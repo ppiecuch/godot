@@ -339,7 +339,8 @@ StringName GDScriptTokenizer::get_token_literal(int p_offset) const {
 					return "null";
 				case Variant::BOOL:
 					return value ? "true" : "false";
-				default: {}
+				default: {
+				}
 			}
 		}
 		case TK_OP_AND:
@@ -534,13 +535,14 @@ void GDScriptTokenizerText::_advance() {
 					}
 				}
 #ifdef DEBUG_ENABLED
-				if (comment.begins_with("#warning-ignore:")) {
-					String code = comment.get_slice(":", 1);
+				String comment_content = comment.trim_prefix("#").trim_prefix(" ");
+				if (comment_content.begins_with("warning-ignore:")) {
+					String code = comment_content.get_slice(":", 1);
 					warning_skips.push_back(Pair<int, String>(line, code.strip_edges().to_lower()));
-				} else if (comment.begins_with("#warning-ignore-all:")) {
-					String code = comment.get_slice(":", 1);
+				} else if (comment_content.begins_with("warning-ignore-all:")) {
+					String code = comment_content.get_slice(":", 1);
 					warning_global_skips.insert(code.strip_edges().to_lower());
-				} else if (comment.strip_edges() == "#warnings-disable") {
+				} else if (comment_content.strip_edges() == "warnings-disable") {
 					ignore_warnings = true;
 				}
 #endif // DEBUG_ENABLED
@@ -744,7 +746,7 @@ void GDScriptTokenizerText::_advance() {
 				}
 				INCPOS(1);
 				is_node_path = true;
-
+				FALLTHROUGH;
 			case '\'':
 			case '"': {
 
@@ -1302,7 +1304,8 @@ Vector<uint8_t> GDScriptTokenizerBuffer::parse_code_string(const String &p_code)
 
 				ERR_FAIL_V(Vector<uint8_t>());
 			} break;
-			default: {}
+			default: {
+			}
 		};
 
 		token_array.push_back(token);

@@ -111,7 +111,7 @@ void ProjectSettingsEditor::_notification(int p_what) {
 			restart_close_button->set_icon(get_icon("Close", "EditorIcons"));
 			restart_container->add_style_override("panel", get_stylebox("bg", "Tree"));
 			restart_icon->set_texture(get_icon("StatusWarning", "EditorIcons"));
-			restart_label->add_color_override("font_color", get_color("error_color", "Editor"));
+			restart_label->add_color_override("font_color", get_color("warning_color", "Editor"));
 
 		} break;
 		case NOTIFICATION_POPUP_HIDE: {
@@ -294,7 +294,8 @@ void ProjectSettingsEditor::_device_input_add() {
 			ie = jb;
 
 		} break;
-		default: {}
+		default: {
+		}
 	}
 
 	if (idx < 0 || idx >= events.size()) {
@@ -519,7 +520,8 @@ void ProjectSettingsEditor::_add_item(int p_item, Ref<InputEvent> p_exiting_even
 			}
 
 		} break;
-		default: {}
+		default: {
+		}
 	}
 }
 

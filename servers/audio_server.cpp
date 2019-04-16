@@ -876,6 +876,15 @@ int AudioServer::get_bus_effect_count(int p_bus) {
 	return buses[p_bus]->effects.size();
 }
 
+Ref<AudioEffectInstance> AudioServer::get_bus_effect_instance(int p_bus, int p_effect, int p_channel) {
+
+	ERR_FAIL_INDEX_V(p_bus, buses.size(), Ref<AudioEffectInstance>());
+	ERR_FAIL_INDEX_V(p_effect, buses[p_bus]->effects.size(), Ref<AudioEffectInstance>());
+	ERR_FAIL_INDEX_V(p_channel, buses[p_bus]->channels.size(), Ref<AudioEffectInstance>());
+
+	return buses[p_bus]->channels[p_channel].effect_instances[p_effect];
+}
+
 Ref<AudioEffect> AudioServer::get_bus_effect(int p_bus, int p_effect) {
 
 	ERR_FAIL_INDEX_V(p_bus, buses.size(), Ref<AudioEffect>());
@@ -1045,8 +1054,10 @@ void AudioServer::update() {
 
 void AudioServer::load_default_bus_layout() {
 
-	if (ResourceLoader::exists("res://default_bus_layout.tres")) {
-		Ref<AudioBusLayout> default_layout = ResourceLoader::load("res://default_bus_layout.tres");
+	String layout_path = ProjectSettings::get_singleton()->get("audio/default_bus_layout");
+
+	if (ResourceLoader::exists(layout_path)) {
+		Ref<AudioBusLayout> default_layout = ResourceLoader::load(layout_path);
 		if (default_layout.is_valid()) {
 			set_bus_layout(default_layout);
 		}
@@ -1328,6 +1339,7 @@ void AudioServer::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("get_bus_effect_count", "bus_idx"), &AudioServer::get_bus_effect_count);
 	ClassDB::bind_method(D_METHOD("get_bus_effect", "bus_idx", "effect_idx"), &AudioServer::get_bus_effect);
+	ClassDB::bind_method(D_METHOD("get_bus_effect_instance", "bus_idx", "effect_idx", "channel"), &AudioServer::get_bus_effect_instance, DEFVAL(0));
 	ClassDB::bind_method(D_METHOD("swap_bus_effects", "bus_idx", "effect_idx", "by_effect_idx"), &AudioServer::swap_bus_effects);
 
 	ClassDB::bind_method(D_METHOD("set_bus_effect_enabled", "bus_idx", "effect_idx", "enabled"), &AudioServer::set_bus_effect_enabled);
