@@ -1210,10 +1210,7 @@ Ref<Image> RasterizerStorageGLES3::texture_get_data(RID p_texture, int p_layer) 
 
 	for (int i = 0; i < texture->mipmaps; i++) {
 
-		int ofs = 0;
-		if (i > 0) {
-			ofs = Image::get_image_data_size(texture->alloc_width, texture->alloc_height, real_format, i - 1);
-		}
+		int ofs = Image::get_image_mipmap_offset(texture->alloc_width, texture->alloc_height, real_format, i);
 
 		if (texture->compressed) {
 
@@ -5219,6 +5216,7 @@ RID RasterizerStorageGLES3::light_create(VS::LightType p_type) {
 	light->directional_blend_splits = false;
 	light->directional_range_mode = VS::LIGHT_DIRECTIONAL_SHADOW_DEPTH_RANGE_STABLE;
 	light->reverse_cull = false;
+	light->use_gi = true;
 	light->version = 0;
 
 	return light_owner.make_rid(light);
@@ -5310,6 +5308,15 @@ void RasterizerStorageGLES3::light_set_reverse_cull_face_mode(RID p_light, bool 
 	light->instance_change_notify(true, false);
 }
 
+void RasterizerStorageGLES3::light_set_use_gi(RID p_light, bool p_enabled) {
+	Light *light = light_owner.getornull(p_light);
+	ERR_FAIL_COND(!light);
+
+	light->use_gi = p_enabled;
+
+	light->version++;
+	light->instance_change_notify(true, false);
+}
 void RasterizerStorageGLES3::light_omni_set_shadow_mode(RID p_light, VS::LightOmniShadowMode p_mode) {
 
 	Light *light = light_owner.getornull(p_light);
@@ -5413,6 +5420,13 @@ Color RasterizerStorageGLES3::light_get_color(RID p_light) {
 	ERR_FAIL_COND_V(!light, Color());
 
 	return light->color;
+}
+
+bool RasterizerStorageGLES3::light_get_use_gi(RID p_light) {
+	Light *light = light_owner.getornull(p_light);
+	ERR_FAIL_COND_V(!light, false);
+
+	return light->use_gi;
 }
 
 bool RasterizerStorageGLES3::light_has_shadow(RID p_light) const {

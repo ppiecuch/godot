@@ -63,9 +63,10 @@ def configure(env):
 
     elif (env["target"] == "release_debug"):
         if (env["optimize"] == "speed"): #optimize for speed (default)
-            env.Prepend(CCFLAGS=['-O2', '-DDEBUG_ENABLED'])
+            env.Prepend(CCFLAGS=['-O2'])
         else: #optimize for size
-            env.Prepend(CCFLAGS=['-Os', '-DDEBUG_ENABLED'])
+            env.Prepend(CCFLAGS=['-Os'])
+        env.Prepend(CPPFLAGS=['-DDEBUG_ENABLED'])
 
         if (env["debug_symbols"] == "yes"):
             env.Prepend(CCFLAGS=['-g1'])
@@ -73,7 +74,8 @@ def configure(env):
             env.Prepend(CCFLAGS=['-g2'])
 
     elif (env["target"] == "debug"):
-        env.Prepend(CCFLAGS=['-g3', '-DDEBUG_ENABLED', '-DDEBUG_MEMORY_ENABLED'])
+        env.Prepend(CCFLAGS=['-g3'])
+        env.Prepend(CPPFLAGS=['-DDEBUG_ENABLED', '-DDEBUG_MEMORY_ENABLED'])
         env.Append(LINKFLAGS=['-rdynamic'])
 
     ## Architecture
@@ -199,7 +201,7 @@ def configure(env):
 
     if not env['builtin_miniupnpc']:
         # No pkgconfig file so far, hardcode default paths.
-        env.Append(CPPPATH=["/usr/include/miniupnpc"])
+        env.Prepend(CPPPATH=["/usr/include/miniupnpc"])
         env.Append(LIBS=["miniupnpc"])
 
     # On Linux wchar_t should be 32-bits
@@ -213,7 +215,7 @@ def configure(env):
     if not env['builtin_zlib']:
         env.ParseConfig('pkg-config zlib --cflags --libs')
 
-    env.Append(CPPPATH=['#platform/server'])
+    env.Prepend(CPPPATH=['#platform/server'])
     env.Append(CPPFLAGS=['-DSERVER_ENABLED', '-DUNIX_ENABLED'])
 
     if (platform.system() == "Darwin"):

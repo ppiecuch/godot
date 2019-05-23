@@ -282,7 +282,6 @@ GDScriptParser::Node *GDScriptParser::_parse_expression(Node *p_parent, bool p_s
 
 				switch (tokenizer->get_token()) {
 					case GDScriptTokenizer::TK_CURSOR: {
-						completion_cursor = StringName();
 						completion_type = COMPLETION_GET_NODE;
 						completion_class = current_class;
 						completion_function = current_function;
@@ -2870,8 +2869,6 @@ void GDScriptParser::_parse_block(BlockNode *p_block, bool p_static) {
 				lv->assign_op = op;
 				lv->assign = assigned;
 
-				lv->assign_op = op;
-
 				if (!_end_statement()) {
 					_set_error("Expected end of statement (var)");
 					return;
@@ -4785,19 +4782,30 @@ void GDScriptParser::_parse_class(ClassNode *p_class) {
 						return;
 					}
 
-					if (member._export.type != Variant::NIL) {
+					Variant::Type initial_type = member.data_type.has_type ? member.data_type.builtin_type : member._export.type;
+
+					if (initial_type != Variant::NIL && initial_type != Variant::OBJECT) {
 						IdentifierNode *id = alloc_node<IdentifierNode>();
 						id->name = member.identifier;
 
-						ConstantNode *cn = alloc_node<ConstantNode>();
+						Node *expr;
 
-						Variant::CallError ce2;
-						cn->value = Variant::construct(member._export.type, NULL, 0, ce2);
+						// Make sure arrays and dictionaries are not shared
+						if (initial_type == Variant::ARRAY) {
+							expr = alloc_node<ArrayNode>();
+						} else if (initial_type == Variant::DICTIONARY) {
+							expr = alloc_node<DictionaryNode>();
+						} else {
+							ConstantNode *cn = alloc_node<ConstantNode>();
+							Variant::CallError ce2;
+							cn->value = Variant::construct(initial_type, NULL, 0, ce2);
+							expr = cn;
+						}
 
 						OperatorNode *op = alloc_node<OperatorNode>();
 						op->op = OperatorNode::OP_INIT_ASSIGN;
 						op->arguments.push_back(id);
-						op->arguments.push_back(cn);
+						op->arguments.push_back(expr);
 
 						p_class->initializer->statements.push_back(op);
 
@@ -6226,8 +6234,8 @@ GDScriptParser::DataType GDScriptParser::_reduce_node_type(Node *p_node) {
 						return DataType();
 					}
 #ifdef DEBUG_ENABLED
-					if (var_op == Variant::OP_DIVIDE && argument_a_type.has_type && argument_a_type.kind == DataType::BUILTIN && argument_a_type.builtin_type == Variant::INT &&
-							argument_b_type.has_type && argument_b_type.kind == DataType::BUILTIN && argument_b_type.builtin_type == Variant::INT) {
+					if (var_op == Variant::OP_DIVIDE && argument_a_type.kind == DataType::BUILTIN && argument_a_type.builtin_type == Variant::INT &&
+							argument_b_type.kind == DataType::BUILTIN && argument_b_type.builtin_type == Variant::INT) {
 						_add_warning(GDScriptWarning::INTEGER_DIVISION, op->line);
 					}
 #endif // DEBUG_ENABLED
@@ -6938,10 +6946,8 @@ GDScriptParser::DataType GDScriptParser::_reduce_function_call_type(const Operat
 
 #ifdef DEBUG_ENABLED
 			if (current_function && !for_completion && !is_static && p_call->arguments[0]->type == Node::TYPE_SELF && current_function->_static) {
-				if (current_function && current_function->_static && p_call->arguments[0]->type == Node::TYPE_SELF) {
-					_set_error("Can't call non-static function from a static function.", p_call->line);
-					return DataType();
-				}
+				_set_error("Can't call non-static function from a static function.", p_call->line);
+				return DataType();
 			}
 
 			if (check_types && !is_static && !is_initializer && base_type.is_meta_type) {
@@ -7467,7 +7473,7 @@ void GDScriptParser::_check_class_level_types(ClassNode *p_class) {
 						return;
 					}
 
-					// Replace assignment with implict conversion
+					// Replace assignment with implicit conversion
 					BuiltInFunctionNode *convert = alloc_node<BuiltInFunctionNode>();
 					convert->line = v.line;
 					convert->function = GDScriptFunctions::TYPE_CONVERT;
@@ -7496,30 +7502,6 @@ void GDScriptParser::_check_class_level_types(ClassNode *p_class) {
 				v.data_type = expr_type;
 				v.data_type.is_constant = false;
 			}
-		} else if (v.data_type.has_type && v.data_type.kind == DataType::BUILTIN) {
-			// Create default value based on the type
-			IdentifierNode *id = alloc_node<IdentifierNode>();
-			id->line = v.line;
-			id->name = v.identifier;
-
-			ConstantNode *init = alloc_node<ConstantNode>();
-			init->line = v.line;
-			Variant::CallError err;
-			init->value = Variant::construct(v.data_type.builtin_type, NULL, 0, err);
-
-			OperatorNode *op = alloc_node<OperatorNode>();
-			op->line = v.line;
-			op->op = OperatorNode::OP_INIT_ASSIGN;
-			op->arguments.push_back(id);
-			op->arguments.push_back(init);
-
-			p_class->initializer->statements.push_front(op);
-			v.initial_assignment = op;
-#ifdef DEBUG_ENABLED
-			NewLineNode *nl = alloc_node<NewLineNode>();
-			nl->line = v.line - 1;
-			p_class->initializer->statements.push_front(nl);
-#endif
 		}
 
 		// Check export hint
@@ -7855,14 +7837,14 @@ void GDScriptParser::_check_block_types(BlockNode *p_block) {
 						if (_is_type_compatible(assign_type, lv->datatype)) {
 							_mark_line_as_unsafe(lv->line);
 						} else {
-							// Try implict conversion
+							// Try implicit conversion
 							if (lv->datatype.kind != DataType::BUILTIN || !_is_type_compatible(lv->datatype, assign_type, true)) {
 								_set_error("Assigned value type (" + assign_type.to_string() + ") doesn't match the variable's type (" +
 												   lv->datatype.to_string() + ").",
 										lv->line);
 								return;
 							}
-							// Replace assignment with implict conversion
+							// Replace assignment with implicit conversion
 							BuiltInFunctionNode *convert = alloc_node<BuiltInFunctionNode>();
 							convert->line = lv->line;
 							convert->function = GDScriptFunctions::TYPE_CONVERT;
@@ -7986,14 +7968,14 @@ void GDScriptParser::_check_block_types(BlockNode *p_block) {
 							if (_is_type_compatible(rh_type, lh_type)) {
 								_mark_line_as_unsafe(op->line);
 							} else {
-								// Try implict conversion
+								// Try implicit conversion
 								if (lh_type.kind != DataType::BUILTIN || !_is_type_compatible(lh_type, rh_type, true)) {
 									_set_error("Assigned value type (" + rh_type.to_string() + ") doesn't match the variable's type (" +
 													   lh_type.to_string() + ").",
 											op->line);
 									return;
 								}
-								// Replace assignment with implict conversion
+								// Replace assignment with implicit conversion
 								BuiltInFunctionNode *convert = alloc_node<BuiltInFunctionNode>();
 								convert->line = op->line;
 								convert->function = GDScriptFunctions::TYPE_CONVERT;

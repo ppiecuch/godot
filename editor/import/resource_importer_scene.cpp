@@ -708,6 +708,10 @@ void ResourceImporterScene::_create_clips(Node *scene, const Array &p_clips, boo
 								default_anim->transform_track_interpolate(j, from, &p, &q, &s);
 								new_anim->transform_track_insert_key(dtrack, 0, p, q, s);
 							}
+							if (default_anim->track_get_type(j) == Animation::TYPE_VALUE) {
+								Variant var = default_anim->value_track_interpolate(j, from);
+								new_anim->track_insert_key(dtrack, 0, var);
+							}
 						}
 					}
 
@@ -717,6 +721,10 @@ void ResourceImporterScene::_create_clips(Node *scene, const Array &p_clips, boo
 						Vector3 s;
 						default_anim->transform_track_get_key(j, k, &p, &q, &s);
 						new_anim->transform_track_insert_key(dtrack, kt - from, p, q, s);
+					}
+					if (default_anim->track_get_type(j) == Animation::TYPE_VALUE) {
+						Variant var = default_anim->track_get_key_value(j, k);
+						new_anim->track_insert_key(dtrack, kt - from, var);
 					}
 				}
 
@@ -728,6 +736,10 @@ void ResourceImporterScene::_create_clips(Node *scene, const Array &p_clips, boo
 						Vector3 s;
 						default_anim->transform_track_interpolate(j, to, &p, &q, &s);
 						new_anim->transform_track_insert_key(dtrack, to - from, p, q, s);
+					}
+					if (default_anim->track_get_type(j) == Animation::TYPE_VALUE) {
+						Variant var = default_anim->value_track_interpolate(j, to);
+						new_anim->track_insert_key(dtrack, to - from, var);
 					}
 				}
 			}
@@ -745,6 +757,12 @@ void ResourceImporterScene::_create_clips(Node *scene, const Array &p_clips, boo
 					new_anim->transform_track_insert_key(dtrack, 0, p, q, s);
 					default_anim->transform_track_interpolate(j, to, &p, &q, &s);
 					new_anim->transform_track_insert_key(dtrack, to - from, p, q, s);
+				}
+				if (default_anim->track_get_type(j) == Animation::TYPE_VALUE) {
+					Variant var = default_anim->value_track_interpolate(j, from);
+					new_anim->track_insert_key(dtrack, 0, var);
+					Variant to_var = default_anim->value_track_interpolate(j, to);
+					new_anim->track_insert_key(dtrack, to - from, to_var);
 				}
 			}
 		}
@@ -1127,7 +1145,7 @@ void ResourceImporterScene::get_import_options(List<ImportOption> *r_options, in
 	r_options->push_back(ImportOption(PropertyInfo(Variant::BOOL, "animation/import", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_UPDATE_ALL_IF_MODIFIED), true));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::REAL, "animation/fps", PROPERTY_HINT_RANGE, "1,120,1"), 15));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::STRING, "animation/filter_script", PROPERTY_HINT_MULTILINE_TEXT), ""));
-	r_options->push_back(ImportOption(PropertyInfo(Variant::INT, "animation/storage", PROPERTY_HINT_ENUM, "Built-In,Files"), animations_out ? true : false));
+	r_options->push_back(ImportOption(PropertyInfo(Variant::INT, "animation/storage", PROPERTY_HINT_ENUM, "Built-In,Files", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_UPDATE_ALL_IF_MODIFIED), animations_out ? true : false));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::BOOL, "animation/keep_custom_tracks"), animations_out ? true : false));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::BOOL, "animation/optimizer/enabled", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_UPDATE_ALL_IF_MODIFIED), true));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::REAL, "animation/optimizer/max_linear_error"), 0.05));
@@ -1290,7 +1308,10 @@ Error ResourceImporterScene::import(const String &p_source_file, const String &p
 		Object::cast_to<Spatial>(scene)->scale(Vector3(root_scale, root_scale, root_scale));
 	}
 
-	scene->set_name(p_options["nodes/root_name"]);
+	if (p_options["nodes/root_name"] != "Scene Root")
+		scene->set_name(p_options["nodes/root_name"]);
+	else
+		scene->set_name(p_save_path.get_file().get_basename());
 
 	err = OK;
 

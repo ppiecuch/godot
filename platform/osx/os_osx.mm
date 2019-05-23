@@ -337,6 +337,11 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTimeSt
 }
 
 - (void)windowDidMove:(NSNotification *)notification {
+
+	if (OS_OSX::singleton->get_main_loop()) {
+		OS_OSX::singleton->input->release_pressed_events();
+	}
+
 	/*
 	[window->nsgl.context update];
 
@@ -965,10 +970,10 @@ static const _KeyCodeMap _keycodes[55] = {
 	{ 'i', KEY_I },
 	{ 'o', KEY_O },
 	{ 'p', KEY_P },
-	{ '[', KEY_BRACERIGHT },
-	{ ']', KEY_BRACELEFT },
-	{ '{', KEY_BRACERIGHT },
-	{ '}', KEY_BRACELEFT },
+	{ '[', KEY_BRACELEFT },
+	{ ']', KEY_BRACERIGHT },
+	{ '{', KEY_BRACELEFT },
+	{ '}', KEY_BRACERIGHT },
 	{ 'a', KEY_A },
 	{ 's', KEY_S },
 	{ 'd', KEY_D },
@@ -1546,7 +1551,7 @@ void OS_OSX::delete_main_loop() {
 	main_loop = NULL;
 }
 
-String OS_OSX::get_name() {
+String OS_OSX::get_name() const {
 
 	return "OSX";
 }

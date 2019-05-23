@@ -112,6 +112,16 @@ public:
 		DOCK_SLOT_MAX
 	};
 
+	struct ExecuteThreadArgs {
+		String path;
+		List<String> args;
+		String output;
+		Thread *execute_output_thread;
+		Mutex *execute_output_mutex;
+		int exitcode;
+		volatile bool done;
+	};
+
 private:
 	enum {
 		HISTORY_SIZE = 64
@@ -130,6 +140,8 @@ private:
 		FILE_IMPORT_SUBSCENE,
 		FILE_EXPORT_PROJECT,
 		FILE_EXPORT_MESH_LIBRARY,
+		FILE_INSTALL_ANDROID_SOURCE,
+		FILE_EXPLORE_ANDROID_BUILD_TEMPLATES,
 		FILE_EXPORT_TILESET,
 		FILE_SAVE_OPTIMIZED,
 		FILE_OPEN_RECENT,
@@ -138,6 +150,9 @@ private:
 		FILE_QUICK_OPEN_SCRIPT,
 		FILE_OPEN_PREV,
 		FILE_CLOSE,
+		FILE_CLOSE_OTHERS,
+		FILE_CLOSE_RIGHT,
+		FILE_CLOSE_ALL,
 		FILE_CLOSE_ALL_AND_QUIT,
 		FILE_CLOSE_ALL_AND_RUN_PROJECT_MANAGER,
 		FILE_QUIT,
@@ -267,6 +282,9 @@ private:
 	RichTextLabel *load_errors;
 	AcceptDialog *load_error_dialog;
 
+	RichTextLabel *execute_outputs;
+	AcceptDialog *execute_output_dialog;
+
 	Ref<Theme> theme;
 
 	PopupMenu *recent_scenes;
@@ -289,6 +307,10 @@ private:
 	Ref<ConfigFile> default_layout;
 	PopupMenu *editor_layouts;
 	EditorNameDialog *layout_dialog;
+
+	ConfirmationDialog *custom_build_manage_templates;
+	ConfirmationDialog *install_android_build_template;
+	ConfirmationDialog *remove_android_build_template;
 
 	EditorSettingsDialog *settings_config_dialog;
 	RunSettingsDialog *run_settings_dialog;
@@ -452,6 +474,7 @@ private:
 	int _next_unsaved_scene(bool p_valid_filename, int p_start = 0);
 	void _discard_changes(const String &p_str = String());
 
+	void _inherit_request(String p_file);
 	void _instance_request(const Vector<String> &p_files);
 
 	void _display_top_editors(bool p_display);
@@ -544,7 +567,7 @@ private:
 	void _dock_split_dragged(int ofs);
 	void _dock_popup_exit();
 	void _scene_tab_changed(int p_tab);
-	void _scene_tab_closed(int p_tab);
+	void _scene_tab_closed(int p_tab, int option = SCENE_TAB_CLOSE);
 	void _scene_tab_hover(int p_tab);
 	void _scene_tab_exit();
 	void _scene_tab_input(const Ref<InputEvent> &p_input);
@@ -799,6 +822,8 @@ public:
 
 	void update_keying() const { inspector_dock->update_keying(); };
 	bool has_scenes_in_session();
+
+	int execute_and_show_output(const String &p_title, const String &p_path, const List<String> &p_arguments, bool p_close_on_ok = true, bool p_close_on_errors = false);
 
 	EditorNode();
 	~EditorNode();

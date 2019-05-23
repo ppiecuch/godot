@@ -476,6 +476,7 @@ void register_scene_types() {
 	ClassDB::register_virtual_class<VisualShaderNode>();
 	ClassDB::register_class<VisualShaderNodeInput>();
 	ClassDB::register_virtual_class<VisualShaderNodeOutput>();
+	ClassDB::register_class<VisualShaderNodeGroupBase>();
 	ClassDB::register_class<VisualShaderNodeScalarConstant>();
 	ClassDB::register_class<VisualShaderNodeBooleanConstant>();
 	ClassDB::register_class<VisualShaderNodeColorConstant>();
@@ -523,6 +524,8 @@ void register_scene_types() {
 	ClassDB::register_class<VisualShaderNodeCubeMapUniform>();
 	ClassDB::register_class<VisualShaderNodeIf>();
 	ClassDB::register_class<VisualShaderNodeSwitch>();
+	ClassDB::register_class<VisualShaderNodeFresnel>();
+	ClassDB::register_class<VisualShaderNodeExpression>();
 
 	ClassDB::register_class<ShaderMaterial>();
 	ClassDB::register_virtual_class<CanvasItem>();
@@ -782,7 +785,11 @@ void unregister_scene_types() {
 	ResourceLoader::remove_resource_format_loader(resource_loader_bmfont);
 	resource_loader_bmfont.unref();
 
+	//SpatialMaterial is not initialised when 3D is disabled, so it shouldn't be cleaned up either
+#ifndef _3D_DISABLED
 	SpatialMaterial::finish_shaders();
+#endif // _3D_DISABLED
+
 	ParticlesMaterial::finish_shaders();
 	CanvasItemMaterial::finish_shaders();
 	SceneStringNames::free();

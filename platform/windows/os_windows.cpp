@@ -53,6 +53,7 @@
 
 #include <avrt.h>
 #include <direct.h>
+#include <knownfolders.h>
 #include <process.h>
 #include <regstr.h>
 #include <shlobj.h>
@@ -345,6 +346,7 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 				control_mem = false;
 				shift_mem = false;
 			} else { // WM_INACTIVE
+				input->release_pressed_events();
 				main_loop->notification(MainLoop::NOTIFICATION_WM_FOCUS_OUT);
 				alt_mem = false;
 			};
@@ -703,7 +705,7 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 					}
 				}
 			} else if (mouse_mode != MOUSE_MODE_CAPTURED) {
-				// for reasons unknown to mankind, wheel comes in screen cordinates
+				// for reasons unknown to mankind, wheel comes in screen coordinates
 				POINT coords;
 				coords.x = mb->get_position().x;
 				coords.y = mb->get_position().y;
@@ -785,6 +787,7 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 		} break;
 
 		case WM_ENTERSIZEMOVE: {
+			input->release_pressed_events();
 			move_timer_id = SetTimer(hWnd, 1, USER_TIMER_MINIMUM, (TIMERPROC)NULL);
 		} break;
 		case WM_EXITSIZEMOVE: {
@@ -1410,26 +1413,29 @@ Error OS_Windows::initialize(const VideoMode &p_desired, int p_video_driver, int
 
 void OS_Windows::set_clipboard(const String &p_text) {
 
+	// Convert LF line endings to CRLF in clipboard content
+	// Otherwise, line endings won't be visible when pasted in other software
+	String text = p_text.replace("\n", "\r\n");
+
 	if (!OpenClipboard(hWnd)) {
 		ERR_EXPLAIN("Unable to open clipboard.");
 		ERR_FAIL();
 	};
 	EmptyClipboard();
 
-	HGLOBAL mem = GlobalAlloc(GMEM_MOVEABLE, (p_text.length() + 1) * sizeof(CharType));
+	HGLOBAL mem = GlobalAlloc(GMEM_MOVEABLE, (text.length() + 1) * sizeof(CharType));
 	if (mem == NULL) {
 		ERR_EXPLAIN("Unable to allocate memory for clipboard contents.");
 		ERR_FAIL();
 	};
 	LPWSTR lptstrCopy = (LPWSTR)GlobalLock(mem);
-	memcpy(lptstrCopy, p_text.c_str(), (p_text.length() + 1) * sizeof(CharType));
-	//memset((lptstrCopy + p_text.length()), 0, sizeof(CharType));
+	memcpy(lptstrCopy, text.c_str(), (text.length() + 1) * sizeof(CharType));
 	GlobalUnlock(mem);
 
 	SetClipboardData(CF_UNICODETEXT, mem);
 
 	// set the CF_TEXT version (not needed?)
-	CharString utf8 = p_text.utf8();
+	CharString utf8 = text.utf8();
 	mem = GlobalAlloc(GMEM_MOVEABLE, utf8.length() + 1);
 	if (mem == NULL) {
 		ERR_EXPLAIN("Unable to allocate memory for clipboard contents.");
@@ -2113,7 +2119,7 @@ void OS_Windows::request_attention() {
 	FlashWindowEx(&info);
 }
 
-String OS_Windows::get_name() {
+String OS_Windows::get_name() const {
 
 	return "Windows";
 }
@@ -2460,7 +2466,7 @@ void OS_Windows::GetMaskBitmaps(HBITMAP hSourceBitmap, COLORREF clrTransparent, 
 	DeleteDC(hMainDC);
 }
 
-Error OS_Windows::execute(const String &p_path, const List<String> &p_arguments, bool p_blocking, ProcessID *r_child_id, String *r_pipe, int *r_exitcode, bool read_stderr) {
+Error OS_Windows::execute(const String &p_path, const List<String> &p_arguments, bool p_blocking, ProcessID *r_child_id, String *r_pipe, int *r_exitcode, bool read_stderr, Mutex *p_pipe_mutex) {
 
 	if (p_blocking && r_pipe) {
 
@@ -2479,7 +2485,13 @@ Error OS_Windows::execute(const String &p_path, const List<String> &p_arguments,
 		char buf[65535];
 		while (fgets(buf, 65535, f)) {
 
+			if (p_pipe_mutex) {
+				p_pipe_mutex->lock();
+			}
 			(*r_pipe) += buf;
+			if (p_pipe_mutex) {
+				p_pipe_mutex->unlock();
+			}
 		}
 
 		int rv = _pclose(f);

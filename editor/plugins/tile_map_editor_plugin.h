@@ -66,12 +66,8 @@ class TileMapEditor : public VBoxContainer {
 
 	enum Options {
 
-		OPTION_BUCKET,
-		OPTION_PICK_TILE,
-		OPTION_SELECT,
 		OPTION_COPY,
 		OPTION_ERASE_SELECTION,
-		OPTION_PAINTING,
 		OPTION_FIX_INVALID,
 		OPTION_CUT
 	};
@@ -90,9 +86,15 @@ class TileMapEditor : public VBoxContainer {
 	ItemList *manual_palette;
 
 	HBoxContainer *toolbar;
+	HBoxContainer *toolbar_right;
 
 	Label *tile_info;
 	MenuButton *options;
+
+	ToolButton *paint_button;
+	ToolButton *bucket_fill_button;
+	ToolButton *picker_button;
+	ToolButton *select_button;
 
 	ToolButton *flip_horizontal_button;
 	ToolButton *flip_vertical_button;
@@ -103,6 +105,7 @@ class TileMapEditor : public VBoxContainer {
 	CheckBox *manual_button;
 
 	Tool tool;
+	Tool last_tool;
 
 	bool selection_active;
 	bool mouse_over;
@@ -184,13 +187,16 @@ class TileMapEditor : public VBoxContainer {
 	void _text_changed(const String &p_text);
 	void _sbox_input(const Ref<InputEvent> &p_ie);
 	void _update_palette();
+	void _update_button_tool();
+	void _button_tool_select(int p_tool);
 	void _menu_option(int p_option);
 	void _palette_selected(int index);
 	void _palette_multi_selected(int index, bool selected);
 
+	Dictionary _create_cell_dictionary(int tile, bool flip_x, bool flip_y, bool transpose, Vector2 autotile_coord);
 	void _start_undo(const String &p_action);
 	void _finish_undo();
-	void _create_set_cell_undo(const Vector2 &p_vec, const CellOp &p_cell_old, const CellOp &p_cell_new);
+	void _create_set_cell_undo_redo(const Vector2 &p_vec, const CellOp &p_cell_old, const CellOp &p_cell_new);
 	void _set_cell(const Point2i &p_pos, Vector<int> p_values, bool p_flip_h = false, bool p_flip_v = false, bool p_transpose = false, const Point2i p_autotile_coord = Point2());
 
 	void _canvas_mouse_enter();
@@ -210,6 +216,7 @@ protected:
 
 public:
 	HBoxContainer *get_toolbar() const { return toolbar; }
+	HBoxContainer *get_toolbar_right() const { return toolbar_right; }
 
 	bool forward_gui_input(const Ref<InputEvent> &p_event);
 	void forward_canvas_draw_over_viewport(Control *p_overlay);

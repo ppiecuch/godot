@@ -112,7 +112,7 @@ void AudioEffectSpectrumAnalyzerInstance::process(const AudioFrame *p_src_frames
 	}
 
 	//determine time of capture
-	double remainer_sec = (temporal_fft_pos / mix_rate); //substract remainder from mix time
+	double remainer_sec = (temporal_fft_pos / mix_rate); //subtract remainder from mix time
 	last_fft_time = time - uint64_t(remainer_sec * 1000000.0);
 }
 
@@ -130,7 +130,7 @@ Vector2 AudioEffectSpectrumAnalyzerInstance::get_magnitude_for_frequency_range(f
 	}
 	uint64_t time = OS::get_singleton()->get_ticks_usec();
 	float diff = double(time - last_fft_time) / 1000000.0 + base->get_tap_back_pos();
-	diff -= AudioServer::get_singleton()->get_output_delay();
+	diff -= AudioServer::get_singleton()->get_output_latency();
 	float fft_time_size = float(fft_size) / mix_rate;
 
 	int fft_index = fft_pos;

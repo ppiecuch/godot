@@ -104,6 +104,7 @@ public:
 
 		GLuint immediate_buffer;
 		Color default_ambient;
+		Color default_bg;
 
 		// ResolveShaderGLES3 resolve_shader;
 		// ScreenSpaceReflectionShaderGLES3 ssr_shader;
@@ -502,7 +503,8 @@ public:
 		enum {
 			MAX_LIGHTS = 255,
 			MAX_REFLECTION_PROBES = 255,
-			DEFAULT_MAX_ELEMENTS = 65536
+			DEFAULT_MAX_ELEMENTS = 65536,
+			SORT_KEY_PRIORITY_SHIFT = 56
 		};
 
 		int max_elements;
@@ -598,6 +600,29 @@ public:
 			}
 		}
 
+		struct SortByReverseDepthAndPriority {
+
+			_FORCE_INLINE_ bool operator()(const Element *A, const Element *B) const {
+				uint32_t layer_A = uint32_t(A->sort_key >> SORT_KEY_PRIORITY_SHIFT);
+				uint32_t layer_B = uint32_t(B->sort_key >> SORT_KEY_PRIORITY_SHIFT);
+				if (layer_A == layer_B) {
+					return A->instance->depth > B->instance->depth;
+				} else {
+					return layer_A < layer_B;
+				}
+			}
+		};
+
+		void sort_by_reverse_depth_and_priority(bool p_alpha) { //used for alpha
+
+			SortArray<Element *, SortByReverseDepthAndPriority> sorter;
+			if (p_alpha) {
+				sorter.sort(&elements[max_elements - alpha_element_count], alpha_element_count);
+			} else {
+				sorter.sort(elements, element_count);
+			}
+		}
+
 		// element adding and stuff
 
 		_FORCE_INLINE_ Element *add_element() {
@@ -646,6 +671,7 @@ public:
 	void _add_geometry(RasterizerStorageGLES2::Geometry *p_geometry, InstanceBase *p_instance, RasterizerStorageGLES2::GeometryOwner *p_owner, int p_material, bool p_depth_pass, bool p_shadow_pass);
 	void _add_geometry_with_material(RasterizerStorageGLES2::Geometry *p_geometry, InstanceBase *p_instance, RasterizerStorageGLES2::GeometryOwner *p_owner, RasterizerStorageGLES2::Material *p_material, bool p_depth_pass, bool p_shadow_pass);
 
+	void _copy_texture_to_front_buffer(GLuint texture);
 	void _fill_render_list(InstanceBase **p_cull_result, int p_cull_count, bool p_depth_pass, bool p_shadow_pass);
 	void _render_render_list(RenderList::Element **p_elements, int p_element_count,
 			const Transform &p_view_transform,

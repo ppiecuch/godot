@@ -128,6 +128,10 @@ class ScriptTextEditor : public ScriptEditorBase {
 		SEARCH_LOCATE_FUNCTION,
 		SEARCH_GOTO_LINE,
 		SEARCH_IN_FILES,
+		BOOKMARK_TOGGLE,
+		BOOKMARK_GOTO_NEXT,
+		BOOKMARK_GOTO_PREV,
+		BOOKMARK_REMOVE_ALL,
 		DEBUG_TOGGLE_BREAKPOINT,
 		DEBUG_REMOVE_ALL_BREAKPOINTS,
 		DEBUG_GOTO_NEXT_BREAKPOINT,
@@ -196,6 +200,8 @@ public:
 
 	virtual void goto_line(int p_line, bool p_with_error = false);
 	void goto_line_selection(int p_line, int p_begin, int p_end);
+	virtual void set_executing_line(int p_line);
+	virtual void clear_executing_line();
 
 	virtual void reload(bool p_soft);
 	virtual void get_breakpoints(List<int> *p_breakpoints);

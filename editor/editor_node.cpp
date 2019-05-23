@@ -47,6 +47,7 @@
 #include "core/translation.h"
 #include "core/version.h"
 #include "main/input_default.h"
+#include "main/main.h"
 #include "scene/resources/packed_scene.h"
 #include "servers/physics_2d_server.h"
 
@@ -1014,8 +1015,7 @@ void EditorNode::_save_scene_with_preview(String p_file, int p_idx) {
 			y = (img->get_height() - size) / 2;
 
 			img->crop_from_point(x, y, size, size);
-			// We could get better pictures with better filters
-			img->resize(preview_size, preview_size, Image::INTERPOLATE_CUBIC);
+			img->resize(preview_size, preview_size, Image::INTERPOLATE_LANCZOS);
 		}
 		img->convert(Image::FORMAT_RGB8);
 
@@ -1269,6 +1269,11 @@ void EditorNode::_dialog_action(String p_file) {
 
 	switch (current_option) {
 		case FILE_NEW_INHERITED_SCENE: {
+
+			Node *scene = editor_data.get_edited_scene_root();
+			// If the previous scene is rootless, just close it in favor of the new one.
+			if (!scene)
+				_menu_option_confirm(FILE_CLOSE, false);
 
 			load_scene(p_file, false, true);
 		} break;
@@ -1630,7 +1635,7 @@ void EditorNode::_edit_current() {
 				editable_warning = TTR("This resource belongs to a scene that was imported, so it's not editable.\nPlease read the documentation relevant to importing scenes to better understand this workflow.");
 			} else {
 				if ((!get_edited_scene() || get_edited_scene()->get_filename() != base_path) && ResourceLoader::get_resource_type(base_path) == "PackedScene") {
-					editable_warning = TTR("This resource belongs to a scene that was instanced or inherited.\nChanges to it will not be kept when saving the current scene.");
+					editable_warning = TTR("This resource belongs to a scene that was instanced or inherited.\nChanges to it won't be kept when saving the current scene.");
 				}
 			}
 		} else if (current_res->get_path().is_resource_file()) {
@@ -1655,14 +1660,14 @@ void EditorNode::_edit_current() {
 		if (get_edited_scene() && get_edited_scene()->get_filename() != String()) {
 			String source_scene = get_edited_scene()->get_filename();
 			if (FileAccess::exists(source_scene + ".import")) {
-				editable_warning = TTR("This scene was imported, so changes to it will not be kept.\nInstancing it or inheriting will allow making changes to it.\nPlease read the documentation relevant to importing scenes to better understand this workflow.");
+				editable_warning = TTR("This scene was imported, so changes to it won't be kept.\nInstancing it or inheriting will allow making changes to it.\nPlease read the documentation relevant to importing scenes to better understand this workflow.");
 			}
 		}
 
 	} else {
 
 		if (current_obj->is_class("ScriptEditorDebuggerInspectedObject")) {
-			editable_warning = TTR("This is a remote object so changes to it will not be kept.\nPlease read the documentation relevant to debugging to better understand this workflow.");
+			editable_warning = TTR("This is a remote object, so changes to it won't be kept.\nPlease read the documentation relevant to debugging to better understand this workflow.");
 			capitalize = false;
 			disable_folding = true;
 		}
@@ -1936,6 +1941,24 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 			open_request(previous_scenes.back()->get());
 
 		} break;
+		case FILE_CLOSE_OTHERS:
+		case FILE_CLOSE_RIGHT:
+		case FILE_CLOSE_ALL: {
+			if (editor_data.get_edited_scene_count() > 1 && (current_option != FILE_CLOSE_RIGHT || editor_data.get_edited_scene() < editor_data.get_edited_scene_count() - 1)) {
+				int next_tab = editor_data.get_edited_scene() + 1;
+				next_tab %= editor_data.get_edited_scene_count();
+				_scene_tab_closed(next_tab, current_option);
+			} else {
+				if (current_option != FILE_CLOSE_ALL)
+					current_option = -1;
+				else
+					_scene_tab_closed(editor_data.get_edited_scene());
+			}
+
+			if (p_confirmed)
+				_menu_option_confirm(SCENE_TAB_CLOSE, true);
+
+		} break;
 		case FILE_CLOSE_ALL_AND_QUIT:
 		case FILE_CLOSE_ALL_AND_RUN_PROJECT_MANAGER:
 		case FILE_CLOSE: {
@@ -1973,6 +1996,7 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 
 				if (scene_idx != -1)
 					_discard_changes();
+				save_layout();
 
 				break;
 			}
@@ -2266,9 +2290,22 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 
 			project_settings->popup_project_settings();
 		} break;
-		case RUN_PROJECT_DATA_FOLDER: {
+		case FILE_INSTALL_ANDROID_SOURCE: {
 
-			OS::get_singleton()->shell_open(String("file://") + OS::get_singleton()->get_user_data_dir());
+			if (p_confirmed) {
+				export_template_manager->install_android_template();
+			} else {
+				if (DirAccess::exists("res://android/build")) {
+					remove_android_build_template->popup_centered_minsize();
+				} else if (export_template_manager->can_install_android_template()) {
+					install_android_build_template->popup_centered_minsize();
+				} else {
+					custom_build_manage_templates->popup_centered_minsize();
+				}
+			}
+		} break;
+		case FILE_EXPLORE_ANDROID_BUILD_TEMPLATES: {
+			OS::get_singleton()->shell_open(String("file://") + ProjectSettings::get_singleton()->get_resource_path().plus_file("android"));
 		} break;
 		case FILE_QUIT:
 		case RUN_PROJECT_MANAGER: {
@@ -2417,7 +2454,13 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 		} break;
 		case SETTINGS_MANAGE_FEATURE_PROFILES: {
 
-			feature_profile_manager->popup_centered_ratio();
+			Size2 popup_size = Size2(900, 800) * editor_get_scale();
+			Size2 window_size = get_viewport()->get_size();
+
+			popup_size.x = MIN(window_size.x * 0.8, popup_size.x);
+			popup_size.y = MIN(window_size.y * 0.8, popup_size.y);
+
+			feature_profile_manager->popup_centered(popup_size);
 
 		} break;
 		case SETTINGS_TOGGLE_FULLSCREEN: {
@@ -2483,6 +2526,9 @@ void EditorNode::_tool_menu_option(int p_idx) {
 		case TOOLS_ORPHAN_RESOURCES: {
 			orphan_resources->show();
 		} break;
+		case RUN_PROJECT_DATA_FOLDER: {
+			OS::get_singleton()->shell_open(String("file://") + OS::get_singleton()->get_user_data_dir());
+		} break;
 		case TOOLS_CUSTOM: {
 			if (tool_menu->get_item_submenu(p_idx) == "") {
 				Array params = tool_menu->get_item_metadata(p_idx);
@@ -2534,6 +2580,9 @@ void EditorNode::_discard_changes(const String &p_str) {
 		case FILE_CLOSE_ALL_AND_QUIT:
 		case FILE_CLOSE_ALL_AND_RUN_PROJECT_MANAGER:
 		case FILE_CLOSE:
+		case FILE_CLOSE_OTHERS:
+		case FILE_CLOSE_RIGHT:
+		case FILE_CLOSE_ALL:
 		case SCENE_TAB_CLOSE: {
 
 			_remove_scene(tab_closing);
@@ -2546,6 +2595,15 @@ void EditorNode::_discard_changes(const String &p_str) {
 				} else {
 					_menu_option_confirm(current_option, false);
 				}
+			} else if (current_option == FILE_CLOSE_OTHERS || current_option == FILE_CLOSE_RIGHT) {
+				if (editor_data.get_edited_scene_count() == 1 || (current_option == FILE_CLOSE_RIGHT && editor_data.get_edited_scene_count() <= editor_data.get_edited_scene() + 1)) {
+					current_option = -1;
+					save_confirmation->hide();
+				} else {
+					_menu_option_confirm(current_option, false);
+				}
+			} else if (current_option == FILE_CLOSE_ALL && editor_data.get_edited_scene_count() > 0) {
+				_menu_option_confirm(current_option, false);
 			} else {
 				current_option = -1;
 				save_confirmation->hide();
@@ -3191,6 +3249,12 @@ SceneTreeDock *EditorNode::get_scene_tree_dock() {
 InspectorDock *EditorNode::get_inspector_dock() {
 
 	return inspector_dock;
+}
+
+void EditorNode::_inherit_request(String p_file) {
+
+	current_option = FILE_NEW_INHERITED_SCENE;
+	_dialog_action(p_file);
 }
 
 void EditorNode::_instance_request(const Vector<String> &p_files) {
@@ -4173,8 +4237,8 @@ void EditorNode::_scene_tab_script_edited(int p_tab) {
 		inspector_dock->edit_resource(script);
 }
 
-void EditorNode::_scene_tab_closed(int p_tab) {
-	current_option = SCENE_TAB_CLOSE;
+void EditorNode::_scene_tab_closed(int p_tab, int option) {
+	current_option = option;
 	tab_closing = p_tab;
 	Node *scene = editor_data.get_edited_scene_root(p_tab);
 	if (!scene) {
@@ -4247,7 +4311,11 @@ void EditorNode::_scene_tab_input(const Ref<InputEvent> &p_input) {
 				scene_tabs_context_menu->add_separator();
 				scene_tabs_context_menu->add_item(TTR("Show in FileSystem"), FILE_SHOW_IN_FILESYSTEM);
 				scene_tabs_context_menu->add_item(TTR("Play This Scene"), RUN_PLAY_SCENE);
+				scene_tabs_context_menu->add_separator();
 				scene_tabs_context_menu->add_item(TTR("Close Tab"), FILE_CLOSE);
+				scene_tabs_context_menu->add_item(TTR("Close Other Tabs"), FILE_CLOSE_OTHERS);
+				scene_tabs_context_menu->add_item(TTR("Close Tabs to the Right"), FILE_CLOSE_RIGHT);
+				scene_tabs_context_menu->add_item(TTR("Close All Tabs"), FILE_CLOSE_ALL);
 			}
 			scene_tabs_context_menu->set_position(mb->get_global_position());
 			scene_tabs_context_menu->popup();
@@ -4962,6 +5030,7 @@ void EditorNode::_bind_methods() {
 	ClassDB::bind_method("_get_scene_metadata", &EditorNode::_get_scene_metadata);
 	ClassDB::bind_method("set_edited_scene", &EditorNode::set_edited_scene);
 	ClassDB::bind_method("open_request", &EditorNode::open_request);
+	ClassDB::bind_method("_inherit_request", &EditorNode::_inherit_request);
 	ClassDB::bind_method("_instance_request", &EditorNode::_instance_request);
 	ClassDB::bind_method("_close_messages", &EditorNode::_close_messages);
 	ClassDB::bind_method("_show_messages", &EditorNode::_show_messages);
@@ -5042,6 +5111,68 @@ static Node *_resource_get_edited_scene() {
 void EditorNode::_print_handler(void *p_this, const String &p_string, bool p_error) {
 	EditorNode *en = (EditorNode *)p_this;
 	en->log->add_message(p_string, p_error ? EditorLog::MSG_TYPE_ERROR : EditorLog::MSG_TYPE_STD);
+}
+
+static void _execute_thread(void *p_ud) {
+
+	EditorNode::ExecuteThreadArgs *eta = (EditorNode::ExecuteThreadArgs *)p_ud;
+	Error err = OS::get_singleton()->execute(eta->path, eta->args, true, NULL, &eta->output, &eta->exitcode, true, eta->execute_output_mutex);
+	print_verbose("Thread exit status: " + itos(eta->exitcode));
+	if (err != OK) {
+		eta->exitcode = err;
+	}
+
+	eta->done = true;
+}
+
+int EditorNode::execute_and_show_output(const String &p_title, const String &p_path, const List<String> &p_arguments, bool p_close_on_ok, bool p_close_on_errors) {
+
+	execute_output_dialog->set_title(p_title);
+	execute_output_dialog->get_ok()->set_disabled(true);
+	execute_outputs->clear();
+	execute_outputs->set_scroll_follow(true);
+	execute_output_dialog->popup_centered_ratio();
+
+	ExecuteThreadArgs eta;
+	eta.path = p_path;
+	eta.args = p_arguments;
+	eta.execute_output_mutex = Mutex::create();
+	eta.exitcode = 255;
+	eta.done = false;
+
+	int prev_len = 0;
+
+	eta.execute_output_thread = Thread::create(_execute_thread, &eta);
+
+	ERR_FAIL_COND_V(!eta.execute_output_thread, 0);
+
+	while (!eta.done) {
+		eta.execute_output_mutex->lock();
+		if (prev_len != eta.output.length()) {
+			String to_add = eta.output.substr(prev_len, eta.output.length());
+			prev_len = eta.output.length();
+			execute_outputs->add_text(to_add);
+			Main::iteration();
+		}
+		eta.execute_output_mutex->unlock();
+		OS::get_singleton()->delay_usec(1000);
+	}
+
+	Thread::wait_to_finish(eta.execute_output_thread);
+	memdelete(eta.execute_output_thread);
+	memdelete(eta.execute_output_mutex);
+	execute_outputs->add_text("\nExit Code: " + itos(eta.exitcode));
+
+	if (p_close_on_errors && eta.exitcode != 0) {
+		execute_output_dialog->hide();
+	}
+	if (p_close_on_ok && eta.exitcode == 0) {
+		execute_output_dialog->hide();
+	}
+
+	execute_output_dialog->get_ok()->set_disabled(false);
+
+	return eta.exitcode;
 }
 
 EditorNode::EditorNode() {
@@ -5442,7 +5573,7 @@ EditorNode::EditorNode() {
 	scene_tabs->set_drag_to_rearrange_enabled(true);
 	scene_tabs->connect("tab_changed", this, "_scene_tab_changed");
 	scene_tabs->connect("right_button_pressed", this, "_scene_tab_script_edited");
-	scene_tabs->connect("tab_close", this, "_scene_tab_closed");
+	scene_tabs->connect("tab_close", this, "_scene_tab_closed", varray(SCENE_TAB_CLOSE));
 	scene_tabs->connect("tab_hover", this, "_scene_tab_hover");
 	scene_tabs->connect("mouse_exited", this, "_scene_tab_exit");
 	scene_tabs->connect("gui_input", this, "_scene_tab_input");
@@ -5618,12 +5749,13 @@ EditorNode::EditorNode() {
 	tool_menu = memnew(PopupMenu);
 	tool_menu->set_name("Tools");
 	tool_menu->connect("index_pressed", this, "_tool_menu_option");
+	p->add_separator();
 	p->add_child(tool_menu);
 	p->add_submenu_item(TTR("Tools"), "Tools");
-	tool_menu->add_shortcut(ED_SHORTCUT("editor/orphan_resource_explorer", TTR("Orphan Resource Explorer")), TOOLS_ORPHAN_RESOURCES);
+	tool_menu->add_item(TTR("Orphan Resource Explorer"), TOOLS_ORPHAN_RESOURCES);
+	tool_menu->add_item(TTR("Open Project Data Folder"), RUN_PROJECT_DATA_FOLDER);
 	p->add_separator();
-
-	p->add_shortcut(ED_SHORTCUT("editor/open_project_data_folder", TTR("Open Project Data Folder")), RUN_PROJECT_DATA_FOLDER);
+	p->add_item(TTR("Install Android Build Template"), FILE_INSTALL_ANDROID_SOURCE);
 	p->add_separator();
 
 #ifdef OSX_ENABLED
@@ -5866,7 +5998,7 @@ EditorNode::EditorNode() {
 	node_dock = memnew(NodeDock);
 
 	filesystem_dock = memnew(FileSystemDock(this));
-	filesystem_dock->connect("open", this, "open_request");
+	filesystem_dock->connect("inherit", this, "_inherit_request");
 	filesystem_dock->connect("instance", this, "_instance_request");
 	filesystem_dock->connect("display_mode_changed", this, "_save_docks");
 
@@ -5969,6 +6101,24 @@ EditorNode::EditorNode() {
 	gui_base->add_child(save_confirmation);
 	save_confirmation->connect("confirmed", this, "_menu_confirm_current");
 	save_confirmation->connect("custom_action", this, "_discard_changes");
+
+	custom_build_manage_templates = memnew(ConfirmationDialog);
+	custom_build_manage_templates->set_text(TTR("Android build template is missing, please install relevant templates."));
+	custom_build_manage_templates->get_ok()->set_text(TTR("Manage Templates"));
+	custom_build_manage_templates->connect("confirmed", this, "_menu_option", varray(SETTINGS_MANAGE_EXPORT_TEMPLATES));
+	gui_base->add_child(custom_build_manage_templates);
+
+	install_android_build_template = memnew(ConfirmationDialog);
+	install_android_build_template->set_text(TTR("This will install the Android project for custom builds.\nNote that, in order to use it, it needs to be enabled per export preset."));
+	install_android_build_template->get_ok()->set_text(TTR("Install"));
+	install_android_build_template->connect("confirmed", this, "_menu_confirm_current");
+	gui_base->add_child(install_android_build_template);
+
+	remove_android_build_template = memnew(ConfirmationDialog);
+	remove_android_build_template->set_text(TTR("Android build template is already installed and it won't be overwritten.\nRemove the \"build\" directory manually before attempting this operation again."));
+	remove_android_build_template->get_ok()->set_text(TTR("Show in File Manager"));
+	remove_android_build_template->connect("confirmed", this, "_menu_option", varray(FILE_EXPLORE_ANDROID_BUILD_TEMPLATES));
+	gui_base->add_child(remove_android_build_template);
 
 	file_templates = memnew(EditorFileDialog);
 	file_templates->set_title(TTR("Import Templates From ZIP File"));
@@ -6183,6 +6333,12 @@ EditorNode::EditorNode() {
 	load_error_dialog->add_child(load_errors);
 	load_error_dialog->set_title(TTR("Load Errors"));
 	gui_base->add_child(load_error_dialog);
+
+	execute_outputs = memnew(RichTextLabel);
+	execute_output_dialog = memnew(AcceptDialog);
+	execute_output_dialog->add_child(execute_outputs);
+	execute_output_dialog->set_title(TTR(""));
+	gui_base->add_child(execute_output_dialog);
 
 	EditorFileSystem::get_singleton()->connect("sources_changed", this, "_sources_changed");
 	EditorFileSystem::get_singleton()->connect("filesystem_changed", this, "_fs_changed");

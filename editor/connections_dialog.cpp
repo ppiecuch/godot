@@ -113,14 +113,14 @@ Signal automatically called by parent dialog.
 void ConnectDialog::ok_pressed() {
 
 	if (dst_method->get_text() == "") {
-		error->set_text(TTR("Method in target Node must be specified!"));
+		error->set_text(TTR("Method in target node must be specified."));
 		error->popup_centered_minsize();
 		return;
 	}
 	Node *target = tree->get_selected();
 	if (target->get_script().is_null()) {
 		if (!target->has_method(dst_method->get_text())) {
-			error->set_text(TTR("Target method not found! Specify a valid method or attach a script to target Node."));
+			error->set_text(TTR("Target method not found. Specify a valid method or attach a script to the target node."));
 			error->popup_centered_minsize();
 			return;
 		}
@@ -140,6 +140,9 @@ Called each time a target node is selected within the target node tree.
 void ConnectDialog::_tree_node_selected() {
 
 	Node *current = tree->get_selected();
+
+	if (!current)
+		return;
 
 	dst_path = source->get_path_to(current);
 	get_ok()->set_disabled(false);
@@ -309,6 +312,7 @@ void ConnectDialog::popup_dialog(const String &p_for_signal, bool p_advanced) {
 	advanced->set_pressed(p_advanced);
 	from_signal->set_text(p_for_signal);
 	error_label->add_color_override("font_color", get_color("error_color", "Editor"));
+	vbc_right->set_visible(p_advanced);
 
 	if (p_advanced) {
 
@@ -330,7 +334,7 @@ void ConnectDialog::popup_dialog(const String &p_for_signal, bool p_advanced) {
 }
 
 void ConnectDialog::_advanced_pressed() {
-	vbc_right->set_visible(advanced->is_pressed());
+
 	popup_dialog(from_signal->get_text(), advanced->is_pressed());
 }
 
@@ -414,7 +418,7 @@ ConnectDialog::ConnectDialog() {
 
 	advanced = memnew(CheckBox);
 	dstm_hb->add_child(advanced);
-	advanced->set_text(TTR("Advanced.."));
+	advanced->set_text(TTR("Advanced..."));
 	advanced->connect("pressed", this, "_advanced_pressed");
 
 	/*
@@ -440,8 +444,9 @@ ConnectDialog::ConnectDialog() {
 
 	cdbinds = memnew(ConnectDialogBinds);
 
-	error = memnew(ConfirmationDialog);
+	error = memnew(AcceptDialog);
 	add_child(error);
+	error->set_title(TTR("Cannot connect signal"));
 	error->get_ok()->set_text(TTR("Close"));
 	get_ok()->set_text(TTR("Connect"));
 }

@@ -127,7 +127,8 @@ class CSharpScript : public Script {
 
 	bool _update_exports();
 #ifdef TOOLS_ENABLED
-	bool _get_member_export(GDMonoClass *p_class, IMonoClassMember *p_member, PropertyInfo &r_prop_info, bool &r_exported);
+	bool _get_member_export(IMonoClassMember *p_member, PropertyInfo &r_prop_info, bool &r_exported);
+	static int _try_get_member_export_hint(IMonoClassMember *p_member, ManagedType p_type, Variant::Type p_variant_type, bool p_allow_generics, PropertyHint &r_hint, String &r_hint_string);
 #endif
 
 	CSharpInstance *_create_instance(const Variant **p_args, int p_argcount, Object *p_owner, bool p_isref, Variant::CallError &r_error);
@@ -309,14 +310,17 @@ class CSharpLanguage : public ScriptLanguage {
 	int lang_idx;
 
 	Dictionary scripts_metadata;
+	bool scripts_metadata_invalidated;
 
 	// For debug_break and debug_break_parse
 	int _debug_parse_err_line;
 	String _debug_parse_err_file;
 	String _debug_error;
 
+	void _load_scripts_metadata();
+
 	friend class GDMono;
-	void _uninitialize_script_bindings();
+	void _on_scripts_domain_unloaded();
 
 public:
 	StringNameCache string_names;
@@ -341,9 +345,15 @@ public:
 	void reload_assemblies(bool p_soft_reload);
 #endif
 
-	void project_assembly_loaded();
+	_FORCE_INLINE_ Dictionary get_scripts_metadata_or_nothing() {
+		return scripts_metadata_invalidated ? Dictionary() : scripts_metadata;
+	}
 
-	_FORCE_INLINE_ const Dictionary &get_scripts_metadata() { return scripts_metadata; }
+	_FORCE_INLINE_ const Dictionary &get_scripts_metadata() {
+		if (scripts_metadata_invalidated)
+			_load_scripts_metadata();
+		return scripts_metadata;
+	}
 
 	virtual String get_name() const;
 

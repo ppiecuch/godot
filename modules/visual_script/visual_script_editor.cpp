@@ -1330,9 +1330,9 @@ void VisualScriptEditor::_input(const Ref<InputEvent> &p_event) {
 	}
 }
 
-void VisualScriptEditor::_generic_search() {
+void VisualScriptEditor::_generic_search(String p_base_type) {
 	port_action_pos = graph->get_viewport()->get_mouse_position() - graph->get_global_position();
-	new_connect_node_select->select_from_visual_script(String(""), false);
+	new_connect_node_select->select_from_visual_script(p_base_type, false);
 }
 
 void VisualScriptEditor::_members_gui_input(const Ref<InputEvent> &p_event) {
@@ -1787,7 +1787,6 @@ void VisualScriptEditor::drop_data_fw(const Point2 &p_point, const Variant &p_da
 				call->set_base_path(sn->get_path_to(node));
 				call->set_base_type(node->get_class());
 				n = call;
-
 				method_select->select_from_instance(node);
 				selecting_method_id = base_id;
 			}
@@ -2042,7 +2041,7 @@ void VisualScriptEditor::set_edit_state(const Variant &p_state) {
 
 	Dictionary d = p_state;
 	if (d.has("function")) {
-		edited_func = p_state;
+		edited_func = d["function"];
 		selected = edited_func;
 	}
 
@@ -2099,6 +2098,14 @@ void VisualScriptEditor::goto_line(int p_line, bool p_with_error) {
 			return;
 		}
 	}
+}
+
+void VisualScriptEditor::set_executing_line(int p_line) {
+	// todo: add a way to show which node is executing right now.
+}
+
+void VisualScriptEditor::clear_executing_line() {
+	// todo: add a way to show which node is executing right now.
 }
 
 void VisualScriptEditor::trim_trailing_whitespace() {
@@ -3148,7 +3155,7 @@ void VisualScriptEditor::_menu_option(int p_what) {
 
 		} break;
 		case EDIT_FIND_NODE_TYPE: {
-			_generic_search();
+			_generic_search(script->get_instance_base_type());
 		} break;
 		case EDIT_COPY_NODES:
 		case EDIT_CUT_NODES: {
@@ -3566,7 +3573,7 @@ VisualScriptEditor::VisualScriptEditor() {
 	graph->connect("scroll_offset_changed", this, "_graph_ofs_changed");
 
 	select_func_text = memnew(Label);
-	select_func_text->set_text(TTR("Select or create a function to edit graph"));
+	select_func_text->set_text(TTR("Select or create a function to edit its graph."));
 	select_func_text->set_align(Label::ALIGN_CENTER);
 	select_func_text->set_valign(Label::VALIGN_CENTER);
 	select_func_text->set_h_size_flags(SIZE_EXPAND_FILL);
