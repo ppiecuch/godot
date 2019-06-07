@@ -10,6 +10,8 @@
   - sqlite (https://github.com/maxmurder/gd-sqlite.git)
   - imgui
   - spine (https://github.com/GodotExplorer/spine.git)
+  - tiled editor (https://github.com/vnen/godot-tiled-importer.git)
+  - poly vector (https://github.com/BattyBovine/polyvector.git)
 * swaggen codegen with GDScript (Workspace/[net]/swagger-codegen/modules/swagger-codegen/src/main/resources/gdscript)
 * porting (https://github.com/khairul169/gdsqlite/issues/8)
   - ObjectTypeDB to ClassDB

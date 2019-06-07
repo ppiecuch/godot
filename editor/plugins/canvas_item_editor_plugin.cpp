@@ -51,6 +51,10 @@
 #include "scene/main/viewport.h"
 #include "scene/resources/packed_scene.h"
 
+Node *createVectorSprite(Ref<Resource> p_resource);
+void configureVectorSprite(Node *p_child, Ref<Resource> p_texture);
+	
+
 #define MIN_ZOOM 0.01
 #define MAX_ZOOM 100
 
@@ -5432,9 +5436,9 @@ void CanvasItemEditorViewport::_perform_drop_data() {
 				else if (default_type == "NinePatchRect")
 					child = memnew(NinePatchRect);
 				else
-					child = memnew(Sprite); // default
+					child = createVectorSprite(texture); // default
 
-				_create_nodes(target_node, child, path, drop_pos);
+				_create_nodes(target_node, child, path, drop_pos); configureVectorSprite(child, texture);
 			}
 		}
 	}
