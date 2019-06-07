@@ -615,6 +615,7 @@ void EditorExportPlugin::_bind_methods() {
 
 	BIND_VMETHOD(MethodInfo("_export_file", PropertyInfo(Variant::STRING, "path"), PropertyInfo(Variant::STRING, "type"), PropertyInfo(Variant::POOL_STRING_ARRAY, "features")));
 	BIND_VMETHOD(MethodInfo("_export_begin", PropertyInfo(Variant::POOL_STRING_ARRAY, "features"), PropertyInfo(Variant::BOOL, "is_debug"), PropertyInfo(Variant::STRING, "path"), PropertyInfo(Variant::INT, "flags")));
+	BIND_VMETHOD(MethodInfo("_export_end"));
 }
 
 EditorExportPlugin::EditorExportPlugin() {
@@ -691,6 +692,10 @@ Error EditorExportPlatform::export_project_files(const Ref<EditorExportPreset> &
 			_export_find_dependencies(files[i], paths);
 		}
 	}
+
+	//add native icons to non-resource include list
+	_edit_filter_list(paths, String("*.icns"), false);
+	_edit_filter_list(paths, String("*.ico"), false);
 
 	_edit_filter_list(paths, p_preset->get_include_filter(), false);
 	_edit_filter_list(paths, p_preset->get_exclude_filter(), true);
