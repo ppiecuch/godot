@@ -1411,7 +1411,7 @@ void EditorNode::_dialog_action(String p_file) {
 		case RESOURCE_SAVE:
 		case RESOURCE_SAVE_AS: {
 
-			ERR_FAIL_COND(saving_resource.is_null())
+			ERR_FAIL_COND(saving_resource.is_null());
 			save_resource_in_path(saving_resource, p_file);
 			saving_resource = Ref<Resource>();
 			ObjectID current = editor_history.get_current();
@@ -5044,7 +5044,7 @@ void EditorNode::_feature_profile_changed() {
 		main_editor_buttons[EDITOR_3D]->set_visible(!profile->is_feature_disabled(EditorFeatureProfile::FEATURE_3D));
 		main_editor_buttons[EDITOR_SCRIPT]->set_visible(!profile->is_feature_disabled(EditorFeatureProfile::FEATURE_SCRIPT));
 		main_editor_buttons[EDITOR_ASSETLIB]->set_visible(!profile->is_feature_disabled(EditorFeatureProfile::FEATURE_ASSET_LIB));
-		if (profile->is_feature_disabled(EditorFeatureProfile::FEATURE_3D) || profile->is_feature_disabled(EditorFeatureProfile::FEATURE_ASSET_LIB) || profile->is_feature_disabled(EditorFeatureProfile::FEATURE_ASSET_LIB)) {
+		if (profile->is_feature_disabled(EditorFeatureProfile::FEATURE_3D) || profile->is_feature_disabled(EditorFeatureProfile::FEATURE_SCRIPT) || profile->is_feature_disabled(EditorFeatureProfile::FEATURE_ASSET_LIB)) {
 			_editor_select(EDITOR_2D);
 		}
 	} else {
