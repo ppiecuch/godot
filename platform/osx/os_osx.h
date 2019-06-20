@@ -31,6 +31,7 @@
 #ifndef OS_OSX_H
 #define OS_OSX_H
 
+#include "camera_osx.h"
 #include "core/os/input.h"
 #include "crash_handler_osx.h"
 #include "drivers/coreaudio/audio_driver_coreaudio.h"
@@ -72,6 +73,8 @@ public:
 	//  rasterizer seems to no longer be given to visual server, its using GLES3 directly?
 	//Rasterizer *rasterizer;
 	VisualServer *visual_server;
+
+	CameraServer *camera_server;
 
 	List<String> args;
 	MainLoop *main_loop;
@@ -134,6 +137,9 @@ public:
 	String im_text;
 	Point2 im_selection;
 
+	Size2 min_size;
+	Size2 max_size;
+
 	PowerOSX *power_manager;
 
 	CrashHandler crash_handler;
@@ -182,6 +188,7 @@ public:
 	virtual void warp_mouse_position(const Point2 &p_to);
 	virtual Point2 get_mouse_position() const;
 	virtual int get_mouse_button_state() const;
+	void update_real_mouse_position();
 	virtual void set_window_title(const String &p_title);
 
 	virtual Size2 get_window_size() const;
@@ -232,6 +239,10 @@ public:
 
 	virtual Point2 get_window_position() const;
 	virtual void set_window_position(const Point2 &p_position);
+	virtual Size2 get_max_window_size() const;
+	virtual Size2 get_min_window_size() const;
+	virtual void set_min_window_size(const Size2 p_size);
+	virtual void set_max_window_size(const Size2 p_size);
 	virtual void set_window_size(const Size2 p_size);
 	virtual void set_window_fullscreen(bool p_enabled);
 	virtual bool is_window_fullscreen() const;

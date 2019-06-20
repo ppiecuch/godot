@@ -94,6 +94,7 @@ static BOOL CALLBACK _MonitorEnumProcSize(HMONITOR hMonitor, HDC hdcMonitor, LPR
 	return TRUE;
 }
 
+#ifdef DEBUG_ENABLED
 static String format_error_message(DWORD id) {
 
 	LPWSTR messageBuffer = NULL;
@@ -106,6 +107,7 @@ static String format_error_message(DWORD id) {
 
 	return msg;
 }
+#endif // DEBUG_ENABLED
 
 extern HINSTANCE godot_hinstance;
 
@@ -353,7 +355,23 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 
 			return 0; // Return To The Message Loop
 		}
-
+		case WM_GETMINMAXINFO: {
+			if (video_mode.resizable && !video_mode.fullscreen) {
+				Size2 decor = get_real_window_size() - get_window_size(); // Size of window decorations
+				MINMAXINFO *min_max_info = (MINMAXINFO *)lParam;
+				if (min_size != Size2()) {
+					min_max_info->ptMinTrackSize.x = min_size.x + decor.x;
+					min_max_info->ptMinTrackSize.y = min_size.y + decor.y;
+				}
+				if (max_size != Size2()) {
+					min_max_info->ptMaxTrackSize.x = max_size.x + decor.x;
+					min_max_info->ptMaxTrackSize.y = max_size.y + decor.y;
+				}
+				return 0;
+			} else {
+				break;
+			}
+		}
 		case WM_PAINT:
 
 			Main::force_redraw();
@@ -555,6 +573,7 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 					break;
 				}
 			}
+			FALLTHROUGH;
 		case WM_MBUTTONDOWN:
 		case WM_MBUTTONUP:
 		case WM_RBUTTONDOWN:
@@ -583,7 +602,6 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 				case WM_MBUTTONDOWN: {
 					mb->set_pressed(true);
 					mb->set_button_index(3);
-
 				} break;
 				case WM_MBUTTONUP: {
 					mb->set_pressed(false);
@@ -598,19 +616,16 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 					mb->set_button_index(2);
 				} break;
 				case WM_LBUTTONDBLCLK: {
-
 					mb->set_pressed(true);
 					mb->set_button_index(1);
 					mb->set_doubleclick(true);
 				} break;
 				case WM_RBUTTONDBLCLK: {
-
 					mb->set_pressed(true);
 					mb->set_button_index(2);
 					mb->set_doubleclick(true);
 				} break;
 				case WM_MBUTTONDBLCLK: {
-
 					mb->set_pressed(true);
 					mb->set_button_index(3);
 					mb->set_doubleclick(true);
@@ -1358,6 +1373,8 @@ Error OS_Windows::initialize(const VideoMode &p_desired, int p_video_driver, int
 
 	power_manager = memnew(PowerWindows);
 
+	camera_server = memnew(CameraWindows);
+
 	AudioDriverManager::initialize(p_audio_driver);
 
 	TRACKMOUSEEVENT tme;
@@ -1517,6 +1534,7 @@ void OS_Windows::finalize() {
 
 	memdelete(joypad);
 	memdelete(input);
+	memdelete(camera_server);
 	touch_state.clear();
 
 	visual_server->finish();
@@ -1769,6 +1787,7 @@ void OS_Windows::set_window_position(const Point2 &p_position) {
 	last_pos = p_position;
 	update_real_mouse_position();
 }
+
 Size2 OS_Windows::get_window_size() const {
 
 	if (minimized) {
@@ -1781,6 +1800,33 @@ Size2 OS_Windows::get_window_size() const {
 	}
 	return Size2();
 }
+
+Size2 OS_Windows::get_max_window_size() const {
+	return max_size;
+}
+
+Size2 OS_Windows::get_min_window_size() const {
+	return min_size;
+}
+
+void OS_Windows::set_min_window_size(const Size2 p_size) {
+
+	if ((p_size != Size2()) && (max_size != Size2()) && ((p_size.x > max_size.x) || (p_size.y > max_size.y))) {
+		WARN_PRINT("Minimum window size can't be larger than maximum window size!");
+		return;
+	}
+	min_size = p_size;
+}
+
+void OS_Windows::set_max_window_size(const Size2 p_size) {
+
+	if ((p_size != Size2()) && ((p_size.x < min_size.x) || (p_size.y < min_size.y))) {
+		WARN_PRINT("Maximum window size can't be smaller than minimum window size!");
+		return;
+	}
+	max_size = p_size;
+}
+
 Size2 OS_Windows::get_real_window_size() const {
 
 	RECT r;
@@ -1789,6 +1835,7 @@ Size2 OS_Windows::get_real_window_size() const {
 	}
 	return Size2();
 }
+
 void OS_Windows::set_window_size(const Size2 p_size) {
 
 	int w = p_size.width;
@@ -1816,11 +1863,11 @@ void OS_Windows::set_window_size(const Size2 p_size) {
 
 	// Don't let the mouse leave the window when resizing to a smaller resolution
 	if (mouse_mode == MOUSE_MODE_CONFINED) {
-		RECT rect;
-		GetClientRect(hWnd, &rect);
-		ClientToScreen(hWnd, (POINT *)&rect.left);
-		ClientToScreen(hWnd, (POINT *)&rect.right);
-		ClipCursor(&rect);
+		RECT crect;
+		GetClientRect(hWnd, &crect);
+		ClientToScreen(hWnd, (POINT *)&crect.left);
+		ClientToScreen(hWnd, (POINT *)&crect.right);
+		ClipCursor(&crect);
 	}
 }
 void OS_Windows::set_window_fullscreen(bool p_enabled) {
@@ -2193,6 +2240,8 @@ uint64_t OS_Windows::get_unix_time() const {
 	FILETIME fep;
 	SystemTimeToFileTime(&ep, &fep);
 
+	// FIXME: dereferencing type-punned pointer will break strict-aliasing rules (GCC warning)
+	// https://docs.microsoft.com/en-us/windows/desktop/api/minwinbase/ns-minwinbase-filetime#remarks
 	return (*(uint64_t *)&ft - *(uint64_t *)&fep) / 10000000;
 };
 
@@ -2378,7 +2427,7 @@ void OS_Windows::set_custom_mouse_cursor(const RES &p_cursor, CursorShape p_shap
 		}
 
 		// Finally, create the icon
-		ICONINFO iconinfo = { 0 };
+		ICONINFO iconinfo;
 		iconinfo.fIcon = FALSE;
 		iconinfo.xHotspot = p_hotspot.x;
 		iconinfo.yHotspot = p_hotspot.y;
@@ -2531,9 +2580,9 @@ Error OS_Windows::execute(const String &p_path, const List<String> &p_arguments,
 
 	if (p_blocking) {
 
-		DWORD ret = WaitForSingleObject(pi.pi.hProcess, INFINITE);
+		DWORD ret2 = WaitForSingleObject(pi.pi.hProcess, INFINITE);
 		if (r_exitcode)
-			*r_exitcode = ret;
+			*r_exitcode = ret2;
 
 		CloseHandle(pi.pi.hProcess);
 		CloseHandle(pi.pi.hThread);

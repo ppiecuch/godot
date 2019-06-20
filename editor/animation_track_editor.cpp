@@ -2083,8 +2083,6 @@ void AnimationTrackEdit::_gui_input(const Ref<InputEvent> &p_event) {
 					moving_selection_from_ofs = (mb->get_position().x - timeline->get_name_limit()) / timeline->get_zoom_scale();
 				}
 				accept_event();
-			} else {
-				emit_signal("clear_selection");
 			}
 		}
 
@@ -2326,7 +2324,7 @@ void AnimationTrackEdit::set_in_group(bool p_enable) {
 	update();
 }
 
-void AnimationTrackEdit::append_to_selection(const Rect2 &p_box) {
+void AnimationTrackEdit::append_to_selection(const Rect2 &p_box, bool p_deselection) {
 
 	Rect2 select_rect(timeline->get_name_limit(), 0, get_size().width - timeline->get_name_limit() - timeline->get_buttons_width(), get_size().height);
 	select_rect = select_rect.clip(p_box);
@@ -2339,7 +2337,10 @@ void AnimationTrackEdit::append_to_selection(const Rect2 &p_box) {
 		rect.position.x += offset;
 
 		if (select_rect.intersects(rect)) {
-			emit_signal("select_key", i, false);
+			if (p_deselection)
+				emit_signal("deselect_key", i);
+			else
+				emit_signal("select_key", i, false);
 		}
 	}
 }
@@ -4342,7 +4343,7 @@ void AnimationTrackEditor::_scroll_input(const Ref<InputEvent> &p_event) {
 
 					Rect2 local_rect = box_select_rect;
 					local_rect.position -= track_edits[i]->get_global_position();
-					track_edits[i]->append_to_selection(local_rect);
+					track_edits[i]->append_to_selection(local_rect, mb->get_command());
 				}
 
 				if (_get_track_selected() == -1 && track_edits.size() > 0) { //minimal hack to make shortcuts work
@@ -4374,8 +4375,8 @@ void AnimationTrackEditor::_scroll_input(const Ref<InputEvent> &p_event) {
 		}
 
 		if (!box_selection->is_visible_in_tree()) {
-			if (!mm->get_shift()) {
-				_clear_selection(); //only append if shift is pressed
+			if (!mm->get_command() && !mm->get_shift()) {
+				_clear_selection();
 			}
 			box_selection->show();
 		}
@@ -4568,7 +4569,7 @@ void AnimationTrackEditor::_edit_menu_pressed(int p_option) {
 				it->set_metadata(0, md);
 			}
 
-			track_copy_dialog->popup_centered_minsize(Size2(300, 500) * EDSCALE);
+			track_copy_dialog->popup_centered_minsize(Size2(350, 500) * EDSCALE);
 		} break;
 		case EDIT_COPY_TRACKS_CONFIRM: {
 
@@ -4957,11 +4958,22 @@ float AnimationTrackEditor::snap_time(float p_value) {
 
 void AnimationTrackEditor::_show_imported_anim_warning() const {
 
-	EditorNode::get_singleton()->show_warning(TTR("This animation belongs to an imported scene, so changes to imported tracks will not be saved.\n\n"
-												  "To enable the ability to add custom tracks, navigate to the scene's import settings and set\n"
-												  "\"Animation > Storage\" to \"Files\", enable \"Animation > Keep Custom Tracks\", then re-import.\n"
-												  "Alternatively, use an import preset that imports animations to separate files."),
+	// It looks terrible on a single line but the TTR extractor doesn't support line breaks yet.
+	EditorNode::get_singleton()->show_warning(TTR("This animation belongs to an imported scene, so changes to imported tracks will not be saved.\n\nTo enable the ability to add custom tracks, navigate to the scene's import settings and set\n\"Animation > Storage\" to \"Files\", enable \"Animation > Keep Custom Tracks\", then re-import.\nAlternatively, use an import preset that imports animations to separate files."),
 			TTR("Warning: Editing imported animation"));
+}
+
+void AnimationTrackEditor::_select_all_tracks_for_copy() {
+	TreeItem *track = track_copy_select->get_root()->get_children();
+	while (track) {
+		track->set_checked(0, selected_all_tracks);
+		track = track->get_next();
+	}
+	selected_all_tracks = !selected_all_tracks;
+	if (selected_all_tracks)
+		select_all_button->set_text(TTR("Select All"));
+	else
+		select_all_button->set_text(TTR("Select None"));
 }
 
 void AnimationTrackEditor::_bind_methods() {
@@ -5004,6 +5016,7 @@ void AnimationTrackEditor::_bind_methods() {
 	ClassDB::bind_method("_selection_changed", &AnimationTrackEditor::_selection_changed);
 	ClassDB::bind_method("_snap_mode_changed", &AnimationTrackEditor::_snap_mode_changed);
 	ClassDB::bind_method("_show_imported_anim_warning", &AnimationTrackEditor::_show_imported_anim_warning);
+	ClassDB::bind_method("_select_all_tracks_for_copy", &AnimationTrackEditor::_select_all_tracks_for_copy);
 
 	ADD_SIGNAL(MethodInfo("timeline_changed", PropertyInfo(Variant::REAL, "position"), PropertyInfo(Variant::BOOL, "drag")));
 	ADD_SIGNAL(MethodInfo("keying_changed"));
@@ -5286,9 +5299,22 @@ AnimationTrackEditor::AnimationTrackEditor() {
 	track_copy_dialog->set_title(TTR("Select tracks to copy:"));
 	track_copy_dialog->get_ok()->set_text(TTR("Copy"));
 
+	VBoxContainer *track_vbox = memnew(VBoxContainer);
+	track_copy_dialog->add_child(track_vbox);
+
+	selected_all_tracks = true;
+
 	track_copy_select = memnew(Tree);
+	track_copy_select->set_h_size_flags(SIZE_EXPAND_FILL);
+	track_copy_select->set_v_size_flags(SIZE_EXPAND_FILL);
 	track_copy_select->set_hide_root(true);
-	track_copy_dialog->add_child(track_copy_select);
+	track_vbox->add_child(track_copy_select);
+	track_copy_options = memnew(HBoxContainer);
+	track_vbox->add_child(track_copy_options);
+	select_all_button = memnew(Button);
+	select_all_button->set_text(TTR("Select All"));
+	select_all_button->connect("pressed", this, "_select_all_tracks_for_copy");
+	track_copy_options->add_child(select_all_button);
 	track_copy_dialog->connect("confirmed", this, "_edit_menu_pressed", varray(EDIT_COPY_TRACKS_CONFIRM));
 	animation_changing_awaiting_update = false;
 }

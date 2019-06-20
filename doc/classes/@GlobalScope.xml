@@ -18,6 +18,9 @@
 		<member name="AudioServer" type="AudioServer" setter="" getter="">
 			[AudioServer] singleton
 		</member>
+		<member name="CameraServer" type="CameraServer" setter="" getter="">
+			[CameraServer] singleton
+		</member>
 		<member name="ClassDB" type="ClassDB" setter="" getter="">
 			[ClassDB] singleton
 		</member>
@@ -1013,7 +1016,7 @@
 			Trigger on a VR controller
 		</constant>
 		<constant name="JOY_OCULUS_AX" value="7" enum="JoystickList">
-			A button on the right Oculus Touch controller, X button on the left controller (also when used in OpenVR)	
+			A button on the right Oculus Touch controller, X button on the left controller (also when used in OpenVR)
 		</constant>
 		<constant name="JOY_OCULUS_BY" value="1" enum="JoystickList">
 			B button on the right Oculus Touch controller, Y button on the left controller (also when used in OpenVR)

@@ -86,7 +86,9 @@ void CPUParticles2D::set_randomness_ratio(float p_ratio) {
 void CPUParticles2D::set_use_local_coordinates(bool p_enable) {
 
 	local_coords = p_enable;
+	set_notify_transform(!p_enable);
 }
+
 void CPUParticles2D::set_speed_scale(float p_scale) {
 
 	speed_scale = p_scale;
@@ -467,7 +469,7 @@ void CPUParticles2D::_validate_property(PropertyInfo &property) const {
 		property.usage = 0;
 	}
 
-	if (property.name == "emission_sphere_radius" && emission_shape != EMISSION_SHAPE_CIRCLE) {
+	if (property.name == "emission_sphere_radius" && emission_shape != EMISSION_SHAPE_SPHERE) {
 		property.usage = 0;
 	}
 
@@ -645,8 +647,9 @@ void CPUParticles2D::_particles_process(float p_delta) {
 				case EMISSION_SHAPE_POINT: {
 					//do none
 				} break;
-				case EMISSION_SHAPE_CIRCLE: {
-					p.transform[2] = Vector2(Math::randf() * 2.0 - 1.0, Math::randf() * 2.0 - 1.0).normalized() * emission_sphere_radius;
+				case EMISSION_SHAPE_SPHERE: {
+					Vector3 sphere_shape = Vector3(Math::randf() * 2.0 - 1.0, Math::randf() * 2.0 - 1.0, Math::randf() * 2.0 - 1.0).normalized() * emission_sphere_radius;
+					p.transform[2] = Vector2(sphere_shape.x, sphere_shape.y);
 				} break;
 				case EMISSION_SHAPE_RECTANGLE: {
 					p.transform[2] = Vector2(Math::randf() * 2.0 - 1.0, Math::randf() * 2.0 - 1.0) * emission_rect_extents;
@@ -860,11 +863,6 @@ void CPUParticles2D::_update_particle_data_buffer() {
 		PoolVector<Particle>::Read r = particles.read();
 		float *ptr = w.ptr();
 
-		Transform2D un_transform;
-		if (!local_coords) {
-			un_transform = get_global_transform().affine_inverse();
-		}
-
 		if (draw_order != DRAW_ORDER_INDEX) {
 			ow = particle_order.write();
 			order = ow.ptr();
@@ -886,7 +884,7 @@ void CPUParticles2D::_update_particle_data_buffer() {
 			Transform2D t = r[idx].transform;
 
 			if (!local_coords) {
-				t = un_transform * t;
+				t = inv_emission_transform * t;
 			}
 
 			if (r[idx].active) {
@@ -1054,6 +1052,42 @@ void CPUParticles2D::_notification(int p_what) {
 		}
 
 		_update_particle_data_buffer();
+	}
+
+	if (p_what == NOTIFICATION_TRANSFORM_CHANGED) {
+
+		inv_emission_transform = get_global_transform().affine_inverse();
+
+		if (!local_coords) {
+
+			int pc = particles.size();
+
+			PoolVector<float>::Write w = particle_data.write();
+			PoolVector<Particle>::Read r = particles.read();
+			float *ptr = w.ptr();
+
+			for (int i = 0; i < pc; i++) {
+
+				Transform2D t = inv_emission_transform * r[i].transform;
+
+				if (r[i].active) {
+
+					ptr[0] = t.elements[0][0];
+					ptr[1] = t.elements[1][0];
+					ptr[2] = 0;
+					ptr[3] = t.elements[2][0];
+					ptr[4] = t.elements[0][1];
+					ptr[5] = t.elements[1][1];
+					ptr[6] = 0;
+					ptr[7] = t.elements[2][1];
+
+				} else {
+					zeromem(ptr, sizeof(float) * 8);
+				}
+
+				ptr += 13;
+			}
+		}
 	}
 }
 
@@ -1323,7 +1357,7 @@ void CPUParticles2D::_bind_methods() {
 	BIND_ENUM_CONSTANT(FLAG_MAX);
 
 	BIND_ENUM_CONSTANT(EMISSION_SHAPE_POINT);
-	BIND_ENUM_CONSTANT(EMISSION_SHAPE_CIRCLE);
+	BIND_ENUM_CONSTANT(EMISSION_SHAPE_SPHERE);
 	BIND_ENUM_CONSTANT(EMISSION_SHAPE_RECTANGLE);
 	BIND_ENUM_CONSTANT(EMISSION_SHAPE_POINTS);
 	BIND_ENUM_CONSTANT(EMISSION_SHAPE_DIRECTED_POINTS);

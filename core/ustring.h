@@ -201,7 +201,7 @@ public:
 	}
 
 	/* complex helpers */
-	String substr(int p_from, int p_chars) const;
+	String substr(int p_from, int p_chars = -1) const;
 	int find(const String &p_str, int p_from = 0) const; ///< return <0 if failed
 	int find(const char *p_str, int p_from = 0) const; ///< return <0 if failed
 	int find_char(const CharType &p_char, int p_from = 0) const; ///< return <0 if failed
@@ -415,16 +415,16 @@ _FORCE_INLINE_ bool is_str_less(const L *l_ptr, const R *r_ptr) {
 
 //gets parsed
 String TTR(const String &);
-//use for c strings
-#define TTRC(m_value) m_value
+//use for C strings
+#define TTRC(m_value) (m_value)
 //use to avoid parsing (for use later with C strings)
 #define TTRGET(m_value) TTR(m_value)
 
 #else
 
-#define TTR(m_val) (String())
-#define TTRCDEF(m_value) (m_value)
+#define TTR(m_value) (String())
 #define TTRC(m_value) (m_value)
+#define TTRGET(m_value) (m_value)
 
 #endif
 

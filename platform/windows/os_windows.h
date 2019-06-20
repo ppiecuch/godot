@@ -31,6 +31,7 @@
 #ifndef OS_WINDOWS_H
 #define OS_WINDOWS_H
 
+#include "camera_win.h"
 #include "context_gl_windows.h"
 #include "core/os/input.h"
 #include "core/os/os.h"
@@ -108,6 +109,7 @@ class OS_Windows : public OS {
 	ContextGL_Windows *gl_context;
 #endif
 	VisualServer *visual_server;
+	CameraWindows *camera_server;
 	int pressrc;
 	HDC hDC; // Private GDI Device Context
 	HINSTANCE hInstance; // Holds The Instance Of The Application
@@ -123,6 +125,9 @@ class OS_Windows : public OS {
 	uint32_t move_timer_id;
 
 	HCURSOR hCursor;
+
+	Size2 min_size;
+	Size2 max_size;
 
 	Size2 window_rect;
 	VideoMode video_mode;
@@ -236,6 +241,10 @@ public:
 	virtual void set_window_position(const Point2 &p_position);
 	virtual Size2 get_window_size() const;
 	virtual Size2 get_real_window_size() const;
+	virtual Size2 get_max_window_size() const;
+	virtual Size2 get_min_window_size() const;
+	virtual void set_min_window_size(const Size2 p_size);
+	virtual void set_max_window_size(const Size2 p_size);
 	virtual void set_window_size(const Size2 p_size);
 	virtual void set_window_fullscreen(bool p_enabled);
 	virtual bool is_window_fullscreen() const;

@@ -75,7 +75,7 @@ public:
 
 	enum EmissionShape {
 		EMISSION_SHAPE_POINT,
-		EMISSION_SHAPE_CIRCLE,
+		EMISSION_SHAPE_SPHERE,
 		EMISSION_SHAPE_RECTANGLE,
 		EMISSION_SHAPE_POINTS,
 		EMISSION_SHAPE_DIRECTED_POINTS,
@@ -143,6 +143,8 @@ private:
 	bool local_coords;
 	int fixed_fps;
 	bool fractional_delta;
+
+	Transform2D inv_emission_transform;
 
 	DrawOrder draw_order;
 

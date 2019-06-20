@@ -735,6 +735,8 @@ Vector2 CanvasItemEditor::_position_to_anchor(const Control *p_control, Vector2 
 	ERR_FAIL_COND_V(!p_control, Vector2());
 
 	Rect2 parent_rect = p_control->get_parent_anchorable_rect();
+	ERR_FAIL_COND_V(parent_rect.size.x == 0, Vector2());
+	ERR_FAIL_COND_V(parent_rect.size.y == 0, Vector2());
 
 	return (p_control->get_transform().xform(position) - parent_rect.position) / parent_rect.size;
 }
@@ -3352,9 +3354,6 @@ void CanvasItemEditor::_notification(int p_what) {
 			presets_menu->set_visible(true);
 			anchor_mode_button->set_visible(true);
 
-			// Set the pressed state of the node
-			anchor_mode_button->set_pressed(anchors_mode);
-
 			// Disable if the selected node is child of a container
 			if (has_container_parents) {
 				presets_menu->set_disabled(true);
@@ -3525,6 +3524,7 @@ void CanvasItemEditor::_selection_changed() {
 		}
 	}
 	anchors_mode = (nbValidControls == nbAnchorsMode);
+	anchor_mode_button->set_pressed(anchors_mode);
 }
 
 void CanvasItemEditor::edit(CanvasItem *p_canvas_item) {
@@ -3746,6 +3746,7 @@ void CanvasItemEditor::_set_anchors_and_margins_preset(Control::LayoutPreset p_p
 	undo_redo->commit_action();
 
 	anchors_mode = false;
+	anchor_mode_button->set_pressed(anchors_mode);
 }
 
 void CanvasItemEditor::_set_anchors_and_margins_to_keep_ratio() {
@@ -3770,6 +3771,7 @@ void CanvasItemEditor::_set_anchors_and_margins_to_keep_ratio() {
 			undo_redo->add_undo_method(control, "set_meta", "_edit_use_anchors_", use_anchors);
 
 			anchors_mode = true;
+			anchor_mode_button->set_pressed(anchors_mode);
 		}
 	}
 
@@ -3916,7 +3918,6 @@ void CanvasItemEditor::_button_toggle_anchor_mode(bool p_status) {
 	}
 
 	anchors_mode = p_status;
-
 	viewport->update();
 }
 
