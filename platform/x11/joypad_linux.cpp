@@ -101,7 +101,6 @@ void JoypadLinux::joy_thread_func(void *p_user) {
 		JoypadLinux *joy = (JoypadLinux *)p_user;
 		joy->run_joypad_thread();
 	}
-	return;
 }
 
 void JoypadLinux::run_joypad_thread() {
@@ -514,6 +513,8 @@ void JoypadLinux::process_joypads() {
 								break;
 
 							default:
+								if (ev.code >= MAX_ABS)
+									return;
 								if (joy->abs_map[ev.code] != -1 && joy->abs_info[ev.code]) {
 									InputDefault::JoyAxis value = axis_correct(joy->abs_info[ev.code], ev.value);
 									joy->curr_axis[joy->abs_map[ev.code]] = value;

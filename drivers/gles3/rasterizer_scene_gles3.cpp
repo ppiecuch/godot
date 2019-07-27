@@ -1008,7 +1008,8 @@ RID RasterizerSceneGLES3::light_instance_create(RID p_light) {
 
 	if (!light_instance->light_ptr) {
 		memdelete(light_instance);
-		ERR_FAIL_COND_V(!light_instance->light_ptr, RID());
+		ERR_EXPLAIN("Condition ' !light_instance->light_ptr ' is true.");
+		ERR_FAIL_V(RID());
 	}
 
 	light_instance->self = light_instance_owner.make_rid(light_instance);
@@ -1459,8 +1460,8 @@ void RasterizerSceneGLES3::_setup_geometry(RenderList::Element *e, const Transfo
 #else
 				PoolVector<RasterizerGLES3Particle> particle_vector;
 				particle_vector.resize(particles->amount);
-				PoolVector<RasterizerGLES3Particle>::Write w = particle_vector.write();
-				particle_array = w.ptr();
+				PoolVector<RasterizerGLES3Particle>::Write particle_writer = particle_vector.write();
+				particle_array = particle_writer.ptr();
 				glGetBufferSubData(GL_ARRAY_BUFFER, 0, particles->amount * sizeof(RasterizerGLES3Particle), particle_array);
 #endif
 
@@ -1477,7 +1478,7 @@ void RasterizerSceneGLES3::_setup_geometry(RenderList::Element *e, const Transfo
 #ifndef __EMSCRIPTEN__
 				glUnmapBuffer(GL_ARRAY_BUFFER);
 #else
-				w = PoolVector<RasterizerGLES3Particle>::Write();
+				particle_writer.release();
 				particle_array = NULL;
 				{
 					PoolVector<RasterizerGLES3Particle>::Read r = particle_vector.read();
@@ -2364,7 +2365,7 @@ void RasterizerSceneGLES3::_add_geometry_with_material(RasterizerStorageGLES3::G
 
 	if (p_depth_pass) {
 
-		if (has_blend_alpha || p_material->shader->spatial.uses_depth_texture || (has_base_alpha && p_material->shader->spatial.depth_draw_mode != RasterizerStorageGLES3::Shader::Spatial::DEPTH_DRAW_ALPHA_PREPASS) || p_material->shader->spatial.depth_draw_mode == RasterizerStorageGLES3::Shader::Spatial::DEPTH_DRAW_NEVER || p_material->shader->spatial.no_depth_test)
+		if (has_blend_alpha || p_material->shader->spatial.uses_depth_texture || (has_base_alpha && p_material->shader->spatial.depth_draw_mode != RasterizerStorageGLES3::Shader::Spatial::DEPTH_DRAW_ALPHA_PREPASS) || p_material->shader->spatial.depth_draw_mode == RasterizerStorageGLES3::Shader::Spatial::DEPTH_DRAW_NEVER || p_material->shader->spatial.no_depth_test || p_instance->cast_shadows == VS::SHADOW_CASTING_SETTING_OFF)
 			return; //bye
 
 		if (!p_material->shader->spatial.uses_alpha_scissor && !p_material->shader->spatial.writes_modelview_or_projection && !p_material->shader->spatial.uses_vertex && !p_material->shader->spatial.uses_discard && p_material->shader->spatial.depth_draw_mode != RasterizerStorageGLES3::Shader::Spatial::DEPTH_DRAW_ALPHA_PREPASS) {
@@ -2426,7 +2427,7 @@ void RasterizerSceneGLES3::_add_geometry_with_material(RasterizerStorageGLES3::G
 			e->sort_key |= SORT_KEY_LIGHTMAP_CAPTURE_FLAG;
 		}
 
-		e->sort_key |= uint64_t(p_material->render_priority + 128) << RenderList::SORT_KEY_PRIORITY_SHIFT;
+		e->sort_key |= (uint64_t(p_material->render_priority) + 128) << RenderList::SORT_KEY_PRIORITY_SHIFT;
 	}
 
 	/*
@@ -2763,9 +2764,7 @@ void RasterizerSceneGLES3::_setup_directional_light(int p_index, const Transform
 				width /= 2;
 				height /= 2;
 
-				if (j == 0) {
-
-				} else if (j == 1) {
+				if (j == 1) {
 					x += width;
 				} else if (j == 2) {
 					y += height;
@@ -2778,9 +2777,7 @@ void RasterizerSceneGLES3::_setup_directional_light(int p_index, const Transform
 
 				height /= 2;
 
-				if (j == 0) {
-
-				} else {
+				if (j != 0) {
 					y += height;
 				}
 			}
@@ -4297,7 +4294,7 @@ void RasterizerSceneGLES3::render_scene(const Transform &p_cam_transform, const 
 		use_mrt = use_mrt && !storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_TRANSPARENT];
 		use_mrt = use_mrt && !storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_NO_3D_EFFECTS];
 		use_mrt = use_mrt && state.debug_draw != VS::VIEWPORT_DEBUG_DRAW_OVERDRAW;
-		use_mrt = use_mrt && env && (env->bg_mode != VS::ENV_BG_KEEP && env->bg_mode != VS::ENV_BG_CANVAS);
+		use_mrt = use_mrt && (env->bg_mode != VS::ENV_BG_KEEP && env->bg_mode != VS::ENV_BG_CANVAS);
 
 		glViewport(0, 0, storage->frame.current_rt->width, storage->frame.current_rt->height);
 
@@ -4741,9 +4738,7 @@ void RasterizerSceneGLES3::render_shadow(RID p_light, RID p_shadow_atlas, int p_
 			width /= 2;
 			height /= 2;
 
-			if (p_pass == 0) {
-
-			} else if (p_pass == 1) {
+			if (p_pass == 1) {
 				x += width;
 			} else if (p_pass == 2) {
 				y += height;
@@ -4989,6 +4984,20 @@ bool RasterizerSceneGLES3::free(RID p_rid) {
 		reflection_probe_release_atlas_index(p_rid);
 		reflection_probe_instance_owner.free(p_rid);
 		memdelete(reflection_instance);
+
+	} else if (environment_owner.owns(p_rid)) {
+
+		Environment *environment = environment_owner.get(p_rid);
+
+		environment_owner.free(p_rid);
+		memdelete(environment);
+
+	} else if (gi_probe_instance_owner.owns(p_rid)) {
+
+		GIProbeInstance *gi_probe_instance = gi_probe_instance_owner.get(p_rid);
+
+		gi_probe_instance_owner.free(p_rid);
+		memdelete(gi_probe_instance);
 
 	} else {
 		return false;
@@ -5287,7 +5296,7 @@ void RasterizerSceneGLES3::initialize() {
 		GLOBAL_DEF("rendering/quality/subsurface_scattering/follow_surface", false);
 		GLOBAL_DEF("rendering/quality/subsurface_scattering/weight_samples", true);
 
-		GLOBAL_DEF("rendering/quality/voxel_cone_tracing/high_quality", true);
+		GLOBAL_DEF("rendering/quality/voxel_cone_tracing/high_quality", false);
 	}
 
 	exposure_shrink_size = 243;

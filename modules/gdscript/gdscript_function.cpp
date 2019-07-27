@@ -1556,14 +1556,14 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 		//error
 		// function, file, line, error, explanation
 		String err_file;
-		if (p_instance)
+		if (p_instance && p_instance->script->is_valid() && p_instance->script->path != "")
 			err_file = p_instance->script->path;
 		else if (script)
 			err_file = script->path;
 		if (err_file == "")
 			err_file = "<built-in>";
 		String err_func = name;
-		if (p_instance && p_instance->script->name != "")
+		if (p_instance && p_instance->script->is_valid() && p_instance->script->name != "")
 			err_func = p_instance->script->name + "." + err_func;
 		int err_line = line;
 		if (err_text == "") {
@@ -1591,15 +1591,26 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 		GDScriptLanguage::get_singleton()->script_frame_time += time_taken - function_call_time;
 	}
 
-	if (ScriptDebugger::get_singleton())
-		GDScriptLanguage::get_singleton()->exit_function();
+	bool yielded = retvalue.is_ref() && Object::cast_to<GDScriptFunctionState>(retvalue);
+
+	// Check if this is the last time the function is resuming from yield
+	// Will be true if never yielded as well
+	// When it's the last resume it will postpone the exit from stack,
+	// so the debugger knows which function triggered the resume of the next function (if any)
+	if (!p_state || yielded) {
+		if (ScriptDebugger::get_singleton())
+			GDScriptLanguage::get_singleton()->exit_function();
 #endif
 
-	if (_stack_size) {
-		//free stack
-		for (int i = 0; i < _stack_size; i++)
-			stack[i].~Variant();
+		if (_stack_size) {
+			//free stack
+			for (int i = 0; i < _stack_size; i++)
+				stack[i].~Variant();
+		}
+
+#ifdef DEBUG_ENABLED
 	}
+#endif
 
 	return retvalue;
 }
@@ -1773,19 +1784,8 @@ GDScriptFunction::~GDScriptFunction() {
 
 Variant GDScriptFunctionState::_signal_callback(const Variant **p_args, int p_argcount, Variant::CallError &r_error) {
 
-	if (state.instance_id && !ObjectDB::get_instance(state.instance_id)) {
-#ifdef DEBUG_ENABLED
-		ERR_EXPLAIN("Resumed after yield, but class instance is gone");
-		ERR_FAIL_V(Variant());
-#else
-		return Variant();
-#endif
-	}
-
 	Variant arg;
 	r_error.error = Variant::CallError::CALL_OK;
-
-	ERR_FAIL_COND_V(!function, Variant());
 
 	if (p_argcount == 0) {
 		r_error.error = Variant::CallError::CALL_ERROR_TOO_FEW_ARGUMENTS;
@@ -1812,33 +1812,7 @@ Variant GDScriptFunctionState::_signal_callback(const Variant **p_args, int p_ar
 		return Variant();
 	}
 
-	state.result = arg;
-	Variant ret = function->call(NULL, NULL, 0, r_error, &state);
-
-	bool completed = true;
-
-	// If the return value is a GDScriptFunctionState reference,
-	// then the function did yield again after resuming.
-	if (ret.is_ref()) {
-		GDScriptFunctionState *gdfs = Object::cast_to<GDScriptFunctionState>(ret);
-		if (gdfs && gdfs->function == function) {
-			completed = false;
-			gdfs->first_state = first_state.is_valid() ? first_state : Ref<GDScriptFunctionState>(this);
-		}
-	}
-
-	function = NULL; //cleaned up;
-	state.result = Variant();
-
-	if (completed) {
-		if (first_state.is_valid()) {
-			first_state->emit_signal("completed", ret);
-		} else {
-			emit_signal("completed", ret);
-		}
-	}
-
-	return ret;
+	return resume(arg);
 }
 
 bool GDScriptFunctionState::is_valid(bool p_extended_check) const {
@@ -1860,7 +1834,7 @@ Variant GDScriptFunctionState::resume(const Variant &p_arg) {
 	ERR_FAIL_COND_V(!function, Variant());
 	if (state.instance_id && !ObjectDB::get_instance(state.instance_id)) {
 #ifdef DEBUG_ENABLED
-		ERR_EXPLAIN("Resumed after yield, but class instance is gone");
+		ERR_EXPLAIN("Resumed function '" + String(function->get_name()) + "()' after yield, but class instance is gone. At script: " + state.script->get_path() + ":" + itos(state.line));
 		ERR_FAIL_V(Variant());
 #else
 		return Variant();
@@ -1892,6 +1866,17 @@ Variant GDScriptFunctionState::resume(const Variant &p_arg) {
 		} else {
 			emit_signal("completed", ret);
 		}
+
+#ifdef DEBUG_ENABLED
+		if (ScriptDebugger::get_singleton())
+			GDScriptLanguage::get_singleton()->exit_function();
+		if (state.stack_size) {
+			//free stack
+			Variant *stack = (Variant *)state.stack.ptr();
+			for (int i = 0; i < state.stack_size; i++)
+				stack[i].~Variant();
+		}
+#endif
 	}
 
 	return ret;

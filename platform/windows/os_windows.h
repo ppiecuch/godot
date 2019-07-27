@@ -155,6 +155,7 @@ class OS_Windows : public OS {
 
 	HCURSOR cursors[CURSOR_MAX] = { NULL };
 	CursorShape cursor_shape;
+	Map<CursorShape, Vector<Variant> > cursors_cache;
 
 	InputDefault *input;
 	JoypadWindows *joypad;
@@ -210,6 +211,7 @@ protected:
 	bool maximized;
 	bool minimized;
 	bool borderless;
+	bool console_visible;
 
 public:
 	LRESULT WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -256,6 +258,8 @@ public:
 	virtual bool is_window_maximized() const;
 	virtual void set_window_always_on_top(bool p_enabled);
 	virtual bool is_window_always_on_top() const;
+	virtual void set_console_visible(bool p_enabled);
+	virtual bool is_console_visible() const;
 	virtual void request_attention();
 
 	virtual void set_borderless_window(bool p_borderless);

@@ -52,18 +52,16 @@ void ExportTemplateManager::_update_template_list() {
 	DirAccess *d = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
 	Error err = d->change_dir(EditorSettings::get_singleton()->get_templates_dir());
 
-	d->list_dir_begin();
 	Set<String> templates;
-
+	d->list_dir_begin();
 	if (err == OK) {
 
-		bool isdir;
-		String c = d->get_next(&isdir);
+		String c = d->get_next();
 		while (c != String()) {
-			if (isdir && !c.begins_with(".")) {
+			if (d->current_is_dir() && !c.begins_with(".")) {
 				templates.insert(c);
 			}
-			c = d->get_next(&isdir);
+			c = d->get_next();
 		}
 	}
 	d->list_dir_end();
@@ -154,18 +152,14 @@ void ExportTemplateManager::_uninstall_template_confirm() {
 	ERR_FAIL_COND(err != OK);
 
 	Vector<String> files;
-
 	d->list_dir_begin();
-
-	bool isdir;
-	String c = d->get_next(&isdir);
+	String c = d->get_next();
 	while (c != String()) {
-		if (!isdir) {
+		if (!d->current_is_dir()) {
 			files.push_back(c);
 		}
-		c = d->get_next(&isdir);
+		c = d->get_next();
 	}
-
 	d->list_dir_end();
 
 	for (int i = 0; i < files.size(); i++) {
@@ -314,7 +308,8 @@ bool ExportTemplateManager::_install_from_file(const String &p_file, bool p_use_
 		if (!f) {
 			ret = unzGoToNextFile(pkg);
 			fc++;
-			ERR_CONTINUE(!f);
+			ERR_EXPLAIN("Can't open file from path: " + String(to_write));
+			ERR_CONTINUE(true);
 		}
 
 		f->store_buffer(data.ptr(), data.size());
@@ -406,9 +401,7 @@ void ExportTemplateManager::_http_download_templates_completed(int p_status, int
 		} break;
 		case HTTPRequest::RESULT_BODY_SIZE_LIMIT_EXCEEDED:
 		case HTTPRequest::RESULT_CONNECTION_ERROR:
-		case HTTPRequest::RESULT_CHUNKED_BODY_SIZE_MISMATCH: {
-			template_list_state->set_text(TTR("Can't connect."));
-		} break;
+		case HTTPRequest::RESULT_CHUNKED_BODY_SIZE_MISMATCH:
 		case HTTPRequest::RESULT_SSL_HANDSHAKE_ERROR:
 		case HTTPRequest::RESULT_CANT_CONNECT: {
 			template_list_state->set_text(TTR("Can't connect."));

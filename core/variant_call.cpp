@@ -33,10 +33,10 @@
 #include "core/color_names.inc"
 #include "core/core_string_names.h"
 #include "core/io/compression.h"
+#include "core/math/crypto_core.h"
 #include "core/object.h"
 #include "core/os/os.h"
 #include "core/script_language.h"
-#include "thirdparty/misc/sha256.h"
 
 typedef void (*VariantFunc)(Variant &r_ret, Variant &p_self, const Variant **p_args);
 typedef void (*VariantConstructFunc)(Variant &r_ret, const Variant **p_args);
@@ -70,7 +70,7 @@ struct _VariantCall {
 
 			for (int i = 0; i < arg_count; i++) {
 
-				if (!tptr[i] || tptr[i] == p_args[i]->type)
+				if (tptr[i] == Variant::NIL || tptr[i] == p_args[i]->type)
 					continue; // all good
 				if (!Variant::can_convert(p_args[i]->type, tptr[i])) {
 					r_error.error = Variant::CallError::CALL_ERROR_INVALID_ARGUMENT;
@@ -237,6 +237,8 @@ struct _VariantCall {
 	VCALL_LOCALMEM1R(String, casecmp_to);
 	VCALL_LOCALMEM1R(String, nocasecmp_to);
 	VCALL_LOCALMEM0R(String, length);
+	VCALL_LOCALMEM3R(String, count);
+	VCALL_LOCALMEM3R(String, countn);
 	VCALL_LOCALMEM2R(String, substr);
 	VCALL_LOCALMEM2R(String, find);
 	VCALL_LOCALMEM1R(String, find_last);
@@ -275,8 +277,10 @@ struct _VariantCall {
 	VCALL_LOCALMEM2(String, erase);
 	VCALL_LOCALMEM0R(String, hash);
 	VCALL_LOCALMEM0R(String, md5_text);
+	VCALL_LOCALMEM0R(String, sha1_text);
 	VCALL_LOCALMEM0R(String, sha256_text);
 	VCALL_LOCALMEM0R(String, md5_buffer);
+	VCALL_LOCALMEM0R(String, sha1_buffer);
 	VCALL_LOCALMEM0R(String, sha256_buffer);
 	VCALL_LOCALMEM0R(String, empty);
 	VCALL_LOCALMEM0R(String, is_abs_path);
@@ -317,7 +321,7 @@ struct _VariantCall {
 		retval.resize(len);
 		PoolByteArray::Write w = retval.write();
 		copymem(w.ptr(), charstr.ptr(), len);
-		w = PoolVector<uint8_t>::Write();
+		w.release();
 
 		r_ret = retval;
 	}
@@ -332,7 +336,7 @@ struct _VariantCall {
 		retval.resize(len);
 		PoolByteArray::Write w = retval.write();
 		copymem(w.ptr(), charstr.ptr(), len);
-		w = PoolVector<uint8_t>::Write();
+		w.release();
 
 		r_ret = retval;
 	}
@@ -598,10 +602,7 @@ struct _VariantCall {
 		PoolByteArray::Read r = ba->read();
 		String s;
 		unsigned char hash[32];
-		sha256_context sha256;
-		sha256_init(&sha256);
-		sha256_hash(&sha256, (unsigned char *)r.ptr(), ba->size());
-		sha256_done(&sha256, hash);
+		CryptoCore::sha256((unsigned char *)r.ptr(), ba->size(), hash);
 		s = String::hex_encode_buffer(hash, 32);
 		r_ret = s;
 	}
@@ -1503,6 +1504,9 @@ void register_variant_methods() {
 
 	ADDFUNC2R(STRING, INT, String, find, STRING, "what", INT, "from", varray(0));
 
+	ADDFUNC3R(STRING, INT, String, count, STRING, "what", INT, "from", INT, "to", varray(0, 0));
+	ADDFUNC3R(STRING, INT, String, countn, STRING, "what", INT, "from", INT, "to", varray(0, 0));
+
 	ADDFUNC1R(STRING, INT, String, find_last, STRING, "what", varray());
 	ADDFUNC2R(STRING, INT, String, findn, STRING, "what", INT, "from", varray(0));
 	ADDFUNC2R(STRING, INT, String, rfind, STRING, "what", INT, "from", varray(-1));
@@ -1542,8 +1546,10 @@ void register_variant_methods() {
 	ADDFUNC2(STRING, NIL, String, erase, INT, "position", INT, "chars", varray());
 	ADDFUNC0R(STRING, INT, String, hash, varray());
 	ADDFUNC0R(STRING, STRING, String, md5_text, varray());
+	ADDFUNC0R(STRING, STRING, String, sha1_text, varray());
 	ADDFUNC0R(STRING, STRING, String, sha256_text, varray());
 	ADDFUNC0R(STRING, POOL_BYTE_ARRAY, String, md5_buffer, varray());
+	ADDFUNC0R(STRING, POOL_BYTE_ARRAY, String, sha1_buffer, varray());
 	ADDFUNC0R(STRING, POOL_BYTE_ARRAY, String, sha256_buffer, varray());
 	ADDFUNC0R(STRING, BOOL, String, empty, varray());
 	ADDFUNC0R(STRING, BOOL, String, is_abs_path, varray());

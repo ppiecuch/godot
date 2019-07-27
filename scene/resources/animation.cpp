@@ -403,7 +403,7 @@ bool Animation::_get(const StringName &p_name, Variant &r_ret) const {
 					w[idx++] = scale.z;
 				}
 
-				w = PoolVector<real_t>::Write();
+				w.release();
 				r_ret = keys;
 				return true;
 
@@ -438,8 +438,8 @@ bool Animation::_get(const StringName &p_name, Variant &r_ret) const {
 					idx++;
 				}
 
-				wti = PoolVector<float>::Write();
-				wtr = PoolVector<float>::Write();
+				wti.release();
+				wtr.release();
 
 				d["times"] = key_times;
 				d["transitions"] = key_transitions;
@@ -478,8 +478,8 @@ bool Animation::_get(const StringName &p_name, Variant &r_ret) const {
 					idx++;
 				}
 
-				wti = PoolVector<float>::Write();
-				wtr = PoolVector<float>::Write();
+				wti.release();
+				wtr.release();
 
 				d["times"] = key_times;
 				d["transitions"] = key_transitions;
@@ -523,8 +523,8 @@ bool Animation::_get(const StringName &p_name, Variant &r_ret) const {
 					idx++;
 				}
 
-				wti = PoolVector<float>::Write();
-				wpo = PoolVector<float>::Write();
+				wti.release();
+				wpo.release();
 
 				d["times"] = key_times;
 				d["points"] = key_points;
@@ -562,7 +562,7 @@ bool Animation::_get(const StringName &p_name, Variant &r_ret) const {
 					idx++;
 				}
 
-				wti = PoolVector<float>::Write();
+				wti.release();
 
 				d["times"] = key_times;
 				d["clips"] = clips;
@@ -595,8 +595,8 @@ bool Animation::_get(const StringName &p_name, Variant &r_ret) const {
 					wcl[i] = vls[i].value;
 				}
 
-				wti = PoolVector<float>::Write();
-				wcl = PoolVector<String>::Write();
+				wti.release();
+				wcl.release();
 
 				d["times"] = key_times;
 				d["clips"] = clips;
@@ -863,7 +863,7 @@ Error Animation::transform_track_get_key(int p_track, int p_key, Vector3 *r_loc,
 	return OK;
 }
 
-int Animation::transform_track_insert_key(int p_track, float p_time, const Vector3 p_loc, const Quat &p_rot, const Vector3 &p_scale) {
+int Animation::transform_track_insert_key(int p_track, float p_time, const Vector3 &p_loc, const Quat &p_rot, const Vector3 &p_scale) {
 
 	ERR_FAIL_INDEX_V(p_track, tracks.size(), -1);
 	Track *t = tracks[p_track];
@@ -1667,8 +1667,7 @@ Variant Animation::_cubic_interpolate(const Variant &p_pre_a, const Variant &p_a
 			Vector2 pb = p_post_b;
 
 			return a.cubic_interpolate(b, pa, pb, p_c);
-
-		} break;
+		}
 		case Variant::RECT2: {
 
 			Rect2 a = p_a;
@@ -1679,8 +1678,7 @@ Variant Animation::_cubic_interpolate(const Variant &p_pre_a, const Variant &p_a
 			return Rect2(
 					a.position.cubic_interpolate(b.position, pa.position, pb.position, p_c),
 					a.size.cubic_interpolate(b.size, pa.size, pb.size, p_c));
-
-		} break;
+		}
 		case Variant::VECTOR3: {
 
 			Vector3 a = p_a;
@@ -1689,8 +1687,7 @@ Variant Animation::_cubic_interpolate(const Variant &p_pre_a, const Variant &p_a
 			Vector3 pb = p_post_b;
 
 			return a.cubic_interpolate(b, pa, pb, p_c);
-
-		} break;
+		}
 		case Variant::QUAT: {
 
 			Quat a = p_a;
@@ -1699,8 +1696,7 @@ Variant Animation::_cubic_interpolate(const Variant &p_pre_a, const Variant &p_a
 			Quat pb = p_post_b;
 
 			return a.cubic_slerp(b, pa, pb, p_c);
-
-		} break;
+		}
 		case Variant::AABB: {
 
 			AABB a = p_a;
@@ -1711,14 +1707,12 @@ Variant Animation::_cubic_interpolate(const Variant &p_pre_a, const Variant &p_a
 			return AABB(
 					a.position.cubic_interpolate(b.position, pa.position, pb.position, p_c),
 					a.size.cubic_interpolate(b.size, pa.size, pb.size, p_c));
-		} break;
+		}
 		default: {
 
 			return _interpolate(p_a, p_b, p_c);
 		}
 	}
-
-	return Variant();
 }
 float Animation::_cubic_interpolate(const float &p_pre_a, const float &p_a, const float &p_b, const float &p_post_b, float p_c) const {
 
@@ -1815,7 +1809,7 @@ T Animation::_interpolate(const Vector<TKey<T> > &p_keys, float p_time, Interpol
 				next = idx;
 			}
 
-		} else if (idx < 0) {
+		} else {
 
 			// only allow extending first key to anim start if looping
 			if (loop)
@@ -3028,7 +3022,6 @@ bool Animation::_transform_track_optimize_key(const TKey<TransformKey> &t0, cons
 				//this could be done as a second pass and would be
 				//able to optimize more
 				erase = false;
-			} else {
 			}
 		}
 	}

@@ -241,6 +241,7 @@ Vector3 GridMap::get_cell_size() const {
 
 void GridMap::set_octant_size(int p_size) {
 
+	ERR_FAIL_COND(p_size == 0);
 	octant_size = p_size;
 	_recreate_octant_data();
 }
@@ -479,11 +480,6 @@ bool GridMap::_octant_update(const OctantKey &p_key) {
 		Vector3 ofs = _get_offset();
 
 		Transform xform;
-
-		if (clip && ((clip_above && cellpos[clip_axis] > clip_floor) || (!clip_above && cellpos[clip_axis] < clip_floor))) {
-
-		} else {
-		}
 
 		xform.basis.set_orthogonal_index(c.rot);
 		xform.set_origin(cellpos * cell_size + ofs);

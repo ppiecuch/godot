@@ -408,6 +408,7 @@ public:
 	int get_uv84_normal_bit(const Vector3 &p_vector);
 
 	bool is_polygon_clockwise(const Vector<Vector2> &p_polygon);
+	bool is_point_in_polygon(const Point2 &p_point, const Vector<Vector2> &p_polygon);
 	Vector<int> triangulate_polygon(const Vector<Vector2> &p_polygon);
 	Vector<int> triangulate_delaunay_2d(const Vector<Vector2> &p_points);
 	Vector<Point2> convex_hull_2d(const Vector<Point2> &p_points);
@@ -745,6 +746,7 @@ public:
 
 	void set_physics_jitter_fix(float p_threshold);
 	float get_physics_jitter_fix() const;
+	float get_physics_interpolation_fraction() const;
 
 	void set_target_fps(int p_fps);
 	int get_target_fps() const;
@@ -804,6 +806,9 @@ public:
 
 	void set_result(const Variant &p_result);
 	Variant get_result() const;
+
+	JSONParseResult() :
+			error_line(-1) {}
 };
 
 class _JSON : public Object {

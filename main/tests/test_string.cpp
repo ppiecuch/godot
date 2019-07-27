@@ -57,7 +57,7 @@ bool test_2() {
 	OS::get_singleton()->print("\n\nTest 2: Assign from string (operator=)\n");
 
 	String s = "Dolly";
-	String t = s;
+	const String &t = s;
 
 	OS::get_singleton()->print("\tExpected: Dolly\n");
 	OS::get_singleton()->print("\tResulted: %ls\n", t.c_str());
@@ -70,7 +70,7 @@ bool test_3() {
 	OS::get_singleton()->print("\n\nTest 3: Assign from c-string (copycon)\n");
 
 	String s("Sheep");
-	String t(s);
+	const String &t(s);
 
 	OS::get_singleton()->print("\tExpected: Sheep\n");
 	OS::get_singleton()->print("\tResulted: %ls\n", t.c_str());
@@ -1062,7 +1062,7 @@ bool test_33() {
 	OS::get_singleton()->print("\n\nTest 33: parse_utf8(null, -1)\n");
 
 	String empty;
-	return empty.parse_utf8(NULL, -1) == true;
+	return empty.parse_utf8(NULL, -1);
 }
 
 bool test_34() {
@@ -1074,6 +1074,44 @@ bool test_34() {
 	String test = upper.to_lower();
 
 	bool state = test == lower;
+
+	return state;
+}
+
+bool test_35() {
+#define COUNT_TEST(x)                                            \
+	{                                                            \
+		bool success = x;                                        \
+		state = state && success;                                \
+		if (!success) {                                          \
+			OS::get_singleton()->print("\tfailed at: %s\n", #x); \
+		}                                                        \
+	}
+
+	OS::get_singleton()->print("\n\nTest 35: count and countn function\n");
+	bool state = true;
+
+	COUNT_TEST(String("").count("Test") == 0);
+	COUNT_TEST(String("Test").count("") == 0);
+	COUNT_TEST(String("Test").count("test") == 0);
+	COUNT_TEST(String("Test").count("TEST") == 0);
+	COUNT_TEST(String("TEST").count("TEST") == 1);
+	COUNT_TEST(String("Test").count("Test") == 1);
+	COUNT_TEST(String("aTest").count("Test") == 1);
+	COUNT_TEST(String("Testa").count("Test") == 1);
+	COUNT_TEST(String("TestTestTest").count("Test") == 3);
+	COUNT_TEST(String("TestTestTest").count("TestTest") == 1);
+	COUNT_TEST(String("TestGodotTestGodotTestGodot").count("Test") == 3);
+
+	COUNT_TEST(String("TestTestTestTest").count("Test", 4, 8) == 1);
+	COUNT_TEST(String("TestTestTestTest").count("Test", 4, 12) == 2);
+	COUNT_TEST(String("TestTestTestTest").count("Test", 4, 16) == 3);
+	COUNT_TEST(String("TestTestTestTest").count("Test", 4) == 3);
+
+	COUNT_TEST(String("Test").countn("test") == 1);
+	COUNT_TEST(String("Test").countn("TEST") == 1);
+	COUNT_TEST(String("testTest-Testatest").countn("tEst") == 4);
+	COUNT_TEST(String("testTest-TeStatest").countn("tEsT", 4, 16) == 2);
 
 	return state;
 }
@@ -1116,6 +1154,7 @@ TestFunc test_funcs[] = {
 	test_32,
 	test_33,
 	test_34,
+	test_35,
 	0
 
 };

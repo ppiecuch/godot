@@ -1487,7 +1487,7 @@ Variant VisualScriptInstance::_call_internal(const StringName &p_method, void *p
 	Variant **output_args = (Variant **)(input_args + max_input_args);
 	int flow_max = f->flow_stack_size;
 	int *flow_stack = flow_max ? (int *)(output_args + max_output_args) : (int *)NULL;
-	int *pass_stack = flow_stack + flow_max;
+	int *pass_stack = flow_stack ? (int *)(flow_stack + flow_max) : (int *)NULL;
 
 	String error_str;
 
@@ -1692,7 +1692,7 @@ Variant VisualScriptInstance::_call_internal(const StringName &p_method, void *p
 
 		if ((ret == output || ret & VisualScriptNodeInstance::STEP_FLAG_PUSH_STACK_BIT) && node->sequence_output_count) {
 			//if no exit bit was set, and has sequence outputs, guess next node
-			if (output < 0 || output >= node->sequence_output_count) {
+			if (output >= node->sequence_output_count) {
 				r_error.error = Variant::CallError::CALL_ERROR_INVALID_METHOD;
 				error_str = RTR("Node returned an invalid sequence output: ") + itos(output);
 				error = true;
@@ -1905,7 +1905,7 @@ Variant VisualScriptInstance::call(const StringName &p_method, const Variant **p
 	Variant **output_args = (Variant **)(input_args + max_input_args);
 	int flow_max = f->flow_stack_size;
 	int *flow_stack = flow_max ? (int *)(output_args + max_output_args) : (int *)NULL;
-	int *pass_stack = flow_stack + flow_max;
+	int *pass_stack = flow_stack ? (int *)(flow_stack + flow_max) : (int *)NULL;
 
 	for (int i = 0; i < f->node_count; i++) {
 		sequence_bits[i] = false; //all starts as false
@@ -2629,8 +2629,6 @@ void VisualScriptLanguage::debug_get_globals(List<String> *p_locals, List<Varian
 }
 String VisualScriptLanguage::debug_parse_stack_level_expression(int p_level, const String &p_expression, int p_max_subitems, int p_max_depth) {
 
-	if (_debug_parse_err_node >= 0)
-		return "";
 	return "";
 }
 

@@ -31,6 +31,11 @@
 #ifndef ANIMATION_TRACK_EDITOR_H
 #define ANIMATION_TRACK_EDITOR_H
 
+#include "editor/editor_data.h"
+#include "editor/editor_spin_slider.h"
+#include "editor/property_editor.h"
+#include "editor/property_selector.h"
+#include "scene/animation/animation_cache.h"
 #include "scene/gui/control.h"
 #include "scene/gui/file_dialog.h"
 #include "scene/gui/menu_button.h"
@@ -40,12 +45,6 @@
 #include "scene/gui/tab_container.h"
 #include "scene/gui/texture_rect.h"
 #include "scene/gui/tool_button.h"
-
-#include "editor/property_selector.h"
-#include "editor_data.h"
-#include "editor_spin_slider.h"
-#include "property_editor.h"
-#include "scene/animation/animation_cache.h"
 #include "scene/resources/animation.h"
 #include "scene_tree_editor.h"
 
@@ -175,8 +174,9 @@ class AnimationTrackEdit : public Control {
 
 	void _path_entered(const String &p_text);
 	void _play_position_draw();
-	mutable int dropping_at;
+	bool _is_value_key_valid(const Variant &p_key_value, Variant::Type &r_valid_type) const;
 
+	mutable int dropping_at;
 	float insert_at_pos;
 	bool moving_selection_attempt;
 	int select_single_attempt;
@@ -246,6 +246,7 @@ public:
 };
 
 class AnimationTrackKeyEdit;
+class AnimationMultiTrackKeyEdit;
 class AnimationBezierTrackEdit;
 
 class AnimationTrackEditGroup : public Control {
@@ -332,7 +333,7 @@ class AnimationTrackEditor : public VBoxContainer {
 
 	void _update_scroll(double);
 	void _update_step(double p_new_step);
-	void _update_length(double p_new_step);
+	void _update_length(double p_new_len);
 	void _dropped_track(int p_from_track, int p_to_track);
 
 	void _add_track(int p_type);
@@ -415,6 +416,7 @@ class AnimationTrackEditor : public VBoxContainer {
 	void _move_selection_cancel();
 
 	AnimationTrackKeyEdit *key_edit;
+	AnimationMultiTrackKeyEdit *multi_key_edit;
 	void _update_key_edit();
 
 	void _clear_key_edit();
@@ -439,9 +441,9 @@ class AnimationTrackEditor : public VBoxContainer {
 	SpinBox *optimize_max_angle;
 
 	ConfirmationDialog *cleanup_dialog;
-	CheckButton *cleanup_keys;
-	CheckButton *cleanup_tracks;
-	CheckButton *cleanup_all;
+	CheckBox *cleanup_keys;
+	CheckBox *cleanup_tracks;
+	CheckBox *cleanup_all;
 
 	ConfirmationDialog *scale_dialog;
 	SpinBox *scale;

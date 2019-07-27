@@ -40,7 +40,7 @@ Size2 SpinBox::get_minimum_size() const {
 
 void SpinBox::_value_changed(double) {
 
-	String value = String::num(get_value(), Math::step_decimals(get_step()));
+	String value = String::num(get_value(), Math::range_step_decimals(get_step()));
 	if (prefix != "")
 		value = prefix + " " + value;
 	if (suffix != "")
@@ -173,7 +173,7 @@ void SpinBox::_line_edit_focus_exit() {
 	_text_entered(line_edit->get_text());
 }
 
-inline void SpinBox::_adjust_width_for_icon(const Ref<Texture> icon) {
+inline void SpinBox::_adjust_width_for_icon(const Ref<Texture> &icon) {
 
 	int w = icon->get_width();
 	if (w != last_w) {
