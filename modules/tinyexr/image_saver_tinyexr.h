@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  crypto_core.h                                                        */
+/*  image_saver_tinyexr.h                                                */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,63 +28,11 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef CRYPTO_CORE_H
-#define CRYPTO_CORE_H
+#ifndef IMAGE_SAVER_TINYEXR_H
+#define IMAGE_SAVER_TINYEXR_H
 
-#include "core/reference.h"
+#include "core/os/os.h"
 
-class CryptoCore {
+Error save_exr(const String &p_path, const Ref<Image> &p_img, bool p_grayscale);
 
-public:
-	class MD5Context {
-
-	private:
-		void *ctx; // To include, or not to include...
-
-	public:
-		MD5Context();
-		~MD5Context();
-
-		Error start();
-		Error update(uint8_t *p_src, size_t p_len);
-		Error finish(unsigned char r_hash[16]);
-	};
-
-	class SHA256Context {
-
-	private:
-		void *ctx; // To include, or not to include...
-
-	public:
-		SHA256Context();
-		~SHA256Context();
-
-		Error start();
-		Error update(uint8_t *p_src, size_t p_len);
-		Error finish(unsigned char r_hash[16]);
-	};
-
-	class AESContext {
-
-	private:
-		void *ctx; // To include, or not to include...
-
-	public:
-		AESContext();
-		~AESContext();
-
-		Error set_encode_key(const uint8_t *p_key, size_t p_bits);
-		Error set_decode_key(const uint8_t *p_key, size_t p_bits);
-		Error encrypt_ecb(const uint8_t p_src[16], uint8_t r_dst[16]);
-		Error decrypt_ecb(const uint8_t p_src[16], uint8_t r_dst[16]);
-	};
-
-	static String b64_encode_str(const uint8_t *p_src, int p_src_len);
-	static Error b64_encode(uint8_t *r_dst, int p_dst_len, size_t *r_len, const uint8_t *p_src, int p_src_len);
-	static Error b64_decode(uint8_t *r_dst, int p_dst_len, size_t *r_len, const uint8_t *p_src, int p_src_len);
-
-	static Error md5(const uint8_t *p_src, int p_src_len, unsigned char r_hash[16]);
-	static Error sha1(const uint8_t *p_src, int p_src_len, unsigned char r_hash[20]);
-	static Error sha256(const uint8_t *p_src, int p_src_len, unsigned char r_hash[32]);
-};
-#endif // CRYPTO_CORE_H
+#endif // IMAGE_SAVER_TINYEXR_H

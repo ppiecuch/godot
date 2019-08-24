@@ -200,6 +200,8 @@ void RasterizerCanvasGLES3::canvas_end() {
 	glBindBufferBase(GL_UNIFORM_BUFFER, 0, 0);
 	glColorMask(1, 1, 1, 1);
 
+	glVertexAttrib4f(VS::ARRAY_COLOR, 1, 1, 1, 1);
+
 	state.using_texture_rect = false;
 	state.using_ninepatch = false;
 }
@@ -1154,10 +1156,7 @@ void RasterizerCanvasGLES3::_canvas_item_render_commands(Item *p_item, Item *cur
 
 void RasterizerCanvasGLES3::_copy_texscreen(const Rect2 &p_rect) {
 
-	if (storage->frame.current_rt->effects.mip_maps[0].sizes.size() == 0) {
-		ERR_EXPLAIN("Can't use screen texture copying in a render target configured without copy buffers");
-		ERR_FAIL();
-	}
+	ERR_FAIL_COND_MSG(storage->frame.current_rt->effects.mip_maps[0].sizes.size() == 0, "Can't use screen texture copying in a render target configured without copy buffers.");
 
 	glDisable(GL_BLEND);
 
