@@ -333,6 +333,7 @@ public:
 	RasterizerStorageGLES2 *storage;
 
 	bool use_nvidia_rect_workaround;
+	bool use_canvas2d_batching;
 
 	virtual RID light_internal_create();
 	virtual void light_internal_update(RID p_rid, Light *p_light);
@@ -346,6 +347,8 @@ public:
 	_FORCE_INLINE_ void _draw_gui_primitive(int p_points, const Vector2 *p_vertices, const Color *p_colors, const Vector2 *p_uvs);
 	_FORCE_INLINE_ void _draw_polygon(const int *p_indices, int p_index_count, int p_vertex_count, const Vector2 *p_vertices, const Vector2 *p_uvs, const Color *p_colors, bool p_singlecolor, const float *p_weights = NULL, const int *p_bones = NULL);
 	_FORCE_INLINE_ void _draw_generic(GLuint p_primitive, int p_vertex_count, const Vector2 *p_vertices, const Vector2 *p_uvs, const Color *p_colors, bool p_singlecolor);
+
+    virtual void canvas_render_items(Item *p_item_list, int p_z, const Color &p_modulate, Light *p_light, const Transform2D &p_base_transform);
 
 	_FORCE_INLINE_ bool _prepare_gui_primitive(RasterizerCanvas::Item::Command *command, int p_points, const Vector2 *p_vertices, const Color *p_colors, const Vector2 *p_uvs);
 	_FORCE_INLINE_ bool _prepare_polygon(RasterizerCanvas::Item::Command *cmd, const int *p_indices, int p_index_count, int p_vertex_count, const Vector2 *p_vertices, const Vector2 *p_uvs, const Color *p_colors, bool p_singlecolor);
@@ -376,9 +379,7 @@ public:
 	_FORCE_INLINE_ void _canvas_item_process(Item *p_item);
 	_FORCE_INLINE_ void _canvas_item_render_commands(Item *p_item, Item *current_clip, bool &reclip, RasterizerStorageGLES2::Material *p_material);
 	_FORCE_INLINE_ void _canvas_item_render_commands(Item::Command *command, Item *p_item, Item *current_clip, bool &reclip, RasterizerStorageGLES2::Material *p_material);
-
-	virtual void canvas_render_items(Item *p_item_list, int p_z, const Color &p_modulate, Light *p_light, const Transform2D &p_base_transform);
-	virtual void canvas_render_items(Item::Command *command, Item *p_item_list, int p_z, const Color &p_modulate, Light *p_light, const Transform2D &p_base_transform);
+    void canvas_render_items(Item::Command *command, Item *p_item_list, int p_z, const Color &p_modulate, Light *p_light, const Transform2D &p_base_transform);
 
 	void _copy_screen(const Rect2 &p_rect);
     void _copy_texscreen(const Rect2 &p_rect);
