@@ -946,10 +946,16 @@ public:
 	static const char *SIGNAL_SELECTION_CHANGED;
 	static const char *SIGNAL_PROJECT_ASK_OPEN;
 
+	enum MenuOptions {
+		GLOBAL_NEW_WINDOW,
+		GLOBAL_OPEN_PROJECT
+	};
+
 	// Can often be passed by copy
 	struct Item {
 		String project_key;
 		String project_name;
+		String description;
 		String path;
 		String icon;
 		String main_scene;
@@ -965,6 +971,7 @@ public:
 
 		Item(const String &p_project,
 				const String &p_name,
+				const String &p_description,
 				const String &p_path,
 				const String &p_icon,
 				const String &p_main_scene,
@@ -976,6 +983,7 @@ public:
 
 			project_key = p_project;
 			project_name = p_name;
+			description = p_description;
 			path = p_path;
 			icon = p_icon;
 			main_scene = p_main_scene;
@@ -1144,6 +1152,7 @@ void ProjectList::load_project_data(const String &p_property_key, Item &p_item, 
 		grayed = true;
 	}
 
+	String description = cf->get_value("application", "config/description", "");
 	String icon = cf->get_value("application", "config/icon", "");
 	String main_scene = cf->get_value("application", "run/main_scene", "");
 
@@ -1165,7 +1174,7 @@ void ProjectList::load_project_data(const String &p_property_key, Item &p_item, 
 
 	String project_key = p_property_key.get_slice("/", 1);
 
-	p_item = Item(project_key, project_name, path, icon, main_scene, last_modified, p_favorite, grayed, missing, config_version);
+	p_item = Item(project_key, project_name, description, path, icon, main_scene, last_modified, p_favorite, grayed, missing, config_version);
 }
 
 void ProjectList::load_projects() {
@@ -1181,6 +1190,7 @@ void ProjectList::load_projects() {
 	_projects.clear();
 	_last_clicked = "";
 	_selected_project_keys.clear();
+	OS::get_singleton()->global_menu_clear("_dock");
 
 	// Load data
 	// TODO Would be nice to change how projects and favourites are stored... it complicates things a bit.
@@ -1218,6 +1228,9 @@ void ProjectList::load_projects() {
 		create_project_item_control(i);
 	}
 
+	OS::get_singleton()->global_menu_add_separator("_dock");
+	OS::get_singleton()->global_menu_add_item("_dock", TTR("New Window"), GLOBAL_NEW_WINDOW, Variant());
+
 	sort_projects();
 
 	set_v_scroll(0);
@@ -1240,6 +1253,7 @@ void ProjectList::create_project_item_control(int p_index) {
 	hb->connect("draw", this, "_panel_draw", varray(hb));
 	hb->connect("gui_input", this, "_panel_input", varray(hb));
 	hb->add_constant_override("separation", 10 * EDSCALE);
+	hb->set_tooltip(item.description);
 
 	VBoxContainer *favorite_box = memnew(VBoxContainer);
 	favorite_box->set_name("FavoriteBox");
@@ -1305,6 +1319,7 @@ void ProjectList::create_project_item_control(int p_index) {
 	fpath->set_clip_text(true);
 
 	_scroll_children->add_child(hb);
+	OS::get_singleton()->global_menu_add_item("_dock", item.project_name + " ( " + item.path + " )", GLOBAL_OPEN_PROJECT, Variant(item.path.plus_file("project.godot")));
 	item.control = hb;
 }
 
@@ -1822,7 +1837,7 @@ void ProjectManager::_unhandled_input(const Ref<InputEvent> &p_ev) {
 					break;
 
 				int index = _project_list->get_single_selected_index();
-				if (index - 1 > 0) {
+				if (index > 0) {
 					_project_list->select_project(index - 1);
 					_project_list->ensure_project_visible(index - 1);
 					_update_project_buttons();
@@ -1892,6 +1907,29 @@ void ProjectManager::_on_project_created(const String &dir) {
 
 void ProjectManager::_confirm_update_settings() {
 	_open_selected_projects();
+}
+
+void ProjectManager::_global_menu_action(const Variant &p_id, const Variant &p_meta) {
+
+	int id = (int)p_id;
+	if (id == ProjectList::GLOBAL_NEW_WINDOW) {
+		List<String> args;
+		String exec = OS::get_singleton()->get_executable_path();
+
+		OS::ProcessID pid = 0;
+		OS::get_singleton()->execute(exec, args, false, &pid);
+	} else if (id == ProjectList::GLOBAL_OPEN_PROJECT) {
+		String conf = (String)p_meta;
+
+		if (conf != String()) {
+			List<String> args;
+			args.push_back(conf);
+			String exec = OS::get_singleton()->get_executable_path();
+
+			OS::ProcessID pid = 0;
+			OS::get_singleton()->execute(exec, args, false, &pid);
+		}
+	}
 }
 
 void ProjectManager::_open_selected_projects() {
@@ -2236,6 +2274,7 @@ void ProjectManager::_bind_methods() {
 
 	ClassDB::bind_method("_open_selected_projects_ask", &ProjectManager::_open_selected_projects_ask);
 	ClassDB::bind_method("_open_selected_projects", &ProjectManager::_open_selected_projects);
+	ClassDB::bind_method(D_METHOD("_global_menu_action"), &ProjectManager::_global_menu_action, DEFVAL(Variant()));
 	ClassDB::bind_method("_run_project", &ProjectManager::_run_project);
 	ClassDB::bind_method("_run_project_confirm", &ProjectManager::_run_project_confirm);
 	ClassDB::bind_method("_scan_projects", &ProjectManager::_scan_projects);
@@ -2561,6 +2600,7 @@ ProjectManager::ProjectManager() {
 	}
 
 	SceneTree::get_singleton()->connect("files_dropped", this, "_files_dropped");
+	SceneTree::get_singleton()->connect("global_menu_action", this, "_global_menu_action");
 
 	run_error_diag = memnew(AcceptDialog);
 	gui_base->add_child(run_error_diag);

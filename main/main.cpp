@@ -598,6 +598,14 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 
 			auto_build_solutions = true;
 			editor = true;
+#ifdef DEBUG_METHODS_ENABLED
+		} else if (I->get() == "--gdnative-generate-json-api") {
+			// Register as an editor instance to use the GLES2 fallback automatically on hardware that doesn't support the GLES3 backend
+			editor = true;
+
+			// We still pass it to the main arguments since the argument handling itself is not done in this function
+			main_args.push_back(I->get());
+#endif
 		} else if (I->get() == "--export" || I->get() == "--export-debug") { // Export project
 
 			editor = true;
@@ -936,7 +944,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		OS::get_singleton()->_allow_hidpi = GLOBAL_DEF("display/window/dpi/allow_hidpi", false);
 	}
 
-	video_mode.use_vsync = GLOBAL_DEF("display/window/vsync/use_vsync", true);
+	video_mode.use_vsync = GLOBAL_DEF_RST("display/window/vsync/use_vsync", true);
 	OS::get_singleton()->_use_vsync = video_mode.use_vsync;
 
 	OS::get_singleton()->_allow_layered = GLOBAL_DEF("display/window/per_pixel_transparency/allowed", false);
