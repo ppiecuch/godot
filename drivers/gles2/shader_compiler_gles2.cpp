@@ -921,7 +921,7 @@ ShaderCompilerGLES2::ShaderCompilerGLES2() {
 	actions[VS::SHADER_CANVAS_ITEM].renames["GLOBAL_MATRIX"] = "world_matrix";
 	actions[VS::SHADER_CANVAS_ITEM].renames["INV_GLOBAL_MATRIX"] = "inv_world_matrix";
 	actions[VS::SHADER_CANVAS_ITEM].renames["PROJECTION_MATRIX"] = "projection_matrix";
-	actions[VS::SHADER_CANVAS_ITEM].renames["EXTRA_MATRIX"] = "extra_matrix";
+	actions[VS::SHADER_CANVAS_ITEM].renames["EXTRA_MATRIX"] = "extra_matrix_instance";
 	actions[VS::SHADER_CANVAS_ITEM].renames["TIME"] = "time";
 	actions[VS::SHADER_CANVAS_ITEM].renames["AT_LIGHT_PASS"] = "at_light_pass";
 	actions[VS::SHADER_CANVAS_ITEM].renames["INSTANCE_CUSTOM"] = "instance_custom";
@@ -969,6 +969,7 @@ ShaderCompilerGLES2::ShaderCompilerGLES2() {
 	actions[VS::SHADER_CANVAS_ITEM].usage_defines["outerProduct"] = "#define OUTER_PRODUCT_USED\n";
 	actions[VS::SHADER_CANVAS_ITEM].usage_defines["round"] = "#define ROUND_USED\n";
 	actions[VS::SHADER_CANVAS_ITEM].usage_defines["roundEven"] = "#define ROUND_EVEN_USED\n";
+	actions[VS::SHADER_CANVAS_ITEM].usage_defines["inverse"] = "#define INVERSE_USED\n";
 	actions[VS::SHADER_CANVAS_ITEM].usage_defines["isinf"] = "#define IS_INF_USED\n";
 	actions[VS::SHADER_CANVAS_ITEM].usage_defines["isnan"] = "#define IS_NAN_USED\n";
 	actions[VS::SHADER_CANVAS_ITEM].usage_defines["trunc"] = "#define TRUNC_USED\n";
@@ -1078,6 +1079,7 @@ ShaderCompilerGLES2::ShaderCompilerGLES2() {
 	actions[VS::SHADER_SPATIAL].usage_defines["outerProduct"] = "#define OUTER_PRODUCT_USED\n";
 	actions[VS::SHADER_SPATIAL].usage_defines["round"] = "#define ROUND_USED\n";
 	actions[VS::SHADER_SPATIAL].usage_defines["roundEven"] = "#define ROUND_EVEN_USED\n";
+	actions[VS::SHADER_SPATIAL].usage_defines["inverse"] = "#define INVERSE_USED\n";
 	actions[VS::SHADER_SPATIAL].usage_defines["isinf"] = "#define IS_INF_USED\n";
 	actions[VS::SHADER_SPATIAL].usage_defines["isnan"] = "#define IS_NAN_USED\n";
 	actions[VS::SHADER_SPATIAL].usage_defines["trunc"] = "#define TRUNC_USED\n";

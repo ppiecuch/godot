@@ -101,7 +101,7 @@ EditorAssetLibraryItem::EditorAssetLibraryItem() {
 	add_style_override("panel", border);
 
 	HBoxContainer *hb = memnew(HBoxContainer);
-	// Add some spacing to visually separate the icon from the asset details
+	// Add some spacing to visually separate the icon from the asset details.
 	hb->add_constant_override("separation", 15 * EDSCALE);
 	add_child(hb);
 
@@ -118,25 +118,21 @@ EditorAssetLibraryItem::EditorAssetLibraryItem() {
 	vb->set_h_size_flags(SIZE_EXPAND_FILL);
 
 	title = memnew(LinkButton);
-	title->set_text("My Awesome Addon");
 	title->set_underline_mode(LinkButton::UNDERLINE_MODE_ON_HOVER);
 	title->connect("pressed", this, "_asset_clicked");
 	vb->add_child(title);
 
 	category = memnew(LinkButton);
-	category->set_text("Editor Tools");
 	category->set_underline_mode(LinkButton::UNDERLINE_MODE_ON_HOVER);
 	category->connect("pressed", this, "_category_clicked");
 	vb->add_child(category);
 
 	author = memnew(LinkButton);
-	author->set_text("Johny Tolengo");
 	author->set_underline_mode(LinkButton::UNDERLINE_MODE_ON_HOVER);
 	author->connect("pressed", this, "_author_clicked");
 	vb->add_child(author);
 
 	price = memnew(Label);
-	price->set_text(TTR("Free"));
 	vb->add_child(price);
 
 	set_custom_minimum_size(Size2(250, 100) * EDSCALE);
@@ -200,14 +196,15 @@ void EditorAssetLibraryItemDescription::set_image(int p_type, int p_index, const
 		} break;
 	}
 }
+
 void EditorAssetLibraryItemDescription::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_ENTER_TREE: {
 			previews_bg->add_style_override("panel", get_stylebox("normal", "TextEdit"));
-			desc_bg->add_style_override("panel", get_stylebox("normal", "TextEdit"));
 		} break;
 	}
 }
+
 void EditorAssetLibraryItemDescription::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_image"), &EditorAssetLibraryItemDescription::set_image);
 	ClassDB::bind_method(D_METHOD("_link_click"), &EditorAssetLibraryItemDescription::_link_click);
@@ -278,12 +275,8 @@ void EditorAssetLibraryItemDescription::add_preview(int p_id, bool p_video, cons
 
 EditorAssetLibraryItemDescription::EditorAssetLibraryItemDescription() {
 
-	VBoxContainer *vbox = memnew(VBoxContainer);
-	add_child(vbox);
-
 	HBoxContainer *hbox = memnew(HBoxContainer);
-	vbox->add_child(hbox);
-	vbox->add_constant_override("separation", 15 * EDSCALE);
+	add_child(hbox);
 	VBoxContainer *desc_vbox = memnew(VBoxContainer);
 	hbox->add_child(desc_vbox);
 	hbox->add_constant_override("separation", 15 * EDSCALE);
@@ -291,24 +284,23 @@ EditorAssetLibraryItemDescription::EditorAssetLibraryItemDescription() {
 	item = memnew(EditorAssetLibraryItem);
 
 	desc_vbox->add_child(item);
-	desc_vbox->set_custom_minimum_size(Size2(300 * EDSCALE, 0));
-
-	desc_bg = memnew(PanelContainer);
-	desc_vbox->add_child(desc_bg);
-	desc_bg->set_v_size_flags(SIZE_EXPAND_FILL);
+	desc_vbox->set_custom_minimum_size(Size2(440 * EDSCALE, 0));
 
 	description = memnew(RichTextLabel);
+	desc_vbox->add_child(description);
+	description->set_v_size_flags(SIZE_EXPAND_FILL);
 	description->connect("meta_clicked", this, "_link_click");
-	description->set_custom_minimum_size(Size2(440 * EDSCALE, 300 * EDSCALE));
-	desc_bg->add_child(description);
 
 	VBoxContainer *previews_vbox = memnew(VBoxContainer);
 	hbox->add_child(previews_vbox);
 	previews_vbox->add_constant_override("separation", 15 * EDSCALE);
+	previews_vbox->set_v_size_flags(SIZE_EXPAND_FILL);
 
 	preview = memnew(TextureRect);
-	preview->set_custom_minimum_size(Size2(640 * EDSCALE, 345 * EDSCALE));
 	previews_vbox->add_child(preview);
+	preview->set_expand(true);
+	preview->set_stretch_mode(TextureRect::STRETCH_KEEP_ASPECT_CENTERED);
+	preview->set_custom_minimum_size(Size2(640 * EDSCALE, 345 * EDSCALE));
 
 	previews_bg = memnew(PanelContainer);
 	previews_vbox->add_child(previews_bg);
@@ -392,7 +384,7 @@ void EditorAssetLibraryItemDownload::_http_download_completed(int p_status, int 
 
 	install->set_disabled(false);
 	status->set_text(TTR("Success!"));
-	// Make the progress bar invisible but don't reflow other Controls around it
+	// Make the progress bar invisible but don't reflow other Controls around it.
 	progress->set_modulate(Color(0, 0, 0, 0));
 
 	set_process(false);
@@ -404,7 +396,7 @@ void EditorAssetLibraryItemDownload::configure(const String &p_title, int p_asse
 	icon->set_texture(p_preview);
 	asset_id = p_asset_id;
 	if (!p_preview.is_valid())
-		icon->set_texture(get_icon("DefaultProjectIcon", "EditorIcons"));
+		icon->set_texture(get_icon("FileBrokenBigThumb", "EditorIcons"));
 	host = p_download_url;
 	sha256 = p_sha256_hash;
 	_make_request();
@@ -600,33 +592,15 @@ void EditorAssetLibrary::_notification(int p_what) {
 		case NOTIFICATION_PROCESS: {
 
 			HTTPClient::Status s = request->get_http_client_status();
-			bool visible = s != HTTPClient::STATUS_DISCONNECTED;
+			const bool loading = s != HTTPClient::STATUS_DISCONNECTED;
 
-			if (visible != load_status->is_visible()) {
-				load_status->set_visible(visible);
+			if (loading) {
+				library_scroll->set_modulate(Color(1, 1, 1, 0.5));
+			} else {
+				library_scroll->set_modulate(Color(1, 1, 1, 1));
 			}
 
-			if (visible) {
-				switch (s) {
-
-					case HTTPClient::STATUS_RESOLVING: {
-						load_status->set_value(0.1);
-					} break;
-					case HTTPClient::STATUS_CONNECTING: {
-						load_status->set_value(0.2);
-					} break;
-					case HTTPClient::STATUS_REQUESTING: {
-						load_status->set_value(0.3);
-					} break;
-					case HTTPClient::STATUS_BODY: {
-						load_status->set_value(0.4);
-					} break;
-					default: {
-					}
-				}
-			}
-
-			bool no_downloads = downloads_hb->get_child_count() == 0;
+			const bool no_downloads = downloads_hb->get_child_count() == 0;
 			if (no_downloads == downloads_scroll->is_visible()) {
 				downloads_scroll->set_visible(!no_downloads);
 			}
@@ -679,7 +653,7 @@ const char *EditorAssetLibrary::sort_key[SORT_MAX] = {
 const char *EditorAssetLibrary::sort_text[SORT_MAX] = {
 	"Downloads",
 	"Name",
-	"License", // "cost" stores the SPDX license name in the Godot Asset Library
+	"License", // "cost" stores the SPDX license name in the Godot Asset Library.
 	"Updated"
 };
 
@@ -691,7 +665,7 @@ const char *EditorAssetLibrary::support_key[SUPPORT_MAX] = {
 
 void EditorAssetLibrary::_select_author(int p_id) {
 
-	// Open author window
+	// Open author window.
 }
 
 void EditorAssetLibrary::_select_category(int p_id) {
@@ -788,7 +762,7 @@ void EditorAssetLibrary::_image_update(bool use_cache, bool final, const PoolByt
 		}
 
 		if (!image_set && final) {
-			obj->call("set_image", image_queue[p_queue_id].image_type, image_queue[p_queue_id].image_index, get_icon("DefaultProjectIcon", "EditorIcons"));
+			obj->call("set_image", image_queue[p_queue_id].image_type, image_queue[p_queue_id].image_index, get_icon("FileBrokenBigThumb", "EditorIcons"));
 		}
 	}
 }
@@ -833,7 +807,7 @@ void EditorAssetLibrary::_image_request_completed(int p_status, int p_code, cons
 		WARN_PRINTS("Error getting image file from URL: " + image_queue[p_queue_id].image_url);
 		Object *obj = ObjectDB::get_instance(image_queue[p_queue_id].target);
 		if (obj) {
-			obj->call("set_image", image_queue[p_queue_id].image_type, image_queue[p_queue_id].image_index, get_icon("DefaultProjectIcon", "EditorIcons"));
+			obj->call("set_image", image_queue[p_queue_id].image_type, image_queue[p_queue_id].image_index, get_icon("FileBrokenBigThumb", "EditorIcons"));
 		}
 	}
 
@@ -845,7 +819,7 @@ void EditorAssetLibrary::_image_request_completed(int p_status, int p_code, cons
 
 void EditorAssetLibrary::_update_image_queue() {
 
-	int max_images = 2;
+	const int max_images = 6;
 	int current_images = 0;
 
 	List<int> to_delete;
@@ -1157,6 +1131,10 @@ void EditorAssetLibrary::_http_request_completed(int p_status, int p_code, const
 			_search();
 		} break;
 		case REQUESTING_SEARCH: {
+
+			// The loading text only needs to be displayed before the first page is loaded
+			library_loading->hide();
+
 			if (asset_items) {
 				memdelete(asset_items);
 			}
@@ -1359,7 +1337,6 @@ EditorAssetLibrary::EditorAssetLibrary(bool p_templates_only) {
 	library_main->add_child(search_hb);
 	library_main->add_constant_override("separation", 10 * EDSCALE);
 
-	search_hb->add_child(memnew(Label(TTR("Search:") + " ")));
 	filter = memnew(LineEdit);
 	search_hb->add_child(filter);
 	filter->set_h_size_flags(SIZE_EXPAND_FILL);
@@ -1372,12 +1349,12 @@ EditorAssetLibrary::EditorAssetLibrary(bool p_templates_only) {
 		search_hb->add_child(memnew(VSeparator));
 
 	Button *open_asset = memnew(Button);
-	open_asset->set_text(TTR("Import"));
+	open_asset->set_text(TTR("Import..."));
 	search_hb->add_child(open_asset);
 	open_asset->connect("pressed", this, "_asset_open");
 
 	Button *plugins = memnew(Button);
-	plugins->set_text(TTR("Plugins"));
+	plugins->set_text(TTR("Plugins..."));
 	search_hb->add_child(plugins);
 	plugins->connect("pressed", this, "_manage_plugins");
 
@@ -1434,7 +1411,7 @@ EditorAssetLibrary::EditorAssetLibrary(bool p_templates_only) {
 
 	support = memnew(MenuButton);
 	search_hb2->add_child(support);
-	support->set_text(TTR("Support..."));
+	support->set_text(TTR("Support"));
 	support->get_popup()->add_check_item(TTR("Official"), SUPPORT_OFFICIAL);
 	support->get_popup()->add_check_item(TTR("Community"), SUPPORT_COMMUNITY);
 	support->get_popup()->add_check_item(TTR("Testing"), SUPPORT_TESTING);
@@ -1472,6 +1449,10 @@ EditorAssetLibrary::EditorAssetLibrary(bool p_templates_only) {
 
 	library_vb_border->add_child(library_vb);
 
+	library_loading = memnew(Label(TTR("Loading...")));
+	library_loading->set_align(Label::ALIGN_CENTER);
+	library_vb->add_child(library_loading);
+
 	asset_top_page = memnew(HBoxContainer);
 	library_vb->add_child(asset_top_page);
 
@@ -1493,12 +1474,6 @@ EditorAssetLibrary::EditorAssetLibrary(bool p_templates_only) {
 	last_queue_id = 0;
 
 	library_vb->add_constant_override("separation", 20 * EDSCALE);
-
-	load_status = memnew(ProgressBar);
-	load_status->set_min(0);
-	load_status->set_max(1);
-	load_status->set_step(0.001);
-	library_main->add_child(load_status);
 
 	error_hb = memnew(HBoxContainer);
 	library_main->add_child(error_hb);
