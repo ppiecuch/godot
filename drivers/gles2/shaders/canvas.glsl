@@ -21,7 +21,13 @@ uniform highp mat4 inv_world_matrix;
 uniform highp mat4 extra_matrix;
 attribute highp vec2 vertex; // attrib:0
 attribute vec4 color_attrib; // attrib:3
+
+#ifdef USE_TEXTURE_RECT_ATTRIB
+attribute vec4 src_rect_attrib; // attrib:4
+attribute vec4 dst_rect_attrib; // attrib:5
+#else
 attribute vec2 uv_attrib; // attrib:4
+#endif
 
 #ifdef USE_SKELETON
 attribute highp vec4 bone_indices; // attrib:6
@@ -126,6 +132,28 @@ void main() {
 	vec4 instance_custom = vec4(0.0);
 #endif
 
+// https://github.com/dragmz/godot/blob/b46766d2905425c06e7456d3ca8007a00b057e48/drivers/gles2/shaders/canvas.glsl
+// https://github.com/ppiecuch/godot/compare/master...dragmz:gles_poly_perf#diff-411d7ea8509597d66bc8e4c2fd5169bd
+
+#ifdef USE_TEXTURE_RECT_ATTRIB
+	if (dst_rect_attrib.z < 0.0) { // Transpose is encoded as negative dst_rect_attrib.z
+		uv_interp = src_rect_attrib.xy + abs(src_rect_attrib.zw) * vertex.yx;
+	} else {
+		uv_interp = src_rect_attrib.xy + abs(src_rect_attrib.zw) * vertex;
+	}
+
+	vec4 outvec = vec4(0.0, 0.0, 0.0, 1.0);
+
+	// This is what is done in the GLES 3 bindings and should
+	// take care of flipped rects.
+	//
+	// But it doesn't.
+	// I don't know why, will need to investigate further.
+
+	outvec.xy = dst_rect_attrib.xy + abs(dst_rect_attrib.zw) * select(vertex, vec2(1.0, 1.0) - vertex, lessThan(src_rect_attrib.zw, vec2(0.0, 0.0)));
+
+	// outvec.xy = dst_rect_attrib.xy + abs(dst_rect_attrib.zw) * vertex;
+#else
 #ifdef USE_TEXTURE_RECT
 
 	if (dst_rect.z < 0.0) { // Transpose is encoded as negative dst_rect.z
@@ -148,7 +176,14 @@ void main() {
 #else
 	vec4 outvec = vec4(vertex.xy, 0.0, 1.0);
 
-	uv = uv_attrib;
+#ifdef USE_UV_ATTRIBUTE
+	uv_interp = uv_attrib;
+#else
+	uv_interp = vertex.xy;
+#endif
+
+#endif
+
 #endif
 
 #if !defined(SKIP_TRANSFORM_USED) && defined(VERTEX_WORLD_COORDS_USED)
@@ -158,9 +193,7 @@ void main() {
 #define extra_matrix extra_matrix_instance
 
 	{
-		vec2 src_vtx = outvec.xy;
-		/* clang-format off */
-
+        vec2 src_vtx = outvec.xy;
 VERTEX_SHADER_CODE
 
 		/* clang-format on */
