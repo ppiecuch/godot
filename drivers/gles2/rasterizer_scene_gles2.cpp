@@ -3020,7 +3020,7 @@ void RasterizerSceneGLES2::render_scene(const Transform &p_cam_transform, const 
 #endif
 		}
 
-		storage->canvas->_copy_texscreen(Rect2());
+		storage->canvas->_copy_screen(Rect2());
 
 		if (storage->frame.current_rt && storage->frame.current_rt->multisample_active) {
 			// Rebind the current framebuffer

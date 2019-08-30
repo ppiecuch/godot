@@ -382,7 +382,7 @@ public:
     void canvas_render_items(Item::Command *command, Item *p_item_list, int p_z, const Color &p_modulate, Light *p_light, const Transform2D &p_base_transform);
 
 	void _copy_screen(const Rect2 &p_rect);
-    void _copy_texscreen(const Rect2 &p_rect);
+    _FORCE_INLINE_ void _copy_texscreen(const Rect2 &p_rect);
 
 	virtual void canvas_debug_viewport_shadows(Light *p_lights_with_shadow);
 
