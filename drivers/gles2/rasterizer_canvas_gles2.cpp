@@ -3021,5 +3021,5 @@ RasterizerCanvasGLES2::RasterizerCanvasGLES2() {
 	// Not needed (a priori) on GLES devices
 	use_nvidia_rect_workaround = false;
 #endif
-    use_canvas2d_batching = GLOBAL_GET("rendering/quality/2d/gles2_use_canvas2d_batching")
+    use_canvas2d_batching = GLOBAL_GET("rendering/quality/2d/gles2_use_canvas2d_batching");
 }
