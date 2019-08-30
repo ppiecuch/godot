@@ -21,6 +21,8 @@
   - register_virtual_type to register_virtual_class
   - Globals to Engine
   - OS:: -> OS::get_singleton()
+* speed optimizatins:
+  - https://github.com/godotengine/godot/compare/master...vblanco20-1:experimental_optimization
 
 ## Reference
 
