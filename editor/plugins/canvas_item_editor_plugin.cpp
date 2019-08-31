@@ -51,9 +51,12 @@
 #include "scene/main/viewport.h"
 #include "scene/resources/packed_scene.h"
 
+#if MODULE_VECTOR_GRAPHICS_ENABLED
+// forward declarations for Vector Graphics module:
 Node *createVectorSprite(Ref<Resource> p_resource);
 void configureVectorSprite(Node *p_child, Ref<Resource> p_texture);
-	
+#endif
+
 
 #define MIN_ZOOM 0.01
 #define MAX_ZOOM 100
@@ -5573,7 +5576,7 @@ void CanvasItemEditorViewport::_perform_drop_data() {
 		} else {
 			Ref<Texture> texture = Ref<Texture>(Object::cast_to<Texture>(*res));
 			if (texture != NULL && texture.is_valid()) {
-				Node *child;
+				Node *child, *vector_child = 0;
 				if (default_type == "Light2D")
 					child = memnew(Light2D);
 				else if (default_type == "Particles2D")
@@ -5586,10 +5589,22 @@ void CanvasItemEditorViewport::_perform_drop_data() {
 					child = memnew(TextureRect);
 				else if (default_type == "NinePatchRect")
 					child = memnew(NinePatchRect);
+#if MODULE_VECTOR_GRAPHICS_ENABLED
+				else if (default_type == "Sprite")
+					child = memnew(Sprite);
 				else
-					child = createVectorSprite(texture); // default
+					child = vector_child = createVectorSprite(texture);  // default
+#else
+                else
+					child = memnew(Sprite); // default
+#endif
 
-				_create_nodes(target_node, child, path, drop_pos); configureVectorSprite(child, texture);
+				_create_nodes(target_node, child, path, drop_pos); 
+#if MODULE_VECTOR_GRAPHICS_ENABLED
+                if (vector_child) {
+                    configureVectorSprite(vector_child, texture);
+                }
+#endif
 			}
 		}
 	}
