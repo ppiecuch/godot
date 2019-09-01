@@ -51,6 +51,10 @@
 #include "scene/main/viewport.h"
 #include "scene/resources/packed_scene.h"
 
+Node *createVectorSprite(Ref<Resource> p_resource);
+void configureVectorSprite(Node *p_child, Ref<Resource> p_texture);
+	
+
 #if MODULE_GD_VECTOR_GRAPHICS_ENABLED
 // forward declarations for Vector Graphics module:
 Node *createVectorSprite(Ref<Resource> p_resource);
@@ -5591,15 +5595,15 @@ void CanvasItemEditorViewport::_perform_drop_data() {
 					child = memnew(NinePatchRect);
 #if MODULE_GD_VECTOR_GRAPHICS_ENABLED
 				else if (default_type == "Sprite")
-					child = memnew(Sprite);
+					child = createVectorSprite(texture);
 				else
 					child = vector_child = createVectorSprite(texture);  // default
 #else
                 else
-					child = memnew(Sprite); // default
+					child = createVectorSprite(texture); // default
 #endif
 
-				_create_nodes(target_node, child, path, drop_pos); 
+				_create_nodes(target_node, child, path, drop_pos); configureVectorSprite(child, texture); 
 #if MODULE_GD_VECTOR_GRAPHICS_ENABLED
                 if (vector_child) {
                     configureVectorSprite(vector_child, texture);
