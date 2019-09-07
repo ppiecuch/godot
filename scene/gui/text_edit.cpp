@@ -596,8 +596,14 @@ void TextEdit::_update_minimap_drag() {
 		return;
 	}
 
+	int control_height = _get_control_height();
+	int scroll_height = v_scroll->get_max() * (minimap_char_size.y + minimap_line_spacing);
+	if (control_height > scroll_height) {
+		control_height = scroll_height;
+	}
+
 	Point2 mp = get_local_mouse_position();
-	double diff = (mp.y - minimap_scroll_click_pos) / _get_control_height();
+	double diff = (mp.y - minimap_scroll_click_pos) / control_height;
 	v_scroll->set_as_ratio(minimap_scroll_ratio + diff);
 }
 
@@ -605,7 +611,6 @@ void TextEdit::_notification(int p_what) {
 
 	switch (p_what) {
 		case NOTIFICATION_ENTER_TREE: {
-
 			_update_caches();
 			if (cursor_changed_dirty)
 				MessageQueue::get_singleton()->push_call(this, "_cursor_changed_emit");
@@ -614,12 +619,16 @@ void TextEdit::_notification(int p_what) {
 			_update_wrap_at();
 		} break;
 		case NOTIFICATION_RESIZED: {
-
 			_update_scrollbars();
 			_update_wrap_at();
 		} break;
+		case NOTIFICATION_VISIBILITY_CHANGED: {
+			if (is_visible()) {
+				call_deferred("_update_scrollbars");
+				call_deferred("_update_wrap_at");
+			}
+		} break;
 		case NOTIFICATION_THEME_CHANGED: {
-
 			_update_caches();
 			_update_wrap_at();
 			syntax_highlighting_cache.clear();
@@ -2194,12 +2203,6 @@ void TextEdit::_gui_input(const Ref<InputEvent> &p_gui_input) {
 				int row, col;
 				_get_mouse_pos(Point2i(mb->get_position().x, mb->get_position().y), row, col);
 
-				if (mb->get_command() && highlighted_word != String()) {
-
-					emit_signal("symbol_lookup", highlighted_word, row, col);
-					return;
-				}
-
 				// Toggle breakpoint on gutter click.
 				if (draw_breakpoint_gutter) {
 					int gutter = cache.style_normal->get_margin(MARGIN_LEFT);
@@ -2368,6 +2371,14 @@ void TextEdit::_gui_input(const Ref<InputEvent> &p_gui_input) {
 		} else {
 
 			if (mb->get_button_index() == BUTTON_LEFT) {
+				if (mb->get_command() && highlighted_word != String()) {
+					int row, col;
+					_get_mouse_pos(Point2i(mb->get_position().x, mb->get_position().y), row, col);
+
+					emit_signal("symbol_lookup", highlighted_word, row, col);
+					return;
+				}
+
 				dragging_minimap = false;
 				dragging_selection = false;
 				can_drag_minimap = false;
@@ -4613,7 +4624,7 @@ Control::CursorShape TextEdit::get_cursor_shape(const Point2 &p_pos) const {
 		return CURSOR_ARROW;
 	} else {
 		int xmargin_end = get_size().width - cache.style_normal->get_margin(MARGIN_RIGHT);
-		if (p_pos.x > xmargin_end - minimap_width && p_pos.x <= xmargin_end) {
+		if (draw_minimap && p_pos.x > xmargin_end - minimap_width && p_pos.x <= xmargin_end) {
 			return CURSOR_ARROW;
 		}
 
@@ -5354,6 +5365,9 @@ bool TextEdit::search(const String &p_key, uint32_t p_search_flags, int p_from_l
 						break;
 					}
 					pos_from = last_pos - p_key.length();
+					if (pos_from < 0) {
+						break;
+					}
 				}
 			} else {
 				while ((last_pos = (p_search_flags & SEARCH_MATCH_CASE) ? text_line.find(p_key, pos_from) : text_line.findn(p_key, pos_from)) != -1) {
