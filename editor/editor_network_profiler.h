@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  editor_run.h                                                         */
+/*  editor_network_profiler.h                                            */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,42 +28,46 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef EDITOR_RUN_H
-#define EDITOR_RUN_H
+#ifndef EDITORNETWORKPROFILER_H
+#define EDITORNETWORKPROFILER_H
 
-#include "core/os/os.h"
-#include "scene/main/node.h"
-class EditorRun {
-public:
-	enum Status {
+#include "scene/gui/box_container.h"
+#include "scene/gui/button.h"
+#include "scene/gui/label.h"
+#include "scene/gui/split_container.h"
+#include "scene/gui/tree.h"
 
-		STATUS_PLAY,
-		STATUS_PAUSED,
-		STATUS_STOP
-	};
+class EditorNetworkProfiler : public VBoxContainer {
 
-	OS::ProcessID pid;
+	GDCLASS(EditorNetworkProfiler, VBoxContainer)
 
 private:
-	bool debug_collisions;
-	bool debug_navigation;
-	Status status;
+	Button *activate;
+	Button *clear_button;
+	Tree *counters_display;
+	LineEdit *incoming_bandwidth_text;
+	LineEdit *outgoing_bandwidth_text;
+
+	Timer *frame_delay;
+
+	Map<ObjectID, MultiplayerAPI::ProfilingInfo> nodes_data;
+
+	void _update_frame();
+
+	void _activate_pressed();
+	void _clear_pressed();
+	String _format_bandwidth(int p_value);
+
+protected:
+	void _notification(int p_what);
+	static void _bind_methods();
 
 public:
-	Status get_status() const;
-	Error run(const String &p_scene, const String &p_custom_args, const List<String> &p_breakpoints, const bool &p_skip_breakpoints = false);
-	void run_native_notify() { status = STATUS_PLAY; }
-	void stop();
+	void add_node_frame_data(const MultiplayerAPI::ProfilingInfo p_frame);
+	void set_bandwidth(int p_incoming, int p_outgoing);
+	bool is_profiling();
 
-	OS::ProcessID get_pid() const { return pid; }
-
-	void set_debug_collisions(bool p_debug);
-	bool get_debug_collisions() const;
-
-	void set_debug_navigation(bool p_debug);
-	bool get_debug_navigation() const;
-
-	EditorRun();
+	EditorNetworkProfiler();
 };
 
-#endif // EDITOR_RUN_H
+#endif //EDITORNETWORKPROFILER_H
