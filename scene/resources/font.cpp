@@ -33,6 +33,7 @@
 #include "core/io/resource_loader.h"
 #include "core/method_bind_ext.gen.inc"
 #include "core/os/file_access.h"
+#include "core/io/xml_parser.h"
 
 void Font::draw_halign(RID p_canvas_item, const Point2 &p_pos, HAlign p_align, float p_width, const String &p_text, const Color &p_modulate, const Color &p_outline_modulate) const {
 	float length = get_string_size(p_text).width;
@@ -200,13 +201,108 @@ Error BitmapFont::create_from_fnt(const String &p_file) {
 	//fnt format used by angelcode bmfont
 	//http://www.angelcode.com/products/bmfont/
 
+	clear();
+
+    Ref<XMLParser> parser = memnew(XMLParser);
+    Error err = parser->open(p_file);
+
+    if (err == OK) {
+        // as this is valid xml file, assume xml bmformat
+        // based on https://github.com/godotengine/godot/blob/master/editor/collada/collada.cpp
+        while (parser->read() == OK) {
+
+            if (parser->get_node_type() == XMLParser::NODE_ELEMENT) {
+
+                if (parser->get_node_name() == "info") {
+                    if (parser->has_attribute("face"))
+                        set_name(parser->get_attribute_value("face"));
+                    else
+                        ERR_PRINT("BMFont xml: face attribute not found.");
+                }
+
+                if (parser->get_node_name() == "common") {
+                    if (parser->has_attribute("lineHeight"))
+                        set_height(parser->get_attribute_value("lineHeight").to_int());
+                    if (parser->has_attribute("base"))
+                        set_ascent(parser->get_attribute_value("base").to_int());
+                }
+
+                if (parser->get_node_name() == "page") {
+
+                    if (parser->has_attribute("file")) {
+
+                        String base_dir = p_file.get_base_dir();
+                        String file = base_dir.plus_file(parser->get_attribute_value("file"));
+                        Ref<Texture> tex = ResourceLoader::load(file);
+                        if (tex.is_null()) {
+                            ERR_PRINT("Can't load font texture!");
+                        } else {
+                            add_texture(tex);
+                        }
+                    }
+                }
+
+                if (parser->get_node_name() == "char") {
+                    CharType idx = 0;
+                    if (parser->has_attribute("id"))
+                        idx = parser->get_attribute_value("id").to_int();
+
+                    Rect2 rect;
+
+                    if (parser->has_attribute("x"))
+                        rect.position.x = parser->get_attribute_value("x").to_int();
+                    if (parser->has_attribute("y"))
+                        rect.position.y = parser->get_attribute_value("y").to_int();
+                    if (parser->has_attribute("width"))
+                        rect.size.width = parser->get_attribute_value("width").to_int();
+                    if (parser->has_attribute("height"))
+                        rect.size.height = parser->get_attribute_value("height").to_int();
+
+                    Point2 ofs;
+
+                    if (parser->has_attribute("xoffset"))
+                        ofs.x = parser->get_attribute_value("xoffset").to_int();
+                    if (parser->has_attribute("yoffset"))
+                        ofs.y = parser->get_attribute_value("yoffset").to_int();
+
+                    int texture = 0;
+                    if (parser->has_attribute("page"))
+                        texture = parser->get_attribute_value("page").to_int();
+                    int advance = -1;
+                    if (parser->has_attribute("xadvance"))
+                        advance = parser->get_attribute_value("xadvance").to_int();
+
+                    add_char(idx, texture, rect, ofs, advance);
+                }
+
+                if (parser->get_node_name() == "kerning") {
+
+                    CharType first = 0, second = 0;
+                    int k = 0;
+
+                    if (parser->has_attribute("first"))
+                        first = parser->get_attribute_value("first").to_int();
+                    if (parser->has_attribute("second"))
+                        second = parser->get_attribute_value("second").to_int();
+                    if (parser->has_attribute("amount"))
+                        k = parser->get_attribute_value("amount").to_int();
+
+                    add_kerning_pair(first, second, -k);
+                }
+
+                // only one/first <font> per file
+                if (parser->get_node_type() == XMLParser::NODE_ELEMENT_END && parser->get_node_name() == "font")
+                    break;
+            }
+        }
+        return OK;
+    }
+
 	FileAccess *f = FileAccess::open(p_file, FileAccess::READ);
 
 	ERR_FAIL_COND_V_MSG(!f, ERR_FILE_NOT_FOUND, "Can't open font: " + p_file + ".");
 
-	clear();
-
-	while (true) {
+    while (true) {
 
 		String line = f->get_line();
 
