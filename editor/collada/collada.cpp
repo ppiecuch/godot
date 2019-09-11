@@ -28,6 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
+#ifdef TOOLS_ENABLED
+
 #include "collada.h"
 
 #include <stdio.h>
@@ -2574,3 +2576,5 @@ Error Collada::load(const String &p_path, int p_flags) {
 
 Collada::Collada() {
 }
+
+#endif

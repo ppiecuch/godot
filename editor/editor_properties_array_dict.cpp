@@ -271,6 +271,8 @@ void EditorPropertyArray::update_property() {
 
 	edit->set_text(arrtype + " (size " + itos(array.call("size")) + ")");
 
+#ifdef TOOLS_ENABLED
+
 	bool unfolded = get_edited_object()->editor_is_section_unfolded(get_edited_property());
 	if (edit->is_pressed() != unfolded) {
 		edit->set_pressed(unfolded);
@@ -395,6 +397,7 @@ void EditorPropertyArray::update_property() {
 			vbox = NULL;
 		}
 	}
+#endif
 }
 
 void EditorPropertyArray::_remove_pressed(int p_index) {
@@ -639,6 +642,8 @@ void EditorPropertyDictionary::update_property() {
 	Dictionary dict = updated_val;
 
 	edit->set_text("Dictionary (size " + itos(dict.size()) + ")");
+
+#ifdef TOOLS_ENABLED
 
 	bool unfolded = get_edited_object()->editor_is_section_unfolded(get_edited_property());
 	if (edit->is_pressed() != unfolded) {
@@ -954,6 +959,7 @@ void EditorPropertyDictionary::update_property() {
 			vbox = NULL;
 		}
 	}
+#endif
 }
 
 void EditorPropertyDictionary::_object_id_selected(const String &p_property, ObjectID p_id) {

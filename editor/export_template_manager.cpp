@@ -542,6 +542,7 @@ void ExportTemplateManager::_notification(int p_what) {
 		template_list_state->set_text(status);
 		if (errored) {
 			set_process(false);
+			;
 		}
 	}
 
@@ -554,33 +555,25 @@ void ExportTemplateManager::_notification(int p_what) {
 
 bool ExportTemplateManager::can_install_android_template() {
 
-	const String templates_dir = EditorSettings::get_singleton()->get_templates_dir().plus_file(VERSION_FULL_CONFIG);
-	return FileAccess::exists(templates_dir.plus_file("android_source.zip")) &&
-		   FileAccess::exists(templates_dir.plus_file("android_release.apk")) &&
-		   FileAccess::exists(templates_dir.plus_file("android_debug.apk"));
+	return FileAccess::exists(EditorSettings::get_singleton()->get_templates_dir().plus_file(VERSION_FULL_CONFIG).plus_file("android_source.zip"));
 }
 
 Error ExportTemplateManager::install_android_template() {
 
-	// To support custom Android builds, we install various things to the project's res://android folder.
-	// First is the Java source code and buildsystem from android_source.zip.
-	// Then we extract the Godot Android libraries from pre-build android_release.apk
-	// and android_debug.apk, to place them in the libs folder.
-
 	DirAccessRef da = DirAccess::open("res://");
 	ERR_FAIL_COND_V(!da, ERR_CANT_CREATE);
+	//make android dir (if it does not exist)
 
-	// Make res://android dir (if it does not exist).
 	da->make_dir("android");
 	{
-		// Add an empty .gdignore file to avoid scan.
+		//add an empty .gdignore file to avoid scan
 		FileAccessRef f = FileAccess::open("res://android/.gdignore", FileAccess::WRITE);
 		ERR_FAIL_COND_V(!f, ERR_CANT_CREATE);
 		f->store_line("");
 		f->close();
 	}
 	{
-		// Add version, to ensure building won't work if template and Godot version don't match.
+		//add version, to ensure building won't work if template and Godot version don't match
 		FileAccessRef f = FileAccess::open("res://android/.build_version", FileAccess::WRITE);
 		ERR_FAIL_COND_V(!f, ERR_CANT_CREATE);
 		f->store_line(VERSION_FULL_CONFIG);
@@ -590,10 +583,7 @@ Error ExportTemplateManager::install_android_template() {
 	Error err = da->make_dir_recursive("android/build");
 	ERR_FAIL_COND_V(err != OK, err);
 
-	// Uncompress source template.
-
-	const String &templates_path = EditorSettings::get_singleton()->get_templates_dir().plus_file(VERSION_FULL_CONFIG);
-	const String &source_zip = templates_path.plus_file("android_source.zip");
+	String source_zip = EditorSettings::get_singleton()->get_templates_dir().plus_file(VERSION_FULL_CONFIG).plus_file("android_source.zip");
 	ERR_FAIL_COND_V(!FileAccess::exists(source_zip), ERR_CANT_OPEN);
 
 	FileAccess *src_f = NULL;
@@ -603,33 +593,37 @@ Error ExportTemplateManager::install_android_template() {
 	ERR_FAIL_COND_V_MSG(!pkg, ERR_CANT_OPEN, "Android sources not in ZIP format.");
 
 	int ret = unzGoToFirstFile(pkg);
+
 	int total_files = 0;
-	// Count files to unzip.
+	//count files
 	while (ret == UNZ_OK) {
 		total_files++;
 		ret = unzGoToNextFile(pkg);
 	}
-	ret = unzGoToFirstFile(pkg);
 
-	ProgressDialog::get_singleton()->add_task("uncompress_src", TTR("Uncompressing Android Build Sources"), total_files);
+	ret = unzGoToFirstFile(pkg);
+	//decompress files
+	ProgressDialog::get_singleton()->add_task("uncompress", TTR("Uncompressing Android Build Sources"), total_files);
 
 	Set<String> dirs_tested;
+
 	int idx = 0;
 	while (ret == UNZ_OK) {
 
-		// Get file path.
+		//get filename
 		unz_file_info info;
-		char fpath[16384];
-		ret = unzGetCurrentFileInfo(pkg, &info, fpath, 16384, NULL, 0, NULL, 0);
+		char fname[16384];
+		ret = unzGetCurrentFileInfo(pkg, &info, fname, 16384, NULL, 0, NULL, 0);
 
-		String path = fpath;
-		String base_dir = path.get_base_dir();
+		String name = fname;
 
-		if (!path.ends_with("/")) {
+		String base_dir = name.get_base_dir();
+
+		if (!name.ends_with("/")) {
 			Vector<uint8_t> data;
 			data.resize(info.uncompressed_size);
 
-			// Read.
+			//read
 			unzOpenCurrentFile(pkg);
 			unzReadCurrentFile(pkg, data.ptrw(), data.size());
 			unzCloseCurrentFile(pkg);
@@ -639,7 +633,7 @@ Error ExportTemplateManager::install_android_template() {
 				dirs_tested.insert(base_dir);
 			}
 
-			String to_write = String("res://android/build").plus_file(path);
+			String to_write = String("res://android/build").plus_file(name);
 			FileAccess *f = FileAccess::open(to_write, FileAccess::WRITE);
 			if (f) {
 				f->store_buffer(data.ptr(), data.size());
@@ -652,96 +646,13 @@ Error ExportTemplateManager::install_android_template() {
 			}
 		}
 
-		ProgressDialog::get_singleton()->task_step("uncompress_src", path, idx);
+		ProgressDialog::get_singleton()->task_step("uncompress", name, idx);
 
 		idx++;
 		ret = unzGoToNextFile(pkg);
 	}
 
-	ProgressDialog::get_singleton()->end_task("uncompress_src");
-	unzClose(pkg);
-
-	// Extract libs from pre-built APKs.
-	err = _extract_libs_from_apk("release");
-	ERR_FAIL_COND_V_MSG(err != OK, err, "Can't extract Android libs from android_release.apk.");
-	err = _extract_libs_from_apk("debug");
-	ERR_FAIL_COND_V_MSG(err != OK, err, "Can't extract Android libs from android_debug.apk.");
-
-	return OK;
-}
-
-Error ExportTemplateManager::_extract_libs_from_apk(const String &p_target_name) {
-
-	const String &templates_path = EditorSettings::get_singleton()->get_templates_dir().plus_file(VERSION_FULL_CONFIG);
-	const String &apk_file = templates_path.plus_file("android_" + p_target_name + ".apk");
-	ERR_FAIL_COND_V(!FileAccess::exists(apk_file), ERR_CANT_OPEN);
-
-	FileAccess *src_f = NULL;
-	zlib_filefunc_def io = zipio_create_io_from_file(&src_f);
-
-	unzFile pkg = unzOpen2(apk_file.utf8().get_data(), &io);
-	ERR_FAIL_COND_V_MSG(!pkg, ERR_CANT_OPEN, "Android APK can't be extracted.");
-
-	DirAccessRef da = DirAccess::open("res://");
-	ERR_FAIL_COND_V(!da, ERR_CANT_CREATE);
-
-	// 8 steps because 4 arches, 2 libs per arch.
-	ProgressDialog::get_singleton()->add_task("extract_libs_from_apk", TTR("Extracting Android Libraries From APKs"), 8);
-
-	int ret = unzGoToFirstFile(pkg);
-	Set<String> dirs_tested;
-	int idx = 0;
-	while (ret == UNZ_OK) {
-		// Get file path.
-		unz_file_info info;
-		char fpath[16384];
-		ret = unzGetCurrentFileInfo(pkg, &info, fpath, 16384, NULL, 0, NULL, 0);
-
-		String path = fpath;
-		String base_dir = path.get_base_dir();
-		String file = path.get_file();
-
-		if (!base_dir.begins_with("lib") || path.ends_with("/")) {
-			ret = unzGoToNextFile(pkg);
-			continue;
-		}
-
-		Vector<uint8_t> data;
-		data.resize(info.uncompressed_size);
-
-		// Read.
-		unzOpenCurrentFile(pkg);
-		unzReadCurrentFile(pkg, data.ptrw(), data.size());
-		unzCloseCurrentFile(pkg);
-
-		// We have a "lib" folder in the APK, but it should be "libs/{release,debug}" in the source dir.
-		String target_base_dir = base_dir.replace_first("lib", String("libs").plus_file(p_target_name));
-
-		if (!dirs_tested.has(base_dir)) {
-			da->make_dir_recursive(String("android/build").plus_file(target_base_dir));
-			dirs_tested.insert(base_dir);
-		}
-
-		String to_write = String("res://android/build").plus_file(target_base_dir.plus_file(path.get_file()));
-		FileAccess *f = FileAccess::open(to_write, FileAccess::WRITE);
-		if (f) {
-			f->store_buffer(data.ptr(), data.size());
-			memdelete(f);
-#ifndef WINDOWS_ENABLED
-			// We can't retrieve Unix permissions from the APK it seems, so simply set 0755 as should be.
-			FileAccess::set_unix_permissions(to_write, 0755);
-#endif
-		} else {
-			ERR_PRINTS("Can't uncompress file: " + to_write);
-		}
-
-		ProgressDialog::get_singleton()->task_step("extract_libs_from_apk", path, idx);
-
-		idx++;
-		ret = unzGoToNextFile(pkg);
-	}
-
-	ProgressDialog::get_singleton()->end_task("extract_libs_from_apk");
+	ProgressDialog::get_singleton()->end_task("uncompress");
 	unzClose(pkg);
 
 	return OK;
