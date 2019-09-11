@@ -1786,7 +1786,6 @@ Error ResourceFormatSaverBinaryInstance::save(const String &p_path, const RES &p
 
 	if (f->get_error() != OK && f->get_error() != ERR_FILE_EOF) {
 		f->close();
-		memdelete(f);
 		return ERR_CANT_CREATE;
 	}
 
@@ -1939,12 +1938,10 @@ Error ResourceFormatSaverBinaryInstance::save(const String &p_path, const RES &p
 
 	if (f->get_error() != OK && f->get_error() != ERR_FILE_EOF) {
 		f->close();
-		memdelete(f);
 		return ERR_CANT_CREATE;
 	}
 
 	f->close();
-	memdelete(f);
 
 	return OK;
 }

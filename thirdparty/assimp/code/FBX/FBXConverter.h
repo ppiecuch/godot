@@ -431,6 +431,10 @@ private:
     void ConvertGlobalSettings();
 
     // ------------------------------------------------------------------------------------------------
+    //  Will perform the conversion from a given unit to the requested unit.
+    void ConvertToUnitScale(FbxUnit unit);
+
+    // ------------------------------------------------------------------------------------------------
     // copy generated meshes, animations, lights, cameras and textures to the output scene
     void TransferDataToScene();
 
@@ -466,6 +470,9 @@ private:
 
     aiScene* const out;
     const FBX::Document& doc;
+
+    bool mRemoveEmptyBones;
+
     FbxUnit mCurrentUnit;
 };
 

@@ -47,37 +47,37 @@ class Geometry {
 public:
 	static real_t get_closest_points_between_segments(const Vector2 &p1, const Vector2 &q1, const Vector2 &p2, const Vector2 &q2, Vector2 &c1, Vector2 &c2) {
 
-		Vector2 d1 = q1 - p1; // Direction vector of segment S1.
-		Vector2 d2 = q2 - p2; // Direction vector of segment S2.
+		Vector2 d1 = q1 - p1; // Direction vector of segment S1
+		Vector2 d2 = q2 - p2; // Direction vector of segment S2
 		Vector2 r = p1 - p2;
-		real_t a = d1.dot(d1); // Squared length of segment S1, always nonnegative.
-		real_t e = d2.dot(d2); // Squared length of segment S2, always nonnegative.
+		real_t a = d1.dot(d1); // Squared length of segment S1, always nonnegative
+		real_t e = d2.dot(d2); // Squared length of segment S2, always nonnegative
 		real_t f = d2.dot(r);
 		real_t s, t;
-		// Check if either or both segments degenerate into points.
+		// Check if either or both segments degenerate into points
 		if (a <= CMP_EPSILON && e <= CMP_EPSILON) {
-			// Both segments degenerate into points.
+			// Both segments degenerate into points
 			c1 = p1;
 			c2 = p2;
 			return Math::sqrt((c1 - c2).dot(c1 - c2));
 		}
 		if (a <= CMP_EPSILON) {
-			// First segment degenerates into a point.
+			// First segment degenerates into a point
 			s = 0.0;
 			t = f / e; // s = 0 => t = (b*s + f) / e = f / e
 			t = CLAMP(t, 0.0, 1.0);
 		} else {
 			real_t c = d1.dot(r);
 			if (e <= CMP_EPSILON) {
-				// Second segment degenerates into a point.
+				// Second segment degenerates into a point
 				t = 0.0;
 				s = CLAMP(-c / a, 0.0, 1.0); // t = 0 => s = (b*t - c) / a = -c / a
 			} else {
-				// The general nondegenerate case starts here.
+				// The general nondegenerate case starts here
 				real_t b = d1.dot(d2);
-				real_t denom = a * e - b * b; // Always nonnegative.
+				real_t denom = a * e - b * b; // Always nonnegative
 				// If segments not parallel, compute closest point on L1 to L2 and
-				// clamp to segment S1. Else pick arbitrary s (here 0).
+				// clamp to segment S1. Else pick arbitrary s (here 0)
 				if (denom != 0.0) {
 					s = CLAMP((b * f - c * e) / denom, 0.0, 1.0);
 				} else
@@ -88,7 +88,7 @@ public:
 
 				//If t in [0,1] done. Else clamp t, recompute s for the new value
 				// of t using s = Dot((P2 + D2*t) - P1,D1) / Dot(D1,D1)= (t*b - c) / a
-				// and clamp s to [0, 1].
+				// and clamp s to [0, 1]
 				if (t < 0.0) {
 					t = 0.0;
 					s = CLAMP(-c / a, 0.0, 1.0);
@@ -105,14 +105,14 @@ public:
 
 	static void get_closest_points_between_segments(const Vector3 &p1, const Vector3 &p2, const Vector3 &q1, const Vector3 &q2, Vector3 &c1, Vector3 &c2) {
 
-// Do the function 'd' as defined by pb. I think is is dot product of some sort.
+//do the function 'd' as defined by pb. I think is is dot product of some sort
 #define d_of(m, n, o, p) ((m.x - n.x) * (o.x - p.x) + (m.y - n.y) * (o.y - p.y) + (m.z - n.z) * (o.z - p.z))
 
-		// Calculate the parametric position on the 2 curves, mua and mub.
+		//calculate the parametric position on the 2 curves, mua and mub
 		real_t mua = (d_of(p1, q1, q2, q1) * d_of(q2, q1, p2, p1) - d_of(p1, q1, p2, p1) * d_of(q2, q1, q2, q1)) / (d_of(p2, p1, p2, p1) * d_of(q2, q1, q2, q1) - d_of(q2, q1, p2, p1) * d_of(q2, q1, p2, p1));
 		real_t mub = (d_of(p1, q1, q2, q1) + mua * d_of(q2, q1, p2, p1)) / d_of(q2, q1, q2, q1);
 
-		// Clip the value between [0..1] constraining the solution to lie on the original curves.
+		//clip the value between [0..1] constraining the solution to lie on the original curves
 		if (mua < 0) mua = 0;
 		if (mub < 0) mub = 0;
 		if (mua > 1) mua = 1;
@@ -125,38 +125,38 @@ public:
 		Vector3 u = p_to_a - p_from_a;
 		Vector3 v = p_to_b - p_from_b;
 		Vector3 w = p_from_a - p_to_a;
-		real_t a = u.dot(u); // Always >= 0
+		real_t a = u.dot(u); // always >= 0
 		real_t b = u.dot(v);
-		real_t c = v.dot(v); // Always >= 0
+		real_t c = v.dot(v); // always >= 0
 		real_t d = u.dot(w);
 		real_t e = v.dot(w);
-		real_t D = a * c - b * b; // Always >= 0
+		real_t D = a * c - b * b; // always >= 0
 		real_t sc, sN, sD = D; // sc = sN / sD, default sD = D >= 0
 		real_t tc, tN, tD = D; // tc = tN / tD, default tD = D >= 0
 
-		// Compute the line parameters of the two closest points.
-		if (D < CMP_EPSILON) { // The lines are almost parallel.
-			sN = 0.0; // Force using point P0 on segment S1
-			sD = 1.0; // to prevent possible division by 0.0 later.
+		// compute the line parameters of the two closest points
+		if (D < CMP_EPSILON) { // the lines are almost parallel
+			sN = 0.0; // force using point P0 on segment S1
+			sD = 1.0; // to prevent possible division by 0.0 later
 			tN = e;
 			tD = c;
-		} else { // Get the closest points on the infinite lines
+		} else { // get the closest points on the infinite lines
 			sN = (b * e - c * d);
 			tN = (a * e - b * d);
-			if (sN < 0.0) { // sc < 0 => the s=0 edge is visible.
+			if (sN < 0.0) { // sc < 0 => the s=0 edge is visible
 				sN = 0.0;
 				tN = e;
 				tD = c;
-			} else if (sN > sD) { // sc > 1 => the s=1 edge is visible.
+			} else if (sN > sD) { // sc > 1 => the s=1 edge is visible
 				sN = sD;
 				tN = e + b;
 				tD = c;
 			}
 		}
 
-		if (tN < 0.0) { // tc < 0 => the t=0 edge is visible.
+		if (tN < 0.0) { // tc < 0 => the t=0 edge is visible
 			tN = 0.0;
-			// Recompute sc for this edge.
+			// recompute sc for this edge
 			if (-d < 0.0)
 				sN = 0.0;
 			else if (-d > a)
@@ -165,9 +165,9 @@ public:
 				sN = -d;
 				sD = a;
 			}
-		} else if (tN > tD) { // tc > 1 => the t=1 edge is visible.
+		} else if (tN > tD) { // tc > 1 => the t=1 edge is visible
 			tN = tD;
-			// Recompute sc for this edge.
+			// recompute sc for this edge
 			if ((-d + b) < 0.0)
 				sN = 0;
 			else if ((-d + b) > a)
@@ -177,14 +177,14 @@ public:
 				sD = a;
 			}
 		}
-		// Finally do the division to get sc and tc.
+		// finally do the division to get sc and tc
 		sc = (Math::is_zero_approx(sN) ? 0.0 : sN / sD);
 		tc = (Math::is_zero_approx(tN) ? 0.0 : tN / tD);
 
-		// Get the difference of the two closest points.
+		// get the difference of the two closest points
 		Vector3 dP = w + (sc * u) - (tc * v); // = S1(sc) - S2(tc)
 
-		return dP.length(); // Return the closest distance.
+		return dP.length(); // return the closest distance
 	}
 
 	static inline bool ray_intersects_triangle(const Vector3 &p_from, const Vector3 &p_dir, const Vector3 &p_v0, const Vector3 &p_v1, const Vector3 &p_v2, Vector3 *r_res = 0) {
@@ -192,7 +192,7 @@ public:
 		Vector3 e2 = p_v2 - p_v0;
 		Vector3 h = p_dir.cross(e2);
 		real_t a = e1.dot(h);
-		if (Math::is_zero_approx(a)) // Parallel test.
+		if (Math::is_zero_approx(a)) // parallel test
 			return false;
 
 		real_t f = 1.0 / a;
@@ -210,15 +210,16 @@ public:
 		if (v < 0.0 || u + v > 1.0)
 			return false;
 
-		// At this stage we can compute t to find out where
-		// the intersection point is on the line.
+		// at this stage we can compute t to find out where
+		// the intersection point is on the line
 		real_t t = f * e2.dot(q);
 
 		if (t > 0.00001) { // ray intersection
 			if (r_res)
 				*r_res = p_from + p_dir * t;
 			return true;
-		} else // This means that there is a line intersection but not a ray intersection.
+		} else // this means that there is a line intersection
+			// but not a ray intersection
 			return false;
 	}
 
@@ -229,7 +230,7 @@ public:
 		Vector3 e2 = p_v2 - p_v0;
 		Vector3 h = rel.cross(e2);
 		real_t a = e1.dot(h);
-		if (Math::is_zero_approx(a)) // Parallel test.
+		if (Math::is_zero_approx(a)) // parallel test
 			return false;
 
 		real_t f = 1.0 / a;
@@ -247,15 +248,16 @@ public:
 		if (v < 0.0 || u + v > 1.0)
 			return false;
 
-		// At this stage we can compute t to find out where
-		// the intersection point is on the line.
+		// at this stage we can compute t to find out where
+		// the intersection point is on the line
 		real_t t = f * e2.dot(q);
 
-		if (t > CMP_EPSILON && t <= 1.0) { // Ray intersection.
+		if (t > CMP_EPSILON && t <= 1.0) { // ray intersection
 			if (r_res)
 				*r_res = p_from + rel * t;
 			return true;
-		} else // This means that there is a line intersection but not a ray intersection.
+		} else // this means that there is a line intersection
+			// but not a ray intersection
 			return false;
 	}
 
@@ -265,10 +267,12 @@ public:
 		Vector3 rel = (p_to - p_from);
 		real_t rel_l = rel.length();
 		if (rel_l < CMP_EPSILON)
-			return false; // Both points are the same.
+			return false; // both points are the same
 		Vector3 normal = rel / rel_l;
 
 		real_t sphere_d = normal.dot(sphere_pos);
+
+		//Vector3 ray_closest=normal*sphere_d;
 
 		real_t ray_distance = sphere_pos.distance_to(normal * sphere_d);
 
@@ -281,7 +285,7 @@ public:
 		if (inters_d2 >= CMP_EPSILON)
 			inters_d -= Math::sqrt(inters_d2);
 
-		// Check in segment.
+		// check in segment
 		if (inters_d < 0 || inters_d > rel_l)
 			return false;
 
@@ -300,9 +304,9 @@ public:
 		Vector3 rel = (p_to - p_from);
 		real_t rel_l = rel.length();
 		if (rel_l < CMP_EPSILON)
-			return false; // Both points are the same.
+			return false; // both points are the same
 
-		// First check if they are parallel.
+		// first check if they are parallel
 		Vector3 normal = (rel / rel_l);
 		Vector3 crs = normal.cross(Vector3(0, 0, 1));
 		real_t crs_l = crs.length();
@@ -310,7 +314,8 @@ public:
 		Vector3 z_dir;
 
 		if (crs_l < CMP_EPSILON) {
-			z_dir = Vector3(1, 0, 0); // Any x/y vector OK.
+			//blahblah parallel
+			z_dir = Vector3(1, 0, 0); //any x/y vector ok
 		} else {
 			z_dir = crs / crs_l;
 		}
@@ -318,12 +323,12 @@ public:
 		real_t dist = z_dir.dot(p_from);
 
 		if (dist >= p_radius)
-			return false; // Too far away.
+			return false; // too far away
 
-		// Convert to 2D.
+		// convert to 2D
 		real_t w2 = p_radius * p_radius - dist * dist;
 		if (w2 < CMP_EPSILON)
-			return false; // Avoid numerical error.
+			return false; //avoid numerical error
 		Size2 size(Math::sqrt(w2), p_height * 0.5);
 
 		Vector3 x_dir = z_dir.cross(Vector3(0, 0, 1)).normalized();
@@ -370,7 +375,7 @@ public:
 				return false;
 		}
 
-		// Convert to 3D again.
+		// convert to 3D again
 		Vector3 result = p_from + (rel * min);
 		Vector3 res_normal = result;
 
@@ -411,18 +416,19 @@ public:
 
 			real_t den = p.normal.dot(dir);
 
+			//printf("den is %i\n",den);
 			if (Math::abs(den) <= CMP_EPSILON)
-				continue; // Ignore parallel plane.
+				continue; // ignore parallel plane
 
 			real_t dist = -p.distance_to(p_from) / den;
 
 			if (den > 0) {
-				// Backwards facing plane.
+				//backwards facing plane
 				if (dist < max)
 					max = dist;
 			} else {
 
-				// Front facing plane.
+				//front facing plane
 				if (dist > min) {
 					min = dist;
 					min_index = i;
@@ -430,8 +436,8 @@ public:
 			}
 		}
 
-		if (max <= min || min < 0 || min > rel_l || min_index == -1) // Exit conditions.
-			return false; // No intersection.
+		if (max <= min || min < 0 || min > rel_l || min_index == -1) // exit conditions
+			return false; // no intersection
 
 		if (p_res)
 			*p_res = p_from + dir * min;
@@ -447,16 +453,16 @@ public:
 		Vector3 n = p_segment[1] - p_segment[0];
 		real_t l2 = n.length_squared();
 		if (l2 < 1e-20)
-			return p_segment[0]; // Both points are the same, just give any.
+			return p_segment[0]; // both points are the same, just give any
 
 		real_t d = n.dot(p) / l2;
 
 		if (d <= 0.0)
-			return p_segment[0]; // Before first point.
+			return p_segment[0]; // before first point
 		else if (d >= 1.0)
-			return p_segment[1]; // After first point.
+			return p_segment[1]; // after first point
 		else
-			return p_segment[0] + n * d; // Inside.
+			return p_segment[0] + n * d; // inside
 	}
 
 	static Vector3 get_closest_point_to_segment_uncapped(const Vector3 &p_point, const Vector3 *p_segment) {
@@ -465,11 +471,11 @@ public:
 		Vector3 n = p_segment[1] - p_segment[0];
 		real_t l2 = n.length_squared();
 		if (l2 < 1e-20)
-			return p_segment[0]; // Both points are the same, just give any.
+			return p_segment[0]; // both points are the same, just give any
 
 		real_t d = n.dot(p) / l2;
 
-		return p_segment[0] + n * d; // Inside.
+		return p_segment[0] + n * d; // inside
 	}
 
 	static Vector2 get_closest_point_to_segment_2d(const Vector2 &p_point, const Vector2 *p_segment) {
@@ -478,16 +484,16 @@ public:
 		Vector2 n = p_segment[1] - p_segment[0];
 		real_t l2 = n.length_squared();
 		if (l2 < 1e-20)
-			return p_segment[0]; // Both points are the same, just give any.
+			return p_segment[0]; // both points are the same, just give any
 
 		real_t d = n.dot(p) / l2;
 
 		if (d <= 0.0)
-			return p_segment[0]; // Before first point.
+			return p_segment[0]; // before first point
 		else if (d >= 1.0)
-			return p_segment[1]; // After first point.
+			return p_segment[1]; // after first point
 		else
-			return p_segment[0] + n * d; // Inside.
+			return p_segment[0] + n * d; // inside
 	}
 
 	static bool is_point_in_triangle(const Vector2 &s, const Vector2 &a, const Vector2 &b, const Vector2 &c) {
@@ -502,25 +508,27 @@ public:
 		return (cn.cross(an) > 0) == orientation;
 	}
 
+	//static bool is_point_in_polygon(const Vector2 &p_point, const Vector<Vector2> &p_polygon);
+
 	static Vector2 get_closest_point_to_segment_uncapped_2d(const Vector2 &p_point, const Vector2 *p_segment) {
 
 		Vector2 p = p_point - p_segment[0];
 		Vector2 n = p_segment[1] - p_segment[0];
 		real_t l2 = n.length_squared();
 		if (l2 < 1e-20)
-			return p_segment[0]; // Both points are the same, just give any.
+			return p_segment[0]; // both points are the same, just give any
 
 		real_t d = n.dot(p) / l2;
 
-		return p_segment[0] + n * d; // Inside.
+		return p_segment[0] + n * d; // inside
 	}
 
 	static bool line_intersects_line_2d(const Vector2 &p_from_a, const Vector2 &p_dir_a, const Vector2 &p_from_b, const Vector2 &p_dir_b, Vector2 &r_result) {
 
-		// See http://paulbourke.net/geometry/pointlineplane/
+		// see http://paulbourke.net/geometry/pointlineplane/
 
 		const real_t denom = p_dir_b.y * p_dir_a.x - p_dir_b.x * p_dir_a.y;
-		if (Math::is_zero_approx(denom)) { // Parallel?
+		if (Math::is_zero_approx(denom)) { // parallel?
 			return false;
 		}
 
@@ -548,11 +556,11 @@ public:
 
 		real_t ABpos = D.x + (C.x - D.x) * D.y / (D.y - C.y);
 
-		// Fail if segment C-D crosses line A-B outside of segment A-B.
+		//  Fail if segment C-D crosses line A-B outside of segment A-B.
 		if (ABpos < 0 || ABpos > 1.0)
 			return false;
 
-		// (4) Apply the discovered position to line A-B in the original coordinate system.
+		//  (4) Apply the discovered position to line A-B in the original coordinate system.
 		if (r_result)
 			*r_result = p_from_a + B * ABpos;
 
@@ -585,7 +593,7 @@ public:
 
 		real_t d = p_normal.dot(p_sphere_pos) - p_normal.dot(p_triangle[0]);
 
-		if (d > p_sphere_radius || d < -p_sphere_radius) // Not touching the plane of the face, return.
+		if (d > p_sphere_radius || d < -p_sphere_radius) // not touching the plane of the face, return
 			return false;
 
 		Vector3 contact = p_sphere_pos - (p_normal * d);
@@ -605,25 +613,25 @@ public:
 
 		for (int i = 0; i < 3; i++) {
 
-			// Check edge cylinder.
+			// check edge cylinder
 
 			Vector3 n1 = verts[i] - verts[i + 1];
 			Vector3 n2 = p_sphere_pos - verts[i + 1];
 
-			///@TODO Maybe discard by range here to make the algorithm quicker.
+			///@TODO i could discard by range here to make the algorithm quicker? dunno..
 
-			// Check point within cylinder radius.
+			// check point within cylinder radius
 			Vector3 axis = n1.cross(n2).cross(n1);
-			axis.normalize();
+			axis.normalize(); // ugh
 
 			real_t ad = axis.dot(n2);
 
 			if (ABS(ad) > p_sphere_radius) {
-				// No chance with this edge, too far away.
+				// no chance with this edge, too far away
 				continue;
 			}
 
-			// Check point within edge capsule cylinder.
+			// check point within edge capsule cylinder
 			/** 4th TEST INSIDE EDGE POINTS **/
 
 			real_t sphere_at = n1.dot(n2);
@@ -632,7 +640,8 @@ public:
 
 				r_triangle_contact = p_sphere_pos - axis * (axis.dot(n2));
 				r_sphere_contact = p_sphere_pos - axis * p_sphere_radius;
-				// Point inside here.
+				// point inside here
+				//printf("solved inside edge\n");
 				return true;
 			}
 
@@ -642,28 +651,27 @@ public:
 
 				Vector3 n = (p_sphere_pos - verts[i + 1]).normalized();
 
+				//r_triangle_contact=verts[i+1]+n*p_sphere_radius;p_sphere_pos+axis*(p_sphere_radius-axis.dot(n2));
 				r_triangle_contact = verts[i + 1];
 				r_sphere_contact = p_sphere_pos - n * p_sphere_radius;
+				//printf("solved inside point segment 1\n");
 				return true;
 			}
 
 			if (n2.distance_squared_to(n1) < r2) {
 				Vector3 n = (p_sphere_pos - verts[i]).normalized();
 
+				//r_triangle_contact=verts[i]+n*p_sphere_radius;p_sphere_pos+axis*(p_sphere_radius-axis.dot(n2));
 				r_triangle_contact = verts[i];
 				r_sphere_contact = p_sphere_pos - n * p_sphere_radius;
+				//printf("solved inside point segment 1\n");
 				return true;
 			}
 
-			break; // It's pointless to continue at this point, so save some CPU cycles.
+			break; // It's pointless to continue at this point, so save some cpu cycles
 		}
 
 		return false;
-	}
-
-	static inline bool is_point_in_circle(const Vector2 &p_point, const Vector2 &p_circle_pos, real_t p_circle_radius) {
-
-		return p_point.distance_squared_to(p_circle_pos) <= p_circle_radius * p_circle_radius;
 	}
 
 	static real_t segment_intersects_circle(const Vector2 &p_from, const Vector2 &p_to, const Vector2 &p_circle_pos, real_t p_circle_radius) {
@@ -671,22 +679,20 @@ public:
 		Vector2 line_vec = p_to - p_from;
 		Vector2 vec_to_line = p_from - p_circle_pos;
 
-		// Create a quadratic formula of the form ax^2 + bx + c = 0
+		/* create a quadratic formula of the form ax^2 + bx + c = 0 */
 		real_t a, b, c;
 
 		a = line_vec.dot(line_vec);
 		b = 2 * vec_to_line.dot(line_vec);
 		c = vec_to_line.dot(vec_to_line) - p_circle_radius * p_circle_radius;
 
-		// Solve for t.
+		/* solve for t */
 		real_t sqrtterm = b * b - 4 * a * c;
 
-		// If the term we intend to square root is less than 0 then the answer won't be real,
-		// so it definitely won't be t in the range 0 to 1.
+		/* if the term we intend to square root is less than 0 then the answer won't be real, so it definitely won't be t in the range 0 to 1 */
 		if (sqrtterm < 0) return -1;
 
-		// If we can assume that the line segment starts outside the circle (e.g. for continuous time collision detection)
-		// then the following can be skipped and we can just return the equivalent of res1.
+		/* if we can assume that the line segment starts outside the circle (e.g. for continuous time collision detection) then the following can be skipped and we can just return the equivalent of res1 */
 		sqrtterm = Math::sqrt(sqrtterm);
 		real_t res1 = (-b - sqrtterm) / (2 * a);
 		real_t res2 = (-b + sqrtterm) / (2 * a);
@@ -712,6 +718,7 @@ public:
 		int outside_count = 0;
 
 		for (int a = 0; a < polygon.size(); a++) {
+			//real_t p_plane.d = (*this) * polygon[a];
 			real_t dist = p_plane.distance_to(polygon[a]);
 			if (dist < -CMP_POINT_IN_PLANE_EPSILON) {
 				location_cache[a] = LOC_INSIDE;
@@ -728,11 +735,11 @@ public:
 
 		if (outside_count == 0) {
 
-			return polygon; // No changes.
+			return polygon; // no changes
 
 		} else if (inside_count == 0) {
 
-			return Vector<Vector3>(); // Empty.
+			return Vector<Vector3>(); //empty
 		}
 
 		long previous = polygon.size() - 1;
@@ -832,6 +839,16 @@ public:
 		return _polypath_offset(p_polygon, p_delta, p_join_type, p_end_type);
 	}
 
+	static Vector<Point2> transform_points_2d(const Vector<Point2> &p_points, const Transform2D &p_mat) {
+
+		Vector<Point2> points;
+
+		for (int i = 0; i < p_points.size(); ++i) {
+			points.push_back(p_mat.xform(p_points[i]));
+		}
+		return points;
+	}
+
 	static Vector<int> triangulate_delaunay_2d(const Vector<Vector2> &p_points) {
 
 		Vector<Delaunay2D::Triangle> tr = Delaunay2D::triangulate(p_points);
@@ -877,7 +894,7 @@ public:
 		return sum > 0.0f;
 	}
 
-	// Alternate implementation that should be faster.
+	/* alternate implementation that should be faster */
 	static bool is_point_in_polygon(const Vector2 &p_point, const Vector<Vector2> &p_polygon) {
 		int c = p_polygon.size();
 		if (c < 3)
@@ -893,8 +910,7 @@ public:
 			further_away_opposite.y = MIN(p[i].y, further_away_opposite.y);
 		}
 
-		// Make point outside that won't intersect with points in segment from p_point.
-		further_away += (further_away - further_away_opposite) * Vector2(1.221313, 1.512312);
+		further_away += (further_away - further_away_opposite) * Vector2(1.221313, 1.512312); // make point outside that won't intersect with points in segment from p_point
 
 		int intersections = 0;
 		for (int i = 0; i < c; i++) {
@@ -910,8 +926,7 @@ public:
 
 	static PoolVector<PoolVector<Face3> > separate_objects(PoolVector<Face3> p_array);
 
-	// Create a "wrap" that encloses the given geometry.
-	static PoolVector<Face3> wrap_geometry(PoolVector<Face3> p_array, real_t *p_error = NULL);
+	static PoolVector<Face3> wrap_geometry(PoolVector<Face3> p_array, real_t *p_error = NULL); ///< create a "wrap" that encloses the given geometry
 
 	struct MeshData {
 
@@ -993,17 +1008,17 @@ public:
 		Vector<Point2> H;
 		H.resize(2 * n);
 
-		// Sort points lexicographically.
+		// Sort points lexicographically
 		P.sort();
 
-		// Build lower hull.
+		// Build lower hull
 		for (int i = 0; i < n; ++i) {
 			while (k >= 2 && vec2_cross(H[k - 2], H[k - 1], P[i]) <= 0)
 				k--;
 			H.write[k++] = P[i];
 		}
 
-		// Build upper hull.
+		// Build upper hull
 		for (int i = n - 2, t = k + 1; i >= 0; i--) {
 			while (k >= t && vec2_cross(H[k - 2], H[k - 1], P[i]) <= 0)
 				k--;

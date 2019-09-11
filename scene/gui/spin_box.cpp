@@ -29,7 +29,6 @@
 /*************************************************************************/
 
 #include "spin_box.h"
-#include "core/math/expression.h"
 #include "core/os/input.h"
 
 Size2 SpinBox::get_minimum_size() const {
@@ -51,19 +50,15 @@ void SpinBox::_value_changed(double) {
 
 void SpinBox::_text_entered(const String &p_string) {
 
-	Ref<Expression> expr;
-	expr.instance();
-	// Ignore the prefix and suffix in the expression
-	Error err = expr->parse(p_string.trim_prefix(prefix + " ").trim_suffix(" " + suffix));
-	if (err != OK) {
+	/*
+	if (!p_string.is_numeric())
 		return;
-	}
-
-	Variant value = expr->execute(Array(), NULL, false);
-	if (value.get_type() != Variant::NIL) {
-		set_value(value);
-		_value_changed(0);
-	}
+	*/
+	String value = p_string;
+	if (prefix != "" && p_string.begins_with(prefix))
+		value = p_string.substr(prefix.length(), p_string.length() - prefix.length());
+	set_value(value.to_double());
+	_value_changed(0);
 }
 
 LineEdit *SpinBox::get_line_edit() {

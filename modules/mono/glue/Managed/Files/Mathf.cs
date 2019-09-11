@@ -158,11 +158,6 @@ namespace Godot
 
         public static bool IsEqualApprox(real_t a, real_t b)
         {
-            // Check for exact equality first, required to handle "infinity" values.
-            if (a == b) {
-                return true;
-            }
-            // Then check for approximate equality.
             real_t tolerance = Epsilon * Abs(a);
             if (tolerance < Epsilon) {
                 tolerance = Epsilon;

@@ -354,12 +354,10 @@ void AnimationBezierTrackEdit::_notification(int p_what) {
 		{ //guides
 			float min_left_scale = font->get_height() + vsep;
 
-			float scale = (min_left_scale * 2) * v_zoom;
-			float step = Math::pow(10.0, Math::round(Math::log(scale / 5.0) / Math::log(10.0))) * 5.0;
-			scale = Math::stepify(scale, step);
+			float scale = 1;
 
 			while (scale / v_zoom < min_left_scale * 2) {
-				scale += step;
+				scale *= 5;
 			}
 
 			bool first = true;
@@ -380,7 +378,7 @@ void AnimationBezierTrackEdit::_notification(int p_what) {
 					draw_line(Point2(limit, i), Point2(right_limit, i), lc);
 					Color c = color;
 					c.a *= 0.5;
-					draw_string(font, Point2(limit + 8, i - 2), rtos(Math::stepify((iv + 1) * scale, step)), c);
+					draw_string(font, Point2(limit + 8, i - 2), itos((iv + 1) * scale), c);
 				}
 
 				first = false;
@@ -630,28 +628,24 @@ void AnimationBezierTrackEdit::_gui_input(const Ref<InputEvent> &p_event) {
 
 	Ref<InputEventMouseButton> mb = p_event;
 	if (mb.is_valid() && mb->is_pressed() && mb->get_button_index() == BUTTON_WHEEL_DOWN) {
-		float v_zoom_orig = v_zoom;
 		if (mb->get_command()) {
 			timeline->get_zoom()->set_value(timeline->get_zoom()->get_value() * 1.05);
 		} else {
-			if (v_zoom < 100000) {
+			if (v_zoom < 1000) {
 				v_zoom *= 1.2;
 			}
 		}
-		v_scroll = v_scroll + (mb->get_position().y - get_size().y / 2) * (v_zoom - v_zoom_orig);
 		update();
 	}
 
 	if (mb.is_valid() && mb->is_pressed() && mb->get_button_index() == BUTTON_WHEEL_UP) {
-		float v_zoom_orig = v_zoom;
 		if (mb->get_command()) {
 			timeline->get_zoom()->set_value(timeline->get_zoom()->get_value() / 1.05);
 		} else {
-			if (v_zoom > 0.000001) {
+			if (v_zoom > 0.01) {
 				v_zoom /= 1.2;
 			}
 		}
-		v_scroll = v_scroll + (mb->get_position().y - get_size().y / 2) * (v_zoom - v_zoom_orig);
 		update();
 	}
 
