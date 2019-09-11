@@ -1937,18 +1937,9 @@ static void _find_identifiers_in_base(const GDScriptCompletionContext &p_context
 				Ref<GDScript> script = base_type.script_type;
 				if (script.is_valid()) {
 					if (!_static && !p_only_functions) {
-						if (p_context.base && p_context.base->get_script_instance()) {
-							List<PropertyInfo> members;
-							p_context.base->get_script_instance()->get_property_list(&members);
-							for (List<PropertyInfo>::Element *E = members.front(); E; E = E->next()) {
-								ScriptCodeCompletionOption option(E->get().name, ScriptCodeCompletionOption::KIND_MEMBER);
-								r_result.insert(option.display, option);
-							}
-						} else {
-							for (const Set<StringName>::Element *E = script->get_members().front(); E; E = E->next()) {
-								ScriptCodeCompletionOption option(E->get().operator String(), ScriptCodeCompletionOption::KIND_MEMBER);
-								r_result.insert(option.display, option);
-							}
+						for (const Set<StringName>::Element *E = script->get_members().front(); E; E = E->next()) {
+							ScriptCodeCompletionOption option(E->get().operator String(), ScriptCodeCompletionOption::KIND_MEMBER);
+							r_result.insert(option.display, option);
 						}
 					}
 					if (!p_only_functions) {
@@ -2834,16 +2825,6 @@ Error GDScriptLanguage::complete_code(const String &p_code, const String &p_path
 				clss = clss->owner;
 				for (int i = 0; i < Variant::VARIANT_MAX; i++) {
 					ScriptCodeCompletionOption option(Variant::get_type_name((Variant::Type)i), ScriptCodeCompletionOption::KIND_CLASS);
-					options.insert(option.display, option);
-				}
-				List<PropertyInfo> props;
-				ProjectSettings::get_singleton()->get_property_list(&props);
-				for (List<PropertyInfo>::Element *E = props.front(); E; E = E->next()) {
-					String s = E->get().name;
-					if (!s.begins_with("autoload/")) {
-						continue;
-					}
-					ScriptCodeCompletionOption option(s.get_slice("/", 1), ScriptCodeCompletionOption::KIND_CLASS);
 					options.insert(option.display, option);
 				}
 			}

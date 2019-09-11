@@ -641,9 +641,6 @@ void CanvasItem::update() {
 
 void CanvasItem::set_modulate(const Color &p_modulate) {
 
-	if (modulate == p_modulate)
-		return;
-
 	modulate = p_modulate;
 	VisualServer::get_singleton()->canvas_item_set_modulate(canvas_item, modulate);
 }
@@ -682,9 +679,6 @@ CanvasItem *CanvasItem::get_parent_item() const {
 
 void CanvasItem::set_self_modulate(const Color &p_self_modulate) {
 
-	if (self_modulate == p_self_modulate)
-		return;
-
 	self_modulate = p_self_modulate;
 	VisualServer::get_singleton()->canvas_item_set_self_modulate(canvas_item, self_modulate);
 }
@@ -694,9 +688,6 @@ Color CanvasItem::get_self_modulate() const {
 }
 
 void CanvasItem::set_light_mask(int p_light_mask) {
-
-	if (light_mask == p_light_mask)
-		return;
 
 	light_mask = p_light_mask;
 	VS::get_singleton()->canvas_item_set_light_mask(canvas_item, p_light_mask);

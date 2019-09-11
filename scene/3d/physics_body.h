@@ -315,7 +315,6 @@ private:
 	Ref<KinematicCollision> _get_slide_collision(int p_bounce);
 
 protected:
-	void _notification(int p_what);
 	static void _bind_methods();
 
 public:

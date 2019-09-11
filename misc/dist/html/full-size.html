@@ -180,8 +180,8 @@ $GODOT_HEAD_INCLUDE
 				[statusProgress, statusIndeterminate, statusNotice].forEach(elem => {
 					elem.style.display = 'none';
 				});
-				animationCallbacks = animationCallbacks.filter(function(value) {
-					return (value != animateStatusIndeterminate);
+				if (animateStatusIndeterminate in animationCallbacks) {
+					animationCallbacks.erase(animateStatusIndeterminate);
 				}
 				switch (mode) {
 					case 'progress':

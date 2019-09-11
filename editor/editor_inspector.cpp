@@ -1044,6 +1044,7 @@ void EditorInspectorSection::_notification(int p_what) {
 		Ref<Font> font = get_font("font", "Tree");
 		Ref<Texture> arrow;
 
+#ifdef TOOLS_ENABLED
 		if (foldable) {
 			if (object->editor_is_section_unfolded(section)) {
 				arrow = get_icon("arrow_up", "Tree");
@@ -1051,6 +1052,7 @@ void EditorInspectorSection::_notification(int p_what) {
 				arrow = get_icon("arrow", "Tree");
 			}
 		}
+#endif
 
 		Size2 size = get_size();
 		Point2 offset;
@@ -1085,6 +1087,7 @@ void EditorInspectorSection::_notification(int p_what) {
 
 		Ref<Texture> arrow;
 
+#ifdef TOOLS_ENABLED
 		if (foldable) {
 			if (object->editor_is_section_unfolded(section)) {
 				arrow = get_icon("arrow_up", "Tree");
@@ -1092,6 +1095,7 @@ void EditorInspectorSection::_notification(int p_what) {
 				arrow = get_icon("arrow", "Tree");
 			}
 		}
+#endif
 
 		Ref<Font> font = get_font("font", "Tree");
 
@@ -1151,6 +1155,7 @@ void EditorInspectorSection::setup(const String &p_section, const String &p_labe
 		vbox_added = true;
 	}
 
+#ifdef TOOLS_ENABLED
 	if (foldable) {
 		_test_unfold();
 		if (object->editor_is_section_unfolded(section)) {
@@ -1159,6 +1164,7 @@ void EditorInspectorSection::setup(const String &p_section, const String &p_labe
 			vbox->hide();
 		}
 	}
+#endif
 }
 
 void EditorInspectorSection::_gui_input(const Ref<InputEvent> &p_event) {
@@ -1166,6 +1172,7 @@ void EditorInspectorSection::_gui_input(const Ref<InputEvent> &p_event) {
 	if (!foldable)
 		return;
 
+#ifdef TOOLS_ENABLED
 	Ref<InputEventMouseButton> mb = p_event;
 	if (mb.is_valid() && mb->is_pressed() && mb->get_button_index() == BUTTON_LEFT) {
 
@@ -1184,6 +1191,7 @@ void EditorInspectorSection::_gui_input(const Ref<InputEvent> &p_event) {
 			vbox->hide();
 		}
 	}
+#endif
 }
 
 VBoxContainer *EditorInspectorSection::get_vbox() {
@@ -1197,9 +1205,11 @@ void EditorInspectorSection::unfold() {
 
 	_test_unfold();
 
+#ifdef TOOLS_ENABLED
 	object->editor_set_section_unfold(section, true);
 	vbox->show();
 	update();
+#endif
 }
 
 void EditorInspectorSection::fold() {
@@ -1209,9 +1219,11 @@ void EditorInspectorSection::fold() {
 	if (!vbox_added)
 		return; //kinda pointless
 
+#ifdef TOOLS_ENABLED
 	object->editor_set_section_unfold(section, false);
 	vbox->hide();
 	update();
+#endif
 }
 
 void EditorInspectorSection::_bind_methods() {

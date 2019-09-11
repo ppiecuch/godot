@@ -28,6 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
+#ifdef TOOLS_ENABLED
+
 #ifndef COLLADA_H
 #define COLLADA_H
 
@@ -645,3 +647,5 @@ private: // private stuff
 };
 
 #endif // COLLADA_H
+
+#endif

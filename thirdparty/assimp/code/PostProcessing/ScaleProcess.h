@@ -39,8 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ----------------------------------------------------------------------
 */
-#ifndef SCALE_PROCESS_H_
-#define SCALE_PROCESS_H_
+#pragma once
 
 #include "Common/BaseProcess.h"
 
@@ -54,11 +53,6 @@ namespace Assimp {
 
 // ---------------------------------------------------------------------------
 /** ScaleProcess: Class to rescale the whole model.
- * Now rescales animations, bones, and blend shapes properly.
- * Please note this will not write to 'scale' transform it will rewrite mesh 
- * and matrixes so that your scale values 
- * from your model package are preserved, so this is completely intentional
- * bugs should be reported as soon as they are found.
 */
 class ASSIMP_API ScaleProcess : public BaseProcess {
 public:
@@ -84,7 +78,7 @@ public:
     virtual void Execute( aiScene* pScene );
 
 private:
-    void traverseNodes( aiNode *currentNode, unsigned int nested_node_id = 0 );
+    void traverseNodes( aiNode *currentNode );
     void applyScaling( aiNode *currentNode );
 
 private:
@@ -92,6 +86,3 @@ private:
 };
 
 } // Namespace Assimp
-
-
-#endif // SCALE_PROCESS_H_

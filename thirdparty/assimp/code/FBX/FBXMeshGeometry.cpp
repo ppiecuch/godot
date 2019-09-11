@@ -115,6 +115,7 @@ MeshGeometry::MeshGeometry(uint64_t id, const Element& element, const std::strin
 
     if(tempVerts.empty()) {
         FBXImporter::LogWarn("encountered mesh with no vertices");
+        return;
     }
 
     std::vector<int> tempFaces;
@@ -122,6 +123,7 @@ MeshGeometry::MeshGeometry(uint64_t id, const Element& element, const std::strin
 
     if(tempFaces.empty()) {
         FBXImporter::LogWarn("encountered mesh with no faces");
+        return;
     }
 
     m_vertices.reserve(tempFaces.size());
@@ -610,10 +612,7 @@ void MeshGeometry::ReadVertexDataMaterials(std::vector<int>& materials_out, cons
     const std::string& ReferenceInformationType)
 {
     const size_t face_count = m_faces.size();
-    if(face_count <= 0)
-    {
-        return;
-    }
+    ai_assert(face_count);
 
     // materials are handled separately. First of all, they are assigned per-face
     // and not per polyvert. Secondly, ReferenceInformationType=IndexToDirect
