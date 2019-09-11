@@ -2467,6 +2467,7 @@ String VisualShaderNodeExpression::generate_code(Shader::Mode p_mode, VisualShad
 	if (pre_symbols.empty()) {
 		pre_symbols.push_back("\t");
 		pre_symbols.push_back(",");
+		pre_symbols.push_back(";");
 		pre_symbols.push_back("{");
 		pre_symbols.push_back("[");
 		pre_symbols.push_back("]");
@@ -2484,9 +2485,9 @@ String VisualShaderNodeExpression::generate_code(Shader::Mode p_mode, VisualShad
 
 	static Vector<String> post_symbols;
 	if (post_symbols.empty()) {
-		post_symbols.push_back("\0");
 		post_symbols.push_back("\t");
 		post_symbols.push_back("\n");
+		post_symbols.push_back(",");
 		post_symbols.push_back(";");
 		post_symbols.push_back("}");
 		post_symbols.push_back("[");

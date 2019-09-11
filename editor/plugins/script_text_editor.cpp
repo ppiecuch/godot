@@ -1436,8 +1436,6 @@ bool ScriptTextEditor::can_drop_data_fw(const Point2 &p_point, const Variant &p_
 	return false;
 }
 
-#ifdef TOOLS_ENABLED
-
 static Node *_find_script_node(Node *p_edited_scene, Node *p_current_node, const Ref<Script> &script) {
 
 	if (p_edited_scene != p_current_node && p_current_node->get_owner() != p_edited_scene)
@@ -1456,14 +1454,6 @@ static Node *_find_script_node(Node *p_edited_scene, Node *p_current_node, const
 
 	return NULL;
 }
-
-#else
-
-static Node *_find_script_node(Node *p_edited_scene, Node *p_current_node, const Ref<Script> &script) {
-
-	return NULL;
-}
-#endif
 
 void ScriptTextEditor::drop_data_fw(const Point2 &p_point, const Variant &p_data, Control *p_from) {
 
@@ -1750,6 +1740,13 @@ ScriptTextEditor::ScriptTextEditor() {
 	color_picker->set_deferred_mode(true);
 	color_panel->add_child(color_picker);
 	color_picker->connect("color_changed", this, "_color_changed");
+
+	// get default color picker mode from editor settings
+	int default_color_mode = EDITOR_GET("interface/inspector/default_color_picker_mode");
+	if (default_color_mode == 1)
+		color_picker->set_hsv_mode(true);
+	else if (default_color_mode == 2)
+		color_picker->set_raw_mode(true);
 
 	edit_hb = memnew(HBoxContainer);
 
