@@ -638,21 +638,26 @@ Ref<BitmapFont> BitmapFont::get_fallback() const {
 
 float BitmapFont::draw_char(RID p_canvas_item, const Point2 &p_pos, CharType p_char, CharType p_next, const Color &p_modulate, bool p_outline) const {
 
+    return draw_char_xform(p_canvas_item, CharTransform(), p_pos, p_char, p_next, p_modulate, p_outline);
+}
+
+float BitmapFont::draw_char_xform(RID p_canvas_item, const CharTransform &p_char_xform, const Point2 &p_pos, CharType p_char, CharType p_next, const Color &p_modulate, bool p_outline) const {
+
 	const Character *c = char_map.getptr(p_char);
 
 	if (!c) {
 		if (fallback.is_valid())
 			return fallback->draw_char(p_canvas_item, p_pos, p_char, p_next, p_modulate, p_outline);
-		return 0;
+		return false;
 	}
 
-	ERR_FAIL_COND_V(c->texture_idx < -1 || c->texture_idx >= textures.size(), 0);
+	ERR_FAIL_COND_V(c->texture_idx < -1 || c->texture_idx >= textures.size(), false);
 	if (!p_outline && c->texture_idx != -1) {
 		Point2 cpos = p_pos;
 		cpos.x += c->h_align;
 		cpos.y -= ascent;
 		cpos.y += c->v_align;
-		VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item, Rect2(cpos, c->rect.size), textures[c->texture_idx]->get_rid(), c->rect, p_modulate, false, RID(), false);
+		VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item, p_char_xform.xform_dest(Rect2(cpos, c->rect.size)), textures[c->texture_idx]->get_rid(), p_char_xform.xform_tex(c->rect), p_modulate, false, RID(), false);
 	}
 
 	return get_char_size(p_char, p_next).width;

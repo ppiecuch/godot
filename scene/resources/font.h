@@ -10,7 +10,8 @@
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
-/* "Software"), to deal in the Software without restriction, including   */
+/* "Software"), to deal in t
+he Software without restriction, including   */
 /* without limitation the rights to use, copy, modify, merge, publish,   */
 /* distribute, sublicense, and/or sell copies of the Software, and to    */
 /* permit persons to whom the Software is furnished to do so, subject to */
@@ -35,6 +36,28 @@
 #include "core/resource.h"
 #include "scene/resources/texture.h"
 
+struct CharTransform {
+    // tex and dest are normalized coordinates rect: (0,0),[1,1]
+    // since we donot know the size of the characters
+    struct {
+        Vector2 offset;
+        Vector2 scale;
+    } dest;
+    struct {
+        Vector2 offset;
+        Rect2 clip;
+    } tex;
+    CharTransform() : dest({Vector2(0,0),Vector2(1,1)}),tex({Vector2(0,0),Rect2(1,1,1,1)}) {
+        // initial null transformation
+    }
+    Rect2 xform_tex(const Rect2 &rc) const {
+        return Rect2(rc.position + tex.offset * rc.position, rc.size)
+        .clip( Rect2(tex.clip.position * rc.position, tex.clip.size * rc.size) ); }
+    Rect2 xform_dest(const Rect2 &rc) const {
+        return Rect2(rc.position + dest.offset * rc.position, rc.size * dest.scale); }
+};
+
+
 class Font : public Resource {
 
 	GDCLASS(Font, Resource);
@@ -58,6 +81,7 @@ public:
 	void draw_halign(RID p_canvas_item, const Point2 &p_pos, HAlign p_align, float p_width, const String &p_text, const Color &p_modulate = Color(1, 1, 1), const Color &p_outline_modulate = Color(1, 1, 1)) const;
 
 	virtual bool has_outline() const { return false; }
+	virtual float draw_char_xform(RID p_canvas_item, const CharTransform &p_char_xform, const Point2 &p_pos, CharType p_char, CharType p_next = 0, const Color &p_modulate = Color(1, 1, 1), bool p_outline = false) const = 0;
 	virtual float draw_char(RID p_canvas_item, const Point2 &p_pos, CharType p_char, CharType p_next = 0, const Color &p_modulate = Color(1, 1, 1), bool p_outline = false) const = 0;
 
 	void update_changes();
@@ -88,11 +112,15 @@ public:
 	}
 
 	float draw_char(RID p_canvas_item, const Point2 &p_pos, CharType p_char, CharType p_next = 0, const Color &p_modulate = Color(1, 1, 1)) {
+		return draw_char(p_canvas_item, CharTransform(), p_pos, p_char, p_next, p_modulate);
+	}
+
+	float draw_char(RID p_canvas_item, const CharTransform &p_char_xform, const Point2 &p_pos, CharType p_char, CharType p_next = 0, const Color &p_modulate = Color(1, 1, 1)) {
 		if (has_outline) {
 			PendingDraw draw = { p_canvas_item, p_pos, p_char, p_next, p_modulate };
 			pending_draws.push_back(draw);
 		}
-		return font->draw_char(p_canvas_item, p_pos, p_char, p_next, has_outline ? outline_color : p_modulate, has_outline);
+		return font->draw_char_xform(p_canvas_item, p_char_xform, p_pos, p_char, p_next, has_outline ? outline_color : p_modulate, has_outline);
 	}
 
 	~FontDrawer() {
@@ -192,7 +220,8 @@ public:
 	void set_distance_field_hint(bool p_distance_field);
 	bool is_distance_field_hint() const;
 
-	float draw_char(RID p_canvas_item, const Point2 &p_pos, CharType p_char, CharType p_next = 0, const Color &p_modulate = Color(1, 1, 1), bool p_outline = false) const;
+	virtual float draw_char_xform(RID p_canvas_item, const CharTransform &p_char_xform, const Point2 &p_pos, CharType p_char, CharType p_next = 0, const Color &p_modulate = Color(1, 1, 1), bool p_outline = false) const;
+	virtual float draw_char(RID p_canvas_item, const Point2 &p_pos, CharType p_char, CharType p_next = 0, const Color &p_modulate = Color(1, 1, 1), bool p_outline = false) const;
 
 	BitmapFont();
 	~BitmapFont();

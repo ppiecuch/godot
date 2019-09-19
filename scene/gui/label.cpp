@@ -33,6 +33,39 @@
 #include "core/project_settings.h"
 #include "core/translation.h"
 
+static void dump_xform(const CharTransform &xform) {
+    print_line("CharTransform:");
+    print_line(vformat(" dest{scale:"+xform.dest.scale+" offset:"+xform.dest.offset+"}"));
+    print_line(vformat(" texture{clip:"+xform.tex.clip+" offset:"+xform.tex.offset+"}"));
+}
+
+struct AnimationSlide : public AnimationController {
+
+    virtual void init_xform(float duration, AnimationTransform &a) {
+    }
+
+    virtual void update(float dt, AnimationTransform &xform) {
+    }
+};
+
+struct AnimationRotate : public AnimationController {
+
+    virtual void init_xform(float duration, AnimationTransform &a) {
+        a = AnimationTransform();
+        a.duration = duration;
+    }
+
+    virtual void update(float dt, AnimationTransform &a) {
+        if (a.current < a.duration) {
+            const float progress = fabs( a.current / a.duration );
+            a.xform.dest.scale.x *= progress;
+
+            a.current += dt;
+        }
+    }
+};
+
+
 void Label::set_autowrap(bool p_autowrap) {
 
 	autowrap = p_autowrap;
@@ -64,16 +97,22 @@ void Label::_notification(int p_what) {
 
 	if (p_what == NOTIFICATION_TRANSLATION_CHANGED) {
 
-		String new_text = tr(text);
-		if (new_text == xl_text)
-			return; //nothing new
-		xl_text = new_text;
-
+        if (animate) {
+            String new_text = tr(text);
+            if (new_text == xl_text)
+                return; //nothing new
+            xl_text = new_text;
+        } else {
+            String new_text = tr(transition_text.text);
+            if (new_text == transition_text.xl_text)
+                return; //nothing new
+            transition_text.xl_text = new_text;
+        }
 		regenerate_word_cache();
 		update();
 	}
 
-	if (p_what == NOTIFICATION_DRAW) {
+	else if (p_what == NOTIFICATION_DRAW) {
 
 		if (clip) {
 			VisualServer::get_singleton()->canvas_item_set_clip(get_canvas_item(), true);
@@ -261,14 +300,26 @@ void Label::_notification(int p_what) {
 				for (int i = 0; i < from->word_len; i++) {
 
 					if (visible_chars < 0 || chars_total < visible_chars) {
-						CharType c = xl_text[i + pos];
-						CharType n = xl_text[i + pos + 1];
-						if (uppercase) {
-							c = String::char_uppercase(c);
-							n = String::char_uppercase(n);
-						}
 
-						x_ofs += drawer.draw_char(ci, Point2(x_ofs, y_ofs), c, n, font_color);
+						if (animate && transition_text.xl_text.length() > i + pos) {
+                            CharType c = transition_xform.current < 0 ? xl_text[i + pos] : transition_text.xl_text[i + pos];
+                            CharType n = transition_xform.current < 0 ? xl_text[i + pos + 1] : transition_text.xl_text[i + pos + 1];
+                            if (uppercase) {
+                                c = String::char_uppercase(c);
+                                n = String::char_uppercase(n);
+                            }
+                            print_line("draw char "+c); dump_xform(transition_xform.xform);
+                            x_ofs += drawer.draw_char(ci, transition_xform.xform, Point2(x_ofs, y_ofs), c, n, font_color);
+                        } else {
+                            CharType c = xl_text[i + pos];
+                            CharType n = xl_text[i + pos + 1];
+                            if (uppercase) {
+                                c = String::char_uppercase(c);
+                                n = String::char_uppercase(n);
+                            }
+                            print_line("draw char "+c);
+                            x_ofs += drawer.draw_char(ci, Point2(x_ofs, y_ofs), c, n, font_color);
+                        }
 						chars_total++;
 					}
 				}
@@ -280,15 +331,28 @@ void Label::_notification(int p_what) {
 		}
 	}
 
-	if (p_what == NOTIFICATION_THEME_CHANGED) {
+	else if (p_what == NOTIFICATION_THEME_CHANGED) {
 
 		word_cache_dirty = true;
 		update();
 	}
-	if (p_what == NOTIFICATION_RESIZED) {
+
+	else if (p_what == NOTIFICATION_RESIZED) {
 
 		word_cache_dirty = true;
 	}
+
+	else if (p_what == NOTIFICATION_INTERNAL_PROCESS) {
+
+        if (animate) {
+            float dt = 1.0/transition_duration * get_process_delta_time();
+
+            print_line(vformat("dt: %0.2f\n", dt));
+            dump_xform(transition_xform.xform);
+
+            transition_controller->update(dt, transition_xform);
+        }
+    }
 }
 
 Size2 Label::get_minimum_size() const {
@@ -370,10 +434,12 @@ int Label::get_visible_line_count() const {
 
 void Label::regenerate_word_cache() {
 
-	while (word_cache) {
+    String label_text = animate ? transition_text.xl_text : xl_text;
+    WordCache *word_cache_root = animate ? transition_text.word_cache : word_cache;
+	while (word_cache_root) {
 
-		WordCache *current = word_cache;
-		word_cache = current->next;
+		WordCache *current = word_cache_root;
+		word_cache_root = current->next;
 		memdelete(current);
 	}
 
@@ -393,9 +459,9 @@ void Label::regenerate_word_cache() {
 
 	WordCache *last = NULL;
 
-	for (int i = 0; i <= xl_text.length(); i++) {
+	for (int i = 0; i <= label_text.length(); i++) {
 
-		CharType current = i < xl_text.length() ? xl_text[i] : L' '; //always a space at the end, so the algo works
+		CharType current = i < label_text.length() ? label_text[i] : L' '; //always a space at the end, so the algo works
 
 		if (uppercase)
 			current = String::char_uppercase(current);
@@ -412,10 +478,10 @@ void Label::regenerate_word_cache() {
 
 			if (current_word_size > 0) {
 				WordCache *wc = memnew(WordCache);
-				if (word_cache) {
+				if (word_cache_root) {
 					last->next = wc;
 				} else {
-					word_cache = wc;
+					word_cache_root = wc;
 				}
 				last = wc;
 
@@ -433,7 +499,7 @@ void Label::regenerate_word_cache() {
 				total_char_cache++;
 			}
 
-			if (i < xl_text.length() && xl_text[i] == ' ') {
+			if (i < label_text.length() && label_text[i] == ' ') {
 				if (line_width > 0 || last == NULL || last->char_pos != WordCache::CHAR_WRAPLINE) {
 					space_count++;
 					line_width += space_width;
@@ -448,7 +514,7 @@ void Label::regenerate_word_cache() {
 				word_pos = i;
 			}
 			// ceiling to ensure autowrapping does not cut text
-			char_width = Math::ceil(font->get_char_size(current, xl_text[i + 1]).width);
+			char_width = Math::ceil(font->get_char_size(current, label_text[i + 1]).width);
 			current_word_size += char_width;
 			line_width += char_width;
 			total_char_cache++;
@@ -458,10 +524,10 @@ void Label::regenerate_word_cache() {
 			if (separatable) {
 				if (current_word_size > 0) {
 					WordCache *wc = memnew(WordCache);
-					if (word_cache) {
+					if (word_cache_root) {
 						last->next = wc;
 					} else {
-						word_cache = wc;
+						word_cache_root = wc;
 					}
 					last = wc;
 
@@ -475,10 +541,10 @@ void Label::regenerate_word_cache() {
 			}
 
 			WordCache *wc = memnew(WordCache);
-			if (word_cache) {
+			if (word_cache_root) {
 				last->next = wc;
 			} else {
-				word_cache = wc;
+				word_cache_root = wc;
 			}
 			last = wc;
 
@@ -504,7 +570,19 @@ void Label::regenerate_word_cache() {
 		//helps speed up some labels that may change a lot, as no resizing is requested. Do not change.
 		minimum_size_changed();
 	}
+
+	if (animate) {
+        transition_text.word_cache = word_cache_root;
+    } else {
+        word_cache = word_cache_root;
+    }
 	word_cache_dirty = false;
+}
+
+void Label::clear_pending_animations() { // reset animation
+    transition_xform = AnimationTransform();
+    xl_text = transition_text.xl_text;
+    text = transition_text.text;
 }
 
 void Label::set_align(Align p_align) {
@@ -535,11 +613,18 @@ void Label::set_text(const String &p_string) {
 
 	if (text == p_string)
 		return;
-	text = p_string;
-	xl_text = tr(p_string);
-	word_cache_dirty = true;
-	if (percent_visible < 1)
-		visible_chars = get_total_character_count() * percent_visible;
+    if (animate) {
+        transition_text.text = p_string;
+        transition_text.xl_text = tr(p_string);
+        transition_controller->init_xform(transition_duration, transition_xform);
+        dump_xform(transition_xform.xform);
+    } else {
+        text = p_string;
+        xl_text = tr(p_string);
+    }
+    word_cache_dirty = true;
+    if (percent_visible < 1)
+        visible_chars = get_total_character_count() * percent_visible;
 	update();
 }
 
@@ -626,6 +711,55 @@ int Label::get_total_character_count() const {
 	return total_char_cache;
 }
 
+bool Label::is_animate() const {
+
+    return animate;
+}
+
+void Label::set_animate(bool p_animate) {
+	animate = p_animate;
+    if (!p_animate) {
+        clear_pending_animations();
+    }
+	update();
+}
+
+void Label::set_transition_duration(float p_duration) {
+    if (p_duration != transition_duration) {
+        transition_duration = p_duration;
+        update();
+    }
+}
+
+float Label::get_transition_duration() const {
+
+    return transition_duration;
+}
+
+void Label::set_transition_effect(TransitionEffect p_effect) {
+
+    if (p_effect != transition_effect) {
+        transition_effect = p_effect;
+        update();
+    }
+}
+
+Label::TransitionEffect Label::get_transition_effect() const {
+    return transition_effect;
+}
+
+void Label::set_transition_behaviour(TransitionBehaviour p_behaviour) {
+
+    if (p_behaviour != transition_behaviour) {
+        transition_behaviour = p_behaviour;
+        update();
+    }
+}
+
+Label::TransitionBehaviour Label::get_transition_behaviour() const {
+    return transition_behaviour;
+}
+
 void Label::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_align", "align"), &Label::set_align);
@@ -634,6 +768,14 @@ void Label::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_valign"), &Label::get_valign);
 	ClassDB::bind_method(D_METHOD("set_text", "text"), &Label::set_text);
 	ClassDB::bind_method(D_METHOD("get_text"), &Label::get_text);
+	ClassDB::bind_method(D_METHOD("set_animate"), &Label::set_animate);
+	ClassDB::bind_method(D_METHOD("is_animate"), &Label::is_animate);
+	ClassDB::bind_method(D_METHOD("set_transition_duration"), &Label::set_transition_duration);
+	ClassDB::bind_method(D_METHOD("get_transition_duration"), &Label::get_transition_duration);
+	ClassDB::bind_method(D_METHOD("set_transition_effect"), &Label::set_transition_effect);
+	ClassDB::bind_method(D_METHOD("get_transition_effect"), &Label::get_transition_effect);
+	ClassDB::bind_method(D_METHOD("set_transition_behaviour"), &Label::set_transition_behaviour);
+	ClassDB::bind_method(D_METHOD("get_transition_behaviour"), &Label::get_transition_behaviour);
 	ClassDB::bind_method(D_METHOD("set_autowrap", "enable"), &Label::set_autowrap);
 	ClassDB::bind_method(D_METHOD("has_autowrap"), &Label::has_autowrap);
 	ClassDB::bind_method(D_METHOD("set_clip_text", "enable"), &Label::set_clip_text);
@@ -664,6 +806,10 @@ void Label::_bind_methods() {
 	BIND_ENUM_CONSTANT(VALIGN_FILL);
 
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "text", PROPERTY_HINT_MULTILINE_TEXT, "", PROPERTY_USAGE_DEFAULT_INTL), "set_text", "get_text");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "animate"), "set_animate", "is_animate");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "transition_duration"), "set_transition_duration", "get_transition_duration");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "transition_effect", PROPERTY_HINT_ENUM, "Slide,Rotate"), "set_transition_effect", "get_transition_effect");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "transition_behaviour", PROPERTY_HINT_ENUM, "All,Diff"), "set_transition_behaviour", "get_transition_behaviour");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "align", PROPERTY_HINT_ENUM, "Left,Center,Right,Fill"), "set_align", "get_align");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "valign", PROPERTY_HINT_ENUM, "Top,Center,Bottom,Fill"), "set_valign", "get_valign");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "autowrap"), "set_autowrap", "has_autowrap");
@@ -686,6 +832,11 @@ Label::Label(const String &p_text) {
 	line_count = 0;
 	set_v_size_flags(0);
 	clip = false;
+    animate = false;
+	transition_text.xl_text = "";
+	transition_text.word_cache = NULL;
+    transition_duration = 100;
+    transition_controller = new AnimationRotate;
 	set_mouse_filter(MOUSE_FILTER_IGNORE);
 	total_char_cache = 0;
 	visible_chars = -1;

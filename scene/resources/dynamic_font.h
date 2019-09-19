@@ -283,6 +283,7 @@ public:
 
 	virtual bool has_outline() const;
 
+	virtual float draw_char_xform(RID p_canvas_item, const CharTransform &p_char_xform, const Point2 &p_pos, CharType p_char, CharType p_next = 0, const Color &p_modulate = Color(1, 1, 1), bool p_outline = false) const;
 	virtual float draw_char(RID p_canvas_item, const Point2 &p_pos, CharType p_char, CharType p_next = 0, const Color &p_modulate = Color(1, 1, 1), bool p_outline = false) const;
 
 	SelfList<DynamicFont> font_list;

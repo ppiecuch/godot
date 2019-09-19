@@ -33,6 +33,17 @@
 
 #include "scene/gui/control.h"
 
+struct AnimationTransform {
+    CharTransform xform;
+    float current;
+    float duration;
+};
+
+struct AnimationController {
+    virtual void init_xform(float duration, AnimationTransform &xform) = 0;
+    virtual void update(float dt, AnimationTransform &xform) = 0;
+};
+
 class Label : public Control {
 
 	GDCLASS(Label, Control);
@@ -53,6 +64,16 @@ public:
 		VALIGN_BOTTOM,
 		VALIGN_FILL
 	};
+
+    enum TransitionEffect {
+        TRANSITIONEFFECT_SLIDE,
+        TRANSITIONEFFECT_ROTATE
+    };
+
+    enum TransitionBehaviour {
+        TRANSITIONBEHAVIOUR_ALL,
+        TRANSITIONBEHAVIOUR_DIFF
+    };
 
 private:
 	Align align;
@@ -98,6 +119,20 @@ private:
 	int lines_skipped;
 	int max_lines_visible;
 
+    bool animate;
+    real_t transition_duration;
+    struct {
+        String text;
+        String xl_text;
+        WordCache *word_cache;
+    } transition_text;
+    TransitionEffect transition_effect;
+    TransitionBehaviour transition_behaviour;
+    AnimationTransform transition_xform;
+    AnimationController *transition_controller;
+
+    void clear_pending_animations();
+
 protected:
 	void _notification(int p_what);
 
@@ -125,6 +160,18 @@ public:
 	int get_visible_characters() const;
 	int get_total_character_count() const;
 
+	void set_animate(bool p_animate);
+	bool is_animate() const;
+
+	void set_transition_duration(float p_duration);
+	float get_transition_duration() const;
+
+    void set_transition_effect(TransitionEffect p_effect);
+    TransitionEffect get_transition_effect() const;
+
+    void set_transition_behaviour(TransitionBehaviour p_behaviour);
+    TransitionBehaviour get_transition_behaviour() const;
+
 	void set_clip_text(bool p_clip);
 	bool is_clipping_text() const;
 
@@ -147,5 +194,7 @@ public:
 
 VARIANT_ENUM_CAST(Label::Align);
 VARIANT_ENUM_CAST(Label::VAlign);
+VARIANT_ENUM_CAST(Label::TransitionEffect);
+VARIANT_ENUM_CAST(Label::TransitionBehaviour);
 
 #endif
