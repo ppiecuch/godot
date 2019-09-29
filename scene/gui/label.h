@@ -37,11 +37,20 @@ struct AnimationTransform {
     CharTransform xform;
     float current;
     float duration;
+
+    AnimationTransform() : current(0), duration(0) { }
 };
 
 struct AnimationController {
+    enum AnimCtrlOpts {
+        ANIMCTRL_OK  = 0,
+        ANIMCTRL_UPDATE_TEXT = 1, // update text to transition text
+        ANIMCTRL_DONE  = 2,       // transition complited
+    };
+
     virtual void init_xform(float duration, AnimationTransform &xform) = 0;
-    virtual void update(float dt, AnimationTransform &xform) = 0;
+    virtual int update(float dt, AnimationTransform &xform) = 0;
+    virtual bool is_active() const = 0;
 };
 
 class Label : public Control {
@@ -72,7 +81,7 @@ public:
 
     enum TransitionBehaviour {
         TRANSITIONBEHAVIOUR_ALL,
-        TRANSITIONBEHAVIOUR_DIFF
+        TRANSITIONBEHAVIOUR_NEW
     };
 
 private:
@@ -86,7 +95,7 @@ private:
 	int line_count;
 	bool uppercase;
 
-	int get_longest_line_width() const;
+	int get_longest_line_width(const String &s) const;
 
 	struct WordCache {
 
@@ -94,7 +103,7 @@ private:
 			CHAR_NEWLINE = -1,
 			CHAR_WRAPLINE = -2
 		};
-		int char_pos; // if -1, then newline
+		int char_pos; // if -1, then newline (CHAR_NEWLINE)
 		int word_len;
 		int pixel_width;
 		int space_count;
@@ -109,6 +118,7 @@ private:
 	};
 
 	bool word_cache_dirty;
+    WordCache *calculate_word_cache(const Ref<Font> &font, const String &label_text, int &line_count, int &total_char_cache, int &width) const;
 	void regenerate_word_cache();
 
 	float percent_visible;
@@ -125,6 +135,9 @@ private:
         String text;
         String xl_text;
         WordCache *word_cache;
+        int width;
+        int line_count;
+        int total_char_cache;
     } transition_text;
     TransitionEffect transition_effect;
     TransitionBehaviour transition_behaviour;
@@ -132,6 +145,7 @@ private:
     AnimationController *transition_controller;
 
     void clear_pending_animations();
+    CharType get_pending_char_at(int line, int pos) const;
 
 protected:
 	void _notification(int p_what);

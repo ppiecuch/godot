@@ -54,7 +54,7 @@ struct CharTransform {
         return Rect2(rc.position + tex.offset * rc.position, rc.size)
         .clip( Rect2(tex.clip.position * rc.position, tex.clip.size * rc.size) ); }
     Rect2 xform_dest(const Rect2 &rc) const {
-        return Rect2(rc.position + dest.offset * rc.position, rc.size * dest.scale); }
+        return Rect2(rc.position + dest.offset * rc.size, rc.size * dest.scale); }
 };
 
 
