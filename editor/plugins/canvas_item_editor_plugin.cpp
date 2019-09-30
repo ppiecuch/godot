@@ -1760,6 +1760,9 @@ bool CanvasItemEditor::_gui_input_resize(const Ref<InputEvent> &p_event) {
 			if (key_auto_insert_button->is_pressed()) {
 				_insert_animation_keys(false, false, true, true);
 			}
+
+			snap_target[0] = SNAP_TARGET_NONE;
+			snap_target[1] = SNAP_TARGET_NONE;
 			drag_type = DRAG_NONE;
 			viewport->update();
 			return true;
@@ -1768,6 +1771,8 @@ bool CanvasItemEditor::_gui_input_resize(const Ref<InputEvent> &p_event) {
 		// Cancel a drag
 		if (b.is_valid() && b->get_button_index() == BUTTON_RIGHT && b->is_pressed()) {
 			_restore_canvas_item_state(drag_selection);
+			snap_target[0] = SNAP_TARGET_NONE;
+			snap_target[1] = SNAP_TARGET_NONE;
 			drag_type = DRAG_NONE;
 			viewport->update();
 			return true;
@@ -1978,6 +1983,11 @@ bool CanvasItemEditor::_gui_input_move(const Ref<InputEvent> &p_event) {
 			if (key_auto_insert_button->is_pressed()) {
 				_insert_animation_keys(true, false, false, true);
 			}
+
+			//Make sure smart snapping lines disappear.
+			snap_target[0] = SNAP_TARGET_NONE;
+			snap_target[1] = SNAP_TARGET_NONE;
+
 			drag_type = DRAG_NONE;
 			viewport->update();
 			return true;
@@ -1986,6 +1996,8 @@ bool CanvasItemEditor::_gui_input_move(const Ref<InputEvent> &p_event) {
 		// Cancel a drag
 		if (b.is_valid() && b->get_button_index() == BUTTON_RIGHT && b->is_pressed()) {
 			_restore_canvas_item_state(drag_selection, true);
+			snap_target[0] = SNAP_TARGET_NONE;
+			snap_target[1] = SNAP_TARGET_NONE;
 			drag_type = DRAG_NONE;
 			viewport->update();
 			return true;
@@ -3095,14 +3107,12 @@ void CanvasItemEditor::_draw_selection() {
 
 					viewport->draw_set_transform_matrix(simple_xform);
 					Rect2 x_handle_rect = Rect2(scale_factor.x * EDSCALE, -5 * EDSCALE, 10 * EDSCALE, 10 * EDSCALE);
-					Color x_axis_color(1.0, 0.4, 0.4, 0.6);
-					viewport->draw_rect(x_handle_rect, x_axis_color);
-					viewport->draw_line(Point2(), Point2(scale_factor.x * EDSCALE, 0), x_axis_color, Math::round(EDSCALE), true);
+					viewport->draw_rect(x_handle_rect, get_color("axis_x_color", "Editor"));
+					viewport->draw_line(Point2(), Point2(scale_factor.x * EDSCALE, 0), get_color("axis_x_color", "Editor"), Math::round(EDSCALE), true);
 
 					Rect2 y_handle_rect = Rect2(-5 * EDSCALE, -(scale_factor.y + 10) * EDSCALE, 10 * EDSCALE, 10 * EDSCALE);
-					Color y_axis_color(0.4, 1.0, 0.4, 0.6);
-					viewport->draw_rect(y_handle_rect, y_axis_color);
-					viewport->draw_line(Point2(), Point2(0, -scale_factor.y * EDSCALE), y_axis_color, Math::round(EDSCALE), true);
+					viewport->draw_rect(y_handle_rect, get_color("axis_y_color", "Editor"));
+					viewport->draw_line(Point2(), Point2(0, -scale_factor.y * EDSCALE), get_color("axis_y_color", "Editor"), Math::round(EDSCALE), true);
 
 					viewport->draw_set_transform_matrix(viewport->get_transform());
 				}
@@ -3182,11 +3192,8 @@ void CanvasItemEditor::_draw_axis() {
 
 	if (show_origin) {
 
-		Color x_axis_color(1.0, 0.4, 0.4, 0.6);
-		Color y_axis_color(0.4, 1.0, 0.4, 0.6);
-
-		_draw_straight_line(Point2(), Point2(1, 0), x_axis_color);
-		_draw_straight_line(Point2(), Point2(0, 1), y_axis_color);
+		_draw_straight_line(Point2(), Point2(1, 0), get_color("axis_x_color", "Editor") * Color(1, 1, 1, 0.75));
+		_draw_straight_line(Point2(), Point2(0, 1), get_color("axis_y_color", "Editor") * Color(1, 1, 1, 0.75));
 	}
 
 	if (show_viewport) {
@@ -3671,7 +3678,7 @@ void CanvasItemEditor::_notification(int p_what) {
 		scale_button->set_icon(get_icon("ToolScale", "EditorIcons"));
 		rotate_button->set_icon(get_icon("ToolRotate", "EditorIcons"));
 		snap_button->set_icon(get_icon("Snap", "EditorIcons"));
-		snap_config_menu->set_icon(get_icon("GuiMiniTabMenu", "EditorIcons"));
+		snap_config_menu->set_icon(get_icon("GuiTabMenu", "EditorIcons"));
 		skeleton_menu->set_icon(get_icon("Bone", "EditorIcons"));
 		pan_button->set_icon(get_icon("ToolPan", "EditorIcons"));
 		ruler_button->set_icon(get_icon("Ruler", "EditorIcons"));
@@ -3689,7 +3696,6 @@ void CanvasItemEditor::_notification(int p_what) {
 		key_auto_insert_button->set_icon(get_icon("AutoKey", "EditorIcons"));
 
 		zoom_minus->set_icon(get_icon("ZoomLess", "EditorIcons"));
-		zoom_reset->set_icon(get_icon("ZoomReset", "EditorIcons"));
 		zoom_plus->set_icon(get_icon("ZoomMore", "EditorIcons"));
 
 		presets_menu->set_icon(get_icon("ControlLayout", "EditorIcons"));
@@ -4047,7 +4053,20 @@ void CanvasItemEditor::_zoom_on_position(float p_zoom, Point2 p_position) {
 	view_offset.x = Math::round(view_offset.x + ofs.x);
 	view_offset.y = Math::round(view_offset.y + ofs.y);
 
+	_update_zoom_label();
 	update_viewport();
+}
+
+void CanvasItemEditor::_update_zoom_label() {
+	String zoom_text;
+	if (zoom >= 10) {
+		// Don't show a decimal when the zoom level is higher than 1000 %
+		zoom_text = rtos(Math::round(zoom * 100)) + " %";
+	} else {
+		zoom_text = rtos(Math::stepify(zoom * 100, 0.1)) + " %";
+	}
+
+	zoom_reset->set_text(zoom_text);
 }
 
 void CanvasItemEditor::_button_zoom_minus() {
@@ -4822,6 +4841,7 @@ void CanvasItemEditor::set_state(const Dictionary &p_state) {
 	Dictionary state = p_state;
 	if (state.has("zoom")) {
 		zoom = p_state["zoom"];
+		_update_zoom_label();
 	}
 
 	if (state.has("ofs")) {
@@ -5042,6 +5062,8 @@ CanvasItemEditor::CanvasItemEditor(EditorNode *p_editor) {
 	snap_rotation = false;
 	snap_relative = false;
 	snap_pixel = false;
+	snap_target[0] = SNAP_TARGET_NONE;
+	snap_target[1] = SNAP_TARGET_NONE;
 
 	anchors_mode = false;
 
@@ -5139,6 +5161,8 @@ CanvasItemEditor::CanvasItemEditor(EditorNode *p_editor) {
 	zoom_hb = memnew(HBoxContainer);
 	viewport->add_child(zoom_hb);
 	zoom_hb->set_begin(Point2(5, 5));
+	// Bring the zoom percentage closer to the zoom buttons
+	zoom_hb->add_constant_override("separation", Math::round(-8 * EDSCALE));
 
 	zoom_minus = memnew(ToolButton);
 	zoom_hb->add_child(zoom_minus);
@@ -5151,6 +5175,9 @@ CanvasItemEditor::CanvasItemEditor(EditorNode *p_editor) {
 	zoom_reset->connect("pressed", this, "_button_zoom_reset");
 	zoom_reset->set_shortcut(ED_SHORTCUT("canvas_item_editor/zoom_reset", TTR("Zoom Reset"), KEY_MASK_CMD | KEY_0));
 	zoom_reset->set_focus_mode(FOCUS_NONE);
+	zoom_reset->set_text_align(Button::TextAlign::ALIGN_CENTER);
+	// Prevent the button's size from changing when the text size changes
+	zoom_reset->set_custom_minimum_size(Size2(75 * EDSCALE, 0));
 
 	zoom_plus = memnew(ToolButton);
 	zoom_hb->add_child(zoom_plus);

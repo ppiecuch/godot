@@ -97,7 +97,7 @@ void Font::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_height"), &Font::get_height);
 	ClassDB::bind_method(D_METHOD("is_distance_field_hint"), &Font::is_distance_field_hint);
 	ClassDB::bind_method(D_METHOD("get_string_size", "string"), &Font::get_string_size);
-	ClassDB::bind_method(D_METHOD("get_wordwrap_string_size", "string", "p_width"), &Font::get_wordwrap_string_size);
+	ClassDB::bind_method(D_METHOD("get_wordwrap_string_size", "string", "width"), &Font::get_wordwrap_string_size);
 	ClassDB::bind_method(D_METHOD("has_outline"), &Font::has_outline);
 	ClassDB::bind_method(D_METHOD("draw_char", "canvas_item", "position", "char", "next", "modulate", "outline"), &Font::draw_char, DEFVAL(-1), DEFVAL(Color(1, 1, 1)), DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("update_changes"), &Font::update_changes);
@@ -454,7 +454,7 @@ float BitmapFont::get_descent() const {
 
 void BitmapFont::add_texture(const Ref<Texture> &p_texture) {
 
-	ERR_FAIL_COND(p_texture.is_null());
+	ERR_FAIL_COND_MSG(p_texture.is_null(), "It's not a reference to a valid Texture object.");
 	textures.push_back(p_texture);
 }
 
@@ -698,11 +698,6 @@ void BitmapFont::_bind_methods() {
     ClassDB::bind_method(D_METHOD("set_height", "px"), &BitmapFont::set_height);
 	ClassDB::bind_method(D_METHOD("set_ascent", "px"), &BitmapFont::set_ascent);
 
-    ClassDB::bind_method(D_METHOD("set_horizontal_spacing", "px"), &BitmapFont::set_horizontal_spacing);
-	ClassDB::bind_method(D_METHOD("get_horizontal_spacing", "px"), &BitmapFont::get_horizontal_spacing);
-    ClassDB::bind_method(D_METHOD("set_vertical_spacing", "px"), &BitmapFont::set_vertical_spacing);
-	ClassDB::bind_method(D_METHOD("get_vertical_spacing", "px"), &BitmapFont::get_vertical_spacing);
-
 	ClassDB::bind_method(D_METHOD("add_kerning_pair", "char_a", "char_b", "kerning"), &BitmapFont::add_kerning_pair);
 	ClassDB::bind_method(D_METHOD("get_kerning_pair", "char_a", "char_b"), &BitmapFont::get_kerning_pair);
 
@@ -736,8 +731,6 @@ void BitmapFont::_bind_methods() {
 
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "height", PROPERTY_HINT_RANGE, "-1024,1024,1"), "set_height", "get_height");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "ascent", PROPERTY_HINT_RANGE, "-1024,1024,1"), "set_ascent", "get_ascent");
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "offset horizontal spacing", PROPERTY_HINT_RANGE, "-128,128,1"), "set_horizontal_spacing", "get_horizontal_spacing");
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "offset vertical spacing", PROPERTY_HINT_RANGE, "-128,128,1"), "set_vertical_spacing", "get_vertical_spacing");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "distance_field"), "set_distance_field_hint", "is_distance_field_hint");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "fallback", PROPERTY_HINT_RESOURCE_TYPE, "BitmapFont"), "set_fallback", "get_fallback");
 }

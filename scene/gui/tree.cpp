@@ -328,7 +328,7 @@ void TreeItem::set_collapsed(bool p_collapsed) {
 
 			ci = ci->parent;
 		}
-		if (ci) { // collapsing cursor/selectd, move it!
+		if (ci) { // collapsing cursor/selected, move it!
 
 			if (tree->select_mode == Tree::SELECT_MULTI) {
 
@@ -546,6 +546,11 @@ Ref<Texture> TreeItem::get_button(int p_column, int p_idx) const {
 	ERR_FAIL_INDEX_V(p_column, cells.size(), Ref<Texture>());
 	ERR_FAIL_INDEX_V(p_idx, cells[p_column].buttons.size(), Ref<Texture>());
 	return cells[p_column].buttons[p_idx].texture;
+}
+String TreeItem::get_button_tooltip(int p_column, int p_idx) const {
+	ERR_FAIL_INDEX_V(p_column, cells.size(), String());
+	ERR_FAIL_INDEX_V(p_idx, cells[p_column].buttons.size(), String());
+	return cells[p_column].buttons[p_idx].tooltip;
 }
 int TreeItem::get_button_id(int p_column, int p_idx) const {
 	ERR_FAIL_INDEX_V(p_column, cells.size(), -1);
@@ -795,6 +800,7 @@ void TreeItem::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("add_button", "column", "button", "button_idx", "disabled", "tooltip"), &TreeItem::add_button, DEFVAL(-1), DEFVAL(false), DEFVAL(""));
 	ClassDB::bind_method(D_METHOD("get_button_count", "column"), &TreeItem::get_button_count);
+	ClassDB::bind_method(D_METHOD("get_button_tooltip", "column", "button_idx"), &TreeItem::get_button_tooltip);
 	ClassDB::bind_method(D_METHOD("get_button", "column", "button_idx"), &TreeItem::get_button);
 	ClassDB::bind_method(D_METHOD("set_button", "column", "button_idx", "button"), &TreeItem::set_button);
 	ClassDB::bind_method(D_METHOD("erase_button", "column", "button_idx"), &TreeItem::erase_button);
@@ -914,7 +920,6 @@ void Tree::update_cache() {
 	cache.arrow_collapsed = get_icon("arrow_collapsed");
 	cache.arrow = get_icon("arrow");
 	cache.select_arrow = get_icon("select_arrow");
-	cache.select_option = get_icon("select_option");
 	cache.updown = get_icon("updown");
 
 	cache.custom_button = get_stylebox("custom_button");
@@ -930,7 +935,6 @@ void Tree::update_cache() {
 	cache.vseparation = get_constant("vseparation");
 	cache.item_margin = get_constant("item_margin");
 	cache.button_margin = get_constant("button_margin");
-	cache.guide_width = get_constant("guide_width");
 	cache.draw_guides = get_constant("draw_guides");
 	cache.draw_relationship_lines = get_constant("draw_relationship_lines");
 	cache.relationship_line_color = get_color("relationship_line_color");
@@ -2548,7 +2552,9 @@ void Tree::_gui_input(Ref<InputEvent> p_event) {
 					} else {
 						Rect2 rect = get_selected()->get_meta("__focus_rect");
 						if (rect.has_point(Point2(b->get_position().x, b->get_position().y))) {
-							edit_selected();
+							if (!edit_selected()) {
+								emit_signal("item_double_clicked");
+							}
 						} else {
 							emit_signal("item_double_clicked");
 						}

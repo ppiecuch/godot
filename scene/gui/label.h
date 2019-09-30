@@ -94,6 +94,8 @@ private:
 	Size2 minsize;
 	int line_count;
 	bool uppercase;
+    float horizontal_spacing;
+    float vertical_spacing;
 
 	int get_longest_line_width(const String &s) const;
 
@@ -146,6 +148,8 @@ private:
 
     void clear_pending_animations();
     CharType get_pending_char_at(int line, int pos) const;
+    int get_chars_from_cache_after(WordCache *cache, int x_offset) const;
+    int get_chars_from_cache_before(WordCache *cache, int x_offset) const;
 
 protected:
 	void _notification(int p_what);
@@ -201,6 +205,12 @@ public:
 	int get_line_height() const;
 	int get_line_count() const;
 	int get_visible_line_count() const;
+
+    void set_horizontal_spacing(float p_offset);
+	float get_horizontal_spacing() const;
+    void set_vertical_spacing(float p_offset);
+	float get_vertical_spacing() const;
+
 
 	Label(const String &p_text = String());
 	~Label();

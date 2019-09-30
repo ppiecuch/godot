@@ -166,7 +166,8 @@ void Label::_notification(int p_what) {
 
 		VisualServer::get_singleton()->canvas_item_set_distance_field_mode(get_canvas_item(), font.is_valid() && font->is_distance_field_hint());
 
-		int font_h = font->get_height() + line_spacing;
+		int font_h = font->get_height() + line_spacing + vertical_spacing;
+;
 
 		int lines_visible = (size.y + line_spacing) / font_h;
 
@@ -302,6 +303,17 @@ void Label::_notification(int p_what) {
 					}
 				}
 
+                int extra_chars_before = 0, extra_chars_after = 0;
+                if (animate && transition_controller->is_active()) {
+
+                    if (from->next == to) { // last_word
+                        extra_chars_after = get_chars_from_cache_after(transition_text.word_cache, x_ofs);
+                    }
+                    if (wc == from) { // first word
+                        extra_chars_before = get_chars_from_cache_before(transition_text.word_cache, x_ofs);
+                    }
+                }
+
 				if (font_color_shadow.a > 0) {
 
 					int chars_total_shadow = chars_total; //save chars drawn
@@ -327,21 +339,28 @@ void Label::_notification(int p_what) {
 						}
 					}
 				}
-				bool first_word = wc == from;
-				bool last_word = from->next == to;
-                int extra_chars_before = 0, extra_chars_after = 0; if (last_word) {
 
-                }
-				for (int i = extra_chars_before; i < from->word_len + extra_chars_after; i++) {
+				for (int i = -extra_chars_before; i < from->word_len + extra_chars_after; i++) {
 
 					if (visible_chars < 0 || chars_total < visible_chars) {
 
-                        CharType c = xl_text[i + pos];
-                        CharType n = xl_text[i + pos + 1];
-
 						if (animate && transition_controller->is_active()) {
 
+                            CharType c,n;
                             CharTransform xform = transition_xform.xform;
+
+                            if (i < 0) {
+
+                                c = get_pending_char_at(line, -i);
+                                n = get_pending_char_at(line, -i+1);
+                            } else if (i >= from->word_len) {
+
+                                c = get_pending_char_at(line, from->word_len + i);
+                                n = get_pending_char_at(line, from->word_len + i + 1);
+                            } else {
+
+
+                            }
 
                             if (transition_behaviour == TRANSITIONBEHAVIOUR_NEW) {
                                 CharType c_ = get_pending_char_at(line, line_pos);
@@ -361,15 +380,19 @@ void Label::_notification(int p_what) {
                                 c = String::char_uppercase(c);
                                 n = String::char_uppercase(n);
                             }
-                            x_ofs += drawer.draw_char(ci, xform, Point2(x_ofs, y_ofs), c, n, font_color);
+                            x_ofs += drawer.draw_char(ci, xform, Point2(x_ofs, y_ofs), c, n, font_color) + horizontal_spacing;
                         } else {
+                            CharType c = xl_text[i + pos];
+                            CharType n = xl_text[i + pos + 1];
+
                             if (uppercase) {
                                 c = String::char_uppercase(c);
                                 n = String::char_uppercase(n);
                             }
                             //print_line(vformat("draw char: %c (text '%s', line %d, char %d)", c, xl_text.utf8().get_data(), line, line_pos));
-                            x_ofs += drawer.draw_char(ci, Point2(x_ofs, y_ofs), c, n, font_color);
+                            x_ofs += drawer.draw_char(ci, Point2(x_ofs, y_ofs), c, n, font_color) + horizontal_spacing;
                         }
+
 						chars_total++; line_pos++;
 					}
 				}
@@ -650,11 +673,11 @@ void Label::regenerate_word_cache() {
 	}
 
 	if (animate && transition_controller->is_active()) {
-        transition_text->word_cache = calculate_word_cache(font,
-                                                           transition_text->xl_text,
-                                                           transition_text->line_count,
-                                                           transition_text->total_char_cache,
-                                                           transition_text->width);
+        transition_text.word_cache = calculate_word_cache(font,
+                                                           transition_text.xl_text,
+                                                           transition_text.line_count,
+                                                           transition_text.total_char_cache,
+                                                           transition_text.width);
     }
 
 	word_cache_dirty = false;
@@ -694,6 +717,14 @@ CharType Label::get_pending_char_at(int line, int pos) const {
 		}
 	}
     return ' ';
+}
+int Label::get_chars_from_cache_after(WordCache *cache, int x_offset) const {
+
+    return 0;
+}
+int Label::get_chars_from_cache_before(WordCache *cache, int x_offset) const {
+
+    return 0;
 }
 
 void Label::set_align(Align p_align) {
@@ -821,6 +852,31 @@ int Label::get_total_character_count() const {
 	return total_char_cache;
 }
 
+void Label::set_horizontal_spacing(float p_offset) {
+
+    if (horizontal_spacing != p_offset) {
+
+        horizontal_spacing = p_offset;
+        update();
+    }
+}
+float Label::get_horizontal_spacing() const {
+
+    return horizontal_spacing;
+}
+void Label::set_vertical_spacing(float p_offset) {
+
+    if (vertical_spacing != p_offset) {
+
+        vertical_spacing = p_offset;
+        update();
+    }
+}
+float Label::get_vertical_spacing() const {
+
+    return vertical_spacing;
+}
+
 bool Label::is_animate() const {
 
     return animate;
@@ -893,6 +949,10 @@ void Label::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_clipping_text"), &Label::is_clipping_text);
 	ClassDB::bind_method(D_METHOD("set_uppercase", "enable"), &Label::set_uppercase);
 	ClassDB::bind_method(D_METHOD("is_uppercase"), &Label::is_uppercase);
+    ClassDB::bind_method(D_METHOD("set_horizontal_spacing", "px"), &Label::set_horizontal_spacing);
+	ClassDB::bind_method(D_METHOD("get_horizontal_spacing"), &Label::get_horizontal_spacing);
+    ClassDB::bind_method(D_METHOD("set_vertical_spacing", "px"), &Label::set_vertical_spacing);
+	ClassDB::bind_method(D_METHOD("get_vertical_spacing"), &Label::get_vertical_spacing);
 	ClassDB::bind_method(D_METHOD("get_line_height"), &Label::get_line_height);
 	ClassDB::bind_method(D_METHOD("get_line_count"), &Label::get_line_count);
 	ClassDB::bind_method(D_METHOD("get_visible_line_count"), &Label::get_visible_line_count);
@@ -923,6 +983,8 @@ void Label::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "transition_behaviour", PROPERTY_HINT_ENUM, "All,New"), "set_transition_behaviour", "get_transition_behaviour");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "align", PROPERTY_HINT_ENUM, "Left,Center,Right,Fill"), "set_align", "get_align");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "valign", PROPERTY_HINT_ENUM, "Top,Center,Bottom,Fill"), "set_valign", "get_valign");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "offset horizontal spacing", PROPERTY_HINT_RANGE, "-100,100,0.5"), "set_horizontal_spacing", "get_horizontal_spacing");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "offset vertical spacing", PROPERTY_HINT_RANGE, "-100,100,0.5"), "set_vertical_spacing", "get_vertical_spacing");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "autowrap"), "set_autowrap", "has_autowrap");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "clip_text"), "set_clip_text", "is_clipping_text");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "uppercase"), "set_uppercase", "is_uppercase");
@@ -940,6 +1002,8 @@ Label::Label(const String &p_text) {
 	word_cache = NULL;
 	word_cache_dirty = true;
 	autowrap = false;
+    vertical_spacing = 0;
+    horizontal_spacing = 0;
 	line_count = 0;
 	set_v_size_flags(0);
 	clip = false;
