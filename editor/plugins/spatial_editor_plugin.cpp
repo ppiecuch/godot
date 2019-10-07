@@ -2172,7 +2172,7 @@ void SpatialEditorViewport::_notification(int p_what) {
 
 			VisualInstance *vi = Object::cast_to<VisualInstance>(sp);
 
-			se->aabb = vi ? vi->get_aabb() : AABB(Vector3(-0.2, -0.2, -0.2), Vector3(0.4, 0.4, 0.4));
+			se->aabb = vi ? vi->get_aabb() : _calculate_spatial_bounds(sp);
 
 			Transform t = sp->get_global_gizmo_transform();
 			t.translate(se->aabb.position);
@@ -3209,20 +3209,35 @@ Vector3 SpatialEditorViewport::_get_instance_position(const Point2 &p_pos) const
 	return point + offset;
 }
 
-AABB SpatialEditorViewport::_calculate_spatial_bounds(const Spatial *p_parent, const AABB &p_bounds) {
-	AABB bounds = p_bounds;
+AABB SpatialEditorViewport::_calculate_spatial_bounds(const Spatial *p_parent, bool p_exclude_toplevel_transform) {
+	AABB bounds;
+
+	const MeshInstance *mesh_instance = Object::cast_to<MeshInstance>(p_parent);
+	if (mesh_instance) {
+		bounds = mesh_instance->get_aabb();
+	}
+
 	for (int i = 0; i < p_parent->get_child_count(); i++) {
 		Spatial *child = Object::cast_to<Spatial>(p_parent->get_child(i));
 		if (child) {
-			MeshInstance *mesh_instance = Object::cast_to<MeshInstance>(child);
-			if (mesh_instance) {
-				AABB mesh_instance_bounds = mesh_instance->get_aabb();
-				mesh_instance_bounds.position += mesh_instance->get_global_gizmo_transform().origin - p_parent->get_global_gizmo_transform().origin;
-				bounds.merge_with(mesh_instance_bounds);
+			AABB child_bounds = _calculate_spatial_bounds(child, false);
+
+			if (bounds.size == Vector3() && p_parent->get_class_name() == StringName("Spatial")) {
+				bounds = child_bounds;
+			} else {
+				bounds.merge_with(child_bounds);
 			}
-			bounds = _calculate_spatial_bounds(child, bounds);
 		}
 	}
+
+	if (bounds.size == Vector3() && p_parent->get_class_name() != StringName("Spatial")) {
+		bounds = AABB(Vector3(-0.2, -0.2, -0.2), Vector3(0.4, 0.4, 0.4));
+	}
+
+	if (!p_exclude_toplevel_transform) {
+		bounds = p_parent->get_transform().xform(bounds);
+	}
+
 	return bounds;
 }
 
@@ -3230,6 +3245,7 @@ void SpatialEditorViewport::_create_preview(const Vector<String> &files) const {
 	for (int i = 0; i < files.size(); i++) {
 		String path = files[i];
 		RES res = ResourceLoader::load(path);
+		ERR_CONTINUE(res.is_null());
 		Ref<PackedScene> scene = Ref<PackedScene>(Object::cast_to<PackedScene>(*res));
 		Ref<Mesh> mesh = Ref<Mesh>(Object::cast_to<Mesh>(*res));
 		if (mesh != NULL || scene != NULL) {
@@ -3248,7 +3264,7 @@ void SpatialEditorViewport::_create_preview(const Vector<String> &files) const {
 			editor->get_scene_root()->add_child(preview_node);
 		}
 	}
-	*preview_bounds = _calculate_spatial_bounds(preview_node, AABB());
+	*preview_bounds = _calculate_spatial_bounds(preview_node);
 }
 
 void SpatialEditorViewport::_remove_preview() {
@@ -3279,6 +3295,7 @@ bool SpatialEditorViewport::_cyclical_dependency_exists(const String &p_target_s
 
 bool SpatialEditorViewport::_create_instance(Node *parent, String &path, const Point2 &p_point) {
 	RES res = ResourceLoader::load(path);
+	ERR_FAIL_COND_V(res.is_null(), false);
 
 	Ref<PackedScene> scene = Ref<PackedScene>(Object::cast_to<PackedScene>(*res));
 	Ref<Mesh> mesh = Ref<Mesh>(Object::cast_to<Mesh>(*res));

@@ -2719,6 +2719,7 @@ void CanvasItemEditor::_draw_ruler_tool() {
 		font_secondary_color.a = 0.5;
 		float text_height = font->get_height();
 		const float text_width = 76;
+		const float angle_text_width = 54;
 
 		Point2 text_pos = (begin + end) / 2 - Vector2(text_width / 2, text_height / 2);
 		text_pos.x = CLAMP(text_pos.x, text_width / 2, viewport->get_rect().size.x - text_width * 1.5);
@@ -2726,14 +2727,38 @@ void CanvasItemEditor::_draw_ruler_tool() {
 		viewport->draw_string(font, text_pos, vformat("%.2f px", length_vector.length()), font_color);
 
 		if (draw_secondary_lines) {
+			int horizontal_axis_angle = round(180 * atan2(length_vector.y, length_vector.x) / Math_PI);
+			int vertictal_axis_angle = 90 - horizontal_axis_angle;
 
 			Point2 text_pos2 = text_pos;
 			text_pos2.x = begin.x < text_pos.x ? MIN(text_pos.x - text_width, begin.x - text_width / 2) : MAX(text_pos.x + text_width, begin.x - text_width / 2);
 			viewport->draw_string(font, text_pos2, vformat("%.2f px", length_vector.y), font_secondary_color);
 
+			Point2 v_angle_text_pos = Point2();
+			v_angle_text_pos.x = CLAMP(begin.x - angle_text_width / 2, angle_text_width / 2, viewport->get_rect().size.x - angle_text_width);
+			v_angle_text_pos.y = begin.y < end.y ? MIN(text_pos2.y - 2 * text_height, begin.y - text_height * 0.5) : MAX(text_pos2.y + text_height * 3, begin.y + text_height * 1.5);
+			viewport->draw_string(font, v_angle_text_pos, vformat("%d deg", vertictal_axis_angle), font_secondary_color);
+
 			text_pos2 = text_pos;
 			text_pos2.y = end.y < text_pos.y ? MIN(text_pos.y - text_height * 2, end.y - text_height / 2) : MAX(text_pos.y + text_height * 2, end.y - text_height / 2);
 			viewport->draw_string(font, text_pos2, vformat("%.2f px", length_vector.x), font_secondary_color);
+
+			Point2 h_angle_text_pos = Point2();
+			h_angle_text_pos.x = CLAMP(end.x - angle_text_width / 2, angle_text_width / 2, viewport->get_rect().size.x - angle_text_width);
+			if (begin.y < end.y) {
+				h_angle_text_pos.y = end.y + text_height * 1.5;
+				if (ABS(text_pos2.x - h_angle_text_pos.x) < text_width) {
+					int height_multiplier = 1.5 + (int)is_snap_active;
+					h_angle_text_pos.y = MAX(text_pos.y + height_multiplier * text_height, MAX(end.y + text_height * 1.5, text_pos2.y + height_multiplier * text_height));
+				}
+			} else {
+				h_angle_text_pos.y = end.y - text_height * 0.5;
+				if (ABS(text_pos2.x - h_angle_text_pos.x) < text_width) {
+					int height_multiplier = 1 + (int)is_snap_active;
+					h_angle_text_pos.y = MIN(text_pos.y - height_multiplier * text_height, MIN(end.y - text_height * 0.5, text_pos2.y - height_multiplier * text_height));
+				}
+			}
+			viewport->draw_string(font, h_angle_text_pos, vformat("%d deg", horizontal_axis_angle), font_secondary_color);
 		}
 
 		if (is_snap_active) {
@@ -5146,6 +5171,8 @@ CanvasItemEditor::CanvasItemEditor(EditorNode *p_editor) {
 	warning_child_of_container = memnew(Label);
 	warning_child_of_container->hide();
 	warning_child_of_container->set_text(TTR("Warning: Children of a container get their position and size determined only by their parent."));
+	warning_child_of_container->add_color_override("font_color", EditorNode::get_singleton()->get_gui_base()->get_color("warning_color", "Editor"));
+	warning_child_of_container->add_font_override("font", EditorNode::get_singleton()->get_gui_base()->get_font("main", "EditorFonts"));
 	add_control_to_info_overlay(warning_child_of_container);
 
 	h_scroll = memnew(HScrollBar);
@@ -5539,6 +5566,7 @@ void CanvasItemEditorViewport::_create_preview(const Vector<String> &files) cons
 	for (int i = 0; i < files.size(); i++) {
 		String path = files[i];
 		RES res = ResourceLoader::load(path);
+		ERR_FAIL_COND(res.is_null());
 		Ref<Texture> texture = Ref<Texture>(Object::cast_to<Texture>(*res));
 		Ref<PackedScene> scene = Ref<PackedScene>(Object::cast_to<PackedScene>(*res));
 		if (texture != NULL || scene != NULL) {

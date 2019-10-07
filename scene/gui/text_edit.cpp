@@ -1271,7 +1271,8 @@ void TextEdit::_notification(int p_what) {
 					}
 
 					// Loop through characters in one line.
-					for (int j = 0; j < str.length(); j++) {
+					int j = 0;
+					for (; j < str.length(); j++) {
 
 						if (syntax_coloring) {
 							if (color_map.has(last_wrap_column + j)) {
@@ -1501,7 +1502,7 @@ void TextEdit::_notification(int p_what) {
 						}
 					}
 
-					if (cursor.column == last_wrap_column + str.length() && cursor.line == line && cursor_wrap_index == line_wrap_index && (char_ofs + char_margin) >= xmargin_beg) {
+					if (cursor.column == (last_wrap_column + j) && cursor.line == line && cursor_wrap_index == line_wrap_index && (char_ofs + char_margin) >= xmargin_beg) {
 
 						cursor_pos = Point2i(char_ofs + char_margin + ofs_x, ofs_y);
 						cursor_pos.y += (get_row_height() - cache.font->get_height()) / 2;
@@ -3965,7 +3966,7 @@ void TextEdit::_base_remove_text(int p_from_line, int p_from_column, int p_to_li
 
 void TextEdit::_insert_text(int p_line, int p_char, const String &p_text, int *r_end_line, int *r_end_char) {
 
-	if (!setting_text)
+	if (!setting_text && idle_detect->is_inside_tree())
 		idle_detect->start();
 
 	if (undo_enabled) {
@@ -4019,7 +4020,7 @@ void TextEdit::_insert_text(int p_line, int p_char, const String &p_text, int *r
 
 void TextEdit::_remove_text(int p_from_line, int p_from_column, int p_to_line, int p_to_column) {
 
-	if (!setting_text)
+	if (!setting_text && idle_detect->is_inside_tree())
 		idle_detect->start();
 
 	String text;
