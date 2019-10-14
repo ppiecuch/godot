@@ -83,7 +83,7 @@ class SnapDialog : public ConfirmationDialog {
 
 public:
 	SnapDialog() {
-		const int SPIN_BOX_GRID_RANGE = 256;
+		const int SPIN_BOX_GRID_RANGE = 16384;
 		const int SPIN_BOX_ROTATION_RANGE = 360;
 		Label *label;
 		VBoxContainer *container;
@@ -107,6 +107,8 @@ public:
 		grid_offset_x = memnew(SpinBox);
 		grid_offset_x->set_min(-SPIN_BOX_GRID_RANGE);
 		grid_offset_x->set_max(SPIN_BOX_GRID_RANGE);
+		grid_offset_x->set_allow_lesser(true);
+		grid_offset_x->set_allow_greater(true);
 		grid_offset_x->set_suffix("px");
 		grid_offset_x->set_h_size_flags(SIZE_EXPAND_FILL);
 		child_container->add_child(grid_offset_x);
@@ -114,6 +116,8 @@ public:
 		grid_offset_y = memnew(SpinBox);
 		grid_offset_y->set_min(-SPIN_BOX_GRID_RANGE);
 		grid_offset_y->set_max(SPIN_BOX_GRID_RANGE);
+		grid_offset_y->set_allow_lesser(true);
+		grid_offset_y->set_allow_greater(true);
 		grid_offset_y->set_suffix("px");
 		grid_offset_y->set_h_size_flags(SIZE_EXPAND_FILL);
 		child_container->add_child(grid_offset_y);
@@ -126,6 +130,7 @@ public:
 		grid_step_x = memnew(SpinBox);
 		grid_step_x->set_min(0.01);
 		grid_step_x->set_max(SPIN_BOX_GRID_RANGE);
+		grid_step_x->set_allow_greater(true);
 		grid_step_x->set_suffix("px");
 		grid_step_x->set_h_size_flags(SIZE_EXPAND_FILL);
 		child_container->add_child(grid_step_x);
@@ -133,6 +138,7 @@ public:
 		grid_step_y = memnew(SpinBox);
 		grid_step_y->set_min(0.01);
 		grid_step_y->set_max(SPIN_BOX_GRID_RANGE);
+		grid_step_y->set_allow_greater(true);
 		grid_step_y->set_suffix("px");
 		grid_step_y->set_h_size_flags(SIZE_EXPAND_FILL);
 		child_container->add_child(grid_step_y);
@@ -289,7 +295,7 @@ Point2 CanvasItemEditor::snap_point(Point2 p_target, unsigned int p_modes, unsig
 	snap_target[0] = SNAP_TARGET_NONE;
 	snap_target[1] = SNAP_TARGET_NONE;
 
-	bool is_snap_active = snap_active ^ Input::get_singleton()->is_key_pressed(KEY_CONTROL);
+	bool is_snap_active = smart_snap_active ^ Input::get_singleton()->is_key_pressed(KEY_CONTROL);
 
 	// Smart snap using the canvas position
 	Vector2 output = p_target;
@@ -389,7 +395,7 @@ Point2 CanvasItemEditor::snap_point(Point2 p_target, unsigned int p_modes, unsig
 		}
 	}
 
-	if (((is_snap_active && snap_grid && (p_modes & SNAP_GRID)) || (p_forced_modes & SNAP_GRID)) && fmod(rotation, (real_t)360.0) == 0.0) {
+	if (((grid_snap_active && (p_modes & SNAP_GRID)) || (p_forced_modes & SNAP_GRID)) && fmod(rotation, (real_t)360.0) == 0.0) {
 		// Grid
 		Point2 offset = grid_offset;
 		if (snap_relative) {
@@ -417,7 +423,7 @@ Point2 CanvasItemEditor::snap_point(Point2 p_target, unsigned int p_modes, unsig
 }
 
 float CanvasItemEditor::snap_angle(float p_target, float p_start) const {
-	return (((snap_active || snap_rotation) ^ Input::get_singleton()->is_key_pressed(KEY_CONTROL)) && snap_rotation_step != 0) ? Math::stepify(p_target - snap_rotation_offset, snap_rotation_step) + snap_rotation_offset : p_target;
+	return (((smart_snap_active || snap_rotation) ^ Input::get_singleton()->is_key_pressed(KEY_CONTROL)) && snap_rotation_step != 0) ? Math::stepify(p_target - snap_rotation_offset, snap_rotation_step) + snap_rotation_offset : p_target;
 }
 
 void CanvasItemEditor::_unhandled_key_input(const Ref<InputEvent> &p_ev) {
@@ -432,11 +438,11 @@ void CanvasItemEditor::_unhandled_key_input(const Ref<InputEvent> &p_ev) {
 	}
 
 	if (k->is_pressed() && !k->get_control() && !k->is_echo()) {
-		if ((snap_grid || show_grid) && multiply_grid_step_shortcut.is_valid() && multiply_grid_step_shortcut->is_shortcut(p_ev)) {
+		if ((grid_snap_active || show_grid) && multiply_grid_step_shortcut.is_valid() && multiply_grid_step_shortcut->is_shortcut(p_ev)) {
 			// Multiply the grid size
 			grid_step_multiplier = MIN(grid_step_multiplier + 1, 12);
 			viewport->update();
-		} else if ((snap_grid || show_grid) && divide_grid_step_shortcut.is_valid() && divide_grid_step_shortcut->is_shortcut(p_ev)) {
+		} else if ((grid_snap_active || show_grid) && divide_grid_step_shortcut.is_valid() && divide_grid_step_shortcut->is_shortcut(p_ev)) {
 			// Divide the grid size
 			Point2 new_grid_step = grid_step * Math::pow(2.0, grid_step_multiplier - 1);
 			if (new_grid_step.x >= 1.0 && new_grid_step.y >= 1.0)
@@ -2292,7 +2298,7 @@ bool CanvasItemEditor::_gui_input_ruler_tool(const Ref<InputEvent> &p_event) {
 		return true;
 	}
 
-	bool is_snap_active = snap_active ^ Input::get_singleton()->is_key_pressed(KEY_CONTROL);
+	bool is_snap_active = smart_snap_active ^ Input::get_singleton()->is_key_pressed(KEY_CONTROL);
 
 	if (m.is_valid() && (ruler_tool_active || (is_snap_active && previous_origin != ruler_tool_origin))) {
 
@@ -2563,11 +2569,10 @@ void CanvasItemEditor::_draw_rulers() {
 	Color font_color = get_color("font_color", "Editor");
 	font_color.a = 0.8;
 	Ref<Font> font = get_font("rulers", "EditorFonts");
-	bool is_snap_active = snap_active ^ Input::get_singleton()->is_key_pressed(KEY_CONTROL);
 
 	// The rule transform
 	Transform2D ruler_transform = Transform2D();
-	if (show_grid || (is_snap_active && snap_grid)) {
+	if (show_grid || grid_snap_active) {
 		List<CanvasItem *> selection = _get_edited_canvas_items();
 		if (snap_relative && selection.size() > 0) {
 			ruler_transform.translate(_get_encompassing_rect_from_list(selection).position);
@@ -2647,7 +2652,7 @@ void CanvasItemEditor::_draw_rulers() {
 }
 
 void CanvasItemEditor::_draw_grid() {
-	if (show_grid) {
+	if (show_grid || grid_snap_active) {
 		//Draw the grid
 		Size2 s = viewport->get_size();
 		int last_cell = 0;
@@ -2693,7 +2698,7 @@ void CanvasItemEditor::_draw_ruler_tool() {
 	if (tool != TOOL_RULER)
 		return;
 
-	bool is_snap_active = snap_active ^ Input::get_singleton()->is_key_pressed(KEY_CONTROL);
+	bool is_snap_active = smart_snap_active ^ Input::get_singleton()->is_key_pressed(KEY_CONTROL);
 
 	if (ruler_tool_active) {
 		Color ruler_primary_color = get_color("accent_color", "Editor");
@@ -3702,7 +3707,8 @@ void CanvasItemEditor::_notification(int p_what) {
 		move_button->set_icon(get_icon("ToolMove", "EditorIcons"));
 		scale_button->set_icon(get_icon("ToolScale", "EditorIcons"));
 		rotate_button->set_icon(get_icon("ToolRotate", "EditorIcons"));
-		snap_button->set_icon(get_icon("Snap", "EditorIcons"));
+		smart_snap_button->set_icon(get_icon("Snap", "EditorIcons"));
+		grid_snap_button->set_icon(get_icon("SnapGrid", "EditorIcons"));
 		snap_config_menu->set_icon(get_icon("GuiTabMenu", "EditorIcons"));
 		skeleton_menu->set_icon(get_icon("Bone", "EditorIcons"));
 		pan_button->set_icon(get_icon("ToolPan", "EditorIcons"));
@@ -4106,8 +4112,13 @@ void CanvasItemEditor::_button_zoom_plus() {
 	_zoom_on_position(zoom * Math_SQRT2, viewport_scrollable->get_size() / 2.0);
 }
 
-void CanvasItemEditor::_button_toggle_snap(bool p_status) {
-	snap_active = p_status;
+void CanvasItemEditor::_button_toggle_smart_snap(bool p_status) {
+	smart_snap_active = p_status;
+	viewport->update();
+}
+
+void CanvasItemEditor::_button_toggle_grid_snap(bool p_status) {
+	grid_snap_active = p_status;
 	viewport->update();
 }
 
@@ -4265,11 +4276,6 @@ void CanvasItemEditor::_popup_callback(int p_op) {
 			snap_guides = !snap_guides;
 			int idx = smartsnap_config_popup->get_item_index(SNAP_USE_GUIDES);
 			smartsnap_config_popup->set_item_checked(idx, snap_guides);
-		} break;
-		case SNAP_USE_GRID: {
-			snap_grid = !snap_grid;
-			int idx = snap_config_menu->get_popup()->get_item_index(SNAP_USE_GRID);
-			snap_config_menu->get_popup()->set_item_checked(idx, snap_grid);
 		} break;
 		case SNAP_USE_ROTATION: {
 			snap_rotation = !snap_rotation;
@@ -4802,7 +4808,8 @@ void CanvasItemEditor::_bind_methods() {
 	ClassDB::bind_method("_button_zoom_minus", &CanvasItemEditor::_button_zoom_minus);
 	ClassDB::bind_method("_button_zoom_reset", &CanvasItemEditor::_button_zoom_reset);
 	ClassDB::bind_method("_button_zoom_plus", &CanvasItemEditor::_button_zoom_plus);
-	ClassDB::bind_method("_button_toggle_snap", &CanvasItemEditor::_button_toggle_snap);
+	ClassDB::bind_method("_button_toggle_smart_snap", &CanvasItemEditor::_button_toggle_smart_snap);
+	ClassDB::bind_method("_button_toggle_grid_snap", &CanvasItemEditor::_button_toggle_grid_snap);
 	ClassDB::bind_method("_button_toggle_anchor_mode", &CanvasItemEditor::_button_toggle_anchor_mode);
 	ClassDB::bind_method("_update_scroll", &CanvasItemEditor::_update_scroll);
 	ClassDB::bind_method("_update_scrollbars", &CanvasItemEditor::_update_scrollbars);
@@ -4837,13 +4844,13 @@ Dictionary CanvasItemEditor::get_state() const {
 	state["grid_step"] = grid_step;
 	state["snap_rotation_offset"] = snap_rotation_offset;
 	state["snap_rotation_step"] = snap_rotation_step;
-	state["snap_active"] = snap_active;
+	state["smart_snap_active"] = smart_snap_active;
+	state["grid_snap_active"] = grid_snap_active;
 	state["snap_node_parent"] = snap_node_parent;
 	state["snap_node_anchors"] = snap_node_anchors;
 	state["snap_node_sides"] = snap_node_sides;
 	state["snap_node_center"] = snap_node_center;
 	state["snap_other_nodes"] = snap_other_nodes;
-	state["snap_grid"] = snap_grid;
 	state["snap_guides"] = snap_guides;
 	state["show_grid"] = show_grid;
 	state["show_origin"] = show_origin;
@@ -4891,9 +4898,14 @@ void CanvasItemEditor::set_state(const Dictionary &p_state) {
 		snap_rotation_offset = state["snap_rotation_offset"];
 	}
 
-	if (state.has("snap_active")) {
-		snap_active = state["snap_active"];
-		snap_button->set_pressed(snap_active);
+	if (state.has("smart_snap_active")) {
+		smart_snap_active = state["smart_snap_active"];
+		smart_snap_button->set_pressed(smart_snap_active);
+	}
+
+	if (state.has("grid_snap_active")) {
+		grid_snap_active = state["grid_snap_active"];
+		grid_snap_button->set_pressed(smart_snap_active);
 	}
 
 	if (state.has("snap_node_parent")) {
@@ -4930,12 +4942,6 @@ void CanvasItemEditor::set_state(const Dictionary &p_state) {
 		snap_guides = state["snap_guides"];
 		int idx = smartsnap_config_popup->get_item_index(SNAP_USE_GUIDES);
 		smartsnap_config_popup->set_item_checked(idx, snap_guides);
-	}
-
-	if (state.has("snap_grid")) {
-		snap_grid = state["snap_grid"];
-		int idx = snap_config_menu->get_popup()->get_item_index(SNAP_USE_GRID);
-		snap_config_menu->get_popup()->set_item_checked(idx, snap_grid);
 	}
 
 	if (state.has("show_grid")) {
@@ -5076,13 +5082,13 @@ CanvasItemEditor::CanvasItemEditor(EditorNode *p_editor) {
 	grid_step_multiplier = 0;
 	snap_rotation_offset = 0;
 	snap_rotation_step = 15 / (180 / Math_PI);
-	snap_active = false;
+	smart_snap_active = false;
+	grid_snap_active = false;
 	snap_node_parent = true;
 	snap_node_anchors = true;
 	snap_node_sides = true;
 	snap_node_center = true;
 	snap_other_nodes = true;
-	snap_grid = true;
 	snap_guides = true;
 	snap_rotation = false;
 	snap_relative = false;
@@ -5274,12 +5280,19 @@ CanvasItemEditor::CanvasItemEditor(EditorNode *p_editor) {
 
 	hb->add_child(memnew(VSeparator));
 
-	snap_button = memnew(ToolButton);
-	hb->add_child(snap_button);
-	snap_button->set_toggle_mode(true);
-	snap_button->connect("toggled", this, "_button_toggle_snap");
-	snap_button->set_tooltip(TTR("Toggle snapping."));
-	snap_button->set_shortcut(ED_SHORTCUT("canvas_item_editor/use_snap", TTR("Use Snap"), KEY_MASK_SHIFT | KEY_S));
+	smart_snap_button = memnew(ToolButton);
+	hb->add_child(smart_snap_button);
+	smart_snap_button->set_toggle_mode(true);
+	smart_snap_button->connect("toggled", this, "_button_toggle_smart_snap");
+	smart_snap_button->set_tooltip(TTR("Toggle smart snapping."));
+	smart_snap_button->set_shortcut(ED_SHORTCUT("canvas_item_editor/use_smart_snap", TTR("Use Smart Snap"), KEY_MASK_SHIFT | KEY_S));
+
+	grid_snap_button = memnew(ToolButton);
+	hb->add_child(grid_snap_button);
+	grid_snap_button->set_toggle_mode(true);
+	grid_snap_button->connect("toggled", this, "_button_toggle_grid_snap");
+	grid_snap_button->set_tooltip(TTR("Toggle grid snapping."));
+	grid_snap_button->set_shortcut(ED_SHORTCUT("canvas_item_editor/use_grid_snap", TTR("Use Grid Snap"), KEY_MASK_SHIFT | KEY_G));
 
 	snap_config_menu = memnew(MenuButton);
 	hb->add_child(snap_config_menu);
@@ -5290,7 +5303,6 @@ CanvasItemEditor::CanvasItemEditor(EditorNode *p_editor) {
 	PopupMenu *p = snap_config_menu->get_popup();
 	p->connect("id_pressed", this, "_popup_callback");
 	p->set_hide_on_checkable_item_selection(false);
-	p->add_check_shortcut(ED_SHORTCUT("canvas_item_editor/snap_grid", TTR("Snap to Grid")), SNAP_USE_GRID);
 	p->add_check_shortcut(ED_SHORTCUT("canvas_item_editor/use_rotation_snap", TTR("Use Rotation Snap")), SNAP_USE_ROTATION);
 	p->add_check_shortcut(ED_SHORTCUT("canvas_item_editor/snap_relative", TTR("Snap Relative")), SNAP_RELATIVE);
 	p->add_check_shortcut(ED_SHORTCUT("canvas_item_editor/use_pixel_snap", TTR("Use Pixel Snap")), SNAP_USE_PIXEL);
@@ -5362,9 +5374,9 @@ CanvasItemEditor::CanvasItemEditor(EditorNode *p_editor) {
 
 	p = view_menu->get_popup();
 	p->set_hide_on_checkable_item_selection(false);
-	p->add_check_shortcut(ED_SHORTCUT("canvas_item_editor/show_grid", TTR("Show Grid"), KEY_G), SHOW_GRID);
+	p->add_check_shortcut(ED_SHORTCUT("canvas_item_editor/show_grid", TTR("Always Show Grid"), KEY_G), SHOW_GRID);
 	p->add_check_shortcut(ED_SHORTCUT("canvas_item_editor/show_helpers", TTR("Show Helpers"), KEY_H), SHOW_HELPERS);
-	p->add_check_shortcut(ED_SHORTCUT("canvas_item_editor/show_rulers", TTR("Show Rulers"), KEY_MASK_CMD | KEY_R), SHOW_RULERS);
+	p->add_check_shortcut(ED_SHORTCUT("canvas_item_editor/show_rulers", TTR("Show Rulers")), SHOW_RULERS);
 	p->add_check_shortcut(ED_SHORTCUT("canvas_item_editor/show_guides", TTR("Show Guides"), KEY_Y), SHOW_GUIDES);
 	p->add_check_shortcut(ED_SHORTCUT("canvas_item_editor/show_origin", TTR("Show Origin")), SHOW_ORIGIN);
 	p->add_check_shortcut(ED_SHORTCUT("canvas_item_editor/show_viewport", TTR("Show Viewport")), SHOW_VIEWPORT);
