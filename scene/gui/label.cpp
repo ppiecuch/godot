@@ -615,6 +615,11 @@ Label::WordCache *Label::calculate_word_cache(const Ref<Font> &font, const Strin
 			current_word_size += char_width;
 			line_width += char_width;
 			total_char_cache++;
+
+			// allow autowrap to cut words when they exceed line width
+			if (autowrap && (current_word_size > width)) {
+				separatable = true;
+			}
 		}
 
 		if ((autowrap && (line_width >= width) && ((last && last->char_pos >= 0) || separatable)) || insert_newline) {
