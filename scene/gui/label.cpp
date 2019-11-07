@@ -467,8 +467,9 @@ Size2 Label::get_minimum_size() const {
 	Size2 min_style = get_stylebox("normal")->get_minimum_size();
 
 	// don't want to mutable everything
-	if (word_cache_dirty)
+	if (word_cache_dirty) {
 		const_cast<Label *>(this)->regenerate_word_cache();
+	}
 
 	if (autowrap)
 		return Size2(1, clip ? 1 : minsize.height) + min_style;
@@ -541,8 +542,22 @@ int Label::get_visible_line_count() const {
 
 Label::WordCache *Label::calculate_word_cache(const Ref<Font> &font, const String &label_text, int &line_count, int &total_char_cache, int &width) const {
 
-    Ref<StyleBox> style = get_stylebox("normal");
-	width = autowrap ? (get_size().width - style->get_minimum_size().width) : get_longest_line_width(label_text);
+	while (word_cache) {
+
+		WordCache *current = word_cache;
+		word_cache = current->next;
+		memdelete(current);
+	}
+
+	int width;
+	if (autowrap) {
+		Ref<StyleBox> style = get_stylebox("normal");
+		width = MAX(get_size().width, get_custom_minimum_size().width) - style->get_minimum_size().width;
+	} else {
+		width = get_longest_line_width();
+	}
+
+	Ref<Font> font = get_font("font");
 
 	int current_word_size = 0;
 	int word_pos = 0;

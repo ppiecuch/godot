@@ -360,6 +360,10 @@ bool CanvasItem::_edit_is_selected_on_click(const Point2 &p_point, double p_tole
 	}
 }
 
+Transform2D CanvasItem::_edit_get_transform() const {
+	return Transform2D(_edit_get_rotation(), _edit_get_position() + _edit_get_pivot());
+}
+
 bool CanvasItem::is_visible_in_tree() const {
 
 	if (!is_inside_tree())
@@ -790,29 +794,29 @@ void CanvasItem::draw_rect(const Rect2 &p_rect, const Color &p_color, bool p_fil
 
 		VisualServer::get_singleton()->canvas_item_add_line(
 				canvas_item,
-				p_rect.position + Point2(-offset, 0),
+				p_rect.position + Size2(-offset, 0),
 				p_rect.position + Size2(p_rect.size.width + offset, 0),
 				p_color,
 				p_width,
 				p_antialiased);
 		VisualServer::get_singleton()->canvas_item_add_line(
 				canvas_item,
-				p_rect.position + Point2(0, offset),
-				p_rect.position + Size2(0, p_rect.size.height - offset),
-				p_color,
-				p_width,
-				p_antialiased);
-		VisualServer::get_singleton()->canvas_item_add_line(
-				canvas_item,
-				p_rect.position + Point2(-offset, p_rect.size.height),
-				p_rect.position + Size2(p_rect.size.width + offset, p_rect.size.height),
-				p_color,
-				p_width,
-				p_antialiased);
-		VisualServer::get_singleton()->canvas_item_add_line(
-				canvas_item,
-				p_rect.position + Point2(p_rect.size.width, offset),
+				p_rect.position + Size2(p_rect.size.width, offset),
 				p_rect.position + Size2(p_rect.size.width, p_rect.size.height - offset),
+				p_color,
+				p_width,
+				p_antialiased);
+		VisualServer::get_singleton()->canvas_item_add_line(
+				canvas_item,
+				p_rect.position + Size2(p_rect.size.width + offset, p_rect.size.height),
+				p_rect.position + Size2(-offset, p_rect.size.height),
+				p_color,
+				p_width,
+				p_antialiased);
+		VisualServer::get_singleton()->canvas_item_add_line(
+				canvas_item,
+				p_rect.position + Size2(0, p_rect.size.height - offset),
+				p_rect.position + Size2(0, offset),
 				p_color,
 				p_width,
 				p_antialiased);
@@ -1133,6 +1137,7 @@ void CanvasItem::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_edit_set_pivot", "pivot"), &CanvasItem::_edit_set_pivot);
 	ClassDB::bind_method(D_METHOD("_edit_get_pivot"), &CanvasItem::_edit_get_pivot);
 	ClassDB::bind_method(D_METHOD("_edit_use_pivot"), &CanvasItem::_edit_use_pivot);
+	ClassDB::bind_method(D_METHOD("_edit_get_transform"), &CanvasItem::_edit_get_transform);
 
 	ClassDB::bind_method(D_METHOD("get_canvas_item"), &CanvasItem::get_canvas_item);
 
