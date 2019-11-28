@@ -148,8 +148,9 @@ Node *EditorSceneImporterAssimp::import_scene(const String &p_path, uint32_t p_f
 								 //aiProcess_SplitByBoneCount |
 								 0;
 	aiScene *scene = (aiScene *)importer.ReadFile(s_path.c_str(), post_process_Steps);
-	ERR_EXPLAIN(String("Open Asset Import failed to open: ") + String(importer.GetErrorString()));
-	ERR_FAIL_COND_V(scene == NULL, NULL);
+
+	ERR_FAIL_COND_V_MSG(scene == NULL, NULL, String("Open Asset Import failed to open: ") + String(importer.GetErrorString()));
+
 	return _generate_scene(p_path, scene, p_flags, p_bake_fps, max_bone_weights);
 }
 
@@ -1318,7 +1319,7 @@ EditorSceneImporterAssimp::create_mesh(ImportState &state, const aiNode *assimp_
 
 	RegenerateBoneStack(state);
 
-	// Configure indicies
+	// Configure indices
 	for (uint32_t i = 0; i < assimp_node->mNumMeshes; i++) {
 		int mesh_index = assimp_node->mMeshes[i];
 		// create list of mesh indexes

@@ -805,6 +805,7 @@ bool CanvasItemEditor::_select_click_on_item(CanvasItem *item, Point2 p_click_po
 			editor_selection->add_node(item);
 			// Reselect
 			if (Engine::get_singleton()->is_editor_hint()) {
+				selected_from_canvas = true;
 				editor->call("edit_node", item);
 			}
 		}
@@ -3682,7 +3683,7 @@ void CanvasItemEditor::_notification(int p_what) {
 		int nb_having_pivot = 0;
 
 		// Update the viewport if the canvas_item changes
-		List<CanvasItem *> selection = _get_edited_canvas_items();
+		List<CanvasItem *> selection = _get_edited_canvas_items(true);
 		for (List<CanvasItem *>::Element *E = selection.front(); E; E = E->next()) {
 			CanvasItem *canvas_item = E->get();
 			CanvasItemEditorSelectedItem *se = editor_selection->get_node_editor_data<CanvasItemEditorSelectedItem>(canvas_item);
@@ -3822,6 +3823,7 @@ void CanvasItemEditor::_notification(int p_what) {
 		grid_snap_button->set_icon(get_icon("SnapGrid", "EditorIcons"));
 		snap_config_menu->set_icon(get_icon("GuiTabMenu", "EditorIcons"));
 		skeleton_menu->set_icon(get_icon("Bone", "EditorIcons"));
+		override_camera_button->set_icon(get_icon("Camera2D", "EditorIcons"));
 		pan_button->set_icon(get_icon("ToolPan", "EditorIcons"));
 		ruler_button->set_icon(get_icon("Ruler", "EditorIcons"));
 		pivot_button->set_icon(get_icon("EditPivot", "EditorIcons"));
@@ -3891,6 +3893,15 @@ void CanvasItemEditor::_notification(int p_what) {
 
 		anchor_mode_button->set_icon(get_icon("Anchor", "EditorIcons"));
 	}
+
+	if (p_what == NOTIFICATION_VISIBILITY_CHANGED) {
+		if (!is_visible() && override_camera_button->is_pressed()) {
+			ScriptEditorDebugger *debugger = ScriptEditor::get_singleton()->get_debugger();
+
+			debugger->set_camera_override(ScriptEditorDebugger::OVERRIDE_NONE);
+			override_camera_button->set_pressed(false);
+		}
+	}
 }
 
 void CanvasItemEditor::_selection_changed() {
@@ -3912,6 +3923,11 @@ void CanvasItemEditor::_selection_changed() {
 	}
 	anchors_mode = (nbValidControls == nbAnchorsMode);
 	anchor_mode_button->set_pressed(anchors_mode);
+
+	if (!selected_from_canvas) {
+		drag_type = DRAG_NONE;
+	}
+	selected_from_canvas = false;
 }
 
 void CanvasItemEditor::edit(CanvasItem *p_canvas_item) {
@@ -3972,9 +3988,9 @@ void CanvasItemEditor::_update_scrollbars() {
 	updating_scroll = true;
 
 	// Move the zoom buttons
-	Point2 zoom_hb_begin = Point2(5, 5);
-	zoom_hb_begin += (show_rulers) ? Point2(RULER_WIDTH, RULER_WIDTH) : Point2();
-	zoom_hb->set_begin(zoom_hb_begin);
+	Point2 controls_vb_begin = Point2(5, 5);
+	controls_vb_begin += (show_rulers) ? Point2(RULER_WIDTH, RULER_WIDTH) : Point2();
+	controls_vb->set_begin(controls_vb_begin);
 
 	// Move and resize the scrollbars
 	Size2 size = viewport->get_size();
@@ -4232,6 +4248,15 @@ void CanvasItemEditor::_button_toggle_grid_snap(bool p_status) {
 	grid_snap_active = p_status;
 	viewport->update();
 }
+void CanvasItemEditor::_button_override_camera(bool p_pressed) {
+	ScriptEditorDebugger *debugger = ScriptEditor::get_singleton()->get_debugger();
+
+	if (p_pressed) {
+		debugger->set_camera_override(ScriptEditorDebugger::OVERRIDE_2D);
+	} else {
+		debugger->set_camera_override(ScriptEditorDebugger::OVERRIDE_NONE);
+	}
+}
 
 void CanvasItemEditor::_button_tool_select(int p_index) {
 
@@ -4327,6 +4352,17 @@ void CanvasItemEditor::_button_toggle_anchor_mode(bool p_status) {
 
 	anchors_mode = p_status;
 	viewport->update();
+}
+
+void CanvasItemEditor::_update_override_camera_button(bool p_game_running) {
+	if (p_game_running) {
+		override_camera_button->set_disabled(false);
+		override_camera_button->set_tooltip(TTR("Game Camera Override\nOverrides game camera with editor viewport camera."));
+	} else {
+		override_camera_button->set_disabled(true);
+		override_camera_button->set_pressed(false);
+		override_camera_button->set_tooltip(TTR("Game Camera Override\nNo game instance running."));
+	}
 }
 
 void CanvasItemEditor::_popup_callback(int p_op) {
@@ -4926,6 +4962,8 @@ void CanvasItemEditor::_bind_methods() {
 	ClassDB::bind_method("_button_zoom_plus", &CanvasItemEditor::_button_zoom_plus);
 	ClassDB::bind_method("_button_toggle_smart_snap", &CanvasItemEditor::_button_toggle_smart_snap);
 	ClassDB::bind_method("_button_toggle_grid_snap", &CanvasItemEditor::_button_toggle_grid_snap);
+	ClassDB::bind_method(D_METHOD("_button_override_camera", "pressed"), &CanvasItemEditor::_button_override_camera);
+	ClassDB::bind_method(D_METHOD("_update_override_camera_button", "game_running"), &CanvasItemEditor::_update_override_camera_button);
 	ClassDB::bind_method("_button_toggle_anchor_mode", &CanvasItemEditor::_button_toggle_anchor_mode);
 	ClassDB::bind_method("_update_scroll", &CanvasItemEditor::_update_scroll);
 	ClassDB::bind_method("_update_scrollbars", &CanvasItemEditor::_update_scrollbars);
@@ -5226,11 +5264,13 @@ CanvasItemEditor::CanvasItemEditor(EditorNode *p_editor) {
 	snap_other_nodes = true;
 	snap_guides = true;
 	snap_rotation = false;
+	snap_scale = false;
 	snap_relative = false;
 	snap_pixel = false;
 	snap_target[0] = SNAP_TARGET_NONE;
 	snap_target[1] = SNAP_TARGET_NONE;
 
+	selected_from_canvas = false;
 	anchors_mode = false;
 
 	skeleton_show_bones = true;
@@ -5240,6 +5280,8 @@ CanvasItemEditor::CanvasItemEditor(EditorNode *p_editor) {
 	drag_to = Vector2();
 	dragged_guide_pos = Point2();
 	dragged_guide_index = -1;
+	is_hovering_h_guide = false;
+	is_hovering_v_guide = false;
 	panning = false;
 	pan_pressed = false;
 
@@ -5256,6 +5298,9 @@ CanvasItemEditor::CanvasItemEditor(EditorNode *p_editor) {
 	editor_selection->add_editor_plugin(this);
 	editor_selection->connect("selection_changed", this, "update");
 	editor_selection->connect("selection_changed", this, "_selection_changed");
+
+	editor->call_deferred("connect", "play_pressed", this, "_update_override_camera_button", make_binds(true));
+	editor->call_deferred("connect", "stop_pressed", this, "_update_override_camera_button", make_binds(false));
 
 	hb = memnew(HBoxContainer);
 	add_child(hb);
@@ -5282,6 +5327,14 @@ CanvasItemEditor::CanvasItemEditor(EditorNode *p_editor) {
 	scene_tree->set_stretch(true);
 	scene_tree->set_anchors_and_margins_preset(Control::PRESET_WIDE);
 	scene_tree->add_child(p_editor->get_scene_root());
+
+	controls_vb = memnew(VBoxContainer);
+	controls_vb->set_begin(Point2(5, 5));
+
+	zoom_hb = memnew(HBoxContainer);
+	// Bring the zoom percentage closer to the zoom buttons
+	zoom_hb->add_constant_override("separation", Math::round(-8 * EDSCALE));
+	controls_vb->add_child(zoom_hb);
 
 	viewport = memnew(CanvasItemEditorViewport(p_editor, this));
 	viewport_scrollable->add_child(viewport);
@@ -5326,11 +5379,7 @@ CanvasItemEditor::CanvasItemEditor(EditorNode *p_editor) {
 	v_scroll->connect("value_changed", this, "_update_scroll");
 	v_scroll->hide();
 
-	zoom_hb = memnew(HBoxContainer);
-	viewport->add_child(zoom_hb);
-	zoom_hb->set_begin(Point2(5, 5));
-	// Bring the zoom percentage closer to the zoom buttons
-	zoom_hb->add_constant_override("separation", Math::round(-8 * EDSCALE));
+	viewport->add_child(controls_vb);
 
 	zoom_minus = memnew(ToolButton);
 	zoom_hb->add_child(zoom_minus);
@@ -5502,6 +5551,15 @@ CanvasItemEditor::CanvasItemEditor(EditorNode *p_editor) {
 
 	hb->add_child(memnew(VSeparator));
 
+	override_camera_button = memnew(ToolButton);
+	hb->add_child(override_camera_button);
+	override_camera_button->connect("toggled", this, "_button_override_camera");
+	override_camera_button->set_toggle_mode(true);
+	override_camera_button->set_disabled(true);
+	_update_override_camera_button(false);
+
+	hb->add_child(memnew(VSeparator));
+
 	view_menu = memnew(MenuButton);
 	view_menu->set_text(TTR("View"));
 	hb->add_child(view_menu);
@@ -5585,7 +5643,7 @@ CanvasItemEditor::CanvasItemEditor(EditorNode *p_editor) {
 	key_auto_insert_button->set_toggle_mode(true);
 	key_auto_insert_button->set_focus_mode(FOCUS_NONE);
 	//key_auto_insert_button->connect("pressed", this, "_popup_callback", varray(ANIM_INSERT_KEY));
-	key_auto_insert_button->set_tooltip(TTR("Auto insert keys when objects are translated, rotated on scaled (based on mask).\nKeys are only added to existing tracks, no new tracks will be created.\nKeys must be inserted manually for the first time."));
+	key_auto_insert_button->set_tooltip(TTR("Auto insert keys when objects are translated, rotated or scaled (based on mask).\nKeys are only added to existing tracks, no new tracks will be created.\nKeys must be inserted manually for the first time."));
 	key_auto_insert_button->set_shortcut(ED_SHORTCUT("canvas_item_editor/anim_auto_insert_key", TTR("Auto Insert Key")));
 	animation_hb->add_child(key_auto_insert_button);
 
@@ -5708,8 +5766,6 @@ void CanvasItemEditorViewport::_on_change_type_closed() {
 }
 
 void CanvasItemEditorViewport::_create_preview(const Vector<String> &files) const {
-	label->set_position(get_global_position() + Point2(14, 14) * EDSCALE);
-	label_desc->set_position(label->get_position() + Point2(0, label->get_size().height));
 	bool add_preview = false;
 	for (int i = 0; i < files.size(); i++) {
 		String path = files[i];
@@ -6143,7 +6199,7 @@ CanvasItemEditorViewport::CanvasItemEditorViewport(EditorNode *p_node, CanvasIte
 	label->add_color_override("font_color_shadow", Color(0, 0, 0, 1));
 	label->add_constant_override("shadow_as_outline", 1 * EDSCALE);
 	label->hide();
-	editor->get_gui_base()->add_child(label);
+	canvas_item_editor->get_controls_container()->add_child(label);
 
 	label_desc = memnew(Label);
 	label_desc->set_text(TTR("Drag & drop + Shift : Add node as sibling\nDrag & drop + Alt : Change node type"));
@@ -6152,7 +6208,8 @@ CanvasItemEditorViewport::CanvasItemEditorViewport(EditorNode *p_node, CanvasIte
 	label_desc->add_constant_override("shadow_as_outline", 1 * EDSCALE);
 	label_desc->add_constant_override("line_spacing", 0);
 	label_desc->hide();
-	editor->get_gui_base()->add_child(label_desc);
+	canvas_item_editor->get_controls_container()->add_child(label_desc);
+
 	VS::get_singleton()->canvas_set_disable_scale(true);
 }
 
