@@ -2249,6 +2249,7 @@ bool CanvasItemEditor::_gui_input_select(const Ref<InputEvent> &p_event) {
 					// Clear the selection if not additive
 					editor_selection->clear();
 					viewport->update();
+					selected_from_canvas = true;
 				};
 
 				drag_from = click;
