@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  register_types.cpp                                                   */
+/*  zip_reader.h                                                         */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,16 +28,34 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "register_types.h"
+#ifndef ZIP_READER_H
+#define ZIP_READER_H
 
-#include "zip_reader.h"
-#include "zip_writer.h"
+#include "core/reference.h"
 
-void register_zip_types() {
+#include "core/os/file_access.h"
+#include "core/os/os.h"
+#include "thirdparty/minizip/unzip.h"
 
-	ClassDB::register_class<ZipReader>();
-	ClassDB::register_class<ZipWriter>();
-}
+class ZipReader : public Reference {
 
-void unregister_zip_types() {
-}
+	GDCLASS(ZipReader, Object)
+
+	FileAccess *f;
+	unzFile uzf;
+
+protected:
+	static void _bind_methods();
+
+public:
+	Error open(String path);
+	Error close();
+
+	PoolStringArray get_files();
+	PoolByteArray read_file(String path, bool case_sensitive);
+
+	ZipReader();
+	~ZipReader();
+};
+
+#endif // ZIP_READER_H
