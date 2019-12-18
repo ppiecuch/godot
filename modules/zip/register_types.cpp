@@ -30,11 +30,11 @@
 
 #include "register_types.h"
 
-#include "zip.h"
+#include "zip_writer.h"
 
 void register_zip_types() {
 
-	ClassDB::register_class<Zip>();
+	ClassDB::register_class<ZipWriter>();
 }
 
 void unregister_zip_types() {

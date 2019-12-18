@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  zip.h                                                                */
+/*  zip_writer.h                                                         */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef ZIP_H
-#define ZIP_H
+#ifndef ZIP_WRITER_H
+#define ZIP_WRITER_H
 
 #include "core/reference.h"
 
@@ -37,9 +37,9 @@
 #include "core/os/os.h"
 #include "thirdparty/minizip/zip.h"
 
-class Zip : public Reference {
+class ZipWriter : public Reference {
 
-	GDCLASS(Zip, Object);
+	GDCLASS(ZipWriter, Object);
 
 	FileAccess *f;
 	zipFile zf;
@@ -54,17 +54,17 @@ public:
 		APPEND_ADDINZIP = 2,
 	};
 
-	Error open(String path, int append);
+	Error open(String path, ZipAppend append);
 	Error close();
 
-	Error open_new_file_in_zip(String path);
-	Error write_in_file_in_zip(Vector<uint8_t> data);
-	Error close_file_in_zip();
+	Error start_file(String path);
+	Error write_file(Vector<uint8_t> data);
+	Error close_file();
 
-	Zip();
-	~Zip();
+	ZipWriter();
+	~ZipWriter();
 };
 
-VARIANT_ENUM_CAST(Zip::ZipAppend)
+VARIANT_ENUM_CAST(ZipWriter::ZipAppend)
 
-#endif // ZIP_H
+#endif // ZIP_WRITER_H
