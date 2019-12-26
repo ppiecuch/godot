@@ -46,7 +46,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Godot Engine editor\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2019-11-29 14:49+0000\n"
+"PO-Revision-Date: 2019-12-21 08:38+0000\n"
 "Last-Translator: Javier Ocampos <xavier.ocampos@gmail.com>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/godot-engine/"
 "godot/es/>\n"
@@ -55,12 +55,12 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 3.10-dev\n"
+"X-Generator: Weblate 3.10\n"
 
 #: core/math/expression.cpp modules/gdscript/gdscript_functions.cpp
 #: modules/visual_script/visual_script_builtin_funcs.cpp
 msgid "Invalid type argument to convert(), use TYPE_* constants."
-msgstr "El argumento para convert() es invalido, utiliza constantes TYPE_*."
+msgstr "Argumento de tipo inválido para convert(), utiliza constantes TYPE_*."
 
 #: core/math/expression.cpp modules/gdscript/gdscript_functions.cpp
 #: modules/mono/glue/gd_glue.cpp
@@ -569,8 +569,9 @@ msgstr "FPS"
 #: editor/plugins/polygon_2d_editor_plugin.cpp
 #: editor/plugins/script_text_editor.cpp
 #: editor/plugins/shader_editor_plugin.cpp editor/plugins/text_editor.cpp
-#: editor/project_manager.cpp editor/project_settings_editor.cpp
-#: editor/property_editor.cpp modules/visual_script/visual_script_editor.cpp
+#: editor/plugins/tile_set_editor_plugin.cpp editor/project_manager.cpp
+#: editor/project_settings_editor.cpp editor/property_editor.cpp
+#: modules/visual_script/visual_script_editor.cpp
 msgid "Edit"
 msgstr "Editar"
 
@@ -756,6 +757,10 @@ msgstr "Sólo selección"
 msgid "Standard"
 msgstr "Estándar"
 
+#: editor/code_editor.cpp editor/plugins/script_editor_plugin.cpp
+msgid "Toggle Scripts Panel"
+msgstr "Act./Desact. Panel de Scripts"
+
 #: editor/code_editor.cpp editor/plugins/canvas_item_editor_plugin.cpp
 #: editor/plugins/texture_region_editor_plugin.cpp
 #: editor/plugins/tile_set_editor_plugin.cpp scene/gui/graph_edit.cpp
@@ -832,6 +837,11 @@ msgstr "Añadir Argumento de Llamada Extra:"
 #: editor/connections_dialog.cpp
 msgid "Extra Call Arguments:"
 msgstr "Argumentos extras de llamada:"
+
+#: editor/connections_dialog.cpp
+#, fuzzy
+msgid "Receiver Method:"
+msgstr "Seleccionar Método"
 
 #: editor/connections_dialog.cpp
 msgid "Advanced"
@@ -1013,7 +1023,7 @@ msgid "Resource"
 msgstr "Recursos"
 
 #: editor/dependency_editor.cpp editor/editor_autoload_settings.cpp
-#: editor/project_settings_editor.cpp
+#: editor/project_manager.cpp editor/project_settings_editor.cpp
 msgid "Path"
 msgstr "Ruta"
 
@@ -1486,7 +1496,8 @@ msgid "Node Name:"
 msgstr "Nombre del Nodo:"
 
 #: editor/editor_autoload_settings.cpp editor/editor_help_search.cpp
-#: editor/editor_profiler.cpp editor/settings_config_dialog.cpp
+#: editor/editor_profiler.cpp editor/project_manager.cpp
+#: editor/settings_config_dialog.cpp
 msgid "Name"
 msgstr "Nombre"
 
@@ -1738,6 +1749,10 @@ msgstr "Nuevo nombre de perfil:"
 #: editor/editor_feature_profile.cpp
 msgid "Erase Profile"
 msgstr "Borrar Perfil"
+
+#: editor/editor_feature_profile.cpp
+msgid "Godot Feature Profile"
+msgstr "Perfil de Características de Godot"
 
 #: editor/editor_feature_profile.cpp
 msgid "Import Profile(s)"
@@ -2715,7 +2730,8 @@ msgstr "Revertir Escena"
 msgid "Miscellaneous project or scene-wide tools."
 msgstr "Herramientas variadas de proyecto o escena."
 
-#: editor/editor_node.cpp editor/script_create_dialog.cpp
+#: editor/editor_node.cpp editor/project_manager.cpp
+#: editor/script_create_dialog.cpp
 msgid "Project"
 msgstr "Proyecto"
 
@@ -3059,6 +3075,10 @@ msgstr ""
 msgid "Import Templates From ZIP File"
 msgstr "Importar plantillas desde un archivo ZIP"
 
+#: editor/editor_node.cpp
+msgid "Template Package"
+msgstr "Paquete de Plantillas"
+
 #: editor/editor_node.cpp editor/project_export.cpp
 msgid "Export Project"
 msgstr "Exportar Proyecto"
@@ -3114,6 +3134,11 @@ msgstr "Abrir Editor siguiente"
 #: editor/editor_node.cpp
 msgid "Open the previous Editor"
 msgstr "Abrir Editor anterior"
+
+#: editor/editor_node.h
+#, fuzzy
+msgid "Warning!"
+msgstr "Advertencia"
 
 #: editor/editor_path.cpp
 msgid "No sub-resources found."
@@ -3561,6 +3586,10 @@ msgstr "Eliminar Plantilla"
 #: editor/export_template_manager.cpp
 msgid "Select Template File"
 msgstr "Selecciona un Archivo de Plantilla"
+
+#: editor/export_template_manager.cpp
+msgid "Godot Export Templates"
+msgstr "Plantillas de Exportación de Godot"
 
 #: editor/export_template_manager.cpp
 msgid "Export Template Manager"
@@ -4705,6 +4734,11 @@ msgstr "Asignar la animación de fin. Esto es útil para sub-transiciones."
 msgid "Transition: "
 msgstr "Transición: "
 
+#: editor/plugins/animation_state_machine_editor.cpp
+#, fuzzy
+msgid "Play Mode:"
+msgstr "Modo desplazamiento lateral"
+
 #: editor/plugins/animation_tree_editor_plugin.cpp
 #: editor/plugins/animation_tree_player_editor_plugin.cpp
 msgid "AnimationTree"
@@ -4959,6 +4993,30 @@ msgid "Download for this asset is already in progress!"
 msgstr "¡Éste asset ya está descargándose!"
 
 #: editor/plugins/asset_library_editor_plugin.cpp
+msgid "Recently Updated"
+msgstr "Actualizados Recientemente"
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+msgid "Least Recently Updated"
+msgstr "Actualizados con Antigüedad"
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+msgid "Name (A-Z)"
+msgstr "Nombre (A-Z)"
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+msgid "Name (Z-A)"
+msgstr "Nombre (Z-A)"
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+msgid "License (A-Z)"
+msgstr "Licencia (A-Z)"
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+msgid "License (Z-A)"
+msgstr "Licencia (Z-A)"
+
+#: editor/plugins/asset_library_editor_plugin.cpp
 msgid "First"
 msgstr "Primero"
 
@@ -5159,6 +5217,74 @@ msgid ""
 msgstr ""
 "Cuando está activo, el movimiento de los nodos de Control cambian sus "
 "anclajes en lugar de sus márgenes."
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Top Left"
+msgstr "Superior Izquierda"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Top Right"
+msgstr "Superior Derecha"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Bottom Right"
+msgstr "Inferior Derecha"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Bottom Left"
+msgstr "Inferior Izquierda"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Center Left"
+msgstr "Centro Izquierda"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Center Top"
+msgstr "Centro Superior"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Center Right"
+msgstr "Centro Derecha"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Center Bottom"
+msgstr "Centro Inferior"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Center"
+msgstr "Centro"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Left Wide"
+msgstr "Izquierda Ancha"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Top Wide"
+msgstr "Superior Ancha"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Right Wide"
+msgstr "Derecha Ancha"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Bottom Wide"
+msgstr "Inferior Ancha"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "VCenter Wide"
+msgstr "Centro Vert. Ancha"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "HCenter Wide"
+msgstr "Centro Horiz. Ancha"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Full Rect"
+msgstr "Completa"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Keep Ratio"
+msgstr "Mantener Proporciones"
 
 #: editor/plugins/canvas_item_editor_plugin.cpp
 msgid "Anchors only"
@@ -5828,6 +5954,11 @@ msgid "Remove item %d?"
 msgstr "¿Quieres borrar el elemento %d?"
 
 #: editor/plugins/mesh_library_editor_plugin.cpp
+#, fuzzy
+msgid "Mesh Library"
+msgstr "Librería de mallas..."
+
+#: editor/plugins/mesh_library_editor_plugin.cpp
 #: editor/plugins/theme_editor_plugin.cpp
 msgid "Add Item"
 msgstr "Añadir Item"
@@ -6463,6 +6594,23 @@ msgid "Save File As..."
 msgstr "Guardar Archivo Como..."
 
 #: editor/plugins/script_editor_plugin.cpp
+msgid "Can't obtain the script for running."
+msgstr ""
+
+#: editor/plugins/script_editor_plugin.cpp
+msgid "Script failed reloading, check console for errors."
+msgstr ""
+
+#: editor/plugins/script_editor_plugin.cpp
+msgid "Script is not in tool mode, will not be able to run."
+msgstr ""
+
+#: editor/plugins/script_editor_plugin.cpp
+msgid ""
+"To run this script, it must inherit EditorScript and be set to tool mode."
+msgstr ""
+
+#: editor/plugins/script_editor_plugin.cpp
 msgid "Import Theme"
 msgstr "Importar Tema"
 
@@ -6588,10 +6736,6 @@ msgstr "Cerrar Documentación"
 #: editor/plugins/script_editor_plugin.cpp editor/project_manager.cpp
 msgid "Run"
 msgstr "Ejecutar"
-
-#: editor/plugins/script_editor_plugin.cpp
-msgid "Toggle Scripts Panel"
-msgstr "Act./Desact. Panel de Scripts"
 
 #: editor/plugins/script_editor_plugin.cpp editor/script_editor_debugger.cpp
 msgid "Step Into"
@@ -7398,7 +7542,7 @@ msgstr "Geometría inválida, no es posible crear un polígono de colisión."
 
 #: editor/plugins/sprite_editor_plugin.cpp
 msgid "Create CollisionPolygon2D Sibling"
-msgstr "Crear hermano de CollisionPolygon2D"
+msgstr "Crear CollisionPolygon2D hermano"
 
 #: editor/plugins/sprite_editor_plugin.cpp
 msgid "Invalid geometry, can't create light occluder."
@@ -7718,6 +7862,7 @@ msgid "Data Type:"
 msgstr "Tipo de datos:"
 
 #: editor/plugins/theme_editor_plugin.cpp
+#: editor/plugins/tile_set_editor_plugin.cpp
 msgid "Icon"
 msgstr "Icono"
 
@@ -7736,6 +7881,10 @@ msgstr "Color"
 #: editor/plugins/theme_editor_plugin.cpp
 msgid "Constant"
 msgstr "Constante"
+
+#: editor/plugins/theme_editor_plugin.cpp
+msgid "Theme File"
+msgstr "Archivo de Tema"
 
 #: editor/plugins/tile_map_editor_plugin.cpp
 msgid "Erase Selection"
@@ -7847,6 +7996,20 @@ msgid "Merge from Scene"
 msgstr "Unir desde escena"
 
 #: editor/plugins/tile_set_editor_plugin.cpp
+msgid "New Single Tile"
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "New Autotile"
+msgstr "Desactivar Autotile"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "New Atlas"
+msgstr "Atlas:"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
 msgid "Next Coordinate"
 msgstr "Siguiente Coordenada"
 
@@ -7861,6 +8024,41 @@ msgstr "Anterior Coordenada"
 #: editor/plugins/tile_set_editor_plugin.cpp
 msgid "Select the previous shape, subtile, or Tile."
 msgstr "Seleccionar la anterior forma, subtile, o Tile."
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Region"
+msgstr "Modo Región"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Collision"
+msgstr "Modo Colisión"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Occlusion"
+msgstr "Modo Oclusión"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Navigation"
+msgstr "Modo Navegación"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Bitmask"
+msgstr "Modo Bitmask"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Priority"
+msgstr "Modo Prioridad"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Z Index"
+msgstr "Índice:"
 
 #: editor/plugins/tile_set_editor_plugin.cpp
 msgid "Region Mode"
@@ -9080,6 +9278,14 @@ msgid "Runnable"
 msgstr "Ejecutable"
 
 #: editor/project_export.cpp
+msgid "Add initial export..."
+msgstr "Agregar puerto de entrada..."
+
+#: editor/project_export.cpp
+msgid "Add previous patches..."
+msgstr "Agregar parches anteriores..."
+
+#: editor/project_export.cpp
 msgid "Delete patch '%s' from list?"
 msgstr "¿Eliminar patch '%s' de la lista?"
 
@@ -9192,6 +9398,10 @@ msgid "Make Patch"
 msgstr "Crear Patch"
 
 #: editor/project_export.cpp
+msgid "Pack File"
+msgstr "Paquete de Archivos"
+
+#: editor/project_export.cpp
 msgid "Features"
 msgstr "Características"
 
@@ -9242,6 +9452,14 @@ msgstr "¿Modo de Exportación?"
 #: editor/project_export.cpp
 msgid "Export All"
 msgstr "Exportar Todo"
+
+#: editor/project_export.cpp editor/project_manager.cpp
+msgid "ZIP File"
+msgstr "Archivo ZIP"
+
+#: editor/project_export.cpp
+msgid "Godot Game Pack"
+msgstr "Godot Game Pack"
 
 #: editor/project_export.cpp
 msgid "Export templates for this platform are missing:"
@@ -9547,6 +9765,10 @@ msgstr "Administrador de Proyectos"
 #: editor/project_manager.cpp
 msgid "Projects"
 msgstr "Proyectos"
+
+#: editor/project_manager.cpp
+msgid "Last Modified"
+msgstr "Ultima Modificación"
 
 #: editor/project_manager.cpp
 msgid "Scan"
@@ -11167,6 +11389,14 @@ msgid "Set Variable Type"
 msgstr "Establecer Tipo de la Variable"
 
 #: modules/visual_script/visual_script_editor.cpp
+msgid "Add Input Port"
+msgstr "Añadir Puerto de Entrada"
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Add Output Port"
+msgstr "Añadir Puerto de Salida"
+
+#: modules/visual_script/visual_script_editor.cpp
 msgid "Override an existing built-in function."
 msgstr "Sobrescribir una función incorporada existente."
 
@@ -11225,14 +11455,6 @@ msgstr "Añadir Variable"
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Add Signal"
 msgstr "Añadir Señal"
-
-#: modules/visual_script/visual_script_editor.cpp
-msgid "Add Input Port"
-msgstr "Añadir Puerto de Entrada"
-
-#: modules/visual_script/visual_script_editor.cpp
-msgid "Add Output Port"
-msgstr "Añadir Puerto de Salida"
 
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Remove Input Port"
@@ -11412,6 +11634,18 @@ msgstr "Convertir en Herramienta:"
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Members:"
 msgstr "Miembros:"
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Change Base Type:"
+msgstr "Cambiar Tipo Base:"
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Add Nodes..."
+msgstr "Agregar Nodos..."
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Add Function..."
+msgstr "Agregar Función..."
 
 #: modules/visual_script/visual_script_editor.cpp
 msgid "function_name"
@@ -11635,28 +11869,8 @@ msgid "Identifier is missing."
 msgstr "Identificador no encontrado."
 
 #: platform/iphone/export/export.cpp
-msgid "Identifier segments must be of non-zero length."
-msgstr "Los segmentos de un identificador deben ser de largo no nulo."
-
-#: platform/iphone/export/export.cpp
 msgid "The character '%s' is not allowed in Identifier."
 msgstr "El carácter '%s' no esta permitido como identificador."
-
-#: platform/iphone/export/export.cpp
-msgid "A digit cannot be the first character in a Identifier segment."
-msgstr ""
-"Un dígito no puede ser el primer carácter en un segmento Identificador."
-
-#: platform/iphone/export/export.cpp
-msgid ""
-"The character '%s' cannot be the first character in a Identifier segment."
-msgstr ""
-"El carácter '%s' no puede ser el primer carácter en un segmento "
-"Identificador."
-
-#: platform/iphone/export/export.cpp
-msgid "The Identifier must have at least one '.' separator."
-msgstr "El Identificador debe tener al menos un '.' como separador."
 
 #: platform/iphone/export/export.cpp
 msgid "App Store Team ID not specified - cannot configure the project."
@@ -11830,8 +12044,8 @@ msgid ""
 "A shape must be provided for CollisionShape2D to function. Please create a "
 "shape resource for it!"
 msgstr ""
-"Se debe de proveer de forma a CollisionShape2D para que funcione. ¡Creale un "
-"recurso \"shape\"!"
+"Para que CollisionShape2D funcione, se debe proporcionar un shape. Por "
+"favor, ¡crea un recurso shape para ello!"
 
 #: scene/2d/cpu_particles_2d.cpp
 msgid ""
@@ -12063,7 +12277,7 @@ msgid ""
 "shape resource for it."
 msgstr ""
 "Se debe proporcionar un shape para que CollisionShape funcione. Por favor, "
-"crea un recurso de shape para ello."
+"crea un recurso shape para ello."
 
 #: scene/3d/collision_shape.cpp
 msgid ""
@@ -12392,6 +12606,22 @@ msgstr "Solo se pueden asignar variaciones en funciones de vértice."
 #: servers/visual/shader_language.cpp
 msgid "Constants cannot be modified."
 msgstr "Las constantes no pueden modificarse."
+
+#~ msgid "Identifier segments must be of non-zero length."
+#~ msgstr "Los segmentos de un identificador deben ser de largo no nulo."
+
+#~ msgid "A digit cannot be the first character in a Identifier segment."
+#~ msgstr ""
+#~ "Un dígito no puede ser el primer carácter en un segmento Identificador."
+
+#~ msgid ""
+#~ "The character '%s' cannot be the first character in a Identifier segment."
+#~ msgstr ""
+#~ "El carácter '%s' no puede ser el primer carácter en un segmento "
+#~ "Identificador."
+
+#~ msgid "The Identifier must have at least one '.' separator."
+#~ msgstr "El Identificador debe tener al menos un '.' como separador."
 
 #~ msgid "Pause the scene"
 #~ msgstr "Pausar la escena"
@@ -13073,9 +13303,6 @@ msgstr "Las constantes no pueden modificarse."
 #~ msgid "Rotate 270 degrees"
 #~ msgstr "Rotar 270 grados"
 
-#~ msgid "Warning"
-#~ msgstr "Advertencia"
-
 #~ msgid "Variable"
 #~ msgstr "Variable"
 
@@ -13576,9 +13803,6 @@ msgstr "Las constantes no pueden modificarse."
 
 #~ msgid "Re-Import Changed Resources"
 #~ msgstr "Reimportar recursos cambiados"
-
-#~ msgid "Loading Export Templates"
-#~ msgstr "Cargando plantillas de exportación"
 
 #, fuzzy
 #~ msgid ""
@@ -14196,10 +14420,6 @@ msgstr "Las constantes no pueden modificarse."
 #~ msgid "Create Android keystore"
 #~ msgstr "Crear recurso nuevo"
 
-#, fuzzy
-#~ msgid "Full name"
-#~ msgstr "Nombre válido"
-
 #~ msgid "Organizational unit"
 #~ msgstr "Unidad organizativa"
 
@@ -14307,9 +14527,6 @@ msgstr "Las constantes no pueden modificarse."
 
 #~ msgid "Lossy Quality:"
 #~ msgstr "Calidad con pérdidas:"
-
-#~ msgid "Atlas:"
-#~ msgstr "Atlas:"
 
 #~ msgid "Shrink By:"
 #~ msgstr "Reducir por:"

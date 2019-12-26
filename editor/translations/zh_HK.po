@@ -556,8 +556,9 @@ msgstr ""
 #: editor/plugins/polygon_2d_editor_plugin.cpp
 #: editor/plugins/script_text_editor.cpp
 #: editor/plugins/shader_editor_plugin.cpp editor/plugins/text_editor.cpp
-#: editor/project_manager.cpp editor/project_settings_editor.cpp
-#: editor/property_editor.cpp modules/visual_script/visual_script_editor.cpp
+#: editor/plugins/tile_set_editor_plugin.cpp editor/project_manager.cpp
+#: editor/project_settings_editor.cpp editor/property_editor.cpp
+#: modules/visual_script/visual_script_editor.cpp
 msgid "Edit"
 msgstr "編輯"
 
@@ -764,6 +765,10 @@ msgstr "只限選中"
 msgid "Standard"
 msgstr ""
 
+#: editor/code_editor.cpp editor/plugins/script_editor_plugin.cpp
+msgid "Toggle Scripts Panel"
+msgstr ""
+
 #: editor/code_editor.cpp editor/plugins/canvas_item_editor_plugin.cpp
 #: editor/plugins/texture_region_editor_plugin.cpp
 #: editor/plugins/tile_set_editor_plugin.cpp scene/gui/graph_edit.cpp
@@ -841,6 +846,11 @@ msgstr ""
 #: editor/connections_dialog.cpp
 msgid "Extra Call Arguments:"
 msgstr ""
+
+#: editor/connections_dialog.cpp
+#, fuzzy
+msgid "Receiver Method:"
+msgstr "選擇模式"
 
 #: editor/connections_dialog.cpp
 msgid "Advanced"
@@ -1026,7 +1036,7 @@ msgid "Resource"
 msgstr "資源"
 
 #: editor/dependency_editor.cpp editor/editor_autoload_settings.cpp
-#: editor/project_settings_editor.cpp
+#: editor/project_manager.cpp editor/project_settings_editor.cpp
 msgid "Path"
 msgstr "路徑"
 
@@ -1532,7 +1542,8 @@ msgid "Node Name:"
 msgstr ""
 
 #: editor/editor_autoload_settings.cpp editor/editor_help_search.cpp
-#: editor/editor_profiler.cpp editor/settings_config_dialog.cpp
+#: editor/editor_profiler.cpp editor/project_manager.cpp
+#: editor/settings_config_dialog.cpp
 msgid "Name"
 msgstr "名稱"
 
@@ -1793,6 +1804,11 @@ msgstr "有效名稱"
 #, fuzzy
 msgid "Erase Profile"
 msgstr "縮放selection"
+
+#: editor/editor_feature_profile.cpp
+#, fuzzy
+msgid "Godot Feature Profile"
+msgstr "管理輸出範本"
 
 #: editor/editor_feature_profile.cpp
 #, fuzzy
@@ -2784,7 +2800,8 @@ msgstr ""
 msgid "Miscellaneous project or scene-wide tools."
 msgstr ""
 
-#: editor/editor_node.cpp editor/script_create_dialog.cpp
+#: editor/editor_node.cpp editor/project_manager.cpp
+#: editor/script_create_dialog.cpp
 msgid "Project"
 msgstr "專案"
 
@@ -3117,6 +3134,11 @@ msgstr ""
 msgid "Import Templates From ZIP File"
 msgstr "從ZIP檔"
 
+#: editor/editor_node.cpp
+#, fuzzy
+msgid "Template Package"
+msgstr "移除選項"
+
 #: editor/editor_node.cpp editor/project_export.cpp
 msgid "Export Project"
 msgstr ""
@@ -3175,6 +3197,10 @@ msgstr "要離開編輯器嗎?"
 
 #: editor/editor_node.cpp
 msgid "Open the previous Editor"
+msgstr ""
+
+#: editor/editor_node.h
+msgid "Warning!"
 msgstr ""
 
 #: editor/editor_path.cpp
@@ -3639,6 +3665,11 @@ msgstr "移除選項"
 #, fuzzy
 msgid "Select Template File"
 msgstr "要刪除選中檔案?"
+
+#: editor/export_template_manager.cpp
+#, fuzzy
+msgid "Godot Export Templates"
+msgstr "管理輸出範本"
 
 #: editor/export_template_manager.cpp
 msgid "Export Template Manager"
@@ -4864,6 +4895,11 @@ msgstr ""
 msgid "Transition: "
 msgstr "過渡"
 
+#: editor/plugins/animation_state_machine_editor.cpp
+#, fuzzy
+msgid "Play Mode:"
+msgstr "匯出"
+
 #: editor/plugins/animation_tree_editor_plugin.cpp
 #: editor/plugins/animation_tree_player_editor_plugin.cpp
 #, fuzzy
@@ -5129,6 +5165,32 @@ msgid "Download for this asset is already in progress!"
 msgstr "Asset已在下載中"
 
 #: editor/plugins/asset_library_editor_plugin.cpp
+msgid "Recently Updated"
+msgstr ""
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+msgid "Least Recently Updated"
+msgstr ""
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+msgid "Name (A-Z)"
+msgstr ""
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+msgid "Name (Z-A)"
+msgstr ""
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+#, fuzzy
+msgid "License (A-Z)"
+msgstr "授權條款"
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+#, fuzzy
+msgid "License (Z-A)"
+msgstr "授權條款"
+
+#: editor/plugins/asset_library_editor_plugin.cpp
 #, fuzzy
 msgid "First"
 msgstr "首頁"
@@ -5334,6 +5396,78 @@ msgid ""
 "When active, moving Control nodes changes their anchors instead of their "
 "margins."
 msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Top Left"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Top Right"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Bottom Right"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Bottom Left"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Center Left"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Center Top"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Center Right"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Center Bottom"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Center"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Left Wide"
+msgstr "線性"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Top Wide"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Right Wide"
+msgstr "線性"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Bottom Wide"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "VCenter Wide"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "HCenter Wide"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Full Rect"
+msgstr "有效名稱"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Keep Ratio"
+msgstr "縮放比例："
 
 #: editor/plugins/canvas_item_editor_plugin.cpp
 msgid "Anchors only"
@@ -6016,6 +6150,11 @@ msgid "Remove item %d?"
 msgstr ""
 
 #: editor/plugins/mesh_library_editor_plugin.cpp
+#, fuzzy
+msgid "Mesh Library"
+msgstr "MeshLibrary..."
+
+#: editor/plugins/mesh_library_editor_plugin.cpp
 #: editor/plugins/theme_editor_plugin.cpp
 msgid "Add Item"
 msgstr ""
@@ -6669,6 +6808,23 @@ msgid "Save File As..."
 msgstr "另存為..."
 
 #: editor/plugins/script_editor_plugin.cpp
+msgid "Can't obtain the script for running."
+msgstr ""
+
+#: editor/plugins/script_editor_plugin.cpp
+msgid "Script failed reloading, check console for errors."
+msgstr ""
+
+#: editor/plugins/script_editor_plugin.cpp
+msgid "Script is not in tool mode, will not be able to run."
+msgstr ""
+
+#: editor/plugins/script_editor_plugin.cpp
+msgid ""
+"To run this script, it must inherit EditorScript and be set to tool mode."
+msgstr ""
+
+#: editor/plugins/script_editor_plugin.cpp
 msgid "Import Theme"
 msgstr ""
 
@@ -6804,10 +6960,6 @@ msgstr "關閉場景"
 #: editor/plugins/script_editor_plugin.cpp editor/project_manager.cpp
 msgid "Run"
 msgstr "運行"
-
-#: editor/plugins/script_editor_plugin.cpp
-msgid "Toggle Scripts Panel"
-msgstr ""
 
 #: editor/plugins/script_editor_plugin.cpp editor/script_editor_debugger.cpp
 msgid "Step Into"
@@ -7995,6 +8147,7 @@ msgid "Data Type:"
 msgstr ""
 
 #: editor/plugins/theme_editor_plugin.cpp
+#: editor/plugins/tile_set_editor_plugin.cpp
 msgid "Icon"
 msgstr ""
 
@@ -8013,6 +8166,11 @@ msgstr ""
 #: editor/plugins/theme_editor_plugin.cpp
 msgid "Constant"
 msgstr "常數"
+
+#: editor/plugins/theme_editor_plugin.cpp
+#, fuzzy
+msgid "Theme File"
+msgstr "開啟檔案"
 
 #: editor/plugins/tile_map_editor_plugin.cpp
 #, fuzzy
@@ -8131,6 +8289,19 @@ msgid "Merge from Scene"
 msgstr ""
 
 #: editor/plugins/tile_set_editor_plugin.cpp
+msgid "New Single Tile"
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "New Autotile"
+msgstr "檔案"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+msgid "New Atlas"
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
 #, fuzzy
 msgid "Next Coordinate"
 msgstr "下一個腳本"
@@ -8146,6 +8317,39 @@ msgstr "上一個tab"
 
 #: editor/plugins/tile_set_editor_plugin.cpp
 msgid "Select the previous shape, subtile, or Tile."
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Region"
+msgstr "無干擾模式"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Collision"
+msgstr "無干擾模式"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Occlusion"
+msgstr "插件"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Navigation"
+msgstr "插件"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+msgid "Bitmask"
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Priority"
+msgstr "匯出"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+msgid "Z Index"
 msgstr ""
 
 #: editor/plugins/tile_set_editor_plugin.cpp
@@ -9342,6 +9546,15 @@ msgstr "啟用"
 
 #: editor/project_export.cpp
 #, fuzzy
+msgid "Add initial export..."
+msgstr "新增訊號"
+
+#: editor/project_export.cpp
+msgid "Add previous patches..."
+msgstr ""
+
+#: editor/project_export.cpp
+#, fuzzy
 msgid "Delete patch '%s' from list?"
 msgstr "刪除"
 
@@ -9447,6 +9660,11 @@ msgid "Make Patch"
 msgstr ""
 
 #: editor/project_export.cpp
+#, fuzzy
+msgid "Pack File"
+msgstr "檔案"
+
+#: editor/project_export.cpp
 msgid "Features"
 msgstr ""
 
@@ -9502,6 +9720,15 @@ msgstr "匯出"
 #, fuzzy
 msgid "Export All"
 msgstr "匯出"
+
+#: editor/project_export.cpp editor/project_manager.cpp
+#, fuzzy
+msgid "ZIP File"
+msgstr "檔案"
+
+#: editor/project_export.cpp
+msgid "Godot Game Pack"
+msgstr ""
 
 #: editor/project_export.cpp
 msgid "Export templates for this platform are missing:"
@@ -9771,6 +9998,10 @@ msgstr ""
 #, fuzzy
 msgid "Projects"
 msgstr "專案"
+
+#: editor/project_manager.cpp
+msgid "Last Modified"
+msgstr ""
 
 #: editor/project_manager.cpp
 msgid "Scan"
@@ -11442,6 +11673,16 @@ msgstr ""
 
 #: modules/visual_script/visual_script_editor.cpp
 #, fuzzy
+msgid "Add Input Port"
+msgstr "新增訊號"
+
+#: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Add Output Port"
+msgstr "新增訊號"
+
+#: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
 msgid "Override an existing built-in function."
 msgstr "有效名稱。"
 
@@ -11505,16 +11746,6 @@ msgstr ""
 
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Add Signal"
-msgstr "新增訊號"
-
-#: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
-msgid "Add Input Port"
-msgstr "新增訊號"
-
-#: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
-msgid "Add Output Port"
 msgstr "新增訊號"
 
 #: modules/visual_script/visual_script_editor.cpp
@@ -11701,6 +11932,21 @@ msgstr ""
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Members:"
 msgstr ""
+
+#: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Change Base Type:"
+msgstr "更改動畫循環"
+
+#: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Add Nodes..."
+msgstr "新增節點"
+
+#: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Add Function..."
+msgstr "行為"
 
 #: modules/visual_script/visual_script_editor.cpp
 #, fuzzy
@@ -11905,24 +12151,7 @@ msgid "Identifier is missing."
 msgstr ""
 
 #: platform/iphone/export/export.cpp
-msgid "Identifier segments must be of non-zero length."
-msgstr ""
-
-#: platform/iphone/export/export.cpp
 msgid "The character '%s' is not allowed in Identifier."
-msgstr ""
-
-#: platform/iphone/export/export.cpp
-msgid "A digit cannot be the first character in a Identifier segment."
-msgstr ""
-
-#: platform/iphone/export/export.cpp
-msgid ""
-"The character '%s' cannot be the first character in a Identifier segment."
-msgstr ""
-
-#: platform/iphone/export/export.cpp
-msgid "The Identifier must have at least one '.' separator."
 msgstr ""
 
 #: platform/iphone/export/export.cpp
@@ -12713,10 +12942,6 @@ msgstr ""
 #~ msgstr "放大"
 
 #, fuzzy
-#~ msgid "New TextFile"
-#~ msgstr "檔案"
-
-#, fuzzy
 #~ msgid "Zoom:"
 #~ msgstr "放大"
 
@@ -12934,10 +13159,6 @@ msgstr ""
 #, fuzzy
 #~ msgid "Create Android keystore"
 #~ msgstr "新增資料夾"
-
-#, fuzzy
-#~ msgid "Full name"
-#~ msgstr "有效名稱"
 
 #, fuzzy
 #~ msgid "Organization"

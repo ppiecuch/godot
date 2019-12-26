@@ -28,6 +28,10 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS // to disable build-time warning which suggested to use strcpy_s instead strcpy
+#endif
+
 #include "ustring.h"
 
 #include "core/color.h"
@@ -1917,7 +1921,7 @@ static double built_in_strtod(const C *string, /* A decimal ASCII floating-point
 		1.0e256
 	};
 
-	int sign, expSign = false;
+	bool sign, expSign = false;
 	double fraction, dblExp;
 	const double *d;
 	const C *p;
@@ -3792,7 +3796,8 @@ bool String::is_valid_float() const {
 
 String String::path_to_file(const String &p_path) const {
 
-	String src = this->replace("\\", "/").get_base_dir();
+	// Don't get base dir for src, this is expected to be a dir already.
+	String src = this->replace("\\", "/");
 	String dst = p_path.replace("\\", "/").get_base_dir();
 	String rel = src.path_to(dst);
 	if (rel == dst) // failed
@@ -4052,6 +4057,19 @@ String String::percent_decode() const {
 	}
 
 	return String::utf8(pe.ptr());
+}
+
+String String::property_name_encode() const {
+	// Escape and quote strings with extended ASCII or further Unicode characters
+	// as well as '"', '=' or ' ' (32)
+	const CharType *cstr = c_str();
+	for (int i = 0; cstr[i]; i++) {
+		if (cstr[i] == '=' || cstr[i] == '"' || cstr[i] < 33 || cstr[i] > 126) {
+			return "\"" + c_escape_multiline() + "\"";
+		}
+	}
+	// Keep as is
+	return *this;
 }
 
 String String::get_basename() const {

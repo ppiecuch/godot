@@ -374,6 +374,8 @@ MonoObject *variant_to_mono_object(const Variant *p_var, const ManagedType &p_ty
 		}
 
 		case MONO_TYPE_STRING: {
+			if (p_var->get_type() == Variant::NIL)
+				return NULL; // Otherwise, Variant -> String would return the string "Null"
 			return (MonoObject *)mono_string_from_godot(p_var->operator String());
 		} break;
 
@@ -934,6 +936,8 @@ Array mono_array_to_Array(MonoArray *p_array) {
 
 	return ret;
 }
+
+// TODO: Use memcpy where possible
 
 MonoArray *PoolIntArray_to_mono_array(const PoolIntArray &p_array) {
 	PoolIntArray::Read r = p_array.read();

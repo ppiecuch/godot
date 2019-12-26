@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  b2d_decompose.h                                                      */
+/*  register_types.h                                                     */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,12 +28,5 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef B2D_DECOMPOSE_H
-#define B2D_DECOMPOSE_H
-
-#include "core/math/vector2.h"
-#include "core/vector.h"
-
-Vector<Vector<Vector2> > b2d_decompose(const Vector<Vector2> &p_polygon);
-
-#endif // B2D_DECOMPOSE_H
+void register_camera_types();
+void unregister_camera_types();

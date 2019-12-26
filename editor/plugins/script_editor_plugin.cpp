@@ -987,8 +987,18 @@ Array ScriptEditor::_get_open_scripts() const {
 	return ret;
 }
 
+bool ScriptEditor::toggle_scripts_panel() {
+	list_split->set_visible(!list_split->is_visible());
+	return list_split->is_visible();
+}
+
+bool ScriptEditor::is_scripts_panel_toggled() {
+	return list_split->is_visible();
+}
+
 void ScriptEditor::_menu_option(int p_option) {
 
+	ScriptEditorBase *current = _get_current_editor();
 	switch (p_option) {
 		case FILE_NEW: {
 			script_create_dialog->config("Node", "new_script");
@@ -1127,11 +1137,18 @@ void ScriptEditor::_menu_option(int p_option) {
 			debug_menu->get_popup()->set_item_checked(debug_menu->get_popup()->get_item_index(DEBUG_WITH_EXTERNAL_EDITOR), debug_with_external_editor);
 		} break;
 		case TOGGLE_SCRIPTS_PANEL: {
-			list_split->set_visible(!list_split->is_visible());
+			if (current) {
+				ScriptTextEditor *editor = Object::cast_to<ScriptTextEditor>(current);
+				toggle_scripts_panel();
+				if (editor) {
+					editor->update_toggle_scripts_button();
+				}
+			} else {
+				toggle_scripts_panel();
+			}
 		}
 	}
 
-	ScriptEditorBase *current = _get_current_editor();
 	if (current) {
 
 		switch (p_option) {
@@ -1208,7 +1225,7 @@ void ScriptEditor::_menu_option(int p_option) {
 
 				Ref<Script> scr = current->get_edited_resource();
 				if (scr == NULL || scr.is_null()) {
-					EditorNode::get_singleton()->show_warning("Can't obtain the script for running.");
+					EditorNode::get_singleton()->show_warning(TTR("Can't obtain the script for running."));
 					break;
 				}
 
@@ -1216,18 +1233,18 @@ void ScriptEditor::_menu_option(int p_option) {
 				Error err = scr->reload(false); //hard reload script before running always
 
 				if (err != OK) {
-					EditorNode::get_singleton()->show_warning("Script failed reloading, check console for errors.");
+					EditorNode::get_singleton()->show_warning(TTR("Script failed reloading, check console for errors."));
 					return;
 				}
 				if (!scr->is_tool()) {
 
-					EditorNode::get_singleton()->show_warning("Script is not in tool mode, will not be able to run.");
+					EditorNode::get_singleton()->show_warning(TTR("Script is not in tool mode, will not be able to run."));
 					return;
 				}
 
 				if (!ClassDB::is_parent_class(scr->get_instance_base_type(), "EditorScript")) {
 
-					EditorNode::get_singleton()->show_warning("To run this script, it must inherit EditorScript and be set to tool mode.");
+					EditorNode::get_singleton()->show_warning(TTR("To run this script, it must inherit EditorScript and be set to tool mode."));
 					return;
 				}
 

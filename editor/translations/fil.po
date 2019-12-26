@@ -8,7 +8,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Godot Engine editor\n"
-"PO-Revision-Date: 2019-11-21 14:24+0000\n"
+"PO-Revision-Date: 2019-12-21 08:37+0000\n"
 "Last-Translator: Bakainkorp <Ryan.Bautista86@myhunter.cuny.edu>\n"
 "Language-Team: Filipino <https://hosted.weblate.org/projects/godot-engine/"
 "godot/fil/>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8-bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1 && n != 2 && n != 3 && (n % 10 == 4 "
 "|| n % 10 == 6 || n % 10 == 9);\n"
-"X-Generator: Weblate 3.10-dev\n"
+"X-Generator: Weblate 3.10\n"
 
 #: core/math/expression.cpp modules/gdscript/gdscript_functions.cpp
 #: modules/visual_script/visual_script_builtin_funcs.cpp
@@ -513,8 +513,9 @@ msgstr "FPS"
 #: editor/plugins/polygon_2d_editor_plugin.cpp
 #: editor/plugins/script_text_editor.cpp
 #: editor/plugins/shader_editor_plugin.cpp editor/plugins/text_editor.cpp
-#: editor/project_manager.cpp editor/project_settings_editor.cpp
-#: editor/property_editor.cpp modules/visual_script/visual_script_editor.cpp
+#: editor/plugins/tile_set_editor_plugin.cpp editor/project_manager.cpp
+#: editor/project_settings_editor.cpp editor/property_editor.cpp
+#: modules/visual_script/visual_script_editor.cpp
 msgid "Edit"
 msgstr "I-edit"
 
@@ -657,7 +658,7 @@ msgstr ""
 
 #: editor/code_editor.cpp
 msgid "Go to Line"
-msgstr ""
+msgstr "Pumunta sa Linya"
 
 #: editor/code_editor.cpp
 msgid "Line Number:"
@@ -698,6 +699,10 @@ msgstr ""
 #: editor/code_editor.cpp editor/plugins/script_text_editor.cpp
 #: editor/plugins/text_editor.cpp
 msgid "Standard"
+msgstr ""
+
+#: editor/code_editor.cpp editor/plugins/script_editor_plugin.cpp
+msgid "Toggle Scripts Panel"
 msgstr ""
 
 #: editor/code_editor.cpp editor/plugins/canvas_item_editor_plugin.cpp
@@ -776,6 +781,10 @@ msgid "Extra Call Arguments:"
 msgstr ""
 
 #: editor/connections_dialog.cpp
+msgid "Receiver Method:"
+msgstr ""
+
+#: editor/connections_dialog.cpp
 msgid "Advanced"
 msgstr ""
 
@@ -817,7 +826,7 @@ msgstr "Isara"
 
 #: editor/connections_dialog.cpp
 msgid "Connect"
-msgstr ""
+msgstr "Ikabit"
 
 #: editor/connections_dialog.cpp
 msgid "Signal:"
@@ -837,7 +846,7 @@ msgstr ""
 
 #: editor/connections_dialog.cpp
 msgid "Connect..."
-msgstr ""
+msgstr "Ikabit..."
 
 #: editor/connections_dialog.cpp
 #: editor/plugins/animation_tree_player_editor_plugin.cpp
@@ -947,7 +956,7 @@ msgid "Resource"
 msgstr ""
 
 #: editor/dependency_editor.cpp editor/editor_autoload_settings.cpp
-#: editor/project_settings_editor.cpp
+#: editor/project_manager.cpp editor/project_settings_editor.cpp
 msgid "Path"
 msgstr ""
 
@@ -975,7 +984,7 @@ msgstr ""
 #: modules/visual_script/visual_script_property_selector.cpp
 #: scene/gui/file_dialog.cpp
 msgid "Open"
-msgstr ""
+msgstr "I-buksan"
 
 #: editor/dependency_editor.cpp
 msgid "Owners Of:"
@@ -1412,7 +1421,8 @@ msgid "Node Name:"
 msgstr ""
 
 #: editor/editor_autoload_settings.cpp editor/editor_help_search.cpp
-#: editor/editor_profiler.cpp editor/settings_config_dialog.cpp
+#: editor/editor_profiler.cpp editor/project_manager.cpp
+#: editor/settings_config_dialog.cpp
 msgid "Name"
 msgstr ""
 
@@ -1649,6 +1659,10 @@ msgstr ""
 
 #: editor/editor_feature_profile.cpp
 msgid "Erase Profile"
+msgstr ""
+
+#: editor/editor_feature_profile.cpp
+msgid "Godot Feature Profile"
 msgstr ""
 
 #: editor/editor_feature_profile.cpp
@@ -2560,7 +2574,8 @@ msgstr ""
 msgid "Miscellaneous project or scene-wide tools."
 msgstr ""
 
-#: editor/editor_node.cpp editor/script_create_dialog.cpp
+#: editor/editor_node.cpp editor/project_manager.cpp
+#: editor/script_create_dialog.cpp
 msgid "Project"
 msgstr ""
 
@@ -2872,6 +2887,10 @@ msgstr ""
 msgid "Import Templates From ZIP File"
 msgstr ""
 
+#: editor/editor_node.cpp
+msgid "Template Package"
+msgstr ""
+
 #: editor/editor_node.cpp editor/project_export.cpp
 msgid "Export Project"
 msgstr ""
@@ -2927,6 +2946,11 @@ msgstr ""
 #: editor/editor_node.cpp
 msgid "Open the previous Editor"
 msgstr ""
+
+#: editor/editor_node.h
+#, fuzzy
+msgid "Warning!"
+msgstr "Mga Babala"
 
 #: editor/editor_path.cpp
 msgid "No sub-resources found."
@@ -3109,7 +3133,7 @@ msgstr ""
 
 #: editor/editor_properties_array_dict.cpp
 msgid "Page: "
-msgstr ""
+msgstr "Pahina: "
 
 #: editor/editor_properties_array_dict.cpp
 #: editor/plugins/theme_editor_plugin.cpp
@@ -3254,7 +3278,7 @@ msgstr ""
 #: editor/export_template_manager.cpp
 #: editor/plugins/asset_library_editor_plugin.cpp
 msgid "No response."
-msgstr ""
+msgstr "Walang sagot."
 
 #: editor/export_template_manager.cpp
 msgid "Request Failed."
@@ -3271,7 +3295,7 @@ msgstr ""
 
 #: editor/export_template_manager.cpp
 msgid "Download Complete."
-msgstr ""
+msgstr "Kumpleto ang pag-Download."
 
 #: editor/export_template_manager.cpp
 msgid "Cannot remove temporary file:"
@@ -3355,6 +3379,10 @@ msgstr ""
 
 #: editor/export_template_manager.cpp
 msgid "Select Template File"
+msgstr ""
+
+#: editor/export_template_manager.cpp
+msgid "Godot Export Templates"
 msgstr ""
 
 #: editor/export_template_manager.cpp
@@ -4468,6 +4496,10 @@ msgstr ""
 msgid "Transition: "
 msgstr ""
 
+#: editor/plugins/animation_state_machine_editor.cpp
+msgid "Play Mode:"
+msgstr ""
+
 #: editor/plugins/animation_tree_editor_plugin.cpp
 #: editor/plugins/animation_tree_player_editor_plugin.cpp
 msgid "AnimationTree"
@@ -4723,6 +4755,30 @@ msgid "Download for this asset is already in progress!"
 msgstr ""
 
 #: editor/plugins/asset_library_editor_plugin.cpp
+msgid "Recently Updated"
+msgstr ""
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+msgid "Least Recently Updated"
+msgstr ""
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+msgid "Name (A-Z)"
+msgstr ""
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+msgid "Name (Z-A)"
+msgstr ""
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+msgid "License (A-Z)"
+msgstr ""
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+msgid "License (Z-A)"
+msgstr ""
+
+#: editor/plugins/asset_library_editor_plugin.cpp
 msgid "First"
 msgstr ""
 
@@ -4912,6 +4968,74 @@ msgstr ""
 msgid ""
 "When active, moving Control nodes changes their anchors instead of their "
 "margins."
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Top Left"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Top Right"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Bottom Right"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Bottom Left"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Center Left"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Center Top"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Center Right"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Center Bottom"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Center"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Left Wide"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Top Wide"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Right Wide"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Bottom Wide"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "VCenter Wide"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "HCenter Wide"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Full Rect"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Keep Ratio"
 msgstr ""
 
 #: editor/plugins/canvas_item_editor_plugin.cpp
@@ -5566,6 +5690,10 @@ msgid "Remove item %d?"
 msgstr ""
 
 #: editor/plugins/mesh_library_editor_plugin.cpp
+msgid "Mesh Library"
+msgstr ""
+
+#: editor/plugins/mesh_library_editor_plugin.cpp
 #: editor/plugins/theme_editor_plugin.cpp
 msgid "Add Item"
 msgstr ""
@@ -6192,6 +6320,23 @@ msgid "Save File As..."
 msgstr ""
 
 #: editor/plugins/script_editor_plugin.cpp
+msgid "Can't obtain the script for running."
+msgstr ""
+
+#: editor/plugins/script_editor_plugin.cpp
+msgid "Script failed reloading, check console for errors."
+msgstr ""
+
+#: editor/plugins/script_editor_plugin.cpp
+msgid "Script is not in tool mode, will not be able to run."
+msgstr ""
+
+#: editor/plugins/script_editor_plugin.cpp
+msgid ""
+"To run this script, it must inherit EditorScript and be set to tool mode."
+msgstr ""
+
+#: editor/plugins/script_editor_plugin.cpp
 msgid "Import Theme"
 msgstr ""
 
@@ -6316,10 +6461,6 @@ msgstr ""
 
 #: editor/plugins/script_editor_plugin.cpp editor/project_manager.cpp
 msgid "Run"
-msgstr ""
-
-#: editor/plugins/script_editor_plugin.cpp
-msgid "Toggle Scripts Panel"
 msgstr ""
 
 #: editor/plugins/script_editor_plugin.cpp editor/script_editor_debugger.cpp
@@ -7436,6 +7577,7 @@ msgid "Data Type:"
 msgstr ""
 
 #: editor/plugins/theme_editor_plugin.cpp
+#: editor/plugins/tile_set_editor_plugin.cpp
 msgid "Icon"
 msgstr ""
 
@@ -7453,6 +7595,10 @@ msgstr ""
 
 #: editor/plugins/theme_editor_plugin.cpp
 msgid "Constant"
+msgstr ""
+
+#: editor/plugins/theme_editor_plugin.cpp
+msgid "Theme File"
 msgstr ""
 
 #: editor/plugins/tile_map_editor_plugin.cpp
@@ -7564,6 +7710,18 @@ msgid "Merge from Scene"
 msgstr ""
 
 #: editor/plugins/tile_set_editor_plugin.cpp
+msgid "New Single Tile"
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+msgid "New Autotile"
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+msgid "New Atlas"
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
 msgid "Next Coordinate"
 msgstr ""
 
@@ -7577,6 +7735,34 @@ msgstr ""
 
 #: editor/plugins/tile_set_editor_plugin.cpp
 msgid "Select the previous shape, subtile, or Tile."
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+msgid "Region"
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+msgid "Collision"
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+msgid "Occlusion"
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+msgid "Navigation"
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+msgid "Bitmask"
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+msgid "Priority"
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+msgid "Z Index"
 msgstr ""
 
 #: editor/plugins/tile_set_editor_plugin.cpp
@@ -8084,15 +8270,15 @@ msgstr ""
 
 #: editor/plugins/visual_shader_editor_plugin.cpp
 msgid "Equal (==)"
-msgstr ""
+msgstr "Katumbas (==)"
 
 #: editor/plugins/visual_shader_editor_plugin.cpp
 msgid "Greater Than (>)"
-msgstr ""
+msgstr "Mahigit sa (>)"
 
 #: editor/plugins/visual_shader_editor_plugin.cpp
 msgid "Greater Than or Equal (>=)"
-msgstr ""
+msgstr "mas Malaki Kaysa sa o Katumbas ng (>=)"
 
 #: editor/plugins/visual_shader_editor_plugin.cpp
 msgid ""
@@ -8706,6 +8892,14 @@ msgid "Runnable"
 msgstr ""
 
 #: editor/project_export.cpp
+msgid "Add initial export..."
+msgstr ""
+
+#: editor/project_export.cpp
+msgid "Add previous patches..."
+msgstr ""
+
+#: editor/project_export.cpp
 msgid "Delete patch '%s' from list?"
 msgstr ""
 
@@ -8805,6 +8999,10 @@ msgid "Make Patch"
 msgstr ""
 
 #: editor/project_export.cpp
+msgid "Pack File"
+msgstr ""
+
+#: editor/project_export.cpp
 msgid "Features"
 msgstr ""
 
@@ -8854,6 +9052,14 @@ msgstr ""
 
 #: editor/project_export.cpp
 msgid "Export All"
+msgstr ""
+
+#: editor/project_export.cpp editor/project_manager.cpp
+msgid "ZIP File"
+msgstr ""
+
+#: editor/project_export.cpp
+msgid "Godot Game Pack"
 msgstr ""
 
 #: editor/project_export.cpp
@@ -9110,6 +9316,10 @@ msgstr ""
 
 #: editor/project_manager.cpp
 msgid "Projects"
+msgstr ""
+
+#: editor/project_manager.cpp
+msgid "Last Modified"
 msgstr ""
 
 #: editor/project_manager.cpp
@@ -10684,6 +10894,15 @@ msgid "Set Variable Type"
 msgstr ""
 
 #: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Add Input Port"
+msgstr "Idagdag Ang Bezier Point"
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Add Output Port"
+msgstr ""
+
+#: modules/visual_script/visual_script_editor.cpp
 msgid "Override an existing built-in function."
 msgstr ""
 
@@ -10741,15 +10960,6 @@ msgstr ""
 
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Add Signal"
-msgstr ""
-
-#: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
-msgid "Add Input Port"
-msgstr "Idagdag Ang Bezier Point"
-
-#: modules/visual_script/visual_script_editor.cpp
-msgid "Add Output Port"
 msgstr ""
 
 #: modules/visual_script/visual_script_editor.cpp
@@ -10922,6 +11132,18 @@ msgstr ""
 
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Members:"
+msgstr ""
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Change Base Type:"
+msgstr ""
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Add Nodes..."
+msgstr ""
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Add Function..."
 msgstr ""
 
 #: modules/visual_script/visual_script_editor.cpp
@@ -11121,24 +11343,7 @@ msgid "Identifier is missing."
 msgstr ""
 
 #: platform/iphone/export/export.cpp
-msgid "Identifier segments must be of non-zero length."
-msgstr ""
-
-#: platform/iphone/export/export.cpp
 msgid "The character '%s' is not allowed in Identifier."
-msgstr ""
-
-#: platform/iphone/export/export.cpp
-msgid "A digit cannot be the first character in a Identifier segment."
-msgstr ""
-
-#: platform/iphone/export/export.cpp
-msgid ""
-"The character '%s' cannot be the first character in a Identifier segment."
-msgstr ""
-
-#: platform/iphone/export/export.cpp
-msgid "The Identifier must have at least one '.' separator."
 msgstr ""
 
 #: platform/iphone/export/export.cpp

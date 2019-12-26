@@ -303,6 +303,10 @@ void Label::_notification(int p_what) {
 					}
 				}
 
+				// calculate transition differences for different variants
+				// and extra characters before and after the word:
+				// before: |  ABCD  | |ABCD   | |    ABCD|
+				// after:  | ABCDEF | |AB     | |   ABCDE|
                 int extra_chars_before = 0, extra_chars_after = 0;
                 if (animate && transition_controller->is_active()) {
 
@@ -321,8 +325,8 @@ void Label::_notification(int p_what) {
                         } break;
                         case ALIGN_CENTER: {
 
-                            extra_chars_before /= 2;
-                            extra_chars_after /= 2;
+                            extra_chars_before = floor(extra_chars_before/2.);
+                            extra_chars_after = ceil(extra_chars_before/2.);
                         } break;
                         case ALIGN_RIGHT: {
 
@@ -357,26 +361,30 @@ void Label::_notification(int p_what) {
 					}
 				}
 
+				// +1 : check if there is a transition after the word (space between words):
+				// before: |  ABC_DEF GH  |
+				// after": |   ABC DEF GH |
 				for (int i = -extra_chars_before; i < from->word_len + extra_chars_after + 1; i++) {
 
 					if (visible_chars < 0 || chars_total < visible_chars) {
 
 						if (animate && transition_controller->is_active()) {
 
-                            CharType c,n, c2,n2;
+                            CharType c, n, c2, n2;
                             CharTransform xform = transition_xform.xform;
 
                             if (i < 0) {
 
                                 c = get_char_at(transition_text.word_cache, transition_text.xl_text, line, -i);
-                                n = get_char_at(transition_text.word_cache, transition_text.xl_text, line, -i+1);
+                                n = get_char_at(transition_text.word_cache, transition_text.xl_text, line, -i + 1);
                             } else if (i >= from->word_len) {
 
                                 c = get_char_at(transition_text.word_cache, transition_text.xl_text, line, from->word_len + i);
                                 n = get_char_at(transition_text.word_cache, transition_text.xl_text, line, from->word_len + i + 1);
                             } else {
 
-
+                                c = xl_text[i + pos];
+                                n = xl_text[i + pos + 1];
                             }
 
                             if (transition_behaviour == TRANSITIONBEHAVIOUR_NEW) {
@@ -542,22 +550,12 @@ int Label::get_visible_line_count() const {
 
 Label::WordCache *Label::calculate_word_cache(const Ref<Font> &font, const String &label_text, int &line_count, int &total_char_cache, int &width) const {
 
-	while (word_cache) {
-
-		WordCache *current = word_cache;
-		word_cache = current->next;
-		memdelete(current);
-	}
-
-	int width;
 	if (autowrap) {
 		Ref<StyleBox> style = get_stylebox("normal");
 		width = MAX(get_size().width, get_custom_minimum_size().width) - style->get_minimum_size().width;
 	} else {
-		width = get_longest_line_width();
+		width = get_longest_line_width(label_text);
 	}
-
-	Ref<Font> font = get_font("font");
 
 	int current_word_size = 0;
 	int word_pos = 0;

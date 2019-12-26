@@ -707,6 +707,7 @@ void ScriptTextEditor::_bookmark_item_pressed(int p_idx) {
 		_edit_option(bookmarks_menu->get_item_id(p_idx));
 	} else {
 		code_editor->goto_line(bookmarks_menu->get_item_metadata(p_idx));
+		code_editor->get_text_edit()->call_deferred("center_viewport_to_cursor"); //Need to be deferred, because goto uses call_deferred().
 	}
 }
 
@@ -856,6 +857,7 @@ void ScriptTextEditor::_breakpoint_item_pressed(int p_idx) {
 		_edit_option(breakpoints_menu->get_item_id(p_idx));
 	} else {
 		code_editor->goto_line(breakpoints_menu->get_item_metadata(p_idx));
+		code_editor->get_text_edit()->call_deferred("center_viewport_to_cursor"); //Need to be deferred, because goto uses call_deferred().
 	}
 }
 
@@ -961,6 +963,12 @@ void ScriptTextEditor::_lookup_symbol(const String &p_symbol, int p_row, int p_c
 				emit_signal("go_to_help", "class_global:" + result.class_name + ":" + result.class_member);
 			} break;
 		}
+	}
+}
+
+void ScriptTextEditor::update_toggle_scripts_button() {
+	if (code_editor != NULL) {
+		code_editor->update_toggle_scripts_button();
 	}
 }
 
@@ -1301,12 +1309,14 @@ void ScriptTextEditor::_edit_option(int p_op) {
 			if (line >= bpoints[bpoints.size() - 1]) {
 				tx->unfold_line(bpoints[0]);
 				tx->cursor_set_line(bpoints[0]);
+				tx->center_viewport_to_cursor();
 			} else {
 				for (List<int>::Element *E = bpoints.front(); E; E = E->next()) {
 					int bline = E->get();
 					if (bline > line) {
 						tx->unfold_line(bline);
 						tx->cursor_set_line(bline);
+						tx->center_viewport_to_cursor();
 						return;
 					}
 				}
@@ -1326,12 +1336,14 @@ void ScriptTextEditor::_edit_option(int p_op) {
 			if (line <= bpoints[0]) {
 				tx->unfold_line(bpoints[bpoints.size() - 1]);
 				tx->cursor_set_line(bpoints[bpoints.size() - 1]);
+				tx->center_viewport_to_cursor();
 			} else {
 				for (List<int>::Element *E = bpoints.back(); E; E = E->prev()) {
 					int bline = E->get();
 					if (bline < line) {
 						tx->unfold_line(bline);
 						tx->cursor_set_line(bline);
+						tx->center_viewport_to_cursor();
 						return;
 					}
 				}
@@ -1756,6 +1768,7 @@ ScriptTextEditor::ScriptTextEditor() {
 	code_editor->get_text_edit()->connect("symbol_lookup", this, "_lookup_symbol");
 	code_editor->get_text_edit()->connect("info_clicked", this, "_lookup_connections");
 	code_editor->set_v_size_flags(SIZE_EXPAND_FILL);
+	code_editor->show_toggle_scripts_button();
 
 	warnings_panel = memnew(RichTextLabel);
 	editor_box->add_child(warnings_panel);

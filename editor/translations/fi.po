@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Godot Engine editor\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2019-11-29 14:49+0000\n"
+"PO-Revision-Date: 2019-12-16 23:50+0000\n"
 "Last-Translator: Tapani Niemi <tapani.niemi@kapsi.fi>\n"
 "Language-Team: Finnish <https://hosted.weblate.org/projects/godot-engine/"
 "godot/fi/>\n"
@@ -526,8 +526,9 @@ msgstr "FPS"
 #: editor/plugins/polygon_2d_editor_plugin.cpp
 #: editor/plugins/script_text_editor.cpp
 #: editor/plugins/shader_editor_plugin.cpp editor/plugins/text_editor.cpp
-#: editor/project_manager.cpp editor/project_settings_editor.cpp
-#: editor/property_editor.cpp modules/visual_script/visual_script_editor.cpp
+#: editor/plugins/tile_set_editor_plugin.cpp editor/project_manager.cpp
+#: editor/project_settings_editor.cpp editor/property_editor.cpp
+#: modules/visual_script/visual_script_editor.cpp
 msgid "Edit"
 msgstr "Muokkaa"
 
@@ -713,6 +714,10 @@ msgstr "Pelkkä valinta"
 msgid "Standard"
 msgstr "Standardi"
 
+#: editor/code_editor.cpp editor/plugins/script_editor_plugin.cpp
+msgid "Toggle Scripts Panel"
+msgstr "Näytä/piilota skriptipaneeli"
+
 #: editor/code_editor.cpp editor/plugins/canvas_item_editor_plugin.cpp
 #: editor/plugins/texture_region_editor_plugin.cpp
 #: editor/plugins/tile_set_editor_plugin.cpp scene/gui/graph_edit.cpp
@@ -789,6 +794,11 @@ msgstr "Lisää ylimääräinen argumentti kutsulle:"
 #: editor/connections_dialog.cpp
 msgid "Extra Call Arguments:"
 msgstr "Ylimääräiset argumentit:"
+
+#: editor/connections_dialog.cpp
+#, fuzzy
+msgid "Receiver Method:"
+msgstr "Valitse metodi"
 
 #: editor/connections_dialog.cpp
 msgid "Advanced"
@@ -967,7 +977,7 @@ msgid "Resource"
 msgstr "Resurssi"
 
 #: editor/dependency_editor.cpp editor/editor_autoload_settings.cpp
-#: editor/project_settings_editor.cpp
+#: editor/project_manager.cpp editor/project_settings_editor.cpp
 msgid "Path"
 msgstr "Polku"
 
@@ -1442,7 +1452,8 @@ msgid "Node Name:"
 msgstr "Solmun nimi:"
 
 #: editor/editor_autoload_settings.cpp editor/editor_help_search.cpp
-#: editor/editor_profiler.cpp editor/settings_config_dialog.cpp
+#: editor/editor_profiler.cpp editor/project_manager.cpp
+#: editor/settings_config_dialog.cpp
 msgid "Name"
 msgstr "Nimi"
 
@@ -1692,6 +1703,11 @@ msgstr "Uusi profiilin nimi:"
 #: editor/editor_feature_profile.cpp
 msgid "Erase Profile"
 msgstr "Tyhjennä profiili"
+
+#: editor/editor_feature_profile.cpp
+#, fuzzy
+msgid "Godot Feature Profile"
+msgstr "Hallinnoi editorin ominaisuusprofiileja"
 
 #: editor/editor_feature_profile.cpp
 msgid "Import Profile(s)"
@@ -2649,7 +2665,8 @@ msgstr "Palauta skene"
 msgid "Miscellaneous project or scene-wide tools."
 msgstr "Sekalaiset projekti- tai skenetyökalut."
 
-#: editor/editor_node.cpp editor/script_create_dialog.cpp
+#: editor/editor_node.cpp editor/project_manager.cpp
+#: editor/script_create_dialog.cpp
 msgid "Project"
 msgstr "Projekti"
 
@@ -2989,6 +3006,11 @@ msgstr ""
 msgid "Import Templates From ZIP File"
 msgstr "Tuo mallit ZIP-tiedostosta"
 
+#: editor/editor_node.cpp
+#, fuzzy
+msgid "Template Package"
+msgstr "Vientimallien hallinta"
+
 #: editor/editor_node.cpp editor/project_export.cpp
 msgid "Export Project"
 msgstr "Vie projekti"
@@ -3044,6 +3066,11 @@ msgstr "Avaa seuraava editori"
 #: editor/editor_node.cpp
 msgid "Open the previous Editor"
 msgstr "Avaa edellinen editori"
+
+#: editor/editor_node.h
+#, fuzzy
+msgid "Warning!"
+msgstr "Varoitus"
 
 #: editor/editor_path.cpp
 msgid "No sub-resources found."
@@ -3488,6 +3515,10 @@ msgstr "Poista malli"
 #: editor/export_template_manager.cpp
 msgid "Select Template File"
 msgstr "Valitse mallitiedosto"
+
+#: editor/export_template_manager.cpp
+msgid "Godot Export Templates"
+msgstr "Godotin vientimallit"
 
 #: editor/export_template_manager.cpp
 msgid "Export Template Manager"
@@ -4627,6 +4658,11 @@ msgstr "Aseta loppuanimaatio. Tämä on hyödyllistä alisiirtymiä varten."
 msgid "Transition: "
 msgstr "Siirtymä: "
 
+#: editor/plugins/animation_state_machine_editor.cpp
+#, fuzzy
+msgid "Play Mode:"
+msgstr "Panorointitila"
+
 #: editor/plugins/animation_tree_editor_plugin.cpp
 #: editor/plugins/animation_tree_player_editor_plugin.cpp
 msgid "AnimationTree"
@@ -4882,6 +4918,30 @@ msgid "Download for this asset is already in progress!"
 msgstr "Tämän assetin lataus on jo käynnissä!"
 
 #: editor/plugins/asset_library_editor_plugin.cpp
+msgid "Recently Updated"
+msgstr "Viimeksi päivitetty"
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+msgid "Least Recently Updated"
+msgstr "Vanhin päivitys"
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+msgid "Name (A-Z)"
+msgstr "Nimi (A-Z)"
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+msgid "Name (Z-A)"
+msgstr "Nimi (Z-A)"
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+msgid "License (A-Z)"
+msgstr "Lisenssi (A-Z)"
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+msgid "License (Z-A)"
+msgstr "Lisenssi (Z-A)"
+
+#: editor/plugins/asset_library_editor_plugin.cpp
 msgid "First"
 msgstr "Ensimmäinen"
 
@@ -5082,6 +5142,87 @@ msgid ""
 msgstr ""
 "Aktiivisena ollessaan, Control solmujen siirtäminen muuttaa niiden "
 "ankkureita marginaalien sijaan."
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Top Left"
+msgstr "Vasen"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Top Right"
+msgstr "OIkea"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Bottom Right"
+msgstr "Kierrä oikealle"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Bottom Left"
+msgstr "Alanäkymä"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Center Left"
+msgstr "Sisennä vasemmalle"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Center Top"
+msgstr "Keskitä valintaan"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Center Right"
+msgstr "Sisennä oikealle"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Center Bottom"
+msgstr "Pohja"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Center"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Left Wide"
+msgstr "Vasen näkymä"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Top Wide"
+msgstr "Ylänäkymä"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Right Wide"
+msgstr "Oikea näkymä"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Bottom Wide"
+msgstr "Alanäkymä"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "VCenter Wide"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "HCenter Wide"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Full Rect"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Keep Ratio"
+msgstr "Skaalaussuhde:"
 
 #: editor/plugins/canvas_item_editor_plugin.cpp
 msgid "Anchors only"
@@ -5750,6 +5891,11 @@ msgid "Remove item %d?"
 msgstr "Poistetaanko kohde %d?"
 
 #: editor/plugins/mesh_library_editor_plugin.cpp
+#, fuzzy
+msgid "Mesh Library"
+msgstr "Mesh-kirjastoksi..."
+
+#: editor/plugins/mesh_library_editor_plugin.cpp
 #: editor/plugins/theme_editor_plugin.cpp
 msgid "Add Item"
 msgstr "Lisää kohde"
@@ -6385,6 +6531,23 @@ msgid "Save File As..."
 msgstr "Tallenna tiedosto nimellä..."
 
 #: editor/plugins/script_editor_plugin.cpp
+msgid "Can't obtain the script for running."
+msgstr ""
+
+#: editor/plugins/script_editor_plugin.cpp
+msgid "Script failed reloading, check console for errors."
+msgstr ""
+
+#: editor/plugins/script_editor_plugin.cpp
+msgid "Script is not in tool mode, will not be able to run."
+msgstr ""
+
+#: editor/plugins/script_editor_plugin.cpp
+msgid ""
+"To run this script, it must inherit EditorScript and be set to tool mode."
+msgstr ""
+
+#: editor/plugins/script_editor_plugin.cpp
 msgid "Import Theme"
 msgstr "Tuo teema"
 
@@ -6510,10 +6673,6 @@ msgstr "Sulje dokumentaatio"
 #: editor/plugins/script_editor_plugin.cpp editor/project_manager.cpp
 msgid "Run"
 msgstr "Suorita"
-
-#: editor/plugins/script_editor_plugin.cpp
-msgid "Toggle Scripts Panel"
-msgstr "Näytä/piilota skriptipaneeli"
 
 #: editor/plugins/script_editor_plugin.cpp editor/script_editor_debugger.cpp
 msgid "Step Into"
@@ -7639,6 +7798,7 @@ msgid "Data Type:"
 msgstr "Tietotyyppi:"
 
 #: editor/plugins/theme_editor_plugin.cpp
+#: editor/plugins/tile_set_editor_plugin.cpp
 msgid "Icon"
 msgstr "Kuvake"
 
@@ -7657,6 +7817,11 @@ msgstr "Väri"
 #: editor/plugins/theme_editor_plugin.cpp
 msgid "Constant"
 msgstr "Muuttumaton"
+
+#: editor/plugins/theme_editor_plugin.cpp
+#, fuzzy
+msgid "Theme File"
+msgstr "Teema"
 
 #: editor/plugins/tile_map_editor_plugin.cpp
 msgid "Erase Selection"
@@ -7770,6 +7935,20 @@ msgid "Merge from Scene"
 msgstr "Yhdistä skenestä"
 
 #: editor/plugins/tile_set_editor_plugin.cpp
+msgid "New Single Tile"
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "New Autotile"
+msgstr "Poista automaattiruudutus käytöstä"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "New Atlas"
+msgstr "Uusi %s"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
 msgid "Next Coordinate"
 msgstr "Seuraava koordinaatti"
 
@@ -7784,6 +7963,41 @@ msgstr "Edellinen koordinaatti"
 #: editor/plugins/tile_set_editor_plugin.cpp
 msgid "Select the previous shape, subtile, or Tile."
 msgstr "Valitse edellinen muoto, aliruutu tai ruutu."
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Region"
+msgstr "Aluetila"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Collision"
+msgstr "Törmäystila"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Occlusion"
+msgstr "Peittotila"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Navigation"
+msgstr "Siirtymistila"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Bitmask"
+msgstr "Bittimaskitila"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Priority"
+msgstr "Prioriteettitila"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Z Index"
+msgstr "Indeksi:"
 
 #: editor/plugins/tile_set_editor_plugin.cpp
 msgid "Region Mode"
@@ -8997,6 +9211,14 @@ msgid "Runnable"
 msgstr "Suoritettava"
 
 #: editor/project_export.cpp
+msgid "Add initial export..."
+msgstr "Lisää ensimmäinen vienti..."
+
+#: editor/project_export.cpp
+msgid "Add previous patches..."
+msgstr "Lisää edelliset päivitykset..."
+
+#: editor/project_export.cpp
 msgid "Delete patch '%s' from list?"
 msgstr "Poista päivitys '%s' listasta?"
 
@@ -9108,6 +9330,11 @@ msgid "Make Patch"
 msgstr "Luo päivitys"
 
 #: editor/project_export.cpp
+#, fuzzy
+msgid "Pack File"
+msgstr " Tiedostot"
+
+#: editor/project_export.cpp
 msgid "Features"
 msgstr "Ominaisuudet"
 
@@ -9158,6 +9385,15 @@ msgstr "Vientitila?"
 #: editor/project_export.cpp
 msgid "Export All"
 msgstr "Vie kaikki"
+
+#: editor/project_export.cpp editor/project_manager.cpp
+#, fuzzy
+msgid "ZIP File"
+msgstr " Tiedostot"
+
+#: editor/project_export.cpp
+msgid "Godot Game Pack"
+msgstr ""
 
 #: editor/project_export.cpp
 msgid "Export templates for this platform are missing:"
@@ -9460,6 +9696,10 @@ msgstr "Projektinhallinta"
 #: editor/project_manager.cpp
 msgid "Projects"
 msgstr "Projektit"
+
+#: editor/project_manager.cpp
+msgid "Last Modified"
+msgstr "Viimeksi muutettu"
 
 #: editor/project_manager.cpp
 msgid "Scan"
@@ -11080,6 +11320,14 @@ msgid "Set Variable Type"
 msgstr "Aseta muuttujan tyyppi"
 
 #: modules/visual_script/visual_script_editor.cpp
+msgid "Add Input Port"
+msgstr "Lisää tuloportti"
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Add Output Port"
+msgstr "Lisää lähtöportti"
+
+#: modules/visual_script/visual_script_editor.cpp
 msgid "Override an existing built-in function."
 msgstr "Ylikirjoita olemassa oleva sisäänrakennettu funktio."
 
@@ -11138,14 +11386,6 @@ msgstr "Lisää muuttuja"
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Add Signal"
 msgstr "Lisää signaali"
-
-#: modules/visual_script/visual_script_editor.cpp
-msgid "Add Input Port"
-msgstr "Lisää tuloportti"
-
-#: modules/visual_script/visual_script_editor.cpp
-msgid "Add Output Port"
-msgstr "Lisää lähtöportti"
 
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Remove Input Port"
@@ -11325,6 +11565,21 @@ msgstr "Tee työkalu:"
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Members:"
 msgstr "Jäsenet:"
+
+#: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Change Base Type:"
+msgstr "Muuta kantatyyppiä"
+
+#: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Add Nodes..."
+msgstr "Lisää solmu..."
+
+#: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Add Function..."
+msgstr "Lisää funktio"
 
 #: modules/visual_script/visual_script_editor.cpp
 msgid "function_name"
@@ -11542,25 +11797,8 @@ msgid "Identifier is missing."
 msgstr "Tunniste puuttuu."
 
 #: platform/iphone/export/export.cpp
-msgid "Identifier segments must be of non-zero length."
-msgstr "Tunnisteen osiot eivät voi olla nollan pituisia."
-
-#: platform/iphone/export/export.cpp
 msgid "The character '%s' is not allowed in Identifier."
 msgstr "Merkki '%s' ei ole sallittu Identifier osiossa."
-
-#: platform/iphone/export/export.cpp
-msgid "A digit cannot be the first character in a Identifier segment."
-msgstr "Identifier osion ensimmäinen merkki ei voi olla numero."
-
-#: platform/iphone/export/export.cpp
-msgid ""
-"The character '%s' cannot be the first character in a Identifier segment."
-msgstr "Merkki '%s' ei voi olla Identifier osion ensimmäinen merkki."
-
-#: platform/iphone/export/export.cpp
-msgid "The Identifier must have at least one '.' separator."
-msgstr "Identifier osiossa täytyy olla vähintään yksi '.' erotinmerkki."
 
 #: platform/iphone/export/export.cpp
 msgid "App Store Team ID not specified - cannot configure the project."
@@ -12276,6 +12514,19 @@ msgstr "Varying tyypin voi sijoittaa vain vertex-funktiossa."
 msgid "Constants cannot be modified."
 msgstr "Vakioita ei voi muokata."
 
+#~ msgid "Identifier segments must be of non-zero length."
+#~ msgstr "Tunnisteen osiot eivät voi olla nollan pituisia."
+
+#~ msgid "A digit cannot be the first character in a Identifier segment."
+#~ msgstr "Identifier osion ensimmäinen merkki ei voi olla numero."
+
+#~ msgid ""
+#~ "The character '%s' cannot be the first character in a Identifier segment."
+#~ msgstr "Merkki '%s' ei voi olla Identifier osion ensimmäinen merkki."
+
+#~ msgid "The Identifier must have at least one '.' separator."
+#~ msgstr "Identifier osiossa täytyy olla vähintään yksi '.' erotinmerkki."
+
 #~ msgid "Pause the scene"
 #~ msgstr "Keskeytä skenen suorittaminen hetkellisesti"
 
@@ -12819,9 +13070,6 @@ msgstr "Vakioita ei voi muokata."
 
 #~ msgid "Rotate 270 degrees"
 #~ msgstr "Käännä 270 astetta"
-
-#~ msgid "Warning"
-#~ msgstr "Varoitus"
 
 #~ msgid "Variable"
 #~ msgstr "Muuttuja"

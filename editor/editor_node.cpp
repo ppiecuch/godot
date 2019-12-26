@@ -630,7 +630,7 @@ void EditorNode::_editor_select_next() {
 		} else {
 			editor++;
 		}
-	} while (main_editor_buttons[editor]->is_visible());
+	} while (!main_editor_buttons[editor]->is_visible());
 
 	_editor_select(editor);
 }
@@ -645,7 +645,7 @@ void EditorNode::_editor_select_prev() {
 		} else {
 			editor--;
 		}
-	} while (main_editor_buttons[editor]->is_visible());
+	} while (!main_editor_buttons[editor]->is_visible());
 
 	_editor_select(editor);
 }
@@ -963,7 +963,7 @@ bool EditorNode::_find_and_save_edited_subresources(Object *obj, Map<RES, bool> 
 				int len = varray.size();
 				for (int i = 0; i < len; i++) {
 
-					Variant v = varray.get(i);
+					const Variant &v = varray.get(i);
 					RES res = v;
 					if (_find_and_save_resource(res, processed, flags))
 						ret_changed = true;
@@ -1027,13 +1027,10 @@ void EditorNode::_save_scene_with_preview(String p_file, int p_idx) {
 	int c3d = 0;
 	_find_node_types(editor_data.get_edited_scene_root(), c2d, c3d);
 
-	RID viewport;
 	bool is2d;
 	if (c3d < c2d) {
-		viewport = scene_root->get_viewport_rid();
 		is2d = true;
 	} else {
-		viewport = SpatialEditor::get_singleton()->get_editor_viewport(0)->get_viewport_node()->get_viewport_rid();
 		is2d = false;
 	}
 	save.step(TTR("Creating Thumbnail"), 1);
@@ -1282,7 +1279,6 @@ void EditorNode::restart_editor() {
 	}
 
 	_exit_editor();
-	String exec = OS::get_singleton()->get_executable_path();
 
 	List<String> args;
 	args.push_back("--path");
@@ -2049,14 +2045,17 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 		case FILE_CLOSE_ALL_AND_RUN_PROJECT_MANAGER:
 		case FILE_CLOSE: {
 
-			if (!p_confirmed && (unsaved_cache || p_option == FILE_CLOSE_ALL_AND_QUIT || p_option == FILE_CLOSE_ALL_AND_RUN_PROJECT_MANAGER)) {
+			if (!p_confirmed) {
 				tab_closing = p_option == FILE_CLOSE ? editor_data.get_edited_scene() : _next_unsaved_scene(false);
-				String scene_filename = editor_data.get_edited_scene_root(tab_closing)->get_filename();
-				save_confirmation->get_ok()->set_text(TTR("Save & Close"));
-				save_confirmation->set_text(vformat(TTR("Save changes to '%s' before closing?"), scene_filename != "" ? scene_filename : "unsaved scene"));
-				save_confirmation->popup_centered_minsize();
-				break;
-			} else {
+
+				if (unsaved_cache || p_option == FILE_CLOSE_ALL_AND_QUIT || p_option == FILE_CLOSE_ALL_AND_RUN_PROJECT_MANAGER) {
+					String scene_filename = editor_data.get_edited_scene_root(tab_closing)->get_filename();
+					save_confirmation->get_ok()->set_text(TTR("Save & Close"));
+					save_confirmation->set_text(vformat(TTR("Save changes to '%s' before closing?"), scene_filename != "" ? scene_filename : "unsaved scene"));
+					save_confirmation->popup_centered_minsize();
+					break;
+				}
+			} else if (p_option == FILE_CLOSE) {
 				tab_closing = editor_data.get_edited_scene();
 			}
 			if (!editor_data.get_edited_scene_root(tab_closing)) {
@@ -5829,6 +5828,7 @@ EditorNode::EditorNode() {
 	Label *dock_label = memnew(Label);
 	dock_label->set_text(TTR("Dock Position"));
 	dock_label->set_h_size_flags(Control::SIZE_EXPAND_FILL);
+	dock_label->set_align(Label::ALIGN_CENTER);
 	dock_hb->add_child(dock_label);
 
 	dock_tab_move_right = memnew(ToolButton);
@@ -6479,7 +6479,7 @@ EditorNode::EditorNode() {
 	file_templates->set_mode(EditorFileDialog::MODE_OPEN_FILE);
 	file_templates->set_access(EditorFileDialog::ACCESS_FILESYSTEM);
 	file_templates->clear_filters();
-	file_templates->add_filter("*.tpz ; Template Package");
+	file_templates->add_filter("*.tpz ; " + TTR("Template Package"));
 
 	file = memnew(EditorFileDialog);
 	gui_base->add_child(file);

@@ -172,7 +172,7 @@ void ExportTemplateManager::_uninstall_template_confirm() {
 	ERR_FAIL_COND_MSG(err != OK, "Could not remove all templates in '" + templates_dir.plus_file(to_remove) + "'.");
 
 	da->change_dir("..");
-	da->remove(to_remove);
+	err = da->remove(to_remove);
 	ERR_FAIL_COND_MSG(err != OK, "Could not remove templates directory at '" + templates_dir.plus_file(to_remove) + "'.");
 
 	_update_template_list();
@@ -691,7 +691,7 @@ ExportTemplateManager::ExportTemplateManager() {
 
 	template_open = memnew(FileDialog);
 	template_open->set_title(TTR("Select Template File"));
-	template_open->add_filter("*.tpz ; Godot Export Templates");
+	template_open->add_filter("*.tpz ; " + TTR("Godot Export Templates"));
 	template_open->set_access(FileDialog::ACCESS_FILESYSTEM);
 	template_open->set_mode(FileDialog::MODE_OPEN_FILE);
 	template_open->connect("file_selected", this, "_install_from_file", varray(true));

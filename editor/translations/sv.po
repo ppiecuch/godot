@@ -541,8 +541,9 @@ msgstr "FPS"
 #: editor/plugins/polygon_2d_editor_plugin.cpp
 #: editor/plugins/script_text_editor.cpp
 #: editor/plugins/shader_editor_plugin.cpp editor/plugins/text_editor.cpp
-#: editor/project_manager.cpp editor/project_settings_editor.cpp
-#: editor/property_editor.cpp modules/visual_script/visual_script_editor.cpp
+#: editor/plugins/tile_set_editor_plugin.cpp editor/project_manager.cpp
+#: editor/project_settings_editor.cpp editor/property_editor.cpp
+#: modules/visual_script/visual_script_editor.cpp
 msgid "Edit"
 msgstr "Redigera"
 
@@ -737,6 +738,10 @@ msgstr "Endast Urval"
 msgid "Standard"
 msgstr ""
 
+#: editor/code_editor.cpp editor/plugins/script_editor_plugin.cpp
+msgid "Toggle Scripts Panel"
+msgstr ""
+
 #: editor/code_editor.cpp editor/plugins/canvas_item_editor_plugin.cpp
 #: editor/plugins/texture_region_editor_plugin.cpp
 #: editor/plugins/tile_set_editor_plugin.cpp scene/gui/graph_edit.cpp
@@ -819,6 +824,11 @@ msgstr "Lägg till extra Call Argument:"
 #: editor/connections_dialog.cpp
 msgid "Extra Call Arguments:"
 msgstr "Extra Call Argument:"
+
+#: editor/connections_dialog.cpp
+#, fuzzy
+msgid "Receiver Method:"
+msgstr "Filtrera noder"
 
 #: editor/connections_dialog.cpp
 #, fuzzy
@@ -1010,7 +1020,7 @@ msgid "Resource"
 msgstr "Resurs"
 
 #: editor/dependency_editor.cpp editor/editor_autoload_settings.cpp
-#: editor/project_settings_editor.cpp
+#: editor/project_manager.cpp editor/project_settings_editor.cpp
 msgid "Path"
 msgstr "Sökväg"
 
@@ -1501,7 +1511,8 @@ msgid "Node Name:"
 msgstr "Node Namn:"
 
 #: editor/editor_autoload_settings.cpp editor/editor_help_search.cpp
-#: editor/editor_profiler.cpp editor/settings_config_dialog.cpp
+#: editor/editor_profiler.cpp editor/project_manager.cpp
+#: editor/settings_config_dialog.cpp
 msgid "Name"
 msgstr "Namn"
 
@@ -1763,6 +1774,10 @@ msgstr "Nytt namn:"
 #, fuzzy
 msgid "Erase Profile"
 msgstr "Radera punkter"
+
+#: editor/editor_feature_profile.cpp
+msgid "Godot Feature Profile"
+msgstr ""
 
 #: editor/editor_feature_profile.cpp
 #, fuzzy
@@ -2768,7 +2783,8 @@ msgstr "Återställ Scen"
 msgid "Miscellaneous project or scene-wide tools."
 msgstr ""
 
-#: editor/editor_node.cpp editor/script_create_dialog.cpp
+#: editor/editor_node.cpp editor/project_manager.cpp
+#: editor/script_create_dialog.cpp
 msgid "Project"
 msgstr "Projekt"
 
@@ -3093,6 +3109,11 @@ msgstr ""
 msgid "Import Templates From ZIP File"
 msgstr "Importera Mall från ZIP fil"
 
+#: editor/editor_node.cpp
+#, fuzzy
+msgid "Template Package"
+msgstr "Mallar"
+
 #: editor/editor_node.cpp editor/project_export.cpp
 msgid "Export Project"
 msgstr "Exportera Projekt"
@@ -3148,6 +3169,11 @@ msgstr ""
 #: editor/editor_node.cpp
 msgid "Open the previous Editor"
 msgstr ""
+
+#: editor/editor_node.h
+#, fuzzy
+msgid "Warning!"
+msgstr "Varning"
 
 #: editor/editor_path.cpp
 #, fuzzy
@@ -3597,6 +3623,11 @@ msgstr "Ta Bort Mall"
 #, fuzzy
 msgid "Select Template File"
 msgstr "Välj mall-fil"
+
+#: editor/export_template_manager.cpp
+#, fuzzy
+msgid "Godot Export Templates"
+msgstr "Mallar"
 
 #: editor/export_template_manager.cpp
 msgid "Export Template Manager"
@@ -4818,6 +4849,11 @@ msgstr ""
 msgid "Transition: "
 msgstr "Övergång"
 
+#: editor/plugins/animation_state_machine_editor.cpp
+#, fuzzy
+msgid "Play Mode:"
+msgstr "Raw-Läge"
+
 #: editor/plugins/animation_tree_editor_plugin.cpp
 #: editor/plugins/animation_tree_player_editor_plugin.cpp
 msgid "AnimationTree"
@@ -5079,6 +5115,32 @@ msgid "Download for this asset is already in progress!"
 msgstr ""
 
 #: editor/plugins/asset_library_editor_plugin.cpp
+msgid "Recently Updated"
+msgstr ""
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+msgid "Least Recently Updated"
+msgstr ""
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+msgid "Name (A-Z)"
+msgstr ""
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+msgid "Name (Z-A)"
+msgstr ""
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+#, fuzzy
+msgid "License (A-Z)"
+msgstr "Licens"
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+#, fuzzy
+msgid "License (Z-A)"
+msgstr "Licens"
+
+#: editor/plugins/asset_library_editor_plugin.cpp
 msgid "First"
 msgstr ""
 
@@ -5279,6 +5341,84 @@ msgid ""
 "When active, moving Control nodes changes their anchors instead of their "
 "margins."
 msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Top Left"
+msgstr "Vänster"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Top Right"
+msgstr "Höger"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Bottom Right"
+msgstr "Vy underifrån"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Bottom Left"
+msgstr "Vy underifrån"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Center Left"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Center Top"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Center Right"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Center Bottom"
+msgstr "Botten"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Center"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Left Wide"
+msgstr "Vy från vänster"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Top Wide"
+msgstr "Vy ovanifrån"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Right Wide"
+msgstr "Vy från höger"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Bottom Wide"
+msgstr "Vy underifrån"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "VCenter Wide"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "HCenter Wide"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Full Rect"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Keep Ratio"
+msgstr "Skalnings förhållande:"
 
 #: editor/plugins/canvas_item_editor_plugin.cpp
 msgid "Anchors only"
@@ -5960,6 +6100,11 @@ msgid "Remove item %d?"
 msgstr ""
 
 #: editor/plugins/mesh_library_editor_plugin.cpp
+#, fuzzy
+msgid "Mesh Library"
+msgstr "MeshLibrary..."
+
+#: editor/plugins/mesh_library_editor_plugin.cpp
 #: editor/plugins/theme_editor_plugin.cpp
 msgid "Add Item"
 msgstr ""
@@ -6609,6 +6754,23 @@ msgid "Save File As..."
 msgstr "Spara Som..."
 
 #: editor/plugins/script_editor_plugin.cpp
+msgid "Can't obtain the script for running."
+msgstr ""
+
+#: editor/plugins/script_editor_plugin.cpp
+msgid "Script failed reloading, check console for errors."
+msgstr ""
+
+#: editor/plugins/script_editor_plugin.cpp
+msgid "Script is not in tool mode, will not be able to run."
+msgstr ""
+
+#: editor/plugins/script_editor_plugin.cpp
+msgid ""
+"To run this script, it must inherit EditorScript and be set to tool mode."
+msgstr ""
+
+#: editor/plugins/script_editor_plugin.cpp
 msgid "Import Theme"
 msgstr "Importera Tema"
 
@@ -6742,10 +6904,6 @@ msgstr ""
 #: editor/plugins/script_editor_plugin.cpp editor/project_manager.cpp
 msgid "Run"
 msgstr "Kör"
-
-#: editor/plugins/script_editor_plugin.cpp
-msgid "Toggle Scripts Panel"
-msgstr ""
 
 #: editor/plugins/script_editor_plugin.cpp editor/script_editor_debugger.cpp
 msgid "Step Into"
@@ -7920,6 +8078,7 @@ msgid "Data Type:"
 msgstr "Datatyp:"
 
 #: editor/plugins/theme_editor_plugin.cpp
+#: editor/plugins/tile_set_editor_plugin.cpp
 msgid "Icon"
 msgstr "Ikon"
 
@@ -7938,6 +8097,11 @@ msgstr "Färg"
 #: editor/plugins/theme_editor_plugin.cpp
 msgid "Constant"
 msgstr "Konstant"
+
+#: editor/plugins/theme_editor_plugin.cpp
+#, fuzzy
+msgid "Theme File"
+msgstr "Tema"
 
 #: editor/plugins/tile_map_editor_plugin.cpp
 msgid "Erase Selection"
@@ -8054,6 +8218,19 @@ msgid "Merge from Scene"
 msgstr ""
 
 #: editor/plugins/tile_set_editor_plugin.cpp
+msgid "New Single Tile"
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "New Autotile"
+msgstr "Visa Filer"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+msgid "New Atlas"
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
 #, fuzzy
 msgid "Next Coordinate"
 msgstr "Nästa Skript"
@@ -8069,6 +8246,40 @@ msgstr "Föregående Skript"
 
 #: editor/plugins/tile_set_editor_plugin.cpp
 msgid "Select the previous shape, subtile, or Tile."
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Region"
+msgstr "Raw-Läge"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Collision"
+msgstr "Animations-Node"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Occlusion"
+msgstr "Redigera Polygon"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Navigation"
+msgstr "Animations-Node"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Bitmask"
+msgstr "Raw-Läge"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Priority"
+msgstr "Exportera Projekt"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+msgid "Z Index"
 msgstr ""
 
 #: editor/plugins/tile_set_editor_plugin.cpp
@@ -9263,6 +9474,15 @@ msgid "Runnable"
 msgstr ""
 
 #: editor/project_export.cpp
+#, fuzzy
+msgid "Add initial export..."
+msgstr "Favoriter:"
+
+#: editor/project_export.cpp
+msgid "Add previous patches..."
+msgstr ""
+
+#: editor/project_export.cpp
 msgid "Delete patch '%s' from list?"
 msgstr ""
 
@@ -9365,6 +9585,11 @@ msgid "Make Patch"
 msgstr "Gör Patch"
 
 #: editor/project_export.cpp
+#, fuzzy
+msgid "Pack File"
+msgstr "Packar"
+
+#: editor/project_export.cpp
 msgid "Features"
 msgstr ""
 
@@ -9419,6 +9644,15 @@ msgstr "Exportera Projekt"
 #, fuzzy
 msgid "Export All"
 msgstr "Exportera"
+
+#: editor/project_export.cpp editor/project_manager.cpp
+#, fuzzy
+msgid "ZIP File"
+msgstr "Fil"
+
+#: editor/project_export.cpp
+msgid "Godot Game Pack"
+msgstr ""
 
 #: editor/project_export.cpp
 msgid "Export templates for this platform are missing:"
@@ -9688,6 +9922,10 @@ msgstr "Projektledare"
 #, fuzzy
 msgid "Projects"
 msgstr "Projekt"
+
+#: editor/project_manager.cpp
+msgid "Last Modified"
+msgstr ""
 
 #: editor/project_manager.cpp
 msgid "Scan"
@@ -11341,6 +11579,16 @@ msgstr ""
 
 #: modules/visual_script/visual_script_editor.cpp
 #, fuzzy
+msgid "Add Input Port"
+msgstr "Favoriter:"
+
+#: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Add Output Port"
+msgstr "Favoriter:"
+
+#: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
 msgid "Override an existing built-in function."
 msgstr "Ogiltigt namn. Får inte vara samma som ett befintligt inbyggt typnamn."
 
@@ -11403,16 +11651,6 @@ msgstr "Lägg till Variabel"
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Add Signal"
 msgstr "Lägg till Signal"
-
-#: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
-msgid "Add Input Port"
-msgstr "Favoriter:"
-
-#: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
-msgid "Add Output Port"
-msgstr "Favoriter:"
 
 #: modules/visual_script/visual_script_editor.cpp
 #, fuzzy
@@ -11591,6 +11829,21 @@ msgstr "Gör Patch"
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Members:"
 msgstr "Medlemmar:"
+
+#: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Change Base Type:"
+msgstr "Ändra Typ"
+
+#: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Add Nodes..."
+msgstr "Lägg Till Node"
+
+#: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Add Function..."
+msgstr "Lägg till Funktion"
 
 #: modules/visual_script/visual_script_editor.cpp
 #, fuzzy
@@ -11796,24 +12049,7 @@ msgid "Identifier is missing."
 msgstr ""
 
 #: platform/iphone/export/export.cpp
-msgid "Identifier segments must be of non-zero length."
-msgstr ""
-
-#: platform/iphone/export/export.cpp
 msgid "The character '%s' is not allowed in Identifier."
-msgstr ""
-
-#: platform/iphone/export/export.cpp
-msgid "A digit cannot be the first character in a Identifier segment."
-msgstr ""
-
-#: platform/iphone/export/export.cpp
-msgid ""
-"The character '%s' cannot be the first character in a Identifier segment."
-msgstr ""
-
-#: platform/iphone/export/export.cpp
-msgid "The Identifier must have at least one '.' separator."
 msgstr ""
 
 #: platform/iphone/export/export.cpp
@@ -12592,10 +12828,6 @@ msgstr ""
 #~ msgstr "Uppdatera Alltid"
 
 #, fuzzy
-#~ msgid "Raw Mode"
-#~ msgstr "Raw-Läge"
-
-#, fuzzy
 #~ msgid "Path to Node:"
 #~ msgstr "Sökväg till Node:"
 
@@ -12692,10 +12924,6 @@ msgstr ""
 #~ "Skapa och tilldela en?"
 
 #, fuzzy
-#~ msgid "New TextFile"
-#~ msgstr "Visa Filer"
-
-#, fuzzy
 #~ msgid "Save Theme As"
 #~ msgstr "Spara Tema Som"
 
@@ -12762,9 +12990,6 @@ msgstr ""
 
 #~ msgid "Rotate 270 degrees"
 #~ msgstr "Rotera 270 grader"
-
-#~ msgid "Warning"
-#~ msgstr "Varning"
 
 #, fuzzy
 #~ msgid "Variable"

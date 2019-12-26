@@ -191,6 +191,7 @@ public:
 
 	virtual void add_syntax_highlighter(SyntaxHighlighter *p_highlighter);
 	virtual void set_syntax_highlighter(SyntaxHighlighter *p_highlighter);
+	void update_toggle_scripts_button();
 
 	virtual void apply_code();
 	virtual RES get_edited_resource() const;

@@ -28,12 +28,13 @@
 # leela <53352@protonmail.com>, 2019.
 # Tarou Yamada <mizuningyou@yahoo.co.jp>, 2019.
 # kazuma kondo <kazmax7@gmail.com>, 2019.
+# Akihiro Ogoshi <technical@palsystem-game.com>, 2019.
 msgid ""
 msgstr ""
 "Project-Id-Version: Godot Engine editor\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2019-11-09 22:04+0000\n"
-"Last-Translator: kazuma kondo <kazmax7@gmail.com>\n"
+"PO-Revision-Date: 2019-12-21 08:37+0000\n"
+"Last-Translator: Akihiro Ogoshi <technical@palsystem-game.com>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/godot-engine/"
 "godot/ja/>\n"
 "Language: ja\n"
@@ -41,7 +42,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 3.10-dev\n"
+"X-Generator: Weblate 3.10\n"
 
 #: core/math/expression.cpp modules/gdscript/gdscript_functions.cpp
 #: modules/visual_script/visual_script_builtin_funcs.cpp
@@ -553,8 +554,9 @@ msgstr "フレームレート"
 #: editor/plugins/polygon_2d_editor_plugin.cpp
 #: editor/plugins/script_text_editor.cpp
 #: editor/plugins/shader_editor_plugin.cpp editor/plugins/text_editor.cpp
-#: editor/project_manager.cpp editor/project_settings_editor.cpp
-#: editor/property_editor.cpp modules/visual_script/visual_script_editor.cpp
+#: editor/plugins/tile_set_editor_plugin.cpp editor/project_manager.cpp
+#: editor/project_settings_editor.cpp editor/property_editor.cpp
+#: modules/visual_script/visual_script_editor.cpp
 msgid "Edit"
 msgstr "編集"
 
@@ -740,6 +742,10 @@ msgstr "選択範囲のみ"
 msgid "Standard"
 msgstr "標準"
 
+#: editor/code_editor.cpp editor/plugins/script_editor_plugin.cpp
+msgid "Toggle Scripts Panel"
+msgstr "スクリプトパネルを切り替え"
+
 #: editor/code_editor.cpp editor/plugins/canvas_item_editor_plugin.cpp
 #: editor/plugins/texture_region_editor_plugin.cpp
 #: editor/plugins/tile_set_editor_plugin.cpp scene/gui/graph_edit.cpp
@@ -816,6 +822,11 @@ msgstr "呼出し引数を追加:"
 #: editor/connections_dialog.cpp
 msgid "Extra Call Arguments:"
 msgstr "追加の呼出し引数:"
+
+#: editor/connections_dialog.cpp
+#, fuzzy
+msgid "Receiver Method:"
+msgstr "メソッドの選択"
 
 #: editor/connections_dialog.cpp
 msgid "Advanced"
@@ -993,7 +1004,7 @@ msgid "Resource"
 msgstr "リソース"
 
 #: editor/dependency_editor.cpp editor/editor_autoload_settings.cpp
-#: editor/project_settings_editor.cpp
+#: editor/project_manager.cpp editor/project_settings_editor.cpp
 msgid "Path"
 msgstr "パス"
 
@@ -1465,7 +1476,8 @@ msgid "Node Name:"
 msgstr "ノード名:"
 
 #: editor/editor_autoload_settings.cpp editor/editor_help_search.cpp
-#: editor/editor_profiler.cpp editor/settings_config_dialog.cpp
+#: editor/editor_profiler.cpp editor/project_manager.cpp
+#: editor/settings_config_dialog.cpp
 msgid "Name"
 msgstr "名前"
 
@@ -1714,6 +1726,11 @@ msgstr "新しいプロファイルの名前:"
 #: editor/editor_feature_profile.cpp
 msgid "Erase Profile"
 msgstr "プロファイルを消去"
+
+#: editor/editor_feature_profile.cpp
+#, fuzzy
+msgid "Godot Feature Profile"
+msgstr "エディタ機能のプロファイルの管理"
 
 #: editor/editor_feature_profile.cpp
 msgid "Import Profile(s)"
@@ -2678,7 +2695,8 @@ msgstr "シーンを元に戻す"
 msgid "Miscellaneous project or scene-wide tools."
 msgstr "その他のプロジェクトまたはシーン全体のツール。"
 
-#: editor/editor_node.cpp editor/script_create_dialog.cpp
+#: editor/editor_node.cpp editor/project_manager.cpp
+#: editor/script_create_dialog.cpp
 msgid "Project"
 msgstr "プロジェクト"
 
@@ -3019,6 +3037,11 @@ msgstr ""
 msgid "Import Templates From ZIP File"
 msgstr "ZIPファイルからテンプレートをインポート"
 
+#: editor/editor_node.cpp
+#, fuzzy
+msgid "Template Package"
+msgstr "テンプレートのエクスポート マネージャー"
+
 #: editor/editor_node.cpp editor/project_export.cpp
 msgid "Export Project"
 msgstr "プロジェクトのエクスポート"
@@ -3074,6 +3097,11 @@ msgstr "次のエディタを開く"
 #: editor/editor_node.cpp
 msgid "Open the previous Editor"
 msgstr "前のエディタを開く"
+
+#: editor/editor_node.h
+#, fuzzy
+msgid "Warning!"
+msgstr "警告"
 
 #: editor/editor_path.cpp
 msgid "No sub-resources found."
@@ -3517,6 +3545,11 @@ msgstr "テンプレートを除去"
 #: editor/export_template_manager.cpp
 msgid "Select Template File"
 msgstr "テンプレートファイルを選択"
+
+#: editor/export_template_manager.cpp
+#, fuzzy
+msgid "Godot Export Templates"
+msgstr "エクスポート　テンプレートの読み込み"
 
 #: editor/export_template_manager.cpp
 msgid "Export Template Manager"
@@ -4335,9 +4368,8 @@ msgid "Audio Clips"
 msgstr "オーディオクリップ:"
 
 #: editor/plugins/animation_blend_tree_editor_plugin.cpp
-#, fuzzy
 msgid "Functions"
-msgstr "関数:"
+msgstr "関数"
 
 #: editor/plugins/animation_blend_tree_editor_plugin.cpp
 #: editor/plugins/animation_state_machine_editor.cpp
@@ -4654,6 +4686,11 @@ msgstr "終了アニメーションを設定する。これはサブトランジ
 msgid "Transition: "
 msgstr "トランジション: "
 
+#: editor/plugins/animation_state_machine_editor.cpp
+#, fuzzy
+msgid "Play Mode:"
+msgstr "パンモード"
+
 #: editor/plugins/animation_tree_editor_plugin.cpp
 #: editor/plugins/animation_tree_player_editor_plugin.cpp
 msgid "AnimationTree"
@@ -4909,6 +4946,32 @@ msgid "Download for this asset is already in progress!"
 msgstr "このアセットのダウンロードは既に進行中！"
 
 #: editor/plugins/asset_library_editor_plugin.cpp
+msgid "Recently Updated"
+msgstr ""
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+msgid "Least Recently Updated"
+msgstr ""
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+msgid "Name (A-Z)"
+msgstr ""
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+msgid "Name (Z-A)"
+msgstr ""
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+#, fuzzy
+msgid "License (A-Z)"
+msgstr "ライセンス"
+
+#: editor/plugins/asset_library_editor_plugin.cpp
+#, fuzzy
+msgid "License (Z-A)"
+msgstr "ライセンス"
+
+#: editor/plugins/asset_library_editor_plugin.cpp
 msgid "First"
 msgstr "最初"
 
@@ -5110,6 +5173,87 @@ msgid ""
 msgstr ""
 "オンの場合、コントロールノードを移動すると、マージンの代わりにアンカーが変更"
 "されます。"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Top Left"
+msgstr "左側面"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Top Right"
+msgstr "右側面"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Bottom Right"
+msgstr "右に回転"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Bottom Left"
+msgstr "下面図"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Center Left"
+msgstr "左インデント"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Center Top"
+msgstr "センター選択"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Center Right"
+msgstr "右インデント"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Center Bottom"
+msgstr "下面"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Center"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Left Wide"
+msgstr "左側面図"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Top Wide"
+msgstr "上面図"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Right Wide"
+msgstr "右側面図"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Bottom Wide"
+msgstr "下面図"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "VCenter Wide"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "HCenter Wide"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Full Rect"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Keep Ratio"
+msgstr "スケール比:"
 
 #: editor/plugins/canvas_item_editor_plugin.cpp
 msgid "Anchors only"
@@ -5774,6 +5918,11 @@ msgid "Remove item %d?"
 msgstr "アイテム%dを取り除きますか？"
 
 #: editor/plugins/mesh_library_editor_plugin.cpp
+#, fuzzy
+msgid "Mesh Library"
+msgstr "メッシュライブラリ..."
+
+#: editor/plugins/mesh_library_editor_plugin.cpp
 #: editor/plugins/theme_editor_plugin.cpp
 msgid "Add Item"
 msgstr "アイテムを追加"
@@ -6409,6 +6558,23 @@ msgid "Save File As..."
 msgstr "名前を付けて保存..."
 
 #: editor/plugins/script_editor_plugin.cpp
+msgid "Can't obtain the script for running."
+msgstr ""
+
+#: editor/plugins/script_editor_plugin.cpp
+msgid "Script failed reloading, check console for errors."
+msgstr ""
+
+#: editor/plugins/script_editor_plugin.cpp
+msgid "Script is not in tool mode, will not be able to run."
+msgstr ""
+
+#: editor/plugins/script_editor_plugin.cpp
+msgid ""
+"To run this script, it must inherit EditorScript and be set to tool mode."
+msgstr ""
+
+#: editor/plugins/script_editor_plugin.cpp
 msgid "Import Theme"
 msgstr "テーマのインポート"
 
@@ -6534,10 +6700,6 @@ msgstr "ドキュメントを閉じる"
 #: editor/plugins/script_editor_plugin.cpp editor/project_manager.cpp
 msgid "Run"
 msgstr "実行"
-
-#: editor/plugins/script_editor_plugin.cpp
-msgid "Toggle Scripts Panel"
-msgstr "スクリプトパネルを切り替え"
 
 #: editor/plugins/script_editor_plugin.cpp editor/script_editor_debugger.cpp
 msgid "Step Into"
@@ -7672,6 +7834,7 @@ msgid "Data Type:"
 msgstr "データの型:"
 
 #: editor/plugins/theme_editor_plugin.cpp
+#: editor/plugins/tile_set_editor_plugin.cpp
 msgid "Icon"
 msgstr "アイコン"
 
@@ -7690,6 +7853,11 @@ msgstr "色"
 #: editor/plugins/theme_editor_plugin.cpp
 msgid "Constant"
 msgstr "コンスタント"
+
+#: editor/plugins/theme_editor_plugin.cpp
+#, fuzzy
+msgid "Theme File"
+msgstr "テーマ"
 
 #: editor/plugins/tile_map_editor_plugin.cpp
 msgid "Erase Selection"
@@ -7803,6 +7971,20 @@ msgid "Merge from Scene"
 msgstr "シーンからマージ"
 
 #: editor/plugins/tile_set_editor_plugin.cpp
+msgid "New Single Tile"
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "New Autotile"
+msgstr "オートタイルを無効にする"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "New Atlas"
+msgstr "新規 %s"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
 msgid "Next Coordinate"
 msgstr "次の座標"
 
@@ -7817,6 +7999,41 @@ msgstr "前の座標"
 #: editor/plugins/tile_set_editor_plugin.cpp
 msgid "Select the previous shape, subtile, or Tile."
 msgstr "前のシェイプ、サブタイル、またはタイルを選択します。"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Region"
+msgstr "領域モード"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Collision"
+msgstr "コリジョンモード"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Occlusion"
+msgstr "オクルージョンモード"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Navigation"
+msgstr "ナビゲーションモード"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Bitmask"
+msgstr "ビットマスクモード"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Priority"
+msgstr "優先モード"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Z Index"
+msgstr "インデックス:"
 
 #: editor/plugins/tile_set_editor_plugin.cpp
 msgid "Region Mode"
@@ -9051,6 +9268,15 @@ msgid "Runnable"
 msgstr "実行可能"
 
 #: editor/project_export.cpp
+#, fuzzy
+msgid "Add initial export..."
+msgstr "入力ポートの追加"
+
+#: editor/project_export.cpp
+msgid "Add previous patches..."
+msgstr ""
+
+#: editor/project_export.cpp
 msgid "Delete patch '%s' from list?"
 msgstr "パッチ '%s' をリストから削除しますか?"
 
@@ -9162,6 +9388,11 @@ msgid "Make Patch"
 msgstr "パッチ生成"
 
 #: editor/project_export.cpp
+#, fuzzy
+msgid "Pack File"
+msgstr " ファイル"
+
+#: editor/project_export.cpp
 msgid "Features"
 msgstr "特徴"
 
@@ -9213,6 +9444,15 @@ msgstr "エクスポート モード？"
 #: editor/project_export.cpp
 msgid "Export All"
 msgstr "すべてエクスポート"
+
+#: editor/project_export.cpp editor/project_manager.cpp
+#, fuzzy
+msgid "ZIP File"
+msgstr " ファイル"
+
+#: editor/project_export.cpp
+msgid "Godot Game Pack"
+msgstr ""
 
 #: editor/project_export.cpp
 msgid "Export templates for this platform are missing:"
@@ -9515,6 +9755,11 @@ msgstr "プロジェクトマネージャー"
 #: editor/project_manager.cpp
 msgid "Projects"
 msgstr "プロジェクト"
+
+#: editor/project_manager.cpp
+#, fuzzy
+msgid "Last Modified"
+msgstr "変更された箇所"
 
 #: editor/project_manager.cpp
 msgid "Scan"
@@ -11152,6 +11397,16 @@ msgid "Set Variable Type"
 msgstr "変数の型を設定"
 
 #: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Add Input Port"
+msgstr "入力ポートの追加"
+
+#: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Add Output Port"
+msgstr "出力ポートを追加"
+
+#: modules/visual_script/visual_script_editor.cpp
 msgid "Override an existing built-in function."
 msgstr "既存の組込み関数をオーバーライド。"
 
@@ -11211,16 +11466,6 @@ msgstr "変数を追加"
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Add Signal"
 msgstr "シグナルを追加"
-
-#: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
-msgid "Add Input Port"
-msgstr "入力ポートの追加"
-
-#: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
-msgid "Add Output Port"
-msgstr "出力ポートを追加"
 
 #: modules/visual_script/visual_script_editor.cpp
 #, fuzzy
@@ -11413,6 +11658,21 @@ msgstr "ローカルにする"
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Members:"
 msgstr "メンバー:"
+
+#: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Change Base Type:"
+msgstr "基本の型を変更"
+
+#: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Add Nodes..."
+msgstr "ノードを追加..."
+
+#: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Add Function..."
+msgstr "関数を追加"
 
 #: modules/visual_script/visual_script_editor.cpp
 #, fuzzy
@@ -11629,25 +11889,8 @@ msgid "Identifier is missing."
 msgstr "識別子がありません。"
 
 #: platform/iphone/export/export.cpp
-msgid "Identifier segments must be of non-zero length."
-msgstr "識別子セグメントはゼロ以外の長さでなければなりません。"
-
-#: platform/iphone/export/export.cpp
 msgid "The character '%s' is not allowed in Identifier."
 msgstr "文字 '%s' は識別子に使用できません。"
-
-#: platform/iphone/export/export.cpp
-msgid "A digit cannot be the first character in a Identifier segment."
-msgstr "数字を識別子セグメントの先頭に使用できません。"
-
-#: platform/iphone/export/export.cpp
-msgid ""
-"The character '%s' cannot be the first character in a Identifier segment."
-msgstr "文字 '%s' は識別子 セグメントの先頭に使用できません。"
-
-#: platform/iphone/export/export.cpp
-msgid "The Identifier must have at least one '.' separator."
-msgstr "識別子には一つ以上の区切り文字 '.' が必要です。"
 
 #: platform/iphone/export/export.cpp
 msgid "App Store Team ID not specified - cannot configure the project."
@@ -12375,6 +12618,19 @@ msgstr "Varyingは頂点関数にのみ割り当てることができます。"
 msgid "Constants cannot be modified."
 msgstr "定数は変更できません。"
 
+#~ msgid "Identifier segments must be of non-zero length."
+#~ msgstr "識別子セグメントはゼロ以外の長さでなければなりません。"
+
+#~ msgid "A digit cannot be the first character in a Identifier segment."
+#~ msgstr "数字を識別子セグメントの先頭に使用できません。"
+
+#~ msgid ""
+#~ "The character '%s' cannot be the first character in a Identifier segment."
+#~ msgstr "文字 '%s' は識別子 セグメントの先頭に使用できません。"
+
+#~ msgid "The Identifier must have at least one '.' separator."
+#~ msgstr "識別子には一つ以上の区切り文字 '.' が必要です。"
+
 #~ msgid "Pause the scene"
 #~ msgstr "シーンを一時停止"
 
@@ -12875,9 +13131,6 @@ msgstr "定数は変更できません。"
 
 #~ msgid "Rotate 270 degrees"
 #~ msgstr "270度回転"
-
-#~ msgid "Warning"
-#~ msgstr "警告"
 
 #~ msgid "Variable"
 #~ msgstr "変数"
@@ -13406,10 +13659,6 @@ msgstr "定数は変更できません。"
 #, fuzzy
 #~ msgid "Re-Import Changed Resources"
 #~ msgstr "変更したリソースを再インポート"
-
-#, fuzzy
-#~ msgid "Loading Export Templates"
-#~ msgstr "エクスポート　テンプレートの読み込み"
 
 #, fuzzy
 #~ msgid ""

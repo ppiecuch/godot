@@ -2,7 +2,7 @@
 
 set -e
 
-scons platform=osx
+scons platform=osx define=DEBUG_ENABLED
 
 echo "*** Packaging app ..."
 

@@ -157,6 +157,8 @@ void main() {
 
 #define extra_matrix extra_matrix_instance
 
+	float point_size = 1.0;
+
 	{
 		vec2 src_vtx = outvec.xy;
 		/* clang-format off */
@@ -166,12 +168,12 @@ VERTEX_SHADER_CODE
 		/* clang-format on */
 	}
 
-#if !defined(SKIP_TRANSFORM_USED) && defined(VERTEX_WORLD_COORDS_USED)
-	outvec = inv_world_matrix * outvec;
-	outvec = modelview_matrix * outvec;
-#endif
+	gl_PointSize = point_size;
 
-#if !defined(SKIP_TRANSFORM_USED) && !defined(VERTEX_WORLD_COORDS_USED)
+#if !defined(SKIP_TRANSFORM_USED)
+# if defined(VERTEX_WORLD_COORDS_USED)
+	outvec = inv_world_matrix * outvec;
+# endif
 	outvec = extra_matrix * outvec;
 	outvec = modelview_matrix * outvec;
 #endif

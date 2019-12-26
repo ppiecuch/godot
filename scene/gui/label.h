@@ -80,8 +80,8 @@ public:
     };
 
     enum TransitionBehaviour {
-        TRANSITIONBEHAVIOUR_ALL,
-        TRANSITIONBEHAVIOUR_NEW
+        TRANSITIONBEHAVIOUR_ALL, /* always transition - even same characters */
+        TRANSITIONBEHAVIOUR_NEW  /* transition only new (changed) characters */
     };
 
 private:
@@ -121,6 +121,8 @@ private:
 
 	bool word_cache_dirty;
     WordCache *calculate_word_cache(const Ref<Font> &font, const String &label_text, int &line_count, int &total_char_cache, int &width) const;
+    CharType get_char_at(WordCache *cache, String &text, int line, int pos) const;
+	int get_line_size(WordCache *cache, String &text, int line) const;
 	void regenerate_word_cache();
 
 	float percent_visible;
@@ -147,9 +149,6 @@ private:
     AnimationController *transition_controller;
 
     void clear_pending_animations();
-    CharType get_pending_char_at(int line, int pos) const;
-    int get_chars_from_cache_after(WordCache *cache, int x_offset) const;
-    int get_chars_from_cache_before(WordCache *cache, int x_offset) const;
 
 protected:
 	void _notification(int p_what);

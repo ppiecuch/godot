@@ -1182,6 +1182,19 @@ void CodeTextEditor::move_lines_down() {
 	text_editor->update();
 }
 
+void CodeTextEditor::_delete_line(int p_line) {
+	// this is currently intended to be called within delete_lines()
+	// so `begin_complex_operation` is ommitted here
+	text_editor->set_line(p_line, "");
+	if (p_line == 0 && text_editor->get_line_count() > 1) {
+		text_editor->cursor_set_line(1);
+		text_editor->cursor_set_column(0);
+	}
+	text_editor->backspace_at_cursor();
+	text_editor->unfold_line(p_line);
+	text_editor->cursor_set_line(p_line);
+}
+
 void CodeTextEditor::delete_lines() {
 	text_editor->begin_complex_operation();
 	if (text_editor->is_selection_active()) {
@@ -1189,22 +1202,13 @@ void CodeTextEditor::delete_lines() {
 		int from_line = text_editor->get_selection_from_line();
 		int count = Math::abs(to_line - from_line) + 1;
 
-		text_editor->cursor_set_line(to_line, false);
-		while (count) {
-			text_editor->set_line(text_editor->cursor_get_line(), "");
-			text_editor->backspace_at_cursor();
-			count--;
-			if (count)
-				text_editor->unfold_line(from_line);
+		text_editor->cursor_set_line(from_line, false);
+		for (int i = 0; i < count; i++) {
+			_delete_line(from_line);
 		}
-		text_editor->cursor_set_line(from_line - 1);
 		text_editor->deselect();
 	} else {
-		int line = text_editor->cursor_get_line();
-		text_editor->set_line(text_editor->cursor_get_line(), "");
-		text_editor->backspace_at_cursor();
-		text_editor->unfold_line(line);
-		text_editor->cursor_set_line(line);
+		_delete_line(text_editor->cursor_get_line());
 	}
 	text_editor->end_complex_operation();
 }
@@ -1504,6 +1508,10 @@ void CodeTextEditor::_set_show_warnings_panel(bool p_show) {
 	emit_signal("show_warnings_panel", p_show);
 }
 
+void CodeTextEditor::_toggle_scripts_pressed() {
+	toggle_scripts_button->set_icon(ScriptEditor::get_singleton()->toggle_scripts_panel() ? get_icon("Back", "EditorIcons") : get_icon("Forward", "EditorIcons"));
+}
+
 void CodeTextEditor::_error_pressed(const Ref<InputEvent> &p_event) {
 	Ref<InputEventMouseButton> mb = p_event;
 	if (mb.is_valid() && mb->is_pressed() && mb->get_button_index() == BUTTON_LEFT) {
@@ -1519,6 +1527,9 @@ void CodeTextEditor::_notification(int p_what) {
 			emit_signal("load_theme_settings");
 		} break;
 		case NOTIFICATION_THEME_CHANGED: {
+			if (toggle_scripts_button->is_visible()) {
+				update_toggle_scripts_button();
+			}
 			_update_font();
 		} break;
 		case NOTIFICATION_ENTER_TREE: {
@@ -1526,6 +1537,9 @@ void CodeTextEditor::_notification(int p_what) {
 			add_constant_override("separation", 4 * EDSCALE);
 		} break;
 		case NOTIFICATION_VISIBILITY_CHANGED: {
+			if (toggle_scripts_button->is_visible()) {
+				update_toggle_scripts_button();
+			}
 			set_process_input(is_visible_in_tree());
 		} break;
 		default:
@@ -1559,12 +1573,14 @@ void CodeTextEditor::goto_next_bookmark() {
 	if (line >= bmarks[bmarks.size() - 1]) {
 		text_editor->unfold_line(bmarks[0]);
 		text_editor->cursor_set_line(bmarks[0]);
+		text_editor->center_viewport_to_cursor();
 	} else {
 		for (List<int>::Element *E = bmarks.front(); E; E = E->next()) {
 			int bline = E->get();
 			if (bline > line) {
 				text_editor->unfold_line(bline);
 				text_editor->cursor_set_line(bline);
+				text_editor->center_viewport_to_cursor();
 				return;
 			}
 		}
@@ -1583,12 +1599,14 @@ void CodeTextEditor::goto_prev_bookmark() {
 	if (line <= bmarks[0]) {
 		text_editor->unfold_line(bmarks[bmarks.size() - 1]);
 		text_editor->cursor_set_line(bmarks[bmarks.size() - 1]);
+		text_editor->center_viewport_to_cursor();
 	} else {
 		for (List<int>::Element *E = bmarks.back(); E; E = E->prev()) {
 			int bline = E->get();
 			if (bline < line) {
 				text_editor->unfold_line(bline);
 				text_editor->cursor_set_line(bline);
+				text_editor->center_viewport_to_cursor();
 				return;
 			}
 		}
@@ -1617,6 +1635,7 @@ void CodeTextEditor::_bind_methods() {
 	ClassDB::bind_method("_complete_request", &CodeTextEditor::_complete_request);
 	ClassDB::bind_method("_font_resize_timeout", &CodeTextEditor::_font_resize_timeout);
 	ClassDB::bind_method("_error_pressed", &CodeTextEditor::_error_pressed);
+	ClassDB::bind_method("_toggle_scripts_pressed", &CodeTextEditor::_toggle_scripts_pressed);
 	ClassDB::bind_method("_warning_button_pressed", &CodeTextEditor::_warning_button_pressed);
 	ClassDB::bind_method("_warning_label_gui_input", &CodeTextEditor::_warning_label_gui_input);
 
@@ -1629,6 +1648,15 @@ void CodeTextEditor::_bind_methods() {
 void CodeTextEditor::set_code_complete_func(CodeTextEditorCodeCompleteFunc p_code_complete_func, void *p_ud) {
 	code_complete_func = p_code_complete_func;
 	code_complete_ud = p_ud;
+}
+
+void CodeTextEditor::show_toggle_scripts_button() {
+	toggle_scripts_button->show();
+}
+
+void CodeTextEditor::update_toggle_scripts_button() {
+	toggle_scripts_button->set_icon(ScriptEditor::get_singleton()->is_scripts_panel_toggled() ? get_icon("Back", "EditorIcons") : get_icon("Forward", "EditorIcons"));
+	toggle_scripts_button->set_tooltip(TTR("Toggle Scripts Panel") + " (" + ED_GET_SHORTCUT("script_editor/toggle_scripts_panel")->get_as_text() + ")");
 }
 
 CodeTextEditor::CodeTextEditor() {
@@ -1671,6 +1699,11 @@ CodeTextEditor::CodeTextEditor() {
 
 	error_line = 0;
 	error_column = 0;
+
+	toggle_scripts_button = memnew(ToolButton);
+	toggle_scripts_button->connect("pressed", this, "_toggle_scripts_pressed");
+	status_bar->add_child(toggle_scripts_button);
+	toggle_scripts_button->hide();
 
 	// Error
 	ScrollContainer *scroll = memnew(ScrollContainer);
