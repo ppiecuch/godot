@@ -77,8 +77,8 @@ public:
 
 		get_root()->add_child(frame);
 
-        int x_pos = 80, y_pos = 90, x_sz = 179, y_sz = 80, spc = 5;
-        String text("There was once upon a time a beautiful\nunicorn that loved to play with little\ngirls...");
+		int x_pos = 80, y_pos = 90, x_sz = 179, y_sz = 80, spc = 5;
+		String text("There was once upon a time a beautiful\nunicorn that loved to play with little\ngirls...");
 
 		Label *label1 = memnew(Label);
 		label1->set_position(Point2(x_pos, y_pos));
@@ -157,6 +157,12 @@ public:
             int num = label1->get_line_size(label1->word_cache, text, 10);
             OS::get_singleton()->print("\t10: %s\n", num==0 ? "PASS" : "FAILED");
         }
+
+        OS::get_singleton()->print("Running animation:\n");
+
+		label1->set_animate(true);
+		label1->set_transition_duration(2);
+		label1->set_text("New\nanimation");
 	}
 };
 
