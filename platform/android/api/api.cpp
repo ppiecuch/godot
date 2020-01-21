@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  register_types.cpp                                                   */
+/*  api.cpp                                                              */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,34 +28,59 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "register_types.h"
+#include "api.h"
 
-#include "navigation_mesh_editor_plugin.h"
+#include "core/engine.h"
+#include "java_class_wrapper.h"
 
-#ifdef TOOLS_ENABLED
-EditorNavigationMeshGenerator *_nav_mesh_generator = NULL;
+#if !defined(ANDROID_ENABLED)
+static JavaClassWrapper *java_class_wrapper = NULL;
 #endif
 
-void register_recast_types() {
-#ifdef TOOLS_ENABLED
-	ClassDB::APIType prev_api = ClassDB::get_current_api();
-	ClassDB::set_current_api(ClassDB::API_EDITOR);
+void register_android_api() {
 
-	EditorPlugins::add_by_type<NavigationMeshEditorPlugin>();
-	_nav_mesh_generator = memnew(EditorNavigationMeshGenerator);
+#if !defined(ANDROID_ENABLED)
+	java_class_wrapper = memnew(JavaClassWrapper); // Dummy
+#endif
 
-	ClassDB::register_class<EditorNavigationMeshGenerator>();
+	ClassDB::register_class<JavaClass>();
+	ClassDB::register_class<JavaClassWrapper>();
+	Engine::get_singleton()->add_singleton(Engine::Singleton("JavaClassWrapper", JavaClassWrapper::get_singleton()));
+}
 
-	Engine::get_singleton()->add_singleton(Engine::Singleton("NavigationMeshGenerator", EditorNavigationMeshGenerator::get_singleton()));
+void unregister_android_api() {
 
-	ClassDB::set_current_api(prev_api);
+#if !defined(ANDROID_ENABLED)
+	memdelete(java_class_wrapper);
 #endif
 }
 
-void unregister_recast_types() {
-#ifdef TOOLS_ENABLED
-	if (_nav_mesh_generator) {
-		memdelete(_nav_mesh_generator);
-	}
-#endif
+void JavaClassWrapper::_bind_methods() {
+
+	ClassDB::bind_method(D_METHOD("wrap", "name"), &JavaClassWrapper::wrap);
 }
+
+#if !defined(ANDROID_ENABLED)
+
+Variant JavaClass::call(const StringName &, const Variant **, int, Variant::CallError &) {
+	return Variant();
+}
+
+JavaClass::JavaClass() {
+}
+
+Variant JavaObject::call(const StringName &, const Variant **, int, Variant::CallError &) {
+	return Variant();
+}
+
+JavaClassWrapper *JavaClassWrapper::singleton = NULL;
+
+Ref<JavaClass> JavaClassWrapper::wrap(const String &) {
+	return Ref<JavaClass>();
+}
+
+JavaClassWrapper::JavaClassWrapper() {
+	singleton = this;
+}
+
+#endif
