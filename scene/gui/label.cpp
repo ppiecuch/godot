@@ -565,26 +565,13 @@ Label::WordCache *Label::calculate_word_cache(const Ref<Font> &font, const Strin
 		width = get_longest_line_width(label_text);
 	}
 
-<<<<<<< HEAD
-	int current_word_size = 0;
-=======
-	Ref<Font> font = get_font("font");
-
 	real_t current_word_size = 0;
->>>>>>> d4a222cd9d849a63f0535f70cbf78700bc5c815b
 	int word_pos = 0;
 	real_t line_width = 0;
 	int space_count = 0;
-<<<<<<< HEAD
-	// ceiling to ensure autowrapping does not cut text
-	int space_width = Math::ceil(font->get_char_size(' ').width) + horizontal_spacing;
-
-    line_count = 1;
-=======
-	real_t space_width = font->get_char_size(' ').width;
+	real_t space_width = font->get_char_size(' ').width + horizontal_spacing;
 	int line_spacing = get_constant("line_spacing");
 	line_count = 1;
->>>>>>> d4a222cd9d849a63f0535f70cbf78700bc5c815b
 	total_char_cache = 0;
 
 	WordCache *root = NULL, *last = NULL;
@@ -643,12 +630,7 @@ Label::WordCache *Label::calculate_word_cache(const Ref<Font> &font, const Strin
 			if (current_word_size == 0) {
 				word_pos = i;
 			}
-<<<<<<< HEAD
-			// ceiling to ensure autowrapping does not cut text
-			char_width = Math::ceil(font->get_char_size(current, label_text[i + 1]).width) + horizontal_spacing;
-=======
-			char_width = font->get_char_size(current, xl_text[i + 1]).width;
->>>>>>> d4a222cd9d849a63f0535f70cbf78700bc5c815b
+			char_width = font->get_char_size(current, label_text[i + 1]).width + horizontal_spacing;
 			current_word_size += char_width;
 			line_width += char_width;
 			total_char_cache++;
