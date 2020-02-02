@@ -33,6 +33,10 @@
 #include "core/vmap.h"
 #include "servers/visual/shader_types.h"
 
+bool VisualShaderNode::is_simple_decl() const {
+	return simple_decl;
+}
+
 void VisualShaderNode::set_output_port_for_preview(int p_index) {
 
 	port_preview = p_index;
@@ -79,7 +83,7 @@ Vector<StringName> VisualShaderNode::get_editable_properties() const {
 	return Vector<StringName>();
 }
 
-Array VisualShaderNode::_get_default_input_values() const {
+Array VisualShaderNode::get_default_input_values() const {
 
 	Array ret;
 	for (Map<int, Variant>::Element *E = default_input_values.front(); E; E = E->next()) {
@@ -88,7 +92,7 @@ Array VisualShaderNode::_get_default_input_values() const {
 	}
 	return ret;
 }
-void VisualShaderNode::_set_default_input_values(const Array &p_values) {
+void VisualShaderNode::set_default_input_values(const Array &p_values) {
 
 	if (p_values.size() % 2 == 0) {
 		for (int i = 0; i < p_values.size(); i += 2) {
@@ -115,11 +119,11 @@ void VisualShaderNode::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_input_port_default_value", "port", "value"), &VisualShaderNode::set_input_port_default_value);
 	ClassDB::bind_method(D_METHOD("get_input_port_default_value", "port"), &VisualShaderNode::get_input_port_default_value);
 
-	ClassDB::bind_method(D_METHOD("_set_default_input_values", "values"), &VisualShaderNode::_set_default_input_values);
-	ClassDB::bind_method(D_METHOD("_get_default_input_values"), &VisualShaderNode::_get_default_input_values);
+	ClassDB::bind_method(D_METHOD("set_default_input_values", "values"), &VisualShaderNode::set_default_input_values);
+	ClassDB::bind_method(D_METHOD("get_default_input_values"), &VisualShaderNode::get_default_input_values);
 
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "output_port_for_preview"), "set_output_port_for_preview", "get_output_port_for_preview");
-	ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "default_input_values", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "_set_default_input_values", "_get_default_input_values");
+	ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "default_input_values", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL), "set_default_input_values", "get_default_input_values");
 	ADD_SIGNAL(MethodInfo("editor_refresh_request"));
 
 	BIND_ENUM_CONSTANT(PORT_TYPE_SCALAR);
@@ -132,6 +136,7 @@ void VisualShaderNode::_bind_methods() {
 
 VisualShaderNode::VisualShaderNode() {
 	port_preview = -1;
+	simple_decl = true;
 }
 
 /////////////////////////////////////////////////////////
@@ -241,6 +246,7 @@ String VisualShaderNodeCustom::generate_code(Shader::Mode p_mode, VisualShader::
 		code.remove(code.size() - 1);
 		code += "}";
 	}
+	code += "\n";
 	return code;
 }
 
@@ -273,6 +279,7 @@ void VisualShaderNodeCustom::_bind_methods() {
 }
 
 VisualShaderNodeCustom::VisualShaderNodeCustom() {
+	simple_decl = false;
 }
 
 /////////////////////////////////////////////////////////
@@ -1104,17 +1111,17 @@ Error VisualShader::_write_node(Type type, StringBuilder &global_code, StringBui
 			} else if (in_type == out_type) {
 				inputs[i] = src_var;
 			} else if (in_type == VisualShaderNode::PORT_TYPE_SCALAR && out_type == VisualShaderNode::PORT_TYPE_VECTOR) {
-				inputs[i] = "dot(" + src_var + ",vec3(0.333333,0.333333,0.333333))";
+				inputs[i] = "dot(" + src_var + ", vec3(0.333333, 0.333333, 0.333333))";
 			} else if (in_type == VisualShaderNode::PORT_TYPE_VECTOR && out_type == VisualShaderNode::PORT_TYPE_SCALAR) {
 				inputs[i] = "vec3(" + src_var + ")";
 			} else if (in_type == VisualShaderNode::PORT_TYPE_BOOLEAN && out_type == VisualShaderNode::PORT_TYPE_VECTOR) {
 				inputs[i] = "all(bvec3(" + src_var + "))";
 			} else if (in_type == VisualShaderNode::PORT_TYPE_BOOLEAN && out_type == VisualShaderNode::PORT_TYPE_SCALAR) {
-				inputs[i] = src_var + ">0.0?true:false";
+				inputs[i] = src_var + " > 0.0 ? true : false";
 			} else if (in_type == VisualShaderNode::PORT_TYPE_SCALAR && out_type == VisualShaderNode::PORT_TYPE_BOOLEAN) {
-				inputs[i] = src_var + "?1.0:0.0";
+				inputs[i] = src_var + " ? 1.0 : 0.0";
 			} else if (in_type == VisualShaderNode::PORT_TYPE_VECTOR && out_type == VisualShaderNode::PORT_TYPE_BOOLEAN) {
-				inputs[i] = "vec3(" + src_var + "?1.0:0.0)";
+				inputs[i] = "vec3(" + src_var + " ? 1.0 : 0.0)";
 			}
 		} else {
 
@@ -1130,7 +1137,7 @@ Error VisualShader::_write_node(Type type, StringBuilder &global_code, StringBui
 			} else if (defval.get_type() == Variant::VECTOR3) {
 				Vector3 val = defval;
 				inputs[i] = "n_in" + itos(node) + "p" + itos(i);
-				code += "\tvec3 " + inputs[i] + " = " + vformat("vec3(%.5f,%.5f,%.5f);\n", val.x, val.y, val.z);
+				code += "\tvec3 " + inputs[i] + " = " + vformat("vec3(%.5f, %.5f, %.5f);\n", val.x, val.y, val.z);
 			} else if (defval.get_type() == Variant::TRANSFORM) {
 				Transform val = defval;
 				val.basis.transpose();
@@ -1145,7 +1152,7 @@ Error VisualShader::_write_node(Type type, StringBuilder &global_code, StringBui
 				values.push_back(val.origin.y);
 				values.push_back(val.origin.z);
 				bool err = false;
-				code += "\tmat4 " + inputs[i] + " = " + String("mat4( vec4(%.5f,%.5f,%.5f,0.0),vec4(%.5f,%.5f,%.5f,0.0),vec4(%.5f,%.5f,%.5f,0.0),vec4(%.5f,%.5f,%.5f,1.0) );\n").sprintf(values, &err);
+				code += "\tmat4 " + inputs[i] + " = " + String("mat4(vec4(%.5f, %.5f, %.5f, 0.0), vec4(%.5f, %.5f, %.5f, 0.0), vec4(%.5f, %.5f, %.5f, 0.0), vec4(%.5f, %.5f, %.5f, 1.0));\n").sprintf(values, &err);
 			} else {
 				//will go empty, node is expected to know what it is doing at this point and handle it
 			}
@@ -1157,15 +1164,29 @@ Error VisualShader::_write_node(Type type, StringBuilder &global_code, StringBui
 	output_vars.resize(vsnode->get_output_port_count());
 	String *outputs = output_vars.ptrw();
 
-	for (int i = 0; i < output_count; i++) {
+	if (vsnode->is_simple_decl()) { // less code to generate for some simple_decl nodes
+		for (int i = 0; i < output_count; i++) {
+			String var_name = "n_out" + itos(node) + "p" + itos(i);
+			switch (vsnode->get_output_port_type(i)) {
+				case VisualShaderNode::PORT_TYPE_SCALAR: outputs[i] = "float " + var_name; break;
+				case VisualShaderNode::PORT_TYPE_VECTOR: outputs[i] = "vec3 " + var_name; break;
+				case VisualShaderNode::PORT_TYPE_BOOLEAN: outputs[i] = "bool " + var_name; break;
+				case VisualShaderNode::PORT_TYPE_TRANSFORM: outputs[i] = "mat4 " + var_name; break;
+				default: {
+				}
+			}
+		}
 
-		outputs[i] = "n_out" + itos(node) + "p" + itos(i);
-		switch (vsnode->get_output_port_type(i)) {
-			case VisualShaderNode::PORT_TYPE_SCALAR: code += String() + "\tfloat " + outputs[i] + ";\n"; break;
-			case VisualShaderNode::PORT_TYPE_VECTOR: code += String() + "\tvec3 " + outputs[i] + ";\n"; break;
-			case VisualShaderNode::PORT_TYPE_BOOLEAN: code += String() + "\tbool " + outputs[i] + ";\n"; break;
-			case VisualShaderNode::PORT_TYPE_TRANSFORM: code += String() + "\tmat4 " + outputs[i] + ";\n"; break;
-			default: {
+	} else {
+		for (int i = 0; i < output_count; i++) {
+			outputs[i] = "n_out" + itos(node) + "p" + itos(i);
+			switch (vsnode->get_output_port_type(i)) {
+				case VisualShaderNode::PORT_TYPE_SCALAR: code += String() + "\tfloat " + outputs[i] + ";\n"; break;
+				case VisualShaderNode::PORT_TYPE_VECTOR: code += String() + "\tvec3 " + outputs[i] + ";\n"; break;
+				case VisualShaderNode::PORT_TYPE_BOOLEAN: code += String() + "\tbool " + outputs[i] + ";\n"; break;
+				case VisualShaderNode::PORT_TYPE_TRANSFORM: code += String() + "\tmat4 " + outputs[i] + ";\n"; break;
+				default: {
+				}
 			}
 		}
 	}
@@ -1432,8 +1453,8 @@ const VisualShaderNodeInput::Port VisualShaderNodeInput::ports[] = {
 	{ Shader::MODE_SPATIAL, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_VECTOR, "normal", "NORMAL" },
 	{ Shader::MODE_SPATIAL, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_VECTOR, "tangent", "TANGENT" },
 	{ Shader::MODE_SPATIAL, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_VECTOR, "binormal", "BINORMAL" },
-	{ Shader::MODE_SPATIAL, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_VECTOR, "uv", "vec3(UV,0.0)" },
-	{ Shader::MODE_SPATIAL, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_VECTOR, "uv2", "vec3(UV2,0.0)" },
+	{ Shader::MODE_SPATIAL, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_VECTOR, "uv", "vec3(UV, 0.0)" },
+	{ Shader::MODE_SPATIAL, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_VECTOR, "uv2", "vec3(UV2, 0.0)" },
 	{ Shader::MODE_SPATIAL, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_VECTOR, "color", "COLOR.rgb" },
 	{ Shader::MODE_SPATIAL, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_SCALAR, "alpha", "COLOR.a" },
 	{ Shader::MODE_SPATIAL, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_SCALAR, "point_size", "POINT_SIZE" },
@@ -1455,13 +1476,13 @@ const VisualShaderNodeInput::Port VisualShaderNodeInput::ports[] = {
 	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "tangent", "TANGENT" },
 	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "binormal", "BINORMAL" },
 	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "view", "VIEW" },
-	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "uv", "vec3(UV,0.0)" },
-	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "uv2", "vec3(UV2,0.0)" },
+	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "uv", "vec3(UV, 0.0)" },
+	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "uv2", "vec3(UV2, 0.0)" },
 	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "color", "COLOR.rgb" },
 	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_SCALAR, "alpha", "COLOR.a" },
-	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "point_coord", "vec3(POINT_COORD,0.0)" },
+	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "point_coord", "vec3(POINT_COORD, 0.0)" },
 
-	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "screen_uv", "vec3(SCREEN_UV,0.0)" },
+	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "screen_uv", "vec3(SCREEN_UV, 0.0)" },
 	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_SCALAR, "side", "float(FRONT_FACING ? 1.0 : 0.0)" },
 
 	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_TRANSFORM, "world", "WORLD_MATRIX" },
@@ -1498,7 +1519,7 @@ const VisualShaderNodeInput::Port VisualShaderNodeInput::ports[] = {
 	{ Shader::MODE_SPATIAL, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_VECTOR, "viewport_size", "vec3(VIEWPORT_SIZE, 0.0)" },
 	{ Shader::MODE_SPATIAL, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_BOOLEAN, "output_is_srgb", "OUTPUT_IS_SRGB" },
 	// Canvas Item, Vertex
-	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_VECTOR, "vertex", "vec3(VERTEX,0.0)" },
+	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_VECTOR, "vertex", "vec3(VERTEX, 0.0)" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_VECTOR, "uv", "vec3(UV,0.0)" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_VECTOR, "color", "COLOR.rgb" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_SCALAR, "alpha", "COLOR.a" },
@@ -1512,13 +1533,13 @@ const VisualShaderNodeInput::Port VisualShaderNodeInput::ports[] = {
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_SCALAR, "light_pass", "float(AT_LIGHT_PASS ? 1.0 : 0.0)" },
 	// Canvas Item, Fragment
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "fragcoord", "FRAGCOORD.xyz" },
-	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "uv", "vec3(UV,0.0)" },
+	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "uv", "vec3(UV, 0.0)" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "color", "COLOR.rgb" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_SCALAR, "alpha", "COLOR.a" },
-	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "screen_uv", "vec3(SCREEN_UV,0.0)" },
+	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "screen_uv", "vec3(SCREEN_UV, 0.0)" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "texture_pixel_size", "vec3(TEXTURE_PIXEL_SIZE, 1.0)" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "screen_pixel_size", "vec3(SCREEN_PIXEL_SIZE, 1.0)" },
-	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "point_coord", "vec3(POINT_COORD,0.0)" },
+	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "point_coord", "vec3(POINT_COORD, 0.0)" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_SCALAR, "time", "TIME" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_SCALAR, "light_pass", "float(AT_LIGHT_PASS ? 1.0 : 0.0)" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_SAMPLER, "texture", "TEXTURE" },
@@ -1526,19 +1547,19 @@ const VisualShaderNodeInput::Port VisualShaderNodeInput::ports[] = {
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_SAMPLER, "screen_texture", "SCREEN_TEXTURE" },
 	// Canvas Item, Light
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_VECTOR, "fragcoord", "FRAGCOORD.xyz" },
-	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_VECTOR, "uv", "vec3(UV,0.0)" },
+	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_VECTOR, "uv", "vec3(UV, 0.0)" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_VECTOR, "normal", "NORMAL" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_VECTOR, "color", "COLOR.rgb" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_SCALAR, "alpha", "COLOR.a" },
-	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_VECTOR, "light_vec", "vec3(LIGHT_VEC,0.0)" },
+	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_VECTOR, "light_vec", "vec3(LIGHT_VEC, 0.0)" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_SCALAR, "light_height", "LIGHT_HEIGHT" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_VECTOR, "light_color", "LIGHT_COLOR.rgb" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_VECTOR, "light_alpha", "LIGHT_COLOR.a" },
-	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_VECTOR, "light_uv", "vec3(LIGHT_UV,0.0)" },
+	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_VECTOR, "light_uv", "vec3(LIGHT_UV, 0.0)" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_VECTOR, "shadow_color", "SHADOW_COLOR.rgb" },
-	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_VECTOR, "screen_uv", "vec3(SCREEN_UV,0.0)" },
+	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_VECTOR, "screen_uv", "vec3(SCREEN_UV, 0.0)" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_VECTOR, "texture_pixel_size", "vec3(TEXTURE_PIXEL_SIZE, 1.0)" },
-	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_VECTOR, "point_coord", "vec3(POINT_COORD,0.0)" },
+	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_VECTOR, "point_coord", "vec3(POINT_COORD, 0.0)" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_SCALAR, "time", "TIME" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_SAMPLER, "texture", "TEXTURE" },
 
@@ -1564,48 +1585,48 @@ const VisualShaderNodeInput::Port VisualShaderNodeInput::ports[] = {
 const VisualShaderNodeInput::Port VisualShaderNodeInput::preview_ports[] = {
 
 	// Spatial, Fragment
-	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "normal", "vec3(0.0,0.0,1.0)" },
-	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "tangent", "vec3(0.0,1.0,0.0)" },
-	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "binormal", "vec3(1.0,0.0,0.0)" },
-	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "uv", "vec3(UV,0.0)" },
-	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "uv2", "vec3(UV,0.0)" },
+	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "normal", "vec3(0.0, 0.0, 1.0)" },
+	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "tangent", "vec3(0.0, 1.0, 0.0)" },
+	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "binormal", "vec3(1.0, 0.0, 0.0)" },
+	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "uv", "vec3(UV, 0.0)" },
+	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "uv2", "vec3(UV, 0.0)" },
 	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "color", "vec3(1.0)" },
 	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_SCALAR, "alpha", "1.0" },
 
-	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "screen_uv", "vec3(SCREEN_UV,0.0)" },
+	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "screen_uv", "vec3(SCREEN_UV, 0.0)" },
 	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_SCALAR, "side", "1.0" },
 
 	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_SCALAR, "time", "TIME" },
 	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "viewport_size", "vec3(1.0,1.0, 0.0)" },
 
 	// Spatial, Light
-	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "normal", "vec3(0.0,0.0,1.0)" },
+	{ Shader::MODE_SPATIAL, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "normal", "vec3(0.0, 0.0, 1.0)" },
 	{ Shader::MODE_SPATIAL, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_SCALAR, "time", "TIME" },
 	{ Shader::MODE_SPATIAL, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_VECTOR, "viewport_size", "vec3(1.0, 1.0, 0.0)" },
 	// Canvas Item, Vertex
-	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_VECTOR, "vertex", "vec3(VERTEX,0.0)" },
-	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_VECTOR, "uv", "vec3(UV,0.0)" },
+	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_VECTOR, "vertex", "vec3(VERTEX, 0.0)" },
+	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_VECTOR, "uv", "vec3(UV, 0.0)" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_VECTOR, "color", "vec3(1.0)" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_SCALAR, "alpha", "1.0" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_SCALAR, "time", "TIME" },
 	// Canvas Item, Fragment
-	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "uv", "vec3(UV,0.0)" },
+	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "uv", "vec3(UV, 0.0)" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "color", "vec3(1.0)" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_SCALAR, "alpha", "1.0" },
-	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "screen_uv", "vec3(SCREEN_UV,0.0)" },
+	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_VECTOR, "screen_uv", "vec3(SCREEN_UV, 0.0)" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_SCALAR, "time", "TIME" },
 	// Canvas Item, Light
-	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_VECTOR, "uv", "vec3(UV,0.0)" },
-	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_VECTOR, "normal", "vec3(0.0,0.0,1.0)" },
+	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_VECTOR, "uv", "vec3(UV, 0.0)" },
+	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_VECTOR, "normal", "vec3(0.0, 0.0, 1.0)" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_VECTOR, "color", "vec3(1.0)" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_SCALAR, "alpha", "1.0" },
 
-	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_VECTOR, "screen_uv", "vec3(SCREEN_UV,0.0)" },
+	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_VECTOR, "screen_uv", "vec3(SCREEN_UV, 0.0)" },
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_SCALAR, "time", "TIME" },
 	// Particles, Vertex
 	{ Shader::MODE_PARTICLES, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_VECTOR, "color", "vec3(1.0)" },
 	{ Shader::MODE_PARTICLES, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_SCALAR, "alpha", "1.0" },
-	{ Shader::MODE_PARTICLES, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_VECTOR, "velocity", "vec3(0.0,0.0,1.0)" },
+	{ Shader::MODE_PARTICLES, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_VECTOR, "velocity", "vec3(0.0, 0.0, 1.0)" },
 	{ Shader::MODE_PARTICLES, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_SCALAR, "time", "TIME" },
 	{ Shader::MODE_MAX, VisualShader::TYPE_MAX, VisualShaderNode::PORT_TYPE_TRANSFORM, NULL, NULL },
 };
@@ -1890,7 +1911,7 @@ const VisualShaderNodeOutput::Port VisualShaderNodeOutput::ports[] = {
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_FRAGMENT, VisualShaderNode::PORT_TYPE_SCALAR, "normalmap_depth", "NORMALMAP_DEPTH" },
 	// Canvas Item, Light
 	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_VECTOR, "light", "LIGHT.rgb" },
-	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_SCALAR, "light_alpha", "LIGHT.rgb" },
+	{ Shader::MODE_CANVAS_ITEM, VisualShader::TYPE_LIGHT, VisualShaderNode::PORT_TYPE_SCALAR, "light_alpha", "LIGHT.a" },
 	// Particles, Vertex
 	{ Shader::MODE_PARTICLES, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_VECTOR, "color", "COLOR.rgb" },
 	{ Shader::MODE_PARTICLES, VisualShader::TYPE_VERTEX, VisualShaderNode::PORT_TYPE_SCALAR, "alpha", "COLOR.a" },
@@ -2502,13 +2523,7 @@ void VisualShaderNodeGroupBase::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_free_input_port_id"), &VisualShaderNodeGroupBase::get_free_input_port_id);
 	ClassDB::bind_method(D_METHOD("get_free_output_port_id"), &VisualShaderNodeGroupBase::get_free_output_port_id);
 
-	ClassDB::bind_method(D_METHOD("set_control", "control", "index"), &VisualShaderNodeGroupBase::set_control);
-	ClassDB::bind_method(D_METHOD("get_control", "index"), &VisualShaderNodeGroupBase::get_control);
-
-	ClassDB::bind_method(D_METHOD("set_editable", "enabled"), &VisualShaderNodeGroupBase::set_editable);
-	ClassDB::bind_method(D_METHOD("is_editable"), &VisualShaderNodeGroupBase::is_editable);
-
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "editable"), "set_editable", "is_editable");
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "size"), "set_size", "get_size");
 }
 
 String VisualShaderNodeGroupBase::generate_code(Shader::Mode p_mode, VisualShader::Type p_type, int p_id, const String *p_input_vars, const String *p_output_vars, bool p_for_preview) const {
@@ -2520,6 +2535,7 @@ VisualShaderNodeGroupBase::VisualShaderNodeGroupBase() {
 	inputs = "";
 	outputs = "";
 	editable = false;
+	simple_decl = false;
 }
 
 ////////////// Expression
@@ -2530,10 +2546,6 @@ String VisualShaderNodeExpression::get_caption() const {
 
 void VisualShaderNodeExpression::set_expression(const String &p_expression) {
 	expression = p_expression;
-}
-
-void VisualShaderNodeExpression::build() {
-	emit_changed();
 }
 
 String VisualShaderNodeExpression::get_expression() const {
@@ -2625,7 +2637,7 @@ String VisualShaderNodeExpression::generate_code(Shader::Mode p_mode, VisualShad
 			default:
 				continue;
 		}
-		output_initializer += "\t" + p_output_vars[i] + "=" + tk + ";\n";
+		output_initializer += "\t" + p_output_vars[i] + " = " + tk + ";\n";
 	}
 
 	String code;
@@ -2641,8 +2653,6 @@ void VisualShaderNodeExpression::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_expression", "expression"), &VisualShaderNodeExpression::set_expression);
 	ClassDB::bind_method(D_METHOD("get_expression"), &VisualShaderNodeExpression::get_expression);
-
-	ClassDB::bind_method(D_METHOD("build"), &VisualShaderNodeExpression::build);
 
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "expression"), "set_expression", "get_expression");
 }

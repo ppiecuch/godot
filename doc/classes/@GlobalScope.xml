@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="@GlobalScope" category="Core" version="3.2">
+<class name="@GlobalScope" version="4.0">
 	<brief_description>
 		Global scope constants and variables.
 	</brief_description>
@@ -1167,10 +1167,10 @@
 			Since [constant OK] has value 0, and all other failure codes are positive integers, it can also be used in boolean checks, e.g.:
 			[codeblock]
 			var err = method_that_returns_error()
-			if (err != OK):
+			if err != OK:
 			    print("Failure!)
 			# Or, equivalent:
-			if (err):
+			if err:
 			    print("Still failing!)
 			[/codeblock]
 		</constant>
@@ -1454,7 +1454,7 @@
 			Default method flags.
 		</constant>
 		<constant name="TYPE_NIL" value="0" enum="Variant.Type">
-			Variable is of type [Nil] (only applied for [code]null[/code]).
+			Variable is [code]null[/code].
 		</constant>
 		<constant name="TYPE_BOOL" value="1" enum="Variant.Type">
 			Variable is of type [bool].

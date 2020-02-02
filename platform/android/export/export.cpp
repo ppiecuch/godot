@@ -247,7 +247,6 @@ class EditorExportPlatformAndroid : public EditorExportPlatform {
 		String name;
 		String description;
 		int api_level;
-		bool usb;
 	};
 
 	struct APKExportData {
@@ -274,20 +273,17 @@ class EditorExportPlatformAndroid : public EditorExportPlatform {
 				String devices;
 				List<String> args;
 				args.push_back("devices");
-				args.push_back("-l");
 				int ec;
 				OS::get_singleton()->execute(adb, args, true, NULL, &devices, &ec);
 
 				Vector<String> ds = devices.split("\n");
 				Vector<String> ldevices;
-				Vector<bool> ldevices_usbconnection;
 				for (int i = 1; i < ds.size(); i++) {
 
 					String d = ds[i];
-					int dpos = d.find(" device ");
+					int dpos = d.find("device");
 					if (dpos == -1)
 						continue;
-					ldevices_usbconnection.push_back(d.find(" usb:") != -1);
 					d = d.substr(0, dpos).strip_edges();
 					ldevices.push_back(d);
 				}
@@ -318,7 +314,6 @@ class EditorExportPlatformAndroid : public EditorExportPlatform {
 
 						Device d;
 						d.id = ldevices[i];
-						d.usb = ldevices_usbconnection[i];
 						for (int j = 0; j < ea->devices.size(); j++) {
 							if (ea->devices[j].id == ldevices[i]) {
 								d.description = ea->devices[j].description;
@@ -373,15 +368,7 @@ class EditorExportPlatformAndroid : public EditorExportPlatform {
 								} else if (p.begins_with("ro.opengles.version=")) {
 									uint32_t opengl = p.get_slice("=", 1).to_int();
 									d.description += "OpenGL: " + itos(opengl >> 16) + "." + itos((opengl >> 8) & 0xFF) + "." + itos((opengl)&0xFF) + "\n";
-								} else if (p.begins_with("ro.boot.serialno=")) {
-									d.description += "Serial: " + p.get_slice("=", 1).strip_edges() + "\n";
 								}
-							}
-
-							if (d.usb) {
-								d.description += "Connection: USB\n";
-							} else {
-								d.description += "Connection: " + d.id + "\n";
 							}
 
 							d.name = vendor + " " + device;
@@ -1495,17 +1482,19 @@ public:
 	virtual Error run(const Ref<EditorExportPreset> &p_preset, int p_device, int p_debug_flags) {
 
 		ERR_FAIL_INDEX_V(p_device, devices.size(), ERR_INVALID_PARAMETER);
+
+		String can_export_error;
+		bool can_export_missing_templates;
+		if (!can_export(p_preset, can_export_error, can_export_missing_templates)) {
+			EditorNode::add_io_error(can_export_error);
+			return ERR_UNCONFIGURED;
+		}
+
 		device_lock->lock();
 
 		EditorProgress ep("run", "Running on " + devices[p_device].name, 3);
 
 		String adb = EditorSettings::get_singleton()->get("export/android/adb");
-		if (adb == "") {
-
-			EditorNode::add_io_error("ADB executable not configured in settings, can't run.");
-			device_lock->unlock();
-			return ERR_UNCONFIGURED;
-		}
 
 		// Export_temp APK.
 		if (ep.step("Exporting APK", 0)) {
@@ -1514,9 +1503,7 @@ public:
 		}
 
 		const bool use_remote = (p_debug_flags & DEBUG_FLAG_REMOTE_DEBUG) || (p_debug_flags & DEBUG_FLAG_DUMB_CLIENT);
-		const bool use_reverse = devices[p_device].api_level >= 21 && devices[p_device].usb;
-		// Note: Reverse can still fail if device is connected by both usb and network
-		// Ideally we'd know for sure whether adb reverse would work before we build the APK
+		const bool use_reverse = devices[p_device].api_level >= 21;
 
 		if (use_reverse)
 			p_debug_flags |= DEBUG_FLAG_REMOTE_DEBUG_LOCALHOST;
@@ -1621,7 +1608,7 @@ public:
 				}
 			} else {
 
-				static const char *const msg = "--- Device API < 21 or no USB connection; debugging over Wi-Fi ---";
+				static const char *const msg = "--- Device API < 21; debugging over Wi-Fi ---";
 				EditorNode::get_singleton()->get_log()->add_message(msg, EditorLog::MSG_TYPE_EDITOR);
 				print_line(String(msg).to_upper());
 			}

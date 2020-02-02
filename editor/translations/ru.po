@@ -66,7 +66,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Godot Engine editor\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2020-01-19 11:03+0000\n"
+"PO-Revision-Date: 2020-01-27 07:10+0000\n"
 "Last-Translator: Danil Alexeev <danil@alexeev.xyz>\n"
 "Language-Team: Russian <https://hosted.weblate.org/projects/godot-engine/"
 "godot/ru/>\n"
@@ -76,7 +76,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Generator: Weblate 3.10.2\n"
+"X-Generator: Weblate 3.11-dev\n"
 
 #: core/math/expression.cpp modules/gdscript/gdscript_functions.cpp
 #: modules/visual_script/visual_script_builtin_funcs.cpp
@@ -2001,16 +2001,6 @@ msgstr "Описание"
 #: editor/editor_help.cpp
 msgid "Online Tutorials"
 msgstr "Онлайн-уроки"
-
-#: editor/editor_help.cpp
-msgid ""
-"There are currently no tutorials for this class, you can [color=$color][url="
-"$url]contribute one[/url][/color] or [color=$color][url=$url2]request one[/"
-"url][/color]."
-msgstr ""
-"В настоящее время отсутствуют учебники для этого класса, вы можете его "
-"[color=$color][url=$url]добавить[/url][/color] или [color=$color][url="
-"$url2]запросить[/url][/color]."
 
 #: editor/editor_help.cpp
 msgid "Properties"
@@ -4592,7 +4582,6 @@ msgid "Animation Tools"
 msgstr "Инструменты анимации"
 
 #: editor/plugins/animation_player_editor_plugin.cpp
-#: editor/plugins/canvas_item_editor_plugin.cpp
 msgid "Animation"
 msgstr "Анимация"
 
@@ -5662,6 +5651,11 @@ msgid "Auto Insert Key"
 msgstr "Автовставка ключа"
 
 #: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Animation Key and Pose Options"
+msgstr "Ключ анимации вставлен."
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
 msgid "Insert Key (Existing Tracks)"
 msgstr "Вставить ключ (существующие треки)"
 
@@ -5948,7 +5942,6 @@ msgid "No mesh to debug."
 msgstr "Нет полисетки для отладки."
 
 #: editor/plugins/mesh_instance_editor_plugin.cpp
-#: editor/plugins/sprite_editor_plugin.cpp
 msgid "Model has no UV in this layer"
 msgstr "У модели нет UV в этом слое"
 
@@ -6703,7 +6696,7 @@ msgstr "Сохранить тему как..."
 
 #: editor/plugins/script_editor_plugin.cpp
 msgid "%s Class Reference"
-msgstr "%s Справка по классу"
+msgstr "Справка по классу %s"
 
 #: editor/plugins/script_editor_plugin.cpp
 #: editor/plugins/script_text_editor.cpp
@@ -7323,7 +7316,7 @@ msgstr "Показывать FPS"
 
 #: editor/plugins/spatial_editor_plugin.cpp
 msgid "Half Resolution"
-msgstr "Половинчатое разрешение"
+msgstr "Половинное разрешение"
 
 #: editor/plugins/spatial_editor_plugin.cpp
 msgid "Audio Listener"
@@ -7339,7 +7332,7 @@ msgstr "Кинематографический предварительный п
 
 #: editor/plugins/spatial_editor_plugin.cpp
 msgid "Not available when using the GLES2 renderer."
-msgstr ""
+msgstr "Недоступно при использовании рендерера GLES2."
 
 #: editor/plugins/spatial_editor_plugin.cpp
 msgid "Freelook Left"
@@ -12693,6 +12686,15 @@ msgstr "Изменения могут быть назначены только �
 #: servers/visual/shader_language.cpp
 msgid "Constants cannot be modified."
 msgstr "Константы не могут быть изменены."
+
+#~ msgid ""
+#~ "There are currently no tutorials for this class, you can [color=$color]"
+#~ "[url=$url]contribute one[/url][/color] or [color=$color][url="
+#~ "$url2]request one[/url][/color]."
+#~ msgstr ""
+#~ "В настоящее время отсутствуют учебники для этого класса, вы можете его "
+#~ "[color=$color][url=$url]добавить[/url][/color] или [color=$color][url="
+#~ "$url2]запросить[/url][/color]."
 
 #~ msgid "enum  "
 #~ msgstr "перечисление  "

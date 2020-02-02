@@ -2022,16 +2022,6 @@ msgid "Online Tutorials"
 msgstr ""
 
 #: editor/editor_help.cpp
-#, fuzzy
-msgid ""
-"There are currently no tutorials for this class, you can [color=$color][url="
-"$url]contribute one[/url][/color] or [color=$color][url=$url2]request one[/"
-"url][/color]."
-msgstr ""
-"Daar is tans geen beskrywing vir hierdie metode nie. Help ons asseblief deur "
-"[color=$color][url=$url]een by te dra[/url][/color]!"
-
-#: editor/editor_help.cpp
 msgid "Properties"
 msgstr "Eienskappe"
 
@@ -4603,7 +4593,6 @@ msgid "Animation Tools"
 msgstr ""
 
 #: editor/plugins/animation_player_editor_plugin.cpp
-#: editor/plugins/canvas_item_editor_plugin.cpp
 msgid "Animation"
 msgstr ""
 
@@ -5688,6 +5677,11 @@ msgid "Auto Insert Key"
 msgstr "Anim Voeg Sleutel by"
 
 #: editor/plugins/canvas_item_editor_plugin.cpp
+#, fuzzy
+msgid "Animation Key and Pose Options"
+msgstr "Animasie lengte (in sekondes)."
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
 msgid "Insert Key (Existing Tracks)"
 msgstr ""
 
@@ -5977,7 +5971,6 @@ msgid "No mesh to debug."
 msgstr ""
 
 #: editor/plugins/mesh_instance_editor_plugin.cpp
-#: editor/plugins/sprite_editor_plugin.cpp
 msgid "Model has no UV in this layer"
 msgstr ""
 
@@ -12546,6 +12539,15 @@ msgstr ""
 #: servers/visual/shader_language.cpp
 msgid "Constants cannot be modified."
 msgstr ""
+
+#, fuzzy
+#~ msgid ""
+#~ "There are currently no tutorials for this class, you can [color=$color]"
+#~ "[url=$url]contribute one[/url][/color] or [color=$color][url="
+#~ "$url2]request one[/url][/color]."
+#~ msgstr ""
+#~ "Daar is tans geen beskrywing vir hierdie metode nie. Help ons asseblief "
+#~ "deur [color=$color][url=$url]een by te dra[/url][/color]!"
 
 #~ msgid "enum  "
 #~ msgstr "enum  "
