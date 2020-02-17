@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  zip_writer.h                                                         */
+/*  zip_packer.h                                                         */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef ZIP_WRITER_H
-#define ZIP_WRITER_H
+#ifndef ZIP_PACKER_H
+#define ZIP_PACKER_H
 
 #include "core/reference.h"
 
@@ -37,9 +37,9 @@
 #include "core/os/os.h"
 #include "thirdparty/minizip/zip.h"
 
-class ZipWriter : public Reference {
+class ZIPPacker : public Reference {
 
-	GDCLASS(ZipWriter, Object);
+	GDCLASS(ZIPPacker, Object);
 
 	FileAccess *f;
 	zipFile zf;
@@ -61,10 +61,10 @@ public:
 	Error write_file(Vector<uint8_t> data);
 	Error close_file();
 
-	ZipWriter();
-	~ZipWriter();
+	ZIPPacker();
+	~ZIPPacker();
 };
 
-VARIANT_ENUM_CAST(ZipWriter::ZipAppend)
+VARIANT_ENUM_CAST(ZIPPacker::ZipAppend)
 
-#endif // ZIP_WRITER_H
+#endif // ZIP_PACKER_H

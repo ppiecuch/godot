@@ -7,7 +7,7 @@ def configure(env):
 def get_doc_classes():
     return [
         "ZipReader",
-        "ZipWriter",
+        "ZipPacker",
     ]
 
 def get_doc_path():

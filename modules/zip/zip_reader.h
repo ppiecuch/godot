@@ -37,9 +37,9 @@
 #include "core/os/os.h"
 #include "thirdparty/minizip/unzip.h"
 
-class ZipReader : public Reference {
+class ZIPReader : public Reference {
 
-	GDCLASS(ZipReader, Object)
+	GDCLASS(ZIPReader, Object)
 
 	FileAccess *f;
 	unzFile uzf;
@@ -54,8 +54,8 @@ public:
 	PoolStringArray get_files();
 	PoolByteArray read_file(String path, bool case_sensitive);
 
-	ZipReader();
-	~ZipReader();
+	ZIPReader();
+	~ZIPReader();
 };
 
 #endif // ZIP_READER_H
