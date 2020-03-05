@@ -127,6 +127,8 @@ void Sprite::_notification(int p_what) {
 			break;
 			*/
 
+            // TODO: draw subdived quad
+
 			Rect2 src_rect, dst_rect;
 			bool filter_clip;
 			_get_rects(src_rect, dst_rect, filter_clip);
@@ -312,6 +314,28 @@ int Sprite::get_hframes() const {
 	return hframes;
 }
 
+void Sprite::set_vsubdivide(int p_amount) {
+	ERR_FAIL_COND_MSG(p_amount < 1, "Amount of vsubdivide cannot be smaller than 1.");
+	vsubdivide = p_amount;
+	update();
+	_change_notify();
+}
+int Sprite::get_vsubdivide() const {
+
+	return vsubdivide;
+}
+
+void Sprite::set_hsubdivide(int p_amount) {
+	ERR_FAIL_COND_MSG(p_amount < 1, "Amount of hsubdivide cannot be smaller than 1.");
+	hsubdivide = p_amount;
+	update();
+	_change_notify();
+}
+int Sprite::get_hsubdivide() const {
+
+	return hsubdivide;
+}
+
 bool Sprite::is_pixel_opaque(const Point2 &p_point) const {
 
 	if (texture.is_null())
@@ -450,7 +474,12 @@ void Sprite::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_hframes", "hframes"), &Sprite::set_hframes);
 	ClassDB::bind_method(D_METHOD("get_hframes"), &Sprite::get_hframes);
 
-	ClassDB::bind_method(D_METHOD("get_rect"), &Sprite::get_rect);
+	ClassDB::bind_method(D_METHOD("set_vsubdivide", "vsubdivide"), &Sprite::set_vsubdivide);
+	ClassDB::bind_method(D_METHOD("get_vsubdivide"), &Sprite::get_vsubdivide);
+	ClassDB::bind_method(D_METHOD("set_hsubdivide", "hsubdivide"), &Sprite::set_hsubdivide);
+	ClassDB::bind_method(D_METHOD("get_hsubdivide"), &Sprite::get_hsubdivide);
+
+    ClassDB::bind_method(D_METHOD("get_rect"), &Sprite::get_rect);
 
 	ClassDB::bind_method(D_METHOD("_texture_changed"), &Sprite::_texture_changed);
 

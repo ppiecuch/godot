@@ -394,7 +394,7 @@ void Label::_notification(int p_what) {
                                 n = xl_text[i + pos + 1];
                             }
 
-                            if (transition_behaviour == TRANSITIONBEHAVIOUR_NEW) {
+                            if (transition_change_policy == TRANSITIONCHANGEPOLICY_NEW) {
                                 CharType c_ = get_char_at(transition_text.word_cache, transition_text.xl_text, line, line_pos);
                                 if (uppercase) {
                                     c_ = String::char_uppercase(c_);
@@ -966,16 +966,16 @@ Label::TransitionEffect Label::get_transition_effect() const {
     return transition_effect;
 }
 
-void Label::set_transition_behaviour(TransitionBehaviour p_behaviour) {
+void Label::set_transition_change_policy(TransitionChangePolicy p_change_policy) {
 
-    if (p_behaviour != transition_behaviour) {
-        transition_behaviour = p_behaviour;
+    if (p_change_policy != transition_change_policy) {
+        transition_change_policy = p_change_policy;
         update();
     }
 }
 
-Label::TransitionBehaviour Label::get_transition_behaviour() const {
-    return transition_behaviour;
+Label::TransitionChangePolicy Label::get_transition_change_policy() const {
+    return transition_change_policy;
 }
 
 void Label::_bind_methods() {
@@ -992,8 +992,8 @@ void Label::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_transition_duration"), &Label::get_transition_duration);
 	ClassDB::bind_method(D_METHOD("set_transition_effect"), &Label::set_transition_effect);
 	ClassDB::bind_method(D_METHOD("get_transition_effect"), &Label::get_transition_effect);
-	ClassDB::bind_method(D_METHOD("set_transition_behaviour"), &Label::set_transition_behaviour);
-	ClassDB::bind_method(D_METHOD("get_transition_behaviour"), &Label::get_transition_behaviour);
+	ClassDB::bind_method(D_METHOD("set_transition_change_policy"), &Label::set_transition_change_policy);
+	ClassDB::bind_method(D_METHOD("get_transition_change_policy"), &Label::get_transition_change_policy);
 	ClassDB::bind_method(D_METHOD("set_autowrap", "enable"), &Label::set_autowrap);
 	ClassDB::bind_method(D_METHOD("has_autowrap"), &Label::has_autowrap);
 	ClassDB::bind_method(D_METHOD("set_clip_text", "enable"), &Label::set_clip_text);
@@ -1027,11 +1027,16 @@ void Label::_bind_methods() {
 	BIND_ENUM_CONSTANT(VALIGN_BOTTOM);
 	BIND_ENUM_CONSTANT(VALIGN_FILL);
 
+    BIND_ENUM_CONSTANT(TRANSITIONEFFECT_SLIDE);
+    BIND_ENUM_CONSTANT(TRANSITIONEFFECT_ROTATE);
+    BIND_ENUM_CONSTANT(TRANSITIONCHANGEPOLICY_ALL);
+    BIND_ENUM_CONSTANT(TRANSITIONCHANGEPOLICY_NEW);
+
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "text", PROPERTY_HINT_MULTILINE_TEXT, "", PROPERTY_USAGE_DEFAULT_INTL), "set_text", "get_text");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "animate"), "set_animate", "is_animate");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "transition_duration"), "set_transition_duration", "get_transition_duration");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "transition_effect", PROPERTY_HINT_ENUM, "Slide,Rotate"), "set_transition_effect", "get_transition_effect");
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "transition_behaviour", PROPERTY_HINT_ENUM, "All,New"), "set_transition_behaviour", "get_transition_behaviour");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "transition_change_policy", PROPERTY_HINT_ENUM, "All,New"), "set_transition_change_policy", "get_transition_change_policy");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "align", PROPERTY_HINT_ENUM, "Left,Center,Right,Fill"), "set_align", "get_align");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "valign", PROPERTY_HINT_ENUM, "Top,Center,Bottom,Fill"), "set_valign", "get_valign");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "offset horizontal spacing", PROPERTY_HINT_RANGE, "-100,100,0.5"), "set_horizontal_spacing", "get_horizontal_spacing");

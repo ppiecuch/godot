@@ -79,9 +79,9 @@ public:
         TRANSITIONEFFECT_ROTATE
     };
 
-    enum TransitionBehaviour {
-        TRANSITIONBEHAVIOUR_ALL, /* always transition - even same characters */
-        TRANSITIONBEHAVIOUR_NEW  /* transition only new (changed) characters */
+    enum TransitionChangePolicy {
+        TRANSITIONCHANGEPOLICY_ALL, /* always transition - even same characters */
+        TRANSITIONCHANGEPOLICY_NEW  /* transition only new (changed) characters */
     };
 
 private:
@@ -144,7 +144,7 @@ private:
         int total_char_cache;
     } transition_text;
     TransitionEffect transition_effect;
-    TransitionBehaviour transition_behaviour;
+    TransitionChangePolicy transition_change_policy;
     AnimationTransform transition_xform;
     AnimationController *transition_controller;
 
@@ -186,8 +186,8 @@ public:
     void set_transition_effect(TransitionEffect p_effect);
     TransitionEffect get_transition_effect() const;
 
-    void set_transition_behaviour(TransitionBehaviour p_behaviour);
-    TransitionBehaviour get_transition_behaviour() const;
+    void set_transition_change_policy(TransitionChangePolicy p_change_policy);
+    TransitionChangePolicy get_transition_change_policy() const;
 
 	void set_clip_text(bool p_clip);
 	bool is_clipping_text() const;
@@ -218,6 +218,6 @@ public:
 VARIANT_ENUM_CAST(Label::Align);
 VARIANT_ENUM_CAST(Label::VAlign);
 VARIANT_ENUM_CAST(Label::TransitionEffect);
-VARIANT_ENUM_CAST(Label::TransitionBehaviour);
+VARIANT_ENUM_CAST(Label::TransitionChangePolicy);
 
 #endif

@@ -55,6 +55,10 @@ class Sprite : public Node2D {
 	int vframes;
 	int hframes;
 
+    int vsubdivide;
+    int hsubdivide;
+    const Vector<Vector2> displacements;
+
 	void _get_rects(Rect2 &r_src_rect, Rect2 &r_dst_rect, bool &r_filter_clip) const;
 
 	void _texture_changed();
@@ -120,6 +124,12 @@ public:
 
 	void set_hframes(int p_amount);
 	int get_hframes() const;
+
+	void set_vsubdivide(int p_amount);
+	int get_vsubdivide() const;
+
+	void set_hsubdivide(int p_amount);
+	int get_hsubdivide() const;
 
 	Rect2 get_rect() const;
 	virtual Rect2 get_anchorable_rect() const;
