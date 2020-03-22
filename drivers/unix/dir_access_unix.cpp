@@ -314,7 +314,6 @@ Error DirAccessUnix::change_dir(String p_dir) {
 	} else {
 		try_dir = p_dir;
 	}
-
 	bool worked = (chdir(try_dir.utf8().get_data()) == 0); // we can only give this utf8
 	if (!worked) {
 		return ERR_INVALID_PARAMETER;
