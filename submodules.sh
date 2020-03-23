@@ -1,6 +1,8 @@
 #!/bin/bash
 
-for m in gd_sqlite gd_unqlite gd_chipmunk gd_liquidfun gd_spine gd_vector_graphics gd_error_handler gd_raknet gd_enet; do
+set -e
+
+for m in gd_distrand gd_sqlite gd_unqlite gd_chipmunk gd_liquidfun gd_spine gd_vector_graphics gd_error_handler gd_raknet gd_enet; do
     echo "***"
     echo "*** checking module $m"
     echo "***"
