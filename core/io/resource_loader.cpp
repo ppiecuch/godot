@@ -39,8 +39,7 @@
 #include "core/translation.h"
 #include "core/variant_parser.h"
 
-Ref<ResourceFormatLoader> ResourceLoader::loader[ResourceLoader::MAX_LOADERS];
-
+Ref<ResourceFormatLoader> *ResourceLoader::loader = 0;
 int ResourceLoader::loader_count = 0;
 
 Error ResourceInteractiveLoader::wait() {
@@ -538,6 +537,11 @@ void ResourceLoader::add_resource_format_loader(Ref<ResourceFormatLoader> p_form
 	ERR_FAIL_COND(p_format_loader.is_null());
 	ERR_FAIL_COND(loader_count >= MAX_LOADERS);
 
+    if(loader == 0)
+        loader = (Ref<ResourceFormatLoader> *)memalloc(MAX_LOADERS*sizeof(Ref<ResourceFormatLoader>));
+
+	ERR_FAIL_COND(loader == 0);
+
 	if (p_at_front) {
 		for (int i = loader_count; i > 0; i--) {
 			loader[i] = loader[i - 1];
@@ -988,7 +992,7 @@ void ResourceLoader::add_custom_loaders() {
 
 void ResourceLoader::remove_custom_loaders() {
 
-	Vector<Ref<ResourceFormatLoader> > custom_loaders;
+	Vector<Ref<ResourceFormatLoader>> custom_loaders;
 	for (int i = 0; i < loader_count; ++i) {
 		if (loader[i]->get_script_instance()) {
 			custom_loaders.push_back(loader[i]);
@@ -1019,6 +1023,10 @@ void ResourceLoader::finalize() {
 	memdelete(loading_map_mutex);
 	loading_map_mutex = NULL;
 #endif
+    /* TODO: release objects */
+    if (loader) memfree(loader);
+    loader = 0;
+    loader_count = 0;
 }
 
 ResourceLoadErrorNotify ResourceLoader::err_notify = NULL;

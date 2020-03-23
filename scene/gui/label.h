@@ -42,15 +42,16 @@ struct AnimationTransform {
 };
 
 struct AnimationController {
-    enum AnimCtrlOpts {
-        ANIMCTRL_OK  = 0,
-        ANIMCTRL_UPDATE_TEXT = 1, // update text to transition text
-        ANIMCTRL_DONE  = 2,       // transition complited
+    enum AnimState {
+        ANIMCTRL_DONE  = 0, // transition complited
+        ANIMCTRL_IN = 1,    // incoming animation
+        ANIMCTRL_OUT = 2    // outgoing aniamtion
     };
 
     virtual void init_xform(float duration, AnimationTransform &xform) = 0;
-    virtual int update(float dt, AnimationTransform &xform) = 0;
+    virtual AnimState update(float dt, AnimationTransform &xform) = 0;
     virtual bool is_active() const = 0;
+    virtual AnimationController::AnimState state(AnimationTransform &a) const = 0;
 };
 
 class Label : public Control {
@@ -121,13 +122,13 @@ private:
 
 	bool word_cache_dirty;
     WordCache *calculate_word_cache(const Ref<Font> &font, const String &label_text, int &line_count, int &total_char_cache, int &width) const;
-    CharType get_char_at(WordCache *cache, String &text, int line, int pos) const;
+    CharType get_char_at(WordCache *cache, String &text, int line, int pos, CharType *next_char = 0) const;
 	int get_line_size(WordCache *cache, String &text, int line) const;
 	void regenerate_word_cache();
 
 	float percent_visible;
 
-	WordCache *word_cache;
+	WordCache *word_cache = 0;
 	int total_char_cache;
 	int visible_chars;
 	int lines_skipped;
@@ -138,7 +139,7 @@ private:
     struct {
         String text;
         String xl_text;
-        WordCache *word_cache;
+        WordCache *word_cache = 0;
         int width;
         int line_count;
         int total_char_cache;

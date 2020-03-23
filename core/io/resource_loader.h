@@ -95,7 +95,7 @@ class ResourceLoader {
 		MAX_LOADERS = 64
 	};
 
-	static Ref<ResourceFormatLoader> loader[MAX_LOADERS];
+	static Ref<ResourceFormatLoader> *loader;
 	static int loader_count;
 	static bool timestamp_on_load;
 

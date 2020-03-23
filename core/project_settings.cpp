@@ -434,12 +434,12 @@ Error ProjectSettings::_setup(const String &p_path, const String &p_main_pack, b
 
 	DirAccess *d = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
 	ERR_FAIL_COND_V_MSG(!d, ERR_CANT_CREATE, "Cannot create DirAccess for path '" + p_path + "'.");
-	d->change_dir(p_path);
+	Error err = d->change_dir(p_path);
+    ERR_FAIL_COND_V_MSG(err != OK, err, "Cannot change to directory '" + p_path + "'.");
 
 	String current_dir = d->get_current_dir();
 	String candidate = current_dir;
 	bool found = false;
-	Error err;
 
 	while (true) {
 		err = _load_settings_text_or_binary(current_dir.plus_file("project.godot"), current_dir.plus_file("project.binary"));
