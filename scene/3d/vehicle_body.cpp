@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -366,7 +366,7 @@ VehicleWheel::VehicleWheel() {
 	engine_traction = false;
 
 	m_steering = real_t(0.);
-	//m_engineForce = real_t(0.);
+	m_engineForce = real_t(0.);
 	m_rotation = real_t(0.);
 	m_deltaRotation = real_t(0.);
 	m_brake = real_t(0.);

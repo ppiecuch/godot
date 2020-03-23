@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -29,9 +29,11 @@
 /*************************************************************************/
 
 #include "version_control_editor_plugin.h"
+
 #include "core/script_language.h"
 #include "editor/editor_file_system.h"
 #include "editor/editor_node.h"
+#include "editor/editor_scale.h"
 
 VersionControlEditorPlugin *VersionControlEditorPlugin::singleton = NULL;
 
@@ -59,14 +61,6 @@ void VersionControlEditorPlugin::_selected_a_vcs(int p_id) {
 
 	List<StringName> available_addons = get_available_vcs_names();
 	const StringName selected_vcs = set_up_choice->get_item_text(p_id);
-
-	if (available_addons.find(selected_vcs) != NULL) {
-
-		set_up_init_button->set_disabled(false);
-	} else {
-
-		set_up_init_button->set_disabled(true);
-	}
 }
 
 void VersionControlEditorPlugin::_populate_available_vcs_names() {
@@ -75,9 +69,6 @@ void VersionControlEditorPlugin::_populate_available_vcs_names() {
 
 	if (!called) {
 
-		set_up_choice->add_item("Select an available VCS");
-
-		fetch_available_vcs_addon_names();
 		List<StringName> available_addons = get_available_vcs_names();
 		for (int i = 0; i < available_addons.size(); i++) {
 
@@ -95,48 +86,42 @@ VersionControlEditorPlugin *VersionControlEditorPlugin::get_singleton() {
 
 void VersionControlEditorPlugin::popup_vcs_set_up_dialog(const Control *p_gui_base) {
 
-	Size2 popup_size = Size2(400, 100);
-	Size2 window_size = p_gui_base->get_viewport_rect().size;
-	popup_size.x = MIN(window_size.x * 0.5, popup_size.x);
-	popup_size.y = MIN(window_size.y * 0.5, popup_size.y);
+	fetch_available_vcs_addon_names();
+	List<StringName> available_addons = get_available_vcs_names();
+	if (available_addons.size() >= 1) {
 
-	if (get_is_vcs_intialized()) {
+		Size2 popup_size = Size2(400, 100);
+		Size2 window_size = p_gui_base->get_viewport_rect().size;
+		popup_size.x = MIN(window_size.x * 0.5, popup_size.x);
+		popup_size.y = MIN(window_size.y * 0.5, popup_size.y);
 
-		set_up_init_button->set_disabled(true);
+		_populate_available_vcs_names();
+
+		set_up_dialog->popup_centered_clamped(popup_size * EDSCALE);
+	} else {
+
+		EditorNode::get_singleton()->show_warning(TTR("No VCS addons are available."), TTR("Error"));
 	}
-
-	_populate_available_vcs_names();
-
-	set_up_dialog->popup_centered_clamped(popup_size * EDSCALE);
 }
 
 void VersionControlEditorPlugin::_initialize_vcs() {
 
 	register_editor();
 
-	if (EditorVCSInterface::get_singleton()) {
+	ERR_FAIL_COND_MSG(EditorVCSInterface::get_singleton(), EditorVCSInterface::get_singleton()->get_vcs_name() + " is already active");
 
-		ERR_EXPLAIN(EditorVCSInterface::get_singleton()->get_vcs_name() + " is already active");
-		return;
-	}
-
-	int id = set_up_choice->get_selected_id();
+	const int id = set_up_choice->get_selected_id();
 	String selected_addon = set_up_choice->get_item_text(id);
 
 	String path = ScriptServer::get_global_class_path(selected_addon);
 	Ref<Script> script = ResourceLoader::load(path);
-	if (!script.is_valid()) {
 
-		ERR_EXPLAIN("VCS Addon path is invalid");
-	}
+	ERR_FAIL_COND_MSG(!script.is_valid(), "VCS Addon path is invalid");
 
 	EditorVCSInterface *vcs_interface = memnew(EditorVCSInterface);
 	ScriptInstance *addon_script_instance = script->instance_create(vcs_interface);
-	if (!addon_script_instance) {
 
-		ERR_FAIL_NULL(addon_script_instance);
-		return;
-	}
+	ERR_FAIL_COND_MSG(!addon_script_instance, "Failed to create addon script instance.");
 
 	// The addon is attached as a script to the VCS interface as a proxy end-point
 	vcs_interface->set_script_and_instance(script.get_ref_ptr(), addon_script_instance);
@@ -145,10 +130,8 @@ void VersionControlEditorPlugin::_initialize_vcs() {
 	EditorFileSystem::get_singleton()->connect("filesystem_changed", this, "_refresh_stage_area");
 
 	String res_dir = OS::get_singleton()->get_resource_dir();
-	if (!EditorVCSInterface::get_singleton()->initialize(res_dir)) {
 
-		ERR_EXPLAIN("VCS was not initialized");
-	}
+	ERR_FAIL_COND_MSG(!EditorVCSInterface::get_singleton()->initialize(res_dir), "VCS was not initialized");
 
 	_refresh_stage_area();
 }
@@ -381,7 +364,20 @@ void VersionControlEditorPlugin::register_editor() {
 
 void VersionControlEditorPlugin::fetch_available_vcs_addon_names() {
 
-	ScriptServer::get_global_class_list(&available_addons);
+	List<StringName> global_classes;
+	ScriptServer::get_global_class_list(&global_classes);
+
+	for (int i = 0; i != global_classes.size(); i++) {
+
+		String path = ScriptServer::get_global_class_path(global_classes[i]);
+		Ref<Script> script = ResourceLoader::load(path);
+		ERR_FAIL_COND(script.is_null());
+
+		if (script->get_instance_base_type() == "EditorVCSInterface") {
+
+			available_addons.push_back(global_classes[i]);
+		}
+	}
 }
 
 void VersionControlEditorPlugin::clear_stage_area() {
@@ -392,8 +388,9 @@ void VersionControlEditorPlugin::clear_stage_area() {
 void VersionControlEditorPlugin::shut_down() {
 
 	if (EditorVCSInterface::get_singleton()) {
-
-		EditorFileSystem::get_singleton()->disconnect("filesystem_changed", this, "_refresh_stage_area");
+		if (EditorFileSystem::get_singleton()->is_connected("filesystem_changed", this, "_refresh_stage_area")) {
+			EditorFileSystem::get_singleton()->disconnect("filesystem_changed", this, "_refresh_stage_area");
+		}
 		EditorVCSInterface::get_singleton()->shut_down();
 		memdelete(EditorVCSInterface::get_singleton());
 		EditorVCSInterface::set_singleton(NULL);
@@ -403,9 +400,9 @@ void VersionControlEditorPlugin::shut_down() {
 	}
 }
 
-bool VersionControlEditorPlugin::get_is_vcs_intialized() const {
+bool VersionControlEditorPlugin::is_vcs_initialized() const {
 
-	return EditorVCSInterface::get_singleton() ? EditorVCSInterface::get_singleton()->get_is_vcs_intialized() : false;
+	return EditorVCSInterface::get_singleton() ? EditorVCSInterface::get_singleton()->is_vcs_initialized() : false;
 }
 
 const String VersionControlEditorPlugin::get_vcs_name() const {
@@ -427,7 +424,6 @@ VersionControlEditorPlugin::VersionControlEditorPlugin() {
 	version_control_actions->add_child(set_up_dialog);
 
 	set_up_ok_button = set_up_dialog->get_ok();
-	set_up_ok_button->set_disabled(false);
 	set_up_ok_button->set_text(TTR("Close"));
 
 	set_up_vbc = memnew(VBoxContainer);
@@ -454,7 +450,6 @@ VersionControlEditorPlugin::VersionControlEditorPlugin() {
 	set_up_init_settings = NULL;
 
 	set_up_init_button = memnew(Button);
-	set_up_init_button->set_disabled(true);
 	set_up_init_button->set_text(TTR("Initialize"));
 	set_up_init_button->connect("pressed", this, "_initialize_vcs");
 	set_up_vbc->add_child(set_up_init_button);
@@ -564,7 +559,7 @@ VersionControlEditorPlugin::VersionControlEditorPlugin() {
 
 	diff_heading = memnew(Label);
 	diff_heading->set_text(TTR("Status"));
-	diff_heading->set_tooltip(TTR("View file diffs before commiting them to the latest version"));
+	diff_heading->set_tooltip(TTR("View file diffs before committing them to the latest version"));
 	diff_hbc->add_child(diff_heading);
 
 	diff_file_name = memnew(Label);

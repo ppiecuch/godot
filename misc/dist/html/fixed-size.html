@@ -2,6 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
 <head>
 	<meta charset="utf-8" />
+	<link id='-gd-engine-icon' rel='icon' type='image/png' href='favicon.png' />
 	<title></title>
 	<style type="text/css">
 
@@ -229,6 +230,7 @@ $GODOT_HEAD_INCLUDE
 
 		(function() {
 
+			const EXECUTABLE_NAME = '$GODOT_BASENAME';
 			const MAIN_PACK = '$GODOT_BASENAME.pck';
 			const DEBUG_ENABLED = $GODOT_DEBUG_ENABLED;
 			const INDETERMINATE_STATUS_STEP_MS = 100;
@@ -380,7 +382,7 @@ $GODOT_HEAD_INCLUDE
 			} else {
 				setStatusMode('indeterminate');
 				engine.setCanvas(canvas);
-				engine.startGame(MAIN_PACK).then(() => {
+				engine.startGame(EXECUTABLE_NAME, MAIN_PACK).then(() => {
 					setStatusMode('hidden');
 					initializing = false;
 				}, displayFailureNotice);

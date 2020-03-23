@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Vector2" category="Built-In Types" version="3.2">
+<class name="Vector2" version="3.2">
 	<brief_description>
 		Vector used for 2D math.
 	</brief_description>
@@ -151,6 +151,15 @@
 			</return>
 			<description>
 				Returns the vector with all components rounded down.
+			</description>
+		</method>
+		<method name="is_equal_approx">
+			<return type="bool">
+			</return>
+			<argument index="0" name="v" type="Vector2">
+			</argument>
+			<description>
+				Returns [code]true[/code] if this vector and [code]v[/code] are approximately equal, by running [method @GDScript.is_equal_approx] on each component.
 			</description>
 		</method>
 		<method name="is_normalized">

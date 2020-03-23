@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -111,6 +111,7 @@ void MultiplayerAPI::poll() {
 		Error err = network_peer->get_packet(&packet, len);
 		if (err != OK) {
 			ERR_PRINT("Error getting packet!");
+			break; // Something is wrong!
 		}
 
 		rpc_sender_id = sender;
@@ -139,6 +140,9 @@ void MultiplayerAPI::set_network_peer(const Ref<NetworkedMultiplayerPeer> &p_pee
 
 	if (p_peer == network_peer) return; // Nothing to do
 
+	ERR_FAIL_COND_MSG(p_peer.is_valid() && p_peer->get_connection_status() == NetworkedMultiplayerPeer::CONNECTION_DISCONNECTED,
+			"Supplied NetworkedMultiplayerPeer must be connecting or connected.");
+
 	if (network_peer.is_valid()) {
 		network_peer->disconnect("peer_connected", this, "_add_peer");
 		network_peer->disconnect("peer_disconnected", this, "_del_peer");
@@ -149,8 +153,6 @@ void MultiplayerAPI::set_network_peer(const Ref<NetworkedMultiplayerPeer> &p_pee
 	}
 
 	network_peer = p_peer;
-
-	ERR_FAIL_COND_MSG(p_peer.is_valid() && p_peer->get_connection_status() == NetworkedMultiplayerPeer::CONNECTION_DISCONNECTED, "Supplied NetworkedNetworkPeer must be connecting or connected.");
 
 	if (network_peer.is_valid()) {
 		network_peer->connect("peer_connected", this, "_add_peer");
@@ -602,7 +604,16 @@ void MultiplayerAPI::_add_peer(int p_id) {
 
 void MultiplayerAPI::_del_peer(int p_id) {
 	connected_peers.erase(p_id);
-	path_get_cache.erase(p_id); // I no longer need your cache, sorry.
+	// Cleanup get cache.
+	path_get_cache.erase(p_id);
+	// Cleanup sent cache.
+	// Some refactoring is needed to make this faster and do paths GC.
+	List<NodePath> keys;
+	path_send_cache.get_key_list(&keys);
+	for (List<NodePath>::Element *E = keys.front(); E; E = E->next()) {
+		PathSentCache *psc = path_send_cache.getptr(E->get());
+		psc->confirmed_peers.erase(p_id);
+	}
 	emit_signal("network_peer_disconnected", p_id);
 }
 
@@ -917,8 +928,7 @@ int MultiplayerAPI::_get_bandwidth_usage(const Vector<BandwidthFrame> &p_buffer,
 		i = (i + p_buffer.size() - 1) % p_buffer.size();
 	}
 
-	ERR_EXPLAIN("Reached the end of the bandwidth profiler buffer, values might be inaccurate.");
-	ERR_FAIL_COND_V(i == p_pointer, total_bandwidth);
+	ERR_FAIL_COND_V_MSG(i == p_pointer, total_bandwidth, "Reached the end of the bandwidth profiler buffer, values might be inaccurate.");
 	return total_bandwidth;
 }
 

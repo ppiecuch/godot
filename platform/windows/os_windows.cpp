@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -68,6 +68,15 @@ __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 // Workaround mingw-w64 < 4.0 bug
 #ifndef WM_TOUCH
 #define WM_TOUCH 576
+#endif
+
+#ifndef WM_POINTERUPDATE
+#define WM_POINTERUPDATE 0x0245
+#endif
+
+#if defined(__GNUC__)
+// Workaround GCC warning from -Wcast-function-type.
+#define GetProcAddress (void *)GetProcAddress
 #endif
 
 typedef struct {
@@ -192,6 +201,9 @@ BOOL WINAPI HandlerRoutine(_In_ DWORD dwCtrlType) {
 	}
 }
 
+GetPointerTypePtr OS_Windows::win8p_GetPointerType = NULL;
+GetPointerPenInfoPtr OS_Windows::win8p_GetPointerPenInfo = NULL;
+
 void OS_Windows::initialize_debugging() {
 
 	SetConsoleCtrlHandler(HandlerRoutine, TRUE);
@@ -288,15 +300,16 @@ void OS_Windows::_drag_event(float p_x, float p_y, int idx) {
 	if (curr->get() == Vector2(p_x, p_y))
 		return;
 
-	curr->get() = Vector2(p_x, p_y);
-
 	Ref<InputEventScreenDrag> event;
 	event.instance();
 	event->set_index(idx);
 	event->set_position(Vector2(p_x, p_y));
+	event->set_relative(Vector2(p_x, p_y) - curr->get());
 
 	if (main_loop)
 		input->accumulate_input_event(event);
+
+	curr->get() = Vector2(p_x, p_y);
 };
 
 LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
@@ -344,12 +357,14 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 			if (LOWORD(wParam) == WA_ACTIVE || LOWORD(wParam) == WA_CLICKACTIVE) {
 
 				main_loop->notification(MainLoop::NOTIFICATION_WM_FOCUS_IN);
+				window_focused = true;
 				alt_mem = false;
 				control_mem = false;
 				shift_mem = false;
 			} else { // WM_INACTIVE
 				input->release_pressed_events();
 				main_loop->notification(MainLoop::NOTIFICATION_WM_FOCUS_OUT);
+				window_focused = false;
 				alt_mem = false;
 			};
 
@@ -479,6 +494,119 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 					input->accumulate_input_event(mm);
 			}
 			delete[] lpb;
+		} break;
+		case WM_POINTERUPDATE: {
+			if (mouse_mode == MOUSE_MODE_CAPTURED && use_raw_input) {
+				break;
+			}
+
+			if (!win8p_GetPointerType || !win8p_GetPointerPenInfo) {
+				break;
+			}
+
+			uint32_t pointer_id = LOWORD(wParam);
+			POINTER_INPUT_TYPE pointer_type = PT_POINTER;
+			if (!win8p_GetPointerType(pointer_id, &pointer_type)) {
+				break;
+			}
+
+			if (pointer_type != PT_PEN) {
+				break;
+			}
+
+			POINTER_PEN_INFO pen_info;
+			if (!win8p_GetPointerPenInfo(pointer_id, &pen_info)) {
+				break;
+			}
+
+			if (input->is_emulating_mouse_from_touch()) {
+				// Universal translation enabled; ignore OS translation
+				LPARAM extra = GetMessageExtraInfo();
+				if (IsTouchEvent(extra)) {
+					break;
+				}
+			}
+
+			if (outside) {
+				//mouse enter
+
+				if (main_loop && mouse_mode != MOUSE_MODE_CAPTURED)
+					main_loop->notification(MainLoop::NOTIFICATION_WM_MOUSE_ENTER);
+
+				CursorShape c = cursor_shape;
+				cursor_shape = CURSOR_MAX;
+				set_cursor_shape(c);
+				outside = false;
+
+				//Once-Off notification, must call again....
+				TRACKMOUSEEVENT tme;
+				tme.cbSize = sizeof(TRACKMOUSEEVENT);
+				tme.dwFlags = TME_LEAVE;
+				tme.hwndTrack = hWnd;
+				tme.dwHoverTime = HOVER_DEFAULT;
+				TrackMouseEvent(&tme);
+			}
+
+			// Don't calculate relative mouse movement if we don't have focus in CAPTURED mode.
+			if (!window_has_focus && mouse_mode == MOUSE_MODE_CAPTURED)
+				break;
+
+			Ref<InputEventMouseMotion> mm;
+			mm.instance();
+
+			mm->set_pressure(pen_info.pressure ? (float)pen_info.pressure / 1024 : 0);
+			mm->set_tilt(Vector2(pen_info.tiltX ? (float)pen_info.tiltX / 90 : 0, pen_info.tiltY ? (float)pen_info.tiltY / 90 : 0));
+
+			mm->set_control((wParam & MK_CONTROL) != 0);
+			mm->set_shift((wParam & MK_SHIFT) != 0);
+			mm->set_alt(alt_mem);
+
+			mm->set_button_mask(last_button_state);
+
+			POINT coords; //client coords
+			coords.x = GET_X_LPARAM(lParam);
+			coords.y = GET_Y_LPARAM(lParam);
+
+			ScreenToClient(hWnd, &coords);
+
+			mm->set_position(Vector2(coords.x, coords.y));
+			mm->set_global_position(Vector2(coords.x, coords.y));
+
+			if (mouse_mode == MOUSE_MODE_CAPTURED) {
+
+				Point2i c(video_mode.width / 2, video_mode.height / 2);
+				old_x = c.x;
+				old_y = c.y;
+
+				if (mm->get_position() == c) {
+					center = c;
+					return 0;
+				}
+
+				Point2i ncenter = mm->get_position();
+				center = ncenter;
+				POINT pos = { (int)c.x, (int)c.y };
+				ClientToScreen(hWnd, &pos);
+				SetCursorPos(pos.x, pos.y);
+			}
+
+			input->set_mouse_position(mm->get_position());
+			mm->set_speed(input->get_last_mouse_speed());
+
+			if (old_invalid) {
+
+				old_x = mm->get_position().x;
+				old_y = mm->get_position().y;
+				old_invalid = false;
+			}
+
+			mm->set_relative(Vector2(mm->get_position() - Vector2(old_x, old_y)));
+			old_x = mm->get_position().x;
+			old_y = mm->get_position().y;
+			if (window_has_focus && main_loop)
+				input->parse_input_event(mm);
+
+			return 0; //Pointer event handled return 0 to avoid duplicate WM_MOUSEMOVE event
 		} break;
 		case WM_MOUSEMOVE: {
 			if (mouse_mode == MOUSE_MODE_CAPTURED && use_raw_input) {
@@ -1359,6 +1487,7 @@ Error OS_Windows::initialize(const VideoMode &p_desired, int p_video_driver, int
 	video_driver_index = p_video_driver;
 
 	gl_context->set_use_vsync(video_mode.use_vsync);
+	set_vsync_via_compositor(video_mode.vsync_via_compositor);
 #endif
 
 	visual_server = memnew(VisualServerRaster);
@@ -1372,8 +1501,6 @@ Error OS_Windows::initialize(const VideoMode &p_desired, int p_video_driver, int
 	joypad = memnew(JoypadWindows(input, &hWnd));
 
 	power_manager = memnew(PowerWindows);
-
-	camera_server = memnew(CameraWindows);
 
 	AudioDriverManager::initialize(p_audio_driver);
 
@@ -1528,7 +1655,6 @@ void OS_Windows::finalize() {
 
 	memdelete(joypad);
 	memdelete(input);
-	memdelete(camera_server);
 	touch_state.clear();
 
 	cursors_cache.clear();
@@ -1875,6 +2001,8 @@ void OS_Windows::set_window_fullscreen(bool p_enabled) {
 
 	if (p_enabled) {
 
+		was_maximized = maximized;
+
 		if (pre_fs_valid) {
 			GetWindowRect(hWnd, &pre_fs_rect);
 		}
@@ -1904,7 +2032,7 @@ void OS_Windows::set_window_fullscreen(bool p_enabled) {
 			rect.bottom = video_mode.height;
 		}
 
-		_update_window_style(false);
+		_update_window_style(false, was_maximized);
 
 		MoveWindow(hWnd, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, TRUE);
 
@@ -1972,6 +2100,11 @@ void OS_Windows::set_window_always_on_top(bool p_enabled) {
 
 bool OS_Windows::is_window_always_on_top() const {
 	return video_mode.always_on_top;
+}
+
+bool OS_Windows::is_window_focused() const {
+
+	return window_focused;
 }
 
 void OS_Windows::set_console_visible(bool p_enabled) {
@@ -2086,12 +2219,16 @@ bool OS_Windows::get_borderless_window() {
 	return video_mode.borderless_window;
 }
 
-void OS_Windows::_update_window_style(bool repaint) {
+void OS_Windows::_update_window_style(bool p_repaint, bool p_maximized) {
 	if (video_mode.fullscreen || video_mode.borderless_window) {
 		SetWindowLongPtr(hWnd, GWL_STYLE, WS_SYSMENU | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE);
 	} else {
 		if (video_mode.resizable) {
-			SetWindowLongPtr(hWnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
+			if (p_maximized) {
+				SetWindowLongPtr(hWnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_MAXIMIZE);
+			} else {
+				SetWindowLongPtr(hWnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
+			}
 		} else {
 			SetWindowLongPtr(hWnd, GWL_STYLE, WS_CAPTION | WS_MINIMIZEBOX | WS_POPUPWINDOW | WS_VISIBLE);
 		}
@@ -2099,7 +2236,7 @@ void OS_Windows::_update_window_style(bool repaint) {
 
 	SetWindowPos(hWnd, video_mode.always_on_top ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE);
 
-	if (repaint) {
+	if (p_repaint) {
 		RECT rect;
 		GetWindowRect(hWnd, &rect);
 		MoveWindow(hWnd, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, TRUE);
@@ -2485,11 +2622,16 @@ void OS_Windows::set_custom_mouse_cursor(const RES &p_cursor, CursorShape p_shap
 		DeleteObject(bitmap);
 	} else {
 		// Reset to default system cursor
-		cursors[p_shape] = NULL;
+		if (cursors[p_shape]) {
+			DestroyIcon(cursors[p_shape]);
+			cursors[p_shape] = NULL;
+		}
 
 		CursorShape c = cursor_shape;
 		cursor_shape = CURSOR_MAX;
 		set_cursor_shape(c);
+
+		cursors_cache.erase(p_shape);
 	}
 }
 
@@ -2571,7 +2713,7 @@ Error OS_Windows::execute(const String &p_path, const List<String> &p_arguments,
 			if (p_pipe_mutex) {
 				p_pipe_mutex->lock();
 			}
-			(*r_pipe) += buf;
+			(*r_pipe) += String::utf8(buf);
 			if (p_pipe_mutex) {
 				p_pipe_mutex->unlock();
 			}
@@ -2663,7 +2805,7 @@ String OS_Windows::get_executable_path() const {
 void OS_Windows::set_native_icon(const String &p_filename) {
 
 	FileAccess *f = FileAccess::open(p_filename, FileAccess::READ);
-	ERR_FAIL_COND(!f);
+	ERR_FAIL_COND_MSG(!f, "Cannot open file with icon '" + p_filename + "'.");
 
 	ICONDIR *icon_dir = (ICONDIR *)memalloc(sizeof(ICONDIR));
 	int pos = 0;
@@ -2856,7 +2998,7 @@ void OS_Windows::move_window_to_foreground() {
 
 Error OS_Windows::shell_open(String p_uri) {
 
-	ShellExecuteW(NULL, L"open", p_uri.c_str(), NULL, NULL, SW_SHOWNORMAL);
+	ShellExecuteW(NULL, NULL, p_uri.c_str(), NULL, NULL, SW_SHOWNORMAL);
 	return OK;
 }
 
@@ -3241,7 +3383,16 @@ OS_Windows::OS_Windows(HINSTANCE _hInstance) {
 	control_mem = false;
 	meta_mem = false;
 	minimized = false;
+	was_maximized = false;
+	window_focused = true;
 	console_visible = IsWindowVisible(GetConsoleWindow());
+
+	//Note: Functions for pen input, available on Windows 8+
+	HMODULE user32_lib = LoadLibraryW(L"user32.dll");
+	if (user32_lib) {
+		win8p_GetPointerType = (GetPointerTypePtr)GetProcAddress(user32_lib, "GetPointerType");
+		win8p_GetPointerPenInfo = (GetPointerPenInfoPtr)GetProcAddress(user32_lib, "GetPointerPenInfo");
+	}
 
 	hInstance = _hInstance;
 	pressrc = 0;

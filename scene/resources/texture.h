@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -45,7 +45,8 @@
 class Texture : public Resource {
 
 	GDCLASS(Texture, Resource);
-	OBJ_SAVE_TYPE(Texture); //children are all saved as Texture, so they can be exchanged
+	OBJ_SAVE_TYPE(Texture); // Saves derived classes with common type so they can be interchanged.
+
 protected:
 	static void _bind_methods();
 
@@ -769,6 +770,36 @@ public:
 
 	CameraTexture();
 	~CameraTexture();
+};
+
+// External textures as defined by https://www.khronos.org/registry/OpenGL/extensions/OES/OES_EGL_image_external.txt
+class ExternalTexture : public Texture {
+	GDCLASS(ExternalTexture, Texture);
+
+private:
+	RID texture;
+	Size2 size;
+
+protected:
+	static void _bind_methods();
+
+public:
+	uint32_t get_external_texture_id();
+
+	virtual Size2 get_size() const;
+	void set_size(const Size2 &p_size);
+
+	virtual int get_width() const;
+	virtual int get_height() const;
+
+	virtual RID get_rid() const;
+	virtual bool has_alpha() const;
+
+	virtual void set_flags(uint32_t p_flags);
+	virtual uint32_t get_flags() const;
+
+	ExternalTexture();
+	~ExternalTexture();
 };
 
 #endif

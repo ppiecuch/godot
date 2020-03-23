@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Spatial" inherits="Node" category="Core" version="3.2">
+<class name="Spatial" inherits="Node" version="3.2">
 	<brief_description>
 		Most basic 3D game object, parent of all 3D-related nodes.
 	</brief_description>
@@ -15,6 +15,7 @@
 			<return type="void">
 			</return>
 			<description>
+				Forces the transform to update. Transform changes in physics are not instant for performance reasons. Transforms are accumulated and then set. Use this if you need an up-to-date transform when doing physics operations.
 			</description>
 		</method>
 		<method name="get_parent_spatial" qualifiers="const">
@@ -48,6 +49,7 @@
 			<argument index="0" name="scale" type="Vector3">
 			</argument>
 			<description>
+				Scales the global (world) transformation by the given [Vector3] scale factors.
 			</description>
 		</method>
 		<method name="global_translate">
@@ -77,6 +79,7 @@
 			<return type="bool">
 			</return>
 			<description>
+				Returns whether this node uses a scale of [code](1, 1, 1)[/code] or its local transformation scale.
 			</description>
 		</method>
 		<method name="is_set_as_toplevel" qualifiers="const">
@@ -206,6 +209,7 @@
 			<argument index="0" name="disable" type="bool">
 			</argument>
 			<description>
+				Sets whether the node uses a scale of [code](1, 1, 1)[/code] or its local transformation scale. Changes to the local transformation scale are preserved.
 			</description>
 		</method>
 		<method name="set_identity">
@@ -273,7 +277,7 @@
 			<argument index="0" name="offset" type="Vector3">
 			</argument>
 			<description>
-				Changes the node's position by given offset [Vector3].
+				Changes the node's position by the given offset [Vector3].
 				Note that the translation [code]offset[/code] is affected by the node's scale, so if scaled by e.g. [code](10, 1, 1)[/code], a translation by an offset of [code](2, 0, 0)[/code] would actually add 20 ([code]2 * 10[/code]) to the X coordinate.
 			</description>
 		</method>
@@ -283,6 +287,7 @@
 			<argument index="0" name="offset" type="Vector3">
 			</argument>
 			<description>
+				Changes the node's position by the given offset [Vector3] in local space.
 			</description>
 		</method>
 		<method name="update_gizmo">

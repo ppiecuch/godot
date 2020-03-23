@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -119,9 +119,7 @@ Error AudioStreamPlaybackOpus::_load_stream() {
 	Error err;
 	f = FileAccess::open(file, FileAccess::READ, &err);
 
-	if (err) {
-		ERR_FAIL_COND_V(err, err);
-	}
+	ERR_FAIL_COND_V_MSG(err, err, "Cannot open file '" + file + "'.");
 
 	int _err = 0;
 
@@ -185,9 +183,7 @@ Error AudioStreamPlaybackOpus::set_file(const String &p_file) {
 	Error err;
 	f = FileAccess::open(file, FileAccess::READ, &err);
 
-	if (err) {
-		ERR_FAIL_COND_V(err, err);
-	}
+	ERR_FAIL_COND_V_MSG(err, err, "Cannot open file '" + file + "'.");
 
 	int _err;
 

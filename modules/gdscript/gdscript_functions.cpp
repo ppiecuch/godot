@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -572,37 +572,32 @@ void GDScriptFunctions::call(Function p_func, const Variant **p_args, int p_arg_
 		} break;
 		case OBJ_WEAKREF: {
 			VALIDATE_ARG_COUNT(1);
-			if (p_args[0]->get_type() != Variant::OBJECT) {
-
+			if (p_args[0]->get_type() == Variant::OBJECT) {
+				if (p_args[0]->is_ref()) {
+					Ref<WeakRef> wref = memnew(WeakRef);
+					REF r = *p_args[0];
+					if (r.is_valid()) {
+						wref->set_ref(r);
+					}
+					r_ret = wref;
+				} else {
+					Ref<WeakRef> wref = memnew(WeakRef);
+					Object *obj = *p_args[0];
+					if (obj) {
+						wref->set_obj(obj);
+					}
+					r_ret = wref;
+				}
+			} else if (p_args[0]->get_type() == Variant::NIL) {
+				Ref<WeakRef> wref = memnew(WeakRef);
+				r_ret = wref;
+			} else {
 				r_error.error = Variant::CallError::CALL_ERROR_INVALID_ARGUMENT;
 				r_error.argument = 0;
 				r_error.expected = Variant::OBJECT;
 				r_ret = Variant();
 				return;
 			}
-
-			if (p_args[0]->is_ref()) {
-
-				REF r = *p_args[0];
-				if (!r.is_valid()) {
-					r_ret = Variant();
-					return;
-				}
-
-				Ref<WeakRef> wref = memnew(WeakRef);
-				wref->set_ref(r);
-				r_ret = wref;
-			} else {
-				Object *obj = *p_args[0];
-				if (!obj) {
-					r_ret = Variant();
-					return;
-				}
-				Ref<WeakRef> wref = memnew(WeakRef);
-				wref->set_obj(obj);
-				r_ret = wref;
-			}
-
 		} break;
 		case FUNC_FUNCREF: {
 			VALIDATE_ARG_COUNT(2);
@@ -1131,27 +1126,13 @@ void GDScriptFunctions::call(Function p_func, const Variant **p_args, int p_arg_
 
 					Dictionary d;
 					d["@subpath"] = cp;
-					d["@path"] = p->path;
+					d["@path"] = p->get_path();
 
-					p = base.ptr();
-
-					while (p) {
-
-						for (Set<StringName>::Element *E = p->members.front(); E; E = E->next()) {
-
-							Variant value;
-							if (ins->get(E->get(), value)) {
-
-								String k = E->get();
-								if (!d.has(k)) {
-									d[k] = value;
-								}
-							}
+					for (Map<StringName, GDScript::MemberInfo>::Element *E = base->member_indices.front(); E; E = E->next()) {
+						if (!d.has(E->key())) {
+							d[E->key()] = ins->members[E->get().index];
 						}
-
-						p = p->_base;
 					}
-
 					r_ret = d;
 				}
 			}
@@ -1279,6 +1260,7 @@ void GDScriptFunctions::call(Function p_func, const Variant **p_args, int p_arg_
 
 			if (err != OK) {
 				r_ret = Variant();
+				ERR_PRINTS(vformat("Error parsing JSON at line %s: %s", errl, errs));
 			}
 
 		} break;
@@ -1873,7 +1855,7 @@ MethodInfo GDScriptFunctions::get_info(Function p_func) {
 		} break;
 		case TEXT_CHAR: {
 
-			MethodInfo mi("char", PropertyInfo(Variant::INT, "ascii"));
+			MethodInfo mi("char", PropertyInfo(Variant::INT, "code"));
 			mi.return_val.type = Variant::STRING;
 			return mi;
 
@@ -2075,12 +2057,13 @@ MethodInfo GDScriptFunctions::get_info(Function p_func) {
 			mi.return_val.type = Variant::BOOL;
 			return mi;
 		} break;
-		case FUNC_MAX: {
+		default: {
 
 			ERR_FAIL_V(MethodInfo());
 		} break;
 	}
 #endif
-
-	return MethodInfo();
+	MethodInfo mi;
+	mi.return_val.usage |= PROPERTY_USAGE_NIL_IS_VARIANT;
+	return mi;
 }

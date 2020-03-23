@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -138,6 +138,19 @@ MainLoop *test() {
 		}
 
 		OS::get_singleton()->print("test for issue #31402 passed.\n");
+	}
+
+	// test collision resolution, should not crash or run indefinitely
+	{
+		OAHashMap<int, int> map(4);
+		map.set(1, 1);
+		map.set(5, 1);
+		map.set(9, 1);
+		map.set(13, 1);
+		map.remove(5);
+		map.remove(9);
+		map.remove(13);
+		map.set(5, 1);
 	}
 
 	return NULL;

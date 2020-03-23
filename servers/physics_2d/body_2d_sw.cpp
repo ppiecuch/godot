@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -238,6 +238,7 @@ void Body2DSW::set_mode(Physics2DServer::BodyMode p_mode) {
 			_inv_mass = mass > 0 ? (1.0 / mass) : 0;
 			_inv_inertia = inertia > 0 ? (1.0 / inertia) : 0;
 			_set_static(false);
+			set_active(true);
 
 		} break;
 		case Physics2DServer::BODY_MODE_CHARACTER: {
@@ -245,6 +246,7 @@ void Body2DSW::set_mode(Physics2DServer::BodyMode p_mode) {
 			_inv_mass = mass > 0 ? (1.0 / mass) : 0;
 			_inv_inertia = 0;
 			_set_static(false);
+			set_active(true);
 			angular_velocity = 0;
 		} break;
 	}
@@ -694,7 +696,7 @@ Body2DSW::Body2DSW() :
 
 	still_time = 0;
 	continuous_cd_mode = Physics2DServer::CCD_MODE_DISABLED;
-	can_sleep = false;
+	can_sleep = true;
 	fi_callback = NULL;
 }
 

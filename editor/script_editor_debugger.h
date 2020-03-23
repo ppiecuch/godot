@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -35,6 +35,7 @@
 #include "core/io/tcp_server.h"
 #include "editor/editor_inspector.h"
 #include "editor/property_editor.h"
+#include "scene/3d/camera.h"
 #include "scene/gui/box_container.h"
 #include "scene/gui/button.h"
 
@@ -54,10 +55,21 @@ class EditorNetworkProfiler;
 
 class ScriptEditorDebuggerInspectedObject;
 
-class ScriptEditorDebugger : public Control {
+class ScriptEditorDebugger : public MarginContainer {
 
-	GDCLASS(ScriptEditorDebugger, Control);
+	GDCLASS(ScriptEditorDebugger, MarginContainer);
 
+public:
+	enum CameraOverride {
+		OVERRIDE_NONE,
+		OVERRIDE_2D,
+		OVERRIDE_3D_1, // 3D Viewport 1
+		OVERRIDE_3D_2, // 3D Viewport 2
+		OVERRIDE_3D_3, // 3D Viewport 3
+		OVERRIDE_3D_4 // 3D Viewport 4
+	};
+
+private:
 	enum MessageType {
 		MESSAGE_ERROR,
 		MESSAGE_WARNING,
@@ -135,6 +147,7 @@ class ScriptEditorDebugger : public Control {
 
 	Tree *perf_monitors;
 	Control *perf_draw;
+	Label *info_message;
 
 	Tree *vmem_tree;
 	Button *vmem_refresh;
@@ -163,6 +176,8 @@ class ScriptEditorDebugger : public Control {
 	bool breaked;
 
 	bool live_debug;
+
+	CameraOverride camera_override;
 
 	void _performance_draw();
 	void _performance_select();
@@ -211,6 +226,7 @@ class ScriptEditorDebugger : public Control {
 
 	void _error_tree_item_rmb_selected(const Vector2 &p_pos);
 	void _item_menu_id_pressed(int p_option);
+	void _tab_changed(int p_tab);
 
 	void _export_csv();
 
@@ -248,6 +264,9 @@ public:
 	void live_debug_restore_node(ObjectID p_id, const NodePath &p_at, int p_at_pos);
 	void live_debug_duplicate_node(const NodePath &p_at, const String &p_new_name);
 	void live_debug_reparent_node(const NodePath &p_at, const NodePath &p_new_place, const String &p_new_name, int p_at_pos);
+
+	CameraOverride get_camera_override() const;
+	void set_camera_override(CameraOverride p_override);
 
 	void set_breakpoint(const String &p_path, int p_line, bool p_enabled);
 

@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -42,7 +42,6 @@
 #include "main/input_default.h"
 #include "power_x11.h"
 #include "servers/audio_server.h"
-#include "servers/camera_server.h"
 #include "servers/visual/rasterizer.h"
 #include "servers/visual_server.h"
 //#include "servers/visual/visual_server_wrap_mt.h"
@@ -116,6 +115,7 @@ class OS_X11 : public OS_Unix {
 	// IME
 	bool im_active;
 	Vector2 im_position;
+	Vector2 last_position_before_fs;
 
 	Size2 min_size;
 	Size2 max_size;
@@ -131,9 +131,12 @@ class OS_X11 : public OS_Unix {
 		int opcode;
 		Vector<int> touch_devices;
 		Map<int, Vector2> absolute_devices;
+		Map<int, Vector3> pen_devices;
 		XIEventMask all_event_mask;
 		XIEventMask all_master_event_mask;
 		Map<int, Vector2> state;
+		double pressure;
+		Vector2 tilt;
 		Vector2 mouse_pos_to_filter;
 		Vector2 relative_motion;
 		Vector2 raw_pos;
@@ -146,8 +149,6 @@ class OS_X11 : public OS_Unix {
 	unsigned int get_mouse_button_state(unsigned int p_x11_button, int p_x11_type);
 	void get_key_modifier_state(unsigned int p_x11_state, Ref<InputEventWithModifiers> state);
 	void flush_mouse_motion();
-
-	CameraServer *camera_server;
 
 	MouseMode mouse_mode;
 	Point2i center;
@@ -195,6 +196,7 @@ class OS_X11 : public OS_Unix {
 
 	int video_driver_index;
 	bool maximized;
+	bool window_focused;
 	//void set_wm_border(bool p_enabled);
 	void set_wm_fullscreen(bool p_enabled);
 	void set_wm_above(bool p_enabled);
@@ -284,6 +286,7 @@ public:
 	virtual bool is_window_maximized() const;
 	virtual void set_window_always_on_top(bool p_enabled);
 	virtual bool is_window_always_on_top() const;
+	virtual bool is_window_focused() const;
 	virtual void request_attention();
 
 	virtual void set_borderless_window(bool p_borderless);

@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -50,6 +50,7 @@ Error HashingContext::start(HashType p_type) {
 Error HashingContext::update(PoolByteArray p_chunk) {
 	ERR_FAIL_COND_V(ctx == NULL, ERR_UNCONFIGURED);
 	size_t len = p_chunk.size();
+	ERR_FAIL_COND_V(len == 0, FAILED);
 	PoolByteArray::Read r = p_chunk.read();
 	switch (type) {
 		case HASH_MD5:
@@ -103,7 +104,7 @@ void HashingContext::_create_ctx(HashType p_type) {
 }
 
 void HashingContext::_delete_ctx() {
-	return;
+
 	switch (type) {
 		case HASH_MD5:
 			memdelete((CryptoCore::MD5Context *)ctx);

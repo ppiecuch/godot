@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -63,9 +63,10 @@ void Tween::_add_pending_command(StringName p_key, const Variant &p_arg1, const 
 		count = 2;
 	else if (p_arg1.get_type() != Variant::NIL)
 		count = 1;
+	else
+		count = 0;
 
 	// Add the specified arguments to the command
-	// TODO: Make this a switch statement?
 	if (count > 0)
 		cmd.arg[0] = p_arg1;
 	if (count > 1)
@@ -191,7 +192,7 @@ void Tween::_notification(int p_what) {
 		case NOTIFICATION_INTERNAL_PHYSICS_PROCESS: {
 			// Are we processing during 'regular' time?
 			if (tween_process_mode == TWEEN_PROCESS_IDLE)
-				// Do nothing since we whould only process during idle time
+				// Do nothing since we would only process during idle time
 				break;
 
 			// Should we update?
@@ -237,14 +238,14 @@ void Tween::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_runtime"), &Tween::get_runtime);
 
 	// Bind interpolation and follow methods
-	ClassDB::bind_method(D_METHOD("interpolate_property", "object", "property", "initial_val", "final_val", "duration", "trans_type", "ease_type", "delay"), &Tween::interpolate_property, DEFVAL(0));
-	ClassDB::bind_method(D_METHOD("interpolate_method", "object", "method", "initial_val", "final_val", "duration", "trans_type", "ease_type", "delay"), &Tween::interpolate_method, DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("interpolate_property", "object", "property", "initial_val", "final_val", "duration", "trans_type", "ease_type", "delay"), &Tween::interpolate_property, DEFVAL(TRANS_LINEAR), DEFVAL(EASE_IN_OUT), DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("interpolate_method", "object", "method", "initial_val", "final_val", "duration", "trans_type", "ease_type", "delay"), &Tween::interpolate_method, DEFVAL(TRANS_LINEAR), DEFVAL(EASE_IN_OUT), DEFVAL(0));
 	ClassDB::bind_method(D_METHOD("interpolate_callback", "object", "duration", "callback", "arg1", "arg2", "arg3", "arg4", "arg5"), &Tween::interpolate_callback, DEFVAL(Variant()), DEFVAL(Variant()), DEFVAL(Variant()), DEFVAL(Variant()), DEFVAL(Variant()));
 	ClassDB::bind_method(D_METHOD("interpolate_deferred_callback", "object", "duration", "callback", "arg1", "arg2", "arg3", "arg4", "arg5"), &Tween::interpolate_deferred_callback, DEFVAL(Variant()), DEFVAL(Variant()), DEFVAL(Variant()), DEFVAL(Variant()), DEFVAL(Variant()));
-	ClassDB::bind_method(D_METHOD("follow_property", "object", "property", "initial_val", "target", "target_property", "duration", "trans_type", "ease_type", "delay"), &Tween::follow_property, DEFVAL(0));
-	ClassDB::bind_method(D_METHOD("follow_method", "object", "method", "initial_val", "target", "target_method", "duration", "trans_type", "ease_type", "delay"), &Tween::follow_method, DEFVAL(0));
-	ClassDB::bind_method(D_METHOD("targeting_property", "object", "property", "initial", "initial_val", "final_val", "duration", "trans_type", "ease_type", "delay"), &Tween::targeting_property, DEFVAL(0));
-	ClassDB::bind_method(D_METHOD("targeting_method", "object", "method", "initial", "initial_method", "final_val", "duration", "trans_type", "ease_type", "delay"), &Tween::targeting_method, DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("follow_property", "object", "property", "initial_val", "target", "target_property", "duration", "trans_type", "ease_type", "delay"), &Tween::follow_property, DEFVAL(TRANS_LINEAR), DEFVAL(EASE_IN_OUT), DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("follow_method", "object", "method", "initial_val", "target", "target_method", "duration", "trans_type", "ease_type", "delay"), &Tween::follow_method, DEFVAL(TRANS_LINEAR), DEFVAL(EASE_IN_OUT), DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("targeting_property", "object", "property", "initial", "initial_val", "final_val", "duration", "trans_type", "ease_type", "delay"), &Tween::targeting_property, DEFVAL(TRANS_LINEAR), DEFVAL(EASE_IN_OUT), DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("targeting_method", "object", "method", "initial", "initial_method", "final_val", "duration", "trans_type", "ease_type", "delay"), &Tween::targeting_method, DEFVAL(TRANS_LINEAR), DEFVAL(EASE_IN_OUT), DEFVAL(0));
 
 	// Add the Tween signals
 	ADD_SIGNAL(MethodInfo("tween_started", PropertyInfo(Variant::OBJECT, "object"), PropertyInfo(Variant::NODE_PATH, "key")));
@@ -281,7 +282,7 @@ void Tween::_bind_methods() {
 	BIND_ENUM_CONSTANT(EASE_OUT_IN);
 }
 
-Variant &Tween::_get_initial_val(InterpolateData &p_data) {
+Variant Tween::_get_initial_val(const InterpolateData &p_data) const {
 
 	// What type of data are we interpolating?
 	switch (p_data.type) {
@@ -299,7 +300,7 @@ Variant &Tween::_get_initial_val(InterpolateData &p_data) {
 			ERR_FAIL_COND_V(object == NULL, p_data.initial_val);
 
 			// Are we targeting a property or a method?
-			static Variant initial_val;
+			Variant initial_val;
 			if (p_data.type == TARGETING_PROPERTY) {
 				// Get the property from the target object
 				bool valid = false;
@@ -320,6 +321,41 @@ Variant &Tween::_get_initial_val(InterpolateData &p_data) {
 	}
 	// If we've made it here, just return the delta value as the initial value
 	return p_data.delta_val;
+}
+
+Variant Tween::_get_final_val(const InterpolateData &p_data) const {
+	switch (p_data.type) {
+		case FOLLOW_PROPERTY:
+		case FOLLOW_METHOD: {
+			// Get the object that is being followed
+			Object *target = ObjectDB::get_instance(p_data.target_id);
+			ERR_FAIL_COND_V(target == NULL, p_data.initial_val);
+
+			// We want to figure out the final value
+			Variant final_val;
+			if (p_data.type == FOLLOW_PROPERTY) {
+				// Read the property as-is
+				bool valid = false;
+				final_val = target->get_indexed(p_data.target_key, &valid);
+				ERR_FAIL_COND_V(!valid, p_data.initial_val);
+			} else {
+				// We're looking at a method. Call the method on the target object
+				Variant::CallError error;
+				final_val = target->call(p_data.target_key[0], NULL, 0, error);
+				ERR_FAIL_COND_V(error.error != Variant::CallError::CALL_OK, p_data.initial_val);
+			}
+
+			// If we're looking at an INT value, instead convert it to a REAL
+			// This is better for interpolation
+			if (final_val.get_type() == Variant::INT) final_val = final_val.operator real_t();
+
+			return final_val;
+		}
+		default: {
+			// If we're not following a final value/method, use the final value from the data
+			return p_data.final_val;
+		}
+	}
 }
 
 Variant &Tween::_get_delta_val(InterpolateData &p_data) {
@@ -384,7 +420,7 @@ Variant &Tween::_get_delta_val(InterpolateData &p_data) {
 
 Variant Tween::_run_equation(InterpolateData &p_data) {
 	// Get the initial and delta values from the data
-	Variant &initial_val = _get_initial_val(p_data);
+	Variant initial_val = _get_initial_val(p_data);
 	Variant &delta_val = _get_delta_val(p_data);
 	Variant result;
 
@@ -422,6 +458,20 @@ Variant Tween::_run_equation(InterpolateData &p_data) {
 			result = r;
 		} break;
 
+		case Variant::RECT2: {
+			// Get the Rect2 for initial and delta value
+			Rect2 i = initial_val;
+			Rect2 d = delta_val;
+			Rect2 r;
+
+			// Execute the equation for the position and size of Rect2
+			APPLY_EQUATION(position.x);
+			APPLY_EQUATION(position.y);
+			APPLY_EQUATION(size.x);
+			APPLY_EQUATION(size.y);
+			result = r;
+		} break;
+
 		case Variant::VECTOR3: {
 			// Get vectors for initial and delta values
 			Vector3 i = initial_val;
@@ -433,6 +483,55 @@ Variant Tween::_run_equation(InterpolateData &p_data) {
 			APPLY_EQUATION(x);
 			APPLY_EQUATION(y);
 			APPLY_EQUATION(z);
+			result = r;
+		} break;
+
+		case Variant::TRANSFORM2D: {
+			// Get the transforms for initial and delta values
+			Transform2D i = initial_val;
+			Transform2D d = delta_val;
+			Transform2D r;
+
+			// Execute the equation on the transforms and mutate the r transform
+			// This uses the custom APPLY_EQUATION macro defined above
+			APPLY_EQUATION(elements[0][0]);
+			APPLY_EQUATION(elements[0][1]);
+			APPLY_EQUATION(elements[1][0]);
+			APPLY_EQUATION(elements[1][1]);
+			APPLY_EQUATION(elements[2][0]);
+			APPLY_EQUATION(elements[2][1]);
+			result = r;
+		} break;
+
+		case Variant::QUAT: {
+			// Get the quaternian for the initial and delta values
+			Quat i = initial_val;
+			Quat d = delta_val;
+			Quat r;
+
+			// Execute the equation on the quaternian values and mutate the r quaternian
+			// This uses the custom APPLY_EQUATION macro defined above
+			APPLY_EQUATION(x);
+			APPLY_EQUATION(y);
+			APPLY_EQUATION(z);
+			APPLY_EQUATION(w);
+			result = r;
+		} break;
+
+		case Variant::AABB: {
+			// Get the AABB's for the initial and delta values
+			AABB i = initial_val;
+			AABB d = delta_val;
+			AABB r;
+
+			// Execute the equation for the position and size of the AABB's and mutate the r AABB
+			// This uses the custom APPLY_EQUATION macro defined above
+			APPLY_EQUATION(position.x);
+			APPLY_EQUATION(position.y);
+			APPLY_EQUATION(position.z);
+			APPLY_EQUATION(size.x);
+			APPLY_EQUATION(size.y);
+			APPLY_EQUATION(size.z);
 			result = r;
 		} break;
 
@@ -456,52 +555,6 @@ Variant Tween::_run_equation(InterpolateData &p_data) {
 			result = r;
 		} break;
 
-		case Variant::TRANSFORM2D: {
-			// Get the transforms for initial and delta values
-			Transform2D i = initial_val;
-			Transform2D d = delta_val;
-			Transform2D r;
-
-			// Execute the equation on the transforms and mutate the r transform
-			// This uses the custom APPLY_EQUATION macro defined above
-			APPLY_EQUATION(elements[0][0]);
-			APPLY_EQUATION(elements[0][1]);
-			APPLY_EQUATION(elements[1][0]);
-			APPLY_EQUATION(elements[1][1]);
-			APPLY_EQUATION(elements[2][0]);
-			APPLY_EQUATION(elements[2][1]);
-			result = r;
-		} break;
-		case Variant::QUAT: {
-			// Get the quaternian for the initial and delta values
-			Quat i = initial_val;
-			Quat d = delta_val;
-			Quat r;
-
-			// Execute the equation on the quaternian values and mutate the r quaternian
-			// This uses the custom APPLY_EQUATION macro defined above
-			APPLY_EQUATION(x);
-			APPLY_EQUATION(y);
-			APPLY_EQUATION(z);
-			APPLY_EQUATION(w);
-			result = r;
-		} break;
-		case Variant::AABB: {
-			// Get the AABB's for the initial and delta values
-			AABB i = initial_val;
-			AABB d = delta_val;
-			AABB r;
-
-			// Execute the equation for the position and size of the AABB's and mutate the r AABB
-			// This uses the custom APPLY_EQUATION macro defined above
-			APPLY_EQUATION(position.x);
-			APPLY_EQUATION(position.y);
-			APPLY_EQUATION(position.z);
-			APPLY_EQUATION(size.x);
-			APPLY_EQUATION(size.y);
-			APPLY_EQUATION(size.z);
-			result = r;
-		} break;
 		case Variant::TRANSFORM: {
 			// Get the transforms for the initial and delta values
 			Transform i = initial_val;
@@ -524,6 +577,7 @@ Variant Tween::_run_equation(InterpolateData &p_data) {
 			APPLY_EQUATION(origin.z);
 			result = r;
 		} break;
+
 		case Variant::COLOR: {
 			// Get the Color for initial and delta value
 			Color i = initial_val;
@@ -538,6 +592,7 @@ Variant Tween::_run_equation(InterpolateData &p_data) {
 			APPLY_EQUATION(a);
 			result = r;
 		} break;
+
 		default: {
 			// If unknown, just return the initial value
 			result = initial_val;
@@ -718,7 +773,8 @@ void Tween::_tween_process(float p_delta) {
 		// Is the tween now finished?
 		if (data.finish) {
 			// Set it to the final value directly
-			_apply_tween_value(data, data.final_val);
+			Variant final_val = _get_final_val(data);
+			_apply_tween_value(data, final_val);
 
 			// Mark the tween as completed and emit the signal
 			data.elapsed = 0;
@@ -789,6 +845,7 @@ bool Tween::start() {
 	// Are there any pending updates?
 	if (pending_update != 0) {
 		// Start the tweens after deferring
+		call_deferred("start");
 		return true;
 	}
 
@@ -1090,25 +1147,17 @@ bool Tween::_calc_delta_val(const Variant &p_initial_val, const Variant &p_final
 			delta_val = final_val.operator Vector2() - initial_val.operator Vector2();
 			break;
 
+		case Variant::RECT2: {
+			// Build a new Rect2 and use the new position and sizes to make a delta
+			Rect2 i = initial_val;
+			Rect2 f = final_val;
+			delta_val = Rect2(f.position - i.position, f.size - i.size);
+		} break;
+
 		case Variant::VECTOR3:
 			// Convert to Vectors and find the delta
 			delta_val = final_val.operator Vector3() - initial_val.operator Vector3();
 			break;
-
-		case Variant::BASIS: {
-			// Build a new basis which is the delta between the initial and final values
-			Basis i = initial_val;
-			Basis f = final_val;
-			delta_val = Basis(f.elements[0][0] - i.elements[0][0],
-					f.elements[0][1] - i.elements[0][1],
-					f.elements[0][2] - i.elements[0][2],
-					f.elements[1][0] - i.elements[1][0],
-					f.elements[1][1] - i.elements[1][1],
-					f.elements[1][2] - i.elements[1][2],
-					f.elements[2][0] - i.elements[2][0],
-					f.elements[2][1] - i.elements[2][1],
-					f.elements[2][2] - i.elements[2][2]);
-		} break;
 
 		case Variant::TRANSFORM2D: {
 			// Build a new transform which is the difference between the initial and final values
@@ -1134,6 +1183,21 @@ bool Tween::_calc_delta_val(const Variant &p_initial_val, const Variant &p_final
 			AABB i = initial_val;
 			AABB f = final_val;
 			delta_val = AABB(f.position - i.position, f.size - i.size);
+		} break;
+
+		case Variant::BASIS: {
+			// Build a new basis which is the delta between the initial and final values
+			Basis i = initial_val;
+			Basis f = final_val;
+			delta_val = Basis(f.elements[0][0] - i.elements[0][0],
+					f.elements[0][1] - i.elements[0][1],
+					f.elements[0][2] - i.elements[0][2],
+					f.elements[1][0] - i.elements[1][0],
+					f.elements[1][1] - i.elements[1][1],
+					f.elements[1][2] - i.elements[1][2],
+					f.elements[2][0] - i.elements[2][0],
+					f.elements[2][1] - i.elements[2][1],
+					f.elements[2][2] - i.elements[2][2]);
 		} break;
 
 		case Variant::TRANSFORM: {
@@ -1164,10 +1228,34 @@ bool Tween::_calc_delta_val(const Variant &p_initial_val, const Variant &p_final
 			delta_val = Color(f.r - i.r, f.g - i.g, f.b - i.b, f.a - i.a);
 		} break;
 
-		default:
-			// TODO: Should move away from a 'magic string'?
-			ERR_PRINT("Invalid param type, except(int/real/vector2/vector/matrix/matrix32/quat/aabb/transform/color)");
+		default: {
+			static Variant::Type supported_types[] = {
+				Variant::BOOL,
+				Variant::INT,
+				Variant::REAL,
+				Variant::VECTOR2,
+				Variant::RECT2,
+				Variant::VECTOR3,
+				Variant::TRANSFORM2D,
+				Variant::QUAT,
+				Variant::AABB,
+				Variant::BASIS,
+				Variant::TRANSFORM,
+				Variant::COLOR,
+			};
+
+			int length = *(&supported_types + 1) - supported_types;
+			String error_msg = "Invalid parameter type. Supported types are: ";
+			for (int i = 0; i < length; i++) {
+				if (i != 0) {
+					error_msg += ", ";
+				}
+				error_msg += Variant::get_type_name(supported_types[i]);
+			}
+			error_msg += ".";
+			ERR_PRINT(error_msg);
 			return false;
+		}
 	};
 	return true;
 }

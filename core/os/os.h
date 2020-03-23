@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -60,6 +60,7 @@ class OS {
 	bool _allow_hidpi;
 	bool _allow_layered;
 	bool _use_vsync;
+	bool _vsync_via_compositor;
 
 	char *last_error;
 
@@ -100,9 +101,10 @@ public:
 		bool maximized;
 		bool always_on_top;
 		bool use_vsync;
+		bool vsync_via_compositor;
 		bool layered;
 		float get_aspect() const { return (float)width / (float)height; }
-		VideoMode(int p_width = 1024, int p_height = 600, bool p_fullscreen = false, bool p_resizable = true, bool p_borderless_window = false, bool p_maximized = false, bool p_always_on_top = false, bool p_use_vsync = false) {
+		VideoMode(int p_width = 1024, int p_height = 600, bool p_fullscreen = false, bool p_resizable = true, bool p_borderless_window = false, bool p_maximized = false, bool p_always_on_top = false, bool p_use_vsync = false, bool p_vsync_via_compositor = false) {
 			width = p_width;
 			height = p_height;
 			fullscreen = p_fullscreen;
@@ -111,6 +113,7 @@ public:
 			maximized = p_maximized;
 			always_on_top = p_always_on_top;
 			use_vsync = p_use_vsync;
+			vsync_via_compositor = p_vsync_via_compositor;
 			layered = false;
 		}
 	};
@@ -154,10 +157,6 @@ public:
 
 	virtual void alert(const String &p_alert, const String &p_title = "ALERT!") = 0;
 	virtual String get_stdin_string(bool p_block = true) = 0;
-
-	virtual void set_last_error(const char *p_error);
-	virtual const char *get_last_error() const;
-	virtual void clear_last_error();
 
 	enum MouseMode {
 		MOUSE_MODE_VISIBLE,
@@ -223,6 +222,7 @@ public:
 	virtual bool is_window_maximized() const { return true; }
 	virtual void set_window_always_on_top(bool p_enabled) {}
 	virtual bool is_window_always_on_top() const { return false; }
+	virtual bool is_window_focused() const { return true; }
 	virtual void set_console_visible(bool p_enabled) {}
 	virtual bool is_console_visible() const { return false; }
 	virtual void request_attention() {}
@@ -267,7 +267,7 @@ public:
 	virtual int get_low_processor_usage_mode_sleep_usec() const;
 
 	virtual String get_executable_path() const;
-	virtual Error execute(const String &p_path, const List<String> &p_arguments, bool p_blocking, ProcessID *r_child_id = NULL, String *r_pipe = NULL, int *r_exitcode = NULL, bool read_stderr = false, Mutex *p_pipe_mutex = NULL) = 0;
+	virtual Error execute(const String &p_path, const List<String> &p_arguments, bool p_blocking = true, ProcessID *r_child_id = NULL, String *r_pipe = NULL, int *r_exitcode = NULL, bool read_stderr = false, Mutex *p_pipe_mutex = NULL) = 0;
 	virtual Error kill(const ProcessID &p_pid) = 0;
 	virtual int get_process_id() const;
 	virtual void vibrate_handheld(int p_duration_ms = 500);
@@ -380,7 +380,7 @@ public:
 	};
 
 	virtual bool has_virtual_keyboard() const;
-	virtual void show_virtual_keyboard(const String &p_existing_text, const Rect2 &p_screen_rect = Rect2());
+	virtual void show_virtual_keyboard(const String &p_existing_text, const Rect2 &p_screen_rect = Rect2(), int p_max_input_length = -1);
 	virtual void hide_virtual_keyboard();
 
 	// returns height of the currently shown virtual keyboard (0 if keyboard is hidden)
@@ -411,6 +411,7 @@ public:
 	virtual String get_data_path() const;
 	virtual String get_config_path() const;
 	virtual String get_cache_path() const;
+	virtual String get_bundle_resource_dir() const;
 
 	virtual String get_user_data_dir() const;
 	virtual String get_resource_dir() const;
@@ -513,6 +514,9 @@ public:
 	//real, actual overridable function to switch vsync, which needs to be called from graphics thread if needed
 	virtual void _set_use_vsync(bool p_enable) {}
 
+	void set_vsync_via_compositor(bool p_enable);
+	bool is_vsync_via_compositor_enabled() const;
+
 	virtual OS::PowerState get_power_state();
 	virtual int get_power_seconds_left();
 	virtual int get_power_percent_left();
@@ -530,6 +534,8 @@ public:
 	List<String> get_restart_on_exit_arguments() const;
 
 	virtual bool request_permission(const String &p_name) { return true; }
+	virtual bool request_permissions() { return true; }
+	virtual Vector<String> get_granted_permissions() const { return Vector<String>(); }
 
 	virtual void process_and_drop_events() {}
 	OS();

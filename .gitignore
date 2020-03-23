@@ -19,7 +19,7 @@ local.properties
 .gradletasknamecache
 project.properties
 platform/android/java/libs/*
-platform/android/java/assets
+platform/android/java/app/libs/*
 
 # General c++ generated files
 *.lib
@@ -73,7 +73,7 @@ logs/
 
 # for projects that use SCons for building: http://http://www.scons.org/
 .sconf_temp
-.sconsign.dblite
+.sconsign*.dblite
 *.pyc
 
 # https://github.com/github/gitignore/blob/master/VisualStudio.gitignore

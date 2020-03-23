@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -32,8 +32,10 @@
 
 #include <mono/metadata/attrdefs.h>
 
+#include "gd_mono_cache.h"
 #include "gd_mono_class.h"
 #include "gd_mono_marshal.h"
+#include "gd_mono_utils.h"
 
 void GDMonoField::set_value_raw(MonoObject *p_object, void *p_ptr) {
 	mono_field_set_value(p_object, mono_field, &p_ptr);
@@ -108,8 +110,14 @@ void GDMonoField::set_value_from_variant(MonoObject *p_object, const Variant &p_
 		} break;
 
 		case MONO_TYPE_STRING: {
-			MonoString *mono_string = GDMonoMarshal::mono_string_from_godot(p_value);
-			mono_field_set_value(p_object, mono_field, mono_string);
+			if (p_value.get_type() == Variant::NIL) {
+				// Otherwise, Variant -> String would return the string "Null"
+				MonoString *mono_string = NULL;
+				mono_field_set_value(p_object, mono_field, mono_string);
+			} else {
+				MonoString *mono_string = GDMonoMarshal::mono_string_from_godot(p_value);
+				mono_field_set_value(p_object, mono_field, mono_string);
+			}
 		} break;
 
 		case MONO_TYPE_VALUETYPE: {
@@ -337,7 +345,7 @@ void GDMonoField::set_value_from_variant(MonoObject *p_object, const Variant &p_
 			}
 
 			if (type_class->implements_interface(CACHED_CLASS(System_Collections_IEnumerable))) {
-				if (GDMonoUtils::tools_godot_api_check()) {
+				if (GDMonoCache::tools_godot_api_check()) {
 					MonoObject *managed = GDMonoUtils::create_managed_from(p_value.operator Array(), CACHED_CLASS(Array));
 					mono_field_set_value(p_object, mono_field, managed);
 					break;
@@ -491,7 +499,7 @@ void GDMonoField::set_value_from_variant(MonoObject *p_object, const Variant &p_
 			}
 
 			if (type.type_class->implements_interface(CACHED_CLASS(System_Collections_IEnumerable))) {
-				if (GDMonoUtils::tools_godot_api_check()) {
+				if (GDMonoCache::tools_godot_api_check()) {
 					MonoObject *managed = GDMonoUtils::create_managed_from(p_value.operator Array(), CACHED_CLASS(Array));
 					mono_field_set_value(p_object, mono_field, managed);
 					break;

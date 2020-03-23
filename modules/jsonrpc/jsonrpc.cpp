@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -47,11 +47,11 @@ void JSONRPC::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("make_notification", "method", "params"), &JSONRPC::make_notification);
 	ClassDB::bind_method(D_METHOD("make_response_error", "code", "message", "id"), &JSONRPC::make_response_error, DEFVAL(Variant()));
 
-	BIND_ENUM_CONSTANT(PARSE_ERROR)
-	BIND_ENUM_CONSTANT(INVALID_REQUEST)
-	BIND_ENUM_CONSTANT(METHOD_NOT_FOUND)
-	BIND_ENUM_CONSTANT(INVALID_PARAMS)
-	BIND_ENUM_CONSTANT(INTERNAL_ERROR)
+	BIND_ENUM_CONSTANT(PARSE_ERROR);
+	BIND_ENUM_CONSTANT(INVALID_REQUEST);
+	BIND_ENUM_CONSTANT(METHOD_NOT_FOUND);
+	BIND_ENUM_CONSTANT(INVALID_PARAMS);
+	BIND_ENUM_CONSTANT(INTERNAL_ERROR);
 }
 
 Dictionary JSONRPC::make_response_error(int p_code, const String &p_message, const Variant &p_id) const {

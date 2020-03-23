@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -96,8 +96,6 @@ void Geometry::MeshData::optimize_vertices() {
 	}
 	vertices = new_vertices;
 }
-
-Vector<Vector<Vector2> > (*Geometry::_decompose_func)(const Vector<Vector2> &p_polygon) = NULL;
 
 struct _FaceClassify {
 
@@ -241,10 +239,7 @@ PoolVector<PoolVector<Face3> > Geometry::separate_objects(PoolVector<Face3> p_ar
 
 	bool error = _connect_faces(_fcptr, len, -1);
 
-	if (error) {
-
-		ERR_FAIL_COND_V(error, PoolVector<PoolVector<Face3> >()); // Invalid geometry.
-	}
+	ERR_FAIL_COND_V_MSG(error, PoolVector<PoolVector<Face3> >(), "Invalid geometry.");
 
 	// Group connected faces in separate objects.
 
@@ -715,7 +710,7 @@ Vector<Vector<Vector2> > Geometry::decompose_polygon_in_convex(Vector<Point2> po
 
 		decomp.write[idx].resize(tp.GetNumPoints());
 
-		for (int i = 0; i < tp.GetNumPoints(); i++) {
+		for (int64_t i = 0; i < tp.GetNumPoints(); i++) {
 			decomp.write[idx].write[i] = tp.GetPoint(i);
 		}
 
@@ -1161,7 +1156,7 @@ Vector<Vector<Point2> > Geometry::_polypath_offset(const Vector<Point2> &p_polyp
 		case END_SQUARE: et = etOpenSquare; break;
 		case END_ROUND: et = etOpenRound; break;
 	}
-	ClipperOffset co;
+	ClipperOffset co(2.0, 0.25 * SCALE_FACTOR); // Defaults from ClipperOffset.
 	Path path;
 
 	// Need to scale points (Clipper's requirement for robust computation).

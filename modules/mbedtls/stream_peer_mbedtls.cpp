@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -111,7 +111,6 @@ Error StreamPeerMbedTLS::connect_to_stream(Ref<StreamPeer> p_base, bool p_valida
 	ERR_FAIL_COND_V(p_base.is_null(), ERR_INVALID_PARAMETER);
 
 	base = p_base;
-	int ret = 0;
 	int authmode = p_validate_certs ? MBEDTLS_SSL_VERIFY_REQUIRED : MBEDTLS_SSL_VERIFY_NONE;
 
 	Error err = ssl_ctx->init_client(MBEDTLS_SSL_TRANSPORT_STREAM, authmode, p_ca_certs);
@@ -122,7 +121,7 @@ Error StreamPeerMbedTLS::connect_to_stream(Ref<StreamPeer> p_base, bool p_valida
 
 	status = STATUS_HANDSHAKING;
 
-	if ((ret = _do_handshake()) != OK) {
+	if (_do_handshake() != OK) {
 		status = STATUS_ERROR_HOSTNAME_MISMATCH;
 		return FAILED;
 	}
@@ -143,7 +142,7 @@ Error StreamPeerMbedTLS::accept_stream(Ref<StreamPeer> p_base, Ref<CryptoKey> p_
 
 	status = STATUS_HANDSHAKING;
 
-	if ((err = _do_handshake()) != OK) {
+	if (_do_handshake() != OK) {
 		return FAILED;
 	}
 

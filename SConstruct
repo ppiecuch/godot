@@ -5,6 +5,7 @@ EnsureSConsVersion(0, 98, 1)
 # System
 import glob
 import os
+import pickle
 import sys
 
 # Local
@@ -68,8 +69,6 @@ env_base.AppendENVPath('PATH', os.getenv('PATH'))
 env_base.AppendENVPath('PKG_CONFIG_PATH', os.getenv('PKG_CONFIG_PATH'))
 env_base.disabled_modules = []
 env_base.use_ptrcall = False
-env_base.split_drivers = False
-env_base.split_modules = False
 env_base.module_version_string = ""
 env_base.msvc = False
 
@@ -89,6 +88,9 @@ env_base.__class__.disable_warnings = methods.disable_warnings
 
 env_base["x86_libtheora_opt_gcc"] = False
 env_base["x86_libtheora_opt_vc"] = False
+
+# avoid issues when building with different versions of python out of the same directory
+env_base.SConsignFile(".sconsign{0}.dblite".format(pickle.HIGHEST_PROTOCOL))
 
 # Build options
 
@@ -129,12 +131,14 @@ opts.Add(BoolVariable('dev', "If yes, alias for verbose=yes warnings=extra werro
 opts.Add('extra_suffix', "Custom extra suffix added to the base filename of all generated binary files", '')
 opts.Add(BoolVariable('vsproj', "Generate a Visual Studio solution", False))
 opts.Add(EnumVariable('macports_clang', "Build using Clang from MacPorts", 'no', ('no', '5.0', 'devel')))
+opts.Add(BoolVariable('split_libmodules', "Split intermediate libmodules.a in smaller chunks to prevent exceeding linker command line size (forced to True when using MinGW)", False))
 opts.Add(BoolVariable('disable_3d', "Disable 3D nodes for a smaller executable", False))
 opts.Add(BoolVariable('disable_advanced_gui', "Disable advanced GUI nodes and behaviors", False))
 opts.Add(BoolVariable('no_editor_splash', "Don't use the custom splash screen for the editor", False))
 opts.Add('system_certs_path', "Use this path as SSL certificates default for editor (for package maintainers)", '')
 
 # Thirdparty libraries
+#opts.Add(BoolVariable('builtin_assimp', "Use the built-in Assimp library", True))
 opts.Add(BoolVariable('builtin_bullet', "Use the built-in Bullet library", True))
 opts.Add(BoolVariable('builtin_certs', "Bundle default SSL certificates to be used if you don't specify an override in the project settings", True))
 opts.Add(BoolVariable('builtin_enet', "Use the built-in ENet library", True))
@@ -150,6 +154,7 @@ opts.Add(BoolVariable('builtin_mbedtls', "Use the built-in mbedTLS library", Tru
 opts.Add(BoolVariable('builtin_miniupnpc', "Use the built-in miniupnpc library", True))
 opts.Add(BoolVariable('builtin_opus', "Use the built-in Opus library", True))
 opts.Add(BoolVariable('builtin_pcre2', "Use the built-in PCRE2 library", True))
+opts.Add(BoolVariable('builtin_pcre2_with_jit', "Use JIT compiler for the built-in PCRE2 library", True))
 opts.Add(BoolVariable('builtin_recast', "Use the built-in Recast library", True))
 opts.Add(BoolVariable('builtin_squish', "Use the built-in squish library", True))
 opts.Add(BoolVariable('builtin_xatlas', "Use the built-in xatlas library", True))
@@ -189,7 +194,7 @@ Help(opts.GenerateHelpText(env_base))  # generate help
 
 # add default include paths
 
-env_base.Prepend(CPPPATH=['#', '#editor'])
+env_base.Prepend(CPPPATH=['#'])
 
 # configure ENV for platform
 env_base.platform_exporters = platform_exporters
@@ -287,6 +292,7 @@ if selected_platform in platform_list:
     if env["extra_suffix"] != '':
         env.extra_suffix += '.' + env["extra_suffix"]
 
+    # Environment flags
     CCFLAGS = env.get('CCFLAGS', '')
     env['CCFLAGS'] = ''
     env.Append(CCFLAGS=str(CCFLAGS).split())
@@ -303,17 +309,28 @@ if selected_platform in platform_list:
     env['LINKFLAGS'] = ''
     env.Append(LINKFLAGS=str(LINKFLAGS).split())
 
+    # Platform specific flags
     flag_list = platform_flags[selected_platform]
     for f in flag_list:
         if not (f[0] in ARGUMENTS):  # allow command line to override platform flags
             env[f[0]] = f[1]
 
-    # must happen after the flags, so when flags are used by configure, stuff happens (ie, ssl on x11)
+    # Must happen after the flags definition, so that they can be used by platform detect
     detect.configure(env)
 
-    # Enable C++11 support
+    # Set our C and C++ standard requirements.
+    # Prepending to make it possible to override
+    # This needs to come after `configure`, otherwise we don't have env.msvc.
     if not env.msvc:
-        env.Append(CXXFLAGS=['-std=c++11'])
+        # Specifying GNU extensions support explicitly, which are supported by
+        # both GCC and Clang. This mirrors GCC and Clang's current default
+        # compile flags if no -std is specified.
+        env.Prepend(CFLAGS=['-std=gnu11'])
+        env.Prepend(CXXFLAGS=['-std=gnu++14'])
+    else:
+        # MSVC doesn't have clear C standard support, /std only covers C++.
+        # We apply it to CCFLAGS (both C and C++ code) in case it impacts C features.
+        env.Prepend(CCFLAGS=['/std:c++14'])
 
     # Configure compiler warnings
     if env.msvc:
@@ -334,12 +351,13 @@ if selected_platform in platform_list:
         # Force to use Unicode encoding
         env.Append(MSVC_FLAGS=['/utf8'])
     else: # Rest of the world
+        version = methods.get_compiler_version(env) or [-1, -1]
+
         shadow_local_warning = []
         all_plus_warnings = ['-Wwrite-strings']
 
         if methods.using_gcc(env):
-            version = methods.get_compiler_version(env)
-            if version != None and version[0] >= '7':
+            if version[0] >= 7:
                 shadow_local_warning = ['-Wshadow-local']
 
         if (env["warnings"] == 'extra'):
@@ -353,8 +371,7 @@ if selected_platform in platform_list:
                     '-Wduplicated-branches', '-Wduplicated-cond',
                     '-Wstringop-overflow=4', '-Wlogical-op'])
                 env.Append(CXXFLAGS=['-Wnoexcept', '-Wplacement-new=1'])
-                version = methods.get_compiler_version(env)
-                if version != None and version[0] >= '9':
+                if version[0] >= 9:
                     env.Append(CCFLAGS=['-Wattribute-alias=2'])
         elif (env["warnings"] == 'all'):
             env.Append(CCFLAGS=['-Wall'] + shadow_local_warning)

@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -262,10 +262,6 @@ Error save_exr(const String &p_path, const Ref<Image> &p_img, bool p_grayscale) 
 	header.channels = channel_infos;
 	header.pixel_types = pixel_types;
 	header.requested_pixel_types = requested_pixel_types;
-	// TODO DEBUG REMOVE
-	for (int i = 0; i < 4; ++i) {
-		print_line(String("requested_pixel_types{0}: {1}").format(varray(i, requested_pixel_types[i])));
-	}
 
 	CharString utf8_filename = p_path.utf8();
 	const char *err;

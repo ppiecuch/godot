@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -216,7 +216,7 @@ Size2 TileMap::get_cell_size() const {
 
 void TileMap::set_quadrant_size(int p_size) {
 
-	ERR_FAIL_COND(p_size < 1);
+	ERR_FAIL_COND_MSG(p_size < 1, "Quadrant size cannot be smaller than 1.");
 
 	_clear_quadrants();
 	quadrant_size = p_size;
@@ -955,6 +955,7 @@ void TileMap::update_bitmask_region(const Vector2 &p_start, const Vector2 &p_end
 
 void TileMap::update_cell_bitmask(int p_x, int p_y) {
 
+	ERR_FAIL_COND_MSG(tile_set.is_null(), "Cannot update cell bitmask if Tileset is not open.");
 	PosKey p(p_x, p_y);
 	Map<PosKey, Cell>::Element *E = tile_map.find(p);
 	if (E != NULL) {
@@ -1050,6 +1051,7 @@ void TileMap::update_dirty_bitmask() {
 
 void TileMap::fix_invalid_tiles() {
 
+	ERR_FAIL_COND_MSG(tile_set.is_null(), "Cannot fix invalid tiles if Tileset is not open.");
 	for (Map<PosKey, Cell>::Element *E = tile_map.front(); E; E = E->next()) {
 
 		if (!tile_set->has_tile(get_cell(E->key().x, E->key().y))) {
@@ -1231,8 +1233,8 @@ void TileMap::_set_tile_data(const PoolVector<int> &p_data) {
 		}
 #endif
 
-		int16_t x = decode_uint16(&local[0]);
-		int16_t y = decode_uint16(&local[2]);
+		uint16_t x = decode_uint16(&local[0]);
+		uint16_t y = decode_uint16(&local[2]);
 		uint32_t v = decode_uint32(&local[4]);
 		bool flip_h = v & (1 << 29);
 		bool flip_v = v & (1 << 30);
@@ -1280,6 +1282,7 @@ PoolVector<int> TileMap::_get_tile_data() const {
 	return data;
 }
 
+#ifdef TOOLS_ENABLED
 Rect2 TileMap::_edit_get_rect() const {
 	if (pending_update) {
 		const_cast<TileMap *>(this)->update_dirty_quadrants();
@@ -1288,6 +1291,7 @@ Rect2 TileMap::_edit_get_rect() const {
 	}
 	return rect_cache;
 }
+#endif
 
 void TileMap::set_collision_layer(uint32_t p_layer) {
 
@@ -1549,7 +1553,8 @@ Vector2 TileMap::_map_to_world(int p_x, int p_y, bool p_ignore_ofs) const {
 					ret += get_cell_transform()[1] * (half_offset == HALF_OFFSET_Y ? 0.5 : -0.5);
 				}
 			} break;
-			default: {
+			case HALF_OFFSET_DISABLED: {
+				// Nothing to do.
 			}
 		}
 	}
@@ -1612,26 +1617,27 @@ Vector2 TileMap::world_to_map(const Vector2 &p_pos) const {
 	switch (half_offset) {
 
 		case HALF_OFFSET_X: {
-			if (ret.y > 0 ? int(ret.y) & 1 : (int(ret.y) - 1) & 1) {
+			if (int(floor(ret.y)) & 1) {
 				ret.x -= 0.5;
 			}
 		} break;
 		case HALF_OFFSET_NEGATIVE_X: {
-			if (ret.y > 0 ? int(ret.y) & 1 : (int(ret.y) - 1) & 1) {
+			if (int(floor(ret.y)) & 1) {
 				ret.x += 0.5;
 			}
 		} break;
 		case HALF_OFFSET_Y: {
-			if (ret.x > 0 ? int(ret.x) & 1 : (int(ret.x) - 1) & 1) {
+			if (int(floor(ret.x)) & 1) {
 				ret.y -= 0.5;
 			}
 		} break;
 		case HALF_OFFSET_NEGATIVE_Y: {
-			if (ret.x > 0 ? int(ret.x) & 1 : (int(ret.x) - 1) & 1) {
+			if (int(floor(ret.x)) & 1) {
 				ret.y += 0.5;
 			}
 		} break;
-		default: {
+		case HALF_OFFSET_DISABLED: {
+			// Nothing to do.
 		}
 	}
 

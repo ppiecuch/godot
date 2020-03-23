@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -183,6 +183,10 @@ void CameraMatrix::set_orthogonal(real_t p_size, real_t p_aspect, real_t p_znear
 
 void CameraMatrix::set_frustum(real_t p_left, real_t p_right, real_t p_bottom, real_t p_top, real_t p_near, real_t p_far) {
 
+	ERR_FAIL_COND(p_right <= p_left);
+	ERR_FAIL_COND(p_top <= p_bottom);
+	ERR_FAIL_COND(p_far <= p_near);
+
 	real_t *te = &matrix[0][0];
 	real_t x = 2 * p_near / (p_right - p_left);
 	real_t y = 2 * p_near / (p_top - p_bottom);
@@ -243,7 +247,7 @@ real_t CameraMatrix::get_z_near() const {
 	return new_plane.d;
 }
 
-void CameraMatrix::get_viewport_size(real_t &r_width, real_t &r_height) const {
+Vector2 CameraMatrix::get_viewport_half_extents() const {
 
 	const real_t *matrix = (const real_t *)this->matrix;
 	///////--- Near Plane ---///////
@@ -269,8 +273,7 @@ void CameraMatrix::get_viewport_size(real_t &r_width, real_t &r_height) const {
 	Vector3 res;
 	near_plane.intersect_3(right_plane, top_plane, &res);
 
-	r_width = res.x;
-	r_height = res.y;
+	return Vector2(res.x, res.y);
 }
 
 bool CameraMatrix::get_endpoints(const Transform &p_transform, Vector3 *p_8points) const {
@@ -559,9 +562,8 @@ CameraMatrix::operator String() const {
 
 real_t CameraMatrix::get_aspect() const {
 
-	real_t w, h;
-	get_viewport_size(w, h);
-	return w / h;
+	Vector2 vp_he = get_viewport_half_extents();
+	return vp_he.x / vp_he.y;
 }
 
 int CameraMatrix::get_pixels_per_meter(int p_for_pixel_width) const {

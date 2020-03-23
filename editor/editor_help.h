@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -158,7 +158,7 @@ class EditorHelp : public VBoxContainer {
 	void _update_doc();
 
 	void _request_help(const String &p_string);
-	void _search(const String &p_str);
+	void _search(bool p_search_previous = false);
 
 	void _unhandled_key_input(const Ref<InputEvent> &p_ev);
 
@@ -179,7 +179,7 @@ public:
 	void scroll_to_section(int p_section_index);
 
 	void popup_search();
-	void search_again();
+	void search_again(bool p_search_previous = false);
 
 	String get_class();
 

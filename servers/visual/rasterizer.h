@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -242,6 +242,10 @@ public:
 	virtual void shader_set_default_texture_param(RID p_shader, const StringName &p_name, RID p_texture) = 0;
 	virtual RID shader_get_default_texture_param(RID p_shader, const StringName &p_name) const = 0;
 
+	virtual void shader_add_custom_define(RID p_shader, const String &p_define) = 0;
+	virtual void shader_get_custom_defines(RID p_shader, Vector<String> *p_defines) const = 0;
+	virtual void shader_clear_custom_defines(RID p_shader) = 0;
+
 	/* COMMON MATERIAL API */
 
 	virtual RID material_create() = 0;
@@ -357,7 +361,6 @@ public:
 	virtual void skeleton_bone_set_transform_2d(RID p_skeleton, int p_bone, const Transform2D &p_transform) = 0;
 	virtual Transform2D skeleton_bone_get_transform_2d(RID p_skeleton, int p_bone) const = 0;
 	virtual void skeleton_set_base_transform_2d(RID p_skeleton, const Transform2D &p_base_transform) = 0;
-	virtual void skeleton_set_world_transform(RID p_skeleton, bool p_enable, const Transform &p_world_transform) = 0;
 
 	/* Light API */
 
@@ -589,6 +592,8 @@ public:
 	virtual int get_captured_render_info(VS::RenderInfo p_info) = 0;
 
 	virtual int get_render_info(VS::RenderInfo p_info) = 0;
+	virtual String get_video_adapter_name() const = 0;
+	virtual String get_video_adapter_vendor() const = 0;
 
 	static RasterizerStorage *base_singleton;
 	RasterizerStorage();
@@ -783,6 +788,7 @@ public:
 			RID normal_map;
 			int count;
 			bool antialiased;
+			bool antialiasing_use_indices;
 
 			CommandPolygon() {
 				type = TYPE_POLYGON;

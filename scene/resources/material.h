@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -42,7 +42,7 @@ class Material : public Resource {
 
 	GDCLASS(Material, Resource);
 	RES_BASE_EXTENSION("material")
-	OBJ_SAVE_TYPE(Material)
+	OBJ_SAVE_TYPE(Material);
 
 	RID material;
 	Ref<Material> next_pass;
@@ -249,10 +249,10 @@ private:
 			uint64_t blend_mode : 2;
 			uint64_t depth_draw_mode : 2;
 			uint64_t cull_mode : 2;
-			uint64_t flags : 18;
+			uint64_t flags : 19;
 			uint64_t detail_blend_mode : 2;
 			uint64_t diffuse_mode : 3;
-			uint64_t specular_mode : 2;
+			uint64_t specular_mode : 3;
 			uint64_t invalid_key : 1;
 			uint64_t deep_parallax : 1;
 			uint64_t billboard_mode : 2;
@@ -260,6 +260,8 @@ private:
 			uint64_t proximity_fade : 1;
 			uint64_t distance_fade : 2;
 			uint64_t emission_op : 1;
+			uint64_t texture_metallic : 1;
+			uint64_t texture_roughness : 1;
 		};
 
 		uint64_t key;
@@ -305,6 +307,8 @@ private:
 		mk.proximity_fade = proximity_fade_enabled;
 		mk.distance_fade = distance_fade;
 		mk.emission_op = emission_op;
+		mk.texture_metallic = textures[TEXTURE_METALLIC].is_valid() ? 1 : 0;
+		mk.texture_roughness = textures[TEXTURE_ROUGHNESS].is_valid() ? 1 : 0;
 
 		return mk;
 	}

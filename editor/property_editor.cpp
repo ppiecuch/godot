@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -47,7 +47,9 @@
 #include "editor/editor_file_system.h"
 #include "editor/editor_help.h"
 #include "editor/editor_node.h"
+#include "editor/editor_scale.h"
 #include "editor/editor_settings.h"
+#include "editor/filesystem_dock.h"
 #include "editor/multi_node_edit.h"
 #include "editor/property_selector.h"
 #include "scene/gui/label.h"
@@ -246,7 +248,13 @@ void CustomPropertyEditor::_menu_option(int p_which) {
 				case OBJ_MENU_NEW_SCRIPT: {
 
 					if (Object::cast_to<Node>(owner))
-						EditorNode::get_singleton()->get_scene_tree_dock()->open_script_dialog(Object::cast_to<Node>(owner));
+						EditorNode::get_singleton()->get_scene_tree_dock()->open_script_dialog(Object::cast_to<Node>(owner), false);
+
+				} break;
+				case OBJ_MENU_EXTEND_SCRIPT: {
+
+					if (Object::cast_to<Node>(owner))
+						EditorNode::get_singleton()->get_scene_tree_dock()->open_script_dialog(Object::cast_to<Node>(owner), true);
 
 				} break;
 				case OBJ_MENU_SHOW_IN_FILE_SYSTEM: {

@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -35,8 +35,8 @@
 #include "core/os/os.h"
 
 #ifdef TOOLS_ENABLED
-#include "editor_scale.h"
-#include "editor_settings.h"
+#include "editor/editor_scale.h"
+#include "editor/editor_settings.h"
 #endif
 #include "scene/main/viewport.h"
 
@@ -396,11 +396,18 @@ void ColorPicker::_update_text_value() {
 }
 
 void ColorPicker::_sample_draw() {
-	Rect2 r = Rect2(Point2(), Size2(uv_edit->get_size().width, sample->get_size().height * 0.95));
+	const Rect2 r = Rect2(Point2(), Size2(uv_edit->get_size().width, sample->get_size().height * 0.95));
+
 	if (color.a < 1.0) {
 		sample->draw_texture_rect(get_icon("preset_bg", "ColorPicker"), r, true);
 	}
+
 	sample->draw_rect(r, color);
+
+	if (color.r > 1 || color.g > 1 || color.b > 1) {
+		// Draw an indicator to denote that the color is "overbright" and can't be displayed accurately in the preview
+		sample->draw_texture(get_icon("overbright_indicator", "ColorPicker"), Point2());
+	}
 }
 
 void ColorPicker::_hsv_draw(int p_which, Control *c) {
@@ -566,9 +573,7 @@ void ColorPicker::_preset_input(const Ref<InputEvent> &p_event) {
 		}
 		if (index < 0 || index >= presets.size())
 			return;
-		preset->set_tooltip("Color: #" + presets[index].to_html(presets[index].a < 1) + "\n"
-																						"LMB: Set color\n"
-																						"RMB: Remove preset");
+		preset->set_tooltip(vformat(RTR("Color: #%s\nLMB: Set color\nRMB: Remove preset"), presets[index].to_html(presets[index].a < 1)));
 	}
 }
 
@@ -662,6 +667,7 @@ void ColorPicker::set_presets_visible(bool p_visible) {
 	presets_visible = p_visible;
 	preset_separator->set_visible(p_visible);
 	preset_container->set_visible(p_visible);
+	preset_container2->set_visible(p_visible);
 }
 
 bool ColorPicker::are_presets_visible() const {
@@ -730,20 +736,6 @@ ColorPicker::ColorPicker() :
 	presets_visible = true;
 	screen = NULL;
 
-	HBoxContainer *hb_smpl = memnew(HBoxContainer);
-	add_child(hb_smpl);
-
-	sample = memnew(TextureRect);
-	hb_smpl->add_child(sample);
-	sample->set_h_size_flags(SIZE_EXPAND_FILL);
-	sample->connect("draw", this, "_sample_draw");
-
-	btn_pick = memnew(ToolButton);
-	hb_smpl->add_child(btn_pick);
-	btn_pick->set_toggle_mode(true);
-	btn_pick->set_tooltip(TTR("Pick a color from the screen."));
-	btn_pick->connect("pressed", this, "_screen_pick_pressed");
-
 	HBoxContainer *hb_edit = memnew(HBoxContainer);
 	add_child(hb_edit);
 	hb_edit->set_v_size_flags(SIZE_EXPAND_FILL);
@@ -764,6 +756,20 @@ ColorPicker::ColorPicker() :
 	w_edit->set_v_size_flags(SIZE_EXPAND_FILL);
 	w_edit->connect("gui_input", this, "_w_input");
 	w_edit->connect("draw", this, "_hsv_draw", make_binds(1, w_edit));
+
+	HBoxContainer *hb_smpl = memnew(HBoxContainer);
+	add_child(hb_smpl);
+
+	sample = memnew(TextureRect);
+	hb_smpl->add_child(sample);
+	sample->set_h_size_flags(SIZE_EXPAND_FILL);
+	sample->connect("draw", this, "_sample_draw");
+
+	btn_pick = memnew(ToolButton);
+	hb_smpl->add_child(btn_pick);
+	btn_pick->set_toggle_mode(true);
+	btn_pick->set_tooltip(TTR("Pick a color from the editor window."));
+	btn_pick->connect("pressed", this, "_screen_pick_pressed");
 
 	VBoxContainer *vbl = memnew(VBoxContainer);
 	add_child(vbl);
@@ -894,10 +900,15 @@ void ColorPickerButton::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_DRAW: {
 
-			Ref<StyleBox> normal = get_stylebox("normal");
-			Rect2 r = Rect2(normal->get_offset(), get_size() - normal->get_minimum_size());
+			const Ref<StyleBox> normal = get_stylebox("normal");
+			const Rect2 r = Rect2(normal->get_offset(), get_size() - normal->get_minimum_size());
 			draw_texture_rect(Control::get_icon("bg", "ColorPickerButton"), r, true);
 			draw_rect(r, color);
+
+			if (color.r > 1 || color.g > 1 || color.b > 1) {
+				// Draw an indicator to denote that the color is "overbright" and can't be displayed accurately in the preview
+				draw_texture(Control::get_icon("overbright_indicator", "ColorPicker"), normal->get_offset());
+			}
 		} break;
 		case MainLoop::NOTIFICATION_WM_QUIT_REQUEST: {
 

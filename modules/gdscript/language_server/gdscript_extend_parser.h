@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -56,12 +56,14 @@ class ExtendGDScriptParser : public GDScriptParser {
 
 	lsp::DocumentSymbol class_symbol;
 	Vector<lsp::Diagnostic> diagnostics;
+	List<lsp::DocumentLink> document_links;
 	ClassMembers members;
 	HashMap<String, ClassMembers> inner_classes;
 
 	void update_diagnostics();
 
 	void update_symbols();
+	void update_document_links(const String &p_code);
 	void parse_class_symbol(const GDScriptParser::ClassNode *p_class, lsp::DocumentSymbol &r_symbol);
 	void parse_function_symbol(const GDScriptParser::FunctionNode *p_func, lsp::DocumentSymbol &r_symbol);
 
@@ -73,11 +75,6 @@ class ExtendGDScriptParser : public GDScriptParser {
 
 	Array member_completions;
 
-	String parse_documentation_as_markdown(int p_line, bool p_docs_down = false);
-
-public:
-	static String marked_documentation(const String &p_bbcode);
-
 public:
 	_FORCE_INLINE_ const String &get_path() const { return path; }
 	_FORCE_INLINE_ const Vector<String> &get_lines() const { return lines; }
@@ -86,6 +83,8 @@ public:
 	_FORCE_INLINE_ const ClassMembers &get_members() const { return members; }
 	_FORCE_INLINE_ const HashMap<String, ClassMembers> &get_inner_classes() const { return inner_classes; }
 
+	Error get_left_function_call(const lsp::Position &p_position, lsp::Position &r_func_pos, int &r_arg_index) const;
+
 	String get_text_for_completion(const lsp::Position &p_cursor) const;
 	String get_text_for_lookup_symbol(const lsp::Position &p_cursor, const String &p_symbol = "", bool p_func_requred = false) const;
 	String get_identifier_under_position(const lsp::Position &p_position, Vector2i &p_offset) const;
@@ -93,6 +92,7 @@ public:
 
 	const lsp::DocumentSymbol *get_symbol_defined_at_line(int p_line) const;
 	const lsp::DocumentSymbol *get_member_symbol(const String &p_name, const String &p_subclass = "") const;
+	const List<lsp::DocumentLink> &get_document_links() const;
 
 	const Array &get_member_completions();
 	Dictionary generate_api() const;

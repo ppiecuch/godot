@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -108,6 +108,8 @@ void FindReplaceBar::_notification(int p_what) {
 		hide_button->set_hover_texture(get_icon("Close", "EditorIcons"));
 		hide_button->set_pressed_texture(get_icon("Close", "EditorIcons"));
 		hide_button->set_custom_minimum_size(hide_button->get_normal_texture()->get_size());
+	} else if (p_what == NOTIFICATION_THEME_CHANGED) {
+		matches_label->add_color_override("font_color", results_count > 0 ? get_color("font_color", "Label") : get_color("error_color", "Editor"));
 	}
 }
 
@@ -191,7 +193,9 @@ void FindReplaceBar::_replace() {
 		results_count = -1;
 	}
 
-	search_current();
+	if (!search_current()) {
+		search_next();
+	}
 }
 
 void FindReplaceBar::_replace_all() {
@@ -273,7 +277,8 @@ void FindReplaceBar::_replace_all() {
 	}
 
 	text_edit->set_v_scroll(vsval);
-	set_error(vformat(TTR("Replaced %d occurrence(s)."), rc));
+	matches_label->add_color_override("font_color", rc > 0 ? get_color("font_color", "Label") : get_color("error_color", "Editor"));
+	matches_label->set_text(vformat(TTR("%d replaced."), rc));
 
 	text_edit->call_deferred("connect", "text_changed", this, "_editor_text_changed");
 	results_count = -1;
@@ -326,7 +331,7 @@ void FindReplaceBar::_update_matches_label() {
 	} else {
 		matches_label->show();
 
-		matches_label->add_color_override("font_color", results_count > 0 ? Color(1, 1, 1) : EditorNode::get_singleton()->get_gui_base()->get_color("error_color", "Editor"));
+		matches_label->add_color_override("font_color", results_count > 0 ? get_color("font_color", "Label") : get_color("error_color", "Editor"));
 		matches_label->set_text(vformat(results_count == 1 ? TTR("%d match.") : TTR("%d matches."), results_count));
 	}
 }
@@ -456,10 +461,10 @@ void FindReplaceBar::_show_search(bool p_focus_replace, bool p_show_only) {
 
 void FindReplaceBar::popup_search(bool p_show_only) {
 
-	if (!is_visible())
-		replace_text->hide();
+	replace_text->hide();
 	hbc_button_replace->hide();
 	hbc_option_replace->hide();
+
 	_show_search(false, p_show_only);
 }
 
@@ -681,6 +686,16 @@ void CodeTextEditor::_input(const Ref<InputEvent> &event) {
 		accept_event();
 		return;
 	}
+	if (ED_IS_SHORTCUT("script_text_editor/delete_line", key_event)) {
+		delete_lines();
+		accept_event();
+		return;
+	}
+	if (ED_IS_SHORTCUT("script_text_editor/clone_down", key_event)) {
+		clone_lines_down();
+		accept_event();
+		return;
+	}
 }
 
 void CodeTextEditor::_text_editor_gui_input(const Ref<InputEvent> &p_event) {
@@ -896,7 +911,7 @@ void CodeTextEditor::update_editor_settings() {
 	text_editor->set_smooth_scroll_enabled(EditorSettings::get_singleton()->get("text_editor/navigation/smooth_scrolling"));
 	text_editor->set_v_scroll_speed(EditorSettings::get_singleton()->get("text_editor/navigation/v_scroll_speed"));
 	text_editor->set_draw_minimap(EditorSettings::get_singleton()->get("text_editor/navigation/show_minimap"));
-	text_editor->set_minimap_width(EditorSettings::get_singleton()->get("text_editor/navigation/minimap_width"));
+	text_editor->set_minimap_width((int)EditorSettings::get_singleton()->get("text_editor/navigation/minimap_width") * EDSCALE);
 	text_editor->set_show_line_numbers(EditorSettings::get_singleton()->get("text_editor/appearance/show_line_numbers"));
 	text_editor->set_line_numbers_zero_padded(EditorSettings::get_singleton()->get("text_editor/appearance/line_numbers_zero_padded"));
 	text_editor->set_bookmark_gutter_enabled(EditorSettings::get_singleton()->get("text_editor/appearance/show_bookmark_gutter"));
@@ -1178,6 +1193,19 @@ void CodeTextEditor::move_lines_down() {
 	text_editor->update();
 }
 
+void CodeTextEditor::_delete_line(int p_line) {
+	// this is currently intended to be called within delete_lines()
+	// so `begin_complex_operation` is omitted here
+	text_editor->set_line(p_line, "");
+	if (p_line == 0 && text_editor->get_line_count() > 1) {
+		text_editor->cursor_set_line(1);
+		text_editor->cursor_set_column(0);
+	}
+	text_editor->backspace_at_cursor();
+	text_editor->unfold_line(p_line);
+	text_editor->cursor_set_line(p_line);
+}
+
 void CodeTextEditor::delete_lines() {
 	text_editor->begin_complex_operation();
 	if (text_editor->is_selection_active()) {
@@ -1185,22 +1213,13 @@ void CodeTextEditor::delete_lines() {
 		int from_line = text_editor->get_selection_from_line();
 		int count = Math::abs(to_line - from_line) + 1;
 
-		text_editor->cursor_set_line(to_line, false);
-		while (count) {
-			text_editor->set_line(text_editor->cursor_get_line(), "");
-			text_editor->backspace_at_cursor();
-			count--;
-			if (count)
-				text_editor->unfold_line(from_line);
+		text_editor->cursor_set_line(from_line, false);
+		for (int i = 0; i < count; i++) {
+			_delete_line(from_line);
 		}
-		text_editor->cursor_set_line(from_line - 1);
 		text_editor->deselect();
 	} else {
-		int line = text_editor->cursor_get_line();
-		text_editor->set_line(text_editor->cursor_get_line(), "");
-		text_editor->backspace_at_cursor();
-		text_editor->unfold_line(line);
-		text_editor->cursor_set_line(line);
+		_delete_line(text_editor->cursor_get_line());
 	}
 	text_editor->end_complex_operation();
 }
@@ -1242,7 +1261,7 @@ void CodeTextEditor::clone_lines_down() {
 	text_editor->cursor_set_line(cursor_new_line);
 	text_editor->cursor_set_column(cursor_new_column);
 	if (selection_active) {
-		text_editor->select(to_line, to_column, 2 * to_line - from_line, 2 * to_column - from_column);
+		text_editor->select(to_line, to_column, 2 * to_line - from_line, to_line == from_line ? 2 * to_column - from_column : to_column);
 	}
 
 	text_editor->end_complex_operation();
@@ -1441,6 +1460,9 @@ void CodeTextEditor::_update_font() {
 
 	text_editor->add_font_override("font", get_font("source", "EditorFonts"));
 
+	error->add_font_override("font", get_font("status_source", "EditorFonts"));
+	error->add_color_override("font_color", get_color("error_color", "Editor"));
+
 	Ref<Font> status_bar_font = get_font("status_source", "EditorFonts");
 	error->add_font_override("font", status_bar_font);
 	int count = status_bar->get_child_count();
@@ -1497,6 +1519,10 @@ void CodeTextEditor::_set_show_warnings_panel(bool p_show) {
 	emit_signal("show_warnings_panel", p_show);
 }
 
+void CodeTextEditor::_toggle_scripts_pressed() {
+	toggle_scripts_button->set_icon(ScriptEditor::get_singleton()->toggle_scripts_panel() ? get_icon("Back", "EditorIcons") : get_icon("Forward", "EditorIcons"));
+}
+
 void CodeTextEditor::_error_pressed(const Ref<InputEvent> &p_event) {
 	Ref<InputEventMouseButton> mb = p_event;
 	if (mb.is_valid() && mb->is_pressed() && mb->get_button_index() == BUTTON_LEFT) {
@@ -1512,6 +1538,9 @@ void CodeTextEditor::_notification(int p_what) {
 			emit_signal("load_theme_settings");
 		} break;
 		case NOTIFICATION_THEME_CHANGED: {
+			if (toggle_scripts_button->is_visible()) {
+				update_toggle_scripts_button();
+			}
 			_update_font();
 		} break;
 		case NOTIFICATION_ENTER_TREE: {
@@ -1519,6 +1548,9 @@ void CodeTextEditor::_notification(int p_what) {
 			add_constant_override("separation", 4 * EDSCALE);
 		} break;
 		case NOTIFICATION_VISIBILITY_CHANGED: {
+			if (toggle_scripts_button->is_visible()) {
+				update_toggle_scripts_button();
+			}
 			set_process_input(is_visible_in_tree());
 		} break;
 		default:
@@ -1552,12 +1584,14 @@ void CodeTextEditor::goto_next_bookmark() {
 	if (line >= bmarks[bmarks.size() - 1]) {
 		text_editor->unfold_line(bmarks[0]);
 		text_editor->cursor_set_line(bmarks[0]);
+		text_editor->center_viewport_to_cursor();
 	} else {
 		for (List<int>::Element *E = bmarks.front(); E; E = E->next()) {
 			int bline = E->get();
 			if (bline > line) {
 				text_editor->unfold_line(bline);
 				text_editor->cursor_set_line(bline);
+				text_editor->center_viewport_to_cursor();
 				return;
 			}
 		}
@@ -1576,12 +1610,14 @@ void CodeTextEditor::goto_prev_bookmark() {
 	if (line <= bmarks[0]) {
 		text_editor->unfold_line(bmarks[bmarks.size() - 1]);
 		text_editor->cursor_set_line(bmarks[bmarks.size() - 1]);
+		text_editor->center_viewport_to_cursor();
 	} else {
 		for (List<int>::Element *E = bmarks.back(); E; E = E->prev()) {
 			int bline = E->get();
 			if (bline < line) {
 				text_editor->unfold_line(bline);
 				text_editor->cursor_set_line(bline);
+				text_editor->center_viewport_to_cursor();
 				return;
 			}
 		}
@@ -1610,6 +1646,7 @@ void CodeTextEditor::_bind_methods() {
 	ClassDB::bind_method("_complete_request", &CodeTextEditor::_complete_request);
 	ClassDB::bind_method("_font_resize_timeout", &CodeTextEditor::_font_resize_timeout);
 	ClassDB::bind_method("_error_pressed", &CodeTextEditor::_error_pressed);
+	ClassDB::bind_method("_toggle_scripts_pressed", &CodeTextEditor::_toggle_scripts_pressed);
 	ClassDB::bind_method("_warning_button_pressed", &CodeTextEditor::_warning_button_pressed);
 	ClassDB::bind_method("_warning_label_gui_input", &CodeTextEditor::_warning_label_gui_input);
 
@@ -1622,6 +1659,15 @@ void CodeTextEditor::_bind_methods() {
 void CodeTextEditor::set_code_complete_func(CodeTextEditorCodeCompleteFunc p_code_complete_func, void *p_ud) {
 	code_complete_func = p_code_complete_func;
 	code_complete_ud = p_ud;
+}
+
+void CodeTextEditor::show_toggle_scripts_button() {
+	toggle_scripts_button->show();
+}
+
+void CodeTextEditor::update_toggle_scripts_button() {
+	toggle_scripts_button->set_icon(ScriptEditor::get_singleton()->is_scripts_panel_toggled() ? get_icon("Back", "EditorIcons") : get_icon("Forward", "EditorIcons"));
+	toggle_scripts_button->set_tooltip(TTR("Toggle Scripts Panel") + " (" + ED_GET_SHORTCUT("script_editor/toggle_scripts_panel")->get_as_text() + ")");
 }
 
 CodeTextEditor::CodeTextEditor() {
@@ -1665,6 +1711,11 @@ CodeTextEditor::CodeTextEditor() {
 	error_line = 0;
 	error_column = 0;
 
+	toggle_scripts_button = memnew(ToolButton);
+	toggle_scripts_button->connect("pressed", this, "_toggle_scripts_pressed");
+	status_bar->add_child(toggle_scripts_button);
+	toggle_scripts_button->hide();
+
 	// Error
 	ScrollContainer *scroll = memnew(ScrollContainer);
 	scroll->set_h_size_flags(SIZE_EXPAND_FILL);
@@ -1675,8 +1726,6 @@ CodeTextEditor::CodeTextEditor() {
 	error = memnew(Label);
 	scroll->add_child(error);
 	error->set_v_size_flags(SIZE_EXPAND | SIZE_SHRINK_CENTER);
-	error->add_color_override("font_color", EditorNode::get_singleton()->get_gui_base()->get_color("error_color", "Editor"));
-	error->add_font_override("font", EditorNode::get_singleton()->get_gui_base()->get_font("status_source", "EditorFonts"));
 	error->set_mouse_filter(MOUSE_FILTER_STOP);
 	error->connect("gui_input", this, "_error_pressed");
 	find_replace_bar->connect("error", error, "set_text");

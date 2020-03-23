@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -49,7 +49,7 @@ void AnimationNode::get_parameter_list(List<PropertyInfo> *r_list) const {
 
 Variant AnimationNode::get_parameter_default_value(const StringName &p_parameter) const {
 	if (get_script_instance()) {
-		return get_script_instance()->call("get_parameter_default_value");
+		return get_script_instance()->call("get_parameter_default_value", p_parameter);
 	}
 	return Variant();
 }
@@ -397,7 +397,7 @@ void AnimationNode::_validate_property(PropertyInfo &property) const {
 
 Ref<AnimationNode> AnimationNode::get_child_by_name(const StringName &p_name) {
 	if (get_script_instance()) {
-		return get_script_instance()->call("get_child_by_name");
+		return get_script_instance()->call("get_child_by_name", p_name);
 	}
 	return Ref<AnimationNode>();
 }
@@ -622,7 +622,7 @@ bool AnimationTree::_update_caches(AnimationPlayer *player) {
 
 							Skeleton *sk = Object::cast_to<Skeleton>(spatial);
 							int bone_idx = sk->find_bone(path.get_subname(0));
-							if (bone_idx != -1 && !sk->is_bone_ignore_animation(bone_idx)) {
+							if (bone_idx != -1) {
 
 								track_xform->skeleton = sk;
 								track_xform->bone_idx = bone_idx;

@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -190,6 +190,10 @@ public:
 	BIND3(shader_set_default_texture_param, RID, const StringName &, RID)
 	BIND2RC(RID, shader_get_default_texture_param, RID, const StringName &)
 
+	BIND2(shader_add_custom_define, RID, const String &)
+	BIND2C(shader_get_custom_defines, RID, Vector<String> *)
+	BIND1(shader_clear_custom_defines, RID)
+
 	/* COMMON MATERIAL API */
 
 	BIND0R(RID, material_create)
@@ -294,7 +298,6 @@ public:
 	BIND3(skeleton_bone_set_transform_2d, RID, int, const Transform2D &)
 	BIND2RC(Transform2D, skeleton_bone_get_transform_2d, RID, int)
 	BIND2(skeleton_set_base_transform_2d, RID, const Transform2D &)
-	BIND3(skeleton_set_world_transform, RID, bool, const Transform &)
 
 	/* Light API */
 
@@ -410,6 +413,8 @@ public:
 	BIND2(particles_set_process_material, RID, RID)
 	BIND2(particles_set_fixed_fps, RID, int)
 	BIND2(particles_set_fractional_delta, RID, bool)
+	BIND1R(bool, particles_is_inactive, RID)
+	BIND1(particles_request_process, RID)
 	BIND1(particles_restart, RID)
 
 	BIND2(particles_set_draw_order, RID, VS::ParticlesDrawOrder)
@@ -530,11 +535,10 @@ public:
 	BIND2(scenario_set_fallback_environment, RID, RID)
 
 	/* INSTANCING API */
-	// from can be mesh, light,  area and portal so far.
 	BIND0R(RID, instance_create)
 
-	BIND2(instance_set_base, RID, RID) // from can be mesh, light, poly, area and portal so far.
-	BIND2(instance_set_scenario, RID, RID) // from can be mesh, light, poly, area and portal so far.
+	BIND2(instance_set_base, RID, RID)
+	BIND2(instance_set_scenario, RID, RID)
 	BIND2(instance_set_layer_mask, RID, uint32_t)
 	BIND2(instance_set_transform, RID, const Transform &)
 	BIND2(instance_attach_object_instance_id, RID, ObjectID)
@@ -601,7 +605,7 @@ public:
 	BIND11(canvas_item_add_nine_patch, RID, const Rect2 &, const Rect2 &, RID, const Vector2 &, const Vector2 &, NinePatchAxisMode, NinePatchAxisMode, bool, const Color &, RID)
 	BIND7(canvas_item_add_primitive, RID, const Vector<Point2> &, const Vector<Color> &, const Vector<Point2> &, RID, float, RID)
 	BIND7(canvas_item_add_polygon, RID, const Vector<Point2> &, const Vector<Color> &, const Vector<Point2> &, RID, RID, bool)
-	BIND10(canvas_item_add_triangle_array, RID, const Vector<int> &, const Vector<Point2> &, const Vector<Color> &, const Vector<Point2> &, const Vector<int> &, const Vector<float> &, RID, int, RID)
+	BIND12(canvas_item_add_triangle_array, RID, const Vector<int> &, const Vector<Point2> &, const Vector<Color> &, const Vector<Point2> &, const Vector<int> &, const Vector<float> &, RID, int, RID, bool, bool)
 	BIND6(canvas_item_add_mesh, RID, const RID &, const Transform2D &, const Color &, RID, RID)
 	BIND4(canvas_item_add_multimesh, RID, RID, RID, RID)
 	BIND4(canvas_item_add_particles, RID, RID, RID, RID)
@@ -679,6 +683,8 @@ public:
 	/* STATUS INFORMATION */
 
 	virtual int get_render_info(RenderInfo p_info);
+	virtual String get_video_adapter_name() const;
+	virtual String get_video_adapter_vendor() const;
 
 	virtual RID get_test_cube();
 

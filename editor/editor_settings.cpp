@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -34,6 +34,7 @@
 #include "core/io/compression.h"
 #include "core/io/config_file.h"
 #include "core/io/file_access_memory.h"
+#include "core/io/ip.h"
 #include "core/io/resource_loader.h"
 #include "core/io/resource_saver.h"
 #include "core/io/translation_loader_po.h"
@@ -436,7 +437,7 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 	_initial_set("text_editor/indent/size", 4);
 	hints["text_editor/indent/size"] = PropertyInfo(Variant::INT, "text_editor/indent/size", PROPERTY_HINT_RANGE, "1, 64, 1"); // size of 0 crashes.
 	_initial_set("text_editor/indent/auto_indent", true);
-	_initial_set("text_editor/indent/convert_indent_on_save", false);
+	_initial_set("text_editor/indent/convert_indent_on_save", true);
 	_initial_set("text_editor/indent/draw_tabs", true);
 	_initial_set("text_editor/indent/draw_spaces", false);
 
@@ -455,7 +456,7 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 	_initial_set("text_editor/appearance/show_info_gutter", true);
 	_initial_set("text_editor/appearance/code_folding", true);
 	_initial_set("text_editor/appearance/word_wrap", false);
-	_initial_set("text_editor/appearance/show_line_length_guideline", false);
+	_initial_set("text_editor/appearance/show_line_length_guideline", true);
 	_initial_set("text_editor/appearance/line_length_guideline_column", 80);
 	hints["text_editor/appearance/line_length_guideline_column"] = PropertyInfo(Variant::INT, "text_editor/appearance/line_length_guideline_column", PROPERTY_HINT_RANGE, "20, 160, 1");
 
@@ -559,8 +560,6 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 	hints["editors/3d/freelook/freelook_base_speed"] = PropertyInfo(Variant::REAL, "editors/3d/freelook/freelook_base_speed", PROPERTY_HINT_RANGE, "0.0, 10, 0.01");
 	_initial_set("editors/3d/freelook/freelook_activation_modifier", 0);
 	hints["editors/3d/freelook/freelook_activation_modifier"] = PropertyInfo(Variant::INT, "editors/3d/freelook/freelook_activation_modifier", PROPERTY_HINT_ENUM, "None,Shift,Alt,Meta,Ctrl");
-	_initial_set("editors/3d/freelook/freelook_modifier_speed_factor", 3.0);
-	hints["editors/3d/freelook/freelook_modifier_speed_factor"] = PropertyInfo(Variant::REAL, "editors/3d/freelook/freelook_modifier_speed_factor", PROPERTY_HINT_RANGE, "0.0, 10.0, 0.1");
 	_initial_set("editors/3d/freelook/freelook_speed_zoom_link", false);
 
 	// 2D
@@ -666,6 +665,7 @@ void EditorSettings::_load_default_text_editor_theme() {
 	_initial_set("text_editor/highlighting/keyword_color", Color(1.0, 1.0, 0.7));
 	_initial_set("text_editor/highlighting/base_type_color", Color(0.64, 1.0, 0.83));
 	_initial_set("text_editor/highlighting/engine_type_color", Color(0.51, 0.83, 1.0));
+	_initial_set("text_editor/highlighting/user_type_color", Color(0.42, 0.67, 0.93));
 	_initial_set("text_editor/highlighting/comment_color", Color(0.4, 0.4, 0.4));
 	_initial_set("text_editor/highlighting/string_color", Color(0.94, 0.43, 0.75));
 	_initial_set("text_editor/highlighting/background_color", dark_theme ? Color(0.0, 0.0, 0.0, 0.23) : Color(0.2, 0.23, 0.31));
@@ -727,6 +727,7 @@ static Dictionary _get_builtin_script_templates() {
 	// No Comments
 	templates["no_comments.gd"] =
 			"extends %BASE%\n"
+			"\n"
 			"\n"
 			"func _ready()%VOID_RETURN%:\n"
 			"%TS%pass\n";
@@ -793,13 +794,13 @@ void EditorSettings::create() {
 		self_contained = true;
 		Error err = extra_config->load(exe_path + "/._sc_");
 		if (err != OK) {
-			ERR_PRINTS("Can't load config from path: " + exe_path + "/._sc_");
+			ERR_PRINTS("Can't load config from path '" + exe_path + "/._sc_'.");
 		}
 	} else if (d->file_exists(exe_path + "/_sc_")) {
 		self_contained = true;
 		Error err = extra_config->load(exe_path + "/_sc_");
 		if (err != OK) {
-			ERR_PRINTS("Can't load config from path: " + exe_path + "/_sc_");
+			ERR_PRINTS("Can't load config from path '" + exe_path + "/_sc_'.");
 		}
 	}
 	memdelete(d);
@@ -1235,10 +1236,10 @@ void EditorSettings::set_project_metadata(const String &p_section, const String 
 	String path = get_project_settings_dir().plus_file("project_metadata.cfg");
 	Error err;
 	err = cf->load(path);
-	ERR_FAIL_COND(err != OK && err != ERR_FILE_NOT_FOUND);
+	ERR_FAIL_COND_MSG(err != OK && err != ERR_FILE_NOT_FOUND, "Cannot load editor settings from file '" + path + "'.");
 	cf->set_value(p_section, p_key, p_data);
 	err = cf->save(path);
-	ERR_FAIL_COND(err != OK);
+	ERR_FAIL_COND_MSG(err != OK, "Cannot save editor settings to file '" + path + "'.");
 }
 
 Variant EditorSettings::get_project_metadata(const String &p_section, const String &p_key, Variant p_default) const {

@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -38,6 +38,7 @@ void ARVRPositionalTracker::_bind_methods() {
 
 	// this class is read only from GDScript, so we only have access to getters..
 	ClassDB::bind_method(D_METHOD("get_type"), &ARVRPositionalTracker::get_type);
+	ClassDB::bind_method(D_METHOD("get_tracker_id"), &ARVRPositionalTracker::get_tracker_id);
 	ClassDB::bind_method(D_METHOD("get_name"), &ARVRPositionalTracker::get_name);
 	ClassDB::bind_method(D_METHOD("get_joy_id"), &ARVRPositionalTracker::get_joy_id);
 	ClassDB::bind_method(D_METHOD("get_tracks_orientation"), &ARVRPositionalTracker::get_tracks_orientation);

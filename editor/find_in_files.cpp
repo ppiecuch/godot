@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -235,8 +235,10 @@ void FindInFiles::_scan_dir(String path, PoolStringArray &out_folders) {
 		if (file == "")
 			break;
 
-		// Ignore special dirs and hidden dirs (such as .git and .import)
+		// Ignore special dirs (such as .git and .import)
 		if (file == "." || file == ".." || file.begins_with("."))
+			continue;
+		if (dir->current_is_hidden())
 			continue;
 
 		if (dir->current_is_dir())
@@ -531,6 +533,12 @@ FindInFilesPanel::FindInFilesPanel() {
 		_status_label = memnew(Label);
 		hbc->add_child(_status_label);
 
+		_refresh_button = memnew(Button);
+		_refresh_button->set_text(TTR("Refresh"));
+		_refresh_button->connect("pressed", this, "_on_refresh_button_clicked");
+		_refresh_button->hide();
+		hbc->add_child(_refresh_button);
+
 		_cancel_button = memnew(Button);
 		_cancel_button->set_text(TTR("Cancel"));
 		_cancel_button->connect("pressed", this, "_on_cancel_button_clicked");
@@ -614,6 +622,7 @@ void FindInFilesPanel::start_search() {
 	_finder->start();
 
 	update_replace_buttons();
+	_refresh_button->hide();
 	_cancel_button->show();
 }
 
@@ -624,6 +633,7 @@ void FindInFilesPanel::stop_search() {
 	_status_label->set_text("");
 	update_replace_buttons();
 	set_progress_visible(false);
+	_refresh_button->show();
 	_cancel_button->hide();
 }
 
@@ -726,7 +736,12 @@ void FindInFilesPanel::_on_finished() {
 	_status_label->set_text(TTR("Search complete"));
 	update_replace_buttons();
 	set_progress_visible(false);
+	_refresh_button->show();
 	_cancel_button->hide();
+}
+
+void FindInFilesPanel::_on_refresh_button_clicked() {
+	start_search();
 }
 
 void FindInFilesPanel::_on_cancel_button_clicked() {
@@ -828,8 +843,8 @@ void FindInFilesPanel::apply_replaces_in_file(String fpath, const Vector<Result>
 	// If there are unsaved changes, the user will be asked on focus,
 	// however that means either losing changes or losing replaces.
 
-	FileAccess *f = FileAccess::open(fpath, FileAccess::READ);
-	ERR_FAIL_COND(f == NULL);
+	FileAccessRef f = FileAccess::open(fpath, FileAccess::READ);
+	ERR_FAIL_COND_MSG(!f, "Cannot open file from path '" + fpath + "'.");
 
 	String buffer;
 	int current_line = 1;
@@ -876,7 +891,7 @@ void FindInFilesPanel::apply_replaces_in_file(String fpath, const Vector<Result>
 	// Now the modified contents are in the buffer, rewrite the file with our changes
 
 	Error err = f->reopen(fpath, FileAccess::WRITE);
-	ERR_FAIL_COND(err != OK);
+	ERR_FAIL_COND_MSG(err != OK, "Cannot create file in path '" + fpath + "'.");
 
 	f->store_string(buffer);
 
@@ -889,7 +904,6 @@ String FindInFilesPanel::get_replace_text() {
 
 void FindInFilesPanel::update_replace_buttons() {
 
-	String text = get_replace_text();
 	bool disabled = _finder->is_searching();
 
 	_replace_all_button->set_disabled(disabled);
@@ -904,6 +918,7 @@ void FindInFilesPanel::_bind_methods() {
 	ClassDB::bind_method("_on_result_found", &FindInFilesPanel::_on_result_found);
 	ClassDB::bind_method("_on_item_edited", &FindInFilesPanel::_on_item_edited);
 	ClassDB::bind_method("_on_finished", &FindInFilesPanel::_on_finished);
+	ClassDB::bind_method("_on_refresh_button_clicked", &FindInFilesPanel::_on_refresh_button_clicked);
 	ClassDB::bind_method("_on_cancel_button_clicked", &FindInFilesPanel::_on_cancel_button_clicked);
 	ClassDB::bind_method("_on_result_selected", &FindInFilesPanel::_on_result_selected);
 	ClassDB::bind_method("_on_replace_text_changed", &FindInFilesPanel::_on_replace_text_changed);

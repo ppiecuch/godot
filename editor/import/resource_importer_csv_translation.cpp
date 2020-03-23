@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -90,7 +90,7 @@ Error ResourceImporterCSVTranslation::import(const String &p_source_file, const 
 
 	FileAccessRef f = FileAccess::open(p_source_file, FileAccess::READ);
 
-	ERR_FAIL_COND_V(!f, ERR_INVALID_PARAMETER);
+	ERR_FAIL_COND_V_MSG(!f, ERR_INVALID_PARAMETER, "Cannot open file from path '" + p_source_file + "'.");
 
 	Vector<String> line = f->get_csv_line(delimiter);
 	ERR_FAIL_COND_V(line.size() <= 1, ERR_PARSE_ERROR);

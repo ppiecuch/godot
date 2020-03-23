@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -820,11 +820,7 @@ void AnimationTreePlayer::_process_animation(float p_delta) {
 		t.value = t.object->get_indexed(t.subpath);
 		t.value.zero();
 
-		if (t.skeleton) {
-			t.skip = t.skeleton->is_bone_ignore_animation(t.bone_idx);
-		} else {
-			t.skip = false;
-		}
+		t.skip = false;
 	}
 
 	/* STEP 2 PROCESS ANIMATIONS */

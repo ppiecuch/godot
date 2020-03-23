@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -31,6 +31,7 @@
 #include "node_dock.h"
 
 #include "editor_node.h"
+#include "editor_scale.h"
 
 void NodeDock::show_groups() {
 
@@ -104,6 +105,7 @@ NodeDock::NodeDock() {
 	connections_button->set_toggle_mode(true);
 	connections_button->set_pressed(true);
 	connections_button->set_h_size_flags(SIZE_EXPAND_FILL);
+	connections_button->set_clip_text(true);
 	mode_hb->add_child(connections_button);
 	connections_button->connect("pressed", this, "show_connections");
 
@@ -112,6 +114,7 @@ NodeDock::NodeDock() {
 	groups_button->set_toggle_mode(true);
 	groups_button->set_pressed(false);
 	groups_button->set_h_size_flags(SIZE_EXPAND_FILL);
+	groups_button->set_clip_text(true);
 	mode_hb->add_child(groups_button);
 	groups_button->connect("pressed", this, "show_groups");
 
@@ -129,6 +132,7 @@ NodeDock::NodeDock() {
 
 	select_a_node = memnew(Label);
 	select_a_node->set_text(TTR("Select a single node to edit its signals and groups."));
+	select_a_node->set_custom_minimum_size(Size2(100 * EDSCALE, 0));
 	select_a_node->set_v_size_flags(SIZE_EXPAND_FILL);
 	select_a_node->set_valign(Label::VALIGN_CENTER);
 	select_a_node->set_align(Label::ALIGN_CENTER);

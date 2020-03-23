@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -250,7 +250,9 @@ public:
 		NOTIFICATION_TRANSLATION_CHANGED = MainLoop::NOTIFICATION_TRANSLATION_CHANGED,
 		NOTIFICATION_WM_ABOUT = MainLoop::NOTIFICATION_WM_ABOUT,
 		NOTIFICATION_CRASH = MainLoop::NOTIFICATION_CRASH,
-		NOTIFICATION_OS_IME_UPDATE = MainLoop::NOTIFICATION_OS_IME_UPDATE
+		NOTIFICATION_OS_IME_UPDATE = MainLoop::NOTIFICATION_OS_IME_UPDATE,
+		NOTIFICATION_APP_RESUMED = MainLoop::NOTIFICATION_APP_RESUMED,
+		NOTIFICATION_APP_PAUSED = MainLoop::NOTIFICATION_APP_PAUSED
 
 	};
 
@@ -348,6 +350,7 @@ public:
 	bool is_processing_internal() const;
 
 	void set_process_priority(int p_priority);
+	int get_process_priority() const;
 
 	void set_process_input(bool p_enable);
 	bool is_processing_input() const;

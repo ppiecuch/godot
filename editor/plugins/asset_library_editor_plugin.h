@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -31,24 +31,22 @@
 #ifndef ASSET_LIBRARY_EDITOR_PLUGIN_H
 #define ASSET_LIBRARY_EDITOR_PLUGIN_H
 
-#include "editor_plugin.h"
+#include "editor/editor_asset_installer.h"
+#include "editor/editor_plugin.h"
+#include "editor/editor_plugin_settings.h"
 #include "scene/gui/box_container.h"
 #include "scene/gui/check_box.h"
+#include "scene/gui/grid_container.h"
 #include "scene/gui/line_edit.h"
 #include "scene/gui/link_button.h"
 #include "scene/gui/option_button.h"
 #include "scene/gui/panel_container.h"
 #include "scene/gui/progress_bar.h"
-#include "scene/gui/separator.h"
-#include "scene/gui/tab_container.h"
-
-#include "editor_plugin_settings.h"
-#include "scene/gui/grid_container.h"
 #include "scene/gui/rich_text_label.h"
 #include "scene/gui/scroll_container.h"
+#include "scene/gui/separator.h"
+#include "scene/gui/tab_container.h"
 #include "scene/gui/texture_button.h"
-
-#include "editor_asset_installer.h"
 #include "scene/main/http_request.h"
 
 class EditorAssetLibraryItem : public PanelContainer {
@@ -186,6 +184,7 @@ class EditorAssetLibrary : public PanelContainer {
 	ScrollContainer *library_scroll;
 	VBoxContainer *library_vb;
 	Label *library_loading;
+	Label *library_error;
 	LineEdit *filter;
 	OptionButton *categories;
 	OptionButton *repository;

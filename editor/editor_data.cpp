@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -314,7 +314,7 @@ void EditorData::copy_object_params(Object *p_object) {
 
 	for (List<PropertyInfo>::Element *E = pinfo.front(); E; E = E->next()) {
 
-		if (!(E->get().usage & PROPERTY_USAGE_EDITOR))
+		if (!(E->get().usage & PROPERTY_USAGE_EDITOR) || E->get().name == "script" || E->get().name == "scripts")
 			continue;
 
 		PropertyData pd;
@@ -435,10 +435,14 @@ void EditorData::restore_editor_global_states() {
 
 void EditorData::paste_object_params(Object *p_object) {
 
+	ERR_FAIL_NULL(p_object);
+	undo_redo.create_action(TTR("Paste Params"));
 	for (List<PropertyData>::Element *E = clipboard.front(); E; E = E->next()) {
-
-		p_object->set(E->get().name, E->get().value);
+		String name = E->get().name;
+		undo_redo.add_do_property(p_object, name, E->get().value);
+		undo_redo.add_undo_property(p_object, name, p_object->get(name));
 	}
+	undo_redo.commit_action();
 }
 
 bool EditorData::call_build() {
@@ -481,7 +485,7 @@ EditorPlugin *EditorData::get_editor_plugin(int p_idx) {
 
 void EditorData::add_custom_type(const String &p_type, const String &p_inherits, const Ref<Script> &p_script, const Ref<Texture> &p_icon) {
 
-	ERR_FAIL_COND(p_script.is_null());
+	ERR_FAIL_COND_MSG(p_script.is_null(), "It's not a reference to a valid Script object.");
 	CustomType ct;
 	ct.name = p_type;
 	ct.icon = p_icon;
@@ -727,7 +731,7 @@ uint64_t EditorData::get_edited_scene_version() const {
 	return edited_scene[current_edited_scene].version;
 }
 uint64_t EditorData::get_scene_version(int p_idx) const {
-	ERR_FAIL_INDEX_V(p_idx, edited_scene.size(), false);
+	ERR_FAIL_INDEX_V(p_idx, edited_scene.size(), 0);
 	return edited_scene[p_idx].version;
 }
 
@@ -820,7 +824,7 @@ void EditorData::save_edited_scene_state(EditorSelection *p_selection, EditorHis
 	ERR_FAIL_INDEX(current_edited_scene, edited_scene.size());
 
 	EditedScene &es = edited_scene.write[current_edited_scene];
-	es.selection = p_selection->get_selected_node_list();
+	es.selection = p_selection->get_full_selected_node_list();
 	es.history_current = p_history->current;
 	es.history_stored = p_history->history;
 	es.editor_states = get_editor_states();
@@ -870,7 +874,7 @@ bool EditorData::script_class_is_parent(const String &p_class, const String &p_i
 	if (!ScriptServer::is_global_class(p_class))
 		return false;
 	String base = script_class_get_base(p_class);
-	Ref<Script> script = ResourceLoader::load(ScriptServer::get_global_class_path(p_class), "Script");
+	Ref<Script> script = script_class_load_script(p_class);
 	Ref<Script> base_script = script->get_base_script();
 
 	while (p_inherits != base) {
@@ -889,12 +893,7 @@ bool EditorData::script_class_is_parent(const String &p_class, const String &p_i
 
 StringName EditorData::script_class_get_base(const String &p_class) const {
 
-	if (!ScriptServer::is_global_class(p_class))
-		return StringName();
-
-	String path = ScriptServer::get_global_class_path(p_class);
-
-	Ref<Script> script = ResourceLoader::load(path, "Script");
+	Ref<Script> script = script_class_load_script(p_class);
 	if (script.is_null())
 		return StringName();
 
@@ -910,13 +909,22 @@ Object *EditorData::script_class_instance(const String &p_class) {
 	if (ScriptServer::is_global_class(p_class)) {
 		Object *obj = ClassDB::instance(ScriptServer::get_global_class_native_base(p_class));
 		if (obj) {
-			RES script = ResourceLoader::load(ScriptServer::get_global_class_path(p_class));
+			Ref<Script> script = script_class_load_script(p_class);
 			if (script.is_valid())
 				obj->set_script(script.get_ref_ptr());
 			return obj;
 		}
 	}
 	return NULL;
+}
+
+Ref<Script> EditorData::script_class_load_script(const String &p_class) const {
+
+	if (!ScriptServer::is_global_class(p_class))
+		return Ref<Script>();
+
+	String path = ScriptServer::get_global_class_path(p_class);
+	return ResourceLoader::load(path, "Script");
 }
 
 void EditorData::script_class_set_icon_path(const String &p_class, const String &p_icon_path) {
@@ -1140,6 +1148,16 @@ List<Node *> &EditorSelection::get_selected_node_list() {
 	else
 		_update_nl();
 	return selected_node_list;
+}
+
+List<Node *> EditorSelection::get_full_selected_node_list() {
+
+	List<Node *> node_list;
+	for (Map<Node *, Object *>::Element *E = selection.front(); E; E = E->next()) {
+		node_list.push_back(E->key());
+	}
+
+	return node_list;
 }
 
 void EditorSelection::clear() {

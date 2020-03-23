@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Node" inherits="Object" category="Core" version="3.2">
+<class name="Node" inherits="Object" version="3.2">
 	<brief_description>
 		Base class for all [i]scene[/i] objects.
 	</brief_description>
@@ -33,15 +33,16 @@
 			</return>
 			<description>
 				Called when the node is about to leave the [SceneTree] (e.g. upon freeing, scene changing, or after calling [method remove_child] in a script). If the node has children, its [method _exit_tree] callback will be called last, after all its children have left the tree.
-				Corresponds to the [constant NOTIFICATION_EXIT_TREE] notification in [method Object._notification] and signal [signal tree_exiting]. To get notified when the node has already left the active tree, connect to the [signal tree_exited]
+				Corresponds to the [constant NOTIFICATION_EXIT_TREE] notification in [method Object._notification] and signal [signal tree_exiting]. To get notified when the node has already left the active tree, connect to the [signal tree_exited].
 			</description>
 		</method>
 		<method name="_get_configuration_warning" qualifiers="virtual">
 			<return type="String">
 			</return>
 			<description>
-				The string returned from this method is displayed as a warning in the "Scene Dock" if the script that overrides it is a [code]tool[/code] script.
+				The string returned from this method is displayed as a warning in the Scene Dock if the script that overrides it is a [code]tool[/code] script.
 				Returning an empty string produces no warning.
+				Call [method update_configuration_warning] when the warning needs to be updated for this node.
 			</description>
 		</method>
 		<method name="_input" qualifiers="virtual">
@@ -128,6 +129,7 @@
 				    child_node.get_parent().remove_child(child_node)
 				add_child(child_node)
 				[/codeblock]
+				[b]Note:[/b] If you want a child to be persisted to a [PackedScene], you must set [member owner] in addition to calling [method add_child]. This is typically relevant for [url=https://godot.readthedocs.io/en/latest/tutorials/misc/running_code_in_the_editor.html]tool scripts[/url] and [url=https://godot.readthedocs.io/en/latest/tutorials/plugins/editor/index.html]editor plugins[/url]. If [method add_child] is called without setting [member owner], the newly added [Node] will not be visible in the scene tree, though it will be visible in the 2D/3D view.
 			</description>
 		</method>
 		<method name="add_child_below_node">
@@ -171,6 +173,7 @@
 			<description>
 				Duplicates the node, returning a new node.
 				You can fine-tune the behavior using the [code]flags[/code] (see [enum DuplicateFlags]).
+				[b]Note:[/b] It will not work properly if the node contains a script with constructor arguments (i.e. needs to supply arguments to [method Object._init] method). In that case, the node will be duplicated without a script.
 			</description>
 		</method>
 		<method name="find_node" qualifiers="const">
@@ -249,7 +252,7 @@
 			<argument index="0" name="path" type="NodePath">
 			</argument>
 			<description>
-				Fetches a node. The [NodePath] can be either a relative path (from the current node) or an absolute path (in the scene tree) to a node. If the path does not exist, a [code]null instance[/code] is returned and attempts to access it will result in an "Attempt to call &lt;method&gt; on a null instance." error.
+				Fetches a node. The [NodePath] can be either a relative path (from the current node) or an absolute path (in the scene tree) to a node. If the path does not exist, a [code]null instance[/code] is returned and an error is logged. Attempts to access methods on the return value will result in an "Attempt to call &lt;method&gt; on a null instance." error.
 				[b]Note:[/b] Fetching absolute paths only works when the node is inside the scene tree (see [method is_inside_tree]).
 				[b]Example:[/b] Assume your current node is Character and the following tree:
 				[codeblock]
@@ -293,7 +296,7 @@
 			<argument index="0" name="path" type="NodePath">
 			</argument>
 			<description>
-				Similar to [method get_node], but does not raise an error if [code]path[/code] does not point to a valid [Node].
+				Similar to [method get_node], but does not log an error if [code]path[/code] does not point to a valid [Node].
 			</description>
 		</method>
 		<method name="get_parent" qualifiers="const">
@@ -323,7 +326,7 @@
 			<return type="float">
 			</return>
 			<description>
-				Returns the time elapsed since the last physics-bound frame (see [method _physics_process]). This is always a constant value in physics processing unless the frames per second is changed via [member Engine.target_fps].
+				Returns the time elapsed since the last physics-bound frame (see [method _physics_process]). This is always a constant value in physics processing unless the frames per second is changed via [member Engine.iterations_per_second].
 			</description>
 		</method>
 		<method name="get_position_in_parent" qualifiers="const">
@@ -742,7 +745,7 @@
 			<argument index="0" name="enable" type="bool">
 			</argument>
 			<description>
-				Enables or disables physics (i.e. fixed framerate) processing. When a node is being processed, it will receive a [constant NOTIFICATION_PHYSICS_PROCESS] at a fixed (usually 60 FPS, see [member Engine.target_fps] to change) interval (and the [method _physics_process] callback will be called if exists). Enabled automatically if [method _physics_process] is overridden. Any calls to this before [method _ready] will be ignored.
+				Enables or disables physics (i.e. fixed framerate) processing. When a node is being processed, it will receive a [constant NOTIFICATION_PHYSICS_PROCESS] at a fixed (usually 60 FPS, see [member Engine.iterations_per_second] to change) interval (and the [method _physics_process] callback will be called if exists). Enabled automatically if [method _physics_process] is overridden. Any calls to this before [method _ready] will be ignored.
 			</description>
 		</method>
 		<method name="set_physics_process_internal">
@@ -781,15 +784,6 @@
 				Enables or disabled internal processing for this node. Internal processing happens in isolation from the normal [method _process] calls and is used by some nodes internally to guarantee proper functioning even if the node is paused or processing is disabled for scripting ([method set_process]). Only useful for advanced uses to manipulate built-in nodes' behaviour.
 			</description>
 		</method>
-		<method name="set_process_priority">
-			<return type="void">
-			</return>
-			<argument index="0" name="priority" type="int">
-			</argument>
-			<description>
-				Sets the node's priority in the execution order of the enabled processing callbacks (i.e. [constant NOTIFICATION_PROCESS], [constant NOTIFICATION_PHYSICS_PROCESS] and their internal counterparts). Nodes with a higher process priority will have their processing callbacks executed first.
-			</description>
-		</method>
 		<method name="set_process_unhandled_input">
 			<return type="void">
 			</return>
@@ -817,6 +811,14 @@
 				Sets whether this is an instance load placeholder. See [InstancePlaceholder].
 			</description>
 		</method>
+		<method name="update_configuration_warning">
+			<return type="void">
+			</return>
+			<description>
+				Updates the warning displayed for this node in the Scene Dock.
+				Use [method _get_configuration_warning] to setup the warning message to display.
+			</description>
+		</method>
 	</methods>
 	<members>
 		<member name="custom_multiplayer" type="MultiplayerAPI" setter="set_custom_multiplayer" getter="get_custom_multiplayer">
@@ -836,6 +838,9 @@
 		</member>
 		<member name="pause_mode" type="int" setter="set_pause_mode" getter="get_pause_mode" enum="Node.PauseMode" default="0">
 			Pause mode. How the node will behave if the [SceneTree] is paused.
+		</member>
+		<member name="process_priority" type="int" setter="set_process_priority" getter="get_process_priority" default="0">
+			The node's priority in the execution order of the enabled processing callbacks (i.e. [constant NOTIFICATION_PROCESS], [constant NOTIFICATION_PHYSICS_PROCESS] and their internal counterparts). Nodes whose process priority value is [i]lower[/i] will have their processing callbacks executed first.
 		</member>
 	</members>
 	<signals>
@@ -962,6 +967,14 @@
 			Notification received from the OS when an update of the Input Method Engine occurs (e.g. change of IME cursor position or composition string).
 			Specific to the macOS platform.
 		</constant>
+		<constant name="NOTIFICATION_APP_RESUMED" value="1014">
+			Notification received from the OS when the app is resumed.
+			Specific to the Android platform.
+		</constant>
+		<constant name="NOTIFICATION_APP_PAUSED" value="1015">
+			Notification received from the OS when the app is paused.
+			Specific to the Android platform.
+		</constant>
 		<constant name="PAUSE_MODE_INHERIT" value="0" enum="PauseMode">
 			Inherits pause mode from the node's parent. For the root node, it is equivalent to [constant PAUSE_MODE_STOP]. Default.
 		</constant>
@@ -982,6 +995,7 @@
 		</constant>
 		<constant name="DUPLICATE_USE_INSTANCING" value="8" enum="DuplicateFlags">
 			Duplicate using instancing.
+			An instance stays linked to the original so when the original changes, the instance changes too.
 		</constant>
 	</constants>
 </class>

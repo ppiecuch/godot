@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -616,7 +616,7 @@ void Collada::_parse_effect_material(XMLParser &parser, Effect &effect, String &
 
 										if (colorarr.size() >= 3) {
 
-											// alpha strangely not allright? maybe it needs to be multiplied by value as a channel intensity
+											// alpha strangely not alright? maybe it needs to be multiplied by value as a channel intensity
 											Color color(colorarr[0], colorarr[1], colorarr[2], 1.0);
 											if (what == "diffuse")
 												effect.diffuse.color = color;
@@ -854,7 +854,7 @@ void Collada::_parse_light(XMLParser &parser) {
 				COLLADA_PRINT("colorarr size: " + rtos(colorarr.size()));
 
 				if (colorarr.size() >= 4) {
-					// alpha strangely not allright? maybe it needs to be multiplied by value as a channel intensity
+					// alpha strangely not alright? maybe it needs to be multiplied by value as a channel intensity
 					Color color(colorarr[0], colorarr[1], colorarr[2], 1.0);
 					light.color = color;
 				}
@@ -1488,7 +1488,6 @@ Collada::Node *Collada::_parse_visual_instance_geometry(XMLParser &parser) {
 
 Collada::Node *Collada::_parse_visual_instance_camera(XMLParser &parser) {
 
-	String type = parser.get_node_name();
 	NodeCamera *cam = memnew(NodeCamera);
 	cam->camera = _uri_to_id(parser.get_attribute_value_safe("url"));
 
@@ -1509,7 +1508,6 @@ Collada::Node *Collada::_parse_visual_instance_camera(XMLParser &parser) {
 
 Collada::Node *Collada::_parse_visual_instance_light(XMLParser &parser) {
 
-	String type = parser.get_node_name();
 	NodeLight *cam = memnew(NodeLight);
 	cam->light = _uri_to_id(parser.get_attribute_value_safe("url"));
 
@@ -2297,7 +2295,7 @@ bool Collada::_optimize_skeletons(VisualScene *p_vscene, Node *p_node) {
 		//replace parent by this...
 		Node *parent = node->parent;
 
-		//i wonder if this is allright.. i think it is since created skeleton (first joint) is already animated by bone..
+		//i wonder if this is alright.. i think it is since created skeleton (first joint) is already animated by bone..
 		node->id = parent->id;
 		node->name = parent->name;
 		node->xform_list = parent->xform_list;
@@ -2514,7 +2512,7 @@ Error Collada::load(const String &p_path, int p_flags) {
 	Ref<XMLParser> parserr = memnew(XMLParser);
 	XMLParser &parser = *parserr.ptr();
 	Error err = parser.open(p_path);
-	ERR_FAIL_COND_V(err, err);
+	ERR_FAIL_COND_V_MSG(err, err, "Cannot open Collada file '" + p_path + "'.");
 
 	state.local_path = ProjectSettings::get_singleton()->localize_path(p_path);
 	state.import_flags = p_flags;
@@ -2530,7 +2528,7 @@ Error Collada::load(const String &p_path, int p_flags) {
 		}
 	}
 
-	ERR_FAIL_COND_V(err != OK, ERR_FILE_CORRUPT);
+	ERR_FAIL_COND_V_MSG(err != OK, ERR_FILE_CORRUPT, "Corrupted Collada file '" + p_path + "'.");
 
 	/* Start loading Collada */
 

@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -100,16 +100,19 @@ private:
 	ToolButton *dir_next;
 	ToolButton *dir_up;
 
+	HBoxContainer *drives_container;
+	HBoxContainer *shortcuts_container;
 	OptionButton *drives;
 	ItemList *item_list;
 	PopupMenu *item_menu;
 	TextureRect *preview;
 	VBoxContainer *preview_vb;
 	HSplitContainer *list_hb;
+	HBoxContainer *file_box;
 	LineEdit *file;
+	OptionButton *filter;
 	AcceptDialog *mkdirerr;
 	AcceptDialog *exterr;
-	OptionButton *filter;
 	DirAccess *dir_access;
 	ConfirmationDialog *confirm_save;
 	DependencyRemoveDialog *remove_dialog;

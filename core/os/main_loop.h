@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -60,6 +60,8 @@ public:
 		NOTIFICATION_WM_ABOUT = 1011,
 		NOTIFICATION_CRASH = 1012,
 		NOTIFICATION_OS_IME_UPDATE = 1013,
+		NOTIFICATION_APP_RESUMED = 1014,
+		NOTIFICATION_APP_PAUSED = 1015,
 	};
 
 	virtual void input_event(const Ref<InputEvent> &p_event);

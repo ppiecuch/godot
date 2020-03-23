@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -86,6 +86,7 @@ static int _get_datatype_size(SL::DataType p_type) {
 		case SL::TYPE_ISAMPLER3D: return 16;
 		case SL::TYPE_USAMPLER3D: return 16;
 		case SL::TYPE_SAMPLERCUBE: return 16;
+		case SL::TYPE_SAMPLEREXT: return 16;
 	}
 
 	ERR_FAIL_V(0);
@@ -125,6 +126,7 @@ static int _get_datatype_alignment(SL::DataType p_type) {
 		case SL::TYPE_ISAMPLER3D: return 16;
 		case SL::TYPE_USAMPLER3D: return 16;
 		case SL::TYPE_SAMPLERCUBE: return 16;
+		case SL::TYPE_SAMPLEREXT: return 16;
 	}
 
 	ERR_FAIL_V(0);
@@ -166,7 +168,7 @@ static String _opstr(SL::Operator p_op) {
 
 static String _mkid(const String &p_id) {
 
-	String id = "m_" + p_id;
+	String id = "m_" + p_id.replace("__", "_dus_");
 	return id.replace("__", "_dus_"); //doubleunderscore is reserved in glsl
 }
 
@@ -400,7 +402,7 @@ String ShaderCompilerGLES3::_dump_node_code(SL::Node *p_node, int p_level, Gener
 			for (int i = 0; i < max_uniforms; i++) {
 				r_gen_code.uniforms += uniform_defines[i];
 			}
-#if 1
+
 			// add up
 			int offset = 0;
 			for (int i = 0; i < uniform_sizes.size(); i++) {
@@ -420,45 +422,6 @@ String ShaderCompilerGLES3::_dump_node_code(SL::Node *p_node, int p_level, Gener
 			if (r_gen_code.uniform_total_size % 16 != 0) { //UBO sizes must be multiples of 16
 				r_gen_code.uniform_total_size += r_gen_code.uniform_total_size % 16;
 			}
-#else
-			// add up
-			for (int i = 0; i < uniform_sizes.size(); i++) {
-
-				if (i > 0) {
-
-					int align = uniform_sizes[i - 1] % uniform_alignments[i];
-					if (align != 0) {
-						uniform_sizes[i - 1] += uniform_alignments[i] - align;
-					}
-
-					uniform_sizes[i] = uniform_sizes[i] + uniform_sizes[i - 1];
-				}
-			}
-			//offset
-			r_gen_code.uniform_offsets.resize(uniform_sizes.size());
-			for (int i = 0; i < uniform_sizes.size(); i++) {
-
-				if (i > 0)
-					r_gen_code.uniform_offsets[i] = uniform_sizes[i - 1];
-				else
-					r_gen_code.uniform_offsets[i] = 0;
-			}
-			/*
-			for(Map<StringName,SL::ShaderNode::Uniform>::Element *E=pnode->uniforms.front();E;E=E->next()) {
-
-				if (SL::is_sampler_type(E->get().type)) {
-					continue;
-				}
-
-			}
-
-*/
-			if (uniform_sizes.size()) {
-				r_gen_code.uniform_total_size = uniform_sizes[uniform_sizes.size() - 1];
-			} else {
-				r_gen_code.uniform_total_size = 0;
-			}
-#endif
 
 			for (Map<StringName, SL::ShaderNode::Varying>::Element *E = pnode->varyings.front(); E; E = E->next()) {
 
@@ -913,7 +876,7 @@ ShaderCompilerGLES3::ShaderCompilerGLES3() {
 
 	actions[VS::SHADER_CANVAS_ITEM].renames["VERTEX"] = "outvec.xy";
 	actions[VS::SHADER_CANVAS_ITEM].renames["UV"] = "uv";
-	actions[VS::SHADER_CANVAS_ITEM].renames["POINT_SIZE"] = "gl_PointSize";
+	actions[VS::SHADER_CANVAS_ITEM].renames["POINT_SIZE"] = "point_size";
 
 	actions[VS::SHADER_CANVAS_ITEM].renames["WORLD_MATRIX"] = "modelview_matrix";
 	actions[VS::SHADER_CANVAS_ITEM].renames["GLOBAL_MATRIX"] = "world_matrix";
@@ -943,6 +906,7 @@ ShaderCompilerGLES3::ShaderCompilerGLES3() {
 	actions[VS::SHADER_CANVAS_ITEM].renames["LIGHT_UV"] = "light_uv";
 	actions[VS::SHADER_CANVAS_ITEM].renames["LIGHT"] = "light";
 	actions[VS::SHADER_CANVAS_ITEM].renames["SHADOW_COLOR"] = "shadow_color";
+	actions[VS::SHADER_CANVAS_ITEM].renames["SHADOW_VEC"] = "shadow_vec";
 
 	actions[VS::SHADER_CANVAS_ITEM].usage_defines["COLOR"] = "#define COLOR_USED\n";
 	actions[VS::SHADER_CANVAS_ITEM].usage_defines["SCREEN_TEXTURE"] = "#define SCREEN_TEXTURE_USED\n";
@@ -951,6 +915,7 @@ ShaderCompilerGLES3::ShaderCompilerGLES3() {
 	actions[VS::SHADER_CANVAS_ITEM].usage_defines["NORMAL"] = "#define NORMAL_USED\n";
 	actions[VS::SHADER_CANVAS_ITEM].usage_defines["NORMALMAP"] = "#define NORMALMAP_USED\n";
 	actions[VS::SHADER_CANVAS_ITEM].usage_defines["LIGHT"] = "#define USE_LIGHT_SHADER_CODE\n";
+	actions[VS::SHADER_CANVAS_ITEM].usage_defines["SHADOW_VEC"] = "#define SHADOW_VEC_USED\n";
 	actions[VS::SHADER_CANVAS_ITEM].render_mode_defines["skip_vertex_transform"] = "#define SKIP_TRANSFORM_USED\n";
 	actions[VS::SHADER_CANVAS_ITEM].render_mode_defines["world_vertex_coords"] = "#define VERTEX_WORLD_COORDS_USED\n";
 
@@ -971,7 +936,7 @@ ShaderCompilerGLES3::ShaderCompilerGLES3() {
 	actions[VS::SHADER_SPATIAL].renames["UV"] = "uv_interp";
 	actions[VS::SHADER_SPATIAL].renames["UV2"] = "uv2_interp";
 	actions[VS::SHADER_SPATIAL].renames["COLOR"] = "color_interp";
-	actions[VS::SHADER_SPATIAL].renames["POINT_SIZE"] = "gl_PointSize";
+	actions[VS::SHADER_SPATIAL].renames["POINT_SIZE"] = "point_size";
 	actions[VS::SHADER_SPATIAL].renames["INSTANCE_ID"] = "gl_InstanceID";
 
 	//builtins

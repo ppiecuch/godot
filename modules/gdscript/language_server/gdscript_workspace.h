@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -53,7 +53,6 @@ protected:
 	ExtendGDScriptParser *get_parse_successed_script(const String &p_path);
 	ExtendGDScriptParser *get_parse_result(const String &p_path);
 
-	void strip_flat_symbols(const String &p_branch);
 	void list_script_files(const String &p_root_dir, List<String> &r_files);
 
 public:
@@ -81,8 +80,10 @@ public:
 
 	const lsp::DocumentSymbol *resolve_symbol(const lsp::TextDocumentPositionParams &p_doc_pos, const String &p_symbol_name = "", bool p_func_requred = false);
 	void resolve_related_symbols(const lsp::TextDocumentPositionParams &p_doc_pos, List<const lsp::DocumentSymbol *> &r_list);
-
+	const lsp::DocumentSymbol *resolve_native_symbol(const lsp::NativeSymbolInspectParams &p_params);
+	void resolve_document_links(const String &p_uri, List<lsp::DocumentLink> &r_list);
 	Dictionary generate_script_api(const String &p_path);
+	Error resolve_signature(const lsp::TextDocumentPositionParams &p_doc_pos, lsp::SignatureHelp &r_signature);
 
 	GDScriptWorkspace();
 	~GDScriptWorkspace();

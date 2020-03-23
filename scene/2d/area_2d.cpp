@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -438,7 +438,7 @@ bool Area2D::is_monitorable() const {
 
 Array Area2D::get_overlapping_bodies() const {
 
-	ERR_FAIL_COND_V(!monitoring, Array());
+	ERR_FAIL_COND_V_MSG(!monitoring, Array(), "Can't find overlapping bodies when monitoring is off.");
 	Array ret;
 	ret.resize(body_map.size());
 	int idx = 0;
@@ -456,7 +456,7 @@ Array Area2D::get_overlapping_bodies() const {
 
 Array Area2D::get_overlapping_areas() const {
 
-	ERR_FAIL_COND_V(!monitoring, Array());
+	ERR_FAIL_COND_V_MSG(!monitoring, Array(), "Can't find overlapping bodies when monitoring is off.");
 	Array ret;
 	ret.resize(area_map.size());
 	int idx = 0;

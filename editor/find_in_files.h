@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -163,6 +163,7 @@ protected:
 private:
 	void _on_result_found(String fpath, int line_number, int begin, int end, String text);
 	void _on_finished();
+	void _on_refresh_button_clicked();
 	void _on_cancel_button_clicked();
 	void _on_result_selected();
 	void _on_item_edited();
@@ -190,6 +191,7 @@ private:
 	Label *_search_text_label;
 	Tree *_results_display;
 	Label *_status_label;
+	Button *_refresh_button;
 	Button *_cancel_button;
 	ProgressBar *_progress_bar;
 	Map<String, TreeItem *> _file_items;

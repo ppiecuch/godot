@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -59,11 +59,14 @@ GodotJavaWrapper::GodotJavaWrapper(JNIEnv *p_env, jobject p_godot_instance) {
 	_get_clipboard = p_env->GetMethodID(cls, "getClipboard", "()Ljava/lang/String;");
 	_set_clipboard = p_env->GetMethodID(cls, "setClipboard", "(Ljava/lang/String;)V");
 	_request_permission = p_env->GetMethodID(cls, "requestPermission", "(Ljava/lang/String;)Z");
+	_request_permissions = p_env->GetMethodID(cls, "requestPermissions", "()Z");
+	_get_granted_permissions = p_env->GetMethodID(cls, "getGrantedPermissions", "()[Ljava/lang/String;");
 	_init_input_devices = p_env->GetMethodID(cls, "initInputDevices", "()V");
 	_get_surface = p_env->GetMethodID(cls, "getSurface", "()Landroid/view/Surface;");
 	_is_activity_resumed = p_env->GetMethodID(cls, "isActivityResumed", "()Z");
 	_vibrate = p_env->GetMethodID(cls, "vibrate", "(I)V");
 	_get_input_fallback_mapping = p_env->GetMethodID(cls, "getInputFallbackMapping", "()Ljava/lang/String;");
+	_on_gl_godot_main_loop_started = p_env->GetMethodID(cls, "onGLGodotMainLoopStarted", "()V");
 }
 
 GodotJavaWrapper::~GodotJavaWrapper() {
@@ -110,6 +113,15 @@ void GodotJavaWrapper::on_video_init(JNIEnv *p_env) {
 			p_env = ThreadAndroid::get_env();
 
 	p_env->CallVoidMethod(godot_instance, _on_video_init);
+}
+
+void GodotJavaWrapper::on_gl_godot_main_loop_started(JNIEnv *p_env) {
+	if (_on_gl_godot_main_loop_started) {
+		if (p_env == NULL) {
+			p_env = ThreadAndroid::get_env();
+		}
+	}
+	p_env->CallVoidMethod(godot_instance, _on_gl_godot_main_loop_started);
 }
 
 void GodotJavaWrapper::restart(JNIEnv *p_env) {
@@ -197,6 +209,34 @@ bool GodotJavaWrapper::request_permission(const String &p_name) {
 	} else {
 		return false;
 	}
+}
+
+bool GodotJavaWrapper::request_permissions() {
+	if (_request_permissions) {
+		JNIEnv *env = ThreadAndroid::get_env();
+		return env->CallBooleanMethod(godot_instance, _request_permissions);
+	} else {
+		return false;
+	}
+}
+
+Vector<String> GodotJavaWrapper::get_granted_permissions() const {
+	Vector<String> permissions_list;
+	if (_get_granted_permissions) {
+		JNIEnv *env = ThreadAndroid::get_env();
+		jobject permissions_object = env->CallObjectMethod(godot_instance, _get_granted_permissions);
+		jobjectArray *arr = reinterpret_cast<jobjectArray *>(&permissions_object);
+
+		int i = 0;
+		jsize len = env->GetArrayLength(*arr);
+		for (i = 0; i < len; i++) {
+			jstring jstr = (jstring)env->GetObjectArrayElement(*arr, i);
+			String str = jstring_to_string(jstr, env);
+			permissions_list.push_back(str);
+			env->DeleteLocalRef(jstr);
+		}
+	}
+	return permissions_list;
 }
 
 void GodotJavaWrapper::init_input_devices() {

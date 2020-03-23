@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -35,6 +35,7 @@
 #include "core/os/os.h"
 #include "core/print_string.h"
 #include "dependency_editor.h"
+#include "editor_file_system.h"
 #include "editor_resource_preview.h"
 #include "editor_scale.h"
 #include "editor_settings.h"
@@ -198,7 +199,10 @@ Vector<String> EditorFileDialog::get_selected_files() const {
 
 void EditorFileDialog::update_dir() {
 
-	dir->set_text(dir_access->get_current_dir());
+	if (drives->is_visible()) {
+		drives->select(dir_access->get_current_drive());
+	}
+	dir->set_text(dir_access->get_current_dir_without_drive());
 
 	// Disable "Open" button only when selecting file(s) mode.
 	get_ok()->set_disabled(_is_open_should_be_disabled());
@@ -251,6 +255,12 @@ void EditorFileDialog::_post_popup() {
 		file->grab_focus();
 	else
 		item_list->grab_focus();
+
+	if (mode == MODE_OPEN_DIR) {
+		file_box->set_visible(false);
+	} else {
+		file_box->set_visible(true);
+	}
 
 	if (is_visible_in_tree() && get_current_file() != "")
 		_request_single_thumbnail(get_current_dir().plus_file(get_current_file()));
@@ -684,7 +694,7 @@ void EditorFileDialog::update_file_name() {
 		String base_name = file_str.get_basename();
 		Vector<String> filter_substr = filter_str.split(";");
 		if (filter_substr.size() >= 2) {
-			file_str = base_name + "." + filter_substr[1].strip_edges().to_lower();
+			file_str = base_name + "." + filter_substr[0].strip_edges().lstrip("*.").to_lower();
 		} else {
 			file_str = base_name + "." + filter_str.get_extension().strip_edges().to_lower();
 		}
@@ -701,6 +711,9 @@ void EditorFileDialog::update_file_list() {
 	Ref<Texture> file_thumbnail;
 
 	item_list->clear();
+
+	// Scroll back to the top after opening a directory
+	item_list->get_v_scroll()->set_value(0);
 
 	if (display_mode == DISPLAY_THUMBNAILS) {
 
@@ -897,25 +910,25 @@ void EditorFileDialog::update_filters() {
 		const int max_filters = 5;
 
 		for (int i = 0; i < MIN(max_filters, filters.size()); i++) {
-			String flt = filters[i].get_slice(";", 0);
+			String flt = filters[i].get_slice(";", 0).strip_edges();
 			if (i > 0)
-				all_filters += ",";
+				all_filters += ", ";
 			all_filters += flt;
 		}
 
 		if (max_filters < filters.size())
 			all_filters += ", ...";
 
-		filter->add_item(TTR("All Recognized") + " ( " + all_filters + " )");
+		filter->add_item(TTR("All Recognized") + " (" + all_filters + ")");
 	}
 	for (int i = 0; i < filters.size(); i++) {
 
 		String flt = filters[i].get_slice(";", 0).strip_edges();
 		String desc = filters[i].get_slice(";", 1).strip_edges();
 		if (desc.length())
-			filter->add_item(desc + " ( " + flt + " )");
+			filter->add_item(desc + " (" + flt + ")");
 		else
-			filter->add_item("( " + flt + " )");
+			filter->add_item("(" + flt + ")");
 	}
 
 	filter->add_item(TTR("All Files (*)"));
@@ -936,7 +949,7 @@ void EditorFileDialog::add_filter(const String &p_filter) {
 
 String EditorFileDialog::get_current_dir() const {
 
-	return dir->get_text();
+	return dir_access->get_current_dir();
 }
 String EditorFileDialog::get_current_file() const {
 
@@ -944,10 +957,12 @@ String EditorFileDialog::get_current_file() const {
 }
 String EditorFileDialog::get_current_path() const {
 
-	return dir->get_text().plus_file(file->get_text());
+	return dir_access->get_current_dir().plus_file(file->get_text());
 }
 void EditorFileDialog::set_current_dir(const String &p_dir) {
 
+	if (p_dir.is_rel_path())
+		dir_access->change_dir(OS::get_singleton()->get_resource_dir());
 	dir_access->change_dir(p_dir);
 	update_dir();
 	invalidate();
@@ -1085,7 +1100,7 @@ void EditorFileDialog::_make_dir_confirm() {
 		update_filters();
 		update_dir();
 		_push_history();
-
+		EditorFileSystem::get_singleton()->scan_changes(); //we created a dir, so rescan changes
 	} else {
 		mkdirerr->popup_centered_minsize(Size2(250, 50) * EDSCALE);
 	}
@@ -1137,6 +1152,12 @@ void EditorFileDialog::_update_drives() {
 		drives->hide();
 	} else {
 		drives->clear();
+		Node *dp = drives->get_parent();
+		if (dp) {
+			dp->remove_child(drives);
+		}
+		dp = dir_access->drives_are_shortcuts() ? shortcuts_container : drives_container;
+		dp->add_child(drives);
 		drives->show();
 
 		for (int i = 0; i < dir_access->get_drive_count(); i++) {
@@ -1531,6 +1552,12 @@ EditorFileDialog::EditorFileDialog() {
 
 	pathhb->add_child(memnew(Label(TTR("Path:"))));
 
+	drives_container = memnew(HBoxContainer);
+	pathhb->add_child(drives_container);
+
+	drives = memnew(OptionButton);
+	drives->connect("item_selected", this, "_select_drive");
+
 	dir = memnew(LineEdit);
 	pathhb->add_child(dir);
 	dir->set_h_size_flags(SIZE_EXPAND_FILL);
@@ -1574,9 +1601,8 @@ EditorFileDialog::EditorFileDialog() {
 	mode_list->set_tooltip(TTR("View items as a list."));
 	pathhb->add_child(mode_list);
 
-	drives = memnew(OptionButton);
-	pathhb->add_child(drives);
-	drives->connect("item_selected", this, "_select_drive");
+	shortcuts_container = memnew(HBoxContainer);
+	pathhb->add_child(shortcuts_container);
 
 	makedir = memnew(Button);
 	makedir->set_text(TTR("Create Folder"));
@@ -1657,19 +1683,19 @@ EditorFileDialog::EditorFileDialog() {
 	prev_cc->add_child(preview);
 	preview_vb->hide();
 
-	HBoxContainer *filename_hbc = memnew(HBoxContainer);
-	filename_hbc->add_child(memnew(Label(TTR("File:"))));
+	file_box = memnew(HBoxContainer);
+	file_box->add_child(memnew(Label(TTR("File:"))));
 	file = memnew(LineEdit);
 	file->set_stretch_ratio(4);
 	file->set_h_size_flags(SIZE_EXPAND_FILL);
-	filename_hbc->add_child(file);
+	file_box->add_child(file);
 	filter = memnew(OptionButton);
 	filter->set_stretch_ratio(3);
 	filter->set_h_size_flags(SIZE_EXPAND_FILL);
 	filter->set_clip_text(true); // Too many extensions overflow it.
-	filename_hbc->add_child(filter);
-	filename_hbc->set_h_size_flags(SIZE_EXPAND_FILL);
-	item_vb->add_child(filename_hbc);
+	file_box->add_child(filter);
+	file_box->set_h_size_flags(SIZE_EXPAND_FILL);
+	item_vb->add_child(file_box);
 
 	dir_access = DirAccess::create(DirAccess::ACCESS_RESOURCES);
 	access = ACCESS_RESOURCES;

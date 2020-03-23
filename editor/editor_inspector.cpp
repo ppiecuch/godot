@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -31,6 +31,7 @@
 #include "editor_inspector.h"
 #include "array_property_edit.h"
 #include "dictionary_property_edit.h"
+#include "editor_feature_profile.h"
 #include "editor_node.h"
 #include "editor_scale.h"
 #include "multi_node_edit.h"
@@ -644,7 +645,19 @@ void EditorProperty::_gui_input(const Ref<InputEvent> &p_event) {
 			emit_signal("property_keyed", property, use_keying_next());
 
 			if (use_keying_next()) {
-				call_deferred("emit_changed", property, object->get(property).operator int64_t() + 1, "", false);
+				if (property == "frame_coords" && (object->is_class("Sprite") || object->is_class("Sprite3D"))) {
+					Vector2 new_coords = object->get(property);
+					new_coords.x++;
+					if (new_coords.x >= object->get("hframes").operator int64_t()) {
+						new_coords.x = 0;
+						new_coords.y++;
+					}
+
+					call_deferred("emit_changed", property, new_coords, "", false);
+				} else {
+					call_deferred("emit_changed", property, object->get(property).operator int64_t() + 1, "", false);
+				}
+
 				call_deferred("update_property");
 			}
 		}
@@ -765,10 +778,20 @@ Control *EditorProperty::make_custom_tooltip(const String &p_text) const {
 	help_bit->add_style_override("panel", get_stylebox("panel", "TooltipPanel"));
 	help_bit->get_rich_text()->set_fixed_size_to_width(360 * EDSCALE);
 
-	String text = TTR("Property:") + " [u][b]" + p_text.get_slice("::", 0) + "[/b][/u]\n";
-	text += p_text.get_slice("::", 1).strip_edges();
-	help_bit->set_text(text);
-	help_bit->call_deferred("set_text", text); //hack so it uses proper theme once inside scene
+	Vector<String> slices = p_text.split("::", false);
+	if (!slices.empty()) {
+		String property_name = slices[0].strip_edges();
+		String text = TTR("Property:") + " [u][b]" + property_name + "[/b][/u]";
+
+		if (slices.size() > 1) {
+			String property_doc = slices[1].strip_edges();
+			if (property_name != property_doc) {
+				text += "\n" + property_doc;
+			}
+		}
+		help_bit->call_deferred("set_text", text); //hack so it uses proper theme once inside scene
+	}
+
 	return help_bit;
 }
 
@@ -992,10 +1015,20 @@ Control *EditorInspectorCategory::make_custom_tooltip(const String &p_text) cons
 	help_bit->add_style_override("panel", get_stylebox("panel", "TooltipPanel"));
 	help_bit->get_rich_text()->set_fixed_size_to_width(360 * EDSCALE);
 
-	String text = "[u][b]" + p_text.get_slice("::", 0) + "[/b][/u]\n";
-	text += p_text.get_slice("::", 1).strip_edges();
-	help_bit->set_text(text);
-	help_bit->call_deferred("set_text", text); //hack so it uses proper theme once inside scene
+	Vector<String> slices = p_text.split("::", false);
+	if (!slices.empty()) {
+		String property_name = slices[0].strip_edges();
+		String text = "[u][b]" + property_name + "[/b][/u]";
+
+		if (slices.size() > 1) {
+			String property_doc = slices[1].strip_edges();
+			if (property_name != property_doc) {
+				text += "\n" + property_doc;
+			}
+		}
+		help_bit->call_deferred("set_text", text); //hack so it uses proper theme once inside scene
+	}
+
 	return help_bit;
 }
 
@@ -1046,9 +1079,9 @@ void EditorInspectorSection::_notification(int p_what) {
 
 		if (foldable) {
 			if (object->editor_is_section_unfolded(section)) {
-				arrow = get_icon("arrow_up", "Tree");
-			} else {
 				arrow = get_icon("arrow", "Tree");
+			} else {
+				arrow = get_icon("arrow_collapsed", "Tree");
 			}
 		}
 
@@ -1087,9 +1120,9 @@ void EditorInspectorSection::_notification(int p_what) {
 
 		if (foldable) {
 			if (object->editor_is_section_unfolded(section)) {
-				arrow = get_icon("arrow_up", "Tree");
-			} else {
 				arrow = get_icon("arrow", "Tree");
+			} else {
+				arrow = get_icon("arrow_collapsed", "Tree");
 			}
 		}
 
@@ -1103,13 +1136,12 @@ void EditorInspectorSection::_notification(int p_what) {
 
 		draw_rect(Rect2(Vector2(), Vector2(get_size().width, h)), bg_color);
 
-		int hs = get_constant("hseparation", "Tree");
-
+		const int arrow_margin = 3;
 		Color color = get_color("font_color", "Tree");
-		draw_string(font, Point2(hs, font->get_ascent() + (h - font->get_height()) / 2).floor(), label, color, get_size().width);
+		draw_string(font, Point2(Math::round((16 + arrow_margin) * EDSCALE), font->get_ascent() + (h - font->get_height()) / 2).floor(), label, color, get_size().width);
 
 		if (arrow.is_valid()) {
-			draw_texture(arrow, Point2(get_size().width - arrow->get_width(), (h - arrow->get_height()) / 2).floor());
+			draw_texture(arrow, Point2(Math::round(arrow_margin * EDSCALE), (h - arrow->get_height()) / 2).floor());
 		}
 	}
 }
@@ -1290,7 +1322,7 @@ void EditorInspector::remove_inspector_plugin(const Ref<EditorInspectorPlugin> &
 		}
 	}
 
-	ERR_FAIL_COND(idx == -1);
+	ERR_FAIL_COND_MSG(idx == -1, "Trying to remove nonexistent inspector plugin.");
 	for (int i = idx; i < inspector_plugin_count - 1; i++) {
 		inspector_plugins[i] = inspector_plugins[i + 1];
 	}
@@ -1567,11 +1599,11 @@ void EditorInspector::update_tree() {
 			if (dot != -1) {
 				String ov = name.right(dot);
 				name = name.substr(0, dot);
-				name = name.camelcase_to_underscore().capitalize();
+				name = name.capitalize();
 				name += ov;
 
 			} else {
-				name = name.camelcase_to_underscore().capitalize();
+				name = name.capitalize();
 			}
 		}
 
@@ -1584,7 +1616,7 @@ void EditorInspector::update_tree() {
 			if (capitalize_paths)
 				cat = cat.capitalize();
 
-			if (!filter.is_subsequence_ofi(cat) && !filter.is_subsequence_ofi(name))
+			if (!filter.is_subsequence_ofi(cat) && !filter.is_subsequence_ofi(name) && property_prefix.to_lower().find(filter.to_lower()) == -1)
 				continue;
 		}
 

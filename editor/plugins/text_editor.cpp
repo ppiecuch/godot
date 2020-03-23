@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -30,7 +30,8 @@
 
 #include "text_editor.h"
 
-#include "editor_node.h"
+#include "core/os/keyboard.h"
+#include "editor/editor_node.h"
 
 void TextEditor::add_syntax_highlighter(SyntaxHighlighter *p_highlighter) {
 	highlighters[p_highlighter->get_name()] = p_highlighter;
@@ -577,13 +578,21 @@ void TextEditor::_text_edit_gui_input(const Ref<InputEvent> &ev) {
 			}
 
 			if (!mb->is_pressed()) {
-				_make_context_menu(tx->is_selection_active(), can_fold, is_folded);
+				_make_context_menu(tx->is_selection_active(), can_fold, is_folded, get_local_mouse_position());
 			}
 		}
 	}
+
+	Ref<InputEventKey> k = ev;
+	if (k.is_valid() && k->is_pressed() && k->get_scancode() == KEY_MENU) {
+		TextEdit *tx = code_editor->get_text_edit();
+		int line = tx->cursor_get_line();
+		_make_context_menu(tx->is_selection_active(), tx->can_fold(line), tx->is_folded(line), (get_global_transform().inverse() * tx->get_global_transform()).xform(tx->_get_cursor_pixel_pos()));
+		context_menu->grab_focus();
+	}
 }
 
-void TextEditor::_make_context_menu(bool p_selection, bool p_can_fold, bool p_is_folded) {
+void TextEditor::_make_context_menu(bool p_selection, bool p_can_fold, bool p_is_folded, Vector2 p_position) {
 
 	context_menu->clear();
 	if (p_selection) {
@@ -609,7 +618,7 @@ void TextEditor::_make_context_menu(bool p_selection, bool p_can_fold, bool p_is
 	if (p_can_fold || p_is_folded)
 		context_menu->add_shortcut(ED_GET_SHORTCUT("script_text_editor/toggle_fold_line"), EDIT_TOGGLE_FOLD_LINE);
 
-	context_menu->set_position(get_global_transform().xform(get_local_mouse_position()));
+	context_menu->set_position(get_global_transform().xform(p_position));
 	context_menu->set_size(Vector2(1, 1));
 	context_menu->popup();
 }
@@ -704,7 +713,7 @@ TextEditor::TextEditor() {
 	goto_menu->get_popup()->add_separator();
 
 	bookmarks_menu = memnew(PopupMenu);
-	bookmarks_menu->set_name(TTR("Bookmarks"));
+	bookmarks_menu->set_name("Bookmarks");
 	goto_menu->get_popup()->add_child(bookmarks_menu);
 	goto_menu->get_popup()->add_submenu_item(TTR("Bookmarks"), "Bookmarks");
 	_update_bookmark_list();

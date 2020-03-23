@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -577,9 +577,8 @@ void Sprite3D::set_frame(int p_frame) {
 
 	ERR_FAIL_INDEX(p_frame, int64_t(vframes) * hframes);
 
-	if (frame != p_frame)
+	frame = p_frame;
 
-		frame = p_frame;
 	_queue_update();
 
 	_change_notify("frame");
@@ -593,8 +592,8 @@ int Sprite3D::get_frame() const {
 }
 
 void Sprite3D::set_frame_coords(const Vector2 &p_coord) {
-	ERR_FAIL_INDEX(int(p_coord.x), vframes);
-	ERR_FAIL_INDEX(int(p_coord.y), hframes);
+	ERR_FAIL_INDEX(int(p_coord.x), hframes);
+	ERR_FAIL_INDEX(int(p_coord.y), vframes);
 
 	set_frame(int(p_coord.y) * hframes + int(p_coord.x));
 }
@@ -661,6 +660,10 @@ void Sprite3D::_validate_property(PropertyInfo &property) const {
 	if (property.name == "frame") {
 		property.hint = PROPERTY_HINT_RANGE;
 		property.hint_string = "0," + itos(vframes * hframes - 1) + ",1";
+		property.usage |= PROPERTY_USAGE_KEYING_INCREMENTS;
+	}
+
+	if (property.name == "frame_coords") {
 		property.usage |= PROPERTY_USAGE_KEYING_INCREMENTS;
 	}
 }

@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -46,8 +46,6 @@ void CollisionObject2D::_notification(int p_what) {
 			else
 				Physics2DServer::get_singleton()->body_set_state(rid, Physics2DServer::BODY_STATE_TRANSFORM, global_transform);
 
-			last_transform = global_transform;
-
 			RID space = get_world_2d()->get_space();
 			if (area) {
 				Physics2DServer::get_singleton()->area_set_space(rid, space);
@@ -73,18 +71,16 @@ void CollisionObject2D::_notification(int p_what) {
 		} break;
 		case NOTIFICATION_TRANSFORM_CHANGED: {
 
-			Transform2D global_transform = get_global_transform();
-
-			if (only_update_transform_changes && global_transform == last_transform) {
+			if (only_update_transform_changes) {
 				return;
 			}
+
+			Transform2D global_transform = get_global_transform();
 
 			if (area)
 				Physics2DServer::get_singleton()->area_set_transform(rid, global_transform);
 			else
 				Physics2DServer::get_singleton()->body_set_state(rid, Physics2DServer::BODY_STATE_TRANSFORM, global_transform);
-
-			last_transform = global_transform;
 
 		} break;
 		case NOTIFICATION_EXIT_TREE: {

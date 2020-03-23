@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -39,7 +39,7 @@
 #include "scene/gui/control.h"
 #include "scene/main/instance_placeholder.h"
 
-#define PACK_VERSION 2
+#define PACKED_SCENE_VERSION 2
 
 bool SceneState::can_instance() const {
 
@@ -396,6 +396,9 @@ Error SceneState::_parse_node(Node *p_owner, Node *p_node, int p_parent_idx, Map
 	//really convoluted condition, but it basically checks that index is only saved when part of an inherited scene OR the node parent is from the edited scene
 	if (p_owner->get_scene_inherited_state().is_null() && (p_node == p_owner || (p_node->get_owner() == p_owner && (p_node->get_parent() == p_owner || p_node->get_parent()->get_owner() == p_owner)))) {
 		//do not save index, because it belongs to saved scene and scene is not inherited
+		nd.index = -1;
+	} else if (p_node == p_owner) {
+		//This (hopefully) happens if the node is a scene root, so its index is irrelevant.
 		nd.index = -1;
 	} else {
 		//part of an inherited scene, or parent is from an instanced scene
@@ -1092,7 +1095,15 @@ void SceneState::set_bundled_scene(const Dictionary &p_dictionary) {
 	if (p_dictionary.has("version"))
 		version = p_dictionary["version"];
 
-	ERR_FAIL_COND_MSG(version > PACK_VERSION, "Save format version too new.");
+	ERR_FAIL_COND_MSG(version > PACKED_SCENE_VERSION, "Save format version too new.");
+
+	const int node_count = p_dictionary["node_count"];
+	const PoolVector<int> snodes = p_dictionary["nodes"];
+	ERR_FAIL_COND(snodes.size() < node_count);
+
+	const int conn_count = p_dictionary["conn_count"];
+	const PoolVector<int> sconns = p_dictionary["conns"];
+	ERR_FAIL_COND(sconns.size() < conn_count);
 
 	PoolVector<String> snames = p_dictionary["names"];
 	if (snames.size()) {
@@ -1118,13 +1129,11 @@ void SceneState::set_bundled_scene(const Dictionary &p_dictionary) {
 		variants.clear();
 	}
 
-	nodes.resize(p_dictionary["node_count"]);
-	int nc = nodes.size();
-	if (nc) {
-		PoolVector<int> snodes = p_dictionary["nodes"];
+	nodes.resize(node_count);
+	if (node_count) {
 		PoolVector<int>::Read r = snodes.read();
 		int idx = 0;
-		for (int i = 0; i < nc; i++) {
+		for (int i = 0; i < node_count; i++) {
 			NodeData &nd = nodes.write[i];
 			nd.parent = r[idx++];
 			nd.owner = r[idx++];
@@ -1148,15 +1157,11 @@ void SceneState::set_bundled_scene(const Dictionary &p_dictionary) {
 		}
 	}
 
-	connections.resize(p_dictionary["conn_count"]);
-	int cc = connections.size();
-
-	if (cc) {
-
-		PoolVector<int> sconns = p_dictionary["conns"];
+	connections.resize(conn_count);
+	if (conn_count) {
 		PoolVector<int>::Read r = sconns.read();
 		int idx = 0;
-		for (int i = 0; i < cc; i++) {
+		for (int i = 0; i < conn_count; i++) {
 			ConnectionData &cd = connections.write[i];
 			cd.from = r[idx++];
 			cd.to = r[idx++];
@@ -1280,9 +1285,7 @@ Dictionary SceneState::get_bundled_scene() const {
 		d["base_scene"] = base_scene_idx;
 	}
 
-	d["version"] = PACK_VERSION;
-
-	//d["path"]=path;
+	d["version"] = PACKED_SCENE_VERSION;
 
 	return d;
 }

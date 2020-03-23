@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -145,13 +145,13 @@ _ResourceLoader::_ResourceLoader() {
 }
 
 Error _ResourceSaver::save(const String &p_path, const RES &p_resource, SaverFlags p_flags) {
-	ERR_FAIL_COND_V_MSG(p_resource.is_null(), ERR_INVALID_PARAMETER, "Can't save empty resource to path: " + String(p_path) + ".");
+	ERR_FAIL_COND_V_MSG(p_resource.is_null(), ERR_INVALID_PARAMETER, "Can't save empty resource to path '" + String(p_path) + "'.");
 	return ResourceSaver::save(p_path, p_resource, p_flags);
 }
 
 PoolVector<String> _ResourceSaver::get_recognized_extensions(const RES &p_resource) {
 
-	ERR_FAIL_COND_V(p_resource.is_null(), PoolVector<String>());
+	ERR_FAIL_COND_V_MSG(p_resource.is_null(), PoolVector<String>(), "It's not a reference to a valid Resource object.");
 	List<String> exts;
 	ResourceSaver::get_recognized_extensions(p_resource, &exts);
 	PoolVector<String> ret;
@@ -400,6 +400,10 @@ bool _OS::is_window_always_on_top() const {
 	return OS::get_singleton()->is_window_always_on_top();
 }
 
+bool _OS::is_window_focused() const {
+	return OS::get_singleton()->is_window_focused();
+}
+
 void _OS::set_borderless_window(bool p_borderless) {
 	OS::get_singleton()->set_borderless_window(p_borderless);
 }
@@ -468,6 +472,16 @@ bool _OS::is_in_low_processor_usage_mode() const {
 	return OS::get_singleton()->is_in_low_processor_usage_mode();
 }
 
+void _OS::set_low_processor_usage_mode_sleep_usec(int p_usec) {
+
+	OS::get_singleton()->set_low_processor_usage_mode_sleep_usec(p_usec);
+}
+
+int _OS::get_low_processor_usage_mode_sleep_usec() const {
+
+	return OS::get_singleton()->get_low_processor_usage_mode_sleep_usec();
+}
+
 String _OS::get_executable_path() const {
 
 	return OS::get_singleton()->get_executable_path();
@@ -481,15 +495,18 @@ Error _OS::shell_open(String p_uri) {
 int _OS::execute(const String &p_path, const Vector<String> &p_arguments, bool p_blocking, Array p_output, bool p_read_stderr) {
 
 	OS::ProcessID pid = -2;
+	int exitcode = 0;
 	List<String> args;
 	for (int i = 0; i < p_arguments.size(); i++)
 		args.push_back(p_arguments[i]);
 	String pipe;
-	Error err = OS::get_singleton()->execute(p_path, args, p_blocking, &pid, &pipe, NULL, p_read_stderr);
+	Error err = OS::get_singleton()->execute(p_path, args, p_blocking, &pid, &pipe, &exitcode, p_read_stderr);
 	p_output.clear();
 	p_output.push_back(pipe);
 	if (err != OK)
 		return -1;
+	else if (p_blocking)
+		return exitcode;
 	else
 		return pid;
 }
@@ -569,6 +586,15 @@ void _OS::set_use_vsync(bool p_enable) {
 bool _OS::is_vsync_enabled() const {
 
 	return OS::get_singleton()->is_vsync_enabled();
+}
+
+void _OS::set_vsync_via_compositor(bool p_enable) {
+	OS::get_singleton()->set_vsync_via_compositor(p_enable);
+}
+
+bool _OS::is_vsync_via_compositor_enabled() const {
+
+	return OS::get_singleton()->is_vsync_via_compositor_enabled();
 }
 
 _OS::PowerState _OS::get_power_state() {
@@ -664,6 +690,10 @@ int _OS::get_exit_code() const {
 
 void _OS::set_exit_code(int p_code) {
 
+	if (p_code < 0 || p_code > 125) {
+		WARN_PRINT("For portability reasons, the exit code should be set between 0 and 125 (inclusive).");
+	}
+
 	OS::get_singleton()->set_exit_code(p_code);
 }
 
@@ -755,7 +785,7 @@ int64_t _OS::get_unix_time_from_datetime(Dictionary datetime) const {
 	ERR_FAIL_COND_V_MSG(month > 12 || month == 0, 0, "Invalid month value of: " + itos(month) + ".");
 
 	// Do this check after month is tested as valid
-	ERR_FAIL_COND_V_MSG(day > MONTH_DAYS_TABLE[LEAPYEAR(year)][month - 1] || day == 0, 0, "Invalid day value of: " + itos(day) + " which is larger than " + itos(MONTH_DAYS_TABLE[LEAPYEAR(year)][month - 1]) + " or 0.");
+	ERR_FAIL_COND_V_MSG(day > MONTH_DAYS_TABLE[LEAPYEAR(year)][month - 1] || day == 0, 0, "Invalid day value of '" + itos(day) + "' which is larger than '" + itos(MONTH_DAYS_TABLE[LEAPYEAR(year)][month - 1]) + "' or 0.");
 	// Calculate all the seconds from months past in this year
 	uint64_t SECONDS_FROM_MONTHS_PAST_THIS_YEAR = DAYS_PAST_THIS_YEAR_TABLE[LEAPYEAR(year)][month - 1] * SECONDS_PER_DAY;
 
@@ -1133,6 +1163,16 @@ bool _OS::request_permission(const String &p_name) {
 	return OS::get_singleton()->request_permission(p_name);
 }
 
+bool _OS::request_permissions() {
+
+	return OS::get_singleton()->request_permissions();
+}
+
+Vector<String> _OS::get_granted_permissions() const {
+
+	return OS::get_singleton()->get_granted_permissions();
+}
+
 _OS *_OS::singleton = NULL;
 
 void _OS::_bind_methods() {
@@ -1190,6 +1230,7 @@ void _OS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_window_maximized"), &_OS::is_window_maximized);
 	ClassDB::bind_method(D_METHOD("set_window_always_on_top", "enabled"), &_OS::set_window_always_on_top);
 	ClassDB::bind_method(D_METHOD("is_window_always_on_top"), &_OS::is_window_always_on_top);
+	ClassDB::bind_method(D_METHOD("is_window_focused"), &_OS::is_window_focused);
 	ClassDB::bind_method(D_METHOD("request_attention"), &_OS::request_attention);
 	ClassDB::bind_method(D_METHOD("get_real_window_size"), &_OS::get_real_window_size);
 	ClassDB::bind_method(D_METHOD("center_window"), &_OS::center_window);
@@ -1219,10 +1260,13 @@ void _OS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_low_processor_usage_mode", "enable"), &_OS::set_low_processor_usage_mode);
 	ClassDB::bind_method(D_METHOD("is_in_low_processor_usage_mode"), &_OS::is_in_low_processor_usage_mode);
 
+	ClassDB::bind_method(D_METHOD("set_low_processor_usage_mode_sleep_usec", "usec"), &_OS::set_low_processor_usage_mode_sleep_usec);
+	ClassDB::bind_method(D_METHOD("get_low_processor_usage_mode_sleep_usec"), &_OS::get_low_processor_usage_mode_sleep_usec);
+
 	ClassDB::bind_method(D_METHOD("get_processor_count"), &_OS::get_processor_count);
 
 	ClassDB::bind_method(D_METHOD("get_executable_path"), &_OS::get_executable_path);
-	ClassDB::bind_method(D_METHOD("execute", "path", "arguments", "blocking", "output", "read_stderr"), &_OS::execute, DEFVAL(Array()), DEFVAL(false));
+	ClassDB::bind_method(D_METHOD("execute", "path", "arguments", "blocking", "output", "read_stderr"), &_OS::execute, DEFVAL(true), DEFVAL(Array()), DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("kill", "pid"), &_OS::kill);
 	ClassDB::bind_method(D_METHOD("shell_open", "uri"), &_OS::shell_open);
 	ClassDB::bind_method(D_METHOD("get_process_id"), &_OS::get_process_id);
@@ -1309,6 +1353,9 @@ void _OS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_use_vsync", "enable"), &_OS::set_use_vsync);
 	ClassDB::bind_method(D_METHOD("is_vsync_enabled"), &_OS::is_vsync_enabled);
 
+	ClassDB::bind_method(D_METHOD("set_vsync_via_compositor", "enable"), &_OS::set_vsync_via_compositor);
+	ClassDB::bind_method(D_METHOD("is_vsync_via_compositor_enabled"), &_OS::is_vsync_via_compositor_enabled);
+
 	ClassDB::bind_method(D_METHOD("has_feature", "tag_name"), &_OS::has_feature);
 
 	ClassDB::bind_method(D_METHOD("get_power_state"), &_OS::get_power_state);
@@ -1316,12 +1363,16 @@ void _OS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_power_percent_left"), &_OS::get_power_percent_left);
 
 	ClassDB::bind_method(D_METHOD("request_permission", "name"), &_OS::request_permission);
+	ClassDB::bind_method(D_METHOD("request_permissions"), &_OS::request_permissions);
+	ClassDB::bind_method(D_METHOD("get_granted_permissions"), &_OS::get_granted_permissions);
 
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "clipboard"), "set_clipboard", "get_clipboard");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "current_screen"), "set_current_screen", "get_current_screen");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "exit_code"), "set_exit_code", "get_exit_code");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "vsync_enabled"), "set_use_vsync", "is_vsync_enabled");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "vsync_via_compositor"), "set_vsync_via_compositor", "is_vsync_via_compositor_enabled");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "low_processor_usage_mode"), "set_low_processor_usage_mode", "is_in_low_processor_usage_mode");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "low_processor_usage_mode_sleep_usec"), "set_low_processor_usage_mode_sleep_usec", "get_low_processor_usage_mode_sleep_usec");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "keep_screen_on"), "set_keep_screen_on", "is_keep_screen_on");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "min_window_size"), "set_min_window_size", "get_min_window_size");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "max_window_size"), "set_max_window_size", "get_max_window_size");
@@ -1342,7 +1393,9 @@ void _OS::_bind_methods() {
 	ADD_PROPERTY_DEFAULT("current_screen", 0);
 	ADD_PROPERTY_DEFAULT("exit_code", 0);
 	ADD_PROPERTY_DEFAULT("vsync_enabled", true);
+	ADD_PROPERTY_DEFAULT("vsync_via_compositor", false);
 	ADD_PROPERTY_DEFAULT("low_processor_usage_mode", false);
+	ADD_PROPERTY_DEFAULT("low_processor_usage_mode_sleep_usec", 6900);
 	ADD_PROPERTY_DEFAULT("keep_screen_on", true);
 	ADD_PROPERTY_DEFAULT("min_window_size", Vector2());
 	ADD_PROPERTY_DEFAULT("max_window_size", Vector2());
@@ -1866,92 +1919,92 @@ bool _File::is_open() const {
 }
 String _File::get_path() const {
 
-	ERR_FAIL_COND_V(!f, "");
+	ERR_FAIL_COND_V_MSG(!f, "", "File must be opened before use.");
 	return f->get_path();
 }
 
 String _File::get_path_absolute() const {
 
-	ERR_FAIL_COND_V(!f, "");
+	ERR_FAIL_COND_V_MSG(!f, "", "File must be opened before use.");
 	return f->get_path_absolute();
 }
 
 void _File::seek(int64_t p_position) {
 
-	ERR_FAIL_COND(!f);
+	ERR_FAIL_COND_MSG(!f, "File must be opened before use.");
 	f->seek(p_position);
 }
 void _File::seek_end(int64_t p_position) {
 
-	ERR_FAIL_COND(!f);
+	ERR_FAIL_COND_MSG(!f, "File must be opened before use.");
 	f->seek_end(p_position);
 }
 int64_t _File::get_position() const {
 
-	ERR_FAIL_COND_V(!f, 0);
+	ERR_FAIL_COND_V_MSG(!f, 0, "File must be opened before use.");
 	return f->get_position();
 }
 
 int64_t _File::get_len() const {
 
-	ERR_FAIL_COND_V(!f, 0);
+	ERR_FAIL_COND_V_MSG(!f, 0, "File must be opened before use.");
 	return f->get_len();
 }
 
 bool _File::eof_reached() const {
 
-	ERR_FAIL_COND_V(!f, false);
+	ERR_FAIL_COND_V_MSG(!f, false, "File must be opened before use.");
 	return f->eof_reached();
 }
 
 uint8_t _File::get_8() const {
 
-	ERR_FAIL_COND_V(!f, 0);
+	ERR_FAIL_COND_V_MSG(!f, 0, "File must be opened before use.");
 	return f->get_8();
 }
 uint16_t _File::get_16() const {
 
-	ERR_FAIL_COND_V(!f, 0);
+	ERR_FAIL_COND_V_MSG(!f, 0, "File must be opened before use.");
 	return f->get_16();
 }
 uint32_t _File::get_32() const {
 
-	ERR_FAIL_COND_V(!f, 0);
+	ERR_FAIL_COND_V_MSG(!f, 0, "File must be opened before use.");
 	return f->get_32();
 }
 uint64_t _File::get_64() const {
 
-	ERR_FAIL_COND_V(!f, 0);
+	ERR_FAIL_COND_V_MSG(!f, 0, "File must be opened before use.");
 	return f->get_64();
 }
 
 float _File::get_float() const {
 
-	ERR_FAIL_COND_V(!f, 0);
+	ERR_FAIL_COND_V_MSG(!f, 0, "File must be opened before use.");
 	return f->get_float();
 }
 double _File::get_double() const {
 
-	ERR_FAIL_COND_V(!f, 0);
+	ERR_FAIL_COND_V_MSG(!f, 0, "File must be opened before use.");
 	return f->get_double();
 }
 real_t _File::get_real() const {
 
-	ERR_FAIL_COND_V(!f, 0);
+	ERR_FAIL_COND_V_MSG(!f, 0, "File must be opened before use.");
 	return f->get_real();
 }
 
 PoolVector<uint8_t> _File::get_buffer(int p_length) const {
 
 	PoolVector<uint8_t> data;
-	ERR_FAIL_COND_V(!f, data);
+	ERR_FAIL_COND_V_MSG(!f, data, "File must be opened before use.");
 
-	ERR_FAIL_COND_V(p_length < 0, data);
+	ERR_FAIL_COND_V_MSG(p_length < 0, data, "Length of buffer cannot be smaller than 0.");
 	if (p_length == 0)
 		return data;
 
 	Error err = data.resize(p_length);
-	ERR_FAIL_COND_V(err != OK, data);
+	ERR_FAIL_COND_V_MSG(err != OK, data, "Can't resize data to " + itos(p_length) + " elements.");
 
 	PoolVector<uint8_t>::Write w = data.write();
 	int len = f->get_buffer(&w[0], p_length);
@@ -1967,7 +2020,7 @@ PoolVector<uint8_t> _File::get_buffer(int p_length) const {
 
 String _File::get_as_text() const {
 
-	ERR_FAIL_COND_V(!f, String());
+	ERR_FAIL_COND_V_MSG(!f, String(), "File must be opened before use.");
 
 	String text;
 	size_t original_pos = f->get_position();
@@ -1997,12 +2050,12 @@ String _File::get_sha256(const String &p_path) const {
 
 String _File::get_line() const {
 
-	ERR_FAIL_COND_V(!f, String());
+	ERR_FAIL_COND_V_MSG(!f, String(), "File must be opened before use.");
 	return f->get_line();
 }
 
 Vector<String> _File::get_csv_line(const String &p_delim) const {
-	ERR_FAIL_COND_V(!f, Vector<String>());
+	ERR_FAIL_COND_V_MSG(!f, Vector<String>(), "File must be opened before use.");
 	return f->get_csv_line(p_delim);
 }
 
@@ -2031,83 +2084,83 @@ Error _File::get_error() const {
 
 void _File::store_8(uint8_t p_dest) {
 
-	ERR_FAIL_COND(!f);
+	ERR_FAIL_COND_MSG(!f, "File must be opened before use.");
 
 	f->store_8(p_dest);
 }
 void _File::store_16(uint16_t p_dest) {
 
-	ERR_FAIL_COND(!f);
+	ERR_FAIL_COND_MSG(!f, "File must be opened before use.");
 
 	f->store_16(p_dest);
 }
 void _File::store_32(uint32_t p_dest) {
 
-	ERR_FAIL_COND(!f);
+	ERR_FAIL_COND_MSG(!f, "File must be opened before use.");
 
 	f->store_32(p_dest);
 }
 void _File::store_64(uint64_t p_dest) {
 
-	ERR_FAIL_COND(!f);
+	ERR_FAIL_COND_MSG(!f, "File must be opened before use.");
 
 	f->store_64(p_dest);
 }
 
 void _File::store_float(float p_dest) {
 
-	ERR_FAIL_COND(!f);
+	ERR_FAIL_COND_MSG(!f, "File must be opened before use.");
 
 	f->store_float(p_dest);
 }
 void _File::store_double(double p_dest) {
 
-	ERR_FAIL_COND(!f);
+	ERR_FAIL_COND_MSG(!f, "File must be opened before use.");
 
 	f->store_double(p_dest);
 }
 void _File::store_real(real_t p_real) {
 
-	ERR_FAIL_COND(!f);
+	ERR_FAIL_COND_MSG(!f, "File must be opened before use.");
 
 	f->store_real(p_real);
 }
 
 void _File::store_string(const String &p_string) {
 
-	ERR_FAIL_COND(!f);
+	ERR_FAIL_COND_MSG(!f, "File must be opened before use.");
 
 	f->store_string(p_string);
 }
 
 void _File::store_pascal_string(const String &p_string) {
 
-	ERR_FAIL_COND(!f);
+	ERR_FAIL_COND_MSG(!f, "File must be opened before use.");
 
 	f->store_pascal_string(p_string);
 };
 
 String _File::get_pascal_string() {
 
-	ERR_FAIL_COND_V(!f, "");
+	ERR_FAIL_COND_V_MSG(!f, "", "File must be opened before use.");
 
 	return f->get_pascal_string();
 };
 
 void _File::store_line(const String &p_string) {
 
-	ERR_FAIL_COND(!f);
+	ERR_FAIL_COND_MSG(!f, "File must be opened before use.");
 	f->store_line(p_string);
 }
 
 void _File::store_csv_line(const Vector<String> &p_values, const String &p_delim) {
-	ERR_FAIL_COND(!f);
+	ERR_FAIL_COND_MSG(!f, "File must be opened before use.");
 	f->store_csv_line(p_values, p_delim);
 }
 
 void _File::store_buffer(const PoolVector<uint8_t> &p_buffer) {
 
-	ERR_FAIL_COND(!f);
+	ERR_FAIL_COND_MSG(!f, "File must be opened before use.");
 
 	int len = p_buffer.size();
 	if (len == 0)
@@ -2125,17 +2178,17 @@ bool _File::file_exists(const String &p_name) const {
 
 void _File::store_var(const Variant &p_var, bool p_full_objects) {
 
-	ERR_FAIL_COND(!f);
+	ERR_FAIL_COND_MSG(!f, "File must be opened before use.");
 	int len;
 	Error err = encode_variant(p_var, NULL, len, p_full_objects);
-	ERR_FAIL_COND(err != OK);
+	ERR_FAIL_COND_MSG(err != OK, "Error when trying to encode Variant.");
 
 	PoolVector<uint8_t> buff;
 	buff.resize(len);
 
 	PoolVector<uint8_t>::Write w = buff.write();
 	err = encode_variant(p_var, &w[0], len, p_full_objects);
-	ERR_FAIL_COND(err != OK);
+	ERR_FAIL_COND_MSG(err != OK, "Error when trying to encode Variant.");
 	w.release();
 
 	store_32(len);
@@ -2144,7 +2197,7 @@ void _File::store_var(const Variant &p_var, bool p_full_objects) {
 
 Variant _File::get_var(bool p_allow_objects) const {
 
-	ERR_FAIL_COND_V(!f, Variant());
+	ERR_FAIL_COND_V_MSG(!f, Variant(), "File must be opened before use.");
 	uint32_t len = get_32();
 	PoolVector<uint8_t> buff = get_buffer(len);
 	ERR_FAIL_COND_V((uint32_t)buff.size() != len, Variant());
@@ -2153,7 +2206,7 @@ Variant _File::get_var(bool p_allow_objects) const {
 
 	Variant v;
 	Error err = decode_variant(v, &r[0], len, NULL, p_allow_objects);
-	ERR_FAIL_COND_V(err != OK, Variant());
+	ERR_FAIL_COND_V_MSG(err != OK, Variant(), "Error when trying to encode Variant.");
 
 	return v;
 }
@@ -2258,7 +2311,7 @@ Error _Directory::open(const String &p_path) {
 
 Error _Directory::list_dir_begin(bool p_skip_navigational, bool p_skip_hidden) {
 
-	ERR_FAIL_COND_V(!d, ERR_UNCONFIGURED);
+	ERR_FAIL_COND_V_MSG(!d, ERR_UNCONFIGURED, "Directory must be opened before use.");
 
 	_list_skip_navigational = p_skip_navigational;
 	_list_skip_hidden = p_skip_hidden;
@@ -2268,7 +2321,7 @@ Error _Directory::list_dir_begin(bool p_skip_navigational, bool p_skip_hidden) {
 
 String _Directory::get_next() {
 
-	ERR_FAIL_COND_V(!d, "");
+	ERR_FAIL_COND_V_MSG(!d, "", "Directory must be opened before use.");
 
 	String next = d->get_next();
 	while (next != "" && ((_list_skip_navigational && (next == "." || next == "..")) || (_list_skip_hidden && d->current_is_hidden()))) {
@@ -2279,44 +2332,44 @@ String _Directory::get_next() {
 }
 bool _Directory::current_is_dir() const {
 
-	ERR_FAIL_COND_V(!d, false);
+	ERR_FAIL_COND_V_MSG(!d, false, "Directory must be opened before use.");
 	return d->current_is_dir();
 }
 
 void _Directory::list_dir_end() {
 
-	ERR_FAIL_COND(!d);
+	ERR_FAIL_COND_MSG(!d, "Directory must be opened before use.");
 	d->list_dir_end();
 }
 
 int _Directory::get_drive_count() {
 
-	ERR_FAIL_COND_V(!d, 0);
+	ERR_FAIL_COND_V_MSG(!d, 0, "Directory must be opened before use.");
 	return d->get_drive_count();
 }
 String _Directory::get_drive(int p_drive) {
 
-	ERR_FAIL_COND_V(!d, "");
+	ERR_FAIL_COND_V_MSG(!d, "", "Directory must be opened before use.");
 	return d->get_drive(p_drive);
 }
 int _Directory::get_current_drive() {
-	ERR_FAIL_COND_V(!d, 0);
+	ERR_FAIL_COND_V_MSG(!d, 0, "Directory must be opened before use.");
 	return d->get_current_drive();
 }
 
 Error _Directory::change_dir(String p_dir) {
 
-	ERR_FAIL_COND_V(!d, ERR_UNCONFIGURED);
+	ERR_FAIL_COND_V_MSG(!d, ERR_UNCONFIGURED, "Directory must be opened before use.");
 	return d->change_dir(p_dir);
 }
 String _Directory::get_current_dir() {
 
-	ERR_FAIL_COND_V(!d, "");
+	ERR_FAIL_COND_V_MSG(!d, "", "Directory must be opened before use.");
 	return d->get_current_dir();
 }
 Error _Directory::make_dir(String p_dir) {
 
-	ERR_FAIL_COND_V(!d, ERR_UNCONFIGURED);
+	ERR_FAIL_COND_V_MSG(!d, ERR_UNCONFIGURED, "Directory must be opened before use.");
 	if (!p_dir.is_rel_path()) {
 		DirAccess *d = DirAccess::create_for_path(p_dir);
 		Error err = d->make_dir(p_dir);
@@ -2327,7 +2380,7 @@ Error _Directory::make_dir(String p_dir) {
 }
 Error _Directory::make_dir_recursive(String p_dir) {
 
-	ERR_FAIL_COND_V(!d, ERR_UNCONFIGURED);
+	ERR_FAIL_COND_V_MSG(!d, ERR_UNCONFIGURED, "Directory must be opened before use.");
 	if (!p_dir.is_rel_path()) {
 		DirAccess *d = DirAccess::create_for_path(p_dir);
 		Error err = d->make_dir_recursive(p_dir);
@@ -2339,7 +2392,7 @@ Error _Directory::make_dir_recursive(String p_dir) {
 
 bool _Directory::file_exists(String p_file) {
 
-	ERR_FAIL_COND_V(!d, false);
+	ERR_FAIL_COND_V_MSG(!d, false, "Directory must be opened before use.");
 
 	if (!p_file.is_rel_path()) {
 		return FileAccess::exists(p_file);
@@ -2349,7 +2402,7 @@ bool _Directory::file_exists(String p_file) {
 }
 
 bool _Directory::dir_exists(String p_dir) {
-	ERR_FAIL_COND_V(!d, false);
+	ERR_FAIL_COND_V_MSG(!d, false, "Directory must be opened before use.");
 	if (!p_dir.is_rel_path()) {
 
 		DirAccess *d = DirAccess::create_for_path(p_dir);
@@ -2364,18 +2417,18 @@ bool _Directory::dir_exists(String p_dir) {
 
 int _Directory::get_space_left() {
 
-	ERR_FAIL_COND_V(!d, 0);
+	ERR_FAIL_COND_V_MSG(!d, 0, "Directory must be opened before use.");
 	return d->get_space_left() / 1024 * 1024; //return value in megabytes, given binding is int
 }
 
 Error _Directory::copy(String p_from, String p_to) {
 
-	ERR_FAIL_COND_V(!d, ERR_UNCONFIGURED);
+	ERR_FAIL_COND_V_MSG(!d, ERR_UNCONFIGURED, "Directory must be opened before use.");
 	return d->copy(p_from, p_to);
 }
 Error _Directory::rename(String p_from, String p_to) {
 
-	ERR_FAIL_COND_V(!d, ERR_UNCONFIGURED);
+	ERR_FAIL_COND_V_MSG(!d, ERR_UNCONFIGURED, "Directory must be opened before use.");
 	if (!p_from.is_rel_path()) {
 		DirAccess *d = DirAccess::create_for_path(p_from);
 		Error err = d->rename(p_from, p_to);
@@ -2387,7 +2440,7 @@ Error _Directory::rename(String p_from, String p_to) {
 }
 Error _Directory::remove(String p_name) {
 
-	ERR_FAIL_COND_V(!d, ERR_UNCONFIGURED);
+	ERR_FAIL_COND_V_MSG(!d, ERR_UNCONFIGURED, "Directory must be opened before use.");
 	if (!p_name.is_rel_path()) {
 		DirAccess *d = DirAccess::create_for_path(p_name);
 		Error err = d->remove(p_name);
@@ -2442,14 +2495,14 @@ String _Marshalls::variant_to_base64(const Variant &p_var, bool p_full_objects) 
 
 	int len;
 	Error err = encode_variant(p_var, NULL, len, p_full_objects);
-	ERR_FAIL_COND_V(err != OK, "");
+	ERR_FAIL_COND_V_MSG(err != OK, "", "Error when trying to encode Variant.");
 
 	PoolVector<uint8_t> buff;
 	buff.resize(len);
 	PoolVector<uint8_t>::Write w = buff.write();
 
 	err = encode_variant(p_var, &w[0], len, p_full_objects);
-	ERR_FAIL_COND_V(err != OK, "");
+	ERR_FAIL_COND_V_MSG(err != OK, "", "Error when trying to encode Variant.");
 
 	String ret = CryptoCore::b64_encode_str(&w[0], len);
 	ERR_FAIL_COND_V(ret == "", ret);
@@ -2471,7 +2524,7 @@ Variant _Marshalls::base64_to_variant(const String &p_str, bool p_allow_objects)
 
 	Variant v;
 	Error err = decode_variant(v, &w[0], len, NULL, p_allow_objects);
-	ERR_FAIL_COND_V(err != OK, Variant());
+	ERR_FAIL_COND_V_MSG(err != OK, Variant(), "Error when trying to decode Variant.");
 
 	return v;
 };
@@ -2638,13 +2691,13 @@ void _Thread::_start_func(void *ud) {
 			}
 		}
 
-		ERR_FAIL_MSG("Could not call function '" + t->target_method.operator String() + "'' starting thread ID: " + t->get_id() + " Reason: " + reason + ".");
+		ERR_FAIL_MSG("Could not call function '" + t->target_method.operator String() + "' to start thread " + t->get_id() + ": " + reason + ".");
 	}
 }
 
 Error _Thread::start(Object *p_instance, const StringName &p_method, const Variant &p_userdata, Priority p_priority) {
 
-	ERR_FAIL_COND_V(active, ERR_ALREADY_IN_USE);
+	ERR_FAIL_COND_V_MSG(active, ERR_ALREADY_IN_USE, "Thread already started.");
 	ERR_FAIL_COND_V(!p_instance, ERR_INVALID_PARAMETER);
 	ERR_FAIL_COND_V(p_method == StringName(), ERR_INVALID_PARAMETER);
 	ERR_FAIL_INDEX_V(p_priority, PRIORITY_MAX, ERR_INVALID_PARAMETER);
@@ -2685,8 +2738,8 @@ bool _Thread::is_active() const {
 }
 Variant _Thread::wait_to_finish() {
 
-	ERR_FAIL_COND_V(!thread, Variant());
-	ERR_FAIL_COND_V(!active, Variant());
+	ERR_FAIL_COND_V_MSG(!thread, Variant(), "Thread must exist to wait for its completion.");
+	ERR_FAIL_COND_V_MSG(!active, Variant(), "Thread must be active to wait for its completion.");
 	Thread::wait_to_finish(thread);
 	Variant r = ret;
 	active = false;
@@ -2720,8 +2773,9 @@ _Thread::_Thread() {
 
 _Thread::~_Thread() {
 
-	ERR_FAIL_COND_MSG(active, "Reference to a Thread object object was lost while the thread is still running...");
+	ERR_FAIL_COND_MSG(active, "Reference to a Thread object was lost while the thread is still running...");
 }
+
 /////////////////////////////////////
 
 PoolStringArray _ClassDB::get_class_list() const {
@@ -2971,6 +3025,16 @@ float _Engine::get_frames_per_second() const {
 	return Engine::get_singleton()->get_frames_per_second();
 }
 
+uint64_t _Engine::get_physics_frames() const {
+
+	return Engine::get_singleton()->get_physics_frames();
+}
+
+uint64_t _Engine::get_idle_frames() const {
+
+	return Engine::get_singleton()->get_idle_frames();
+}
+
 void _Engine::set_time_scale(float p_scale) {
 	Engine::get_singleton()->set_time_scale(p_scale);
 }
@@ -3055,6 +3119,8 @@ void _Engine::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("get_frames_drawn"), &_Engine::get_frames_drawn);
 	ClassDB::bind_method(D_METHOD("get_frames_per_second"), &_Engine::get_frames_per_second);
+	ClassDB::bind_method(D_METHOD("get_physics_frames"), &_Engine::get_physics_frames);
+	ClassDB::bind_method(D_METHOD("get_idle_frames"), &_Engine::get_idle_frames);
 
 	ClassDB::bind_method(D_METHOD("get_main_loop"), &_Engine::get_main_loop);
 
@@ -3150,6 +3216,9 @@ Ref<JSONParseResult> _JSON::parse(const String &p_json) {
 
 	result->error = JSON::parse(p_json, result->result, result->error_string, result->error_line);
 
+	if (result->error != OK) {
+		ERR_PRINTS(vformat("Error parsing JSON at line %s: %s", result->error_line, result->error_string));
+	}
 	return result;
 }
 

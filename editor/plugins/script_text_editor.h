@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -59,6 +59,7 @@ class ScriptTextEditor : public ScriptEditorBase {
 	RichTextLabel *warnings_panel;
 
 	Ref<Script> script;
+	bool script_is_valid;
 
 	Vector<String> functions;
 
@@ -91,6 +92,7 @@ class ScriptTextEditor : public ScriptEditorBase {
 		Color keyword_color;
 		Color basetype_color;
 		Color type_color;
+		Color usertype_color;
 		Color comment_color;
 		Color string_color;
 	} colors_cache;
@@ -169,7 +171,7 @@ protected:
 
 	void _edit_option(int p_op);
 	void _edit_option_toggle_inline_comment();
-	void _make_context_menu(bool p_selection, bool p_color, bool p_foldable, bool p_open_docs, bool p_goto_definition);
+	void _make_context_menu(bool p_selection, bool p_color, bool p_foldable, bool p_open_docs, bool p_goto_definition, Vector2 p_pos);
 	void _text_edit_gui_input(const Ref<InputEvent> &ev);
 	void _color_changed(const Color &p_color);
 
@@ -189,6 +191,7 @@ public:
 
 	virtual void add_syntax_highlighter(SyntaxHighlighter *p_highlighter);
 	virtual void set_syntax_highlighter(SyntaxHighlighter *p_highlighter);
+	void update_toggle_scripts_button();
 
 	virtual void apply_code();
 	virtual RES get_edited_resource() const;

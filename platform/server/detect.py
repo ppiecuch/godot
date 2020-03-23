@@ -159,10 +159,14 @@ def configure(env):
             sys.exit(255)
         env.ParseConfig('pkg-config bullet --cflags --libs')
 
+    if False:  # not env['builtin_assimp']:
+        # FIXME: Add min version check
+        env.ParseConfig('pkg-config assimp --cflags --libs')
+
     if not env['builtin_enet']:
         env.ParseConfig('pkg-config libenet --cflags --libs')
 
-    if not env['builtin_squish'] and env['tools']:
+    if not env['builtin_squish']:
         env.ParseConfig('pkg-config libsquish --cflags --libs')
 
     if not env['builtin_zstd']:

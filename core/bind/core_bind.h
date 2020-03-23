@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -198,6 +198,7 @@ public:
 	virtual bool is_window_maximized() const;
 	virtual void set_window_always_on_top(bool p_enabled);
 	virtual bool is_window_always_on_top() const;
+	virtual bool is_window_focused() const;
 	virtual void request_attention();
 	virtual void center_window();
 	virtual void move_window_to_foreground();
@@ -222,8 +223,11 @@ public:
 	void set_low_processor_usage_mode(bool p_enabled);
 	bool is_in_low_processor_usage_mode() const;
 
+	void set_low_processor_usage_mode_sleep_usec(int p_usec);
+	int get_low_processor_usage_mode_sleep_usec() const;
+
 	String get_executable_path() const;
-	int execute(const String &p_path, const Vector<String> &p_arguments, bool p_blocking, Array p_output = Array(), bool p_read_stderr = false);
+	int execute(const String &p_path, const Vector<String> &p_arguments, bool p_blocking = true, Array p_output = Array(), bool p_read_stderr = false);
 
 	Error kill(int p_pid);
 	Error shell_open(String p_uri);
@@ -342,6 +346,9 @@ public:
 	void set_use_vsync(bool p_enable);
 	bool is_vsync_enabled() const;
 
+	void set_vsync_via_compositor(bool p_enable);
+	bool is_vsync_via_compositor_enabled() const;
+
 	PowerState get_power_state();
 	int get_power_seconds_left();
 	int get_power_percent_left();
@@ -349,6 +356,8 @@ public:
 	bool has_feature(const String &p_feature) const;
 
 	bool request_permission(const String &p_name);
+	bool request_permissions();
+	Vector<String> get_granted_permissions() const;
 
 	static _OS *get_singleton() { return singleton; }
 
@@ -589,9 +598,9 @@ private:
 	bool _list_skip_hidden;
 };
 
-class _Marshalls : public Reference {
+class _Marshalls : public Object {
 
-	GDCLASS(_Marshalls, Reference);
+	GDCLASS(_Marshalls, Object);
 
 	static _Marshalls *singleton;
 
@@ -738,6 +747,8 @@ public:
 	int get_target_fps() const;
 
 	float get_frames_per_second() const;
+	uint64_t get_physics_frames() const;
+	uint64_t get_idle_frames() const;
 
 	int get_frames_drawn();
 

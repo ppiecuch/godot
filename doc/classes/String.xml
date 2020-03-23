@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="String" category="Built-In Types" version="3.2">
+<class name="String" version="3.2">
 	<brief_description>
 		Built-in string class.
 	</brief_description>
@@ -366,7 +366,7 @@
 			</return>
 			<argument index="0" name="values" type="Variant">
 			</argument>
-			<argument index="1" name="placeholder" type="String" default="{_}">
+			<argument index="1" name="placeholder" type="String" default="&quot;{_}&quot;">
 			</argument>
 			<description>
 				Formats the string by replacing all occurrences of [code]placeholder[/code] with [code]values[/code].
@@ -437,6 +437,20 @@
 				[/codeblock]
 			</description>
 		</method>
+		<method name="humanize_size">
+			<return type="String">
+			</return>
+			<argument index="0" name="size" type="int">
+			</argument>
+			<description>
+				Converts [code]size[/code] represented as number of bytes to human-readable format using internationalized set of data size units, namely: B, KiB, MiB, GiB, TiB, PiB, EiB. Note that the next smallest unit is picked automatically to hold at most 1024 units.
+				[codeblock]
+				var bytes = 133790307
+				var size = String.humanize_size(bytes)
+				print(size) # prints "127.5 MiB"
+				[/codeblock]
+			</description>
+		</method>
 		<method name="insert">
 			<return type="String">
 			</return>
@@ -445,7 +459,7 @@
 			<argument index="1" name="what" type="String">
 			</argument>
 			<description>
-				Inserts a substring at a given position.
+				Returns a copy of the string with the substring [code]what[/code] inserted at the given position.
 			</description>
 		</method>
 		<method name="is_abs_path">
@@ -498,7 +512,7 @@
 		<method name="is_valid_hex_number">
 			<return type="bool">
 			</return>
-			<argument index="0" name="with_prefix" type="bool" default="False">
+			<argument index="0" name="with_prefix" type="bool" default="false">
 			</argument>
 			<description>
 				Returns [code]true[/code] if this string contains a valid hexadecimal number. If [code]with_prefix[/code] is [code]true[/code], then a validity of the hexadecimal number is determined by [code]0x[/code] prefix, for instance: [code]0xDEADC0DE[/code].
@@ -655,6 +669,15 @@
 				If the string is a path, this concatenates [code]file[/code] at the end of the string as a subpath. E.g. [code]"this/is".plus_file("path") == "this/is/path"[/code].
 			</description>
 		</method>
+		<method name="repeat">
+			<return type="String">
+			</return>
+			<argument index="0" name="count" type="int">
+			</argument>
+			<description>
+				Returns original string repeated a number of times. The number of repetitions is given by the argument.
+			</description>
+		</method>
 		<method name="replace">
 			<return type="String">
 			</return>
@@ -713,7 +736,7 @@
 			</return>
 			<argument index="0" name="delimiter" type="String">
 			</argument>
-			<argument index="1" name="allow_empty" type="bool" default="True">
+			<argument index="1" name="allow_empty" type="bool" default="true">
 			</argument>
 			<argument index="2" name="maxsplit" type="int" default="0">
 			</argument>
@@ -721,7 +744,14 @@
 				Splits the string by a [code]delimiter[/code] string and returns an array of the substrings, starting from right.
 				The splits in the returned array are sorted in the same order as the original string, from left to right.
 				If [code]maxsplit[/code] is specified, it defines the number of splits to do from the right up to [code]maxsplit[/code]. The default value of 0 means that all items are split, thus giving the same result as [method split].
-				For example, [code]"One,Two,Three,Four"[/code] will return [code]["Three","Four"][/code] if split by [code]","[/code] with a [code]maxsplit[/code] value of 2.
+				Example:
+				[codeblock]
+				var some_string = "One,Two,Three,Four"
+				var some_array = some_string.rsplit(",", true, 1)
+				print(some_array.size()) # Prints 2
+				print(some_array[0]) # Prints "Four"
+				print(some_array[1]) # Prints "Three,Two,One"
+				[/codeblock]
 			</description>
 		</method>
 		<method name="rstrip">
@@ -775,14 +805,21 @@
 			</return>
 			<argument index="0" name="delimiter" type="String">
 			</argument>
-			<argument index="1" name="allow_empty" type="bool" default="True">
+			<argument index="1" name="allow_empty" type="bool" default="true">
 			</argument>
 			<argument index="2" name="maxsplit" type="int" default="0">
 			</argument>
 			<description>
 				Splits the string by a [code]delimiter[/code] string and returns an array of the substrings.
 				If [code]maxsplit[/code] is specified, it defines the number of splits to do from the left up to [code]maxsplit[/code]. The default value of 0 means that all items are split.
-				For example, [code]"One,Two,Three"[/code] will return [code]["One","Two"][/code] if split by [code]","[/code] with a [code]maxsplit[/code] value of 2.
+				Example:
+				[codeblock]
+				var some_string = "One,Two,Three,Four"
+				var some_array = some_string.split(",", true, 1)
+				print(some_array.size()) # Prints 2
+				print(some_array[0]) # Prints "One"
+				print(some_array[1]) # Prints "Two,Three,Four"
+				[/codeblock]
 			</description>
 		</method>
 		<method name="split_floats">
@@ -790,7 +827,7 @@
 			</return>
 			<argument index="0" name="delimiter" type="String">
 			</argument>
-			<argument index="1" name="allow_empty" type="bool" default="True">
+			<argument index="1" name="allow_empty" type="bool" default="true">
 			</argument>
 			<description>
 				Splits the string in floats by using a delimiter string and returns an array of the substrings.
@@ -800,9 +837,9 @@
 		<method name="strip_edges">
 			<return type="String">
 			</return>
-			<argument index="0" name="left" type="bool" default="True">
+			<argument index="0" name="left" type="bool" default="true">
 			</argument>
-			<argument index="1" name="right" type="bool" default="True">
+			<argument index="1" name="right" type="bool" default="true">
 			</argument>
 			<description>
 				Returns a copy of the string stripped of any non-printable character (including tabulations, spaces and line breaks) at the beginning and the end. The optional arguments are used to toggle stripping on the left and right edges respectively.

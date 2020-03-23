@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -378,10 +378,10 @@ Error ResourceInteractiveLoaderBinary::parse_variant(Variant &r_v) {
 			for (uint32_t i = 0; i < len; i++) {
 				Variant key;
 				Error err = parse_variant(key);
-				ERR_FAIL_COND_V(err, ERR_FILE_CORRUPT);
+				ERR_FAIL_COND_V_MSG(err, ERR_FILE_CORRUPT, "Error when trying to parse Variant.");
 				Variant value;
 				err = parse_variant(value);
-				ERR_FAIL_COND_V(err, ERR_FILE_CORRUPT);
+				ERR_FAIL_COND_V_MSG(err, ERR_FILE_CORRUPT, "Error when trying to parse Variant.");
 				d[key] = value;
 			}
 			r_v = d;
@@ -395,7 +395,7 @@ Error ResourceInteractiveLoaderBinary::parse_variant(Variant &r_v) {
 			for (uint32_t i = 0; i < len; i++) {
 				Variant val;
 				Error err = parse_variant(val);
-				ERR_FAIL_COND_V(err, ERR_FILE_CORRUPT);
+				ERR_FAIL_COND_V_MSG(err, ERR_FILE_CORRUPT, "Error when trying to parse Variant.");
 				a[i] = val;
 			}
 			r_v = a;
@@ -836,15 +836,20 @@ void ResourceInteractiveLoaderBinary::open(FileAccess *p_f) {
 	uint8_t header[4];
 	f->get_buffer(header, 4);
 	if (header[0] == 'R' && header[1] == 'S' && header[2] == 'C' && header[3] == 'C') {
-		//compressed
+		// Compressed.
 		FileAccessCompressed *fac = memnew(FileAccessCompressed);
-		fac->open_after_magic(f);
+		error = fac->open_after_magic(f);
+		if (error != OK) {
+			memdelete(fac);
+			f->close();
+			ERR_FAIL_MSG("Failed to open binary resource file: " + local_path + ".");
+		}
 		f = fac;
 
 	} else if (header[0] != 'R' || header[1] != 'S' || header[2] != 'R' || header[3] != 'C') {
-		//not normal
-
+		// Not normal.
 		error = ERR_FILE_UNRECOGNIZED;
+		f->close();
 		ERR_FAIL_MSG("Unrecognized binary resource file: " + local_path + ".");
 	}
 
@@ -919,6 +924,7 @@ void ResourceInteractiveLoaderBinary::open(FileAccess *p_f) {
 	if (f->eof_reached()) {
 
 		error = ERR_FILE_CORRUPT;
+		f->close();
 		ERR_FAIL_MSG("Premature end of file (EOF): " + local_path + ".");
 	}
 }
@@ -931,14 +937,20 @@ String ResourceInteractiveLoaderBinary::recognize(FileAccess *p_f) {
 	uint8_t header[4];
 	f->get_buffer(header, 4);
 	if (header[0] == 'R' && header[1] == 'S' && header[2] == 'C' && header[3] == 'C') {
-		//compressed
+		// Compressed.
 		FileAccessCompressed *fac = memnew(FileAccessCompressed);
-		fac->open_after_magic(f);
+		error = fac->open_after_magic(f);
+		if (error != OK) {
+			memdelete(fac);
+			f->close();
+			return "";
+		}
 		f = fac;
 
 	} else if (header[0] != 'R' || header[1] != 'S' || header[2] != 'R' || header[3] != 'C') {
-		//not normal
+		// Not normal.
 		error = ERR_FILE_UNRECOGNIZED;
+		f->close();
 		return "";
 	}
 
@@ -983,7 +995,7 @@ Ref<ResourceInteractiveLoader> ResourceFormatLoaderBinary::load_interactive(cons
 	Error err;
 	FileAccess *f = FileAccess::open(p_path, FileAccess::READ, &err);
 
-	ERR_FAIL_COND_V(err != OK, Ref<ResourceInteractiveLoader>());
+	ERR_FAIL_COND_V_MSG(err != OK, Ref<ResourceInteractiveLoader>(), "Cannot open file '" + p_path + "'.");
 
 	Ref<ResourceInteractiveLoaderBinary> ria = memnew(ResourceInteractiveLoaderBinary);
 	String path = p_original_path != "" ? p_original_path : p_path;
@@ -1032,7 +1044,7 @@ bool ResourceFormatLoaderBinary::handles_type(const String &p_type) const {
 void ResourceFormatLoaderBinary::get_dependencies(const String &p_path, List<String> *p_dependencies, bool p_add_types) {
 
 	FileAccess *f = FileAccess::open(p_path, FileAccess::READ);
-	ERR_FAIL_COND(!f);
+	ERR_FAIL_COND_MSG(!f, "Cannot open file '" + p_path + "'.");
 
 	Ref<ResourceInteractiveLoaderBinary> ria = memnew(ResourceInteractiveLoaderBinary);
 	ria->local_path = ProjectSettings::get_singleton()->localize_path(p_path);
@@ -1046,7 +1058,7 @@ Error ResourceFormatLoaderBinary::rename_dependencies(const String &p_path, cons
 	//Error error=OK;
 
 	FileAccess *f = FileAccess::open(p_path, FileAccess::READ);
-	ERR_FAIL_COND_V(!f, ERR_CANT_OPEN);
+	ERR_FAIL_COND_V_MSG(!f, ERR_CANT_OPEN, "Cannot open file '" + p_path + "'.");
 
 	FileAccess *fw = NULL; //=FileAccess::open(p_path+".depren");
 
@@ -1055,34 +1067,37 @@ Error ResourceFormatLoaderBinary::rename_dependencies(const String &p_path, cons
 	uint8_t header[4];
 	f->get_buffer(header, 4);
 	if (header[0] == 'R' && header[1] == 'S' && header[2] == 'C' && header[3] == 'C') {
-		//compressed
+		// Compressed.
 		FileAccessCompressed *fac = memnew(FileAccessCompressed);
-		fac->open_after_magic(f);
+		Error err = fac->open_after_magic(f);
+		if (err != OK) {
+			memdelete(fac);
+			memdelete(f);
+			ERR_FAIL_V_MSG(err, "Cannot open file '" + p_path + "'.");
+		}
 		f = fac;
 
 		FileAccessCompressed *facw = memnew(FileAccessCompressed);
 		facw->configure("RSCC");
-		Error err = facw->_open(p_path + ".depren", FileAccess::WRITE);
+		err = facw->_open(p_path + ".depren", FileAccess::WRITE);
 		if (err) {
 			memdelete(fac);
 			memdelete(facw);
-			ERR_FAIL_COND_V(err, ERR_FILE_CORRUPT);
+			ERR_FAIL_COND_V_MSG(err, ERR_FILE_CORRUPT, "Cannot create file '" + p_path + ".depren'.");
 		}
 
 		fw = facw;
 
 	} else if (header[0] != 'R' || header[1] != 'S' || header[2] != 'R' || header[3] != 'C') {
-		//not normal
-
-		//error=ERR_FILE_UNRECOGNIZED;
+		// Not normal.
 		memdelete(f);
-		ERR_FAIL_V_MSG(ERR_FILE_UNRECOGNIZED, "Unrecognized binary resource file: " + local_path + ".");
+		ERR_FAIL_V_MSG(ERR_FILE_UNRECOGNIZED, "Unrecognized binary resource file '" + local_path + "'.");
 	} else {
 		fw = FileAccess::open(p_path + ".depren", FileAccess::WRITE);
 		if (!fw) {
 			memdelete(f);
 		}
-		ERR_FAIL_COND_V(!fw, ERR_CANT_CREATE);
+		ERR_FAIL_COND_V_MSG(!fw, ERR_CANT_CREATE, "Cannot create file '" + p_path + ".depren'.");
 
 		uint8_t magic[4] = { 'R', 'S', 'R', 'C' };
 		fw->store_buffer(magic, 4);
@@ -1113,12 +1128,12 @@ Error ResourceFormatLoaderBinary::rename_dependencies(const String &p_path, cons
 		memdelete(da);
 		//use the old approach
 
-		WARN_PRINTS("This file is old, so it can't refactor dependencies, opening and resaving: " + p_path + ".");
+		WARN_PRINTS("This file is old, so it can't refactor dependencies, opening and resaving '" + p_path + "'.");
 
 		Error err;
 		f = FileAccess::open(p_path, FileAccess::READ, &err);
 
-		ERR_FAIL_COND_V(err != OK, ERR_FILE_CANT_OPEN);
+		ERR_FAIL_COND_V_MSG(err != OK, ERR_FILE_CANT_OPEN, "Cannot open file '" + p_path + "'.");
 
 		Ref<ResourceInteractiveLoaderBinary> ria = memnew(ResourceInteractiveLoaderBinary);
 		ria->local_path = ProjectSettings::get_singleton()->localize_path(p_path);
@@ -1751,7 +1766,7 @@ Error ResourceFormatSaverBinaryInstance::save(const String &p_path, const RES &p
 		f = FileAccess::open(p_path, FileAccess::WRITE, &err);
 	}
 
-	ERR_FAIL_COND_V(err, err);
+	ERR_FAIL_COND_V_MSG(err != OK, err, "Cannot create file '" + p_path + "'.");
 
 	relative_paths = p_flags & ResourceSaver::FLAG_RELATIVE_PATHS;
 	skip_editor = p_flags & ResourceSaver::FLAG_OMIT_EDITOR_PROPERTIES;

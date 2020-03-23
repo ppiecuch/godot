@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Input" inherits="Object" category="Core" version="3.2">
+<class name="Input" inherits="Object" version="3.2">
 	<brief_description>
-		A Singleton that deals with inputs.
+		A singleton that deals with inputs.
 	</brief_description>
 	<description>
-		A Singleton that deals with inputs. This includes key presses, mouse buttons and movement, joypads, and input actions. Actions and their events can be set in the [b]Input Map[/b] tab in the [b]Project &gt; Project Settings[/b], or with the [InputMap] class.
+		A singleton that deals with inputs. This includes key presses, mouse buttons and movement, joypads, and input actions. Actions and their events can be set in the [b]Input Map[/b] tab in the [b]Project &gt; Project Settings[/b], or with the [InputMap] class.
 	</description>
 	<tutorials>
 		<link>https://docs.godotengine.org/en/latest/tutorials/inputs/index.html</link>
@@ -71,6 +71,7 @@
 			<return type="int" enum="Input.CursorShape">
 			</return>
 			<description>
+				Returns the currently assigned cursor shape (see [enum CursorShape]).
 			</description>
 		</method>
 		<method name="get_gravity" qualifiers="const">
@@ -223,7 +224,7 @@
 			<argument index="0" name="action" type="String">
 			</argument>
 			<description>
-				Returns [code]true[/code] if you are pressing the action event. Note that if an action has multiple buttons asigned and more than one of them is pressed, releasing one button will release the action, even if some other button assigned to this action is still pressed.
+				Returns [code]true[/code] if you are pressing the action event. Note that if an action has multiple buttons assigned and more than one of them is pressed, releasing one button will release the action, even if some other button assigned to this action is still pressed.
 			</description>
 		</method>
 		<method name="is_joy_button_pressed" qualifiers="const">
@@ -276,6 +277,8 @@
 			<argument index="3" name="guid" type="String">
 			</argument>
 			<description>
+				Notifies the [Input] singleton that a connection has changed, to update the state for the [code]device[/code] index.
+				This is used internally and should not have to be called from user scripts. See [signal joy_connection_changed] for the signal emitted when this is triggered internally.
 			</description>
 		</method>
 		<method name="parse_input_event">
@@ -313,9 +316,11 @@
 			<argument index="2" name="hotspot" type="Vector2" default="Vector2( 0, 0 )">
 			</argument>
 			<description>
-				Sets a custom mouse cursor image, which is only visible inside the game window. The hotspot can also be specified. Passing [code]null[/code] to the image parameter resets to the system cursor. See enum [code]CURSOR_*[/code] for the list of shapes.
+				Sets a custom mouse cursor image, which is only visible inside the game window. The hotspot can also be specified. Passing [code]null[/code] to the image parameter resets to the system cursor. See [enum CursorShape] for the list of shapes.
 				[code]image[/code]'s size must be lower than 256×256.
 				[code]hotspot[/code] must be within [code]image[/code]'s size.
+				[b]Note:[/b] [AnimatedTexture]s aren't supported as custom mouse cursors. If using an [AnimatedTexture], only the first frame will be displayed.
+				[b]Note:[/b] Only images imported with the [b]Lossless[/b], [b]Lossy[/b] or [b]Uncompressed[/b] compression modes are supported. The [b]Video RAM[/b] compression mode can't be used for custom cursors.
 			</description>
 		</method>
 		<method name="set_default_cursor_shape">

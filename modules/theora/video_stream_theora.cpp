@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -147,7 +147,6 @@ void VideoStreamPlaybackTheora::clear() {
 	thread = NULL;
 	ring_buffer.clear();
 #endif
-	//file_name = "";
 
 	theora_p = 0;
 	vorbis_p = 0;
@@ -175,7 +174,7 @@ void VideoStreamPlaybackTheora::set_file(const String &p_file) {
 		memdelete(file);
 	}
 	file = FileAccess::open(p_file, FileAccess::READ);
-	ERR_FAIL_COND(!file);
+	ERR_FAIL_COND_MSG(!file, "Cannot open file '" + p_file + "'.");
 
 #ifdef THEORA_USE_THREAD_STREAMING
 	thread_exit = false;
@@ -364,11 +363,13 @@ void VideoStreamPlaybackTheora::set_file(const String &p_file) {
 };
 
 float VideoStreamPlaybackTheora::get_time() const {
-
-	return time - AudioServer::get_singleton()->get_output_latency() - delay_compensation; //-((get_total())/(float)vi.rate);
+	// FIXME: AudioServer output latency was fixed in af9bb0e, previously it used to
+	// systematically return 0. Now that it gives a proper latency, it broke this
+	// code where the delay compensation likely never really worked.
+	return time - /* AudioServer::get_singleton()->get_output_latency() - */ delay_compensation;
 };
 
-Ref<Texture> VideoStreamPlaybackTheora::get_texture() {
+Ref<Texture> VideoStreamPlaybackTheora::get_texture() const {
 
 	return texture;
 }
@@ -741,6 +742,8 @@ RES ResourceFormatLoaderTheora::load(const String &p_path, const String &p_origi
 		*r_error = OK;
 	}
 
+	f->close();
+	memdelete(f);
 	return ogv_stream;
 }
 

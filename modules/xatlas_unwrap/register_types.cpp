@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -65,8 +65,7 @@ bool xatlas_mesh_lightmap_unwrap_callback(float p_texel_size, const float *p_ver
 	xatlas::Atlas *atlas = xatlas::Create();
 	printf("Adding mesh..\n");
 	xatlas::AddMeshError::Enum err = xatlas::AddMesh(atlas, input_mesh, 1);
-	ERR_EXPLAINC(xatlas::StringForEnum(err));
-	ERR_FAIL_COND_V(err != xatlas::AddMeshError::Enum::Success, false);
+	ERR_FAIL_COND_V_MSG(err != xatlas::AddMeshError::Enum::Success, false, xatlas::StringForEnum(err));
 
 	printf("Generate..\n");
 	xatlas::Generate(atlas, chart_options, NULL, pack_options);
