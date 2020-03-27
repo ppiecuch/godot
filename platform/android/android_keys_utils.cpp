@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  reverb_sw.h                                                          */
+/*  android_keys_utils.cpp                                               */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,61 +28,16 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef REVERB_SW_H
-#define REVERB_SW_H
+#include "android_keys_utils.h"
 
-#include "core/os/memory.h"
-#include "core/typedefs.h"
+unsigned int android_get_keysym(unsigned int p_code) {
+	for (int i = 0; _ak_to_keycode[i].keysym != KEY_UNKNOWN; i++) {
 
-struct ReverbParamsSW;
+		if (_ak_to_keycode[i].keycode == p_code) {
 
-class ReverbSW {
-public:
-	enum ReverbMode {
-		REVERB_MODE_ROOM,
-		REVERB_MODE_STUDIO_SMALL,
-		REVERB_MODE_STUDIO_MEDIUM,
-		REVERB_MODE_STUDIO_LARGE,
-		REVERB_MODE_HALL,
-		REVERB_MODE_SPACE_ECHO,
-		REVERB_MODE_ECHO,
-		REVERB_MODE_DELAY,
-		REVERB_MODE_HALF_ECHO
-	};
-
-private:
-	struct State {
-		int lwl;
-		int lwr;
-		int rwl;
-		int rwr;
-		unsigned int Offset;
-		void reset() {
-			lwl = 0;
-			lwr = 0;
-			rwl = 0;
-			rwr = 0;
-			Offset = 0;
+			return _ak_to_keycode[i].keysym;
 		}
-		State() { reset(); }
-	} state;
+	}
 
-	ReverbParamsSW *current_params;
-
-	int *reverb_buffer;
-	unsigned int reverb_buffer_size;
-	ReverbMode mode;
-	int mix_rate;
-
-	void adjust_current_params();
-
-public:
-	void set_mode(ReverbMode p_mode);
-	bool process(int *p_input, int *p_output, int p_frames, int p_stereo_stride = 1); // return tru if audio was created
-	void set_mix_rate(int p_mix_rate);
-
-	ReverbSW();
-	~ReverbSW();
-};
-
-#endif
+	return KEY_UNKNOWN;
+}

@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  canvas.cpp                                                           */
+/*  PaymentsCache.java                                                   */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,19 +28,44 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "canvas.h"
-#include "servers/visual_server.h"
+package org.godotengine.godot.plugin.payment;
 
-RID Canvas::get_rid() const {
+import android.content.Context;
+import android.content.SharedPreferences;
 
-	return canvas;
-}
+public class PaymentsCache {
 
-Canvas::Canvas() {
+	public Context context;
 
-	canvas = VisualServer::get_singleton()->canvas_create();
-}
+	public PaymentsCache(Context context) {
+		this.context = context;
+	}
 
-Canvas::~Canvas() {
-	VisualServer::get_singleton()->free(canvas);
+	public void setConsumableFlag(String set, String sku, Boolean flag) {
+		SharedPreferences sharedPref = context.getSharedPreferences("consumables_" + set, Context.MODE_PRIVATE);
+		SharedPreferences.Editor editor = sharedPref.edit();
+		editor.putBoolean(sku, flag);
+		editor.apply();
+	}
+
+	public boolean getConsumableFlag(String set, String sku) {
+		SharedPreferences sharedPref = context.getSharedPreferences(
+				"consumables_" + set, Context.MODE_PRIVATE);
+		return sharedPref.getBoolean(sku, false);
+	}
+
+	public void setConsumableValue(String set, String sku, String value) {
+		SharedPreferences sharedPref = context.getSharedPreferences("consumables_" + set, Context.MODE_PRIVATE);
+		SharedPreferences.Editor editor = sharedPref.edit();
+		editor.putString(sku, value);
+		//Log.d("XXX", "Setting asset: consumables_" + set + ":" + sku);
+		editor.apply();
+	}
+
+	public String getConsumableValue(String set, String sku) {
+		SharedPreferences sharedPref = context.getSharedPreferences(
+				"consumables_" + set, Context.MODE_PRIVATE);
+		//Log.d("XXX", "Getting asset: consumables_" + set + ":" + sku);
+		return sharedPref.getString(sku, null);
+	}
 }
