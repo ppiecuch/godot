@@ -60,7 +60,7 @@ public:
 template <class T>
 class Ref {
 
-	T *reference = 0;
+	T *reference = NULL;
 
 	void ref(const Ref &p_from) {
 

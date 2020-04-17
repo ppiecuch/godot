@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# https://github.com/bruvzg/gdsdecomp.git
+# https://github.com/pchasco/gd2c-py
+
 set -e
 
 for m in gd_distrand gd_sqlite gd_unqlite gd_chipmunk gd_liquidfun gd_spine gd_vector_graphics gd_error_handler gd_raknet gd_enet; do

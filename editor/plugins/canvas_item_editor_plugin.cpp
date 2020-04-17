@@ -6022,7 +6022,7 @@ void CanvasItemEditorViewport::_perform_drop_data() {
 					child = memnew(TextureRect);
 				else if (default_type == "NinePatchRect")
 					child = memnew(NinePatchRect);
-#if MODULE_GD_VECTOR_GRAPHICS_ENABLED
+#ifdef MODULE_GD_VECTOR_GRAPHICS_ENABLED
 				else if (default_type == "Sprite")
 					child = createVectorSprite(texture);
 				else

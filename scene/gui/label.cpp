@@ -41,15 +41,203 @@ static void dump_xform(const CharTransform &xform) {
 
 template <typename T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }
 
+#ifndef PI
+# define PI 3.14159265358979323846f
+#endif
+
+// How to use:
+// -----------
+//  t = current time (in any unit measure, but same unit as duration)
+//  b = starting value to interpolate
+//  c = the total change in value of b that needs to occur
+//  d = total time it should take to complete (duration)
+
+// Linear Easing functions
+static float ease_linear_none(float t, float b, float c, float d) { return (c*t/d + b); }
+static float ease_linear_in(float t, float b, float c, float d) { return (c*t/d + b); }
+static float ease_linear_out(float t, float b, float c, float d) { return (c*t/d + b); }
+static float ease_linear_inout(float t,float b, float c, float d) { return (c*t/d + b); }
+// Sine Easing functions
+static float ease_sine_in(float t, float b, float c, float d) { return (-c*cosf(t/d*(PI/2.0f)) + c + b); }
+static float ease_sine_out(float t, float b, float c, float d) { return (c*sinf(t/d*(PI/2.0f)) + b); }
+static float ease_sine_inout(float t, float b, float c, float d) { return (-c/2.0f*(cosf(PI*t/d) - 1.0f) + b); }
+// Circular Easing functions
+static float ease_circ_in(float t, float b, float c, float d) { t /= d; return (-c*(sqrt(1.0f - t*t) - 1.0f) + b); }
+static float ease_circ_out(float t, float b, float c, float d) { t = t/d - 1.0f; return (c*sqrt(1.0f - t*t) + b); }
+static float ease_circ_inout(float t, float b, float c, float d) {
+    if ((t/=d/2.0f) < 1.0f) return (-c/2.0f*(sqrt(1.0f - t*t) - 1.0f) + b);
+    t -= 2.0f; return (c/2.0f*(sqrt(1.0f - t*t) + 1.0f) + b);
+}
+// Cubic Easing functions
+static float ease_cubic_in(float t, float b, float c, float d) { t /= d; return (c*t*t*t + b); }
+static float ease_cubic_out(float t, float b, float c, float d) { t = t/d - 1.0f; return (c*(t*t*t + 1.0f) + b); }
+static float ease_cubic_inout(float t, float b, float c, float d) {
+    if ((t/=d/2.0f) < 1.0f) return (c/2.0f*t*t*t + b);
+        t -= 2.0f; return (c/2.0f*(t*t*t + 2.0f) + b);
+}
+// Quadratic Easing functions
+static float ease_quad_in(float t, float b, float c, float d) { t /= d; return (c*t*t + b); }
+static float ease_quad_out(float t, float b, float c, float d) { t /= d; return (-c*t*(t - 2.0f) + b); }
+static float ease_quad_inout(float t, float b, float c, float d) {
+    if ((t/=d/2) < 1) return (((c/2)*(t*t)) + b);
+    return (-c/2.0f*(((t - 1.0f)*(t - 3.0f)) - 1.0f) + b);
+}
+// Exponential Easing functions
+static float ease_expo_in(float t, float b, float c, float d) { return (t == 0.0f) ? b : (c*powf(2.0f, 10.0f*(t/d - 1.0f)) + b); }
+static float ease_expo_out(float t, float b, float c, float d) { return (t == d) ? (b + c) : (c*(-powf(2.0f, -10.0f*t/d) + 1.0f) + b);    }
+static float ease_expo_inout(float t, float b, float c, float d) {
+    if (t == 0.0f) return b;
+    if (t == d) return (b + c);
+    if ((t/=d/2.0f) < 1.0f) return (c/2.0f*powf(2.0f, 10.0f*(t - 1.0f)) + b);
+    return (c/2.0f*(-powf(2.0f, -10.0f*(t - 1.0f)) + 2.0f) + b);
+}
+// Back Easing functions
+static float ease_back_in(float t, float b, float c, float d) {
+    const float s = 1.70158f;
+    const float postFix = t/=d;
+    return (c*(postFix)*t*((s + 1.0f)*t - s) + b);
+}
+static float ease_back_out(float t, float b, float c, float d) {
+    const float s = 1.70158f;
+    t = t/d - 1.0f;
+    return (c*(t*t*((s + 1.0f)*t + s) + 1.0f) + b);
+}
+static float ease_back_inout(float t, float b, float c, float d) {
+    float s = 1.70158f;
+    if ((t/=d/2.0f) < 1.0f) {
+        s *= 1.525f;
+        return (c/2.0f*(t*t*((s + 1.0f)*t - s)) + b);
+    }
+    const float postFix = t-=2.0f;
+    s *= 1.525f;
+    return (c/2.0f*((postFix)*t*((s + 1.0f)*t + s) + 2.0f) + b);
+}
+// Bounce Easing functions
+static float ease_bounce_out(float t, float b, float c, float d) {
+    if ((t/=d) < (1.0f/2.75f)) {
+        return (c*(7.5625f*t*t) + b);
+    } else if (t < (2.0f/2.75f)) {
+        const float postFix = t-=(1.5f/2.75f);
+        return (c*(7.5625f*(postFix)*t + 0.75f) + b);
+    } else if (t < (2.5/2.75)) {
+        const float postFix = t-=(2.25f/2.75f);
+        return (c*(7.5625f*(postFix)*t + 0.9375f) + b);
+    } else {
+        const float postFix = t-=(2.625f/2.75f);
+        return (c*(7.5625f*(postFix)*t + 0.984375f) + b);
+    }
+}
+static float ease_bounce_in(float t, float b, float c, float d) { return (c - ease_bounce_out(d - t, 0.0f, c, d) + b); }
+static float ease_bounce_inout(float t, float b, float c, float d) {
+    if (t < d/2.0f) return (ease_bounce_in(t*2.0f, 0.0f, c, d)*0.5f + b);
+    else return (ease_bounce_out(t*2.0f - d, 0.0f, c, d)*0.5f + c*0.5f + b);
+}
+// Elastic Easing functions
+static float ease_elastic_in(float t, float b, float c, float d) {
+    if (t == 0.0f) return b;
+    if ((t/=d) == 1.0f) return (b + c);
+    const float p = d*0.3f;
+    const float a = c;
+    const float s = p/4.0f;
+    const float postFix = a*powf(2.0f, 10.0f*(t-=1.0f));
+    return (-(postFix*sinf((t*d-s)*(2.0f*PI)/p )) + b);
+}
+static float ease_elastic_out(float t, float b, float c, float d) {
+    if (t == 0.0f) return b;
+    if ((t/=d) == 1.0f) return (b + c);
+    const float p = d*0.3f;
+    const float a = c;
+    const float s = p/4.0f;
+    return (a*powf(2.0f,-10.0f*t)*sinf((t*d-s)*(2.0f*PI)/p) + c + b);
+}
+static float ease_elastic_inout(float t, float b, float c, float d) {
+    if (t == 0.0f) return b;
+    if ((t/=d/2.0f) == 2.0f) return (b + c);
+    const float p = d*(0.3f*1.5f);
+    const float a = c;
+    const float s = p/4.0f;
+    if (t < 1.0f) {
+        const float postFix = a*powf(2.0f, 10.0f*(t-=1.0f));
+        return -0.5f*(postFix*sinf((t*d-s)*(2.0f*PI)/p)) + b;
+    }
+    const float postFix = a*powf(2.0f, -10.0f*(t-=1.0f));
+    return (postFix*sinf((t*d-s)*(2.0f*PI)/p)*0.5f + c + b);
+}
+// End easing functions.
+
+#define EASE_FUNC      \
+    "EaseLinearNone,"  \
+    "EaseLinearIn,"    \
+    "EaseLinearOut,"   \
+    "EaseLinearInOut," \
+    "EaseSineIn,"      \
+    "EaseSineOut,"     \
+    "EaseSineInOut,"   \
+    "EaseCircIn,"      \
+    "EaseCircOut,"     \
+    "EaseCircInOut,"   \
+    "EaseCubicIn,"     \
+    "EaseCubicOut,"    \
+    "EaseCubicInOut,"  \
+    "EaseQuadIn,"      \
+    "EaseQuadOut,"     \
+    "EaseQuadInOut,"   \
+    "EaseExpoIn,"      \
+    "EaseExpoOut,"     \
+    "EaseExpoInOut,"   \
+    "EaseBackIn,"      \
+    "EaseBackOut,"     \
+    "EaseBackInOut,"   \
+    "EaseBounceIn,"    \
+    "EaseBounceOut,"   \
+    "EaseBounceInOut," \
+    "EaseElasticIn,"   \
+    "EaseElasticOut,"  \
+    "EaseElasticInOut"
+
+#define DefineEaseFunc(F) \
+    ease_ ## F ## _in,    \
+    ease_ ## F ## _out,   \
+    ease_ ## F ## _inout  \
+
+static ease_func_t ease_func_table[] = {
+    ease_linear_none,
+    DefineEaseFunc(linear),
+    DefineEaseFunc(sine),
+    DefineEaseFunc(circ),
+    DefineEaseFunc(cubic),
+    DefineEaseFunc(quad),
+    DefineEaseFunc(expo),
+    DefineEaseFunc(back),
+    DefineEaseFunc(bounce),
+    DefineEaseFunc(elastic)
+};
+#undef DefineEaseFunc
+
+struct AnimationNone : public AnimationController {
+
+    AnimationNone() { }
+
+    virtual void init_xform(float duration, AnimationTransform &a) { }
+    virtual AnimationController::AnimState update(float dt, ease_func_t ease, AnimationTransform &xform) { return ANIMCTRL_DONE; }
+    virtual bool is_active() const { return false; }
+    virtual AnimationController::AnimState state(AnimationTransform &a) const { return ANIMCTRL_DONE; }
+};
+
 struct AnimationSlide : public AnimationController {
 
+    enum AnimationSlideOrient {
+        ANIMATION_SLIDE_UP,
+        ANIMATION_SLIDE_DOWN
+    };
+    AnimationSlideOrient orientation = ANIMATION_SLIDE_UP;
     bool active;
 
-    AnimationSlide() : active(false) { }
+    AnimationSlide(AnimationSlideOrient orientation) : orientation(orientation), active(false) { }
 
     virtual void init_xform(float duration, AnimationTransform &a) {
     }
-    virtual  AnimationController::AnimState update(float dt, AnimationTransform &xform) {
+    virtual  AnimationController::AnimState update(float dt, ease_func_t ease, AnimationTransform &xform) {
         return ANIMCTRL_DONE;
     }
     virtual bool is_active() const { return active; }
@@ -58,17 +246,22 @@ struct AnimationSlide : public AnimationController {
 
 struct AnimationRotate : public AnimationController {
 
+    enum AnimationRotateOrient {
+        ANIMATION_ROTATE_H,
+        ANIMATION_ROTATE_V
+    };
+    AnimationRotateOrient orientation = ANIMATION_ROTATE_H;
     bool active;
 
-    AnimationRotate() : active(false) { }
+    AnimationRotate(AnimationRotateOrient orientation) : orientation(orientation), active(false) { }
 
     virtual void init_xform(float duration, AnimationTransform &a) {
         a = AnimationTransform();
         a.duration = duration;
-        a.current = -duration; // transition from -duration .. duration
+        a.current = -duration; // transition from  -duration .. 0 .. duration
         active = duration > 0;
     }
-    virtual AnimationController::AnimState update(float dt, AnimationTransform &a) {
+    virtual AnimationController::AnimState update(float dt, ease_func_t ease, AnimationTransform &a) {
         if (!active) {
             return ANIMCTRL_DONE;
         }
@@ -77,10 +270,15 @@ struct AnimationRotate : public AnimationController {
             return ANIMCTRL_DONE;
         }
 
-        float ratio = 1.0/a.duration * dt;
-
-        a.xform.dest.scale.x += ratio * sgn(a.current); // 1..0..1
-        a.xform.dest.offset.x -= 0.5 *  ratio * sgn(a.current); // 0..0,5..0
+        if (orientation == ANIMATION_ROTATE_H) {
+            a.xform.dest.scale.x = ease(a.current, 0, 1, a.current<0?-a.duration:a.duration); // 1..0..1
+            a.xform.dest.offset.x = 0.5*(1-a.xform.dest.scale.x); // 0..0,5..0
+        } else if (orientation == ANIMATION_ROTATE_V) {
+            a.xform.dest.scale.y = ease(a.current, 0, 1, a.current<0?-a.duration:a.duration); // 1..0..1
+            a.xform.dest.offset.y = 0.5*(1-a.xform.dest.scale.y); // 0..0,5..0
+        } else {
+			ERR_PRINT("Unknown orientation type");
+        }
 
         a.current += dt;
         if (a.current >= 0)
@@ -132,16 +330,16 @@ void Label::_notification(int p_what) {
 
 	if (p_what == NOTIFICATION_TRANSLATION_CHANGED) {
 
-        if (animate) {
-            String new_text = tr(text);
-            if (new_text == xl_text)
-                return; //nothing new
-            xl_text = new_text;
-        } else {
+        if (is_transition_enabled()) {
             String new_text = tr(transition_text.text);
             if (new_text == transition_text.xl_text)
                 return; //nothing new
             transition_text.xl_text = new_text;
+        } else {
+            String new_text = tr(text);
+            if (new_text == xl_text)
+                return; //nothing new
+            xl_text = new_text;
         }
 		regenerate_word_cache();
 		update();
@@ -166,7 +364,7 @@ void Label::_notification(int p_what) {
 		Color font_color_shadow = get_color("font_color_shadow");
 		bool use_outline = get_constant("shadow_as_outline");
 		Point2 shadow_ofs(get_constant("shadow_offset_x"), get_constant("shadow_offset_y"));
-		int line_spacing = get_constant("line_spacing");
+		const int line_spacing = get_constant("line_spacing");
 		Color font_outline_modulate = get_color("font_outline_modulate");
 
 		style->draw(ci, Rect2(Point2(0, 0), get_size()));
@@ -224,6 +422,9 @@ void Label::_notification(int p_what) {
 		if (!wc) {
 			return;
         }
+
+        int same_char_cnt = 0;
+        Array same_chars_pos;
 
 		int line = 0;
 		int line_to = lines_skipped + (lines_visible > 0 ? lines_visible : 1);
@@ -310,24 +511,24 @@ void Label::_notification(int p_what) {
 				}
 
 				// calculate transition differences for different variants
-				// and extra characters before and after the word:
+				// and extra characters before and after the last/first word (line):
 				// before: |  ABCD  | |ABCD   | |    ABCD|
 				// after:  | ABCDEF | |AB     | |   ABCDE|
                 int extra_chars_before = 0, extra_chars_after = 0;
-                if (animate && transition_controller->is_active()) {
+                if (is_transition_enabled() && transition_controller->is_active()) {
 
                     int extra_chars = 0;
                     if (from->next == to || wc == from) { // last/first word ?
                         extra_chars =
-                            get_line_size(transition_text.word_cache, transition_text.xl_text, line) -
-                            get_line_size(word_cache, xl_text, line);
+                            Math::abs(get_line_size(transition_text.word_cache, transition_text.xl_text, line) -
+                                get_line_size(word_cache, xl_text, line));
                     }
                     if (extra_chars) switch (align) {
 
                         case ALIGN_FILL:
                         case ALIGN_LEFT: {
 
-                            extra_chars_before = 0;
+                            extra_chars_after = extra_chars;
                         } break;
                         case ALIGN_CENTER: {
 
@@ -336,10 +537,10 @@ void Label::_notification(int p_what) {
                         } break;
                         case ALIGN_RIGHT: {
 
-                            extra_chars_after = 0;
+                            extra_chars_before = extra_chars;
                         } break;
                     }
-                    //printf("* extra_chars_before %d, extra_chars_after %d\n",extra_chars_before,extra_chars_after);
+                    // printf("* extra_chars_before %d, extra_chars_after %d\n", extra_chars_before, extra_chars_after);
                 }
 
 				if (font_color_shadow.a > 0) {
@@ -371,46 +572,61 @@ void Label::_notification(int p_what) {
 				// +1 : check if there is a transition after the word (space between words):
 				// before: |  ABC_DEF GH  |
 				// after": |   ABC DEF GH |
+				bool draw_state = transition_controller->state(transition_xform) != AnimationController::ANIMCTRL_IN;
+                String draw_text_state[] = { xl_text, transition_text.xl_text };
+# define draw_text draw_text_state[draw_state]
+# define not_draw_text draw_text_state[!draw_state]
+                WordCache *draw_cache_state[] = { word_cache, transition_text.word_cache };
+# define draw_cache draw_cache_state[draw_state]
+# define not_draw_cache draw_cache_state[!draw_state]
 				for (int i = -extra_chars_before; i < from->word_len + extra_chars_after + 1; i++) {
 
 					if (visible_chars < 0 || chars_total < visible_chars) {
 
-						if (animate && transition_controller->is_active()) {
+						if (is_transition_enabled() && transition_controller->is_active()) {
 
                             CharType c, n;
                             CharTransform xform = transition_xform.xform;
-                            String draw_text =
-                                transition_controller->state(transition_xform) == AnimationController::ANIMCTRL_IN ? transition_text.xl_text : xl_text;
-                            WordCache *draw_cache =
-                                transition_controller->state(transition_xform) == AnimationController::ANIMCTRL_IN ? transition_text.word_cache : word_cache;
 
                             if (i < 0) {
                                 c = get_char_at(draw_cache, draw_text, line, -i, &n);
-                            } else if (i >= from->word_len) {
-                                c = get_char_at(draw_cache, draw_text, line, from->word_len + i, &n);
                             } else {
-                                c = xl_text[i + pos];
-                                n = xl_text[i + pos + 1];
+                                c = get_char_at(draw_cache, draw_text, line, i + pos, &n);
                             }
 
-                            if (transition_change_policy == TRANSITIONCHANGEPOLICY_NEW) {
-                                CharType c_ = get_char_at(draw_cache, draw_text, line, line_pos);
-                                if (uppercase) {
-                                    c_ = String::char_uppercase(c_);
-                                }
-                                if (c == c_) {
-                                    xform = CharTransform(); // no transition
-                                }
-                            }
-
-                            if (transition_xform.current >= 0 && !draw_text.empty()) {
-                                c = get_char_at(draw_cache, draw_text, line, line_pos, &n);
-                            }
                             if (uppercase) {
                                 c = String::char_uppercase(c);
                                 n = String::char_uppercase(n);
                             }
-                            x_ofs += drawer.draw_char(ci, xform, Point2(x_ofs, y_ofs), c, n, font_color) + horizontal_spacing;
+
+                            // reset glyph transformation if necessery
+                            float x_correct = 0;
+                            if (transition_change_policy == TRANSITIONCHANGEPOLICY_NEW) {
+                                CharType c_ = get_char_at(not_draw_cache, not_draw_text, line, line_pos);
+                                if (c_ != 0) {
+                                    if (uppercase) {
+                                        c_ = String::char_uppercase(c_);
+                                    }
+                                    if (c == c_) {
+                                        if (draw_state) {
+                                            // correct position in OUT state for this char/pair
+                                            x_correct = (int(transition_text.same_chars_pos[same_char_cnt++])-x_ofs) * (1-xform.dest.scale.x*xform.dest.scale.y);
+                                        } else {
+                                            if (transition_text.same_chars_pos.empty())
+                                                same_chars_pos.push_back(x_ofs); // save position for this char/pair in IN
+                                        }
+                                        xform = CharTransform();            // no transition
+                                    }
+                                }
+                            }
+
+                            if (transition_scale_width) {
+                                xform.dest.offset = Vector2();
+                                x_ofs += drawer.draw_char(ci, xform, Point2(x_ofs, y_ofs), c, n, font_color) * xform.dest.scale.x;
+                            } else {
+                                x_ofs += drawer.draw_char(ci, xform, Point2(x_ofs + x_correct, y_ofs), c, n, font_color);
+                            }
+                            x_ofs += horizontal_spacing;
                         } else {
                             CharType c = xl_text[i + pos];
                             CharType n = xl_text[i + pos + 1];
@@ -430,6 +646,9 @@ void Label::_notification(int p_what) {
 			wc = to ? to->next : 0;
 			line++;
 		}
+
+        if (transition_text.same_chars_pos.empty())
+            transition_text.same_chars_pos = Array( same_chars_pos );
 	}
 
 	else if (p_what == NOTIFICATION_THEME_CHANGED) {
@@ -445,10 +664,10 @@ void Label::_notification(int p_what) {
 
 	else if (p_what == NOTIFICATION_INTERNAL_PROCESS) {
 
-        if (animate && transition_controller->is_active()) {
+        if (is_transition_enabled() && transition_controller->is_active()) {
             float dt = get_process_delta_time();
 
-            if (transition_controller->update(dt, transition_xform) == AnimationController::ANIMCTRL_DONE) {
+            if (transition_controller->update(dt, ease_func_table[transition_ease], transition_xform) == AnimationController::ANIMCTRL_DONE) {
 
                 transition_xform = AnimationTransform();
                 if (text != transition_text.text) {
@@ -562,7 +781,6 @@ Label::WordCache *Label::calculate_word_cache(const Ref<Font> &font, const Strin
 	real_t line_width = 0;
 	int space_count = 0;
 	real_t space_width = font->get_char_size(' ').width + horizontal_spacing;
-	int line_spacing = get_constant("line_spacing");
 	line_count = 1;
 	total_char_cache = 0;
 
@@ -755,7 +973,7 @@ void Label::regenerate_word_cache() {
 		minimum_size_changed();
 	}
 
-	if (animate && transition_controller->is_active()) {
+	if (is_transition_enabled() && transition_controller->is_active()) {
         while (transition_text.word_cache) {
 
             WordCache *current = transition_text.word_cache;
@@ -767,15 +985,20 @@ void Label::regenerate_word_cache() {
                                                           transition_text.line_count,
                                                           transition_text.total_char_cache,
                                                           transition_text.width);
+        transition_text.same_chars_pos = Array();
     }
 
 	word_cache_dirty = false;
 }
 
 void Label::clear_pending_animations() { // reset animation
-    transition_xform = AnimationTransform();
-    xl_text = transition_text.xl_text;
-    text = transition_text.text;
+
+    if (transition_controller->is_active()) {
+        transition_xform = AnimationTransform();
+        xl_text = transition_text.xl_text;
+        text = transition_text.text;
+        word_cache = transition_text.word_cache;
+    }
 }
 
 void Label::set_align(Align p_align) {
@@ -806,7 +1029,7 @@ void Label::set_text(const String &p_string) {
 
 	if (text == p_string)
 		return;
-    if (animate) {
+    if (is_transition_enabled()) {
         transition_text.text = p_string;
         transition_text.xl_text = tr(p_string);
         transition_controller->init_xform(transition_duration, transition_xform);
@@ -930,21 +1153,8 @@ float Label::get_vertical_spacing() const {
     return vertical_spacing;
 }
 
-bool Label::is_animate() const {
-
-    return animate;
-}
-
-void Label::set_animate(bool p_animate) {
-	animate = p_animate;
-    if (!p_animate) {
-        clear_pending_animations();
-    }
-    set_process_internal(p_animate);
-	update();
-}
-
 void Label::set_transition_duration(float p_duration) {
+
     if (p_duration != transition_duration) {
         transition_duration = p_duration;
         update();
@@ -960,12 +1170,45 @@ void Label::set_transition_effect(TransitionEffect p_effect) {
 
     if (p_effect != transition_effect) {
         transition_effect = p_effect;
+        transition_controller = transition_controllers_table[p_effect];
+        if (p_effect == TRANSITIONEFFECT_NONE) {
+            set_process_internal(false);
+            clear_pending_animations();
+        } else
+            set_process_internal(true);
         update();
     }
 }
 
 Label::TransitionEffect Label::get_transition_effect() const {
+
     return transition_effect;
+}
+
+void Label::set_transition_ease(TransitionEase p_ease) {
+
+    if (p_ease != transition_ease) {
+        transition_ease = p_ease;
+        update();
+    }
+}
+
+Label::TransitionEase Label::get_transition_ease() const {
+
+    return transition_ease;
+}
+
+void Label::set_transition_scale_width(bool p_scale_width) {
+
+    if (p_scale_width != transition_scale_width) {
+        transition_scale_width = p_scale_width;
+        update();
+    }
+}
+
+bool Label::is_transition_scale_width() const {
+
+    return transition_scale_width;
 }
 
 void Label::set_transition_change_policy(TransitionChangePolicy p_change_policy) {
@@ -977,8 +1220,15 @@ void Label::set_transition_change_policy(TransitionChangePolicy p_change_policy)
 }
 
 Label::TransitionChangePolicy Label::get_transition_change_policy() const {
+
     return transition_change_policy;
 }
+
+bool Label::is_transition_active() const {
+
+    return (is_transition_enabled() && transition_controller->is_active());
+}
+
 
 void Label::_bind_methods() {
 
@@ -988,14 +1238,17 @@ void Label::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_valign"), &Label::get_valign);
 	ClassDB::bind_method(D_METHOD("set_text", "text"), &Label::set_text);
 	ClassDB::bind_method(D_METHOD("get_text"), &Label::get_text);
-	ClassDB::bind_method(D_METHOD("set_animate"), &Label::set_animate);
-	ClassDB::bind_method(D_METHOD("is_animate"), &Label::is_animate);
+	ClassDB::bind_method(D_METHOD("set_transition_scale_width"), &Label::set_transition_scale_width);
+	ClassDB::bind_method(D_METHOD("is_transition_scale_width"), &Label::is_transition_scale_width);
 	ClassDB::bind_method(D_METHOD("set_transition_duration"), &Label::set_transition_duration);
 	ClassDB::bind_method(D_METHOD("get_transition_duration"), &Label::get_transition_duration);
+	ClassDB::bind_method(D_METHOD("set_transition_ease"), &Label::set_transition_ease);
+	ClassDB::bind_method(D_METHOD("get_transition_ease"), &Label::get_transition_ease);
 	ClassDB::bind_method(D_METHOD("set_transition_effect"), &Label::set_transition_effect);
 	ClassDB::bind_method(D_METHOD("get_transition_effect"), &Label::get_transition_effect);
 	ClassDB::bind_method(D_METHOD("set_transition_change_policy"), &Label::set_transition_change_policy);
 	ClassDB::bind_method(D_METHOD("get_transition_change_policy"), &Label::get_transition_change_policy);
+	ClassDB::bind_method(D_METHOD("is_transition_active"), &Label::is_transition_active);
 	ClassDB::bind_method(D_METHOD("set_autowrap", "enable"), &Label::set_autowrap);
 	ClassDB::bind_method(D_METHOD("has_autowrap"), &Label::has_autowrap);
 	ClassDB::bind_method(D_METHOD("set_clip_text", "enable"), &Label::set_clip_text);
@@ -1029,18 +1282,25 @@ void Label::_bind_methods() {
 	BIND_ENUM_CONSTANT(VALIGN_BOTTOM);
 	BIND_ENUM_CONSTANT(VALIGN_FILL);
 
-    BIND_ENUM_CONSTANT(TRANSITIONEFFECT_SLIDE);
-    BIND_ENUM_CONSTANT(TRANSITIONEFFECT_ROTATE);
+    BIND_ENUM_CONSTANT(TRANSITIONEFFECT_NONE);
+    BIND_ENUM_CONSTANT(TRANSITIONEFFECT_SLIDE_UP);
+    BIND_ENUM_CONSTANT(TRANSITIONEFFECT_SLIDE_DOWN);
+    BIND_ENUM_CONSTANT(TRANSITIONEFFECT_ROTATE_V);
+    BIND_ENUM_CONSTANT(TRANSITIONEFFECT_ROTATE_H);
+
     BIND_ENUM_CONSTANT(TRANSITIONCHANGEPOLICY_ALL);
     BIND_ENUM_CONSTANT(TRANSITIONCHANGEPOLICY_NEW);
 
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "text", PROPERTY_HINT_MULTILINE_TEXT, "", PROPERTY_USAGE_DEFAULT_INTL), "set_text", "get_text");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "animate"), "set_animate", "is_animate");
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "transition_duration"), "set_transition_duration", "get_transition_duration");
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "transition_effect", PROPERTY_HINT_ENUM, "Slide,Rotate"), "set_transition_effect", "get_transition_effect");
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "transition_change_policy", PROPERTY_HINT_ENUM, "All,New"), "set_transition_change_policy", "get_transition_change_policy");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "align", PROPERTY_HINT_ENUM, "Left,Center,Right,Fill"), "set_align", "get_align");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "valign", PROPERTY_HINT_ENUM, "Top,Center,Bottom,Fill"), "set_valign", "get_valign");
+	ADD_GROUP("Transition", "transition_");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "transition_duration"), "set_transition_duration", "get_transition_duration");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "transition_ease", PROPERTY_HINT_ENUM, EASE_FUNC), "set_transition_ease", "get_transition_ease");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "transition_effect", PROPERTY_HINT_ENUM, "None,SlideUp,SlideDown,RotateV,RotateH"), "set_transition_effect", "get_transition_effect");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "transition_scale_width"), "set_transition_scale_width", "is_transition_scale_width");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "transition_change_policy", PROPERTY_HINT_ENUM, "All,New"), "set_transition_change_policy", "get_transition_change_policy");
+	ADD_GROUP("", "");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "offset horizontal spacing", PROPERTY_HINT_RANGE, "-100,100,0.5"), "set_horizontal_spacing", "get_horizontal_spacing");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "offset vertical spacing", PROPERTY_HINT_RANGE, "-100,100,0.5"), "set_vertical_spacing", "get_vertical_spacing");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "autowrap"), "set_autowrap", "has_autowrap");
@@ -1065,10 +1325,21 @@ Label::Label(const String &p_text) {
 	line_count = 0;
 	set_v_size_flags(0);
 	clip = false;
-    animate = false;
 	transition_text.xl_text = "";
-    transition_duration = 1;
-    transition_controller = new AnimationRotate;
+    transition_duration = 1.0;
+    transition_ease = TRANSITIONEASE_NONE;
+    transition_scale_width = false;
+    transition_change_policy = TRANSITIONCHANGEPOLICY_NEW;
+    transition_effect = TRANSITIONEFFECT_NONE;
+    const AnimationController *_transition_controllers_table[] = {
+        new AnimationNone(),
+        new AnimationSlide(AnimationSlide::ANIMATION_SLIDE_UP),
+        new AnimationSlide(AnimationSlide::ANIMATION_SLIDE_DOWN),
+        new AnimationRotate(AnimationRotate::ANIMATION_ROTATE_V),
+        new AnimationRotate(AnimationRotate::ANIMATION_ROTATE_H)
+    };
+    copymem(transition_controllers_table, _transition_controllers_table, sizeof(_transition_controllers_table));
+    transition_controller = transition_controllers_table[TRANSITIONEFFECT_NONE];
 	set_mouse_filter(MOUSE_FILTER_IGNORE);
 	total_char_cache = 0;
 	visible_chars = -1;

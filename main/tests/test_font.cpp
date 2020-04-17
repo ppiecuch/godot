@@ -165,7 +165,7 @@ public:
 
         OS::get_singleton()->print("Running animation:\n");
 
-		label1->set_animate(true);
+		label1->set_transition_effect(Label::TRANSITIONEFFECT_ROTATE_V);
 		label1->set_transition_duration(2);
 		label1->set_text("New\nanimation");
 	}

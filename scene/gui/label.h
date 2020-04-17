@@ -41,6 +41,8 @@ struct AnimationTransform {
     AnimationTransform() : current(0), duration(0) { }
 };
 
+typedef float (*ease_func_t)(float t, float b, float c, float d);
+
 struct AnimationController {
     enum AnimState {
         ANIMCTRL_DONE  = 0, // transition complited
@@ -49,7 +51,7 @@ struct AnimationController {
     };
 
     virtual void init_xform(float duration, AnimationTransform &xform) = 0;
-    virtual AnimState update(float dt, AnimationTransform &xform) = 0;
+    virtual AnimState update(float dt, ease_func_t ease, AnimationTransform &xform) = 0;
     virtual bool is_active() const = 0;
     virtual AnimationController::AnimState state(AnimationTransform &a) const = 0;
 };
@@ -76,14 +78,37 @@ public:
 	};
 
     enum TransitionEffect {
-        TRANSITIONEFFECT_SLIDE,
-        TRANSITIONEFFECT_ROTATE
+        TRANSITIONEFFECT_NONE,
+        TRANSITIONEFFECT_SLIDE_UP,
+        TRANSITIONEFFECT_SLIDE_DOWN,
+        TRANSITIONEFFECT_ROTATE_V,
+        TRANSITIONEFFECT_ROTATE_H,
+        TRANSITIONEFFECT_COUNT
     };
 
     enum TransitionChangePolicy {
         TRANSITIONCHANGEPOLICY_ALL, /* always transition - even same characters */
         TRANSITIONCHANGEPOLICY_NEW  /* transition only new (changed) characters */
     };
+
+#define DEFINE_TRANSITIONEASE(M)   \
+    TRANSITIONEASE_ ## M ## _IN,   \
+    TRANSITIONEASE_ ## M ## _OUT,  \
+    TRANSITIONEASE_ ## M ## _INOUT \
+
+    enum TransitionEase {
+        TRANSITIONEASE_NONE,
+        DEFINE_TRANSITIONEASE(LINEAR),
+        DEFINE_TRANSITIONEASE(SINE),
+        DEFINE_TRANSITIONEASE(CIRC),
+        DEFINE_TRANSITIONEASE(CUBIC),
+        DEFINE_TRANSITIONEASE(QUAD),
+        DEFINE_TRANSITIONEASE(EXPO),
+        DEFINE_TRANSITIONEASE(BACK),
+        DEFINE_TRANSITIONEASE(BOUNCE),
+        DEFINE_TRANSITIONEASE(ELASTIC)
+    };
+#undef DEFINE_TRANSITIONEASE
 
 private:
 	Align align;
@@ -140,14 +165,20 @@ private:
         String text;
         String xl_text;
         WordCache *word_cache = 0;
+        Array same_chars_pos;
         int width;
         int line_count;
         int total_char_cache;
     } transition_text;
+    TransitionEase transition_ease;
     TransitionEffect transition_effect;
+    bool transition_scale_width;
     TransitionChangePolicy transition_change_policy;
     AnimationTransform transition_xform;
+    AnimationController *transition_controllers_table[TRANSITIONEFFECT_COUNT];
     AnimationController *transition_controller;
+
+    bool is_transition_enabled() const { return transition_effect != TRANSITIONEFFECT_NONE; }
 
     void clear_pending_animations();
 
@@ -178,17 +209,22 @@ public:
 	int get_visible_characters() const;
 	int get_total_character_count() const;
 
-	void set_animate(bool p_animate);
-	bool is_animate() const;
-
 	void set_transition_duration(float p_duration);
 	float get_transition_duration() const;
+
+    void set_transition_ease(TransitionEase p_ease);
+    TransitionEase get_transition_ease() const;
 
     void set_transition_effect(TransitionEffect p_effect);
     TransitionEffect get_transition_effect() const;
 
+    void set_transition_scale_width(bool p_scale_width);
+    bool is_transition_scale_width() const;
+
     void set_transition_change_policy(TransitionChangePolicy p_change_policy);
     TransitionChangePolicy get_transition_change_policy() const;
+
+    bool is_transition_active() const;
 
 	void set_clip_text(bool p_clip);
 	bool is_clipping_text() const;
@@ -218,6 +254,7 @@ public:
 
 VARIANT_ENUM_CAST(Label::Align);
 VARIANT_ENUM_CAST(Label::VAlign);
+VARIANT_ENUM_CAST(Label::TransitionEase);
 VARIANT_ENUM_CAST(Label::TransitionEffect);
 VARIANT_ENUM_CAST(Label::TransitionChangePolicy);
 
