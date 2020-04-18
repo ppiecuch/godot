@@ -659,7 +659,7 @@ float BitmapFont::draw_char_xform(RID p_canvas_item, const CharTransform &p_char
         Rect2 transform = p_char_xform.xform_dest(Rect2(cpos, c->rect.size));
         if (p_char_xform.align_vrotation) {
             // make vert. rotation happens in one line (otherwise vert. rotation happens in the middle of the letter
-            // height - usually different for letters). Rotation line is set to half of small letter'.
+            // height - usually different for letters).
             // TODO: it is kind of magic at the moment
             const int y_offset = (p_char_xform.align_vrotation_factor*ascent + height - c->v_align - ascent - c->rect.size.y/2)
                 * (1 - p_char_xform.dest.scale.y);
