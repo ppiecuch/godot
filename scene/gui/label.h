@@ -37,8 +37,10 @@ struct AnimationTransform {
     CharTransform xform;
     float current;
     float duration;
+    bool active;
 
-    AnimationTransform() : current(0), duration(0) { }
+    AnimationTransform() : current(0), duration(0), active(false) { }
+    bool is_active() const { return active; }
 };
 
 typedef float (*ease_func_t)(float t, float b, float c, float d);
@@ -52,7 +54,6 @@ struct AnimationController {
 
     virtual void init_xform(float duration, AnimationTransform &xform) = 0;
     virtual AnimState update(float dt, ease_func_t ease, AnimationTransform &xform) = 0;
-    virtual bool is_active() const = 0;
     virtual AnimationController::AnimState state(AnimationTransform &a) const = 0;
 };
 
@@ -170,13 +171,16 @@ private:
         int line_count;
         int total_char_cache;
     } transition_text;
+    struct {
+        bool scale_width;
+        bool align_vrotation;
+        float align_vrotation_factor;
+    } transition_opts;
     TransitionEase transition_ease;
     TransitionEffect transition_effect;
-    bool transition_scale_width;
     TransitionChangePolicy transition_change_policy;
     AnimationTransform transition_xform;
-    AnimationController *transition_controllers_table[TRANSITIONEFFECT_COUNT];
-    AnimationController *transition_controller;
+    AnimationController *transition_controller = 0;
 
     bool is_transition_enabled() const { return transition_effect != TRANSITIONEFFECT_NONE; }
 
@@ -220,6 +224,12 @@ public:
 
     void set_transition_scale_width(bool p_scale_width);
     bool is_transition_scale_width() const;
+
+    void set_transition_align_vrotation(bool p_align_vrotation);
+    bool is_transition_align_vrotation() const;
+
+    void set_transition_align_vrotation_factor(float p_vrotation_factor);
+    float get_transition_align_vrotation_factor() const;
 
     void set_transition_change_policy(TransitionChangePolicy p_change_policy);
     TransitionChangePolicy get_transition_change_policy() const;

@@ -55,9 +55,11 @@ struct CharTransform {
         .clip( Rect2(tex.clip.position * rc.position, tex.clip.size * rc.size) );
     }
     Rect2 xform_dest(const Rect2 &rc) const {
-        return Rect2(rc.position + dest.offset * rc.size, rc.size * dest.scale);
+        return Rect2(rc.position + (scale_width?Vector2(0,0):(dest.offset*rc.size)), rc.size * dest.scale);
     }
-    bool align_vert_rotation = true;
+    bool scale_width = false;
+    bool align_vrotation = false;
+    float align_vrotation_factor = 0.5;
 };
 
 

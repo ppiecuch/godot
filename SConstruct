@@ -463,6 +463,13 @@ if selected_platform in platform_list:
         sys.path.remove(tmppath)
         sys.modules.pop('config')
 
+    # some modules needs to be defined outside of the 'modules' folder, since
+    # they might modifie/affect editor
+    for x in ['gd_vector_graphics']:
+        if (x in env.disabled_modules):
+            continue
+        env.Append(CPPDEFINES=["MODULE_" + x.upper() + "_ENABLED"])
+
     methods.update_version(env.module_version_string)
 
     env["PROGSUFFIX"] = suffix + env.module_version_string + env["PROGSUFFIX"]
