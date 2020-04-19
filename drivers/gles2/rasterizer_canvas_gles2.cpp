@@ -90,12 +90,6 @@ RasterizerStorageGLES2::Texture *RasterizerCanvasGLES2::_get_canvas_texture(cons
 
 		RasterizerStorageGLES2::Texture *texture = storage->texture_owner.getornull(p_texture);
 
-        state.canvas_shader.set_uniform(CanvasShaderGLES2::PROJECTION_MATRIX, state.uniforms.projection_matrix);
-        state.canvas_shader.set_uniform(CanvasShaderGLES2::MODELVIEW_MATRIX, state.uniforms.modelview_matrix);
-        state.canvas_shader.set_uniform(CanvasShaderGLES2::WORLD_MATRIX, state.uniforms.world_matrix);
-        state.canvas_shader.set_uniform(CanvasShaderGLES2::INV_WORLD_MATRIX, state.uniforms.inv_world_matrix);
-        state.canvas_shader.set_uniform(CanvasShaderGLES2::EXTRA_MATRIX, state.uniforms.extra_matrix);
-
 		if (texture) {
 			return texture->get_ptr();
 		}
@@ -1991,7 +1985,7 @@ bool RasterizerCanvasGLES2::_detect_batch_break(Item *p_ci) {
 
 // Legacy non-batched implementation for regression testing.
 // Should be removed after testing phase to avoid duplicate codepaths.
-void RasterizerCanvasGLES2::_canvas_render_item(Item *p_ci, RenderItemState &r_ris) {
+void RasterizerCanvasGLES2::_canvas_render_item(Item *p_ci, RenderItemState &r_ris, const Transform2D &p_base_transform) {
 	storage->info.render._2d_item_count++;
 
 	if (r_ris.current_clip != p_ci->final_clip_owner) {
@@ -2212,8 +2206,8 @@ void RasterizerCanvasGLES2::_canvas_render_item(Item *p_ci, RenderItemState &r_r
 
 	state.uniforms.final_modulate = unshaded ? p_ci->final_modulate : Color(p_ci->final_modulate.r * r_ris.item_group_modulate.r, p_ci->final_modulate.g * r_ris.item_group_modulate.g, p_ci->final_modulate.b * r_ris.item_group_modulate.b, p_ci->final_modulate.a * r_ris.item_group_modulate.a);
 
-	state.uniforms.modelview_matrix = ci->final_transform;
-	state.uniforms.world_matrix = p_base_transform.affine_inverse() * ci->final_transform;
+	state.uniforms.modelview_matrix = p_ci->final_transform;
+	state.uniforms.world_matrix = p_base_transform.affine_inverse() * p_ci->final_transform;
 	state.uniforms.inv_world_matrix = state.uniforms.world_matrix.affine_inverse();
 	state.uniforms.extra_matrix = Transform2D();
 

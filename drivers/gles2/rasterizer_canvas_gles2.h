@@ -238,7 +238,7 @@ public:
 
 private:
 	// legacy codepath .. to remove after testing
-	void _canvas_render_item(Item *p_ci, RenderItemState &r_ris);
+	void _canvas_render_item(Item *p_ci, RenderItemState &r_ris, const Transform2D &p_base_transform = Transform2D());
 	_FORCE_INLINE_ void _canvas_item_render_commands(Item *p_item, Item *p_current_clip, bool &r_reclip, RasterizerStorageGLES2::Material *p_material);
 
 	// high level batch funcs

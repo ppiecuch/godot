@@ -311,6 +311,8 @@ void RasterizerCanvasBaseGLES2::_set_uniforms() {
 
 	state.canvas_shader.set_uniform(CanvasShaderGLES2::PROJECTION_MATRIX, state.uniforms.projection_matrix);
 	state.canvas_shader.set_uniform(CanvasShaderGLES2::MODELVIEW_MATRIX, state.uniforms.modelview_matrix);
+    state.canvas_shader.set_uniform(CanvasShaderGLES2::WORLD_MATRIX, state.uniforms.world_matrix);
+    state.canvas_shader.set_uniform(CanvasShaderGLES2::INV_WORLD_MATRIX, state.uniforms.inv_world_matrix);
 	state.canvas_shader.set_uniform(CanvasShaderGLES2::EXTRA_MATRIX, state.uniforms.extra_matrix);
 
 	state.canvas_shader.set_uniform(CanvasShaderGLES2::FINAL_MODULATE, state.uniforms.final_modulate);
