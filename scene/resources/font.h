@@ -54,12 +54,17 @@ struct CharTransform {
         return Rect2(rc.position + tex.offset * rc.position, rc.size)
         .clip( Rect2(tex.clip.position * rc.position, tex.clip.size * rc.size) );
     }
-    Rect2 xform_dest(const Rect2 &rc) const {
-        return Rect2(rc.position + (scale_width?Vector2(0,0):(dest.offset*rc.size)), rc.size * dest.scale);
+    Rect2 xform_dest(const Rect2 &rc, float ascent, float vrotation_offset) const {
+        return Rect2(rc.position
+            + (scale_width?Vector2(0,0):(dest.offset*rc.size))
+            // align vert. rotation to one line (otherwise rot. happens in the middle of the letter bitmap).
+            // TODO: it is kind of magic at the moment
+            + (align_vrotation?Vector2(0, (align_vrotation_factor*ascent+vrotation_offset) * (1-dest.scale.y)):Vector2(0,0))
+            , rc.size * dest.scale);
     }
     bool scale_width = false;
     bool align_vrotation = false;
-    float align_vrotation_factor = 0.5;
+    real_t align_vrotation_factor = 0.5;
 };
 
 

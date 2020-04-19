@@ -380,7 +380,7 @@ void Label::_notification(int p_what) {
 
 		int lines_visible = (size.y + line_spacing) / font_h;
 
-		real_t space_w = font->get_char_size(' ').width;
+		real_t space_w = font->get_char_size(' ').width + horizontal_spacing;
 		int chars_total = 0;
 
 		int vbegin = 0, vsep = 0;
@@ -424,14 +424,12 @@ void Label::_notification(int p_what) {
 
 		WordCache *wc = word_cache;
 		if (!wc) {
+            ERR_PRINT("Illegal - word cache is empty");
 			return;
         }
 
+		int line = 0, line_to = lines_skipped + (lines_visible > 0 ? lines_visible : 1);
         int same_char_cnt = 0;
-        Array same_chars_pos;
-
-		int line = 0;
-		int line_to = lines_skipped + (lines_visible > 0 ? lines_visible : 1);
 		FontDrawer drawer(font, font_outline_modulate);
 		while (wc) {
 			/* handle lines not meant to be drawn quickly */
@@ -614,12 +612,14 @@ void Label::_notification(int p_what) {
                                     if (c == c_) {
                                         if (draw_state) {
                                             // correct position in OUT state for this char/pair
-                                            x_correct = (int(transition_text.same_chars_pos[same_char_cnt++])-x_ofs) * (1-xform.dest.scale.x*xform.dest.scale.y);
-                                        } else {
-                                            if (transition_text.same_chars_pos.empty())
-                                                same_chars_pos.push_back(x_ofs); // save position for this char/pair in IN
+                                            if (same_char_cnt < transition_text.same_chars_pos.size()) {
+                                                x_correct =
+                                                    (int(transition_text.same_chars_pos[same_char_cnt++])-x_ofs)
+                                                    * (1-xform.dest.scale.x*xform.dest.scale.y);
+                                            } else
+                                                ERR_PRINT("Invalid index for same_chars_pos");
                                         }
-                                        xform = CharTransform();            // no transition
+                                        xform = CharTransform(); // no transition
                                     }
                                 }
                             }
@@ -648,9 +648,6 @@ void Label::_notification(int p_what) {
 			wc = to ? to->next : 0;
 			line++;
 		}
-
-        if (transition_text.same_chars_pos.empty())
-            transition_text.same_chars_pos = Array( same_chars_pos );
 	}
 
 	else if (p_what == NOTIFICATION_THEME_CHANGED) {
@@ -908,10 +905,11 @@ CharType Label::get_char_at(WordCache *cache, String &text, int line, int pos, C
 
         char_pos += wc->word_len;
         if (char_pos > pos) {
+            const int index = wc->char_pos + wc->word_len - (char_pos - pos);
             if (next_char) {
-                if (char_pos > pos + 1) *next_char = text[wc->char_pos + pos + 1]; else *next_char = 0;
+                *next_char = text[index + 1]; // character or NULL
             }
-            return text[wc->char_pos + wc->word_len - (char_pos - pos)];
+            return text[index];
         }
 
         wc = wc->next;
@@ -987,7 +985,38 @@ void Label::regenerate_word_cache() {
                                                           transition_text.line_count,
                                                           transition_text.total_char_cache,
                                                           transition_text.width);
+        // try to extmate position of same chars
         transition_text.same_chars_pos = Array();
+        const real_t space_w = font->get_char_size(' ').width + horizontal_spacing;
+        int line = 0, line_pos = 0, line_xpos = 0;
+        WordCache *wc = word_cache;
+        while (wc) {
+            for (int index=line_pos; index<line_pos+wc->word_len; ++index) {
+                CharType c = xl_text[wc->char_pos + index];
+                CharType c_ = get_char_at(transition_text.word_cache, transition_text.xl_text, line, index);
+                if (c_ != 0) {
+                    if (uppercase) {
+                        c = String::char_uppercase(c);
+                        c_ = String::char_uppercase(c_);
+                    }
+                    if (c == c_) {
+                        transition_text.same_chars_pos.push_back(line_xpos);
+                    }
+                }
+                line_xpos += font->get_char_size(xl_text[index], xl_text[index + 1]).width + horizontal_spacing;
+            }
+
+            line_pos += wc->word_len;
+            line_xpos += wc->pixel_width + space_w*wc->space_count;
+
+            wc = wc->next;
+            if (!wc)
+                break;
+            if (wc->char_pos < 0) { // end of line
+                ++line;
+                line_pos = line_xpos = 0;
+            }
+        }
     }
 
 	word_cache_dirty = false;
@@ -1226,7 +1255,7 @@ bool Label::is_transition_align_vrotation() const {
     return transition_opts.align_vrotation;
 }
 
-void Label::set_transition_align_vrotation_factor(float p_align_vrotation_factor) {
+void Label::set_transition_align_vrotation_factor(real_t p_align_vrotation_factor) {
 
     if (p_align_vrotation_factor != transition_opts.align_vrotation_factor) {
         transition_opts.align_vrotation_factor = p_align_vrotation_factor;
@@ -1234,7 +1263,7 @@ void Label::set_transition_align_vrotation_factor(float p_align_vrotation_factor
     }
 }
 
-float Label::get_transition_align_vrotation_factor() const {
+real_t Label::get_transition_align_vrotation_factor() const {
 
     return transition_opts.align_vrotation_factor;
 }

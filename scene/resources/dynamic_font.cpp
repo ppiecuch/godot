@@ -306,7 +306,7 @@ void DynamicFontAtSize::set_texture_flags(uint32_t p_flags) {
 	}
 }
 
-float DynamicFontAtSize::draw_char(RID p_canvas_item, const Point2 &p_pos, CharType p_char, CharType p_next, const Color &p_modulate, const Vector<Ref<DynamicFontAtSize> > &p_fallbacks, bool p_advance_only, bool p_outline) const {
+float DynamicFontAtSize::draw_char(RID p_canvas_item, const CharTransform &p_char_xform, const Point2 &p_pos, CharType p_char, CharType p_next, const Color &p_modulate, const Vector<Ref<DynamicFontAtSize> > &p_fallbacks, bool p_advance_only, bool p_outline) const {
 
 	if (!valid)
 		return 0;
@@ -900,7 +900,7 @@ float DynamicFont::draw_char_xform(RID p_canvas_item, const CharTransform &p_cha
 
 	// If requested outline draw, but no outline is present, simply return advance without drawing anything
 	bool advance_only = p_outline && outline_cache_id.outline_size == 0;
-	return font_at_size->draw_char(p_canvas_item, p_pos, p_char, p_next, color, fallbacks, advance_only, p_outline) + spacing_char;
+	return font_at_size->draw_char(p_canvas_item, p_char_xform, p_pos, p_char, p_next, color, fallbacks, advance_only, p_outline) + spacing_char;
 }
 
 void DynamicFont::set_fallback(int p_idx, const Ref<DynamicFontData> &p_data) {

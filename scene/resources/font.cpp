@@ -656,16 +656,10 @@ float BitmapFont::draw_char_xform(RID p_canvas_item, const CharTransform &p_char
 		Point2 cpos = p_pos;
 		cpos.x += c->h_align;
 		cpos.y += c->v_align - ascent;
-        Rect2 transform = p_char_xform.xform_dest(Rect2(cpos, c->rect.size));
-        if (p_char_xform.align_vrotation) {
-            // make vert. rotation happens in one line (otherwise vert. rotation happens in the middle of the letter
-            // height - usually different for letters).
-            // TODO: it is kind of magic at the moment
-            const int y_offset = (p_char_xform.align_vrotation_factor*ascent + height - c->v_align - ascent - c->rect.size.y/2)
-                * (1 - p_char_xform.dest.scale.y);
-            transform.position.y += y_offset;
-        }
-		VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item, transform, textures[c->texture_idx]->get_rid(), p_char_xform.xform_tex(c->rect), p_modulate, false, RID(), false);
+		VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item,
+            p_char_xform.xform_dest(Rect2(cpos, c->rect.size), ascent, height-c->v_align-ascent-c->rect.size.y/2),
+            textures[c->texture_idx]->get_rid(),
+            p_char_xform.xform_tex(c->rect), p_modulate, false, RID(), false);
 	}
 
 	if (p_char_xform.scale_width)

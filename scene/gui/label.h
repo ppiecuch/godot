@@ -174,7 +174,7 @@ private:
     struct {
         bool scale_width;
         bool align_vrotation;
-        float align_vrotation_factor;
+        real_t align_vrotation_factor;
     } transition_opts;
     TransitionEase transition_ease;
     TransitionEffect transition_effect;
@@ -213,8 +213,8 @@ public:
 	int get_visible_characters() const;
 	int get_total_character_count() const;
 
-	void set_transition_duration(float p_duration);
-	float get_transition_duration() const;
+	void set_transition_duration(real_t p_duration);
+	real_t get_transition_duration() const;
 
     void set_transition_ease(TransitionEase p_ease);
     TransitionEase get_transition_ease() const;
@@ -228,8 +228,8 @@ public:
     void set_transition_align_vrotation(bool p_align_vrotation);
     bool is_transition_align_vrotation() const;
 
-    void set_transition_align_vrotation_factor(float p_vrotation_factor);
-    float get_transition_align_vrotation_factor() const;
+    void set_transition_align_vrotation_factor(real_t p_vrotation_factor);
+    real_t get_transition_align_vrotation_factor() const;
 
     void set_transition_change_policy(TransitionChangePolicy p_change_policy);
     TransitionChangePolicy get_transition_change_policy() const;
