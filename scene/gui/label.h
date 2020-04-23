@@ -31,6 +31,7 @@
 #ifndef LABEL_H
 #define LABEL_H
 
+#include "core/pair.h"
 #include "scene/gui/control.h"
 
 struct AnimationTransform {
@@ -64,6 +65,8 @@ class Label : public Control {
 	GDCLASS(Label, Control);
 
 public:
+    typedef Pair<CharType, CharType> CharPair;
+
 	enum Align {
 
 		ALIGN_LEFT,
@@ -151,10 +154,11 @@ private:
 	};
 
 	bool word_cache_dirty;
+	void regenerate_word_cache();
     WordCache *calculate_word_cache(const Ref<Font> &font, const String &label_text, int &line_count, int &total_char_cache, int &width) const;
     CharType get_char_at(WordCache *cache, String &text, int line, int pos, int *word = 0, CharType *next_char = 0) const;
 	int get_line_size(WordCache *cache, String &text, int line) const;
-	void regenerate_word_cache();
+
     void _dump_word_cache(const String &text, const Label::WordCache *wc);
 
 	float percent_visible;
@@ -171,7 +175,7 @@ private:
         String text;
         String xl_text;
         WordCache *word_cache = 0;
-        Array same_chars_pos;
+        Dictionary same_chars_pos;
         int width;
         int line_count;
         int total_char_cache;
@@ -187,8 +191,10 @@ private:
     AnimationTransform transition_xform;
     AnimationController *transition_controller = 0;
 
-    real_t _process_transition_char(CharTransform &xform, bool draw_state, int line, int line_pos, int x_ofs, CharType &c, CharType &n, int &same_char_count);
+    CharPair _process_transition_char(CharTransform &xform, bool draw_state, int line, int line_pos, int char_pos, real_t &x_ofs);
     void _clear_pending_animations();
+    // 0 : IN
+    // 1 : OUT/DONE
     bool _current_transition_state() const { return transition_controller->state(transition_xform) != AnimationController::ANIMCTRL_IN; }
 
     bool is_transition_enabled() const { return transition_effect != TRANSITIONEFFECT_NONE; }

@@ -337,7 +337,7 @@ int Label::get_line_height() const {
 	return get_font("font")->get_height();
 }
 
-real_t Label::_process_transition_char(CharTransform &xform, bool draw_state, int line, int line_pos, int x_ofs, CharType &c, CharType &n, int &same_char_count) {
+Label::CharPair Label::_process_transition_char(CharTransform &xform, bool draw_state, int line, int line_pos, int char_pos, real_t &x_ofs) {
 
     String draw_text_state[] = { xl_text, transition_text.xl_text };
 # define draw_text draw_text_state[draw_state]
@@ -346,16 +346,16 @@ real_t Label::_process_transition_char(CharTransform &xform, bool draw_state, in
 # define draw_cache draw_cache_state[draw_state]
 # define other_draw_cache draw_cache_state[!draw_state]
 
+    CharPair cn;
     int word = -1;
-    c = get_char_at(draw_cache, draw_text, line, line_pos, &word, &n);
+    cn.first = get_char_at(draw_cache, draw_text, line, line_pos, &word, &cn.second);
 
     if (uppercase) {
-        c = String::char_uppercase(c);
-        n = String::char_uppercase(n);
+        cn.first = String::char_uppercase(cn.first);
+        cn.second = String::char_uppercase(cn.second);
     }
 
     // reset glyph transformation if necessery
-    float x_ofs_move = 0;
     if (transition_change_policy == TRANSITIONCHANGEPOLICY_NEW) {
         int other_word = -1;
         CharType c_ = get_char_at(other_draw_cache, other_draw_text, line, line_pos, &other_word);
@@ -363,16 +363,14 @@ real_t Label::_process_transition_char(CharTransform &xform, bool draw_state, in
             if (uppercase) {
                 c_ = String::char_uppercase(c_);
             }
-            if (c == c_) {
+            if (cn.first == c_) {
                 if (draw_state) {
                     // correct position in OUT state for this char/pair
-                    if (same_char_count < transition_text.same_chars_pos.size()) {
-                        x_ofs_move =
-                            (int(transition_text.same_chars_pos[same_char_count])-x_ofs)
+                    if (transition_text.same_chars_pos.has(char_pos)) {
+                        x_ofs +=
+                            (int(transition_text.same_chars_pos[char_pos])-x_ofs)
                             * (1-xform.dest.scale.x*xform.dest.scale.y);
-                        same_char_count++;
-                    } else
-                        ERR_PRINT("Pair not found");
+                    }
                 }
                 xform = CharTransform(); // no transition
             }
@@ -383,7 +381,7 @@ real_t Label::_process_transition_char(CharTransform &xform, bool draw_state, in
     xform.align_vrotation = transition_opts.align_vrotation;
     xform.align_vrotation_factor = transition_opts.align_vrotation_factor;
 
-    return x_ofs_move;
+    return cn;
 }
 
 void Label::_notification(int p_what) {
@@ -411,8 +409,9 @@ void Label::_notification(int p_what) {
 			VisualServer::get_singleton()->canvas_item_set_clip(get_canvas_item(), true);
 		}
 
-		if (word_cache_dirty)
+		if (word_cache_dirty) {
 			regenerate_word_cache();
+        }
 
 		RID ci = get_canvas_item();
 
@@ -432,8 +431,6 @@ void Label::_notification(int p_what) {
 		VisualServer::get_singleton()->canvas_item_set_distance_field_mode(get_canvas_item(), font.is_valid() && font->is_distance_field_hint());
 
 		int font_h = font->get_height() + line_spacing + vertical_spacing;
-;
-
 		int lines_visible = (size.y + line_spacing) / font_h;
 
 		const real_t space_w = font->get_char_size(' ').width + horizontal_spacing;
@@ -556,9 +553,14 @@ void Label::_notification(int p_what) {
 					ERR_PRINT("BUG");
 					return;
 				}
+
+				const bool transition_draw_state = _current_transition_state();
+                const bool transition_in_progress = is_transition_enabled() && transition_xform.is_active();
+
 				if (from->space_count) {
 					/* spacing */
-					x_ofs += space_w * from->space_count;
+                    if (!transition_in_progress || !transition_draw_state)
+                        x_ofs += space_w * from->space_count;
 					if (can_fill && align == ALIGN_FILL && spaces) {
 						x_ofs += int((size.width - (taken + space_w * spaces)) / spaces);
 					}
@@ -568,11 +570,9 @@ void Label::_notification(int p_what) {
 				// and extra characters before and after the last/first word (line):
 				// before: |  ABCD  | |ABCD   | |    ABCD|
 				// after:  | ABCDEF | |AB     | |   ABCDE|
-				const bool draw_state = _current_transition_state();
-                const bool transition_active = is_transition_enabled() && transition_xform.is_active();
-
+                // (this is necessery for OUT state to handle additional characters)
                 int extra_chars_before = 0, extra_chars_after = 0;
-                if (transition_active) {
+                if (transition_in_progress && transition_draw_state) {
 
                     int extra_chars = 0;
                     if (from->next == to || wc == from) { // last/first word ?
@@ -600,12 +600,10 @@ void Label::_notification(int p_what) {
                     extra_chars_before -= from->space_count; // we need to handle spaces too
                 }
 
-                int same_char_count = 0;
-
 				if (font_color_shadow.a > 0) {
 
 					int chars_total_shadow = chars_total; //save chars drawn
-					float x_ofs_shadow = x_ofs;
+					real_t x_ofs_shadow = x_ofs;
 					for (int i = 0; i < from->word_len; i++) {
 
 						if (visible_chars < 0 || chars_total_shadow < visible_chars) {
@@ -616,7 +614,7 @@ void Label::_notification(int p_what) {
 								n = String::char_uppercase(n);
 							}
 
-							float move = drawer.draw_char(ci, Point2(x_ofs_shadow, y_ofs) + shadow_ofs, c, n, font_color_shadow);
+							real_t move = drawer.draw_char(ci, Point2(x_ofs_shadow, y_ofs) + shadow_ofs, c, n, font_color_shadow);
 							if (use_outline) {
 								drawer.draw_char(ci, Point2(x_ofs_shadow, y_ofs) + Vector2(-shadow_ofs.x, shadow_ofs.y), c, n, font_color_shadow);
 								drawer.draw_char(ci, Point2(x_ofs_shadow, y_ofs) + Vector2(shadow_ofs.x, -shadow_ofs.y), c, n, font_color_shadow);
@@ -632,18 +630,16 @@ void Label::_notification(int p_what) {
 
 					if (visible_chars < 0 || chars_total < visible_chars) {
 
-						if (transition_active) {
+						if (transition_in_progress) {
 
-                            CharType c, n;
                             CharTransform xform = transition_xform.xform;
+                            real_t x_ofs_move = x_ofs;
 
-                            const float x_ofs_move = _process_transition_char(xform, draw_state, from->line, line_chars, x_ofs, c, n, same_char_count);
+                            CharPair cn = _process_transition_char(xform, transition_draw_state, from->line, line_chars, from->char_pos + i, x_ofs_move);
 
-                            if (c) {
-                                printf("%lc,%d,", c, i);
-                                x_ofs += drawer.draw_char(ci, xform, Point2(x_ofs + x_ofs_move, y_ofs), c, n, font_color) + horizontal_spacing;
-                            } else
-                                printf("%d,", i);
+                            if (cn.first) {
+                                x_ofs += drawer.draw_char(ci, xform, Point2(x_ofs_move, y_ofs), cn.first, cn.second, font_color) + horizontal_spacing;
+                            }
                         } else {
                             CharType c = xl_text[i + pos];
                             CharType n = xl_text[i + pos + 1];
@@ -661,6 +657,7 @@ void Label::_notification(int p_what) {
                 from = from->next;
 			}
 
+			line++;
             line_chars = 0;
 			wc = to ? to->next : 0;
             printf("\n");
@@ -1009,7 +1006,7 @@ void Label::regenerate_word_cache() {
                                                           transition_text.total_char_cache,
                                                           transition_text.width);
         // try to extmate position of the same chars in every words
-        transition_text.same_chars_pos = Array();
+        transition_text.same_chars_pos = Dictionary();
         const real_t space_w = font->get_char_size(' ').width + horizontal_spacing;
         int line_xpos = 0;
         WordCache *wc = word_cache, *tr_wc = transition_text.word_cache;
@@ -1035,7 +1032,7 @@ void Label::regenerate_word_cache() {
                             c_ = String::char_uppercase(c_);
                         }
                         if (c == c_) {
-                            transition_text.same_chars_pos.push_back(line_xpos);
+                            transition_text.same_chars_pos[wc->char_pos + index] = line_xpos;
                         }
                     }
                     line_xpos += font->get_char_size(xl_text[index], xl_text[index + 1]).width + horizontal_spacing;
