@@ -53,16 +53,11 @@
 #include "scene/main/viewport.h"
 #include "scene/resources/packed_scene.h"
 
-Node *createVectorSprite(Ref<Resource> p_resource);
-void configureVectorSprite(Node *p_child, Ref<Resource> p_texture);
-	
-
-#if MODULE_GD_VECTOR_GRAPHICS_ENABLED
+#ifdef MODULE_GD_VECTOR_GRAPHICS_ENABLED
 // forward declarations for Vector Graphics module:
 Node *createVectorSprite(Ref<Resource> p_resource);
 void configureVectorSprite(Node *p_child, Ref<Resource> p_texture);
 #endif
-
 
 #define MIN_ZOOM 0.01
 #define MAX_ZOOM 100
@@ -3143,12 +3138,14 @@ void CanvasItemEditor::_draw_selection() {
 
 	RID ci = viewport->get_canvas_item();
 
-	List<CanvasItem *> selection = _get_edited_canvas_items(false, false);
+	List<CanvasItem *> selection = _get_edited_canvas_items(true, false);
 
 	bool single = selection.size() == 1;
 	for (List<CanvasItem *>::Element *E = selection.front(); E; E = E->next()) {
 		CanvasItem *canvas_item = Object::cast_to<CanvasItem>(E->get());
 		CanvasItemEditorSelectedItem *se = editor_selection->get_node_editor_data<CanvasItemEditorSelectedItem>(canvas_item);
+
+		bool item_locked = canvas_item->has_meta("_edit_lock_");
 
 		// Draw the previous position if we are dragging the node
 		if (show_helpers &&
@@ -3189,6 +3186,10 @@ void CanvasItemEditor::_draw_selection() {
 
 			Color c = Color(1, 0.6, 0.4, 0.7);
 
+			if (item_locked) {
+				c = Color(0.7, 0.7, 0.7, 0.7);
+			}
+
 			for (int i = 0; i < 4; i++) {
 				viewport->draw_line(endpoints[i], endpoints[(i + 1) % 4], c, Math::round(2 * EDSCALE), true);
 			}
@@ -3201,7 +3202,7 @@ void CanvasItemEditor::_draw_selection() {
 			viewport->draw_set_transform_matrix(viewport->get_transform());
 		}
 
-		if (single && (tool == TOOL_SELECT || tool == TOOL_MOVE || tool == TOOL_SCALE || tool == TOOL_ROTATE || tool == TOOL_EDIT_PIVOT)) { //kind of sucks
+		if (single && !item_locked && (tool == TOOL_SELECT || tool == TOOL_MOVE || tool == TOOL_SCALE || tool == TOOL_ROTATE || tool == TOOL_EDIT_PIVOT)) { //kind of sucks
 			// Draw the pivot
 			if (canvas_item->_edit_use_pivot()) {
 
@@ -4228,10 +4229,20 @@ void CanvasItemEditor::_zoom_on_position(float p_zoom, Point2 p_position) {
 
 	float prev_zoom = zoom;
 	zoom = p_zoom;
-	Point2 ofs = p_position;
-	ofs = ofs / prev_zoom - ofs / zoom;
-	view_offset.x = Math::round(view_offset.x + ofs.x);
-	view_offset.y = Math::round(view_offset.y + ofs.y);
+
+	view_offset += p_position / prev_zoom - p_position / zoom;
+
+	// We want to align in-scene pixels to screen pixels, this prevents blurry rendering
+	// in small details (texts, lines).
+	// This correction adds a jitter movement when zooming, so we correct only when the
+	// zoom factor is an integer. (in the other cases, all pixels won't be aligned anyway)
+	float closest_zoom_factor = Math::round(zoom);
+	if (Math::is_zero_approx(zoom - closest_zoom_factor)) {
+		// make sure scene pixel at view_offset is aligned on a screen pixel
+		Vector2 view_offset_int = view_offset.floor();
+		Vector2 view_offset_frac = view_offset - view_offset_int;
+		view_offset = view_offset_int + (view_offset_frac * closest_zoom_factor).round() / closest_zoom_factor;
+	}
 
 	_update_zoom_label();
 	update_viewport();
@@ -6012,18 +6023,19 @@ void CanvasItemEditorViewport::_perform_drop_data() {
 					child = memnew(TextureRect);
 				else if (default_type == "NinePatchRect")
 					child = memnew(NinePatchRect);
-#if MODULE_GD_VECTOR_GRAPHICS_ENABLED
+#ifdef MODULE_GD_VECTOR_GRAPHICS_ENABLED
 				else if (default_type == "Sprite")
-					child = createVectorSprite(texture);
+					child = memnew(Sprite);
 				else
 					child = vector_child = createVectorSprite(texture);  // default
 #else
+
                 else
-					child = createVectorSprite(texture); // default
+					child = memnew(Sprite); // default
 #endif
 
-				_create_nodes(target_node, child, path, drop_pos); configureVectorSprite(child, texture); 
-#if MODULE_GD_VECTOR_GRAPHICS_ENABLED
+				_create_nodes(target_node, child, path, drop_pos);
+#ifdef MODULE_GD_VECTOR_GRAPHICS_ENABLED
                 if (vector_child) {
                     configureVectorSprite(vector_child, texture);
                 }

@@ -34,14 +34,18 @@ import android.app.Activity;
 import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
+import org.godotengine.godot.BuildConfig;
 import org.godotengine.godot.Godot;
 
 /**
@@ -69,7 +73,10 @@ import org.godotengine.godot.Godot;
  */
 public abstract class GodotPlugin {
 
+	private static final String TAG = GodotPlugin.class.getSimpleName();
+
 	private final Godot godot;
+	private final ConcurrentHashMap<String, SignalInfo> registeredSignals = new ConcurrentHashMap<>();
 
 	public GodotPlugin(Godot godot) {
 		this.godot = godot;
@@ -84,8 +91,10 @@ public abstract class GodotPlugin {
 
 	/**
 	 * Register the plugin with Godot native code.
+	 *
+	 * This method is invoked on the render thread.
 	 */
-	public final void onGLRegisterPluginWithGodotNative() {
+	public final void onRegisterPluginWithGodotNative() {
 		nativeRegisterSingleton(getPluginName(), this);
 
 		Class clazz = getClass();
@@ -113,6 +122,13 @@ public abstract class GodotPlugin {
 			ptr.toArray(pt);
 
 			nativeRegisterMethod(getPluginName(), method.getName(), method.getReturnType().getName(), pt);
+		}
+
+		// Register the signals for this plugin.
+		for (SignalInfo signalInfo : getPluginSignals()) {
+			String signalName = signalInfo.getName();
+			nativeRegisterSignal(getPluginName(), signalName, signalInfo.getParamTypesNames());
+			registeredSignals.put(signalName, signalInfo);
 		}
 
 		// Get the list of gdnative libraries to register.
@@ -169,9 +185,9 @@ public abstract class GodotPlugin {
 	public boolean onMainBackPressed() { return false; }
 
 	/**
-	 * Invoked on the GL thread when the Godot main loop has started.
+	 * Invoked on the render thread when the Godot main loop has started.
 	 */
-	public void onGLGodotMainLoopStarted() {}
+	public void onGodotMainLoopStarted() {}
 
 	/**
 	 * Invoked once per frame on the GL thread after the frame is drawn.
@@ -201,7 +217,17 @@ public abstract class GodotPlugin {
 	 * Returns the list of methods to be exposed to Godot.
 	 */
 	@NonNull
-	public abstract List<String> getPluginMethods();
+	public List<String> getPluginMethods() {
+		return Collections.emptyList();
+	}
+
+	/**
+	 * Returns the list of signals to be exposed to Godot.
+	 */
+	@NonNull
+	public Set<SignalInfo> getPluginSignals() {
+		return Collections.emptySet();
+	}
 
 	/**
 	 * Returns the paths for the plugin's gdnative libraries.
@@ -225,12 +251,55 @@ public abstract class GodotPlugin {
 	}
 
 	/**
-	 * Queue the specified action to be run on the GL thread.
+	 * Queue the specified action to be run on the render thread.
 	 *
-	 * @param action the action to run on the GL thread
+	 * @param action the action to run on the render thread
 	 */
-	protected void runOnGLThread(Runnable action) {
-		godot.runOnGLThread(action);
+	protected void runOnRenderThread(Runnable action) {
+		godot.runOnRenderThread(action);
+	}
+
+	/**
+	 * Emit a registered Godot signal.
+	 * @param signalName
+	 * @param signalArgs
+	 */
+	protected void emitSignal(final String signalName, final Object... signalArgs) {
+		try {
+			// Check that the given signal is among the registered set.
+			SignalInfo signalInfo = registeredSignals.get(signalName);
+			if (signalInfo == null) {
+				throw new IllegalArgumentException(
+						"Signal " + signalName + " is not registered for this plugin.");
+			}
+
+			// Validate the arguments count.
+			Class<?>[] signalParamTypes = signalInfo.getParamTypes();
+			if (signalArgs.length != signalParamTypes.length) {
+				throw new IllegalArgumentException(
+						"Invalid arguments count. Should be " + signalParamTypes.length + "  but is " + signalArgs.length);
+			}
+
+			// Validate the argument's types.
+			for (int i = 0; i < signalParamTypes.length; i++) {
+				if (!signalParamTypes[i].isInstance(signalArgs[i])) {
+					throw new IllegalArgumentException(
+							"Invalid type for argument #" + i + ". Should be of type " + signalParamTypes[i].getName());
+				}
+			}
+
+			runOnRenderThread(new Runnable() {
+				@Override
+				public void run() {
+					nativeEmitSignal(getPluginName(), signalName, signalArgs);
+				}
+			});
+		} catch (IllegalArgumentException exception) {
+			Log.w(TAG, exception.getMessage());
+			if (BuildConfig.DEBUG) {
+				throw exception;
+			}
+		}
 	}
 
 	/**
@@ -253,4 +322,20 @@ public abstract class GodotPlugin {
 	 * @param gdnlibPaths Paths to the libraries relative to the 'assets' directory.
 	 */
 	private native void nativeRegisterGDNativeLibraries(String[] gdnlibPaths);
+
+	/**
+	 * Used to complete registration of the {@link GodotPlugin} instance's methods.
+	 * @param pluginName Name of the plugin
+	 * @param signalName Name of the signal to register
+	 * @param signalParamTypes Signal parameters types
+	 */
+	private native void nativeRegisterSignal(String pluginName, String signalName, String[] signalParamTypes);
+
+	/**
+	 * Used to emit signal by {@link GodotPlugin} instance.
+	 * @param pluginName Name of the plugin
+	 * @param signalName Name of the signal to emit
+	 * @param signalParams Signal parameters
+	 */
+	private native void nativeEmitSignal(String pluginName, String signalName, Object[] signalParams);
 }

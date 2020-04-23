@@ -576,13 +576,14 @@ int RichTextLabel::_process_line(ItemFrame *p_frame, const Vector2 &p_ofs, int &
 									} else {
 										cw = drawer.draw_char(ci, p_ofs + Point2(align_ofs + pofs, y + lh - line_descent) + fx_offset, fx_char, c[i + 1], fx_color);
 									}
-								} else if (previously_visible) {
+								} else if (previously_visible && c[i] != '\t') {
 									backtrack += font->get_char_size(fx_char, c[i + 1]).x;
 								}
 
 								p_char_count++;
 								if (c[i] == '\t') {
 									cw = tab_size * font->get_char_size(' ').width;
+									backtrack = MAX(0, backtrack - cw);
 								}
 
 								ofs += cw;
@@ -601,7 +602,7 @@ int RichTextLabel::_process_line(ItemFrame *p_frame, const Vector2 &p_ofs, int &
 						} else if (strikethrough) {
 							Color uc = color;
 							uc.a *= 0.5;
-							int uy = y + lh / 2 - line_descent + 2;
+							int uy = y + lh - (line_ascent + line_descent) / 2;
 							float strikethrough_width = 1.0;
 #ifdef TOOLS_ENABLED
 							strikethrough_width *= EDSCALE;
@@ -2502,7 +2503,7 @@ bool RichTextLabel::search(const String &p_string, bool p_from_selection, bool p
 		if (it->type == ITEM_TEXT) {
 
 			ItemText *t = static_cast<ItemText *>(it);
-			int sp = t->text.find(p_string, charidx);
+			int sp = t->text.findn(p_string, charidx);
 			if (sp != -1) {
 				selection.from = it;
 				selection.from_char = sp;

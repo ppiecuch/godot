@@ -39,8 +39,7 @@
 #include "core/translation.h"
 #include "core/variant_parser.h"
 
-Ref<ResourceFormatLoader> ResourceLoader::loader[ResourceLoader::MAX_LOADERS];
-
+Ref<ResourceFormatLoader> ResourceLoader::loader[MAX_LOADERS];
 int ResourceLoader::loader_count = 0;
 
 Error ResourceInteractiveLoader::wait() {
@@ -988,7 +987,7 @@ void ResourceLoader::add_custom_loaders() {
 
 void ResourceLoader::remove_custom_loaders() {
 
-	Vector<Ref<ResourceFormatLoader> > custom_loaders;
+	Vector<Ref<ResourceFormatLoader>> custom_loaders;
 	for (int i = 0; i < loader_count; ++i) {
 		if (loader[i]->get_script_instance()) {
 			custom_loaders.push_back(loader[i]);

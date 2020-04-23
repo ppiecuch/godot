@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="EditorExportPlugin" inherits="Reference" version="3.2">
+<class name="EditorExportPlugin" inherits="Reference" version="4.0">
 	<brief_description>
 		A script that is executed when exporting projects.
 	</brief_description>
@@ -90,6 +90,14 @@
 			<return type="void">
 			</return>
 			<argument index="0" name="plist_content" type="String">
+			</argument>
+			<description>
+			</description>
+		</method>
+		<method name="add_ios_project_static_lib">
+			<return type="void">
+			</return>
+			<argument index="0" name="path" type="String">
 			</argument>
 			<description>
 			</description>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="AnimationNodeStateMachine" inherits="AnimationRootNode" version="3.2">
+<class name="AnimationNodeStateMachine" inherits="AnimationRootNode" version="4.0">
 	<brief_description>
 		State machine for control of animations.
 	</brief_description>
@@ -181,6 +181,17 @@
 			</argument>
 			<description>
 				Renames the given node.
+			</description>
+		</method>
+		<method name="replace_node">
+			<return type="void">
+			</return>
+			<argument index="0" name="name" type="String">
+			</argument>
+			<argument index="1" name="node" type="AnimationNode">
+			</argument>
+			<description>
+				Replaces the node and keeps its transitions unchanged.
 			</description>
 		</method>
 		<method name="set_end_node">

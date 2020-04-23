@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Skeleton" inherits="Spatial" version="3.2">
+<class name="Skeleton" inherits="Spatial" version="4.0">
 	<brief_description>
 		Skeleton for characters and animated objects.
 	</brief_description>
@@ -36,6 +36,12 @@
 			</return>
 			<description>
 				Clear all the bones in this skeleton.
+			</description>
+		</method>
+		<method name="clear_bones_global_pose_override">
+			<return type="void">
+			</return>
+			<description>
 			</description>
 		</method>
 		<method name="find_bone" qualifiers="const">

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Viewport" inherits="Node" version="3.2">
+<class name="Viewport" inherits="Node" version="4.0">
 	<brief_description>
 		Creates a sub-view into the screen.
 	</brief_description>
@@ -377,7 +377,13 @@
 		<constant name="RENDER_INFO_DRAW_CALLS_IN_FRAME" value="5" enum="RenderInfo">
 			Amount of draw calls in frame.
 		</constant>
-		<constant name="RENDER_INFO_MAX" value="6" enum="RenderInfo">
+		<constant name="RENDER_INFO_2D_ITEMS_IN_FRAME" value="6" enum="RenderInfo">
+			Amount of items or joined items in frame.
+		</constant>
+		<constant name="RENDER_INFO_2D_DRAW_CALLS_IN_FRAME" value="7" enum="RenderInfo">
+			Amount of draw calls in frame.
+		</constant>
+		<constant name="RENDER_INFO_MAX" value="8" enum="RenderInfo">
 			Represents the size of the [enum RenderInfo] enum.
 		</constant>
 		<constant name="DEBUG_DRAW_DISABLED" value="0" enum="DebugDraw">

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="HSlider" inherits="Slider" version="3.2">
+<class name="HSlider" inherits="Slider" version="4.0">
 	<brief_description>
 		Horizontal slider.
 	</brief_description>
@@ -18,6 +18,8 @@
 		</theme_item>
 		<theme_item name="grabber_area" type="StyleBox">
 			The background of the area to the left of the grabber.
+		</theme_item>
+		<theme_item name="grabber_area_highlight" type="StyleBox">
 		</theme_item>
 		<theme_item name="grabber_disabled" type="Texture">
 			The texture for the grabber when it's disabled.

@@ -28,8 +28,9 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
+#include "test_main.h"
+
 #include "core/list.h"
-#include "core/os/main_loop.h"
 
 #ifdef DEBUG_ENABLED
 
@@ -44,6 +45,7 @@
 #include "test_render.h"
 #include "test_shader_lang.h"
 #include "test_string.h"
+#include "test_font.h"
 
 const char **tests_get_names() {
 
@@ -62,6 +64,7 @@ const char **tests_get_names() {
 		"gd_bytecode",
 		"ordered_hash_map",
 		"astar",
+		"font",
 		NULL
 	};
 
@@ -140,6 +143,11 @@ MainLoop *test_main(String p_test, const List<String> &p_args) {
 	if (p_test == "astar") {
 
 		return TestAStar::test();
+	}
+
+	if (p_test == "font") {
+
+		return TestFont::test();
 	}
 
 	print_line("Unknown test: " + p_test);

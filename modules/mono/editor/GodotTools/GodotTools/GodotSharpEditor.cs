@@ -36,6 +36,17 @@ namespace GodotTools
 
         public BottomPanel BottomPanel { get; private set; }
 
+        public static string ProjectAssemblyName
+        {
+            get
+            {
+                var projectAssemblyName = (string)ProjectSettings.GetSetting("application/config/name");
+                if (string.IsNullOrEmpty(projectAssemblyName))
+                    projectAssemblyName = "UnnamedProject";
+                return projectAssemblyName;
+            }
+        }
+
         private bool CreateProjectSolution()
         {
             using (var pr = new EditorProgress("create_csharp_solution", "Generating solution...".TTR(), 3))
@@ -45,9 +56,7 @@ namespace GodotTools
                 string resourceDir = ProjectSettings.GlobalizePath("res://");
 
                 string path = resourceDir;
-                string name = (string)ProjectSettings.GetSetting("application/config/name");
-                if (name.Empty())
-                    name = "UnnamedProject";
+                string name = ProjectAssemblyName;
 
                 string guid = CsProjOperations.GenerateGameProject(path, name);
 
@@ -62,7 +71,7 @@ namespace GodotTools
                     {
                         Guid = guid,
                         PathRelativeToSolution = name + ".csproj",
-                        Configs = new List<string> {"Debug", "Release", "Tools"}
+                        Configs = new List<string> { "Debug", "ExportDebug", "ExportRelease" }
                     };
 
                     solution.AddNewProject(name, projectInfo);
@@ -437,8 +446,22 @@ namespace GodotTools
 
             if (File.Exists(GodotSharpDirs.ProjectSlnPath) && File.Exists(GodotSharpDirs.ProjectCsProjPath))
             {
-                // Make sure the existing project has Api assembly references configured correctly
-                CsProjOperations.FixApiHintPath(GodotSharpDirs.ProjectCsProjPath);
+                try
+                {
+                    // Migrate solution from old configuration names to: Debug, ExportDebug and ExportRelease
+                    DotNetSolution.MigrateFromOldConfigNames(GodotSharpDirs.ProjectSlnPath);
+                    // Migrate csproj from old configuration names to: Debug, ExportDebug and ExportRelease
+                    ProjectUtils.MigrateFromOldConfigNames(GodotSharpDirs.ProjectCsProjPath);
+
+                    // Apply the other fixes after configurations are migrated
+
+                    // Make sure the existing project has Api assembly references configured correctly
+                    ProjectUtils.FixApiHintPath(GodotSharpDirs.ProjectCsProjPath);
+                }
+                catch (Exception e)
+                {
+                    GD.PushError(e.ToString());
+                }
             }
             else
             {

@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-from detect import get_ndk_version
-from distutils.version import LooseVersion
-
 Import('env')
 
 android_files = [
@@ -19,6 +16,7 @@ android_files = [
     'java_godot_wrapper.cpp',
     'java_godot_io_wrapper.cpp',
     'jni_utils.cpp',
+    'android_keys_utils.cpp',
     'plugin/godot_plugin_jni.cpp',
     #'power_android.cpp'
 ]

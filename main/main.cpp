@@ -427,6 +427,14 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 
 	I = args.front();
 	while (I) {
+#ifdef OSX_ENABLED
+		// Ignore the process serial number argument passed by macOS Gatekeeper.
+		// Otherwise, Godot would try to open a non-existent project on the first start and abort.
+		if (I->get().begins_with("-psn_")) {
+			I = I->next();
+			continue;
+		}
+#endif
 
 		List<String>::Element *N = I->next();
 
@@ -1123,9 +1131,11 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	ProjectSettings::get_singleton()->set_custom_property_info("debug/settings/fps/force_fps", PropertyInfo(Variant::INT, "debug/settings/fps/force_fps", PROPERTY_HINT_RANGE, "0,120,1,or_greater"));
 
 	GLOBAL_DEF("debug/settings/stdout/print_fps", false);
+	GLOBAL_DEF("debug/settings/stdout/verbose_stdout", false);
 
-	if (!OS::get_singleton()->_verbose_stdout) //overridden
-		OS::get_singleton()->_verbose_stdout = GLOBAL_DEF("debug/settings/stdout/verbose_stdout", false);
+	if (!OS::get_singleton()->_verbose_stdout) { // Not manually overridden.
+		OS::get_singleton()->_verbose_stdout = GLOBAL_GET("debug/settings/stdout/verbose_stdout");
+	}
 
 	if (frame_delay == 0) {
 		frame_delay = GLOBAL_DEF("application/run/frame_delay_msec", 0);
@@ -1574,7 +1584,7 @@ bool Main::start() {
 			return false;
 		}
 
-		if (script_res->can_instance() /*&& script_res->inherits_from("SceneTreeScripted")*/) {
+		if (script_res->can_instance()) {
 
 			StringName instance_type = script_res->get_instance_base_type();
 			Object *obj = ClassDB::instance(instance_type);
@@ -1582,7 +1592,7 @@ bool Main::start() {
 			if (!script_loop) {
 				if (obj)
 					memdelete(obj);
-				ERR_FAIL_V_MSG(false, "Can't load script '" + script + "', it does not inherit from a MainLoop type.");
+				ERR_FAIL_V_MSG(false, vformat("Can't load the script \"%s\" as it doesn't inherit from SceneTree or MainLoop.", script));
 			}
 
 			script_loop->set_init_script(script_res);
@@ -1900,6 +1910,8 @@ bool Main::start() {
 			ProgressDialog *progress_dialog = memnew(ProgressDialog);
 			pmanager->add_child(progress_dialog);
 			sml->get_root()->add_child(pmanager);
+			// Speed up rendering slightly by disabling 3D features while in the project manager.
+			sml->get_root()->set_usage(Viewport::USAGE_2D_NO_SAMPLING);
 			OS::get_singleton()->set_context(OS::CONTEXT_PROJECTMAN);
 			project_manager = true;
 		}

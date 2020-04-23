@@ -84,6 +84,7 @@ private:
 	Button *browse;
 	Button *install_browse;
 	Button *create_dir;
+	Button *copy_addons;
 	Container *name_container;
 	Container *path_container;
 	Container *install_path_container;
@@ -483,6 +484,12 @@ private:
 			} else {
 				if (mode == MODE_NEW) {
 
+                    String addons_path = OS::get_singleton()->get_executable_path().get_base_dir().plus_file("addons");
+# ifdef __APPLE__
+                    if (!DirAccess::exists(addons_path))
+                        addons_path = OS::get_singleton()->get_executable_path().get_base_dir().plus_file("/../../../addons");
+# endif
+
 					ProjectSettings::CustomMap initial_settings;
 					if (rasterizer_button_group->get_pressed_button()->get_meta("driver_name") == "GLES3") {
 						initial_settings["rendering/quality/driver/driver_name"] = "GLES3";
@@ -494,6 +501,8 @@ private:
 					initial_settings["application/config/name"] = project_name->get_text();
 					initial_settings["application/config/icon"] = "res://icon.png";
 					initial_settings["rendering/environment/default_environment"] = "res://default_env.tres";
+                    if(copy_addons->is_pressed() && FileAccess::exists(addons_path.plus_file("Addons.gd")))
+                        initial_settings["autoload/Addons"] = "*res://addons/Addons.gd";
 
 					if (ProjectSettings::get_singleton()->save_custom(dir.plus_file("project.godot"), initial_settings, Vector<String>(), false) != OK) {
 						set_message(TTR("Couldn't create project.godot in project path."), MESSAGE_ERROR);
@@ -511,6 +520,43 @@ private:
 							f->store_line("background_sky = SubResource( 1 )");
 							memdelete(f);
 						}
+
+                        // copy default plugins
+                        if(copy_addons->is_pressed() && DirAccess::exists(addons_path)) {
+
+                            PoolStringArray dirs;
+                            DirAccess *addons_da = DirAccess::open(addons_path);
+                            if (addons_da) {
+                                addons_da->list_dir_begin();
+                                String n = addons_da->get_next();
+                                while (n != String()) {
+                                    if (n != "." && n != "..") {
+                                        if (addons_da->current_is_dir())
+                                            dirs.push_back(n);
+                                    }
+                                    n = addons_da->get_next();
+                                }
+                                addons_da->list_dir_end();
+                                memdelete(addons_da);
+
+                                if (!dirs.empty()) {
+                                    String path = dir.plus_file("addons");
+                                    DirAccess *da = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
+                                    if((da->make_dir(path) == OK) || DirAccess::exists(path)) {
+                                        if(da->copy_dir(addons_path, dir.plus_file("addons")) == OK) {
+                                            FileAccess *f = FileAccess::open(dir.plus_file("project.godot"), FileAccess::READ_WRITE);
+                                            if (f) {
+                                                f->seek_end();
+                                                f->store_line("\n[editor_plugins]");
+                                                f->store_line(String("\nenabled = ")+"PoolStringArray(\""+dirs.join("\",\"")+"\")\n");
+                                                memdelete(f);
+                                            }
+                                        }
+                                    }
+                                    memdelete(da);
+                                }
+                            }
+                        }
 					}
 
 				} else if (mode == MODE_INSTALL) {
@@ -699,6 +745,7 @@ public:
 			project_path->set_editable(false);
 			browse->hide();
 			install_browse->hide();
+            copy_addons->hide();
 
 			set_title(TTR("Rename Project"));
 			get_ok()->set_text(TTR("Rename"));
@@ -753,6 +800,7 @@ public:
 			status_rect->show();
 			install_status_rect->show();
 			msg->show();
+            copy_addons->hide();
 
 			if (mode == MODE_IMPORT) {
 				set_title(TTR("Import Existing Project"));
@@ -768,6 +816,7 @@ public:
 				get_ok()->set_text(TTR("Create & Edit"));
 				name_container->show();
 				install_path_container->hide();
+                copy_addons->show();
 				rasterizer_container->show();
 				project_name->call_deferred("grab_focus");
 				project_name->call_deferred("select_all");
@@ -861,11 +910,18 @@ public:
 		install_browse->connect("pressed", this, "_browse_install_path");
 		iphb->add_child(install_browse);
 
+        // default addons
+		copy_addons = memnew(CheckBox);
+		copy_addons->set_button_group(rasterizer_button_group);
+		copy_addons->set_text(TTR("Copy and install default plugins"));
+		copy_addons->set_pressed(true);
+		vb->add_child(copy_addons);
+
 		msg = memnew(Label);
 		msg->set_align(Label::ALIGN_CENTER);
 		vb->add_child(msg);
 
-		// rasterizer selection
+        // rasterizer selection
 		rasterizer_container = memnew(VBoxContainer);
 		vb->add_child(rasterizer_container);
 		l = memnew(Label);

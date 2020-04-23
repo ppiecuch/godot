@@ -4140,7 +4140,7 @@ String String::sprintf(const Array &values, bool *error) const {
 	bool left_justified = false;
 	bool show_sign = false;
 
-	*error = true;
+	if (error) *error = true;
 
 	for (; *self; self++) {
 		const CharType c = *self;
@@ -4380,7 +4380,7 @@ String String::sprintf(const Array &values, bool *error) const {
 		return "not all arguments converted during string formatting";
 	}
 
-	*error = false;
+	if (error) *error = false;
 	return formatted;
 }
 
