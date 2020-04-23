@@ -78,7 +78,7 @@ public:
 		get_root()->add_child(frame);
 
 		int x_pos = 80, y_pos = 90, x_sz = 179, y_sz = 80, spc = 5;
-		String text("There was once upon a time a beautiful\nunicorn that loved to play with little\ngirls ...");
+		String text("There was once  upon a time a beautiful   \nunicorn that loved to play with little   \ngirls ...   ");
 
 		Label *label1 = memnew(Label);
 		label1->set_position(Point2(x_pos, y_pos));
@@ -107,50 +107,61 @@ public:
 
         OS::get_singleton()->print("Running tests:\n");
 
+        int word;
+        CharType n;
+
         // 1:
         {
-            CharType ch = label1->get_char_at(label1->word_cache, text, 0, 0);
+            CharType ch = label1->get_char_at(label1->word_cache, text, 0, 0, &word, &n);
             OS::get_singleton()->print("\t 1: %s\n", ch=='T' ? "PASS" : "FAILED");
+            OS::get_singleton()->print("\t 1: %s\n", word==0 ? "PASS" : "FAILED");
         }
         // 2:
         {
-            CharType ch = label1->get_char_at(label1->word_cache, text, 0, 1);
+            CharType ch = label1->get_char_at(label1->word_cache, text, 0, 1, &word, &n);
             OS::get_singleton()->print("\t 2: %s\n", ch=='h' ? "PASS" : "FAILED");
+            OS::get_singleton()->print("\t 2: %s\n", word==0 ? "PASS" : "FAILED");
         }
         // 3:
         {
-            CharType ch = label1->get_char_at(label1->word_cache, text, 0, 7);
-            OS::get_singleton()->print("\t 3: %s\n", ch=='s' ? "PASS" : "FAILED");
+            CharType ch = label1->get_char_at(label1->word_cache, text, 0, 7, &word, &n);
+            OS::get_singleton()->print("\t 3: %s\n", ch=='a' ? "PASS" : "FAILED");
+            OS::get_singleton()->print("\t 3: %s\n", word==1 ? "PASS" : "FAILED");
         }
         // 4:
         {
-            CharType ch = label1->get_char_at(label1->word_cache, text, 1, 0);
+            CharType ch = label1->get_char_at(label1->word_cache, text, 1, 0, &word, &n);
             OS::get_singleton()->print("\t 4: %s\n", ch=='u' ? "PASS" : "FAILED");
+            OS::get_singleton()->print("\t 4: %s\n", word==0 ? "PASS" : "FAILED");
         }
         // 5:
         {
-            CharType ch = label1->get_char_at(label1->word_cache, text, 1, 1);
+            CharType ch = label1->get_char_at(label1->word_cache, text, 1, 1, &word, &n);
             OS::get_singleton()->print("\t 5: %s\n", ch=='n' ? "PASS" : "FAILED");
+            OS::get_singleton()->print("\t 5: %s\n", word==0 ? "PASS" : "FAILED");
         }
         // 6:
         {
-            CharType ch = label1->get_char_at(label1->word_cache, text, 2, 4);
+            CharType ch = label1->get_char_at(label1->word_cache, text, 2, 4, &word, &n);
             OS::get_singleton()->print("\t 6: %s\n", ch=='s' ? "PASS" : "FAILED");
+            OS::get_singleton()->print("\t 1: %s\n", word==0 ? "PASS" : "FAILED");
         }
         // 7:
         {
-            CharType ch = label1->get_char_at(label1->word_cache, text, 2, 5);
-            OS::get_singleton()->print("\t 7: %s\n", ch=='.' ? "PASS" : "FAILED");
+            CharType ch = label1->get_char_at(label1->word_cache, text, 2, 5, &word, &n);
+            OS::get_singleton()->print("\t 7: %s\n", ch==' ' ? "PASS" : "FAILED");
+            OS::get_singleton()->print("\t 7: %s\n", word==1 ? "PASS" : "FAILED");
         }
         // 8:
         {
-            CharType ch = label1->get_char_at(label1->word_cache, text, 5, 5);
+            CharType ch = label1->get_char_at(label1->word_cache, text, 5, 5, &word, &n);
             OS::get_singleton()->print("\t 8: %s\n", ch==0 ? "PASS" : "FAILED");
+            OS::get_singleton()->print("\t 8: %s\n", word==0 ? "PASS" : "FAILED");
         }
         // 9:
         {
             int num = label1->get_line_size(label1->word_cache, text, 0);
-            OS::get_singleton()->print("\t 9: %s\n", num==38 ? "PASS" : "FAILED");
+            OS::get_singleton()->print("\t 9: %s\n", num==39 ? "PASS" : "FAILED");
         }
         // 10:
         {
@@ -166,8 +177,10 @@ public:
         OS::get_singleton()->print("Running animation:\n");
 
 		label1->set_transition_effect(Label::TRANSITIONEFFECT_ROTATE_V);
-		label1->set_transition_duration(2);
-		label1->set_text("New\nanimation");
+		label1->set_transition_duration(5);
+		label1->set_text("New\nanimation transition");
+
+        OS::get_singleton()->print("\nDONE\n");
 	}
 };
 

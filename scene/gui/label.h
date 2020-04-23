@@ -41,6 +41,8 @@ struct AnimationTransform {
 
     AnimationTransform() : current(0), duration(0), active(false) { }
     bool is_active() const { return active; }
+
+    void _dump_xform() const;
 };
 
 typedef float (*ease_func_t)(float t, float b, float c, float d);
@@ -54,7 +56,7 @@ struct AnimationController {
 
     virtual void init_xform(float duration, AnimationTransform &xform) = 0;
     virtual AnimState update(float dt, ease_func_t ease, AnimationTransform &xform) = 0;
-    virtual AnimationController::AnimState state(AnimationTransform &a) const = 0;
+    virtual AnimationController::AnimState state(const AnimationTransform &a) const = 0;
 };
 
 class Label : public Control {
@@ -132,13 +134,15 @@ private:
 			CHAR_NEWLINE = -1,
 			CHAR_WRAPLINE = -2
 		};
-		int char_pos; // if -1, then newline (CHAR_NEWLINE)
+		int char_pos; // if -1, then newline '\n' (CHAR_NEWLINE), -2 if wrapline (soft-break)
+		int line, line_pos;
 		int word_len;
 		int pixel_width;
-		int space_count;
+		int space_count; // spaces before the word
 		WordCache *next;
 		WordCache() {
-			char_pos = 0;
+            char_pos = 0;
+            line = line_pos = 0;
 			word_len = 0;
 			pixel_width = 0;
 			next = 0;
@@ -148,9 +152,10 @@ private:
 
 	bool word_cache_dirty;
     WordCache *calculate_word_cache(const Ref<Font> &font, const String &label_text, int &line_count, int &total_char_cache, int &width) const;
-    CharType get_char_at(WordCache *cache, String &text, int line, int pos, CharType *next_char = 0) const;
+    CharType get_char_at(WordCache *cache, String &text, int line, int pos, int *word = 0, CharType *next_char = 0) const;
 	int get_line_size(WordCache *cache, String &text, int line) const;
 	void regenerate_word_cache();
+    void _dump_word_cache(const String &text, const Label::WordCache *wc);
 
 	float percent_visible;
 
@@ -182,9 +187,11 @@ private:
     AnimationTransform transition_xform;
     AnimationController *transition_controller = 0;
 
-    bool is_transition_enabled() const { return transition_effect != TRANSITIONEFFECT_NONE; }
+    real_t _process_transition_char(CharTransform &xform, bool draw_state, int line, int line_pos, int x_ofs, CharType &c, CharType &n, int &same_char_count);
+    void _clear_pending_animations();
+    bool _current_transition_state() const { return transition_controller->state(transition_xform) != AnimationController::ANIMCTRL_IN; }
 
-    void clear_pending_animations();
+    bool is_transition_enabled() const { return transition_effect != TRANSITIONEFFECT_NONE; }
 
 protected:
 	void _notification(int p_what);

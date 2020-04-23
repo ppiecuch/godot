@@ -33,12 +33,6 @@
 #include "core/project_settings.h"
 #include "core/translation.h"
 
-static void dump_xform(const CharTransform &xform) {
-    print_line("CharTransform:");
-    print_line(vformat(" dest{scale:"+xform.dest.scale+" offset:"+xform.dest.offset+"}"));
-    print_line(vformat(" texture{clip:"+xform.tex.clip+" offset:"+xform.tex.offset+"}"));
-}
-
 template <typename T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }
 
 #ifndef PI
@@ -214,6 +208,12 @@ static ease_func_t ease_func_table[] = {
 };
 #undef DefineEaseFunc
 
+void AnimationTransform::_dump_xform() const {
+    print_line("CharTransform:");
+    print_line(vformat(" dest{scale:%f offset:%f}", xform.dest.scale, xform.dest.offset));
+    print_line(vformat(" texture{clip:%f offset:%f}", xform.tex.clip, xform.tex.offset));
+}
+
 struct AnimationNone : public AnimationController {
 
     AnimationNone() { }
@@ -221,7 +221,7 @@ struct AnimationNone : public AnimationController {
     virtual void init_xform(float duration, AnimationTransform &a) { }
     virtual AnimationController::AnimState update(float dt, ease_func_t ease, AnimationTransform &xform) { return ANIMCTRL_DONE; }
     virtual bool is_active() const { return false; }
-    virtual AnimationController::AnimState state(AnimationTransform &a) const { return ANIMCTRL_DONE; }
+    virtual AnimationController::AnimState state(const AnimationTransform &a) const { return ANIMCTRL_DONE; }
 };
 
 struct AnimationSlide : public AnimationController {
@@ -239,7 +239,7 @@ struct AnimationSlide : public AnimationController {
     virtual  AnimationController::AnimState update(float dt, ease_func_t ease, AnimationTransform &xform) {
         return ANIMCTRL_DONE;
     }
-    virtual AnimationController::AnimState state(AnimationTransform &a) const { return a.active ? (a.current >= 0 ? ANIMCTRL_OUT : ANIMCTRL_IN) : ANIMCTRL_DONE; }
+    virtual AnimationController::AnimState state(const AnimationTransform &a) const { return a.active ? (a.current >= 0 ? ANIMCTRL_OUT : ANIMCTRL_IN) : ANIMCTRL_DONE; }
 };
 
 struct AnimationRotate : public AnimationController {
@@ -283,7 +283,7 @@ struct AnimationRotate : public AnimationController {
         else
             return ANIMCTRL_IN;
     }
-    virtual AnimationController::AnimState state(AnimationTransform &a) const { return a.active ? (a.current >= 0 ? ANIMCTRL_OUT : ANIMCTRL_IN) : ANIMCTRL_DONE; }
+    virtual AnimationController::AnimState state(const AnimationTransform &a) const { return a.active ? (a.current >= 0 ? ANIMCTRL_OUT : ANIMCTRL_IN) : ANIMCTRL_DONE; }
 };
 
 static AnimationController *transition_controllers_table[] = {
@@ -294,6 +294,13 @@ static AnimationController *transition_controllers_table[] = {
     new AnimationRotate(AnimationRotate::ANIMATION_ROTATE_H)
 };
 
+
+#define _RemoveWordCache(wc)      \
+	while (wc) {                  \
+		WordCache *current = wc;  \
+		wc = current->next;       \
+		memdelete(current);       \
+	}
 
 void Label::set_autowrap(bool p_autowrap) {
 
@@ -328,6 +335,55 @@ bool Label::is_uppercase() const {
 int Label::get_line_height() const {
 
 	return get_font("font")->get_height();
+}
+
+real_t Label::_process_transition_char(CharTransform &xform, bool draw_state, int line, int line_pos, int x_ofs, CharType &c, CharType &n, int &same_char_count) {
+
+    String draw_text_state[] = { xl_text, transition_text.xl_text };
+# define draw_text draw_text_state[draw_state]
+# define other_draw_text draw_text_state[!draw_state]
+    WordCache *draw_cache_state[] = { word_cache, transition_text.word_cache };
+# define draw_cache draw_cache_state[draw_state]
+# define other_draw_cache draw_cache_state[!draw_state]
+
+    int word = -1;
+    c = get_char_at(draw_cache, draw_text, line, line_pos, &word, &n);
+
+    if (uppercase) {
+        c = String::char_uppercase(c);
+        n = String::char_uppercase(n);
+    }
+
+    // reset glyph transformation if necessery
+    float x_ofs_move = 0;
+    if (transition_change_policy == TRANSITIONCHANGEPOLICY_NEW) {
+        int other_word = -1;
+        CharType c_ = get_char_at(other_draw_cache, other_draw_text, line, line_pos, &other_word);
+        if (c_ != 0 && word == other_word) {
+            if (uppercase) {
+                c_ = String::char_uppercase(c_);
+            }
+            if (c == c_) {
+                if (draw_state) {
+                    // correct position in OUT state for this char/pair
+                    if (same_char_count < transition_text.same_chars_pos.size()) {
+                        x_ofs_move =
+                            (int(transition_text.same_chars_pos[same_char_count])-x_ofs)
+                            * (1-xform.dest.scale.x*xform.dest.scale.y);
+                        same_char_count++;
+                    } else
+                        ERR_PRINT("Pair not found");
+                }
+                xform = CharTransform(); // no transition
+            }
+        }
+    }
+
+    xform.scale_width = transition_opts.scale_width;
+    xform.align_vrotation = transition_opts.align_vrotation;
+    xform.align_vrotation_factor = transition_opts.align_vrotation_factor;
+
+    return x_ofs_move;
 }
 
 void Label::_notification(int p_what) {
@@ -380,7 +436,7 @@ void Label::_notification(int p_what) {
 
 		int lines_visible = (size.y + line_spacing) / font_h;
 
-		real_t space_w = font->get_char_size(' ').width + horizontal_spacing;
+		const real_t space_w = font->get_char_size(' ').width + horizontal_spacing;
 		int chars_total = 0;
 
 		int vbegin = 0, vsep = 0;
@@ -424,12 +480,11 @@ void Label::_notification(int p_what) {
 
 		WordCache *wc = word_cache;
 		if (!wc) {
-            ERR_PRINT("Illegal - word cache is empty");
+            ERR_PRINT("Invalid word cache");
 			return;
         }
 
 		int line = 0, line_to = lines_skipped + (lines_visible > 0 ? lines_visible : 1);
-        int same_char_cnt = 0;
 		FontDrawer drawer(font, font_outline_modulate);
 		while (wc) {
 			/* handle lines not meant to be drawn quickly */
@@ -454,11 +509,10 @@ void Label::_notification(int p_what) {
 				continue;
 			}
 
-			WordCache *from = wc;
-			WordCache *to = wc;
+			WordCache *from = wc; // first word
+			WordCache *to = wc;   // last word
 
-			int taken = 0;
-			int spaces = 0;
+			int taken = 0, spaces = 0, line_chars = 0;
 			while (to && to->char_pos >= 0) {
 
 				taken += to->pixel_width;
@@ -496,7 +550,6 @@ void Label::_notification(int p_what) {
 			while (from != to) {
 
 				// draw a word
-                int line_pos = 0;
 				int pos = from->char_pos;
 				if (from->char_pos < 0) {
 
@@ -507,7 +560,6 @@ void Label::_notification(int p_what) {
 					/* spacing */
 					x_ofs += space_w * from->space_count;
 					if (can_fill && align == ALIGN_FILL && spaces) {
-
 						x_ofs += int((size.width - (taken + space_w * spaces)) / spaces);
 					}
 				}
@@ -516,16 +568,19 @@ void Label::_notification(int p_what) {
 				// and extra characters before and after the last/first word (line):
 				// before: |  ABCD  | |ABCD   | |    ABCD|
 				// after:  | ABCDEF | |AB     | |   ABCDE|
+				const bool draw_state = _current_transition_state();
+                const bool transition_active = is_transition_enabled() && transition_xform.is_active();
+
                 int extra_chars_before = 0, extra_chars_after = 0;
-                if (is_transition_enabled() && transition_xform.is_active()) {
+                if (transition_active) {
 
                     int extra_chars = 0;
                     if (from->next == to || wc == from) { // last/first word ?
                         extra_chars =
-                            Math::abs(get_line_size(transition_text.word_cache, transition_text.xl_text, line) -
-                                get_line_size(word_cache, xl_text, line));
+                            get_line_size(transition_text.word_cache, transition_text.xl_text, line)
+                            - get_line_size(word_cache, xl_text, line);
                     }
-                    if (extra_chars) switch (align) {
+                    if (extra_chars > 0) switch (align) {
 
                         case ALIGN_FILL:
                         case ALIGN_LEFT: {
@@ -542,8 +597,10 @@ void Label::_notification(int p_what) {
                             extra_chars_before = extra_chars;
                         } break;
                     }
-                    // printf("* extra_chars_before %d, extra_chars_after %d\n", extra_chars_before, extra_chars_after);
+                    extra_chars_before -= from->space_count; // we need to handle spaces too
                 }
+
+                int same_char_count = 0;
 
 				if (font_color_shadow.a > 0) {
 
@@ -571,64 +628,22 @@ void Label::_notification(int p_what) {
 					}
 				}
 
-				// +1 : check if there is a transition after the word (space between words):
-				// before: |  ABC_DEF GH  |
-				// after": |   ABC DEF GH |
-				bool draw_state = transition_controller->state(transition_xform) != AnimationController::ANIMCTRL_IN;
-                String draw_text_state[] = { xl_text, transition_text.xl_text };
-# define draw_text draw_text_state[draw_state]
-# define not_draw_text draw_text_state[!draw_state]
-                WordCache *draw_cache_state[] = { word_cache, transition_text.word_cache };
-# define draw_cache draw_cache_state[draw_state]
-# define not_draw_cache draw_cache_state[!draw_state]
-				for (int i = -extra_chars_before; i < from->word_len + extra_chars_after + 1; i++) {
+				for (int i = -extra_chars_before; i < from->word_len + extra_chars_after; i++) {
 
 					if (visible_chars < 0 || chars_total < visible_chars) {
 
-						if (is_transition_enabled() && transition_xform.is_active()) {
+						if (transition_active) {
 
                             CharType c, n;
                             CharTransform xform = transition_xform.xform;
 
-                            if (i < 0) {
-                                c = get_char_at(draw_cache, draw_text, line, -i, &n);
-                            } else {
-                                c = get_char_at(draw_cache, draw_text, line, i + pos, &n);
-                            }
+                            const float x_ofs_move = _process_transition_char(xform, draw_state, from->line, line_chars, x_ofs, c, n, same_char_count);
 
-                            if (uppercase) {
-                                c = String::char_uppercase(c);
-                                n = String::char_uppercase(n);
-                            }
-
-                            // reset glyph transformation if necessery
-                            float x_correct = 0;
-                            if (transition_change_policy == TRANSITIONCHANGEPOLICY_NEW) {
-                                CharType c_ = get_char_at(not_draw_cache, not_draw_text, line, line_pos);
-                                if (c_ != 0) {
-                                    if (uppercase) {
-                                        c_ = String::char_uppercase(c_);
-                                    }
-                                    if (c == c_) {
-                                        if (draw_state) {
-                                            // correct position in OUT state for this char/pair
-                                            if (same_char_cnt < transition_text.same_chars_pos.size()) {
-                                                x_correct =
-                                                    (int(transition_text.same_chars_pos[same_char_cnt++])-x_ofs)
-                                                    * (1-xform.dest.scale.x*xform.dest.scale.y);
-                                            } else
-                                                ERR_PRINT("Invalid index for same_chars_pos");
-                                        }
-                                        xform = CharTransform(); // no transition
-                                    }
-                                }
-                            }
-
-                            xform.scale_width = transition_opts.scale_width;
-                            xform.align_vrotation = transition_opts.align_vrotation;
-                            xform.align_vrotation_factor = transition_opts.align_vrotation_factor;
-
-                            x_ofs += drawer.draw_char(ci, xform, Point2(x_ofs + x_correct, y_ofs), c, n, font_color) + horizontal_spacing;
+                            if (c) {
+                                printf("%lc,%d,", c, i);
+                                x_ofs += drawer.draw_char(ci, xform, Point2(x_ofs + x_ofs_move, y_ofs), c, n, font_color) + horizontal_spacing;
+                            } else
+                                printf("%d,", i);
                         } else {
                             CharType c = xl_text[i + pos];
                             CharType n = xl_text[i + pos + 1];
@@ -639,14 +654,16 @@ void Label::_notification(int p_what) {
                             }
                             x_ofs += drawer.draw_char(ci, Point2(x_ofs, y_ofs), c, n, font_color) + horizontal_spacing;
                         }
-						chars_total++; line_pos++;
+						chars_total++;
 					}
+					line_chars++;
 				}
-				from = from->next;
+                from = from->next;
 			}
 
+            line_chars = 0;
 			wc = to ? to->next : 0;
-			line++;
+            printf("\n");
 		}
 	}
 
@@ -669,17 +686,17 @@ void Label::_notification(int p_what) {
             if (transition_controller->update(dt, ease_func_table[transition_ease], transition_xform) == AnimationController::ANIMCTRL_DONE) {
 
                 transition_xform = AnimationTransform();
-                if (text != transition_text.text) {
-                    String old = text;
+                if (text != transition_text.text || xl_text != transition_text.xl_text) {
+
                     text = transition_text.text;
-                    transition_text.text = old;
-                    word_cache_dirty = true;
-                }
-                if (xl_text != transition_text.xl_text) {
-                    String old = xl_text;
+                    transition_text.text = "";
                     xl_text = transition_text.xl_text;
-                    transition_text.xl_text = old;
-                    word_cache_dirty = true;
+                    transition_text.xl_text = "";
+
+                    _RemoveWordCache(word_cache);
+                    word_cache = transition_text.word_cache;
+
+                    transition_text.word_cache = 0;
                 }
             }
 
@@ -766,6 +783,23 @@ int Label::get_visible_line_count() const {
 	return lines_visible;
 }
 
+void Label::_dump_word_cache(const String &text, const Label::WordCache *wc) {
+    print_line("WordCache:");
+    while(wc) {
+        print_line(vformat("  '"+text.substr(wc->char_pos, wc->word_len)+"' char_pos=%d,line=%d,line_pos=%d,len=%d,spc=%d"
+            ,wc->char_pos
+            ,wc->line
+            ,wc->line_pos
+            ,wc->word_len
+            ,wc->space_count
+        ));
+        wc = wc->next;
+    }
+    print_line("----------");
+}
+
+// Notice: space_count is the number of spaces before the word
+// Notice: spaces before end of the line/return are skipped
 Label::WordCache *Label::calculate_word_cache(const Ref<Font> &font, const String &label_text, int &line_count, int &total_char_cache, int &width) const {
 
 	if (autowrap) {
@@ -777,6 +811,7 @@ Label::WordCache *Label::calculate_word_cache(const Ref<Font> &font, const Strin
 
 	real_t current_word_size = 0;
 	int word_pos = 0;
+    int line_pos = 0;
 	real_t line_width = 0;
 	int space_count = 0;
 	real_t space_width = font->get_char_size(' ').width + horizontal_spacing;
@@ -814,6 +849,8 @@ Label::WordCache *Label::calculate_word_cache(const Ref<Font> &font, const Strin
 				wc->pixel_width = current_word_size;
 				wc->char_pos = word_pos;
 				wc->word_len = i - word_pos;
+                wc->line = line_count - 1;
+				wc->line_pos = line_pos - wc->word_len;
 				wc->space_count = space_count;
 				current_word_size = 0;
 				space_count = 0;
@@ -824,6 +861,8 @@ Label::WordCache *Label::calculate_word_cache(const Ref<Font> &font, const Strin
 			} else if (current != ' ') {
 				total_char_cache++;
 			}
+
+			line_pos++;
 
 			if (i < label_text.length() && label_text[i] == ' ') {
 				if (line_width > 0 || last == NULL || last->char_pos != WordCache::CHAR_WRAPLINE) {
@@ -842,6 +881,7 @@ Label::WordCache *Label::calculate_word_cache(const Ref<Font> &font, const Strin
 			char_width = font->get_char_size(current, label_text[i + 1]).width + horizontal_spacing;
 			current_word_size += char_width;
 			line_width += char_width;
+            line_pos++;
 			total_char_cache++;
 
 			// allow autowrap to cut words when they exceed line width
@@ -864,6 +904,8 @@ Label::WordCache *Label::calculate_word_cache(const Ref<Font> &font, const Strin
 					wc->pixel_width = current_word_size - char_width;
 					wc->char_pos = word_pos;
 					wc->word_len = i - word_pos;
+                    wc->line = line_count - 1;
+					wc->line_pos = line_pos - wc->word_len;
 					wc->space_count = space_count;
 					current_word_size = char_width;
 					word_pos = i;
@@ -880,9 +922,11 @@ Label::WordCache *Label::calculate_word_cache(const Ref<Font> &font, const Strin
 
 			wc->pixel_width = 0;
 			wc->char_pos = insert_newline ? WordCache::CHAR_NEWLINE : WordCache::CHAR_WRAPLINE;
+            wc->line = line_count - 1;
 
 			line_width = current_word_size;
 			line_count++;
+            line_pos = 0;
 			space_count = 0;
 		}
 	}
@@ -890,67 +934,49 @@ Label::WordCache *Label::calculate_word_cache(const Ref<Font> &font, const Strin
 	return root;
 }
 
-CharType Label::get_char_at(WordCache *cache, String &text, int line, int pos, CharType *next_char) const {
-	int line_count = 0, char_pos = 0;
+CharType Label::get_char_at(WordCache *cache, String &text, int line, int pos, int *word, CharType *next_char) const {
+	int word_count = 0, line_pos = 0;
+    if (word)
+        *word = 0;
     WordCache *wc = cache;
+    while (wc && wc->line != line)
+        wc = wc->next;
     while (wc) {
-        if (line_count < line) {
-            while (wc && wc->char_pos >= 0)
-                wc = wc->next;
-            if (wc)
-                wc = wc->next;
-            line_count++;
-            continue;
-        }
-
-        char_pos += wc->word_len;
-        if (char_pos > pos) {
-            const int index = wc->char_pos + wc->word_len - (char_pos - pos);
-            if (next_char) {
+        if (wc->char_pos < 0) // end of line
+            return 0;
+        line_pos += wc->word_len + wc->space_count;
+        if (line_pos > pos) {
+            const int index = wc->char_pos + wc->word_len - (line_pos - pos);
+            if (next_char)
                 *next_char = text[index + 1]; // character or NULL
-            }
+            if (word)
+                *word = word_count;
             return text[index];
         }
 
         wc = wc->next;
-        if (!wc || wc->char_pos < 0) // end of line
+        if (!wc) // end of line
             break;
+        word_count++;
     }
     return 0;
 }
 
 int Label::get_line_size(WordCache *cache, String &text, int line) const {
-	int line_count = 0, line_size = 0;
+	int line_size = 0;
     WordCache *wc = cache;
-    while (wc) {
-        if (line_count < line) {
-            while (wc && wc->char_pos >= 0)
-                wc = wc->next;
-            if (wc)
-                wc = wc->next;
-            line_count++;
-            continue;
-        }
-
-        while (wc && wc->char_pos >= 0) {
-            line_size += wc->word_len + 1; // including spaces
-            wc = wc->next;
-        }
-        if (line_size)
-            --line_size; // remove last space
-        return line_size;
+    while (wc && wc->line != line)
+        wc = wc->next;
+    while (wc && wc->char_pos >= 0) {
+        line_size += wc->word_len + wc->space_count; // including spaces
+        wc = wc->next;
     }
     return line_size;
 }
 
 void Label::regenerate_word_cache() {
 
-	while (word_cache) {
-
-		WordCache *current = word_cache;
-		word_cache = current->next;
-		memdelete(current);
-	}
+	_RemoveWordCache(word_cache);
 
 	Ref<Font> font = get_font("font");
 
@@ -974,55 +1000,61 @@ void Label::regenerate_word_cache() {
 	}
 
 	if (is_transition_enabled() && transition_xform.is_active()) {
-        while (transition_text.word_cache) {
 
-            WordCache *current = transition_text.word_cache;
-            transition_text.word_cache = current->next;
-            memdelete(current);
-        }
+        _RemoveWordCache(transition_text.word_cache);
+
         transition_text.word_cache = calculate_word_cache(font,
                                                           transition_text.xl_text,
                                                           transition_text.line_count,
                                                           transition_text.total_char_cache,
                                                           transition_text.width);
-        // try to extmate position of same chars
+        // try to extmate position of the same chars in every words
         transition_text.same_chars_pos = Array();
         const real_t space_w = font->get_char_size(' ').width + horizontal_spacing;
-        int line = 0, line_pos = 0, line_xpos = 0;
-        WordCache *wc = word_cache;
+        int line_xpos = 0;
+        WordCache *wc = word_cache, *tr_wc = transition_text.word_cache;
         while (wc) {
-            for (int index=line_pos; index<line_pos+wc->word_len; ++index) {
-                CharType c = xl_text[wc->char_pos + index];
-                CharType c_ = get_char_at(transition_text.word_cache, transition_text.xl_text, line, index);
-                if (c_ != 0) {
-                    if (uppercase) {
-                        c = String::char_uppercase(c);
-                        c_ = String::char_uppercase(c_);
-                    }
-                    if (c == c_) {
-                        transition_text.same_chars_pos.push_back(line_xpos);
-                    }
+            if (wc->char_pos < 0) { // end of line / wrap line
+                line_xpos = 0;
+            } else {
+                line_xpos += space_w*wc->space_count;
+                // make sure we are on the same line
+                if (wc && tr_wc && wc->line != tr_wc->line) {
+                    while (tr_wc && wc->line != tr_wc->line)
+                        tr_wc = tr_wc->next;
                 }
-                line_xpos += font->get_char_size(xl_text[index], xl_text[index + 1]).width + horizontal_spacing;
+                const String tr_word = tr_wc
+                    ? transition_text.xl_text.substr(tr_wc->char_pos, tr_wc->word_len)
+                    : "";
+                for (int index=0; index<wc->word_len; ++index) {
+                    CharType c = xl_text[wc->char_pos + index];
+                    CharType c_ = index<tr_word.size() ? tr_word[index] : 0;
+                    if (c_ != 0) {
+                        if (uppercase) {
+                            c = String::char_uppercase(c);
+                            c_ = String::char_uppercase(c_);
+                        }
+                        if (c == c_) {
+                            transition_text.same_chars_pos.push_back(line_xpos);
+                        }
+                    }
+                    line_xpos += font->get_char_size(xl_text[index], xl_text[index + 1]).width + horizontal_spacing;
+                }
+                line_xpos += space_w * wc->space_count;
             }
 
-            line_pos += wc->word_len;
-            line_xpos += wc->pixel_width + space_w*wc->space_count;
-
+            if (tr_wc && tr_wc->char_pos >= 0) // next word in the line (donot switch new-line)
+                tr_wc = tr_wc->next;
             wc = wc->next;
             if (!wc)
                 break;
-            if (wc->char_pos < 0) { // end of line
-                ++line;
-                line_pos = line_xpos = 0;
-            }
         }
     }
 
 	word_cache_dirty = false;
 }
 
-void Label::clear_pending_animations() { // reset animation
+void Label::_clear_pending_animations() { // reset animation
 
     if (transition_xform.is_active()) {
         transition_xform = AnimationTransform();
@@ -1204,7 +1236,7 @@ void Label::set_transition_effect(TransitionEffect p_effect) {
         transition_controller = transition_controllers_table[p_effect];
         if (p_effect == TRANSITIONEFFECT_NONE) {
             set_process_internal(false);
-            clear_pending_animations();
+            _clear_pending_animations();
         } else
             set_process_internal(true);
         update();
@@ -1364,8 +1396,10 @@ void Label::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "transition_align_v_rotation"), "set_transition_align_vrotation", "is_transition_align_vrotation");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "transition_align_v_rotation_factor",  PROPERTY_HINT_RANGE, "0,1,0.05"), "set_transition_align_vrotation_factor", "get_transition_align_vrotation_factor");
 	ADD_GROUP("", "");
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "offset horizontal spacing", PROPERTY_HINT_RANGE, "-100,100,0.5"), "set_horizontal_spacing", "get_horizontal_spacing");
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "offset vertical spacing", PROPERTY_HINT_RANGE, "-100,100,0.5"), "set_vertical_spacing", "get_vertical_spacing");
+	ADD_GROUP("Extra Spacing", "extra_spacing_");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "extra_spacing_horizontal", PROPERTY_HINT_RANGE, "-10,10,0.5"), "set_horizontal_spacing", "get_horizontal_spacing");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "extra_spacing_vertical", PROPERTY_HINT_RANGE, "-10,10,0.5"), "set_vertical_spacing", "get_vertical_spacing");
+	ADD_GROUP("", "");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "autowrap"), "set_autowrap", "has_autowrap");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "clip_text"), "set_clip_text", "is_clipping_text");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "uppercase"), "set_uppercase", "is_uppercase");
