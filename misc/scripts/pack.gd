@@ -2,47 +2,59 @@ extends Node
 
 # class member variables go here:
 var version = "0.1"
-var pck_queue_list = []
 
 func _ready():
 	# Called when the node is added to the scene for the first time.
 	# Initialization here
-	pck_queue_list.clear()
+	var pck_file = args()[0]
+	var input_folder = args()[1]
 	print("***")
-	print("*** Godot PCK v",version," packer ready")
+	print("*** Godot PCK v%s packer ready" % version)
 	print("*** ---------------------------")
 	print("***")
+	print("Input:  %s" % input_folder)
+	print("Output: %s" % pck_file)
+	print("")
+	var dir = Directory.new()
+	if dir.open(".") == OK:
+        print("Current folder: %s" % dir.get_current_dir())
+    else:
+        print("Current folder cannot read")
+	pck_Packager(input_folder, pck_file)
 	pass
 
-func pck_Packager(path,filepath):
-	_pre_Pack()
-	_pck_Queue(path,filepath)
-	_pck_Pack()
-	pass
+func _add_dir_contents(dir:Directory, files:Array, directories:Array):
+    dir.list_dir_begin(true, false)
+    var file_name = dir.get_next()
+    while (file_name != ""):
+        var path = dir.get_current_dir() + "/" + file_name
+        if dir.current_is_dir():
+            printraw("#")
+            var sub_dir = Directory.new()
+            sub_dir.open(path)
+            directories.append(path)
+            _add_dir_contents(sub_dir, files, directories)
+        else:
+            printraw(".")
+            files.append(path)
 
-func _pre_Pack():
-	pck_queue_list.clear()
-	pass
+        file_name = dir.get_next()
 
-func _pck_Queue(path,filepath):
+    dir.list_dir_end()
+
+func pck_Packager(path, pckfile):
+	var files = []
+	var dirs = []
 	var packaging = PCKPacker.new()
-	packaging.pck_start(filepath, 0)
-	for i in range(0,path.size()):
-		packaging.add_file(path[i],0)
-	packaging.flush(false)
-	pass
-
-func _pck_Pack():
-	_post_Pack()
-	pass
-
-func _post_Pack():
-	get_node("/root/Node/HBoxContainer/Open").disabled = false
-	get_node("/root/Node/HBoxContainer/Select All").disabled = false
-	get_node("/root/Node/HBoxContainer/Deselect").disabled = false
-	get_node("/root/Node/HBoxContainer/Delete").disabled = false
-	get_node("/root/Node/HBoxContainer/Initialize").disabled = false
-	get_node("/root/Node/HBoxContainer/Initialize2").disabled = false
-	get_node("/root/Node/HBoxContainer/Progress Bar").disabled = true
-	get_node("/root/Node/WindowDialog").show()
+	packaging.pck_start(pckfile, 0)
+    var dir = Directory.new()
+    if dir.open(path) == OK:
+        _add_dir_contents(dir, files, dirs)
+        print(" - scanning finished")
+        print("Processing %d files .." % files.size())
+        for i in range(0, files.size()):
+            packaging.add_file(files[i].replace(dir.get_current_dir(), ""), files[i])
+        packaging.flush(true)
+    else:
+        print("An error occurred when trying to access the path '%s'" % path)
 	pass

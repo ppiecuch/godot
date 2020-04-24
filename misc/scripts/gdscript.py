@@ -99,15 +99,21 @@ func _init():
 
     EXTENDS_BODY = """class __GeneratedGodotClass__:
 {body}
+{args}
 """
 
     SIMPLE_BODY = """extends Node
-func _ready():
+func _ready({args}):
 {body}
 """
 
-    def __init__(self, body, mode=0, name=None, timeout=0, path=None, autoquit=True):
+    ARGS_BODY = """func args():
+    return {args}
+"""
+
+    def __init__(self, body, args=[], mode=0, name=None, timeout=0, path=None, autoquit=True):
         self._body = body
+        self._args = args
         self._name = name
         self.mode = mode
         self.timeout = timeout
@@ -121,13 +127,13 @@ func _ready():
             return self._body
         elif self.mode == self.MODE_EXTENDS:
             self.map_lines += 1
-            return self.EXTENDS_BODY.format(body=text_indent(self._body))
+            return self.EXTENDS_BODY.format(body=text_indent(self._body), args=text_indent(self.ARGS_BODY.format(args=self._args)))
         elif self.mode == self.MODE_SIMPLE:
             self.map_lines += 3
             return self.EXTENDS_BODY.format(
                 body=text_indent(self.SIMPLE_BODY.format(
-                    body=text_indent(self._body)
-                ))
+                    body=text_indent(self._body), args=self._args)
+                )
             )
 
     @property
@@ -144,25 +150,25 @@ func _ready():
 
     @classmethod
     def from_simple(cls, body, timeout=0, autoquit=True):
-        return cls(body, cls.MODE_SIMPLE, timeout=timeout, autoquit=autoquit)
+        return cls(body, mode=cls.MODE_SIMPLE, timeout=timeout, autoquit=autoquit)
 
     @classmethod
-    def from_file(cls, path, mode, timeout=0, autoquit=True):
+    def from_file(cls, path, args, mode, timeout=0, autoquit=True):
         with open(path, 'r', encoding='utf-8') as gds:
             body = gds.read()
             body = body.replace('\t', '    ')
         return cls(
-            body, mode, timeout=timeout,
+            body, args, mode, timeout=timeout,
             path=os.path.dirname(os.path.abspath(path)),
             autoquit=autoquit
         )
 
     @classmethod
-    def from_file_ex(cls, path, timeout=0, autoquit=True):
-        return cls.from_file(path, cls.MODE_EXTENDS, timeout, autoquit)
+    def from_file_ex(cls, path, args=[], timeout=0, autoquit=True):
+        return cls.from_file(path, args, cls.MODE_EXTENDS, timeout, autoquit)
 
     @classmethod
-    def from_file_cls(cls, path, timeout=0, autoquit=True):
+    def from_file_cls(cls, path, args=[], timeout=0, autoquit=True):
         raise NotImplementedError()
         # return cls.from_file(path, cls.MODE_CLASS, timeout)
 
@@ -315,7 +321,7 @@ class GDSCriptCLI(object):
         else:
             return process.exec_godot_script()
 
-    def block(self, code, timeout=0, autoquit=True, sys_exit=True):
+    def block(self, code, args, timeout=0, autoquit=True, sys_exit=True):
         """Executes a block of code."""
         code = code.replace('\t', '    ')
         if re.search(r'^extends\s', code, re.M) is None:
@@ -340,16 +346,15 @@ class GDSCriptCLI(object):
         code = 'print({0})'.format(expression)
         self.oneline(code, sys_exit=False)
 
-    def file(self, path, mode='extends', timeout=0, autoquit=True):
+    def file(self, path, args, mode='extends', timeout=0, autoquit=True):
         """Executes a script file <script.gd>."""
         # TODO: Add automatic mode check
         if mode == 'extends':
-            script = GodotScript.from_file_ex(path, timeout, autoquit)
+            script = GodotScript.from_file_ex(path, args, timeout, autoquit)
         elif mode == 'class':
-            script = GodotScript.from_file_cls(path, timeout, autoquit)
+            script = GodotScript.from_file_cls(path, args, timeout, autoquit)
         process = self._create_process(script)
         sys.exit(process.exec_godot_script()[1])
-
 
 
 if __name__ == '__main__':
@@ -365,6 +370,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser('gdscript', description='GDScript CLI Wrapper', usage='%(prog)s [-epqw] [-t <seconds>] [-v] input\n -h/--help: show help message')
     parser.add_argument('input', type=str, help='input script (program passed in as string or file)')
+    parser.add_argument('inputargs', nargs=argparse.REMAINDER)
     parser.add_argument('-e', '--eval', action='store_true', help='evaluate a boolean expression (exit code)')
     parser.add_argument('-p', '--print', action='store_true', help='print a simple expression')
     parser.add_argument('-q', '--quit-manually', action='store_true', help='call get_tree().quit() manually (if using Timer or _process)')
@@ -373,7 +379,8 @@ if __name__ == '__main__':
     parser.add_argument('-j', '--json', action='store_true', help='json output')
     parser.add_argument('-v', '--verbose', action='count', default=0, help='verbose level (wrapper or default Godot behavior)')
     parser.add_argument('--version', action='store_true', help='print version info')
-    # parser.add_argument('-m', '--mode', type=str, default='extends', help='Not implemented yed (ignore it)')
+
+    # parser.add_argument('-m', '--mode', type=str, default='extends', help='Not implemented yet')
 
     args = parser.parse_args()
     VERBOSE1 = args.verbose > 0
@@ -381,6 +388,7 @@ if __name__ == '__main__':
     VERBOSE3 = args.verbose > 2
     GD = GDSCriptCLI(GODOT_BINARY, args.window, args.json)
     INPUT = args.input
+    INPUTARGS = args.inputargs
     if args.input == '-':
         if VERBOSE1: print('[gdscript] Reading from STDIN')
         INPUT = '\n'.join(sys.stdin.readlines())
@@ -389,6 +397,6 @@ if __name__ == '__main__':
     if args.eval:
         GD.eval(INPUT)
     elif args.input.endswith('.gd'):
-        GD.file(INPUT, 'extends', args.timeout, not args.quit_manually)
+        GD.file(INPUT, INPUTARGS, 'extends', args.timeout, not args.quit_manually)
     elif not args.print:
-        GD.block(INPUT, args.timeout, not args.quit_manually)
+        GD.block(INPUT, INPUTARGS, args.timeout, not args.quit_manually)
