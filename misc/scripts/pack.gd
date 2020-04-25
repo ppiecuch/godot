@@ -49,11 +49,13 @@ func pck_Packager(path, pckfile):
 	packaging.pck_start(pckfile, 0)
     var dir = Directory.new()
     if dir.open(path) == OK:
+        var base_folder = dir.get_current_dir()+"/"
+        print("Base folder: %s" % base_folder)
         _add_dir_contents(dir, files, dirs)
         print(" - scanning finished")
         print("Processing %d files .." % files.size())
         for i in range(0, files.size()):
-            packaging.add_file(files[i].replace(dir.get_current_dir(), ""), files[i])
+            packaging.add_file("res://"+files[i].replace(base_folder, ""), files[i])
         packaging.flush(true)
     else:
         print("An error occurred when trying to access the path '%s'" % path)
