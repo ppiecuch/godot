@@ -39,7 +39,6 @@
 #include "scene/2d/line_2d.h"
 #include "scene/gui/control.h"
 #include "scene/gui/panel.h"
-#define private public
 #include "scene/gui/label.h"
 #undef private
 

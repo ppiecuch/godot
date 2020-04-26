@@ -34,6 +34,11 @@
 #include "core/pair.h"
 #include "scene/gui/control.h"
 
+// allow for testing private Label's methods
+namespace TestFont {
+    class TestMainLoop;
+}
+
 struct AnimationTransform {
     CharTransform xform;
     float current;
@@ -273,6 +278,8 @@ public:
 
 	Label(const String &p_text = String());
 	~Label();
+
+    friend class TestFont::TestMainLoop;
 };
 
 VARIANT_ENUM_CAST(Label::Align);
