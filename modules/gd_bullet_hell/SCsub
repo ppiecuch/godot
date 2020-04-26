@@ -8,21 +8,10 @@ env_generator = env_modules.Clone()
 # Integration source files
 sources = Glob("*.cpp")
 # Library source files
-sources += [
-    "src/bulletmlparser-tinyxml.cpp",
-    "src/bulletmlparser.cpp",
-    "src/bulletmltree.cpp",
-    "src/calc.cpp",
-    "src/formula-variables.cpp",
-    "src/bulletmlrunner.cpp",
-    "src/bulletmlrunnerimpl.cpp",
-    "src/tinyxml/tinyxml.cpp",
-    "src/tinyxml/tinyxmlerror.cpp",
-    "src/tinyxml/tinyxmlparser.cpp"
-]
+sources += Glob("bulletml/src/*.cpp")
 
 # Generator include path
-env_generator.Append(CPPPATH=[".", "include"])
+env_generator.Append(CPPPATH=[".", "bulletml/include"])
 
 # Compilation flags
 env_generator.Append(CXXFLAGS=['-std=c++11'])
