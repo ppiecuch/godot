@@ -7,18 +7,13 @@ env_generator = env_modules.Clone()
 
 # Integration source files
 sources = Glob("*.cpp")
-# Library source files
-sources += Glob("bulletml/src/*.cpp")
-
-# Bulletml include path
-env_generator.Append(CPPPATH=[".", "bulletml/include"])
 
 # Compilation flags
 if not env.msvc:
     env_generator.Append(CXXFLAGS=['-std=c++11'])
 
 # Compile as a static library
-lib = env_generator.Library("bullet_hell", sources)
+lib = env_generator.Library("2d_water", sources)
 
 # Add the library as a dependency of the final executable
 env.Prepend(LIBS=[lib])
