@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CausticsGenerator xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Caustics>
+    <FrameCount>32</FrameCount>
+    <Resolution>128</Resolution>
+    <Depth>10</Depth>
+    <Intensity>0.0284629986</Intensity>
+    <AmplitudeFilter>30</AmplitudeFilter>
+    <FrequencyFilter>4.01423168</FrequencyFilter>
+    <TimeFilter>26.4971542</TimeFilter>
+    <BackgroundColor>
+      <A>255</A>
+      <R>0</R>
+      <G>0</G>
+      <B>0</B>
+      <ScA>1</ScA>
+      <ScR>0</ScR>
+      <ScG>0</ScG>
+      <ScB>0</ScB>
+    </BackgroundColor>
+    <BackgroundIntensity>1</BackgroundIntensity>
+  </Caustics>
+  <Output>
+    <Size>128</Size>
+    <SaveAsBmp>true</SaveAsBmp>
+    <SaveAsHdr>false</SaveAsHdr>
+    <SaveHeightMap>false</SaveHeightMap>
+    <OutputFileName>CausticsRender_%03d</OutputFileName>
+    <Antialiasing>1</Antialiasing>
+    <MotionBlur>1</MotionBlur>
+  </Output>
+  <Preview>
+    <ShowAsTiled>false</ShowAsTiled>
+    <AutoRender>true</AutoRender>
+    <FramesPerSecond>25</FramesPerSecond>
+  </Preview>
+</CausticsGenerator>
