@@ -14,6 +14,7 @@
 
 /* grid of 50 x 50 fluid cells */
 #define WATER_SIZE  50
+#define WATER_GRID (WATER_SIZE << 1)
 #define WATER_MILX ((WATER_SIZE >> 1)+1)
 #define WATER_MILY ((WATER_SIZE >> 1)+1)
 #define WATER_LARG (WATER_SIZE >> 1)
@@ -46,17 +47,17 @@ private:
     int m_angle;                                                // angle for wave generator
 
     // geometric construction (static number of vertices)
-    float (*m_sommet)[WATER_SIZE * 2][3];                     // vertices vector
-    float (*m_normal)[WATER_SIZE * 2][3];                     // quads normals
-    float (*m_snormal)[WATER_SIZE * 2][3];                    // vertices normals (average)
-    float (*m_snormaln)[WATER_SIZE * 2][3];                   // normalized vertices normals
-    float (*m_uvmap)[WATER_SIZE * 2][2];                      // background texture coordinates
-    float (*m_maskmap)[WATER_SIZE * 2][2];                    // masking texture coordinates
-    float (*m_newuvmap)[WATER_SIZE * 2][2];                   // perturbated background coordinates -> refraction
-    float (*m_newuvanimmap)[WATER_SIZE * 2][2];               // perturbated animation coordinates -> refraction
-    float (*m_newuvcausticmap)[WATER_SIZE * 2][2];            // perturbated caustics coordinates -> refraction
-    float (*m_newuvbumpmap)[WATER_SIZE * 2][2];               // perturbated bump map coordinates -> refraction
-    float (*m_envmap)[WATER_SIZE * 2][2];                     // envmap coordinates...
+    float (*m_sommet)[WATER_GRID][3];                     // vertices vector
+    float (*m_normal)[WATER_GRID][3];                     // quads normals
+    float (*m_snormal)[WATER_GRID][3];                    // vertices normals (average)
+    float (*m_snormaln)[WATER_GRID][3];                   // normalized vertices normals
+    float (*m_uvmap)[WATER_GRID][2];                      // background texture coordinates
+    float (*m_maskmap)[WATER_GRID][2];                    // masking texture coordinates
+    float (*m_newuvmap)[WATER_GRID][2];                   // perturbated background coordinates -> refraction
+    float (*m_newuvanimmap)[WATER_GRID][2];               // perturbated animation coordinates -> refraction
+    float (*m_newuvcausticmap)[WATER_GRID][2];            // perturbated caustics coordinates -> refraction
+    float (*m_newuvbumpmap)[WATER_GRID][2];               // perturbated bump map coordinates -> refraction
+    float (*m_envmap)[WATER_GRID][2];                     // envmap coordinates...
     uint16_t *m_water_index;                                  // vertex array index
 
     int  m_VBO_sommet_ID;                                    // Vertex VBO Name

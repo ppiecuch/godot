@@ -1,4 +1,4 @@
-#include "gdwater.h"
+#include "water_node_2d.h"
 
 // C libs
 #include <stdlib.h>
@@ -33,20 +33,20 @@ GdWater::GdWater (void)
     // allocate buffers
 
     // geometric construction (static number of vertices)
-    m_sommet = new float[WATER_SIZE * 2][WATER_SIZE * 2][3];          // vertices vector
-    m_normal = new float[WATER_SIZE * 2][WATER_SIZE * 2][3];          // quads normals
-    m_snormal = new float[WATER_SIZE * 2][WATER_SIZE * 2][3];         // vertices normals (average)
-    m_snormaln = new float[WATER_SIZE * 2][WATER_SIZE * 2][3];        // normalized vertices normals
+    m_sommet = new float[WATER_GRID][WATER_GRID][3];          // vertices vector
+    m_normal = new float[WATER_GRID][WATER_GRID][3];          // quads normals
+    m_snormal = new float[WATER_GRID][WATER_GRID][3];         // vertices normals (average)
+    m_snormaln = new float[WATER_GRID][WATER_GRID][3];        // normalized vertices normals
 
-    m_uvmap = new float[WATER_SIZE * 2][WATER_SIZE * 2][2];           // background texture coordinates
-    m_maskmap = new float[WATER_SIZE * 2][WATER_SIZE * 2][2];         // masking texture coordinates
-    m_newuvmap = new float[WATER_SIZE * 2][WATER_SIZE * 2][2];        // perturbated background coordinates -> refraction
-    m_newuvanimmap = new float[WATER_SIZE * 2][WATER_SIZE * 2][2];    // perturbated background animation coordinates -> refraction
-    m_newuvcausticmap = new float[WATER_SIZE * 2][WATER_SIZE * 2][2]; // perturbated caustic animation coordinates -> refraction
-    m_newuvbumpmap = new float[WATER_SIZE * 2][WATER_SIZE * 2][2];    // perturbated bump map coordinates -> refraction
-    m_envmap = new float[WATER_SIZE * 2][WATER_SIZE * 2][2];          // envmap coordinates...
+    m_uvmap = new float[WATER_GRID][WATER_GRID][2];           // background texture coordinates
+    m_maskmap = new float[WATER_GRID][WATER_GRID][2];         // masking texture coordinates
+    m_newuvmap = new float[WATER_GRID][WATER_GRID][2];        // perturbated background coordinates -> refraction
+    m_newuvanimmap = new float[WATER_GRID][WATER_GRID][2];    // perturbated background animation coordinates -> refraction
+    m_newuvcausticmap = new float[WATER_GRID][WATER_GRID][2]; // perturbated caustic animation coordinates -> refraction
+    m_newuvbumpmap = new float[WATER_GRID][WATER_GRID][2];    // perturbated bump map coordinates -> refraction
+    m_envmap = new float[WATER_GRID][WATER_GRID][2];          // envmap coordinates...
 
-    m_water_index = new uint16_t[(WATER_SIZE * 2) * (WATER_SIZE * 2) * 6]; // vertex array index
+    m_water_index = new uint16_t[WATER_GRID * WATER_GRID * 6]; // vertex array index
 
     m_caustic_frame = m_anim_frame = m_bumpmap_frame = 0;
 }
@@ -91,8 +91,8 @@ GdWater::init ()
 // trace a hole at normalized coordinates
 void GdWater::set_wave (float a_X, float a_Y, int a_Val)
 {
-    int x = WATER_MILX + (int) (2.0f * (a_X - 0.5f) * WATER_LARG);
-    int y = WATER_MILY + (int) (2.0f * (a_Y - 0.5f) * WATER_LARG);
+    int x = WATER_MILX + (int) (2.0f * (a_X - 0.5f) * WATER_GRID);
+    int y = WATER_MILY + (int) (2.0f * (a_Y - 0.5f) * WATER_GRID);
 
     // check periodicity
     while (x > WATER_SIZE)
@@ -112,8 +112,8 @@ void GdWater::run_wave (float a_Phase, float a_Cos, float a_Sin, int a_Val)
 {
     float r = (m_angle * M_PI) / 1024.0f;
 
-    int x = WATER_MILX + ((int) (cosf (a_Cos * r + a_Phase) * WATER_LARG));
-    int y = WATER_MILY + ((int) (sinf (a_Sin * r + a_Phase) * WATER_LARG));
+    int x = WATER_MILX + ((int) (cosf (a_Cos * r + a_Phase) * WATER_GRID));
+    int y = WATER_MILY + ((int) (sinf (a_Sin * r + a_Phase) * WATER_GRID));
 
     if (x > WATER_SIZE)
         x = WATER_SIZE;
@@ -231,9 +231,9 @@ void GdWater::prebuild_water (void)
         }
     }
     // build vertices in-between
-    for (x = 0; x <= WATER_SIZE * 2 - 1; x += 2) // even rows
+    for (x = 0; x <= WATER_GRID - 1; x += 2) // even rows
     {
-        for (y = 1; y <= WATER_SIZE * 2 - 2; y += 2)  // odd columns
+        for (y = 1; y <= WATER_GRID - 2; y += 2)  // odd columns
         {
             m_sommet[x][y][0] = (m_sommet[x][y-1][0] + m_sommet[x][y+1][0]) / 2.0f;
             m_sommet[x][y][1] = (m_sommet[x][y-1][1] + m_sommet[x][y+1][1]) / 2.0f;
@@ -243,9 +243,9 @@ void GdWater::prebuild_water (void)
     }
 
     // build vertices in-between
-    for (x = 1; x <= WATER_SIZE * 2 - 2; x += 2) // odd rows
+    for (x = 1; x <= WATER_GRID - 2; x += 2) // odd rows
     {
-        for (y = 0; y <= WATER_SIZE * 2 - 1; y++) // every columns
+        for (y = 0; y <= WATER_GRID - 1; y++) // every columns
         {
             m_sommet[x][y][0] = (m_sommet[x-1][y][0] + m_sommet[x+1][y][0]) / 2.0f;
             m_sommet[x][y][1] = (m_sommet[x-1][y][1] + m_sommet[x+1][y][1]) / 2.0f;
@@ -257,8 +257,8 @@ void GdWater::prebuild_water (void)
     Rect2 region = get_tex_region(m_TEX_mask);
 
     // normalize uv for mask texture atlas
-    for (x = 0; x < WATER_SIZE * 2; x++) {
-        for (y = 0; y < WATER_SIZE * 2; y++) {
+    for (x = 0; x < WATER_GRID; x++) {
+        for (y = 0; y < WATER_GRID; y++) {
             m_maskmap[x][y][0] = region.position.x + m_maskmap[x][y][0]*region.size.width;
             m_maskmap[x][y][1] = region.position.y + m_maskmap[x][y][1]*region.size.height;
         }
@@ -278,8 +278,8 @@ void GdWater::prebuild_water (void)
     // _snormal[x][y][2] = 0.01+0.01+0.01+0.01 = 0.04
     //..............................................................................................................
 
-    constexpr int grid_size = 3 * sizeof(float) * WATER_SIZE * 2;
-    constexpr int last_index = WATER_SIZE * 2 - 1;
+    constexpr int grid_size = 3 * sizeof(float) * WATER_GRID;
+    constexpr int last_index = WATER_GRID - 1;
 
     /* copy borders of the map (Z component only) for periodicity */
     memcpy ((char *) &m_normal[last_index][0][0], (char *) &m_normal[last_index - 1][0][0], grid_size);
@@ -298,7 +298,7 @@ void GdWater::prebuild_water (void)
     }
 
     /* copy borders of the map (Z component only) for periodicity */
-    for (x = 0; x < WATER_SIZE * 2; x++) {
+    for (x = 0; x < WATER_GRID; x++) {
         m_snormal[x][0][2] = m_normal[x][0][2];
         m_snormal[x][last_index][2] = m_normal[x][last_index][2];
     }
@@ -313,8 +313,8 @@ void GdWater::build_water (void)
     float h1, sqroot;
     int x, y;
 
-    constexpr int grid_size = 3 * sizeof(float) * WATER_SIZE * 2;
-    constexpr int last_index = WATER_SIZE * 2 - 1;
+    constexpr int grid_size = 3 * sizeof(float) * WATER_GRID;
+    constexpr int last_index = WATER_GRID - 1;
 
     /* calculate vertices : Z component */
     for (x = 1; x <= WATER_SIZE; x++) {
@@ -344,7 +344,7 @@ void GdWater::build_water (void)
     // -> simplified cross product knowing that we have a distance of 1.0 between
     //    each fluid cells.
     for (x = 0; x < last_index; x++) {
-        for (y = 0; y < WATER_SIZE * 2 - 1; y++) {
+        for (y = 0; y < WATER_GRID - 1; y++) {
             m_normal[x][y][0] = 0.1f * (m_sommet[x][y][2] - m_sommet[x+1][y][2]);
             m_normal[x][y][1] = 0.1f * (m_sommet[x][y][2] - m_sommet[x][y+1][2]);
         }
@@ -355,7 +355,7 @@ void GdWater::build_water (void)
 
     memcpy ((char *) &m_normal[last_index][0][0], (char *) &m_normal[last_index - 1][0][0], grid_size);
 
-    for (x = 0; x < WATER_SIZE * 2; x++) {
+    for (x = 0; x < WATER_GRID; x++) {
         m_normal[x][last_index][0] = m_normal[x][last_index - 1][0];
         m_normal[x][last_index][1] = m_normal[x][last_index - 1][1];
     }
@@ -375,7 +375,7 @@ void GdWater::build_water (void)
     }
 
     /* copy map borders (components X and Y only) */
-    for (x = 0; x < WATER_SIZE * 2; x++) {
+    for (x = 0; x < WATER_GRID; x++) {
         m_snormal[x][0][0] = m_normal[x][0][0];
         m_snormal[x][0][1] = m_normal[x][0][1];
         m_snormal[x][last_index][0] = m_normal[x][last_index][0];
@@ -387,8 +387,8 @@ void GdWater::build_water (void)
 
 
     /* calculate ourself normalization */
-    for (x = 0; x < WATER_SIZE * 2; x++) {
-        for (y = 0; y < WATER_SIZE * 2; y++) {
+    for (x = 0; x < WATER_GRID; x++) {
+        for (y = 0; y < WATER_GRID; y++) {
             sqroot = sqrtf (m_snormal[x][y][0] * m_snormal[x][y][0] +
                             m_snormal[x][y][1] * m_snormal[x][y][1] + 0.0016f);
             m_snormaln[x][y][0] = m_snormal[x][y][0] / sqroot;
@@ -405,8 +405,8 @@ void GdWater::build_water (void)
     Rect2 caustic_reg = get_tex_region(m_TEX_caust_frames[m_caustic_frame]);
 
     // really simple version of a fake envmap generator
-    for (x = 0; x < WATER_SIZE * 2; x++) {
-        for (y = 0; y < WATER_SIZE * 2; y++) {
+    for (x = 0; x < WATER_GRID; x++) {
+        for (y = 0; y < WATER_GRID; y++) {
             // perturbate coordinates of background mapping with the components X,Y of normals...
             // simulate refraction
             m_newuvcausticmap[x][y][0]
@@ -445,7 +445,7 @@ void GdWater::build_strip_index(void)
 {
     // array is (WATER_SIZE * 2) x (WATER_SIZE * 2)
 
-    int strip_width = (WATER_SIZE * 2) - 2; // n points define n-2 triangles
+    int strip_width = WATER_GRID - 2; // n points define n-2 triangles
     uint16_t *water_index_ptr = NULL;       // in a strip
     int x, y;
 
@@ -456,14 +456,14 @@ void GdWater::build_strip_index(void)
     for (x = 0; x < strip_width; x++) // vertical index in array
     {
         // strip_width+1 triangle strips
-        *water_index_ptr++ = ((x + 1) * (WATER_SIZE * 2)) + 1;
+        *water_index_ptr++ = ((x + 1) * WATER_GRID) + 1;
 
         for (y = 1; y < strip_width; y++) // horizontal index in array
         {
-            *water_index_ptr++ = (x * (WATER_SIZE * 2)) + y;
-            *water_index_ptr++ = ((x + 1) * (WATER_SIZE * 2)) + y + 1;
+            *water_index_ptr++ = (x * WATER_GRID) + y;
+            *water_index_ptr++ = ((x + 1) * WATER_GRID) + y + 1;
         }
-        *water_index_ptr++ = (x * (WATER_SIZE * 2)) + y;
+        *water_index_ptr++ = (x * WATER_GRID) + y;
     }
     // end build vertex array
 }
