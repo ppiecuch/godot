@@ -2022,6 +2022,38 @@ GDScriptParser::Node *GDScriptParser::_parse_and_reduce_expression(Node *p_paren
 	return expr;
 }
 
+bool GDScriptParser::_reduce_export_var_type(Variant &p_value, int p_line) {
+
+	if (p_value.get_type() == Variant::ARRAY) {
+		Array arr = p_value;
+		for (int i = 0; i < arr.size(); i++) {
+			if (!_reduce_export_var_type(arr[i], p_line)) return false;
+		}
+		return true;
+	}
+
+	if (p_value.get_type() == Variant::DICTIONARY) {
+		Dictionary dict = p_value;
+		for (int i = 0; i < dict.size(); i++) {
+			Variant value = dict.get_value_at_index(i);
+			if (!_reduce_export_var_type(value, p_line)) return false;
+		}
+		return true;
+	}
+
+	// validate type
+	DataType type = _type_from_variant(p_value);
+	if (type.kind == DataType::BUILTIN) {
+		return true;
+	} else if (type.kind == DataType::NATIVE) {
+		if (ClassDB::is_parent_class(type.native_type, "Resource")) {
+			return true;
+		}
+	}
+	_set_error("Invalid export type. Only built-in and native resource types can be exported.", p_line);
+	return false;
+}
+
 bool GDScriptParser::_recover_from_completion() {
 
 	if (!completion_found) {
@@ -3312,15 +3344,10 @@ void GDScriptParser::_parse_block(BlockNode *p_block, bool p_static) {
 				}
 
 				if (args.empty() || args.size() > 2) {
-					_set_error("Wrong number of arguments, expected 1 or 2");
+					_set_error("Wrong number of arguments, expected 1 or 2", assert_line);
 					return;
 				}
 
-#ifdef DEBUG_ENABLED
-				// Mark as safe, let type check mark as unsafe if needed
-				_mark_line_as_safe(assert_line);
-				_reduce_node_type(args[0]);
-#endif
 				AssertNode *an = alloc_node<AssertNode>();
 				an->condition = _reduce_expression(args[0], p_static);
 				an->line = assert_line;
@@ -3336,7 +3363,7 @@ void GDScriptParser::_parse_block(BlockNode *p_block, bool p_static) {
 				p_block->statements.push_back(an);
 
 				if (!_end_statement()) {
-					_set_error("Expected end of statement after \"assert\".");
+					_set_error("Expected end of statement after \"assert\".", assert_line);
 					return;
 				}
 			} break;
@@ -4889,6 +4916,9 @@ void GDScriptParser::_parse_class(ClassNode *p_class) {
 							_set_error("Can't accept a null constant expression for inferring export type.");
 							return;
 						}
+
+						if (!_reduce_export_var_type(cn->value, member.line)) return;
+
 						member._export.type = cn->value.get_type();
 						member._export.usage |= PROPERTY_USAGE_SCRIPT_VARIABLE;
 						if (cn->value.get_type() == Variant::OBJECT) {
@@ -8080,9 +8110,14 @@ void GDScriptParser::_check_block_types(BlockNode *p_block) {
 		Node *statement = E->get();
 		switch (statement->type) {
 			case Node::TYPE_NEWLINE:
-			case Node::TYPE_BREAKPOINT:
-			case Node::TYPE_ASSERT: {
+			case Node::TYPE_BREAKPOINT: {
 				// Nothing to do
+			} break;
+			case Node::TYPE_ASSERT: {
+				AssertNode *an = static_cast<AssertNode *>(statement);
+				_mark_line_as_safe(an->line);
+				_reduce_node_type(an->condition);
+				_reduce_node_type(an->message);
 			} break;
 			case Node::TYPE_LOCAL_VAR: {
 				LocalVarNode *lv = static_cast<LocalVarNode *>(statement);
