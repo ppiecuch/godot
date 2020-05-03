@@ -3,17 +3,4 @@
 Import('env')
 Import('env_modules')
 
-env_generator = env_modules.Clone()
-
-# Integration source files
-sources = Glob("*.cpp")
-
-# Compilation flags
-if not env.msvc:
-    env_generator.Append(CXXFLAGS=['-std=c++11'])
-
-# Compile as a static library
-lib = env_generator.Library("elastic_node", sources)
-
-# Add the library as a dependency of the final executable
-env.Prepend(LIBS=[lib])
+env_modules.add_source_files(env.modules_sources,"*.cpp")

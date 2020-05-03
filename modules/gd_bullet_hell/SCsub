@@ -3,22 +3,13 @@
 Import('env')
 Import('env_modules')
 
-env_generator = env_modules.Clone()
+env_module = env_modules.Clone()
+env_module.Append(CPPPATH=[".", "bulletml/include"])
 
-# Integration source files
 sources = Glob("*.cpp")
-# Library source files
 sources += Glob("bulletml/src/*.cpp")
 
-# Bulletml include path
-env_generator.Append(CPPPATH=[".", "bulletml/include"])
-
-# Compilation flags
-if not env.msvc:
-    env_generator.Append(CXXFLAGS=['-std=c++11'])
-
 # Compile as a static library
-lib = env_generator.Library("bullet_hell", sources)
-
+lib = env_module.Library("gd_bullet_hell", sources)
 # Add the library as a dependency of the final executable
 env.Prepend(LIBS=[lib])

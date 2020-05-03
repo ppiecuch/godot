@@ -181,6 +181,8 @@ public:
 		OPCODE_CALL_BUILT_IN,
 		OPCODE_CALL_SELF,
 		OPCODE_CALL_SELF_BASE,
+		OPCODE_CALL_STACK,
+		OPCODE_CALL_STACK_RETURN,
 		OPCODE_YIELD,
 		OPCODE_YIELD_SIGNAL,
 		OPCODE_YIELD_RESUME,
@@ -210,7 +212,9 @@ public:
 		ADDR_TYPE_STACK_VARIABLE = 6,
 		ADDR_TYPE_GLOBAL = 7,
 		ADDR_TYPE_NAMED_GLOBAL = 8,
-		ADDR_TYPE_NIL = 9
+		ADDR_TYPE_FUNCTION=9,
+		ADDR_TYPE_LAMBDA_FUNCTION=10,
+		ADDR_TYPE_NIL = 11
 	};
 
 	struct StackDebug {
@@ -223,6 +227,8 @@ public:
 
 private:
 	friend class GDScriptCompiler;
+	friend class GDScriptInstance;
+	friend class GDScriptLambdaFunctionObject;
 
 	StringName source;
 
@@ -369,6 +375,59 @@ public:
 	Variant resume(const Variant &p_arg = Variant());
 	GDScriptFunctionState();
 	~GDScriptFunctionState();
+};
+
+class GDScriptFunctionObject : public Reference {
+	GDCLASS(GDScriptFunctionObject,Reference);
+
+protected:
+	GDScriptFunction *function;
+	GDScriptInstance *instance;
+	friend class GDScriptInstance;
+	friend class GDScriptFunction;
+	friend class GDScriptSignalObject;
+	static void _bind_methods();
+
+public:
+	_FORCE_INLINE_ virtual bool is_valid() const {return instance && function;}
+	virtual Object *get_owner() const;
+
+	_FORCE_INLINE_ virtual StringName get_name() const { return function->get_name(); }
+	virtual Variant applyv(const Array p_args);
+	Variant _apply(const Variant** p_args,int p_argcount,Variant::CallError &r_error);
+	virtual Variant apply(const Variant** p_args,int p_argcount,Variant::CallError &r_error);
+	Variant apply(VARIANT_ARG_LIST);
+	virtual Variant apply_with(Object *p_target, const Array p_args);
+	GDScriptFunctionObject() {instance=NULL, function=NULL;}
+//	~GDScriptFunctoionObject();
+};
+
+class GDScriptNativeFunctionObject : public GDScriptFunctionObject {
+	GDCLASS(GDScriptNativeFunctionObject,GDScriptFunctionObject);
+
+	friend class GDScriptFunction;
+	friend class GDScriptInstance;
+	ObjectID target_id;
+	StringName method_name;
+public:
+	virtual Object *get_owner() const {return (target_id == 0 ? NULL : ObjectDB::get_instance(target_id));}
+	_FORCE_INLINE_ virtual bool is_valid() const { return target_id != 0 && ObjectDB::get_instance(target_id); }
+	
+	_FORCE_INLINE_ virtual StringName get_name() const { return method_name; }
+	virtual Variant apply(const Variant** p_args,int p_argcount,Variant::CallError &r_error);
+	virtual Variant apply_with(Object *p_target, const Array p_args);
+	GDScriptNativeFunctionObject() {target_id = 0;}
+};
+
+class GDScriptLambdaFunctionObject : public GDScriptFunctionObject {
+	GDCLASS(GDScriptLambdaFunctionObject,GDScriptFunctionObject);
+	friend class GDScriptInstance;
+	Vector<Variant> variants;
+public:
+	virtual Variant apply(const Variant** p_args,int p_argcount,Variant::CallError &r_error);
+	virtual Variant apply_with(Object *p_target, const Array p_args);
+
+	~GDScriptLambdaFunctionObject();
 };
 
 #endif // GDSCRIPT_FUNCTION_H

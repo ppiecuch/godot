@@ -3,21 +3,16 @@
 Import('env')
 Import('env_modules')
 
-env_generator = env_modules.Clone()
+env_module = env_modules.Clone()
+env_module.Append(CPPPATH=[".", "include"])
 
-# Integration source files
+env_module.add_source_files(env.modules_sources, "*.cpp")
+env_module.add_source_files(env.modules_sources, "src/*.cpp")
+
 sources = Glob("*.cpp")
-# Library source files
 sources += Glob("src/*.cpp")
 
-# Generator include path
-env_generator.Append(CPPPATH=[".", "include"])
-
-# Compilation flags
-env_generator.Append(CXXFLAGS=['-std=c++11'])
-
 # Compile as a static library
-lib = env_generator.Library("generator", sources)
-
+lib = env_module.Library("gd_generator", sources)
 # Add the library as a dependency of the final executable
 env.Prepend(LIBS=[lib])

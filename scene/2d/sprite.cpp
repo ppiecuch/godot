@@ -34,6 +34,26 @@
 #include "scene/main/viewport.h"
 #include "scene/scene_string_names.h"
 
+void Sprite::_update_grid_mesh() {
+	Vector<Vector2> computed_vertices;
+	Vector<Vector2> computed_uv;
+	Vector<int> computed_indices;
+
+	Ref<ArrayMesh> mesh;
+	mesh.instance();
+
+	Array a;
+	a.resize(Mesh::ARRAY_MAX);
+	a[Mesh::ARRAY_VERTEX] = computed_vertices;
+	a[Mesh::ARRAY_TEX_UV] = computed_uv;
+	a[Mesh::ARRAY_INDEX] = computed_indices;
+
+	mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, a, Array(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
+
+	MeshInstance2D *mesh_instance = memnew(MeshInstance2D);
+	mesh_instance->set_mesh(mesh);
+}
+
 #ifdef TOOLS_ENABLED
 Dictionary Sprite::_edit_get_state() const {
 	Dictionary state = Node2D::_edit_get_state();
@@ -127,12 +147,19 @@ void Sprite::_notification(int p_what) {
 			break;
 			*/
 
-            // TODO: draw subdived quad
+            if (vsubdivide > 0 && hsubdivide > 0) {
+                if (grid_mesh == 0) {
+                }
+                Ref<ArrayMesh> mesh;
+                mesh.instance();
 
-			Rect2 src_rect, dst_rect;
-			bool filter_clip;
-			_get_rects(src_rect, dst_rect, filter_clip);
-			texture->draw_rect_region(ci, dst_rect, src_rect, Color(1, 1, 1), false, normal_map, filter_clip);
+                draw_mesh(mesh, texture, normal_map);
+            } else {
+                Rect2 src_rect, dst_rect;
+                bool filter_clip;
+                _get_rects(src_rect, dst_rect, filter_clip);
+                texture->draw_rect_region(ci, dst_rect, src_rect, Color(1, 1, 1), false, normal_map, filter_clip);
+            }
 
 		} break;
 	}
@@ -517,6 +544,7 @@ Sprite::Sprite() {
 
 	vframes = 1;
 	hframes = 1;
+    grid_mesh = 0;
 }
 
 Sprite::~Sprite() {
