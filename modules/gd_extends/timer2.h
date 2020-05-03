@@ -1,0 +1,59 @@
+//
+// Created by gen on 15-4-26.
+//
+
+#ifndef GODOT_MASTER_TIMER2_H
+#define GODOT_MASTER_TIMER2_H
+
+#include "core/reference.h"
+#include "scene/main/node.h"
+
+class TimerObject : public Reference {
+    GDCLASS( TimerObject, Reference );
+private:
+
+    bool is_cancel;
+protected:
+
+    static void _bind_methods();
+
+public:
+    float time;
+    Object *target;
+    String method;
+
+    bool step(float delta);
+    void cancel();
+
+    TimerObject() {is_cancel = false;target=NULL;}
+};
+
+class TimerNode : public Node {
+    GDCLASS( TimerNode, Node );
+public:
+    Vector< Ref<TimerObject> > timer_objs;
+    void check_queue();
+protected:
+    void _notification(int p_what);
+};
+
+class Timer2: public Reference {
+    GDCLASS(Timer2, Reference);
+private:
+    TimerNode   *timer_node;
+protected:
+    static void _bind_methods();
+    static Timer2 *singleton;
+public:
+    static Timer2* get_singleton();
+
+    Ref<TimerObject> wait(float p_time);
+    Ref<TimerObject> wait_trigger(float p_time, Object* p_target, String p_method);
+    void _add_node(Object *node);
+
+    Timer2() {timer_node=NULL;}
+    ~Timer2();
+};
+
+
+#endif //GODOT_MASTER_TIMER2_H
