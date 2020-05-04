@@ -52,7 +52,7 @@ int get_member_index(const GDScript &script, const StringName &member) {
 void trace(int line, const char *text) {
 	char trace_buffer[4096];
 	sprintf(trace_buffer, "%i: %s\n", line, text);
-	OS::get_singleton()->print(String(trace_buffer).utf8().get_data());
+	OS::get_singleton()->print("%s", String(trace_buffer).utf8().get_data());
 }
 
 #define TRACE(text) trace(__LINE__, text)

@@ -316,10 +316,20 @@ void TweenAction::end() {
 
 //==================Tween2
 
+Tween2::Tween2() {
+    singleton = this;
+}
+
 Tween2::~Tween2() {
     if (tween_node) {
         memdelete(tween_node);
     }
+    singleton = NULL;
+}
+
+Tween2 *Tween2::singleton = NULL;
+Tween2 *Tween2::get_singleton() {
+    return singleton;
 }
 
 Ref<TweenAction> Tween2::to(Object *target, float during) {

@@ -13,16 +13,19 @@ class TweenAction;
 
 class TweenNode: public Node {
     GDCLASS(TweenNode, Node);
+
 private:
     Vector< Ref<TweenAction> > actions;
     void check_queue();
     friend class Tween2;
+
 protected:
     void _notification(int p_what);
 };
 
 class TweenProperty : public Reference {
     GDCLASS(TweenProperty, Reference);
+
 private:
     friend class TweenAction;
     StringName property_name;
@@ -40,11 +43,17 @@ private:
 
 class Tween2: public Reference {
     GDCLASS(Tween2, Reference);
+
 private:
-    TweenNode   *tween_node;
+    TweenNode   *tween_node = NULL;
+
 protected:
     static void _bind_methods();
+    static Tween2 *singleton;
+
 public:
+    static Tween2* get_singleton();
+
     typedef enum {
         TWEEN_EASING_LINEAR,
         TWEEN_EASING_QUADRATIC_IN,
@@ -82,7 +91,7 @@ public:
     Ref<TweenAction> to(Object *target, float during);
     void cancel(Object *target);
 
-    Tween2() {tween_node = NULL;}
+    Tween2();
     ~Tween2();
 };
 

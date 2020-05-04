@@ -212,8 +212,8 @@ public:
 		ADDR_TYPE_STACK_VARIABLE = 6,
 		ADDR_TYPE_GLOBAL = 7,
 		ADDR_TYPE_NAMED_GLOBAL = 8,
-		ADDR_TYPE_FUNCTION=9,
-		ADDR_TYPE_LAMBDA_FUNCTION=10,
+		ADDR_TYPE_FUNCTION = 9,
+		ADDR_TYPE_LAMBDA_FUNCTION = 10,
 		ADDR_TYPE_NIL = 11
 	};
 
@@ -378,7 +378,7 @@ public:
 };
 
 class GDScriptFunctionObject : public Reference {
-	GDCLASS(GDScriptFunctionObject,Reference);
+	GDCLASS(GDScriptFunctionObject, Reference);
 
 protected:
 	GDScriptFunction *function;
@@ -403,7 +403,7 @@ public:
 };
 
 class GDScriptNativeFunctionObject : public GDScriptFunctionObject {
-	GDCLASS(GDScriptNativeFunctionObject,GDScriptFunctionObject);
+	GDCLASS(GDScriptNativeFunctionObject, GDScriptFunctionObject);
 
 	friend class GDScriptFunction;
 	friend class GDScriptInstance;

@@ -218,6 +218,8 @@ String GDScriptFunction::_get_call_error(const Variant::CallError &p_err, const 
 		&&OPCODE_CALL_BUILT_IN,               \
 		&&OPCODE_CALL_SELF,                   \
 		&&OPCODE_CALL_SELF_BASE,              \
+		&&OPCODE_CALL_STACK,                  \
+		&&OPCODE_CALL_STACK_RETURN,           \
 		&&OPCODE_YIELD,                       \
 		&&OPCODE_YIELD_SIGNAL,                \
 		&&OPCODE_YIELD_RESUME,                \
@@ -1248,6 +1250,16 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 				ip += 4 + argc;
 			}
 			DISPATCH_OPCODE;
+
+			OPCODE(OPCODE_CALL_STACK) {
+
+				OPCODE_BREAK;
+			}
+
+			OPCODE(OPCODE_CALL_STACK_RETURN) {
+
+				OPCODE_BREAK;
+			}
 
 			OPCODE(OPCODE_YIELD)
 			OPCODE(OPCODE_YIELD_SIGNAL) {

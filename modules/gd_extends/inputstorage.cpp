@@ -8,16 +8,7 @@
 InputStorage *InputStorage::singleton = NULL;
 
 InputStorage *InputStorage::get_singleton() {
-    if (!singleton) {
-        singleton = memnew(InputStorage);
-    }
     return singleton;
-}
-
-InputNode& InputNode::operator=(InputNode&& other) {
-    _pressed_actions = other._pressed_actions;
-    _down_actions = other._down_actions;
-    return *this;
 }
 
 void InputNode::pressed_action(const String &action) {
@@ -63,6 +54,18 @@ int InputNode::queue_down(const PoolStringArray &actions, int offset) const {
         }
     }
     return res;
+}
+
+InputStorage::InputStorage() {
+    singleton = this;
+    _this_frame = NULL;
+    storage_size = 30;
+    storage_node = NULL;
+    storage_events.alloc(storage_size);
+}
+
+InputStorage::~InputStorage() {
+    singleton = NULL;
 }
 
 void InputStorage::_add_node(Object *node) {
@@ -251,10 +254,10 @@ void InputStorageNode::_input(const Ref<InputEvent>& p_event) {
 }
 
 void InputStorageNode::_bind_methods() {
-    ClassDB::bind_method(D_METHOD("_input"),&InputStorageNode::_input);
-    ClassDB::bind_method(D_METHOD("set_storage_size", "storage_size"), &InputStorageNode::set_storage_size);
+    ClassDB::bind_method(D_METHOD("_input"), &InputStorageNode::_input);
+    ClassDB::bind_method(D_METHOD("set_storage_size"), &InputStorageNode::set_storage_size);
     ClassDB::bind_method(D_METHOD("get_storage_size"), &InputStorageNode::get_storage_size);
-    ClassDB::bind_method(D_METHOD("set_events", "events"), &InputStorageNode::set_events);
+    ClassDB::bind_method(D_METHOD("set_events"), &InputStorageNode::set_events);
     ClassDB::bind_method(D_METHOD("get_events"), &InputStorageNode::get_events);
 
     ADD_PROPERTY( PropertyInfo( Variant::INT, "input_storage_node/storage_size" ), "set_storage_size","get_storage_size");

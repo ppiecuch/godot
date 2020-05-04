@@ -61,10 +61,15 @@ void TimerNode::_notification(int p_notification) {
     }
 }
 
+Timer2::Timer2() {
+    singleton = this;
+}
+
 Timer2::~Timer2() {
     if (timer_node) {
         memdelete(timer_node);
     }
+    singleton = NULL;
 }
 
 Ref<TimerObject> Timer2::wait(float p_time) {
@@ -126,9 +131,6 @@ Ref<TimerObject> Timer2::wait_trigger(float p_time, Object *p_target, String p_m
 
 Timer2 *Timer2::singleton = NULL;
 Timer2 *Timer2::get_singleton() {
-    if (!singleton) {
-        singleton = memnew(Timer2);
-    }
     return singleton;
 }
 
