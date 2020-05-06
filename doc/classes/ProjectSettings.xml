@@ -417,6 +417,9 @@
 		<member name="display/mouse_cursor/tooltip_position_offset" type="Vector2" setter="" getter="" default="Vector2( 10, 10 )">
 			Position offset for tooltips, relative to the mouse cursor's hotspot.
 		</member>
+		<member name="display/window/disable_wintab_api" type="bool" setter="" getter="" default="false">
+            Disables WinTab API and always use Windows Ink API for the pen input (Windows only).
+        </member>
 		<member name="display/window/dpi/allow_hidpi" type="bool" setter="" getter="" default="false">
 			If [code]true[/code], allows HiDPI display on Windows and macOS. This setting has no effect on desktop Linux, as DPI-awareness fallbacks are not supported there.
 		</member>
@@ -477,6 +480,8 @@
 		</member>
 		<member name="gui/common/swap_ok_cancel" type="bool" setter="" getter="" default="false">
 			If [code]true[/code], swaps OK and Cancel buttons in dialogs on Windows and UWP to follow interface conventions.
+		</member>
+		<member name="gui/common/text_edit_undo_stack_max_size" type="int" setter="" getter="" default="1024">
 		</member>
 		<member name="gui/theme/custom" type="String" setter="" getter="" default="&quot;&quot;">
 			Path to a custom [Theme] resource file to use for the project ([code]theme[/code] or generic [code]tres[/code]/[code]res[/code] extension).
@@ -995,6 +1000,9 @@
 		</member>
 		<member name="rendering/gles2/debug/diagnose_frame" type="bool" setter="" getter="" default="false">
 			When batching is on, this regularly prints a frame diagnosis log. Note that this will degrade performance.
+		</member>
+		<member name="rendering/gles2/debug/disable_half_float" type="bool" setter="" getter="" default="false">
+			The use of half-float vertex compression may be producing rendering errors on some platforms (especially iOS). These have been seen particularly in particles. Disabling half-float may resolve these problems.
 		</member>
 		<member name="rendering/gles2/debug/flash_batching" type="bool" setter="" getter="" default="false">
 			[b]Experimental[/b] For regression testing against the old renderer. If this is switched on, and [code]use_batching[/code] is set, the renderer will swap alternately between using the old renderer, and the batched renderer, on each frame. This makes it easy to identify visual differences. Performance will be degraded.
