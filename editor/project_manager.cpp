@@ -501,8 +501,24 @@ private:
 					initial_settings["application/config/name"] = project_name->get_text();
 					initial_settings["application/config/icon"] = "res://icon.png";
 					initial_settings["rendering/environment/default_environment"] = "res://default_env.tres";
-                    if(copy_addons->is_pressed() && FileAccess::exists(addons_path.plus_file("Addons.gd")))
-                        initial_settings["autoload/Addons"] = "*res://addons/Addons.gd";
+                    if(copy_addons->is_pressed() && DirAccess::exists(addons_path.plus_file("autoload"))) {
+                        DirAccess *addons_da = DirAccess::open(addons_path.plus_file("autoload"));
+                        if (addons_da) {
+                            addons_da->list_dir_begin();
+                            String n = addons_da->get_next();
+                            while (n != String()) {
+                                if (n != "." && n != "..") {
+                                    if (!addons_da->current_is_dir()) {
+                                        String bn = n.get_basename().underscore_to_camelcase();
+                                        initial_settings["autoload/"+bn] = "*res://addons/"+n;
+                                    }
+                                }
+                                n = addons_da->get_next();
+                            }
+                            addons_da->list_dir_end();
+                            memdelete(addons_da);
+                        }
+                    }
 
 					if (ProjectSettings::get_singleton()->save_custom(dir.plus_file("project.godot"), initial_settings, Vector<String>(), false) != OK) {
 						set_message(TTR("Couldn't create project.godot in project path."), MESSAGE_ERROR);

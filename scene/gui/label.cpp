@@ -477,7 +477,7 @@ void Label::_notification(int p_what) {
 
 		WordCache *wc = word_cache;
 		if (!wc) {
-            ERR_PRINT("Invalid word cache");
+            WARN_PRINT("Invalid word cache");
 			return;
         }
 

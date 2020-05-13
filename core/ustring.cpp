@@ -602,6 +602,23 @@ String String::capitalize() const {
 	return cap;
 }
 
+
+String String::underscore_to_camelcase() const {
+
+	String cam;
+	for (int i = 0; i < this->get_slice_count("_"); i++) {
+
+		String slice = this->get_slicec('_', i);
+		if (slice.length() > 0) {
+
+			slice[0] = _find_upper(slice[0]);
+			cam += slice;
+		}
+	}
+
+	return cam;
+}
+
 String String::camelcase_to_underscore(bool lowercase) const {
 	const CharType *cstr = c_str();
 	String new_string;
