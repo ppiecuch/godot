@@ -3092,6 +3092,8 @@ void GDScriptParser::_parse_block(BlockNode *p_block, bool p_static) {
 
 				cf_while->body = alloc_node<BlockNode>();
 				cf_while->body->parent_block = p_block;
+				cf_while->body->can_break = true;
+				cf_while->body->can_continue = true;
 				p_block->sub_blocks.push_back(cf_while->body);
 
 				if (!_enter_indent_block(cf_while->body)) {
@@ -3156,6 +3158,8 @@ void GDScriptParser::_parse_block(BlockNode *p_block, bool p_static) {
 								ConstantNode *c = static_cast<ConstantNode *>(op->arguments[i]);
 								if (c->value.get_type() == Variant::REAL || c->value.get_type() == Variant::INT) {
 									constants.push_back(c->value);
+								} else {
+									constant = false;
 								}
 							} else {
 								constant = false;
@@ -3209,6 +3213,8 @@ void GDScriptParser::_parse_block(BlockNode *p_block, bool p_static) {
 
 				cf_for->body = alloc_node<BlockNode>();
 				cf_for->body->parent_block = p_block;
+				cf_for->body->can_break = true;
+				cf_for->body->can_continue = true;
 				p_block->sub_blocks.push_back(cf_for->body);
 
 				if (!_enter_indent_block(cf_for->body)) {
@@ -3238,6 +3244,20 @@ void GDScriptParser::_parse_block(BlockNode *p_block, bool p_static) {
 				p_block->statements.push_back(cf_for);
 			} break;
 			case GDScriptTokenizer::TK_CF_CONTINUE: {
+				BlockNode *upper_block = p_block;
+				bool is_continue_valid = false;
+				while (upper_block) {
+					if (upper_block->can_continue) {
+						is_continue_valid = true;
+						break;
+					}
+					upper_block = upper_block->parent_block;
+				}
+
+				if (!is_continue_valid) {
+					_set_error("Unexpected keyword \"continue\" outside a loop.");
+					return;
+				}
 
 				_mark_line_as_safe(tokenizer->get_token_line());
 				tokenizer->advance();
@@ -3250,6 +3270,20 @@ void GDScriptParser::_parse_block(BlockNode *p_block, bool p_static) {
 				}
 			} break;
 			case GDScriptTokenizer::TK_CF_BREAK: {
+				BlockNode *upper_block = p_block;
+				bool is_break_valid = false;
+				while (upper_block) {
+					if (upper_block->can_break) {
+						is_break_valid = true;
+						break;
+					}
+					upper_block = upper_block->parent_block;
+				}
+
+				if (!is_break_valid) {
+					_set_error("Unexpected keyword \"break\" outside a loop.");
+					return;
+				}
 
 				_mark_line_as_safe(tokenizer->get_token_line());
 				tokenizer->advance();
@@ -3318,6 +3352,7 @@ void GDScriptParser::_parse_block(BlockNode *p_block, bool p_static) {
 				BlockNode *compiled_branches = alloc_node<BlockNode>();
 				compiled_branches->parent_block = p_block;
 				compiled_branches->parent_class = p_block->parent_class;
+				compiled_branches->can_continue = true;
 
 				p_block->sub_blocks.push_back(compiled_branches);
 
@@ -7336,7 +7371,7 @@ GDScriptParser::DataType GDScriptParser::_reduce_function_call_type(const Operat
 	return return_type;
 }
 
-bool GDScriptParser::_get_member_type(const DataType &p_base_type, const StringName &p_member, DataType &r_member_type) const {
+bool GDScriptParser::_get_member_type(const DataType &p_base_type, const StringName &p_member, DataType &r_member_type, bool *r_is_const) const {
 	DataType base_type = p_base_type;
 
 	// Check classes in current file
@@ -7347,6 +7382,8 @@ bool GDScriptParser::_get_member_type(const DataType &p_base_type, const StringN
 
 	while (base) {
 		if (base->constant_expressions.has(p_member)) {
+			if (r_is_const)
+				*r_is_const = true;
 			r_member_type = base->constant_expressions[p_member].expression->get_datatype();
 			return true;
 		}
@@ -7570,8 +7607,9 @@ GDScriptParser::DataType GDScriptParser::_reduce_identifier_type(const DataType 
 		base_type = DataType(*p_base_type);
 	}
 
-	if (_get_member_type(base_type, p_identifier, member_type)) {
-		if (!p_base_type && current_function && current_function->_static) {
+	bool is_const = false;
+	if (_get_member_type(base_type, p_identifier, member_type, &is_const)) {
+		if (!p_base_type && current_function && current_function->_static && !is_const) {
 			_set_error("Can't access member variable (\"" + p_identifier.operator String() + "\") from a static function.", p_line);
 			return DataType();
 		}
@@ -7782,6 +7820,7 @@ void GDScriptParser::_check_class_level_types(ClassNode *p_class) {
 
 		_mark_line_as_safe(v.line);
 		v.data_type = _resolve_type(v.data_type, v.line);
+		v.initial_assignment->arguments[0]->set_datatype(v.data_type);
 
 		if (v.expression) {
 			DataType expr_type = _reduce_node_type(v.expression);
@@ -7823,6 +7862,10 @@ void GDScriptParser::_check_class_level_types(ClassNode *p_class) {
 			if (v.data_type.infer_type) {
 				if (!expr_type.has_type) {
 					_set_error("The assigned value doesn't have a set type; the variable type can't be inferred.", v.line);
+					return;
+				}
+				if (expr_type.kind == DataType::BUILTIN && expr_type.builtin_type == Variant::NIL) {
+					_set_error("The variable type cannot be inferred because its value is \"null\".", v.line);
 					return;
 				}
 				v.data_type = expr_type;
@@ -8044,17 +8087,6 @@ void GDScriptParser::_check_function_types(FunctionNode *p_function) {
 		p_function->return_type.has_type = false;
 		p_function->return_type.may_yield = true;
 	}
-
-#ifdef DEBUG_ENABLED
-	for (Map<StringName, LocalVarNode *>::Element *E = p_function->body->variables.front(); E; E = E->next()) {
-		LocalVarNode *lv = E->get();
-		for (int i = 0; i < current_class->variables.size(); i++) {
-			if (current_class->variables[i].identifier == lv->name) {
-				_add_warning(GDScriptWarning::SHADOWED_VARIABLE, lv->line, lv->name, itos(current_class->variables[i].line));
-			}
-		}
-	}
-#endif // DEBUG_ENABLED
 }
 
 void GDScriptParser::_check_class_blocks_types(ClassNode *p_class) {
@@ -8162,6 +8194,11 @@ void GDScriptParser::_check_block_types(BlockNode *p_block) {
 					if (lv->datatype.has_type && assign_type.may_yield && lv->assign->type == Node::TYPE_OPERATOR) {
 						_add_warning(GDScriptWarning::FUNCTION_MAY_YIELD, lv->line, _find_function_name(static_cast<OperatorNode *>(lv->assign)));
 					}
+					for (int i = 0; i < current_class->variables.size(); i++) {
+						if (current_class->variables[i].identifier == lv->name) {
+							_add_warning(GDScriptWarning::SHADOWED_VARIABLE, lv->line, lv->name, itos(current_class->variables[i].line));
+						}
+					}
 #endif // DEBUG_ENABLED
 
 					if (!_is_type_compatible(lv->datatype, assign_type)) {
@@ -8204,6 +8241,10 @@ void GDScriptParser::_check_block_types(BlockNode *p_block) {
 					if (lv->datatype.infer_type) {
 						if (!assign_type.has_type) {
 							_set_error("The assigned value doesn't have a set type; the variable type can't be inferred.", lv->line);
+							return;
+						}
+						if (assign_type.kind == DataType::BUILTIN && assign_type.builtin_type == Variant::NIL) {
+							_set_error("The variable type cannot be inferred because its value is \"null\".", lv->line);
 							return;
 						}
 						lv->datatype = assign_type;
