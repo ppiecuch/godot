@@ -294,6 +294,7 @@ void ScriptTextEditor::_set_theme_for_script() {
 	text_edit->add_keyword_color("Vector2", basetype_color);
 	text_edit->add_keyword_color("Rect2", basetype_color);
 	text_edit->add_keyword_color("Transform2D", basetype_color);
+	text_edit->add_keyword_color("Matrix2D", basetype_color);
 	text_edit->add_keyword_color("Vector3", basetype_color);
 	text_edit->add_keyword_color("AABB", basetype_color);
 	text_edit->add_keyword_color("Basis", basetype_color);

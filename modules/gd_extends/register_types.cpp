@@ -3,6 +3,7 @@
 #include "tween2.h"
 #include "inputstorage.h"
 #include "trail_2d.h"
+#include "line_builder_2d.h"
 #include "phantom.h"
 
 #include "core/engine.h"
@@ -17,6 +18,7 @@ void register_gd_extends_types() {
     ClassDB::register_class<InputStorageNode>();
     ClassDB::register_class<TrailPoint2D>();
     ClassDB::register_class<TrailLine2D>();
+    ClassDB::register_class<LineBuilder2D>();
     ClassDB::register_class<Phantom>();
 
     Engine::get_singleton()->add_singleton(Engine::Singleton("Timer2", Timer2::get_singleton()));
