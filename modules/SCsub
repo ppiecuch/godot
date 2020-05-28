@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
-Import('env')
+Import("env")
+
+import os
 
 env_modules = env.Clone()
 
@@ -11,15 +13,21 @@ env.modules_sources = []
 env_modules.add_source_files(env.modules_sources, "register_module_types.gen.cpp")
 
 c11=0
-for x in env.module_list:
-    if (x in env.disabled_modules):
+for name, path in env.module_list.items():
+    if (name in env.disabled_modules):
         continue
-    env_modules.Append(CPPDEFINES=["MODULE_" + x.upper() + "_ENABLED"])
+
+    env_modules.Append(CPPDEFINES=["MODULE_" + name.upper() + "_ENABLED"])
+
     # make all custom modules c++11 enabled by default
-    if x.startswith("gd_") and not env.msvc:
+    if name.startswith("gd_") and not env.msvc:
         env_modules.Append(CXXFLAGS=['-std=c++11'])
         c11+=1
-    SConscript(x + "/SCsub")
+
+    if not os.path.isabs(path):
+        SConscript(name + "/SCsub")  # Built-in.
+    else:
+        SConscript(path + "/SCsub")  # Custom.
 
 if c11>0:
     print("Enabled c++11 for %d 'gd_' modules." % c11)
