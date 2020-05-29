@@ -2315,6 +2315,9 @@ void RasterizerStorageGLES3::_update_shader(Shader *p_shader) const {
 
 			actions = &shaders.actions_canvas;
 			actions->uniforms = &p_shader->uniforms;
+			actions->back_stencil = &p_shader->back_stencil;
+			actions->front_stencil = &p_shader->front_stencil;
+			actions->uses_stencil = &p_shader->uses_stencil;
 
 		} break;
 
@@ -2373,6 +2376,9 @@ void RasterizerStorageGLES3::_update_shader(Shader *p_shader) const {
 
 			actions = &shaders.actions_scene;
 			actions->uniforms = &p_shader->uniforms;
+			actions->back_stencil = &p_shader->back_stencil;
+			actions->front_stencil = &p_shader->front_stencil;
+			actions->uses_stencil = &p_shader->uses_stencil;
 
 		} break;
 		case VS::SHADER_PARTICLES: {
@@ -7112,6 +7118,8 @@ void RasterizerStorageGLES3::_render_target_allocate(RenderTarget *rt) {
 	GLuint color_type;
 	Image::Format image_format;
 
+	GLenum depth_attachment = config.stencil_buffer_enable ? GL_DEPTH_STENCIL_ATTACHMENT : GL_DEPTH_ATTACHMENT;
+
 	bool hdr = rt->flags[RENDER_TARGET_HDR] && config.framebuffer_half_float_supported;
 	//hdr = false;
 
@@ -7156,8 +7164,7 @@ void RasterizerStorageGLES3::_render_target_allocate(RenderTarget *rt) {
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-				GL_TEXTURE_2D, rt->depth, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, depth_attachment, GL_TEXTURE_2D, rt->depth, 0);
 
 		glGenTextures(1, &rt->color);
 		glBindTexture(GL_TEXTURE_2D, rt->color);
@@ -7222,6 +7229,8 @@ void RasterizerStorageGLES3::_render_target_allocate(RenderTarget *rt) {
 			glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaa, GL_DEPTH_COMPONENT24, rt->width, rt->height);
 
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rt->buffers.depth);
+		if (config.stencil_buffer_enable)
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rt->buffers.depth);
 
 		glGenRenderbuffers(1, &rt->buffers.diffuse);
 		glBindRenderbuffer(GL_RENDERBUFFER, rt->buffers.diffuse);
@@ -8455,6 +8464,7 @@ void RasterizerStorageGLES3::initialize() {
 			}
 		}
 	}
+	config.stencil_buffer_enable = GLOBAL_GET("rendering/quality/stencil_buffer/enable");
 }
 
 void RasterizerStorageGLES3::finalize() {

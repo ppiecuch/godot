@@ -1015,7 +1015,8 @@ void RasterizerSceneGLES2::_add_geometry_with_material(RasterizerStorageGLES2::G
 		if (has_blend_alpha || p_material->shader->spatial.uses_depth_texture || (has_base_alpha && p_material->shader->spatial.depth_draw_mode != RasterizerStorageGLES2::Shader::Spatial::DEPTH_DRAW_ALPHA_PREPASS))
 			return; //bye
 
-		if (!p_material->shader->spatial.uses_alpha_scissor && !p_material->shader->spatial.writes_modelview_or_projection && !p_material->shader->spatial.uses_vertex && !p_material->shader->spatial.uses_discard && p_material->shader->spatial.depth_draw_mode != RasterizerStorageGLES2::Shader::Spatial::DEPTH_DRAW_ALPHA_PREPASS) {
+		if (!p_material->shader->spatial.uses_alpha_scissor && !p_material->shader->spatial.writes_modelview_or_projection && !p_material->shader->spatial.uses_vertex && !p_material->shader->spatial.uses_discard && p_material->shader->spatial.depth_draw_mode != RasterizerStorageGLES2::Shader::Spatial::DEPTH_DRAW_ALPHA_PREPASS &&
+ 				!p_material->shader->uses_stencil) {
 			//shader does not use discard and does not write a vertex position, use generic material
 			if (p_instance->cast_shadows == VS::SHADOW_CASTING_SETTING_DOUBLE_SIDED) {
 				p_material = storage->material_owner.getptr(!p_shadow_pass && p_material->shader->spatial.uses_world_coordinates ? default_worldcoord_material_twosided : default_material_twosided);
@@ -1301,9 +1302,83 @@ void RasterizerSceneGLES2::_set_cull(bool p_front, bool p_disabled, bool p_rever
 	}
 }
 
+_FORCE_INLINE_ void RasterizerSceneGLES2::_set_stencil(bool p_enabled, const ShaderLanguage::StencilTest &p_front, const ShaderLanguage::StencilTest &p_back) {
+	if (p_enabled) {
+		if (!state.current_stencil_enabled) {
+			glEnable(GL_STENCIL_TEST);
+			state.current_stencil_enabled = true;
+		}
+		_set_stencil_face(GL_FRONT, p_front, state.front_stencil);
+		_set_stencil_face(GL_BACK, p_back, state.back_stencil);
+	} else if (state.current_stencil_enabled) {
+		glDisable(GL_STENCIL_TEST);
+		state.current_stencil_enabled = false;
+	}
+}
+
+_FORCE_INLINE_ void RasterizerSceneGLES2::_set_stencil_face(GLenum p_face, const ShaderLanguage::StencilTest &p_stencil, ShaderLanguage::StencilTest &p_state_stencil) {
+	if (p_stencil.value != p_state_stencil.value ||
+			p_stencil.read_mask != p_state_stencil.read_mask ||
+			p_stencil.test != p_state_stencil.test) {
+
+		glStencilFuncSeparate(p_face, _get_stencil_test(p_stencil.test), p_stencil.value, p_stencil.read_mask);
+		p_state_stencil.value = p_stencil.value;
+		p_state_stencil.read_mask = p_stencil.read_mask;
+		p_state_stencil.test = p_stencil.test;
+	}
+
+	if (p_stencil.write_mask != p_state_stencil.write_mask) {
+		glStencilMaskSeparate(p_face, p_stencil.write_mask);
+		p_state_stencil.write_mask = p_stencil.write_mask;
+	}
+
+	if (p_stencil.pass != p_state_stencil.pass ||
+			p_stencil.fail_depth != p_state_stencil.fail_depth ||
+			p_stencil.fail_stencil != p_state_stencil.fail_stencil) {
+
+		glStencilOpSeparate(p_face,
+				_get_stencil_op(p_stencil.fail_stencil),
+				_get_stencil_op(p_stencil.fail_depth),
+				_get_stencil_op(p_stencil.pass));
+		p_state_stencil.pass = p_stencil.pass;
+		p_state_stencil.fail_depth = p_stencil.fail_depth;
+		p_state_stencil.fail_stencil = p_stencil.fail_stencil;
+	}
+}
+
+_FORCE_INLINE_ GLenum RasterizerSceneGLES2::_get_stencil_test(ShaderLanguage::StencilTest::StencilTestType p_test) {
+	switch (p_test) {
+		case ShaderLanguage::StencilTest::STENCIL_TEST_ALWAYS: return GL_ALWAYS;
+		case ShaderLanguage::StencilTest::STENCIL_TEST_NEVER: return GL_NEVER;
+		case ShaderLanguage::StencilTest::STENCIL_TEST_EQUAL: return GL_EQUAL;
+		case ShaderLanguage::StencilTest::STENCIL_TEST_NOT_EQUAL: return GL_NOTEQUAL;
+		case ShaderLanguage::StencilTest::STENCIL_TEST_LESS: return GL_LESS;
+		case ShaderLanguage::StencilTest::STENCIL_TEST_LESS_EQUAL: return GL_LEQUAL;
+		case ShaderLanguage::StencilTest::STENCIL_TEST_GREATER: return GL_GREATER;
+		case ShaderLanguage::StencilTest::STENCIL_TEST_GREATER_EQUAL: return GL_GEQUAL;
+		default: ERR_FAIL_V(GL_ALWAYS);
+	}
+}
+
+_FORCE_INLINE_ GLenum RasterizerSceneGLES2::_get_stencil_op(ShaderLanguage::StencilTest::StencilActionType p_action) {
+	switch (p_action) {
+		case ShaderLanguage::StencilTest::STENCIL_ACTION_KEEP: return GL_KEEP;
+		case ShaderLanguage::StencilTest::STENCIL_ACTION_ZERO: return GL_ZERO;
+		case ShaderLanguage::StencilTest::STENCIL_ACTION_INCR: return GL_INCR;
+		case ShaderLanguage::StencilTest::STENCIL_ACTION_DECR: return GL_DECR;
+		case ShaderLanguage::StencilTest::STENCIL_ACTION_INVERT: return GL_INVERT;
+		case ShaderLanguage::StencilTest::STENCIL_ACTION_REPLACE: return GL_REPLACE;
+		case ShaderLanguage::StencilTest::STENCIL_ACTION_INCR_WRAP: return GL_INCR_WRAP;
+		case ShaderLanguage::StencilTest::STENCIL_ACTION_DECR_WRAP: return GL_DECR_WRAP;
+		default: ERR_FAIL_V(GL_KEEP);
+	}
+}
+
 bool RasterizerSceneGLES2::_setup_material(RasterizerStorageGLES2::Material *p_material, bool p_alpha_pass, Size2i p_skeleton_tex_size) {
 
 	// material parameters
+
+	_set_stencil(p_material->shader->uses_stencil, p_material->shader->front_stencil, p_material->shader->back_stencil);
 
 	state.scene_shader.set_custom_shader(p_material->shader->custom_code_id);
 
@@ -3298,8 +3373,9 @@ void RasterizerSceneGLES2::render_scene(const Transform &p_cam_transform, const 
 	glDepthFunc(GL_LEQUAL);
 	glDepthMask(GL_TRUE);
 	glClearDepth(1.0f);
+	glClearStencil(0);
 	glEnable(GL_DEPTH_TEST);
-	glClear(GL_DEPTH_BUFFER_BIT);
+	glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 	// clear color
 
@@ -3744,7 +3820,8 @@ void RasterizerSceneGLES2::render_shadow(RID p_light, RID p_shadow_atlas, int p_
 
 	glEnable(GL_SCISSOR_TEST);
 	glClearDepth(1.0f);
-	glClear(GL_DEPTH_BUFFER_BIT);
+	glClearStencil(0);
+	glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	if (storage->config.use_rgba_3d_shadows) {
 		glClearColor(1.0, 1.0, 1.0, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT);

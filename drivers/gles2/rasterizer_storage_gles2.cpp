@@ -4712,6 +4712,8 @@ void RasterizerStorageGLES2::_render_target_allocate(RenderTarget *rt) {
 
 		if (config.support_depth_texture) {
 
+			GLenum depth_attachment = config.stencil_buffer_enable ? GL_DEPTH_STENCIL_ATTACHMENT : GL_DEPTH_ATTACHMENT;
+
 			glGenTextures(1, &rt->depth);
 			glBindTexture(GL_TEXTURE_2D, rt->depth);
 			glTexImage2D(GL_TEXTURE_2D, 0, config.depth_internalformat, rt->width, rt->height, 0, GL_DEPTH_COMPONENT, config.depth_type, NULL);
@@ -4721,7 +4723,7 @@ void RasterizerStorageGLES2::_render_target_allocate(RenderTarget *rt) {
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, rt->depth, 0);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, depth_attachment, GL_TEXTURE_2D, rt->depth, 0);
 		} else {
 
 			glGenRenderbuffers(1, &rt->depth);
@@ -4730,6 +4732,8 @@ void RasterizerStorageGLES2::_render_target_allocate(RenderTarget *rt) {
 			glRenderbufferStorage(GL_RENDERBUFFER, config.depth_buffer_internalformat, rt->width, rt->height);
 
 			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rt->depth);
+			if (config.stencil_buffer_enable)
+				glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rt->depth);
 		}
 
 		GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -6209,6 +6213,7 @@ void RasterizerStorageGLES2::initialize() {
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 #endif
 
+	config.stencil_buffer_enable = GLOBAL_GET("rendering/quality/stencil_buffer/enable");
 	config.force_vertex_shading = GLOBAL_GET("rendering/quality/shading/force_vertex_shading");
 	config.use_fast_texture_filter = GLOBAL_GET("rendering/quality/filters/use_nearest_mipmap_filter");
 }

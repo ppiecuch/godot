@@ -17,10 +17,12 @@ public:
     PoolVector2Array get_points() const;
     void set_default_color(const Color &p_default_color);
     Color get_default_color() const;
-    void set_gradient(const Ref<Gradient> &p_gradient);
+    void set_gradient(Ref<Gradient> p_gradient);
     Ref<Gradient> get_gradient() const;
     void set_texture_mode(Line2D::LineTextureMode p_texture_mode);
     Line2D::LineTextureMode get_texture_mode() const;
+    void set_tile_aspect(float p_tile_aspect);
+    float get_tile_aspect() const;
     void set_joint_mode(Line2D::LineJointMode p_joint_mode);
     Line2D::LineJointMode get_joint_mode() const;
     void set_begin_cap_mode(Line2D::LineCapMode p_begin_cap_mode);
@@ -33,17 +35,18 @@ public:
     float get_sharp_limit() const;
     void set_width(float p_width);
     float get_width() const;
-    void set_curve(const Ref<Curve> &p_curve);
+    void set_curve(Ref<Curve> p_curve);
     Ref<Curve> get_curve() const;
 
     PoolIntArray get_indices() const;
-    void set_indices(const PoolIntArray &p_indicies);
     PoolVector2Array get_vertices() const;
-    void set_vertices(const PoolVector2Array &p_vertices);
     PoolColorArray get_colors() const;
-    void set_colors(const PoolColorArray &p_colors);
     PoolVector2Array get_uvs() const;
-    void set_uvs(const PoolVector2Array &p_uvs);
+
+    void build() { lb.build(); }
+    void clear_output() { lb.clear_output(); }
+
+    LineBuilder2D();
 
 private:
     LineBuilder lb;

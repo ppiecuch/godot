@@ -92,7 +92,7 @@ public:
 	void set_texture(const Ref<Texture> &texture);
 	Ref<Texture> get_texture() const;
 
-	void set_texture_mode(const LineTextureMode mode);
+	void set_texture_mode(LineTextureMode mode);
 	LineTextureMode get_texture_mode() const;
 
 	void set_joint_mode(LineJointMode mode);

@@ -118,6 +118,12 @@ void CanvasItemMaterial::_update_shader() {
 
 	code += ";\n";
 
+	switch (stencil_mode) {
+		case STENCIL_MODE_DISABLED: break;
+		case STENCIL_MODE_BUILD: code += "stencil front { test always; pass decr_wrap; };\n"; break;
+		case STENCIL_MODE_USE: code += "stencil front { test always; pass decr_wrap; };\n"; break;
+	}
+
 	if (particles_animation) {
 
 		code += "uniform int particles_anim_h_frames;\n";
@@ -211,6 +217,16 @@ void CanvasItemMaterial::set_light_mode(LightMode p_light_mode) {
 	_queue_shader_change();
 }
 
+void CanvasItemMaterial::set_stencil_mode(StencilMode p_stencil_mode) {
+
+	stencil_mode = p_stencil_mode;
+	_queue_shader_change();
+}
+
+CanvasItemMaterial::StencilMode CanvasItemMaterial::get_stencil_mode() const {
+	return stencil_mode;
+}
+
 CanvasItemMaterial::LightMode CanvasItemMaterial::get_light_mode() const {
 
 	return light_mode;
@@ -283,6 +299,9 @@ void CanvasItemMaterial::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_light_mode", "light_mode"), &CanvasItemMaterial::set_light_mode);
 	ClassDB::bind_method(D_METHOD("get_light_mode"), &CanvasItemMaterial::get_light_mode);
 
+	ClassDB::bind_method(D_METHOD("set_stencil_mode", "stencil_mode"), &CanvasItemMaterial::set_stencil_mode);
+	ClassDB::bind_method(D_METHOD("get_stencil_mode"), &CanvasItemMaterial::get_stencil_mode);
+
 	ClassDB::bind_method(D_METHOD("set_particles_animation", "particles_anim"), &CanvasItemMaterial::set_particles_animation);
 	ClassDB::bind_method(D_METHOD("get_particles_animation"), &CanvasItemMaterial::get_particles_animation);
 
@@ -297,6 +316,7 @@ void CanvasItemMaterial::_bind_methods() {
 
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "blend_mode", PROPERTY_HINT_ENUM, "Mix,Add,Sub,Mul,Premult Alpha"), "set_blend_mode", "get_blend_mode");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "light_mode", PROPERTY_HINT_ENUM, "Normal,Unshaded,Light Only"), "set_light_mode", "get_light_mode");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "stencil_mode", PROPERTY_HINT_ENUM, "Disabled,Build,Use"), "set_stencil_mode", "get_stencil_mode");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "particles_animation"), "set_particles_animation", "get_particles_animation");
 
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "particles_anim_h_frames", PROPERTY_HINT_RANGE, "1,128,1"), "set_particles_anim_h_frames", "get_particles_anim_h_frames");
@@ -312,6 +332,10 @@ void CanvasItemMaterial::_bind_methods() {
 	BIND_ENUM_CONSTANT(LIGHT_MODE_NORMAL);
 	BIND_ENUM_CONSTANT(LIGHT_MODE_UNSHADED);
 	BIND_ENUM_CONSTANT(LIGHT_MODE_LIGHT_ONLY);
+
+	BIND_ENUM_CONSTANT(STENCIL_MODE_DISABLED);
+	BIND_ENUM_CONSTANT(STENCIL_MODE_BUILD);
+	BIND_ENUM_CONSTANT(STENCIL_MODE_USE);
 }
 
 CanvasItemMaterial::CanvasItemMaterial() :

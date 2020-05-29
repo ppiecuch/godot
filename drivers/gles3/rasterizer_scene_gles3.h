@@ -211,6 +211,10 @@ public:
 		bool prepared_depth_texture;
 		bool bound_depth_texture;
 
+		ShaderLanguage::StencilTest front_stencil;
+		ShaderLanguage::StencilTest back_stencil;
+		bool current_stencil_enabled;
+
 		VS::ViewportDebugDraw debug_draw;
 	} state;
 
@@ -831,6 +835,11 @@ public:
 	RenderList render_list;
 
 	_FORCE_INLINE_ void _set_cull(bool p_front, bool p_disabled, bool p_reverse_cull);
+
+	_FORCE_INLINE_ void _set_stencil(bool p_enabled, const ShaderLanguage::StencilTest &p_front, const ShaderLanguage::StencilTest &p_back);
+	_FORCE_INLINE_ void _set_stencil_face(GLenum p_face, const ShaderLanguage::StencilTest &p_stencil, ShaderLanguage::StencilTest &p_state_stencil);
+	_FORCE_INLINE_ GLenum _get_stencil_test(ShaderLanguage::StencilTest::StencilTestType p_test);
+	_FORCE_INLINE_ GLenum _get_stencil_op(ShaderLanguage::StencilTest::StencilActionType p_action);
 
 	_FORCE_INLINE_ bool _setup_material(RasterizerStorageGLES3::Material *p_material, bool p_depth_pass, bool p_alpha_pass);
 	_FORCE_INLINE_ void _setup_geometry(RenderList::Element *e, const Transform &p_view_transform);

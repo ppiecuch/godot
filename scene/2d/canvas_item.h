@@ -64,6 +64,12 @@ public:
 		LIGHT_MODE_LIGHT_ONLY
 	};
 
+	enum StencilMode {
+		STENCIL_MODE_DISABLED,
+		STENCIL_MODE_BUILD,
+		STENCIL_MODE_USE
+	};
+
 private:
 	union MaterialKey {
 
@@ -118,6 +124,7 @@ private:
 
 	BlendMode blend_mode;
 	LightMode light_mode;
+	StencilMode stencil_mode;
 	bool particles_animation;
 
 	int particles_anim_h_frames;
@@ -134,6 +141,9 @@ public:
 
 	void set_light_mode(LightMode p_light_mode);
 	LightMode get_light_mode() const;
+
+	void set_stencil_mode(StencilMode p_blend_mode);
+	StencilMode get_stencil_mode() const;
 
 	void set_particles_animation(bool p_particles_anim);
 	bool get_particles_animation() const;
@@ -160,6 +170,7 @@ public:
 
 VARIANT_ENUM_CAST(CanvasItemMaterial::BlendMode)
 VARIANT_ENUM_CAST(CanvasItemMaterial::LightMode)
+VARIANT_ENUM_CAST(CanvasItemMaterial::StencilMode)
 
 class CanvasItem : public Node {
 

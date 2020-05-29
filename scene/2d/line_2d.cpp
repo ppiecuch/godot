@@ -197,7 +197,7 @@ Ref<Texture> Line2D::get_texture() const {
 	return _texture;
 }
 
-void Line2D::set_texture_mode(const LineTextureMode p_mode) {
+void Line2D::set_texture_mode(LineTextureMode p_mode) {
 	_texture_mode = p_mode;
 	update();
 }

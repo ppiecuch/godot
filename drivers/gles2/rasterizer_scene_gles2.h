@@ -216,6 +216,10 @@ public:
 
 		bool render_no_shadows;
 
+		ShaderLanguage::StencilTest front_stencil;
+		ShaderLanguage::StencilTest back_stencil;
+		bool current_stencil_enabled;
+
 		Vector2 viewport_size;
 
 		Vector2 screen_pixel_size;
@@ -746,6 +750,12 @@ public:
 	void _draw_sky(RasterizerStorageGLES2::Sky *p_sky, const CameraMatrix &p_projection, const Transform &p_transform, bool p_vflip, float p_custom_fov, float p_energy, const Basis &p_sky_orientation);
 
 	_FORCE_INLINE_ void _set_cull(bool p_front, bool p_disabled, bool p_reverse_cull);
+
+	_FORCE_INLINE_ void _set_stencil(bool p_enabled, const ShaderLanguage::StencilTest &p_front, const ShaderLanguage::StencilTest &p_back);
+	_FORCE_INLINE_ void _set_stencil_face(GLenum p_face, const ShaderLanguage::StencilTest &p_stencil, ShaderLanguage::StencilTest &p_state_stencil);
+	_FORCE_INLINE_ GLenum _get_stencil_test(ShaderLanguage::StencilTest::StencilTestType p_test);
+	_FORCE_INLINE_ GLenum _get_stencil_op(ShaderLanguage::StencilTest::StencilActionType p_action);
+
 	_FORCE_INLINE_ bool _setup_material(RasterizerStorageGLES2::Material *p_material, bool p_alpha_pass, Size2i p_skeleton_tex_size = Size2i(0, 0));
 	_FORCE_INLINE_ void _setup_geometry(RenderList::Element *p_element, RasterizerStorageGLES2::Skeleton *p_skeleton);
 	_FORCE_INLINE_ void _setup_light_type(LightInstance *p_light, ShadowAtlas *shadow_atlas);

@@ -101,6 +101,7 @@ public:
 		GLuint depth_type;
 		GLuint depth_buffer_internalformat;
 
+		bool stencil_buffer_enable;
 	} config;
 
 	struct Resources {
@@ -421,6 +422,10 @@ public:
 		Vector<ShaderLanguage::ShaderNode::Uniform::Hint> texture_hints;
 
 		bool valid;
+
+		ShaderLanguage::StencilTest front_stencil;
+		ShaderLanguage::StencilTest back_stencil;
+		bool uses_stencil;
 
 		String path;
 

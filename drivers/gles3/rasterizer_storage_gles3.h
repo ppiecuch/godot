@@ -105,6 +105,8 @@ public:
 
 		bool use_depth_prepass;
 		bool force_vertex_shading;
+
+		bool stencil_buffer_enable;
 	} config;
 
 	mutable struct Shaders {
@@ -431,6 +433,10 @@ public:
 		Vector<ShaderLanguage::ShaderNode::Uniform::Hint> texture_hints;
 
 		bool valid;
+
+		ShaderLanguage::StencilTest front_stencil;
+		ShaderLanguage::StencilTest back_stencil;
+		bool uses_stencil;
 
 		String path;
 

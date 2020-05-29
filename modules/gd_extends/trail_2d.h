@@ -6,8 +6,8 @@
 #define GODOT_MASTER_TRAIL_2D_H
 
 #include "core/typedefs.h"
-#include "core/math/vector2.h"
 #include "core/object.h"
+#include "core/math/vector2.h"
 #include "scene/2d/node_2d.h"
 #include "scene/2d/position_2d.h"
 #include "scene/2d/canvas_item.h"
