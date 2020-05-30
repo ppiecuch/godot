@@ -120,8 +120,8 @@ void CanvasItemMaterial::_update_shader() {
 
 	switch (stencil_mode) {
 		case STENCIL_MODE_DISABLED: break;
-		case STENCIL_MODE_BUILD: code += "stencil front { test always; pass decr_wrap; };\n"; break;
-		case STENCIL_MODE_USE: code += "stencil front { test always; pass decr_wrap; };\n"; break;
+		case STENCIL_MODE_BUILD: code += "stencil front { value 1; pass replace; write_mask 255; };\n"; break;
+		case STENCIL_MODE_USE: code += "stencil front { value 1; test not_equal; pass decr_wrap; write_mask 0; };\n"; break;
 	}
 
 	if (particles_animation) {

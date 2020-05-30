@@ -36,33 +36,33 @@
 
 // allow for testing private Label's methods
 namespace TestFont {
-    class TestMainLoop;
+	class TestMainLoop;
 }
 
 struct AnimationTransform {
-    CharTransform xform;
-    float current;
-    float duration;
-    bool active;
+	CharTransform xform;
+	float current;
+	float duration;
+	bool active;
 
-    AnimationTransform() : current(0), duration(0), active(false) { }
-    bool is_active() const { return active; }
+	AnimationTransform() : current(0), duration(0), active(false) { }
+	bool is_active() const { return active; }
 
-    void _dump_xform() const;
+	void _dump_xform() const;
 };
 
 typedef float (*ease_func_t)(float t, float b, float c, float d);
 
 struct AnimationController {
-    enum AnimState {
-        ANIMCTRL_DONE  = 0, // transition complited
-        ANIMCTRL_IN = 1,    // incoming animation
-        ANIMCTRL_OUT = 2    // outgoing aniamtion
-    };
+	enum AnimState {
+		ANIMCTRL_DONE  = 0, // transition complited
+		ANIMCTRL_IN = 1,    // incoming animation
+		ANIMCTRL_OUT = 2    // outgoing aniamtion
+	};
 
-    virtual void init_xform(float duration, AnimationTransform &xform) = 0;
-    virtual AnimState update(float dt, ease_func_t ease, AnimationTransform &xform) = 0;
-    virtual AnimationController::AnimState state(const AnimationTransform &a) const = 0;
+	virtual void init_xform(float duration, AnimationTransform &xform) = 0;
+	virtual AnimState update(float dt, ease_func_t ease, AnimationTransform &xform) = 0;
+	virtual AnimationController::AnimState state(const AnimationTransform &a) const = 0;
 };
 
 class Label : public Control {
@@ -88,37 +88,37 @@ public:
 		VALIGN_FILL
 	};
 
-    enum TransitionEffect {
-        TRANSITIONEFFECT_NONE,
-        TRANSITIONEFFECT_SLIDE_UP,
-        TRANSITIONEFFECT_SLIDE_DOWN,
-        TRANSITIONEFFECT_ROTATE_V,
-        TRANSITIONEFFECT_ROTATE_H,
-        TRANSITIONEFFECT_COUNT
-    };
+	enum TransitionEffect {
+		TRANSITIONEFFECT_NONE,
+		TRANSITIONEFFECT_SLIDE_UP,
+		TRANSITIONEFFECT_SLIDE_DOWN,
+		TRANSITIONEFFECT_ROTATE_V,
+		TRANSITIONEFFECT_ROTATE_H,
+		TRANSITIONEFFECT_COUNT
+	};
 
-    enum TransitionChangePolicy {
-        TRANSITIONCHANGEPOLICY_ALL, /* always transition - even same characters */
-        TRANSITIONCHANGEPOLICY_NEW  /* transition only new (changed) characters */
-    };
+	enum TransitionChangePolicy {
+		TRANSITIONCHANGEPOLICY_ALL, /* always transition - even same characters */
+		TRANSITIONCHANGEPOLICY_NEW  /* transition only new (changed) characters */
+	};
 
 #define DEFINE_TRANSITIONEASE(M)   \
-    TRANSITIONEASE_ ## M ## _IN,   \
-    TRANSITIONEASE_ ## M ## _OUT,  \
-    TRANSITIONEASE_ ## M ## _INOUT \
+	TRANSITIONEASE_ ## M ## _IN,   \
+	TRANSITIONEASE_ ## M ## _OUT,  \
+	TRANSITIONEASE_ ## M ## _INOUT \
 
-    enum TransitionEase {
-        TRANSITIONEASE_NONE,
-        DEFINE_TRANSITIONEASE(LINEAR),
-        DEFINE_TRANSITIONEASE(SINE),
-        DEFINE_TRANSITIONEASE(CIRC),
-        DEFINE_TRANSITIONEASE(CUBIC),
-        DEFINE_TRANSITIONEASE(QUAD),
-        DEFINE_TRANSITIONEASE(EXPO),
-        DEFINE_TRANSITIONEASE(BACK),
-        DEFINE_TRANSITIONEASE(BOUNCE),
-        DEFINE_TRANSITIONEASE(ELASTIC)
-    };
+	enum TransitionEase {
+		TRANSITIONEASE_NONE,
+		DEFINE_TRANSITIONEASE(LINEAR),
+		DEFINE_TRANSITIONEASE(SINE),
+		DEFINE_TRANSITIONEASE(CIRC),
+		DEFINE_TRANSITIONEASE(CUBIC),
+		DEFINE_TRANSITIONEASE(QUAD),
+		DEFINE_TRANSITIONEASE(EXPO),
+		DEFINE_TRANSITIONEASE(BACK),
+		DEFINE_TRANSITIONEASE(BOUNCE),
+		DEFINE_TRANSITIONEASE(ELASTIC)
+	};
 #undef DEFINE_TRANSITIONEASE
 
 private:
@@ -131,8 +131,8 @@ private:
 	Size2 minsize;
 	int line_count;
 	bool uppercase;
-    float horizontal_spacing;
-    float vertical_spacing;
+	float horizontal_spacing;
+	float vertical_spacing;
 
 	int get_longest_line_width(const String &s) const;
 
@@ -149,8 +149,8 @@ private:
 		int space_count; // spaces before the word
 		WordCache *next;
 		WordCache() {
-            char_pos = 0;
-            line = line_pos = 0;
+			char_pos = 0;
+			line = line_pos = 0;
 			word_len = 0;
 			pixel_width = 0;
 			next = 0;
@@ -160,11 +160,11 @@ private:
 
 	bool word_cache_dirty;
 	void regenerate_word_cache();
-    WordCache *calculate_word_cache(const Ref<Font> &font, const String &label_text, int &line_count, int &total_char_cache, int &width) const;
-    CharType get_char_at(WordCache *cache, String &text, int line, int pos, int *word = 0, CharType *next_char = 0) const;
+	WordCache *calculate_word_cache(const Ref<Font> &font, const String &label_text, int &line_count, int &total_char_cache, int &width) const;
+	CharType get_char_at(WordCache *cache, String &text, int line, int pos, int *word = 0, CharType *next_char = 0) const;
 	int get_line_size(WordCache *cache, String &text, int line) const;
 
-    void _dump_word_cache(const String &text, const Label::WordCache *wc);
+	void _dump_word_cache(const String &text, const Label::WordCache *wc);
 
 	float percent_visible;
 
@@ -174,35 +174,35 @@ private:
 	int lines_skipped;
 	int max_lines_visible;
 
-    bool animate;
-    real_t transition_duration;
-    struct {
-        String text;
-        String xl_text;
-        WordCache *word_cache = 0;
-        Dictionary same_chars_pos;
-        int width;
-        int line_count;
-        int total_char_cache;
-    } transition_text;
-    struct {
-        bool scale_width;
-        bool align_vrotation;
-        real_t align_vrotation_factor;
-    } transition_opts;
-    TransitionEase transition_ease;
-    TransitionEffect transition_effect;
-    TransitionChangePolicy transition_change_policy;
-    AnimationTransform transition_xform;
-    AnimationController *transition_controller = 0;
+	bool animate;
+	real_t transition_duration;
+	struct {
+		String text;
+		String xl_text;
+		WordCache *word_cache = 0;
+		Dictionary same_chars_pos;
+		int width;
+		int line_count;
+		int total_char_cache;
+	} transition_text;
+	struct {
+		bool scale_width;
+		bool align_vrotation;
+		real_t align_vrotation_factor;
+	} transition_opts;
+	TransitionEase transition_ease;
+	TransitionEffect transition_effect;
+	TransitionChangePolicy transition_change_policy;
+	AnimationTransform transition_xform;
+	AnimationController *transition_controller = 0;
 
-    CharPair _process_transition_char(CharTransform &xform, bool draw_state, int line, int line_pos, int char_pos, real_t &x_ofs);
-    void _clear_pending_animations();
-    // 0 : IN
-    // 1 : OUT/DONE
-    bool _current_transition_state() const { return transition_controller->state(transition_xform) != AnimationController::ANIMCTRL_IN; }
+	CharPair _process_transition_char(CharTransform &xform, bool draw_state, int line, int line_pos, int char_pos, real_t &x_ofs);
+	void _clear_pending_animations();
+	// 0 : IN
+	// 1 : OUT/DONE
+	bool _current_transition_state() const { return transition_controller->state(transition_xform) != AnimationController::ANIMCTRL_IN; }
 
-    bool is_transition_enabled() const { return transition_effect != TRANSITIONEFFECT_NONE; }
+	bool is_transition_enabled() const { return transition_effect != TRANSITIONEFFECT_NONE; }
 
 protected:
 	void _notification(int p_what);
@@ -234,25 +234,25 @@ public:
 	void set_transition_duration(real_t p_duration);
 	real_t get_transition_duration() const;
 
-    void set_transition_ease(TransitionEase p_ease);
-    TransitionEase get_transition_ease() const;
+	void set_transition_ease(TransitionEase p_ease);
+	TransitionEase get_transition_ease() const;
 
-    void set_transition_effect(TransitionEffect p_effect);
-    TransitionEffect get_transition_effect() const;
+	void set_transition_effect(TransitionEffect p_effect);
+	TransitionEffect get_transition_effect() const;
 
-    void set_transition_scale_width(bool p_scale_width);
-    bool is_transition_scale_width() const;
+	void set_transition_scale_width(bool p_scale_width);
+	bool is_transition_scale_width() const;
 
-    void set_transition_align_vrotation(bool p_align_vrotation);
-    bool is_transition_align_vrotation() const;
+	void set_transition_align_vrotation(bool p_align_vrotation);
+	bool is_transition_align_vrotation() const;
 
-    void set_transition_align_vrotation_factor(real_t p_vrotation_factor);
-    real_t get_transition_align_vrotation_factor() const;
+	void set_transition_align_vrotation_factor(real_t p_vrotation_factor);
+	real_t get_transition_align_vrotation_factor() const;
 
-    void set_transition_change_policy(TransitionChangePolicy p_change_policy);
-    TransitionChangePolicy get_transition_change_policy() const;
+	void set_transition_change_policy(TransitionChangePolicy p_change_policy);
+	TransitionChangePolicy get_transition_change_policy() const;
 
-    bool is_transition_active() const;
+	bool is_transition_active() const;
 
 	void set_clip_text(bool p_clip);
 	bool is_clipping_text() const;
@@ -270,16 +270,16 @@ public:
 	int get_line_count() const;
 	int get_visible_line_count() const;
 
-    void set_horizontal_spacing(float p_offset);
+	void set_horizontal_spacing(float p_offset);
 	float get_horizontal_spacing() const;
-    void set_vertical_spacing(float p_offset);
+	void set_vertical_spacing(float p_offset);
 	float get_vertical_spacing() const;
 
 
 	Label(const String &p_text = String());
 	~Label();
 
-    friend class TestFont::TestMainLoop;
+	friend class TestFont::TestMainLoop;
 };
 
 VARIANT_ENUM_CAST(Label::Align);
