@@ -2109,6 +2109,8 @@ void RasterizerSceneGLES3::_render_list(RenderList::Element **p_elements, int p_
 	storage->info.render.draw_call_count += p_element_count;
 	bool prev_opaque_prepass = false;
 
+	int prev_fstencil = -1, prev_bstencil = -1;
+
 	for (int i = 0; i < p_element_count; i++) {
 
 		RenderList::Element *e = p_elements[i];
@@ -2274,6 +2276,13 @@ void RasterizerSceneGLES3::_render_list(RenderList::Element **p_elements, int p_
 			}
 		}
 
+		int fstencil = material->shader->front_stencil._compute_key().key,
+			bstencil = material->shader->back_stencil._compute_key().key;
+
+		if (prev_fstencil != fstencil || prev_bstencil != bstencil) {
+			rebind = true;
+		}
+
 		if (material != prev_material || rebind) {
 
 			storage->info.render.material_switch_count++;
@@ -2306,6 +2315,8 @@ void RasterizerSceneGLES3::_render_list(RenderList::Element **p_elements, int p_
 		prev_geometry = e->geometry;
 		prev_owner = e->owner;
 		prev_shading = shading;
+		prev_fstencil = fstencil;
+		prev_bstencil = bstencil;
 		prev_skeleton = skeleton;
 		prev_use_instancing = use_instancing;
 		prev_opaque_prepass = use_opaque_prepass;
@@ -2411,8 +2422,7 @@ void RasterizerSceneGLES3::_add_geometry_with_material(RasterizerStorageGLES3::G
 		if (has_blend_alpha || p_material->shader->spatial.uses_depth_texture || (has_base_alpha && p_material->shader->spatial.depth_draw_mode != RasterizerStorageGLES3::Shader::Spatial::DEPTH_DRAW_ALPHA_PREPASS) || p_material->shader->spatial.depth_draw_mode == RasterizerStorageGLES3::Shader::Spatial::DEPTH_DRAW_NEVER || p_material->shader->spatial.no_depth_test || p_instance->cast_shadows == VS::SHADOW_CASTING_SETTING_OFF)
 			return; //bye
 
-		if (!p_material->shader->spatial.uses_alpha_scissor && !p_material->shader->spatial.writes_modelview_or_projection && !p_material->shader->spatial.uses_vertex && !p_material->shader->spatial.uses_discard && p_material->shader->spatial.depth_draw_mode != RasterizerStorageGLES3::Shader::Spatial::DEPTH_DRAW_ALPHA_PREPASS &&
- 				!p_material->shader->uses_stencil) {
+		if (!p_material->shader->spatial.uses_alpha_scissor && !p_material->shader->spatial.writes_modelview_or_projection && !p_material->shader->spatial.uses_vertex && !p_material->shader->spatial.uses_discard && p_material->shader->spatial.depth_draw_mode != RasterizerStorageGLES3::Shader::Spatial::DEPTH_DRAW_ALPHA_PREPASS && !p_material->shader->uses_stencil) {
 			//shader does not use discard, stencil and does not write a vertex position, use generic material
 			if (p_instance->cast_shadows == VS::SHADOW_CASTING_SETTING_DOUBLE_SIDED) {
 				p_material = storage->material_owner.getptr(!p_shadow_pass && p_material->shader->spatial.uses_world_coordinates ? default_worldcoord_material_twosided : default_material_twosided);

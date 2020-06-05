@@ -66,8 +66,8 @@ public:
 
 	enum StencilMode {
 		STENCIL_MODE_DISABLED,
-		STENCIL_MODE_BUILD,
-		STENCIL_MODE_USE
+		STENCIL_MODE_FILL,
+		STENCIL_MODE_MASK
 	};
 
 private:
@@ -76,6 +76,7 @@ private:
 		struct {
 			uint32_t blend_mode : 4;
 			uint32_t light_mode : 4;
+			uint32_t stencil_mode : 4;
 			uint32_t particles_animation : 1;
 			uint32_t invalid_key : 1;
 		};
@@ -110,6 +111,7 @@ private:
 		mk.key = 0;
 		mk.blend_mode = blend_mode;
 		mk.light_mode = light_mode;
+		mk.stencil_mode = stencil_mode;
 		mk.particles_animation = particles_animation;
 		return mk;
 	}

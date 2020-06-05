@@ -333,6 +333,7 @@ const ShaderLanguage::KeyWord ShaderLanguage::keyword_list[] = {
 	{ TK_HINT_COLOR, "hint_color" },
 	{ TK_HINT_RANGE, "hint_range" },
 	{ TK_SHADER_TYPE, "shader_type" },
+	{ TK_STENCIL, "stencil" },
 
 	{ TK_ERROR, NULL }
 };
@@ -5723,6 +5724,7 @@ Error ShaderLanguage::_parse_stencil_block(bool &p_has_front, bool &p_has_back) 
 		}
 		p_has_front = true;
 		shader->front_stencil = stencil;
+		printf("STENCIL SHR: val %d\n", shader->front_stencil.value);
 	}
 	if (back) {
 		if (p_has_back) {

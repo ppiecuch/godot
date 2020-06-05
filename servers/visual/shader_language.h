@@ -342,6 +342,40 @@ public:
 		StencilActionType fail_depth;
 		StencilActionType fail_stencil;
 
+		union StencilKey {
+
+			struct {
+				uint64_t value : 8;
+				uint64_t read_mask : 8;
+				uint64_t write_mask : 8;
+				uint64_t test : 4;
+				uint64_t pass : 4;
+				uint64_t fail_depth : 4;
+				uint64_t fail_stencil : 4;
+			};
+
+			uint64_t key;
+
+			bool operator<(const StencilKey &p_key) const {
+				return key < p_key.key;
+			}
+		};
+
+		_FORCE_INLINE_ StencilKey _compute_key() const {
+
+			StencilKey mk;
+			mk.key = 0;
+			mk.value = value;
+			mk.read_mask = read_mask;
+			mk.write_mask = write_mask;
+			mk.test = test;
+			mk.pass = pass;
+			mk.fail_depth = fail_depth;
+			mk.fail_stencil = fail_stencil;
+
+			return mk;
+		}
+
 		StencilTest() :
 				value(0),
 				read_mask(255),
@@ -655,7 +689,6 @@ public:
 		Vector<Function> functions;
 		Vector<Constant> vconstants;
 
-		Vector<StencilTest> stencils;
 		StencilTest front_stencil;
 		StencilTest back_stencil;
 

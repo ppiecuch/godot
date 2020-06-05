@@ -94,6 +94,9 @@ public:
 		Transform2D skeleton_transform;
 		Transform2D skeleton_transform_inverse;
 
+		ShaderLanguage::StencilTest front_stencil;
+		ShaderLanguage::StencilTest back_stencil;
+		bool current_stencil_enabled;
 	} state;
 
 	RasterizerStorageGLES3 *storage;
@@ -128,6 +131,11 @@ public:
 
 	virtual void canvas_begin();
 	virtual void canvas_end();
+
+	_FORCE_INLINE_ void _set_stencil(bool p_enabled, const ShaderLanguage::StencilTest &p_front, const ShaderLanguage::StencilTest &p_back);
+	_FORCE_INLINE_ void _set_stencil_face(GLenum p_face, const ShaderLanguage::StencilTest &p_stencil, ShaderLanguage::StencilTest &p_state_stencil);
+	_FORCE_INLINE_ GLenum _get_stencil_test(ShaderLanguage::StencilTest::StencilTestType p_test);
+	_FORCE_INLINE_ GLenum _get_stencil_op(ShaderLanguage::StencilTest::StencilActionType p_action);
 
 	_FORCE_INLINE_ void _set_texture_rect_mode(bool p_enable, bool p_ninepatch = false);
 	_FORCE_INLINE_ RasterizerStorageGLES3::Texture *_bind_canvas_texture(const RID &p_texture, const RID &p_normal_map, bool p_force = false);

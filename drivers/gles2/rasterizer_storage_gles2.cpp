@@ -1449,6 +1449,9 @@ void RasterizerStorageGLES2::_update_shader(Shader *p_shader) const {
 
 			actions = &shaders.actions_canvas;
 			actions->uniforms = &p_shader->uniforms;
+			actions->back_stencil = &p_shader->back_stencil;
+			actions->front_stencil = &p_shader->front_stencil;
+			actions->uses_stencil = &p_shader->uses_stencil;
 		} break;
 
 		case VS::SHADER_SPATIAL: {
@@ -1505,6 +1508,9 @@ void RasterizerStorageGLES2::_update_shader(Shader *p_shader) const {
 
 			actions = &shaders.actions_scene;
 			actions->uniforms = &p_shader->uniforms;
+			actions->back_stencil = &p_shader->back_stencil;
+			actions->front_stencil = &p_shader->front_stencil;
+			actions->uses_stencil = &p_shader->uses_stencil;
 
 			if (p_shader->spatial.uses_screen_texture && p_shader->spatial.uses_depth_texture) {
 				ERR_PRINT_ONCE("Using both SCREEN_TEXTURE and DEPTH_TEXTURE is not supported in GLES2");
