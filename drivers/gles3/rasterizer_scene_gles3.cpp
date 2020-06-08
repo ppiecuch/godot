@@ -2082,6 +2082,7 @@ void RasterizerSceneGLES3::_render_list(RenderList::Element **p_elements, int p_
 	glEnable(GL_CULL_FACE);
 
 	state.current_depth_test = true;
+	state.current_stencil_enabled = false;
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_STENCIL_TEST);
 
@@ -2109,7 +2110,7 @@ void RasterizerSceneGLES3::_render_list(RenderList::Element **p_elements, int p_
 	storage->info.render.draw_call_count += p_element_count;
 	bool prev_opaque_prepass = false;
 
-	int prev_fstencil = -1, prev_bstencil = -1;
+	int64_t prev_fstencil = -1, prev_bstencil = -1;
 
 	for (int i = 0; i < p_element_count; i++) {
 
@@ -2276,11 +2277,16 @@ void RasterizerSceneGLES3::_render_list(RenderList::Element **p_elements, int p_
 			}
 		}
 
-		int fstencil = material->shader->front_stencil._compute_key().key,
-			bstencil = material->shader->back_stencil._compute_key().key;
+		if (material != prev_material && material->shader->uses_stencil) {
+			int fstencil = material->shader->front_stencil._compute_key().key,
+				bstencil = material->shader->back_stencil._compute_key().key;
 
-		if (prev_fstencil != fstencil || prev_bstencil != bstencil) {
-			rebind = true;
+			if (prev_fstencil != fstencil || prev_bstencil != bstencil) {
+				rebind = true;
+			}
+
+			prev_fstencil = fstencil;
+			prev_bstencil = bstencil;
 		}
 
 		if (material != prev_material || rebind) {
@@ -2315,8 +2321,6 @@ void RasterizerSceneGLES3::_render_list(RenderList::Element **p_elements, int p_
 		prev_geometry = e->geometry;
 		prev_owner = e->owner;
 		prev_shading = shading;
-		prev_fstencil = fstencil;
-		prev_bstencil = bstencil;
 		prev_skeleton = skeleton;
 		prev_use_instancing = use_instancing;
 		prev_opaque_prepass = use_opaque_prepass;

@@ -77,7 +77,8 @@ void RasterizerCanvasBaseGLES2::canvas_begin() {
 				storage->frame.clear_request_color.g,
 				storage->frame.clear_request_color.b,
 				state.using_transparent_rt ? storage->frame.clear_request_color.a : 1.0);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClearStencil(0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 		storage->frame.clear_request = false;
 	}
 
@@ -375,6 +376,9 @@ void RasterizerCanvasBaseGLES2::reset_canvas() {
 	glDisable(GL_SCISSOR_TEST);
 	glDisable(GL_DITHER);
 	glEnable(GL_BLEND);
+
+	state.current_stencil_enabled = false;
+	glDisable(GL_STENCIL_TEST);
 
 	if (storage->frame.current_rt && storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_TRANSPARENT]) {
 		glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -714,6 +718,78 @@ void RasterizerCanvasBaseGLES2::_copy_screen(const Rect2 &p_rect) {
 
 	glBindFramebuffer(GL_FRAMEBUFFER, storage->frame.current_rt->fbo); //back to front
 	glEnable(GL_BLEND);
+}
+
+void RasterizerCanvasBaseGLES2::_set_stencil(bool p_enabled, const ShaderLanguage::StencilTest &p_front, const ShaderLanguage::StencilTest &p_back) {
+	if (p_enabled) {
+		if (!state.current_stencil_enabled) {
+			glEnable(GL_STENCIL_TEST);
+			state.current_stencil_enabled = true;
+		}
+		_set_stencil_face(GL_FRONT, p_front, state.front_stencil);
+		_set_stencil_face(GL_BACK, p_back, state.back_stencil);
+	} else if (state.current_stencil_enabled) {
+		glDisable(GL_STENCIL_TEST);
+		state.current_stencil_enabled = false;
+	}
+}
+
+void RasterizerCanvasBaseGLES2::_set_stencil_face(GLenum p_face, const ShaderLanguage::StencilTest &p_stencil, ShaderLanguage::StencilTest &p_state_stencil) {
+	if (p_stencil.value != p_state_stencil.value ||
+		p_stencil.read_mask != p_state_stencil.read_mask ||
+		p_stencil.test != p_state_stencil.test) {
+		
+		glStencilFuncSeparate(p_face, _get_stencil_test(p_stencil.test), p_stencil.value, p_stencil.read_mask);
+		p_state_stencil.value = p_stencil.value;
+		p_state_stencil.read_mask = p_stencil.read_mask;
+		p_state_stencil.test = p_stencil.test;
+	}
+	
+	if (p_stencil.write_mask != p_state_stencil.write_mask) {
+		glStencilMaskSeparate(p_face, p_stencil.write_mask);
+		p_state_stencil.write_mask = p_stencil.write_mask;
+	}
+	
+	if (p_stencil.pass != p_state_stencil.pass ||
+		p_stencil.fail_depth != p_state_stencil.fail_depth ||
+		p_stencil.fail_stencil != p_state_stencil.fail_stencil) {
+		
+		glStencilOpSeparate(p_face,
+							_get_stencil_op(p_stencil.fail_stencil),
+							_get_stencil_op(p_stencil.fail_depth),
+							_get_stencil_op(p_stencil.pass));
+		p_state_stencil.pass = p_stencil.pass;
+		p_state_stencil.fail_depth = p_stencil.fail_depth;
+		p_state_stencil.fail_stencil = p_stencil.fail_stencil;
+	}
+}
+
+GLenum RasterizerCanvasBaseGLES2::_get_stencil_test(ShaderLanguage::StencilTest::StencilTestType p_test) {
+	switch (p_test) {
+		case ShaderLanguage::StencilTest::STENCIL_TEST_ALWAYS: return GL_ALWAYS;
+		case ShaderLanguage::StencilTest::STENCIL_TEST_NEVER: return GL_NEVER;
+		case ShaderLanguage::StencilTest::STENCIL_TEST_EQUAL: return GL_EQUAL;
+		case ShaderLanguage::StencilTest::STENCIL_TEST_NOT_EQUAL: return GL_NOTEQUAL;
+		case ShaderLanguage::StencilTest::STENCIL_TEST_LESS: return GL_LESS;
+		case ShaderLanguage::StencilTest::STENCIL_TEST_LESS_EQUAL: return GL_LEQUAL;
+		case ShaderLanguage::StencilTest::STENCIL_TEST_GREATER: return GL_GREATER;
+		case ShaderLanguage::StencilTest::STENCIL_TEST_GREATER_EQUAL: return GL_GEQUAL;
+		default: ERR_FAIL_V(GL_ALWAYS);
+	}
+}
+
+GLenum RasterizerCanvasBaseGLES2::_get_stencil_op(ShaderLanguage::StencilTest::StencilActionType p_action) {
+	switch (p_action) {
+		case ShaderLanguage::StencilTest::STENCIL_ACTION_KEEP: return GL_KEEP;
+		case ShaderLanguage::StencilTest::STENCIL_ACTION_ZERO: return GL_ZERO;
+		case ShaderLanguage::StencilTest::STENCIL_ACTION_INCR: return GL_INCR;
+		case ShaderLanguage::StencilTest::STENCIL_ACTION_DECR: return GL_DECR;
+		case ShaderLanguage::StencilTest::STENCIL_ACTION_INVERT: return GL_INVERT;
+		case ShaderLanguage::StencilTest::STENCIL_ACTION_REPLACE: return GL_REPLACE;
+		case ShaderLanguage::StencilTest::STENCIL_ACTION_INCR_WRAP: return GL_INCR_WRAP;
+		case ShaderLanguage::StencilTest::STENCIL_ACTION_DECR_WRAP: return GL_DECR_WRAP;
+		default: ERR_FAIL_V(GL_KEEP);
+	}
 }
 
 void RasterizerCanvasBaseGLES2::canvas_light_shadow_buffer_update(RID p_buffer, const Transform2D &p_light_xform, int p_light_mask, float p_near, float p_far, LightOccluderInstance *p_occluders, CameraMatrix *p_xform_cache) {

@@ -119,9 +119,9 @@ void CanvasItemMaterial::_update_shader() {
 	code += ";\n";
 
 	switch (stencil_mode) {
-		case STENCIL_MODE_DISABLED: break;
-		case STENCIL_MODE_FILL: code += "stencil front { value 1; pass replace; write_mask 255; }\n"; break;
-		case STENCIL_MODE_MASK: code += "stencil front { value 1; test not_equal; pass replace; write_mask 0; }\n"; break;
+		case STENCIL_MODE_NONE: break;
+		case STENCIL_MODE_FILL: code += "stencil front_back { value 1; pass replace; write_mask 255; }\n"; break;
+		case STENCIL_MODE_MASK: code += "stencil front_back { value 1; test equal; pass replace; write_mask 0; }\n"; break;
 	}
 
 	if (particles_animation) {
@@ -316,7 +316,7 @@ void CanvasItemMaterial::_bind_methods() {
 
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "blend_mode", PROPERTY_HINT_ENUM, "Mix,Add,Sub,Mul,Premult Alpha"), "set_blend_mode", "get_blend_mode");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "light_mode", PROPERTY_HINT_ENUM, "Normal,Unshaded,Light Only"), "set_light_mode", "get_light_mode");
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "stencil_mode", PROPERTY_HINT_ENUM, "Disabled,Fill,Mask"), "set_stencil_mode", "get_stencil_mode");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "stencil_mode", PROPERTY_HINT_ENUM, "None,Fill,Mask"), "set_stencil_mode", "get_stencil_mode");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "particles_animation"), "set_particles_animation", "get_particles_animation");
 
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "particles_anim_h_frames", PROPERTY_HINT_RANGE, "1,128,1"), "set_particles_anim_h_frames", "get_particles_anim_h_frames");

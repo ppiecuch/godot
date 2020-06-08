@@ -2329,6 +2329,8 @@ void RasterizerSceneGLES2::_render_render_list(RenderList::Element **p_elements,
 
 	storage->info.render.draw_call_count += p_element_count;
 
+	int64_t prev_fstencil = -1, prev_bstencil = -1;
+
 	for (int i = 0; i < p_element_count; i++) {
 		RenderList::Element *e = p_elements[i];
 
@@ -2538,6 +2540,19 @@ void RasterizerSceneGLES2::_render_render_list(RenderList::Element **p_elements,
 			rebind = true;
 		}
 
+		if (material != prev_material && material->shader->uses_stencil) {
+			int fstencil = material->shader->front_stencil._compute_key().key,
+				bstencil = material->shader->back_stencil._compute_key().key;
+
+			if (prev_fstencil != fstencil || prev_bstencil != bstencil) {
+				rebind = true;
+			}
+
+			prev_fstencil = fstencil;
+			prev_bstencil = bstencil;
+		}
+
+
 		if (e->owner != prev_owner || e->geometry != prev_geometry || skeleton != prev_skeleton) {
 			_setup_geometry(e, skeleton);
 			storage->info.render.surface_switch_count++;
@@ -2666,6 +2681,7 @@ void RasterizerSceneGLES2::_render_render_list(RenderList::Element **p_elements,
 		prev_use_lightmap_capture = use_lightmap_capture;
 	}
 
+	_set_stencil(false, ShaderLanguage::StencilTest(), ShaderLanguage::StencilTest()); //reset stencil bufer
 	_setup_light_type(NULL, NULL); //clear light stuff
 	state.scene_shader.set_conditional(SceneShaderGLES2::USE_SKELETON, false);
 	state.scene_shader.set_conditional(SceneShaderGLES2::SHADELESS, false);

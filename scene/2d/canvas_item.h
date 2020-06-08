@@ -65,7 +65,7 @@ public:
 	};
 
 	enum StencilMode {
-		STENCIL_MODE_DISABLED,
+		STENCIL_MODE_NONE,
 		STENCIL_MODE_FILL,
 		STENCIL_MODE_MASK
 	};

@@ -152,7 +152,8 @@ void RasterizerCanvasGLES3::canvas_begin() {
 				storage->frame.clear_request_color.g,
 				storage->frame.clear_request_color.b,
 				transparent ? storage->frame.clear_request_color.a : 1.0);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClearStencil(0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 		storage->frame.clear_request = false;
 		glColorMask(1, 1, 1, transparent ? 1 : 0);
 	}
@@ -1510,6 +1511,7 @@ void RasterizerCanvasGLES3::canvas_render_items(Item *p_item_list, int p_z, cons
 	glBindTexture(GL_TEXTURE_2D, storage->resources.white_tex);
 
 	int last_blend_mode = -1;
+	int64_t last_fstencil, last_bstencil = -1;
 
 	RID canvas_last_material;
 
@@ -1688,6 +1690,20 @@ void RasterizerCanvasGLES3::canvas_render_items(Item *p_item_list, int p_z, cons
 			canvas_last_material = material;
 			rebind_shader = false;
 		}
+
+		bool uses_stencil = shader_cache ? shader_cache->uses_stencil : false;
+		if (uses_stencil && shader_cache) {
+			int fstencil = shader_cache->front_stencil._compute_key().key,
+				bstencil = shader_cache->back_stencil._compute_key().key;
+
+			if (last_fstencil != fstencil || last_bstencil != bstencil) {
+				_set_stencil(shader_cache->uses_stencil, shader_cache->front_stencil, shader_cache->back_stencil);
+			}
+
+			last_fstencil = fstencil;
+			last_bstencil = bstencil;
+		} else
+			_set_stencil(false, ShaderLanguage::StencilTest(), ShaderLanguage::StencilTest()); //no stencil bufer
 
 		int blend_mode = shader_cache ? shader_cache->canvas_item.blend_mode : RasterizerStorageGLES3::Shader::CanvasItem::BLEND_MODE_MIX;
 		if (blend_mode == RasterizerStorageGLES3::Shader::CanvasItem::BLEND_MODE_DISABLED && (!storage->frame.current_rt || !storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_TRANSPARENT])) {
@@ -1950,6 +1966,7 @@ void RasterizerCanvasGLES3::canvas_render_items(Item *p_item_list, int p_z, cons
 	if (current_clip) {
 		glDisable(GL_SCISSOR_TEST);
 	}
+	_set_stencil(false, ShaderLanguage::StencilTest(), ShaderLanguage::StencilTest()); //reset stencil bufer
 	//disable states that may have been used
 	state.canvas_shader.set_conditional(CanvasShaderGLES3::USE_DISTANCE_FIELD, false);
 	state.canvas_shader.set_conditional(CanvasShaderGLES3::USE_SKELETON, false);
@@ -2132,6 +2149,9 @@ void RasterizerCanvasGLES3::reset_canvas() {
 	//glLineWidth(1.0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	state.current_stencil_enabled = false;
+	glDisable(GL_STENCIL_TEST);
 
 	//use for reading from screen
 	if (storage->frame.current_rt && !storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_NO_SAMPLING]) {

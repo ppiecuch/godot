@@ -2269,6 +2269,20 @@ bool RasterizerCanvasGLES2::try_join_item(Item *p_ci, RenderItemState &r_ris, bo
 		r_ris.rebind_shader = false;
 	}
 
+	bool uses_stencil = r_ris.shader_cache ? r_ris.shader_cache->uses_stencil : false;
+	if (uses_stencil && r_ris.shader_cache) {
+		int fstencil = r_ris.shader_cache->front_stencil._compute_key().key,
+		bstencil = r_ris.shader_cache->back_stencil._compute_key().key;
+		
+		if (r_ris.last_fstencil != fstencil || r_ris.last_bstencil != bstencil) {
+			_set_stencil(r_ris.shader_cache->uses_stencil, r_ris.shader_cache->front_stencil, r_ris.shader_cache->back_stencil);
+		}
+		
+		r_ris.last_fstencil = fstencil;
+		r_ris.last_bstencil = bstencil;
+	} else
+		_set_stencil(false, ShaderLanguage::StencilTest(), ShaderLanguage::StencilTest()); //no stencil bufer
+
 	int blend_mode = r_ris.shader_cache ? r_ris.shader_cache->canvas_item.blend_mode : RasterizerStorageGLES2::Shader::CanvasItem::BLEND_MODE_MIX;
 	bool unshaded = r_ris.shader_cache && (r_ris.shader_cache->canvas_item.light_mode == RasterizerStorageGLES2::Shader::CanvasItem::LIGHT_MODE_UNSHADED || (blend_mode != RasterizerStorageGLES2::Shader::CanvasItem::BLEND_MODE_MIX && blend_mode != RasterizerStorageGLES2::Shader::CanvasItem::BLEND_MODE_PMALPHA));
 	bool reclip = false;

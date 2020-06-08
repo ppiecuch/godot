@@ -5,3 +5,5 @@ Import('env_modules')
 
 env_modules.add_source_files(env.modules_sources,"*.cpp")
 env_modules.add_source_files(env.modules_sources,"*.c")
+env_modules.add_source_files(env.modules_sources,"gd2c/*.cpp")
+env_modules.Append(CPPPATH = ['../gdnative/include'])

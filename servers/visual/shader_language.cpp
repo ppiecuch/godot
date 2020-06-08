@@ -341,6 +341,7 @@ const ShaderLanguage::KeyWord ShaderLanguage::keyword_list[] = {
 const ShaderLanguage::KeyWord ShaderLanguage::stencil_keyword_list[] = {
 	{ TK_STENCIL_FACE_FRONT, "front" },
 	{ TK_STENCIL_FACE_BACK, "back" },
+	{ TK_STENCIL_FACE_FRONT_BACK, "front_back" },
 	{ TK_STENCIL_VALUE, "value" },
 	{ TK_STENCIL_MASK_READ, "read_mask" },
 	{ TK_STENCIL_MASK_WRITE, "write_mask" },
@@ -5638,10 +5639,10 @@ static int _get_first_ident_pos(const String &p_code) {
 
 Error ShaderLanguage::_parse_stencil_block(bool &p_has_front, bool &p_has_back) {
 	Token tk = _get_stencil_token();
-	bool front = (tk.type != TK_STENCIL_FACE_BACK);
-	bool back = (tk.type != TK_STENCIL_FACE_FRONT);
+	bool front = (tk.type == TK_STENCIL_FACE_FRONT) || (tk.type == TK_STENCIL_FACE_FRONT_BACK);
+	bool back = (tk.type == TK_STENCIL_FACE_BACK) || (tk.type == TK_STENCIL_FACE_FRONT_BACK);
 
-	if (!front || !back) {
+	if (front || back) {
 		tk = _get_stencil_token();
 	}
 
@@ -5724,7 +5725,6 @@ Error ShaderLanguage::_parse_stencil_block(bool &p_has_front, bool &p_has_back) 
 		}
 		p_has_front = true;
 		shader->front_stencil = stencil;
-		printf("STENCIL SHR: val %d\n", shader->front_stencil.value);
 	}
 	if (back) {
 		if (p_has_back) {

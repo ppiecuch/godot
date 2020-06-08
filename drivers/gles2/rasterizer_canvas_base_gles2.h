@@ -94,6 +94,9 @@ public:
 		bool using_shadow;
 		bool using_transparent_rt;
 
+		ShaderLanguage::StencilTest front_stencil;
+		ShaderLanguage::StencilTest back_stencil;
+		bool current_stencil_enabled;
 	} state;
 
 	typedef void Texture;
@@ -112,6 +115,11 @@ public:
 
 	virtual void canvas_begin();
 	virtual void canvas_end();
+
+	void _set_stencil(bool p_enabled, const ShaderLanguage::StencilTest &p_front, const ShaderLanguage::StencilTest &p_back);
+	void _set_stencil_face(GLenum p_face, const ShaderLanguage::StencilTest &p_stencil, ShaderLanguage::StencilTest &p_state_stencil);
+	GLenum _get_stencil_test(ShaderLanguage::StencilTest::StencilTestType p_test);
+	GLenum _get_stencil_op(ShaderLanguage::StencilTest::StencilActionType p_action);
 
 	void _draw_gui_primitive(int p_points, const Vector2 *p_vertices, const Color *p_colors, const Vector2 *p_uvs);
 	void _draw_polygon(const int *p_indices, int p_index_count, int p_vertex_count, const Vector2 *p_vertices, const Vector2 *p_uvs, const Color *p_colors, bool p_singlecolor, const float *p_weights = NULL, const int *p_bones = NULL);

@@ -256,6 +256,7 @@ class RasterizerCanvasGLES2 : public RasterizerCanvasBaseGLES2 {
 		bool rebind_shader;
 		bool prev_use_skeleton;
 		int last_blend_mode;
+		int64_t last_fstencil, last_bstencil;
 		RID canvas_last_material;
 		Color final_modulate;
 
