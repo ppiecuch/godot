@@ -120,8 +120,8 @@ void CanvasItemMaterial::_update_shader() {
 
 	switch (stencil_mode) {
 		case STENCIL_MODE_NONE: break;
-		case STENCIL_MODE_FILL: code += "stencil front_back { value 1; pass replace; write_mask 255; }\n"; break;
-		case STENCIL_MODE_MASK: code += "stencil front_back { value 1; test equal; pass replace; write_mask 0; }\n"; break;
+		case STENCIL_MODE_FILL: code += "stencil front_back { value 1; test always; pass replace; }\n"; break;
+		case STENCIL_MODE_MASK: code += "stencil front_back { value 1; test equal; }\n"; break;
 	}
 
 	if (particles_animation) {
@@ -333,7 +333,7 @@ void CanvasItemMaterial::_bind_methods() {
 	BIND_ENUM_CONSTANT(LIGHT_MODE_UNSHADED);
 	BIND_ENUM_CONSTANT(LIGHT_MODE_LIGHT_ONLY);
 
-	BIND_ENUM_CONSTANT(STENCIL_MODE_DISABLED);
+	BIND_ENUM_CONSTANT(STENCIL_MODE_NONE);
 	BIND_ENUM_CONSTANT(STENCIL_MODE_FILL);
 	BIND_ENUM_CONSTANT(STENCIL_MODE_MASK);
 }

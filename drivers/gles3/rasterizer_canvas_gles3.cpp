@@ -1702,8 +1702,11 @@ void RasterizerCanvasGLES3::canvas_render_items(Item *p_item_list, int p_z, cons
 
 			last_fstencil = fstencil;
 			last_bstencil = bstencil;
-		} else
+		} else {
+			last_fstencil = -1;
+			last_bstencil = -1;
 			_set_stencil(false, ShaderLanguage::StencilTest(), ShaderLanguage::StencilTest()); //no stencil bufer
+		}
 
 		int blend_mode = shader_cache ? shader_cache->canvas_item.blend_mode : RasterizerStorageGLES3::Shader::CanvasItem::BLEND_MODE_MIX;
 		if (blend_mode == RasterizerStorageGLES3::Shader::CanvasItem::BLEND_MODE_DISABLED && (!storage->frame.current_rt || !storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_TRANSPARENT])) {
