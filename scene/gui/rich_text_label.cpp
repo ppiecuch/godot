@@ -1968,6 +1968,9 @@ void RichTextLabel::clear() {
 	selection.click = NULL;
 	selection.active = false;
 	current_idx = 1;
+	if (scroll_follow) {
+		scroll_following = true;
+	}
 }
 
 void RichTextLabel::set_tab_size(int p_spaces) {
@@ -2452,6 +2455,17 @@ Error RichTextLabel::append_bbcode(const String &p_bbcode) {
 					pos = brk_pos + 1;
 				}
 			}
+		}
+	}
+
+	Vector<ItemFX *> fx_items;
+	for (List<Item *>::Element *E = main->subitems.front(); E; E = E->next()) {
+		Item *subitem = static_cast<Item *>(E->get());
+		_fetch_item_fx_stack(subitem, fx_items);
+
+		if (fx_items.size()) {
+			set_process_internal(true);
+			break;
 		}
 	}
 
