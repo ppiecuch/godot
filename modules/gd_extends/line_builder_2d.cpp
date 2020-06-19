@@ -28,6 +28,8 @@ void LineBuilder2D::set_texture_mode(Line2D::LineTextureMode p_texture_mode) { l
 Line2D::LineTextureMode LineBuilder2D::get_texture_mode() const { return lb.texture_mode; }
 void LineBuilder2D::set_tile_aspect(float p_tile_aspect) { lb.tile_aspect = p_tile_aspect; }
 float LineBuilder2D::get_tile_aspect() const { return lb.tile_aspect; }
+void LineBuilder2D::set_tile_region(Rect2 p_tile_region) { lb.tile_region = p_tile_region; }
+Rect2 LineBuilder2D::get_tile_region() const { return lb.tile_region; }
 void LineBuilder2D::set_joint_mode(Line2D::LineJointMode p_joint_mode) { lb.joint_mode = p_joint_mode; }
 Line2D::LineJointMode LineBuilder2D::get_joint_mode() const { return lb.joint_mode; }
 void LineBuilder2D::set_begin_cap_mode(Line2D::LineCapMode p_begin_cap_mode) { lb.begin_cap_mode = p_begin_cap_mode; }
@@ -89,6 +91,8 @@ void LineBuilder2D::_bind_methods() {
     ClassDB::bind_method("get_texture_mode", &LineBuilder2D::get_texture_mode);
     ClassDB::bind_method("set_tile_aspect", &LineBuilder2D::set_tile_aspect);
     ClassDB::bind_method("get_tile_aspect", &LineBuilder2D::get_tile_aspect);
+    ClassDB::bind_method("set_tile_region", &LineBuilder2D::set_tile_region);
+    ClassDB::bind_method("get_tile_region", &LineBuilder2D::get_tile_region);
     ClassDB::bind_method("set_joint_mode", &LineBuilder2D::set_joint_mode);
     ClassDB::bind_method("get_joint_mode", &LineBuilder2D::get_joint_mode);
     ClassDB::bind_method("set_begin_cap_mode", &LineBuilder2D::set_begin_cap_mode);
@@ -111,6 +115,7 @@ void LineBuilder2D::_bind_methods() {
     ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "gradient", PROPERTY_HINT_RESOURCE_TYPE, "Gradient"), "set_gradient", "get_gradient");
     ADD_PROPERTY(PropertyInfo(Variant::INT, "texture_mode", PROPERTY_HINT_ENUM, "None,Tile,Stretch"), "set_texture_mode", "get_texture_mode");
     ADD_PROPERTY(PropertyInfo(Variant::REAL, "tile_aspect"), "set_tile_aspect", "get_tile_aspect");
+    ADD_PROPERTY(PropertyInfo(Variant::RECT2, "tile_region"), "set_tile_region", "get_tile_region");
     ADD_PROPERTY(PropertyInfo(Variant::INT, "joint_mode", PROPERTY_HINT_ENUM, "Sharp,Bevel,Round"), "set_joint_mode", "get_joint_mode");
     ADD_PROPERTY(PropertyInfo(Variant::INT, "begin_cap_mode", PROPERTY_HINT_ENUM, "None,Box,Round"), "set_begin_cap_mode", "get_begin_cap_mode");
     ADD_PROPERTY(PropertyInfo(Variant::INT, "end_cap_mode", PROPERTY_HINT_ENUM, "None,Box,Round"), "set_end_cap_mode", "get_end_cap_mode");

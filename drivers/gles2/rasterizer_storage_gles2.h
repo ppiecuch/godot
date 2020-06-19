@@ -466,7 +466,7 @@ public:
 			bool uses_time;
 			bool uses_modulate;
 			bool uses_color;
-			bool reads_vertex;
+			bool uses_vertex;
 
 		} canvas_item;
 

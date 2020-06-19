@@ -64,6 +64,10 @@ private:
 
 public:
 	bool push_back(T p_elem);
+	bool push_back(T p_elem1, T p_elem2);
+	bool push_back(T p_elem1, T p_elem2, T p_elem3);
+	bool push_back(T p_elem1, T p_elem2, T p_elem3, T p_elem4);
+	bool push_multi(int p_num, T p_elem);
 
 	void remove(int p_index) { _cowdata.remove(p_index); }
 	void erase(const T &p_val) {
@@ -81,6 +85,7 @@ public:
 	_FORCE_INLINE_ const T get(int p_index) const { return _cowdata.get(p_index); }
 	_FORCE_INLINE_ void set(int p_index, const T &p_elem) { _cowdata.set(p_index, p_elem); }
 	_FORCE_INLINE_ int size() const { return _cowdata.size(); }
+	_FORCE_INLINE_ const T last(int p_index = 0) const { return _cowdata.get(_cowdata.size()-1-p_index); }
 	Error resize(int p_size) { return _cowdata.resize(p_size); }
 	_FORCE_INLINE_ const T &operator[](int p_index) const { return _cowdata.get(p_index); }
 	_FORCE_INLINE_ T &ref(int p_index) { return const_cast<T&>(_cowdata.get(p_index)); } // USE WITH CAUTION
@@ -88,6 +93,7 @@ public:
 	int find(const T &p_val, int p_from = 0) const { return _cowdata.find(p_val, p_from); }
 
 	void append_array(Vector<T> p_other);
+	void append_array(int p_num, const T p_other[]);
 
 	template <class C>
 	void sort_custom() {
@@ -148,12 +154,66 @@ void Vector<T>::append_array(Vector<T> p_other) {
 }
 
 template <class T>
+void Vector<T>::append_array(int p_num, const T p_other[]) {
+	const int bs = size();
+	resize(bs + p_num);
+	for (int i = 0; i < p_num; ++i)
+		ptrw()[bs + i] = p_other[i];
+}
+
+template <class T>
 bool Vector<T>::push_back(T p_elem) {
 
 	Error err = resize(size() + 1);
 	ERR_FAIL_COND_V(err, true);
 	set(size() - 1, p_elem);
 
+	return false;
+}
+
+template <class T>
+bool Vector<T>::push_back(T p_elem1, T p_elem2) {
+
+	Error err = resize(size() + 2);
+	ERR_FAIL_COND_V(err, true);
+	set(size() - 2, p_elem1);
+	set(size() - 1, p_elem2);
+
+	return false;
+}
+
+template <class T>
+bool Vector<T>::push_back(T p_elem1, T p_elem2, T p_elem3) {
+
+	Error err = resize(size() + 3);
+	ERR_FAIL_COND_V(err, true);
+	set(size() - 3, p_elem1);
+	set(size() - 2, p_elem2);
+	set(size() - 1, p_elem3);
+
+	return false;
+}
+
+template <class T>
+bool Vector<T>::push_back(T p_elem1, T p_elem2, T p_elem3, T p_elem4) {
+
+	Error err = resize(size() + 4);
+	ERR_FAIL_COND_V(err, true);
+	set(size() - 4, p_elem1);
+	set(size() - 3, p_elem2);
+	set(size() - 2, p_elem3);
+	set(size() - 1, p_elem4);
+
+	return false;
+}
+
+template <class T>
+bool Vector<T>::push_multi(int p_num, T p_elem) {
+	const int bs = size();
+	Error err = resize(bs + p_num);
+	ERR_FAIL_COND_V(err, true);
+	for (int i = 0; i < p_num; ++i)
+		ptrw()[bs + i] = p_elem;
 	return false;
 }
 

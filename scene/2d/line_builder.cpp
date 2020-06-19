@@ -34,6 +34,13 @@
 // Util
 //----------------------------------------------------------------------------
 
+#define PUSH_BACK_IF(nm, op) \
+	template<typename T> void push_back_if_##nm(Vector<T> &p_arr, T p_elem) { if (p_elem op) p_arr.push_back(p_elem); }
+
+PUSH_BACK_IF(gtzero, >0);
+PUSH_BACK_IF(nonzero, !=0);
+PUSH_BACK_IF(lezero, <0);
+
 enum SegmentIntersectionResult {
 	SEGMENT_PARALLEL = 0,
 	SEGMENT_NO_INTERSECT = 1,
@@ -67,6 +74,10 @@ static inline void swap(T &a, T &b) {
 	T tmp = a;
 	a = b;
 	b = tmp;
+}
+
+static inline real_t frac(const real_t &a) {
+	return a - int(a);
 }
 
 static float calculate_total_distance(const Vector<Vector2> &points) {
@@ -103,6 +114,7 @@ LineBuilder::LineBuilder() {
 	begin_cap_mode = Line2D::LINE_CAP_NONE;
 	end_cap_mode = Line2D::LINE_CAP_NONE;
 	tile_aspect = 1.f;
+	tile_region = Rect2(0, 0, 1.f, 1.f);
 
 	_interpolate_color = false;
 	_last_index[0] = 0;
@@ -148,6 +160,8 @@ void LineBuilder::build() {
 	float total_distance = 0.f;
 	float width_factor = 1.f;
 	_interpolate_color = gradient != NULL;
+	_repeat_segment = tile_region != Rect2(0,0,1.f,1.f);
+	_last_uvx = 0;
 	bool retrieve_curve = curve != NULL;
 	bool distance_required = _interpolate_color ||
 							 retrieve_curve ||
@@ -155,7 +169,7 @@ void LineBuilder::build() {
 							 texture_mode == Line2D::LINE_TEXTURE_STRETCH;
 	if (distance_required) {
 		total_distance = calculate_total_distance(points);
-		//Adjust totalDistance.
+		// Adjust totalDistance.
 		// The line's outer length will be a little higher due to begin and end caps
 		if (begin_cap_mode == Line2D::LINE_CAP_BOX || begin_cap_mode == Line2D::LINE_CAP_ROUND) {
 			if (retrieve_curve)
@@ -434,22 +448,31 @@ void LineBuilder::build() {
 		}
 		new_arc(pos1, pos_up1 - pos1, Math_PI, color, Rect2(uvx1 - 0.5f * dist, 0.f, dist, 1.f));
 	}
+
+	if (!_repeat_segment)
+		return;
+
+	const real_t sx = tile_region.position.x;
+	const real_t sy = tile_region.position.y;
+	const real_t sw = tile_region.size.x;
+	const real_t sh = tile_region.size.y;
+	// rescale uvs values
+	for(int i=0; i<uvs.size(); i++) {
+		uvs.ref(i) = Vector2(sx + uvs[i].x*sw, sy + uvs[i].y*sh);
+	}
 }
 
 void LineBuilder::strip_begin(Vector2 up, Vector2 down, Color color, float uvx) {
 	int vi = vertices.size();
 
-	vertices.push_back(up);
-	vertices.push_back(down);
+	vertices.push_back(up, down);
 
 	if (_interpolate_color) {
-		colors.push_back(color);
-		colors.push_back(color);
+		colors.push_back(color, color);
 	}
 
 	if (texture_mode != Line2D::LINE_TEXTURE_NONE) {
-		uvs.push_back(Vector2(uvx, 0.f));
-		uvs.push_back(Vector2(uvx, 1.f));
+		uvs.push_back(Vector2(uvx, 0.f), Vector2(uvx, 1.f));
 	}
 
 	_last_index[UP] = vi;
@@ -459,31 +482,20 @@ void LineBuilder::strip_begin(Vector2 up, Vector2 down, Color color, float uvx) 
 void LineBuilder::strip_new_quad(Vector2 up, Vector2 down, Color color, float uvx) {
 	int vi = vertices.size();
 
-	vertices.push_back(vertices[_last_index[UP]]);
-	vertices.push_back(vertices[_last_index[DOWN]]);
-	vertices.push_back(up);
-	vertices.push_back(down);
+	vertices.push_back(vertices[_last_index[UP]], vertices[_last_index[DOWN]]);
+	vertices.push_back(up, down);
 
 	if (_interpolate_color) {
-		colors.push_back(color);
-		colors.push_back(color);
-		colors.push_back(color);
-		colors.push_back(color);
+		colors.push_multi(4, color);
 	}
 
 	if (texture_mode != Line2D::LINE_TEXTURE_NONE) {
-		uvs.push_back(uvs[_last_index[UP]]);
-		uvs.push_back(uvs[_last_index[DOWN]]);
-		uvs.push_back(Vector2(uvx, UP));
-		uvs.push_back(Vector2(uvx, DOWN));
+		uvs.push_back(uvs[_last_index[UP]], uvs[_last_index[DOWN]]);
+		uvs.push_back(Vector2(uvx, UP), Vector2(uvx, DOWN));
 	}
 
-	indices.push_back(vi);
-	indices.push_back(vi + 3);
-	indices.push_back(vi + 1);
-	indices.push_back(vi);
-	indices.push_back(vi + 2);
-	indices.push_back(vi + 3);
+	indices.push_back(vi, vi + 3, vi + 1);
+	indices.push_back(vi, vi + 2, vi + 3);
 
 	_last_index[UP] = vi + 2;
 	_last_index[DOWN] = vi + 3;
@@ -492,25 +504,78 @@ void LineBuilder::strip_new_quad(Vector2 up, Vector2 down, Color color, float uv
 void LineBuilder::strip_add_quad(Vector2 up, Vector2 down, Color color, float uvx) {
 	int vi = vertices.size();
 
-	vertices.push_back(up);
-	vertices.push_back(down);
+	if (uvx > 1 && _repeat_segment && vertices.size() && texture_mode == Line2D::LINE_TEXTURE_TILE) {
+
+		const float last_remainings = ceil(_last_uvx) - _last_uvx; // remainings of the last tile
+		const float dist = uvx - _last_uvx;
+
+		// split dist (excluding remaining part of the last tile) on texture tile, eg:
+		// [0,1] ................ [2,2] ................ [3,3]
+		// [0,1] .. 1|0 .. 1|0 .. [0,2] .. 1|0 .. 1|0 .. [0.3]
+		Vector2 prev_down = vertices.last(0);
+		Vector2 prev_up = vertices.last(1);
+		Vector2 step_down = (down - prev_down) / dist;
+		Vector2 step_up = (up - prev_up) / dist;
+		Color prev_color = _interpolate_color ? colors.last() : Color();
+
+		const bool is_last_remains = last_remainings>0;
+		const int segs = floor(dist - last_remainings) + is_last_remains;
+		const Vector2 full_quad[] = { Vector2(1.f, 0.f), Vector2(1.f, 1.f), Vector2(0.f, 0.f), Vector2(0.f, 1.f) };
+
+		for (int s=0; s<segs; s++) {
+			if (s==0 && is_last_remains) {
+				prev_up += step_up * last_remainings;
+				prev_down += step_down * last_remainings;
+			} else {
+				prev_up += step_up;
+				prev_down += step_down;
+			}
+			vertices.push_back(prev_up, prev_down, prev_up, prev_down);
+			if (_interpolate_color) {
+				const float t = s/dist;
+				Color curr_color = prev_color.linear_interpolate(color, t);
+				colors.push_multi(4, curr_color);
+			}
+
+			uvs.append_array(4, full_quad);
+
+			indices.push_back(_last_index[UP], vi + 1, _last_index[DOWN]);
+			indices.push_back(_last_index[UP], vi, vi + 1);
+
+			_last_index[UP] = vi;
+			_last_index[DOWN] = vi + 1;
+
+			vi += 2;
+
+			indices.push_back(_last_index[UP], vi + 1, _last_index[DOWN]);
+			indices.push_back(_last_index[UP], vi, vi + 1);
+
+			_last_index[UP] = vi;
+			_last_index[DOWN] = vi + 1;
+
+			vi += 2;
+		}
+		_last_uvx = uvx;
+
+		// remaining part
+		uvx -= floor(uvx);
+		// nothing left to drawn
+		if (uvx == 0)
+			return;
+	}
+
+	vertices.push_back(up, down);
 
 	if (_interpolate_color) {
-		colors.push_back(color);
-		colors.push_back(color);
+		colors.push_multi(2, color);
 	}
 
 	if (texture_mode != Line2D::LINE_TEXTURE_NONE) {
-		uvs.push_back(Vector2(uvx, 0.f));
-		uvs.push_back(Vector2(uvx, 1.f));
+		uvs.push_back(Vector2(uvx, 0.f), Vector2(uvx, 1.f));
 	}
 
-	indices.push_back(_last_index[UP]);
-	indices.push_back(vi + 1);
-	indices.push_back(_last_index[DOWN]);
-	indices.push_back(_last_index[UP]);
-	indices.push_back(vi);
-	indices.push_back(vi + 1);
+	indices.push_back(_last_index[UP], vi + 1, _last_index[DOWN]);
+	indices.push_back(_last_index[UP], vi, vi + 1);
 
 	_last_index[UP] = vi;
 	_last_index[DOWN] = vi + 1;
@@ -530,12 +595,11 @@ void LineBuilder::strip_add_tri(Vector2 up, Orientation orientation) {
 	if (texture_mode != Line2D::LINE_TEXTURE_NONE) {
 		// UVs are just one slice of the texture all along
 		// (otherwise we can't share the bottom vertice)
+		print_line(vformat("strip_add_tri uvs: %f",uvs[_last_index[opposite_orientation]]));
 		uvs.push_back(uvs[_last_index[opposite_orientation]]);
 	}
 
-	indices.push_back(_last_index[opposite_orientation]);
-	indices.push_back(vi);
-	indices.push_back(_last_index[orientation]);
+	indices.push_back(_last_index[opposite_orientation], vi, _last_index[orientation]);
 
 	_last_index[opposite_orientation] = vi;
 }
@@ -582,10 +646,27 @@ void LineBuilder::new_arc(Vector2 center, Vector2 vbegin, float angle_delta, Col
 		angle_step = -angle_step;
 
 	float t = Vector2(1, 0).angle_to(vbegin);
-	float end_angle = t + angle_delta;
-	Vector2 rpos(0, 0);
-	float tt_begin = -Math_PI / 2.f;
-	float tt = tt_begin;
+	const float end_angle = t + angle_delta;
+	const float tt_begin = -Math_PI / 2.f;
+
+	Vector<float> uv_segs;
+	if (_repeat_segment && texture_mode == Line2D::LINE_TEXTURE_TILE) {
+		// get the number of repeated segments and
+		// split texture for each segment
+		const float uv0 = uv_rect.position.x;
+		const float uv1 = uv_rect.position.x + uv_rect.size.width;
+		push_back_if_gtzero(uv_segs, ceil(uv0) - uv0);
+		int uv = ceil(uv0); while (++uv <= uv1) uv_segs.push_back(1);
+		push_back_if_gtzero(uv_segs, uv1 - floor(uv1));
+
+		print_line(vformat("new_arc uvs_rect: {%s}, {%s}",String(uv_rect),String(interpolate(uv_rect, Vector2(0.5f, 0.5f)))));
+		for(int s = 0; s < uv_segs.size(); ++s) {
+			print_line(vformat("%d uv_segs: %f",s,uv_segs[s]));
+		}
+	} else {
+		// single segment only
+		uv_segs.push_back(uv_rect.size.width);
+	}
 
 	// Center vertice
 	int vi = vertices.size();
@@ -595,38 +676,81 @@ void LineBuilder::new_arc(Vector2 center, Vector2 vbegin, float angle_delta, Col
 	if (texture_mode != Line2D::LINE_TEXTURE_NONE)
 		uvs.push_back(interpolate(uv_rect, Vector2(0.5f, 0.5f)));
 
-	// Arc vertices
-	for (int ti = 0; ti < steps; ++ti, t += angle_step) {
-		Vector2 sc = Vector2(Math::cos(t), Math::sin(t));
-		rpos = center + sc * radius;
+	// Radius weights
+	Vector<float> segs;
+	// divide radius for repeated segments + fractional begin/end:
+	// | . | ... | ... | .. |
+	const float step = radius / uv_rect.size.width;
+	float dist = 0;
+	for(int s = 0; s < uv_segs.size(); ++s) {
+		dist += uv_segs[s];
+		segs.push_back(dist * step);
+	}
+	for(int s = 0; s < segs.size(); ++s) {
+		print_line(vformat("%d segs: %f",s,segs[s]));
+	}
 
-		vertices.push_back(rpos);
-		if (_interpolate_color)
-			colors.push_back(color);
-		if (texture_mode != Line2D::LINE_TEXTURE_NONE) {
-			Vector2 tsc = Vector2(Math::cos(tt), Math::sin(tt));
-			uvs.push_back(interpolate(uv_rect, 0.5f * (tsc + Vector2(1.f, 1.f))));
-			tt += angle_step;
+	const int sc = segs.size();
+
+	// Arc vertices
+	//                   ----+ +---
+	//          ---+ +---    | |
+	//       ---   | |       | |
+	//    ---      | |       | |
+	// +-----------+ +-------+ +--- ..
+	for (int ti = 0; ti < steps; ++ti, t+=angle_step) {
+		const Vector2 so = Vector2(Math::cos(t), Math::sin(t));
+
+		for(int s=0; s<sc; ++s) {
+			const Vector2 tsc = (segs[s]/radius) * Vector2(Math::cos(tt_begin+t), Math::sin(tt_begin+t));
+			if (s) {
+				vertices.push_back(center + so * segs[s-1]);
+				if (texture_mode != Line2D::LINE_TEXTURE_NONE)
+					uvs.push_back(interpolate(uv_rect, Vector2(.5f, .5f)));
+			}
+			vertices.push_back(center + so * segs[s]);
+			if (_interpolate_color)
+				colors.push_multi(s ? 2 : 1, color);
+			if (texture_mode != Line2D::LINE_TEXTURE_NONE)
+				uvs.push_back(interpolate(uv_rect, 0.5f * (tsc + Vector2(1.f, 1.f))));
 		}
 	}
 
 	// Last arc vertice
-	Vector2 sc = Vector2(Math::cos(end_angle), Math::sin(end_angle));
-	rpos = center + sc * radius;
-	vertices.push_back(rpos);
-	if (_interpolate_color)
-		colors.push_back(color);
-	if (texture_mode != Line2D::LINE_TEXTURE_NONE) {
-		tt = tt_begin + angle_delta;
-		Vector2 tsc = Vector2(Math::cos(tt), Math::sin(tt));
-		uvs.push_back(interpolate(uv_rect, 0.5f * (tsc + Vector2(1.f, 1.f))));
+	Vector2 so = Vector2(Math::cos(end_angle), Math::sin(end_angle));
+	Vector2 tsc = Vector2(Math::cos(tt_begin + angle_delta), Math::sin(tt_begin + angle_delta));
+	for(int s=0; s<sc; ++s) {
+		if (s) {
+			vertices.push_back(center + so * segs[s-1]);
+			if (texture_mode != Line2D::LINE_TEXTURE_NONE)
+				uvs.push_back(interpolate(uv_rect, Vector2(.5f, .5f), true));
+		}
+		vertices.push_back(center + so * segs[s]);
+		if (_interpolate_color)
+			colors.push_multi(s ? 2 : 1, color);
+		if (texture_mode != Line2D::LINE_TEXTURE_NONE)
+			uvs.push_back(interpolate(uv_rect, 0.5f * (tsc + Vector2(1.f, 1.f)), sc>1));
 	}
 
-	// Make up triangles
-	int vi0 = vi;
-	for (int ti = 0; ti < steps; ++ti) {
-		indices.push_back(vi0);
-		indices.push_back(++vi);
-		indices.push_back(vi + 1);
+	print_line(vformat("steps:%d vi0:%d, size:%d, new:%d",steps,vi,vertices.size(),vertices.size()-vi));
+
+	// Make up triangles from center
+	//                        --(2)(3)--    (ti)
+	//               (0)(1)--     ||         .
+	//           ---   ||         ||         .
+	//       ---       ||         ||         .
+	// (vi0)---------(0)(1)-----(2)(3)------(si)
+	//
+	// * first segment is a triangle
+	// * next segments are split into two triangles
+	// * sc - segments count
+	const int vi0 = vi++;
+	const int st = sc * 2 - 1;
+	for (int ti = 0; ti < steps; ++ti,vi+=st) {
+		indices.push_back(vi0, vi, vi+st);
+		for(int si = 0; si < sc-1; ++si) {
+			indices.push_back(vi+si+1, vi+si+2, vi+si+st+2);
+			indices.push_back(vi+si+1, vi+si+st+2, vi+si+st+1);
+		}
 	}
 }

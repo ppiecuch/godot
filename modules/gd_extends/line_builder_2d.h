@@ -23,6 +23,8 @@ public:
     Line2D::LineTextureMode get_texture_mode() const;
     void set_tile_aspect(float p_tile_aspect);
     float get_tile_aspect() const;
+    void set_tile_region(Rect2 p_tile_region);
+    Rect2 get_tile_region() const;
     void set_joint_mode(Line2D::LineJointMode p_joint_mode);
     Line2D::LineJointMode get_joint_mode() const;
     void set_begin_cap_mode(Line2D::LineCapMode p_begin_cap_mode);

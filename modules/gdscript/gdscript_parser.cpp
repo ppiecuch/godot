@@ -2755,6 +2755,8 @@ void GDScriptParser::_parse_block(BlockNode *p_block, bool p_static) {
 
 #ifdef DEBUG_ENABLED
 
+	pending_newline = -1; // reset for the new block
+
 	NewLineNode *nl = alloc_node<NewLineNode>();
 
 	nl->line = tokenizer->get_token_line();
@@ -3120,6 +3122,13 @@ void GDScriptParser::_parse_block(BlockNode *p_block, bool p_static) {
 
 				IdentifierNode *id = alloc_node<IdentifierNode>();
 				id->name = tokenizer->get_token_identifier();
+#ifdef DEBUG_ENABLED
+				for (int j = 0; j < current_class->variables.size(); j++) {
+					if (current_class->variables[j].identifier == id->name) {
+						_add_warning(GDScriptWarning::SHADOWED_VARIABLE, id->line, id->name, itos(current_class->variables[j].line));
+					}
+				}
+#endif // DEBUG_ENABLED
 
 				BlockNode *check_block = p_block;
 				while (check_block) {
@@ -7053,7 +7062,11 @@ bool GDScriptParser::_get_function_signature(DataType &p_base_type, const String
 	}
 
 	r_default_arg_count = method->get_default_argument_count();
-	r_return_type = _type_from_property(method->get_return_info(), false);
+	if (method->get_name() == "get_script") {
+		r_return_type = DataType(); // Variant for now and let runtime decide.
+	} else {
+		r_return_type = _type_from_property(method->get_return_info(), false);
+	}
 	r_vararg = method->is_vararg();
 
 	for (int i = 0; i < method->get_argument_count(); i++) {

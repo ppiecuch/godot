@@ -2189,6 +2189,8 @@ void SpatialEditorViewport::set_freelook_active(bool active_now) {
 			freelook_speed = base_speed * cursor.distance;
 		}
 
+		previous_mouse_position = get_local_mouse_position();
+
 		// Hide mouse like in an FPS (warping doesn't work)
 		Input::get_singleton()->set_mouse_mode(Input::MOUSE_MODE_CAPTURED);
 
@@ -2198,6 +2200,11 @@ void SpatialEditorViewport::set_freelook_active(bool active_now) {
 
 		// Restore mouse
 		Input::get_singleton()->set_mouse_mode(Input::MOUSE_MODE_VISIBLE);
+
+		// Restore the previous mouse position when leaving freelook mode.
+		// This is done because leaving `Input.MOUSE_MODE_CAPTURED` will center the cursor
+		// due to OS limitations.
+		warp_mouse(previous_mouse_position);
 	}
 
 	freelook_active = active_now;
@@ -2359,13 +2366,6 @@ void SpatialEditorViewport::_notification(int p_what) {
 		call_deferred("update_transform_gizmo_view");
 	}
 
-	if (p_what == NOTIFICATION_READY) {
-		// The crosshair icon doesn't depend on the editor theme.
-		crosshair->set_texture(get_icon("Crosshair", "EditorIcons"));
-		// Set the anchors and margins after changing the icon to ensure it's centered correctly.
-		crosshair->set_anchors_and_margins_preset(PRESET_CENTER);
-	}
-
 	if (p_what == NOTIFICATION_PROCESS) {
 
 		real_t delta = get_process_delta_time();
@@ -2489,10 +2489,6 @@ void SpatialEditorViewport::_notification(int p_what) {
 			current_camera = camera;
 		}
 
-		// Display the crosshair only while freelooking. Hide it otherwise,
-		// as the crosshair can be distracting.
-		crosshair->set_visible(freelook_active);
-
 		if (show_info) {
 			String text;
 			text += "X: " + rtos(current_camera->get_translation().x).pad_decimals(1) + "\n";
@@ -2574,15 +2570,14 @@ void SpatialEditorViewport::_notification(int p_what) {
 	}
 }
 
-static void draw_indicator_bar(Control &surface, real_t fill, Ref<Texture> icon) {
-
+static void draw_indicator_bar(Control &surface, real_t fill, const Ref<Texture> icon, const Ref<Font> font, const String &text) {
 	// Adjust bar size from control height
-	Vector2 surface_size = surface.get_size();
-	real_t h = surface_size.y / 2.0;
-	real_t y = (surface_size.y - h) / 2.0;
+	const Vector2 surface_size = surface.get_size();
+	const real_t h = surface_size.y / 2.0;
+	const real_t y = (surface_size.y - h) / 2.0;
 
-	Rect2 r(10, y, 6, h);
-	real_t sy = r.size.y * fill;
+	const Rect2 r(10 * EDSCALE, y, 6 * EDSCALE, h);
+	const real_t sy = r.size.y * fill;
 
 	// Note: because this bar appears over the viewport, it has to stay readable for any background color
 	// Draw both neutral dark and bright colors to account this
@@ -2590,9 +2585,12 @@ static void draw_indicator_bar(Control &surface, real_t fill, Ref<Texture> icon)
 	surface.draw_rect(Rect2(r.position.x, r.position.y + r.size.y - sy, r.size.x, sy), Color(1, 1, 1, 0.6));
 	surface.draw_rect(r.grow(1), Color(0, 0, 0, 0.7), false, Math::round(EDSCALE));
 
-	Vector2 icon_size = icon->get_size();
-	Vector2 icon_pos = Vector2(r.position.x - (icon_size.x - r.size.x) / 2, r.position.y + r.size.y + 2);
+	const Vector2 icon_size = icon->get_size();
+	const Vector2 icon_pos = Vector2(r.position.x - (icon_size.x - r.size.x) / 2, r.position.y + r.size.y + 2 * EDSCALE);
 	surface.draw_texture(icon, icon_pos);
+
+	// Draw text below the bar (for speed/zoom information).
+	surface.draw_string(font, Vector2(icon_pos.x, icon_pos.y + icon_size.y + 16 * EDSCALE), text);
 }
 
 void SpatialEditorViewport::_draw() {
@@ -2696,7 +2694,14 @@ void SpatialEditorViewport::_draw() {
 					if (logscale_t < 0.25)
 						logscale_t = 0.25 * Math::exp(4.0 * logscale_t - 1.0);
 
-					draw_indicator_bar(*surface, 1.0 - logscale_t, get_icon("ViewportSpeed", "EditorIcons"));
+					// Display the freelook speed to help the user get a better sense of scale.
+					const int precision = freelook_speed < 1.0 ? 2 : 1;
+					draw_indicator_bar(
+							*surface,
+							1.0 - logscale_t,
+							get_icon("ViewportSpeed", "EditorIcons"),
+							get_font("font", "Label"),
+							vformat("%s u/s", String::num(freelook_speed).pad_decimals(precision)));
 				}
 
 			} else {
@@ -2714,7 +2719,14 @@ void SpatialEditorViewport::_draw() {
 					if (logscale_t < 0.25)
 						logscale_t = 0.25 * Math::exp(4.0 * logscale_t - 1.0);
 
-					draw_indicator_bar(*surface, logscale_t, get_icon("ViewportZoom", "EditorIcons"));
+					// Display the zoom center distance to help the user get a better sense of scale.
+					const int precision = cursor.distance < 1.0 ? 2 : 1;
+					draw_indicator_bar(
+							*surface,
+							logscale_t,
+							get_icon("ViewportZoom", "EditorIcons"),
+							get_font("font", "Label"),
+							vformat("%s u", String::num(cursor.distance).pad_decimals(precision)));
 				}
 			}
 		}
@@ -3829,10 +3841,6 @@ SpatialEditorViewport::SpatialEditorViewport(SpatialEditor *p_spatial_editor, Ed
 	viewport->add_child(camera);
 	camera->make_current();
 	surface->set_focus_mode(FOCUS_ALL);
-
-	crosshair = memnew(TextureRect);
-	crosshair->set_mouse_filter(MOUSE_FILTER_IGNORE);
-	surface->add_child(crosshair);
 
 	VBoxContainer *vbox = memnew(VBoxContainer);
 	surface->add_child(vbox);
