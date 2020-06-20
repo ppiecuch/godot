@@ -46,6 +46,12 @@ class ProjectManager : public Control {
 
 	GDCLASS(ProjectManager, Control);
 
+	enum ClearDataOption {
+		ID_CLEAR_DATA,
+		ID_CLEAR_CACHE,
+		ID_CLEAR_IMPORT
+	};
+
 	Button *erase_btn;
 	Button *erase_missing_btn;
 	Button *open_btn;
@@ -61,6 +67,9 @@ class ProjectManager : public Control {
 	ConfirmationDialog *language_restart_ask;
 	ConfirmationDialog *erase_ask;
 	ConfirmationDialog *erase_missing_ask;
+	ConfirmationDialog *clear_project_data_ask;
+	ConfirmationDialog *clear_project_cache_ask;
+	ConfirmationDialog *clear_project_import_ask;
 	ConfirmationDialog *multi_open_ask;
 	ConfirmationDialog *multi_run_ask;
 	ConfirmationDialog *multi_scan_ask;
@@ -73,6 +82,9 @@ class ProjectManager : public Control {
 	HBoxContainer *projects_hb;
 	TabContainer *tabs;
 	ProjectList *_project_list;
+
+	PopupMenu *_project_context_menu;
+	String _last_context_project;
 
 	OptionButton *language_btn;
 	Control *gui_base;
@@ -92,11 +104,19 @@ class ProjectManager : public Control {
 	void _erase_missing_projects();
 	void _erase_project_confirm();
 	void _erase_missing_projects_confirm();
+	void _clear_project_data();
+	void _clear_project_data_confirm();
+	void _clear_project_cache();
+	void _clear_project_cache_confirm();
+	void _clear_project_import();
+	void _clear_project_import_confirm();
 	void _update_project_buttons();
+	void _project_context_changed(String project_key, Vector2 context_pos);
 	void _language_selected(int p_id);
 	void _restart_confirm();
 	void _exit_dialog();
 	void _scan_begin(const String &p_base);
+	void _project_menu_id_pressed(int p_option);
 	void _global_menu_action(const Variant &p_id, const Variant &p_meta);
 
 	void _confirm_update_settings();

@@ -501,24 +501,6 @@ private:
 					initial_settings["application/config/name"] = project_name->get_text();
 					initial_settings["application/config/icon"] = "res://icon.png";
 					initial_settings["rendering/environment/default_environment"] = "res://default_env.tres";
-                    if(copy_addons->is_pressed() && DirAccess::exists(addons_path.plus_file("autoload"))) {
-                        DirAccess *addons_da = DirAccess::open(addons_path.plus_file("autoload"));
-                        if (addons_da) {
-                            addons_da->list_dir_begin();
-                            String n = addons_da->get_next();
-                            while (n != String()) {
-                                if (n != "." && n != "..") {
-                                    if (!addons_da->current_is_dir()) {
-                                        String bn = n.get_basename().underscore_to_camelcase();
-                                        initial_settings["autoload/"+bn] = "*res://addons/"+n;
-                                    }
-                                }
-                                n = addons_da->get_next();
-                            }
-                            addons_da->list_dir_end();
-                            memdelete(addons_da);
-                        }
-                    }
 
 					if (ProjectSettings::get_singleton()->save_custom(dir.plus_file("project.godot"), initial_settings, Vector<String>(), false) != OK) {
 						set_message(TTR("Couldn't create project.godot in project path."), MESSAGE_ERROR);
@@ -1048,6 +1030,7 @@ class ProjectList : public ScrollContainer {
 	GDCLASS(ProjectList, ScrollContainer)
 public:
 	static const char *SIGNAL_SELECTION_CHANGED;
+	static const char *SIGNAL_CONTEXT_CHANGED;
 	static const char *SIGNAL_PROJECT_ASK_OPEN;
 
 	enum MenuOptions {
@@ -1779,35 +1762,44 @@ void ProjectList::_panel_input(const Ref<InputEvent> &p_ev, Node *p_hb) {
 	int clicked_index = p_hb->get_index();
 	const Item &clicked_project = _projects[clicked_index];
 
-	if (mb.is_valid() && mb->is_pressed() && mb->get_button_index() == BUTTON_LEFT) {
+	if (mb.is_valid() && mb->is_pressed())
 
-		if (mb->get_shift() && _selected_project_keys.size() > 0 && _last_clicked != "" && clicked_project.project_key != _last_clicked) {
+		switch (mb->get_button_index()) {
+			case BUTTON_LEFT: {
 
-			int anchor_index = -1;
-			for (int i = 0; i < _projects.size(); ++i) {
-				const Item &p = _projects[i];
-				if (p.project_key == _last_clicked) {
-					anchor_index = p.control->get_index();
-					break;
+				if (mb->get_shift() && _selected_project_keys.size() > 0 && _last_clicked != "" && clicked_project.project_key != _last_clicked) {
+
+					int anchor_index = -1;
+					for (int i = 0; i < _projects.size(); ++i) {
+						const Item &p = _projects[i];
+						if (p.project_key == _last_clicked) {
+							anchor_index = p.control->get_index();
+							break;
+						}
+					}
+					CRASH_COND(anchor_index == -1);
+					select_range(anchor_index, clicked_index);
+
+				} else if (mb->get_control()) {
+					toggle_select(clicked_index);
+
+				} else {
+					_last_clicked = clicked_project.project_key;
+					select_project(clicked_index);
 				}
-			}
-			CRASH_COND(anchor_index == -1);
-			select_range(anchor_index, clicked_index);
 
-		} else if (mb->get_control()) {
-			toggle_select(clicked_index);
+				emit_signal(SIGNAL_SELECTION_CHANGED);
 
-		} else {
-			_last_clicked = clicked_project.project_key;
-			select_project(clicked_index);
+				if (!mb->get_control() && mb->is_doubleclick()) {
+					emit_signal(SIGNAL_PROJECT_ASK_OPEN);
+				}
+			}; break;
+
+			case BUTTON_RIGHT: {
+				if (!clicked_project.project_key.empty())
+					emit_signal(SIGNAL_CONTEXT_CHANGED, clicked_project.project_key, mb->get_global_position());
+			}; break;
 		}
-
-		emit_signal(SIGNAL_SELECTION_CHANGED);
-
-		if (!mb->get_control() && mb->is_doubleclick()) {
-			emit_signal(SIGNAL_PROJECT_ASK_OPEN);
-		}
-	}
 }
 
 void ProjectList::_favorite_pressed(Node *p_hb) {
@@ -1850,6 +1842,7 @@ void ProjectList::_show_project(const String &p_path) {
 }
 
 const char *ProjectList::SIGNAL_SELECTION_CHANGED = "selection_changed";
+const char *ProjectList::SIGNAL_CONTEXT_CHANGED = "context_changed";
 const char *ProjectList::SIGNAL_PROJECT_ASK_OPEN = "project_ask_open";
 
 void ProjectList::_bind_methods() {
@@ -1860,6 +1853,7 @@ void ProjectList::_bind_methods() {
 	ClassDB::bind_method("_show_project", &ProjectList::_show_project);
 
 	ADD_SIGNAL(MethodInfo(SIGNAL_SELECTION_CHANGED));
+	ADD_SIGNAL(MethodInfo(SIGNAL_CONTEXT_CHANGED));
 	ADD_SIGNAL(MethodInfo(SIGNAL_PROJECT_ASK_OPEN));
 }
 
@@ -1929,6 +1923,11 @@ void ProjectManager::_update_project_buttons() {
 	run_btn->set_disabled(empty_selection || is_missing_project_selected);
 
 	erase_missing_btn->set_visible(_project_list->is_any_project_missing());
+}
+
+void ProjectManager::_project_context_changed(String project_key, Vector2 context_pos) {
+	_project_context_menu->set_position(context_pos);
+	_project_context_menu->popup();
 }
 
 void ProjectManager::_unhandled_input(const Ref<InputEvent> &p_ev) {
@@ -2331,6 +2330,128 @@ void ProjectManager::_erase_missing_projects() {
 	erase_missing_ask->popup_centered_minsize();
 }
 
+void ProjectManager::_project_menu_id_pressed(int p_option) {
+
+	switch (p_option) {
+
+		case ID_CLEAR_CACHE: {
+			_clear_project_cache();
+		} break;
+
+		case ID_CLEAR_DATA: {
+			_clear_project_data();
+		} break;
+
+		case ID_CLEAR_IMPORT: {
+			_clear_project_import();
+		} break;
+	}
+}
+
+void ProjectManager::_clear_project_cache_confirm() {
+
+	if (_last_context_project.empty()) {
+		return;
+	}
+
+	DirAccess *d;
+	String cache_dir = EditorSettings::get_singleton()->get_cache_dir();
+	String temp_dir = EditorSettings::get_singleton()->get_settings_dir() + String("/projects");
+
+	if (DirAccess::exists(cache_dir)) { //Clear editor cache
+		print_line("Cleared cache from: " + cache_dir);
+		d = DirAccess::open(cache_dir);
+		d->erase_contents_recursive();
+	}
+
+	String project_file = _last_context_project.replace("::", "/") + "/project.godot";
+	String project_name = _last_context_project.substr(_last_context_project.find_last("::") + 2, _last_context_project.length());
+
+	if (FileAccess::exists(project_file) && DirAccess::exists(temp_dir)) {
+		d = DirAccess::open(temp_dir);
+		d->list_dir_begin();
+		String n = d->get_next();
+		while (n != String()) {
+			if (d->current_is_dir() && n.length() == (project_name.length() + 32 + 1) && n.begins_with(project_name)) {
+				DirAccess *da = DirAccess::open(d->get_current_dir() + "/" + n);
+				da->erase_contents_recursive();
+				da->remove(d->get_current_dir() + "/" + n);
+				print_verbose("Cleared cache from: " + d->get_current_dir() + "/" + n);
+				break;
+			}
+			n = d->get_next();
+		}
+	}
+}
+
+void ProjectManager::_clear_project_cache() {
+
+	clear_project_cache_ask->set_text(TTR("Clear cache of selected project?"));
+	clear_project_cache_ask->get_label()->set_align(Label::ALIGN_CENTER);
+	clear_project_cache_ask->popup_centered_minsize();
+}
+
+void ProjectManager::_clear_project_import_confirm() {
+
+	if (_last_context_project.empty()) {
+		return;
+	}
+
+	String project_file = _last_context_project.replace("::", "/") + "/project.godot";
+	String import_folder = _last_context_project.replace("::", "/") + "/.import";
+	if (FileAccess::exists(project_file)) {
+		if (DirAccess::exists(import_folder)) {
+			DirAccess *d = DirAccess::open(import_folder);
+			d->erase_contents_recursive();
+			d->remove(import_folder);
+			print_verbose("Cleared .import from: " + import_folder);
+		}
+	}
+}
+
+void ProjectManager::_clear_project_import() {
+
+	clear_project_import_ask->set_text(TTR("Clear .import folder from this project?\nYou will need to import all resources again after opening the project.));
+	clear_project_import_ask->get_label()->set_align(Label::ALIGN_CENTER);
+	clear_project_import_ask->popup_centered_minsize();
+}
+
+void ProjectManager::_clear_project_data_confirm() {
+
+	if (_last_context_project.empty()) {
+		return;
+	}
+
+	DirAccess *d;
+	String user_data_dir = EditorSettings::get_singleton()->get_data_dir() + String("/app_userdata");
+
+	String project_file = _last_context_project.replace("::", "/") + "/project.godot";
+	String project_name = _last_context_project.substr(_last_context_project.find_last("::") + 2, _last_context_project.length());
+
+	if (FileAccess::exists(project_file) && DirAccess::exists(user_data_dir)) {
+		d = DirAccess::open(user_data_dir);
+
+		d->list_dir_begin();
+		String n = d->get_next();
+		while (n != String()) {
+			if (d->current_is_dir() && n == project_name) {
+				DirAccess *da = DirAccess::open(d->get_current_dir() + "/" + n);
+				da->erase_contents_recursive();
+				da->remove(d->get_current_dir() + "/" + n);
+				print_verbose("Clear user data(user://) from: " + d->get_current_dir() + "/" + n);
+			}
+			n = d->get_next();
+		}
+	}
+}
+
+void ProjectManager::_clear_project_data() {
+
+	clear_project_data_ask->set_text(TTR("Clear user data from this project?\nIt will delete all files stored in user://."));
+	clear_project_data_ask->get_label()->set_align(Label::ALIGN_CENTER);
+	clear_project_data_ask->popup_centered_minsize();
+}
+
 void ProjectManager::_language_selected(int p_id) {
 
 	String lang = language_btn->get_item_metadata(p_id);
@@ -2442,6 +2563,12 @@ void ProjectManager::_bind_methods() {
 	ClassDB::bind_method("_erase_missing_projects", &ProjectManager::_erase_missing_projects);
 	ClassDB::bind_method("_erase_project_confirm", &ProjectManager::_erase_project_confirm);
 	ClassDB::bind_method("_erase_missing_projects_confirm", &ProjectManager::_erase_missing_projects_confirm);
+	ClassDB::bind_method("_clear_project_data", &ProjectManager::_clear_project_data);
+	ClassDB::bind_method("_clear_project_data_confirm", &ProjectManager::_clear_project_data_confirm);
+	ClassDB::bind_method("_clear_project_cache", &ProjectManager::_clear_project_cache);
+	ClassDB::bind_method("_clear_project_cache_confirm", &ProjectManager::_clear_project_cache_confirm);
+	ClassDB::bind_method("_clear_project_import", &ProjectManager::_clear_project_import);
+	ClassDB::bind_method("_clear_project_import_confirm", &ProjectManager::_clear_project_import_confirm);
 	ClassDB::bind_method("_language_selected", &ProjectManager::_language_selected);
 	ClassDB::bind_method("_restart_confirm", &ProjectManager::_restart_confirm);
 	ClassDB::bind_method("_exit_dialog", &ProjectManager::_exit_dialog);
@@ -2455,6 +2582,8 @@ void ProjectManager::_bind_methods() {
 	ClassDB::bind_method("_open_asset_library", &ProjectManager::_open_asset_library);
 	ClassDB::bind_method("_confirm_update_settings", &ProjectManager::_confirm_update_settings);
 	ClassDB::bind_method("_update_project_buttons", &ProjectManager::_update_project_buttons);
+	ClassDB::bind_method(D_METHOD("_project_menu_id_pressed", "option"), &ProjectManager::_project_menu_id_pressed);
+	ClassDB::bind_method(D_METHOD("_project_context_changed", "project_key", "context_pos"), &ProjectManager::_project_context_changed);
 	ClassDB::bind_method(D_METHOD("_scan_multiple_folders", "files"), &ProjectManager::_scan_multiple_folders);
 }
 
@@ -2582,9 +2711,17 @@ ProjectManager::ProjectManager() {
 
 	_project_list = memnew(ProjectList);
 	_project_list->connect(ProjectList::SIGNAL_SELECTION_CHANGED, this, "_update_project_buttons");
+	_project_list->connect(ProjectList::SIGNAL_CONTEXT_CHANGED, this, "_project_context_changed");
 	_project_list->connect(ProjectList::SIGNAL_PROJECT_ASK_OPEN, this, "_open_selected_projects_ask");
 	pc->add_child(_project_list);
 	_project_list->set_enable_h_scroll(false);
+
+	_project_context_menu = memnew(PopupMenu);
+	_project_context_menu->connect("id_pressed", this, "_project_menu_id_pressed");
+	_project_context_menu->add_item(TTR("Clear data"), ID_CLEAR_DATA);
+	_project_context_menu->add_item(TTR("Clear cache"), ID_CLEAR_CACHE);
+	_project_context_menu->add_item(TTR("Clear .import"), ID_CLEAR_IMPORT);
+	add_child(_project_context_menu);
 
 	VBoxContainer *tree_vb = memnew(VBoxContainer);
 	tree_hb->add_child(tree_vb);
@@ -2739,6 +2876,21 @@ ProjectManager::ProjectManager() {
 	ask_update_settings = memnew(ConfirmationDialog);
 	ask_update_settings->get_ok()->connect("pressed", this, "_confirm_update_settings");
 	gui_base->add_child(ask_update_settings);
+
+	clear_project_cache_ask = memnew(ConfirmationDialog);
+	clear_project_cache_ask->get_ok()->set_text(TTR("Clear"));
+	clear_project_cache_ask->get_ok()->connect("pressed", this, "_clear_project_cache_confirm");
+	gui_base->add_child(clear_project_cache_ask);
+
+	clear_project_import_ask = memnew(ConfirmationDialog);
+	clear_project_import_ask->get_ok()->set_text(TTR("Clear"));
+	clear_project_import_ask->get_ok()->connect("pressed", this, "_clear_project_import_confirm");
+	gui_base->add_child(clear_project_import_ask);
+
+	clear_project_data_ask = memnew(ConfirmationDialog);
+	clear_project_data_ask->get_ok()->set_text(TTR("Clear"));
+	clear_project_data_ask->get_ok()->connect("pressed", this, "_clear_project_data_confirm");
+	gui_base->add_child(clear_project_data_ask);
 
 	OS::get_singleton()->set_low_processor_usage_mode(true);
 
