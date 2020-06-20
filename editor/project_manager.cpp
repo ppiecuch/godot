@@ -1797,7 +1797,7 @@ void ProjectList::_panel_input(const Ref<InputEvent> &p_ev, Node *p_hb) {
 
 			case BUTTON_RIGHT: {
 				if (!clicked_project.project_key.empty())
-					emit_signal(SIGNAL_CONTEXT_CHANGED, clicked_project.project_key, mb->get_global_position());
+					emit_signal(SIGNAL_CONTEXT_CHANGED, clicked_project.project_key, clicked_project.path, mb->get_global_position());
 			}; break;
 		}
 }
@@ -1925,9 +1925,12 @@ void ProjectManager::_update_project_buttons() {
 	erase_missing_btn->set_visible(_project_list->is_any_project_missing());
 }
 
-void ProjectManager::_project_context_changed(String project_key, Vector2 context_pos) {
-	_project_context_menu->set_position(context_pos);
-	_project_context_menu->popup();
+void ProjectManager::_project_context_changed(String project_key, String project_path, Vector2 context_pos) {
+	_last_context_project = { project_key, project_path };
+	if (!project_key.empty()) {
+		_project_context_menu->set_position(context_pos);
+		_project_context_menu->popup();
+	}
 }
 
 void ProjectManager::_unhandled_input(const Ref<InputEvent> &p_ev) {
@@ -2350,7 +2353,10 @@ void ProjectManager::_project_menu_id_pressed(int p_option) {
 
 void ProjectManager::_clear_project_cache_confirm() {
 
-	if (_last_context_project.empty()) {
+	String &key = _last_context_project.key;
+	String &path = _last_context_project.path;
+
+	if (key.empty()) {
 		return;
 	}
 
@@ -2364,8 +2370,8 @@ void ProjectManager::_clear_project_cache_confirm() {
 		d->erase_contents_recursive();
 	}
 
-	String project_file = _last_context_project.replace("::", "/") + "/project.godot";
-	String project_name = _last_context_project.substr(_last_context_project.find_last("::") + 2, _last_context_project.length());
+	String project_file = path.plus_file("project.godot");
+	String project_name = key.substr(key.find_last("::") + 2, key.length());
 
 	if (FileAccess::exists(project_file) && DirAccess::exists(temp_dir)) {
 		d = DirAccess::open(temp_dir);
@@ -2393,12 +2399,15 @@ void ProjectManager::_clear_project_cache() {
 
 void ProjectManager::_clear_project_import_confirm() {
 
-	if (_last_context_project.empty()) {
+	String &key = _last_context_project.key;
+	String &path = _last_context_project.path;
+
+	if (key.empty()) {
 		return;
 	}
 
-	String project_file = _last_context_project.replace("::", "/") + "/project.godot";
-	String import_folder = _last_context_project.replace("::", "/") + "/.import";
+	String project_file = path.plus_file("project.godot");
+	String import_folder = path.plus_file(".import");
 	if (FileAccess::exists(project_file)) {
 		if (DirAccess::exists(import_folder)) {
 			DirAccess *d = DirAccess::open(import_folder);
@@ -2411,22 +2420,25 @@ void ProjectManager::_clear_project_import_confirm() {
 
 void ProjectManager::_clear_project_import() {
 
-	clear_project_import_ask->set_text(TTR("Clear .import folder from this project?\nYou will need to import all resources again after opening the project.));
+	clear_project_import_ask->set_text(TTR("Clear .import folder from this project?\nYou will need to import all resources again after opening the project."));
 	clear_project_import_ask->get_label()->set_align(Label::ALIGN_CENTER);
 	clear_project_import_ask->popup_centered_minsize();
 }
 
 void ProjectManager::_clear_project_data_confirm() {
 
-	if (_last_context_project.empty()) {
+	String &key = _last_context_project.key;
+	String &path = _last_context_project.path;
+
+	if (key.empty()) {
 		return;
 	}
 
 	DirAccess *d;
 	String user_data_dir = EditorSettings::get_singleton()->get_data_dir() + String("/app_userdata");
 
-	String project_file = _last_context_project.replace("::", "/") + "/project.godot";
-	String project_name = _last_context_project.substr(_last_context_project.find_last("::") + 2, _last_context_project.length());
+	String project_file = path.plus_file("project.godot");
+	String project_name = key.substr(key.find_last("::") + 2, key.length());
 
 	if (FileAccess::exists(project_file) && DirAccess::exists(user_data_dir)) {
 		d = DirAccess::open(user_data_dir);

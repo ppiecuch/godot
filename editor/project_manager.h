@@ -84,7 +84,10 @@ class ProjectManager : public Control {
 	ProjectList *_project_list;
 
 	PopupMenu *_project_context_menu;
-	String _last_context_project;
+	struct {
+		String key;
+		String path;
+	} _last_context_project;
 
 	OptionButton *language_btn;
 	Control *gui_base;
@@ -111,7 +114,7 @@ class ProjectManager : public Control {
 	void _clear_project_import();
 	void _clear_project_import_confirm();
 	void _update_project_buttons();
-	void _project_context_changed(String project_key, Vector2 context_pos);
+	void _project_context_changed(String project_key, String project_path, Vector2 context_pos);
 	void _language_selected(int p_id);
 	void _restart_confirm();
 	void _exit_dialog();
