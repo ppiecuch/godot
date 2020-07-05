@@ -444,7 +444,7 @@ static NSCursor *cursorFromSelector(SEL selector, SEL fallback = nil) {
 
 @end
 
-@interface GodotContentView : NSView <NSTextInputClient> {
+@interface GodotContentView : NSOpenGLView <NSTextInputClient> {
 	NSTrackingArea *trackingArea;
 	NSMutableAttributedString *markedText;
 	bool imeInputEventInProgress;
@@ -475,7 +475,11 @@ static NSCursor *cursorFromSelector(SEL selector, SEL fallback = nil) {
 	trackingArea = nil;
 	imeInputEventInProgress = false;
 	[self updateTrackingAreas];
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 101400
+	[self registerForDraggedTypes:[NSArray arrayWithObject:NSPasteboardTypeFileURL]];
+#else
 	[self registerForDraggedTypes:[NSArray arrayWithObject:NSFilenamesPboardType]];
+#endif
 	markedText = [[NSMutableAttributedString alloc] init];
 	return self;
 }
@@ -619,11 +623,19 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
 
 	NSPasteboard *pboard = [sender draggingPasteboard];
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 101400
+	NSArray<NSURL *> *filenames = [pboard propertyListForType:NSPasteboardTypeFileURL];
+#else
 	NSArray *filenames = [pboard propertyListForType:NSFilenamesPboardType];
+#endif
 
 	Vector<String> files;
 	for (NSUInteger i = 0; i < filenames.count; i++) {
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 101400
+		NSString *ns = [[filenames objectAtIndex:i] path];
+#else
 		NSString *ns = [filenames objectAtIndex:i];
+#endif
 		char *utfs = strdup([ns UTF8String]);
 		String ret;
 		ret.parse_utf8(utfs);
@@ -704,23 +716,67 @@ static void _mouseDownEvent(NSEvent *event, int index, int mask, bool pressed) {
 
 - (void)mouseMoved:(NSEvent *)event {
 
+	NSPoint delta = NSMakePoint([event deltaX], [event deltaY]);
+	NSPoint mpos = [event locationInWindow];
+
+	if (OS_OSX::singleton->mouse_mode == OS::MOUSE_MODE_CONFINED) {
+		// Discard late events
+		if (([event timestamp]) < OS_OSX::singleton->last_warp) {
+			return;
+		}
+
+		// Warp affects next event delta, subtract previous warp deltas
+		List<OS_OSX::WarpEvent>::Element *F = OS_OSX::singleton->warp_events.front();
+		while (F) {
+			if (F->get().timestamp < [event timestamp]) {
+				List<OS_OSX::WarpEvent>::Element *E = F;
+				delta.x -= E->get().delta.x;
+				delta.y -= E->get().delta.y;
+				F = F->next();
+				OS_OSX::singleton->warp_events.erase(E);
+			} else {
+				F = F->next();
+			}
+		}
+
+		// Confine mouse position to the window, and update delta
+		NSRect frame = [OS_OSX::singleton->window_object frame];
+		NSPoint conf_pos = mpos;
+		conf_pos.x = CLAMP(conf_pos.x + delta.x, 0.f, frame.size.width);
+		conf_pos.y = CLAMP(conf_pos.y - delta.y, 0.f, frame.size.height);
+		delta.x = conf_pos.x - mpos.x;
+		delta.y = mpos.y - conf_pos.y;
+		mpos = conf_pos;
+
+		// Move mouse cursor
+		NSRect pointInWindowRect = NSMakeRect(conf_pos.x, conf_pos.y, 0, 0);
+		conf_pos = [[OS_OSX::singleton->window_view window] convertRectToScreen:pointInWindowRect].origin;
+		conf_pos.y = CGDisplayBounds(CGMainDisplayID()).size.height - conf_pos.y;
+		CGWarpMouseCursorPosition(conf_pos);
+
+		// Save warp data
+		OS_OSX::singleton->last_warp = [[NSProcessInfo processInfo] systemUptime];
+		OS_OSX::WarpEvent ev;
+		ev.timestamp = OS_OSX::singleton->last_warp;
+		ev.delta = delta;
+		OS_OSX::singleton->warp_events.push_back(ev);
+	}
+
 	Ref<InputEventMouseMotion> mm;
 	mm.instance();
 
 	mm->set_button_mask(button_mask);
 	const CGFloat backingScaleFactor = [[event window] backingScaleFactor];
-	const Vector2 pos = get_mouse_pos([event locationInWindow], backingScaleFactor);
+	const Vector2 pos = get_mouse_pos(mpos, backingScaleFactor);
 	mm->set_position(pos);
 	mm->set_pressure([event pressure]);
-	if ([event subtype] == NSTabletPointEventSubtype) {
+	if ([event subtype] == NSEventSubtypeTabletPoint) {
 		const NSPoint p = [event tilt];
 		mm->set_tilt(Vector2(p.x, p.y));
 	}
 	mm->set_global_position(pos);
 	mm->set_speed(OS_OSX::singleton->input->get_last_mouse_speed());
-	Vector2 relativeMotion = Vector2();
-	relativeMotion.x = [event deltaX] * OS_OSX::singleton -> _mouse_scale(backingScaleFactor);
-	relativeMotion.y = [event deltaY] * OS_OSX::singleton -> _mouse_scale(backingScaleFactor);
+	const Vector2 relativeMotion = Vector2(delta.x, delta.y) * OS_OSX::singleton->_mouse_scale(backingScaleFactor);
 	mm->set_relative(relativeMotion);
 	get_key_modifier_state([event modifierFlags], mm);
 
@@ -1600,7 +1656,7 @@ Error OS_OSX::initialize(const VideoMode &p_desired, int p_video_driver, int p_a
 
 	ERR_FAIL_COND_V(context == nil, ERR_UNAVAILABLE);
 
-	[context setView:window_view];
+	[window_view setOpenGLContext:context];
 
 	[context makeCurrentContext];
 
@@ -1800,7 +1856,7 @@ void OS_OSX::alert(const String &p_alert, const String &p_title) {
 	[window addButtonWithTitle:@"OK"];
 	[window setMessageText:ns_title];
 	[window setInformativeText:ns_alert];
-	[window setAlertStyle:NSWarningAlertStyle];
+	[window setAlertStyle:NSAlertStyleWarning];
 
 	// Display it, then release
 	[window runModal];
@@ -2030,7 +2086,9 @@ void OS_OSX::warp_mouse_position(const Point2 &p_to) {
 		CGEventSourceSetLocalEventsSuppressionInterval(lEventRef, 0.0);
 		CGAssociateMouseAndMouseCursorPosition(false);
 		CGWarpMouseCursorPosition(lMouseWarpPos);
-		CGAssociateMouseAndMouseCursorPosition(true);
+		if (mouse_mode != MOUSE_MODE_CONFINED) {
+			CGAssociateMouseAndMouseCursorPosition(true);
+		}
 	}
 }
 
@@ -2686,14 +2744,14 @@ void OS_OSX::set_window_per_pixel_transparency_enabled(bool p_enabled) {
 			[window_object setBackgroundColor:[NSColor clearColor]];
 			[window_object setOpaque:NO];
 			[window_object setHasShadow:NO];
-			[context setValues:&opacity forParameter:NSOpenGLCPSurfaceOpacity];
+			[context setValues:&opacity forParameter:NSOpenGLContextParameterSurfaceOpacity];
 			layered_window = true;
 		} else {
 			GLint opacity = 1;
 			[window_object setBackgroundColor:[NSColor colorWithCalibratedWhite:1 alpha:1]];
 			[window_object setOpaque:YES];
 			[window_object setHasShadow:YES];
-			[context setValues:&opacity forParameter:NSOpenGLCPSurfaceOpacity];
+			[context setValues:&opacity forParameter:NSOpenGLContextParameterSurfaceOpacity];
 			layered_window = false;
 		}
 		[context update];
@@ -3081,11 +3139,15 @@ void OS_OSX::set_mouse_mode(MouseMode p_mode) {
 			CGDisplayHideCursor(kCGDirectMainDisplay);
 		}
 		CGAssociateMouseAndMouseCursorPosition(true);
+	} else if (p_mode == MOUSE_MODE_CONFINED) {
+		CGDisplayShowCursor(kCGDirectMainDisplay);
+		CGAssociateMouseAndMouseCursorPosition(false);
 	} else {
 		CGDisplayShowCursor(kCGDirectMainDisplay);
 		CGAssociateMouseAndMouseCursorPosition(true);
 	}
 
+	warp_events.clear();
 	mouse_mode = p_mode;
 }
 
