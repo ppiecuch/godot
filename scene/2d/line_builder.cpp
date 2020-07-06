@@ -702,34 +702,48 @@ void LineBuilder::new_arc(Vector2 center, Vector2 vbegin, float angle_delta, Col
 		const Vector2 so = Vector2(Math::cos(t), Math::sin(t));
 
 		for(int s=0; s<sc; ++s) {
-			const Vector2 tsc = (segs[s]/radius) * Vector2(Math::cos(tt_begin+t), Math::sin(tt_begin+t));
-			if (s) {
-				vertices.push_back(center + so * segs[s-1]);
-				if (texture_mode != Line2D::LINE_TEXTURE_NONE)
-					uvs.push_back(interpolate(uv_rect, Vector2(.5f, .5f)));
+			const float rs = segs[s]/so.y;
+			if (rs <= radius) {
+				// add intersection vertex (end/begin)
+				vertices.push_multi(2, center + so * rs);
+				if (_interpolate_color)
+					colors.push_multi(2, color);
+				if (texture_mode != Line2D::LINE_TEXTURE_NONE) {
+					uvs.push_back(interpolate(uv_rect, Vector2(1.f, 1.f)));
+					uvs.push_back(interpolate(uv_rect, Vector2(0.f, 0.f)));
+				}
 			}
-			vertices.push_back(center + so * segs[s]);
-			if (_interpolate_color)
-				colors.push_multi(s ? 2 : 1, color);
-			if (texture_mode != Line2D::LINE_TEXTURE_NONE)
-				uvs.push_back(interpolate(uv_rect, 0.5f * (tsc + Vector2(1.f, 1.f))));
+		}
+		// ending (single if no intersections) vertex
+		vertices.push_back(center + so * radius);
+		if (_interpolate_color)
+			colors.push_back(color);
+		if (texture_mode != Line2D::LINE_TEXTURE_NONE) {
+			const Vector2 tsc = Vector2(Math::cos(tt_begin+t), Math::sin(tt_begin+t));
+			uvs.push_back(interpolate(uv_rect, 0.5f * (tsc + Vector2(1.f, 1.f))));
 		}
 	}
 
 	// Last arc vertice
 	Vector2 so = Vector2(Math::cos(end_angle), Math::sin(end_angle));
-	Vector2 tsc = Vector2(Math::cos(tt_begin + angle_delta), Math::sin(tt_begin + angle_delta));
 	for(int s=0; s<sc; ++s) {
-		if (s) {
-			vertices.push_back(center + so * segs[s-1]);
-			if (texture_mode != Line2D::LINE_TEXTURE_NONE)
-				uvs.push_back(interpolate(uv_rect, Vector2(.5f, .5f), true));
+		const float rs = segs[s]/so.y;
+		if (rs <= radius) {
+			vertices.push_back(center + so * rs);
+			if (_interpolate_color)
+				colors.push_multi(2, color);
+			if (texture_mode != Line2D::LINE_TEXTURE_NONE) {
+				uvs.push_back(interpolate(uv_rect, Vector2(1.f, 1.f)));
+				uvs.push_back(interpolate(uv_rect, Vector2(0.f, 0.f)));
+			}
 		}
-		vertices.push_back(center + so * segs[s]);
-		if (_interpolate_color)
-			colors.push_multi(s ? 2 : 1, color);
-		if (texture_mode != Line2D::LINE_TEXTURE_NONE)
-			uvs.push_back(interpolate(uv_rect, 0.5f * (tsc + Vector2(1.f, 1.f)), sc>1));
+	}
+	vertices.push_back(center + so * radius);
+	if (_interpolate_color)
+		colors.push_back(color);
+	if (texture_mode != Line2D::LINE_TEXTURE_NONE) {
+		Vector2 tsc = Vector2(Math::cos(tt_begin + t), Math::sin(tt_begin + t));
+		uvs.push_back(interpolate(uv_rect, 0.5f * (tsc + Vector2(1.f, 1.f))));
 	}
 
 	print_line(vformat("steps:%d vi0:%d, size:%d, new:%d",steps,vi,vertices.size(),vertices.size()-vi));
