@@ -87,6 +87,9 @@ private:
 	bool _repeat_segment; // segment will be sliced for repeat pattern
 	float _last_uvx; // last unmodified uvs
 	int _last_index[2]; // Index of last up and down vertices of the strip
+
+	void new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float angle_delta, Color color, Rect2 uv_rect);
+	void new_arc_tiled_texture(Vector2 center, Vector2 vbegin, float angle_delta, Color color, Rect2 uv_rect);
 };
 
 #endif // LINE_BUILDER_H

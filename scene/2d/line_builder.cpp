@@ -634,9 +634,92 @@ void LineBuilder::strip_add_arc(Vector2 center, float angle_delta, Orientation o
 }
 
 void LineBuilder::new_arc(Vector2 center, Vector2 vbegin, float angle_delta, Color color, Rect2 uv_rect) {
+	if (_repeat_segment && texture_mode == Line2D::LINE_TEXTURE_TILE) {
+		new_arc_tiled_geometry(center, vbegin, angle_delta, color, uv_rect);
+	} else {
+		new_arc_tiled_texture(center, vbegin, angle_delta, color, uv_rect);
+	}
+}
 
+void LineBuilder::new_arc_tiled_texture(Vector2 center, Vector2 vbegin, float angle_delta, Color color, Rect2 uv_rect) {
 	// Make a standalone arc that doesn't use existing vertices,
 	// with undistorted UVs from within a square section
+
+	float radius = vbegin.length();
+	float angle_step = Math_PI / static_cast<float>(round_precision);
+	float steps = Math::abs(angle_delta) / angle_step;
+
+	if (angle_delta < 0.f) {
+		angle_step = -angle_step;
+	}
+
+	float t = Vector2(1, 0).angle_to(vbegin);
+	float end_angle = t + angle_delta;
+	Vector2 rpos(0, 0);
+	float tt_begin = -Math_PI / 2.f;
+	float tt = tt_begin;
+
+	// Center vertice
+	int vi = vertices.size();
+	vertices.push_back(center);
+	if (_interpolate_color) {
+		colors.push_back(color);
+	}
+	if (texture_mode != Line2D::LINE_TEXTURE_NONE) {
+		uvs.push_back(interpolate(uv_rect, Vector2(0.5f, 0.5f)));
+	}
+
+	// Arc vertices
+	for (int ti = 0; ti < steps; ++ti, t += angle_step) {
+		Vector2 sc = Vector2(Math::cos(t), Math::sin(t));
+		rpos = center + sc * radius;
+
+		vertices.push_back(rpos);
+		if (_interpolate_color) {
+			colors.push_back(color);
+		}
+		if (texture_mode != Line2D::LINE_TEXTURE_NONE) {
+			Vector2 tsc = Vector2(Math::cos(tt), Math::sin(tt));
+			uvs.push_back(interpolate(uv_rect, 0.5f * (tsc + Vector2(1.f, 1.f))));
+			tt += angle_step;
+		}
+	}
+
+	// Last arc vertice
+	Vector2 sc = Vector2(Math::cos(end_angle), Math::sin(end_angle));
+	rpos = center + sc * radius;
+	vertices.push_back(rpos);
+	if (_interpolate_color) {
+		colors.push_back(color);
+	}
+	if (texture_mode != Line2D::LINE_TEXTURE_NONE) {
+		tt = tt_begin + angle_delta;
+		Vector2 tsc = Vector2(Math::cos(tt), Math::sin(tt));
+		uvs.push_back(interpolate(uv_rect, 0.5f * (tsc + Vector2(1.f, 1.f))));
+	}
+
+	// Make up triangles
+	int vi0 = vi;
+	for (int ti = 0; ti < steps; ++ti) {
+		indices.push_back(vi0);
+		indices.push_back(++vi);
+		indices.push_back(vi + 1);
+	}
+}
+
+void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float angle_delta, Color color, Rect2 uv_rect) {
+
+	// Make a standalone arc that doesn't use existing vertices,
+	// build with stripes not triangle fans,
+	// with undistorted UVs from within a square section (possible spans across
+	// multiple tiles)
+
+	//             / |
+	//         +-----+-
+	//      /        |
+	//    +----------+--
+	//  /            |
+	// +-------------+----
 
 	float radius = vbegin.length();
 	float angle_step = Math_PI / static_cast<float>(round_precision);
