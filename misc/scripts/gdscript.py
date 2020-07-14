@@ -77,24 +77,24 @@ class GodotScript(object):
 	CLASS_BODY = """extends SceneTree
 {body}
 func _init():
-	if {verbose}: prints('[gdscript]', '_init')
-	if {timeout} == 0:
-		var instance = {name}.new()
-		root.add_child(instance)
-		if {autoquit}:
-			if {verbose}: prints('[gdscript]', 'autoquit')
-			quit()
-	else:
-		if {verbose}: prints('[gdscript]', 'timeout mode')
-		var timer = Timer.new()
-		root.add_child(timer)
-		timer.set_wait_time({timeout})
-		timer.start()
-		var instance = {name}.new()
-		root.add_child(instance)
-		yield(timer, 'timeout')
-		quit()
-	if {verbose}: prints('[gdscript]', '_init DONE')
+    if {verbose}: prints('[gdscript]', '_init')
+    if {timeout} == 0:
+        var instance = {name}.new()
+        root.add_child(instance)
+        if {autoquit}:
+            if {verbose}: prints('[gdscript]', 'autoquit')
+            quit()
+    else:
+        if {verbose}: prints('[gdscript]', 'timeout mode')
+        var timer = Timer.new()
+        root.add_child(timer)
+        timer.set_wait_time({timeout})
+        timer.start()
+        var instance = {name}.new()
+        root.add_child(instance)
+        yield(timer, 'timeout')
+        quit()
+    if {verbose}: prints('[gdscript]', '_init DONE')
 """
 
 	EXTENDS_BODY = """class __GeneratedGodotClass__:
@@ -107,8 +107,11 @@ func _ready({args}):
 {body}
 """
 
-	ARGS_BODY = """func args():
-	return {args}
+	ARGS_BODY = """func args(index):
+    var _args = {args}
+    if index < _args.size():
+        return _args[index]
+    return ""
 """
 
 	def __init__(self, body, args=[], mode=0, name=None, timeout=0, path=None, autoquit=True):
@@ -285,6 +288,7 @@ class ScriptProcess(object):
 						elif re_ogl.match(uline) and 'v3.2' in version_line:
 							ignore_next = True
 						elif re_ogl.match(uline) is None and re_ver.match(uline) is None:
+							push_output(uline)
 				else:
 					ignore_next = False
 				sys.stdout.flush()
