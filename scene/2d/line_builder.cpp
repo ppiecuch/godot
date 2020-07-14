@@ -655,7 +655,6 @@ void LineBuilder::new_arc_tiled_texture(Vector2 center, Vector2 vbegin, float an
 
 	float t = Vector2(1, 0).angle_to(vbegin);
 	float end_angle = t + angle_delta;
-	Vector2 rpos(0, 0);
 	float tt_begin = -Math_PI / 2.f;
 	float tt = tt_begin;
 
@@ -672,7 +671,7 @@ void LineBuilder::new_arc_tiled_texture(Vector2 center, Vector2 vbegin, float an
 	// Arc vertices
 	for (int ti = 0; ti < steps; ++ti, t += angle_step) {
 		Vector2 sc = Vector2(Math::cos(t), Math::sin(t));
-		rpos = center + sc * radius;
+		Vector2 rpos = center + sc * radius;
 
 		vertices.push_back(rpos);
 		if (_interpolate_color) {
@@ -687,7 +686,7 @@ void LineBuilder::new_arc_tiled_texture(Vector2 center, Vector2 vbegin, float an
 
 	// Last arc vertice
 	Vector2 sc = Vector2(Math::cos(end_angle), Math::sin(end_angle));
-	rpos = center + sc * radius;
+	Vector2 rpos = center + sc * radius;
 	vertices.push_back(rpos);
 	if (_interpolate_color) {
 		colors.push_back(color);
@@ -774,8 +773,8 @@ void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float a
 	}
 
 	const int sc = segs.size();
-	auto add_triangle = [](v1, v2, v3, color, uv){
-		vertices.push_back(center + so * radius);
+	auto add_vertex = [](t, v, color){
+		vertices.push_back(v);
 		if (_interpolate_color)
 			colors.push_back(color);
 		if (texture_mode != Line2D::LINE_TEXTURE_NONE) {
@@ -785,53 +784,18 @@ void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float a
 	}
 
 	// First arc vertice
-	Vector2 so = Vector2(Math::cos(end_angle), Math::sin(end_angle));
-	vertices.push_back(center + so * radius);
-	if (_interpolate_color)
-		colors.push_back(color);
-	if (texture_mode != Line2D::LINE_TEXTURE_NONE) {
-		Vector2 tsc = Vector2(Math::cos(tt_begin + t), Math::sin(tt_begin + t));
-		uvs.push_back(interpolate(uv_rect, 0.5f * (tsc + Vector2(1.f, 1.f))));
-	}
+	Vector2 last_so = center + Vector2(Math::cos(t), Math::sin(t)) * radius;
+	add_vertex(t, last_so, color)
 
+	t+=angle_step;
 	for (int ti = 1; ti < sc + 1; ++ti, t+=angle_step) {
+		const real_t t = ti < round_precision ? ti * angle_step : Math_PI;
 		const Vector2 so = Vector2(Math::cos(t), Math::sin(t));
-
-		for(int s=0; s<sc; ++s) {
-			const float rs = segs[s]/so.y;
-			if (rs <= radius) {
-				// add intersection vertex (end/begin)
-				vertices.push_multi(2, center + so * rs);
-				if (_interpolate_color)
-					colors.push_multi(2, color);
-				if (texture_mode != Line2D::LINE_TEXTURE_NONE) {
-					uvs.push_back(interpolate(uv_rect, Vector2(1.f, 1.f)));
-					uvs.push_back(interpolate(uv_rect, Vector2(0.f, 0.f)));
-				}
-			}
-		}
-		// ending (single if no intersections) vertex
-		vertices.push_back(center + so * radius);
-		if (_interpolate_color)
-			colors.push_back(color);
-		if (texture_mode != Line2D::LINE_TEXTURE_NONE) {
-			const Vector2 tsc = Vector2(Math::cos(tt_begin+t), Math::sin(tt_begin+t));
-			uvs.push_back(interpolate(uv_rect, 0.5f * (tsc + Vector2(1.f, 1.f))));
-		}
+		add_vertex(t, center + so * radius, color)
 	}
 
 	print_line(vformat("steps:%d vi0:%d, size:%d, new:%d",steps,vi,vertices.size(),vertices.size()-vi));
 
-	// Make up triangles from center
-	//                        --(2)(3)--    (ti)
-	//               (0)(1)--     ||         .
-	//           ---   ||         ||         .
-	//       ---       ||         ||         .
-	// (vi0)---------(0)(1)-----(2)(3)------(si)
-	//
-	// * first segment is a triangle
-	// * next segments are split into two triangles
-	// * sc - segments count
 	const int vi0 = vi++;
 	const int st = sc * 2 - 1;
 	for (int ti = 0; ti < steps; ++ti,vi+=st) {
