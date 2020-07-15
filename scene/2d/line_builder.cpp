@@ -732,22 +732,17 @@ void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float a
 	const float tt_begin = -Math_PI / 2.f;
 
 	Vector<float> uv_segs;
-	if (_repeat_segment && texture_mode == Line2D::LINE_TEXTURE_TILE) {
-		// get the number of repeated segments and
-		// split texture for each segment
-		const float uv0 = uv_rect.position.x;
-		const float uv1 = uv_rect.position.x + uv_rect.size.width;
-		push_back_if_gtzero(uv_segs, ceil(uv0) - uv0);
-		int uv = ceil(uv0); while (++uv <= uv1) uv_segs.push_back(1);
-		push_back_if_gtzero(uv_segs, uv1 - floor(uv1));
+	// get the number of repeated segments and
+	// split texture for each segment
+	const float uv0 = uv_rect.position.x;
+	const float uv1 = uv_rect.position.x + uv_rect.size.width;
+	push_back_if_gtzero(uv_segs, ceil(uv0) - uv0);
+	int uv = ceil(uv0); while (++uv <= uv1) uv_segs.push_back(1);
+	push_back_if_gtzero(uv_segs, uv1 - floor(uv1));
 
-		print_line(vformat("new_arc uvs_rect: {%s}, {%s}",String(uv_rect),String(interpolate(uv_rect, Vector2(0.5f, 0.5f)))));
-		for(int s = 0; s < uv_segs.size(); ++s) {
-			print_line(vformat("%d uv_segs: %f",s,uv_segs[s]));
-		}
-	} else {
-		// single segment only
-		uv_segs.push_back(uv_rect.size.width);
+	print_line(vformat("new_arc uvs_rect: {%s}, {%s}",String(uv_rect),String(interpolate(uv_rect, Vector2(0.5f, 0.5f)))));
+	for(int s = 0; s < uv_segs.size(); ++s) {
+		print_line(vformat("%d uv_segs: %f",s,uv_segs[s]));
 	}
 
 	// Center vertice
@@ -773,7 +768,7 @@ void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float a
 	}
 
 	const int sc = segs.size();
-	auto add_vertex = [](t, v, color){
+	auto add_vertex = [=](float t, const Vector2 &v, const Color &color){
 		vertices.push_back(v);
 		if (_interpolate_color)
 			colors.push_back(color);
@@ -781,17 +776,17 @@ void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float a
 			Vector2 tsc = Vector2(Math::cos(tt_begin + t), Math::sin(tt_begin + t));
 			uvs.push_back(interpolate(uv_rect, 0.5f * (tsc + Vector2(1.f, 1.f))));
 		}
-	}
+	};
 
 	// First arc vertice
 	Vector2 last_so = center + Vector2(Math::cos(t), Math::sin(t)) * radius;
-	add_vertex(t, last_so, color)
+	add_vertex(t, last_so, color);
 
 	t+=angle_step;
 	for (int ti = 1; ti < sc + 1; ++ti, t+=angle_step) {
 		const real_t t = ti < round_precision ? ti * angle_step : Math_PI;
 		const Vector2 so = Vector2(Math::cos(t), Math::sin(t));
-		add_vertex(t, center + so * radius, color)
+		add_vertex(t, center + so * radius, color);
 	}
 
 	print_line(vformat("steps:%d vi0:%d, size:%d, new:%d",steps,vi,vertices.size(),vertices.size()-vi));

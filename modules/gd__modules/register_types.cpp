@@ -26,7 +26,7 @@
 #include "scene/vegetation_instance.h"
 
 
-void register_gd_extends_types() {
+void register_gd__modules_types() {
 	ClassDB::register_class<Timer2>();
 	ClassDB::register_class<TimerObject>();
 	ClassDB::register_class<Tween2>();
@@ -63,6 +63,6 @@ void register_gd_extends_types() {
 	ClassDB::register_class<VegetationInstance>();
 }
 
-void unregister_gd_extends_types() {
+void unregister_gd__modules_types() {
 
 }
