@@ -16,6 +16,8 @@
 * porting (https://github.com/khairul169/gdsqlite/issues/8)
   - ObjectTypeDB to ClassDB
   - OBJ_TYPE to GDCLASS
+  - ADD_PROPERTYNZ to ADD_PROPERTY
+  - _MD to D_METHOD
   - register_type to register_class
   - get_type_static to get_class_static
   - register_virtual_type to register_virtual_class

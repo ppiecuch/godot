@@ -1,3 +1,3 @@
 
-void register_gd_extends_types();
-void unregister_gd_extends_types();
+void register_gd__modules_types();
+void unregister_gd__modules_types();

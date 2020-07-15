@@ -6,16 +6,24 @@
 #include "inputstorage.h"
 #include "trail_2d.h"
 #include "phantom.h"
-
 #include "line_builder_2d.h"
+#include "byteswap.h"
+#include "tags.h"
+#include "blitter.h"
+#include "godoterrorhandler.h"
 
 #include "gd2c/bytecode_exporter.h"
 #include "gd2c/gd2c.h"
 
-#include "statemachine.h"
-#include "state.h"
+#include "statemachine/statemachine.h"
+#include "statemachine/state.h"
 
-#include "debugdraw.h"
+#include "debugdraw/debugdraw.h"
+
+#include "scene/autotilemap.h"
+#include "scene/bullet_manager.h"
+#include "scene/pixel_spaceships.h"
+#include "scene/vegetation_instance.h"
 
 
 void register_gd_extends_types() {
@@ -29,18 +37,30 @@ void register_gd_extends_types() {
 	ClassDB::register_class<TrailLine2D>();
 	ClassDB::register_class<LineBuilder2D>();
 	ClassDB::register_class<Phantom>();
+	ClassDB::register_class<Byteswap>();
 
 	ClassDB::register_class<GDScriptBytecodeExporter>();
 	ClassDB::register_class<GD2CApi>();
 
-	Engine::get_singleton()->add_singleton(Engine::Singleton("Timer2", memnew(Timer2));
-	Engine::get_singleton()->add_singleton(Engine::Singleton("Tween2", memnew(Tween2));
-	Engine::get_singleton()->add_singleton(Engine::Singleton("InputStorage", memnew(InputStorage));
+	Engine::get_singleton()->add_singleton(Engine::Singleton("Timer2", memnew(Timer2)));
+	Engine::get_singleton()->add_singleton(Engine::Singleton("Tween2", memnew(Tween2)));
+	Engine::get_singleton()->add_singleton(Engine::Singleton("InputStorage", memnew(InputStorage)));
 
-	ObjectTypeDB::register_type<StateMachine>();
-	ObjectTypeDB::register_type<State>();
+	ClassDB::register_class<StateMachine>();
+	ClassDB::register_class<State>();
 
-	Globals::get_singleton()->add_singleton(Globals::Singleton("DebugDraw", memnew(DebugDraw));
+	Engine::get_singleton()->add_singleton(Engine::Singleton("DebugDraw", memnew(DebugDraw)));
+    Engine::get_singleton()->add_singleton(Engine::Singleton("Tags", memnew(Tags)));
+	Engine::get_singleton()->add_singleton(Engine::Singleton("Blitter", memnew(_Blitter)));
+	Engine::get_singleton()->add_singleton(Engine::Singleton("GodotErrorHandler", memnew(GodotErrorHandler)));
+
+	ClassDB::register_class<PixelSpaceshipsOptions>();
+	ClassDB::register_class<PixelSpaceshipsMask>();
+	ClassDB::register_class<PixelSpaceships>();
+	ClassDB::register_class<BulletManagerBulletType>();
+	ClassDB::register_class<BulletManager>();
+	ClassDB::register_class<Autotilemap>();
+	ClassDB::register_class<VegetationInstance>();
 }
 
 void unregister_gd_extends_types() {

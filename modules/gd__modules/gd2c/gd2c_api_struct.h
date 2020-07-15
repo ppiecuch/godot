@@ -1,9 +1,8 @@
 #ifndef __GD2C_API_STRUCT__
 #define __GD2C_API_STRUCT__
 
-#include "modules/gdnative/include/gdnative/gdnative.h"
 #include "core/array.h"
-#include "core/string_name.h"
+#include "gdnative/gdnative.h"
 
 typedef Map<StringName, StringName> gd2c_map_stringname_stringname;
 typedef gd2c_map_stringname_stringname gd2c_class_hierarchy;

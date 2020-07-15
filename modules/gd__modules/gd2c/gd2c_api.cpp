@@ -6,11 +6,12 @@
 #include "core/variant_parser.h"
 #include "core/io/resource_loader.h"
 #include "core/ustring.h"
+#include "core/array.h"
+#include "core/string_name.h"
+
 #include "modules/gdscript/gdscript.h"
 #include "modules/gdscript/gdscript_functions.h"
 #include "modules/gdnative/nativescript/nativescript.h"
-#include "core/array.h"
-#include "core/string_name.h"
 
 #include "gd2c.h"
 #include "gd2c_api_struct.h"

@@ -1,11 +1,15 @@
 #!/usr/bin/env python
+import os
 
 Import('env')
 Import('env_modules')
 
 env_modules.add_source_files(env.modules_sources,"*.cpp")
-env_modules.add_source_files(env.modules_sources,"*.c")
+env_modules.add_source_files(env.modules_sources,"src/*.cpp")
+env_modules.add_source_files(env.modules_sources,"src/*.c")
 env_modules.add_source_files(env.modules_sources,"gd2c/*.cpp")
-env_modules.add_source_files(env.modules_sources,"visual/*.cpp")
+env_modules.add_source_files(env.modules_sources,"scene/*.cpp")
 env_modules.add_source_files(env.modules_sources,"statemachine/*.cpp")
 env_modules.add_source_files(env.modules_sources,"debugdraw/*.cpp")
+
+env_modules.Append(CPPPATH=["src", os.path.dirname(os.path.realpath(os.curdir))+"/gdnative/include"])

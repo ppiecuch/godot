@@ -2,7 +2,7 @@
 #define __GD2C__
 
 #include "core/reference.h"
-#include "modules/gdnative/include/gdnative/gdnative.h"
+#include "core/ustring.h"
 
 #ifndef memnew_placement_custom
 #define memnew_placement_custom(m_placement, m_class, m_constr) _post_initialize(new (m_placement, sizeof(m_class), "") m_constr)
@@ -19,4 +19,4 @@ protected:
     static void _bind_methods();
 };
 
-#endif
+#endif // __GD2C__
