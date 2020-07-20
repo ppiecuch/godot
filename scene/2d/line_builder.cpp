@@ -68,6 +68,38 @@ static SegmentIntersectionResult segment_intersection(
 	return SEGMENT_PARALLEL;
 }
 
+static Vector2 Failed(NAN, NAN);
+
+static Vector2 find_intersection(const Vector2 &p0, const Vector2 &p1, const Vector2 &p2, const Vector2 &p3) {
+	const real_t s10_x = p1.x - p0.x;
+	const real_t s10_y = p1.y - p0.y;
+	const real_t s32_x = p3.x - p2.x;
+	const real_t s32_y = p3.y - p2.y;
+
+	const real_t denom = s10_x * s32_y - s32_x * s10_y;
+
+	if (denom == 0) return Failed; // collinear
+
+	const bool denom_is_positive = denom > 0;
+
+	const real_t s02_x = p0.x - p2.x;
+	const real_t s02_y = p0.y - p2.y;
+
+	const real_t s_numer = s10_x * s02_y - s10_y * s02_x;
+
+	if ((s_numer < 0) == denom_is_positive) return Failed; // no collision
+
+	const real_t t_numer = s32_x * s02_y - s32_y * s02_x;
+
+	if ((t_numer < 0) == denom_is_positive) return Failed; // no collision
+	if ((s_numer > denom) == denom_is_positive or (t_numer > denom) == denom_is_positive) return Failed; // no collision
+
+	// collision detected
+
+	const real_t t = t_numer / denom;
+	return Vector2( p0.x + (t * s10_x), p0.y + (t * s10_y) );
+}
+
 // TODO I'm pretty sure there is an even faster way to swap things
 template <typename T>
 static inline void swap(T &a, T &b) {
@@ -164,9 +196,9 @@ void LineBuilder::build() {
 	_last_uvx = 0;
 	bool retrieve_curve = curve != NULL;
 	bool distance_required = _interpolate_color ||
-							 retrieve_curve ||
-							 texture_mode == Line2D::LINE_TEXTURE_TILE ||
-							 texture_mode == Line2D::LINE_TEXTURE_STRETCH;
+							retrieve_curve ||
+							texture_mode == Line2D::LINE_TEXTURE_TILE ||
+							texture_mode == Line2D::LINE_TEXTURE_STRETCH;
 	if (distance_required) {
 		total_distance = calculate_total_distance(points);
 		// Adjust totalDistance.
@@ -220,14 +252,14 @@ void LineBuilder::build() {
 	strip_begin(pos_up0, pos_down0, color0, uvx0);
 
 	/*
-	 *  pos_up0 ------------- pos_up1 --------------------
-	 *     |                     |
-	 *   pos0 - - - - - - - - - pos1 - - - - - - - - - pos2
-	 *     |                     |
-	 * pos_down0 ------------ pos_down1 ------------------
-	 *
-	 *   i-1                     i                      i+1
-	 */
+	*  pos_up0 ------------- pos_up1 --------------------
+	*     |                     |
+	*   pos0 - - - - - - - - - pos1 - - - - - - - - - pos2
+	*     |                     |
+	* pos_down0 ------------ pos_down1 ------------------
+	*
+	*   i-1                     i                      i+1
+	*/
 
 	// http://labs.hyperandroid.com/tag/opengl-lines
 	// (not the same implementation but visuals help a lot)
@@ -265,18 +297,18 @@ void LineBuilder::build() {
 		}
 
 		/*
-		 * ---------------------------
-		 *                        /
-		 * 0                     /    1
-		 *                      /          /
-		 * --------------------x------    /
-		 *                    /          /    (here shown with orientation == DOWN)
-		 *                   /          /
-		 *                  /          /
-		 *                 /          /
-		 *                     2     /
-		 *                          /
-		 */
+		* ---------------------------
+		*                        /
+		* 0                     /    1
+		*                      /          /
+		* --------------------x------    /
+		*                    /          /    (here shown with orientation == DOWN)
+		*                   /          /
+		*                  /          /
+		*                 /          /
+		*                     2     /
+		*                          /
+		*/
 
 		// Find inner intersection at the joint
 		Vector2 corner_pos_in, corner_pos_out;
@@ -375,13 +407,13 @@ void LineBuilder::build() {
 		if (current_joint_mode != Line2D::LINE_JOINT_SHARP) {
 
 			/* ________________ cbegin
-			 *               / \
-			 *              /   \
-			 * ____________/_ _ _\ cend
-			 *             |     |
-			 *             |     |
-			 *             |     |
-			 */
+			*               / \
+			*              /   \
+			* ____________/_ _ _\ cend
+			*             |     |
+			*             |     |
+			*             |     |
+			*/
 
 			Vector2 cbegin, cend;
 			if (orientation == UP) {
@@ -729,6 +761,7 @@ void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float a
 
 	float t = Vector2(1, 0).angle_to(vbegin);
 	const float end_angle = t + angle_delta;
+	const float half_angle = angle_delta / 2;
 	const float tt_begin = -Math_PI / 2.f;
 
 	Vector<float> uv_segs;
@@ -767,7 +800,6 @@ void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float a
 		print_line(vformat("%d segs: %f",s,segs[s]));
 	}
 
-	const int sc = segs.size();
 	auto add_vertex = [=](float t, const Vector2 &v, const Color &color){
 		vertices.push_back(v);
 		if (_interpolate_color)
@@ -778,15 +810,36 @@ void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float a
 		}
 	};
 
+	const Vector2 ho = Vector2(cos(half_angle), sin(half_angle)); // half arc unit vector
+	const Vector2 top = center + ho * radius; // top point of arc
+
 	// First arc vertice
 	Vector2 last_so = center + Vector2(Math::cos(t), Math::sin(t)) * radius;
 	add_vertex(t, last_so, color);
 
 	t+=angle_step;
+
+	const int sc = segs.size();
+	const int seg_last = sc - 1;
+
+	int seg_index = 0, seg_step = 1;
 	for (int ti = 1; ti < sc + 1; ++ti, t+=angle_step) {
 		const real_t t = ti < round_precision ? ti * angle_step : Math_PI;
-		const Vector2 so = Vector2(Math::cos(t), Math::sin(t));
-		add_vertex(t, center + so * radius, color);
+		const Vector2 so = center + Vector2(Math::cos(t), Math::sin(t)) * radius;
+		const float seg = segs[seg_index];
+		const Vector2 R0(radius * seg_step, 0); // -radius or radius vector
+		const Vector2 half_s = center + ho * seg; // band along the half arc
+		const Vector2 edge = find_intersection(half_s, half_s + R0, last_so, so);
+		if (edge != Failed) {
+			add_vertex(t, center + so * radius, color);
+			// next band up or down
+			seg_index += seg_step;
+			if (seg_index == seg_last) {
+				seg_step = -1;
+				seg_index += seg_step;
+			}
+		}
+		last_so = so;
 	}
 
 	print_line(vformat("steps:%d vi0:%d, size:%d, new:%d",steps,vi,vertices.size(),vertices.size()-vi));

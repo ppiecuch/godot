@@ -1,13 +1,22 @@
 #!/bin/bash
 
-# https://github.com/bruvzg/gdsdecomp.git
+# Misc repos:
+# -----------
 # https://github.com/pchasco/gd2c-py
+
 
 set -e
 
+ext=" \
+ https://github.com/bruvzg/gdsdecomp.git \
+"
+
 for m in \
-	gd_distrand gd_sqlite gd_unqlite gd_chipmunk gd_liquidfun \
-	gd_spine gd_dragonbones gd_vector_graphics \
+	gd_distrand gd_behavior_tree \
+	gd_sqlite gd_unqlite \
+	gd_chipmunk gd_liquidfun \
+	gd_spine gd_dragonbones \
+	gd_vector_graphics gd_polyvector \
 	gd_raknet gd_enet \
 	gd_goost; do
 	echo "+--"
