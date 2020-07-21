@@ -839,6 +839,7 @@ void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float a
 				seg_index += seg_step;
 			}
 		}
+		add_vertex(t, half_s, color);
 		last_so = so;
 	}
 

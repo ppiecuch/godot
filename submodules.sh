@@ -18,7 +18,7 @@ for m in \
 	gd_spine gd_dragonbones \
 	gd_vector_graphics gd_polyvector gd_bullet_hell \
 	gd_raknet gd_enet \
-	gd_goost gd_texture_packer gd_cable2d; do
+	gd_goost gd_texture_packer; do
 	echo "+--"
     echo "| checking module: $m"
     echo "+--"
