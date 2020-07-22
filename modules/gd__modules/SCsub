@@ -12,4 +12,4 @@ env_modules.add_source_files(env.modules_sources,"scene/*.cpp")
 env_modules.add_source_files(env.modules_sources,"statemachine/*.cpp")
 env_modules.add_source_files(env.modules_sources,"debugdraw/*.cpp")
 
-env_modules.Append(CPPPATH=["src", os.path.dirname(os.path.realpath(os.curdir))+"/gdnative/include"])
+env_modules.Append(CPPPATH=["gd", os.path.dirname(os.path.realpath(os.curdir))+"/gdnative/include"])
