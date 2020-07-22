@@ -29,6 +29,11 @@
 #include "scene/cable2d.h"
 #include "scene/cable2d_editor_plugin.h"
 
+#include "benet/enet_packet_peer.h"
+#include "benet/enet_node.h"
+
+
+static bool enet_ok = false;
 
 static void editor_init_callback() {
     EditorNode::get_singleton()->add_editor_plugin(memnew(Cable2DEditorPlugin(EditorNode::get_singleton())));
@@ -73,8 +78,18 @@ void register_gd__modules_types() {
 #ifdef TOOLS_ENABLED
     EditorNode::add_init_callback(editor_init_callback);
 #endif
+
+	if (enet_initialize() != 0 ) {
+		ERR_PRINT( "ENet initialization failure" );
+	} else {
+		enet_ok = true;
+	}
+
+	ClassDB::register_class<ENetPacketPeer>();
+	ClassDB::register_class<ENetNode>();
 }
 
 void unregister_gd__modules_types() {
-
+	if (enet_ok)
+		enet_deinitialize();
 }

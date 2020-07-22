@@ -11,5 +11,7 @@ env_modules.add_source_files(env.modules_sources,"gd2c/*.cpp")
 env_modules.add_source_files(env.modules_sources,"scene/*.cpp")
 env_modules.add_source_files(env.modules_sources,"statemachine/*.cpp")
 env_modules.add_source_files(env.modules_sources,"debugdraw/*.cpp")
+env_modules.add_source_files(env.modules_sources,"benet/*.cpp")
 
-env_modules.Append(CPPPATH=["gd", os.path.dirname(os.path.realpath(os.curdir))+"/gdnative/include"])
+env_modules.Append(CPPPATH=["gd", "#thirdparty/enet/", os.path.dirname(os.path.realpath(os.curdir))+"/gdnative/include"])
+env_modules.Append(CPPFLAGS=["-DGD_GODOT_ENET"])
