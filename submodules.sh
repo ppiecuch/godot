@@ -25,6 +25,6 @@ for m in \
     if [ -e modules/$m/.git ]; then
         pushd modules/$m; git pull --recurse-submodules; popd
     else
-        git clone --recursive https://github.com/ppiecuch/$m modules/$m
+        git clone --recurse-submodules https://github.com/ppiecuch/$m modules/$m
     fi
 done

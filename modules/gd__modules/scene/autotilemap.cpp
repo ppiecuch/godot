@@ -139,7 +139,7 @@ void Autotilemap::map_ids_to_tiles(TileMap* tilemap) {
 
 void Autotilemap::apply_autotiling(TileMap* tilemap) {
 	for (int ai = 0; ai < _autotilers.size(); ai++) {
-		if (not _autotilers[ai]->is_type("QuadAutotiler")) {
+		if (! _autotilers[ai]->is_type("QuadAutotiler")) {
 			continue;			
 		}
 
@@ -149,7 +149,7 @@ void Autotilemap::apply_autotiling(TileMap* tilemap) {
 			for (int x = 1; x < _width-1; x++) {
 		
 				int src_tile_id = _data[y + x*_height];
-				if (not autotiler->is_source_tile(src_tile_id)) {
+				if (! autotiler->is_source_tile(src_tile_id)) {
 					//tilemap->set_cell(_top_left.x + x, _top_left.y + y, 0,
 					//				  false, false, false, Vector2(0,0));
 					continue;
@@ -190,7 +190,7 @@ void Autotilemap::apply_blob_terrain_autotiling(TileMap* tilemap) {
 	int nw = 0;
 	
 	for (int ai = 0; ai < _autotilers.size(); ai++) {
-		if (not _autotilers[ai]->is_type("BlobTerrainAutotiler")) {
+		if (! _autotilers[ai]->is_type("BlobTerrainAutotiler")) {
 			continue;			
 		}
 		
@@ -202,7 +202,7 @@ void Autotilemap::apply_blob_terrain_autotiling(TileMap* tilemap) {
 
 				//TODO: use a map of autotilers?
 				// entry ID has the list of autotilers
-				if (not autotiler->is_source_tile(src_tile_id)) {
+				if (! autotiler->is_source_tile(src_tile_id)) {
 					continue;
 				}
 
@@ -237,7 +237,7 @@ void Autotilemap::apply_blob_terrain_autotiling(TileMap* tilemap) {
 					}
 				}
 
-				if (not (flag1 and flag2)) {
+				if (! (flag1 && flag2)) {
 					bool isolated = true;
 					for (int i = 0; i < all_neighbors.size(); i++) {
 						int n = all_neighbors[i];
@@ -306,7 +306,7 @@ void Autotilemap::apply_blob_autotiling(TileMap* tilemap) {
 	int nw = 0;
 	
 	for (int ai = 0; ai < _autotilers.size(); ai++) {
-		if (not _autotilers[ai]->is_type("BlobAutotiler")) {
+		if (! _autotilers[ai]->is_type("BlobAutotiler")) {
 			continue;					
 		}
 
@@ -315,7 +315,7 @@ void Autotilemap::apply_blob_autotiling(TileMap* tilemap) {
 		for (int y = 1; y < _height-1; y++) {
 			for (int x = 1; x < _width-1; x++) {
 				int src_tile_id = _data[y + x*_height];
-				if (not autotiler->is_source_tile(src_tile_id)) {
+				if (! autotiler->is_source_tile(src_tile_id)) {
 					tilemap->set_cell(_top_left.x + x, _top_left.y + y, 0,
 									  false, false, false, Vector2(0,0));
 					continue;

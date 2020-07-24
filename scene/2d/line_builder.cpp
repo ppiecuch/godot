@@ -92,7 +92,7 @@ static Vector2 find_intersection(const Vector2 &p0, const Vector2 &p1, const Vec
 	const real_t t_numer = s32_x * s02_y - s32_y * s02_x;
 
 	if ((t_numer < 0) == denom_is_positive) return Failed; // no collision
-	if ((s_numer > denom) == denom_is_positive or (t_numer > denom) == denom_is_positive) return Failed; // no collision
+	if ((s_numer > denom) == denom_is_positive || (t_numer > denom) == denom_is_positive) return Failed; // no collision
 
 	// collision detected
 
@@ -769,9 +769,9 @@ void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float a
 	// split texture for each segment
 	const float uv0 = uv_rect.position.x;
 	const float uv1 = uv_rect.position.x + uv_rect.size.width;
-	push_back_if_gtzero(uv_segs, ceil(uv0) - uv0);
+	push_back_if_gtzero(uv_segs, Math::ceil(uv0) - uv0);
 	int uv = ceil(uv0); while (++uv <= uv1) uv_segs.push_back(1);
-	push_back_if_gtzero(uv_segs, uv1 - floor(uv1));
+	push_back_if_gtzero(uv_segs, uv1 - Math::floor(uv1));
 
 	print_line(vformat("new_arc uvs_rect: {%s}, {%s}",String(uv_rect),String(interpolate(uv_rect, Vector2(0.5f, 0.5f)))));
 	for(int s = 0; s < uv_segs.size(); ++s) {
@@ -823,13 +823,11 @@ void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float a
 	const int seg_last = sc - 1;
 
 	int seg_index = 0, seg_step = 1;
-	for (int ti = 1; ti < sc + 1; ++ti, t+=angle_step) {
-		const real_t t = ti < round_precision ? ti * angle_step : Math_PI;
+	Vector2 half_s = center + ho * segs[seg_index]; // band along the half arc
+	for (int ti = 1; ti < steps + 1; ++ti, t+=angle_step) {
 		const Vector2 so = center + Vector2(Math::cos(t), Math::sin(t)) * radius;
-		const float seg = segs[seg_index];
-		const Vector2 R0(radius * seg_step, 0); // -radius or radius vector
-		const Vector2 half_s = center + ho * seg; // band along the half arc
-		const Vector2 edge = find_intersection(half_s, half_s + R0, last_so, so);
+		const Vector2 ro(radius * seg_step, 0); // -radius or radius vector
+		const Vector2 edge = find_intersection(half_s, half_s + ro, last_so, so);
 		if (edge != Failed) {
 			add_vertex(t, center + so * radius, color);
 			// next band up or down
@@ -838,6 +836,7 @@ void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float a
 				seg_step = -1;
 				seg_index += seg_step;
 			}
+			half_s = center + ho * segs[seg_index];
 		}
 		add_vertex(t, half_s, color);
 		last_so = so;

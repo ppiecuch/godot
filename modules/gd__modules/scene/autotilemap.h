@@ -59,7 +59,7 @@ public:
 	int get_atlas_id() const { return _atlas_id; }
 
 	bool is_neighbor_tile(int tid) const {
-		if (tid == _src_tile or tid == _comp_tile) {
+		if (tid == _src_tile || tid == _comp_tile) {
 			return true;
 		}
 		return false;
