@@ -1,4 +1,5 @@
 #include "statemachine.h"
+
 void StateMachine::_notification(int p_notification) {
     switch (p_notification) {
         case NOTIFICATION_ENTER_TREE: {
@@ -129,7 +130,7 @@ void StateMachine::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_all_state_names"), &StateMachine::get_all_state_names);
     ClassDB::bind_method(D_METHOD("get_state_amount"), &StateMachine::get_state_amount);
 
-    ClassDB::bind_method(D_METHOD("add_state", "name:String", "state:State"), &StateMachine::add_new_state);
+    ClassDB::bind_method(D_METHOD("add_state", "state:State"), &StateMachine::add_new_state);
 
     ClassDB::bind_method(D_METHOD("get_active_state"), &StateMachine::get_active_state);
     ClassDB::bind_method(D_METHOD("execute_current_state", "delta:float"), &StateMachine::execute_active_state);
