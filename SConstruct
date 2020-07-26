@@ -519,9 +519,8 @@ if selected_platform in platform_list:
 
     env.module_list = modules_enabled
 
-    # some modules needs to be defined outside of the 'modules' folder, since
-    # they might modifie/affect editor
-    for x in ['gd_vector_graphics']:
+    # Let the editor knows what modules are enabled
+    for x in env.module_list:
         if (x in env.disabled_modules):
             continue
         env.Append(CPPDEFINES=["MODULE_" + x.upper() + "_ENABLED"])

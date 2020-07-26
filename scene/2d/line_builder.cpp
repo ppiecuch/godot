@@ -745,12 +745,16 @@ void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float a
 	// with undistorted UVs from within a square section (possible spans across
 	// multiple tiles)
 
+	//               *  stop
 	//             / |
-	//         +-----+-
+	//         +-----+- 0
+	//         +-----+- 1
 	//      /        |
-	//    +----------+--
+	//    +----------+- 0
+	//    +----------+- 1
 	//  /            |
-	// +-------------+----
+	// +-------------+- start
+	// R             C
 
 	float radius = vbegin.length();
 	float angle_step = Math_PI / static_cast<float>(round_precision);
@@ -838,6 +842,7 @@ void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float a
 			}
 			half_s = center + ho * segs[seg_index];
 		}
+		add_vertex(t, half_s, color);
 		add_vertex(t, half_s, color);
 		last_so = so;
 	}
