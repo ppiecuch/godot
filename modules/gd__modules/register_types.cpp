@@ -13,6 +13,7 @@
 #include "tags.h"
 #include "blitter.h"
 #include "godoterrorhandler.h"
+#include "cripter.h"
 
 #include "gd2c/bytecode_exporter.h"
 #include "gd2c/gd2c.h"
@@ -51,6 +52,9 @@ void register_gd__modules_types() {
 	ClassDB::register_class<LineBuilder2D>();
 	ClassDB::register_class<Phantom>();
 	ClassDB::register_class<Byteswap>();
+#ifdef MODULE_MBEDTLS_ENABLED
+	ClassDB::register_class<Cripter>();
+#endif
 
 	ClassDB::register_class<GDScriptBytecodeExporter>();
 	ClassDB::register_class<GD2CApi>();
