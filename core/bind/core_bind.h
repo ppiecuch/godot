@@ -256,7 +256,7 @@ public:
 	void dump_resources_to_file(const String &p_file);
 
 	bool has_virtual_keyboard() const;
-	void show_virtual_keyboard(const String &p_existing_text = "");
+	void show_virtual_keyboard(const String &p_existing_text = "", bool p_multiline = false);
 	void hide_virtual_keyboard();
 	int get_virtual_keyboard_height();
 
@@ -570,15 +570,12 @@ class _Directory : public Reference {
 
 	GDCLASS(_Directory, Reference);
 	DirAccess *d;
-	bool dir_open = false;
 
 protected:
 	static void _bind_methods();
 
 public:
 	Error open(const String &p_path);
-
-	bool is_open() const;
 
 	Error list_dir_begin(bool p_skip_navigational = false, bool p_skip_hidden = false); // This starts dir listing.
 	String get_next();
