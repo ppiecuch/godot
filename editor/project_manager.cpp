@@ -501,7 +501,24 @@ private:
 					initial_settings["application/config/name"] = project_name->get_text();
 					initial_settings["application/config/icon"] = "res://icon.png";
 					initial_settings["rendering/environment/default_environment"] = "res://default_env.tres";
-
+                    if(copy_addons->is_pressed() && DirAccess::exists(addons_path.plus_file("_autoload"))) {
+						DirAccess *addons_da = DirAccess::open(addons_path.plus_file("_autoload"));
+						if (addons_da) {
+							addons_da->list_dir_begin();
+							String n = addons_da->get_next();
+							while (n != String()) {
+								if (n != "." && n != "..") {
+									if (!addons_da->current_is_dir()) {
+										String bn = n.get_basename().underscore_to_camelcase();
+										initial_settings["autoload/"+bn] = "*res://addons/"+n;
+									}
+								}
+								n = addons_da->get_next();
+							}
+							addons_da->list_dir_end();
+							memdelete(addons_da);
+						}
+					}
 					if (ProjectSettings::get_singleton()->save_custom(dir.plus_file("project.godot"), initial_settings, Vector<String>(), false) != OK) {
 						set_message(TTR("Couldn't create project.godot in project path."), MESSAGE_ERROR);
 					} else {
@@ -519,42 +536,34 @@ private:
 							memdelete(f);
 						}
 
-                        // copy default plugins
-                        if(copy_addons->is_pressed() && DirAccess::exists(addons_path)) {
+						// copy default plugins
+						if(copy_addons->is_pressed() && DirAccess::exists(addons_path)) {
 
-                            PoolStringArray dirs;
-                            DirAccess *addons_da = DirAccess::open(addons_path);
-                            if (addons_da) {
-                                addons_da->list_dir_begin();
-                                String n = addons_da->get_next();
-                                while (n != String()) {
-                                    if (n != "." && n != "..") {
-                                        if (addons_da->current_is_dir())
-                                            dirs.push_back(n);
-                                    }
-                                    n = addons_da->get_next();
-                                }
-                                addons_da->list_dir_end();
-                                memdelete(addons_da);
+							PoolStringArray dirs;
+							DirAccess *addons_da = DirAccess::open(addons_path);
+							if (addons_da) {
+								addons_da->list_dir_begin();
+								String n = addons_da->get_next();
+								while (n != String()) {
+									if (n != "." && n != "..") {
+										if (addons_da->current_is_dir())
+											dirs.push_back(n);
+									}
+									n = addons_da->get_next();
+								}
+								addons_da->list_dir_end();
+								memdelete(addons_da);
 
-                                if (!dirs.empty()) {
-                                    String path = dir.plus_file("addons");
-                                    DirAccess *da = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
-                                    if((da->make_dir(path) == OK) || DirAccess::exists(path)) {
-                                        if(da->copy_dir(addons_path, dir.plus_file("addons")) == OK) {
-                                            FileAccess *f = FileAccess::open(dir.plus_file("project.godot"), FileAccess::READ_WRITE);
-                                            if (f) {
-                                                f->seek_end();
-                                                f->store_line("\n[editor_plugins]");
-                                                f->store_line(String("\nenabled = ")+"PoolStringArray(\""+dirs.join("\",\"")+"\")\n");
-                                                memdelete(f);
-                                            }
-                                        }
-                                    }
-                                    memdelete(da);
-                                }
-                            }
-                        }
+								if (!dirs.empty()) {
+									String path = dir.plus_file("addons");
+									DirAccess *da = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
+									if((da->make_dir(path) == OK) || DirAccess::exists(path)) {
+										da->copy_dir(addons_path, dir.plus_file("addons"));
+									}
+									memdelete(da);
+								}
+							}
+						}
 					}
 
 				} else if (mode == MODE_INSTALL) {

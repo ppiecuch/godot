@@ -39,7 +39,7 @@
 #include "core/translation.h"
 #include "core/variant_parser.h"
 
-Ref<ResourceFormatLoader> ResourceLoader::loader[MAX_LOADERS];
+Ref<ResourceFormatLoader> ResourceLoader::loader[ResourceLoader::MAX_LOADERS];
 int ResourceLoader::loader_count = 0;
 
 Error ResourceInteractiveLoader::wait() {

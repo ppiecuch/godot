@@ -660,7 +660,6 @@ void Label::_notification(int p_what) {
 			line++;
             line_chars = 0;
 			wc = to ? to->next : 0;
-            printf("\n");
 		}
 	}
 

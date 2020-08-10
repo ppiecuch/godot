@@ -27,7 +27,7 @@ export -f echo_success
 export SCONS_FLAGS="$SCONS_FLAGS CCFLAGS=-D__MACPORTS__"
 
 echo_header "*** Building debug editor for macOS ..."
-scons platform=osx define=DEBUG_ENABLED $SCONS_FLAGS
+scons -j4 platform=osx define=DEBUG_ENABLED $SCONS_FLAGS
 
 echo_header "*** Packaging app ..."
 cp -rv "$GODOT_DIR/misc/dist/osx_tools.app" "$GODOT_DIR/bin/Godot-master.app"
