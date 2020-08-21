@@ -3,17 +3,21 @@
 #include "core/engine.h"
 #include "editor/editor_node.h"
 
-#include "timer2.h"
-#include "tween2.h"
-#include "inputstorage.h"
-#include "trail_2d.h"
-#include "phantom.h"
-#include "line_builder_2d.h"
-#include "byteswap.h"
-#include "tags.h"
-#include "blitter.h"
-#include "godoterrorhandler.h"
-#include "cripter.h"
+#include "gd/timer2.h"
+#include "gd/tween2.h"
+#include "gd/inputstorage.h"
+#include "gd/trail_2d.h"
+#include "gd/phantom.h"
+#include "gd/line_builder_2d.h"
+#include "gd/byteswap.h"
+#include "gd/tags.h"
+#include "gd/blitter.h"
+#include "gd/godoterrorhandler.h"
+#include "gd/cripter.h"
+#include "gd/procedural_animation.h"
+#include "gd/procedural_animation_editor_plugin.h"
+#include "gd/bs_input_event_key.h"
+#include "gd/input_map_editor.h"
 
 #include "gd2c/bytecode_exporter.h"
 #include "gd2c/gd2c.h"
@@ -29,6 +33,8 @@
 #include "scene/vegetation_instance.h"
 #include "scene/cable2d.h"
 #include "scene/cable2d_editor_plugin.h"
+#include "scene/touch_button.h"
+#include "scene/audio_stream_preview_generator.h"
 
 #include "benet/enet_packet_peer.h"
 #include "benet/enet_node.h"
@@ -55,6 +61,12 @@ void register_gd__modules_types() {
 #ifdef MODULE_MBEDTLS_ENABLED
 	ClassDB::register_class<Cripter>();
 #endif
+	ClassDB::register_class<ProceduralAnimation>();
+#ifdef TOOLS_ENABLED
+	EditorPlugins::add_by_type<ProceduralAnimationEditorPlugin>();
+#endif
+	ClassDB::register_class<BSInputEventKey>();
+	ClassDB::register_class<InputMapEditor>();
 
 	ClassDB::register_class<GDScriptBytecodeExporter>();
 	ClassDB::register_class<GD2CApi>();
@@ -82,6 +94,8 @@ void register_gd__modules_types() {
 #ifdef TOOLS_ENABLED
     EditorNode::add_init_callback(editor_init_callback);
 #endif
+	ClassDB::register_class<TouchButton>();
+	ClassDB::register_class<AudioStreamPreviewGenerator>();
 
 	if (enet_initialize() != 0 ) {
 		ERR_PRINT( "ENet initialization failure" );

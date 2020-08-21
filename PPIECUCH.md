@@ -14,6 +14,7 @@
   - poly vector (https://github.com/BattyBovine/polyvector.git)
 * swaggen codegen with GDScript (Workspace/[net]/swagger-codegen/modules/swagger-codegen/src/main/resources/gdscript)
 * porting (https://github.com/khairul169/gdsqlite/issues/8)
+  - https://github.com/dploeger/godot-migrationnotes
   - ObjectTypeDB to ClassDB
   - OBJ_TYPE to GDCLASS
   - ADD_PROPERTYNZ to ADD_PROPERTY
@@ -24,6 +25,7 @@
   - Globals to Engine
   - GlobalConfig to ProjectSettings
   - OS:: -> OS::get_singleton()
+  - Matrix3
 * speed optimizatins:
   - https://github.com/godotengine/godot/compare/master...vblanco20-1:experimental_optimization
 

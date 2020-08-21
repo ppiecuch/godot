@@ -39,7 +39,7 @@ void ARVRInterfaceGDNative::_bind_methods() {
 }
 
 ARVRInterfaceGDNative::ARVRInterfaceGDNative() {
-	print_verbose("Construct gdnative interface\n");
+	print_verbose("Construct gdnative interface");
 
 	// we won't have our data pointer until our library gets set
 	data = NULL;
@@ -48,7 +48,7 @@ ARVRInterfaceGDNative::ARVRInterfaceGDNative() {
 }
 
 ARVRInterfaceGDNative::~ARVRInterfaceGDNative() {
-	print_verbose("Destruct gdnative interface\n");
+	print_verbose("Destruct gdnative interface");
 
 	if (interface != NULL && is_initialized()) {
 		uninitialize();

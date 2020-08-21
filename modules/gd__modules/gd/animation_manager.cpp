@@ -3,7 +3,7 @@
 //
 
 #include "animation_manager.h"
-#include "../../core/script_language.h"
+#include "core/script_language.h"
 
 Variant AnimationManager::getvar(const Variant& p_key, bool *r_valid) const {
     Variant ret;

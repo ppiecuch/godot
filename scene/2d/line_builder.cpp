@@ -829,6 +829,7 @@ void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float a
 	int seg_index = 0, seg_step = 1;
 	Vector2 half_s = center + ho * segs[seg_index]; // band along the half arc
 	for (int ti = 1; ti < steps + 1; ++ti, t+=angle_step) {
+		print_line(vformat("ti %d t %f seg_index %d seg_step %d",ti,t,seg_index,seg_step));
 		const Vector2 so = center + Vector2(Math::cos(t), Math::sin(t)) * radius;
 		const Vector2 ro(radius * seg_step, 0); // -radius or radius vector
 		const Vector2 edge = find_intersection(half_s, half_s + ro, last_so, so);

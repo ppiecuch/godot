@@ -5,9 +5,9 @@
 #ifndef GODOT_MASTER_ANIMATION_MANAGER_H
 #define GODOT_MASTER_ANIMATION_MANAGER_H
 
-#include "../../core/reference.h"
-#include "../../scene/main/node.h"
-#include "../../core/ustring.h"
+#include "core/reference.h"
+#include "scene/main/node.h"
+#include "core/ustring.h"
 
 class AnimationManager : public Node {
     GDCLASS(AnimationManager, Node);
