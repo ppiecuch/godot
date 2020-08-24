@@ -142,6 +142,7 @@ opts.Add(
 )
 opts.Add(BoolVariable("disable_3d", "Disable 3D nodes for a smaller executable", False))
 opts.Add(BoolVariable("disable_advanced_gui", "Disable advanced GUI nodes and behaviors", False))
+opts.Add(BoolVariable("disable_experimental", "Disable experimental modules", False))
 opts.Add(BoolVariable("no_editor_splash", "Don't use the custom splash screen for the editor", False))
 opts.Add("system_certs_path", "Use this path as SSL certificates default for editor (for package maintainers)", "")
 
@@ -173,6 +174,7 @@ opts.Add(BoolVariable("builtin_zstd", "Use the built-in Zstd library", True))
 opts.Add("CXX", "C++ compiler")
 opts.Add("CC", "C compiler")
 opts.Add("LINK", "Linker")
+opts.Add("AR", "Archiver")
 opts.Add("CCFLAGS", "Custom flags for both the C and C++ compilers")
 opts.Add("CFLAGS", "Custom flags for the C compiler")
 opts.Add("CXXFLAGS", "Custom flags for the C++ compiler")
@@ -404,7 +406,8 @@ if selected_platform in platform_list:
         all_plus_warnings = ["-Wwrite-strings"]
 
         if methods.using_gcc(env):
-            env.Append(CCFLAGS=["-Wno-misleading-indentation"])
+            if version[0] > 4:  # For sure not on gcw0 4.3.1
+                env.Append(CCFLAGS=["-Wno-misleading-indentation"])
             if version[0] >= 7:
                 shadow_local_warning = ["-Wshadow-local"]
 

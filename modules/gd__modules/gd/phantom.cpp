@@ -76,7 +76,7 @@ void Phantom::_update_fixed_frame() {
 }
 
 void Phantom::_update_and_draw() {
-    int t = sprites.size(), count = 0;
+    int t = sprites.size();
     if (t == 0) return;
     RID ci = get_canvas_item();
     Transform2D m = get_global_transform().affine_inverse();
@@ -98,7 +98,7 @@ void Phantom::_update_and_draw() {
                     color = color_ramp->get_color_at_offset(1-p);
                 item->texture->draw_rect_region(ci, Rect2(item->offset,item->src_rect.size), item->src_rect, color);
             }
-        }else
+        } else
             break;
     }
 }

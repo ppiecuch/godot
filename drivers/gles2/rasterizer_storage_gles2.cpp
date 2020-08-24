@@ -82,6 +82,7 @@ GLuint RasterizerStorageGLES2::system_fbo = 0;
 #define _RED_OES 0x1903
 
 #define _DEPTH_COMPONENT24_OES 0x81A6
+#define _DEPTH_STENCIL_ATTACHMENT 0x821A
 
 #ifndef GLES_OVER_GL
 #define glClearDepth glClearDepthf
@@ -4723,7 +4724,7 @@ void RasterizerStorageGLES2::_render_target_allocate(RenderTarget *rt) {
 
 		if (config.support_depth_texture) {
 
-			GLenum depth_attachment = config.stencil_buffer_enable ? GL_DEPTH_STENCIL_ATTACHMENT : GL_DEPTH_ATTACHMENT;
+			GLenum depth_attachment = config.stencil_buffer_enable ? _DEPTH_STENCIL_ATTACHMENT : GL_DEPTH_ATTACHMENT;
 
 			glGenTextures(1, &rt->depth);
 			glBindTexture(GL_TEXTURE_2D, rt->depth);

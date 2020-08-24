@@ -703,11 +703,30 @@ def get_compiler_version(env):
             return None
     else:  # TODO: Implement for MSVC
         return None
-    match = re.search("[0-9]+\.[0-9.]+", version)
+    # First try with x.y.z
+    match = re.search("[0-9]+\.[0-9.]+\.[0-9.]+", version)
+    # If not found try with last x.y (and skip eg. 2014.3 signatures)
+    if match is None:
+        match = re.search("[0-9]+\.[0-9.]+$", version)
     if match is not None:
         return list(map(int, match.group().split(".")))
     else:
         return None
+
+
+def get_compiler_architecture(env):
+    """
+    Returns compiler (default) architecture.
+    """
+    if not env.msvc:
+        try:
+            arch = decode_utf8(subprocess.check_output([env.subst(env["CXX"]), "-dumpmachine"]).strip())
+        except (subprocess.CalledProcessError, OSError):
+            print("Couldn't parse CXX environment variable to infer compiler architecture.")
+            return None
+    else:  # TODO: Implement for MSVC
+        return None
+	return next(iter(arch.split("-")), None)
 
 
 def using_gcc(env):
