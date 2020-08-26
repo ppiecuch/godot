@@ -86,9 +86,9 @@ public:
 
 private:
 	
-	uint32_t _atlas_id = 0;
-	uint32_t _src_2 = 0;
-	uint32_t _comp_tile = 0;
+	int _atlas_id = 0;
+	int _src_2 = 0;
+	int _comp_tile = 0;
 };
 
 class BlobAutotiler : public Autotiler {

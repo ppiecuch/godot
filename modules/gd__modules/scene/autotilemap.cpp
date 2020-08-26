@@ -388,7 +388,6 @@ void Autotilemap::load_from_json(const String& json_file) {
 	Dictionary data;
 	String err_message;
 	int err_line;
-	Error file_err;
 
 	Variant json_data_tmp;
 	if (OK != JSON::parse(text, json_data_tmp, err_message, err_line)) {
