@@ -25,8 +25,8 @@ namespace sim3 {
 	typedef std::vector<Constraint> ConstraintsArray;
 
 	struct Point {
-		Vector2 position, previous, acceleration;
 		bool fixed;
+		Vector2 position, previous, acceleration;
 
 		Point (const Vector2 xy, bool fixed = NO):
 			fixed(fixed),
