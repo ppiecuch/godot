@@ -42,9 +42,11 @@
 
 static bool enet_ok = false;
 
+#ifdef TOOLS_ENABLED
 static void editor_init_callback() {
     EditorNode::get_singleton()->add_editor_plugin(memnew(Cable2DEditorPlugin(EditorNode::get_singleton())));
 }
+#endif
 
 void register_gd__modules_types() {
 	ClassDB::register_class<Timer2>();
