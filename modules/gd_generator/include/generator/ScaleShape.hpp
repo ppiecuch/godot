@@ -29,8 +29,8 @@ public:
 	ScaleShape(Shape shape, const gml::dvec2& scale) :
 		transformShape_{
 			std::move(shape),
-			[scale] (ShapeVertex& value) { 
-				value.position *= scale; 
+			[scale] (ShapeVertex& value) {
+				value.position *= scale;
 				value.tangent = normalize(scale * value.tangent);
 			}
 		}

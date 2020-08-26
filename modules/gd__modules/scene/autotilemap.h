@@ -25,7 +25,7 @@ public:
 				return true;
 			}
 		}
-		return false;		
+		return false;
 	}
 
 	int get_src_tile() {
@@ -33,7 +33,7 @@ public:
 	}
 
 	virtual String get_type() const = 0;
-	
+
 	bool is_type(const String& type) const {
 		return type == get_type();
 	}
@@ -42,7 +42,7 @@ public:
 	Dictionary& get_metadata_map() {
 		return _tile_metadata_map;
 	}
-	
+
 protected:
 	Dictionary _tile_metadata_map;
 	Vector<int> _neighbor_tile_ids;
@@ -55,7 +55,7 @@ public:
 	String get_type() const {
 		return "BlobTerrainAutotiler";
 	}
-	
+
 	int get_atlas_id() const { return _atlas_id; }
 
 	bool is_neighbor_tile(int tid) const {
@@ -85,10 +85,10 @@ public:
 	}
 
 private:
-	
-	uint32_t _atlas_id = 0;
-	uint32_t _src_2 = 0;
-	uint32_t _comp_tile = 0;
+
+	int _atlas_id = 0;
+	int _src_2 = 0;
+	int _comp_tile = 0;
 };
 
 class BlobAutotiler : public Autotiler {
@@ -98,24 +98,24 @@ public:
 	}
 
 	int get_atlas_id() const {return _atlas_id ;}
-		
+
 	void init(const Variant& autotiler, const Vector<Variant>& codes) {
 		_atlas_id = autotiler.get("atlas_id");
 		_src_tile = autotiler.get("src_tile");
 		Variant neighbor_ids = autotiler.get("neighbor_tiles");
 		Vector<int> neighbors = neighbor_ids;
-		for (int i = 0; i < neighbors.size(); i++) {			
+		for (int i = 0; i < neighbors.size(); i++) {
 			_neighbor_tile_ids.push_back(neighbors[i]);
 		}
-		
+
 		for (int i = 0; i < codes.size(); i++) {
 			auto code = codes[i];
 			_tile_metadata_map[int(code.get("code"))] = int(code.get("id"));
 		}
-	}	
-	
+	}
+
 private:
-	
+
 	uint32_t _atlas_id = 0;
 };
 
@@ -129,7 +129,7 @@ public:
 	/* 	bool flip_x; */
 	/* 	bool flip_y; */
 	/* }; */
-	
+
 	void init(const Variant& autotiler) {
 		_src_tile = autotiler.get("src_tile");
 		Vector<Variant> codes = autotiler.get("codes");
@@ -137,17 +137,17 @@ public:
 			auto code = codes[i];
 			_tile_metadata_map[int(code.get("code"))] = code;//.get("id")), code.get("x_mirror"), code.get("y_mirror");
 		}
-		
+
 		Variant neighbor_ids = autotiler.get("neighbor_tiles");
 		Vector<int> neighbors = neighbor_ids;
-		for (int i = 0; i < neighbors.size(); i++) {			
+		for (int i = 0; i < neighbors.size(); i++) {
 			_neighbor_tile_ids.push_back(neighbors[i]);
 		}
 	}
-			  
+
 	String get_type() const {
 		return "QuadAutotiler";
-	}	
+	}
 };
 
 class Autotilemap : public Reference {
@@ -155,7 +155,7 @@ class Autotilemap : public Reference {
 
 protected:
     static void _bind_methods();
-	
+
 public:
 	void init(const Vector2& top_left, const Vector2& bottom_right, const String& json_file);
 	void load_from_json(const String& json_file);
@@ -168,7 +168,7 @@ public:
 	int get_width();
 	int get_height();
 	Variant get_data();
-		
+
 	Autotilemap();
 
 private:
@@ -177,7 +177,7 @@ private:
 	void apply_blob_terrain_autotiling(TileMap* tilemap);
 	void map_ids_to_tiles(TileMap* tilemap);
 	void apply_autotiling(TileMap* tilemap);
-	
+
 	Variant _json_data;
 	Vector<Variant> _id_to_atlas;
 	Vector2 _top_left;
@@ -187,7 +187,7 @@ private:
 	int _base_tile = 0;
 	Vector<int32_t> _data;   //TypedArray instead?
 	Vector<Ref<Autotiler>> _autotilers;
-	bool _blob_mode = false;		
+	bool _blob_mode = false;
 };
 
 #endif // AUTOTILEMAP_H

@@ -333,9 +333,9 @@ void Line2D::_draw() {
 	// Draw wireframe
 	#if 1
 		if(lb.indices.size() % 3 == 0) {
+			// int lbvsize = lb.vertices.size();
 			Color col(1,1,0);
 			for(int i = 0; i < lb.indices.size(); i += 3) {
-				int lbvsize = lb.vertices.size();
 				Vector2 a = lb.vertices[lb.indices[i]];
 				Vector2 b = lb.vertices[lb.indices[i+1]];
 				Vector2 c = lb.vertices[lb.indices[i+2]];

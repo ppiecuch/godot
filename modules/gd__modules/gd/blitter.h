@@ -98,5 +98,3 @@ public:
 
 	_Blitter();
 };
-
-static _Blitter *_blitter = NULL;

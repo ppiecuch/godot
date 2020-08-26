@@ -7,6 +7,7 @@
 # We need dos2unix and recode.
 if [ ! -x "$(command -v dos2unix)" -o ! -x "$(command -v recode)" ]; then
     printf "Install 'dos2unix' and 'recode' to use this script.\n"
+    exit 1
 fi
 
 set -uo pipefail

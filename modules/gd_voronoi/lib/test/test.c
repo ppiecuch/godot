@@ -460,7 +460,7 @@ int main(int argc, const char** argv)
     (void)argv;
     (void)debug_edges;
     (void)debug_points;
-    
+
     RUN_ALL();
     return 0;
 }

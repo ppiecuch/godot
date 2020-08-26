@@ -51,7 +51,7 @@ void ProceduralAnimationEditor::load_animation() {
 
 	_start_node->set_offset(_animation->get_start_node_position());
 
-	const PoolVector<String> &animation_names = _animation->get_animation_keyframe_names();
+	// const PoolVector<String> &animation_names = _animation->get_animation_keyframe_names();
 
 	PoolVector<int> kfind = _animation->get_keyframe_indices();
 

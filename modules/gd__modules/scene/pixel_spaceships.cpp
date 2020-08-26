@@ -508,7 +508,7 @@ Ref<ImageTexture> PixelSpaceships::make_texture()
 	}
 	img->unlock();
 
-	tex->create_from_image(img, ImageTexture::Flags::FLAG_ANISOTROPIC_FILTER || ImageTexture::Flags::FLAG_MIPMAPS);
+	tex->create_from_image(img, ImageTexture::Flags::FLAG_ANISOTROPIC_FILTER | ImageTexture::Flags::FLAG_MIPMAPS);
 
 	return tex;
 }
@@ -518,7 +518,7 @@ Ref<ImageTexture> PixelSpaceships::generate_texture(Ref<PixelSpaceshipsMask> _ma
 		return 0;
 
 	generate(_mask, _options, _seed);
-	
+
 	generate_colors();
 	return make_texture();
 }

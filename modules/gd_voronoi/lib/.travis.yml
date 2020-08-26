@@ -5,7 +5,7 @@ compiler:
 os:
   - linux
   - osx
-  
+
 script:
   - ./compile_clang.sh
   - (cd test && ./compile_clang.sh)

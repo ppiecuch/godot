@@ -138,7 +138,7 @@ public:
 		for( size_t i = 0; i < m_Count; ++i )
 		{
 			setupfunc(args...);
-			
+
 #if defined(USE_CHRONO)
 			auto tstart = std::chrono::high_resolution_clock::now();
 #else
@@ -249,7 +249,7 @@ public:
 	}
 
 private:
-	
+
 
 #if defined(USE_CHRONO)
 	void calc_times(std::vector<std::chrono::duration<double> >& times)

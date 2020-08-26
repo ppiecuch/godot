@@ -15,7 +15,6 @@ float Byteswap::reverseFloat(float inFloat) {
     returnFloat[1] = floatToConvert[2];
     returnFloat[2] = floatToConvert[1];
     returnFloat[3] = floatToConvert[0];
-    
     return retVal;
 
 }
@@ -31,7 +30,6 @@ int Byteswap::reverseInt( int inInt )
    returnInt[1] = intToConvert[2];
    returnInt[2] = intToConvert[1];
    returnInt[3] = intToConvert[0];
-
    return retVal;
 };
 

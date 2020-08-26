@@ -6,17 +6,17 @@
 #include "scene/2d/tile_map.h"
 
 int encode_tile_and_flipping(int tid, int fx, int fy, int atlas_id=0) {
-	
+
 	//24 bits of id code. We encode the ATLAS id in 8 bits, and the tile_id in 16 bits
 	int atlas_id_code = (int(atlas_id) & 0xff) << 16;
 	int id_code = int(tid) & 0x0000ffff;
-	
+
 	//1 bit of flipx
 	//1 bit of flipy
 	int flip_x_code = int(fx) << 29;
 	int flip_y_code = int(fy) << 30;
-	
-	//1 bit of transpose		
+
+	//1 bit of transpose
 	int id = atlas_id_code + id_code + flip_x_code + flip_y_code;
 	return id;
 }
@@ -55,18 +55,18 @@ void Autotilemap::init(const Vector2& top_left, const Vector2& bottom_right, con
 	load_from_json(json_file);
 
 	_data.resize(_width * _height);
-	
+
 	_base_tile = _json_data.get("base_tile");
 	if (_base_tile >= 0) {
 		for (int r = 0; r < _height; r++) {
 			for (int c = 0; c < _width; c++) {
 				_data.set(r + c * _height, _base_tile);
 			}
-		}		
+		}
 	}
 
 	Dictionary data_dict = _json_data;
-	
+
 	if (data_dict.has("id_to_atlas")) {
 		_id_to_atlas = _json_data.get("id_to_atlas");
 	}
@@ -76,7 +76,7 @@ void Autotilemap::init(const Vector2& top_left, const Vector2& bottom_right, con
 		Vector<Variant> codes = _json_data.get("codes");
 		Vector<Variant> blob_autot = _json_data.get("blob_autotiling");
 		for (int i = 0; i < blob_autot.size(); i++) {
-			BlobAutotiler* autot = memnew(BlobAutotiler);			
+			BlobAutotiler* autot = memnew(BlobAutotiler);
 			autot->init(blob_autot[i], codes);
 			_autotilers.push_back(Ref<BlobAutotiler>(autot));
 		}
@@ -87,7 +87,7 @@ void Autotilemap::init(const Vector2& top_left, const Vector2& bottom_right, con
 		Vector<Variant> codes = _json_data.get("codes");
 		Vector<Variant> blob_autot = _json_data.get("blob_terrain_autotiling");
 		for (int i = 0; i < blob_autot.size(); i++) {
-			BlobTerrainAutotiler* autot = memnew(BlobTerrainAutotiler);			
+			BlobTerrainAutotiler* autot = memnew(BlobTerrainAutotiler);
 			autot->init(blob_autot[i], codes);
 			_autotilers.push_back(Ref<BlobTerrainAutotiler>(autot));
 		}
@@ -124,13 +124,13 @@ void Autotilemap::map_ids_to_tiles(TileMap* tilemap) {
 			for (int y = 1; y < _height-1; y++) {
 				for (int x = 1; x < _width-1; x++) {
 
-					//TODO access data only once for all autotilers!					
+					//TODO access data only once for all autotilers!
 					int src_tile_id = _data[y + x*_height];
 					if (src_tile_id == int(id_to_atlas.get("src_tile"))) {
 						int atlas_id = id_to_atlas.get("atlas");
 						tilemap->set_cell(_top_left.x + x, _top_left.y + y, atlas_id,
 										  false, false, false, Vector2(0,0));
-					}					
+					}
 				}
 			}
 		}
@@ -140,14 +140,14 @@ void Autotilemap::map_ids_to_tiles(TileMap* tilemap) {
 void Autotilemap::apply_autotiling(TileMap* tilemap) {
 	for (int ai = 0; ai < _autotilers.size(); ai++) {
 		if (! _autotilers[ai]->is_type("QuadAutotiler")) {
-			continue;			
+			continue;
 		}
 
 		Ref<QuadAutotiler> autotiler = Ref<QuadAutotiler>(_autotilers[ai]);
-		
+
 		for (int y = 1; y < _height-1; y++) {
 			for (int x = 1; x < _width-1; x++) {
-		
+
 				int src_tile_id = _data[y + x*_height];
 				if (! autotiler->is_source_tile(src_tile_id)) {
 					//tilemap->set_cell(_top_left.x + x, _top_left.y + y, 0,
@@ -159,12 +159,12 @@ void Autotilemap::apply_autotiling(TileMap* tilemap) {
 				int e = int(autotiler->is_neighbor_tile(_data[y + (x+1)*_height]));
 				int s = int(autotiler->is_neighbor_tile(_data[(y+1) + x*_height]));
 				int w = int(autotiler->is_neighbor_tile(_data[y + (x-1)*_height]));
-				
+
 				int v = n + 4*e + 16*s + 64*w;
-				
-				if (autotiler->get_metadata_map().has(v)) {						
+
+				if (autotiler->get_metadata_map().has(v)) {
 					auto code = autotiler->get_metadata_map()[v];
-					
+
 					tilemap->set_cell(_top_left.x + x, _top_left.y + y, code.get("id"),
 									  code.get("x_mirror"), code.get("y_mirror"), false, Vector2(0,0));
 				}
@@ -188,14 +188,14 @@ void Autotilemap::apply_blob_terrain_autotiling(TileMap* tilemap) {
 	int sw = 0;
 	int w = 0;
 	int nw = 0;
-	
+
 	for (int ai = 0; ai < _autotilers.size(); ai++) {
 		if (! _autotilers[ai]->is_type("BlobTerrainAutotiler")) {
-			continue;			
+			continue;
 		}
-		
+
 		Ref<BlobTerrainAutotiler> autotiler = Ref<BlobTerrainAutotiler>(_autotilers[ai]);
-		
+
 		for (int y = 1; y < _height-1; y++) {
 			for (int x = 1; x < _width-1; x++) {
 				int src_tile_id = _data[y + x*_height];
@@ -251,12 +251,12 @@ void Autotilemap::apply_blob_terrain_autotiling(TileMap* tilemap) {
 						int tile_id = autotiler->get_metadata_map()[0];
 						Vector2 subtile_coords = compute_subtile_coords(tile_id);
 						tilemap->set_cell(_top_left.x + x, _top_left.y + y, autotiler->get_atlas_id(),
-										  false, false, false, subtile_coords);	  
+										  false, false, false, subtile_coords);
 					}
-					continue;					
+					continue;
 				}
 
-				//TODO: We should re-factor/clean this				
+				//TODO: We should re-factor/clean this
 				n = int(autotiler->is_neighbor_tile(nt));
 				ne = int(autotiler->is_neighbor_tile(net));
 				e = int(autotiler->is_neighbor_tile(et));
@@ -265,7 +265,7 @@ void Autotilemap::apply_blob_terrain_autotiling(TileMap* tilemap) {
 				sw = int(autotiler->is_neighbor_tile(swt));
 				w = int(autotiler->is_neighbor_tile(wt));
 				nw = int(autotiler->is_neighbor_tile(nwt));
-				
+
 				int v = n + 2*ne + 4*e + 8*se + 16*s + 32*sw + 64*w + 128*nw;
 
 				bool flip_h = false;
@@ -273,9 +273,9 @@ void Autotilemap::apply_blob_terrain_autotiling(TileMap* tilemap) {
 				bool transpose = false;
 				int tile_id = 0;
 				Vector2 subtile_coords = Vector2(0,0);
-				
+
 				if (v > 0) {
-					if (autotiler->get_metadata_map().has(v)) {						
+					if (autotiler->get_metadata_map().has(v)) {
 						tile_id = autotiler->get_metadata_map()[v];
 						if (_blob_mode) {
 							subtile_coords = compute_subtile_coords(tile_id);
@@ -288,7 +288,7 @@ void Autotilemap::apply_blob_terrain_autotiling(TileMap* tilemap) {
 						tilemap->set_cell(_top_left.x + x, _top_left.y + y, _base_tile,
 										  flip_h, flip_v, transpose, subtile_coords);
 					}
-				}				
+				}
 			}
 		}
 	}
@@ -304,14 +304,14 @@ void Autotilemap::apply_blob_autotiling(TileMap* tilemap) {
 	int sw = 0;
 	int w = 0;
 	int nw = 0;
-	
+
 	for (int ai = 0; ai < _autotilers.size(); ai++) {
 		if (! _autotilers[ai]->is_type("BlobAutotiler")) {
-			continue;					
+			continue;
 		}
 
 		Ref<Autotiler> autotiler = _autotilers[ai];
-		
+
 		for (int y = 1; y < _height-1; y++) {
 			for (int x = 1; x < _width-1; x++) {
 				int src_tile_id = _data[y + x*_height];
@@ -328,7 +328,7 @@ void Autotilemap::apply_blob_autotiling(TileMap* tilemap) {
 				sw = int(autotiler->is_neighbor_tile(_data[(y+1) + (x-1)*_height]));
 				w = int(autotiler->is_neighbor_tile(_data[y + (x-1)*_height]));
 				nw = int(autotiler->is_neighbor_tile(_data[(y-1) + (x-1)*_height]));
-		
+
 				int v = n + 2*ne + 4*e + 8*se + 16*s + 32*sw + 64*w + 128*nw;
 
 				bool flip_h = false;
@@ -336,18 +336,18 @@ void Autotilemap::apply_blob_autotiling(TileMap* tilemap) {
 				bool transpose = false;
 				int tile_id = 0;
 				Vector2 subtile_coords = Vector2(0,0);
-				
+
 				if (v > 0) {
-					if (autotiler->get_metadata_map().has(v)) {						
+					if (autotiler->get_metadata_map().has(v)) {
 						tile_id = autotiler->get_metadata_map()[v];
 						if (_blob_mode) {
 							subtile_coords = compute_subtile_coords(tile_id);
 							tile_id = autotiler->get_atlas_id();
-						}											
+						}
 					}
 				}
 				tilemap->set_cell(_top_left.x + x, _top_left.y + y, tile_id,
-								  flip_h, flip_v, transpose, subtile_coords);	  
+								  flip_h, flip_v, transpose, subtile_coords);
 			}
 		}
 	}
@@ -356,7 +356,7 @@ void Autotilemap::apply_blob_autotiling(TileMap* tilemap) {
 void Autotilemap::set_submap(Vector2 sub_top_left, int width, int height, const Variant& input_data) {
 	const Vector<int32_t>& idata = input_data;
 	Vector2 offset = sub_top_left - _top_left;
-	for (int row = 0; row < height; row++) {		
+	for (int row = 0; row < height; row++) {
 		for (int col = 0; col < width; col++) {
 			_data.set(row + offset.y + (col + offset.x) * _height, idata[row + col * height]);
 		}
@@ -388,7 +388,6 @@ void Autotilemap::load_from_json(const String& json_file) {
 	Dictionary data;
 	String err_message;
 	int err_line;
-	Error file_err;
 
 	Variant json_data_tmp;
 	if (OK != JSON::parse(text, json_data_tmp, err_message, err_line)) {

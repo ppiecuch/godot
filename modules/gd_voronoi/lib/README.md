@@ -180,7 +180,7 @@ void relax_points(const jcv_diagram* diagram, jcv_point* points)
 
 ## Fastjet
 
-The Fastjet version is built upon Steven Fortune's original C version, which Shane O'Sullivan improved upon. 
+The Fastjet version is built upon Steven Fortune's original C version, which Shane O'Sullivan improved upon.
 Given the robustness and speed improvements of the implementation done by Fastjet,
 that should be the base line to compare other implementations with.
 
@@ -205,7 +205,7 @@ For simply generating a 2D voronoi diagram using points as input, it is clearly 
 
 ## Voronoi++
 
-The performance of it is very slow (~20x slower than fastjet) and 
+The performance of it is very slow (~20x slower than fastjet) and
 And it uses ~2.5x-3x more memory than the fastest algorithms.
 
 Using the same data sets as the other algorithms, it breaks under some conditions.

@@ -45,13 +45,8 @@ namespace GdExtends {
         }
 
         _FORCE_INLINE_ T &operator [](int p_index) {
-            if (p_index >= _size){
-                T& aux=*((T*)0);
-                ERR_FAIL_COND_V(p_index >= _size, aux);
-                return aux;
-            }
-            else
-                return mem[(_offset+p_index)%_limit];
+            CRASH_BAD_INDEX(p_index, _size);
+            return mem[(_offset+p_index)%_limit];
         }
 
         int size() const {

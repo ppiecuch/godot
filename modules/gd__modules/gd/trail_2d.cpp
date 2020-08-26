@@ -34,13 +34,12 @@ void TrailPoint2D::_update_position(bool minus) {
 
 void TrailPoint2D::_normal_points(int idx, int total, Vector2 &res1, Vector2 &res2) {
     bool has_before = false, has_front = false;
-    int count = trail_items[idx].count, front_idx = count, back_idx = count;
+    int count = trail_items[idx].count;
     Point2 pos_o = trail_items[idx].position, pos_f = pos_o, pos_b = pos_o;
     for (int i = idx + 1; i < total; ++i) {
         const TrailItem &tp = trail_items[i];
         if (tp.position != pos_o) {
             pos_f = tp.position;
-            front_idx = tp.count;
             has_front = true;
             break;
         }
@@ -49,7 +48,6 @@ void TrailPoint2D::_normal_points(int idx, int total, Vector2 &res1, Vector2 &re
         const TrailItem &tp = trail_items[j];
         if (tp.position != pos_o) {
             pos_b = tp.position;
-            back_idx = tp.count;
             has_before = true;
             break;
         }

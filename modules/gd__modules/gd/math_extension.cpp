@@ -108,7 +108,7 @@ float _GodotMathExtension::base_log(float a, float new_base) {
 	if (a != 1.0 && (new_base == 0.0 || Math::is_inf(new_base))) {
 		return NAN;
 	}
-		
+
 	return Math::log(a) / Math::log(new_base);
 }
 

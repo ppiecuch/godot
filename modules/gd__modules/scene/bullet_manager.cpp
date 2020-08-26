@@ -219,7 +219,7 @@ void BulletManagerBulletType::set_collision_layer(uint32_t p_layer) {
 
 	collision_layer = p_layer;
 	Physics2DServer::get_singleton()->area_set_collision_layer(area, collision_layer);
-	
+
 }
 
 uint32_t BulletManagerBulletType::get_collision_layer() const {
@@ -289,7 +289,7 @@ void BulletManagerBulletType::_body_inout(int p_status, const RID &p_body, int p
 	if (bullet_id != -1 && _bullet_manager->is_bullet_active(bullet_id)) {
 		emit_signal("body_entered_bullet", bullet_id, collider);
 	}
-	
+
 }
 
 int BulletManagerBulletType::add_shape(int bullet_idx, Transform2D transform) {
@@ -353,9 +353,9 @@ void BulletManagerBulletType::_notification(int p_what) {
 			_shapes.clear();
 			_unused_shapes.clear();
 		} break;
-		case NOTIFICATION_DRAW: { 
+		case NOTIFICATION_DRAW: {
 			if (!Engine::get_singleton()->is_editor_hint()) {
-				return;	
+				return;
 			}
 			if (texture != NULL) {
 				_update_cached_rects();
@@ -414,7 +414,7 @@ void BulletManagerBulletType::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_region_rect"), &Sprite::get_region_rect);
 	ClassDB::bind_method(D_METHOD("set_region_filter_clip", "enabled"), &Sprite::set_region_filter_clip);
 	ClassDB::bind_method(D_METHOD("is_region_filter_clip_enabled"), &Sprite::is_region_filter_clip_enabled);*/
-	
+
 	//PHYSICS
 	ClassDB::bind_method(D_METHOD("_body_inout"), &BulletManagerBulletType::_body_inout);
 	ClassDB::bind_method(D_METHOD("_area_inout"), &BulletManagerBulletType::_area_inout);
@@ -429,7 +429,7 @@ void BulletManagerBulletType::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_rotating_physics"), &BulletManagerBulletType::is_rotating_physics);
 
 	ClassDB::bind_method(D_METHOD("get_bullet_id", "shape_index"), &BulletManagerBulletType::get_bullet_id);
-	
+
 	//VISUAL PROPERTIES
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "texture", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_texture", "get_texture");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "normal_map", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_normal_map", "get_normal_map");
@@ -451,7 +451,7 @@ void BulletManagerBulletType::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "collision_layer", PROPERTY_HINT_LAYERS_2D_PHYSICS), "set_collision_layer", "get_collision_layer");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "collision_mask", PROPERTY_HINT_LAYERS_2D_PHYSICS), "set_collision_mask", "get_collision_mask");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "rotate_physics"), "set_rotate_physics", "is_rotating_physics");
-	
+
 
 	ADD_SIGNAL(MethodInfo("area_entered_bullet", PropertyInfo(Variant::INT, "bullet_id", PROPERTY_HINT_NONE, "bullet_id"), PropertyInfo(Variant::OBJECT, "area", PROPERTY_HINT_RESOURCE_TYPE, "Area2D")));
 	ADD_SIGNAL(MethodInfo("body_entered_bullet", PropertyInfo(Variant::INT, "bullet_id", PROPERTY_HINT_NONE, "bullet_id"), PropertyInfo(Variant::OBJECT, "body", PROPERTY_HINT_RESOURCE_TYPE, "PhysicsBody2D")));
@@ -498,12 +498,12 @@ void BulletManager::_notification(int p_what) {
 		} break;
 		case NOTIFICATION_PHYSICS_PROCESS: {
 			_update_bullets();
-		} break; 
+		} break;
 	}
 }
 
 int BulletManager::add_bullet(StringName type_name, Vector2 position, real_t angle, real_t speed) {
-    Physics2DServer *ps = Physics2DServer::get_singleton();
+    // Physics2DServer *ps = Physics2DServer::get_singleton();
 	BulletManagerBulletType* type = types[type_name];
 	BulletManagerBullet* bullet;
 	if (_unused_ids.size() == 0) {
@@ -523,14 +523,14 @@ int BulletManager::add_bullet(StringName type_name, Vector2 position, real_t ang
 	bullet->matrix.elements[2] = position;
 	bullet->is_queued_for_deletion = false;
 	bullet->shape_index = type->add_shape(bullet->id, bullet->matrix);
-	
+
 	_active_bullets.push_back(bullet->id);
 	return bullet->id;
 }
 
 void BulletManager::clear()
 {
-	Physics2DServer *ps = Physics2DServer::get_singleton();
+	// Physics2DServer *ps = Physics2DServer::get_singleton();
 	List<int>::Element *E = _active_bullets.front();
 	while(E) {
 		_bullets.write[E->get()].is_queued_for_deletion = true;
@@ -587,15 +587,15 @@ void BulletManager::_draw_bullets() {
 		//draw_texture_rect_region(type->texture, type->_cached_dst_rect, type->_cached_src_rect, Color(1, 1, 1), false, type->normal_map);
 		E = E->next();
 	}
-	
-	
+
+
 }
 
 void BulletManager::_update_bullets() {
-	
+
 	Physics2DServer *ps = Physics2DServer::get_singleton();
 	float delta = get_physics_process_delta_time();
-	int size = _active_bullets.size();
+	// int size = _active_bullets.size();
 	Rect2 visible_rect;
 	_get_visible_rect(visible_rect);
 	visible_rect = visible_rect.grow(bounds_margin);
@@ -608,7 +608,7 @@ void BulletManager::_update_bullets() {
 			}
 		}
 	}
-	
+
 	List<int>::Element *E = _active_bullets.front();
 	while(E) {
 		int idx = E->get();
@@ -719,7 +719,7 @@ bool BulletManager::is_bullet_active(int bullet_id) const {
 
 void BulletManager::clear_by_type(BulletManagerBulletType* type) {
 	for (int i = 0; i < _bullets.size(); i++) {
-		if (_bullets[i].type == type) 
+		if (_bullets[i].type == type)
 			_bullets.write[i].is_queued_for_deletion = true;
 	}
 }
@@ -733,14 +733,14 @@ void BulletManager::_clear_by_type_script(Object* type) {
 
 void BulletManager::clear_by_mask(int mask) {
 	for (int i = 0; i < _bullets.size(); i++) {
-		if ((_bullets[i].type->collision_mask & mask) > 0) 
+		if ((_bullets[i].type->collision_mask & mask) > 0)
 			_bullets.write[i].is_queued_for_deletion = true;
 	}
 }
 
 void BulletManager::clear_by_layer(int layer) {
 	for (int i = 0; i < _bullets.size(); i++) {
-		if ((_bullets[i].type->collision_mask & layer) > 0) 
+		if ((_bullets[i].type->collision_mask & layer) > 0)
 			_bullets.write[i].is_queued_for_deletion = true;
 	}
 }

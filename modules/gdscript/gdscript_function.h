@@ -417,7 +417,7 @@ class GDScriptNativeFunctionObject : public GDScriptFunctionObject {
 public:
 	virtual Object *get_owner() const {return (target_id == 0 ? NULL : ObjectDB::get_instance(target_id));}
 	_FORCE_INLINE_ virtual bool is_valid() const { return target_id != 0 && ObjectDB::get_instance(target_id); }
-	
+
 	_FORCE_INLINE_ virtual StringName get_name() const { return method_name; }
 	virtual Variant apply(const Variant** p_args,int p_argcount,Variant::CallError &r_error);
 	virtual Variant apply_with(Object *p_target, const Array p_args);

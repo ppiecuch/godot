@@ -15,7 +15,7 @@ var encripter = cripter.new()
 #---You must use an absolute path here, otherwise the module will not find the keys folder.
 #---Set the path here or on editor.
 """ IT WON'T WORK IF YOU DO NOT SET THE PATH CORRECTLY!!!!!! """
-export(String, DIR, GLOBAL) var path_keys := "/home/myself/godot_project/cripter/certs"  
+export(String, DIR, GLOBAL) var path_keys := "/home/myself/godot_project/cripter/certs"
 
 var rsa_password := "cripter_exemple"
 var rsa_public_key_path := path_keys + "/id_rsa.pem"
@@ -43,7 +43,7 @@ func _ready():
 	$Label.text = "Encrypt/Decrypt bytes: \n"
 	print("#---Encrypt/Decrypt bytes GCM")
 	var encrypted_array_gcm = encripter.encrypt_byte_GCM(gcm_input, key, gcm_add)
-	var decrypted_array_gcm = encripter.decrypt_byte_GCM(encrypted_array_gcm, key, gcm_add) 
+	var decrypted_array_gcm = encripter.decrypt_byte_GCM(encrypted_array_gcm, key, gcm_add)
 	print("\n", bytes2var(decrypted_array_gcm))
 	$Label.text = $Label.text + "\n GCM:  " + str(bytes2var(decrypted_array_gcm))
 
@@ -58,7 +58,7 @@ func _ready():
 	print("#---Encrypt/Decrypt bytes RSA")
 	var encrypted_array_rsa = encripter.encrypt_byte_RSA(rsa_input, rsa_public_key_path) #---Using public key
 	var decrypted_array_rsa = encripter.decrypt_byte_RSA(encrypted_array_rsa, rsa_private_key_path, rsa_password) #---Using private key
-	print("\n", bytes2var(decrypted_array_rsa)) 
+	print("\n", bytes2var(decrypted_array_rsa))
 	$Label.text = $Label.text + "\n RSA:  " + str(bytes2var(decrypted_array_rsa))
 
 
@@ -72,7 +72,7 @@ func _ready():
 
 	print("#---Encrypt/Decrypt Var GCM")
 	var encrypted_var_gcm = encripter.encrypt_var_GCM(gcm_var, key, gcm_add)
-	var decrypted_var_gcm = encripter.decrypt_var_GCM(encrypted_var_gcm, key, gcm_add) 
+	var decrypted_var_gcm = encripter.decrypt_var_GCM(encrypted_var_gcm, key, gcm_add)
 	print("\n", decrypted_var_gcm)
 	$Label.text = $Label.text + "\n GCM:  " + str(decrypted_var_gcm)
 
@@ -80,7 +80,7 @@ func _ready():
 	print("#---Encrypt/Decrypt Var RSA")
 	var encrypted_var_rsa = encripter.encrypt_var_RSA(rsa_var, rsa_public_key_path) #---Using public key
 	var decrypted_var_rsa = encripter.decrypt_var_RSA(encrypted_var_rsa, rsa_private_key_path, rsa_password) #---Using private key
-	print("\n", decrypted_var_rsa) 
+	print("\n", decrypted_var_rsa)
 	$Label.text = $Label.text + "\n RSA:  " + str(decrypted_var_rsa)
 
 

@@ -52,7 +52,7 @@ extern "C" {
 			r_error->error = (godot_variant_call_error_error)err.error;
 			r_error->argument = err.argument;
 			r_error->expected = (godot_variant_type)err.expected;
-		}		
+		}
 	}
 
 	void GDAPI gd2c_object_get_property(godot_variant *r_result, godot_object *p_instance, godot_string_name *p_index) {
@@ -78,7 +78,7 @@ extern "C" {
 			r_error->error = (godot_variant_call_error_error)err.error;
 			r_error->argument = err.argument;
 			r_error->expected = (godot_variant_type)err.expected;
-		}	
+		}
 	}
 
 	godot_bool GDAPI gd2c_variant_iter_init(godot_variant *p_self, godot_variant *r_iter, godot_bool *r_valid) {
@@ -125,7 +125,7 @@ extern "C" {
 			r_error->error = (godot_variant_call_error_error)err.error;
 			r_error->argument = err.argument;
 			r_error->expected = (godot_variant_type)err.expected;
-		}			
+		}
 	}
 
 	void GDAPI gd2c_extends_test(godot_variant *p_a, godot_variant *p_b, godot_variant *r_result) {
@@ -146,7 +146,7 @@ extern "C" {
 				// Left = gd2c, Right = gd2c
 				const auto *rightNativeScript = Object::cast_to<NativeScript>(rightObject);
 				if (rightNativeScript) {
-					const auto methodName = StringName("__gd2c_is_class_instanceof");					
+					const auto methodName = StringName("__gd2c_is_class_instanceof");
 					if (leftNativeScriptInstance->has_method(methodName)) {
 						Variant::CallError err;
 						auto name = Variant(rightNativeScript->get_class_name());
@@ -156,7 +156,7 @@ extern "C" {
 						return;
 					}
 				}
-				
+
 				// Scenario 2
 				// Left = gd2c, Right = classdb
 				// Scenario 3
@@ -182,7 +182,7 @@ extern "C" {
 			r_error->error = (godot_variant_call_error_error)err.error;
 			r_error->argument = err.argument;
 			r_error->expected = (godot_variant_type)err.expected;
-		} 
+		}
 	}
 
 	void GDAPI gd2c_variant_get(const godot_variant *p_self, const godot_variant *p_index, godot_variant *p_dest, godot_bool *r_valid) {
@@ -191,7 +191,7 @@ extern "C" {
 		Variant *dest = (Variant *)p_dest;
 
 		*dest = self->get(*index, r_valid);
-	}	
+	}
 
 	void GDAPI gd2c_variant_set(const godot_variant *p_self, const godot_variant *p_index, const godot_variant *p_value, godot_bool *r_valid) {
 		Variant *self = (Variant *)p_self;
@@ -199,7 +199,7 @@ extern "C" {
 		const Variant *value = (Variant *)p_value;
 
 		self->set(*index, *value);
-	}	
+	}
 }
 
 extern const struct gd2c_api_1_0 __api10 = {
