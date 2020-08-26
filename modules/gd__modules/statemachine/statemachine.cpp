@@ -23,7 +23,7 @@ void StateMachine::add_new_state(Node* newState) {
 
     ERR_FAIL_COND(stateMap.has(stateName));
 
-    stateMap[stateName] = dynamic_cast<State*>(newState);
+    stateMap[stateName] = Object::cast_to<State>(newState);
 }
 
 PoolStringArray StateMachine::get_all_state_names() {
@@ -74,7 +74,7 @@ void StateMachine::change_state(State* toState, State* fromState) {
 
 void StateMachine::change_active_state_with_node(Node* toState) {
     ERR_FAIL_NULL(toState);
-    State* castedToState = dynamic_cast<State*>(toState);
+    State* castedToState = Object::cast_to<State>(toState);
     State* fromState = get_active_state();
     delete_from_stack_after_index(currentStackIndex);
     currentStackIndex = stateList.size();

@@ -5,8 +5,10 @@
 #include "cripter.h"
 #include "core/print_string.h"
 
-//---Do:
-	//RSA  ---> Check if key file is valid / Maximun input size / Erros
+#include <stdint.h>
+
+//--- Do:
+//RSA  ---> Check if key file is valid / Maximun input size / Erros
 
 #define KEY_SIZE  32
 #define EXT_SIZE  16
