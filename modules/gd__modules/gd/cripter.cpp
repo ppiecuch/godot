@@ -56,7 +56,7 @@ PoolByteArray Cripter::encrypt_byte_GCM(const PoolByteArray p_input, const Strin
 	}
 
 	//Prepare Tag
-	std::vector<uint8_t> tag(TAG_SIZE);
+	uint8_t tag[TAG_SIZE];
 	//Prepare Addicional Data
 	int add_len = p_add.length();
 	std::vector<uint8_t> add(add_len);
@@ -70,14 +70,14 @@ PoolByteArray Cripter::encrypt_byte_GCM(const PoolByteArray p_input, const Strin
 	mbedtls_gcm_setkey(&ctx, MBEDTLS_CIPHER_ID_AES, key, 256);
 
 	if (add_len == 0) {
-		_err = mbedtls_gcm_crypt_and_tag(&ctx, MBEDTLS_GCM_ENCRYPT, input.size(), iv, EXT_SIZE, NULL, 0, input.data(), output.data(), TAG_SIZE, tag.data());
+		_err = mbedtls_gcm_crypt_and_tag(&ctx, MBEDTLS_GCM_ENCRYPT, input.size(), iv, EXT_SIZE, NULL, 0, input.data(), output.data(), TAG_SIZE, tag);
 		if( _err != 0) {
 		mbedtls_strerror( _err, erro, sizeof(erro) );
 		print_error( erro );
 		}
 	}
 	else {
-		_err = mbedtls_gcm_crypt_and_tag(&ctx, MBEDTLS_GCM_ENCRYPT, input.size(), iv, EXT_SIZE, add.data(), add_len, input.data(), output.data(), TAG_SIZE, tag.data());
+		_err = mbedtls_gcm_crypt_and_tag(&ctx, MBEDTLS_GCM_ENCRYPT, input.size(), iv, EXT_SIZE, add.data(), add_len, input.data(), output.data(), TAG_SIZE, tag);
 		if( _err != 0) {
 			mbedtls_strerror( _err, erro, sizeof(erro) );
 			print_error( erro );
@@ -270,7 +270,7 @@ PoolByteArray Cripter::encrypt_byte_RSA(const PoolByteArray p_input, String p_ke
 	size_t olen = 0;
 	const char *pers = "rsa_encrypt";
 	char erro[150];
-	std::vector<uint8_t> input[p_input.size()];
+	std::vector<uint8_t> input(p_input.size());
 	uint8_t output[512];
 	PoolVector<uint8_t>::Read r = p_input.read();
 	for (unsigned int i = 0; i < input.size(); i++) {
