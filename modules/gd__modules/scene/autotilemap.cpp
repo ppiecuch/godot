@@ -228,11 +228,11 @@ void Autotilemap::apply_blob_terrain_autotiling(TileMap* tilemap) {
 				bool flag1 = false;
 				bool flag2 = false;
 				for (int i = 0; i < all_neighbors.size(); i++) {
-					int n = all_neighbors[i];
-					if (n == autotiler->get_src_1()) {
+					int nb = all_neighbors[i];
+					if (nb == autotiler->get_src_1()) {
 						flag1 = true;
 					}
-					if (n == autotiler->get_src_2()) {
+					if (nb == autotiler->get_src_2()) {
 						flag2 = true;
 					}
 				}
@@ -240,8 +240,8 @@ void Autotilemap::apply_blob_terrain_autotiling(TileMap* tilemap) {
 				if (! (flag1 && flag2)) {
 					bool isolated = true;
 					for (int i = 0; i < all_neighbors.size(); i++) {
-						int n = all_neighbors[i];
-						if (n != autotiler->get_src_2()) {
+						int nb = all_neighbors[i];
+						if (nb != autotiler->get_src_2()) {
 							isolated = false;
 							break;
 						}
