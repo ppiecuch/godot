@@ -6,6 +6,7 @@
 #include "core/print_string.h"
 
 #include <stdint.h>
+#include <vector>
 
 //--- Do:
 //RSA  ---> Check if key file is valid / Maximun input size / Erros
@@ -46,8 +47,8 @@ PoolByteArray Cripter::encrypt_byte_GCM(const PoolByteArray p_input, const Strin
 	}
 	//Preparing Buffer
 	char erro[150];
-	uint8_t input[p_input.size()];
-	uint8_t output[sizeof(input)];
+	std::vector<uint8_t> input(p_input.size());
+	std::vector<uint8_t> output(p_input.size());
 
 	PoolVector<uint8_t>::Read r = p_input.read();   //PoolByteArray to CharArray
 	for (int i = 0; i < p_input.size(); i++) {
@@ -69,14 +70,14 @@ PoolByteArray Cripter::encrypt_byte_GCM(const PoolByteArray p_input, const Strin
 	mbedtls_gcm_setkey(&ctx, MBEDTLS_CIPHER_ID_AES, key, 256);
 
 	if (add_len == 0) {
-		_err = mbedtls_gcm_crypt_and_tag(&ctx, MBEDTLS_GCM_ENCRYPT, sizeof(input), iv, EXT_SIZE, NULL, 0, input, output, TAG_SIZE, tag);
+		_err = mbedtls_gcm_crypt_and_tag(&ctx, MBEDTLS_GCM_ENCRYPT, input.size(), iv, EXT_SIZE, NULL, 0, input.data(), output.data(), TAG_SIZE, tag);
 		if( _err != 0) {
 		mbedtls_strerror( _err, erro, sizeof(erro) );
 		print_error( erro );
 		}
 	}
 	else {
-		_err = mbedtls_gcm_crypt_and_tag(&ctx, MBEDTLS_GCM_ENCRYPT, sizeof(input), iv, EXT_SIZE, add, add_len, input, output, TAG_SIZE, tag);
+		_err = mbedtls_gcm_crypt_and_tag(&ctx, MBEDTLS_GCM_ENCRYPT, input.size(), iv, EXT_SIZE, add, add_len, input.data(), output.data(), TAG_SIZE, tag);
 		if( _err != 0) {
 			mbedtls_strerror( _err, erro, sizeof(erro) );
 			print_error( erro );
@@ -84,7 +85,7 @@ PoolByteArray Cripter::encrypt_byte_GCM(const PoolByteArray p_input, const Strin
 	}
 
 	mbedtls_gcm_free( &ctx );
-	PoolByteArray ret_output = char2pool(output, sizeof(output));
+	PoolByteArray ret_output = char2pool(output.data(), output.size());
 	PoolByteArray ret_tag = char2pool(tag, sizeof(tag));
 	ret_output.append_array(ret_tag);
 	return ret_output;
