@@ -742,18 +742,15 @@ void RasterizerCanvasBaseGLES2::_set_stencil_face(GLenum p_face, const ShaderLan
 	if (p_stencil.value != p_state_stencil.value ||
 		p_stencil.read_mask != p_state_stencil.read_mask ||
 		p_stencil.test != p_state_stencil.test) {
-		
 		glStencilFuncSeparate(p_face, _get_stencil_test(p_stencil.test), p_stencil.value, p_stencil.read_mask);
 		p_state_stencil.value = p_stencil.value;
 		p_state_stencil.read_mask = p_stencil.read_mask;
 		p_state_stencil.test = p_stencil.test;
 	}
-	
 	if (p_stencil.write_mask != p_state_stencil.write_mask) {
 		glStencilMaskSeparate(p_face, p_stencil.write_mask);
 		p_state_stencil.write_mask = p_stencil.write_mask;
 	}
-	
 	if (p_stencil.pass != p_state_stencil.pass ||
 		p_stencil.fail_depth != p_state_stencil.fail_depth ||
 		p_stencil.fail_stencil != p_state_stencil.fail_stencil) {
