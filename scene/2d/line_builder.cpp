@@ -764,7 +764,6 @@ void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float a
 		angle_step = -angle_step;
 
 	float t = Vector2(1, 0).angle_to(vbegin);
-	const float end_angle = t + angle_delta;
 	const float half_angle = angle_delta / 2;
 	const float tt_begin = -Math_PI / 2.f;
 
@@ -815,7 +814,6 @@ void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float a
 	};
 
 	const Vector2 ho = Vector2(cos(half_angle), sin(half_angle)); // half arc unit vector
-	const Vector2 top = center + ho * radius; // top point of arc
 
 	// First arc vertice
 	Vector2 last_so = center + Vector2(Math::cos(t), Math::sin(t)) * radius;
@@ -828,7 +826,7 @@ void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float a
 
 	int seg_index = 0, seg_step = 1;
 	Vector2 half_s = center + ho * segs[seg_index]; // band along the half arc
-	for (int ti = 1; ti < steps + 1; ++ti, t+=angle_step) {
+	for (int ti = 1; ti < steps + 1; ++ti, t += angle_step) {
 		print_line(vformat("ti %d t %f seg_index %d seg_step %d",ti,t,seg_index,seg_step));
 		const Vector2 so = center + Vector2(Math::cos(t), Math::sin(t)) * radius;
 		const Vector2 ro(radius * seg_step, 0); // -radius or radius vector
