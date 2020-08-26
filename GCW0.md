@@ -79,7 +79,7 @@ To simplify toolchain configuration I have added gcw0 configuration as another d
 
 ### Build script
 
-Having a build image in place we can build an application (eg. using ```build_gcw0.sh``` script):
+Having a build image in place we can build an application (eg. using ```(build_gcw0.sh)[https://github.com/ppiecuch/godot/blob/master/build_gcw0.sh]``` script):
 
 ```
 #!/bin/bash
