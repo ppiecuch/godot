@@ -231,8 +231,8 @@ PoolByteArray Cripter::decrypt_byte_CBC(const PoolByteArray p_input, const Strin
 	//Preparing buffer **
 	int data_len = p_input.size() - 1;
 	int zeros = p_input[data_len];
-	uint8_t input[data_len];
-	uint8_t output[data_len];
+	std::vector<uint8_t> input(data_len);
+	std::vector<uint8_t> output(data_len);
 	char erro[150];
 	for (int g = 0; g < data_len; g++) {
 		input[g] = (uint8_t)p_input[g];
@@ -246,14 +246,14 @@ PoolByteArray Cripter::decrypt_byte_CBC(const PoolByteArray p_input, const Strin
 		mbedtls_strerror( _err, erro, sizeof(erro) );
 		print_error( erro );
 	}
-	_err = mbedtls_aes_crypt_cbc( &ctx, MBEDTLS_AES_DECRYPT, data_len, iv, input, output);
+	_err = mbedtls_aes_crypt_cbc( &ctx, MBEDTLS_AES_DECRYPT, data_len, iv, input.data(), output.data());
 	if( _err != 0) {
 		mbedtls_strerror( _err, erro, sizeof(erro) );
 		print_error( erro );
 	}
 	mbedtls_aes_free( &ctx );
 	//Fit data **
-	return char2pool(output, (sizeof(output) - zeros)); //No more extra zeros here
+	return char2pool(output.data(), (output.size() - zeros)); //No more extra zeros here
 }
 
 
@@ -261,7 +261,7 @@ PoolByteArray Cripter::decrypt_byte_CBC(const PoolByteArray p_input, const Strin
 PoolByteArray Cripter::encrypt_byte_RSA(const PoolByteArray p_input, String p_key_path) const {
 	int _err;
 	//--- Load key
-	char key[p_key_path.length()+1];
+	std::vector<char> key(p_key_path.length()+1);
 	for (int i = 0; i < p_key_path.length(); i++) {
 		key[i] = p_key_path[i];
 	}
@@ -293,7 +293,7 @@ PoolByteArray Cripter::encrypt_byte_RSA(const PoolByteArray p_input, String p_ke
 	}
 
 	//---Encryptation
-	_err = mbedtls_pk_parse_public_keyfile( &pk,  key);
+	_err = mbedtls_pk_parse_public_keyfile( &pk,  key.data());
 	if( _err != 0 ) {
 		mbedtls_strerror( _err, erro, sizeof(erro) );
 		print_error( erro );
@@ -320,7 +320,7 @@ PoolByteArray Cripter::encrypt_byte_RSA(const PoolByteArray p_input, String p_ke
 PoolByteArray Cripter::decrypt_byte_RSA(const PoolByteArray p_input, const String p_key_path, const String p_password) const {
 	int _err;
 	//--- Load key
-	char key[p_key_path.length()+1];
+	std::vector<char> key(p_key_path.length()+1);
 	for (int i = 0; i < p_key_path.length(); i++) {
 		key[i] = p_key_path[i];
 	}
@@ -358,7 +358,7 @@ PoolByteArray Cripter::decrypt_byte_RSA(const PoolByteArray p_input, const Strin
 		print_error( erro );
 	}
 	//---Decryptation **
-	_err = mbedtls_pk_parse_keyfile( &ctx_pk, key, password );
+	_err = mbedtls_pk_parse_keyfile( &ctx_pk, key.data(), password );
 	if( _err != 0 ) {
 		mbedtls_strerror( _err, erro, sizeof(erro) );
 		print_error( erro );
