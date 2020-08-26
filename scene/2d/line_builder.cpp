@@ -108,10 +108,6 @@ static inline void swap(T &a, T &b) {
 	b = tmp;
 }
 
-//static inline real_t frac(const real_t &a) {
-//	return a - int(a);
-//}
-
 static float calculate_total_distance(const Vector<Vector2> &points) {
 	float d = 0.f;
 	for (int i = 1; i < points.size(); ++i) {

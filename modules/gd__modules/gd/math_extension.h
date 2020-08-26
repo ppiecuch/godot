@@ -250,5 +250,3 @@ public:
 
 	_GodotMathExtension();
 };
-
-static _GodotMathExtension *_godot_math_extension = NULL;

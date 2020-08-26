@@ -6065,7 +6065,11 @@ void CanvasItemEditorViewport::_perform_drop_data() {
 		} else {
 			Ref<Texture> texture = Ref<Texture>(Object::cast_to<Texture>(*res));
 			if (texture != NULL && texture.is_valid()) {
-				Node *child, *vector_child = 0;
+#ifdef MODULE_GD_VECTOR_GRAPHICS_ENABLED
+				Node *child = 0, *vector_child = 0;
+#else
+				Node *child = 0;
+#endif
 				if (default_type == "Light2D")
 					child = memnew(Light2D);
 				else if (default_type == "Particles2D")
@@ -6084,7 +6088,6 @@ void CanvasItemEditorViewport::_perform_drop_data() {
 				else
 					child = vector_child = createVectorSprite(texture);  // default
 #else
-
                 else
 					child = memnew(Sprite); // default
 #endif
