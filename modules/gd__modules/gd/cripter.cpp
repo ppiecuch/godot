@@ -108,7 +108,7 @@ PoolByteArray Cripter::decrypt_byte_GCM(const PoolByteArray p_input, const Strin
 	char erro[150];
 	PoolByteArray ret_output;
 	int data_len = p_input.size();
-	uint8_t input[(data_len - TAG_SIZE)];
+	uint8_t input[int32_t(data_len - TAG_SIZE)];
 	uint8_t output[sizeof(input)];
 	PoolVector<uint8_t>::Read r = p_input.read();
 	for (int i = 0; i < (data_len - TAG_SIZE); i++) {
