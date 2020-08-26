@@ -28,7 +28,7 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-/// TODO 
+/// TODO
 /*
    - surface normal rotation as option
    - slope amount
@@ -70,7 +70,7 @@ void VegetationInstance::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "scale_amount"), "set_scale_amount", "get_scale_amount");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "normal"), "set_custom_normal", "get_custom_normal");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "offset"), "set_custom_offset", "get_custom_offset");
-	
+
 
 }
 
@@ -195,13 +195,13 @@ void VegetationInstance::populate(const NodePath& surface_source) {
 		xform.translate(custom_offset);
 
 		Basis post_xform;
-		
+
 		post_xform.rotate(xform.basis.get_axis(0), Math::random(-tilt_random, tilt_random)*Math_PI);
 		post_xform.rotate(xform.basis.get_axis(2), Math::random(-tilt_random, tilt_random)*Math_PI);
 		post_xform.rotate(xform.basis.get_axis(1), Math::random(-rotate_random, rotate_random)*Math_PI);
 		xform.basis = post_xform * xform.basis;
 		//xform.basis.orthonormalize();
-		
+
 
 
 		xform.basis.scale(Vector3(1, 1, 1)*(scale_amount + Math::random(-scale_random, scale_random)));

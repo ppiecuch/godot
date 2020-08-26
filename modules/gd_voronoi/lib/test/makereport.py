@@ -48,18 +48,18 @@ def parse_log(report, reportpath):
                 report['memory'][testname]      = OrderedDict()
                 report['allocations'][testname] = OrderedDict()
                 report['timings'][testname]     = OrderedDict()
-            
+
             if not name in report['timings'][testname]:
                 report['memory'][testname][name]      = list()
                 report['allocations'][testname][name] = list()
                 report['timings'][testname][name]     = list()
-                
+
             if 'used' == tokens[2]:
                 memory      = int(tokens[3])
                 allocations = int(tokens[6])
                 report['memory'][testname][name].append(memory)
                 report['allocations'][testname][name].append(allocations)
-                
+
             else: # timings
                 index       = tokens.index("min:") # avg, median, min, max
                 timing      = float(tokens[index+1])
@@ -75,16 +75,16 @@ def collect_table_data(counts, report, tabledata):
         for testname, results in tests.iteritems():
             if testname in ['title', 'scale', 'unit']:
                 continue
-            
+
             if not category in tabledata:
                 tabledata[category] = OrderedDict()
             if not testname in tabledata[category]:
                 tabledata[category][testname] = OrderedDict()
-            
+
             if not 'counts' in tabledata[category][testname]:
                 tabledata[category][testname]['counts'] = list()
             tabledata[category][testname]['counts'].extend(counts)
-            
+
             for name, values in results.iteritems():
                 if not name in tabledata[category][testname]:
                     tabledata[category][testname][name] = list()
@@ -92,40 +92,40 @@ def collect_table_data(counts, report, tabledata):
                     tabledata[category][testname][name] = values
                     continue
                 tabledata[category][testname][name].extend(values)
-            
+
 
 def make_table_report(data):
     usediff = False
 
     for category, tests in data.iteritems():
-    
+
         totaldiff = 0.0
-    
+
         for testname, results in tests.iteritems():
             if testname in ['title', 'scale', 'formatter', 'unit']:
                 continue
-            
+
             columns = list()
             for name, values in results.iteritems():
                 if len(values) < len(results['counts']):
                     values.extend( (len(results['counts']) - len(values)) * [0.0])
                 columns.append( [name]+values )
-            
+
             formatter = tests['formatter']
             scale = tests['scale']
             title = tests['title']
-            
+
             matrix = zip(*columns)
-            
+
             rows = [list(matrix[0])]
             for row in matrix[1:]:
                 rows.append( [str(row[0])] + map(formatter, map(lambda x: scale * x, row[1:]) ) )
-            
+
             lengths = [0] * len(rows[0])
             for row in rows:
                 for ic, v in enumerate(row):
                     lengths[ic] = max(lengths[ic], len(v))
-            
+
             # header
             headers = []
             headersunderline = []
@@ -136,7 +136,7 @@ def make_table_report(data):
                     headersunderline.append( '-' * (length + 1) + ':' )
                 else:
                     headersunderline.append( '-' * (length + 2) )
-                    
+
             print "## " + title + " " + testname
             print ""
             print '|' + '|'.join(headers) + '|'
@@ -148,23 +148,23 @@ def make_table_report(data):
                     length = lengths[ic]
                     value = v.ljust(length)
                     values.append( ' ' + value + ' ')
-                
+
                 print '|' + '|'.join(values) + '|',
                 if not usediff:
                     print ""
-                
+
                 diff = 0.0
                 if usediff:
                     tokens = values[-1].split()
                     diff = float(tokens[0]) - float(values[-2].split()[0])
                     print diff, tokens[1]
-        
-            if usediff:            
+
+            if usediff:
                 totaldiff += diff
-            
+
             print ""
             print ""
-        
+
         if usediff:
             print "Total diff:", totaldiff
 
@@ -174,7 +174,7 @@ def make_timings_report(input_path):
     report['timings'] = OrderedDict()
     report['memory'] = OrderedDict()
     report['allocations'] = OrderedDict()
-    
+
     report['timings']['title'] = 'Timings (microseconds)'
     report['timings']['scale'] = 1000000.0
     report['timings']['unit']  = 'us'
@@ -184,14 +184,14 @@ def make_timings_report(input_path):
     report['allocations']['title'] = 'Num Allocations'
     report['allocations']['scale'] = 1
     report['allocations']['unit']  = ''
-        
+
     counts = parse_log(report, input_path)
 
     tabledata = OrderedDict()
     tabledata['timings'] = OrderedDict()
     tabledata['memory'] = OrderedDict()
     tabledata['allocations'] = OrderedDict()
-    
+
     collect_table_data(counts, report, tabledata)
 
     #del tabledata['memory']

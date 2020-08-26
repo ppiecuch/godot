@@ -110,7 +110,7 @@ void GDScriptBytecodeExporter::export_bytecode_to_file(String input_script_path,
 	comma1 = true;
 
 	// Godot ClassDB-defined constants
-	
+
 	//populate native classes
 	TRACE("native classes");
 	List<StringName> class_list;

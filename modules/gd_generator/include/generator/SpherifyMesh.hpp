@@ -29,13 +29,13 @@ public:
 			std::move(mesh),
 			[radius, factor] (MeshVertex& value) {
 				 value.position = gml::mix(
-					value.position, 
-					radius * gml::normalize(value.position), 
+					value.position,
+					radius * gml::normalize(value.position),
 					factor
 				);
 				value.normal = gml::normalize(gml::mix(
-					value.normal, 
-					gml::normalize(value.position), 
+					value.normal,
+					gml::normalize(value.position),
 					factor
 				));
 			}

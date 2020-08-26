@@ -754,7 +754,6 @@ void RasterizerCanvasBaseGLES2::_set_stencil_face(GLenum p_face, const ShaderLan
 	if (p_stencil.pass != p_state_stencil.pass ||
 		p_stencil.fail_depth != p_state_stencil.fail_depth ||
 		p_stencil.fail_stencil != p_state_stencil.fail_stencil) {
-		
 		glStencilOpSeparate(p_face,
 							_get_stencil_op(p_stencil.fail_stencil),
 							_get_stencil_op(p_stencil.fail_depth),

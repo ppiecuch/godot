@@ -12,9 +12,9 @@
 class BulletManager;
 
 class BulletManagerBulletType : public Node2D {
-	
+
 	GDCLASS(BulletManagerBulletType, Node2D)
-	
+
 	Ref<Texture> texture;
 	Ref<Texture> normal_map;
 	int vframes = 1;
@@ -43,8 +43,8 @@ class BulletManagerBulletType : public Node2D {
 
 	StringName _body_inout_name = StaticCString::create("_body_inout");
 	StringName _area_inout_name = StaticCString::create("_area_inout");
-	
-	
+
+
 protected:
 	void _notification(int p_what);
 	static void _bind_methods();
@@ -118,9 +118,9 @@ struct BulletManagerBullet {
 
 
 class BulletManager : public Node2D {
-	
+
 	GDCLASS(BulletManager, Node2D)
-	
+
 	Point2 pos;
     Size2 scale;
 	int z_index = 0;
@@ -128,12 +128,12 @@ class BulletManager : public Node2D {
 	//pool of bullets both used and unused bullets
 	Vector<BulletManagerBullet> _bullets;
 	//Active bullets only. A linked list allows constant time deletion in the middle of a list, without changing the order of the elements.
-	List<int> _active_bullets; 
+	List<int> _active_bullets;
 	List<int> _unused_ids; //bullet ids are indices into the bullets vector.
-	
+
 	Map<StringName, BulletManagerBulletType*> types;
 
-	
+
 
 	void set_bounds_margin(float p_bounds_margin);
 	float get_bounds_margin() const;

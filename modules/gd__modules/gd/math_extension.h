@@ -89,7 +89,7 @@ public:
 		else {
 			int rotation = 270.0f;
 
-			if (is_behind == true)
+			if (is_behind)
 				rotation = 90.0f;
 			else
 				rotation = 270.0f;

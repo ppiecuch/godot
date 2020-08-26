@@ -1,20 +1,20 @@
 /**
  * libtween
  * Copyright (C) 2013 libtween authors.
- * 
+ *
  * Based on tween.js Copyright (c) 2010-2012 Tween.js authors.
  * Easing equations Copyright (c) 2001 Robert Penner http://robertpenner.com/easing/
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -133,13 +133,13 @@ double Tween_QuadraticOutEasing(double k) {
 
 double Tween_QuadraticInOutEasing(double k) {
     k *= 2;
-    
+
     if ( k < 1 ) {
         return 0.5 * k * k;
     }
-    
+
     --k;
-    
+
     return - 0.5 * ( k * ( k - 2 ) - 1 );
 }
 
@@ -157,7 +157,7 @@ double Tween_CubicInEasing(double k) {
 
 double Tween_CubicOutEasing(double k) {
     --k;
-    
+
     return k * k * k + 1;
 }
 
@@ -167,13 +167,13 @@ double Tween_CubicOutEasing(double k) {
 
 double Tween_CubicInOutEasing(double k) {
     k *= 2;
-    
+
     if ( k < 1 ) {
         return 0.5 * k * k * k;
     }
-    
+
     k -= 2;
-    
+
     return 0.5 * ( k * k * k + 2 );
 }
 
@@ -191,7 +191,7 @@ double Tween_QuarticInEasing(double k) {
 
 double Tween_QuarticOutEasing(double k) {
     --k;
-    
+
     return 1 - ( k * k * k * k );
 }
 
@@ -201,13 +201,13 @@ double Tween_QuarticOutEasing(double k) {
 
 double Tween_QuarticInOutEasing(double k) {
     k *= 2;
-    
+
     if ( k < 1 ) {
         return 0.5 * k * k * k * k;
     }
-    
+
     k -= 2;
-    
+
     return - 0.5 * ( k * k * k * k - 2 );
 }
 
@@ -225,7 +225,7 @@ double Tween_QuinticInEasing(double k) {
 
 double Tween_QuinticOutEasing(double k) {
     --k;
-    
+
     return k * k * k * k * k + 1;
 }
 
@@ -235,13 +235,13 @@ double Tween_QuinticOutEasing(double k) {
 
 double Tween_QuinticInOutEasing(double k) {
     k *= 2;
-    
+
     if ( k < 1 ) {
         return 0.5 * k * k * k * k * k;
     }
-    
+
     k -= 2;
-    
+
     return 0.5 * ( k * k * k * k * k + 2 );
 }
 
@@ -293,17 +293,17 @@ double Tween_ExponentialInOutEasing(double k) {
     if ( k == 0 ) {
         return 0;
     }
-    
+
     if ( k == 1 ) {
         return 1;
     }
-    
+
     k *= 2;
-    
+
     if ( k < 1 ) {
         return 0.5 * pow( 1024, k - 1 );
     }
-    
+
     return 0.5 * ( - pow( 2, - 10 * ( k - 1 ) ) + 2 );
 }
 
@@ -322,7 +322,7 @@ double Tween_CircularInEasing(double k) {
 
 double Tween_CircularOutEasing(double k) {
     --k;
-    
+
     return sqrt( 1 - ( k * k ) );
 }
 
@@ -332,13 +332,13 @@ double Tween_CircularOutEasing(double k) {
 
 double Tween_CircularInOutEasing(double k) {
     k *= 2;
-    
+
     if ( k < 1 ) {
         return - 0.5 * ( sqrt( 1 - k * k ) - 1);
     }
-    
+
     k -= 2;
-    
+
     return 0.5 * ( sqrt( 1 - k * k) + 1);
 }
 
@@ -350,15 +350,15 @@ double Tween_ElasticInEasing(double k) {
     double s;
     double a = 0.1;
     double p = 0.4;
-    
+
     if ( k == 0 ) {
         return 0;
     }
-    
+
     if ( k == 1 ) {
         return 1;
     }
-    
+
     if ( !a || a < 1 ) {
         a = 1;
         s = p / 4;
@@ -366,9 +366,9 @@ double Tween_ElasticInEasing(double k) {
     else {
         s = p * asin( 1 / a ) / ( 2 * PI );
     }
-    
+
     k -= 1;
-    
+
     return - ( a * pow( 2, 10 * k ) * sin( ( k - s ) * ( 2 * PI ) / p ) );
 }
 
@@ -380,15 +380,15 @@ double Tween_ElasticOutEasing(double k) {
     double s;
     double a = 0.1;
     double p = 0.4;
-    
+
     if ( k == 0 ) {
         return 0;
     };
-    
+
     if ( k == 1 ) {
         return 1;
     }
-    
+
     if ( !a || a < 1 ) {
         a = 1;
         s = p / 4;
@@ -396,7 +396,7 @@ double Tween_ElasticOutEasing(double k) {
     else {
         s = p * asin( 1 / a ) / ( 2 * PI );
     }
-    
+
     return ( a * pow( 2, - 10 * k ) * sin( ( k - s ) * ( 2 * PI ) / p ) + 1 );
 }
 
@@ -408,15 +408,15 @@ double Tween_ElasticInOutEasing(double k) {
     double s;
     double a = 0.1;
     double p = 0.4;
-    
+
     if ( k == 0 ) {
         return 0;
     }
-    
+
     if ( k == 1 ) {
         return 1;
     }
-    
+
     if ( !a || a < 1 ) {
         a = 1;
         s = p / 4;
@@ -424,17 +424,17 @@ double Tween_ElasticInOutEasing(double k) {
     else {
         s = p * asin( 1 / a ) / ( 2 * PI );
     }
-    
+
     k *= 2;
-    
+
     if ( k < 1 ) {
         k -= 1;
-        
+
         return - 0.5 * ( a * pow( 2, 10 * k ) * sin( ( k - s ) * ( 2 * PI ) / p ) );
     }
-    
+
     k -= 1;
-    
+
     return a * pow( 2, -10 * k ) * sin( ( k - s ) * ( 2 * PI ) / p ) * 0.5 + 1;
 }
 
@@ -453,9 +453,9 @@ double Tween_BackInEasing(double k) {
 
 double Tween_BackOutEasing(double k) {
     double s = 1.70158;
-    
+
     --k;
-    
+
     return k * k * ( ( s + 1 ) * k + s ) + 1;
 }
 
@@ -465,15 +465,15 @@ double Tween_BackOutEasing(double k) {
 
 double Tween_BackInOutEasing(double k) {
     double s = 1.70158 * 1.525;
-    
+
     k *= 2;
-    
+
     if ( k < 1 ) {
         return 0.5 * ( k * k * ( ( s + 1 ) * k - s ) );
     }
-    
+
     k -= 2;
-    
+
     return 0.5 * ( k * k * ( ( s + 1 ) * k + s ) + 2 );
 }
 
@@ -495,17 +495,17 @@ double Tween_BounceOutEasing(double k) {
     }
     else if ( k < ( 2 / 2.75 ) ) {
         k -= ( 1.5 / 2.75 );
-        
+
         return 7.5625 * k * k + 0.75;
     }
     else if ( k < ( 2.5 / 2.75 ) ) {
         k -= ( 2.25 / 2.75 );
-        
+
         return 7.5625 * k * k + 0.9375;
     }
 
     k -= ( 2.625 / 2.75 );
-    
+
     return 7.5625 * k * k + 0.984375;
 }
 
@@ -517,6 +517,6 @@ double Tween_BounceInOutEasing(double k) {
     if ( k < 0.5 ) {
         return Tween_BounceInEasing( k * 2 ) * 0.5;
     }
-    
+
     return Tween_BounceOutEasing( k * 2 - 1 ) * 0.5 + 0.5;
 }

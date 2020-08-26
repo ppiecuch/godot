@@ -29,10 +29,10 @@ public:
 	ScalePath(Path path, const gml::dvec3& scale) :
 		transformPath_{
 			std::move(path),
-			[scale] (PathVertex& value) { 
+			[scale] (PathVertex& value) {
 				value.position *= scale;
 				value.tangent = gml::normalize(scale * value.tangent);
-				value.normal = gml::normalize(scale * value.normal);  
+				value.normal = gml::normalize(scale * value.normal);
 			}
 		}
 	{ }

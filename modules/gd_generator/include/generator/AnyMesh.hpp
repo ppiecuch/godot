@@ -18,7 +18,7 @@ namespace generator {
 
 
 /// A type erasing container that can store any mesh.
-class AnyMesh 
+class AnyMesh
 {
 public:
 
@@ -59,11 +59,11 @@ private:
 			return std::unique_ptr<Base>{new Derived{mesh_}};
 		}
 
-		virtual AnyGenerator<Triangle> triangles() const override { 
+		virtual AnyGenerator<Triangle> triangles() const override {
 			return mesh_.triangles();
 		}
 
-		virtual AnyGenerator<MeshVertex> vertices() const override { 
+		virtual AnyGenerator<MeshVertex> vertices() const override {
 			return mesh_.vertices();
 		}
 

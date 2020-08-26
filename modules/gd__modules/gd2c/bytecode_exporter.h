@@ -8,7 +8,7 @@ class GDScriptBytecodeExporter : public Reference {
     GDCLASS(GDScriptBytecodeExporter, Reference)
 public:
     GDScriptBytecodeExporter() {};
-    
+
     void export_bytecode_to_file(String input_script_path, String output_json_path);
 
 protected:

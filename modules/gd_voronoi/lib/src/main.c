@@ -158,7 +158,7 @@ static void Usage()
     printf("\t-h <height>\n");
 }
 
-// Search for any of the common characters: \n,; 
+// Search for any of the common characters: \n,;
 static inline int is_csv(const char* chars, uint32_t len)
 {
     for( uint32_t i = 0; i < len; ++i )
