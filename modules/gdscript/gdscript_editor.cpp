@@ -2978,6 +2978,8 @@ Error GDScriptLanguage::complete_code(const String &p_code, const String &p_path
 			}
 			r_forced = options.size() > 0;
 		} break;
+		case GDScriptParser::COMPLETION_EXTENDS: {
+		} break;
 	}
 
 	for (Map<String, ScriptCodeCompletionOption>::Element *E = options.front(); E; E = E->next()) {
