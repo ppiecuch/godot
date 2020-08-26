@@ -59,7 +59,7 @@ PoolByteArray Cripter::encrypt_byte_GCM(const PoolByteArray p_input, const Strin
 	uint8_t tag[TAG_SIZE];
 	//Prepare Addicional Data
 	int add_len = p_add.length();
-	uint8_t add[add_len];
+	std::vector<uint8_t> add(add_len);
 	for (int i = 0; i < add_len; i++) {
 		add[i] = p_add[i];
 	}
@@ -77,7 +77,7 @@ PoolByteArray Cripter::encrypt_byte_GCM(const PoolByteArray p_input, const Strin
 		}
 	}
 	else {
-		_err = mbedtls_gcm_crypt_and_tag(&ctx, MBEDTLS_GCM_ENCRYPT, input.size(), iv, EXT_SIZE, add, add_len, input.data(), output.data(), TAG_SIZE, tag);
+		_err = mbedtls_gcm_crypt_and_tag(&ctx, MBEDTLS_GCM_ENCRYPT, input.size(), iv, EXT_SIZE, add.data(), add_len, input.data(), output.data(), TAG_SIZE, tag);
 		if( _err != 0) {
 			mbedtls_strerror( _err, erro, sizeof(erro) );
 			print_error( erro );
@@ -108,9 +108,9 @@ PoolByteArray Cripter::decrypt_byte_GCM(const PoolByteArray p_input, const Strin
 	//Preparing Buffer
 	char erro[150];
 	PoolByteArray ret_output;
-	uint32_t data_len = p_input.size();
-	uint8_t input[(data_len - TAG_SIZE)];
-	uint8_t output[sizeof(input)];
+	int data_len = p_input.size();
+	std::vector<uint8_t> input(data_len - TAG_SIZE);
+	std::vector<uint8_t> output(data_len - TAG_SIZE);
 	PoolVector<uint8_t>::Read r = p_input.read();
 	for (int i = 0; i < (data_len - TAG_SIZE); i++) {
 		input[i] = (uint8_t)p_input[i];
@@ -135,14 +135,14 @@ PoolByteArray Cripter::decrypt_byte_GCM(const PoolByteArray p_input, const Strin
 	mbedtls_gcm_setkey(&ctx, MBEDTLS_CIPHER_ID_AES, key, 256);
 
 	if (add_len == 0) {
-		_err = mbedtls_gcm_auth_decrypt(&ctx, sizeof(input), iv, EXT_SIZE, NULL, 0, tag, TAG_SIZE, input, output);
+		_err = mbedtls_gcm_auth_decrypt(&ctx, input.size(), iv, EXT_SIZE, NULL, 0, tag, TAG_SIZE, input.data(), output.data());
 		if( _err != 0) {
 			mbedtls_strerror( _err, erro, sizeof(erro) );
 			print_error( erro );
 		}
 	}
 	else {
-		_err = mbedtls_gcm_auth_decrypt(&ctx, sizeof(input), iv, EXT_SIZE, add, add_len, tag, TAG_SIZE, input, output);
+		_err = mbedtls_gcm_auth_decrypt(&ctx, input.size(), iv, EXT_SIZE, add, add_len, tag, TAG_SIZE, input.data(), output.data());
 		if( _err != 0) {
 		mbedtls_strerror( _err, erro, sizeof(erro) );
 		print_error( erro );
@@ -151,7 +151,7 @@ PoolByteArray Cripter::decrypt_byte_GCM(const PoolByteArray p_input, const Strin
 
 	//Ending
 	mbedtls_gcm_free( &ctx );
-	return char2pool(output, sizeof(output));
+	return char2pool(output.data(), output.size());
 }
 
 
