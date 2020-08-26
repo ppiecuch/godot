@@ -726,7 +726,7 @@ def get_compiler_architecture(env):
             return None
     else:  # TODO: Implement for MSVC
         return None
-	return next(iter(arch.split("-")), None)
+    return next(iter(arch.split("-")), None)
 
 
 def using_gcc(env):
