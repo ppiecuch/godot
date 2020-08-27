@@ -36,12 +36,12 @@
 #ifndef UUID_07E9B812BFC543378AA70B7963B4EBDC
 #define UUID_07E9B812BFC543378AA70B7963B4EBDC
 
+#include "_util.hpp"
 #include "intersect.hpp"
 #include "mat.hpp"
 #include "quaternion.hpp"
 #include "spline.hpp"
 #include "texture.hpp"
-#include "util.hpp"
 #include "vec.hpp"
 
 #endif
