@@ -101,7 +101,9 @@ def CompilationDbEntryAction(target, source, env, **kw):
     """
 
     command = env["__COMPILATIONDB_UACTION"].strfunction(
-        target=env["__COMPILATIONDB_UTARGET"], source=env["__COMPILATIONDB_USOURCE"], env=env["__COMPILATIONDB_ENV"],
+        target=env["__COMPILATIONDB_UTARGET"],
+        source=env["__COMPILATIONDB_USOURCE"],
+        env=env["__COMPILATIONDB_ENV"],
     )
 
     entry = {
@@ -151,7 +153,12 @@ def generate(env, **kwargs):
         # used to auto ignore header files
         if suffix in builder.emitter:
             emitter = builder.emitter[suffix]
-            builder.emitter[suffix] = SCons.Builder.ListEmitter([emitter, makeEmitCompilationDbEntry(command),])
+            builder.emitter[suffix] = SCons.Builder.ListEmitter(
+                [
+                    emitter,
+                    makeEmitCompilationDbEntry(command),
+                ]
+            )
 
     env["BUILDERS"]["__COMPILATIONDB_Entry"] = SCons.Builder.Builder(
         action=SCons.Action.Action(CompilationDbEntryAction, None),

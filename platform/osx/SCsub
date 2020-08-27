@@ -21,7 +21,7 @@ if (env["debug_symbols"] == "full" or env["debug_symbols"] == "yes") and env["se
     env.AddPostAction(prog, run_in_subprocess(platform_osx_builders.make_debug_osx))
 
 try:
-    env.XcodeProject('../../Godot.xcodeproj', products=prog)
+    env.XcodeProject("../../Godot.xcodeproj", products=prog)
 except AttributeError:
     # No xcode tool builder
     pass

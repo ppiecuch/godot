@@ -4,9 +4,16 @@
 
 set -uo pipefail
 
+find=find
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    if [ -e "/opt/local/libexec/gnubin/find" ]; then
+        find="/opt/local/libexec/gnubin/find"
+    fi
+fi
+
 # Apply black.
 echo -e "Formatting Python files..."
-PY_FILES=$(find \( -path "./.git" \
+PY_FILES=$($find \( -path "./.git" \
                 -o -path "./thirdparty" \
                 \) -prune \
                 -o \( -name "SConstruct" \
