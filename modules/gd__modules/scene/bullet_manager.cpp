@@ -516,7 +516,7 @@ int BulletManager::add_bullet(StringName type_name, Vector2 position, real_t ang
 		_unused_ids.pop_front();
 		bullet = &_bullets.write[id];
 	}
-	ERR_FAIL_COND_V(_active_bullets.size() >= _bullets.size(), NULL);
+	ERR_FAIL_COND_V(_active_bullets.size() >= _bullets.size(), 0);
 	bullet->type = type;
 	bullet->set_angle(angle); //the set_angle function also rotates the matrix if rotate_physics is true for the bullet type.
 	bullet->speed = speed;
