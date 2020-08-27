@@ -10,7 +10,24 @@
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
-/* "Software"), to deal in t
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 he Software without restriction, including   */
 /* without limitation the rights to use, copy, modify, merge, publish,   */
 /* distribute, sublicense, and/or sell copies of the Software, and to    */
@@ -37,36 +54,35 @@ he Software without restriction, including   */
 #include "scene/resources/texture.h"
 
 struct CharTransform {
-    // tex and dest are normalized coordinates rect: (0,0),[1,1]
-    // since we donot know the size of the characters
-    struct {
-        Vector2 offset;
-        Vector2 scale;
-    } dest;
-    struct {
-        Vector2 offset;
-        Rect2 clip;
-    } tex;
-    CharTransform() : dest({Vector2(0,0),Vector2(1,1)}),tex({Vector2(0,0),Rect2(1,1,1,1)}) {
-        // initial null transformation
-    }
-    Rect2 xform_tex(const Rect2 &rc) const {
-        return Rect2(rc.position + tex.offset * rc.position, rc.size)
-        .clip( Rect2(tex.clip.position * rc.position, tex.clip.size * rc.size) );
-    }
-    Rect2 xform_dest(const Rect2 &rc, float ascent, float vrotation_offset) const {
-        return Rect2(rc.position
-            + (scale_width?Vector2(0,0):(dest.offset*rc.size))
-            // align vert. rotation to one line (otherwise rot. happens in the middle of the letter bitmap).
-            // TODO: it is kind of magic at the moment
-            + (align_vrotation?Vector2(0, (align_vrotation_factor*ascent+vrotation_offset) * (1-dest.scale.y)):Vector2(0,0))
-            , rc.size * dest.scale);
-    }
-    bool scale_width = false;
-    bool align_vrotation = false;
-    real_t align_vrotation_factor = 0.5;
+	// tex and dest are normalized coordinates rect: (0,0),[1,1]
+	// since we donot know the size of the characters
+	struct {
+		Vector2 offset;
+		Vector2 scale;
+	} dest;
+	struct {
+		Vector2 offset;
+		Rect2 clip;
+	} tex;
+	CharTransform() :
+			dest({ Vector2(0, 0), Vector2(1, 1) }), tex({ Vector2(0, 0), Rect2(1, 1, 1, 1) }) {
+		// initial null transformation
+	}
+	Rect2 xform_tex(const Rect2 &rc) const {
+		return Rect2(rc.position + tex.offset * rc.position, rc.size)
+				.clip(Rect2(tex.clip.position * rc.position, tex.clip.size * rc.size));
+	}
+	Rect2 xform_dest(const Rect2 &rc, float ascent, float vrotation_offset) const {
+		return Rect2(rc.position + (scale_width ? Vector2(0, 0) : (dest.offset * rc.size))
+							 // align vert. rotation to one line (otherwise rot. happens in the middle of the letter bitmap).
+							 // TODO: it is kind of magic at the moment
+							 + (align_vrotation ? Vector2(0, (align_vrotation_factor * ascent + vrotation_offset) * (1 - dest.scale.y)) : Vector2(0, 0)),
+				rc.size * dest.scale);
+	}
+	bool scale_width = false;
+	bool align_vrotation = false;
+	real_t align_vrotation_factor = 0.5;
 };
-
 
 class Font : public Resource {
 

@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  mat.hpp                                                              */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 // Copyright 2015 Markus Ilmola
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE.txt or copy at
@@ -6,18 +36,16 @@
 #ifndef UUID_8B39B0365617488895EAC6FEC2A32C6E
 #define UUID_8B39B0365617488895EAC6FEC2A32C6E
 
-
 #include <assert.h>
-#include <iostream>
 #include <cmath>
+#include <iostream>
 #include <sstream>
 #include <string>
 
-#include "vec.hpp"
 #include "quaternion.hpp"
+#include "vec.hpp"
 
 namespace gml {
-
 
 /**
  * A matrix with C Columns and R rows
@@ -27,7 +55,6 @@ namespace gml {
 template <typename T, int C, int R>
 class mat {
 public:
-
 	static_assert(C > 0, "Columns must be greater than zero!");
 	static_assert(R > 0, "Rows must be greater than zero!");
 
@@ -35,26 +62,26 @@ public:
 	using value_type = T;
 
 	/// Initialize all components to zero.
-	mat() { }
+	mat() {}
 
 	/// Initialize the diagonal to given value and 0 elsewhere
-	explicit mat(const T& a) {
-		for (int i = 0; i < std::min(C, R); ++i) data_[i][i] = a;
+	explicit mat(const T &a) {
+		for (int i = 0; i < std::min(C, R); ++i)
+			data_[i][i] = a;
 	}
 
 	/// Initialize all columns to v.
-	explicit mat(const vec<T, R>& v) {
-		for (int i = 0; i < C; ++i) data_[i] = v;
+	explicit mat(const vec<T, R> &v) {
+		for (int i = 0; i < C; ++i)
+			data_[i] = v;
 	}
 
 	/// Initialize from C column vectors with R components each.
 	template <
-		typename... Args,
-		typename std::enable_if<C == sizeof...(Args), int>::type = 0
-	>
-	mat(const Args&... args) :
-		data_{ args... }
-	{
+			typename... Args,
+			typename std::enable_if<C == sizeof...(Args), int>::type = 0>
+	mat(const Args &... args) :
+			data_{ args... } {
 		static_assert(sizeof...(args) == C, "Invalid number of arguments!");
 	}
 
@@ -63,14 +90,13 @@ public:
 	/// If data is null assertion error will occur.
 	/// @param data Pointer to the first element.
 	/// @param columnMajor Are the components in the input in column major order
-	mat(const T* data, bool columnMajor) {
-		assert( data != nullptr );
+	mat(const T *data, bool columnMajor) {
+		assert(data != nullptr);
 		if (columnMajor) {
 			for (int i = 0; i < C; ++i) {
 				data_[i] = vec<T, R>(&data[i * R]);
 			}
-		}
-		else {
+		} else {
 			for (int i = 0; i < C; ++i) {
 				for (int j = 0; j < R; ++j) {
 					data_[i][j] = data[j * C + i];
@@ -82,12 +108,11 @@ public:
 	/// Initialize from a smaller matrix by adding given value to the diagonal
 	/// and zero elsewhere.
 	template <
-		int CC, int RR,
-		typename std::enable_if<(CC < C || RR < R), int>::type = 0
-	>
-	explicit mat(const mat<T, CC, RR>& m, const T& a = T{0}) {
+			int CC, int RR,
+			typename std::enable_if<(CC < C || RR < R), int>::type = 0>
+	explicit mat(const mat<T, CC, RR> &m, const T &a = T{ 0 }) {
 		for (int i = 0; i < std::min(C, CC); ++i) {
-			data_[i] = vec<T, R>{m[i]};
+			data_[i] = vec<T, R>{ m[i] };
 		}
 		for (int i = std::min(CC, RR); i < std::min(C, R); ++i) {
 			data_[i][i] = a;
@@ -96,64 +121,66 @@ public:
 
 	/// Initialize from bigger matrix by dropping trailing rows and columns.
 	template <
-		int CC, int RR,
-		typename std::enable_if<((CC != C || RR != R) && CC >= C && RR >= R), int>::type = 0
-	>
-	explicit mat(const mat<T, CC, RR>& m) {
-		for (int i = 0; i < C; ++i) data_[i] = vec<T, R>{m[i]};
+			int CC, int RR,
+			typename std::enable_if<((CC != C || RR != R) && CC >= C && RR >= R), int>::type = 0>
+	explicit mat(const mat<T, CC, RR> &m) {
+		for (int i = 0; i < C; ++i)
+			data_[i] = vec<T, R>{ m[i] };
 	}
 
 	/// Creates a sub matrix by removing a row and a column
 	/// @param m Input matrix.
 	/// @param col Zero based index of the column to remove
 	/// @param row Zero based index of the row to remove
-	mat(const mat<T, C+1, R+1>& m, int col, int row) {
+	mat(const mat<T, C + 1, R + 1> &m, int col, int row) {
 		assert(col <= C && row <= R);
 		for (int i = 0; i < C; ++i) {
-			if (i < col) data_[i] = vec<T, R>{m[i], row};
-			else data_[i] = vec<T, R>{m[i+1], row};
+			if (i < col)
+				data_[i] = vec<T, R>{ m[i], row };
+			else
+				data_[i] = vec<T, R>{ m[i + 1], row };
 		}
 	}
 
-	mat(const mat&) = default;
+	mat(const mat &) = default;
 
-	mat(mat&&) = default;
+	mat(mat &&) = default;
 
-	mat& operator=(const mat&) = default;
+	mat &operator=(const mat &) = default;
 
-	mat& operator=(mat&&) = default;
+	mat &operator=(mat &&) = default;
 
 	/// Returns a reference to the i:th column vector.
 	/// If i is not in the range [0, C) and assertion failure will occur.
-	const vec<T, R>& operator[](int i) const noexcept {
+	const vec<T, R> &operator[](int i) const noexcept {
 		assert(i >= 0 && i < C);
 		return data_[i];
 	}
 
 	/// Returns a reference to the i:th column vector.
 	/// If i is not in the range [0, C) and assertion failure will occur.
-	vec<T, R>& operator[](int i) noexcept {
+	vec<T, R> &operator[](int i) noexcept {
 		assert(i >= 0 && i < C);
 		return data_[i];
 	}
 
 	/// Component-wise sum
-	mat<T, C, R> operator+(const mat<T, C, R>& m) const {
-		mat<T, C, R> temp{*this};
+	mat<T, C, R> operator+(const mat<T, C, R> &m) const {
+		mat<T, C, R> temp{ *this };
 		temp += m;
 		return temp;
 	}
 
 	/// Component-wise subtraction
-	mat<T, C, R> operator-(const mat<T, C, R>& m) const {
-		mat<T, C, R> temp{*this};
+	mat<T, C, R> operator-(const mat<T, C, R> &m) const {
+		mat<T, C, R> temp{ *this };
 		temp -= m;
 		return temp;
 	}
 
 	/// Returns the product of matrices
-	template<int N>
-	mat<T, N, R> operator*(const mat<T, N, C>& m) const {
+	template <int N>
+	mat<T, N, R> operator*(const mat<T, N, C> &m) const {
 		mat<T, N, R> temp;
 		for (int i = 0; i < N; ++i) {
 			for (int r = 0; r < R; ++r) {
@@ -167,7 +194,7 @@ public:
 
 	/// The product of a matrix and a vector as if the vector was a column of a matrix.
 	/// Note: you can't multiply 4x4-matrix and 3-vector. Use transform instead.
-	vec<T, R> operator*(const vec<T, C>& v) const {
+	vec<T, R> operator*(const vec<T, C> &v) const {
 		vec<T, R> temp;
 		for (int r = 0; r < R; ++r) {
 			for (int c = 0; c < C; ++c) {
@@ -178,14 +205,14 @@ public:
 	}
 
 	/// Returns the product of a matrix and a scalar
-	mat<T, C, R> operator*(const T& a) const {
-		mat<T, C, R> temp{*this};
+	mat<T, C, R> operator*(const T &a) const {
+		mat<T, C, R> temp{ *this };
 		temp *= a;
 		return temp;
 	}
 
 	/// Component-wise sum
-	mat<T, C, R>& operator+=(const mat<T, C, R>& m) {
+	mat<T, C, R> &operator+=(const mat<T, C, R> &m) {
 		for (int i = 0; i < C; ++i) {
 			data_[i] += m.data_[i];
 		}
@@ -193,7 +220,7 @@ public:
 	}
 
 	/// Component wise subtraction
-	mat<T, C, R>& operator-=(const mat<T, C, R>& m) {
+	mat<T, C, R> &operator-=(const mat<T, C, R> &m) {
 		for (int i = 0; i < C; ++i) {
 			data_[i] -= m.data_[i];
 		}
@@ -201,7 +228,7 @@ public:
 	}
 
 	/// Same as M = M * a
-	mat<T, C, R>& operator*=(const T& a) {
+	mat<T, C, R> &operator*=(const T &a) {
 		for (int i = 0; i < C; ++i) {
 			data_[i] *= a;
 		}
@@ -209,13 +236,13 @@ public:
 	}
 
 	/// Same as M = M * m
-	mat<T, C, R>& operator*=(const mat<T, C, R>& m) {
+	mat<T, C, R> &operator*=(const mat<T, C, R> &m) {
 		*this = *this * m;
 		return *this;
 	}
 
 	/// Matrices are equal if all corresponding components are equal.
-	bool operator==(const mat<T, C, R>& m) const {
+	bool operator==(const mat<T, C, R> &m) const {
 		for (int i = 0; i < C; ++i) {
 			if (data_[i] != m.data_[i]) return false;
 		}
@@ -223,7 +250,7 @@ public:
 	}
 
 	/// Matrices are not equal if any of the corresponding components are not equal
-	bool operator!=(const mat<T, C, R>& m) const {
+	bool operator!=(const mat<T, C, R> &m) const {
 		for (int i = 0; i < C; ++i) {
 			if (data_[i] != m.data_[i]) return true;
 		}
@@ -232,7 +259,7 @@ public:
 
 	/// Returns pointer to the first component.
 	/// The matrix data is in column major order
-	const T* data() const noexcept { return data_[0].data(); }
+	const T *data() const noexcept { return data_[0].data(); }
 
 	/// Returns the number of columns in the matrix
 	/// (NOT the number of components)
@@ -240,23 +267,20 @@ public:
 	static int size() noexcept { return C; }
 
 	/// Iterator to the first column
-	vec<T, R>* begin() noexcept { return data_; }
-	const vec<T, R>* begin() const noexcept { return data_; }
+	vec<T, R> *begin() noexcept { return data_; }
+	const vec<T, R> *begin() const noexcept { return data_; }
 
 	/// Iterator to the one past the last column
-	vec<T, R>* end() noexcept { return data_ + C; }
-	const vec<T, R>* end() const noexcept { return data_ + C; }
+	vec<T, R> *end() noexcept { return data_ + C; }
+	const vec<T, R> *end() const noexcept { return data_ + C; }
 
 private:
-
 	vec<T, R> data_[C];
-
 };
-
 
 /// Multiplies all components of the matrix with a scalar
 template <typename T, int C, int R>
-mat<T, C, R> operator*(const T& a, const mat<T, C, R>& m) {
+mat<T, C, R> operator*(const T &a, const mat<T, C, R> &m) {
 	mat<T, C, R> temp;
 	for (int i = 0; i < C; ++i) {
 		temp[i] = a * m[i];
@@ -264,10 +288,9 @@ mat<T, C, R> operator*(const T& a, const mat<T, C, R>& m) {
 	return temp;
 }
 
-
 /// Prints the matrix to a stream inside brackets columns separated by a comma.
 template <typename T, int C, int R>
-std::ostream& operator<<(std::ostream& os, const mat<T, C, R>& m) {
+std::ostream &operator<<(std::ostream &os, const mat<T, C, R> &m) {
 	os << '(';
 	for (int i = 0; i < C; ++i) {
 		if (i > 0) os << ',';
@@ -277,11 +300,10 @@ std::ostream& operator<<(std::ostream& os, const mat<T, C, R>& m) {
 	return os;
 }
 
-
 /// Read matrix from a stream.
 /// The matrix must be inside brackets columns separeted by a comma.
 template <typename T, int C, int R>
-std::istream& operator>>(std::istream& is, mat<T, C, R>& m) {
+std::istream &operator>>(std::istream &is, mat<T, C, R> &m) {
 	char tmp;
 	is >> tmp;
 	for (int i = 0; i < C; ++i) {
@@ -291,32 +313,29 @@ std::istream& operator>>(std::istream& is, mat<T, C, R>& m) {
 	return is;
 }
 
-
 /// Converts a mat to std::string.
 template <typename T, int C, int R>
-std::string to_string(const mat<T, C, R>& m) {
+std::string to_string(const mat<T, C, R> &m) {
 	std::stringstream ss{};
 	ss << m;
 	return ss.str();
 }
 
-
 /// Returns the transpose of the matrix.
 template <typename T, int C, int R>
-mat<T, R, C> transpose(const mat<T, C, R>& m) {
+mat<T, R, C> transpose(const mat<T, C, R> &m) {
 	mat<T, R, C> temp;
 	for (int i = 0; i < C; ++i) { // C
-		for (int j = 0; j < R; ++j) {  // R
+		for (int j = 0; j < R; ++j) { // R
 			temp[j][i] = m[i][j];
 		}
 	}
 	return temp;
 }
 
-
 /// Component wise multiplication of matrices
 template <typename T, int C, int R>
-mat<T, C, R> matrixCompMult(const mat<T, C, R>& m1, const mat<T, C, R>& m2) {
+mat<T, C, R> matrixCompMult(const mat<T, C, R> &m1, const mat<T, C, R> &m2) {
 	mat<T, C, R> temp;
 	for (int i = 0; i < C; ++i) {
 		temp[i] = m1[i] * m2[i];
@@ -324,10 +343,9 @@ mat<T, C, R> matrixCompMult(const mat<T, C, R>& m1, const mat<T, C, R>& m2) {
 	return temp;
 }
 
-
 /// Treats the first vector as matrix with one column and second as matrix with one row
 template <typename T, int C, int R>
-mat<T, C, R> outerProduct(const vec<T, R>& v1, const vec<T, C>& v2) {
+mat<T, C, R> outerProduct(const vec<T, R> &v1, const vec<T, C> &v2) {
 	mat<T, C, R> temp;
 	for (int i = 0; i < C; ++i) {
 		for (int j = 0; j < R; ++j) {
@@ -337,106 +355,97 @@ mat<T, C, R> outerProduct(const vec<T, R>& v1, const vec<T, C>& v2) {
 	return temp;
 }
 
-
 /// Computes the determinant of a matrix
 template <typename T, int N>
-T determinant(const mat<T, N, N>& m) {
+T determinant(const mat<T, N, N> &m) {
 	T det = 0;
 	for (int i = 0; i < N; ++i) {
 		if (i % 2 == 0)
-			det += m[i][0] * determinant(mat<T, N-1, N-1>{m, i, int{0}});
+			det += m[i][0] * determinant(mat<T, N - 1, N - 1>{ m, i, int{ 0 } });
 		else
-			det -= m[i][0] * determinant(mat<T, N-1, N-1>{m, i, int{0}});
+			det -= m[i][0] * determinant(mat<T, N - 1, N - 1>{ m, i, int{ 0 } });
 	}
 	return det;
 }
 
-
 /// Computes the determinant of a 1x1 matrix
 template <typename T>
-T determinant(const mat<T, 1, 1>& m) {
+T determinant(const mat<T, 1, 1> &m) {
 	return m[0][0];
 }
 
-
 /// Computes the determinant of a 2x2 matrix
 template <typename T>
-T determinant(const mat<T, 2, 2>& m) {
+T determinant(const mat<T, 2, 2> &m) {
 	return m[0][0] * m[1][1] - m[1][0] * m[0][1];
 }
 
-
 /// Computes the inverse of a matrix
 template <typename T, int N>
-mat<T, N, N> inverse(const mat<T, N, N>& m) {
+mat<T, N, N> inverse(const mat<T, N, N> &m) {
 	mat<T, N, N> temp;
 	const T a = determinant(m);
 	for (int i = 0; i < N; ++i) {
 		for (int j = 0; j < N; ++j) {
 			if ((i + j) % 2 == 0)
-				temp[j][i] = determinant(mat<T, N-1, N-1>{m, i, j}) / a;
+				temp[j][i] = determinant(mat<T, N - 1, N - 1>{ m, i, j }) / a;
 			else
-				temp[j][i] = -determinant(mat<T, N-1, N-1>{m, i, j}) / a;
+				temp[j][i] = -determinant(mat<T, N - 1, N - 1>{ m, i, j }) / a;
 		}
 	}
 	return temp;
 }
 
-
 /// Computes the inverse of a 1x1 matrix
 template <typename T>
-mat<T, 1, 1> inverse(const mat<T, 1, 1>& m) {
-	return mat<T, 1, 1>{T{1} / m[0][0]};
+mat<T, 1, 1> inverse(const mat<T, 1, 1> &m) {
+	return mat<T, 1, 1>{ T{ 1 } / m[0][0] };
 }
-
 
 /// Generates a translation matrix so that transform(translate(v), p) = p + v
 /// This the same matrix that would generated by glTranslate
 template <typename T, int N>
-mat<T, N+1, N+1> translate(const vec<T, N>& v) {
-	mat<T, N+1, N+1> result{T{1}};
+mat<T, N + 1, N + 1> translate(const vec<T, N> &v) {
+	mat<T, N + 1, N + 1> result{ T{ 1 } };
 	for (int i = 0; i < N; ++i) {
 		result[N][i] = v[i];
 	}
 	return result;
 }
 
-
 /// Generates a scaling matrix so that transform(scale(v), p) = v * p
 /// This the same matrix that would generated by glScale
 template <typename T, int N>
-mat<T, N+1, N+1> scale(const vec<T, N>& v) {
-	mat<T, N+1, N+1> result{T{1}};
+mat<T, N + 1, N + 1> scale(const vec<T, N> &v) {
+	mat<T, N + 1, N + 1> result{ T{ 1 } };
 	for (int i = 0; i < N; ++i) {
 		result[i][i] = v[i];
 	}
 	return result;
 }
 
-
 /// Generates rotations matrix so that
 template <typename T>
-mat<T, 3, 3> rotate(const T& angle) {
-	using std::sin;
+mat<T, 3, 3> rotate(const T &angle) {
 	using std::cos;
+	using std::sin;
 
 	const T s = sin(angle);
 	const T c = cos(angle);
 
 	const T data[9] = {
-		c,    -s,    T{0},
-		s,     c,    T{0},
-		T{0},  T{0}, T{1}
+		c, -s, T{ 0 },
+		s, c, T{ 0 },
+		T{ 0 }, T{ 0 }, T{ 1 }
 	};
-	return mat<T, 3, 3>{data, false};
+	return mat<T, 3, 3>{ data, false };
 }
-
 
 /// Generates rotation matrix from Eular angles
 template <typename T>
-mat<T, 4, 4> rotate(const vec<T, 3>& angle) {
-	using std::sin;
+mat<T, 4, 4> rotate(const vec<T, 3> &angle) {
 	using std::cos;
+	using std::sin;
 
 	const T sy = sin(angle[2]);
 	const T cy = cos(angle[2]);
@@ -446,24 +455,23 @@ mat<T, 4, 4> rotate(const vec<T, 3>& angle) {
 	const T cr = cos(angle[0]);
 
 	const T data[16] = {
-		cp * cy, sr * sp * cy + cr * -sy, cr * sp * cy + -sr * -sy, T{0},
-		cp * sy, sr * sp * sy + cr * cy,  cr * sp * sy + -sr * cy,  T{0},
-		-sp,     sr * cp,                 cr * cp,                  T{0},
-		T{0},    T{0},                    T{0},                     T{1}
+		cp * cy, sr * sp * cy + cr * -sy, cr * sp * cy + -sr * -sy, T{ 0 },
+		cp * sy, sr * sp * sy + cr * cy, cr * sp * sy + -sr * cy, T{ 0 },
+		-sp, sr * cp, cr * cp, T{ 0 },
+		T{ 0 }, T{ 0 }, T{ 0 }, T{ 1 }
 	};
-	return mat<T, 4, 4>{data, false};
+	return mat<T, 4, 4>{ data, false };
 }
-
 
 /// Generates rotation matrix from angle and axis
 template <typename T>
-mat<T, 4, 4> rotate(const T& angle, const vec<T, 3>& axis) {
+mat<T, 4, 4> rotate(const T &angle, const vec<T, 3> &axis) {
 	using std::cos;
 	using std::sin;
 
 	const T rcos = cos(angle);
 	const T rsin = sin(angle);
-	const T rcos_1 = T{1} - rcos;
+	const T rcos_1 = T{ 1 } - rcos;
 	const T xz = axis[0] * axis[2];
 	const T yz = axis[1] * axis[2];
 	const T xy = axis[0] * axis[1];
@@ -472,18 +480,17 @@ mat<T, 4, 4> rotate(const T& angle, const vec<T, 3>& axis) {
 	const T zz = axis[2] * axis[2];
 
 	const T data[16] = {
-		rcos + xx * rcos_1,            -axis[2] * rsin + xy * rcos_1, axis[1] * rsin + xz * rcos_1,  T{0},
-		axis[2] * rsin + xy * rcos_1,  rcos + yy * rcos_1,            -axis[0] * rsin + yz * rcos_1, T{0},
-		-axis[1] * rsin + xz * rcos_1, axis[0] * rsin + yz * rcos_1,  rcos + zz * rcos_1,            T{0},
-		T{0},                          T{0},                          T{0},                          T{1}
+		rcos + xx * rcos_1, -axis[2] * rsin + xy * rcos_1, axis[1] * rsin + xz * rcos_1, T{ 0 },
+		axis[2] * rsin + xy * rcos_1, rcos + yy * rcos_1, -axis[0] * rsin + yz * rcos_1, T{ 0 },
+		-axis[1] * rsin + xz * rcos_1, axis[0] * rsin + yz * rcos_1, rcos + zz * rcos_1, T{ 0 },
+		T{ 0 }, T{ 0 }, T{ 0 }, T{ 1 }
 	};
-	return mat<T, 4, 4>{data, false};
+	return mat<T, 4, 4>{ data, false };
 }
-
 
 /// Generates rotation matrix from a rotation quaternion
 template <typename T>
-mat<T, 4, 4> rotate(const quaternion<T>& q) {
+mat<T, 4, 4> rotate(const quaternion<T> &q) {
 
 	const T xx = q.imag[0] * q.imag[0];
 	const T xy = q.imag[0] * q.imag[1];
@@ -496,19 +503,18 @@ mat<T, 4, 4> rotate(const quaternion<T>& q) {
 	const T zw = q.imag[2] * q.real;
 
 	const T data[16] = {
-		T{1} - T{2} * (yy + zz), T{2} * (xy - zw),        T{2} * (xz + yw),        T{0},
-		T{2} * (xy + zw),        T{1} - T{2} * (xx + zz), T{2} * (yz - xw),        T{0},
-		T{2} * (xz - yw),        T{2} * (yz + xw),        T{1} - T{2} * (xx + yy), T{0},
-		T{0},                    T{0},                    T{0},                    T{1}
+		T{ 1 } - T{ 2 } * (yy + zz), T{ 2 } * (xy - zw), T{ 2 } * (xz + yw), T{ 0 },
+		T{ 2 } * (xy + zw), T{ 1 } - T{ 2 } * (xx + zz), T{ 2 } * (yz - xw), T{ 0 },
+		T{ 2 } * (xz - yw), T{ 2 } * (yz + xw), T{ 1 } - T{ 2 } * (xx + yy), T{ 0 },
+		T{ 0 }, T{ 0 }, T{ 0 }, T{ 1 }
 	};
-	return mat<T, 4, 4>{data, false};
+	return mat<T, 4, 4>{ data, false };
 }
-
 
 /// Generates a rotation quaternion from a rotation matrix.
 /// The input matrix is assumed to be a valid rotation matrix.
 template <typename T>
-quaternion<T> qrotate(const mat<T, 4, 4>& m) {
+quaternion<T> qrotate(const mat<T, 4, 4> &m) {
 	using std::sqrt;
 
 	const T t = trace(m);
@@ -517,97 +523,84 @@ quaternion<T> qrotate(const mat<T, 4, 4>& m) {
 	return quaternion<T>{
 		static_cast<T>(0.25) / S,
 		vec<T, 3>{
-			S * (m[1][2] - m[2][1]),
-			S * (m[2][0] - m[0][2]),
-			S * (m[0][1] - m[1][0])
-		}
+				S * (m[1][2] - m[2][1]),
+				S * (m[2][0] - m[0][2]),
+				S * (m[0][1] - m[1][0]) }
 	};
-
 }
-
 
 /// Generates a perspective projection matrix.
 /// This is the same matrix that glFrustum would generate.
 template <typename T>
 mat<T, 4, 4> frustum(
-	const T& left, const T& right, const T& bottom, const T& top,
-	const T& zNear, const T& zFar
-) {
+		const T &left, const T &right, const T &bottom, const T &top,
+		const T &zNear, const T &zFar) {
 	const T dX = right - left;
 	const T dY = top - bottom;
 	const T dZ = zFar - zNear;
 	const T data[16] = {
-		(T{2} * zNear) / dX, T{0},                (right + left) / dX,  T{0},
-		T{0},                (T{2} * zNear) / dY, (top + bottom) / dY,  T{0},
-		T{0},                T{0},                -(zFar + zNear) / dZ, (T{-2} * zFar * zNear) / dZ,
-		T{0},                T{0},                T{-1},                T{0}
+		(T{ 2 } * zNear) / dX, T{ 0 }, (right + left) / dX, T{ 0 },
+		T{ 0 }, (T{ 2 } * zNear) / dY, (top + bottom) / dY, T{ 0 },
+		T{ 0 }, T{ 0 }, -(zFar + zNear) / dZ, (T{ -2 } * zFar * zNear) / dZ,
+		T{ 0 }, T{ 0 }, T{ -1 }, T{ 0 }
 	};
-	return mat<T, 4, 4>{data, false};
+	return mat<T, 4, 4>{ data, false };
 }
-
 
 /// Returns a perspective projection matrix.
 /// This is the same matrix that gluPerspective would generate.
 template <typename T>
 mat<T, 4, 4> perspective(
-	const T& fovy, const T& aspect, const T& zNear, const T& zFar
-) {
+		const T &fovy, const T &aspect, const T &zNear, const T &zFar) {
 	using std::tan;
-	const T ymax = zNear * tan(fovy / T{2});
+	const T ymax = zNear * tan(fovy / T{ 2 });
 	const T ymin = -ymax;
 	const T xmin = ymin * aspect;
 	const T xmax = ymax * aspect;
 	return frustum(xmin, xmax, ymin, ymax, zNear, zFar);
 }
 
-
 /// Returns an orthographic projection matrix
 /// This is the same matrix that glOrtho would generate.
 template <typename T>
 mat<T, 4, 4> ortho(
-	const T& left, const T& right, const T& bottom, const T& top,
-	const T& zNear, const T& zFar
-) {
+		const T &left, const T &right, const T &bottom, const T &top,
+		const T &zNear, const T &zFar) {
 	const T dX = right - left;
 	const T dY = top - bottom;
 	const T dZ = zFar - zNear;
 	const T data[16] = {
-		T{2} / dX, T{0},      T{0},       -(right + left) / dX,
-		T{0},      T{2} / dY, T{0},       -(top + bottom) / dY,
-		T{0},      T{0},      T{-2} / dZ, -(zFar + zNear) / dZ,
-		T{0},      T{0},      T{0},       T{1}
+		T{ 2 } / dX, T{ 0 }, T{ 0 }, -(right + left) / dX,
+		T{ 0 }, T{ 2 } / dY, T{ 0 }, -(top + bottom) / dY,
+		T{ 0 }, T{ 0 }, T{ -2 } / dZ, -(zFar + zNear) / dZ,
+		T{ 0 }, T{ 0 }, T{ 0 }, T{ 1 }
 	};
-	return mat<T, 4, 4>{data, false};
+	return mat<T, 4, 4>{ data, false };
 }
-
 
 /// Returns an orthographic projection matrix
 template <typename T>
 mat<T, 4, 4> ortho2D(
-	const T& left, const T& right, const T& bottom, const T& top
-) {
-	return ortho(left, right, bottom, top, T{-1}, T{1});
+		const T &left, const T &right, const T &bottom, const T &top) {
+	return ortho(left, right, bottom, top, T{ -1 }, T{ 1 });
 }
-
 
 /// Returns same matrix as gluLookAt would generate
 template <typename T>
 mat<T, 4, 4> lookAt(
-	const vec<T, 3>& eye, const vec<T, 3>& center, const vec<T, 3>& up
-) {
+		const vec<T, 3> &eye, const vec<T, 3> &center, const vec<T, 3> &up) {
 	const vec<T, 3> z = normalize(center - eye);
 	const vec<T, 3> x = normalize(cross(z, up));
 	const vec<T, 3> y = cross(x, z);
 
 	const T data[16] = {
-		x[0],  x[1],  x[2],  T{0},
-		y[0],  y[1],  y[2],  T{0},
-		-z[0], -z[1], -z[2], T{0},
-		T{0},  T{0},  T{0},  T{1}
+		x[0], x[1], x[2], T{ 0 },
+		y[0], y[1], y[2], T{ 0 },
+		-z[0], -z[1], -z[2], T{ 0 },
+		T{ 0 }, T{ 0 }, T{ 0 }, T{ 1 }
 	};
-	return mat<T, 4, 4>{data, false} * translate(-eye);
+	return mat<T, 4, 4>{ data, false } * translate(-eye);
 }
-
 
 /// Map object coordinates to window coordinates (same as gluProject).
 /// @param v Object coordinates to project.
@@ -617,13 +610,11 @@ mat<T, 4, 4> lookAt(
 /// @param viewportSize Size of the viewport
 template <typename T, typename TI, typename TS>
 vec<T, 3> project(
-	const vec<T, 3>& v,
-	const mat<T, 4, 4>& modelView, const mat<T, 4, 4>& proj,
-	const vec<TI, 2>& viewportOrigin, const vec<TS, 2>& viewportSize
-) {
+		const vec<T, 3> &v,
+		const mat<T, 4, 4> &modelView, const mat<T, 4, 4> &proj,
+		const vec<TI, 2> &viewportOrigin, const vec<TS, 2> &viewportSize) {
 	return project(v, proj * modelView, viewportOrigin, viewportSize);
 }
-
 
 /// Map object coordinates to window coordinates (same as gluProject).
 /// @param v Object coordinates to project.
@@ -632,11 +623,10 @@ vec<T, 3> project(
 /// @param viewportSize Size of the viewport
 template <typename T, typename TI, typename TS>
 vec<T, 3> project(
-	const vec<T, 3>& v,
-	const mat<T, 4, 4>& modelViewProj,
-	const vec<TI, 2>& viewportOrigin, const vec<TS, 2>& viewportSize
-) {
-	vec<T, 4> in = modelViewProj * vec<T, 4>{v, static_cast<T>(1)};
+		const vec<T, 3> &v,
+		const mat<T, 4, 4> &modelViewProj,
+		const vec<TI, 2> &viewportOrigin, const vec<TS, 2> &viewportSize) {
+	vec<T, 4> in = modelViewProj * vec<T, 4>{ v, static_cast<T>(1) };
 
 	in[0] /= in[3];
 	in[1] /= in[3];
@@ -651,9 +641,8 @@ vec<T, 3> project(
 	in[0] = in[0] * static_cast<T>(viewportSize[0]) + static_cast<T>(viewportOrigin[0]);
 	in[1] = in[1] * static_cast<T>(viewportSize[1]) + static_cast<T>(viewportOrigin[1]);
 
-	return vec<T, 3>{in, 3u};
+	return vec<T, 3>{ in, 3u };
 }
-
 
 /// Map window coordinates to object coordinates (same as gluUnProject).
 /// @param v Window coordinates to map.
@@ -663,13 +652,11 @@ vec<T, 3> project(
 /// @param viewportSize Size of the viewport
 template <typename T, typename TI, typename TS>
 vec<T, 3> unProject(
-	const vec<T, 3>& v,
-	const mat<T, 4, 4>& modelView, const mat<T, 4, 4>& proj,
-	const vec<TI, 2>& viewportOrigin, const vec<TS, 2>& viewportSize
-) {
+		const vec<T, 3> &v,
+		const mat<T, 4, 4> &modelView, const mat<T, 4, 4> &proj,
+		const vec<TI, 2> &viewportOrigin, const vec<TS, 2> &viewportSize) {
 	return unProject(v, inverse(proj * modelView), viewportOrigin, viewportSize);
 }
-
 
 /// Map window coordinates to object coordinates (same as gluUnProject).
 /// @param v Window coordinates to map.
@@ -678,11 +665,10 @@ vec<T, 3> unProject(
 /// @param viewportSize Size of the viewport
 template <typename T, typename TI, typename TS>
 vec<T, 3> unProject(
-	const vec<T, 3>& v,
-	const mat<T, 4, 4>& invModelViewProj,
-	const vec<TI, 2>& viewportOrigin, const vec<TS, 2>& viewportSize
-) {
-	vec<T, 4> in{v, static_cast<T>(1)};
+		const vec<T, 3> &v,
+		const mat<T, 4, 4> &invModelViewProj,
+		const vec<TI, 2> &viewportOrigin, const vec<TS, 2> &viewportSize) {
+	vec<T, 4> in{ v, static_cast<T>(1) };
 
 	in[0] = (in[0] - static_cast<T>(viewportOrigin[0])) / static_cast<T>(viewportSize[0]);
 	in[1] = (in[1] - static_cast<T>(viewportOrigin[1])) / static_cast<T>(viewportSize[1]);
@@ -700,44 +686,39 @@ vec<T, 3> unProject(
 	out[1] /= out[3];
 	out[2] /= out[3];
 
-	return vec<T, 3>{out, 3u};
+	return vec<T, 3>{ out, 3u };
 }
-
 
 /// Multiply 4x4 matrix by 3-vector by adding 1 as last component to the vector.
 template <typename T, int N>
-vec<T, N-1> transform(const mat<T, N, N>& m, const vec<T, N-1>& v) {
-	vec<T, N-1> temp{m[N-1]};
-	for (int c = 0; c < N-1; ++c) {
-		for (int r = 0; r < N-1; ++r) {
+vec<T, N - 1> transform(const mat<T, N, N> &m, const vec<T, N - 1> &v) {
+	vec<T, N - 1> temp{ m[N - 1] };
+	for (int c = 0; c < N - 1; ++c) {
+		for (int r = 0; r < N - 1; ++r) {
 			temp[r] += m[c][r] * v[c];
 		}
 	}
 	return temp;
 }
 
-
 /// Static cast each component from T2 to T1.
 template <typename T1, typename T2, int C, int R>
-mat<T1, C, R> static_mat_cast(const mat<T2, C, R>& m) {
+mat<T1, C, R> static_mat_cast(const mat<T2, C, R> &m) {
 	mat<T1, C, R> temp;
 	for (int i = 0; i < C; ++i)
 		temp[i] = static_vec_cast<T1>(m[i]);
 	return temp;
 }
 
-
-
 /// Returns the trace of a matrix (sum of the diagonal elements).
 template <typename T, int N>
-T trace(const mat<T, N, N>& m) {
+T trace(const mat<T, N, N> &m) {
 	T temp = m[0][0];
 	for (int i = 1; i < N; ++i) {
 		temp += m[i][i];
 	}
 	return temp;
 }
-
 
 typedef mat<float, 2, 2> mat2x2;
 typedef mat<float, 2, 3> mat2x3;
@@ -809,7 +790,6 @@ typedef mat<bool, 2, 2> bmat2;
 typedef mat<bool, 3, 3> bmat3;
 typedef mat<bool, 4, 4> bmat4;
 
-
-}
+} // namespace gml
 
 #endif

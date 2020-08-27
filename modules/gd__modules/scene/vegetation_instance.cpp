@@ -3,10 +3,10 @@
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
-/*                    http://www.godotengine.org                         */
+/*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2016 Juan Linietsky, Ariel Manzur.                 */
-/* Portions: Copyright (c) 2016 Alex Piola                               */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -41,7 +41,6 @@
 
 #include "vegetation_instance.h"
 
-
 void VegetationInstance::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_instance_count", "count"), &VegetationInstance::set_instance_count);
@@ -70,19 +69,14 @@ void VegetationInstance::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "scale_amount"), "set_scale_amount", "get_scale_amount");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "normal"), "set_custom_normal", "get_custom_normal");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "offset"), "set_custom_offset", "get_custom_offset");
-
-
 }
 
-
-
-void VegetationInstance::populate(const NodePath& surface_source) {
+void VegetationInstance::populate(const NodePath &surface_source) {
 
 	Ref<Mesh> mesh;
 	Ref<MultiMesh> old_multimesh;
 	old_multimesh = get_multimesh();
-	if (old_multimesh.is_null())
-	{
+	if (old_multimesh.is_null()) {
 		ERR_PRINT("MultiMeshInstance::_populate: no multimesh on object");
 		return;
 	}
@@ -120,13 +114,11 @@ void VegetationInstance::populate(const NodePath& surface_source) {
 	int gc = geometry.size();
 	PoolVector<Face3>::Write w = geometry.write();
 
-	for (int i = 0; i<gc; i++) {
-		for (int j = 0; j<3; j++) {
+	for (int i = 0; i < gc; i++) {
+		for (int j = 0; j < 3; j++) {
 			w[i].vertex[j] = geom_xform.xform(w[i].vertex[j]);
 		}
 	}
-
-
 
 	w = PoolVector<Face3>::Write();
 
@@ -136,14 +128,13 @@ void VegetationInstance::populate(const NodePath& surface_source) {
 
 	PoolVector<Face3>::Read r = faces.read();
 
-
-
 	float area_accum = 0;
 	Map<float, int> triangle_area_map;
-	for (int i = 0; i<facecount; i++) {
+	for (int i = 0; i < facecount; i++) {
 
-		float area = r[i].get_area();;
-		if (area<CMP_EPSILON)
+		float area = r[i].get_area();
+		;
+		if (area < CMP_EPSILON)
 			continue;
 		triangle_area_map[area_accum] = i;
 		area_accum += area;
@@ -158,19 +149,19 @@ void VegetationInstance::populate(const NodePath& surface_source) {
 
 	Transform axis_xform;
 	if (populate_axis == Vector3::AXIS_Z) {
-		axis_xform.rotate(Vector3(1, 0, 0), Math_PI*0.5);
+		axis_xform.rotate(Vector3(1, 0, 0), Math_PI * 0.5);
 	}
 	if (populate_axis == Vector3::AXIS_X) {
-		axis_xform.rotate(Vector3(0, 0, 1), Math_PI*0.5);
+		axis_xform.rotate(Vector3(0, 0, 1), Math_PI * 0.5);
 	}
 
-	for (int i = 0; i<instance_count; i++) {
+	for (int i = 0; i < instance_count; i++) {
 
 		float areapos = Math::random(0.0f, area_accum);
 
 		Map<float, int>::Element *E = triangle_area_map.find_closest(areapos);
 		ERR_FAIL_COND(!E)
-			int index = E->get();
+		int index = E->get();
 		ERR_FAIL_INDEX(index, facecount);
 
 		// ok FINALLY get face
@@ -184,11 +175,9 @@ void VegetationInstance::populate(const NodePath& surface_source) {
 
 		Transform xform;
 
-		if (Math::abs(custom_normal.length()) > 0.00f)
-		{
+		if (Math::abs(custom_normal.length()) > 0.00f) {
 			normal = custom_normal;
 		}
-
 
 		xform.set_look_at(pos, pos + op_axis, normal);
 		xform = xform * axis_xform;
@@ -196,15 +185,13 @@ void VegetationInstance::populate(const NodePath& surface_source) {
 
 		Basis post_xform;
 
-		post_xform.rotate(xform.basis.get_axis(0), Math::random(-tilt_random, tilt_random)*Math_PI);
-		post_xform.rotate(xform.basis.get_axis(2), Math::random(-tilt_random, tilt_random)*Math_PI);
-		post_xform.rotate(xform.basis.get_axis(1), Math::random(-rotate_random, rotate_random)*Math_PI);
+		post_xform.rotate(xform.basis.get_axis(0), Math::random(-tilt_random, tilt_random) * Math_PI);
+		post_xform.rotate(xform.basis.get_axis(2), Math::random(-tilt_random, tilt_random) * Math_PI);
+		post_xform.rotate(xform.basis.get_axis(1), Math::random(-rotate_random, rotate_random) * Math_PI);
 		xform.basis = post_xform * xform.basis;
 		//xform.basis.orthonormalize();
 
-
-
-		xform.basis.scale(Vector3(1, 1, 1)*(scale_amount + Math::random(-scale_random, scale_random)));
+		xform.basis.scale(Vector3(1, 1, 1) * (scale_amount + Math::random(-scale_random, scale_random)));
 
 		multimesh->set_instance_transform(i, xform);
 		multimesh->set_instance_color(i, Color(1, 1, 1, 1));
@@ -213,10 +200,9 @@ void VegetationInstance::populate(const NodePath& surface_source) {
 	multimesh->get_aabb();
 
 	set_multimesh(multimesh);
-
 }
 
-void VegetationInstance::set_instance_count(const uint16_t& p_instance_count) {
+void VegetationInstance::set_instance_count(const uint16_t &p_instance_count) {
 	instance_count = p_instance_count;
 }
 
@@ -224,7 +210,7 @@ uint16_t VegetationInstance::get_instance_count() const {
 	return instance_count;
 }
 
-void VegetationInstance::set_populate_axis(const uint8_t& p_populate_axis) {
+void VegetationInstance::set_populate_axis(const uint8_t &p_populate_axis) {
 	populate_axis = p_populate_axis;
 }
 
@@ -232,7 +218,7 @@ uint8_t VegetationInstance::get_populate_axis() const {
 	return populate_axis;
 }
 
-void VegetationInstance::set_tilt_random(const float& p_tilt_random) {
+void VegetationInstance::set_tilt_random(const float &p_tilt_random) {
 	tilt_random = p_tilt_random;
 }
 
@@ -240,7 +226,7 @@ float VegetationInstance::get_tilt_random() const {
 	return tilt_random;
 }
 
-void VegetationInstance::set_rotate_random(const float& p_rotate_random) {
+void VegetationInstance::set_rotate_random(const float &p_rotate_random) {
 	rotate_random = p_rotate_random;
 }
 
@@ -248,7 +234,7 @@ float VegetationInstance::get_rotate_random() const {
 	return rotate_random;
 }
 
-void VegetationInstance::set_scale_random(const float& p_scale_random) {
+void VegetationInstance::set_scale_random(const float &p_scale_random) {
 	scale_random = p_scale_random;
 }
 
@@ -256,7 +242,7 @@ float VegetationInstance::get_scale_random() const {
 	return scale_random;
 }
 
-void VegetationInstance::set_scale_amount(const float& p_scale_amount) {
+void VegetationInstance::set_scale_amount(const float &p_scale_amount) {
 	scale_amount = p_scale_amount;
 }
 
@@ -264,7 +250,7 @@ float VegetationInstance::get_scale_amount() const {
 	return scale_amount;
 }
 
-void VegetationInstance::set_custom_normal(const Vector3& p_custom_normal) {
+void VegetationInstance::set_custom_normal(const Vector3 &p_custom_normal) {
 	custom_normal = p_custom_normal;
 }
 
@@ -272,7 +258,7 @@ Vector3 VegetationInstance::get_custom_normal() const {
 	return custom_normal;
 }
 
-void VegetationInstance::set_custom_offset(const Vector3& p_custom_offset) {
+void VegetationInstance::set_custom_offset(const Vector3 &p_custom_offset) {
 	custom_offset = p_custom_offset;
 }
 
@@ -287,12 +273,9 @@ VegetationInstance::VegetationInstance() {
 	scale_random = 0.0f;
 	scale_amount = 1.0f;
 	populate_axis = Vector3::AXIS_Y;
-	custom_normal = Vector3(0.f,0.f,0.f);
+	custom_normal = Vector3(0.f, 0.f, 0.f);
 	custom_offset = Vector3(0.f, 0.f, 0.f);
 }
 
 VegetationInstance::~VegetationInstance() {
-
-
 }
-

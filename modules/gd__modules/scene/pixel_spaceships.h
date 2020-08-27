@@ -1,12 +1,42 @@
+/*************************************************************************/
+/*  pixel_spaceships.h                                                   */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 /* pixel_spaceships.h */
 #pragma once
 
 #ifndef DS_PIXEL_SPACESHIPS_H
 #define DS_PIXEL_SPACESHIPS_H
 
+#include "core/math/math_funcs.h"
 #include "core/reference.h"
 #include "scene/resources/texture.h"
-#include "core/math/math_funcs.h"
 
 typedef Vector<int> MaskData;
 typedef Vector<Color> TextureColors;
@@ -14,8 +44,7 @@ typedef Vector<Color> TextureColors;
 //////////////////////////////////////////////////////////////////////////
 // MASK
 //////////////////////////////////////////////////////////////////////////
-class PixelSpaceshipsMask : public Reference
-{
+class PixelSpaceshipsMask : public Reference {
 	GDCLASS(PixelSpaceshipsMask, Reference);
 
 private:
@@ -25,24 +54,22 @@ private:
 	bool mirrorY;
 
 protected:
-
 	static void _bind_methods();
 
 public:
-
 	MaskData get_data();
-	PixelSpaceshipsMask* set_data(MaskData, Vector2 size = Vector2());
+	PixelSpaceshipsMask *set_data(MaskData, Vector2 size = Vector2());
 	//WHITE = 0; RED = -1; GREEN = 1; BLUE = 2;!!!!!!!!!!
-	PixelSpaceshipsMask* set_data_from_texture(Ref<Texture>);
+	PixelSpaceshipsMask *set_data_from_texture(Ref<Texture>);
 
 	Vector2 get_size();
-	PixelSpaceshipsMask* set_size(Vector2);
+	PixelSpaceshipsMask *set_size(Vector2);
 
 	bool get_mirror_x();
-	PixelSpaceshipsMask* set_mirror_x(bool);
+	PixelSpaceshipsMask *set_mirror_x(bool);
 
 	bool get_mirror_y();
-	PixelSpaceshipsMask* set_mirror_y(bool);
+	PixelSpaceshipsMask *set_mirror_y(bool);
 
 	PixelSpaceshipsMask();
 	~PixelSpaceshipsMask();
@@ -51,9 +78,9 @@ public:
 //////////////////////////////////////////////////////////////////////////
 // OPTIONS
 //////////////////////////////////////////////////////////////////////////
-class PixelSpaceshipsOptions : public Reference
-{
+class PixelSpaceshipsOptions : public Reference {
 	GDCLASS(PixelSpaceshipsOptions, Reference);
+
 private:
 	bool colored;
 	float edge_brightnes;
@@ -63,28 +90,26 @@ private:
 	float hue;
 
 protected:
-
 	static void _bind_methods();
 
 public:
-
 	bool get_colored();
-	PixelSpaceshipsOptions* set_colored(bool);
+	PixelSpaceshipsOptions *set_colored(bool);
 
 	float get_edge_brightness();
-	PixelSpaceshipsOptions* set_edge_brightness(float);
+	PixelSpaceshipsOptions *set_edge_brightness(float);
 
 	float get_color_variation();
-	PixelSpaceshipsOptions* set_color_variation(float);
+	PixelSpaceshipsOptions *set_color_variation(float);
 
 	float get_brightness_noise();
-	PixelSpaceshipsOptions* set_brightness_noise(float);
+	PixelSpaceshipsOptions *set_brightness_noise(float);
 
 	float get_saturation();
-	PixelSpaceshipsOptions* set_saturation(float);
+	PixelSpaceshipsOptions *set_saturation(float);
 
 	float get_hue();
-	PixelSpaceshipsOptions* set_hue(float);
+	PixelSpaceshipsOptions *set_hue(float);
 
 	void setup_options(bool _colored = true, float _edge_brightness = 0.15f, float _col_variations = 0.2f, float _brightness_noise = 0.8f, float _saturation = 0.7f);
 
@@ -95,8 +120,7 @@ public:
 //////////////////////////////////////////////////////////////////////////
 // PIXEL SPACESHIPS
 //////////////////////////////////////////////////////////////////////////
-class PixelSpaceships : public Reference
-{
+class PixelSpaceships : public Reference {
 	GDCLASS(PixelSpaceships, Reference);
 
 private:
@@ -112,7 +136,7 @@ private:
 
 	int pos_to_idx(int, int, int);
 	int get_data(MaskData, int, int, int);
-	Color hsl2rgb(float, float, float,Color);
+	Color hsl2rgb(float, float, float, Color);
 	float random();
 
 	void generate_random_sample();
@@ -122,11 +146,9 @@ private:
 	Ref<ImageTexture> make_texture();
 
 protected:
-
 	static void _bind_methods();
 
 public:
-
 	Ref<ImageTexture> generate_texture(Ref<PixelSpaceshipsMask>, Ref<PixelSpaceshipsOptions>, int = 0);
 	void generate(Ref<PixelSpaceshipsMask>, Ref<PixelSpaceshipsOptions>, int = 0);
 

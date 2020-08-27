@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  pixel_spaceships.cpp                                                 */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 /* pixel_spaceships.cpp */
 
 #include "pixel_spaceships.h"
@@ -5,28 +35,25 @@
 //////////////////////////////////////////////////////////////////////////
 // MASK
 //////////////////////////////////////////////////////////////////////////
-MaskData PixelSpaceshipsMask::get_data()
-{
+MaskData PixelSpaceshipsMask::get_data() {
 	return data;
 }
 
-PixelSpaceshipsMask* PixelSpaceshipsMask::set_data(MaskData _data, Vector2 _size)
-{
+PixelSpaceshipsMask *PixelSpaceshipsMask::set_data(MaskData _data, Vector2 _size) {
 	data = _data;
 	if (_size != Vector2())
 		size = _size;
 	return this;
 }
 
-PixelSpaceshipsMask* PixelSpaceshipsMask::set_data_from_texture(Ref<Texture> tex)
-{
+PixelSpaceshipsMask *PixelSpaceshipsMask::set_data_from_texture(Ref<Texture> tex) {
 	Ref<Image> img = tex->get_data();
 	int w, h;
 	size.width = w = tex->get_size().width;
 	size.height = h = tex->get_size().height;
 
 	MaskData tmp_data;
-	tmp_data.resize(w*h);
+	tmp_data.resize(w * h);
 
 	const auto white = Color(1, 1, 1, 1).to_rgba32();
 	const auto red = Color(1, 0, 0, 1).to_rgba32();
@@ -34,29 +61,20 @@ PixelSpaceshipsMask* PixelSpaceshipsMask::set_data_from_texture(Ref<Texture> tex
 	const auto blue = Color(0, 0, 1, 1).to_rgba32();
 
 	img->lock();
-	for (int j = 0; j < h; j++)
-	{
-		for (int i = 0; i < w; i++)
-		{
+	for (int j = 0; j < h; j++) {
+		for (int i = 0; i < w; i++) {
 			Color col = img->get_pixel(i, j);
 
-			int idx = j*w + i;
+			int idx = j * w + i;
 			auto col_int = col.to_rgba32();
 
-			if (col_int == white)
-			{
+			if (col_int == white) {
 				tmp_data.ref(idx) = 0;
-			}
-			else if (col_int == red)
-			{
+			} else if (col_int == red) {
 				tmp_data.ref(idx) = -1;
-			}
-			else if (col_int == green)
-			{
+			} else if (col_int == green) {
 				tmp_data.ref(idx) = 1;
-			}
-			else if (col_int == blue)
-			{
+			} else if (col_int == blue) {
 				tmp_data.ref(idx) = 2;
 			}
 		}
@@ -67,42 +85,35 @@ PixelSpaceshipsMask* PixelSpaceshipsMask::set_data_from_texture(Ref<Texture> tex
 	return this;
 }
 
-Vector2 PixelSpaceshipsMask::get_size()
-{
+Vector2 PixelSpaceshipsMask::get_size() {
 	return size;
 }
 
-PixelSpaceshipsMask* PixelSpaceshipsMask::set_size(Vector2 _size)
-{
+PixelSpaceshipsMask *PixelSpaceshipsMask::set_size(Vector2 _size) {
 	size = _size;
 
 	return this;
 }
 
-bool PixelSpaceshipsMask::get_mirror_x()
-{
+bool PixelSpaceshipsMask::get_mirror_x() {
 	return mirrorX;
 }
 
-PixelSpaceshipsMask* PixelSpaceshipsMask::set_mirror_x(bool _mirrorX)
-{
+PixelSpaceshipsMask *PixelSpaceshipsMask::set_mirror_x(bool _mirrorX) {
 	mirrorX = _mirrorX;
 	return this;
 }
 
-bool PixelSpaceshipsMask::get_mirror_y()
-{
+bool PixelSpaceshipsMask::get_mirror_y() {
 	return mirrorY;
 }
 
-PixelSpaceshipsMask* PixelSpaceshipsMask::set_mirror_y(bool _mirrorY)
-{
+PixelSpaceshipsMask *PixelSpaceshipsMask::set_mirror_y(bool _mirrorY) {
 	mirrorY = _mirrorY;
 	return this;
 }
 
-void PixelSpaceshipsMask::_bind_methods()
-{
+void PixelSpaceshipsMask::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_data"), &PixelSpaceshipsMask::get_data);
 	ClassDB::bind_method(D_METHOD("set_data", "data_array", "size"), &PixelSpaceshipsMask::set_data, DEFVAL(Vector2()));
 	ClassDB::bind_method(D_METHOD("set_data_from_texture", "texture"), &PixelSpaceshipsMask::set_data_from_texture);
@@ -115,47 +126,35 @@ void PixelSpaceshipsMask::_bind_methods()
 
 	ClassDB::bind_method(D_METHOD("get_mirror_y"), &PixelSpaceshipsMask::get_mirror_y);
 	ClassDB::bind_method(D_METHOD("set_mirror_y", "is_mirror_y"), &PixelSpaceshipsMask::set_mirror_y);
-
-
 }
 
-PixelSpaceshipsMask::PixelSpaceshipsMask()
-{
+PixelSpaceshipsMask::PixelSpaceshipsMask() {
 	size = Vector2();
 	data = MaskData();
 	mirrorX = false;
 	mirrorY = false;
 }
 
-
-
-PixelSpaceshipsMask::~PixelSpaceshipsMask()
-{
-
+PixelSpaceshipsMask::~PixelSpaceshipsMask() {
 }
-
 
 //////////////////////////////////////////////////////////////////////////
 // OPTIONS
 //////////////////////////////////////////////////////////////////////////
-bool PixelSpaceshipsOptions::get_colored()
-{
+bool PixelSpaceshipsOptions::get_colored() {
 	return colored;
 }
 
-PixelSpaceshipsOptions* PixelSpaceshipsOptions::set_colored(bool _colored)
-{
+PixelSpaceshipsOptions *PixelSpaceshipsOptions::set_colored(bool _colored) {
 	colored = _colored;
 	return this;
 }
 
-float PixelSpaceshipsOptions::get_edge_brightness()
-{
+float PixelSpaceshipsOptions::get_edge_brightness() {
 	return edge_brightnes;
 }
 
-PixelSpaceshipsOptions* PixelSpaceshipsOptions::set_edge_brightness(float _brightnes)
-{
+PixelSpaceshipsOptions *PixelSpaceshipsOptions::set_edge_brightness(float _brightnes) {
 	edge_brightnes = _brightnes;
 	if (edge_brightnes < 0)
 		edge_brightnes = 0;
@@ -164,13 +163,11 @@ PixelSpaceshipsOptions* PixelSpaceshipsOptions::set_edge_brightness(float _brigh
 	return this;
 }
 
-float PixelSpaceshipsOptions::get_color_variation()
-{
+float PixelSpaceshipsOptions::get_color_variation() {
 	return color_variation;
 }
 
-PixelSpaceshipsOptions* PixelSpaceshipsOptions::set_color_variation(float _col)
-{
+PixelSpaceshipsOptions *PixelSpaceshipsOptions::set_color_variation(float _col) {
 	color_variation = _col;
 	if (color_variation < 0)
 		color_variation = 0;
@@ -179,13 +176,11 @@ PixelSpaceshipsOptions* PixelSpaceshipsOptions::set_color_variation(float _col)
 	return this;
 }
 
-float PixelSpaceshipsOptions::get_brightness_noise()
-{
+float PixelSpaceshipsOptions::get_brightness_noise() {
 	return brightness_noise;
 }
 
-PixelSpaceshipsOptions* PixelSpaceshipsOptions::set_brightness_noise(float _noise)
-{
+PixelSpaceshipsOptions *PixelSpaceshipsOptions::set_brightness_noise(float _noise) {
 	brightness_noise = _noise;
 	if (brightness_noise < 0)
 		brightness_noise = 0;
@@ -194,13 +189,11 @@ PixelSpaceshipsOptions* PixelSpaceshipsOptions::set_brightness_noise(float _nois
 	return this;
 }
 
-float PixelSpaceshipsOptions::get_saturation()
-{
+float PixelSpaceshipsOptions::get_saturation() {
 	return saturation;
 }
 
-PixelSpaceshipsOptions* PixelSpaceshipsOptions::set_saturation(float _saturation)
-{
+PixelSpaceshipsOptions *PixelSpaceshipsOptions::set_saturation(float _saturation) {
 	saturation = _saturation;
 	if (saturation < 0)
 		saturation = 0;
@@ -209,13 +202,11 @@ PixelSpaceshipsOptions* PixelSpaceshipsOptions::set_saturation(float _saturation
 	return this;
 }
 
-float PixelSpaceshipsOptions::get_hue()
-{
+float PixelSpaceshipsOptions::get_hue() {
 	return hue;
 }
 
-PixelSpaceshipsOptions* PixelSpaceshipsOptions::set_hue(float _hue)
-{
+PixelSpaceshipsOptions *PixelSpaceshipsOptions::set_hue(float _hue) {
 	hue = _hue;
 	if (hue < 0)
 		hue = -1.0f;
@@ -224,8 +215,7 @@ PixelSpaceshipsOptions* PixelSpaceshipsOptions::set_hue(float _hue)
 	return this;
 }
 
-void PixelSpaceshipsOptions::setup_options(bool _colored, float _edge_brightness, float _col_variations, float _brightness_noise, float _saturation)
-{
+void PixelSpaceshipsOptions::setup_options(bool _colored, float _edge_brightness, float _col_variations, float _brightness_noise, float _saturation) {
 	colored = _colored;
 	edge_brightnes = _edge_brightness;
 	color_variation = _col_variations;
@@ -233,8 +223,7 @@ void PixelSpaceshipsOptions::setup_options(bool _colored, float _edge_brightness
 	saturation = _saturation;
 }
 
-void PixelSpaceshipsOptions::_bind_methods()
-{
+void PixelSpaceshipsOptions::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_colored"), &PixelSpaceshipsOptions::get_colored);
 	ClassDB::bind_method(D_METHOD("set_colored", "is_colored"), &PixelSpaceshipsOptions::set_colored);
 
@@ -254,11 +243,9 @@ void PixelSpaceshipsOptions::_bind_methods()
 	ClassDB::bind_method(D_METHOD("set_hue", "hue"), &PixelSpaceshipsOptions::set_hue);
 
 	ClassDB::bind_method(D_METHOD("setup_options", "is_colored", "edge_brightness", "color_variations", "brightness_noise", "saturation"), &PixelSpaceshipsOptions::setup_options, DEFVAL(true), DEFVAL(0.15f), DEFVAL(0.2f), DEFVAL(0.8f), DEFVAL(0.7f));
-
 }
 
-PixelSpaceshipsOptions::PixelSpaceshipsOptions()
-{
+PixelSpaceshipsOptions::PixelSpaceshipsOptions() {
 	colored = true;
 	edge_brightnes = 0.3f;
 	color_variation = 0.2f;
@@ -267,18 +254,13 @@ PixelSpaceshipsOptions::PixelSpaceshipsOptions()
 	hue = -1.0f;
 }
 
-PixelSpaceshipsOptions::~PixelSpaceshipsOptions()
-{
-
+PixelSpaceshipsOptions::~PixelSpaceshipsOptions() {
 }
-
-
 
 //////////////////////////////////////////////////////////////////////////
 // PIXEL SPACESHIPS
 //////////////////////////////////////////////////////////////////////////
-int PixelSpaceships::get_data(MaskData _mask_data, int x, int y, int width)
-{
+int PixelSpaceships::get_data(MaskData _mask_data, int x, int y, int width) {
 	int idx = pos_to_idx(x, y, width);
 	if (idx >= _mask_data.size() || idx < 0)
 		idx = 0;
@@ -286,15 +268,11 @@ int PixelSpaceships::get_data(MaskData _mask_data, int x, int y, int width)
 	return _mask_data[idx];
 }
 
-
-int PixelSpaceships::pos_to_idx(int x, int y, int width)
-{
-	return y*width + x;
+int PixelSpaceships::pos_to_idx(int x, int y, int width) {
+	return y * width + x;
 }
 
-
-Color PixelSpaceships::hsl2rgb(float h, float s, float l, Color rgb)
-{
+Color PixelSpaceships::hsl2rgb(float h, float s, float l, Color rgb) {
 	int i;
 	float f, p, q, t;
 	i = Math::floor(h * 6);
@@ -303,46 +281,59 @@ Color PixelSpaceships::hsl2rgb(float h, float s, float l, Color rgb)
 	q = l * (1.0f - f * s);
 	t = l * (1.0f - (1.0f - f) * s);
 
-	switch (i % 6)
-	{
-	case 0: rgb.r = l; rgb.g = t; rgb.b = p; break;
-	case 1: rgb.r = q; rgb.g = l; rgb.b = p; break;
-	case 2: rgb.r = p; rgb.g = l; rgb.b = t; break;
-	case 3: rgb.r = p; rgb.g = q; rgb.b = l; break;
-	case 4: rgb.r = t; rgb.g = p; rgb.b = l; break;
-	case 5: rgb.r = l; rgb.g = p; rgb.b = q; break;
+	switch (i % 6) {
+		case 0:
+			rgb.r = l;
+			rgb.g = t;
+			rgb.b = p;
+			break;
+		case 1:
+			rgb.r = q;
+			rgb.g = l;
+			rgb.b = p;
+			break;
+		case 2:
+			rgb.r = p;
+			rgb.g = l;
+			rgb.b = t;
+			break;
+		case 3:
+			rgb.r = p;
+			rgb.g = q;
+			rgb.b = l;
+			break;
+		case 4:
+			rgb.r = t;
+			rgb.g = p;
+			rgb.b = l;
+			break;
+		case 5:
+			rgb.r = l;
+			rgb.g = p;
+			rgb.b = q;
+			break;
 	}
 
 	return rgb;
 }
 
-float PixelSpaceships::random()
-{
+float PixelSpaceships::random() {
 	float ret = Math::random(0, 1);
 
 	return ret;
 }
 
-void PixelSpaceships::generate_random_sample()
-{
-	for (int j = 0; j < HalfHeight; j++)
-	{
-		for (int i = 0; i < HalfWidth; i++)
-		{
+void PixelSpaceships::generate_random_sample() {
+	for (int j = 0; j < HalfHeight; j++) {
+		for (int i = 0; i < HalfWidth; i++) {
 			int cell = get_data(ResultData, i, j, HalfWidth);
 
-			if (cell == 1)
-			{
-				cell = cell*Math::round(random());
-			}
-			else if (cell == 2)
-			{
-				if (random() > 0.5)
-				{
+			if (cell == 1) {
+				cell = cell * Math::round(random());
+			} else if (cell == 2) {
+				if (random() > 0.5) {
 					cell = 1;
-				}
-				else
-				{
+				} else {
 					cell = -1;
 				}
 			}
@@ -352,19 +343,16 @@ void PixelSpaceships::generate_random_sample()
 	}
 }
 
-void PixelSpaceships::mirror_data()
-{
+void PixelSpaceships::mirror_data() {
 	int w = Width;
 	int h = Height;
 	int tmpW = HalfWidth - 1;
 	int tmpHH = HalfHeight - 1;
 	MaskData MirroredData;
-	MirroredData.resize(w*h);
+	MirroredData.resize(w * h);
 
-	for (int j = 0; j < h; j++)
-	{
-		for (int i = 0; i < w; i++)
-		{
+	for (int j = 0; j < h; j++) {
+		for (int i = 0; i < w; i++) {
 			int x = i <= tmpW ? i : tmpW - (i - tmpW) + 1;
 			int y = j <= tmpHH ? j : tmpHH - (j - tmpHH) + 1;
 
@@ -374,31 +362,23 @@ void PixelSpaceships::mirror_data()
 	ResultData = MirroredData;
 }
 
-void PixelSpaceships::generate_edges()
-{
+void PixelSpaceships::generate_edges() {
 	int w = Width;
 	int h = Height;
 
-	for (int j = 0; j < h; j++)
-	{
-		for (int i = 0; i < w; i++)
-		{
-			if (get_data(ResultData, i, j, w) > 0)
-			{
-				if (j - 1 >= 0 && get_data(ResultData, i, j - 1, w) == 0)
-				{
+	for (int j = 0; j < h; j++) {
+		for (int i = 0; i < w; i++) {
+			if (get_data(ResultData, i, j, w) > 0) {
+				if (j - 1 >= 0 && get_data(ResultData, i, j - 1, w) == 0) {
 					ResultData.ref(pos_to_idx(i, j - 1, w)) = -1;
 				}
-				if (j + 1 < h && get_data(ResultData, i, j + 1, w) == 0)
-				{
+				if (j + 1 < h && get_data(ResultData, i, j + 1, w) == 0) {
 					ResultData.ref(pos_to_idx(i, j + 1, w)) = -1;
 				}
-				if (i - 1 >= 0 && get_data(ResultData, i - 1, j, w) == 0)
-				{
+				if (i - 1 >= 0 && get_data(ResultData, i - 1, j, w) == 0) {
 					ResultData.ref(pos_to_idx(i - 1, j, w)) = -1;
 				}
-				if (i + 1 < w && get_data(ResultData, i + 1, j, w) == 0)
-				{
+				if (i + 1 < w && get_data(ResultData, i + 1, j, w) == 0) {
 					ResultData.ref(pos_to_idx(i + 1, j, w)) = -1;
 				}
 			}
@@ -406,85 +386,65 @@ void PixelSpaceships::generate_edges()
 	}
 }
 
-void PixelSpaceships::generate_colors()
-{
+void PixelSpaceships::generate_colors() {
 	ResultColors.clear();
 	ResultColors.resize(ResultData.size());
 
 	float IsVerticalGradient = random() > 0.5f;
-	float Saturation = MAX(MIN(random()*PSOptions->get_saturation(), 1.0f), 0.0f);
+	float Saturation = MAX(MIN(random() * PSOptions->get_saturation(), 1.0f), 0.0f);
 	float hue = PSOptions->get_hue();
 
 	if (hue < 0)
 		hue = random();
 
 	int ulen, vlen;
-	if (IsVerticalGradient)
-	{
+	if (IsVerticalGradient) {
 		ulen = Height;
 		vlen = Width;
-	}
-	else
-	{
+	} else {
 		ulen = Width;
 		vlen = Height;
 	}
 
-	for (int u = 0; u < ulen; u++)
-	{
+	for (int u = 0; u < ulen; u++) {
 		float IsNewColor = Math::abs((
-			(random() * 2.0f - 1.0f)
-			+ (random() * 2.0f - 1.0f)
-			+ (random() * 2.0f - 1.0f)) / 3.0f);
+											 (random() * 2.0f - 1.0f) + (random() * 2.0f - 1.0f) + (random() * 2.0f - 1.0f)) /
+									 3.0f);
 
-		if (IsNewColor > (1 - PSOptions->get_color_variation()))
-		{
+		if (IsNewColor > (1 - PSOptions->get_color_variation())) {
 			hue = random();
 		}
 
-		for (int v = 0; v < vlen; v++)
-		{
+		for (int v = 0; v < vlen; v++) {
 			int val, idx;
-			if (IsVerticalGradient)
-			{
+			if (IsVerticalGradient) {
 				idx = pos_to_idx(v, u, vlen);
-			}
-			else
-			{
+			} else {
 				idx = pos_to_idx(u, v, ulen);
 			}
 			val = ResultData[idx];
 
 			Color rgb = Color(1, 1, 1, 1);
 
-			if (val != 0)
-			{
-				if (PSOptions->get_colored())
-				{
+			if (val != 0) {
+				if (PSOptions->get_colored()) {
 					float brightness =
-						Math::sin((u / ulen)* 3.1415926f)*(1.0f - PSOptions->get_brightness_noise())
-						+ random()*PSOptions->get_brightness_noise();
+							Math::sin((u / ulen) * 3.1415926f) * (1.0f - PSOptions->get_brightness_noise()) + random() * PSOptions->get_brightness_noise();
 
 					rgb = hsl2rgb(hue, Saturation, brightness, rgb);
-					if (val == -1)
-					{
+					if (val == -1) {
 						rgb.r *= PSOptions->get_edge_brightness();
 						rgb.g *= PSOptions->get_edge_brightness();
 						rgb.b *= PSOptions->get_edge_brightness();
 					}
-				}
-				else
-				{
-					if (val == -1)
-					{
+				} else {
+					if (val == -1) {
 						rgb.r = 0;
 						rgb.g = 0;
 						rgb.b = 0;
 					}
 				}
-			}
-			else
-			{
+			} else {
 				rgb.a = 0;
 			}
 
@@ -493,16 +453,13 @@ void PixelSpaceships::generate_colors()
 	}
 }
 
-Ref<ImageTexture> PixelSpaceships::make_texture()
-{
-	Image* img = memnew(Image(Width, Height, true, Image::Format::FORMAT_RGBA8));
-	ImageTexture* tex = memnew(ImageTexture());
+Ref<ImageTexture> PixelSpaceships::make_texture() {
+	Image *img = memnew(Image(Width, Height, true, Image::Format::FORMAT_RGBA8));
+	ImageTexture *tex = memnew(ImageTexture());
 
 	img->lock();
-	for (int j = 0; j < Height; j++)
-	{
-		for (int i = 0; i < Width; i++)
-		{
+	for (int j = 0; j < Height; j++) {
+		for (int i = 0; i < Width; i++) {
 			img->set_pixel(i, j, ResultColors[pos_to_idx(i, j, Width)]);
 		}
 	}
@@ -512,8 +469,7 @@ Ref<ImageTexture> PixelSpaceships::make_texture()
 
 	return tex;
 }
-Ref<ImageTexture> PixelSpaceships::generate_texture(Ref<PixelSpaceshipsMask> _mask, Ref<PixelSpaceshipsOptions> _options, int _seed)
-{
+Ref<ImageTexture> PixelSpaceships::generate_texture(Ref<PixelSpaceshipsMask> _mask, Ref<PixelSpaceshipsOptions> _options, int _seed) {
 	if (_mask == 0 || _options == 0)
 		return 0;
 
@@ -523,8 +479,7 @@ Ref<ImageTexture> PixelSpaceships::generate_texture(Ref<PixelSpaceshipsMask> _ma
 	return make_texture();
 }
 
-void PixelSpaceships::generate(Ref<PixelSpaceshipsMask> _mask, Ref<PixelSpaceshipsOptions> _options, int _seed)
-{
+void PixelSpaceships::generate(Ref<PixelSpaceshipsMask> _mask, Ref<PixelSpaceshipsOptions> _options, int _seed) {
 	ERR_FAIL_COND(_mask == 0);
 	ERR_FAIL_COND(_options == 0);
 
@@ -548,27 +503,22 @@ void PixelSpaceships::generate(Ref<PixelSpaceshipsMask> _mask, Ref<PixelSpaceshi
 	generate_edges();
 }
 
-Ref<PixelSpaceshipsMask> PixelSpaceships::get_mask_object()
-{
+Ref<PixelSpaceshipsMask> PixelSpaceships::get_mask_object() {
 	return PSMask;
 }
 
-Ref<PixelSpaceshipsOptions> PixelSpaceships::get_options_object()
-{
+Ref<PixelSpaceshipsOptions> PixelSpaceships::get_options_object() {
 	return PSOptions;
 }
 
-Array PixelSpaceships::get_mask_matrix()
-{
+Array PixelSpaceships::get_mask_matrix() {
 	Array matrix;
-	if (ResultData.size() != Height*Width)
+	if (ResultData.size() != Height * Width)
 		return matrix;
 
-	for (int j = 0; j < Height; j++)
-	{
+	for (int j = 0; j < Height; j++) {
 		Array newArr;
-		for (int i = 0; i < Width; i++)
-		{
+		for (int i = 0; i < Width; i++) {
 			newArr.append(ResultData[pos_to_idx(i, j, Width)]);
 		}
 		matrix.append(newArr);
@@ -577,17 +527,14 @@ Array PixelSpaceships::get_mask_matrix()
 	return matrix;
 }
 
-Array PixelSpaceships::get_colors_matrix()
-{
+Array PixelSpaceships::get_colors_matrix() {
 	Array matrix;
-	if (ResultColors.size() != Height*Width)
+	if (ResultColors.size() != Height * Width)
 		return matrix;
 
-	for (int j = 0; j < Height; j++)
-	{
+	for (int j = 0; j < Height; j++) {
 		Array newArr;
-		for (int i = 0; i < Width; i++)
-		{
+		for (int i = 0; i < Width; i++) {
 			newArr.append(ResultColors[pos_to_idx(i, j, Width)]);
 		}
 		matrix.append(newArr);
@@ -596,8 +543,7 @@ Array PixelSpaceships::get_colors_matrix()
 	return matrix;
 }
 
-void PixelSpaceships::_bind_methods()
-{
+void PixelSpaceships::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("generate_texture", "pixel_spaceship_mask", "pixel_spaceship_options", "seed"), &PixelSpaceships::generate_texture, DEFVAL(0));
 	ClassDB::bind_method(D_METHOD("generate", "pixel_spaceship_mask", "pixel_spaceship_options", "seed"), &PixelSpaceships::generate, DEFVAL(0));
 
@@ -608,8 +554,7 @@ void PixelSpaceships::_bind_methods()
 	ClassDB::bind_method(D_METHOD("get_colors_matrix"), &PixelSpaceships::get_colors_matrix);
 }
 
-PixelSpaceships::PixelSpaceships()
-{
+PixelSpaceships::PixelSpaceships() {
 	ResultData = MaskData();
 	ResultColors = TextureColors();
 	Width = 0;
@@ -619,8 +564,5 @@ PixelSpaceships::PixelSpaceships()
 	Seed = 0;
 }
 
-PixelSpaceships::~PixelSpaceships()
-{
-
+PixelSpaceships::~PixelSpaceships() {
 }
-

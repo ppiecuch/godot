@@ -147,19 +147,19 @@ void Sprite::_notification(int p_what) {
 			break;
 			*/
 
-            if (vsubdivide > 0 && hsubdivide > 0) {
-                if (grid_mesh == 0) {
-                }
-                Ref<ArrayMesh> mesh;
-                mesh.instance();
+			if (vsubdivide > 0 && hsubdivide > 0) {
+				if (grid_mesh == 0) {
+				}
+				Ref<ArrayMesh> mesh;
+				mesh.instance();
 
-                draw_mesh(mesh, texture, normal_map);
-            } else {
-                Rect2 src_rect, dst_rect;
-                bool filter_clip;
-                _get_rects(src_rect, dst_rect, filter_clip);
-                texture->draw_rect_region(ci, dst_rect, src_rect, Color(1, 1, 1), false, normal_map, filter_clip);
-            }
+				draw_mesh(mesh, texture, normal_map);
+			} else {
+				Rect2 src_rect, dst_rect;
+				bool filter_clip;
+				_get_rects(src_rect, dst_rect, filter_clip);
+				texture->draw_rect_region(ci, dst_rect, src_rect, Color(1, 1, 1), false, normal_map, filter_clip);
+			}
 
 		} break;
 	}
@@ -506,7 +506,7 @@ void Sprite::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_hsubdivide", "hsubdivide"), &Sprite::set_hsubdivide);
 	ClassDB::bind_method(D_METHOD("get_hsubdivide"), &Sprite::get_hsubdivide);
 
-    ClassDB::bind_method(D_METHOD("get_rect"), &Sprite::get_rect);
+	ClassDB::bind_method(D_METHOD("get_rect"), &Sprite::get_rect);
 
 	ClassDB::bind_method(D_METHOD("_texture_changed"), &Sprite::_texture_changed);
 
@@ -544,7 +544,7 @@ Sprite::Sprite() {
 
 	vframes = 1;
 	hframes = 1;
-    grid_mesh = 0;
+	grid_mesh = 0;
 }
 
 Sprite::~Sprite() {

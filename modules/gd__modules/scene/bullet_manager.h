@@ -1,13 +1,42 @@
+/*************************************************************************/
+/*  bullet_manager.h                                                     */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #ifndef BULLET_MANAGER_H
 #define BULLET_MANAGER_H
 
 #include "core/object.h"
-#include "scene/2d/node_2d.h"
 #include "scene/2d/canvas_item.h"
+#include "scene/2d/node_2d.h"
 #include "scene/2d/sprite.h"
-#include "scene/resources/texture.h"
 #include "scene/resources/shape_2d.h"
-
+#include "scene/resources/texture.h"
 
 class BulletManager;
 
@@ -22,7 +51,7 @@ class BulletManagerBulletType : public Node2D {
 	int frame = 0;
 	bool centered = false;
 	Point2 offset;
-	bool region = false ;
+	bool region = false;
 	Rect2 region_rect;
 	bool rotate_visual = false;
 	Ref<Shape2D> collision_shape;
@@ -38,19 +67,17 @@ class BulletManagerBulletType : public Node2D {
 	friend class BulletManager;
 	Rect2 _cached_src_rect;
 	Rect2 _cached_dst_rect;
-	BulletManager* _bullet_manager;
+	BulletManager *_bullet_manager;
 	void _update_cached_rects();
 
 	StringName _body_inout_name = StaticCString::create("_body_inout");
 	StringName _area_inout_name = StaticCString::create("_area_inout");
-
 
 protected:
 	void _notification(int p_what);
 	static void _bind_methods();
 
 public:
-
 	BulletManagerBulletType();
 	~BulletManagerBulletType();
 	void set_texture(const Ref<Texture> &p_texture);
@@ -73,7 +100,7 @@ public:
 	Rect2 get_region_rect() const;
 	void set_rotate_visual(bool p_rotate_visual);
 	bool is_rotating_visual() const;
-    void set_collision_mask(uint32_t p_mask);
+	void set_collision_mask(uint32_t p_mask);
 	uint32_t get_collision_mask() const;
 	void set_collision_layer(uint32_t p_layer);
 	uint32_t get_collision_layer() const;
@@ -91,38 +118,35 @@ public:
 	void _area_inout(int p_status, const RID &p_area, int p_instance, int p_area_shape, int p_self_shape);
 	void _body_inout(int p_status, const RID &p_body, int p_instance, int p_body_shape, int p_area_shape);
 	void _shape_changed();
-
 };
 
-
 struct BulletManagerBullet {
-    Transform2D matrix = Transform2D();
+	Transform2D matrix = Transform2D();
 	Vector2 direction;
 	real_t speed;
-    int id; //also servers as index into bullets array in bulletmanager
+	int id; //also servers as index into bullets array in bulletmanager
 	int shape_index;
 	bool is_queued_for_deletion = false;
 	Variant custom_data;
-	BulletManagerBulletType* type;
+	BulletManagerBulletType *type;
 	void set_position(Point2 position);
 	Point2 get_position() const;
-    void set_direction(Vector2 direction);
-    Vector2 get_direction() const;
-    void set_angle(real_t angle);
-    real_t get_angle() const;
-    void set_speed(real_t speed);
-    real_t get_speed() const;
+	void set_direction(Vector2 direction);
+	Vector2 get_direction() const;
+	void set_angle(real_t angle);
+	real_t get_angle() const;
+	void set_speed(real_t speed);
+	real_t get_speed() const;
 	void queue_delete();
-    Node* get_type() const;
+	Node *get_type() const;
 };
-
 
 class BulletManager : public Node2D {
 
 	GDCLASS(BulletManager, Node2D)
 
 	Point2 pos;
-    Size2 scale;
+	Size2 scale;
 	int z_index = 0;
 	real_t bounds_margin = 300.0;
 	//pool of bullets both used and unused bullets
@@ -131,9 +155,7 @@ class BulletManager : public Node2D {
 	List<int> _active_bullets;
 	List<int> _unused_ids; //bullet ids are indices into the bullets vector.
 
-	Map<StringName, BulletManagerBulletType*> types;
-
-
+	Map<StringName, BulletManagerBulletType *> types;
 
 	void set_bounds_margin(float p_bounds_margin);
 	float get_bounds_margin() const;
@@ -159,15 +181,13 @@ public:
 	void set_bullet_custom_data(int bullet_id, Variant custom_data);
 	void queue_delete_bullet(int bullet_id);
 	void clear();
-	void clear_by_type(BulletManagerBulletType* type);
-	void _clear_by_type_script(Object* type);
+	void clear_by_type(BulletManagerBulletType *type);
+	void _clear_by_type_script(Object *type);
 	void clear_by_mask(int mask);
 	void clear_by_layer(int layer);
 	int count();
-	void register_bullet_type(BulletManagerBulletType* type);
-	void unregister_bullet_type(BulletManagerBulletType* type);
-
-
+	void register_bullet_type(BulletManagerBulletType *type);
+	void unregister_bullet_type(BulletManagerBulletType *type);
 };
 
 #endif // BULLET_MANAGER_H

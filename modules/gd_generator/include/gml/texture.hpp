@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  texture.hpp                                                          */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
@@ -12,7 +42,6 @@
 
 namespace gml {
 
-
 /// Calculates the texture coordinate of the center of a texel with given index
 /// in a 1D texture with given size. The return value is in the range [0, 1] if
 /// the index is in the range [0, size - 1].
@@ -22,8 +51,7 @@ namespace gml {
 /// @param index Texel index in the texture.
 /// @param size Size of the texture in texels.
 template <typename TF, typename TI, typename TS>
-TF texelCenter(TI index, TS size)
-{
+TF texelCenter(TI index, TS size) {
 	static_assert(std::is_integral<TI>::value, "TI must an integral type.");
 	static_assert(std::is_integral<TS>::value, "TS must an integral type.");
 	static_assert(std::is_floating_point<TF>::value, "TF must a floating point type.");
@@ -31,7 +59,6 @@ TF texelCenter(TI index, TS size)
 	if (size == static_cast<TS>(0)) return static_cast<TF>(0);
 	return (static_cast<TF>(index) + static_cast<TF>(0.5)) / static_cast<TF>(size);
 }
-
 
 /// Calculates the texture coordinate of the center of a texel with given index
 /// in a N-D texture with given size. The return value is in the range [0, 1] if
@@ -42,15 +69,13 @@ TF texelCenter(TI index, TS size)
 /// @param index Texel index in the texture.
 /// @param size Size of the texture in texels.
 template <typename TF, typename TI, typename TS, int N>
-gml::vec<TF, N> texelCenter(const gml::vec<TI, N>& index, const gml::vec<TS, N>& size)
-{
+gml::vec<TF, N> texelCenter(const gml::vec<TI, N> &index, const gml::vec<TS, N> &size) {
 	gml::vec<TF, N> temp;
 	for (int i = 0; i < N; ++i) {
 		temp[i] = texelCenter<TF>(index[i], size[i]);
 	}
 	return temp;
 }
-
 
 /// Calculates the index of the texel with center nearest to the given coordinate
 /// in a 1D texture with given size.
@@ -61,8 +86,7 @@ gml::vec<TF, N> texelCenter(const gml::vec<TI, N>& index, const gml::vec<TS, N>&
 /// @param coord The texture coordinate.
 /// @param size Size of the texture in texels.
 template <typename TI, typename TF, typename TS>
-TI nearestTexel(TF coord, TS size)
-{
+TI nearestTexel(TF coord, TS size) {
 	static_assert(std::is_integral<TI>::value, "TI must an integral type.");
 	static_assert(std::is_integral<TS>::value, "TS must an integral type.");
 	static_assert(std::is_floating_point<TF>::value, "TF must a floating point type.");
@@ -70,7 +94,6 @@ TI nearestTexel(TF coord, TS size)
 	const TF temp = coord * static_cast<TF>(size);
 	return static_cast<TI>(temp) - static_cast<TI>(temp < static_cast<TF>(0));
 }
-
 
 /// Calculates the index of the texel with center nearest to the given coordinate
 /// in a N-D texture with given size.
@@ -81,8 +104,7 @@ TI nearestTexel(TF coord, TS size)
 /// @param coord The texture coordinate.
 /// @param size Size of the texture in texels.
 template <typename TI, typename TF, typename TS, int N>
-vec<TI, N> nearestTexel(const vec<TF, N>& coord, const vec<TS, N>& size)
-{
+vec<TI, N> nearestTexel(const vec<TF, N> &coord, const vec<TS, N> &size) {
 	static_assert(std::is_integral<TI>::value, "TI must an integral type.");
 	static_assert(std::is_integral<TS>::value, "TS must an integral type.");
 	static_assert(std::is_floating_point<TF>::value, "TF must a floating point type.");
@@ -94,13 +116,11 @@ vec<TI, N> nearestTexel(const vec<TF, N>& coord, const vec<TS, N>& size)
 	return temp;
 }
 
-
 /// Returns the index of a cubemap face at given direction.
 /// @param direction The direction vector. Need not be normalized.
 /// @return 0: +X, 1: -X, 2: +Y, 3: -Y, 4: +Z, 5: -Z.
 template <typename TF>
-int faceAt(const gml::vec<TF, 3>& direction)
-{
+int faceAt(const gml::vec<TF, 3> &direction) {
 	static_assert(std::is_floating_point<TF>::value, "TF must a floating point type.");
 
 	const gml::vec<TF, 3> a = gml::abs(direction);
@@ -109,40 +129,42 @@ int faceAt(const gml::vec<TF, 3>& direction)
 
 	if (a[0] >= a[1]) {
 		if (a[0] >= a[2]) {
-			if (direction[0] < zero) return 1;
-			else return 0;
+			if (direction[0] < zero)
+				return 1;
+			else
+				return 0;
+		} else {
+			if (direction[2] < zero)
+				return 5;
+			else
+				return 4;
 		}
-		else {
-			if (direction[2] < zero) return 5;
-			else return 4;
-		}
-	}
-	else {
+	} else {
 		if (a[1] >= a[2]) {
-			if (direction[1] < zero) return 3;
-			else return 2;
-		}
-		else {
-			if (direction[2] < zero) return 5;
-			else return 4;
+			if (direction[1] < zero)
+				return 3;
+			else
+				return 2;
+		} else {
+			if (direction[2] < zero)
+				return 5;
+			else
+				return 4;
 		}
 	}
 
 	return 0;
 }
 
-
 /// Convert a cube map direction vector to face index texture coordinate pair
 /// using the OpenGL conventions.
 /// @param direction The direction vector. Need not be normalized.
 /// @return 0: +X, 1: -X, 2: +Y, 3: -Y, 4: +Z, 5: -Z.
 template <typename TF>
-std::pair<int, gml::vec<TF, 2>> cubeTexCoord(const gml::vec<TF, 3>& direction)
-{
+std::pair<int, gml::vec<TF, 2> > cubeTexCoord(const gml::vec<TF, 3> &direction) {
 	static_assert(std::is_floating_point<TF>::value, "TF must a floating point type.");
 
-	auto fn = [] (TF sc, TF tc, TF ma) -> gml::vec<TF, 2>
-	{
+	auto fn = [](TF sc, TF tc, TF ma) -> gml::vec<TF, 2> {
 		using std::abs;
 		ma = abs(ma);
 		const TF half = static_cast<TF>(1) / static_cast<TF>(2);
@@ -164,26 +186,24 @@ std::pair<int, gml::vec<TF, 2>> cubeTexCoord(const gml::vec<TF, 3>& direction)
 
 	const int face = faceAt(direction);
 	switch (face) {
-	case 0: // +x
-		return std::make_pair(face, fn(-direction[2], -direction[1], direction[0]));
-	case 1: // -x
-		return std::make_pair(face, fn( direction[2], -direction[1], direction[0]));
-	case 2: // +y
-		return std::make_pair(face, fn( direction[0],  direction[2], direction[1]));
-	case 3: // -y
-		return std::make_pair(face, fn( direction[0], -direction[2], direction[1]));
-	case 4: // +z
-		return std::make_pair(face, fn( direction[0], -direction[1], direction[2]));
-	case 5: // -z
-		return std::make_pair(face, fn(-direction[0], -direction[1], direction[2]));
+		case 0: // +x
+			return std::make_pair(face, fn(-direction[2], -direction[1], direction[0]));
+		case 1: // -x
+			return std::make_pair(face, fn(direction[2], -direction[1], direction[0]));
+		case 2: // +y
+			return std::make_pair(face, fn(direction[0], direction[2], direction[1]));
+		case 3: // -y
+			return std::make_pair(face, fn(direction[0], -direction[2], direction[1]));
+		case 4: // +z
+			return std::make_pair(face, fn(direction[0], -direction[1], direction[2]));
+		case 5: // -z
+			return std::make_pair(face, fn(-direction[0], -direction[1], direction[2]));
 	}
 
 	// Should not happen
 	return std::make_pair(
-		0u, gml::vec<TF, 2>{static_cast<TF>(1.0), static_cast<TF>(0.0)}
-	);
+			0u, gml::vec<TF, 2>{ static_cast<TF>(1.0), static_cast<TF>(0.0) });
 }
-
 
 /// Convert a face index texture coordinate pair to cube map direction vector
 /// using the OpenGL conventions.
@@ -192,8 +212,7 @@ std::pair<int, gml::vec<TF, 2>> cubeTexCoord(const gml::vec<TF, 3>& direction)
 /// @param texCoord Texture coordinate in the given face.
 /// @return Direction vector. The vector is not normalized.
 template <typename TF>
-gml::vec<TF, 3> cubeDirection(int faceIndex, const gml::vec<TF, 2>& texCoord)
-{
+gml::vec<TF, 3> cubeDirection(int faceIndex, const gml::vec<TF, 2> &texCoord) {
 	static_assert(std::is_floating_point<TF>::value, "TF must a floating point type.");
 
 	assert(faceIndex >= 0 && faceIndex <= 5);
@@ -203,25 +222,24 @@ gml::vec<TF, 3> cubeDirection(int faceIndex, const gml::vec<TF, 2>& texCoord)
 	const TF one = static_cast<TF>(1);
 
 	switch (faceIndex) {
-	case 0: // +x
-		return gml::vec<TF, 3>{ one, -temp[1], -temp[0]};
-	case 1: // -x
-		return gml::vec<TF, 3>{-one, -temp[1],  temp[0]};
-	case 2: // +y
-		return gml::vec<TF, 3>{temp[0],  one,  temp[1]};
-	case 3: // -y
-		return gml::vec<TF, 3>{temp[0], -one, -temp[1]};
-	case 4: // +z
-		return gml::vec<TF, 3>{ temp[0], -temp[1],  one};
-	case 5: // -z
-		return gml::vec<TF, 3>{-temp[0], -temp[1], -one};
+		case 0: // +x
+			return gml::vec<TF, 3>{ one, -temp[1], -temp[0] };
+		case 1: // -x
+			return gml::vec<TF, 3>{ -one, -temp[1], temp[0] };
+		case 2: // +y
+			return gml::vec<TF, 3>{ temp[0], one, temp[1] };
+		case 3: // -y
+			return gml::vec<TF, 3>{ temp[0], -one, -temp[1] };
+		case 4: // +z
+			return gml::vec<TF, 3>{ temp[0], -temp[1], one };
+		case 5: // -z
+			return gml::vec<TF, 3>{ -temp[0], -temp[1], -one };
 	}
 
 	// Should not happen
-	return gml::vec<TF, 3>{one, static_cast<TF>(0.0), static_cast<TF>(0.0)};
+	return gml::vec<TF, 3>{ one, static_cast<TF>(0.0), static_cast<TF>(0.0) };
 }
 
-
-}
+} // namespace gml
 
 #endif

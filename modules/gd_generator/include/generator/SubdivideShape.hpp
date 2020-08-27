@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  SubdivideShape.hpp                                                   */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 // Copyright 2015 Markus Ilmola
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -11,18 +41,14 @@
 #include "ShapeVertex.hpp"
 #include "utils.hpp"
 
-
 namespace generator {
-
 
 /// Cuts each edge in half
 template <typename Shape>
 class SubdivideShape {
 public:
-
 	class Edges {
 	public:
-
 		bool done() const noexcept { return edges_.done(); }
 
 		Edge generate() const {
@@ -45,26 +71,22 @@ public:
 		}
 
 	private:
-
-		const SubdivideShape* shape_;
+		const SubdivideShape *shape_;
 
 		typename EdgeGeneratorType<Shape>::Type edges_;
 
 		int i_;
 
-		Edges(const SubdivideShape& shape) :
-			shape_{&shape},
-			edges_{shape.shape_.edges()},
-			i_{0}
-		{ }
+		Edges(const SubdivideShape &shape) :
+				shape_{ &shape },
+				edges_{ shape.shape_.edges() },
+				i_{ 0 } {}
 
-	friend class SubdivideShape;
+		friend class SubdivideShape;
 	};
-
 
 	class Vertices {
 	public:
-
 		bool done() const noexcept {
 			return vertexIndex_ == shape_->vertexCache_.size() && edges_.done();
 		}
@@ -74,8 +96,8 @@ public:
 				return shape_->vertexCache_[vertexIndex_];
 
 			const Edge edge = edges_.generate();
-			const ShapeVertex& v1 = shape_->vertexCache_[edge.vertices[0]];
-			const ShapeVertex& v2 = shape_->vertexCache_[edge.vertices[1]];
+			const ShapeVertex &v1 = shape_->vertexCache_[edge.vertices[0]];
+			const ShapeVertex &v2 = shape_->vertexCache_[edge.vertices[1]];
 
 			ShapeVertex vertex;
 			vertex.position = gml::mix(v1.position, v2.position, 0.5);
@@ -85,33 +107,31 @@ public:
 		}
 
 		void next() {
-			if (vertexIndex_ < shape_->vertexCache_.size()) ++vertexIndex_;
-			else edges_.next();
+			if (vertexIndex_ < shape_->vertexCache_.size())
+				++vertexIndex_;
+			else
+				edges_.next();
 		}
 
 	private:
-
-		const SubdivideShape* shape_;
+		const SubdivideShape *shape_;
 
 		int vertexIndex_;
 
 		typename EdgeGeneratorType<Shape>::Type edges_;
 
-		Vertices(const SubdivideShape& shape) :
-			shape_{&shape},
-			vertexIndex_{0},
-			edges_{shape.shape_.edges()}
-		{ }
+		Vertices(const SubdivideShape &shape) :
+				shape_{ &shape },
+				vertexIndex_{ 0 },
+				edges_{ shape.shape_.edges() } {}
 
-	friend class SubdivideShape;
+		friend class SubdivideShape;
 	};
 
-
 	SubdivideShape(Shape shape) :
-		shape_(std::move(shape)),
-		vertexCache_{}
-	{
-		for (const ShapeVertex& vertex : shape_.vertices()) {
+			shape_(std::move(shape)),
+			vertexCache_{} {
+		for (const ShapeVertex &vertex : shape_.vertices()) {
 			vertexCache_.push_back(vertex);
 		}
 	}
@@ -121,14 +141,11 @@ public:
 	Vertices vertices() const noexcept { return *this; }
 
 private:
-
 	Shape shape_;
 
 	std::vector<ShapeVertex> vertexCache_;
-
 };
 
-
-}
+} // namespace generator
 
 #endif

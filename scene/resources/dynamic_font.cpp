@@ -363,14 +363,14 @@ float DynamicFontAtSize::draw_char(RID p_canvas_item, const CharTransform &p_cha
 				modulate.r = modulate.g = modulate.b = 1.0;
 			}
 			RID texture = font->textures[ch->texture_idx].texture->get_rid();
-            VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item,
-                p_char_xform.xform_dest(Rect2(cpos, ch->rect.size), ascent, font->get_height()-ch->v_align-ascent-ch->rect.size.y/2),
-                texture, p_char_xform.xform_tex(ch->rect_uv), modulate, false, RID(), false);
+			VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item,
+					p_char_xform.xform_dest(Rect2(cpos, ch->rect.size), ascent, font->get_height() - ch->v_align - ascent - ch->rect.size.y / 2),
+					texture, p_char_xform.xform_tex(ch->rect_uv), modulate, false, RID(), false);
 		}
 
 		advance = ch->advance;
-        if (p_char_xform.scale_width)
-            advance *= p_char_xform.dest.scale.x;
+		if (p_char_xform.scale_width)
+			advance *= p_char_xform.dest.scale.x;
 	}
 
 	return advance;
@@ -924,7 +924,7 @@ bool DynamicFont::has_outline() const {
 }
 
 float DynamicFont::draw_char(RID p_canvas_item, const Point2 &p_pos, CharType p_char, CharType p_next, const Color &p_modulate, bool p_outline) const {
-    return draw_char_xform(p_canvas_item, CharTransform(), p_pos, p_char, p_next, p_modulate, p_outline);
+	return draw_char_xform(p_canvas_item, CharTransform(), p_pos, p_char, p_next, p_modulate, p_outline);
 }
 
 float DynamicFont::draw_char_xform(RID p_canvas_item, const CharTransform &p_char_xform, const Point2 &p_pos, CharType p_char, CharType p_next, const Color &p_modulate, bool p_outline) const {

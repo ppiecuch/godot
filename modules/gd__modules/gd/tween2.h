@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  tween2.h                                                             */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 //
 // Created by gen on 15-4-26.
 //
@@ -5,145 +35,154 @@
 #ifndef GODOT_MASTER_TWEEN2_H
 #define GODOT_MASTER_TWEEN2_H
 
-#include "core/reference.h"
 #include "core/object.h"
+#include "core/reference.h"
 #include "scene/main/node.h"
 
 class TweenAction;
 
-class TweenNode: public Node {
-    GDCLASS(TweenNode, Node);
+class TweenNode : public Node {
+	GDCLASS(TweenNode, Node);
 
 private:
-    Vector< Ref<TweenAction> > actions;
-    void check_queue();
-    friend class Tween2;
+	Vector<Ref<TweenAction> > actions;
+	void check_queue();
+	friend class Tween2;
 
 protected:
-    void _notification(int p_what);
+	void _notification(int p_what);
 };
 
 class TweenProperty : public Reference {
-    GDCLASS(TweenProperty, Reference);
+	GDCLASS(TweenProperty, Reference);
 
 private:
-    friend class TweenAction;
-    StringName property_name;
-    int property_type;
-    Variant from_value;
-    Variant to_value;
+	friend class TweenAction;
+	StringName property_name;
+	int property_type;
+	Variant from_value;
+	Variant to_value;
 
-    Variant callback_target;
-    float step;
-    int step_count;
+	Variant callback_target;
+	float step;
+	int step_count;
 
-    Variant interpolation(float per);
-    Variant lerp(Variant from, Variant to, float per);
+	Variant interpolation(float per);
+	Variant lerp(Variant from, Variant to, float per);
 };
 
-class Tween2: public Reference {
-    GDCLASS(Tween2, Reference);
+class Tween2 : public Reference {
+	GDCLASS(Tween2, Reference);
 
 private:
-    TweenNode   *tween_node = NULL;
+	TweenNode *tween_node = NULL;
 
 protected:
-    static void _bind_methods();
-    static Tween2 *singleton;
+	static void _bind_methods();
+	static Tween2 *singleton;
 
 public:
-    static Tween2* get_singleton();
+	static Tween2 *get_singleton();
 
-    typedef enum {
-        TWEEN_EASING_LINEAR,
-        TWEEN_EASING_QUADRATIC_IN,
-        TWEEN_EASING_QUADRATIC_OUT,
-        TWEEN_EASING_QUADRATIC_IN_OUT,
-        TWEEN_EASING_CUBIC_IN,
-        TWEEN_EASING_CUBIC_OUT,
-        TWEEN_EASING_CUBIC_IN_OUT,
-        TWEEN_EASING_QUARTIC_IN,
-        TWEEN_EASING_QUARTIC_OUT,
-        TWEEN_EASING_QUARTIC_IN_OUT,
-        TWEEN_EASING_QUINTIC_IN,
-        TWEEN_EASING_QUINTIC_OUT,
-        TWEEN_EASING_QUINTIC_IN_OUT,
-        TWEEN_EASING_SINUSOIDAL_IN,
-        TWEEN_EASING_SINUSOIDAL_OUT,
-        TWEEN_EASING_SINUSOIDAL_IN_OUT,
-        TWEEN_EASING_EXPONENTIAL_IN,
-        TWEEN_EASING_EXPONENTIAL_OUT,
-        TWEEN_EASING_EXPONENTIAL_IN_OUT,
-        TWEEN_EASING_CIRCULAR_IN,
-        TWEEN_EASING_CIRCULAR_OUT,
-        TWEEN_EASING_CIRCULAR_IN_OUT,
-        TWEEN_EASING_ELASTIC_IN,
-        TWEEN_EASING_ELASTIC_OUT,
-        TWEEN_EASING_ELASTIC_IN_OUT,
-        TWEEN_EASING_BACK_IN,
-        TWEEN_EASING_BACK_OUT,
-        TWEEN_EASING_BACK_IN_OUT,
-        TWEEN_EASING_BOUNCE_IN,
-        TWEEN_EASING_BOUNCE_OUT,
-        TWEEN_EASING_BOUNCE_IN_OUT,
-    } Tween_Easing;
-    void _add_node(Object *node);
-    Ref<TweenAction> to(Object *target, float during);
-    void cancel(Object *target);
+	typedef enum {
+		TWEEN_EASING_LINEAR,
+		TWEEN_EASING_QUADRATIC_IN,
+		TWEEN_EASING_QUADRATIC_OUT,
+		TWEEN_EASING_QUADRATIC_IN_OUT,
+		TWEEN_EASING_CUBIC_IN,
+		TWEEN_EASING_CUBIC_OUT,
+		TWEEN_EASING_CUBIC_IN_OUT,
+		TWEEN_EASING_QUARTIC_IN,
+		TWEEN_EASING_QUARTIC_OUT,
+		TWEEN_EASING_QUARTIC_IN_OUT,
+		TWEEN_EASING_QUINTIC_IN,
+		TWEEN_EASING_QUINTIC_OUT,
+		TWEEN_EASING_QUINTIC_IN_OUT,
+		TWEEN_EASING_SINUSOIDAL_IN,
+		TWEEN_EASING_SINUSOIDAL_OUT,
+		TWEEN_EASING_SINUSOIDAL_IN_OUT,
+		TWEEN_EASING_EXPONENTIAL_IN,
+		TWEEN_EASING_EXPONENTIAL_OUT,
+		TWEEN_EASING_EXPONENTIAL_IN_OUT,
+		TWEEN_EASING_CIRCULAR_IN,
+		TWEEN_EASING_CIRCULAR_OUT,
+		TWEEN_EASING_CIRCULAR_IN_OUT,
+		TWEEN_EASING_ELASTIC_IN,
+		TWEEN_EASING_ELASTIC_OUT,
+		TWEEN_EASING_ELASTIC_IN_OUT,
+		TWEEN_EASING_BACK_IN,
+		TWEEN_EASING_BACK_OUT,
+		TWEEN_EASING_BACK_IN_OUT,
+		TWEEN_EASING_BOUNCE_IN,
+		TWEEN_EASING_BOUNCE_OUT,
+		TWEEN_EASING_BOUNCE_IN_OUT,
+	} Tween_Easing;
+	void _add_node(Object *node);
+	Ref<TweenAction> to(Object *target, float during);
+	void cancel(Object *target);
 
-    Tween2();
-    ~Tween2();
+	Tween2();
+	~Tween2();
 };
 
 class TweenAction : public Reference {
-    GDCLASS(TweenAction, Reference);
+	GDCLASS(TweenAction, Reference);
+
 private:
-    typedef enum {
-        TWEEN_STATUS_NORMAL,
-        TWEEN_STATUS_CANCEL,
-        TWEEN_STATUS_END
-    } TweenStatus;
-    float total_time;
-    float delta_time;
-    float delay_time;
-    Object *target;
-    TweenStatus status;
-    Tween2::Tween_Easing easing;
+	typedef enum {
+		TWEEN_STATUS_NORMAL,
+		TWEEN_STATUS_CANCEL,
+		TWEEN_STATUS_END
+	} TweenStatus;
+	float total_time;
+	float delta_time;
+	float delay_time;
+	Object *target;
+	TweenStatus status;
+	Tween2::Tween_Easing easing;
 
-    bool step(float delta);
+	bool step(float delta);
 
-    Vector< Ref<TweenProperty> > properties;
-    friend class Tween2;
-    friend class TweenNode;
-    void set_target(Object* target);
-    void _on_target_exit();
+	Vector<Ref<TweenProperty> > properties;
+	friend class Tween2;
+	friend class TweenNode;
+	void set_target(Object *target);
+	void _on_target_exit();
+
 protected:
-    static void _bind_methods();
+	static void _bind_methods();
+
 public:
-    TweenAction *add_method(const StringName& method_name, const Variant &from, const Variant& to);
-    TweenAction *add_property(const StringName& property_name, const Variant &from, const Variant& to);
-    TweenAction *add_callback(const Variant &target, const StringName& method_name, float step);
+	TweenAction *add_method(const StringName &method_name, const Variant &from, const Variant &to);
+	TweenAction *add_property(const StringName &property_name, const Variant &from, const Variant &to);
+	TweenAction *add_callback(const Variant &target, const StringName &method_name, float step);
 
-    void cancel();
-    void end();
+	void cancel();
+	void end();
 
-    TweenAction *set_easing(Tween2::Tween_Easing e) {easing = e;return this;}
-    Tween2::Tween_Easing get_easing() {return easing;}
+	TweenAction *set_easing(Tween2::Tween_Easing e) {
+		easing = e;
+		return this;
+	}
+	Tween2::Tween_Easing get_easing() { return easing; }
 
-    float get_total_time() {return total_time;}
-    float get_delta_time() {return delta_time;}
-    float get_delay_time() {return delay_time;}
-    TweenAction *set_delay_time(float dt) {delay_time = dt;return this;}
+	float get_total_time() { return total_time; }
+	float get_delta_time() { return delta_time; }
+	float get_delay_time() { return delay_time; }
+	TweenAction *set_delay_time(float dt) {
+		delay_time = dt;
+		return this;
+	}
 
-    TweenAction() {
-        easing = Tween2::TWEEN_EASING_LINEAR;
-        status = TWEEN_STATUS_NORMAL;
-        delay_time = 0;
-        total_time = 0;
-        delta_time = 0;
-        target = NULL;
-    }
-    ~TweenAction();
+	TweenAction() {
+		easing = Tween2::TWEEN_EASING_LINEAR;
+		status = TWEEN_STATUS_NORMAL;
+		delay_time = 0;
+		total_time = 0;
+		delta_time = 0;
+		target = NULL;
+	}
+	~TweenAction();
 };
 
 VARIANT_ENUM_CAST(Tween2::Tween_Easing);

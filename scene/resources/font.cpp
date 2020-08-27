@@ -31,9 +31,9 @@
 #include "font.h"
 
 #include "core/io/resource_loader.h"
+#include "core/io/xml_parser.h"
 #include "core/method_bind_ext.gen.inc"
 #include "core/os/file_access.h"
-#include "core/io/xml_parser.h"
 
 void Font::draw_halign(RID p_canvas_item, const Point2 &p_pos, HAlign p_align, float p_width, const String &p_text, const Color &p_modulate, const Color &p_outline_modulate) const {
 	float length = get_string_size(p_text).width;
@@ -303,7 +303,7 @@ Error BitmapFont::create_from_fnt(const String &p_file) {
 
 	ERR_FAIL_COND_V_MSG(!f, ERR_FILE_NOT_FOUND, "Can't open font: " + p_file + ".");
 
-    while (true) {
+	while (true) {
 
 		String line = f->get_line();
 
@@ -639,7 +639,7 @@ Ref<BitmapFont> BitmapFont::get_fallback() const {
 
 float BitmapFont::draw_char(RID p_canvas_item, const Point2 &p_pos, CharType p_char, CharType p_next, const Color &p_modulate, bool p_outline) const {
 
-    return draw_char_xform(p_canvas_item, CharTransform(), p_pos, p_char, p_next, p_modulate, p_outline);
+	return draw_char_xform(p_canvas_item, CharTransform(), p_pos, p_char, p_next, p_modulate, p_outline);
 }
 
 float BitmapFont::draw_char_xform(RID p_canvas_item, const CharTransform &p_char_xform, const Point2 &p_pos, CharType p_char, CharType p_next, const Color &p_modulate, bool p_outline) const {
@@ -658,14 +658,14 @@ float BitmapFont::draw_char_xform(RID p_canvas_item, const CharTransform &p_char
 		cpos.x += c->h_align;
 		cpos.y += c->v_align - ascent;
 		VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item,
-            p_char_xform.xform_dest(Rect2(cpos, c->rect.size), ascent, height-c->v_align-ascent-c->rect.size.y/2),
-            textures[c->texture_idx]->get_rid(),
-            p_char_xform.xform_tex(c->rect), p_modulate, false, RID(), false);
+				p_char_xform.xform_dest(Rect2(cpos, c->rect.size), ascent, height - c->v_align - ascent - c->rect.size.y / 2),
+				textures[c->texture_idx]->get_rid(),
+				p_char_xform.xform_tex(c->rect), p_modulate, false, RID(), false);
 	}
 
 	if (p_char_xform.scale_width)
-        return get_char_size(p_char, p_next).width * p_char_xform.dest.scale.x;
-    return get_char_size(p_char, p_next).width;
+		return get_char_size(p_char, p_next).width * p_char_xform.dest.scale.x;
+	return get_char_size(p_char, p_next).width;
 }
 
 Size2 BitmapFont::get_char_size(CharType p_char, CharType p_next) const {

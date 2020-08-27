@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  util.hpp                                                             */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 // Copyright 2015 Markus Ilmola
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE.txt or copy at
@@ -9,9 +39,7 @@
 #include <algorithm>
 #include <cmath>
 
-
 namespace gml {
-
 
 /// Converts degrees to radians
 template <typename T>
@@ -19,52 +47,43 @@ T radians(T degrees) {
 	return degrees * static_cast<T>(0.017453292519943295769236907684886);
 }
 
-
 /// Converts radians to degrees
 template <typename T>
 T degrees(T radians) {
 	return radians * static_cast<T>(57.295779513082320876798154814105);
 }
 
-
 template <typename T>
 T clamp(T val, T minVal, T maxVal) {
 	return std::min<T>(std::max<T>(val, minVal), maxVal);
 }
-
 
 /// Wraps a value around to the given interval
 /// @param val Value to wrap to the given interval.
 /// @param min Start point of the interval (inclusive)
 /// @param max End point of the interval (exclusive)
 template <
-	typename T,
-	typename std::enable_if<!std::is_integral<T>::value, int>::type = 0
->
-T repeat(T val, T min, T max)
-{
+		typename T,
+		typename std::enable_if<!std::is_integral<T>::value, int>::type = 0>
+T repeat(T val, T min, T max) {
 	using std::fmod;
 	T temp = fmod(val - min, max - min);
 	if (temp < static_cast<T>(0)) temp += max - min;
 	return temp + min;
 }
 
-
 /// Wraps a value around to the given interval
 /// @param val Value to wrap to the given interval.
 /// @param min Start point of the interval (inclusive)
 /// @param max End point of the interval (exclusive)
 template <
-	typename T,
-	typename std::enable_if<std::is_integral<T>::value, int>::type = 0
->
-T repeat(T val, T min, T max)
-{
+		typename T,
+		typename std::enable_if<std::is_integral<T>::value, int>::type = 0>
+T repeat(T val, T min, T max) {
 	T temp = (val - min) % (max - min);
 	if (temp < static_cast<T>(0)) temp += max - min;
 	return temp + min;
 }
-
 
 /// Convert an unsigned integral type TI to floating point type TF by mapping it
 /// linearly to range [0.0, 1.0].
@@ -74,18 +93,15 @@ template <typename TF, typename TI>
 TF unpackUnorm(TI val) {
 
 	static_assert(
-		std::is_integral<TI>::value && !std::is_signed<TI>::value,
-		"TI must be an unsigned integral type."
-	);
+			std::is_integral<TI>::value && !std::is_signed<TI>::value,
+			"TI must be an unsigned integral type.");
 
 	static_assert(
-		std::is_floating_point<TF>::value,
-		"TF must be a floating point type!"
-	);
+			std::is_floating_point<TF>::value,
+			"TF must be a floating point type!");
 
 	return static_cast<TF>(val) / static_cast<TF>(std::numeric_limits<TI>::max());
 }
-
 
 /// Convert a floating point type to an unsigned integral type by first clamping
 /// it to range [0.0, 1.0] and then mapping it to the full range of the integer.
@@ -95,22 +111,18 @@ template <typename TI, typename TF>
 TI packUnorm(TF val) {
 
 	static_assert(
-		std::is_integral<TI>::value && !std::is_signed<TI>::value,
-		"TI must be an unsigned integral type."
-	);
+			std::is_integral<TI>::value && !std::is_signed<TI>::value,
+			"TI must be an unsigned integral type.");
 
 	static_assert(
-		std::is_floating_point<TF>::value,
-		"TF must be a floating point type!"
-	);
+			std::is_floating_point<TF>::value,
+			"TF must be a floating point type!");
 
 	return static_cast<TI>(
-		clamp<TF>(val, static_cast<TF>(0.0), static_cast<TF>(1.0)) *
-		static_cast<TF>(std::numeric_limits<TI>::max()) +
-		static_cast<TF>(0.5)
-	);
+			clamp<TF>(val, static_cast<TF>(0.0), static_cast<TF>(1.0)) *
+					static_cast<TF>(std::numeric_limits<TI>::max()) +
+			static_cast<TF>(0.5));
 }
-
 
 /// Convert a signed integral type TI to floating point type TF by mapping it
 /// linearly to range [-1.0, 1.0].
@@ -120,22 +132,18 @@ template <typename TF, typename TI>
 TF unpackSnorm(TI val) {
 
 	static_assert(
-		std::is_integral<TI>::value && std::is_signed<TI>::value,
-		"TI must be a signed integral type."
-	);
+			std::is_integral<TI>::value && std::is_signed<TI>::value,
+			"TI must be a signed integral type.");
 
 	static_assert(
-		std::is_floating_point<TF>::value,
-		"TF must be a floating point type!"
-	);
+			std::is_floating_point<TF>::value,
+			"TF must be a floating point type!");
 
 	return clamp(
-		static_cast<TF>(val) /
-		static_cast<TF>(std::numeric_limits<TI>::max()),
-		static_cast<TF>(-1.0), static_cast<TF>(1.0)
-	);
+			static_cast<TF>(val) /
+					static_cast<TF>(std::numeric_limits<TI>::max()),
+			static_cast<TF>(-1.0), static_cast<TF>(1.0));
 }
-
 
 /// Convert a floating point type to a signed integral type by first clamping
 /// it to range [-1.0, 1.0] and then mapping it to the full range of the integer.
@@ -145,25 +153,19 @@ template <typename TI, typename TF>
 TI packSnorm(TF val) {
 
 	static_assert(
-		std::is_integral<TI>::value && std::is_signed<TI>::value,
-		"TI must be a signed integral type."
-	);
+			std::is_integral<TI>::value && std::is_signed<TI>::value,
+			"TI must be a signed integral type.");
 
 	static_assert(
-		std::is_floating_point<TF>::value,
-		"TF must be a floating point type!"
-	);
+			std::is_floating_point<TF>::value,
+			"TF must be a floating point type!");
 
 	return static_cast<TI>(
-		clamp<TF>(val, static_cast<TF>(-1.0), static_cast<TF>(1.0)) *
-		static_cast<TF>(std::numeric_limits<TI>::max()) +
-		static_cast<TF>(0.5)
-	);
+			clamp<TF>(val, static_cast<TF>(-1.0), static_cast<TF>(1.0)) *
+					static_cast<TF>(std::numeric_limits<TI>::max()) +
+			static_cast<TF>(0.5));
 }
 
-
-
-
-}
+} // namespace gml
 
 #endif

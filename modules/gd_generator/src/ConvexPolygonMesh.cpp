@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  ConvexPolygonMesh.cpp                                                */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 // Copyright 2016 Markus Ilmola
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -11,25 +41,17 @@
 
 using namespace generator;
 
-
-
-ConvexPolygonMesh::Triangles::Triangles(const ConvexPolygonMesh& mesh) noexcept :
-	mMesh{&mesh},
-	mOdd{false},
-	mSegmentIndex{0},
-	mSideIndex{0},
-	mRingIndex{0}
-{
-
+ConvexPolygonMesh::Triangles::Triangles(const ConvexPolygonMesh &mesh) noexcept : mMesh{ &mesh },
+																				  mOdd{ false },
+																				  mSegmentIndex{ 0 },
+																				  mSideIndex{ 0 },
+																				  mRingIndex{ 0 } {
 }
-
 
 bool ConvexPolygonMesh::Triangles::done() const noexcept {
-	return
-		mMesh->mSegments == 0 || mMesh->mVertices.size() < 3 ||
-		mRingIndex == mMesh->mRings;
+	return mMesh->mSegments == 0 || mMesh->mVertices.size() < 3 ||
+		   mRingIndex == mMesh->mRings;
 }
-
 
 Triangle ConvexPolygonMesh::Triangles::generate() const {
 	if (done()) throw std::runtime_error("Done!");
@@ -46,14 +68,12 @@ Triangle ConvexPolygonMesh::Triangles::generate() const {
 		triangle.vertices[0] = 0;
 		triangle.vertices[1] = n1 + delta;
 		triangle.vertices[2] = n2 + delta;
-	}
-	else {
+	} else {
 		if (!mOdd) {
 			triangle.vertices[0] = n1 + delta;
 			triangle.vertices[1] = n2 + delta;
 			triangle.vertices[2] = n1 + verticesPerRing + delta;
-		}
-		else {
+		} else {
 			triangle.vertices[0] = n2 + delta;
 			triangle.vertices[1] = n2 + verticesPerRing + delta;
 			triangle.vertices[2] = n1 + verticesPerRing + delta;
@@ -62,9 +82,6 @@ Triangle ConvexPolygonMesh::Triangles::generate() const {
 
 	return triangle;
 }
-
-
-
 
 void ConvexPolygonMesh::Triangles::next() {
 	if (done()) throw std::runtime_error("Done!");
@@ -81,8 +98,7 @@ void ConvexPolygonMesh::Triangles::next() {
 				++mRingIndex;
 			}
 		}
-	}
-	else {
+	} else {
 
 		mOdd = !mOdd;
 
@@ -102,31 +118,21 @@ void ConvexPolygonMesh::Triangles::next() {
 					++mRingIndex;
 				}
 			}
-
 		}
 	}
 }
 
-
-
-ConvexPolygonMesh::Vertices::Vertices(const ConvexPolygonMesh& mesh) noexcept :
-	mMesh{&mesh},
-	mCenterDone{false},
-	mSegmentIndex{0},
-	mSideIndex{0},
-	mRingIndex{0}
-{
+ConvexPolygonMesh::Vertices::Vertices(const ConvexPolygonMesh &mesh) noexcept : mMesh{ &mesh },
+																				mCenterDone{ false },
+																				mSegmentIndex{ 0 },
+																				mSideIndex{ 0 },
+																				mRingIndex{ 0 } {
 }
-
 
 bool ConvexPolygonMesh::Vertices::done() const noexcept {
-	return
-		mMesh->mSegments == 0 || mMesh->mRings == 0 ||
-		mMesh->mVertices.size() < 3 || mRingIndex == mMesh->mRings;
+	return mMesh->mSegments == 0 || mMesh->mRings == 0 ||
+		   mMesh->mVertices.size() < 3 || mRingIndex == mMesh->mRings;
 }
-
-
-
 
 MeshVertex ConvexPolygonMesh::Vertices::generate() const {
 	if (done()) throw std::runtime_error("Done!");
@@ -143,8 +149,7 @@ MeshVertex ConvexPolygonMesh::Vertices::generate() const {
 		const gml::dvec3 b = gml::mix(mMesh->mVertices.at(nextSide), mMesh->mCenter, ringDelta);
 
 		vertex.position = gml::mix(a, b, segmentDelta);
-	}
-	else {
+	} else {
 		vertex.position = mMesh->mCenter;
 	}
 
@@ -160,16 +165,12 @@ MeshVertex ConvexPolygonMesh::Vertices::generate() const {
 	return vertex;
 }
 
-
-
-
 void ConvexPolygonMesh::Vertices::next() {
 	if (done()) throw std::runtime_error("Done!");
 
 	if (!mCenterDone) {
 		mCenterDone = true;
-	}
-	else {
+	} else {
 
 		++mSegmentIndex;
 
@@ -188,45 +189,39 @@ void ConvexPolygonMesh::Vertices::next() {
 	}
 }
 
-
 namespace {
-
 
 std::vector<gml::dvec3> makeVertices(double radius, int sides) noexcept {
 	std::vector<gml::dvec3> result{};
 
-	CircleShape circle{radius, sides};
-	for (const auto& v : circle.vertices()) {
-		result.push_back(gml::dvec3{v.position[0], v.position[1], 0.0});
+	CircleShape circle{ radius, sides };
+	for (const auto &v : circle.vertices()) {
+		result.push_back(gml::dvec3{ v.position[0], v.position[1], 0.0 });
 	}
 	result.pop_back(); // The last one is a dublicate with the first one
 
 	return result;
 }
 
-
-
-std::vector<gml::dvec3> convertVertices(const std::vector<gml::dvec2>& vertices) noexcept {
+std::vector<gml::dvec3> convertVertices(const std::vector<gml::dvec2> &vertices) noexcept {
 	std::vector<gml::dvec3> result(vertices.size());
 
 	for (std::size_t i = 0; i < vertices.size(); ++i) {
-		result.at(i) = gml::dvec3{vertices.at(i)[0], vertices.at(i)[1], 0.0};
+		result.at(i) = gml::dvec3{ vertices.at(i)[0], vertices.at(i)[1], 0.0 };
 	}
 
 	return result;
 }
 
-
-gml::dvec3 calcCenter(const std::vector<gml::dvec3>& vertices) noexcept {
+gml::dvec3 calcCenter(const std::vector<gml::dvec3> &vertices) noexcept {
 	gml::dvec3 result{};
-	for (const auto& v : vertices) {
+	for (const auto &v : vertices) {
 		result += v;
 	}
 	return result / static_cast<double>(vertices.size());
 }
 
-
-gml::dvec3 calcNormal(const gml::dvec3& center, const std::vector<gml::dvec3>& vertices) {
+gml::dvec3 calcNormal(const gml::dvec3 &center, const std::vector<gml::dvec3> &vertices) {
 	gml::dvec3 normal{};
 	for (int i = 0; i < static_cast<int>(vertices.size()); ++i) {
 		normal += gml::normal(center, vertices[i], vertices[(i + 1) % vertices.size()]);
@@ -234,36 +229,23 @@ gml::dvec3 calcNormal(const gml::dvec3& center, const std::vector<gml::dvec3>& v
 	return gml::normalize(normal);
 }
 
-
-}
-
+} // namespace
 
 ConvexPolygonMesh::ConvexPolygonMesh(
-	double radius, int sides, int segments, int rings
-) noexcept :
-	ConvexPolygonMesh{makeVertices(radius, sides), segments, rings}
-{ }
-
+		double radius, int sides, int segments, int rings) noexcept : ConvexPolygonMesh{ makeVertices(radius, sides), segments, rings } {}
 
 ConvexPolygonMesh::ConvexPolygonMesh(
-	const std::vector<gml::dvec2>& vertices, int segments, int rings
-) noexcept :
-	ConvexPolygonMesh{convertVertices(vertices), segments, rings}
-{ }
-
+		const std::vector<gml::dvec2> &vertices, int segments, int rings) noexcept : ConvexPolygonMesh{ convertVertices(vertices), segments, rings } {}
 
 ConvexPolygonMesh::ConvexPolygonMesh(
-	std::vector<gml::dvec3> vertices, int segments, int rings
-) noexcept :
-	mVertices{std::move(vertices)},
-	mSegments{segments},
-	mRings{rings},
-	mCenter{calcCenter(mVertices)},
-	mNormal{calcNormal(mCenter, mVertices)},
-	mTangent{},
-	mBitangent{},
-	mTexDelta{}
-{
+		std::vector<gml::dvec3> vertices, int segments, int rings) noexcept : mVertices{ std::move(vertices) },
+																			  mSegments{ segments },
+																			  mRings{ rings },
+																			  mCenter{ calcCenter(mVertices) },
+																			  mNormal{ calcNormal(mCenter, mVertices) },
+																			  mTangent{},
+																			  mBitangent{},
+																			  mTexDelta{} {
 
 	if (mVertices.size() > 0) {
 		mTangent = gml::normalize(mVertices.at(0) - mCenter);
@@ -271,10 +253,10 @@ ConvexPolygonMesh::ConvexPolygonMesh(
 
 		gml::dvec2 texMax{};
 
-		for (const gml::dvec3& vertex : mVertices) {
+		for (const gml::dvec3 &vertex : mVertices) {
 			gml::dvec3 delta = vertex - mCenter;
 
-			gml::dvec2 uv{gml::dot(mTangent, delta), gml::dot(mBitangent, delta)};
+			gml::dvec2 uv{ gml::dot(mTangent, delta), gml::dot(mBitangent, delta) };
 
 			mTexDelta = gml::min(mTexDelta, uv);
 			texMax = gml::max(texMax, uv);
@@ -286,18 +268,13 @@ ConvexPolygonMesh::ConvexPolygonMesh(
 		mBitangent /= size[1];
 
 		mTexDelta /= size;
-
 	}
 }
 
-
 ConvexPolygonMesh::Triangles ConvexPolygonMesh::triangles() const noexcept {
-	return Triangles{*this};
+	return Triangles{ *this };
 }
-
 
 ConvexPolygonMesh::Vertices ConvexPolygonMesh::vertices() const noexcept {
-	return Vertices{*this};
+	return Vertices{ *this };
 }
-
-

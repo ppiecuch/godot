@@ -1,20 +1,48 @@
+/*************************************************************************/
+/*  autotilemap.h                                                        */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #ifndef AUTOTILEMAP_H
 #define AUTOTILEMAP_H
 
-#include "core/reference.h"
-#include "core/vector.h"
 #include "core/dictionary.h"
+#include "core/io/json.h"
+#include "core/reference.h"
 #include "core/variant.h"
 #include "core/vector.h"
 #include "scene/2d/tile_map.h"
-#include "core/io/json.h"
 
 #include <string>
 #include <vector>
 
 class Autotiler : public Reference {
 public:
-
 	virtual bool is_source_tile(int tid) const {
 		return _src_tile == tid;
 	}
@@ -34,12 +62,12 @@ public:
 
 	virtual String get_type() const = 0;
 
-	bool is_type(const String& type) const {
+	bool is_type(const String &type) const {
 		return type == get_type();
 	}
-	virtual int get_atlas_id() const {return 0;}
+	virtual int get_atlas_id() const { return 0; }
 
-	Dictionary& get_metadata_map() {
+	Dictionary &get_metadata_map() {
 		return _tile_metadata_map;
 	}
 
@@ -51,7 +79,6 @@ protected:
 
 class BlobTerrainAutotiler : public Autotiler {
 public:
-
 	String get_type() const {
 		return "BlobTerrainAutotiler";
 	}
@@ -65,7 +92,7 @@ public:
 		return false;
 	}
 
-	void init(const Variant& autotiler, const Vector<Variant>& codes) {
+	void init(const Variant &autotiler, const Vector<Variant> &codes) {
 		_atlas_id = autotiler.get("atlas_id");
 		_src_tile = autotiler.get("src_1");
 		_src_2 = autotiler.get("src_2");
@@ -85,7 +112,6 @@ public:
 	}
 
 private:
-
 	int _atlas_id = 0;
 	int _src_2 = 0;
 	int _comp_tile = 0;
@@ -97,9 +123,9 @@ public:
 		return "BlobAutotiler";
 	}
 
-	int get_atlas_id() const {return _atlas_id ;}
+	int get_atlas_id() const { return _atlas_id; }
 
-	void init(const Variant& autotiler, const Vector<Variant>& codes) {
+	void init(const Variant &autotiler, const Vector<Variant> &codes) {
 		_atlas_id = autotiler.get("atlas_id");
 		_src_tile = autotiler.get("src_tile");
 		Variant neighbor_ids = autotiler.get("neighbor_tiles");
@@ -115,14 +141,11 @@ public:
 	}
 
 private:
-
 	uint32_t _atlas_id = 0;
 };
 
-
 class QuadAutotiler : public Autotiler {
 public:
-
 	/* struct Meta : public Object { */
 	/* Meta(int c, bool fx, bool fy) : code(c), flip_x(fx), flip_y(fy) {} */
 	/* 	int code; */
@@ -130,12 +153,12 @@ public:
 	/* 	bool flip_y; */
 	/* }; */
 
-	void init(const Variant& autotiler) {
+	void init(const Variant &autotiler) {
 		_src_tile = autotiler.get("src_tile");
 		Vector<Variant> codes = autotiler.get("codes");
 		for (int i = 0; i < codes.size(); i++) {
 			auto code = codes[i];
-			_tile_metadata_map[int(code.get("code"))] = code;//.get("id")), code.get("x_mirror"), code.get("y_mirror");
+			_tile_metadata_map[int(code.get("code"))] = code; //.get("id")), code.get("x_mirror"), code.get("y_mirror");
 		}
 
 		Variant neighbor_ids = autotiler.get("neighbor_tiles");
@@ -154,15 +177,15 @@ class Autotilemap : public Reference {
 	GDCLASS(Autotilemap, Reference);
 
 protected:
-    static void _bind_methods();
+	static void _bind_methods();
 
 public:
-	void init(const Vector2& top_left, const Vector2& bottom_right, const String& json_file);
-	void load_from_json(const String& json_file);
-	void apply(Object* obj_tilemap);
+	void init(const Vector2 &top_left, const Vector2 &bottom_right, const String &json_file);
+	void load_from_json(const String &json_file);
+	void apply(Object *obj_tilemap);
 	void set_value(int x, int y, int v);
 	void set_value_relative_to_tl(int x, int y, int v);
-	void set_submap(Vector2 sub_top_left, int width, int height, const Variant& idata);
+	void set_submap(Vector2 sub_top_left, int width, int height, const Variant &idata);
 	Vector2 get_top_left();
 	Vector2 get_bottom_right();
 	int get_width();
@@ -172,11 +195,10 @@ public:
 	Autotilemap();
 
 private:
-
-	void apply_blob_autotiling(TileMap* tilemap);
-	void apply_blob_terrain_autotiling(TileMap* tilemap);
-	void map_ids_to_tiles(TileMap* tilemap);
-	void apply_autotiling(TileMap* tilemap);
+	void apply_blob_autotiling(TileMap *tilemap);
+	void apply_blob_terrain_autotiling(TileMap *tilemap);
+	void map_ids_to_tiles(TileMap *tilemap);
+	void apply_autotiling(TileMap *tilemap);
 
 	Variant _json_data;
 	Vector<Variant> _id_to_atlas;
@@ -185,8 +207,8 @@ private:
 	int _width = 0;
 	int _height = 0;
 	int _base_tile = 0;
-	Vector<int32_t> _data;   //TypedArray instead?
-	Vector<Ref<Autotiler>> _autotilers;
+	Vector<int32_t> _data; //TypedArray instead?
+	Vector<Ref<Autotiler> > _autotilers;
 	bool _blob_mode = false;
 };
 

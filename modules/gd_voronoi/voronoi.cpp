@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  voronoi.cpp                                                          */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #include <algorithm>
 #include <type_traits>
 
@@ -36,11 +66,10 @@ Vector2 VoronoiSite::center() const {
 
 Vector<Variant> VoronoiSite::edges() const {
 	Vector<Variant> result;
-	const jcv_graphedge* graphedge = _site->edges;
+	const jcv_graphedge *graphedge = _site->edges;
 	while (graphedge) {
 		result.push_back(_diagram->_edges_by_address.at(
-			reinterpret_cast<std::uintptr_t>(graphedge->edge)
-		));
+				reinterpret_cast<std::uintptr_t>(graphedge->edge)));
 		graphedge = graphedge->next;
 	}
 	return result;
@@ -48,7 +77,7 @@ Vector<Variant> VoronoiSite::edges() const {
 
 Vector<Variant> VoronoiSite::neighbors() const {
 	Vector<Variant> result;
-	const jcv_graphedge* graphedge = _site->edges;
+	const jcv_graphedge *graphedge = _site->edges;
 	while (graphedge) {
 		if (graphedge->neighbor)
 			result.push_back(_diagram->_sites_by_index.at(graphedge->neighbor->index));
@@ -64,16 +93,16 @@ void VoronoiSite::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("neighbors"), &VoronoiSite::neighbors);
 }
 
-VoronoiDiagram::VoronoiDiagram()
-	: _diagram() {
+VoronoiDiagram::VoronoiDiagram() :
+		_diagram() {
 	memset(&_diagram, 0, sizeof(jcv_diagram));
 }
 
 VoronoiDiagram::~VoronoiDiagram() {
 	for (auto edge : _edges)
-		memdelete(static_cast<Object*>(edge));
+		memdelete(static_cast<Object *>(edge));
 	for (auto site : _sites)
-		memdelete(static_cast<Object*>(site));
+		memdelete(static_cast<Object *>(site));
 
 	jcv_diagram_free(&_diagram);
 }
@@ -94,12 +123,12 @@ Vector<Variant> VoronoiDiagram::sites() const {
 
 void VoronoiDiagram::build_objects() {
 	voronoi_detail::vector<Variant> gd_edges;
-	const jcv_edge* edge = jcv_diagram_get_edges(&_diagram);
+	const jcv_edge *edge = jcv_diagram_get_edges(&_diagram);
 	while (edge) {
 		// apparent bug in jcv, egdes where start = end are reported as
 		// diagram edges, but do not exist when iterating over sites
 		if (edge->pos[0].x != edge->pos[1].x || edge->pos[0].y != edge->pos[1].y) {
-			VoronoiEdge* gd_edge = memnew(VoronoiEdge(edge, this));
+			VoronoiEdge *gd_edge = memnew(VoronoiEdge(edge, this));
 			gd_edges.push_back(gd_edge);
 			_edges_by_address[reinterpret_cast<std::uintptr_t>(edge)] = gd_edge;
 		}
@@ -108,9 +137,9 @@ void VoronoiDiagram::build_objects() {
 	_edges.swap(gd_edges);
 
 	voronoi_detail::vector<Variant> gd_sites;
-	const jcv_site* sites = jcv_diagram_get_sites(&_diagram);
+	const jcv_site *sites = jcv_diagram_get_sites(&_diagram);
 	for (int i = 0; i < _diagram.numsites; i++) {
-		VoronoiSite* gd_site = memnew(VoronoiSite(&sites[i], this));
+		VoronoiSite *gd_site = memnew(VoronoiSite(&sites[i], this));
 		gd_sites.push_back(gd_site);
 		_sites_by_index[sites[i].index] = gd_site;
 	}
@@ -118,8 +147,8 @@ void VoronoiDiagram::build_objects() {
 }
 
 void VoronoiDiagram::_bind_methods() {
-    ClassDB::bind_method(D_METHOD("edges"), &VoronoiDiagram::edges);
-    ClassDB::bind_method(D_METHOD("sites"), &VoronoiDiagram::sites);
+	ClassDB::bind_method(D_METHOD("edges"), &VoronoiDiagram::edges);
+	ClassDB::bind_method(D_METHOD("sites"), &VoronoiDiagram::sites);
 }
 
 void Voronoi::set_points(Vector<Vector2> points) {
@@ -134,18 +163,18 @@ void Voronoi::set_points(Vector<Vector2> points) {
 }
 
 void Voronoi::set_boundaries(Rect2 boundaries) {
-	_boundaries = jcv_rect {
-		jcv_point { boundaries.position.x, boundaries.position.y },
-		jcv_point { boundaries.position.x + boundaries.size.x, boundaries.position.y + boundaries.size.y }
+	_boundaries = jcv_rect{
+		jcv_point{ boundaries.position.x, boundaries.position.y },
+		jcv_point{ boundaries.position.x + boundaries.size.x, boundaries.position.y + boundaries.size.y }
 	};
 	_has_boundaries = true;
 }
 
-void* useralloc(void* ctx, size_t size) {
+void *useralloc(void *ctx, size_t size) {
 	return memalloc(size);
 }
 
-void userfree(void* ctx, void* ptr) {
+void userfree(void *ctx, void *ptr) {
 	return memfree(ptr);
 }
 
@@ -155,22 +184,21 @@ void Voronoi::relax_points(int iterations = 1) {
 		jcv_diagram diagram;
 		memset(&diagram, 0, sizeof(jcv_diagram));
 		jcv_diagram_generate_useralloc(
-			_points.size(),
-			_points.data(),
-			_has_boundaries ? &_boundaries : NULL,
-			NULL,
-			&useralloc,
-			&userfree,
-			&diagram
-		);
-		const jcv_site* sites = jcv_diagram_get_sites(&diagram);
+				_points.size(),
+				_points.data(),
+				_has_boundaries ? &_boundaries : NULL,
+				NULL,
+				&useralloc,
+				&userfree,
+				&diagram);
+		const jcv_site *sites = jcv_diagram_get_sites(&diagram);
 		const int numsites = diagram.numsites;
 		for (int i = 0; i < numsites; ++i) {
-			const jcv_site* site = &sites[i];
+			const jcv_site *site = &sites[i];
 			jcv_point sum = site->p;
 			int count = 1;
 
-			const jcv_graphedge* edge = site->edges;
+			const jcv_graphedge *edge = site->edges;
 
 			while (edge) {
 				sum.x += edge->pos[0].x;
@@ -187,23 +215,22 @@ void Voronoi::relax_points(int iterations = 1) {
 }
 
 Ref<VoronoiDiagram> Voronoi::generate_diagram() const {
-	Ref<VoronoiDiagram> result { memnew(VoronoiDiagram) };
+	Ref<VoronoiDiagram> result{ memnew(VoronoiDiagram) };
 	jcv_diagram_generate_useralloc(
-		_points.size(),
-		_points.data(),
-		_has_boundaries ? &_boundaries : NULL,
-		NULL,
-		&useralloc,
-		&userfree,
-		&(result->_diagram)
-	);
+			_points.size(),
+			_points.data(),
+			_has_boundaries ? &_boundaries : NULL,
+			NULL,
+			&useralloc,
+			&userfree,
+			&(result->_diagram));
 	result->build_objects();
 	return result;
 }
 
 void Voronoi::_bind_methods() {
-    ClassDB::bind_method(D_METHOD("set_points", "points"), &Voronoi::set_points);
-    ClassDB::bind_method(D_METHOD("set_boundaries", "boundaries"), &Voronoi::set_boundaries);
-    ClassDB::bind_method(D_METHOD("relax_points", "iterations"), &Voronoi::relax_points);
-    ClassDB::bind_method(D_METHOD("generate_diagram"), &Voronoi::generate_diagram);
+	ClassDB::bind_method(D_METHOD("set_points", "points"), &Voronoi::set_points);
+	ClassDB::bind_method(D_METHOD("set_boundaries", "boundaries"), &Voronoi::set_boundaries);
+	ClassDB::bind_method(D_METHOD("relax_points", "iterations"), &Voronoi::relax_points);
+	ClassDB::bind_method(D_METHOD("generate_diagram"), &Voronoi::generate_diagram);
 }

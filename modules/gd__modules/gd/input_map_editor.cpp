@@ -1,7 +1,7 @@
 /*************************************************************************/
-/*  originally project_settings_editor.cpp                               */
+/*  input_map_editor.cpp                                                 */
 /*************************************************************************/
-/*                This file is (originally) the part of:                 */
+/*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/

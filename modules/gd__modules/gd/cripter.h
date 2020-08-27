@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  cripter.h                                                            */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 /*cripter.h*/
 
 #ifndef CRIPTER_H
@@ -5,34 +35,30 @@
 
 #ifdef MODULE_MBEDTLS_ENABLED
 
-#include "core/reference.h"
 #include "core/io/marshalls.h"
+#include "core/reference.h"
 
-#include "thirdparty/mbedtls/include/mbedtls/gcm.h"
 #include "thirdparty/mbedtls/include/mbedtls/aes.h"
-#include "thirdparty/mbedtls/include/mbedtls/pk.h"
 #include "thirdparty/mbedtls/include/mbedtls/ctr_drbg.h"
-#include "thirdparty/mbedtls/include/mbedtls/rsa.h"
 #include "thirdparty/mbedtls/include/mbedtls/entropy.h"
+#include "thirdparty/mbedtls/include/mbedtls/gcm.h"
+#include "thirdparty/mbedtls/include/mbedtls/pk.h"
+#include "thirdparty/mbedtls/include/mbedtls/rsa.h"
 
-#include "thirdparty/mbedtls/include/mbedtls/error.h"  //  ---  Desenvolver   ---
+#include "thirdparty/mbedtls/include/mbedtls/error.h" //  ---  Desenvolver   ---
 
 #pragma once
 
-
 class Cripter : public Reference {
-	GDCLASS(Cripter,Reference);
-
+	GDCLASS(Cripter, Reference);
 
 private:
 	PoolByteArray encode_var(const Variant p_data) const;
 	Variant decode_var(const PoolByteArray p_data) const;
 	PoolByteArray char2pool(const uint8_t *p_in, const size_t p_size) const;
 
-
 protected:
 	static void _bind_methods();
-
 
 public:
 	//CBC
@@ -46,7 +72,7 @@ public:
 	PoolByteArray encrypt_var_GCM(const Variant p_input, const String p_key, const String p_add = "") const;
 	Variant decrypt_var_GCM(const PoolByteArray p_input, const String p_key, const String p_add = "") const;
 	//RSA
-	PoolByteArray encrypt_byte_RSA(const PoolByteArray p_input,  String p_key_path) const;
+	PoolByteArray encrypt_byte_RSA(const PoolByteArray p_input, String p_key_path) const;
 	PoolByteArray decrypt_byte_RSA(const PoolByteArray p_input, const String p_key_path, const String p_password) const;
 	PoolByteArray encrypt_var_RSA(const Variant p_input, const String p_key_path) const;
 	Variant decrypt_var_RSA(const PoolByteArray p_input, const String p_key_path, const String p_password) const;
@@ -57,4 +83,3 @@ public:
 #endif // MODULE_MBEDTLS_ENABLED
 
 #endif // cripter.h
-

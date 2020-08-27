@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  LatheMesh.hpp                                                        */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 // Copyright 2015 Markus Ilmola
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,10 +45,7 @@
 #include "ShapeVertex.hpp"
 #include "Triangle.hpp"
 
-
 namespace generator {
-
-
 
 /// Spins a shape around an axis to create a mesh.
 /// u-texture coordinate is taken from the shape and v runs from 0 to 1 around
@@ -26,25 +53,22 @@ namespace generator {
 template <typename Shape>
 class LatheMesh {
 public:
-
 	class Triangles {
 	public:
-
 		Triangle generate() const {
 			Triangle triangle;
 
-			const auto& shapeEdge = shape_Edges.generate();
+			const auto &shapeEdge = shape_Edges.generate();
 
 			int slice = i_ / 2;
 
-			const int delta = mesh_->slices_ + 1 ;
+			const int delta = mesh_->slices_ + 1;
 
 			if (i_ % 2 == 0) {
 				triangle.vertices[0] = shapeEdge.vertices[0] * delta + slice;
 				triangle.vertices[1] = shapeEdge.vertices[1] * delta + slice;
 				triangle.vertices[2] = shapeEdge.vertices[1] * delta + slice + 1;
-			}
-			else {
+			} else {
 				triangle.vertices[0] = shapeEdge.vertices[0] * delta + slice;
 				triangle.vertices[1] = shapeEdge.vertices[1] * delta + slice + 1;
 				triangle.vertices[2] = shapeEdge.vertices[0] * delta + slice + 1;
@@ -64,25 +88,22 @@ public:
 		}
 
 	private:
-
-		const LatheMesh* mesh_;
+		const LatheMesh *mesh_;
 
 		decltype(mesh_->shape_.edges()) shape_Edges;
 
 		int i_;
 
-		Triangles(const LatheMesh& mesh) :
-			mesh_{&mesh},
-			shape_Edges{mesh.shape_.edges()},
-			i_{0}
-		{ }
+		Triangles(const LatheMesh &mesh) :
+				mesh_{ &mesh },
+				shape_Edges{ mesh.shape_.edges() },
+				i_{ 0 } {}
 
-	friend class LatheMesh;
+		friend class LatheMesh;
 	};
 
 	class Vertices {
 	public:
-
 		MeshVertex generate() const {
 			MeshVertex vertex;
 
@@ -94,10 +115,9 @@ public:
 
 			const gml::dquat q = gml::qrotate(angle, mesh_->axis_);
 
-			vertex.position = gml::transform(q, gml::dvec3{shapeVertex.position[0], shapeVertex.position[1], 0.0});
+			vertex.position = gml::transform(q, gml::dvec3{ shapeVertex.position[0], shapeVertex.position[1], 0.0 });
 
-			vertex.normal = gml::transform(q, gml::dvec3{normal[0], normal[1], 0.0});
-
+			vertex.normal = gml::transform(q, gml::dvec3{ normal[0], normal[1], 0.0 });
 
 			vertex.texCoord[0] = shapeVertex.texCoord;
 			vertex.texCoord[1] = angle / mesh_->sweep_;
@@ -110,28 +130,25 @@ public:
 		void next() {
 			++i_;
 
-			if (i_ == mesh_->slices_  + 1) {
+			if (i_ == mesh_->slices_ + 1) {
 				i_ = 0;
 				shapeVertices_.next();
 			}
-
 		}
 
 	private:
-
-		const LatheMesh* mesh_;
+		const LatheMesh *mesh_;
 
 		decltype(mesh_->shape_.vertices()) shapeVertices_;
 
 		int i_;
 
-		Vertices(const LatheMesh& mesh) :
-			mesh_{&mesh},
-			shapeVertices_{mesh.shape_.vertices()},
-			i_{0}
-		{ }
+		Vertices(const LatheMesh &mesh) :
+				mesh_{ &mesh },
+				shapeVertices_{ mesh.shape_.vertices() },
+				i_{ 0 } {}
 
-	friend class LatheMesh;
+		friend class LatheMesh;
 	};
 
 	/// @param shape The shape to spin.
@@ -141,25 +158,22 @@ public:
 	/// relative to the xy-plane.
 	/// @param sweep Counterclockwise angle around the given axis.
 	LatheMesh(
-		Shape shape,
-		const gml::dvec2& axis,
-		int slices = 32,
-		double start = 0.0,
-		double sweep = gml::radians(360.0)
-	) :
-		axis_{axis, 0.0},
-		shape_{std::move(shape)},
-		slices_{slices},
-		start_{start},
-		sweep_{sweep}
-	{ }
+			Shape shape,
+			const gml::dvec2 &axis,
+			int slices = 32,
+			double start = 0.0,
+			double sweep = gml::radians(360.0)) :
+			axis_{ axis, 0.0 },
+			shape_{ std::move(shape) },
+			slices_{ slices },
+			start_{ start },
+			sweep_{ sweep } {}
 
 	Triangles triangles() const noexcept { return *this; }
 
 	Vertices vertices() const noexcept { return *this; }
 
 private:
-
 	gml::dvec3 axis_;
 
 	Shape shape_;
@@ -169,23 +183,18 @@ private:
 	double start_;
 
 	double sweep_;
-
 };
-
 
 template <typename Shape>
 LatheMesh<Shape> lathe(
-	Shape shape,
-	Axis axis = Axis::X,
-	int slices = 32,
-	double start = 0.0,
-	double sweep = gml::radians(360.0)
-) {
-	return LatheMesh<Shape>{std::move(shape), axis, slices, start, sweep};
+		Shape shape,
+		Axis axis = Axis::X,
+		int slices = 32,
+		double start = 0.0,
+		double sweep = gml::radians(360.0)) {
+	return LatheMesh<Shape>{ std::move(shape), axis, slices, start, sweep };
 }
 
-
-}
-
+} // namespace generator
 
 #endif

@@ -316,8 +316,8 @@ void RasterizerCanvasBaseGLES2::_set_uniforms() {
 
 	state.canvas_shader.set_uniform(CanvasShaderGLES2::PROJECTION_MATRIX, state.uniforms.projection_matrix);
 	state.canvas_shader.set_uniform(CanvasShaderGLES2::MODELVIEW_MATRIX, state.uniforms.modelview_matrix);
-    state.canvas_shader.set_uniform(CanvasShaderGLES2::WORLD_MATRIX, state.uniforms.world_matrix);
-    state.canvas_shader.set_uniform(CanvasShaderGLES2::INV_WORLD_MATRIX, state.uniforms.inv_world_matrix);
+	state.canvas_shader.set_uniform(CanvasShaderGLES2::WORLD_MATRIX, state.uniforms.world_matrix);
+	state.canvas_shader.set_uniform(CanvasShaderGLES2::INV_WORLD_MATRIX, state.uniforms.inv_world_matrix);
 	state.canvas_shader.set_uniform(CanvasShaderGLES2::EXTRA_MATRIX, state.uniforms.extra_matrix);
 
 	state.canvas_shader.set_uniform(CanvasShaderGLES2::FINAL_MODULATE, state.uniforms.final_modulate);
@@ -740,8 +740,8 @@ void RasterizerCanvasBaseGLES2::_set_stencil(bool p_enabled, const ShaderLanguag
 
 void RasterizerCanvasBaseGLES2::_set_stencil_face(GLenum p_face, const ShaderLanguage::StencilTest &p_stencil, ShaderLanguage::StencilTest &p_state_stencil) {
 	if (p_stencil.value != p_state_stencil.value ||
-		p_stencil.read_mask != p_state_stencil.read_mask ||
-		p_stencil.test != p_state_stencil.test) {
+			p_stencil.read_mask != p_state_stencil.read_mask ||
+			p_stencil.test != p_state_stencil.test) {
 		glStencilFuncSeparate(p_face, _get_stencil_test(p_stencil.test), p_stencil.value, p_stencil.read_mask);
 		p_state_stencil.value = p_stencil.value;
 		p_state_stencil.read_mask = p_stencil.read_mask;
@@ -752,12 +752,12 @@ void RasterizerCanvasBaseGLES2::_set_stencil_face(GLenum p_face, const ShaderLan
 		p_state_stencil.write_mask = p_stencil.write_mask;
 	}
 	if (p_stencil.pass != p_state_stencil.pass ||
-		p_stencil.fail_depth != p_state_stencil.fail_depth ||
-		p_stencil.fail_stencil != p_state_stencil.fail_stencil) {
+			p_stencil.fail_depth != p_state_stencil.fail_depth ||
+			p_stencil.fail_stencil != p_state_stencil.fail_stencil) {
 		glStencilOpSeparate(p_face,
-							_get_stencil_op(p_stencil.fail_stencil),
-							_get_stencil_op(p_stencil.fail_depth),
-							_get_stencil_op(p_stencil.pass));
+				_get_stencil_op(p_stencil.fail_stencil),
+				_get_stencil_op(p_stencil.fail_depth),
+				_get_stencil_op(p_stencil.pass));
 		p_state_stencil.pass = p_stencil.pass;
 		p_state_stencil.fail_depth = p_stencil.fail_depth;
 		p_state_stencil.fail_stencil = p_stencil.fail_stencil;

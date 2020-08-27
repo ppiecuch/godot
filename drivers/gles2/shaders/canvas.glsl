@@ -174,9 +174,9 @@ VERTEX_SHADER_CODE
 	gl_PointSize = point_size;
 
 #if !defined(SKIP_TRANSFORM_USED)
-# if defined(VERTEX_WORLD_COORDS_USED)
+#if defined(VERTEX_WORLD_COORDS_USED)
 	outvec = inv_world_matrix * outvec;
-# endif
+#endif
 	outvec = extra_matrix * outvec;
 	outvec = modelview_matrix * outvec;
 #endif

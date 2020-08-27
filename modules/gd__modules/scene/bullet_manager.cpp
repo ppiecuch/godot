@@ -1,11 +1,40 @@
+/*************************************************************************/
+/*  bullet_manager.cpp                                                   */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #include "bullet_manager.h"
 #include "core/os/os.h"
 #include "scene/2d/area_2d.h"
 #include "scene/2d/collision_shape_2d.h"
-#include "scene/scene_string_names.h"
 #include "scene/main/scene_tree.h"
 #include "scene/main/viewport.h"
-
+#include "scene/scene_string_names.h"
 
 void BulletManagerBullet::set_position(Point2 position) {
 	matrix.set_origin(position);
@@ -16,44 +45,42 @@ Point2 BulletManagerBullet::get_position() const {
 }
 
 void BulletManagerBullet::set_direction(Vector2 direction) {
-    this->direction = direction;
-     if(this->type->is_rotating_physics()) {
-          this->matrix.set_rotation(direction.angle());
-     }
+	this->direction = direction;
+	if (this->type->is_rotating_physics()) {
+		this->matrix.set_rotation(direction.angle());
+	}
 }
 
 Vector2 BulletManagerBullet::get_direction() const {
-    return direction;
+	return direction;
 }
 
 void BulletManagerBullet::set_angle(real_t angle) {
-    real_t rads = Math::deg2rad(angle);
-    this->direction =  Vector2(cos(rads), sin(rads));
-    if(this->type->is_rotating_physics()) {
-        this->matrix.set_rotation(rads);
-    }
+	real_t rads = Math::deg2rad(angle);
+	this->direction = Vector2(cos(rads), sin(rads));
+	if (this->type->is_rotating_physics()) {
+		this->matrix.set_rotation(rads);
+	}
 }
 
 real_t BulletManagerBullet::get_angle() const {
-    return Math::rad2deg(direction.angle());
+	return Math::rad2deg(direction.angle());
 }
 
-
-
 void BulletManagerBullet::set_speed(real_t speed) {
-    this->speed = speed;
+	this->speed = speed;
 }
 
 real_t BulletManagerBullet::get_speed() const {
-    return speed;
+	return speed;
 }
 
 void BulletManagerBullet::queue_delete() {
 	is_queued_for_deletion = true;
 }
 
-Node* BulletManagerBullet::get_type() const  {
-    return type;
+Node *BulletManagerBullet::get_type() const {
+	return type;
 }
 
 void BulletManagerBulletType::set_texture(const Ref<Texture> &p_texture) {
@@ -130,11 +157,9 @@ void BulletManagerBulletType::set_frame(int p_frame) {
 
 	ERR_FAIL_INDEX(p_frame, vframes * hframes);
 
-
 	frame = p_frame;
 
 	_change_notify("frame");
-
 }
 
 int BulletManagerBulletType::get_frame() const {
@@ -219,7 +244,6 @@ void BulletManagerBulletType::set_collision_layer(uint32_t p_layer) {
 
 	collision_layer = p_layer;
 	Physics2DServer::get_singleton()->area_set_collision_layer(area, collision_layer);
-
 }
 
 uint32_t BulletManagerBulletType::get_collision_layer() const {
@@ -237,7 +261,7 @@ bool BulletManagerBulletType::is_rotating_physics() const {
 	return rotate_physics;
 }
 
-void BulletManagerBulletType::_update_cached_rects()  {
+void BulletManagerBulletType::_update_cached_rects() {
 
 	Rect2 base_rect;
 
@@ -276,7 +300,7 @@ void BulletManagerBulletType::_shape_changed() {
 
 void BulletManagerBulletType::_area_inout(int p_status, const RID &p_area, int p_instance, int p_area_shape, int p_self_shape) {
 	ERR_FAIL_COND(p_self_shape >= _shapes.size());
-	Object* collider = ObjectDB::get_instance(p_instance);
+	Object *collider = ObjectDB::get_instance(p_instance);
 	int bullet_id = _shapes[p_self_shape];
 	if (bullet_id != -1 && _bullet_manager->is_bullet_active(bullet_id)) {
 		emit_signal("area_entered_bullet", bullet_id, collider);
@@ -284,12 +308,11 @@ void BulletManagerBulletType::_area_inout(int p_status, const RID &p_area, int p
 }
 void BulletManagerBulletType::_body_inout(int p_status, const RID &p_body, int p_instance, int p_body_shape, int p_area_shape) {
 	ERR_FAIL_COND(p_area_shape >= _shapes.size());
-	Object* collider = ObjectDB::get_instance(p_instance);
+	Object *collider = ObjectDB::get_instance(p_instance);
 	int bullet_id = _shapes[p_area_shape];
 	if (bullet_id != -1 && _bullet_manager->is_bullet_active(bullet_id)) {
 		emit_signal("body_entered_bullet", bullet_id, collider);
 	}
-
 }
 
 int BulletManagerBulletType::add_shape(int bullet_idx, Transform2D transform) {
@@ -317,11 +340,11 @@ void BulletManagerBulletType::remove_shape(int shape_idx) {
 }
 
 void BulletManagerBulletType::custom_update() {
-	if(!has_custom_update) {
+	if (!has_custom_update) {
 		return;
 	}
 	Array indices;
-	for(int i = 0; i < _shapes.size(); i++) {
+	for (int i = 0; i < _shapes.size(); i++) {
 		if (_shapes[i] != -1) {
 			indices.push_back(_shapes[i]);
 		}
@@ -345,7 +368,7 @@ void BulletManagerBulletType::_notification(int p_what) {
 			_bullet_manager->register_bullet_type(this);
 		} break;
 		case NOTIFICATION_UNPARENTED: {
-			if(!_bullet_manager) {
+			if (!_bullet_manager) {
 				return;
 			}
 			_bullet_manager->unregister_bullet_type(this);
@@ -369,7 +392,7 @@ void BulletManagerBulletType::_notification(int p_what) {
 			if (!Engine::get_singleton()->is_editor_hint()) {
 				set_transform(Transform2D()); //don't want bullets to be drawn at an offset
 			}
-			Physics2DServer* ps = Physics2DServer::get_singleton();
+			Physics2DServer *ps = Physics2DServer::get_singleton();
 			ps->area_set_space(area, get_world_2d()->get_space());
 			ps->area_set_transform(area, Transform2D());
 			ps->area_set_collision_layer(area, collision_layer);
@@ -379,7 +402,7 @@ void BulletManagerBulletType::_notification(int p_what) {
 			Physics2DServer::get_singleton()->area_set_space(area, RID());
 		} break;
 		case NOTIFICATION_READY: {
-			if (get_script_instance() &&  get_script_instance()->has_method("_update")) {
+			if (get_script_instance() && get_script_instance()->has_method("_update")) {
 				print_line("has_custom_update");
 				has_custom_update = true;
 			}
@@ -452,15 +475,13 @@ void BulletManagerBulletType::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "collision_mask", PROPERTY_HINT_LAYERS_2D_PHYSICS), "set_collision_mask", "get_collision_mask");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "rotate_physics"), "set_rotate_physics", "is_rotating_physics");
 
-
 	ADD_SIGNAL(MethodInfo("area_entered_bullet", PropertyInfo(Variant::INT, "bullet_id", PROPERTY_HINT_NONE, "bullet_id"), PropertyInfo(Variant::OBJECT, "area", PROPERTY_HINT_RESOURCE_TYPE, "Area2D")));
 	ADD_SIGNAL(MethodInfo("body_entered_bullet", PropertyInfo(Variant::INT, "bullet_id", PROPERTY_HINT_NONE, "bullet_id"), PropertyInfo(Variant::OBJECT, "body", PROPERTY_HINT_RESOURCE_TYPE, "PhysicsBody2D")));
 	ADD_SIGNAL(MethodInfo("bullet_clipped", PropertyInfo(Variant::INT, "bullet_id", PROPERTY_HINT_NONE, "bullet_id")));
-
 }
 
 BulletManagerBulletType::BulletManagerBulletType() {
-	Physics2DServer* ps = Physics2DServer::get_singleton();
+	Physics2DServer *ps = Physics2DServer::get_singleton();
 	area = ps->area_create();
 	ps->area_set_transform(area, Transform2D());
 	ps->area_attach_object_instance_id(area, get_instance_id());
@@ -469,7 +490,7 @@ BulletManagerBulletType::BulletManagerBulletType() {
 }
 
 BulletManagerBulletType::~BulletManagerBulletType() {
-	if(area.is_valid())
+	if (area.is_valid())
 		Physics2DServer::get_singleton()->free(area);
 }
 
@@ -488,8 +509,7 @@ void BulletManager::_notification(int p_what) {
 		case NOTIFICATION_DRAW: {
 			if (Engine::get_singleton()->is_editor_hint()) {
 				return;
-			}
-			else {
+			} else {
 				_draw_bullets();
 			}
 		} break;
@@ -503,9 +523,9 @@ void BulletManager::_notification(int p_what) {
 }
 
 int BulletManager::add_bullet(StringName type_name, Vector2 position, real_t angle, real_t speed) {
-    // Physics2DServer *ps = Physics2DServer::get_singleton();
-	BulletManagerBulletType* type = types[type_name];
-	BulletManagerBullet* bullet;
+	// Physics2DServer *ps = Physics2DServer::get_singleton();
+	BulletManagerBulletType *type = types[type_name];
+	BulletManagerBullet *bullet;
 	if (_unused_ids.size() == 0) {
 		BulletManagerBullet new_bullet;
 		new_bullet.id = _bullets.size();
@@ -528,18 +548,16 @@ int BulletManager::add_bullet(StringName type_name, Vector2 position, real_t ang
 	return bullet->id;
 }
 
-void BulletManager::clear()
-{
+void BulletManager::clear() {
 	// Physics2DServer *ps = Physics2DServer::get_singleton();
 	List<int>::Element *E = _active_bullets.front();
-	while(E) {
+	while (E) {
 		_bullets.write[E->get()].is_queued_for_deletion = true;
 		E = E->next();
 	}
 }
 
-int BulletManager::count()
-{
+int BulletManager::count() {
 	return _active_bullets.size();
 }
 
@@ -551,13 +569,11 @@ float BulletManager::get_bounds_margin() const {
 	return bounds_margin;
 }
 
-
-
 void BulletManager::_draw_bullets() {
-	VisualServer* vs = VS::get_singleton();
+	VisualServer *vs = VS::get_singleton();
 	//Update cached type info incase any of its properties have been changed.
-	for (Map<StringName, BulletManagerBulletType*>::Element *E = types.front(); E; E = E->next()) {
-		BulletManagerBulletType* type = E->get();
+	for (Map<StringName, BulletManagerBulletType *>::Element *E = types.front(); E; E = E->next()) {
+		BulletManagerBulletType *type = E->get();
 		type->_update_cached_rects();
 		vs->canvas_item_clear(type->get_canvas_item());
 	}
@@ -566,10 +582,10 @@ void BulletManager::_draw_bullets() {
 	}
 	List<int>::Element *E = _active_bullets.front();
 	//for(int i = 0; i < bullets.size(); i++) {
-	while(E) {
+	while (E) {
 		//Bullet* bullet = r[i];
-		BulletManagerBullet* bullet = &_bullets.write[E->get()];
-		BulletManagerBulletType* type = bullet->type;
+		BulletManagerBullet *bullet = &_bullets.write[E->get()];
+		BulletManagerBulletType *type = bullet->type;
 		RID ci = type->get_canvas_item();
 		if (type->rotate_visual) {
 			Transform2D tform;
@@ -577,8 +593,7 @@ void BulletManager::_draw_bullets() {
 			tform.set_rotation_and_scale(bullet->direction.angle() + (Math_PI * -0.5), bullet->matrix.get_scale());
 			vs->canvas_item_add_set_transform(ci, tform);
 			//draw_set_transform(bullet->matrix.get_origin(), bullet->direction.angle() + (Math_PI * -0.5), bullet->matrix.get_scale());
-		}
-		else {
+		} else {
 			vs->canvas_item_add_set_transform(ci, bullet->matrix);
 			//draw_set_transform_matrix(bullet->matrix);
 		}
@@ -587,8 +602,6 @@ void BulletManager::_draw_bullets() {
 		//draw_texture_rect_region(type->texture, type->_cached_dst_rect, type->_cached_src_rect, Color(1, 1, 1), false, type->normal_map);
 		E = E->next();
 	}
-
-
 }
 
 void BulletManager::_update_bullets() {
@@ -599,9 +612,9 @@ void BulletManager::_update_bullets() {
 	Rect2 visible_rect;
 	_get_visible_rect(visible_rect);
 	visible_rect = visible_rect.grow(bounds_margin);
-	for(int i = 0; i < _bullets.size(); i++) {
-		if(!_bullets[i].is_queued_for_deletion) {
-			_bullets.write[i].matrix[2] += _bullets[i].direction * _bullets[i].speed  * delta;
+	for (int i = 0; i < _bullets.size(); i++) {
+		if (!_bullets[i].is_queued_for_deletion) {
+			_bullets.write[i].matrix[2] += _bullets[i].direction * _bullets[i].speed * delta;
 			if (!visible_rect.has_point(_bullets[i].matrix.get_origin())) {
 				_bullets.write[i].is_queued_for_deletion = true;
 				_bullets[i].type->emit_signal("bullet_clipped", _bullets[i].id);
@@ -610,22 +623,21 @@ void BulletManager::_update_bullets() {
 	}
 
 	List<int>::Element *E = _active_bullets.front();
-	while(E) {
+	while (E) {
 		int idx = E->get();
-		if( _bullets[idx].is_queued_for_deletion) {
+		if (_bullets[idx].is_queued_for_deletion) {
 			_bullets[idx].type->remove_shape(_bullets[idx].shape_index);
 			_unused_ids.push_front(_bullets[idx].id);
 			E->erase();
-		}
-		else {
+		} else {
 			//bullet->matrix[2] += bullet->direction * bullet->speed  * delta;
 			ps->area_set_shape_transform(_bullets[idx].type->area, _bullets[idx].shape_index, _bullets[idx].matrix);
 		}
 		E = E->next();
 	}
-	Map<StringName, BulletManagerBulletType*>::Element * T = types.front();
-	while(T) {
-		BulletManagerBulletType* type = T->get();
+	Map<StringName, BulletManagerBulletType *>::Element *T = types.front();
+	while (T) {
+		BulletManagerBulletType *type = T->get();
 		if (type->has_custom_update) {
 			type->custom_update();
 		}
@@ -636,17 +648,16 @@ void BulletManager::_update_bullets() {
 
 //Should only be used on direct children. BulletManagerBulletTypes will call this on themselves when parented to a BulletManager.
 //Godot doesn't allow duplicate names among neighbors, so i won't check for duplicates here.
-void BulletManager::register_bullet_type(BulletManagerBulletType* type) {
+void BulletManager::register_bullet_type(BulletManagerBulletType *type) {
 	types[type->get_name()] = type;
 }
 
-void BulletManager::unregister_bullet_type(BulletManagerBulletType* type) {
+void BulletManager::unregister_bullet_type(BulletManagerBulletType *type) {
 	clear_by_type(type);
 	types.erase(type->get_name());
 }
 
-void BulletManager::_get_visible_rect(Rect2& rect)
-{
+void BulletManager::_get_visible_rect(Rect2 &rect) {
 	Transform2D ctrans = get_viewport()->get_canvas_transform();
 	rect.position = -ctrans.get_origin() / ctrans.get_scale();
 	rect.size = get_viewport_rect().size;
@@ -717,16 +728,16 @@ bool BulletManager::is_bullet_active(int bullet_id) const {
 	return false;
 }
 
-void BulletManager::clear_by_type(BulletManagerBulletType* type) {
+void BulletManager::clear_by_type(BulletManagerBulletType *type) {
 	for (int i = 0; i < _bullets.size(); i++) {
 		if (_bullets[i].type == type)
 			_bullets.write[i].is_queued_for_deletion = true;
 	}
 }
 
-void BulletManager::_clear_by_type_script(Object* type) {
-	BulletManagerBulletType* castedType = Object::cast_to<BulletManagerBulletType>(type);
-	if(!castedType )
+void BulletManager::_clear_by_type_script(Object *type) {
+	BulletManagerBulletType *castedType = Object::cast_to<BulletManagerBulletType>(type);
+	if (!castedType)
 		return;
 	clear_by_type(castedType);
 }
@@ -745,10 +756,8 @@ void BulletManager::clear_by_layer(int layer) {
 	}
 }
 
-
-
 void BulletManager::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("add_bullet", "position", "angle","speed"), &BulletManager::add_bullet);
+	ClassDB::bind_method(D_METHOD("add_bullet", "position", "angle", "speed"), &BulletManager::add_bullet);
 	ClassDB::bind_method(D_METHOD("set_bullet_position", "bullet_id", "position"), &BulletManager::set_bullet_position);
 	ClassDB::bind_method(D_METHOD("get_bullet_position", "bullet_id"), &BulletManager::get_bullet_position);
 	ClassDB::bind_method(D_METHOD("set_bullet_speed", "bullet_id", "speed"), &BulletManager::set_bullet_speed);

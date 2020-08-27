@@ -33,10 +33,13 @@
 #include "core/project_settings.h"
 #include "core/translation.h"
 
-template <typename T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }
+template <typename T>
+int sgn(T val) {
+	return (T(0) < val) - (val < T(0));
+}
 
 #ifndef PI
-# define PI 3.14159265358979323846f
+#define PI 3.14159265358979323846f
 #endif
 
 // How to use:
@@ -47,115 +50,157 @@ template <typename T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }
 //  d = total time it should take to complete (duration)
 
 // Linear Easing functions
-static float ease_linear_none(float t, float b, float c, float d) { return (c*t/d + b); }
-static float ease_linear_in(float t, float b, float c, float d) { return (c*t/d + b); }
-static float ease_linear_out(float t, float b, float c, float d) { return (c*t/d + b); }
-static float ease_linear_inout(float t,float b, float c, float d) { return (c*t/d + b); }
+static float ease_linear_none(float t, float b, float c, float d) {
+	return (c * t / d + b);
+}
+static float ease_linear_in(float t, float b, float c, float d) {
+	return (c * t / d + b);
+}
+static float ease_linear_out(float t, float b, float c, float d) {
+	return (c * t / d + b);
+}
+static float ease_linear_inout(float t, float b, float c, float d) {
+	return (c * t / d + b);
+}
 // Sine Easing functions
-static float ease_sine_in(float t, float b, float c, float d) { return (-c*cosf(t/d*(PI/2.0f)) + c + b); }
-static float ease_sine_out(float t, float b, float c, float d) { return (c*sinf(t/d*(PI/2.0f)) + b); }
-static float ease_sine_inout(float t, float b, float c, float d) { return (-c/2.0f*(cosf(PI*t/d) - 1.0f) + b); }
+static float ease_sine_in(float t, float b, float c, float d) {
+	return (-c * cosf(t / d * (PI / 2.0f)) + c + b);
+}
+static float ease_sine_out(float t, float b, float c, float d) {
+	return (c * sinf(t / d * (PI / 2.0f)) + b);
+}
+static float ease_sine_inout(float t, float b, float c, float d) {
+	return (-c / 2.0f * (cosf(PI * t / d) - 1.0f) + b);
+}
 // Circular Easing functions
-static float ease_circ_in(float t, float b, float c, float d) { t /= d; return (-c*(sqrt(1.0f - t*t) - 1.0f) + b); }
-static float ease_circ_out(float t, float b, float c, float d) { t = t/d - 1.0f; return (c*sqrt(1.0f - t*t) + b); }
+static float ease_circ_in(float t, float b, float c, float d) {
+	t /= d;
+	return (-c * (sqrt(1.0f - t * t) - 1.0f) + b);
+}
+static float ease_circ_out(float t, float b, float c, float d) {
+	t = t / d - 1.0f;
+	return (c * sqrt(1.0f - t * t) + b);
+}
 static float ease_circ_inout(float t, float b, float c, float d) {
-	if ((t/=d/2.0f) < 1.0f) return (-c/2.0f*(sqrt(1.0f - t*t) - 1.0f) + b);
-	t -= 2.0f; return (c/2.0f*(sqrt(1.0f - t*t) + 1.0f) + b);
+	if ((t /= d / 2.0f) < 1.0f) return (-c / 2.0f * (sqrt(1.0f - t * t) - 1.0f) + b);
+	t -= 2.0f;
+	return (c / 2.0f * (sqrt(1.0f - t * t) + 1.0f) + b);
 }
 // Cubic Easing functions
-static float ease_cubic_in(float t, float b, float c, float d) { t /= d; return (c*t*t*t + b); }
-static float ease_cubic_out(float t, float b, float c, float d) { t = t/d - 1.0f; return (c*(t*t*t + 1.0f) + b); }
+static float ease_cubic_in(float t, float b, float c, float d) {
+	t /= d;
+	return (c * t * t * t + b);
+}
+static float ease_cubic_out(float t, float b, float c, float d) {
+	t = t / d - 1.0f;
+	return (c * (t * t * t + 1.0f) + b);
+}
 static float ease_cubic_inout(float t, float b, float c, float d) {
-	if ((t/=d/2.0f) < 1.0f) return (c/2.0f*t*t*t + b);
-		t -= 2.0f; return (c/2.0f*(t*t*t + 2.0f) + b);
+	if ((t /= d / 2.0f) < 1.0f) return (c / 2.0f * t * t * t + b);
+	t -= 2.0f;
+	return (c / 2.0f * (t * t * t + 2.0f) + b);
 }
 // Quadratic Easing functions
-static float ease_quad_in(float t, float b, float c, float d) { t /= d; return (c*t*t + b); }
-static float ease_quad_out(float t, float b, float c, float d) { t /= d; return (-c*t*(t - 2.0f) + b); }
+static float ease_quad_in(float t, float b, float c, float d) {
+	t /= d;
+	return (c * t * t + b);
+}
+static float ease_quad_out(float t, float b, float c, float d) {
+	t /= d;
+	return (-c * t * (t - 2.0f) + b);
+}
 static float ease_quad_inout(float t, float b, float c, float d) {
-	if ((t/=d/2) < 1) return (((c/2)*(t*t)) + b);
-	return (-c/2.0f*(((t - 1.0f)*(t - 3.0f)) - 1.0f) + b);
+	if ((t /= d / 2) < 1) return (((c / 2) * (t * t)) + b);
+	return (-c / 2.0f * (((t - 1.0f) * (t - 3.0f)) - 1.0f) + b);
 }
 // Exponential Easing functions
-static float ease_expo_in(float t, float b, float c, float d) { return (t == 0.0f) ? b : (c*powf(2.0f, 10.0f*(t/d - 1.0f)) + b); }
-static float ease_expo_out(float t, float b, float c, float d) { return (t == d) ? (b + c) : (c*(-powf(2.0f, -10.0f*t/d) + 1.0f) + b);    }
+static float ease_expo_in(float t, float b, float c, float d) {
+	return (t == 0.0f) ? b : (c * powf(2.0f, 10.0f * (t / d - 1.0f)) + b);
+}
+static float ease_expo_out(float t, float b, float c, float d) {
+	return (t == d) ? (b + c) : (c * (-powf(2.0f, -10.0f * t / d) + 1.0f) + b);
+}
 static float ease_expo_inout(float t, float b, float c, float d) {
 	if (t == 0.0f) return b;
 	if (t == d) return (b + c);
-	if ((t/=d/2.0f) < 1.0f) return (c/2.0f*powf(2.0f, 10.0f*(t - 1.0f)) + b);
-	return (c/2.0f*(-powf(2.0f, -10.0f*(t - 1.0f)) + 2.0f) + b);
+	if ((t /= d / 2.0f) < 1.0f) return (c / 2.0f * powf(2.0f, 10.0f * (t - 1.0f)) + b);
+	return (c / 2.0f * (-powf(2.0f, -10.0f * (t - 1.0f)) + 2.0f) + b);
 }
 // Back Easing functions
 static float ease_back_in(float t, float b, float c, float d) {
-    const float s = 1.70158f;
-    const float postFix = t/=d;
-    return (c*(postFix)*t*((s + 1.0f)*t - s) + b);
+	const float s = 1.70158f;
+	const float postFix = t /= d;
+	return (c * (postFix)*t * ((s + 1.0f) * t - s) + b);
 }
 static float ease_back_out(float t, float b, float c, float d) {
 	const float s = 1.70158f;
-	t = t/d - 1.0f;
-	return (c*(t*t*((s + 1.0f)*t + s) + 1.0f) + b);
+	t = t / d - 1.0f;
+	return (c * (t * t * ((s + 1.0f) * t + s) + 1.0f) + b);
 }
 static float ease_back_inout(float t, float b, float c, float d) {
 	float s = 1.70158f;
-	if ((t/=d/2.0f) < 1.0f) {
+	if ((t /= d / 2.0f) < 1.0f) {
 		s *= 1.525f;
-		return (c/2.0f*(t*t*((s + 1.0f)*t - s)) + b);
+		return (c / 2.0f * (t * t * ((s + 1.0f) * t - s)) + b);
 	}
-	const float postFix = t-=2.0f;
+	const float postFix = t -= 2.0f;
 	s *= 1.525f;
-	return (c/2.0f*((postFix)*t*((s + 1.0f)*t + s) + 2.0f) + b);
+	return (c / 2.0f * ((postFix)*t * ((s + 1.0f) * t + s) + 2.0f) + b);
 }
 // Bounce Easing functions
 static float ease_bounce_out(float t, float b, float c, float d) {
-	if ((t/=d) < (1.0f/2.75f)) {
-		return (c*(7.5625f*t*t) + b);
-	} else if (t < (2.0f/2.75f)) {
-		const float postFix = t-=(1.5f/2.75f);
-		return (c*(7.5625f*(postFix)*t + 0.75f) + b);
-	} else if (t < (2.5/2.75)) {
-		const float postFix = t-=(2.25f/2.75f);
-		return (c*(7.5625f*(postFix)*t + 0.9375f) + b);
+	if ((t /= d) < (1.0f / 2.75f)) {
+		return (c * (7.5625f * t * t) + b);
+	} else if (t < (2.0f / 2.75f)) {
+		const float postFix = t -= (1.5f / 2.75f);
+		return (c * (7.5625f * (postFix)*t + 0.75f) + b);
+	} else if (t < (2.5 / 2.75)) {
+		const float postFix = t -= (2.25f / 2.75f);
+		return (c * (7.5625f * (postFix)*t + 0.9375f) + b);
 	} else {
-		const float postFix = t-=(2.625f/2.75f);
-		return (c*(7.5625f*(postFix)*t + 0.984375f) + b);
+		const float postFix = t -= (2.625f / 2.75f);
+		return (c * (7.5625f * (postFix)*t + 0.984375f) + b);
 	}
 }
-static float ease_bounce_in(float t, float b, float c, float d) { return (c - ease_bounce_out(d - t, 0.0f, c, d) + b); }
+static float ease_bounce_in(float t, float b, float c, float d) {
+	return (c - ease_bounce_out(d - t, 0.0f, c, d) + b);
+}
 static float ease_bounce_inout(float t, float b, float c, float d) {
-	if (t < d/2.0f) return (ease_bounce_in(t*2.0f, 0.0f, c, d)*0.5f + b);
-	else return (ease_bounce_out(t*2.0f - d, 0.0f, c, d)*0.5f + c*0.5f + b);
+	if (t < d / 2.0f)
+		return (ease_bounce_in(t * 2.0f, 0.0f, c, d) * 0.5f + b);
+	else
+		return (ease_bounce_out(t * 2.0f - d, 0.0f, c, d) * 0.5f + c * 0.5f + b);
 }
 // Elastic Easing functions
 static float ease_elastic_in(float t, float b, float c, float d) {
 	if (t == 0.0f) return b;
-	if ((t/=d) == 1.0f) return (b + c);
-	const float p = d*0.3f;
+	if ((t /= d) == 1.0f) return (b + c);
+	const float p = d * 0.3f;
 	const float a = c;
-	const float s = p/4.0f;
-	const float postFix = a*powf(2.0f, 10.0f*(t-=1.0f));
-	return (-(postFix*sinf((t*d-s)*(2.0f*PI)/p )) + b);
+	const float s = p / 4.0f;
+	const float postFix = a * powf(2.0f, 10.0f * (t -= 1.0f));
+	return (-(postFix * sinf((t * d - s) * (2.0f * PI) / p)) + b);
 }
 static float ease_elastic_out(float t, float b, float c, float d) {
 	if (t == 0.0f) return b;
-	if ((t/=d) == 1.0f) return (b + c);
-	const float p = d*0.3f;
+	if ((t /= d) == 1.0f) return (b + c);
+	const float p = d * 0.3f;
 	const float a = c;
-	const float s = p/4.0f;
-	return (a*powf(2.0f,-10.0f*t)*sinf((t*d-s)*(2.0f*PI)/p) + c + b);
+	const float s = p / 4.0f;
+	return (a * powf(2.0f, -10.0f * t) * sinf((t * d - s) * (2.0f * PI) / p) + c + b);
 }
 static float ease_elastic_inout(float t, float b, float c, float d) {
 	if (t == 0.0f) return b;
-	if ((t/=d/2.0f) == 2.0f) return (b + c);
-	const float p = d*(0.3f*1.5f);
+	if ((t /= d / 2.0f) == 2.0f) return (b + c);
+	const float p = d * (0.3f * 1.5f);
 	const float a = c;
-	const float s = p/4.0f;
+	const float s = p / 4.0f;
 	if (t < 1.0f) {
-		const float postFix = a*powf(2.0f, 10.0f*(t-=1.0f));
-		return -0.5f*(postFix*sinf((t*d-s)*(2.0f*PI)/p)) + b;
+		const float postFix = a * powf(2.0f, 10.0f * (t -= 1.0f));
+		return -0.5f * (postFix * sinf((t * d - s) * (2.0f * PI) / p)) + b;
 	}
-	const float postFix = a*powf(2.0f, -10.0f*(t-=1.0f));
-	return (postFix*sinf((t*d-s)*(2.0f*PI)/p)*0.5f + c + b);
+	const float postFix = a * powf(2.0f, -10.0f * (t -= 1.0f));
+	return (postFix * sinf((t * d - s) * (2.0f * PI) / p) * 0.5f + c + b);
 }
 // End easing functions.
 
@@ -189,10 +234,10 @@ static float ease_elastic_inout(float t, float b, float c, float d) {
 	"EaseElasticOut,"  \
 	"EaseElasticInOut"
 
-#define DefineEaseFunc(F) \
-	ease_ ## F ## _in,    \
-	ease_ ## F ## _out,   \
-	ease_ ## F ## _inout  \
+#define DefineEaseFunc(F)   \
+	ease_##F##_in,          \
+			ease_##F##_out, \
+			ease_##F##_inout
 
 static ease_func_t ease_func_table[] = {
 	ease_linear_none,
@@ -216,9 +261,9 @@ void AnimationTransform::_dump_xform() const {
 
 struct AnimationNone : public AnimationController {
 
-	AnimationNone() { }
+	AnimationNone() {}
 
-	virtual void init_xform(float duration, AnimationTransform &a) { }
+	virtual void init_xform(float duration, AnimationTransform &a) {}
 	virtual AnimationController::AnimState update(float dt, ease_func_t ease, AnimationTransform &xform) { return ANIMCTRL_DONE; }
 	virtual bool is_active() const { return false; }
 	virtual AnimationController::AnimState state(const AnimationTransform &a) const { return ANIMCTRL_DONE; }
@@ -232,11 +277,12 @@ struct AnimationSlide : public AnimationController {
 	};
 	AnimationSlideOrient orientation = ANIMATION_SLIDE_UP;
 
-	AnimationSlide(AnimationSlideOrient orientation) : orientation(orientation) { }
+	AnimationSlide(AnimationSlideOrient orientation) :
+			orientation(orientation) {}
 
 	virtual void init_xform(float duration, AnimationTransform &a) {
 	}
-	virtual  AnimationController::AnimState update(float dt, ease_func_t ease, AnimationTransform &xform) {
+	virtual AnimationController::AnimState update(float dt, ease_func_t ease, AnimationTransform &xform) {
 		return ANIMCTRL_DONE;
 	}
 	virtual AnimationController::AnimState state(const AnimationTransform &a) const { return a.active ? (a.current >= 0 ? ANIMCTRL_OUT : ANIMCTRL_IN) : ANIMCTRL_DONE; }
@@ -250,7 +296,8 @@ struct AnimationRotate : public AnimationController {
 	};
 	AnimationRotateOrient orientation = ANIMATION_ROTATE_H;
 
-	AnimationRotate(AnimationRotateOrient orientation) : orientation(orientation) { }
+	AnimationRotate(AnimationRotateOrient orientation) :
+			orientation(orientation) {}
 
 	virtual void init_xform(float duration, AnimationTransform &a) {
 		a = AnimationTransform();
@@ -268,11 +315,11 @@ struct AnimationRotate : public AnimationController {
 		}
 
 		if (orientation == ANIMATION_ROTATE_H) {
-			a.xform.dest.scale.x = ease(a.current, 0, 1, a.current<0?-a.duration:a.duration); // 1..0..1
-			a.xform.dest.offset.x = 0.5*(1-a.xform.dest.scale.x); // 0..0,5..0
+			a.xform.dest.scale.x = ease(a.current, 0, 1, a.current < 0 ? -a.duration : a.duration); // 1..0..1
+			a.xform.dest.offset.x = 0.5 * (1 - a.xform.dest.scale.x); // 0..0,5..0
 		} else if (orientation == ANIMATION_ROTATE_V) {
-			a.xform.dest.scale.y = ease(a.current, 0, 1, a.current<0?-a.duration:a.duration); // 1..0..1
-			a.xform.dest.offset.y = 0.5*(1-a.xform.dest.scale.y); // 0..0,5..0
+			a.xform.dest.scale.y = ease(a.current, 0, 1, a.current < 0 ? -a.duration : a.duration); // 1..0..1
+			a.xform.dest.offset.y = 0.5 * (1 - a.xform.dest.scale.y); // 0..0,5..0
 		} else {
 			ERR_PRINT("Unknown orientation type - no transform peformed");
 		}
@@ -294,12 +341,11 @@ static AnimationController *transition_controllers_table[] = {
 	new AnimationRotate(AnimationRotate::ANIMATION_ROTATE_H)
 };
 
-
-#define _RemoveWordCache(wc)      \
-	while (wc) {                  \
-		WordCache *current = wc;  \
-		wc = current->next;       \
-		memdelete(current);       \
+#define _RemoveWordCache(wc)     \
+	while (wc) {                 \
+		WordCache *current = wc; \
+		wc = current->next;      \
+		memdelete(current);      \
 	}
 
 void Label::set_autowrap(bool p_autowrap) {
@@ -340,11 +386,11 @@ int Label::get_line_height() const {
 Label::CharPair Label::_process_transition_char(CharTransform &xform, bool draw_state, int line, int line_pos, int char_pos, real_t &x_ofs) {
 
 	String draw_text_state[] = { xl_text, transition_text.xl_text };
-# define draw_text draw_text_state[draw_state]
-# define other_draw_text draw_text_state[!draw_state]
+#define draw_text draw_text_state[draw_state]
+#define other_draw_text draw_text_state[!draw_state]
 	WordCache *draw_cache_state[] = { word_cache, transition_text.word_cache };
-# define draw_cache draw_cache_state[draw_state]
-# define other_draw_cache draw_cache_state[!draw_state]
+#define draw_cache draw_cache_state[draw_state]
+#define other_draw_cache draw_cache_state[!draw_state]
 
 	CharPair cn;
 	int word = -1;
@@ -368,8 +414,7 @@ Label::CharPair Label::_process_transition_char(CharTransform &xform, bool draw_
 					// correct position in OUT state for this char/pair
 					if (transition_text.same_chars_pos.has(char_pos)) {
 						x_ofs +=
-							(int(transition_text.same_chars_pos[char_pos])-x_ofs)
-							* (1-xform.dest.scale.x*xform.dest.scale.y);
+								(int(transition_text.same_chars_pos[char_pos]) - x_ofs) * (1 - xform.dest.scale.x * xform.dest.scale.y);
 					}
 				}
 				xform = CharTransform(); // no transition
@@ -411,7 +456,7 @@ void Label::_notification(int p_what) {
 
 		if (word_cache_dirty) {
 			regenerate_word_cache();
-        }
+		}
 
 		RID ci = get_canvas_item();
 
@@ -477,9 +522,9 @@ void Label::_notification(int p_what) {
 
 		WordCache *wc = word_cache;
 		if (!wc) {
-            WARN_PRINT("Invalid word cache");
+			WARN_PRINT("Invalid word cache");
 			return;
-        }
+		}
 
 		int line = 0, line_to = lines_skipped + (lines_visible > 0 ? lines_visible : 1);
 		FontDrawer drawer(font, font_outline_modulate);
@@ -507,7 +552,7 @@ void Label::_notification(int p_what) {
 			}
 
 			WordCache *from = wc; // first word
-			WordCache *to = wc;   // last word
+			WordCache *to = wc; // last word
 
 			int taken = 0, spaces = 0, line_chars = 0;
 			while (to && to->char_pos >= 0) {
@@ -555,12 +600,12 @@ void Label::_notification(int p_what) {
 				}
 
 				const bool transition_draw_state = _current_transition_state();
-                const bool transition_in_progress = is_transition_enabled() && transition_xform.is_active();
+				const bool transition_in_progress = is_transition_enabled() && transition_xform.is_active();
 
 				if (from->space_count) {
 					/* spacing */
-                    if (!transition_in_progress || !transition_draw_state)
-                        x_ofs += space_w * from->space_count;
+					if (!transition_in_progress || !transition_draw_state)
+						x_ofs += space_w * from->space_count;
 					if (can_fill && align == ALIGN_FILL && spaces) {
 						x_ofs += int((size.width - (taken + space_w * spaces)) / spaces);
 					}
@@ -577,26 +622,25 @@ void Label::_notification(int p_what) {
 					int extra_chars = 0;
 					if (from->next == to || wc == from) { // last/first word ?
 						extra_chars =
-							get_line_size(transition_text.word_cache, transition_text.xl_text, line)
-							- get_line_size(word_cache, xl_text, line);
+								get_line_size(transition_text.word_cache, transition_text.xl_text, line) - get_line_size(word_cache, xl_text, line);
 					}
 					if (extra_chars > 0) switch (align) {
 
-						case ALIGN_FILL:
-						case ALIGN_LEFT: {
+							case ALIGN_FILL:
+							case ALIGN_LEFT: {
 
-							extra_chars_after = extra_chars;
-						} break;
-						case ALIGN_CENTER: {
+								extra_chars_after = extra_chars;
+							} break;
+							case ALIGN_CENTER: {
 
-							extra_chars_before = floor(extra_chars_before/2.);
-							extra_chars_after = ceil(extra_chars_before/2.);
-						} break;
-						case ALIGN_RIGHT: {
+								extra_chars_before = floor(extra_chars_before / 2.);
+								extra_chars_after = ceil(extra_chars_before / 2.);
+							} break;
+							case ALIGN_RIGHT: {
 
-							extra_chars_before = extra_chars;
-						} break;
-					}
+								extra_chars_before = extra_chars;
+							} break;
+						}
 					extra_chars_before -= from->space_count; // we need to handle spaces too
 				}
 
@@ -654,11 +698,11 @@ void Label::_notification(int p_what) {
 					}
 					line_chars++;
 				}
-                from = from->next;
+				from = from->next;
 			}
 
 			line++;
-            line_chars = 0;
+			line_chars = 0;
 			wc = to ? to->next : 0;
 		}
 	}
@@ -781,14 +825,8 @@ int Label::get_visible_line_count() const {
 
 void Label::_dump_word_cache(const String &text, const Label::WordCache *wc) {
 	print_line("WordCache:");
-	while(wc) {
-		print_line(vformat("  '"+text.substr(wc->char_pos, wc->word_len)+"' char_pos=%d,line=%d,line_pos=%d,len=%d,spc=%d"
-			,wc->char_pos
-			,wc->line
-			,wc->line_pos
-			,wc->word_len
-			,wc->space_count
-		));
+	while (wc) {
+		print_line(vformat("  '" + text.substr(wc->char_pos, wc->word_len) + "' char_pos=%d,line=%d,line_pos=%d,len=%d,spc=%d", wc->char_pos, wc->line, wc->line_pos, wc->word_len, wc->space_count));
 		wc = wc->next;
 	}
 	print_line("----------");
@@ -807,7 +845,7 @@ Label::WordCache *Label::calculate_word_cache(const Ref<Font> &font, const Strin
 
 	real_t current_word_size = 0;
 	int word_pos = 0;
-    int line_pos = 0;
+	int line_pos = 0;
 	real_t line_width = 0;
 	int space_count = 0;
 	real_t space_width = font->get_char_size(' ').width + horizontal_spacing;
@@ -845,7 +883,7 @@ Label::WordCache *Label::calculate_word_cache(const Ref<Font> &font, const Strin
 				wc->pixel_width = current_word_size;
 				wc->char_pos = word_pos;
 				wc->word_len = i - word_pos;
-                wc->line = line_count - 1;
+				wc->line = line_count - 1;
 				wc->line_pos = line_pos - wc->word_len;
 				wc->space_count = space_count;
 				current_word_size = 0;
@@ -877,7 +915,7 @@ Label::WordCache *Label::calculate_word_cache(const Ref<Font> &font, const Strin
 			char_width = font->get_char_size(current, label_text[i + 1]).width + horizontal_spacing;
 			current_word_size += char_width;
 			line_width += char_width;
-            line_pos++;
+			line_pos++;
 			total_char_cache++;
 
 			// allow autowrap to cut words when they exceed line width
@@ -900,7 +938,7 @@ Label::WordCache *Label::calculate_word_cache(const Ref<Font> &font, const Strin
 					wc->pixel_width = current_word_size - char_width;
 					wc->char_pos = word_pos;
 					wc->word_len = i - word_pos;
-                    wc->line = line_count - 1;
+					wc->line = line_count - 1;
 					wc->line_pos = line_pos - wc->word_len;
 					wc->space_count = space_count;
 					current_word_size = char_width;
@@ -918,11 +956,11 @@ Label::WordCache *Label::calculate_word_cache(const Ref<Font> &font, const Strin
 
 			wc->pixel_width = 0;
 			wc->char_pos = insert_newline ? WordCache::CHAR_NEWLINE : WordCache::CHAR_WRAPLINE;
-            wc->line = line_count - 1;
+			wc->line = line_count - 1;
 
 			line_width = current_word_size;
 			line_count++;
-            line_pos = 0;
+			line_pos = 0;
 			space_count = 0;
 		}
 	}
@@ -982,7 +1020,7 @@ void Label::regenerate_word_cache() {
 	if (!autowrap)
 		minsize.width = width;
 
-    int line_spacing = get_constant("line_spacing");
+	int line_spacing = get_constant("line_spacing");
 
 	if (max_lines_visible > 0 && line_count > max_lines_visible) {
 		minsize.height = (font->get_height() * max_lines_visible) + (line_spacing * (max_lines_visible - 1));
@@ -1000,10 +1038,10 @@ void Label::regenerate_word_cache() {
 		_RemoveWordCache(transition_text.word_cache);
 
 		transition_text.word_cache = calculate_word_cache(font,
-														transition_text.xl_text,
-														transition_text.line_count,
-														transition_text.total_char_cache,
-														transition_text.width);
+				transition_text.xl_text,
+				transition_text.line_count,
+				transition_text.total_char_cache,
+				transition_text.width);
 		// try to extmate position of the same chars in every words
 		transition_text.same_chars_pos = Dictionary();
 		const real_t space_w = font->get_char_size(' ').width + horizontal_spacing;
@@ -1013,18 +1051,16 @@ void Label::regenerate_word_cache() {
 			if (wc->char_pos < 0) { // end of line / wrap line
 				line_xpos = 0;
 			} else {
-				line_xpos += space_w*wc->space_count;
+				line_xpos += space_w * wc->space_count;
 				// make sure we are on the same line
 				if (wc && tr_wc && wc->line != tr_wc->line) {
 					while (tr_wc && wc->line != tr_wc->line)
 						tr_wc = tr_wc->next;
 				}
-				const String tr_word = tr_wc
-					? transition_text.xl_text.substr(tr_wc->char_pos, tr_wc->word_len)
-					: "";
-				for (int index=0; index<wc->word_len; ++index) {
+				const String tr_word = tr_wc ? transition_text.xl_text.substr(tr_wc->char_pos, tr_wc->word_len) : "";
+				for (int index = 0; index < wc->word_len; ++index) {
 					CharType c = xl_text[wc->char_pos + index];
-					CharType c_ = index<tr_word.size() ? tr_word[index] : 0;
+					CharType c_ = index < tr_word.size() ? tr_word[index] : 0;
 					if (c_ != 0) {
 						if (uppercase) {
 							c = String::char_uppercase(c);
@@ -1314,7 +1350,6 @@ bool Label::is_transition_active() const {
 	return (is_transition_enabled() && transition_xform.is_active());
 }
 
-
 void Label::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_align", "align"), &Label::set_align);
@@ -1390,7 +1425,7 @@ void Label::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "transition_change_policy", PROPERTY_HINT_ENUM, "All,New"), "set_transition_change_policy", "get_transition_change_policy");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "transition_scale_width"), "set_transition_scale_width", "is_transition_scale_width");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "transition_align_v_rotation"), "set_transition_align_vrotation", "is_transition_align_vrotation");
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "transition_align_v_rotation_factor",  PROPERTY_HINT_RANGE, "0,1,0.05"), "set_transition_align_vrotation_factor", "get_transition_align_vrotation_factor");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "transition_align_v_rotation_factor", PROPERTY_HINT_RANGE, "0,1,0.05"), "set_transition_align_vrotation_factor", "get_transition_align_vrotation_factor");
 	ADD_GROUP("", "");
 	ADD_GROUP("Extra Spacing", "extra_spacing_");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "extra_spacing_horizontal", PROPERTY_HINT_RANGE, "-10,10,0.5"), "set_horizontal_spacing", "get_horizontal_spacing");

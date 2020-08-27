@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  ExtrudeMesh.hpp                                                      */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 // Copyright 2015 Markus Ilmola
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -7,17 +37,14 @@
 #ifndef GENERATOR_EXTRUDEMESH_HPP
 #define GENERATOR_EXTRUDEMESH_HPP
 
+#include "Edge.hpp"
+#include "Iterator.hpp"
 #include "MeshVertex.hpp"
 #include "PathVertex.hpp"
 #include "ShapeVertex.hpp"
 #include "Triangle.hpp"
-#include "Edge.hpp"
-#include "Iterator.hpp"
-
 
 namespace generator {
-
-
 
 /// Extrude a shape along a path.
 /// The shape normal becomes the mesh normal.
@@ -25,31 +52,28 @@ namespace generator {
 template <typename Shape, typename Path>
 class ExtrudeMesh {
 public:
-
 	class Triangles {
 	public:
-
 		Triangle generate() const {
 			Triangle triangle;
 
-			const auto& shapeEdge = shapeEdges_.generate();
-			const auto& pathEdge = pathEdges_.generate();
+			const auto &shapeEdge = shapeEdges_.generate();
+			const auto &pathEdge = pathEdges_.generate();
 
 			if (odd_ == 0) {
 				triangle.vertices[0] =
-					shapeEdge.vertices[0] + pathEdge.vertices[0] * mesh_->shapeVertexCount_;
+						shapeEdge.vertices[0] + pathEdge.vertices[0] * mesh_->shapeVertexCount_;
 				triangle.vertices[1] =
-					shapeEdge.vertices[1] + pathEdge.vertices[1] * mesh_->shapeVertexCount_;
+						shapeEdge.vertices[1] + pathEdge.vertices[1] * mesh_->shapeVertexCount_;
 				triangle.vertices[2] =
-					shapeEdge.vertices[0] + pathEdge.vertices[1] * mesh_->shapeVertexCount_;
-			}
-			else {
+						shapeEdge.vertices[0] + pathEdge.vertices[1] * mesh_->shapeVertexCount_;
+			} else {
 				triangle.vertices[0] =
-					shapeEdge.vertices[0] + pathEdge.vertices[0] * mesh_->shapeVertexCount_;
+						shapeEdge.vertices[0] + pathEdge.vertices[0] * mesh_->shapeVertexCount_;
 				triangle.vertices[1] =
-					shapeEdge.vertices[1] + pathEdge.vertices[0] * mesh_->shapeVertexCount_;
+						shapeEdge.vertices[1] + pathEdge.vertices[0] * mesh_->shapeVertexCount_;
 				triangle.vertices[2] =
-					shapeEdge.vertices[1] + pathEdge.vertices[1] * mesh_->shapeVertexCount_;
+						shapeEdge.vertices[1] + pathEdge.vertices[1] * mesh_->shapeVertexCount_;
 			}
 
 			return triangle;
@@ -70,8 +94,7 @@ public:
 		}
 
 	private:
-
-		const ExtrudeMesh* mesh_;
+		const ExtrudeMesh *mesh_;
 
 		decltype(mesh_->shape_.edges()) shapeEdges_;
 
@@ -79,36 +102,34 @@ public:
 
 		bool odd_;
 
-		Triangles(const ExtrudeMesh& mesh) :
-			mesh_{&mesh},
-			shapeEdges_{mesh.shape_.edges()},
-			pathEdges_{mesh.path_.edges()},
-			odd_{true}
-		{
+		Triangles(const ExtrudeMesh &mesh) :
+				mesh_{ &mesh },
+				shapeEdges_{ mesh.shape_.edges() },
+				pathEdges_{ mesh.path_.edges() },
+				odd_{ true } {
 		}
 
-	friend class ExtrudeMesh;
+		friend class ExtrudeMesh;
 	};
 
 	class Vertices {
 	public:
-
 		MeshVertex generate() const {
 			MeshVertex vertex;
 
-			const auto& shapeVertex = shapeVertices_.generate();
-			const auto& pathVertex = pathVertices_.generate();
+			const auto &shapeVertex = shapeVertices_.generate();
+			const auto &pathVertex = pathVertices_.generate();
 
 			gml::dvec3 pathBinormal = pathVertex.binormal();
 			vertex.position =
-				pathVertex.position +
-				shapeVertex.position[0] * pathVertex.normal +
-				shapeVertex.position[1] * pathBinormal;
+					pathVertex.position +
+					shapeVertex.position[0] * pathVertex.normal +
+					shapeVertex.position[1] * pathBinormal;
 
 			gml::dvec2 shapeNormal = shapeVertex.normal();
 			vertex.normal =
-				shapeNormal[0] * pathVertex.normal +
-				shapeNormal[1] * pathBinormal;
+					shapeNormal[0] * pathVertex.normal +
+					shapeNormal[1] * pathBinormal;
 
 			vertex.texCoord[0] = shapeVertex.texCoord;
 			vertex.texCoord[1] = pathVertex.texCoord;
@@ -127,20 +148,18 @@ public:
 		}
 
 	private:
-
-		const ExtrudeMesh* mesh_;
+		const ExtrudeMesh *mesh_;
 
 		decltype(mesh_->shape_.vertices()) shapeVertices_;
 
 		decltype(mesh_->path_.vertices()) pathVertices_;
 
-		Vertices(const ExtrudeMesh& mesh) :
-			mesh_{&mesh},
-			shapeVertices_{mesh.shape_.vertices()},
-			pathVertices_{mesh.path_.vertices()}
-		{ }
+		Vertices(const ExtrudeMesh &mesh) :
+				mesh_{ &mesh },
+				shapeVertices_{ mesh.shape_.vertices() },
+				pathVertices_{ mesh.path_.vertices() } {}
 
-	friend class ExtrudeMesh;
+		friend class ExtrudeMesh;
 	};
 
 	Triangles triangles() const noexcept { return *this; }
@@ -150,29 +169,23 @@ public:
 	/// @param shape Shape to be extruded.
 	/// @param path Path to extrude along.
 	ExtrudeMesh(Shape shape, Path path) :
-		shape_{std::move(shape)},
-		path_{std::move(path)},
-		shapeVertexCount_{count(shape_.vertices())}
-	{ }
+			shape_{ std::move(shape) },
+			path_{ std::move(path) },
+			shapeVertexCount_{ count(shape_.vertices()) } {}
 
 private:
-
 	Shape shape_;
 
 	Path path_;
 
 	int shapeVertexCount_;
-
 };
-
-
 
 template <typename Shape, typename Path>
 ExtrudeMesh<Shape, Path> extrudeMesh(Shape shape, Path path) {
-	return ExtrudeMesh<Shape, Path>{std::move(shape), std::move(path)};
+	return ExtrudeMesh<Shape, Path>{ std::move(shape), std::move(path) };
 }
 
-
-}
+} // namespace generator
 
 #endif

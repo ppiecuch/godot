@@ -1,30 +1,60 @@
+/*************************************************************************/
+/*  bytecode_exporter.cpp                                                */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
+#include "bytecode_exporter.h"
+#include "core/engine.h"
 #include "core/global_constants.h"
 #include "core/io/marshalls.h"
-#include "core/variant_parser.h"
-#include "core/engine.h"
-#include "modules/gdscript/gdscript.h"
-#include "bytecode_exporter.h"
-#include "core/string_builder.h"
 #include "core/os/os.h"
+#include "core/string_builder.h"
+#include "core/variant_parser.h"
+#include "modules/gdscript/gdscript.h"
 
 String q(String value) {
-    return "\"" + value.json_escape() + "\"";
+	return "\"" + value.json_escape() + "\"";
 }
 
 String kv(char *key, String value) {
-    return q(String(key)) + ":" + q(value);
+	return q(String(key)) + ":" + q(value);
 }
 
 String kv(char *key, const char *value) {
-    return q(key) + ":" + q(String(value));
+	return q(key) + ":" + q(String(value));
 }
 
 String kv(char *key, int value) {
-    return q(key) + ":" + q(String(itos(value)));
+	return q(key) + ":" + q(String(itos(value)));
 }
 
 String kv(char *key, double value) {
-    return q(key) + ":" + String(rtos(value));
+	return q(key) + ":" + String(rtos(value));
 }
 
 int put_var(const Variant &p_packet, Vector<uint8_t> *data) {
@@ -57,13 +87,13 @@ void trace(int line, const char *text) {
 
 void GDScriptBytecodeExporter::export_bytecode_to_file(String input_script_path, String output_json_path) {
 	Ref<Script> scr = ResourceLoader::load(input_script_path);
-    ERR_FAIL_COND_MSG(scr.is_null(), "Can't load script: " + input_script_path);
+	ERR_FAIL_COND_MSG(scr.is_null(), "Can't load script: " + input_script_path);
 
-    ERR_FAIL_COND_MSG(!scr->can_instance(), "Cannot instance script: " + input_script_path);
+	ERR_FAIL_COND_MSG(!scr->can_instance(), "Cannot instance script: " + input_script_path);
 
-    Ref<GDScript> script = scr;
+	Ref<GDScript> script = scr;
 
-    StringName instance_type = script->get_instance_base_type();
+	StringName instance_type = script->get_instance_base_type();
 	Set<StringName> members;
 	Vector<uint8_t> variantBuffer;
 	Map<String, int> objectJsonIndex;
@@ -383,5 +413,5 @@ void GDScriptBytecodeExporter::export_bytecode_to_file(String input_script_path,
 }
 
 void GDScriptBytecodeExporter::_bind_methods() {
-    ClassDB::bind_method(D_METHOD("export_bytecode_to_file", "input_script_path", "output_json_path"), &GDScriptBytecodeExporter::export_bytecode_to_file);
+	ClassDB::bind_method(D_METHOD("export_bytecode_to_file", "input_script_path", "output_json_path"), &GDScriptBytecodeExporter::export_bytecode_to_file);
 }

@@ -6086,17 +6086,17 @@ void CanvasItemEditorViewport::_perform_drop_data() {
 				else if (default_type == "Sprite")
 					child = memnew(Sprite);
 				else
-					child = vector_child = createVectorSprite(texture);  // default
+					child = vector_child = createVectorSprite(texture); // default
 #else
-                else
+				else
 					child = memnew(Sprite); // default
 #endif
 
 				_create_nodes(target_node, child, path, drop_pos);
 #ifdef MODULE_GD_VECTOR_GRAPHICS_ENABLED
-                if (vector_child) {
-                    configureVectorSprite(vector_child, texture);
-                }
+				if (vector_child) {
+					configureVectorSprite(vector_child, texture);
+				}
 #endif
 			}
 		}

@@ -1,11 +1,41 @@
+/*************************************************************************/
+/*  timeit.h                                                             */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #pragma once
 
-#include <vector>
-#include <chrono>
 #include <algorithm>
-#include <iostream>
+#include <chrono>
 #include <iomanip>
+#include <iostream>
 #include <string>
+#include <vector>
 
 #define USE_CHRONO 1
 #if defined(USE_CHRONO)
@@ -13,11 +43,10 @@
 #endif
 
 #include <sys/time.h>
-inline double get_time_usec()
-{
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return (double)tv.tv_sec * 1000000.0 + (double)tv.tv_usec;
+inline double get_time_usec() {
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	return (double)tv.tv_sec * 1000000.0 + (double)tv.tv_usec;
 }
 
 /*
@@ -106,8 +135,7 @@ inline uint64_t rdtsc_stop()
 // http://stackoverflow.com/questions/850774/how-to-determine-the-hardware-cpu-and-ram-on-a-machine
 */
 
-class CTimeIt
-{
+class CTimeIt {
 #if defined(USE_CHRONO)
 	std::chrono::duration<double> m_Average;
 	std::chrono::duration<double> m_Median;
@@ -120,11 +148,10 @@ class CTimeIt
 	double m_Max;
 #endif
 	size_t m_Count;
-public:
 
-	template<typename FuncResult, typename SetupFunc, typename Func, typename... FuncArgs>
-	FuncResult run(size_t count, SetupFunc setupfunc, Func func, FuncArgs&... args)
-	{
+public:
+	template <typename FuncResult, typename SetupFunc, typename Func, typename... FuncArgs>
+	FuncResult run(size_t count, SetupFunc setupfunc, Func func, FuncArgs &... args) {
 		m_Count = count;
 
 #if defined(USE_CHRONO)
@@ -135,8 +162,7 @@ public:
 		times.resize(m_Count);
 
 		FuncResult result = FuncResult();
-		for( size_t i = 0; i < m_Count; ++i )
-		{
+		for (size_t i = 0; i < m_Count; ++i) {
 			setupfunc(args...);
 
 #if defined(USE_CHRONO)
@@ -156,7 +182,7 @@ public:
 			times[i] = tend - tstart;
 		}
 
-		calc_times( times );
+		calc_times(times);
 
 		return result;
 	}
@@ -164,8 +190,7 @@ public:
 	/**
 	 * @return Returns the average (in seconds)
 	 */
-	float average() const
-	{
+	float average() const {
 #if defined(USE_CHRONO)
 		return m_Average.count();
 #else
@@ -176,8 +201,7 @@ public:
 	/**
 	 * @return Returns the median (in seconds)
 	 */
-	float median() const
-	{
+	float median() const {
 #if defined(USE_CHRONO)
 		return m_Median.count();
 #else
@@ -188,8 +212,7 @@ public:
 	/**
 	 * @return Returns the fastest run (in seconds)
 	 */
-	float fastest() const
-	{
+	float fastest() const {
 #if defined(USE_CHRONO)
 		return m_Min.count();
 #else
@@ -200,8 +223,7 @@ public:
 	/**
 	 * @return Returns the longest run (in seconds)
 	 */
-	float longest() const
-	{
+	float longest() const {
 #if defined(USE_CHRONO)
 		return m_Max.count();
 #else
@@ -209,89 +231,82 @@ public:
 #endif
 	}
 
-	static void report_time(std::ostream& stream, float t, float multiplier)
-	{
-		if( multiplier == 0.0f )
-		{
-			if( t < 0.000001f )
+	static void report_time(std::ostream &stream, float t, float multiplier) {
+		if (multiplier == 0.0f) {
+			if (t < 0.000001f)
 				stream << t * 1000000000.0 << " ns";
-			else if( t < 0.001f )
+			else if (t < 0.001f)
 				stream << t * 1000000.0 << " \u00b5s";
-			else if( t < 0.1f )
+			else if (t < 0.1f)
 				stream << t * 1000.0 << " ms";
 			else
 				stream << t << " s";
-		}
-		else
-		{
-			if( multiplier == 1000000000.0f )
+		} else {
+			if (multiplier == 1000000000.0f)
 				stream << t * multiplier << " ns";
-			else if( multiplier == 1000000.0f )
+			else if (multiplier == 1000000.0f)
 				stream << t * multiplier << " \u00b5s";
-			else if( multiplier == 1000.0f )
+			else if (multiplier == 1000.0f)
 				stream << t * multiplier << " ms";
-			else if( multiplier == 1.0f )
+			else if (multiplier == 1.0f)
 				stream << t * multiplier << " s";
 			else
 				stream << t * multiplier;
 		}
 	}
 
-	void report(std::ostream& stream, const std::string& title, float multiplier = 0.0f) const
-	{
+	void report(std::ostream &stream, const std::string &title, float multiplier = 0.0f) const {
 		stream << std::fixed << std::setprecision(3);
 		stream << title << "\titerations: " << m_Count;
-		stream << "\tavg: "; report_time(stream, average(), multiplier);
-		stream << "\tmedian: "; report_time(stream, median(), multiplier);
-		stream << "\tmin: "; report_time(stream, fastest(), multiplier);
-		stream << "\tmax: "; report_time(stream, longest(), multiplier);
+		stream << "\tavg: ";
+		report_time(stream, average(), multiplier);
+		stream << "\tmedian: ";
+		report_time(stream, median(), multiplier);
+		stream << "\tmin: ";
+		report_time(stream, fastest(), multiplier);
+		stream << "\tmax: ";
+		report_time(stream, longest(), multiplier);
 		stream << std::endl;
 	}
 
 private:
-
-
 #if defined(USE_CHRONO)
-	void calc_times(std::vector<std::chrono::duration<double> >& times)
-	{
-		std::sort( times.begin(), times.end() );
+	void calc_times(std::vector<std::chrono::duration<double> > &times) {
+		std::sort(times.begin(), times.end());
 
 		std::chrono::duration<float> total(0);
-		for( size_t i = 0; i < m_Count; ++i )
-		{
+		for (size_t i = 0; i < m_Count; ++i) {
 			total += times[i];
 		}
 
 		m_Average = total / (double)m_Count;
 		size_t middle = m_Count / 2;
-		if( m_Count & 1 )
+		if (m_Count & 1)
 			m_Median = times[middle];
 		else
-			m_Median = (times[middle-1] + times[middle]) / 2.0f;
+			m_Median = (times[middle - 1] + times[middle]) / 2.0f;
 
 		m_Min = times[0];
-		m_Max = times[times.size()-1];
+		m_Max = times[times.size() - 1];
 	}
 #else
-	void calc_times(std::vector<double>& times)
-	{
-		std::sort( times.begin(), times.end() );
+	void calc_times(std::vector<double> &times) {
+		std::sort(times.begin(), times.end());
 
 		double total = 0;
-		for( size_t i = 0; i < m_Count; ++i )
-		{
+		for (size_t i = 0; i < m_Count; ++i) {
 			total += times[i];
 		}
 
 		m_Average = total / (float)m_Count;
 		size_t middle = m_Count / 2;
-		if( m_Count & 1 )
+		if (m_Count & 1)
 			m_Median = times[middle];
 		else
-			m_Median = (times[middle-1] + times[middle]) / 2.0f;
+			m_Median = (times[middle - 1] + times[middle]) / 2.0f;
 
 		m_Min = times[0];
-		m_Max = times[times.size()-1];
+		m_Max = times[times.size() - 1];
 	}
 #endif
 };
@@ -312,4 +327,4 @@ struct TimeScope
 };
 */
 
-#define TIMESCOPE( _NAME_ )	struct TimeScope __timescope##_NAME_( #_NAME_ )
+#define TIMESCOPE(_NAME_) struct TimeScope __timescope##_NAME_(#_NAME_)

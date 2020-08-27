@@ -1669,7 +1669,7 @@ Variant GDScriptFunction::get_constant(int p_idx) const {
 }
 
 int GDScriptFunction::get_constant_count() const {
- 	return constants.size();
+	return constants.size();
 }
 
 StringName GDScriptFunction::get_global_name(int p_idx) const {
@@ -1679,7 +1679,7 @@ StringName GDScriptFunction::get_global_name(int p_idx) const {
 }
 
 int GDScriptFunction::get_global_name_count() const {
- 	return global_names.size();
+	return global_names.size();
 }
 
 int GDScriptFunction::get_default_argument_count() const {

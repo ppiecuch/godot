@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  BezierMesh.hpp                                                       */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
@@ -11,73 +41,62 @@
 
 #include "ParametricMesh.hpp"
 
-
 namespace generator {
-
 
 /// A bezier patch with D0xD1 control points.
 /// @tparam D0 Number of control points along the t[0] axis. Must be > 1.
 /// @tparam D1 Number of control points along the t[1] axis. Must be > 1.
 /// @image html BezierMesh.svg
 template <int D0, int D1>
-class BezierMesh
-{
+class BezierMesh {
 private:
-
 	static_assert(D0 > 1, "D0 must be > 1.");
 	static_assert(D1 > 1, "D1 must be > 1.");
 
 	using Impl = ParametricMesh;
 	Impl mParametricMesh;
 
-	struct ArrayWrapper
-	{
+	struct ArrayWrapper {
 		gml::dvec3 data[D1][D0];
 
-		ArrayWrapper(const gml::dvec3 (&p)[D1][D0])
-		{
+		ArrayWrapper(const gml::dvec3 (&p)[D1][D0]) {
 			std::copy(&p[0][0], &p[0][0] + D1 * D0, &data[0][0]);
 		}
 	};
 
 	explicit BezierMesh(
-		const ArrayWrapper& p, const gml::ivec2& segments
-	) :
-		mParametricMesh{
-			[p] (const gml::dvec2& t) {
-				MeshVertex vertex;
+			const ArrayWrapper &p, const gml::ivec2 &segments) :
+			mParametricMesh{
+				[p](const gml::dvec2 &t) {
+					MeshVertex vertex;
 
-				vertex.position = gml::bezier2(p.data, t);
+					vertex.position = gml::bezier2(p.data, t);
 
-				gml::dmat2x3 J = gml::bezier2Jacobian<1>(p.data, t);
-				vertex.normal = gml::cross(J[0], J[1]);
-
-				// If the normal was zero try a again near by.
-				const double e = std::numeric_limits<double>::epsilon();
-				if (dot(vertex.normal, vertex.normal) < e) {
-					J = gml::bezier2Jacobian<1>(p.data, t + 10.0 * e);
+					gml::dmat2x3 J = gml::bezier2Jacobian<1>(p.data, t);
 					vertex.normal = gml::cross(J[0], J[1]);
-				}
-				vertex.normal = gml::normalize(vertex.normal);
 
-				vertex.texCoord = t;
+					// If the normal was zero try a again near by.
+					const double e = std::numeric_limits<double>::epsilon();
+					if (dot(vertex.normal, vertex.normal) < e) {
+						J = gml::bezier2Jacobian<1>(p.data, t + 10.0 * e);
+						vertex.normal = gml::cross(J[0], J[1]);
+					}
+					vertex.normal = gml::normalize(vertex.normal);
 
-				return vertex;
-			},
-			segments
-		}
-	{ }
+					vertex.texCoord = t;
+
+					return vertex;
+				},
+				segments
+			} {}
 
 public:
-
 	/// @param p Control points
 	/// @param segments Number of subdivisions along each axis
 	explicit BezierMesh(
-		const gml::dvec3 (&p)[D1][D0], const gml::ivec2& segments = {16, 16}
-	) :
-		// Work around a msvc lambda capture bug by wrapping the array.
-		BezierMesh{ArrayWrapper{p}, segments}
-	{ }
+			const gml::dvec3 (&p)[D1][D0], const gml::ivec2 &segments = { 16, 16 }) :
+			// Work around a msvc lambda capture bug by wrapping the array.
+			BezierMesh{ ArrayWrapper{ p }, segments } {}
 
 	using Triangles = typename Impl::Triangles;
 
@@ -86,10 +105,8 @@ public:
 	using Vertices = typename Impl::Vertices;
 
 	Vertices vertices() const noexcept { return mParametricMesh.vertices(); }
-
 };
 
-
-}
+} // namespace generator
 
 #endif

@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  godoterrorhandler.cpp                                                */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #include "godoterrorhandler.h"
 
 GodotErrorHandler *GodotErrorHandler::singleton = NULL;
@@ -18,7 +48,7 @@ GodotErrorHandler::~GodotErrorHandler() {
 }
 
 GodotErrorHandler *GodotErrorHandler::get_singleton() {
-  return GodotErrorHandler::singleton;
+	return GodotErrorHandler::singleton;
 }
 
 void GodotErrorHandler::_err_handler(void *ud, const char *p_func, const char *p_file, int p_line, const char *p_err, const char *p_descr, ErrorHandlerType p_type) {
@@ -36,10 +66,10 @@ void GodotErrorHandler::_err_handler(void *ud, const char *p_func, const char *p
 	Array cstack;
 
 	Vector<ScriptLanguage::StackInfo> si;
-    ScriptLanguage *sl = 0;
+	ScriptLanguage *sl = 0;
 
 	for (int i = 0; i < ScriptServer::get_language_count(); i++) {
-        sl = ScriptServer::get_language(i);
+		sl = ScriptServer::get_language(i);
 		si = sl->debug_get_current_stack_info();
 		if (si.size())
 			break;
@@ -59,7 +89,7 @@ void GodotErrorHandler::_err_handler(void *ud, const char *p_func, const char *p
 
 	errorObject["callstack"] = cstack;
 
-  gdh->handle_error(errorObject);
+	gdh->handle_error(errorObject);
 }
 
 void GodotErrorHandler::handle_error(Dictionary errorObject) {

@@ -34,12 +34,15 @@
 // Util
 //----------------------------------------------------------------------------
 
-#define PUSH_BACK_IF(nm, op) \
-	template<typename T> void push_back_if_##nm(Vector<T> &p_arr, T p_elem) { if (p_elem op) p_arr.push_back(p_elem); }
+#define PUSH_BACK_IF(nm, op)                             \
+	template <typename T>                                \
+	void push_back_if_##nm(Vector<T> &p_arr, T p_elem) { \
+		if (p_elem op) p_arr.push_back(p_elem);          \
+	}
 
-PUSH_BACK_IF(gtzero, >0);
-PUSH_BACK_IF(nonzero, !=0);
-PUSH_BACK_IF(lezero, <0);
+PUSH_BACK_IF(gtzero, > 0);
+PUSH_BACK_IF(nonzero, != 0);
+PUSH_BACK_IF(lezero, < 0);
 
 enum SegmentIntersectionResult {
 	SEGMENT_PARALLEL = 0,
@@ -97,7 +100,7 @@ static Vector2 find_intersection(const Vector2 &p0, const Vector2 &p1, const Vec
 	// collision detected
 
 	const real_t t = t_numer / denom;
-	return Vector2( p0.x + (t * s10_x), p0.y + (t * s10_y) );
+	return Vector2(p0.x + (t * s10_x), p0.y + (t * s10_y));
 }
 
 // TODO I'm pretty sure there is an even faster way to swap things
@@ -188,13 +191,13 @@ void LineBuilder::build() {
 	float total_distance = 0.f;
 	float width_factor = 1.f;
 	_interpolate_color = gradient != NULL;
-	_repeat_segment = tile_region != Rect2(0,0,1.f,1.f);
+	_repeat_segment = tile_region != Rect2(0, 0, 1.f, 1.f);
 	_last_uvx = 0;
 	bool retrieve_curve = curve != NULL;
 	bool distance_required = _interpolate_color ||
-							retrieve_curve ||
-							texture_mode == Line2D::LINE_TEXTURE_TILE ||
-							texture_mode == Line2D::LINE_TEXTURE_STRETCH;
+							 retrieve_curve ||
+							 texture_mode == Line2D::LINE_TEXTURE_TILE ||
+							 texture_mode == Line2D::LINE_TEXTURE_STRETCH;
 	if (distance_required) {
 		total_distance = calculate_total_distance(points);
 		// Adjust totalDistance.
@@ -485,8 +488,8 @@ void LineBuilder::build() {
 	const real_t sw = tile_region.size.x;
 	const real_t sh = tile_region.size.y;
 	// rescale uvs values
-	for(int i=0; i<uvs.size(); i++) {
-		uvs.ref(i) = Vector2(sx + uvs[i].x*sw, sy + uvs[i].y*sh);
+	for (int i = 0; i < uvs.size(); i++) {
+		uvs.ref(i) = Vector2(sx + uvs[i].x * sw, sy + uvs[i].y * sh);
 	}
 }
 
@@ -546,12 +549,12 @@ void LineBuilder::strip_add_quad(Vector2 up, Vector2 down, Color color, float uv
 		Vector2 step_up = (up - prev_up) / dist;
 		Color prev_color = _interpolate_color ? colors.last() : Color();
 
-		const bool is_last_remains = last_remainings>0;
+		const bool is_last_remains = last_remainings > 0;
 		const int segs = floor(dist - last_remainings) + is_last_remains;
 		const Vector2 full_quad[] = { Vector2(1.f, 0.f), Vector2(1.f, 1.f), Vector2(0.f, 0.f), Vector2(0.f, 1.f) };
 
-		for (int s=0; s<segs; s++) {
-			if (s==0 && is_last_remains) {
+		for (int s = 0; s < segs; s++) {
+			if (s == 0 && is_last_remains) {
 				prev_up += step_up * last_remainings;
 				prev_down += step_down * last_remainings;
 			} else {
@@ -560,7 +563,7 @@ void LineBuilder::strip_add_quad(Vector2 up, Vector2 down, Color color, float uv
 			}
 			vertices.push_back(prev_up, prev_down, prev_up, prev_down);
 			if (_interpolate_color) {
-				const float t = s/dist;
+				const float t = s / dist;
 				Color curr_color = prev_color.linear_interpolate(color, t);
 				colors.push_multi(4, curr_color);
 			}
@@ -623,7 +626,7 @@ void LineBuilder::strip_add_tri(Vector2 up, Orientation orientation) {
 	if (texture_mode != Line2D::LINE_TEXTURE_NONE) {
 		// UVs are just one slice of the texture all along
 		// (otherwise we can't share the bottom vertice)
-		print_line(vformat("strip_add_tri uvs: %f",uvs[_last_index[opposite_orientation]]));
+		print_line(vformat("strip_add_tri uvs: %f", uvs[_last_index[opposite_orientation]]));
 		uvs.push_back(uvs[_last_index[opposite_orientation]]);
 	}
 
@@ -769,12 +772,14 @@ void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float a
 	const float uv0 = uv_rect.position.x;
 	const float uv1 = uv_rect.position.x + uv_rect.size.width;
 	push_back_if_gtzero(uv_segs, Math::ceil(uv0) - uv0);
-	int uv = ceil(uv0); while (++uv <= uv1) uv_segs.push_back(1);
+	int uv = ceil(uv0);
+	while (++uv <= uv1)
+		uv_segs.push_back(1);
 	push_back_if_gtzero(uv_segs, uv1 - Math::floor(uv1));
 
-	print_line(vformat("new_arc uvs_rect: {%s}, {%s}",String(uv_rect),String(interpolate(uv_rect, Vector2(0.5f, 0.5f)))));
-	for(int s = 0; s < uv_segs.size(); ++s) {
-		print_line(vformat("%d uv_segs: %f",s,uv_segs[s]));
+	print_line(vformat("new_arc uvs_rect: {%s}, {%s}", String(uv_rect), String(interpolate(uv_rect, Vector2(0.5f, 0.5f)))));
+	for (int s = 0; s < uv_segs.size(); ++s) {
+		print_line(vformat("%d uv_segs: %f", s, uv_segs[s]));
 	}
 
 	// Center vertice
@@ -791,15 +796,15 @@ void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float a
 	// | . | ... | ... | .. |
 	const float step = radius / uv_rect.size.width;
 	float dist = 0;
-	for(int s = 0; s < uv_segs.size(); ++s) {
+	for (int s = 0; s < uv_segs.size(); ++s) {
 		dist += uv_segs[s];
 		segs.push_back(dist * step);
 	}
-	for(int s = 0; s < segs.size(); ++s) {
-		print_line(vformat("%d segs: %f",s,segs[s]));
+	for (int s = 0; s < segs.size(); ++s) {
+		print_line(vformat("%d segs: %f", s, segs[s]));
 	}
 
-	auto add_vertex = [=](float tt, const Vector2 &v, const Color &vc){
+	auto add_vertex = [=](float tt, const Vector2 &v, const Color &vc) {
 		vertices.push_back(v);
 		if (_interpolate_color)
 			colors.push_back(vc);
@@ -815,7 +820,7 @@ void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float a
 	Vector2 last_so = center + Vector2(Math::cos(t), Math::sin(t)) * radius;
 	add_vertex(t, last_so, color);
 
-	t+=angle_step;
+	t += angle_step;
 
 	const int sc = segs.size();
 	const int seg_last = sc - 1;
@@ -823,7 +828,7 @@ void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float a
 	int seg_index = 0, seg_step = 1;
 	Vector2 half_s = center + ho * segs[seg_index]; // band along the half arc
 	for (int ti = 1; ti < steps + 1; ++ti, t += angle_step) {
-		print_line(vformat("ti %d t %f seg_index %d seg_step %d",ti,t,seg_index,seg_step));
+		print_line(vformat("ti %d t %f seg_index %d seg_step %d", ti, t, seg_index, seg_step));
 		const Vector2 so = center + Vector2(Math::cos(t), Math::sin(t)) * radius;
 		const Vector2 ro(radius * seg_step, 0); // -radius or radius vector
 		const Vector2 edge = find_intersection(half_s, half_s + ro, last_so, so);
@@ -842,15 +847,15 @@ void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float a
 		last_so = so;
 	}
 
-	print_line(vformat("steps:%d vi0:%d, size:%d, new:%d",steps,vi,vertices.size(),vertices.size()-vi));
+	print_line(vformat("steps:%d vi0:%d, size:%d, new:%d", steps, vi, vertices.size(), vertices.size() - vi));
 
 	const int vi0 = vi++;
 	const int st = sc * 2 - 1;
-	for (int ti = 0; ti < steps; ++ti,vi+=st) {
-		indices.push_back(vi0, vi, vi+st);
-		for(int si = 0; si < sc-1; ++si) {
-			indices.push_back(vi+si+1, vi+si+2, vi+si+st+2);
-			indices.push_back(vi+si+1, vi+si+st+2, vi+si+st+1);
+	for (int ti = 0; ti < steps; ++ti, vi += st) {
+		indices.push_back(vi0, vi, vi + st);
+		for (int si = 0; si < sc - 1; ++si) {
+			indices.push_back(vi + si + 1, vi + si + 2, vi + si + st + 2);
+			indices.push_back(vi + si + 1, vi + si + st + 2, vi + si + st + 1);
 		}
 	}
 }

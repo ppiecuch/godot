@@ -1,11 +1,41 @@
+/*************************************************************************/
+/*  autotilemap.cpp                                                      */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #include "autotilemap.h"
 #include "core/io/json.h"
-#include "core/ustring.h"
-#include "scene/resources/text_file.h"
 #include "core/os/os.h"
+#include "core/ustring.h"
 #include "scene/2d/tile_map.h"
+#include "scene/resources/text_file.h"
 
-int encode_tile_and_flipping(int tid, int fx, int fy, int atlas_id=0) {
+int encode_tile_and_flipping(int tid, int fx, int fy, int atlas_id = 0) {
 
 	//24 bits of id code. We encode the ATLAS id in 8 bits, and the tile_id in 16 bits
 	int atlas_id_code = (int(atlas_id) & 0xff) << 16;
@@ -39,15 +69,15 @@ int compute_atlas_id(int code) {
 
 Vector2 compute_subtile_coords(int code) {
 	int tid = compute_tile_id(code);
-	int y = int(tid/7);
-	int x = int(tid)%7;
+	int y = int(tid / 7);
+	int x = int(tid) % 7;
 	return Vector2(x, y);
 }
 
 Autotilemap::Autotilemap() {
 }
 
-void Autotilemap::init(const Vector2& top_left, const Vector2& bottom_right, const String& json_file) {
+void Autotilemap::init(const Vector2 &top_left, const Vector2 &bottom_right, const String &json_file) {
 	_top_left = top_left;
 	_bottom_right = bottom_right;
 	_width = bottom_right.x - top_left.x;
@@ -76,7 +106,7 @@ void Autotilemap::init(const Vector2& top_left, const Vector2& bottom_right, con
 		Vector<Variant> codes = _json_data.get("codes");
 		Vector<Variant> blob_autot = _json_data.get("blob_autotiling");
 		for (int i = 0; i < blob_autot.size(); i++) {
-			BlobAutotiler* autot = memnew(BlobAutotiler);
+			BlobAutotiler *autot = memnew(BlobAutotiler);
 			autot->init(blob_autot[i], codes);
 			_autotilers.push_back(Ref<BlobAutotiler>(autot));
 		}
@@ -87,7 +117,7 @@ void Autotilemap::init(const Vector2& top_left, const Vector2& bottom_right, con
 		Vector<Variant> codes = _json_data.get("codes");
 		Vector<Variant> blob_autot = _json_data.get("blob_terrain_autotiling");
 		for (int i = 0; i < blob_autot.size(); i++) {
-			BlobTerrainAutotiler* autot = memnew(BlobTerrainAutotiler);
+			BlobTerrainAutotiler *autot = memnew(BlobTerrainAutotiler);
 			autot->init(blob_autot[i], codes);
 			_autotilers.push_back(Ref<BlobTerrainAutotiler>(autot));
 		}
@@ -96,40 +126,38 @@ void Autotilemap::init(const Vector2& top_left, const Vector2& bottom_right, con
 	if (data_dict.has("autotiling")) {
 		Vector<Variant> quad_autot = _json_data.get("autotiling");
 		for (int i = 0; i < quad_autot.size(); i++) {
-			QuadAutotiler* autot = memnew(QuadAutotiler);
+			QuadAutotiler *autot = memnew(QuadAutotiler);
 			autot->init(quad_autot[i]);
 			_autotilers.push_back(Ref<QuadAutotiler>(autot));
 		}
 	}
 }
 
-void Autotilemap::apply(Object* obj_tilemap) {
+void Autotilemap::apply(Object *obj_tilemap) {
 	if (obj_tilemap) {
-		TileMap* tilemap = cast_to<TileMap>(obj_tilemap);
+		TileMap *tilemap = cast_to<TileMap>(obj_tilemap);
 		map_ids_to_tiles(tilemap);
 		apply_autotiling(tilemap);
 		apply_blob_autotiling(tilemap);
 		apply_blob_terrain_autotiling(tilemap);
-	}
-	else {
+	} else {
 		print_error("Error applying tilemap");
 	}
 }
 
-
-void Autotilemap::map_ids_to_tiles(TileMap* tilemap) {
+void Autotilemap::map_ids_to_tiles(TileMap *tilemap) {
 	if (_id_to_atlas.size() > 0) {
 		for (int i = 0; i < _id_to_atlas.size(); i++) {
 			Variant id_to_atlas = _id_to_atlas[i];
-			for (int y = 1; y < _height-1; y++) {
-				for (int x = 1; x < _width-1; x++) {
+			for (int y = 1; y < _height - 1; y++) {
+				for (int x = 1; x < _width - 1; x++) {
 
 					//TODO access data only once for all autotilers!
-					int src_tile_id = _data[y + x*_height];
+					int src_tile_id = _data[y + x * _height];
 					if (src_tile_id == int(id_to_atlas.get("src_tile"))) {
 						int atlas_id = id_to_atlas.get("atlas");
 						tilemap->set_cell(_top_left.x + x, _top_left.y + y, atlas_id,
-										  false, false, false, Vector2(0,0));
+								false, false, false, Vector2(0, 0));
 					}
 				}
 			}
@@ -137,36 +165,36 @@ void Autotilemap::map_ids_to_tiles(TileMap* tilemap) {
 	}
 }
 
-void Autotilemap::apply_autotiling(TileMap* tilemap) {
+void Autotilemap::apply_autotiling(TileMap *tilemap) {
 	for (int ai = 0; ai < _autotilers.size(); ai++) {
-		if (! _autotilers[ai]->is_type("QuadAutotiler")) {
+		if (!_autotilers[ai]->is_type("QuadAutotiler")) {
 			continue;
 		}
 
 		Ref<QuadAutotiler> autotiler = Ref<QuadAutotiler>(_autotilers[ai]);
 
-		for (int y = 1; y < _height-1; y++) {
-			for (int x = 1; x < _width-1; x++) {
+		for (int y = 1; y < _height - 1; y++) {
+			for (int x = 1; x < _width - 1; x++) {
 
-				int src_tile_id = _data[y + x*_height];
-				if (! autotiler->is_source_tile(src_tile_id)) {
+				int src_tile_id = _data[y + x * _height];
+				if (!autotiler->is_source_tile(src_tile_id)) {
 					//tilemap->set_cell(_top_left.x + x, _top_left.y + y, 0,
 					//				  false, false, false, Vector2(0,0));
 					continue;
 				}
 
-				int n = int(autotiler->is_neighbor_tile(_data[(y-1) + x*_height]));
-				int e = int(autotiler->is_neighbor_tile(_data[y + (x+1)*_height]));
-				int s = int(autotiler->is_neighbor_tile(_data[(y+1) + x*_height]));
-				int w = int(autotiler->is_neighbor_tile(_data[y + (x-1)*_height]));
+				int n = int(autotiler->is_neighbor_tile(_data[(y - 1) + x * _height]));
+				int e = int(autotiler->is_neighbor_tile(_data[y + (x + 1) * _height]));
+				int s = int(autotiler->is_neighbor_tile(_data[(y + 1) + x * _height]));
+				int w = int(autotiler->is_neighbor_tile(_data[y + (x - 1) * _height]));
 
-				int v = n + 4*e + 16*s + 64*w;
+				int v = n + 4 * e + 16 * s + 64 * w;
 
 				if (autotiler->get_metadata_map().has(v)) {
 					auto code = autotiler->get_metadata_map()[v];
 
 					tilemap->set_cell(_top_left.x + x, _top_left.y + y, code.get("id"),
-									  code.get("x_mirror"), code.get("y_mirror"), false, Vector2(0,0));
+							code.get("x_mirror"), code.get("y_mirror"), false, Vector2(0, 0));
 				}
 				// else {
 				// 	tilemap->set_cell(_top_left.x + x, _top_left.y + y, _base_tile,
@@ -178,7 +206,7 @@ void Autotilemap::apply_autotiling(TileMap* tilemap) {
 	}
 }
 
-void Autotilemap::apply_blob_terrain_autotiling(TileMap* tilemap) {
+void Autotilemap::apply_blob_terrain_autotiling(TileMap *tilemap) {
 
 	int n = 0;
 	int ne = 0;
@@ -190,30 +218,30 @@ void Autotilemap::apply_blob_terrain_autotiling(TileMap* tilemap) {
 	int nw = 0;
 
 	for (int ai = 0; ai < _autotilers.size(); ai++) {
-		if (! _autotilers[ai]->is_type("BlobTerrainAutotiler")) {
+		if (!_autotilers[ai]->is_type("BlobTerrainAutotiler")) {
 			continue;
 		}
 
 		Ref<BlobTerrainAutotiler> autotiler = Ref<BlobTerrainAutotiler>(_autotilers[ai]);
 
-		for (int y = 1; y < _height-1; y++) {
-			for (int x = 1; x < _width-1; x++) {
-				int src_tile_id = _data[y + x*_height];
+		for (int y = 1; y < _height - 1; y++) {
+			for (int x = 1; x < _width - 1; x++) {
+				int src_tile_id = _data[y + x * _height];
 
 				//TODO: use a map of autotilers?
 				// entry ID has the list of autotilers
-				if (! autotiler->is_source_tile(src_tile_id)) {
+				if (!autotiler->is_source_tile(src_tile_id)) {
 					continue;
 				}
 
-				int nt = _data[(y-1) + x*_height];
-				int net = _data[(y-1) + (x+1)*_height];
-				int et = _data[y + (x+1)*_height];
-				int set = _data[(y+1) + (x+1)*_height];
-				int st = _data[(y+1) + x*_height];
-				int swt = _data[(y+1) + (x-1)*_height];
-				int wt = _data[y + (x-1)*_height];
-				int nwt = _data[(y-1) + (x-1)*_height];
+				int nt = _data[(y - 1) + x * _height];
+				int net = _data[(y - 1) + (x + 1) * _height];
+				int et = _data[y + (x + 1) * _height];
+				int set = _data[(y + 1) + (x + 1) * _height];
+				int st = _data[(y + 1) + x * _height];
+				int swt = _data[(y + 1) + (x - 1) * _height];
+				int wt = _data[y + (x - 1) * _height];
+				int nwt = _data[(y - 1) + (x - 1) * _height];
 
 				Vector<int> all_neighbors;
 				all_neighbors.push_back(nt);
@@ -237,7 +265,7 @@ void Autotilemap::apply_blob_terrain_autotiling(TileMap* tilemap) {
 					}
 				}
 
-				if (! (flag1 && flag2)) {
+				if (!(flag1 && flag2)) {
 					bool isolated = true;
 					for (int i = 0; i < all_neighbors.size(); i++) {
 						int nb = all_neighbors[i];
@@ -251,7 +279,7 @@ void Autotilemap::apply_blob_terrain_autotiling(TileMap* tilemap) {
 						int tile_id = autotiler->get_metadata_map()[0];
 						Vector2 subtile_coords = compute_subtile_coords(tile_id);
 						tilemap->set_cell(_top_left.x + x, _top_left.y + y, autotiler->get_atlas_id(),
-										  false, false, false, subtile_coords);
+								false, false, false, subtile_coords);
 					}
 					continue;
 				}
@@ -266,13 +294,13 @@ void Autotilemap::apply_blob_terrain_autotiling(TileMap* tilemap) {
 				w = int(autotiler->is_neighbor_tile(wt));
 				nw = int(autotiler->is_neighbor_tile(nwt));
 
-				int v = n + 2*ne + 4*e + 8*se + 16*s + 32*sw + 64*w + 128*nw;
+				int v = n + 2 * ne + 4 * e + 8 * se + 16 * s + 32 * sw + 64 * w + 128 * nw;
 
 				bool flip_h = false;
 				bool flip_v = false;
 				bool transpose = false;
 				int tile_id = 0;
-				Vector2 subtile_coords = Vector2(0,0);
+				Vector2 subtile_coords = Vector2(0, 0);
 
 				if (v > 0) {
 					if (autotiler->get_metadata_map().has(v)) {
@@ -282,11 +310,10 @@ void Autotilemap::apply_blob_terrain_autotiling(TileMap* tilemap) {
 							tile_id = autotiler->get_atlas_id();
 						}
 						tilemap->set_cell(_top_left.x + x, _top_left.y + y, tile_id,
-										  flip_h, flip_v, transpose, subtile_coords);
-					}
-					else {
+								flip_h, flip_v, transpose, subtile_coords);
+					} else {
 						tilemap->set_cell(_top_left.x + x, _top_left.y + y, _base_tile,
-										  flip_h, flip_v, transpose, subtile_coords);
+								flip_h, flip_v, transpose, subtile_coords);
 					}
 				}
 			}
@@ -294,7 +321,7 @@ void Autotilemap::apply_blob_terrain_autotiling(TileMap* tilemap) {
 	}
 }
 
-void Autotilemap::apply_blob_autotiling(TileMap* tilemap) {
+void Autotilemap::apply_blob_autotiling(TileMap *tilemap) {
 
 	int n = 0;
 	int ne = 0;
@@ -306,36 +333,36 @@ void Autotilemap::apply_blob_autotiling(TileMap* tilemap) {
 	int nw = 0;
 
 	for (int ai = 0; ai < _autotilers.size(); ai++) {
-		if (! _autotilers[ai]->is_type("BlobAutotiler")) {
+		if (!_autotilers[ai]->is_type("BlobAutotiler")) {
 			continue;
 		}
 
 		Ref<Autotiler> autotiler = _autotilers[ai];
 
-		for (int y = 1; y < _height-1; y++) {
-			for (int x = 1; x < _width-1; x++) {
-				int src_tile_id = _data[y + x*_height];
-				if (! autotiler->is_source_tile(src_tile_id)) {
+		for (int y = 1; y < _height - 1; y++) {
+			for (int x = 1; x < _width - 1; x++) {
+				int src_tile_id = _data[y + x * _height];
+				if (!autotiler->is_source_tile(src_tile_id)) {
 					tilemap->set_cell(_top_left.x + x, _top_left.y + y, 0,
-									  false, false, false, Vector2(0,0));
+							false, false, false, Vector2(0, 0));
 					continue;
 				}
-				n = int(autotiler->is_neighbor_tile(_data[(y-1) + x*_height]));
-				ne = int(autotiler->is_neighbor_tile(_data[(y-1) + (x+1)*_height]));
-				e = int(autotiler->is_neighbor_tile(_data[y + (x+1)*_height]));
-				se = int(autotiler->is_neighbor_tile(_data[(y+1) + (x+1)*_height]));
-				s = int(autotiler->is_neighbor_tile(_data[(y+1) + x*_height]));
-				sw = int(autotiler->is_neighbor_tile(_data[(y+1) + (x-1)*_height]));
-				w = int(autotiler->is_neighbor_tile(_data[y + (x-1)*_height]));
-				nw = int(autotiler->is_neighbor_tile(_data[(y-1) + (x-1)*_height]));
+				n = int(autotiler->is_neighbor_tile(_data[(y - 1) + x * _height]));
+				ne = int(autotiler->is_neighbor_tile(_data[(y - 1) + (x + 1) * _height]));
+				e = int(autotiler->is_neighbor_tile(_data[y + (x + 1) * _height]));
+				se = int(autotiler->is_neighbor_tile(_data[(y + 1) + (x + 1) * _height]));
+				s = int(autotiler->is_neighbor_tile(_data[(y + 1) + x * _height]));
+				sw = int(autotiler->is_neighbor_tile(_data[(y + 1) + (x - 1) * _height]));
+				w = int(autotiler->is_neighbor_tile(_data[y + (x - 1) * _height]));
+				nw = int(autotiler->is_neighbor_tile(_data[(y - 1) + (x - 1) * _height]));
 
-				int v = n + 2*ne + 4*e + 8*se + 16*s + 32*sw + 64*w + 128*nw;
+				int v = n + 2 * ne + 4 * e + 8 * se + 16 * s + 32 * sw + 64 * w + 128 * nw;
 
 				bool flip_h = false;
 				bool flip_v = false;
 				bool transpose = false;
 				int tile_id = 0;
-				Vector2 subtile_coords = Vector2(0,0);
+				Vector2 subtile_coords = Vector2(0, 0);
 
 				if (v > 0) {
 					if (autotiler->get_metadata_map().has(v)) {
@@ -347,14 +374,14 @@ void Autotilemap::apply_blob_autotiling(TileMap* tilemap) {
 					}
 				}
 				tilemap->set_cell(_top_left.x + x, _top_left.y + y, tile_id,
-								  flip_h, flip_v, transpose, subtile_coords);
+						flip_h, flip_v, transpose, subtile_coords);
 			}
 		}
 	}
 }
 
-void Autotilemap::set_submap(Vector2 sub_top_left, int width, int height, const Variant& input_data) {
-	const Vector<int32_t>& idata = input_data;
+void Autotilemap::set_submap(Vector2 sub_top_left, int width, int height, const Variant &input_data) {
+	const Vector<int32_t> &idata = input_data;
 	Vector2 offset = sub_top_left - _top_left;
 	for (int row = 0; row < height; row++) {
 		for (int col = 0; col < width; col++) {
@@ -371,7 +398,7 @@ void Autotilemap::set_value_relative_to_tl(int x, int y, int v) {
 	set_value(x - _top_left.x, y - _top_left.y, v);
 }
 
-void Autotilemap::load_from_json(const String& json_file) {
+void Autotilemap::load_from_json(const String &json_file) {
 
 	Error err;
 	FileAccessRef f = FileAccess::open(json_file, FileAccess::READ, &err);

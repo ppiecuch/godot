@@ -484,11 +484,11 @@ private:
 			} else {
 				if (mode == MODE_NEW) {
 
-                    String addons_path = OS::get_singleton()->get_executable_path().get_base_dir().plus_file("addons");
-# ifdef __APPLE__
-                    if (!DirAccess::exists(addons_path))
-                        addons_path = OS::get_singleton()->get_executable_path().get_base_dir().plus_file("/../../../addons");
-# endif
+					String addons_path = OS::get_singleton()->get_executable_path().get_base_dir().plus_file("addons");
+#ifdef __APPLE__
+					if (!DirAccess::exists(addons_path))
+						addons_path = OS::get_singleton()->get_executable_path().get_base_dir().plus_file("/../../../addons");
+#endif
 
 					ProjectSettings::CustomMap initial_settings;
 					if (rasterizer_button_group->get_pressed_button()->get_meta("driver_name") == "GLES3") {
@@ -501,7 +501,7 @@ private:
 					initial_settings["application/config/name"] = project_name->get_text();
 					initial_settings["application/config/icon"] = "res://icon.png";
 					initial_settings["rendering/environment/default_environment"] = "res://default_env.tres";
-                    if(copy_addons->is_pressed() && DirAccess::exists(addons_path.plus_file("_autoload"))) {
+					if (copy_addons->is_pressed() && DirAccess::exists(addons_path.plus_file("_autoload"))) {
 						DirAccess *addons_da = DirAccess::open(addons_path.plus_file("_autoload"));
 						if (addons_da) {
 							addons_da->list_dir_begin();
@@ -510,7 +510,7 @@ private:
 								if (n != "." && n != "..") {
 									if (!addons_da->current_is_dir()) {
 										String bn = n.get_basename().underscore_to_camelcase();
-										initial_settings["autoload/"+bn] = "*res://addons/"+n;
+										initial_settings["autoload/" + bn] = "*res://addons/" + n;
 									}
 								}
 								n = addons_da->get_next();
@@ -537,7 +537,7 @@ private:
 						}
 
 						// copy default plugins
-						if(copy_addons->is_pressed() && DirAccess::exists(addons_path)) {
+						if (copy_addons->is_pressed() && DirAccess::exists(addons_path)) {
 
 							PoolStringArray dirs;
 							DirAccess *addons_da = DirAccess::open(addons_path);
@@ -557,7 +557,7 @@ private:
 								if (!dirs.empty()) {
 									String path = dir.plus_file("addons");
 									DirAccess *da = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
-									if((da->make_dir(path) == OK) || DirAccess::exists(path)) {
+									if ((da->make_dir(path) == OK) || DirAccess::exists(path)) {
 										da->copy_dir(addons_path, dir.plus_file("addons"));
 									}
 									memdelete(da);
@@ -752,7 +752,7 @@ public:
 			project_path->set_editable(false);
 			browse->hide();
 			install_browse->hide();
-            copy_addons->hide();
+			copy_addons->hide();
 
 			set_title(TTR("Rename Project"));
 			get_ok()->set_text(TTR("Rename"));
@@ -807,7 +807,7 @@ public:
 			status_rect->show();
 			install_status_rect->show();
 			msg->show();
-            copy_addons->hide();
+			copy_addons->hide();
 
 			if (mode == MODE_IMPORT) {
 				set_title(TTR("Import Existing Project"));
@@ -823,7 +823,7 @@ public:
 				get_ok()->set_text(TTR("Create & Edit"));
 				name_container->show();
 				install_path_container->hide();
-                copy_addons->show();
+				copy_addons->show();
 				rasterizer_container->show();
 				project_name->call_deferred("grab_focus");
 				project_name->call_deferred("select_all");
@@ -920,7 +920,7 @@ public:
 		install_browse->connect("pressed", this, "_browse_install_path");
 		iphb->add_child(install_browse);
 
-        // default addons
+		// default addons
 		copy_addons = memnew(CheckBox);
 		copy_addons->set_button_group(rasterizer_button_group);
 		copy_addons->set_text(TTR("Copy and install default plugins"));
@@ -931,7 +931,7 @@ public:
 		msg->set_align(Label::ALIGN_CENTER);
 		vb->add_child(msg);
 
-        // rasterizer selection
+		// rasterizer selection
 		rasterizer_container = memnew(VBoxContainer);
 		vb->add_child(rasterizer_container);
 		l = memnew(Label);

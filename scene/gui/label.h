@@ -36,7 +36,7 @@
 
 // allow for testing private Label's methods
 namespace TestFont {
-	class TestMainLoop;
+class TestMainLoop;
 }
 
 struct AnimationTransform {
@@ -45,7 +45,8 @@ struct AnimationTransform {
 	float duration;
 	bool active;
 
-	AnimationTransform() : current(0), duration(0), active(false) { }
+	AnimationTransform() :
+			current(0), duration(0), active(false) {}
 	bool is_active() const { return active; }
 
 	void _dump_xform() const;
@@ -55,9 +56,9 @@ typedef float (*ease_func_t)(float t, float b, float c, float d);
 
 struct AnimationController {
 	enum AnimState {
-		ANIMCTRL_DONE  = 0, // transition complited
-		ANIMCTRL_IN = 1,    // incoming animation
-		ANIMCTRL_OUT = 2    // outgoing aniamtion
+		ANIMCTRL_DONE = 0, // transition complited
+		ANIMCTRL_IN = 1, // incoming animation
+		ANIMCTRL_OUT = 2 // outgoing aniamtion
 	};
 
 	virtual void init_xform(float duration, AnimationTransform &xform) = 0;
@@ -70,7 +71,7 @@ class Label : public Control {
 	GDCLASS(Label, Control);
 
 public:
-    typedef Pair<CharType, CharType> CharPair;
+	typedef Pair<CharType, CharType> CharPair;
 
 	enum Align {
 
@@ -99,13 +100,13 @@ public:
 
 	enum TransitionChangePolicy {
 		TRANSITIONCHANGEPOLICY_ALL, /* always transition - even same characters */
-		TRANSITIONCHANGEPOLICY_NEW  /* transition only new (changed) characters */
+		TRANSITIONCHANGEPOLICY_NEW /* transition only new (changed) characters */
 	};
 
-#define DEFINE_TRANSITIONEASE(M)   \
-	TRANSITIONEASE_ ## M ## _IN,   \
-	TRANSITIONEASE_ ## M ## _OUT,  \
-	TRANSITIONEASE_ ## M ## _INOUT \
+#define DEFINE_TRANSITIONEASE(M)      \
+	TRANSITIONEASE_##M##_IN,          \
+			TRANSITIONEASE_##M##_OUT, \
+			TRANSITIONEASE_##M##_INOUT
 
 	enum TransitionEase {
 		TRANSITIONEASE_NONE,
@@ -274,7 +275,6 @@ public:
 	float get_horizontal_spacing() const;
 	void set_vertical_spacing(float p_offset);
 	float get_vertical_spacing() const;
-
 
 	Label(const String &p_text = String());
 	~Label();

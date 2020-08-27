@@ -1,6 +1,35 @@
+/*************************************************************************/
+/*  bend_deform_2d.cpp                                                   */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
 
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "core/math/math_funcs.h"
 #include "core/math/vector2.h"
@@ -9,178 +38,187 @@
 
 using namespace godot;
 
-
 #ifndef NO
-# define NO false
+#define NO false
 #endif
 #ifndef YES
-# define YES true
+#define YES true
 #endif
 
 namespace sim3 {
 
-	struct Point;
-	typedef std::vector<Point> PointsArray;
-	struct Constraint;
-	typedef std::vector<Constraint> ConstraintsArray;
+struct Point;
+typedef std::vector<Point> PointsArray;
+struct Constraint;
+typedef std::vector<Constraint> ConstraintsArray;
 
-	struct Point {
-		bool fixed;
-		Vector2 position, previous, acceleration;
+struct Point {
+	bool fixed;
+	Vector2 position, previous, acceleration;
 
-		Point (const Vector2 xy, bool fixed = NO):
+	Point(const Vector2 xy, bool fixed = NO) :
 			fixed(fixed),
 			position(xy),
 			previous(xy),
-			acceleration(Vector2(0, 0))
-			{ }
-		Point (float x, float y, bool fixed = NO):
+			acceleration(Vector2(0, 0)) {}
+	Point(float x, float y, bool fixed = NO) :
 			fixed(fixed),
 			position(Vector2(x, y)),
 			previous(Vector2(x, y)),
-			acceleration(Vector2(0, 0))
-			{ }
-		void accelerate(const Vector2 &v) { acceleration += v; }
-		void correct(const Vector2 &v) { if (!fixed) position += v; }
-		void simulate(float delta) {
-			if (!fixed) {
-				acceleration *= delta*delta;
+			acceleration(Vector2(0, 0)) {}
+	void accelerate(const Vector2 &v) { acceleration += v; }
+	void correct(const Vector2 &v) {
+		if (!fixed) position += v;
+	}
+	void simulate(float delta) {
+		if (!fixed) {
+			acceleration *= delta * delta;
 
-				const float x = position.x;
-				const float y = position.y;
+			const float x = position.x;
+			const float y = position.y;
 
-				position = Vector2(x*2-previous.x+acceleration.x, y*2-previous.y+acceleration.y);
-				previous = Vector2(x, y);
+			position = Vector2(x * 2 - previous.x + acceleration.x, y * 2 - previous.y + acceleration.y);
+			previous = Vector2(x, y);
 
-				acceleration = Vector2();
-			}
+			acceleration = Vector2();
 		}
-	};
+	}
+};
 
-	struct Constraint {
-		Point &point1, &point2;
-		float target;
+struct Constraint {
+	Point &point1, &point2;
+	float target;
 
-		Constraint(Point &point1, Point &point2):point1(point1), point2(point2) {
-			target = point1.position.distance_to(point2.position);
+	Constraint(Point &point1, Point &point2) :
+			point1(point1), point2(point2) {
+		target = point1.position.distance_to(point2.position);
+	}
+
+	void resolve() {
+		Vector2 direction = point2.position - point1.position;
+		const float length = direction.length();
+		const float factor = (length - target) / (length * 2.5); // this should be flexible constraint
+		direction *= factor; // correction factor
+
+		point1.correct(direction);
+		direction *= -1;
+		point2.correct(direction);
+	}
+};
+
+class Simulation3 {
+
+public:
+	float interval;
+	PointsArray points;
+	ConstraintsArray constraints;
+
+	Simulation3() {}
+	void simulate(float delta, Vector2 &gravity) {
+		for (Constraint &c : constraints) {
+			c.resolve();
+		}
+		// --
+		for (Point &point : points) {
+			point.accelerate(gravity);
+			point.simulate(delta);
+		}
+	}
+	// p1.x ---- p2.x ----- p3.x ----- p4.x
+	// |         |          |          |
+	// |         |          |          |
+	// p1.x ---- p2.x ----- p3.x ----- p4.x
+	void make_beam(const Vector2 &xy, float length, int segments) {
+		const real_t &x = xy.x;
+		const real_t &y = xy.y;
+
+		/* root */
+		Point top = Point(x, y, YES);
+		points.push_back(top);
+		Point bottom = Point(x, y + length, YES);
+		points.push_back(bottom);
+
+		for (int i = 1; i < segments; i++) {
+			Point new_top = Point(x + i * length, y);
+			points.push_back(new_top);
+			Point new_bottom = Point(x + i * length, y + length);
+			points.push_back(new_bottom);
+
+			constraints.push_back(Constraint(top, new_top));
+			constraints.push_back(Constraint(bottom, new_bottom));
+			constraints.push_back(Constraint(new_top, new_bottom));
+			constraints.push_back(Constraint(top, new_bottom));
+
+			top = new_top;
+			bottom = new_bottom;
+		}
+	}
+	// r2.x ------ p2.x ------- b2.x
+	//  |           |           |
+	//  |           |           |
+	// r1.x ------ p1.x ------- b1.x
+	void add_beam(const Vector2 &r1, const Vector2 &r2, const Vector2 &p1, const Vector2 &p2, const Vector2 &b1, const Vector2 &b2) {
+		/* root */
+		Point top = Point(r2, YES);
+		points.push_back(top);
+		Point bottom = Point(r1, YES);
+		points.push_back(bottom);
+
+		/* middle */
+		{
+			Point new_top = Point(p2);
+			points.push_back(new_top);
+			Point new_bottom = Point(p1);
+			points.push_back(new_bottom);
+
+			constraints.push_back(Constraint(top, new_top));
+			constraints.push_back(Constraint(bottom, new_bottom));
+			constraints.push_back(Constraint(new_top, new_bottom));
+			constraints.push_back(Constraint(top, new_bottom));
+
+			top = new_top;
+			bottom = new_bottom;
 		}
 
-		void resolve() {
-			Vector2 direction = point2.position - point1.position;
-			const float length = direction.length();
-			const float factor = (length-target)/(length*2.5); // this should be flexible constraint
-			direction *= factor;                               // correction factor
+		/* bottom */
+		{
+			Point new_top = Point(b2);
+			points.push_back(new_top);
+			Point new_bottom = Point(b1);
+			points.push_back(new_bottom);
 
-			point1.correct(direction);
-			direction *= -1;
-			point2.correct(direction);
+			constraints.push_back(Constraint(top, new_top));
+			constraints.push_back(Constraint(bottom, new_bottom));
+			constraints.push_back(Constraint(new_top, new_bottom));
+			constraints.push_back(Constraint(top, new_bottom));
 		}
-	};
-
-
-	class Simulation3 {
-
-	public:
-		float interval;
-		PointsArray points;
-		ConstraintsArray constraints;
-
-		Simulation3() { }
-		void simulate(float delta, Vector2 &gravity) {
-			for (Constraint &c : constraints) { c.resolve(); }
-			// --
-			for (Point &point : points) {
-				point.accelerate(gravity);
-				point.simulate(delta);
-			}
-		}
-		// p1.x ---- p2.x ----- p3.x ----- p4.x
-		// |         |          |          |
-		// |         |          |          |
-		// p1.x ---- p2.x ----- p3.x ----- p4.x
-		void make_beam(const Vector2 &xy, float length, int segments) {
-			const real_t &x = xy.x;
-			const real_t &y = xy.y;
-
-			/* root */
-			Point top = Point(x, y, YES); points.push_back( top );
-			Point bottom = Point(x, y+length, YES); points.push_back( bottom );
-
-			for(int i=1; i<segments; i++) {
-				Point new_top = Point(x+i*length, y); points.push_back( new_top );
-				Point new_bottom = Point(x+i*length, y+length); points.push_back( new_bottom );
-
-				constraints.push_back( Constraint(top, new_top) );
-				constraints.push_back( Constraint(bottom, new_bottom) );
-				constraints.push_back( Constraint(new_top, new_bottom) );
-				constraints.push_back( Constraint(top, new_bottom) );
-
-				top = new_top;
-				bottom = new_bottom;
-			}
-		}
-		// r2.x ------ p2.x ------- b2.x
-		//  |           |           |
-		//  |           |           |
-		// r1.x ------ p1.x ------- b1.x
-		void add_beam(const Vector2 &r1, const Vector2 &r2, const Vector2 &p1, const Vector2 &p2, const Vector2 &b1, const Vector2 &b2) {
-			/* root */
-			Point top = Point( r2, YES ); points.push_back( top );
-			Point bottom = Point( r1, YES ); points.push_back( bottom );
-
-			/* middle */
-			{
-				Point new_top = Point( p2 ); points.push_back( new_top );
-				Point new_bottom = Point( p1 ); points.push_back( new_bottom );
-
-				constraints.push_back( Constraint(top, new_top) );
-				constraints.push_back( Constraint(bottom, new_bottom) );
-				constraints.push_back( Constraint(new_top, new_bottom) );
-				constraints.push_back( Constraint(top, new_bottom) );
-
-				top = new_top;
-				bottom = new_bottom;
-			}
-
-			/* bottom */
-			{
-				Point new_top = Point( b2); points.push_back( new_top );
-				Point new_bottom = Point( b1 ); points.push_back( new_bottom );
-
-				constraints.push_back( Constraint(top, new_top) );
-				constraints.push_back( Constraint(bottom, new_bottom) );
-				constraints.push_back( Constraint(new_top, new_bottom) );
-				constraints.push_back( Constraint(top, new_bottom) );
-			}
-		}
-	};
+	}
+};
 } // namespace sim3
 
-
 void DeformMeshInstance2D::_bind_methods() {
-    ClassDB::bind_method("_process", &DeformMeshInstance2D::_process);
+	ClassDB::bind_method("_process", &DeformMeshInstance2D::_process);
 }
 
 DeformMeshInstance2D::DeformMeshInstance2D() {
 }
 
 DeformMeshInstance2D::~DeformMeshInstance2D() {
-    // add your cleanup here
+	// add your cleanup here
 }
 
 void DeformMeshInstance2D::_init() {
-    // initialize any variables here
-    time_passed = 0.0;
+	// initialize any variables here
+	time_passed = 0.0;
 }
 
 void DeformMeshInstance2D::_process(float delta) {
-    time_passed += delta;
+	time_passed += delta;
 
-    Vector2 new_position = Vector2(10.0 + (10.0 * sin(time_passed * 2.0)), 10.0 + (10.0 * cos(time_passed * 1.5)));
+	Vector2 new_position = Vector2(10.0 + (10.0 * sin(time_passed * 2.0)), 10.0 + (10.0 * cos(time_passed * 1.5)));
 
-    set_position(new_position);
+	set_position(new_position);
 }
-
 
 //
 //var Simulation3 = function(canvas){

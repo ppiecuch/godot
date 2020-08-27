@@ -602,7 +602,6 @@ String String::capitalize() const {
 	return cap;
 }
 
-
 String String::underscore_to_camelcase() const {
 
 	String cam;

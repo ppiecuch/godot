@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  math_extension.cpp                                                   */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #include "math_extension.h"
 
 _GodotMathExtension *_GodotMathExtension::singleton = NULL;
@@ -69,8 +99,8 @@ real_t _GodotMathExtension::camera_get_position_distance(const Object *p_camera,
 }
 
 Vector2 _GodotMathExtension::get_2d_position_from_3d_position_with_screen_limits(const Object *p_camera, const Vector3 &p_position_3d,
-	const Vector2 &screen_size, const Vector2 &screen_center,
-	const Vector2 &screen_mins, const Vector2 &screen_max) {
+		const Vector2 &screen_size, const Vector2 &screen_center,
+		const Vector2 &screen_mins, const Vector2 &screen_max) {
 
 	ERR_FAIL_NULL_V(p_camera, Vector2());
 	if (const Camera *camera = Object::cast_to<Camera>(p_camera))
@@ -89,7 +119,7 @@ real_t _GodotMathExtension::clamp_angle(real_t val, real_t ang_min, real_t ang_m
 	return GodotMathExtension::clamp_angle(val, ang_min, ang_max);
 }
 
-Vector3 _GodotMathExtension::adjust_facing(const Vector3 &p_facing, const Vector3 &p_target, const real_t &p_step, const real_t &p_adjust_rate, const Vector3& p_current_gn) {
+Vector3 _GodotMathExtension::adjust_facing(const Vector3 &p_facing, const Vector3 &p_target, const real_t &p_step, const real_t &p_adjust_rate, const Vector3 &p_current_gn) {
 	return GodotMathExtension::adjust_facing(p_facing, p_target, p_step, p_adjust_rate, p_current_gn);
 }
 
@@ -116,15 +146,15 @@ Vector3 _GodotMathExtension::transform_directon_vector(const Vector3 &p_directio
 	return GodotMathExtension::transform_directon_vector(p_direction, p_basis);
 }
 
-Quat spatial_get_rotation_quat(const Node* spatial) {
+Quat spatial_get_rotation_quat(const Node *spatial) {
 	return GodotMathExtension::spatial_get_rotation_quat(spatial);
 }
 
-void spatial_set_rotation_quat(Node* spatial, const Quat& rotation) {
+void spatial_set_rotation_quat(Node *spatial, const Quat &rotation) {
 	return GodotMathExtension::spatial_set_rotation_quat(spatial, rotation);
 }
 
-void spatial_set_rotation_quat_keep_scale(Node* spatial, const Quat& rotation) {
+void spatial_set_rotation_quat_keep_scale(Node *spatial, const Quat &rotation) {
 	return GodotMathExtension::spatial_set_rotation_quat_keep_scale(spatial, rotation);
 }
 

@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  TransformPath.hpp                                                    */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 // Copyright 2015 Markus Ilmola
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -12,24 +42,18 @@
 #include "PathVertex.hpp"
 #include "utils.hpp"
 
-
 namespace generator {
-
 
 /// Apply a mutator function to each vertex.
 template <typename Path>
-class TransformPath
-{
+class TransformPath {
 private:
-
 	using Impl = Path;
 	Impl path_;
 
 public:
-
 	class Vertices {
 	public:
-
 		PathVertex generate() const {
 			auto vertex = vertices_.generate();
 			path_->mutate_(vertex);
@@ -41,47 +65,39 @@ public:
 		void next() { vertices_.next(); }
 
 	private:
+		Vertices(const TransformPath &path) :
+				path_{ &path },
+				vertices_{ path.path_.vertices() } {}
 
-		Vertices(const TransformPath& path) :
-			path_{&path},
-			vertices_{path.path_.vertices()}
-		{ }
-
-		const TransformPath* path_;
+		const TransformPath *path_;
 
 		typename VertexGeneratorType<Path>::Type vertices_;
 
-	friend class TransformPath;
+		friend class TransformPath;
 	};
 
 	/// @param path Source data path.
 	/// @param mutate Callback function that gets called once per vertex.
-	TransformPath(Path path, std::function<void(PathVertex&)> mutate) :
-		path_{std::move(path)},
-		mutate_{mutate}
-	 { }
+	TransformPath(Path path, std::function<void(PathVertex &)> mutate) :
+			path_{ std::move(path) },
+			mutate_{ mutate } {}
 
-	Vertices vertices() const noexcept { return*this; }
+	Vertices vertices() const noexcept { return *this; }
 
 	using Edges = typename Impl::Edges;
 
 	Edges edges() const noexcept { return path_.edges(); }
 
 private:
-
-	std::function<void(PathVertex&)> mutate_;
-
+	std::function<void(PathVertex &)> mutate_;
 };
-
 
 template <typename Path>
 TransformPath<Path> transformPath(
-	Path path, std::function<void(PathVertex&)> mutate
-) {
-	return TransformPath<Path>{std::move(path), std::move(mutate)};
+		Path path, std::function<void(PathVertex &)> mutate) {
+	return TransformPath<Path>{ std::move(path), std::move(mutate) };
 }
 
-
-}
+} // namespace generator
 
 #endif

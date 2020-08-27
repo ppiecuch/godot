@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  intersect.hpp                                                        */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
@@ -7,13 +37,10 @@
 
 #include <tuple>
 
-#include "vec.hpp"
 #include "mat.hpp"
-
+#include "vec.hpp"
 
 namespace gml {
-
-
 
 /// Compute a pickray for mouse coordinates.
 /// @param mpos The mouse coordinates relative to the BOTTOM left corner of the screen.
@@ -23,14 +50,12 @@ namespace gml {
 /// @param viewportSize Size of the viewport
 /// @return Ray origin and unit length ray direction vector.
 template <typename T, typename TI, typename TS>
-std::tuple<vec<T, 3>, vec<T, 3>> pickRay(
-	const vec<TI, 2>& mpos,
-	const mat<T, 4, 4>& view, const mat<T, 4, 4>& proj,
-	const vec<TI, 2>& viewportOrigin, const vec<TS, 2>& viewportSize
-) {
+std::tuple<vec<T, 3>, vec<T, 3> > pickRay(
+		const vec<TI, 2> &mpos,
+		const mat<T, 4, 4> &view, const mat<T, 4, 4> &proj,
+		const vec<TI, 2> &viewportOrigin, const vec<TS, 2> &viewportSize) {
 	return pickRay(mpos, inverse(proj * view), viewportOrigin, viewportSize);
 }
-
 
 /// Compute a pickray for mouse coordinates.
 /// @param mpos The mouse coordinates relative to the BOTTOM left corner of the screen.
@@ -39,13 +64,12 @@ std::tuple<vec<T, 3>, vec<T, 3>> pickRay(
 /// @param viewportSize Size of the viewport
 /// @return Ray origin and unit length ray direction vector.
 template <typename T, typename TI, typename TS>
-std::tuple<vec<T, 3>, vec<T, 3>> pickRay(
-	const vec<TI, 2>& mpos,
-	const mat<T, 4, 4>& invProjView,
-	const vec<TI, 2>& viewportOrigin, const vec<TS, 2>& viewportSize
-) {
+std::tuple<vec<T, 3>, vec<T, 3> > pickRay(
+		const vec<TI, 2> &mpos,
+		const mat<T, 4, 4> &invProjView,
+		const vec<TI, 2> &viewportOrigin, const vec<TS, 2> &viewportSize) {
 	const T zero = static_cast<T>(0);
-	const T one  = static_cast<T>(1);
+	const T one = static_cast<T>(1);
 	const T half = static_cast<T>(0.5);
 
 	const vec<T, 2> fmpos{
@@ -53,16 +77,13 @@ std::tuple<vec<T, 3>, vec<T, 3>> pickRay(
 	};
 
 	const vec<T, 3> frontPos = unProject(
-		vec<T, 3>{fmpos, zero}, invProjView, viewportOrigin, viewportSize
-	);
+			vec<T, 3>{ fmpos, zero }, invProjView, viewportOrigin, viewportSize);
 
 	const vec<T, 3> backPos = unProject(
-		vec<T, 3>{fmpos, one}, invProjView, viewportOrigin, viewportSize
-	);
+			vec<T, 3>{ fmpos, one }, invProjView, viewportOrigin, viewportSize);
 
 	return std::make_tuple(frontPos, normalize(backPos - frontPos));
 }
-
 
 /// Computes the intersection of a ray and a N-plane.
 /// A plane if N == 3, a line if N == 2.
@@ -76,9 +97,8 @@ std::tuple<vec<T, 3>, vec<T, 3>> pickRay(
 /// negative depending if the point is in front of or behind the origin).
 template <typename T, int N>
 std::tuple<bool, T> intersectRayPlane(
-	const vec<T, N>& origin, const vec<T, N>& direction,
-	const vec<T, N>& center, const vec<T, N>& normal
-) {
+		const vec<T, N> &origin, const vec<T, N> &direction,
+		const vec<T, N> &center, const vec<T, N> &normal) {
 	using std::abs;
 
 	const T divisor = dot(direction, normal);
@@ -92,8 +112,6 @@ std::tuple<bool, T> intersectRayPlane(
 	return std::make_tuple(true, (d - dot(origin, normal)) / divisor);
 }
 
-
-
 /// Computes the intersection of a ray and N-sphere.
 /// A sphere if N == 3, circle if N == 2.
 /// @param origin Origin of the ray
@@ -106,9 +124,8 @@ std::tuple<bool, T> intersectRayPlane(
 /// the point is in front of or behind the origin).
 template <typename T, int N>
 std::tuple<bool, T, T> intersectRaySphere(
-	const vec<T, N>& origin, const vec<T, N>& direction,
-	const vec<T, N>& center, T radius
-) {
+		const vec<T, N> &origin, const vec<T, N> &direction,
+		const vec<T, N> &center, T radius) {
 	using std::sqrt;
 
 	const vec<T, N> L = center - origin;
@@ -125,9 +142,6 @@ std::tuple<bool, T, T> intersectRaySphere(
 	return std::make_tuple(true, tca - thc, tca + thc);
 }
 
-
-}
-
+} // namespace gml
 
 #endif
-

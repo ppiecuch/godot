@@ -2313,7 +2313,7 @@ bool RasterizerCanvasGLES2::try_join_item(Item *p_ci, RenderItemState &r_ris, bo
 	bool uses_stencil = r_ris.shader_cache ? r_ris.shader_cache->uses_stencil : false;
 	if (uses_stencil && r_ris.shader_cache) {
 		int fstencil = r_ris.shader_cache->front_stencil._compute_key().key,
-		bstencil = r_ris.shader_cache->back_stencil._compute_key().key;
+			bstencil = r_ris.shader_cache->back_stencil._compute_key().key;
 		if (r_ris.last_fstencil != fstencil || r_ris.last_bstencil != bstencil) {
 			_set_stencil(r_ris.shader_cache->uses_stencil, r_ris.shader_cache->front_stencil, r_ris.shader_cache->back_stencil);
 		}

@@ -1,21 +1,49 @@
+/*************************************************************************/
+/*  enet_node.cpp                                                        */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
 
-#include "core/engine.h"
 #include "enet_node.h"
-
+#include "core/engine.h"
 
 void ENetNode::_notification(int p_what) {
-	if(!is_inside_tree() || Engine::get_singleton()->is_editor_hint() || !network_peer.is_valid())
+	if (!is_inside_tree() || Engine::get_singleton()->is_editor_hint() || !network_peer.is_valid())
 		return;
 
-	if(p_what == NOTIFICATION_PHYSICS_PROCESS) {
-		if(poll_mode == MODE_PHYSICS)
+	if (p_what == NOTIFICATION_PHYSICS_PROCESS) {
+		if (poll_mode == MODE_PHYSICS)
 			_network_poll();
-		if(signal_mode == MODE_PHYSICS)
+		if (signal_mode == MODE_PHYSICS)
 			_network_process();
 	} else if (p_what == NOTIFICATION_PROCESS) {
-		if(poll_mode == MODE_IDLE)
+		if (poll_mode == MODE_IDLE)
 			_network_poll();
-		if(signal_mode == MODE_IDLE)
+		if (signal_mode == MODE_IDLE)
 			_network_process();
 	}
 }
@@ -32,17 +60,17 @@ void ENetNode::_update_process_mode() {
 		set_process(false);
 	}
 
-	if(idle && !is_processing()) {
+	if (idle && !is_processing()) {
 		set_process(true);
 	}
-	if(physics && !is_physics_processing()) {
+	if (physics && !is_physics_processing()) {
 		set_physics_process(true);
 	}
 }
 
 void ENetNode::set_signal_mode(NetProcessMode p_mode) {
 
-	if(signal_mode == p_mode)
+	if (signal_mode == p_mode)
 		return;
 
 	signal_mode = p_mode;
@@ -50,13 +78,13 @@ void ENetNode::set_signal_mode(NetProcessMode p_mode) {
 	_update_process_mode();
 }
 
-ENetNode::NetProcessMode ENetNode::get_signal_mode() const{
+ENetNode::NetProcessMode ENetNode::get_signal_mode() const {
 	return signal_mode;
 }
 
 void ENetNode::set_poll_mode(NetProcessMode p_mode) {
 
-	if(poll_mode == p_mode)
+	if (poll_mode == p_mode)
 		return;
 
 	poll_mode = p_mode;
@@ -64,52 +92,51 @@ void ENetNode::set_poll_mode(NetProcessMode p_mode) {
 	_update_process_mode();
 }
 
-ENetNode::NetProcessMode ENetNode::get_poll_mode() const{
+ENetNode::NetProcessMode ENetNode::get_poll_mode() const {
 	return poll_mode;
 }
 
-void ENetNode::set_network_peer(const Ref<ENetPacketPeer>& p_network_peer) {
+void ENetNode::set_network_peer(const Ref<ENetPacketPeer> &p_network_peer) {
 	if (network_peer.is_valid()) {
-		network_peer->disconnect("peer_connected",this,"_network_peer_connected");
-		network_peer->disconnect("peer_disconnected",this,"_network_peer_disconnected");
-		network_peer->disconnect("connection_succeeded",this,"_connected_to_server");
-		network_peer->disconnect("connection_failed",this,"_connection_failed");
-		network_peer->disconnect("server_disconnected",this,"_server_disconnected");
+		network_peer->disconnect("peer_connected", this, "_network_peer_connected");
+		network_peer->disconnect("peer_disconnected", this, "_network_peer_disconnected");
+		network_peer->disconnect("connection_succeeded", this, "_connected_to_server");
+		network_peer->disconnect("connection_failed", this, "_connection_failed");
+		network_peer->disconnect("server_disconnected", this, "_server_disconnected");
 		connected_peers.clear();
 		//path_get_cache.clear();
 		//path_send_cache.clear();
 		//last_send_cache_id=1;
 	}
 
-	ERR_FAIL_COND_MSG(p_network_peer.is_valid() && p_network_peer->get_connection_status()==NetworkedMultiplayerPeer::CONNECTION_DISCONNECTED, "Supplied NetworkedNetworkPeer must be connecting or connected.");
+	ERR_FAIL_COND_MSG(p_network_peer.is_valid() && p_network_peer->get_connection_status() == NetworkedMultiplayerPeer::CONNECTION_DISCONNECTED, "Supplied NetworkedNetworkPeer must be connecting or connected.");
 
-	network_peer=p_network_peer;
+	network_peer = p_network_peer;
 
 	if (network_peer.is_valid()) {
-		network_peer->connect("peer_connected",this,"_network_peer_connected");
-		network_peer->connect("peer_disconnected",this,"_network_peer_disconnected");
-		network_peer->connect("connection_succeeded",this,"_connected_to_server");
-		network_peer->connect("connection_failed",this,"_connection_failed");
-		network_peer->connect("server_disconnected",this,"_server_disconnected");
+		network_peer->connect("peer_connected", this, "_network_peer_connected");
+		network_peer->connect("peer_disconnected", this, "_network_peer_disconnected");
+		network_peer->connect("connection_succeeded", this, "_connected_to_server");
+		network_peer->connect("connection_failed", this, "_connection_failed");
+		network_peer->connect("server_disconnected", this, "_server_disconnected");
 	}
 }
 
 bool ENetNode::is_network_server() const {
 
-	ERR_FAIL_COND_V(!network_peer.is_valid(),false);
+	ERR_FAIL_COND_V(!network_peer.is_valid(), false);
 	return network_peer->is_server();
-
 }
 
 int ENetNode::get_network_unique_id() const {
 
-	ERR_FAIL_COND_V(!network_peer.is_valid(),0);
+	ERR_FAIL_COND_V(!network_peer.is_valid(), 0);
 	return network_peer->get_unique_id();
 }
 
 Error ENetNode::kick_client(int p_id) {
 
-	ERR_FAIL_COND_V(!network_peer.is_valid(),ERR_UNCONFIGURED);
+	ERR_FAIL_COND_V(!network_peer.is_valid(), ERR_UNCONFIGURED);
 
 	return network_peer->disconnect_peer(p_id);
 }
@@ -118,14 +145,14 @@ void ENetNode::_network_peer_connected(int p_id) {
 
 	connected_peers.insert(p_id);
 	//path_get_cache.insert(p_id,PathGetCache());
-	emit_signal("network_peer_connected",p_id);
+	emit_signal("network_peer_connected", p_id);
 }
 
 void ENetNode::_network_peer_disconnected(int p_id) {
 
 	connected_peers.erase(p_id);
 	//path_get_cache.erase(p_id); //I no longer need your cache, sorry
-	emit_signal("network_peer_disconnected",p_id);
+	emit_signal("network_peer_disconnected", p_id);
 }
 
 void ENetNode::_connected_to_server() {
@@ -168,7 +195,7 @@ Error ENetNode::send_ordered(int p_id, const PoolVector<uint8_t> &p_packet, int 
 }
 
 Error ENetNode::put_packet(NetworkedMultiplayerPeer::TransferMode p_mode, int p_target, const PoolVector<uint8_t> &p_packet, int p_channel) {
-	ERR_FAIL_COND_V(!network_peer.is_valid(),ERR_UNCONFIGURED);
+	ERR_FAIL_COND_V(!network_peer.is_valid(), ERR_UNCONFIGURED);
 
 	network_peer->set_transfer_mode(p_mode);
 	network_peer->set_target_peer(p_target);
@@ -177,7 +204,7 @@ Error ENetNode::put_packet(NetworkedMultiplayerPeer::TransferMode p_mode, int p_
 
 void ENetNode::_network_poll() {
 
-	if (!network_peer.is_valid() || network_peer->get_connection_status()==NetworkedMultiplayerPeer::CONNECTION_DISCONNECTED)
+	if (!network_peer.is_valid() || network_peer->get_connection_status() == NetworkedMultiplayerPeer::CONNECTION_DISCONNECTED)
 		return;
 
 	network_peer->poll();
@@ -185,55 +212,51 @@ void ENetNode::_network_poll() {
 
 void ENetNode::_network_process() {
 
-	if (!network_peer.is_valid() || network_peer->get_connection_status()==NetworkedMultiplayerPeer::CONNECTION_DISCONNECTED)
+	if (!network_peer.is_valid() || network_peer->get_connection_status() == NetworkedMultiplayerPeer::CONNECTION_DISCONNECTED)
 		return;
 
-	while(network_peer->get_available_packet_count()) {
+	while (network_peer->get_available_packet_count()) {
 
 		int sender = network_peer->get_packet_peer();
 		int channel = network_peer->get_packet_channel();
 
-		if(channel==-1) {
+		if (channel == -1) {
 
 			int len;
 			const uint8_t *packet;
 
-			Error err = network_peer->get_packet(&packet,len);
-			if (err!=OK) {
+			Error err = network_peer->get_packet(&packet, len);
+			if (err != OK) {
 				ERR_PRINT("Error getting packet!");
 			}
 
-			_network_process_packet(sender,packet,len);
+			_network_process_packet(sender, packet, len);
 
 		} else {
 
 			PoolVector<uint8_t> pkt;
 
 			Error err = network_peer->get_packet_buffer(pkt);
-			if (err!=OK) {
+			if (err != OK) {
 				ERR_PRINT("Error getting packet!");
 			}
 
-			if(sender == 1) {
+			if (sender == 1) {
 				emit_signal("server_packet", channel, pkt);
-			}
-			else {
+			} else {
 				emit_signal("peer_packet", sender, channel, pkt);
 			}
-
 		}
 
 		if (!network_peer.is_valid()) {
 			break; //it's also possible that a packet or RPC caused a disconnection, so also check here
 		}
 	}
-
-
 }
 
-void ENetNode::_network_process_packet(int p_from, const uint8_t* p_packet, int p_packet_len) {
+void ENetNode::_network_process_packet(int p_from, const uint8_t *p_packet, int p_packet_len) {
 	// Not implemented yet!
-/*
+	/*
 	ERR_FAIL_COND(p_packet_len<5);
 
 	uint8_t packet_type = p_packet[0];
@@ -420,52 +443,50 @@ void ENetNode::_network_process_packet(int p_from, const uint8_t* p_packet, int 
 }
 
 void ENetNode::_bind_methods() {
-	ADD_SIGNAL( MethodInfo("network_peer_connected",PropertyInfo(Variant::INT,"id")));
-	ADD_SIGNAL( MethodInfo("network_peer_disconnected",PropertyInfo(Variant::INT,"id")));
+	ADD_SIGNAL(MethodInfo("network_peer_connected", PropertyInfo(Variant::INT, "id")));
+	ADD_SIGNAL(MethodInfo("network_peer_disconnected", PropertyInfo(Variant::INT, "id")));
 
-	ADD_SIGNAL( MethodInfo("connected_to_server"));
-	ADD_SIGNAL( MethodInfo("connection_failed"));
-	ADD_SIGNAL( MethodInfo("server_disconnected"));
+	ADD_SIGNAL(MethodInfo("connected_to_server"));
+	ADD_SIGNAL(MethodInfo("connection_failed"));
+	ADD_SIGNAL(MethodInfo("server_disconnected"));
 
-	ADD_SIGNAL( MethodInfo("server_packet",PropertyInfo(Variant::INT,"channel"),PropertyInfo(Variant::POOL_BYTE_ARRAY,"packet")));
-	ADD_SIGNAL( MethodInfo("peer_packet",PropertyInfo(Variant::INT,"peer"),PropertyInfo(Variant::INT,"channel"),PropertyInfo(Variant::POOL_BYTE_ARRAY,"packet")));
+	ADD_SIGNAL(MethodInfo("server_packet", PropertyInfo(Variant::INT, "channel"), PropertyInfo(Variant::POOL_BYTE_ARRAY, "packet")));
+	ADD_SIGNAL(MethodInfo("peer_packet", PropertyInfo(Variant::INT, "peer"), PropertyInfo(Variant::INT, "channel"), PropertyInfo(Variant::POOL_BYTE_ARRAY, "packet")));
 
-	ClassDB::bind_method(D_METHOD("set_network_peer","peer"),&ENetNode::set_network_peer);
-	ClassDB::bind_method(D_METHOD("_network_peer_connected"),&ENetNode::_network_peer_connected);
-	ClassDB::bind_method(D_METHOD("_network_peer_disconnected"),&ENetNode::_network_peer_disconnected);
-	ClassDB::bind_method(D_METHOD("_connected_to_server"),&ENetNode::_connected_to_server);
-	ClassDB::bind_method(D_METHOD("_connection_failed"),&ENetNode::_connection_failed);
-	ClassDB::bind_method(D_METHOD("_server_disconnected"),&ENetNode::_server_disconnected);
+	ClassDB::bind_method(D_METHOD("set_network_peer", "peer"), &ENetNode::set_network_peer);
+	ClassDB::bind_method(D_METHOD("_network_peer_connected"), &ENetNode::_network_peer_connected);
+	ClassDB::bind_method(D_METHOD("_network_peer_disconnected"), &ENetNode::_network_peer_disconnected);
+	ClassDB::bind_method(D_METHOD("_connected_to_server"), &ENetNode::_connected_to_server);
+	ClassDB::bind_method(D_METHOD("_connection_failed"), &ENetNode::_connection_failed);
+	ClassDB::bind_method(D_METHOD("_server_disconnected"), &ENetNode::_server_disconnected);
 
 	// Basic infos
-	ClassDB::bind_method(D_METHOD("is_network_server"),&ENetNode::is_network_server);
-	ClassDB::bind_method(D_METHOD("get_network_unique_id"),&ENetNode::get_network_unique_id);
-
+	ClassDB::bind_method(D_METHOD("is_network_server"), &ENetNode::is_network_server);
+	ClassDB::bind_method(D_METHOD("get_network_unique_id"), &ENetNode::get_network_unique_id);
 
 	// Signal Handling
 	BIND_ENUM_CONSTANT(MODE_IDLE);
 	BIND_ENUM_CONSTANT(MODE_PHYSICS);
-	ClassDB::bind_method(D_METHOD("set_signal_mode","mode"),&ENetNode::set_signal_mode);
-	ClassDB::bind_method(D_METHOD("get_signal_mode"),&ENetNode::get_signal_mode);
-	ADD_PROPERTY( PropertyInfo(Variant::INT,"signal_mode",PROPERTY_HINT_ENUM,"Idle,Fixed"),"set_signal_mode","get_signal_mode");
-	ClassDB::bind_method(D_METHOD("set_poll_mode","mode"),&ENetNode::set_poll_mode);
-	ClassDB::bind_method(D_METHOD("get_poll_mode"),&ENetNode::get_poll_mode);
-	ADD_PROPERTY( PropertyInfo(Variant::INT,"poll_mode",PROPERTY_HINT_ENUM,"Idle,Fixed"),"set_poll_mode","get_poll_mode");
-
+	ClassDB::bind_method(D_METHOD("set_signal_mode", "mode"), &ENetNode::set_signal_mode);
+	ClassDB::bind_method(D_METHOD("get_signal_mode"), &ENetNode::get_signal_mode);
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "signal_mode", PROPERTY_HINT_ENUM, "Idle,Fixed"), "set_signal_mode", "get_signal_mode");
+	ClassDB::bind_method(D_METHOD("set_poll_mode", "mode"), &ENetNode::set_poll_mode);
+	ClassDB::bind_method(D_METHOD("get_poll_mode"), &ENetNode::get_poll_mode);
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "poll_mode", PROPERTY_HINT_ENUM, "Idle,Fixed"), "set_poll_mode", "get_poll_mode");
 
 	// General purpose method
-	ClassDB::bind_method(D_METHOD("put_packet", "mode", "target", "pkt","channel"),&ENetNode::put_packet);
-	ClassDB::bind_method(D_METHOD("kick_client", "id"),&ENetNode::kick_client);
+	ClassDB::bind_method(D_METHOD("put_packet", "mode", "target", "pkt", "channel"), &ENetNode::put_packet);
+	ClassDB::bind_method(D_METHOD("kick_client", "id"), &ENetNode::kick_client);
 
 	// Reliable
-	ClassDB::bind_method(D_METHOD("broadcast", "pkt","channel"),&ENetNode::broadcast);
-	ClassDB::bind_method(D_METHOD("send", "target", "pkt","channel"),&ENetNode::send);
+	ClassDB::bind_method(D_METHOD("broadcast", "pkt", "channel"), &ENetNode::broadcast);
+	ClassDB::bind_method(D_METHOD("send", "target", "pkt", "channel"), &ENetNode::send);
 	// Unreliable
-	ClassDB::bind_method(D_METHOD("broadcast_unreliable", "pkt","channel"),&ENetNode::broadcast_unreliable);
-	ClassDB::bind_method(D_METHOD("send_unreliable", "target", "pkt","channel"),&ENetNode::send_unreliable);
+	ClassDB::bind_method(D_METHOD("broadcast_unreliable", "pkt", "channel"), &ENetNode::broadcast_unreliable);
+	ClassDB::bind_method(D_METHOD("send_unreliable", "target", "pkt", "channel"), &ENetNode::send_unreliable);
 	// Ordered
-	ClassDB::bind_method(D_METHOD("broadcast_ordered", "pkt","channel"),&ENetNode::broadcast_ordered);
-	ClassDB::bind_method(D_METHOD("send_ordered", "target", "pkt","channel"),&ENetNode::send_ordered);
+	ClassDB::bind_method(D_METHOD("broadcast_ordered", "pkt", "channel"), &ENetNode::broadcast_ordered);
+	ClassDB::bind_method(D_METHOD("send_ordered", "target", "pkt", "channel"), &ENetNode::send_ordered);
 }
 
 ENetNode::ENetNode() {
@@ -478,7 +499,4 @@ ENetNode::ENetNode() {
 }
 
 ENetNode::~ENetNode() {
-
 }
-
-

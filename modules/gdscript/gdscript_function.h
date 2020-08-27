@@ -320,9 +320,9 @@ public:
 	const int *get_code() const; //used for debug
 	int get_code_size() const;
 	Variant get_constant(int p_idx) const;
-    int get_constant_count() const;
+	int get_constant_count() const;
 	StringName get_global_name(int p_idx) const;
-    int get_global_name_count() const;
+	int get_global_name_count() const;
 	StringName get_name() const;
 	int get_max_stack_size() const;
 	int get_default_argument_count() const;
@@ -394,17 +394,17 @@ protected:
 	static void _bind_methods();
 
 public:
-	_FORCE_INLINE_ virtual bool is_valid() const {return instance && function;}
+	_FORCE_INLINE_ virtual bool is_valid() const { return instance && function; }
 	virtual Object *get_owner() const;
 
 	_FORCE_INLINE_ virtual StringName get_name() const { return function->get_name(); }
 	virtual Variant applyv(const Array p_args);
-	Variant _apply(const Variant** p_args,int p_argcount,Variant::CallError &r_error);
-	virtual Variant apply(const Variant** p_args,int p_argcount,Variant::CallError &r_error);
+	Variant _apply(const Variant **p_args, int p_argcount, Variant::CallError &r_error);
+	virtual Variant apply(const Variant **p_args, int p_argcount, Variant::CallError &r_error);
 	Variant apply(VARIANT_ARG_LIST);
 	virtual Variant apply_with(Object *p_target, const Array p_args);
-	GDScriptFunctionObject() {instance=NULL, function=NULL;}
-//	~GDScriptFunctoionObject();
+	GDScriptFunctionObject() { instance = NULL, function = NULL; }
+	//	~GDScriptFunctoionObject();
 };
 
 class GDScriptNativeFunctionObject : public GDScriptFunctionObject {
@@ -414,22 +414,24 @@ class GDScriptNativeFunctionObject : public GDScriptFunctionObject {
 	friend class GDScriptInstance;
 	ObjectID target_id;
 	StringName method_name;
+
 public:
-	virtual Object *get_owner() const {return (target_id == 0 ? NULL : ObjectDB::get_instance(target_id));}
+	virtual Object *get_owner() const { return (target_id == 0 ? NULL : ObjectDB::get_instance(target_id)); }
 	_FORCE_INLINE_ virtual bool is_valid() const { return target_id != 0 && ObjectDB::get_instance(target_id); }
 
 	_FORCE_INLINE_ virtual StringName get_name() const { return method_name; }
-	virtual Variant apply(const Variant** p_args,int p_argcount,Variant::CallError &r_error);
+	virtual Variant apply(const Variant **p_args, int p_argcount, Variant::CallError &r_error);
 	virtual Variant apply_with(Object *p_target, const Array p_args);
-	GDScriptNativeFunctionObject() {target_id = 0;}
+	GDScriptNativeFunctionObject() { target_id = 0; }
 };
 
 class GDScriptLambdaFunctionObject : public GDScriptFunctionObject {
-	GDCLASS(GDScriptLambdaFunctionObject,GDScriptFunctionObject);
+	GDCLASS(GDScriptLambdaFunctionObject, GDScriptFunctionObject);
 	friend class GDScriptInstance;
 	Vector<Variant> variants;
+
 public:
-	virtual Variant apply(const Variant** p_args,int p_argcount,Variant::CallError &r_error);
+	virtual Variant apply(const Variant **p_args, int p_argcount, Variant::CallError &r_error);
 	virtual Variant apply_with(Object *p_target, const Array p_args);
 
 	~GDScriptLambdaFunctionObject();

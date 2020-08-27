@@ -1,25 +1,50 @@
+/*************************************************************************/
+/*  SphericalTriangleMesh.cpp                                            */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 // Copyright 2015 Markus Ilmola
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or (at your option) any later version.
 
-
 #include "generator/SphericalTriangleMesh.hpp"
 
 #include <stdexcept>
 
-
 using namespace generator;
 
-
-SphericalTriangleMesh::Triangles::Triangles(const SphericalTriangleMesh& mesh) :
-	mesh_{&mesh},
-	row_{0},
-	col_{0},
-	i_{0}
-{ }
-
+SphericalTriangleMesh::Triangles::Triangles(const SphericalTriangleMesh &mesh) :
+		mesh_{ &mesh },
+		row_{ 0 },
+		col_{ 0 },
+		i_{ 0 } {}
 
 bool SphericalTriangleMesh::Triangles::done() const noexcept {
 	return row_ == mesh_->segments_;
@@ -34,10 +59,9 @@ Triangle SphericalTriangleMesh::Triangles::generate() const {
 		triangle.vertices[0] = i_;
 		triangle.vertices[1] = i_ + 1;
 		triangle.vertices[2] = i_ + 1 + mesh_->segments_ - row_;
-	}
-	else {
+	} else {
 		triangle.vertices[0] = i_;
-		triangle.vertices[1] = i_ + 1 + mesh_->segments_- row_;
+		triangle.vertices[1] = i_ + 1 + mesh_->segments_ - row_;
 		triangle.vertices[2] = i_ + mesh_->segments_ - row_;
 	}
 
@@ -57,14 +81,10 @@ void SphericalTriangleMesh::Triangles::next() {
 	}
 }
 
-
-
-SphericalTriangleMesh::Vertices::Vertices(const SphericalTriangleMesh& mesh) :
-	mesh_{&mesh},
-	row_{0},
-	col_{0}
-{ }
-
+SphericalTriangleMesh::Vertices::Vertices(const SphericalTriangleMesh &mesh) :
+		mesh_{ &mesh },
+		row_{ 0 },
+		col_{ 0 } {}
 
 bool SphericalTriangleMesh::Vertices::done() const noexcept {
 	return row_ > mesh_->segments_;
@@ -77,9 +97,8 @@ MeshVertex SphericalTriangleMesh::Vertices::generate() const {
 
 	if (row_ == mesh_->segments_) {
 		vertex.position = mesh_->v2_;
-		vertex.texCoord = gml::dvec2{0.5, 1.0};
-	}
-	else {
+		vertex.texCoord = gml::dvec2{ 0.5, 1.0 };
+	} else {
 		const double t = 1.0 / mesh_->segments_ * row_;
 		const double t2 = 1.0 / (mesh_->segments_ - row_) * col_;
 
@@ -105,32 +124,24 @@ void SphericalTriangleMesh::Vertices::next() {
 	}
 }
 
-
+SphericalTriangleMesh::SphericalTriangleMesh(
+		double radius,
+		int segments) :
+		SphericalTriangleMesh{
+			gml::dvec3{ radius, 0.0, 0.0 },
+			gml::dvec3{ 0.0, radius, 0.0 },
+			gml::dvec3{ 0.0, 0.0, radius },
+			segments
+		} {}
 
 SphericalTriangleMesh::SphericalTriangleMesh(
-	double radius,
-	int segments
-) :
-	SphericalTriangleMesh{
-		gml::dvec3{radius, 0.0, 0.0},
-		gml::dvec3{0.0, radius, 0.0},
-		gml::dvec3{0.0, 0.0, radius},
-		segments
-	}
-{ }
-
-
-SphericalTriangleMesh::SphericalTriangleMesh(
-	const gml::dvec3& v0, const gml::dvec3& v1, const gml::dvec3& v2,
-	int segments
-) :
-	v0_{v0},
-	v1_{v1},
-	v2_{v2},
-	normal_{gml::normal(v0, v1, v2)},
-	segments_{segments}
-{ }
-
+		const gml::dvec3 &v0, const gml::dvec3 &v1, const gml::dvec3 &v2,
+		int segments) :
+		v0_{ v0 },
+		v1_{ v1 },
+		v2_{ v2 },
+		normal_{ gml::normal(v0, v1, v2) },
+		segments_{ segments } {}
 
 SphericalTriangleMesh::Triangles SphericalTriangleMesh::triangles() const noexcept {
 	return *this;
@@ -139,5 +150,3 @@ SphericalTriangleMesh::Triangles SphericalTriangleMesh::triangles() const noexce
 SphericalTriangleMesh::Vertices SphericalTriangleMesh::vertices() const noexcept {
 	return *this;
 }
-
-

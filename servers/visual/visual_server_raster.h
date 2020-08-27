@@ -73,8 +73,8 @@ class VisualServerRaster : public VisualServer {
 	static void _changes_changed() {}
 
 public:
-	//if editor is redrawing when it shouldn't, enable this and put a breakpoint in _changes_changed()
-	#define DEBUG_CHANGES
+//if editor is redrawing when it shouldn't, enable this and put a breakpoint in _changes_changed()
+#define DEBUG_CHANGES
 
 #ifdef DEBUG_CHANGES
 	_FORCE_INLINE_ static void redraw_request() {

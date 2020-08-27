@@ -379,7 +379,7 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 	// Directories
 	_initial_set("filesystem/directories/autoscan_project_path", "");
 	hints["filesystem/directories/autoscan_project_path"] = PropertyInfo(Variant::STRING, "filesystem/directories/autoscan_project_path", PROPERTY_HINT_GLOBAL_DIR);
-	_initial_set("filesystem/directories/default_project_path", !OS::get_singleton()->get_system_dir(OS::SYSTEM_DIR_DOCUMENTS).empty() ?OS::get_singleton()->get_system_dir(OS::SYSTEM_DIR_DOCUMENTS).plus_file("Godot") : OS::get_singleton()->get_environment("HOME"));
+	_initial_set("filesystem/directories/default_project_path", !OS::get_singleton()->get_system_dir(OS::SYSTEM_DIR_DOCUMENTS).empty() ? OS::get_singleton()->get_system_dir(OS::SYSTEM_DIR_DOCUMENTS).plus_file("Godot") : OS::get_singleton()->get_environment("HOME"));
 	hints["filesystem/directories/default_project_path"] = PropertyInfo(Variant::STRING, "filesystem/directories/default_project_path", PROPERTY_HINT_GLOBAL_DIR);
 
 	// On save

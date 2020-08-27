@@ -7162,7 +7162,7 @@ void RasterizerStorageGLES3::_render_target_allocate(RenderTarget *rt) {
 		glGenFramebuffers(1, &rt->fbo);
 		glBindFramebuffer(GL_FRAMEBUFFER, rt->fbo);
 
-		GLenum internalformat = config.stencil_buffer_enable?GL_DEPTH24_STENCIL8:GL_DEPTH_COMPONENT24;
+		GLenum internalformat = config.stencil_buffer_enable ? GL_DEPTH24_STENCIL8 : GL_DEPTH_COMPONENT24;
 
 		glGenTextures(1, &rt->depth);
 		glBindTexture(GL_TEXTURE_2D, rt->depth);
@@ -7233,7 +7233,7 @@ void RasterizerStorageGLES3::_render_target_allocate(RenderTarget *rt) {
 
 		glGenRenderbuffers(1, &rt->buffers.depth);
 		glBindRenderbuffer(GL_RENDERBUFFER, rt->buffers.depth);
-		GLenum internalformat = config.stencil_buffer_enable?GL_DEPTH24_STENCIL8:GL_DEPTH_COMPONENT24;
+		GLenum internalformat = config.stencil_buffer_enable ? GL_DEPTH24_STENCIL8 : GL_DEPTH_COMPONENT24;
 		if (msaa == 0)
 			glRenderbufferStorage(GL_RENDERBUFFER, internalformat, rt->width, rt->height);
 		else

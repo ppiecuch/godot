@@ -36,6 +36,7 @@
 
 #include "test_astar.h"
 #include "test_basis.h"
+#include "test_font.h"
 #include "test_gdscript.h"
 #include "test_gui.h"
 #include "test_math.h"
@@ -46,7 +47,6 @@
 #include "test_render.h"
 #include "test_shader_lang.h"
 #include "test_string.h"
-#include "test_font.h"
 
 const char **tests_get_names() {
 

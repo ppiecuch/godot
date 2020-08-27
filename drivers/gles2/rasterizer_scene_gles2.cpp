@@ -2552,7 +2552,6 @@ void RasterizerSceneGLES2::_render_render_list(RenderList::Element **p_elements,
 			prev_bstencil = bstencil;
 		}
 
-
 		if (e->owner != prev_owner || e->geometry != prev_geometry || skeleton != prev_skeleton) {
 			_setup_geometry(e, skeleton);
 			storage->info.render.surface_switch_count++;
