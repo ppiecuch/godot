@@ -799,12 +799,12 @@ void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float a
 		print_line(vformat("%d segs: %f",s,segs[s]));
 	}
 
-	auto add_vertex = [=](float t, const Vector2 &v, const Color &color){
+	auto add_vertex = [=](float tt, const Vector2 &v, const Color &vc){
 		vertices.push_back(v);
 		if (_interpolate_color)
-			colors.push_back(color);
+			colors.push_back(vc);
 		if (texture_mode != Line2D::LINE_TEXTURE_NONE) {
-			Vector2 tsc = Vector2(Math::cos(tt_begin + t), Math::sin(tt_begin + t));
+			Vector2 tsc = Vector2(Math::cos(tt_begin + tt), Math::sin(tt_begin + tt));
 			uvs.push_back(interpolate(uv_rect, 0.5f * (tsc + Vector2(1.f, 1.f))));
 		}
 	};
