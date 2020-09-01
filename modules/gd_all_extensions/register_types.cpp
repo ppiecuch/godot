@@ -65,6 +65,7 @@
 #include "scene/pixel_spaceships.h"
 #include "scene/touch_button.h"
 #include "scene/vegetation_instance.h"
+#include "scene/sprite_mesh.h"
 
 #include "benet/enet_node.h"
 #include "benet/enet_packet_peer.h"
@@ -77,7 +78,7 @@ static void editor_init_callback() {
 }
 #endif
 
-void register_gd__modules_types() {
+void register_gd_all_extensions_types() {
 	ClassDB::register_class<Timer2>();
 	ClassDB::register_class<TimerObject>();
 	ClassDB::register_class<Tween2>();
@@ -127,6 +128,7 @@ void register_gd__modules_types() {
 #endif
 	ClassDB::register_class<TouchButton>();
 	ClassDB::register_class<AudioStreamPreviewGenerator>();
+	ClassDB::register_class<SpriteMesh>();
 
 	if (enet_initialize() != 0) {
 		ERR_PRINT("ENet initialization failure");
@@ -138,7 +140,7 @@ void register_gd__modules_types() {
 	ClassDB::register_class<ENetNode>();
 }
 
-void unregister_gd__modules_types() {
+void unregister_gd_all_extensions_types() {
 	if (enet_ok)
 		enet_deinitialize();
 }
