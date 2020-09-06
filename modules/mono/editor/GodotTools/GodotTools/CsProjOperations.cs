@@ -54,20 +54,13 @@ namespace GodotTools
 
                 ulong modifiedTime = File.GetLastWriteTime(projectIncludeFile).ConvertToTimestamp();
 
-                if (oldDict.TryGetValue(projectIncludeFile, out var oldFileVar))
-                {
-                    var oldFileDict = (Dictionary)oldFileVar;
+            var firstMatch = classes.FirstOrDefault(classDecl =>
+                    classDecl.BaseCount != 0 && // If it doesn't inherit anything, it can't be a Godot.Object.
+                    classDecl.SearchName == searchName // Filter by the name we're looking for
+            );
 
-                    if (ulong.TryParse(oldFileDict["modified_time"] as string, out ulong storedModifiedTime))
-                    {
-                        if (storedModifiedTime == modifiedTime)
-                        {
-                            // No changes so no need to parse again
-                            newDict[projectIncludeFile] = oldFileDict;
-                            continue;
-                        }
-                    }
-                }
+            if (firstMatch == null)
+                return false; // Not found
 
                 Error parseError = ScriptClassParser.ParseFile(projectIncludeFile, out var classes, out string errorStr);
                 if (parseError != Error.Ok)

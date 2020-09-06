@@ -425,6 +425,28 @@ GDMonoClass *GDMonoAssembly::get_object_derived_class(const StringName &p_class)
 	return match;
 }
 
+GDMonoAssembly *GDMonoAssembly::load(const String &p_name, MonoAssemblyName *p_aname, bool p_refonly, const Vector<String> &p_search_dirs) {
+
+	if (GDMono::get_singleton()->get_corlib_assembly() && (p_name == "mscorlib" || p_name == "mscorlib.dll"))
+		return GDMono::get_singleton()->get_corlib_assembly();
+
+	// We need to manually call the search hook in this case, as it won't be called in the next step
+	MonoAssembly *assembly = mono_assembly_invoke_search_hook(p_aname);
+
+	if (!assembly) {
+		assembly = _load_assembly_search(p_name, p_aname, p_refonly, p_search_dirs);
+		if (!assembly) {
+			return nullptr;
+		}
+	}
+
+	GDMonoAssembly *loaded_asm = GDMono::get_singleton()->get_loaded_assembly(p_name);
+	ERR_FAIL_NULL_V_MSG(loaded_asm, nullptr, "Loaded assembly missing from table. Did we not receive the load hook?");
+	ERR_FAIL_COND_V(loaded_asm->get_assembly() != assembly, nullptr);
+
+	return loaded_asm;
+}
+
 GDMonoAssembly *GDMonoAssembly::load_from(const String &p_name, const String &p_path, bool p_refonly) {
 
 	if (p_name == "mscorlib" || p_name == "mscorlib.dll")
@@ -438,7 +460,9 @@ GDMonoAssembly *GDMonoAssembly::load_from(const String &p_name, const String &p_
 
 	if (!assembly) {
 		assembly = _real_load_assembly_from(p_path, p_refonly);
-		ERR_FAIL_NULL_V(assembly, NULL);
+		if (!assembly) {
+			return nullptr;
+		}
 	}
 
 	GDMonoAssembly *loaded_asm = GDMono::get_singleton()->get_loaded_assembly(p_name);

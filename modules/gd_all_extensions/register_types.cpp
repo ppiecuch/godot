@@ -55,6 +55,12 @@
 #include "statemachine/state.h"
 #include "statemachine/statemachine.h"
 
+#include "behaviornode/behaviornode.h"
+#include "behaviornode/timebnode.h"
+#include "behaviornode/probabilitybnode.h"
+#include "behaviornode/linkerbnode.h"
+#include "behaviornode/statusbnode.h"
+
 #include "debugdraw/debugdraw.h"
 
 #include "scene/audio_stream_preview_generator.h"
@@ -63,9 +69,10 @@
 #include "scene/cable2d.h"
 #include "scene/cable2d_editor_plugin.h"
 #include "scene/pixel_spaceships.h"
+#include "scene/round_progress.h"
+#include "scene/sprite_mesh.h"
 #include "scene/touch_button.h"
 #include "scene/vegetation_instance.h"
-#include "scene/sprite_mesh.h"
 
 #include "benet/enet_node.h"
 #include "benet/enet_packet_peer.h"
@@ -79,6 +86,13 @@ static void editor_init_callback() {
 #endif
 
 void register_gd_all_extensions_types() {
+
+	ClassDB::register_class<BehaviorNode>();
+    ClassDB::register_class<TimerBNode>();
+    ClassDB::register_class<ProbabilityBNode>();
+    ClassDB::register_class<LinkerBNode>();
+    ClassDB::register_class<StatusBNode>();
+
 	ClassDB::register_class<Timer2>();
 	ClassDB::register_class<TimerObject>();
 	ClassDB::register_class<Tween2>();
@@ -88,6 +102,7 @@ void register_gd_all_extensions_types() {
 	ClassDB::register_class<TrailPoint2D>();
 	ClassDB::register_class<TrailLine2D>();
 	ClassDB::register_class<LineBuilder2D>();
+	ClassDB::register_class<RoundProgress>();
 	ClassDB::register_class<Phantom>();
 	ClassDB::register_class<Byteswap>();
 #ifdef MODULE_MBEDTLS_ENABLED

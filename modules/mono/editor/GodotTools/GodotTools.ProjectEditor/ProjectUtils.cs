@@ -139,6 +139,30 @@ namespace GodotTools.ProjectEditor
             var root = ProjectRootElement.Open(projectPath);
             Debug.Assert(root != null);
 
+            if (root.AreDefaultCompileItemsEnabled())
+            {
+                var excluded = new List<string>();
+                result.AddRange(existingFiles);
+
+                foreach (var item in root.Items)
+                {
+                    if (string.IsNullOrEmpty(item.Condition))
+                        continue;
+
+                    if (item.ItemType != itemType)
+                        continue;
+
+
+                    string normalizedRemove= item.Remove.NormalizePath();
+
+                    var glob = MSBuildGlob.Parse(normalizedRemove);
+
+                    excluded.AddRange(result.Where(includedFile => glob.IsMatch(includedFile)));
+                }
+
+                result.RemoveAll(f => excluded.Contains(f));
+            }
+
             foreach (var itemGroup in root.ItemGroups)
             {
                 if (itemGroup.Condition.Length != 0)
@@ -231,6 +255,7 @@ namespace GodotTools.ProjectEditor
                         return;
                     }
 
+<<<<<<< HEAD
                     var referenceWithHintPath = referencesWithHintPath.FirstOrDefault();
                     if (referenceWithHintPath != null)
                     {
@@ -241,6 +266,32 @@ namespace GodotTools.ProjectEditor
                             // Safe to remove as we duplicate with ToList() to loop
                             referenceWithHintPath.RemoveChild(metadata);
                         }
+=======
+            var yabaiPropertiesForConfigs = new[]
+            {
+                "DebugSymbols",
+                "DebugType",
+                "Optimize",
+                "DefineConstants",
+                "ErrorReport",
+                "WarningLevel",
+                "ConsolePause"
+            };
+
+            var configNames = new[]
+            {
+                "ExportDebug", "ExportRelease", "Debug",
+                "Tools", "Release" // Include old config names as well in case it's upgrading from 3.2.1 or older
+            };
+
+            foreach (var config in configNames)
+            {
+                var group = root.PropertyGroups
+                    .FirstOrDefault(g => g.Condition.Trim() == $"'$(Configuration)|$(Platform)' == '{config}|AnyCPU'");
+
+                if (group == null)
+                    continue;
+>>>>>>> 13e2e487a2bbae66d2e18d4f28b8827b420c45a3
 
                         referenceWithHintPath.AddMetadata("HintPath", hintPath);
                         project.HasUnsavedChanges = true;

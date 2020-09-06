@@ -43,16 +43,22 @@ class SpriteMesh : public Node2D {
 private:
 	Ref<Mesh> mesh;
 	Ref<Texture> texture;
+	Ref<Texture> normal_map;
 	AABB mesh_aabb;
-	Vector3 mesh_rotate;
 
-	bool centered;
-	Point2 offset;
+	float mesh_angle;
+	Size2 mesh_scale;
+	Transform2D _mesh_xform;
+	bool _mesh_xform_dirty;
+
+	bool mesh_hflip;
+	bool mesh_vflip;
+	bool mesh_centered;
+	Point2 mesh_offset;
 
 	void _get_rects(Rect2 &r_src_rect, Rect2 &r_dst_rect, bool &r_filter_clip) const;
 
 	void _mesh_changed();
-	void _texture_changed();
 
 protected:
 	void _notification(int p_what);
@@ -77,17 +83,34 @@ public:
 
 	bool is_inside_mesh(const Point2 &p_point, double p_tolerance) const;
 
+	void _update_xform_values();
+	void _update_transform();
+
 	void set_mesh(const Ref<Mesh> &p_mesh);
 	Ref<Mesh> get_mesh() const;
 
-	void set_texture(const Ref<Texture> &p_texture);
-	Ref<Texture> get_texture() const;
+	void set_mesh_rotation(float p_radians);
+	float get_mesh_rotation() const;
+	void set_mesh_rotation_degrees(float p_degrees);
+	float get_mesh_rotation_degrees() const;
+	void set_mesh_scale(const Size2 &p_scale);
+	Size2 get_mesh_scale() const;
 
-	void set_centered(bool p_center);
-	bool is_centered() const;
+	void set_mesh_texture(const Ref<Texture> &p_texture);
+	Ref<Texture> get_mesh_texture() const;
 
-	void set_offset(const Point2 &p_offset);
-	Point2 get_offset() const;
+	void set_mesh_normal_map(const Ref<Texture> &p_texture);
+	Ref<Texture> get_mesh_normal_map() const;
+
+	void set_mesh_centered(bool p_center);
+	bool is_mesh_centered() const;
+	void set_mesh_offset(const Point2 &p_offset);
+	Point2 get_mesh_offset() const;
+	void set_mesh_flip_h(bool p_mesh_flip);
+	bool is_mesh_flipped_h() const;
+	void set_mesh_flip_v(bool p_mesh_flip);
+	bool is_mesh_flipped_v() const;
+
 
 	Rect2 get_rect() const;
 	virtual Rect2 get_anchorable_rect() const;
