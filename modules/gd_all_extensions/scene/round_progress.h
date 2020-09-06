@@ -7,9 +7,6 @@
 /*************************************************************************/
 /* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
 /* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
-/* Copyright (c) 2015-2017 Gauvain "GovanifY" Roussel-Tarbouriech        */
-/* Copyright (c) 2016-2017 António "Keyaku" Sarmento                     */
-/* Copyright (c) 2015-2017 SKYNISM                                       */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -29,6 +26,14 @@
 /* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
+/*************************************************************************/
+/* Authors and contributors:                                             */
+/*                                                                       */
+/* Copyright (c) 2015-2017 Gauvain "GovanifY" Roussel-Tarbouriech        */
+/* Copyright (c) 2016-2017 António "Keyaku" Sarmento                     */
+/* Copyright (c) 2015-2017 SKYNISM                                       */
 /*************************************************************************/
 
 #ifndef ROUND_PROGRESS_BAR_H
