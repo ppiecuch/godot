@@ -1,0 +1,39 @@
+//
+// Created by gen on 15-5-9.
+//
+
+#include "statusbnode.h"
+
+BehaviorNode::Status StatusBNode::_step(const Variant &target, Dictionary &env) {
+    if (!get_behavior_enable() || get_child_count() == 0)
+        return STATUS_FAILURE;
+    if ((bool)call(StringName("pre_behavior"),target, Variant(env)) && get_child_count() > 0) {
+        if (_selected < 0) {
+            _selected = 0;
+        }else if (_selected >= get_child_count()) {
+            _selected = get_child_count() - 1;
+        }
+        BehaviorNode *b_node = Object::cast_to<BehaviorNode>(get_child(_selected));
+        Status childrenStatus = STATUS_FAILURE;
+        if (b_node) {
+            if (_selected != _old_selected)
+                b_node->reset(target);
+            childrenStatus =   b_node->step(target, env);
+        }
+        _old_selected = _selected;
+        Status status = (Status)((int)call(StringName("behavior"),target, Variant(env)));
+        if (status == STATUS_DEPEND_ON_CHILDREN)
+            return childrenStatus;
+        else
+            return status;
+    }else {
+        return STATUS_FAILURE;
+    }
+}
+
+void StatusBNode::_bind_methods() {
+    ClassDB::bind_method(D_METHOD("set_select", "status"), &StatusBNode::set_select);
+    ClassDB::bind_method(D_METHOD("get_select"), &StatusBNode::get_select);
+
+    ADD_PROPERTY( PropertyInfo( Variant::REAL, "status/status" ), "set_select","get_select");
+}
