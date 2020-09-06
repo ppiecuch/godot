@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  sprite_mesh.h                                                     */
+/*  sprite_mesh.h                                                        */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -33,8 +33,8 @@
 
 #include "core/math/vector3.h"
 #include "scene/2d/sprite.h"
-#include "scene/resources/texture.h"
 #include "scene/resources/mesh.h"
+#include "scene/resources/texture.h"
 
 class SpriteMesh : public Node2D {
 
@@ -110,7 +110,6 @@ public:
 	bool is_mesh_flipped_h() const;
 	void set_mesh_flip_v(bool p_mesh_flip);
 	bool is_mesh_flipped_v() const;
-
 
 	Rect2 get_rect() const;
 	virtual Rect2 get_anchorable_rect() const;

@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  sprite_mesh.cpp                                                   */
+/*  sprite_mesh.cpp                                                      */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -43,7 +43,6 @@
 // https://github.com/patrikhuber/eos/issues/140
 // * https://gamedev.stackexchange.com/questions/10261/android-collision-detection-of-a-3d-object-based-on-a-2d-projection
 
-
 Rect2 _rect_offset(Rect2 rect, real_t dx, real_t dy) {
 	rect.position.x += dx;
 	rect.position.y += dy;
@@ -72,22 +71,22 @@ Rect2 _rect_scale_to_fit(const Rect2 &dest_rect, const Rect2 &src_rect) {
 }
 
 Rect2 _rect_scale_to_fill(const Rect2 &dest_rect, const Rect2 &src_rect) {
-    float aspect_dest = dest_rect.size.width / dest_rect.size.height;
-    float aspect_scale = src_rect.size.width / src_rect.size.height;
-    Rect2 project_to = Rect2(0, 0, 0, 0);
-    // Scale the image so that the aspect ratio is preserved and the
-    // dest target size is filled.
-    if (aspect_scale < aspect_dest) {
-        //if the inside rectangle has the taller shape, reduce its width:
-        project_to.size.width = project_to.size.height * aspect_scale;
-    } else {
-        //if the inside rectangle has the wider shape, reduce its height
-        project_to.size.height = project_to.size.width / aspect_scale;
-    }
-    // now center the rectangle:
-    project_to.position.x = dest_rect.size.width + (dest_rect.size.width - project_to.size.width) / 2;
-    project_to.position.y = dest_rect.size.height + (dest_rect.size.height - project_to.size.height) / 2;
-    return project_to;
+	float aspect_dest = dest_rect.size.width / dest_rect.size.height;
+	float aspect_scale = src_rect.size.width / src_rect.size.height;
+	Rect2 project_to = Rect2(0, 0, 0, 0);
+	// Scale the image so that the aspect ratio is preserved and the
+	// dest target size is filled.
+	if (aspect_scale < aspect_dest) {
+		//if the inside rectangle has the taller shape, reduce its width:
+		project_to.size.width = project_to.size.height * aspect_scale;
+	} else {
+		//if the inside rectangle has the wider shape, reduce its height
+		project_to.size.height = project_to.size.width / aspect_scale;
+	}
+	// now center the rectangle:
+	project_to.position.x = dest_rect.size.width + (dest_rect.size.width - project_to.size.width) / 2;
+	project_to.position.y = dest_rect.size.height + (dest_rect.size.height - project_to.size.height) / 2;
+	return project_to;
 }
 
 #ifdef TOOLS_ENABLED
@@ -292,9 +291,8 @@ bool SpriteMesh::is_mesh_flipped_v() const {
 
 Rect2 SpriteMesh::get_rect() const {
 	return Rect2(
-				mesh_aabb.get_position().x, mesh_aabb.get_position().y,
-				mesh_aabb.get_size().x, mesh_aabb.get_size().y
-			);
+			mesh_aabb.get_position().x, mesh_aabb.get_position().y,
+			mesh_aabb.get_size().x, mesh_aabb.get_size().y);
 }
 
 Rect2 SpriteMesh::get_anchorable_rect() const {
@@ -302,7 +300,6 @@ Rect2 SpriteMesh::get_anchorable_rect() const {
 }
 
 void SpriteMesh::_validate_property(PropertyInfo &property) const {
-
 }
 
 void SpriteMesh::_mesh_changed() {

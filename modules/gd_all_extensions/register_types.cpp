@@ -56,10 +56,10 @@
 #include "statemachine/statemachine.h"
 
 #include "behaviornode/behaviornode.h"
-#include "behaviornode/timebnode.h"
-#include "behaviornode/probabilitybnode.h"
 #include "behaviornode/linkerbnode.h"
+#include "behaviornode/probabilitybnode.h"
 #include "behaviornode/statusbnode.h"
+#include "behaviornode/timebnode.h"
 
 #include "debugdraw/debugdraw.h"
 
@@ -88,10 +88,10 @@ static void editor_init_callback() {
 void register_gd_all_extensions_types() {
 
 	ClassDB::register_class<BehaviorNode>();
-    ClassDB::register_class<TimerBNode>();
-    ClassDB::register_class<ProbabilityBNode>();
-    ClassDB::register_class<LinkerBNode>();
-    ClassDB::register_class<StatusBNode>();
+	ClassDB::register_class<TimerBNode>();
+	ClassDB::register_class<ProbabilityBNode>();
+	ClassDB::register_class<LinkerBNode>();
+	ClassDB::register_class<StatusBNode>();
 
 	ClassDB::register_class<Timer2>();
 	ClassDB::register_class<TimerObject>();
