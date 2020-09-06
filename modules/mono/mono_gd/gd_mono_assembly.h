@@ -121,6 +121,7 @@ public:
 
 	static void fill_search_dirs(Vector<String> &r_search_dirs, const String &p_custom_config = String(), const String &p_custom_bcl_dir = String());
 
+	static GDMonoAssembly *load(const String &p_name, MonoAssemblyName *p_aname, bool p_refonly, const Vector<String> &p_search_dirs);
 	static GDMonoAssembly *load_from(const String &p_name, const String &p_path, bool p_refonly);
 
 	GDMonoAssembly(const String &p_name, MonoImage *p_image, MonoAssembly *p_assembly);
