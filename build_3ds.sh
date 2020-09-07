@@ -17,4 +17,4 @@ export CTRULIB=$DEVKITPRO/libctru
 
 export PATH=$DEVKITARM/bin:$PATH
 
-scons p=3ds disable_3d=true target=release use_mingw=true
+scons p=3ds disable_3d=true target=release use_mingw=true disable_experimental=yes

@@ -65,14 +65,22 @@ AssemblyRefInfo get_assemblyref_name(MonoImage *p_image, int index) {
 
 	mono_metadata_decode_row(table_info, index, cols, MONO_ASSEMBLYREF_SIZE);
 
-	return String::utf8(mono_metadata_string_heap(p_image, cols[MONO_ASSEMBLYREF_NAME]));
+	return {
+		String::utf8(mono_metadata_string_heap(p_image, cols[MONO_ASSEMBLYREF_NAME])),
+		(uint16_t)cols[MONO_ASSEMBLYREF_MAJOR_VERSION],
+		(uint16_t)cols[MONO_ASSEMBLYREF_MINOR_VERSION],
+		(uint16_t)cols[MONO_ASSEMBLYREF_BUILD_NUMBER],
+		(uint16_t)cols[MONO_ASSEMBLYREF_REV_NUMBER]
+	};
 }
 
 Error get_assembly_dependencies(GDMonoAssembly *p_assembly, MonoAssemblyName *reusable_aname, const Vector<String> &p_search_dirs, Dictionary &r_assembly_dependencies) {
 	MonoImage *image = p_assembly->get_image();
 
 	for (int i = 0; i < mono_image_get_table_rows(image, MONO_TABLE_ASSEMBLYREF); i++) {
-		String ref_name = get_assemblyref_name(image, i);
+		AssemblyRefInfo ref_info = get_assemblyref_name(image, i);
+
+		const String &ref_name = ref_info.name;
 
 		if (r_assembly_dependencies.has(ref_name))
 			continue;
