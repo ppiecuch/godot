@@ -49,7 +49,7 @@ Rect2 _rect_offset(Rect2 rect, real_t dx, real_t dy) {
 	return rect;
 }
 
-Rect2 _rect_scale_to_fit(const Rect2 &dest_rect, const Rect2 &src_rect) {
+static Rect2 _rect_scale_to_fit(const Rect2 &dest_rect, const Rect2 &src_rect) {
 	// Start off with a rectangle the same size as the destination rectangle:
 	Rect2 rect = dest_rect;
 	// Reduce it by 1 pixel all round to leave a slight margin:
@@ -70,19 +70,18 @@ Rect2 _rect_scale_to_fit(const Rect2 &dest_rect, const Rect2 &src_rect) {
 	return rect;
 }
 
-Rect2 _rect_scale_to_fill(const Rect2 &dest_rect, const Rect2 &src_rect) {
+static Rect2 _rect_scale_to_fill(const Rect2 &dest_rect, const Rect2 &src_rect) {
 	float aspect_dest = dest_rect.size.width / dest_rect.size.height;
 	float aspect_scale = src_rect.size.width / src_rect.size.height;
 	Rect2 project_to = Rect2(0, 0, 0, 0);
 	// Scale the image so that the aspect ratio is preserved and the
 	// dest target size is filled.
-	if (aspect_scale < aspect_dest) {
+	if (aspect_scale < aspect_dest)
 		//if the inside rectangle has the taller shape, reduce its width:
 		project_to.size.width = project_to.size.height * aspect_scale;
-	} else {
+	else
 		//if the inside rectangle has the wider shape, reduce its height
 		project_to.size.height = project_to.size.width / aspect_scale;
-	}
 	// now center the rectangle:
 	project_to.position.x = dest_rect.size.width + (dest_rect.size.width - project_to.size.width) / 2;
 	project_to.position.y = dest_rect.size.height + (dest_rect.size.height - project_to.size.height) / 2;

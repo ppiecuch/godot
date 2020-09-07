@@ -570,6 +570,26 @@ bool GDMono::load_assembly(const String &p_name, MonoAssemblyName *p_aname, GDMo
 	return true;
 }
 
+bool GDMono::load_assembly(const String &p_name, MonoAssemblyName *p_aname, GDMonoAssembly **r_assembly, bool p_refonly, const Vector<String> &p_search_dirs) {
+#ifdef DEBUG_ENABLED
+	CRASH_COND(!r_assembly);
+#endif
+
+	print_verbose("Mono: Loading assembly " + p_name + (p_refonly ? " (refonly)" : "") + "...");
+
+	GDMonoAssembly *assembly = GDMonoAssembly::load(p_name, p_aname, p_refonly, p_search_dirs);
+
+	if (!assembly) {
+		return false;
+	}
+
+	*r_assembly = assembly;
+
+	print_verbose("Mono: Assembly " + p_name + (p_refonly ? " (refonly)" : "") + " loaded from path: " + (*r_assembly)->get_path());
+
+	return true;
+}
+
 bool GDMono::load_assembly_from(const String &p_name, const String &p_path, GDMonoAssembly **r_assembly, bool p_refonly) {
 
 	CRASH_COND(!r_assembly);
