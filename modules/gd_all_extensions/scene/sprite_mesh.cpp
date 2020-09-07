@@ -43,50 +43,6 @@
 // https://github.com/patrikhuber/eos/issues/140
 // * https://gamedev.stackexchange.com/questions/10261/android-collision-detection-of-a-3d-object-based-on-a-2d-projection
 
-Rect2 _rect_offset(Rect2 rect, real_t dx, real_t dy) {
-	rect.position.x += dx;
-	rect.position.y += dy;
-	return rect;
-}
-
-static Rect2 _rect_scale_to_fit(const Rect2 &dest_rect, const Rect2 &src_rect) {
-	// Start off with a rectangle the same size as the destination rectangle:
-	Rect2 rect = dest_rect;
-	// Reduce it by 1 pixel all round to leave a slight margin:
-	_rect_offset(rect, -1, -1);
-	// find the aspect ratios of the two rectangles:
-	const float aspect_scale = src_rect.size.width / src_rect.size.height;
-	const float aspect_dest = dest_rect.size.width / dest_rect.size.height;
-	// compare the aspect ratios of the two rectangles:
-	if (aspect_scale > aspect_dest)
-		// if the inside rectangle has the wider shape, reduce its height
-		rect.size.height = rect.size.width / aspect_scale;
-	else
-		// if the inside rectangle has the taller shape, reduce its width:
-		rect.size.width = rect.size.height * aspect_scale;
-	//now centre the rectangle:
-	rect.position.x = dest_rect.size.width + (dest_rect.size.width - rect.size.width) / 2;
-	rect.position.y = dest_rect.size.height + (dest_rect.size.height - rect.size.height) / 2;
-	return rect;
-}
-
-static Rect2 _rect_scale_to_fill(const Rect2 &dest_rect, const Rect2 &src_rect) {
-	float aspect_dest = dest_rect.size.width / dest_rect.size.height;
-	float aspect_scale = src_rect.size.width / src_rect.size.height;
-	Rect2 project_to = Rect2(0, 0, 0, 0);
-	// Scale the image so that the aspect ratio is preserved and the
-	// dest target size is filled.
-	if (aspect_scale < aspect_dest)
-		//if the inside rectangle has the taller shape, reduce its width:
-		project_to.size.width = project_to.size.height * aspect_scale;
-	else
-		//if the inside rectangle has the wider shape, reduce its height
-		project_to.size.height = project_to.size.width / aspect_scale;
-	// now center the rectangle:
-	project_to.position.x = dest_rect.size.width + (dest_rect.size.width - project_to.size.width) / 2;
-	project_to.position.y = dest_rect.size.height + (dest_rect.size.height - project_to.size.height) / 2;
-	return project_to;
-}
 
 #ifdef TOOLS_ENABLED
 Dictionary SpriteMesh::_edit_get_state() const {
