@@ -24,11 +24,11 @@ def get_name():
 
 def can_build():
 
-    if not os.environ.has_key("DEVKITPRO"):
+    if not "DEVKITPRO" in os.environ:
         return False
-    if not os.environ.has_key("DEVKITARM"):
+    if not "DEVKITARM" in os.environ:
         return False
-    if not os.environ.has_key("CTRULIB"):
+    if not "CTRULIB" in os.environ:
         return False
     if os.name == "nt":
         return False
@@ -68,11 +68,11 @@ def get_flags():
 
 
 def build_shader_gen(target, source, env, for_signature):
+
     return "picasso -o {} {}".format(target[0], source[0])
 
 
 def build_shader_header(target, source, env):
-    import os
 
     data = source[0].get_contents()
     data_str = ",".join([str(ord(x)) for x in data])
