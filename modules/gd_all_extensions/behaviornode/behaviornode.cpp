@@ -32,14 +32,6 @@
 #include "core/math/math_funcs.h"
 #include "scene/scene_string_names.h"
 
-//void BehaviorNode::_notification(int p_notification) {
-//    case NOTIFICATION_READY: {
-//    }
-//}
-
-//StringName BehaviorNode::C_PreBehavior = ;
-//StringName BehaviorNode::C_Behavior = ;
-
 BehaviorNode::Status BehaviorNode::_traversal_children(const Variant &target, const Dictionary &env) {
 	int t = get_child_count();
 	Status res = STATUS_FAILURE;

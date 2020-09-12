@@ -21,13 +21,13 @@
 	; Force the w component of inpos to be 1.0
 	mov r0.xyz, inpos
 	mov r0.w,   ones
-	
+
 	; r1 = extra * inpos
 	dp4 r1.x, extra[0], r0
 	dp4 r1.y, extra[1], r0
 	dp4 r1.z, extra[2], r0
 	dp4 r1.w, extra[3], r0
-	
+
 	; r2 = modelView * r1
 	dp4 r2.x, modelView[0], r1
 	dp4 r2.y, modelView[1], r1
@@ -41,7 +41,7 @@
 	dp4 outpos.w, projection[3], r2
 
  	mov outtc0, intex
- 	
+
  	mov outclr, incol
 
 	end

@@ -66,7 +66,7 @@ static inline u32 get_morton_offset(u32 x, u32 y, u32 bytes_per_pixel)
 }
 
 void texture_tile_sw(C3D_Tex *tex, const void *data, int w, int h)
-{	
+{
 	const u32* src = reinterpret_cast<const u32*>(data);
 	u32* dest = reinterpret_cast<u32*>(tex->data);
 	for (int y = 0; y < h; y++)

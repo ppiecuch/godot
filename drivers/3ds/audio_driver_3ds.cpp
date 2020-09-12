@@ -38,7 +38,7 @@ static int channel_num = 1;
 
 
 Error AudioDriver3ds::init() {
-	
+
 	if (ndspInit() < 0)
 		return FAILED;
 
@@ -56,7 +56,7 @@ Error AudioDriver3ds::init() {
 	buffer_size = closest_power_of_2( latency * mix_rate / 1000 );
 
 	samples_in = memnew_arr(int32_t, buffer_size*channels);
-	
+
 	ndspWaveBuf* buffer = ndsp_buffers;
 	for (int i = 0; i < NDSP_BUFFER_COUNT; ++i) {
 		memset(buffer, 0, sizeof(ndspWaveBuf));
@@ -66,7 +66,7 @@ Error AudioDriver3ds::init() {
 		buffer->status = NDSP_WBUF_DONE;
 		buffer++;
 	}
-	
+
 	ndspChnReset(channel_num);
 	ndspChnSetInterp(channel_num, NDSP_INTERP_LINEAR);
 	ndspChnSetRate(channel_num, mix_rate);
@@ -79,21 +79,21 @@ Error AudioDriver3ds::init() {
 };
 
 void AudioDriver3ds::thread_func(void* p_udata) {
-	
+
 	int buffer_index = 0;
 	ndspWaveBuf* buffer;
 
 	AudioDriver3ds* ad = (AudioDriver3ds*)p_udata;
-	
+
 	int sample_count = ad->buffer_size * ad->channels;
 
 	while (!ad->exit_thread) {
-		
+
 		buffer = &ad->ndsp_buffers[buffer_index % NDSP_BUFFER_COUNT];
-		
+
 		while (!ad->exit_thread && (!ad->active || buffer->status != NDSP_WBUF_DONE))
 			OS::get_singleton()->delay_usec(10000);
-		
+
 		if (ad->exit_thread)
 			break;
 
@@ -103,13 +103,13 @@ void AudioDriver3ds::thread_func(void* p_udata) {
 			ad->lock();
 			ad->audio_server_process(ad->buffer_size, ad->samples_in);
 			ad->unlock();
-			
+
 			for(int i = 0; i < sample_count; ++i)
 				buffer->data_pcm16[i] = ad->samples_in[i] >> 16;
-			
+
 		} else
 			memset(buffer->data_pcm16, 0, sample_count * sizeof(int16_t));
-		
+
 		DSP_FlushDataCache(buffer->data_pcm16, sample_count * sizeof(int16_t));
 		ndspChnWaveBufAdd(channel_num, buffer);
 
@@ -161,7 +161,7 @@ void AudioDriver3ds::finish() {
 	if (samples_in) {
 		memdelete_arr(samples_in);
 	};
-	
+
 	for (int i = 0; i < NDSP_BUFFER_COUNT; ++i)
 		linearFree(ndsp_buffers[i].data_pcm16);
 
@@ -169,7 +169,7 @@ void AudioDriver3ds::finish() {
 	if (mutex)
 		memdelete(mutex);
 	thread = NULL;
-	
+
 	ndspExit();
 };
 

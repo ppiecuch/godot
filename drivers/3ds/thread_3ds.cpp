@@ -40,12 +40,12 @@ Thread* Thread3ds::create_func_3ds(ThreadCreateCallback p_callback, void * p_use
 	// Get base thread priority for relative priority setting
 	int32_t priority;
 	svcGetThreadPriority(&priority, (Thread::_main_thread_id == 0) ? CUR_THREAD_HANDLE : Thread::_main_thread_id);
-	
+
 	if (p_settings.priority == PRIORITY_LOW)
 		priority++;
 	else if (p_settings.priority == PRIORITY_HIGH)
 		priority--;
-	
+
 	ThreadCtrWrapper* thread_wrapper = memnew(ThreadCtrWrapper(p_callback, p_user, priority));
 	return memnew(Thread3ds(thread_wrapper));
 }
@@ -81,7 +81,7 @@ Thread3ds::~Thread3ds() {
 
 Mutex3ds::Mutex3ds(bool p_recursive) {
 	is_recursive = p_recursive;
-	
+
 	if (is_recursive)
 		RecursiveLock_Init(&recursiveLock);
 	else
@@ -89,7 +89,7 @@ Mutex3ds::Mutex3ds(bool p_recursive) {
 }
 
 Mutex3ds::~Mutex3ds() {
-	
+
 }
 
 Mutex* Mutex3ds::create(bool p_recursive) {
@@ -120,7 +120,7 @@ Error Mutex3ds::try_lock() {
 		ret = RecursiveLock_TryLock(&recursiveLock);
 	else
 		ret = LightLock_TryLock(&lightLock);
-	
+
 	return (ret == 0) ? OK : ERR_BUSY;
 }
 

@@ -48,19 +48,19 @@
 */
 
 class OS_3DS : public OS {
-	
+
 	MainLoop *main_loop;
 	VisualServer *visual_server;
 	InputDefault *input;
-	
+
 	AudioServer *audio_server;
 	AudioDriver3ds audio_driver;
-	
+
 	Point2i last_mouse_pos;
 	VideoMode video_mode;
-	
+
 	bool use_vsync;
-	
+
 	uint64_t ticks_start;
 
 protected:

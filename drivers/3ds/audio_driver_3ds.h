@@ -44,7 +44,7 @@ extern "C" {
 
 
 class AudioDriver3ds : public AudioDriver {
-	
+
 	enum {
 		NDSP_BUFFER_COUNT = 3,
 	};
@@ -53,7 +53,7 @@ class AudioDriver3ds : public AudioDriver {
 	Mutex* mutex;
 
 	int32_t* samples_in;
-	
+
 	ndspWaveBuf ndsp_buffers[NDSP_BUFFER_COUNT];
 
 	static void thread_func(void* p_udata);

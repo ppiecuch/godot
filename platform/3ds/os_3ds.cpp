@@ -58,23 +58,23 @@ static aptHookCookie apt_hook_cookie;
 static void apt_hook_callback(APT_HookType hook, void* param)
 {
 	if (hook == APTHOOK_ONRESTORE || hook == APTHOOK_ONWAKEUP) {
-		
+
 	}
 }
 
 
 OS_3DS::OS_3DS()
 : video_mode(800, 480, true, false, false)
-{	
+{
 	gfxInitDefault();
 	consoleInit(GFX_BOTTOM, NULL);
-	
+
 	aptHook(&apt_hook_cookie, apt_hook_callback, this);
-	
+
 // 	set_low_processor_usage_mode(true);
 	_render_thread_mode = RENDER_THREAD_UNSAFE;
 	AudioDriverManager::add_driver(&audio_driver);
-	
+
 	use_vsync = true;
 }
 
@@ -87,22 +87,22 @@ void OS_3DS::run()
 {
 	if (!main_loop)
 		return;
-	
+
 	main_loop->init();
 
 	while (aptMainLoop())
 	{
 		processInput();
-		
+
 		if (hidKeysDown() & KEY_SELECT)
 			break;
-		
+
 		if (Main::iteration()==true)
 			break;
-		
+
 		printf("fps:%f\n", Engine::get_singleton()->get_frames_per_second());
 	}
-	
+
 	main_loop->finish();
 }
 
@@ -111,7 +111,7 @@ void OS_3DS::initialize_core()
 	Thread3ds::make_default();
 	Semaphore3ds::make_default();
 	Mutex3ds::make_default();
-	
+
 	FileAccess::make_default<FileAccessUnix>(FileAccess::ACCESS_RESOURCES);
 	FileAccess::make_default<FileAccessUnix>(FileAccess::ACCESS_USERDATA);
 	FileAccess::make_default<FileAccessUnix>(FileAccess::ACCESS_FILESYSTEM);
@@ -135,7 +135,7 @@ Error OS_3DS::initialize(const VideoMode& p_desired, int p_video_driver, int p_a
 	main_loop = NULL;
 
 	visual_server = memnew( VisualServerRaster() );
-	
+
 #ifndef NO_THREADS
 	if (get_render_thread_mode() != RENDER_THREAD_UNSAFE) {
 		visual_server = 	memnew(VisualServerWrapMT(visual_server,get_render_thread_mode()==RENDER_SEPARATE_THREAD));
@@ -151,7 +151,7 @@ Error OS_3DS::initialize(const VideoMode& p_desired, int p_video_driver, int p_a
 	audio_server->init();
 
 	visual_server->init();
-	
+
 	input = memnew( InputDefault );
 
 	return OK;
@@ -226,13 +226,13 @@ OS::Date OS_3DS::get_date(bool utc) const
 	Date ret;
 	ret.year = 1900 + lt->tm_year;
 	// Index starting at 1 to match OS_Unix::get_date
-	//   and Windows SYSTEMTIME and tm_mon follows the typical structure 
+	//   and Windows SYSTEMTIME and tm_mon follows the typical structure
 	//   of 0-11, noted here: http://www.cplusplus.com/reference/ctime/tm/
 	ret.month = (Month)(lt->tm_mon + 1);
 	ret.day = lt->tm_mday;
 	ret.weekday = (Weekday)lt->tm_wday;
 	ret.dst = lt->tm_isdst;
-	
+
 	return ret;
 }
 
@@ -343,7 +343,7 @@ void OS_3DS::processInput()
 	hidScanInput();
 	u32 kDown = hidKeysDown();
 	u32 kUp = hidKeysUp();
-	
+
 	for (int i = 0; i < KEY_MAX; ++i)
 	{
 		if (buttons[i] & kDown)

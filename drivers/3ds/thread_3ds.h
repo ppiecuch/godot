@@ -45,14 +45,14 @@ class Thread3ds : public Thread {
 
 	static Thread* create_func_3ds(ThreadCreateCallback p_callback, void * p_user, const Settings& p_settings=Settings());
 	static void wait_to_finish_func_3ds(Thread* p_thread);
-	
+
 	ThreadCtrWrapper* thread;
 	ID id;
 
 public:
 	Thread3ds(ThreadCtrWrapper* p_thread);
 	~Thread3ds();
-	
+
 	virtual ID get_id() const;
 
 	static void make_default();
@@ -62,7 +62,7 @@ public:
 class Mutex3ds : public Mutex {
 
 	static Mutex* create(bool p_recursive);
-	
+
 	bool is_recursive;
 	LightLock lightLock;
 	RecursiveLock recursiveLock;
@@ -74,7 +74,7 @@ public:
 	virtual Error try_lock();
 
 	static void make_default();
-	
+
 	Mutex3ds(bool p_recursive);
 	~Mutex3ds();
 };

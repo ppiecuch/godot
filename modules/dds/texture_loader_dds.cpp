@@ -32,6 +32,8 @@
 
 #include "core/os/file_access.h"
 
+#include <inttypes.h>
+
 #define PF_FOURCC(s) ((uint32_t)(((s)[3] << 24U) | ((s)[2] << 16U) | ((s)[1] << 8U) | ((s)[0])))
 
 // Reference: https://docs.microsoft.com/en-us/windows/win32/direct3ddds/dds-header
@@ -216,7 +218,7 @@ RES ResourceFormatDDS::load(const String &p_path, const String &p_original_path,
 		dds_format = DDS_BGR565;
 	} else {
 
-		printf("unrecognized fourcc %lx format_flags: %lx - rgbbits %li - red_mask %lx green mask %lx blue mask %lx alpha mask %lx\n", format_fourcc, format_flags, format_rgb_bits, format_red_mask, format_green_mask, format_blue_mask, format_alpha_mask);
+		printf("unrecognized fourcc %" PRIx32 " format_flags: %" PRIx32 " - rgbbits %" PRIi32 " - red_mask %" PRIx32 " green mask %" PRIx32 " blue mask %" PRIx32 " alpha mask %" PRIx32 "\n", format_fourcc, format_flags, format_rgb_bits, format_red_mask, format_green_mask, format_blue_mask, format_alpha_mask);
 		ERR_FAIL_V_MSG(RES(), "Unrecognized or unsupported color layout in DDS '" + p_path + "'.");
 	}
 

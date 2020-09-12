@@ -34,7 +34,7 @@ typedef void (*ThreadCreateCallback)(void *p_userdata);
 extern "C" {
 #include <sys/reent.h>
 #include <3ds/types.h>
-	
+
 // Needs to be same as definition in 3ds/thread.h
 // Which cannot itself be included due to Thread struct naming conflict
 struct Thread_tag
@@ -52,12 +52,12 @@ struct Thread_tag
 class ThreadCtrWrapper
 {
 	Thread_tag* thread;
-	
+
 public:
 	ThreadCtrWrapper(ThreadCreateCallback p_callback, void* p_userdata, int32_t p_priority);
-	
+
 	void wait();
-	
+
 	static uint64_t get_thread_id_func_3ds();
 };
 
