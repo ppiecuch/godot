@@ -67,6 +67,7 @@ name is available.
     Emmanuel Leblond (touilleMan)
     Eoin O'Neill (Eoin-ONeill-Yokai)
     Eric Lasota (elasota)
+    Eric M (EricEzaM)
     Eric Rybicki (ericrybick)
     Erik Selecký (rxlecky)
     est31
