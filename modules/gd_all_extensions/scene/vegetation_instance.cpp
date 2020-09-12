@@ -28,14 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-/// TODO
-/*
-   - surface normal rotation as option
-   - slope amount
+// TODO
+//  - surface normal rotation as option
+//  - slope amount
+//  - generate static body and add collision shapes for each instance
 
-   - generate static body and add collision shapes for each instance
-*/
-///
+#ifndef _3D_DISABLED
 
 #include "scene/3d/mesh_instance.h"
 
@@ -279,3 +277,5 @@ VegetationInstance::VegetationInstance() {
 
 VegetationInstance::~VegetationInstance() {
 }
+
+#endif // _3D_DISABLED

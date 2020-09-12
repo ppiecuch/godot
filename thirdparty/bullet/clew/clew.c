@@ -18,6 +18,13 @@ typedef HMODULE CLEW_DYNLIB_HANDLE;
 #define CLEW_DYNLIB_OPEN LoadLibraryA
 #define CLEW_DYNLIB_CLOSE FreeLibrary
 #define CLEW_DYNLIB_IMPORT GetProcAddress
+#elif _3DS
+
+typedef void* CLEW_DYNLIB_HANDLE;
+
+#define CLEW_DYNLIB_OPEN(path) (NULL)
+#define CLEW_DYNLIB_CLOSE
+#define CLEW_DYNLIB_IMPORT
 #else
 #include <dlfcn.h>
 

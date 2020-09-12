@@ -102,6 +102,10 @@ struct PtrToArg {
 	}
 
 MAKE_PTRARG(bool);
+#ifdef _3DS
+MAKE_PTRARG(int);
+MAKE_PTRARG(unsigned int);
+#endif
 MAKE_PTRARGCONV(uint8_t, int64_t);
 MAKE_PTRARGCONV(int8_t, int64_t);
 MAKE_PTRARGCONV(uint16_t, int64_t);

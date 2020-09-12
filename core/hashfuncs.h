@@ -136,13 +136,16 @@ struct HashMapHasherDefault {
 
 	static _FORCE_INLINE_ uint32_t hash(const String &p_string) { return p_string.hash(); }
 	static _FORCE_INLINE_ uint32_t hash(const char *p_cstr) { return hash_djb2(p_cstr); }
-	static _FORCE_INLINE_ uint32_t hash(const uint64_t p_int) { return hash_one_uint64(p_int); }
-
-	static _FORCE_INLINE_ uint32_t hash(const int64_t p_int) { return hash(uint64_t(p_int)); }
 	static _FORCE_INLINE_ uint32_t hash(const float p_float) { return hash_djb2_one_float(p_float); }
 	static _FORCE_INLINE_ uint32_t hash(const double p_double) { return hash_djb2_one_float(p_double); }
-	static _FORCE_INLINE_ uint32_t hash(const uint32_t p_int) { return p_int; }
-	static _FORCE_INLINE_ uint32_t hash(const int32_t p_int) { return (uint32_t)p_int; }
+	static _FORCE_INLINE_ uint32_t hash(const int p_int) { return (uint32_t)p_int; }
+	static _FORCE_INLINE_ uint32_t hash(const unsigned int p_int) { return (uint32_t)p_int; }
+#ifdef NEED_LONG_INT
+	static _FORCE_INLINE_ uint32_t hash(const signed long p_int) { return (uint32_t)p_int; }
+	static _FORCE_INLINE_ uint32_t hash(const unsigned long p_int) { return (uint32_t)p_int; }
+#endif
+	static _FORCE_INLINE_ uint32_t hash(const uint64_t p_int) { return hash_one_uint64(p_int); }
+	static _FORCE_INLINE_ uint32_t hash(const int64_t p_int) { return hash(uint64_t(p_int)); }
 	static _FORCE_INLINE_ uint32_t hash(const uint16_t p_int) { return p_int; }
 	static _FORCE_INLINE_ uint32_t hash(const int16_t p_int) { return (uint32_t)p_int; }
 	static _FORCE_INLINE_ uint32_t hash(const uint8_t p_int) { return p_int; }

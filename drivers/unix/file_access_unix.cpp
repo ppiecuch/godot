@@ -290,13 +290,15 @@ bool FileAccessUnix::file_exists(const String &p_path) {
 	if (err)
 		return false;
 
-#ifdef UNIX_ENABLED
+#ifndef _3DS
+# if defined(UNIX_ENABLED)
 	// See if we have access to the file
 	if (access(filename.utf8().get_data(), F_OK))
 		return false;
-#else
+# else
 	if (_access(filename.utf8().get_data(), 4) == -1)
 		return false;
+# endif
 #endif
 
 	// See if this is a regular file

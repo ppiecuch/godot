@@ -61,7 +61,7 @@
 
 #if !defined(unix) && !defined(__unix__) && !defined(__unix) && \
     !defined(__APPLE__) && !defined(_WIN32) && !defined(__QNXNTO__) && \
-    !defined(__HAIKU__)
+    !defined(__HAIKU__) && !defined(_3DS)
 #error "This module only works on Unix and Windows, see MBEDTLS_NET_C in config.h"
 #endif
 
@@ -438,6 +438,9 @@ int mbedtls_net_accept( mbedtls_net_context *bind_ctx,
         }
         else
         {
+#if defined(_3DS)
+            return( MBEDTLS_ERR_UNSUPPORTED );
+#else
             struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *) &client_addr;
             *ip_len = sizeof( addr6->sin6_addr.s6_addr );
 
@@ -445,6 +448,7 @@ int mbedtls_net_accept( mbedtls_net_context *bind_ctx,
                 return( MBEDTLS_ERR_NET_BUFFER_TOO_SMALL );
 
             memcpy( client_ip, &addr6->sin6_addr.s6_addr, *ip_len);
+#endif
         }
     }
 

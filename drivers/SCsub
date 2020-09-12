@@ -23,11 +23,16 @@ SConscript("coremidi/SCsub")
 SConscript("winmidi/SCsub")
 
 # Graphics drivers
-if env["platform"] != "server":
+if env["platform"] == "3ds":
+    SConscript("3ds/SCsub")
+elif env["platform"] == "psvita":
+    SConscript("psvita/SCsub")
+elif env["platform"] != "server":
     SConscript("gles3/SCsub")
     SConscript("gles2/SCsub")
-    SConscript("apple_metal/SCsub")
     SConscript("gl_context/SCsub")
+    if env["platform"] == "osx":
+        SConscript("metal/SCsub")
 else:
     SConscript("dummy/SCsub")
 

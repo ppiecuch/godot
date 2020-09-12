@@ -222,6 +222,9 @@ public:
 
 	operator PoolVector<uint8_t>() const;
 	operator PoolVector<int>() const;
+#ifdef NEED_LONG_INT
+	operator PoolVector<long int>() const;
+#endif
 	operator PoolVector<real_t>() const;
 	operator PoolVector<String>() const;
 	operator PoolVector<Vector3>() const;
@@ -232,6 +235,9 @@ public:
 	operator Vector<Variant>() const;
 	operator Vector<uint8_t>() const;
 	operator Vector<int>() const;
+#ifdef NEED_LONG_INT
+	operator Vector<long int>() const;
+#endif
 	operator Vector<real_t>() const;
 	operator Vector<String>() const;
 	operator Vector<StringName>() const;
@@ -254,7 +260,6 @@ public:
 #ifdef NEED_LONG_INT
 	Variant(signed long p_long); // real one
 	Variant(unsigned long p_long);
-//Variant(long unsigned int p_long);
 #endif
 	Variant(signed short p_short); // real one
 	Variant(unsigned short p_short);
@@ -288,6 +293,9 @@ public:
 	Variant(const PoolVector<Plane> &p_array); // helper
 	Variant(const PoolVector<uint8_t> &p_raw_array);
 	Variant(const PoolVector<int> &p_int_array);
+#ifdef NEED_LONG_INT
+	Variant(const PoolVector<long int> &p_int_array);
+#endif
 	Variant(const PoolVector<real_t> &p_real_array);
 	Variant(const PoolVector<String> &p_string_array);
 	Variant(const PoolVector<Vector3> &p_vector3_array);
@@ -297,6 +305,9 @@ public:
 	Variant(const Vector<Variant> &p_array);
 	Variant(const Vector<uint8_t> &p_array);
 	Variant(const Vector<int> &p_array);
+#ifdef NEED_LONG_INT
+	Variant(const Vector<long int> &p_array);
+#endif
 	Variant(const Vector<real_t> &p_array);
 	Variant(const Vector<String> &p_array);
 	Variant(const Vector<StringName> &p_array);

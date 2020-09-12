@@ -136,7 +136,9 @@ void register_gd_all_extensions_types() {
 	ClassDB::register_class<BulletManagerBulletType>();
 	ClassDB::register_class<BulletManager>();
 	ClassDB::register_class<Autotilemap>();
+#ifndef _3D_DISABLED
 	ClassDB::register_class<VegetationInstance>();
+#endif
 	ClassDB::register_class<Cable2D>();
 #ifdef TOOLS_ENABLED
 	EditorNode::add_init_callback(editor_init_callback);

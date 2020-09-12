@@ -35,6 +35,9 @@
 #include "core/safe_refcount.h"
 
 #include <stddef.h>
+#ifdef _3DS
+# include <alloca.h> // for alloca
+#endif
 
 #ifndef PAD_ALIGN
 #define PAD_ALIGN 16 //must always be greater than this at much

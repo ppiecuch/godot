@@ -163,6 +163,7 @@ def configure(env):
             "APPLE_STYLE_KEYS",
             "COREAUDIO_ENABLED",
             "COREMIDI_ENABLED",
+            "METAL_ENABLED",
             "GL_SILENCE_DEPRECATION",
         ]
     )

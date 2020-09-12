@@ -216,7 +216,7 @@ RES ResourceFormatDDS::load(const String &p_path, const String &p_original_path,
 		dds_format = DDS_BGR565;
 	} else {
 
-		printf("unrecognized fourcc %x format_flags: %x - rgbbits %i - red_mask %x green mask %x blue mask %x alpha mask %x\n", format_fourcc, format_flags, format_rgb_bits, format_red_mask, format_green_mask, format_blue_mask, format_alpha_mask);
+		printf("unrecognized fourcc %lx format_flags: %lx - rgbbits %li - red_mask %lx green mask %lx blue mask %lx alpha mask %lx\n", format_fourcc, format_flags, format_rgb_bits, format_red_mask, format_green_mask, format_blue_mask, format_alpha_mask);
 		ERR_FAIL_V_MSG(RES(), "Unrecognized or unsupported color layout in DDS '" + p_path + "'.");
 	}
 

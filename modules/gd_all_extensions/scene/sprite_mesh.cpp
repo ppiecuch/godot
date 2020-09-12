@@ -36,13 +36,12 @@
 
 #include "sprite_mesh.h"
 
-// Reference:
+// References:
 // https://stackoverflow.com/questions/6053522/how-to-recalculate-axis-aligned-bounding-box-after-translate-rotate
 // https://github.com/libigl/libigl/issues/514 (Projecting mesh onto a plane)
 // https://github.com/pyvista/pyvista-support/issues/20 (Project points/surface to a plane)
 // https://github.com/patrikhuber/eos/issues/140
 // * https://gamedev.stackexchange.com/questions/10261/android-collision-detection-of-a-3d-object-based-on-a-2d-projection
-
 
 #ifdef TOOLS_ENABLED
 Dictionary SpriteMesh::_edit_get_state() const {
@@ -116,7 +115,7 @@ void SpriteMesh::_update_xform_values() {
 void SpriteMesh::_update_transform() {
 
 	_mesh_xform.set_rotation_and_scale(mesh_angle, mesh_scale);
-	_mesh_xform.elements[2] = get_rect().position + mesh_offset;
+	_mesh_xform.elements[2] = get_position() + mesh_offset;
 
 	VisualServer::get_singleton()->canvas_item_set_transform(get_canvas_item(), _mesh_xform);
 
