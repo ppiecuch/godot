@@ -10,11 +10,13 @@
 #  - devkitARM
 #  - 3ds-zlib
 #  - 3ds-libpng
+#  - citra3d
+#  - picasso
 
 export DEVKITPRO=/opt/devkitpro
 export DEVKITARM=$DEVKITPRO/devkitARM
 export CTRULIB=$DEVKITPRO/libctru
 
-export PATH=$DEVKITARM/bin:$PATH
+export PATH=$DEVKITARM/bin:$DEVKITPRO/tools/bin:$PATH
 
-scons p=3ds disable_3d=true target=release use_mingw=true disable_experimental=yes
+scons p=3ds disable_3d=true disable_advanced_gui=true target=release use_mingw=true disable_experimental=yes
