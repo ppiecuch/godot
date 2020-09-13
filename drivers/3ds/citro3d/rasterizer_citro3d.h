@@ -31,11 +31,16 @@
 #ifndef RASTERIZER_CITRO3D_H
 #define RASTERIZER_CITRO3D_H
 
-#include "core/math/camera_matrix.h"
+#include "core/image.h"
+#include "core/rid.h"
 #include "core/self_list.h"
+#include "core/math/camera_matrix.h"
 #include "scene/resources/mesh.h"
 #include "servers/visual/rasterizer.h"
 #include "servers/visual_server.h"
+
+#include "3ds_godot.h"
+
 
 class RasterizerSceneCitro3D : public RasterizerScene {
 public:
@@ -805,7 +810,7 @@ public:
 	void set_boot_image(const Ref<Image> &p_image, const Color &p_color, bool p_scale, bool p_use_filter = true) {}
 	void set_shader_time_scale(float p_scale) {}
 
-	void initialize() {}
+	void initialize();
 	void begin_frame(double frame_step) {}
 	void set_current_render_target(RID p_render_target) {}
 	void restore_render_target(bool p_3d_was_drawn) {}
@@ -815,22 +820,85 @@ public:
 	void end_frame(bool p_swap_buffers) {}
 	void finalize() {}
 
-	static Error is_viable() {
-		return OK;
-	}
+	static Error is_viable() { return OK; }
 
-	static Rasterizer *_create_current() {
-		return memnew(RasterizerCitro3D);
-	}
+	static Rasterizer *_create_current() { return memnew(RasterizerCitro3D); }
 
-	static void make_current() {
-		_create_func = _create_current;
-	}
+	static void make_current() { _create_func = _create_current; }
 
 	virtual bool is_low_end() const { return true; }
 
 	RasterizerCitro3D() {}
 	~RasterizerCitro3D() {}
+
+	// --- Nintendo 3DS elements ---
+
+	struct TextureNds {
+
+		uint32_t flags;
+		int width, height;
+		C3D_Tex tex;
+		Image::Format format;
+		Image image[6];
+		TextureNds() {
+			tex.data = NULL;
+			flags = width = height = 0;
+			format = Image::FORMAT_L8;
+		}
+
+		~TextureNds() { }
+	};
+
+	mutable RID_Owner<TextureNds> texture_owner;
+
+	struct ShaderNds {
+
+		String vertex_code;
+		String fragment_code;
+		String light_code;
+		VS::ShaderMode mode;
+		Map<StringName,Variant> params;
+		int fragment_line;
+		int vertex_line;
+		int light_line;
+		bool valid;
+		bool has_alpha;
+		bool use_world_transform;
+
+		DVLB_s* dvlb;
+		shaderProgram_s program;
+
+		int location_projection;
+		int location_modelview;
+		int location_worldTransform;
+		int location_extra;
+
+		void set_data(void* data, u32 size) {
+			dvlb = DVLB_ParseFile(reinterpret_cast<u32*>(data), size);
+			shaderProgramSetVsh(&program, &dvlb->DVLE[0]);
+			location_projection = shaderInstanceGetUniformLocation(program.vertexShader, "projection");
+			location_modelview = shaderInstanceGetUniformLocation(program.vertexShader, "modelView");
+			location_worldTransform = shaderInstanceGetUniformLocation(program.vertexShader, "worldTransform");
+			location_extra = shaderInstanceGetUniformLocation(program.vertexShader, "extra");
+		}
+
+		ShaderNds() {
+			dvlb = NULL;
+			shaderProgramInit(&program);
+		}
+		~ShaderNds() {
+			shaderProgramFree(&program);
+			if (dvlb)
+				DVLB_Free(dvlb);
+		}
+	};
+
+	mutable RID_Owner<ShaderNds> shader_owner;
+
+	ShaderNds* canvas_shader;
+	ShaderNds* scene_shader;
+
+	bool draw_next_frame;
 };
 
 #endif // RASTERIZER_CITRO3D_H

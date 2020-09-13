@@ -36,13 +36,7 @@
 #include "core/os/mutex.h"
 #include "core/os/thread.h"
 
-extern "C" {
-#include <3ds/allocator/linear.h>
-#include <3ds/ndsp/channel.h>
-#include <3ds/ndsp/ndsp.h>
-#include <3ds/services/dsp.h>
-#include <3ds/types.h>
-}
+#include "3ds_godot.h"
 
 class AudioDriver3ds : public AudioDriver {
 

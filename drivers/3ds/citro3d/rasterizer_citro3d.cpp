@@ -44,12 +44,20 @@
 			GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGBA8) | GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGB8) | \
 			GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_XY))
 
-/* TEXTURE API */
+#define C3D_CMDBUF_SIZE 0x100000
 
-#ifdef DEBUG
-#define print(...) printf(__VA_ARGS__)
-#else
-#define print(...)
-#endif
+void RasterizerCitro3D::initialize() {
+	print_verbose("citro3d driver init ");
+
+	C3D_Init(C3D_CMDBUF_SIZE);
+
+	draw_next_frame = false;
+
+	canvas_shader = memnew(ShaderNds);
+	canvas_shader->set_data(shader_builtin_2d, sizeof(shader_builtin_2d));
+
+	scene_shader = memnew(ShaderNds);
+	scene_shader->set_data(shader_builtin_3d, sizeof(shader_builtin_3d));
+}
 
 #endif // CITRO3D_ENABLED
