@@ -26,9 +26,10 @@ jobs:
       # Install all packages (except scons)
       - name: Configure dependencies
         run: |
-          sudo apt-get install yasm
+          sudo apt-get install wget yasm
 
-     - name: Configure devKit
+      # Environment for devkitPro
+      - name: Configure devKit
         run: |
           echo "::set-env name=PATH::/opt/devkitpro:${PATH}"
           echo "::set-env name=DEVKITPRO::/opt/devkitpro"
