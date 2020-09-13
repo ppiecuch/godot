@@ -84,7 +84,7 @@ friend class Main;
 	virtual void finalize();
 	virtual void finalize_core();
 
-	virtual bool _check_internal_feature_support(const String &p_feature);
+	virtual bool _check_internal_feature_support(const String &p_feature) { return false; }
 
 public:
 

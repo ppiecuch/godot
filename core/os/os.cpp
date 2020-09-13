@@ -667,8 +667,13 @@ bool OS::has_feature(const String &p_feature) {
 		return true;
 	}
 #endif
-#if defined(__ARM_ARCH_7S__)
-	if (p_feature == "armv7s" || p_feature == "armv7") {
+#if defined(__ARM_ARCH_7A__)
+	if (p_feature == "armv7a" || p_feature == "armv7") {
+		return true;
+	}
+#endif
+#if defined(__ARM_ARCH_4T__)
+	if (p_feature == "armv4t" || p_feature == "armv4") {
 		return true;
 	}
 #endif

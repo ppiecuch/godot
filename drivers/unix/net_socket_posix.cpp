@@ -31,7 +31,7 @@
 #include "net_socket_posix.h"
 
 #ifndef UNIX_SOCKET_UNAVAILABLE
-#if defined(UNIX_ENABLED)
+#if defined(UNIX_ENABLED) || defined(UNIX_SOCKETS_ENABLED)
 
 #include <errno.h>
 #include <netdb.h>
@@ -62,6 +62,11 @@
 #endif
 #if !defined(IPV6_DROP_MEMBERSHIP) && defined(IPV6_LEAVE_GROUP)
 #define IPV6_DROP_MEMBERSHIP IPV6_LEAVE_GROUP
+#endif
+
+#ifdef __GNUC__
+#define htons __htons
+#define ntohs __ntohs
 #endif
 
 // Some custom defines to minimize ifdefs
@@ -100,6 +105,10 @@ size_t NetSocketPosix::_set_addr_storage(struct sockaddr_storage *p_addr, const 
 	memset(p_addr, 0, sizeof(struct sockaddr_storage));
 	if (p_ip_type == IP::TYPE_IPV6 || p_ip_type == IP::TYPE_ANY) { // IPv6 socket
 
+#ifdef IP6_UNAVAILABLE
+		WARN_PRINT("IP6 is not available on this platform");
+		return 0;
+#else
 		// IPv6 only socket with IPv4 address
 		ERR_FAIL_COND_V(!p_ip.is_wildcard() && p_ip_type == IP::TYPE_IPV6 && p_ip.is_ipv4(), 0);
 
@@ -112,6 +121,7 @@ size_t NetSocketPosix::_set_addr_storage(struct sockaddr_storage *p_addr, const 
 			addr6->sin6_addr = in6addr_any;
 		}
 		return sizeof(sockaddr_in6);
+#endif
 	} else { // IPv4 socket
 
 		// IPv4 socket with IPv6 address
@@ -142,10 +152,14 @@ void NetSocketPosix::_set_ip_port(struct sockaddr_storage *p_addr, IP_Address &r
 
 	} else if (p_addr->ss_family == AF_INET6) {
 
+#ifdef IP6_UNAVAILABLE
+		WARN_PRINT("IP6 is not available on this platform");
+#else
 		struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *)p_addr;
 		r_ip.set_ipv6(addr6->sin6_addr.s6_addr);
 
 		r_port = ntohs(addr6->sin6_port);
+#endif
 	};
 }
 
@@ -237,11 +251,18 @@ _FORCE_INLINE_ Error NetSocketPosix::_change_multicast_group(IP_Address p_ip, St
 	// Need to force level and af_family to IP(v4) when using dual stacking and provided multicast group is IPv4
 	IP::Type type = _ip_type == IP::TYPE_ANY && p_ip.is_ipv4() ? IP::TYPE_IPV4 : _ip_type;
 	// This needs to be the proper level for the multicast group, no matter if the socket is dual stacking.
+#ifdef IP6_UNAVAILABLE
+	ERR_FAIL_COND_V(type != IP::TYPE_IPV4, ERR_INVALID_PARAMETER);
+	int level = IPPROTO_IP;
+#else
 	int level = type == IP::TYPE_IPV4 ? IPPROTO_IP : IPPROTO_IPV6;
+#endif
 	int ret = -1;
 
 	IP_Address if_ip;
+#ifndef IP6_UNAVAILABLE
 	uint32_t if_v6id = 0;
+#endif
 	Map<String, IP::Interface_Info> if_info;
 	IP::get_singleton()->get_local_interfaces(&if_info);
 	for (Map<String, IP::Interface_Info>::Element *E = if_info.front(); E; E = E->next()) {
@@ -249,7 +270,9 @@ _FORCE_INLINE_ Error NetSocketPosix::_change_multicast_group(IP_Address p_ip, St
 		if (c.name != p_if_name)
 			continue;
 
+#ifndef IP6_UNAVAILABLE
 		if_v6id = (uint32_t)c.index.to_int64();
+#endif
 		if (type == IP::TYPE_IPV6)
 			break; // IPv6 uses index.
 
@@ -270,11 +293,13 @@ _FORCE_INLINE_ Error NetSocketPosix::_change_multicast_group(IP_Address p_ip, St
 		copymem(&greq.imr_interface, if_ip.get_ipv4(), 4);
 		ret = setsockopt(_sock, level, sock_opt, (const char *)&greq, sizeof(greq));
 	} else {
+#ifndef IP6_UNAVAILABLE
 		struct ipv6_mreq greq;
 		int sock_opt = p_add ? IPV6_ADD_MEMBERSHIP : IPV6_DROP_MEMBERSHIP;
 		copymem(&greq.ipv6mr_multiaddr, p_ip.get_ipv6(), 16);
 		greq.ipv6mr_interface = if_v6id;
 		ret = setsockopt(_sock, level, sock_opt, (const char *)&greq, sizeof(greq));
+#endif
 	}
 	ERR_FAIL_COND_V(ret != 0, FAILED);
 
@@ -566,10 +591,12 @@ Error NetSocketPosix::recvfrom(uint8_t *p_buffer, int p_len, int &r_read, IP_Add
 		r_ip.set_ipv4((uint8_t *)&sin_from->sin_addr);
 		r_port = ntohs(sin_from->sin_port);
 	} else if (from.ss_family == AF_INET6) {
+#ifndef IP6_UNAVAILABLE
 		struct sockaddr_in6 *s6_from = (struct sockaddr_in6 *)&from;
 		r_ip.set_ipv6((uint8_t *)&s6_from->sin6_addr);
 		r_port = ntohs(s6_from->sin6_port);
 	} else {
+#endif
 		// Unsupported socket family, should never happen.
 		ERR_FAIL_V(FAILED);
 	}
@@ -650,6 +677,7 @@ void NetSocketPosix::set_blocking_enabled(bool p_enabled) {
 }
 
 void NetSocketPosix::set_ipv6_only_enabled(bool p_enabled) {
+#ifndef IP6_UNAVAILABLE
 	ERR_FAIL_COND(!is_open());
 	// This option is only available in IPv6 sockets.
 	ERR_FAIL_COND(_ip_type == IP::TYPE_IPV4);
@@ -658,6 +686,7 @@ void NetSocketPosix::set_ipv6_only_enabled(bool p_enabled) {
 	if (setsockopt(_sock, IPPROTO_IPV6, IPV6_V6ONLY, SOCK_CBUF(&par), sizeof(int)) != 0) {
 		WARN_PRINT("Unable to change IPv4 address mapping over IPv6 option");
 	}
+#endif
 }
 
 void NetSocketPosix::set_tcp_no_delay_enabled(bool p_enabled) {
@@ -687,7 +716,7 @@ void NetSocketPosix::set_reuse_port_enabled(bool p_enabled) {
 	ERR_FAIL_COND(!is_open());
 
 // See comment above...
-#ifdef WINDOWS_ENABLED
+#if defined(WINDOWS_ENABLED) || !defined(SO_REUSEPORT)
 #define SO_REUSEPORT SO_REUSEADDR
 #endif
 	int par = p_enabled ? 1 : 0;
@@ -704,13 +733,15 @@ int NetSocketPosix::get_available_bytes() const {
 
 	ERR_FAIL_COND_V(!is_open(), -1);
 
-	unsigned long len;
+	unsigned long len = -1;
+#ifdef FIONREAD
 	int ret = SOCK_IOCTL(_sock, FIONREAD, &len);
 	if (ret == -1) {
 		_get_socket_error();
 		print_verbose("Error when checking available bytes on socket.");
 		return -1;
 	}
+#endif
 	return len;
 }
 

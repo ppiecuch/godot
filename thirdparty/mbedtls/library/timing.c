@@ -65,8 +65,12 @@
 
 #if !defined(unix) && !defined(__unix__) && !defined(__unix) && \
     !defined(__APPLE__) && !defined(_WIN32) && !defined(__QNXNTO__) && \
-    !defined(__HAIKU__) && !defined(_3DS)
+    !defined(__HAIKU__) && !defined(_3DS) && !defined(__psp2__)
 #error "This module only works on Unix and Windows, see MBEDTLS_TIMING_C in config.h"
+#endif
+
+#ifndef _3DS
+#define HAVE_ALARM
 #endif
 
 #ifndef asm
@@ -338,6 +342,7 @@ unsigned long mbedtls_timing_get_timer( struct mbedtls_timing_hr_time *val, int 
     }
 }
 
+#ifdef HAVE_ALARM
 static void sighandler( int signum )
 {
     mbedtls_timing_alarmed = 1;
@@ -356,6 +361,7 @@ void mbedtls_set_alarm( int seconds )
         mbedtls_timing_alarmed = 1;
     }
 }
+#endif /* HAVE_ALARM */
 
 #endif /* _WIN32 && !EFIX64 && !EFI32 */
 
@@ -454,6 +460,7 @@ int mbedtls_timing_self_test( int verbose )
 
     if( verbose != 0 )
         mbedtls_printf( "  TIMING test #1 (set_alarm / get_timer): " );
+#ifdef HAVE_ALARM
 
     {
         secs = 1;
@@ -474,6 +481,10 @@ int mbedtls_timing_self_test( int verbose )
 
     if( verbose != 0 )
         mbedtls_printf( "passed\n" );
+#else
+    if( verbose != 0 )
+        mbedtls_printf( "unavailable\n" );
+#endif /* HAVE_ALARM */
 
     if( verbose != 0 )
         mbedtls_printf( "  TIMING test #2 (set/get_delay        ): " );

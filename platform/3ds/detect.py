@@ -63,6 +63,7 @@ def get_flags():
         ('module_upnp_enabled', False),
         ('module_webm_enabled', False),
         ("builtin_zlib", False),
+        ("builtin_libpng", False),
         ('builtin_pcre2_with_jit', False)
     ]
 
@@ -73,6 +74,8 @@ def build_shader_gen(target, source, env, for_signature):
 
 
 def build_shader_header(target, source, env):
+
+    import os
 
     data = source[0].get_contents()
     data_str = ",".join([str(ord(x)) for x in data])
@@ -145,4 +148,4 @@ def configure(env):
     if not check(env, "builtin_zlib"):
         env.ParseConfig("pkg-config zlib --cflags --libs")
 
-    env.Append(CPPDEFINES=["CITRO3D_ENABLED", "NEED_LONG_INT", "LIBC_FILEIO_ENABLED", "UNIX_SOCKET_UNAVAILABLE"])
+    env.Append(CPPDEFINES=["CITRO3D_ENABLED", "NEED_LONG_INT", "IP6_UNAVAILABLE", "UNIX_SOCKETS_ENABLED", "LIBC_FILEIO_ENABLED"])

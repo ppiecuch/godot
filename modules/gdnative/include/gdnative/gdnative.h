@@ -35,7 +35,7 @@
 extern "C" {
 #endif
 
-#if defined(_WIN32) || defined(__ANDROID__) || defined(__GCW0__) || defined(_3DS)
+#if defined(_WIN32) || defined(__ANDROID__) || defined(__GCW0__) || defined(_3DS) || defined(__psp2__)
 #define GDCALLINGCONV
 #define GDAPI GDCALLINGCONV
 #elif defined(__APPLE__)

@@ -51,4 +51,16 @@ uint64_t wslay_byteswap64(uint64_t x);
 #  define hton64(x) wslay_byteswap64(x)
 #endif /* !WORDS_BIGENDIAN */
 
+#ifdef __GNUC__
+#ifdef __ntohl
+#define ntohl __ntohl
+#endif
+#ifdef __ntohs
+#define ntohs __ntohs
+#endif
+#ifdef __htons
+#define htons __htons
+#endif
+#endif
+
 #endif /* WSLAY_NET_H */

@@ -35,10 +35,7 @@ int main(int argc, char* argv[])
 {
 	OS_3DS os;
 
-	const char* args[] = {"-path", "sat_test"};
-
-	Error err  = Main::setup("3ds", 2, const_cast<char**>(args));
-	if (err==OK)
+	if (Main::setup(argv[0], argc - 1, &argv[1]) != OK)
 	{
 		printf("Running...\n");
 

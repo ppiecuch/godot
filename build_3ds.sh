@@ -17,6 +17,6 @@ export DEVKITPRO=/opt/devkitpro
 export DEVKITARM=$DEVKITPRO/devkitARM
 export CTRULIB=$DEVKITPRO/libctru
 
-export PATH=$DEVKITARM/bin:$DEVKITPRO/tools/bin:$PATH
+export PATH=$DEVKITARM/bin:$DEVKITPRO/tools/bin:/bin:/sbin:/usr/bin:/opt/local/bin
 
-scons p=3ds disable_3d=true disable_advanced_gui=true target=release use_mingw=true disable_experimental=yes
+scons p=3ds target=release use_mingw=true disable_3d=true disable_advanced_gui=true disable_experimental=yes
