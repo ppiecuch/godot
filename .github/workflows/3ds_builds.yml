@@ -9,7 +9,7 @@ env:
   SCONS_CACHE_LIMIT: 4096
 
 jobs:
-  3ds-template:
+  nds-template:
     runs-on: "ubuntu-20.04"
     container: "devkitpro/devkitarm"
     name: Template (target=release, tools=no)
@@ -38,7 +38,7 @@ jobs:
 
       # Upload cache on completion and check it out now
       - name: Load .scons_cache directory
-        id: 3ds-template-cache
+        id: nds-template-cache
         uses: actions/cache@v2
         with:
           path: ${{github.workspace}}/.scons_cache/
