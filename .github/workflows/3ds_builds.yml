@@ -38,7 +38,7 @@ jobs:
       # Configuring devkitPro packages
       - name: Configure devKit packages
         run: |
-          sudo dkp-pacman -Syyu --noconfirm 3ds-libpng 3ds-libz libctru citra3d picasso
+          sudo dkp-pacman -Ss 3ds-libpng 3ds-libz libctru citra3d picasso
 
       # Upload cache on completion and check it out now
       - name: Load .scons_cache directory
