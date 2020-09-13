@@ -3,9 +3,10 @@
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
-/*                    http://www.godotengine.org                         */
+/*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2016 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -26,12 +27,13 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #ifdef _3DS
 
 #include "thread_ctr_wrapper.h"
 #include <3ds.h>
 
-ThreadCtrWrapper::ThreadCtrWrapper(ThreadCreateCallback p_callback, void* p_userdata, int32_t p_priority) {
+ThreadCtrWrapper::ThreadCtrWrapper(ThreadCreateCallback p_callback, void *p_userdata, int32_t p_priority) {
 	thread = threadCreate(p_callback, p_userdata, 64 * 1024, p_priority, -1, false);
 }
 

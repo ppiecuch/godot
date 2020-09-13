@@ -3,9 +3,10 @@
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
-/*                    http://www.godotengine.org                         */
+/*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2016 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -26,17 +27,18 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #ifdef _3DS
 
 #include "thread_3ds.h"
-#include "platform/3ds/os_3ds.h"
 #include "core/os/memory.h"
+#include "platform/3ds/os_3ds.h"
 
 ////////////
 /* Thread */
 ////////////
 
-Thread* Thread3ds::create_func_3ds(ThreadCreateCallback p_callback, void * p_user, const Thread::Settings& p_settings) {
+Thread *Thread3ds::create_func_3ds(ThreadCreateCallback p_callback, void *p_user, const Thread::Settings &p_settings) {
 	// Get base thread priority for relative priority setting
 	int32_t priority;
 	svcGetThreadPriority(&priority, (Thread::_main_thread_id == 0) ? CUR_THREAD_HANDLE : Thread::_main_thread_id);
@@ -46,7 +48,7 @@ Thread* Thread3ds::create_func_3ds(ThreadCreateCallback p_callback, void * p_use
 	else if (p_settings.priority == PRIORITY_HIGH)
 		priority--;
 
-	ThreadCtrWrapper* thread_wrapper = memnew(ThreadCtrWrapper(p_callback, p_user, priority));
+	ThreadCtrWrapper *thread_wrapper = memnew(ThreadCtrWrapper(p_callback, p_user, priority));
 	return memnew(Thread3ds(thread_wrapper));
 }
 
@@ -60,20 +62,18 @@ Thread::ID Thread3ds::get_id() const {
 	return id;
 }
 
-void Thread3ds::wait_to_finish_func_3ds(Thread* p_thread) {
-	Thread3ds *t = static_cast<Thread3ds*>(p_thread);
+void Thread3ds::wait_to_finish_func_3ds(Thread *p_thread) {
+	Thread3ds *t = static_cast<Thread3ds *>(p_thread);
 	t->thread->wait();
 }
 
-Thread3ds::Thread3ds(ThreadCtrWrapper* p_thread) {
+Thread3ds::Thread3ds(ThreadCtrWrapper *p_thread) {
 	thread = p_thread;
 }
 
 Thread3ds::~Thread3ds() {
 	memdelete(thread);
 }
-
-
 
 ///////////
 /* Mutex */
@@ -89,10 +89,9 @@ Mutex3ds::Mutex3ds(bool p_recursive) {
 }
 
 Mutex3ds::~Mutex3ds() {
-
 }
 
-Mutex* Mutex3ds::create(bool p_recursive) {
+Mutex *Mutex3ds::create(bool p_recursive) {
 	return memnew(Mutex3ds(p_recursive));
 }
 
@@ -124,13 +123,11 @@ Error Mutex3ds::try_lock() {
 	return (ret == 0) ? OK : ERR_BUSY;
 }
 
-
-
 ///////////////
 /* Semaphore */
 ///////////////
 
-Semaphore* Semaphore3ds::create() {
+Semaphore *Semaphore3ds::create() {
 	return memnew(Semaphore3ds);
 }
 
@@ -139,4 +136,3 @@ void Semaphore3ds::make_default() {
 }
 
 #endif // _3DS
-

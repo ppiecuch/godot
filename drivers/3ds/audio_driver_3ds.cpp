@@ -3,9 +3,10 @@
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
-/*                    http://www.godotengine.org                         */
+/*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2016 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -26,6 +27,7 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #ifdef _3DS
 #include "audio_driver_3ds.h"
 
@@ -36,15 +38,14 @@
 
 static int channel_num = 1;
 
-
 Error AudioDriver3ds::init() {
 
 	if (ndspInit() < 0)
 		return FAILED;
 
-	active=false;
-	thread_exited=false;
-	exit_thread=false;
+	active = false;
+	thread_exited = false;
+	exit_thread = false;
 	pcm_open = false;
 	samples_in = NULL;
 
@@ -53,11 +54,11 @@ Error AudioDriver3ds::init() {
 	channels = 2;
 
 	int latency = GLOBAL_GET("audio/output_latency");
-	buffer_size = closest_power_of_2( latency * mix_rate / 1000 );
+	buffer_size = closest_power_of_2(latency * mix_rate / 1000);
 
-	samples_in = memnew_arr(int32_t, buffer_size*channels);
+	samples_in = memnew_arr(int32_t, buffer_size * channels);
 
-	ndspWaveBuf* buffer = ndsp_buffers;
+	ndspWaveBuf *buffer = ndsp_buffers;
 	for (int i = 0; i < NDSP_BUFFER_COUNT; ++i) {
 		memset(buffer, 0, sizeof(ndspWaveBuf));
 		buffer->data_vaddr = linearAlloc(buffer_size * channels * sizeof(int16_t));
@@ -78,12 +79,12 @@ Error AudioDriver3ds::init() {
 	return OK;
 };
 
-void AudioDriver3ds::thread_func(void* p_udata) {
+void AudioDriver3ds::thread_func(void *p_udata) {
 
 	int buffer_index = 0;
-	ndspWaveBuf* buffer;
+	ndspWaveBuf *buffer;
 
-	AudioDriver3ds* ad = (AudioDriver3ds*)p_udata;
+	AudioDriver3ds *ad = (AudioDriver3ds *)p_udata;
 
 	int sample_count = ad->buffer_size * ad->channels;
 
@@ -104,7 +105,7 @@ void AudioDriver3ds::thread_func(void* p_udata) {
 			ad->audio_server_process(ad->buffer_size, ad->samples_in);
 			ad->unlock();
 
-			for(int i = 0; i < sample_count; ++i)
+			for (int i = 0; i < sample_count; ++i)
 				buffer->data_pcm16[i] = ad->samples_in[i] >> 16;
 
 		} else
@@ -118,7 +119,7 @@ void AudioDriver3ds::thread_func(void* p_udata) {
 
 	ndspChnWaveBufClear(channel_num);
 
-	ad->thread_exited=true;
+	ad->thread_exited = true;
 };
 
 void AudioDriver3ds::start() {
@@ -179,7 +180,7 @@ AudioDriver3ds::AudioDriver3ds() {
 	thread = NULL;
 };
 
-AudioDriver3ds::~AudioDriver3ds() {
+AudioDriver3ds::~AudioDriver3ds(){
 
 };
 

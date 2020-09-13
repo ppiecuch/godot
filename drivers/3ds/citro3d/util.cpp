@@ -3,9 +3,10 @@
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
-/*                    http://www.godotengine.org                         */
+/*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2016 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -26,17 +27,17 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #ifdef _3DS
 
 #include "util.h"
 
 extern "C" {
-# include <tex3ds.h>
-# include <3ds/services/gspgpu.h>
+#include <3ds/services/gspgpu.h>
+#include <tex3ds.h>
 }
 
-u32 next_pow2(u32 v)
-{
+u32 next_pow2(u32 v) {
 	v--;
 	v |= v >> 1;
 	v |= v >> 2;
@@ -48,30 +49,26 @@ u32 next_pow2(u32 v)
 }
 
 // Grabbed from Citra Emulator (citra/src/video_core/utils.h)
-static inline u32 morton_interleave(u32 x, u32 y)
-{
+static inline u32 morton_interleave(u32 x, u32 y) {
 	u32 i = (x & 7) | ((y & 7) << 8); // ---- -210
-	i = (i ^ (i << 2)) & 0x1313;      // ---2 --10
-	i = (i ^ (i << 1)) & 0x1515;      // ---2 -1-0
-	i = (i | (	i >> 7)) & 0x3F;
+	i = (i ^ (i << 2)) & 0x1313; // ---2 --10
+	i = (i ^ (i << 1)) & 0x1515; // ---2 -1-0
+	i = (i | (i >> 7)) & 0x3F;
 	return i;
 }
 
 //Grabbed from Citra Emulator (citra/src/video_core/utils.h)
-static inline u32 get_morton_offset(u32 x, u32 y, u32 bytes_per_pixel)
-{
+static inline u32 get_morton_offset(u32 x, u32 y, u32 bytes_per_pixel) {
 	u32 i = morton_interleave(x, y);
 	unsigned int offset = (x & ~7) * 8;
 	return (i + offset) * bytes_per_pixel;
 }
 
-void texture_tile_sw(C3D_Tex *tex, const void *data, int w, int h)
-{
-	const u32* src = reinterpret_cast<const u32*>(data);
-	u32* dest = reinterpret_cast<u32*>(tex->data);
+void texture_tile_sw(C3D_Tex *tex, const void *data, int w, int h) {
+	const u32 *src = reinterpret_cast<const u32 *>(data);
+	u32 *dest = reinterpret_cast<u32 *>(tex->data);
 	for (int y = 0; y < h; y++)
-		for (int x = 0; x < w; x++)
-		{
+		for (int x = 0; x < w; x++) {
 			int dest_y = (tex->height - 1 - y);
 			u32 coarse_y = dest_y & ~7;
 			u32 dst_offset = get_morton_offset(x, dest_y, 1) + coarse_y * tex->width;
@@ -84,21 +81,19 @@ void texture_tile_sw(C3D_Tex *tex, const void *data, int w, int h)
 }
 
 // Minimum texture dimension seems to be 64 pixels
-void texture_tile_hw(C3D_Tex *tex, const void *data, int w, int h)
-{
+void texture_tile_hw(C3D_Tex *tex, const void *data, int w, int h) {
 	const u32 flags = (GX_TRANSFER_FLIP_VERT(1) | GX_TRANSFER_OUT_TILED(1) | GX_TRANSFER_RAW_COPY(0) |
-		GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGBA8) | GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGBA8) |
-		GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_NO));
+					   GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGBA8) | GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGBA8) |
+					   GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_NO));
 
-	GSPGPU_FlushDataCache(data, w*h*4);
+	GSPGPU_FlushDataCache(data, w * h * 4);
 
 	GX_DisplayTransfer(
-		(u32*)data,
-		GX_BUFFER_DIM(w, h),
-		(u32*)tex->data,
-		GX_BUFFER_DIM(tex->width, tex->height),
-		flags
-	);
+			(u32 *)data,
+			GX_BUFFER_DIM(w, h),
+			(u32 *)tex->data,
+			GX_BUFFER_DIM(tex->width, tex->height),
+			flags);
 
 	gspWaitForPPF();
 	C3D_TexFlush(tex);

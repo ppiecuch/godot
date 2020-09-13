@@ -3,9 +3,10 @@
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
-/*                    http://www.godotengine.org                         */
+/*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2016 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -26,35 +27,34 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #ifndef THREAD_CTR_WRAPPER_H
 #define THREAD_CTR_WRAPPER_H
 
 typedef void (*ThreadCreateCallback)(void *p_userdata);
 
 extern "C" {
-#include <sys/reent.h>
 #include <3ds/types.h>
+#include <sys/reent.h>
 
 // Needs to be same as definition in 3ds/thread.h
 // Which cannot itself be included due to Thread struct naming conflict
-struct Thread_tag
-{
+struct Thread_tag {
 	Handle handle;
 	ThreadFunc ep;
-	void* arg;
+	void *arg;
 	int rc;
 	bool detached, finished;
 	struct _reent reent;
-	void* stacktop;
+	void *stacktop;
 };
 }
 
-class ThreadCtrWrapper
-{
-	Thread_tag* thread;
+class ThreadCtrWrapper {
+	Thread_tag *thread;
 
 public:
-	ThreadCtrWrapper(ThreadCreateCallback p_callback, void* p_userdata, int32_t p_priority);
+	ThreadCtrWrapper(ThreadCreateCallback p_callback, void *p_userdata, int32_t p_priority);
 
 	void wait();
 

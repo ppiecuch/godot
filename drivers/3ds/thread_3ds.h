@@ -3,9 +3,10 @@
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
-/*                    http://www.godotengine.org                         */
+/*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2016 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -26,31 +27,31 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #ifndef THREAD_3DS_H
 #define THREAD_3DS_H
 
-#include "core/os/thread.h"
 #include "core/os/mutex.h"
 #include "core/os/semaphore.h"
+#include "core/os/thread.h"
 #include "thread_ctr_wrapper.h"
 
 extern "C" {
-# include <3ds/types.h>
-# include <3ds/svc.h>
-# include <3ds/synchronization.h>
+#include <3ds/svc.h>
+#include <3ds/synchronization.h>
+#include <3ds/types.h>
 }
-
 
 class Thread3ds : public Thread {
 
-	static Thread* create_func_3ds(ThreadCreateCallback p_callback, void * p_user, const Settings& p_settings=Settings());
-	static void wait_to_finish_func_3ds(Thread* p_thread);
+	static Thread *create_func_3ds(ThreadCreateCallback p_callback, void *p_user, const Settings &p_settings = Settings());
+	static void wait_to_finish_func_3ds(Thread *p_thread);
 
-	ThreadCtrWrapper* thread;
+	ThreadCtrWrapper *thread;
 	ID id;
 
 public:
-	Thread3ds(ThreadCtrWrapper* p_thread);
+	Thread3ds(ThreadCtrWrapper *p_thread);
 	~Thread3ds();
 
 	virtual ID get_id() const;
@@ -58,17 +59,15 @@ public:
 	static void make_default();
 };
 
-
 class Mutex3ds : public Mutex {
 
-	static Mutex* create(bool p_recursive);
+	static Mutex *create(bool p_recursive);
 
 	bool is_recursive;
 	LightLock lightLock;
 	RecursiveLock recursiveLock;
 
 public:
-
 	virtual void lock();
 	virtual void unlock();
 	virtual Error try_lock();
@@ -79,10 +78,9 @@ public:
 	~Mutex3ds();
 };
 
-
 class Semaphore3ds : public Semaphore {
 
-	static Semaphore* create();
+	static Semaphore *create();
 
 public:
 	virtual Error wait() { return OK; };
@@ -90,7 +88,6 @@ public:
 	virtual int get() const { return 0; }; ///< get semaphore value
 
 	static void make_default();
-
 };
 
 #endif

@@ -3,9 +3,10 @@
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
-/*                    http://www.godotengine.org                         */
+/*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2016 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -26,22 +27,22 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #ifndef AUDIO_DRIVER_3DS_H
 #define AUDIO_DRIVER_3DS_H
 
 #include "servers/audio_server.h"
 
-#include "core/os/thread.h"
 #include "core/os/mutex.h"
+#include "core/os/thread.h"
 
 extern "C" {
-# include <3ds/types.h>
-# include <3ds/ndsp/ndsp.h>
-# include <3ds/ndsp/channel.h>
-# include <3ds/allocator/linear.h>
-# include <3ds/services/dsp.h>
+#include <3ds/allocator/linear.h>
+#include <3ds/ndsp/channel.h>
+#include <3ds/ndsp/ndsp.h>
+#include <3ds/services/dsp.h>
+#include <3ds/types.h>
 }
-
 
 class AudioDriver3ds : public AudioDriver {
 
@@ -49,14 +50,14 @@ class AudioDriver3ds : public AudioDriver {
 		NDSP_BUFFER_COUNT = 3,
 	};
 
-	Thread* thread;
-	Mutex* mutex;
+	Thread *thread;
+	Mutex *mutex;
 
-	int32_t* samples_in;
+	int32_t *samples_in;
 
 	ndspWaveBuf ndsp_buffers[NDSP_BUFFER_COUNT];
 
-	static void thread_func(void* p_udata);
+	static void thread_func(void *p_udata);
 	int buffer_size;
 
 	unsigned int mix_rate;
@@ -70,8 +71,7 @@ class AudioDriver3ds : public AudioDriver {
 	bool pcm_open;
 
 public:
-
-	const char* get_name() const {
+	const char *get_name() const {
 		return "3DS NDSP";
 	};
 

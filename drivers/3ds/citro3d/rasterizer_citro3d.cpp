@@ -3,9 +3,10 @@
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
-/*                    http://www.godotengine.org                         */
+/*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2016 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -26,6 +27,7 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #ifdef CITRO3D_ENABLED
 
 #include "core/os/os.h"
@@ -37,18 +39,17 @@
 #include "shaders/2d.h"
 #include "shaders/3d.h"
 
-#define DISPLAY_TRANSFER_FLAGS \
-	(GX_TRANSFER_FLIP_VERT(0) | GX_TRANSFER_OUT_TILED(0) | GX_TRANSFER_RAW_COPY(0) | \
-	GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGBA8) | GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGB8) | \
-	GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_XY))
+#define DISPLAY_TRANSFER_FLAGS                                                                            \
+	(GX_TRANSFER_FLIP_VERT(0) | GX_TRANSFER_OUT_TILED(0) | GX_TRANSFER_RAW_COPY(0) |                      \
+			GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGBA8) | GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGB8) | \
+			GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_XY))
 
 /* TEXTURE API */
 
 #ifdef DEBUG
-# define print(...) printf(__VA_ARGS__)
+#define print(...) printf(__VA_ARGS__)
 #else
-# define print(...)
+#define print(...)
 #endif
-
 
 #endif // CITRO3D_ENABLED

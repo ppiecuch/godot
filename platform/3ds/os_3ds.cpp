@@ -3,9 +3,10 @@
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
-/*                    http://www.godotengine.org                         */
+/*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2016 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -31,13 +32,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <sys/time.h>
+#include <time.h>
 
-#include "core/print_string.h"
 #include "core/os/memory.h"
-#include "drivers/unix/file_access_unix.h"
+#include "core/print_string.h"
 #include "drivers/unix/dir_access_unix.h"
+#include "drivers/unix/file_access_unix.h"
 #include "servers/physics_server.h"
 #include "servers/visual/visual_server_raster.h"
 #ifndef NO_THREADS
@@ -45,59 +46,54 @@
 #endif
 #include "main/main.h"
 
-#include "os_3ds.h"
 #include "drivers/3ds/citro3d/rasterizer_citro3d.h"
 #include "drivers/3ds/thread_3ds.h"
+#include "os_3ds.h"
 
 #include "3ds_godot.h"
 // Big stack thanks to CANVAS_ITEM_Z_MAX among other things
-extern "C" { u32 __stacksize__ = 1024 * 128; }
+extern "C" {
+u32 __stacksize__ = 1024 * 128;
+}
 
 static aptHookCookie apt_hook_cookie;
 
-static void apt_hook_callback(APT_HookType hook, void* param)
-{
+static void apt_hook_callback(APT_HookType hook, void *param) {
 	if (hook == APTHOOK_ONRESTORE || hook == APTHOOK_ONWAKEUP) {
-
 	}
 }
 
-
-OS_3DS::OS_3DS()
-: video_mode(800, 480, true, false, false)
-{
+OS_3DS::OS_3DS() :
+		video_mode(800, 480, true, false, false) {
 	gfxInitDefault();
 	consoleInit(GFX_BOTTOM, NULL);
 
 	aptHook(&apt_hook_cookie, apt_hook_callback, this);
 
-// 	set_low_processor_usage_mode(true);
+	// 	set_low_processor_usage_mode(true);
 	_render_thread_mode = RENDER_THREAD_UNSAFE;
 	AudioDriverManager::add_driver(&audio_driver);
 
 	use_vsync = true;
 }
 
-OS_3DS::~OS_3DS()
-{
+OS_3DS::~OS_3DS() {
 	gfxExit();
 }
 
-void OS_3DS::run()
-{
+void OS_3DS::run() {
 	if (!main_loop)
 		return;
 
 	main_loop->init();
 
-	while (aptMainLoop())
-	{
+	while (aptMainLoop()) {
 		processInput();
 
 		if (hidKeysDown() & KEY_SELECT)
 			break;
 
-		if (Main::iteration()==true)
+		if (Main::iteration() == true)
 			break;
 
 		printf("fps:%f\n", Engine::get_singleton()->get_frames_per_second());
@@ -106,8 +102,7 @@ void OS_3DS::run()
 	main_loop->finish();
 }
 
-void OS_3DS::initialize_core()
-{
+void OS_3DS::initialize_core() {
 	Thread3ds::make_default();
 	Semaphore3ds::make_default();
 	Mutex3ds::make_default();
@@ -130,15 +125,14 @@ void OS_3DS::initialize_core()
 	ticks_start = svcGetSystemTick();
 }
 
-Error OS_3DS::initialize(const VideoMode& p_desired, int p_video_driver, int p_audio_driver)
-{
+Error OS_3DS::initialize(const VideoMode &p_desired, int p_video_driver, int p_audio_driver) {
 	main_loop = NULL;
 
-	visual_server = memnew( VisualServerRaster() );
+	visual_server = memnew(VisualServerRaster());
 
 #ifndef NO_THREADS
 	if (get_render_thread_mode() != RENDER_THREAD_UNSAFE) {
-		visual_server = 	memnew(VisualServerWrapMT(visual_server,get_render_thread_mode()==RENDER_SEPARATE_THREAD));
+		visual_server = memnew(VisualServerWrapMT(visual_server, get_render_thread_mode() == RENDER_SEPARATE_THREAD));
 	}
 #endif
 
@@ -147,32 +141,29 @@ Error OS_3DS::initialize(const VideoMode& p_desired, int p_video_driver, int p_a
 		ERR_PRINT("Initializing audio failed.");
 	}
 
-	audio_server = memnew( AudioServer() );
+	audio_server = memnew(AudioServer());
 	audio_server->init();
 
 	visual_server->init();
 
-	input = memnew( InputDefault );
+	input = memnew(InputDefault);
 
 	return OK;
 }
 
-void OS_3DS::delete_main_loop()
-{
+void OS_3DS::delete_main_loop() {
 	if (main_loop)
 		memdelete(main_loop);
-	main_loop=NULL;
+	main_loop = NULL;
 }
 
-void OS_3DS::set_main_loop( MainLoop * p_main_loop )
-{
-	main_loop=p_main_loop;
+void OS_3DS::set_main_loop(MainLoop *p_main_loop) {
+	main_loop = p_main_loop;
 	input->set_main_loop(p_main_loop);
 }
 
-void OS_3DS::finalize()
-{
-	if(main_loop)
+void OS_3DS::finalize() {
+	if (main_loop)
 		memdelete(main_loop);
 	main_loop = NULL;
 
@@ -185,37 +176,32 @@ void OS_3DS::finalize()
 	memdelete(visual_server);
 }
 
-void OS_3DS::finalize_core()
-{
+void OS_3DS::finalize_core() {
 }
 
-void OS_3DS::vprint(const char* p_format, va_list p_list,bool p_stder)
-{
+void OS_3DS::vprint(const char *p_format, va_list p_list, bool p_stder) {
 	if (p_stder) {
-		vfprintf(stderr,p_format,p_list);
+		vfprintf(stderr, p_format, p_list);
 		fflush(stderr);
 	} else {
-		vprintf(p_format,p_list);
+		vprintf(p_format, p_list);
 		fflush(stdout);
 	}
 }
 
-void OS_3DS::alert(const String& p_alert,const String& p_title)
-{
-	fprintf(stderr,"ERROR: %s\n",p_alert.utf8().get_data());
+void OS_3DS::alert(const String &p_alert, const String &p_title) {
+	fprintf(stderr, "ERROR: %s\n", p_alert.utf8().get_data());
 }
 
-Error OS_3DS::set_cwd(const String& p_cwd)
-{
+Error OS_3DS::set_cwd(const String &p_cwd) {
 	printf("set cwd: %s", p_cwd.utf8().get_data());
-	if (chdir(p_cwd.utf8().get_data())!=0)
+	if (chdir(p_cwd.utf8().get_data()) != 0)
 		return ERR_CANT_OPEN;
 
 	return OK;
 }
 
-OS::Date OS_3DS::get_date(bool utc) const
-{
+OS::Date OS_3DS::get_date(bool utc) const {
 
 	time_t t = time(NULL);
 	struct tm *lt;
@@ -236,8 +222,7 @@ OS::Date OS_3DS::get_date(bool utc) const
 	return ret;
 }
 
-OS::Time OS_3DS::get_time(bool utc) const
-{
+OS::Time OS_3DS::get_time(bool utc) const {
 	time_t t = time(NULL);
 	struct tm *lt;
 	if (utc)
@@ -252,8 +237,7 @@ OS::Time OS_3DS::get_time(bool utc) const
 	return ret;
 }
 
-OS::TimeZoneInfo OS_3DS::get_time_zone_info() const
-{
+OS::TimeZoneInfo OS_3DS::get_time_zone_info() const {
 	time_t t = time(NULL);
 	struct tm *lt = localtime(&t);
 	char name[16];
@@ -279,26 +263,22 @@ OS::TimeZoneInfo OS_3DS::get_time_zone_info() const
 	return ret;
 }
 
-void OS_3DS::delay_usec(uint32_t p_usec) const
-{
+void OS_3DS::delay_usec(uint32_t p_usec) const {
 	svcSleepThread(1000ULL * p_usec);
 }
 
 #define TICKS_PER_SEC 268123480ULL
 #define TICKS_PER_USEC 268
 
-uint64_t OS_3DS::get_ticks_usec() const
-{
+uint64_t OS_3DS::get_ticks_usec() const {
 	return (svcGetSystemTick() - ticks_start) / TICKS_PER_USEC;
 }
 
-uint64_t OS_3DS::get_unix_time() const
-{
+uint64_t OS_3DS::get_unix_time() const {
 	return time(NULL);
 }
 
-uint64_t OS_3DS::get_system_time_secs() const
-{
+uint64_t OS_3DS::get_system_time_secs() const {
 	struct timeval tv_now;
 	gettimeofday(&tv_now, NULL);
 	//localtime(&tv_now.tv_usec);
@@ -306,15 +286,13 @@ uint64_t OS_3DS::get_system_time_secs() const
 	return uint64_t(tv_now.tv_sec);
 }
 
-void OS_3DS::swap_buffers()
-{
+void OS_3DS::swap_buffers() {
 	gfxSwapBuffersGpu();
 	if (use_vsync)
 		gspWaitForVBlank();
 }
 
-int OS_3DS::get_processor_count() const
-{
+int OS_3DS::get_processor_count() const {
 	return 1;
 }
 
@@ -326,8 +304,8 @@ static u32 buttons[KEY_MAX] = {
 	KEY_X,
 	KEY_L,
 	KEY_R,
-	KEY_ZL,    // L2
-	KEY_ZR,    // R2
+	KEY_ZL, // L2
+	KEY_ZR, // R2
 	KEY_TOUCH, // L3 substitute
 	KEY_TOUCH, // R3 substitute
 	KEY_SELECT,
@@ -338,14 +316,12 @@ static u32 buttons[KEY_MAX] = {
 	KEY_DRIGHT,
 };
 
-void OS_3DS::processInput()
-{
+void OS_3DS::processInput() {
 	hidScanInput();
 	u32 kDown = hidKeysDown();
 	u32 kUp = hidKeysUp();
 
-	for (int i = 0; i < KEY_MAX; ++i)
-	{
+	for (int i = 0; i < KEY_MAX; ++i) {
 		if (buttons[i] & kDown)
 			input->joy_button(0, i, true);
 		else if (buttons[i] & kUp)

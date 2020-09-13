@@ -184,7 +184,8 @@ struct CSGBrushOperation {
 		void insert(const CSGBrush &p_brush, int p_brush_face);
 		void addFacesToMesh(MeshMerge &r_mesh_merge, bool p_smooth, bool p_invert, const Ref<Material> &p_material, bool p_from_b);
 
-		Build2DFaces() : vertex_snap2(0) {}
+		Build2DFaces() :
+				vertex_snap2(0) {}
 		Build2DFaces(const CSGBrush &p_brush, int p_brush_face, float p_vertex_snap2);
 	};
 

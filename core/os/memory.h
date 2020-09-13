@@ -36,7 +36,7 @@
 
 #include <stddef.h>
 #ifdef _3DS
-# include <alloca.h> // for alloca
+#include <alloca.h> // for alloca
 #endif
 
 #ifndef PAD_ALIGN

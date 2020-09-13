@@ -3,9 +3,10 @@
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
-/*                    http://www.godotengine.org                         */
+/*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2016 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -26,20 +27,21 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #include "export.h"
-#include "platform/3ds/logo.gen.h"
 #include "editor/editor_export.h"
+#include "platform/3ds/logo.gen.h"
 #include "scene/resources/texture.h"
 
 void register_3ds_exporter() {
 
-    Ref<Image> img = memnew(Image(_3ds_logo));
+	Ref<Image> img = memnew(Image(_3ds_logo));
 	Ref<ImageTexture> logo;
 	logo.instance();
 	logo->create_from_image(img);
 
 	{
-		Ref<EditorExportPlatformPC> exporter = Ref<EditorExportPlatformPC>( memnew(EditorExportPlatformPC) );
+		Ref<EditorExportPlatformPC> exporter = Ref<EditorExportPlatformPC>(memnew(EditorExportPlatformPC));
 		exporter->set_extension(".elf");
 		exporter->set_release_32("3ds_release");
 		exporter->set_debug_32("3ds_debug");
@@ -47,5 +49,4 @@ void register_3ds_exporter() {
 		exporter->set_logo(logo);
 		EditorExport::get_singleton()->add_export_platform(exporter);
 	}
-
 }
