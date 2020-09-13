@@ -36,9 +36,9 @@ def can_build():
     envstr = "PKG_CONFIG_DIR= PKG_CONFIG_PATH= PKG_CONFIG_LIBDIR=${DEVKITPRO}/portlibs/3ds/lib/pkgconfig:${DEVKITPRO}/portlibs/armv6k/lib/pkgconfig"
 
     for exe in ["pkg-config", "picasso"]:
-        errorval = os.system("%s --version > /dev/null"%exe)
+        errorval = os.system("%s --version > /dev/null" % exe)
         if errorval:
-            print("%s not found... 3ds disabled."%exe)
+            print("%s not found... 3ds disabled." % exe)
             return False
 
     return True  # 3DS enabled
@@ -60,11 +60,11 @@ def get_flags():
         ("module_dds_enabled", False),
         ("module_pvr_enabled", False),
         ("module_etc1_enabled", False),
-        ('module_upnp_enabled', False),
-        ('module_webm_enabled', False),
+        ("module_upnp_enabled", False),
+        ("module_webm_enabled", False),
         ("builtin_zlib", False),
         ("builtin_libpng", False),
-        ('builtin_pcre2_with_jit', False)
+        ("builtin_pcre2_with_jit'", False)
     ]
 
 
@@ -115,7 +115,15 @@ def configure(env):
     env.Append(CCFLAGS=["-march=armv6k", "-mtune=mpcore", "-mfloat-abi=hard", "-mtp=soft"])
     env.Append(CCFLAGS=["-mword-relocations", "-fomit-frame-pointer"])
 
-    env.Append(CCFLAGS=["-Wno-maybe-uninitialized", "-Wno-strict-aliasing", "-Wno-switch", "-Wno-sign-compare", "-Wno-shadow=compatible-local"])
+    env.Append(
+        CCFLAGS=[
+            "-Wno-maybe-uninitialized",
+            "-Wno-strict-aliasing",
+            "-Wno-switch",
+            "-Wno-sign-compare",
+            "-Wno-shadow=compatible-local",
+        ]
+    )
     env.Append(CXXFLAGS=["-Wno-class-memaccess"])
 
     devkitpro_path = os.environ["DEVKITPRO"]
@@ -148,4 +156,12 @@ def configure(env):
     if not check(env, "builtin_zlib"):
         env.ParseConfig("pkg-config zlib --cflags --libs")
 
-    env.Append(CPPDEFINES=["CITRO3D_ENABLED", "NEED_LONG_INT", "IP6_UNAVAILABLE", "UNIX_SOCKETS_ENABLED", "LIBC_FILEIO_ENABLED"])
+    env.Append(
+        CPPDEFINES=[
+            "CITRO3D_ENABLED",
+            "NEED_LONG_INT",
+            "IP6_UNAVAILABLE",
+            "UNIX_SOCKETS_ENABLED",
+            "LIBC_FILEIO_ENABLED",
+        ]
+    )

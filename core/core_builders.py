@@ -86,7 +86,15 @@ def make_authors_header(target, source, env):
 
 
 def make_donors_header(target, source, env):
-    sections = ["Platinum sponsors", "Gold sponsors", "Bronze sponsors", "Mini sponsors", "Gold donors", "Silver donors", "Bronze donors"]
+    sections = [
+        "Platinum sponsors",
+        "Gold sponsors",
+        "Bronze sponsors",
+        "Mini sponsors",
+        "Gold donors",
+        "Silver donors",
+        "Bronze donors",
+    ]
     sections_id = [
         "DONORS_SPONSOR_PLAT",
         "DONORS_SPONSOR_GOLD",
