@@ -26,7 +26,7 @@ jobs:
       # Install all packages (except scons)
       - name: Configure dependencies
         run: |
-          sudo apt-get install wget yasm
+          sudo apt-get install -y wget yasm
 
       # Environment for devkitPro
       - name: Configure devKit
