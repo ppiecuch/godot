@@ -65,8 +65,12 @@
 #endif
 
 #ifdef __GNUC__
+#ifdef __htons
 #define htons __htons
+#endif
+#ifdef __ntohs
 #define ntohs __ntohs
+#endif
 #endif
 
 // Some custom defines to minimize ifdefs
