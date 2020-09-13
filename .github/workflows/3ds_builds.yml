@@ -33,11 +33,6 @@ jobs:
         run: |
           echo "::set-env name=CTRULIB::${DEVKITARM}"
 
-      # Configuring devkitPro packages
-      - name: Configure devKit packages
-        run: |
-          sudo dkp-pacman -Ss 3ds-libpng 3ds-libz libctru citra3d picasso
-
       # Upload cache on completion and check it out now
       - name: Load .scons_cache directory
         id: nds-template-cache
