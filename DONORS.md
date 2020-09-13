@@ -31,7 +31,6 @@ generous deed immortalized in the next stable release of Godot Engine.
     albinaask
     Alejandro Saucedo
     Andrew Dunai
-    Brandon Lamb
     Christian Baune
     Christoffer Sundbom
     Christopher Montesano
