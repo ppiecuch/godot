@@ -33,8 +33,6 @@ def can_build():
     if os.name == "nt":
         return False
 
-    envstr = "PKG_CONFIG_DIR= PKG_CONFIG_PATH= PKG_CONFIG_LIBDIR=${DEVKITPRO}/portlibs/3ds/lib/pkgconfig:${DEVKITPRO}/portlibs/armv6k/lib/pkgconfig"
-
     for exe in ["pkg-config", "picasso"]:
         errorval = os.system("%s --version > /dev/null" % exe)
         if errorval:
@@ -149,12 +147,14 @@ def configure(env):
     elif env["target"] == "debug":
         env.Append(CCFLAGS=["-g2", "-Wall", "-DDEBUG_ENABLED", "-DDEBUG_MEMORY_ENABLED"])
 
+    envstr = "PKG_CONFIG_DIR= PKG_CONFIG_PATH= PKG_CONFIG_LIBDIR=${DEVKITPRO}/portlibs/3ds/lib/pkgconfig:${DEVKITPRO}/portlibs/armv6k/lib/pkgconfig"
+
     if not check(env, "builtin_freetype"):
-        env.ParseConfig("pkg-config freetype2 --cflags --libs")
+        env.ParseConfig("%s pkg-config freetype2 --cflags --libs" % envstr)
     if not check(env, "builtin_libpng"):
-        env.ParseConfig("pkg-config libpng --cflags --libs")
+        env.ParseConfig("%s pkg-config libpng --cflags --libs" % envstr)
     if not check(env, "builtin_zlib"):
-        env.ParseConfig("pkg-config zlib --cflags --libs")
+        env.ParseConfig("%s pkg-config zlib --cflags --libs" % envstr)
 
     env.Append(
         CPPDEFINES=[

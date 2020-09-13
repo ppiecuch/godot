@@ -31,9 +31,7 @@ jobs:
       # Environment for devkitPro
       - name: Configure devKit
         run: |
-          echo "::set-env name=PATH::/opt/devkitpro:${PATH}"
-          echo "::set-env name=DEVKITPRO::/opt/devkitpro"
-          echo "::set-env name=CTRULIB::${DEVKITPRO}/devkitARM"
+          echo "::set-env name=CTRULIB::${DEVKITARM}"
 
       # Configuring devkitPro packages
       - name: Configure devKit packages
