@@ -93,7 +93,7 @@ void OS_3DS::run() {
 		if (hidKeysDown() & KEY_SELECT)
 			break;
 
-		if (Main::iteration() == true)
+		if (Main::iteration())
 			break;
 
 		printf("fps:%f\n", Engine::get_singleton()->get_frames_per_second());
