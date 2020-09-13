@@ -6,10 +6,10 @@
 # How to install
 # --------------
 # required:
-#  - libctru
 #  - devkitARM
 #  - 3ds-zlib
 #  - 3ds-libpng
+#  - libctru
 #  - citra3d
 #  - picasso
 

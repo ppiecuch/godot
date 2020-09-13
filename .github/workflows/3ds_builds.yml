@@ -35,6 +35,11 @@ jobs:
           echo "::set-env name=DEVKITPRO::/opt/devkitpro"
           echo "::set-env name=CTRULIB::${DEVKITPRO}/devkitARM"
 
+      # Configuring devkitPro packages
+      - name: Configure devKit packages
+        run: |
+          sudo dkp-pacman -Syyu 3ds-libpng 3ds-libz libctru citra3d picasso
+
       # Upload cache on completion and check it out now
       - name: Load .scons_cache directory
         id: nds-template-cache
