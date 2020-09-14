@@ -151,7 +151,7 @@ void RotatedFileLogger::rotate_file() {
 
 	if (FileAccess::exists(base_path)) {
 		if (max_files > 1) {
-			char timestamp[21];
+			char timestamp[66];
 			OS::Date date = OS::get_singleton()->get_date();
 			OS::Time time = OS::get_singleton()->get_time();
 			sprintf(timestamp, "_%04d-%02d-%02d_%02d-%02d-%02d", date.year, date.month, date.day, time.hour, time.min, time.sec);
