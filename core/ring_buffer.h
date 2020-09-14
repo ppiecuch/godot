@@ -66,14 +66,14 @@ public:
 			int total = end - pos;
 			const T *read = data.ptr();
 // Silent false-positive warnings
-#if defined(__GNUC__) && !defined(__clang__)
+#if (__GNUC__ > 6) && !defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
 #endif
 			for (int i = 0; i < total; i++) {
 				p_buf[dst++] = read[pos + i];
 			};
-#if defined(__GNUC__) && !defined(__clang__)
+#if (__GNUC__ > 6) && !defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
 			to_read -= total;
