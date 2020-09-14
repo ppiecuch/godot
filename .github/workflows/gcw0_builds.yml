@@ -63,8 +63,14 @@ jobs:
           cp misc/ci/gcw0_dockerfile Dockerfile
           docker build --build-arg version=${{env.GCW0_TOOLCHAIN}} -t gcw_zero_dev:${{env.GCW0_TOOLCHAIN}} .
 
+      - name: Checkout FRT platform
+        uses: actions/checkout@v2
+        with:
+          repository: 'http://github.com//ppiecuch/frt'
+          path: 'platform/'
+
       - name: Compilation
         env:
           SCONS_CACHE: ${{github.workspace}}/.scons_cache/
         run: |
-          scons -j2 verbose=yes warnings=all werror=yes platform=frt target=release tools=no
+          docker run --rm -t -v "$(pwd):/app" gcw_zero_dev:${{env.GCW0_TOOLCHAIN}} "scons -j2 verbose=yes warnings=all werror=yes platform=frt frt_arch=gcw0 target=release tools=no"
