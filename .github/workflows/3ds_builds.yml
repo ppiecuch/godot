@@ -32,8 +32,6 @@ jobs:
       - name: Configure devKit
         run: |
           echo "::set-env name=PATH::${DEVKITARM}/bin:${PATH}"
-          ls ${DEVKITARM}/bin
-          arm-none-eabi-g++
           echo "::set-env name=CTRULIB::${DEVKITARM}"
 
       # Upload cache on completion and check it out now
