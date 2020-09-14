@@ -76,7 +76,7 @@ def build_shader_header(target, source, env):
     import os
 
     data = source[0].get_contents()
-    data_str = ",".join([str(x) for x in bytearray(data, "utf-8")])
+    data_str = ",".join([str(x) for x in bytearray(data)])
     name = os.path.basename(str(target[0]))[:-2]
     target[0].prepare()
     with open(str(target[0]), "w") as f:
