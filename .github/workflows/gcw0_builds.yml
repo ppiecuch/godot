@@ -60,31 +60,7 @@ jobs:
 
       - name: Build Docker GCW0 toolchain
         run: |
-          cat << _EOF_ > Dockerfile
-FROM i386/ubuntu:xenial
-
-MAINTAINER Pawel Piecuch <piecuch.pawel@gmail.com>
-
-ARG version
-
-LABEL version=$version
-LABEL description="GCW Zero development toolchain"
-
-RUN mkdir -p /opt
-
-RUN apt-get update \
-  && apt-get install -y bzip2 less curl scons libx11-dev nano make ca-certificates \
-  && apt-get autoclean \
-  && rm -rf /var/lib/apt/lists/* \
-  && echo "*** Fetching toolchain $version ..." \
-  && cd /opt \
-  && curl -sL http://www.gcw-zero.com/files/opendingux-gcw0-toolchain.$version.tar.bz2 | tar xj
-
-VOLUME ["/app"]
-WORKDIR /app/
-
-CMD ["uname", "-a"]
-_EOF_
+          cp misc/ci/gcw0_dockerfile Dockerfile
           docker build --build-arg version=${{env.GCW0_TOOLCHAIN}} -t gcw_zero_dev:${{env.GCW0_TOOLCHAIN}} .
 
       - name: Compilation
