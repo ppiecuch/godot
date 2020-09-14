@@ -1,0 +1,94 @@
+name: 🐜 GCW0 Build
+on: [push, pull_request]
+
+# https://github.community/t/how-to-use-docker-compose-with-github-actions/16850
+
+
+# Global Cache Settings
+env:
+  GODOT_BASE_BRANCH: 3.2
+  SCONS_CACHE_LIMIT: 4096
+  GCW0_TOOLCHAIN: 2014-08-20
+
+jobs:
+  gcw0-template:
+    runs-on: "ubuntu-20.04"
+    name: Template (target=release, tools=no)
+
+    steps:
+      - uses: actions/checkout@v2
+
+      # Azure repositories are not reliable, we need to prevent azure giving us packages.
+      - name: Make apt sources.list use the default Ubuntu repositories
+        run: |
+          sudo cp -f misc/ci/sources.list /etc/apt/sources.list
+          sudo apt-get update
+
+      # Install all packages (except scons)
+      - name: Configure dependencies
+        run: |
+          sudo apt-get install wget
+
+      # Upload cache on completion and check it out now
+      - name: Load .scons_cache directory
+        id: gcw0-template-cache
+        uses: actions/cache@v2
+        with:
+          path: ${{github.workspace}}/.scons_cache/
+          key: ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}-${{github.sha}}
+          restore-keys: |
+            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}-${{github.sha}}
+            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}
+            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}
+
+      # Use python 3.x release (works cross platform)
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v2
+        with:
+          # Semantic version range syntax or exact version of a Python version
+          python-version: '3.x'
+          # Optional - x64 or x86 architecture, defaults to x64
+          architecture: 'x64'
+
+      # You can test your matrix by printing the current Python version
+      - name: Configuring Python packages
+        run: |
+          python -c "import sys; print(sys.version)"
+          python -m pip install scons
+          python --version
+          scons --version
+
+      - name: Build Docker GCW0 toolchain
+        run: |
+          cat << _EOF_ > Dockerfile
+FROM i386/ubuntu:xenial
+
+MAINTAINER Pawel Piecuch <piecuch.pawel@gmail.com>
+
+ARG version
+
+LABEL version=$version
+LABEL description="GCW Zero development toolchain"
+
+RUN mkdir -p /opt
+
+RUN apt-get update \
+  && apt-get install -y bzip2 less curl scons libx11-dev nano make ca-certificates \
+  && apt-get autoclean \
+  && rm -rf /var/lib/apt/lists/* \
+  && echo "*** Fetching toolchain $version ..." \
+  && cd /opt \
+  && curl -sL http://www.gcw-zero.com/files/opendingux-gcw0-toolchain.$version.tar.bz2 | tar xj
+
+VOLUME ["/app"]
+WORKDIR /app/
+
+CMD ["uname", "-a"]
+_EOF_
+          docker build --build-arg version=${{env.GCW0_TOOLCHAIN}} -t gcw_zero_dev:${{env.GCW0_TOOLCHAIN}} .
+
+      - name: Compilation
+        env:
+          SCONS_CACHE: ${{github.workspace}}/.scons_cache/
+        run: |
+          scons -j2 verbose=yes warnings=all werror=yes platform=frt target=release tools=no
