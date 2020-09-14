@@ -844,7 +844,7 @@ public:
 			format = Image::FORMAT_L8;
 		}
 
-		~TextureNds() { }
+		~TextureNds() {}
 	};
 
 	mutable RID_Owner<TextureNds> texture_owner;
@@ -871,7 +871,7 @@ public:
 		int location_worldTransform;
 		int location_extra;
 
-		void set_data(void* data, u32 size) {
+		void set_data(void *data, u32 size) {
 			dvlb = DVLB_ParseFile(reinterpret_cast<u32 *>(data), size);
 			shaderProgramSetVsh(&program, &dvlb->DVLE[0]);
 			location_projection = shaderInstanceGetUniformLocation(program.vertexShader, "projection");
