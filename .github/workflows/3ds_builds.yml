@@ -31,6 +31,8 @@ jobs:
       # Environment for devkitPro
       - name: Configure devKit
         run: |
+          echo "::set-env name=PATH::${DEVKITARM}/bin:${PATH}"
+          arm-none-eabi-g++
           echo "::set-env name=CTRULIB::${DEVKITARM}"
 
       # Upload cache on completion and check it out now

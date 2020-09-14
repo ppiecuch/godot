@@ -34,13 +34,11 @@
 #include "core/image.h"
 #include "core/rid.h"
 #include "core/self_list.h"
-#include "core/math/camera_matrix.h"
 #include "scene/resources/mesh.h"
 #include "servers/visual/rasterizer.h"
 #include "servers/visual_server.h"
 
 #include "3ds_godot.h"
-
 
 class RasterizerSceneCitro3D : public RasterizerScene {
 public:
@@ -857,7 +855,7 @@ public:
 		String fragment_code;
 		String light_code;
 		VS::ShaderMode mode;
-		Map<StringName,Variant> params;
+		Map<StringName, Variant> params;
 		int fragment_line;
 		int vertex_line;
 		int light_line;
@@ -865,7 +863,7 @@ public:
 		bool has_alpha;
 		bool use_world_transform;
 
-		DVLB_s* dvlb;
+		DVLB_s *dvlb;
 		shaderProgram_s program;
 
 		int location_projection;
@@ -874,7 +872,7 @@ public:
 		int location_extra;
 
 		void set_data(void* data, u32 size) {
-			dvlb = DVLB_ParseFile(reinterpret_cast<u32*>(data), size);
+			dvlb = DVLB_ParseFile(reinterpret_cast<u32 *>(data), size);
 			shaderProgramSetVsh(&program, &dvlb->DVLE[0]);
 			location_projection = shaderInstanceGetUniformLocation(program.vertexShader, "projection");
 			location_modelview = shaderInstanceGetUniformLocation(program.vertexShader, "modelView");
@@ -895,8 +893,8 @@ public:
 
 	mutable RID_Owner<ShaderNds> shader_owner;
 
-	ShaderNds* canvas_shader;
-	ShaderNds* scene_shader;
+	ShaderNds *canvas_shader;
+	ShaderNds *scene_shader;
 
 	bool draw_next_frame;
 };
