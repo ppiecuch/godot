@@ -34,6 +34,14 @@
 
 #include <inttypes.h>
 
+#ifndef PRIx32
+#define PRIx32 "x"
+#endif
+
+#ifndef PRIi32
+#define PRIi32 "i"
+#endif
+
 #define PF_FOURCC(s) ((uint32_t)(((s)[3] << 24U) | ((s)[2] << 16U) | ((s)[1] << 8U) | ((s)[0])))
 
 // Reference: https://docs.microsoft.com/en-us/windows/win32/direct3ddds/dds-header
