@@ -135,21 +135,43 @@ public:
 
 	_FORCE_INLINE_ void set(int p_index, const T &p_elem) {
 
+// Silent gcc4 warnings (false-positive?)
+#if (__GNUC__ < 5) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-overflow"
+#endif
 		CRASH_BAD_INDEX(p_index, size());
+#if (__GNUC__ < 5) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 		_copy_on_write();
 		_get_data()[p_index] = p_elem;
 	}
 
 	_FORCE_INLINE_ T &get_m(int p_index) {
 
+#if (__GNUC__ < 5) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-overflow"
+#endif
 		CRASH_BAD_INDEX(p_index, size());
+#if (__GNUC__ < 5) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 		_copy_on_write();
 		return _get_data()[p_index];
 	}
 
 	_FORCE_INLINE_ const T &get(int p_index) const {
 
+#if (__GNUC__ < 5) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-overflow"
+#endif
 		CRASH_BAD_INDEX(p_index, size());
+#if (__GNUC__ < 5) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 		return _get_data()[p_index];
 	}
@@ -271,8 +293,16 @@ Error CowData<T>::resize(int p_size) {
 	size_t alloc_size;
 	ERR_FAIL_COND_V(!_get_alloc_size_checked(p_size, &alloc_size), ERR_OUT_OF_MEMORY);
 
+// Silent gcc4 warnings (false-positive?)
+#if (__GNUC__ < 5) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-overflow"
+#endif
 	if (p_size > current_size) {
-
+// Silent gcc4 warnings (false-positive?)
+#if (__GNUC__ < 5) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 		if (alloc_size != current_alloc_size) {
 			if (current_size == 0) {
 				// alloc from scratch

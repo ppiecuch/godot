@@ -2856,6 +2856,10 @@ void RasterizerSceneGLES2::_post_process(Environment *env, const CameraMatrix &p
 
 		// In GLES2 Android Blit is not available, so just copy color texture manually
 		_copy_texture_to_buffer(storage->frame.current_rt->multisample_color, next_buffer);
+#elif FRT_ENABLED
+
+		// Assumin minimum GLES2, so just copy color texture manually
+		_copy_texture_to_buffer(storage->frame.current_rt->multisample_color, next_buffer);
 #else
 		// TODO: any other platform not supported? this will fail.. maybe we should just call _copy_texture_to_buffer here as well?
 #endif

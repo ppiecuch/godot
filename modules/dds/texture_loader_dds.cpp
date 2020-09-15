@@ -34,12 +34,18 @@
 
 #include <inttypes.h>
 
+#define __STRINGIFY(a) #a
+
+#ifndef __INT32
+#define __INT32
+#endif
+
 #ifndef PRIx32
-#define PRIx32 "x"
+#define PRIx32 __INT32 __STRINGIFY(x)
 #endif
 
 #ifndef PRIi32
-#define PRIi32 "i"
+#define PRIi32 __INT32 __STRINGIFY(i)
 #endif
 
 #define PF_FOURCC(s) ((uint32_t)(((s)[3] << 24U) | ((s)[2] << 16U) | ((s)[1] << 8U) | ((s)[0])))
