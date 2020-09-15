@@ -42,7 +42,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstrict-overflow"
 static _FORCE_INLINE_ void _CRASH_BAD_INDEX(int p_index, int p_size) {
-		CRASH_BAD_INDEX(p_index, p_size);
+	CRASH_BAD_INDEX(p_index, p_size);
 }
 #pragma GCC diagnostic pop
 #else
