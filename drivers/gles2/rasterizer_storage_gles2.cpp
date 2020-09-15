@@ -2271,7 +2271,7 @@ void RasterizerStorageGLES2::mesh_add_surface(RID p_mesh, uint32_t p_format, VS:
 
 	//bool has_morph = p_blend_shapes.size();
 
-	Surface::Attrib attribs[VS::ARRAY_MAX];
+	Surface::Attrib attribs[VS::ARRAY_MAX] = { 0 };
 
 	int stride = 0;
 	bool uses_half_float = false;

@@ -47,7 +47,7 @@
 #define C3D_CMDBUF_SIZE 0x100000
 
 void RasterizerCitro3D::initialize() {
-	print_verbose("citro3d driver init ");
+	print_verbose("citro3d driver init ..");
 
 	C3D_Init(C3D_CMDBUF_SIZE);
 

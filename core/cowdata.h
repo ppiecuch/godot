@@ -37,6 +37,18 @@
 #include "core/os/memory.h"
 #include "core/safe_refcount.h"
 
+// Silent gcc4 warnings (false-positive?)
+#if (__GNUC__ <= 4) && !defined(__clang__) && !defined(_MSC_VER)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-overflow"
+static _FORCE_INLINE_ void _CRASH_BAD_INDEX(int p_index, int p_size) {
+		CRASH_BAD_INDEX(p_index, p_size);
+}
+#pragma GCC diagnostic pop
+#else
+#define _CRASH_BAD_INDEX CRASH_BAD_INDEX
+#endif
+
 template <class T>
 class Vector;
 class String;
@@ -135,44 +147,21 @@ public:
 
 	_FORCE_INLINE_ void set(int p_index, const T &p_elem) {
 
-// Silent gcc4 warnings (false-positive?)
-#if (__GNUC__ < 5) && !defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstrict-overflow"
-#endif
-		CRASH_BAD_INDEX(p_index, size());
-#if (__GNUC__ < 5) && !defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
+		_CRASH_BAD_INDEX(p_index, size());
 		_copy_on_write();
 		_get_data()[p_index] = p_elem;
 	}
 
 	_FORCE_INLINE_ T &get_m(int p_index) {
 
-#if (__GNUC__ < 5) && !defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstrict-overflow"
-#endif
-		CRASH_BAD_INDEX(p_index, size());
-#if (__GNUC__ < 5) && !defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
+		_CRASH_BAD_INDEX(p_index, size());
 		_copy_on_write();
 		return _get_data()[p_index];
 	}
 
 	_FORCE_INLINE_ const T &get(int p_index) const {
 
-#if (__GNUC__ < 5) && !defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstrict-overflow"
-#endif
-		CRASH_BAD_INDEX(p_index, size());
-#if (__GNUC__ < 5) && !defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
-
+		_CRASH_BAD_INDEX(p_index, size());
 		return _get_data()[p_index];
 	}
 
@@ -294,13 +283,12 @@ Error CowData<T>::resize(int p_size) {
 	ERR_FAIL_COND_V(!_get_alloc_size_checked(p_size, &alloc_size), ERR_OUT_OF_MEMORY);
 
 // Silent gcc4 warnings (false-positive?)
-#if (__GNUC__ < 5) && !defined(__clang__)
+#if (__GNUC__ <= 4) && !defined(__clang__) && !defined(_MSC_VER)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstrict-overflow"
 #endif
 	if (p_size > current_size) {
-// Silent gcc4 warnings (false-positive?)
-#if (__GNUC__ < 5) && !defined(__clang__)
+#if (__GNUC__ <= 4) && !defined(__clang__) && !defined(_MSC_VER)
 #pragma GCC diagnostic pop
 #endif
 		if (alloc_size != current_alloc_size) {
