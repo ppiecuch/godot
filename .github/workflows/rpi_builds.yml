@@ -60,5 +60,4 @@ jobs:
         env:
           SCONS_CACHE: ${{github.workspace}}/.scons_cache/
         run: |
-          export RPXC_ARGS=-t
-          ~/bin/rpxc -- scons -j2 verbose=yes warnings=all werror=yes platform=frt frt_arch=rpi1 target=release tools=no
+          ~/bin/rpxc --args -t -- scons -j2 verbose=yes warnings=all werror=yes platform=frt frt_arch=rpi1 target=release tools=no
