@@ -9,6 +9,7 @@ on: [push, pull_request]
 env:
   GODOT_BASE_BRANCH: 3.2
   SCONS_CACHE_LIMIT: 4096
+  RPI_IMAGE: rpi_toolchain
 
 jobs:
   rpi-template:
@@ -44,7 +45,7 @@ jobs:
       - name: Build Docker RPi toolchain and build environment
         run: |
           cp misc/ci/rpi_dockerfile Dockerfile
-          export RPXC_IMAGE=rpi_toolchain
+          export RPXC_IMAGE=${{env.RPI_IMAGE}}
           docker build -t ${RPXC_IMAGE} .
           mkdir ~/bin
           docker run ${RPXC_IMAGE} > ~/bin/rpxc
@@ -63,5 +64,5 @@ jobs:
         env:
           SCONS_CACHE: ${{github.workspace}}/.scons_cache/
         run: |
-          ~/bin/rpxc -- scons --version
+          export RPXC_IMAGE=${{env.RPI_IMAGE}}
           ~/bin/rpxc -- scons -j2 verbose=yes warnings=all werror=yes platform=frt frt_arch=rpi1 target=release tools=no
