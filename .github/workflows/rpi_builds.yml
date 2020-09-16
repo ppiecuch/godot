@@ -1,0 +1,63 @@
+name: 🍓 RPi Builds
+on: [push, pull_request]
+
+# https://github.community/t/how-to-use-docker-compose-with-github-actions/16850
+# https://github.com/sdt/docker-raspberry-pi-cross-compiler
+
+
+# Global Cache Settings
+env:
+  GODOT_BASE_BRANCH: 3.2
+  SCONS_CACHE_LIMIT: 4096
+
+jobs:
+  rpi-template:
+    runs-on: "ubuntu-20.04"
+    name: Template (target=release, tools=no)
+
+    steps:
+      - uses: actions/checkout@v2
+
+      # Azure repositories are not reliable, we need to prevent azure giving us packages.
+      - name: Make apt sources.list use the default Ubuntu repositories
+        run: |
+          sudo cp -f misc/ci/sources.list /etc/apt/sources.list
+          sudo apt-get update
+
+      # Install all packages (except scons)
+      - name: Configure dependencies
+        run: |
+          sudo apt-get install wget
+
+      # Upload cache on completion and check it out now
+      - name: Load .scons_cache directory
+        id: rpi-template-cache
+        uses: actions/cache@v2
+        with:
+          path: ${{github.workspace}}/.scons_cache/
+          key: ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}-${{github.sha}}
+          restore-keys: |
+            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}-${{github.sha}}
+            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}
+            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}
+
+      - name: Build Docker RPi toolchain and build environment
+        run: |
+          cp misc/ci/rpi_dockerfile Dockerfile
+          export RPXC_IMAGE=rpi_toolchain
+          docker build -t ${RPXC_IMAGE} .
+          mkdir ~/bin
+          docker run ${RPXC_IMAGE} > ~/bin/rpxc
+          chmod +x ~/bin/rpxc
+
+      - name: Checkout FRT platform
+        uses: actions/checkout@v2
+        with:
+          repository: 'ppiecuch/frt'
+          path: 'platform/frt/'
+
+      - name: RPi1 compilation
+        env:
+          SCONS_CACHE: ${{github.workspace}}/.scons_cache/
+        run: |
+          rpxc -- scons -j2 verbose=yes warnings=all werror=yes platform=frt frt_arch=rpi1 target=release tools=no
