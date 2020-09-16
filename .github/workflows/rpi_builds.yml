@@ -45,6 +45,7 @@ jobs:
         run: |
           cp misc/ci/rpi_dockerfile Dockerfile
           export RPXC_IMAGE=rpi_toolchain
+          export RPXC_ARGS=-t
           docker build -t ${RPXC_IMAGE} .
           mkdir ~/bin
           docker run ${RPXC_IMAGE} > ~/bin/rpxc
