@@ -49,7 +49,7 @@ jobs:
           mkdir ~/bin
           docker run ${RPXC_IMAGE} > ~/bin/rpxc
           chmod +x ~/bin/rpxc
-          sed -i '' 's/run -i/run/' ~/bin/rpxc
+          sed -i '' -e 's/run -i/run/' ~/bin/rpxc
 
       - name: Checkout FRT platform
         uses: actions/checkout@v2
@@ -61,4 +61,4 @@ jobs:
         env:
           SCONS_CACHE: ${{github.workspace}}/.scons_cache/
         run: |
-          ~/bin/rpxc --args -t -- scons -j2 verbose=yes warnings=all werror=yes platform=frt frt_arch=rpi1 target=release tools=no
+          ~/bin/rpxc -- scons -j2 verbose=yes warnings=all werror=yes platform=frt frt_arch=rpi1 target=release tools=no
