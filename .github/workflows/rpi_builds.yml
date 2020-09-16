@@ -51,7 +51,7 @@ jobs:
           chmod +x ~/bin/rpxc
           echo "*** patching rpxc"
           sed -i -e 's/run -i/run/' ~/bin/rpxc
-          ~/bin/rpxc scons --version
+          ~/bin/rpxc -- scons --version
 
       - name: Checkout FRT platform
         uses: actions/checkout@v2
@@ -63,4 +63,5 @@ jobs:
         env:
           SCONS_CACHE: ${{github.workspace}}/.scons_cache/
         run: |
-          ~/bin/rpxc scons -j2 verbose=yes warnings=all werror=yes platform=frt frt_arch=rpi1 target=release tools=no
+          ~/bin/rpxc -- scons --version
+          ~/bin/rpxc -- scons -j2 verbose=yes warnings=all werror=yes platform=frt frt_arch=rpi1 target=release tools=no
