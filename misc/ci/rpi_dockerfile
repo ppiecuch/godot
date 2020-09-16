@@ -1,7 +1,6 @@
 FROM sdthirlwall/raspberry-pi-cross-compiler
 
-# Install some native build-time tools
-RUN install-debian scons
-
-# Install raspbian development libraries
-RUN install-raspbian libpng-dev libz-dev
+RUN apt-get update \
+	&& install-debian scons \                 # Install some native build-time tools
+	&& install-raspbian libpng-dev libz-dev \ # Install raspbian development libraries
+	&& apt-get autoclean
