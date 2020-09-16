@@ -2,4 +2,4 @@ FROM sdthirlwall/raspberry-pi-cross-compiler
 
 # Install some native and raspbian build-time tools
 RUN install-debian --update scons \
-	&& install-raspbian --update libpng-dev libz-dev
+	&& install-raspbian --update libgles2-mesa-dev libpng-dev libz-dev
