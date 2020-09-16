@@ -51,6 +51,7 @@ jobs:
           chmod +x ~/bin/rpxc
           echo "*** patching rpxc"
           sed -i -e 's/run -i/run/' ~/bin/rpxc
+          ~/bin/rpxc scons --version
 
       - name: Checkout FRT platform
         uses: actions/checkout@v2
