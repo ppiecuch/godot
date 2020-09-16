@@ -49,6 +49,7 @@ jobs:
           mkdir ~/bin
           docker run ${RPXC_IMAGE} > ~/bin/rpxc
           chmod +x ~/bin/rpxc
+          sed -i '' 's/run -i/run/' ~/bin/rpxc
 
       - name: Checkout FRT platform
         uses: actions/checkout@v2
