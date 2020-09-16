@@ -1,5 +1,13 @@
 FROM sdthirlwall/raspberry-pi-cross-compiler
 
+WORKDIR $SYSROOT
+
+# Install BCM firmware
+RUN curl -L https://github.com/raspberrypi/firmware/tarball/master \
+	| tar -xzf
+
 # Install some native and raspbian build-time tools
 RUN install-debian --update scons \
-	&& install-raspbian --update libgles2-mesa-dev libpng-dev libz-dev
+	&& install-raspbian --update libpng-dev libz-dev
+
+WORKDIR /build
