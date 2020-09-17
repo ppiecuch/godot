@@ -383,11 +383,11 @@ if selected_platform in platform_list:
         # both GCC and Clang. This mirrors GCC and Clang's current default
         # compile flags if no -std is specified.
         env.Prepend(CFLAGS=["-std=gnu11"])
-        env.Prepend(CXXFLAGS=["-std=gnu++14"])
+        env.Prepend(CXXFLAGS=["-std=gnu++11"])
     else:
         # MSVC doesn't have clear C standard support, /std only covers C++.
         # We apply it to CCFLAGS (both C and C++ code) in case it impacts C features.
-        env.Prepend(CCFLAGS=["/std:c++14"])
+        env.Prepend(CCFLAGS=["/std:c++11"])
 
     # Configure compiler warnings
     if env.msvc:

@@ -12,25 +12,23 @@ env.modules_sources = []
 
 env_modules.add_source_files(env.modules_sources, "register_module_types.gen.cpp")
 
-c11 = 0
+gd_ = 0
 for name, path in env.module_list.items():
     if name in env.disabled_modules:
         continue
 
     env_modules.Append(CPPDEFINES=["MODULE_" + name.upper() + "_ENABLED"])
 
-    # make all custom modules c++11 enabled by default
-    if name.startswith("gd_") and not env.msvc:
-        env_modules.Append(CXXFLAGS=["-std=c++11"])
-        c11 += 1
+    if name.startswith("gd_"):
+        gd_ += 1
 
     if not os.path.isabs(path):
         SConscript(name + "/SCsub")  # Built-in.
     else:
         SConscript(path + "/SCsub")  # Custom.
 
-if c11 > 0:
-    print("Enabled c++11 for %d 'gd_' modules." % c11)
+if gd_ > 0:
+    print("Found %d custom 'gd_' modules." % gd_)
 
 if env["split_libmodules"]:
     env.split_lib("modules", env_lib=env_modules)
