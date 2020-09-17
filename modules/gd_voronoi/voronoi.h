@@ -74,9 +74,10 @@ struct GodotAllocator {
 		memfree(ptr);
 	}
 
-#if (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__) < 40900
+#if (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__) < 40900 \
+	&& !defined(__clang__) && !defined(_MSC_VER)
 	template <typename U>
-	using rebind = allocator<U>;
+	using rebind = std::allocator<U>;
 #endif
 };
 
