@@ -2,7 +2,7 @@ FROM sdthirlwall/raspberry-pi-cross-compiler
 
 # Install BCM firmware
 RUN curl -L https://github.com/raspberrypi/firmware/tarball/master \
-	| tar -xzf - $SYSROOT
+	| tar --strip-components 1 --directory $SYSROOT --wildcards -xzf - "*/opt/vc"
 
 # Install some native and raspbian build-time tools
 RUN install-debian --update scons \
