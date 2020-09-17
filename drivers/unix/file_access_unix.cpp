@@ -39,6 +39,7 @@
 #include <sys/types.h>
 
 #include <errno.h>
+#include <stdio.h>
 
 #if defined(UNIX_ENABLED)
 #include <unistd.h>
