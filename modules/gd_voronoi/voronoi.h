@@ -73,6 +73,11 @@ struct GodotAllocator {
 	inline void deallocate(T *ptr, size_t) const noexcept {
 		memfree(ptr);
 	}
+
+#if (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__) < 40900
+	template <typename U>
+	using rebind = allocator<U>;
+#endif
 };
 
 template <typename K, typename V>
