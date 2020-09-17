@@ -28,8 +28,7 @@ if env["platform"] == "3ds":
 elif env["platform"] == "psvita":
     SConscript("sce_vita/SCsub")
 elif env["platform"] != "server":
-    if env["platform"] != "frt":
-        SConscript("gles3/SCsub")
+    SConscript("gles3/SCsub")
     SConscript("gles2/SCsub")
     SConscript("gl_context/SCsub")
     if env["platform"] == "osx":
