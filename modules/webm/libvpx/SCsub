@@ -368,9 +368,8 @@ elif webm_cpu_arm:
         env_libvpx.Prepend(CPPPATH=[libvpx_dir + "third_party/android"])
         env_libvpx.add_source_files(env.modules_sources, [libvpx_dir + "third_party/android/cpu-features.c"])
 
-    have_neon = (
-        not (env["platform"] == "frt" and ("frt_arch" in env and (env["frt_arch"] == "pi1")))
-    )
+    # Raspberry Pi1/Zero have no NEON support
+    have_neon = not (env["platform"] == "frt" and ("frt_arch" in env and (env["frt_arch"] == "pi1")))
 
     if have_neon:
         env_libvpx_neon = env_libvpx.Clone()
