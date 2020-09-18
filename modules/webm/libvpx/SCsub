@@ -368,14 +368,21 @@ elif webm_cpu_arm:
         env_libvpx.Prepend(CPPPATH=[libvpx_dir + "third_party/android"])
         env_libvpx.add_source_files(env.modules_sources, [libvpx_dir + "third_party/android/cpu-features.c"])
 
-    env_libvpx_neon = env_libvpx.Clone()
-    env_libvpx_neon.add_source_files(env.modules_sources, libvpx_sources_arm_neon)
+    have_neon = not (
+        env["platform"] == "frt" and ("frt_arch" in env and (env["frt_arch"] == "pi1"))
+    )
 
-    if env["platform"] == "uwp":
-        env_libvpx.add_source_files(env.modules_sources, libvpx_sources_arm_neon_armasm_ms)
-    elif env["platform"] == "iphone":
-        env_libvpx.add_source_files(env.modules_sources, libvpx_sources_arm_neon_gas_apple)
-    elif (is_x11_or_server_arm and cpu_bits == "32") or (
-        env["platform"] == "android" and not env["android_arch"] == "arm64v8"
-    ):
-        env_libvpx.add_source_files(env.modules_sources, libvpx_sources_arm_neon_gas)
+    if have_neon:
+        env_libvpx_neon = env_libvpx.Clone()
+        env_libvpx_neon.add_source_files(env.modules_sources, libvpx_sources_arm_neon)
+
+        if env["platform"] == "uwp":
+            env_libvpx.add_source_files(env.modules_sources, libvpx_sources_arm_neon_armasm_ms)
+        elif env["platform"] == "iphone":
+            env_libvpx.add_source_files(env.modules_sources, libvpx_sources_arm_neon_gas_apple)
+        elif (is_x11_or_server_arm and cpu_bits == "32") or (
+            env["platform"] == "android" and not env["android_arch"] == "arm64v8"
+        ):
+            env_libvpx.add_source_files(env.modules_sources, libvpx_sources_arm_neon_gas)
+    else:
+        env_libvpx.Append(CPPDEFINES=["WEBM_NO_ARM_NEON"])
