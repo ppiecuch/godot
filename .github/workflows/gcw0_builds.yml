@@ -74,3 +74,10 @@ jobs:
           SCONS_CACHE: ${{github.workspace}}/.scons_cache/
         run: |
           docker run --rm -t -v "$(pwd):/app" gcw_zero_dev:${{env.GCW0_TOOLCHAIN}} scons -j2 verbose=yes warnings=all werror=yes platform=frt frt_arch=gcw0 target=release tools=no
+
+      - name: Upload template
+        uses: actions/upload-artifact@v2
+        with:
+          name: gcw0-template
+          path: bin/godot.frt.opt.mipsel.gcw0
+
