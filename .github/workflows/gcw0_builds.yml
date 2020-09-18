@@ -80,4 +80,3 @@ jobs:
         with:
           name: gcw0-template
           path: bin/godot.frt.opt.mipsel.gcw0
-
