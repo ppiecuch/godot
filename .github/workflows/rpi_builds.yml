@@ -67,3 +67,17 @@ jobs:
         run: |
           export RPXC_IMAGE=${{env.RPI_IMAGE}}
           ~/bin/rpxc -- scons -j2 verbose=yes warnings=all werror=yes platform=frt frt_arch=pi1 target=release tools=no
+
+      - name: RPi2 compilation
+        env:
+          SCONS_CACHE: ${{github.workspace}}/.scons_cache/
+        run: |
+          export RPXC_IMAGE=${{env.RPI_IMAGE}}
+          ~/bin/rpxc -- scons -j2 verbose=yes warnings=all werror=yes platform=frt frt_arch=pi2 target=release tools=no
+
+      - name: RPi3 compilation
+        env:
+          SCONS_CACHE: ${{github.workspace}}/.scons_cache/
+        run: |
+          export RPXC_IMAGE=${{env.RPI_IMAGE}}
+          ~/bin/rpxc -- scons -j2 verbose=yes warnings=all werror=yes platform=frt frt_arch=pi3 target=release tools=no
