@@ -385,5 +385,6 @@ elif webm_cpu_arm:
             env_libvpx.add_source_files(env.modules_sources, libvpx_sources_arm_neon_gas)
         else:
             env_libvpx.Append(CPPDEFINES=["WEBM_NO_ARM_NEON_ASM"])
+            env_libvpx_neon.Append(CPPDEFINES=["WEBM_NO_ARM_NEON_ASM"])
     else:
         env_libvpx.Append(CPPDEFINES=["WEBM_NO_ARM_NEON"])
