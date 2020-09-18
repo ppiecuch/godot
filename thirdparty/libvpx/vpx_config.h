@@ -49,9 +49,12 @@
 	#define ARCH_ARM 1
 #ifdef WEBM_NO_ARM_NEON
 	#define HAVE_NEON 0
-	#define HAVE_NEON_ASM 0
 #else
 	#define HAVE_NEON 1
+#endif
+#ifdef WEBM_NO_ARM_NEON_ASM
+	#define HAVE_NEON_ASM 0
+#else
 	#define HAVE_NEON_ASM 1
 #endif
 #elif defined(__aarch64__)
