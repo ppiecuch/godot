@@ -117,6 +117,7 @@ def configure(env):
         CCFLAGS=[
             "-Wno-maybe-uninitialized",
             "-Wno-strict-aliasing",
+            "-fno-strict-overflow",
             "-Wno-switch",
             "-Wno-sign-compare",
             "-Wno-shadow=compatible-local",
