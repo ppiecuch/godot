@@ -601,23 +601,23 @@ static void setup_rtcd_internal(void)
     if (flags & HAS_NEON) vpx_lpf_horizontal_8 = vpx_lpf_horizontal_8_neon;
 #endif
     vpx_lpf_horizontal_8_dual = vpx_lpf_horizontal_8_dual_c;
-#if HAVE_NEON
+#if HAVE_NEON_ASM
     if (flags & HAS_NEON) vpx_lpf_horizontal_8_dual = vpx_lpf_horizontal_8_dual_neon;
 #endif
     vpx_lpf_horizontal_edge_16 = vpx_lpf_horizontal_edge_16_c;
-#if HAVE_NEON
+#if HAVE_NEON_ASM
     if (flags & HAS_NEON) vpx_lpf_horizontal_edge_16 = vpx_lpf_horizontal_edge_16_neon;
 #endif
     vpx_lpf_horizontal_edge_8 = vpx_lpf_horizontal_edge_8_c;
-#if HAVE_NEON
+#if HAVE_NEON_ASM
     if (flags & HAS_NEON) vpx_lpf_horizontal_edge_8 = vpx_lpf_horizontal_edge_8_neon;
 #endif
     vpx_lpf_vertical_16 = vpx_lpf_vertical_16_c;
-#if HAVE_NEON
+#if HAVE_NEON_ASM
     if (flags & HAS_NEON) vpx_lpf_vertical_16 = vpx_lpf_vertical_16_neon;
 #endif
     vpx_lpf_vertical_16_dual = vpx_lpf_vertical_16_dual_c;
-#if HAVE_NEON
+#if HAVE_NEON_ASM
     if (flags & HAS_NEON) vpx_lpf_vertical_16_dual = vpx_lpf_vertical_16_dual_neon;
 #endif
     vpx_lpf_vertical_4 = vpx_lpf_vertical_4_c;
@@ -633,7 +633,7 @@ static void setup_rtcd_internal(void)
     if (flags & HAS_NEON) vpx_lpf_vertical_8 = vpx_lpf_vertical_8_neon;
 #endif
     vpx_lpf_vertical_8_dual = vpx_lpf_vertical_8_dual_c;
-#if HAVE_NEON
+#if HAVE_NEON_ASM
     if (flags & HAS_NEON) vpx_lpf_vertical_8_dual = vpx_lpf_vertical_8_dual_neon;
 #endif
     vpx_tm_predictor_16x16 = vpx_tm_predictor_16x16_c;
