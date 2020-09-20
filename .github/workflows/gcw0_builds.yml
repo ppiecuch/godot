@@ -62,7 +62,7 @@ jobs:
         run: |
           cp misc/ci/gcw0_dockerfile Dockerfile
           docker build --build-arg version=${{env.GCW0_TOOLCHAIN}} -t gcw_zero_dev:${{env.GCW0_TOOLCHAIN}} .
-          echo "::warning::Using gcc/toolchain version $(docker run --rm -t mipsel-linux-gcc --version)"
+          echo "::warning::Using gcc/toolchain version $(docker run --rm -t gcw_zero_dev:${{env.GCW0_TOOLCHAIN}} mipsel-linux-gcc --version)"
 
       - name: Checkout FRT platform
         uses: actions/checkout@v2
