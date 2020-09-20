@@ -1,0 +1,11 @@
+name: Linters
+
+on: [push]
+
+jobs:
+  fixmes:
+    name: FIXME check
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: bbugh/action-fixme-check@master # or @ the latest release
