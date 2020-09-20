@@ -56,7 +56,7 @@ jobs:
           sed -i -e 's/run -i/run/' ~/bin/rpxc
           ~/bin/rpxc -- scons --version
           ~/bin/rpxc -- bash -c 'ls -l /rpxc/sysroot/opt/vc'
-          echo "::warning::Using gcc version $(arm-linux-gnueabihf-gcc --version)"
+          echo "::warning::Using gcc version $(~/bin/rpxc -- arm-linux-gnueabihf-gcc --version)"
 
       - name: Checkout FRT platform
         uses: actions/checkout@v2
@@ -85,7 +85,7 @@ jobs:
       - name: Upload all templates
         uses: actions/upload-artifact@v2
         with:
-          name: rpi-templates
+          name: rpi-templates (pi1/p2/pi3)
           path: |
             bin/godot.frt.opt.arm.pi1
             bin/godot.frt.opt.arm.pi2
