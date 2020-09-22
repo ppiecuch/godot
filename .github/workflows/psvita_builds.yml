@@ -28,7 +28,7 @@ jobs:
       - name: Checkout VDPM package
         uses: actions/checkout@v2
         with:
-          repository: 'ppiecuch/vdpm'
+          repository: 'vitasdk/vdpm'
           path: 'vdpm'
 
      - name: Configure VitaSDK and toolchain
