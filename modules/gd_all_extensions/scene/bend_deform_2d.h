@@ -31,8 +31,8 @@
 #ifndef BENDDEFORM2D_H
 #define BENDDEFORM2D_H
 
-#include "scene/2d/sprite.h"
 #include "scene/2d/mesh_instance_2d.h"
+#include "scene/2d/sprite.h"
 
 namespace godot {
 
