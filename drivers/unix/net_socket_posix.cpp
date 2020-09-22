@@ -35,17 +35,23 @@
 
 #include <errno.h>
 #include <netdb.h>
+#ifndef __psp2__
 #include <poll.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef NO_IOCTL
 #include <sys/ioctl.h>
+#endif
 #include <sys/types.h>
 #include <unistd.h>
 #ifndef NO_FCNTL
 #include <fcntl.h>
 #else
+#ifndef NO_IOCTL
 #include <sys/ioctl.h>
+#endif
 #endif
 #include <netinet/in.h>
 
@@ -525,6 +531,9 @@ Error NetSocketPosix::poll(PollType p_type, int p_timeout) const {
 		ready = true;
 
 	return ready ? OK : ERR_BUSY;
+#elif defined(__psp2__)
+	// TODO: Not implemented
+	return ERR_BUSY;
 #else
 	struct pollfd pfd;
 	pfd.fd = _sock;

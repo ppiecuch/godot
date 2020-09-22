@@ -46,8 +46,7 @@ jobs:
       - name: Build Docker RPi toolchain and build environment
         run: |
           cp misc/ci/rpi_dockerfile Dockerfile
-          export RPXC_IMAGE=${{env.RPI_IMAGE}}
-          echo "::set-env name=RPXC_IMAGE::${RPXC_IMAGE}"
+          echo "::set-env name=RPXC_IMAGE::${{env.RPI_IMAGE}}"
           docker build -t ${RPXC_IMAGE} .
           mkdir ~/bin
           docker run ${RPXC_IMAGE} > ~/bin/rpxc

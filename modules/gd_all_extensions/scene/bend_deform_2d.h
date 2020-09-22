@@ -28,9 +28,10 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GDELASTICNODE2D_H
-#define GDELASTICNODE2D_H
+#ifndef BENDDEFORM2D_H
+#define BENDDEFORM2D_H
 
+#include "scene/2d/sprite.h"
 #include "scene/2d/mesh_instance_2d.h"
 
 namespace godot {
@@ -58,11 +59,35 @@ public:
 	DeformMeshInstance2D();
 	~DeformMeshInstance2D();
 
-	void _init(); // our initializer called by Godot
+	void _process(float delta);
+};
+
+class ElasticSprite : public Sprite {
+	GDCLASS(ElasticSprite, Sprite)
+
+private:
+	float time_passed;
+
+private:
+	int mesh_segments;
+	bool simulation_active;
+	Vector2 simulation_force;
+	float simulation_delta;
+	Vector2 flow_factors;
+
+	bool debug_geometry;
+	bool debug_simulation;
+	bool debug_output;
+
+public:
+	static void _bind_methods();
+
+	ElasticSprite();
+	~ElasticSprite();
 
 	void _process(float delta);
 };
 
 } // namespace godot
 
-#endif // GDELASTICNODE2D_H
+#endif // BENDDEFORM2D_H

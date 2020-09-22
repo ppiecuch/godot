@@ -41,7 +41,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef ANDROID_ENABLED
+#if !defined(ANDROID_ENABLED) && !defined(NO_STATVFS)
 #include <sys/statvfs.h>
 #endif
 
@@ -141,6 +141,9 @@ String DirAccessUnix::get_next() {
 	// the type is a link, in that case we want to resolve the link to
 	// known if it points to a directory. stat() will resolve the link
 	// for us.
+#ifdef __psp2__
+	_cisdir = true;
+#else
 	if (entry->d_type == DT_UNKNOWN || entry->d_type == DT_LNK) {
 		String f = current_dir.plus_file(fname);
 
@@ -153,7 +156,7 @@ String DirAccessUnix::get_next() {
 	} else {
 		_cisdir = (entry->d_type == DT_DIR);
 	}
-
+#endif
 	_cishidden = (fname != "." && fname != ".." && fname.begins_with("."));
 
 	return fname;

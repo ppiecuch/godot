@@ -69,7 +69,7 @@
 #error "This module only works on Unix and Windows, see MBEDTLS_TIMING_C in config.h"
 #endif
 
-#ifndef _3DS
+#if !defined(_3DS) && !defined(__psp2__)
 #define HAVE_ALARM
 #endif
 

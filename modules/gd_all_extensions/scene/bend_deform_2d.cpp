@@ -201,15 +201,11 @@ void DeformMeshInstance2D::_bind_methods() {
 }
 
 DeformMeshInstance2D::DeformMeshInstance2D() {
+	time_passed = 0.0;
 }
 
 DeformMeshInstance2D::~DeformMeshInstance2D() {
 	// add your cleanup here
-}
-
-void DeformMeshInstance2D::_init() {
-	// initialize any variables here
-	time_passed = 0.0;
 }
 
 void DeformMeshInstance2D::_process(float delta) {
