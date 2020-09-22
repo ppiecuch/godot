@@ -25,13 +25,14 @@ jobs:
         run: |
           sudo apt-get install wget cmake
 
+      # Checkout and configure VitaSDK package
       - name: Checkout VDPM package
         uses: actions/checkout@v2
         with:
           repository: 'vitasdk/vdpm'
           path: 'vdpm'
 
-     - name: Configure VitaSDK and toolchain
+      - name: Configure VitaSDK and toolchain
         run: |
           echo "::set-env name=VITASDK::/opt/vitasdk"
           echo "::set-env name=PATH::$VITASDK/bin:${PATH}"
