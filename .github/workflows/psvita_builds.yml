@@ -32,10 +32,13 @@ jobs:
           repository: 'vitasdk/vdpm'
           path: 'vdpm'
 
-      - name: Configure VitaSDK and toolchain
+      - name: Configure environment
         run: |
           echo "::set-env name=VITASDK::/opt/vitasdk"
           echo "::set-env name=PATH::$VITASDK/bin:${PATH}"
+
+      - name: Configure VitaSDK and toolchain
+        run: |
           cd vdpm
           ./bootstrap-vitasdk.sh
           ./install-all.sh
