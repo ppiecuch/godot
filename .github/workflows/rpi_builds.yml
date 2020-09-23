@@ -43,10 +43,13 @@ jobs:
             ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}
             ${{github.job}}-${{env.GODOT_BASE_BRANCH}}
 
+      - name: Configure environment
+        run: |
+          echo "::set-env name=RPXC_IMAGE::${{env.RPI_IMAGE}}"
+
       - name: Build Docker RPi toolchain and build environment
         run: |
           cp misc/ci/rpi_dockerfile Dockerfile
-          echo "::set-env name=RPXC_IMAGE::${{env.RPI_IMAGE}}"
           docker build -t ${RPXC_IMAGE} .
           mkdir ~/bin
           docker run ${RPXC_IMAGE} > ~/bin/rpxc
