@@ -1,0 +1,4 @@
+Import("env")
+
+
+env.Program("#bin/godot", ["os_psvita.cpp", "godot_psvita.cpp", "vitasdk_libc.cpp"])

@@ -28,8 +28,6 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifdef CITRO3D_ENABLED
-
 #include "core/os/os.h"
 
 #include "rasterizer_citro3d.h"
@@ -59,5 +57,3 @@ void RasterizerCitro3D::initialize() {
 	scene_shader = memnew(ShaderNds);
 	scene_shader->set_data(shader_builtin_3d, sizeof(shader_builtin_3d));
 }
-
-#endif // CITRO3D_ENABLED

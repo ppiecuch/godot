@@ -165,7 +165,6 @@ def configure(env):
 
     env.Append(
         CPPDEFINES=[
-            "CITRO3D_ENABLED",
             "NEED_LONG_INT",
             "IP6_UNAVAILABLE",
             "UNIX_SOCKETS_ENABLED",

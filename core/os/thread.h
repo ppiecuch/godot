@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef THREAD_H
-#define THREAD_H
+#ifndef OS_THREAD_H
+#define OS_THREAD_H
 
 #include "core/typedefs.h"
 #include "core/ustring.h"

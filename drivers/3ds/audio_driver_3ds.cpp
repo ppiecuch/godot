@@ -28,7 +28,6 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifdef _3DS
 #include "audio_driver_3ds.h"
 
 #include "core/os/os.h"
@@ -183,5 +182,3 @@ AudioDriver3ds::AudioDriver3ds() {
 AudioDriver3ds::~AudioDriver3ds(){
 
 };
-
-#endif

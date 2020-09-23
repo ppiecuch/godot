@@ -35,6 +35,7 @@
 
 #if (defined(UNIX_ENABLED) || defined(PTHREAD_ENABLED)) && !defined(OSX_ENABLED) && !defined(IPHONE_ENABLED)
 
+#include <sys/types.h> // workaround for missing mode_t for psp2
 #include <semaphore.h>
 
 class SemaphorePosix : public Semaphore {

@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef SEMAPHORE_H
-#define SEMAPHORE_H
+#ifndef OS_SEMAPHORE_H
+#define OS_SEMAPHORE_H
 
 #include "core/error_list.h"
 

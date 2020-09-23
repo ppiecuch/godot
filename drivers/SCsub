@@ -26,7 +26,7 @@ SConscript("winmidi/SCsub")
 if env["platform"] == "3ds":
     SConscript("3ds/SCsub")
 elif env["platform"] == "psvita":
-    SConscript("sce_vita/SCsub")
+    SConscript("psvita/SCsub")
 elif env["platform"] != "server":
     SConscript("gles3/SCsub")
     SConscript("gles2/SCsub")
