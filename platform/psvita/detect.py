@@ -45,7 +45,7 @@ def get_flags():
         ("module_webm_enabled", False),
         ("builtin_zlib", True),
         ("builtin_libpng", True),
-        ("builtin_pcre2_with_jit", False)
+        ("builtin_pcre2_with_jit", False),
     ]
 
 
