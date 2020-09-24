@@ -41,11 +41,11 @@ def get_flags():
         ("module_squish_enabled", False),
         ("module_theora_enabled", False),
         ("module_dds_enabled", False),
-        ('module_upnp_enabled', False),
-        ('module_webm_enabled', False),
+        ("module_upnp_enabled", False),
+        ("module_webm_enabled", False),
         ("builtin_zlib", True),
         ("builtin_libpng", True),
-        ('builtin_pcre2_with_jit', False)
+        ("builtin_pcre2_with_jit", False)
     ]
 
 
@@ -74,7 +74,15 @@ def configure(env):
 
     env.Append(CCFLAGS=["-D__psp2__"])
 
-    env.Append(CCFLAGS=["-Wno-maybe-uninitialized", "-Wno-strict-aliasing", "-Wno-switch", "-Wno-sign-compare", "-Wno-shadow=compatible-local"])
+    env.Append(
+        CCFLAGS=[
+            "-Wno-maybe-uninitialized",
+            "-Wno-strict-aliasing",
+            "-Wno-switch",
+            "-Wno-sign-compare",
+            "-Wno-shadow=compatible-local",
+        ]
+    )
     env.Append(CXXFLAGS=["-Wno-class-memaccess"])
 
     env.Append(LIBS=["pthread"])
@@ -91,4 +99,14 @@ def configure(env):
     elif env["target"] == "debug":
         env.Append(CCFLAGS=["-g2", "-Wall", "-DDEBUG_ENABLED", "-DDEBUG_MEMORY_ENABLED"])
 
-    env.Append(CPPDEFINES=["NO_STATVFS", "NO_IOCTL", "IP6_UNAVAILABLE", "UNIX_SOCKETS_ENABLED", "LIBC_FILEIO_ENABLED", "PTHREAD_ENABLED", "PTHREAD_NO_RENAME"])
+    env.Append(
+        CPPDEFINES=[
+            "NO_STATVFS",
+            "NO_IOCTL",
+            "IP6_UNAVAILABLE",
+            "UNIX_SOCKETS_ENABLED",
+            "LIBC_FILEIO_ENABLED",
+            "PTHREAD_ENABLED",
+            "PTHREAD_NO_RENAME",
+        ]
+    )

@@ -1,19 +1,8 @@
 Import("env")
 
-sys = [
-	"thread_3ds.cpp",
-	"thread_ctr_wrapper.cpp"
-]
-
-audio = [
-	"audio/audio_driver_3ds.cpp"
-]
-
-video = [
-	"video/rasterizer_citro3d.cpp",
-	"video/texture_loader_citro3d.cpp",
-	"video/util.cpp"
-]
+sys = ["thread_3ds.cpp", "thread_ctr_wrapper.cpp"]
+audio = ["audio/audio_driver_3ds.cpp"]
+video = ["video/rasterizer_citro3d.cpp", "video/texture_loader_citro3d.cpp", "video/util.cpp"]
 
 SConscript("video/shaders/SCsub")
 
