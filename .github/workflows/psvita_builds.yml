@@ -5,6 +5,7 @@ on: [push, pull_request]
 env:
   GODOT_BASE_BRANCH: 3.2
   SCONS_CACHE_LIMIT: 4096
+  VITASDK_PATH: /opt/vitasdk
 
 jobs:
   psvita-template:
@@ -34,8 +35,8 @@ jobs:
 
       - name: Configure environment
         run: |
-          echo "::set-env name=VITASDK::/opt/vitasdk"
-          echo "::set-env name=PATH::$VITASDK/bin:${PATH}"
+          echo "::set-env name=VITASDK::${{env.VITASDK}}"
+          echo "::set-env name=PATH::${{env.VITASDK}}/bin:${PATH}"
 
       - name: Configure VitaSDK and toolchain
         run: |
