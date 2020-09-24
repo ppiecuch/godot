@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  audio_driver_sce.cpp                                                 */
+/*  rasterizer_gxm.cpp                                                   */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,117 +28,15 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "audio_driver_sce.h"
+#ifdef SCE_VITA_ENABLED
 
 #include "core/os/os.h"
-#include "core/project_settings.h"
 
-#include <string.h>
+#include "rasterizer_gxm.h"
 
-Error AudioDriverSCE::init() {
+void RasterizerCitro3D::initialize() {
 
-	active = false;
-	thread_exited = false;
-	exit_thread = false;
-	pcm_open = false;
-	samples_in = NULL;
+	print_verbose("gxm driver init ..");
+}
 
-	mix_rate = 44100;
-	output_format = SPEAKER_MODE_STEREO;
-	channels = 2;
-
-	int latency = GLOBAL_GET("audio/output_latency");
-	buffer_size = closest_power_of_2(latency * mix_rate / 1000);
-
-	samples_in = memnew_arr(int32_t, buffer_size * channels);
-
-	mutex = Mutex::create();
-	thread = Thread::create(AudioDriverSCE::thread_func, this);
-
-	return OK;
-};
-
-void AudioDriverSCE::thread_func(void *p_udata) {
-
-	int buffer_index = 0;
-	AudioDriverSCE *ad = (AudioDriverSCE *)p_udata;
-
-	int sample_count = ad->buffer_size * ad->channels;
-
-	while (!ad->exit_thread) {
-
-		while (!ad->exit_thread && (!ad->active /*|| buffer->status != NDSP_WBUF_DONE*/))
-			OS::get_singleton()->delay_usec(10000);
-
-		if (ad->exit_thread)
-			break;
-
-		if (ad->active) {
-			ad->lock();
-			ad->audio_server_process(ad->buffer_size, ad->samples_in);
-			ad->unlock();
-
-		}
-
-		buffer_index++;
-	}
-
-	ad->thread_exited = true;
-};
-
-void AudioDriverSCE::start() {
-
-	active = true;
-};
-
-int AudioDriverSCE::get_mix_rate() const {
-
-	return mix_rate;
-};
-
-AudioDriver::SpeakerMode AudioDriverSCE::get_speaker_mode() const {
-
-	return output_format;
-};
-
-void AudioDriverSCE::lock() {
-
-	if (!thread || !mutex)
-		return;
-	mutex->lock();
-};
-
-void AudioDriverSCE::unlock() {
-
-	if (!thread || !mutex)
-		return;
-	mutex->unlock();
-};
-
-void AudioDriverSCE::finish() {
-
-	if (!thread)
-		return;
-
-	exit_thread = true;
-	Thread::wait_to_finish(thread);
-
-	if (samples_in) {
-		memdelete_arr(samples_in);
-	};
-
-	memdelete(thread);
-	if (mutex)
-		memdelete(mutex);
-	thread = NULL;
-};
-
-AudioDriverSCE::AudioDriverSCE() {
-
-	mutex = NULL;
-	thread = NULL;
-};
-
-AudioDriverSCE::~AudioDriverSCE() {
-
-};
+#endif // SCE_VITA_ENABLED

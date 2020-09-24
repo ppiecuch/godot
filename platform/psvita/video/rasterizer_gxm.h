@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  rasterizer_gxm.h                                                 */
+/*  rasterizer_gxm.h                                                     */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -828,7 +828,6 @@ public:
 	~RasterizerCitro3D() {}
 
 	// --- PSVita GXM elements ---
-
 };
 
 #endif // RASTERIZER_GXM_H

@@ -46,8 +46,8 @@
 #endif
 #include "main/main.h"
 
-#include "drivers/3ds/citro3d/rasterizer_citro3d.h"
-#include "drivers/3ds/thread_3ds.h"
+#include "video/rasterizer_citro3d.h"
+#include "thread_3ds.h"
 #include "os_3ds.h"
 
 #include "3ds_godot.h"

@@ -1,4 +1,20 @@
 Import("env")
 
+sys = [
+	"thread_3ds.cpp",
+	"thread_ctr_wrapper.cpp"
+]
 
-env.Program("#bin/godot", ["os_3ds.cpp", "godot_3ds.cpp"])
+audio = [
+	"audio/audio_driver_3ds.cpp"
+]
+
+video = [
+	"video/rasterizer_citro3d.cpp",
+	"video/texture_loader_citro3d.cpp",
+	"video/util.cpp"
+]
+
+SConscript("video/shaders/SCsub")
+
+env.Program("#bin/godot", ["os_3ds.cpp", "godot_3ds.cpp"] + sys + audio + video)

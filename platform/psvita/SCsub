@@ -1,4 +1,16 @@
 Import("env")
 
+sys = [
+	"vitasdk_libc.cpp"
+]
 
-env.Program("#bin/godot", ["os_psvita.cpp", "godot_psvita.cpp", "vitasdk_libc.cpp"])
+audio = [
+	"audio/audio_driver_sce.cpp"
+]
+
+video = [
+	"video/rasterizer_gxm.cpp",
+	"video/texture_loader_gxm.cpp"
+]
+
+env.Program("#bin/godot", ["os_psvita.cpp", "godot_psvita.cpp"] + sys + audio + video)

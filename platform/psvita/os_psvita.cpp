@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  os_psvita.cpp                                                        */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #include "os_psvita.h"
 
 #include "core/io/file_access_buffered_fa.h"
@@ -8,7 +38,6 @@
 #ifndef NO_THREADS
 #include "servers/visual/visual_server_wrap_mt.h"
 #endif
-
 
 #ifdef __psp2__
 #include <psp2/kernel/threadmgr.h>
@@ -22,10 +51,9 @@ int OSPSVita::get_video_driver_count() const {
 };
 
 const char *OSPSVita::get_video_driver_name(int p_driver) const {
-	
+
 	return "GXM";
 };
-
 
 int OSPSVita::get_audio_driver_count() const {
 
@@ -33,10 +61,9 @@ int OSPSVita::get_audio_driver_count() const {
 };
 
 const char *OSPSVita::get_audio_driver_name(int p_driver) const {
-	
+
 	return "SCE";
 };
-
 
 void OSPSVita::initialize_core() {
 
@@ -45,7 +72,7 @@ void OSPSVita::initialize_core() {
 };
 
 Error OSPSVita::initialize(const VideoMode &p_desired, int p_video_driver, int p_audio_driver) {
-	
+
 	OS::VideoMode vm;
 	vm.resizable = false;
 	vm.fullscreen = true;
@@ -67,27 +94,24 @@ Error OSPSVita::initialize(const VideoMode &p_desired, int p_video_driver, int p
 	printf("%s: %i\n", __PRETTY_FUNCTION__, __LINE__);
 
 	dual_mode = GLOBAL_DEF("psvita/dual_pad_mode", DUAL_MODE_DUAL_PAD);
-	
+
 	return OK;
 };
 
-
-void OSPSVita::release_rendering_thread() {
-
-};
-
-void OSPSVita::make_rendering_thread() {
+void OSPSVita::release_rendering_thread(){
 
 };
 
-void OSPSVita::swap_buffers() {
+void OSPSVita::make_rendering_thread(){
 
 };
 
+void OSPSVita::swap_buffers(){
 
+};
 
 void OSPSVita::set_main_loop(MainLoop *p_main_loop) {
-	
+
 	main_loop = p_main_loop;
 	input->set_main_loop(p_main_loop);
 };
@@ -107,12 +131,11 @@ void OSPSVita::_mouse_button(Vector2 p_pos, bool p_pressed) {
 	ev->set_pressed(p_pressed);
 
 	input->set_mouse_position(p_pos);
-	
+
 	input->parse_input_event(ev);
 };
 
 void OSPSVita::_mouse_motion(Vector2 p_pos, Vector2 p_rel) {
-
 
 	Ref<InputEventMouseMotion> ev;
 	ev.instance();
@@ -122,7 +145,7 @@ void OSPSVita::_mouse_motion(Vector2 p_pos, Vector2 p_rel) {
 	ev->set_relative(p_rel);
 
 	input->set_mouse_position(ev->get_position());
-	
+
 	ev->set_speed(input->get_last_mouse_speed());
 	ev->set_button_mask(BUTTON_LEFT); // pressed
 
@@ -133,16 +156,16 @@ void OSPSVita::_screen_touch(int fid, Vector2 p_pos, bool p_pressed) {
 
 	Ref<InputEventScreenTouch> ev;
 	ev.instance();
-	
+
 	ev->set_index(fid);
 	ev->set_pressed(true);
 	ev->set_position(p_pos);
-	
+
 	input->parse_input_event(ev);
 };
 
 void OSPSVita::_screen_drag(int fid, Vector2 p_pos, Vector2 old_pos) {
-	
+
 	Ref<InputEventScreenDrag> ev;
 	ev.instance();
 	ev->set_index(fid);
@@ -154,15 +177,14 @@ void OSPSVita::_screen_drag(int fid, Vector2 p_pos, Vector2 old_pos) {
 
 void OSPSVita::_process_axis(int p_device, int p_axis, int p_value) {
 
-
 	InputDefault::JoyAxis axis;
 	axis.min = 1;
 	axis.value = (float)p_value / 32768.0;
 
 	input->joy_axis(p_device, p_axis, axis);
 };
-	
-void OSPSVita::process_events() {
+
+void OSPSVita::process_events(){
 
 };
 
@@ -176,26 +198,22 @@ void OSPSVita::run() {
 	while (true) {
 
 		process_events(); // get rid of pending events
-		if (Main::iteration()==true)
+		if (Main::iteration() == true)
 			break;
 	};
 
 	main_loop->finish();
 };
 
-
-
 void OSPSVita::delete_main_loop() {
-	
+
 	if (main_loop)
 		memdelete(main_loop);
 	main_loop = NULL;
 };
 
+void OSPSVita::finalize(){
 
-void OSPSVita::finalize() {
-
-	
 };
 
 void OSPSVita::finalize_core() {
@@ -209,7 +227,6 @@ void OSPSVita::finalize_core() {
 	visual_server->finish();
 	memdelete(visual_server);
 };
-
 
 bool OSPSVita::_check_internal_feature_support(const String &p_feature) {
 
@@ -233,15 +250,10 @@ bool OSPSVita::_check_internal_feature_support(const String &p_feature) {
 	return false;
 };
 
-
-
-
 String OSPSVita::get_stdin_string(bool p_block) {
 
 	return "";
 };
-
-
 
 Point2 OSPSVita::get_mouse_position() const {
 
@@ -253,13 +265,11 @@ int OSPSVita::get_mouse_button_state() const {
 	return 0;
 };
 
-
-
-void OSPSVita::set_window_title(const String &p_title) {
+void OSPSVita::set_window_title(const String &p_title){
 
 };
 
-void OSPSVita::set_video_mode(const VideoMode &p_video_mode, int p_screen) {
+void OSPSVita::set_video_mode(const VideoMode &p_video_mode, int p_screen){
 
 };
 
@@ -273,13 +283,10 @@ Size2 OSPSVita::get_window_size() const {
 	return Size2(default_video_mode.width, default_video_mode.height);
 };
 
-
 void OSPSVita::get_fullscreen_mode_list(List<VideoMode> *p_list, int p_screen) const {
 
 	p_list->push_back(default_video_mode);
 };
-
-
 
 Error OSPSVita::execute(const String &p_path, const List<String> &p_arguments, bool p_blocking, ProcessID *r_child_id, String *r_pipe, int *r_exitcode, bool read_stderr, Mutex *p_pipe_mutex) {
 
@@ -290,7 +297,6 @@ Error OSPSVita::kill(const ProcessID &p_pid) {
 
 	return ERR_UNAVAILABLE;
 };
-
 
 bool OSPSVita::has_environment(const String &p_var) const {
 
@@ -304,21 +310,18 @@ String OSPSVita::get_environment(const String &p_var) const {
 
 bool OSPSVita::set_environment(const String &p_var, const String &p_value) const {
 
-    return false;
+	return false;
 }
-
 
 String OSPSVita::get_name() const {
 
 	return "PSP2";
 };
 
-
 MainLoop *OSPSVita::get_main_loop() const {
-	
+
 	return main_loop;
 };
-
 
 OS::Date OSPSVita::get_date(bool utc) const {
 	time_t t = time(NULL);
@@ -357,7 +360,7 @@ OS::Time OSPSVita::get_time(bool utc) const {
 };
 
 OS::TimeZoneInfo OSPSVita::get_time_zone_info() const {
-	
+
 	time_t t = time(NULL);
 	struct tm *lt = localtime(&t);
 	char name[16];
@@ -383,7 +386,6 @@ OS::TimeZoneInfo OSPSVita::get_time_zone_info() const {
 	return ret;
 };
 
-
 void OSPSVita::delay_usec(uint32_t p_usec) const {
 
 	sceKernelDelayThread(p_usec);
@@ -402,19 +404,17 @@ uint64_t OSPSVita::get_ticks_usec() const {
 	return retval;
 };
 
-
 bool OSPSVita::can_draw() const {
 
 	return true;
 };
 
+void OSPSVita::set_cursor_shape(CursorShape p_shape){
 
-void OSPSVita::set_cursor_shape(CursorShape p_shape) {
-	
 };
 
-void OSPSVita::set_custom_mouse_cursor(const RES &p_cursor, CursorShape p_shape, const Vector2 &p_hotspot) {
-	
+void OSPSVita::set_custom_mouse_cursor(const RES &p_cursor, CursorShape p_shape, const Vector2 &p_hotspot){
+
 };
 
 void OSPSVita::alert(const String &p_alert, const String &p_title) {
@@ -423,16 +423,15 @@ void OSPSVita::alert(const String &p_alert, const String &p_title) {
 };
 
 String OSPSVita::get_resource_dir() const {
-	
+
 	return resource_dir;
 };
-
 
 OSPSVita::OSPSVita() {
 
 	printf("*** creating OS %p\n", this);
 	main_loop = NULL;
-	
+
 	sceRtcGetCurrentTick(&ticks_start);
 	ticks_per_sec = sceRtcGetTickResolution();
 
@@ -441,6 +440,6 @@ OSPSVita::OSPSVita() {
 	resource_dir = "";
 };
 
-OSPSVita::~OSPSVita() {
-	
+OSPSVita::~OSPSVita(){
+
 };

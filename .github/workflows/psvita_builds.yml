@@ -42,6 +42,7 @@ jobs:
           cd vdpm
           ./bootstrap-vitasdk.sh
           ./install-all.sh
+          echo "::warning::Using gcc/toolchain version $(arm-vita-eabi-gcc --version)"
 
       # Upload cache on completion and check it out now
       - name: Load .scons_cache directory
@@ -77,3 +78,9 @@ jobs:
           SCONS_CACHE: ${{github.workspace}}/.scons_cache/
         run: |
           scons -j2 verbose=yes warnings=all werror=yes platform=psvita disable_3ds=yes target=release tools=no
+
+      - name: Upload template
+        uses: actions/upload-artifact@v2
+        with:
+          name: psvita-template
+          path: bin/godot.psvita.opt.arm

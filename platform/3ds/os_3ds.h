@@ -33,7 +33,7 @@
 
 #include "core/os/input.h"
 #include "core/os/os.h"
-#include "drivers/3ds/audio_driver_3ds.h"
+#include "audio/audio_driver_3ds.h"
 #include "main/input_default.h"
 #include "servers/audio/audio_driver_dummy.h"
 #include "servers/audio_server.h"
