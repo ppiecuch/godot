@@ -198,7 +198,7 @@ void OSPSVita::run() {
 	while (true) {
 
 		process_events(); // get rid of pending events
-		if (Main::iteration() == true)
+		if (Main::iteration())
 			break;
 	};
 

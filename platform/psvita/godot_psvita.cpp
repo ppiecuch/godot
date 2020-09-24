@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
 	if (Main::setup(argv[0], argc - 1, &argv[1]) != OK) {
 		printf("Running...\n");
 
-		if (Main::iteration() == true)
+		if (Main::iteration())
 			os.run(); // it is actually the OS that decides how to run
 		Main::cleanup();
 	}

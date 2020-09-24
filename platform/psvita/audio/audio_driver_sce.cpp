@@ -63,11 +63,9 @@ void AudioDriverSCE::thread_func(void *p_udata) {
 	int buffer_index = 0;
 	AudioDriverSCE *ad = (AudioDriverSCE *)p_udata;
 
-	int sample_count = ad->buffer_size * ad->channels;
-
 	while (!ad->exit_thread) {
 
-		while (!ad->exit_thread && (!ad->active /*|| buffer->status != NDSP_WBUF_DONE*/))
+		while (!ad->exit_thread && (!ad->active))
 			OS::get_singleton()->delay_usec(10000);
 
 		if (ad->exit_thread)
