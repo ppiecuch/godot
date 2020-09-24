@@ -46,9 +46,9 @@
 #endif
 #include "main/main.h"
 
-#include "video/rasterizer_citro3d.h"
-#include "thread_3ds.h"
 #include "os_3ds.h"
+#include "thread_3ds.h"
+#include "video/rasterizer_citro3d.h"
 
 #include "3ds_godot.h"
 // Big stack thanks to CANVAS_ITEM_Z_MAX among other things

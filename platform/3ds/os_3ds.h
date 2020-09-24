@@ -31,9 +31,9 @@
 #ifndef OS_3DS_H
 #define OS_3DS_H
 
+#include "audio/audio_driver_3ds.h"
 #include "core/os/input.h"
 #include "core/os/os.h"
-#include "audio/audio_driver_3ds.h"
 #include "main/input_default.h"
 #include "servers/audio/audio_driver_dummy.h"
 #include "servers/audio_server.h"
