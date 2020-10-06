@@ -891,10 +891,10 @@ Label::WordCache *Label::calculate_word_cache(const Ref<Font> &font, const Strin
 			} else if ((i == xl_text.length() || current == '\n') && last != nullptr && space_count != 0) {
 				//in case there are trailing white spaces we add a placeholder word cache with just the spaces
 				WordCache *wc = memnew(WordCache);
-				if (word_cache) {
+				if (root) {
 					last->next = wc;
 				} else {
-					word_cache = wc;
+					root = wc;
 				}
 				last = wc;
 
