@@ -36,15 +36,6 @@ if env["platform"] != "3ds" and env["platform"] != "psvita":
 # Core dependencies
 SConscript("png/SCsub")
 
-if env["vsproj"]:
-    import os
-
-    path = os.getcwd()
-    # Change directory so the path resolves correctly in the function call.
-    os.chdir("..")
-    env.AddToVSProject(env.drivers_sources)
-    os.chdir(path)
-
 env.add_source_files(env.drivers_sources, "*.cpp")
 
 lib = env.add_library("drivers", env.drivers_sources)

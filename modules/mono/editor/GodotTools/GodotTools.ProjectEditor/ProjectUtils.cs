@@ -255,43 +255,30 @@ namespace GodotTools.ProjectEditor
                         return;
                     }
 
-<<<<<<< HEAD
-                    var referenceWithHintPath = referencesWithHintPath.FirstOrDefault();
-                    if (referenceWithHintPath != null)
+                    var yabaiPropertiesForConfigs = new[]
                     {
-                        // Found a Reference item with a wrong HintPath
-                        foreach (var metadata in referenceWithHintPath.Metadata.ToList()
-                            .Where(m => m.Name == "HintPath"))
-                        {
-                            // Safe to remove as we duplicate with ToList() to loop
-                            referenceWithHintPath.RemoveChild(metadata);
-                        }
-=======
-            var yabaiPropertiesForConfigs = new[]
-            {
-                "DebugSymbols",
-                "DebugType",
-                "Optimize",
-                "DefineConstants",
-                "ErrorReport",
-                "WarningLevel",
-                "ConsolePause"
-            };
+                        "DebugSymbols",
+                        "DebugType",
+                        "Optimize",
+                        "DefineConstants",
+                        "ErrorReport",
+                        "WarningLevel",
+                        "ConsolePause"
+                    };
 
-            var configNames = new[]
-            {
-                "ExportDebug", "ExportRelease", "Debug",
-                "Tools", "Release" // Include old config names as well in case it's upgrading from 3.2.1 or older
-            };
+                    var configNames = new[]
+                    {
+                        "ExportDebug", "ExportRelease", "Debug",
+                        "Tools", "Release" // Include old config names as well in case it's upgrading from 3.2.1 or older
+                    };
 
-            foreach (var config in configNames)
-            {
-                var group = root.PropertyGroups
-                    .FirstOrDefault(g => g.Condition.Trim() == $"'$(Configuration)|$(Platform)' == '{config}|AnyCPU'");
+                    foreach (var config in configNames)
+                    {
+                        var group = root.PropertyGroups
+                            .FirstOrDefault(g => g.Condition.Trim() == $"'$(Configuration)|$(Platform)' == '{config}|AnyCPU'");
 
-                if (group == null)
-                    continue;
->>>>>>> 13e2e487a2bbae66d2e18d4f28b8827b420c45a3
+                        if (group == null)
+                            continue;
 
                         referenceWithHintPath.AddMetadata("HintPath", hintPath);
                         project.HasUnsavedChanges = true;
@@ -347,12 +334,11 @@ namespace GodotTools.ProjectEditor
                 }
             }
 
-            if (!hasGodotProjectGeneratorVersion)
-            {
-                root.PropertyGroups.First(g => string.IsNullOrEmpty(g.Condition))?
-                    .AddProperty("GodotProjectGeneratorVersion", Assembly.GetExecutingAssembly().GetName().Version.ToString());
-                project.HasUnsavedChanges = true;
-            }
+            // Add comment about Microsoft.NET.Sdk properties disabled during migration
+
+            GetElement(xDoc, name: "EnableDefaultCompileItems", value: "false", parentName: "PropertyGroup")
+                .AddBeforeSelf(new XComment("The following properties were overridden during migration to prevent errors.\n" +
+                                            "    Enabling them may require other manual changes to the project and its files."));
 
             if (!foundOldConfiguration)
             {

@@ -214,7 +214,7 @@ void Skeleton::_update_process_order() {
 		pass_count++;
 	}
 
-	if (pass_count == len * len) {
+	if (len && pass_count == len * len) {
 		ERR_PRINT("Skeleton parenthood graph is cyclic");
 	}
 

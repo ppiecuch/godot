@@ -48,7 +48,6 @@ public:
 	void handle_error(Dictionary errorObject);
 
 protected:
-	static void _bind_methods();
 	static GodotErrorHandler *singleton;
 
 	struct ErrorObject {

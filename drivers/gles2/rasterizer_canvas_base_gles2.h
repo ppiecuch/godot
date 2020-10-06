@@ -78,6 +78,7 @@ public:
 		LensDistortedShaderGLES2 lens_shader;
 
 		bool using_texture_rect;
+		bool using_light_angle;
 		bool using_ninepatch;
 		bool using_skeleton;
 
@@ -121,7 +122,7 @@ public:
 	GLenum _get_stencil_test(ShaderLanguage::StencilTest::StencilTestType p_test);
 	GLenum _get_stencil_op(ShaderLanguage::StencilTest::StencilActionType p_action);
 
-	void _draw_gui_primitive(int p_points, const Vector2 *p_vertices, const Color *p_colors, const Vector2 *p_uvs);
+	void _draw_gui_primitive(int p_points, const Vector2 *p_vertices, const Color *p_colors, const Vector2 *p_uvs, const float *p_light_angles = nullptr);
 	void _draw_polygon(const int *p_indices, int p_index_count, int p_vertex_count, const Vector2 *p_vertices, const Vector2 *p_uvs, const Color *p_colors, bool p_singlecolor, const float *p_weights = NULL, const int *p_bones = NULL);
 	void _draw_generic(GLuint p_primitive, int p_vertex_count, const Vector2 *p_vertices, const Vector2 *p_uvs, const Color *p_colors, bool p_singlecolor);
 	void _draw_generic_indices(GLuint p_primitive, const int *p_indices, int p_index_count, int p_vertex_count, const Vector2 *p_vertices, const Vector2 *p_uvs, const Color *p_colors, bool p_singlecolor);
@@ -139,6 +140,7 @@ public:
 	virtual void canvas_debug_viewport_shadows(Light *p_lights_with_shadow);
 
 	RasterizerStorageGLES2::Texture *_bind_canvas_texture(const RID &p_texture, const RID &p_normal_map);
+	void _set_texture_rect_mode(bool p_texture_rect, bool p_light_angle = false);
 
 	void initialize();
 	void finalize();

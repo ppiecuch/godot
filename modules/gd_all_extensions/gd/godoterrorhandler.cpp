@@ -53,7 +53,15 @@ GodotErrorHandler *GodotErrorHandler::get_singleton() {
 
 void GodotErrorHandler::_err_handler(void *ud, const char *p_func, const char *p_file, int p_line, const char *p_err, const char *p_descr, ErrorHandlerType p_type) {
 
-	GodotErrorHandler *gdh = (GodotErrorHandler *)ud;
+	static String _lastError = "";
+	static int _lastErrorCnt = 1;
+	String _error = vformat("%s:%d", p_file, p_line);
+
+	if (_lastError == _error) {
+		// Skip repeating messages
+		_lastErrorCnt++;
+		return;
+	}
 
 	Dictionary errorObject;
 
@@ -63,6 +71,8 @@ void GodotErrorHandler::_err_handler(void *ud, const char *p_func, const char *p
 	errorObject["source_line"] = p_line;
 	errorObject["source_func"] = p_func;
 	errorObject["warning"] = p_type == ERR_HANDLER_WARNING;
+	if (!_lastError.empty())
+		errorObject["skipped"] = vformat("%s (%d times)", _lastError, _lastErrorCnt);
 	Array cstack;
 
 	Vector<ScriptLanguage::StackInfo> si;
@@ -89,13 +99,9 @@ void GodotErrorHandler::_err_handler(void *ud, const char *p_func, const char *p
 
 	errorObject["callstack"] = cstack;
 
-	gdh->handle_error(errorObject);
-}
+	_lastError = _error;
+	_lastErrorCnt = 1;
 
-void GodotErrorHandler::handle_error(Dictionary errorObject) {
-	emit_signal("error_threw", errorObject);
-}
-
-void GodotErrorHandler::_bind_methods() {
-	ADD_SIGNAL(MethodInfo("error_threw", PropertyInfo(Variant::DICTIONARY, "errorObject")));
+	// 	GodotErrorHandler *gdh = (GodotErrorHandler *)ud;
+	// _print_format_error(errorObject);
 }

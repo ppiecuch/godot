@@ -371,7 +371,7 @@ void SceneTreeDock::_tool_selected(int p_tool, bool p_confirm_override) {
 				if (preferred_types.empty()) {
 					preferred_types.push_back("Control");
 					preferred_types.push_back("Node2D");
-					preferred_types.push_back("Node3D");
+					preferred_types.push_back("Spatial");
 				}
 
 				for (int i = 0; i < preferred_types.size(); i++) {
@@ -1118,7 +1118,7 @@ void SceneTreeDock::_notification(int p_what) {
 			beginner_node_shortcuts->set_name("BeginnerNodeShortcuts");
 			node_shortcuts->add_child(beginner_node_shortcuts);
 
-			Button *button_2d = memnew(Button);
+			button_2d = memnew(Button);
 			beginner_node_shortcuts->add_child(button_2d);
 			button_2d->set_text(TTR("2D Scene"));
 			button_2d->set_icon(get_icon("Node2D", "EditorIcons"));
@@ -1129,7 +1129,7 @@ void SceneTreeDock::_notification(int p_what) {
 			button_3d->set_icon(get_icon("Spatial", "EditorIcons"));
 			button_3d->connect("pressed", this, "_tool_selected", make_binds(TOOL_CREATE_3D_SCENE, false));
 
-			Button *button_ui = memnew(Button);
+			button_ui = memnew(Button);
 			beginner_node_shortcuts->add_child(button_ui);
 			button_ui->set_text(TTR("User Interface"));
 			button_ui->set_icon(get_icon("Control", "EditorIcons"));
@@ -1139,7 +1139,7 @@ void SceneTreeDock::_notification(int p_what) {
 			favorite_node_shortcuts->set_name("FavoriteNodeShortcuts");
 			node_shortcuts->add_child(favorite_node_shortcuts);
 
-			Button *button_custom = memnew(Button);
+			button_custom = memnew(Button);
 			node_shortcuts->add_child(button_custom);
 			button_custom->set_text(TTR("Other Node"));
 			button_custom->set_icon(get_icon("Add", "EditorIcons"));
@@ -1162,6 +1162,10 @@ void SceneTreeDock::_notification(int p_what) {
 			button_instance->set_icon(get_icon("Instance", "EditorIcons"));
 			button_create_script->set_icon(get_icon("ScriptCreate", "EditorIcons"));
 			button_detach_script->set_icon(get_icon("ScriptRemove", "EditorIcons"));
+			button_2d->set_icon(get_icon("Node2D", "EditorIcons"));
+			button_3d->set_icon(get_icon("Spatial", "EditorIcons"));
+			button_ui->set_icon(get_icon("Control", "EditorIcons"));
+			button_custom->set_icon(get_icon("Add", "EditorIcons"));
 
 			filter->set_right_icon(get_icon("Search", "EditorIcons"));
 			filter->set_clear_button_enabled(true);
@@ -1225,8 +1229,6 @@ void SceneTreeDock::_node_selected() {
 	Node *node = scene_tree->get_selected();
 
 	if (!node) {
-
-		editor->push_item(NULL);
 		return;
 	}
 
@@ -1929,11 +1931,10 @@ void SceneTreeDock::_selection_changed() {
 	if (selection_size > 1) {
 		//automatically turn on multi-edit
 		_tool_selected(TOOL_MULTI_EDIT);
-	} else if (selection_size == 1) {
-		editor->push_item(EditorNode::get_singleton()->get_editor_selection()->get_selected_node_list()[0]);
-	} else {
+	} else if (selection_size == 0) {
 		editor->push_item(NULL);
 	}
+
 	_update_script_button();
 }
 
