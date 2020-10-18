@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  ios.mm                                                               */
+/*  javascript_tools_editor_plugin.h                                     */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,57 +28,35 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "ios.h"
+#ifndef JAVASCRIPT_TOOLS_EDITOR_PLUGIN_H
+#define JAVASCRIPT_TOOLS_EDITOR_PLUGIN_H
 
-#import "app_delegate.h"
-#import "view_controller.h"
+#if defined(TOOLS_ENABLED) && defined(JAVASCRIPT_ENABLED)
+#include "core/io/zip_io.h"
+#include "editor/editor_plugin.h"
 
-#import <UIKit/UIKit.h>
-#include <sys/sysctl.h>
+class JavaScriptToolsEditorPlugin : public EditorPlugin {
+	GDCLASS(JavaScriptToolsEditorPlugin, EditorPlugin);
 
-void iOS::_bind_methods() {
+private:
+	void _zip_file(String p_path, String p_base_path, zipFile p_zip);
+	void _zip_recursive(String p_path, String p_base_path, zipFile p_zip);
 
-	ClassDB::bind_method(D_METHOD("get_rate_url", "app_id"), &iOS::get_rate_url);
+protected:
+	static void _bind_methods();
+
+	void _download_zip(Variant p_v);
+
+public:
+	static void initialize();
+
+	JavaScriptToolsEditorPlugin(EditorNode *p_editor);
 };
-
-void iOS::alert(const char *p_alert, const char *p_title) {
-	NSString *title = [NSString stringWithUTF8String:p_title];
-	NSString *message = [NSString stringWithUTF8String:p_alert];
-
-	UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
-	UIAlertAction *button = [UIAlertAction actionWithTitle:@"OK"
-													 style:UIAlertActionStyleCancel
-												   handler:^(id){
-												   }];
-
-	[alert addAction:button];
-
-	[AppDelegate.viewController presentViewController:alert animated:YES completion:nil];
-}
-
-String iOS::get_model() const {
-	// [[UIDevice currentDevice] model] only returns "iPad" or "iPhone".
-	size_t size;
-	sysctlbyname("hw.machine", NULL, &size, NULL, 0);
-	char *model = (char *)malloc(size);
-	if (model == NULL) {
-		return "";
-	}
-	sysctlbyname("hw.machine", model, &size, NULL, 0);
-	NSString *platform = [NSString stringWithCString:model encoding:NSUTF8StringEncoding];
-	free(model);
-	const char *str = [platform UTF8String];
-	return String(str != NULL ? str : "");
-}
-
-String iOS::get_rate_url(int p_app_id) const {
-	String app_url_path = "itms-apps://itunes.apple.com/app/idAPP_ID";
-
-	String ret = app_url_path.replace("APP_ID", String::num(p_app_id));
-
-	printf("returning rate url %ls\n", ret.c_str());
-
-	return ret;
+#else
+class JavaScriptToolsEditorPlugin {
+public:
+	static void initialize() {}
 };
+#endif
 
-iOS::iOS(){};
+#endif // JAVASCRIPT_TOOLS_EDITOR_PLUGIN_H

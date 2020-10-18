@@ -505,6 +505,8 @@ public:
 			bool uses_screen_texture;
 			bool uses_depth_texture;
 			bool uses_time;
+			bool uses_tangent;
+			bool uses_ensure_correct_normals;
 			bool writes_modelview_or_projection;
 			bool uses_vertex_lighting;
 			bool uses_world_coordinates;
@@ -612,6 +614,8 @@ public:
 
 	virtual bool material_is_animated(RID p_material);
 	virtual bool material_casts_shadows(RID p_material);
+	virtual bool material_uses_tangents(RID p_material);
+	virtual bool material_uses_ensure_correct_normals(RID p_material);
 
 	virtual void material_add_instance_owner(RID p_material, RasterizerScene::InstanceBase *p_instance);
 	virtual void material_remove_instance_owner(RID p_material, RasterizerScene::InstanceBase *p_instance);
@@ -1483,7 +1487,18 @@ public:
 	virtual String get_video_adapter_name() const;
 	virtual String get_video_adapter_vendor() const;
 
+	void buffer_orphan_and_upload(unsigned int p_buffer_size, unsigned int p_offset, unsigned int p_data_size, const void *p_data, GLenum p_target = GL_ARRAY_BUFFER);
+
 	RasterizerStorageGLES3();
 };
+
+// standardize the orphan / upload in one place so it can be changed per platform as necessary, and avoid future
+// bugs causing pipeline stalls
+inline void RasterizerStorageGLES3::buffer_orphan_and_upload(unsigned int p_buffer_size, unsigned int p_offset, unsigned int p_data_size, const void *p_data, GLenum p_target) {
+	// Orphan the buffer to avoid CPU/GPU sync points caused by glBufferSubData
+	// Was previously #ifndef GLES_OVER_GL however this causes stalls on desktop mac also (and possibly other)
+	glBufferData(p_target, p_buffer_size, NULL, GL_DYNAMIC_DRAW);
+	glBufferSubData(p_target, p_offset, p_data_size, p_data);
+}
 
 #endif // RASTERIZERSTORAGEGLES3_H
