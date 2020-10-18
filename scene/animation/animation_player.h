@@ -31,8 +31,9 @@
 #ifndef ANIMATION_PLAYER_H
 #define ANIMATION_PLAYER_H
 
+#include "animation_player_bone_transform.h"
+
 #include "scene/2d/node_2d.h"
-#include "scene/3d/skeleton.h"
 #include "scene/3d/spatial.h"
 #include "scene/resources/animation.h"
 
@@ -92,7 +93,7 @@ private:
 		Node *node;
 		Spatial *spatial;
 		Node2D *node_2d;
-		Skeleton *skeleton;
+		AnimationPlayerBoneTransform *skeleton;
 		int bone_idx;
 		// accumulated transforms
 

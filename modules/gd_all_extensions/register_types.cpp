@@ -68,6 +68,7 @@
 #include "scene/bullet_manager.h"
 #include "scene/cable2d.h"
 #include "scene/cable2d_editor_plugin.h"
+#include "scene/figure.h"
 #include "scene/pixel_spaceships.h"
 #include "scene/round_progress.h"
 #include "scene/sprite_mesh.h"
@@ -148,6 +149,7 @@ void register_gd_all_extensions_types() {
 	ClassDB::register_class<TouchButton>();
 	ClassDB::register_class<AudioStreamPreviewGenerator>();
 	ClassDB::register_class<SpriteMesh>();
+	ClassDB::register_class<Figure>();
 
 	if (enet_initialize() != 0) {
 		ERR_PRINT("ENet initialization failure");

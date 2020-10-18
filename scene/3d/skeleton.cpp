@@ -895,11 +895,13 @@ void Skeleton::_bind_methods() {
 	BIND_CONSTANT(NOTIFICATION_UPDATE_SKELETON);
 }
 
-Skeleton::Skeleton() {
+Skeleton::Skeleton() : _bone_transformer(this) {
 
 	dirty = false;
 	version = 1;
 	process_order_dirty = true;
+
+	set_meta(BONE_TRANSFORMER_KEY, &_bone_transformer);
 }
 
 Skeleton::~Skeleton() {

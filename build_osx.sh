@@ -7,14 +7,27 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GODOT_DIR=$DIR
 TEMPLATES_DIR="$HOME/Library/ApplicationSupport/Godot/templates/"
 
+if ! command -v scons &> /dev/null
+then
+	export PATH=$PATH:/opt/local/bin
+fi
+
 # Utilities
 # ---------
 
 echo_header() {
-	printf "\e[1;4m$1\e[0m\n"
+	if [[ "$TERM" =~ "xterm" ]]; then
+		printf "\e[1;4m$1\e[0m\n"
+	else
+		printf "[$1]\n"
+	fi
 }
 echo_success() {
-	printf "\e[1;4;32m$1\e[0m\n"
+	if [[ "$TERM" =~ "xterm" ]]; then
+		printf "\e[1;4;32m$1\e[0m\n"
+	else
+		printf "[$1]\n"
+	fi
 }
 
 export -f echo_header

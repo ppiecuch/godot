@@ -330,10 +330,10 @@ Vector<Vector<Point2> > simplify(Vector<Point2> original) {
 		int off = 0;
 		while (off < total) {
 			if (total <= 3) break;
-			Point2 &p1 = n_path.ref(off), p2 = n_path.ref((off + 1) % total);
+			Point2 &p1 = n_path.write[off], &p2 = n_path.write[(off + 1) % total];
 			int c_off = off + 1;
 			while (c_off < total) {
-				Point2 &p3 = n_path.ref(c_off), &p4 = n_path.ref((c_off + 1) % total), cp;
+				Point2 &p3 = n_path.write[c_off], &p4 = n_path.write[(c_off + 1) % total], cp;
 				int check = intersect(p1, p2, p3, p4, &cp);
 				if (total < 3) {
 					total = 0;

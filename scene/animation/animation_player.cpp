@@ -32,8 +32,13 @@
 
 #include "core/engine.h"
 #include "core/message_queue.h"
+#include "core/object.h"
 #include "scene/scene_string_names.h"
 #include "servers/audio/audio_stream.h"
+
+#define get_bone_transformer(node) \
+	((AnimationPlayerBoneTransform *)(node->has_meta(BONE_TRANSFORMER_KEY)?(Object *)node->get_meta(BONE_TRANSFORMER_KEY):0))
+
 
 #ifdef TOOLS_ENABLED
 #include "editor/editor_settings.h"
@@ -44,7 +49,9 @@ void AnimatedValuesBackup::update_skeletons() {
 	for (int i = 0; i < entries.size(); i++) {
 		if (entries[i].bone_idx != -1) {
 			// 3D bone
-			Object::cast_to<Skeleton>(entries[i].object)->notification(Skeleton::NOTIFICATION_UPDATE_SKELETON);
+			if (AnimationPlayerBoneTransform *bt = get_bone_transformer(entries[i].object)) {
+				bt->update_skeleton();
+			}
 		} else {
 			Bone2D *bone = Object::cast_to<Bone2D>(entries[i].object);
 			if (bone && bone->skeleton) {
@@ -250,14 +257,12 @@ void AnimationPlayer::_ensure_node_caches(AnimationData *p_anim) {
 		Node *child = parent->get_node_and_resource(a->track_get_path(i), resource, leftover_path);
 		ERR_CONTINUE_MSG(!child, "On Animation: '" + p_anim->name + "', couldn't resolve track:  '" + String(a->track_get_path(i)) + "'."); // couldn't find the child node
 		uint32_t id = resource.is_valid() ? resource->get_instance_id() : child->get_instance_id();
+		AnimationPlayerBoneTransform *bt = get_bone_transformer(child);
 		int bone_idx = -1;
 
-		if (a->track_get_path(i).get_subname_count() == 1 && Object::cast_to<Skeleton>(child)) {
-
-			Skeleton *sk = Object::cast_to<Skeleton>(child);
-			bone_idx = sk->find_bone(a->track_get_path(i).get_subname(0));
+		if (a->track_get_path(i).get_subname_count() == 1 && bt) {
+			bone_idx = bt->find_bone(a->track_get_path(i).get_subname(0));
 			if (bone_idx == -1) {
-
 				continue;
 			}
 		}
@@ -285,7 +290,7 @@ void AnimationPlayer::_ensure_node_caches(AnimationData *p_anim) {
 			// cache spatial
 			p_anim->node_cache[i]->spatial = Object::cast_to<Spatial>(child);
 			// cache skeleton
-			p_anim->node_cache[i]->skeleton = Object::cast_to<Skeleton>(child);
+			p_anim->node_cache[i]->skeleton = bt;
 			if (p_anim->node_cache[i]->skeleton) {
 				if (a->track_get_path(i).get_subname_count() == 1) {
 					StringName bone_name = a->track_get_path(i).get_subname(0);
@@ -372,7 +377,7 @@ void AnimationPlayer::_animation_process_animation(AnimationData *p_anim, float 
 
 			case Animation::TYPE_TRANSFORM: {
 
-				if (!nc->spatial)
+				if (!nc->spatial && !nc->skeleton)
 					continue;
 
 				Vector3 loc;
@@ -1612,7 +1617,9 @@ void AnimationPlayer::restore_animated_values(const AnimatedValuesBackup &p_back
 		if (entry->bone_idx == -1) {
 			entry->object->set_indexed(entry->subpath, entry->value);
 		} else {
-			Object::cast_to<Skeleton>(entry->object)->set_bone_pose(entry->bone_idx, entry->value);
+			if (AnimationPlayerBoneTransform *bt = get_bone_transformer(entry->object)) {
+				bt->set_bone_pose(entry->bone_idx, entry->value);
+			}
 		}
 	}
 }

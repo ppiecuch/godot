@@ -320,6 +320,9 @@ SpriteMesh::SpriteMesh() {
 	mesh_offset = Vector2(0, 0);
 	mesh_angle = 0;
 	mesh_scale = Vector2(1, 1);
+	_mesh_xform = Transform2D();
+	_mesh_xform_dirty = false;
+
 }
 
 SpriteMesh::~SpriteMesh() {

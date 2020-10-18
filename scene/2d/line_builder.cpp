@@ -489,7 +489,7 @@ void LineBuilder::build() {
 	const real_t sh = tile_region.size.y;
 	// rescale uvs values
 	for (int i = 0; i < uvs.size(); i++) {
-		uvs.ref(i) = Vector2(sx + uvs[i].x * sw, sy + uvs[i].y * sh);
+		uvs.write[i] = Vector2(sx + uvs[i].x * sw, sy + uvs[i].y * sh);
 	}
 }
 

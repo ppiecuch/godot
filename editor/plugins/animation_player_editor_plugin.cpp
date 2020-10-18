@@ -1403,7 +1403,7 @@ void AnimationPlayerEditor::_prepare_onion_layers_2() {
 		new_state["viewports"] = vp;
 		// TODO: Save/restore only affected entries.
 		SpatialEditor::get_singleton()->set_state(new_state);
-	} else { // CanvasItemEditor
+	} else if (CanvasItemEditor::get_singleton()->is_visible()) { // CanvasItemEditor
 		// 2D
 		canvas_edit_state = CanvasItemEditor::get_singleton()->get_state();
 		Dictionary new_state = canvas_edit_state.duplicate();
@@ -1490,7 +1490,7 @@ void AnimationPlayerEditor::_prepare_onion_layers_2() {
 	if (SpatialEditor::get_singleton()->is_visible()) {
 		// 3D
 		SpatialEditor::get_singleton()->set_state(spatial_edit_state);
-	} else { // CanvasItemEditor
+	} else if (CanvasItemEditor::get_singleton()->is_visible()) { // CanvasItemEditor
 		// 2D
 		CanvasItemEditor::get_singleton()->set_state(canvas_edit_state);
 	}

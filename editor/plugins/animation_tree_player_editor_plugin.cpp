@@ -35,9 +35,13 @@
 #include "core/os/keyboard.h"
 #include "core/project_settings.h"
 #include "editor/editor_scale.h"
+#include "scene/animation/animation_player_bone_transform.h"
 #include "scene/gui/menu_button.h"
 #include "scene/gui/panel.h"
 #include "scene/main/viewport.h"
+
+#define get_bone_transformer(node) \
+	((AnimationPlayerBoneTransform *)(node->has_meta(BONE_TRANSFORMER_KEY)?(Object *)node->get_meta(BONE_TRANSFORMER_KEY):0))
 
 void AnimationTreePlayerEditor::edit(AnimationTreePlayer *p_anim_tree) {
 
@@ -1206,19 +1210,19 @@ void AnimationTreePlayerEditor::_edit_filters() {
 
 			if (np.get_subname_count() == 1) {
 				Node *n = base->get_node(np);
-				Skeleton *s = Object::cast_to<Skeleton>(n);
-				if (s) {
+				AnimationPlayerBoneTransform *bt = get_bone_transformer(n);
+				if (bt) {
 
 					String skelbase = E->get().substr(0, E->get().find(":"));
 
-					int bidx = s->find_bone(np.get_subname(0));
+					int bidx = bt->find_bone(np.get_subname(0));
 
 					if (bidx != -1) {
-						int bparent = s->get_bone_parent(bidx);
+						int bparent = bt->get_bone_parent(bidx);
 						//
 						if (bparent != -1) {
 
-							String bpn = skelbase + ":" + s->get_bone_name(bparent);
+							String bpn = skelbase + ":" + bt->get_bone_name(bparent);
 							if (pm.has(bpn)) {
 								parent = pm[bpn];
 								descr = np.get_subname(0);

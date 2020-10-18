@@ -34,6 +34,7 @@
 #include "core/rid.h"
 #include "scene/3d/spatial.h"
 #include "scene/resources/skin.h"
+#include "scene/animation/animation_player_bone_transform.h"
 
 #ifndef _3D_DISABLED
 typedef int BoneId;
@@ -143,6 +144,18 @@ private:
 
 	void _update_process_order();
 
+	class BoneTransform : public AnimationPlayerBoneTransform {
+		Skeleton *_sk = 0;
+	public:
+		BoneTransform(Skeleton *p_skeleton) : _sk(p_skeleton) { }
+		virtual String get_bone_name(int p_bone) const { return _sk->get_bone_name(p_bone); }
+		virtual int get_bone_parent(int p_bone) const { return _sk->get_bone_parent(p_bone); }
+		virtual Transform get_bone_pose(int p_bone) const { return _sk->get_bone_pose(p_bone); }
+		virtual void set_bone_pose(int p_bone, const Transform &p_pose) { _sk->set_bone_pose(p_bone, p_pose); }
+		virtual int find_bone(const String &p_name) const { return _sk->find_bone(p_name); }
+		virtual void update_skeleton() { notification(NOTIFICATION_UPDATE_SKELETON); }
+	} _bone_transformer;
+
 protected:
 	bool _get(const StringName &p_path, Variant &r_ret) const;
 	bool _set(const StringName &p_path, const Variant &p_value);
@@ -191,8 +204,8 @@ public:
 
 	// posing api
 
-	void set_bone_pose(int p_bone, const Transform &p_pose);
-	Transform get_bone_pose(int p_bone) const;
+	virtual void set_bone_pose(int p_bone, const Transform &p_pose);
+	virtual Transform get_bone_pose(int p_bone) const;
 
 	void set_bone_custom_pose(int p_bone, const Transform &p_custom_pose);
 	Transform get_bone_custom_pose(int p_bone) const;

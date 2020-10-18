@@ -69,13 +69,13 @@ PixelSpaceshipsMask *PixelSpaceshipsMask::set_data_from_texture(Ref<Texture> tex
 			auto col_int = col.to_rgba32();
 
 			if (col_int == white) {
-				tmp_data.ref(idx) = 0;
+				tmp_data.write[idx] = 0;
 			} else if (col_int == red) {
-				tmp_data.ref(idx) = -1;
+				tmp_data.write[idx] = -1;
 			} else if (col_int == green) {
-				tmp_data.ref(idx) = 1;
+				tmp_data.write[idx] = 1;
 			} else if (col_int == blue) {
-				tmp_data.ref(idx) = 2;
+				tmp_data.write[idx] = 2;
 			}
 		}
 	}
@@ -338,7 +338,7 @@ void PixelSpaceships::generate_random_sample() {
 				}
 			}
 
-			ResultData.ref(pos_to_idx(i, j, HalfWidth)) = cell;
+			ResultData.write[pos_to_idx(i, j, HalfWidth)] = cell;
 		}
 	}
 }
@@ -356,7 +356,7 @@ void PixelSpaceships::mirror_data() {
 			int x = i <= tmpW ? i : tmpW - (i - tmpW) + 1;
 			int y = j <= tmpHH ? j : tmpHH - (j - tmpHH) + 1;
 
-			MirroredData.ref(pos_to_idx(i, j, w)) = get_data(ResultData, x, y, HalfWidth);
+			MirroredData.write[pos_to_idx(i, j, w)] = get_data(ResultData, x, y, HalfWidth);
 		}
 	}
 	ResultData = MirroredData;
@@ -370,16 +370,16 @@ void PixelSpaceships::generate_edges() {
 		for (int i = 0; i < w; i++) {
 			if (get_data(ResultData, i, j, w) > 0) {
 				if (j - 1 >= 0 && get_data(ResultData, i, j - 1, w) == 0) {
-					ResultData.ref(pos_to_idx(i, j - 1, w)) = -1;
+					ResultData.write[pos_to_idx(i, j - 1, w)] = -1;
 				}
 				if (j + 1 < h && get_data(ResultData, i, j + 1, w) == 0) {
-					ResultData.ref(pos_to_idx(i, j + 1, w)) = -1;
+					ResultData.write[pos_to_idx(i, j + 1, w)] = -1;
 				}
 				if (i - 1 >= 0 && get_data(ResultData, i - 1, j, w) == 0) {
-					ResultData.ref(pos_to_idx(i - 1, j, w)) = -1;
+					ResultData.write[pos_to_idx(i - 1, j, w)] = -1;
 				}
 				if (i + 1 < w && get_data(ResultData, i + 1, j, w) == 0) {
-					ResultData.ref(pos_to_idx(i + 1, j, w)) = -1;
+					ResultData.write[pos_to_idx(i + 1, j, w)] = -1;
 				}
 			}
 		}
@@ -448,7 +448,7 @@ void PixelSpaceships::generate_colors() {
 				rgb.a = 0;
 			}
 
-			ResultColors.ref(idx) = rgb;
+			ResultColors.write[idx] = rgb;
 		}
 	}
 }

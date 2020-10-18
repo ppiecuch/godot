@@ -127,6 +127,7 @@ struct Transform2D {
 		elements[2][1] = oy;
 	}
 
+	Transform2D(real_t p_rot, const Size2 &p_scale, const Vector2 &p_pos);
 	Transform2D(real_t p_rot, const Vector2 &p_pos);
 	Transform2D() {
 		elements[0][0] = 1.0;

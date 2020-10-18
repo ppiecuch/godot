@@ -1,12 +1,12 @@
 /*************************************************************************/
-/*  zip_reader.h                                                         */
+/*  animation_player_bone_transform.h                                                   */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
 /* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -28,34 +28,25 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef ZIP_READER_H
-#define ZIP_READER_H
+#ifndef ANIMATION_PLAYER_BONE_TRANSFORM_H
+#define ANIMATION_PLAYER_BONE_TRANSFORM_H
 
-#include "core/reference.h"
+#include "core/ustring.h"
+#include "core/object.h"
+#include "core/math/transform.h"
 
-#include "core/os/file_access.h"
-#include "core/os/os.h"
-#include "thirdparty/minizip/unzip.h"
+#define BONE_TRANSFORMER_KEY "bone_transformer"
 
-class ZIPReader : public Reference {
 
-	GDCLASS(ZIPReader, Object)
-
-	FileAccess *f;
-	unzFile uzf;
-
-protected:
-	static void _bind_methods();
-
+class AnimationPlayerBoneTransform : public Object {
 public:
-	Error open(String path);
-	Error close();
-
-	PoolStringArray get_files();
-	PoolByteArray read_file(String path, bool case_sensitive);
-
-	ZIPReader();
-	~ZIPReader();
+	AnimationPlayerBoneTransform() { set_meta(BONE_TRANSFORMER_KEY, this); }
+	virtual String get_bone_name(int p_bone) const = 0;
+	virtual int get_bone_parent(int p_bone) const = 0;
+	virtual Transform get_bone_pose(int p_bone) const = 0;
+	virtual void set_bone_pose(int p_bone, const Transform &p_pose) = 0;
+	virtual int find_bone(const String &p_name) const = 0;
+	virtual void update_skeleton() = 0;
 };
 
-#endif // ZIP_READER_H
+#endif // ANIMATION_PLAYER_BONE_TRANSFORM_H

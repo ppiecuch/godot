@@ -96,6 +96,15 @@ Transform2D::Transform2D(real_t p_rot, const Vector2 &p_pos) {
 	elements[2] = p_pos;
 }
 
+Transform2D::Transform2D(real_t p_rot, const Size2 &p_scale, const Vector2 &p_pos) {
+
+	elements[0][0] = Math::cos(p_rot) * p_scale.x;
+	elements[1][1] = Math::cos(p_rot) * p_scale.y;
+	elements[1][0] = -Math::sin(p_rot) * p_scale.y;
+	elements[0][1] = Math::sin(p_rot) * p_scale.x;
+	elements[2] = p_pos;
+}
+
 Size2 Transform2D::get_scale() const {
 	real_t det_sign = SGN(basis_determinant());
 	return Size2(elements[0].length(), det_sign * elements[1].length());

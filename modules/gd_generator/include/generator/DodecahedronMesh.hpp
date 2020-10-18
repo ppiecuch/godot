@@ -61,7 +61,7 @@ private:
 	private:
 		const DodecahedronMesh *mMesh;
 
-		int mFaceIndex;
+		unsigned int mFaceIndex;
 
 		// Needs be a shared_ptr in order to make copy/move not to mess up the
 		// internal pointer in mTriangles.
@@ -83,7 +83,7 @@ private:
 	private:
 		const DodecahedronMesh *mMesh;
 
-		int mFaceIndex;
+		unsigned int mFaceIndex;
 
 		// Needs be a shared_ptr in order to make copy/move not to mess up the
 		// internal pointer in mTriangles.
