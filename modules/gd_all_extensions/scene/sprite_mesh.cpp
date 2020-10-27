@@ -33,6 +33,9 @@
 
 #include "core/math/math_funcs.h"
 #include "core/math/vector2.h"
+#include "scene/3d/mesh_instance.h"
+#include "scene/resources/mesh_data_tool.h"
+#include "scene/resources/mesh.h"
 
 #include "sprite_mesh.h"
 
@@ -46,17 +49,17 @@
 #ifdef TOOLS_ENABLED
 Dictionary SpriteMesh::_edit_get_state() const {
 	Dictionary state = Node2D::_edit_get_state();
-	state["mesh_offset"] = mesh_offset;
+	state["offset"] = offset;
 	return state;
 }
 
 void SpriteMesh::_edit_set_state(const Dictionary &p_state) {
 	Node2D::_edit_set_state(p_state);
-	set_mesh_offset(p_state["mesh_offset"]);
+	set_offset(p_state["offset"]);
 }
 
 void SpriteMesh::_edit_set_pivot(const Point2 &p_pivot) {
-	set_mesh_offset(get_mesh_offset() - p_pivot);
+	set_offset(get_offset() - p_pivot);
 	set_position(get_transform().xform(p_pivot));
 }
 
@@ -69,8 +72,7 @@ bool SpriteMesh::_edit_use_pivot() const {
 }
 
 bool SpriteMesh::_edit_is_selected_on_click(const Point2 &p_point, double p_tolerance) const {
-
-	return is_inside_mesh(p_point, p_tolerance);
+	return get_rect().has_point(p_point);
 }
 
 Rect2 SpriteMesh::_edit_get_rect() const {
@@ -78,15 +80,53 @@ Rect2 SpriteMesh::_edit_get_rect() const {
 }
 
 bool SpriteMesh::_edit_use_rect() const {
-	return texture.is_valid();
+	return mesh.is_valid();
 }
 #endif
 
+void SpriteMesh::_update_mesh_xform() {
+	if (mesh.is_valid()) {
+		MeshDataTool *dataTool = memnew(MeshDataTool);
+		dataTool->create_from_surface(mesh, 0);
+		for (int i = 0; i < dataTool->get_vertex_count(); ++i) {
+			const Vector3 &vertex = _mesh_xform.xform( dataTool->get_vertex(i) );
+			dataTool->set_vertex(i, vertex);
+		}
+		if (ArrayMesh *m = Object::cast_to<ArrayMesh>(*mesh)) {
+			// surface 0 is reference data
+			// surface 1 is transformed data
+			if(m->get_surface_count() == 1)
+				m->surface_set_active(0, false);
+			else
+				m->surface_remove(1);
+		}
+		dataTool->commit_to_surface(mesh);
+		memdelete(dataTool);
+
+		item_rect_changed();
+	}
+}
+
 void SpriteMesh::_notification(int p_what) {
 	if (p_what == NOTIFICATION_DRAW) {
+		if (_mesh_dirty) {
+			_update_mesh_xform();
+			_mesh_dirty = false;
+		}
 		if (mesh.is_valid()) {
-			draw_mesh(mesh, texture, normal_map, _mesh_xform);
-			draw_rect(get_rect(), Color::named("yellow"), false);
+			const AABB &aabb = mesh->get_aabb();
+
+			Size2i s(aabb.size.x, aabb.size.y);
+
+			Point2 ofs = offset;
+			if (centered)
+				ofs -= Size2(s) / 2;
+
+			Transform2D xform(0, ofs-Point2(aabb.position.x, aabb.position.y));
+			draw_mesh(mesh, texture, normal_map, xform);
+#if 1
+			draw_rect(Rect2(ofs, s), Color::named("yellow"), false);
+#endif
 		}
 	}
 }
@@ -95,7 +135,9 @@ void SpriteMesh::set_mesh(const Ref<Mesh> &p_mesh) {
 	if (mesh == p_mesh)
 		return;
 	mesh = p_mesh;
-	mesh_aabb = p_mesh->get_aabb();
+	_mesh_dirty = true;
+	_update_transform();
+	item_rect_changed();
 	update();
 	emit_signal("mesh_changed");
 	_change_notify("mesh");
@@ -107,25 +149,25 @@ Ref<Mesh> SpriteMesh::get_mesh() const {
 
 void SpriteMesh::_update_xform_values() {
 
-	mesh_angle = _mesh_xform.get_rotation();
+	mesh_angle = _mesh_xform.get_euler();
 	mesh_scale = _mesh_xform.get_scale();
 	_mesh_xform_dirty = false;
 }
 
 void SpriteMesh::_update_transform() {
 
-	_mesh_xform.set_rotation_and_scale(mesh_angle, mesh_scale);
-	_mesh_xform.elements[2] = get_position() + mesh_offset;
-
-	VisualServer::get_singleton()->canvas_item_set_transform(get_canvas_item(), _mesh_xform);
+	_mesh_xform.set_euler_scale(mesh_angle, mesh_scale);
 
 	if (!is_inside_tree())
 		return;
 
+	_mesh_dirty = true;
+
 	_notify_transform();
+	update();
 }
 
-void SpriteMesh::set_mesh_rotation(float p_radians) {
+void SpriteMesh::set_mesh_rotation(Vector3 p_radians) {
 
 	if (_mesh_xform_dirty)
 		_update_xform_values();
@@ -133,12 +175,63 @@ void SpriteMesh::set_mesh_rotation(float p_radians) {
 	_update_transform();
 }
 
-void SpriteMesh::set_mesh_rotation_degrees(float p_degrees) {
+Vector3 SpriteMesh::get_mesh_rotation() const {
+	if (_mesh_xform_dirty)
+		((SpriteMesh *)this)->_update_xform_values();
 
-	set_mesh_rotation(Math::deg2rad(p_degrees));
+	return mesh_angle;
 }
 
-void SpriteMesh::set_mesh_scale(const Size2 &p_scale) {
+void SpriteMesh::set_mesh_rotation_x_degrees(float p_degrees) {
+
+	mesh_angle.x = Math::deg2rad(p_degrees);
+	_update_transform();
+}
+
+float SpriteMesh::get_mesh_rotation_x_degrees() const {
+
+	return Math::rad2deg(mesh_angle.x);
+}
+
+void SpriteMesh::set_mesh_rotation_y_degrees(float p_degrees) {
+
+	mesh_angle.y = Math::deg2rad(p_degrees);
+	_update_transform();
+}
+
+float SpriteMesh::get_mesh_rotation_y_degrees() const {
+
+	return Math::rad2deg(mesh_angle.y);
+}
+
+void SpriteMesh::set_mesh_rotation_z_degrees(float p_degrees) {
+
+	mesh_angle.z = Math::deg2rad(p_degrees);
+	_update_transform();
+}
+
+float SpriteMesh::get_mesh_rotation_z_degrees() const {
+
+	return Math::rad2deg(mesh_angle.z);
+}
+
+void SpriteMesh::set_mesh_orientation(const Basis &p_basis) {
+
+	_mesh_xform = p_basis;
+	_mesh_xform_dirty = true;
+
+	if (!is_inside_tree())
+		return;
+
+	_notify_transform();
+}
+
+Basis SpriteMesh::get_mesh_orientation() const {
+
+	return _mesh_xform;
+}
+
+void SpriteMesh::set_mesh_scale(const Vector3 &p_scale) {
 
 	if (_mesh_xform_dirty)
 		_update_xform_values();
@@ -148,22 +241,12 @@ void SpriteMesh::set_mesh_scale(const Size2 &p_scale) {
 		mesh_scale.x = CMP_EPSILON;
 	if (mesh_scale.y == 0)
 		mesh_scale.y = CMP_EPSILON;
+	if (mesh_scale.z == 0)
+		mesh_scale.z = CMP_EPSILON;
 	_update_transform();
 }
 
-float SpriteMesh::get_mesh_rotation() const {
-	if (_mesh_xform_dirty)
-		((SpriteMesh *)this)->_update_xform_values();
-
-	return mesh_angle;
-}
-
-float SpriteMesh::get_mesh_rotation_degrees() const {
-
-	return Math::rad2deg(get_mesh_rotation());
-}
-
-Size2 SpriteMesh::get_mesh_scale() const {
+Vector3 SpriteMesh::get_mesh_scale() const {
 	if (_mesh_xform_dirty)
 		((SpriteMesh *)this)->_update_xform_values();
 
@@ -194,59 +277,46 @@ Ref<Texture> SpriteMesh::get_mesh_normal_map() const {
 	return normal_map;
 }
 
-void SpriteMesh::set_mesh_centered(bool p_mesh_center) {
+void SpriteMesh::set_centered(bool p_center) {
 
-	mesh_centered = p_mesh_center;
+	centered = p_center;
 	update();
 	item_rect_changed();
 }
 
-bool SpriteMesh::is_mesh_centered() const {
+bool SpriteMesh::is_centered() const {
 
-	return mesh_centered;
+	return centered;
 }
 
-void SpriteMesh::set_mesh_offset(const Point2 &p_mesh_offset) {
+void SpriteMesh::set_offset(const Point2 &p_offset) {
 
-	mesh_offset = p_mesh_offset;
+	offset = p_offset;
 	update();
 	item_rect_changed();
 	_change_notify("offset");
 }
-Point2 SpriteMesh::get_mesh_offset() const {
+Point2 SpriteMesh::get_offset() const {
 
-	return mesh_offset;
-}
-
-bool SpriteMesh::is_inside_mesh(const Point2 &p_point, double p_tolerance) const {
-	// TODO
-	return true;
-}
-
-void SpriteMesh::set_mesh_flip_h(bool p_mesh_flip) {
-
-	mesh_hflip = p_mesh_flip;
-	update();
-}
-bool SpriteMesh::is_mesh_flipped_h() const {
-
-	return mesh_hflip;
-}
-
-void SpriteMesh::set_mesh_flip_v(bool p_mesh_flip) {
-
-	mesh_vflip = p_mesh_flip;
-	update();
-}
-bool SpriteMesh::is_mesh_flipped_v() const {
-
-	return mesh_vflip;
+	return offset;
 }
 
 Rect2 SpriteMesh::get_rect() const {
-	return Rect2(
-			mesh_aabb.get_position().x, mesh_aabb.get_position().y,
-			mesh_aabb.get_size().x, mesh_aabb.get_size().y);
+	if (mesh.is_null())
+		return Rect2(0, 0, 1, 1);
+
+	const AABB &aabb = mesh->get_aabb();
+
+	Size2i s(aabb.size.x, aabb.size.y);
+
+	Point2 ofs = offset;
+	if (centered)
+		ofs -= Size2(s) / 2;
+
+	if (s == Size2(0, 0))
+		s = Size2(1, 1);
+
+	return Rect2(ofs, s);
 }
 
 Rect2 SpriteMesh::get_anchorable_rect() const {
@@ -271,18 +341,17 @@ void SpriteMesh::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_mesh_rotation", "mesh_rotation"), &SpriteMesh::set_mesh_rotation);
 	ClassDB::bind_method(D_METHOD("get_mesh_rotation"), &SpriteMesh::get_mesh_rotation);
-
-	ClassDB::bind_method(D_METHOD("set_mesh_rotation_degrees", "mesh_rotation_degrees"), &SpriteMesh::set_mesh_rotation_degrees);
-	ClassDB::bind_method(D_METHOD("get_mesh_rotation_degrees"), &SpriteMesh::get_mesh_rotation_degrees);
+	ClassDB::bind_method(D_METHOD("set_mesh_rotation_x_degrees", "mesh_rotation_x_degrees"), &SpriteMesh::set_mesh_rotation_x_degrees);
+	ClassDB::bind_method(D_METHOD("get_mesh_rotation_x_degrees"), &SpriteMesh::get_mesh_rotation_x_degrees);
+	ClassDB::bind_method(D_METHOD("set_mesh_rotation_y_degrees", "mesh_rotation_x_degrees"), &SpriteMesh::set_mesh_rotation_y_degrees);
+	ClassDB::bind_method(D_METHOD("get_mesh_rotation_y_degrees"), &SpriteMesh::get_mesh_rotation_y_degrees);
+	ClassDB::bind_method(D_METHOD("set_mesh_rotation_z_degrees", "mesh_rotation_x_degrees"), &SpriteMesh::set_mesh_rotation_z_degrees);
+	ClassDB::bind_method(D_METHOD("get_mesh_rotation_z_degrees"), &SpriteMesh::get_mesh_rotation_z_degrees);
+	ClassDB::bind_method(D_METHOD("set_mesh_orientation", "mesh_orientation"), &SpriteMesh::set_mesh_orientation);
+	ClassDB::bind_method(D_METHOD("get_mesh_orientation"), &SpriteMesh::get_mesh_orientation);
 
 	ClassDB::bind_method(D_METHOD("set_mesh_scale", "mesh_scale"), &SpriteMesh::set_mesh_scale);
 	ClassDB::bind_method(D_METHOD("get_mesh_scale"), &SpriteMesh::get_mesh_scale);
-
-	ClassDB::bind_method(D_METHOD("set_mesh_flip_h", "mesh_fiph_h"), &SpriteMesh::set_mesh_flip_h);
-	ClassDB::bind_method(D_METHOD("is_mesh_flipped_h"), &SpriteMesh::is_mesh_flipped_h);
-
-	ClassDB::bind_method(D_METHOD("set_mesh_flip_v", "mesh_fiph_v"), &SpriteMesh::set_mesh_flip_v);
-	ClassDB::bind_method(D_METHOD("is_mesh_flipped_v"), &SpriteMesh::is_mesh_flipped_v);
 
 	ClassDB::bind_method(D_METHOD("set_mesh_texture", "mesh_texture"), &SpriteMesh::set_mesh_texture);
 	ClassDB::bind_method(D_METHOD("get_mesh_texture"), &SpriteMesh::get_mesh_texture);
@@ -290,21 +359,22 @@ void SpriteMesh::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_mesh_normal_map", "mesh_normal_map"), &SpriteMesh::set_mesh_normal_map);
 	ClassDB::bind_method(D_METHOD("get_mesh_normal_map"), &SpriteMesh::get_mesh_normal_map);
 
-	ClassDB::bind_method(D_METHOD("set_mesh_centered", "centered"), &SpriteMesh::set_mesh_centered);
-	ClassDB::bind_method(D_METHOD("is_mesh_centered"), &SpriteMesh::is_mesh_centered);
+	ClassDB::bind_method(D_METHOD("set_centered", "centered"), &SpriteMesh::set_centered);
+	ClassDB::bind_method(D_METHOD("is_centered"), &SpriteMesh::is_centered);
 
-	ClassDB::bind_method(D_METHOD("set_mesh_offset", "offset"), &SpriteMesh::set_mesh_offset);
-	ClassDB::bind_method(D_METHOD("get_mesh_offset"), &SpriteMesh::get_mesh_offset);
+	ClassDB::bind_method(D_METHOD("set_offset", "offset"), &SpriteMesh::set_offset);
+	ClassDB::bind_method(D_METHOD("get_offset"), &SpriteMesh::get_offset);
 
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "mesh", PROPERTY_HINT_RESOURCE_TYPE, "Mesh"), "set_mesh", "get_mesh");
+
 	ADD_GROUP("Mesh Transform", "mesh_");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "mesh_centered"), "set_mesh_centered", "is_mesh_centered");
-	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "mesh_offset"), "set_mesh_offset", "get_mesh_offset");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "mesh_flip_h"), "set_mesh_flip_h", "is_mesh_flipped_h");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "mesh_flip_v"), "set_mesh_flip_v", "is_mesh_flipped_v");
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "mesh_rotation", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "set_mesh_rotation", "get_mesh_rotation");
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "mesh_rotation_degrees", PROPERTY_HINT_RANGE, "-360,360,0.1,or_lesser,or_greater", PROPERTY_USAGE_EDITOR), "set_mesh_rotation_degrees", "get_mesh_rotation_degrees");
-	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "mesh_scale"), "set_mesh_scale", "get_mesh_scale");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "mesh_centered"), "set_centered", "is_centered");
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "mesh_offset"), "set_offset", "get_offset");
+	ADD_PROPERTY(PropertyInfo(Variant::BASIS, "mesh_rotation", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "set_mesh_rotation", "get_mesh_rotation");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "mesh_rotation_x_degrees", PROPERTY_HINT_RANGE, "-360,360,0.1,or_lesser,or_greater", PROPERTY_USAGE_EDITOR), "set_mesh_rotation_x_degrees", "get_mesh_rotation_x_degrees");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "mesh_rotation_y_degrees", PROPERTY_HINT_RANGE, "-360,360,0.1,or_lesser,or_greater", PROPERTY_USAGE_EDITOR), "set_mesh_rotation_y_degrees", "get_mesh_rotation_y_degrees");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "mesh_rotation_z_degrees", PROPERTY_HINT_RANGE, "-360,360,0.1,or_lesser,or_greater", PROPERTY_USAGE_EDITOR), "set_mesh_rotation_z_degrees", "get_mesh_rotation_z_degrees");
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "mesh_scale"), "set_mesh_scale", "get_mesh_scale");
 	ADD_GROUP("", "");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "mesh_texture", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_mesh_texture", "get_mesh_texture");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "mesh_normal_map", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_mesh_normal_map", "get_mesh_normal_map");
@@ -314,13 +384,12 @@ void SpriteMesh::_bind_methods() {
 }
 
 SpriteMesh::SpriteMesh() {
-	mesh_hflip = false;
-	mesh_vflip = false;
-	mesh_centered = true;
-	mesh_offset = Vector2(0, 0);
-	mesh_angle = 0;
-	mesh_scale = Vector2(1, 1);
-	_mesh_xform = Transform2D();
+	centered = true;
+	offset = Vector2(0, 0);
+	mesh_angle = Vector3(0, 0, 0);
+	mesh_scale = Vector3(1, 1, 1);
+	_mesh_xform = Basis(mesh_angle, mesh_scale);
+	_mesh_dirty = false;
 	_mesh_xform_dirty = false;
 
 }

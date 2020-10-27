@@ -755,6 +755,8 @@ public:
 	virtual void mesh_remove_surface(RID p_mesh, int p_surface);
 	virtual int mesh_get_surface_count(RID p_mesh) const;
 
+	virtual void mesh_surface_set_active(RID p_mesh, int p_surface, bool p_active);
+
 	virtual void mesh_set_custom_aabb(RID p_mesh, const AABB &p_aabb);
 	virtual AABB mesh_get_custom_aabb(RID p_mesh) const;
 

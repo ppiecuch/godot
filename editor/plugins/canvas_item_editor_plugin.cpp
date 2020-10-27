@@ -40,6 +40,7 @@
 #include "editor/plugins/animation_player_editor_plugin.h"
 #include "editor/plugins/script_editor_plugin.h"
 #include "editor/script_editor_debugger.h"
+#include "scene/animation/animation_player_bone_transform.h"
 #include "scene/2d/light_2d.h"
 #include "scene/2d/particles_2d.h"
 #include "scene/2d/polygon_2d.h"
@@ -58,6 +59,9 @@
 Node *createVectorSprite(Ref<Resource> p_resource);
 void configureVectorSprite(Node *p_child, Ref<Resource> p_texture);
 #endif
+
+#define get_bone_transformer(node) \
+	((AnimationPlayerBoneTransform *)(node->has_meta(BONE_TRANSFORMER_KEY)?(Object *)node->get_meta(BONE_TRANSFORMER_KEY):0))
 
 // Min and Max are power of two in order to play nicely with successive increment.
 // That way, we can naturally reach a 100% zoom from boundaries.
@@ -4856,7 +4860,9 @@ void CanvasItemEditor::_popup_callback(int p_op) {
 				if (canvas_item->get_viewport() != EditorNode::get_singleton()->get_scene_root())
 					continue;
 
-				if (Object::cast_to<Node2D>(canvas_item)) {
+				if (AnimationPlayerBoneTransform *bt = get_bone_transformer(canvas_item)) {
+					bt->clear_pose();
+				} else if (Object::cast_to<Node2D>(canvas_item)) {
 					Node2D *n2d = Object::cast_to<Node2D>(canvas_item);
 
 					if (key_pos)

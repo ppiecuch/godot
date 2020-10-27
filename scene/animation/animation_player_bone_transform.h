@@ -46,6 +46,7 @@ public:
 	virtual Transform get_bone_pose(int p_bone) const = 0;
 	virtual void set_bone_pose(int p_bone, const Transform &p_pose) = 0;
 	virtual int find_bone(const String &p_name) const = 0;
+	virtual void clear_pose() = 0;
 	virtual void update_skeleton() = 0;
 };
 

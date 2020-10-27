@@ -31,7 +31,6 @@
 #ifndef SPRITE_H
 #define SPRITE_H
 
-#include "scene/2d/mesh_instance_2d.h"
 #include "scene/2d/node_2d.h"
 #include "scene/resources/texture.h"
 
@@ -55,13 +54,6 @@ class Sprite : public Node2D {
 
 	int vframes;
 	int hframes;
-
-	int vsubdivide;
-	int hsubdivide;
-	Array displacements;
-	MeshInstance2D *grid_mesh;
-
-	void _update_grid_mesh();
 
 	void _get_rects(Rect2 &r_src_rect, Rect2 &r_dst_rect, bool &r_filter_clip) const;
 

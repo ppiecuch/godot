@@ -44,17 +44,16 @@ private:
 	Ref<Mesh> mesh;
 	Ref<Texture> texture;
 	Ref<Texture> normal_map;
-	AABB mesh_aabb;
 
-	float mesh_angle;
-	Size2 mesh_scale;
-	Transform2D _mesh_xform;
+	Vector3 mesh_angle;
+	Vector3 mesh_scale;
+
+	bool centered;
+	Point2 offset;
+
+	Basis _mesh_xform;
 	bool _mesh_xform_dirty;
-
-	bool mesh_hflip;
-	bool mesh_vflip;
-	bool mesh_centered;
-	Point2 mesh_offset;
+	bool _mesh_dirty;
 
 	void _get_rects(Rect2 &r_src_rect, Rect2 &r_dst_rect, bool &r_filter_clip) const;
 
@@ -81,20 +80,12 @@ public:
 	virtual bool _edit_use_rect() const;
 #endif
 
-	bool is_inside_mesh(const Point2 &p_point, double p_tolerance) const;
-
 	void _update_xform_values();
+	void _update_mesh_xform();
 	void _update_transform();
 
 	void set_mesh(const Ref<Mesh> &p_mesh);
 	Ref<Mesh> get_mesh() const;
-
-	void set_mesh_rotation(float p_radians);
-	float get_mesh_rotation() const;
-	void set_mesh_rotation_degrees(float p_degrees);
-	float get_mesh_rotation_degrees() const;
-	void set_mesh_scale(const Size2 &p_scale);
-	Size2 get_mesh_scale() const;
 
 	void set_mesh_texture(const Ref<Texture> &p_texture);
 	Ref<Texture> get_mesh_texture() const;
@@ -102,14 +93,24 @@ public:
 	void set_mesh_normal_map(const Ref<Texture> &p_texture);
 	Ref<Texture> get_mesh_normal_map() const;
 
-	void set_mesh_centered(bool p_center);
-	bool is_mesh_centered() const;
-	void set_mesh_offset(const Point2 &p_offset);
-	Point2 get_mesh_offset() const;
-	void set_mesh_flip_h(bool p_mesh_flip);
-	bool is_mesh_flipped_h() const;
-	void set_mesh_flip_v(bool p_mesh_flip);
-	bool is_mesh_flipped_v() const;
+	void set_mesh_rotation(Vector3 p_radians);
+	Vector3 get_mesh_rotation() const;
+	void set_mesh_scale(const Vector3 &p_scale);
+	Vector3 get_mesh_scale() const;
+	void set_mesh_orientation(const Basis &p_basis);
+	Basis get_mesh_orientation() const;
+
+	void set_mesh_rotation_x_degrees(float p_degrees);
+	float get_mesh_rotation_x_degrees() const;
+	void set_mesh_rotation_y_degrees(float p_degrees);
+	float get_mesh_rotation_y_degrees() const;
+	void set_mesh_rotation_z_degrees(float p_degrees);
+	float get_mesh_rotation_z_degrees() const;
+
+	void set_centered(bool p_center);
+	bool is_centered() const;
+	void set_offset(const Point2 &p_offset);
+	Point2 get_offset() const;
 
 	Rect2 get_rect() const;
 	virtual Rect2 get_anchorable_rect() const;

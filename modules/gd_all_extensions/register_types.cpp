@@ -71,6 +71,7 @@
 #include "scene/figure.h"
 #include "scene/pixel_spaceships.h"
 #include "scene/round_progress.h"
+#include "scene/spherical_waves.h"
 #include "scene/sprite_mesh.h"
 #include "scene/touch_button.h"
 #include "scene/vegetation_instance.h"
@@ -128,7 +129,7 @@ void register_gd_all_extensions_types() {
 
 	Engine::get_singleton()->add_singleton(Engine::Singleton("DebugDraw", memnew(DebugDraw)));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Tags", memnew(Tags)));
-	Engine::get_singleton()->add_singleton(Engine::Singleton("Blitter", memnew(_Blitter)));
+	Engine::get_singleton()->add_singleton(Engine::Singleton("Blitter", memnew(Blitter)));
 #ifdef TOOLS_ENABLED
 	Engine::get_singleton()->add_singleton(Engine::Singleton("GodotErrorHandler", memnew(GodotErrorHandler)));
 #endif
@@ -149,6 +150,7 @@ void register_gd_all_extensions_types() {
 	ClassDB::register_class<TouchButton>();
 	ClassDB::register_class<AudioStreamPreviewGenerator>();
 	ClassDB::register_class<SpriteMesh>();
+	ClassDB::register_class<SphericalWaves>();
 	ClassDB::register_class<Figure>();
 
 	if (enet_initialize() != 0) {

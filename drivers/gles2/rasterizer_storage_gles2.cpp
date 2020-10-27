@@ -2778,6 +2778,13 @@ Vector<AABB> RasterizerStorageGLES2::mesh_surface_get_skeleton_aabb(RID p_mesh, 
 	return mesh->surfaces[p_surface]->skeleton_bone_aabb;
 }
 
+void RasterizerStorageGLES2::mesh_surface_set_active(RID p_mesh, int p_surface, bool p_active) {
+	Mesh *mesh = mesh_owner.getornull(p_mesh);
+	ERR_FAIL_COND(!mesh);
+	ERR_FAIL_COND(p_surface >= mesh->surfaces.size());
+	mesh->surfaces[p_surface]->active = p_active;
+}
+
 void RasterizerStorageGLES2::mesh_remove_surface(RID p_mesh, int p_surface) {
 
 	Mesh *mesh = mesh_owner.getornull(p_mesh);

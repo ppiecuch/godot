@@ -34,11 +34,7 @@
 #include "core/object.h"
 #include "core/reference.h"
 
-class Blitter : public Object {
-
-	GDCLASS(Blitter, Object)
-
-	static Blitter *singleton;
+class BlitterOps {
 
 public:
 	static _FORCE_INLINE_ Rect2 calculate_new_rect_from_mins_max(const Vector2 &p_base_size, const Vector2 &p_mins, const Vector2 &p_max) {
@@ -110,17 +106,17 @@ public:
 	}
 };
 
-class _Blitter : public Object {
+class Blitter : public Object {
 
-	GDCLASS(_Blitter, Object)
+	GDCLASS(Blitter, Object)
 
-	static _Blitter *singleton;
+	static Blitter *singleton;
 
 protected:
 	static void _bind_methods();
 
 public:
-	static _Blitter *get_singleton();
+	static Blitter *get_singleton();
 
 	Rect2 calculate_new_rect_from_mins_max(const Vector2 &p_base_size, const Vector2 &p_mins, const Vector2 &p_max);
 	Vector2 calculate_new_size_from_mins_max(const Vector2 &p_base_size, const Vector2 &p_mins, const Vector2 &p_max);
@@ -128,5 +124,5 @@ public:
 	Ref<Image> blit_rect_modulate_inverted_alpha(const Ref<Image> p_src, const Rect2 &p_src_rect, const Ref<Image> p_dest, const Point2 &p_dest_point, const Color &p_modulate);
 	Ref<Image> blit_rect_modulate_inverted_alpha_translucent(const Ref<Image> p_src, const Rect2 &p_src_rect, const Ref<Image> p_dest, const Point2 &p_dest_point, const Color &p_modulate);
 
-	_Blitter();
+	Blitter();
 };

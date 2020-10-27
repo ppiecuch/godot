@@ -34,26 +34,6 @@
 #include "scene/main/viewport.h"
 #include "scene/scene_string_names.h"
 
-void Sprite::_update_grid_mesh() {
-	Vector<Vector2> computed_vertices;
-	Vector<Vector2> computed_uv;
-	Vector<int> computed_indices;
-
-	Ref<ArrayMesh> mesh;
-	mesh.instance();
-
-	Array a;
-	a.resize(Mesh::ARRAY_MAX);
-	a[Mesh::ARRAY_VERTEX] = computed_vertices;
-	a[Mesh::ARRAY_TEX_UV] = computed_uv;
-	a[Mesh::ARRAY_INDEX] = computed_indices;
-
-	mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, a, Array(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
-
-	MeshInstance2D *mesh_instance = memnew(MeshInstance2D);
-	mesh_instance->set_mesh(mesh);
-}
-
 #ifdef TOOLS_ENABLED
 Dictionary Sprite::_edit_get_state() const {
 	Dictionary state = Node2D::_edit_get_state();
@@ -147,19 +127,10 @@ void Sprite::_notification(int p_what) {
 			break;
 			*/
 
-			if (vsubdivide > 0 && hsubdivide > 0) {
-				if (grid_mesh == 0) {
-				}
-				Ref<ArrayMesh> mesh;
-				mesh.instance();
-
-				draw_mesh(mesh, texture, normal_map);
-			} else {
-				Rect2 src_rect, dst_rect;
-				bool filter_clip;
-				_get_rects(src_rect, dst_rect, filter_clip);
-				texture->draw_rect_region(ci, dst_rect, src_rect, Color(1, 1, 1), false, normal_map, filter_clip);
-			}
+			Rect2 src_rect, dst_rect;
+			bool filter_clip;
+			_get_rects(src_rect, dst_rect, filter_clip);
+			texture->draw_rect_region(ci, dst_rect, src_rect, Color(1, 1, 1), false, normal_map, filter_clip);
 
 		} break;
 	}
@@ -341,28 +312,6 @@ int Sprite::get_hframes() const {
 	return hframes;
 }
 
-void Sprite::set_vsubdivide(int p_amount) {
-	ERR_FAIL_COND_MSG(p_amount < 1, "Amount of vsubdivide cannot be smaller than 1.");
-	vsubdivide = p_amount;
-	update();
-	_change_notify();
-}
-int Sprite::get_vsubdivide() const {
-
-	return vsubdivide;
-}
-
-void Sprite::set_hsubdivide(int p_amount) {
-	ERR_FAIL_COND_MSG(p_amount < 1, "Amount of hsubdivide cannot be smaller than 1.");
-	hsubdivide = p_amount;
-	update();
-	_change_notify();
-}
-int Sprite::get_hsubdivide() const {
-
-	return hsubdivide;
-}
-
 bool Sprite::is_pixel_opaque(const Point2 &p_point) const {
 
 	if (texture.is_null())
@@ -501,11 +450,6 @@ void Sprite::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_hframes", "hframes"), &Sprite::set_hframes);
 	ClassDB::bind_method(D_METHOD("get_hframes"), &Sprite::get_hframes);
 
-	ClassDB::bind_method(D_METHOD("set_vsubdivide", "vsubdivide"), &Sprite::set_vsubdivide);
-	ClassDB::bind_method(D_METHOD("get_vsubdivide"), &Sprite::get_vsubdivide);
-	ClassDB::bind_method(D_METHOD("set_hsubdivide", "hsubdivide"), &Sprite::set_hsubdivide);
-	ClassDB::bind_method(D_METHOD("get_hsubdivide"), &Sprite::get_hsubdivide);
-
 	ClassDB::bind_method(D_METHOD("get_rect"), &Sprite::get_rect);
 
 	ClassDB::bind_method(D_METHOD("_texture_changed"), &Sprite::_texture_changed);
@@ -544,7 +488,6 @@ Sprite::Sprite() {
 
 	vframes = 1;
 	hframes = 1;
-	grid_mesh = 0;
 }
 
 Sprite::~Sprite() {

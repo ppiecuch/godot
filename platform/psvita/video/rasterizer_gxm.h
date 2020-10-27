@@ -38,7 +38,7 @@
 #include "servers/visual/rasterizer.h"
 #include "servers/visual_server.h"
 
-class RasterizerSceneCitro3D : public RasterizerScene {
+class RasterizerSceneGXM : public RasterizerScene {
 public:
 	/* SHADOW ATLAS API */
 
@@ -115,14 +115,14 @@ public:
 
 	bool free(RID p_rid) { return true; }
 
-	RasterizerSceneCitro3D() {}
-	~RasterizerSceneCitro3D() {}
+	RasterizerSceneGXM() {}
+	~RasterizerSceneGXM() {}
 };
 
-class RasterizerStorageCitro3D : public RasterizerStorage {
+class RasterizerStorageGXM : public RasterizerStorage {
 public:
 	/* TEXTURE API */
-	struct Citro3DTexture : public RID_Data {
+	struct GXMTexture : public RID_Data {
 		int width;
 		int height;
 		uint32_t flags;
@@ -131,36 +131,37 @@ public:
 		String path;
 	};
 
-	struct Citro3DSurface {
+	struct GXMSurface {
 		uint32_t format;
 		VS::PrimitiveType primitive;
 		PoolVector<uint8_t> array;
 		int vertex_count;
 		PoolVector<uint8_t> index_array;
 		int index_count;
+		bool active;
 		AABB aabb;
 		Vector<PoolVector<uint8_t> > blend_shapes;
 		Vector<AABB> bone_aabbs;
 	};
 
-	struct Citro3DMesh : public RID_Data {
-		Vector<Citro3DSurface> surfaces;
+	struct GXMMesh : public RID_Data {
+		Vector<GXMSurface> surfaces;
 		int blend_shape_count;
 		VS::BlendShapeMode blend_shape_mode;
 	};
 
-	mutable RID_Owner<Citro3DTexture> texture_owner;
-	mutable RID_Owner<Citro3DMesh> mesh_owner;
+	mutable RID_Owner<GXMTexture> texture_owner;
+	mutable RID_Owner<GXMMesh> mesh_owner;
 
 	RID texture_create() {
 
-		Citro3DTexture *texture = memnew(Citro3DTexture);
+		GXMTexture *texture = memnew(GXMTexture);
 		ERR_FAIL_COND_V(!texture, RID());
 		return texture_owner.make_rid(texture);
 	}
 
 	void texture_allocate(RID p_texture, int p_width, int p_height, int p_depth_3d, Image::Format p_format, VisualServer::TextureType p_type = VS::TEXTURE_TYPE_2D, uint32_t p_flags = VS::TEXTURE_FLAGS_DEFAULT) {
-		Citro3DTexture *t = texture_owner.getornull(p_texture);
+		GXMTexture *t = texture_owner.getornull(p_texture);
 		ERR_FAIL_COND(!t);
 		t->width = p_width;
 		t->height = p_height;
@@ -170,7 +171,7 @@ public:
 		t->image->create(p_width, p_height, false, p_format);
 	}
 	void texture_set_data(RID p_texture, const Ref<Image> &p_image, int p_level) {
-		Citro3DTexture *t = texture_owner.getornull(p_texture);
+		GXMTexture *t = texture_owner.getornull(p_texture);
 		ERR_FAIL_COND(!t);
 		t->width = p_image->get_width();
 		t->height = p_image->get_height();
@@ -179,7 +180,7 @@ public:
 	}
 
 	void texture_set_data_partial(RID p_texture, const Ref<Image> &p_image, int src_x, int src_y, int src_w, int src_h, int dst_x, int dst_y, int p_dst_mip, int p_level) {
-		Citro3DTexture *t = texture_owner.get(p_texture);
+		GXMTexture *t = texture_owner.get(p_texture);
 
 		ERR_FAIL_COND(!t);
 		ERR_FAIL_COND_MSG(p_image.is_null(), "It's not a reference to a valid Image object.");
@@ -192,22 +193,22 @@ public:
 	}
 
 	Ref<Image> texture_get_data(RID p_texture, int p_level) const {
-		Citro3DTexture *t = texture_owner.getornull(p_texture);
+		GXMTexture *t = texture_owner.getornull(p_texture);
 		ERR_FAIL_COND_V(!t, Ref<Image>());
 		return t->image;
 	}
 	void texture_set_flags(RID p_texture, uint32_t p_flags) {
-		Citro3DTexture *t = texture_owner.getornull(p_texture);
+		GXMTexture *t = texture_owner.getornull(p_texture);
 		ERR_FAIL_COND(!t);
 		t->flags = p_flags;
 	}
 	uint32_t texture_get_flags(RID p_texture) const {
-		Citro3DTexture *t = texture_owner.getornull(p_texture);
+		GXMTexture *t = texture_owner.getornull(p_texture);
 		ERR_FAIL_COND_V(!t, 0);
 		return t->flags;
 	}
 	Image::Format texture_get_format(RID p_texture) const {
-		Citro3DTexture *t = texture_owner.getornull(p_texture);
+		GXMTexture *t = texture_owner.getornull(p_texture);
 		ERR_FAIL_COND_V(!t, Image::FORMAT_RGB8);
 		return t->format;
 	}
@@ -221,12 +222,12 @@ public:
 	void texture_bind(RID p_texture, uint32_t p_texture_no) {}
 
 	void texture_set_path(RID p_texture, const String &p_path) {
-		Citro3DTexture *t = texture_owner.getornull(p_texture);
+		GXMTexture *t = texture_owner.getornull(p_texture);
 		ERR_FAIL_COND(!t);
 		t->path = p_path;
 	}
 	String texture_get_path(RID p_texture) const {
-		Citro3DTexture *t = texture_owner.getornull(p_texture);
+		GXMTexture *t = texture_owner.getornull(p_texture);
 		ERR_FAIL_COND_V(!t, String());
 		return t->path;
 	}
@@ -292,7 +293,7 @@ public:
 	/* MESH API */
 
 	RID mesh_create() {
-		Citro3DMesh *mesh = memnew(Citro3DMesh);
+		GXMMesh *mesh = memnew(GXMMesh);
 		ERR_FAIL_COND_V(!mesh, RID());
 		mesh->blend_shape_count = 0;
 		mesh->blend_shape_mode = VS::BLEND_SHAPE_MODE_NORMALIZED;
@@ -300,40 +301,41 @@ public:
 	}
 
 	void mesh_add_surface(RID p_mesh, uint32_t p_format, VS::PrimitiveType p_primitive, const PoolVector<uint8_t> &p_array, int p_vertex_count, const PoolVector<uint8_t> &p_index_array, int p_index_count, const AABB &p_aabb, const Vector<PoolVector<uint8_t> > &p_blend_shapes = Vector<PoolVector<uint8_t> >(), const Vector<AABB> &p_bone_aabbs = Vector<AABB>()) {
-		Citro3DMesh *m = mesh_owner.getornull(p_mesh);
+		GXMMesh *m = mesh_owner.getornull(p_mesh);
 		ERR_FAIL_COND(!m);
 
-		m->surfaces.push_back(Citro3DSurface());
-		Citro3DSurface *s = &m->surfaces.write[m->surfaces.size() - 1];
+		m->surfaces.push_back(GXMSurface());
+		GXMSurface *s = &m->surfaces.write[m->surfaces.size() - 1];
 		s->format = p_format;
 		s->primitive = p_primitive;
 		s->array = p_array;
 		s->vertex_count = p_vertex_count;
 		s->index_array = p_index_array;
 		s->index_count = p_index_count;
+		s->active = true;
 		s->aabb = p_aabb;
 		s->blend_shapes = p_blend_shapes;
 		s->bone_aabbs = p_bone_aabbs;
 	}
 
 	void mesh_set_blend_shape_count(RID p_mesh, int p_amount) {
-		Citro3DMesh *m = mesh_owner.getornull(p_mesh);
+		GXMMesh *m = mesh_owner.getornull(p_mesh);
 		ERR_FAIL_COND(!m);
 		m->blend_shape_count = p_amount;
 	}
 	int mesh_get_blend_shape_count(RID p_mesh) const {
-		Citro3DMesh *m = mesh_owner.getornull(p_mesh);
+		GXMMesh *m = mesh_owner.getornull(p_mesh);
 		ERR_FAIL_COND_V(!m, 0);
 		return m->blend_shape_count;
 	}
 
 	void mesh_set_blend_shape_mode(RID p_mesh, VS::BlendShapeMode p_mode) {
-		Citro3DMesh *m = mesh_owner.getornull(p_mesh);
+		GXMMesh *m = mesh_owner.getornull(p_mesh);
 		ERR_FAIL_COND(!m);
 		m->blend_shape_mode = p_mode;
 	}
 	VS::BlendShapeMode mesh_get_blend_shape_mode(RID p_mesh) const {
-		Citro3DMesh *m = mesh_owner.getornull(p_mesh);
+		GXMMesh *m = mesh_owner.getornull(p_mesh);
 		ERR_FAIL_COND_V(!m, VS::BLEND_SHAPE_MODE_NORMALIZED);
 		return m->blend_shape_mode;
 	}
@@ -344,72 +346,79 @@ public:
 	RID mesh_surface_get_material(RID p_mesh, int p_surface) const { return RID(); }
 
 	int mesh_surface_get_array_len(RID p_mesh, int p_surface) const {
-		Citro3DMesh *m = mesh_owner.getornull(p_mesh);
+		GXMMesh *m = mesh_owner.getornull(p_mesh);
 		ERR_FAIL_COND_V(!m, 0);
 
 		return m->surfaces[p_surface].vertex_count;
 	}
 	int mesh_surface_get_array_index_len(RID p_mesh, int p_surface) const {
-		Citro3DMesh *m = mesh_owner.getornull(p_mesh);
+		GXMMesh *m = mesh_owner.getornull(p_mesh);
 		ERR_FAIL_COND_V(!m, 0);
 
 		return m->surfaces[p_surface].index_count;
 	}
 
 	PoolVector<uint8_t> mesh_surface_get_array(RID p_mesh, int p_surface) const {
-		Citro3DMesh *m = mesh_owner.getornull(p_mesh);
+		GXMMesh *m = mesh_owner.getornull(p_mesh);
 		ERR_FAIL_COND_V(!m, PoolVector<uint8_t>());
 
 		return m->surfaces[p_surface].array;
 	}
 	PoolVector<uint8_t> mesh_surface_get_index_array(RID p_mesh, int p_surface) const {
-		Citro3DMesh *m = mesh_owner.getornull(p_mesh);
+		GXMMesh *m = mesh_owner.getornull(p_mesh);
 		ERR_FAIL_COND_V(!m, PoolVector<uint8_t>());
 
 		return m->surfaces[p_surface].index_array;
 	}
 
 	uint32_t mesh_surface_get_format(RID p_mesh, int p_surface) const {
-		Citro3DMesh *m = mesh_owner.getornull(p_mesh);
+		GXMMesh *m = mesh_owner.getornull(p_mesh);
 		ERR_FAIL_COND_V(!m, 0);
 
 		return m->surfaces[p_surface].format;
 	}
 	VS::PrimitiveType mesh_surface_get_primitive_type(RID p_mesh, int p_surface) const {
-		Citro3DMesh *m = mesh_owner.getornull(p_mesh);
+		GXMMesh *m = mesh_owner.getornull(p_mesh);
 		ERR_FAIL_COND_V(!m, VS::PRIMITIVE_POINTS);
 
 		return m->surfaces[p_surface].primitive;
 	}
 
 	AABB mesh_surface_get_aabb(RID p_mesh, int p_surface) const {
-		Citro3DMesh *m = mesh_owner.getornull(p_mesh);
+		GXMMesh *m = mesh_owner.getornull(p_mesh);
 		ERR_FAIL_COND_V(!m, AABB());
 
 		return m->surfaces[p_surface].aabb;
 	}
 	Vector<PoolVector<uint8_t> > mesh_surface_get_blend_shapes(RID p_mesh, int p_surface) const {
-		Citro3DMesh *m = mesh_owner.getornull(p_mesh);
+		GXMMesh *m = mesh_owner.getornull(p_mesh);
 		ERR_FAIL_COND_V(!m, Vector<PoolVector<uint8_t> >());
 
 		return m->surfaces[p_surface].blend_shapes;
 	}
 	Vector<AABB> mesh_surface_get_skeleton_aabb(RID p_mesh, int p_surface) const {
-		Citro3DMesh *m = mesh_owner.getornull(p_mesh);
+		GXMMesh *m = mesh_owner.getornull(p_mesh);
 		ERR_FAIL_COND_V(!m, Vector<AABB>());
 
 		return m->surfaces[p_surface].bone_aabbs;
 	}
 
+	void mesh_surface_set_active(RID p_mesh, int p_surface, bool p_active) {
+		GXMMesh *m = mesh_owner.getornull(p_mesh);
+		ERR_FAIL_COND(!m);
+		ERR_FAIL_COND(p_surface >= m->surfaces.size());
+		m->surfaces.write[p_surface].active = p_active;
+	}
+
 	void mesh_remove_surface(RID p_mesh, int p_index) {
-		Citro3DMesh *m = mesh_owner.getornull(p_mesh);
+		GXMMesh *m = mesh_owner.getornull(p_mesh);
 		ERR_FAIL_COND(!m);
 		ERR_FAIL_COND(p_index >= m->surfaces.size());
 
 		m->surfaces.remove(p_index);
 	}
 	int mesh_get_surface_count(RID p_mesh) const {
-		Citro3DMesh *m = mesh_owner.getornull(p_mesh);
+		GXMMesh *m = mesh_owner.getornull(p_mesh);
 		ERR_FAIL_COND_V(!m, 0);
 		return m->surfaces.size();
 	}
@@ -730,12 +739,12 @@ public:
 	bool free(RID p_rid) {
 		if (texture_owner.owns(p_rid)) {
 			// delete the texture
-			Citro3DTexture *texture = texture_owner.get(p_rid);
+			GXMTexture *texture = texture_owner.get(p_rid);
 			texture_owner.free(p_rid);
 			memdelete(texture);
 		} else if (mesh_owner.owns(p_rid)) {
 			// delete the mesh
-			Citro3DMesh *mesh = mesh_owner.getornull(p_rid);
+			GXMMesh *mesh = mesh_owner.getornull(p_rid);
 			mesh_owner.free(p_rid);
 			memdelete(mesh);
 		} else if (lightmap_capture_data_owner.owns(p_rid)) {
@@ -766,11 +775,11 @@ public:
 
 	static RasterizerStorage *base_singleton;
 
-	RasterizerStorageCitro3D(){};
-	~RasterizerStorageCitro3D() {}
+	RasterizerStorageGXM(){};
+	~RasterizerStorageGXM() {}
 };
 
-class RasterizerCanvasCitro3D : public RasterizerCanvas {
+class RasterizerCanvasGXM : public RasterizerCanvas {
 public:
 	RID light_internal_create() { return RID(); }
 	void light_internal_update(RID p_rid, Light *p_light) {}
@@ -788,15 +797,15 @@ public:
 
 	void draw_window_margins(int *p_margins, RID *p_margin_textures) {}
 
-	RasterizerCanvasCitro3D() {}
-	~RasterizerCanvasCitro3D() {}
+	RasterizerCanvasGXM() {}
+	~RasterizerCanvasGXM() {}
 };
 
-class RasterizerCitro3D : public Rasterizer {
+class RasterizerGXM : public Rasterizer {
 protected:
-	RasterizerCanvasCitro3D canvas;
-	RasterizerStorageCitro3D storage;
-	RasterizerSceneCitro3D scene;
+	RasterizerCanvasGXM canvas;
+	RasterizerStorageGXM storage;
+	RasterizerSceneGXM scene;
 
 public:
 	RasterizerStorage *get_storage() { return &storage; }
@@ -818,14 +827,14 @@ public:
 
 	static Error is_viable() { return OK; }
 
-	static Rasterizer *_create_current() { return memnew(RasterizerCitro3D); }
+	static Rasterizer *_create_current() { return memnew(RasterizerGXM); }
 
 	static void make_current() { _create_func = _create_current; }
 
 	virtual bool is_low_end() const { return true; }
 
-	RasterizerCitro3D() {}
-	~RasterizerCitro3D() {}
+	RasterizerGXM() {}
+	~RasterizerGXM() {}
 
 	// --- PSVita GXM elements ---
 };

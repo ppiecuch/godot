@@ -153,7 +153,9 @@ void RasterizerCanvasGLES3::canvas_begin() {
 				storage->frame.clear_request_color.b,
 				transparent ? storage->frame.clear_request_color.a : 1.0);
 		glClearStencil(0);
-		glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		glClearDepth(1.0f);
+		glEnable(GL_DEPTH_TEST);
+		glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		storage->frame.clear_request = false;
 		glColorMask(1, 1, 1, transparent ? 1 : 0);
 	}
@@ -1119,19 +1121,29 @@ void RasterizerCanvasGLES3::_canvas_item_render_commands(Item *p_item, Item *cur
 
 					for (int j = 0; j < mesh_data->surfaces.size(); j++) {
 						RasterizerStorageGLES3::Surface *s = mesh_data->surfaces[j];
-						// materials are ignored in 2D meshes, could be added but many things (ie, lighting mode, reading from screen, etc) would break as they are not meant be set up at this point of drawing
-						glBindVertexArray(s->array_id);
+						if (s->active) {
+							// materials are ignored in 2D meshes, could be added but many things (ie, lighting mode, reading from screen, etc) would break as they are not meant be set up at this point of drawing
+							glBindVertexArray(s->array_id);
 
-						glVertexAttrib4f(VS::ARRAY_COLOR, mesh->modulate.r, mesh->modulate.g, mesh->modulate.b, mesh->modulate.a);
+							glVertexAttrib4f(VS::ARRAY_COLOR, mesh->modulate.r, mesh->modulate.g, mesh->modulate.b, mesh->modulate.a);
 
-						if (s->index_array_len) {
-							glDrawElements(gl_primitive[s->primitive], s->index_array_len, (s->array_len >= (1 << 16)) ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, 0);
-						} else {
-							glDrawArrays(gl_primitive[s->primitive], 0, s->array_len);
+							const bool need_depth = !(s->format & VisualServer::ARRAY_FLAG_USE_2D_VERTICES);
+
+							if (need_depth) {
+								glEnable(GL_DEPTH_TEST);
+							}
+							if (s->index_array_len) {
+								glDrawElements(gl_primitive[s->primitive], s->index_array_len, (s->array_len >= (1 << 16)) ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, 0);
+							} else {
+								glDrawArrays(gl_primitive[s->primitive], 0, s->array_len);
+							}
+							if (need_depth) {
+								glDisable(GL_DEPTH_TEST);
+							}
+							storage->info.render._2d_draw_call_count++;
+
+							glBindVertexArray(0);
 						}
-						storage->info.render._2d_draw_call_count++;
-
-						glBindVertexArray(0);
 					}
 				}
 				state.canvas_shader.set_uniform(CanvasShaderGLES3::MODELVIEW_MATRIX, state.final_transform);

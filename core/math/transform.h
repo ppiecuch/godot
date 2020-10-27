@@ -36,6 +36,12 @@
 #include "core/math/plane.h"
 #include "core/pool_vector.h"
 
+#define _from_transform_2d(t2d)                                \
+	Transform(	(t2d).elements[0][0], (t2d).elements[0][1], 0, \
+				(t2d).elements[1][0], (t2d).elements[1][1], 0, \
+				0,                  0,                  0,     \
+				(t2d).elements[2][0], (t2d).elements[2][1], 0 )
+
 class Transform {
 public:
 	Basis basis;

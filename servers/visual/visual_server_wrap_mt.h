@@ -178,6 +178,8 @@ public:
 	FUNC2(mesh_remove_surface, RID, int)
 	FUNC1RC(int, mesh_get_surface_count, RID)
 
+	FUNC3(mesh_surface_set_active, RID, int, bool)
+
 	FUNC2(mesh_set_custom_aabb, RID, const AABB &)
 	FUNC1RC(AABB, mesh_get_custom_aabb, RID)
 

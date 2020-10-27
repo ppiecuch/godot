@@ -140,6 +140,7 @@ public:
 		int vertex_count;
 		PoolVector<uint8_t> index_array;
 		int index_count;
+		bool active;
 		AABB aabb;
 		Vector<PoolVector<uint8_t> > blend_shapes;
 		Vector<AABB> bone_aabbs;
@@ -313,6 +314,7 @@ public:
 		s->vertex_count = p_vertex_count;
 		s->index_array = p_index_array;
 		s->index_count = p_index_count;
+		s->active = true;
 		s->aabb = p_aabb;
 		s->blend_shapes = p_blend_shapes;
 		s->bone_aabbs = p_bone_aabbs;
@@ -401,6 +403,13 @@ public:
 		ERR_FAIL_COND_V(!m, Vector<AABB>());
 
 		return m->surfaces[p_surface].bone_aabbs;
+	}
+
+	void mesh_surface_set_active(RID p_mesh, int p_surface, bool p_active) {
+		Citro3DMesh *m = mesh_owner.getornull(p_mesh);
+		ERR_FAIL_COND(!m);
+		ERR_FAIL_COND(p_surface >= m->surfaces.size());
+		m->surfaces.write[p_surface].active = p_active;
 	}
 
 	void mesh_remove_surface(RID p_mesh, int p_index) {

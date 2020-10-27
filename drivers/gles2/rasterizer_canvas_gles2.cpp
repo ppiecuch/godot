@@ -1145,38 +1145,40 @@ void RasterizerCanvasGLES2::render_batches(Item::Command *const *p_commands, Ite
 
 								for (int j = 0; j < mesh_data->surfaces.size(); j++) {
 									RasterizerStorageGLES2::Surface *s = mesh_data->surfaces[j];
-									// materials are ignored in 2D meshes, could be added but many things (ie, lighting mode, reading from screen, etc) would break as they are not meant be set up at this point of drawing
+									if (s->active) {
+										// materials are ignored in 2D meshes, could be added but many things (ie, lighting mode, reading from screen, etc) would break as they are not meant be set up at this point of drawing
 
-									glBindBuffer(GL_ARRAY_BUFFER, s->vertex_id);
+										glBindBuffer(GL_ARRAY_BUFFER, s->vertex_id);
 
-									if (s->index_array_len > 0) {
-										glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, s->index_id);
-									}
+										if (s->index_array_len > 0) {
+											glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, s->index_id);
+										}
 
-									for (int k = 0; k < VS::ARRAY_MAX - 1; k++) {
-										if (s->attribs[k].enabled) {
-											glEnableVertexAttribArray(k);
-											glVertexAttribPointer(s->attribs[k].index, s->attribs[k].size, s->attribs[k].type, s->attribs[k].normalized, s->attribs[k].stride, CAST_INT_TO_UCHAR_PTR(s->attribs[k].offset));
-										} else {
-											glDisableVertexAttribArray(k);
-											switch (k) {
-												case VS::ARRAY_NORMAL: {
-													glVertexAttrib4f(VS::ARRAY_NORMAL, 0.0, 0.0, 1, 1);
-												} break;
-												case VS::ARRAY_COLOR: {
-													glVertexAttrib4f(VS::ARRAY_COLOR, 1, 1, 1, 1);
+										for (int k = 0; k < VS::ARRAY_MAX - 1; k++) {
+											if (s->attribs[k].enabled) {
+												glEnableVertexAttribArray(k);
+												glVertexAttribPointer(s->attribs[k].index, s->attribs[k].size, s->attribs[k].type, s->attribs[k].normalized, s->attribs[k].stride, CAST_INT_TO_UCHAR_PTR(s->attribs[k].offset));
+											} else {
+												glDisableVertexAttribArray(k);
+												switch (k) {
+													case VS::ARRAY_NORMAL: {
+														glVertexAttrib4f(VS::ARRAY_NORMAL, 0.0, 0.0, 1, 1);
+													} break;
+													case VS::ARRAY_COLOR: {
+														glVertexAttrib4f(VS::ARRAY_COLOR, 1, 1, 1, 1);
 
-												} break;
-												default: {
+													} break;
+													default: {
+													}
 												}
 											}
 										}
-									}
 
-									if (s->index_array_len > 0) {
-										glDrawElements(gl_primitive[s->primitive], s->index_array_len, (s->array_len >= (1 << 16)) ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, 0);
-									} else {
-										glDrawArrays(gl_primitive[s->primitive], 0, s->array_len);
+										if (s->index_array_len > 0) {
+											glDrawElements(gl_primitive[s->primitive], s->index_array_len, (s->array_len >= (1 << 16)) ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, 0);
+										} else {
+											glDrawArrays(gl_primitive[s->primitive], 0, s->array_len);
+										}
 									}
 								}
 

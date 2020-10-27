@@ -242,6 +242,8 @@ public:
 	BIND2(mesh_remove_surface, RID, int)
 	BIND1RC(int, mesh_get_surface_count, RID)
 
+	BIND3(mesh_surface_set_active, RID, int, bool)
+
 	BIND2(mesh_set_custom_aabb, RID, const AABB &)
 	BIND1RC(AABB, mesh_get_custom_aabb, RID)
 

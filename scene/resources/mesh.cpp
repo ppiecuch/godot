@@ -812,13 +812,17 @@ void ArrayMesh::_recompute_aabb() {
 
 	// regenerate AABB
 	aabb = AABB();
+	bool first = true;
 
 	for (int i = 0; i < surfaces.size(); i++) {
 
-		if (i == 0)
-			aabb = surfaces[i].aabb;
-		else
-			aabb.merge_with(surfaces[i].aabb);
+		if (surfaces[i].is_active) {
+			if (first) {
+				aabb = surfaces[i].aabb;
+				first = false;
+			} else
+				aabb.merge_with(surfaces[i].aabb);
+		}
 	}
 }
 
@@ -826,6 +830,7 @@ void ArrayMesh::add_surface(uint32_t p_format, PrimitiveType p_primitive, const 
 
 	Surface s;
 	s.aabb = p_aabb;
+	s.is_active = true;
 	s.is_2d = p_format & ARRAY_FLAG_USE_2D_VERTICES;
 	surfaces.push_back(s);
 	_recompute_aabb();
@@ -861,6 +866,7 @@ void ArrayMesh::add_surface_from_arrays(PrimitiveType p_primitive, const Array &
 		}
 
 		s.aabb = aabb;
+		s.is_active = true;
 		s.is_2d = arr.get_type() == Variant::POOL_VECTOR2_ARRAY;
 		surfaces.push_back(s);
 
@@ -932,6 +938,22 @@ void ArrayMesh::set_blend_shape_mode(BlendShapeMode p_mode) {
 ArrayMesh::BlendShapeMode ArrayMesh::get_blend_shape_mode() const {
 
 	return blend_shape_mode;
+}
+
+void ArrayMesh::surface_set_active(int p_idx, bool p_active) {
+
+	ERR_FAIL_INDEX(p_idx, surfaces.size());
+
+	if (surfaces[p_idx].is_active == p_active)
+		return;
+
+	VisualServer::get_singleton()->mesh_surface_set_active(mesh, p_idx, p_active);
+	surfaces.write[p_idx].is_active = p_active;
+
+	clear_cache();
+	_recompute_aabb();
+	_change_notify();
+	emit_changed();
 }
 
 void ArrayMesh::surface_remove(int p_idx) {

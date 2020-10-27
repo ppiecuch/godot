@@ -154,6 +154,11 @@ private:
 		virtual Transform get_bone_pose(int p_bone) const { return _sk->get_bone_pose(p_bone); }
 		virtual void set_bone_pose(int p_bone, const Transform &p_pose) { _sk->set_bone_pose(p_bone, p_pose); }
 		virtual int find_bone(const String &p_name) const { return _sk->find_bone(p_name); }
+		virtual void clear_pose() {
+			for (int i = 0; i < _sk->get_bone_count(); i++) {
+				_sk->set_bone_pose(i, Transform());
+			}
+		}
 		virtual void update_skeleton() { notification(NOTIFICATION_UPDATE_SKELETON); }
 	} _bone_transformer;
 
