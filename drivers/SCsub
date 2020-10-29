@@ -27,6 +27,7 @@ if env["platform"] != "3ds" and env["platform"] != "psvita":
     if env["platform"] != "server":
         SConscript("gles3/SCsub")
         SConscript("gles2/SCsub")
+        SConscript("gles_common/SCsub")
         SConscript("gl_context/SCsub")
         if env["platform"] == "osx":
             SConscript("metal/SCsub")

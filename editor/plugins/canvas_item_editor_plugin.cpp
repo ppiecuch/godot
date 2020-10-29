@@ -54,6 +54,8 @@
 #include "scene/main/viewport.h"
 #include "scene/resources/packed_scene.h"
 
+#include <stdlib.h>
+
 #ifdef MODULE_GD_VECTOR_GRAPHICS_ENABLED
 // forward declarations for Vector Graphics module:
 Node *createVectorSprite(Ref<Resource> p_resource);

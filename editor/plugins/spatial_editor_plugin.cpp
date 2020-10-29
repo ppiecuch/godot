@@ -2406,17 +2406,17 @@ void SpatialEditorViewport::_notification(int p_what) {
 				continue;
 
 			Transform t = sp->get_global_gizmo_transform();
+			VisualInstance *vi = Object::cast_to<VisualInstance>(sp);
+			AABB new_aabb = vi ? vi->get_aabb() : _calculate_spatial_bounds(sp);
 
 			exist = true;
-			if (se->last_xform == t && !se->last_xform_dirty)
+			if (se->last_xform == t && se->aabb == new_aabb && !se->last_xform_dirty)
 				continue;
 			changed = true;
 			se->last_xform_dirty = false;
 			se->last_xform = t;
 
-			VisualInstance *vi = Object::cast_to<VisualInstance>(sp);
-
-			se->aabb = vi ? vi->get_aabb() : _calculate_spatial_bounds(sp);
+			se->aabb = new_aabb;
 
 			t.translate(se->aabb.position);
 
@@ -2468,6 +2468,9 @@ void SpatialEditorViewport::_notification(int p_what) {
 
 		int msaa_mode = ProjectSettings::get_singleton()->get("rendering/quality/filters/msaa");
 		viewport->set_msaa(Viewport::MSAA(msaa_mode));
+
+		bool use_fxaa = ProjectSettings::get_singleton()->get("rendering/quality/filters/use_fxaa");
+		viewport->set_use_fxaa(use_fxaa);
 
 		bool hdr = ProjectSettings::get_singleton()->get("rendering/quality/depth/hdr");
 		viewport->set_hdr(hdr);

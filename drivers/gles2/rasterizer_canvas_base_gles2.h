@@ -31,13 +31,14 @@
 #ifndef RASTERIZERCANVASBASEGLES2_H
 #define RASTERIZERCANVASBASEGLES2_H
 
-#include "rasterizer_array_gles2.h"
+#include "drivers/gles_common/rasterizer_array.h"
 #include "rasterizer_storage_gles2.h"
 #include "servers/visual/rasterizer.h"
 
 #include "shaders/canvas.glsl.gen.h"
 #include "shaders/lens_distorted.glsl.gen.h"
 
+#include "drivers/gles_common/rasterizer_storage_common.h"
 #include "shaders/canvas_shadow.glsl.gen.h"
 
 class RasterizerCanvasBaseGLES2 : public RasterizerCanvas {
@@ -49,8 +50,8 @@ public:
 	struct Uniforms {
 		Transform projection_matrix;
 
-		Transform2D world_matrix, inv_world_matrix;
 		Transform2D modelview_matrix;
+		Transform2D world_matrix, inv_world_matrix;
 		Transform2D extra_matrix;
 
 		Color final_modulate;
@@ -78,7 +79,11 @@ public:
 		LensDistortedShaderGLES2 lens_shader;
 
 		bool using_texture_rect;
+
 		bool using_light_angle;
+		bool using_modulate;
+		bool using_large_vertex;
+
 		bool using_ninepatch;
 		bool using_skeleton;
 
@@ -105,8 +110,6 @@ public:
 	RasterizerSceneGLES2 *scene_render;
 
 	RasterizerStorageGLES2 *storage;
-
-	bool use_nvidia_rect_workaround;
 
 	void _set_uniforms();
 
@@ -140,7 +143,7 @@ public:
 	virtual void canvas_debug_viewport_shadows(Light *p_lights_with_shadow);
 
 	RasterizerStorageGLES2::Texture *_bind_canvas_texture(const RID &p_texture, const RID &p_normal_map);
-	void _set_texture_rect_mode(bool p_texture_rect, bool p_light_angle = false);
+	void _set_texture_rect_mode(bool p_texture_rect, bool p_light_angle = false, bool p_modulate = false, bool p_large_vertex = false);
 
 	void initialize();
 	void finalize();
