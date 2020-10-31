@@ -152,7 +152,10 @@ void RasterizerCanvasBaseGLES3::canvas_begin() {
 				storage->frame.clear_request_color.g,
 				storage->frame.clear_request_color.b,
 				transparent ? storage->frame.clear_request_color.a : 1.0);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClearStencil(0);
+		glEnable(GL_DEPTH_TEST);
+		glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glDisable(GL_DEPTH_TEST);
 		storage->frame.clear_request = false;
 		glColorMask(1, 1, 1, transparent ? 1 : 0);
 	}
@@ -1054,6 +1057,7 @@ void RasterizerCanvasBaseGLES3::reset_canvas() {
 
 	glBindVertexArray(0);
 	glDisable(GL_CULL_FACE);
+	glDepthFunc(GL_LESS);
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_SCISSOR_TEST);
 	glDisable(GL_DITHER);
@@ -1084,6 +1088,7 @@ void RasterizerCanvasBaseGLES3::reset_canvas() {
 	glVertexAttrib4f(VS::ARRAY_COLOR, 1, 1, 1, 1);
 
 	Transform canvas_transform;
+	const float depth_size = 5000.0;
 
 	if (storage->frame.current_rt) {
 
@@ -1091,12 +1096,12 @@ void RasterizerCanvasBaseGLES3::reset_canvas() {
 		if (storage->frame.current_rt && storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_VFLIP]) {
 			csy = -1.0;
 		}
-		canvas_transform.translate(-(storage->frame.current_rt->width / 2.0f), -(storage->frame.current_rt->height / 2.0f), 0.0f);
-		canvas_transform.scale(Vector3(2.0f / storage->frame.current_rt->width, csy * -2.0f / storage->frame.current_rt->height, 1.0f));
+		canvas_transform.translate(-(storage->frame.current_rt->width / 2.0f), -(storage->frame.current_rt->height / 2.0f), -depth_size / 2.0f);
+		canvas_transform.scale(Vector3(2.0f / storage->frame.current_rt->width, csy * -2.0f / storage->frame.current_rt->height, 2.0f / depth_size));
 	} else {
 		Vector2 ssize = OS::get_singleton()->get_window_size();
-		canvas_transform.translate(-(ssize.width / 2.0f), -(ssize.height / 2.0f), 0.0f);
-		canvas_transform.scale(Vector3(2.0f / ssize.width, -2.0f / ssize.height, 1.0f));
+		canvas_transform.translate(-(ssize.width / 2.0f), -(ssize.height / 2.0f), -depth_size / 2.0f);
+		canvas_transform.scale(Vector3(2.0f / ssize.width, -2.0f / ssize.height, 2.0f / depth_size));
 	}
 
 	state.vp = canvas_transform;
@@ -1369,6 +1374,7 @@ void RasterizerCanvasBaseGLES3::initialize() {
 	state.canvas_shadow_shader.set_conditional(CanvasShadowShaderGLES3::USE_RGBA_SHADOWS, storage->config.use_rgba_2d_shadows);
 
 	state.canvas_shader.set_conditional(CanvasShaderGLES3::USE_PIXEL_SNAP, GLOBAL_DEF("rendering/quality/2d/use_pixel_snap", false));
+	state.canvas_shader.set_conditional(CanvasShaderGLES3::USE_CANVAS_VEC3, GLOBAL_DEF("rendering/quality/2d/use_vertex_vec3", true));
 }
 
 void RasterizerCanvasBaseGLES3::finalize() {

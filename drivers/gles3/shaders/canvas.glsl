@@ -1,7 +1,11 @@
 /* clang-format off */
 [vertex]
 
+#ifdef USE_CANVAS_VEC3
+layout(location = 0) in highp vec3 vertex;
+#else
 layout(location = 0) in highp vec2 vertex;
+#endif
 
 #ifdef USE_ATTRIB_LIGHT_ANGLE
 layout(location = 2) in highp float light_angle;
@@ -139,6 +143,11 @@ VERTEX_SHADER_GLOBALS
 void main() {
 
 	vec4 color = color_attrib;
+#ifdef USE_CANVAS_VEC3
+#define vertex_z vertex.z
+#else
+#define vertex_z 0.0
+#endif
 
 #ifdef USE_INSTANCING
 	mat4 extra_matrix_instance = extra_matrix * transpose(mat4(instance_xform0, instance_xform1, instance_xform2, vec4(0.0, 0.0, 0.0, 1.0)));
@@ -160,18 +169,19 @@ void main() {
 	if (dst_rect.z < 0.0) { // Transpose is encoded as negative dst_rect.z
 		uv_interp = src_rect.xy + abs(src_rect.zw) * vertex.yx;
 	} else {
-		uv_interp = src_rect.xy + abs(src_rect.zw) * vertex;
+		uv_interp = src_rect.xy + abs(src_rect.zw) * vertex.xy;
 	}
-	highp vec4 outvec = vec4(dst_rect.xy + abs(dst_rect.zw) * mix(vertex, vec2(1.0, 1.0) - vertex, lessThan(src_rect.zw, vec2(0.0, 0.0))), 0.0, 1.0);
+	highp vec4 outvec = vec4(dst_rect.xy + abs(dst_rect.zw) * mix(vertex.xy, vec2(1.0, 1.0) - vertex.xy, lessThan(src_rect.zw, vec2(0.0, 0.0))), vertex_z, 1.0);
 
 #else
 	uv_interp = uv_attrib;
-	highp vec4 outvec = vec4(vertex, 0.0, 1.0);
+	highp vec4 outvec = vec4(vertex.xy, vertex_z, 1.0);
+
 #endif
 
 #ifdef USE_PARTICLES
 	//scale by texture size
-	outvec.xy /= color_texpixel_size;
+	outvec.xyz /= vec3(color_texpixel_size, 1.0);
 #endif
 
 #if !defined(SKIP_TRANSFORM_USED) && defined(VERTEX_WORLD_COORDS_USED)
@@ -196,7 +206,7 @@ VERTEX_SHADER_CODE
 
 #ifdef USE_NINEPATCH
 
-	pixel_size_interp = abs(dst_rect.zw) * vertex;
+	pixel_size_interp = abs(dst_rect.zw) * vertex.xy;
 #endif
 
 #ifdef USE_ATTRIB_MODULATE
@@ -213,7 +223,7 @@ VERTEX_SHADER_CODE
 	temp.y = (outvec.x * basis_attrib.y) + (outvec.y * basis_attrib.w);
 
 	temp += translate_attrib;
-	outvec.xy = temp;
+	outvec.xyz = vec3(temp, outvec.z);
 #endif
 
 #if !defined(SKIP_TRANSFORM_USED) && defined(VERTEX_WORLD_COORDS_USED)
@@ -231,7 +241,7 @@ VERTEX_SHADER_CODE
 	color_interp = color;
 
 #ifdef USE_PIXEL_SNAP
-	outvec.xy = floor(outvec + 0.5).xy;
+	outvec.xyz = vec3(floor(outvec + 0.5).xy, outvec.z);
 	// precision issue on some hardware creates artifacts within texture
 	// offset uv by a small amount to avoid
 	uv_interp += 1e-5;
