@@ -193,22 +193,42 @@ public:
 			constraints.push_back(Constraint(top, new_bottom));
 		}
 	}
+
+	Vector2 evaluate (const Vector2& param, const Point2 controls[3][3]) {
+		const real_t s = param.x;
+		const real_t t = param.y;
+		const real_t omS = 1.0f - s;
+		const real_t omT = 1.0f - t;
+		const real_t b0s = omS * omS;
+		const real_t b0t = omT * omT;
+		const real_t b1s = 2.0f * omS*s;
+		const real_t b1t = 2.0f * omT*t;
+		const real_t b2s = s * s;
+		const real_t b2t = t * t;
+
+		Point2 result =
+			b0s*(b0t*controls[0][0] + b1t*controls[0][1] + b2t*controls[0][2]) +
+			b1s*(b0t*controls[1][0] + b1t*controls[1][1] + b2t*controls[1][2]) +
+			b2s*(b0t*controls[2][0] + b1t*controls[2][1] + b2t*controls[2][2]);
+
+		return Vector2(result.x, result.y);
+	}
 };
 } // namespace sim3
 
-void DeformMeshInstance2D::_bind_methods() {
-	ClassDB::bind_method("_process", &DeformMeshInstance2D::_process);
+void ElasticMeshInstance2D::_bind_methods() {
+	ClassDB::bind_method("_process", &ElasticMeshInstance2D::_process);
 }
 
-DeformMeshInstance2D::DeformMeshInstance2D() {
+ElasticMeshInstance2D::ElasticMeshInstance2D() {
 	time_passed = 0.0;
 }
 
-DeformMeshInstance2D::~DeformMeshInstance2D() {
+ElasticMeshInstance2D::~ElasticMeshInstance2D() {
 	// add your cleanup here
 }
 
-void DeformMeshInstance2D::_process(float delta) {
+void ElasticMeshInstance2D::_process(float delta) {
 	time_passed += delta;
 
 	Vector2 new_position = Vector2(10.0 + (10.0 * sin(time_passed * 2.0)), 10.0 + (10.0 * cos(time_passed * 1.5)));

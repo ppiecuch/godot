@@ -28,16 +28,17 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GODOT_FBX_MATERIAL_H
-#define GODOT_FBX_MATERIAL_H
+#ifndef FBX_MATERIAL_H
+#define FBX_MATERIAL_H
+
+#include "tools/import_utils.h"
 
 #include "core/reference.h"
 #include "core/ustring.h"
-#include "modules/fbx/tools/import_utils.h"
 
 struct FBXMaterial : public Reference {
 	String material_name = String();
-	mutable const Assimp::FBX::Material *material = nullptr;
+	mutable const FBXDocParser::Material *material = nullptr;
 
 	/* Godot materials
 	 *** Texture Maps:
@@ -78,6 +79,7 @@ struct FBXMaterial : public Reference {
 	// TODO make this static?
 	const std::map<std::string, SpatialMaterial::TextureParam> fbx_texture_mapping_desc = {
 		/* Diffuse */
+		{ "Maya|base", SpatialMaterial::TextureParam::TEXTURE_ALBEDO },
 		{ "DiffuseColor", SpatialMaterial::TextureParam::TEXTURE_ALBEDO },
 		{ "Maya|DiffuseTexture", SpatialMaterial::TextureParam::TEXTURE_ALBEDO },
 		{ "Maya|baseColor", SpatialMaterial::TextureParam::TEXTURE_ALBEDO },
@@ -200,7 +202,7 @@ struct FBXMaterial : public Reference {
 	struct TextureFileMapping {
 		SpatialMaterial::TextureParam map_mode = SpatialMaterial::TEXTURE_ALBEDO;
 		String name = String();
-		const Assimp::FBX::Texture *texture = nullptr;
+		const FBXDocParser::Texture *texture = nullptr;
 	};
 
 	/* storing the texture properties like color */
@@ -216,16 +218,16 @@ struct FBXMaterial : public Reference {
 
 	String get_material_name() const;
 
-	void set_imported_material(const Assimp::FBX::Material *p_material);
+	void set_imported_material(const FBXDocParser::Material *p_material);
 
 	struct MaterialInfo {
 		Vector<TextureFileMapping> textures;
 		Vector<SpatialMaterial::Feature> features;
 	};
 	/// Extracts the material information.
-	MaterialInfo extract_material_info(const Assimp::FBX::Material *material) const;
+	MaterialInfo extract_material_info(const FBXDocParser::Material *material) const;
 
 	Ref<SpatialMaterial> import_material(ImportState &state);
 };
 
-#endif // GODOT_FBX_MATERIAL_H
+#endif // FBX_MATERIAL_H

@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef MODEL_ABSTRACTION_ANIM_CONTAINER_H
-#define MODEL_ABSTRACTION_ANIM_CONTAINER_H
+#ifndef FBX_ANIM_CONTAINER_H
+#define FBX_ANIM_CONTAINER_H
 
 #include "core/vector.h"
 
@@ -40,7 +40,7 @@
 struct FBXTrack {
 	bool has_default = false;
 	Vector3 default_value;
-	std::map<uint64_t, Vector3> keyframes;
+	std::map<int64_t, Vector3> keyframes;
 };
 
 #endif //MODEL_ABSTRACTION_ANIM_CONTAINER_H

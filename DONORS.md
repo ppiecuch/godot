@@ -12,29 +12,38 @@ generous deed immortalized in the next stable release of Godot Engine.
 
 ## Platinum sponsors
 
+    Gamblify <https://www.gamblify.com>
     Heroic Labs <https://heroiclabs.com>
+    Spiffcode <http://www.spiffcode.com>
 
 ## Gold sponsors
 
-    Gamblify <https://www.gamblify.com>
+    None currently, become one! <https://godotengine.org/donate>
+
+## Silver sponsors
+
+    ASIFA-Hollywood <https://www.asifa-hollywood.org>
     Moonwards <https://www.moonwards.com>
+    Zenva Academy <https://academy.zenva.com>
 
 ## Bronze sponsors
 
     Brandon Lamb
     Garry Newman
+    Hunter Dickson
 
 ## Mini sponsors
 
     AD Ford
     albinaask
     Alejandro Saucedo
+    alex brown
     Andrew Dunai
     Christian Baune
     Christoffer Sundbom
     Christopher Montesano
-    Darkhan Baimyrza
     Darrin Massena
+    David Mydlarz
     Digital Grows
     Dov Zimring
     Edward Flick
@@ -45,50 +54,44 @@ generous deed immortalized in the next stable release of Godot Engine.
     Jasper Brooks
     Javary Co.
     Jeffery Chiu
+    John G Gentzel
+    Jonah Stich
     Justin Arnold
-    Kyle Szklenski
     Marcel Kräml
     Matthieu Huvé
     Maxim Karsten
     Mike King
     Nathan Warden
     Neal Gompa (Conan Kudo)
+    Patrick Horn
+    Patrick Schmidt
+    Péter Magyar
     Ronnie Cheng
     Slobodan Milnovic
     Stephan Lanfermann
     Steve
+    Thomas Krampl
     Tristan Pemble
     VilliHaukka
+    Violin Iliev
 
 ## Gold donors
 
-    Bjarke
-    David Gehrig
-    David Snopek
-    Ed Morley
-    Florian Rämisch
-    Jakub Grzesik
-    Manuele Finocchiaro
-    Officine Pixel S.n.c.
-    Rami
-    Ronan Zeegers
-    Sofox
-    Spicylewd
-    Taylor Ritenour
-    Zaven Muradyan
-
-    Andreas Schüle
-    Andres Hernandez
+    Andrew Morsillo
     Asher Glick
     Austen McRae
     Bernhard Werner
     Carlo Cabanilla
+    Chris Goddard
     Christopher Case
     Daniel James
-    David Giardi
-    Default Name
+    David Gehrig
+    David Snopek
+    Ed Morley
     eggs
+    Ellen Poe
     Florian Breisch
+    Florian Rämisch
     Forge
     Gamejunkey
     Grady
@@ -106,10 +109,14 @@ generous deed immortalized in the next stable release of Godot Engine.
     Markus Wiesner
     Mason Bially
     Matthew Hillier
+    Michael
     m kaersten
     Mohamed Ikbel Boulabiar
     Monster Vial
+    Officine Pixel S.n.c.
+    Rami
     Rene
+    Rene Tailleur
     Retro Village
     Rob Messick
     Roland Fredenhagen
@@ -118,71 +125,44 @@ generous deed immortalized in the next stable release of Godot Engine.
     Sarksus
     Sean
     Sergey
-    thechris
+    SIM KIM SIA
+    Sofox
+    Taylor Ritenour
     Tom Langwaldt
     Tricky Fat Cat
     tukon
     William Wold
+    xagonist
+    Zaven Muradyan
 
-    Alex Khayrullin
-    alice gambrell
-    Andrew Harris
-    Barugon
-    Chris Goddard
-    Chris Serino
-    Christian Padilla
-    Conrad Curry
-    Craig Smith
-    Darrian Little
-    dragonage13
-    GiulianoB
-    Hoai Nam Tran
-    Horváth Péter
-    Jeff Nyte
-    Joan Fons
-    Joshua Flores
-    Leo Fidel R Liban
-    Michael Dürwald
-    Péter Magyar
-    Petr Malac
-    Rob
-    Robert Willes
-    Ronnie Ashlock
-    SKison
-    Thomas Bjarnelöf
-    Valryia
-    Vincent Henderson
-    Vojtěch
-    Wojciech Chojnacki
-    Xavier PATRICELLI
-    Zoran Kukulj
-
+    Aaron Winter
     Adam Nakonieczny
-    Adam Neumann
     Alexander J Maynard
     Alex de la Mare
-    Alexey Dyadchenko
+    Alex Khayrullin
+    alice gambrell
     Andreas Funke
-    André Frélicot
     Andrew Harris
     Antoni Batchelli
-    aoshiwik
     Arisaka Mayuki
     Barugon
-    Can Eris
-    Carlos de Sousa Marques
+    Ben Botwin
     Charlie Whitfield
     Chase Taranto
     Chelsea Hash
     Chris Petrich
     Chris Serino
     Christian Leth Jeppesen
+    Cody Brooks
     Cody Parker
+    Conrad Curry
     Craig Ostrin
-    curtis Kramer
+    Craig Smith
     D
+    Darrian Little
     Dev To be curious
     Digital Denizen
+    Donn Eddy
     Easypete
     Edgar Sun
     Eugenio Hugo Salgüero Jáñez
@@ -196,15 +176,18 @@ generous deed immortalized in the next stable release of Godot Engine.
     Green Fox
     Guilherme Felipe de C. G. da Silva
     Heath Hayes
+    Hoai Nam Tran
+    Horváth Péter
     Hu Hund
     James Couzens
     Jared
     Jared White
     Joel Fivat
     Joel Höglund
-    John G Gentzel
     Jose Malheiro
     Joseph Crane
+    Joshie Sparks
+    Joshua Flores
     Joshua Lesperance
     Juan Velandia
     Judd
@@ -218,17 +201,19 @@ generous deed immortalized in the next stable release of Godot Engine.
     kuku
     Lachie
     Lain Ballard
-    luca duran
+    Leo Fidel R Liban
     Luc-Frédéric Langis
+    luka duren
     MadScientistCarl
     Marcelo Dornbusch Lopes
-    Marcelo Henrique Gonçalves
+    Marisa Clardy
     Markus Fehr
-    Markus Wiesner
     Martin Eigel
     Martin Kotz
     Martin Soucek
     Matt Eunson
+    Michael
+    Michael Dürwald
     Mikado069
     MuffinManKen
     Nick Abousselam
@@ -237,14 +222,15 @@ generous deed immortalized in the next stable release of Godot Engine.
     Patrick Ting
     Paul Hocker
     Paul Von Zimmerman
+    Pedro Silva
     Pete Goodwin
+    Petr Malac
     PhaineOfCatz
     pl
     Ranoller
     Raymond Harris
     razmie
     Ricardo Alcantara
-    Rob
     Robert Willes
     Rob McInroy
     Rocknight Studios
@@ -252,18 +238,17 @@ generous deed immortalized in the next stable release of Godot Engine.
     Ryan Wilson
     Samuel Judd
     Scott Pilet
-    Scott Ryan-Taylor
     Sean Morgan
     Sean Robertson
     Sébastien
-    Serban Serafimescu
     Sergey Minakov
     Shishir Tandale
     SKison
     spilldata
+    Steven Landow
     Stoned Xander
-    Tahiti Bos
     TheLevelOfDetail .
+    Thomas Bjarnelöf
     Thomas Kurz
     Tim Howard
     Timothy Pulliam
@@ -271,32 +256,34 @@ generous deed immortalized in the next stable release of Godot Engine.
     Trent Fehl
     Valryia
     VikFro
+    Vincent Cloutier
     Vojtěch
     voxelv
     William Foster
+    Wojciech Chojnacki
+    xzibiting
     Zhou Tuizhi
     Zie Weaver
-    蕭惟允
+    Zoran Kukulj
 
 ## Silver donors
 
     1D_Inc
-    Aaron
     Aaron Passchier
     Abraham Haskins
     Acheron
     Adam
     Adam Brunnmeier
-    Adam  Carr
+    Adam Carr
     Adam Long
     Adam McCurdy
-    Adam Netzel
     Adam N Webber
     Adam Smeltzer
     Adam Szymański
     Adisibio
     Agar3s - Giovanny Beltrán
     Agustinus Arya
+    Ahmet Kalyoncu
     Aidan O'Flannagain
     Aki Mimoto
     Alan Beauchamp
@@ -305,7 +292,9 @@ generous deed immortalized in the next stable release of Godot Engine.
     AleMax
     Alessandro Senese
     Alexander Erlemann
+    Alexandre Beaudoin
     alex clavelle
+    Ali Al-Khalifa
     Allan Davis
     Allen Schade
     Andreas Krampitz
@@ -313,6 +302,7 @@ generous deed immortalized in the next stable release of Godot Engine.
     Andre Stackhouse
     andrew james morris
     Andrew Mansuetti
+    Andrew Rosenwinkel
     Andrew Thomas
     Ano Nim
     Anthony Avina
@@ -333,33 +323,39 @@ generous deed immortalized in the next stable release of Godot Engine.
     Benedikt
     Ben Vercammen
     Bernd Jänichen
-    Bjarne
+    Bjarne Voigtländer
     Black Block
     Blair Allen
     Bobby CC Wong
     Borkzilla
+    Boyd Trolinger
     Bram
     brian
+    Brian mc gowan
+    Brodie Fairhall
     Burney Waring
+    Caleb Gartner
     Cameron Meyer
     Carlos Cejudo
     Carl van der Geest
     Carwyn Edwards
     Cas Brugman
     Cassidy James
-    Chris Brown
+    Chad Steadman
     Chris Chapin
     Chris Jagusch
+    Chris Langford
     Christian Clavet
     Christian Winter
     Christoffer Dahlblom
     Christophe Gagnier
     Christopher Schmitt
+    Christoph Woinke
     Clay Heaton
-    Cole Johnson
     Conall O
     Curt King
-    Daniel Kimblad
+    Cyrelouyea
+    CzechBlueBear
     Daniel Johnson
     DanielMaximiano
     Daniel Tebbutt
@@ -369,10 +365,9 @@ generous deed immortalized in the next stable release of Godot Engine.
     David Bôle
     David May
     David Woodard
-    Dimitri Stanojevic
+    Dmitry Fisher
     Dmytro Korchynskyi
     Dominik Wetzel
-    Donn Eddy
     Dragontrapper
     Dr Ewan Murray
     Dr.Raccoon
@@ -389,6 +384,7 @@ generous deed immortalized in the next stable release of Godot Engine.
     Eric Ellingson
     Eric Williams
     Erkki Seppälä
+    ET Garcia
     Evan Rose
     Fain
     Faisal Alkubaisi
@@ -397,6 +393,7 @@ generous deed immortalized in the next stable release of Godot Engine.
     Felix Bohmann
     Flaredown
     Forty Doubleu
+    Francois Holland
     Frank
     FuDiggity
     Gadzhi Kharkharov
@@ -421,32 +418,29 @@ generous deed immortalized in the next stable release of Godot Engine.
     Iiari
     iKlem
     IndustrialRobot
-    Ivan Nikolaev
     Jackson Harmer
     Jacob
     Jaguar
     Jaiden Gerig
     Jaime Ruiz-Borau Vizárraga
+    Jake D
     Jake Huxell
     Jako Danar
+    James
     James A F Manley
     James Thomas
     Jamiee H
     Jamie Massey
     Janders
     JARKKO PARVIAINEN
+    Jason Uechi
     Jean-Baptiste LEPESME
     Jeff Hungerford
     Jennifer Graves
     Jesse Dubay
     Joe Alden
-    Joel Fivat
-    Joel Höglund
-    Joel Setterberg
-    Johannes Goslar
+    Joe Klemmer
     John Gabriel
-    John Walker
-    Jomei Jackson
     Jonas
     Jonas Bernemann
     Jonas Rudlang
@@ -458,7 +452,6 @@ generous deed immortalized in the next stable release of Godot Engine.
     Jon Sully
     Jordy Goodridge
     Jorge Antunes
-    Jose Aleman
     Jose C. Rubio
     Joseph Catrambone
     Josh Mitchell
@@ -468,27 +461,28 @@ generous deed immortalized in the next stable release of Godot Engine.
     June Little
     JungleRobba
     Justin Calleja
-    Justin Hamilton
     Justin Oaksford
     Justin Spedding
     KaDokta
+    Kalin
     Karel Němec
     Kauzig
     Keedong Park
+    Keinan Powers
     Keith Bradner
     Kent Jofur
     Kevin McPhillips
-    Kevin Velasco
     Kiri Jolly
     Kjetil Haugland
     Kristian Nygaard Jensen
     KsyTek Games
     Kuan Cheang
     kycho
-    Kyle Appelgate
+    Kyle Szklenski
     Kyuppin
     Laurent CHEA
     Laurent Tréguier
+    LEMMiNO
     Leonardo Dimano
     Lin Chear
     Linus Lind Lundgren
@@ -501,6 +495,7 @@ generous deed immortalized in the next stable release of Godot Engine.
     Marco Lardelli
     Mark Jad
     Mark Krenz
+    Markus Martin
     Markus Michael Egger
     Martin FIbik
     Martin Holas
@@ -510,7 +505,8 @@ generous deed immortalized in the next stable release of Godot Engine.
     Marvin
     Mathieu
     Matt Edwards
-    Mauro Pellegrini
+    Matthew Booe
+    Max Brister
     Max Fiedler
     Maxime Blade
     Maxwell
@@ -519,7 +515,6 @@ generous deed immortalized in the next stable release of Godot Engine.
     mewin
     Michael Haney
     Michał Skwarek
-    Mikael Olsson
     Mikayla
     Mike Birkhead
     Mike Cunningham
@@ -527,7 +522,9 @@ generous deed immortalized in the next stable release of Godot Engine.
     Molinghu
     Molly Jameson
     MoM
+    MrAZIE
     Nathan Fish
+    Nathaniel
     Natrim
     nee
     Neil Blakey-Milner
@@ -539,13 +536,15 @@ generous deed immortalized in the next stable release of Godot Engine.
     Nick Allen
     Nick Macholl
     Niclas Eriksen
+    Nicolas Goll-Perrier
     Nicolás Montaña
     Nicolas SAN AGUSTIN
     NZ
+    OKV
     Oleg Reva
+    Oleksandr Kryvonos
     Olivier
     Omar Delarosa
-    Orinxlm
     Oscar Domingo
     Oscar Norlander
     Parinya Teerakasemsuk
@@ -557,6 +556,7 @@ generous deed immortalized in the next stable release of Godot Engine.
     Paweł Łyczkowski
     Pedro Assuncao
     Penguin
+    Petrus Prinsloo
     Philip Cohoe
     Piotr Góral
     Point08
@@ -564,11 +564,10 @@ generous deed immortalized in the next stable release of Godot Engine.
     Price Comstock
     pwab
     Rafa Laguna
-    Ram
+    Raffaele Aramo
     Remi Rampin
     Rémi Verschelde
     Reneator
-    Ricardo Alcantara
     Richard Diss
     Richard Ivánek
     Robert Farr (Larington)
@@ -580,7 +579,9 @@ generous deed immortalized in the next stable release of Godot Engine.
     Ronald Ho Hip (CrimsonZA)
     Ronan
     Ronny Mühle
+    Ross Squires
     Ryan Groom
+    Sam Caulfield
     Sam Edson
     Samuele Zolfanelli
     sayaks
@@ -589,15 +590,15 @@ generous deed immortalized in the next stable release of Godot Engine.
     ScottMakesGames
     Sebastian Michailidis
     Sebastian Vetter
-    Sergio Mello-Grand
+    Shaher
     Shane
     Shane Sicienski
     Shane Spoor
-    Shiomi '- Duy Kevin Nguyen
+    Shiomi - Duy Kevin Nguyen
     Siim Raidma
     Simon Jonas Larsen
+    Simon Schoenenberger
     Simon Wenner
-    Sintinium
     Skalli
     smbe19
     smo1704
@@ -607,10 +608,10 @@ generous deed immortalized in the next stable release of Godot Engine.
     Steve Cloete
     Svenne Krap
     tadashi endo
-    Tannen Helmers
+    tannhauser_gate
     Terry
-    tezuvholovdr
     Theodore Lindsey
+    TheTrainDoctor
     TheVoiceInMyHead
     thomas
     Thomas Bechtold
@@ -620,27 +621,32 @@ generous deed immortalized in the next stable release of Godot Engine.
     Tim Erskine
     Tim Gleason
     Timothy B. MacDonald
-    Title Plinsut
     Tobbun
     Tobias Bradtke
-    Tom Glenn
     Toni Duran
+    Tony Zhao
     Torgeir Lilleskog
     Torsten Crass
     Travis O'Brien
     Trent Skinner
+    tril zerobyte
+    Triptych
+    Triumph263 .
     Troy Bonneau
     Tryggve Sollid
     Turgut Temucin
     Tyler Compton
     Tyler Stafos
     UltyX
-    Valentí Gàmez
+    Uther
     Vaughan Ling
     Victor
     Vigilant Watch
-    Vincent Cloutier
+    Viktor Ismagilov
+    Vitor Balbio
     Vladimir Savin
+    Vladislav Smirnov
+    Výrus Hemomancer
     waka nya
     Wayne Haak
     werner mendizabal
@@ -649,15 +655,12 @@ generous deed immortalized in the next stable release of Godot Engine.
     William Edwards
     William F Siqueira
     William Hogben
-    Windvis
     Wyatt Goodin
-    x1212
     Yegor Smirnov
     YiYin Gu
-    Yuri LaPointe
-    Yuri Sizov
     Zak Stephens
-    Zgegnesh Hemomancer
+    ΒΑΣΙΛΗΣ ΓΕΩΡΓΑΚΟΠΟΥΛΟΣ
+    蕭惟允
     郝晨煜
 
 ## Bronze donors

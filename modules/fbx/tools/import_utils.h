@@ -31,53 +31,14 @@
 #ifndef IMPORT_UTILS_FBX_IMPORTER_H
 #define IMPORT_UTILS_FBX_IMPORTER_H
 
-#include "modules/fbx/data/import_state.h"
-#include "thirdparty/assimp_fbx/FBXDocument.h"
-
 #include "core/io/image_loader.h"
+
+#include "data/import_state.h"
+#include "fbx_parser/FBXDocument.h"
+
 #include <string>
 
 #define CONVERT_FBX_TIME(time) static_cast<double>(time) / 46186158000LL
-
-#define AI_PROPERTIES aiTextureType_UNKNOWN, 0
-#define AI_NULL 0, 0
-#define AI_MATKEY_FBX_MAYA_BASE_COLOR_FACTOR "$raw.Maya|baseColor"
-#define AI_MATKEY_FBX_MAYA_METALNESS_FACTOR "$raw.Maya|metalness"
-#define AI_MATKEY_FBX_MAYA_DIFFUSE_ROUGHNESS_FACTOR "$raw.Maya|diffuseRoughness"
-
-#define AI_MATKEY_FBX_MAYA_EMISSION_TEXTURE "$raw.Maya|emissionColor|file"
-#define AI_MATKEY_FBX_MAYA_EMISSIVE_FACTOR "$raw.Maya|emission"
-#define AI_MATKEY_FBX_MAYA_METALNESS_TEXTURE "$raw.Maya|metalness|file"
-#define AI_MATKEY_FBX_MAYA_METALNESS_UV_XFORM "$raw.Maya|metalness|uvtrafo"
-#define AI_MATKEY_FBX_MAYA_DIFFUSE_ROUGHNESS_TEXTURE "$raw.Maya|diffuseRoughness|file"
-#define AI_MATKEY_FBX_MAYA_DIFFUSE_ROUGHNESS_UV_XFORM "$raw.Maya|diffuseRoughness|uvtrafo"
-#define AI_MATKEY_FBX_MAYA_BASE_COLOR_TEXTURE "$raw.Maya|baseColor|file"
-#define AI_MATKEY_FBX_MAYA_BASE_COLOR_UV_XFORM "$raw.Maya|baseColor|uvtrafo"
-#define AI_MATKEY_FBX_MAYA_NORMAL_TEXTURE "$raw.Maya|normalCamera|file"
-#define AI_MATKEY_FBX_MAYA_NORMAL_UV_XFORM "$raw.Maya|normalCamera|uvtrafo"
-
-#define AI_MATKEY_FBX_NORMAL_TEXTURE "$raw.Maya|normalCamera|file"
-#define AI_MATKEY_FBX_NORMAL_UV_XFORM "$raw.Maya|normalCamera|uvtrafo"
-
-#define AI_MATKEY_FBX_MAYA_STINGRAY_DISPLACEMENT_SCALING_FACTOR "$raw.Maya|displacementscaling"
-#define AI_MATKEY_FBX_MAYA_STINGRAY_BASE_COLOR_FACTOR "$raw.Maya|base_color"
-#define AI_MATKEY_FBX_MAYA_STINGRAY_EMISSIVE_FACTOR "$raw.Maya|emissive"
-#define AI_MATKEY_FBX_MAYA_STINGRAY_METALLIC_FACTOR "$raw.Maya|metallic"
-#define AI_MATKEY_FBX_MAYA_STINGRAY_ROUGHNESS_FACTOR "$raw.Maya|roughness"
-#define AI_MATKEY_FBX_MAYA_STINGRAY_EMISSIVE_INTENSITY_FACTOR "$raw.Maya|emissive_intensity"
-
-#define AI_MATKEY_FBX_MAYA_STINGRAY_NORMAL_TEXTURE "$raw.Maya|TEX_normal_map|file"
-#define AI_MATKEY_FBX_MAYA_STINGRAY_NORMAL_UV_XFORM "$raw.Maya|TEX_normal_map|uvtrafo"
-#define AI_MATKEY_FBX_MAYA_STINGRAY_COLOR_TEXTURE "$raw.Maya|TEX_color_map|file"
-#define AI_MATKEY_FBX_MAYA_STINGRAY_COLOR_UV_XFORM "$raw.Maya|TEX_color_map|uvtrafo"
-#define AI_MATKEY_FBX_MAYA_STINGRAY_METALLIC_TEXTURE "$raw.Maya|TEX_metallic_map|file"
-#define AI_MATKEY_FBX_MAYA_STINGRAY_METALLIC_UV_XFORM "$raw.Maya|TEX_metallic_map|uvtrafo"
-#define AI_MATKEY_FBX_MAYA_STINGRAY_ROUGHNESS_TEXTURE "$raw.Maya|TEX_roughness_map|file"
-#define AI_MATKEY_FBX_MAYA_STINGRAY_ROUGHNESS_UV_XFORM "$raw.Maya|TEX_roughness_map|uvtrafo"
-#define AI_MATKEY_FBX_MAYA_STINGRAY_EMISSIVE_TEXTURE "$raw.Maya|TEX_emissive_map|file"
-#define AI_MATKEY_FBX_MAYA_STINGRAY_EMISSIVE_UV_XFORM "$raw.Maya|TEX_emissive_map|uvtrafo"
-#define AI_MATKEY_FBX_MAYA_STINGRAY_AO_TEXTURE "$raw.Maya|TEX_ao_map|file"
-#define AI_MATKEY_FBX_MAYA_STINGRAY_AO_UV_XFORM "$raw.Maya|TEX_ao_map|uvtrafo"
 
 /**
  * Import Utils
@@ -92,16 +53,16 @@ public:
 	static Vector3 rad2deg(const Vector3 &p_rotation);
 
 	/// Converts rotation order vector (in rad) to quaternion.
-	static Basis EulerToBasis(Assimp::FBX::Model::RotOrder mode, const Vector3 &p_rotation);
+	static Basis EulerToBasis(FBXDocParser::Model::RotOrder mode, const Vector3 &p_rotation);
 
 	/// Converts rotation order vector (in rad) to quaternion.
-	static Quat EulerToQuaternion(Assimp::FBX::Model::RotOrder mode, const Vector3 &p_rotation);
+	static Quat EulerToQuaternion(FBXDocParser::Model::RotOrder mode, const Vector3 &p_rotation);
 
 	/// Converts basis into rotation order vector (in rad).
-	static Vector3 BasisToEuler(Assimp::FBX::Model::RotOrder mode, const Basis &p_rotation);
+	static Vector3 BasisToEuler(FBXDocParser::Model::RotOrder mode, const Basis &p_rotation);
 
 	/// Converts quaternion into rotation order vector (in rad).
-	static Vector3 QuaternionToEuler(Assimp::FBX::Model::RotOrder mode, const Quat &p_rotation);
+	static Vector3 QuaternionToEuler(FBXDocParser::Model::RotOrder mode, const Quat &p_rotation);
 
 	static void debug_xform(String name, const Transform &t) {
 		print_verbose(name + " " + t.origin + " rotation: " + (t.basis.get_euler() * (180 / Math_PI)));
@@ -262,7 +223,7 @@ public:
 		return 0;
 	}
 
-	static float get_fbx_fps(const Assimp::FBX::FileGlobalSettings *FBXSettings) {
+	static float get_fbx_fps(const FBXDocParser::FileGlobalSettings *FBXSettings) {
 		int time_mode = FBXSettings->TimeMode();
 
 		// get the animation FPS

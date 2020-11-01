@@ -36,8 +36,18 @@
 
 namespace godot {
 
-class DeformMeshInstance2D : public MeshInstance2D {
-	GDCLASS(DeformMeshInstance2D, MeshInstance2D)
+class ElasticCage2D : public Node2D {
+	GDCLASS(ElasticCage2D, Node2D)
+
+public:
+	static void _bind_methods();
+
+	ElasticCage2D();
+	~ElasticCage2D();
+};
+
+class ElasticMeshInstance2D : public MeshInstance2D {
+	GDCLASS(ElasticMeshInstance2D, MeshInstance2D)
 
 private:
 	float time_passed;
@@ -56,8 +66,8 @@ private:
 public:
 	static void _bind_methods();
 
-	DeformMeshInstance2D();
-	~DeformMeshInstance2D();
+	ElasticMeshInstance2D();
+	~ElasticMeshInstance2D();
 
 	void _process(float delta);
 };

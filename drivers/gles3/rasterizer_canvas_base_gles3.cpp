@@ -154,8 +154,10 @@ void RasterizerCanvasBaseGLES3::canvas_begin() {
 				transparent ? storage->frame.clear_request_color.a : 1.0);
 		glClearStencil(0);
 		glEnable(GL_DEPTH_TEST);
+		glDepthMask(GL_TRUE);
+		glEnable(GL_STENCIL_TEST);
+		glClearStencil(0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glDisable(GL_DEPTH_TEST);
 		storage->frame.clear_request = false;
 		glColorMask(1, 1, 1, transparent ? 1 : 0);
 	}
@@ -938,7 +940,7 @@ void RasterizerCanvasBaseGLES3::canvas_light_shadow_buffer_update(RID p_buffer, 
 	glDisable(GL_CULL_FACE);
 	glDepthFunc(GL_LEQUAL);
 	glEnable(GL_DEPTH_TEST);
-	glDepthMask(true);
+	glDepthMask(GL_TRUE);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, cls->fbo);
 
@@ -1088,7 +1090,10 @@ void RasterizerCanvasBaseGLES3::reset_canvas() {
 	glVertexAttrib4f(VS::ARRAY_COLOR, 1, 1, 1, 1);
 
 	Transform canvas_transform;
-	const float depth_size = 5000.0;
+	const float depth_size_near = GLOBAL_DEF("rendering/quality/2d/mesh_depth_near", -1000);
+	const float depth_size_far = GLOBAL_DEF("rendering/quality/2d/mesh_depth_near", 1000);
+	const float depth_size = depth_size_far - depth_size_near == 0 ? 1 : depth_size_far - depth_size_near;
+	const float depth_mid_z = depth_size_far - depth_size_near == 0 ? 0 : -(depth_size_far + depth_size_near)/(depth_size_far - depth_size_near);
 
 	if (storage->frame.current_rt) {
 
@@ -1096,12 +1101,12 @@ void RasterizerCanvasBaseGLES3::reset_canvas() {
 		if (storage->frame.current_rt && storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_VFLIP]) {
 			csy = -1.0;
 		}
-		canvas_transform.translate(-(storage->frame.current_rt->width / 2.0f), -(storage->frame.current_rt->height / 2.0f), -depth_size / 2.0f);
-		canvas_transform.scale(Vector3(2.0f / storage->frame.current_rt->width, csy * -2.0f / storage->frame.current_rt->height, 2.0f / depth_size));
+		canvas_transform.translate(-(storage->frame.current_rt->width / 2.0f), -(storage->frame.current_rt->height / 2.0f), depth_mid_z);
+		canvas_transform.scale(Vector3(2.0f / storage->frame.current_rt->width, csy * -2.0f / storage->frame.current_rt->height, -2.0f / depth_size));
 	} else {
 		Vector2 ssize = OS::get_singleton()->get_window_size();
-		canvas_transform.translate(-(ssize.width / 2.0f), -(ssize.height / 2.0f), -depth_size / 2.0f);
-		canvas_transform.scale(Vector3(2.0f / ssize.width, -2.0f / ssize.height, 2.0f / depth_size));
+		canvas_transform.translate(-(ssize.width / 2.0f), -(ssize.height / 2.0f), depth_mid_z);
+		canvas_transform.scale(Vector3(2.0f / ssize.width, -2.0f / ssize.height, -2.0f / depth_size));
 	}
 
 	state.vp = canvas_transform;

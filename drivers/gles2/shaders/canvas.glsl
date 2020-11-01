@@ -211,15 +211,19 @@ VERTEX_SHADER_CODE
 	temp += translate_attrib;
 	outvec.xy = temp;
 
-#endif
+#else
 
-#if !defined(SKIP_TRANSFORM_USED)
-#if defined(VERTEX_WORLD_COORDS_USED)
+	// transform is in uniforms
+#ifndef SKIP_TRANSFORM_USED
+#ifdef VERTEX_WORLD_COORDS_USED
 	outvec = inv_world_matrix * outvec;
-#endif
+#else
 	outvec = extra_matrix * outvec;
+#endif
 	outvec = modelview_matrix * outvec;
 #endif
+
+#endif // not large integer
 
 #undef extra_matrix
 

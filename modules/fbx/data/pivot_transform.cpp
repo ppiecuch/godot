@@ -30,62 +30,62 @@
 
 #include "pivot_transform.h"
 
-#include "modules/fbx/tools/import_utils.h"
+#include "tools/import_utils.h"
 
 void PivotTransform::ReadTransformChain() {
-	const Assimp::FBX::PropertyTable &props = fbx_model->Props();
-	const Assimp::FBX::Model::RotOrder &rot = fbx_model->RotationOrder();
-	const Assimp::FBX::TransformInheritance &inheritType = fbx_model->InheritType();
+	const FBXDocParser::PropertyTable *props = fbx_model->Props();
+	const FBXDocParser::Model::RotOrder &rot = fbx_model->RotationOrder();
+	const FBXDocParser::TransformInheritance &inheritType = fbx_model->InheritType();
 	inherit_type = inheritType; // copy the inherit type we need it in the second step.
 	print_verbose("Model: " + String(fbx_model->Name().c_str()) + " Has inherit type: " + itos(fbx_model->InheritType()));
 	bool ok = false;
-	raw_pre_rotation = ImportUtils::safe_import_vector3(Assimp::FBX::PropertyGet<Vector3>(props, "PreRotation", ok));
+	raw_pre_rotation = ImportUtils::safe_import_vector3(FBXDocParser::PropertyGet<Vector3>(props, "PreRotation", ok));
 	if (ok) {
 		pre_rotation = ImportUtils::EulerToQuaternion(rot, ImportUtils::deg2rad(raw_pre_rotation));
 		print_verbose("valid pre_rotation: " + raw_pre_rotation + " euler conversion: " + (pre_rotation.get_euler() * (180 / Math_PI)));
 	}
-	raw_post_rotation = ImportUtils::safe_import_vector3(Assimp::FBX::PropertyGet<Vector3>(props, "PostRotation", ok));
+	raw_post_rotation = ImportUtils::safe_import_vector3(FBXDocParser::PropertyGet<Vector3>(props, "PostRotation", ok));
 	if (ok) {
-		post_rotation = ImportUtils::EulerToQuaternion(Assimp::FBX::Model::RotOrder_EulerXYZ, ImportUtils::deg2rad(raw_post_rotation));
+		post_rotation = ImportUtils::EulerToQuaternion(FBXDocParser::Model::RotOrder_EulerXYZ, ImportUtils::deg2rad(raw_post_rotation));
 		print_verbose("valid post_rotation: " + raw_post_rotation + " euler conversion: " + (pre_rotation.get_euler() * (180 / Math_PI)));
 	}
-	const Vector3 &RotationPivot = ImportUtils::safe_import_vector3(Assimp::FBX::PropertyGet<Vector3>(props, "RotationPivot", ok));
+	const Vector3 &RotationPivot = ImportUtils::safe_import_vector3(FBXDocParser::PropertyGet<Vector3>(props, "RotationPivot", ok));
 	if (ok) {
 		rotation_pivot = ImportUtils::FixAxisConversions(RotationPivot);
 	}
-	const Vector3 &RotationOffset = ImportUtils::safe_import_vector3(Assimp::FBX::PropertyGet<Vector3>(props, "RotationOffset", ok));
+	const Vector3 &RotationOffset = ImportUtils::safe_import_vector3(FBXDocParser::PropertyGet<Vector3>(props, "RotationOffset", ok));
 	if (ok) {
 		rotation_offset = ImportUtils::FixAxisConversions(RotationOffset);
 	}
-	const Vector3 &ScalingOffset = ImportUtils::safe_import_vector3(Assimp::FBX::PropertyGet<Vector3>(props, "ScalingOffset", ok));
+	const Vector3 &ScalingOffset = ImportUtils::safe_import_vector3(FBXDocParser::PropertyGet<Vector3>(props, "ScalingOffset", ok));
 	if (ok) {
 		scaling_offset = ImportUtils::FixAxisConversions(ScalingOffset);
 	}
-	const Vector3 &ScalingPivot = ImportUtils::safe_import_vector3(Assimp::FBX::PropertyGet<Vector3>(props, "ScalingPivot", ok));
+	const Vector3 &ScalingPivot = ImportUtils::safe_import_vector3(FBXDocParser::PropertyGet<Vector3>(props, "ScalingPivot", ok));
 	if (ok) {
 		scaling_pivot = ImportUtils::FixAxisConversions(ScalingPivot);
 	}
-	const Vector3 &Translation = ImportUtils::safe_import_vector3(Assimp::FBX::PropertyGet<Vector3>(props, "Lcl Translation", ok));
+	const Vector3 &Translation = ImportUtils::safe_import_vector3(FBXDocParser::PropertyGet<Vector3>(props, "Lcl Translation", ok));
 	if (ok) {
 		translation = ImportUtils::FixAxisConversions(Translation);
 	}
-	raw_rotation = ImportUtils::safe_import_vector3(Assimp::FBX::PropertyGet<Vector3>(props, "Lcl Rotation", ok));
+	raw_rotation = ImportUtils::safe_import_vector3(FBXDocParser::PropertyGet<Vector3>(props, "Lcl Rotation", ok));
 	if (ok) {
 		rotation = ImportUtils::EulerToQuaternion(rot, ImportUtils::deg2rad(raw_rotation));
 	}
-	const Vector3 &Scaling = ImportUtils::safe_import_vector3(Assimp::FBX::PropertyGet<Vector3>(props, "Lcl Scaling", ok));
+	const Vector3 &Scaling = ImportUtils::safe_import_vector3(FBXDocParser::PropertyGet<Vector3>(props, "Lcl Scaling", ok));
 	if (ok) {
 		scaling = Scaling;
 	}
-	const Vector3 &GeometricScaling = ImportUtils::safe_import_vector3(Assimp::FBX::PropertyGet<Vector3>(props, "GeometricScaling", ok));
+	const Vector3 &GeometricScaling = ImportUtils::safe_import_vector3(FBXDocParser::PropertyGet<Vector3>(props, "GeometricScaling", ok));
 	if (ok) {
 		geometric_scaling = GeometricScaling;
 	}
-	const Vector3 &GeometricRotation = ImportUtils::safe_import_vector3(Assimp::FBX::PropertyGet<Vector3>(props, "GeometricRotation", ok));
+	const Vector3 &GeometricRotation = ImportUtils::safe_import_vector3(FBXDocParser::PropertyGet<Vector3>(props, "GeometricRotation", ok));
 	if (ok) {
 		geometric_rotation = ImportUtils::EulerToQuaternion(rot, ImportUtils::deg2rad(GeometricRotation));
 	}
-	const Vector3 &GeometricTranslation = ImportUtils::safe_import_vector3(Assimp::FBX::PropertyGet<Vector3>(props, "GeometricTranslation", ok));
+	const Vector3 &GeometricTranslation = ImportUtils::safe_import_vector3(FBXDocParser::PropertyGet<Vector3>(props, "GeometricTranslation", ok));
 	if (ok) {
 		geometric_translation = ImportUtils::FixAxisConversions(GeometricTranslation);
 	}
@@ -159,11 +159,11 @@ Transform PivotTransform::ComputeGlobalTransform(Vector3 p_translation, Quat p_r
 
 	// Inherit type handler - we don't care about T here, just reordering RSrs etc.
 	Transform global_rotation_scale;
-	if (inherit_type == Assimp::FBX::Transform_RrSs) {
+	if (inherit_type == FBXDocParser::Transform_RrSs) {
 		global_rotation_scale = parent_global_rotation_m * local_rotation_m * parent_shear_scaling * local_shear_scaling;
-	} else if (inherit_type == Assimp::FBX::Transform_RSrs) {
+	} else if (inherit_type == FBXDocParser::Transform_RSrs) {
 		global_rotation_scale = parent_global_rotation_m * parent_shear_scaling * local_rotation_m * local_shear_scaling;
-	} else if (inherit_type == Assimp::FBX::Transform_Rrs) {
+	} else if (inherit_type == FBXDocParser::Transform_Rrs) {
 		Transform parent_global_shear_m_noLocal = parent_shear_scaling * parent_local_scaling_m.affine_inverse();
 		global_rotation_scale = parent_global_rotation_m * local_rotation_m * parent_global_shear_m_noLocal * local_shear_scaling;
 	}
@@ -188,7 +188,11 @@ void PivotTransform::ComputePivotTransform() {
 	Sp.set_origin(scaling_pivot);
 
 	// Scaling node
-	S.scale(scaling);
+	if (!scaling.is_equal_approx(Vector3())) {
+		S.scale(scaling);
+	} else {
+		S.scale(Vector3(1, 1, 1));
+	}
 	Local_Scaling_Matrix = S; // copy for when node / child is looking for the value of this.
 
 	// Rotation pivots
@@ -220,16 +224,18 @@ void PivotTransform::ComputePivotTransform() {
 
 	// Inherit type handler - we don't care about T here, just reordering RSrs etc.
 	Transform global_rotation_scale;
-	if (inherit_type == Assimp::FBX::Transform_RrSs) {
+	if (inherit_type == FBXDocParser::Transform_RrSs) {
 		global_rotation_scale = parent_global_rotation_m * local_rotation_m * parent_shear_scaling * local_shear_scaling;
-	} else if (inherit_type == Assimp::FBX::Transform_RSrs) {
+	} else if (inherit_type == FBXDocParser::Transform_RSrs) {
 		global_rotation_scale = parent_global_rotation_m * parent_shear_scaling * local_rotation_m * local_shear_scaling;
-	} else if (inherit_type == Assimp::FBX::Transform_Rrs) {
+	} else if (inherit_type == FBXDocParser::Transform_Rrs) {
 		Transform parent_global_shear_m_noLocal = parent_shear_scaling * parent_local_scaling_m.inverse();
 		global_rotation_scale = parent_global_rotation_m * local_rotation_m * parent_global_shear_m_noLocal * local_shear_scaling;
 	}
 	LocalTransform = Transform();
 	LocalTransform = T * Roff * Rp * Rpre * R * Rpost.affine_inverse() * Rp.affine_inverse() * Soff * Sp * S * Sp.affine_inverse();
+
+	ERR_FAIL_COND_MSG(LocalTransform.basis.determinant() == 0, "invalid scale reset");
 
 	Transform local_translation_pivoted = Transform(Basis(), LocalTransform.origin);
 	GlobalTransform = Transform();
@@ -241,6 +247,7 @@ void PivotTransform::ComputePivotTransform() {
 	print_verbose("scale of node: " + S.basis.get_scale_local());
 	print_verbose("---------------------------------------------------------------");
 }
+
 void PivotTransform::Execute() {
 	ReadTransformChain();
 	ComputePivotTransform();

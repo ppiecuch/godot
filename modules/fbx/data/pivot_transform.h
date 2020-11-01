@@ -28,13 +28,15 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef MODEL_ABSTRACTION_PIVOT_TRANSFORM_H
-#define MODEL_ABSTRACTION_PIVOT_TRANSFORM_H
+#ifndef PIVOT_TRANSFORM_H
+#define PIVOT_TRANSFORM_H
 
 #include "core/reference.h"
+
 #include "model_abstraction.h"
-#include "modules/fbx/tools/import_utils.h"
-#include "thirdparty/assimp_fbx/FBXDocument.h"
+
+#include "fbx_parser/FBXDocument.h"
+#include "tools/import_utils.h"
 
 enum TransformationComp {
 	TransformationComp_Translation,
@@ -94,6 +96,7 @@ struct PivotTransform : Reference, ModelAbstraction {
 	void set_parent(Ref<PivotTransform> p_parent) {
 		parent_transform = p_parent;
 	}
+
 	bool computed_global_xform = false;
 	Ref<PivotTransform> parent_transform = Ref<PivotTransform>();
 	//Transform chain[TransformationComp_MAXIMUM];
@@ -103,7 +106,7 @@ struct PivotTransform : Reference, ModelAbstraction {
 	Transform LocalTransform = Transform();
 	Transform Local_Scaling_Matrix = Transform(); // used for inherit type.
 	Transform GeometricTransform = Transform(); // 3DS max only
-	Assimp::FBX::TransformInheritance inherit_type = Assimp::FBX::TransformInheritance_MAX; // maya fbx requires this - sorry <3
+	FBXDocParser::TransformInheritance inherit_type = FBXDocParser::TransformInheritance_MAX; // maya fbx requires this - sorry <3
 };
 
-#endif // MODEL_ABSTRACTION_PIVOT_TRANSFORM_H
+#endif // PIVOT_TRANSFORM_H

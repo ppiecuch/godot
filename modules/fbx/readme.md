@@ -1,6 +1,23 @@
 # Open Source FBX Specification for the Importer
 
-The goal of this document is to make everything in FBX clearly stated, any errors will be corrected over time this is a first draft.
+The goal of this document is to make everything in FBX clearly stated, any errors will be corrected over time this
+is a first draft.
+
+## fbx parser - originally from assimp
+
+- Folder: /modules/fbx/fbx_parser
+- Upstream: assimp
+- Original Version: git (308db73d0b3c2d1870cd3e465eaa283692a4cf23, 2019)
+- License: BSD-3-Clause
+
+This can never be updated from upstream, we have heavily modified the parser to provide memory safety and add some
+functionality. If anything we should give this parser back to assimp at some point as it has a lot of new features.
+
+# Updating assimp fbx parser
+
+Don't. it's not possible the code is rewritten in many areas to remove thirdparty deps and various bugs are fixed.
+
+Many days were put into rewriting the parser to use safe code and safe memory accessors.
 
 # File Headers
 
@@ -10,16 +27,25 @@ FBX ASCII documents contain a larger header, sometimes with copyright informatio
 
 Detecting these is pretty simple.
 
+# What is an OP link?
+It's an object to property link. It lists the properties for that object in some cases. Source and destination based by
+ID.
+
+# What is a OO link?
+Its an object to object link, it contains the ID source and destination ID.
+
 # FBX Node connections
 
 Nodes in FBX are connected using OO links, This means Object to Object.
 
-FBX has a single other kind of link which is Object Property, this is used for Object to Property Links, this can be extra attributes, defaults, or even some simple settings.
+FBX has a single other kind of link which is Object Property, this is used for Object to Property Links, this can be
+ extra attributes, defaults, or even some simple settings.
 
 # Bones / Joints / Locators
 
-Bones in FBX are nodes, they initially have the Model:: Type, then have links to SubDeformer the sub deformer is part of the skin
-There is also an explicit Skin link, which then links to the geometry using OO links in the document.
+Bones in FBX are nodes, they initially have the Model:: Type, then have links to SubDeformer the sub deformer
+is part of the skin there is also an explicit Skin link, which then links to the geometry using OO links in the
+document.
 
 # Rotation Order in FBX compared to Godot
 
@@ -85,7 +111,7 @@ The goal of below is to explain why they implement this in the first place.
 
 The use case is to make nodes have an option to override their local scaling or to make scaling influenced by orientation, which i would imagine would be useful for when you need to rotate a node and the child to scale based on the orientation rather than setting on the rotation matrix planes.
 ```cpp
-
+// not modified the formatting here since this code must remain clear
 enum TransformInheritance {
 	Transform_RrSs = 0,
 	// Parent Rotation * Local Rotation * Parent Scale * Local Scale  -- Parent Rotation Offset * Parent ScalingOffset (Local scaling is offset by rotation of parent node)
@@ -144,18 +170,13 @@ GlobalSettings:  {
 
 #### FBX FILE declares axis dynamically using FBX header
 Coord is X
-
 Up is Y
-
 Front is Z
 
 #### GODOT - constant reference point
 Coord is X positive,
-
 Y is up positive,
-
 Front is -Z negative
-
 
 ### Explaining MeshGeometry indexing
 
@@ -166,7 +187,7 @@ Reference type declared:
 ControlPoint is a vertex
 * None The mapping is undetermined.
 * ByVertex There will be one mapping coordinate for each surface control point/vertex.
-    * If you have direct reference type verticies[x]
+    * If you have direct reference type vertices [x]
     * If you have IndexToDirect reference type the UV
 * ByPolygonVertex There will be one mapping coordinate for each vertex, for every polygon of which it is a part. This means that a vertex will have as many mapping coordinates as polygons of which it is a part. (Sorted by polygon, referencing vertex)
 * ByPolygon There can be only one mapping coordinate for the whole polygon.

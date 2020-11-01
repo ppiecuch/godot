@@ -38,37 +38,37 @@ Vector3 ImportUtils::rad2deg(const Vector3 &p_rotation) {
 	return p_rotation / Math_PI * 180.0;
 }
 
-Basis ImportUtils::EulerToBasis(Assimp::FBX::Model::RotOrder mode, const Vector3 &p_rotation) {
+Basis ImportUtils::EulerToBasis(FBXDocParser::Model::RotOrder mode, const Vector3 &p_rotation) {
 	Basis ret;
 
 	// FBX is using intrinsic euler, we can convert intrinsic to extrinsic (the one used in godot
 	// by simply invert its order: https://www.cs.utexas.edu/~theshark/courses/cs354/lectures/cs354-14.pdf
 	switch (mode) {
-		case Assimp::FBX::Model::RotOrder_EulerXYZ:
+		case FBXDocParser::Model::RotOrder_EulerXYZ:
 			ret.set_euler_zyx(p_rotation);
 			break;
 
-		case Assimp::FBX::Model::RotOrder_EulerXZY:
+		case FBXDocParser::Model::RotOrder_EulerXZY:
 			ret.set_euler_yzx(p_rotation);
 			break;
 
-		case Assimp::FBX::Model::RotOrder_EulerYZX:
+		case FBXDocParser::Model::RotOrder_EulerYZX:
 			ret.set_euler_xzy(p_rotation);
 			break;
 
-		case Assimp::FBX::Model::RotOrder_EulerYXZ:
+		case FBXDocParser::Model::RotOrder_EulerYXZ:
 			ret.set_euler_zxy(p_rotation);
 			break;
 
-		case Assimp::FBX::Model::RotOrder_EulerZXY:
+		case FBXDocParser::Model::RotOrder_EulerZXY:
 			ret.set_euler_yxz(p_rotation);
 			break;
 
-		case Assimp::FBX::Model::RotOrder_EulerZYX:
+		case FBXDocParser::Model::RotOrder_EulerZYX:
 			ret.set_euler_xyz(p_rotation);
 			break;
 
-		case Assimp::FBX::Model::RotOrder_SphericXYZ:
+		case FBXDocParser::Model::RotOrder_SphericXYZ:
 			// TODO do this.
 			break;
 
@@ -80,34 +80,34 @@ Basis ImportUtils::EulerToBasis(Assimp::FBX::Model::RotOrder mode, const Vector3
 	return ret;
 }
 
-Quat ImportUtils::EulerToQuaternion(Assimp::FBX::Model::RotOrder mode, const Vector3 &p_rotation) {
+Quat ImportUtils::EulerToQuaternion(FBXDocParser::Model::RotOrder mode, const Vector3 &p_rotation) {
 	return ImportUtils::EulerToBasis(mode, p_rotation);
 }
 
-Vector3 ImportUtils::BasisToEuler(Assimp::FBX::Model::RotOrder mode, const Basis &p_rotation) {
+Vector3 ImportUtils::BasisToEuler(FBXDocParser::Model::RotOrder mode, const Basis &p_rotation) {
 
 	// FBX is using intrinsic euler, we can convert intrinsic to extrinsic (the one used in godot
 	// by simply invert its order: https://www.cs.utexas.edu/~theshark/courses/cs354/lectures/cs354-14.pdf
 	switch (mode) {
-		case Assimp::FBX::Model::RotOrder_EulerXYZ:
+		case FBXDocParser::Model::RotOrder_EulerXYZ:
 			return p_rotation.get_euler_zyx();
 
-		case Assimp::FBX::Model::RotOrder_EulerXZY:
+		case FBXDocParser::Model::RotOrder_EulerXZY:
 			return p_rotation.get_euler_yzx();
 
-		case Assimp::FBX::Model::RotOrder_EulerYZX:
+		case FBXDocParser::Model::RotOrder_EulerYZX:
 			return p_rotation.get_euler_xzy();
 
-		case Assimp::FBX::Model::RotOrder_EulerYXZ:
+		case FBXDocParser::Model::RotOrder_EulerYXZ:
 			return p_rotation.get_euler_zxy();
 
-		case Assimp::FBX::Model::RotOrder_EulerZXY:
+		case FBXDocParser::Model::RotOrder_EulerZXY:
 			return p_rotation.get_euler_yxz();
 
-		case Assimp::FBX::Model::RotOrder_EulerZYX:
+		case FBXDocParser::Model::RotOrder_EulerZYX:
 			return p_rotation.get_euler_xyz();
 
-		case Assimp::FBX::Model::RotOrder_SphericXYZ:
+		case FBXDocParser::Model::RotOrder_SphericXYZ:
 			// TODO
 			return Vector3();
 
@@ -118,12 +118,14 @@ Vector3 ImportUtils::BasisToEuler(Assimp::FBX::Model::RotOrder mode, const Basis
 	}
 }
 
-Vector3 ImportUtils::QuaternionToEuler(Assimp::FBX::Model::RotOrder mode, const Quat &p_rotation) {
+Vector3 ImportUtils::QuaternionToEuler(FBXDocParser::Model::RotOrder mode, const Quat &p_rotation) {
 	return BasisToEuler(mode, p_rotation);
 }
 
 Transform get_unscaled_transform(const Transform &p_initial, real_t p_scale) {
-	return Transform(p_initial.basis, p_initial.origin * p_scale);
+	Transform unscaled = Transform(p_initial.basis, p_initial.origin * p_scale);
+	ERR_FAIL_COND_V_MSG(unscaled.basis.determinant() == 0, Transform(), "det is zero unscaled?");
+	return unscaled;
 }
 
 Vector3 get_poly_normal(const std::vector<Vector3> &p_vertices) {

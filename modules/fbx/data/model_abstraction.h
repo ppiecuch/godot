@@ -28,15 +28,15 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef MODEL_ABSTRACTION_FBX_IMPORTER_H
-#define MODEL_ABSTRACTION_FBX_IMPORTER_H
+#ifndef MODEL_ABSTRACTION_H
+#define MODEL_ABSTRACTION_H
 
-#include "thirdparty/assimp_fbx/FBXDocument.h"
+#include "modules/fbx/fbx_parser/FBXDocument.h"
 
 struct ModelAbstraction {
-	mutable const Assimp::FBX::Model *fbx_model = nullptr;
+	mutable const FBXDocParser::Model *fbx_model = nullptr;
 
-	void set_model(const Assimp::FBX::Model *p_model) {
+	void set_model(const FBXDocParser::Model *p_model) {
 		fbx_model = p_model;
 	}
 
@@ -44,9 +44,9 @@ struct ModelAbstraction {
 		return fbx_model != nullptr;
 	}
 
-	const Assimp::FBX::Model *get_model() const {
+	const FBXDocParser::Model *get_model() const {
 		return fbx_model;
 	}
 };
 
-#endif // MODEL_ABSTRACTION_FBX_IMPORTER_H
+#endif // MODEL_ABSTRACTION_H

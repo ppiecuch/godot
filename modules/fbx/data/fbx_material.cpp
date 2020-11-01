@@ -32,13 +32,12 @@
 
 #include "scene/resources/material.h"
 #include "scene/resources/texture.h"
-#include <typeinfo>
 
 String FBXMaterial::get_material_name() const {
 	return material_name;
 }
 
-void FBXMaterial::set_imported_material(const Assimp::FBX::Material *p_material) {
+void FBXMaterial::set_imported_material(const FBXDocParser::Material *p_material) {
 	material = p_material;
 }
 
@@ -145,14 +144,14 @@ String FBXMaterial::find_texture_path_by_filename(const String p_filename, const
 	return "";
 }
 
-FBXMaterial::MaterialInfo FBXMaterial::extract_material_info(const Assimp::FBX::Material *material) const {
+FBXMaterial::MaterialInfo FBXMaterial::extract_material_info(const FBXDocParser::Material *material) const {
 	MaterialInfo mat_info;
 
 	// TODO Layered textures are a collection on textures stored into an array.
 	// Extract layered textures is not yet supported. Per each texture in the
 	// layered texture array you want to use the below method to extract those.
 
-	for (std::pair<std::string, const Assimp::FBX::Texture *> texture : material->Textures()) {
+	for (std::pair<std::string, const FBXDocParser::Texture *> texture : material->Textures()) {
 		const std::string &fbx_mapping_name = texture.first;
 
 		if (fbx_feature_mapping_desc.count(fbx_mapping_name) > 0) {
@@ -233,12 +232,11 @@ FBXMaterial::MaterialInfo FBXMaterial::extract_material_info(const Assimp::FBX::
 }
 
 template <class T>
-T extract_from_prop(const Assimp::FBX::Property *prop, const T &p_default, const std::string &p_name, const String &p_type) {
-	const Assimp::FBX::TypedProperty<T> *val = prop->As<Assimp::FBX::TypedProperty<T> >();
-	if (val == nullptr) {
-		return p_default;
-	}
-	//ERR_FAIL_COND_V_MSG(val == nullptr, p_default, "The FBX is corrupted, the property `" + String(p_name.c_str()) + "` is a `" + String(typeid(*prop).name()) + "` but should be a " + p_type);
+T extract_from_prop(FBXDocParser::PropertyPtr prop, const T &p_default, const std::string &p_name, const String &p_type) {
+	ERR_FAIL_COND_V_MSG(prop == nullptr, p_default, "invalid property passed to extractor");
+	const FBXDocParser::TypedProperty<T> *val = dynamic_cast<const FBXDocParser::TypedProperty<T> *>(prop);
+
+	ERR_FAIL_COND_V_MSG(val == nullptr, p_default, "The FBX is corrupted, the property `" + String(p_name.c_str()) + "` is a `" + String(typeid(*prop).name()) + "` but should be a " + p_type);
 	// Make sure to not lost any eventual opacity.
 	return val->Value();
 }
@@ -261,33 +259,40 @@ Ref<SpatialMaterial> FBXMaterial::import_material(ImportState &state) {
 	MaterialInfo material_info = extract_material_info(material);
 
 	// Extract other parameters info.
-	const std::vector<std::string> properties_name = material->Props().get_properties_name();
-	for (std::string name : properties_name) {
+	for (FBXDocParser::LazyPropertyMap::value_type iter : material->Props()->GetLazyProperties()) {
+		const std::string name = iter.first;
+		//const Assimp::FBX::ElementPtr element = iter.second;
+
 		if (name.empty()) {
 			continue;
 		}
+
 		PropertyDesc desc = PROPERTY_DESC_NOT_FOUND;
 		if (fbx_properties_desc.count(name) > 0) {
 			desc = fbx_properties_desc.at(name);
 		}
 
 		if (desc == PROPERTY_DESC_IGNORE) {
-			//print_verbose("The FBX material parameter: `" + String(name.c_str()) + "` is ignored.");
+			print_verbose("The FBX material parameter: `" + String(name.c_str()) + "` is ignored.");
 			continue;
+		} else {
+			print_verbose("FBX Material parameter: " + String(name.c_str()));
 		}
 
 		if (desc == PROPERTY_DESC_NOT_FOUND) {
 			continue;
 		}
 
-		//ERR_CONTINUE_MSG(desc == PROPERTY_DESC_NOT_FOUND, "The FBX material parameter: `" + String(name.c_str()) + "` was not recognized. Please open an issue so we can add the support to it.");
+		ERR_CONTINUE_MSG(desc == PROPERTY_DESC_NOT_FOUND, "The FBX material parameter: `" + String(name.c_str()) + "` was not recognized. Please open an issue so we can add the support to it.");
 
-		const Assimp::FBX::Property *prop = material->Props().Get(name);
+		FBXDocParser::PropertyPtr prop = material->Props()->Get(name);
+
+		//Assimp::FBX::PropertyPtr prop = prop.second.
 
 		if (prop == nullptr) {
 			continue;
 		}
-		//ERR_CONTINUE_MSG(prop == nullptr, "This file may be corrupted because is not possible to extract the material parameter: " + String(name.c_str()));
+		ERR_CONTINUE_MSG(prop == nullptr, "This file may be corrupted because is not possible to extract the material parameter: " + String(name.c_str()));
 
 		if (spatial_material.is_null()) {
 			// Done here so if no data no material is created.
@@ -315,10 +320,10 @@ Ref<SpatialMaterial> FBXMaterial::import_material(ImportState &state) {
 				}
 			} break;
 			case PROPERTY_DESC_METALLIC: {
-				spatial_material->set_metallic(extract_from_prop(prop, 1.0f, name, "float"));
+				spatial_material->set_metallic(std::min(1.0f, extract_from_prop(prop, 1.0f, name, "float")));
 			} break;
 			case PROPERTY_DESC_ROUGHNESS: {
-				spatial_material->set_roughness(extract_from_prop(prop, 1.0f, name, "float"));
+				spatial_material->set_roughness(std::min(1.0f, extract_from_prop(prop, 1.0f, name, "float")));
 			} break;
 			case PROPERTY_DESC_COAT: {
 				spatial_material->set_clearcoat(extract_from_prop(prop, 1.0f, name, "float"));
@@ -350,9 +355,6 @@ Ref<SpatialMaterial> FBXMaterial::import_material(ImportState &state) {
 				break;
 		}
 	}
-
-	// FBX culling normally is front only.
-	spatial_material->set_cull_mode(SpatialMaterial::CULL_FRONT);
 
 	// Set the material features.
 	for (int x = 0; x < material_info.features.size(); x++) {
@@ -407,8 +409,8 @@ Ref<SpatialMaterial> FBXMaterial::import_material(ImportState &state) {
 				} else if (extension == "TGA") {
 
 					// The stored file is a TGA.
-					image = Image::_tga_mem_loader_func(mapping.texture->Media()->Content(), mapping.texture->Media()->ContentLength());
-					ERR_CONTINUE_MSG(image.is_valid() == false, "FBX Embedded TGA image load fail.");
+					//image = Image::_tga_mem_loader_func(mapping.texture->Media()->Content(), mapping.texture->Media()->ContentLength());
+					//ERR_CONTINUE_MSG(image.is_valid() == false, "FBX Embedded TGA image load fail.");
 
 				} else if (extension == "WEBP") {
 

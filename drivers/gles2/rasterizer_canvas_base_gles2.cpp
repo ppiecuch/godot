@@ -87,8 +87,11 @@ void RasterizerCanvasBaseGLES2::canvas_begin() {
 				storage->frame.clear_request_color.g,
 				storage->frame.clear_request_color.b,
 				state.using_transparent_rt ? storage->frame.clear_request_color.a : 1.0);
+		glEnable(GL_DEPTH_TEST);
+		glDepthMask(GL_TRUE);
+		glEnable(GL_STENCIL_TEST);
 		glClearStencil(0);
-		glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		storage->frame.clear_request = false;
 	}
 
@@ -117,12 +120,12 @@ void RasterizerCanvasBaseGLES2::canvas_begin() {
 		if (storage->frame.current_rt && storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_VFLIP]) {
 			csy = -1.0;
 		}
-		canvas_transform.translate(-(storage->frame.current_rt->width / 2.0f), -(storage->frame.current_rt->height / 2.0f), 0.0f);
-		canvas_transform.scale(Vector3(2.0f / storage->frame.current_rt->width, csy * -2.0f / storage->frame.current_rt->height, 1.0f));
+		canvas_transform.translate(-(storage->frame.current_rt->width / 2.0f), -(storage->frame.current_rt->height / 2.0f), -100.0f);
+		canvas_transform.scale(Vector3(2.0f / storage->frame.current_rt->width, csy * -2.0f / storage->frame.current_rt->height, 100.0f));
 	} else {
 		Vector2 ssize = OS::get_singleton()->get_window_size();
-		canvas_transform.translate(-(ssize.width / 2.0f), -(ssize.height / 2.0f), 0.0f);
-		canvas_transform.scale(Vector3(2.0f / ssize.width, -2.0f / ssize.height, 1.0f));
+		canvas_transform.translate(-(ssize.width / 2.0f), -(ssize.height / 2.0f), -100.0f);
+		canvas_transform.scale(Vector3(2.0f / ssize.width, -2.0f / ssize.height, 100.0f));
 	}
 
 	state.uniforms.projection_matrix = canvas_transform;
@@ -408,6 +411,7 @@ void RasterizerCanvasBaseGLES2::_set_uniforms() {
 void RasterizerCanvasBaseGLES2::reset_canvas() {
 
 	glDisable(GL_CULL_FACE);
+	glDepthFunc(GL_LESS);
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_SCISSOR_TEST);
 	glDisable(GL_DITHER);

@@ -65,6 +65,7 @@
 
 #include "scene/audio_stream_preview_generator.h"
 #include "scene/autotilemap.h"
+#include "scene/bend_deform_2d.h"
 #include "scene/bullet_manager.h"
 #include "scene/cable2d.h"
 #include "scene/cable2d_editor_plugin.h"

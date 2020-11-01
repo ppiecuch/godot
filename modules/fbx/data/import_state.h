@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef EDITOR_SCENE_IMPORT_STATE_H
-#define EDITOR_SCENE_IMPORT_STATE_H
+#ifndef IMPORT_STATE_H
+#define IMPORT_STATE_H
 
 #include "fbx_mesh_data.h"
 #include "modules/fbx/tools/import_utils.h"
@@ -47,12 +47,12 @@
 #include "scene/resources/animation.h"
 #include "scene/resources/surface_tool.h"
 
-#include "thirdparty/assimp_fbx/FBXDocument.h"
-#include "thirdparty/assimp_fbx/FBXImportSettings.h"
-#include "thirdparty/assimp_fbx/FBXMeshGeometry.h"
-#include "thirdparty/assimp_fbx/FBXParser.h"
-#include "thirdparty/assimp_fbx/FBXTokenizer.h"
-#include "thirdparty/assimp_fbx/FBXUtil.h"
+#include "modules/fbx/fbx_parser/FBXDocument.h"
+#include "modules/fbx/fbx_parser/FBXImportSettings.h"
+#include "modules/fbx/fbx_parser/FBXMeshGeometry.h"
+#include "modules/fbx/fbx_parser/FBXParser.h"
+#include "modules/fbx/fbx_parser/FBXTokenizer.h"
+#include "modules/fbx/fbx_parser/FBXUtil.h"
 
 struct FBXBone;
 struct FBXMeshData;
@@ -60,8 +60,8 @@ struct FBXNode;
 struct FBXSkeleton;
 
 struct ImportState {
-	bool enable_material_import = false;
-	bool enable_animation_import = false;
+	bool enable_material_import = true;
+	bool enable_animation_import = true;
 
 	Map<StringName, Ref<Texture> > cached_image_searches;
 	Map<uint64_t, Ref<SpatialMaterial> > cached_materials;
@@ -107,4 +107,4 @@ struct ImportState {
 	Map<uint64_t, Ref<FBXMeshData> > renderer_mesh_data = Map<uint64_t, Ref<FBXMeshData> >();
 };
 
-#endif // EDITOR_SCENE_IMPORT_STATE_H
+#endif // IMPORT_STATE_H

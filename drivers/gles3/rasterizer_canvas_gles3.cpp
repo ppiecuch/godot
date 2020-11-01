@@ -845,6 +845,7 @@ void RasterizerCanvasGLES3::render_batches(Item::Command *const *p_commands, Ite
 
 										if (need_depth) {
 											glEnable(GL_DEPTH_TEST);
+											glDepthMask(GL_TRUE);
 										}
 										if (s->index_array_len) {
 											glDrawElements(gl_primitive[s->primitive], s->index_array_len, (s->array_len >= (1 << 16)) ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, 0);
@@ -853,6 +854,7 @@ void RasterizerCanvasGLES3::render_batches(Item::Command *const *p_commands, Ite
 										}
 										if (need_depth) {
 											glDisable(GL_DEPTH_TEST);
+											glDepthMask(GL_FALSE);
 										}
 										storage->info.render._2d_draw_call_count++;
 
@@ -1472,7 +1474,9 @@ void RasterizerCanvasGLES3::render_joined_item(const BItemJoined &p_bij, RenderI
 	//	state.final_transform = p_ci->final_transform;
 	//	state.extra_matrix = Transform2D();
 
-	// using software transform
+	// using software transform?
+	// (i.e. don't send the transform matrix, send identity, and either use baked verts,
+	// or large fvf where the transform is done in the shader from transform stored in the fvf.)
 	if (!p_bij.use_hardware_transform()) {
 		state.final_transform = Transform2D();
 		// final_modulate will be baked per item ref so the final_modulate can be an identity color

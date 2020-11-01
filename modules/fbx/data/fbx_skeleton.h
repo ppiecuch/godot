@@ -28,13 +28,14 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef EDITOR_SCENE_FBX_SKELETON_H
-#define EDITOR_SCENE_FBX_SKELETON_H
+#ifndef FBX_SKELETON_H
+#define FBX_SKELETON_H
 
-#include "core/reference.h"
 #include "fbx_bone.h"
 #include "fbx_node.h"
 #include "model_abstraction.h"
+
+#include "core/reference.h"
 #include "scene/3d/skeleton.h"
 
 struct FBXNode;
@@ -49,4 +50,4 @@ struct FBXSkeleton : Reference, ModelAbstraction {
 	void init_skeleton(const ImportState &state);
 };
 
-#endif // EDITOR_SCENE_FBX_SKELETON_H
+#endif // FBX_SKELETON_H

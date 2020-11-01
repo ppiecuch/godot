@@ -28,12 +28,13 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef MODEL_ABSTRACTION_FBX_BONE_H
-#define MODEL_ABSTRACTION_FBX_BONE_H
+#ifndef FBX_BONE_H
+#define FBX_BONE_H
 
 #include "fbx_node.h"
 #include "import_state.h"
-#include "thirdparty/assimp_fbx/FBXDocument.h"
+
+#include "fbx_parser/FBXDocument.h"
 
 struct PivotTransform;
 
@@ -74,9 +75,10 @@ struct FBXBone : public Reference {
 	Transform vertex_transform_matrix;
 	Transform local_cluster_matrix; // set_bone_pose
 
-	mutable const Assimp::FBX::Deformer *skin = nullptr; // let's stop copying data
-	mutable const Assimp::FBX::Cluster *cluster = nullptr;
-	mutable const Assimp::FBX::Geometry *geometry = nullptr;
+	mutable const FBXDocParser::Deformer *skin = nullptr;
+	mutable const FBXDocParser::Cluster *cluster = nullptr;
+	mutable const FBXDocParser::Geometry *geometry = nullptr;
+	mutable const FBXDocParser::ModelLimbNode *limb_node = nullptr;
 
 	void set_pivot_xform(Ref<PivotTransform> p_pivot_xform) {
 		pivot_xform = p_pivot_xform;
@@ -90,4 +92,4 @@ struct FBXBone : public Reference {
 	Ref<FBXSkeleton> fbx_skeleton = Ref<FBXSkeleton>();
 };
 
-#endif // MODEL_ABSTRACTION_FBX_BONE_H
+#endif // FBX_BONE_H

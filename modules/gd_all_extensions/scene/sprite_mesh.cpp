@@ -116,13 +116,13 @@ void SpriteMesh::_notification(int p_what) {
 		if (mesh.is_valid()) {
 			const AABB &aabb = mesh->get_aabb();
 
-			Size2i s(aabb.size.x, aabb.size.y);
+			Size2 s(aabb.size.x, aabb.size.y);
 
 			Point2 ofs = offset;
 			if (centered)
 				ofs -= Size2(s) / 2;
 
-			Transform2D xform(0, ofs-Point2(aabb.position.x, aabb.position.y));
+			Transform2D xform(0, ofs - Point2(aabb.position.x, aabb.position.y));
 			draw_mesh(mesh, texture, normal_map, xform);
 #if 1
 			draw_rect(Rect2(ofs, s), Color::named("yellow"), false);
@@ -307,7 +307,7 @@ Rect2 SpriteMesh::get_rect() const {
 
 	const AABB &aabb = mesh->get_aabb();
 
-	Size2i s(aabb.size.x, aabb.size.y);
+	Size2 s(aabb.size.x, aabb.size.y);
 
 	Point2 ofs = offset;
 	if (centered)

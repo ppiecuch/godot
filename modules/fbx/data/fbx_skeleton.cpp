@@ -31,7 +31,8 @@
 #include "fbx_skeleton.h"
 
 #include "import_state.h"
-#include "modules/fbx/tools/import_utils.h"
+
+#include "tools/import_utils.h"
 
 void FBXSkeleton::init_skeleton(const ImportState &state) {
 	int skeleton_bone_count = skeleton_bones.size();
@@ -49,7 +50,7 @@ void FBXSkeleton::init_skeleton(const ImportState &state) {
 			} else {
 				// root node must never be a skeleton to prevent cyclic skeletons from being allowed (skeleton in a skeleton)
 				fbx_node->godot_node->add_child(skeleton);
-				skeleton->set_owner(state.root);
+				skeleton->set_owner(state.root_owner);
 				skeleton->set_name("Skeleton");
 				print_verbose("created armature skeleton for root");
 			}
@@ -104,6 +105,7 @@ void FBXSkeleton::init_skeleton(const ImportState &state) {
 		print_verbose("working on bone: " + itos(bone_index) + " bone name:" + bone->bone_name);
 
 		skeleton->set_bone_rest(bone->godot_bone_id, get_unscaled_transform(bone->pivot_xform->LocalTransform, state.scale));
+
 		// lookup parent ID
 		if (bone->valid_parent && state.fbx_bone_map.has(bone->parent_bone_id)) {
 			Ref<FBXBone> parent_bone = state.fbx_bone_map[bone->parent_bone_id];
