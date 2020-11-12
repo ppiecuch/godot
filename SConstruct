@@ -386,6 +386,9 @@ if selected_platform in platform_list:
 
         gcc_common_warnings = []
 
+        # Disable c++11 warnings
+        env.Append(CXXFLAGS=["-Wno-inconsistent-missing-override"])
+
         if methods.using_gcc(env):
             if version[0] > 4:  # For sure not on gcw0 4.3.1
                 gcc_common_warnings += ["-Wno-misleading-indentation"]

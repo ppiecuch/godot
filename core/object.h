@@ -261,17 +261,24 @@ public:                                                             \
                                                                     \
 private:
 
+#if __cplusplus >= 201103L || (defined(_MSC_VER) && _MSC_VER >= 1900)
+# define G_OVERRIDE override
+#else
+# define G_OVERRIDE
+#endif
+
 #define GDCLASS(m_class, m_inherits)                                                                                                    \
 private:                                                                                                                                \
+	Array _disabled_base_notifications;                                                                                                 \
 	void operator=(const m_class &p_rval) {}                                                                                            \
 	mutable StringName _class_name;                                                                                                     \
 	friend class ClassDB;                                                                                                               \
                                                                                                                                         \
 public:                                                                                                                                 \
-	virtual String get_class() const {                                                                                                  \
+	virtual String get_class() const G_OVERRIDE {                                                                                       \
 		return String(#m_class);                                                                                                        \
 	}                                                                                                                                   \
-	virtual const StringName *_get_class_namev() const {                                                                                \
+	virtual const StringName *_get_class_namev() const G_OVERRIDE {                                                                     \
 		if (!_class_name)                                                                                                               \
 			_class_name = get_class_static();                                                                                           \
 		return &_class_name;                                                                                                            \
@@ -302,9 +309,12 @@ public:                                                                         
 	static String inherits_static() {                                                                                                   \
 		return String(#m_inherits);                                                                                                     \
 	}                                                                                                                                   \
-	virtual bool is_class(const String &p_class) const { return (p_class == (#m_class)) ? true : m_inherits::is_class(p_class); }       \
-	virtual bool is_class_ptr(void *p_ptr) const { return (p_ptr == get_class_ptr_static()) ? true : m_inherits::is_class_ptr(p_ptr); } \
-                                                                                                                                        \
+	virtual bool is_class(const String &p_class) const G_OVERRIDE {                                                                     \
+		return (p_class == (#m_class)) ? true : m_inherits::is_class(p_class);                                                          \
+	}                                                                                                                                   \
+	virtual bool is_class_ptr(void *p_ptr) const G_OVERRIDE {                                                                           \
+		return (p_ptr == get_class_ptr_static()) ? true : m_inherits::is_class_ptr(p_ptr);                                              \
+	}                                                                                                                                   \
 	static void get_valid_parents_static(List<String> *p_parents) {                                                                     \
                                                                                                                                         \
 		if (m_class::_get_valid_parents_static != m_inherits::_get_valid_parents_static) {                                              \
@@ -332,13 +342,13 @@ public:                                                                         
 	}                                                                                                                                   \
                                                                                                                                         \
 protected:                                                                                                                              \
-	virtual void _initialize_classv() {                                                                                                 \
+	virtual void _initialize_classv() G_OVERRIDE {                                                                                      \
 		initialize_class();                                                                                                             \
 	}                                                                                                                                   \
 	_FORCE_INLINE_ bool (Object::*_get_get() const)(const StringName &p_name, Variant &) const {                                        \
 		return (bool (Object::*)(const StringName &, Variant &) const) & m_class::_get;                                                 \
 	}                                                                                                                                   \
-	virtual bool _getv(const StringName &p_name, Variant &r_ret) const {                                                                \
+	virtual bool _getv(const StringName &p_name, Variant &r_ret) const G_OVERRIDE {                                                     \
 		if (m_class::_get_get() != m_inherits::_get_get()) {                                                                            \
 			if (_get(p_name, r_ret))                                                                                                    \
 				return true;                                                                                                            \
@@ -348,7 +358,7 @@ protected:                                                                      
 	_FORCE_INLINE_ bool (Object::*_get_set() const)(const StringName &p_name, const Variant &p_property) {                              \
 		return (bool (Object::*)(const StringName &, const Variant &)) & m_class::_set;                                                 \
 	}                                                                                                                                   \
-	virtual bool _setv(const StringName &p_name, const Variant &p_property) {                                                           \
+	virtual bool _setv(const StringName &p_name, const Variant &p_property) G_OVERRIDE {                                                \
 		if (m_inherits::_setv(p_name, p_property)) return true;                                                                         \
 		if (m_class::_get_set() != m_inherits::_get_set()) {                                                                            \
 			return _set(p_name, p_property);                                                                                            \
@@ -358,7 +368,7 @@ protected:                                                                      
 	_FORCE_INLINE_ void (Object::*_get_get_property_list() const)(List<PropertyInfo> * p_list) const {                                  \
 		return (void (Object::*)(List<PropertyInfo> *) const) & m_class::_get_property_list;                                            \
 	}                                                                                                                                   \
-	virtual void _get_property_listv(List<PropertyInfo> *p_list, bool p_reversed) const {                                               \
+	virtual void _get_property_listv(List<PropertyInfo> *p_list, bool p_reversed) const G_OVERRIDE {                                    \
 		if (!p_reversed) {                                                                                                              \
 			m_inherits::_get_property_listv(p_list, p_reversed);                                                                        \
 		}                                                                                                                               \
@@ -377,13 +387,13 @@ protected:                                                                      
 	_FORCE_INLINE_ void (Object::*_get_notification() const)(int) {                                                                     \
 		return (void (Object::*)(int)) & m_class::_notification;                                                                        \
 	}                                                                                                                                   \
-	virtual void _notificationv(int p_notification, bool p_reversed) {                                                                  \
-		if (!p_reversed)                                                                                                                \
+	virtual void _notificationv(int p_notification, bool p_reversed) G_OVERRIDE {                                                       \
+		if (!p_reversed && !_disabled_base_notifications.has(p_notification))                                                           \
 			m_inherits::_notificationv(p_notification, p_reversed);                                                                     \
 		if (m_class::_get_notification() != m_inherits::_get_notification()) {                                                          \
 			_notification(p_notification);                                                                                              \
 		}                                                                                                                               \
-		if (p_reversed)                                                                                                                 \
+		if (p_reversed && !_disabled_base_notifications.has(p_notification))                                                            \
 			m_inherits::_notificationv(p_notification, p_reversed);                                                                     \
 	}                                                                                                                                   \
                                                                                                                                         \
@@ -395,10 +405,10 @@ protected:                                                              \
                                                                         \
 private:
 
-#define OBJ_SAVE_TYPE(m_class)                                 \
-public:                                                        \
-	virtual String get_save_class() const { return #m_class; } \
-                                                               \
+#define OBJ_SAVE_TYPE(m_class)                                            \
+public:                                                                   \
+	virtual String get_save_class() const G_OVERRIDE { return #m_class; } \
+                                                                          \
 private:
 
 class ScriptInstance;

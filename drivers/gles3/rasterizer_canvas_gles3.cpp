@@ -856,6 +856,7 @@ void RasterizerCanvasGLES3::render_batches(Item::Command *const *p_commands, Ite
 											glDisable(GL_DEPTH_TEST);
 											glDepthMask(GL_FALSE);
 										}
+
 										storage->info.render._2d_draw_call_count++;
 
 										glBindVertexArray(0);

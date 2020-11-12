@@ -405,7 +405,7 @@ public:
 	void set_fog_height_curve(float p_distance);
 	float get_fog_height_curve() const;
 
-	virtual RID get_rid() const;
+	virtual RID get_rid() const G_OVERRIDE;
 
 	Environment();
 	~Environment();

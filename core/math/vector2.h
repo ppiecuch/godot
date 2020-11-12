@@ -147,6 +147,9 @@ struct Vector2 {
 	Vector2 snapped(const Vector2 &p_by) const;
 	real_t aspect() const { return width / height; }
 
+	_FORCE_INLINE_ static Vector2 min(const Vector2 &p_lv, const Vector2 &p_rv) { return Vector2(MIN(p_lv.x, p_rv.x), MIN(p_lv.y, p_rv.y)); }
+	_FORCE_INLINE_ static Vector2 max(const Vector2 &p_lv, const Vector2 &p_rv) { return Vector2(MAX(p_lv.x, p_rv.x), MAX(p_lv.y, p_rv.y)); }
+
 	operator String() const { return String::num(x) + ", " + String::num(y); }
 
 	_FORCE_INLINE_ Vector2(real_t p_x, real_t p_y) {

@@ -95,7 +95,7 @@ public:
 		return StringName();
 	}
 
-	virtual RID get_rid() const;
+	virtual RID get_rid() const G_OVERRIDE;
 
 	Shader();
 	~Shader();

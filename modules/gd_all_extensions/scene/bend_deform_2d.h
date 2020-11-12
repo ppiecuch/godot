@@ -34,70 +34,105 @@
 #include "scene/2d/mesh_instance_2d.h"
 #include "scene/2d/sprite.h"
 
-namespace godot {
+#include "elastic_simulation.h"
 
-class ElasticCage2D : public Node2D {
-	GDCLASS(ElasticCage2D, Node2D)
+
+class ElasticSimulator2D : public Node2D {
+	GDCLASS(ElasticSimulator2D, Node2D)
+
+private:
+	Ref<ElasticSimualtion> sim;
+	Vector2 force_impulse;
+
+	bool _enable_simulation;
 
 public:
 	static void _bind_methods();
 
-	ElasticCage2D();
-	~ElasticCage2D();
+	void _notification(int p_what);
+
+	Ref<ElasticSimualtion> get_simulator() const;
+
+	ElasticSimulator2D();
+	~ElasticSimulator2D();
+
 };
 
-class ElasticMeshInstance2D : public MeshInstance2D {
-	GDCLASS(ElasticMeshInstance2D, MeshInstance2D)
+class DeformMeshInstance2D : public MeshInstance2D {
+	GDCLASS(DeformMeshInstance2D, MeshInstance2D)
 
 private:
-	float time_passed;
+	Ref<ElasticSimualtion> _sim;
+	bool _enable_simulation;
+
+public:
+	static void _bind_methods();
+
+	void _notification(int p_what);
+
+	DeformMeshInstance2D();
+	~DeformMeshInstance2D();
+
+};
+
+class DeformSprite : public Sprite {
+	GDCLASS(DeformSprite, Sprite)
 
 private:
-	int mesh_segments;
+	Ref<ElasticSimualtion> _sim;
+	int _sim_id;
+	bool _sim_dirty;
+	bool _sim_shared;
+	bool _geom_dirty;
+
 	bool simulation_active;
-	Vector2 simulation_force;
-	float simulation_delta;
-	Vector2 flow_factors;
+	bool simulation_override_delta;
+	real_t simulation_delta;
+	real_t simulation_pixel_scale;
+	int simulation_geom_segments;
+	ElasticSimualtion::Anchor simulation_geom_anchor;
+	real_t simulation_spring_factor;
+	Vector2 simulation_force_impulse;
+	bool simulation_debug;
 
-	bool debug_geometry;
-	bool debug_simulation;
-	bool debug_output;
+	void _check_parent_simulator();
+	void _update_simulation();
 
-public:
+	Ref<ArrayMesh> _mesh;
+	void _create_geom();
+	void _update_geom();
+
+protected:
 	static void _bind_methods();
 
-	ElasticMeshInstance2D();
-	~ElasticMeshInstance2D();
-
-	void _process(float delta);
-};
-
-class ElasticSprite : public Sprite {
-	GDCLASS(ElasticSprite, Sprite)
-
-private:
-	float time_passed;
-
-private:
-	int mesh_segments;
-	bool simulation_active;
-	Vector2 simulation_force;
-	float simulation_delta;
-	Vector2 flow_factors;
-
-	bool debug_geometry;
-	bool debug_simulation;
-	bool debug_output;
+	void _get_property_list(List<PropertyInfo> *p_list) const;
+	void _notification(int p_what);
 
 public:
-	static void _bind_methods();
+	void set_simulation_state(bool p_state);
+	bool is_simulation_active() const;
+	void reset_simulation();
+	void set_simulation_geom_anchor(ElasticSimualtion::Anchor p_anchor);
+	ElasticSimualtion::Anchor get_simulation_geom_anchor() const;
+	void set_simulation_geom_segments(int p_segments);
+	int get_simulation_geom_segments() const;
+	void set_simulation_force_impulse(const Vector2 &p_force);
+	Vector2 get_simulation_force_impulse() const;
+	void set_simulation_override_delta(bool p_state);
+	bool is_simulation_override_delta() const;
+	void set_simulation_delta(real_t p_delta);
+	real_t get_simulation_delta() const;
+	void set_simulation_pixel_scale(real_t p_scale);
+	real_t get_simulation_pixel_scale() const;
+	void set_simulation_spring_factor(real_t p_factor);
+	real_t get_simulation_spring_factor() const;
+	void set_simulation_debug(bool p_debug);
+	bool get_simulation_debug() const;
 
-	ElasticSprite();
-	~ElasticSprite();
+	void debug_draw();
 
-	void _process(float delta);
+	DeformSprite();
+	~DeformSprite();
 };
-
-} // namespace godot
 
 #endif // BENDDEFORM2D_H

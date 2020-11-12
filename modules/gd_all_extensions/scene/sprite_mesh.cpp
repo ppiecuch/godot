@@ -46,6 +46,9 @@
 // https://github.com/patrikhuber/eos/issues/140
 // * https://gamedev.stackexchange.com/questions/10261/android-collision-detection-of-a-3d-object-based-on-a-2d-projection
 
+#define get_mesh_surf_info(mesh) \
+	((Dictionary)(mesh->has_meta("_mesh_surf_info")?(Dictionary)mesh->get_meta("_mesh_surf_info"):Dictionary()))
+
 #ifdef TOOLS_ENABLED
 Dictionary SpriteMesh::_edit_get_state() const {
 	Dictionary state = Node2D::_edit_get_state();
@@ -86,24 +89,37 @@ bool SpriteMesh::_edit_use_rect() const {
 
 void SpriteMesh::_update_mesh_xform() {
 	if (mesh.is_valid()) {
-		MeshDataTool *dataTool = memnew(MeshDataTool);
-		dataTool->create_from_surface(mesh, 0);
-		for (int i = 0; i < dataTool->get_vertex_count(); ++i) {
-			const Vector3 &vertex = _mesh_xform.xform( dataTool->get_vertex(i) );
-			dataTool->set_vertex(i, vertex);
-		}
 		if (ArrayMesh *m = Object::cast_to<ArrayMesh>(*mesh)) {
+			MeshDataTool *dataTool = memnew(MeshDataTool);
+			dataTool->create_from_surface(mesh, 0);
+			for (int i = 0; i < dataTool->get_vertex_count(); ++i) {
+				const Vector3 &vertex = _mesh_xform[_mesh_active_surface].surf_xform.xform( dataTool->get_vertex(i) );
+				dataTool->set_vertex(i, vertex);
+			}
 			// surface 0 is reference data
-			// surface 1 is transformed data
+			// surface X is transformed data
 			if(m->get_surface_count() == 1)
 				m->surface_set_active(0, false);
 			else
-				m->surface_remove(1);
-		}
-		dataTool->commit_to_surface(mesh);
-		memdelete(dataTool);
+				// remove active surface
+				m->surface_remove(_mesh_xform[_mesh_active_surface].surf_id);
 
-		item_rect_changed();
+			const int surf_id = m->get_surface_count();
+
+			dataTool->commit_to_surface(mesh);
+			memdelete(dataTool);
+
+			_mesh_xform.write[_mesh_active_surface].surf_id = surf_id; // new transform is created as last surface
+
+			// update surface info in metadata
+			Dictionary surf_info;
+			for(int i=0; i<_mesh_xform.size(); ++i) {
+				surf_info[_mesh_xform[i].surf_id] = _mesh_xform[i].surf_xform;
+			}
+			mesh->set_meta("_mesh_surf_info", surf_info);
+
+			item_rect_changed();
+		}
 	}
 }
 
@@ -134,7 +150,26 @@ void SpriteMesh::_notification(int p_what) {
 void SpriteMesh::set_mesh(const Ref<Mesh> &p_mesh) {
 	if (mesh == p_mesh)
 		return;
-	mesh = p_mesh;
+	mesh = p_mesh->duplicate(); // we need our own instance
+
+	_mesh_xform.clear();
+
+	// Restore surface transformation info
+	Dictionary surf_info = get_mesh_surf_info(mesh);
+	Array k = surf_info.keys();
+	for(int s = 0; s < k.size(); ++s) {
+		const int surf_id = k[s];
+		const Basis surf_xform = surf_info[surf_id];
+		_mesh_xform.push_back( (SurfInfo){surf_xform, surf_id} );
+	}
+
+	if (ArrayMesh *m = Object::cast_to<ArrayMesh>(*mesh)) {
+		for(int s = 1; s < m->get_surface_count(); ++s) {
+			m->surface_set_active(s, (s - 1) == _mesh_active_surface);
+		}
+	} else
+		WARN_PRINT("Not an ArrayMesh object: do not know how to transform this.");
+
 	_mesh_dirty = true;
 	_update_transform();
 	item_rect_changed();
@@ -149,14 +184,14 @@ Ref<Mesh> SpriteMesh::get_mesh() const {
 
 void SpriteMesh::_update_xform_values() {
 
-	mesh_angle = _mesh_xform.get_euler();
-	mesh_scale = _mesh_xform.get_scale();
+	mesh_angle = _mesh_xform[_mesh_active_surface].surf_xform.get_euler();
+	mesh_scale = _mesh_xform[_mesh_active_surface].surf_xform.get_scale();
 	_mesh_xform_dirty = false;
 }
 
 void SpriteMesh::_update_transform() {
 
-	_mesh_xform.set_euler_scale(mesh_angle, mesh_scale);
+	_mesh_xform.write[_mesh_active_surface].surf_xform.set_euler_scale(mesh_angle, mesh_scale);
 
 	if (!is_inside_tree())
 		return;
@@ -217,7 +252,7 @@ float SpriteMesh::get_mesh_rotation_z_degrees() const {
 
 void SpriteMesh::set_mesh_orientation(const Basis &p_basis) {
 
-	_mesh_xform = p_basis;
+	_mesh_xform.write[_mesh_active_surface].surf_xform = p_basis;
 	_mesh_xform_dirty = true;
 
 	if (!is_inside_tree())
@@ -228,7 +263,7 @@ void SpriteMesh::set_mesh_orientation(const Basis &p_basis) {
 
 Basis SpriteMesh::get_mesh_orientation() const {
 
-	return _mesh_xform;
+	return _mesh_xform[_mesh_active_surface].surf_xform;
 }
 
 void SpriteMesh::set_mesh_scale(const Vector3 &p_scale) {
@@ -388,9 +423,10 @@ SpriteMesh::SpriteMesh() {
 	offset = Vector2(0, 0);
 	mesh_angle = Vector3(0, 0, 0);
 	mesh_scale = Vector3(1, 1, 1);
-	_mesh_xform = Basis(mesh_angle, mesh_scale);
+	_mesh_xform.push_back( (SurfInfo){Basis(mesh_angle, mesh_scale), 1} );
 	_mesh_dirty = false;
 	_mesh_xform_dirty = false;
+	_mesh_active_surface = 0;
 
 }
 

@@ -941,10 +941,20 @@ void RasterizerCanvasGLES2::render_batches(Item::Command *const *p_commands, Ite
 											}
 										}
 
+										const bool need_depth = !(s->format & VisualServer::ARRAY_FLAG_USE_2D_VERTICES);
+
+										if (need_depth) {
+											glEnable(GL_DEPTH_TEST);
+											glDepthMask(GL_TRUE);
+										}
 										if (s->index_array_len > 0) {
 											glDrawElements(gl_primitive[s->primitive], s->index_array_len, (s->array_len >= (1 << 16)) ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, 0);
 										} else {
 											glDrawArrays(gl_primitive[s->primitive], 0, s->array_len);
+										}
+										if (need_depth) {
+											glDisable(GL_DEPTH_TEST);
+											glDepthMask(GL_FALSE);
 										}
 									}
 								}

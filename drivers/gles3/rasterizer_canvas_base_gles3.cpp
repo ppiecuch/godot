@@ -1091,7 +1091,7 @@ void RasterizerCanvasBaseGLES3::reset_canvas() {
 
 	Transform canvas_transform;
 	const float depth_size_near = GLOBAL_DEF("rendering/quality/2d/mesh_depth_near", -1000);
-	const float depth_size_far = GLOBAL_DEF("rendering/quality/2d/mesh_depth_near", 1000);
+	const float depth_size_far = GLOBAL_DEF("rendering/quality/2d/mesh_depth_far", 1000);
 	const float depth_size = depth_size_far - depth_size_near == 0 ? 1 : depth_size_far - depth_size_near;
 	const float depth_mid_z = depth_size_far - depth_size_near == 0 ? 0 : -(depth_size_far + depth_size_near)/(depth_size_far - depth_size_near);
 

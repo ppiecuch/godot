@@ -146,6 +146,9 @@ struct Vector3 {
 	_FORCE_INLINE_ bool operator>(const Vector3 &p_v) const;
 	_FORCE_INLINE_ bool operator>=(const Vector3 &p_v) const;
 
+	_FORCE_INLINE_ static Vector3 min(const Vector3 &p_lv, const Vector3 &p_rv) { return Vector3(MIN(p_lv.x, p_rv.x), MIN(p_lv.y, p_rv.y), MIN(p_lv.z, p_rv.z)); }
+	_FORCE_INLINE_ static Vector3 max(const Vector3 &p_lv, const Vector3 &p_rv) { return Vector3(MAX(p_lv.x, p_rv.x), MAX(p_lv.y, p_rv.y), MAX(p_lv.z, p_rv.z)); }
+
 	operator String() const;
 
 	_FORCE_INLINE_ Vector3(real_t p_x, real_t p_y, real_t p_z) {

@@ -51,9 +51,14 @@ private:
 	bool centered;
 	Point2 offset;
 
-	Basis _mesh_xform;
-	bool _mesh_xform_dirty;
+	struct SurfInfo {
+		Basis surf_xform; // surface transform
+		int surf_id;      // surface index
+	};
+	Vector<SurfInfo> _mesh_xform;
 	bool _mesh_dirty;
+	bool _mesh_xform_dirty;
+	int _mesh_active_surface;
 
 	void _get_rects(Rect2 &r_src_rect, Rect2 &r_dst_rect, bool &r_filter_clip) const;
 
@@ -111,6 +116,12 @@ public:
 	bool is_centered() const;
 	void set_offset(const Point2 &p_offset);
 	Point2 get_offset() const;
+
+	Basis new_snapshot();
+	void set_snapshot(int p_snapshot);
+	void delete_snapshot(int p_snapshot);
+	Basis get_snapshot_transform() const;
+	int get_snapshot_count() const;
 
 	Rect2 get_rect() const;
 	virtual Rect2 get_anchorable_rect() const;

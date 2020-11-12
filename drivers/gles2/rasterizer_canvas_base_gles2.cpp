@@ -113,6 +113,10 @@ void RasterizerCanvasBaseGLES2::canvas_begin() {
 	// set up default uniforms
 
 	Transform canvas_transform;
+	const float depth_size_near = GLOBAL_DEF("rendering/quality/2d/mesh_depth_near", -1000);
+	const float depth_size_far = GLOBAL_DEF("rendering/quality/2d/mesh_depth_far", 1000);
+	const float depth_size = depth_size_far - depth_size_near == 0 ? 1 : depth_size_far - depth_size_near;
+	const float depth_mid_z = depth_size_far - depth_size_near == 0 ? 0 : -(depth_size_far + depth_size_near)/(depth_size_far - depth_size_near);
 
 	if (storage->frame.current_rt) {
 
@@ -120,12 +124,12 @@ void RasterizerCanvasBaseGLES2::canvas_begin() {
 		if (storage->frame.current_rt && storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_VFLIP]) {
 			csy = -1.0;
 		}
-		canvas_transform.translate(-(storage->frame.current_rt->width / 2.0f), -(storage->frame.current_rt->height / 2.0f), -100.0f);
-		canvas_transform.scale(Vector3(2.0f / storage->frame.current_rt->width, csy * -2.0f / storage->frame.current_rt->height, 100.0f));
+		canvas_transform.translate(-(storage->frame.current_rt->width / 2.0f), -(storage->frame.current_rt->height / 2.0f), depth_mid_z);
+		canvas_transform.scale(Vector3(2.0f / storage->frame.current_rt->width, csy * -2.0f / storage->frame.current_rt->height, -2.0f / depth_size));
 	} else {
 		Vector2 ssize = OS::get_singleton()->get_window_size();
-		canvas_transform.translate(-(ssize.width / 2.0f), -(ssize.height / 2.0f), -100.0f);
-		canvas_transform.scale(Vector3(2.0f / ssize.width, -2.0f / ssize.height, 100.0f));
+		canvas_transform.translate(-(ssize.width / 2.0f), -(ssize.height / 2.0f), depth_mid_z);
+		canvas_transform.scale(Vector3(2.0f / ssize.width, -2.0f / ssize.height, -2.0f / depth_size));
 	}
 
 	state.uniforms.projection_matrix = canvas_transform;
