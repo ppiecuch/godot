@@ -22,6 +22,10 @@ platform/android/java/app/libs/*
 platform/android/java/libs/*
 platform/android/java/lib/.cxx/
 
+# 3DS auto generated files
+platform/3ds/video/shaders/2d.h
+platform/3ds/video/shaders/3d.h
+
 # General c++ generated files
 *.lib
 *.o
