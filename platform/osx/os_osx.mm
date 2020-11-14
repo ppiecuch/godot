@@ -2821,11 +2821,6 @@ void OS_OSX::set_window_always_on_top(bool p_enabled) {
 		return;
 	}
 
-	on_top = p_enabled;
-
-	if (is_window_always_on_top() == p_enabled)
-		return;
-
 	if (p_enabled)
 		[window_object setLevel:NSFloatingWindowLevel];
 	else
