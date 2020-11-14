@@ -279,6 +279,9 @@ public:
 			settings_uv_contract = false;
 			settings_uv_contract_amount = 0.0f;
 
+			buffer_mode_batch_upload_send_null = true;
+			buffer_mode_batch_upload_flag_stream = false;
+
 			stats_items_sorted = 0;
 			stats_light_items_joined = 0;
 		}
@@ -398,6 +401,10 @@ public:
 		bool settings_use_software_skinning;
 		int settings_light_max_join_items;
 		int settings_ninepatch_mode;
+
+		// buffer orphaning modes
+		bool buffer_mode_batch_upload_send_null;
+		bool buffer_mode_batch_upload_flag_stream;
 
 		// uv contraction
 		bool settings_uv_contract;
@@ -1029,6 +1036,10 @@ PREAMBLE(void)::batch_initialize() {
 	bdata.settings_scissor_threshold = CLAMP(bdata.settings_scissor_threshold, 0.0f, 1.0f);
 	bdata.settings_light_max_join_items = CLAMP(bdata.settings_light_max_join_items, 0, 65535);
 	bdata.settings_item_reordering_lookahead = CLAMP(bdata.settings_item_reordering_lookahead, 0, 65535);
+
+	// allow user to override the api usage techniques using project settings
+	bdata.buffer_mode_batch_upload_send_null = GLOBAL_GET("rendering/options/api_usage_batching/send_null");
+	bdata.buffer_mode_batch_upload_flag_stream = GLOBAL_GET("rendering/options/api_usage_batching/flag_stream");
 
 	// for debug purposes, output a string with the batching options
 	String batching_options_string = "OpenGL ES Batching: ";
@@ -2162,28 +2173,38 @@ PREAMBLE(bool)::prefill_joined_item(FillState &r_fill_state, int &r_command_star
 
 			case RasterizerCanvas::Item::Command::TYPE_POLYGON: {
 
-				// not using software skinning?
-				if (!bdata.settings_use_software_skinning && get_this()->state.using_skeleton) {
+				RasterizerCanvas::Item::CommandPolygon *polygon = static_cast<RasterizerCanvas::Item::CommandPolygon *>(command);
+#ifdef GLES_OVER_GL
+				// anti aliasing not accelerated .. it is problematic because it requires a 2nd line drawn around the outside of each
+				// poly, which would require either a second list of indices or a second list of vertices for this step
+				if (polygon->antialiased) {
 					// not accelerated
 					_prefill_default_batch(r_fill_state, command_num, *p_item);
 				} else {
-					RasterizerCanvas::Item::CommandPolygon *polygon = static_cast<RasterizerCanvas::Item::CommandPolygon *>(command);
-
-					// unoptimized - could this be done once per batch / batch texture?
-					bool send_light_angles = polygon->normal_map != RID();
-
-					bool buffer_full = false;
-
-					if (send_light_angles) {
-						// NYI
+#endif
+					// not using software skinning?
+					if (!bdata.settings_use_software_skinning && get_this()->state.using_skeleton) {
+						// not accelerated
 						_prefill_default_batch(r_fill_state, command_num, *p_item);
-						//buffer_full = prefill_polygon<true>(polygon, r_fill_state, r_command_start, command_num, command_count, p_item, multiply_final_modulate);
-					} else
-						buffer_full = _prefill_polygon<false>(polygon, r_fill_state, r_command_start, command_num, command_count, p_item, multiply_final_modulate);
+					} else {
+						// unoptimized - could this be done once per batch / batch texture?
+						bool send_light_angles = polygon->normal_map != RID();
 
-					if (buffer_full)
-						return true;
-				} // using software skinning path
+						bool buffer_full = false;
+
+						if (send_light_angles) {
+							// NYI
+							_prefill_default_batch(r_fill_state, command_num, *p_item);
+							//buffer_full = prefill_polygon<true>(polygon, r_fill_state, r_command_start, command_num, command_count, p_item, multiply_final_modulate);
+						} else
+							buffer_full = _prefill_polygon<false>(polygon, r_fill_state, r_command_start, command_num, command_count, p_item, multiply_final_modulate);
+
+						if (buffer_full)
+							return true;
+					} // if not using hardware skinning path
+#ifdef GLES_OVER_GL
+				} // if not anti-aliased poly
+#endif
 
 			} break;
 		}
@@ -2899,17 +2920,18 @@ PREAMBLE(bool)::_detect_item_batch_break(RenderItemState &r_ris, RasterizerCanva
 					}
 				} break;
 				case RasterizerCanvas::Item::Command::TYPE_POLYGON: {
-					//return true;
 					// only allow polygons to join if they aren't skeleton
 					RasterizerCanvas::Item::CommandPolygon *poly = static_cast<RasterizerCanvas::Item::CommandPolygon *>(command);
 
-					//					return true;
+#ifdef GLES_OVER_GL
+					// anti aliasing not accelerated
+					if (poly->antialiased)
+						return true;
+#endif
 
 					// light angles not yet implemented, treat as default
 					if (poly->normal_map != RID())
 						return true;
-
-					// we could possibly join polygons that are software skinned? NYI
 
 					if (!get_this()->bdata.settings_use_software_skinning && poly->bones.size())
 						return true;

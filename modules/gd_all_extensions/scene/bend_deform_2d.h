@@ -88,7 +88,7 @@ private:
 	bool simulation_active;
 	bool simulation_override_delta;
 	real_t simulation_delta;
-	real_t simulation_pixel_scale;
+	real_t simulation_pixel_unit;
 	int simulation_geom_segments;
 	ElasticSimualtion::Anchor simulation_geom_anchor;
 	real_t simulation_spring_factor;
@@ -97,6 +97,7 @@ private:
 
 	void _check_parent_simulator();
 	void _update_simulation();
+	Rect2 _get_texture_uv_rect() const;
 
 	Ref<ArrayMesh> _mesh;
 	void _create_geom();
@@ -122,8 +123,8 @@ public:
 	bool is_simulation_override_delta() const;
 	void set_simulation_delta(real_t p_delta);
 	real_t get_simulation_delta() const;
-	void set_simulation_pixel_scale(real_t p_scale);
-	real_t get_simulation_pixel_scale() const;
+	void set_simulation_pixel_unit(real_t p_scale);
+	real_t get_simulation_pixel_unit() const;
 	void set_simulation_spring_factor(real_t p_factor);
 	real_t get_simulation_spring_factor() const;
 	void set_simulation_debug(bool p_debug);

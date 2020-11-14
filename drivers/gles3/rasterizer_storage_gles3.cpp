@@ -2071,6 +2071,9 @@ void RasterizerStorageGLES3::sky_set_texture(RID p_sky, RID p_panorama, int p_ra
 		glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
+		//reset flags on Sky Texture that may have changed
+		texture_set_flags(sky->panorama, texture->flags);
+
 		glBindFramebuffer(GL_FRAMEBUFFER, RasterizerStorageGLES3::system_fbo);
 		glDeleteFramebuffers(1, &tmp_fb);
 		glDeleteFramebuffers(1, &tmp_fb2);
@@ -5099,7 +5102,11 @@ void RasterizerStorageGLES3::update_dirty_multimeshes() {
 
 			glBindBuffer(GL_ARRAY_BUFFER, multimesh->buffer);
 			uint32_t buffer_size = multimesh->data.size() * sizeof(float);
-			glBufferData(GL_ARRAY_BUFFER, buffer_size, multimesh->data.ptr(), GL_DYNAMIC_DRAW);
+			if (config.should_orphan) {
+				glBufferData(GL_ARRAY_BUFFER, buffer_size, multimesh->data.ptr(), GL_DYNAMIC_DRAW);
+			} else {
+				glBufferSubData(GL_ARRAY_BUFFER, 0, buffer_size, multimesh->data.ptr());
+			}
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 		}
 
@@ -7201,7 +7208,7 @@ void RasterizerStorageGLES3::_render_target_allocate(RenderTarget *rt) {
 	GLuint color_type;
 	Image::Format image_format;
 
-	GLenum depth_attachment = config.stencil_buffer_enable ? GL_DEPTH_STENCIL_ATTACHMENT : GL_DEPTH_ATTACHMENT;
+	GLenum depth_attachment = config.use_stencil_buffer ? GL_DEPTH_STENCIL_ATTACHMENT : GL_DEPTH_ATTACHMENT;
 
 	bool hdr = rt->flags[RENDER_TARGET_HDR] && config.framebuffer_half_float_supported;
 	//hdr = false;
@@ -7237,7 +7244,7 @@ void RasterizerStorageGLES3::_render_target_allocate(RenderTarget *rt) {
 		glGenFramebuffers(1, &rt->fbo);
 		glBindFramebuffer(GL_FRAMEBUFFER, rt->fbo);
 
-		GLenum internalformat = config.stencil_buffer_enable ? GL_DEPTH24_STENCIL8 : GL_DEPTH_COMPONENT24;
+		GLenum internalformat = config.use_stencil_buffer ? GL_DEPTH24_STENCIL8 : GL_DEPTH_COMPONENT24;
 
 		glGenTextures(1, &rt->depth);
 		glBindTexture(GL_TEXTURE_2D, rt->depth);
@@ -7308,14 +7315,14 @@ void RasterizerStorageGLES3::_render_target_allocate(RenderTarget *rt) {
 
 		glGenRenderbuffers(1, &rt->buffers.depth);
 		glBindRenderbuffer(GL_RENDERBUFFER, rt->buffers.depth);
-		GLenum internalformat = config.stencil_buffer_enable ? GL_DEPTH24_STENCIL8 : GL_DEPTH_COMPONENT24;
+		GLenum internalformat = config.use_stencil_buffer ? GL_DEPTH24_STENCIL8 : GL_DEPTH_COMPONENT24;
 		if (msaa == 0)
 			glRenderbufferStorage(GL_RENDERBUFFER, internalformat, rt->width, rt->height);
 		else
 			glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaa, internalformat, rt->width, rt->height);
 
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rt->buffers.depth);
-		if (config.stencil_buffer_enable)
+		if (config.use_stencil_buffer)
 			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rt->buffers.depth);
 
 		glGenRenderbuffers(1, &rt->buffers.diffuse);
@@ -8549,6 +8556,7 @@ void RasterizerStorageGLES3::initialize() {
 	config.keep_original_textures = false;
 	config.generate_wireframes = false;
 	config.use_texture_array_environment = GLOBAL_GET("rendering/quality/reflections/texture_array_reflections");
+	config.use_stencil_buffer = GLOBAL_GET("rendering/quality/stencil_buffer/enable");
 
 	config.force_vertex_shading = GLOBAL_GET("rendering/quality/shading/force_vertex_shading");
 
@@ -8569,7 +8577,8 @@ void RasterizerStorageGLES3::initialize() {
 			}
 		}
 	}
-	config.stencil_buffer_enable = GLOBAL_GET("rendering/quality/stencil_buffer/enable");
+
+	config.should_orphan = GLOBAL_GET("rendering/options/api_usage_legacy/orphan_buffers");
 }
 
 void RasterizerStorageGLES3::finalize() {
@@ -8589,4 +8598,5 @@ void RasterizerStorageGLES3::update_dirty_resources() {
 }
 
 RasterizerStorageGLES3::RasterizerStorageGLES3() {
+	config.should_orphan = true;
 }
