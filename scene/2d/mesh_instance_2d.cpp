@@ -60,6 +60,7 @@ void MeshInstance2D::_bind_methods() {
 void MeshInstance2D::set_mesh(const Ref<Mesh> &p_mesh) {
 
 	mesh = p_mesh;
+	item_rect_changed();
 	update();
 }
 
@@ -103,6 +104,9 @@ Rect2 MeshInstance2D::_edit_get_rect() const {
 	}
 
 	return Node2D::_edit_get_rect();
+}
+bool MeshInstance2D::_edit_use_rect() const {
+	return mesh.is_valid();
 }
 #endif
 
