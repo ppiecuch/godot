@@ -23,7 +23,7 @@ if [ ! -e "$CROSS/$CC" ]; then
 
 	DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 	NAME="$(basename "${BASH_SOURCE[0]}")"
-	VERSION=2014-08-20
+	VERSION=2020-10-01
 
 	echo "*** Running docker toolchain $VERSION (with script $NAME).."
 	docker run --rm -t -v "$DIR:/app" gcw_zero_dev:$VERSION "./$NAME"
@@ -31,4 +31,4 @@ if [ ! -e "$CROSS/$CC" ]; then
 fi
 
 PATH=/usr/bin:/bin:/sbin:/usr/local/bin:$CROSS
-scons -j 2 platform=frt frt_arch=gcw0 target=release disable_3d=true disable_experimental=yes
+scons -j2 platform=frt frt_arch=gcw0 target=release disable_3d=true disable_experimental=yes
