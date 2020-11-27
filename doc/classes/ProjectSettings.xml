@@ -856,7 +856,7 @@
 			Maximum number of warnings allowed to be sent as output from the debugger. Over this value, content is dropped. This helps not to stall the debugger connection.
 		</member>
 		<member name="network/limits/packet_peer_stream/max_buffer_po2" type="int" setter="" getter="" default="16">
-			Default size of packet peer stream for deserializing Godot data. Over this size, data is dropped.
+			Default size of packet peer stream for deserializing Godot data (in bytes, specified as a power of two). The default value [code]16[/code] is equal to 65,536 bytes. Over this size, data is dropped.
 		</member>
 		<member name="network/limits/tcp/connect_timeout_seconds" type="int" setter="" getter="" default="30">
 			Timeout (in seconds) for connection attempts using TCP.
@@ -1073,6 +1073,9 @@
 		<member name="rendering/limits/rendering/max_renderable_reflections" type="int" setter="" getter="" default="1024">
 			Max number of reflection probes renderable in a frame. If more than this number are used, they will be ignored. On some systems (particularly web) setting this number as low as possible can increase the speed of shader compilation.
 		</member>
+		<member name="rendering/limits/rendering/max_lights_per_object" type="int" setter="" getter="" default="32">
+			Max number of lights renderable per object. This is further limited by hardware support. Most devices only support 409 lights, while many devices (especially mobile) only support 102. Setting this low will slightly reduce memory usage and may decrease shader compile times.
+		</member>
 		<member name="rendering/limits/time/time_rollover_secs" type="float" setter="" getter="" default="3600">
 			Shaders have a time variable that constantly increases. At some point, it needs to be rolled back to zero to avoid precision errors on shader animations. This setting specifies when (in seconds).
 		</member>
@@ -1097,8 +1100,12 @@
 			Consider using the project setting [member rendering/batching/precision/uv_contract] to prevent artifacts.
 		</member>
 		<member name="rendering/quality/2d/use_software_skinning" type="bool" setter="" getter="" default="true">
-			If [code]true[/code], performs 2d skinning on the CPU rather than the GPU. This provides greater compatibility with a wide range of hardware, and also may be faster in some circumstances.
+			If [code]true[/code], performs 2D skinning on the CPU rather than the GPU. This provides greater compatibility with a wide range of hardware, and also may be faster in some circumstances.
 			Currently only available when [member rendering/batching/options/use_batching] is active.
+		</member>
+		<member name="rendering/quality/2d/use_transform_snap" type="bool" setter="" getter="" default="false">
+			If [code]true[/code], forces snapping of 2D object transforms to the nearest whole coordinate.
+			Can help prevent unwanted relative movement in pixel art styles.
 		</member>
 		<member name="rendering/quality/depth/hdr" type="bool" setter="" getter="" default="true">
 			If [code]true[/code], allocates the main framebuffer with high dynamic range. High dynamic range allows the use of [Color] values greater than 1.

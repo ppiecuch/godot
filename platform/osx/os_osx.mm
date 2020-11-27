@@ -3370,9 +3370,6 @@ OS_OSX::OS_OSX() {
 	// Implicitly create shared NSApplication instance
 	[GodotApplication sharedApplication];
 
-	// In case we are unbundled, make us a proper UI application
-	[NSApp setActivationPolicy:(NSApplicationActivationPolicyAccessory)];
-
 	// Menu bar setup must go between sharedApplication above and
 	// finishLaunching below, in order to properly emulate the behavior
 	// of NSApplicationMain

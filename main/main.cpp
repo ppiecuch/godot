@@ -1113,6 +1113,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	}
 
 	Engine::get_singleton()->_pixel_snap = GLOBAL_DEF("rendering/quality/2d/use_pixel_snap", false);
+	Engine::get_singleton()->_snap_2d_transforms = GLOBAL_DEF("rendering/quality/2d/use_transform_snap", false);
 	OS::get_singleton()->_keep_screen_on = GLOBAL_DEF("display/window/energy_saving/keep_screen_on", true);
 	if (rtm == -1) {
 		rtm = GLOBAL_DEF("rendering/threads/thread_model", OS::RENDER_THREAD_SAFE);
@@ -1612,14 +1613,6 @@ bool Main::start() {
 		return false;
 	}
 
-	if (_export_preset != "") {
-		if (positional_arg == "") {
-			String err = "Command line includes export parameter option, but no destination path was given.\n";
-			err += "Please specify the binary's file path to export to. Aborting export.";
-			ERR_PRINT(err);
-			return false;
-		}
-	}
 #endif
 
 	if (script == "" && game_path == "" && String(GLOBAL_DEF("application/run/main_scene", "")) != "") {
@@ -2081,7 +2074,6 @@ bool Main::iteration() {
 
 		uint64_t physics_begin = OS::get_singleton()->get_ticks_usec();
 
-		PhysicsServer::get_singleton()->sync();
 		PhysicsServer::get_singleton()->flush_queries();
 
 		Physics2DServer::get_singleton()->sync();
