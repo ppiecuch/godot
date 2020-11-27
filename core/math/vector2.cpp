@@ -88,6 +88,11 @@ real_t Vector2::angle_to_point(const Vector2 &p_vector2) const {
 	return Math::atan2(y - p_vector2.y, x - p_vector2.x);
 }
 
+real_t Vector2::angle_between(const Vector2 &p_left, const Vector2 &p_right) {
+
+	return (p_left - *this).angle_to(p_right - *this);
+}
+
 real_t Vector2::dot(const Vector2 &p_other) const {
 
 	return x * p_other.x + y * p_other.y;
@@ -116,6 +121,15 @@ Vector2 Vector2::ceil() const {
 Vector2 Vector2::round() const {
 
 	return Vector2(Math::round(x), Math::round(y));
+}
+
+Vector2 Vector2::rotated_around(const Vector2 &p_origin, real_t p_radians) {
+
+	const real_t _x = x - p_origin.x;
+	const real_t _y = y - p_origin.y;
+	const real_t _sin = Math::sin(p_radians);
+	const real_t _cos = Math::cos(p_radians);
+	return p_origin + Vector2(_x*_cos - _y*_sin, _x*_sin + _y*_cos);
 }
 
 Vector2 Vector2::rotated(real_t p_by) const {

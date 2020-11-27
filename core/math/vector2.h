@@ -70,6 +70,7 @@ struct Vector2 {
 	real_t distance_squared_to(const Vector2 &p_vector2) const;
 	real_t angle_to(const Vector2 &p_vector2) const;
 	real_t angle_to_point(const Vector2 &p_vector2) const;
+	real_t angle_between(const Vector2 &p_left, const Vector2 &p_right);
 	_FORCE_INLINE_ Vector2 direction_to(const Vector2 &p_b) const;
 
 	real_t dot(const Vector2 &p_other) const;
@@ -134,6 +135,7 @@ struct Vector2 {
 		return Vector2(Math::abs(x), Math::abs(y));
 	}
 
+	Vector2 rotated_around(const Vector2 &p_origin, real_t p_radians);
 	Vector2 rotated(real_t p_by) const;
 	Vector2 tangent() const {
 
@@ -146,9 +148,17 @@ struct Vector2 {
 	Vector2 round() const;
 	Vector2 snapped(const Vector2 &p_by) const;
 	real_t aspect() const { return width / height; }
+	Vector2 inv() const { return Vector2(1.0 / x, 1.0 / y); }
 
 	_FORCE_INLINE_ static Vector2 min(const Vector2 &p_lv, const Vector2 &p_rv) { return Vector2(MIN(p_lv.x, p_rv.x), MIN(p_lv.y, p_rv.y)); }
 	_FORCE_INLINE_ static Vector2 max(const Vector2 &p_lv, const Vector2 &p_rv) { return Vector2(MAX(p_lv.x, p_rv.x), MAX(p_lv.y, p_rv.y)); }
+
+	_FORCE_INLINE_ static Vector2 barycentric(const Vector2 &p_v1, const Vector2 &p_v2, const Vector2 &p_v3, real_t p_amount1, real_t p_amount2) {
+		return Vector2(
+			(p_v1.x + p_amount1 * (p_v2.x - p_v1.x)) + p_amount2 * (p_v3.x - p_v1.x),
+			(p_v1.y + p_amount1 * (p_v2.y - p_v1.y)) + p_amount2 * (p_v3.y - p_v1.y)
+		);
+	}
 
 	operator String() const { return String::num(x) + ", " + String::num(y); }
 

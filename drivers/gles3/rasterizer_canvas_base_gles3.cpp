@@ -1386,7 +1386,7 @@ void RasterizerCanvasBaseGLES3::initialize() {
 	state.canvas_shadow_shader.set_conditional(CanvasShadowShaderGLES3::USE_RGBA_SHADOWS, storage->config.use_rgba_2d_shadows);
 
 	state.canvas_shader.set_conditional(CanvasShaderGLES3::USE_PIXEL_SNAP, GLOBAL_DEF("rendering/quality/2d/use_pixel_snap", false));
-	state.canvas_shader.set_conditional(CanvasShaderGLES3::USE_CANVAS_VEC3, GLOBAL_DEF("rendering/quality/2d/use_vertex_vec3", true));
+	state.canvas_shader.set_conditional(CanvasShaderGLES3::USE_CANVAS_VEC3, GLOBAL_DEF("rendering/quality/2d/use_vertex_vector3", true));
 }
 
 void RasterizerCanvasBaseGLES3::finalize() {

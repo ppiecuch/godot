@@ -4783,7 +4783,7 @@ void RasterizerStorageGLES2::_render_target_allocate(RenderTarget *rt) {
 
 		if (config.support_depth_texture) {
 
-			GLenum depth_attachment = config.stencil_buffer_enable ? _DEPTH_STENCIL_ATTACHMENT : GL_DEPTH_ATTACHMENT;
+			GLenum depth_attachment = config.use_stencil_buffer ? _DEPTH_STENCIL_ATTACHMENT : GL_DEPTH_ATTACHMENT;
 
 			glGenTextures(1, &rt->depth);
 			glBindTexture(GL_TEXTURE_2D, rt->depth);
@@ -4803,7 +4803,7 @@ void RasterizerStorageGLES2::_render_target_allocate(RenderTarget *rt) {
 			glRenderbufferStorage(GL_RENDERBUFFER, config.depth_buffer_internalformat, rt->width, rt->height);
 
 			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rt->depth);
-			if (config.stencil_buffer_enable)
+			if (config.use_stencil_buffer)
 				glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rt->depth);
 		}
 
@@ -4984,8 +4984,10 @@ void RasterizerStorageGLES2::_render_target_allocate(RenderTarget *rt) {
 			while (true) {
 
 				RenderTarget::MipMaps::Size mm;
+				mm.fbo = 0;
 				mm.width = w;
 				mm.height = h;
+				mm.color = 0;
 				rt->mip_maps[i].sizes.push_back(mm);
 
 				w >>= 1;
@@ -6305,7 +6307,7 @@ void RasterizerStorageGLES2::initialize() {
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 #endif
 
-	config.stencil_buffer_enable = GLOBAL_GET("rendering/quality/stencil_buffer/enable");
+	config.use_stencil_buffer = GLOBAL_GET("rendering/quality/stencil_buffer/enable");
 	config.force_vertex_shading = GLOBAL_GET("rendering/quality/shading/force_vertex_shading");
 	config.use_fast_texture_filter = GLOBAL_GET("rendering/quality/filters/use_nearest_mipmap_filter");
 	config.should_orphan = GLOBAL_GET("rendering/options/api_usage_legacy/orphan_buffers");

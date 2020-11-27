@@ -72,18 +72,26 @@ def configure(env):
     env["RANLIB"] = "arm-vita-eabi-ranlib"
     env["AS"] = "arm-vita-eabi-as"
 
-    env.Append(CCFLAGS=["-D__psp2__"])
+    env.Append(CCFLAGS=["-D__psp2__", "-fno-strict-aliasing"])
 
     env.Append(
         CCFLAGS=[
             "-Wno-maybe-uninitialized",
-            "-Wno-strict-aliasing",
             "-Wno-switch",
             "-Wno-sign-compare",
             "-Wno-shadow=compatible-local",
+            "-Wno-char-subscripts",
+            "-Wno-return-local-addr",
+            "-Wno-alloc-size-larger-than",
+            "-Wno-format-overflow",
         ]
     )
-    env.Append(CXXFLAGS=["-Wno-class-memaccess"])
+    env.Append(
+        CXXFLAGS=[
+            "-Wno-class-memaccess",
+            "-Wno-psabi",
+        ]
+    )
 
     env.Append(LIBS=["pthread"])
 

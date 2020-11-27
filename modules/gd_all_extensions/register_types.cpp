@@ -144,6 +144,8 @@ void register_gd_all_extensions_types() {
 #ifndef _3D_DISABLED
 	ClassDB::register_class<VegetationInstance>();
 #endif
+	ClassDB::register_class<SimulationController2D>();
+	ClassDB::register_class<SimulationControllerInstance2D>();
 	ClassDB::register_class<DeformMeshInstance2D>();
 	ClassDB::register_class<DeformSprite>();
 	ClassDB::register_class<Cable2D>();

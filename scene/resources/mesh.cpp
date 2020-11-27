@@ -1377,6 +1377,15 @@ void ArrayMesh::reload_from_file() {
 	_change_notify();
 }
 
+void ArrayMesh::clear_mesh() {
+	VisualServer::get_singleton()->mesh_clear(mesh);
+	surfaces.clear();
+	clear_blend_shapes();
+	clear_cache();
+
+	_change_notify();
+}
+
 ArrayMesh::ArrayMesh() {
 
 	mesh = VisualServer::get_singleton()->mesh_create();

@@ -19,7 +19,11 @@ uniform highp mat4 modelview_matrix;
 uniform highp mat4 world_matrix;
 uniform highp mat4 inv_world_matrix;
 uniform highp mat4 extra_matrix;
+#ifdef USE_CANVAS_VEC3
 attribute highp vec2 vertex; // attrib:0
+#else
+attribute highp vec2 vertex; // attrib:0
+#endif
 
 #ifdef USE_ATTRIB_LIGHT_ANGLE
 // shared with tangent, not used in canvas shader

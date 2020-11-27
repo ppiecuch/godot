@@ -296,6 +296,14 @@ if selected_platform in ["linux", "bsd", "linuxbsd"]:
     selected_platform = "x11"
     env_base["platform"] = selected_platform
 
+# Detect platform family
+if selected_platform in ["x11", "frt", "osx", "iphone", "android", "nx"]:
+    env_base["os_family"] = "os_unix"
+elif sys.platform == "win32":
+    env_base["os_family"] = "os_windows"
+else:
+    env_base["os_family"] = "os_other"
+
 if selected_platform in platform_list:
     tmppath = "./platform/" + selected_platform
     sys.path.insert(0, tmppath)
@@ -386,8 +394,9 @@ if selected_platform in platform_list:
 
         gcc_common_warnings = []
 
-        # Disable c++11 warnings
-        env.Append(CXXFLAGS=["-Wno-inconsistent-missing-override"])
+        # Disable clang c++11 warnings
+        if not methods.using_gcc(env):
+            env.Append(CXXFLAGS=["-Wno-inconsistent-missing-override"])
 
         if methods.using_gcc(env):
             if version[0] > 4:  # For sure not on gcw0 4.3.1

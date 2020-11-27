@@ -1120,6 +1120,7 @@ void RasterizerCanvasBaseGLES2::initialize() {
 	state.lens_shader.init();
 
 	state.canvas_shader.set_conditional(CanvasShaderGLES2::USE_PIXEL_SNAP, GLOBAL_DEF("rendering/quality/2d/use_pixel_snap", false));
+	state.canvas_shader.set_conditional(CanvasShaderGLES2::USE_CANVAS_VEC3, GLOBAL_DEF("rendering/quality/2d/use_vertex_vector3", true));
 
 	state.using_light = NULL;
 	state.using_transparent_rt = false;

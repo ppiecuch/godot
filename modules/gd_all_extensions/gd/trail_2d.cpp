@@ -445,9 +445,6 @@ void TrailLine2D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_line_color"), &TrailLine2D::get_line_color);
 	ClassDB::bind_method(D_METHOD("set_line_color", "line_color:ColorRamp"), &TrailLine2D::set_line_color);
 
-	//    ObjectTypeDB::bind_method(_MD("_on_exit_tree"), &TrailPoint2D::_on_exit_tree);
-
-	//    ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "target_path"), _SCS("set_target_path"), _SCS("get_target_path"));
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "trail_enable"), "set_trail_enable", "get_trail_enable");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "trail_count"), "set_trail_count", "get_trail_count");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "span_frame"), "set_span_frame", "get_span_frame");
