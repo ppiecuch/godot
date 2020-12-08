@@ -3,9 +3,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using DotNet.Globbing;
+using System.Text.RegularExpressions;
+using System.Xml;
+using System.Xml.Linq;
+using JetBrains.Annotations;
 using Microsoft.Build.Construction;
+using Microsoft.Build.Globbing;
+using Semver;
 
 namespace GodotTools.ProjectEditor
 {
@@ -153,7 +157,7 @@ namespace GodotTools.ProjectEditor
                         continue;
 
 
-                    string normalizedRemove= item.Remove.NormalizePath();
+                    string normalizedRemove = item.Remove.NormalizePath();
 
                     var glob = MSBuildGlob.Parse(normalizedRemove);
 
@@ -196,11 +200,7 @@ namespace GodotTools.ProjectEditor
         {
             var root = project.Root;
 
-            bool found = root.PropertyGroups.Any(pg =>
-                string.IsNullOrEmpty(pg.Condition) && pg.Properties.Any(p => p.Name == "ProjectTypeGuids"));
-
-            if (found)
-                return;
+            root.Sdk = $"{ProjectGenerator.GodotSdkNameToUse}/{ProjectGenerator.GodotSdkVersionToUse}";
 
             root.AddProperty("ProjectTypeGuids", ProjectGenerator.GodotDefaultProjectTypeGuids);
 
@@ -406,13 +406,32 @@ namespace GodotTools.ProjectEditor
 
         public static void EnsureHasNugetNetFrameworkRefAssemblies(MSBuildProject project)
         {
+            string godotSdkAttrValue = $"{ProjectGenerator.GodotSdkNameToUse}/{ProjectGenerator.GodotSdkVersionToUse}";
+
             var root = project.Root;
+            string rootSdk = root.Sdk?.Trim();
 
-            bool found = root.ItemGroups.Any(g => string.IsNullOrEmpty(g.Condition) && g.Items.Any(
-                item => item.ItemType == "PackageReference" && item.Include == "Microsoft.NETFramework.ReferenceAssemblies"));
+            if (!string.IsNullOrEmpty(rootSdk))
+            {
+                // Check if the version is already the same.
+                if (rootSdk.Equals(godotSdkAttrValue, StringComparison.OrdinalIgnoreCase))
+                    return;
 
-            if (found)
-                return;
+                // We also allow higher versions as long as the major and minor are the same.
+                var semVerToUse = SemVersion.Parse(ProjectGenerator.GodotSdkVersionToUse);
+                var godotSdkAttrLaxValueRegex = new Regex($@"^{ProjectGenerator.GodotSdkNameToUse}/(?<ver>.*)$");
+
+                var match = godotSdkAttrLaxValueRegex.Match(rootSdk);
+
+                if (match.Success &&
+                    SemVersion.TryParse(match.Groups["ver"].Value, out var semVerDetected) &&
+                    semVerDetected.Major == semVerToUse.Major &&
+                    semVerDetected.Minor == semVerToUse.Minor &&
+                    semVerDetected > semVerToUse)
+                {
+                    return;
+                }
+            }
 
             var frameworkRefAssembliesItem = root.AddItem("PackageReference", "Microsoft.NETFramework.ReferenceAssemblies");
 

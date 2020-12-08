@@ -9,11 +9,8 @@ namespace GodotTools.ProjectEditor
 {
     public static class ProjectGenerator
     {
-        private const string CoreApiProjectName = "GodotSharp";
-        private const string EditorApiProjectName = "GodotSharpEditor";
-
-        public const string CSharpProjectTypeGuid = "{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}";
-        public const string GodotProjectTypeGuid = "{8F3E2DF0-C35C-4265-82FC-BEA011F4A7ED}";
+        public const string GodotSdkVersionToUse = "3.2.4";
+        public const string GodotSdkNameToUse = "Godot.NET.Sdk";
 
         public static readonly string GodotDefaultProjectTypeGuids = $"{GodotProjectTypeGuid};{CSharpProjectTypeGuid}";
 
@@ -24,12 +21,7 @@ namespace GodotTools.ProjectEditor
             ProjectPropertyGroupElement mainGroup;
             var root = CreateLibraryProject(name, "Debug", out mainGroup);
 
-            mainGroup.SetProperty("ProjectTypeGuids", GodotDefaultProjectTypeGuids);
-            mainGroup.SetProperty("OutputPath", Path.Combine(".mono", "temp", "bin", "$(Configuration)"));
-            mainGroup.SetProperty("BaseIntermediateOutputPath", Path.Combine(".mono", "temp", "obj"));
-            mainGroup.SetProperty("IntermediateOutputPath", Path.Combine("$(BaseIntermediateOutputPath)", "$(Configuration)"));
-            mainGroup.SetProperty("ApiConfiguration", "Debug").Condition = " '$(Configuration)' != 'ExportRelease' ";
-            mainGroup.SetProperty("ApiConfiguration", "Release").Condition = " '$(Configuration)' == 'ExportRelease' ";
+            root.Sdk = $"{GodotSdkNameToUse}/{GodotSdkVersionToUse}";
 
             var debugGroup = root.AddPropertyGroup();
             debugGroup.Condition = " '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ";
