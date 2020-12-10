@@ -269,6 +269,8 @@ public:
 	inline bool is_valid() const { return reference != NULL; }
 	inline bool is_null() const { return reference == NULL; }
 
+	inline explicit operator bool() const { return is_valid(); }
+
 	void unref() {
 		//TODO this should be moved to mutexes, since this engine does not really
 		// do a lot of referencing on references and stuff

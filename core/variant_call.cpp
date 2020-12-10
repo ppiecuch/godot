@@ -385,6 +385,8 @@ struct _VariantCall {
 	VCALL_LOCALMEM0R(Vector2, abs);
 	VCALL_LOCALMEM1R(Vector2, clamped);
 	VCALL_LOCALMEM0R(Vector2, sign);
+	VCALL_LOCALMEM1R(Vector2, min);
+	VCALL_LOCALMEM1R(Vector2, max);
 
 	VCALL_LOCALMEM0R(Rect2, get_area);
 	VCALL_LOCALMEM0R(Rect2, has_no_area);
@@ -433,6 +435,8 @@ struct _VariantCall {
 	VCALL_LOCALMEM1R(Vector3, bounce);
 	VCALL_LOCALMEM1R(Vector3, reflect);
 	VCALL_LOCALMEM0R(Vector3, sign);
+	VCALL_LOCALMEM1R(Vector3, min);
+	VCALL_LOCALMEM1R(Vector3, max);
 
 	VCALL_LOCALMEM0R(Plane, normalized);
 	VCALL_LOCALMEM0R(Plane, center);
@@ -1677,6 +1681,8 @@ void register_variant_methods() {
 	ADDFUNC0R(VECTOR2, VECTOR2, Vector2, abs, varray());
 	ADDFUNC1R(VECTOR2, VECTOR2, Vector2, clamped, REAL, "length", varray());
 	ADDFUNC0R(VECTOR2, VECTOR2, Vector2, sign, varray());
+	ADDFUNC1R(VECTOR2, VECTOR2, Vector2, min, VECTOR2, "b", varray());
+	ADDFUNC1R(VECTOR2, VECTOR2, Vector2, max, VECTOR2, "b", varray());
 
 	ADDFUNC0R(RECT2, REAL, Rect2, get_area, varray());
 	ADDFUNC0R(RECT2, BOOL, Rect2, has_no_area, varray());
@@ -1725,6 +1731,8 @@ void register_variant_methods() {
 	ADDFUNC1R(VECTOR3, VECTOR3, Vector3, bounce, VECTOR3, "n", varray());
 	ADDFUNC1R(VECTOR3, VECTOR3, Vector3, reflect, VECTOR3, "n", varray());
 	ADDFUNC0R(VECTOR3, VECTOR3, Vector3, sign, varray());
+	ADDFUNC1R(VECTOR3, VECTOR3, Vector3, min, VECTOR3, "b", varray());
+	ADDFUNC1R(VECTOR3, VECTOR3, Vector3, max, VECTOR3, "b", varray());
 
 	ADDFUNC0R(PLANE, PLANE, Plane, normalized, varray());
 	ADDFUNC0R(PLANE, VECTOR3, Plane, center, varray());

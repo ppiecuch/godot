@@ -146,8 +146,11 @@ struct Vector3 {
 	_FORCE_INLINE_ bool operator>(const Vector3 &p_v) const;
 	_FORCE_INLINE_ bool operator>=(const Vector3 &p_v) const;
 
-	_FORCE_INLINE_ static Vector3 min(const Vector3 &p_lv, const Vector3 &p_rv) { return Vector3(MIN(p_lv.x, p_rv.x), MIN(p_lv.y, p_rv.y), MIN(p_lv.z, p_rv.z)); }
-	_FORCE_INLINE_ static Vector3 max(const Vector3 &p_lv, const Vector3 &p_rv) { return Vector3(MAX(p_lv.x, p_rv.x), MAX(p_lv.y, p_rv.y), MAX(p_lv.z, p_rv.z)); }
+	_FORCE_INLINE_ static Vector3 min(const Vector3 &p_a, const Vector3 &p_b) { return Vector3(MIN(p_a.x, p_b.x), MIN(p_a.y, p_b.y), MIN(p_a.z, p_b.z)); }
+	_FORCE_INLINE_ static Vector3 max(const Vector3 &p_a, const Vector3 &p_b) { return Vector3(MAX(p_a.x, p_b.x), MAX(p_a.y, p_b.y), MAX(p_a.z, p_b.z)); }
+
+	_FORCE_INLINE_ Vector3 min(const Vector3 &p_b) { return Vector3(MIN(x, p_b.x), MIN(y, p_b.y), MIN(z, p_b.z)); }
+	_FORCE_INLINE_ Vector3 max(const Vector3 &p_b) { return Vector3(MAX(x, p_b.x), MAX(y, p_b.y), MAX(z, p_b.z)); }
 
 	operator String() const;
 

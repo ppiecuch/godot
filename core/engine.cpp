@@ -234,7 +234,7 @@ Engine::Engine() {
 	_frame_step = 0;
 	editor_hint = false;
 }
-
+#include <assert.h>
 Engine::Singleton::Singleton(const StringName &p_name, Object *p_ptr) :
 		name(p_name),
 		ptr(p_ptr) {

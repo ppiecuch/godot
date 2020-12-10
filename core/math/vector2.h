@@ -150,8 +150,11 @@ struct Vector2 {
 	real_t aspect() const { return width / height; }
 	Vector2 inv() const { return Vector2(1.0 / x, 1.0 / y); }
 
-	_FORCE_INLINE_ static Vector2 min(const Vector2 &p_lv, const Vector2 &p_rv) { return Vector2(MIN(p_lv.x, p_rv.x), MIN(p_lv.y, p_rv.y)); }
-	_FORCE_INLINE_ static Vector2 max(const Vector2 &p_lv, const Vector2 &p_rv) { return Vector2(MAX(p_lv.x, p_rv.x), MAX(p_lv.y, p_rv.y)); }
+	_FORCE_INLINE_ static Vector2 min(const Vector2 &p_a, const Vector2 &p_b) { return Vector2(MIN(p_a.x, p_b.x), MIN(p_a.y, p_b.y)); }
+	_FORCE_INLINE_ static Vector2 max(const Vector2 &p_a, const Vector2 &p_b) { return Vector2(MAX(p_a.x, p_b.x), MAX(p_a.y, p_b.y)); }
+
+	_FORCE_INLINE_ Vector2 min(const Vector2 &p_b) { return Vector2(MIN(x, p_b.x), MIN(y, p_b.y)); }
+	_FORCE_INLINE_ Vector2 max(const Vector2 &p_b) { return Vector2(MAX(x, p_b.x), MAX(y, p_b.y)); }
 
 	_FORCE_INLINE_ static Vector2 barycentric(const Vector2 &p_v1, const Vector2 &p_v2, const Vector2 &p_v3, real_t p_amount1, real_t p_amount2) {
 		return Vector2(
