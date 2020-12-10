@@ -72,10 +72,13 @@
 #include "scene/figure.h"
 #include "scene/pixel_spaceships.h"
 #include "scene/round_progress.h"
-#include "scene/spherical_waves.h"
 #include "scene/sprite_mesh.h"
 #include "scene/touch_button.h"
-#include "scene/vegetation_instance.h"
+
+#include "scenery/tree_2d/tree_2d.h"
+#include "scenery/water_splash/gd_water_splash.h"
+#include "scenery/spherical_waves/spherical_waves.h"
+#include "scenery/vegetation_instance/vegetation_instance.h"
 
 #include "benet/enet_node.h"
 #include "benet/enet_packet_peer.h"
@@ -84,11 +87,14 @@ static bool enet_ok = false;
 
 #ifdef TOOLS_ENABLED
 static void editor_init_callback() {
-	EditorNode::get_singleton()->add_editor_plugin(memnew(Cable2DEditorPlugin(EditorNode::get_singleton())));
+	Engine::get_singleton()->add_singleton(Engine::Singleton("GodotErrorHandler", memnew(GodotErrorHandler)));
+
+	EditorNode::get_singleton()->add_editor_plugin(memnew(Cable2DEditorPlugin(EditorNode::get_singleton()))); /* Cable2D */
+	EditorPlugins::add_by_type<ProceduralAnimationEditorPlugin>();                                            /* ProceduralAnimation */
 }
 #endif
 
-void register_gd_all_extensions_types() {
+void register_gd_custom_extensions_types() {
 
 	ClassDB::register_class<BehaviorNode>();
 	ClassDB::register_class<TimerBNode>();
@@ -112,9 +118,6 @@ void register_gd_all_extensions_types() {
 	ClassDB::register_class<Cripter>();
 #endif
 	ClassDB::register_class<ProceduralAnimation>();
-#ifdef TOOLS_ENABLED
-	EditorPlugins::add_by_type<ProceduralAnimationEditorPlugin>();
-#endif
 	ClassDB::register_class<BSInputEventKey>();
 	ClassDB::register_class<InputMapEditor>();
 
@@ -131,9 +134,6 @@ void register_gd_all_extensions_types() {
 	Engine::get_singleton()->add_singleton(Engine::Singleton("DebugDraw", memnew(DebugDraw)));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Tags", memnew(Tags)));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Blitter", memnew(Blitter)));
-#ifdef TOOLS_ENABLED
-	Engine::get_singleton()->add_singleton(Engine::Singleton("GodotErrorHandler", memnew(GodotErrorHandler)));
-#endif
 
 	ClassDB::register_class<PixelSpaceshipsOptions>();
 	ClassDB::register_class<PixelSpaceshipsMask>();
@@ -141,22 +141,23 @@ void register_gd_all_extensions_types() {
 	ClassDB::register_class<BulletManagerBulletType>();
 	ClassDB::register_class<BulletManager>();
 	ClassDB::register_class<Autotilemap>();
-#ifndef _3D_DISABLED
-	ClassDB::register_class<VegetationInstance>();
-#endif
 	ClassDB::register_class<SimulationController2D>();
 	ClassDB::register_class<SimulationControllerInstance2D>();
 	ClassDB::register_class<DeformMeshInstance2D>();
 	ClassDB::register_class<DeformSprite>();
 	ClassDB::register_class<Cable2D>();
-#ifdef TOOLS_ENABLED
-	EditorNode::add_init_callback(editor_init_callback);
-#endif
 	ClassDB::register_class<TouchButton>();
 	ClassDB::register_class<AudioStreamPreviewGenerator>();
 	ClassDB::register_class<SpriteMesh>();
-	ClassDB::register_class<SphericalWaves>();
 	ClassDB::register_class<Figure>();
+
+	ClassDB::register_class<Tree2D>();
+	ClassDB::register_class<GDWaterSplash>();
+	ClassDB::register_virtual_class<GDWaterSplashColumn>();
+#ifndef _3D_DISABLED
+	ClassDB::register_class<VegetationInstance>();
+#endif
+	ClassDB::register_class<SphericalWaves>();
 
 	if (enet_initialize() != 0) {
 		ERR_PRINT("ENet initialization failure");
@@ -166,9 +167,19 @@ void register_gd_all_extensions_types() {
 
 	ClassDB::register_class<ENetPacketPeer>();
 	ClassDB::register_class<ENetNode>();
+
+#ifdef TOOLS_ENABLED
+	EditorNode::add_init_callback(editor_init_callback);
+#endif
 }
 
-void unregister_gd_all_extensions_types() {
+void unregister_gd_custom_extensions_types() {
 	if (enet_ok)
 		enet_deinitialize();
+	if (Timer2 *instance = Timer2::get_singleton())
+		memdelete(instance);
+	if (Tween2 *instance = Tween2::get_singleton())
+		memdelete(instance);
+	if (InputStorage *instance = InputStorage::get_singleton())
+		memdelete(instance);
 }

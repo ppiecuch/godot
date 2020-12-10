@@ -4,15 +4,18 @@ import os
 Import("env")
 Import("env_modules")
 
-env_modules.add_source_files(env.modules_sources, "*.cpp")
-env_modules.add_source_files(env.modules_sources, "gd/*.cpp")
-env_modules.add_source_files(env.modules_sources, "gd/*.c")
-env_modules.add_source_files(env.modules_sources, "gd2c/*.cpp")
-env_modules.add_source_files(env.modules_sources, "scene/*.cpp")
-env_modules.add_source_files(env.modules_sources, "statemachine/*.cpp")
-env_modules.add_source_files(env.modules_sources, "debugdraw/*.cpp")
-env_modules.add_source_files(env.modules_sources, "benet/*.cpp")
-env_modules.add_source_files(env.modules_sources, "behaviornode/*.cpp")
+env_module = env_modules.Clone()
 
-env_modules.Append(CPPPATH=["#thirdparty/enet/", os.path.dirname(os.path.realpath(os.curdir)) + "/gdnative/include"])
-env_modules.Append(CPPFLAGS=["-DGD_GODOT_ENET"])
+sources = Glob("*.cpp")
+modules = ["gd", "gd2c", "scene", "scenery/tree_2d", "scenery/spherical_waves", "scenery/water_splash", "scenery/vegetation_instance", "debugdraw", "statemachine", "benet", "behaviornode"]
+for m in modules:
+    sources += Glob("%s/*.cpp"%m)
+    sources += Glob("%s/*.c"%m)
+
+env_module.Append(CPPPATH=["#thirdparty/enet/", os.path.dirname(os.path.realpath(os.curdir)) + "/gdnative/include"])
+env_module.Append(CPPFLAGS=["-DGD_GODOT_ENET"])
+
+# Compile as a static library
+lib = env_module.Library("gd_custom_extensions", sources)
+# Add the library as a dependency of the final executable
+env.Prepend(LIBS=[lib])

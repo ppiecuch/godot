@@ -28,5 +28,5 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-void register_gd_all_extensions_types();
-void unregister_gd_all_extensions_types();
+void register_gd_custom_extensions_types();
+void unregister_gd_custom_extensions_types();
