@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  file_access_buffered.h                                               */
+/*  validation_tools.h                                                   */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,65 +28,66 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef FILE_ACCESS_BUFFERED_H
-#define FILE_ACCESS_BUFFERED_H
+#ifndef FBX_VALIDATION_TOOLS_H
+#define FBX_VALIDATION_TOOLS_H
 
-#include "core/os/file_access.h"
-#include "core/pool_vector.h"
+#ifdef TOOLS_ENABLED
+
+#include "core/local_vector.h"
+#include "core/map.h"
 #include "core/ustring.h"
+#include <core/io/json.h>
+#include <core/os/file_access.h>
+#include <scene/3d/path.h>
 
-class FileAccessBuffered : public FileAccess {
-
-public:
-	enum {
-		DEFAULT_CACHE_SIZE = 128 * 1024,
-	};
-
-private:
-	int cache_size;
-
-	int cache_data_left() const;
-	mutable Error last_error;
-
+class ValidationTracker {
 protected:
-	Error set_error(Error p_error) const;
+	struct Entries {
+		Map<String, LocalVector<String> > validation_entries = Map<String, LocalVector<String> >();
 
-	mutable struct File {
-		bool open = false;
-		int size = 0;
-		int offset = 0;
-		String name;
-		int access_flags = 0;
-	} file;
+		// for printing our CSV to dump validation problems of files
+		// later we can make some agnostic tooling for this but this is fine for the time being.
+		void add_validation_error(String asset_path, String message);
+		void print_to_csv() {
+			print_verbose("Exporting assset validation log please wait");
+			String massive_log_file;
 
-	mutable struct Cache {
-		Vector<uint8_t> buffer;
-		int offset = 0;
-	} cache;
+			String csv_header = "file_path, error message, extra data\n";
+			massive_log_file += csv_header;
 
-	virtual int read_data_block(int p_offset, int p_size, uint8_t *p_dest = 0) const = 0;
+			for (Map<String, LocalVector<String> >::Element *element = validation_entries.front(); element; element = element->next()) {
+				for (unsigned int x = 0; x < element->value().size(); x++) {
+					const String &line_entry = element->key() + ", " + element->value()[x].c_escape() + "\n";
+					massive_log_file += line_entry;
+				}
+			}
 
-	void set_cache_size(int p_size);
-	int get_cache_size();
+			String path = "asset_validation_errors.csv";
+			Error err;
+			FileAccess *file = FileAccess::open(path, FileAccess::WRITE, &err);
+			if (!file || err) {
+				if (file)
+					memdelete(file);
+				print_error("ValidationTracker Error - failed to create file - path: %s\n" + path);
+				return;
+			}
+
+			file->store_string(massive_log_file);
+			if (file->get_error() != OK && file->get_error() != ERR_FILE_EOF) {
+				print_error("ValidationTracker Error - failed to write to file - path: %s\n" + path);
+			}
+			file->close();
+			memdelete(file);
+		}
+	};
+	// asset path, error messages
+	static Entries *entries_singleton;
 
 public:
-	virtual size_t get_position() const; ///< get position in the file
-	virtual size_t get_len() const; ///< get size of the file
-
-	virtual void seek(size_t p_position); ///< seek to a given position
-	virtual void seek_end(int64_t p_position = 0); ///< seek from the end of file
-
-	virtual bool eof_reached() const;
-
-	virtual uint8_t get_8() const;
-	virtual int get_buffer(uint8_t *p_dest, int p_length) const; ///< get an array of bytes
-
-	virtual bool is_open() const;
-
-	virtual Error get_error() const;
-
-	FileAccessBuffered();
-	virtual ~FileAccessBuffered();
+	static Entries *get_singleton() {
+		return entries_singleton;
+	}
 };
 
-#endif
+#endif // TOOLS_ENABLED
+#endif // FBX_VALIDATION_TOOLS_H
