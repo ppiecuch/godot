@@ -40,39 +40,10 @@
 #include "scene/main/node.h"
 
 class TweenAction;
+class TweenNode;
 
-class TweenNode : public Node {
-	GDCLASS(TweenNode, Node);
-
-private:
-	Vector<Ref<TweenAction> > actions;
-	void check_queue();
-	friend class Tween2;
-
-protected:
-	void _notification(int p_what);
-};
-
-class TweenProperty : public Reference {
-	GDCLASS(TweenProperty, Reference);
-
-private:
-	friend class TweenAction;
-	StringName property_name;
-	int property_type;
-	Variant from_value;
-	Variant to_value;
-
-	Variant callback_target;
-	float step;
-	int step_count;
-
-	Variant interpolation(float per);
-	Variant lerp(Variant from, Variant to, float per);
-};
-
-class Tween2 : public Reference {
-	GDCLASS(Tween2, Reference);
+class Tween2 : public Object {
+	GDCLASS(Tween2, Object);
 
 private:
 	TweenNode *tween_node = NULL;
@@ -123,6 +94,36 @@ public:
 
 	Tween2();
 	~Tween2();
+};
+
+class TweenNode : public Node {
+	GDCLASS(TweenNode, Node);
+
+private:
+	Vector<Ref<TweenAction> > actions;
+	void check_queue();
+	friend class Tween2;
+
+protected:
+	void _notification(int p_what);
+};
+
+class TweenProperty : public Reference {
+	GDCLASS(TweenProperty, Reference);
+
+private:
+	friend class TweenAction;
+	StringName property_name;
+	int property_type;
+	Variant from_value;
+	Variant to_value;
+
+	Variant callback_target;
+	float step;
+	int step_count;
+
+	Variant interpolation(float per);
+	Variant lerp(Variant from, Variant to, float per);
 };
 
 class TweenAction : public Reference {

@@ -67,8 +67,8 @@ protected:
 	void _notification(int p_what);
 };
 
-class Timer2 : public Reference {
-	GDCLASS(Timer2, Reference);
+class Timer2 : public Object {
+	GDCLASS(Timer2, Object);
 
 private:
 	TimerNode *timer_node = NULL;

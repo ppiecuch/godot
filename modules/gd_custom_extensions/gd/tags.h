@@ -42,6 +42,7 @@ class tags_impl_t;
 
 class Tags : public Object {
 	GDCLASS(Tags, Object);
+
 	static Tags *singleton;
 
 protected:
@@ -61,6 +62,7 @@ public:
 	bool match_tag(int a, int b);
 
 	static Tags *get_singleton() { return singleton; };
+
 	Tags();
 	virtual ~Tags();
 

@@ -36,24 +36,24 @@
 
 #include "elastic_simulation.h"
 
+enum {
 
-#define simulation_changed "simulation_changed"
-#define simulation_update "simulation_update"
-#define controller_changed "controller_changed"
+	SIMULATION_CONFIGURATION_CHANGED = 510
+};
 
 class SimulationController2D : public Resource {
 	GDCLASS(SimulationController2D, Resource)
 
 private:
 	Ref<ElasticSimulation> _sim;
-	bool _sim_dirty;
 	Node *_sim_owner;
 
 	bool simulation_active;
 	bool simulation_fixed_delta;
 	real_t simulation_delta;
-	real_t simulation_spring_factor;
-	real_t simulation_spring_variation;
+
+	// Using motion texture for vertex displacement:
+	// P' = P + WarpingMotionTexture[ StartUV + RandomTrajectoryUV * Time ]
 
 	Ref<Texture> motion_texture;
 
@@ -61,6 +61,10 @@ private:
 	real_t _simulation_force_impulse_duration;
 
 	void _update_simulation();
+
+	// points are defined in normalized space here:
+	Vector2 _get_displacement(Ref<Image> image, Point2 p1, Point2 p2, real_t t);
+	Vector2 _get_displacement(Ref<Image> image, real_t dir, Point2 origin, real_t t);
 
 protected:
 	static void _bind_methods();
@@ -74,19 +78,18 @@ public:
 	bool is_simulation_fixed_delta() const;
 	void set_simulation_delta(real_t p_delta);
 	real_t get_simulation_delta() const;
-	void set_simulation_spring_factor(real_t p_factor);
-	real_t get_simulation_spring_factor() const;
-	void set_simulation_spring_variation(real_t p_factor);
-	real_t get_simulation_spring_variation() const;
 	void apply_simulation_force_impulse(const Vector2 &p_force, real_t p_duration);
-	void apply_deform_force_impulse(const Vector2 &p_force, real_t p_duration);
+	void apply_deform_force_impulse(int sim_id, real_t delta_time, const Vector2 &p_force);
 	void reset_simulation();
 
 	Ref<ElasticSimulation> get_simulation() const;
-	void simulation_progress(real_t process_delta_time);
 
+	void simulation_progress(real_t process_delta_time);
 	Vector2 get_simulation_force_impulse() const;
 	real_t get_simulation_force_impulse_duration() const;
+
+	Ref<Texture> get_motion_texture() const;
+	void set_motion_texture(const Ref<Texture> &p_texture);
 
 	Node *get_owner() const;
 	void set_owner(Node *p_owner);
@@ -120,8 +123,14 @@ class DeformMeshInstance2D : public MeshInstance2D {
 	GDCLASS(DeformMeshInstance2D, MeshInstance2D)
 
 private:
+	int _sim_id;
+
 	Ref<SimulationController2D> controller;
 
+	real_t motion_texture_trajectory_angle;
+	Vector2 motion_texture_trajectory_origin;
+	real_t motion_texture_time_scale;
+	real_t motion_texture_move_scale;
 	int geometry_segments;
 	ElasticSimulation::Anchor geometry_anchor;
 	bool geometry_size_variation;
@@ -145,6 +154,17 @@ protected:
 	void _notification(int p_what);
 
 public:
+	int get_simulation_id() const;
+
+	real_t get_motion_texture_trajectory_angle();
+	void set_motion_texture_trajectory_angle(real_t p_angle);
+	Vector2 get_motion_texture_trajectory_origin();
+	void set_motion_texture_trajectory_origin(Vector2 p_origin);
+	real_t get_motion_texture_time_scale();
+	void set_motion_texture_time_scale(real_t p_time_scale);
+	real_t get_motion_texture_move_scale();
+	void set_motion_texture_move_scale(real_t p_move_scale);
+
 	Ref<SimulationController2D> get_controller() const;
 	void set_controller(const Ref<SimulationController2D> &p_controller);
 
@@ -160,12 +180,19 @@ private:
 	bool _sim_dirty;
 	bool _geom_dirty;
 
+	Vector2 _deform_force;
+
 	Ref<SimulationController2D> controller;
+	real_t motion_texture_trajectory_angle;
+	Vector2 motion_texture_trajectory_origin;
+	real_t motion_texture_time_scale;
+	real_t motion_texture_move_scale;
 	int geometry_segments;
 	ElasticSimulation::Anchor geometry_anchor;
 	bool geometry_size_variation;
 	real_t geometry_pixel_unit;
-	Vector2 geometry_deform_force;
+	real_t geometry_spring_factor;
+	real_t geometry_spring_variation;
 	bool geometry_debug;
 
 	enum SigOperation {
@@ -173,7 +200,7 @@ private:
 		SIG_DISCONNECT,
 	};
 
-	void _check_parent_simulator();
+	void _check_parent_controller();
 	void _configure_controller(SigOperation p_op);
 	void _connect_controller() { _configure_controller(SIG_CONNECT); }
 	void _disconnect_controller() { _configure_controller(SIG_DISCONNECT); }
@@ -194,7 +221,23 @@ protected:
 	void _get_property_list(List<PropertyInfo> *p_list) const;
 	void _notification(int p_what);
 
+	void _on_simulation_update();
+	void _on_simulation_changed();
+
+	void _on_texture_changed();
+
 public:
+	int get_simulation_id() const;
+
+	real_t get_motion_texture_trajectory_angle();
+	void set_motion_texture_trajectory_angle(real_t p_angle);
+	Vector2 get_motion_texture_trajectory_origin();
+	void set_motion_texture_trajectory_origin(Vector2 p_origin);
+	real_t get_motion_texture_time_scale();
+	void set_motion_texture_time_scale(real_t p_time_scale);
+	real_t get_motion_texture_move_scale();
+	void set_motion_texture_move_scale(real_t p_move_scale);
+
 	Ref<SimulationController2D> get_controller() const;
 	void set_controller(const Ref<SimulationController2D> &p_controller);
 
@@ -206,13 +249,16 @@ public:
 	bool is_geometry_size_variation() const;
 	void set_geometry_pixel_unit(real_t p_unit);
 	real_t get_geometry_pixel_unit() const;
+	void set_geometry_spring_factor(real_t p_factor);
+	real_t get_geometry_spring_factor() const;
+	void set_geometry_spring_variation(real_t p_factor);
+	real_t get_geometry_spring_variation() const;
 	void set_geometry_debug(bool p_debug);
 	bool get_geometry_debug() const;
 
-	void debug_draw();
+	void deform_geometry(const Vector2 &force);
 
-	void _on_simulation_update();
-	void _on_simulation_changed();
+	void debug_draw_geometry();
 
 	DeformSprite();
 	~DeformSprite();

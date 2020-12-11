@@ -55,8 +55,9 @@ public:
 };
 
 class InputStorageNode;
-class InputStorage : public Reference {
-	GDCLASS(InputStorage, Reference);
+
+class InputStorage : public Object {
+	GDCLASS(InputStorage, Object);
 
 private:
 	Queue<InputNode> storage_events;
@@ -69,6 +70,7 @@ private:
 	bool _down_in_frame(const Variant &events, int frame);
 	void _add_node(Object *node);
 	InputStorageNode *storage_node;
+
 	static InputStorage *singleton;
 
 protected:
@@ -118,7 +120,7 @@ protected:
 	static void _bind_methods();
 
 public:
-	Ref<InputStorage> _storage;
+	InputStorage *_storage;
 	const PoolStringArray &get_events() const { return events; }
 	void set_events(const PoolStringArray &e) { events = e; }
 
@@ -128,6 +130,8 @@ public:
 	}
 
 	InputStorageNode() {
+		_storage = NULL;
+
 		set_process_input(true);
 		set_physics_process(true);
 		set_pause_mode(Node::PAUSE_MODE_PROCESS);

@@ -88,7 +88,9 @@ int InputNode::queue_down(const PoolStringArray &actions, int offset) const {
 
 InputStorage::InputStorage() {
 	singleton = this;
+
 	_this_frame = NULL;
+
 	storage_size = 30;
 	storage_node = NULL;
 	storage_events.alloc(storage_size);
@@ -118,7 +120,7 @@ void InputStorage::start(PoolStringArray events) {
 	if (storage_node == NULL) {
 		storage_node = memnew(InputStorageNode);
 		storage_node->set_name(node_key);
-		storage_node->_storage = Ref<InputStorage>(this);
+		storage_node->_storage = this;
 
 		Vector<Variant> vector;
 		vector.push_back(Variant(storage_node));
