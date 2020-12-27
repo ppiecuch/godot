@@ -1,0 +1,86 @@
+/*************************************************************************/
+/*  elastic_simulation.h                                                     */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
+#ifndef ELASTICSIMULATION_H
+#define ELASTICSIMULATION_H
+
+#include <memory>
+
+#include "core/reference.h"
+#include "core/class_db.h"
+
+namespace sim3 {
+	class Simulation;
+}
+
+class ElasticSimulation: public Reference {
+	GDCLASS(ElasticSimulation, Reference);
+
+private:
+	float time_passed;
+
+public:
+	enum Anchor {
+		SIM_ANCHOR_LEFT,
+		SIM_ANCHOR_RIGHT,
+		SIM_ANCHOR_TOP,
+		SIM_ANCHOR_BOTTOM
+	};
+
+	float simulation_delta;
+	Vector2 flow_factors;
+
+	std::unique_ptr<sim3::Simulation> _sim;
+
+	int make_sim(const Size2 &p_rect, int p_segments, bool p_dynamic_split, Anchor p_anchor, real_t p_spring_factor = 0.0, real_t p_spring_variation = 0.0);
+	void update_sim(int sim_id, const Size2 &p_rect, int p_segments, bool p_dynamic_split, Anchor p_anchor, real_t p_spring_factor = 0.0, real_t p_spring_variation = 0.0);
+	void remove_sim(int sim_id);
+	void reset_sim();
+	void transform_sim_geom(const Transform2D &p_xform) const;
+	int get_sim_position_count(int sim_id) const;
+	Vector2 get_sim_position_at(int sim_id, int p_index) const;
+	bool is_sim_point_fixed(int sim_id, int p_index) const;
+	void simulate(real_t p_delta, const Vector2 &p_impulse);
+	void deform(int sim_id, real_t p_delta, const Vector2 &p_impulse);
+
+	struct Constraint {
+		Vector2 begin, end;
+		real_t deviation; // 0 - 1
+	};
+	int get_sim_constraint_count(int sim_id) const;
+	Constraint get_sim_constraint_at(int sim_id, int p_index) const;
+
+	ElasticSimulation();
+	~ElasticSimulation();
+};
+
+VARIANT_ENUM_CAST(ElasticSimulation::Anchor);
+
+#endif // ELASTICSIMULATION_H
