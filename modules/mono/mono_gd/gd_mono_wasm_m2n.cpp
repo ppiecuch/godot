@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  generic_6dof_joint_bullet.h                                          */
+/*  gd_mono_wasm_m2n.cpp                                                 */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,46 +28,52 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GENERIC_6DOF_JOINT_BULLET_H
-#define GENERIC_6DOF_JOINT_BULLET_H
+#include "gd_mono_wasm_m2n.h"
 
-#include "joint_bullet.h"
+#ifdef JAVASCRIPT_ENABLED
 
-/**
-	@author AndreaCatania
-*/
+#include "core/oa_hash_map.h"
 
-class RigidBodyBullet;
+typedef mono_bool (*GodotMonoM2nIcallTrampolineDispatch)(const char *cookie, void *target_func, Mono_InterpMethodArguments *margs);
 
-class Generic6DOFJointBullet : public JointBullet {
-	class btGeneric6DofSpring2Constraint *sixDOFConstraint;
+// This extern function is implemented in our patched version of Mono
+MONO_API void godot_mono_register_m2n_icall_trampoline_dispatch_hook(GodotMonoM2nIcallTrampolineDispatch hook);
 
-	// First is linear second is angular
-	Vector3 limits_lower[2];
-	Vector3 limits_upper[2];
-	bool flags[3][PhysicsServer::G6DOF_JOINT_FLAG_MAX];
+namespace GDMonoWasmM2n {
 
-public:
-	Generic6DOFJointBullet(RigidBodyBullet *rbA, RigidBodyBullet *rbB, const Transform &frameInA, const Transform &frameInB);
-
-	virtual PhysicsServer::JointType get_type() const { return PhysicsServer::JOINT_6DOF; }
-
-	Transform getFrameOffsetA() const;
-	Transform getFrameOffsetB() const;
-	Transform getFrameOffsetA();
-	Transform getFrameOffsetB();
-
-	void set_linear_lower_limit(const Vector3 &linearLower);
-	void set_linear_upper_limit(const Vector3 &linearUpper);
-
-	void set_angular_lower_limit(const Vector3 &angularLower);
-	void set_angular_upper_limit(const Vector3 &angularUpper);
-
-	void set_param(Vector3::Axis p_axis, PhysicsServer::G6DOFJointAxisParam p_param, real_t p_value);
-	real_t get_param(Vector3::Axis p_axis, PhysicsServer::G6DOFJointAxisParam p_param) const;
-
-	void set_flag(Vector3::Axis p_axis, PhysicsServer::G6DOFJointAxisFlag p_flag, bool p_value);
-	bool get_flag(Vector3::Axis p_axis, PhysicsServer::G6DOFJointAxisFlag p_flag) const;
+struct HashMapCookieComparator {
+	static bool compare(const char *p_lhs, const char *p_rhs) {
+		return strcmp(p_lhs, p_rhs) == 0;
+	}
 };
+
+// The default hasher supports 'const char *' C Strings, but we need a custom comparator
+OAHashMap<const char *, TrampolineFunc, HashMapHasherDefault, HashMapCookieComparator> trampolines;
+
+void set_trampoline(const char *cookies, GDMonoWasmM2n::TrampolineFunc trampoline_func) {
+	trampolines.set(cookies, trampoline_func);
+}
+
+mono_bool trampoline_dispatch_hook(const char *cookie, void *target_func, Mono_InterpMethodArguments *margs) {
+	TrampolineFunc trampoline_func;
+
+	if (!trampolines.lookup(cookie, trampoline_func)) {
+		return false;
+	}
+
+	(*trampoline_func)(target_func, margs);
+	return true;
+}
+
+bool initialized = false;
+
+void lazy_initialize() {
+	// Doesn't need to be thread safe
+	if (!initialized) {
+		initialized = true;
+		godot_mono_register_m2n_icall_trampoline_dispatch_hook(&trampoline_dispatch_hook);
+	}
+}
+} // namespace GDMonoWasmM2n
 
 #endif

@@ -703,8 +703,6 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 
 			auto_build_solutions = true;
 			editor = true;
-			OS::get_singleton()->set_no_window_mode(true);
-			auto_quit = true;
 #ifdef DEBUG_METHODS_ENABLED
 		} else if (I->get() == "--gdnative-generate-json-api") {
 			// Register as an editor instance to use the GLES2 fallback automatically on hardware that doesn't support the GLES3 backend
@@ -712,17 +710,11 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 
 			// We still pass it to the main arguments since the argument handling itself is not done in this function
 			main_args.push_back(I->get());
-
-			OS::get_singleton()->set_no_window_mode(true);
-			auto_quit = true;
 #endif
 		} else if (I->get() == "--export" || I->get() == "--export-debug" || I->get() == "--export-pack") { // Export project
 
 			editor = true;
 			main_args.push_back(I->get());
-
-			OS::get_singleton()->set_no_window_mode(true);
-			auto_quit = true;
 #endif
 		} else if (I->get() == "--path") { // set path of project to start or edit
 
@@ -1030,11 +1022,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	GLOBAL_DEF("rendering/quality/driver/driver_name", "GLES3");
 	ProjectSettings::get_singleton()->set_custom_property_info("rendering/quality/driver/driver_name", PropertyInfo(Variant::STRING, "rendering/quality/driver/driver_name", PROPERTY_HINT_ENUM, "GLES2,GLES3"));
 	if (video_driver == "") {
-		if (project_manager) {
-			video_driver = "GLES2"; // Force GLES2 for maximum compatibility, unless specified from command line.
-		} else {
-			video_driver = GLOBAL_GET("rendering/quality/driver/driver_name");
-		}
+		video_driver = GLOBAL_GET("rendering/quality/driver/driver_name");
 	}
 
 	GLOBAL_DEF("rendering/quality/driver/fallback_to_gles2", false);
