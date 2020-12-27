@@ -36,26 +36,26 @@
 
 #include "elastic_simulation.h"
 
-enum {
-
-	SIMULATION_CONFIGURATION_CHANGED = 510
-};
-
 class SimulationController2D : public Resource {
 	GDCLASS(SimulationController2D, Resource)
 
+public:
+	enum MotionPacking {
+		PACKING_8BIT,
+		PACKING_16BIT,
+	};
+
 private:
 	Ref<ElasticSimulation> _sim;
-	Node *_sim_owner;
 
 	bool simulation_active;
-	bool simulation_fixed_delta;
 	real_t simulation_delta;
 
 	// Using motion texture for vertex displacement:
 	// P' = P + WarpingMotionTexture[ StartUV + RandomTrajectoryUV * Time ]
 
-	Ref<Texture> motion_texture;
+	Ref<Image> motion_image;
+	MotionPacking motion_packing;
 
 	Vector2 _simulation_force_impulse;
 	real_t _simulation_force_impulse_duration;
@@ -63,56 +63,61 @@ private:
 	void _update_simulation();
 
 	// points are defined in normalized space here:
-	Vector2 _get_displacement(Ref<Image> image, Point2 p1, Point2 p2, real_t t);
-	Vector2 _get_displacement(Ref<Image> image, real_t dir, Point2 origin, real_t t);
+	Vector2 _get_motion_normalized_displacement(Point2 p_coord);
 
 protected:
 	static void _bind_methods();
 
-	void _get_property_list(List<PropertyInfo> *p_list) const;
-
 public:
 	void set_simulation_state(bool p_state);
 	bool is_simulation_active() const;
-	void set_simulation_fixed_delta(bool p_state);
-	bool is_simulation_fixed_delta() const;
 	void set_simulation_delta(real_t p_delta);
 	real_t get_simulation_delta() const;
 	void apply_simulation_force_impulse(const Vector2 &p_force, real_t p_duration);
-	void apply_deform_force_impulse(int sim_id, real_t delta_time, const Vector2 &p_force);
+	void apply_deform_force(int sim_id, const Vector2 &p_force);
 	void reset_simulation();
 
 	Ref<ElasticSimulation> get_simulation() const;
 
-	void simulation_progress(real_t process_delta_time);
+	void simulation_progress();
 	Vector2 get_simulation_force_impulse() const;
 	real_t get_simulation_force_impulse_duration() const;
 
-	Ref<Texture> get_motion_texture() const;
-	void set_motion_texture(const Ref<Texture> &p_texture);
+	Ref<Image> get_motion_image() const;
+	void set_motion_image(const Ref<Image> &p_image);
 
-	Node *get_owner() const;
-	void set_owner(Node *p_owner);
-	bool has_owner() const;
+	void set_motion_packing(MotionPacking p_packing);
+	MotionPacking get_motion_packing() const;
+
+	Vector2 get_motion_value(Node *p_node, real_t p_amp, int p_interpolations);
 
 	SimulationController2D();
 	~SimulationController2D();
 };
+
+VARIANT_ENUM_CAST(SimulationController2D::MotionPacking);
 
 class SimulationControllerInstance2D : public Node2D {
 	GDCLASS(SimulationControllerInstance2D, Node2D)
 
 private:
 	Ref<SimulationController2D> controller;
+	bool motion_debug;
+
+	void _draw_debug_marker(const Point2 &p0, real_t dir, int marker_length, int head_length, int head_width, const Color &marker_color1 = Color(1, 1, 0, 1), const Color &marker_color2 = Color(1, 1, 1, 1));
 
 protected:
 	static void _bind_methods();
 
 	void _notification(int p_what);
 
+	void _on_controller_changed();
+
 public:
 	Ref<SimulationController2D> get_controller() const;
 	void set_controller(const Ref<SimulationController2D> &p_controller);
+	bool get_motion_debug() const;
+	void set_motion_debug(const bool &p_debug);
 
 	SimulationControllerInstance2D();
 	~SimulationControllerInstance2D();
@@ -127,10 +132,10 @@ private:
 
 	Ref<SimulationController2D> controller;
 
-	real_t motion_texture_trajectory_angle;
-	Vector2 motion_texture_trajectory_origin;
-	real_t motion_texture_time_scale;
-	real_t motion_texture_move_scale;
+	real_t motion_trajectory_direction;
+	Vector2 motion_trajectory_origin;
+	real_t motion_amplify;
+	int motion_interpolations;
 	int geometry_segments;
 	ElasticSimulation::Anchor geometry_anchor;
 	bool geometry_size_variation;
@@ -156,14 +161,16 @@ protected:
 public:
 	int get_simulation_id() const;
 
-	real_t get_motion_texture_trajectory_angle();
-	void set_motion_texture_trajectory_angle(real_t p_angle);
-	Vector2 get_motion_texture_trajectory_origin();
-	void set_motion_texture_trajectory_origin(Vector2 p_origin);
-	real_t get_motion_texture_time_scale();
-	void set_motion_texture_time_scale(real_t p_time_scale);
-	real_t get_motion_texture_move_scale();
-	void set_motion_texture_move_scale(real_t p_move_scale);
+	real_t get_motion_direction() const;
+	void set_motion_direction(real_t p_angle);
+	real_t get_motion_direction_degree() const;
+	void set_motion_direction_degree(real_t p_degree);
+	Vector2 get_motion_trajectory_origin() const;
+	void set_motion_trajectory_origin(Vector2 p_origin);
+	real_t get_motion_amplify() const;
+	void set_motion_amplify(real_t p_amp);
+	int get_motion_interpolations() const;
+	void set_motion_interpolations(int p_steps);
 
 	Ref<SimulationController2D> get_controller() const;
 	void set_controller(const Ref<SimulationController2D> &p_controller);
@@ -183,10 +190,10 @@ private:
 	Vector2 _deform_force;
 
 	Ref<SimulationController2D> controller;
-	real_t motion_texture_trajectory_angle;
-	Vector2 motion_texture_trajectory_origin;
-	real_t motion_texture_time_scale;
-	real_t motion_texture_move_scale;
+	real_t motion_trajectory_direction;
+	Vector2 motion_trajectory_origin;
+	real_t motion_amplify;
+	int motion_interpolations;
 	int geometry_segments;
 	ElasticSimulation::Anchor geometry_anchor;
 	bool geometry_size_variation;
@@ -200,6 +207,7 @@ private:
 		SIG_DISCONNECT,
 	};
 
+	bool _is_parent_controller() const;
 	void _check_parent_controller();
 	void _configure_controller(SigOperation p_op);
 	void _connect_controller() { _configure_controller(SIG_CONNECT); }
@@ -229,14 +237,16 @@ protected:
 public:
 	int get_simulation_id() const;
 
-	real_t get_motion_texture_trajectory_angle();
-	void set_motion_texture_trajectory_angle(real_t p_angle);
-	Vector2 get_motion_texture_trajectory_origin();
-	void set_motion_texture_trajectory_origin(Vector2 p_origin);
-	real_t get_motion_texture_time_scale();
-	void set_motion_texture_time_scale(real_t p_time_scale);
-	real_t get_motion_texture_move_scale();
-	void set_motion_texture_move_scale(real_t p_move_scale);
+	real_t get_motion_direction() const;
+	void set_motion_direction(real_t p_angle);
+	real_t get_motion_direction_degree() const;
+	void set_motion_direction_degree(real_t p_degree);
+	Vector2 get_motion_trajectory_origin() const;
+	void set_motion_trajectory_origin(Vector2 p_origin);
+	real_t get_motion_amplify() const;
+	void set_motion_amplify(real_t p_amp);
+	int get_motion_interpolations() const;
+	void set_motion_interpolations(int p_steps);
 
 	Ref<SimulationController2D> get_controller() const;
 	void set_controller(const Ref<SimulationController2D> &p_controller);

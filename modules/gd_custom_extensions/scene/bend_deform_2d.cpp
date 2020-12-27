@@ -40,77 +40,133 @@
 
 
 #ifdef DEBUG_ENABLED
-
-#define DEBUG_PRINT(m_text) print_line(m_text);
-
+# define DEBUG_PRINT(m_text) print_line(m_text);
 #else
-
-#define DEBUG_PRINT(m_text)
-
+# define DEBUG_PRINT(m_text)
 #endif
 
 static const Vector2 ONE(1.0, 1.0);
 
+struct MotionTextureIterator : public Reference {
+	Point2 position, next_position;
+	real_t pk;
+	int interpolation;
+	MotionTextureIterator(const Point2 &pt, real_t dir) : interpolation(0) {
+		const real_t dx = Math::cos(dir);
+		const real_t dy = Math::sin(dir);
+		const real_t slope = Math::tan(dir);
+		pk = slope < 1 ? 2 * dy - dx : 2 * dx - dy;
+		position = next_position = Point2(Math::round(pt.x), Math::round(pt.y));
+	}
+	MotionTextureIterator(const Variant &var) { }
+	void set_position(const Point2 &pt) { position = pt; }
+	Point2 &get_position() { return position; }
+	Point2 get_position() const { return position; }
+	void set_next_position(const Point2 &pt) { next_position = pt; }
+	Point2 &get_next_position() { return next_position; }
+	Point2 get_next_position() const { return next_position; }
+	real_t &get_pk() { return pk; }
+	real_t get_pk() const { return pk; }
+	int &get_interpolation() { return interpolation; }
+	int get_interpolation() const { return interpolation; }
+	MotionTextureIterator *next_step(real_t dir, const Size2 &limit) {
+		position = next_position;
+		const real_t dx = Math::cos(dir);
+		const real_t dy = Math::sin(dir);
+		const real_t slope = Math::tan(dir);
+		if (slope < 1) {
+			++next_position.x;
+			if (pk<0) {
+				pk += 2*dy;
+			} else {
+				pk += 2*(dy-dx);
+				++next_position.y;
+			}
+		} else {
+			++next_position.y;
+			if (pk<0) {
+				pk += 2*dx;
+			} else {
+				pk += 2*(dx-dy);
+				++next_position.x;
+			}
+		}
+		next_position = next_position.posmodv(limit);
+		return this;
+	}
+};
 
 // BEGIN Elastic-deform group node.
 
 #define _notify_simulation_change()                                 \
-	if (_sim_owner)                                                 \
-		_sim_owner->notification(SIMULATION_CONFIGURATION_CHANGED); \
-	emit_signal("simulation_configuration_changed");
+	emit_signal("simulation_changed");
 
-Vector2 SimulationController2D::_get_displacement(Ref<Image> image, Point2 p1, Point2 p2, real_t t) {
-	const real_t theta = Math::atan2(p2.y - p1.y, p2.x - p1.x);
+Vector2 SimulationController2D::_get_motion_normalized_displacement(Point2 p_coord) {
 
-	Vector2 pn = p1 + Vector2(Math::cos(theta), Math::sin(theta)) * t;
-	Vector2 p = pn.posmodv(image->get_size());
+	motion_image->lock();
+	Color c = motion_image->get_pixel(p_coord.x, p_coord.y);
+	motion_image->unlock();
 
-	image->lock();
-	Color c = image->get_pixel(p.x, p.y);
-	image->unlock();
-
-	return Vector2(c.r, c.b) * 2.0 - ONE;
-}
-
-Vector2 SimulationController2D::_get_displacement(Ref<Image> image, real_t dir, Point2 origin, real_t t) {
-	Vector2 pn = origin + Vector2(Math::cos(dir), Math::sin(dir)) * t;
-	Vector2 p = pn.posmodv(image->get_size());
-
-	image->lock();
-	Color c = image->get_pixel(p.x, p.y);
-	image->unlock();
-
-	return Vector2(c.r, c.b) * 2.0 - ONE;
-}
-
-Ref<Texture> SimulationController2D::get_motion_texture() const { return motion_texture; }
-
-void SimulationController2D::set_motion_texture(const Ref<Texture> &p_texture) {
-	if (motion_texture != p_texture) {
-		motion_texture = p_texture;
-		emit_signal("motion_texture_changed");
+	switch (motion_packing) {
+		case PACKING_16BIT: {
+			const uint32_t _c = c.to_argb32();
+			return Vector2((_c&0xFFFF0000)>>16, _c&0xFFFF) / 32767.5 - ONE;
+		}
+		case PACKING_8BIT: {
+			return Vector2(c.r, c.g) * 2.0 - ONE;
+		}
+		default:
+			WARN_PRINT("Unknown packing format!")
 	}
+
+	return Vector2();
+}
+
+Ref<Image> SimulationController2D::get_motion_image() const { return motion_image; }
+
+void SimulationController2D::set_motion_image(const Ref<Image> &p_image) {
+
+	if (motion_image != p_image) {
+		motion_image = p_image;
+		_change_notify();
+		emit_signal("motion_image_changed");
+	}
+}
+
+void SimulationController2D::set_motion_packing(MotionPacking p_packing) {
+	ERR_FAIL_COND(p_packing > 1);
+
+	motion_packing = p_packing;
+}
+
+SimulationController2D::MotionPacking SimulationController2D::get_motion_packing() const {
+
+	return motion_packing;
+}
+
+Vector2 SimulationController2D::get_motion_value(Node *p_node, real_t p_amp, int p_interpolations) {
+	ERR_FAIL_COND_V(!p_node->has_meta("__state_motion_iterator"), Vector2());
+
+	const real_t interpolation_period = p_interpolations ? 1.0 / (p_interpolations + 1) : 0.0;
+	Ref<MotionTextureIterator> info = p_node->get_meta("__state_motion_iterator");
+	Vector2 displace;
+	const Vector2 curr = displace = _get_motion_normalized_displacement(info->get_position());
+	const real_t interpolation = info->get_interpolation() * interpolation_period;
+	if (interpolation > 0) {
+		const Vector2 next = _get_motion_normalized_displacement(info->get_next_position());
+		ERR_FAIL_COND_V(interpolation > 1, next * p_amp);
+		if (curr != next) {
+			displace = curr.linear_interpolate(next, interpolation);
+		}
+	}
+	return displace * p_amp;
+
 }
 
 Ref<ElasticSimulation> SimulationController2D::get_simulation() const { return _sim; }
 
 Vector2 SimulationController2D::get_simulation_force_impulse() const { return _simulation_force_impulse; }
 real_t SimulationController2D::get_simulation_force_impulse_duration() const { return _simulation_force_impulse_duration; }
-
-void SimulationController2D::_get_property_list(List<PropertyInfo> *p_list) const {
-
-	if (p_list) {
-		for (List<PropertyInfo>::Element *E = p_list->front(); E; E = E->next()) {
-			PropertyInfo &prop = E->get();
-			if (prop.name.to_lower() == "simulation_delta_interval") {
-				if (simulation_fixed_delta)
-					prop.usage |= PROPERTY_USAGE_EDITOR;
-				else
-					prop.usage &= ~PROPERTY_USAGE_EDITOR;
-			}
-		}
-	}
-}
 
 void SimulationController2D::set_simulation_state(bool p_state) {
 
@@ -123,19 +179,6 @@ void SimulationController2D::set_simulation_state(bool p_state) {
 bool SimulationController2D::is_simulation_active() const {
 
 	return simulation_active;
-}
-
-void SimulationController2D::set_simulation_fixed_delta(bool p_state) {
-
-	if (simulation_fixed_delta != p_state) {
-		simulation_fixed_delta = p_state;
-		_notify_simulation_change();
-	}
-}
-
-bool SimulationController2D::is_simulation_fixed_delta() const {
-
-	return simulation_fixed_delta;
 }
 
 void SimulationController2D::set_simulation_delta(real_t p_delta) {
@@ -159,94 +202,59 @@ void SimulationController2D::apply_simulation_force_impulse(const Vector2 &p_for
 	_simulation_force_impulse_duration = p_duration;
 }
 
-void SimulationController2D::apply_deform_force_impulse(int sim_id, real_t delta_time, const Vector2 &p_force) {
+void SimulationController2D::apply_deform_force(int sim_id, const Vector2 &p_force) {
 	ERR_FAIL_COND(_sim.is_null());
 
-	const real_t dt = (simulation_fixed_delta && simulation_delta > 0) ? simulation_delta : delta_time;
-	_sim->deform(sim_id, dt, p_force);
+	_sim->deform(sim_id, simulation_delta, p_force);
 	emit_signal("simulation_progress");
 }
 
-void SimulationController2D::simulation_progress(real_t process_delta_time) {
+void SimulationController2D::simulation_progress() {
+
 	if (simulation_active) {
-		const real_t dt = (simulation_fixed_delta && simulation_delta > 0) ? simulation_delta : process_delta_time;
-		if (motion_texture.is_valid() && _sim_owner != NULL) {
-			int sim_id = -1;
-			Vector2 trajectory_origin;
-			real_t trajectory_angle;
-			real_t time_scale, move_scale;
-			for (int n = 0; n < _sim_owner->get_child_count(); ++n) {
-				Node *node = _sim_owner->get_child(n);
-				if (DeformSprite *ds = Object::cast_to<DeformSprite>(node)) {
-					sim_id = ds->get_simulation_id();
-					trajectory_angle = ds->get_motion_texture_trajectory_angle();
-					trajectory_origin = ds->get_motion_texture_trajectory_origin();
-					time_scale = ds->get_motion_texture_time_scale();
-					move_scale = ds->get_motion_texture_move_scale();
-				} else
-					if (DeformMeshInstance2D *dm = Object::cast_to<DeformMeshInstance2D>(node)) {
-						sim_id = dm->get_simulation_id();
-						trajectory_angle = dm->get_motion_texture_trajectory_angle();
-						trajectory_origin = dm->get_motion_texture_trajectory_origin();
-						time_scale = dm->get_motion_texture_time_scale();
-						move_scale = dm->get_motion_texture_move_scale();
-				}
-				if (sim_id >= 0) {
-					_sim->deform(sim_id, dt, _get_displacement(motion_texture->get_data(), trajectory_angle, trajectory_origin, dt * time_scale) * move_scale);
-				}
-			}
+		if (_simulation_force_impulse_duration > 0) {
+			_sim->simulate( simulation_delta, _simulation_force_impulse );
+			_simulation_force_impulse_duration -= simulation_delta;
 		} else {
-			if (_simulation_force_impulse_duration > 0) {
-				_sim->simulate( dt, _simulation_force_impulse );
-				_simulation_force_impulse_duration -= dt;
-			} else {
-				_sim->simulate( dt, Vector2(0, 0) );
-			}
+			_sim->simulate( simulation_delta, Vector2(0, 0) );
 		}
 		emit_signal("simulation_progress");
 	}
 }
 
 void SimulationController2D::reset_simulation() {
+
 	_sim->reset_sim();
 	emit_signal("simulation_progress");
 }
 
-Node *SimulationController2D::get_owner() const { return _sim_owner; }
-
-void SimulationController2D::set_owner(Node *p_owner) {
-	if (_sim_owner != p_owner) {
-		_sim_owner = p_owner;
-	}
-}
-
-bool SimulationController2D::has_owner() const { return _sim_owner != NULL; }
-
 void SimulationController2D::_bind_methods() {
+
 	BIND_ENUM_CONSTANT(ElasticSimulation::SIM_ANCHOR_LEFT);
 	BIND_ENUM_CONSTANT(ElasticSimulation::SIM_ANCHOR_RIGHT);
 	BIND_ENUM_CONSTANT(ElasticSimulation::SIM_ANCHOR_TOP);
 	BIND_ENUM_CONSTANT(ElasticSimulation::SIM_ANCHOR_BOTTOM);
 
-	ClassDB::bind_method(D_METHOD("set_motion_texture", "texture"), &SimulationController2D::set_motion_texture);
-	ClassDB::bind_method(D_METHOD("get_motion_texture"), &SimulationController2D::get_motion_texture);
+	BIND_ENUM_CONSTANT(MotionPacking::PACKING_8BIT);
+	BIND_ENUM_CONSTANT(MotionPacking::PACKING_16BIT);
+
+	ClassDB::bind_method(D_METHOD("set_motion_image", "image"), &SimulationController2D::set_motion_image);
+	ClassDB::bind_method(D_METHOD("get_motion_image"), &SimulationController2D::get_motion_image);
+	ClassDB::bind_method(D_METHOD("set_motion_packing", "packing"), &SimulationController2D::set_motion_packing);
+	ClassDB::bind_method(D_METHOD("get_motion_packing"), &SimulationController2D::get_motion_packing);
 	ClassDB::bind_method(D_METHOD("set_simulation_state", "active"), &SimulationController2D::set_simulation_state);
 	ClassDB::bind_method(D_METHOD("is_simulation_active"), &SimulationController2D::is_simulation_active);
-	ClassDB::bind_method(D_METHOD("set_simulation_fixed_delta", "override"), &SimulationController2D::set_simulation_fixed_delta);
-	ClassDB::bind_method(D_METHOD("is_simulation_fixed_delta"), &SimulationController2D::is_simulation_fixed_delta);
 	ClassDB::bind_method(D_METHOD("set_simulation_delta", "delta_interval"), &SimulationController2D::set_simulation_delta);
 	ClassDB::bind_method(D_METHOD("get_simulation_delta"), &SimulationController2D::get_simulation_delta);
 	ClassDB::bind_method(D_METHOD("apply_simulation_force_impulse", "force_impulse", "duration"), &SimulationController2D::apply_simulation_force_impulse);
 	ClassDB::bind_method(D_METHOD("reset_simulation"), &SimulationController2D::reset_simulation);
 
-	ADD_GROUP("Simulation", "simulation_");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "simulation_active"), "set_simulation_state", "is_simulation_active");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "simulation_enable_fixed_delta"), "set_simulation_fixed_delta", "is_simulation_fixed_delta");
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "simulation_delta_interval", PROPERTY_HINT_RANGE, "0,1,0.05"), "set_simulation_delta", "get_simulation_delta");
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "motion_texture"), "set_motion_texture", "get_motion_texture");
-	ADD_GROUP("", "");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "active"), "set_simulation_state", "is_simulation_active");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "delta_interval", PROPERTY_HINT_RANGE, "0,1,0.05,or_greater"), "set_simulation_delta", "get_simulation_delta");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "motion_image", PROPERTY_HINT_RESOURCE_TYPE, "Image"), "set_motion_image", "get_motion_image");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "packing", PROPERTY_HINT_ENUM, "2 channels,4 channels"), "set_motion_packing", "get_motion_packing");
 
-	ADD_SIGNAL(MethodInfo("motion_texture_changed"));
+	ADD_SIGNAL(MethodInfo("motion_image_changed"));
 	ADD_SIGNAL(MethodInfo("simulation_changed"));
 	ADD_SIGNAL(MethodInfo("simulation_progress"));
 }
@@ -254,10 +262,10 @@ void SimulationController2D::_bind_methods() {
 SimulationController2D::SimulationController2D() {
 
 	_sim = Ref<ElasticSimulation>(memnew(ElasticSimulation));
-	_sim_owner = NULL;
+
+	motion_packing = PACKING_16BIT;
 
 	simulation_active = false;
-	simulation_fixed_delta = false;
 	simulation_delta = 0.1;
 
 	_simulation_force_impulse = Vector2();
@@ -268,7 +276,48 @@ SimulationController2D::~SimulationController2D() {
 }
 
 
+void SimulationControllerInstance2D::_draw_debug_marker(const Point2 &p0, real_t dir, int marker_length, int head_length, int head_width, const Color &marker_color1, const Color &marker_color2) {
+
+	const Vector2 unit = Vector2(Math::cos(dir), Math::sin(dir));
+	const Vector2 p1 = p0 + unit * marker_length;
+
+	draw_line(p0, p1, marker_color2);
+
+	const real_t dx = p1.x - p0.x;
+	const real_t dy = p1.y - p0.y;
+	const real_t length = Math::sqrt(dx*dx + dy*dy);
+
+	if (head_length < 1 || length < head_length) return;
+
+	// ux,uy is a unit vector parallel to the line.
+	const real_t ux = dx / length;
+	const real_t uy = dy / length;
+	// vx,vy is a unit vector perpendicular to ux,uy
+	const real_t vx = -uy;
+	const real_t vy = ux;
+
+	const real_t half_width = 0.5f * head_width;
+
+	const Vector2 pt1 = p1 + unit * head_length;
+	const Vector2 pt2 = Vector2(pt1.x - head_length*ux + half_width*vx, pt1.y - head_length*uy + half_width*vy);
+	const Vector2 pt3 = Vector2(pt1.x - head_length*ux - half_width*vx, pt1.y - head_length*uy - half_width*vy);
+
+	draw_line(pt1, pt2, marker_color2);
+	draw_line(pt2, pt3, marker_color2);
+	draw_line(pt3, pt1, marker_color2);
+
+	draw_circle(p0, 2, marker_color2);
+	draw_circle(p0, 1, marker_color1);
+}
+
+void SimulationControllerInstance2D::_on_controller_changed() {
+	set_process_internal(controller->is_simulation_active());
+	update();
+}
+
 void SimulationControllerInstance2D::_notification(int p_what) {
+
+	static Ref<ImageTexture> _motion_texture;
 
 	switch (p_what) {
 		case NOTIFICATION_READY: {
@@ -277,16 +326,94 @@ void SimulationControllerInstance2D::_notification(int p_what) {
 				set_controller(Ref<SimulationController2D>(memnew(SimulationController2D)));
 			}
 		} break;
+		case NOTIFICATION_DRAW: {
+			if (motion_debug) {
+				if (controller.is_valid() && controller->get_motion_image().is_valid()) {
+					const int cnt = get_child_count();
+					if (cnt > 0) {
+						if (_motion_texture.is_null()) {
+							_motion_texture.instance();
+							_motion_texture->create_from_image(controller->get_motion_image());
+						}
+						draw_texture(_motion_texture, Point2());
+						for (int n = 0; n < cnt; ++n) {
+							int sim_id = -1;
+							real_t trajectory_dir;
+							Node *node = get_child(n);
+							if (node->has_meta("__state_motion_iterator")) {
+								if (DeformSprite *ds = Object::cast_to<DeformSprite>(node)) {
+									sim_id = ds->get_simulation_id();
+									trajectory_dir = ds->get_motion_direction();
+								} else
+									if (DeformMeshInstance2D *dm = Object::cast_to<DeformMeshInstance2D>(node)) {
+										sim_id = dm->get_simulation_id();
+										trajectory_dir = dm->get_motion_direction();
+								}
+								if (sim_id >= 0) {
+									const MotionTextureIterator *info = (MotionTextureIterator *)(Object *)node->get_meta("__state_motion_iterator");
+									_draw_debug_marker(info->get_position(), trajectory_dir, 10, 3, 5);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 		case NOTIFICATION_INTERNAL_PROCESS: {
 			if (controller.is_valid()) {
-				controller->simulation_progress(get_process_delta_time());
+				if (controller->get_motion_image().is_valid()) {
+					for (int n = 0; n < get_child_count(); ++n) {
+						int sim_id = -1;
+						Vector2 trajectory_origin;
+						real_t trajectory_dir;
+						real_t amplify;
+						int interpolations;
+						Node *node = get_child(n);
+						if (DeformSprite *ds = Object::cast_to<DeformSprite>(node)) {
+							sim_id = ds->get_simulation_id();
+							trajectory_dir = ds->get_motion_direction();
+							trajectory_origin = ds->get_motion_trajectory_origin();
+							amplify = ds->get_motion_amplify();
+							interpolations = ds->get_motion_interpolations();
+						} else
+							if (DeformMeshInstance2D *dm = Object::cast_to<DeformMeshInstance2D>(node)) {
+								sim_id = dm->get_simulation_id();
+								trajectory_dir = dm->get_motion_direction();
+								trajectory_origin = dm->get_motion_trajectory_origin();
+								amplify = dm->get_motion_amplify();
+								interpolations = dm->get_motion_interpolations();
+						}
+						if (sim_id >= 0) {
+							const Size2 image_size = controller->get_motion_image()->get_size();
+
+							Ref<MotionTextureIterator> it = node->has_meta("__state_motion_iterator")
+								? node->get_meta("__state_motion_iterator")
+								: memnew(MotionTextureIterator(trajectory_origin * image_size, trajectory_dir))->next_step(trajectory_dir, image_size);
+
+							ERR_FAIL_COND(it.is_null());
+
+							// save new iterator
+							node->set_meta("__state_motion_iterator", it);
+
+							// directly modify iterator
+							int &interpolation_step = it->get_interpolation();
+
+							controller->apply_deform_force(sim_id, controller->get_motion_value(node, amplify, interpolations));
+
+							if (interpolation_step == interpolations) {
+								interpolation_step = 0;
+								it->next_step(trajectory_dir, image_size);
+							} else
+								++interpolation_step;
+						}
+					}
+					if (motion_debug)
+						update();
+				} else {
+					controller->simulation_progress();
+				}
 			}
 		} break;
-		case SIMULATION_CONFIGURATION_CHANGED: {
-			set_process_internal(controller->is_simulation_active());
-		} break;
-		default:
-			Node2D::_notification(p_what);
 	}
 }
 
@@ -298,9 +425,25 @@ Ref<SimulationController2D> SimulationControllerInstance2D::get_controller() con
 void SimulationControllerInstance2D::set_controller(const Ref<SimulationController2D> &p_controller) {
 
 	if (controller != p_controller) {
+		if (controller.is_valid())
+			controller->disconnect("simulation_changed", this, "_on_controller_changed");
 		controller = p_controller;
-		controller->set_owner(this);
-		set_process_internal(controller->is_simulation_active());
+		if (controller.is_valid())
+			controller->connect("simulation_changed", this, "_on_controller_changed");
+		set_process_internal(controller.is_valid() && controller->is_simulation_active());
+	}
+}
+
+bool SimulationControllerInstance2D::get_motion_debug() const {
+
+	return motion_debug;
+}
+
+void SimulationControllerInstance2D::set_motion_debug(const bool &p_debug) {
+
+	if (motion_debug != p_debug) {
+		motion_debug = p_debug;
+		update();
 	}
 }
 
@@ -308,17 +451,21 @@ void SimulationControllerInstance2D::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("get_controller"), &SimulationControllerInstance2D::get_controller);
 	ClassDB::bind_method(D_METHOD("set_controller"), &SimulationControllerInstance2D::set_controller);
+	ClassDB::bind_method(D_METHOD("get_motion_debug"), &SimulationControllerInstance2D::get_motion_debug);
+	ClassDB::bind_method(D_METHOD("set_motion_debug"), &SimulationControllerInstance2D::set_motion_debug);
+
+	ClassDB::bind_method(D_METHOD("_on_controller_changed"), &SimulationControllerInstance2D::_on_controller_changed);
 
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "controller"), "set_controller", "get_controller");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "motion_debug"), "set_motion_debug", "get_motion_debug");
 }
 
 SimulationControllerInstance2D::SimulationControllerInstance2D() {
+
+	motion_debug = false;
 }
 
 SimulationControllerInstance2D::~SimulationControllerInstance2D() {
-
-	if (controller.is_valid())
-		controller->set_owner(NULL);
 }
 
 // END
@@ -372,14 +519,9 @@ void DeformMeshInstance2D::_notification(int p_what) {
 		} break;
 		case NOTIFICATION_INTERNAL_PROCESS: {
 			if (controller.is_valid()) {
-				controller->simulation_progress(get_process_delta_time());
+				controller->simulation_progress();
 			}
 		} break;
-		case NOTIFICATION_LOCAL_TRANSFORM_CHANGED: {
-			MeshInstance2D::_notification(p_what);
-		} break;
-		default:
-			MeshInstance2D::_notification(p_what);
 	}
 }
 
@@ -393,65 +535,74 @@ Ref<SimulationController2D> DeformMeshInstance2D::get_controller() const {
 void DeformMeshInstance2D::set_controller(const Ref<SimulationController2D> &p_controller) {
 
 	if(controller != p_controller) {
-		_disconnect_controller();
+		if (controller.is_valid())
+			_disconnect_controller();
 		controller = p_controller;
-		if (controller.is_valid()) {
-			if (!controller->has_owner())
-				controller->set_owner(this);
+		if (controller.is_valid())
 			_connect_controller();
-		}
 	}
 }
 
-real_t DeformMeshInstance2D::get_motion_texture_trajectory_angle() {
+int DeformMeshInstance2D::get_motion_interpolations() const {
 
-	return motion_texture_trajectory_angle;
+	return motion_interpolations;
 }
 
-void DeformMeshInstance2D::set_motion_texture_trajectory_angle(real_t p_angle) {
+void DeformMeshInstance2D::set_motion_interpolations(int p_steps) {
 
-	if(motion_texture_trajectory_angle != p_angle) {
-		motion_texture_trajectory_angle = p_angle;
+	if (motion_interpolations != p_steps) {
+		motion_interpolations = p_steps;
 	}
 }
 
-Vector2 DeformMeshInstance2D::get_motion_texture_trajectory_origin() {
+real_t DeformMeshInstance2D::get_motion_direction() const {
 
-	return motion_texture_trajectory_origin;
+	return motion_trajectory_direction;
 }
 
-void DeformMeshInstance2D::set_motion_texture_trajectory_origin(Vector2 p_origin) {
+void DeformMeshInstance2D::set_motion_direction(real_t p_angle) {
 
-	if(motion_texture_trajectory_origin != p_origin) {
-		motion_texture_trajectory_origin = p_origin;
+	if(motion_trajectory_direction != p_angle) {
+		motion_trajectory_direction = p_angle;
 	}
 }
 
-real_t DeformMeshInstance2D::get_motion_texture_time_scale() {
+real_t DeformMeshInstance2D::get_motion_direction_degree() const {
 
-	return motion_texture_time_scale;
+	return Math::rad2deg(get_motion_direction());
 }
 
-void DeformMeshInstance2D::set_motion_texture_time_scale(real_t p_time_scale) {
+void DeformMeshInstance2D::set_motion_direction_degree(real_t p_degree) {
 
-	if(motion_texture_time_scale != p_time_scale) {
-		motion_texture_time_scale = p_time_scale;
+	set_motion_direction(Math::deg2rad(p_degree));
+}
+
+Vector2 DeformMeshInstance2D::get_motion_trajectory_origin() const {
+
+	return motion_trajectory_origin;
+}
+
+void DeformMeshInstance2D::set_motion_trajectory_origin(Vector2 p_origin) {
+
+	if(motion_trajectory_origin != p_origin) {
+		motion_trajectory_origin = p_origin;
 	}
 }
 
-real_t DeformMeshInstance2D::get_motion_texture_move_scale() {
+real_t DeformMeshInstance2D::get_motion_amplify() const {
 
-	return motion_texture_move_scale;
+	return motion_amplify;
 }
 
-void DeformMeshInstance2D::set_motion_texture_move_scale(real_t p_move_scale) {
+void DeformMeshInstance2D::set_motion_amplify(real_t p_amp) {
 
-	if(motion_texture_move_scale != p_move_scale) {
-		motion_texture_move_scale = p_move_scale;
+	if(motion_amplify != p_amp) {
+		motion_amplify = p_amp;
 	}
 }
 
 void DeformMeshInstance2D::_bind_methods() {
+
 	ClassDB::bind_method(D_METHOD("get_controller"), &DeformMeshInstance2D::get_controller);
 	ClassDB::bind_method(D_METHOD("set_controller", "controller"), &DeformMeshInstance2D::set_controller);
 
@@ -459,16 +610,19 @@ void DeformMeshInstance2D::_bind_methods() {
 }
 
 DeformMeshInstance2D::DeformMeshInstance2D() {
+
 	controller = Ref<SimulationController2D>(NULL);
 
-	motion_texture_trajectory_angle = 0;
-	motion_texture_trajectory_origin = Vector2();
-	motion_texture_time_scale = 1.0;
-	motion_texture_move_scale = 1.0;
+	motion_trajectory_direction = 0;
+	motion_trajectory_origin = Vector2();
+	motion_amplify = 2.0;
+	motion_interpolations = 20;
 
 }
 
 DeformMeshInstance2D::~DeformMeshInstance2D() {
+
+	// TODO: Dereference __state_motion_iterator (?)
 }
 
 // END
@@ -498,7 +652,7 @@ void DeformSprite::_update_simulation() {
 		sim->update_sim(_sim_id, scaled_rect, geometry_segments, geometry_size_variation, geometry_anchor, geometry_spring_factor, geometry_spring_variation);
 	}
 	// activate simulation progress:
-	set_process_internal(controller->get_owner() == this && controller->is_simulation_active());
+	set_process_internal(!_is_parent_controller() && controller->is_simulation_active());
 	// request new geometry:
 	_mesh = Ref<ArrayMesh>(NULL);
 }
@@ -655,6 +809,14 @@ Rect2 DeformSprite::_get_texture_uv_rect() const {
 	return rc;
 }
 
+bool DeformSprite::_is_parent_controller() const {
+
+	if (SimulationControllerInstance2D *instance = Object::cast_to<SimulationControllerInstance2D>(get_parent())) {
+		return controller != instance->get_controller();
+	}
+	return false;
+}
+
 void DeformSprite::_check_parent_controller() {
 
 	if (SimulationControllerInstance2D *instance = Object::cast_to<SimulationControllerInstance2D>(get_parent())) {
@@ -675,10 +837,7 @@ void DeformSprite::_check_parent_controller() {
 			DEBUG_PRINT("Parent controller connected to the node");
 		}
 	} else {
-		if (controller.is_valid() && !controller->has_owner()) {
-			// remove orphant controller
-			controller = Ref<SimulationController2D>(NULL);
-		}
+		controller = Ref<SimulationController2D>(NULL);
 	}
 }
 
@@ -877,52 +1036,70 @@ bool DeformSprite::get_geometry_debug() const {
 	return geometry_debug;
 }
 
-real_t DeformSprite::get_motion_texture_trajectory_angle() {
+int DeformSprite::get_motion_interpolations() const {
 
-	return motion_texture_trajectory_angle;
+	return motion_interpolations;
 }
 
-void DeformSprite::set_motion_texture_trajectory_angle(real_t p_angle) {
+void DeformSprite::set_motion_interpolations(int p_steps) {
 
-	if(motion_texture_trajectory_angle != p_angle) {
-		motion_texture_trajectory_angle = p_angle;
+	if (motion_interpolations != p_steps) {
+		motion_interpolations = p_steps;
 	}
 }
 
-Vector2 DeformSprite::get_motion_texture_trajectory_origin() {
+real_t DeformSprite::get_motion_direction() const {
 
-	return motion_texture_trajectory_origin;
+	return motion_trajectory_direction;
 }
 
-void DeformSprite::set_motion_texture_trajectory_origin(Vector2 p_origin) {
+void DeformSprite::set_motion_direction(real_t p_angle) {
+
+	const real_t angle360 = 2 * Math_PI;
+	const real_t angle90 = Math_PI;
+
+	// only supporting <0, 90> range
+	p_angle = Math::fmod(Math::fmod(p_angle, angle360) + angle360, angle90);
+
+	if(motion_trajectory_direction != p_angle) {
+		motion_trajectory_direction = p_angle;
+	}
+}
+
+real_t DeformSprite::get_motion_direction_degree() const {
+
+	return Math::rad2deg(get_motion_direction());
+}
+
+void DeformSprite::set_motion_direction_degree(real_t p_degree) {
+
+	set_motion_direction(Math::deg2rad(p_degree));
+}
+
+Vector2 DeformSprite::get_motion_trajectory_origin() const {
+
+	return motion_trajectory_origin;
+}
+
+void DeformSprite::set_motion_trajectory_origin(Vector2 p_origin) {
 	ERR_FAIL_COND(p_origin > ONE);
 
-	if(motion_texture_trajectory_origin != p_origin) {
-		motion_texture_trajectory_origin = p_origin;
+	if(motion_trajectory_origin != p_origin) {
+		motion_trajectory_origin = p_origin;
 	}
 }
 
-real_t DeformSprite::get_motion_texture_time_scale() {
+real_t DeformSprite::get_motion_amplify() const {
 
-	return motion_texture_time_scale;
+	return motion_amplify;
 }
 
-void DeformSprite::set_motion_texture_time_scale(real_t p_time_scale) {
+void DeformSprite::set_motion_amplify(real_t p_amp) {
+	ERR_FAIL_COND(p_amp <= 0);
+	ERR_FAIL_COND(p_amp > 10);
 
-	if(motion_texture_time_scale != p_time_scale) {
-		motion_texture_time_scale = p_time_scale;
-	}
-}
-
-real_t DeformSprite::get_motion_texture_move_scale() {
-
-	return motion_texture_move_scale;
-}
-
-void DeformSprite::set_motion_texture_move_scale(real_t p_move_scale) {
-
-	if(motion_texture_move_scale != p_move_scale) {
-		motion_texture_move_scale = p_move_scale;
+	if(motion_amplify != p_amp) {
+		motion_amplify = p_amp;
 	}
 }
 
@@ -941,8 +1118,6 @@ void DeformSprite::set_controller(const Ref<SimulationController2D> &p_controlle
 		}
 		controller = p_controller;
 		if (controller.is_valid()) {
-			if (!controller->has_owner())
-				controller->set_owner(this);
 			_connect_controller();
 		}
 		_sim_dirty = true;
@@ -954,7 +1129,7 @@ void DeformSprite::deform_geometry(const Vector2 &force) {
 	ERR_FAIL_COND(controller.is_null());
 	ERR_FAIL_COND(_sim_id == -1);
 
-	controller->apply_deform_force_impulse(_sim_id, get_process_delta_time(), force);
+	controller->apply_deform_force(_sim_id, force);
 
 	_deform_force = force;
 	update();
@@ -985,14 +1160,17 @@ void DeformSprite::debug_draw_geometry() {
 		case ElasticSimulation::SIM_ANCHOR_RIGHT: { force.x -= half.x; } break;
 	}
 	const real_t force_scale = 2;
-	if (controller->is_simulation_active()) {
+	if (controller->is_simulation_active() && controller->get_motion_image().is_null()) {
 		const Color force_color = Color(0.5, 1, 0, CLAMP(controller->get_simulation_force_impulse_duration(), 0, 1));
 		const Vector2 force_end = force + force_scale * controller->get_simulation_force_impulse() / get_scale();
 		draw_line(force, force_end, force_color);
 		draw_rect(Rect2(force_end, 2.0 * get_scale().inv()), force_color, true);
 	} else {
 		const Color force_color = Color(0.5, 1, 0, 0.8);
-		const Vector2 force_end = force + force_scale * _deform_force / get_scale();
+		const Vector2 force_end = force + force_scale
+			* (controller->get_motion_image().is_valid()
+			? controller->get_motion_value(this, motion_amplify, motion_interpolations)
+			: _deform_force) / get_scale();
 		draw_line(force, force_end, force_color);
 		draw_rect(Rect2(force_end, 2.0 * get_scale().inv()), force_color, true);
 	}
@@ -1017,14 +1195,16 @@ void DeformSprite::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_geometry_debug", "debug"), &DeformSprite::set_geometry_debug);
 	ClassDB::bind_method(D_METHOD("get_geometry_debug"), &DeformSprite::get_geometry_debug);
 
-	ClassDB::bind_method(D_METHOD("set_motion_texture_time_scale"), &DeformSprite::set_motion_texture_time_scale);
-	ClassDB::bind_method(D_METHOD("get_motion_texture_time_scale"), &DeformSprite::get_motion_texture_time_scale);
-	ClassDB::bind_method(D_METHOD("set_motion_texture_move_scale"), &DeformSprite::set_motion_texture_move_scale);
-	ClassDB::bind_method(D_METHOD("get_motion_texture_move_scale"), &DeformSprite::get_motion_texture_move_scale);
-	ClassDB::bind_method(D_METHOD("set_motion_texture_trajectory_angle"), &DeformSprite::set_motion_texture_trajectory_angle);
-	ClassDB::bind_method(D_METHOD("get_motion_texture_trajectory_angle"), &DeformSprite::get_motion_texture_trajectory_angle);
-	ClassDB::bind_method(D_METHOD("set_motion_texture_trajectory_origin"), &DeformSprite::set_motion_texture_trajectory_origin);
-	ClassDB::bind_method(D_METHOD("get_motion_texture_trajectory_origin"), &DeformSprite::get_motion_texture_trajectory_origin);
+	ClassDB::bind_method(D_METHOD("set_motion_amplify"), &DeformSprite::set_motion_amplify);
+	ClassDB::bind_method(D_METHOD("get_motion_amplify"), &DeformSprite::get_motion_amplify);
+	ClassDB::bind_method(D_METHOD("set_motion_direction"), &DeformSprite::set_motion_direction);
+	ClassDB::bind_method(D_METHOD("get_motion_direction"), &DeformSprite::get_motion_direction);
+	ClassDB::bind_method(D_METHOD("set_motion_direction_degree"), &DeformSprite::set_motion_direction_degree);
+	ClassDB::bind_method(D_METHOD("get_motion_direction_degree"), &DeformSprite::get_motion_direction_degree);
+	ClassDB::bind_method(D_METHOD("set_motion_trajectory_origin"), &DeformSprite::set_motion_trajectory_origin);
+	ClassDB::bind_method(D_METHOD("get_motion_trajectory_origin"), &DeformSprite::get_motion_trajectory_origin);
+	ClassDB::bind_method(D_METHOD("set_motion_interpolations", "steps"), &DeformSprite::set_motion_interpolations);
+	ClassDB::bind_method(D_METHOD("get_motion_interpolations"), &DeformSprite::get_motion_interpolations);
 
 	ClassDB::bind_method(D_METHOD("_on_simulation_update"), &DeformSprite::_on_simulation_update);
 	ClassDB::bind_method(D_METHOD("_on_simulation_changed"), &DeformSprite::_on_simulation_changed);
@@ -1042,20 +1222,20 @@ void DeformSprite::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "geometry_spring_variation", PROPERTY_HINT_RANGE, "0,1,0.05"), "set_geometry_spring_variation", "get_geometry_spring_variation");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "geometry_debug"), "set_geometry_debug", "get_geometry_debug");
 
-	ADD_GROUP("Motion Texture", "motion_texture_");
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "motion_texture_time_scale"), "set_motion_texture_time_scale", "get_motion_texture_time_scale");
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "motion_texture_move_scale"), "set_motion_texture_move_scale", "get_motion_texture_move_scale");
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "motion_texture_trajectory_angle", PROPERTY_HINT_RANGE, "-360,360,0.1,or_lesser,or_greater"), "set_motion_texture_trajectory_angle", "get_motion_texture_trajectory_angle");
-	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "motion_texture_trajectory_origin"), "set_motion_texture_trajectory_origin", "get_motion_texture_trajectory_origin");
+	ADD_GROUP("Motion Image", "motion_");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "motion_amplify", PROPERTY_HINT_RANGE, "0,10,0.5,or_greater"), "set_motion_amplify", "get_motion_amplify");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "motion_direction", PROPERTY_HINT_RANGE, "-360,360,0.1,or_lesser,or_greater"), "set_motion_direction_degree", "get_motion_direction_degree");
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "motion_origin"), "set_motion_trajectory_origin", "get_motion_trajectory_origin");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "motion_interpolations"), "set_motion_interpolations", "get_motion_interpolations");
 }
 
 DeformSprite::DeformSprite() {
 	controller = Ref<SimulationController2D>(NULL);
 
-	motion_texture_trajectory_angle = 0;
-	motion_texture_trajectory_origin = Vector2();
-	motion_texture_time_scale = 1.0;
-	motion_texture_move_scale = 1.0;
+	motion_trajectory_direction = Math::deg2rad(30.0);
+	motion_trajectory_origin = Vector2();
+	motion_amplify = 2.0;
+	motion_interpolations = 20;
 
 	geometry_segments = 1;
 	geometry_size_variation = false;
@@ -1075,6 +1255,8 @@ DeformSprite::DeformSprite() {
 }
 
 DeformSprite::~DeformSprite() {
+
+	// TODO: Dereference __state_motion_iterator (?)
 }
 
 // END

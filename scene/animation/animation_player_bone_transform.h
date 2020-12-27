@@ -35,7 +35,7 @@
 #include "core/object.h"
 #include "core/math/transform.h"
 
-#define BONE_TRANSFORMER_KEY "bone_transformer"
+#define BONE_TRANSFORMER_KEY "__internal_bone_transformer"
 
 
 class AnimationPlayerBoneTransform : public Object {

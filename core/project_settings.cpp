@@ -635,7 +635,6 @@ Error ProjectSettings::_load_settings_text_or_binary(const String &p_text_path, 
 }
 
 int ProjectSettings::get_order(const String &p_name) const {
-
 	ERR_FAIL_COND_V_MSG(!props.has(p_name), -1, "Request for nonexistent project setting: " + p_name + ".");
 	return props[p_name].order;
 }

@@ -45,7 +45,9 @@ VERBOSE2 = False  # default godot behavior
 VERBOSE3 = False  # godot verbose mode
 nm = sys.platform
 nm = "osx" if sys.platform == "darwin" else nm
-GODOT_BINARY = os.environ.get("GDBIN", "bin/godot.%s.tools.64" % nm)
+
+default_bin = os.path.dirname(os.path.realpath(__file__)) + "/../../bin/godot.%s.tools.64" % nm
+GODOT_BINARY = os.environ.get("GDBIN", default_bin)
 
 
 def text_indent(text):

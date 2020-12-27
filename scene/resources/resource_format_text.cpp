@@ -1735,10 +1735,25 @@ Error ResourceFormatSaverTextInstance::save(const String &p_path, const RES &p_r
 
 			for (int j = 0; j < state->get_node_property_count(i); j++) {
 
+				String nm = String(state->get_node_property_name(i, j)).property_name_encode();
 				String vars;
-				VariantWriter::write_to_string(state->get_node_property_value(i, j), vars, _write_resources, this);
+				if (String(state->get_node_property_name(i, j)).property_name_encode() == "__meta__") {
+					Dictionary meta = state->get_node_property_value(i, j).duplicate();
+					if (!meta.empty()) {
+						Array keys = meta.keys();
+						for (int c = 0; c < keys.size(); ++c) {
+							String key = keys[c];
+							if (key.begins_with("__state") || key.begins_with("__internal"))
+								meta.erase(key);
+						}
+						if (!meta.empty())
+							VariantWriter::write_to_string(meta, vars, _write_resources, this);
+					}
+				} else
+					VariantWriter::write_to_string(state->get_node_property_value(i, j), vars, _write_resources, this);
 
-				f->store_string(String(state->get_node_property_name(i, j)).property_name_encode() + " = " + vars + "\n");
+				if (!vars.empty())
+					f->store_string(nm + " = " + vars + "\n");
 			}
 
 			if (i < state->get_node_count() - 1)
