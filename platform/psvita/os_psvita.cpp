@@ -30,7 +30,6 @@
 
 #include "os_psvita.h"
 
-#include "core/io/file_access_buffered_fa.h"
 #include "drivers/unix/dir_access_unix.h"
 #include "drivers/unix/file_access_unix.h"
 #include "main/main.h"
@@ -67,7 +66,7 @@ const char *OSPSVita::get_audio_driver_name(int p_driver) const {
 
 void OSPSVita::initialize_core() {
 
-	FileAccess::make_default<FileAccessBufferedFA<FileAccessUnix> >(FileAccess::ACCESS_RESOURCES);
+	FileAccess::make_default<FileAccessUnix>(FileAccess::ACCESS_RESOURCES);
 	DirAccess::make_default<DirAccessUnix>(DirAccess::ACCESS_RESOURCES);
 };
 

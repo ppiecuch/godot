@@ -140,6 +140,7 @@ public:
 		AABB aabb;
 		Vector<PoolVector<uint8_t> > blend_shapes;
 		Vector<AABB> bone_aabbs;
+		bool active;
 	};
 
 	struct DummyMesh : public RID_Data {

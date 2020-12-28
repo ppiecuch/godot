@@ -390,7 +390,9 @@ void SimulationControllerInstance2D::_notification(int p_what) {
 						if (sim_id >= 0) {
 							const Size2 image_size = controller->get_motion_image()->get_size();
 
-							Ref<MotionTextureIterator> it = node->has_meta("__state_motion_iterator") ? node->get_meta("__state_motion_iterator") : memnew(MotionTextureIterator(trajectory_origin * image_size, trajectory_dir))->next_step(trajectory_dir, image_size);
+							Ref<MotionTextureIterator> it = node->has_meta("__state_motion_iterator")
+								? (Ref<MotionTextureIterator>)node->get_meta("__state_motion_iterator")
+								: Ref<MotionTextureIterator>(memnew(MotionTextureIterator(trajectory_origin * image_size, trajectory_dir))->next_step(trajectory_dir, image_size));
 
 							ERR_FAIL_COND(it.is_null());
 
@@ -496,7 +498,7 @@ void DeformMeshInstance2D::_get_property_list(List<PropertyInfo> *p_list) const 
 		for (List<PropertyInfo>::Element *E = p_list->front(); E; E = E->next()) {
 			PropertyInfo &prop = E->get();
 			if (prop.name.to_lower() == "controller") {
-				if (SimulationControllerInstance2D *sim = Object::cast_to<SimulationControllerInstance2D>(get_parent()))
+				if (Object::cast_to<SimulationControllerInstance2D>(get_parent()))
 					prop.usage &= ~PROPERTY_USAGE_EDITOR;
 				else
 					prop.usage |= PROPERTY_USAGE_EDITOR;
@@ -963,7 +965,7 @@ void DeformSprite::_get_property_list(List<PropertyInfo> *p_list) const {
 		for (List<PropertyInfo>::Element *E = p_list->front(); E; E = E->next()) {
 			PropertyInfo &prop = E->get();
 			if (prop.name.to_lower() == "controller") {
-				if (SimulationControllerInstance2D *sim = Object::cast_to<SimulationControllerInstance2D>(get_parent()))
+				if (Object::cast_to<SimulationControllerInstance2D>(get_parent()))
 					prop.usage &= ~PROPERTY_USAGE_EDITOR;
 				else
 					prop.usage |= PROPERTY_USAGE_EDITOR;
