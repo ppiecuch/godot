@@ -41,7 +41,7 @@
 #include "scene/main/viewport.h"
 
 #define get_bone_transformer(node) \
-	((AnimationPlayerBoneTransform *)(node->has_meta(BONE_TRANSFORMER_KEY)?(Object *)node->get_meta(BONE_TRANSFORMER_KEY):0))
+	((AnimationPlayerBoneTransform *)(node->has_meta(BONE_TRANSFORMER_KEY) ? (Object *)node->get_meta(BONE_TRANSFORMER_KEY) : 0))
 
 void AnimationTreePlayerEditor::edit(AnimationTreePlayer *p_anim_tree) {
 

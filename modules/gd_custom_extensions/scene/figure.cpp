@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  figure.cpp                                                         */
+/*  figure.cpp                                                           */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -36,7 +36,7 @@
 
 #include <limits>
 
-const Basis FLIP_Y = Basis( 1, 0, 0, 0, -1, 0, 0, 0, 1 );
+const Basis FLIP_Y = Basis(1, 0, 0, 0, -1, 0, 0, 0, 1);
 const real_t REAL_MIN = std::numeric_limits<real_t>::min();
 const real_t REAL_MAX = std::numeric_limits<real_t>::max();
 
@@ -101,8 +101,8 @@ void Figure::_update_figure_shape() {
 		if (parent >= 0) {
 			grests.write[i] = grests[parent] * get_bone_rest(i) * get_bone_pose(i);
 
-			Vector3 v0 = _figure_xform.xform( grests[parent].origin );
-			Vector3 v1 = _figure_xform.xform( grests[i].origin );
+			Vector3 v0 = _figure_xform.xform(grests[parent].origin);
+			Vector3 v1 = _figure_xform.xform(grests[i].origin);
 
 			if (v0.x < pt_min.x) pt_min.x = v0.x;
 			if (v0.y < pt_min.y) pt_min.y = v0.y;
@@ -129,7 +129,7 @@ void Figure::_update_figure_shape() {
 		}
 	}
 
-	for(int pt = 0; pt < lines.size(); pt++) {
+	for (int pt = 0; pt < lines.size(); pt++) {
 		const Vector3 &v = lines[pt];
 		_figure_lines.push_back(Vector2(v.x, v.y));
 	}
@@ -183,7 +183,6 @@ Vector3 Figure::get_figure_scale() const {
 	return figure_scale * Vector3(1, -1, 1);
 }
 
-
 void Figure::set_figure_rotation(Vector3 p_radians) {
 
 	if (_figure_xform_dirty)
@@ -198,7 +197,6 @@ Vector3 Figure::get_figure_rotation() const {
 
 	return figure_angle;
 }
-
 
 void Figure::set_figure_rotation_x_degrees(float p_degrees) {
 
@@ -411,8 +409,7 @@ void Figure::_notification(int p_what) {
 
 		case NOTIFICATION_DRAW: {
 
-			if (_figure_dirty)
-			{
+			if (_figure_dirty) {
 				_update_figure_shape();
 				_figure_dirty = false;
 			}
@@ -773,7 +770,7 @@ Point2 Figure::get_figure_offset() const {
 	return figure_offset;
 }
 
-void Figure::set_figure_offset(const Point2& p_offset) {
+void Figure::set_figure_offset(const Point2 &p_offset) {
 
 	figure_offset = p_offset;
 	_update_transform();
@@ -831,7 +828,6 @@ void Figure::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_figure_orientation", "figure_orientation"), &Figure::set_figure_orientation);
 	ClassDB::bind_method(D_METHOD("get_figure_orientation"), &Figure::get_figure_orientation);
 
-
 	ADD_GROUP("Figure Transform", "figure_");
 	ADD_PROPERTY(PropertyInfo(Variant::BASIS, "figure_orientation", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "set_figure_orientation", "get_figure_orientation");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "figure_offset"), "set_figure_offset", "get_figure_offset");
@@ -844,7 +840,8 @@ void Figure::_bind_methods() {
 	BIND_CONSTANT(NOTIFICATION_UPDATE_FIGURE);
 }
 
-Figure::Figure() : _bone_transformer(this) {
+Figure::Figure() :
+		_bone_transformer(this) {
 
 	figure_offset = Point2(0, 0);
 	figure_angle = Vector3(0, 0, 0);
@@ -862,5 +859,4 @@ Figure::Figure() : _bone_transformer(this) {
 }
 
 Figure::~Figure() {
-
 }

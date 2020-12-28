@@ -1053,7 +1053,6 @@ void RasterizerCanvasGLES3::render_batches(Item::Command *const *p_commands, Ite
 								state.canvas_shader.set_uniform(CanvasShaderGLES3::MODELVIEW_MATRIX, state.final_transform * inv_xf);
 								state.canvas_shader.set_uniform(CanvasShaderGLES3::WORLD_MATRIX, state.world_matrix * inv_xf);
 								state.canvas_shader.set_uniform(CanvasShaderGLES3::INV_WORLD_MATRIX, state.inv_world_matrix * inv_xf);
-
 							}
 
 							glBindVertexArray(data.particle_quad_array); //use particle quad array

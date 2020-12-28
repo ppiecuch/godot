@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  elastic_simulation.h                                                     */
+/*  elastic_simulation.h                                                 */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -33,14 +33,14 @@
 
 #include <memory>
 
-#include "core/reference.h"
 #include "core/class_db.h"
+#include "core/reference.h"
 
 namespace sim3 {
-	class Simulation;
+class Simulation;
 }
 
-class ElasticSimulation: public Reference {
+class ElasticSimulation : public Reference {
 	GDCLASS(ElasticSimulation, Reference);
 
 private:

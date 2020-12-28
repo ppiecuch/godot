@@ -123,7 +123,6 @@ public:
 	~SimulationControllerInstance2D();
 };
 
-
 class DeformMeshInstance2D : public MeshInstance2D {
 	GDCLASS(DeformMeshInstance2D, MeshInstance2D)
 

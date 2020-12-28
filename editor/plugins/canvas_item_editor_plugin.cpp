@@ -40,13 +40,13 @@
 #include "editor/plugins/animation_player_editor_plugin.h"
 #include "editor/plugins/script_editor_plugin.h"
 #include "editor/script_editor_debugger.h"
-#include "scene/animation/animation_player_bone_transform.h"
 #include "scene/2d/light_2d.h"
 #include "scene/2d/particles_2d.h"
 #include "scene/2d/polygon_2d.h"
 #include "scene/2d/skeleton_2d.h"
 #include "scene/2d/sprite.h"
 #include "scene/2d/touch_screen_button.h"
+#include "scene/animation/animation_player_bone_transform.h"
 #include "scene/gui/grid_container.h"
 #include "scene/gui/nine_patch_rect.h"
 #include "scene/gui/viewport_container.h"
@@ -63,7 +63,7 @@ void configureVectorSprite(Node *p_child, Ref<Resource> p_texture);
 #endif
 
 #define get_bone_transformer(node) \
-	((AnimationPlayerBoneTransform *)(node->has_meta(BONE_TRANSFORMER_KEY)?(Object *)node->get_meta(BONE_TRANSFORMER_KEY):0))
+	((AnimationPlayerBoneTransform *)(node->has_meta(BONE_TRANSFORMER_KEY) ? (Object *)node->get_meta(BONE_TRANSFORMER_KEY) : 0))
 
 // Min and Max are power of two in order to play nicely with successive increment.
 // That way, we can naturally reach a 100% zoom from boundaries.

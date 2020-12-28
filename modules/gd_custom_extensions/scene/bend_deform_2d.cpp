@@ -31,18 +31,17 @@
 #include <string>
 #include <vector>
 
-#include "scene/resources/mesh_data_tool.h"
 #include "scene/resources/mesh.h"
+#include "scene/resources/mesh_data_tool.h"
 
 #include "bend_deform_2d.h"
 
 // https://www.reddit.com/r/godot/comments/9y74r6/how_to_detect_when_node2d_is_moveddragged_in_the/
 
-
 #ifdef DEBUG_ENABLED
-# define DEBUG_PRINT(m_text) print_line(m_text);
+#define DEBUG_PRINT(m_text) print_line(m_text);
 #else
-# define DEBUG_PRINT(m_text)
+#define DEBUG_PRINT(m_text)
 #endif
 
 static const Vector2 ONE(1.0, 1.0);
@@ -51,14 +50,15 @@ struct MotionTextureIterator : public Reference {
 	Point2 position, next_position;
 	real_t pk;
 	int interpolation;
-	MotionTextureIterator(const Point2 &pt, real_t dir) : interpolation(0) {
+	MotionTextureIterator(const Point2 &pt, real_t dir) :
+			interpolation(0) {
 		const real_t dx = Math::cos(dir);
 		const real_t dy = Math::sin(dir);
 		const real_t slope = Math::tan(dir);
 		pk = slope < 1 ? 2 * dy - dx : 2 * dx - dy;
 		position = next_position = Point2(Math::round(pt.x), Math::round(pt.y));
 	}
-	MotionTextureIterator(const Variant &var) { }
+	MotionTextureIterator(const Variant &var) {}
 	void set_position(const Point2 &pt) { position = pt; }
 	Point2 &get_position() { return position; }
 	Point2 get_position() const { return position; }
@@ -76,18 +76,18 @@ struct MotionTextureIterator : public Reference {
 		const real_t slope = Math::tan(dir);
 		if (slope < 1) {
 			++next_position.x;
-			if (pk<0) {
-				pk += 2*dy;
+			if (pk < 0) {
+				pk += 2 * dy;
 			} else {
-				pk += 2*(dy-dx);
+				pk += 2 * (dy - dx);
 				++next_position.y;
 			}
 		} else {
 			++next_position.y;
-			if (pk<0) {
-				pk += 2*dx;
+			if (pk < 0) {
+				pk += 2 * dx;
 			} else {
-				pk += 2*(dx-dy);
+				pk += 2 * (dx - dy);
 				++next_position.x;
 			}
 		}
@@ -98,7 +98,7 @@ struct MotionTextureIterator : public Reference {
 
 // BEGIN Elastic-deform group node.
 
-#define _notify_simulation_change()                                 \
+#define _notify_simulation_change() \
 	emit_signal("simulation_changed");
 
 Vector2 SimulationController2D::_get_motion_normalized_displacement(Point2 p_coord) {
@@ -110,7 +110,7 @@ Vector2 SimulationController2D::_get_motion_normalized_displacement(Point2 p_coo
 	switch (motion_packing) {
 		case PACKING_16BIT: {
 			const uint32_t _c = c.to_argb32();
-			return Vector2((_c&0xFFFF0000)>>16, _c&0xFFFF) / 32767.5 - ONE;
+			return Vector2((_c & 0xFFFF0000) >> 16, _c & 0xFFFF) / 32767.5 - ONE;
 		}
 		case PACKING_8BIT: {
 			return Vector2(c.r, c.g) * 2.0 - ONE;
@@ -122,7 +122,9 @@ Vector2 SimulationController2D::_get_motion_normalized_displacement(Point2 p_coo
 	return Vector2();
 }
 
-Ref<Image> SimulationController2D::get_motion_image() const { return motion_image; }
+Ref<Image> SimulationController2D::get_motion_image() const {
+	return motion_image;
+}
 
 void SimulationController2D::set_motion_image(const Ref<Image> &p_image) {
 
@@ -160,13 +162,18 @@ Vector2 SimulationController2D::get_motion_value(Node *p_node, real_t p_amp, int
 		}
 	}
 	return displace * p_amp;
-
 }
 
-Ref<ElasticSimulation> SimulationController2D::get_simulation() const { return _sim; }
+Ref<ElasticSimulation> SimulationController2D::get_simulation() const {
+	return _sim;
+}
 
-Vector2 SimulationController2D::get_simulation_force_impulse() const { return _simulation_force_impulse; }
-real_t SimulationController2D::get_simulation_force_impulse_duration() const { return _simulation_force_impulse_duration; }
+Vector2 SimulationController2D::get_simulation_force_impulse() const {
+	return _simulation_force_impulse;
+}
+real_t SimulationController2D::get_simulation_force_impulse_duration() const {
+	return _simulation_force_impulse_duration;
+}
 
 void SimulationController2D::set_simulation_state(bool p_state) {
 
@@ -213,10 +220,10 @@ void SimulationController2D::simulation_progress() {
 
 	if (simulation_active) {
 		if (_simulation_force_impulse_duration > 0) {
-			_sim->simulate( simulation_delta, _simulation_force_impulse );
+			_sim->simulate(simulation_delta, _simulation_force_impulse);
 			_simulation_force_impulse_duration -= simulation_delta;
 		} else {
-			_sim->simulate( simulation_delta, Vector2(0, 0) );
+			_sim->simulate(simulation_delta, Vector2(0, 0));
 		}
 		emit_signal("simulation_progress");
 	}
@@ -275,7 +282,6 @@ SimulationController2D::SimulationController2D() {
 SimulationController2D::~SimulationController2D() {
 }
 
-
 void SimulationControllerInstance2D::_draw_debug_marker(const Point2 &p0, real_t dir, int marker_length, int head_length, int head_width, const Color &marker_color1, const Color &marker_color2) {
 
 	const Vector2 unit = Vector2(Math::cos(dir), Math::sin(dir));
@@ -285,7 +291,7 @@ void SimulationControllerInstance2D::_draw_debug_marker(const Point2 &p0, real_t
 
 	const real_t dx = p1.x - p0.x;
 	const real_t dy = p1.y - p0.y;
-	const real_t length = Math::sqrt(dx*dx + dy*dy);
+	const real_t length = Math::sqrt(dx * dx + dy * dy);
 
 	if (head_length < 1 || length < head_length) return;
 
@@ -299,8 +305,8 @@ void SimulationControllerInstance2D::_draw_debug_marker(const Point2 &p0, real_t
 	const real_t half_width = 0.5f * head_width;
 
 	const Vector2 pt1 = p1 + unit * head_length;
-	const Vector2 pt2 = Vector2(pt1.x - head_length*ux + half_width*vx, pt1.y - head_length*uy + half_width*vy);
-	const Vector2 pt3 = Vector2(pt1.x - head_length*ux - half_width*vx, pt1.y - head_length*uy - half_width*vy);
+	const Vector2 pt2 = Vector2(pt1.x - head_length * ux + half_width * vx, pt1.y - head_length * uy + half_width * vy);
+	const Vector2 pt3 = Vector2(pt1.x - head_length * ux - half_width * vx, pt1.y - head_length * uy - half_width * vy);
 
 	draw_line(pt1, pt2, marker_color2);
 	draw_line(pt2, pt3, marker_color2);
@@ -344,10 +350,9 @@ void SimulationControllerInstance2D::_notification(int p_what) {
 								if (DeformSprite *ds = Object::cast_to<DeformSprite>(node)) {
 									sim_id = ds->get_simulation_id();
 									trajectory_dir = ds->get_motion_direction();
-								} else
-									if (DeformMeshInstance2D *dm = Object::cast_to<DeformMeshInstance2D>(node)) {
-										sim_id = dm->get_simulation_id();
-										trajectory_dir = dm->get_motion_direction();
+								} else if (DeformMeshInstance2D *dm = Object::cast_to<DeformMeshInstance2D>(node)) {
+									sim_id = dm->get_simulation_id();
+									trajectory_dir = dm->get_motion_direction();
 								}
 								if (sim_id >= 0) {
 									const MotionTextureIterator *info = (MotionTextureIterator *)(Object *)node->get_meta("__state_motion_iterator");
@@ -375,20 +380,17 @@ void SimulationControllerInstance2D::_notification(int p_what) {
 							trajectory_origin = ds->get_motion_trajectory_origin();
 							amplify = ds->get_motion_amplify();
 							interpolations = ds->get_motion_interpolations();
-						} else
-							if (DeformMeshInstance2D *dm = Object::cast_to<DeformMeshInstance2D>(node)) {
-								sim_id = dm->get_simulation_id();
-								trajectory_dir = dm->get_motion_direction();
-								trajectory_origin = dm->get_motion_trajectory_origin();
-								amplify = dm->get_motion_amplify();
-								interpolations = dm->get_motion_interpolations();
+						} else if (DeformMeshInstance2D *dm = Object::cast_to<DeformMeshInstance2D>(node)) {
+							sim_id = dm->get_simulation_id();
+							trajectory_dir = dm->get_motion_direction();
+							trajectory_origin = dm->get_motion_trajectory_origin();
+							amplify = dm->get_motion_amplify();
+							interpolations = dm->get_motion_interpolations();
 						}
 						if (sim_id >= 0) {
 							const Size2 image_size = controller->get_motion_image()->get_size();
 
-							Ref<MotionTextureIterator> it = node->has_meta("__state_motion_iterator")
-								? node->get_meta("__state_motion_iterator")
-								: memnew(MotionTextureIterator(trajectory_origin * image_size, trajectory_dir))->next_step(trajectory_dir, image_size);
+							Ref<MotionTextureIterator> it = node->has_meta("__state_motion_iterator") ? node->get_meta("__state_motion_iterator") : memnew(MotionTextureIterator(trajectory_origin * image_size, trajectory_dir))->next_step(trajectory_dir, image_size);
 
 							ERR_FAIL_COND(it.is_null());
 
@@ -470,7 +472,6 @@ SimulationControllerInstance2D::~SimulationControllerInstance2D() {
 
 // END
 
-
 // BEGIN Mesh elastic-deform.
 
 void DeformMeshInstance2D::_configure_controller(SigOperation p_op) {
@@ -525,7 +526,9 @@ void DeformMeshInstance2D::_notification(int p_what) {
 	}
 }
 
-int DeformMeshInstance2D::get_simulation_id() const { return _sim_id; }
+int DeformMeshInstance2D::get_simulation_id() const {
+	return _sim_id;
+}
 
 Ref<SimulationController2D> DeformMeshInstance2D::get_controller() const {
 
@@ -534,7 +537,7 @@ Ref<SimulationController2D> DeformMeshInstance2D::get_controller() const {
 
 void DeformMeshInstance2D::set_controller(const Ref<SimulationController2D> &p_controller) {
 
-	if(controller != p_controller) {
+	if (controller != p_controller) {
 		if (controller.is_valid())
 			_disconnect_controller();
 		controller = p_controller;
@@ -562,7 +565,7 @@ real_t DeformMeshInstance2D::get_motion_direction() const {
 
 void DeformMeshInstance2D::set_motion_direction(real_t p_angle) {
 
-	if(motion_trajectory_direction != p_angle) {
+	if (motion_trajectory_direction != p_angle) {
 		motion_trajectory_direction = p_angle;
 	}
 }
@@ -584,7 +587,7 @@ Vector2 DeformMeshInstance2D::get_motion_trajectory_origin() const {
 
 void DeformMeshInstance2D::set_motion_trajectory_origin(Vector2 p_origin) {
 
-	if(motion_trajectory_origin != p_origin) {
+	if (motion_trajectory_origin != p_origin) {
 		motion_trajectory_origin = p_origin;
 	}
 }
@@ -596,7 +599,7 @@ real_t DeformMeshInstance2D::get_motion_amplify() const {
 
 void DeformMeshInstance2D::set_motion_amplify(real_t p_amp) {
 
-	if(motion_amplify != p_amp) {
+	if (motion_amplify != p_amp) {
 		motion_amplify = p_amp;
 	}
 }
@@ -617,7 +620,6 @@ DeformMeshInstance2D::DeformMeshInstance2D() {
 	motion_trajectory_origin = Vector2();
 	motion_amplify = 2.0;
 	motion_interpolations = 20;
-
 }
 
 DeformMeshInstance2D::~DeformMeshInstance2D() {
@@ -626,7 +628,6 @@ DeformMeshInstance2D::~DeformMeshInstance2D() {
 }
 
 // END
-
 
 // BEGIN Sprite elastic-deform.
 
@@ -691,28 +692,51 @@ void DeformSprite::_create_geom() {
 	const bool horiz = geometry_anchor == ElasticSimulation::SIM_ANCHOR_LEFT || geometry_anchor == ElasticSimulation::SIM_ANCHOR_RIGHT;
 
 	const Vector2
-		DXv(rc.size.width/(horiz ? segs : 1), 0),
-		DYv(0, rc.size.height/(vert ? segs : 1)),
-		HXv(rc.size.width/(horiz ? 2 : 1), 0),
-		HYv(0, rc.size.height/(vert ? 2 : 1));
+			DXv(rc.size.width / (horiz ? segs : 1), 0),
+			DYv(0, rc.size.height / (vert ? segs : 1)),
+			HXv(rc.size.width / (horiz ? 2 : 1), 0),
+			HYv(0, rc.size.height / (vert ? 2 : 1));
 	const Vector2
-		DXt(tc.size.width/(horiz ? segs : 1), 0),
-		DYt(0, tc.size.height/(vert ? segs : 1)),
-		HXt(tc.size.width/(horiz ? 2 : 1), 0),
-		HYt(0, tc.size.height/(vert ? 2 : 1));
+			DXt(tc.size.width / (horiz ? segs : 1), 0),
+			DYt(0, tc.size.height / (vert ? segs : 1)),
+			HXt(tc.size.width / (horiz ? 2 : 1), 0),
+			HYt(0, tc.size.height / (vert ? 2 : 1));
 
 	typedef std::vector<Vector2> Vec2Vector;
 
 	Vec2Vector steps, tsteps;
 	Vector2 starting = rc.position, opposite, step, tstarting = tc.position, topposite, tstep;
 	if (geometry_size_variation && segs > 1) {
-		switch(geometry_anchor) {
-			case ElasticSimulation::SIM_ANCHOR_TOP: { step = HYv; opposite = DXv; tstep = -HYt; topposite = DXt; } break;
-			case ElasticSimulation::SIM_ANCHOR_BOTTOM: { starting.y += rc.size.height; step = -HYv; opposite = DXv; tstarting.y += tc.size.height; tstep = -HYt; topposite = DXt; } break;
-			case ElasticSimulation::SIM_ANCHOR_LEFT: { step = HXv; opposite = DYv; tstep = HXt; topposite = DYt; } break;
-			case ElasticSimulation::SIM_ANCHOR_RIGHT: { starting.x += rc.size.width; step = -HXv; opposite = DYv; tstarting.x += tc.size.width; tstep = -HXt; } break;
+		switch (geometry_anchor) {
+			case ElasticSimulation::SIM_ANCHOR_TOP: {
+				step = HYv;
+				opposite = DXv;
+				tstep = -HYt;
+				topposite = DXt;
+			} break;
+			case ElasticSimulation::SIM_ANCHOR_BOTTOM: {
+				starting.y += rc.size.height;
+				step = -HYv;
+				opposite = DXv;
+				tstarting.y += tc.size.height;
+				tstep = -HYt;
+				topposite = DXt;
+			} break;
+			case ElasticSimulation::SIM_ANCHOR_LEFT: {
+				step = HXv;
+				opposite = DYv;
+				tstep = HXt;
+				topposite = DYt;
+			} break;
+			case ElasticSimulation::SIM_ANCHOR_RIGHT: {
+				starting.x += rc.size.width;
+				step = -HXv;
+				opposite = DYv;
+				tstarting.x += tc.size.width;
+				tstep = -HXt;
+			} break;
 		}
-		for(int s = 0; s < segs - 1; ++s) {
+		for (int s = 0; s < segs - 1; ++s) {
 			if (s == segs - 2) {
 				// last two segments
 				steps.push_back(1.5 * step);
@@ -727,11 +751,34 @@ void DeformSprite::_create_geom() {
 			tstep /= 2;
 		}
 	} else {
-		switch(geometry_anchor) {
-			case ElasticSimulation::SIM_ANCHOR_TOP: { step = DYv; opposite = DXv; tstep = -DYt; topposite = DXt; } break;
-			case ElasticSimulation::SIM_ANCHOR_BOTTOM: { starting.y += rc.size.y; step = -DYv; opposite = DXv; tstarting.y += tc.size.y; tstep = -DYt; topposite = DXt; } break;
-			case ElasticSimulation::SIM_ANCHOR_LEFT: { step = DXv; opposite = DYv; tstep = DXt; topposite = DYt; } break;
-			case ElasticSimulation::SIM_ANCHOR_RIGHT: { starting.x += rc.size.x; step = -DXv; opposite = DYv; tstarting.x += tc.size.x; tstep = -DXt; } break;
+		switch (geometry_anchor) {
+			case ElasticSimulation::SIM_ANCHOR_TOP: {
+				step = DYv;
+				opposite = DXv;
+				tstep = -DYt;
+				topposite = DXt;
+			} break;
+			case ElasticSimulation::SIM_ANCHOR_BOTTOM: {
+				starting.y += rc.size.y;
+				step = -DYv;
+				opposite = DXv;
+				tstarting.y += tc.size.y;
+				tstep = -DYt;
+				topposite = DXt;
+			} break;
+			case ElasticSimulation::SIM_ANCHOR_LEFT: {
+				step = DXv;
+				opposite = DYv;
+				tstep = DXt;
+				topposite = DYt;
+			} break;
+			case ElasticSimulation::SIM_ANCHOR_RIGHT: {
+				starting.x += rc.size.x;
+				step = -DXv;
+				opposite = DYv;
+				tstarting.x += tc.size.x;
+				tstep = -DXt;
+			} break;
 		}
 		steps = Vec2Vector(segs, step);
 		tsteps = Vec2Vector(segs, tstep);
@@ -937,7 +984,9 @@ void DeformSprite::_on_texture_changed() {
 	}
 }
 
-int DeformSprite::get_simulation_id() const { return _sim_id; }
+int DeformSprite::get_simulation_id() const {
+	return _sim_id;
+}
 
 void DeformSprite::set_geometry_anchor(ElasticSimulation::Anchor p_anchor) {
 	ERR_FAIL_INDEX((int)p_anchor, 4);
@@ -953,7 +1002,7 @@ ElasticSimulation::Anchor DeformSprite::get_geometry_anchor() const {
 }
 
 void DeformSprite::set_geometry_segments(int p_segments) {
-	ERR_FAIL_COND(p_segments<=0);
+	ERR_FAIL_COND(p_segments <= 0);
 
 	geometry_segments = p_segments;
 	_sim_dirty = true;
@@ -1061,7 +1110,7 @@ void DeformSprite::set_motion_direction(real_t p_angle) {
 	// only supporting <0, 90> range
 	p_angle = Math::fmod(Math::fmod(p_angle, angle360) + angle360, angle90);
 
-	if(motion_trajectory_direction != p_angle) {
+	if (motion_trajectory_direction != p_angle) {
 		motion_trajectory_direction = p_angle;
 	}
 }
@@ -1084,7 +1133,7 @@ Vector2 DeformSprite::get_motion_trajectory_origin() const {
 void DeformSprite::set_motion_trajectory_origin(Vector2 p_origin) {
 	ERR_FAIL_COND(p_origin > ONE);
 
-	if(motion_trajectory_origin != p_origin) {
+	if (motion_trajectory_origin != p_origin) {
 		motion_trajectory_origin = p_origin;
 	}
 }
@@ -1098,7 +1147,7 @@ void DeformSprite::set_motion_amplify(real_t p_amp) {
 	ERR_FAIL_COND(p_amp <= 0);
 	ERR_FAIL_COND(p_amp > 10);
 
-	if(motion_amplify != p_amp) {
+	if (motion_amplify != p_amp) {
 		motion_amplify = p_amp;
 	}
 }
@@ -1110,7 +1159,7 @@ Ref<SimulationController2D> DeformSprite::get_controller() const {
 
 void DeformSprite::set_controller(const Ref<SimulationController2D> &p_controller) {
 
-	if(controller != p_controller) {
+	if (controller != p_controller) {
 		if (controller.is_valid()) {
 			_disconnect_controller();
 			if (Ref<ElasticSimulation> sim = controller->get_simulation())
@@ -1143,21 +1192,29 @@ void DeformSprite::debug_draw_geometry() {
 
 	const Point2 origin = get_rect().position;
 	const int ccnt = sim->get_sim_constraint_count(_sim_id);
-	for(int i = 0; i < ccnt; i++) {
+	for (int i = 0; i < ccnt; i++) {
 		const ElasticSimulation::Constraint &c = sim->get_sim_constraint_at(_sim_id, i);
 		draw_line(origin + c.begin / geometry_pixel_unit / get_scale(), origin + c.end / geometry_pixel_unit / get_scale(), Color(1, 1 - Math::abs(c.deviation), 1 - Math::abs(c.deviation), 1));
 	}
 	const int pcnt = sim->get_sim_position_count(_sim_id);
-	for(int i = 0; i < pcnt; i++) {
+	for (int i = 0; i < pcnt; i++) {
 		draw_rect(Rect2(origin + sim->get_sim_position_at(_sim_id, i) / geometry_pixel_unit / get_scale(), get_scale().inv()), Color::named("yellow"));
 	}
 	const Size2 half = get_rect().size / 2;
 	Vector2 force = get_rect().position + half;
-	switch(geometry_anchor) {
-		case ElasticSimulation::SIM_ANCHOR_TOP: { force.y += half.y; } break;
-		case ElasticSimulation::SIM_ANCHOR_BOTTOM: { force.y -= half.y; } break;
-		case ElasticSimulation::SIM_ANCHOR_LEFT: { force.x += half.x; } break;
-		case ElasticSimulation::SIM_ANCHOR_RIGHT: { force.x -= half.x; } break;
+	switch (geometry_anchor) {
+		case ElasticSimulation::SIM_ANCHOR_TOP: {
+			force.y += half.y;
+		} break;
+		case ElasticSimulation::SIM_ANCHOR_BOTTOM: {
+			force.y -= half.y;
+		} break;
+		case ElasticSimulation::SIM_ANCHOR_LEFT: {
+			force.x += half.x;
+		} break;
+		case ElasticSimulation::SIM_ANCHOR_RIGHT: {
+			force.x -= half.x;
+		} break;
 	}
 	const real_t force_scale = 2;
 	if (controller->is_simulation_active() && controller->get_motion_image().is_null()) {
@@ -1167,10 +1224,7 @@ void DeformSprite::debug_draw_geometry() {
 		draw_rect(Rect2(force_end, 2.0 * get_scale().inv()), force_color, true);
 	} else {
 		const Color force_color = Color(0.5, 1, 0, 0.8);
-		const Vector2 force_end = force + force_scale
-			* (controller->get_motion_image().is_valid()
-			? controller->get_motion_value(this, motion_amplify, motion_interpolations)
-			: _deform_force) / get_scale();
+		const Vector2 force_end = force + force_scale * (controller->get_motion_image().is_valid() ? controller->get_motion_value(this, motion_amplify, motion_interpolations) : _deform_force) / get_scale();
 		draw_line(force, force_end, force_color);
 		draw_rect(Rect2(force_end, 2.0 * get_scale().inv()), force_color, true);
 	}

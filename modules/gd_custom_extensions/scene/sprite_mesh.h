@@ -53,7 +53,7 @@ private:
 
 	struct SurfInfo {
 		Basis surf_xform; // surface transform
-		int surf_id;      // surface index
+		int surf_id; // surface index
 	};
 	Vector<SurfInfo> _mesh_xform;
 	bool _mesh_dirty;

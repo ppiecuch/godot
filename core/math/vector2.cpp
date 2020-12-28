@@ -129,7 +129,7 @@ Vector2 Vector2::rotated_around(const Vector2 &p_origin, real_t p_radians) {
 	const real_t _y = y - p_origin.y;
 	const real_t _sin = Math::sin(p_radians);
 	const real_t _cos = Math::cos(p_radians);
-	return p_origin + Vector2(_x*_cos - _y*_sin, _x*_sin + _y*_cos);
+	return p_origin + Vector2(_x * _cos - _y * _sin, _x * _sin + _y * _cos);
 }
 
 Vector2 Vector2::rotated(real_t p_by) const {

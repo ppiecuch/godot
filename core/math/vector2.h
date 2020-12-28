@@ -158,9 +158,8 @@ struct Vector2 {
 
 	_FORCE_INLINE_ static Vector2 barycentric(const Vector2 &p_v1, const Vector2 &p_v2, const Vector2 &p_v3, real_t p_amount1, real_t p_amount2) {
 		return Vector2(
-			(p_v1.x + p_amount1 * (p_v2.x - p_v1.x)) + p_amount2 * (p_v3.x - p_v1.x),
-			(p_v1.y + p_amount1 * (p_v2.y - p_v1.y)) + p_amount2 * (p_v3.y - p_v1.y)
-		);
+				(p_v1.x + p_amount1 * (p_v2.x - p_v1.x)) + p_amount2 * (p_v3.x - p_v1.x),
+				(p_v1.y + p_amount1 * (p_v2.y - p_v1.y)) + p_amount2 * (p_v3.y - p_v1.y));
 	}
 
 	operator String() const { return String::num(x) + ", " + String::num(y); }

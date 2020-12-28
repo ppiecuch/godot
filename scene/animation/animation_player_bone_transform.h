@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  animation_player_bone_transform.h                                                   */
+/*  animation_player_bone_transform.h                                    */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -31,12 +31,11 @@
 #ifndef ANIMATION_PLAYER_BONE_TRANSFORM_H
 #define ANIMATION_PLAYER_BONE_TRANSFORM_H
 
-#include "core/ustring.h"
-#include "core/object.h"
 #include "core/math/transform.h"
+#include "core/object.h"
+#include "core/ustring.h"
 
 #define BONE_TRANSFORMER_KEY "__internal_bone_transformer"
-
 
 class AnimationPlayerBoneTransform : public Object {
 public:

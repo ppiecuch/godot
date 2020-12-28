@@ -75,10 +75,10 @@
 #include "scene/sprite_mesh.h"
 #include "scene/touch_button.h"
 
-#include "scenery/tree_2d/tree_2d.h"
-#include "scenery/water_splash/gd_water_splash.h"
 #include "scenery/spherical_waves/spherical_waves.h"
+#include "scenery/tree_2d/tree_2d.h"
 #include "scenery/vegetation_instance/vegetation_instance.h"
+#include "scenery/water_splash/gd_water_splash.h"
 
 #include "benet/enet_node.h"
 #include "benet/enet_packet_peer.h"
@@ -90,7 +90,7 @@ static void editor_init_callback() {
 	Engine::get_singleton()->add_singleton(Engine::Singleton("GodotErrorHandler", memnew(GodotErrorHandler)));
 
 	EditorNode::get_singleton()->add_editor_plugin(memnew(Cable2DEditorPlugin(EditorNode::get_singleton()))); /* Cable2D */
-	EditorPlugins::add_by_type<ProceduralAnimationEditorPlugin>();                                            /* ProceduralAnimation */
+	EditorPlugins::add_by_type<ProceduralAnimationEditorPlugin>(); /* ProceduralAnimation */
 }
 #endif
 

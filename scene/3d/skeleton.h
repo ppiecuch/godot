@@ -33,8 +33,8 @@
 
 #include "core/rid.h"
 #include "scene/3d/spatial.h"
-#include "scene/resources/skin.h"
 #include "scene/animation/animation_player_bone_transform.h"
+#include "scene/resources/skin.h"
 
 #ifndef _3D_DISABLED
 typedef int BoneId;
@@ -147,8 +147,10 @@ private:
 
 	class BoneTransform : public AnimationPlayerBoneTransform {
 		Skeleton *_sk = 0;
+
 	public:
-		BoneTransform(Skeleton *p_skeleton) : _sk(p_skeleton) { }
+		BoneTransform(Skeleton *p_skeleton) :
+				_sk(p_skeleton) {}
 		virtual String get_bone_name(int p_bone) const { return _sk->get_bone_name(p_bone); }
 		virtual int get_bone_parent(int p_bone) const { return _sk->get_bone_parent(p_bone); }
 		virtual Transform get_bone_pose(int p_bone) const { return _sk->get_bone_pose(p_bone); }

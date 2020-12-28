@@ -902,7 +902,8 @@ void Skeleton::_bind_methods() {
 	BIND_CONSTANT(NOTIFICATION_UPDATE_SKELETON);
 }
 
-Skeleton::Skeleton() : _bone_transformer(this) {
+Skeleton::Skeleton() :
+		_bone_transformer(this) {
 
 	dirty = false;
 	version = 1;

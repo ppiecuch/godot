@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  figure.h                                                           */
+/*  figure.h                                                             */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -33,8 +33,8 @@
 
 #include "core/rid.h"
 #include "scene/2d/node_2d.h"
-#include "scene/resources/skin.h"
 #include "scene/animation/animation_player_bone_transform.h"
+#include "scene/resources/skin.h"
 
 class Figure : public Node2D {
 
@@ -115,8 +115,10 @@ private:
 
 	class BoneTransform : public AnimationPlayerBoneTransform {
 		Figure *_fg = 0;
+
 	public:
-		BoneTransform(Figure *p_figure) : _fg(p_figure) { }
+		BoneTransform(Figure *p_figure) :
+				_fg(p_figure) {}
 		virtual String get_bone_name(int p_bone) const { return _fg->get_bone_name(p_bone); }
 		virtual int get_bone_parent(int p_bone) const { return _fg->get_bone_parent(p_bone); }
 		virtual Transform get_bone_pose(int p_bone) const { return _fg->get_bone_pose(p_bone); }
@@ -171,7 +173,7 @@ public:
 
 	Rect2 get_rect() const;
 	Point2 get_figure_offset() const;
-	void set_figure_offset(const Point2& p_offset);
+	void set_figure_offset(const Point2 &p_offset);
 
 	// skeleton creation api
 	void add_bone(const String &p_name);
