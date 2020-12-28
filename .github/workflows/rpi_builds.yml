@@ -92,3 +92,4 @@ jobs:
             bin/godot.frt.opt.arm.pi1
             bin/godot.frt.opt.arm.pi2
             bin/godot.frt.opt.arm.pi3
+          retention-days: 7

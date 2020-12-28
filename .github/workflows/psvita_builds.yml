@@ -85,3 +85,4 @@ jobs:
         with:
           name: psvita-template
           path: bin/godot.psvita.opt.arm
+          retention-days: 7
