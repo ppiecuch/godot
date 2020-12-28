@@ -45,7 +45,7 @@ jobs:
 
       - name: Configure environment
         run: |
-          echo "::set-env name=RPXC_IMAGE::${{env.RPI_IMAGE}}"
+          echo "RPXC_IMAGE=${{env.RPI_IMAGE}}" >> $GITHUB_ENV
 
       - name: Build Docker RPi toolchain and build environment
         run: |

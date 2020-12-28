@@ -7,10 +7,22 @@ Import("env_modules")
 env_module = env_modules.Clone()
 
 sources = Glob("*.cpp")
-modules = ["gd", "gd2c", "scene", "scenery/tree_2d", "scenery/spherical_waves", "scenery/water_splash", "scenery/vegetation_instance", "debugdraw", "statemachine", "benet", "behaviornode"]
+modules = [
+    "gd",
+    "gd2c",
+    "scene",
+    "scenery/tree_2d",
+    "scenery/spherical_waves",
+    "scenery/water_splash",
+    "scenery/vegetation_instance",
+    "debugdraw",
+    "statemachine",
+    "benet",
+    "behaviornode"
+]
 for m in modules:
-    sources += Glob("%s/*.cpp"%m)
-    sources += Glob("%s/*.c"%m)
+    sources += Glob("%s/*.cpp" % m)
+    sources += Glob("%s/*.c" % m)
 
 env_module.Append(CPPPATH=["#thirdparty/enet/", os.path.dirname(os.path.realpath(os.curdir)) + "/gdnative/include"])
 env_module.Append(CPPFLAGS=["-DGD_GODOT_ENET"])

@@ -35,8 +35,8 @@ jobs:
 
       - name: Configure environment
         run: |
-          echo "::set-env name=VITASDK::${{env.VITASDK_PATH}}"
-          echo "::set-env name=PATH::${{env.VITASDK_PATH}}/bin:${PATH}"
+          echo "VITASDK=${{env.VITASDK_PATH}}" >> $GITHUB_ENV
+          echo "${{env.VITASDK_PATH}}/bin" >> $GITHUB_PATH
 
       - name: Configure VitaSDK and toolchain
         run: |
