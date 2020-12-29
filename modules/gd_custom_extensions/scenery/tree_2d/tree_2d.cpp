@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  tree_2d.cpp                                                          */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #include "tree_2d.h"
 #include "scene/2d/canvas_item.h"
 
@@ -15,11 +45,11 @@ void Tree2D::set_mesh(const Ref<Mesh> &p_mesh) {
 	mesh = p_mesh;
 	// default materials:
 	Ref<CanvasItemMaterial> mat_branch = Ref<CanvasItemMaterial>(memnew(CanvasItemMaterial));
-    mat_branch->set_stencil_mode(CanvasItemMaterial::STENCIL_MODE_FILL);
+	mat_branch->set_stencil_mode(CanvasItemMaterial::STENCIL_MODE_FILL);
 	Ref<CanvasItemMaterial> mat_shadows = Ref<CanvasItemMaterial>(memnew(CanvasItemMaterial));
-    mat_shadows->set_stencil_mode(CanvasItemMaterial::STENCIL_MODE_MASK);
+	mat_shadows->set_stencil_mode(CanvasItemMaterial::STENCIL_MODE_MASK);
 	Ref<CanvasItemMaterial> mat_decors = Ref<CanvasItemMaterial>(memnew(CanvasItemMaterial));
-	for(int surf=0; surf<mesh->get_surface_count(); surf++) {
+	for (int surf = 0; surf < mesh->get_surface_count(); surf++) {
 		String n = "n/a";
 		if (ArrayMesh *arraymesh = Object::cast_to<ArrayMesh>(*mesh))
 			n = arraymesh->surface_get_name(surf);
@@ -31,7 +61,7 @@ void Tree2D::set_mesh(const Ref<Mesh> &p_mesh) {
 		} else if (n == "shadows") {
 			mesh->surface_set_material(surf, mat_shadows);
 		}
-		if (m.is_valid() &&  m != mesh->surface_get_material(surf))
+		if (m.is_valid() && m != mesh->surface_get_material(surf))
 			WARN_PRINTS("Replaced material for surface " + n);
 	}
 	update();

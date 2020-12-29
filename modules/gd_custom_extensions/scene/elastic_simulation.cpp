@@ -46,10 +46,10 @@ const real_t REAL_MIN = std::numeric_limits<real_t>::min();
 const real_t REAL_MAX = std::numeric_limits<real_t>::max();
 
 #ifndef NO
-# define NO false
+#define NO false
 #endif
 #ifndef YES
-# define YES true
+#define YES true
 #endif
 
 // https://math.stackexchange.com/questions/13404/mapping-irregular-quadrilateral-to-a-rectangle
@@ -532,13 +532,13 @@ int ElasticSimulation::get_sim_position_count(simid_t sim_id) const {
 	return _sim->points[sim_id].size();
 }
 
-Vector2 ElasticSimulation::get_sim_position_at(simid_t sim_id, int p_index) const {
+Vector2 ElasticSimulation::get_sim_position_at(simid_t sim_id, unsigned int p_index) const {
 	ERR_FAIL_INDEX_V(sim_id, _sim->points.size(), Vector2());
 	ERR_FAIL_INDEX_V(p_index, _sim->points[sim_id].size(), Vector2());
 	return _sim->points[sim_id][p_index]->position;
 }
 
-bool ElasticSimulation::is_sim_point_fixed(simid_t sim_id, int p_index) const {
+bool ElasticSimulation::is_sim_point_fixed(simid_t sim_id, unsigned int p_index) const {
 	ERR_FAIL_INDEX_V(sim_id, _sim->points.size(), false);
 	ERR_FAIL_INDEX_V(p_index, _sim->points[sim_id].size(), false);
 	return _sim->points[sim_id][p_index]->fixed;
@@ -556,15 +556,15 @@ int ElasticSimulation::get_sim_constraint_count(simid_t sim_id) const {
 	return filter.size();
 }
 
-ElasticSimulation::Constraint ElasticSimulation::get_sim_constraint_at(simid_t sim_id, int p_index) const {
+ElasticSimulation::Constraint ElasticSimulation::get_sim_constraint_at(simid_t sim_id, unsigned int p_index) const {
 	ERR_FAIL_INDEX_V(sim_id, _sim->points.size(), ElasticSimulation::Constraint());
 	sim3::DConstraintsVector filter = _filter_constrains(sim_id, _sim->d_constraints);
 	ERR_FAIL_INDEX_V(p_index, filter.size(), Constraint());
 	const sim3::DistanceConstraint &c = filter[p_index];
 	return (ElasticSimulation::Constraint){
-		.begin = c.point1.position,
-		.end = c.point2.position,
-		.deviation = (c.target - c.point1.position.distance_to(c.point2.position)) / c.target
+		c.point1.position,
+		c.point2.position,
+		(c.target - c.point1.position.distance_to(c.point2.position)) / c.target
 	};
 }
 

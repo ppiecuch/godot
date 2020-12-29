@@ -1,9 +1,39 @@
+/*************************************************************************/
+/*  spherical_waves.cpp                                                  */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #include "spherical_waves.h"
 
 #include "core/math/vector3.h"
 
-#include <cmath>
 #include <stdlib.h>
+#include <cmath>
 
 SphericalWaves::SphericalWaves() {
 	twoSquareHalf = sqrt(2) / 2;
@@ -42,15 +72,14 @@ void SphericalWaves::set_amplitude(int x, int y, real_t value) {
 
 void SphericalWaves::update(real_t deltaT) {
 	for (int x = 1; x < x_size - 1; ++x) {
-		for (int y = 1; y < y_size -1; ++y) {
+		for (int y = 1; y < y_size - 1; ++y) {
 			real_t force = 0;
 			for (int a = -1; a < 2; ++a) {
 				for (int b = -1; b < 2; ++b) {
 					real_t difference = currentAmplitudes[(x + a) * y_size + y + b] - currentAmplitudes[x * y_size + y];
 					if (abs(x) + abs(y) == 2) {
 						force += twoSquareHalf * difference;
-					}
-					else {
+					} else {
 						force += difference;
 					}
 				}
@@ -70,8 +99,8 @@ void SphericalWaves::update(real_t deltaT) {
 
 void SphericalWaves::set_nodes(Vector<Variant> voxels, int index) {
 	for (int x = 1; x < x_size - 1; ++x) {
-		for (int y = 1; y < y_size -1; ++y) {
-			Spatial* node = (Spatial*)((Node*) voxels[x * y_size + y]);
+		for (int y = 1; y < y_size - 1; ++y) {
+			Spatial *node = (Spatial *)((Node *)voxels[x * y_size + y]);
 			Vector3 translation = node->get_translation();
 			translation[index] = currentAmplitudes[x * y_size + y];
 			node->set_translation(translation);
@@ -85,7 +114,7 @@ void SphericalWaves::set_mesh(const Ref<Mesh> &mesh) {
 	for (int i = 0; i < dataTool->get_vertex_count(); ++i) {
 		Vector3 vertex = dataTool->get_vertex(i);
 		vertex.y = currentAmplitudes[(int)((vertex.x - x_size / 2.0) * y_size + vertex.z - y_size / 2.0)];
-		dataTool->set_vertex(i,  vertex);
+		dataTool->set_vertex(i, vertex);
 	}
 	dataTool->commit_to_surface(mesh);
 }
@@ -98,7 +127,6 @@ void SphericalWaves::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_nodes"), &SphericalWaves::set_nodes);
 	ClassDB::bind_method(D_METHOD("set_mesh", "mesh"), &SphericalWaves::set_mesh);
 }
-
 
 // Example
 #if 0
@@ -176,11 +204,11 @@ func _process(deltaT):
 		print(1/deltaT)
 	waves.update(deltaT)
 
-	# I will build a wall to make games great again
-	#for x in range(0, sizeX/2):
-	#	waves.set_amplitude(x, 10, 0)
-	#	waves.set_amplitude(x, 11, 0)
-	#	waves.set_amplitude(x, 13, 0)
+#I will build a wall to make games great again
+#for x in range(0, sizeX / 2):
+#waves.set_amplitude(x, 10, 0)
+#waves.set_amplitude(x, 11, 0)
+#waves.set_amplitude(x, 13, 0)
 
 	for stonePos in stones:
 		waves.set_amplitude(stonePos.x, stonePos.y, 0)

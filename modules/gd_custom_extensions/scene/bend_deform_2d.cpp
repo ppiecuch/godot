@@ -390,9 +390,7 @@ void SimulationControllerInstance2D::_notification(int p_what) {
 						if (sim_id >= 0) {
 							const Size2 image_size = controller->get_motion_image()->get_size();
 
-							Ref<MotionTextureIterator> it = node->has_meta("__state_motion_iterator")
-								? (Ref<MotionTextureIterator>)node->get_meta("__state_motion_iterator")
-								: Ref<MotionTextureIterator>(memnew(MotionTextureIterator(trajectory_origin * image_size, trajectory_dir))->next_step(trajectory_dir, image_size));
+							Ref<MotionTextureIterator> it = node->has_meta("__state_motion_iterator") ? (Ref<MotionTextureIterator>)node->get_meta("__state_motion_iterator") : Ref<MotionTextureIterator>(memnew(MotionTextureIterator(trajectory_origin * image_size, trajectory_dir))->next_step(trajectory_dir, image_size));
 
 							ERR_FAIL_COND(it.is_null());
 

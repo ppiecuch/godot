@@ -193,6 +193,17 @@ public class GodotEditText extends EditText {
 	}
 
 	// ===========================================================
+	// Getter & Setter
+	// ===========================================================
+	public void setView(final GodotRenderView view) {
+		mRenderView = view;
+		if (mInputWrapper == null)
+			mInputWrapper = new GodotTextInputWrapper(mRenderView, this);
+		setOnEditorActionListener(mInputWrapper);
+		view.getView().requestFocus();
+	}
+
+	// ===========================================================
 	// Methods for/from SuperClass/Interfaces
 	// ===========================================================
 	@Override
