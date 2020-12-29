@@ -50,7 +50,7 @@
 
 // FIXME: For some reason mbedtls_strerror is undefined in gcc release
 // builds for mips and arm toolchains. Remove this when builds are fine.
-#if defined(__mips__) || defined(__arm__)
+#if defined(__mips__) || defined(__arm__) || defined(__aarch64__)
 extern "C" void mbedtls_strerror( int ret, char *buf, size_t buflen ) {
     snprintf( buf, buflen, "MBEDTLS ERROR CODE (%04X)", ret );
 }

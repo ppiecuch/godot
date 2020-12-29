@@ -277,14 +277,14 @@ public:
 
 		return sim_id;
 	}
-	void update_geom(int sim_id, const Point2 &starting, const Point2 &opposite, const Vec2Vector &steps, real_t spring_factor, real_t spring_variation) {
+	void update_geom(simid_t sim_id, const Point2 &starting, const Point2 &opposite, const Vec2Vector &steps, real_t spring_factor, real_t spring_variation) {
 
 		d_constraints.remove_if([sim_id](DistanceConstraint &c) { return c.sim_id == sim_id; });
 		points[sim_id] = PointsArray();
 
 		build_geom(sim_id, starting, opposite, steps, spring_factor, spring_variation);
 	}
-	void remove_geom(int sim_id) {
+	void remove_geom(simid_t sim_id) {
 		d_constraints.remove_if([sim_id](DistanceConstraint &c) { return c.sim_id == sim_id; });
 		points[sim_id] = PointsArray();
 	}

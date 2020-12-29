@@ -1,5 +1,5 @@
 # WaterSplash
-Water splash node 2D for Godot game engine I wrote for my indie game LittleShadows. 
+Water splash node 2D for Godot game engine I wrote for my indie game LittleShadows.
 
 ## How to use it?
 To use it, just clone in into your godot branch module directory and recompile godot (as explained here http://docs.godotengine.org/en/stable/reference/custom_modules_in_c++.html)

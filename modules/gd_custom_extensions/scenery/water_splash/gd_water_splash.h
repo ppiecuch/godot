@@ -19,10 +19,10 @@ class GDWaterSplashColumn : public Area2D {
 
 public:
   GDWaterSplashColumn(const Vector2&, const Vector2& delta, const Vector2& drag);
-  void update(float& tension, float& damping) ;    
-  void body_enter_shape ( int body_id, Object* body, int body_shape, int area_shape ); 
-  float target_height_; 
-  float height_ ;  
+  void update(float& tension, float& damping) ;
+  void body_enter_shape ( int body_id, Object* body, int body_shape, int area_shape );
+  float target_height_;
+  float height_ ;
   float speed_ ;
   Vector2 drag_  ;
 
@@ -36,21 +36,21 @@ class GDWaterSplash : public Node2D {
 
 public:
   GDWaterSplash();
-  
+
   void _notification(int p_what);
-  
+
   // Size in x must be a multiple of resolution
   void set_size(const Rect2&value);
   Rect2 get_size() const;
 
-  
+
   // Size of the simulation grid
   void set_resolution(const uint32_t&value);
   uint32_t get_resolution() const;
 
   void set_color(const Color&value);
   Color get_color() const;
-  
+
   /**
    * Physical Parameters
    */
@@ -62,7 +62,7 @@ public:
 
   void set_spread(const float&value);
   float get_spread() const;
-  
+
   void set_drag(const Vector2&value);
   Vector2 get_drag() const;
 
@@ -75,18 +75,18 @@ protected:
 
   Vector<GDWaterSplashColumn*> columns_;
 
-  Rect2 rect_ ; 
-  uint32_t ncols_ ; 
-  uint32_t resolution_ ; 
-  Color color_; 
-  float damping_ ; 
+  Rect2 rect_ ;
+  uint32_t ncols_ ;
+  uint32_t resolution_ ;
+  Color color_;
+  float damping_ ;
   float tension_ ;
-  float spread_ ; 
+  float spread_ ;
   Vector2 drag_ ;
   Ref<Texture> texture;
 
-  bool size_changed_ ; 
-  void _update() ; 
+  bool size_changed_ ;
+  void _update() ;
 };
 
 
