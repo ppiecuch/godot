@@ -280,6 +280,8 @@ SimulationController2D::SimulationController2D() {
 }
 
 SimulationController2D::~SimulationController2D() {
+
+	_sim.unref();
 }
 
 void SimulationControllerInstance2D::_draw_debug_marker(const Point2 &p0, real_t dir, int marker_length, int head_length, int head_width, const Color &marker_color1, const Color &marker_color2) {
@@ -322,8 +324,6 @@ void SimulationControllerInstance2D::_on_controller_changed() {
 }
 
 void SimulationControllerInstance2D::_notification(int p_what) {
-
-	static Ref<ImageTexture> _motion_texture;
 
 	switch (p_what) {
 		case NOTIFICATION_READY: {

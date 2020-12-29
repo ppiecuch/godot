@@ -104,6 +104,8 @@ private:
 	Ref<SimulationController2D> controller;
 	bool motion_debug;
 
+	Ref<ImageTexture> _motion_texture;
+
 	void _draw_debug_marker(const Point2 &p0, real_t dir, int marker_length, int head_length, int head_width, const Color &marker_color1 = Color(1, 1, 0, 1), const Color &marker_color2 = Color(1, 1, 1, 1));
 
 protected:

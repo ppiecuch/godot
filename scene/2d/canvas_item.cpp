@@ -343,6 +343,7 @@ CanvasItemMaterial::CanvasItemMaterial() :
 
 	blend_mode = BLEND_MODE_MIX;
 	light_mode = LIGHT_MODE_NORMAL;
+	stencil_mode = STENCIL_MODE_NONE;
 	particles_animation = false;
 
 	set_particles_anim_h_frames(1);
