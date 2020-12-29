@@ -160,7 +160,7 @@ void SpriteMesh::set_mesh(const Ref<Mesh> &p_mesh) {
 	for (int s = 0; s < k.size(); ++s) {
 		const int surf_id = k[s];
 		const Basis surf_xform = surf_info[surf_id];
-		_mesh_xform.push_back((SurfInfo){ surf_xform, surf_id });
+		_mesh_xform.push_back(SurfInfo{ surf_xform, surf_id });
 	}
 
 	if (ArrayMesh *m = Object::cast_to<ArrayMesh>(*mesh)) {
@@ -423,7 +423,7 @@ SpriteMesh::SpriteMesh() {
 	offset = Vector2(0, 0);
 	mesh_angle = Vector3(0, 0, 0);
 	mesh_scale = Vector3(1, 1, 1);
-	_mesh_xform.push_back((SurfInfo){ Basis(mesh_angle, mesh_scale), 1 });
+	_mesh_xform.push_back(SurfInfo{ Basis(mesh_angle, mesh_scale), 1 });
 	_mesh_dirty = false;
 	_mesh_xform_dirty = false;
 	_mesh_active_surface = 0;

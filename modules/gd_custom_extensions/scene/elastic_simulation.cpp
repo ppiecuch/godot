@@ -561,7 +561,7 @@ ElasticSimulation::Constraint ElasticSimulation::get_sim_constraint_at(simid_t s
 	sim3::DConstraintsVector filter = _filter_constrains(sim_id, _sim->d_constraints);
 	ERR_FAIL_INDEX_V(p_index, filter.size(), Constraint());
 	const sim3::DistanceConstraint &c = filter[p_index];
-	return ElasticSimulation::Constraint {
+	return ElasticSimulation::Constraint{
 		c.point1.position,
 		c.point2.position,
 		(c.target - c.point1.position.distance_to(c.point2.position)) / c.target
