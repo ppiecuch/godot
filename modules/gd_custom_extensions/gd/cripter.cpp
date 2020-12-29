@@ -48,9 +48,9 @@
 
 #include "cripter.h"
 
-// FIXME: For some reason mbedtls_strerror is undefined in gcc release
-// builds (optimization?) of non-intel archs. Remove this when builds are fine.
-#if defined(__mips__) || defined(__arm__) || defined(__aarch64__)
+// FIXME: For some reason mbedtls_strerror is undefined in gcc release builds
+// (optimization?) for gcc and non-intel archs. Remove this when builds are fine.
+#if defined(__linux__) || defined(__mips__) || defined(__arm__) || defined(__aarch64__)
 extern "C" void mbedtls_strerror(int ret, char *buf, size_t buflen) {
 	snprintf(buf, buflen, "MBEDTLS ERROR CODE (%04X)", ret);
 }
