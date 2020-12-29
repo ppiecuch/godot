@@ -36,8 +36,11 @@
 #include "core/class_db.h"
 #include "core/reference.h"
 
+typedef unsigned int simid_t;
+
+
 namespace sim3 {
-class Simulation;
+	class Simulation;
 }
 
 class ElasticSimulation : public Reference {
@@ -60,22 +63,22 @@ public:
 	std::unique_ptr<sim3::Simulation> _sim;
 
 	int make_sim(const Size2 &p_rect, int p_segments, bool p_dynamic_split, Anchor p_anchor, real_t p_spring_factor = 0.0, real_t p_spring_variation = 0.0);
-	void update_sim(int sim_id, const Size2 &p_rect, int p_segments, bool p_dynamic_split, Anchor p_anchor, real_t p_spring_factor = 0.0, real_t p_spring_variation = 0.0);
-	void remove_sim(int sim_id);
+	void update_sim(simid_t sim_id, const Size2 &p_rect, int p_segments, bool p_dynamic_split, Anchor p_anchor, real_t p_spring_factor = 0.0, real_t p_spring_variation = 0.0);
+	void remove_sim(simid_t sim_id);
 	void reset_sim();
 	void transform_sim_geom(const Transform2D &p_xform) const;
-	int get_sim_position_count(int sim_id) const;
-	Vector2 get_sim_position_at(int sim_id, int p_index) const;
-	bool is_sim_point_fixed(int sim_id, int p_index) const;
+	int get_sim_position_count(simid_t sim_id) const;
+	Vector2 get_sim_position_at(simid_t sim_id, int p_index) const;
+	bool is_sim_point_fixed(simid_t sim_id, int p_index) const;
 	void simulate(real_t p_delta, const Vector2 &p_impulse);
-	void deform(int sim_id, real_t p_delta, const Vector2 &p_impulse);
+	void deform(simid_t sim_id, real_t p_delta, const Vector2 &p_impulse);
 
 	struct Constraint {
 		Vector2 begin, end;
 		real_t deviation; // 0 - 1
 	};
-	int get_sim_constraint_count(int sim_id) const;
-	Constraint get_sim_constraint_at(int sim_id, int p_index) const;
+	int get_sim_constraint_count(simid_t sim_id) const;
+	Constraint get_sim_constraint_at(simid_t sim_id, int p_index) const;
 
 	ElasticSimulation();
 	~ElasticSimulation();

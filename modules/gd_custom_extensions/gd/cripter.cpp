@@ -32,11 +32,29 @@
 
 #ifdef MODULE_MBEDTLS_ENABLED
 
-#include "cripter.h"
+#include "thirdparty/mbedtls/include/mbedtls/aes.h"
+#include "thirdparty/mbedtls/include/mbedtls/ctr_drbg.h"
+#include "thirdparty/mbedtls/include/mbedtls/entropy.h"
+#include "thirdparty/mbedtls/include/mbedtls/gcm.h"
+#include "thirdparty/mbedtls/include/mbedtls/pk.h"
+#include "thirdparty/mbedtls/include/mbedtls/rsa.h"
+
+#include "thirdparty/mbedtls/include/mbedtls/error.h" //  ---  Desenvolver   ---
+
 #include "core/print_string.h"
 
 #include <stdint.h>
 #include <vector>
+
+#include "cripter.h"
+
+// FIXME: For some reason mbedtls_strerror is undefined in gcc release
+// builds for mips and arm toolchains. Remove this when builds are fine.
+#if defined(__mips__) || defined(__arm__)
+extern "C" void mbedtls_strerror( int ret, char *buf, size_t buflen ) {
+    snprintf( buf, buflen, "MBEDTLS ERROR CODE (%04X)", ret );
+}
+#endif
 
 //--- Do:
 //RSA  ---> Check if key file is valid / Maximun input size / Erros

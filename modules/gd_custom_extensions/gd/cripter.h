@@ -38,17 +38,6 @@
 #include "core/io/marshalls.h"
 #include "core/reference.h"
 
-#include "thirdparty/mbedtls/include/mbedtls/aes.h"
-#include "thirdparty/mbedtls/include/mbedtls/ctr_drbg.h"
-#include "thirdparty/mbedtls/include/mbedtls/entropy.h"
-#include "thirdparty/mbedtls/include/mbedtls/gcm.h"
-#include "thirdparty/mbedtls/include/mbedtls/pk.h"
-#include "thirdparty/mbedtls/include/mbedtls/rsa.h"
-
-#include "thirdparty/mbedtls/include/mbedtls/error.h" //  ---  Desenvolver   ---
-
-#pragma once
-
 class Cripter : public Reference {
 	GDCLASS(Cripter, Reference);
 
@@ -82,4 +71,4 @@ public:
 
 #endif // MODULE_MBEDTLS_ENABLED
 
-#endif // cripter.h
+#endif // CRIPTER_H

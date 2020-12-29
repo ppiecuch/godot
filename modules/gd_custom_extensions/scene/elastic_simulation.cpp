@@ -29,6 +29,7 @@
 /*************************************************************************/
 
 #include <algorithm>
+#include <iterator>
 #include <limits>
 #include <list>
 #include <memory>
@@ -45,10 +46,10 @@ const real_t REAL_MIN = std::numeric_limits<real_t>::min();
 const real_t REAL_MAX = std::numeric_limits<real_t>::max();
 
 #ifndef NO
-#define NO false
+# define NO false
 #endif
 #ifndef YES
-#define YES true
+# define YES true
 #endif
 
 // https://math.stackexchange.com/questions/13404/mapping-irregular-quadrilateral-to-a-rectangle
@@ -135,12 +136,12 @@ inline Point_r make_point_r(const Vector2 &xy, bool fixed = NO) {
 struct DistanceConstraint {
 	const real_t factor_base = 1.5;
 
-	int sim_id;
+	simid_t sim_id;
 	Point &point1, &point2;
 	real_t target;
 	real_t spring_factor;
 
-	DistanceConstraint(int sim_id, Point &point1, Point &point2, real_t factor = 0.0) :
+	DistanceConstraint(simid_t sim_id, Point &point1, Point &point2, real_t factor = 0.0) :
 			sim_id(sim_id), point1(point1), point2(point2), spring_factor(factor_base + factor_base * CLAMP(factor, 0, 1)) { target = point1.position.distance_to(point2.position); }
 
 	void resolve() {
@@ -437,7 +438,7 @@ int ElasticSimulation::make_sim(const Size2 &p_rect, int p_segments, bool p_dyna
 	return _sim->make_geom(starting, opposite, steps, p_spring_factor, p_spring_variation);
 }
 
-void ElasticSimulation::update_sim(int sim_id, const Size2 &p_rect, int p_segments, bool p_dynamic_split, Anchor p_anchor, real_t p_spring_factor, real_t p_spring_variation) {
+void ElasticSimulation::update_sim(simid_t sim_id, const Size2 &p_rect, int p_segments, bool p_dynamic_split, Anchor p_anchor, real_t p_spring_factor, real_t p_spring_variation) {
 
 	ERR_FAIL_INDEX(sim_id, _sim->points.size());
 	ERR_FAIL_COND(p_segments <= 0);
@@ -516,7 +517,7 @@ void ElasticSimulation::update_sim(int sim_id, const Size2 &p_rect, int p_segmen
 	return _sim->update_geom(sim_id, starting, opposite, steps, p_spring_factor, p_spring_variation);
 }
 
-void ElasticSimulation::remove_sim(int sim_id) {
+void ElasticSimulation::remove_sim(simid_t sim_id) {
 	ERR_FAIL_INDEX(sim_id, _sim->points.size());
 
 	_sim->remove_geom(sim_id);
@@ -526,36 +527,36 @@ void ElasticSimulation::reset_sim() {
 	_sim->reset();
 }
 
-int ElasticSimulation::get_sim_position_count(int sim_id) const {
+int ElasticSimulation::get_sim_position_count(simid_t sim_id) const {
 	ERR_FAIL_INDEX_V(sim_id, _sim->points.size(), 0);
 	return _sim->points[sim_id].size();
 }
 
-Vector2 ElasticSimulation::get_sim_position_at(int sim_id, int p_index) const {
+Vector2 ElasticSimulation::get_sim_position_at(simid_t sim_id, int p_index) const {
 	ERR_FAIL_INDEX_V(sim_id, _sim->points.size(), Vector2());
 	ERR_FAIL_INDEX_V(p_index, _sim->points[sim_id].size(), Vector2());
 	return _sim->points[sim_id][p_index]->position;
 }
 
-bool ElasticSimulation::is_sim_point_fixed(int sim_id, int p_index) const {
+bool ElasticSimulation::is_sim_point_fixed(simid_t sim_id, int p_index) const {
 	ERR_FAIL_INDEX_V(sim_id, _sim->points.size(), false);
 	ERR_FAIL_INDEX_V(p_index, _sim->points[sim_id].size(), false);
 	return _sim->points[sim_id][p_index]->fixed;
 }
 
-inline static sim3::DConstraintsVector _filter_constrains(int sim_id, const sim3::DConstraintsArray &constraints) {
+inline static sim3::DConstraintsVector _filter_constrains(simid_t sim_id, const sim3::DConstraintsArray &constraints) {
 	sim3::DConstraintsVector filter;
 	std::copy_if(constraints.begin(), constraints.end(), std::back_inserter(filter), [sim_id](const sim3::DistanceConstraint &c) { return c.sim_id == sim_id; });
 	return filter;
 }
 
-int ElasticSimulation::get_sim_constraint_count(int sim_id) const {
+int ElasticSimulation::get_sim_constraint_count(simid_t sim_id) const {
 	ERR_FAIL_INDEX_V(sim_id, _sim->points.size(), 0);
 	sim3::DConstraintsVector filter = _filter_constrains(sim_id, _sim->d_constraints);
 	return filter.size();
 }
 
-ElasticSimulation::Constraint ElasticSimulation::get_sim_constraint_at(int sim_id, int p_index) const {
+ElasticSimulation::Constraint ElasticSimulation::get_sim_constraint_at(simid_t sim_id, int p_index) const {
 	ERR_FAIL_INDEX_V(sim_id, _sim->points.size(), ElasticSimulation::Constraint());
 	sim3::DConstraintsVector filter = _filter_constrains(sim_id, _sim->d_constraints);
 	ERR_FAIL_INDEX_V(p_index, filter.size(), Constraint());
@@ -572,7 +573,7 @@ void ElasticSimulation::simulate(float p_delta, const Vector2 &p_impulse) {
 	_sim->simulate(p_delta, p_impulse);
 }
 
-void ElasticSimulation::deform(int sim_id, float p_delta, const Vector2 &p_impulse) {
+void ElasticSimulation::deform(simid_t sim_id, float p_delta, const Vector2 &p_impulse) {
 	_sim->deform(sim_id, p_delta, p_impulse);
 }
 

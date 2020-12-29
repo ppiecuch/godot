@@ -418,7 +418,7 @@ public:
 		DummyMesh *m = mesh_owner.getornull(p_mesh);
 		ERR_FAIL_COND(!m);
 		ERR_FAIL_COND(p_surface >= m->surfaces.size());
-		return m->surfaces[p_surface].active = p_active;
+		m->surfaces.write[p_surface].active = p_active;
 	}
 
 	void mesh_set_custom_aabb(RID p_mesh, const AABB &p_aabb) {}
