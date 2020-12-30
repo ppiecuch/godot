@@ -200,7 +200,7 @@ public class GodotEditText extends EditText {
 		if (mInputWrapper == null)
 			mInputWrapper = new GodotTextInputWrapper(mView, this);
 		setOnEditorActionListener(mInputWrapper);
-		view.getView().requestFocus();
+		view.requestFocus();
 	}
 
 	// ===========================================================
