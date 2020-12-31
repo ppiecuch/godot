@@ -583,5 +583,6 @@ ElasticSimulation::ElasticSimulation() {
 }
 
 ElasticSimulation::~ElasticSimulation() {
-	_sim.release();
+	if (sim3::Simulation *sim = _sim.release())
+		delete sim;
 }
