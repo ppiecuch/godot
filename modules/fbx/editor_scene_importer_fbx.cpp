@@ -62,8 +62,7 @@ void EditorSceneImporterFBX::get_extensions(List<String> *r_extensions) const {
 	const String fbx_str = "fbx";
 	Vector<String> exts;
 	exts.push_back(fbx_str);
-	_register_project_setting_import(fbx_str, import_setting_string, exts, r_extensions,
-			true);
+	_register_project_setting_import(fbx_str, import_setting_string, exts, r_extensions, true);
 }
 
 void EditorSceneImporterFBX::_register_project_setting_import(const String generic,
@@ -181,23 +180,25 @@ Node *EditorSceneImporterFBX::import_scene(const String &p_path, uint32_t p_flag
 				}
 			}
 
-			if (!is_blender_fbx) {
-				Spatial *spatial = _generate_scene(p_path, &doc, p_flags, p_bake_fps, 8);
-				// todo: move to document shutdown (will need to be validated after moving; this code has been validated already)
-				for (FBXDocParser::TokenPtr token : tokens) {
-					if (token) {
-						delete token;
-						token = nullptr;
-					}
-				}
-
-				return spatial;
-			} else {
-				print_error("We can't import blender FBX files, they're not implemented correctly at export time and would require several hacks in the FBX importer which could break Maya imports.");
+			if (is_blender_fbx) {
+				WARN_PRINT("We don't officially support Blender FBX animations yet, due to issues with upstream Blender,\n"
+						   "so please wait for us to work around remaining issues. We will continue to import the file but it may be broken.\n"
+						   "For minimal breakage, please export FBX from Blender with -Z forward, and Y up.");
 			}
 
+			Spatial *spatial = _generate_scene(p_path, &doc, p_flags, p_bake_fps, 8, is_blender_fbx);
+			// todo: move to document shutdown (will need to be validated after moving; this code has been validated already)
+			for (FBXDocParser::TokenPtr token : tokens) {
+				if (token) {
+					delete token;
+					token = nullptr;
+				}
+			}
+
+			return spatial;
+
 		} else {
-			print_error("Cannot import file: " + p_path + " version of file is unsupported, please re-export in your modelling package file version is: " + itos(doc.FBXVersion()));
+			ERR_PRINT(vformat("Cannot import FBX file: %s. It uses file format %d which is unsupported by Godot. Please re-export it or convert it to a newer format.", p_path, doc.FBXVersion()));
 		}
 	}
 
@@ -369,9 +370,11 @@ Spatial *EditorSceneImporterFBX::_generate_scene(
 		const FBXDocParser::Document *p_document,
 		const uint32_t p_flags,
 		int p_bake_fps,
-		const int32_t p_max_bone_weights) {
+		const int32_t p_max_bone_weights,
+		bool p_is_blender_fbx) {
 
 	ImportState state;
+	state.is_blender_fbx = p_is_blender_fbx;
 	state.path = p_path;
 	state.animation_player = NULL;
 
@@ -593,8 +596,8 @@ Spatial *EditorSceneImporterFBX::_generate_scene(
 
 			print_verbose("populating skeleton with bone: " + bone->bone_name);
 
-			//			// populate bone skeleton - since fbx has no DOM for the skeleton just a node.
-			//			bone->bone_skeleton = fbx_skeleton_inst;
+			//// populate bone skeleton - since fbx has no DOM for the skeleton just a node.
+			//bone->bone_skeleton = fbx_skeleton_inst;
 
 			// now populate bone on the armature node list
 			fbx_skeleton_inst->skeleton_bones.push_back(bone);
@@ -731,8 +734,8 @@ Spatial *EditorSceneImporterFBX::_generate_scene(
 		//
 		// Get Mesh Node Xform only
 		//
-		//		ERR_CONTINUE_MSG(!state.fbx_target_map.has(mesh_id), "invalid xform for the skin pose: " + itos(mesh_id));
-		//		Ref<FBXNode> mesh_node_xform_data = state.fbx_target_map[mesh_id];
+		//ERR_CONTINUE_MSG(!state.fbx_target_map.has(mesh_id), "invalid xform for the skin pose: " + itos(mesh_id));
+		//Ref<FBXNode> mesh_node_xform_data = state.fbx_target_map[mesh_id];
 
 		if (!mesh_skin) {
 			continue; // not a deformer.

@@ -7,7 +7,6 @@
 		List of core built-in GDScript functions. Math functions and other utilities. Everything else is provided by objects. (Keywords: builtin, built in, global functions.)
 	</description>
 	<tutorials>
-		<link title="Random number generation">https://docs.godotengine.org/en/3.2/tutorials/math/random_number_generation.html</link>
 	</tutorials>
 	<methods>
 		<method name="Color8">
@@ -780,7 +779,7 @@
 			<argument index="1" name="exp" type="float">
 			</argument>
 			<description>
-				Returns the result of [code]x[/code] raised to the power of [code]y[/code].
+				Returns the result of [code]base[/code] raised to the power of [code]exp[/code].
 				[codeblock]
 				pow(2, 5) # Returns 32.0
 				[/codeblock]
@@ -804,7 +803,7 @@
 			<return type="void">
 			</return>
 			<description>
-				Converts one or more arguments to strings in the best way possible and prints them to the console.
+				Converts one or more arguments of any type to string in the best way possible and prints them to the console.
 				[codeblock]
 				a = [1, 2, 3]
 				print("a", "=", a) # Prints a=[1, 2, 3]
@@ -1138,7 +1137,7 @@
 			<return type="String">
 			</return>
 			<description>
-				Converts one or more arguments to string in the best way possible.
+				Converts one or more arguments of any type to string in the best way possible.
 				[codeblock]
 				var a = [10, 20, 30]
 				var b = str(a);
