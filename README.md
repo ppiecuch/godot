@@ -1,10 +1,16 @@
 [![Godot Engine logo](/logo.png)](https://godotengine.org)
 
-# Donation Button
+## Donation Button
 
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=59LH5AHNQ8XZW)
+You can support my work on __Godot Engine__:
 
-https://www.paypal.com/donate?business=6QXS8MBPKBTTN&item_name=Improving+and+enhancing+Godot+Engine.&currency_code=USD
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate?business=6QXS8MBPKBTTN&item_name=Improving+and+enhancing+Godot+Engine.&currency_code=USD)
+
+The most important topics for the future:
+---
+1. _Apple Metal_ interface
+2. _Odroid Advanced_ and _Super_ consoles
+3. Nintendo Switch port (only for _Nintendo registered_ users)
 
 ## Godot Engine
 
