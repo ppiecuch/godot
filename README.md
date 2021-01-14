@@ -1,5 +1,11 @@
 [![Godot Engine logo](/logo.png)](https://godotengine.org)
 
+# Donation Button
+
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=59LH5AHNQ8XZW)
+
+https://www.paypal.com/donate?business=6QXS8MBPKBTTN&item_name=Improving+and+enhancing+Godot+Engine.&currency_code=USD
+
 ## Godot Engine
 
 Homepage: https://godotengine.org
