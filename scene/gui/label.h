@@ -33,38 +33,14 @@
 
 #include "core/pair.h"
 #include "scene/gui/control.h"
+#include "scene/resources/font.h"
+
+#include <memory>
 
 // allow for testing private Label's methods
 namespace TestFont {
-class TestMainLoop;
+	class TestMainLoop;
 }
-
-struct AnimationTransform {
-	CharTransform xform;
-	float current;
-	float duration;
-	bool active;
-
-	AnimationTransform() :
-			current(0), duration(0), active(false) {}
-	bool is_active() const { return active; }
-
-	void _dump_xform() const;
-};
-
-typedef float (*ease_func_t)(float t, float b, float c, float d);
-
-struct AnimationController {
-	enum AnimState {
-		ANIMCTRL_DONE = 0, // transition complited
-		ANIMCTRL_IN = 1, // incoming animation
-		ANIMCTRL_OUT = 2 // outgoing aniamtion
-	};
-
-	virtual void init_xform(float duration, AnimationTransform &xform) = 0;
-	virtual AnimState update(float dt, ease_func_t ease, AnimationTransform &xform) = 0;
-	virtual AnimationController::AnimState state(const AnimationTransform &a) const = 0;
-};
 
 class Label : public Control {
 
@@ -72,6 +48,11 @@ class Label : public Control {
 
 public:
 	typedef Pair<CharType, CharType> CharPair;
+
+	struct AnimationController;
+	struct AnimationNone;
+	struct AnimationRotate;
+	struct AnimationSlide;
 
 	enum Align {
 
@@ -93,14 +74,13 @@ public:
 		TRANSITIONEFFECT_NONE,
 		TRANSITIONEFFECT_SLIDE_UP,
 		TRANSITIONEFFECT_SLIDE_DOWN,
+		TRANSITIONEFFECT_SLIDE_UP_NEW,
+		TRANSITIONEFFECT_SLIDE_DOWN_NEW,
 		TRANSITIONEFFECT_ROTATE_V,
 		TRANSITIONEFFECT_ROTATE_H,
+		TRANSITIONEFFECT_ROTATE_V_SEQ,
+		TRANSITIONEFFECT_ROTATE_H_SEQ,
 		TRANSITIONEFFECT_COUNT
-	};
-
-	enum TransitionChangePolicy {
-		TRANSITIONCHANGEPOLICY_ALL, /* always transition - even same characters */
-		TRANSITIONCHANGEPOLICY_NEW /* transition only new (changed) characters */
 	};
 
 #define DEFINE_TRANSITIONEASE(M)      \
@@ -130,14 +110,13 @@ private:
 	bool autowrap;
 	bool clip;
 	Size2 minsize;
-	int line_count;
 	bool uppercase;
 	float horizontal_spacing;
 	float vertical_spacing;
 
 	int get_longest_line_width(const String &s) const;
 
-	struct WordCache {
+	struct WordList {
 
 		enum {
 			CHAR_NEWLINE = -1,
@@ -148,8 +127,8 @@ private:
 		int word_len;
 		int pixel_width;
 		int space_count; // spaces before the word
-		WordCache *next;
-		WordCache() {
+		WordList *next;
+		WordList() {
 			char_pos = 0;
 			line = line_pos = 0;
 			word_len = 0;
@@ -159,51 +138,59 @@ private:
 		}
 	};
 
+	struct WordCache {
+
+		WordList *words;
+		String cache_text;
+		int total_char_cache;
+		int line_count;
+		int width;
+		WordCache() {
+			words = nullptr;
+			total_char_cache = 0;
+			line_count = 0;
+			width = 0;
+			char_xform_size = 0;
+			char_xform = 0;
+		}
+		int char_xform_size;
+		CharTransform *char_xform;
+	};
+
+	void _dump_word_cache(const String &text, const WordCache &cache) const;
+
 	bool word_cache_dirty;
 	void regenerate_word_cache();
-	WordCache *calculate_word_cache(const Ref<Font> &font, const String &label_text, int &line_count, int &total_char_cache, int &width) const;
-	CharType get_char_at(WordCache *cache, String &text, int line, int pos, int *word = 0, CharType *next_char = 0) const;
-	int get_line_size(WordCache *cache, String &text, int line) const;
+	WordCache calculate_word_cache(const Ref<Font> &font, const String &label_text) const;
+	int get_line_size(const WordCache &cache, int line) const;
+	String get_line_content(const WordCache &cache, int line) const;
+	CharType get_char_at_pos(const WordCache &cache, int line, int pixel_pos) const;
 
-	void _dump_word_cache(const String &text, const Label::WordCache *wc);
+	WordCache word_cache;
 
-	float percent_visible;
-
-	WordCache *word_cache = 0;
-	int total_char_cache;
+	real_t percent_visible;
 	int visible_chars;
 	int lines_skipped;
 	int max_lines_visible;
 
 	bool animate;
 	real_t transition_duration;
-	struct {
-		String text;
-		String xl_text;
-		WordCache *word_cache = 0;
-		Dictionary same_chars_pos;
-		int width;
-		int line_count;
-		int total_char_cache;
+	struct TransitionText {
+		String text, xl_text;
+		WordCache word_cache;
 	} transition_text;
-	struct {
+	struct TransitionOptions {
 		bool scale_width;
 		bool align_vrotation;
 		real_t align_vrotation_factor;
 	} transition_opts;
 	TransitionEase transition_ease;
 	TransitionEffect transition_effect;
-	TransitionChangePolicy transition_change_policy;
-	AnimationTransform transition_xform;
-	AnimationController *transition_controller = 0;
 
-	CharPair _process_transition_char(CharTransform &xform, bool draw_state, int line, int line_pos, int char_pos, real_t &x_ofs);
+	bool _transition_dirty;
+	std::unique_ptr<AnimationController> _transition_controller;
+
 	void _clear_pending_animations();
-	// 0 : IN
-	// 1 : OUT/DONE
-	bool _current_transition_state() const { return transition_controller->state(transition_xform) != AnimationController::ANIMCTRL_IN; }
-
-	bool is_transition_enabled() const { return transition_effect != TRANSITIONEFFECT_NONE; }
 
 protected:
 	void _notification(int p_what);
@@ -250,10 +237,8 @@ public:
 	void set_transition_align_vrotation_factor(real_t p_vrotation_factor);
 	real_t get_transition_align_vrotation_factor() const;
 
-	void set_transition_change_policy(TransitionChangePolicy p_change_policy);
-	TransitionChangePolicy get_transition_change_policy() const;
-
 	bool is_transition_active() const;
+	bool is_transition_enabled() const;
 
 	void set_clip_text(bool p_clip);
 	bool is_clipping_text() const;
@@ -286,6 +271,5 @@ VARIANT_ENUM_CAST(Label::Align);
 VARIANT_ENUM_CAST(Label::VAlign);
 VARIANT_ENUM_CAST(Label::TransitionEase);
 VARIANT_ENUM_CAST(Label::TransitionEffect);
-VARIANT_ENUM_CAST(Label::TransitionChangePolicy);
 
 #endif

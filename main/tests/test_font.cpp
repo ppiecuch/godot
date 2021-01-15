@@ -106,70 +106,19 @@ public:
 
 		OS::get_singleton()->print("Running tests:\n");
 
-		int word;
-		CharType n;
-
 		// 1:
 		{
-			CharType ch = label1->get_char_at(label1->word_cache, text, 0, 0, &word, &n);
-			OS::get_singleton()->print("\t 1: %s\n", ch == 'T' ? "PASS" : "FAILED");
-			OS::get_singleton()->print("\t 1: %s\n", word == 0 ? "PASS" : "FAILED");
+			int num = label1->get_line_size(label1->word_cache, 0);
+			OS::get_singleton()->print("\t 9: %s\n", num == 39 ? "PASS" : "FAILED");
 		}
 		// 2:
 		{
-			CharType ch = label1->get_char_at(label1->word_cache, text, 0, 1, &word, &n);
-			OS::get_singleton()->print("\t 2: %s\n", ch == 'h' ? "PASS" : "FAILED");
-			OS::get_singleton()->print("\t 2: %s\n", word == 0 ? "PASS" : "FAILED");
+			int num = label1->get_line_size(label1->word_cache, 2);
+			OS::get_singleton()->print("\t10: %s\n", num == 9 ? "PASS" : "FAILED");
 		}
 		// 3:
 		{
-			CharType ch = label1->get_char_at(label1->word_cache, text, 0, 7, &word, &n);
-			OS::get_singleton()->print("\t 3: %s\n", ch == 'a' ? "PASS" : "FAILED");
-			OS::get_singleton()->print("\t 3: %s\n", word == 1 ? "PASS" : "FAILED");
-		}
-		// 4:
-		{
-			CharType ch = label1->get_char_at(label1->word_cache, text, 1, 0, &word, &n);
-			OS::get_singleton()->print("\t 4: %s\n", ch == 'u' ? "PASS" : "FAILED");
-			OS::get_singleton()->print("\t 4: %s\n", word == 0 ? "PASS" : "FAILED");
-		}
-		// 5:
-		{
-			CharType ch = label1->get_char_at(label1->word_cache, text, 1, 1, &word, &n);
-			OS::get_singleton()->print("\t 5: %s\n", ch == 'n' ? "PASS" : "FAILED");
-			OS::get_singleton()->print("\t 5: %s\n", word == 0 ? "PASS" : "FAILED");
-		}
-		// 6:
-		{
-			CharType ch = label1->get_char_at(label1->word_cache, text, 2, 4, &word, &n);
-			OS::get_singleton()->print("\t 6: %s\n", ch == 's' ? "PASS" : "FAILED");
-			OS::get_singleton()->print("\t 1: %s\n", word == 0 ? "PASS" : "FAILED");
-		}
-		// 7:
-		{
-			CharType ch = label1->get_char_at(label1->word_cache, text, 2, 5, &word, &n);
-			OS::get_singleton()->print("\t 7: %s\n", ch == ' ' ? "PASS" : "FAILED");
-			OS::get_singleton()->print("\t 7: %s\n", word == 1 ? "PASS" : "FAILED");
-		}
-		// 8:
-		{
-			CharType ch = label1->get_char_at(label1->word_cache, text, 5, 5, &word, &n);
-			OS::get_singleton()->print("\t 8: %s\n", ch == 0 ? "PASS" : "FAILED");
-			OS::get_singleton()->print("\t 8: %s\n", word == 0 ? "PASS" : "FAILED");
-		}
-		// 9:
-		{
-			int num = label1->get_line_size(label1->word_cache, text, 0);
-			OS::get_singleton()->print("\t 9: %s\n", num == 39 ? "PASS" : "FAILED");
-		}
-		// 10:
-		{
-			int num = label1->get_line_size(label1->word_cache, text, 2);
-			OS::get_singleton()->print("\t10: %s\n", num == 9 ? "PASS" : "FAILED");
-		}
-		// 11:
-		{
-			int num = label1->get_line_size(label1->word_cache, text, 10);
+			int num = label1->get_line_size(label1->word_cache, 10);
 			OS::get_singleton()->print("\t11: %s\n", num == 0 ? "PASS" : "FAILED");
 		}
 

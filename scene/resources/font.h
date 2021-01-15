@@ -36,34 +36,32 @@
 #include "scene/resources/texture.h"
 
 struct CharTransform {
-	// tex and dest are normalized coordinates rect: (0,0),[1,1]
-	// since we donot know the size of the characters
-	struct {
-		Vector2 offset;
-		Vector2 scale;
-	} dest;
-	struct {
-		Vector2 offset;
-		Rect2 clip;
-	} tex;
-	CharTransform() :
-			dest({ Vector2(0, 0), Vector2(1, 1) }), tex({ Vector2(0, 0), Rect2(1, 1, 1, 1) }) {
-		// initial null transformation
+	// NOTE: tex_clip and dest_rect are normalized coordinates rect: (0,0),[1,1]
+	// an related to the size of the glyph, since we donot know the size
+	// of the characters
+	//
+	// +-------+
+	// | ↘︎     |
+	// |  +----+
+	// |  |....|
+	// +--+----+
+	//
+	// 1) .position shrinks the rect from origin
+	// 2) .size scale remaining rect
+	Rect2 dest_rect;
+	Rect2 tex_clip;
+	CharTransform() {
+		dest_rect = Rect2(0, 0, 1, 1);
+		tex_clip = Rect2(0, 0, 1, 1);
 	}
 	Rect2 xform_tex(const Rect2 &rc) const {
-		return Rect2(rc.position + tex.offset * rc.position, rc.size)
-				.clip(Rect2(tex.clip.position * rc.position, tex.clip.size * rc.size));
+		const Size2 off = rc.size * tex_clip.position;
+		return rc.clip(Rect2(rc.position + off, (rc.size - off) * tex_clip.size));
 	}
-	Rect2 xform_dest(const Rect2 &rc, float ascent, float vrotation_offset) const {
-		return Rect2(rc.position + (scale_width ? Vector2(0, 0) : (dest.offset * rc.size))
-							 // align vert. rotation to one line (otherwise rot. happens in the middle of the letter bitmap).
-							 // TODO: it is kind of magic at the moment
-							 + (align_vrotation ? Vector2(0, (align_vrotation_factor * ascent + vrotation_offset) * (1 - dest.scale.y)) : Vector2(0, 0)),
-				rc.size * dest.scale);
+	Rect2 xform_dest(const Rect2 &rc) const {
+		const Size2 off = rc.size * dest_rect.position;
+		return Rect2(rc.position + off, (rc.size - off) * dest_rect.size);
 	}
-	bool scale_width = false;
-	bool align_vrotation = false;
-	real_t align_vrotation_factor = 0.5;
 };
 
 class Font : public Resource {
@@ -108,6 +106,8 @@ class FontDrawer {
 		CharType chr;
 		CharType next;
 		Color modulate;
+		bool with_xform;
+		CharTransform xform;
 	};
 
 	Vector<PendingDraw> pending_draws;
@@ -120,12 +120,16 @@ public:
 	}
 
 	float draw_char(RID p_canvas_item, const Point2 &p_pos, CharType p_char, CharType p_next = 0, const Color &p_modulate = Color(1, 1, 1)) {
+		if (has_outline) {
+			PendingDraw draw = { p_canvas_item, p_pos, p_char, p_next, p_modulate, false };
+			pending_draws.push_back(draw);
+		}
 		return draw_char(p_canvas_item, CharTransform(), p_pos, p_char, p_next, p_modulate);
 	}
 
 	float draw_char(RID p_canvas_item, const CharTransform &p_char_xform, const Point2 &p_pos, CharType p_char, CharType p_next = 0, const Color &p_modulate = Color(1, 1, 1)) {
 		if (has_outline) {
-			PendingDraw draw = { p_canvas_item, p_pos, p_char, p_next, p_modulate };
+			PendingDraw draw = { p_canvas_item, p_pos, p_char, p_next, p_modulate, true, p_char_xform };
 			pending_draws.push_back(draw);
 		}
 		return font->draw_char_xform(p_canvas_item, p_char_xform, p_pos, p_char, p_next, has_outline ? outline_color : p_modulate, has_outline);
@@ -134,7 +138,10 @@ public:
 	~FontDrawer() {
 		for (int i = 0; i < pending_draws.size(); ++i) {
 			const PendingDraw &draw = pending_draws[i];
-			font->draw_char(draw.canvas_item, draw.pos, draw.chr, draw.next, draw.modulate, false);
+			if (draw.with_xform)
+				font->draw_char_xform(draw.canvas_item, draw.xform, draw.pos, draw.chr, draw.next, draw.modulate, false);
+			else
+				font->draw_char(draw.canvas_item, draw.pos, draw.chr, draw.next, draw.modulate, false);
 		}
 	}
 };

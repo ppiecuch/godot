@@ -62,6 +62,7 @@ typedef PoolVector<uint8_t> PoolByteArray;
 typedef PoolVector<int> PoolIntArray;
 typedef PoolVector<real_t> PoolRealArray;
 typedef PoolVector<String> PoolStringArray;
+typedef PoolVector<Point2> PoolPoint2Array;
 typedef PoolVector<Vector2> PoolVector2Array;
 typedef PoolVector<Vector3> PoolVector3Array;
 typedef PoolVector<Color> PoolColorArray;
