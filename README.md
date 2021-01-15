@@ -1,5 +1,16 @@
 [![Godot Engine logo](/logo.png)](https://godotengine.org)
 
+## Donation Button
+
+You can support my (_Pawel Piecuch_) work on __Godot Engine__ enhancements:
+
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate?business=6QXS8MBPKBTTN&item_name=Improving+and+enhancing+Godot+Engine.&currency_code=USD)
+
+The most important topics and focus of my work:
+  1. _Apple Metal_ graphics driver
+  2. HK _Odroid-Fo Advance_ and _Super_ consoles
+  3. _Nintendo Switch_ port and improvments (only for _Nintendo registered_ users)
+
 ## Godot Engine
 
 Homepage: https://godotengine.org
