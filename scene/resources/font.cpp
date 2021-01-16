@@ -654,11 +654,11 @@ float BitmapFont::draw_char_xform(RID p_canvas_item, const CharTransform &p_char
 
 	ERR_FAIL_COND_V(c->texture_idx < -1 || c->texture_idx >= textures.size(), false);
 	if (!p_outline && c->texture_idx != -1) {
-		Point2 cpos = p_pos;
+		Point2 cpos;
 		cpos.x += c->h_align;
 		cpos.y += c->v_align - ascent;
 		VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item,
-				p_char_xform.xform_dest(Rect2(cpos, c->rect.size)),
+				p_char_xform.xform_dest(Rect2(p_pos, c->rect.size)).move_by(cpos),
 				textures[c->texture_idx]->get_rid(),
 				p_char_xform.xform_tex(c->rect), p_modulate, false, RID(), false);
 	}

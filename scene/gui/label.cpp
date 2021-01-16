@@ -279,12 +279,12 @@ draw_loop:
 					}
 				}
 
-				auto get_char_xform = [](const WordCache *cc, int pos) {
-					ERR_FAIL_COND_V(cc->char_xform == NULL, CharTransform());
-					if (cc->char_xform_size == 1)
-						return *cc->char_xform;
-					ERR_FAIL_INDEX_V(pos, cc->cache_text.length(), CharTransform());
-					return cc->char_xform[pos];
+				auto get_char_xform = [](const WordCache *cache, int pos) {
+					ERR_FAIL_COND_V(cache->char_xform == NULL, CharTransform());
+					if (cache->char_xform_size == 1)
+						return *cache->char_xform;
+					ERR_FAIL_INDEX_V(pos, cache->cache_text.length(), CharTransform());
+					return cache->char_xform[pos];
 				};
 
 				if (font_color_shadow.a > 0) {

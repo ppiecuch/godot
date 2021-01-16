@@ -237,6 +237,11 @@ struct Rect2 {
 		return Rect2(Point2(position.x + MIN(size.x, 0), position.y + MIN(size.y, 0)), size.abs());
 	}
 
+	_FORCE_INLINE_ Rect2 move_by(const Point2 &p_vector) {
+
+		return Rect2(position + p_vector, size);
+	}
+
 	operator String() const { return String(position) + ", " + String(size); }
 
 	Rect2() {}
