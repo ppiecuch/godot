@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -72,9 +72,10 @@ public:
 	struct Config {
 
 		bool shrink_textures_x2;
+		bool use_stencil_buffer;
 		bool use_fast_texture_filter;
 		bool use_anisotropic_filter;
-		bool use_stencil_buffer;
+		bool use_lightmap_filter_bicubic;
 
 		bool s3tc_supported;
 		bool latc_supported;

@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -76,6 +76,19 @@ public:
 		count--;
 		for (U i = p_index; i < count; i++) {
 			data[i] = data[i + 1];
+		}
+		if (!__has_trivial_destructor(T) && !force_trivial) {
+			data[count].~T();
+		}
+	}
+
+	// Removes the item copying the last value into the position of the one to
+	// remove. It's generally faster than `remove`.
+	void remove_unordered(U p_index) {
+		ERR_FAIL_INDEX(p_index, count);
+		count--;
+		if (count > p_index) {
+			data[p_index] = data[count];
 		}
 		if (!__has_trivial_destructor(T) && !force_trivial) {
 			data[count].~T();

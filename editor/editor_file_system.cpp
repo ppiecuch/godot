@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -1510,20 +1510,21 @@ void EditorFileSystem::update_file(const String &p_file) {
 	String type = ResourceLoader::get_resource_type(p_file);
 
 	if (cpos == -1) {
+		// The file did not exist, it was added.
 
-		//the file did not exist, it was added
-
-		late_added_files.insert(p_file); //remember that it was added. This mean it will be scanned and imported on editor restart
+		late_added_files.insert(p_file); // Remember that it was added. This mean it will be scanned and imported on editor restart.
 		int idx = 0;
+		String file_name = p_file.get_file();
 
 		for (int i = 0; i < fs->files.size(); i++) {
-			if (p_file < fs->files[i]->file)
+			if (file_name < fs->files[i]->file) {
 				break;
+			}
 			idx++;
 		}
 
 		EditorFileSystemDirectory::FileInfo *fi = memnew(EditorFileSystemDirectory::FileInfo);
-		fi->file = p_file.get_file();
+		fi->file = file_name;
 		fi->import_modified_time = 0;
 		fi->import_valid = ResourceLoader::is_import_valid(p_file);
 

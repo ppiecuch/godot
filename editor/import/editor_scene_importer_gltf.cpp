@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -425,7 +425,9 @@ Error EditorSceneImporterGLTF::_parse_buffers(GLTFState &state, const String &p_
 
 Error EditorSceneImporterGLTF::_parse_buffer_views(GLTFState &state) {
 
-	ERR_FAIL_COND_V(!state.json.has("bufferViews"), ERR_FILE_CORRUPT);
+	if (!state.json.has("bufferViews"))
+		return OK;
+
 	const Array &buffers = state.json["bufferViews"];
 	for (GLTFBufferViewIndex i = 0; i < buffers.size(); i++) {
 
@@ -483,7 +485,9 @@ EditorSceneImporterGLTF::GLTFType EditorSceneImporterGLTF::_get_type_from_str(co
 
 Error EditorSceneImporterGLTF::_parse_accessors(GLTFState &state) {
 
-	ERR_FAIL_COND_V(!state.json.has("accessors"), ERR_FILE_CORRUPT);
+	if (!state.json.has("accessors"))
+		return OK;
+
 	const Array &accessors = state.json["accessors"];
 	for (GLTFAccessorIndex i = 0; i < accessors.size(); i++) {
 

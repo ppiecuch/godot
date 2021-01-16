@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -31,8 +31,10 @@
 #include "physics_server_sw.h"
 
 #include "broad_phase_basic.h"
+#include "broad_phase_bvh.h"
 #include "broad_phase_octree.h"
 #include "core/os/os.h"
+#include "core/project_settings.h"
 #include "core/script_language.h"
 #include "joints/cone_twist_joint_sw.h"
 #include "joints/generic_6dof_joint_sw.h"
@@ -1565,7 +1567,15 @@ void PhysicsServerSW::_shape_col_cbk(const Vector3 &p_point_A, const Vector3 &p_
 PhysicsServerSW *PhysicsServerSW::singleton = NULL;
 PhysicsServerSW::PhysicsServerSW() {
 	singleton = this;
-	BroadPhaseSW::create_func = BroadPhaseOctree::_create;
+
+	bool use_bvh_or_octree = GLOBAL_GET("physics/3d/godot_physics/use_bvh");
+
+	if (use_bvh_or_octree) {
+		BroadPhaseSW::create_func = BroadPhaseBVH::_create;
+	} else {
+		BroadPhaseSW::create_func = BroadPhaseOctree::_create;
+	}
+
 	island_count = 0;
 	active_objects = 0;
 	collision_pairs = 0;

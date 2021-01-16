@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -251,6 +251,19 @@ protected:
 			undo_redo->create_action(TTR("Set Variable Type"));
 			undo_redo->add_do_method(script.ptr(), "set_variable_info", var, dc);
 			undo_redo->add_undo_method(script.ptr(), "set_variable_info", var, d);
+
+			// Setting the default value.
+			Variant::Type type = (Variant::Type)(int)p_value;
+			if (type != Variant::NIL) {
+				Variant default_value;
+				Variant::CallError ce;
+				default_value = Variant::construct(type, NULL, 0, ce);
+				if (ce.error == Variant::CallError::CALL_OK) {
+					undo_redo->add_do_method(script.ptr(), "set_variable_default_value", var, default_value);
+					undo_redo->add_undo_method(script.ptr(), "set_variable_default_value", var, dc["value"]);
+				}
+			}
+
 			undo_redo->add_do_method(this, "_var_changed");
 			undo_redo->add_undo_method(this, "_var_changed");
 			undo_redo->commit_action();
