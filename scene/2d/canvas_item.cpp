@@ -41,6 +41,15 @@
 #include "servers/visual/visual_server_raster.h"
 #include "servers/visual_server.h"
 
+#ifdef MODULE_GDEXTENSIONS_ENABLED
+#ifdef TOOLS_ENABLED
+# include "editor/editor_node.h"
+#endif
+// global on-screen console layer instance
+#include "modules/gdextensions/debugconsole/debug_console.h"
+static ConsoleInstance *_console = 0;
+#endif
+
 Mutex *CanvasItemMaterial::material_mutex = NULL;
 SelfList<CanvasItemMaterial>::List *CanvasItemMaterial::dirty_materials = NULL;
 Map<CanvasItemMaterial::MaterialKey, CanvasItemMaterial::ShaderData> CanvasItemMaterial::shader_map;
@@ -597,6 +606,20 @@ void CanvasItem::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_ENTER_TREE: {
 
+#ifdef MODULE_GDEXTENSIONS_ENABLED
+			if (_console == 0
+#ifdef TOOLS_ENABLED
+				&& EditorNode::get_singleton()->get_scene_root() == get_parent()
+#else
+				&& get_tree()->get_root() == get_parent()
+#endif
+				&& GLOBAL_DEF("debug/settings/stdout/active_console", false)) {
+
+				_console = memnew(ConsoleInstance);
+				_console->set_name("text_console");
+				add_child(_console);
+			}
+#endif
 			first_draw = true;
 			if (get_parent()) {
 				CanvasItem *ci = Object::cast_to<CanvasItem>(get_parent());
@@ -1145,6 +1168,14 @@ void CanvasItem::force_update_transform() {
 	notification(NOTIFICATION_TRANSFORM_CHANGED);
 }
 
+void CanvasItem::console_msg(const String &p_msg) {
+#ifdef MODULE_GDEXTENSIONS_ENABLED
+	_console->console_msg(p_msg);
+#else
+	print_line(p_msg);
+#endif
+}
+
 void CanvasItem::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("_toplevel_raise_self"), &CanvasItem::_toplevel_raise_self);
@@ -1230,6 +1261,8 @@ void CanvasItem::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_canvas"), &CanvasItem::get_canvas);
 	ClassDB::bind_method(D_METHOD("get_world_2d"), &CanvasItem::get_world_2d);
 	//ClassDB::bind_method(D_METHOD("get_viewport"),&CanvasItem::get_viewport);
+
+	ClassDB::bind_method(D_METHOD("console_msg", "msg"), &CanvasItem::console_msg);
 
 	ClassDB::bind_method(D_METHOD("set_material", "material"), &CanvasItem::set_material);
 	ClassDB::bind_method(D_METHOD("get_material"), &CanvasItem::get_material);

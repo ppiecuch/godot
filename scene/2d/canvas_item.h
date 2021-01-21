@@ -343,6 +343,8 @@ public:
 	void draw_set_transform(const Point2 &p_offset, float p_rot, const Size2 &p_scale);
 	void draw_set_transform_matrix(const Transform2D &p_matrix);
 
+	void console_msg(const String &p_msg);
+
 	static CanvasItem *get_current_item_drawn();
 
 	/* RECT / TRANSFORM */
