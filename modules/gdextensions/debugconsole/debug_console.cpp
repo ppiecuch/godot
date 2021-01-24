@@ -150,7 +150,7 @@ static Color palette[16] = {
     /* 15. WHITE        */ Color::from_abgr( 0xFFFFFFFF )
 };
 
-Point2i TextConsole::_write(const String &p_msg, Point2i pos, uint8_t foreground, uint8_t background) {
+Point2i TextConsole::_write(const String &p_msg, Point2i pos, ColorIndex foreground, ColorIndex background) {
 	ERR_FAIL_COND_V(_screen == 0, pos);
 	ERR_FAIL_COND_V(pos.x >= _con_size.width, pos);
 	ERR_FAIL_COND_V(pos.y >= _con_size.height, pos);
@@ -171,7 +171,7 @@ Point2i TextConsole::_write(const String &p_msg, Point2i pos, uint8_t foreground
 	return pos;
 }
 
-Point2i TextConsole::_put(const String &p_msg, Point2i pos, uint8_t foreground, uint8_t background) {
+Point2i TextConsole::_putl(const String &p_msg, Point2i pos, ColorIndex foreground, ColorIndex background) {
 	ERR_FAIL_COND_V(_screen == 0, pos);
 	ERR_FAIL_COND_V(pos.x >= _con_size.width, pos);
 	ERR_FAIL_COND_V(pos.y >= _con_size.height, pos);
@@ -188,39 +188,39 @@ Point2i TextConsole::_put(const String &p_msg, Point2i pos, uint8_t foreground, 
 	return pos;
 }
 
-Point2i TextConsole::_putf(const String &p_msg, Point2i pos, uint8_t foreground, uint8_t background) {
+Point2i TextConsole::_putf(const String &p_msg, Point2i pos, ColorIndex foreground, ColorIndex background) {
 	ERR_FAIL_COND_V(_screen == 0, pos);
+	ERR_FAIL_COND_V(pos.x >= _con_size.width, pos);
+	ERR_FAIL_COND_V(pos.y >= _con_size.height, pos);
 
 	static Point2i v1 = Point2i(0, 1);
-	static Point2i v2 = Point2i(0, 2);
-	static Point2i h2 = Point2i(2, 0);
-	static Point2i hf = Point2i(BoxFSize, 0);
 
 	CharString ascii = p_msg.ascii();
-	for(int i=0; i<ascii.size(); ++i) {
-		const uint8_t ch = ascii[i];
-		if (ch == ' ') {
-			_put("  ", pos, foreground, background);
-			_put("  ", pos + v1, foreground, background);
-			_put("  ", pos + v2, foreground, background);
-			pos += h2;
+	for(int r=0; r<BoxFSize; ++r) {
+		for(int c=0; c<ascii.size(); ++c) {
+			const uint8_t ch = ascii[c];
+			if (ch == ' ') {
+				_putl("  ", pos + Point2i(c * BoxFSize, 0), foreground, background);
+			} else {
+				_putl(boxf[boxf_offsets[ch] + r], pos + Point2i(c * BoxFSize, 0), foreground, background);
+			}
+		}
+		if (pos.y + 1 == _con_size.height) {
+			_scroll_up();
 		} else {
-			int off = boxf_offsets[ch];
-			_put(boxf[off++], pos, foreground, background);
-			_put(boxf[off++], pos + v1, foreground, background);
-			_put(boxf[off++], pos + v2, foreground, background);
-			pos += hf;
+			pos += v1;
 		}
 	}
 	return pos;
 }
 
-void TextConsole::_scroll_up() {
+void TextConsole::_scroll_up(int p_scroll_lines) {
+	ERR_FAIL_COND(p_scroll_lines <= 0);
 	ERR_FAIL_COND(_screen == 0);
 
 	const int cell_size = sizeof(cell);
-	memmove(_screen, _screen + _con_size.width, (_con_size.height - 1) * _con_size.width * cell_size);
-	memset(_screen + (_con_size.height - 1) * _con_size.width, 0, _con_size.width * cell_size);
+	memmove(_screen, _screen + _con_size.width * p_scroll_lines, (_con_size.height - p_scroll_lines) * _con_size.width * cell_size * p_scroll_lines);
+	memset(_screen + (_con_size.height - p_scroll_lines) * _con_size.width, 0, _con_size.width * cell_size * p_scroll_lines);
 }
 
 void TextConsole::_update_mesh() {
@@ -311,10 +311,12 @@ void TextConsole::log(const String &p_msg) {
 	log(p_msg, _default_fg_color_index, _default_bg_color_index);
 }
 
-void TextConsole::log(const String &p_msg, uint8_t foreground, uint8_t background) {
+void TextConsole::log(const String &p_msg, ColorIndex foreground, ColorIndex background) {
 
 	// next line
-	_cursor_pos = Point2i(0, _put(p_msg, _cursor_pos, foreground, background).y + 1);
+	_cursor_pos = Point2i(0, _putl(p_msg, _cursor_pos,
+								   foreground == COLOR_DEFAULT ? _default_fg_color_index : foreground,
+								   background == COLOR_DEFAULT ? _default_bg_color_index : background).y + 1);
 	if (_cursor_pos.y == _con_size.height) {
 		_scroll_up();
 		_cursor_pos = Point2i(0, _cursor_pos.y - 1);
@@ -326,10 +328,16 @@ void TextConsole::logf(const String &p_msg) {
 	logf(p_msg, _default_fg_color_index, _default_bg_color_index);
 }
 
-void TextConsole::logf(const String &p_msg, uint8_t foreground, uint8_t background) {
+void TextConsole::logf(const String &p_msg, ColorIndex foreground, ColorIndex background) {
 
 	// next line
-	_cursor_pos = Point2i(0, _putf(p_msg, _cursor_pos, foreground, background).y + BoxFSize);
+	_cursor_pos = Point2i(0, _putf(p_msg, _cursor_pos,
+								   foreground == COLOR_DEFAULT ? _default_fg_color_index : foreground,
+								   background == COLOR_DEFAULT ? _default_bg_color_index : background).y + 1);
+	if (_cursor_pos.y == _con_size.height) {
+		_scroll_up();
+		_cursor_pos = Point2i(0, _cursor_pos.y - 1);
+	}
 }
 
 TextConsole::TextConsole() {
@@ -342,10 +350,10 @@ TextConsole::TextConsole() {
 	transparent_color_index = 0;
 
 	resize(80, 25);
-    log(BOX_DDR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DDL, 7);
-    log(BOX_DUD "   Godot Engine debug console   " BOX_DUD, 7);
-    log(BOX_DUD "     KomSoft Oprogramowanie     " BOX_DUD, 7);
-    log(BOX_DUR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DUL, 7);
+    log(BOX_DDR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DDL, COLOR_LIGHTGRAY);
+    log(BOX_DUD "   Godot Engine debug console   " BOX_DUD, COLOR_LIGHTGRAY);
+    log(BOX_DUD "     KomSoft Oprogramowanie     " BOX_DUD, COLOR_LIGHTGRAY);
+    log(BOX_DUR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DUL, COLOR_LIGHTGRAY);
     log("\020 " VERSION_FULL_NAME);
     log("\020 Hello!");
 	logf("2021");
@@ -388,7 +396,7 @@ void ConsoleInstance::_notification(int p_notification) {
 
 			if (!console.is_valid()) {
 				console = Ref<TextConsole>(memnew(TextConsole()));
-				console->load_font(TextConsole::DOS_8x16);
+				console->load_font(TextConsole::DOS_8x12);
 			}
 		} break;
 
@@ -405,8 +413,102 @@ void ConsoleInstance::console_msg(const String &p_msg) {
 	ERR_FAIL_COND(!console.is_valid());
 
 	// parse control characters
-	console->log(p_msg);
+	_process_codes(p_msg);
 	update();
+}
+
+Error ConsoleInstance::_process_codes(const String &p_concodes) {
+
+	static const String colors_value[] = {
+		"black",
+		"blue",
+		"green",
+		"cyan",
+		"red",
+		"magenta",
+		"brown",
+		"lightgray",
+		"darkgray",
+		"lightblue",
+		"lightgreen",
+		"lightcyan",
+		"lightred",
+		"lightmagenta",
+		"yellow",
+		"white",
+		"default",
+	};
+
+	List<String> tag_stack;
+	int pos = 0;
+	TextConsole::ColorIndex fg = TextConsole::COLOR_DEFAULT, bg = TextConsole::COLOR_DEFAULT;
+
+	while (pos < p_concodes.length()) {
+
+		int brk_pos = p_concodes.find("[", pos);
+
+		if (brk_pos < 0)
+			brk_pos = p_concodes.length();
+		if (brk_pos > pos)
+			console->log(p_concodes.substr(pos, brk_pos - pos), fg, bg);
+		if (brk_pos == p_concodes.length())
+			break; //nothing else to add
+
+		int brk_end = p_concodes.find("]", brk_pos + 1);
+
+		if (brk_end == -1) {
+			//no close, add the rest
+			console->log(p_concodes.substr(brk_pos, p_concodes.length() - brk_pos), fg, bg);
+			break;
+		}
+
+		String tag = p_concodes.substr(brk_pos + 1, brk_end - brk_pos - 1);
+		Vector<String> split_tag_block = tag.split(" ", false);
+
+		if (tag.begins_with("/") && tag_stack.size()) {
+
+			bool tag_ok = tag_stack.size() && tag_stack.front()->get() == tag.substr(1, tag.length());
+
+			if (tag_stack.front()->get() == "fg")
+				fg = TextConsole::COLOR_DEFAULT;
+			if (tag_stack.front()->get() == "bg")
+				bg = TextConsole::COLOR_DEFAULT;
+
+			if (!tag_ok) {
+				console->log("[" + tag, fg, bg);
+				pos = brk_end;
+				continue;
+			}
+
+			pos = brk_end + 1;
+			tag_stack.pop_front();
+
+		} else if (tag.begins_with("fg=") || tag.begins_with("bg=")) {
+
+			String col = tag.substr(3, tag.length());
+			int color_index = -1;
+
+			for(int c=0; c<TextConsole::COLOR_MAX; ++c) {
+				if (col == colors_value[c]) {
+					color_index = c;
+					break;
+				}
+			}
+
+			if (color_index == -1) {
+				WARN_PRINT("Unknown color name: "+col);
+			} else {
+				if (tag.begins_with("fg="))
+					fg = TextConsole::ColorIndex(color_index);
+				else if (tag.begins_with("bg="))
+					bg = TextConsole::ColorIndex(color_index);
+			}
+
+			pos = brk_end + 1;
+			tag_stack.push_front(tag);
+		}
+	}
+	return OK;
 }
 
 Ref<TextConsole> ConsoleInstance::get_console() const { return console; }

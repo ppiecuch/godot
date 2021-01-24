@@ -46,6 +46,7 @@ struct Rect2 {
 	void set_size(const Vector2 &p_size) { size = p_size; }
 
 	real_t get_area() const { return size.width * size.height; }
+	Point2 get_center() const { return position + size / 2.0; }
 
 	inline Rect2 interpolate(const Rect2 &p_rect, real_t p_weight) const {
 		return Rect2(
@@ -237,7 +238,7 @@ struct Rect2 {
 		return Rect2(Point2(position.x + MIN(size.x, 0), position.y + MIN(size.y, 0)), size.abs());
 	}
 
-	_FORCE_INLINE_ Rect2 move_by(const Point2 &p_vector) {
+	_FORCE_INLINE_ Rect2 move_by(const Point2 &p_vector) const {
 
 		return Rect2(position + p_vector, size);
 	}

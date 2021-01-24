@@ -15,7 +15,10 @@ modules = [
     "scenery/spherical_waves",
     "scenery/water_splash",
     "scenery/vegetation_instance",
+    "scenery/starfield",
+    "scenery/spider_anim",
     "debugdraw",
+    "debugconsole",
     "statemachine",
     "benet",
     "behaviornode",
@@ -24,10 +27,10 @@ for m in modules:
     sources += Glob("%s/*.cpp" % m)
     sources += Glob("%s/*.c" % m)
 
-env_module.Append(CPPPATH=["#thirdparty/enet/", os.path.dirname(os.path.realpath(os.curdir)) + "/gdnative/include"])
+env_module.Append(CPPPATH=["#thirdparty/enet/", os.path.dirname(os.path.realpath(os.curdir)) + "/gdnative/include", "."])
 env_module.Append(CPPFLAGS=["-DGD_GODOT_ENET"])
 
 # Compile as a static library
-lib = env_module.Library("gd_custom_extensions", sources)
+lib = env_module.Library("gdextensions", sources)
 # Add the library as a dependency of the final executable
 env.Prepend(LIBS=[lib])

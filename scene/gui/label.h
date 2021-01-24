@@ -52,6 +52,7 @@ public:
 	struct AnimationController;
 	struct AnimationNone;
 	struct AnimationRotate;
+	struct AnimationRotateSeq;
 	struct AnimationSlide;
 
 	enum Align {
@@ -109,7 +110,6 @@ private:
 	String xl_text;
 	bool autowrap;
 	bool clip;
-	Size2 minsize;
 	bool uppercase;
 	float horizontal_spacing;
 	float vertical_spacing;
@@ -145,19 +145,17 @@ private:
 		int total_char_cache;
 		int line_count;
 		int width;
+		Size2 minsize;
 		WordCache() {
 			words = nullptr;
 			total_char_cache = 0;
 			line_count = 0;
 			width = 0;
-			char_xform_size = 0;
-			char_xform = 0;
+			minsize = Size2(0, 0);
 		}
-		int char_xform_size;
-		CharTransform *char_xform;
 	};
 
-	void _dump_word_cache(const String &text, const WordCache &cache) const;
+	void _dump_word_cache(const WordCache &cache) const;
 
 	bool word_cache_dirty;
 	void regenerate_word_cache();
@@ -179,11 +177,6 @@ private:
 		String text, xl_text;
 		WordCache word_cache;
 	} transition_text;
-	struct TransitionOptions {
-		bool scale_width;
-		bool align_vrotation;
-		real_t align_vrotation_factor;
-	} transition_opts;
 	TransitionEase transition_ease;
 	TransitionEffect transition_effect;
 
@@ -227,15 +220,6 @@ public:
 
 	void set_transition_effect(TransitionEffect p_effect);
 	TransitionEffect get_transition_effect() const;
-
-	void set_transition_scale_width(bool p_scale_width);
-	bool is_transition_scale_width() const;
-
-	void set_transition_align_vrotation(bool p_align_vrotation);
-	bool is_transition_align_vrotation() const;
-
-	void set_transition_align_vrotation_factor(real_t p_vrotation_factor);
-	real_t get_transition_align_vrotation_factor() const;
 
 	bool is_transition_active() const;
 	bool is_transition_enabled() const;

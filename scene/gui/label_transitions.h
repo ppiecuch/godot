@@ -218,9 +218,10 @@ static inline void _dump_xform(const CharTransform &xform) {
 
 struct Label::AnimationController {
 
-	virtual bool init_transition(Label *p_owner, real_t p_duration, WordCache *p_cache_in, WordCache *p_cache_out) = 0;
-	virtual bool update(real_t dt, ease_func_t ease) = 0;
-	virtual std::vector<WordCache*> get_draw_cache() = 0;
+	virtual bool init_transition(Label *p_owner, real_t p_duration, ease_func_t p_ease, WordCache *p_cache_in, WordCache *p_cache_out) = 0;
+	virtual bool update(real_t p_dt, ease_func_t p_ease) = 0; // -> true: transition done
+	virtual const std::vector<WordCache*> get_draw_cache() = 0;
+	virtual const CharTransform *get_char_xform(const WordCache *p_cache, int p_pos) = 0;
 	virtual bool is_done() const = 0;
 	virtual bool is_valid() const = 0;
 	virtual ~AnimationController() { }
@@ -228,58 +229,70 @@ struct Label::AnimationController {
 
 struct Label::AnimationNone : public Label::AnimationController {
 
-	virtual bool init_transition(Label *p_owner, real_t p_duration, WordCache *p_cache_in, WordCache *p_cache_out) { return false; }
-	virtual bool update(real_t dt, ease_func_t ease) { return true; }
-	virtual std::vector<WordCache*> get_draw_cache() { return std::vector<WordCache*>(); }
+	virtual bool init_transition(Label *p_owner, real_t p_duration, ease_func_t p_ease, WordCache *p_cache_in, WordCache *p_cache_out) { return false; }
+	virtual bool update(real_t p_dt, ease_func_t p_ease) { return true; }
+	virtual const std::vector<WordCache*> get_draw_cache() { return std::vector<WordCache*>(); }
+	virtual const CharTransform *get_char_xform(const WordCache *p_cache, int p_pos) { return nullptr; }
 	virtual bool is_done() const { return true; }
 	virtual bool is_valid() const { return false; }
 };
 
 struct Label::AnimationSlide : public Label::AnimationController {
 
-	enum AnimationSlideOrient {
+	enum AnimationOrient {
 		ANIMATION_SLIDE_UP,
 		ANIMATION_SLIDE_DOWN,
 		ANIMATION_SLIDE_UP_NEW,
 		ANIMATION_SLIDE_DOWN_NEW
 	};
 
+	CharTransform slide_in;
+	CharTransform slide_out;
 	real_t current = 0;
 	real_t duration = 0;
 	bool active = false;
 
 	Label *owner = nullptr;
-	AnimationSlideOrient orientation = ANIMATION_SLIDE_UP;
+	AnimationOrient orientation = ANIMATION_SLIDE_UP;
 
-	WordCache *cache_in = 0;
-	WordCache *cache_out = 0;
+	WordCache cache_in;
+	WordCache cache_out;
 
-	virtual bool init_transition(Label *p_owner, real_t p_duration, WordCache *p_cache_in, WordCache *p_cache_out) {
-
+	virtual bool init_transition(Label *p_owner, real_t p_duration, ease_func_t p_ease, WordCache *p_cache_in, WordCache *p_cache_out) {
 		ERR_FAIL_COND_V(p_cache_in == 0, false);
 		ERR_FAIL_COND_V(p_cache_out == 0, false);
+		ERR_FAIL_COND_V(p_duration <= 0, false);
 
-		cache_in = p_cache_in;
-		cache_out = p_cache_out;
+		slide_in = CharTransform();
+		slide_out = CharTransform();
+
+		cache_in = *p_cache_in;
+		cache_out = *p_cache_out;
 
 		duration = p_duration;
 		current = 0; // transition from 0 .. duration
-		active = p_duration > 0;
+		active = cache_in.words || cache_out.words;
 
 		return true;
 	}
-	virtual bool update(real_t dt, ease_func_t ease) { return true; }
-	virtual std::vector<WordCache*> get_draw_cache() { return std::vector<WordCache*> { cache_in }; }
+	virtual bool update(real_t p_dt, ease_func_t p_ease) { return true; }
+	virtual const std::vector<WordCache*> get_draw_cache() { return std::vector<WordCache*> { &cache_in }; }
+	virtual const CharTransform *get_char_xform(const WordCache *p_cache, int p_pos) {
+
+		if (p_cache == &cache_in) return &slide_in;
+		if (p_cache == &cache_out) return &slide_out;
+		return nullptr;
+	}
 	virtual bool is_done() const { return !active; }
 	virtual bool is_valid() const {
 
-		if (!cache_in || !cache_out)
+		if (!owner)
 			return false;
 		else
-			return (cache_in->line_count != cache_out->line_count) && (owner->get_valign() == VALIGN_CENTER || owner->get_align() == ALIGN_CENTER);
+			return (cache_in.line_count != cache_out.line_count) && (owner->get_valign() == VALIGN_CENTER || owner->get_align() == ALIGN_CENTER);
 	}
 
-	AnimationSlide(AnimationSlideOrient p_orientation) {
+	AnimationSlide(AnimationOrient p_orientation) {
 
 		orientation = p_orientation;
 	}
@@ -287,12 +300,10 @@ struct Label::AnimationSlide : public Label::AnimationController {
 
 struct Label::AnimationRotate : public Label::AnimationController {
 
-	enum AnimationRotateOrient {
+	enum AnimationOrient {
 
 		ANIMATION_ROTATE_H,
 		ANIMATION_ROTATE_V,
-		ANIMATION_ROTATE_H_SEQ,
-		ANIMATION_ROTATE_V_SEQ
 	};
 
 	CharTransform xform;
@@ -301,42 +312,13 @@ struct Label::AnimationRotate : public Label::AnimationController {
 	bool active = false;
 
 	Label *owner = nullptr;
-	AnimationRotateOrient orientation = ANIMATION_ROTATE_H;
+	AnimationOrient orientation = ANIMATION_ROTATE_H;
 
 	WordCache cache_in;
 	WordCache cache_out;
 
-	virtual bool init_transition(Label *p_owner, real_t p_duration, WordCache *p_cache_out, WordCache *p_cache_in) {
-		ERR_FAIL_COND_V(p_cache_out == 0, false);
-		ERR_FAIL_COND_V(p_cache_in == 0, false);
-		ERR_FAIL_COND_V(p_duration <= 0, false);
-
-		cache_in = *p_cache_in;
-		cache_in.char_xform = &xform;
-		cache_in.char_xform_size = 1;
-		cache_out = *p_cache_out;
-		cache_out.char_xform = &xform;
-		cache_out.char_xform_size = 1;
-
-		duration = p_duration;
-		// transition from range:  -duration .. 0 .. duration (2 x duration)
-		if (!cache_out.words) // nothing to hide - jump to showing new text
-			current = 0;
-		else
-			current = -p_duration;
-		active = cache_in.words || cache_out.words;
-
-		return true;
-	}
-	virtual bool update(real_t dt, ease_func_t ease) {
-
-		if (!active) {
-			return true;
-		}
-		if (current > duration || !get_draw_cache().front()->words) {
-			active = false;
-			return true;
-		}
+	void _update_xform(ease_func_t ease) {
+		xform.progress = 1.0 - Math::abs(current / duration);
 		if (orientation == ANIMATION_ROTATE_H) {
 			xform.dest_rect.position.x = 0.5 - ease(current, 0, 0.5, current < 0 ? -duration : duration); // 0 .. 0,5 .. 0
 			xform.dest_rect.size.x = 1 - xform.dest_rect.position.x/(1 - xform.dest_rect.position.x); // 1 .. 0 .. 1
@@ -346,15 +328,52 @@ struct Label::AnimationRotate : public Label::AnimationController {
 		} else {
 			ERR_PRINT("Unknown orientation type - no transform performed");
 		}
+	}
+
+	virtual bool init_transition(Label *p_owner, real_t p_duration, ease_func_t p_ease, WordCache *p_cache_in, WordCache *p_cache_out) {
+		ERR_FAIL_COND_V(p_cache_out == 0, false);
+		ERR_FAIL_COND_V(p_cache_in == 0, false);
+		ERR_FAIL_COND_V(p_duration <= 0, false);
+
+		xform = CharTransform();
+
+		xform.vertical_align = orientation == ANIMATION_ROTATE_V;
+
+		cache_in = *p_cache_in;
+		cache_out = *p_cache_out;
+
+		duration = p_duration;
+		// transition from range:  -duration .. 0 .. duration (2 x duration)
+		if (!cache_out.words) // nothing to hide - jump to showing new text
+			current = 0;
+		else
+			current = -p_duration;
+		active = cache_in.words || cache_out.words;
+
+		_update_xform(p_ease); // initial xform value
+
+		return true;
+	}
+	virtual bool update(real_t p_dt, ease_func_t p_ease) {
+
+		if (!active) {
+			return true;
+		}
+		if (current > duration || !get_draw_cache().front()->words) {
+			active = false;
+			return true;
+		}
+		_update_xform(p_ease);
 #if 0
 		_dump_xform(xform);
 		print_line(vformat(" current:%f", current));
 		print_line(" text:"+get_draw_cache()[0]->cache_text);
 #endif
-		current += dt;
+		current += p_dt;
+
 		return false;
 	}
-	virtual std::vector<WordCache*> get_draw_cache() {
+	virtual const std::vector<WordCache*> get_draw_cache() {
 
 		if (current >= 0) {
 			return std::vector<WordCache*> { &cache_in }; // new text
@@ -362,10 +381,133 @@ struct Label::AnimationRotate : public Label::AnimationController {
 			return std::vector<WordCache*> { &cache_out }; // old text
 		}
 	}
+	virtual const CharTransform *get_char_xform(const WordCache *p_cache, int p_pos) { return &xform; }
 	virtual bool is_done() const { return !active; }
-	virtual bool is_valid() const { return true; }
+	virtual bool is_valid() const { return !!owner; }
 
-	AnimationRotate(AnimationRotateOrient p_orientation) {
+	AnimationRotate(AnimationOrient p_orientation) {
+
+		orientation = p_orientation;
+	}
+};
+
+struct Label::AnimationRotateSeq : public Label::AnimationController {
+
+	enum AnimationOrient {
+
+		ANIMATION_ROTATE_H_SEQ,
+		ANIMATION_ROTATE_V_SEQ
+	};
+
+	struct _xform {
+		CharTransform xform;
+		real_t current = 0;
+		real_t delay = 0;
+	};
+	Vector<_xform> trans_info;
+	real_t duration = 0;
+	bool active = false;
+
+	Label *owner = nullptr;
+	AnimationOrient orientation = ANIMATION_ROTATE_H_SEQ;
+
+	WordCache cache_in;
+	WordCache cache_out;
+
+	void _update_xform(_xform &info, real_t dt, ease_func_t ease) {
+		info.xform.progress = 1.0 - Math::abs(info.current / duration);
+		if (orientation == ANIMATION_ROTATE_H_SEQ) {
+			info.xform.dest_rect.position.x = 0.5 - ease(info.current, 0, 0.5, info.current < 0 ? -duration : duration); // 0 .. 0,5 .. 0
+			info.xform.dest_rect.size.x = 1 - info.xform.dest_rect.position.x/(1 - info.xform.dest_rect.position.x); // 1 .. 0 .. 1
+		} else if (orientation == ANIMATION_ROTATE_V_SEQ) {
+			info.xform.dest_rect.position.y = 0.5 - ease(info.current, 0, 0.5, info.current < 0 ? -duration : duration); // 0 .. 0,5 .. 0
+			info.xform.dest_rect.size.y = 1 - info.xform.dest_rect.position.y/(1 - info.xform.dest_rect.position.y); // 1 .. 0 .. 1
+		} else {
+			ERR_PRINT("Unknown orientation type - no transform performed");
+		}
+		info.current += dt;
+	}
+	bool _update_xform(real_t dt, ease_func_t ease) {
+		bool status = false;
+		for (int f = 0; f < trans_info.size(); ++f) {
+			_xform &info = trans_info.write[f];
+			if (info.delay <= 0) {
+				if (info.current < duration) {
+					_update_xform(info, dt, ease);
+					status = true;
+				}
+			} else {
+				info.delay -= dt;
+				status = true;
+			}
+		}
+		return status;
+	}
+
+	virtual bool init_transition(Label *p_owner, real_t p_duration, ease_func_t p_ease, WordCache *p_cache_in, WordCache *p_cache_out) {
+		ERR_FAIL_COND_V(p_cache_out == 0, false);
+		ERR_FAIL_COND_V(p_cache_in == 0, false);
+		ERR_FAIL_COND_V(p_duration <= 0, false);
+
+		const int xforms_size = MAX(p_cache_in->cache_text.length(), p_cache_out->cache_text.length());
+
+		trans_info.clear();
+		trans_info.resize(xforms_size);
+
+		cache_in = *p_cache_in;
+		cache_out = *p_cache_out;
+
+		for (int f = 0; f < xforms_size; ++f) {
+			_xform &info = trans_info.write[f];
+			info.xform.vertical_align = orientation == ANIMATION_ROTATE_V_SEQ;
+			info.delay = f * 0.5;
+			// transition from range:  -duration .. 0 .. duration (2 x duration)
+			if (!cache_out.words) // nothing to hide - jump to showing new text
+				info.current = 0;
+			else
+				info.current = -p_duration;
+			_update_xform(info, 0, p_ease); // initial xform value
+		}
+
+		duration = p_duration;
+		active = cache_in.words || cache_out.words;
+
+		return true;
+	}
+	virtual bool update(real_t p_dt, ease_func_t p_ease) {
+
+		if (!active) {
+			return true;
+		}
+		if ((active = _update_xform(p_dt, p_ease))) {
+			return false;
+		}
+		cache_in = WordCache();
+		cache_out = WordCache();
+		return true;
+	}
+	virtual const std::vector<WordCache*> get_draw_cache() {
+
+		return std::vector<WordCache*> { &cache_out, &cache_in };
+	}
+	virtual const CharTransform *get_char_xform(const WordCache *p_cache, int p_pos) {
+		ERR_FAIL_INDEX_V(p_pos, trans_info.size(), nullptr);
+
+		static CharTransform _hidden(true);
+		const _xform &info = trans_info[p_pos];
+		if (info.current > 0) {
+			if (p_cache == &cache_out) return &_hidden;
+			if (p_cache == &cache_in) return &info.xform;
+		} else {
+			if (p_cache == &cache_out) return &info.xform;
+			if (p_cache == &cache_in) return &_hidden;
+		}
+		return nullptr;
+	}
+	virtual bool is_done() const { return !active; }
+	virtual bool is_valid() const { return !!owner; }
+
+	AnimationRotateSeq(AnimationOrient p_orientation) {
 
 		orientation = p_orientation;
 	}
@@ -381,8 +523,8 @@ std::unique_ptr<Label::AnimationController> AnimationControllerFactory(Label::Tr
 		case Label::TRANSITIONEFFECT_SLIDE_DOWN_NEW: return std::unique_ptr<Label::AnimationController>(new Label::AnimationSlide(Label::AnimationSlide::ANIMATION_SLIDE_DOWN_NEW));
 		case Label::TRANSITIONEFFECT_ROTATE_V: return std::unique_ptr<Label::AnimationController>(new Label::AnimationRotate(Label::AnimationRotate::ANIMATION_ROTATE_V));
 		case Label::TRANSITIONEFFECT_ROTATE_H: return std::unique_ptr<Label::AnimationController>(new Label::AnimationRotate(Label::AnimationRotate::ANIMATION_ROTATE_H));
-		case Label::TRANSITIONEFFECT_ROTATE_V_SEQ: return std::unique_ptr<Label::AnimationController>(new Label::AnimationRotate(Label::AnimationRotate::ANIMATION_ROTATE_V_SEQ));
-		case Label::TRANSITIONEFFECT_ROTATE_H_SEQ: return std::unique_ptr<Label::AnimationController>(new Label::AnimationRotate(Label::AnimationRotate::ANIMATION_ROTATE_H_SEQ));
+		case Label::TRANSITIONEFFECT_ROTATE_V_SEQ: return std::unique_ptr<Label::AnimationController>(new Label::AnimationRotateSeq(Label::AnimationRotateSeq::ANIMATION_ROTATE_V_SEQ));
+		case Label::TRANSITIONEFFECT_ROTATE_H_SEQ: return std::unique_ptr<Label::AnimationController>(new Label::AnimationRotateSeq(Label::AnimationRotateSeq::ANIMATION_ROTATE_H_SEQ));
 		default: ERR_PRINT("Unknown transition - defaults to None");
 	}
 	return std::unique_ptr<Label::AnimationController>(new Label::AnimationNone());

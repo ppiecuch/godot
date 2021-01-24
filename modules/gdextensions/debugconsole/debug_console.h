@@ -75,24 +75,25 @@ struct TextConsole : public Reference {
 		COLOR_LIGHTMAGENTA,
 		COLOR_YELLOW,
 		COLOR_WHITE,
+		COLOR_DEFAULT,
 		COLOR_MAX,
 	};
 	void _update_mesh();
-	Point2i _write(const String &p_msg, Point2i pos, uint8_t foreground, uint8_t background);
-	Point2i _put(const String &p_msg, Point2i pos, uint8_t foreground, uint8_t background);
-	Point2i _putf(const String &p_msg, Point2i pos, uint8_t foreground, uint8_t background);
-	void _scroll_up();
+	Point2i _write(const String &p_msg, Point2i pos, ColorIndex foreground, ColorIndex background);
+	Point2i _putl(const String &p_msg, Point2i pos, ColorIndex foreground, ColorIndex background);
+	Point2i _putf(const String &p_msg, Point2i pos, ColorIndex foreground, ColorIndex background);
+	void _scroll_up(int p_scroll_lines = 1);
 
 	void load_font(FontSize p_font);
 	void resize(int p_width, int p_height);
 	void resize(const Viewport &p_view);
 	void draw(RID p_canvas_item, const Transform2D &p_xform);
 	void set_pixel_ratio(real_t p_scale);
-	void set_transparent_color_index(uint8_t p_transparent_color_index);
+	void set_transparent_color_index(ColorIndex p_transparent_color_index);
 
-	void log(const String &p_msg, uint8_t foreground, uint8_t background = 0);
+	void log(const String &p_msg, ColorIndex foreground, ColorIndex background = COLOR_BLACK);
 	void log(const String &p_msg);
-	void logf(const String &p_msg, uint8_t foreground, uint8_t background = 0);
+	void logf(const String &p_msg, ColorIndex foreground, ColorIndex background = COLOR_BLACK);
 	void logf(const String &p_msg);
 
 	TextConsole();
@@ -102,15 +103,15 @@ struct TextConsole : public Reference {
 	bool _dirty_screen;
 	struct cell {
 		char character;
-		uint8_t foreground:4;
-		uint8_t background:4;
+		ColorIndex foreground:4;
+		ColorIndex background:4;
 		bool inverted:1;
 	};
 	cell *_screen;
 	Ref<ImageTexture> _font_texture;
 	Size2i _font_size, _con_size;
 	Point2i _cursor_pos;
-	uint8_t _default_bg_color_index, _default_fg_color_index;
+	ColorIndex _default_bg_color_index, _default_fg_color_index;
 	// texture font info (2x256 chars) cache:
 	struct _char_info_t {
 		Point2 t[4];
@@ -130,6 +131,8 @@ private:
 	Point2 _pos;
 	Size2 _scale;
 	Transform2D _xform;
+
+	Error _process_codes(const String &p_concodes);
 
 protected:
 	void _notification(int p_what);

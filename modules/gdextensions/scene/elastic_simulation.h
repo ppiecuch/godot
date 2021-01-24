@@ -53,7 +53,8 @@ public:
 		SIM_ANCHOR_LEFT,
 		SIM_ANCHOR_RIGHT,
 		SIM_ANCHOR_TOP,
-		SIM_ANCHOR_BOTTOM
+		SIM_ANCHOR_BOTTOM,
+		SIM_ANCHOR_COUNT
 	};
 
 	float simulation_delta;

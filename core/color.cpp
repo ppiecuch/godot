@@ -258,6 +258,18 @@ Color Color::hex64(uint64_t p_hex) {
 	return Color(r, g, b, a);
 }
 
+Color Color::from_abgr(uint32_t p_abgr) {
+	float r = (p_abgr & 0xFF) / 255.0;
+	p_abgr >>= 8;
+	float g = (p_abgr & 0xFF) / 255.0;
+	p_abgr >>= 8;
+	float b = (p_abgr & 0xFF) / 255.0;
+	p_abgr >>= 8;
+	float a = (p_abgr & 0xFF) / 255.0;
+
+	return Color(r, g, b, a);
+}
+
 Color Color::from_rgbe9995(uint32_t p_rgbe) {
 
 	float r = p_rgbe & 0x1ff;

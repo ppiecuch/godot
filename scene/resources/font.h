@@ -50,9 +50,25 @@ struct CharTransform {
 	// 2) .size scale remaining rect
 	Rect2 dest_rect;
 	Rect2 tex_clip;
-	CharTransform() {
+	// hide character from drawing
+	bool hidden:1;
+	// vertical transition (rotation) looks better if it is
+	// aligned to single, common baseline (middle of ascend)
+	//
+	//    /\
+	// - /--\ - +-+ - - - - -
+	//  /    \  | |
+	// /------\-+-+----------
+	//
+	bool vertical_align:1;
+	// transition progress 0 .. 1
+	real_t progress;
+	CharTransform(bool p_hidden = false) {
 		dest_rect = Rect2(0, 0, 1, 1);
 		tex_clip = Rect2(0, 0, 1, 1);
+		vertical_align = false;
+		progress = 0;
+		hidden = p_hidden;
 	}
 	Rect2 xform_tex(const Rect2 &rc) const {
 		const Size2 off = rc.size * tex_clip.position;

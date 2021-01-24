@@ -389,6 +389,7 @@ public:
 	T get(int p_index) const;
 	void set(int p_index, const T &p_val);
 	void push_back(const T &p_val);
+	void push_multi(int p_num, T p_val);
 	void append(const T &p_val) { push_back(p_val); }
 	void append_array(const PoolVector<T> &p_arr) {
 		int ds = p_arr.size();
@@ -501,6 +502,14 @@ void PoolVector<T>::push_back(const T &p_val) {
 
 	resize(size() + 1);
 	set(size() - 1, p_val);
+}
+
+template <class T>
+void PoolVector<T>::push_multi(int p_num, T p_val) {
+	const int bs = size();
+	resize(bs + p_num);
+	for (int i = 0; i < p_num; ++i)
+		set(bs + i, p_val);
 }
 
 template <class T>

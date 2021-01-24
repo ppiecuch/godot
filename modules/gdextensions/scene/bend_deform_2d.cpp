@@ -733,6 +733,9 @@ void DeformSprite::_create_geom() {
 				tstarting.x += tc.size.width;
 				tstep = -HXt;
 			} break;
+			default: {
+				ERR_FAIL_MSG("Invalid anchor value.");
+			}
 		}
 		for (int s = 0; s < segs - 1; ++s) {
 			if (s == segs - 2) {
@@ -777,6 +780,9 @@ void DeformSprite::_create_geom() {
 				tstarting.x += tc.size.x;
 				tstep = -DXt;
 			} break;
+			default: {
+				ERR_FAIL_MSG("Invalid anchor value.");
+			}
 		}
 		steps = Vec2Vector(segs, step);
 		tsteps = Vec2Vector(segs, tstep);
@@ -987,7 +993,7 @@ int DeformSprite::get_simulation_id() const {
 }
 
 void DeformSprite::set_geometry_anchor(ElasticSimulation::Anchor p_anchor) {
-	ERR_FAIL_INDEX((int)p_anchor, 4);
+	ERR_FAIL_INDEX(p_anchor, ElasticSimulation::SIM_ANCHOR_COUNT);
 
 	geometry_anchor = p_anchor;
 	_sim_dirty = true;
@@ -1213,6 +1219,9 @@ void DeformSprite::debug_draw_geometry() {
 		case ElasticSimulation::SIM_ANCHOR_RIGHT: {
 			force.x -= half.x;
 		} break;
+		default: {
+			ERR_FAIL_MSG("Invalid anchor value.");
+		}
 	}
 	const real_t force_scale = 2;
 	if (controller->is_simulation_active() && controller->get_motion_image().is_null()) {

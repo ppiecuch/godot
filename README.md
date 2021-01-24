@@ -10,6 +10,8 @@ The most important topics and focus of my work:
   1. _Apple Metal_ graphics driver
   2. HK _Odroid-Fo Advance_ and _Super_ consoles
   3. _Nintendo Switch_ port and improvments (only for _Nintendo registered_ users)
+  4.  _PS Vita_ (Homebrew) drivers
+  5. _2D_ additions and extensions
 
 ## Godot Engine
 

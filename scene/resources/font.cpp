@@ -653,12 +653,19 @@ float BitmapFont::draw_char_xform(RID p_canvas_item, const CharTransform &p_char
 	}
 
 	ERR_FAIL_COND_V(c->texture_idx < -1 || c->texture_idx >= textures.size(), false);
-	if (!p_outline && c->texture_idx != -1) {
-		Point2 cpos;
+	if (!p_outline && c->texture_idx != -1 && !p_char_xform.hidden) {
+		Point2 cpos = p_pos;
 		cpos.x += c->h_align;
 		cpos.y += c->v_align - ascent;
+		const Rect2 rc = p_char_xform.xform_dest(Rect2(cpos, c->rect.size));
+		real_t valign = 0;
+		if (p_char_xform.vertical_align) {
+			const real_t rotation_base = p_pos.y - ascent / 2.0;
+			const real_t t = p_char_xform.progress;
+			valign = (rotation_base - rc.get_center().y) * t * t * t * t * t; // t^5
+		}
 		VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item,
-				p_char_xform.xform_dest(Rect2(p_pos, c->rect.size)).move_by(cpos),
+				rc.move_by(Point2(0, valign)),
 				textures[c->texture_idx]->get_rid(),
 				p_char_xform.xform_tex(c->rect), p_modulate, false, RID(), false);
 	}

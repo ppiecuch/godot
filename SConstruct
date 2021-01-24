@@ -89,6 +89,7 @@ env_base.__class__.disable_warnings = methods.disable_warnings
 
 env_base["x86_libtheora_opt_gcc"] = False
 env_base["x86_libtheora_opt_vc"] = False
+env_base["thread_support"] = True
 
 # avoid issues when building with different versions of python out of the same directory
 env_base.SConsignFile(".sconsign{0}.dblite".format(pickle.HIGHEST_PROTOCOL))

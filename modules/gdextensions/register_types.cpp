@@ -79,6 +79,7 @@
 #include "scenery/tree_2d/tree_2d.h"
 #include "scenery/vegetation_instance/vegetation_instance.h"
 #include "scenery/water_splash/gd_water_splash.h"
+#include "scenery/starfield/starfield_2d.h"
 
 #include "benet/enet_node.h"
 #include "benet/enet_packet_peer.h"
@@ -94,7 +95,7 @@ static void editor_init_callback() {
 }
 #endif
 
-void register_gd_custom_extensions_types() {
+void register_gdextensions_types() {
 
 	ClassDB::register_class<BehaviorNode>();
 	ClassDB::register_class<TimerBNode>();
@@ -158,6 +159,7 @@ void register_gd_custom_extensions_types() {
 	ClassDB::register_class<VegetationInstance>();
 #endif
 	ClassDB::register_class<SphericalWaves>();
+	ClassDB::register_class<Starfield2D>();
 
 	if (enet_initialize() != 0) {
 		ERR_PRINT("ENet initialization failure");
@@ -173,7 +175,7 @@ void register_gd_custom_extensions_types() {
 #endif
 }
 
-void unregister_gd_custom_extensions_types() {
+void unregister_gdextensions_types() {
 	if (enet_ok)
 		enet_deinitialize();
 	if (Timer2 *instance = Timer2::get_singleton())
@@ -182,4 +184,14 @@ void unregister_gd_custom_extensions_types() {
 		memdelete(instance);
 	if (InputStorage *instance = InputStorage::get_singleton())
 		memdelete(instance);
+	if (DebugDraw *instance = DebugDraw::get_singleton())
+		memdelete(instance);
+	if (Tags *instance = Tags::get_singleton())
+		memdelete(instance);
+	if (Blitter *instance = Blitter::get_singleton())
+		memdelete(instance);
+#ifdef TOOLS_ENABLED
+	if (GodotErrorHandler *instance = GodotErrorHandler::get_singleton())
+		memdelete(instance);
+#endif
 }

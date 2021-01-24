@@ -28,6 +28,7 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
+// Reference:
 // https://github.com/danboo/godot-RigidBodyParticles2D/blob/master/examples/sparks/Particle.gd
 
 #include "explosion_particles.h"

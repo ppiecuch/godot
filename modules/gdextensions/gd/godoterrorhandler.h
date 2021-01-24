@@ -42,6 +42,7 @@
 class GodotErrorHandler : public Object {
 public:
 	static GodotErrorHandler *get_singleton();
+
 	GodotErrorHandler();
 	~GodotErrorHandler();
 

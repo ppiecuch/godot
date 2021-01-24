@@ -45,7 +45,7 @@ def can_build():
 def get_opts():
 
     return [
-        ("debug_release", "Add debug symbols to release version", "no"),
+        ("debug_release", "Add debug symbols to release version", "no")
     ]
 
 
@@ -63,6 +63,7 @@ def get_flags():
         ("builtin_zlib", False),
         ("builtin_libpng", False),
         ("builtin_pcre2_with_jit", False),
+        ("thread_support", False),
     ]
 
 
@@ -100,6 +101,7 @@ def configure(env):
     env.Append(BUILDERS={"PICA_HEADER": env.Builder(action=build_shader_header, suffix=".h", src_suffix=".shbin")})
 
     env["bits"] = "32"
+    env["no_thread_support"] = True
 
     env.Append(CPPPATH=["#platform/3ds"])
     env["CC"] = "arm-none-eabi-gcc"
