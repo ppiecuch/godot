@@ -91,10 +91,11 @@ struct TextConsole : public Reference {
 	void set_pixel_ratio(real_t p_scale);
 	void set_transparent_color_index(ColorIndex p_transparent_color_index);
 
-	void log(const String &p_msg, ColorIndex foreground, ColorIndex background = COLOR_BLACK);
-	void log(const String &p_msg);
-	void logf(const String &p_msg, ColorIndex foreground, ColorIndex background = COLOR_BLACK);
+	void logl(const String &p_msg);
+	void logl(const String &p_msg, ColorIndex foreground, ColorIndex background = COLOR_BLACK);
 	void logf(const String &p_msg);
+	void logf(const String &p_msg, ColorIndex foreground, ColorIndex background = COLOR_BLACK);
+	void logv(const Array &p_log);
 
 	TextConsole();
 	~TextConsole();

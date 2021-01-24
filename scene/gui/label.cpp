@@ -106,10 +106,6 @@ void Label::_notification(int p_what) {
 
 		if (word_cache_dirty) {
 			regenerate_word_cache();
-			if (is_transition_enabled()) {
-				_dump_word_cache(word_cache);
-				_dump_word_cache(transition_text.word_cache);
-			}
 			_transition_dirty = true;
 		}
 
@@ -479,8 +475,8 @@ int Label::get_visible_line_count() const {
 }
 
 void Label::_dump_word_cache(const WordCache &cache) const {
-	print_line("WordCache:");
-	print_line(vformat("cached text: %d", cache.cache_text));
+	print_line("WordCache dump:");
+	print_line("cached text: "+cache.cache_text);
 	WordList *wc = cache.words;
 	while (wc) {
 		print_line(vformat("  '" + cache.cache_text.substr(wc->char_pos, wc->word_len) + "' char_pos=%d,line=%d,line_pos=%d,len=%d,spc=%d", wc->char_pos, wc->line, wc->line_pos, wc->word_len, wc->space_count));

@@ -177,7 +177,7 @@ Point2i TextConsole::_putl(const String &p_msg, Point2i pos, ColorIndex foregrou
 	ERR_FAIL_COND_V(pos.y >= _con_size.height, pos);
 
 	CharString ascii = p_msg.ascii();
-	for(int i=0; i<ascii.size(); ++i) {
+	for(int i=0; i<ascii.length(); ++i) {
 		const cell c = { ascii[i], foreground, background, 0 };
 		if (pos.x < _con_size.width) {
 			_screen[pos.y * _con_size.width + pos.x] = c;
@@ -197,7 +197,7 @@ Point2i TextConsole::_putf(const String &p_msg, Point2i pos, ColorIndex foregrou
 
 	CharString ascii = p_msg.ascii();
 	for(int r=0; r<BoxFSize; ++r) {
-		for(int c=0; c<ascii.size(); ++c) {
+		for(int c=0; c<ascii.length(); ++c) {
 			const uint8_t ch = ascii[c];
 			if (ch == ' ') {
 				_putl("  ", pos + Point2i(c * BoxFSize, 0), foreground, background);
@@ -306,12 +306,12 @@ void TextConsole::draw(RID p_canvas_item, const Transform2D &p_xform) {
 
 void TextConsole::set_pixel_ratio(real_t p_scale) { pixel_scale = p_scale; }
 
-void TextConsole::log(const String &p_msg) {
+void TextConsole::logl(const String &p_msg) {
 
-	log(p_msg, _default_fg_color_index, _default_bg_color_index);
+	logl(p_msg, _default_fg_color_index, _default_bg_color_index);
 }
 
-void TextConsole::log(const String &p_msg, ColorIndex foreground, ColorIndex background) {
+void TextConsole::logl(const String &p_msg, ColorIndex foreground, ColorIndex background) {
 
 	// next line
 	_cursor_pos = Point2i(0, _putl(p_msg, _cursor_pos,
@@ -340,6 +340,24 @@ void TextConsole::logf(const String &p_msg, ColorIndex foreground, ColorIndex ba
 	}
 }
 
+void TextConsole::logv(const Array &p_log) {
+	Array log_msg = p_log;
+	Point2i pos = _cursor_pos;
+	while (!log_msg.empty()) {
+		String msg = log_msg.pop_front();
+		ColorIndex foreground = ColorIndex(int(log_msg.pop_front()));
+		ColorIndex background = ColorIndex(int(log_msg.pop_front()));
+		pos = _putl(msg, pos,
+					foreground == COLOR_DEFAULT ? _default_fg_color_index : foreground,
+					background == COLOR_DEFAULT ? _default_bg_color_index : background);
+	}
+	_cursor_pos = Point2i(0, pos.y + 1);
+	if (_cursor_pos.y == _con_size.height) {
+		_scroll_up();
+		_cursor_pos = Point2i(0, _cursor_pos.y - 1);
+	}
+}
+
 TextConsole::TextConsole() {
 
 	_dirty_screen = false;
@@ -350,12 +368,12 @@ TextConsole::TextConsole() {
 	transparent_color_index = 0;
 
 	resize(80, 25);
-    log(BOX_DDR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DDL, COLOR_LIGHTGRAY);
-    log(BOX_DUD "   Godot Engine debug console   " BOX_DUD, COLOR_LIGHTGRAY);
-    log(BOX_DUD "     KomSoft Oprogramowanie     " BOX_DUD, COLOR_LIGHTGRAY);
-    log(BOX_DUR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DUL, COLOR_LIGHTGRAY);
-    log("\020 " VERSION_FULL_NAME);
-    log("\020 Hello!");
+    logl(BOX_DDR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DDL, COLOR_LIGHTGRAY);
+    logl(BOX_DUD "   Godot Engine debug console   " BOX_DUD, COLOR_LIGHTGRAY);
+    logl(BOX_DUD "     KomSoft Oprogramowanie     " BOX_DUD, COLOR_LIGHTGRAY);
+    logl(BOX_DUR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DUL, COLOR_LIGHTGRAY);
+    logl("\020 " VERSION_FULL_NAME);
+    logl("\020 Hello!");
 	logf("2021");
 }
 
@@ -439,9 +457,14 @@ Error ConsoleInstance::_process_codes(const String &p_concodes) {
 		"default",
 	};
 
+	Array log_msg;
 	List<String> tag_stack;
 	int pos = 0;
 	TextConsole::ColorIndex fg = TextConsole::COLOR_DEFAULT, bg = TextConsole::COLOR_DEFAULT;
+
+#define _append_log_msg(MSG, FG, BG) {                                    \
+	log_msg.push_back(MSG); log_msg.push_back(FG); log_msg.push_back(BG); \
+}
 
 	while (pos < p_concodes.length()) {
 
@@ -450,7 +473,7 @@ Error ConsoleInstance::_process_codes(const String &p_concodes) {
 		if (brk_pos < 0)
 			brk_pos = p_concodes.length();
 		if (brk_pos > pos)
-			console->log(p_concodes.substr(pos, brk_pos - pos), fg, bg);
+			_append_log_msg(p_concodes.substr(pos, brk_pos - pos), fg, bg);
 		if (brk_pos == p_concodes.length())
 			break; //nothing else to add
 
@@ -458,7 +481,7 @@ Error ConsoleInstance::_process_codes(const String &p_concodes) {
 
 		if (brk_end == -1) {
 			//no close, add the rest
-			console->log(p_concodes.substr(brk_pos, p_concodes.length() - brk_pos), fg, bg);
+			_append_log_msg(p_concodes.substr(brk_pos, p_concodes.length() - brk_pos), fg, bg);
 			break;
 		}
 
@@ -475,7 +498,7 @@ Error ConsoleInstance::_process_codes(const String &p_concodes) {
 				bg = TextConsole::COLOR_DEFAULT;
 
 			if (!tag_ok) {
-				console->log("[" + tag, fg, bg);
+				_append_log_msg("[" + tag, fg, bg);
 				pos = brk_end;
 				continue;
 			}
@@ -507,6 +530,9 @@ Error ConsoleInstance::_process_codes(const String &p_concodes) {
 			pos = brk_end + 1;
 			tag_stack.push_front(tag);
 		}
+	}
+	if (!log_msg.empty()) {
+		console->logv(log_msg);
 	}
 	return OK;
 }
