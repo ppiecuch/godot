@@ -1,0 +1,515 @@
+#include <vector>
+#include <algorithm>
+#include <cstring>
+
+#include "core/image.h"
+
+/* of your interest:
+
+1. rect_xywhf - structure representing your rectangle object
+	members:
+	int x, y, w, h;
+	bool flipped;
+
+2. bin - structure representing resultant bin object
+3. bool pack(rect_xywhf* const * v, int n, int max_side, std::vector<bin>& bins) - actual packing function
+	Arguments:
+	input/output: v - pointer to array of pointers to your rectangles (const here means that the pointers will point to the same rectangles after the call)
+	input: n - rectangles count
+
+	input: max_side - maximum bins' side - algorithm works with square bins (in the end it may trim them to rectangular form).
+	for the algorithm to finish faster, pass a reasonable value (unreasonable would be passing 1 000 000 000 for packing 4 50x50 rectangles).
+	output: bins - vector to which the function will push_back() created bins, each of them containing vector to pointers of rectangles from "v" belonging to that particular bin.
+	Every bin also keeps information about its width and height of course, none of the dimensions is bigger than max_side.
+
+	returns true on success, false if one of the rectangles' dimension was bigger than max_side
+
+You want to your rectangles representing your textures/glyph objects with GL_MAX_TEXTURE_SIZE as max_side,
+then for each bin iterate through its rectangles, typecast each one to your own structure (or manually add userdata) and then memcpy its pixel contents (rotated by 90 degrees if "flipped" rect_xywhf's member is true)
+to the array representing your texture atlas to the place specified by the rectangle, then finally upload it with glTexImage2D.
+
+Algorithm doesn't create any new rectangles.
+You just pass an array of pointers - rectangles' x/y/w/h/flipped are modified in place.
+There is a vector of pointers for every resultant bin to let you know which ones belong to the particular bin.
+The algorithm may swap the w and h fields for the sake of better fitting, the flag "flipped" will be set to true whenever this occurs.
+
+For description how to tune the algorithm and how it actually works see the .cpp file.
+
+
+*/
+
+
+struct rect_ltrb {
+	rect_ltrb() : l(0), t(0), r(0), b(0) {}
+	rect_ltrb(int l, int t, int r, int b) : l(l), t(t), r(r), b(b) {}
+	int l, t, r, b;
+	int w() const { return r - l; }
+	int h() const { return b - t; }
+	int area() const { return w() * h(); }
+	int perimeter() const { return 2 * w() + 2 * h(); }
+	void w(int ww) { r = l + ww; }
+	void h(int hh) { b = t + hh; }
+};
+
+struct rect_wh {
+	rect_wh(const rect_ltrb &rr) : w(rr.w()), h(rr.h()) {}
+	rect_wh(int w = 0, int h = 0) : w(w), h(h) {}
+	int w, h;
+	int area() const { return w * h; }
+	int perimeter() const { return 2 * w + 2 * h; }
+	int fits(const rect_wh &bigger, bool allowFlip) const // 0 - no, 1 - yes, 2 - flipped, 3 - perfectly, 4 perfectly flipped
+	{
+		if (w == bigger.w && h == bigger.h) return 3;
+		if (allowFlip && h == bigger.w && w == bigger.h) return 4;
+		if (w <= bigger.w && h <= bigger.h) return 1;
+		if (allowFlip && h <= bigger.w && w <= bigger.h) return 2;
+		return 0;
+	}
+};
+
+struct rect_xywh : public rect_wh {
+	rect_xywh() : x(0), y(0) {}
+	rect_xywh(const rect_ltrb &rc) : x(rc.l), y(rc.t) { b(rc.b); r(rc.r); }
+	rect_xywh(int x, int y, int w, int h) : rect_wh(w, h), x(x), y(y) {}
+	operator rect_ltrb() {
+		rect_ltrb rr(x, y, 0, 0);
+		rr.w(w);
+		rr.h(h);
+		return rr;
+	}
+	int x, y;
+	int r() const { return x + w; }
+	int b() const { return y + h; }
+	void r(int right) { w = right - x; }
+	void b(int bottom) { h = bottom - y; }
+};
+
+struct rect_xywhf : public rect_xywh {
+	rect_xywhf(const rect_ltrb &rr) : rect_xywh(rr), flipped(false) {}
+	rect_xywhf(int x, int y, int w, int h) : rect_xywh(x, y, w, h), flipped(false) {}
+	rect_xywhf() : flipped(false) {}
+	void flip() { flipped = !flipped; std::swap(w, h); }
+	bool flipped;
+	int bin;
+	Ref<Image> atlas_image;
+	Ref<Image> original_image;
+};
+
+struct bin {
+	rect_wh size;
+	std::vector<rect_xywhf *> rects;
+};
+
+static inline bool area(rect_xywhf *a, rect_xywhf *b) { return a->area() > b->area(); }
+static inline bool perimeter(rect_xywhf *a, rect_xywhf *b) { return a->perimeter() > b->perimeter(); }
+static inline bool max_side(rect_xywhf *a, rect_xywhf *b) { return std::max(a->w, a->h) > std::max(b->w, b->h); }
+static inline bool max_width(rect_xywhf *a, rect_xywhf *b) { return a->w > b->w; }
+static inline bool max_height(rect_xywhf *a, rect_xywhf *b) { return a->h > b->h; }
+
+// just add another comparing function name to cmpf to perform another packing attempt
+// more functions == slower but probably more efficient cases covered and hence less area wasted
+
+static bool (*cmpf[])(rect_xywhf *, rect_xywhf *) = {
+	area,
+	perimeter,
+	max_side,
+	max_width,
+	max_height
+};
+
+// if you find the algorithm running too slow you may double this factor to increase speed but also decrease efficiency
+// 1 == most efficient, slowest
+// efficiency may be still satisfying at 64 or even 256 with nice speedup
+
+static const int discard_step = 128;
+
+/*
+
+For every sorting function, algorithm will perform packing attempts beginning with a bin with width and height equal to max_side,
+and decreasing its dimensions if it finds out that rectangles did actually fit, increasing otherwise.
+Although, it's doing that in sort of binary search manner, so for every comparing function it will perform at most log2(max_side) packing attempts looking for the smallest possible bin size.
+discard_step = 128 means that the algorithm will break of the searching loop if the rectangles fit but "it may be possible to fit them in a bin smaller by 128"
+the bigger the value, the sooner the algorithm will finish but the rectangles will be packed less tightly.
+use discard_step = 1 for maximum tightness.
+
+the algorithm was based on http://www.blackpawn.com/texts/lightmaps/default.html
+the algorithm reuses the node tree so it doesn't reallocate them between searching attempts
+
+*/
+
+/*************************************************************************** CHAOS BEGINS HERE */
+
+struct node {
+	struct pnode {
+		node *pn = nullptr;
+		bool fill = false;
+
+		void set(int l, int t, int r, int b) {
+			if (!pn)
+				pn = new node(rect_ltrb(l, t, r, b));
+			else {
+				(*pn).rc = rect_ltrb(l, t, r, b);
+				(*pn).id = false;
+			}
+			fill = true;
+		}
+	};
+
+	pnode c[2];
+	rect_ltrb rc;
+	bool id = false;
+	node(rect_ltrb rc = rect_ltrb()) :
+			rc(rc) {}
+
+	void reset(const rect_wh &r) {
+		id = false;
+		rc = rect_ltrb(0, 0, r.w, r.h);
+		delcheck();
+	}
+
+	node *insert(rect_xywhf &img, bool allowFlip) {
+		if (c[0].pn && c[0].fill) {
+			if (auto newn = c[0].pn->insert(img, allowFlip)) return newn;
+			return c[1].pn->insert(img, allowFlip);
+		}
+
+		if (id) return 0;
+		int f = img.fits(rect_xywh(rc), allowFlip);
+
+		switch (f) {
+			case 0: return 0;
+			case 1: img.flipped = false; break;
+			case 2: img.flipped = true; break;
+			case 3:
+				id = true;
+				img.flipped = false;
+				return this;
+			case 4:
+				id = true;
+				img.flipped = true;
+				return this;
+		}
+
+		int iw = (img.flipped ? img.h : img.w), ih = (img.flipped ? img.w : img.h);
+
+		if (rc.w() - iw > rc.h() - ih) {
+			c[0].set(rc.l, rc.t, rc.l + iw, rc.b);
+			c[1].set(rc.l + iw, rc.t, rc.r, rc.b);
+		} else {
+			c[0].set(rc.l, rc.t, rc.r, rc.t + ih);
+			c[1].set(rc.l, rc.t + ih, rc.r, rc.b);
+		}
+
+		return c[0].pn->insert(img, allowFlip);
+	}
+
+	void delcheck() {
+		if (c[0].pn) {
+			c[0].fill = false;
+			c[0].pn->delcheck();
+		}
+		if (c[1].pn) {
+			c[1].fill = false;
+			c[1].pn->delcheck();
+		}
+	}
+
+	~node() {
+		if (c[0].pn) delete c[0].pn;
+		if (c[1].pn) delete c[1].pn;
+	}
+};
+
+static rect_wh _rect2D(rect_xywhf *const *v, int n, int max_s, bool allowFlip, std::vector<rect_xywhf *> &succ, std::vector<rect_xywhf *> &unsucc) {
+	node root;
+
+	const int funcs = (sizeof(cmpf) / sizeof(bool (*)(rect_xywhf *, rect_xywhf *)));
+
+	rect_xywhf **order[funcs];
+
+	for (int f = 0; f < funcs; ++f) {
+		order[f] = new rect_xywhf *[n];
+		std::memcpy(order[f], v, sizeof(rect_xywhf *) * n);
+		std::sort(order[f], order[f] + n, cmpf[f]);
+	}
+
+	rect_wh min_bin = rect_wh(max_s, max_s);
+	int min_func = -1, best_func = 0, best_area = 0, _area = 0, step, fit, i;
+
+	bool fail = false;
+
+	for (int f = 0; f < funcs; ++f) {
+		v = order[f];
+		step = min_bin.w / 2;
+		root.reset(min_bin);
+
+		while (true) {
+			if (root.rc.w() > min_bin.w) {
+				if (min_func > -1) break;
+				_area = 0;
+
+				root.reset(min_bin);
+				for (i = 0; i < n; ++i)
+					if (root.insert(*v[i], allowFlip))
+						_area += v[i]->area();
+
+				fail = true;
+				break;
+			}
+
+			fit = -1;
+
+			for (i = 0; i < n; ++i)
+				if (!root.insert(*v[i], allowFlip)) {
+					fit = 1;
+					break;
+				}
+
+			if (fit == -1 && step <= discard_step)
+				break;
+
+			root.reset(rect_wh(root.rc.w() + fit * step, root.rc.h() + fit * step));
+
+			step /= 2;
+			if (!step)
+				step = 1;
+		}
+
+		if (!fail && (min_bin.area() >= root.rc.area())) {
+			min_bin = rect_wh(root.rc);
+			min_func = f;
+		}
+
+		else if (fail && (_area > best_area)) {
+			best_area = _area;
+			best_func = f;
+		}
+		fail = false;
+	}
+
+	v = order[min_func == -1 ? best_func : min_func];
+
+	int clip_x = 0, clip_y = 0;
+
+	root.reset(min_bin);
+
+	for (i = 0; i < n; ++i) {
+		if (auto ret = root.insert(*v[i], allowFlip)) {
+			v[i]->x = ret->rc.l;
+			v[i]->y = ret->rc.t;
+
+			if (v[i]->flipped) {
+				v[i]->flipped = false;
+				v[i]->flip();
+			}
+
+			clip_x = std::max(clip_x, ret->rc.r);
+			clip_y = std::max(clip_y, ret->rc.b);
+
+			succ.push_back(v[i]);
+		} else {
+			unsucc.push_back(v[i]);
+
+			v[i]->flipped = false;
+		}
+	}
+
+	for (int f = 0; f < funcs; ++f)
+		delete[] order[f];
+
+	return rect_wh(clip_x, clip_y);
+}
+
+static bool _pack_rects(rect_xywhf *const *v, int n, int max_s, bool allowFlip, std::vector<bin> &bins) {
+	rect_wh _rect(max_s, max_s);
+
+	for (int i = 0; i < n; ++i)
+		if (!v[i]->fits(_rect, allowFlip)) return false;
+
+	std::vector<rect_xywhf *> vec[2], *p[2] = { vec, vec + 1 };
+	vec[0].resize(n);
+	vec[1].clear();
+	std::memcpy(&vec[0][0], v, sizeof(rect_xywhf *) * n);
+
+	bin *b = 0;
+
+	while (true) {
+		bins.push_back(bin());
+		b = &bins[bins.size() - 1];
+
+		b->size = _rect2D(&((*p[0])[0]), static_cast<int>(p[0]->size()), max_s, allowFlip, b->rects, *p[1]);
+		p[0]->clear();
+
+		if (!p[1]->size()) break;
+
+		std::swap(p[0], p[1]);
+	}
+
+	return true;
+}
+
+static int _get_offset_for_format(Image::Format format) {
+	switch (format) {
+		case Image::FORMAT_RGB8:
+			return 3;
+		case Image::FORMAT_RGBA8:
+			return 4;
+		case Image::FORMAT_L8:
+		case Image::FORMAT_LA8:
+		case Image::FORMAT_R8:
+		case Image::FORMAT_RG8:
+		case Image::FORMAT_RGBA4444:
+		case Image::FORMAT_RF:
+		case Image::FORMAT_RGF:
+		case Image::FORMAT_RGBF:
+		case Image::FORMAT_RGBAF:
+		case Image::FORMAT_RH:
+		case Image::FORMAT_RGH:
+		case Image::FORMAT_RGBH:
+		case Image::FORMAT_RGBAH:
+		case Image::FORMAT_RGBE9995:
+		case Image::FORMAT_DXT1:
+		case Image::FORMAT_DXT3:
+		case Image::FORMAT_DXT5:
+		case Image::FORMAT_RGTC_R:
+		case Image::FORMAT_RGTC_RG:
+		case Image::FORMAT_BPTC_RGBA:
+		case Image::FORMAT_BPTC_RGBF:
+		case Image::FORMAT_BPTC_RGBFU:
+		case Image::FORMAT_PVRTC2:
+		case Image::FORMAT_PVRTC2A:
+		case Image::FORMAT_PVRTC4:
+		case Image::FORMAT_PVRTC4A:
+		case Image::FORMAT_ETC:
+		case Image::FORMAT_ETC2_R11:
+		case Image::FORMAT_ETC2_R11S:
+		case Image::FORMAT_ETC2_RG11:
+		case Image::FORMAT_ETC2_RG11S:
+		case Image::FORMAT_ETC2_RGB8:
+		case Image::FORMAT_ETC2_RGBA8:
+		case Image::FORMAT_ETC2_RGB8A1:
+#if VERSION_MAJOR >= 4
+		case Image::FORMAT_RGB565:
+		case Image::FORMAT_ETC2_RA_AS_RG:
+		case Image::FORMAT_DXT5_RA_AS_RG:
+#else
+		case Image::FORMAT_RGBA5551:
+#endif
+		case Image::FORMAT_MAX:
+			return 0;
+	}
+
+	return 0;
+}
+
+static Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, int max_atlas_size = 256, int margin = 2, Color background_color = Color(0,0,0,1)) {
+	ERR_FAIL_COND_V(images.size() != names.size(), Dictionary());
+
+	Array generated_images;
+	std::vector<bin> bins;
+
+	int atlas_channels =  3;
+
+	const int n = images.size();
+	Vector<rect_xywhf> data;
+	data.resize(n);
+	Vector<rect_xywhf *> rects;
+	rects.resize(n);
+	for (uint32_t i = 0; i < images.size(); ++i) {
+		data.write[i].original_image = images[i];
+		data.write[i].x = 0;
+		data.write[i].y = 0;
+		data.write[i].w = images[i]->get_size().x;
+		data.write[i].h = images[i]->get_size().y;
+		rects.write[i] = &data.write[i];
+		if (images[i]->get_format() ==  Image::FORMAT_RGBA8)
+			atlas_channels = 4;
+	}
+
+	ERR_FAIL_COND_V(atlas_channels < 3, Dictionary());
+
+	Dictionary ret;
+	if (_pack_rects(rects.ptr(), rects.size(), max_atlas_size, false, bins)) {
+		generated_images.clear();
+		generated_images.resize(bins.size());
+
+		for (uint32_t i = 0; i < bins.size(); ++i) {
+			bin b = bins[i];
+
+			PoolByteArray data;
+			data.resize(b.size.w * b.size.h * atlas_channels);
+
+			//Setup background color
+			uint8_t cr = background_color.r * 255.0;
+			uint8_t cg = background_color.g * 255.0;
+			uint8_t cb = background_color.b * 255.0;
+			uint8_t ca = background_color.a * 255.0;
+
+			for (int j = 0; j < data.size(); j += atlas_channels) {
+				data.set(j, cr);
+				data.set(j + 1, cg);
+				data.set(j + 2, cb);
+				if (atlas_channels == 4)
+					data.set(j + 3, ca);
+			}
+
+			Ref<Image> atlas;
+			atlas.instance();
+
+			//Process rects
+			for (uint32_t j = 0; j < b.rects.size(); ++j) {
+				rect_xywhf *r = b.rects[j];
+
+				r->bin = i;
+				r->atlas_image = atlas;
+
+				int rect_pos_x = 0;
+				int rect_pos_y = 0;
+
+				Ref<Image> img = r->original_image;
+
+				ERR_CONTINUE(!img.is_valid());
+
+				int img_width = img->get_width();
+
+				PoolByteArray image_data = img->get_data();
+
+				int input_format_offset = _get_offset_for_format(img->get_format());
+
+				ERR_CONTINUE_MSG(input_format_offset == 0, "Format is not implemented, Skipping!");
+
+				int h_wo_margin = r->h - 2 * margin;
+				for (int y = 0; y < h_wo_margin; ++y) {
+					int orig_img_indx = (rect_pos_y + y) * img_width * input_format_offset + rect_pos_x * input_format_offset;
+					int start_indx = (r->y + y + margin) * b.size.w * atlas_channels + (r->x + margin) * atlas_channels;
+
+					int row_width = (r->w - 2 * margin);
+					for (int x = 0; x < row_width; ++x) {
+
+						for (int sx = 0; sx < input_format_offset; ++sx) {
+							data.set(start_indx + (x * atlas_channels) + sx, image_data[orig_img_indx + sx + (x * input_format_offset)]);
+						}
+					}
+				}
+			}
+
+			atlas->create(b.size.w, b.size.h, false, atlas_channels == 4 ? Image::FORMAT_RGBA8 : Image::FORMAT_RGB8, data);
+			// atlas->save_png(vformat("atlas_%d.png", i));
+
+			generated_images.set(i, atlas);
+		}
+
+		ret["_generated_images"] = generated_images;
+
+		for (uint32_t r = 0; r < data.size(); ++r) {
+			const rect_xywhf &rc = data[r];
+			Dictionary entry;
+			entry["rect"] = Rect2(rc.x, rc.y, rc.w, rc.h);
+			entry["atlas_page"] = rc.bin;
+			entry["atlas"] = rc.atlas_image;
+			ret[names[r]] = entry;
+		}
+	}
+
+	return ret;
+}
