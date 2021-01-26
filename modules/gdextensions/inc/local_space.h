@@ -1,9 +1,38 @@
+/*************************************************************************/
+/*  local_space.h                                                        */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #ifndef local_space_h
 #define local_space_h
 
 #include "core/math/vector2.h"
 #include "core/math/vector3.h"
-
 
 // LocalSpace: a local coordinate system for 3d space
 //
@@ -28,44 +57,37 @@
 
 class LocalSpace {
 public:
-    // transformation as three orthonormal unit basis vectors and the
-    // origin of the local space.  These correspond to the "rows" of
-    // a 3x4 transformation matrix with [0 0 0 1] as the final column
-    LocalSpace() { setToIdentity(); }
+	// transformation as three orthonormal unit basis vectors and the
+	// origin of the local space.  These correspond to the "rows" of
+	// a 3x4 transformation matrix with [0 0 0 1] as the final column
+	LocalSpace() { setToIdentity(); }
 
-    // reset transform: set local space to its identity state, equivalent to a
-    // 4x4 homogeneous transform like this:
-    // ------------------------------------------------------------------------
-    //     [ X 0 0 0 ]
-    //     [ 0 1 0 0 ]
-    //     [ 0 0 1 0 ]
-    //     [ 0 0 0 1 ]
-    //
-    // where X is 1 for a left-handed system and -1 for a right-handed system.
-    void setToIdentity() {
-        forward = forward = Vector3(0.0f, 0.0f, 1.0f);
-        up = globalUp = Vector3(0.0f, 1.0f, 0.0f);
-    }
+	// reset transform: set local space to its identity state, equivalent to a
+	// 4x4 homogeneous transform like this:
+	// ------------------------------------------------------------------------
+	//     [ X 0 0 0 ]
+	//     [ 0 1 0 0 ]
+	//     [ 0 0 1 0 ]
+	//     [ 0 0 0 1 ]
+	//
+	// where X is 1 for a left-handed system and -1 for a right-handed system.
+	void setToIdentity() {
+		forward = forward = Vector3(0.0f, 0.0f, 1.0f);
+		up = globalUp = Vector3(0.0f, 1.0f, 0.0f);
+	}
 
-    bool rightHanded (void) const { return true; }
+	bool rightHanded(void) const { return true; }
 
-    Vector3 globalizePosition(const Point2 pos, const Vector2 local) const
-        { return Vector3(pos.x, pos.y, 0) + globalizeDirection(local); }
-    Vector3 globalizeDirection(const Vector2 local) const
-        { return side * local.x + up * local.y; }
-    Vector3 globalizeDirection(const Vector3 local) const
-        { return side * local.x + up * local.y + forward * local.z; }
-    Vector3 localizeDirection(const Vector3 global) const
-        { return Vector3(global.dot(side), global.dot(up), global.dot(forward)); }
-    Vector3 localizePosition(const Point2 pos, const Vector3 global) const
-        { return localizeDirection(global - Vector3(pos.x, pos.y, 0)); }
-    Vector3 localizePosition(const Point2 pos, const Vector2 global) const
-        { return localizeDirection(Vector3(global.x, global.y, 0) - Vector3(pos.x, pos.y, 0)); }
-    Vector3 localRotateForwardToSide (const Vector3& v) const
-        { return Vector3(rightHanded()?(-v.z):(+v.z), v.y, v.x); }
+	Vector3 globalizePosition(const Point2 pos, const Vector2 local) const { return Vector3(pos.x, pos.y, 0) + globalizeDirection(local); }
+	Vector3 globalizeDirection(const Vector2 local) const { return side * local.x + up * local.y; }
+	Vector3 globalizeDirection(const Vector3 local) const { return side * local.x + up * local.y + forward * local.z; }
+	Vector3 localizeDirection(const Vector3 global) const { return Vector3(global.dot(side), global.dot(up), global.dot(forward)); }
+	Vector3 localizePosition(const Point2 pos, const Vector3 global) const { return localizeDirection(global - Vector3(pos.x, pos.y, 0)); }
+	Vector3 localizePosition(const Point2 pos, const Vector2 global) const { return localizeDirection(Vector3(global.x, global.y, 0) - Vector3(pos.x, pos.y, 0)); }
+	Vector3 localRotateForwardToSide(const Vector3 &v) const { return Vector3(rightHanded() ? (-v.z) : (+v.z), v.y, v.x); }
 
-    Vector3 globalUp;
-    Vector3 side, up, forward;
+	Vector3 globalUp;
+	Vector3 side, up, forward;
 };
 
 #endif // local_space_h

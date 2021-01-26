@@ -51,7 +51,7 @@ struct CharTransform {
 	Rect2 dest_rect;
 	Rect2 tex_clip;
 	// hide character from drawing
-	bool hidden:1;
+	bool hidden : 1;
 	// vertical transition (rotation) looks better if it is
 	// aligned to single, common baseline (middle of ascend)
 	//
@@ -60,7 +60,7 @@ struct CharTransform {
 	//  |  \|  | |
 	// -+---+--+-+----------
 	//
-	bool vertical_align:1;
+	bool vertical_align : 1;
 	// transition progress 0 .. 1
 	real_t progress;
 	CharTransform(bool p_hidden = false) {

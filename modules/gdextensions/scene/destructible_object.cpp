@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -37,8 +37,8 @@
 void DestructibleSprite::_bind_methods() {
 
 	ADD_GROUP("Force impulse", "force_impulse_");
-    ADD_PROPERTY( PropertyInfo(Variant::VECTOR2, "force_impulse_direction"), "set_force_impulse_direction", "get_force_impulse_direction" );
-    ADD_PROPERTY( PropertyInfo(Variant::REAL, "force_impulse_duration"), "set_force_impulse_duration", "get_force_impulse_duration" );
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "force_impulse_direction"), "set_force_impulse_direction", "get_force_impulse_direction");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "force_impulse_duration"), "set_force_impulse_duration", "get_force_impulse_duration");
 	ADD_GROUP("", "");
-    ADD_PROPERTY( PropertyInfo(Variant::BOOL, "fade_debris"), "set_fade_debris", "get_fade_debris" );
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "fade_debris"), "set_fade_debris", "get_fade_debris");
 }

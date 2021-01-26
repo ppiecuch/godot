@@ -1,7 +1,37 @@
+/*************************************************************************/
+/*  starfield.cpp                                                        */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #include "starfield.h"
 
-#include <random>
 #include <functional>
+#include <random>
 
 // Reference:
 // ----------
@@ -16,26 +46,23 @@
 // https://github.com/zatakeshi/Pygame-Parallax-Scrolling-Starfield
 // https://github.com/johnprattchristian/starfielder
 
+namespace {
 
-namespace
-{
+std::mt19937 randomGenerator;
+std::uniform_real_distribution<real_t> randomDistributionAlpha(0.05, 1.0);
+std::function<unsigned short int()> randomAlpha;
 
-	std::mt19937 randomGenerator;
-	std::uniform_real_distribution<real_t> randomDistributionAlpha(0.05, 1.0);
-	std::function <unsigned short int()> randomAlpha;
+inline void randomSeed() {
+	std::random_device rd;
+	randomGenerator.seed(rd());
+	randomAlpha = std::bind(randomDistributionAlpha, randomGenerator);
+}
 
-	inline void randomSeed() {
-		std::random_device rd;
-		randomGenerator.seed(rd());
-		randomAlpha = std::bind(randomDistributionAlpha, randomGenerator);
-	}
-
-	inline float randomValue(const float low, const float high) {
-		return std::uniform_real_distribution<float>{low, high}(randomGenerator);
-	}
+inline float randomValue(const float low, const float high) {
+	return std::uniform_real_distribution<float>{ low, high }(randomGenerator);
+}
 
 } // namespace
-
 
 void Starfield::_update_mesh() {
 	if (_mesh.is_null())
@@ -56,25 +83,34 @@ void Starfield::_update_mesh() {
 void Starfield::move(Vector2 p_movement) {
 	for (auto &layer : _layers) {
 		auto w = layer.positions.write();
-		for (int p=0; p<layer.positions.size(); ++p) {
+		for (int p = 0; p < layer.positions.size(); ++p) {
 			auto &position = w[p];
 			// move
 			position += p_movement * (static_cast<float>(layer.color.a) / 255.f);
 			// wrap
 			if (position.x < 0)
-				position = { layer.size.x, randomValue(0.f, layer.size.y), };
+				position = {
+					layer.size.x,
+					randomValue(0.f, layer.size.y),
+				};
 			else if (position.x > layer.size.x)
-				position = { 0.f, randomValue(0.f, layer.size.y), };
+				position = {
+					0.f,
+					randomValue(0.f, layer.size.y),
+				};
 			if (position.y < 0)
-				position = { randomValue(0.f, layer.size.x), layer.size.y, };
+				position = {
+					randomValue(0.f, layer.size.x),
+					layer.size.y,
+				};
 			else if (position.y > layer.size.y)
-				position = { randomValue(0.f, layer.size.x) , 0.f };
+				position = { randomValue(0.f, layer.size.x), 0.f };
 		}
 	}
 }
 
 void Starfield::regenerate() {
-	for (unsigned int l=0; l<_layers.size(); ++l) {
+	for (unsigned int l = 0; l < _layers.size(); ++l) {
 		regenerate(l);
 	}
 }
@@ -87,7 +123,7 @@ void Starfield::regenerate(layerid_t p_layer) {
 
 	auto wp = layer.positions.write();
 	auto wc = layer.colors.write();
-	for (int p=0; p<layer.positions.size(); ++p) {
+	for (int p = 0; p < layer.positions.size(); ++p) {
 		auto &position = wp[p];
 		auto &color = wc[p];
 		position = { randomValue(0.f, layer.size.x), randomValue(0.f, layer.size.y) };
@@ -126,9 +162,9 @@ void Starfield::set_color(layerid_t p_layer, const Color &p_color) {
 	auto &layer = _layers[p_layer];
 	layer.color = p_color;
 	auto w = layer.colors.write();
-	for (int c=0; c<layer.colors.size(); ++c) {
+	for (int c = 0; c < layer.colors.size(); ++c) {
 		auto &color = w[c];
-		const real_t alphaDepth { color.a };
+		const real_t alphaDepth{ color.a };
 		color = p_color;
 		color.a = alphaDepth;
 	}

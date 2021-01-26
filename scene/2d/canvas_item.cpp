@@ -43,7 +43,7 @@
 
 #ifdef MODULE_GDEXTENSIONS_ENABLED
 #ifdef TOOLS_ENABLED
-# include "editor/editor_node.h"
+#include "editor/editor_node.h"
 #endif
 // global on-screen console layer instance
 #include "modules/gdextensions/debugconsole/debug_console.h"
@@ -609,11 +609,11 @@ void CanvasItem::_notification(int p_what) {
 #ifdef MODULE_GDEXTENSIONS_ENABLED
 			if (_console == 0
 #ifdef TOOLS_ENABLED
-				&& EditorNode::get_singleton()->get_scene_root() == get_parent()
+					&& EditorNode::get_singleton()->get_scene_root() == get_parent()
 #else
-				&& get_tree()->get_root() == get_parent()
+					&& get_tree()->get_root() == get_parent()
 #endif
-				&& GLOBAL_DEF("debug/settings/stdout/active_console", false)) {
+					&& GLOBAL_DEF("debug/settings/stdout/active_console", false)) {
 
 				_console = memnew(ConsoleInstance);
 				_console->set_name("text_console");

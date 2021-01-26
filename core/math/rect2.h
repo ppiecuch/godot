@@ -50,9 +50,8 @@ struct Rect2 {
 
 	inline Rect2 interpolate(const Rect2 &p_rect, real_t p_weight) const {
 		return Rect2(
-			Point2(Math::lerp(position.x, p_rect.position.x, p_weight), Math::lerp(position.y, p_rect.position.y, p_weight)),
-			Size2(Math::lerp(size.width, p_rect.size.width, p_weight), Math::lerp(size.height, p_rect.size.height, p_weight))
-		);
+				Point2(Math::lerp(position.x, p_rect.position.x, p_weight), Math::lerp(position.y, p_rect.position.y, p_weight)),
+				Size2(Math::lerp(size.width, p_rect.size.width, p_weight), Math::lerp(size.height, p_rect.size.height, p_weight)));
 	}
 
 	inline bool intersects(const Rect2 &p_rect, const bool p_include_borders = false) const {

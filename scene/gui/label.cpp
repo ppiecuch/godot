@@ -29,10 +29,10 @@
 /*************************************************************************/
 
 #include "label.h"
-#include "label_transitions.h"
 #include "core/print_string.h"
 #include "core/project_settings.h"
 #include "core/translation.h"
+#include "label_transitions.h"
 
 #define _RemoveCacheList(wc)    \
 	while (wc) {                \
@@ -115,7 +115,7 @@ void Label::_notification(int p_what) {
 			_transition_dirty = false;
 		}
 
-		std::vector<WordCache*> draw_set { &word_cache };
+		std::vector<WordCache *> draw_set{ &word_cache };
 
 		if (is_transition_active()) {
 			draw_set = _transition_controller->get_draw_cache();
@@ -154,7 +154,7 @@ void Label::_notification(int p_what) {
 		FontDrawer drawer(font, font_outline_modulate);
 
 		int draw_index = 0;
-draw_loop:
+	draw_loop:
 		const WordCache *cc = draw_set[draw_index];
 		const WordList *wc = cc->words;
 
@@ -295,7 +295,7 @@ draw_loop:
 								n = String::char_uppercase(n);
 							}
 
-							if (const CharTransform *xform = _transition_controller->get_char_xform (cc, i + pos)) {
+							if (const CharTransform *xform = _transition_controller->get_char_xform(cc, i + pos)) {
 								const real_t move = drawer.draw_char(ci, *xform, Point2(x_ofs_shadow, y_ofs) + shadow_ofs, c, n, font_color_shadow);
 								if (use_outline) {
 									drawer.draw_char(ci, *xform, Point2(x_ofs_shadow, y_ofs) + Vector2(-shadow_ofs.x, shadow_ofs.y), c, n, font_color_shadow);
@@ -328,7 +328,7 @@ draw_loop:
 							n = String::char_uppercase(n);
 						}
 
-						if (const CharTransform *xform = _transition_controller->get_char_xform (cc, i + pos)) {
+						if (const CharTransform *xform = _transition_controller->get_char_xform(cc, i + pos)) {
 							x_ofs += drawer.draw_char(ci, *xform, Point2(x_ofs, y_ofs), c, n, font_color);
 						} else {
 							x_ofs += drawer.draw_char(ci, Point2(x_ofs, y_ofs), c, n, font_color);
@@ -342,7 +342,7 @@ draw_loop:
 			wc = to ? to->next : 0;
 			line++;
 		}
-draw_next:
+	draw_next:
 		if (++draw_index == draw_set.size())
 			return;
 		else
@@ -464,7 +464,7 @@ int Label::get_visible_line_count() const {
 
 void Label::_dump_word_cache(const WordCache &cache) const {
 	print_line("WordCache dump:");
-	print_line("cached text: "+cache.cache_text);
+	print_line("cached text: " + cache.cache_text);
 	WordList *wc = cache.words;
 	while (wc) {
 		print_line(vformat("  '" + cache.cache_text.substr(wc->char_pos, wc->word_len) + "' char_pos=%d,line=%d,line_pos=%d,len=%d,spc=%d", wc->char_pos, wc->line, wc->line_pos, wc->word_len, wc->space_count));
@@ -674,7 +674,7 @@ CharType Label::get_char_at_pos(const WordCache &cache, int line, int pixel_pos)
 		}
 
 		if (char_pos + wc->pixel_width > pixel_pos) {
-			for(int c=0; c<wc->word_len; ++c) {
+			for (int c = 0; c < wc->word_len; ++c) {
 				const real_t char_w = font->get_char_size(wc->char_pos + c).width + horizontal_spacing;
 				if (char_pos + char_w > pixel_pos)
 					return text[wc->char_pos + c];

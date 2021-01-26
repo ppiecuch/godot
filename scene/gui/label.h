@@ -39,7 +39,7 @@
 
 // allow for testing private Label's methods
 namespace TestFont {
-	class TestMainLoop;
+class TestMainLoop;
 }
 
 class Label : public Control {

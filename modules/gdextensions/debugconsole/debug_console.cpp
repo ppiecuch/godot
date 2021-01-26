@@ -1,17 +1,46 @@
+/*************************************************************************/
+/*  debug_console.cpp                                                    */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
 
 #include "debug_console.h"
 
+#include <assert.h>
+#include <stdarg.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <sys/types.h>
-#include <stdint.h>
-#include <stdarg.h>
-#include <assert.h>
 #include <string>
 #include <vector>
 
 #include "core/version.h"
-#include "scene/resources/texture.h"
 #include "scene/resources/mesh.h"
+#include "scene/resources/texture.h"
 
 typedef struct {
 	const char *image;
@@ -25,14 +54,13 @@ typedef struct {
 
 extern const unsigned char font_8x16[], font_8x12[], font_8x8[], font_7x9[], font_4x6[];
 constexpr EmbedImageItem embed_debug_font[] = {
-	{"dos-8x16", font_8x16, 8, 16, 196608/3, 128, 512, FORMAT_1CHANNEL},
-	{"dos-8x12", font_8x12, 8, 12, 147456/3, 128, 384, FORMAT_1CHANNEL},
-	{"dos-8x8", font_8x8, 8, 8, 98304/3, 128, 256, FORMAT_1CHANNEL},
-	{"dos-7x9", font_7x9, 7, 9, 96768/3, 112, 288, FORMAT_1CHANNEL},
-	{"dos-4x6", font_4x6, 4, 6, 36864/3, 64, 192, FORMAT_1CHANNEL},
-	{NULL, NULL, 0, 0, 0, 0, 0, 0}
+	{ "dos-8x16", font_8x16, 8, 16, 196608 / 3, 128, 512, FORMAT_1CHANNEL },
+	{ "dos-8x12", font_8x12, 8, 12, 147456 / 3, 128, 384, FORMAT_1CHANNEL },
+	{ "dos-8x8", font_8x8, 8, 8, 98304 / 3, 128, 256, FORMAT_1CHANNEL },
+	{ "dos-7x9", font_7x9, 7, 9, 96768 / 3, 112, 288, FORMAT_1CHANNEL },
+	{ "dos-4x6", font_4x6, 4, 6, 36864 / 3, 64, 192, FORMAT_1CHANNEL },
+	{ NULL, NULL, 0, 0, 0, 0, 0, 0 }
 };
-
 
 // LCD text with big letters.
 // --------------------------
@@ -40,26 +68,25 @@ const int BoxFSize = 3;
 extern int boxf_offsets[];
 extern char boxf[][BoxFSize + 1];
 
-
 static PoolByteArray _poolbytearray_from_data(const uint8_t *bytes, size_t bytes_size, int bytes_channels, Image::Format dest_format) {
 	PoolByteArray data;
 	if (bytes_channels == FORMAT_1CHANNEL && dest_format == Image::Format::FORMAT_LA8) {
 		data.resize(2 * bytes_size);
 		PoolByteArray::Write wr = data.write();
-		for(int b=0; b<2 * bytes_size; b+=2) {
-			wr[b] = wr[b+1] = bytes[b>>1];
+		for (int b = 0; b < 2 * bytes_size; b += 2) {
+			wr[b] = wr[b + 1] = bytes[b >> 1];
 		}
 	} else if (bytes_channels == FORMAT_1CHANNEL && dest_format == Image::Format::FORMAT_RGB8) {
 		data.resize(3 * bytes_size);
 		PoolByteArray::Write wr = data.write();
-		for(int b=0; b<3 * bytes_size; b+=3) {
-			wr[b] = wr[b+1] = wr[b+3] = bytes[b/3];
+		for (int b = 0; b < 3 * bytes_size; b += 3) {
+			wr[b] = wr[b + 1] = wr[b + 3] = bytes[b / 3];
 		}
 	} else if (bytes_channels == FORMAT_1CHANNEL && dest_format == Image::Format::FORMAT_RGBA8) {
 		data.resize(4 * bytes_size);
 		PoolByteArray::Write wr = data.write();
-		for(int b=0; b<4 * bytes_size; b+=4) {
-			wr[b] = wr[b+1] = wr[b+3] = wr[b+4] = bytes[b>>2];
+		for (int b = 0; b < 4 * bytes_size; b += 4) {
+			wr[b] = wr[b + 1] = wr[b + 3] = wr[b + 4] = bytes[b >> 2];
 		}
 	} else {
 		data.resize(bytes_size);
@@ -94,36 +121,36 @@ void TextConsole::load_font(FontSize p_font) {
 	_font_texture = _font_texture_cache[p_font];
 	_font_size = Size2i(data.char_w, data.char_h);
 
-    /* 16x32 chars */ for (int loop=0; loop<512; ++loop) // loop through all 512 chars
-    {
-        real_t cx = (real_t)(loop%16)/16.0f;        // X position of current character
-        real_t cy = (real_t)(loop/16)/32.0f;        // Y position of current character
+	/* 16x32 chars */ for (int loop = 0; loop < 512; ++loop) // loop through all 512 chars
+	{
+		real_t cx = (real_t)(loop % 16) / 16.0f; // X position of current character
+		real_t cy = (real_t)(loop / 16) / 32.0f; // Y position of current character
 
-        const int col = loop%16, row = loop/16, ch = row*16+col;
+		const int col = loop % 16, row = loop / 16, ch = row * 16 + col;
 
-        _chars[ch].t[0] = Point2(cx,          cy);          /* 0, 0 */
-        _chars[ch].t[1] = Point2(cx,          cy+0.03125f); /* 0, 1 */
-        _chars[ch].t[2] = Point2(cx+0.0625f,  cy);          /* 1, 0 */
-        _chars[ch].t[3] = Point2(cx+0.0625f,  cy+0.03125f); /* 1, 1 */
-    }
+		_chars[ch].t[0] = Point2(cx, cy); /* 0, 0 */
+		_chars[ch].t[1] = Point2(cx, cy + 0.03125f); /* 0, 1 */
+		_chars[ch].t[2] = Point2(cx + 0.0625f, cy); /* 1, 0 */
+		_chars[ch].t[3] = Point2(cx + 0.0625f, cy + 0.03125f); /* 1, 1 */
+	}
 }
 
 void TextConsole::resize(const Viewport &p_view) {
 
 	const Size2i size = p_view.get_size();
-    // screen size rounded to font size
-	const int screen_width = size.width - size.width%int(_font_size.width);
-	const int screen_height = size.height - size.height%int(_font_size.height);
-    // console size:
-    resize( screen_width/_font_size.width, screen_height/_font_size.height );
+	// screen size rounded to font size
+	const int screen_width = size.width - size.width % int(_font_size.width);
+	const int screen_height = size.height - size.height % int(_font_size.height);
+	// console size:
+	resize(screen_width / _font_size.width, screen_height / _font_size.height);
 }
 
 void TextConsole::resize(int p_width, int p_height) {
 	ERR_FAIL_COND(p_width < 1);
 	ERR_FAIL_COND(p_height < 1);
 
-    _con_size.width = p_width;
-    _con_size.height = p_height;
+	_con_size.width = p_width;
+	_con_size.height = p_height;
 
 	if (_screen)
 		memdelete_arr(_screen);
@@ -132,22 +159,22 @@ void TextConsole::resize(int p_width, int p_height) {
 }
 
 static Color palette[16] = {
-    /*  0. BLACK        */ Color::from_abgr( 0xFF000000 ),
-    /*  1. BLUE         */ Color::from_abgr( 0xFFFF0000 ),
-    /*  2. GREEN        */ Color::from_abgr( 0xFF00FF00 ),
-    /*  3. CYAN         */ Color::from_abgr( 0xFFFFFF00 ),
-    /*  4. RED          */ Color::from_abgr( 0xFF0000FF ),
-    /*  5. MAGENTA      */ Color::from_abgr( 0xFFFF00FF ),
-    /*  6. BROWN        */ Color::from_abgr( 0xFF2A2AA5 ),
-    /*  7. LIGHTGRAY    */ Color::from_abgr( 0xFFD3D3D3 ),
-    /*  8. DARKGRAY     */ Color::from_abgr( 0xFFA9A9A9 ),
-    /*  9. LIGHTBLUE    */ Color::from_abgr( 0xFFE6D8AD ),
-    /* 10. LIGHTGREEN   */ Color::from_abgr( 0xFF90EE90 ),
-    /* 11. LIGHTCYAN    */ Color::from_abgr( 0xFFFFFFE0 ),
-    /* 12. LIGHTRED     */ Color::from_abgr( 0xFFCBCCFF ),
-    /* 13. LIGHTMAGENTA */ Color::from_abgr( 0xFFF942FF ),
-    /* 14. YELLOW       */ Color::from_abgr( 0xFF0FFEFF ),
-    /* 15. WHITE        */ Color::from_abgr( 0xFFFFFFFF )
+	/*  0. BLACK        */ Color::from_abgr(0xFF000000),
+	/*  1. BLUE         */ Color::from_abgr(0xFFFF0000),
+	/*  2. GREEN        */ Color::from_abgr(0xFF00FF00),
+	/*  3. CYAN         */ Color::from_abgr(0xFFFFFF00),
+	/*  4. RED          */ Color::from_abgr(0xFF0000FF),
+	/*  5. MAGENTA      */ Color::from_abgr(0xFFFF00FF),
+	/*  6. BROWN        */ Color::from_abgr(0xFF2A2AA5),
+	/*  7. LIGHTGRAY    */ Color::from_abgr(0xFFD3D3D3),
+	/*  8. DARKGRAY     */ Color::from_abgr(0xFFA9A9A9),
+	/*  9. LIGHTBLUE    */ Color::from_abgr(0xFFE6D8AD),
+	/* 10. LIGHTGREEN   */ Color::from_abgr(0xFF90EE90),
+	/* 11. LIGHTCYAN    */ Color::from_abgr(0xFFFFFFE0),
+	/* 12. LIGHTRED     */ Color::from_abgr(0xFFCBCCFF),
+	/* 13. LIGHTMAGENTA */ Color::from_abgr(0xFFF942FF),
+	/* 14. YELLOW       */ Color::from_abgr(0xFF0FFEFF),
+	/* 15. WHITE        */ Color::from_abgr(0xFFFFFFFF)
 };
 
 Point2i TextConsole::_write(const String &p_msg, Point2i pos, ColorIndex foreground, ColorIndex background) {
@@ -156,7 +183,7 @@ Point2i TextConsole::_write(const String &p_msg, Point2i pos, ColorIndex foregro
 	ERR_FAIL_COND_V(pos.y >= _con_size.height, pos);
 
 	CharString ascii = p_msg.ascii();
-	for(int i=0; i<ascii.size(); ++i) {
+	for (int i = 0; i < ascii.size(); ++i) {
 		const cell c = { ascii[i], foreground, background, 0 };
 		_screen[pos.y * _con_size.width + pos.x] = c;
 		pos.x++;
@@ -177,7 +204,7 @@ Point2i TextConsole::_putl(const String &p_msg, Point2i pos, ColorIndex foregrou
 	ERR_FAIL_COND_V(pos.y >= _con_size.height, pos);
 
 	CharString ascii = p_msg.ascii();
-	for(int i=0; i<ascii.length(); ++i) {
+	for (int i = 0; i < ascii.length(); ++i) {
 		const cell c = { ascii[i], foreground, background, 0 };
 		if (pos.x < _con_size.width) {
 			_screen[pos.y * _con_size.width + pos.x] = c;
@@ -196,8 +223,8 @@ Point2i TextConsole::_putf(const String &p_msg, Point2i pos, ColorIndex foregrou
 	static Point2i v1 = Point2i(0, 1);
 
 	CharString ascii = p_msg.ascii();
-	for(int r=0; r<BoxFSize; ++r) {
-		for(int c=0; c<ascii.length(); ++c) {
+	for (int r = 0; r < BoxFSize; ++r) {
+		for (int c = 0; c < ascii.length(); ++c) {
 			const uint8_t ch = ascii[c];
 			if (ch == ' ') {
 				_putl("  ", pos + Point2i(c * BoxFSize, 0), foreground, background);
@@ -227,50 +254,51 @@ void TextConsole::_update_mesh() {
 	ERR_FAIL_COND(_screen == 0);
 
 	// transparent color:
-	static Color transparent(0,0,0,0);
+	static Color transparent(0, 0, 0, 0);
 	// char corners:
-	static const Point2i v0(0, 0);                                /* 0, 0 */
-	static const Point2i v1(0, _font_size.height);                /* 0, 1 */
-	static const Point2i v2(_font_size.width, 0);                 /* 1, 0 */
+	static const Point2i v0(0, 0); /* 0, 0 */
+	static const Point2i v1(0, _font_size.height); /* 0, 1 */
+	static const Point2i v2(_font_size.width, 0); /* 1, 0 */
 	static const Point2i v3(_font_size.width, _font_size.height); /* 1, 1 */
 
 	PoolVector2Array vertices;
 	PoolColorArray bg_colors, fg_colors;
 	PoolVector2Array textures;
 
-    Point2i xx; cell *p = _screen;
-	for(uint row=0; row<_con_size.height; ++row) {
-        for(uint col=0; col<_con_size.width; ++col) {
+	Point2i xx;
+	cell *p = _screen;
+	for (uint row = 0; row < _con_size.height; ++row) {
+		for (uint col = 0; col < _con_size.width; ++col) {
 			if (p->character) {
 				const uint8_t fg = p->foreground;
 				const uint8_t bg = p->background;
 
 				const int tex_info = uint8_t(p->character) + (p->inverted ? 0 : 256);
-				vertices.push_back( xx + v0 );
-				vertices.push_back( xx + v1 );
-				vertices.push_back( xx + v2 );
-				vertices.push_back( xx + v1 );
-				vertices.push_back( xx + v2 );
-				vertices.push_back( xx + v3 );
+				vertices.push_back(xx + v0);
+				vertices.push_back(xx + v1);
+				vertices.push_back(xx + v2);
+				vertices.push_back(xx + v1);
+				vertices.push_back(xx + v2);
+				vertices.push_back(xx + v3);
 				// bg:
 				if (bg == transparent_color_index)
-					bg_colors.push_multi( 6, transparent );
+					bg_colors.push_multi(6, transparent);
 				else
-					bg_colors.push_multi( 6, palette[bg] );
+					bg_colors.push_multi(6, palette[bg]);
 				// fg:
-				textures.push_back( _chars[tex_info].t[0] );
-				textures.push_back( _chars[tex_info].t[1] );
-				textures.push_back( _chars[tex_info].t[2] );
-				textures.push_back( _chars[tex_info].t[1] );
-				textures.push_back( _chars[tex_info].t[2] );
-				textures.push_back( _chars[tex_info].t[3] );
-				fg_colors.push_multi( 6, palette[fg] );
+				textures.push_back(_chars[tex_info].t[0]);
+				textures.push_back(_chars[tex_info].t[1]);
+				textures.push_back(_chars[tex_info].t[2]);
+				textures.push_back(_chars[tex_info].t[1]);
+				textures.push_back(_chars[tex_info].t[2]);
+				textures.push_back(_chars[tex_info].t[3]);
+				fg_colors.push_multi(6, palette[fg]);
 			}
 			xx += v2;
 			p++;
-        }
-        xx = Point2i(0, xx.y + _font_size.height);
-    }
+		}
+		xx = Point2i(0, xx.y + _font_size.height);
+	}
 
 	Array background, foreground;
 	background.resize(VS::ARRAY_MAX);
@@ -300,11 +328,13 @@ void TextConsole::draw(RID p_canvas_item, const Transform2D &p_xform) {
 
 	if (_mesh.is_valid()) {
 		RID texture_rid = _font_texture->get_rid();
-		VS::get_singleton()->canvas_item_add_mesh(p_canvas_item, _mesh->get_rid(), p_xform, Color(1,1,1,1), texture_rid, RID());
+		VS::get_singleton()->canvas_item_add_mesh(p_canvas_item, _mesh->get_rid(), p_xform, Color(1, 1, 1, 1), texture_rid, RID());
 	}
 }
 
-void TextConsole::set_pixel_ratio(real_t p_scale) { pixel_scale = p_scale; }
+void TextConsole::set_pixel_ratio(real_t p_scale) {
+	pixel_scale = p_scale;
+}
 
 void TextConsole::logl(const String &p_msg) {
 
@@ -315,8 +345,10 @@ void TextConsole::logl(const String &p_msg, ColorIndex foreground, ColorIndex ba
 
 	// next line
 	_cursor_pos = Point2i(0, _putl(p_msg, _cursor_pos,
-								   foreground == COLOR_DEFAULT ? _default_fg_color_index : foreground,
-								   background == COLOR_DEFAULT ? _default_bg_color_index : background).y + 1);
+									 foreground == COLOR_DEFAULT ? _default_fg_color_index : foreground,
+									 background == COLOR_DEFAULT ? _default_bg_color_index : background)
+											 .y +
+									 1);
 	if (_cursor_pos.y == _con_size.height) {
 		_scroll_up();
 		_cursor_pos = Point2i(0, _cursor_pos.y - 1);
@@ -332,8 +364,10 @@ void TextConsole::logf(const String &p_msg, ColorIndex foreground, ColorIndex ba
 
 	// next line
 	_cursor_pos = Point2i(0, _putf(p_msg, _cursor_pos,
-								   foreground == COLOR_DEFAULT ? _default_fg_color_index : foreground,
-								   background == COLOR_DEFAULT ? _default_bg_color_index : background).y + 1);
+									 foreground == COLOR_DEFAULT ? _default_fg_color_index : foreground,
+									 background == COLOR_DEFAULT ? _default_bg_color_index : background)
+											 .y +
+									 1);
 	if (_cursor_pos.y == _con_size.height) {
 		_scroll_up();
 		_cursor_pos = Point2i(0, _cursor_pos.y - 1);
@@ -348,8 +382,8 @@ void TextConsole::logv(const Array &p_log) {
 		ColorIndex foreground = ColorIndex(int(log_msg.pop_front()));
 		ColorIndex background = ColorIndex(int(log_msg.pop_front()));
 		pos = _putl(msg, pos,
-					foreground == COLOR_DEFAULT ? _default_fg_color_index : foreground,
-					background == COLOR_DEFAULT ? _default_bg_color_index : background);
+				foreground == COLOR_DEFAULT ? _default_fg_color_index : foreground,
+				background == COLOR_DEFAULT ? _default_bg_color_index : background);
 	}
 	_cursor_pos = Point2i(0, pos.y + 1);
 	if (_cursor_pos.y == _con_size.height) {
@@ -361,19 +395,19 @@ void TextConsole::logv(const Array &p_log) {
 TextConsole::TextConsole() {
 
 	_dirty_screen = false;
-	_cursor_pos = Point2i(0,0);
+	_cursor_pos = Point2i(0, 0);
 	_default_bg_color_index = COLOR_BLACK, _default_fg_color_index = COLOR_WHITE;
 	_screen = 0;
 
 	transparent_color_index = 0;
 
 	resize(80, 25);
-    logl(BOX_DDR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DDL, COLOR_LIGHTGRAY);
-    logl(BOX_DUD "   Godot Engine debug console   " BOX_DUD, COLOR_LIGHTGRAY);
-    logl(BOX_DUD "     KomSoft Oprogramowanie     " BOX_DUD, COLOR_LIGHTGRAY);
-    logl(BOX_DUR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DUL, COLOR_LIGHTGRAY);
-    logl("\020 " VERSION_FULL_NAME);
-    logl("\020 Hello!");
+	logl(BOX_DDR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DDL, COLOR_LIGHTGRAY);
+	logl(BOX_DUD "   Godot Engine debug console   " BOX_DUD, COLOR_LIGHTGRAY);
+	logl(BOX_DUD "     KomSoft Oprogramowanie     " BOX_DUD, COLOR_LIGHTGRAY);
+	logl(BOX_DUR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DUL, COLOR_LIGHTGRAY);
+	logl("\020 " VERSION_FULL_NAME);
+	logl("\020 Hello!");
 	logf("2021");
 }
 
@@ -381,8 +415,6 @@ TextConsole::~TextConsole() {
 
 	memdelete_arr(_screen);
 }
-
-
 
 void ConsoleInstance::_edit_set_position(const Point2 &p_position) {
 	_pos = p_position;
@@ -462,9 +494,12 @@ Error ConsoleInstance::_process_codes(const String &p_concodes) {
 	int pos = 0;
 	TextConsole::ColorIndex fg = TextConsole::COLOR_DEFAULT, bg = TextConsole::COLOR_DEFAULT;
 
-#define _append_log_msg(MSG, FG, BG) {                                    \
-	log_msg.push_back(MSG); log_msg.push_back(FG); log_msg.push_back(BG); \
-}
+#define _append_log_msg(MSG, FG, BG) \
+	{                                \
+		log_msg.push_back(MSG);      \
+		log_msg.push_back(FG);       \
+		log_msg.push_back(BG);       \
+	}
 
 	while (pos < p_concodes.length()) {
 
@@ -511,7 +546,7 @@ Error ConsoleInstance::_process_codes(const String &p_concodes) {
 			String col = tag.substr(3, tag.length());
 			int color_index = -1;
 
-			for(int c=0; c<TextConsole::COLOR_MAX; ++c) {
+			for (int c = 0; c < TextConsole::COLOR_MAX; ++c) {
 				if (col == colors_value[c]) {
 					color_index = c;
 					break;
@@ -519,7 +554,7 @@ Error ConsoleInstance::_process_codes(const String &p_concodes) {
 			}
 
 			if (color_index == -1) {
-				WARN_PRINT("Unknown color name: "+col);
+				WARN_PRINT("Unknown color name: " + col);
 			} else {
 				if (tag.begins_with("fg="))
 					fg = TextConsole::ColorIndex(color_index);
@@ -537,7 +572,9 @@ Error ConsoleInstance::_process_codes(const String &p_concodes) {
 	return OK;
 }
 
-Ref<TextConsole> ConsoleInstance::get_console() const { return console; }
+Ref<TextConsole> ConsoleInstance::get_console() const {
+	return console;
+}
 
 void ConsoleInstance::_bind_methods() {
 

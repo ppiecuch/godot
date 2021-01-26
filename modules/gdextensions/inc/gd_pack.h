@@ -1,6 +1,36 @@
-#include <vector>
+/*************************************************************************/
+/*  gd_pack.h                                                            */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #include <algorithm>
 #include <cstring>
+#include <vector>
 
 #include "core/image.h"
 
@@ -38,10 +68,11 @@ For description how to tune the algorithm and how it actually works see the .cpp
 
 */
 
-
 struct rect_ltrb {
-	rect_ltrb() : l(0), t(0), r(0), b(0) {}
-	rect_ltrb(int l, int t, int r, int b) : l(l), t(t), r(r), b(b) {}
+	rect_ltrb() :
+			l(0), t(0), r(0), b(0) {}
+	rect_ltrb(int l, int t, int r, int b) :
+			l(l), t(t), r(r), b(b) {}
 	int l, t, r, b;
 	int w() const { return r - l; }
 	int h() const { return b - t; }
@@ -52,8 +83,10 @@ struct rect_ltrb {
 };
 
 struct rect_wh {
-	rect_wh(const rect_ltrb &rr) : w(rr.w()), h(rr.h()) {}
-	rect_wh(int w = 0, int h = 0) : w(w), h(h) {}
+	rect_wh(const rect_ltrb &rr) :
+			w(rr.w()), h(rr.h()) {}
+	rect_wh(int w = 0, int h = 0) :
+			w(w), h(h) {}
 	int w, h;
 	int area() const { return w * h; }
 	int perimeter() const { return 2 * w + 2 * h; }
@@ -68,9 +101,15 @@ struct rect_wh {
 };
 
 struct rect_xywh : public rect_wh {
-	rect_xywh() : x(0), y(0) {}
-	rect_xywh(const rect_ltrb &rc) : x(rc.l), y(rc.t) { b(rc.b); r(rc.r); }
-	rect_xywh(int x, int y, int w, int h) : rect_wh(w, h), x(x), y(y) {}
+	rect_xywh() :
+			x(0), y(0) {}
+	rect_xywh(const rect_ltrb &rc) :
+			x(rc.l), y(rc.t) {
+		b(rc.b);
+		r(rc.r);
+	}
+	rect_xywh(int x, int y, int w, int h) :
+			rect_wh(w, h), x(x), y(y) {}
 	operator rect_ltrb() {
 		rect_ltrb rr(x, y, 0, 0);
 		rr.w(w);
@@ -85,10 +124,16 @@ struct rect_xywh : public rect_wh {
 };
 
 struct rect_xywhf : public rect_xywh {
-	rect_xywhf(const rect_ltrb &rr) : rect_xywh(rr), flipped(false) {}
-	rect_xywhf(int x, int y, int w, int h) : rect_xywh(x, y, w, h), flipped(false) {}
-	rect_xywhf() : flipped(false) {}
-	void flip() { flipped = !flipped; std::swap(w, h); }
+	rect_xywhf(const rect_ltrb &rr) :
+			rect_xywh(rr), flipped(false) {}
+	rect_xywhf(int x, int y, int w, int h) :
+			rect_xywh(x, y, w, h), flipped(false) {}
+	rect_xywhf() :
+			flipped(false) {}
+	void flip() {
+		flipped = !flipped;
+		std::swap(w, h);
+	}
 	bool flipped;
 	int bin;
 	Ref<Image> atlas_image;
@@ -100,11 +145,21 @@ struct bin {
 	std::vector<rect_xywhf *> rects;
 };
 
-static inline bool area(rect_xywhf *a, rect_xywhf *b) { return a->area() > b->area(); }
-static inline bool perimeter(rect_xywhf *a, rect_xywhf *b) { return a->perimeter() > b->perimeter(); }
-static inline bool max_side(rect_xywhf *a, rect_xywhf *b) { return std::max(a->w, a->h) > std::max(b->w, b->h); }
-static inline bool max_width(rect_xywhf *a, rect_xywhf *b) { return a->w > b->w; }
-static inline bool max_height(rect_xywhf *a, rect_xywhf *b) { return a->h > b->h; }
+static inline bool area(rect_xywhf *a, rect_xywhf *b) {
+	return a->area() > b->area();
+}
+static inline bool perimeter(rect_xywhf *a, rect_xywhf *b) {
+	return a->perimeter() > b->perimeter();
+}
+static inline bool max_side(rect_xywhf *a, rect_xywhf *b) {
+	return std::max(a->w, a->h) > std::max(b->w, b->h);
+}
+static inline bool max_width(rect_xywhf *a, rect_xywhf *b) {
+	return a->w > b->w;
+}
+static inline bool max_height(rect_xywhf *a, rect_xywhf *b) {
+	return a->h > b->h;
+}
 
 // just add another comparing function name to cmpf to perform another packing attempt
 // more functions == slower but probably more efficient cases covered and hence less area wasted
@@ -402,13 +457,13 @@ static int _get_offset_for_format(Image::Format format) {
 	return 0;
 }
 
-static Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, int max_atlas_size = 256, int margin = 2, Color background_color = Color(0,0,0,1)) {
+static Dictionary merge_images(Vector<Ref<Image> > images, Vector<String> names, int max_atlas_size = 256, int margin = 2, Color background_color = Color(0, 0, 0, 1)) {
 	ERR_FAIL_COND_V(images.size() != names.size(), Dictionary());
 
 	Array generated_images;
 	std::vector<bin> bins;
 
-	int atlas_channels =  3;
+	int atlas_channels = 3;
 
 	const int n = images.size();
 	Vector<rect_xywhf> data;
@@ -422,7 +477,7 @@ static Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, 
 		data.write[i].w = images[i]->get_size().x;
 		data.write[i].h = images[i]->get_size().y;
 		rects.write[i] = &data.write[i];
-		if (images[i]->get_format() ==  Image::FORMAT_RGBA8)
+		if (images[i]->get_format() == Image::FORMAT_RGBA8)
 			atlas_channels = 4;
 	}
 
