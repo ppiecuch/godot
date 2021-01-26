@@ -528,7 +528,7 @@ Error ConsoleInstance::_process_codes(const String &p_concodes) {
 			}
 
 			pos = brk_end + 1;
-			tag_stack.push_front(tag);
+			tag_stack.push_front(tag.substr(0, 2));
 		}
 	}
 	if (!log_msg.empty()) {
