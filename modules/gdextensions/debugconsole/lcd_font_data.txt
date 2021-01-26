@@ -1,5 +1,4 @@
-const int BoxFSize = 3;
-char boxf[][BoxFSize+1] = {
+char *boxf[] = {
 	"   ",
 	"   ",
 	"   ",
@@ -282,7 +281,7 @@ char boxf[][BoxFSize+1] = {
 	"   ",
 	"\xda\xc4\xd9",
 	"   ",
-	{0}
+	0
 };
 
 int boxf_offsets[] = {

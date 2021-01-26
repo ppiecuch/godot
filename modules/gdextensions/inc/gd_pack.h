@@ -470,7 +470,7 @@ static Dictionary merge_images(Vector<Ref<Image> > images, Vector<String> names,
 	data.resize(n);
 	Vector<rect_xywhf *> rects;
 	rects.resize(n);
-	for (uint32_t i = 0; i < images.size(); ++i) {
+	for (int i = 0; i < images.size(); ++i) {
 		data.write[i].original_image = images[i];
 		data.write[i].x = 0;
 		data.write[i].y = 0;
@@ -531,7 +531,7 @@ static Dictionary merge_images(Vector<Ref<Image> > images, Vector<String> names,
 
 				int input_format_offset = _get_offset_for_format(img->get_format());
 
-				ERR_CONTINUE_MSG(input_format_offset == 0, "Format is not implemented, Skipping!");
+				ERR_CONTINUE_MSG(input_format_offset == 0, "Image format is not supported, Skipping!");
 
 				int h_wo_margin = r->h - 2 * margin;
 				for (int y = 0; y < h_wo_margin; ++y) {
@@ -556,7 +556,7 @@ static Dictionary merge_images(Vector<Ref<Image> > images, Vector<String> names,
 
 		ret["_generated_images"] = generated_images;
 
-		for (uint32_t r = 0; r < data.size(); ++r) {
+		for (int r = 0; r < data.size(); ++r) {
 			const rect_xywhf &rc = data[r];
 			Dictionary entry;
 			entry["rect"] = Rect2(rc.x, rc.y, rc.w, rc.h);

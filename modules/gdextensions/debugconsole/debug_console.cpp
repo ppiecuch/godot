@@ -66,7 +66,7 @@ constexpr EmbedImageItem embed_debug_font[] = {
 // --------------------------
 const int BoxFSize = 3;
 extern int boxf_offsets[];
-extern char boxf[][BoxFSize + 1];
+extern char *boxf[];
 
 static PoolByteArray _poolbytearray_from_data(const uint8_t *bytes, size_t bytes_size, int bytes_channels, Image::Format dest_format) {
 	PoolByteArray data;
@@ -267,8 +267,8 @@ void TextConsole::_update_mesh() {
 
 	Point2i xx;
 	cell *p = _screen;
-	for (uint row = 0; row < _con_size.height; ++row) {
-		for (uint col = 0; col < _con_size.width; ++col) {
+	for (int row = 0; row < _con_size.height; ++row) {
+		for (int col = 0; col < _con_size.width; ++col) {
 			if (p->character) {
 				const uint8_t fg = p->foreground;
 				const uint8_t bg = p->background;
