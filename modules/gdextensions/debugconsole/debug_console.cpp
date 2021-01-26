@@ -93,12 +93,12 @@ void TextConsole::load_font(FontSize p_font) {
 
 	_font_texture = _font_texture_cache[p_font];
 	_font_size = Size2i(data.char_w, data.char_h);
-    
+
     /* 16x32 chars */ for (int loop=0; loop<512; ++loop) // loop through all 512 chars
     {
         real_t cx = (real_t)(loop%16)/16.0f;        // X position of current character
         real_t cy = (real_t)(loop/16)/32.0f;        // Y position of current character
-        
+
         const int col = loop%16, row = loop/16, ch = row*16+col;
 
         _chars[ch].t[0] = Point2(cx,          cy);          /* 0, 0 */

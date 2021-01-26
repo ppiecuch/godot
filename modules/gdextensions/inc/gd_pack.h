@@ -436,8 +436,8 @@ static Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, 
 		for (uint32_t i = 0; i < bins.size(); ++i) {
 			bin b = bins[i];
 
-			PoolByteArray data;
-			data.resize(b.size.w * b.size.h * atlas_channels);
+			PoolByteArray atlas_data;
+			atlas_data.resize(b.size.w * b.size.h * atlas_channels);
 
 			//Setup background color
 			uint8_t cr = background_color.r * 255.0;
@@ -445,12 +445,12 @@ static Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, 
 			uint8_t cb = background_color.b * 255.0;
 			uint8_t ca = background_color.a * 255.0;
 
-			for (int j = 0; j < data.size(); j += atlas_channels) {
-				data.set(j, cr);
-				data.set(j + 1, cg);
-				data.set(j + 2, cb);
+			for (int j = 0; j < atlas_data.size(); j += atlas_channels) {
+				atlas_data.set(j, cr);
+				atlas_data.set(j + 1, cg);
+				atlas_data.set(j + 2, cb);
 				if (atlas_channels == 4)
-					data.set(j + 3, ca);
+					atlas_data.set(j + 3, ca);
 			}
 
 			Ref<Image> atlas;
@@ -487,7 +487,7 @@ static Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, 
 					for (int x = 0; x < row_width; ++x) {
 
 						for (int sx = 0; sx < input_format_offset; ++sx) {
-							data.set(start_indx + (x * atlas_channels) + sx, image_data[orig_img_indx + sx + (x * input_format_offset)]);
+							atlas_data.set(start_indx + (x * atlas_channels) + sx, image_data[orig_img_indx + sx + (x * input_format_offset)]);
 						}
 					}
 				}

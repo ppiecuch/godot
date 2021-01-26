@@ -23,9 +23,9 @@ private:
 public:
 	Starfield2D();
 	~Starfield2D();
-  
+
 	void _notification(int p_what);
-  
+
 protected:
 	static void _bind_methods();
 
