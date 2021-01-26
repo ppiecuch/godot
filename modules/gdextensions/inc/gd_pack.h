@@ -493,7 +493,7 @@ static Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, 
 				}
 			}
 
-			atlas->create(b.size.w, b.size.h, false, atlas_channels == 4 ? Image::FORMAT_RGBA8 : Image::FORMAT_RGB8, data);
+			atlas->create(b.size.w, b.size.h, false, atlas_channels == 4 ? Image::FORMAT_RGBA8 : Image::FORMAT_RGB8, atlas_data);
 			// atlas->save_png(vformat("atlas_%d.png", i));
 
 			generated_images.set(i, atlas);
