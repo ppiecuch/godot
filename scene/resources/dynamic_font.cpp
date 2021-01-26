@@ -320,18 +320,25 @@ float DynamicFontAtSize::draw_char(RID p_canvas_item, const CharTransform &p_cha
 	if (ch->found) {
 		ERR_FAIL_COND_V(ch->texture_idx < -1 || ch->texture_idx >= font->textures.size(), 0);
 
-		if (!p_advance_only && ch->texture_idx != -1) {
+		if (!p_advance_only && ch->texture_idx != -1 && !p_char_xform.hidden) {
 			Point2 cpos = p_pos;
 			cpos.x += ch->h_align;
 			cpos.y -= font->get_ascent();
 			cpos.y += ch->v_align;
+			const Rect2 rc = p_char_xform.xform_dest(Rect2(cpos, ch->rect.size));
+			real_t valign = 0;
+			if (p_char_xform.vertical_align) {
+				const real_t rotation_base = p_pos.y - ascent / 2.0;
+				const real_t t = p_char_xform.progress;
+				valign = (rotation_base - rc.get_center().y) * t * t * t * t * t; // t^5
+			}
 			Color modulate = p_modulate;
 			if (FT_HAS_COLOR(font->face)) {
 				modulate.r = modulate.g = modulate.b = 1.0;
 			}
 			RID texture = font->textures[ch->texture_idx].texture->get_rid();
 			VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item,
-					p_char_xform.xform_dest(Rect2(cpos, ch->rect.size)),
+					rc.move_by(Point2(0, valign)),
 					texture, p_char_xform.xform_tex(ch->rect_uv), modulate, false, RID(), false);
 		}
 

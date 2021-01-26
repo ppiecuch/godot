@@ -13,6 +13,11 @@ The most important topics and focus of my work:
   4.  _PS Vita_ (Homebrew) drivers
   5. _2D_ additions and extensions
 
+Some of the things you may found usefull in this repository:
+  * Embedded _DOS-like_ console [modules/gdextensions/debugconsole](modules/gdextensions/debugconsole)
+  * Extension of ```Label``` with tranition effects [scene/gui/label_transitions.h](scene/gui/label_transitions.h)
+  * _BMF_ XML bitmap fonts reader [scene/resources/font.cpp](https://github.com/ppiecuch/godot/blob/master/scene/resources/font.cpp#L211)
+
 ## Godot Engine
 
 Homepage: https://godotengine.org

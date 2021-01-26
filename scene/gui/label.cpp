@@ -329,13 +329,9 @@ draw_loop:
 						}
 
 						if (const CharTransform *xform = _transition_controller->get_char_xform (cc, i + pos)) {
-							const real_t adv = drawer.draw_char(ci, *xform, Point2(x_ofs, y_ofs), c, n, font_color);
-							x_ofs += adv;
+							x_ofs += drawer.draw_char(ci, *xform, Point2(x_ofs, y_ofs), c, n, font_color);
 						} else {
-							const real_t adv = drawer.draw_char(ci, Point2(x_ofs, y_ofs), c, n, font_color);
-							draw_rect(Rect2(x_ofs, y_ofs-font->get_ascent(), adv, font->get_ascent()), Color(1,0,0,1), false);
-							draw_rect(Rect2(x_ofs, y_ofs, adv, font->get_descent()), Color(1,1,0,1), false);
-							x_ofs += adv;
+							x_ofs += drawer.draw_char(ci, Point2(x_ofs, y_ofs), c, n, font_color);
 						}
 						chars_total++;
 					}
@@ -374,15 +370,7 @@ draw_next:
 
 				if (text != transition_text.text || xl_text != transition_text.xl_text) {
 
-					text = transition_text.text;
-					transition_text.text = "";
-					xl_text = transition_text.xl_text;
-					transition_text.xl_text = "";
-
-					// swap caches:
-					_RemoveCacheList(word_cache.words);
-					word_cache = transition_text.word_cache;
-					transition_text.word_cache = WordCache();
+					_clear_pending_animations();
 
 					if (!autowrap || !clip) {
 						//helps speed up some labels that may change a lot, as no resizing is requested. Do not change.
@@ -735,12 +723,15 @@ void Label::regenerate_word_cache() {
 
 void Label::_clear_pending_animations() { // reset animation
 
-	if (is_transition_active()) {
+	text = transition_text.text;
+	transition_text.text = "";
+	xl_text = transition_text.xl_text;
+	transition_text.xl_text = "";
 
-		xl_text = transition_text.xl_text;
-		text = transition_text.text;
-		word_cache = transition_text.word_cache;
-	}
+	// swap caches:
+	_RemoveCacheList(word_cache.words);
+	word_cache = transition_text.word_cache;
+	transition_text.word_cache = WordCache();
 }
 
 void Label::set_align(Align p_align) {
@@ -772,6 +763,8 @@ void Label::set_text(const String &p_string) {
 	if (text == p_string)
 		return;
 	if (is_transition_enabled()) {
+		if (is_transition_active())
+			_clear_pending_animations(); // finish now current animation
 		transition_text.text = p_string;
 		transition_text.xl_text = tr(p_string);
 	} else {
@@ -1006,10 +999,20 @@ void Label::_bind_methods() {
 	BIND_ENUM_CONSTANT(TRANSITIONEFFECT_SLIDE_DOWN);
 	BIND_ENUM_CONSTANT(TRANSITIONEFFECT_SLIDE_UP_NEW);
 	BIND_ENUM_CONSTANT(TRANSITIONEFFECT_SLIDE_DOWN_NEW);
+	BIND_ENUM_CONSTANT(TRANSITIONEFFECT_WHEEL_UP);
+	BIND_ENUM_CONSTANT(TRANSITIONEFFECT_WHEEL_DOWN);
+	BIND_ENUM_CONSTANT(TRANSITIONEFFECT_WHEEL_UP_NEW);
+	BIND_ENUM_CONSTANT(TRANSITIONEFFECT_WHEEL_DOWN_NEW);
+	BIND_ENUM_CONSTANT(TRANSITIONEFFECT_REVEAL_UP);
+	BIND_ENUM_CONSTANT(TRANSITIONEFFECT_REVEAL_DOWN);
+	BIND_ENUM_CONSTANT(TRANSITIONEFFECT_REVEAL_UP_NEW);
+	BIND_ENUM_CONSTANT(TRANSITIONEFFECT_REVEAL_DOWN_NEW);
 	BIND_ENUM_CONSTANT(TRANSITIONEFFECT_ROTATE_V);
 	BIND_ENUM_CONSTANT(TRANSITIONEFFECT_ROTATE_H);
 	BIND_ENUM_CONSTANT(TRANSITIONEFFECT_ROTATE_V_SEQ);
 	BIND_ENUM_CONSTANT(TRANSITIONEFFECT_ROTATE_H_SEQ);
+	BIND_ENUM_CONSTANT(TRANSITIONEFFECT_SLIDE_UP_SEQ);
+	BIND_ENUM_CONSTANT(TRANSITIONEFFECT_SLIDE_DOWN_SEQ);
 
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "text", PROPERTY_HINT_MULTILINE_TEXT, "", PROPERTY_USAGE_DEFAULT_INTL), "set_text", "get_text");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "align", PROPERTY_HINT_ENUM, "Left,Center,Right,Fill"), "set_align", "get_align");
@@ -1017,7 +1020,7 @@ void Label::_bind_methods() {
 	ADD_GROUP("Transition", "transition_");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "transition_duration"), "set_transition_duration", "get_transition_duration");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "transition_ease", PROPERTY_HINT_ENUM, EASE_FUNC), "set_transition_ease", "get_transition_ease");
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "transition_effect", PROPERTY_HINT_ENUM, "None,SlideUp,SlideUpNew,SlideDown,SlideDownNew,RotateV,RotateH,RotateVSeq,RotateHSeq"), "set_transition_effect", "get_transition_effect");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "transition_effect", PROPERTY_HINT_ENUM, "None,SlideUp,SlideDown,SlideUpNew,SlideDownNew,WheelUp,WheelDown,WheelUpNew,WheelDownNew,RevelUp,RevelDown,RevelUpNew,RevelDownNew,RotateV,RotateH,RotateVSeq,RotateHSeq,SlideUpSeq,SlideDownSeq"), "set_transition_effect", "get_transition_effect");
 	ADD_GROUP("", "");
 	ADD_GROUP("Extra Spacing", "extra_spacing_");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "extra_spacing_horizontal", PROPERTY_HINT_RANGE, "-10,10,0.5"), "set_horizontal_spacing", "get_horizontal_spacing");

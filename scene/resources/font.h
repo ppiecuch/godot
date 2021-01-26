@@ -55,10 +55,10 @@ struct CharTransform {
 	// vertical transition (rotation) looks better if it is
 	// aligned to single, common baseline (middle of ascend)
 	//
-	//    /\
-	// - /--\ - +-+ - - - - -
-	//  /    \  | |
-	// /------\-+-+----------
+	//  |\  |
+	// -|-\-|- +-+ - - - -
+	//  |  \|  | |
+	// -+---+--+-+----------
 	//
 	bool vertical_align:1;
 	// transition progress 0 .. 1
