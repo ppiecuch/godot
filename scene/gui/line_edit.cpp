@@ -128,13 +128,7 @@ void LineEdit::_gui_input(Ref<InputEvent> p_event) {
 			selection.creating = false;
 			selection.doubleclick = false;
 
-			if (OS::get_singleton()->has_virtual_keyboard() && virtual_keyboard_enabled) {
-				if (selection.enabled) {
-					OS::get_singleton()->show_virtual_keyboard(text, get_global_rect(), false, max_length, selection.begin, selection.end);
-				} else {
-					OS::get_singleton()->show_virtual_keyboard(text, get_global_rect(), false, max_length, cursor_pos);
-				}
-			}
+			show_virtual_keyboard();
 		}
 
 		update();
@@ -617,11 +611,18 @@ Variant LineEdit::get_drag_data(const Point2 &p_point) {
 
 	return Variant();
 }
+
 bool LineEdit::can_drop_data(const Point2 &p_point, const Variant &p_data) const {
+	bool drop_override = Control::can_drop_data(p_point, p_data); // In case user wants to drop custom data.
+	if (drop_override) {
+		return drop_override;
+	}
 
 	return p_data.get_type() == Variant::STRING;
 }
+
 void LineEdit::drop_data(const Point2 &p_point, const Variant &p_data) {
+	Control::drop_data(p_point, p_data);
 
 	if (p_data.get_type() == Variant::STRING) {
 		set_cursor_at_pixel_pos(p_point.x);
@@ -930,13 +931,7 @@ void LineEdit::_notification(int p_what) {
 				OS::get_singleton()->set_ime_position(get_global_position() + cursor_pos2);
 			}
 
-			if (OS::get_singleton()->has_virtual_keyboard() && virtual_keyboard_enabled) {
-				if (selection.enabled) {
-					OS::get_singleton()->show_virtual_keyboard(text, get_global_rect(), false, max_length, selection.begin, selection.end);
-				} else {
-					OS::get_singleton()->show_virtual_keyboard(text, get_global_rect(), false, max_length, cursor_pos);
-				}
-			}
+			show_virtual_keyboard();
 		} break;
 		case NOTIFICATION_FOCUS_EXIT: {
 
@@ -1277,6 +1272,21 @@ void LineEdit::clear() {
 
 	clear_internal();
 	_text_changed();
+
+	// This should reset virtual keyboard state if needed.
+	if (has_focus()) {
+		show_virtual_keyboard();
+	}
+}
+
+void LineEdit::show_virtual_keyboard() {
+	if (OS::get_singleton()->has_virtual_keyboard() && virtual_keyboard_enabled) {
+		if (selection.enabled) {
+			OS::get_singleton()->show_virtual_keyboard(text, get_global_rect(), false, max_length, selection.begin, selection.end);
+		} else {
+			OS::get_singleton()->show_virtual_keyboard(text, get_global_rect(), false, max_length, cursor_pos);
+		}
+	}
 }
 
 String LineEdit::get_text() const {

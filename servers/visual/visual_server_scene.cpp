@@ -120,6 +120,10 @@ void VisualServerScene::SpatialPartitioningScene_BVH::update() {
 	_bvh.update();
 }
 
+void VisualServerScene::SpatialPartitioningScene_BVH::update_collisions() {
+	_bvh.update_collisions();
+}
+
 void VisualServerScene::SpatialPartitioningScene_BVH::set_pairable(SpatialPartitionID p_handle, bool p_pairable, uint32_t p_pairable_type, uint32_t p_pairable_mask) {
 	_bvh.set_pairable(p_handle - 1, p_pairable, p_pairable_type, p_pairable_mask);
 }
@@ -191,7 +195,7 @@ void VisualServerScene::SpatialPartitioningScene_Octree::set_balance(float p_bal
 VisualServerScene::Scenario::Scenario() {
 	debug = VS::SCENARIO_DEBUG_DISABLED;
 
-	bool use_bvh_or_octree = GLOBAL_DEF("rendering/quality/spatial_partitioning/use_bvh", true);
+	bool use_bvh_or_octree = GLOBAL_GET("rendering/quality/spatial_partitioning/use_bvh");
 
 	if (use_bvh_or_octree) {
 		sps = memnew(SpatialPartitioningScene_BVH);
@@ -3652,7 +3656,7 @@ VisualServerScene::VisualServerScene() {
 
 	render_pass = 1;
 	singleton = this;
-	_use_bvh = false;
+	_use_bvh = GLOBAL_DEF("rendering/quality/spatial_partitioning/use_bvh", true);
 }
 
 VisualServerScene::~VisualServerScene() {

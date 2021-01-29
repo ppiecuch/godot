@@ -80,6 +80,8 @@ void _emwebxr_on_session_failed(char *p_message) {
 	Ref<ARVRInterface> interface = arvr_server->find_interface("WebXR");
 	ERR_FAIL_COND(interface.is_null());
 
+	interface->uninitialize();
+
 	String message = String(p_message);
 	interface->emit_signal("session_failed", message);
 }
@@ -199,12 +201,11 @@ StringName WebXRInterfaceJS::get_name() const {
 };
 
 int WebXRInterfaceJS::get_capabilities() const {
-	return ARVRInterface::ARVR_STEREO;
+	return ARVRInterface::ARVR_STEREO | ARVRInterface::ARVR_MONO;
 };
 
 bool WebXRInterfaceJS::is_stereo() {
-	// @todo WebXR can be mono! So, how do we know? Count the views in the frame?
-	return true;
+	return godot_webxr_get_view_count() == 2;
 };
 
 bool WebXRInterfaceJS::is_initialized() const {
@@ -226,6 +227,12 @@ bool WebXRInterfaceJS::initialize() {
 
 		// make this our primary interface
 		arvr_server->set_primary_interface(this);
+
+		// Clear render_targetsize to make sure it gets reset to the new size.
+		// Clearing in uninitialize() doesn't work because a frame can still be
+		// rendered after it's called, which will fill render_targetsize again.
+		render_targetsize.width = 0;
+		render_targetsize.height = 0;
 
 		initialized = true;
 
@@ -280,22 +287,24 @@ Transform WebXRInterfaceJS::_js_matrix_to_transform(float *p_js_matrix) {
 }
 
 Size2 WebXRInterfaceJS::get_render_targetsize() {
-	Size2 target_size;
+	if (render_targetsize.width != 0 && render_targetsize.height != 0) {
+		return render_targetsize;
+	}
 
 	int *js_size = godot_webxr_get_render_targetsize();
 	if (!initialized || js_size == nullptr) {
-		// As a default, use half the window size.
-		target_size = OS::get_singleton()->get_window_size();
-		target_size.width /= 2.0;
-		return target_size;
+		// As a temporary default (until WebXR is fully initialized), use half the window size.
+		Size2 temp = OS::get_singleton()->get_window_size();
+		temp.width /= 2.0;
+		return temp;
 	}
 
-	target_size.width = js_size[0];
-	target_size.height = js_size[1];
+	render_targetsize.width = js_size[0];
+	render_targetsize.height = js_size[1];
 
 	free(js_size);
 
-	return target_size;
+	return render_targetsize;
 };
 
 Transform WebXRInterfaceJS::get_transform_for_eye(ARVRInterface::Eyes p_eye, const Transform &p_cam_transform) {

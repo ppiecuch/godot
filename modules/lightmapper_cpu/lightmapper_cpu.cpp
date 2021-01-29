@@ -264,6 +264,7 @@ bool LightmapperCPU::_parallel_run(int p_count, const String &p_description, Bak
 	}
 	thread_cancelled = cancelled;
 	Thread::wait_to_finish(runner_thread);
+	memdelete(runner_thread);
 #endif
 
 	thread_cancelled = false;
@@ -780,7 +781,8 @@ _ALWAYS_INLINE_ float uniform_rand() {
 	state ^= state << 13;
 	state ^= state >> 17;
 	state ^= state << 5;
-	return float(state) / UINT32_MAX;
+	/* implicit conversion from 'unsigned int' to 'float' changes value from 4294967295 to 4294967296 */
+	return float(state) / float(UINT32_MAX);
 }
 
 void LightmapperCPU::_compute_indirect_light(uint32_t p_idx, void *r_lightmap) {

@@ -1686,9 +1686,10 @@ String::String(const StrRange &p_range) {
 }
 
 int String::hex_to_int(bool p_with_prefix) const {
-
-	if (p_with_prefix && length() < 3)
+	int len = length();
+	if (len == 0 || (p_with_prefix && len < 3)) {
 		return 0;
+	}
 
 	const CharType *s = ptr();
 
@@ -1771,9 +1772,10 @@ int64_t String::hex_to_int64(bool p_with_prefix) const {
 }
 
 int64_t String::bin_to_int64(bool p_with_prefix) const {
-
-	if (p_with_prefix && length() < 3)
+	int len = length();
+	if (len == 0 || (p_with_prefix && len < 3)) {
 		return 0;
+	}
 
 	const CharType *s = ptr();
 
@@ -2725,10 +2727,15 @@ int String::rfindn(const String &p_str, int p_from) const {
 
 bool String::ends_with(const String &p_string) const {
 
+	int l = p_string.length();
+	if (l == 0) {
+		return true;
+	}
+
 	int pos = find_last(p_string);
 	if (pos == -1)
 		return false;
-	return pos + p_string.length() == length();
+	return pos + l == length();
 }
 
 bool String::begins_with(const String &p_string) const {
