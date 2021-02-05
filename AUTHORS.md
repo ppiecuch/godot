@@ -58,7 +58,9 @@ name is available.
     Daniel J. Ramirez (djrm)
     Daniel Rakos (aqnuep)
     dankan1890
+    Danil Alexeev (dalexeev)
     David Sichma (DavidSichma)
+    David Snopek (dsnopek)
     Dharkael (lupoDharkael)
     Dmitry Koteroff (Krakean)
     Dominik Jasiński (dreamsComeTrue)
@@ -99,6 +101,7 @@ name is available.
     James Buck (jbuck3)
     Jérôme Gully (Nutriz)
     Joan Fons Sanchez (JFonS)
+    Johannes Witt (HaSa1002)
     Johan Manuel (29jm)
     Joshua Grams (JoshuaGrams)
     Juan Linietsky (reduz)

@@ -1424,11 +1424,10 @@ void ProjectList::create_project_item_control(int p_index) {
 	vb->add_child(path_hb);
 
 	Button *show = memnew(Button);
-	// Display a folder icon if the project directory can be opened, or a "broken file" icon if it can't
+	// Display a folder icon if the project directory can be opened, or a "broken file" icon if it can't.
 	show->set_icon(get_icon(!item.missing ? "Load" : "FileBroken", "EditorIcons"));
-	show->set_flat(true);
 	if (!item.grayed) {
-		// Don't make the icon less prominent if the parent is already grayed out
+		// Don't make the icon less prominent if the parent is already grayed out.
 		show->set_modulate(Color(1, 1, 1, 0.5));
 	}
 	path_hb->add_child(show);
@@ -2255,8 +2254,9 @@ void ProjectManager::_run_project() {
 }
 
 void ProjectManager::_scan_dir(const String &path, List<String> *r_projects) {
-	DirAccess *da = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
-	da->change_dir(path);
+	DirAccessRef da = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
+	Error error = da->change_dir(path);
+	ERR_FAIL_COND_MSG(error != OK, "Could not scan directory at: " + path);
 	da->list_dir_begin();
 	String n = da->get_next();
 	while (n != String()) {
@@ -2268,7 +2268,6 @@ void ProjectManager::_scan_dir(const String &path, List<String> *r_projects) {
 		n = da->get_next();
 	}
 	da->list_dir_end();
-	memdelete(da);
 }
 
 void ProjectManager::_scan_begin(const String &p_base) {
@@ -2523,6 +2522,11 @@ void ProjectManager::_install_project(const String &p_zip_path, const String &p_
 }
 
 void ProjectManager::_files_dropped(PoolStringArray p_files, int p_screen) {
+	if (p_files.size() == 1 && p_files[0].ends_with(".zip")) {
+		const String file = p_files[0].get_file();
+		_install_project(p_files[0], file.substr(0, file.length() - 4).capitalize());
+		return;
+	}
 	Set<String> folders_set;
 	DirAccess *da = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
 	for (int i = 0; i < p_files.size(); i++) {
@@ -2963,8 +2967,26 @@ ProjectManager::ProjectManager() {
 
 	_load_recent_projects();
 
-	if (EditorSettings::get_singleton()->get("filesystem/directories/autoscan_project_path")) {
-		_scan_begin(EditorSettings::get_singleton()->get("filesystem/directories/autoscan_project_path"));
+	DirAccessRef dir_access = DirAccess::create(DirAccess::AccessType::ACCESS_FILESYSTEM);
+
+	String default_project_path = EditorSettings::get_singleton()->get("filesystem/directories/default_project_path");
+	if (!dir_access->dir_exists(default_project_path)) {
+		Error error = dir_access->make_dir_recursive(default_project_path);
+		if (error != OK) {
+			ERR_PRINT("Could not create default project directory at: " + default_project_path);
+		}
+	}
+
+	String autoscan_path = EditorSettings::get_singleton()->get("filesystem/directories/autoscan_project_path");
+	if (autoscan_path != "") {
+		if (dir_access->dir_exists(autoscan_path)) {
+			_scan_begin(autoscan_path);
+		} else {
+			Error error = dir_access->make_dir_recursive(autoscan_path);
+			if (error != OK) {
+				ERR_PRINT("Could not create project autoscan directory at: " + autoscan_path);
+			}
+		}
 	}
 
 	SceneTree::get_singleton()->connect("files_dropped", this, "_files_dropped");
