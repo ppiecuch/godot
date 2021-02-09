@@ -2494,7 +2494,7 @@ void SpatialEditorViewport::_notification(int p_what) {
 							": %dx%d (%.1fMP)\n",
 							viewport->get_size().x,
 							viewport->get_size().y,
-							viewport->get_size().x * viewport->get_size().y * 0.000'001);
+							viewport->get_size().x * viewport->get_size().y * 0.000001);
 			text += TTR("Objects Drawn") + ": " + itos(viewport->get_render_info(Viewport::RENDER_INFO_OBJECTS_IN_FRAME)) + "\n";
 			text += TTR("Material Changes") + ": " + itos(viewport->get_render_info(Viewport::RENDER_INFO_MATERIAL_CHANGES_IN_FRAME)) + "\n";
 			text += TTR("Shader Changes") + ": " + itos(viewport->get_render_info(Viewport::RENDER_INFO_SHADER_CHANGES_IN_FRAME)) + "\n";
