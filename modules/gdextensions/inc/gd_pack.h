@@ -98,6 +98,7 @@ struct rect_wh {
 		if (allowFlip && h <= bigger.w && w <= bigger.h) return 2;
 		return 0;
 	}
+	Size2i size() const { return Size2i(w, h); }
 };
 
 struct rect_xywh : public rect_wh {
@@ -409,8 +410,9 @@ static int _get_offset_for_format(Image::Format format) {
 			return 3;
 		case Image::FORMAT_RGBA8:
 			return 4;
-		case Image::FORMAT_L8:
 		case Image::FORMAT_LA8:
+			return 2;
+		case Image::FORMAT_L8:
 		case Image::FORMAT_R8:
 		case Image::FORMAT_RG8:
 		case Image::FORMAT_RGBA4444:
@@ -457,12 +459,67 @@ static int _get_offset_for_format(Image::Format format) {
 	return 0;
 }
 
-static Dictionary merge_images(Vector<Ref<Image> > images, Vector<String> names, int max_atlas_size = 256, int margin = 2, Color background_color = Color(0, 0, 0, 1)) {
+// mirror borders to avoid leaking outside pixels when filtering
+static Ref<Image> _mirror_borders(Ref<Image> image, int x_border, int y_border)  {
+	ERR_FAIL_COND_V(image.is_null(), Ref<Image>());
+
+	int bx = MAX(0, x_border - 1);
+	int by = MAX(0, y_border - 1);
+	Size2 rc = image->get_size();
+
+	Ref<Image> form = memnew(Image);
+	form->create(image->get_size().width + 2 * x_border, image->get_size().height + 2 * y_border, false, image->get_format());
+
+	auto get_rect = [](Ref<Image> img) {
+		return Rect2(Point2(0,0), img->get_size());
+	};
+
+	// copy borders:
+	const auto topb = image->get_rect( Rect2(0, 0, rc.width, 1) );
+	const auto botb = image->get_rect( Rect2(0, rc.height - 1, rc.width, 1) );
+	const auto leftb = image->get_rect( Rect2(0, 0, 1, rc.height) );
+	const auto rightb = image->get_rect( Rect2(rc.width - 1, 0, 1, rc.height) );
+
+	// copy corner pixels:
+	image->lock();
+	const auto topp = image->get_pixel( 0, 0 );
+	const auto botp = image->get_pixel( 0, rc.height - 1 );
+	const auto leftp = image->get_pixel( rc.width - 1, rc.height - 1 );
+	const auto rightp = image->get_pixel( rc.width - 1, 0 );
+	image->unlock();
+
+	// duplicate borders around the image:
+	for (int k = 0; k < by; k++)
+		form->blit_rect(topb, get_rect(topb), Point2(x_border, y_border - k - 1));             // top
+	for (int k = 0; k < by; k++)
+		form->blit_rect(botb, get_rect(botb), Point2(x_border, rc.height - y_border + k));     // bottom
+	for (int k = 0; k < bx; k++)
+		form->blit_rect(leftb, get_rect(leftb), Point2(x_border - k - 1, y_border));           // left
+	for (int k = 0; k < bx; k++)
+		form->blit_rect(rightb, get_rect(rightb),  Point2(rc.width - x_border + k, y_border)); // right
+
+	form->lock();
+	// fill up corners:
+	for (int k = 0; k < by; k++) {
+		for(int m = 0; m < bx; m++) {
+			form->set_pixel( x_border - m - 1, y_border - k - 1, topp);
+			form->set_pixel( x_border - m - 1, rc.height - y_border + k, botp);
+			form->set_pixel( rc.width - x_border + m, rc.height - y_border + k, leftp);
+			form->set_pixel( rc.width - x_border + m, y_border - k - 1, rightp);
+		}
+	}
+	form->unlock();
+
+	return form;
+}
+
+static Dictionary merge_images(Vector<Ref<Image> > images, Vector<String> names, int max_atlas_size = 256, int margin = 2, Color background_color = Color(0, 0, 0, 0)) {
 	ERR_FAIL_COND_V(images.size() != names.size(), Dictionary());
 
 	Array generated_images;
 	std::vector<bin> bins;
 
+	// NOTICE: atlas texture can be 3 or 4 channels only
 	int atlas_channels = 3;
 
 	const int n = images.size();
@@ -471,14 +528,22 @@ static Dictionary merge_images(Vector<Ref<Image> > images, Vector<String> names,
 	Vector<rect_xywhf *> rects;
 	rects.resize(n);
 	for (int i = 0; i < images.size(); ++i) {
-		data.write[i].original_image = images[i];
+		Ref<Image> image = images[i];
+		if (margin > 0) {
+			image = _mirror_borders(image, margin, margin);
+		}
+		data.write[i].original_image = image;
 		data.write[i].x = 0;
 		data.write[i].y = 0;
-		data.write[i].w = images[i]->get_size().x;
-		data.write[i].h = images[i]->get_size().y;
+		data.write[i].w = image->get_size().x;
+		data.write[i].h = image->get_size().y;
 		rects.write[i] = &data.write[i];
-		if (images[i]->get_format() == Image::FORMAT_RGBA8)
-			atlas_channels = 4;
+		if (image->get_format() == Image::FORMAT_RGBA8 || image->get_format() == Image::FORMAT_LA8) {
+			// only if we have a real alpha values in the channel
+			if (image->detect_alpha() == Image::ALPHA_BLEND) {
+				atlas_channels = 4;
+			}
+		}
 	}
 
 	ERR_FAIL_COND_V(atlas_channels < 3, Dictionary());
@@ -526,44 +591,58 @@ static Dictionary merge_images(Vector<Ref<Image> > images, Vector<String> names,
 				ERR_CONTINUE(!img.is_valid());
 
 				int img_width = img->get_width();
-
 				PoolByteArray image_data = img->get_data();
 
 				int input_format_offset = _get_offset_for_format(img->get_format());
 
 				ERR_CONTINUE_MSG(input_format_offset == 0, "Image format is not supported, Skipping!");
 
-				int h_wo_margin = r->h - 2 * margin;
-				for (int y = 0; y < h_wo_margin; ++y) {
-					int orig_img_indx = (rect_pos_y + y) * img_width * input_format_offset + rect_pos_x * input_format_offset;
-					int start_indx = (r->y + y + margin) * b.size.w * atlas_channels + (r->x + margin) * atlas_channels;
+				for (int y = 0; y < r->h; ++y) {
 
-					int row_width = (r->w - 2 * margin);
-					for (int x = 0; x < row_width; ++x) {
+					const int orig_img_indx = (rect_pos_y + y) * img_width * input_format_offset + rect_pos_x * input_format_offset;
+					const int start_indx = (r->y + y) * b.size.w * atlas_channels + r->x * atlas_channels;
 
-						for (int sx = 0; sx < input_format_offset; ++sx) {
-							atlas_data.set(start_indx + (x * atlas_channels) + sx, image_data[orig_img_indx + sx + (x * input_format_offset)]);
+					for (int x = 0; x < r->w; ++x) {
+
+						switch(input_format_offset) {
+							case 4:
+							case 3: {
+								for (int sx = 0; sx < input_format_offset; ++sx) {
+									atlas_data.set(start_indx + (x * atlas_channels) + sx, image_data[orig_img_indx + sx + (x * input_format_offset)]);
+								}
+							} break;
+							case 2: {
+								// grey + alpha
+								for (int sx = 0; sx < 4; ++sx) {
+									if (sx == 3 && atlas_channels == 4)
+										atlas_data.set(start_indx + (x * atlas_channels) + sx, image_data[orig_img_indx + 1 + (x * input_format_offset)]);
+									else
+										atlas_data.set(start_indx + (x * atlas_channels) + sx, image_data[orig_img_indx + 0 +(x * input_format_offset)]);
+								}
+							} break;
 						}
 					}
 				}
 			}
 
 			atlas->create(b.size.w, b.size.h, false, atlas_channels == 4 ? Image::FORMAT_RGBA8 : Image::FORMAT_RGB8, atlas_data);
-			// atlas->save_png(vformat("atlas_%d.png", i));
+			atlas->save_png(vformat("atlas_%d.png", i));
 
 			generated_images.set(i, atlas);
 		}
 
-		ret["_generated_images"] = generated_images;
-
+		Dictionary rects;
 		for (int r = 0; r < data.size(); ++r) {
 			const rect_xywhf &rc = data[r];
 			Dictionary entry;
-			entry["rect"] = Rect2(rc.x, rc.y, rc.w, rc.h);
+			entry["rect"] = Rect2(rc.x + margin, rc.y + margin, rc.w - 2 * margin, rc.h - 2 * margin);
 			entry["atlas_page"] = rc.bin;
 			entry["atlas"] = rc.atlas_image;
-			ret[names[r]] = entry;
+			rects[names[r]] = entry;
 		}
+
+		ret["_rects"] = rects;
+		ret["_generated_images"] = generated_images;
 	}
 
 	return ret;
