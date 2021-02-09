@@ -80,8 +80,10 @@
 #include "scenery/tree_2d/tree_2d.h"
 #include "scenery/vegetation_instance/vegetation_instance.h"
 #include "scenery/water_splash/gd_water_splash.h"
+#ifdef GD_CUSTOM_SPIDER_ANIM
 #include "scenery/spider_anim/spider.h"
 #include "scenery/spider_anim/spider_insects.h"
+#endif
 
 #include "benet/enet_node.h"
 #include "benet/enet_packet_peer.h"
@@ -162,8 +164,10 @@ void register_gdextensions_types() {
 #endif
 	ClassDB::register_class<SphericalWaves>();
 	ClassDB::register_class<Starfield2D>();
+#ifdef GD_CUSTOM_SPIDER_ANIM
 	ClassDB::register_class<Spider>();
 	ClassDB::register_class<InsectsManagerInstance>();
+#endif
 
 	if (enet_initialize() != 0) {
 		ERR_PRINT("ENet initialization failure");
