@@ -198,7 +198,9 @@ void unregister_gdextensions_types() {
 		memdelete(instance);
 	if (Blitter *instance = Blitter::get_singleton())
 		memdelete(instance);
+#ifdef GD_CUSTOM_SPIDER_ANIM
 	Spider::_release_global_resources();
+#endif
 #ifdef TOOLS_ENABLED
 	if (GodotErrorHandler *instance = GodotErrorHandler::get_singleton())
 		memdelete(instance);
