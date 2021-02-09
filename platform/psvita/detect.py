@@ -113,8 +113,5 @@ def configure(env):
             "NO_IOCTL",
             "IP6_UNAVAILABLE",
             "UNIX_SOCKETS_ENABLED",
-            "LIBC_FILEIO_ENABLED",
-            "PTHREAD_ENABLED",
-            "PTHREAD_NO_RENAME",
         ]
     )

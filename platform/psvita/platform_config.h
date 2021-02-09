@@ -29,3 +29,7 @@
 /*************************************************************************/
 
 #include <alloca.h>
+
+#define LIBC_FILEIO_ENABLED
+#define PTHREAD_ENABLED
+#define PTHREAD_NO_RENAME
