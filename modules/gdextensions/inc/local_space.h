@@ -28,17 +28,17 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef local_space_h
-#define local_space_h
+#ifndef LOCAL_SPACE_H
+#define LOCAL_SPACE_H
 
 #include "core/math/vector2.h"
 #include "core/math/vector3.h"
 
-// LocalSpace: a local coordinate system for 3d space
+// LocalSpace: a local coordinate system for 2d/3d space
 //
 // Provide functionality such as transforming from local space to global
 // space and vice versa.  Also regenerates a valid space from a perturbed
-// "forward vector" which is the basis of abstract vehicle turning.
+// "forward vector" which is the basis of abstract object turning.
 //
 // These are comparable to a 4x4 homogeneous transformation matrix where the
 // 3x3 (R) portion is constrained to be a pure rotation (no shear or scale).
@@ -60,7 +60,7 @@ public:
 	// transformation as three orthonormal unit basis vectors and the
 	// origin of the local space.  These correspond to the "rows" of
 	// a 3x4 transformation matrix with [0 0 0 1] as the final column
-	LocalSpace() { setToIdentity(); }
+	LocalSpace() { set_to_identity(); }
 
 	// reset transform: set local space to its identity state, equivalent to a
 	// 4x4 homogeneous transform like this:
@@ -71,23 +71,39 @@ public:
 	//     [ 0 0 0 1 ]
 	//
 	// where X is 1 for a left-handed system and -1 for a right-handed system.
-	void setToIdentity() {
-		forward = forward = Vector3(0.0f, 0.0f, 1.0f);
-		up = globalUp = Vector3(0.0f, 1.0f, 0.0f);
+	void set_to_identity() {
+		forward = Vector3(0, 0, 1);
+		side = local_rotate_forward_to_side (forward);
+		up = Vector3(0, 1, 0);
 	}
 
-	bool rightHanded(void) const { return true; }
+	bool right_handed(void) const { return true; }
 
-	Vector3 globalizePosition(const Point2 pos, const Vector2 local) const { return Vector3(pos.x, pos.y, 0) + globalizeDirection(local); }
-	Vector3 globalizeDirection(const Vector2 local) const { return side * local.x + up * local.y; }
-	Vector3 globalizeDirection(const Vector3 local) const { return side * local.x + up * local.y + forward * local.z; }
-	Vector3 localizeDirection(const Vector3 global) const { return Vector3(global.dot(side), global.dot(up), global.dot(forward)); }
-	Vector3 localizePosition(const Point2 pos, const Vector3 global) const { return localizeDirection(global - Vector3(pos.x, pos.y, 0)); }
-	Vector3 localizePosition(const Point2 pos, const Vector2 global) const { return localizeDirection(Vector3(global.x, global.y, 0) - Vector3(pos.x, pos.y, 0)); }
-	Vector3 localRotateForwardToSide(const Vector3 &v) const { return Vector3(rightHanded() ? (-v.z) : (+v.z), v.y, v.x); }
+	Vector3 globalize_position(const Point3 &pos, const Vector3 &local) const { return Vector3(pos.x, pos.y, pos.z) + globalize_direction(local); }
+	Vector3 globalize_direction(const Vector3 &local) const { return side * local.x + up * local.y + forward * local.z; }
+	Vector3 localize_direction(const Vector3 &global) const { return Vector3(global.dot(side), global.dot(up), global.dot(forward)); }
+	Vector3 localize_position(const Point3 &pos, const Vector3 &global) const { return localize_direction(global - Vector3(pos.x, pos.y, pos.z)); }
+	Vector3 local_rotate_forward_to_side(const Vector3 &v) const { return Vector3(right_handed() ? (-v.z) : (+v.z), v.y, v.x); }
 
-	Vector3 globalUp;
-	Vector3 side, up, forward;
+	Vector3 side, forward, up;
 };
 
-#endif // local_space_h
+class LocalSpace2 {
+public:
+	LocalSpace2() { set_to_identity(); }
+
+	void set_to_identity() {
+		side = Vector2(1, 0);
+		up = Vector2(0, 1);
+	}
+
+	Vector2 globalize_position(const Point2 &pos, const Vector2 &local) const { return Vector2(pos.x, pos.y) + globalize_direction(local); }
+	Vector2 globalize_direction(const Vector2 &local) const { return side * local.x + up * local.y; }
+	Vector2 localize_position(const Point2 &pos, const Vector2 &global) const { return localize_direction(global - Vector2(pos.x, pos.y)); }
+	Vector2 localize_direction(const Vector2 &global) const { return Vector2(global.dot(side), global.dot(up)); }
+	Vector2 local_rotate_forward_to_side(const Vector2 &v) const { return Vector2(v.y, v.x); }
+
+	Vector2 side, up;
+};
+
+#endif // LOCAL_SPACE_H
