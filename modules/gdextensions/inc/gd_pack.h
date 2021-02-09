@@ -460,7 +460,7 @@ static int _get_offset_for_format(Image::Format format) {
 }
 
 // mirror borders to avoid leaking outside pixels when filtering
-static Ref<Image> _mirror_borders(Ref<Image> image, int x_border, int y_border)  {
+static Ref<Image> _mirror_borders(Ref<Image> image, int x_border, int y_border) {
 	ERR_FAIL_COND_V(image.is_null(), Ref<Image>());
 
 	int bx = MAX(0, x_border - 1);
@@ -471,41 +471,41 @@ static Ref<Image> _mirror_borders(Ref<Image> image, int x_border, int y_border) 
 	form->create(image->get_size().width + 2 * x_border, image->get_size().height + 2 * y_border, false, image->get_format());
 
 	auto get_rect = [](Ref<Image> img) {
-		return Rect2(Point2(0,0), img->get_size());
+		return Rect2(Point2(0, 0), img->get_size());
 	};
 
 	// copy borders:
-	const auto topb = image->get_rect( Rect2(0, 0, rc.width, 1) );
-	const auto botb = image->get_rect( Rect2(0, rc.height - 1, rc.width, 1) );
-	const auto leftb = image->get_rect( Rect2(0, 0, 1, rc.height) );
-	const auto rightb = image->get_rect( Rect2(rc.width - 1, 0, 1, rc.height) );
+	const auto topb = image->get_rect(Rect2(0, 0, rc.width, 1));
+	const auto botb = image->get_rect(Rect2(0, rc.height - 1, rc.width, 1));
+	const auto leftb = image->get_rect(Rect2(0, 0, 1, rc.height));
+	const auto rightb = image->get_rect(Rect2(rc.width - 1, 0, 1, rc.height));
 
 	// copy corner pixels:
 	image->lock();
-	const auto topp = image->get_pixel( 0, 0 );
-	const auto botp = image->get_pixel( 0, rc.height - 1 );
-	const auto leftp = image->get_pixel( rc.width - 1, rc.height - 1 );
-	const auto rightp = image->get_pixel( rc.width - 1, 0 );
+	const auto topp = image->get_pixel(0, 0);
+	const auto botp = image->get_pixel(0, rc.height - 1);
+	const auto leftp = image->get_pixel(rc.width - 1, rc.height - 1);
+	const auto rightp = image->get_pixel(rc.width - 1, 0);
 	image->unlock();
 
 	// duplicate borders around the image:
 	for (int k = 0; k < by; k++)
-		form->blit_rect(topb, get_rect(topb), Point2(x_border, y_border - k - 1));             // top
+		form->blit_rect(topb, get_rect(topb), Point2(x_border, y_border - k - 1)); // top
 	for (int k = 0; k < by; k++)
-		form->blit_rect(botb, get_rect(botb), Point2(x_border, rc.height - y_border + k));     // bottom
+		form->blit_rect(botb, get_rect(botb), Point2(x_border, rc.height - y_border + k)); // bottom
 	for (int k = 0; k < bx; k++)
-		form->blit_rect(leftb, get_rect(leftb), Point2(x_border - k - 1, y_border));           // left
+		form->blit_rect(leftb, get_rect(leftb), Point2(x_border - k - 1, y_border)); // left
 	for (int k = 0; k < bx; k++)
-		form->blit_rect(rightb, get_rect(rightb),  Point2(rc.width - x_border + k, y_border)); // right
+		form->blit_rect(rightb, get_rect(rightb), Point2(rc.width - x_border + k, y_border)); // right
 
 	form->lock();
 	// fill up corners:
 	for (int k = 0; k < by; k++) {
-		for(int m = 0; m < bx; m++) {
-			form->set_pixel( x_border - m - 1, y_border - k - 1, topp);
-			form->set_pixel( x_border - m - 1, rc.height - y_border + k, botp);
-			form->set_pixel( rc.width - x_border + m, rc.height - y_border + k, leftp);
-			form->set_pixel( rc.width - x_border + m, y_border - k - 1, rightp);
+		for (int m = 0; m < bx; m++) {
+			form->set_pixel(x_border - m - 1, y_border - k - 1, topp);
+			form->set_pixel(x_border - m - 1, rc.height - y_border + k, botp);
+			form->set_pixel(rc.width - x_border + m, rc.height - y_border + k, leftp);
+			form->set_pixel(rc.width - x_border + m, y_border - k - 1, rightp);
 		}
 	}
 	form->unlock();
@@ -604,7 +604,7 @@ static Dictionary merge_images(Vector<Ref<Image> > images, Vector<String> names,
 
 					for (int x = 0; x < r->w; ++x) {
 
-						switch(input_format_offset) {
+						switch (input_format_offset) {
 							case 4:
 							case 3: {
 								for (int sx = 0; sx < input_format_offset; ++sx) {
@@ -617,7 +617,7 @@ static Dictionary merge_images(Vector<Ref<Image> > images, Vector<String> names,
 									if (sx == 3 && atlas_channels == 4)
 										atlas_data.set(start_indx + (x * atlas_channels) + sx, image_data[orig_img_indx + 1 + (x * input_format_offset)]);
 									else
-										atlas_data.set(start_indx + (x * atlas_channels) + sx, image_data[orig_img_indx + 0 +(x * input_format_offset)]);
+										atlas_data.set(start_indx + (x * atlas_channels) + sx, image_data[orig_img_indx + 0 + (x * input_format_offset)]);
 								}
 							} break;
 						}

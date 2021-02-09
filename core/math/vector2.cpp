@@ -153,7 +153,7 @@ Vector2 Vector2::project(const Vector2 &p_b) const {
 }
 
 Vector2 Vector2::perp(const Vector2 &p_other) const {
-	return Vector2(x * p_other.y, - y * p_other.x);
+	return Vector2(x * p_other.y, -y * p_other.x);
 }
 
 Vector2 Vector2::snapped(const Vector2 &p_by) const {

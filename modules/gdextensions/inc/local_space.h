@@ -73,7 +73,7 @@ public:
 	// where X is 1 for a left-handed system and -1 for a right-handed system.
 	void set_to_identity() {
 		forward = Vector3(0, 0, 1);
-		side = local_rotate_forward_to_side (forward);
+		side = local_rotate_forward_to_side(forward);
 		up = Vector3(0, 1, 0);
 	}
 

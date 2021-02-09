@@ -310,36 +310,36 @@ struct Label::GenericDualTransformController : public Label::AnimationController
 		const real_t t = ease(current, 0, 1, duration);
 		switch (orientation) {
 			case ANIMATION_WHEEL_UP: {
-				xform_out.dest_rect.size.y = 1.0 - t;    // 1 .. 0
+				xform_out.dest_rect.size.y = 1.0 - t; // 1 .. 0
 				xform_in.dest_rect.position.y = 1.0 - t; // 1 .. 0
 			} break;
 			case ANIMATION_WHEEL_DOWN: {
-				xform_out.dest_rect.position.y = t;      // 0 .. 1
-				xform_in.dest_rect.size.y = t;           // 0 .. 1
+				xform_out.dest_rect.position.y = t; // 0 .. 1
+				xform_in.dest_rect.size.y = t; // 0 .. 1
 			} break;
 			case ANIMATION_REVEAL_UP: {
-				xform_out.dest_rect.size.y = 1.0 - t;    // 1 .. 0
-				xform_out.tex_clip.position.y = t;       // 0 .. 1
+				xform_out.dest_rect.size.y = 1.0 - t; // 1 .. 0
+				xform_out.tex_clip.position.y = t; // 0 .. 1
 				xform_in.dest_rect.position.y = 1.0 - t; // 1 .. 0
-				xform_in.tex_clip.size.y = t;            // 0 .. 1
+				xform_in.tex_clip.size.y = t; // 0 .. 1
 			} break;
 			case ANIMATION_REVEAL_DOWN: {
-				xform_out.dest_rect.position.y = t;      // 0 .. 1
-				xform_out.tex_clip.position.y = t;       // 0 .. 1
-				xform_in.dest_rect.size.y = t;           // 0 .. 1
-				xform_in.tex_clip.position.y = t;        // 1 .. 0
+				xform_out.dest_rect.position.y = t; // 0 .. 1
+				xform_out.tex_clip.position.y = t; // 0 .. 1
+				xform_in.dest_rect.size.y = t; // 0 .. 1
+				xform_in.tex_clip.position.y = t; // 1 .. 0
 			} break;
 			case ANIMATION_SLIDE_UP: {
-				xform_out.dest_rect.size.y = 1.0 - t;    // 1 .. 0
-				xform_out.tex_clip.position.y = t;       // 0 .. 1
+				xform_out.dest_rect.size.y = 1.0 - t; // 1 .. 0
+				xform_out.tex_clip.position.y = t; // 0 .. 1
 				xform_in.dest_rect.position.y = 1.0 - t; // 1 .. 0
-				xform_in.tex_clip.size.y = t;            // 0 .. 1
+				xform_in.tex_clip.size.y = t; // 0 .. 1
 			} break;
 			case ANIMATION_SLIDE_DOWN: {
-				xform_out.dest_rect.position.y = t;      // 0 .. 1
-				xform_out.tex_clip.size.y = 1.0 - t;     // 1 .. 0
-				xform_in.dest_rect.size.y = t;           // 0 .. 1
-				xform_in.tex_clip.position.y = 1.0 - t;  // 1 .. 0
+				xform_out.dest_rect.position.y = t; // 0 .. 1
+				xform_out.tex_clip.size.y = 1.0 - t; // 1 .. 0
+				xform_in.dest_rect.size.y = t; // 0 .. 1
+				xform_in.tex_clip.position.y = 1.0 - t; // 1 .. 0
 			} break;
 			default:
 				ERR_PRINT("Unknown orientation type - no transform performed");
@@ -659,15 +659,15 @@ struct Label::GenericMulti2TransformController : public Label::AnimationControll
 		const real_t t = ease(info.current, 0, 1, duration);
 		switch (orientation) {
 			case ANIMATION_SLIDE_UP: {
-				info.xform_out.dest_rect.size.y = 1.0 - t;    // 1 .. 0
-				info.xform_out.tex_clip.position.y = t;       // 0 .. 1
+				info.xform_out.dest_rect.size.y = 1.0 - t; // 1 .. 0
+				info.xform_out.tex_clip.position.y = t; // 0 .. 1
 				info.xform_in.dest_rect.position.y = 1.0 - t; // 1 .. 0
-				info.xform_in.tex_clip.size.y = t;            // 0 .. 1
+				info.xform_in.tex_clip.size.y = t; // 0 .. 1
 			} break;
 			case ANIMATION_SLIDE_DOWN: {
-				info.xform_out.dest_rect.position.y = t;     // 0 .. 1
-				info.xform_out.tex_clip.size.y = 1.0 - t;    // 1 .. 0
-				info.xform_in.dest_rect.size.y = t;          // 0 .. 1
+				info.xform_out.dest_rect.position.y = t; // 0 .. 1
+				info.xform_out.tex_clip.size.y = 1.0 - t; // 1 .. 0
+				info.xform_in.dest_rect.size.y = t; // 0 .. 1
 				info.xform_in.tex_clip.position.y = 1.0 - t; // 1 .. 0
 			} break;
 			default:

@@ -7,6 +7,7 @@ You can support my (_Pawel Piecuch_) work on __Godot Engine__ enhancements:
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate?business=6QXS8MBPKBTTN&item_name=Improving+and+enhancing+Godot+Engine.&currency_code=USD)
 
 The most important topics and focus of my work:
+
   1. _Apple Metal_ graphics driver
   2. HK _Odroid-Fo Advance_ and _Super_ consoles
   3. _Nintendo Switch_ port and improvments (only for _Nintendo registered_ users)
@@ -14,9 +15,16 @@ The most important topics and focus of my work:
   5. _2D_ additions and extensions
 
 Some of the things you may found usefull in this repository:
+
   * Embedded _DOS-like_ console [modules/gdextensions/debugconsole](modules/gdextensions/debugconsole)
-  * Extension of ```Label``` with tranition effects [scene/gui/label_transitions.h](scene/gui/label_transitions.h)
+  * Extension of ```Label``` with transition effects [scene/gui/label_transitions.h](scene/gui/label_transitions.h)
   * _BMF_ XML bitmap fonts reader [scene/resources/font.cpp](https://github.com/ppiecuch/godot/blob/master/scene/resources/font.cpp#L211)
+
+Some of the modules I am also developing or maintaining every now and then:
+
+  * ```BulletML``` extension for Godot (https://github.com/ppiecuch/gd_bullet_hell.git)
+  * ```Chipmunk``` physics for Godot (https://github.com/ppiecuch/gd_chipmunk.git)
+  * ```Liquidfun``` physics for Godot (https://github.com/ppiecuch/gd_liquidfun.git)
 
 ## Godot Engine
 
