@@ -162,6 +162,8 @@ struct Vector3 {
 	_FORCE_INLINE_ Vector3() { x = y = z = 0; }
 };
 
+typedef Vector3 Point3;
+
 Vector3 Vector3::cross(const Vector3 &p_b) const {
 
 	Vector3 ret(

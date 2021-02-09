@@ -152,6 +152,10 @@ Vector2 Vector2::project(const Vector2 &p_b) const {
 	return p_b * (dot(p_b) / p_b.length_squared());
 }
 
+Vector2 Vector2::perp(const Vector2 &p_other) const {
+	return Vector2(x * p_other.y, - y * p_other.x);
+}
+
 Vector2 Vector2::snapped(const Vector2 &p_by) const {
 
 	return Vector2(
@@ -161,7 +165,7 @@ Vector2 Vector2::snapped(const Vector2 &p_by) const {
 
 Vector2 Vector2::clamped(real_t p_len) const {
 
-	real_t l = length();
+	const real_t l = length();
 	Vector2 v = *this;
 	if (l > 0 && p_len < l) {
 
@@ -179,9 +183,9 @@ Vector2 Vector2::cubic_interpolate(const Vector2 &p_b, const Vector2 &p_pre_a, c
 	Vector2 p2 = p_b;
 	Vector2 p3 = p_post_b;
 
-	real_t t = p_t;
-	real_t t2 = t * t;
-	real_t t3 = t2 * t;
+	const real_t t = p_t;
+	const real_t t2 = t * t;
+	const real_t t3 = t2 * t;
 
 	Vector2 out;
 	out = 0.5 * ((p1 * 2.0) +

@@ -78,6 +78,7 @@ struct Vector2 {
 	Vector2 posmod(const real_t p_mod) const;
 	Vector2 posmodv(const Vector2 &p_modv) const;
 	Vector2 project(const Vector2 &p_b) const;
+	Vector2 perp(const Vector2 &p_other) const;
 
 	Vector2 plane_project(real_t p_d, const Vector2 &p_vec) const;
 
