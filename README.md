@@ -1,6 +1,6 @@
 [![Godot Engine logo](/logo.png)](https://godotengine.org)
 
-## Donation Button
+## Support my work ...
 
 You can support my (_Pawel Piecuch_) work on __Godot Engine__ enhancements:
 
