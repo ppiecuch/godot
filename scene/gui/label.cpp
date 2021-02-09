@@ -106,13 +106,12 @@ void Label::_notification(int p_what) {
 
 		if (word_cache_dirty) {
 			regenerate_word_cache();
-			_transition_dirty = true;
 		}
 
-		if (_transition_dirty) {
+		if (_transition_dirty || _cache_changed) {
 			if (is_transition_enabled())
 				_transition_controller->init_transition(this, transition_duration, ease_func_table[transition_ease], &transition_text.word_cache, &word_cache);
-			_transition_dirty = false;
+			_cache_changed = _transition_dirty = false;
 		}
 
 		std::vector<WordCache *> draw_set{ &word_cache };
@@ -376,6 +375,8 @@ void Label::_notification(int p_what) {
 						//helps speed up some labels that may change a lot, as no resizing is requested. Do not change.
 						minimum_size_changed();
 					}
+
+					_change_notify();
 				}
 			}
 
@@ -645,53 +646,6 @@ int Label::get_line_size(const WordCache &cache, int line) const {
 	return line_size;
 }
 
-String Label::get_line_content(const WordCache &cache, int line) const {
-
-	String content;
-	WordList *wc = cache.words;
-	while (wc && wc->line != line)
-		wc = wc->next;
-	while (wc && wc->char_pos >= 0) {
-		content += String(" ").repeat(wc->space_count) + xl_text.substr(wc->char_pos, wc->word_len); // including spaces
-		wc = wc->next;
-	}
-	return content;
-}
-
-CharType Label::get_char_at_pos(const WordCache &cache, int line, int pixel_pos) const {
-
-	Ref<Font> font = get_font("font");
-	int line_count = 0, char_pos = 0;
-	WordList *wc = cache.words;
-	while (wc) {
-		if (line_count < line) {
-			while (wc && wc->char_pos >= 0)
-				wc = wc->next;
-			if (wc)
-				wc = wc->next;
-			line_count++;
-			continue;
-		}
-
-		if (char_pos + wc->pixel_width > pixel_pos) {
-			for (int c = 0; c < wc->word_len; ++c) {
-				const real_t char_w = font->get_char_size(wc->char_pos + c).width + horizontal_spacing;
-				if (char_pos + char_w > pixel_pos)
-					return text[wc->char_pos + c];
-				char_pos += char_w;
-			}
-			ERR_PRINT("BUG");
-			return 0;
-		} else
-			char_pos += wc->pixel_width;
-
-		wc = wc->next;
-		if (wc->char_pos < 0) // end of line
-			break;
-	}
-	return 0;
-}
-
 void Label::regenerate_word_cache() {
 
 	Ref<Font> font = get_font("font");
@@ -719,6 +673,7 @@ void Label::regenerate_word_cache() {
 	}
 
 	word_cache_dirty = false;
+	_cache_changed = true;
 }
 
 void Label::_clear_pending_animations() { // reset animation
@@ -1052,6 +1007,7 @@ Label::Label(const String &p_text) {
 	transition_effect = TRANSITIONEFFECT_NONE;
 	_transition_controller = AnimationControllerFactory(TRANSITIONEFFECT_NONE);
 	_transition_dirty = false;
+	_cache_changed = false;
 	set_mouse_filter(MOUSE_FILTER_IGNORE);
 	visible_chars = -1;
 	percent_visible = 1;

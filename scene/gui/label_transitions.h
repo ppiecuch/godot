@@ -310,36 +310,36 @@ struct Label::GenericDualTransformController : public Label::AnimationController
 		const real_t t = ease(current, 0, 1, duration);
 		switch (orientation) {
 			case ANIMATION_WHEEL_UP: {
-				xform_out.dest_rect.size.y = 1.0 - t; // 1 .. 0
+				xform_out.dest_rect.size.y = 1.0 - t;    // 1 .. 0
 				xform_in.dest_rect.position.y = 1.0 - t; // 1 .. 0
 			} break;
 			case ANIMATION_WHEEL_DOWN: {
-				xform_out.dest_rect.position.y = t; // 0 .. 1
-				xform_in.dest_rect.size.y = t; // 0 .. 1
+				xform_out.dest_rect.position.y = t;      // 0 .. 1
+				xform_in.dest_rect.size.y = t;           // 0 .. 1
 			} break;
 			case ANIMATION_REVEAL_UP: {
-				xform_out.dest_rect.size.y = 1.0 - t; // 1 .. 0
-				xform_out.tex_clip.position.y = t; // 0 .. 1
+				xform_out.dest_rect.size.y = 1.0 - t;    // 1 .. 0
+				xform_out.tex_clip.position.y = t;       // 0 .. 1
 				xform_in.dest_rect.position.y = 1.0 - t; // 1 .. 0
-				xform_in.tex_clip.size.y = t; // 0 .. 1
+				xform_in.tex_clip.size.y = t;            // 0 .. 1
 			} break;
 			case ANIMATION_REVEAL_DOWN: {
-				xform_out.dest_rect.position.y = t; // 0 .. 1
-				xform_out.tex_clip.position.y = t; // 0 .. 1
-				xform_in.dest_rect.size.y = t; // 0 .. 1
-				xform_in.tex_clip.position.y = t; // 1 .. 0
+				xform_out.dest_rect.position.y = t;      // 0 .. 1
+				xform_out.tex_clip.position.y = t;       // 0 .. 1
+				xform_in.dest_rect.size.y = t;           // 0 .. 1
+				xform_in.tex_clip.position.y = t;        // 1 .. 0
 			} break;
 			case ANIMATION_SLIDE_UP: {
-				xform_out.dest_rect.size.y = 1.0 - t; // 1 .. 0
-				xform_out.tex_clip.position.y = t; // 0 .. 1
+				xform_out.dest_rect.size.y = 1.0 - t;    // 1 .. 0
+				xform_out.tex_clip.position.y = t;       // 0 .. 1
 				xform_in.dest_rect.position.y = 1.0 - t; // 1 .. 0
-				xform_in.tex_clip.size.y = t; // 0 .. 1
+				xform_in.tex_clip.size.y = t;            // 0 .. 1
 			} break;
 			case ANIMATION_SLIDE_DOWN: {
-				xform_out.dest_rect.position.y = t; // 0 .. 1
-				xform_out.tex_clip.position.y = 1.0 - t; // 1 .. 0
-				xform_in.dest_rect.size.y = t; // 0 .. 1
-				xform_in.tex_clip.position.y = 1.0 - t; // 1 .. 0
+				xform_out.dest_rect.position.y = t;      // 0 .. 1
+				xform_out.tex_clip.size.y = 1.0 - t;     // 1 .. 0
+				xform_in.dest_rect.size.y = t;           // 0 .. 1
+				xform_in.tex_clip.position.y = 1.0 - t;  // 1 .. 0
 			} break;
 			default:
 				ERR_PRINT("Unknown orientation type - no transform performed");
@@ -444,6 +444,8 @@ struct Label::GenericSingleTransformController : public Label::AnimationControll
 		ERR_FAIL_COND_V(p_cache_in == 0, false);
 		ERR_FAIL_COND_V(p_duration <= 0, false);
 
+		const real_t duration_by_2 = p_duration / 2;
+
 		xform = CharTransform();
 
 		xform.vertical_align = orientation == ANIMATION_ROTATE_V;
@@ -451,12 +453,13 @@ struct Label::GenericSingleTransformController : public Label::AnimationControll
 		cache_in = *p_cache_in;
 		cache_out = *p_cache_out;
 
-		duration = p_duration;
-		// transition from range:  -duration .. 0 .. duration (2 x duration)
+		duration = duration_by_2;
+
+		// transition from range:  -duration/2 .. 0 .. duration/2
 		if (!cache_out.words) // nothing to hide - jump to showing new text
 			current = 0;
 		else
-			current = -p_duration;
+			current = -duration_by_2;
 		active = cache_in.words || cache_out.words;
 
 		_update_xform(p_ease); // initial xform value
@@ -562,6 +565,7 @@ struct Label::GenericMulti1TransformController : public Label::AnimationControll
 		ERR_FAIL_COND_V(p_cache_in == 0, false);
 		ERR_FAIL_COND_V(p_duration <= 0, false);
 
+		const real_t duration_by_2 = p_duration / 2;
 		const int xforms_size = MAX(p_cache_in->cache_text.length(), p_cache_out->cache_text.length());
 
 		trans_info.clear();
@@ -570,19 +574,20 @@ struct Label::GenericMulti1TransformController : public Label::AnimationControll
 		cache_in = *p_cache_in;
 		cache_out = *p_cache_out;
 
+		duration = duration_by_2;
+
 		for (int f = 0; f < xforms_size; ++f) {
 			_xform &info = trans_info.write[f];
 			info.xform.vertical_align = orientation == ANIMATION_ROTATE_V;
-			info.delay = f * 0.5;
-			// transition from range:  -duration .. 0 .. duration (2 x duration)
+			info.delay = f * duration * 0.2;
+			// transition from range:  -duration/2 .. 0 .. duration/2
 			if (!cache_out.words) // nothing to hide - jump to showing new text
 				info.current = 0;
 			else
-				info.current = -p_duration;
+				info.current = -duration_by_2;
 			_update_xform(info, 0, p_ease); // initial xform value
 		}
 
-		duration = p_duration;
 		active = cache_in.words || cache_out.words;
 
 		return true;
@@ -654,15 +659,15 @@ struct Label::GenericMulti2TransformController : public Label::AnimationControll
 		const real_t t = ease(info.current, 0, 1, duration);
 		switch (orientation) {
 			case ANIMATION_SLIDE_UP: {
-				info.xform_out.dest_rect.size.y = 1.0 - t; // 1 .. 0
-				info.xform_out.tex_clip.position.y = t; // 0 .. 1
+				info.xform_out.dest_rect.size.y = 1.0 - t;    // 1 .. 0
+				info.xform_out.tex_clip.position.y = t;       // 0 .. 1
 				info.xform_in.dest_rect.position.y = 1.0 - t; // 1 .. 0
-				info.xform_in.tex_clip.size.y = t; // 0 .. 1
+				info.xform_in.tex_clip.size.y = t;            // 0 .. 1
 			} break;
 			case ANIMATION_SLIDE_DOWN: {
-				info.xform_out.dest_rect.position.y = t; // 0 .. 1
-				info.xform_out.tex_clip.position.y = 1.0 - t; // 1 .. 0
-				info.xform_in.dest_rect.size.y = t; // 0 .. 1
+				info.xform_out.dest_rect.position.y = t;     // 0 .. 1
+				info.xform_out.tex_clip.size.y = 1.0 - t;    // 1 .. 0
+				info.xform_in.dest_rect.size.y = t;          // 0 .. 1
 				info.xform_in.tex_clip.position.y = 1.0 - t; // 1 .. 0
 			} break;
 			default:
@@ -700,14 +705,15 @@ struct Label::GenericMulti2TransformController : public Label::AnimationControll
 		cache_in = *p_cache_in;
 		cache_out = *p_cache_out;
 
+		duration = p_duration;
+
 		for (int f = 0; f < xforms_size; ++f) {
 			_xform &info = trans_info.write[f];
-			info.delay = f * 0.5;
+			info.delay = f * p_duration * 0.2;
 			info.current = 0;
 			_update_xform(info, 0, p_ease); // initial xform value
 		}
 
-		duration = p_duration;
 		active = cache_in.words || cache_out.words;
 
 		return true;

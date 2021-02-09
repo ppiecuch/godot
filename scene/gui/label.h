@@ -172,8 +172,6 @@ private:
 	void regenerate_word_cache();
 	WordCache calculate_word_cache(const Ref<Font> &font, const String &label_text) const;
 	int get_line_size(const WordCache &cache, int line) const;
-	String get_line_content(const WordCache &cache, int line) const;
-	CharType get_char_at_pos(const WordCache &cache, int line, int pixel_pos) const;
 
 	WordCache word_cache;
 
@@ -192,6 +190,7 @@ private:
 	TransitionEffect transition_effect;
 
 	bool _transition_dirty;
+	bool _cache_changed;
 	std::unique_ptr<AnimationController> _transition_controller;
 
 	void _clear_pending_animations();
@@ -200,6 +199,7 @@ protected:
 	void _notification(int p_what);
 
 	static void _bind_methods();
+
 	// bind helpers
 public:
 	virtual Size2 get_minimum_size() const;
