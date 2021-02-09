@@ -631,17 +631,17 @@ static Dictionary merge_images(Vector<Ref<Image> > images, Vector<String> names,
 			generated_images.set(i, atlas);
 		}
 
-		Dictionary rects;
+		Dictionary atlas_rects;
 		for (int r = 0; r < data.size(); ++r) {
 			const rect_xywhf &rc = data[r];
 			Dictionary entry;
 			entry["rect"] = Rect2(rc.x + margin, rc.y + margin, rc.w - 2 * margin, rc.h - 2 * margin);
 			entry["atlas_page"] = rc.bin;
 			entry["atlas"] = rc.atlas_image;
-			rects[names[r]] = entry;
+			atlas_rects[names[r]] = entry;
 		}
 
-		ret["_rects"] = rects;
+		ret["_rects"] = atlas_rects;
 		ret["_generated_images"] = generated_images;
 	}
 
