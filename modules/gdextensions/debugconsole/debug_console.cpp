@@ -135,9 +135,9 @@ void TextConsole::load_font(FontSize p_font) {
 	}
 }
 
-void TextConsole::resize(const Viewport &p_view) {
+void TextConsole::resize(const Viewport *p_view) {
 
-	const Size2i size = p_view.get_size();
+	const Size2i size = p_view->get_size();
 	// screen size rounded to font size
 	const int screen_width = size.width - size.width % int(_font_size.width);
 	const int screen_height = size.height - size.height % int(_font_size.height);
@@ -464,6 +464,13 @@ void ConsoleInstance::console_msg(const String &p_msg) {
 
 	// parse control characters
 	_process_codes(p_msg);
+	update();
+}
+
+void ConsoleInstance::console_resize(const Viewport *p_view) {
+	ERR_FAIL_COND(!console.is_valid());
+
+	console->resize(p_view);
 	update();
 }
 

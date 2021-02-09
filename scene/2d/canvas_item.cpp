@@ -609,14 +609,17 @@ void CanvasItem::_notification(int p_what) {
 #ifdef MODULE_GDEXTENSIONS_ENABLED
 			if (_console == 0
 #ifdef TOOLS_ENABLED
-					&& EditorNode::get_singleton()->get_scene_root() == get_parent()
+					&& EditorNode::get_singleton() && EditorNode::get_singleton()->get_scene_root() == get_parent()
 #else
-					&& get_tree()->get_root() == get_parent()
+					&& get_tree() && get_tree()->get_root() == get_parent()
 #endif
 					&& GLOBAL_DEF("debug/settings/stdout/active_console", false)) {
 
 				_console = memnew(ConsoleInstance);
 				_console->set_name("text_console");
+				if (Viewport *viewport = get_tree()->get_root()->get_viewport()) {
+					_console->console_resize(viewport);
+				}
 				add_child(_console);
 			}
 #endif
