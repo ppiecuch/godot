@@ -80,6 +80,8 @@
 #include "scenery/tree_2d/tree_2d.h"
 #include "scenery/vegetation_instance/vegetation_instance.h"
 #include "scenery/water_splash/gd_water_splash.h"
+#include "scenery/spider_anim/spider.h"
+#include "scenery/spider_anim/spider_insects.h"
 
 #include "benet/enet_node.h"
 #include "benet/enet_packet_peer.h"
@@ -160,6 +162,8 @@ void register_gdextensions_types() {
 #endif
 	ClassDB::register_class<SphericalWaves>();
 	ClassDB::register_class<Starfield2D>();
+	ClassDB::register_class<Spider>();
+	ClassDB::register_class<InsectsManagerInstance>();
 
 	if (enet_initialize() != 0) {
 		ERR_PRINT("ENet initialization failure");
@@ -190,6 +194,7 @@ void unregister_gdextensions_types() {
 		memdelete(instance);
 	if (Blitter *instance = Blitter::get_singleton())
 		memdelete(instance);
+	Spider::_release_global_resources();
 #ifdef TOOLS_ENABLED
 	if (GodotErrorHandler *instance = GodotErrorHandler::get_singleton())
 		memdelete(instance);

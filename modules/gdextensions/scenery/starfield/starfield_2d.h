@@ -44,21 +44,26 @@ class Starfield2D : public Node2D {
 
 private:
 	Size2 virtual_size;
-	Vector2 movement;
+	Vector2 movement_vector;
 
 	Ref<Starfield> _starfield;
 	Dictionary _image_atlas;
 
+	void _update();
+
 public:
+	void set_virtual_size(const Size2 &p_size);
+	Vector2 get_virtual_size() const;
+	void set_movement_vector(const Vector2 &p_movement);
+	Vector2 get_movement_vector() const;
+
 	Starfield2D();
 	~Starfield2D();
-
-	void _notification(int p_what);
 
 protected:
 	static void _bind_methods();
 
-	void _update();
+	void _notification(int p_what);
 };
 
 #endif /* _STARFIELD_2D_H_ */

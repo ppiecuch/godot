@@ -144,15 +144,6 @@ private:
 	Vector2 geometry_deform_force;
 	bool geometry_debug;
 
-	enum SigOperation {
-		SIG_CONNECT,
-		SIG_DISCONNECT,
-	};
-
-	void _configure_controller(SigOperation p_op);
-	void _connect_controller() { _configure_controller(SIG_CONNECT); }
-	void _disconnect_controller() { _configure_controller(SIG_DISCONNECT); }
-
 protected:
 	static void _bind_methods();
 
@@ -203,16 +194,8 @@ private:
 	real_t geometry_spring_variation;
 	bool geometry_debug;
 
-	enum SigOperation {
-		SIG_CONNECT,
-		SIG_DISCONNECT,
-	};
-
 	bool _is_parent_controller() const;
 	void _check_parent_controller();
-	void _configure_controller(SigOperation p_op);
-	void _connect_controller() { _configure_controller(SIG_CONNECT); }
-	void _disconnect_controller() { _configure_controller(SIG_DISCONNECT); }
 	Rect2 _get_texture_uv_rect() const;
 
 	Ref<ArrayMesh> _mesh;

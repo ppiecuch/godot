@@ -42,6 +42,9 @@ void Starfield2D::_notification(int p_what) {
 	switch (p_what) {
 
 		case NOTIFICATION_READY: {
+
+			// prepare starfield
+			_starfield = Ref<Starfield>(memnew(Starfield));
 			update();
 		} break;
 
@@ -53,10 +56,41 @@ void Starfield2D::_notification(int p_what) {
 	}
 }
 
+void Starfield2D::set_virtual_size(const Size2 &p_size) {
+
+	if (p_size != virtual_size) {
+		virtual_size = p_size;
+		update();
+	}
+}
+
+Vector2 Starfield2D::get_virtual_size() const {
+
+	return virtual_size;
+}
+
+void Starfield2D::set_movement_vector(const Vector2 &p_movement) {
+
+	if (p_movement != movement_vector) {
+		movement_vector = p_movement;
+		update();
+	}
+}
+
+Vector2 Starfield2D::get_movement_vector() const {
+
+	return movement_vector;
+}
+
 void Starfield2D::_bind_methods() {
 
+	ClassDB::bind_method(D_METHOD("set_virtual_size"), &Starfield2D::set_virtual_size);
+	ClassDB::bind_method(D_METHOD("get_virtual_size"), &Starfield2D::get_virtual_size);
+	ClassDB::bind_method(D_METHOD("set_movement_vector"), &Starfield2D::set_movement_vector);
+	ClassDB::bind_method(D_METHOD("get_movement_vector"), &Starfield2D::get_movement_vector);
+
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "virtual_size"), "set_virtual_size", "get_virtual_size");
-	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "movement"), "set_movement", "get_movement");
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "movement_vector"), "set_movement_vector", "get_movement_vector");
 }
 
 Starfield2D::Starfield2D() {
@@ -76,8 +110,6 @@ Starfield2D::Starfield2D() {
 		names.push_back(r.image);
 	}
 	_image_atlas = merge_images(images, names);
-	// prepare starfield
-	_starfield = Ref<Starfield>(memnew(Starfield));
 }
 
 Starfield2D::~Starfield2D() {

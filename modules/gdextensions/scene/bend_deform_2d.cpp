@@ -39,12 +39,12 @@
 // https://www.reddit.com/r/godot/comments/9y74r6/how_to_detect_when_node2d_is_moveddragged_in_the/
 
 #ifdef DEBUG_ENABLED
-#define DEBUG_PRINT(m_text) print_line(m_text);
+# define DEBUG_PRINT(m_text) print_line(m_text);
 #else
-#define DEBUG_PRINT(m_text)
+# define DEBUG_PRINT(m_text)
 #endif
 
-static const Vector2 ONE(1.0, 1.0);
+static const Vector2 ONE = Vector2(1, 1);
 
 struct MotionTextureIterator : public Reference {
 	Point2 position, next_position;
@@ -472,22 +472,6 @@ SimulationControllerInstance2D::~SimulationControllerInstance2D() {
 
 // BEGIN Mesh elastic-deform.
 
-void DeformMeshInstance2D::_configure_controller(SigOperation p_op) {
-	ERR_FAIL_COND(controller.is_null());
-
-	// connect signals
-	switch (p_op) {
-		case SIG_CONNECT: {
-			controller->connect("simulation_progress", this, "_on_simulation_update");
-			controller->connect("simulation_changed", this, "_on_simulation_changed");
-		} break;
-		case SIG_DISCONNECT: {
-			controller->disconnect("simulation_progress", this, "_on_simulation_update");
-			controller->disconnect("simulation_changed", this, "_on_simulation_changed");
-		} break;
-	}
-}
-
 void DeformMeshInstance2D::_get_property_list(List<PropertyInfo> *p_list) const {
 
 	if (p_list) {
@@ -536,11 +520,15 @@ Ref<SimulationController2D> DeformMeshInstance2D::get_controller() const {
 void DeformMeshInstance2D::set_controller(const Ref<SimulationController2D> &p_controller) {
 
 	if (controller != p_controller) {
-		if (controller.is_valid())
-			_disconnect_controller();
+		if (controller.is_valid()) {
+			controller->disconnect("simulation_progress", this, "_on_simulation_update");
+			controller->disconnect("simulation_changed", this, "_on_simulation_changed");
+		}
 		controller = p_controller;
-		if (controller.is_valid())
-			_connect_controller();
+		if (controller.is_valid()) {
+			controller->connect("simulation_progress", this, "_on_simulation_update");
+			controller->connect("simulation_changed", this, "_on_simulation_changed");
+		}
 	}
 }
 
@@ -871,40 +859,10 @@ bool DeformSprite::_is_parent_controller() const {
 void DeformSprite::_check_parent_controller() {
 
 	if (SimulationControllerInstance2D *instance = Object::cast_to<SimulationControllerInstance2D>(get_parent())) {
-		if (controller != instance->get_controller()) {
-			if (controller.is_valid()) {
-				_disconnect_controller();
-				if (Ref<ElasticSimulation> sim = controller->get_simulation())
-					if (_sim_id >= 0)
-						sim->remove_sim(_sim_id);
-			}
-			controller = instance->get_controller();
-			if (controller.is_valid()) {
-				_connect_controller();
-			}
-			_sim_id = -1;
-			_sim_dirty = true;
-			update();
-			DEBUG_PRINT("Parent controller connected to the node");
-		}
+		set_controller(instance->get_controller());
+		DEBUG_PRINT("Parent controller connected to the node");
 	} else {
 		controller = Ref<SimulationController2D>(NULL);
-	}
-}
-
-void DeformSprite::_configure_controller(SigOperation p_op) {
-	ERR_FAIL_COND(controller.is_null());
-
-	// connect signals
-	switch (p_op) {
-		case SIG_CONNECT: {
-			controller->connect("simulation_progress", this, "_on_simulation_update");
-			controller->connect("simulation_changed", this, "_on_simulation_changed");
-		} break;
-		case SIG_DISCONNECT: {
-			controller->disconnect("simulation_progress", this, "_on_simulation_update");
-			controller->disconnect("simulation_changed", this, "_on_simulation_changed");
-		} break;
 	}
 }
 
@@ -1165,13 +1123,16 @@ void DeformSprite::set_controller(const Ref<SimulationController2D> &p_controlle
 
 	if (controller != p_controller) {
 		if (controller.is_valid()) {
-			_disconnect_controller();
-			if (Ref<ElasticSimulation> sim = controller->get_simulation())
+			controller->disconnect("simulation_progress", this, "_on_simulation_update");
+			controller->disconnect("simulation_changed", this, "_on_simulation_changed");
+			if (Ref<ElasticSimulation> sim = controller->get_simulation()) {
 				sim->remove_sim(_sim_id);
+			}
 		}
 		controller = p_controller;
 		if (controller.is_valid()) {
-			_connect_controller();
+			controller->connect("simulation_progress", this, "_on_simulation_update");
+			controller->connect("simulation_changed", this, "_on_simulation_changed");
 		}
 		_sim_dirty = true;
 		update();
