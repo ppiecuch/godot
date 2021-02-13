@@ -1396,6 +1396,7 @@ void TextEdit::_notification(int p_what) {
 
 						if (cursor.column == last_wrap_column + j && cursor.line == line && cursor_wrap_index == line_wrap_index) {
 
+							is_cursor_visible = true;
 							cursor_pos = Point2i(char_ofs + char_margin + ofs_x, ofs_y);
 							cursor_pos.y += (get_row_height() - cache.font->get_height()) / 2;
 
@@ -2386,7 +2387,7 @@ void TextEdit::_gui_input(const Ref<InputEvent> &p_gui_input) {
 				int prev_col = cursor.column;
 				int prev_line = cursor.line;
 
-				cursor_set_line(row, true, false);
+				cursor_set_line(row, false, false);
 				cursor_set_column(col);
 
 				if (mb->get_shift() && (cursor.column != prev_col || cursor.line != prev_line)) {

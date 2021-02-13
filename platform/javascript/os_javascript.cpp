@@ -159,7 +159,8 @@ Size2 OS_JavaScript::get_screen_size(int p_screen) const {
 	EmscriptenFullscreenChangeEvent ev;
 	EMSCRIPTEN_RESULT result = emscripten_get_fullscreen_status(&ev);
 	ERR_FAIL_COND_V(result != EMSCRIPTEN_RESULT_SUCCESS, Size2());
-	return Size2(ev.screenWidth, ev.screenHeight);
+	double scale = godot_js_display_pixel_ratio_get();
+	return Size2(ev.screenWidth * scale, ev.screenHeight * scale);
 }
 
 void OS_JavaScript::set_window_size(const Size2 p_size) {
@@ -814,6 +815,7 @@ void OS_JavaScript::initialize_core() {
 
 Error OS_JavaScript::initialize(const VideoMode &p_desired, int p_video_driver, int p_audio_driver) {
 
+	godot_js_display_setup_canvas(); // Handle contextmenu, webglcontextlost
 	swap_ok_cancel = godot_js_display_is_swap_ok_cancel() == 1;
 
 	EmscriptenWebGLContextAttributes attributes;
@@ -1011,6 +1013,18 @@ bool OS_JavaScript::main_loop_iterate() {
 	}
 
 	return Main::iteration();
+}
+
+int OS_JavaScript::get_screen_dpi(int p_screen) const {
+	return godot_js_display_screen_dpi_get();
+}
+
+float OS_JavaScript::get_screen_scale(int p_screen) const {
+	return godot_js_display_pixel_ratio_get();
+}
+
+float OS_JavaScript::get_screen_max_scale() const {
+	return get_screen_scale();
 }
 
 void OS_JavaScript::delete_main_loop() {

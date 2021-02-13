@@ -113,6 +113,7 @@ name is available.
     lawnjelly
     Leon Krause (eska014)
     Lucien Menassol (Kanabenki)
+    Lyuma
     m4nu3lf
     Maganty Rushyendra (mrushyendra)
     Marcel Admiraal (madmiraal)
@@ -137,6 +138,7 @@ name is available.
     MichiRecRoom (LikeLakers2)
     mrezai
     muiroc
+    Nathan Franke (nathanfranke)
     Nathan Lovato (NathanLovato)
     Nathan Warden (NathanWarden)
     Nils André-Chang (NilsIrl)
@@ -186,6 +188,7 @@ name is available.
     Xavier Cho (mysticfall)
     yg2f (SuperUserNameMan)
     Yuri Roubinsky (Chaosus)
+    Yuri Sizov (pycbouh)
     Zak Stam (zaksnet)
     Zher Huei Lee (leezh)
     ZuBsPaCe
