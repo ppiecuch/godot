@@ -488,6 +488,9 @@ static Ref<Image> _mirror_borders(Ref<Image> image, int x_border, int y_border) 
 	const auto rightp = image->get_pixel(rc.width - 1, 0);
 	image->unlock();
 
+	// place image:
+	form->blit_rect(image, get_rect(image), Point2(x_border, y_border));
+
 	// duplicate borders around the image:
 	for (int k = 0; k < by; k++)
 		form->blit_rect(topb, get_rect(topb), Point2(x_border, y_border - k - 1)); // top
@@ -513,8 +516,21 @@ static Ref<Image> _mirror_borders(Ref<Image> image, int x_border, int y_border) 
 	return form;
 }
 
-static Dictionary merge_images(Vector<Ref<Image> > images, Vector<String> names, int max_atlas_size = 256, int margin = 2, Color background_color = Color(0, 0, 0, 0)) {
+struct TextureMergeOptions {
+	int max_atlas_size = 512;
+	Color background_color = Color(0, 0, 0, 0);
+	int margin = 2;
+	bool power_of_two = false;
+
+	TextureMergeOptions() { }
+	TextureMergeOptions(int max_atlas_size) : max_atlas_size(max_atlas_size) { }
+};
+
+static Dictionary merge_images(Vector<Ref<Image> > images, Vector<String> names, const TextureMergeOptions &options = TextureMergeOptions()) {
 	ERR_FAIL_COND_V(images.size() != names.size(), Dictionary());
+
+	const int margin = options.margin;
+	const Color background_color = options.background_color;
 
 	Array generated_images;
 	std::vector<bin> bins;
@@ -549,7 +565,7 @@ static Dictionary merge_images(Vector<Ref<Image> > images, Vector<String> names,
 	ERR_FAIL_COND_V(atlas_channels < 3, Dictionary());
 
 	Dictionary ret;
-	if (_pack_rects(rects.ptr(), rects.size(), max_atlas_size, false, bins)) {
+	if (_pack_rects(rects.ptr(), rects.size(), options.max_atlas_size, false, bins)) {
 		generated_images.clear();
 		generated_images.resize(bins.size());
 
@@ -560,10 +576,10 @@ static Dictionary merge_images(Vector<Ref<Image> > images, Vector<String> names,
 			atlas_data.resize(b.size.w * b.size.h * atlas_channels);
 
 			//Setup background color
-			uint8_t cr = background_color.r * 255.0;
-			uint8_t cg = background_color.g * 255.0;
-			uint8_t cb = background_color.b * 255.0;
-			uint8_t ca = background_color.a * 255.0;
+			const uint8_t cr = background_color.r * 255.0;
+			const uint8_t cg = background_color.g * 255.0;
+			const uint8_t cb = background_color.b * 255.0;
+			const uint8_t ca = background_color.a * 255.0;
 
 			for (int j = 0; j < atlas_data.size(); j += atlas_channels) {
 				atlas_data.set(j, cr);
@@ -626,7 +642,8 @@ static Dictionary merge_images(Vector<Ref<Image> > images, Vector<String> names,
 			}
 
 			atlas->create(b.size.w, b.size.h, false, atlas_channels == 4 ? Image::FORMAT_RGBA8 : Image::FORMAT_RGB8, atlas_data);
-			atlas->save_png(vformat("atlas_%d.png", i));
+			// dump generated atlas:
+			// atlas->save_png(vformat("atlas_%d.png", i));
 
 			generated_images.set(i, atlas);
 		}
