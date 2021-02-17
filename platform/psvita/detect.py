@@ -109,6 +109,9 @@ def configure(env):
 
     env.Append(
         CPPDEFINES=[
+            "PTHREAD_ENABLED",
+            "PTHREAD_NO_RENAME",
+            "LIBC_FILEIO_ENABLED",
             "NO_STATVFS",
             "NO_IOCTL",
             "IP6_UNAVAILABLE",
