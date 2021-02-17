@@ -35,6 +35,7 @@
 #include "trail_2d.h"
 
 void TrailPoint2D::_update_frame(bool minus) {
+
 	_update_position(minus);
 	if (minus) {
 		if (trail_enable && (span_frame == 0 || (++span_count > span_frame))) {
@@ -47,6 +48,7 @@ void TrailPoint2D::_update_frame(bool minus) {
 }
 
 void TrailPoint2D::_update_position(bool minus) {
+
 	Vector2 new_pos = get_global_position();
 	Vector2 offset = (new_pos - old_position) / get_global_transform().get_scale();
 	old_position = new_pos;
@@ -64,8 +66,9 @@ void TrailPoint2D::_update_position(bool minus) {
 }
 
 void TrailPoint2D::_normal_points(int idx, int total, Vector2 &res1, Vector2 &res2) {
+
+	const int count = trail_items[idx].count;
 	bool has_before = false, has_front = false;
-	int count = trail_items[idx].count;
 	Point2 pos_o = trail_items[idx].position, pos_f = pos_o, pos_b = pos_o;
 	for (int i = idx + 1; i < total; ++i) {
 		const TrailItem &tp = trail_items[i];
@@ -111,28 +114,34 @@ void TrailPoint2D::_normal_points(int idx, int total, Vector2 &res1, Vector2 &re
 }
 
 void TrailPoint2D::_update_trail_target() {
+
 	if (is_inside_tree()) {
+
 		if (target_path != NodePath() && has_node(target_path)) {
+
 			CanvasItem *nt = Object::cast_to<CanvasItem>(get_node(target_path));
+
 			if (nt != trail_target) {
-				if (trail_target != NULL) {
-					trail_target->disconnect("exit_tree", this, "_on_exit_tree");
+				if (trail_target != nullptr) {
+					trail_target->disconnect("tree_exiting", this, "_on_exit_tree");
 				}
 				trail_target = nt;
-				if (trail_target != NULL) {
-					trail_target->connect("exit_tree", this, "_on_exit_tree");
+				if (trail_target != nullptr) {
+					trail_target->connect("tree_exiting", this, "_on_exit_tree");
 				}
 			}
 		} else {
-			trail_target = NULL;
+			trail_target = nullptr;
 		}
 	}
 }
 
 void TrailPoint2D::_on_exit_tree() {
-	if (trail_target != NULL) {
-		trail_target->disconnect("exit_tree", this, "_on_exit_tree");
-		trail_target = NULL;
+
+	if (trail_target != nullptr) {
+
+		trail_target->disconnect("tree_exiting", this, "_on_exit_tree");
+		trail_target = nullptr;
 	}
 }
 
@@ -141,74 +150,85 @@ Rect2 TrailPoint2D::get_item_rect() const {
 	return Rect2(Point2(-10, -10), Size2(20, 20));
 }
 
-float determinant(Vector2 v1, Vector2 v2) {
+real_t determinant(Vector2 v1, Vector2 v2) {
+
 	return v1.x * v2.y - v2.x * v1.y;
 }
 
 int intersect(Point2 point_a1, Point2 point_a2, Point2 point_b1, Point2 point_b2, Point2 *result) {
-	float delta = determinant(point_a2 - point_a1, point_b1 - point_b2);
-	float d1 = determinant(point_b1 - point_a1, point_b1 - point_b2);
-	float d2 = determinant(point_a2 - point_a1, point_b1 - point_a1);
+
+	const real_t delta = determinant(point_a2 - point_a1, point_b1 - point_b2);
+	const real_t d1 = determinant(point_b1 - point_a1, point_b1 - point_b2);
+	const real_t d2 = determinant(point_a2 - point_a1, point_b1 - point_a1);
 	if (delta == 0) {
 		if (d1 == 0 || d2 == 0) return -1;
 		return 0;
 	}
-	double namenda = d1 / delta;
+	const real_t namenda = d1 / delta;
 	if (namenda > 1 || namenda < 0) {
 		return 0;
 	}
-	double miu = d2 / delta;
+	const real_t miu = d2 / delta;
 	if (miu > 1 || miu < 0) {
 		return 0;
 	}
 
-	if (result != NULL) {
+	if (result != nullptr) {
 		*result = (point_a2 - point_a1) * namenda + point_a1;
 	}
 	return 1;
 }
 
 void TrailPoint2D::_notification(int p_what) {
+
 	switch (p_what) {
+		case NOTIFICATION_READY: {
+			set_physics_process(true);
+			set_process(true);
+		} break;
+
 		case NOTIFICATION_ENTER_TREE: {
 			old_position = get_global_position();
 			_update_trail_target();
 		} break;
+
 		case NOTIFICATION_PHYSICS_PROCESS: {
 			_update_frame(true);
 		} break;
+
 		case NOTIFICATION_PROCESS: {
-			if (trail_target != NULL) {
+			if (trail_target != nullptr) {
 				Transform2D mat = trail_target->get_global_transform();
 				set_global_position(mat.get_origin());
-				Size2 scale = mat.get_scale();
+				const Size2 scale = mat.get_scale();
 				final_gravity.x = gravity.x * scale.x;
 				final_gravity.y = gravity.y * scale.y;
 			}
 			_update_frame();
 			update();
 		} break;
+
 		case NOTIFICATION_DRAW: {
-			int total = trail_items.size();
+			const int total = trail_items.size();
 			if (wave != 0) time_during += get_process_delta_time();
 			for (int n = total - 2; n >= 0; n--) {
 				if (trail_items[n].count > 0) {
-					float per1 = 1 - trail_items[n].count / (float)(total - 1);
-					float per2 = 1 - trail_items[n + 1].count / (float)(total - 1);
+					const real_t per1 = 1 - trail_items[n].count / (real_t)(total - 1);
+					const real_t per2 = 1 - trail_items[n + 1].count / (real_t)(total - 1);
 
 					if (wave == 0) {
 						const Vector2 &p1 = trail_items[n].position,
 									  &p2 = trail_items[n + 1].position;
 						if (p1 != p2) {
-							float f = 1 - per1;
+							real_t f = 1 - per1;
 							if (f > 1) f = 1;
-							draw_line(p1, p2, !line_color.is_null() ? line_color->get_color_at_offset(per1) : Color(1, 1, 1, 1 - per1), f * line_width);
+							draw_line(p1, p2, line_color.is_valid() ? line_color->get_color_at_offset(per1) : Color(1, 1, 1, 1 - per1), f * line_width);
 						}
 					} else {
 						const Vector2 &p1 = trail_items[n].position + (Vector2(0, wave * Math::cos(per1 * wave_scale - time_during * wave_time_scale))) * per1,
 									  &p2 = trail_items[n + 1].position + (Vector2(0, wave * Math::cos(per2 * wave_scale - time_during * wave_time_scale))) * per2;
 						if (p1 != p2) {
-							draw_line(p1, p2, !line_color.is_null() ? line_color->get_color_at_offset(per1) : Color(1, 1, 1, 1 - per1), line_width);
+							draw_line(p1, p2, line_color.is_valid() ? line_color->get_color_at_offset(per1) : Color(1, 1, 1, 1 - per1), line_width);
 						}
 					}
 				} else
@@ -219,6 +239,7 @@ void TrailPoint2D::_notification(int p_what) {
 }
 
 void TrailPoint2D::_bind_methods() {
+
 	ClassDB::bind_method(D_METHOD("get_trail_enable"), &TrailPoint2D::get_trail_enable);
 	ClassDB::bind_method(D_METHOD("set_trail_enable", "trail_enable"), &TrailPoint2D::set_trail_enable);
 
@@ -232,7 +253,7 @@ void TrailPoint2D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_line_width", "line_width"), &TrailPoint2D::set_line_width);
 
 	ClassDB::bind_method(D_METHOD("get_line_color"), &TrailPoint2D::get_line_color);
-	ClassDB::bind_method(D_METHOD("set_line_color", "line_color:ColorRamp"), &TrailPoint2D::set_line_color);
+	ClassDB::bind_method(D_METHOD("set_line_color", "line_color:Gradient"), &TrailPoint2D::set_line_color);
 
 	ClassDB::bind_method(D_METHOD("get_target_path"), &TrailPoint2D::get_target_path);
 	ClassDB::bind_method(D_METHOD("set_target_path", "target_path"), &TrailPoint2D::set_target_path);
@@ -256,7 +277,7 @@ void TrailPoint2D::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "trail_count"), "set_trail_count", "get_trail_count");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "span_frame"), "set_span_frame", "get_span_frame");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "line_width"), "set_line_width", "get_line_width");
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "line_color", PROPERTY_HINT_RESOURCE_TYPE, "ColorRamp"), "set_line_color", "get_line_color");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "line_color", PROPERTY_HINT_RESOURCE_TYPE, "Gradient"), "set_line_color", "get_line_color");
 
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "gravity"), "set_gravity", "get_gravity");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "wave"), "set_wave", "get_wave");
@@ -270,6 +291,7 @@ Rect2 TrailLine2D::get_item_rect() const {
 }
 
 void TrailLine2D::_update_frame(bool minus) {
+
 	_update_position(minus);
 	if (minus) {
 		if (trail_enable && (span_frame == 0 || (++span_count > span_frame))) {
@@ -279,11 +301,13 @@ void TrailLine2D::_update_frame(bool minus) {
 				np.position2 = terminal->get_position();
 			np.count = trail_items.limit();
 			trail_items.push(np);
+			_needs_update = true;
 		}
 	}
 }
 
 void TrailLine2D::_update_position(bool minus) {
+
 	Vector2 new_pos = get_global_position();
 	Vector2 offset = (new_pos - old_position) / get_global_transform().get_scale();
 	old_position = new_pos;
@@ -293,13 +317,15 @@ void TrailLine2D::_update_position(bool minus) {
 			trail_items[n].offset(-offset);
 			if (minus)
 				trail_items[n].count -= 1;
+			_needs_update = true;
 		} else
 			break;
 	}
 }
 
-Vector<Vector<Point2> > simplify(Vector<Point2> original) {
-	Vector<Vector<Point2> > new_vs;
+Vector<Vector<Point2>> simplify(Vector<Point2> original) {
+
+	Vector<Vector<Point2>> new_vs;
 	int total = original.size();
 	if (total < 3) return new_vs;
 	int i = 0;
@@ -330,7 +356,7 @@ Vector<Vector<Point2> > simplify(Vector<Point2> original) {
 		int off = 0;
 		while (off < total) {
 			if (total <= 3) break;
-			Point2 &p1 = n_path.write[off], &p2 = n_path.write[(off + 1) % total];
+			Point2 &p1 = n_path.write[off], p2 = n_path[(off + 1) % total];
 			int c_off = off + 1;
 			while (c_off < total) {
 				Point2 &p3 = n_path.write[c_off], &p4 = n_path.write[(c_off + 1) % total], cp;
@@ -351,7 +377,7 @@ Vector<Vector<Point2> > simplify(Vector<Point2> original) {
 						n_path.remove(off + 1);
 					}
 					total = n_path.size();
-					Vector<Vector<Point2> > s_p = simplify(vs);
+					Vector<Vector<Point2>> s_p = simplify(vs);
 					for (int k = 0, t = s_p.size(); k < t; ++k) {
 						new_vs.push_back(s_p[k]);
 					}
@@ -392,37 +418,49 @@ Vector<Vector<Point2> > simplify(Vector<Point2> original) {
 }
 
 void TrailLine2D::_notification(int p_what) {
+
 	switch (p_what) {
+		case NOTIFICATION_READY: {
+			set_physics_process(true);
+			set_process(true);
+		} break;
+
 		case NOTIFICATION_ENTER_TREE: {
 			old_position = get_global_position();
 			terminal = memnew(Position2D);
 			add_child(terminal);
 			terminal->set_position(terminal_position);
 		} break;
+
 		case NOTIFICATION_PHYSICS_PROCESS: {
 			_update_frame(true);
 		} break;
+
 		case NOTIFICATION_PROCESS: {
 			_update_frame();
 			update();
 		} break;
+
 		case NOTIFICATION_DRAW: {
-			Vector<Point2> vs;
-			int total = trail_items.size();
-			if (total > 1) {
-				vs.resize(total * 2);
-				for (int i = total - 1; i >= 0; --i) {
-					const TrailItem &item = trail_items[i];
-					if (item.count > 0) {
-						vs.set(i, item.position1);
-						vs.set(total * 2 - 1 - i, item.position2);
-					} else
-						break;
+			if (_needs_update) {
+				Vector<Point2> vs;
+				const int total = trail_items.size();
+				if (total > 1) {
+					vs.resize(total * 2);
+					for (int i = total - 1; i >= 0; --i) {
+						const TrailItem &item = trail_items[i];
+						if (item.count > 0) {
+							vs.write[i] = item.position1;
+							vs.write[total * 2 - 1 - i] = item.position2;
+						} else
+							break;
+					}
+					_cache_polys = simplify(vs);
+					_needs_update = false;
 				}
-				Vector<Vector<Point2> > pols = simplify(vs);
-				Color color = Color(1, 1, 1, 0.3);
-				for (int j = 0, t = pols.size(); j < t; ++j) {
-					draw_colored_polygon(pols[j], color);
+				const Color color = Color(1, 1, 1, 0.3);
+				for (int j = 0, t = _cache_polys.size(); j < t; ++j) {
+					draw_colored_polygon(_cache_polys[j], color);
 				}
 			}
 		} break;
@@ -430,6 +468,7 @@ void TrailLine2D::_notification(int p_what) {
 }
 
 void TrailLine2D::_bind_methods() {
+
 	ClassDB::bind_method(D_METHOD("get_trail_enable"), &TrailLine2D::get_trail_enable);
 	ClassDB::bind_method(D_METHOD("set_trail_enable", "trail_enable"), &TrailLine2D::set_trail_enable);
 
@@ -443,11 +482,11 @@ void TrailLine2D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_terminal", "terminal"), &TrailLine2D::set_terminal);
 
 	ClassDB::bind_method(D_METHOD("get_line_color"), &TrailLine2D::get_line_color);
-	ClassDB::bind_method(D_METHOD("set_line_color", "line_color:ColorRamp"), &TrailLine2D::set_line_color);
+	ClassDB::bind_method(D_METHOD("set_line_color", "line_color:Gradient"), &TrailLine2D::set_line_color);
 
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "trail_enable"), "set_trail_enable", "get_trail_enable");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "trail_count"), "set_trail_count", "get_trail_count");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "span_frame"), "set_span_frame", "get_span_frame");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "terminal"), "set_terminal", "get_line_color");
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "line_color", PROPERTY_HINT_RESOURCE_TYPE, "ColorRamp"), "set_line_color", "get_line_color");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "line_color", PROPERTY_HINT_RESOURCE_TYPE, "Gradient"), "set_line_color", "get_line_color");
 }
