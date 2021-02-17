@@ -31,9 +31,9 @@
 #include "debug_console.h"
 
 #include <assert.h>
-#include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
 #include <string>
 #include <vector>
@@ -41,6 +41,8 @@
 #include "core/version.h"
 #include "scene/resources/mesh.h"
 #include "scene/resources/texture.h"
+
+#include "inc/gd_core.h"
 
 typedef struct {
 	const char *image;
@@ -73,24 +75,24 @@ static PoolByteArray _poolbytearray_from_data(const uint8_t *bytes, size_t bytes
 	if (bytes_channels == FORMAT_1CHANNEL && dest_format == Image::Format::FORMAT_LA8) {
 		data.resize(2 * bytes_size);
 		PoolByteArray::Write wr = data.write();
-		for (int b = 0; b < 2 * bytes_size; b += 2) {
+		for (size_t b = 0; b < 2 * bytes_size; b += 2) {
 			wr[b] = wr[b + 1] = bytes[b >> 1];
 		}
 	} else if (bytes_channels == FORMAT_1CHANNEL && dest_format == Image::Format::FORMAT_RGB8) {
 		data.resize(3 * bytes_size);
 		PoolByteArray::Write wr = data.write();
-		for (int b = 0; b < 3 * bytes_size; b += 3) {
+		for (size_t b = 0; b < 3 * bytes_size; b += 3) {
 			wr[b] = wr[b + 1] = wr[b + 3] = bytes[b / 3];
 		}
 	} else if (bytes_channels == FORMAT_1CHANNEL && dest_format == Image::Format::FORMAT_RGBA8) {
 		data.resize(4 * bytes_size);
 		PoolByteArray::Write wr = data.write();
-		for (int b = 0; b < 4 * bytes_size; b += 4) {
+		for (size_t b = 0; b < 4 * bytes_size; b += 4) {
 			wr[b] = wr[b + 1] = wr[b + 3] = wr[b + 4] = bytes[b >> 2];
 		}
 	} else {
 		data.resize(bytes_size);
-		std::memcpy(data.write().ptr(), bytes, bytes_size);
+		memcpy(data.write().ptr(), bytes, bytes_size);
 	}
 	return data;
 }
@@ -345,11 +347,7 @@ void TextConsole::logl(const String &p_msg) {
 void TextConsole::logl(const String &p_msg, ColorIndex foreground, ColorIndex background) {
 
 	// next line
-	_cursor_pos = Point2i(0, _putl(p_msg, _cursor_pos,
-									 foreground == COLOR_DEFAULT ? _default_fg_color_index : foreground,
-									 background == COLOR_DEFAULT ? _default_bg_color_index : background)
-											 .y +
-									 1);
+	_cursor_pos = Point2i(0, _putl(p_msg, _cursor_pos, _default_fg_color_index, _default_bg_color_index).y + 1);
 	if (_cursor_pos.y == _con_size.height) {
 		_scroll_up();
 		_cursor_pos = Point2i(0, _cursor_pos.y - 1);
@@ -364,11 +362,7 @@ void TextConsole::logf(const String &p_msg) {
 void TextConsole::logf(const String &p_msg, ColorIndex foreground, ColorIndex background) {
 
 	// next line
-	_cursor_pos = Point2i(0, _putf(p_msg, _cursor_pos,
-									 foreground == COLOR_DEFAULT ? _default_fg_color_index : foreground,
-									 background == COLOR_DEFAULT ? _default_bg_color_index : background)
-											 .y +
-									 1);
+	_cursor_pos = Point2i(0, _putf(p_msg, _cursor_pos, _default_fg_color_index, _default_bg_color_index).y + 1);
 	if (_cursor_pos.y == _con_size.height) {
 		_scroll_up();
 		_cursor_pos = Point2i(0, _cursor_pos.y - 1);
@@ -380,11 +374,12 @@ void TextConsole::logv(const Array &p_log) {
 	Point2i pos = _cursor_pos;
 	while (!log_msg.empty()) {
 		String msg = log_msg.pop_front();
-		ColorIndex foreground = ColorIndex(int(log_msg.pop_front()));
-		ColorIndex background = ColorIndex(int(log_msg.pop_front()));
+		const int foreground = int(log_msg.pop_front());
+		const int background = int(log_msg.pop_front());
 		pos = _putl(msg, pos,
-				foreground == COLOR_DEFAULT ? _default_fg_color_index : foreground,
-				background == COLOR_DEFAULT ? _default_bg_color_index : background);
+				foreground == COLOR_DEFAULT ? _default_fg_color_index : ColorIndex(foreground),
+				background == COLOR_DEFAULT ? _default_bg_color_index : ColorIndex(background)
+		);
 	}
 	_cursor_pos = Point2i(0, pos.y + 1);
 	if (_cursor_pos.y == _con_size.height) {
@@ -522,7 +517,7 @@ Error ConsoleInstance::_process_codes(const String &p_concodes) {
 		if (brk_pos == p_concodes.length())
 			break; //nothing else to add
 
-		int brk_end = p_concodes.find("]", brk_pos + 1);
+		const int brk_end = p_concodes.find("]", brk_pos + 1);
 
 		if (brk_end == -1) {
 			//no close, add the rest
@@ -590,17 +585,17 @@ void ConsoleInstance::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("get_console"), &ConsoleInstance::get_console);
 
-	BIND_ENUM_CONSTANT(TextConsole::COLOR_BLACK);
-	BIND_ENUM_CONSTANT(TextConsole::COLOR_BLUE);
-	BIND_ENUM_CONSTANT(TextConsole::COLOR_GREEN);
-	BIND_ENUM_CONSTANT(TextConsole::COLOR_RED);
-	BIND_ENUM_CONSTANT(TextConsole::COLOR_MAGENTA);
-	BIND_ENUM_CONSTANT(TextConsole::COLOR_BROWN);
-	BIND_ENUM_CONSTANT(TextConsole::COLOR_LIGHTGRAY);
-	BIND_ENUM_CONSTANT(TextConsole::COLOR_LIGHTBLUE);
-	BIND_ENUM_CONSTANT(TextConsole::COLOR_LIGHTGREEN);
-	BIND_ENUM_CONSTANT(TextConsole::COLOR_LIGHTCYAN);
-	BIND_ENUM_CONSTANT(TextConsole::COLOR_LIGHTRED);
-	BIND_ENUM_CONSTANT(TextConsole::COLOR_LIGHTMAGENTA);
-	BIND_ENUM_CONSTANT(TextConsole::COLOR_WHITE);
+	BIND_ENUM_CONSTANT_CUSTOM(TextConsole::COLOR_BLACK, "COLOR_BLACK");
+	BIND_ENUM_CONSTANT_CUSTOM(TextConsole::COLOR_BLUE, "COLOR_BLUE");
+	BIND_ENUM_CONSTANT_CUSTOM(TextConsole::COLOR_GREEN, "COLOR_GREEN");
+	BIND_ENUM_CONSTANT_CUSTOM(TextConsole::COLOR_RED, "COLOR_RED");
+	BIND_ENUM_CONSTANT_CUSTOM(TextConsole::COLOR_MAGENTA, "COLOR_MAGENTA");
+	BIND_ENUM_CONSTANT_CUSTOM(TextConsole::COLOR_BROWN, "COLOR_BROWN");
+	BIND_ENUM_CONSTANT_CUSTOM(TextConsole::COLOR_LIGHTGRAY, "COLOR_LIGHTGRAY");
+	BIND_ENUM_CONSTANT_CUSTOM(TextConsole::COLOR_LIGHTBLUE, "COLOR_LIGHTBLUE");
+	BIND_ENUM_CONSTANT_CUSTOM(TextConsole::COLOR_LIGHTGREEN, "COLOR_LIGHTGREEN");
+	BIND_ENUM_CONSTANT_CUSTOM(TextConsole::COLOR_LIGHTCYAN, "COLOR_LIGHTCYAN");
+	BIND_ENUM_CONSTANT_CUSTOM(TextConsole::COLOR_LIGHTRED, "COLOR_LIGHTRED");
+	BIND_ENUM_CONSTANT_CUSTOM(TextConsole::COLOR_LIGHTMAGENTA, "COLOR_LIGHTMAGENTA");
+	BIND_ENUM_CONSTANT_CUSTOM(TextConsole::COLOR_WHITE, "COLOR_WHITE");
 }

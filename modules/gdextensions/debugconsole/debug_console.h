@@ -105,9 +105,10 @@ struct TextConsole : public Reference {
 		COLOR_LIGHTMAGENTA,
 		COLOR_YELLOW,
 		COLOR_WHITE,
+		COLOR_MAX = COLOR_WHITE,
 		COLOR_DEFAULT,
-		COLOR_MAX,
 	};
+
 	void _update_mesh();
 	Point2i _write(const String &p_msg, Point2i pos, ColorIndex foreground, ColorIndex background);
 	Point2i _putl(const String &p_msg, Point2i pos, ColorIndex foreground, ColorIndex background);
@@ -134,8 +135,8 @@ struct TextConsole : public Reference {
 	bool _dirty_screen;
 	struct cell {
 		char character;
-		ColorIndex foreground : 4;
-		ColorIndex background : 4;
+		ColorIndex foreground : 5;
+		ColorIndex background : 5;
 		bool inverted : 1;
 	};
 	cell *_screen;
