@@ -201,6 +201,7 @@ struct Color {
 	Color from_hsv(float p_h, float p_s, float p_v, float p_a) const;
 	static Color from_abgr(uint32_t p_abgr);
 	static Color from_rgbe9995(uint32_t p_rgbe);
+	_FORCE_INLINE_ static Color solid(float p_rbg, float p_a = 1.0) { return Color(p_rbg, p_rbg, p_rbg, p_a); }
 
 	_FORCE_INLINE_ bool operator<(const Color &p_color) const; //used in set keys
 	operator String() const;
