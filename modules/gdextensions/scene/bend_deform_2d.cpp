@@ -35,6 +35,7 @@
 #include "scene/resources/mesh_data_tool.h"
 
 #include "bend_deform_2d.h"
+#include "inc/gd_core.h"
 
 // https://www.reddit.com/r/godot/comments/9y74r6/how_to_detect_when_node2d_is_moveddragged_in_the/
 
@@ -237,13 +238,13 @@ void SimulationController2D::reset_simulation() {
 
 void SimulationController2D::_bind_methods() {
 
-	BIND_ENUM_CONSTANT(ElasticSimulation::SIM_ANCHOR_LEFT);
-	BIND_ENUM_CONSTANT(ElasticSimulation::SIM_ANCHOR_RIGHT);
-	BIND_ENUM_CONSTANT(ElasticSimulation::SIM_ANCHOR_TOP);
-	BIND_ENUM_CONSTANT(ElasticSimulation::SIM_ANCHOR_BOTTOM);
+	BIND_ENUM_CONSTANT_CUSTOM(ElasticSimulation::SIM_ANCHOR_LEFT, "SIM_ANCHOR_LEFT");
+	BIND_ENUM_CONSTANT_CUSTOM(ElasticSimulation::SIM_ANCHOR_RIGHT, "SIM_ANCHOR_RIGHT");
+	BIND_ENUM_CONSTANT_CUSTOM(ElasticSimulation::SIM_ANCHOR_TOP, "SIM_ANCHOR_TOP");
+	BIND_ENUM_CONSTANT_CUSTOM(ElasticSimulation::SIM_ANCHOR_BOTTOM, "SIM_ANCHOR_BOTTOM");
 
-	BIND_ENUM_CONSTANT(MotionPacking::PACKING_8BIT);
-	BIND_ENUM_CONSTANT(MotionPacking::PACKING_16BIT);
+	BIND_ENUM_CONSTANT_CUSTOM(MotionPacking::PACKING_8BIT, "PACKING_8BIT");
+	BIND_ENUM_CONSTANT_CUSTOM(MotionPacking::PACKING_16BIT, "PACKING_16BIT");
 
 	ClassDB::bind_method(D_METHOD("set_motion_image", "image"), &SimulationController2D::set_motion_image);
 	ClassDB::bind_method(D_METHOD("get_motion_image"), &SimulationController2D::get_motion_image);
