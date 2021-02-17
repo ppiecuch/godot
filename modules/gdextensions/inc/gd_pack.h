@@ -522,8 +522,9 @@ struct TextureMergeOptions {
 	int margin = 2;
 	bool power_of_two = false;
 
-	TextureMergeOptions() { }
-	TextureMergeOptions(int max_atlas_size) : max_atlas_size(max_atlas_size) { }
+	TextureMergeOptions() {}
+	TextureMergeOptions(int max_atlas_size) :
+			max_atlas_size(max_atlas_size) {}
 };
 
 static Dictionary merge_images(Vector<Ref<Image> > images, Vector<String> names, const TextureMergeOptions &options = TextureMergeOptions()) {

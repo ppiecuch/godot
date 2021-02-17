@@ -46,8 +46,8 @@
 
 #include "core/color.h"
 #include "core/reference.h"
-#include "scene/2d/node_2d.h"
 #include "scene/2d/canvas_item.h"
+#include "scene/2d/node_2d.h"
 #include "scene/resources/mesh.h"
 
 #include <vector>
@@ -118,7 +118,6 @@ private:
 	std::vector<StarsLayer> _layers;
 	Ref<ImageTexture> _texture_atlas;
 	Dictionary _texture_cache;
-
 
 	void _push_quad(PoolVector2Array &array, Point2 center, real_t size);
 	void _insert_quad(PoolVector2Array &array, int position, Point2 origin, real_t size);

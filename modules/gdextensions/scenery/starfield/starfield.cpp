@@ -31,9 +31,9 @@
 #include "starfield.h"
 #include "starfield_res.h"
 
-#include <vector>
 #include <functional>
 #include <random>
+#include <vector>
 
 #include "inc/gd_pack.h"
 
@@ -66,7 +66,7 @@ inline real_t random_value(const int low, const int high) {
 	return std::uniform_int_distribution<int>{ low, high }(RandomGenerator);
 }
 
-static std::vector<float> _alpha_lookup {
+static std::vector<float> _alpha_lookup{
 	0.6462, 0.6870, 0.6670, 0.7671, 0.3030, 0.4929, 0.2815, 0.6442,
 	0.3401, 0.9845, 0.8320, 0.3762, 0.7365, 0.6013, 0.6089, 0.1346,
 	0.4758, 0.2487, 0.8488, 0.1849, 0.4089, 0.2104, 0.6042, 0.8024,
@@ -155,18 +155,18 @@ layerid_t Starfield::add_stars(int p_number_of_stars, Size2 p_layer_size, real_t
 
 	layerid_t lid = _layers.size();
 	_layers.push_back({
-		p_number_of_stars,
-		PoolVector2Array(),
-		PoolVector2Array(),
-		PoolColorArray(),
-		p_layer_size,
-		Vector2(1,1),
-		true,
-		p_texture_id,
-		p_star_size,
-		0,
-		p_color,
-		true,
+			p_number_of_stars,
+			PoolVector2Array(),
+			PoolVector2Array(),
+			PoolColorArray(),
+			p_layer_size,
+			Vector2(1, 1),
+			true,
+			p_texture_id,
+			p_star_size,
+			0,
+			p_color,
+			true,
 	});
 	_needs_refresh = true;
 	return lid;
@@ -193,15 +193,15 @@ void Starfield::move(real_t p_delta, Vector2 p_movement) {
 			if (valid_colors_array) {
 				alpha = c[p].a;
 				if (layer.star_pulsation) {
-					alpha = _alpha_lookup[p&0xff];
-					const real_t alpha_modulation = Math::sin(_timer*layer.star_pulsation);
+					alpha = _alpha_lookup[p & 0xff];
+					const real_t alpha_modulation = Math::sin(_timer * layer.star_pulsation);
 					const real_t new_alpha = c[p].a = alpha * alpha_modulation * alpha_modulation;
 					if (layer.star_size > 0) {
 						// only fade opposite vertexes:
 						// (*)--+
 						//  | / |
 						//  +--(*)
-						c[p+4].a = new_alpha;
+						c[p + 4].a = new_alpha;
 					}
 				}
 			}
@@ -223,12 +223,12 @@ void Starfield::move(real_t p_delta, Vector2 p_movement) {
 				int quad_origin = p;
 				if (wrapx || wrapy) {
 					// w[p] = position;                // +--+
-					w[++p] = position + sidex;         // | /
-					w[++p] = position + sidey;         // +
+					w[++p] = position + sidex; // | /
+					w[++p] = position + sidey; // +
 
-					w[++p] = position + sidex;         //    +
+					w[++p] = position + sidex; //    +
 					w[++p] = position + sidex + sidey; //  / |
-					w[++p] = position + sidey;         // +--+
+					w[++p] = position + sidey; // +--+
 				} else {
 					w[++p] += delta;
 					w[++p] += delta;
@@ -252,7 +252,7 @@ void Starfield::move(real_t p_delta, Vector2 p_movement) {
 				}
 #define ANIM_FRAMES 120
 				if (new_texture_id != layer.texture_id) {
-					const int next_frame = _counter % int(ANIM_FRAMES * (layer.star_pulsation == 0 ? 1 : 1/layer.star_pulsation));
+					const int next_frame = _counter % int(ANIM_FRAMES * (layer.star_pulsation == 0 ? 1 : 1 / layer.star_pulsation));
 					if (next_frame == 0) {
 						layer.texture_id = new_texture_id;
 						// update texture
@@ -278,13 +278,13 @@ void Starfield::_push_quad(PoolVector2Array &array, Point2 origin, real_t size) 
 	const Vector2 sidex(size, 0);
 	const Vector2 sidey(0, size);
 
-	array.push_back(origin);                 // +--+
-	array.push_back(origin + sidex);         // | /
-	array.push_back(origin + sidey);         // +
+	array.push_back(origin); // +--+
+	array.push_back(origin + sidex); // | /
+	array.push_back(origin + sidey); // +
 
-	array.push_back(origin + sidex);         //    +
+	array.push_back(origin + sidex); //    +
 	array.push_back(origin + sidex + sidey); //  / |
-	array.push_back(origin + sidey);         // +--+
+	array.push_back(origin + sidey); // +--+
 }
 
 void Starfield::_insert_quad(PoolVector2Array &array, int position, Point2 origin, real_t size) {
@@ -294,13 +294,13 @@ void Starfield::_insert_quad(PoolVector2Array &array, int position, Point2 origi
 
 	auto w = array.write();
 
-	w[position++] = origin;                 // +--+
-	w[position++] = origin + sidex;         // | /
-	w[position++] = origin + sidey;         // +
+	w[position++] = origin; // +--+
+	w[position++] = origin + sidex; // | /
+	w[position++] = origin + sidey; // +
 
-	w[position++] = origin + sidex;         //    +
+	w[position++] = origin + sidex; //    +
 	w[position++] = origin + sidex + sidey; //  / |
-	w[position++] = origin + sidey;         // +--+
+	w[position++] = origin + sidey; // +--+
 }
 
 void Starfield::regenerate(layerid_t p_layer) {
@@ -406,7 +406,7 @@ void Starfield::set_color(layerid_t p_layer, const Color &p_base_color, real_t p
 	auto w = layer.colors.write();
 	for (int c = 0; c < layer.colors.size(); ++c) {
 		auto &color = w[c];
-		const real_t alpha_depth = layer.star_pulsation > 0 ? _alpha_lookup[c&0xff] : color.a;
+		const real_t alpha_depth = layer.star_pulsation > 0 ? _alpha_lookup[c & 0xff] : color.a;
 		color = p_base_color;
 		color.a = alpha_depth;
 	}

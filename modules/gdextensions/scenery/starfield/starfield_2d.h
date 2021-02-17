@@ -69,9 +69,9 @@ public:
 	void set_view_size(const Size2 &p_size);
 	Size2 get_view_size() const;
 
-	int add_stars_layer(int p_num_stars, Vector2 p_expanse_size, real_t p_star_size, Color p_star_color =  Color::solid(0.6));
-	int add_point_stars_layer(int p_num_stars, Vector2 p_expanse_size, Color p_star_color =  Color::solid(0.6));
-	int add_texture_stars_layer(int p_num_stars, Vector2 p_expanse_size, real_t p_star_size, Starfield::StarTexture p_texture_id, Color p_star_color =  Color::solid(0.6));
+	int add_stars_layer(int p_num_stars, Vector2 p_expanse_size, real_t p_star_size, Color p_star_color = Color::solid(0.6));
+	int add_point_stars_layer(int p_num_stars, Vector2 p_expanse_size, Color p_star_color = Color::solid(0.6));
+	int add_texture_stars_layer(int p_num_stars, Vector2 p_expanse_size, real_t p_star_size, Starfield::StarTexture p_texture_id, Color p_star_color = Color::solid(0.6));
 
 	void set_layer_movement_opt(int p_layer, Vector2 p_movement_scale, bool p_with_alpha);
 	void set_layer_color_opt(int p_layer, Color p_base_color, real_t p_alpha_pulsation);

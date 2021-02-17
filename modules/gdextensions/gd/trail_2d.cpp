@@ -323,9 +323,9 @@ void TrailLine2D::_update_position(bool minus) {
 	}
 }
 
-Vector<Vector<Point2>> simplify(Vector<Point2> original) {
+Vector<Vector<Point2> > simplify(Vector<Point2> original) {
 
-	Vector<Vector<Point2>> new_vs;
+	Vector<Vector<Point2> > new_vs;
 	int total = original.size();
 	if (total < 3) return new_vs;
 	int i = 0;
@@ -377,7 +377,7 @@ Vector<Vector<Point2>> simplify(Vector<Point2> original) {
 						n_path.remove(off + 1);
 					}
 					total = n_path.size();
-					Vector<Vector<Point2>> s_p = simplify(vs);
+					Vector<Vector<Point2> > s_p = simplify(vs);
 					for (int k = 0, t = s_p.size(); k < t; ++k) {
 						new_vs.push_back(s_p[k]);
 					}

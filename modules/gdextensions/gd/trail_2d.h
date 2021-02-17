@@ -179,7 +179,7 @@ private:
 	Point2 terminal_position;
 
 	bool _needs_update;
-	Vector<Vector<Point2>> _cache_polys;
+	Vector<Vector<Point2> > _cache_polys;
 
 	void _update_position(bool minus = false);
 	void _update_frame(bool minus = false);

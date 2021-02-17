@@ -127,10 +127,9 @@ bool Starfield2D::is_movement_active() const {
 	return movement_active;
 }
 
-
 int Starfield2D::add_stars_layer(int p_num_stars, Vector2 p_expanse_size, real_t p_star_size, Color p_star_color) {
 	ERR_FAIL_COND_V(_starfield.is_null(), -1);
-	ERR_FAIL_COND_V(p_star_size <= 0 , -1);
+	ERR_FAIL_COND_V(p_star_size <= 0, -1);
 
 	return _starfield->add_stars(p_num_stars, p_expanse_size, p_star_size, Starfield::STAR_POINT, p_star_color);
 }
@@ -143,7 +142,7 @@ int Starfield2D::add_point_stars_layer(int p_num_stars, Vector2 p_expanse_size, 
 
 int Starfield2D::add_texture_stars_layer(int p_num_stars, Vector2 p_expanse_size, real_t p_star_size, Starfield::StarTexture p_texture_id, Color p_star_color) {
 	ERR_FAIL_COND_V(_starfield.is_null(), -1);
-	ERR_FAIL_COND_V(p_star_size <= 0 , -1);
+	ERR_FAIL_COND_V(p_star_size <= 0, -1);
 
 	return _starfield->add_stars(p_num_stars, p_expanse_size, p_star_size, p_texture_id, p_star_color);
 }
@@ -200,7 +199,7 @@ void Starfield2D::_bind_methods() {
 
 Starfield2D::Starfield2D() {
 
-	movement_vector = Vector2(1,1);
+	movement_vector = Vector2(1, 1);
 	movement_active = false;
 	view_size = Vector2(100, 100);
 
