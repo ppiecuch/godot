@@ -54,7 +54,7 @@ typedef struct {
 #define FORMAT_3CHANNEL 3
 #define FORMAT_4CHANNEL 4
 
-extern const unsigned char font_8x16[], font_8x12[], font_8x8[], font_7x9[], font_4x6[];
+extern "C" const unsigned char font_8x16[], font_8x12[], font_8x8[], font_7x9[], font_4x6[];
 constexpr EmbedImageItem embed_debug_font[] = {
 	{ "dos-8x16", font_8x16, 8, 16, 196608 / 3, 128, 512, FORMAT_1CHANNEL },
 	{ "dos-8x12", font_8x12, 8, 12, 147456 / 3, 128, 384, FORMAT_1CHANNEL },
@@ -67,8 +67,8 @@ constexpr EmbedImageItem embed_debug_font[] = {
 // LCD text with big letters.
 // --------------------------
 const int BoxFSize = 3;
-extern int boxf_offsets[];
-extern char *boxf[];
+extern "C" int boxf_offsets[];
+extern "C" char *boxf[];
 
 static PoolByteArray _poolbytearray_from_data(const uint8_t *bytes, size_t bytes_size, int bytes_channels, Image::Format dest_format) {
 	PoolByteArray data;
