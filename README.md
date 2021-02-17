@@ -6,6 +6,11 @@ You can support my (_Pawel Piecuch_) work on __Godot Engine__ enhancements:
 
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate?business=6QXS8MBPKBTTN&item_name=Improving+and+enhancing+Godot+Engine.&currency_code=USD)
 
+Find me on **Tweeter** for announcments, more details and discussions: [https://twitter.com/ppiecuch]()
+
+<a href="https://twitter.com/ppiecuch?ref_src=twsrc%5Etfw" class="twitter-follow-button" data-show-count="false">Follow @ppiecuch</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+
 The most important topics and focus of my work:
 
   1. _Apple Metal_ graphics driver
@@ -18,6 +23,7 @@ Some of the things you may found usefull in this repository:
 
   * Embedded _DOS-like_ console [modules/gdextensions/debugconsole](modules/gdextensions/debugconsole)
   * Extension of ```Label``` with transition effects [scene/gui/label_transitions.h](scene/gui/label_transitions.h)
+  * *Starfield* component [modules/gdextensions/scenery/starfield/starfield.h](modules/gdextensions/scenery/starfield/starfield.h)
   * _BMF_ XML bitmap fonts reader [scene/resources/font.cpp](https://github.com/ppiecuch/godot/blob/master/scene/resources/font.cpp#L211)
 
 Some of the modules I am also developing or maintaining every now and then:
