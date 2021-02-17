@@ -152,7 +152,7 @@ void Label::_notification(int p_what) {
 
 		FontDrawer drawer(font, font_outline_modulate);
 
-		int draw_index = 0;
+		size_t draw_index = 0;
 	draw_loop:
 		const WordCache *cc = draw_set[draw_index];
 		const WordList *wc = cc->words;
