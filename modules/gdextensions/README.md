@@ -16,31 +16,6 @@ My own, copied, copied and ported to **Godot3** modules.
  - https://github.com/danboo/godot-RigidBodyParticles2D/blob/master/examples/sparks/Particle.gd
  - https://github.com/dbsGen/my_godot_modules.git
 
-#### Starfield
-
-Example of adding layers and setting paramets:
-
-```
-tool
-extends Starfield2D
-
-first time.
-func _ready():
-    var points = add_point_stars_layer(800, view_size, Color(0.8, 0.8, 0.8))
-    set_layer_movement_opt(points, Vector2(1, 1), true)
-    var squares = add_stars_layer(50, view_size, 2, Color(0.7, 0.7, 0.7))
-    set_layer_movement_opt(squares, Vector2(0.5, 0.5), false)
-    set_layer_color_opt(squares, Color(0.6, 0.6, 0.6), 0.5)
-    var textures1 = add_texture_stars_layer(10, view_size, 16, STAR1_TEXTURE, Color(0.6, 0.6, 0.6))
-    set_layer_movement_opt(textures1, Vector2(0.2, 0.2), true)
-    var textures2 = add_texture_stars_layer(4, view_size, 64, STAR12_TEXTURE, Color(0.9, 0.9, 0.9))
-    set_layer_movement_opt(textures2, Vector2(0.05, 0.1), true)
-    var textures3 = add_texture_stars_layer(2, view_size, 96, STAR12_TEXTURE, Color(0.9, 0.9, 0.9))
-    set_layer_movement_opt(textures3, Vector2(0.05, 0.05), true)
-    set_layer_color_opt(textures3, Color(0.6, 0.6, 0.6), 0.4)
-
-```
-
 #### Elastic simulation orignal code (js)
 
 https://web.archive.org/web/20191117201506/http://codeflow.org/entries/2010/sep/01/hard-constraints-easy-solutions/
