@@ -599,7 +599,6 @@ void ConsoleInstance::_bind_methods() {
 	BIND_ENUM_CONSTANT_CUSTOM(TextConsole::COLOR_WHITE, "COLOR_WHITE");
 }
 
-
 ConsoleInstance::ConsoleInstance() {
 
 	console = Ref<TextConsole>(NULL);

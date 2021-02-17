@@ -187,7 +187,6 @@ public:
 
 	ConsoleInstance();
 	~ConsoleInstance();
-
 };
 
 VARIANT_ENUM_CAST(TextConsole::ColorIndex);
