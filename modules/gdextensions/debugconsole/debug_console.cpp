@@ -378,8 +378,7 @@ void TextConsole::logv(const Array &p_log) {
 		const int background = int(log_msg.pop_front());
 		pos = _putl(msg, pos,
 				foreground == COLOR_DEFAULT ? _default_fg_color_index : ColorIndex(foreground),
-				background == COLOR_DEFAULT ? _default_bg_color_index : ColorIndex(background)
-		);
+				background == COLOR_DEFAULT ? _default_bg_color_index : ColorIndex(background));
 	}
 	_cursor_pos = Point2i(0, pos.y + 1);
 	if (_cursor_pos.y == _con_size.height) {

@@ -52,6 +52,7 @@ For log = natural log uncomment the next line. */
 #include <limits.h>
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h> // strtod
 #include <string.h>
 
 #include "core/math/math_funcs.h"
