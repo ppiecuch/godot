@@ -617,7 +617,7 @@ void CanvasItem::_notification(int p_what) {
 
 				_console = memnew(ConsoleInstance);
 				_console->set_name("text_console");
-				if (Viewport *viewport = get_tree()->get_root()->get_viewport()) {
+				if (Viewport *viewport = get_viewport()) {
 					_console->console_resize(viewport);
 				}
 				add_child(_console);
