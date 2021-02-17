@@ -598,3 +598,16 @@ void ConsoleInstance::_bind_methods() {
 	BIND_ENUM_CONSTANT_CUSTOM(TextConsole::COLOR_LIGHTMAGENTA, "COLOR_LIGHTMAGENTA");
 	BIND_ENUM_CONSTANT_CUSTOM(TextConsole::COLOR_WHITE, "COLOR_WHITE");
 }
+
+
+ConsoleInstance::ConsoleInstance() {
+
+	console = Ref<TextConsole>(NULL);
+
+	_pos = Point2(0, 0);
+	_scale = Size2(1, 1);
+	_xform = Transform2D();
+}
+
+ConsoleInstance::~ConsoleInstance() {
+}

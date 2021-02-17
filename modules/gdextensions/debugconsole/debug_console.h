@@ -184,6 +184,10 @@ public:
 	void console_resize(const Viewport *p_view);
 
 	Ref<TextConsole> get_console() const;
+
+	ConsoleInstance();
+	~ConsoleInstance();
+
 };
 
 VARIANT_ENUM_CAST(TextConsole::ColorIndex);
