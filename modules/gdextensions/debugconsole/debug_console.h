@@ -170,10 +170,12 @@ protected:
 	static void _bind_methods();
 
 public:
+#ifdef TOOLS_ENABLED
 	void _edit_set_position(const Point2 &p_position);
 	Point2 _edit_get_position() const;
 	void _edit_set_scale(const Size2 &p_scale);
 	Size2 _edit_get_scale() const;
+#endif
 
 	Transform2D get_transform() const;
 

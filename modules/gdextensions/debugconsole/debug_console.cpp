@@ -136,6 +136,7 @@ void TextConsole::load_font(FontSize p_font) {
 }
 
 void TextConsole::resize(const Viewport *p_view) {
+	ERR_FAIL_COND(p_view == nullptr);
 
 	const Size2i size = p_view->get_size();
 	// screen size rounded to font size
@@ -416,6 +417,7 @@ TextConsole::~TextConsole() {
 	memdelete_arr(_screen);
 }
 
+#ifdef TOOLS_ENABLED
 void ConsoleInstance::_edit_set_position(const Point2 &p_position) {
 	_pos = p_position;
 	update();
@@ -433,6 +435,7 @@ void ConsoleInstance::_edit_set_scale(const Size2 &p_scale) {
 Size2 ConsoleInstance::_edit_get_scale() const {
 	return _scale;
 }
+#endif
 
 Transform2D ConsoleInstance::get_transform() const {
 	return _xform;
