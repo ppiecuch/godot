@@ -24,7 +24,7 @@ jobs:
       # Install all packages (except scons)
       - name: Configure dependencies
         run: |
-          sudo apt-get install wget cmake
+          sudo apt-get install wget xz-utils cmake
 
       # Checkout and configure VitaSDK package
       - name: Checkout VDPM package
