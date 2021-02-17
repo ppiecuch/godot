@@ -390,6 +390,7 @@ public:
 	void set(int p_index, const T &p_val);
 	void push_back(const T &p_val);
 	void push_multi(int p_num, T p_val);
+	void insert_multi(int p_pos, int p_num, T p_val);
 	void append(const T &p_val) { push_back(p_val); }
 	void append_array(const PoolVector<T> &p_arr) {
 		int ds = p_arr.size();
@@ -401,6 +402,18 @@ public:
 		Read r = p_arr.read();
 		for (int i = 0; i < ds; i++)
 			w[bs + i] = r[i];
+	}
+	void insert_array(int p_pos, const PoolVector<T> &p_arr) {
+		int ds = p_arr.size();
+		if (ds == 0)
+			return;
+
+		ERR_FAIL_INDEX(p_pos + ds - 1, size());
+
+		Write w = write();
+		Read r = p_arr.read();
+		for (int i = 0; i < ds; i++)
+			w[p_pos + i] = r[i];
 	}
 
 	PoolVector<T> subarray(int p_from, int p_to) {
@@ -506,10 +519,22 @@ void PoolVector<T>::push_back(const T &p_val) {
 
 template <class T>
 void PoolVector<T>::push_multi(int p_num, T p_val) {
+
 	const int bs = size();
 	resize(bs + p_num);
 	for (int i = 0; i < p_num; ++i)
 		set(bs + i, p_val);
+}
+
+template <class T>
+void PoolVector<T>::insert_multi(int p_pos, int p_num, T p_val) {
+
+	const int last_index = p_pos + p_num - 1;
+
+	ERR_FAIL_INDEX(last_index, size());
+
+	for (int i = p_pos; i <= last_index; ++i)
+		set(i, p_val);
 }
 
 template <class T>
