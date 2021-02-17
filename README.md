@@ -6,9 +6,9 @@ You can support my (_Pawel Piecuch_) work on __Godot Engine__ enhancements:
 
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate?business=6QXS8MBPKBTTN&item_name=Improving+and+enhancing+Godot+Engine.&currency_code=USD)
 
-Find me on **Tweeter** for announcments, more details and discussions: [https://twitter.com/ppiecuch]()
+Find me on **Tweeter** for announcement, more details and discussions: [https://twitter.com/ppiecuch]()
 
-<a href="https://twitter.com/ppiecuch?ref_src=twsrc%5Etfw" class="twitter-follow-button" data-show-count="false">Follow @ppiecuch</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+[![Twitter](https://img.shields.io/twitter/url/https/twitter.com/ppiecuch.svg?style=social&label=Follow%20%40ppiecuch)](https://twitter.com/ppiecuch)
 
 
 The most important topics and focus of my work:
