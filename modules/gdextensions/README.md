@@ -18,7 +18,7 @@ My own, copied, copied and ported to **Godot3** modules.
 
 #### Starfield
 
-Example of adding layers:
+Example of adding layers and setting paramets:
 
 ```
 tool
