@@ -51,14 +51,23 @@ private:
 	bool centered;
 	Point2 offset;
 
-	struct SurfInfo {
-		Basis surf_xform; // surface transform
-		int surf_id; // surface index
-	};
-	Vector<SurfInfo> _mesh_xform;
+	int selected_frame;
+	// Description of frames to be precalculated:
+	// frame rotate="x,y,z" scale="x,y,z"
+	// repeat 10 rotate="360/repcount,y,z" scale="repcounter*10,y,z"
+	String frames_builder;
+
+	struct {
+		Basis xform;
+		int surface_nr;
+	} _frames;
+
+	Array _mesh_data;
+	Basis _mesh_xform;
 	bool _mesh_dirty;
 	bool _mesh_xform_dirty;
 	int _mesh_active_surface;
+	bool _mesh_debug;
 
 	void _get_rects(Rect2 &r_src_rect, Rect2 &r_dst_rect, bool &r_filter_clip) const;
 
@@ -97,6 +106,12 @@ public:
 
 	void set_mesh_normal_map(const Ref<Texture> &p_texture);
 	Ref<Texture> get_mesh_normal_map() const;
+
+	void set_selected_frame(int p_frame);
+	int get_selected_frame() const;
+
+	void set_frames_builder(const String &p_frames);
+	String get_frames_builder() const;
 
 	void set_mesh_rotation(Vector3 p_radians);
 	Vector3 get_mesh_rotation() const;

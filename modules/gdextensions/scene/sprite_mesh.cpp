@@ -40,6 +40,7 @@
 #include "sprite_mesh.h"
 
 // References:
+// -----------
 // https://stackoverflow.com/questions/6053522/how-to-recalculate-axis-aligned-bounding-box-after-translate-rotate
 // https://github.com/libigl/libigl/issues/514 (Projecting mesh onto a plane)
 // https://github.com/pyvista/pyvista-support/issues/20 (Project points/surface to a plane)
@@ -88,37 +89,28 @@ bool SpriteMesh::_edit_use_rect() const {
 #endif
 
 void SpriteMesh::_update_mesh_xform() {
-	if (mesh.is_valid()) {
-		if (ArrayMesh *m = Object::cast_to<ArrayMesh>(*mesh)) {
-			MeshDataTool *dataTool = memnew(MeshDataTool);
-			dataTool->create_from_surface(mesh, 0);
-			for (int i = 0; i < dataTool->get_vertex_count(); ++i) {
-				const Vector3 &vertex = _mesh_xform[_mesh_active_surface].surf_xform.xform(dataTool->get_vertex(i));
-				dataTool->set_vertex(i, vertex);
+	if (mesh.is_valid() && !_mesh_data.empty()) {
+		if (ArrayMesh *array_mesh = Object::cast_to<ArrayMesh>(*mesh)) {
+
+			PoolVector3Array vertexes = _mesh_data[VS::ARRAY_VERTEX];
+			PoolVector3Array xform_vertexes;
+			ERR_FAIL_COND(xform_vertexes.resize(vertexes.size()) != OK);
+
+			auto w = xform_vertexes.write();
+			for (int v = 0; v < vertexes.size(); ++v) {
+				w[v] = _mesh_xform.xform(vertexes[v]);
 			}
-			// surface 0 is reference data
-			// surface X is transformed data
-			if (m->get_surface_count() == 1)
-				m->surface_set_active(0, false);
-			else
-				// remove active surface
-				m->surface_remove(_mesh_xform[_mesh_active_surface].surf_id);
-
-			const int surf_id = m->get_surface_count();
-
-			dataTool->commit_to_surface(mesh);
-			memdelete(dataTool);
-
-			_mesh_xform.write[_mesh_active_surface].surf_id = surf_id; // new transform is created as last surface
-
-			// update surface info in metadata
-			Dictionary surf_info;
-			for (int i = 0; i < _mesh_xform.size(); ++i) {
-				surf_info[_mesh_xform[i].surf_id] = _mesh_xform[i].surf_xform;
-			}
-			mesh->set_meta("_mesh_surf_info", surf_info);
+			// build transformed mesh
+			Array mesh_array = _mesh_data.duplicate();
+			mesh_array[VS::ARRAY_VERTEX] = xform_vertexes;
+			array_mesh->clear_mesh();
+			// array_mesh->surface_remove(active_frame);
+			// int surf_id = array_mesh->get_surface_count();
+			array_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array, Array(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
 
 			item_rect_changed();
+		} else {
+			WARN_PRINT("Cannot transform non ArrayMesh object.");
 		}
 	}
 }
@@ -140,35 +132,28 @@ void SpriteMesh::_notification(int p_what) {
 
 			Transform2D xform(0, ofs - Point2(aabb.position.x, aabb.position.y));
 			draw_mesh(mesh, texture, normal_map, xform);
-#if 1
-			draw_rect(Rect2(ofs, s), Color::named("yellow"), false);
-#endif
+			if (_mesh_debug) {
+				draw_rect(Rect2(ofs, s), Color::named("yellow"), false);
+			}
 		}
 	}
 }
 
 void SpriteMesh::set_mesh(const Ref<Mesh> &p_mesh) {
+
 	if (mesh == p_mesh)
 		return;
-	mesh = p_mesh->duplicate(); // we need our own instance
 
-	_mesh_xform.clear();
-
-	// Restore surface transformation info
-	Dictionary surf_info = get_mesh_surf_info(mesh);
-	Array k = surf_info.keys();
-	for (int s = 0; s < k.size(); ++s) {
-		const int surf_id = k[s];
-		const Basis surf_xform = surf_info[surf_id];
-		_mesh_xform.push_back(SurfInfo{ surf_xform, surf_id });
+	if (*p_mesh && Object::cast_to<ArrayMesh>(*p_mesh) == nullptr) {
+		WARN_PRINT("Not an ArrayMesh object: do not know how to transform this.");
+		return;
 	}
 
-	if (ArrayMesh *m = Object::cast_to<ArrayMesh>(*mesh)) {
-		for (int s = 1; s < m->get_surface_count(); ++s) {
-			m->surface_set_active(s, (s - 1) == _mesh_active_surface);
-		}
-	} else
-		WARN_PRINT("Not an ArrayMesh object: do not know how to transform this.");
+	mesh = p_mesh;
+
+	_mesh_data.clear();
+	if (ArrayMesh *array_mesh = Object::cast_to<ArrayMesh>(*mesh))
+		_mesh_data = array_mesh->surface_get_arrays(0);
 
 	_mesh_dirty = true;
 	_update_transform();
@@ -184,14 +169,14 @@ Ref<Mesh> SpriteMesh::get_mesh() const {
 
 void SpriteMesh::_update_xform_values() {
 
-	mesh_angle = _mesh_xform[_mesh_active_surface].surf_xform.get_euler();
-	mesh_scale = _mesh_xform[_mesh_active_surface].surf_xform.get_scale();
+	mesh_angle = _mesh_xform.get_euler();
+	mesh_scale = _mesh_xform.get_scale();
 	_mesh_xform_dirty = false;
 }
 
 void SpriteMesh::_update_transform() {
 
-	_mesh_xform.write[_mesh_active_surface].surf_xform.set_euler_scale(mesh_angle, mesh_scale);
+	_mesh_xform.set_euler_scale(mesh_angle, mesh_scale);
 
 	if (!is_inside_tree())
 		return;
@@ -252,7 +237,7 @@ float SpriteMesh::get_mesh_rotation_z_degrees() const {
 
 void SpriteMesh::set_mesh_orientation(const Basis &p_basis) {
 
-	_mesh_xform.write[_mesh_active_surface].surf_xform = p_basis;
+	_mesh_xform = p_basis;
 	_mesh_xform_dirty = true;
 
 	if (!is_inside_tree())
@@ -263,7 +248,7 @@ void SpriteMesh::set_mesh_orientation(const Basis &p_basis) {
 
 Basis SpriteMesh::get_mesh_orientation() const {
 
-	return _mesh_xform[_mesh_active_surface].surf_xform;
+	return _mesh_xform;
 }
 
 void SpriteMesh::set_mesh_scale(const Vector3 &p_scale) {
@@ -289,6 +274,7 @@ Vector3 SpriteMesh::get_mesh_scale() const {
 }
 
 void SpriteMesh::set_mesh_texture(const Ref<Texture> &p_texture) {
+
 	if (texture == p_texture)
 		return;
 	texture = p_texture;
@@ -303,13 +289,38 @@ Ref<Texture> SpriteMesh::get_mesh_texture() const {
 
 void SpriteMesh::set_mesh_normal_map(const Ref<Texture> &p_texture) {
 
-	normal_map = p_texture;
-	update();
+	if (normal_map != p_texture) {
+		normal_map = p_texture;
+		update();
+	}
 }
 
 Ref<Texture> SpriteMesh::get_mesh_normal_map() const {
 
 	return normal_map;
+}
+
+void SpriteMesh::set_selected_frame(int p_frame) {
+
+	if (selected_frame != p_frame) {
+		selected_frame = p_frame;
+	}
+}
+
+int SpriteMesh::get_selected_frame() const {
+	return selected_frame;
+}
+
+void SpriteMesh::set_frames_builder(const String &p_frames) {
+
+	if (frames_builder != p_frames) {
+		frames_builder = p_frames;
+	}
+}
+
+String SpriteMesh::get_frames_builder() const {
+
+	return frames_builder;
 }
 
 void SpriteMesh::set_centered(bool p_center) {
@@ -373,6 +384,15 @@ void SpriteMesh::_mesh_changed() {
 void SpriteMesh::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_mesh", "mesh"), &SpriteMesh::set_mesh);
 	ClassDB::bind_method(D_METHOD("get_mesh"), &SpriteMesh::get_mesh);
+	ClassDB::bind_method(D_METHOD("set_mesh_texture", "mesh_texture"), &SpriteMesh::set_mesh_texture);
+	ClassDB::bind_method(D_METHOD("get_mesh_texture"), &SpriteMesh::get_mesh_texture);
+	ClassDB::bind_method(D_METHOD("set_mesh_normal_map", "mesh_normal_map"), &SpriteMesh::set_mesh_normal_map);
+	ClassDB::bind_method(D_METHOD("get_mesh_normal_map"), &SpriteMesh::get_mesh_normal_map);
+
+	ClassDB::bind_method(D_METHOD("set_selected_frame", "frame"), &SpriteMesh::set_selected_frame);
+	ClassDB::bind_method(D_METHOD("get_selected_frame"), &SpriteMesh::get_selected_frame);
+	ClassDB::bind_method(D_METHOD("set_frames_builder", "description"), &SpriteMesh::set_frames_builder);
+	ClassDB::bind_method(D_METHOD("get_frames_builder"), &SpriteMesh::get_frames_builder);
 
 	ClassDB::bind_method(D_METHOD("set_mesh_rotation", "mesh_rotation"), &SpriteMesh::set_mesh_rotation);
 	ClassDB::bind_method(D_METHOD("get_mesh_rotation"), &SpriteMesh::get_mesh_rotation);
@@ -388,12 +408,6 @@ void SpriteMesh::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_mesh_scale", "mesh_scale"), &SpriteMesh::set_mesh_scale);
 	ClassDB::bind_method(D_METHOD("get_mesh_scale"), &SpriteMesh::get_mesh_scale);
 
-	ClassDB::bind_method(D_METHOD("set_mesh_texture", "mesh_texture"), &SpriteMesh::set_mesh_texture);
-	ClassDB::bind_method(D_METHOD("get_mesh_texture"), &SpriteMesh::get_mesh_texture);
-
-	ClassDB::bind_method(D_METHOD("set_mesh_normal_map", "mesh_normal_map"), &SpriteMesh::set_mesh_normal_map);
-	ClassDB::bind_method(D_METHOD("get_mesh_normal_map"), &SpriteMesh::get_mesh_normal_map);
-
 	ClassDB::bind_method(D_METHOD("set_centered", "centered"), &SpriteMesh::set_centered);
 	ClassDB::bind_method(D_METHOD("is_centered"), &SpriteMesh::is_centered);
 
@@ -401,6 +415,10 @@ void SpriteMesh::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_offset"), &SpriteMesh::get_offset);
 
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "mesh", PROPERTY_HINT_RESOURCE_TYPE, "Mesh"), "set_mesh", "get_mesh");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "mesh_texture", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_mesh_texture", "get_mesh_texture");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "mesh_normal_map", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_mesh_normal_map", "get_mesh_normal_map");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "select_frame"), "set_selected_frame", "get_selected_frame");
+	ADD_PROPERTY(PropertyInfo(Variant::STRING, "frames_builder", PROPERTY_HINT_MULTILINE_TEXT, ""), "set_frames_builder", "get_frames_builder");
 
 	ADD_GROUP("Mesh Transform", "mesh_");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "mesh_centered"), "set_centered", "is_centered");
@@ -410,23 +428,24 @@ void SpriteMesh::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "mesh_rotation_y_degrees", PROPERTY_HINT_RANGE, "-360,360,0.1,or_lesser,or_greater", PROPERTY_USAGE_EDITOR), "set_mesh_rotation_y_degrees", "get_mesh_rotation_y_degrees");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "mesh_rotation_z_degrees", PROPERTY_HINT_RANGE, "-360,360,0.1,or_lesser,or_greater", PROPERTY_USAGE_EDITOR), "set_mesh_rotation_z_degrees", "get_mesh_rotation_z_degrees");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "mesh_scale"), "set_mesh_scale", "get_mesh_scale");
-	ADD_GROUP("", "");
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "mesh_texture", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_mesh_texture", "get_mesh_texture");
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "mesh_normal_map", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_mesh_normal_map", "get_mesh_normal_map");
 
 	ADD_SIGNAL(MethodInfo("texture_changed"));
 	ADD_SIGNAL(MethodInfo("mesh_changed"));
 }
 
 SpriteMesh::SpriteMesh() {
+
 	centered = true;
 	offset = Vector2(0, 0);
 	mesh_angle = Vector3(0, 0, 0);
 	mesh_scale = Vector3(1, 1, 1);
-	_mesh_xform.push_back(SurfInfo{ Basis(mesh_angle, mesh_scale), 1 });
+	selected_frame = 0;
+	frames_builder = "";
+	_mesh_xform = Basis(mesh_angle, mesh_scale);
 	_mesh_dirty = false;
 	_mesh_xform_dirty = false;
 	_mesh_active_surface = 0;
+	_mesh_debug = false;
 }
 
 SpriteMesh::~SpriteMesh() {
