@@ -101,6 +101,7 @@ def configure(env):
     env.Append(BUILDERS={"PICA_HEADER": env.Builder(action=build_shader_header, suffix=".h", src_suffix=".shbin")})
 
     env["bits"] = "32"
+    env["arch"] = "arm"
     env["no_thread_support"] = True
 
     env.Append(CPPPATH=["#platform/3ds"])
