@@ -29,6 +29,7 @@ def get_opts():
         ("ndk_platform", 'Target platform (android-<api>, e.g. "android-18")', "android-18"),
         EnumVariable("android_arch", "Target architecture", "armv7", ("armv7", "arm64v8", "x86", "x86_64")),
         BoolVariable("android_neon", "Enable NEON support (armv7 only)", True),
+        BoolVariable("android_rtti", "Enable rtti/exceptions support", False),
     ]
 
 
@@ -260,7 +261,7 @@ def configure(env):
     env.Append(CPPFLAGS=["-isystem", env["ANDROID_NDK_ROOT"] + "/sources/cxx-stl/llvm-libc++abi/include"])
 
     # Disable exceptions and rtti on non-tools (template) builds
-    if env["tools"]:
+    if env["tools"] or env["android_rtti"]:
         env.Append(CXXFLAGS=["-frtti"])
     else:
         env.Append(CXXFLAGS=["-fno-rtti", "-fno-exceptions"])

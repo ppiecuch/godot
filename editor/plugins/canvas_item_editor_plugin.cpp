@@ -58,8 +58,8 @@
 
 #ifdef MODULE_GD_VECTOR_GRAPHICS_ENABLED
 // forward declarations for Vector Graphics module:
-Node *createVectorSprite(Ref<Resource> p_resource);
-void configureVectorSprite(Node *p_child, Ref<Resource> p_texture);
+extern Node *createVectorSprite(Ref<Resource> p_resource);
+extern void configureVectorSprite(Node *p_child, Ref<Resource> p_texture);
 #endif
 
 #define get_bone_transformer(node) \

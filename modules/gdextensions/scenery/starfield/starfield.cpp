@@ -222,13 +222,13 @@ void Starfield::move(real_t p_delta, Vector2 p_movement) {
 			if (layer.star_size > 0 || layer.texture_id != STAR_POINT) {
 				int quad_origin = p;
 				if (wrapx || wrapy) {
-					// w[p] = position;                // +--+
+					// w[p] = position;        // +--+
 					w[++p] = position + sidex; // | /
 					w[++p] = position + sidey; // +
 
-					w[++p] = position + sidex; //    +
-					w[++p] = position + sidex + sidey; //  / |
-					w[++p] = position + sidey; // +--+
+					w[++p] = position + sidex; //           +
+					w[++p] = position + sidex + sidey; // / |
+					w[++p] = position + sidey; //        +--+
 				} else {
 					w[++p] += delta;
 					w[++p] += delta;

@@ -1529,11 +1529,15 @@ public:
 		tmpVec.swap(ptrVec);
 
 		while (!tmpVec.empty()) {
+#ifdef NO_SAFE_CAST
+			delete tmpVec.pop_back();
+#else
 			try {
 				delete tmpVec.pop_back();
 			} catch (...) {
 				assert(false);
 			}
+#endif
 		}
 	}
 

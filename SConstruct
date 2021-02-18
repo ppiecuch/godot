@@ -60,7 +60,7 @@ if os.name == "nt" and (platform_arg == "android" or ARGUMENTS.get("use_mingw", 
 elif platform_arg == "javascript":
     # Use generic POSIX build toolchain for Emscripten.
     custom_tools = ["cc", "c++", "ar", "link", "textfile", "zip"]
-if sys.platform == "darwin" and os.path.exists("site_scons/site_tools/xcode/__init__.py"):
+if sys.platform == "darwin" and platform_arg == "osx" and os.path.exists("site_scons/site_tools/xcode/__init__.py"):
     custom_tools = ["default", "xcode"]
 
 env_base = Environment(tools=custom_tools)
@@ -641,6 +641,8 @@ if selected_platform in platform_list:
 
     # build subdirs, the build order is dependent on link order.
 
+    SConscript("modules/SCsub")
+
     SConscript("core/SCsub")
     SConscript("servers/SCsub")
     SConscript("scene/SCsub")
@@ -648,7 +650,6 @@ if selected_platform in platform_list:
     SConscript("drivers/SCsub")
 
     SConscript("platform/SCsub")
-    SConscript("modules/SCsub")
     SConscript("main/SCsub")
 
     SConscript("platform/" + selected_platform + "/SCsub")  # build selected platform
