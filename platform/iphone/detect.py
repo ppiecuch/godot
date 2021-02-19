@@ -136,6 +136,7 @@ def configure(env):
             env.Append(CCFLAGS=["-fexceptions"])
         else:
             env.Append(CCFLAGS=["-fno-exceptions"])
+            env.Append(CPPDEFINES=["NO_EXCEPTIONS"])
 
     # Temp fix for ABS/MAX/MIN macros in iPhone SDK blocking compilation
     env.Append(CCFLAGS=["-Wno-ambiguous-macro"])

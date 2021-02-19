@@ -1529,7 +1529,7 @@ public:
 		tmpVec.swap(ptrVec);
 
 		while (!tmpVec.empty()) {
-#ifdef NO_SAFE_CAST
+#if defined(NO_SAFE_CAST) || defined(NO_EXCEPTIONS)
 			delete tmpVec.pop_back();
 #else
 			try {
