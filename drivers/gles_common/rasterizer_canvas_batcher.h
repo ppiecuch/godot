@@ -1290,7 +1290,8 @@ PREAMBLE(bool)::_prefill_line(RasterizerCanvas::Item::CommandLine *p_line, FillS
 
 		r_fill_state.curr_batch->type = line_batch_type;
 		r_fill_state.curr_batch->color = bcol;
-		r_fill_state.curr_batch->batch_texture_id = -1;
+		// cast is to stop sanitizer benign warning .. watch though in case destination type changes
+		r_fill_state.curr_batch->batch_texture_id = (uint16_t)-1;
 		r_fill_state.curr_batch->first_command = command_num;
 		r_fill_state.curr_batch->num_commands = 1;
 		//r_fill_state.curr_batch->first_quad = bdata.total_quads;
@@ -1902,7 +1903,7 @@ bool C_PREAMBLE::_prefill_rect(RasterizerCanvas::Item::CommandRect *rect, FillSt
 
 	// we need to treat color change separately because we need to count these
 	// to decide whether to switch on the fly to colored vertices.
-	if (!r_fill_state.curr_batch->color.equals(col)) {
+	if (!change_batch && !r_fill_state.curr_batch->color.equals(col)) {
 		change_batch = true;
 		bdata.total_color_changes++;
 	}

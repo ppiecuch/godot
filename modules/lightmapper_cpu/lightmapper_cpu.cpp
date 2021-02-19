@@ -251,7 +251,8 @@ bool LightmapperCPU::_parallel_run(int p_count, const String &p_description, Bak
 	td.count = p_count;
 	td.thread_func = p_thread_func;
 	td.userdata = p_userdata;
-	Thread *runner_thread = Thread::create(_thread_func_callback, &td);
+	Thread runner_thread;
+	runner_thread.start(_thread_func_callback, &td);
 
 	int progress = thread_progress;
 
@@ -263,8 +264,7 @@ bool LightmapperCPU::_parallel_run(int p_count, const String &p_description, Bak
 		progress = thread_progress;
 	}
 	thread_cancelled = cancelled;
-	Thread::wait_to_finish(runner_thread);
-	memdelete(runner_thread);
+	runner_thread.wait_to_finish();
 #endif
 
 	thread_cancelled = false;
@@ -1369,6 +1369,7 @@ LightmapperCPU::BakeError LightmapperCPU::bake(BakeQuality p_quality, bool p_use
 	if (parameters.environment_panorama.is_valid()) {
 		parameters.environment_panorama->lock();
 	}
+
 	for (unsigned int i = 0; i < mesh_instances.size(); i++) {
 
 		if (!mesh_instances[i].generate_lightmap) {
@@ -1389,6 +1390,7 @@ LightmapperCPU::BakeError LightmapperCPU::bake(BakeQuality p_quality, bool p_use
 			}
 		}
 	}
+
 	if (parameters.environment_panorama.is_valid()) {
 		parameters.environment_panorama->unlock();
 	}

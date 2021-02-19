@@ -897,13 +897,18 @@ float DynamicFont::draw_char_xform(RID p_canvas_item, const CharTransform &p_cha
 	if (!data_at_size.is_valid())
 		return 0;
 
+	int spacing = spacing_char;
+	if (p_char == ' ') {
+		spacing += spacing_space;
+	}
+
 	if (p_outline) {
 		if (outline_data_at_size.is_valid() && outline_cache_id.outline_size > 0) {
 			outline_data_at_size->draw_char(p_canvas_item, p_char_xform, p_pos, p_char, p_next, p_modulate * outline_color, fallback_outline_data_at_size, false, true); // Draw glpyh outline.
 		}
-		return data_at_size->draw_char(p_canvas_item, p_char_xform, p_pos, p_char, p_next, p_modulate, fallback_data_at_size, true, false) + spacing_char; // Return advance of the base glyph.
+		return data_at_size->draw_char(p_canvas_item, p_char_xform, p_pos, p_char, p_next, p_modulate, fallback_data_at_size, true, false) + spacing; // Return advance of the base glyph.
 	} else {
-		return data_at_size->draw_char(p_canvas_item, p_char_xform, p_pos, p_char, p_next, p_modulate, fallback_data_at_size, false, false) + spacing_char; // Draw base glyph and return advance.
+		return data_at_size->draw_char(p_canvas_item, p_char_xform, p_pos, p_char, p_next, p_modulate, fallback_data_at_size, false, false) + spacing; // Draw base glyph and return advance.
 	}
 }
 
@@ -1047,7 +1052,7 @@ void DynamicFont::_bind_methods() {
 	BIND_ENUM_CONSTANT(SPACING_SPACE);
 }
 
-Mutex *DynamicFont::dynamic_font_mutex = NULL;
+Mutex DynamicFont::dynamic_font_mutex;
 
 SelfList<DynamicFont>::List *DynamicFont::dynamic_fonts = NULL;
 
@@ -1061,29 +1066,22 @@ DynamicFont::DynamicFont() :
 	spacing_char = 0;
 	spacing_space = 0;
 	outline_color = Color(1, 1, 1);
-	if (dynamic_font_mutex) {
-		dynamic_font_mutex->lock();
-		dynamic_fonts->add(&font_list);
-		dynamic_font_mutex->unlock();
-	}
+	dynamic_font_mutex.lock();
+	dynamic_fonts->add(&font_list);
+	dynamic_font_mutex.unlock();
 }
 
 DynamicFont::~DynamicFont() {
-	if (dynamic_font_mutex) {
-		dynamic_font_mutex->lock();
-		dynamic_fonts->remove(&font_list);
-		dynamic_font_mutex->unlock();
-	}
+	dynamic_font_mutex.lock();
+	dynamic_fonts->remove(&font_list);
+	dynamic_font_mutex.unlock();
 }
 
 void DynamicFont::initialize_dynamic_fonts() {
 	dynamic_fonts = memnew(SelfList<DynamicFont>::List());
-	dynamic_font_mutex = Mutex::create();
 }
 
 void DynamicFont::finish_dynamic_fonts() {
-	memdelete(dynamic_font_mutex);
-	dynamic_font_mutex = NULL;
 	memdelete(dynamic_fonts);
 	dynamic_fonts = NULL;
 }
@@ -1092,8 +1090,7 @@ void DynamicFont::update_oversampling() {
 
 	Vector<Ref<DynamicFont> > changed;
 
-	if (dynamic_font_mutex)
-		dynamic_font_mutex->lock();
+	dynamic_font_mutex.lock();
 
 	SelfList<DynamicFont> *E = dynamic_fonts->first();
 	while (E) {
@@ -1121,8 +1118,7 @@ void DynamicFont::update_oversampling() {
 		E = E->next();
 	}
 
-	if (dynamic_font_mutex)
-		dynamic_font_mutex->unlock();
+	dynamic_font_mutex.unlock();
 
 	for (int i = 0; i < changed.size(); i++) {
 		changed.write[i]->emit_changed();

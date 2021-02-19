@@ -37,6 +37,12 @@
 
 #include <errno.h>
 
+#ifdef PULSEAUDIO_ENABLED
+extern "C" {
+extern int initialize_pulse();
+}
+#endif
+
 Error AudioDriverALSA::init_device() {
 	mix_rate = GLOBAL_GET("audio/mix_rate");
 	speaker_mode = SPEAKER_MODE_STEREO;
@@ -147,6 +153,15 @@ Error AudioDriverALSA::init_device() {
 }
 
 Error AudioDriverALSA::init() {
+#ifdef PULSEAUDIO_ENABLED
+	// On pulse enabled systems Alsa will silently use pulse.
+	// It doesn't matter if this fails as that likely means there is no pulse
+	initialize_pulse();
+#endif
+
+	if (initialize_asound()) {
+		return ERR_CANT_OPEN;
+	}
 
 	active = false;
 	thread_exited = false;
@@ -154,8 +169,7 @@ Error AudioDriverALSA::init() {
 
 	Error err = init_device();
 	if (err == OK) {
-		mutex = Mutex::create();
-		thread = Thread::create(AudioDriverALSA::thread_func, this);
+		thread.start(AudioDriverALSA::thread_func, this);
 	}
 
 	return err;
@@ -299,16 +313,12 @@ void AudioDriverALSA::set_device(String device) {
 
 void AudioDriverALSA::lock() {
 
-	if (!thread || !mutex)
-		return;
-	mutex->lock();
+	mutex.lock();
 }
 
 void AudioDriverALSA::unlock() {
 
-	if (!thread || !mutex)
-		return;
-	mutex->unlock();
+	mutex.unlock();
 }
 
 void AudioDriverALSA::finish_device() {
@@ -321,25 +331,13 @@ void AudioDriverALSA::finish_device() {
 
 void AudioDriverALSA::finish() {
 
-	if (thread) {
-		exit_thread = true;
-		Thread::wait_to_finish(thread);
-
-		memdelete(thread);
-		thread = NULL;
-
-		if (mutex) {
-			memdelete(mutex);
-			mutex = NULL;
-		}
-	}
+	exit_thread = true;
+	thread.wait_to_finish();
 
 	finish_device();
 }
 
 AudioDriverALSA::AudioDriverALSA() :
-		thread(NULL),
-		mutex(NULL),
 		pcm_handle(NULL),
 		device_name("Default"),
 		new_device("Default") {

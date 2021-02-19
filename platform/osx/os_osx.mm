@@ -38,7 +38,6 @@
 #include "drivers/gles2/rasterizer_gles2.h"
 #include "drivers/gles3/rasterizer_gles3.h"
 #include "main/main.h"
-#include "semaphore_osx.h"
 #include "servers/visual/visual_server_raster.h"
 
 #include <mach-o/dyld.h>
@@ -737,6 +736,15 @@ static void _mouseDownEvent(NSEvent *event, int index, int mask, bool pressed) {
 
 	NSPoint delta = NSMakePoint([event deltaX], [event deltaY]);
 	NSPoint mpos = [event locationInWindow];
+
+	if (OS_OSX::singleton->ignore_warp) {
+		// Discard late events, before warp
+		if (([event timestamp]) < OS_OSX::singleton->last_warp) {
+			return;
+		}
+		OS_OSX::singleton->ignore_warp = false;
+		return;
+	}
 
 	if (OS_OSX::singleton->mouse_mode == OS::MOUSE_MODE_CONFINED) {
 		// Discard late events
@@ -1518,8 +1526,6 @@ void OS_OSX::initialize_core() {
 	DirAccess::make_default<DirAccessOSX>(DirAccess::ACCESS_RESOURCES);
 	DirAccess::make_default<DirAccessOSX>(DirAccess::ACCESS_USERDATA);
 	DirAccess::make_default<DirAccessOSX>(DirAccess::ACCESS_FILESYSTEM);
-
-	SemaphoreOSX::make_default();
 }
 
 struct LayoutInfo {
@@ -3292,6 +3298,8 @@ void OS_OSX::set_mouse_mode(MouseMode p_mode) {
 		CGAssociateMouseAndMouseCursorPosition(true);
 	}
 
+	last_warp = [[NSProcessInfo processInfo] systemUptime];
+	ignore_warp = true;
 	warp_events.clear();
 	mouse_mode = p_mode;
 }

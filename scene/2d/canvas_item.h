@@ -116,7 +116,7 @@ private:
 		return mk;
 	}
 
-	static Mutex *material_mutex;
+	static Mutex material_mutex;
 	static SelfList<CanvasItemMaterial>::List *dirty_materials;
 	SelfList<CanvasItemMaterial> element;
 

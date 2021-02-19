@@ -37,12 +37,12 @@
 #include "core/os/thread.h"
 #include "servers/audio_server.h"
 
-#include <pulse/pulseaudio.h>
+#include "pulse-so_wrap.h"
 
 class AudioDriverPulseAudio : public AudioDriver {
 
-	Thread *thread;
-	Mutex *mutex;
+	Thread thread;
+	Mutex mutex;
 
 	pa_mainloop *pa_ml;
 	pa_context *pa_ctx;

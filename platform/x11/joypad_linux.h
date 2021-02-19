@@ -71,9 +71,12 @@ private:
 		void reset();
 	};
 
-	bool exit_udev;
-	Mutex *joy_mutex;
-	Thread *joy_thread;
+#ifdef UDEV_ENABLED
+	bool use_udev;
+#endif
+	SafeFlag exit_monitor;
+	Mutex joy_mutex;
+	Thread joy_thread;
 	InputDefault *input;
 	Joypad joypads[JOYPADS_MAX];
 	Vector<String> attached_devices;

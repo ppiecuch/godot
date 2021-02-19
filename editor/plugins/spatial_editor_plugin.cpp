@@ -75,6 +75,20 @@
 #define MIN_FOV 0.01
 #define MAX_FOV 179
 
+static Node *get_deepest_visible_node(Node *start_node, Node const *edited_scene) {
+	Node const *iterated_item = start_node;
+	Node *node = start_node;
+
+	while (iterated_item->get_owner() && iterated_item->get_owner() != edited_scene) {
+		if (!edited_scene->is_editable_instance(iterated_item->get_owner()))
+			node = iterated_item->get_owner();
+
+		iterated_item = iterated_item->get_owner();
+	}
+
+	return node;
+}
+
 void ViewportRotationControl::_notification(int p_what) {
 
 	if (p_what == NOTIFICATION_ENTER_TREE) {
@@ -532,11 +546,7 @@ ObjectID SpatialEditorViewport::_select_ray(const Point2 &p_pos, bool p_append, 
 			continue;
 
 		if (dist < closest_dist) {
-
-			item = Object::cast_to<Node>(spat);
-			while (item->get_owner() && item->get_owner() != edited_scene && !edited_scene->is_editable_instance(item->get_owner())) {
-				item = item->get_owner();
-			}
+			item = get_deepest_visible_node(Object::cast_to<Node>(spat), edited_scene);
 
 			closest = item->get_instance_id();
 			closest_dist = dist;
@@ -691,10 +701,7 @@ void SpatialEditorViewport::_select_region() {
 		if (!sp || _is_node_locked(sp))
 			continue;
 
-		Node *item = Object::cast_to<Node>(sp);
-		while (item->get_owner() && item->get_owner() != edited_scene && !edited_scene->is_editable_instance(item->get_owner())) {
-			item = item->get_owner();
-		}
+		Node *item = get_deepest_visible_node(Object::cast_to<Node>(sp), edited_scene);
 
 		// Replace the node by the group if grouped
 		if (item->is_class("Spatial")) {
@@ -1026,7 +1033,7 @@ void SpatialEditorViewport::_list_select(Ref<InputEventMouseButton> b) {
 
 	for (int i = 0; i < selection_results.size(); i++) {
 		Spatial *item = selection_results[i].item;
-		if (item != scene && item->get_owner() != scene && !scene->is_editable_instance(item->get_owner())) {
+		if (item != scene && item->get_owner() != scene && item != get_deepest_visible_node(item, scene)) {
 			//invalid result
 			selection_results.remove(i);
 			i--;
@@ -2201,7 +2208,7 @@ void SpatialEditorViewport::set_freelook_active(bool active_now) {
 
 void SpatialEditorViewport::scale_cursor_distance(real_t scale) {
 	real_t min_distance = MAX(camera->get_znear() * 4, ZOOM_FREELOOK_MIN);
-	real_t max_distance = MIN(camera->get_zfar() / 4, ZOOM_FREELOOK_MAX);
+	real_t max_distance = MIN(camera->get_zfar() / 2, ZOOM_FREELOOK_MAX);
 	if (unlikely(min_distance > max_distance)) {
 		cursor.distance = (min_distance + max_distance) / 2;
 	} else {
@@ -2214,7 +2221,7 @@ void SpatialEditorViewport::scale_cursor_distance(real_t scale) {
 
 void SpatialEditorViewport::scale_freelook_speed(real_t scale) {
 	real_t min_speed = MAX(camera->get_znear() * 4, ZOOM_FREELOOK_MIN);
-	real_t max_speed = MIN(camera->get_zfar() / 4, ZOOM_FREELOOK_MAX);
+	real_t max_speed = MIN(camera->get_zfar() / 2, ZOOM_FREELOOK_MAX);
 	if (unlikely(min_speed > max_speed)) {
 		freelook_speed = (min_speed + max_speed) / 2;
 	} else {
@@ -2702,7 +2709,7 @@ void SpatialEditorViewport::_draw() {
 				// Show speed
 
 				real_t min_speed = MAX(camera->get_znear() * 4, ZOOM_FREELOOK_MIN);
-				real_t max_speed = MIN(camera->get_zfar() / 4, ZOOM_FREELOOK_MAX);
+				real_t max_speed = MIN(camera->get_zfar() / 2, ZOOM_FREELOOK_MAX);
 				real_t scale_length = (max_speed - min_speed);
 
 				if (!Math::is_zero_approx(scale_length)) {
@@ -2722,7 +2729,7 @@ void SpatialEditorViewport::_draw() {
 				// Show zoom
 
 				real_t min_distance = MAX(camera->get_znear() * 4, ZOOM_FREELOOK_MIN);
-				real_t max_distance = MIN(camera->get_zfar() / 4, ZOOM_FREELOOK_MAX);
+				real_t max_distance = MIN(camera->get_zfar() / 2, ZOOM_FREELOOK_MAX);
 				real_t scale_length = (max_distance - min_distance);
 
 				if (!Math::is_zero_approx(scale_length)) {

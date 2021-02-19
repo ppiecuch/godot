@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  thread_windows.h                                                     */
+/*  GodotPluginInfoProvider.java                                         */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,41 +28,41 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef THREAD_WINDOWS_H
-#define THREAD_WINDOWS_H
+package org.godotengine.godot.plugin;
 
-#ifdef WINDOWS_ENABLED
+import androidx.annotation.NonNull;
 
-#include "core/os/thread.h"
-#include "core/script_language.h"
+import java.util.List;
+import java.util.Set;
 
-#include <windows.h>
+/**
+ * Provides the set of information expected from a Godot plugin.
+ */
+public interface GodotPluginInfoProvider {
 
-class ThreadWindows : public Thread {
+	/**
+	 * Returns the name of the plugin.
+	 */
+	@NonNull
+	String getPluginName();
 
-	ThreadCreateCallback callback;
-	void *user;
-	ID id;
-	HANDLE handle;
+	/**
+	 * Returns the list of methods to be exposed to Godot.
+	 */
+	@NonNull
+	List<String> getPluginMethods();
 
-	static Thread *create_thread_windows();
+	/**
+	 * Returns the list of signals to be exposed to Godot.
+	 */
+	@NonNull
+	Set<SignalInfo> getPluginSignals();
 
-	static DWORD WINAPI thread_callback(LPVOID userdata);
-
-	static Thread *create_func_windows(ThreadCreateCallback p_callback, void *, const Settings &);
-	static ID get_thread_id_func_windows();
-	static void wait_to_finish_func_windows(Thread *p_thread);
-
-	ThreadWindows();
-
-public:
-	virtual ID get_id() const;
-
-	static void make_default();
-
-	~ThreadWindows();
-};
-
-#endif
-
-#endif
+	/**
+	 * Returns the paths for the plugin's gdnative libraries (if any).
+	 *
+	 * The paths must be relative to the 'assets' directory and point to a '*.gdnlib' file.
+	 */
+	@NonNull
+	Set<String> getPluginGDNativeLibrariesPaths();
+}

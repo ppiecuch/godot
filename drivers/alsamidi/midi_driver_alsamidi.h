@@ -38,13 +38,13 @@
 #include "core/os/thread.h"
 #include "core/vector.h"
 
-#include <alsa/asoundlib.h>
+#include "../alsa/asound-so_wrap.h"
 #include <stdio.h>
 
 class MIDIDriverALSAMidi : public MIDIDriver {
 
-	Thread *thread;
-	Mutex *mutex;
+	Thread thread;
+	Mutex mutex;
 
 	Vector<snd_rawmidi_t *> connected_inputs;
 
