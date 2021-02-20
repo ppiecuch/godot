@@ -47,7 +47,12 @@ class AudioStreamPreviewGenerator : public Node {
 		Ref<AudioStreamPlayback> playback;
 		volatile bool generating;
 		ObjectID id;
-		Thread *thread;
+		Thread* thread = nullptr;
+		~Preview() {
+			if (thread) {
+				thread->wait_to_finish();
+			}
+		}
 	};
 
 	Map<ObjectID, Preview> previews;

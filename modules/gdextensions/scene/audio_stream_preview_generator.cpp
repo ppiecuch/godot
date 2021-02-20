@@ -103,7 +103,6 @@ Ref<AudioStreamPreview> AudioStreamPreviewGenerator::generate_preview(const Ref<
 	}
 
 	//no preview exists
-
 	previews[p_stream->get_instance_id()] = Preview();
 
 	Preview *preview = &previews[p_stream->get_instance_id()];
@@ -134,7 +133,7 @@ Ref<AudioStreamPreview> AudioStreamPreviewGenerator::generate_preview(const Ref<
 	preview->preview->length = len_s;
 
 	if (preview->playback.is_valid())
-		preview->thread = Thread::create(_preview_thread, preview);
+		preview->thread->start(_preview_thread, preview);
 
 	return preview->preview;
 }
@@ -153,10 +152,7 @@ void AudioStreamPreviewGenerator::_notification(int p_what) {
 		List<ObjectID> to_erase;
 		for (Map<ObjectID, Preview>::Element *E = previews.front(); E; E = E->next()) {
 			if (!E->get().generating) {
-				if (E->get().thread) {
-					Thread::wait_to_finish(E->get().thread);
-					E->get().thread = NULL;
-				}
+				E->get().thread->wait_to_finish();
 				if (!ObjectDB::get_instance(E->key())) { //no longer in use, get rid of preview
 					to_erase.push_back(E->key());
 				}
