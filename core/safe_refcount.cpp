@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  main.h                                                               */
+/*  safe_refcount.cpp                                                    */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,35 +28,18 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef MAIN_H
-#define MAIN_H
+#if defined(DEBUG_ENABLED) && !defined(NO_THREADS)
 
-#include "core/error_list.h"
-#include "core/os/thread.h"
-#include "core/typedefs.h"
+#include "safe_refcount.h"
 
-class Main {
+#include "core/error_macros.h"
 
-	static void print_help(const char *p_binary);
-	static uint64_t last_ticks;
-	static uint32_t frames;
-	static uint32_t frame;
-	static bool force_redraw_requested;
-	static int iterating;
+// On C++14 we don't have std::atomic::is_always_lockfree, so this is the best we can do
+void check_lockless_atomics() {
+	// Doing the check for the types we actually care about
+	if (!std::atomic<uint32_t>{}.is_lock_free() || !std::atomic<uint64_t>{}.is_lock_free() || !std::atomic_bool{}.is_lock_free()) {
+		WARN_PRINT("Your compiler doesn't seem to support lockless atomics. Performance will be degraded. Please consider upgrading to a different or newer compiler.");
+	}
+}
 
-public:
-	static bool is_project_manager();
-
-	static Error setup(const char *execpath, int argc, char *argv[], bool p_second_phase = true);
-	static Error setup2(Thread::ID p_main_tid_override = 0);
-	static bool start();
-
-	static bool iteration();
-	static void force_redraw();
-
-	static bool is_iterating();
-
-	static void cleanup(bool p_force = false);
-};
-
-#endif // MAIN_H
+#endif

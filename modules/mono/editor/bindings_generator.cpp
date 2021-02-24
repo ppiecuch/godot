@@ -39,6 +39,7 @@
 #include "core/os/file_access.h"
 #include "core/os/os.h"
 #include "core/ucaps.h"
+#include "main/main.h"
 
 #include "../glue/cs_glue_version.gen.h"
 #include "../godotsharp_defs.h"
@@ -3127,6 +3128,7 @@ void BindingsGenerator::handle_cmdline_args(const List<String> &p_cmdline_args) 
 
 		if (!bindings_generator.initialized) {
 			ERR_PRINTS("Failed to initialize the bindings generator");
+			Main::cleanup(true);
 			::exit(0);
 		}
 
@@ -3149,6 +3151,7 @@ void BindingsGenerator::handle_cmdline_args(const List<String> &p_cmdline_args) 
 		}
 
 		// Exit once done
+		Main::cleanup(true);
 		::exit(0);
 	}
 }

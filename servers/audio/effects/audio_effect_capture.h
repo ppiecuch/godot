@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  main.h                                                               */
+/*  audio_effect_capture.h                                               */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,35 +28,62 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef MAIN_H
-#define MAIN_H
+#ifndef AUDIO_EFFECT_CAPTURE_H
+#define AUDIO_EFFECT_CAPTURE_H
 
-#include "core/error_list.h"
-#include "core/os/thread.h"
-#include "core/typedefs.h"
+#include "core/engine.h"
+#include "core/math/audio_frame.h"
+#include "core/pool_vector.h"
+#include "core/reference.h"
+#include "core/ring_buffer.h"
+#include "servers/audio/audio_effect.h"
+#include "servers/audio_server.h"
 
-class Main {
+class AudioEffectCapture;
 
-	static void print_help(const char *p_binary);
-	static uint64_t last_ticks;
-	static uint32_t frames;
-	static uint32_t frame;
-	static bool force_redraw_requested;
-	static int iterating;
+class AudioEffectCaptureInstance : public AudioEffectInstance {
+	GDCLASS(AudioEffectCaptureInstance, AudioEffectInstance);
+	friend class AudioEffectCapture;
+	Ref<AudioEffectCapture> base;
 
 public:
-	static bool is_project_manager();
-
-	static Error setup(const char *execpath, int argc, char *argv[], bool p_second_phase = true);
-	static Error setup2(Thread::ID p_main_tid_override = 0);
-	static bool start();
-
-	static bool iteration();
-	static void force_redraw();
-
-	static bool is_iterating();
-
-	static void cleanup(bool p_force = false);
+	virtual void process(const AudioFrame *p_src_frames, AudioFrame *p_dst_frames, int p_frame_count);
+	virtual bool process_silence() const;
 };
 
-#endif // MAIN_H
+class AudioEffectCapture : public AudioEffect {
+	GDCLASS(AudioEffectCapture, AudioEffect)
+	friend class AudioEffectCaptureInstance;
+
+	RingBuffer<AudioFrame> buffer;
+	uint64_t discarded_frames;
+	uint64_t pushed_frames;
+	float buffer_length_seconds;
+	bool buffer_initialized;
+
+protected:
+	static void _bind_methods();
+
+public:
+	AudioEffectCapture() {
+		discarded_frames = 0;
+		pushed_frames = 0;
+		buffer_length_seconds = 0.1f;
+		buffer_initialized = false;
+	}
+	virtual Ref<AudioEffectInstance> instance();
+
+	void set_buffer_length(float p_buffer_length_seconds);
+	float get_buffer_length();
+
+	bool can_get_buffer(int p_frames) const;
+	PoolVector2Array get_buffer(int p_len);
+	void clear_buffer();
+
+	int get_frames_available() const;
+	int64_t get_discarded_frames() const;
+	int get_buffer_length_frames() const;
+	int64_t get_pushed_frames() const;
+};
+
+#endif // AUDIO_EFFECT_CAPTURE_H
