@@ -35,21 +35,13 @@
 
 #if !defined(NO_THREADS)
 
-#include <shared_mutex>
-
 #if ((defined(_MSVC_LANG) && _MSVC_LANG < 201402L) || __cplusplus < 201402L)
+#include "simple_shared_mutex.h"
 namespace std {
-	class shared_timed_mutex {
-		std::timed_mutex mutex;
-	public:
-		void lock() { mutex.lock(); }
-		bool try_lock() { return mutex.try_lock(); }
-		void lock_shared() { mutex.lock(); }
-		bool try_lock_shared() { return mutex.try_lock(); }
-		void unlock() { return mutex.unlock(); }
-		void unlock_shared() { mutex.unlock(); }
-	};
+typedef c11::SharedTimedMutex shared_timed_mutex;
 }
+#else
+#include <shared_mutex>
 #endif
 
 class RWLock {
