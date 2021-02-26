@@ -74,6 +74,8 @@
 #include "scene/round_progress.h"
 #include "scene/sprite_mesh.h"
 #include "scene/touch_button.h"
+#include "scene/texture_panning.h"
+#include "scene/nixie_font.h"
 
 #include "scenery/spherical_waves/spherical_waves.h"
 #include "scenery/starfield/starfield_2d.h"
@@ -164,6 +166,8 @@ void register_gdextensions_types() {
 #endif
 	ClassDB::register_class<SphericalWaves>();
 	ClassDB::register_class<Starfield2D>();
+	ClassDB::register_class<TexturePanning>();
+	ClassDB::register_class<NixieFont>();
 #ifdef GD_CUSTOM_SPIDER_ANIM
 	ClassDB::register_class<Spider>();
 	ClassDB::register_class<InsectsManagerInstance>();
