@@ -44,6 +44,12 @@
 
 #include "inc/gd_core.h"
 
+#ifdef DEBUG_ENABLED
+# define DEBUG_PRINT(m_text) print_line(m_text);
+#else
+# define DEBUG_PRINT(m_text)
+#endif
+
 typedef struct {
 	const char *image;
 	const unsigned char *pixels;
@@ -125,40 +131,53 @@ void TextConsole::load_font(FontSize p_font) {
 
 	/* 16x32 chars */ for (int loop = 0; loop < 512; ++loop) // loop through all 512 chars
 	{
-		real_t cx = (real_t)(loop % 16) / 16.0f; // X position of current character
-		real_t cy = (real_t)(loop / 16) / 32.0f; // Y position of current character
+		real_t cx = (loop % 16) / 16.0; // X position of current character
+		real_t cy = (loop / 16) / 32.0; // Y position of current character
 
 		const int col = loop % 16, row = loop / 16, ch = row * 16 + col;
 
 		_chars[ch].t[0] = Point2(cx, cy); /* 0, 0 */
-		_chars[ch].t[1] = Point2(cx, cy + 0.03125f); /* 0, 1 */
-		_chars[ch].t[2] = Point2(cx + 0.0625f, cy); /* 1, 0 */
-		_chars[ch].t[3] = Point2(cx + 0.0625f, cy + 0.03125f); /* 1, 1 */
+		_chars[ch].t[1] = Point2(cx, cy + 0.03125); /* 0, 1 */
+		_chars[ch].t[2] = Point2(cx + 0.0625, cy); /* 1, 0 */
+		_chars[ch].t[3] = Point2(cx + 0.0625, cy + 0.03125); /* 1, 1 */
 	}
 }
 
-void TextConsole::resize(const Viewport *p_view) {
-	ERR_FAIL_COND(p_view == nullptr);
+bool TextConsole::resize(const Viewport *p_view) {
+	ERR_FAIL_COND_V(p_view == nullptr, false);
 
-	const Size2i size = p_view->get_size();
+	const Size2i size = p_view->get_visible_rect().size;
 	// screen size rounded to font size
 	const int screen_width = size.width - size.width % int(_font_size.width);
 	const int screen_height = size.height - size.height % int(_font_size.height);
 	// console size:
-	resize(screen_width / _font_size.width, screen_height / _font_size.height);
+	return resize(screen_width / _font_size.width, screen_height / _font_size.height);
 }
 
-void TextConsole::resize(int p_width, int p_height) {
-	ERR_FAIL_COND(p_width < 1);
-	ERR_FAIL_COND(p_height < 1);
+bool TextConsole::resize(int p_cols, int p_rows) {
+	ERR_FAIL_COND_V(p_cols < 1, false);
+	ERR_FAIL_COND_V(p_rows < 1, false);
 
-	_con_size.width = p_width;
-	_con_size.height = p_height;
+	_con_size.width = p_cols;
+	_con_size.height = p_rows;
 
 	if (_screen)
 		memdelete_arr(_screen);
 	_screen = memnew_arr(cell, _con_size.width * _con_size.height);
 	memset(_screen, 0, sizeof(cell) * _con_size.width * _con_size.height);
+	_cursor_pos = Point2i(0, 0);
+
+	DEBUG_PRINT(vformat("New console resized: %dx%d", p_cols, p_rows));
+
+	logl(BOX_DDR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DDL, COLOR_LIGHTGRAY);
+	logl(BOX_DUD "   Godot Engine debug console   " BOX_DUD, COLOR_LIGHTGRAY);
+	logl(BOX_DUD "     KomSoft Oprogramowanie     " BOX_DUD, COLOR_LIGHTGRAY);
+	logl(BOX_DUR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DUL, COLOR_LIGHTGRAY);
+	logl("\020 " VERSION_FULL_NAME);
+	logl("\020 Hello!");
+	logf(vformat("Console: %dx%d", p_cols, p_rows));
+
+	return true;
 }
 
 static Color palette[16] = {
@@ -389,21 +408,11 @@ void TextConsole::logv(const Array &p_log) {
 
 TextConsole::TextConsole() {
 
+	transparent_color_index = 0;
 	_dirty_screen = false;
 	_cursor_pos = Point2i(0, 0);
 	_default_bg_color_index = COLOR_BLACK, _default_fg_color_index = COLOR_WHITE;
 	_screen = 0;
-
-	transparent_color_index = 0;
-
-	resize(80, 25);
-	logl(BOX_DDR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DDL, COLOR_LIGHTGRAY);
-	logl(BOX_DUD "   Godot Engine debug console   " BOX_DUD, COLOR_LIGHTGRAY);
-	logl(BOX_DUD "     KomSoft Oprogramowanie     " BOX_DUD, COLOR_LIGHTGRAY);
-	logl(BOX_DUR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DUL, COLOR_LIGHTGRAY);
-	logl("\020 " VERSION_FULL_NAME);
-	logl("\020 Hello!");
-	logf("2021");
 }
 
 TextConsole::~TextConsole() {
@@ -439,11 +448,15 @@ void ConsoleInstance::_notification(int p_notification) {
 
 	switch (p_notification) {
 
-		case NOTIFICATION_READY: {
+		case NOTIFICATION_ENTER_TREE: {
 
 			if (!console.is_valid()) {
-				console = Ref<TextConsole>(memnew(TextConsole()));
+
+				console = Ref<TextConsole>(memnew(TextConsole));
 				console->load_font(TextConsole::DOS_8x12);
+				Viewport *viewport = get_viewport();
+				if (!viewport || !console->resize(viewport))
+					console->resize(80, 25);
 			}
 		} break;
 
@@ -461,13 +474,6 @@ void ConsoleInstance::console_msg(const String &p_msg) {
 
 	// parse control characters
 	_process_codes(p_msg);
-	update();
-}
-
-void ConsoleInstance::console_resize(const Viewport *p_view) {
-	ERR_FAIL_COND(!console.is_valid());
-
-	console->resize(p_view);
 	update();
 }
 

@@ -116,8 +116,8 @@ struct TextConsole : public Reference {
 	void _scroll_up(int p_scroll_lines = 1);
 
 	void load_font(FontSize p_font);
-	void resize(int p_width, int p_height);
-	void resize(const Viewport *p_view);
+	bool resize(int p_cols, int p_rows);
+	bool resize(const Viewport *p_view);
 	void draw(RID p_canvas_item, const Transform2D &p_xform);
 	void set_pixel_ratio(real_t p_scale);
 	void set_transparent_color_index(ColorIndex p_transparent_color_index);

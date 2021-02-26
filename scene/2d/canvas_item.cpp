@@ -601,9 +601,6 @@ void CanvasItem::_notification(int p_what) {
 
 				_console = memnew(ConsoleInstance);
 				_console->set_name("text_console");
-				if (Viewport *viewport = get_viewport()) {
-					_console->console_resize(viewport);
-				}
 				add_child(_console);
 			}
 #endif
@@ -641,6 +638,9 @@ void CanvasItem::_notification(int p_what) {
 				C = NULL;
 			}
 			global_invalid = true;
+#ifdef MODULE_GDEXTENSIONS_ENABLED
+			_console = nullptr;
+#endif
 		} break;
 		case NOTIFICATION_DRAW:
 		case NOTIFICATION_TRANSFORM_CHANGED: {
