@@ -130,7 +130,6 @@ void Starfield::_update_mesh() {
 			mesh_array[VS::ARRAY_TEX_UV] = layer.uv;
 
 			if (_mesh_textured.is_null())
-				_mesh_textured = Ref<ArrayMesh>(memnew(ArrayMesh));
 			_mesh_textured->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array, Array(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
 		} else {
 
@@ -278,13 +277,16 @@ void Starfield::_push_quad(PoolVector2Array &array, Point2 origin, real_t size) 
 	const Vector2 sidex(size, 0);
 	const Vector2 sidey(0, size);
 
-	array.push_back(origin); // +--+
-	array.push_back(origin + sidex); // | /
-	array.push_back(origin + sidey); // +
+	// 0--1,2
+	// | // |
+	// 2,4--3
+	array.push_back(origin);
+	array.push_back(origin + sidex);
+	array.push_back(origin + sidey);
 
-	array.push_back(origin + sidex); //    +
-	array.push_back(origin + sidex + sidey); //  / |
-	array.push_back(origin + sidey); // +--+
+	array.push_back(origin + sidex);
+	array.push_back(origin + sidex + sidey);
+	array.push_back(origin + sidey);
 }
 
 void Starfield::_insert_quad(PoolVector2Array &array, int position, Point2 origin, real_t size) {
@@ -294,13 +296,16 @@ void Starfield::_insert_quad(PoolVector2Array &array, int position, Point2 origi
 
 	auto w = array.write();
 
-	w[position++] = origin; // +--+
-	w[position++] = origin + sidex; // | /
-	w[position++] = origin + sidey; // +
+	// 0--1,2
+	// | // |
+	// 2,4--3
+	w[position++] = origin;
+	w[position++] = origin + sidex;
+	w[position++] = origin + sidey;
 
-	w[position++] = origin + sidex; //    +
-	w[position++] = origin + sidex + sidey; //  / |
-	w[position++] = origin + sidey; // +--+
+	w[position++] = origin + sidex;
+	w[position++] = origin + sidex + sidey;
+	w[position++] = origin + sidey;
 }
 
 void Starfield::regenerate(layerid_t p_layer) {
@@ -485,6 +490,9 @@ void Starfield::ready(Node2D *p_owner) {
 		static const Vector2 sideu(1, 0);
 		static const Vector2 sidev(0, 1);
 
+		// 0--1,2
+		// | // |
+		// 2,4--3
 		PoolVector2Array uv;
 		uv.push_back(uv_origin + uv_size * sidev);
 		uv.push_back(uv_origin + uv_size);
@@ -528,12 +536,6 @@ void Starfield::ready(Node2D *p_owner) {
 			_texture_cache[STAR12_TEXTURE_FRAME4] = uv;
 		}
 	}
-	if (_mesh_material.is_null()) {
-		_mesh_material = Ref<CanvasItemMaterial>(memnew(CanvasItemMaterial));
-		_mesh_material->set_blend_mode(CanvasItemMaterial::BLEND_MODE_ADD);
-		_mesh_material->set_light_mode(CanvasItemMaterial::LIGHT_MODE_UNSHADED);
-	}
-	p_owner->set_material(_mesh_material);
 }
 
 Starfield::Starfield() {

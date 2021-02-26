@@ -99,7 +99,6 @@ public:
 private:
 	bool _needs_refresh;
 	Ref<ArrayMesh> _mesh_solid, _mesh_textured;
-	Ref<CanvasItemMaterial> _mesh_material;
 
 	struct StarsLayer {
 		int num_stars;

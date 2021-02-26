@@ -31,8 +31,8 @@
 // -*- C++ -*-
 //
 
-#ifndef _STARFIELD_2D_H_
-#define _STARFIELD_2D_H_
+#ifndef GD_STARFIELD_2D_H
+#define GD_STARFIELD_2D_H
 
 #include "core/reference.h"
 #include "scene/2d/node_2d.h"
@@ -85,4 +85,4 @@ protected:
 	void _notification(int p_what);
 };
 
-#endif /* _STARFIELD_2D_H_ */
+#endif /* GD_STARFIELD_2D_H */
