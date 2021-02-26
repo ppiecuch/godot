@@ -363,7 +363,7 @@ void Label::_notification(int p_what) {
 
 		if (is_transition_active()) {
 
-			real_t dt = get_process_delta_time();
+			const real_t dt = get_process_delta_time();
 
 			if (_transition_controller->update(dt, ease_func_table[transition_ease])) {
 
@@ -410,9 +410,9 @@ int Label::get_longest_line_width(const String &s) const {
 	real_t max_line_width = 0;
 	real_t line_width = 0;
 
-	for (int i = 0; i < xl_text.size(); i++) {
+	for (int i = 0; i < s.size(); i++) {
 
-		CharType current = xl_text[i];
+		CharType current = s[i];
 		if (uppercase)
 			current = String::char_uppercase(current);
 
@@ -426,7 +426,7 @@ int Label::get_longest_line_width(const String &s) const {
 			}
 		} else {
 
-			real_t char_width = font->get_char_size(current, xl_text[i + 1]).width + horizontal_spacing;
+			real_t char_width = font->get_char_size(current, s[i + 1]).width + horizontal_spacing;
 			line_width += char_width;
 		}
 	}
