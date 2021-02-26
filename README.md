@@ -24,6 +24,7 @@ Some of the things you may found usefull in this repository:
   * Embedded _DOS-like_ console [modules/gdextensions/debugconsole](modules/gdextensions/debugconsole)
   * Extension of ```Label``` with transition effects [scene/gui/label_transitions.h](scene/gui/label_transitions.h)
   * *Starfield* component [modules/gdextensions/scenery/starfield/starfield.h](modules/gdextensions/scenery/starfield/starfield.h)
+  * _Nixie_-like ```Label``` animation: [modules/gdextensions/scene/nixie_font.h](modules/gdextensions/scene/nixie_font.h)
   * _BMF_ XML bitmap fonts reader [scene/resources/font.cpp](https://github.com/ppiecuch/godot/blob/master/scene/resources/font.cpp#L211)
 
 Some of the modules I am also developing or maintaining every now and then:
