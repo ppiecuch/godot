@@ -45,9 +45,9 @@
 #include "inc/gd_core.h"
 
 #ifdef DEBUG_ENABLED
-# define DEBUG_PRINT(m_text) print_line(m_text);
+#define DEBUG_PRINT(m_text) print_line(m_text);
 #else
-# define DEBUG_PRINT(m_text)
+#define DEBUG_PRINT(m_text)
 #endif
 
 typedef struct {

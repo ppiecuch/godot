@@ -130,7 +130,7 @@ void Starfield::_update_mesh() {
 			mesh_array[VS::ARRAY_TEX_UV] = layer.uv;
 
 			if (_mesh_textured.is_null())
-			_mesh_textured->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array, Array(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
+				_mesh_textured->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array, Array(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
 		} else {
 
 			if (_mesh_solid.is_null())

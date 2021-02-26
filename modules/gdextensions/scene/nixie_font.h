@@ -45,7 +45,6 @@ private:
 	int animation_speed;
 	int broken_tube_effect;
 
-
 	Ref<ImageTexture> _texture;
 	bool _dirty;
 	Size2 _char_size;

@@ -38,8 +38,8 @@ static PoolVector<Rect2> _build_tiles(Size2 grid_size, unsigned int total_frames
 
 	PoolVector<Rect2> frames;
 	const real_t cw = tex_size.width / grid_size.width, ch = tex_size.height / grid_size.height;
-	for (int fr = 0; fr < grid_size.height  /* rows */; fr++) {
-		for (int fc = 0; fc < grid_size.width  /* cols */; fc++) {
+	for (int fr = 0; fr < grid_size.height /* rows */; fr++) {
+		for (int fc = 0; fc < grid_size.width /* cols */; fc++) {
 			frames.push_back(Rect2(tex_origin.x + (grid_size.width - fc - 1) * cw, tex_origin.y + fr * ch, cw, ch));
 			if (frames.size() == total_frames) break;
 		}
@@ -204,21 +204,21 @@ Size2 NixieFont::_calculate_text_rect(const String &s, int *visible_chars) const
 }
 
 void NixieFont::_push_texture(PoolVector2Array &array, const Rect2 &quad) {
-		static const Vector2 sideu(1, 0);
-		static const Vector2 sidev(0, 1);
+	static const Vector2 sideu(1, 0);
+	static const Vector2 sidev(0, 1);
 
-		const Point2 &uv_origin = quad.position;
-		const Size2 &uv_size = quad.size;
+	const Point2 &uv_origin = quad.position;
+	const Size2 &uv_size = quad.size;
 
-		// 0--1,2
-		// | // |
-		// 2,4--3
-		array.push_back(uv_origin);
-		array.push_back(uv_origin + uv_size * sideu);
-		array.push_back(uv_origin + uv_size * sidev);
-		array.push_back(uv_origin + uv_size * sideu);
-		array.push_back(uv_origin + uv_size);
-		array.push_back(uv_origin + uv_size * sidev);
+	// 0--1,2
+	// | // |
+	// 2,4--3
+	array.push_back(uv_origin);
+	array.push_back(uv_origin + uv_size * sideu);
+	array.push_back(uv_origin + uv_size * sidev);
+	array.push_back(uv_origin + uv_size * sideu);
+	array.push_back(uv_origin + uv_size);
+	array.push_back(uv_origin + uv_size * sidev);
 }
 
 void NixieFont::_push_quad(PoolVector2Array &array, const Point2 &origin, const Size2 &size) {
@@ -238,7 +238,7 @@ void NixieFont::_push_quad(PoolVector2Array &array, const Point2 &origin, const 
 	array.push_back(origin + sidey);
 }
 
-#define _push_quad_color(arr, c) arr.push_multi(6, Color(1, 1, 1, c/255.0));
+#define _push_quad_color(arr, c) arr.push_multi(6, Color(1, 1, 1, c / 255.0));
 
 void NixieFont::_update_animation() {
 
@@ -248,7 +248,8 @@ void NixieFont::_update_animation() {
 
 		_control.resize(_visible_chars);
 		auto w = _control.write();
-		int index = 0; for (int i = 0; i < _control.size(); i++) {
+		int index = 0;
+		for (int i = 0; i < _control.size(); i++) {
 			w[index].phase = 0;
 			w[index].age = -(Math::rand() & 0x7f); // random initial delay
 			w[index].alt = 0;
@@ -266,16 +267,19 @@ void NixieFont::_update_animation() {
 
 	const int char_w = _char_size.width;
 	const int char_h = _char_size.height;
-	Point2 pos(0 ,0);
-	int control = 0; for(int p = 0; p < draw_text.size(); p++) {
+	Point2 pos(0, 0);
+	int control = 0;
+	for (int p = 0; p < draw_text.size(); p++) {
 		const CharType &chr = draw_text[p];
 
 		if (chr == ' ') {
-			pos.x += char_w; continue; // space
+			pos.x += char_w;
+			continue; // space
 		}
 		if (chr == '\n') {
 			pos.x = 0;
-			pos.y += char_h; continue; // new line
+			pos.y += char_h;
+			continue; // new line
 		}
 		if (chr < 32) {
 			continue; // unknown
@@ -293,20 +297,20 @@ void NixieFont::_update_animation() {
 		} else {
 			if (broken_tube_effect) {
 				// display "broken" tube effect for some frames
-				const char chr = ctl.alt ? ctl.alt : 0x10 + ( rand() % 10 );
+				const char chr = ctl.alt ? ctl.alt : 0x10 + (rand() % 10);
 				const Rect2 &tex_coords = _frames[chr];
 				const uint8_t alpha = LightBlinkingPattern[ctl.phase].alpha >> 2;
 				_push_quad(v, pos, _char_size);
 				_push_texture(uv, tex_coords);
 				_push_quad_color(c, alpha);
-				switch(ctl.alt_age--) {
+				switch (ctl.alt_age--) {
 					case 0:
 						ctl.alt = chr;
 						break;
 					default:
 						if (ctl.alt_age == -broken_tube_effect) {
 							ctl.alt = 0;
-							ctl.alt_age = 0x80 + ( (rand() & 0xff) << 1 ); // schedule next event
+							ctl.alt_age = 0x80 + ((rand() & 0xff) << 1); // schedule next event
 						}
 						break;
 				}
@@ -323,10 +327,10 @@ void NixieFont::_update_animation() {
 		}
 
 		control++;
-    }
+	}
 
 	// build final mesh
-    if (v.size() > 0) {
+	if (v.size() > 0) {
 		Array mesh_array;
 		mesh_array.resize(VS::ARRAY_MAX);
 		mesh_array[VS::ARRAY_VERTEX] = v;
@@ -484,5 +488,4 @@ NixieFont::NixieFont() {
 }
 
 NixieFont::~NixieFont() {
-
 }
