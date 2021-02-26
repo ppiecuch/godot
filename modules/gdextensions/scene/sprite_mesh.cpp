@@ -31,6 +31,7 @@
 #include <string>
 #include <vector>
 
+#include "core/io/json.h"
 #include "core/math/math_funcs.h"
 #include "core/math/vector2.h"
 #include "scene/3d/mesh_instance.h"
@@ -38,6 +39,7 @@
 #include "scene/resources/mesh_data_tool.h"
 
 #include "sprite_mesh.h"
+#include "tinyexpr.h"
 
 // References:
 // -----------
@@ -311,10 +313,78 @@ int SpriteMesh::get_selected_frame() const {
 	return selected_frame;
 }
 
-void SpriteMesh::set_frames_builder(const String &p_frames) {
+void SpriteMesh::set_frames_builder(const String &p_input) {
 
-	if (frames_builder != p_frames) {
-		frames_builder = p_frames;
+	if (frames_builder != p_input) {
+		if (!p_input.empty()) {
+			Variant input;
+			String err_message;
+			int err_line;
+			if (OK != JSON::parse(p_input, input, err_message, err_line)) {
+				WARN_PRINT(vformat("Failed to parse input JSON data - error at line %d: %s", err_line, err_message));
+				return;
+			}
+			if (input.get_type() == Variant::ARRAY) {
+				// process frames
+				_frames.clear();
+				frames_builder = p_input;
+				Array frames = input;
+				int frame_nr = 0;
+				for (int f = 0; f < frames.size(); f++) {
+					if (input.get_type() == Variant::ARRAY) {
+						Dictionary frame = frames[f];
+						int rep = 1;
+						if (frame.has("repeat")) {
+						}
+						real_t rotation[3] = { 0, 0, 0 };
+						real_t scaling[3] = { 0, 0, 0 };
+						for (int loop = 0; loop < rep; ++loop) {
+							if (frame.has("rotate")) {
+								if (frame["rotate"].get_type() == Variant::ARRAY) {
+									Array rotates = frame["rotate"];
+									for (int c = 0; c < 3; c++) {
+										switch (rotates[c].get_type()) {
+											case Variant::REAL: {
+												rotation[c] = real_t(rotates[c]);
+											} break;
+											case Variant::STRING: {
+												String expr_str = rotates[c];
+												te_variable vars[] = { { "repcount", &rep }, { "repcounter", &loop } };
+												int err;
+												if (te_expr *expr = te_compile(expr_str.utf8().get_data(), vars, 2, &err)) {
+													rotation[c] = te_eval(expr);
+													te_free(expr);
+												} else {
+													WARN_PRINT(vformat("Rotate expresion parse error at %d", err));
+												}
+											} break;
+											default: {
+												WARN_PRINT("rotate component can be float or String only");
+											}
+										}
+									}
+								} else {
+									WARN_PRINT("rotate needs to be an Array");
+								}
+							}
+							if (frame.has("scale")) {
+								if (frame["scale"].get_type() == Variant::ARRAY) {
+								} else {
+									WARN_PRINT("scale needs to be an Array");
+								}
+							}
+
+							printf("frame %d) rotate=[%0.2f %0.2f %0.2f] scale=[%0.2f %0.2f %0.2f]", ++frame_nr,
+									rotation[0], rotation[1], rotation[2], scaling[0], scaling[1], scaling[2]);
+						}
+					} else {
+						WARN_PRINT(vformat("Unknown format of frame %d. Skipping", f));
+					}
+				}
+			} else {
+				WARN_PRINT("Input JSON is not an Array.");
+			}
+		}
 	}
 }
 

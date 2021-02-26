@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GLSPRITEMESH_H
-#define GLSPRITEMESH_H
+#ifndef GD_SPRITE_MESH_H
+#define GD_SPRITE_MESH_H
 
 #include "core/math/vector3.h"
 #include "scene/2d/sprite.h"
@@ -53,14 +53,26 @@ private:
 
 	int selected_frame;
 	// Description of frames to be precalculated:
-	// frame rotate="x,y,z" scale="x,y,z"
-	// repeat 10 rotate="360/repcount,y,z" scale="repcounter*10,y,z"
+	// ------------------------------------------
+	// [
+	//    {
+	//       "rotate":[10, 10, 10],
+	//       "scale":[10, 10, 10]
+	//    },
+	//    {
+	//       "repeat":"10",
+	//       "rotate":["sin(repcounter)", 10, 10],
+	//       "scale":["360/repcount", 10, 10]
+	//    }
+	// ]
 	String frames_builder;
 
-	struct {
+	struct _FrameInfo {
 		Basis xform;
 		int surface_nr;
-	} _frames;
+		AABB bbox;
+	};
+	Vector<_FrameInfo> _frames;
 
 	Array _mesh_data;
 	Basis _mesh_xform;
@@ -110,7 +122,7 @@ public:
 	void set_selected_frame(int p_frame);
 	int get_selected_frame() const;
 
-	void set_frames_builder(const String &p_frames);
+	void set_frames_builder(const String &p_input);
 	String get_frames_builder() const;
 
 	void set_mesh_rotation(Vector3 p_radians);
@@ -132,12 +144,6 @@ public:
 	void set_offset(const Point2 &p_offset);
 	Point2 get_offset() const;
 
-	Basis new_snapshot();
-	void set_snapshot(int p_snapshot);
-	void delete_snapshot(int p_snapshot);
-	Basis get_snapshot_transform() const;
-	int get_snapshot_count() const;
-
 	Rect2 get_rect() const;
 	virtual Rect2 get_anchorable_rect() const;
 
@@ -145,4 +151,4 @@ public:
 	~SpriteMesh();
 };
 
-#endif // GLSPRITEMESH_H
+#endif // GD_SPRITE_MESH_H
