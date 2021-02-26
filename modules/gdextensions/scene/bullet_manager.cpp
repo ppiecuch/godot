@@ -95,10 +95,12 @@ void BulletManagerBulletType::set_texture(const Ref<Texture> &p_texture) {
 
 	if (texture.is_valid())
 		texture->add_change_receptor(this);
-	/*
+
+#ifdef TOOLS_ENABLED
 	update();
 	emit_signal("texture_changed");
-	item_rect_changed();*/
+	item_rect_changed();
+#endif
 	_change_notify("texture");
 }
 
@@ -119,10 +121,11 @@ void BulletManagerBulletType::set_normal_map(const Ref<Texture> &p_normal_map) {
 
 	if (normal_map.is_valid())
 		normal_map->add_change_receptor(this);
-	/*
+#ifdef TOOLS_ENABLED
 	update();
 	emit_signal("texture_changed");
-	item_rect_changed();*/
+	item_rect_changed();
+#endif
 	_change_notify("normal_map");
 }
 
@@ -266,10 +269,8 @@ void BulletManagerBulletType::_update_cached_rects() {
 	Rect2 base_rect;
 
 	if (region) {
-		//r_filter_clip = region_filter_clip;
 		base_rect = region_rect;
 	} else {
-		//r_filter_clip = false;
 		base_rect = Rect2(0, 0, texture->get_width(), texture->get_height());
 	}
 	Size2 frame_size = base_rect.size / Size2(hframes, vframes);
@@ -287,11 +288,6 @@ void BulletManagerBulletType::_update_cached_rects() {
 	}
 
 	_cached_dst_rect = Rect2(dest_offset, frame_size);
-
-	/*if (hflip)
-		r_dst_rect.size.x = -r_dst_rect.size.x;
-	if (vflip)
-		r_dst_rect.size.y = -r_dst_rect.size.y;*/
 }
 
 void BulletManagerBulletType::_shape_changed() {
@@ -431,12 +427,6 @@ void BulletManagerBulletType::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_region_rect"), &BulletManagerBulletType::get_region_rect);
 	ClassDB::bind_method(D_METHOD("set_rotate_visual", "enabled"), &BulletManagerBulletType::set_rotate_visual);
 	ClassDB::bind_method(D_METHOD("is_rotating_visual"), &BulletManagerBulletType::is_rotating_visual);
-	/*ClassDB::bind_method(D_METHOD("set_region", "enabled"), &Sprite::set_region);
-	ClassDB::bind_method(D_METHOD("is_region"), &Sprite::is_region);
-	ClassDB::bind_method(D_METHOD("set_region_rect", "rect"), &Sprite::set_region_rect);
-	ClassDB::bind_method(D_METHOD("get_region_rect"), &Sprite::get_region_rect);
-	ClassDB::bind_method(D_METHOD("set_region_filter_clip", "enabled"), &Sprite::set_region_filter_clip);
-	ClassDB::bind_method(D_METHOD("is_region_filter_clip_enabled"), &Sprite::is_region_filter_clip_enabled);*/
 
 	//PHYSICS
 	ClassDB::bind_method(D_METHOD("_body_inout"), &BulletManagerBulletType::_body_inout);
@@ -503,8 +493,6 @@ void BulletManager::_notification(int p_what) {
 
 		case NOTIFICATION_READY: {
 			set_physics_process(true);
-			//set_as_toplevel(true);
-			//VS::get_singleton()->canvas_item_set_z_index(get_canvas_item(), z_index);
 		} break;
 		case NOTIFICATION_DRAW: {
 			if (Engine::get_singleton()->is_editor_hint()) {
