@@ -36,8 +36,8 @@
 #ifndef C11_SHARED_MUTEX_H
 #define C11_SHARED_MUTEX_H
 
-#include <mutex>
 #include <condition_variable>
+#include <mutex>
 
 namespace c11 {
 

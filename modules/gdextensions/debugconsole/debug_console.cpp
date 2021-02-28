@@ -36,9 +36,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <sstream>
 
 #include "core/version.h"
 #include "scene/resources/mesh.h"
@@ -73,14 +73,14 @@ constexpr EmbedImageItem embed_debug_font[] = {
 };
 
 namespace Figlet {
-	constexpr Banner *fig_font_mapping[] = {
-		&future,
-		&calvins,
-		&ansiregular,
-		&dosrebel,
-		&maxiwi,
-		&maxii,
-	};
+constexpr Banner *fig_font_mapping[] = {
+	&future,
+	&calvins,
+	&ansiregular,
+	&dosrebel,
+	&maxiwi,
+	&maxii,
+};
 }
 
 static PoolByteArray _poolbytearray_from_data(const uint8_t *bytes, size_t bytes_size, int bytes_channels, Image::Format dest_format) {
@@ -183,11 +183,14 @@ bool TextConsole::resize(int p_cols, int p_rows) {
 	logl("\020 " VERSION_FULL_NAME);
 	logl(vformat("\020 %s", OS::get_singleton()->get_video_driver_name(OS::get_singleton()->get_current_video_driver())));
 	logl(vformat("\020 Console: %dx%d", p_cols, p_rows));
-	logf(FIG_FUTURE, "Processing now 0 1 2 3 4 5", COLOR_GREEN);
-	logf(FIG_MAXIWI, "Hello!");
-	logf(FIG_MAXII, "Running 0 1 2 3 4 5", COLOR_RED);
-	logf(FIG_ANSI_REGULAR, "Warning!");
-	logf(FIG_DOS_REBEL, "60 FPS");
+
+	//logf(FIG_FUTURE, "Processing now 0 1 2 3 4 5", COLOR_GREEN);
+	//logf(FIG_MAXIWI, "Hello!");
+	//logf(FIG_MAXII, "Running 0 1 2 3 4 5", COLOR_RED);
+	//logf(FIG_ANSI_REGULAR, "Warning!");
+	//logf(FIG_DOS_REBEL, "60 FPS");
+
+	logf(FIG_MAXII, "Hello!", COLOR_BLUE);
 
 	return true;
 }
@@ -368,7 +371,7 @@ void TextConsole::logf(FigFontFace p_face, const String &p_msg, ColorIndex foreg
 	std::stringstream ss;
 	Figlet::fig_font_mapping[p_face]->print(&p_msg.ascii()[0], ss);
 	std::string line;
-	while(std::getline(ss, line, '\n')) {
+	while (std::getline(ss, line, '\n')) {
 		logl(line.c_str(), foreground, background);
 	}
 }
@@ -380,8 +383,8 @@ void TextConsole::logv(const Array &p_log) {
 		const int foreground = int(log_msg.pop_front());
 		const int background = int(log_msg.pop_front());
 		logl(msg,
-			 foreground == COLOR_DEFAULT ? _default_fg_color_index : ColorIndex(foreground),
-			 background == COLOR_DEFAULT ? _default_bg_color_index : ColorIndex(background));
+				foreground == COLOR_DEFAULT ? _default_fg_color_index : ColorIndex(foreground),
+				background == COLOR_DEFAULT ? _default_bg_color_index : ColorIndex(background));
 	}
 }
 

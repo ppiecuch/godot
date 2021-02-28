@@ -1,3 +1,32 @@
+/*************************************************************************/
+/*  figlet_font.h                                                        */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
 
 /*
 Copyright (c) 2014, Enrico Bertolazzi (email: enrico.bertolazzi@unitn.it)
@@ -32,7 +61,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 // check for bugged compiler
 #ifdef _MSC_VER
-  #define EMBED_FIGLET_USE_VISUAL_STUDIO
+#define EMBED_FIGLET_USE_VISUAL_STUDIO
 #endif
 
 // http://ruletheweb.co.uk/figlet/
@@ -198,138 +227,147 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef FIGLET_FONT_H
 #define FIGLET_FONT_H
 
-#include <iostream>
 #include <stdint.h>
+#include <iostream>
 
 /*! \brief
  * Collects structures and classes for banner generation
  */
 namespace Figlet {
 
-  using namespace std;
+using namespace std;
 
-  typedef std::basic_ostream<char> ostream_type;
+typedef std::basic_ostream<char> ostream_type;
 
-  static unsigned const maxHeight    = 11;  //!< maximum allowed (lines) height of the font
-  static unsigned const maxLenght    = 256; //!< maximum number of characters x line of the banner
-  static unsigned const maxTableSize = 256; //!< maximum number of allowed character x font
+static unsigned const maxHeight = 11; //!< maximum allowed (lines) height of the font
+static unsigned const maxLenght = 256; //!< maximum number of characters x line of the banner
+static unsigned const maxTableSize = 256; //!< maximum number of allowed character x font
 
-  //! Structure used to store a charater of the font
-  typedef struct {
-    unsigned short nchar;              //!< character (ascii) number
-    uint8_t        lspaces[maxHeight]; //!< number of spaces on the left side x line
-    uint8_t        rspaces[maxHeight]; //!< number of spaces on the right side x line
-    char const *   rows[maxHeight];    //!< charater definition
-  } FontFiglet;
+//! Structure used to store a charater of the font
+typedef struct {
+	unsigned short nchar; //!< character (ascii) number
+	uint8_t lspaces[maxHeight]; //!< number of spaces on the left side x line
+	uint8_t rspaces[maxHeight]; //!< number of spaces on the right side x line
+	char const *rows[maxHeight]; //!< charater definition
+} FontFiglet;
 
-  //! Available way to print a string, see \ref printmode
-  typedef enum {
-    FIGLET_SMUSHED=0,
-    FIGLET_PACKED,
-    FIGLET_FULLWIDTH,
-    FIGLET_MONOSPACED
-  } PrintMode;
+//! Available way to print a string, see \ref printmode
+typedef enum {
+	FIGLET_SMUSHED = 0,
+	FIGLET_PACKED,
+	FIGLET_FULLWIDTH,
+	FIGLET_MONOSPACED
+} PrintMode;
 
-  //! Available way to print a frames string, see \ref framemode
-  typedef enum { FIGLET_SINGLE=0, FIGLET_DOUBLE } FrameMode;
+//! Available way to print a frames string, see \ref framemode
+typedef enum { FIGLET_SINGLE = 0,
+	FIGLET_DOUBLE } FrameMode;
 
-  //! Class implementing the "figlet" algorithm
-  class Banner {
+//! Class implementing the "figlet" algorithm
+class Banner {
 
-    FontFiglet const * characters; //!< pointer to the font structures
-    char       const   Hardblank;  //!< character used for the "hardblank" in the font definition
-    unsigned   const   Height;     //!< vertical dimension (lines) of the font
-    unsigned           Width;      //!< width of the charater M used in Monospaced print
-    unsigned   const   FontMaxLen; //!< maximum width of the letters of the font
-    unsigned   const   FontSize;   //!< total number of characters in the font
-    uint8_t            rspaces[maxHeight]; //!< extra right spaces availables after the last insertion
-    char               lines[maxHeight][maxLenght]; //!< lines buffer 
-    char               smush[maxHeight];            //!< charater used in the "smushing" algorithm
-    unsigned short     charToTable[maxTableSize];   //!< map ascii character to font structure
-    unsigned short     charWidth[maxTableSize];     //!< size width of each charater of the font
-    unsigned           charPosition;                //!< position of last inserted character
+	FontFiglet const *characters; //!< pointer to the font structures
+	char const Hardblank; //!< character used for the "hardblank" in the font definition
+	unsigned const Height; //!< vertical dimension (lines) of the font
+	unsigned Width; //!< width of the charater M used in Monospaced print
+	unsigned const FontMaxLen; //!< maximum width of the letters of the font
+	unsigned const FontSize; //!< total number of characters in the font
+	uint8_t rspaces[maxHeight]; //!< extra right spaces availables after the last insertion
+	char lines[maxHeight][maxLenght]; //!< lines buffer
+	char smush[maxHeight]; //!< charater used in the "smushing" algorithm
+	unsigned short charToTable[maxTableSize]; //!< map ascii character to font structure
+	unsigned short charWidth[maxTableSize]; //!< size width of each charater of the font
+	unsigned charPosition; //!< position of last inserted character
 
-    const char       * mappingFrom;                 //!< map from set of these characters
-    const char       * mappingTo;                   //!< to these characters
+	const char *mappingFrom; //!< map from set of these characters
+	const char *mappingTo; //!< to these characters
 
-    PrintMode          printMode; //!< the type of printing mode used
+	PrintMode printMode; //!< the type of printing mode used
 
-    Banner const & operator = ( Banner const & );
-    Banner( Banner const & );
+	Banner const &operator=(Banner const &);
+	Banner(Banner const &);
 
-    //! evaluate smushing rules for 2 characters, return '\0' if no rules apply
-    char smushingRules( char left, char right ) const;
+	//! evaluate smushing rules for 2 characters, return '\0' if no rules apply
+	char smushingRules(char left, char right) const;
 
-    bool pushMonospaced( unsigned c );
-    bool pushFullWidth( unsigned c );
-    bool pushPacked( unsigned c );
-    bool pushSmushed( unsigned c );
-    void fillForPrint( char const message[] );
+	bool pushMonospaced(unsigned c);
+	bool pushFullWidth(unsigned c);
+	bool pushPacked(unsigned c);
+	bool pushSmushed(unsigned c);
+	void fillForPrint(char const message[]);
 
-  public:
-
-    //! Constructor of `Banner` class
-    /*!
+public:
+	//! Constructor of `Banner` class
+	/*!
     :|: \param characters none
     :|: \param Hardblank  none
     :|: \param Height     none
     :|: \param FontMaxLen none
     :|: \param FontSize   none
     \*/
-    explicit
-    Banner( FontFiglet const * characters,
-            char               Hardblank,
-            unsigned           Height,
-            unsigned           FontMaxLen,
-            unsigned           FontSize,
-            PrintMode          PrintMode = FIGLET_PACKED,
-            const char       * MappingFrom = 0,
-            const char       * MappingTo = 0 );
+	explicit Banner(FontFiglet const *characters,
+			char Hardblank,
+			unsigned Height,
+			unsigned FontMaxLen,
+			unsigned FontSize,
+			PrintMode PrintMode = FIGLET_PACKED,
+			const char *MappingFrom = 0,
+			const char *MappingTo = 0);
 
-    //! initialize Banner class
-    void init();
+	//! initialize Banner class
+	void init();
 
-    //! Set print mode to `monospaced`, see \ref printmode
-    void setMonospaced() { printMode = FIGLET_MONOSPACED; }
-    Banner &monospaced() { setMonospaced(); return *this; }
+	//! Set print mode to `monospaced`, see \ref printmode
+	void setMonospaced() { printMode = FIGLET_MONOSPACED; }
+	Banner &monospaced() {
+		setMonospaced();
+		return *this;
+	}
 
-    //! Set print mode to `full width`, see \ref printmode
-    void setFullWidth() { printMode = FIGLET_FULLWIDTH; }
-    Banner &fullWidth() { setFullWidth(); return *this; }
+	//! Set print mode to `full width`, see \ref printmode
+	void setFullWidth() { printMode = FIGLET_FULLWIDTH; }
+	Banner &fullWidth() {
+		setFullWidth();
+		return *this;
+	}
 
-    //! Set print mode to `packed`, see \ref printmode
-    void setPacked() { printMode = FIGLET_PACKED; }
-    Banner &packed() { setPacked(); return *this; }
+	//! Set print mode to `packed`, see \ref printmode
+	void setPacked() { printMode = FIGLET_PACKED; }
+	Banner &packed() {
+		setPacked();
+		return *this;
+	}
 
-    //! Set print mode to `smushed` (figlet default), see \ref printmode
-    void setSmushed() { printMode = FIGLET_SMUSHED; }
-    Banner &smushed() { setSmushed(); return *this; }
+	//! Set print mode to `smushed` (figlet default), see \ref printmode
+	void setSmushed() { printMode = FIGLET_SMUSHED; }
+	Banner &smushed() {
+		setSmushed();
+		return *this;
+	}
 
-    //! Print large letters of string `message` on stream `s`, see \ref printmode
-    unsigned
-    print(
-      char const     message[],
-      ostream_type & s        = cout,
-      char const     top[]    = "",
-      char const     bottom[] = ""
-    );
+	//! Print large letters of string `message` on stream `s`, see \ref printmode
+	unsigned
+	print(
+			char const message[],
+			ostream_type &s = cout,
+			char const top[] = "",
+			char const bottom[] = "");
 
-    //! \ref framemode
-    void
-    printFramed(
-      char const     message[],
-      ostream_type & s  = cout,
-      FrameMode      fm = FIGLET_SINGLE
-    );
-  };
+	//! \ref framemode
+	void
+	printFramed(
+			char const message[],
+			ostream_type &s = cout,
+			FrameMode fm = FIGLET_SINGLE);
+};
 
-  extern Banner future;      //!< instance `Banner` class using figlet font `future`
-  extern Banner calvins;     //!< instance `Banner` class using figlet font `calvins`
-  extern Banner maxii;       //!< instance `Banner` class using figlet font `maxii`
-  extern Banner maxiwi;      //!< instance `Banner` class using figlet font `maxiwi`
-  extern Banner dosrebel;    //!< instance `Banner` class using figlet font `dosrebel`
-  extern Banner ansiregular; //!< instance `Banner` class using figlet font `ansiregular`
-}
+extern Banner future; //!< instance `Banner` class using figlet font `future`
+extern Banner calvins; //!< instance `Banner` class using figlet font `calvins`
+extern Banner maxii; //!< instance `Banner` class using figlet font `maxii`
+extern Banner maxiwi; //!< instance `Banner` class using figlet font `maxiwi`
+extern Banner dosrebel; //!< instance `Banner` class using figlet font `dosrebel`
+extern Banner ansiregular; //!< instance `Banner` class using figlet font `ansiregular`
+} // namespace Figlet
 
 #endif // FIGLET_FONT_H
 
