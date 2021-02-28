@@ -196,6 +196,9 @@ void Label::_notification(int p_what) {
 					}
 
 				} break;
+				default: {
+					WARN_PRINT("Invalid valign enumeration.");
+				}
 			}
 		}
 
@@ -255,6 +258,9 @@ void Label::_notification(int p_what) {
 
 					x_ofs = int(size.width - style->get_margin(MARGIN_RIGHT) - (taken + spaces * space_w));
 				} break;
+				default: {
+					WARN_PRINT("Invalid align enumeration.");
+				}
 			}
 
 			float y_ofs = style->get_offset().y;
@@ -690,7 +696,7 @@ void Label::_clear_pending_animations() { // reset animation
 }
 
 void Label::set_align(Align p_align) {
-	ERR_FAIL_INDEX((int)p_align, 4);
+	ERR_FAIL_INDEX((int)p_align, AlignCount);
 
 	align = p_align;
 	update();
@@ -702,7 +708,7 @@ Label::Align Label::get_align() const {
 }
 
 void Label::set_valign(VAlign p_align) {
-	ERR_FAIL_INDEX((int)p_align, 4);
+	ERR_FAIL_INDEX((int)p_align, VAlignCount);
 
 	valign = p_align;
 	update();

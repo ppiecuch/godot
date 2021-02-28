@@ -61,7 +61,8 @@ public:
 		ALIGN_LEFT,
 		ALIGN_CENTER,
 		ALIGN_RIGHT,
-		ALIGN_FILL
+		ALIGN_FILL,
+		AlignCount
 	};
 
 	enum VAlign {
@@ -69,7 +70,8 @@ public:
 		VALIGN_TOP,
 		VALIGN_CENTER,
 		VALIGN_BOTTOM,
-		VALIGN_FILL
+		VALIGN_FILL,
+		VAlignCount
 	};
 
 	enum TransitionEffect {
