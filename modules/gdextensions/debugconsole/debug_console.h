@@ -86,7 +86,16 @@ struct TextConsole : public Reference {
 		DOS_8x8,
 		DOS_7x9,
 		DOS_4x6,
-		DOS_FONT_MAX,
+		DosFontCount,
+	};
+	enum FigFontFace {
+		FIG_FUTURE,
+		FIG_CALVIS_S,
+		FIG_ANSI_REGULAR,
+		FIG_DOS_REBEL,
+		FIG_MAXIWI,
+		FIG_MAXII,
+		FigFontFaceCount,
 	};
 	enum ColorIndex {
 		COLOR_BLACK,
@@ -105,14 +114,15 @@ struct TextConsole : public Reference {
 		COLOR_LIGHTMAGENTA,
 		COLOR_YELLOW,
 		COLOR_WHITE,
-		COLOR_MAX = COLOR_WHITE,
+		COLOR_TRANSPARENT,
 		COLOR_DEFAULT,
+		COLOR_MAX_VALID = COLOR_TRANSPARENT,
+		COLOR_COUNT = COLOR_DEFAULT
 	};
 
 	void _update_mesh();
 	Point2i _write(const String &p_msg, Point2i pos, ColorIndex foreground, ColorIndex background);
-	Point2i _putl(const String &p_msg, Point2i pos, ColorIndex foreground, ColorIndex background);
-	Point2i _putf(const String &p_msg, Point2i pos, ColorIndex foreground, ColorIndex background);
+	Point2i _put(const String &p_msg, Point2i pos, ColorIndex foreground, ColorIndex background);
 	void _scroll_up(int p_scroll_lines = 1);
 
 	void load_font(FontSize p_font);
@@ -124,8 +134,8 @@ struct TextConsole : public Reference {
 
 	void logl(const String &p_msg);
 	void logl(const String &p_msg, ColorIndex foreground, ColorIndex background = COLOR_BLACK);
-	void logf(const String &p_msg);
-	void logf(const String &p_msg, ColorIndex foreground, ColorIndex background = COLOR_BLACK);
+	void logf(FigFontFace p_face, const String &p_msg);
+	void logf(FigFontFace p_face, const String &p_msg, ColorIndex foreground, ColorIndex background = COLOR_BLACK);
 	void logv(const Array &p_log);
 
 	TextConsole();
@@ -149,7 +159,6 @@ struct TextConsole : public Reference {
 		Point2 t[4];
 	} _chars[512];
 	real_t pixel_scale;
-	int transparent_color_index;
 };
 
 class ConsoleInstance : public CanvasItem {
@@ -190,5 +199,6 @@ public:
 };
 
 VARIANT_ENUM_CAST(TextConsole::ColorIndex);
+VARIANT_ENUM_CAST(TextConsole::FigFontFace);
 
 #endif // DEBUG_CONSOLE_H
