@@ -31,33 +31,7 @@
 /*
 Copyright (c) 2014, Enrico Bertolazzi (email: enrico.bertolazzi@unitn.it)
 All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are
-met:
-
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in
-      the documentation and/or other materials provided with the distribution
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
 */
-
-//
-// file: figlet_font.h
-//
 
 // check for bugged compiler
 #ifdef _MSC_VER
@@ -140,15 +114,18 @@ POSSIBILITY OF SUCH DAMAGE.
 
   No initialization files are necessary.
   The fonts are hardware embedded in the library.
-  The available fonts are:
+  The available fonts (modified by P.P.) are:
 
+  - Future
   - Calvin S
   - ANSI Regular
   - DOS Rebel
   - maxiwi
+  - maxii
 
-  A simple ruby script permits to convert figlet .flf files
-  to structures which can be embedded in the library.
+  A simple ruby script permits to convert figlet .flf
+  (and some .tlf - P.P.) files to structures which can
+  be embedded in the library.
 
   - \ref printmode
   - \ref framemode
@@ -234,8 +211,6 @@ POSSIBILITY OF SUCH DAMAGE.
  * Collects structures and classes for banner generation
  */
 namespace Figlet {
-
-using namespace std;
 
 typedef std::basic_ostream<char> ostream_type;
 
@@ -349,7 +324,7 @@ public:
 	unsigned
 	print(
 			char const message[],
-			ostream_type &s = cout,
+			ostream_type &s = std::cout,
 			char const top[] = "",
 			char const bottom[] = "");
 
@@ -357,7 +332,7 @@ public:
 	void
 	printFramed(
 			char const message[],
-			ostream_type &s = cout,
+			ostream_type &s = std::cout,
 			FrameMode fm = FIGLET_SINGLE);
 };
 
@@ -370,7 +345,3 @@ extern Banner ansiregular; //!< instance `Banner` class using figlet font `ansir
 } // namespace Figlet
 
 #endif // FIGLET_FONT_H
-
-//
-// eof: figlet_font.h
-//

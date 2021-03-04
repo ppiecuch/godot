@@ -130,7 +130,6 @@ struct TextConsole : public Reference {
 	bool resize(const Viewport *p_view);
 	void draw(RID p_canvas_item, const Transform2D &p_xform);
 	void set_pixel_ratio(real_t p_scale);
-	void set_transparent_color_index(ColorIndex p_transparent_color_index);
 
 	void logl(const String &p_msg);
 	void logl(const String &p_msg, ColorIndex foreground, ColorIndex background = COLOR_BLACK);

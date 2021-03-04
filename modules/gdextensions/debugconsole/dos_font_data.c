@@ -28,4 +28,4 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "dos_font_data_8.txt"
+#include "dos_font_data_8.h"

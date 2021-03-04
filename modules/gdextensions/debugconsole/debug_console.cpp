@@ -44,7 +44,7 @@
 #include "scene/resources/mesh.h"
 #include "scene/resources/texture.h"
 
-#include "inc/gd_core.h"
+#include "common/gd_core.h"
 
 #ifdef DEBUG_ENABLED
 #define DEBUG_PRINT(m_text) print_line(m_text);
@@ -177,20 +177,21 @@ bool TextConsole::resize(int p_cols, int p_rows) {
 	DEBUG_PRINT(vformat("New console resized: %dx%d", p_cols, p_rows));
 
 	logl(BOX_DDR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DDL, COLOR_LIGHTGRAY);
-	logl(BOX_DUD "   Godot Engine debug console   " BOX_DUD, COLOR_LIGHTGRAY);
-	logl(BOX_DUD "     KomSoft Oprogramowanie     " BOX_DUD, COLOR_LIGHTGRAY);
+	logl(BOX_DUD "   \x01Godot Engine\x01 debug console   " BOX_DUD, COLOR_LIGHTGRAY);
+	logl(BOX_DUD "    \xfeKomSoft Oprogramowanie\xfe    " BOX_DUD, COLOR_LIGHTGRAY);
 	logl(BOX_DUR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DLR BOX_DUL, COLOR_LIGHTGRAY);
 	logl("\020 " VERSION_FULL_NAME);
 	logl(vformat("\020 %s", OS::get_singleton()->get_video_driver_name(OS::get_singleton()->get_current_video_driver())));
 	logl(vformat("\020 Console: %dx%d", p_cols, p_rows));
 
-	//logf(FIG_FUTURE, "Processing now 0 1 2 3 4 5", COLOR_GREEN);
+	logf(FIG_FUTURE, "Processing now 0 1 2 3 4 5", COLOR_GREEN);
+	logf(FIG_CALVIS_S, "processsing now 0 1 2 3 4 5", COLOR_RED);
 	//logf(FIG_MAXIWI, "Hello!");
 	//logf(FIG_MAXII, "Running 0 1 2 3 4 5", COLOR_RED);
 	//logf(FIG_ANSI_REGULAR, "Warning!");
 	//logf(FIG_DOS_REBEL, "60 FPS");
 
-	logf(FIG_MAXII, "Hello!", COLOR_BLUE);
+	//logf(FIG_MAXII, "Hello!", COLOR_BLUE);
 
 	return true;
 }
@@ -220,9 +221,15 @@ Point2i TextConsole::_write(const String &p_msg, Point2i pos, ColorIndex foregro
 	ERR_FAIL_COND_V(pos.x >= _con_size.width, pos);
 	ERR_FAIL_COND_V(pos.y >= _con_size.height, pos);
 
-	CharString ascii = p_msg.ascii();
+	// \x01 is invert marker
+	bool inv = false;
+	const CharString ascii = p_msg.ascii();
 	for (int i = 0; i < ascii.size(); ++i) {
-		const cell c = { ascii[i], foreground, background, 0 };
+		if (ascii[i] == '\x01') {
+			inv = !inv;
+			continue;
+		}
+		const cell c = { ascii[i], foreground, background, inv };
 		_screen[pos.y * _con_size.width + pos.x] = c;
 		pos.x++;
 		if (pos.x == _con_size.width)
@@ -241,9 +248,15 @@ Point2i TextConsole::_put(const String &p_msg, Point2i pos, ColorIndex foregroun
 	ERR_FAIL_COND_V(pos.x >= _con_size.width, pos);
 	ERR_FAIL_COND_V(pos.y >= _con_size.height, pos);
 
-	CharString ascii = p_msg.ascii();
+	// \x01 is invert marker
+	bool inv = false;
+	const CharString ascii = p_msg.ascii();
 	for (int i = 0; i < ascii.length(); ++i) {
-		const cell c = { ascii[i], foreground, background, 0 };
+		if (ascii[i] == '\x01') {
+			inv = !inv;
+			continue;
+		}
+		const cell c = { ascii[i], foreground, background, inv };
 		if (pos.x < _con_size.width) {
 			_screen[pos.y * _con_size.width + pos.x] = c;
 			pos.x++;
