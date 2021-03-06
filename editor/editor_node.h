@@ -475,6 +475,7 @@ private:
 	void _get_scene_metadata(const String &p_file);
 	void _update_title();
 	void _update_scene_tabs();
+	void _refresh_viewport_if_needed();
 	void _version_control_menu_option(int p_idx);
 	void _close_messages();
 	void _show_messages();

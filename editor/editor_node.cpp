@@ -279,6 +279,18 @@ void EditorNode::disambiguate_filenames(const Vector<String> p_full_paths, Vecto
 	}
 }
 
+void EditorNode::_refresh_viewport_if_needed() {
+
+	// PP: refresh 2d editor (to remove selection, that
+	// is still visible when curent scene is closed)
+	if (editor_table.size() - 1 >= EDITOR_2D) {
+		if (editor_plugin_screen == editor_table[EDITOR_2D]) {
+			if (CanvasItemEditorPlugin *plugin = Object::cast_to<CanvasItemEditorPlugin>(editor_plugin_screen))
+				plugin->get_canvas_item_editor()->update_viewport();
+		}
+	}
+}
+
 void EditorNode::_update_scene_tabs() {
 
 	bool show_rb = EditorSettings::get_singleton()->get("interface/scene_tabs/show_script_button");
@@ -3318,6 +3330,7 @@ void EditorNode::_remove_edited_scene(bool p_change_tab) {
 	editor_data.get_undo_redo().clear_history(false);
 	_update_title();
 	_update_scene_tabs();
+	_refresh_viewport_if_needed();
 }
 
 void EditorNode::_remove_scene(int index, bool p_change_tab) {
