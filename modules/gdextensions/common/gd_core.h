@@ -34,13 +34,15 @@
 #include "core/class_db.h"
 #include "core/os/os.h"
 #include "core/ustring.h"
+#include "scene/main/scene_tree.h"
 
-#define safe_delete(x) (delete x, x = nullptr)
+#define safe_delete(x) (memdelete(x), x = nullptr)
+#define newref(pClass) Ref<pClass>(memnew(pClass))
 
 #ifdef DEBUG_ENABLED
-#define DEBUG_PRINT(m_text) print_line(m_text);
+# define DEBUG_PRINT(m_text) print_line(m_text);
 #else
-#define DEBUG_PRINT(m_text)
+# define DEBUG_PRINT(m_text)
 #endif
 
 #ifdef DEBUG_ENABLED
@@ -57,9 +59,18 @@
 
 #endif // DEBUG_ENABLED
 
-static inline void trace(int line, const char *file, const String &text) {
+
+static inline void _trace(int line, const char *file, const String &text) {
 	OS::get_singleton()->print("%s", text.utf8().get_data());
 }
-#define TRACE(text, ...) trace(__LINE__, __FILE__, vformat(text, __VA_ARGS__))
+#define TRACE(text, ...) _trace(__LINE__, __FILE__, vformat(text, __VA_ARGS__))
+
+#define _register_global_ref(pRef) {                  \
+	if (SceneTree *sc = SceneTree::get_singleton()) { \
+		sc->add_exit_callback([&]() {                 \
+			pRef.unref();                             \
+		});                                           \
+	}                                                 \
+}
 
 #endif // GD_CORE_H

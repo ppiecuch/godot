@@ -39,6 +39,8 @@
 #include "scene/resources/world.h"
 #include "scene/resources/world_2d.h"
 
+#include <functional>
+
 class PackedScene;
 class Node;
 class Viewport;
@@ -74,6 +76,7 @@ class SceneTree : public MainLoop {
 
 public:
 	typedef void (*IdleCallback)();
+	typedef std::function<void()> ExitCallback;
 
 	enum StretchMode {
 
@@ -255,12 +258,16 @@ private:
 #endif
 
 	enum {
-		MAX_IDLE_CALLBACKS = 256
+		MAX_IDLE_CALLBACKS = 256,
+		MAX_EXIT_CALLBACKS = 64,
 	};
 
 	static IdleCallback idle_callbacks[MAX_IDLE_CALLBACKS];
 	static int idle_callback_count;
 	void _call_idle_callbacks();
+	static ExitCallback exit_callbacks[MAX_EXIT_CALLBACKS];
+	static int exit_callback_count;
+	void _call_exit_callbacks();
 
 protected:
 	void _notification(int p_notification);
@@ -411,6 +418,7 @@ public:
 	bool is_refusing_new_network_connections() const;
 
 	static void add_idle_callback(IdleCallback p_callback);
+	static void add_exit_callback(ExitCallback p_callback);
 	SceneTree();
 	~SceneTree();
 };

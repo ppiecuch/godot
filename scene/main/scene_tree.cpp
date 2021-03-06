@@ -610,8 +610,9 @@ bool SceneTree::idle(float p_time) {
 
 void SceneTree::finish() {
 
-	_flush_delete_queue();
+	_call_exit_callbacks();
 
+	_flush_delete_queue();
 	_flush_ugc();
 
 	initialized = false;
@@ -1962,6 +1963,8 @@ SceneTree *SceneTree::singleton = NULL;
 
 SceneTree::IdleCallback SceneTree::idle_callbacks[SceneTree::MAX_IDLE_CALLBACKS];
 int SceneTree::idle_callback_count = 0;
+SceneTree::ExitCallback SceneTree::exit_callbacks[SceneTree::MAX_EXIT_CALLBACKS];
+int SceneTree::exit_callback_count = 0;
 
 void SceneTree::_call_idle_callbacks() {
 
@@ -1970,9 +1973,21 @@ void SceneTree::_call_idle_callbacks() {
 	}
 }
 
+void SceneTree::_call_exit_callbacks() {
+
+	for (int i = 0; i < exit_callback_count; i++) {
+		exit_callbacks[i]();
+	}
+}
+
 void SceneTree::add_idle_callback(IdleCallback p_callback) {
 	ERR_FAIL_COND(idle_callback_count >= MAX_IDLE_CALLBACKS);
 	idle_callbacks[idle_callback_count++] = p_callback;
+}
+
+void SceneTree::add_exit_callback(ExitCallback p_callback) {
+	ERR_FAIL_COND(exit_callback_count >= MAX_EXIT_CALLBACKS);
+	exit_callbacks[exit_callback_count++] = p_callback;
 }
 
 void SceneTree::set_use_font_oversampling(bool p_oversampling) {
