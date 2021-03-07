@@ -21,7 +21,10 @@ The most important topics and focus of my work:
 
 Some of the things you may found usefull in this repository:
 
-  * Embedded _DOS-like_ console [modules/gdextensions/debugconsole](modules/gdextensions/debugconsole)
+  * Embedded text console [modules/gdextensions/debugconsole](modules/gdextensions/debugconsole) automatically and globally available from both C++ and GDScript (color support, multiply sizes, basic markers/bbcodes, graphical fonts):
+
+    <center>![Godot Console](modules/gdextensions/_promo/fig-fonts-in-console-small.png)</center>
+
   * Extension of ```Label``` with transition effects [scene/gui/label_transitions.h](scene/gui/label_transitions.h)
   * *Starfield* component [modules/gdextensions/scenery/starfield/starfield.h](modules/gdextensions/scenery/starfield/starfield.h)
   * _Nixie_-like ```Label``` animation: [modules/gdextensions/scene/nixie_font.h](modules/gdextensions/scene/nixie_font.h)
