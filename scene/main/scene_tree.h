@@ -400,6 +400,9 @@ public:
 	void global_menu_action(const Variant &p_id, const Variant &p_meta);
 	void get_argument_options(const StringName &p_function, int p_idx, List<String> *r_options) const;
 
+	void console_show(bool p_state);
+	void console_msg(const String &p_msg);
+
 	//network API
 
 	Ref<MultiplayerAPI> get_multiplayer() const;
