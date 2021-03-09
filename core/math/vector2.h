@@ -313,11 +313,13 @@ struct Vector2i {
 	Vector2i operator-(const Vector2i &p_v) const;
 	void operator-=(const Vector2i &p_v);
 	Vector2i operator*(const Vector2i &p_v1) const;
+	Vector2i operator*(const Vector2 &p_v1) const;
 
 	Vector2i operator*(const int &rvalue) const;
 	void operator*=(const int &rvalue);
 
 	Vector2i operator/(const Vector2i &p_v1) const;
+	Vector2i operator/(const Vector2 &p_v1) const;
 
 	Vector2i operator/(const int &rvalue) const;
 
