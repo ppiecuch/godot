@@ -696,7 +696,7 @@ void Label::_clear_pending_animations() { // reset animation
 }
 
 void Label::set_align(Align p_align) {
-	ERR_FAIL_INDEX((int)p_align, AlignCount);
+	ERR_FAIL_INDEX(p_align, AlignCount);
 
 	align = p_align;
 	update();
@@ -708,7 +708,7 @@ Label::Align Label::get_align() const {
 }
 
 void Label::set_valign(VAlign p_align) {
-	ERR_FAIL_INDEX((int)p_align, VAlignCount);
+	ERR_FAIL_INDEX(p_align, VAlignCount);
 
 	valign = p_align;
 	update();
