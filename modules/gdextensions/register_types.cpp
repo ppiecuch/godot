@@ -69,6 +69,7 @@
 #include "scene/bullet_manager.h"
 #include "scene/cable2d.h"
 #include "scene/cable2d_editor_plugin.h"
+#include "scene/explosion_particles.h"
 #include "scene/figure.h"
 #include "scene/nixie_font.h"
 #include "scene/pixel_spaceships.h"
@@ -82,21 +83,27 @@
 #include "scenery/tree_2d/tree_2d.h"
 #include "scenery/vegetation_instance/vegetation_instance.h"
 #include "scenery/water_splash/gd_water_splash.h"
-#ifdef GD_CUSTOM_SPIDER_ANIM
 #include "scenery/spider_anim/spider.h"
 #include "scenery/spider_anim/spider_insects.h"
-#endif
+
+#include "smooth/smooth.h"
+#include "smooth/smooth_2d.h"
 
 #include "benet/enet_node.h"
 #include "benet/enet_packet_peer.h"
 
-static bool enet_ok = false;
+static Vector<Object *> _global_resources;
+void _register_global_resources(Object *ref) {
+	_global_resources.push_back(ref);
+}
 
 #ifdef TOOLS_ENABLED
 static void editor_init_callback() {
+
 	Engine::get_singleton()->add_singleton(Engine::Singleton("GodotErrorHandler", memnew(GodotErrorHandler)));
 
 	EditorNode::get_singleton()->add_editor_plugin(memnew(Cable2DEditorPlugin(EditorNode::get_singleton()))); /* Cable2D */
+
 	EditorPlugins::add_by_type<ProceduralAnimationEditorPlugin>(); /* ProceduralAnimation */
 }
 #endif
@@ -167,20 +174,18 @@ void register_gdextensions_types() {
 	ClassDB::register_class<SphericalWaves>();
 	ClassDB::register_class<Starfield2D>();
 	ClassDB::register_class<TexturePanning>();
+	ClassDB::register_class<FakeExplosionParticles2D>();
 	ClassDB::register_class<NixieFont>();
-#ifdef GD_CUSTOM_SPIDER_ANIM
 	ClassDB::register_class<Spider>();
 	ClassDB::register_class<InsectsManagerInstance>();
-#endif
 
-	if (enet_initialize() != 0) {
-		ERR_PRINT("ENet initialization failure");
-	} else {
-		enet_ok = true;
-	}
-
+#ifdef MODULE_ENET_ENABLED
 	ClassDB::register_class<ENetPacketPeer>();
 	ClassDB::register_class<ENetNode>();
+#endif
+
+	ClassDB::register_class<Smooth>();
+	ClassDB::register_class<Smooth2D>();
 
 #ifdef TOOLS_ENABLED
 	EditorNode::add_init_callback(editor_init_callback);
@@ -188,8 +193,7 @@ void register_gdextensions_types() {
 }
 
 void unregister_gdextensions_types() {
-	if (enet_ok)
-		enet_deinitialize();
+
 	if (Timer2 *instance = Timer2::get_singleton())
 		memdelete(instance);
 	if (Tween2 *instance = Tween2::get_singleton())
@@ -202,9 +206,6 @@ void unregister_gdextensions_types() {
 		memdelete(instance);
 	if (Blitter *instance = Blitter::get_singleton())
 		memdelete(instance);
-#ifdef GD_CUSTOM_SPIDER_ANIM
-	Spider::_release_global_resources();
-#endif
 #ifdef TOOLS_ENABLED
 	if (GodotErrorHandler *instance = GodotErrorHandler::get_singleton())
 		memdelete(instance);
