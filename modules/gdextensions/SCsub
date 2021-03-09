@@ -17,6 +17,7 @@ modules = [
     "scenery/vegetation_instance",
     "scenery/starfield",
     "scenery/spider_anim",
+    "smooth",
     "debugdraw",
     "debugconsole",
     "statemachine",
@@ -29,9 +30,6 @@ for m in modules:
 
 env_module.Append(CPPPATH=["#thirdparty/enet/", os.path.dirname(os.path.realpath(os.curdir)) + "/gdnative/include", "."])
 env_module.Append(CPPFLAGS=["-DGD_GODOT_ENET", "-DGD_NO_UNUSED_FUNCTIONS"])
-
-if os.path.isfile("scenery/spider_anim/spider.h") and os.path.isfile("scenery/spider_anim/spider_insects.h"):
-	env_module.Append(CPPFLAGS=["-DGD_CUSTOM_SPIDER_ANIM"])
 
 # Compile as a static library
 lib = env_module.Library("gdextensions", sources)
