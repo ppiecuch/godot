@@ -2,9 +2,13 @@
 
 namespace VASErin { //VASEr internal namespace
 
-	void backend::vah_draw(vertex_array_holder& vah)
-	{
+	Mesh _mesh;
+
+	void backend::vah_draw(vertex_array_holder& vah) {
+
 		if ( vah.count > 0) { //save some effort
+
+			Array mesh_array;
 
 			glVertexPointer(2, GL_FLOAT, 0, &vah.vert[0]);
 			glColorPointer (4, GL_FLOAT, 0, &vah.color[0]);
@@ -12,7 +16,8 @@ namespace VASErin { //VASEr internal namespace
 		}
 	}
 
-	void backend::polyline( const Vector2* P, Color C, float W, int length, const polyline_opt*) { //constant color and weight
+	void backend::polyline(const Vector2* P, Color C, float W, int length, const polyline_opt*) { //constant color and weight
+
 		int type=0;
 		if( sizeof (Vector2)==8)
 			type = GL_FLOAT;
