@@ -40,6 +40,7 @@
 #include "core/project_settings.h"
 #include "main/input_default.h"
 #include "node.h"
+#include "scene/debugconsole/debug_console.h" // on-screen console
 #include "scene/debugger/script_debugger_remote.h"
 #include "scene/resources/dynamic_font.h"
 #include "scene/resources/material.h"
@@ -1256,6 +1257,11 @@ void SceneTree::set_screen_stretch(StretchMode p_mode, StretchAspect p_aspect, c
 void SceneTree::set_edited_scene_root(Node *p_node) {
 #ifdef TOOLS_ENABLED
 	edited_scene_root = p_node;
+	if (p_node) {
+		ConsoleInstance *con = memnew(ConsoleInstance);
+		con->set_name("_text_console");
+		p_node->add_child(con);
+	}
 #endif
 }
 
@@ -1857,6 +1863,9 @@ void SceneTree::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("queue_delete", "obj"), &SceneTree::queue_delete);
 
+	ClassDB::bind_method(D_METHOD("console_show", "state"), &SceneTree::console_show);
+	ClassDB::bind_method(D_METHOD("console_msg", "msg"), &SceneTree::console_msg);
+
 	MethodInfo mi;
 	mi.name = "call_group_flags";
 	mi.arguments.push_back(PropertyInfo(Variant::INT, "flags"));
@@ -2032,6 +2041,15 @@ void SceneTree::get_argument_options(const StringName &p_function, int p_idx, Li
 				filename = dir_access->get_next();
 			}
 		}
+	}
+}
+
+void SceneTree::console_show(bool p_state) {
+}
+
+void SceneTree::console_msg(const String &p_msg) {
+	if (ConsoleInstance *con = Object::cast_to<ConsoleInstance>(get_root()->find_node("_text_console"))) {
+		con->console_msg(p_msg);
 	}
 }
 
