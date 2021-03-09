@@ -54,6 +54,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define text_console_name String("__text_console")
+
 void SceneTreeTimer::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_time_left", "time"), &SceneTreeTimer::set_time_left);
@@ -1263,7 +1265,8 @@ void SceneTree::set_edited_scene_root(Node *p_node) {
 	edited_scene_root = p_node;
 	if (p_node) {
 		ConsoleInstance *con = memnew(ConsoleInstance);
-		con->set_name("_text_console");
+		con->set_name(text_console_name);
+		con->set_visible(_console_show);
 		p_node->add_child(con);
 	}
 #endif
@@ -2049,11 +2052,23 @@ void SceneTree::get_argument_options(const StringName &p_function, int p_idx, Li
 }
 
 void SceneTree::console_show(bool p_state) {
+
+	if (_console_show != p_state) {
+		if (Node *node = get_edited_scene_root() ? get_edited_scene_root() : current_scene) {
+			if (ConsoleInstance *con = Object::cast_to<ConsoleInstance>(node->get_node(text_console_name))) {
+				con->set_visible(p_state);
+			}
+		}
+		_console_show = p_state;
+	}
 }
 
 void SceneTree::console_msg(const String &p_msg) {
-	if (ConsoleInstance *con = Object::cast_to<ConsoleInstance>(get_root()->find_node("_text_console"))) {
-		con->console_msg(p_msg);
+
+	if (Node *node = get_edited_scene_root() ? get_edited_scene_root() : current_scene) {
+		if (ConsoleInstance *con = Object::cast_to<ConsoleInstance>(node->get_node(text_console_name))) {
+			con->console_msg(p_msg);
+		}
 	}
 }
 
@@ -2061,6 +2076,7 @@ SceneTree::SceneTree() {
 
 	if (singleton == NULL) singleton = this;
 	_quit = false;
+	_console_show = false;
 	accept_quit = true;
 	quit_on_go_back = true;
 	initialized = false;
@@ -2189,9 +2205,7 @@ SceneTree::SceneTree() {
 #endif
 
 #ifdef DEBUG_ENABLED
-
 	live_edit_root = NodePath("/root");
-
 #endif
 }
 
