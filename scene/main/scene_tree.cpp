@@ -52,6 +52,7 @@
 #include "viewport.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 void SceneTreeTimer::_bind_methods() {
 
@@ -640,6 +641,9 @@ void SceneTree::quit(int p_exit_code) {
 		// Override the exit code if a positive argument is given (the default is `-1`).
 		// This is a shorthand for calling `set_exit_code()` on the OS singleton then quitting.
 		OS::get_singleton()->set_exit_code(p_exit_code);
+	} else if (!OS::get_singleton()->is_custom_exit_code()) {
+		// Must customize exit code, otherwise it will default to a non-zero value
+		OS::get_singleton()->set_exit_code(EXIT_SUCCESS);
 	}
 
 	_quit = true;
@@ -2071,6 +2075,8 @@ SceneTree::SceneTree() {
 	debug_navigation_disabled_color = GLOBAL_DEF("debug/shapes/navigation/disabled_geometry_color", Color(1.0, 0.7, 0.1, 0.4));
 	collision_debug_contacts = GLOBAL_DEF("debug/shapes/collision/max_contacts_displayed", 10000);
 	ProjectSettings::get_singleton()->set_custom_property_info("debug/shapes/collision/max_contacts_displayed", PropertyInfo(Variant::INT, "debug/shapes/collision/max_contacts_displayed", PROPERTY_HINT_RANGE, "0,20000,1")); // No negative
+
+	GLOBAL_DEF("debug/shapes/collision/draw_2d_outlines", true);
 
 	tree_version = 1;
 	physics_process_time = 1;

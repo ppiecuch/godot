@@ -83,9 +83,8 @@ for compilation instructions for every supported platform.
 Godot is not only an engine but an ever-growing community of users and engine
 developers. The main community channels are listed [on the homepage](https://godotengine.org/community).
 
-To get in touch with the developers, the best way is to join the
-[#godotengine IRC channel](https://webchat.freenode.net/?channels=godotengine)
-on Freenode.
+To get in touch with the engine developers, the best way is to join the
+[Godot Contributors Chat](https://chat.godotengine.org).
 
 To get started contributing to the project, see the [contributing guide](CONTRIBUTING.md).
 

@@ -135,8 +135,6 @@ MonoAssembly *GDMonoAssembly::assembly_refonly_preload_hook(MonoAssemblyName *an
 
 MonoAssembly *GDMonoAssembly::_search_hook(MonoAssemblyName *aname, void *user_data, bool refonly) {
 
-	(void)user_data; // UNUSED
-
 	String name = String::utf8(mono_assembly_name_get_name(aname));
 	bool has_extension = name.ends_with(".dll") || name.ends_with(".exe");
 
@@ -148,8 +146,6 @@ MonoAssembly *GDMonoAssembly::_search_hook(MonoAssemblyName *aname, void *user_d
 }
 
 MonoAssembly *GDMonoAssembly::_preload_hook(MonoAssemblyName *aname, char **, void *user_data, bool refonly) {
-
-	(void)user_data; // UNUSED
 
 	String name = String::utf8(mono_assembly_name_get_name(aname));
 	return _load_assembly_search(name, search_dirs, refonly);

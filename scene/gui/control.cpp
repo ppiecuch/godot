@@ -433,10 +433,6 @@ void Control::_resize(const Size2 &p_size) {
 	_size_changed();
 }
 
-void Control::_clear_size_warning() {
-	data.size_warning = false;
-}
-
 //moved theme configuration here, so controls can set up even if still not inside active scene
 
 void Control::add_child_notify(Node *p_child) {
@@ -466,11 +462,6 @@ void Control::_update_canvas_item_transform() {
 	Transform2D xform = _get_internal_transform();
 	xform[2] += get_position();
 
-	// We use a little workaround to avoid flickering when moving the pivot with _edit_set_pivot()
-	if (is_inside_tree() && Math::abs(Math::sin(data.rotation * 4.0f)) < 0.00001f && get_viewport()->is_snap_controls_to_pixels_enabled()) {
-		xform[2] = xform[2].round();
-	}
-
 	VisualServer::get_singleton()->canvas_item_set_transform(get_canvas_item(), xform);
 }
 
@@ -488,9 +479,7 @@ void Control::_notification(int p_notification) {
 		case NOTIFICATION_EXIT_TREE: {
 
 			get_viewport()->_gui_remove_control(this);
-		} break;
-		case NOTIFICATION_READY: {
-			connect("ready", this, "_clear_size_warning", varray(), CONNECT_DEFERRED | CONNECT_ONESHOT);
+
 		} break;
 
 		case NOTIFICATION_ENTER_CANVAS: {
@@ -1835,11 +1824,6 @@ void Control::set_position(const Size2 &p_point, bool p_keep_margins) {
 }
 
 void Control::_set_size(const Size2 &p_size) {
-#ifdef DEBUG_ENABLED
-	if (data.size_warning) {
-		WARN_PRINT("Adjusting the size of Control nodes before they are fully initialized is unreliable. Consider deferring it with set_deferred().");
-	}
-#endif
 	set_size(p_size);
 }
 
@@ -2963,8 +2947,6 @@ void Control::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_theme_changed"), &Control::_theme_changed);
 
 	ClassDB::bind_method(D_METHOD("_override_changed"), &Control::_override_changed);
-
-	ClassDB::bind_method(D_METHOD("_clear_size_warning"), &Control::_clear_size_warning);
 
 	BIND_VMETHOD(MethodInfo("_gui_input", PropertyInfo(Variant::OBJECT, "event", PROPERTY_HINT_RESOURCE_TYPE, "InputEvent")));
 	BIND_VMETHOD(MethodInfo(Variant::VECTOR2, "_get_minimum_size"));

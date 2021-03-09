@@ -532,7 +532,10 @@ ObjectID SpatialEditorViewport::_select_ray(const Point2 &p_pos, bool p_append, 
 			continue;
 
 		if (dist < closest_dist) {
-			item = edited_scene->get_deepest_editable_node(Object::cast_to<Node>(spat));
+			item = Object::cast_to<Node>(spat);
+			if (item != edited_scene) {
+				item = edited_scene->get_deepest_editable_node(item);
+			}
 
 			closest = item->get_instance_id();
 			closest_dist = dist;
@@ -687,7 +690,10 @@ void SpatialEditorViewport::_select_region() {
 		if (!sp || _is_node_locked(sp))
 			continue;
 
-		Node *item = edited_scene->get_deepest_editable_node(Object::cast_to<Node>(sp));
+		Node *item = Object::cast_to<Node>(sp);
+		if (item != edited_scene) {
+			item = edited_scene->get_deepest_editable_node(item);
+		}
 
 		// Replace the node by the group if grouped
 		if (item->is_class("Spatial")) {
@@ -6192,6 +6198,7 @@ void SpatialEditor::_register_all_gizmos() {
 	add_gizmo_plugin(Ref<ReflectionProbeGizmoPlugin>(memnew(ReflectionProbeGizmoPlugin)));
 	add_gizmo_plugin(Ref<GIProbeGizmoPlugin>(memnew(GIProbeGizmoPlugin)));
 	add_gizmo_plugin(Ref<BakedIndirectLightGizmoPlugin>(memnew(BakedIndirectLightGizmoPlugin)));
+	add_gizmo_plugin(Ref<CollisionObjectGizmoPlugin>(memnew(CollisionObjectGizmoPlugin)));
 	add_gizmo_plugin(Ref<CollisionShapeSpatialGizmoPlugin>(memnew(CollisionShapeSpatialGizmoPlugin)));
 	add_gizmo_plugin(Ref<CollisionPolygonSpatialGizmoPlugin>(memnew(CollisionPolygonSpatialGizmoPlugin)));
 	add_gizmo_plugin(Ref<NavigationMeshSpatialGizmoPlugin>(memnew(NavigationMeshSpatialGizmoPlugin)));
