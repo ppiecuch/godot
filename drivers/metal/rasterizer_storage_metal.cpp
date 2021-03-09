@@ -603,7 +603,7 @@ void RasterizerStorageMetal::render_info_begin_capture() {}
 void RasterizerStorageMetal::render_info_end_capture() {}
 int RasterizerStorageMetal::get_captured_render_info(VS::RenderInfo p_info) { return 0; }
 
-int RasterizerStorageMetal::get_render_info(VS::RenderInfo p_info) { return 0; }
+uint64_t RasterizerStorageMetal::get_render_info(VS::RenderInfo p_info) { return 0; }
 String RasterizerStorageMetal::get_video_adapter_name() const { return String(); }
 String RasterizerStorageMetal::get_video_adapter_vendor() const { return String(); }
 

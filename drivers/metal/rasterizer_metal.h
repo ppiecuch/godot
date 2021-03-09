@@ -572,7 +572,7 @@ public:
 	void render_info_end_capture();
 	int get_captured_render_info(VS::RenderInfo p_info);
 
-	int get_render_info(VS::RenderInfo p_info);
+	uint64_t get_render_info(VS::RenderInfo p_info);
 	String get_video_adapter_name() const;
 	String get_video_adapter_vendor() const;
 
