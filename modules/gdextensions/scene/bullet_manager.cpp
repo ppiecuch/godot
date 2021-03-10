@@ -283,7 +283,7 @@ void BulletManagerBulletType::_update_cached_rects() {
 	Point2 dest_offset = offset;
 	if (centered)
 		dest_offset -= frame_size / 2;
-	if (Engine::get_singleton()->get_use_pixel_snap()) {
+	if (Engine::get_singleton()->get_use_gpu_pixel_snap()) {
 		dest_offset = dest_offset.floor();
 	}
 
