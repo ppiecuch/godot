@@ -34,18 +34,14 @@
 #include "scene/resources/mesh.h"
 #include "scene/resources/mesh_data_tool.h"
 
-#include "bend_deform_2d.h"
-#include "inc/gd_core.h"
+#include "common/gd_core.h"
 
+#include "bend_deform_2d.h"
+
+// Reference:
+// ----------
 // https://www.reddit.com/r/godot/comments/9y74r6/how_to_detect_when_node2d_is_moveddragged_in_the/
 
-#ifdef DEBUG_ENABLED
-#define DEBUG_PRINT(m_text) print_line(m_text);
-#else
-#define DEBUG_PRINT(m_text)
-#endif
-
-static const Vector2 ONE = Vector2(1, 1);
 
 struct MotionTextureIterator : public Reference {
 	Point2 position, next_position;

@@ -32,8 +32,9 @@
 #define GD_CORE_H
 
 #include "core/class_db.h"
-#include "core/os/os.h"
 #include "core/ustring.h"
+#include "core/os/os.h"
+#include "core/math/vector2.h"
 #include "scene/main/scene_tree.h"
 
 #define safe_delete(pPtr) (memdelete(pPtr), pPtr = nullptr)
@@ -72,5 +73,8 @@ static inline void _trace(int line, const char *file, const String &text) {
 			});                                           \
 		}                                                 \
 	}
+
+static const Vector2 ONE = Vector2(1, 1);
+static const Vector2 ZERO = Vector2(0, 0);
 
 #endif // GD_CORE_H
