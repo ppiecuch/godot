@@ -19,7 +19,6 @@ modules = [
     "scenery/spider_anim",
     "smooth",
     "debugdraw",
-    "debugconsole",
     "statemachine",
     "benet",
     "behaviornode",
