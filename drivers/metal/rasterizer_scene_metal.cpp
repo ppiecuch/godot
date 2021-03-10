@@ -1,11 +1,12 @@
 /*************************************************************************/
-/*  rasterizer_scene_metal.cpp                                               */
+/*  rasterizer_scene_metal.cpp                                           */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
-/*                    http://www.godotengine.org                         */
+/*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2016 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -26,12 +27,13 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #ifdef METAL_ENABLED
 
 #include "rasterizer_metal.h"
 
-#include "core/os/os.h"
 #include "core/math/camera_matrix.h"
+#include "core/os/os.h"
 #include "core/self_list.h"
 #include "scene/resources/mesh.h"
 #include "servers/visual/rasterizer.h"
@@ -39,17 +41,25 @@
 
 /* SHADOW ATLAS API */
 
-RID RasterizerSceneMetal::shadow_atlas_create() { return RID(); }
+RID RasterizerSceneMetal::shadow_atlas_create() {
+	return RID();
+}
 void RasterizerSceneMetal::shadow_atlas_set_size(RID p_atlas, int p_size) {}
 void RasterizerSceneMetal::shadow_atlas_set_quadrant_subdivision(RID p_atlas, int p_quadrant, int p_subdivision) {}
-bool RasterizerSceneMetal::shadow_atlas_update_light(RID p_atlas, RID p_light_intance, float p_coverage, uint64_t p_light_version) { return false; }
+bool RasterizerSceneMetal::shadow_atlas_update_light(RID p_atlas, RID p_light_intance, float p_coverage, uint64_t p_light_version) {
+	return false;
+}
 
-int RasterizerSceneMetal::get_directional_light_shadow_size(RID p_light_intance) { return 0; }
+int RasterizerSceneMetal::get_directional_light_shadow_size(RID p_light_intance) {
+	return 0;
+}
 void RasterizerSceneMetal::set_directional_shadow_count(int p_count) {}
 
 /* ENVIRONMENT API */
 
-RID environment_create() { return RID(); }
+RID environment_create() {
+	return RID();
+}
 
 void RasterizerSceneMetal::environment_set_background(RID p_env, VS::EnvironmentBG p_bg) {}
 void RasterizerSceneMetal::environment_set_sky(RID p_env, RID p_sky) {}
@@ -78,28 +88,50 @@ void RasterizerSceneMetal::environment_set_fog(RID p_env, bool p_enable, const C
 void RasterizerSceneMetal::environment_set_fog_depth(RID p_env, bool p_enable, float p_depth_begin, float p_depth_end, float p_depth_curve, bool p_transmit, float p_transmit_curve) {}
 void RasterizerSceneMetal::environment_set_fog_height(RID p_env, bool p_enable, float p_min_height, float p_max_height, float p_height_curve) {}
 
-bool RasterizerSceneMetal::is_environment(RID p_env) { return false; }
-VS::EnvironmentBG RasterizerSceneMetal::environment_get_background(RID p_env) { return VS::ENV_BG_KEEP; }
-int RasterizerSceneMetal::environment_get_canvas_max_layer(RID p_env) { return 0; }
+bool RasterizerSceneMetal::is_environment(RID p_env) {
+	return false;
+}
+VS::EnvironmentBG RasterizerSceneMetal::environment_get_background(RID p_env) {
+	return VS::ENV_BG_KEEP;
+}
+int RasterizerSceneMetal::environment_get_canvas_max_layer(RID p_env) {
+	return 0;
+}
 
-RID RasterizerSceneMetal::light_instance_create(RID p_light) { return RID(); }
+RID RasterizerSceneMetal::light_instance_create(RID p_light) {
+	return RID();
+}
 void RasterizerSceneMetal::light_instance_set_transform(RID p_light_instance, const Transform &p_transform) {}
 void RasterizerSceneMetal::light_instance_set_shadow_transform(RID p_light_instance, const CameraMatrix &p_projection, const Transform &p_transform, float p_far, float p_split, int p_pass, float p_bias_scale) {}
 void RasterizerSceneMetal::light_instance_mark_visible(RID p_light_instance) {}
 
-RID RasterizerSceneMetal::reflection_atlas_create() { return RID(); }
+RID RasterizerSceneMetal::reflection_atlas_create() {
+	return RID();
+}
 void RasterizerSceneMetal::reflection_atlas_set_size(RID p_ref_atlas, int p_size) {}
 void RasterizerSceneMetal::reflection_atlas_set_subdivision(RID p_ref_atlas, int p_subdiv) {}
 
-RID RasterizerSceneMetal::reflection_probe_instance_create(RID p_probe) { return RID(); }
+RID RasterizerSceneMetal::reflection_probe_instance_create(RID p_probe) {
+	return RID();
+}
 void RasterizerSceneMetal::reflection_probe_instance_set_transform(RID p_instance, const Transform &p_transform) {}
 void RasterizerSceneMetal::reflection_probe_release_atlas_index(RID p_instance) {}
-bool reflection_probe_instance_needs_redraw(RID p_instance) { return false; }
-bool reflection_probe_instance_has_reflection(RID p_instance) { return false; }
-bool reflection_probe_instance_begin_render(RID p_instance, RID p_reflection_atlas) { return false; }
-bool reflection_probe_instance_postprocess_step(RID p_instance) { return true; }
+bool reflection_probe_instance_needs_redraw(RID p_instance) {
+	return false;
+}
+bool reflection_probe_instance_has_reflection(RID p_instance) {
+	return false;
+}
+bool reflection_probe_instance_begin_render(RID p_instance, RID p_reflection_atlas) {
+	return false;
+}
+bool reflection_probe_instance_postprocess_step(RID p_instance) {
+	return true;
+}
 
-RID RasterizerSceneMetal::gi_probe_instance_create() { return RID(); }
+RID RasterizerSceneMetal::gi_probe_instance_create() {
+	return RID();
+}
 void RasterizerSceneMetal::gi_probe_instance_set_light_data(RID p_probe, RID p_base, RID p_data) {}
 void RasterizerSceneMetal::gi_probe_instance_set_transform_to_data(RID p_probe, const Transform &p_xform) {}
 void RasterizerSceneMetal::gi_probe_instance_set_bounds(RID p_probe, const Vector3 &p_bounds) {}
@@ -110,13 +142,16 @@ void RasterizerSceneMetal::render_shadow(RID p_light, RID p_shadow_atlas, int p_
 void RasterizerSceneMetal::set_scene_pass(uint64_t p_pass) {}
 void RasterizerSceneMetal::set_debug_draw_mode(VS::ViewportDebugDraw p_debug_draw) {}
 
-bool RasterizerSceneMetal::free(RID p_rid) { return true; }
+bool RasterizerSceneMetal::free(RID p_rid) {
+	return true;
+}
 
 RasterizerSceneMetal::RasterizerSceneMetal() {}
 RasterizerSceneMetal::~RasterizerSceneMetal() {}
 
-
-RID RasterizerCanvasMetal::light_internal_create() { return RID(); }
+RID RasterizerCanvasMetal::light_internal_create() {
+	return RID();
+}
 void RasterizerCanvasMetal::light_internal_update(RID p_rid, Light *p_light) {}
 void RasterizerCanvasMetal::light_internal_free(RID p_rid) {}
 
@@ -135,10 +170,15 @@ void RasterizerCanvasMetal::draw_window_margins(int *p_margins, RID *p_margin_te
 RasterizerCanvasMetal::RasterizerCanvasMetal() {}
 RasterizerCanvasMetal::~RasterizerCanvasMetal() {}
 
-
-RasterizerStorage *RasterizerMetal::get_storage() { return &storage; }
-RasterizerCanvas *RasterizerMetal::get_canvas() { return &canvas; }
-RasterizerScene *RasterizerMetal::get_scene() { return &scene; }
+RasterizerStorage *RasterizerMetal::get_storage() {
+	return &storage;
+}
+RasterizerCanvas *RasterizerMetal::get_canvas() {
+	return &canvas;
+}
+RasterizerScene *RasterizerMetal::get_scene() {
+	return &scene;
+}
 
 void RasterizerMetal::set_boot_image(const Ref<Image> &p_image, const Color &p_color, bool p_scale, bool p_use_filter) {}
 void RasterizerMetal::set_shader_time_scale(float p_scale) {}
@@ -153,15 +193,25 @@ void RasterizerMetal::output_lens_distorted_to_screen(RID p_render_target, const
 void RasterizerMetal::end_frame(bool p_swap_buffers) {}
 void RasterizerMetal::finalize() {}
 
-Error RasterizerMetal::is_viable() { return OK; }
+Error RasterizerMetal::is_viable() {
+	return OK;
+}
 
-Rasterizer *RasterizerMetal::_create_current() { return memnew(RasterizerMetal); }
+Rasterizer *RasterizerMetal::_create_current() {
+	return memnew(RasterizerMetal);
+}
 
-void RasterizerMetal::make_current() { _create_func = _create_current; }
+void RasterizerMetal::make_current() {
+	_create_func = _create_current;
+}
 
-bool RasterizerMetal::is_low_end() const { return true; }
+bool RasterizerMetal::is_low_end() const {
+	return true;
+}
 
-const char *gl_check_for_error(bool p_print_error) { return nullptr; }
+const char *gl_check_for_error(bool p_print_error) {
+	return nullptr;
+}
 
 RasterizerMetal::RasterizerMetal() {}
 RasterizerMetal::~RasterizerMetal() {}

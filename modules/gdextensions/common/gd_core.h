@@ -32,18 +32,18 @@
 #define GD_CORE_H
 
 #include "core/class_db.h"
-#include "core/ustring.h"
-#include "core/os/os.h"
 #include "core/math/vector2.h"
+#include "core/os/os.h"
+#include "core/ustring.h"
 #include "scene/main/scene_tree.h"
 
 #define safe_delete(pPtr) (memdelete(pPtr), pPtr = nullptr)
 #define newref(pClass) Ref<pClass>(memnew(pClass))
 
 #ifdef DEBUG_ENABLED
-# define DEBUG_PRINT(pText) print_line(pText)
+#define DEBUG_PRINT(pText) print_line(pText)
 #else
-# define DEBUG_PRINT(pText)
+#define DEBUG_PRINT(pText)
 #endif
 
 #ifdef DEBUG_ENABLED

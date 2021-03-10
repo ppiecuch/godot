@@ -1,11 +1,12 @@
 /*************************************************************************/
-/*  rasterizer_storage_metal.cpp                                               */
+/*  rasterizer_storage_metal.cpp                                         */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
-/*                    http://www.godotengine.org                         */
+/*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2016 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -26,17 +27,17 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #ifdef METAL_ENABLED
 
 #include "rasterizer_metal.h"
 
-#include "core/os/os.h"
 #include "core/math/camera_matrix.h"
+#include "core/os/os.h"
 #include "core/self_list.h"
 #include "scene/resources/mesh.h"
 #include "servers/visual/rasterizer.h"
 #include "servers/visual_server.h"
-
 
 RID RasterizerStorageMetal::texture_create() {
 
@@ -98,11 +99,21 @@ Image::Format RasterizerStorageMetal::texture_get_format(RID p_texture) const {
 	return t->format;
 }
 
-VisualServer::TextureType RasterizerStorageMetal::texture_get_type(RID p_texture) const { return VS::TEXTURE_TYPE_2D; }
-uint32_t RasterizerStorageMetal::texture_get_texid(RID p_texture) const { return 0; }
-uint32_t RasterizerStorageMetal::texture_get_width(RID p_texture) const { return 0; }
-uint32_t RasterizerStorageMetal::texture_get_height(RID p_texture) const { return 0; }
-uint32_t RasterizerStorageMetal::texture_get_depth(RID p_texture) const { return 0; }
+VisualServer::TextureType RasterizerStorageMetal::texture_get_type(RID p_texture) const {
+	return VS::TEXTURE_TYPE_2D;
+}
+uint32_t RasterizerStorageMetal::texture_get_texid(RID p_texture) const {
+	return 0;
+}
+uint32_t RasterizerStorageMetal::texture_get_width(RID p_texture) const {
+	return 0;
+}
+uint32_t RasterizerStorageMetal::texture_get_height(RID p_texture) const {
+	return 0;
+}
+uint32_t RasterizerStorageMetal::texture_get_depth(RID p_texture) const {
+	return 0;
+}
 void RasterizerStorageMetal::texture_set_size_override(RID p_texture, int p_width, int p_height, int p_depth_3d) {}
 void RasterizerStorageMetal::texture_bind(RID p_texture, uint32_t p_texture_no) {}
 
@@ -121,7 +132,9 @@ void RasterizerStorageMetal::texture_set_shrink_all_x2_on_set_data(bool p_enable
 
 void RasterizerStorageMetal::texture_debug_usage(List<VS::TextureInfo> *r_info) {}
 
-RID RasterizerStorageMetal::texture_create_radiance_cubemap(RID p_source, int p_resolution) const { return RID(); }
+RID RasterizerStorageMetal::texture_create_radiance_cubemap(RID p_source, int p_resolution) const {
+	return RID();
+}
 
 void RasterizerStorageMetal::texture_set_detect_3d_callback(RID p_texture, VisualServer::TextureDetectCallback p_callback, void *p_userdata) {}
 void RasterizerStorageMetal::texture_set_detect_srgb_callback(RID p_texture, VisualServer::TextureDetectCallback p_callback, void *p_userdata) {}
@@ -130,24 +143,34 @@ void RasterizerStorageMetal::texture_set_detect_normal_callback(RID p_texture, V
 void RasterizerStorageMetal::textures_keep_original(bool p_enable) {}
 
 void RasterizerStorageMetal::texture_set_proxy(RID p_proxy, RID p_base) {}
-Size2 RasterizerStorageMetal::texture_size_with_proxy(RID p_texture) const { return Size2(); }
+Size2 RasterizerStorageMetal::texture_size_with_proxy(RID p_texture) const {
+	return Size2();
+}
 void RasterizerStorageMetal::texture_set_force_redraw_if_visible(RID p_texture, bool p_enable) {}
 
 /* SKY API */
 
-RID RasterizerStorageMetal::sky_create() { return RID(); }
+RID RasterizerStorageMetal::sky_create() {
+	return RID();
+}
 void RasterizerStorageMetal::sky_set_texture(RID p_sky, RID p_cube_map, int p_radiance_size) {}
 
 /* SHADER API */
 
-RID RasterizerStorageMetal::shader_create() { return RID(); }
+RID RasterizerStorageMetal::shader_create() {
+	return RID();
+}
 
 void RasterizerStorageMetal::shader_set_code(RID p_shader, const String &p_code) {}
-String RasterizerStorageMetal::shader_get_code(RID p_shader) const { return ""; }
+String RasterizerStorageMetal::shader_get_code(RID p_shader) const {
+	return "";
+}
 void RasterizerStorageMetal::shader_get_param_list(RID p_shader, List<PropertyInfo> *p_param_list) const {}
 
 void RasterizerStorageMetal::shader_set_default_texture_param(RID p_shader, const StringName &p_name, RID p_texture) {}
-RID RasterizerStorageMetal::shader_get_default_texture_param(RID p_shader, const StringName &p_name) const { return RID(); }
+RID RasterizerStorageMetal::shader_get_default_texture_param(RID p_shader, const StringName &p_name) const {
+	return RID();
+}
 
 void RasterizerStorageMetal::shader_add_custom_define(RID p_shader, const String &p_define) {}
 void RasterizerStorageMetal::shader_get_custom_defines(RID p_shader, Vector<String> *p_defines) const {}
@@ -155,22 +178,34 @@ void RasterizerStorageMetal::shader_remove_custom_define(RID p_shader, const Str
 
 /* COMMON MATERIAL API */
 
-RID RasterizerStorageMetal::material_create() { return RID(); }
+RID RasterizerStorageMetal::material_create() {
+	return RID();
+}
 
 void RasterizerStorageMetal::material_set_render_priority(RID p_material, int priority) {}
 void RasterizerStorageMetal::material_set_shader(RID p_shader_material, RID p_shader) {}
-RID RasterizerStorageMetal::material_get_shader(RID p_shader_material) const { return RID(); }
+RID RasterizerStorageMetal::material_get_shader(RID p_shader_material) const {
+	return RID();
+}
 
 void RasterizerStorageMetal::material_set_param(RID p_material, const StringName &p_param, const Variant &p_value) {}
-Variant RasterizerStorageMetal::material_get_param(RID p_material, const StringName &p_param) const { return Variant(); }
-Variant RasterizerStorageMetal::material_get_param_default(RID p_material, const StringName &p_param) const { return Variant(); }
+Variant RasterizerStorageMetal::material_get_param(RID p_material, const StringName &p_param) const {
+	return Variant();
+}
+Variant RasterizerStorageMetal::material_get_param_default(RID p_material, const StringName &p_param) const {
+	return Variant();
+}
 
 void RasterizerStorageMetal::material_set_line_width(RID p_material, float p_width) {}
 
 void RasterizerStorageMetal::material_set_next_pass(RID p_material, RID p_next_material) {}
 
-bool RasterizerStorageMetal::material_is_animated(RID p_material) { return false; }
-bool RasterizerStorageMetal::material_casts_shadows(RID p_material) { return false; }
+bool RasterizerStorageMetal::material_is_animated(RID p_material) {
+	return false;
+}
+bool RasterizerStorageMetal::material_casts_shadows(RID p_material) {
+	return false;
+}
 
 void RasterizerStorageMetal::material_add_instance_owner(RID p_material, RasterizerScene::InstanceBase *p_instance) {}
 void RasterizerStorageMetal::material_remove_instance_owner(RID p_material, RasterizerScene::InstanceBase *p_instance) {}
@@ -228,7 +263,9 @@ VS::BlendShapeMode RasterizerStorageMetal::mesh_get_blend_shape_mode(RID p_mesh)
 void RasterizerStorageMetal::mesh_surface_update_region(RID p_mesh, int p_surface, int p_offset, const PoolVector<uint8_t> &p_data) {}
 
 void RasterizerStorageMetal::mesh_surface_set_material(RID p_mesh, int p_surface, RID p_material) {}
-RID RasterizerStorageMetal::mesh_surface_get_material(RID p_mesh, int p_surface) const { return RID(); }
+RID RasterizerStorageMetal::mesh_surface_get_material(RID p_mesh, int p_surface) const {
+	return RID();
+}
 
 int RasterizerStorageMetal::mesh_surface_get_array_len(RID p_mesh, int p_surface) const {
 	MetalMesh *m = mesh_owner.getornull(p_mesh);
@@ -309,17 +346,25 @@ void RasterizerStorageMetal::mesh_surface_set_active(RID p_mesh, int p_surface, 
 }
 
 void RasterizerStorageMetal::mesh_set_custom_aabb(RID p_mesh, const AABB &p_aabb) {}
-AABB RasterizerStorageMetal::mesh_get_custom_aabb(RID p_mesh) const { return AABB(); }
+AABB RasterizerStorageMetal::mesh_get_custom_aabb(RID p_mesh) const {
+	return AABB();
+}
 
-AABB RasterizerStorageMetal::mesh_get_aabb(RID p_mesh, RID p_skeleton) const { return AABB(); }
+AABB RasterizerStorageMetal::mesh_get_aabb(RID p_mesh, RID p_skeleton) const {
+	return AABB();
+}
 void RasterizerStorageMetal::mesh_clear(RID p_mesh) {}
 
 /* MULTIMESH API */
 
-RID RasterizerStorageMetal::multimesh_create() { return RID(); }
+RID RasterizerStorageMetal::multimesh_create() {
+	return RID();
+}
 
 void RasterizerStorageMetal::multimesh_allocate(RID p_multimesh, int p_instances, VS::MultimeshTransformFormat p_transform_format, VS::MultimeshColorFormat p_color_format, VS::MultimeshCustomDataFormat p_data) {}
-int RasterizerStorageMetal::multimesh_get_instance_count(RID p_multimesh) const { return 0; }
+int RasterizerStorageMetal::multimesh_get_instance_count(RID p_multimesh) const {
+	return 0;
+}
 
 void RasterizerStorageMetal::multimesh_set_mesh(RID p_multimesh, RID p_mesh) {}
 void RasterizerStorageMetal::multimesh_instance_set_transform(RID p_multimesh, int p_index, const Transform &p_transform) {}
@@ -327,23 +372,39 @@ void RasterizerStorageMetal::multimesh_instance_set_transform_2d(RID p_multimesh
 void RasterizerStorageMetal::multimesh_instance_set_color(RID p_multimesh, int p_index, const Color &p_color) {}
 void RasterizerStorageMetal::multimesh_instance_set_custom_data(RID p_multimesh, int p_index, const Color &p_color) {}
 
-RID RasterizerStorageMetal::multimesh_get_mesh(RID p_multimesh) const { return RID(); }
+RID RasterizerStorageMetal::multimesh_get_mesh(RID p_multimesh) const {
+	return RID();
+}
 
-Transform RasterizerStorageMetal::multimesh_instance_get_transform(RID p_multimesh, int p_index) const { return Transform(); }
-Transform2D RasterizerStorageMetal::multimesh_instance_get_transform_2d(RID p_multimesh, int p_index) const { return Transform2D(); }
-Color RasterizerStorageMetal::multimesh_instance_get_color(RID p_multimesh, int p_index) const { return Color(); }
-Color RasterizerStorageMetal::multimesh_instance_get_custom_data(RID p_multimesh, int p_index) const { return Color(); }
+Transform RasterizerStorageMetal::multimesh_instance_get_transform(RID p_multimesh, int p_index) const {
+	return Transform();
+}
+Transform2D RasterizerStorageMetal::multimesh_instance_get_transform_2d(RID p_multimesh, int p_index) const {
+	return Transform2D();
+}
+Color RasterizerStorageMetal::multimesh_instance_get_color(RID p_multimesh, int p_index) const {
+	return Color();
+}
+Color RasterizerStorageMetal::multimesh_instance_get_custom_data(RID p_multimesh, int p_index) const {
+	return Color();
+}
 
 void RasterizerStorageMetal::multimesh_set_as_bulk_array(RID p_multimesh, const PoolVector<float> &p_array) {}
 
 void RasterizerStorageMetal::multimesh_set_visible_instances(RID p_multimesh, int p_visible) {}
-int RasterizerStorageMetal::multimesh_get_visible_instances(RID p_multimesh) const { return 0; }
+int RasterizerStorageMetal::multimesh_get_visible_instances(RID p_multimesh) const {
+	return 0;
+}
 
-AABB RasterizerStorageMetal::multimesh_get_aabb(RID p_multimesh) const { return AABB(); }
+AABB RasterizerStorageMetal::multimesh_get_aabb(RID p_multimesh) const {
+	return AABB();
+}
 
 /* IMMEDIATE API */
 
-RID RasterizerStorageMetal::immediate_create() { return RID(); }
+RID RasterizerStorageMetal::immediate_create() {
+	return RID();
+}
 void RasterizerStorageMetal::immediate_begin(RID p_immediate, VS::PrimitiveType p_rimitive, RID p_texture) {}
 void RasterizerStorageMetal::immediate_vertex(RID p_immediate, const Vector3 &p_vertex) {}
 void RasterizerStorageMetal::immediate_normal(RID p_immediate, const Vector3 &p_normal) {}
@@ -354,28 +415,48 @@ void RasterizerStorageMetal::immediate_uv2(RID p_immediate, const Vector2 &tex_u
 void RasterizerStorageMetal::immediate_end(RID p_immediate) {}
 void RasterizerStorageMetal::immediate_clear(RID p_immediate) {}
 void RasterizerStorageMetal::immediate_set_material(RID p_immediate, RID p_material) {}
-RID RasterizerStorageMetal::immediate_get_material(RID p_immediate) const { return RID(); }
-AABB RasterizerStorageMetal::immediate_get_aabb(RID p_immediate) const { return AABB(); }
+RID RasterizerStorageMetal::immediate_get_material(RID p_immediate) const {
+	return RID();
+}
+AABB RasterizerStorageMetal::immediate_get_aabb(RID p_immediate) const {
+	return AABB();
+}
 
 /* SKELETON API */
 
-RID RasterizerStorageMetal::skeleton_create() { return RID(); }
+RID RasterizerStorageMetal::skeleton_create() {
+	return RID();
+}
 void RasterizerStorageMetal::skeleton_allocate(RID p_skeleton, int p_bones, bool p_2d_skeleton) {}
 void RasterizerStorageMetal::skeleton_set_base_transform_2d(RID p_skeleton, const Transform2D &p_base_transform) {}
 void RasterizerStorageMetal::skeleton_set_world_transform(RID p_skeleton, bool p_enable, const Transform &p_world_transform) {}
-int RasterizerStorageMetal::skeleton_get_bone_count(RID p_skeleton) const { return 0; }
+int RasterizerStorageMetal::skeleton_get_bone_count(RID p_skeleton) const {
+	return 0;
+}
 void RasterizerStorageMetal::skeleton_bone_set_transform(RID p_skeleton, int p_bone, const Transform &p_transform) {}
-Transform RasterizerStorageMetal::skeleton_bone_get_transform(RID p_skeleton, int p_bone) const { return Transform(); }
+Transform RasterizerStorageMetal::skeleton_bone_get_transform(RID p_skeleton, int p_bone) const {
+	return Transform();
+}
 void RasterizerStorageMetal::skeleton_bone_set_transform_2d(RID p_skeleton, int p_bone, const Transform2D &p_transform) {}
-Transform2D RasterizerStorageMetal::skeleton_bone_get_transform_2d(RID p_skeleton, int p_bone) const { return Transform2D(); }
+Transform2D RasterizerStorageMetal::skeleton_bone_get_transform_2d(RID p_skeleton, int p_bone) const {
+	return Transform2D();
+}
 
 /* Light API */
 
-RID RasterizerStorageMetal::light_create(VS::LightType p_type) { return RID(); }
+RID RasterizerStorageMetal::light_create(VS::LightType p_type) {
+	return RID();
+}
 
-RID RasterizerStorageMetal::directional_light_create() { return light_create(VS::LIGHT_DIRECTIONAL); }
-RID RasterizerStorageMetal::omni_light_create() { return light_create(VS::LIGHT_OMNI); }
-RID RasterizerStorageMetal::spot_light_create() { return light_create(VS::LIGHT_SPOT); }
+RID RasterizerStorageMetal::directional_light_create() {
+	return light_create(VS::LIGHT_DIRECTIONAL);
+}
+RID RasterizerStorageMetal::omni_light_create() {
+	return light_create(VS::LIGHT_OMNI);
+}
+RID RasterizerStorageMetal::spot_light_create() {
+	return light_create(VS::LIGHT_SPOT);
+}
 
 void RasterizerStorageMetal::light_set_color(RID p_light, const Color &p_color) {}
 void RasterizerStorageMetal::light_set_param(RID p_light, VS::LightParam p_param, float p_value) {}
@@ -393,26 +474,52 @@ void RasterizerStorageMetal::light_omni_set_shadow_detail(RID p_light, VS::Light
 
 void RasterizerStorageMetal::light_directional_set_shadow_mode(RID p_light, VS::LightDirectionalShadowMode p_mode) {}
 void RasterizerStorageMetal::light_directional_set_blend_splits(RID p_light, bool p_enable) {}
-bool RasterizerStorageMetal::light_directional_get_blend_splits(RID p_light) const { return false; }
+bool RasterizerStorageMetal::light_directional_get_blend_splits(RID p_light) const {
+	return false;
+}
 void RasterizerStorageMetal::light_directional_set_shadow_depth_range_mode(RID p_light, VS::LightDirectionalShadowDepthRangeMode p_range_mode) {}
-VS::LightDirectionalShadowDepthRangeMode RasterizerStorageMetal::light_directional_get_shadow_depth_range_mode(RID p_light) const { return VS::LIGHT_DIRECTIONAL_SHADOW_DEPTH_RANGE_STABLE; }
+VS::LightDirectionalShadowDepthRangeMode RasterizerStorageMetal::light_directional_get_shadow_depth_range_mode(RID p_light) const {
+	return VS::LIGHT_DIRECTIONAL_SHADOW_DEPTH_RANGE_STABLE;
+}
 
-VS::LightDirectionalShadowMode RasterizerStorageMetal::light_directional_get_shadow_mode(RID p_light) { return VS::LIGHT_DIRECTIONAL_SHADOW_ORTHOGONAL; }
-VS::LightOmniShadowMode RasterizerStorageMetal::light_omni_get_shadow_mode(RID p_light) { return VS::LIGHT_OMNI_SHADOW_DUAL_PARABOLOID; }
+VS::LightDirectionalShadowMode RasterizerStorageMetal::light_directional_get_shadow_mode(RID p_light) {
+	return VS::LIGHT_DIRECTIONAL_SHADOW_ORTHOGONAL;
+}
+VS::LightOmniShadowMode RasterizerStorageMetal::light_omni_get_shadow_mode(RID p_light) {
+	return VS::LIGHT_OMNI_SHADOW_DUAL_PARABOLOID;
+}
 
-bool RasterizerStorageMetal::light_has_shadow(RID p_light) const { return false; }
+bool RasterizerStorageMetal::light_has_shadow(RID p_light) const {
+	return false;
+}
 
-VS::LightType RasterizerStorageMetal::light_get_type(RID p_light) const { return VS::LIGHT_OMNI; }
-AABB RasterizerStorageMetal::light_get_aabb(RID p_light) const { return AABB(); }
-float RasterizerStorageMetal::light_get_param(RID p_light, VS::LightParam p_param) { return 0.0; }
-Color RasterizerStorageMetal::light_get_color(RID p_light) { return Color(); }
-bool RasterizerStorageMetal::light_get_use_gi(RID p_light) { return false; }
-VS::LightBakeMode RasterizerStorageMetal::light_get_bake_mode(RID p_light) { return VS::LightBakeMode::LIGHT_BAKE_DISABLED; }
-uint64_t RasterizerStorageMetal::light_get_version(RID p_light) const { return 0; }
+VS::LightType RasterizerStorageMetal::light_get_type(RID p_light) const {
+	return VS::LIGHT_OMNI;
+}
+AABB RasterizerStorageMetal::light_get_aabb(RID p_light) const {
+	return AABB();
+}
+float RasterizerStorageMetal::light_get_param(RID p_light, VS::LightParam p_param) {
+	return 0.0;
+}
+Color RasterizerStorageMetal::light_get_color(RID p_light) {
+	return Color();
+}
+bool RasterizerStorageMetal::light_get_use_gi(RID p_light) {
+	return false;
+}
+VS::LightBakeMode RasterizerStorageMetal::light_get_bake_mode(RID p_light) {
+	return VS::LightBakeMode::LIGHT_BAKE_DISABLED;
+}
+uint64_t RasterizerStorageMetal::light_get_version(RID p_light) const {
+	return 0;
+}
 
 /* PROBE API */
 
-RID RasterizerStorageMetal::reflection_probe_create() { return RID(); }
+RID RasterizerStorageMetal::reflection_probe_create() {
+	return RID();
+}
 
 void RasterizerStorageMetal::reflection_probe_set_update_mode(RID p_probe, VS::ReflectionProbeUpdateMode p_mode) {}
 void RasterizerStorageMetal::reflection_probe_set_intensity(RID p_probe, float p_intensity) {}
@@ -428,13 +535,27 @@ void RasterizerStorageMetal::reflection_probe_set_enable_shadows(RID p_probe, bo
 void RasterizerStorageMetal::reflection_probe_set_cull_mask(RID p_probe, uint32_t p_layers) {}
 void RasterizerStorageMetal::reflection_probe_set_resolution(RID p_probe, int p_resolution) {}
 
-AABB RasterizerStorageMetal::reflection_probe_get_aabb(RID p_probe) const { return AABB(); }
-VS::ReflectionProbeUpdateMode RasterizerStorageMetal::reflection_probe_get_update_mode(RID p_probe) const { return VisualServer::REFLECTION_PROBE_UPDATE_ONCE; }
-uint32_t RasterizerStorageMetal::reflection_probe_get_cull_mask(RID p_probe) const { return 0; }
-Vector3 RasterizerStorageMetal::reflection_probe_get_extents(RID p_probe) const { return Vector3(); }
-Vector3 RasterizerStorageMetal::reflection_probe_get_origin_offset(RID p_probe) const { return Vector3(); }
-float RasterizerStorageMetal::reflection_probe_get_origin_max_distance(RID p_probe) const { return 0.0; }
-bool RasterizerStorageMetal::reflection_probe_renders_shadows(RID p_probe) const { return false; }
+AABB RasterizerStorageMetal::reflection_probe_get_aabb(RID p_probe) const {
+	return AABB();
+}
+VS::ReflectionProbeUpdateMode RasterizerStorageMetal::reflection_probe_get_update_mode(RID p_probe) const {
+	return VisualServer::REFLECTION_PROBE_UPDATE_ONCE;
+}
+uint32_t RasterizerStorageMetal::reflection_probe_get_cull_mask(RID p_probe) const {
+	return 0;
+}
+Vector3 RasterizerStorageMetal::reflection_probe_get_extents(RID p_probe) const {
+	return Vector3();
+}
+Vector3 RasterizerStorageMetal::reflection_probe_get_origin_offset(RID p_probe) const {
+	return Vector3();
+}
+float RasterizerStorageMetal::reflection_probe_get_origin_max_distance(RID p_probe) const {
+	return 0.0;
+}
+bool RasterizerStorageMetal::reflection_probe_renders_shadows(RID p_probe) const {
+	return false;
+}
 
 void RasterizerStorageMetal::instance_add_skeleton(RID p_skeleton, RasterizerScene::InstanceBase *p_instance) {}
 void RasterizerStorageMetal::instance_remove_skeleton(RID p_skeleton, RasterizerScene::InstanceBase *p_instance) {}
@@ -444,16 +565,24 @@ void RasterizerStorageMetal::instance_remove_dependency(RID p_base, RasterizerSc
 
 /* GI PROBE API */
 
-RID RasterizerStorageMetal::gi_probe_create() { return RID(); }
+RID RasterizerStorageMetal::gi_probe_create() {
+	return RID();
+}
 
 void RasterizerStorageMetal::gi_probe_set_bounds(RID p_probe, const AABB &p_bounds) {}
-AABB RasterizerStorageMetal::gi_probe_get_bounds(RID p_probe) const { return AABB(); }
+AABB RasterizerStorageMetal::gi_probe_get_bounds(RID p_probe) const {
+	return AABB();
+}
 
 void RasterizerStorageMetal::gi_probe_set_cell_size(RID p_probe, float p_range) {}
-float RasterizerStorageMetal::gi_probe_get_cell_size(RID p_probe) const { return 0.0; }
+float RasterizerStorageMetal::gi_probe_get_cell_size(RID p_probe) const {
+	return 0.0;
+}
 
 void RasterizerStorageMetal::gi_probe_set_to_cell_xform(RID p_probe, const Transform &p_xform) {}
-Transform RasterizerStorageMetal::gi_probe_get_to_cell_xform(RID p_probe) const { return Transform(); }
+Transform RasterizerStorageMetal::gi_probe_get_to_cell_xform(RID p_probe) const {
+	return Transform();
+}
 
 void RasterizerStorageMetal::gi_probe_set_dynamic_data(RID p_probe, const PoolVector<int> &p_data) {}
 PoolVector<int> RasterizerStorageMetal::gi_probe_get_dynamic_data(RID p_probe) const {
@@ -462,36 +591,58 @@ PoolVector<int> RasterizerStorageMetal::gi_probe_get_dynamic_data(RID p_probe) c
 }
 
 void RasterizerStorageMetal::gi_probe_set_dynamic_range(RID p_probe, int p_range) {}
-int RasterizerStorageMetal::gi_probe_get_dynamic_range(RID p_probe) const { return 0; }
+int RasterizerStorageMetal::gi_probe_get_dynamic_range(RID p_probe) const {
+	return 0;
+}
 
 void RasterizerStorageMetal::gi_probe_set_energy(RID p_probe, float p_range) {}
-float RasterizerStorageMetal::gi_probe_get_energy(RID p_probe) const { return 0.0; }
+float RasterizerStorageMetal::gi_probe_get_energy(RID p_probe) const {
+	return 0.0;
+}
 
 void RasterizerStorageMetal::gi_probe_set_bias(RID p_probe, float p_range) {}
-float RasterizerStorageMetal::gi_probe_get_bias(RID p_probe) const { return 0.0; }
+float RasterizerStorageMetal::gi_probe_get_bias(RID p_probe) const {
+	return 0.0;
+}
 
 void RasterizerStorageMetal::gi_probe_set_normal_bias(RID p_probe, float p_range) {}
-float RasterizerStorageMetal::gi_probe_get_normal_bias(RID p_probe) const { return 0.0; }
+float RasterizerStorageMetal::gi_probe_get_normal_bias(RID p_probe) const {
+	return 0.0;
+}
 
 void RasterizerStorageMetal::gi_probe_set_propagation(RID p_probe, float p_range) {}
-float RasterizerStorageMetal::gi_probe_get_propagation(RID p_probe) const { return 0.0; }
+float RasterizerStorageMetal::gi_probe_get_propagation(RID p_probe) const {
+	return 0.0;
+}
 
 void RasterizerStorageMetal::gi_probe_set_interior(RID p_probe, bool p_enable) {}
-bool RasterizerStorageMetal::gi_probe_is_interior(RID p_probe) const { return false; }
+bool RasterizerStorageMetal::gi_probe_is_interior(RID p_probe) const {
+	return false;
+}
 
 void RasterizerStorageMetal::gi_probe_set_compress(RID p_probe, bool p_enable) {}
-bool RasterizerStorageMetal::gi_probe_is_compressed(RID p_probe) const { return false; }
+bool RasterizerStorageMetal::gi_probe_is_compressed(RID p_probe) const {
+	return false;
+}
 
-uint32_t RasterizerStorageMetal::gi_probe_get_version(RID p_probe) { return 0; }
+uint32_t RasterizerStorageMetal::gi_probe_get_version(RID p_probe) {
+	return 0;
+}
 
-RasterizerStorage::GIProbeCompression RasterizerStorageMetal::gi_probe_get_dynamic_data_get_preferred_compression() const { return GI_PROBE_UNCOMPRESSED; }
-RID RasterizerStorageMetal::gi_probe_dynamic_data_create(int p_width, int p_height, int p_depth, GIProbeCompression p_compression) { return RID(); }
+RasterizerStorage::GIProbeCompression RasterizerStorageMetal::gi_probe_get_dynamic_data_get_preferred_compression() const {
+	return GI_PROBE_UNCOMPRESSED;
+}
+RID RasterizerStorageMetal::gi_probe_dynamic_data_create(int p_width, int p_height, int p_depth, GIProbeCompression p_compression) {
+	return RID();
+}
 void RasterizerStorageMetal::gi_probe_dynamic_data_update(RID p_gi_probe_data, int p_depth_slice, int p_slice_count, int p_mipmap, const void *p_data) {}
 
 /* LIGHTMAP CAPTURE */
 
 void RasterizerStorageMetal::lightmap_capture_set_bounds(RID p_capture, const AABB &p_bounds) {}
-AABB RasterizerStorageMetal::lightmap_capture_get_bounds(RID p_capture) const { return AABB(); }
+AABB RasterizerStorageMetal::lightmap_capture_get_bounds(RID p_capture) const {
+	return AABB();
+}
 void RasterizerStorageMetal::lightmap_capture_set_octree(RID p_capture, const PoolVector<uint8_t> &p_octree) {}
 RID RasterizerStorageMetal::lightmap_capture_create() {
 	LightmapCapture *capture = memnew(LightmapCapture);
@@ -503,11 +654,17 @@ PoolVector<uint8_t> RasterizerStorageMetal::lightmap_capture_get_octree(RID p_ca
 	return PoolVector<uint8_t>();
 }
 void RasterizerStorageMetal::lightmap_capture_set_octree_cell_transform(RID p_capture, const Transform &p_xform) {}
-Transform RasterizerStorageMetal::lightmap_capture_get_octree_cell_transform(RID p_capture) const { return Transform(); }
+Transform RasterizerStorageMetal::lightmap_capture_get_octree_cell_transform(RID p_capture) const {
+	return Transform();
+}
 void RasterizerStorageMetal::lightmap_capture_set_octree_cell_subdiv(RID p_capture, int p_subdiv) {}
-int RasterizerStorageMetal::lightmap_capture_get_octree_cell_subdiv(RID p_capture) const { return 0; }
+int RasterizerStorageMetal::lightmap_capture_get_octree_cell_subdiv(RID p_capture) const {
+	return 0;
+}
 void RasterizerStorageMetal::lightmap_capture_set_energy(RID p_capture, float p_energy) {}
-float RasterizerStorageMetal::lightmap_capture_get_energy(RID p_capture) const { return 0.0; }
+float RasterizerStorageMetal::lightmap_capture_get_energy(RID p_capture) const {
+	return 0.0;
+}
 const PoolVector<RasterizerStorage::LightmapCaptureOctree> *RasterizerStorageMetal::lightmap_capture_get_octree_ptr(RID p_capture) const {
 	const LightmapCapture *capture = lightmap_capture_data_owner.getornull(p_capture);
 	ERR_FAIL_COND_V(!capture, NULL);
@@ -516,7 +673,9 @@ const PoolVector<RasterizerStorage::LightmapCaptureOctree> *RasterizerStorageMet
 
 /* PARTICLES */
 
-RID RasterizerStorageMetal::particles_create() { return RID(); }
+RID RasterizerStorageMetal::particles_create() {
+	return RID();
+}
 
 void RasterizerStorageMetal::particles_set_emitting(RID p_particles, bool p_emitting) {}
 void RasterizerStorageMetal::particles_set_amount(RID p_particles, int p_amount) {}
@@ -539,26 +698,44 @@ void RasterizerStorageMetal::particles_set_draw_passes(RID p_particles, int p_co
 void RasterizerStorageMetal::particles_set_draw_pass_mesh(RID p_particles, int p_pass, RID p_mesh) {}
 
 void RasterizerStorageMetal::particles_request_process(RID p_particles) {}
-AABB RasterizerStorageMetal::particles_get_current_aabb(RID p_particles) { return AABB(); }
-AABB RasterizerStorageMetal::particles_get_aabb(RID p_particles) const { return AABB(); }
+AABB RasterizerStorageMetal::particles_get_current_aabb(RID p_particles) {
+	return AABB();
+}
+AABB RasterizerStorageMetal::particles_get_aabb(RID p_particles) const {
+	return AABB();
+}
 
 void RasterizerStorageMetal::particles_set_emission_transform(RID p_particles, const Transform &p_transform) {}
 
-bool RasterizerStorageMetal::particles_get_emitting(RID p_particles) { return false; }
-int RasterizerStorageMetal::particles_get_draw_passes(RID p_particles) const { return 0; }
-RID RasterizerStorageMetal::particles_get_draw_pass_mesh(RID p_particles, int p_pass) const { return RID(); }
+bool RasterizerStorageMetal::particles_get_emitting(RID p_particles) {
+	return false;
+}
+int RasterizerStorageMetal::particles_get_draw_passes(RID p_particles) const {
+	return 0;
+}
+RID RasterizerStorageMetal::particles_get_draw_pass_mesh(RID p_particles, int p_pass) const {
+	return RID();
+}
 
-bool RasterizerStorageMetal::particles_is_inactive(RID p_particles) const { return false; }
+bool RasterizerStorageMetal::particles_is_inactive(RID p_particles) const {
+	return false;
+}
 
 /* RENDER TARGET */
 
-RID RasterizerStorageMetal::render_target_create() { return RID(); }
+RID RasterizerStorageMetal::render_target_create() {
+	return RID();
+}
 void RasterizerStorageMetal::render_target_set_position(RID p_render_target, int p_x, int p_y) {}
 void RasterizerStorageMetal::render_target_set_size(RID p_render_target, int p_width, int p_height) {}
-RID RasterizerStorageMetal::render_target_get_texture(RID p_render_target) const { return RID(); }
+RID RasterizerStorageMetal::render_target_get_texture(RID p_render_target) const {
+	return RID();
+}
 void RasterizerStorageMetal::render_target_set_external_texture(RID p_render_target, unsigned int p_texture_id) {}
 void RasterizerStorageMetal::render_target_set_flag(RID p_render_target, RenderTargetFlags p_flag, bool p_value) {}
-bool RasterizerStorageMetal::render_target_was_used(RID p_render_target) { return false; }
+bool RasterizerStorageMetal::render_target_was_used(RID p_render_target) {
+	return false;
+}
 void RasterizerStorageMetal::render_target_clear_used(RID p_render_target) {}
 void RasterizerStorageMetal::render_target_set_msaa(RID p_render_target, VS::ViewportMSAA p_msaa) {}
 void RasterizerStorageMetal::render_target_set_use_fxaa(RID p_render_target, bool p_fxaa) {}
@@ -566,11 +743,15 @@ void RasterizerStorageMetal::render_target_set_use_debanding(RID p_render_target
 
 /* CANVAS SHADOW */
 
-RID RasterizerStorageMetal::canvas_light_shadow_buffer_create(int p_width) { return RID(); }
+RID RasterizerStorageMetal::canvas_light_shadow_buffer_create(int p_width) {
+	return RID();
+}
 
 /* LIGHT SHADOW MAPPING */
 
-RID RasterizerStorageMetal::canvas_light_occluder_create() { return RID(); }
+RID RasterizerStorageMetal::canvas_light_occluder_create() {
+	return RID();
+}
 void RasterizerStorageMetal::canvas_light_occluder_set_polylines(RID p_occluder, const PoolVector<Vector2> &p_lines) {}
 
 VS::InstanceType RasterizerStorageMetal::get_base_type(RID p_rid) const {
@@ -593,7 +774,9 @@ bool RasterizerStorageMetal::free(RID p_rid) {
 	return true;
 }
 
-bool RasterizerStorageMetal::has_os_feature(const String &p_feature) const { return false; }
+bool RasterizerStorageMetal::has_os_feature(const String &p_feature) const {
+	return false;
+}
 
 void RasterizerStorageMetal::update_dirty_resources() {}
 
@@ -601,14 +784,21 @@ void RasterizerStorageMetal::set_debug_generate_wireframes(bool p_generate) {}
 
 void RasterizerStorageMetal::render_info_begin_capture() {}
 void RasterizerStorageMetal::render_info_end_capture() {}
-int RasterizerStorageMetal::get_captured_render_info(VS::RenderInfo p_info) { return 0; }
+int RasterizerStorageMetal::get_captured_render_info(VS::RenderInfo p_info) {
+	return 0;
+}
 
-uint64_t RasterizerStorageMetal::get_render_info(VS::RenderInfo p_info) { return 0; }
-String RasterizerStorageMetal::get_video_adapter_name() const { return String(); }
-String RasterizerStorageMetal::get_video_adapter_vendor() const { return String(); }
+uint64_t RasterizerStorageMetal::get_render_info(VS::RenderInfo p_info) {
+	return 0;
+}
+String RasterizerStorageMetal::get_video_adapter_name() const {
+	return String();
+}
+String RasterizerStorageMetal::get_video_adapter_vendor() const {
+	return String();
+}
 
 RasterizerStorageMetal::RasterizerStorageMetal() {}
 RasterizerStorageMetal::~RasterizerStorageMetal() {}
-
 
 #endif // METAL_ENABLED

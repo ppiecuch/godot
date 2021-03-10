@@ -79,12 +79,12 @@
 #include "scene/touch_button.h"
 
 #include "scenery/spherical_waves/spherical_waves.h"
+#include "scenery/spider_anim/spider.h"
+#include "scenery/spider_anim/spider_insects.h"
 #include "scenery/starfield/starfield_2d.h"
 #include "scenery/tree_2d/tree_2d.h"
 #include "scenery/vegetation_instance/vegetation_instance.h"
 #include "scenery/water_splash/gd_water_splash.h"
-#include "scenery/spider_anim/spider.h"
-#include "scenery/spider_anim/spider_insects.h"
 
 #include "smooth/smooth.h"
 #include "smooth/smooth_2d.h"

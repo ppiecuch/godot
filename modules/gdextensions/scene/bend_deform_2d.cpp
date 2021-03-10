@@ -42,7 +42,6 @@
 // ----------
 // https://www.reddit.com/r/godot/comments/9y74r6/how_to_detect_when_node2d_is_moveddragged_in_the/
 
-
 struct MotionTextureIterator : public Reference {
 	Point2 position, next_position;
 	real_t pk;

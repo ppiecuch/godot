@@ -1,12 +1,12 @@
 /*************************************************************************/
-/*  blit.metal                                                            */
+/*  godot_common.h                                                       */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -36,37 +36,36 @@
 #define METAL_GODOT_COMMON_H
 
 #ifndef SKIP_STD_HEADERS
-# include <simd/simd.h>
-# include <metal_stdlib>
+#include <simd/simd.h>
+#include <metal_stdlib>
 #endif
 
-struct Uniforms
-{
-    matrix_float4x4 localToClip;
-    matrix_float4x4 localToView;
-    matrix_float4x4 localToWorld;
-    matrix_float4x4 localToShadowClip;
-    matrix_float4x4 clipToView;
-    matrix_float4x4 viewToClip;
-    float4 lightPosition;
-    float4 lightDirection;
-    float4 lightColor;
-    float lightConeAngle;
-    int lightType; // 0: None, 1: Spot, 2: Dir, 3: Point
-    float minAmbient;
-    uint maxNumLightsPerTile;
-    uint windowWidth;
-    uint windowHeight;
-    uint numLights; // 16 bits for point light count, 16 for spot light count
-    float f0;
-    float4 tex0scaleOffset;
-    float4 tilesXY;
-    matrix_float4x4 boneMatrices[ 80 ];
-    int isVR;
-    int kernelSize;
-    float2 bloomParams;
-    float4 kernelOffsets[ 16 ];
-    float4 cameraParams; // .x: fov (radians), .y: aspect, .z: near, .w: far
+struct Uniforms {
+	matrix_float4x4 localToClip;
+	matrix_float4x4 localToView;
+	matrix_float4x4 localToWorld;
+	matrix_float4x4 localToShadowClip;
+	matrix_float4x4 clipToView;
+	matrix_float4x4 viewToClip;
+	float4 lightPosition;
+	float4 lightDirection;
+	float4 lightColor;
+	float lightConeAngle;
+	int lightType; // 0: None, 1: Spot, 2: Dir, 3: Point
+	float minAmbient;
+	uint maxNumLightsPerTile;
+	uint windowWidth;
+	uint windowHeight;
+	uint numLights; // 16 bits for point light count, 16 for spot light count
+	float f0;
+	float4 tex0scaleOffset;
+	float4 tilesXY;
+	matrix_float4x4 boneMatrices[80];
+	int isVR;
+	int kernelSize;
+	float2 bloomParams;
+	float4 kernelOffsets[16];
+	float4 cameraParams; // .x: fov (radians), .y: aspect, .z: near, .w: far
 };
 
 #endif /* METAL_GODOT_COMMON_H */
