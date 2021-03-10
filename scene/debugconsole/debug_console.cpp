@@ -46,8 +46,8 @@
 #include "scene/resources/texture.h"
 
 #ifndef BIND_ENUM_CONSTANT_CUSTOM
-# define BIND_ENUM_CONSTANT_CUSTOM(m_constant, m_name) \
-	ClassDB::bind_integer_constant(get_class_static(), StringName(), m_name, ((int)(m_constant)));
+# define BIND_ENUM_CONSTANT_CUSTOM(pConstant, pName) \
+	ClassDB::bind_integer_constant(get_class_static(), StringName(), pName, ((int)(pConstant)));
 #endif
 #define newref(pClass) Ref<pClass>(memnew(pClass))
 #define _register_global_ref(pRef)                        \

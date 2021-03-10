@@ -36,26 +36,26 @@
 #include "core/ustring.h"
 #include "scene/main/scene_tree.h"
 
-#define safe_delete(x) (memdelete(x), x = nullptr)
+#define safe_delete(pPtr) (memdelete(pPtr), pPtr = nullptr)
 #define newref(pClass) Ref<pClass>(memnew(pClass))
 
 #ifdef DEBUG_ENABLED
-#define DEBUG_PRINT(m_text) print_line(m_text);
+# define DEBUG_PRINT(pText) print_line(pText)
 #else
-#define DEBUG_PRINT(m_text)
+# define DEBUG_PRINT(pText)
 #endif
 
 #ifdef DEBUG_ENABLED
 
 // Bind constant with custom name
-#define BIND_ENUM_CONSTANT_CUSTOM(m_constant, m_name) \
-	ClassDB::bind_integer_constant(get_class_static(), __constant_get_enum_name(m_constant, m_name), m_name, ((int)(m_constant)));
+#define BIND_ENUM_CONSTANT_CUSTOM(pConstant, pName) \
+	ClassDB::bind_integer_constant(get_class_static(), __constant_get_enum_name(pConstant, pName), pName, ((int)(pConstant)));
 
 #else
 
 // Bind constant with custom name
-#define BIND_ENUM_CONSTANT_CUSTOM(m_constant, m_name) \
-	ClassDB::bind_integer_constant(get_class_static(), StringName(), m_name, ((int)(m_constant)));
+#define BIND_ENUM_CONSTANT_CUSTOM(pConstant, pName) \
+	ClassDB::bind_integer_constant(get_class_static(), StringName(), pName, ((int)(pConstant)));
 
 #endif // DEBUG_ENABLED
 
