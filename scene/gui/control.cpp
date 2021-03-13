@@ -70,7 +70,9 @@ Dictionary Control::_edit_get_state() const {
 }
 
 void Control::_edit_set_state(const Dictionary &p_state) {
-
+	ERR_FAIL_COND((p_state.size() <= 0) ||
+				  !p_state.has("rotation") || !p_state.has("scale") ||
+				  !p_state.has("pivot") || !p_state.has("anchors") || !p_state.has("offsets"));
 	Dictionary state = p_state;
 
 	set_rotation(state["rotation"]);
@@ -461,6 +463,11 @@ void Control::_update_canvas_item_transform() {
 
 	Transform2D xform = _get_internal_transform();
 	xform[2] += get_position();
+
+	// We use a little workaround to avoid flickering when moving the pivot with _edit_set_pivot()
+	if (is_inside_tree() && Math::abs(Math::sin(data.rotation * 4.0f)) < 0.00001f && get_viewport()->is_snap_controls_to_pixels_enabled()) {
+		xform[2] = xform[2].round();
+	}
 
 	VisualServer::get_singleton()->canvas_item_set_transform(get_canvas_item(), xform);
 }

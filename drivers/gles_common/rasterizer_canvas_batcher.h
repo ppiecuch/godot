@@ -227,7 +227,7 @@ public:
 
 		// we are always splitting items with lots of commands,
 		// and items with unhandled primitives (default)
-		bool use_hardware_transform() const { return num_item_refs == 1; }
+		bool use_hardware_transform() const { return (num_item_refs == 1) && !(flags & RasterizerStorageCommon::USE_LARGE_FVF); }
 	};
 
 	struct BItemRef {
@@ -1164,10 +1164,17 @@ PREAMBLE(bool)::_light_scissor_begin(const Rect2 &p_item_rect, const Transform2D
 
 	int rh = get_storage()->frame.current_rt->height;
 
+	// using the exact size was leading to off by one errors,
+	// possibly due to pixel snap. For this reason we will boost
+	// the scissor area by 1 pixel, this will take care of any rounding
+	// issues, and shouldn't significantly negatively impact performance.
 	int y = rh - (cliprect.position.y + cliprect.size.y);
+	y += 1; // off by 1 boost before flipping
+
 	if (get_storage()->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_VFLIP])
 		y = cliprect.position.y;
-	get_this()->gl_enable_scissor(cliprect.position.x, y, cliprect.size.width, cliprect.size.height);
+
+	get_this()->gl_enable_scissor(cliprect.position.x - 1, y, cliprect.size.width + 2, cliprect.size.height + 2);
 
 	return true;
 }
@@ -2063,9 +2070,9 @@ bool C_PREAMBLE::_prefill_rect(RasterizerCanvas::Item::CommandRect *rect, FillSt
 		const Transform2D &tr = r_fill_state.transform_combined;
 
 		pBT[0].translate.set(tr.elements[2]);
-		// could do swizzling in shader?
-		pBT[0].basis[0].set(tr.elements[0][0], tr.elements[1][0]);
-		pBT[0].basis[1].set(tr.elements[0][1], tr.elements[1][1]);
+
+		pBT[0].basis[0].set(tr.elements[0][0], tr.elements[0][1]);
+		pBT[0].basis[1].set(tr.elements[1][0], tr.elements[1][1]);
 
 		pBT[1] = pBT[0];
 		pBT[2] = pBT[0];
