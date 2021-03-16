@@ -14,4 +14,15 @@ class SpiderInsects : public Node2D {
 		SpiderInsects() {}
 };
 
+class InsectsManagerInstance : public Node2D {
+	GDCLASS(InsectsManagerInstance, Node2D);
+
+	protected:
+		static void _bind_methods() {}
+
+		void _notification(int p_what) {}
+
+		InsectsManagerInstance() {}
+};
+
 #endif // GD_SPIDER_INSECTS_H
