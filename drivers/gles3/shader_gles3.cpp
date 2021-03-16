@@ -83,7 +83,7 @@ void ShaderGLES3::bind_uniforms() {
 
 		const Variant &v = E->value();
 		_set_uniform_variant(location, v);
-		//print_line("uniform "+itos(location)+" value "+v+ " type "+Variant::get_type_name(v.get_type()));
+		//DEBUG_PRINT("uniform "+itos(location)+" value "+v+ " type "+Variant::get_type_name(v.get_type()));
 		E = E->next();
 	};
 
@@ -300,7 +300,7 @@ ShaderGLES3::Version *ShaderGLES3::get_current_version() {
 	DEBUG_PRINT("\nVertex Code:\n\n" + String(code_string.get_data()));
 	for (int i = 0; i < strings.size(); i++) {
 
-		//print_line("vert strings "+itos(i)+":"+String(strings[i]));
+		DEBUG_PRINT("//vert strings "+itos(i)+":\n"+String(strings[i]));
 	}
 #endif
 
@@ -395,7 +395,7 @@ ShaderGLES3::Version *ShaderGLES3::get_current_version() {
 	DEBUG_PRINT("\nFragment Code:\n\n" + String(code_string2.get_data()));
 	for (int i = 0; i < strings.size(); i++) {
 
-		//print_line("frag strings "+itos(i)+":"+String(strings[i]));
+		DEBUG_PRINT("//frag strings "+itos(i)+":\n"+String(strings[i]));
 	}
 #endif
 
