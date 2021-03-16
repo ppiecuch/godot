@@ -31,28 +31,39 @@
 // -*- C++ -*-
 //
 
-#ifndef _DESTRUCTIBLE_2D_H_
-#define _DESTRUCTIBLE_2D_H_
+#ifndef GD_DESTRUCTIBLE_2D_H
+#define GD_DESTRUCTIBLE_2D_H
 
 #include "core/reference.h"
-#include "scene/2d/sprite.h"
+#include "scene/2d/physics_body_2d.h"
 
-class DestructibleSprite : public Sprite {
-	GDCLASS(DestructibleSprite, Sprite);
+class DestructibleObject : public RigidBody2D {
+	GDCLASS(DestructibleObject, RigidBody2D);
 
 private:
-	Vector2 force_impulse_direction;
-	real_t force_impulse_duration;
-	bool fade_debris;
+	int blocks_per_side;
+	real_t blocks_impulse;
+	real_t blocks_gravity_scale;
+	real_t debris_max_time;
+	bool remove_debris;
+	int collision_layers;
+	int collision_masks;
+	bool collision_one_way;
+	bool explosion_delay;
+	String fake_explosions_group = "fake_explosion_particles";
+	bool randomize_seed;
+	bool debug_mode;
+
+	real_t _explosion_delay_timer;
+	real_t _explosion_delay_timer_limit;
 
 public:
-	DestructibleSprite();
-	~DestructibleSprite();
-
-	void _notification(int p_what);
+	DestructibleObject();
+	~DestructibleObject();
 
 protected:
+	void _notification(int p_what);
 	static void _bind_methods();
 };
 
-#endif /* _DESTRUCTIBLE_2D_H_ */
+#endif /* GD_DESTRUCTIBLE_2D_H */

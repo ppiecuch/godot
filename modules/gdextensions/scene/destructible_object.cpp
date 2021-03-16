@@ -34,11 +34,36 @@
 
 #include "destructible_object.h"
 
-void DestructibleSprite::_bind_methods() {
+void DestructibleObject::_bind_methods() {
 
-	ADD_GROUP("Force impulse", "force_impulse_");
-	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "force_impulse_direction"), "set_force_impulse_direction", "get_force_impulse_direction");
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "force_impulse_duration"), "set_force_impulse_duration", "get_force_impulse_duration");
-	ADD_GROUP("", "");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "fade_debris"), "set_fade_debris", "get_fade_debris");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "blocks_per_side"), "set_blocks_per_side", "get_blocks_per_side");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "blocks_impulse"), "set_blocks_impulse", "get_blocks_impulse");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "blocks_gravity_scale"), "set_blocks_gravity_scale", "get_blocks_gravity_scale");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "debris_max_time"), "set_debris_max_time", "get_debris_max_time");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "remove_debris"), "set_remove_debris", "get_remove_debris");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "collision_layers"), "set_collision_layers", "get_collision_layers");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "collision_masks"), "set_collision_masks", "get_collision_masks");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "collision_one_way"), "set_collision_one_way", "get_collision_one_way");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "explosion_delay"), "set_explosion_delay", "get_explosion_delay");
+	ADD_PROPERTY(PropertyInfo(Variant::STRING, "fake_explosions_group"), "set_fake_explosions_group", "get_fake_explosions_group");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "randomize_seed"), "set_randomize_seed", "get_randomize_seed");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "debug_mode"), "set_debug_mode", "get_debug_mode");
+}
+
+DestructibleObject::DestructibleObject() {
+
+	blocks_per_side = 6;
+	blocks_impulse = 600;
+	blocks_gravity_scale = 10;
+	debris_max_time = 5;
+	remove_debris = false;
+	collision_layers = 1;
+	collision_masks = 1;
+	collision_one_way = false;
+	explosion_delay = false;
+	fake_explosions_group = "fake_explosion_particles";
+	randomize_seed = false;
+	debug_mode = false;
+	_explosion_delay_timer = 0;
+	_explosion_delay_timer_limit = 0;
 }
