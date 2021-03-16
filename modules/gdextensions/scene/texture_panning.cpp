@@ -1,11 +1,38 @@
+/*************************************************************************/
+/*  texture_panning.cpp                                                  */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
 
-#include "scrolling_texture.h"
+#include "texture_panning.h"
 #include "scene/main/viewport.h"
 
-
-
 #ifdef TOOLS_ENABLED
-Dictionary ScrollingTexture::_edit_get_state() const {
+Dictionary TexturePanning::_edit_get_state() const {
 
 	Dictionary state = Node2D::_edit_get_state();
 	state["view_size"] = get_view_size();
@@ -13,47 +40,71 @@ Dictionary ScrollingTexture::_edit_get_state() const {
 	return state;
 }
 
-void ScrollingTexture::_edit_set_state(const Dictionary &p_state) {
+void TexturePanning::_edit_set_state(const Dictionary &p_state) {
 
 	Node2D::_edit_set_state(p_state);
 	set_view_size(p_state["view_size"]);
 }
 
-bool ScrollingTexture::_edit_is_selected_on_click(const Point2 &p_point, double p_tolerance) const {
+bool TexturePanning::_edit_is_selected_on_click(const Point2 &p_point, double p_tolerance) const {
 	return _edit_get_rect().has_point(p_point);
 };
 
-Rect2 ScrollingTexture::_edit_get_rect() const {
+Rect2 TexturePanning::_edit_get_rect() const {
 	return Rect2(Point2(), get_view_size());
 }
 
-bool ScrollingTexture::_edit_use_rect() const {
+bool TexturePanning::_edit_use_rect() const {
 	return true;
 }
 #endif
 
-void ScrollingTexture::_refresh() {
+void TexturePanning::_refresh() {
 	ERR_FAIL_COND(texture.is_null());
 
-	texture_offset = Vector2(0, 0) - texture->get_size() * texture_scale;
+	_texture_offset = Vector2(0, 0) - texture->get_size() * texture_scale;
 	update();
 }
 
+void TexturePanning::set_texture(Ref<Texture> p_texture) {
 
+	if (texture != p_texture) {
+		texture = p_texture;
+		update();
+	}
+}
 
-void ScrollingTexture::set_scrolling_active(bool p_state) {
+Ref<Texture> TexturePanning::get_texture() const {
+
+	return texture;
+}
+
+void TexturePanning::set_texture_scale(Vector2 p_scale) {
+
+	if (texture_scale != p_scale) {
+		texture_scale = p_scale;
+		update();
+	}
+}
+
+Vector2 TexturePanning::get_texture_scale() const {
+
+	return texture_scale;
+}
+
+void TexturePanning::set_scrolling_active(bool p_state) {
 
 	if (p_state != scrolling_active) {
 		scrolling_active = p_state;
 	}
 }
 
-bool ScrollingTexture::is_scrolling_active() const {
+bool TexturePanning::is_scrolling_active() const {
 
 	return scrolling_active;
 }
 
-void ScrollingTexture::set_scrolling_speed(const Vector2 &p_speed) {
+void TexturePanning::set_scrolling_speed(const Vector2 &p_speed) {
 
 	if (p_speed != scrolling_speed) {
 		scrolling_speed = p_speed;
@@ -62,12 +113,12 @@ void ScrollingTexture::set_scrolling_speed(const Vector2 &p_speed) {
 	}
 }
 
-Vector2 ScrollingTexture::get_scrolling_speed() const {
+Vector2 TexturePanning::get_scrolling_speed() const {
 
 	return scrolling_speed;
 }
 
-void ScrollingTexture::set_view_size(const Size2 &p_size) {
+void TexturePanning::set_view_size(const Size2 &p_size) {
 
 	if (p_size != view_size) {
 		view_size = p_size;
@@ -77,12 +128,12 @@ void ScrollingTexture::set_view_size(const Size2 &p_size) {
 	}
 }
 
-Size2 ScrollingTexture::get_view_size() const {
+Size2 TexturePanning::get_view_size() const {
 
 	return view_size;
 }
 
-void ScrollingTexture::_notification(int p_what) {
+void TexturePanning::_notification(int p_what) {
 
 	switch (p_what) {
 		case NOTIFICATION_READY: {
@@ -92,42 +143,44 @@ void ScrollingTexture::_notification(int p_what) {
 		case NOTIFICATION_DRAW: {
 			if (texture.is_valid()) {
 				RID ci = get_canvas_item();
-				Rect2 dest_rect = Rect2(Point2(0,0), view_size);
-				Rect2 src_rect = Rect2(texture_offset, (view_size + texture->get_size() * 2) / texture_scale);
-				texture->draw_rect_region(ci, dest_rect, src_rect, modulate, false, Ref<Texture>(), true);
+				Rect2 dest_rect = Rect2(Point2(0, 0), view_size);
+				Rect2 src_rect = Rect2(_texture_offset, (view_size + texture->get_size() * 2) / texture_scale);
+				texture->draw_rect_region(ci, dest_rect, src_rect, get_modulate(), false, Ref<Texture>(), true);
 			}
 		} break;
 	}
 }
 
-void ScrollingTexture::_bind_methods() {
+void TexturePanning::_bind_methods() {
 
-	ClassDB::bind_method(D_METHOD("set_scrolling_speed"), &ScrollingTexture::set_scrolling_speed);
-	ClassDB::bind_method(D_METHOD("get_scrolling_speed"), &ScrollingTexture::get_scrolling_speed);
-	ClassDB::bind_method(D_METHOD("set_scrolling_active"), &ScrollingTexture::set_scrolling_active);
-	ClassDB::bind_method(D_METHOD("is_scrolling_active"), &ScrollingTexture::is_scrolling_active);
-	ClassDB::bind_method(D_METHOD("get_view_size"), &ScrollingTexture::get_view_size);
-	ClassDB::bind_method(D_METHOD("set_view_size"), &ScrollingTexture::set_view_size);
+	ClassDB::bind_method(D_METHOD("set_texture"), &TexturePanning::set_texture);
+	ClassDB::bind_method(D_METHOD("get_texture"), &TexturePanning::get_texture);
+	ClassDB::bind_method(D_METHOD("set_texture_scale"), &TexturePanning::set_texture_scale);
+	ClassDB::bind_method(D_METHOD("get_texture_scale"), &TexturePanning::get_texture_scale);
+	ClassDB::bind_method(D_METHOD("set_scrolling_speed"), &TexturePanning::set_scrolling_speed);
+	ClassDB::bind_method(D_METHOD("get_scrolling_speed"), &TexturePanning::get_scrolling_speed);
+	ClassDB::bind_method(D_METHOD("set_scrolling_active"), &TexturePanning::set_scrolling_active);
+	ClassDB::bind_method(D_METHOD("is_scrolling_active"), &TexturePanning::is_scrolling_active);
+	ClassDB::bind_method(D_METHOD("set_view_size"), &TexturePanning::set_view_size);
+	ClassDB::bind_method(D_METHOD("get_view_size"), &TexturePanning::get_view_size);
 
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "scrolling_active"), "set_scrolling_active", "is_scrolling_active");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "texture", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_texture", "get_texture");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "texture_scale"), "set_texture_scale", "get_texture_scale");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "scrolling_speed"), "set_scrolling_speed", "get_scrolling_speed");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "view_size"), "set_view_size", "get_view_size");
-	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "modulate"), "set_modulate", "get_modulate");
 
 	ADD_SIGNAL(MethodInfo("view_size_changed"));
 	ADD_SIGNAL(MethodInfo("movement_changed"));
 }
 
-ScrollingTexture::ScrollingTexture() {
+TexturePanning::TexturePanning() {
 
-	Ref<Texture> texture = Ref<Texture>(NULL);
+	texture = Ref<Texture>(NULL);
 	texture_scale = Vector2(2, 2);
-	texture_offset = Point2(0, 0);
 	view_size = Vector2(100, 100);
 	scrolling_speed = Vector2(0, 0);
-	modulate = Color(1, 1, 1, 1);
+	_texture_offset = Point2(0, 0);
 }
 
 // extends Node
