@@ -72,8 +72,7 @@ Error AudioDriver3ds::init() {
 	ndspChnSetRate(channel_num, mix_rate);
 	ndspChnSetFormat(channel_num, (channels == 1) ? NDSP_FORMAT_MONO_PCM16 : NDSP_FORMAT_STEREO_PCM16);
 
-	mutex = Mutex::create();
-	thread = Thread::create(AudioDriver3ds::thread_func, this);
+	thread.start(&thread_func, this);
 
 	return OK;
 };
@@ -138,25 +137,20 @@ AudioDriver::SpeakerMode AudioDriver3ds::get_speaker_mode() const {
 
 void AudioDriver3ds::lock() {
 
-	if (!thread || !mutex)
-		return;
-	mutex->lock();
+	mutex.lock();
 };
 
 void AudioDriver3ds::unlock() {
 
-	if (!thread || !mutex)
-		return;
-	mutex->unlock();
+	mutex.unlock();
 };
 
 void AudioDriver3ds::finish() {
 
-	if (!thread)
-		return;
-
 	exit_thread = true;
-	Thread::wait_to_finish(thread);
+	if (thread.is_started()) {
+		thread.wait_to_finish();
+	}
 
 	if (samples_in) {
 		memdelete_arr(samples_in);
@@ -165,18 +159,11 @@ void AudioDriver3ds::finish() {
 	for (int i = 0; i < NDSP_BUFFER_COUNT; ++i)
 		linearFree(ndsp_buffers[i].data_pcm16);
 
-	memdelete(thread);
-	if (mutex)
-		memdelete(mutex);
-	thread = NULL;
-
 	ndspExit();
 };
 
 AudioDriver3ds::AudioDriver3ds() {
 
-	mutex = NULL;
-	thread = NULL;
 };
 
 AudioDriver3ds::~AudioDriver3ds(){

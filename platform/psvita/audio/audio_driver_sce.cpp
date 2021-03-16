@@ -52,8 +52,7 @@ Error AudioDriverSCE::init() {
 
 	samples_in = memnew_arr(int32_t, buffer_size * channels);
 
-	mutex = Mutex::create();
-	thread = Thread::create(AudioDriverSCE::thread_func, this);
+	thread.start(&thread_func, this);
 
 	return OK;
 };
@@ -100,40 +99,28 @@ AudioDriver::SpeakerMode AudioDriverSCE::get_speaker_mode() const {
 
 void AudioDriverSCE::lock() {
 
-	if (!thread || !mutex)
-		return;
-	mutex->lock();
+	mutex.lock();
 };
 
 void AudioDriverSCE::unlock() {
 
-	if (!thread || !mutex)
-		return;
-	mutex->unlock();
+	mutex.unlock();
 };
 
 void AudioDriverSCE::finish() {
 
-	if (!thread)
-		return;
-
 	exit_thread = true;
-	Thread::wait_to_finish(thread);
+	if (thread.is_started()) {
+		thread.wait_to_finish();
+	}
 
 	if (samples_in) {
 		memdelete_arr(samples_in);
 	};
-
-	memdelete(thread);
-	if (mutex)
-		memdelete(mutex);
-	thread = NULL;
 };
 
 AudioDriverSCE::AudioDriverSCE() {
 
-	mutex = NULL;
-	thread = NULL;
 };
 
 AudioDriverSCE::~AudioDriverSCE(){

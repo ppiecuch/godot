@@ -44,8 +44,8 @@ class AudioDriver3ds : public AudioDriver {
 		NDSP_BUFFER_COUNT = 3,
 	};
 
-	Thread *thread;
-	Mutex *mutex;
+	Thread thread;
+	Mutex mutex;
 
 	int32_t *samples_in;
 
