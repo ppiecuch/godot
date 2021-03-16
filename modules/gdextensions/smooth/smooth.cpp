@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  smooth.cpp                                                           */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 //	Copyright (c) 2019 Lawnjelly
 
 //	Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,7 +51,6 @@
 #include "smooth.h"
 #include "core/engine.h"
 
-
 #define SMOOTHCLASS Smooth
 #define SMOOTHNODE Spatial
 #include "smooth_body.inl"
@@ -44,25 +73,21 @@ Smooth::Smooth() {
 	SetFlags(SF_ENABLED | SF_TRANSLATE | SF_ROTATE);
 }
 
-void Smooth::set_method(eMethod p_method)
-{
+void Smooth::set_method(eMethod p_method) {
 	ChangeFlags(SF_LERP, p_method == METHOD_LERP);
 }
 
-Smooth::eMethod Smooth::get_method() const
-{
+Smooth::eMethod Smooth::get_method() const {
 	if (TestFlags(SF_LERP))
 		return METHOD_LERP;
 
 	return METHOD_SLERP;
 }
 
-
-void Smooth::teleport()
-{
-	Spatial * pTarget = GetTarget();
+void Smooth::teleport() {
+	Spatial *pTarget = GetTarget();
 	if (!pTarget)
-	return;
+		return;
 
 	// refresh all components during teleport
 	int temp_flags = m_Flags;
@@ -79,11 +104,9 @@ void Smooth::teleport()
 
 	// restore flags
 	m_Flags = temp_flags;
-
 }
 
-void Smooth::RefreshTransform(Spatial * pTarget)
-{
+void Smooth::RefreshTransform(Spatial *pTarget) {
 	ClearFlags(SF_DIRTY);
 
 	// keep the data flowing...
@@ -100,28 +123,22 @@ void Smooth::RefreshTransform(Spatial * pTarget)
 	else
 		trans = pTarget->get_transform();
 
-	if (TestFlags(SF_TRANSLATE))
-	{
+	if (TestFlags(SF_TRANSLATE)) {
 		m_Curr.m_Transform.origin = trans.origin;
 		m_ptTranslateDiff = m_Curr.m_Transform.origin - m_Prev.m_Transform.origin;
 	}
 
 	// lerp? keep the basis
-	if (TestFlags(SF_LERP))
-	{
+	if (TestFlags(SF_LERP)) {
 		m_Prev.m_Transform.basis = m_Curr.m_Transform.basis;
 		m_Curr.m_Transform.basis = trans.basis;
-	}
-	else
-	{
-		if (TestFlags(SF_ROTATE))
-		{
+	} else {
+		if (TestFlags(SF_ROTATE)) {
 			m_Prev.m_qtRotate = m_Curr.m_qtRotate;
 			m_Curr.m_qtRotate = trans.basis.get_rotation_quat();
 		}
 
-		if (TestFlags(SF_SCALE))
-		{
+		if (TestFlags(SF_SCALE)) {
 			m_Prev.m_ptScale = m_Curr.m_ptScale;
 			m_Curr.m_ptScale = trans.basis.get_scale();
 		}
@@ -129,11 +146,10 @@ void Smooth::RefreshTransform(Spatial * pTarget)
 	} // if not lerp
 }
 
-void Smooth::FrameUpdate()
-{
-	Spatial * pTarget = GetTarget();
+void Smooth::FrameUpdate() {
+	Spatial *pTarget = GetTarget();
 	if (!pTarget)
-	return;
+		return;
 
 	if (TestFlags(SF_DIRTY))
 		RefreshTransform(pTarget);
@@ -148,8 +164,7 @@ void Smooth::FrameUpdate()
 
 	// simplified, only using translate .. useful for e.g. moving platforms that don't rotate
 	// NOTE THIS IMPLIES LOCAL as global flag not set...
-	if (m_Flags == (SF_ENABLED | SF_TRANSLATE))
-	{
+	if (m_Flags == (SF_ENABLED | SF_TRANSLATE)) {
 		set_translation(ptNew);
 		return;
 	}
@@ -159,19 +174,15 @@ void Smooth::FrameUpdate()
 	trans.origin = ptNew;
 
 	// lerping
-	if (TestFlags(SF_LERP))
-	{
+	if (TestFlags(SF_LERP)) {
 		//trans.basis = m_Prev.m_Basis.slerp(m_Curr.m_Basis, f);
 		LerpBasis(m_Prev.m_Transform.basis, m_Curr.m_Transform.basis, trans.basis, f);
-	}
-	else
-	{
+	} else {
 		// slerping
 		Quat qtRot = m_Prev.m_qtRotate.slerp(m_Curr.m_qtRotate, f);
 		trans.basis.set_quat(qtRot);
 
-		if (TestFlags(SF_SCALE))
-		{
+		if (TestFlags(SF_SCALE)) {
 			Vector3 ptScale = ((m_Curr.m_ptScale - m_Prev.m_ptScale) * f) + m_Prev.m_ptScale;
 			trans.basis.scale(ptScale);
 		}
@@ -181,21 +192,16 @@ void Smooth::FrameUpdate()
 		set_global_transform(trans);
 	else
 		set_transform(trans);
-
 }
-
-
 
 // Directly lerping the basis vectors is cheaper than doing a slerp and dealing with scale properly
 // Could look bad with large changes between ticks, but with reasonable tick rate usually looks acceptable.
-void Smooth::LerpBasis(const Basis &from, const Basis &to, Basis &res, float f) const
-{
+void Smooth::LerpBasis(const Basis &from, const Basis &to, Basis &res, float f) const {
 	res = from;
 
-	for (int n=0; n<3; n++)
+	for (int n = 0; n < 3; n++)
 		res.elements[n] = from.elements[n].linear_interpolate(to.elements[n], f);
 }
-
 
 //bool Smooth::FindVisibility() const
 //{
