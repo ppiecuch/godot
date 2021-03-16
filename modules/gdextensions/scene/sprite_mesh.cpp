@@ -373,9 +373,13 @@ void SpriteMesh::set_frames_builder(const String &p_input) {
 									WARN_PRINT("scale needs to be an Array");
 								}
 							}
-
-							printf("frame %d) rotate=[%0.2f %0.2f %0.2f] scale=[%0.2f %0.2f %0.2f]", ++frame_nr,
-									rotation[0], rotation[1], rotation[2], scaling[0], scaling[1], scaling[2]);
+#ifdef DEBUG_ENABLED
+							printf("frame %d) rotate=[%0.2f %0.2f %0.2f] scale=[%0.2f %0.2f %0.2f]\n",
+									frame_nr,
+									rotation[0], rotation[1], rotation[2],
+									scaling[0], scaling[1], scaling[2]);
+#endif
+							++frame_nr;
 						}
 					} else {
 						WARN_PRINT(vformat("Unknown format of frame %d. Skipping", f));
