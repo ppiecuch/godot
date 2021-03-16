@@ -665,6 +665,10 @@ void RasterizerStorageMetal::lightmap_capture_set_energy(RID p_capture, float p_
 float RasterizerStorageMetal::lightmap_capture_get_energy(RID p_capture) const {
 	return 0.0;
 }
+void RasterizerStorageMetal::lightmap_capture_set_interior(RID p_capture, bool p_interior) {}
+bool RasterizerStorageMetal::lightmap_capture_is_interior(RID p_capture) const {
+	return false;
+}
 const PoolVector<RasterizerStorage::LightmapCaptureOctree> *RasterizerStorageMetal::lightmap_capture_get_octree_ptr(RID p_capture) const {
 	const LightmapCapture *capture = lightmap_capture_data_owner.getornull(p_capture);
 	ERR_FAIL_COND_V(!capture, NULL);

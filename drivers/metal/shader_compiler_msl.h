@@ -36,7 +36,7 @@
 #include "servers/visual/shader_types.h"
 #include "servers/visual_server.h"
 
-class ShaderCompilerMSL {
+class ShaderCompilerMetal {
 public:
 	struct IdentifierActions {
 
@@ -101,7 +101,7 @@ private:
 public:
 	Error compile(VS::ShaderMode p_mode, const String &p_code, IdentifierActions *p_actions, const String &p_path, GeneratedCode &r_gen_code);
 
-	ShaderCompilerMSL();
+	ShaderCompilerMetal();
 };
 
 #endif // SHADERCOMPILERMSL_H

@@ -1266,8 +1266,9 @@ void SceneTree::set_edited_scene_root(Node *p_node) {
 	if (p_node) {
 		ConsoleInstance *con = memnew(ConsoleInstance);
 		con->set_name(text_console_name);
-		con->set_visible(_console_show);
+		con->set_visible(_console_requested_state);
 		p_node->add_child(con);
+		_console_requested_state = false;
 	}
 #endif
 }
@@ -2053,21 +2054,24 @@ void SceneTree::get_argument_options(const StringName &p_function, int p_idx, Li
 
 void SceneTree::console_show(bool p_state) {
 
-	if (_console_show != p_state) {
-		if (Node *node = get_edited_scene_root() ? get_edited_scene_root() : current_scene) {
+	if (Node *node = get_edited_scene_root() ? get_edited_scene_root() : current_scene) {
+		if (node->has_node(text_console_name)) {
 			if (ConsoleInstance *con = Object::cast_to<ConsoleInstance>(node->get_node(text_console_name))) {
 				con->set_visible(p_state);
+				return;
 			}
 		}
-		_console_show = p_state;
 	}
+	_console_requested_state = p_state;
 }
 
 void SceneTree::console_msg(const String &p_msg) {
 
 	if (Node *node = get_edited_scene_root() ? get_edited_scene_root() : current_scene) {
-		if (ConsoleInstance *con = Object::cast_to<ConsoleInstance>(node->get_node(text_console_name))) {
-			con->console_msg(p_msg);
+		if (node->has_node(text_console_name)) {
+			if (ConsoleInstance *con = Object::cast_to<ConsoleInstance>(node->get_node(text_console_name))) {
+				con->console_msg(p_msg);
+			}
 		}
 	}
 }
@@ -2076,7 +2080,7 @@ SceneTree::SceneTree() {
 
 	if (singleton == NULL) singleton = this;
 	_quit = false;
-	_console_show = false;
+	_console_requested_state = false;
 	accept_quit = true;
 	quit_on_go_back = true;
 	initialized = false;

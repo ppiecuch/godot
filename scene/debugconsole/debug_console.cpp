@@ -40,13 +40,13 @@
 #include <string>
 #include <vector>
 
-#include "core/version.h"
 #include "core/os/os.h"
+#include "core/version.h"
 #include "scene/resources/mesh.h"
 #include "scene/resources/texture.h"
 
 #ifndef BIND_ENUM_CONSTANT_CUSTOM
-# define BIND_ENUM_CONSTANT_CUSTOM(pConstant, pName) \
+#define BIND_ENUM_CONSTANT_CUSTOM(pConstant, pName) \
 	ClassDB::bind_integer_constant(get_class_static(), StringName(), pName, ((int)(pConstant)));
 #endif
 #define newref(pClass) Ref<pClass>(memnew(pClass))
@@ -60,9 +60,9 @@
 	}
 
 #ifdef DEBUG_ENABLED
-# define DEBUG_PRINT(m_text) print_line(m_text);
+#define DEBUG_PRINT(m_text) print_line(m_text);
 #else
-# define DEBUG_PRINT(m_text)
+#define DEBUG_PRINT(m_text)
 #endif
 
 typedef struct {
