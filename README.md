@@ -23,7 +23,7 @@ Some of the things you may found usefull in this repository:
 
   * Embedded text console [modules/gdextensions/debugconsole](modules/gdextensions/debugconsole) automatically and globally available from both C++ and GDScript (color support, multiply sizes, basic markers/bbcodes, graphical fonts):
 
-    <center>![Godot Console](modules/gdextensions/_promo/fig-fonts-in-console-small.png)</center>
+  ![Godot Console](modules/gdextensions/_promo/fig-fonts-in-console-small.png)
 
   * Extension of ```Label``` with transition effects [scene/gui/label_transitions.h](scene/gui/label_transitions.h)
   * *Starfield* component [modules/gdextensions/scenery/starfield/starfield.h](modules/gdextensions/scenery/starfield/starfield.h)
