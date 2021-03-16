@@ -157,6 +157,8 @@ struct Vector2 {
 	_FORCE_INLINE_ Vector2 min(const Vector2 &p_b) { return Vector2(MIN(x, p_b.x), MIN(y, p_b.y)); }
 	_FORCE_INLINE_ Vector2 max(const Vector2 &p_b) { return Vector2(MAX(x, p_b.x), MAX(y, p_b.y)); }
 
+	_FORCE_INLINE_ Vector2 clamp(const Vector2 &p_a, const Vector2 &p_b) { return Vector2(CLAMP(x, p_a.x, p_b.x), CLAMP(y, p_a.y, p_b.y)); }
+
 	_FORCE_INLINE_ static Vector2 barycentric(const Vector2 &p_v1, const Vector2 &p_v2, const Vector2 &p_v3, real_t p_amount1, real_t p_amount2) {
 		return Vector2(
 				(p_v1.x + p_amount1 * (p_v2.x - p_v1.x)) + p_amount2 * (p_v3.x - p_v1.x),
