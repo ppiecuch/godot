@@ -300,7 +300,7 @@ ShaderGLES3::Version *ShaderGLES3::get_current_version() {
 	DEBUG_PRINT("\nVertex Code:\n\n" + String(code_string.get_data()));
 	for (int i = 0; i < strings.size(); i++) {
 
-		DEBUG_PRINT("//vert strings "+itos(i)+":\n"+String(strings[i]));
+		DEBUG_PRINT("//vert strings " + itos(i) + ":\n" + String(strings[i]));
 	}
 #endif
 
@@ -395,7 +395,7 @@ ShaderGLES3::Version *ShaderGLES3::get_current_version() {
 	DEBUG_PRINT("\nFragment Code:\n\n" + String(code_string2.get_data()));
 	for (int i = 0; i < strings.size(); i++) {
 
-		DEBUG_PRINT("//frag strings "+itos(i)+":\n"+String(strings[i]));
+		DEBUG_PRINT("//frag strings " + itos(i) + ":\n" + String(strings[i]));
 	}
 #endif
 

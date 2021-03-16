@@ -496,7 +496,6 @@ public:
 	static _ALWAYS_INLINE_ real_t map(real_t p_value, real_t p_istart, real_t p_istop, real_t p_ostart, real_t p_ostop) {
 		return p_ostart + (p_ostop - p_ostart) * ((p_value - p_istart) / (p_istop - p_istart));
 	}
-
 };
 
 #endif // MATH_FUNCS_H
