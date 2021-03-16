@@ -39,8 +39,18 @@ class NixieFont : public Node2D {
 
 	GDCLASS(NixieFont, Node2D);
 
+public:
+	enum Align {
+
+		ALIGN_LEFT,
+		ALIGN_CENTER,
+		ALIGN_RIGHT,
+		AlignCount
+	};
+
 private:
 	String draw_text;
+	Align align;
 	bool enable_animation;
 	int animation_speed;
 	int broken_tube_effect;
@@ -80,6 +90,9 @@ public:
 	String get_text();
 	void set_text(String p_text);
 
+	void set_align(Align p_align);
+	Align get_align() const;
+
 	bool get_enable_animation();
 	void set_enable_animation(bool p_state);
 
@@ -92,5 +105,7 @@ public:
 	NixieFont();
 	~NixieFont();
 };
+
+VARIANT_ENUM_CAST(NixieFont::Align);
 
 #endif // GD_NIXIE_FONT_H

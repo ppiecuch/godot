@@ -368,6 +368,18 @@ void NixieFont::set_text(String p_text) {
 	}
 }
 
+void NixieFont::set_align(Align p_align) {
+	ERR_FAIL_INDEX((int)p_align, AlignCount);
+
+	align = p_align;
+	update();
+}
+
+NixieFont::Align NixieFont::get_align() const {
+
+	return align;
+}
+
 bool NixieFont::get_enable_animation() {
 
 	return enable_animation;
@@ -458,6 +470,8 @@ void NixieFont::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("get_text"), &NixieFont::get_text);
 	ClassDB::bind_method(D_METHOD("set_text"), &NixieFont::set_text);
+	ClassDB::bind_method(D_METHOD("set_align", "align"), &NixieFont::set_align);
+	ClassDB::bind_method(D_METHOD("get_align"), &NixieFont::get_align);
 	ClassDB::bind_method(D_METHOD("set_enable_animation"), &NixieFont::set_enable_animation);
 	ClassDB::bind_method(D_METHOD("get_enable_animation"), &NixieFont::get_enable_animation);
 	ClassDB::bind_method(D_METHOD("set_animation_speed"), &NixieFont::set_animation_speed);
@@ -465,7 +479,12 @@ void NixieFont::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_broken_tube_effect"), &NixieFont::set_broken_tube_effect);
 	ClassDB::bind_method(D_METHOD("get_broken_tube_effect"), &NixieFont::get_broken_tube_effect);
 
+	BIND_ENUM_CONSTANT(ALIGN_LEFT);
+	BIND_ENUM_CONSTANT(ALIGN_CENTER);
+	BIND_ENUM_CONSTANT(ALIGN_RIGHT);
+
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "text", PROPERTY_HINT_MULTILINE_TEXT), "set_text", "get_text");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "align", PROPERTY_HINT_ENUM, "Left,Center,Right"), "set_align", "get_align");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "enable_animation"), "set_enable_animation", "get_enable_animation");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "animation_speed", PROPERTY_HINT_RANGE, "0,10,1,or_lesser,or_greater"), "set_animation_speed", "get_animation_speed");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "broken_tube_effect", PROPERTY_HINT_RANGE, "0,10,1,or_lesser,or_greater"), "set_broken_tube_effect", "get_broken_tube_effect");
