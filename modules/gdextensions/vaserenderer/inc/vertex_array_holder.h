@@ -78,8 +78,8 @@ public:
 	}
 
 	void push3(const Point &P1, const Point &P2, const Point &P3,
-			   const Color &C1, const Color &C2, const Color &C3,
-			   bool trans1 = 0, bool trans2 = 0, bool trans3 = 0) {
+			const Color &C1, const Color &C2, const Color &C3,
+			bool trans1 = 0, bool trans2 = 0, bool trans3 = 0) {
 
 		push(P1, C1, trans1);
 		push(P2, C2, trans2);
