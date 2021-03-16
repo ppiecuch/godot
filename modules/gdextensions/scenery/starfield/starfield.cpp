@@ -35,7 +35,8 @@
 #include <random>
 #include <vector>
 
-#include "inc/gd_pack.h"
+#include "common/gd_core.h"
+#include "common/gd_pack.h"
 
 // Reference:
 // ----------
@@ -101,6 +102,8 @@ static std::vector<float> _alpha_lookup{
 	0.8894, 0.8110, 0.4473, 0.7483, 0.2035, 0.8135, 0.9283, 0.1020
 };
 
+static Ref<Starfield::CacheInfo> _texture_cache;
+
 } // namespace
 
 void Starfield::_regenerate() {
@@ -130,11 +133,12 @@ void Starfield::_update_mesh() {
 			mesh_array[VS::ARRAY_TEX_UV] = layer.uv;
 
 			if (_mesh_textured.is_null())
-				_mesh_textured->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array, Array(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
+				_mesh_textured = newref(ArrayMesh);
+			_mesh_textured->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array, Array(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
 		} else {
 
 			if (_mesh_solid.is_null())
-				_mesh_solid = Ref<ArrayMesh>(memnew(ArrayMesh));
+				_mesh_solid = newref(ArrayMesh);
 			if (layer.star_size == 0 && layer.texture_id == STAR_POINT) {
 				_mesh_solid->add_surface_from_arrays(Mesh::PRIMITIVE_POINTS, mesh_array, Array(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
 			} else {
@@ -255,7 +259,7 @@ void Starfield::move(real_t p_delta, Vector2 p_movement) {
 					if (next_frame == 0) {
 						layer.texture_id = new_texture_id;
 						// update texture
-						PoolVector2Array texture_uv = _texture_cache[new_texture_id];
+						PoolVector2Array texture_uv = _texture_cache->rects[new_texture_id];
 						uv[quad_origin++] = texture_uv[0];
 						uv[quad_origin++] = texture_uv[1];
 						uv[quad_origin++] = texture_uv[2];
@@ -354,7 +358,7 @@ void Starfield::regenerate(layerid_t p_layer) {
 			_insert_quad(vertexes, q, positions[p], layer.star_size);
 			vertexes_color.insert_multi(q, 6, colors[p]);
 			if (textured_star)
-				uv.insert_array(q, _texture_cache[layer.texture_id]);
+				uv.insert_array(q, _texture_cache->rects[layer.texture_id]);
 		}
 		layer.vertexes = vertexes;
 		layer.colors = vertexes_color;
@@ -434,7 +438,7 @@ void Starfield::draw(Node2D *p_canvas) {
 		_update_mesh();
 	}
 	if (_mesh_textured.is_valid())
-		p_canvas->draw_mesh(_mesh_textured, _texture_atlas, Ref<Texture>());
+		p_canvas->draw_mesh(_mesh_textured, _texture_cache->texture, Ref<Texture>());
 	if (_mesh_solid.is_valid())
 		p_canvas->draw_mesh(_mesh_solid, Ref<Texture>(), Ref<Texture>());
 }
@@ -442,99 +446,110 @@ void Starfield::draw(Node2D *p_canvas) {
 void Starfield::ready(Node2D *p_owner) {
 	ERR_FAIL_COND(p_owner == nullptr);
 
-	// build texture atlas from resources
-	Vector<Ref<Image> > images;
-	Vector<String> names;
-	std::vector<EmbedImageItem> embed(embed_starfield_res, embed_starfield_res + embed_starfield_res_count);
-	for (const auto &r : embed) {
-		ERR_CONTINUE_MSG(r.channels < 3, "Format is not supported, Skipping!");
-		Ref<Image> image;
-		image.instance();
-		PoolByteArray data;
-		data.resize(r.size);
-		std::memcpy(data.write().ptr(), r.pixels, r.size);
-		image->create(r.width, r.height, false, r.channels == 4 ? Image::FORMAT_RGBA8 : Image::FORMAT_RGB8, data);
-		images.push_back(image);
-		names.push_back(r.image);
-	}
-	Dictionary atlas_info = merge_images(images, names);
+	if (!_texture_cache.is_valid()) {
 
-	ERR_FAIL_COND(atlas_info.empty());
+		Ref<CacheInfo> cache_info = newref(CacheInfo);
 
-	Array pages = atlas_info["_generated_images"];
-	if (pages.size() > 1) {
-
-		WARN_PRINT("Too many texture atlases - using only first one for Starfield.");
-	}
-	Ref<Image> atlas_image = pages[0];
-
-	Vector2 atlas_size(1, 1);
-	if (atlas_image.is_valid()) {
-		_texture_atlas = Ref<ImageTexture>(memnew(ImageTexture()));
-		_texture_atlas->create_from_image(atlas_image);
-		atlas_size = _texture_atlas->get_size();
-	} else {
-		WARN_PRINT("Atlas image is not valid, Skipping!");
-	}
-
-	Dictionary atlas_rects = atlas_info["_rects"];
-	for (int j = 0; j < names.size(); ++j) {
-		String name = names[j];
-		Dictionary entry = atlas_rects[name];
-		Rect2 rect = entry["rect"];
-
-		ERR_CONTINUE_MSG(entry.empty(), "Empty atlas entry, Skipping!");
-
-		const Vector2 uv_origin = rect.position / atlas_size;
-		const Vector2 uv_size = rect.size / atlas_size;
-		static const Vector2 sideu(1, 0);
-		static const Vector2 sidev(0, 1);
-
-		// 0--1,2
-		// | // |
-		// 2,4--3
-		PoolVector2Array uv;
-		uv.push_back(uv_origin + uv_size * sidev);
-		uv.push_back(uv_origin + uv_size);
-		uv.push_back(uv_origin);
-		uv.push_back(uv_origin + uv_size);
-		uv.push_back(uv_origin + uv_size * sideu);
-		uv.push_back(uv_origin);
-
-		if (name == "star01.png")
-			_texture_cache[STAR1_TEXTURE] = uv;
-		else if (name == "star02.png")
-			_texture_cache[STAR2_TEXTURE] = uv;
-		else if (name == "star03.png")
-			_texture_cache[STAR3_TEXTURE] = uv;
-		else if (name == "star04.png")
-			_texture_cache[STAR4_TEXTURE] = uv;
-		else if (name == "star05.png")
-			_texture_cache[STAR5_TEXTURE] = uv;
-		else if (name == "star06.png")
-			_texture_cache[STAR6_TEXTURE] = uv;
-		else if (name == "star07.png")
-			_texture_cache[STAR7_TEXTURE] = uv;
-		else if (name == "star08.png")
-			_texture_cache[STAR8_TEXTURE] = uv;
-		else if (name == "star09.png")
-			_texture_cache[STAR9_TEXTURE] = uv;
-		else if (name == "star10.png")
-			_texture_cache[STAR10_TEXTURE] = uv;
-		else if (name == "star11.png")
-			_texture_cache[STAR11_TEXTURE] = uv;
-		else if (name == "star12.png")
-			_texture_cache[STAR12_TEXTURE] = uv;
-		else if (name == "frame0.png") {
-			_texture_cache[STAR12_TEXTURE_FRAME1] = uv;
-			_texture_cache[STAR12_TEXTURE_FRAME6] = uv;
-		} else if (name == "frame1.png") {
-			_texture_cache[STAR12_TEXTURE_FRAME2] = uv;
-			_texture_cache[STAR12_TEXTURE_FRAME5] = uv;
-		} else if (name == "frame2.png") {
-			_texture_cache[STAR12_TEXTURE_FRAME3] = uv;
-			_texture_cache[STAR12_TEXTURE_FRAME4] = uv;
+		// build texture atlas from resources
+		Vector<Ref<Image> > images;
+		Vector<String> names;
+		std::vector<EmbedImageItem> embed(embed_starfield_res, embed_starfield_res + embed_starfield_res_count);
+		for (const auto &r : embed) {
+			ERR_CONTINUE_MSG(r.channels < 3, "Format is not supported, Skipping!");
+			Ref<Image> image;
+			image.instance();
+			PoolByteArray data;
+			data.resize(r.size);
+			std::memcpy(data.write().ptr(), r.pixels, r.size);
+			image->create(r.width, r.height, false, r.channels == 4 ? Image::FORMAT_RGBA8 : Image::FORMAT_RGB8, data);
+			images.push_back(image);
+			names.push_back(r.image);
 		}
+		Dictionary atlas_info = merge_images(images, names);
+
+		ERR_FAIL_COND(atlas_info.empty());
+
+		Array pages = atlas_info["_generated_images"];
+		if (pages.size() > 1) {
+
+			WARN_PRINT("Too many texture pages - using only first one for Starfield.");
+		}
+		Ref<Image> atlas_image = pages[0];
+
+		Vector2 atlas_size(1, 1);
+		if (atlas_image.is_valid()) {
+
+			Ref<ImageTexture> texture = newref(ImageTexture);
+			texture->create_from_image(atlas_image);
+			atlas_size = texture->get_size();
+			cache_info->texture = texture;
+		} else {
+
+			WARN_PRINT("Atlas image is not valid, Skipping!");
+		}
+
+		Dictionary atlas_rects = atlas_info["_rects"];
+		for (int j = 0; j < names.size(); ++j) {
+			String name = names[j];
+			Dictionary entry = atlas_rects[name];
+			Rect2 rect = entry["rect"];
+
+			ERR_CONTINUE_MSG(entry.empty(), "Empty atlas entry, Skipping!");
+
+			const Vector2 uv_origin = rect.position / atlas_size;
+			const Vector2 uv_size = rect.size / atlas_size;
+			static const Vector2 sideu(1, 0);
+			static const Vector2 sidev(0, 1);
+
+			// 0--1,2
+			// | // |
+			// 2,4--3
+			PoolVector2Array uv;
+			uv.push_back(uv_origin + uv_size * sidev);
+			uv.push_back(uv_origin + uv_size);
+			uv.push_back(uv_origin);
+			uv.push_back(uv_origin + uv_size);
+			uv.push_back(uv_origin + uv_size * sideu);
+			uv.push_back(uv_origin);
+
+			if (name == "star01.png")
+				cache_info->rects[STAR1_TEXTURE] = uv;
+			else if (name == "star02.png")
+				cache_info->rects[STAR2_TEXTURE] = uv;
+			else if (name == "star03.png")
+				cache_info->rects[STAR3_TEXTURE] = uv;
+			else if (name == "star04.png")
+				cache_info->rects[STAR4_TEXTURE] = uv;
+			else if (name == "star05.png")
+				cache_info->rects[STAR5_TEXTURE] = uv;
+			else if (name == "star06.png")
+				cache_info->rects[STAR6_TEXTURE] = uv;
+			else if (name == "star07.png")
+				cache_info->rects[STAR7_TEXTURE] = uv;
+			else if (name == "star08.png")
+				cache_info->rects[STAR8_TEXTURE] = uv;
+			else if (name == "star09.png")
+				cache_info->rects[STAR9_TEXTURE] = uv;
+			else if (name == "star10.png")
+				cache_info->rects[STAR10_TEXTURE] = uv;
+			else if (name == "star11.png")
+				cache_info->rects[STAR11_TEXTURE] = uv;
+			else if (name == "star12.png")
+				cache_info->rects[STAR12_TEXTURE] = uv;
+			else if (name == "frame0.png") {
+				cache_info->rects[STAR12_TEXTURE_FRAME1] = uv;
+				cache_info->rects[STAR12_TEXTURE_FRAME6] = uv;
+			} else if (name == "frame1.png") {
+				cache_info->rects[STAR12_TEXTURE_FRAME2] = uv;
+				cache_info->rects[STAR12_TEXTURE_FRAME5] = uv;
+			} else if (name == "frame2.png") {
+				cache_info->rects[STAR12_TEXTURE_FRAME3] = uv;
+				cache_info->rects[STAR12_TEXTURE_FRAME4] = uv;
+			}
+		}
+		_texture_cache = cache_info;
+
+		_register_global_ref(_texture_cache);
 	}
 }
 

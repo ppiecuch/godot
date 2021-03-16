@@ -56,6 +56,11 @@ typedef unsigned int layerid_t;
 
 class Starfield : public Reference {
 public:
+	struct CacheInfo : public Reference {
+		Ref<Texture> texture;
+		Dictionary rects;
+	};
+
 	enum StarTexture {
 		STAR_POINT,
 		STAR1_TEXTURE,
@@ -115,8 +120,6 @@ private:
 	};
 
 	std::vector<StarsLayer> _layers;
-	Ref<ImageTexture> _texture_atlas;
-	Dictionary _texture_cache;
 
 	void _push_quad(PoolVector2Array &array, Point2 center, real_t size);
 	void _insert_quad(PoolVector2Array &array, int position, Point2 origin, real_t size);
