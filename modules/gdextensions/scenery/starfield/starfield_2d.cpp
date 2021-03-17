@@ -29,7 +29,7 @@
 /*************************************************************************/
 
 #include "starfield_2d.h"
-#include "inc/gd_core.h"
+#include "common/gd_core.h"
 
 #ifdef TOOLS_ENABLED
 Dictionary Starfield2D::_edit_get_state() const {
@@ -52,6 +52,11 @@ bool Starfield2D::_edit_is_selected_on_click(const Point2 &p_point, double p_tol
 
 Rect2 Starfield2D::_edit_get_rect() const {
 	return Rect2(Point2(), get_view_size());
+}
+
+void Starfield2D::_edit_set_rect(const Rect2 &p_rect) {
+	set_view_size(p_rect.size);
+	_change_notify();
 }
 
 bool Starfield2D::_edit_use_rect() const {
