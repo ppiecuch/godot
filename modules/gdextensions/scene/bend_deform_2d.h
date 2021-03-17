@@ -190,8 +190,8 @@ private:
 	ElasticSimulation::Anchor geometry_anchor;
 	bool geometry_size_variation;
 	real_t geometry_pixel_unit;
-	real_t geometry_spring_factor;
-	real_t geometry_spring_variation;
+	real_t geometry_stiffness;
+	bool physics_variation;
 	bool geometry_debug;
 
 	bool _is_parent_controller() const;
@@ -209,6 +209,7 @@ protected:
 
 #ifdef TOOLS_ENABLED
 	virtual bool _edit_is_selected_on_click(const Point2 &p_point, double p_tolerance) const;
+	virtual void _edit_set_rect(const Rect2 &p_rect);
 #endif
 	void _get_property_list(List<PropertyInfo> *p_list) const;
 	void _notification(int p_what);
@@ -243,10 +244,10 @@ public:
 	bool is_geometry_size_variation() const;
 	void set_geometry_pixel_unit(real_t p_unit);
 	real_t get_geometry_pixel_unit() const;
-	void set_geometry_spring_factor(real_t p_factor);
-	real_t get_geometry_spring_factor() const;
-	void set_geometry_spring_variation(real_t p_factor);
-	real_t get_geometry_spring_variation() const;
+	void set_geometry_stiffness(real_t p_stiffness);
+	real_t get_geometry_stiffness() const;
+	void set_physics_variation(bool p_variation);
+	bool is_physics_variation() const;
 	void set_geometry_debug(bool p_debug);
 	bool get_geometry_debug() const;
 

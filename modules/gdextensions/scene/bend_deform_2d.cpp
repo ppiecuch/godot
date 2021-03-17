@@ -298,7 +298,7 @@ void SimulationControllerInstance2D::_draw_debug_marker(const Point2 &p0, real_t
 	const real_t vx = -uy;
 	const real_t vy = ux;
 
-	const real_t half_width = 0.5f * head_width;
+	const real_t half_width = 0.5 * head_width;
 
 	const Vector2 pt1 = p1 + unit * head_length;
 	const Vector2 pt2 = Vector2(pt1.x - head_length * ux + half_width * vx, pt1.y - head_length * uy + half_width * vy);
@@ -321,12 +321,14 @@ void SimulationControllerInstance2D::_notification(int p_what) {
 
 	switch (p_what) {
 		case NOTIFICATION_READY: {
+
 			if (controller.is_null()) {
 				// create default controller
 				set_controller(Ref<SimulationController2D>(memnew(SimulationController2D)));
 			}
 		} break;
 		case NOTIFICATION_DRAW: {
+
 			if (motion_debug) {
 				if (controller.is_valid() && controller->get_motion_image().is_valid()) {
 					const int cnt = get_child_count();
@@ -359,6 +361,7 @@ void SimulationControllerInstance2D::_notification(int p_what) {
 			}
 		}
 		case NOTIFICATION_INTERNAL_PROCESS: {
+
 			if (controller.is_valid()) {
 				if (controller->get_motion_image().is_valid()) {
 					for (int n = 0; n < get_child_count(); ++n) {
@@ -618,6 +621,12 @@ bool DeformSprite::_edit_is_selected_on_click(const Point2 &p_point, double p_to
 
 	return controller.is_valid() ? _edit_get_rect().has_point(p_point) : Sprite::_edit_is_selected_on_click(p_point, p_tolerance);
 }
+
+void DeformSprite::_edit_set_rect(const Rect2 &p_rect) {
+
+	Sprite::_edit_set_rect(p_rect);
+	_sim_dirty = true;
+}
 #endif
 
 void DeformSprite::_update_simulation() {
@@ -630,9 +639,9 @@ void DeformSprite::_update_simulation() {
 
 	const Size2 scaled_rect = get_rect().size * geometry_pixel_unit * get_scale();
 	if (_sim_id == -1) {
-		_sim_id = sim->make_sim(scaled_rect, geometry_segments, geometry_size_variation, geometry_anchor, geometry_spring_factor, geometry_spring_variation);
+		_sim_id = sim->make_sim(scaled_rect, geometry_segments, geometry_size_variation, geometry_anchor, geometry_stiffness, physics_variation);
 	} else {
-		sim->update_sim(_sim_id, scaled_rect, geometry_segments, geometry_size_variation, geometry_anchor, geometry_spring_factor, geometry_spring_variation);
+		sim->update_sim(_sim_id, scaled_rect, geometry_segments, geometry_size_variation, geometry_anchor, geometry_stiffness, physics_variation);
 	}
 	// activate simulation progress:
 	set_process_internal(!_is_parent_controller() && controller->is_simulation_active());
@@ -650,11 +659,12 @@ void DeformSprite::_update_geom() {
 		ERR_FAIL_COND(sim.is_null());
 
 		PoolVector2Array verts = PoolVector2Array(_mesh_array[VS::ARRAY_VERTEX]);
-		ERR_FAIL_COND(verts.size() != sim->get_sim_position_count(_sim_id));
+		ERR_FAIL_COND(verts.size() != sim->get_sim_particles_count(_sim_id));
 
-		const Point2 origin = get_rect().position;
+		const Point2 &origin = get_rect().position;
+		const Size2 &sc = ONE / geometry_pixel_unit / get_scale();
 		for (int i = 0; i < verts.size(); ++i) {
-			verts.set(i, origin + sim->get_sim_position_at(_sim_id, i) / geometry_pixel_unit / get_scale());
+			verts.set(i, origin + sim->get_sim_particle_pos(_sim_id, i) * sc);
 		}
 		_mesh_array[VS::ARRAY_VERTEX] = verts;
 
@@ -724,10 +734,10 @@ void DeformSprite::_create_geom() {
 		for (int s = 0; s < segs - 1; ++s) {
 			if (s == segs - 2) {
 				// last two segments
-				steps.push_back(1.5 * step);
-				steps.push_back(0.5 * step);
-				tsteps.push_back(1.5 * tstep);
-				tsteps.push_back(0.5 * tstep);
+				steps.push_back(step);
+				steps.push_back(step);
+				tsteps.push_back(tstep);
+				tsteps.push_back(tstep);
 			} else {
 				steps.push_back(step);
 				tsteps.push_back(tstep);
@@ -943,6 +953,7 @@ void DeformSprite::_on_texture_changed() {
 }
 
 int DeformSprite::get_simulation_id() const {
+
 	return _sim_id;
 }
 
@@ -998,36 +1009,33 @@ bool DeformSprite::is_geometry_size_variation() const {
 	return geometry_size_variation;
 }
 
-void DeformSprite::set_geometry_spring_factor(real_t p_factor) {
-	ERR_FAIL_COND(p_factor > 1);
-	ERR_FAIL_COND(p_factor < 0);
+void DeformSprite::set_geometry_stiffness(real_t p_stiffness) {
+	ERR_FAIL_COND(p_stiffness > 1);
+	ERR_FAIL_COND(p_stiffness < 0);
 
-	if (geometry_spring_factor != p_factor) {
-		geometry_spring_factor = p_factor;
+	if (geometry_stiffness != p_stiffness) {
+		geometry_stiffness = p_stiffness;
 		_sim_dirty = true;
 		update();
 	}
 }
 
-real_t DeformSprite::get_geometry_spring_factor() const {
+real_t DeformSprite::get_geometry_stiffness() const {
 
-	return geometry_spring_factor;
+	return geometry_stiffness;
 }
 
-void DeformSprite::set_geometry_spring_variation(real_t p_factor) {
-	ERR_FAIL_COND(p_factor > 1);
-	ERR_FAIL_COND(p_factor < 0);
-
-	if (geometry_spring_variation != p_factor) {
-		geometry_spring_variation = p_factor;
+void DeformSprite::set_physics_variation(bool p_variation) {
+	if (physics_variation != p_variation) {
+		physics_variation = p_variation;
 		_sim_dirty = true;
 		update();
 	}
 }
 
-real_t DeformSprite::get_geometry_spring_variation() const {
+bool DeformSprite::is_physics_variation() const {
 
-	return geometry_spring_variation;
+	return physics_variation;
 }
 
 void DeformSprite::set_geometry_debug(bool p_debug) {
@@ -1145,21 +1153,31 @@ void DeformSprite::deform_geometry(const Vector2 &force) {
 	update();
 }
 
+inline Point2 middle_point(const Point2 &a, const Point2 &b) { return (a + b) / 2; }
+
 void DeformSprite::debug_draw_geometry() {
 	ERR_FAIL_COND(controller.is_null());
 
 	Ref<ElasticSimulation> sim = controller->get_simulation();
 	ERR_FAIL_COND(sim.is_null());
 
-	const Point2 origin = get_rect().position;
+	const Point2 &origin = get_rect().position;
+	const Size2 &sc = ONE / geometry_pixel_unit / get_scale();
 	const int ccnt = sim->get_sim_constraint_count(_sim_id);
 	for (int i = 0; i < ccnt; i++) {
 		const ElasticSimulation::Constraint &c = sim->get_sim_constraint_at(_sim_id, i);
-		draw_line(origin + c.begin / geometry_pixel_unit / get_scale(), origin + c.end / geometry_pixel_unit / get_scale(), Color(1, 1 - Math::abs(c.deviation), 1 - Math::abs(c.deviation), 1));
+		const float color_diff = c.deviation * 0.5;
+		draw_line(origin + c.begin * sc, origin + c.end * sc, Color(0.5 + color_diff, 0.5 - color_diff, 0, 1));
 	}
-	const int pcnt = sim->get_sim_position_count(_sim_id);
+	const int pcnt = sim->get_sim_particles_count(_sim_id);
+	const Color yellow = Color::named("yellow");
 	for (int i = 0; i < pcnt; i++) {
-		draw_rect(Rect2(origin + sim->get_sim_position_at(_sim_id, i) / geometry_pixel_unit / get_scale(), get_scale().inv()), Color::named("yellow"));
+		draw_rect(Rect2(origin + sim->get_sim_particle_pos(_sim_id, i) * sc, sim->get_sim_particle_mass(_sim_id, i) * get_scale().inv()), yellow);
+	}
+	if (pcnt >= 4) for(int p = 0; p < pcnt - 2; p += 2) {
+		const Point2 &p1 = middle_point(sim->get_sim_particle_pos(_sim_id, p), sim->get_sim_particle_pos(_sim_id, p+1));
+		const Point2 &p2 = middle_point(sim->get_sim_particle_pos(_sim_id, p+2), sim->get_sim_particle_pos(_sim_id, p+3));
+		draw_line(origin + p1 * sc, origin + p2 * sc, yellow);
 	}
 	const Size2 half = get_rect().size / 2;
 	Vector2 force = get_rect().position + half;
@@ -1180,17 +1198,26 @@ void DeformSprite::debug_draw_geometry() {
 			ERR_FAIL_MSG("Invalid anchor value.");
 		}
 	}
-	const real_t force_scale = 2;
+
+#define _draw_force(force, force_end, force_color) { \
+	draw_line(force, force_end, force_color); \
+	draw_rect(Rect2(force_end, get_scale().inv()), force_color, true); \
+}
+
+	const real_t force_scale = 10;
 	if (controller->is_simulation_active() && controller->get_motion_image().is_null()) {
 		const Color force_color = Color(0.5, 1, 0, CLAMP(controller->get_simulation_force_impulse_duration(), 0, 1));
 		const Vector2 force_end = force + force_scale * controller->get_simulation_force_impulse() / get_scale();
-		draw_line(force, force_end, force_color);
-		draw_rect(Rect2(force_end, 2.0 * get_scale().inv()), force_color, true);
+		_draw_force(force, force_end, force_color);
+	} else if (controller->get_motion_image().is_valid()) {
+		const bool valid_motion = controller->get_motion_image().is_valid() && this->has_meta("__state_motion_iterator");
+		const Color force_color = valid_motion ?  Color(0.5, 1, 0, 0.8) : Color(1, 0, 0, 1);
+		const Vector2 force_end = force + force_scale * (valid_motion ? controller->get_motion_value(this, motion_amplify, motion_interpolations) : Vector2()) / get_scale();
+		_draw_force(force, force_end, force_color);
 	} else {
 		const Color force_color = Color(0.5, 1, 0, 0.8);
-		const Vector2 force_end = force + force_scale * (controller->get_motion_image().is_valid() ? controller->get_motion_value(this, motion_amplify, motion_interpolations) : _deform_force) / get_scale();
-		draw_line(force, force_end, force_color);
-		draw_rect(Rect2(force_end, 2.0 * get_scale().inv()), force_color, true);
+		const Vector2 force_end = force + force_scale * _deform_force / get_scale();
+		_draw_force(force, force_end, force_color);
 	}
 }
 
@@ -1206,12 +1233,14 @@ void DeformSprite::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_geometry_anchor"), &DeformSprite::get_geometry_anchor);
 	ClassDB::bind_method(D_METHOD("set_geometry_pixel_unit", "pixel_unit"), &DeformSprite::set_geometry_pixel_unit);
 	ClassDB::bind_method(D_METHOD("get_geometry_pixel_unit"), &DeformSprite::get_geometry_pixel_unit);
-	ClassDB::bind_method(D_METHOD("set_geometry_spring_factor", "spring_factor"), &DeformSprite::set_geometry_spring_factor);
-	ClassDB::bind_method(D_METHOD("get_geometry_spring_factor"), &DeformSprite::get_geometry_spring_factor);
-	ClassDB::bind_method(D_METHOD("set_geometry_spring_variation", "spring_variation"), &DeformSprite::set_geometry_spring_variation);
-	ClassDB::bind_method(D_METHOD("get_geometry_spring_variation"), &DeformSprite::get_geometry_spring_variation);
+	ClassDB::bind_method(D_METHOD("set_geometry_stiffness", "factor"), &DeformSprite::set_geometry_stiffness);
+	ClassDB::bind_method(D_METHOD("get_geometry_stiffness"), &DeformSprite::get_geometry_stiffness);
+	ClassDB::bind_method(D_METHOD("set_physics_variation", "variation"), &DeformSprite::set_physics_variation);
+	ClassDB::bind_method(D_METHOD("is_physics_variation"), &DeformSprite::is_physics_variation);
 	ClassDB::bind_method(D_METHOD("set_geometry_debug", "debug"), &DeformSprite::set_geometry_debug);
 	ClassDB::bind_method(D_METHOD("get_geometry_debug"), &DeformSprite::get_geometry_debug);
+
+	ClassDB::bind_method(D_METHOD("get_simulation_id"), &DeformSprite::get_simulation_id);
 
 	ClassDB::bind_method(D_METHOD("set_motion_amplify"), &DeformSprite::set_motion_amplify);
 	ClassDB::bind_method(D_METHOD("get_motion_amplify"), &DeformSprite::get_motion_amplify);
@@ -1226,6 +1255,7 @@ void DeformSprite::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("_on_simulation_update"), &DeformSprite::_on_simulation_update);
 	ClassDB::bind_method(D_METHOD("_on_simulation_changed"), &DeformSprite::_on_simulation_changed);
+	ClassDB::bind_method(D_METHOD("_on_texture_changed"), &DeformSprite::_on_texture_changed);
 
 	ClassDB::bind_method(D_METHOD("deform_geometry", "force"), &DeformSprite::deform_geometry);
 
@@ -1233,11 +1263,11 @@ void DeformSprite::_bind_methods() {
 
 	ADD_GROUP("Geometry", "geometry_");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "geometry_segments", PROPERTY_HINT_RANGE, "1,5,1"), "set_geometry_segments", "get_geometry_segments");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "geometry_enable_size_variation"), "set_geometry_size_variation", "is_geometry_size_variation");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "geometry_size_variation"), "set_geometry_size_variation", "is_geometry_size_variation");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "geometry_anchor", PROPERTY_HINT_ENUM, "Left,Right,Top,Bottom"), "set_geometry_anchor", "get_geometry_anchor");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "geometry_pixel_unit", PROPERTY_HINT_RANGE, "0,1,0.001,or_greater"), "set_geometry_pixel_unit", "get_geometry_pixel_unit");
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "geometry_spring_factor", PROPERTY_HINT_RANGE, "0,1,0.05"), "set_geometry_spring_factor", "get_geometry_spring_factor");
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "geometry_spring_variation", PROPERTY_HINT_RANGE, "0,1,0.05"), "set_geometry_spring_variation", "get_geometry_spring_variation");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "geometry_stiffness", PROPERTY_HINT_RANGE, "0,1,0.05"), "set_geometry_stiffness", "get_geometry_stiffness");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "geometry_physics_variation"), "set_physics_variation", "is_physics_variation");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "geometry_debug"), "set_geometry_debug", "get_geometry_debug");
 
 	ADD_GROUP("Motion Image", "motion_");
@@ -1245,6 +1275,8 @@ void DeformSprite::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "motion_direction", PROPERTY_HINT_RANGE, "-360,360,0.1,or_lesser,or_greater"), "set_motion_direction_degree", "get_motion_direction_degree");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "motion_origin"), "set_motion_trajectory_origin", "get_motion_trajectory_origin");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "motion_interpolations"), "set_motion_interpolations", "get_motion_interpolations");
+
+	ADD_SIGNAL(MethodInfo("simulation_failed"));
 }
 
 DeformSprite::DeformSprite() {
@@ -1259,8 +1291,8 @@ DeformSprite::DeformSprite() {
 	geometry_size_variation = false;
 	geometry_anchor = ElasticSimulation::SIM_ANCHOR_BOTTOM;
 	geometry_pixel_unit = 0.1;
-	geometry_spring_factor = 0.5;
-	geometry_spring_variation = 0;
+	geometry_stiffness = 0.5;
+	physics_variation = false;
 	geometry_debug = false;
 
 	_sim_id = -1;
