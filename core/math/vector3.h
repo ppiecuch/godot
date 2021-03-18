@@ -159,6 +159,11 @@ struct Vector3 {
 		y = p_y;
 		z = p_z;
 	}
+	_FORCE_INLINE_ Vector3(const real_t *p_arr) {
+		x = p_arr[0];
+		y = p_arr[1];
+		z = p_arr[2];
+	}
 	_FORCE_INLINE_ Vector3() { x = y = z = 0; }
 };
 
