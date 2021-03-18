@@ -1,0 +1,35 @@
+#!/bin/bash
+
+set -e
+
+CROSS="/opt/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu/bin"
+CC="aarch64-linux-gnu-gcc"
+
+if [ ! -e "$CROSS/$CC" ]; then
+	# toolchain not found - run docker image
+	if ! command -v docker &> /dev/null
+	then
+		echo "*** Docker is not found - cannot run build script."
+		exit
+	fi
+	docker_state=$(docker info >/dev/null 2>&1)
+	if [[ $? -ne 0 ]]; then
+		echo "*** Docker does not seem to be running, run it first."
+		exit 1
+	fi
+
+	APPDIR="$(cd "$PWD" && pwd)"
+	SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	NAME="$(basename "${BASH_SOURCE[0]}")"
+	VERSION=2020-10-01
+
+	echo "*** Running docker toolchain $VERSION (with script $NAME).."
+	docker run --rm -t -v "$APPDIR:/app" odroid_dev:$VERSION "./${SCRIPTDIR/$APPDIR/}/$NAME"
+	exit
+fi
+
+PATH=/usr/bin:/bin:/sbin:/usr/local/bin:$CROSS
+scons -j2 platform=frt frt_arch=odroid target=release disable_3d=true disable_experimental=yes
+
+mkdir -p bin/templates/frt
+mv -v bin/godot.frt.opt.aarch64.odroid bin/templates/frt/
