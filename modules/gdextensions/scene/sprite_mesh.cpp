@@ -379,6 +379,7 @@ void SpriteMesh::set_frames_builder(const String &p_input) {
 									rotation[0], rotation[1], rotation[2],
 									scaling[0], scaling[1], scaling[2]);
 #endif
+							_frames.push_back({Basis(Vector3(rotation), Vector3(scaling))});
 							++frame_nr;
 						}
 					} else {
