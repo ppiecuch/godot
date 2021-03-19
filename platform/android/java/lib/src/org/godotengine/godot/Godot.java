@@ -290,8 +290,10 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 		godotHost = null;
 	}
 
+	@CallSuper
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
 		if (result_callback != null) {
 			result_callback.callback(requestCode, resultCode, data);
 			result_callback = null;
@@ -306,8 +308,10 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 		}
 	}
 
+	@CallSuper
 	@Override
 	public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 		for (int i = 0; i < singleton_count; i++) {
 			singletons[i].onMainRequestPermissionsResult(requestCode, permissions, grantResults);
 		}
