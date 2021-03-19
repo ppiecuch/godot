@@ -1,19 +1,49 @@
+/*************************************************************************/
+/*  heatmap.cpp                                                          */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #include "heatmap.h"
 
 #include <core/os/os.h>
-#include <scene/main/viewport.h>
-#include <scene/main/scene_tree.h>
-#include <scene/resources/tile_set.h>
 #include <scene/2d/tile_map.h>
+#include <scene/main/scene_tree.h>
+#include <scene/main/viewport.h>
+#include <scene/resources/tile_set.h>
 
-#include <deque>
 #include <algorithm>
+#include <deque>
 
 namespace {
-	inline float lerp(const float& a, const float& b, const float& t) {
-		return a + t * (b - a);
-	}
+inline float lerp(const float &a, const float &b, const float &t) {
+	return a + t * (b - a);
 }
+} // namespace
 
 void Heatmap::_bind_methods() {
 	//public
@@ -46,7 +76,7 @@ void Heatmap::_notification(int p_what) {
 }
 
 void Heatmap::_ready() {
-	m_grid = (TileMap*)get_node(m_pathfinding_tilemap);
+	m_grid = (TileMap *)get_node(m_pathfinding_tilemap);
 	if (m_grid == nullptr) {
 		ERR_PRINT("No tilemap found for Heatmap node.");
 		return;
@@ -82,8 +112,8 @@ void Heatmap::_draw() {
 	tile.set_size(cell_size);
 	cell_size /= 2;
 
-	for (int y = int(m_y_min); y<int(m_y_max); ++y) {
-		for (int x = int(m_x_min); x<int(m_x_max); ++x) {
+	for (int y = int(m_y_min); y < int(m_y_max); ++y) {
+		for (int x = int(m_x_min); x < int(m_x_max); ++x) {
 			Vector2 point = Vector2(float(x), float(y));
 			Vector2 world_position = m_grid->map_to_world(point);
 			tile.set_position(world_position);
@@ -240,12 +270,7 @@ Vector2 Heatmap::refresh_cells_heat(Vector2 t_cell_position) {
 				unsigned int cell_index = calculate_point_index(point);
 				HeatCell new_cell = HeatCell(point, layer + 1);
 
-				if (   cell_index != index
-					&& cell_index >= 0 && cell_index < m_cells_heat_cache.size()
-					&& m_cells_heat_cache[cell_index] == -1
-					&& !is_out_of_bounds(point)
-					&& std::find(queue.begin(), queue.end(), new_cell) == queue.end()
-					&& std::find(m_obstacles.begin(), m_obstacles.end(), point) == m_obstacles.end()) {
+				if (cell_index != index && cell_index >= 0 && cell_index < m_cells_heat_cache.size() && m_cells_heat_cache[cell_index] == -1 && !is_out_of_bounds(point) && std::find(queue.begin(), queue.end(), new_cell) == queue.end() && std::find(m_obstacles.begin(), m_obstacles.end(), point) == m_obstacles.end()) {
 
 					queue.push_back(new_cell);
 				}
@@ -270,8 +295,7 @@ void Heatmap::thread_done(Vector2 t_cell_position) {
 }
 
 bool Heatmap::is_out_of_bounds(Vector2 t_position) {
-	return t_position.x < m_x_min || t_position.y < m_y_min
-		|| t_position.x > m_x_max || t_position.y > m_y_max;
+	return t_position.x < m_x_min || t_position.y < m_y_min || t_position.x > m_x_max || t_position.y > m_y_max;
 }
 
 void Heatmap::on_Events_player_moved(Node *t_player) {
@@ -298,15 +322,8 @@ void Heatmap::on_Events_player_moved(Node *t_player) {
 	}
 }
 
-
-Heatmap::Heatmap()
-	: m_draw_debug(false)
-	, m_grid(nullptr)
-	, m_y_min(0), m_x_min(0)
-	, m_y_max(0), m_x_max(0)
-	, m_max_heat(0)
-	, m_max_heat_cache(0)
-	, m_updating(false) {
+Heatmap::Heatmap() :
+		m_draw_debug(false), m_grid(nullptr), m_y_min(0), m_x_min(0), m_y_max(0), m_x_max(0), m_max_heat(0), m_max_heat_cache(0), m_updating(false) {
 }
 
 Heatmap::~Heatmap() {
