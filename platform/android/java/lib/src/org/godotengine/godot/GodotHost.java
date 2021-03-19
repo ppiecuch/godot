@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  thread_posix.cpp                                                     */
+/*  GodotHost.java                                                       */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,49 +28,30 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#if (defined(UNIX_ENABLED) || defined(PTHREAD_ENABLED)) && !defined(NO_THREADS)
+package org.godotengine.godot;
 
-#include "thread_posix.h"
+import java.util.Collections;
+import java.util.List;
 
-#include "core/os/thread.h"
-#include "core/ustring.h"
+/**
+ * Denotate a component (e.g: Activity, Fragment) that hosts the {@link Godot} fragment.
+ */
+public interface GodotHost {
 
-#ifdef PTHREAD_BSD_SET_NAME
-#include <pthread_np.h>
-#endif
+	/**
+	 * Provides a set of command line parameters to setup the engine.
+	 */
+	default List<String> getCommandLine() {
+		return Collections.emptyList();
+	}
 
-static Error set_name(const String &p_name) {
-#ifdef PTHREAD_NO_RENAME
-	return ERR_UNAVAILABLE;
+	/**
+	 * Invoked on the render thread when the Godot setup is complete.
+	 */
+	default void onGodotSetupCompleted() {}
 
-#else
-
-#ifdef PTHREAD_RENAME_SELF
-
-	// check if thread is the same as caller
-	int err = pthread_setname_np(p_name.utf8().get_data());
-
-#else
-
-	pthread_t running_thread = pthread_self();
-#ifdef PTHREAD_BSD_SET_NAME
-	pthread_set_name_np(running_thread, p_name.utf8().get_data());
-	int err = 0; // Open/FreeBSD ignore errors in this function
-#elif defined(PTHREAD_NETBSD_SET_NAME)
-	int err = pthread_setname_np(running_thread, "%s", const_cast<char *>(p_name.utf8().get_data()));
-#else
-	int err = pthread_setname_np(running_thread, p_name.utf8().get_data());
-#endif // PTHREAD_BSD_SET_NAME
-
-#endif // PTHREAD_RENAME_SELF
-
-	return err == 0 ? OK : ERR_INVALID_PARAMETER;
-
-#endif // PTHREAD_NO_RENAME
+	/**
+	 * Invoked on the render thread when the Godot main loop has started.
+	 */
+	default void onGodotMainLoopStarted() {}
 }
-
-void init_thread_posix() {
-	Thread::_set_platform_funcs(&set_name, nullptr);
-}
-
-#endif
