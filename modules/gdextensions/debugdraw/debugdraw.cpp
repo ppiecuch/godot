@@ -202,11 +202,11 @@ DebugDraw *DebugDraw::get_singleton() {
 }
 
 void DebugDraw::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("circle", "position:Vector2", "radius:real", "color:Color", "duration:real"), &DebugDraw::circle, DEFVAL(.0f));
-	ClassDB::bind_method(D_METHOD("line", "a:Vector2", "b:Vector2", "color:Color", "width:real", "duration:real"), &DebugDraw::line, DEFVAL(1.f), DEFVAL(.0f));
-	ClassDB::bind_method(D_METHOD("rect", "rect:Rect2", "color:Color", "width:real", "duration:real"), &DebugDraw::rect, DEFVAL(1.f), DEFVAL(.0f));
-	ClassDB::bind_method(D_METHOD("area", "rect:Rect2", "color:Color", "duration:real"), &DebugDraw::area, DEFVAL(.0f));
-	ClassDB::bind_method(D_METHOD("print", "text:String", "color:Color", "duration:real"), &DebugDraw::print, DEFVAL(.0f));
+	ClassDB::bind_method(D_METHOD("circle", "position", "radius", "color", "duration"), &DebugDraw::circle, DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("line", "a", "b", "color", "width", "duration"), &DebugDraw::line, DEFVAL(1.f), DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("rect", "rect", "color", "width", "duration"), &DebugDraw::rect, DEFVAL(1.f), DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("area", "rect", "color", "duration"), &DebugDraw::area, DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("print", "text", "color", "duration"), &DebugDraw::print, DEFVAL(0));
 
 	ClassDB::bind_method(D_METHOD("clear"), &DebugDraw::clear);
 

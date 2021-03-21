@@ -474,20 +474,20 @@ Variant Cripter::decode_var(const PoolByteArray p_data) const {
 
 void Cripter::_bind_methods() {
 	//CBC
-	ClassDB::bind_method(D_METHOD("encrypt_byte_CBC", "Encrypt data", "key"), &Cripter::encrypt_byte_CBC);
-	ClassDB::bind_method(D_METHOD("decrypt_byte_CBC", "Decrypt data", "key"), &Cripter::decrypt_byte_CBC);
-	ClassDB::bind_method(D_METHOD("encrypt_var_CBC", "Encrypt data", "key"), &Cripter::encrypt_var_CBC);
-	ClassDB::bind_method(D_METHOD("decrypt_var_CBC", "Decrypt data", "key"), &Cripter::decrypt_var_CBC);
+	ClassDB::bind_method(D_METHOD("encrypt_byte_CBC", "encrypt_data", "key"), &Cripter::encrypt_byte_CBC);
+	ClassDB::bind_method(D_METHOD("decrypt_byte_CBC", "decrypt_data", "key"), &Cripter::decrypt_byte_CBC);
+	ClassDB::bind_method(D_METHOD("encrypt_var_CBC", "encrypt_data", "key"), &Cripter::encrypt_var_CBC);
+	ClassDB::bind_method(D_METHOD("decrypt_var_CBC", "decrypt_data", "key"), &Cripter::decrypt_var_CBC);
 	//GCM
-	ClassDB::bind_method(D_METHOD("encrypt_byte_GCM", "Encrypt data", "key", "Additional Data"), &Cripter::encrypt_byte_GCM);
-	ClassDB::bind_method(D_METHOD("decrypt_byte_GCM", "Decrypt data", "key", "Additional Data"), &Cripter::decrypt_byte_GCM);
-	ClassDB::bind_method(D_METHOD("encrypt_var_GCM", "Encrypt data", "key", "Additional Data"), &Cripter::encrypt_var_GCM);
-	ClassDB::bind_method(D_METHOD("decrypt_var_GCM", "Decrypt data", "key", "Additional Data"), &Cripter::decrypt_var_GCM);
+	ClassDB::bind_method(D_METHOD("encrypt_byte_GCM", "encrypt_data", "key", "additional_data"), &Cripter::encrypt_byte_GCM);
+	ClassDB::bind_method(D_METHOD("decrypt_byte_GCM", "decrypt_data", "key", "additional_data"), &Cripter::decrypt_byte_GCM);
+	ClassDB::bind_method(D_METHOD("encrypt_var_GCM", "encrypt_data", "key", "additional_data"), &Cripter::encrypt_var_GCM);
+	ClassDB::bind_method(D_METHOD("decrypt_var_GCM", "decrypt_data", "key", "additional_data"), &Cripter::decrypt_var_GCM);
 	//RSA
-	ClassDB::bind_method(D_METHOD("encrypt_byte_RSA", "Encrypt data", "key path"), &Cripter::encrypt_byte_RSA);
-	ClassDB::bind_method(D_METHOD("decrypt_byte_RSA", "Decrypt data", "key path", "Password"), &Cripter::decrypt_byte_RSA);
-	ClassDB::bind_method(D_METHOD("encrypt_var_RSA", "Encrypt data", "key path"), &Cripter::encrypt_var_RSA);
-	ClassDB::bind_method(D_METHOD("decrypt_var_RSA", "Decrypt data", "key path", "Password"), &Cripter::decrypt_var_RSA);
+	ClassDB::bind_method(D_METHOD("encrypt_byte_RSA", "encrypt_data", "key_path"), &Cripter::encrypt_byte_RSA);
+	ClassDB::bind_method(D_METHOD("decrypt_byte_RSA", "decrypt_data", "key_path", "password"), &Cripter::decrypt_byte_RSA);
+	ClassDB::bind_method(D_METHOD("encrypt_var_RSA", "encrypt_data", "key_path"), &Cripter::encrypt_var_RSA);
+	ClassDB::bind_method(D_METHOD("decrypt_var_RSA", "decrypt_data", "key_path", "password"), &Cripter::decrypt_var_RSA);
 }
 
 Cripter::Cripter() {

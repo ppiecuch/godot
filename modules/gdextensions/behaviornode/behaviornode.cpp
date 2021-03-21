@@ -182,14 +182,16 @@ void BehaviorNode::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "behavior/enable"), "set_behavior_enable", "get_behavior_enable");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "behavior/focus"), "set_will_focus", "get_will_focus");
 
-	BIND_VMETHOD(MethodInfo("pre_behavior", PropertyInfo(Variant::OBJECT, "target"), PropertyInfo(Variant::DICTIONARY, "env")));
-	BIND_VMETHOD(MethodInfo("behavior", PropertyInfo(Variant::OBJECT, "target"), PropertyInfo(Variant::DICTIONARY, "env")));
-	BIND_VMETHOD(MethodInfo("step", PropertyInfo(Variant::OBJECT, "target"), PropertyInfo(Variant::DICTIONARY, "env")));
+	BIND_VMETHOD(MethodInfo("_pre_behavior", PropertyInfo(Variant::OBJECT, "target"), PropertyInfo(Variant::DICTIONARY, "env")));
+	BIND_VMETHOD(MethodInfo("_behavior", PropertyInfo(Variant::OBJECT, "target"), PropertyInfo(Variant::DICTIONARY, "env")));
+	BIND_VMETHOD(MethodInfo("_step", PropertyInfo(Variant::OBJECT, "target"), PropertyInfo(Variant::DICTIONARY, "env")));
 	BIND_VMETHOD(MethodInfo("_reset", PropertyInfo(Variant::OBJECT, "target")));
 	BIND_VMETHOD(MethodInfo("_on_notify", PropertyInfo(Variant::OBJECT, "from"), PropertyInfo(Variant::STRING, "key"), PropertyInfo(Variant::OBJECT, "value")));
-	BIND_CONSTANT(TYPE_SEQUENCE);
-	BIND_CONSTANT(TYPE_CONDITION);
-	BIND_CONSTANT(STATUS_DEPEND_ON_CHILDREN);
-	BIND_CONSTANT(STATUS_FAILURE);
-	BIND_CONSTANT(STATUS_RUNNING);
+
+	BIND_ENUM_CONSTANT(TYPE_SEQUENCE);
+	BIND_ENUM_CONSTANT(TYPE_CONDITION);
+
+	BIND_ENUM_CONSTANT(STATUS_DEPEND_ON_CHILDREN);
+	BIND_ENUM_CONSTANT(STATUS_FAILURE);
+	BIND_ENUM_CONSTANT(STATUS_RUNNING);
 }

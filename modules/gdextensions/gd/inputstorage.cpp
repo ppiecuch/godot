@@ -245,11 +245,11 @@ void InputStorage::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("get_storage_size"), &InputStorage::get_storage_size);
 
-	ClassDB::bind_method(D_METHOD("pressed_at", "events", "at_frame"), &InputStorage::pressed_at, Variant(""), 0);
-	ClassDB::bind_method(D_METHOD("down_frame", "event", "in_frame"), &InputStorage::down_frame, Variant(""), 1);
+	ClassDB::bind_method(D_METHOD("pressed_at", "events", "at_frame"), &InputStorage::pressed_at, Variant(), 0);
+	ClassDB::bind_method(D_METHOD("down_frame", "event", "in_frame"), &InputStorage::down_frame, Variant(), 1);
 	ClassDB::bind_method(D_METHOD("test_down", "events", "in_frame"), &InputStorage::test_down, Variant(PoolStringArray()), 1);
-	ClassDB::bind_method(D_METHOD("is_pressed", "event", "in_frame"), &InputStorage::is_pressed, Variant(""), 1);
-	ClassDB::bind_method(D_METHOD("is_down", "event", "in_frame"), &InputStorage::is_down, Variant(""), 1);
+	ClassDB::bind_method(D_METHOD("is_pressed", "event", "in_frame"), &InputStorage::is_pressed, Variant(), 1);
+	ClassDB::bind_method(D_METHOD("is_down", "event", "in_frame"), &InputStorage::is_down, Variant(), 1);
 }
 
 void InputStorageNode::_notification(int p_what) {

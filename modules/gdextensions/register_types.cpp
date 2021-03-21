@@ -32,6 +32,7 @@
 
 #include "core/engine.h"
 #include "editor/editor_node.h"
+#include "editor/audio_stream_preview.h"
 
 #include "gd/blitter.h"
 #include "gd/bs_input_event_key.h"
@@ -63,7 +64,6 @@
 
 #include "debugdraw/debugdraw.h"
 
-#include "scene/audio_stream_preview_generator.h"
 #include "scene/autotilemap.h"
 #include "scene/bend_deform_2d.h"
 #include "scene/bullet_manager.h"
@@ -155,13 +155,17 @@ void register_gdextensions_types() {
 	ClassDB::register_class<BulletManagerBulletType>();
 	ClassDB::register_class<BulletManager>();
 	ClassDB::register_class<Autotilemap>();
+	ClassDB::register_class<ElasticSimulation>();
 	ClassDB::register_class<SimulationController2D>();
 	ClassDB::register_class<SimulationControllerInstance2D>();
 	ClassDB::register_class<DeformMeshInstance2D>();
 	ClassDB::register_class<DeformSprite>();
 	ClassDB::register_class<Cable2D>();
 	ClassDB::register_class<TouchButton>();
+#ifdef TOOLS_ENABLED
+	ClassDB::register_class<AudioStreamPreview>();
 	ClassDB::register_class<AudioStreamPreviewGenerator>();
+#endif
 	ClassDB::register_class<SpriteMesh>();
 	ClassDB::register_class<Figure>();
 
@@ -177,6 +181,7 @@ void register_gdextensions_types() {
 	ClassDB::register_class<FakeExplosionParticles2D>();
 	ClassDB::register_class<NixieFont>();
 	ClassDB::register_class<Spider>();
+	ClassDB::register_virtual_class<InsectsManager>();
 	ClassDB::register_class<InsectsManagerInstance>();
 
 #ifdef MODULE_ENET_ENABLED

@@ -32,6 +32,7 @@
 #define ELASTICSIMULATION_H
 
 #include <memory>
+#include <map>
 
 #include "core/class_db.h"
 #include "core/reference.h"
@@ -48,6 +49,9 @@ class ElasticSimulation : public Reference {
 private:
 	float time_passed;
 
+protected:
+	static void _bind_methods();
+
 public:
 	enum Anchor {
 		SIM_ANCHOR_LEFT,
@@ -63,23 +67,23 @@ public:
 	std::unique_ptr<sim3::Simulation> _sim;
 
 	int make_sim(const Size2 &p_rect, int p_segments, bool p_dynamic_split, Anchor p_anchor, real_t p_stiffness_factor = 0.0, bool p_variation = false);
-	void update_sim(simid_t sim_id, const Size2 &p_rect, int p_segments, bool p_dynamic_split, Anchor p_anchor, real_t p_stiffness_factor = 0.0, bool p_variation = false);
-	void remove_sim(simid_t sim_id);
+	void update_sim(simid_t p_sim_id, const Size2 &p_rect, int p_segments, bool p_dynamic_split, Anchor p_anchor, real_t p_stiffness_factor = 0.0, bool p_variation = false);
+	void remove_sim(simid_t p_sim_id);
 	void reset_sim();
 	void transform_sim_geom(const Transform2D &p_xform) const;
-	int get_sim_particles_count(simid_t sim_id) const;
-	Vector2 get_sim_particle_pos(simid_t sim_id, unsigned int p_index) const;
-	real_t get_sim_particle_mass(simid_t sim_id, unsigned int p_index) const;
-	bool is_sim_particle_fixed(simid_t sim_id, unsigned int p_index) const;
-	void simulate(real_t p_delta, const Vector2 &p_impulse);
-	void deform(simid_t sim_id, real_t p_delta, const Vector2 &p_impulse);
+	int get_sim_particles_count(simid_t p_sim_id) const;
+	Vector2 get_sim_particle_pos(simid_t p_sim_id, unsigned int p_index) const;
+	real_t get_sim_particle_mass(simid_t p_sim_id, unsigned int p_index) const;
+	bool is_sim_particle_fixed(simid_t p_sim_id, unsigned int p_index) const;
+	void simulate(real_t p_delta, const std::map<simid_t, Vector2> &p_forces);
+	void simulate_all(real_t p_delta, const Vector2 &p_force);
 
 	struct Constraint {
 		Vector2 begin, end;
 		real_t deviation; // -1 .. 1
 	};
-	int get_sim_constraint_count(simid_t sim_id) const;
-	Constraint get_sim_constraint_at(simid_t sim_id, unsigned int p_index) const;
+	int get_sim_constraint_count(simid_t p_sim_id) const;
+	Constraint get_sim_constraint_at(simid_t p_sim_id, unsigned int p_index) const;
 
 	ElasticSimulation();
 	~ElasticSimulation();

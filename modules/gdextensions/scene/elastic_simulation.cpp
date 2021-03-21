@@ -97,15 +97,6 @@ struct Particle {
 			position = next_position;
 		}
 	}
-	void deform(real_t delta, const Vector2 &force) {
-		if (!fixed) {
-			const Vector2 acceleration = force * mass * delta * delta;
-
-			Point2 next_position = rest + acceleration;
-			previous = rest;
-			position = next_position;
-		}
-	}
 	void reset() { position = previous = rest; }
 };
 
@@ -161,6 +152,31 @@ public:
 				const Point2 &p1 = middle_point(particles[p]->position, particles[p+1]->position);
 				const Point2 &p2 = middle_point(particles[p+2]->position, particles[p+3]->position);
 				const real_t curr_deform = orientation + Math::rad2deg((p2-p1).angle());
+				if (Math::abs(curr_deform) > 90) {
+					// failed constraint
+					particles[p]->reset();
+					particles[p+1]->reset();
+				}
+				const real_t delta_corrected = delta * (Math::abs(curr_deform) > angle_limit ? 0.1 : 1);
+				particles[p]->simulate(delta_corrected, force);
+				particles[p+1]->simulate(delta_corrected, force);
+				if (p == pcnt - 4) {
+					particles[p+2]->simulate(delta_corrected, force);
+					particles[p+3]->simulate(delta_corrected, force);
+				}
+			}
+		}
+	}
+	void simulate(real_t delta, const std::vector<Vector2> &forces) {
+		for (DistanceConstraint &c : constraints) { c.resolve(); }
+		for (int f = 0;  f < simulations.size(); f++) {
+			ParticlesArray &particles = simulations[f];
+			const Vector2 &force = forces[f];
+			const int pcnt = particles.size();
+			for(int p = 0; p < pcnt - 2; p += 2) {
+				const Point2 &p1 = middle_point(particles[p]->position, particles[p+1]->position);
+				const Point2 &p2 = middle_point(particles[p+2]->position, particles[p+3]->position);
+				const real_t curr_deform = orientation + Math::rad2deg((p2-p1).angle());
 				if (curr_deform < angle_limit && curr_deform > -angle_limit) {
 					particles[p]->simulate(delta, force);
 					particles[p+1]->simulate(delta, force);
@@ -174,10 +190,6 @@ public:
 				}
 			}
 		}
-	}
-	void deform(int sim_id, real_t delta, const Vector2 &force) {
-		for (DistanceConstraint &c : constraints) { c.resolve(); }
-		for (Particle_r &p : simulations[sim_id]) { p->deform(delta, force); }
 	}
 	void reset() {
 		for (ParticlesArray &sim : simulations)
@@ -252,6 +264,7 @@ public:
 		build_geom(sim_id, starting, opposite, steps, stiffness, variation);
 	}
 	void remove_geom(simid_t sim_id) {
+		// remove constraints and clear particles array
 		constraints.remove_if([sim_id](DistanceConstraint &c) { return c.sim_id == sim_id; });
 		simulations[sim_id] = ParticlesArray();
 	}
@@ -259,7 +272,7 @@ public:
 
 // Mesh FFD 2D support
 
-class FfdSimulation {
+class MeshDeformation {
 
 	Vector2 S, T; // Local coordinate system
 	int Sc, Tc; // Number of controls for S, T respectively.  (Sc, Tc must be >= 1)
@@ -267,19 +280,14 @@ class FfdSimulation {
 
 	// Calculate a binomial coefficient using the multiplicative formula
 	real_t binomial(int n, int k) const {
-		real_t total = 1.0f;
+		real_t total = 1;
 		for (int i = 1; i <= k; ++i) {
 			total *= (n - (k - 1)) / real_t(i);
 		}
 		return total;
 	}
-	// Calculate a bernstein polynomial
-	real_t bernstein_polynomial(int n, int v, real_t x) const { return binomial(n, v) * powf(x, v) * powf(1.0f - x, n - v); }
-	// Calculate local coordinates
-	void calculate_st(const Vector2 &max, const Vector2 &min) {
-		S = Vector2(max.x - min.x, 0.0f);
-		T = Vector2(0.0f, max.y - min.y);
-	}
+	real_t bernstein_polynomial(int n, int v, real_t x) const { return binomial(n, v) * Math::pow(x, v) * Math::pow(1 - x, n - v); } // Calculate a bernstein polynomial
+	void calculate_st(const Vector2 &max, const Vector2 &min) { S = Vector2(max.x - min.x, 0); T = Vector2(0, max.y - min.y); } // Calculate local coordinates
 	void calculate_trivariate_bernstein_polynomial(const Vector2 &p0, const PoolVector3Array &mesh, ParticleParamsArray &vertex_params) {
 		vertex_params.clear();
 		for (int v = 0; v < mesh.size(); v++) {
@@ -299,7 +307,7 @@ class FfdSimulation {
 			}
 			vertex_params.push_back(tmp);
 #ifdef DEBUG
-			if (tmp.p.distance_to(points[v].position) > 0.001f) {
+			if (tmp.p.distance_to(points[v].position) > 0.001) {
 				PRINT_WARN(vformat("Warning, vtx[%d] does not match it's parameterization.", v));
 			}
 #endif
@@ -435,9 +443,9 @@ int ElasticSimulation::make_sim(const Size2 &p_rect, int p_segments, bool p_dyna
 	return _sim->make_geom(starting, opposite, steps, p_stiffness_factor, p_variation);
 }
 
-void ElasticSimulation::update_sim(simid_t sim_id, const Size2 &p_rect, int p_segments, bool p_dynamic_split, Anchor p_anchor, real_t p_stiffness_factor, bool p_variation) {
+void ElasticSimulation::update_sim(simid_t p_sim_id, const Size2 &p_rect, int p_segments, bool p_dynamic_split, Anchor p_anchor, real_t p_stiffness_factor, bool p_variation) {
 
-	ERR_FAIL_INDEX(sim_id, _sim->simulations.size());
+	ERR_FAIL_INDEX(p_sim_id, _sim->simulations.size());
 	ERR_FAIL_COND(p_segments <= 0);
 
 #ifdef DEBUG_ENABLED
@@ -450,63 +458,65 @@ void ElasticSimulation::update_sim(simid_t sim_id, const Size2 &p_rect, int p_se
 	Vector2Array steps = _sim_geometry(p_rect, p_segments, p_dynamic_split, p_anchor, starting, opposite);
 	_sim->orientation = _sim_orientation(p_anchor);
 
-	_sim->update_geom(sim_id, starting, opposite, steps, p_stiffness_factor, p_variation);
+	_sim->update_geom(p_sim_id, starting, opposite, steps, p_stiffness_factor, p_variation);
 }
 
-void ElasticSimulation::remove_sim(simid_t sim_id) {
-	ERR_FAIL_INDEX(sim_id, _sim->simulations.size());
+void ElasticSimulation::remove_sim(simid_t p_sim_id) {
+	ERR_FAIL_INDEX(p_sim_id, _sim->simulations.size());
 
-	_sim->remove_geom(sim_id);
+	_sim->remove_geom(p_sim_id);
 }
 
 void ElasticSimulation::reset_sim() {
+
 	_sim->reset();
 }
 
-int ElasticSimulation::get_sim_particles_count(simid_t sim_id) const {
-	ERR_FAIL_INDEX_V(sim_id, _sim->simulations.size(), 0);
+int ElasticSimulation::get_sim_particles_count(simid_t p_sim_id) const {
+	ERR_FAIL_INDEX_V(p_sim_id, _sim->simulations.size(), 0);
 
-	return _sim->simulations[sim_id].size();
+	return _sim->simulations[p_sim_id].size();
 }
 
-Vector2 ElasticSimulation::get_sim_particle_pos(simid_t sim_id, unsigned int p_index) const {
-	ERR_FAIL_INDEX_V(sim_id, _sim->simulations.size(), Vector2());
-	ERR_FAIL_INDEX_V(p_index, _sim->simulations[sim_id].size(), Vector2());
+Vector2 ElasticSimulation::get_sim_particle_pos(simid_t p_sim_id, unsigned int p_index) const {
+	ERR_FAIL_INDEX_V(p_sim_id, _sim->simulations.size(), Vector2());
+	ERR_FAIL_INDEX_V(p_index, _sim->simulations[p_sim_id].size(), Vector2());
 
-	return _sim->simulations[sim_id][p_index]->position;
+	return _sim->simulations[p_sim_id][p_index]->position;
 }
 
-real_t ElasticSimulation::get_sim_particle_mass(simid_t sim_id, unsigned int p_index) const {
-	ERR_FAIL_INDEX_V(sim_id, _sim->simulations.size(), 1);
-	ERR_FAIL_INDEX_V(p_index, _sim->simulations[sim_id].size(), 1);
+real_t ElasticSimulation::get_sim_particle_mass(simid_t p_sim_id, unsigned int p_index) const {
+	ERR_FAIL_INDEX_V(p_sim_id, _sim->simulations.size(), 1);
+	ERR_FAIL_INDEX_V(p_index, _sim->simulations[p_sim_id].size(), 1);
 
-	return _sim->simulations[sim_id][p_index]->mass;
+	return _sim->simulations[p_sim_id][p_index]->mass;
 }
 
-bool ElasticSimulation::is_sim_particle_fixed(simid_t sim_id, unsigned int p_index) const {
-	ERR_FAIL_INDEX_V(sim_id, _sim->simulations.size(), false);
-	ERR_FAIL_INDEX_V(p_index, _sim->simulations[sim_id].size(), false);
+bool ElasticSimulation::is_sim_particle_fixed(simid_t p_sim_id, unsigned int p_index) const {
+	ERR_FAIL_INDEX_V(p_sim_id, _sim->simulations.size(), false);
+	ERR_FAIL_INDEX_V(p_index, _sim->simulations[p_sim_id].size(), false);
 
-	return _sim->simulations[sim_id][p_index]->fixed;
+	return _sim->simulations[p_sim_id][p_index]->fixed;
 }
 
-inline static sim3::DConstraintsVector _filter_constrains(simid_t sim_id, const sim3::DConstraintsArray &constraints) {
+inline static sim3::DConstraintsVector _filter_constrains(simid_t p_sim_id, const sim3::DConstraintsArray &constraints) {
+
 	sim3::DConstraintsVector filter;
-	std::copy_if(constraints.begin(), constraints.end(), std::back_inserter(filter), [sim_id](const sim3::DistanceConstraint &c) { return c.sim_id == sim_id; });
+	std::copy_if(constraints.begin(), constraints.end(), std::back_inserter(filter), [p_sim_id](const sim3::DistanceConstraint &c) { return c.sim_id == p_sim_id; });
 	return filter;
 }
 
-int ElasticSimulation::get_sim_constraint_count(simid_t sim_id) const {
-	ERR_FAIL_INDEX_V(sim_id, _sim->simulations.size(), 0);
+int ElasticSimulation::get_sim_constraint_count(simid_t p_sim_id) const {
+	ERR_FAIL_INDEX_V(p_sim_id, _sim->simulations.size(), 0);
 
-	sim3::DConstraintsVector filter = _filter_constrains(sim_id, _sim->constraints);
+	sim3::DConstraintsVector filter = _filter_constrains(p_sim_id, _sim->constraints);
 	return filter.size();
 }
 
-ElasticSimulation::Constraint ElasticSimulation::get_sim_constraint_at(simid_t sim_id, unsigned int p_index) const {
-	ERR_FAIL_INDEX_V(sim_id, _sim->simulations.size(), ElasticSimulation::Constraint());
+ElasticSimulation::Constraint ElasticSimulation::get_sim_constraint_at(simid_t p_sim_id, unsigned int p_index) const {
+	ERR_FAIL_INDEX_V(p_sim_id, _sim->simulations.size(), ElasticSimulation::Constraint());
 
-	sim3::DConstraintsVector filter = _filter_constrains(sim_id, _sim->constraints);
+	sim3::DConstraintsVector filter = _filter_constrains(p_sim_id, _sim->constraints);
 	ERR_FAIL_INDEX_V(p_index, filter.size(), Constraint());
 
 	const sim3::DistanceConstraint &c = filter[p_index];
@@ -517,15 +527,29 @@ ElasticSimulation::Constraint ElasticSimulation::get_sim_constraint_at(simid_t s
 	};
 }
 
-void ElasticSimulation::simulate(float p_delta, const Vector2 &p_impulse) {
+void ElasticSimulation::simulate_all(float p_delta, const Vector2 &p_force) {
 
 	time_passed += p_delta;
-	_sim->simulate(p_delta, p_impulse);
+	_sim->simulate(p_delta, p_force);
 }
 
-void ElasticSimulation::deform(simid_t sim_id, float p_delta, const Vector2 &p_impulse) {
+void ElasticSimulation::simulate(float p_delta, const std::map<simid_t, Vector2> &p_forces) {
 
-	_sim->deform(sim_id, p_delta, p_impulse);
+	std::vector<Vector2> forces(_sim->simulations.size());
+	for (const auto &f : p_forces) {
+		ERR_FAIL_INDEX(f.first, _sim->simulations.size());
+		forces[f.first] = f.second;
+	}
+	time_passed += p_delta;
+	_sim->simulate(p_delta, forces);
+}
+
+void ElasticSimulation::_bind_methods() {
+
+	BIND_ENUM_CONSTANT(SIM_ANCHOR_LEFT);
+	BIND_ENUM_CONSTANT(SIM_ANCHOR_RIGHT);
+	BIND_ENUM_CONSTANT(SIM_ANCHOR_TOP);
+	BIND_ENUM_CONSTANT(SIM_ANCHOR_BOTTOM);
 }
 
 ElasticSimulation::ElasticSimulation() {
