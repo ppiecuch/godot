@@ -98,6 +98,7 @@ public:
 
 		int max_texture_image_units;
 		int max_texture_size;
+		int max_cubemap_texture_size;
 
 		bool generate_wireframes;
 
