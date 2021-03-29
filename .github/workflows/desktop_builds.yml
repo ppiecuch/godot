@@ -59,7 +59,7 @@ jobs:
         with:
           name: ${{ github.job }}
           path: bin/*
-          retention-days: 14
+          retention-days: ${{env.RETENTION_DAYS}}
 
   macos-template:
     runs-on: "macos-latest"
