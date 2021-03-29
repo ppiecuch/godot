@@ -11,9 +11,12 @@ env:
   GODOT_BASE_BRANCH: 3.2
   SCONS_CACHE_LIMIT: 4096
   RPI_IMAGE: rpi_toolchain
-  RETENTION_DAYS: 7
   VITASDK_PATH: /opt/vitasdk
   GCW0_TOOLCHAIN: 2014-08-20
+  ODROID_TAG: 2020-10-01
+  ODROID_ARCH: gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu
+  ODROID_TOOLCHAIN: https://releases.linaro.org/components/toolchain/binaries/6.3-2017.05/aarch64-linux-gnu/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu.tar.xz
+  RETENTION_DAYS: 7
 
 jobs:
   max-parallel: 1
@@ -96,6 +99,64 @@ jobs:
             bin/godot.frt.opt.arm.pi1
             bin/godot.frt.opt.arm.pi2
             bin/godot.frt.opt.arm.pi3
+          retention-days: ${{env.RETENTION_DAYS}}
+
+  odroid-template:
+    runs-on: "ubuntu-20.04"
+    name: Template (target=release, tools=no)
+
+    steps:
+      - uses: actions/checkout@v2
+
+      # Azure repositories are not reliable, we need to prevent azure giving us packages.
+      - name: Make apt sources.list use the default Ubuntu repositories
+        run: |
+          sudo cp -f misc/ci/sources.list /etc/apt/sources.list
+          sudo apt-get update
+
+      # Install all packages (except scons)
+      - name: Configure dependencies
+        run: |
+          sudo apt-get install wget
+
+      # Upload cache on completion and check it out now
+      - name: Load .scons_cache directory
+        id: rpi-template-cache
+        uses: actions/cache@v2
+        with:
+          path: ${{github.workspace}}/.scons_cache/
+          key: ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}-${{github.sha}}
+          restore-keys: |
+            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}-${{github.sha}}
+            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}
+            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}
+
+      - name: Build Docker ODroid toolchain and build environment
+        run: |
+          cp misc/ci/odroid_dockerfile Dockerfile
+          docker build --build-arg version=${{env.ODROID_TAG}} --build-arg toolchain-${{env.ODROID_TOOLCHAIN}} -t odroid_dev:${{env.ODROID_TAG}} .
+          CROSS="/opt/$${{env.ODROID_ARCH}}/bin/aarch64-linux-gnu-gcc"
+          echo "::warning::Using gcc/toolchain version $(docker run --rm -t odroid_dev:${{env.ODROID_TAG}} $CROSS --version)"
+
+      - name: Checkout FRT platform
+        uses: actions/checkout@v2
+        with:
+          repository: 'ppiecuch/frt'
+          path: 'platform/frt/'
+
+      - name: ODroid compilation
+        env:
+          SCONS_CACHE: ${{github.workspace}}/.scons_cache/
+        run: |
+          docker run --rm -t -v "$(pwd):/app" odroid_dev:${{env.ODROID_TAG}} \
+            PATH=$PATH:/opt/$${{env.ODROID_ARCH}}/bin \
+            scons -j2 platform=frt frt_arch=odroid verbose=yes warnings=all werror=yes target=release tools=no
+
+      - name: Upload templates
+        uses: actions/upload-artifact@v2
+        with:
+          name: odroid-templates
+          path: bin/godot.frt.opt.arm.odroid
           retention-days: ${{env.RETENTION_DAYS}}
 
   psvita-template:
@@ -299,3 +360,10 @@ jobs:
           SCONS_CACHE: ${{github.workspace}}/.scons_cache/
         run: |
           scons -j2 platform=3ds verbose=yes warnings=all werror=yes target=release tools=no disable_3ds=yes
+
+      - name: Upload template
+        uses: actions/upload-artifact@v2
+        with:
+          name: nds-template
+          path: bin/godot.3ds.opt.arm
+          retention-days: ${{env.RETENTION_DAYS}}
