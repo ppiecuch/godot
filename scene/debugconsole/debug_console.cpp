@@ -452,7 +452,7 @@ void ConsoleInstance::_notification(int p_notification) {
 		case NOTIFICATION_DRAW: {
 
 			if (console.is_valid()) {
-				console->draw(get_canvas_item(), _xform * get_global_transform().affine_inverse());
+				console->draw(get_canvas_item(), get_global_transform().affine_inverse());
 			}
 		} break;
 	}
@@ -606,8 +606,4 @@ void ConsoleInstance::_bind_methods() {
 ConsoleInstance::ConsoleInstance() {
 
 	console = Ref<TextConsole>(NULL);
-
-	_pos = Point2(0, 0);
-	_scale = Size2(1, 1);
-	_xform = Transform2D();
 }
