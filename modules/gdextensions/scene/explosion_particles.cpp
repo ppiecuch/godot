@@ -38,6 +38,8 @@
 
 #include "common/gd_core.h"
 
+#include <algorithm> // remove_if
+
 #define rand_range random
 
 #ifdef TOOLS_ENABLED

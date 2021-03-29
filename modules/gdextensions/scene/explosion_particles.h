@@ -42,6 +42,21 @@
 
 #include <vector>
 
+// Example:
+// --------
+// extends KinematicBody2D
+//
+// export var velocity:Vector2
+//
+// func _physics_process(delta):
+//     var collision = move_and_collide(velocity * delta)
+//     if collision:
+//         velocity = velocity.bounce(collision.normal)
+//         var emiter_position:Vector2 = to_local(collision.position)
+//         $marker.position = emiter_position
+//         $emitter.set_emitter_position(emiter_position)
+//         $emitter.single_explosion()
+
 class FakeExplosionParticles2D : public Node2D {
 	GDCLASS(FakeExplosionParticles2D, Node2D);
 
