@@ -165,6 +165,8 @@ struct Vector2 {
 				(p_v1.y + p_amount1 * (p_v2.y - p_v1.y)) + p_amount2 * (p_v3.y - p_v1.y));
 	}
 
+	_FORCE_INLINE_ static Vector2 from_rotation(real_t p_radians) { return Vector2(Math::cos(p_radians), Math::sin(p_radians)); }
+
 	operator String() const { return String::num(x) + ", " + String::num(y); }
 
 	_FORCE_INLINE_ Vector2(real_t p_x, real_t p_y) {
