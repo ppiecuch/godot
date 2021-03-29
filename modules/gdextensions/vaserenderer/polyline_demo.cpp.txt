@@ -51,23 +51,23 @@ void line_update()
 {
 	Color cc[3];
 	Color grey = {.4,.4,.4, 1};
-	
+
 	{ Color col={1 , 0, 0, 1}; cc[0]=col;}
 	{ Color col={.8,.8, 0, 1}; cc[1]=col;}
 	{ Color col={ 0, 0, 1, 1}; cc[2]=col;}
-	
+
 	for ( int i=0; i<size_of_AP; i++)
 	{
 		if ( colored->value())
 			AC[i] = cc[i%3];
 		else
 			AC[i] = grey;
-		
+
 		if ( alphaed->value())
 			AC[i].a = 0.5f;
 		else
 			AC[i].a = 1.0f;
-			
+
 		if ( weighted->value())
 		{
 			AW[i] = weight->value() * (0.05 + double(i*2)/size_of_AP);
@@ -87,14 +87,14 @@ void line_init( int N)
 		AP[1].x=220; AP[1].y=30;
 		size_of_AP = 2;
 	break;
-	
+
 	case 3:
 		AP[0].x=200; AP[0].y=100;
 		AP[1].x=100; AP[1].y=200;
 		AP[2].x=300; AP[2].y=200;
 		size_of_AP = 3;
 	break;
-	
+
 	case 4:
 		AP[0].x=200; AP[0].y=50;
 		AP[1].x=100; AP[1].y=150;
@@ -102,7 +102,7 @@ void line_init( int N)
 		AP[3].x=200; AP[3].y=250;
 		size_of_AP = 4;
 	break;
-	
+
 	case 5:
 		AP[0].x=60; AP[0].y=250;
 		AP[1].x=120; AP[1].y=50;
@@ -111,7 +111,7 @@ void line_init( int N)
 		AP[4].x=300; AP[4].y=250;
 		size_of_AP = 5;
 	break;
-	
+
 	case 6:
 		AP[0].x=280; AP[0].y=110;
 		AP[1].x=200; AP[1].y=50;
@@ -134,7 +134,7 @@ void line_init( int N)
 	break;
 	}
 	line_update();
-	gl_wnd->set_drag_target( AP, size_of_AP); 
+	gl_wnd->set_drag_target( AP, size_of_AP);
 }
 char get_joint_type()
 {
@@ -213,7 +213,7 @@ void make_form()
 		weight->bounds(0.02,30.0);
 		weight->callback(drag_cb);
 		weight->value(8.0);
-		
+
 		{ Fl_Group* o = new Fl_Group(400,90,200,20);
 			poly = new Fl_Radio_Light_Button(400,90,100,20,"polyline");
 			bezi = new Fl_Radio_Light_Button(500,90,100,20,"polybezier");
@@ -392,6 +392,6 @@ int main(int argc, char **argv)
 	main_wnd->end();
 	main_wnd->show();
 	main_wnd->redraw();
-	
+
 	return Fl::run();
 }

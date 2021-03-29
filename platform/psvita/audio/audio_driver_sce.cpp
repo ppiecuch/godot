@@ -119,7 +119,7 @@ void AudioDriverSCE::finish() {
 	};
 };
 
-AudioDriverSCE::AudioDriverSCE() {
+AudioDriverSCE::AudioDriverSCE(){
 
 };
 

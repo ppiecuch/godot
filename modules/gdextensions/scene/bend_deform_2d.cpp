@@ -28,9 +28,9 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
 
 #include "scene/main/viewport.h"
 #include "scene/resources/mesh.h"
@@ -114,15 +114,14 @@ static void _draw_debug_marker(CanvasItem *node, const Point2 &p0, real_t dir, i
 	// node->draw_circle(p0, 1, marker_color);
 }
 
-
-Vector<Object*> SimulationController2D::_get_connected_nodes() const {
+Vector<Object *> SimulationController2D::_get_connected_nodes() const {
 
 	// get the list of listeners of "simulation_progress" signal
 
 	List<Connection> connections;
 	get_signal_connection_list("simulation_progress", &connections);
 
-	Vector<Object*> targets;
+	Vector<Object *> targets;
 	for (const List<Connection>::Element *E = connections.front(); E; E = E->next()) {
 		targets.push_back(E->get().target);
 	}
@@ -174,7 +173,6 @@ void SimulationController2D::set_noise_modulation(bool p_state) {
 	noise_modulation = p_state;
 }
 
-
 bool SimulationController2D::is_noise_modulation_active() const {
 
 	return noise_modulation;
@@ -215,7 +213,7 @@ void SimulationController2D::simulation_progress(real_t p_delta) {
 	if (simulation_active) {
 		if (noise_modulation) {
 			std::map<simid_t, Vector2> forces;
-			Vector<Object*> objects = _get_connected_nodes();
+			Vector<Object *> objects = _get_connected_nodes();
 			for (int n = 0; n < objects.size(); ++n) {
 				_add_node_noise_modulation_value(objects[n], _noise, _time_progress * noise_time_scale, noise_pixel_resolution, forces);
 			}
@@ -299,21 +297,26 @@ SimulationController2D::SimulationController2D() {
 
 	simulation_active = false;
 	simulation_precision = PRECISION_MEDIUM;
-	simulation_force = Vector2(10,10);
+	simulation_force = Vector2(10, 10);
 }
 
 SimulationController2D::~SimulationController2D() {
 }
 
-
 #ifdef TOOLS_ENABLED
-void SimulationControllerDebugInstance2D::_edit_set_position(const Point2 &p_position) { }
-Point2 SimulationControllerDebugInstance2D::_edit_get_position() const { return Point2(); }
-void SimulationControllerDebugInstance2D::_edit_set_scale(const Size2 &p_scale) { }
-Size2 SimulationControllerDebugInstance2D::_edit_get_scale() const { return Size2(); }
+void SimulationControllerDebugInstance2D::_edit_set_position(const Point2 &p_position) {}
+Point2 SimulationControllerDebugInstance2D::_edit_get_position() const {
+	return Point2();
+}
+void SimulationControllerDebugInstance2D::_edit_set_scale(const Size2 &p_scale) {}
+Size2 SimulationControllerDebugInstance2D::_edit_get_scale() const {
+	return Size2();
+}
 #endif
 
-Transform2D SimulationControllerDebugInstance2D::get_transform() const { return Transform2D(); }
+Transform2D SimulationControllerDebugInstance2D::get_transform() const {
+	return Transform2D();
+}
 
 int SimulationControllerDebugInstance2D::get_cell_size() const {
 
@@ -350,19 +353,19 @@ void SimulationControllerDebugInstance2D::_notification(int p_what) {
 		case NOTIFICATION_DRAW: {
 
 			if (SimulationControllerInstance2D *instance = Object::cast_to<SimulationControllerInstance2D>(get_parent())) {
-					Ref<SimulationController2D> controller = instance->get_controller();
-					if (controller.is_valid()) {
-						if (Viewport *viewport = get_viewport()) {
-							const Size2i size = viewport->get_visible_rect().size;
-							for (int r = 0; r < size.y; r += cell_size) {
-								for (int c = 0; c < size.x; c += cell_size) {
-									const Vector2 pos = Point2(c, r);
-									const real_t dir = controller->get_current_noise_modulation_dir(pos);
-									_draw_debug_marker(this, pos, dir, cell_size - 2, cell_size / 3, cell_size / 4);
-								}
+				Ref<SimulationController2D> controller = instance->get_controller();
+				if (controller.is_valid()) {
+					if (Viewport *viewport = get_viewport()) {
+						const Size2i size = viewport->get_visible_rect().size;
+						for (int r = 0; r < size.y; r += cell_size) {
+							for (int c = 0; c < size.x; c += cell_size) {
+								const Vector2 pos = Point2(c, r);
+								const real_t dir = controller->get_current_noise_modulation_dir(pos);
+								_draw_debug_marker(this, pos, dir, cell_size - 2, cell_size / 3, cell_size / 4);
 							}
 						}
 					}
+				}
 			}
 		}
 	}
@@ -380,7 +383,6 @@ SimulationControllerDebugInstance2D::SimulationControllerDebugInstance2D() {
 
 	cell_size = 20;
 }
-
 
 void SimulationControllerInstance2D::_on_controller_changed() {
 
@@ -781,7 +783,8 @@ void DeformSprite::_check_parent_controller() {
 	} else if (controller.is_null()) {
 		// look depeer for new controller, if no parent controller and
 		// controller is not valid
-		Node *next = get_parent(); while(next) {
+		Node *next = get_parent();
+		while (next) {
 			if (SimulationControllerInstance2D *instance = Object::cast_to<SimulationControllerInstance2D>(next)) {
 				new_controller = instance;
 				break;
@@ -996,7 +999,9 @@ void DeformSprite::set_controller(const Ref<SimulationController2D> &p_controlle
 	}
 }
 
-inline Point2 middle_point(const Point2 &a, const Point2 &b) { return (a + b) / 2; }
+inline Point2 middle_point(const Point2 &a, const Point2 &b) {
+	return (a + b) / 2;
+}
 
 void DeformSprite::debug_draw_geometry() {
 	ERR_FAIL_COND(controller.is_null());
@@ -1013,14 +1018,14 @@ void DeformSprite::debug_draw_geometry() {
 		draw_line(origin + c.begin * sc, origin + c.end * sc, Color(0.5 + color_diff, 0.5 - color_diff, 0, 1));
 	}
 	const int pcnt = sim->get_sim_particles_count(_sim_id);
-	ERR_FAIL_COND(pcnt<4);
+	ERR_FAIL_COND(pcnt < 4);
 	const Color yellow = Color::named("yellow");
 	for (int i = 0; i < pcnt; i++) {
 		draw_rect(Rect2(origin + sim->get_sim_particle_pos(_sim_id, i) * sc, sim->get_sim_particle_mass(_sim_id, i) * get_scale().inv()), yellow);
 	}
-	for(int p = 0; p < pcnt - 2; p += 2) {
-		const Point2 &p1 = middle_point(sim->get_sim_particle_pos(_sim_id, p), sim->get_sim_particle_pos(_sim_id, p+1));
-		const Point2 &p2 = middle_point(sim->get_sim_particle_pos(_sim_id, p+2), sim->get_sim_particle_pos(_sim_id, p+3));
+	for (int p = 0; p < pcnt - 2; p += 2) {
+		const Point2 &p1 = middle_point(sim->get_sim_particle_pos(_sim_id, p), sim->get_sim_particle_pos(_sim_id, p + 1));
+		const Point2 &p2 = middle_point(sim->get_sim_particle_pos(_sim_id, p + 2), sim->get_sim_particle_pos(_sim_id, p + 3));
 		draw_line(origin + p1 * sc, origin + p2 * sc, yellow);
 	}
 

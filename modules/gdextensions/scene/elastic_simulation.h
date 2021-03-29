@@ -31,8 +31,8 @@
 #ifndef ELASTICSIMULATION_H
 #define ELASTICSIMULATION_H
 
-#include <memory>
 #include <map>
+#include <memory>
 
 #include "core/class_db.h"
 #include "core/reference.h"

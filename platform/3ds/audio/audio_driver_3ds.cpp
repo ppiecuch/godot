@@ -162,7 +162,7 @@ void AudioDriver3ds::finish() {
 	ndspExit();
 };
 
-AudioDriver3ds::AudioDriver3ds() {
+AudioDriver3ds::AudioDriver3ds(){
 
 };
 

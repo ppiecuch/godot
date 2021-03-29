@@ -86,9 +86,13 @@ struct Particle {
 	Point2 control;
 	real_t mass;
 
-	Particle(const Point2 &xy, bool fixed = NO) : fixed(fixed), mass(1) { rest = position = previous = xy; }
-	Particle(const Point2 &xy, real_t mass) : fixed(NO), mass(mass) { rest = position = previous = xy; }
-	void correct(const Vector2 &v) { if (!fixed) position += v; }
+	Particle(const Point2 &xy, bool fixed = NO) :
+			fixed(fixed), mass(1) { rest = position = previous = xy; }
+	Particle(const Point2 &xy, real_t mass) :
+			fixed(NO), mass(mass) { rest = position = previous = xy; }
+	void correct(const Vector2 &v) {
+		if (!fixed) position += v;
+	}
 	void simulate(real_t delta, const Vector2 &force) {
 		if (!fixed) {
 			const Vector2 acceleration = force * mass * delta * delta;
@@ -100,13 +104,23 @@ struct Particle {
 	void reset() { position = previous = rest; }
 };
 
-inline Point2 operator+(const Particle &pt, const Point2 &vec) { return pt.position + vec; }
-inline Point2 operator+(const Particle *pt, const Point2 &vec) { return pt->position + vec; }
+inline Point2 operator+(const Particle &pt, const Point2 &vec) {
+	return pt.position + vec;
+}
+inline Point2 operator+(const Particle *pt, const Point2 &vec) {
+	return pt->position + vec;
+}
 
-inline Particle_r make_particle_r(const Point2 &xy, bool fixed = NO) { return std::unique_ptr<Particle>(new Particle(xy, fixed)); }
-inline Particle_r make_particle_r(const Point2 &xy, real_t mass) { return std::unique_ptr<Particle>(new Particle(xy, mass)); }
+inline Particle_r make_particle_r(const Point2 &xy, bool fixed = NO) {
+	return std::unique_ptr<Particle>(new Particle(xy, fixed));
+}
+inline Particle_r make_particle_r(const Point2 &xy, real_t mass) {
+	return std::unique_ptr<Particle>(new Particle(xy, mass));
+}
 
-inline Point2 middle_point(const Point2 &a, const Point2 &b) { return (a + b) / 2; }
+inline Point2 middle_point(const Point2 &a, const Point2 &b) {
+	return (a + b) / 2;
+}
 
 struct DistanceConstraint {
 	const real_t MinDistStiffnessFactor = 0.4;
@@ -145,44 +159,48 @@ public:
 
 	Simulation() {}
 	void simulate(real_t delta, const Vector2 &force) {
-		for (DistanceConstraint &c : constraints) { c.resolve(); }
+		for (DistanceConstraint &c : constraints) {
+			c.resolve();
+		}
 		for (ParticlesArray &particles : simulations) {
 			const int pcnt = particles.size();
-			for(int p = 0; p < pcnt - 2; p += 2) {
-				const Point2 &p1 = middle_point(particles[p]->position, particles[p+1]->position);
-				const Point2 &p2 = middle_point(particles[p+2]->position, particles[p+3]->position);
-				const real_t curr_deform = orientation + Math::rad2deg((p2-p1).angle());
+			for (int p = 0; p < pcnt - 2; p += 2) {
+				const Point2 &p1 = middle_point(particles[p]->position, particles[p + 1]->position);
+				const Point2 &p2 = middle_point(particles[p + 2]->position, particles[p + 3]->position);
+				const real_t curr_deform = orientation + Math::rad2deg((p2 - p1).angle());
 				if (Math::abs(curr_deform) > 90) {
 					// failed constraint
 					particles[p]->reset();
-					particles[p+1]->reset();
+					particles[p + 1]->reset();
 				}
 				const real_t delta_corrected = delta * (Math::abs(curr_deform) > angle_limit ? 0.1 : 1);
 				particles[p]->simulate(delta_corrected, force);
-				particles[p+1]->simulate(delta_corrected, force);
+				particles[p + 1]->simulate(delta_corrected, force);
 				if (p == pcnt - 4) {
-					particles[p+2]->simulate(delta_corrected, force);
-					particles[p+3]->simulate(delta_corrected, force);
+					particles[p + 2]->simulate(delta_corrected, force);
+					particles[p + 3]->simulate(delta_corrected, force);
 				}
 			}
 		}
 	}
 	void simulate(real_t delta, const std::vector<Vector2> &forces) {
-		for (DistanceConstraint &c : constraints) { c.resolve(); }
-		for (int f = 0;  f < simulations.size(); f++) {
+		for (DistanceConstraint &c : constraints) {
+			c.resolve();
+		}
+		for (int f = 0; f < simulations.size(); f++) {
 			ParticlesArray &particles = simulations[f];
 			const Vector2 &force = forces[f];
 			const int pcnt = particles.size();
-			for(int p = 0; p < pcnt - 2; p += 2) {
-				const Point2 &p1 = middle_point(particles[p]->position, particles[p+1]->position);
-				const Point2 &p2 = middle_point(particles[p+2]->position, particles[p+3]->position);
-				const real_t curr_deform = orientation + Math::rad2deg((p2-p1).angle());
+			for (int p = 0; p < pcnt - 2; p += 2) {
+				const Point2 &p1 = middle_point(particles[p]->position, particles[p + 1]->position);
+				const Point2 &p2 = middle_point(particles[p + 2]->position, particles[p + 3]->position);
+				const real_t curr_deform = orientation + Math::rad2deg((p2 - p1).angle());
 				if (curr_deform < angle_limit && curr_deform > -angle_limit) {
 					particles[p]->simulate(delta, force);
-					particles[p+1]->simulate(delta, force);
+					particles[p + 1]->simulate(delta, force);
 					if (p == pcnt - 4) {
-						particles[p+2]->simulate(delta, force);
-						particles[p+3]->simulate(delta, force);
+						particles[p + 2]->simulate(delta, force);
+						particles[p + 3]->simulate(delta, force);
 					}
 				} else {
 					// do not process simulation if segment is too bend
@@ -193,7 +211,9 @@ public:
 	}
 	void reset() {
 		for (ParticlesArray &sim : simulations)
-			for (Particle_r &p : sim) { p->reset(); }
+			for (Particle_r &p : sim) {
+				p->reset();
+			}
 	}
 
 	inline Particle *add_point(int sim_id, const Point2 &xy, bool fixed = NO) {
@@ -287,7 +307,10 @@ class MeshDeformation {
 		return total;
 	}
 	real_t bernstein_polynomial(int n, int v, real_t x) const { return binomial(n, v) * Math::pow(x, v) * Math::pow(1 - x, n - v); } // Calculate a bernstein polynomial
-	void calculate_st(const Vector2 &max, const Vector2 &min) { S = Vector2(max.x - min.x, 0); T = Vector2(0, max.y - min.y); } // Calculate local coordinates
+	void calculate_st(const Vector2 &max, const Vector2 &min) {
+		S = Vector2(max.x - min.x, 0);
+		T = Vector2(0, max.y - min.y);
+	} // Calculate local coordinates
 	void calculate_trivariate_bernstein_polynomial(const Vector2 &p0, const PoolVector3Array &mesh, ParticleParamsArray &vertex_params) {
 		vertex_params.clear();
 		for (int v = 0; v < mesh.size(); v++) {

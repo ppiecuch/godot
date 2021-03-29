@@ -8,20 +8,20 @@
 // Contact: mcseem@antigrain.com
 //          mcseemagg@yahoo.com
 //          http://antigrain.com
-// 
+//
 // AGG is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
 // as published by the Free Software Foundation; either version 2
 // of the License, or (at your option) any later version.
-// 
+//
 // AGG is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with AGG; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 // MA 02110-1301, USA.
 //----------------------------------------------------------------------------
 
@@ -200,7 +200,7 @@ void recursive_bezier(real_t x1, real_t y1,
 			}
 		break;
 
-		case 3: 
+		case 3:
 			// Regular case
 			//-----------------
 			if((d2 + d3)*(d2 + d3) <= m_distance_tolerance_square * (dx*dx + dy*dy))
@@ -252,10 +252,10 @@ void recursive_bezier(real_t x1, real_t y1,
 	//----------------------
 	recursive_bezier(x1, y1, x12, y12, x123, y123, x1234, y1234, level + 1,
 		m_angle_tolerance, m_cusp_limit, m_distance_tolerance_square,
-		add_point, obj); 
+		add_point, obj);
 	recursive_bezier(x1234, y1234, x234, y234, x34, y34, x4, y4, level + 1,
 		m_angle_tolerance, m_cusp_limit, m_distance_tolerance_square,
-		add_point, obj); 
+		add_point, obj);
 }
 
 int curve4_div(real_t x1, real_t y1,

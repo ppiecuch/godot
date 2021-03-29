@@ -66,7 +66,7 @@ private:
 	Ref<OpenSimplexNoise> _noise;
 #endif
 
-	Vector<Object*> _get_connected_nodes() const;
+	Vector<Object *> _get_connected_nodes() const;
 
 	const real_t _simulation_delta[SimulationPrecisionCount] = { 0.1, 0.05, 0.01 };
 
@@ -108,7 +108,6 @@ public:
 
 VARIANT_ENUM_CAST(SimulationController2D::SimulationPrecision);
 
-
 class SimulationControllerDebugInstance2D : public CanvasItem {
 	GDCLASS(SimulationControllerDebugInstance2D, CanvasItem)
 
@@ -137,7 +136,6 @@ public:
 	SimulationControllerDebugInstance2D();
 };
 
-
 class SimulationControllerInstance2D : public Node {
 	GDCLASS(SimulationControllerInstance2D, Node)
 
@@ -158,7 +156,6 @@ public:
 	SimulationControllerInstance2D();
 	~SimulationControllerInstance2D();
 };
-
 
 class DeformMeshInstance2D : public MeshInstance2D {
 	GDCLASS(DeformMeshInstance2D, MeshInstance2D)
@@ -196,7 +193,6 @@ public:
 	DeformMeshInstance2D();
 	~DeformMeshInstance2D();
 };
-
 
 class DeformSprite : public Sprite {
 	GDCLASS(DeformSprite, Sprite)

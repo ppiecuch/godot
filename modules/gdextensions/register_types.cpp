@@ -31,8 +31,8 @@
 #include "register_types.h"
 
 #include "core/engine.h"
-#include "editor/editor_node.h"
 #include "editor/audio_stream_preview.h"
+#include "editor/editor_node.h"
 
 #include "gd/blitter.h"
 #include "gd/bs_input_event_key.h"

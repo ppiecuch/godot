@@ -46,7 +46,7 @@ void line_update()
 	{ Color col={.8,.8, 0, 1}; cc[1]=col;}
 	{ Color col={ 0, 0, 1, 1}; cc[2]=col;}
 	Color grey={.5,.5,.5, 1};
-	
+
 	for ( int i=0; i<size_of_AP; i++)
 	{
 		if ( i<3) {
@@ -63,14 +63,14 @@ void line_init( int)
 	AP[0].x=300; AP[0].y=30;
 	AP[1].x=120; AP[1].y=250;
 	AP[2].x=480; AP[2].y=250;
-	
+
 	AP[3].x=240; AP[3].y=130;
 	AP[4].x=360; AP[4].y=130;
 	AP[5].x=300; AP[5].y=220;
 	size_of_AP = 6;
-	
+
 	line_update();
-	gl_wnd->set_drag_target( AP, size_of_AP); 
+	gl_wnd->set_drag_target( AP, size_of_AP);
 }
 void drag_cb(Fl_Widget* W, void*)
 {
@@ -101,17 +101,17 @@ void make_form()
 	"Drag the points of the triangles to play."
 	);
 	text->align( FL_ALIGN_TOP | FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_WRAP);
-	
+
 	{	Fl_Group* o = new Fl_Group(0,380,600,20);
 		new Fl_Box(0,380,30,20,"N =");
 		nk1 = new Fl_Radio_Light_Button(30,380,80,20,"1 knife");
 		nk2 = new Fl_Radio_Light_Button(110,380,30,20,"2");
 		nk3 = new Fl_Radio_Light_Button(140,380,30,20,"3");
-		
+
 		nk1->callback(nk_cb);
 		nk2->callback(nk_cb);
 		nk3->callback(nk_cb);
-		
+
 		nk1->value(1);
 		o->end();
 	}
@@ -123,7 +123,7 @@ void draw_triangles_outline( vertex_array_holder& tris)
 		Point P1 = tris.get(i); i++;
 		Point P2 = tris.get(i); i++;
 		Point P3 = tris.get(i);
-		
+
 		glBegin(GL_LINE_STRIP);
 			glColor3f(1,0,0);
 			glVertex2f( P1.x,P1.y);
@@ -136,25 +136,25 @@ void draw_triangles_outline( vertex_array_holder& tris)
 void test_draw()
 {
 	renderer::before();
-	
+
 	{	vertex_array_holder tri_in,tri_out;
 		tri_in .set_gl_draw_mode(GL_TRIANGLES);
 		tri_out.set_gl_draw_mode(GL_TRIANGLES);
-		
+
 		for ( int i=0; i<3; i++)
 		{
 			tri_in.push( AP[i], AC[i]);
 		}
-		
+
 		Point kn0[3]={AP[3],AP[4],AP[5]};
 		Point kn1[3]={AP[4],AP[5],AP[3]};
 		Point kn2[3]={AP[5],AP[3],AP[4]};
-		
+
 		vah_N_knife_cut( tri_in, tri_out, kn0,kn1,kn2, 0,0,N_knife());
 		tri_out.draw();
 		draw_triangles_outline( tri_out);
 	}
-	
+
 	{	vertex_array_holder kn;
 		kn.set_gl_draw_mode(GL_TRIANGLES);
 		for ( int i=3; i<6; i++)
@@ -163,7 +163,7 @@ void test_draw()
 		}
 		kn.draw();
 	}
-	
+
 	renderer::after();
 }
 
@@ -176,6 +176,6 @@ int main(int argc, char **argv)
 	main_wnd->end();
 	main_wnd->show();
 	main_wnd->redraw();
-	
+
 	return Fl::run();
 }
