@@ -90,6 +90,13 @@ float AudioStreamPreview::get_min(float p_time, float p_time_next) const {
 	return (vmin / 255.0) * 2.0 - 1.0;
 }
 
+void AudioStreamPreview::_bind_methods() {
+
+	ClassDB::bind_method("get_length", &AudioStreamPreview::get_length);
+	ClassDB::bind_method(D_METHOD("get_max", "p_time", "p_time_next"), &AudioStreamPreview::get_max);
+	ClassDB::bind_method(D_METHOD("get_min", "p_time", "p_time_next"), &AudioStreamPreview::get_min);
+}
+
 AudioStreamPreview::AudioStreamPreview() {
 	length = 0;
 }

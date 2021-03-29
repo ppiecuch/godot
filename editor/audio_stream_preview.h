@@ -44,6 +44,9 @@ class AudioStreamPreview : public Reference {
 
 	friend class AudioStreamPreviewGenerator;
 
+protected:
+	static void _bind_methods();
+
 public:
 	float get_length() const;
 	float get_max(float p_time, float p_time_next) const;
