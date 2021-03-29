@@ -44,6 +44,13 @@ class SpiderInsects : public Node2D {
 		SpiderInsects() {}
 };
 
+class InsectsManager : public Reference {
+	GDCLASS(InsectsManager, Reference)
+
+public:
+	InsectsManager() {}
+};
+
 class InsectsManagerInstance : public Node2D {
 	GDCLASS(InsectsManagerInstance, Node2D);
 
