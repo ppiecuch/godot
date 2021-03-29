@@ -167,10 +167,6 @@ class ConsoleInstance : public CanvasItem {
 private:
 	Ref<TextConsole> console;
 
-	Point2 _pos;
-	Size2 _scale;
-	Transform2D _xform;
-
 	Error _process_codes(const String &p_concodes);
 
 protected:

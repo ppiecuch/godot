@@ -424,28 +424,13 @@ TextConsole::~TextConsole() {
 }
 
 #ifdef TOOLS_ENABLED
-void ConsoleInstance::_edit_set_position(const Point2 &p_position) {
-	_pos = p_position;
-	update();
-}
-
-Point2 ConsoleInstance::_edit_get_position() const {
-	return _pos;
-}
-
-void ConsoleInstance::_edit_set_scale(const Size2 &p_scale) {
-	_scale = p_scale;
-	update();
-}
-
-Size2 ConsoleInstance::_edit_get_scale() const {
-	return _scale;
-}
+void ConsoleInstance::_edit_set_position(const Point2 &p_position) { }
+Point2 ConsoleInstance::_edit_get_position() const { return Point2(); }
+void ConsoleInstance::_edit_set_scale(const Size2 &p_scale) { }
+Size2 ConsoleInstance::_edit_get_scale() const { return Size2(); }
 #endif
 
-Transform2D ConsoleInstance::get_transform() const {
-	return _xform;
-}
+Transform2D ConsoleInstance::get_transform() const { return Transform2D(); }
 
 void ConsoleInstance::_notification(int p_notification) {
 
