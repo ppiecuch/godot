@@ -37,7 +37,7 @@ export -f echo_success
 # Building
 # --------
 
-export SCONS_FLAGS="$SCONS_FLAGS CCFLAGS=-D__MACPORTS__"
+export SCONS_FLAGS="$SCONS_FLAGS no_editor_splash=yes CCFLAGS=-D__MACPORTS__"
 
 if [ -z "$1" ]; then
 	target="release_debug"
