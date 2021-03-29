@@ -153,10 +153,11 @@ static real_t pi(void) {
 static real_t e(void) {
 	return 2.71828182845904523536;
 }
+const real_t uint_max = UINT_MAX;
 static real_t fac(real_t a) { /* simplest version of fac */
-	if (a < 0.0)
+	if (a < 0)
 		return NAN;
-	if (a > UINT_MAX)
+	if (a > uint_max)
 		return INFINITY;
 	unsigned int ua = (unsigned int)(a);
 	unsigned long int result = 1, i;
@@ -168,8 +169,8 @@ static real_t fac(real_t a) { /* simplest version of fac */
 	return (real_t)result;
 }
 static real_t ncr(real_t n, real_t r) {
-	if (n < 0.0 || r < 0.0 || n < r) return NAN;
-	if (n > UINT_MAX || r > UINT_MAX) return INFINITY;
+	if (n < 0 || r < 0 || n < r) return NAN;
+	if (n > uint_max || r > uint_max) return INFINITY;
 	unsigned long int un = (unsigned int)(n), ur = (unsigned int)(r), i;
 	unsigned long int result = 1;
 	if (ur > un / 2) ur = un - ur;
