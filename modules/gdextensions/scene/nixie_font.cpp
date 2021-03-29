@@ -31,6 +31,8 @@
 #include "nixie_font.h"
 #include "nixie_font_res.h"
 
+#include <cstring> // std::memcpy
+
 #define MAKE_ABGR(r, g, b, a) ((uint32_t)(((uint32_t)(a) << 24) | ((uint32_t)(b) << 16) | ((uint32_t)(g) << 8) | (uint32_t)(r)))
 #define MAKE_RGBA(r, g, b, a) ((uint32_t)(((uint32_t)(r) << 24) | ((uint32_t)(g) << 16) | ((uint32_t)(b) << 8) | (uint32_t)(a)))
 
