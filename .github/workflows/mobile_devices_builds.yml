@@ -10,7 +10,6 @@ env:
   RETENTION_DAYS: 7
 
 jobs:
-  max-parallel: 1
   android-template:
     runs-on: "ubuntu-20.04"
 
