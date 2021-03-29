@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  simple_shared_mutex.h                                                */
+/*  _simple_shared_mutex.h                                                */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -29,11 +29,13 @@
 /*************************************************************************/
 
 /**
- * shared_mutex.h
+ * _simple_shared_mutex.h
+ * ----------------------
  * Alternative implementations of shared mutex for C++11. Use C++14 std::shared_timed_mutex
  * and C++17 std::shared_mutex if available.
  * (Hope it will be sufficient)
  */
+
 #ifndef C11_SIMPLE_SHARED_MUTEX_H
 #define C11_SIMPLE_SHARED_MUTEX_H
 
