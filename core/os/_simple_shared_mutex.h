@@ -30,11 +30,12 @@
 
 /**
  * shared_mutex.h
- * Alternative implementations of shared mutex for C++11. Use C++14 std::shared_timed_mutex and
- * C++17 std::shared_mutex if available.
+ * Alternative implementations of shared mutex for C++11. Use C++14 std::shared_timed_mutex
+ * and C++17 std::shared_mutex if available.
+ * (Hope it will be sufficient)
  */
-#ifndef C11_SHARED_MUTEX_H
-#define C11_SHARED_MUTEX_H
+#ifndef C11_SIMPLE_SHARED_MUTEX_H
+#define C11_SIMPLE_SHARED_MUTEX_H
 
 #include <condition_variable>
 #include <mutex>
@@ -398,4 +399,4 @@ private:
 
 } // namespace c11
 
-#endif /* C11_SHARED_MUTEX_H */
+#endif /* C11_SIMPLE_SHARED_MUTEX_H */

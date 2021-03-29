@@ -36,7 +36,7 @@
 #if !defined(NO_THREADS)
 
 #if ((defined(_MSVC_LANG) && _MSVC_LANG < 201402L) || __cplusplus < 201402L)
-#include "simple_shared_mutex.h"
+#include "_simple_shared_mutex.h"
 namespace std {
 typedef c11::SharedTimedMutex shared_timed_mutex;
 }
