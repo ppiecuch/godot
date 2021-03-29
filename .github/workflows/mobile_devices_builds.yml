@@ -1,4 +1,4 @@
-name:📱Mobile-devices Builds
+name: 📱 Mobile-devices Builds
 on: [push, pull_request]
 
 # Global Settings
