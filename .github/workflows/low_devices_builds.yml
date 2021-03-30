@@ -134,7 +134,7 @@ jobs:
         run: |
           cp misc/ci/odroid_dockerfile Dockerfile
           docker build --build-arg version=${{env.ODROID_TAG}} --build-arg toolchain=${{env.ODROID_TOOLCHAIN}} -t odroid_dev:${{env.ODROID_TAG}} .
-          CROSS="/opt/$${{env.ODROID_ARCH}}/bin/aarch64-linux-gnu-gcc"
+          CROSS="/opt/${{env.ODROID_ARCH}}/bin/aarch64-linux-gnu-gcc"
           echo "::warning::Using gcc/toolchain version $(docker run --rm -t odroid_dev:${{env.ODROID_TAG}} $CROSS --version)"
 
       - name: Checkout FRT platform
@@ -148,7 +148,7 @@ jobs:
           SCONS_CACHE: ${{github.workspace}}/.scons_cache/
         run: |
           echo "#!/bin/bash" > wrapper.sh
-          echo "PATH=$PATH:/opt/$${{env.ODROID_ARCH}}/bin" >> wrapper.sh
+          echo "PATH=$PATH:/opt/${{env.ODROID_ARCH}}/bin" >> wrapper.sh
           echo "scons -j2 platform=frt frt_arch=odroid verbose=yes warnings=all werror=yes target=release tools=no" >> wrapper.sh
           chmod a+x wrapper.sh
           docker run --rm -t -v "$(pwd):/app" odroid_dev:${{env.ODROID_TAG}} ./wrapper.sh
