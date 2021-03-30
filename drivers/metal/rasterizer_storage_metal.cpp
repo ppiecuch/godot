@@ -735,7 +735,10 @@ void RasterizerStorageMetal::render_target_set_size(RID p_render_target, int p_w
 RID RasterizerStorageMetal::render_target_get_texture(RID p_render_target) const {
 	return RID();
 }
-void RasterizerStorageMetal::render_target_set_external_texture(RID p_render_target, unsigned int p_texture_id) {}
+uint32_t RasterizerStorageMetal::render_target_get_depth_texture_id(RID p_render_target) const {
+	return 0;
+}
+void RasterizerStorageMetal::render_target_set_external_texture(RID p_render_target, unsigned int p_texture_id, unsigned int p_depth_id) {}
 void RasterizerStorageMetal::render_target_set_flag(RID p_render_target, RenderTargetFlags p_flag, bool p_value) {}
 bool RasterizerStorageMetal::render_target_was_used(RID p_render_target) {
 	return false;
