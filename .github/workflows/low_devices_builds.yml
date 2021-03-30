@@ -147,9 +147,10 @@ jobs:
         env:
           SCONS_CACHE: ${{github.workspace}}/.scons_cache/
         run: |
-          docker run --rm -t -v "$(pwd):/app" odroid_dev:${{env.ODROID_TAG}} \
-            PATH=$PATH:/opt/$${{env.ODROID_ARCH}}/bin \
-            scons -j2 platform=frt frt_arch=odroid verbose=yes warnings=all werror=yes target=release tools=no
+          echo "PATH=$PATH:/opt/$${{env.ODROID_ARCH}}/bin" > wrapper.sh
+          echo "scons -j2 platform=frt frt_arch=odroid verbose=yes warnings=all werror=yes target=release tools=no" >> wrapper.sh
+          chmod a+x wrapper.sh
+          docker run --rm -t -v "$(pwd):/app" odroid_dev:${{env.ODROID_TAG}} wrapper.sh
 
       - name: Upload templates
         uses: actions/upload-artifact@v2
