@@ -157,7 +157,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: odroid-templates
-          path: bin/godot.frt.opt.arm.odroid
+          path: bin/godot.frt.opt.aarch64.odroid
           retention-days: ${{env.RETENTION_DAYS}}
 
   psvita-template:
