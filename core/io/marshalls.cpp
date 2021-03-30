@@ -57,9 +57,9 @@ EncodedObjectAsID::EncodedObjectAsID() :
 		id(0) {
 }
 
-#define _S(a) ((int32_t)a)
-#define ERR_FAIL_ADD_OF(a, b, err) ERR_FAIL_COND_V(_S(b) < 0 || _S(a) < 0 || _S(a) > INT_MAX - _S(b), err)
-#define ERR_FAIL_MUL_OF(a, b, err) ERR_FAIL_COND_V(_S(a) < 0 || _S(b) <= 0 || _S(a) > INT_MAX / _S(b), err)
+#define _s(a) ((int32_t)a)
+#define ERR_FAIL_ADD_OF(a, b, err) ERR_FAIL_COND_V(_s(b) < 0 || _s(a) < 0 || _S(a) > INT_MAX - _s(b), err)
+#define ERR_FAIL_MUL_OF(a, b, err) ERR_FAIL_COND_V(_s(a) < 0 || _s(b) <= 0 || _S(a) > INT_MAX / _s(b), err)
 
 #define ENCODE_MASK 0xFF
 #define ENCODE_FLAG_64 1 << 16
