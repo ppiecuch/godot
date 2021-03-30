@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  rw_lock.h                                                            */
+/*  semaphore_posix.h                                                    */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,101 +28,28 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef RWLOCK_H
-#define RWLOCK_H
+#ifndef SEMAPHORE_POSIX_H
+#define SEMAPHORE_POSIX_H
 
-#include "core/error_list.h"
+#if (defined(UNIX_ENABLED) || defined(PTHREAD_ENABLED)) && !defined(OSX_ENABLED) && !defined(IPHONE_ENABLED)
 
-#if !defined(NO_THREADS)
-
-#if ((defined(_MSVC_LANG) && _MSVC_LANG < 201402L) || __cplusplus < 201402L)
-
-#include "drivers/posix/rw_lock_posix.h"
-
-class RWLock : public RWLockPosix {
-
-};
-
-#else
-
-#include <shared_mutex>
-
-class RWLock {
-
-	mutable std::shared_timed_mutex mutex;
-
-public:
-	// Lock the rwlock, block if locked by someone else
-	void read_lock() const {
-		mutex.lock_shared();
-	}
-
-	// Unlock the rwlock, let other threads continue
-	void read_unlock() const {
-		mutex.unlock_shared();
-	}
-
-	// Attempt to lock the rwlock, OK on success, ERR_BUSY means it can't lock.
-	Error read_try_lock() const {
-		return mutex.try_lock_shared() ? OK : ERR_BUSY;
-	}
-
-	// Lock the rwlock, block if locked by someone else
-	void write_lock() {
-		mutex.lock();
-	}
-
-	// Unlock the rwlock, let other thwrites continue
-	void write_unlock() {
-		mutex.unlock();
-	}
-
-	// Attempt to lock the rwlock, OK on success, ERR_BUSY means it can't lock.
-	Error write_try_lock() {
-		return mutex.try_lock() ? OK : ERR_BUSY;
-	}
-};
+#ifdef __psp2__
+#include <sys/types.h> // fixing missing mode_t definition
 #endif
+#include <semaphore.h>
 
-#else
+class SemaphorePosix {
 
-class RWLock {
+	mutable sem_t sem;
+
 public:
-	void read_lock() const {}
-	void read_unlock() const {}
-	Error read_try_lock() const { return OK; }
+	Error wait();
+	Error post();
+	int get() const;
 
-	void write_lock() {}
-	void write_unlock() {}
-	Error write_try_lock() { return OK; }
+	SemaphorePosix();
+	~SemaphorePosix();
 };
 
 #endif
-
-class RWLockRead {
-
-	const RWLock &lock;
-
-public:
-	RWLockRead(const RWLock &p_lock) : lock(p_lock) {
-		lock.read_lock();
-	}
-	~RWLockRead() {
-		lock.read_unlock();
-	}
-};
-
-class RWLockWrite {
-
-	RWLock &lock;
-
-public:
-	RWLockWrite(RWLock &p_lock) : lock(p_lock) {
-		lock.write_lock();
-	}
-	~RWLockWrite() {
-		lock.write_unlock();
-	}
-};
-
-#endif // RWLOCK_H
+#endif // SEMAPHORE_POSIX_H

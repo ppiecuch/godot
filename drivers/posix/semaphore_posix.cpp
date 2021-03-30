@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  rw_lock.h                                                            */
+/*  semaphore_posix.cpp                                                  */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,101 +28,50 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef RWLOCK_H
-#define RWLOCK_H
+#include "semaphore_posix.h"
 
-#include "core/error_list.h"
+#if (defined(UNIX_ENABLED) || defined(PTHREAD_ENABLED)) && !defined(OSX_ENABLED) && !defined(IPHONE_ENABLED)
 
-#if !defined(NO_THREADS)
+#include "core/os/memory.h"
+#include <errno.h>
+#include <stdio.h>
 
-#if ((defined(_MSVC_LANG) && _MSVC_LANG < 201402L) || __cplusplus < 201402L)
+Error SemaphorePosix::wait() {
 
-#include "drivers/posix/rw_lock_posix.h"
-
-class RWLock : public RWLockPosix {
-
-};
-
-#else
-
-#include <shared_mutex>
-
-class RWLock {
-
-	mutable std::shared_timed_mutex mutex;
-
-public:
-	// Lock the rwlock, block if locked by someone else
-	void read_lock() const {
-		mutex.lock_shared();
+	while (sem_wait(&sem)) {
+		if (errno == EINTR) {
+			errno = 0;
+			continue;
+		} else {
+			perror("sem waiting");
+			return ERR_BUSY;
+		}
 	}
+	return OK;
+}
 
-	// Unlock the rwlock, let other threads continue
-	void read_unlock() const {
-		mutex.unlock_shared();
-	}
+Error SemaphorePosix::post() {
 
-	// Attempt to lock the rwlock, OK on success, ERR_BUSY means it can't lock.
-	Error read_try_lock() const {
-		return mutex.try_lock_shared() ? OK : ERR_BUSY;
-	}
+	return (sem_post(&sem) == 0) ? OK : ERR_BUSY;
+}
+int SemaphorePosix::get() const {
 
-	// Lock the rwlock, block if locked by someone else
-	void write_lock() {
-		mutex.lock();
-	}
+	int val;
+	sem_getvalue(&sem, &val);
 
-	// Unlock the rwlock, let other thwrites continue
-	void write_unlock() {
-		mutex.unlock();
-	}
+	return val;
+}
 
-	// Attempt to lock the rwlock, OK on success, ERR_BUSY means it can't lock.
-	Error write_try_lock() {
-		return mutex.try_lock() ? OK : ERR_BUSY;
-	}
-};
-#endif
+SemaphorePosix::SemaphorePosix() {
 
-#else
+	int r = sem_init(&sem, 0, 0);
+	if (r != 0)
+		perror("sem creating");
+}
 
-class RWLock {
-public:
-	void read_lock() const {}
-	void read_unlock() const {}
-	Error read_try_lock() const { return OK; }
+SemaphorePosix::~SemaphorePosix() {
 
-	void write_lock() {}
-	void write_unlock() {}
-	Error write_try_lock() { return OK; }
-};
+	sem_destroy(&sem);
+}
 
 #endif
-
-class RWLockRead {
-
-	const RWLock &lock;
-
-public:
-	RWLockRead(const RWLock &p_lock) : lock(p_lock) {
-		lock.read_lock();
-	}
-	~RWLockRead() {
-		lock.read_unlock();
-	}
-};
-
-class RWLockWrite {
-
-	RWLock &lock;
-
-public:
-	RWLockWrite(RWLock &p_lock) : lock(p_lock) {
-		lock.write_lock();
-	}
-	~RWLockWrite() {
-		lock.write_unlock();
-	}
-};
-
-#endif // RWLOCK_H

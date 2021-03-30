@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  rw_lock.h                                                            */
+/*  mutex_posix.cpp                                                      */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,101 +28,36 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef RWLOCK_H
-#define RWLOCK_H
+#include "mutex_posix.h"
 
-#include "core/error_list.h"
+#include "core/os/memory.h"
 
-#if !defined(NO_THREADS)
+#if defined(UNIX_ENABLED) || defined(PTHREAD_ENABLED)
 
-#if ((defined(_MSVC_LANG) && _MSVC_LANG < 201402L) || __cplusplus < 201402L)
+void MutexPosix::lock() {
 
-#include "drivers/posix/rw_lock_posix.h"
+	pthread_mutex_lock(&mutex);
+}
+void MutexPosix::unlock() {
 
-class RWLock : public RWLockPosix {
+	pthread_mutex_unlock(&mutex);
+}
+Error MutexPosix::try_lock() {
 
-};
+	return (pthread_mutex_trylock(&mutex) == 0) ? OK : ERR_BUSY;
+}
 
-#else
+MutexPosix::MutexPosix(bool p_recursive) {
 
-#include <shared_mutex>
+	pthread_mutexattr_init(&attr);
+	if (p_recursive)
+		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+	pthread_mutex_init(&mutex, &attr);
+}
 
-class RWLock {
+MutexPosix::~MutexPosix() {
 
-	mutable std::shared_timed_mutex mutex;
-
-public:
-	// Lock the rwlock, block if locked by someone else
-	void read_lock() const {
-		mutex.lock_shared();
-	}
-
-	// Unlock the rwlock, let other threads continue
-	void read_unlock() const {
-		mutex.unlock_shared();
-	}
-
-	// Attempt to lock the rwlock, OK on success, ERR_BUSY means it can't lock.
-	Error read_try_lock() const {
-		return mutex.try_lock_shared() ? OK : ERR_BUSY;
-	}
-
-	// Lock the rwlock, block if locked by someone else
-	void write_lock() {
-		mutex.lock();
-	}
-
-	// Unlock the rwlock, let other thwrites continue
-	void write_unlock() {
-		mutex.unlock();
-	}
-
-	// Attempt to lock the rwlock, OK on success, ERR_BUSY means it can't lock.
-	Error write_try_lock() {
-		return mutex.try_lock() ? OK : ERR_BUSY;
-	}
-};
-#endif
-
-#else
-
-class RWLock {
-public:
-	void read_lock() const {}
-	void read_unlock() const {}
-	Error read_try_lock() const { return OK; }
-
-	void write_lock() {}
-	void write_unlock() {}
-	Error write_try_lock() { return OK; }
-};
+	pthread_mutex_destroy(&mutex);
+}
 
 #endif
-
-class RWLockRead {
-
-	const RWLock &lock;
-
-public:
-	RWLockRead(const RWLock &p_lock) : lock(p_lock) {
-		lock.read_lock();
-	}
-	~RWLockRead() {
-		lock.read_unlock();
-	}
-};
-
-class RWLockWrite {
-
-	RWLock &lock;
-
-public:
-	RWLockWrite(RWLock &p_lock) : lock(p_lock) {
-		lock.write_lock();
-	}
-	~RWLockWrite() {
-		lock.write_unlock();
-	}
-};
-
-#endif // RWLOCK_H
