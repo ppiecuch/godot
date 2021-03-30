@@ -133,7 +133,7 @@ jobs:
       - name: Build Docker ODroid toolchain and build environment
         run: |
           cp misc/ci/odroid_dockerfile Dockerfile
-          docker build --build-arg version=${{env.ODROID_TAG}} --build-arg toolchain-${{env.ODROID_TOOLCHAIN}} -t odroid_dev:${{env.ODROID_TAG}} .
+          docker build --build-arg version=${{env.ODROID_TAG}} --build-arg toolchain=${{env.ODROID_TOOLCHAIN}} -t odroid_dev:${{env.ODROID_TAG}} .
           CROSS="/opt/$${{env.ODROID_ARCH}}/bin/aarch64-linux-gnu-gcc"
           echo "::warning::Using gcc/toolchain version $(docker run --rm -t odroid_dev:${{env.ODROID_TAG}} $CROSS --version)"
 
