@@ -82,7 +82,7 @@ public:
 	template <
 			typename... Args,
 			typename std::enable_if<N == sizeof...(Args), int>::type = 0>
-	vec(const Args &... args) :
+	vec(const Args &...args) :
 			data_{ args... } {
 		static_assert(sizeof...(args) == N, "Invalid number of arguments!");
 	}

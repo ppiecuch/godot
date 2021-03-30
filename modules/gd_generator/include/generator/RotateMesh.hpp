@@ -73,8 +73,8 @@ public:
 				gml::qrotate(
 						angle,
 						axis == Axis::X ?
-								gml::dvec3{ 1.0, 0.0, 0.0 } :
-								(axis == Axis::Y ? gml::dvec3{ 0.0, 1.0, 0.0 } : gml::dvec3{ 0.0, 0.0, 1.0 }))
+								  gml::dvec3{ 1.0, 0.0, 0.0 } :
+								  (axis == Axis::Y ? gml::dvec3{ 0.0, 1.0, 0.0 } : gml::dvec3{ 0.0, 0.0, 1.0 }))
 			} {}
 
 	using Triangles = typename Impl::Triangles;

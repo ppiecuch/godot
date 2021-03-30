@@ -80,7 +80,7 @@ public:
 	template <
 			typename... Args,
 			typename std::enable_if<C == sizeof...(Args), int>::type = 0>
-	mat(const Args &... args) :
+	mat(const Args &...args) :
 			data_{ args... } {
 		static_assert(sizeof...(args) == C, "Invalid number of arguments!");
 	}

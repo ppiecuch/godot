@@ -151,7 +151,7 @@ class CTimeIt {
 
 public:
 	template <typename FuncResult, typename SetupFunc, typename Func, typename... FuncArgs>
-	FuncResult run(size_t count, SetupFunc setupfunc, Func func, FuncArgs &... args) {
+	FuncResult run(size_t count, SetupFunc setupfunc, Func func, FuncArgs &...args) {
 		m_Count = count;
 
 #if defined(USE_CHRONO)
