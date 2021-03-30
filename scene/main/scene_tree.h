@@ -269,8 +269,6 @@ private:
 	static int exit_callback_count;
 	void _call_exit_callbacks();
 
-	bool _console_requested_state;
-
 protected:
 	void _notification(int p_notification);
 	static void _bind_methods();
