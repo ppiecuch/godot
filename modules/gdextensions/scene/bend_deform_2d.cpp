@@ -305,9 +305,13 @@ SimulationController2D::~SimulationController2D() {
 
 #ifdef TOOLS_ENABLED
 void SimulationControllerDebugInstance2D::_edit_set_position(const Point2 &p_position) {}
-Point2 SimulationControllerDebugInstance2D::_edit_get_position() const { return Point2(); }
+Point2 SimulationControllerDebugInstance2D::_edit_get_position() const {
+	return Point2();
+}
 void SimulationControllerDebugInstance2D::_edit_set_scale(const Size2 &p_scale) {}
-Size2 SimulationControllerDebugInstance2D::_edit_get_scale() const { return Size2(); }
+Size2 SimulationControllerDebugInstance2D::_edit_get_scale() const {
+	return Size2();
+}
 #endif
 
 Transform2D SimulationControllerDebugInstance2D::get_transform() const {
