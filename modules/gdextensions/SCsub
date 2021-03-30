@@ -27,7 +27,9 @@ for m in modules:
     sources += Glob("%s/*.cpp" % m)
     sources += Glob("%s/*.c" % m)
 
-env_module.Append(CPPPATH=["#thirdparty/enet/", os.path.dirname(os.path.realpath(os.curdir)) + "/gdnative/include", "."])
+env_module.Append(
+    CPPPATH=["#thirdparty/enet/", os.path.dirname(os.path.realpath(os.curdir)) + "/gdnative/include", "."]
+)
 env_module.Append(CPPFLAGS=["-DGD_GODOT_ENET", "-DGD_NO_UNUSED_FUNCTIONS"])
 
 # Compile as a static library

@@ -16,30 +16,30 @@ template_header_boilerplate = """// GENERATED FILE - DO NOT EDIT.
 //
 """
 
-inputs = [ 'master_source.metal', 'blit.metal', 'clear.metal', 'gen_indices.metal', 'metal_common.h', 'godot_common.h' ]
-outputs = ['compiled/mtl_default_shaders.inc', 'compiled/mtl_default_shaders_src_autogen.inc']
-
+inputs = ["master_source.metal", "blit.metal", "clear.metal", "gen_indices.metal", "metal_common.h", "godot_common.h"]
+outputs = ["compiled/mtl_default_shaders.inc", "compiled/mtl_default_shaders_src_autogen.inc"]
 
 def build_mtl(target, source, env):
-    folder = 'drivers/metal/shaders'
+    folder = "drivers/metal/shaders"
 
     if not os.path.exists(folder):
         print('Error: Cannot find "%s" folder.' % folder)
         Exit(1)
 
-    if not os.path.exists(folder + '/compiled'):
-        print('Create default compiled directory ...')
-        os.makedirs(folder + '/compiled')
+    if not os.path.exists(folder + "/compiled"):
+        print("Create default compiled directory ...")
+        os.makedirs(folder + "/compiled")
 
-    print('Compiling macos version of default shaders ...')
+    # fmt: off
+    print("Compiling macos version of default shaders ...")
     os.system('xcrun -sdk macosx metal "{0}"/master_source.metal -mmacosx-version-min=10.13 -c -o "{0}"/compiled/default.air'.format(folder))
     os.system('xcrun -sdk macosx metallib "{0}"/compiled/default.air -o "{0}"/compiled/default.metallib'.format(folder))
 
-    print('Compiling ios version of default shaders ...')
+    print("Compiling ios version of default shaders ...")
     os.system('xcrun -sdk iphoneos metal "{0}"/master_source.metal -mios-version-min=11.0 -c -o "{0}"/compiled/default.ios.air'.format(folder))
     os.system('xcrun -sdk iphoneos metallib "{0}"/compiled/default.ios.air -o "{0}"/compiled/default.ios.metallib'.format(folder))
 
-    print('Compiling ios simulator version of default shaders ...')
+    print("Compiling ios simulator version of default shaders ...")
     os.system('xcrun -sdk iphonesimulator metal "{0}"/master_source.metal -c -o "{0}"/compiled/default.ios_sim.air'.format(folder))
     os.system('xcrun -sdk iphonesimulator metallib "{0}"/compiled/default.ios_sim.air -o "{0}"/compiled/default.ios_sim.metallib'.format(folder))
 
@@ -82,6 +82,6 @@ def build_mtl(target, source, env):
     os.system('echo "#include <simd/simd.h>" >> "{0}"/compiled/mtl_default_shaders_src_autogen.inc'.format(folder))
     os.system('clang -xc++ -E -DSKIP_STD_HEADERS "{0}"/master_source.metal >> "{0}"/compiled/mtl_default_shaders_src_autogen.inc'.format(folder))
     os.system('echo ")\\";" >> "{0}"/compiled/mtl_default_shaders_src_autogen.inc'.format(folder))
-
+    # fmt: on
 
 env.Command(outputs, inputs, build_mtl)

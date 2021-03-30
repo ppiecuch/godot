@@ -44,9 +44,7 @@ def can_build():
 
 def get_opts():
 
-    return [
-        ("debug_release", "Add debug symbols to release version", "no")
-    ]
+    return [("debug_release", "Add debug symbols to release version", "no")]
 
 
 def get_flags():
