@@ -286,7 +286,7 @@ void Heatmap::thread_done(Vector2 t_cell_position) {
 	m_updating = false;
 
 	m_max_heat = m_max_heat_cache;
-	for (int i = 0; i < m_cells_heat.size(); ++i) {
+	for (size_t i = 0; i < m_cells_heat.size(); ++i) {
 		m_cells_heat[i] = m_cells_heat_cache[i];
 	}
 	m_last_player_cell_position = t_cell_position;
@@ -309,7 +309,7 @@ void Heatmap::on_Events_player_moved(Node *t_player) {
 		Vector2 difference = player_cell_position - m_last_player_cell_position;
 
 		if (!out_of_bounds && (difference.x != 0 || difference.y != 0)) {
-			for (int i = 0; i < m_cells_heat_cache.size(); ++i) {
+			for (size_t i = 0; i < m_cells_heat_cache.size(); ++i) {
 				m_cells_heat_cache[i] = -1;
 			}
 

@@ -36,7 +36,7 @@
 #define MAKE_ABGR(r, g, b, a) ((uint32_t)(((uint32_t)(a) << 24) | ((uint32_t)(b) << 16) | ((uint32_t)(g) << 8) | (uint32_t)(r)))
 #define MAKE_RGBA(r, g, b, a) ((uint32_t)(((uint32_t)(r) << 24) | ((uint32_t)(g) << 16) | ((uint32_t)(b) << 8) | (uint32_t)(a)))
 
-static PoolVector<Rect2> _build_tiles(Size2 grid_size, size_t total_frames, Point2 tex_origin = Point2(0, 0), Size2 tex_size = Size2(1, 1)) {
+static PoolVector<Rect2> _build_tiles(Size2 grid_size, int total_frames, Point2 tex_origin = Point2(0, 0), Size2 tex_size = Size2(1, 1)) {
 
 	PoolVector<Rect2> frames;
 	const real_t cw = tex_size.width / grid_size.width, ch = tex_size.height / grid_size.height;
