@@ -36,6 +36,16 @@
 
 #if !defined(NO_THREADS)
 
+#if ((defined(_MSVC_LANG) && _MSVC_LANG < 201402L) || __cplusplus < 201402L)
+
+#include "drivers/posix/semaphore_posix.h"
+
+class Semaphore : public SemaphorePosix {
+
+};
+
+#else
+
 #include <condition_variable>
 #include <mutex>
 
@@ -74,6 +84,7 @@ public:
 		return count_;
 	}
 };
+#endif
 
 #else
 

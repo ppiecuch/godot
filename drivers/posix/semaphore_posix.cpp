@@ -28,16 +28,56 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
+#if defined(UNIX_ENABLED) || defined(PTHREAD_ENABLED)
+
 #include "semaphore_posix.h"
 
-#if (defined(UNIX_ENABLED) || defined(PTHREAD_ENABLED)) && !defined(OSX_ENABLED) && !defined(IPHONE_ENABLED)
-
 #include "core/os/memory.h"
+
 #include <errno.h>
 #include <stdio.h>
 
-Error SemaphorePosix::wait() {
+#if defined(OSX_ENABLED) || defined(IOS_ENABLED)
+#include <fcntl.h>
+#include <unistd.h>
 
+
+static void cgsem_init(cgsem_t *cgsem) {
+	int flags, fd, i;
+
+	pipe(cgsem->pipefd);
+
+	/* Make the pipes FD_CLOEXEC to allow them to close should we call
+	 * execv on restart. */
+	for (i = 0; i < 2; i++) {
+		fd = cgsem->pipefd[i];
+		flags = fcntl(fd, F_GETFD, 0);
+		flags |= FD_CLOEXEC;
+		fcntl(fd, F_SETFD, flags);
+	}
+}
+
+static Error cgsem_post(cgsem_t *cgsem) {
+	const char buf = 1;
+	return write(cgsem->pipefd[1], &buf, 1) == -1 ? OK : FAILED;
+}
+
+static Error cgsem_wait(cgsem_t *cgsem) {
+	char buf;
+	return read(cgsem->pipefd[0], &buf, 1) == -1 ? OK : FAILED;
+}
+
+static void cgsem_destroy(cgsem_t *cgsem) {
+	close(cgsem->pipefd[1]);
+	close(cgsem->pipefd[0]);
+}
+#endif
+
+Error SemaphorePosix::wait() const {
+
+#if defined(OSX_ENABLED) || defined(IOS_ENABLED)
+	return cgsem_wait(&sem);
+#else
 	while (sem_wait(&sem)) {
 		if (errno == EINTR) {
 			errno = 0;
@@ -48,30 +88,47 @@ Error SemaphorePosix::wait() {
 		}
 	}
 	return OK;
+#endif
 }
 
-Error SemaphorePosix::post() {
+Error SemaphorePosix::post() const {
 
+#if defined(OSX_ENABLED) || defined(IOS_ENABLED)
+	return cgsem_post(&sem);
+#else
 	return (sem_post(&sem) == 0) ? OK : ERR_BUSY;
+#endif
 }
 int SemaphorePosix::get() const {
 
+#if defined(OSX_ENABLED) || defined(IOS_ENABLED)
+	return 0;
+#else
 	int val;
 	sem_getvalue(&sem, &val);
 
 	return val;
+#endif
 }
 
 SemaphorePosix::SemaphorePosix() {
 
+#if defined(OSX_ENABLED) || defined(IOS_ENABLED)
+	cgsem_init(&sem);
+#else
 	int r = sem_init(&sem, 0, 0);
 	if (r != 0)
 		perror("sem creating");
+#endif
 }
 
 SemaphorePosix::~SemaphorePosix() {
 
+#if defined(OSX_ENABLED) || defined(IOS_ENABLED)
+	cgsem_destroy(&sem);
+#else
 	sem_destroy(&sem);
+#endif
 }
 
 #endif

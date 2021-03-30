@@ -31,20 +31,34 @@
 #ifndef SEMAPHORE_POSIX_H
 #define SEMAPHORE_POSIX_H
 
-#if (defined(UNIX_ENABLED) || defined(PTHREAD_ENABLED)) && !defined(OSX_ENABLED) && !defined(IPHONE_ENABLED)
+#if defined(UNIX_ENABLED) || defined(PTHREAD_ENABLED)
+
+#include "core/error_list.h"
 
 #ifdef __psp2__
 #include <sys/types.h> // fixing missing mode_t definition
 #endif
+
 #include <semaphore.h>
+
+#if defined(OSX_ENABLED) || defined(IOS_ENABLED)
+struct cgsem {
+	int pipefd[2];
+};
+typedef struct cgsem cgsem_t;
+#endif
 
 class SemaphorePosix {
 
+#if defined(OSX_ENABLED) || defined(IOS_ENABLED)
+	mutable cgsem_t sem;
+#else
 	mutable sem_t sem;
+#endif
 
 public:
-	Error wait();
-	Error post();
+	Error wait() const;
+	Error post() const;
 	int get() const;
 
 	SemaphorePosix();
