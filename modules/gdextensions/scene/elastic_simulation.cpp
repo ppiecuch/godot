@@ -187,7 +187,7 @@ public:
 		for (DistanceConstraint &c : constraints) {
 			c.resolve();
 		}
-		for (int f = 0; f < simulations.size(); f++) {
+		for (size_t f = 0; f < simulations.size(); f++) {
 			ParticlesArray &particles = simulations[f];
 			const Vector2 &force = forces[f];
 			const int pcnt = particles.size();
