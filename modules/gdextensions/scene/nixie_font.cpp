@@ -36,7 +36,7 @@
 #define MAKE_ABGR(r, g, b, a) ((uint32_t)(((uint32_t)(a) << 24) | ((uint32_t)(b) << 16) | ((uint32_t)(g) << 8) | (uint32_t)(r)))
 #define MAKE_RGBA(r, g, b, a) ((uint32_t)(((uint32_t)(r) << 24) | ((uint32_t)(g) << 16) | ((uint32_t)(b) << 8) | (uint32_t)(a)))
 
-static PoolVector<Rect2> _build_tiles(Size2 grid_size, unsigned int total_frames, Point2 tex_origin = Point2(0, 0), Size2 tex_size = Size2(1, 1)) {
+static PoolVector<Rect2> _build_tiles(Size2 grid_size, size_t total_frames, Point2 tex_origin = Point2(0, 0), Size2 tex_size = Size2(1, 1)) {
 
 	PoolVector<Rect2> frames;
 	const real_t cw = tex_size.width / grid_size.width, ch = tex_size.height / grid_size.height;
@@ -299,15 +299,15 @@ void NixieFont::_update_animation() {
 		} else {
 			if (broken_tube_effect) {
 				// display "broken" tube effect for some frames
-				const char chr = ctl.alt ? ctl.alt : 0x10 + (rand() % 10);
-				const Rect2 &tex_coords = _frames[chr];
+				const char alt_chr = ctl.alt ? ctl.alt : 0x10 + (rand() % 10);
+				const Rect2 &alt_tex_coords = _frames[alt_chr];
 				const uint8_t alpha = LightBlinkingPattern[ctl.phase].alpha >> 2;
 				_push_quad(v, pos, _char_size);
-				_push_texture(uv, tex_coords);
+				_push_texture(uv, alt_tex_coords);
 				_push_quad_color(c, alpha);
 				switch (ctl.alt_age--) {
 					case 0:
-						ctl.alt = chr;
+						ctl.alt = alt_chr;
 						break;
 					default:
 						if (ctl.alt_age == -broken_tube_effect) {
