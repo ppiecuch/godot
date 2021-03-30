@@ -36,12 +36,12 @@
 class Spider : public Node2D {
 	GDCLASS(Spider, Node2D);
 
-	protected:
-		static void _bind_methods() {}
+protected:
+	static void _bind_methods() {}
 
-		void _notification(int p_what) {}
+	void _notification(int p_what) {}
 
-		Spider() {}
+	Spider() {}
 };
 
 #endif // GD_SPIDER_H

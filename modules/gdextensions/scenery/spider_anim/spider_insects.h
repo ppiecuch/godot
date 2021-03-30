@@ -36,12 +36,12 @@
 class SpiderInsects : public Node2D {
 	GDCLASS(SpiderInsects, Node2D);
 
-	protected:
-		static void _bind_methods() {}
+protected:
+	static void _bind_methods() {}
 
-		void _notification(int p_what) {}
+	void _notification(int p_what) {}
 
-		SpiderInsects() {}
+	SpiderInsects() {}
 };
 
 class InsectsManager : public Reference {
@@ -54,12 +54,12 @@ public:
 class InsectsManagerInstance : public Node2D {
 	GDCLASS(InsectsManagerInstance, Node2D);
 
-	protected:
-		static void _bind_methods() {}
+protected:
+	static void _bind_methods() {}
 
-		void _notification(int p_what) {}
+	void _notification(int p_what) {}
 
-		InsectsManagerInstance() {}
+	InsectsManagerInstance() {}
 };
 
 #endif // GD_SPIDER_INSECTS_H
