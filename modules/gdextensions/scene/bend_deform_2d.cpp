@@ -785,8 +785,8 @@ void DeformSprite::_check_parent_controller() {
 		// controller is not valid
 		Node *next = get_parent();
 		while (next) {
-			if (SimulationControllerInstance2D *instance = Object::cast_to<SimulationControllerInstance2D>(next)) {
-				new_controller = instance;
+			if (SimulationControllerInstance2D *next_instance = Object::cast_to<SimulationControllerInstance2D>(next)) {
+				new_controller = next_instance;
 				break;
 			}
 			next = next->get_parent();
