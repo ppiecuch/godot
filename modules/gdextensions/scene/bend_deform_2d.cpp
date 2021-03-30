@@ -305,16 +305,13 @@ SimulationController2D::~SimulationController2D() {
 
 #ifdef TOOLS_ENABLED
 void SimulationControllerDebugInstance2D::_edit_set_position(const Point2 &p_position) {}
-Point2 SimulationControllerDebugInstance2D::_edit_get_position() const {
-	return Point2();
-}
+Point2 SimulationControllerDebugInstance2D::_edit_get_position() const { return Point2(); }
 void SimulationControllerDebugInstance2D::_edit_set_scale(const Size2 &p_scale) {}
-Size2 SimulationControllerDebugInstance2D::_edit_get_scale() const {
-	return Size2();
-}
+Size2 SimulationControllerDebugInstance2D::_edit_get_scale() const { return Size2(); }
 #endif
 
 Transform2D SimulationControllerDebugInstance2D::get_transform() const {
+
 	return Transform2D();
 }
 
@@ -398,7 +395,6 @@ void SimulationControllerInstance2D::_notification(int p_what) {
 				// create default controller
 				set_controller(Ref<SimulationController2D>(memnew(SimulationController2D)));
 			}
-			add_child(memnew(SimulationControllerDebugInstance2D));
 		} break;
 		case NOTIFICATION_INTERNAL_PROCESS: {
 
@@ -425,19 +421,35 @@ void SimulationControllerInstance2D::set_controller(const Ref<SimulationControll
 	}
 }
 
+bool SimulationControllerInstance2D::get_debug_controller() const {
+
+	return _debug_node && _debug_node->is_visible();
+}
+
+void SimulationControllerInstance2D::set_debug_controller(bool p_debug) {
+
+	if (p_debug && !_debug_node) {
+		add_child(_debug_node = memnew(SimulationControllerDebugInstance2D));
+	}
+	_debug_node->set_visible(p_debug);
+}
+
 void SimulationControllerInstance2D::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("get_controller"), &SimulationControllerInstance2D::get_controller);
 	ClassDB::bind_method(D_METHOD("set_controller"), &SimulationControllerInstance2D::set_controller);
+	ClassDB::bind_method(D_METHOD("set_debug_controller"), &SimulationControllerInstance2D::set_debug_controller);
+	ClassDB::bind_method(D_METHOD("get_debug_controller"), &SimulationControllerInstance2D::get_debug_controller);
 
 	ClassDB::bind_method(D_METHOD("_on_controller_changed"), &SimulationControllerInstance2D::_on_controller_changed);
 
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "controller"), "set_controller", "get_controller");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "debug_controller"), "set_debug_controller", "get_debug_controller");
 }
 
 SimulationControllerInstance2D::SimulationControllerInstance2D() {
 
-	motion_debug = false;
+	_debug_node = nullptr;
 }
 
 SimulationControllerInstance2D::~SimulationControllerInstance2D() {

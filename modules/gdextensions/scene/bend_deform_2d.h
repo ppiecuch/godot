@@ -141,7 +141,8 @@ class SimulationControllerInstance2D : public Node {
 
 private:
 	Ref<SimulationController2D> controller;
-	bool motion_debug;
+
+	SimulationControllerDebugInstance2D *_debug_node;
 
 protected:
 	static void _bind_methods();
@@ -152,6 +153,9 @@ protected:
 public:
 	Ref<SimulationController2D> get_controller() const;
 	void set_controller(const Ref<SimulationController2D> &p_controller);
+
+	bool get_debug_controller() const;
+	void set_debug_controller(bool p_debug);
 
 	SimulationControllerInstance2D();
 	~SimulationControllerInstance2D();
