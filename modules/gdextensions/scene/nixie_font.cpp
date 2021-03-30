@@ -253,7 +253,7 @@ void NixieFont::_update_animation() {
 		int index = 0;
 		for (int i = 0; i < _control.size(); i++) {
 			w[index].phase = 0;
-			w[index].age = 0-(Math::rand() & 0x7f); // random initial delay
+			w[index].age = 0 - (Math::rand() & 0x7f); // random initial delay
 			w[index].alt = 0;
 			w[index].alt_age = Math::rand() & 0x7f;
 			index++;
