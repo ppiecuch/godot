@@ -36,7 +36,11 @@
 
 #if !defined(NO_THREADS)
 
-#if ((defined(_MSVC_LANG) && _MSVC_LANG < 201402L) || __cplusplus < 201402L)
+#if defined(PLATFORM_SEM_H)
+
+#include PLATFORM_SEM_H
+
+#elif ((defined(_MSVC_LANG) && _MSVC_LANG < 201402L) || __cplusplus < 201402L)
 
 #include "drivers/posix/semaphore_posix.h"
 

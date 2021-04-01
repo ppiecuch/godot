@@ -33,8 +33,61 @@
 
 #include "core/error_list.h"
 #include "core/typedefs.h"
+#include "platform_config.h"
 
 #if !defined(NO_THREADS)
+
+#if defined(PLATFORM_MUTEX_H)
+
+#include PLATFORM_MUTEX_H
+
+class MutexLock {
+
+	Mutex *mutex;
+
+public:
+	MutexLock(Mutex *p_mutex) : mutex(p_mutex) {
+		if (mutex) mutex->lock();
+	}
+	MutexLock(Mutex &p_mutex) : mutex(&p_mutex) {
+		if (mutex) mutex->lock();
+	}
+	~MutexLock() {
+		if (mutex) mutex->unlock();
+	}
+};
+
+#elif ((defined(_MSVC_LANG) && _MSVC_LANG < 201402L) || __cplusplus < 201402L)
+
+#include "drivers/posix/mutex_posix.h"
+
+class Mutex : public MutexPosix {
+public:
+	Mutex() : MutexPosix(true) { }
+};
+
+class BinaryMutex : public MutexPosix {
+public:
+	BinaryMutex() : MutexPosix(false) { }
+};
+
+class MutexLock {
+
+	Mutex *mutex;
+
+public:
+	_ALWAYS_INLINE_ MutexLock(Mutex *p_mutex) : mutex(p_mutex) {
+		if (mutex) mutex->lock();
+	}
+	_ALWAYS_INLINE_ MutexLock(Mutex &p_mutex) : mutex(&p_mutex) {
+		if (mutex) mutex->lock();
+	}
+	_ALWAYS_INLINE_ ~MutexLock() {
+		if (mutex) mutex->unlock();
+	}
+};
+
+#else
 
 #include <mutex>
 
@@ -92,6 +145,7 @@ using BinaryMutex = MutexImpl<std::mutex>; // Non-recursive, handle with care
 
 extern template class MutexImpl<std::recursive_mutex>;
 extern template class MutexImpl<std::mutex>;
+#endif
 
 #else
 

@@ -32,10 +32,15 @@
 #define RWLOCK_H
 
 #include "core/error_list.h"
+#include "platform_config.h"
 
 #if !defined(NO_THREADS)
 
-#if ((defined(_MSVC_LANG) && _MSVC_LANG < 201402L) || __cplusplus < 201402L)
+#if defined(PLATFORM_RWLOCK_H)
+
+#include PLATFORM_RWLOCK_H
+
+#elif ((defined(_MSVC_LANG) && _MSVC_LANG < 201402L) || __cplusplus < 201402L)
 
 #include "drivers/posix/rw_lock_posix.h"
 
@@ -87,6 +92,7 @@ public:
 #else
 
 class RWLock {
+
 public:
 	void read_lock() const {}
 	void read_unlock() const {}

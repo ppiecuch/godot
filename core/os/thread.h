@@ -32,6 +32,14 @@
 #define OS_THREAD_H
 
 #include "core/typedefs.h"
+#include "core/error_list.h"
+#include "platform_config.h"
+
+#if defined(PLATFORM_THREAD_H)
+
+#include PLATFORM_THREAD_H
+
+#else // PLATFORM_THREAD_H
 
 #if !defined(NO_THREADS)
 #include "core/safe_refcount.h"
@@ -79,7 +87,7 @@ private:
 public:
 	static void _set_platform_funcs(
 			Error (*p_set_name_func)(const String &),
-			void (*p_set_priority_func)(Thread::Priority),
+			void (*p_set_priority_func)(Thread::Priority) = nullptr,
 			void (*p_init_func)() = nullptr,
 			void (*p_term_func)() = nullptr);
 
@@ -113,4 +121,5 @@ public:
 #endif
 };
 
-#endif // THREAD_H
+#endif // PLATFORM_THREAD_H
+#endif // OS_THREAD_H

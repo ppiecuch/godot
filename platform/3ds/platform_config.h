@@ -29,3 +29,8 @@
 /*************************************************************************/
 
 #include <stdlib.h>
+
+#define PLATFORM_MUTEX_H "thread_3ds.h"
+#define PLATFORM_SEM_H "thread_3ds.h"
+#define PLATFORM_RWLOCK_H "thread_3ds.h"
+#define PLATFORM_THREAD_H "thread_3ds.h"

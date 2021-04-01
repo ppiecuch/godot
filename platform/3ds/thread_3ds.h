@@ -31,63 +31,99 @@
 #ifndef THREAD_3DS_H
 #define THREAD_3DS_H
 
-#include "core/os/mutex.h"
-#include "core/os/semaphore.h"
-#include "core/os/thread.h"
-#include "thread_ctr_wrapper.h"
+#include "core/error_list.h"
+#include "core/typedefs.h"
+#include "core/ustring.h"
 
 extern "C" {
 #include <3ds/svc.h>
 #include <3ds/synchronization.h>
+#define Thread Thread3DS
+#include <3ds/thread.h>
+#undef Thread
 #include <3ds/types.h>
+
 }
 
-class Thread3ds : public Thread {
+class Thread {
 
-	static Thread *create_func_3ds(ThreadCreateCallback p_callback, void *p_user, const Settings &p_settings = Settings());
-	static void wait_to_finish_func_3ds(Thread *p_thread);
+	friend class Main;
 
-	ThreadCtrWrapper *thread;
+public:
+	typedef void (*Callback)(void *p_userdata);
+
+	typedef uint64_t ID;
+
+	enum Priority {
+		PRIORITY_LOW,
+		PRIORITY_NORMAL,
+		PRIORITY_HIGH
+	};
+
+	struct Settings {
+		Priority priority;
+		Settings() { priority = PRIORITY_NORMAL; }
+	};
+
+	static void *thread_callback(void *p_userdata);
+	static ID get_thread_id();
+	static Error set_name(const String &p_name) { return ERR_UNAVAILABLE; }
+
+	void start(Callback p_callback, void *p_user, const Settings &p_settings = Settings());
+	bool is_started() const;
+	void wait_to_finish();
+	ID get_id() const { return id; }
+	// get the ID of the caller thread
+	static ID get_caller_id();
+	// get the ID of the main thread
+	_FORCE_INLINE_ static ID get_main_id() { return main_thread_id; }
+
+	Thread();
+	~Thread();
+
+private:
+	Thread3DS thread;
+	Callback callback;
+	void *user;
 	ID id;
 
-public:
-	Thread3ds(ThreadCtrWrapper *p_thread);
-	~Thread3ds();
-
-	virtual ID get_id() const;
-
-	static void make_default();
+	static ID next_thread_id;
+	static ID main_thread_id;
 };
 
-class Mutex3ds : public Mutex {
+class Mutex {
 
-	static Mutex *create(bool p_recursive);
-
-	bool is_recursive;
-	LightLock lightLock;
-	RecursiveLock recursiveLock;
+	const bool is_recursive;
+	mutable LightLock lightLock;
+	mutable RecursiveLock recursiveLock;
 
 public:
-	virtual void lock();
-	virtual void unlock();
-	virtual Error try_lock();
+	void lock() const;
+	void unlock() const;
+	Error try_lock() const;
 
-	static void make_default();
-
-	Mutex3ds(bool p_recursive);
-	~Mutex3ds();
+	Mutex(bool p_recursive = true);
+	~Mutex();
 };
 
-class Semaphore3ds : public Semaphore {
-
-	static Semaphore *create();
+class Semaphore {
 
 public:
-	virtual Error wait() { return OK; };
-	virtual Error post() { return OK; };
-	virtual int get() const { return 0; }; ///< get semaphore value
-
-	static void make_default();
+	Error wait() const { return OK; };
+	Error post() const { return OK; };
+	int get() const { return 0; }; ///< get semaphore value
 };
 
-#endif
+class RWLock {
+
+public:
+	void read_lock() const {}
+	void read_unlock() const {}
+	Error read_try_lock() const { return OK; }
+
+	void write_lock() {}
+	void write_unlock() {}
+	Error write_try_lock() { return OK; }
+};
+
+#endif // THREAD_3DS_H

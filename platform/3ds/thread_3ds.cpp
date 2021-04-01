@@ -32,55 +32,96 @@
 
 #include "thread_3ds.h"
 #include "core/os/memory.h"
+#include "core/script_language.h"
 #include "platform/3ds/os_3ds.h"
 
 ////////////
 /* Thread */
 ////////////
 
-Thread *Thread3ds::create_func_3ds(ThreadCreateCallback p_callback, void *p_user, const Thread::Settings &p_settings) {
+Thread::ID Thread::main_thread_id = Thread::get_thread_id();
+Thread::ID Thread::next_thread_id = 0;
+static thread_local Thread::ID caller_id = 0;
+static thread_local bool caller_id_cached = false;
+
+void *Thread::thread_callback(void *p_userdata) {
+
+	Thread *t = reinterpret_cast<Thread *>(p_userdata);
+	t->id = AtomicIncrement(&next_thread_id);
+
+	caller_id = t->get_id();
+	caller_id_cached = true;
+
+	ScriptServer::thread_enter(); //scripts may need to attach a stack
+
+	t->callback(t->user);
+
+	ScriptServer::thread_exit();
+
+	return NULL;
+}
+
+void Thread::start(Thread::Callback p_callback, void *p_user, const Thread::Settings &p_settings) {
+
 	// Get base thread priority for relative priority setting
 	int32_t priority;
-	svcGetThreadPriority(&priority, (Thread::_main_thread_id == 0) ? CUR_THREAD_HANDLE : Thread::_main_thread_id);
+	svcGetThreadPriority(&priority, (Thread::main_thread_id == 0) ? CUR_THREAD_HANDLE : Thread::main_thread_id);
 
 	if (p_settings.priority == PRIORITY_LOW)
 		priority++;
 	else if (p_settings.priority == PRIORITY_HIGH)
 		priority--;
 
-	ThreadCtrWrapper *thread_wrapper = memnew(ThreadCtrWrapper(p_callback, p_user, priority));
-	return memnew(Thread3ds(thread_wrapper));
+	callback = p_callback;
+	user = p_user;
+
+	thread = threadCreate(p_callback, this, 64 * 1024, priority, -1, false);
 }
 
-void Thread3ds::make_default() {
-	create_func = create_func_3ds;
-	get_thread_id_func = ThreadCtrWrapper::get_thread_id_func_3ds;
-	wait_to_finish_func = wait_to_finish_func_3ds;
+bool Thread::is_started() const {
+
+	return thread != 0;
 }
 
-Thread::ID Thread3ds::get_id() const {
-	return id;
+void Thread::wait_to_finish() {
+
+	threadJoin(thread, U64_MAX);
+	threadFree(thread);
 }
 
-void Thread3ds::wait_to_finish_func_3ds(Thread *p_thread) {
-	Thread3ds *t = static_cast<Thread3ds *>(p_thread);
-	t->thread->wait();
+Thread::ID Thread::get_thread_id() {
+
+	if (!threadGetCurrent())
+		return CUR_THREAD_HANDLE;
+	return threadGetHandle(threadGetCurrent());
 }
 
-Thread3ds::Thread3ds(ThreadCtrWrapper *p_thread) {
-	thread = p_thread;
+
+Thread::ID Thread::get_caller_id() {
+
+	if (likely(caller_id_cached)) {
+		return caller_id;
+	} else {
+		caller_id = Thread::get_thread_id();
+		caller_id_cached = true;
+		return caller_id;
+	}
 }
 
-Thread3ds::~Thread3ds() {
-	memdelete(thread);
+Thread::Thread() {
+
+	thread = 0;
+}
+
+Thread::~Thread() {
+
 }
 
 ///////////
 /* Mutex */
 ///////////
 
-Mutex3ds::Mutex3ds(bool p_recursive) {
-	is_recursive = p_recursive;
+Mutex::Mutex(bool p_recursive) : is_recursive(p_recursive) {
 
 	if (is_recursive)
 		RecursiveLock_Init(&recursiveLock);
@@ -88,32 +129,27 @@ Mutex3ds::Mutex3ds(bool p_recursive) {
 		LightLock_Init(&lightLock);
 }
 
-Mutex3ds::~Mutex3ds() {
+Mutex::~Mutex() {
 }
 
-Mutex *Mutex3ds::create(bool p_recursive) {
-	return memnew(Mutex3ds(p_recursive));
-}
+void Mutex::lock() const {
 
-void Mutex3ds::make_default() {
-	Mutex::create_func = &Mutex3ds::create;
-}
-
-void Mutex3ds::lock() {
 	if (is_recursive)
 		RecursiveLock_Lock(&recursiveLock);
 	else
 		LightLock_Lock(&lightLock);
 }
 
-void Mutex3ds::unlock() {
+void Mutex::unlock() const {
+
 	if (is_recursive)
 		RecursiveLock_Unlock(&recursiveLock);
 	else
 		LightLock_Unlock(&lightLock);
 }
 
-Error Mutex3ds::try_lock() {
+Error Mutex::try_lock() const {
+
 	int ret;
 	if (is_recursive)
 		ret = RecursiveLock_TryLock(&recursiveLock);
@@ -121,18 +157,6 @@ Error Mutex3ds::try_lock() {
 		ret = LightLock_TryLock(&lightLock);
 
 	return (ret == 0) ? OK : ERR_BUSY;
-}
-
-///////////////
-/* Semaphore */
-///////////////
-
-Semaphore *Semaphore3ds::create() {
-	return memnew(Semaphore3ds);
-}
-
-void Semaphore3ds::make_default() {
-	Semaphore::create_func = &Semaphore3ds::create;
 }
 
 #endif // _3DS

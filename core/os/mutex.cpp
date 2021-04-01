@@ -42,7 +42,14 @@ void _global_unlock() {
 
 #ifndef NO_THREADS
 
+#if ((defined(_MSVC_LANG) && _MSVC_LANG < 201402L) || __cplusplus < 201402L)
+
+#include "drivers/posix/mutex_posix.cpp"
+
+#else
+
 template class MutexImpl<std::recursive_mutex>;
 template class MutexImpl<std::mutex>;
 
+#endif
 #endif
