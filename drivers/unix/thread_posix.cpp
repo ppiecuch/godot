@@ -35,6 +35,8 @@
 #include "core/os/thread.h"
 #include "core/ustring.h"
 
+#if !defined(PLATFORM_THREAD_H)
+
 #ifdef PTHREAD_BSD_SET_NAME
 #include <pthread_np.h>
 #endif
@@ -70,7 +72,8 @@ static Error set_name(const String &p_name) {
 }
 
 void init_thread_posix() {
-	Thread::_set_platform_funcs(&set_name, nullptr);
+	Thread::_set_platform_funcs(&set_name);
 }
 
+#endif // PLATFORM_THREAD_H
 #endif
