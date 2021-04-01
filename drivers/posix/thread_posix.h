@@ -1,12 +1,12 @@
 /*************************************************************************/
-/*  mutex_posix.cpp                                                      */
+/*  thread_posix.h                                                       */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -28,36 +28,71 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "mutex_posix.h"
+#ifndef THREAD_POSIX_H
+#define THREAD_POSIX_H
 
-#include "core/os/memory.h"
+/**
+	@author Juan Linietsky <reduzio@gmail.com>
+*/
 
-#if defined(UNIX_ENABLED) || defined(PTHREAD_ENABLED)
+#if (defined(UNIX_ENABLED) || defined(PTHREAD_ENABLED)) && !defined(NO_THREADS)
 
-void MutexPosix::lock() const {
+#include "core/typedefs.h"
 
-	pthread_mutex_lock(&mutex);
-}
-void MutexPosix::unlock() const {
+#include <pthread.h>
+#include <sys/types.h>
 
-	pthread_mutex_unlock(&mutex);
-}
-Error MutexPosix::try_lock() const {
+class Thread {
 
-	return (pthread_mutex_trylock(&mutex) == 0) ? OK : ERR_BUSY;
-}
+private:
+	static pthread_key_t thread_id_key;
+	static ID next_thread_id;
+	static ID main_thread_id;
 
-MutexPosix::MutexPosix(bool p_recursive) {
+	pthread_t pthread;
+	pthread_attr_t pthread_attr;
+	Callback callback;
+	void *user;
+	ID id;
 
-	pthread_mutexattr_init(&attr);
-	if (p_recursive)
-		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-	pthread_mutex_init(&mutex, &attr);
-}
+public:
+	friend class Main;
 
-MutexPosix::~MutexPosix() {
+	typedef void (*Callback)(void *p_userdata);
 
-	pthread_mutex_destroy(&mutex);
-}
+	typedef uint64_t ID;
+
+	enum Priority {
+		PRIORITY_LOW,
+		PRIORITY_NORMAL,
+		PRIORITY_HIGH
+	};
+
+	struct Settings {
+		Priority priority;
+		Settings() { priority = PRIORITY_NORMAL; }
+	};
+
+	static void *thread_callback(void *p_userdata);
+	static ID get_thread_id();
+
+public:
+	_FORCE_INLINE_ ID get_id() const { return id; }
+	// get the ID of the caller thread
+	static ID get_caller_id();
+	// get the ID of the main thread
+	_FORCE_INLINE_ static ID get_main_id() { return main_thread_id; }
+
+	void start(Callback p_callback, void *p_user, const Settings &p_settings = Settings());
+	bool is_started() const;
+	Error set_name(const String &p_name);
+	///< waits until thread is finished, and deallocates it.
+	void wait_to_finish();
+
+	ThreadPosix();
+	~ThreadPosix();
+};
 
 #endif
+
+#endif // THREAD_POSIX_H
