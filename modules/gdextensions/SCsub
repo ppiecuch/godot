@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import version
 
 Import("env")
 Import("env_modules")
@@ -31,8 +32,9 @@ if env["disable_experimental"] == True:
     ignore += ["gd/input_map_editor.cpp"]
 
 for m in modules:
-    sources += Glob("%s/*.cpp" % m, exclude=ignore)
-    sources += Glob("%s/*.c" % m, exclude=ignore)
+    files = Glob("%s/*.cpp" % m)
+    sources += [f for f in files if str(f) not in ignore]
+    sources += Glob("%s/*.c" % m)
 
 env_module.Append(
     CPPPATH=["#thirdparty/enet/", os.path.dirname(os.path.realpath(os.curdir)) + "/gdnative/include", "."]
