@@ -59,7 +59,7 @@ public:
 	}
 };
 
-#elif ((defined(_MSVC_LANG) && _MSVC_LANG < 201402L) || __cplusplus < 201402L)
+#elif defined(UNIX_ENABLED) && __cplusplus < 201402L
 
 #include "drivers/posix/mutex_posix.h"
 
