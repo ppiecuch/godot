@@ -23,9 +23,16 @@ modules = [
     "benet",
     "behaviornode",
 ]
+
+ignore=[]
+if env["platform"] == "3ds":
+    ignore += ["scene/heatmap.cpp"]
+if env["disable_experimental"] == True:
+    ignore += ["gd/input_map_editor.cpp"]
+
 for m in modules:
-    sources += Glob("%s/*.cpp" % m)
-    sources += Glob("%s/*.c" % m)
+    sources += Glob("%s/*.cpp" % m, exclude=ignore)
+    sources += Glob("%s/*.c" % m, exclude=ignore)
 
 env_module.Append(
     CPPPATH=["#thirdparty/enet/", os.path.dirname(os.path.realpath(os.curdir)) + "/gdnative/include", "."]

@@ -133,8 +133,9 @@ void register_gdextensions_types() {
 #endif
 	ClassDB::register_class<ProceduralAnimation>();
 	ClassDB::register_class<BSInputEventKey>();
+#ifndef ADVANCED_GUI_DISABLED
 	ClassDB::register_class<InputMapEditor>();
-
+#endif
 	ClassDB::register_class<GDScriptBytecodeExporter>();
 	ClassDB::register_class<GD2CApi>();
 
