@@ -46,10 +46,12 @@ class MutexLock {
 	Mutex *mutex;
 
 public:
-	MutexLock(Mutex *p_mutex) : mutex(p_mutex) {
+	MutexLock(Mutex *p_mutex) :
+			mutex(p_mutex) {
 		if (mutex) mutex->lock();
 	}
-	MutexLock(Mutex &p_mutex) : mutex(&p_mutex) {
+	MutexLock(Mutex &p_mutex) :
+			mutex(&p_mutex) {
 		if (mutex) mutex->lock();
 	}
 	~MutexLock() {
@@ -63,12 +65,14 @@ public:
 
 class Mutex : public MutexPosix {
 public:
-	Mutex() : MutexPosix(true) { }
+	Mutex() :
+			MutexPosix(true) {}
 };
 
 class BinaryMutex : public MutexPosix {
 public:
-	BinaryMutex() : MutexPosix(false) { }
+	BinaryMutex() :
+			MutexPosix(false) {}
 };
 
 class MutexLock {
@@ -76,10 +80,12 @@ class MutexLock {
 	Mutex *mutex;
 
 public:
-	_ALWAYS_INLINE_ MutexLock(Mutex *p_mutex) : mutex(p_mutex) {
+	_ALWAYS_INLINE_ MutexLock(Mutex *p_mutex) :
+			mutex(p_mutex) {
 		if (mutex) mutex->lock();
 	}
-	_ALWAYS_INLINE_ MutexLock(Mutex &p_mutex) : mutex(&p_mutex) {
+	_ALWAYS_INLINE_ MutexLock(Mutex &p_mutex) :
+			mutex(&p_mutex) {
 		if (mutex) mutex->lock();
 	}
 	_ALWAYS_INLINE_ ~MutexLock() {

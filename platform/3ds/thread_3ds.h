@@ -42,7 +42,6 @@ extern "C" {
 #include <3ds/thread.h>
 #undef Thread
 #include <3ds/types.h>
-
 }
 
 class Thread {

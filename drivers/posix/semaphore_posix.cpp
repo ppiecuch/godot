@@ -41,7 +41,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-
 static void cgsem_init(cgsem_t *cgsem) {
 	int flags, fd, i;
 

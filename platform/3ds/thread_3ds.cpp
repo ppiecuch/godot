@@ -96,7 +96,6 @@ Thread::ID Thread::get_thread_id() {
 	return threadGetHandle(threadGetCurrent());
 }
 
-
 Thread::ID Thread::get_caller_id() {
 
 	if (likely(caller_id_cached)) {
@@ -114,14 +113,14 @@ Thread::Thread() {
 }
 
 Thread::~Thread() {
-
 }
 
 ///////////
 /* Mutex */
 ///////////
 
-Mutex::Mutex(bool p_recursive) : is_recursive(p_recursive) {
+Mutex::Mutex(bool p_recursive) :
+		is_recursive(p_recursive) {
 
 	if (is_recursive)
 		RecursiveLock_Init(&recursiveLock);

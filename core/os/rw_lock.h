@@ -45,7 +45,6 @@
 #include "drivers/posix/rw_lock_posix.h"
 
 class RWLock : public RWLockPosix {
-
 };
 
 #else
@@ -110,7 +109,8 @@ class RWLockRead {
 	const RWLock &lock;
 
 public:
-	RWLockRead(const RWLock &p_lock) : lock(p_lock) {
+	RWLockRead(const RWLock &p_lock) :
+			lock(p_lock) {
 		lock.read_lock();
 	}
 	~RWLockRead() {
@@ -123,7 +123,8 @@ class RWLockWrite {
 	RWLock &lock;
 
 public:
-	RWLockWrite(RWLock &p_lock) : lock(p_lock) {
+	RWLockWrite(RWLock &p_lock) :
+			lock(p_lock) {
 		lock.write_lock();
 	}
 	~RWLockWrite() {

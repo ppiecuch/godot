@@ -45,7 +45,6 @@
 #include "drivers/posix/semaphore_posix.h"
 
 class Semaphore : public SemaphorePosix {
-
 };
 
 #else
