@@ -49,7 +49,7 @@ StringName _scs_create(const char *p_chr) {
 bool StringName::configured = false;
 
 namespace {
-Mutex *lock = memnew(Mutex);
+Mutex *lock = memnew(Mutex); // TODO: might be cleanup in cleanup()
 }
 
 void StringName::setup() {
