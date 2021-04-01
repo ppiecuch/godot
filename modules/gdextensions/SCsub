@@ -24,7 +24,7 @@ modules = [
     "behaviornode",
 ]
 
-ignore=[]
+ignore = []
 if env["platform"] == "3ds":
     ignore += ["scene/heatmap.cpp"]
 if env["disable_experimental"] == True:
