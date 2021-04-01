@@ -58,18 +58,19 @@ protected:
 
 public:
 	MaskData get_data();
-	PixelSpaceshipsMask *set_data(MaskData, Vector2 size = Vector2());
+	void set_data(MaskData, Vector2 size = Vector2());
+
 	//WHITE = 0; RED = -1; GREEN = 1; BLUE = 2;!!!!!!!!!!
-	PixelSpaceshipsMask *set_data_from_texture(Ref<Texture>);
+	void set_data_from_texture(Ref<Texture>);
 
 	Vector2 get_size();
-	PixelSpaceshipsMask *set_size(Vector2);
+	void set_size(Vector2);
 
 	bool get_mirror_x();
-	PixelSpaceshipsMask *set_mirror_x(bool);
+	void set_mirror_x(bool);
 
 	bool get_mirror_y();
-	PixelSpaceshipsMask *set_mirror_y(bool);
+	void set_mirror_y(bool);
 
 	PixelSpaceshipsMask();
 	~PixelSpaceshipsMask();
@@ -94,22 +95,22 @@ protected:
 
 public:
 	bool get_colored();
-	PixelSpaceshipsOptions *set_colored(bool);
+	void set_colored(bool);
 
 	float get_edge_brightness();
-	PixelSpaceshipsOptions *set_edge_brightness(float);
+	void set_edge_brightness(float);
 
 	float get_color_variation();
-	PixelSpaceshipsOptions *set_color_variation(float);
+	void set_color_variation(float);
 
 	float get_brightness_noise();
-	PixelSpaceshipsOptions *set_brightness_noise(float);
+	void set_brightness_noise(float);
 
 	float get_saturation();
-	PixelSpaceshipsOptions *set_saturation(float);
+	void set_saturation(float);
 
 	float get_hue();
-	PixelSpaceshipsOptions *set_hue(float);
+	void set_hue(float);
 
 	void setup_options(bool _colored = true, float _edge_brightness = 0.15f, float _col_variations = 0.2f, float _brightness_noise = 0.8f, float _saturation = 0.7f);
 
