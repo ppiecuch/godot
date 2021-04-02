@@ -39,7 +39,7 @@ for m in modules:
 env_module.Append(
     CPPPATH=["#thirdparty/enet/", os.path.dirname(os.path.realpath(os.curdir)) + "/gdnative/include", "."]
 )
-env_module.Append(CPPFLAGS=["-DGD_GODOT_ENET", "-DGD_NO_UNUSED_FUNCTIONS"])
+env_module.Append(CPPDEFINES=["GD_GODOT_ENET", "GD_NO_UNUSED_FUNCTIONS"])
 
 # Compile as a static library
 lib = env_module.Library("gdextensions", sources)

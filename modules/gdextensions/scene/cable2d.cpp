@@ -111,7 +111,7 @@ void Cable2D::set_segments(int segments) {
 	update();
 }
 
-float Cable2D::get_segments() const {
+int Cable2D::get_segments() const {
 	return _segments;
 }
 

@@ -56,7 +56,7 @@ public:
 	float get_width() const;
 
 	void set_segments(int segments);
-	float get_segments() const;
+	int get_segments() const;
 
 	void set_restlength_scale(float scale);
 	float get_restlength_scale() const;
