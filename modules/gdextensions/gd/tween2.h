@@ -154,25 +154,23 @@ protected:
 	static void _bind_methods();
 
 public:
-	TweenAction *add_method(const StringName &method_name, const Variant &from, const Variant &to);
-	TweenAction *add_property(const StringName &property_name, const Variant &from, const Variant &to);
-	TweenAction *add_callback(const Variant &target, const StringName &method_name, float step);
+	void add_method(const StringName &method_name, const Variant &from, const Variant &to);
+	void add_property(const StringName &property_name, const Variant &from, const Variant &to);
+	void add_callback(const Variant &target, const StringName &method_name, float step);
 
 	void cancel();
 	void end();
 
-	TweenAction *set_easing(Tween2::Tween_Easing e) {
+	void set_easing(Tween2::Tween_Easing e) {
 		easing = e;
-		return this;
 	}
 	Tween2::Tween_Easing get_easing() { return easing; }
 
 	float get_total_time() { return total_time; }
 	float get_delta_time() { return delta_time; }
 	float get_delay_time() { return delay_time; }
-	TweenAction *set_delay_time(float dt) {
+	void set_delay_time(float dt) {
 		delay_time = dt;
-		return this;
 	}
 
 	TweenAction() {

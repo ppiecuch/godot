@@ -199,29 +199,27 @@ Variant TweenProperty::lerp(Variant from, Variant to, float per) {
 	return result;
 }
 
-//===================TweenAction
+//=================== TweenAction
 
-TweenAction *TweenAction::add_method(const StringName &method_name, const Variant &from, const Variant &to) {
+void TweenAction::add_method(const StringName &method_name, const Variant &from, const Variant &to) {
 	Ref<TweenProperty> property = memnew(TweenProperty);
 	property->property_type = 0;
 	property->property_name = method_name;
 	property->to_value = to;
 	property->from_value = from;
 	properties.push_back(property);
-	return this;
 }
 
-TweenAction *TweenAction::add_property(const StringName &property_name, const Variant &from, const Variant &to) {
+void TweenAction::add_property(const StringName &property_name, const Variant &from, const Variant &to) {
 	Ref<TweenProperty> property = memnew(TweenProperty);
 	property->property_type = 1;
 	property->property_name = property_name;
 	property->to_value = to;
 	property->from_value = from;
 	properties.push_back(property);
-	return this;
 }
 
-TweenAction *TweenAction::add_callback(const Variant &target, const StringName &method_name, float step) {
+void TweenAction::add_callback(const Variant &target, const StringName &method_name, float step) {
 	Ref<TweenProperty> property = memnew(TweenProperty);
 	property->property_type = 2;
 	property->property_name = method_name;
@@ -229,7 +227,6 @@ TweenAction *TweenAction::add_callback(const Variant &target, const StringName &
 	property->step_count = 0;
 	property->callback_target = target;
 	properties.push_back(property);
-	return this;
 }
 
 bool TweenAction::step(float delta) {
@@ -303,17 +300,17 @@ TweenAction::~TweenAction() {
 }
 
 void TweenAction::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("add_method:TweenAction", "method_name", "from", "to"), &TweenAction::add_method);
-	ClassDB::bind_method(D_METHOD("add_property:TweenAction", "property_name", "from", "to"), &TweenAction::add_property);
-	ClassDB::bind_method(D_METHOD("add_callback:TweenAction", "target", "method_name", "step"), &TweenAction::add_callback);
+	ClassDB::bind_method(D_METHOD("add_method", "method_name", "from", "to"), &TweenAction::add_method);
+	ClassDB::bind_method(D_METHOD("add_property", "property_name", "from", "to"), &TweenAction::add_property);
+	ClassDB::bind_method(D_METHOD("add_callback", "target", "method_name", "step"), &TweenAction::add_callback);
 	ClassDB::bind_method(D_METHOD("cancel"), &TweenAction::cancel);
 	ClassDB::bind_method(D_METHOD("end"), &TweenAction::end);
-	ClassDB::bind_method(D_METHOD("set_easing:TweenAction", "easing"), &TweenAction::set_easing);
+	ClassDB::bind_method(D_METHOD("set_easing", "easing"), &TweenAction::set_easing);
 	ClassDB::bind_method(D_METHOD("get_easing"), &TweenAction::get_easing);
 	ClassDB::bind_method(D_METHOD("get_total_time"), &TweenAction::get_total_time);
 	ClassDB::bind_method(D_METHOD("get_delta_time"), &TweenAction::get_delta_time);
 	ClassDB::bind_method(D_METHOD("get_delay_time"), &TweenAction::get_delay_time);
-	ClassDB::bind_method(D_METHOD("set_delay_time:TweenAction", "delay_time"), &TweenAction::set_delay_time);
+	ClassDB::bind_method(D_METHOD("set_delay_time", "delay_time"), &TweenAction::set_delay_time);
 	ClassDB::bind_method(D_METHOD("_on_target_exit"), &TweenAction::_on_target_exit);
 
 	ADD_SIGNAL(MethodInfo("finished"));
