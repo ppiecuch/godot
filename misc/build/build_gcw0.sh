@@ -27,7 +27,7 @@ if [ ! -e "$CROSS/$CC" ]; then
 	APPDIR="$(cd "$PWD" && pwd)"
 	SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 	NAME="$(basename "${BASH_SOURCE[0]}")"
-	VERSION=2020-10-01
+	VERSION=2021-03-10
 
 	echo "*** Running docker toolchain $VERSION (with script $NAME).."
 	docker run --rm -t -v "$APPDIR:/app" gcw_zero_dev:$VERSION "./${SCRIPTDIR/$APPDIR/}/$NAME"
