@@ -17,7 +17,7 @@ RUN apt-get update \
   && cd /opt \
   && curl -sL http://www.gcw-zero.com/files/opendingux-gcw0-toolchain.$version.tar.bz2 | tar xj
 
-ENV CROSS=/opt/gcw0-toolchain/bin
+ENV CROSS=/opt/gcw0-toolchain/usr/bin
 ENV PATH=${CROSS}:$PATH
 
 VOLUME ["/app"]

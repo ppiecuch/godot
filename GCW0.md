@@ -75,7 +75,7 @@ To simplify toolchain configuration I have added gcw0 configuration as another d
 		env.extra_suffix += '.gcw0'
 ```
 
-(that change and some others necessery for gcw0 are in my fork at https://github.com/ppiecuch/frt)
+(that change and some others necessery for gcw0 are in my fork at https://github.com/ppiecuch/frt - look there for actual version)
 
 ### Build script
 
