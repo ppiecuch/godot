@@ -487,6 +487,6 @@ void TrailLine2D::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "trail_enable"), "set_trail_enable", "get_trail_enable");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "trail_count"), "set_trail_count", "get_trail_count");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "span_frame"), "set_span_frame", "get_span_frame");
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "terminal"), "set_terminal", "get_line_color");
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "terminal"), "set_terminal", "get_terminal");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "line_color", PROPERTY_HINT_RESOURCE_TYPE, "Gradient"), "set_line_color", "get_line_color");
 }

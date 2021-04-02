@@ -8,7 +8,7 @@ on: [push, pull_request]
 
 # Global Cache Settings
 env:
-  GODOT_BASE_BRANCH: 3.2
+  GODOT_BASE_BRANCH: master
   SCONS_CACHE_LIMIT: 4096
   RPI_IMAGE: rpi_toolchain
   VITASDK_PATH: /opt/vitasdk
