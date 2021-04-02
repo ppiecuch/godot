@@ -40,7 +40,7 @@
 
 #include PLATFORM_SEM_H
 
-#elif defined(UNIX_ENABLED) && __cplusplus < 201402L
+#elif (defined(UNIX_ENABLED) || defined(PTHREAD_ENABLED)) && __cplusplus < 201402L
 
 #include "drivers/posix/semaphore_posix.h"
 
