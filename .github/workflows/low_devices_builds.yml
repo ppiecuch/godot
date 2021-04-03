@@ -21,7 +21,7 @@ env:
 jobs:
   rpi-template:
     runs-on: "ubuntu-20.04"
-    name: Template (target=release, tools=no)
+    name: RPi Template (target=release, tools=no)
 
     steps:
       - uses: actions/checkout@v2
@@ -102,7 +102,7 @@ jobs:
 
   odroid-template:
     runs-on: "ubuntu-20.04"
-    name: Template (target=release, tools=no)
+    name: Odroid Template (target=release, tools=no)
 
     steps:
       - uses: actions/checkout@v2
@@ -162,7 +162,7 @@ jobs:
 
   psvita-template:
     runs-on: "ubuntu-20.04"
-    name: Template (target=release, tools=no)
+    name: PSVita Template (target=release, tools=no)
 
     steps:
       - uses: actions/checkout@v2
@@ -241,7 +241,7 @@ jobs:
 
   gcw0-template:
     runs-on: "ubuntu-20.04"
-    name: Template (target=release, tools=no)
+    name: GCW0 Template (target=release, tools=no)
 
     steps:
       - uses: actions/checkout@v2
@@ -314,7 +314,7 @@ jobs:
   nds-template:
     runs-on: "ubuntu-20.04"
     container: "devkitpro/devkitarm"
-    name: Template (target=release, tools=no)
+    name: 3DS Template (target=release, tools=no)
 
     steps:
       - uses: actions/checkout@v2
