@@ -178,7 +178,7 @@ void BehaviorNode::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("step"), &BehaviorNode::step);
 	ClassDB::bind_method(D_METHOD("reset"), &BehaviorNode::reset);
 
-	ADD_GROUP("Behavior", behavior_");
+	ADD_GROUP("Behavior", "behavior_");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "behavior_type", PROPERTY_HINT_ENUM, "Sequence,Condition"), "set_behavior_node_type", "get_behavior_node_type");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "behavior_enable"), "set_behavior_enable", "get_behavior_enable");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "behavior_focus"), "set_will_focus", "get_will_focus");
