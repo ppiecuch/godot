@@ -170,7 +170,7 @@ void BehaviorNode::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_will_focus", "will_focus"), &BehaviorNode::set_will_focus);
 	ClassDB::bind_method(D_METHOD("get_will_focus"), &BehaviorNode::get_will_focus);
 
-	ClassDB::bind_method(D_METHOD("pre_behavior:bool", "target", "env"), &BehaviorNode::_pre_behavior);
+	ClassDB::bind_method(D_METHOD("pre_behavior", "target", "env"), &BehaviorNode::_pre_behavior);
 	ClassDB::bind_method(D_METHOD("behavior", "target", "env"), &BehaviorNode::_behavior);
 
 	ClassDB::bind_method(D_METHOD("set_focus"), &BehaviorNode::set_focus);
@@ -178,9 +178,10 @@ void BehaviorNode::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("step"), &BehaviorNode::step);
 	ClassDB::bind_method(D_METHOD("reset"), &BehaviorNode::reset);
 
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "behavior/type", PROPERTY_HINT_ENUM, "Sequence,Condition"), "set_behavior_node_type", "get_behavior_node_type");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "behavior/enable"), "set_behavior_enable", "get_behavior_enable");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "behavior/focus"), "set_will_focus", "get_will_focus");
+	ADD_GROUP("Behavior", behavior_");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "behavior_type", PROPERTY_HINT_ENUM, "Sequence,Condition"), "set_behavior_node_type", "get_behavior_node_type");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "behavior_enable"), "set_behavior_enable", "get_behavior_enable");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "behavior_focus"), "set_will_focus", "get_will_focus");
 
 	BIND_VMETHOD(MethodInfo("_pre_behavior", PropertyInfo(Variant::OBJECT, "target"), PropertyInfo(Variant::DICTIONARY, "env")));
 	BIND_VMETHOD(MethodInfo("_behavior", PropertyInfo(Variant::OBJECT, "target"), PropertyInfo(Variant::DICTIONARY, "env")));

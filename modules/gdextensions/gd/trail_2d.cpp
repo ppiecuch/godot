@@ -253,7 +253,7 @@ void TrailPoint2D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_line_width", "line_width"), &TrailPoint2D::set_line_width);
 
 	ClassDB::bind_method(D_METHOD("get_line_color"), &TrailPoint2D::get_line_color);
-	ClassDB::bind_method(D_METHOD("set_line_color", "line_color:Gradient"), &TrailPoint2D::set_line_color);
+	ClassDB::bind_method(D_METHOD("set_line_color", "line_color"), &TrailPoint2D::set_line_color);
 
 	ClassDB::bind_method(D_METHOD("get_target_path"), &TrailPoint2D::get_target_path);
 	ClassDB::bind_method(D_METHOD("set_target_path", "target_path"), &TrailPoint2D::set_target_path);
@@ -482,7 +482,7 @@ void TrailLine2D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_terminal", "terminal"), &TrailLine2D::set_terminal);
 
 	ClassDB::bind_method(D_METHOD("get_line_color"), &TrailLine2D::get_line_color);
-	ClassDB::bind_method(D_METHOD("set_line_color", "line_color:Gradient"), &TrailLine2D::set_line_color);
+	ClassDB::bind_method(D_METHOD("set_line_color", "line_color"), &TrailLine2D::set_line_color);
 
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "trail_enable"), "set_trail_enable", "get_trail_enable");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "trail_count"), "set_trail_count", "get_trail_count");
