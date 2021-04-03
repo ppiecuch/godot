@@ -95,16 +95,16 @@ public:
 		_update_targets();
 	}
 	_FORCE_INLINE_ const Array &get_target_paths() { return target_paths; }
-	_FORCE_INLINE_ const Array &get_targets() { return targets; }
+	_FORCE_INLINE_ const Array &get_targets() const { return targets; }
 
 	_FORCE_INLINE_ void set_gradient(const Ref<Gradient> &p_color_ramp) { color_ramp = p_color_ramp; }
-	_FORCE_INLINE_ Ref<Gradient> get_gradient() { return color_ramp; }
+	_FORCE_INLINE_ Ref<Gradient> get_gradient() const { return color_ramp; }
 
 	_FORCE_INLINE_ void set_life_frame(int p_frame) {
 		life_frame = p_frame;
 		_update_size();
 	}
-	_FORCE_INLINE_ int get_life_frame() { return life_frame; }
+	_FORCE_INLINE_ int get_life_frame() const { return life_frame; }
 
 	_FORCE_INLINE_ void set_frame_interval(int p_frame) {
 		frame_interval = p_frame;
@@ -113,7 +113,7 @@ public:
 	_FORCE_INLINE_ int get_frame_interval() { return frame_interval; }
 
 	_FORCE_INLINE_ void set_phantom_enable(bool p_enable) { phantom_enable = p_enable; }
-	_FORCE_INLINE_ bool get_phantom_enable() { return phantom_enable; }
+	_FORCE_INLINE_ bool get_phantom_enable() const { return phantom_enable; }
 
 	_FORCE_INLINE_ Phantom() {
 		frame_count = 0;

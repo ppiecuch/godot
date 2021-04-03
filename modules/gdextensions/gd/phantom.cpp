@@ -156,7 +156,7 @@ void Phantom::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_target_paths"), &Phantom::get_target_paths);
 	ClassDB::bind_method(D_METHOD("get_targets"), &Phantom::get_targets);
 
-	ClassDB::bind_method(D_METHOD("set_gradient", "gradient:Gradient"), &Phantom::set_gradient);
+	ClassDB::bind_method(D_METHOD("set_gradient", "gradient"), &Phantom::set_gradient);
 	ClassDB::bind_method(D_METHOD("get_gradient"), &Phantom::get_gradient);
 
 	ClassDB::bind_method(D_METHOD("set_life_frame", "life_frame"), &Phantom::set_life_frame);

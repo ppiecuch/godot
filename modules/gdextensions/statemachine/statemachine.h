@@ -66,7 +66,7 @@ public:
 	int get_state_amount();
 
 	State *get_active_state();
-	void change_active_state_with_name(const StringName toStateName);
+	void change_active_state_with_name(const StringName &toStateName);
 	void change_active_state_with_node(Node *toState);
 
 	bool can_step_back_state();

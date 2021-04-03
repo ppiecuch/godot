@@ -78,12 +78,12 @@ State *StateMachine::get_active_state() {
 	return NULL;
 }
 
-void StateMachine::execute_active_state(const float deltaTime) {
+void StateMachine::execute_active_state(float deltaTime) {
 	ERR_FAIL_NULL(get_active_state());
 	get_active_state()->execute(deltaTime);
 }
 
-void StateMachine::change_active_state_with_name(const StringName toStateName) {
+void StateMachine::change_active_state_with_name(const StringName &toStateName) {
 	ERR_FAIL_COND_MSG(stateMap.size() == 0, "There are no registered states!");
 	ERR_FAIL_COND_MSG(!stateMap.has(toStateName), "There are no registered states!");
 	State *toStateNode = stateMap[toStateName];
@@ -160,13 +160,13 @@ void StateMachine::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_all_state_names"), &StateMachine::get_all_state_names);
 	ClassDB::bind_method(D_METHOD("get_state_amount"), &StateMachine::get_state_amount);
 
-	ClassDB::bind_method(D_METHOD("add_state", "state:State"), &StateMachine::add_new_state);
+	ClassDB::bind_method(D_METHOD("add_state", "state"), &StateMachine::add_new_state);
 
 	ClassDB::bind_method(D_METHOD("get_active_state"), &StateMachine::get_active_state);
-	ClassDB::bind_method(D_METHOD("execute_current_state", "delta:float"), &StateMachine::execute_active_state);
+	ClassDB::bind_method(D_METHOD("execute_current_state", "delta"), &StateMachine::execute_active_state);
 
-	ClassDB::bind_method(D_METHOD("change_active_state_with_name", "name:String"), &StateMachine::change_active_state_with_name);
-	ClassDB::bind_method(D_METHOD("change_active_state_with_node", "state:State"), &StateMachine::change_active_state_with_node);
+	ClassDB::bind_method(D_METHOD("change_active_state_with_name", "name"), &StateMachine::change_active_state_with_name);
+	ClassDB::bind_method(D_METHOD("change_active_state_with_node", "state"), &StateMachine::change_active_state_with_node);
 
 	ClassDB::bind_method(D_METHOD("can_step_back_state"), &StateMachine::can_step_back_state);
 	ClassDB::bind_method(D_METHOD("can_step_forward_state"), &StateMachine::can_step_forward_state);
