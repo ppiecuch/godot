@@ -49,10 +49,13 @@ class OpenSimplexNoise : public Resource {
 	osn_context contexts[MAX_OCTAVES];
 
 	int seed;
+
 	float persistence; // Controls details, value in [0,1]. Higher increases grain, lower increases smoothness.
 	int octaves; // Number of noise layers
 	float period; // Distance above which we start to see similarities. The higher, the longer "hills" will be on a terrain.
 	float lacunarity; // Controls period change across octaves. 2 is usually a good value to address all detail levels.
+
+	static uint8_t _rand_perm[512]; // random table
 
 public:
 	OpenSimplexNoise();
@@ -91,6 +94,17 @@ public:
 
 	_FORCE_INLINE_ float get_noise_2dv(const Vector2 &v) const { return get_noise_2d(v.x, v.y); }
 	_FORCE_INLINE_ float get_noise_3dv(const Vector3 &v) const { return get_noise_3d(v.x, v.y, v.z); }
+
+	// OpenSimplex2 Noise
+
+	float get_simplex_noise_1d(float x) const;
+	float get_simplex_noise_2d(float x, float y) const;
+	float get_simplex_noise_3d(float x, float y, float z) const;
+	float get_simplex_noise_4d(float x, float y, float z, float w) const;
+	float get_multi_noise_1d(float x) const;
+	float get_multi_noise_2d(float x, float y) const;
+	float get_multi_noise_3d(float x, float y, float z) const;
+	float get_multi_noise_4d(float x, float y, float z, float w) const;
 
 protected:
 	static void _bind_methods();
