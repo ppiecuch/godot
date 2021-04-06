@@ -580,10 +580,10 @@ void DeformSprite::_update_simulation() {
 	const Size2 scaled_rect = get_rect().size * geometry_pixel_unit * get_scale();
 	if (_sim_id == -1) {
 		_sim_id = sim->make_sim(scaled_rect, geometry_segments, geometry_size_variation, geometry_anchor, geometry_stiffness, physics_variation);
-		sim->set_sim_state(_sim_id, sprite_simulation_pause ? ElasticSimulation::SIM_STATE_PAUSED : ElasticSimulation::SIM_STATE_RUNNING);
 	} else {
 		sim->update_sim(_sim_id, scaled_rect, geometry_segments, geometry_size_variation, geometry_anchor, geometry_stiffness, physics_variation);
 	}
+	sim->set_sim_state(_sim_id, sprite_simulation_pause ? ElasticSimulation::SIM_STATE_PAUSED : ElasticSimulation::SIM_STATE_RUNNING);
 	// request new geometry:
 	_mesh = Ref<ArrayMesh>(NULL);
 }
