@@ -58,7 +58,14 @@ public:
 		SIM_ANCHOR_RIGHT,
 		SIM_ANCHOR_TOP,
 		SIM_ANCHOR_BOTTOM,
-		SIM_ANCHOR_COUNT
+		SimAnchorCount,
+	};
+
+	enum State {
+		SIM_STATE_RUNNING,
+		SIM_STATE_PAUSED,
+		SIM_STATE_REMOVED,
+		SimStateCount,
 	};
 
 	float simulation_delta;
@@ -68,9 +75,10 @@ public:
 
 	int make_sim(const Size2 &p_rect, int p_segments, bool p_dynamic_split, Anchor p_anchor, real_t p_stiffness_factor = 0.0, bool p_variation = false);
 	void update_sim(simid_t p_sim_id, const Size2 &p_rect, int p_segments, bool p_dynamic_split, Anchor p_anchor, real_t p_stiffness_factor = 0.0, bool p_variation = false);
+	void set_sim_state(simid_t p_sim_id, State p_state);
+	State get_sim_state(simid_t p_sim_id) const;
 	void remove_sim(simid_t p_sim_id);
 	void reset_sim();
-	void transform_sim_geom(const Transform2D &p_xform) const;
 	int get_sim_particles_count(simid_t p_sim_id) const;
 	Vector2 get_sim_particle_pos(simid_t p_sim_id, unsigned int p_index) const;
 	real_t get_sim_particle_mass(simid_t p_sim_id, unsigned int p_index) const;
@@ -90,5 +98,6 @@ public:
 };
 
 VARIANT_ENUM_CAST(ElasticSimulation::Anchor);
+VARIANT_ENUM_CAST(ElasticSimulation::State);
 
 #endif // ELASTICSIMULATION_H

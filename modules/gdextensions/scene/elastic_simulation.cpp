@@ -70,8 +70,7 @@ typedef std::vector<Particle_r> ParticlesArray;
 struct ParticleParam;
 typedef std::vector<ParticleParam> ParticleParamsArray;
 struct DistanceConstraint;
-typedef std::list<DistanceConstraint> DConstraintsArray;
-typedef std::vector<DistanceConstraint> DConstraintsVector;
+typedef std::vector<DistanceConstraint> DConstraintsArray;
 
 struct ParticleParam {
 	std::vector<real_t> bern_poly_pack[2]; // bernstein polynomial packing
@@ -148,32 +147,54 @@ struct DistanceConstraint {
 	}
 };
 
+struct Sim {
+	enum State {
+		StateRunning,
+		StatePaused,
+		StateEmpty,
+	};
+	State state;
+	int orientation;
+	ParticlesArray particles;
+	DConstraintsArray constraints;
+};
+
 class Simulation {
 
-public:
-	std::vector<ParticlesArray> simulations;
-	DConstraintsArray constraints;
+private:
+	float _ALWAYS_INLINE_ _deform_angle(int orientation, float angle) {
+		// converting atan2 result to: 0 .. 180|180 .. 0
+		if (angle < 0) angle = -angle;
+		// return always-positive deform angle
+		return Math::abs(orientation + angle);
+	}
 
-	int orientation = 0;
+public:
+	std::vector<Sim> simulations;
+
 	real_t angle_limit = 30;
 
 	Simulation() {}
 	void simulate(real_t delta, const Vector2 &force) {
-		for (DistanceConstraint &c : constraints) {
-			c.resolve();
-		}
-		for (ParticlesArray &particles : simulations) {
+		for (Sim &sim : simulations) {
+			if (sim.state != Sim::StateRunning) {
+				continue;
+			}
+			for (DistanceConstraint &c : sim.constraints) {
+				c.resolve();
+			}
+			ParticlesArray &particles = sim.particles;
 			const int pcnt = particles.size();
 			for (int p = 0; p < pcnt - 2; p += 2) {
 				const Point2 &p1 = middle_point(particles[p]->position, particles[p + 1]->position);
 				const Point2 &p2 = middle_point(particles[p + 2]->position, particles[p + 3]->position);
-				const real_t curr_deform = orientation + Math::rad2deg((p2 - p1).angle());
-				if (Math::abs(curr_deform) > 90) {
+				const real_t curr_deform = _deform_angle(sim.orientation, Math::rad2deg((p2 - p1).angle()));
+				if (curr_deform > 90) {
 					// failed constraint
 					particles[p]->reset();
 					particles[p + 1]->reset();
 				}
-				const real_t delta_corrected = delta * (Math::abs(curr_deform) > angle_limit ? 0.1 : 1);
+				const real_t delta_corrected = delta * (curr_deform > angle_limit ? 0.1 : 1);
 				particles[p]->simulate(delta_corrected, force);
 				particles[p + 1]->simulate(delta_corrected, force);
 				if (p == pcnt - 4) {
@@ -184,18 +205,22 @@ public:
 		}
 	}
 	void simulate(real_t delta, const std::vector<Vector2> &forces) {
-		for (DistanceConstraint &c : constraints) {
-			c.resolve();
-		}
 		for (size_t f = 0; f < simulations.size(); f++) {
-			ParticlesArray &particles = simulations[f];
+			Sim &sim = simulations[f];
+			if (sim.state != Sim::StateRunning) {
+				continue;
+			}
+			for (DistanceConstraint &c : sim.constraints) {
+				c.resolve();
+			}
+			ParticlesArray &particles = sim.particles;
 			const Vector2 &force = forces[f];
 			const int pcnt = particles.size();
 			for (int p = 0; p < pcnt - 2; p += 2) {
 				const Point2 &p1 = middle_point(particles[p]->position, particles[p + 1]->position);
 				const Point2 &p2 = middle_point(particles[p + 2]->position, particles[p + 3]->position);
-				const real_t curr_deform = orientation + Math::rad2deg((p2 - p1).angle());
-				if (curr_deform < angle_limit && curr_deform > -angle_limit) {
+				const real_t curr_deform = _deform_angle(sim.orientation, Math::rad2deg((p2 - p1).angle()));
+				if (curr_deform < angle_limit) {
 					particles[p]->simulate(delta, force);
 					particles[p + 1]->simulate(delta, force);
 					if (p == pcnt - 4) {
@@ -210,28 +235,22 @@ public:
 		}
 	}
 	void reset() {
-		for (ParticlesArray &sim : simulations)
-			for (Particle_r &p : sim) {
+		for (Sim &sim : simulations) {
+			for (Particle_r &p : sim.particles) {
 				p->reset();
 			}
+		}
 	}
 
 	inline Particle *add_point(int sim_id, const Point2 &xy, bool fixed = NO) {
-		simulations[sim_id].push_back(make_particle_r(xy, fixed));
-		return simulations[sim_id].back().get();
+		simulations[sim_id].particles.push_back(make_particle_r(xy, fixed));
+		return simulations[sim_id].particles.back().get();
 	}
 	inline Particle *add_point(int sim_id, const Point2 &xy, real_t mass) {
-		simulations[sim_id].push_back(make_particle_r(xy, mass));
-		return simulations[sim_id].back().get();
+		simulations[sim_id].particles.push_back(make_particle_r(xy, mass));
+		return simulations[sim_id].particles.back().get();
 	}
 
-	void update_geom(int sim_id, const Transform2D &transform) {
-		for (Particle_r &particle : simulations[sim_id]) {
-			particle->rest = transform.xform(particle->rest);
-			particle->position = transform.xform(particle->position);
-			particle->previous = transform.xform(particle->previous);
-		}
-	}
 	// segment:
 	// ========
 	//  |        |
@@ -242,6 +261,8 @@ public:
 	// (0)------(1)  (1)----(3)----
 	//  top/bottom    left/right
 	void build_geom(int sim_id, const Point2 &starting, const Point2 &opposite, const Vector2Array &steps, real_t stiffness, bool variation) {
+		Sim &sim = simulations[sim_id];
+
 		const int segments = steps.size();
 		const real_t physics_variation_change = 0.4;
 
@@ -255,10 +276,10 @@ public:
 			Particle *n1 = add_point(sim_id, p1 + steps[i], mass);
 			Particle *n2 = add_point(sim_id, p2 + steps[i], mass);
 
-			constraints.push_back(DistanceConstraint(sim_id, *p1, *n1, stiffness)); // [n1]--[n2]
-			constraints.push_back(DistanceConstraint(sim_id, *p2, *n2, stiffness)); //  |  __/|
-			constraints.push_back(DistanceConstraint(sim_id, *n1, *n2, stiffness)); //  | /   |
-			constraints.push_back(DistanceConstraint(sim_id, *p1, *n2, stiffness)); // [p1]  [p2]
+			sim.constraints.push_back(DistanceConstraint(sim_id, *p1, *n1, stiffness)); // [n1]--[n2]
+			sim.constraints.push_back(DistanceConstraint(sim_id, *p2, *n2, stiffness)); //  |  __/|
+			sim.constraints.push_back(DistanceConstraint(sim_id, *n1, *n2, stiffness)); //  | /   |
+			sim.constraints.push_back(DistanceConstraint(sim_id, *p1, *n2, stiffness)); // [p1]  [p2]
 
 			p1 = n1;
 			p2 = n2;
@@ -269,24 +290,20 @@ public:
 			}
 		}
 	}
-	int make_geom(const Point2 &starting, const Point2 &opposite, const Vector2Array &steps, real_t stiffness, bool variation) {
+	int make_geom(int orientation, const Point2 &starting, Point2 &opposite, const Vector2Array &steps, real_t stiffness, bool variation) {
 		const int sim_id = simulations.size();
 
-		simulations.push_back(ParticlesArray());
+		simulations.push_back((Sim){Sim::StateRunning, orientation});
 		build_geom(sim_id, starting, opposite, steps, stiffness, variation);
 
 		return sim_id;
 	}
-	void update_geom(simid_t sim_id, const Point2 &starting, const Point2 &opposite, const Vector2Array &steps, real_t stiffness, bool variation) {
-		constraints.remove_if([sim_id](DistanceConstraint &c) { return c.sim_id == sim_id; });
-		simulations[sim_id] = ParticlesArray();
-
+	void update_geom(simid_t sim_id, int orientation, const Point2 &starting, const Point2 &opposite, const Vector2Array &steps, real_t stiffness, bool variation) {
+		simulations[sim_id] = (Sim){simulations[sim_id].state, simulations[sim_id].orientation};
 		build_geom(sim_id, starting, opposite, steps, stiffness, variation);
 	}
 	void remove_geom(simid_t sim_id) {
-		// remove constraints and clear particles array
-		constraints.remove_if([sim_id](DistanceConstraint &c) { return c.sim_id == sim_id; });
-		simulations[sim_id] = ParticlesArray();
+		simulations[sim_id] = (Sim){Sim::StateEmpty};
 	}
 };
 
@@ -356,20 +373,6 @@ class MeshDeformation {
 	}
 };
 } // namespace sim3
-
-static int _sim_orientation(ElasticSimulation::Anchor p_anchor) {
-
-	switch (p_anchor) {
-		case ElasticSimulation::SIM_ANCHOR_TOP: return -90;
-		case ElasticSimulation::SIM_ANCHOR_BOTTOM: return 90;
-		case ElasticSimulation::SIM_ANCHOR_LEFT: return -180;
-		case ElasticSimulation::SIM_ANCHOR_RIGHT: return 0;
-		default: {
-			WARN_PRINT("Invalid anchor value.");
-			return 0;
-		}
-	}
-}
 
 static Vector2Array _sim_geometry(const Size2 &p_rect, int p_segments, bool p_dynamic_split, ElasticSimulation::Anchor p_anchor, Vector2 &starting, Vector2 &opposite) {
 
@@ -449,9 +452,22 @@ static Vector2Array _sim_geometry(const Size2 &p_rect, int p_segments, bool p_dy
 	return steps;
 }
 
+int _ALWAYS_INLINE_ _get_orientation(ElasticSimulation::Anchor anchor) {
+	switch (anchor) {
+		case ElasticSimulation::SIM_ANCHOR_TOP:
+		case ElasticSimulation::SIM_ANCHOR_BOTTOM: return -90;
+		case ElasticSimulation::SIM_ANCHOR_LEFT: return 0;
+		case ElasticSimulation::SIM_ANCHOR_RIGHT: return -180;
+		default: {
+			WARN_PRINT("Invalid anchor value.");
+			return 0;
+		}
+	}
+}
+
 int ElasticSimulation::make_sim(const Size2 &p_rect, int p_segments, bool p_dynamic_split, Anchor p_anchor, real_t p_stiffness_factor, bool p_variation) {
 
-	ERR_FAIL_COND_V(p_segments <= 0, -1);
+	ERR_FAIL_COND_V(p_segments < 1, -1);
 
 #ifdef DEBUG_ENABLED
 	if (p_stiffness_factor < 0 || p_stiffness_factor > 1) {
@@ -460,16 +476,15 @@ int ElasticSimulation::make_sim(const Size2 &p_rect, int p_segments, bool p_dyna
 #endif
 
 	Vector2 starting, opposite;
-	Vector2Array steps = _sim_geometry(p_rect, p_segments, p_dynamic_split, p_anchor, starting, opposite);
-	_sim->orientation = _sim_orientation(p_anchor);
-
-	return _sim->make_geom(starting, opposite, steps, p_stiffness_factor, p_variation);
+	const Vector2Array steps = _sim_geometry(p_rect, p_segments, p_dynamic_split, p_anchor, starting, opposite);
+	ERR_FAIL_COND_V(starting.distance_to(opposite) <= 1, -1);
+	return _sim->make_geom(_get_orientation(p_anchor), starting, opposite, steps, p_stiffness_factor, p_variation);
 }
 
 void ElasticSimulation::update_sim(simid_t p_sim_id, const Size2 &p_rect, int p_segments, bool p_dynamic_split, Anchor p_anchor, real_t p_stiffness_factor, bool p_variation) {
 
 	ERR_FAIL_INDEX(p_sim_id, _sim->simulations.size());
-	ERR_FAIL_COND(p_segments <= 0);
+	ERR_FAIL_COND(p_segments < 0);
 
 #ifdef DEBUG_ENABLED
 	if (p_stiffness_factor < 0 || p_stiffness_factor > 1) {
@@ -478,10 +493,36 @@ void ElasticSimulation::update_sim(simid_t p_sim_id, const Size2 &p_rect, int p_
 #endif
 
 	Vector2 starting, opposite;
-	Vector2Array steps = _sim_geometry(p_rect, p_segments, p_dynamic_split, p_anchor, starting, opposite);
-	_sim->orientation = _sim_orientation(p_anchor);
+	const Vector2Array steps = _sim_geometry(p_rect, p_segments, p_dynamic_split, p_anchor, starting, opposite);
+	ERR_FAIL_COND(starting.distance_to(opposite) <= 1);
+	_sim->update_geom(p_sim_id, _get_orientation(p_anchor), starting, opposite, steps, p_stiffness_factor, p_variation);
+}
 
-	_sim->update_geom(p_sim_id, starting, opposite, steps, p_stiffness_factor, p_variation);
+void ElasticSimulation::set_sim_state(simid_t p_sim_id, State p_state) {
+	ERR_FAIL_INDEX(p_sim_id, _sim->simulations.size());
+	ERR_FAIL_INDEX(p_state, SimStateCount);
+
+	sim3::Sim &sim = _sim->simulations[p_sim_id];
+	switch(p_state) {
+		case SIM_STATE_PAUSED: {
+			sim.state = sim3::Sim::StatePaused;
+		} break;
+		case SIM_STATE_RUNNING: {
+			sim.state = sim3::Sim::StateRunning;
+		} break;
+		default: {
+			WARN_PRINT("Invalid state value");
+		}
+	}
+}
+
+ElasticSimulation::State ElasticSimulation::get_sim_state(simid_t p_sim_id) const {
+	ERR_FAIL_INDEX_V(p_sim_id, _sim->simulations.size(), SIM_STATE_REMOVED);
+	switch(_sim->simulations[p_sim_id].state) {
+		case sim3::Sim::StateEmpty: return SIM_STATE_REMOVED;
+		case sim3::Sim::StateRunning: return SIM_STATE_RUNNING;
+		case sim3::Sim::StatePaused: return SIM_STATE_PAUSED;
+	}
 }
 
 void ElasticSimulation::remove_sim(simid_t p_sim_id) {
@@ -498,51 +539,41 @@ void ElasticSimulation::reset_sim() {
 int ElasticSimulation::get_sim_particles_count(simid_t p_sim_id) const {
 	ERR_FAIL_INDEX_V(p_sim_id, _sim->simulations.size(), 0);
 
-	return _sim->simulations[p_sim_id].size();
+	return _sim->simulations[p_sim_id].particles.size();
 }
 
 Vector2 ElasticSimulation::get_sim_particle_pos(simid_t p_sim_id, unsigned int p_index) const {
 	ERR_FAIL_INDEX_V(p_sim_id, _sim->simulations.size(), Vector2());
-	ERR_FAIL_INDEX_V(p_index, _sim->simulations[p_sim_id].size(), Vector2());
+	ERR_FAIL_INDEX_V(p_index, _sim->simulations[p_sim_id].particles.size(), Vector2());
 
-	return _sim->simulations[p_sim_id][p_index]->position;
+	return _sim->simulations[p_sim_id].particles[p_index]->position;
 }
 
 real_t ElasticSimulation::get_sim_particle_mass(simid_t p_sim_id, unsigned int p_index) const {
 	ERR_FAIL_INDEX_V(p_sim_id, _sim->simulations.size(), 1);
-	ERR_FAIL_INDEX_V(p_index, _sim->simulations[p_sim_id].size(), 1);
+	ERR_FAIL_INDEX_V(p_index, _sim->simulations[p_sim_id].particles.size(), 1);
 
-	return _sim->simulations[p_sim_id][p_index]->mass;
+	return _sim->simulations[p_sim_id].particles[p_index]->mass;
 }
 
 bool ElasticSimulation::is_sim_particle_fixed(simid_t p_sim_id, unsigned int p_index) const {
 	ERR_FAIL_INDEX_V(p_sim_id, _sim->simulations.size(), false);
-	ERR_FAIL_INDEX_V(p_index, _sim->simulations[p_sim_id].size(), false);
+	ERR_FAIL_INDEX_V(p_index, _sim->simulations[p_sim_id].particles.size(), false);
 
-	return _sim->simulations[p_sim_id][p_index]->fixed;
-}
-
-inline static sim3::DConstraintsVector _filter_constrains(simid_t p_sim_id, const sim3::DConstraintsArray &constraints) {
-
-	sim3::DConstraintsVector filter;
-	std::copy_if(constraints.begin(), constraints.end(), std::back_inserter(filter), [p_sim_id](const sim3::DistanceConstraint &c) { return c.sim_id == p_sim_id; });
-	return filter;
+	return _sim->simulations[p_sim_id].particles[p_index]->fixed;
 }
 
 int ElasticSimulation::get_sim_constraint_count(simid_t p_sim_id) const {
 	ERR_FAIL_INDEX_V(p_sim_id, _sim->simulations.size(), 0);
 
-	sim3::DConstraintsVector filter = _filter_constrains(p_sim_id, _sim->constraints);
-	return filter.size();
+	return _sim->simulations[p_sim_id].constraints.size();
 }
 
 ElasticSimulation::Constraint ElasticSimulation::get_sim_constraint_at(simid_t p_sim_id, unsigned int p_index) const {
 	ERR_FAIL_INDEX_V(p_sim_id, _sim->simulations.size(), ElasticSimulation::Constraint());
+	ERR_FAIL_INDEX_V(p_index, _sim->simulations[p_sim_id].constraints.size(), ElasticSimulation::Constraint());
 
-	sim3::DConstraintsVector filter = _filter_constrains(p_sim_id, _sim->constraints);
-	ERR_FAIL_INDEX_V(p_index, filter.size(), Constraint());
-
-	const sim3::DistanceConstraint &c = filter[p_index];
+	const sim3::DistanceConstraint &c = _sim->simulations[p_sim_id].constraints[p_index];
 	return ElasticSimulation::Constraint{
 		c.point1.position,
 		c.point2.position,
@@ -573,6 +604,10 @@ void ElasticSimulation::_bind_methods() {
 	BIND_ENUM_CONSTANT(SIM_ANCHOR_RIGHT);
 	BIND_ENUM_CONSTANT(SIM_ANCHOR_TOP);
 	BIND_ENUM_CONSTANT(SIM_ANCHOR_BOTTOM);
+
+	BIND_ENUM_CONSTANT(SIM_STATE_RUNNING);
+	BIND_ENUM_CONSTANT(SIM_STATE_PAUSED);
+	BIND_ENUM_CONSTANT(SIM_STATE_REMOVED);
 }
 
 ElasticSimulation::ElasticSimulation() {

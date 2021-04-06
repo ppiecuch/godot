@@ -51,13 +51,13 @@
 	emit_signal("simulation_changed");
 
 static bool _get_node_noise_modulation_value(Object *node, Ref<OpenSimplexNoise> &noise, real_t progress, int resolution, Vector2 &force) {
-	if (node->has_meta("__simulation_id")) {
-		const int sim_id = node->get_meta("__simulation_id");
+	if (node->has_method("get_simulation_id")) {
+		const int sim_id = node->call("get_simulation_id");
 		if (sim_id >= 0) {
 			if (Node2D *node2d = Object::cast_to<Node2D>(node)) {
-				const Vector2 noise_scale = node->get_meta("__noise_modulation_scale");
+				const Vector2 noise_scale = node->call("get_noise_scale");
 				const Vector2i pos = node2d->get_global_position();
-				force = noise_scale * Vector2::from_rotation(Math::map(noise->get_noise_3d(pos.x / resolution, pos.y / resolution, progress), -1, 1, 0, Math_Two_PI));
+				force = noise_scale * Vector2::from_rotation(Math::map(noise->get_multi_noise_3d(pos.x / resolution, pos.y / resolution, progress), -1, 1, 0, Math_Two_PI));
 				return true;
 			}
 		}
@@ -66,13 +66,13 @@ static bool _get_node_noise_modulation_value(Object *node, Ref<OpenSimplexNoise>
 }
 
 static bool _add_node_noise_modulation_value(Object *node, Ref<OpenSimplexNoise> &noise, real_t progress, int resolution, std::map<simid_t, Vector2> &forces) {
-	if (node->has_meta("__simulation_id")) {
-		const int sim_id = node->get_meta("__simulation_id");
+	if (node->has_method("get_simulation_id")) {
+		const int sim_id = node->call("get_simulation_id");
 		if (sim_id >= 0) {
 			if (Node2D *node2d = Object::cast_to<Node2D>(node)) {
-				const Vector2 noise_scale = node2d->get_meta("__noise_modulation_scale");
+				const Vector2 noise_scale = node2d->call("get_noise_scale");
 				const Vector2i pos = node2d->get_global_position();
-				const Vector2 force = Vector2::from_rotation(Math::map(noise->get_noise_3d(pos.x / resolution, pos.y / resolution, progress), -1, 1, 0, Math_Two_PI));
+				const Vector2 force = Vector2::from_rotation(Math::map(noise->get_multi_noise_3d(pos.x / resolution, pos.y / resolution, progress), -1, 1, 0, Math_Two_PI));
 				forces[sim_id] = noise_scale * force;
 				return true;
 			}
@@ -133,17 +133,17 @@ Ref<ElasticSimulation> SimulationController2D::get_simulation() const {
 	return _sim;
 }
 
-void SimulationController2D::set_simulation_state(bool p_state) {
+void SimulationController2D::set_simulation_pause(bool p_state) {
 
-	if (simulation_active != p_state) {
-		simulation_active = p_state;
+	if (simulation_paused != p_state) {
+		simulation_paused = p_state;
 		_notify_simulation_change();
 	}
 }
 
-bool SimulationController2D::is_simulation_active() const {
+bool SimulationController2D::is_simulation_paused() const {
 
-	return simulation_active;
+	return simulation_paused;
 }
 
 void SimulationController2D::set_simulation_precision(SimulationPrecision p_precision) {
@@ -198,24 +198,23 @@ int SimulationController2D::get_noise_pixel_resolution() const {
 	return noise_pixel_resolution;
 }
 
-real_t SimulationController2D::get_current_noise_modulation_dir(const Vector2 &pos) const {
+Vector2 SimulationController2D::get_current_noise_modulation(const Vector2 &pos) const {
 
-#ifdef MODULE_OPENSIMPLEX_ENABLED
-	return Math::map(_noise->get_noise_3d(pos.x / noise_pixel_resolution, pos.y / noise_pixel_resolution, _time_progress * noise_time_scale), -1, 1, 0, Math_Two_PI);
-#else
-	return 0;
-#endif
+	return Vector2(
+		Math::map(_noise->get_multi_noise_3d(pos.x / noise_pixel_resolution, pos.y / noise_pixel_resolution, _time_progress), -1, 1, 0, Math_Two_PI),
+		Math::map(_noise->get_multi_noise_3d(10000 + pos.x / (2 * noise_pixel_resolution), 10000 + pos.y / (2 * noise_pixel_resolution), _time_progress), -1, 1, 0, 1)
+	);
 }
 #endif
 
 void SimulationController2D::simulation_progress(real_t p_delta) {
 
-	if (simulation_active) {
+	if (!simulation_paused) {
 		if (noise_modulation) {
 			std::map<simid_t, Vector2> forces;
 			Vector<Object *> objects = _get_connected_nodes();
 			for (int n = 0; n < objects.size(); ++n) {
-				_add_node_noise_modulation_value(objects[n], _noise, _time_progress * noise_time_scale, noise_pixel_resolution, forces);
+				_add_node_noise_modulation_value(objects[n], _noise, _time_progress, noise_pixel_resolution, forces);
 			}
 			if (!forces.empty()) {
 				for (auto &f : forces)
@@ -225,7 +224,7 @@ void SimulationController2D::simulation_progress(real_t p_delta) {
 		} else {
 			_sim->simulate_all(_simulation_delta[simulation_precision], simulation_force);
 		}
-		_time_progress += p_delta;
+		_time_progress += p_delta * noise_time_scale;
 		emit_signal("simulation_progress");
 	}
 }
@@ -241,7 +240,7 @@ Vector2 SimulationController2D::get_simulation_force_for_node(Node *p_node) {
 #ifdef MODULE_OPENSIMPLEX_ENABLED
 	if (noise_modulation) {
 		Vector2 node_force;
-		if (_get_node_noise_modulation_value(p_node, _noise, _time_progress * noise_time_scale, noise_pixel_resolution, node_force)) {
+		if (_get_node_noise_modulation_value(p_node, _noise, _time_progress, noise_pixel_resolution, node_force)) {
 			return node_force * simulation_force;
 		}
 	}
@@ -255,8 +254,8 @@ void SimulationController2D::_bind_methods() {
 	BIND_ENUM_CONSTANT(PRECISION_MEDIUM);
 	BIND_ENUM_CONSTANT(PRECISION_HIGH);
 
-	ClassDB::bind_method(D_METHOD("set_simulation_state", "active"), &SimulationController2D::set_simulation_state);
-	ClassDB::bind_method(D_METHOD("is_simulation_active"), &SimulationController2D::is_simulation_active);
+	ClassDB::bind_method(D_METHOD("set_simulation_pause", "active"), &SimulationController2D::set_simulation_pause);
+	ClassDB::bind_method(D_METHOD("is_simulation_paused"), &SimulationController2D::is_simulation_paused);
 	ClassDB::bind_method(D_METHOD("set_simulation_precision", "precision"), &SimulationController2D::set_simulation_precision);
 	ClassDB::bind_method(D_METHOD("get_simulation_precision"), &SimulationController2D::get_simulation_precision);
 	ClassDB::bind_method(D_METHOD("set_simulation_force", "precision"), &SimulationController2D::set_simulation_force);
@@ -270,12 +269,12 @@ void SimulationController2D::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("reset_simulation"), &SimulationController2D::reset_simulation);
 
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "active"), "set_simulation_state", "is_simulation_active");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "paused"), "set_simulation_pause", "is_simulation_paused");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "simulation_precision", PROPERTY_HINT_ENUM, "Low,Medium,High"), "set_simulation_precision", "get_simulation_precision");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "simulation_force"), "set_simulation_force", "get_simulation_force");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "noise_modulation"), "set_noise_modulation", "is_noise_modulation_active");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "noise_time_scale", PROPERTY_HINT_RANGE, "0,100,1,or_greater"), "set_noise_time_scale", "get_noise_time_scale");
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "noise_pixel_resolution"), "set_noise_pixel_resolution", "get_noise_pixel_resolution");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "noise_pixel_resolution", PROPERTY_HINT_RANGE, "1,100,1,or_greater"), "set_noise_pixel_resolution", "get_noise_pixel_resolution");
 
 	ADD_SIGNAL(MethodInfo("simulation_changed"));
 	ADD_SIGNAL(MethodInfo("simulation_progress"));
@@ -290,12 +289,12 @@ SimulationController2D::SimulationController2D() {
 #ifdef MODULE_OPENSIMPLEX_ENABLED
 	noise_modulation = false;
 	noise_time_scale = 20;
-	noise_pixel_resolution = 20;
+	noise_pixel_resolution = 10;
 	_noise = newref(OpenSimplexNoise);
 	_noise->set_persistence(0.3); // more smoothness
 #endif
 
-	simulation_active = false;
+	simulation_paused = true;
 	simulation_precision = PRECISION_MEDIUM;
 	simulation_force = Vector2(10, 10);
 }
@@ -361,8 +360,10 @@ void SimulationControllerDebugInstance2D::_notification(int p_what) {
 						for (int r = 0; r < size.y; r += cell_size) {
 							for (int c = 0; c < size.x; c += cell_size) {
 								const Vector2 pos = Point2(c, r);
-								const real_t dir = controller->get_current_noise_modulation_dir(pos);
-								_draw_debug_marker(this, pos, dir, cell_size - 2, cell_size / 3, cell_size / 4);
+								const Vector2 noise = controller->get_current_noise_modulation(pos);
+								const real_t dir = noise.x;
+								const real_t mag = noise.y;
+								_draw_debug_marker(this, pos,dir, mag * cell_size, mag * cell_size / 3, mag * cell_size / 4);
 							}
 						}
 					}
@@ -387,7 +388,7 @@ SimulationControllerDebugInstance2D::SimulationControllerDebugInstance2D() {
 
 void SimulationControllerInstance2D::_on_controller_changed() {
 
-	set_process_internal(controller->is_simulation_active());
+	set_process_internal(!controller->is_simulation_paused());
 }
 
 void SimulationControllerInstance2D::_notification(int p_what) {
@@ -421,7 +422,7 @@ void SimulationControllerInstance2D::set_controller(const Ref<SimulationControll
 		controller = p_controller;
 		if (controller.is_valid())
 			controller->connect("simulation_changed", this, "_on_controller_changed");
-		set_process_internal(controller.is_valid() && controller->is_simulation_active());
+		set_process_internal(controller.is_valid() && !controller->is_simulation_paused());
 	}
 }
 
@@ -463,12 +464,6 @@ SimulationControllerInstance2D::~SimulationControllerInstance2D() {
 
 // BEGIN Mesh elastic-deform.
 
-void DeformMeshInstance2D::_update_meta() {
-
-	set_meta("__noise_modulation_scale", noise_scale);
-	set_meta("__simulation_id", _sim_id);
-}
-
 void DeformMeshInstance2D::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_READY: {
@@ -484,6 +479,19 @@ void DeformMeshInstance2D::_notification(int p_what) {
 int DeformMeshInstance2D::get_simulation_id() const {
 
 	return _sim_id;
+}
+
+bool DeformMeshInstance2D::is_sprite_simulation_paused() const {
+
+	return sprite_simulation_pause;
+}
+
+void DeformMeshInstance2D::set_sprite_simulation_pause(bool p_state) {
+
+	if (sprite_simulation_pause != p_state) {
+		sprite_simulation_pause = p_state;
+		update();
+	}
 }
 
 Ref<SimulationController2D> DeformMeshInstance2D::get_controller() const {
@@ -514,28 +522,29 @@ Vector2 DeformMeshInstance2D::get_noise_scale() const {
 void DeformMeshInstance2D::set_noise_scale(Vector2 p_scale) {
 
 	noise_scale = p_scale;
-	_update_meta();
 }
 
 void DeformMeshInstance2D::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_controller", "controller"), &DeformMeshInstance2D::set_controller);
 	ClassDB::bind_method(D_METHOD("get_controller"), &DeformMeshInstance2D::get_controller);
+	ClassDB::bind_method(D_METHOD("set_sprite_simulation_pause"), &DeformMeshInstance2D::set_sprite_simulation_pause);
+	ClassDB::bind_method(D_METHOD("is_sprite_simulation_paused"), &DeformMeshInstance2D::is_sprite_simulation_paused);
 	ClassDB::bind_method(D_METHOD("set_noise_scale", "scale"), &DeformMeshInstance2D::set_noise_scale);
 	ClassDB::bind_method(D_METHOD("get_noise_scale"), &DeformMeshInstance2D::get_noise_scale);
 
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "sprite_pause"), "set_sprite_simulation_pause", "is_sprite_simulation_paused");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "controller"), "set_controller", "get_controller");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "noise_scale"), "set_noise_scale", "get_noise_scale");
 }
 
 DeformMeshInstance2D::DeformMeshInstance2D() {
 
+	sprite_simulation_pause = false;
 	controller = Ref<SimulationController2D>(NULL);
 
 	_sim_id = -1;
 	noise_scale = Vector2(1, 0);
-
-	_update_meta();
 }
 
 DeformMeshInstance2D::~DeformMeshInstance2D() {
@@ -560,12 +569,6 @@ void DeformSprite::_edit_set_rect(const Rect2 &p_rect) {
 }
 #endif
 
-void DeformSprite::_update_meta() {
-
-	set_meta("__noise_modulation_scale", noise_scale);
-	set_meta("__simulation_id", _sim_id);
-}
-
 void DeformSprite::_update_simulation() {
 
 	ERR_FAIL_COND(controller.is_null());
@@ -577,7 +580,7 @@ void DeformSprite::_update_simulation() {
 	const Size2 scaled_rect = get_rect().size * geometry_pixel_unit * get_scale();
 	if (_sim_id == -1) {
 		_sim_id = sim->make_sim(scaled_rect, geometry_segments, geometry_size_variation, geometry_anchor, geometry_stiffness, physics_variation);
-		_update_meta();
+		sim->set_sim_state(_sim_id, sprite_simulation_pause ? ElasticSimulation::SIM_STATE_PAUSED : ElasticSimulation::SIM_STATE_RUNNING);
 	} else {
 		sim->update_sim(_sim_id, scaled_rect, geometry_segments, geometry_size_variation, geometry_anchor, geometry_stiffness, physics_variation);
 	}
@@ -620,48 +623,54 @@ void DeformSprite::_create_geom() {
 	const bool horiz = geometry_anchor == ElasticSimulation::SIM_ANCHOR_LEFT || geometry_anchor == ElasticSimulation::SIM_ANCHOR_RIGHT;
 
 	const Vector2
-			DXv(rc.size.width / (horiz ? segs : 1), 0),
-			DYv(0, rc.size.height / (vert ? segs : 1)),
-			HXv(rc.size.width / (horiz ? 2 : 1), 0),
-			HYv(0, rc.size.height / (vert ? 2 : 1));
+			dxV(rc.size.width / (horiz ? segs : 1), 0),
+			dyV(0, rc.size.height / (vert ? segs : 1)),
+			hxV(rc.size.width / (horiz ? 2 : 1), 0),
+			hyV(0, rc.size.height / (vert ? 2 : 1));
 	const Vector2
-			DXt(tc.size.width / (horiz ? segs : 1), 0),
-			DYt(0, tc.size.height / (vert ? segs : 1)),
-			HXt(tc.size.width / (horiz ? 2 : 1), 0),
-			HYt(0, tc.size.height / (vert ? 2 : 1));
+			dxT(tc.size.width / (horiz ? segs : 1), 0),
+			dyT(0, tc.size.height / (vert ? segs : 1)),
+			hxT(tc.size.width / (horiz ? 2 : 1), 0),
+			hyT(0, tc.size.height / (vert ? 2 : 1));
 
 	typedef std::vector<Vector2> Vec2Vector;
 
 	Vec2Vector steps, tsteps;
-	Vector2 starting = rc.position, opposite, step, tstarting = tc.position, topposite, tstep;
+	Vector2 starting = rc.position,
+			opposite,
+			step,
+			tstarting = tc.position,
+			topposite,
+			tstep;
 	if (geometry_size_variation && segs > 1) {
 		switch (geometry_anchor) {
 			case ElasticSimulation::SIM_ANCHOR_TOP: {
-				step = HYv;
-				opposite = DXv;
-				tstep = -HYt;
-				topposite = DXt;
+				step = hyV;
+				opposite = dxV;
+				tstep = hyT;
+				topposite = dxT;
 			} break;
 			case ElasticSimulation::SIM_ANCHOR_BOTTOM: {
 				starting.y += rc.size.height;
-				step = -HYv;
-				opposite = DXv;
+				step = -hyV;
+				opposite = dxV;
 				tstarting.y += tc.size.height;
-				tstep = -HYt;
-				topposite = DXt;
+				tstep = -hyT;
+				topposite = dxT;
 			} break;
 			case ElasticSimulation::SIM_ANCHOR_LEFT: {
-				step = HXv;
-				opposite = DYv;
-				tstep = HXt;
-				topposite = DYt;
+				step = hxV;
+				opposite = dyV;
+				tstep = hxT;
+				topposite = dyT;
 			} break;
 			case ElasticSimulation::SIM_ANCHOR_RIGHT: {
 				starting.x += rc.size.width;
-				step = -HXv;
-				opposite = DYv;
+				step = -hxV;
+				opposite = dyV;
 				tstarting.x += tc.size.width;
-				tstep = -HXt;
+				tstep = -hxT;
+				topposite = dyT;
 			} break;
 			default: {
 				ERR_FAIL_MSG("Invalid anchor value.");
@@ -684,31 +693,32 @@ void DeformSprite::_create_geom() {
 	} else {
 		switch (geometry_anchor) {
 			case ElasticSimulation::SIM_ANCHOR_TOP: {
-				step = DYv;
-				opposite = DXv;
-				tstep = -DYt;
-				topposite = DXt;
+				step = dyV;
+				opposite = dxV;
+				tstep = dyT;
+				topposite = dxT;
 			} break;
 			case ElasticSimulation::SIM_ANCHOR_BOTTOM: {
 				starting.y += rc.size.y;
-				step = -DYv;
-				opposite = DXv;
+				step = -dyV;
+				opposite = dxV;
 				tstarting.y += tc.size.y;
-				tstep = -DYt;
-				topposite = DXt;
+				tstep = -dyT;
+				topposite = dxT;
 			} break;
 			case ElasticSimulation::SIM_ANCHOR_LEFT: {
-				step = DXv;
-				opposite = DYv;
-				tstep = DXt;
-				topposite = DYt;
+				step = dxV;
+				opposite = dyV;
+				tstep = dxT;
+				topposite = dyT;
 			} break;
 			case ElasticSimulation::SIM_ANCHOR_RIGHT: {
 				starting.x += rc.size.x;
-				step = -DXv;
-				opposite = DYv;
+				step = -dxV;
+				opposite = dyV;
 				tstarting.x += tc.size.x;
-				tstep = -DXt;
+				tstep = -dxT;
+				topposite = dyT;
 			} break;
 			default: {
 				ERR_FAIL_MSG("Invalid anchor value.");
@@ -841,7 +851,7 @@ void DeformSprite::_notification(int p_what) {
 		case NOTIFICATION_UNPARENTED: {
 		} break;
 		case NOTIFICATION_DRAW: {
-			if (controller.is_valid()) {
+			if (controller.is_valid() && geometry_enable_deformation) {
 				if (_sim_dirty) {
 					_update_simulation();
 					_sim_dirty = false;
@@ -875,7 +885,6 @@ void DeformSprite::_on_texture_changed() {
 			if (_sim_id >= 0)
 				sim->remove_sim(_sim_id);
 		_sim_id = -1;
-		_update_meta();
 		update();
 	}
 }
@@ -886,7 +895,7 @@ int DeformSprite::get_simulation_id() const {
 }
 
 void DeformSprite::set_geometry_anchor(ElasticSimulation::Anchor p_anchor) {
-	ERR_FAIL_INDEX(p_anchor, ElasticSimulation::SIM_ANCHOR_COUNT);
+	ERR_FAIL_INDEX(p_anchor, ElasticSimulation::SimAnchorCount);
 
 	geometry_anchor = p_anchor;
 	_sim_dirty = true;
@@ -898,8 +907,21 @@ ElasticSimulation::Anchor DeformSprite::get_geometry_anchor() const {
 	return geometry_anchor;
 }
 
+bool DeformSprite::is_geometry_deformation_enabled() const {
+
+	return geometry_enable_deformation;
+}
+
+void DeformSprite::set_geometry_enable_deformation(bool p_state) {
+
+	if (geometry_enable_deformation != p_state) {
+		geometry_enable_deformation = p_state;
+		update();
+	}
+}
+
 void DeformSprite::set_geometry_segments(int p_segments) {
-	ERR_FAIL_COND(p_segments <= 0);
+	ERR_FAIL_COND(p_segments < 1);
 
 	geometry_segments = p_segments;
 	_sim_dirty = true;
@@ -954,6 +976,7 @@ real_t DeformSprite::get_geometry_stiffness() const {
 }
 
 void DeformSprite::set_physics_variation(bool p_variation) {
+
 	if (physics_variation != p_variation) {
 		physics_variation = p_variation;
 		_sim_dirty = true;
@@ -974,7 +997,6 @@ Vector2 DeformSprite::get_noise_scale() const {
 void DeformSprite::set_noise_scale(Vector2 p_scale) {
 
 	noise_scale = p_scale;
-	_update_meta();
 }
 
 void DeformSprite::set_geometry_debug(bool p_debug) {
@@ -990,6 +1012,23 @@ bool DeformSprite::get_geometry_debug() const {
 	return geometry_debug;
 }
 
+bool DeformSprite::is_sprite_simulation_paused() const {
+
+	return sprite_simulation_pause;
+}
+
+void DeformSprite::set_sprite_simulation_pause(bool p_state) {
+
+	if (sprite_simulation_pause != p_state) {
+		sprite_simulation_pause = p_state;
+		if (Ref<ElasticSimulation> sim = controller->get_simulation()) {
+			if (_sim_id >= 0) {
+				sim->set_sim_state(_sim_id, sprite_simulation_pause ? ElasticSimulation::SIM_STATE_PAUSED : ElasticSimulation::SIM_STATE_RUNNING);
+			}
+		}
+	}
+}
+
 Ref<SimulationController2D> DeformSprite::get_controller() const {
 
 	return controller;
@@ -1003,6 +1042,7 @@ void DeformSprite::set_controller(const Ref<SimulationController2D> &p_controlle
 			controller->disconnect("simulation_changed", this, "_on_simulation_changed");
 			if (Ref<ElasticSimulation> sim = controller->get_simulation()) {
 				sim->remove_sim(_sim_id);
+				_sim_id = -1;
 			}
 		}
 		controller = p_controller;
@@ -1035,9 +1075,13 @@ void DeformSprite::debug_draw_geometry() {
 	}
 	const int pcnt = sim->get_sim_particles_count(_sim_id);
 	ERR_FAIL_COND(pcnt < 4);
+	const Color black = Color::named("black");
 	const Color yellow = Color::named("yellow");
 	for (int i = 0; i < pcnt; i++) {
-		draw_rect(Rect2(origin + sim->get_sim_particle_pos(_sim_id, i) * sc, sim->get_sim_particle_mass(_sim_id, i) * get_scale().inv()), yellow);
+		draw_rect(
+			Rect2(origin + sim->get_sim_particle_pos(_sim_id, i) * sc, sim->get_sim_particle_mass(_sim_id, i) * get_scale().inv()),
+			sim->is_sim_particle_fixed(_sim_id, i) ? black : yellow
+		);
 	}
 	for (int p = 0; p < pcnt - 2; p += 2) {
 		const Point2 &p1 = middle_point(sim->get_sim_particle_pos(_sim_id, p), sim->get_sim_particle_pos(_sim_id, p + 1));
@@ -1056,7 +1100,13 @@ void DeformSprite::debug_draw_geometry() {
 void DeformSprite::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_controller"), &DeformSprite::get_controller);
 	ClassDB::bind_method(D_METHOD("set_controller", "controller"), &DeformSprite::set_controller);
+	ClassDB::bind_method(D_METHOD("set_sprite_simulation_pause"), &DeformSprite::set_sprite_simulation_pause);
+	ClassDB::bind_method(D_METHOD("is_sprite_simulation_paused"), &DeformSprite::is_sprite_simulation_paused);
+	ClassDB::bind_method(D_METHOD("set_noise_scale"), &DeformSprite::set_noise_scale);
+	ClassDB::bind_method(D_METHOD("get_noise_scale"), &DeformSprite::get_noise_scale);
 
+	ClassDB::bind_method(D_METHOD("set_geometry_enable_deformation", "state"), &DeformSprite::set_geometry_enable_deformation);
+	ClassDB::bind_method(D_METHOD("is_geometry_deformation_enabled"), &DeformSprite::is_geometry_deformation_enabled);
 	ClassDB::bind_method(D_METHOD("set_geometry_segments", "segments"), &DeformSprite::set_geometry_segments);
 	ClassDB::bind_method(D_METHOD("get_geometry_segments"), &DeformSprite::get_geometry_segments);
 	ClassDB::bind_method(D_METHOD("set_geometry_size_variation", "size_variation"), &DeformSprite::set_geometry_size_variation);
@@ -1074,17 +1124,16 @@ void DeformSprite::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("get_simulation_id"), &DeformSprite::get_simulation_id);
 
-	ClassDB::bind_method(D_METHOD("set_noise_scale"), &DeformSprite::set_noise_scale);
-	ClassDB::bind_method(D_METHOD("get_noise_scale"), &DeformSprite::get_noise_scale);
-
 	ClassDB::bind_method(D_METHOD("_on_simulation_update"), &DeformSprite::_on_simulation_update);
 	ClassDB::bind_method(D_METHOD("_on_simulation_changed"), &DeformSprite::_on_simulation_changed);
 	ClassDB::bind_method(D_METHOD("_on_texture_changed"), &DeformSprite::_on_texture_changed);
 
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "sprite_pause"), "set_sprite_simulation_pause", "is_sprite_simulation_paused");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "controller"), "set_controller", "get_controller");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "noise_scale"), "set_noise_scale", "get_noise_scale");
 
 	ADD_GROUP("Geometry", "geometry_");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "geometry_enable_deformation"), "set_geometry_enable_deformation", "is_geometry_deformation_enabled");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "geometry_segments", PROPERTY_HINT_RANGE, "1,5,1"), "set_geometry_segments", "get_geometry_segments");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "geometry_size_variation"), "set_geometry_size_variation", "is_geometry_size_variation");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "geometry_anchor", PROPERTY_HINT_ENUM, "Left,Right,Top,Bottom"), "set_geometry_anchor", "get_geometry_anchor");
@@ -1095,15 +1144,18 @@ void DeformSprite::_bind_methods() {
 }
 
 DeformSprite::DeformSprite() {
-	controller = Ref<SimulationController2D>(NULL);
 
+	sprite_simulation_pause = false;
+	controller = Ref<SimulationController2D>(NULL);
+	noise_scale = Vector2(1, 0);
+
+	geometry_enable_deformation = true;
 	geometry_segments = 1;
 	geometry_size_variation = false;
 	geometry_anchor = ElasticSimulation::SIM_ANCHOR_BOTTOM;
 	geometry_pixel_unit = 1;
 	geometry_stiffness = 0.5;
 	physics_variation = false;
-	noise_scale = Vector2(1, 0);
 	geometry_debug = false;
 
 	_sim_id = -1;
@@ -1111,7 +1163,6 @@ DeformSprite::DeformSprite() {
 	_geom_dirty = false;
 
 	_disabled_base_notifications.append(NOTIFICATION_DRAW); // we want only our drawing code
-	_update_meta();
 }
 
 DeformSprite::~DeformSprite() {

@@ -55,7 +55,7 @@ private:
 	Ref<ElasticSimulation> _sim;
 	real_t _time_progress;
 
-	bool simulation_active;
+	bool simulation_paused;
 	SimulationPrecision simulation_precision;
 	Vector2 simulation_force;
 
@@ -74,8 +74,8 @@ protected:
 	static void _bind_methods();
 
 public:
-	void set_simulation_state(bool p_state);
-	bool is_simulation_active() const;
+	void set_simulation_pause(bool p_state);
+	bool is_simulation_paused() const;
 
 	void set_simulation_precision(SimulationPrecision p_precision);
 	SimulationPrecision get_simulation_precision() const;
@@ -91,7 +91,7 @@ public:
 	void set_noise_time_scale(int p_scale);
 	int get_noise_time_scale() const;
 
-	real_t get_current_noise_modulation_dir(const Vector2 &pos) const;
+	Vector2 get_current_noise_modulation(const Vector2 &pos) const; // return [angle,magnitude]
 #endif
 
 	Ref<ElasticSimulation> get_simulation() const;
@@ -167,6 +167,7 @@ class DeformMeshInstance2D : public MeshInstance2D {
 private:
 	int _sim_id;
 
+	bool sprite_simulation_pause;
 	Ref<SimulationController2D> controller;
 
 	Vector2 noise_scale;
@@ -176,8 +177,6 @@ private:
 	real_t geometry_pixel_unit;
 	bool geometry_debug;
 
-	void _update_meta();
-
 protected:
 	static void _bind_methods();
 
@@ -186,13 +185,15 @@ protected:
 public:
 	int get_simulation_id() const;
 
-	Vector2 get_noise_scale() const;
-	void set_noise_scale(Vector2 p_scale);
-	int get_motion_interpolations() const;
-	void set_motion_interpolations(int p_steps);
-
 	Ref<SimulationController2D> get_controller() const;
 	void set_controller(const Ref<SimulationController2D> &p_controller);
+	bool is_sprite_simulation_paused() const;
+	void set_sprite_simulation_pause(bool p_state);
+	Vector2 get_noise_scale() const;
+	void set_noise_scale(Vector2 p_scale);
+
+	int get_motion_interpolations() const;
+	void set_motion_interpolations(int p_steps);
 
 	DeformMeshInstance2D();
 	~DeformMeshInstance2D();
@@ -206,10 +207,12 @@ private:
 	bool _sim_dirty;
 	bool _geom_dirty;
 
+	bool sprite_simulation_pause;
 	Ref<SimulationController2D> controller;
 	Vector2 noise_scale;
 	int geometry_segments;
 	ElasticSimulation::Anchor geometry_anchor;
+	bool geometry_enable_deformation;
 	bool geometry_size_variation;
 	real_t geometry_pixel_unit;
 	real_t geometry_stiffness;
@@ -225,7 +228,6 @@ private:
 	void _create_geom();
 	void _update_geom();
 	void _update_simulation();
-	void _update_meta();
 
 protected:
 	static void _bind_methods();
@@ -244,12 +246,15 @@ protected:
 public:
 	int get_simulation_id() const;
 
+	Ref<SimulationController2D> get_controller() const;
+	void set_controller(const Ref<SimulationController2D> &p_controller);
+	bool is_sprite_simulation_paused() const;
+	void set_sprite_simulation_pause(bool p_state);
 	Vector2 get_noise_scale() const;
 	void set_noise_scale(Vector2 p_scale);
 
-	Ref<SimulationController2D> get_controller() const;
-	void set_controller(const Ref<SimulationController2D> &p_controller);
-
+	bool is_geometry_deformation_enabled() const;
+	void set_geometry_enable_deformation(bool p_state);
 	void set_geometry_segments(int p_segments);
 	int get_geometry_segments() const;
 	void set_geometry_anchor(ElasticSimulation::Anchor p_anchor);
