@@ -100,6 +100,8 @@ name is available.
     Jakub Grzesik (kubecz3k)
     James Buck (jbuck3)
     Jérôme Gully (Nutriz)
+    Jia Jun Chai (SkyLucilfer)
+    jmb462
     Joan Fons Sanchez (JFonS)
     Johannes Witt (HaSa1002)
     Johan Manuel (29jm)
@@ -108,6 +110,7 @@ name is available.
     Julian Murgia (StraToN)
     Justo Delgado (mrcdk)
     Kelly Thomas (KellyThomas)
+    Kongfa Waroros (gongpha)
     Kostadin Damyanov (Max-Might)
     K. S. Ernest (iFire) Lee (fire)
     lawnjelly
