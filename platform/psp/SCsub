@@ -1,0 +1,7 @@
+Import("env")
+
+sys = []
+audio = []
+video = []
+
+env.Program("#bin/godot", ["os_psp.cpp", "godot_psp.cpp"] + sys + audio + video)
