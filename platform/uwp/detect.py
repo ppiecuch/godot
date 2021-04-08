@@ -164,7 +164,7 @@ def configure(env):
     env.Append(CPPFLAGS=["/AI", vc_base_path + "lib/x86/store/references"])
 
     env.Append(
-        CCFLAGS='/FS /MP /GS /wd"4453" /wd"28204" /wd"4291" /Zc:wchar_t /Gm- /fp:precise /errorReport:prompt /WX- /Zc:forScope /Gd /EHsc /nologo'.split()
+        CCFLAGS='/FS /MP /GS /wd"4453" /wd"28204" /wd"4291" /Zc:wchar_t /Gm- /fp:precise /errorReport:prompt /WX- /Zc:forScope /Zc:__cplusplus /Gd /EHsc /nologo'.split()
     )
     env.Append(CPPDEFINES=["_UNICODE", "UNICODE", ("WINAPI_FAMILY", "WINAPI_FAMILY_APP")])
     env.Append(CXXFLAGS=["/ZW"])
