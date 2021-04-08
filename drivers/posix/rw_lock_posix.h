@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef RWLOCKPOSIX_H
-#define RWLOCKPOSIX_H
+#ifndef POSIX_RW_LOCK_POSIX_H
+#define POSIX_RW_LOCK_POSIX_H
 
 #if defined(UNIX_ENABLED) || defined(PTHREAD_ENABLED)
 
@@ -57,4 +57,4 @@ public:
 
 #endif
 
-#endif // RWLOCKPOSIX_H
+#endif // POSIX_RW_LOCK_POSIX_H

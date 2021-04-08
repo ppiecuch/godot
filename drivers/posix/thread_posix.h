@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef THREAD_POSIX_H
-#define THREAD_POSIX_H
+#ifndef POSIX_THREAD_POSIX_H
+#define POSIX_THREAD_POSIX_H
 
 /**
 	@author Juan Linietsky <reduzio@gmail.com>
@@ -42,18 +42,9 @@
 #include <pthread.h>
 #include <sys/types.h>
 
-class Thread {
+class String;
 
-private:
-	static pthread_key_t thread_id_key;
-	static ID next_thread_id;
-	static ID main_thread_id;
-
-	pthread_t pthread;
-	pthread_attr_t pthread_attr;
-	Callback callback;
-	void *user;
-	ID id;
+class PosixThread {
 
 public:
 	friend class Main;
@@ -75,6 +66,18 @@ public:
 
 	static void *thread_callback(void *p_userdata);
 	static ID get_thread_id();
+	static Error set_name(const String &p_name);
+
+private:
+	static pthread_key_t thread_id_key;
+	static ID next_thread_id;
+	static ID main_thread_id;
+
+	pthread_t pthread;
+	pthread_attr_t pthread_attr;
+	Callback callback;
+	void *user;
+	ID id;
 
 public:
 	_FORCE_INLINE_ ID get_id() const { return id; }
@@ -85,14 +88,13 @@ public:
 
 	void start(Callback p_callback, void *p_user, const Settings &p_settings = Settings());
 	bool is_started() const;
-	Error set_name(const String &p_name);
 	///< waits until thread is finished, and deallocates it.
 	void wait_to_finish();
 
-	ThreadPosix();
-	~ThreadPosix();
+	PosixThread();
+	~PosixThread();
 };
 
 #endif
 
-#endif // THREAD_POSIX_H
+#endif // POSIX_THREAD_POSIX_H

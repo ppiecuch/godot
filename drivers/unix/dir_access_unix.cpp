@@ -142,9 +142,19 @@ String DirAccessUnix::get_next() {
 	// known if it points to a directory. stat() will resolve the link
 	// for us.
 #ifdef __psp2__
-	_cisdir = true;
+# define GD_ISDIR(e) SCE_S_ISDIR(e->d_stat.st_mode)
+# define GD_ISLNK(e) SCE_S_ISLNK(e->d_stat.st_mode)
+# define GD_ISUNK(e) (0)
+#elif __psp__
+# define GD_ISDIR(e) FIO_S_ISDIR(e->d_stat.st_mode)
+# define GD_ISLNK(e) FIO_S_ISLNK(e->d_stat.st_mode)
+# define GD_ISUNK(e) (0)
 #else
-	if (entry->d_type == DT_UNKNOWN || entry->d_type == DT_LNK) {
+# define GD_ISDIR(e) (e->d_type == DT_DIR)
+# define GD_ISLNK(e) (e->d_type == DT_LNK)
+# define GD_ISUNK(e) (e->d_type == DT_UNKNOWN)
+#endif
+	if (GD_ISUNK(entry) || GD_ISLNK(entry)) {
 		String f = current_dir.plus_file(fname);
 
 		struct stat flags;
@@ -154,9 +164,8 @@ String DirAccessUnix::get_next() {
 			_cisdir = false;
 		}
 	} else {
-		_cisdir = (entry->d_type == DT_DIR);
+		_cisdir = GD_ISDIR(entry);
 	}
-#endif
 
 	_cishidden = is_hidden(fname);
 

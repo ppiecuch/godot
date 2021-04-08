@@ -167,8 +167,8 @@ def configure(env):
     env.Append(
         CPPDEFINES=[
             "NEED_LONG_INT",
-            "IP6_UNAVAILABLE",
             "UNIX_SOCKETS_ENABLED",
+            "IP6_UNAVAILABLE",
             "LIBC_FILEIO_ENABLED",
         ]
     )

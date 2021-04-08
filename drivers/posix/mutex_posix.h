@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef MUTEX_POSIX_H
-#define MUTEX_POSIX_H
+#ifndef POSIX_MUTEX_POSIX_H
+#define POSIX_MUTEX_POSIX_H
 
 #if defined(UNIX_ENABLED) || defined(PTHREAD_ENABLED)
 
@@ -50,4 +50,4 @@ public:
 };
 
 #endif
-#endif // MUTEX_POSIX_H
+#endif // POSIX_MUTEX_POSIX_H

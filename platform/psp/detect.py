@@ -44,10 +44,11 @@ def get_flags():
 		("module_dds_enabled", False),
 		("module_pvr_enabled", False),
 		("module_etc1_enabled", False),
-		("module_upnp_enabled", False),
 		("module_webm_enabled", False),
-		("builtin_zlib", False),
-		("builtin_libpng", False),
+		("module_upnp_enabled", False),
+		("module_mbedtls", False),
+		("builtin_zlib", True),
+		("builtin_libpng", True),
 		("builtin_pcre2_with_jit", False),
 		("thread_support", False),
 	]
@@ -92,6 +93,7 @@ def configure(env):
 	if checkexe([env["CC"], '--version']):
 		print('*** Using psp toolchain.')
 
+	env.Append(CCFLAGS=["-G0"])
 	env.Append(
 		CCFLAGS=[
 			"-Wno-maybe-uninitialized",
@@ -106,8 +108,8 @@ def configure(env):
 
 	pspdev_path = os.environ["PSPSDK"]
 
-	env.Append(CPPPATH=[pspdev_path + "/include"])
-	env.Append(LIBPATH=[pspdev_path + "/lib"])
+	env.Append(CPPPATH=[pspdev_path + "/psp/sdk/include"])
+	env.Append(LIBPATH=[pspdev_path + "/psp/sdk/lib"])
 
 	if env["target"] == "release":
 		if env["debug_release"] == "yes":
@@ -121,11 +123,23 @@ def configure(env):
 	elif env["target"] == "debug":
 		env.Append(CCFLAGS=["-g2", "-Wall", "-DDEBUG_ENABLED", "-DDEBUG_MEMORY_ENABLED"])
 
+	if not check(env, "builtin_freetype"):
+		env.ParseConfig("psp-pkg-config freetype2 --cflags --libs")
+	if not check(env, "builtin_libpng"):
+		env.ParseConfig("psp-pkg-config libpng --cflags --libs")
+	if not check(env, "builtin_zlib"):
+		env.ParseConfig("psp-pkg-config zlib --cflags --libs")
+
+	env.Append(LIBS=["c", "g", "pspuser", "pspkernel"])
+
 	env.Append(
 		CPPDEFINES=[
-			"NEED_LONG_INT",
-			"IP6_UNAVAILABLE",
+			"PTHREAD_ENABLED",
+			"PTHREAD_NO_RENAME",
 			"UNIX_SOCKETS_ENABLED",
+			"IP6_UNAVAILABLE",
+			"NO_GETADDRINFO",
+			"NO_STATVFS",
 			"LIBC_FILEIO_ENABLED",
 		]
 	)

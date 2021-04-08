@@ -59,7 +59,7 @@ public:
 	}
 };
 
-#elif (defined(UNIX_ENABLED) || defined(PTHREAD_ENABLED)) && __cplusplus < 201402L
+#elif defined(PTHREAD_ENABLED)
 
 #include "drivers/posix/mutex_posix.h"
 

@@ -29,13 +29,12 @@
 /*************************************************************************/
 
 #if (defined(UNIX_ENABLED) || defined(PTHREAD_ENABLED)) && !defined(NO_THREADS)
+#if !defined(PLATFORM_THREAD_H) && !defined(PTHREAD_ENABLED)
 
 #include "thread_posix.h"
 
 #include "core/os/thread.h"
 #include "core/ustring.h"
-
-#if !defined(PLATFORM_THREAD_H)
 
 #ifdef PTHREAD_BSD_SET_NAME
 #include <pthread_np.h>
@@ -75,5 +74,5 @@ void init_thread_posix() {
 	Thread::_set_platform_funcs(&set_name);
 }
 
-#endif // PLATFORM_THREAD_H
+#endif
 #endif

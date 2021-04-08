@@ -26,7 +26,7 @@ modules = [
 ]
 
 ignore = []
-if env["platform"] == "3ds":
+if env["platform"] == "3ds" or env["platform"] == "psp":
     ignore += ["scene/heatmap.cpp"]
 if env["disable_advanced_gui"] == True:
     ignore += ["gd/input_map_editor.cpp"]

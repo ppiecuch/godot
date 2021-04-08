@@ -28,17 +28,17 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "thread_posix.h"
-#include "core/script_language.h"
-
 #if (defined(UNIX_ENABLED) || defined(PTHREAD_ENABLED)) && !defined(NO_THREADS)
 
 #ifdef PTHREAD_BSD_SET_NAME
 #include <pthread_np.h>
 #endif
 
-#include "core/os/memory.h"
+#include "thread_posix.h"
+#include "core/script_language.h"
+#include "core/ustring.h"
 #include "core/safe_refcount.h"
+#include "core/os/memory.h"
 
 static void _thread_id_key_destr_callback(void *p_value) {
 

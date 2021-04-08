@@ -519,9 +519,9 @@ void ElasticSimulation::set_sim_state(simid_t p_sim_id, State p_state) {
 ElasticSimulation::State ElasticSimulation::get_sim_state(simid_t p_sim_id) const {
 	ERR_FAIL_INDEX_V(p_sim_id, _sim->simulations.size(), SIM_STATE_REMOVED);
 	switch(_sim->simulations[p_sim_id].state) {
-		case sim3::Sim::StateEmpty: return SIM_STATE_REMOVED;
 		case sim3::Sim::StateRunning: return SIM_STATE_RUNNING;
 		case sim3::Sim::StatePaused: return SIM_STATE_PAUSED;
+		default: return SIM_STATE_REMOVED;
 	}
 }
 

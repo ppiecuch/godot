@@ -28,11 +28,11 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef THREAD_POSIX_H
-#define THREAD_POSIX_H
+#ifndef UNIX_THREAD_POSIX_H
+#define UNIX_THREAD_POSIX_H
 
 #if !defined(NO_THREADS)
 void init_thread_posix();
 #endif
 
-#endif
+#endif // UNIX_THREAD_POSIX_H

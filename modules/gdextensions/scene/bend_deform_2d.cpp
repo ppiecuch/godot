@@ -1021,8 +1021,8 @@ void DeformSprite::set_sprite_simulation_pause(bool p_state) {
 
 	if (sprite_simulation_pause != p_state) {
 		sprite_simulation_pause = p_state;
-		if (Ref<ElasticSimulation> sim = controller->get_simulation()) {
-			if (_sim_id >= 0) {
+		if (_sim_id >= 0 && controller.is_valid()) {
+			if (Ref<ElasticSimulation> sim = controller->get_simulation()) {
 				sim->set_sim_state(_sim_id, sprite_simulation_pause ? ElasticSimulation::SIM_STATE_PAUSED : ElasticSimulation::SIM_STATE_RUNNING);
 			}
 		}

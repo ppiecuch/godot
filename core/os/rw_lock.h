@@ -40,7 +40,7 @@
 
 #include PLATFORM_RWLOCK_H
 
-#elif (defined(UNIX_ENABLED) || defined(PTHREAD_ENABLED)) && __cplusplus < 201402L
+#elif defined(PTHREAD_ENABLED) || __cplusplus < 201402L // c++11
 
 #include "drivers/posix/rw_lock_posix.h"
 

@@ -28,15 +28,15 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifdef SCE_VITA_ENABLED
+#ifdef __psp2__
 
 #include "core/os/os.h"
 
 #include "rasterizer_gxm.h"
 
-void RasterizerCitro3D::initialize() {
+void RasterizerGXM::initialize() {
 
 	print_verbose("gxm driver init ..");
 }
 
-#endif // SCE_VITA_ENABLED
+#endif // __psp2__

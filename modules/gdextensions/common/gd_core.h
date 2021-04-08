@@ -71,6 +71,8 @@ static inline void _trace(int line, const char *file, const String &text) {
 			sc->add_exit_callback([=]() {                 \
 				pRef.unref();                             \
 			});                                           \
+		} else {                                          \
+			WARN_PRINT("Cannot register exit callback."); \
 		}                                                 \
 	}
 

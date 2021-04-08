@@ -32,7 +32,7 @@
 
 #include "core/script_language.h"
 
-#if !defined(NO_THREADS) && !defined(PLATFORM_THREAD_H)
+#if !defined(NO_THREADS) && !defined(PTHREAD_ENABLED) && !defined(PLATFORM_THREAD_H)
 
 #include "core/safe_refcount.h"
 

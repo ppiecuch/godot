@@ -28,14 +28,14 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef SEMAPHORE_POSIX_H
-#define SEMAPHORE_POSIX_H
+#ifndef POSIX_SEMAPHORE_POSIX_H
+#define POSIX_SEMAPHORE_POSIX_H
 
 #if defined(UNIX_ENABLED) || defined(PTHREAD_ENABLED)
 
 #include "core/error_list.h"
 
-#ifdef __psp2__
+#if defined(__psp__) || defined(__psp2__)
 #include <sys/types.h> // fixing missing mode_t definition
 #endif
 
@@ -66,4 +66,4 @@ public:
 };
 
 #endif
-#endif // SEMAPHORE_POSIX_H
+#endif // POSIX_SEMAPHORE_POSIX_H

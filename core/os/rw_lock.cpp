@@ -30,7 +30,7 @@
 
 #if !defined(NO_THREADS)
 
-#if ((defined(_MSVC_LANG) && _MSVC_LANG < 201402L) || __cplusplus < 201402L)
+#if defined(PTHREAD_ENABLED) || __cplusplus < 201402L
 #include "drivers/posix/rw_lock_posix.cpp"
 #endif
 

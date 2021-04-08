@@ -33,7 +33,6 @@
 
 #include "core/error_list.h"
 #include "core/typedefs.h"
-#include "core/ustring.h"
 
 extern "C" {
 #include <3ds/svc.h>
@@ -43,6 +42,8 @@ extern "C" {
 #undef Thread
 #include <3ds/types.h>
 }
+
+class String;
 
 class Thread {
 

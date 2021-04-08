@@ -31,6 +31,7 @@
 #ifndef OS_THREAD_H
 #define OS_THREAD_H
 
+#include "core/safe_refcount.h"
 #include "core/error_list.h"
 #include "core/typedefs.h"
 #include "platform_config.h"
@@ -39,10 +40,16 @@
 
 #include PLATFORM_THREAD_H
 
-#else // PLATFORM_THREAD_H
+#elif defined(PTHREAD_ENABLED)
+
+#include "drivers/posix/thread_posix.h"
+
+class Thread : public PosixThread {
+};
+
+#else
 
 #if !defined(NO_THREADS)
-#include "core/safe_refcount.h"
 #include <thread>
 #endif
 

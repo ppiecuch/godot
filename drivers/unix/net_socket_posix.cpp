@@ -35,7 +35,7 @@
 
 #include <errno.h>
 #include <netdb.h>
-#ifndef __psp2__
+#if !defined(__psp__) && !defined(__psp2__)
 #include <poll.h>
 #endif
 #include <stdio.h>
@@ -86,6 +86,36 @@
 #define SOCK_IOCTL ioctl
 #define SOCK_CLOSE ::close
 #define SOCK_CONNECT(p_sock, p_addr, p_addr_len) ::connect(p_sock, p_addr, p_addr_len)
+
+#ifdef NO_GETADDRINFO
+
+#define _SS_MAXSIZE 128
+#define _SS_ALIGNSIZE (sizeof(int64_t))
+#define _SS_PAD1SIZE (_SS_ALIGNSIZE - sizeof(sa_family_t))
+#define _SS_PAD2SIZE (_SS_MAXSIZE - (sizeof(sa_family_t)+ \
+                      _SS_PAD1SIZE + _SS_ALIGNSIZE))
+struct sockaddr_storage {
+    sa_family_t  ss_family;
+
+    char _ss_pad1[_SS_PAD1SIZE];
+    int64_t _ss_align;
+    char _ss_pad2[_SS_PAD2SIZE];
+};
+struct addrinfo {
+    int              ai_flags;
+    int              ai_family;
+    int              ai_socktype;
+    int              ai_protocol;
+    size_t           ai_addrlen;
+    struct sockaddr *ai_addr;
+    char            *ai_canonname;
+    struct addrinfo *ai_next;
+};
+#ifndef AI_PASSIVE
+#define AI_PASSIVE     1
+#endif /* AI_PASSIVE */
+
+#endif // NO_GETADDRINFO
 
 /* Windows */
 #elif defined(WINDOWS_ENABLED)
@@ -531,7 +561,7 @@ Error NetSocketPosix::poll(PollType p_type, int p_timeout) const {
 		ready = true;
 
 	return ready ? OK : ERR_BUSY;
-#elif defined(__psp2__)
+#elif defined(__psp__) || defined(__psp2__)
 	// TODO: Not implemented
 	return ERR_BUSY;
 #else
