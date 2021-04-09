@@ -31,8 +31,8 @@
 #ifndef OS_THREAD_H
 #define OS_THREAD_H
 
-#include "core/safe_refcount.h"
 #include "core/error_list.h"
+#include "core/safe_refcount.h"
 #include "core/typedefs.h"
 #include "platform_config.h"
 

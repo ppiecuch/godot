@@ -36,11 +36,11 @@
 #include <pthread_np.h>
 #endif
 
-#include "thread_posix.h"
+#include "core/os/memory.h"
+#include "core/safe_refcount.h"
 #include "core/script_language.h"
 #include "core/ustring.h"
-#include "core/safe_refcount.h"
-#include "core/os/memory.h"
+#include "thread_posix.h"
 
 #if defined(__psp__) || defined(__psp2__)
 #include <pte_osal.h>

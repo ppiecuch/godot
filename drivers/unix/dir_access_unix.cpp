@@ -142,17 +142,17 @@ String DirAccessUnix::get_next() {
 	// known if it points to a directory. stat() will resolve the link
 	// for us.
 #ifdef __psp2__
-# define GD_ISDIR(e) SCE_S_ISDIR(e->d_stat.st_mode)
-# define GD_ISLNK(e) SCE_S_ISLNK(e->d_stat.st_mode)
-# define GD_ISUNK(e) (0)
+#define GD_ISDIR(e) SCE_S_ISDIR(e->d_stat.st_mode)
+#define GD_ISLNK(e) SCE_S_ISLNK(e->d_stat.st_mode)
+#define GD_ISUNK(e) (0)
 #elif __psp__
-# define GD_ISDIR(e) FIO_S_ISDIR(e->d_stat.st_mode)
-# define GD_ISLNK(e) FIO_S_ISLNK(e->d_stat.st_mode)
-# define GD_ISUNK(e) (0)
+#define GD_ISDIR(e) FIO_S_ISDIR(e->d_stat.st_mode)
+#define GD_ISLNK(e) FIO_S_ISLNK(e->d_stat.st_mode)
+#define GD_ISUNK(e) (0)
 #else
-# define GD_ISDIR(e) (e->d_type == DT_DIR)
-# define GD_ISLNK(e) (e->d_type == DT_LNK)
-# define GD_ISUNK(e) (e->d_type == DT_UNKNOWN)
+#define GD_ISDIR(e) (e->d_type == DT_DIR)
+#define GD_ISLNK(e) (e->d_type == DT_LNK)
+#define GD_ISUNK(e) (e->d_type == DT_UNKNOWN)
 #endif
 	if (GD_ISUNK(entry) || GD_ISLNK(entry)) {
 		String f = current_dir.plus_file(fname);

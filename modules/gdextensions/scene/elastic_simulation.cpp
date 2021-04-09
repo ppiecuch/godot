@@ -295,17 +295,17 @@ public:
 	int make_geom(int orientation, const Point2 &starting, Point2 &opposite, const Vector2Array &steps, real_t stiffness, bool variation) {
 		const int sim_id = simulations.size();
 
-		simulations.push_back(Sim{Sim::StateRunning, orientation});
+		simulations.push_back(Sim{ Sim::StateRunning, orientation });
 		build_geom(sim_id, starting, opposite, steps, stiffness, variation);
 
 		return sim_id;
 	}
 	void update_geom(simid_t sim_id, int orientation, const Point2 &starting, const Point2 &opposite, const Vector2Array &steps, real_t stiffness, bool variation) {
-		simulations[sim_id] = Sim{simulations[sim_id].state, simulations[sim_id].orientation};
+		simulations[sim_id] = Sim{ simulations[sim_id].state, simulations[sim_id].orientation };
 		build_geom(sim_id, starting, opposite, steps, stiffness, variation);
 	}
 	void remove_geom(simid_t sim_id) {
-		simulations[sim_id] = Sim{Sim::StateEmpty};
+		simulations[sim_id] = Sim{ Sim::StateEmpty };
 	}
 };
 
@@ -505,7 +505,7 @@ void ElasticSimulation::set_sim_state(simid_t p_sim_id, State p_state) {
 	ERR_FAIL_INDEX(p_state, SimStateCount);
 
 	sim3::Sim &sim = _sim->simulations[p_sim_id];
-	switch(p_state) {
+	switch (p_state) {
 		case SIM_STATE_PAUSED: {
 			sim.state = sim3::Sim::StatePaused;
 		} break;
@@ -520,7 +520,7 @@ void ElasticSimulation::set_sim_state(simid_t p_sim_id, State p_state) {
 
 ElasticSimulation::State ElasticSimulation::get_sim_state(simid_t p_sim_id) const {
 	ERR_FAIL_INDEX_V(p_sim_id, _sim->simulations.size(), SIM_STATE_REMOVED);
-	switch(_sim->simulations[p_sim_id].state) {
+	switch (_sim->simulations[p_sim_id].state) {
 		case sim3::Sim::StateRunning: return SIM_STATE_RUNNING;
 		case sim3::Sim::StatePaused: return SIM_STATE_PAUSED;
 		default: return SIM_STATE_REMOVED;

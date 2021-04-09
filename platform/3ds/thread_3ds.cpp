@@ -31,9 +31,9 @@
 #ifdef _3DS
 
 #include "thread_3ds.h"
-#include "core/ustring.h"
 #include "core/os/memory.h"
 #include "core/script_language.h"
+#include "core/ustring.h"
 #include "platform/3ds/os_3ds.h"
 
 ////////////

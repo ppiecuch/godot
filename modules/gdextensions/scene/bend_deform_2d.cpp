@@ -201,9 +201,8 @@ int SimulationController2D::get_noise_pixel_resolution() const {
 Vector2 SimulationController2D::get_current_noise_modulation(const Vector2 &pos) const {
 
 	return Vector2(
-		Math::map(_noise->get_multi_noise_3d(pos.x / noise_pixel_resolution, pos.y / noise_pixel_resolution, _time_progress), -1, 1, 0, Math_Two_PI),
-		Math::map(_noise->get_multi_noise_3d(10000 + pos.x / (2 * noise_pixel_resolution), 10000 + pos.y / (2 * noise_pixel_resolution), _time_progress), -1, 1, 0, 1)
-	);
+			Math::map(_noise->get_multi_noise_3d(pos.x / noise_pixel_resolution, pos.y / noise_pixel_resolution, _time_progress), -1, 1, 0, Math_Two_PI),
+			Math::map(_noise->get_multi_noise_3d(10000 + pos.x / (2 * noise_pixel_resolution), 10000 + pos.y / (2 * noise_pixel_resolution), _time_progress), -1, 1, 0, 1));
 }
 #endif
 
@@ -363,7 +362,7 @@ void SimulationControllerDebugInstance2D::_notification(int p_what) {
 								const Vector2 noise = controller->get_current_noise_modulation(pos);
 								const real_t dir = noise.x;
 								const real_t mag = noise.y;
-								_draw_debug_marker(this, pos,dir, mag * cell_size, mag * cell_size / 3, mag * cell_size / 4);
+								_draw_debug_marker(this, pos, dir, mag * cell_size, mag * cell_size / 3, mag * cell_size / 4);
 							}
 						}
 					}
@@ -1079,9 +1078,8 @@ void DeformSprite::debug_draw_geometry() {
 	const Color yellow = Color::named("yellow");
 	for (int i = 0; i < pcnt; i++) {
 		draw_rect(
-			Rect2(origin + sim->get_sim_particle_pos(_sim_id, i) * sc, sim->get_sim_particle_mass(_sim_id, i) * get_scale().inv()),
-			sim->is_sim_particle_fixed(_sim_id, i) ? black : yellow
-		);
+				Rect2(origin + sim->get_sim_particle_pos(_sim_id, i) * sc, sim->get_sim_particle_mass(_sim_id, i) * get_scale().inv()),
+				sim->is_sim_particle_fixed(_sim_id, i) ? black : yellow);
 	}
 	for (int p = 0; p < pcnt - 2; p += 2) {
 		const Point2 &p1 = middle_point(sim->get_sim_particle_pos(_sim_id, p), sim->get_sim_particle_pos(_sim_id, p + 1));
