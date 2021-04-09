@@ -159,6 +159,8 @@ struct Sim {
 	DConstraintsArray constraints;
 };
 
+// Simple beam simulation
+
 class Simulation {
 
 private:
@@ -293,21 +295,21 @@ public:
 	int make_geom(int orientation, const Point2 &starting, Point2 &opposite, const Vector2Array &steps, real_t stiffness, bool variation) {
 		const int sim_id = simulations.size();
 
-		simulations.push_back((Sim){Sim::StateRunning, orientation});
+		simulations.push_back(Sim{Sim::StateRunning, orientation});
 		build_geom(sim_id, starting, opposite, steps, stiffness, variation);
 
 		return sim_id;
 	}
 	void update_geom(simid_t sim_id, int orientation, const Point2 &starting, const Point2 &opposite, const Vector2Array &steps, real_t stiffness, bool variation) {
-		simulations[sim_id] = (Sim){simulations[sim_id].state, simulations[sim_id].orientation};
+		simulations[sim_id] = Sim{simulations[sim_id].state, simulations[sim_id].orientation};
 		build_geom(sim_id, starting, opposite, steps, stiffness, variation);
 	}
 	void remove_geom(simid_t sim_id) {
-		simulations[sim_id] = (Sim){Sim::StateEmpty};
+		simulations[sim_id] = Sim{Sim::StateEmpty};
 	}
 };
 
-// Mesh FFD 2D support
+// Mesh FFD 2D deformation
 
 class MeshDeformation {
 
