@@ -9,35 +9,37 @@ env_module = env_modules.Clone()
 
 sources = Glob("*.cpp")
 modules = [
-    "gd",
-    "gd2c",
-    "scene",
-    "scenery/tree_2d",
-    "scenery/spherical_waves",
-    "scenery/water_splash",
-    "scenery/vegetation_instance",
-    "scenery/starfield",
-    "scenery/spider_anim",
-    "smooth",
-    "debugdraw",
-    "statemachine",
-    "benet",
-    "behaviornode",
+	"gd",
+	"scene",
+	"scenery/tree_2d",
+	"scenery/spherical_waves",
+	"scenery/water_splash",
+	"scenery/vegetation_instance",
+	"scenery/starfield",
+	"scenery/spider_anim",
+	"smooth",
+	"debugdraw",
+	"statemachine",
+	"benet",
+	"behaviornode",
 ]
+
+if not env["disable_experimental"]:
+	modules += [ "gd2c" ]
 
 ignore = []
 if env["platform"] == "3ds" or env["platform"] == "psp":
-    ignore += ["scene/heatmap.cpp"]
-if env["disable_advanced_gui"] == True:
-    ignore += ["gd/input_map_editor.cpp"]
+	ignore += ["scene/heatmap.cpp"]
+if env["disable_advanced_gui"]:
+	ignore += ["gd/input_map_editor.cpp"]
 
 for m in modules:
-    files = Glob("%s/*.cpp" % m)
-    sources += [f for f in files if str(f) not in ignore]
-    sources += Glob("%s/*.c" % m)
+	files = Glob("%s/*.cpp" % m)
+	sources += [f for f in files if str(f) not in ignore]
+	sources += Glob("%s/*.c" % m)
 
 env_module.Append(
-    CPPPATH=["#thirdparty/enet/", os.path.dirname(os.path.realpath(os.curdir)) + "/gdnative/include", "."]
+	CPPPATH=["#thirdparty/enet/", os.path.dirname(os.path.realpath(os.curdir)) + "/gdnative/include", "."]
 )
 env_module.Append(CPPDEFINES=["GD_GODOT_ENET", "GD_NO_UNUSED_FUNCTIONS"])
 

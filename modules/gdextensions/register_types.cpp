@@ -50,8 +50,10 @@
 #include "gd/trail_2d.h"
 #include "gd/tween2.h"
 
+#ifndef EXPERIMENTAL_DISABLED
 #include "gd2c/bytecode_exporter.h"
 #include "gd2c/gd2c.h"
+#endif
 
 #include "statemachine/state.h"
 #include "statemachine/statemachine.h"
@@ -136,8 +138,10 @@ void register_gdextensions_types() {
 #ifndef ADVANCED_GUI_DISABLED
 	ClassDB::register_class<InputMapEditor>();
 #endif
+#ifndef EXPERIMENTAL_DISABLED
 	ClassDB::register_class<GDScriptBytecodeExporter>();
 	ClassDB::register_class<GD2CApi>();
+#endif
 
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Timer2", memnew(Timer2)));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Tween2", memnew(Tween2)));

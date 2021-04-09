@@ -32,7 +32,12 @@
 
 #include "core/script_language.h"
 
-#if !defined(NO_THREADS) && !defined(PTHREAD_ENABLED) && !defined(PLATFORM_THREAD_H)
+#if !defined(NO_THREADS) && !defined(PLATFORM_THREAD_H)
+#if defined(PTHREAD_ENABLED)
+
+#include "drivers/posix/thread_posix.cpp"
+
+#else
 
 #include "core/safe_refcount.h"
 
@@ -141,4 +146,5 @@ Thread::ID Thread::get_caller_id() {
 		return caller_id;
 	}
 }
-#endif // !NO_THREADS && !PLATFORM_THREAD_H
+#endif // PTHREAD_ENABLED
+#endif // NO_THREADS

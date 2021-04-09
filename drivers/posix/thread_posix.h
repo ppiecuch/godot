@@ -51,7 +51,11 @@ public:
 
 	typedef void (*Callback)(void *p_userdata);
 
+#if defined(__psp__) || defined(__psp2__)
+	typedef int32_t ID;
+#else
 	typedef uint64_t ID;
+#endif
 
 	enum Priority {
 		PRIORITY_LOW,

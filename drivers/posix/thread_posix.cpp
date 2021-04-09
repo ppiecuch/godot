@@ -30,6 +30,8 @@
 
 #if (defined(UNIX_ENABLED) || defined(PTHREAD_ENABLED)) && !defined(NO_THREADS)
 
+#include <pthread.h>
+
 #ifdef PTHREAD_BSD_SET_NAME
 #include <pthread_np.h>
 #endif
@@ -40,9 +42,16 @@
 #include "core/safe_refcount.h"
 #include "core/os/memory.h"
 
+#if defined(__psp__) || defined(__psp2__)
+#include <pte_osal.h>
+#define ATOMIC_INCREMENT pte_osAtomicIncrement
+#else
+#define ATOMIC_INCREMENT atomic_increment
+#endif
+
 static void _thread_id_key_destr_callback(void *p_value) {
 
-	memdelete(static_cast<Thread::ID *>(p_value));
+	memdelete(static_cast<PosixThread::ID *>(p_value));
 }
 
 static pthread_key_t _create_thread_id_key() {
@@ -52,16 +61,16 @@ static pthread_key_t _create_thread_id_key() {
 	return key;
 }
 
-pthread_key_t Thread::thread_id_key = _create_thread_id_key();
-Thread::ID Thread::next_thread_id = 0;
-Thread::ID Thread::main_thread_id = Thread::get_thread_id();
-static thread_local Thread::ID caller_id = 0;
+pthread_key_t PosixThread::thread_id_key = _create_thread_id_key();
+PosixThread::ID PosixThread::main_thread_id = PosixThread::get_thread_id();
+PosixThread::ID PosixThread::next_thread_id = 0;
+static thread_local PosixThread::ID caller_id = 0;
 static thread_local bool caller_id_cached = false;
 
-void *Thread::thread_callback(void *p_userdata) {
+void *PosixThread::thread_callback(void *p_userdata) {
 
-	Thread *t = reinterpret_cast<Thread *>(p_userdata);
-	t->id = atomic_increment(&next_thread_id);
+	PosixThread *t = reinterpret_cast<PosixThread *>(p_userdata);
+	t->id = ATOMIC_INCREMENT(&next_thread_id);
 	pthread_setspecific(thread_id_key, (void *)memnew(ID(t->id)));
 
 	caller_id = t->get_id();
@@ -76,7 +85,7 @@ void *Thread::thread_callback(void *p_userdata) {
 	return NULL;
 }
 
-void Thread::start(Thread::Callback p_callback, void *p_user, const Settings &p_settings) {
+void PosixThread::start(PosixThread::Callback p_callback, void *p_user, const Settings &p_settings) {
 
 	if (pthread != 0) {
 #ifdef DEBUG_ENABLED
@@ -95,41 +104,41 @@ void Thread::start(Thread::Callback p_callback, void *p_user, const Settings &p_
 	pthread_create(&pthread, &pthread_attr, thread_callback, this);
 }
 
-Thread::ID Thread::get_thread_id() {
+PosixThread::ID PosixThread::get_thread_id() {
 
 	void *value = pthread_getspecific(thread_id_key);
 
 	if (value)
 		return *static_cast<ID *>(value);
 
-	ID new_id = atomic_increment(&next_thread_id);
+	ID new_id = ATOMIC_INCREMENT(&next_thread_id);
 	pthread_setspecific(thread_id_key, (void *)memnew(ID(new_id)));
 	return new_id;
 }
 
-Thread::ID Thread::get_caller_id() {
+PosixThread::ID PosixThread::get_caller_id() {
 
 	if (likely(caller_id_cached)) {
 		return caller_id;
 	} else {
-		caller_id = Thread::get_thread_id();
+		caller_id = PosixThread::get_thread_id();
 		caller_id_cached = true;
 		return caller_id;
 	}
 }
 
-bool Thread::is_started() const {
+bool PosixThread::is_started() const {
 
 	return pthread != 0;
 }
 
-void Thread::wait_to_finish() {
+void PosixThread::wait_to_finish() {
 
 	pthread_join(pthread, NULL);
 	pthread = 0;
 }
 
-Error Thread::set_name(const String &p_name) {
+Error PosixThread::set_name(const String &p_name) {
 
 #ifdef PTHREAD_NO_RENAME
 	return ERR_UNAVAILABLE;
@@ -158,12 +167,12 @@ Error Thread::set_name(const String &p_name) {
 #endif // PTHREAD_NO_RENAME
 }
 
-Thread::Thread() {
+PosixThread::PosixThread() {
 
 	pthread = 0;
 }
 
-Thread::~Thread() {
+PosixThread::~PosixThread() {
 }
 
 #endif

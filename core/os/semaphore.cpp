@@ -28,10 +28,10 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#if !defined(NO_THREADS)
+#if !defined(NO_THREADS) && !defined(PLATFORM_SEM_H)
+#if defined(PTHREAD_ENABLED)
 
-#if ((defined(_MSVC_LANG) && _MSVC_LANG < 201402L) || __cplusplus < 201402L)
 #include "drivers/posix/semaphore_posix.cpp"
-#endif
 
+#endif // PTHREAD_ENABLED
 #endif // NO_THREADS

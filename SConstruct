@@ -595,6 +595,8 @@ if selected_platform in platform_list:
             env.Append(CPPDEFINES=["_3D_DISABLED"])
     if env["gdscript"]:
         env.Append(CPPDEFINES=["GDSCRIPT_ENABLED"])
+    if env["disable_experimental"]:
+        env.Append(CPPDEFINES=["EXPERIMENTAL_DISABLED"])
     if env["disable_advanced_gui"]:
         if env["tools"]:
             print(
