@@ -170,7 +170,7 @@ void Timer2::_add_node(Object *node) {
 }
 
 void Timer2::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("wait_trigger:TimerObject", "time", "target", "method"), &Timer2::wait_trigger);
-	ClassDB::bind_method(D_METHOD("wait:TimerObject", "time"), &Timer2::wait);
+	ClassDB::bind_method(D_METHOD("wait_trigger", "time", "target", "method"), &Timer2::wait_trigger);
+	ClassDB::bind_method(D_METHOD("wait", "time"), &Timer2::wait);
 	ClassDB::bind_method(D_METHOD("_add_node", "node"), &Timer2::_add_node);
 }

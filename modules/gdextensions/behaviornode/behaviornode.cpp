@@ -159,7 +159,7 @@ void BehaviorNode::_reset(const Variant &target) {
 }
 
 void BehaviorNode::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("send_notify", "from", "key:String", "value:Variant"), &BehaviorNode::send_notify, DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("send_notify", "from", "key", "value"), &BehaviorNode::send_notify, DEFVAL(0));
 
 	ClassDB::bind_method(D_METHOD("set_behavior_enable", "enable"), &BehaviorNode::set_behavior_enable);
 	ClassDB::bind_method(D_METHOD("get_behavior_enable"), &BehaviorNode::get_behavior_enable);
