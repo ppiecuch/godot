@@ -111,6 +111,7 @@ Thread::ID Thread::get_caller_id() {
 Thread::Thread() {
 
 	thread = 0;
+	id = 0;
 }
 
 Thread::~Thread() {
