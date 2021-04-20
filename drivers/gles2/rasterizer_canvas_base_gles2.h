@@ -93,6 +93,9 @@ public:
 
 		RID current_tex;
 		RID current_normal;
+		RID current_mask;
+		float current_mask_cut_off;
+		Vector3 current_mask_channels_mixer;
 		RasterizerStorageGLES2::Texture *current_tex_ptr;
 
 		Transform vp;
@@ -145,7 +148,7 @@ public:
 	virtual void canvas_light_shadow_buffer_update(RID p_buffer, const Transform2D &p_light_xform, int p_light_mask, float p_near, float p_far, LightOccluderInstance *p_occluders, CameraMatrix *p_xform_cache);
 	virtual void canvas_debug_viewport_shadows(Light *p_lights_with_shadow);
 
-	RasterizerStorageGLES2::Texture *_bind_canvas_texture(const RID &p_texture, const RID &p_normal_map);
+	RasterizerStorageGLES2::Texture *_bind_canvas_texture(const RID &p_texture, const RID &p_normal_map, const RID &p_mask);
 	void _set_texture_rect_mode(bool p_texture_rect, bool p_light_angle = false, bool p_modulate = false, bool p_large_vertex = false);
 
 	void initialize();

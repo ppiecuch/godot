@@ -44,6 +44,7 @@ private:
 	Ref<Mesh> mesh;
 	Ref<Texture> texture;
 	Ref<Texture> normal_map;
+	Ref<Texture> mask;
 
 	Vector3 mesh_angle;
 	Vector3 mesh_scale;
@@ -115,9 +116,10 @@ public:
 
 	void set_mesh_texture(const Ref<Texture> &p_texture);
 	Ref<Texture> get_mesh_texture() const;
-
 	void set_mesh_normal_map(const Ref<Texture> &p_texture);
 	Ref<Texture> get_mesh_normal_map() const;
+	void set_mesh_mask(const Ref<Texture> &p_texture);
+	Ref<Texture> get_mesh_mask() const;
 
 	void set_selected_frame(int p_frame);
 	int get_selected_frame() const;

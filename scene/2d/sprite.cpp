@@ -131,7 +131,7 @@ void Sprite::_notification(int p_what) {
 			Rect2 src_rect, dst_rect;
 			bool filter_clip;
 			_get_rects(src_rect, dst_rect, filter_clip);
-			texture->draw_rect_region(ci, dst_rect, src_rect, Color(1, 1, 1), false, normal_map, filter_clip);
+			texture->draw_rect_region(ci, dst_rect, src_rect, Color(1, 1, 1), false, normal_map, mask, filter_clip);
 
 		} break;
 	}
@@ -158,13 +158,38 @@ void Sprite::set_texture(const Ref<Texture> &p_texture) {
 
 void Sprite::set_normal_map(const Ref<Texture> &p_texture) {
 
+	if (normal_map.is_valid())
+		normal_map->disconnect(CoreStringNames::get_singleton()->changed, this, "_texture_changed");
+
 	normal_map = p_texture;
+
+	if (normal_map.is_valid())
+		normal_map->connect(CoreStringNames::get_singleton()->changed, this, "_texture_changed");
+
 	update();
 }
 
 Ref<Texture> Sprite::get_normal_map() const {
 
 	return normal_map;
+}
+
+void Sprite::set_mask(const Ref<MaskTexture> &p_texture) {
+
+	if (mask.is_valid())
+		mask->disconnect(CoreStringNames::get_singleton()->changed, this, "_texture_changed");
+
+	mask = p_texture;
+
+	if (mask.is_valid())
+		mask->connect(CoreStringNames::get_singleton()->changed, this, "_texture_changed");
+
+	update();
+}
+
+Ref<MaskTexture> Sprite::get_mask() const {
+
+	return mask;
 }
 
 Ref<Texture> Sprite::get_texture() const {
@@ -406,7 +431,7 @@ void Sprite::_texture_changed() {
 
 	// Changes to the texture need to trigger an update to make
 	// the editor redraw the sprite with the updated texture.
-	if (texture.is_valid()) {
+	if (texture.is_valid() || normal_map.is_valid() || mask.is_valid()) {
 		update();
 	}
 }
@@ -418,6 +443,9 @@ void Sprite::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_normal_map", "normal_map"), &Sprite::set_normal_map);
 	ClassDB::bind_method(D_METHOD("get_normal_map"), &Sprite::get_normal_map);
+
+	ClassDB::bind_method(D_METHOD("set_mask", "mask_texture"), &Sprite::set_mask);
+	ClassDB::bind_method(D_METHOD("get_mask"), &Sprite::get_mask);
 
 	ClassDB::bind_method(D_METHOD("set_centered", "centered"), &Sprite::set_centered);
 	ClassDB::bind_method(D_METHOD("is_centered"), &Sprite::is_centered);
@@ -463,6 +491,8 @@ void Sprite::_bind_methods() {
 
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "texture", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_texture", "get_texture");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "normal_map", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_normal_map", "get_normal_map");
+	ADD_GROUP("Masking", "mask_");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "mask", PROPERTY_HINT_RESOURCE_TYPE, "MaskTexture"), "set_mask", "get_mask");
 	ADD_GROUP("Offset", "");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "centered"), "set_centered", "is_centered");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "offset"), "set_offset", "get_offset");

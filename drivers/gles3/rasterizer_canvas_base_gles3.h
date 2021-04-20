@@ -87,6 +87,9 @@ public:
 
 		RID current_tex;
 		RID current_normal;
+		RID current_mask;
+		float current_mask_cut_off;
+		Vector3 current_mask_channels_mixer;
 		RasterizerStorageGLES3::Texture *current_tex_ptr;
 
 		Transform vp;
@@ -102,7 +105,6 @@ public:
 		ShaderLanguage::StencilTest front_stencil;
 		ShaderLanguage::StencilTest back_stencil;
 		bool current_stencil_enabled;
-
 	} state;
 
 	RasterizerStorageGLES3 *storage;
@@ -146,7 +148,7 @@ public:
 	GLenum _get_stencil_op(ShaderLanguage::StencilTest::StencilActionType p_action);
 
 	void _set_texture_rect_mode(bool p_enable, bool p_ninepatch = false, bool p_light_angle = false, bool p_modulate = false, bool p_large_vertex = false);
-	RasterizerStorageGLES3::Texture *_bind_canvas_texture(const RID &p_texture, const RID &p_normal_map, bool p_force = false);
+	RasterizerStorageGLES3::Texture *_bind_canvas_texture(const RID &p_texture, const RID &p_normal_map, const RID &p_mask, bool p_force = false);
 
 	void _draw_gui_primitive(int p_points, const Vector2 *p_vertices, const Color *p_colors, const Vector2 *p_uvs, const float *p_light_angles = nullptr);
 	void _draw_polygon(const int *p_indices, int p_index_count, int p_vertex_count, const Vector2 *p_vertices, const Vector2 *p_uvs, const Color *p_colors, bool p_singlecolor, const int *p_bones, const float *p_weights);

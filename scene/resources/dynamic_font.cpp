@@ -340,7 +340,7 @@ float DynamicFontAtSize::draw_char(RID p_canvas_item, const CharTransform &p_cha
 			RID texture = font->textures[ch->texture_idx].texture->get_rid();
 			VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item,
 					rc.move_by(Point2(0, valign)),
-					texture, p_char_xform.xform_tex(ch->rect_uv), modulate, false, RID(), false);
+					texture, p_char_xform.xform_tex(ch->rect_uv), modulate, false, RID(), RID(), false);
 		}
 
 		advance = ch->advance;

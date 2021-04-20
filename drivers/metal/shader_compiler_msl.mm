@@ -906,6 +906,7 @@ ShaderCompilerMSL::ShaderCompilerMSL() {
 	actions[VS::SHADER_CANVAS_ITEM].renames["TEXTURE"] = "color_texture";
 	actions[VS::SHADER_CANVAS_ITEM].renames["TEXTURE_PIXEL_SIZE"] = "color_texpixel_size";
 	actions[VS::SHADER_CANVAS_ITEM].renames["NORMAL_TEXTURE"] = "normal_texture";
+	actions[VS::SHADER_CANVAS_ITEM].renames["MASK"] = "mask_texture";
 	actions[VS::SHADER_CANVAS_ITEM].renames["SCREEN_UV"] = "screen_uv";
 	actions[VS::SHADER_CANVAS_ITEM].renames["SCREEN_TEXTURE"] = "screen_texture";
 	actions[VS::SHADER_CANVAS_ITEM].renames["SCREEN_PIXEL_SIZE"] = "screen_pixel_size";

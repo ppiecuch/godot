@@ -114,6 +114,7 @@ public:
 		GLuint white_tex;
 		GLuint black_tex;
 		GLuint normal_tex;
+		GLuint mask_tex;
 		GLuint aniso_tex;
 
 		GLuint mipmap_blur_fbo;

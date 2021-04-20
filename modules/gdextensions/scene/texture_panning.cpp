@@ -145,7 +145,7 @@ void TexturePanning::_notification(int p_what) {
 				RID ci = get_canvas_item();
 				Rect2 dest_rect = Rect2(Point2(0, 0), view_size);
 				Rect2 src_rect = Rect2(_texture_offset, (view_size + texture->get_size() * 2) / texture_scale);
-				texture->draw_rect_region(ci, dest_rect, src_rect, get_modulate(), false, Ref<Texture>(), true);
+				texture->draw_rect_region(ci, dest_rect, src_rect, get_modulate(), false, Ref<Texture>(), Ref<Texture>(), true);
 			}
 		} break;
 	}

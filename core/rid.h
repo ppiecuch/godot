@@ -32,10 +32,13 @@
 #define RID_H
 
 #include "core/list.h"
+#include "core/math/vector2.h"
+#include "core/math/vector3.h"
 #include "core/os/memory.h"
 #include "core/safe_refcount.h"
 #include "core/set.h"
 #include "core/typedefs.h"
+#include "core/vector.h"
 
 class RID_OwnerBase;
 
@@ -54,13 +57,36 @@ public:
 	virtual ~RID_Data();
 };
 
+union RID_Props {
+	int int_value;
+	float float_value;
+	Vector2 vec2_value;
+	Vector3 vec3_value;
+
+	RID_Props() {}
+	RID_Props(int v) { int_value = v; }
+	RID_Props(float v) { float_value = v; }
+	RID_Props(const Vector2 &v) { vec2_value = v; }
+	RID_Props(const Vector3 &v) { vec3_value = v; }
+};
+
 class RID {
 	friend class RID_OwnerBase;
 
 	mutable RID_Data *_data;
+	mutable Vector<RID_Props> _props;
+
+	struct _expand_props {
+		template<typename... T> _expand_props(T&&...) {}
+	};
 
 public:
 	_FORCE_INLINE_ RID_Data *get_data() const { return _data; }
+
+	RID_Props get_prop(int p_index) const { return _props[p_index]; }
+	bool is_props_valid() const { return _props.size() > 0; }
+	size_t get_props_count() const { return _props.size(); }
+	template<typename... props_types> void set_props(props_types... args) { _expand_props{ 0, (_props.push_back(args), 0)... }; }
 
 	_FORCE_INLINE_ bool operator==(const RID &p_rid) const {
 

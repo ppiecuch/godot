@@ -842,27 +842,27 @@ void CanvasItem::draw_circle(const Point2 &p_pos, float p_radius, const Color &p
 	VisualServer::get_singleton()->canvas_item_add_circle(canvas_item, p_pos, p_radius, p_color);
 }
 
-void CanvasItem::draw_texture(const Ref<Texture> &p_texture, const Point2 &p_pos, const Color &p_modulate, const Ref<Texture> &p_normal_map) {
+void CanvasItem::draw_texture(const Ref<Texture> &p_texture, const Point2 &p_pos, const Color &p_modulate, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask) {
 
 	ERR_FAIL_COND_MSG(!drawing, "Drawing is only allowed inside NOTIFICATION_DRAW, _draw() function or 'draw' signal.");
 
 	ERR_FAIL_COND(p_texture.is_null());
 
-	p_texture->draw(canvas_item, p_pos, p_modulate, false, p_normal_map);
+	p_texture->draw(canvas_item, p_pos, p_modulate, false, p_normal_map, p_mask);
 }
 
-void CanvasItem::draw_texture_rect(const Ref<Texture> &p_texture, const Rect2 &p_rect, bool p_tile, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map) {
+void CanvasItem::draw_texture_rect(const Ref<Texture> &p_texture, const Rect2 &p_rect, bool p_tile, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask) {
 
 	ERR_FAIL_COND_MSG(!drawing, "Drawing is only allowed inside NOTIFICATION_DRAW, _draw() function or 'draw' signal.");
 
 	ERR_FAIL_COND(p_texture.is_null());
-	p_texture->draw_rect(canvas_item, p_rect, p_tile, p_modulate, p_transpose, p_normal_map);
+	p_texture->draw_rect(canvas_item, p_rect, p_tile, p_modulate, p_transpose, p_normal_map, p_mask);
 }
-void CanvasItem::draw_texture_rect_region(const Ref<Texture> &p_texture, const Rect2 &p_rect, const Rect2 &p_src_rect, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, bool p_clip_uv) {
+void CanvasItem::draw_texture_rect_region(const Ref<Texture> &p_texture, const Rect2 &p_rect, const Rect2 &p_src_rect, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask, bool p_clip_uv) {
 
 	ERR_FAIL_COND_MSG(!drawing, "Drawing is only allowed inside NOTIFICATION_DRAW, _draw() function or 'draw' signal.");
 	ERR_FAIL_COND(p_texture.is_null());
-	p_texture->draw_rect_region(canvas_item, p_rect, p_src_rect, p_modulate, p_transpose, p_normal_map, p_clip_uv);
+	p_texture->draw_rect_region(canvas_item, p_rect, p_src_rect, p_modulate, p_transpose, p_normal_map, p_mask, p_clip_uv);
 }
 
 void CanvasItem::draw_style_box(const Ref<StyleBox> &p_style_box, const Rect2 &p_rect) {
@@ -872,14 +872,15 @@ void CanvasItem::draw_style_box(const Ref<StyleBox> &p_style_box, const Rect2 &p
 
 	p_style_box->draw(canvas_item, p_rect);
 }
-void CanvasItem::draw_primitive(const Vector<Point2> &p_points, const Vector<Color> &p_colors, const Vector<Point2> &p_uvs, Ref<Texture> p_texture, float p_width, const Ref<Texture> &p_normal_map) {
+void CanvasItem::draw_primitive(const Vector<Point2> &p_points, const Vector<Color> &p_colors, const Vector<Point2> &p_uvs, Ref<Texture> p_texture, float p_width, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask) {
 
 	ERR_FAIL_COND_MSG(!drawing, "Drawing is only allowed inside NOTIFICATION_DRAW, _draw() function or 'draw' signal.");
 
 	RID rid = p_texture.is_valid() ? p_texture->get_rid() : RID();
 	RID rid_normal = p_normal_map.is_valid() ? p_normal_map->get_rid() : RID();
+	RID rid_mask =  p_mask.is_valid() ? p_mask->get_rid() : RID();
 
-	VisualServer::get_singleton()->canvas_item_add_primitive(canvas_item, p_points, p_colors, p_uvs, rid, p_width, rid_normal);
+	VisualServer::get_singleton()->canvas_item_add_primitive(canvas_item, p_points, p_colors, p_uvs, rid, p_width, rid_normal, rid_mask);
 }
 void CanvasItem::draw_set_transform(const Point2 &p_offset, float p_rot, const Size2 &p_scale) {
 
@@ -897,17 +898,18 @@ void CanvasItem::draw_set_transform_matrix(const Transform2D &p_matrix) {
 	VisualServer::get_singleton()->canvas_item_add_set_transform(canvas_item, p_matrix);
 }
 
-void CanvasItem::draw_polygon(const Vector<Point2> &p_points, const Vector<Color> &p_colors, const Vector<Point2> &p_uvs, Ref<Texture> p_texture, const Ref<Texture> &p_normal_map, bool p_antialiased) {
+void CanvasItem::draw_polygon(const Vector<Point2> &p_points, const Vector<Color> &p_colors, const Vector<Point2> &p_uvs, Ref<Texture> p_texture, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask, bool p_antialiased) {
 
 	ERR_FAIL_COND_MSG(!drawing, "Drawing is only allowed inside NOTIFICATION_DRAW, _draw() function or 'draw' signal.");
 
 	RID rid = p_texture.is_valid() ? p_texture->get_rid() : RID();
 	RID rid_normal = p_normal_map.is_valid() ? p_normal_map->get_rid() : RID();
+	RID rid_mask = p_mask.is_valid() ? p_mask->get_rid() : RID();
 
-	VisualServer::get_singleton()->canvas_item_add_polygon(canvas_item, p_points, p_colors, p_uvs, rid, rid_normal, p_antialiased);
+	VisualServer::get_singleton()->canvas_item_add_polygon(canvas_item, p_points, p_colors, p_uvs, rid, rid_normal, rid_mask, p_antialiased);
 }
 
-void CanvasItem::draw_colored_polygon(const Vector<Point2> &p_points, const Color &p_color, const Vector<Point2> &p_uvs, Ref<Texture> p_texture, const Ref<Texture> &p_normal_map, bool p_antialiased) {
+void CanvasItem::draw_colored_polygon(const Vector<Point2> &p_points, const Color &p_color, const Vector<Point2> &p_uvs, Ref<Texture> p_texture, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask, bool p_antialiased) {
 
 	ERR_FAIL_COND_MSG(!drawing, "Drawing is only allowed inside NOTIFICATION_DRAW, _draw() function or 'draw' signal.");
 
@@ -915,24 +917,28 @@ void CanvasItem::draw_colored_polygon(const Vector<Point2> &p_points, const Colo
 	colors.push_back(p_color);
 	RID rid = p_texture.is_valid() ? p_texture->get_rid() : RID();
 	RID rid_normal = p_normal_map.is_valid() ? p_normal_map->get_rid() : RID();
+	RID rid_mask = p_mask.is_valid() ? p_mask->get_rid() : RID();
 
-	VisualServer::get_singleton()->canvas_item_add_polygon(canvas_item, p_points, colors, p_uvs, rid, rid_normal, p_antialiased);
+	VisualServer::get_singleton()->canvas_item_add_polygon(canvas_item, p_points, colors, p_uvs, rid, rid_normal, rid_mask, p_antialiased);
 }
 
-void CanvasItem::draw_mesh(const Ref<Mesh> &p_mesh, const Ref<Texture> &p_texture, const Ref<Texture> &p_normal_map, const Transform2D &p_transform, const Color &p_modulate) {
+void CanvasItem::draw_mesh(const Ref<Mesh> &p_mesh, const Ref<Texture> &p_texture, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask, const Transform2D &p_transform, const Color &p_modulate) {
 
 	ERR_FAIL_COND(p_mesh.is_null());
 	RID texture_rid = p_texture.is_valid() ? p_texture->get_rid() : RID();
 	RID normal_map_rid = p_normal_map.is_valid() ? p_normal_map->get_rid() : RID();
+	RID mask_rid = p_mask.is_valid() ? p_mask->get_rid() : RID();
 
-	VisualServer::get_singleton()->canvas_item_add_mesh(canvas_item, p_mesh->get_rid(), p_transform, p_modulate, texture_rid, normal_map_rid);
+	VisualServer::get_singleton()->canvas_item_add_mesh(canvas_item, p_mesh->get_rid(), p_transform, p_modulate, texture_rid, normal_map_rid, mask_rid);
 }
-void CanvasItem::draw_multimesh(const Ref<MultiMesh> &p_multimesh, const Ref<Texture> &p_texture, const Ref<Texture> &p_normal_map) {
+void CanvasItem::draw_multimesh(const Ref<MultiMesh> &p_multimesh, const Ref<Texture> &p_texture, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask) {
 
 	ERR_FAIL_COND(p_multimesh.is_null());
 	RID texture_rid = p_texture.is_valid() ? p_texture->get_rid() : RID();
 	RID normal_map_rid = p_normal_map.is_valid() ? p_normal_map->get_rid() : RID();
-	VisualServer::get_singleton()->canvas_item_add_multimesh(canvas_item, p_multimesh->get_rid(), texture_rid, normal_map_rid);
+	RID mask_rid = p_mask.is_valid() ? p_mask->get_rid() : RID();
+
+	VisualServer::get_singleton()->canvas_item_add_multimesh(canvas_item, p_multimesh->get_rid(), texture_rid, normal_map_rid, mask_rid);
 }
 
 void CanvasItem::draw_string(const Ref<Font> &p_font, const Point2 &p_pos, const String &p_text, const Color &p_modulate, int p_clip_w) {
@@ -1189,17 +1195,17 @@ void CanvasItem::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("draw_multiline_colors", "points", "colors", "width", "antialiased"), &CanvasItem::draw_multiline_colors, DEFVAL(1.0), DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("draw_rect", "rect", "color", "filled", "width", "antialiased"), &CanvasItem::draw_rect, DEFVAL(true), DEFVAL(1.0), DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("draw_circle", "position", "radius", "color"), &CanvasItem::draw_circle);
-	ClassDB::bind_method(D_METHOD("draw_texture", "texture", "position", "modulate", "normal_map"), &CanvasItem::draw_texture, DEFVAL(Color(1, 1, 1, 1)), DEFVAL(Variant()));
-	ClassDB::bind_method(D_METHOD("draw_texture_rect", "texture", "rect", "tile", "modulate", "transpose", "normal_map"), &CanvasItem::draw_texture_rect, DEFVAL(Color(1, 1, 1)), DEFVAL(false), DEFVAL(Variant()));
-	ClassDB::bind_method(D_METHOD("draw_texture_rect_region", "texture", "rect", "src_rect", "modulate", "transpose", "normal_map", "clip_uv"), &CanvasItem::draw_texture_rect_region, DEFVAL(Color(1, 1, 1)), DEFVAL(false), DEFVAL(Variant()), DEFVAL(true));
+	ClassDB::bind_method(D_METHOD("draw_texture", "texture", "position", "modulate", "normal_map", "mask"), &CanvasItem::draw_texture, DEFVAL(Color(1, 1, 1, 1)), DEFVAL(Ref<Texture>()), DEFVAL(Ref<Texture>()));
+	ClassDB::bind_method(D_METHOD("draw_texture_rect", "texture", "rect", "tile", "modulate", "transpose", "normal_map", "mask"), &CanvasItem::draw_texture_rect, DEFVAL(Color(1, 1, 1)), DEFVAL(false), DEFVAL(Ref<Texture>()), DEFVAL(Ref<Texture>()));
+	ClassDB::bind_method(D_METHOD("draw_texture_rect_region", "texture", "rect", "src_rect", "modulate", "transpose", "normal_map", "mask", "clip_uv"), &CanvasItem::draw_texture_rect_region, DEFVAL(Color(1, 1, 1)), DEFVAL(false), DEFVAL(Ref<Texture>()), DEFVAL(Ref<Texture>()), DEFVAL(true));
 	ClassDB::bind_method(D_METHOD("draw_style_box", "style_box", "rect"), &CanvasItem::draw_style_box);
-	ClassDB::bind_method(D_METHOD("draw_primitive", "points", "colors", "uvs", "texture", "width", "normal_map"), &CanvasItem::draw_primitive, DEFVAL(Variant()), DEFVAL(1.0), DEFVAL(Variant()));
-	ClassDB::bind_method(D_METHOD("draw_polygon", "points", "colors", "uvs", "texture", "normal_map", "antialiased"), &CanvasItem::draw_polygon, DEFVAL(PoolVector2Array()), DEFVAL(Variant()), DEFVAL(Variant()), DEFVAL(false));
-	ClassDB::bind_method(D_METHOD("draw_colored_polygon", "points", "color", "uvs", "texture", "normal_map", "antialiased"), &CanvasItem::draw_colored_polygon, DEFVAL(PoolVector2Array()), DEFVAL(Variant()), DEFVAL(Variant()), DEFVAL(false));
+	ClassDB::bind_method(D_METHOD("draw_primitive", "points", "colors", "uvs", "texture", "width", "normal_map", "mask"), &CanvasItem::draw_primitive, DEFVAL(Variant()), DEFVAL(1.0), DEFVAL(Ref<Texture>()), DEFVAL(Ref<Texture>()));
+	ClassDB::bind_method(D_METHOD("draw_polygon", "points", "colors", "uvs", "texture", "normal_map", "mask", "antialiased"), &CanvasItem::draw_polygon, DEFVAL(PoolVector2Array()), DEFVAL(Variant()), DEFVAL(Ref<Texture>()), DEFVAL(Ref<Texture>()), DEFVAL(false));
+	ClassDB::bind_method(D_METHOD("draw_colored_polygon", "points", "color", "uvs", "texture", "normal_map", "mask", "antialiased"), &CanvasItem::draw_colored_polygon, DEFVAL(PoolVector2Array()), DEFVAL(Variant()), DEFVAL(Ref<Texture>()), DEFVAL(Ref<Texture>()), DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("draw_string", "font", "position", "text", "modulate", "clip_w"), &CanvasItem::draw_string, DEFVAL(Color(1, 1, 1)), DEFVAL(-1));
 	ClassDB::bind_method(D_METHOD("draw_char", "font", "position", "char", "next", "modulate"), &CanvasItem::draw_char, DEFVAL(Color(1, 1, 1)));
-	ClassDB::bind_method(D_METHOD("draw_mesh", "mesh", "texture", "normal_map", "transform", "modulate"), &CanvasItem::draw_mesh, DEFVAL(Ref<Texture>()), DEFVAL(Transform2D()), DEFVAL(Color(1, 1, 1)));
-	ClassDB::bind_method(D_METHOD("draw_multimesh", "multimesh", "texture", "normal_map"), &CanvasItem::draw_multimesh, DEFVAL(Ref<Texture>()));
+	ClassDB::bind_method(D_METHOD("draw_mesh", "mesh", "texture", "normal_map", "mask", "transform", "modulate"), &CanvasItem::draw_mesh, DEFVAL(Ref<Texture>()), DEFVAL(Ref<Texture>()), DEFVAL(Transform2D()), DEFVAL(Color(1, 1, 1)));
+	ClassDB::bind_method(D_METHOD("draw_multimesh", "multimesh", "texture", "normal_map", "mask"), &CanvasItem::draw_multimesh, DEFVAL(Ref<Texture>()), DEFVAL(Ref<Texture>()), DEFVAL(Ref<Texture>()));
 
 	ClassDB::bind_method(D_METHOD("draw_set_transform", "position", "rotation", "scale"), &CanvasItem::draw_set_transform);
 	ClassDB::bind_method(D_METHOD("draw_set_transform_matrix", "xform"), &CanvasItem::draw_set_transform_matrix);

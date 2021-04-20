@@ -749,6 +749,7 @@ public:
 			Rect2 rect;
 			RID texture;
 			RID normal_map;
+			RID mask;
 			Color modulate;
 			Rect2 source;
 			uint8_t flags;
@@ -765,6 +766,7 @@ public:
 			Rect2 source;
 			RID texture;
 			RID normal_map;
+			RID mask;
 			float margin[4];
 			bool draw_center;
 			Color color;
@@ -783,11 +785,16 @@ public:
 			Vector<Color> colors;
 			RID texture;
 			RID normal_map;
+			RID mask;
+			float mask_cut_off;
+			Vector3 mask_channels_mixer;
 			float width;
 
 			CommandPrimitive() {
 				type = TYPE_PRIMITIVE;
 				width = 1;
+				mask_cut_off = 0.5;
+				mask_channels_mixer = Vector3(1,0,0);
 			}
 		};
 
@@ -801,6 +808,7 @@ public:
 			Vector<float> weights;
 			RID texture;
 			RID normal_map;
+			RID mask;
 			int count;
 			bool antialiased;
 			bool antialiasing_use_indices;
@@ -816,6 +824,7 @@ public:
 			RID mesh;
 			RID texture;
 			RID normal_map;
+			RID mask;
 			Transform2D transform;
 			Color modulate;
 			CommandMesh() { type = TYPE_MESH; }
@@ -826,6 +835,7 @@ public:
 			RID multimesh;
 			RID texture;
 			RID normal_map;
+			RID mask;
 			CommandMultiMesh() { type = TYPE_MULTIMESH; }
 		};
 
@@ -834,6 +844,7 @@ public:
 			RID particles;
 			RID texture;
 			RID normal_map;
+			RID mask;
 			CommandParticles() { type = TYPE_PARTICLES; }
 		};
 

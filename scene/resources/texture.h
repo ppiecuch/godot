@@ -74,9 +74,9 @@ public:
 	virtual void set_flags(uint32_t p_flags) = 0;
 	virtual uint32_t get_flags() const = 0;
 
-	virtual void draw(RID p_canvas_item, const Point2 &p_pos, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>()) const;
-	virtual void draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile = false, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>()) const;
-	virtual void draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, const Rect2 &p_src_rect, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>(), bool p_clip_uv = true) const;
+	virtual void draw(RID p_canvas_item, const Point2 &p_pos, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>(), const Ref<Texture> &p_mask = Ref<Texture>()) const;
+	virtual void draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile = false, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>(), const Ref<Texture> &p_mask = Ref<Texture>()) const;
+	virtual void draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, const Rect2 &p_src_rect, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>(), const Ref<Texture> &p_mask = Ref<Texture>(), bool p_clip_uv = true) const;
 	virtual bool get_rect_region(const Rect2 &p_rect, const Rect2 &p_src_rect, Rect2 &r_rect, Rect2 &r_src_rect) const;
 
 	virtual Ref<Image> get_data() const { return Ref<Image>(); }
@@ -143,9 +143,9 @@ public:
 	virtual RID get_rid() const G_OVERRIDE;
 
 	virtual bool has_alpha() const G_OVERRIDE;
-	virtual void draw(RID p_canvas_item, const Point2 &p_pos, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>()) const G_OVERRIDE;
-	virtual void draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile = false, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>()) const G_OVERRIDE;
-	virtual void draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, const Rect2 &p_src_rect, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>(), bool p_clip_uv = true) const G_OVERRIDE;
+	virtual void draw(RID p_canvas_item, const Point2 &p_pos, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>(), const Ref<Texture> &p_mask = Ref<Texture>()) const G_OVERRIDE;
+	virtual void draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile = false, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>(), const Ref<Texture> &p_mask = Ref<Texture>()) const G_OVERRIDE;
+	virtual void draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, const Rect2 &p_src_rect, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>(), const Ref<Texture> &p_mask = Ref<Texture>(), bool p_clip_uv = true) const G_OVERRIDE;
 	void set_storage(Storage p_storage);
 	Storage get_storage() const;
 
@@ -221,9 +221,9 @@ public:
 
 	virtual void set_path(const String &p_path, bool p_take_over) G_OVERRIDE;
 
-	virtual void draw(RID p_canvas_item, const Point2 &p_pos, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>()) const G_OVERRIDE;
-	virtual void draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile = false, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>()) const G_OVERRIDE;
-	virtual void draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, const Rect2 &p_src_rect, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>(), bool p_clip_uv = true) const G_OVERRIDE;
+	virtual void draw(RID p_canvas_item, const Point2 &p_pos, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>(), const Ref<Texture> &p_mask = Ref<Texture>()) const G_OVERRIDE;
+	virtual void draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile = false, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>(), const Ref<Texture> &p_mask = Ref<Texture>()) const G_OVERRIDE;
+	virtual void draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, const Rect2 &p_src_rect, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>(), const Ref<Texture> &p_mask = Ref<Texture>(), bool p_clip_uv = true) const G_OVERRIDE;
 
 	virtual bool has_alpha() const G_OVERRIDE;
 	virtual void set_flags(uint32_t p_flags) G_OVERRIDE;
@@ -244,6 +244,40 @@ public:
 };
 
 VARIANT_ENUM_CAST(ImageTexture::Storage);
+
+class MaskTexture : public Texture {
+
+	GDCLASS(MaskTexture, Texture);
+	RES_BASE_EXTENSION("msktex");
+
+protected:
+	Ref<Texture> mask_texture;
+	real_t mask_cut_off;
+	Vector3 mask_channels_mixer;
+
+	static void _bind_methods();
+
+public:
+	virtual int get_width() const G_OVERRIDE;
+	virtual int get_height() const G_OVERRIDE;
+	virtual RID get_rid() const G_OVERRIDE;
+
+	virtual bool has_alpha() const G_OVERRIDE;
+
+	virtual void set_flags(uint32_t p_flags) G_OVERRIDE;
+	virtual uint32_t get_flags() const G_OVERRIDE;
+
+	void set_mask_texture(const Ref<Texture> &p_mask);
+	Ref<Texture> get_mask_texture() const;
+
+	void set_cut_off(const real_t &p_cut_off);
+	real_t get_cut_off() const;
+
+	void set_channels_mixer(const Vector3 &p_channels_mixer);
+	Vector3 get_channels_mixer() const;
+
+	MaskTexture();
+};
 
 class AtlasTexture : public Texture {
 
@@ -280,9 +314,9 @@ public:
 	void set_filter_clip(const bool p_enable);
 	bool has_filter_clip() const;
 
-	virtual void draw(RID p_canvas_item, const Point2 &p_pos, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>()) const G_OVERRIDE;
-	virtual void draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile = false, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>()) const G_OVERRIDE;
-	virtual void draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, const Rect2 &p_src_rect, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>(), bool p_clip_uv = true) const G_OVERRIDE;
+	virtual void draw(RID p_canvas_item, const Point2 &p_pos, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>(), const Ref<Texture> &p_mask = Ref<Texture>()) const G_OVERRIDE;
+	virtual void draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile = false, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>(), const Ref<Texture> &p_mask = Ref<Texture>()) const G_OVERRIDE;
+	virtual void draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, const Rect2 &p_src_rect, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>(), const Ref<Texture> &p_mask = Ref<Texture>(), bool p_clip_uv = true) const G_OVERRIDE;
 	virtual bool get_rect_region(const Rect2 &p_rect, const Rect2 &p_src_rect, Rect2 &r_rect, Rect2 &r_src_rect) const G_OVERRIDE;
 
 	virtual bool is_pixel_opaque(int p_x, int p_y) const G_OVERRIDE;
@@ -323,9 +357,9 @@ public:
 	void set_base_texture(const Ref<Texture> &p_texture);
 	Ref<Texture> get_base_texture() const;
 
-	virtual void draw(RID p_canvas_item, const Point2 &p_pos, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>()) const G_OVERRIDE;
-	virtual void draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile = false, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>()) const G_OVERRIDE;
-	virtual void draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, const Rect2 &p_src_rect, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>(), bool p_clip_uv = true) const G_OVERRIDE;
+	virtual void draw(RID p_canvas_item, const Point2 &p_pos, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>(), const Ref<Texture> &p_mask = Ref<Texture>()) const G_OVERRIDE;
+	virtual void draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile = false, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>(), const Ref<Texture> &p_mask = Ref<Texture>()) const G_OVERRIDE;
+	virtual void draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, const Rect2 &p_src_rect, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>(), const Ref<Texture> &p_mask = Ref<Texture>(), bool p_clip_uv = true) const G_OVERRIDE;
 	virtual bool get_rect_region(const Rect2 &p_rect, const Rect2 &p_src_rect, Rect2 &r_rect, Rect2 &r_src_rect) const G_OVERRIDE;
 
 	virtual bool is_pixel_opaque(int p_x, int p_y) const G_OVERRIDE;
@@ -374,9 +408,9 @@ public:
 	Ref<Texture> get_piece_texture(int p_idx) const;
 	Ref<Image> to_image() const;
 
-	virtual void draw(RID p_canvas_item, const Point2 &p_pos, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>()) const G_OVERRIDE;
-	virtual void draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile = false, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>()) const G_OVERRIDE;
-	virtual void draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, const Rect2 &p_src_rect, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>(), bool p_clip_uv = true) const G_OVERRIDE;
+	virtual void draw(RID p_canvas_item, const Point2 &p_pos, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>(), const Ref<Texture> &p_mask = Ref<Texture>()) const G_OVERRIDE;
+	virtual void draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile = false, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>(), const Ref<Texture> &p_mask = Ref<Texture>()) const G_OVERRIDE;
+	virtual void draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, const Rect2 &p_src_rect, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, const Ref<Texture> &p_normal_map = Ref<Texture>(), const Ref<Texture> &p_mask = Ref<Texture>(), bool p_clip_uv = true) const G_OVERRIDE;
 
 	virtual bool is_pixel_opaque(int p_x, int p_y) const G_OVERRIDE;
 

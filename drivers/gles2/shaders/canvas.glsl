@@ -20,7 +20,7 @@ uniform highp mat4 world_matrix;
 uniform highp mat4 inv_world_matrix;
 uniform highp mat4 extra_matrix;
 #ifdef USE_CANVAS_VEC3
-attribute highp vec2 vertex; // attrib:0
+attribute highp vec3 vertex; // attrib:0
 #else
 attribute highp vec2 vertex; // attrib:0
 #endif
@@ -73,7 +73,7 @@ attribute highp vec4 instance_custom_data; //attrib:12
 #endif
 
 #ifdef USE_SKELETON
-uniform highp sampler2D skeleton_texture; // texunit:-3
+uniform highp sampler2D skeleton_texture; // texunit:-4
 uniform highp ivec2 skeleton_texture_size;
 uniform highp mat4 skeleton_transform;
 uniform highp mat4 skeleton_transform_inverse;
@@ -350,7 +350,7 @@ VERTEX_SHADER_CODE
 #define mediump
 #define highp
 #else
-#if defined(USE_HIGHP_PRECISION)
+#ifdef USE_HIGHP_PRECISION
 precision highp float;
 precision highp int;
 #else
@@ -365,6 +365,9 @@ uniform sampler2D color_texture; // texunit:-1
 /* clang-format on */
 uniform highp vec2 color_texpixel_size;
 uniform mediump sampler2D normal_texture; // texunit:-2
+uniform lowp sampler2D mask_texture; // texunit:-3
+uniform lowp float mask_cut_off;
+uniform lowp vec3 mask_channels_mixer;
 
 varying mediump vec2 uv_interp;
 varying mediump vec4 color_interp;
@@ -378,15 +381,11 @@ uniform highp float time;
 uniform vec4 final_modulate;
 
 #ifdef SCREEN_TEXTURE_USED
-
-uniform sampler2D screen_texture; // texunit:-4
-
+uniform sampler2D screen_texture; // texunit:-5
 #endif
 
 #ifdef SCREEN_UV_USED
-
 uniform vec2 screen_pixel_size;
-
 #endif
 
 #ifdef USE_LIGHTING
@@ -403,7 +402,7 @@ uniform highp float light_height;
 uniform highp float light_outside_alpha;
 uniform highp float shadow_distance_mult;
 
-uniform lowp sampler2D light_texture; // texunit:-6
+uniform lowp sampler2D light_texture; // texunit:-7
 varying vec4 light_uv_interp;
 varying vec2 transformed_light_uv;
 
@@ -411,7 +410,7 @@ varying vec4 local_rot;
 
 #ifdef USE_SHADOWS
 
-uniform highp sampler2D shadow_texture; // texunit:-5
+uniform highp sampler2D shadow_texture; // texunit:-6
 varying highp vec2 pos;
 
 #endif
@@ -422,6 +421,7 @@ const bool at_light_pass = false;
 #endif
 
 uniform bool use_default_normal;
+uniform bool use_default_mask;
 
 /* clang-format off */
 
@@ -439,12 +439,12 @@ void light_compute(
 		inout vec2 shadow_vec,
 		vec3 normal,
 		vec2 uv,
-#if defined(SCREEN_UV_USED)
+#ifdef SCREEN_UV_USED
 		vec2 screen_uv,
 #endif
 		vec4 color) {
 
-#if defined(USE_LIGHT_SHADER_CODE)
+#ifdef USE_LIGHT_SHADER_CODE
 
 	/* clang-format off */
 
@@ -459,12 +459,20 @@ void main() {
 
 	vec4 color = color_interp;
 	vec2 uv = uv_interp;
+
+	if (use_default_mask) {
+		float mask = dot(texture(mask_texture, uv).xyz, mask_channels_mixer);
+		if (mask <= mask_cut_off) {
+			discard;
+		}
+	}
+
 #ifdef USE_FORCE_REPEAT
 	//needs to use this to workaround GLES2/WebGL1 forcing tiling that textures that don't support it
 	uv = mod(uv, vec2(1.0, 1.0));
 #endif
 
-#if !defined(COLOR_USED)
+#ifndef COLOR_USED
 	//default behavior, texture by color
 	color *= texture2D(color_texture, uv);
 #endif
@@ -475,8 +483,7 @@ void main() {
 
 	vec3 normal;
 
-#if defined(NORMAL_USED)
-
+#ifdef NORMAL_USED
 	bool normal_used = true;
 #else
 	bool normal_used = false;
@@ -493,7 +500,7 @@ void main() {
 	{
 		float normal_depth = 1.0;
 
-#if defined(NORMALMAP_USED)
+#ifdef NORMALMAP_USED
 		vec3 normal_map = vec3(0.0, 0.0, 1.0);
 		normal_used = true;
 #endif
@@ -501,7 +508,7 @@ void main() {
 		// If larger fvfs are used, final_modulate is passed as an attribute.
 		// we need to read from this in custom fragment shaders or applying in the post step,
 		// rather than using final_modulate directly.
-#if defined(final_modulate_alias)
+#ifdef final_modulate_alias
 #undef final_modulate_alias
 #endif
 #ifdef USE_ATTRIB_MODULATE
@@ -516,12 +523,12 @@ FRAGMENT_SHADER_CODE
 
 		/* clang-format on */
 
-#if defined(NORMALMAP_USED)
+#ifdef NORMALMAP_USED
 		normal = mix(vec3(0.0, 0.0, 1.0), normal_map * vec3(2.0, -2.0, 1.0) - vec3(1.0, -1.0, 0.0), normal_depth);
 #endif
 	}
 
-#if !defined(MODULATE_USED)
+#ifndef MODULATE_USED
 	color *= final_modulate_alias;
 #endif
 
@@ -547,7 +554,7 @@ FRAGMENT_SHADER_CODE
 		vec4 real_light_color = light_color;
 		vec4 real_light_shadow_color = light_shadow_color;
 
-#if defined(USE_LIGHT_SHADER_CODE)
+#ifdef USE_LIGHT_SHADER_CODE
 		//light is written by the light shader
 		light_compute(
 				light,
@@ -559,7 +566,7 @@ FRAGMENT_SHADER_CODE
 				shadow_vec,
 				normal,
 				uv,
-#if defined(SCREEN_UV_USED)
+#ifdef SCREEN_UV_USED
 				screen_uv,
 #endif
 				color);

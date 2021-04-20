@@ -667,7 +667,7 @@ float BitmapFont::draw_char_xform(RID p_canvas_item, const CharTransform &p_char
 		VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item,
 				rc.move_by(Point2(0, valign)),
 				textures[c->texture_idx]->get_rid(),
-				p_char_xform.xform_tex(c->rect), p_modulate, false, RID(), false);
+				p_char_xform.xform_tex(c->rect), p_modulate, false, RID(), RID(), false);
 	}
 
 	return get_char_size(p_char, p_next).width;

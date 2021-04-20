@@ -203,6 +203,7 @@ public:
 		};
 		RID RID_texture;
 		RID RID_normal;
+		RID RID_mask;
 		TileMode tile_mode;
 		BatchVector2 tex_pixel_size;
 		uint32_t flags;
@@ -590,7 +591,7 @@ private:
 	bool _prefill_rect(RasterizerCanvas::Item::CommandRect *rect, FillState &r_fill_state, int &r_command_start, int command_num, int command_count, RasterizerCanvas::Item::Command *const *commands, RasterizerCanvas::Item *p_item, bool multiply_final_modulate);
 
 	// dealing with textures
-	int _batch_find_or_create_tex(const RID &p_texture, const RID &p_normal, bool p_tile, int p_previous_match);
+	int _batch_find_or_create_tex(const RID &p_texture, const RID &p_normal, const RID &p_mask, bool p_tile, int p_previous_match);
 
 protected:
 	// legacy support for non batched mode
@@ -900,7 +901,7 @@ PREAMBLE(void)::_prefill_default_batch(FillState &r_fill_state, int p_command_nu
 	}
 }
 
-PREAMBLE(int)::_batch_find_or_create_tex(const RID &p_texture, const RID &p_normal, bool p_tile, int p_previous_match) {
+PREAMBLE(int)::_batch_find_or_create_tex(const RID &p_texture, const RID &p_normal, const RID &p_mask, bool p_tile, int p_previous_match) {
 
 	// optimization .. in 99% cases the last matched value will be the same, so no need to traverse the list
 	if (p_previous_match > 0) // if it is zero, it will get hit first in the linear search anyway
@@ -908,7 +909,7 @@ PREAMBLE(int)::_batch_find_or_create_tex(const RID &p_texture, const RID &p_norm
 		const BatchTex &batch_texture = bdata.batch_textures[p_previous_match];
 
 		// note for future reference, if RID implementation changes, this could become more expensive
-		if ((batch_texture.RID_texture == p_texture) && (batch_texture.RID_normal == p_normal)) {
+		if ((batch_texture.RID_texture == p_texture) && (batch_texture.RID_normal == p_normal) && (batch_texture.RID_mask == p_mask)) {
 			// tiling mode must also match
 			bool tiles = batch_texture.tile_mode != BatchTex::TILE_OFF;
 
@@ -923,7 +924,7 @@ PREAMBLE(int)::_batch_find_or_create_tex(const RID &p_texture, const RID &p_norm
 	// n.b. could possibly be replaced later by a fast hash table
 	for (int n = 0; n < bdata.batch_textures.size(); n++) {
 		const BatchTex &batch_texture = bdata.batch_textures[n];
-		if ((batch_texture.RID_texture == p_texture) && (batch_texture.RID_normal == p_normal)) {
+		if ((batch_texture.RID_texture == p_texture) && (batch_texture.RID_normal == p_normal) && (batch_texture.RID_mask == p_mask)) {
 
 			// tiling mode must also match
 			bool tiles = batch_texture.tile_mode != BatchTex::TILE_OFF;
@@ -939,6 +940,7 @@ PREAMBLE(int)::_batch_find_or_create_tex(const RID &p_texture, const RID &p_norm
 	BatchTex new_batch_tex;
 	new_batch_tex.RID_texture = p_texture;
 	new_batch_tex.RID_normal = p_normal;
+	new_batch_tex.RID_mask = p_mask;
 
 	// get the texture
 	typename T_STORAGE::Texture *texture = _get_canvas_texture(p_texture);
@@ -1645,7 +1647,7 @@ bool C_PREAMBLE::_prefill_polygon(RasterizerCanvas::Item::CommandPolygon *p_poly
 	}
 
 	int old_batch_tex_id = r_fill_state.batch_tex_id;
-	r_fill_state.batch_tex_id = _batch_find_or_create_tex(p_poly->texture, p_poly->normal_map, false, old_batch_tex_id);
+	r_fill_state.batch_tex_id = _batch_find_or_create_tex(p_poly->texture, p_poly->normal_map, p_poly->mask, false, old_batch_tex_id);
 
 	// conditions for creating a new batch
 	if (old_batch_tex_id != r_fill_state.batch_tex_id) {
@@ -1967,7 +1969,7 @@ bool C_PREAMBLE::_prefill_rect(RasterizerCanvas::Item::CommandRect *rect, FillSt
 	// This means we have a potentially rather slow step to identify which texture combo
 	// using the RIDs.
 	int old_batch_tex_id = r_fill_state.batch_tex_id;
-	r_fill_state.batch_tex_id = _batch_find_or_create_tex(rect->texture, rect->normal_map, rect->flags & RasterizerCanvas::CANVAS_RECT_TILE, old_batch_tex_id);
+	r_fill_state.batch_tex_id = _batch_find_or_create_tex(rect->texture, rect->normal_map, rect->mask, rect->flags & RasterizerCanvas::CANVAS_RECT_TILE, old_batch_tex_id);
 
 	//r_fill_state.use_light_angles = send_light_angles;
 	if (SEND_LIGHT_ANGLES) {

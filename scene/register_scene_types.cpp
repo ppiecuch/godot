@@ -653,6 +653,7 @@ void register_scene_types() {
 	ClassDB::register_class<ProceduralSky>();
 	ClassDB::register_class<StreamTexture>();
 	ClassDB::register_class<ImageTexture>();
+	ClassDB::register_class<MaskTexture>();
 	ClassDB::register_class<AtlasTexture>();
 	ClassDB::register_class<MeshTexture>();
 	ClassDB::register_class<LargeTexture>();

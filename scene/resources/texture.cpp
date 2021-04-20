@@ -46,20 +46,23 @@ Size2 Texture::get_size() const {
 bool Texture::is_pixel_opaque(int p_x, int p_y) const {
 	return true;
 }
-void Texture::draw(RID p_canvas_item, const Point2 &p_pos, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map) const {
+void Texture::draw(RID p_canvas_item, const Point2 &p_pos, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask) const {
 
 	RID normal_rid = p_normal_map.is_valid() ? p_normal_map->get_rid() : RID();
-	VisualServer::get_singleton()->canvas_item_add_texture_rect(p_canvas_item, Rect2(p_pos, get_size()), get_rid(), false, p_modulate, p_transpose, normal_rid);
+	RID mask_rid = p_mask.is_valid() ? p_mask->get_rid() : RID();
+	VisualServer::get_singleton()->canvas_item_add_texture_rect(p_canvas_item, Rect2(p_pos, get_size()), get_rid(), false, p_modulate, p_transpose, normal_rid, mask_rid);
 }
-void Texture::draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map) const {
+void Texture::draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask) const {
 
 	RID normal_rid = p_normal_map.is_valid() ? p_normal_map->get_rid() : RID();
-	VisualServer::get_singleton()->canvas_item_add_texture_rect(p_canvas_item, p_rect, get_rid(), p_tile, p_modulate, p_transpose, normal_rid);
+	RID mask_rid = p_mask.is_valid() ? p_mask->get_rid() : RID();
+	VisualServer::get_singleton()->canvas_item_add_texture_rect(p_canvas_item, p_rect, get_rid(), p_tile, p_modulate, p_transpose, normal_rid, mask_rid);
 }
-void Texture::draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, const Rect2 &p_src_rect, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, bool p_clip_uv) const {
+void Texture::draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, const Rect2 &p_src_rect, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask, bool p_clip_uv) const {
 
 	RID normal_rid = p_normal_map.is_valid() ? p_normal_map->get_rid() : RID();
-	VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item, p_rect, get_rid(), p_src_rect, p_modulate, p_transpose, normal_rid, p_clip_uv);
+	RID mask_rid = p_mask.is_valid() ? p_mask->get_rid() : RID();
+	VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item, p_rect, get_rid(), p_src_rect, p_modulate, p_transpose, normal_rid, mask_rid, p_clip_uv);
 }
 
 bool Texture::get_rect_region(const Rect2 &p_rect, const Rect2 &p_src_rect, Rect2 &r_rect, Rect2 &r_src_rect) const {
@@ -293,26 +296,29 @@ bool ImageTexture::has_alpha() const {
 	return (format == Image::FORMAT_LA8 || format == Image::FORMAT_RGBA8);
 }
 
-void ImageTexture::draw(RID p_canvas_item, const Point2 &p_pos, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map) const {
+void ImageTexture::draw(RID p_canvas_item, const Point2 &p_pos, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask) const {
 
 	if ((w | h) == 0)
 		return;
 	RID normal_rid = p_normal_map.is_valid() ? p_normal_map->get_rid() : RID();
-	VisualServer::get_singleton()->canvas_item_add_texture_rect(p_canvas_item, Rect2(p_pos, Size2(w, h)), texture, false, p_modulate, p_transpose, normal_rid);
+	RID mask_rid = p_mask.is_valid() ? p_mask->get_rid() : RID();
+	VisualServer::get_singleton()->canvas_item_add_texture_rect(p_canvas_item, Rect2(p_pos, Size2(w, h)), texture, false, p_modulate, p_transpose, normal_rid, mask_rid);
 }
-void ImageTexture::draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map) const {
+void ImageTexture::draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask) const {
 
 	if ((w | h) == 0)
 		return;
 	RID normal_rid = p_normal_map.is_valid() ? p_normal_map->get_rid() : RID();
-	VisualServer::get_singleton()->canvas_item_add_texture_rect(p_canvas_item, p_rect, texture, p_tile, p_modulate, p_transpose, normal_rid);
+	RID mask_rid = p_mask.is_valid() ? p_mask->get_rid() : RID();
+	VisualServer::get_singleton()->canvas_item_add_texture_rect(p_canvas_item, p_rect, texture, p_tile, p_modulate, p_transpose, normal_rid, mask_rid);
 }
-void ImageTexture::draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, const Rect2 &p_src_rect, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, bool p_clip_uv) const {
+void ImageTexture::draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, const Rect2 &p_src_rect, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask, bool p_clip_uv) const {
 
 	if ((w | h) == 0)
 		return;
 	RID normal_rid = p_normal_map.is_valid() ? p_normal_map->get_rid() : RID();
-	VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item, p_rect, texture, p_src_rect, p_modulate, p_transpose, normal_rid, p_clip_uv);
+	RID mask_rid = p_mask.is_valid() ? p_mask->get_rid() : RID();
+	VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item, p_rect, texture, p_src_rect, p_modulate, p_transpose, normal_rid, mask_rid, p_clip_uv);
 }
 
 bool ImageTexture::is_pixel_opaque(int p_x, int p_y) const {
@@ -762,26 +768,29 @@ RID StreamTexture::get_rid() const {
 	return texture;
 }
 
-void StreamTexture::draw(RID p_canvas_item, const Point2 &p_pos, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map) const {
+void StreamTexture::draw(RID p_canvas_item, const Point2 &p_pos, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask) const {
 
 	if ((w | h) == 0)
 		return;
 	RID normal_rid = p_normal_map.is_valid() ? p_normal_map->get_rid() : RID();
-	VisualServer::get_singleton()->canvas_item_add_texture_rect(p_canvas_item, Rect2(p_pos, Size2(w, h)), texture, false, p_modulate, p_transpose, normal_rid);
+	RID mask_rid = p_mask.is_valid() ? p_mask->get_rid() : RID();
+	VisualServer::get_singleton()->canvas_item_add_texture_rect(p_canvas_item, Rect2(p_pos, Size2(w, h)), texture, false, p_modulate, p_transpose, normal_rid, mask_rid);
 }
-void StreamTexture::draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map) const {
+void StreamTexture::draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask) const {
 
 	if ((w | h) == 0)
 		return;
 	RID normal_rid = p_normal_map.is_valid() ? p_normal_map->get_rid() : RID();
-	VisualServer::get_singleton()->canvas_item_add_texture_rect(p_canvas_item, p_rect, texture, p_tile, p_modulate, p_transpose, normal_rid);
+	RID mask_rid = p_mask.is_valid() ? p_mask->get_rid() : RID();
+	VisualServer::get_singleton()->canvas_item_add_texture_rect(p_canvas_item, p_rect, texture, p_tile, p_modulate, p_transpose, normal_rid, mask_rid);
 }
-void StreamTexture::draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, const Rect2 &p_src_rect, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, bool p_clip_uv) const {
+void StreamTexture::draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, const Rect2 &p_src_rect, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask, bool p_clip_uv) const {
 
 	if ((w | h) == 0)
 		return;
 	RID normal_rid = p_normal_map.is_valid() ? p_normal_map->get_rid() : RID();
-	VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item, p_rect, texture, p_src_rect, p_modulate, p_transpose, normal_rid, p_clip_uv);
+	RID mask_rid = p_mask.is_valid() ? p_mask->get_rid() : RID();
+	VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item, p_rect, texture, p_src_rect, p_modulate, p_transpose, normal_rid, mask_rid, p_clip_uv);
 }
 
 bool StreamTexture::has_alpha() const {
@@ -904,6 +913,121 @@ String ResourceFormatLoaderStreamTexture::get_resource_type(const String &p_path
 	if (p_path.get_extension().to_lower() == "stex")
 		return "StreamTexture";
 	return "";
+}
+
+//////////////////////////////////////////
+
+int MaskTexture::get_width() const {
+
+	if (mask_texture.is_valid())
+		return mask_texture->get_width();
+
+	return 1;
+}
+
+int MaskTexture::get_height() const {
+
+	if (mask_texture.is_valid())
+		return mask_texture->get_height();
+
+	return 1;
+}
+
+RID MaskTexture::get_rid() const {
+
+	if (mask_texture.is_valid()) {
+		RID rid = mask_texture->get_rid();
+		rid.set_props(get_cut_off(), get_channels_mixer());
+		return rid;
+	}
+
+	return RID();
+}
+
+
+bool MaskTexture::has_alpha() const {
+
+	if (mask_texture.is_valid())
+		return mask_texture->has_alpha();
+
+	return false;
+}
+
+void MaskTexture::set_flags(uint32_t p_flags) {
+
+	if (mask_texture.is_valid())
+		mask_texture->set_flags(p_flags);
+}
+
+uint32_t MaskTexture::get_flags() const {
+
+	if (mask_texture.is_valid())
+		return mask_texture->get_flags();
+
+	return 0;
+}
+
+void MaskTexture::set_mask_texture(const Ref<Texture> &p_mask) {
+
+	if (mask_texture == p_mask)
+		return;
+	mask_texture = p_mask;
+	emit_changed();
+	_change_notify("mask_texture");
+}
+
+Ref<Texture> MaskTexture::get_mask_texture() const {
+
+	return mask_texture;
+}
+
+void MaskTexture::set_cut_off(const real_t &p_cut_off) {
+
+	if (mask_cut_off == p_cut_off)
+		return;
+	mask_cut_off = p_cut_off;
+	emit_changed();
+	_change_notify("mask_cut_off");
+}
+
+real_t MaskTexture::get_cut_off() const {
+
+	return mask_cut_off;
+}
+
+void MaskTexture::set_channels_mixer(const Vector3 &p_channels_mixer) {
+
+	if (mask_channels_mixer == p_channels_mixer)
+		return;
+	mask_channels_mixer = p_channels_mixer;
+	emit_changed();
+	_change_notify("mask_channels_mixer");
+}
+
+Vector3 MaskTexture::get_channels_mixer() const {
+
+	return mask_channels_mixer;
+}
+
+void MaskTexture::_bind_methods() {
+
+	ClassDB::bind_method(D_METHOD("set_mask_texture", "mask"), &MaskTexture::set_mask_texture);
+	ClassDB::bind_method(D_METHOD("get_mask_texture"), &MaskTexture::get_mask_texture);
+
+	ClassDB::bind_method(D_METHOD("set_cut_off", "region"), &MaskTexture::set_cut_off);
+	ClassDB::bind_method(D_METHOD("get_cut_off"), &MaskTexture::get_cut_off);
+
+	ClassDB::bind_method(D_METHOD("set_channels_mixer", "margin"), &MaskTexture::set_channels_mixer);
+	ClassDB::bind_method(D_METHOD("get_channels_mixer"), &MaskTexture::get_channels_mixer);
+
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "mask_texture", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_mask_texture", "get_mask_texture");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "cut_off"), "set_cut_off", "get_cut_off");
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "channels_mixer"), "set_channels_mixer", "get_channels_mixer");
+}
+
+MaskTexture::MaskTexture() {
+	mask_cut_off = 0.5;
+	mask_channels_mixer = Vector3(1, 0, 0);
 }
 
 //////////////////////////////////////////
@@ -1032,7 +1156,7 @@ void AtlasTexture::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "filter_clip"), "set_filter_clip", "has_filter_clip");
 }
 
-void AtlasTexture::draw(RID p_canvas_item, const Point2 &p_pos, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map) const {
+void AtlasTexture::draw(RID p_canvas_item, const Point2 &p_pos, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask) const {
 
 	if (!atlas.is_valid())
 		return;
@@ -1048,10 +1172,11 @@ void AtlasTexture::draw(RID p_canvas_item, const Point2 &p_pos, const Color &p_m
 	}
 
 	RID normal_rid = p_normal_map.is_valid() ? p_normal_map->get_rid() : RID();
-	VS::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item, Rect2(p_pos + margin.position, rc.size), atlas->get_rid(), rc, p_modulate, p_transpose, normal_rid, filter_clip);
+	RID mask_rid = p_mask.is_valid() ? p_mask->get_rid() : RID();
+	VS::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item, Rect2(p_pos + margin.position, rc.size), atlas->get_rid(), rc, p_modulate, p_transpose, normal_rid, mask_rid, filter_clip);
 }
 
-void AtlasTexture::draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map) const {
+void AtlasTexture::draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask) const {
 
 	if (!atlas.is_valid())
 		return;
@@ -1070,9 +1195,10 @@ void AtlasTexture::draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile
 	Rect2 dr(p_rect.position + margin.position * scale, rc.size * scale);
 
 	RID normal_rid = p_normal_map.is_valid() ? p_normal_map->get_rid() : RID();
-	VS::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item, dr, atlas->get_rid(), rc, p_modulate, p_transpose, normal_rid, filter_clip);
+	RID mask_rid = p_mask.is_valid() ? p_mask->get_rid() : RID();
+	VS::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item, dr, atlas->get_rid(), rc, p_modulate, p_transpose, normal_rid, mask_rid, filter_clip);
 }
-void AtlasTexture::draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, const Rect2 &p_src_rect, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, bool p_clip_uv) const {
+void AtlasTexture::draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, const Rect2 &p_src_rect, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask, bool p_clip_uv) const {
 
 	//this might not necessarily work well if using a rect, needs to be fixed properly
 	if (!atlas.is_valid())
@@ -1083,7 +1209,8 @@ void AtlasTexture::draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, cons
 	get_rect_region(p_rect, p_src_rect, dr, src_c);
 
 	RID normal_rid = p_normal_map.is_valid() ? p_normal_map->get_rid() : RID();
-	VS::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item, dr, atlas->get_rid(), src_c, p_modulate, p_transpose, normal_rid, filter_clip);
+	RID mask_rid = p_mask.is_valid() ? p_mask->get_rid() : RID();
+	VS::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item, dr, atlas->get_rid(), src_c, p_modulate, p_transpose, normal_rid, mask_rid, filter_clip);
 }
 
 bool AtlasTexture::get_rect_region(const Rect2 &p_rect, const Rect2 &p_src_rect, Rect2 &r_rect, Rect2 &r_src_rect) const {
@@ -1188,7 +1315,7 @@ Ref<Texture> MeshTexture::get_base_texture() const {
 	return base_texture;
 }
 
-void MeshTexture::draw(RID p_canvas_item, const Point2 &p_pos, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map) const {
+void MeshTexture::draw(RID p_canvas_item, const Point2 &p_pos, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask) const {
 
 	if (mesh.is_null() || base_texture.is_null()) {
 		return;
@@ -1200,9 +1327,10 @@ void MeshTexture::draw(RID p_canvas_item, const Point2 &p_pos, const Color &p_mo
 		SWAP(xform.elements[0][0], xform.elements[1][1]);
 	}
 	RID normal_rid = p_normal_map.is_valid() ? p_normal_map->get_rid() : RID();
-	VisualServer::get_singleton()->canvas_item_add_mesh(p_canvas_item, mesh->get_rid(), xform, p_modulate, base_texture->get_rid(), normal_rid);
+	RID mask_rid = p_mask.is_valid() ? p_mask->get_rid() : RID();
+	VisualServer::get_singleton()->canvas_item_add_mesh(p_canvas_item, mesh->get_rid(), xform, p_modulate, base_texture->get_rid(), normal_rid, mask_rid);
 }
-void MeshTexture::draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map) const {
+void MeshTexture::draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask) const {
 	if (mesh.is_null() || base_texture.is_null()) {
 		return;
 	}
@@ -1222,9 +1350,10 @@ void MeshTexture::draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile,
 		SWAP(xform.elements[0][0], xform.elements[1][1]);
 	}
 	RID normal_rid = p_normal_map.is_valid() ? p_normal_map->get_rid() : RID();
-	VisualServer::get_singleton()->canvas_item_add_mesh(p_canvas_item, mesh->get_rid(), xform, p_modulate, base_texture->get_rid(), normal_rid);
+	RID mask_rid = p_mask.is_valid() ? p_mask->get_rid() : RID();
+	VisualServer::get_singleton()->canvas_item_add_mesh(p_canvas_item, mesh->get_rid(), xform, p_modulate, base_texture->get_rid(), normal_rid, mask_rid);
 }
-void MeshTexture::draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, const Rect2 &p_src_rect, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, bool p_clip_uv) const {
+void MeshTexture::draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, const Rect2 &p_src_rect, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask, bool p_clip_uv) const {
 
 	if (mesh.is_null() || base_texture.is_null()) {
 		return;
@@ -1245,7 +1374,8 @@ void MeshTexture::draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, const
 		SWAP(xform.elements[0][0], xform.elements[1][1]);
 	}
 	RID normal_rid = p_normal_map.is_valid() ? p_normal_map->get_rid() : RID();
-	VisualServer::get_singleton()->canvas_item_add_mesh(p_canvas_item, mesh->get_rid(), xform, p_modulate, base_texture->get_rid(), normal_rid);
+	RID mask_rid = p_mask.is_valid() ? p_mask->get_rid() : RID();
+	VisualServer::get_singleton()->canvas_item_add_mesh(p_canvas_item, mesh->get_rid(), xform, p_modulate, base_texture->get_rid(), normal_rid, mask_rid);
 }
 bool MeshTexture::get_rect_region(const Rect2 &p_rect, const Rect2 &p_src_rect, Rect2 &r_rect, Rect2 &r_src_rect) const {
 	r_rect = p_rect;
@@ -1413,7 +1543,7 @@ void LargeTexture::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "_data", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL), "_set_data", "_get_data");
 }
 
-void LargeTexture::draw(RID p_canvas_item, const Point2 &p_pos, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map) const {
+void LargeTexture::draw(RID p_canvas_item, const Point2 &p_pos, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask) const {
 
 	for (int i = 0; i < pieces.size(); i++) {
 
@@ -1422,7 +1552,7 @@ void LargeTexture::draw(RID p_canvas_item, const Point2 &p_pos, const Color &p_m
 	}
 }
 
-void LargeTexture::draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map) const {
+void LargeTexture::draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask) const {
 
 	//tiling not supported for this
 	if (size.x == 0 || size.y == 0)
@@ -1436,7 +1566,7 @@ void LargeTexture::draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile
 		pieces[i].texture->draw_rect(p_canvas_item, Rect2(pieces[i].offset * scale + p_rect.position, pieces[i].texture->get_size() * scale), false, p_modulate, p_transpose, p_normal_map);
 	}
 }
-void LargeTexture::draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, const Rect2 &p_src_rect, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, bool p_clip_uv) const {
+void LargeTexture::draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, const Rect2 &p_src_rect, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask, bool p_clip_uv) const {
 
 	//tiling not supported for this
 	if (p_src_rect.size.x == 0 || p_src_rect.size.y == 0)
@@ -1455,7 +1585,7 @@ void LargeTexture::draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, cons
 		target.size *= scale;
 		target.position = p_rect.position + (p_src_rect.position + rect.position) * scale;
 		local.position -= rect.position;
-		pieces[i].texture->draw_rect_region(p_canvas_item, target, local, p_modulate, p_transpose, p_normal_map, false);
+		pieces[i].texture->draw_rect_region(p_canvas_item, target, local, p_modulate, p_transpose, p_normal_map, p_mask, false);
 	}
 }
 

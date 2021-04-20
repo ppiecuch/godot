@@ -545,7 +545,7 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 							Item::CommandLine *line = static_cast<Item::CommandLine *>(c);
 							_set_texture_rect_mode(false);
 
-							_bind_canvas_texture(RID(), RID());
+							_bind_canvas_texture(RID(), RID(), RID());
 
 							glVertexAttrib4f(VS::ARRAY_COLOR, line->color.r, line->color.g, line->color.b, line->color.a);
 
@@ -600,7 +600,7 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 							Item::CommandPolyLine *pline = static_cast<Item::CommandPolyLine *>(c);
 							_set_texture_rect_mode(false);
 
-							_bind_canvas_texture(RID(), RID());
+							_bind_canvas_texture(RID(), RID(), RID());
 
 							if (pline->triangles.size()) {
 
@@ -657,7 +657,7 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 							//set color
 							glVertexAttrib4f(VS::ARRAY_COLOR, rect->modulate.r, rect->modulate.g, rect->modulate.b, rect->modulate.a);
 
-							RasterizerStorageGLES3::Texture *texture = _bind_canvas_texture(rect->texture, rect->normal_map);
+							RasterizerStorageGLES3::Texture *texture = _bind_canvas_texture(rect->texture, rect->normal_map, rect->mask);
 
 							if (use_nvidia_rect_workaround) {
 								render_rect_nvidia_workaround(rect, texture);
@@ -742,7 +742,7 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 
 							glVertexAttrib4f(VS::ARRAY_COLOR, np->color.r, np->color.g, np->color.b, np->color.a);
 
-							RasterizerStorageGLES3::Texture *texture = _bind_canvas_texture(np->texture, np->normal_map);
+							RasterizerStorageGLES3::Texture *texture = _bind_canvas_texture(np->texture, np->normal_map, np->mask);
 
 							Size2 texpixel_size;
 
@@ -782,7 +782,7 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 
 							ERR_CONTINUE(primitive->points.size() < 1);
 
-							RasterizerStorageGLES3::Texture *texture = _bind_canvas_texture(primitive->texture, primitive->normal_map);
+							RasterizerStorageGLES3::Texture *texture = _bind_canvas_texture(primitive->texture, primitive->normal_map, primitive->mask);
 
 							if (texture) {
 								Size2 texpixel_size(1.0 / texture->width, 1.0 / texture->height);
@@ -819,7 +819,7 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 							Item::CommandPolygon *polygon = static_cast<Item::CommandPolygon *>(c);
 							_set_texture_rect_mode(false);
 
-							RasterizerStorageGLES3::Texture *texture = _bind_canvas_texture(polygon->texture, polygon->normal_map);
+							RasterizerStorageGLES3::Texture *texture = _bind_canvas_texture(polygon->texture, polygon->normal_map, polygon->mask);
 
 							if (texture) {
 								Size2 texpixel_size(1.0 / texture->width, 1.0 / texture->height);
@@ -845,7 +845,7 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 							Item::CommandMesh *mesh = static_cast<Item::CommandMesh *>(c);
 							_set_texture_rect_mode(false);
 
-							RasterizerStorageGLES3::Texture *texture = _bind_canvas_texture(mesh->texture, mesh->normal_map);
+							RasterizerStorageGLES3::Texture *texture = _bind_canvas_texture(mesh->texture, mesh->normal_map, mesh->mask);
 
 							if (texture) {
 								Size2 texpixel_size(1.0 / texture->width, 1.0 / texture->height);
@@ -904,7 +904,7 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 							if (!mesh_data)
 								break;
 
-							RasterizerStorageGLES3::Texture *texture = _bind_canvas_texture(mmesh->texture, mmesh->normal_map);
+							RasterizerStorageGLES3::Texture *texture = _bind_canvas_texture(mmesh->texture, mmesh->normal_map, mmesh->mask);
 
 							state.canvas_shader.set_conditional(CanvasShaderGLES3::USE_INSTANCE_CUSTOM, multi_mesh->custom_data_format != VS::MULTIMESH_CUSTOM_DATA_NONE);
 							state.canvas_shader.set_conditional(CanvasShaderGLES3::USE_INSTANCING, true);
@@ -1036,7 +1036,7 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 							state.using_texture_rect = true;
 							_set_texture_rect_mode(false);
 
-							RasterizerStorageGLES3::Texture *texture = _bind_canvas_texture(particles_cmd->texture, particles_cmd->normal_map);
+							RasterizerStorageGLES3::Texture *texture = _bind_canvas_texture(particles_cmd->texture, particles_cmd->normal_map, particles_cmd->mask);
 
 							if (texture) {
 								Size2 texpixel_size(1.0 / texture->width, 1.0 / texture->height);
@@ -1159,7 +1159,7 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 								indices[j * 3 + 2] = numpoints;
 							}
 
-							_bind_canvas_texture(RID(), RID());
+							_bind_canvas_texture(RID(), RID(), RID());
 							_draw_polygon(indices, numpoints * 3, numpoints + 1, points, NULL, &circle->color, true, NULL, NULL);
 
 							//_draw_polygon(numpoints*3,indices,points,NULL,&circle->color,RID(),true);
@@ -2081,7 +2081,7 @@ void RasterizerCanvasGLES3::_batch_render_lines(const Batch &p_batch, Rasterizer
 
 	_set_texture_rect_mode(false);
 
-	_bind_canvas_texture(RID(), RID());
+	_bind_canvas_texture(RID(), RID(), RID());
 
 	glBindVertexArray(batch_gl_data.batch_vertex_array[0]);
 
@@ -2179,7 +2179,7 @@ void RasterizerCanvasGLES3::_batch_render_generic(const Batch &p_batch, Rasteriz
 	// batch tex
 	const BatchTex &tex = bdata.batch_textures[p_batch.batch_texture_id];
 
-	_bind_canvas_texture(tex.RID_texture, tex.RID_normal);
+	_bind_canvas_texture(tex.RID_texture, tex.RID_normal, tex.RID_mask);
 
 	if (!colored_verts) {
 		// may not need this disable

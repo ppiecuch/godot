@@ -197,7 +197,7 @@ void RasterizerCanvasBaseGLES2::_set_texture_rect_mode(bool p_texture_rect, bool
 	}
 }
 
-RasterizerStorageGLES2::Texture *RasterizerCanvasBaseGLES2::_bind_canvas_texture(const RID &p_texture, const RID &p_normal_map) {
+RasterizerStorageGLES2::Texture *RasterizerCanvasBaseGLES2::_bind_canvas_texture(const RID &p_texture, const RID &p_normal_map, const RID &p_mask) {
 
 	RasterizerStorageGLES2::Texture *tex_return = NULL;
 
@@ -276,6 +276,54 @@ RasterizerStorageGLES2::Texture *RasterizerCanvasBaseGLES2::_bind_canvas_texture
 		state.canvas_shader.set_uniform(CanvasShaderGLES2::USE_DEFAULT_NORMAL, false);
 	}
 
+	if (p_mask == state.current_mask) {
+		//do none
+		state.canvas_shader.set_uniform(CanvasShaderGLES2::USE_DEFAULT_MASK, state.current_mask.is_valid());
+		state.canvas_shader.set_uniform(CanvasShaderGLES2::MASK_CUT_OFF, state.current_mask_cut_off);
+		state.canvas_shader.set_uniform(CanvasShaderGLES2::MASK_CHANNELS_MIXER, state.current_mask_channels_mixer);
+
+	} else if (p_mask.is_valid()) {
+
+		RasterizerStorageGLES2::Texture *mask = storage->texture_owner.getornull(p_mask);
+
+		if (!mask) {
+			state.current_mask = RID();
+			glActiveTexture(GL_TEXTURE0 + storage->config.max_texture_image_units - 3);
+			glBindTexture(GL_TEXTURE_2D, storage->resources.mask_tex);
+			state.canvas_shader.set_uniform(CanvasShaderGLES2::USE_DEFAULT_MASK, false);
+
+		} else {
+
+			if (mask->redraw_if_visible) { //check before proxy, because this is usually used with proxies
+				VisualServerRaster::redraw_request();
+			}
+
+			mask = mask->get_ptr();
+
+			glActiveTexture(GL_TEXTURE0 + storage->config.max_texture_image_units - 3);
+			glBindTexture(GL_TEXTURE_2D, mask->tex_id);
+			state.current_mask = p_mask;
+			state.canvas_shader.set_uniform(CanvasShaderGLES2::USE_DEFAULT_MASK, true);
+			if (p_mask.get_props_count() == 2) {
+				state.current_mask_cut_off = p_mask.get_prop(0).float_value;
+				state.current_mask_channels_mixer = p_mask.get_prop(1).vec3_value;
+			} else {
+				// default masking values
+				state.current_mask_cut_off = 0.5;
+				state.current_mask_channels_mixer = Vector3(1,0,0);
+			}
+			state.canvas_shader.set_uniform(CanvasShaderGLES2::MASK_CUT_OFF, state.current_mask_cut_off);
+			state.canvas_shader.set_uniform(CanvasShaderGLES2::MASK_CHANNELS_MIXER, state.current_mask_channels_mixer);
+		}
+
+	} else {
+
+		state.current_mask = RID();
+		glActiveTexture(GL_TEXTURE0 + storage->config.max_texture_image_units - 3);
+		glBindTexture(GL_TEXTURE_2D, storage->resources.normal_tex);
+		state.canvas_shader.set_uniform(CanvasShaderGLES2::USE_DEFAULT_MASK, false);
+	}
+
 	return tex_return;
 }
 
@@ -290,7 +338,7 @@ void RasterizerCanvasBaseGLES2::draw_window_margins(int *black_margin, RID *blac
 	canvas_begin();
 
 	if (black_image[MARGIN_LEFT].is_valid()) {
-		_bind_canvas_texture(black_image[MARGIN_LEFT], RID());
+		_bind_canvas_texture(black_image[MARGIN_LEFT], RID(), RID());
 		Size2 sz(storage->texture_get_width(black_image[MARGIN_LEFT]), storage->texture_get_height(black_image[MARGIN_LEFT]));
 		draw_generic_textured_rect(Rect2(0, 0, black_margin[MARGIN_LEFT], window_h),
 				Rect2(0, 0, (float)black_margin[MARGIN_LEFT] / sz.x, (float)(window_h) / sz.y));
@@ -302,7 +350,7 @@ void RasterizerCanvasBaseGLES2::draw_window_margins(int *black_margin, RID *blac
 	}
 
 	if (black_image[MARGIN_RIGHT].is_valid()) {
-		_bind_canvas_texture(black_image[MARGIN_RIGHT], RID());
+		_bind_canvas_texture(black_image[MARGIN_RIGHT], RID(), RID());
 		Size2 sz(storage->texture_get_width(black_image[MARGIN_RIGHT]), storage->texture_get_height(black_image[MARGIN_RIGHT]));
 		draw_generic_textured_rect(Rect2(window_w - black_margin[MARGIN_RIGHT], 0, black_margin[MARGIN_RIGHT], window_h),
 				Rect2(0, 0, (float)black_margin[MARGIN_RIGHT] / sz.x, (float)window_h / sz.y));
@@ -314,7 +362,7 @@ void RasterizerCanvasBaseGLES2::draw_window_margins(int *black_margin, RID *blac
 	}
 
 	if (black_image[MARGIN_TOP].is_valid()) {
-		_bind_canvas_texture(black_image[MARGIN_TOP], RID());
+		_bind_canvas_texture(black_image[MARGIN_TOP], RID(), RID());
 
 		Size2 sz(storage->texture_get_width(black_image[MARGIN_TOP]), storage->texture_get_height(black_image[MARGIN_TOP]));
 		draw_generic_textured_rect(Rect2(0, 0, window_w, black_margin[MARGIN_TOP]),
@@ -329,7 +377,7 @@ void RasterizerCanvasBaseGLES2::draw_window_margins(int *black_margin, RID *blac
 
 	if (black_image[MARGIN_BOTTOM].is_valid()) {
 
-		_bind_canvas_texture(black_image[MARGIN_BOTTOM], RID());
+		_bind_canvas_texture(black_image[MARGIN_BOTTOM], RID(), RID());
 
 		Size2 sz(storage->texture_get_width(black_image[MARGIN_BOTTOM]), storage->texture_get_height(black_image[MARGIN_BOTTOM]));
 		draw_generic_textured_rect(Rect2(0, window_h - black_margin[MARGIN_BOTTOM], window_w, black_margin[MARGIN_BOTTOM]),
@@ -456,7 +504,7 @@ void RasterizerCanvasBaseGLES2::_copy_texscreen(const Rect2 &p_rect) {
 	// back to canvas, force rebind
 	state.using_texture_rect = false;
 	state.canvas_shader.bind();
-	_bind_canvas_texture(state.current_tex, state.current_normal);
+	_bind_canvas_texture(state.current_tex, state.current_normal, state.current_mask);
 	_set_uniforms();
 }
 

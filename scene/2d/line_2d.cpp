@@ -327,7 +327,7 @@ void Line2D::_draw() {
 			lb.vertices,
 			lb.colors,
 			lb.uvs, Vector<int>(), Vector<float>(),
-			texture_rid, -1, RID(),
+			texture_rid, -1, RID(), RID(),
 			_antialiased, true);
 
 // DEBUG

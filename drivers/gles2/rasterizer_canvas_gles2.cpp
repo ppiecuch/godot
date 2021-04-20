@@ -98,7 +98,7 @@ void RasterizerCanvasGLES2::_batch_render_lines(const Batch &p_batch, Rasterizer
 		state.canvas_shader.use_material((void *)p_material);
 	}
 
-	_bind_canvas_texture(RID(), RID());
+	_bind_canvas_texture(RID(), RID(), RID());
 
 	glDisableVertexAttribArray(VS::ARRAY_COLOR);
 	glVertexAttrib4fv(VS::ARRAY_COLOR, (float *)&p_batch.color);
@@ -188,7 +188,7 @@ void RasterizerCanvasGLES2::_batch_render_generic(const Batch &p_batch, Rasteriz
 		state.canvas_shader.use_material((void *)p_material);
 	}
 
-	_bind_canvas_texture(tex.RID_texture, tex.RID_normal);
+	_bind_canvas_texture(tex.RID_texture, tex.RID_normal, tex.RID_mask);
 
 	// bind the index and vertex buffer
 	glBindBuffer(GL_ARRAY_BUFFER, bdata.gl_vertex_buffer);
@@ -338,7 +338,7 @@ void RasterizerCanvasGLES2::render_batches(Item *p_current_clip, bool &r_reclip,
 								state.canvas_shader.use_material((void *)p_material);
 							}
 
-							_bind_canvas_texture(RID(), RID());
+							_bind_canvas_texture(RID(), RID(), RID());
 
 							glDisableVertexAttribArray(VS::ARRAY_COLOR);
 							glVertexAttrib4fv(VS::ARRAY_COLOR, line->color.components);
@@ -451,7 +451,7 @@ void RasterizerCanvasGLES2::render_batches(Item *p_current_clip, bool &r_reclip,
 									SWAP(points[1], points[2]);
 								}
 
-								RasterizerStorageGLES2::Texture *texture = _bind_canvas_texture(r->texture, r->normal_map);
+								RasterizerStorageGLES2::Texture *texture = _bind_canvas_texture(r->texture, r->normal_map, r->mask);
 
 								if (texture) {
 									Size2 texpixel_size(1.0 / texture->width, 1.0 / texture->height);
@@ -550,7 +550,7 @@ void RasterizerCanvasGLES2::render_batches(Item *p_current_clip, bool &r_reclip,
 									state.canvas_shader.use_material((void *)p_material);
 								}
 
-								RasterizerStorageGLES2::Texture *tex = _bind_canvas_texture(r->texture, r->normal_map);
+								RasterizerStorageGLES2::Texture *tex = _bind_canvas_texture(r->texture, r->normal_map, r->mask);
 
 								if (!tex) {
 									Rect2 dst_rect = Rect2(r->rect.position, r->rect.size);
@@ -640,7 +640,7 @@ void RasterizerCanvasGLES2::render_batches(Item *p_current_clip, bool &r_reclip,
 							glDisableVertexAttribArray(VS::ARRAY_COLOR);
 							glVertexAttrib4fv(VS::ARRAY_COLOR, np->color.components);
 
-							RasterizerStorageGLES2::Texture *tex = _bind_canvas_texture(np->texture, np->normal_map);
+							RasterizerStorageGLES2::Texture *tex = _bind_canvas_texture(np->texture, np->normal_map, np->mask);
 
 							if (!tex) {
 								// FIXME: Handle textureless ninepatch gracefully
@@ -827,7 +827,7 @@ void RasterizerCanvasGLES2::render_batches(Item *p_current_clip, bool &r_reclip,
 								indices[j * 3 + 2] = num_points;
 							}
 
-							_bind_canvas_texture(RID(), RID());
+							_bind_canvas_texture(RID(), RID(), RID());
 
 							_draw_polygon(indices, num_points * 3, num_points + 1, points, NULL, &circle->color, true);
 						} break;
@@ -843,7 +843,7 @@ void RasterizerCanvasGLES2::render_batches(Item *p_current_clip, bool &r_reclip,
 								state.canvas_shader.use_material((void *)p_material);
 							}
 
-							RasterizerStorageGLES2::Texture *texture = _bind_canvas_texture(polygon->texture, polygon->normal_map);
+							RasterizerStorageGLES2::Texture *texture = _bind_canvas_texture(polygon->texture, polygon->normal_map, polygon->mask);
 
 							if (texture) {
 								Size2 texpixel_size(1.0 / texture->width, 1.0 / texture->height);
@@ -874,7 +874,7 @@ void RasterizerCanvasGLES2::render_batches(Item *p_current_clip, bool &r_reclip,
 								state.canvas_shader.use_material((void *)p_material);
 							}
 
-							RasterizerStorageGLES2::Texture *texture = _bind_canvas_texture(mesh->texture, mesh->normal_map);
+							RasterizerStorageGLES2::Texture *texture = _bind_canvas_texture(mesh->texture, mesh->normal_map, mesh->mask);
 
 							if (texture) {
 								Size2 texpixel_size(1.0 / texture->width, 1.0 / texture->height);
@@ -962,7 +962,7 @@ void RasterizerCanvasGLES2::render_batches(Item *p_current_clip, bool &r_reclip,
 								state.canvas_shader.use_material((void *)p_material);
 							}
 
-							RasterizerStorageGLES2::Texture *texture = _bind_canvas_texture(mmesh->texture, mmesh->normal_map);
+							RasterizerStorageGLES2::Texture *texture = _bind_canvas_texture(mmesh->texture, mmesh->normal_map, mmesh->mask);
 
 							if (texture) {
 								Size2 texpixel_size(1.0 / texture->width, 1.0 / texture->height);
@@ -1077,7 +1077,7 @@ void RasterizerCanvasGLES2::render_batches(Item *p_current_clip, bool &r_reclip,
 								state.canvas_shader.use_material((void *)p_material);
 							}
 
-							_bind_canvas_texture(RID(), RID());
+							_bind_canvas_texture(RID(), RID(), RID());
 
 							if (pline->triangles.size()) {
 								_draw_generic(GL_TRIANGLE_STRIP, pline->triangles.size(), pline->triangles.ptr(), NULL, pline->triangle_colors.ptr(), pline->triangle_colors.size() == 1);
@@ -1131,7 +1131,7 @@ void RasterizerCanvasGLES2::render_batches(Item *p_current_clip, bool &r_reclip,
 
 							ERR_CONTINUE(primitive->points.size() < 1);
 
-							RasterizerStorageGLES2::Texture *texture = _bind_canvas_texture(primitive->texture, primitive->normal_map);
+							RasterizerStorageGLES2::Texture *texture = _bind_canvas_texture(primitive->texture, primitive->normal_map, primitive->mask);
 
 							if (texture) {
 								Size2 texpixel_size(1.0 / texture->width, 1.0 / texture->height);

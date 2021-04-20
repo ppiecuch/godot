@@ -358,6 +358,9 @@ uniform mediump sampler2D color_texture; // texunit:0
 /* clang-format on */
 uniform highp vec2 color_texpixel_size;
 uniform mediump sampler2D normal_texture; // texunit:1
+uniform lowp sampler2D mask_texture; // texunit:2
+uniform lowp float mask_cut_off;
+uniform lowp vec3 mask_channels_mixer;
 
 in highp vec2 uv_interp;
 in mediump vec4 color_interp;
@@ -366,14 +369,11 @@ in mediump vec4 color_interp;
 flat in mediump vec4 modulate_interp;
 #endif
 
-#if defined(SCREEN_TEXTURE_USED)
-
+#ifdef SCREEN_TEXTURE_USED
 uniform sampler2D screen_texture; // texunit:-3
-
 #endif
 
-#if defined(SCREEN_UV_USED)
-
+#ifdef SCREEN_UV_USED
 uniform vec2 screen_pixel_size;
 #endif
 
@@ -400,7 +400,7 @@ layout(std140) uniform LightData {
 	highp float shadow_distance_mult;
 };
 
-uniform lowp sampler2D light_texture; // texunit:-1
+uniform lowp sampler2D light_texture; // texunit:-2
 in vec4 light_uv_interp;
 in vec2 transformed_light_uv;
 
@@ -408,7 +408,7 @@ in vec4 local_rot;
 
 #ifdef USE_SHADOWS
 
-uniform highp sampler2D shadow_texture; // texunit:-2
+uniform highp sampler2D shadow_texture; // texunit:-5
 in highp vec2 pos;
 
 #endif
@@ -568,11 +568,19 @@ float map_ninepatch_axis(float pixel, float draw_size, float tex_pixel_size, flo
 #endif
 
 uniform bool use_default_normal;
+uniform bool use_default_mask;
 
 void main() {
 
 	vec4 color = color_interp;
 	vec2 uv = uv_interp;
+
+	if (use_default_mask) {
+		float mask = dot(texture(mask_texture, uv).xyz, mask_channels_mixer);
+		if (mask <= mask_cut_off) {
+			discard;
+		}
+	}
 
 #ifdef USE_TEXTURE_RECT
 

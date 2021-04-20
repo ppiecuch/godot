@@ -133,7 +133,7 @@ void SpriteMesh::_notification(int p_what) {
 				ofs -= Size2(s) / 2;
 
 			Transform2D xform(0, ofs - Point2(aabb.position.x, aabb.position.y));
-			draw_mesh(mesh, texture, normal_map, xform);
+			draw_mesh(mesh, texture, normal_map, mask, xform);
 			if (_mesh_debug) {
 				draw_rect(Rect2(ofs, s), Color::named("yellow"), false);
 			}
@@ -302,6 +302,19 @@ Ref<Texture> SpriteMesh::get_mesh_normal_map() const {
 	return normal_map;
 }
 
+void SpriteMesh::set_mesh_mask(const Ref<Texture> &p_texture) {
+
+	if (mask != p_texture) {
+		mask = p_texture;
+		update();
+	}
+}
+
+Ref<Texture> SpriteMesh::get_mesh_mask() const {
+
+	return mask;
+}
+
 void SpriteMesh::set_selected_frame(int p_frame) {
 
 	if (selected_frame != p_frame) {
@@ -459,10 +472,12 @@ void SpriteMesh::_mesh_changed() {
 void SpriteMesh::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_mesh", "mesh"), &SpriteMesh::set_mesh);
 	ClassDB::bind_method(D_METHOD("get_mesh"), &SpriteMesh::get_mesh);
-	ClassDB::bind_method(D_METHOD("set_mesh_texture", "mesh_texture"), &SpriteMesh::set_mesh_texture);
+	ClassDB::bind_method(D_METHOD("set_mesh_texture", "texture"), &SpriteMesh::set_mesh_texture);
 	ClassDB::bind_method(D_METHOD("get_mesh_texture"), &SpriteMesh::get_mesh_texture);
-	ClassDB::bind_method(D_METHOD("set_mesh_normal_map", "mesh_normal_map"), &SpriteMesh::set_mesh_normal_map);
+	ClassDB::bind_method(D_METHOD("set_mesh_normal_map", "normal_map"), &SpriteMesh::set_mesh_normal_map);
 	ClassDB::bind_method(D_METHOD("get_mesh_normal_map"), &SpriteMesh::get_mesh_normal_map);
+	ClassDB::bind_method(D_METHOD("set_mesh_mask", "mask"), &SpriteMesh::set_mesh_mask);
+	ClassDB::bind_method(D_METHOD("get_mesh_mask"), &SpriteMesh::get_mesh_mask);
 
 	ClassDB::bind_method(D_METHOD("set_selected_frame", "frame"), &SpriteMesh::set_selected_frame);
 	ClassDB::bind_method(D_METHOD("get_selected_frame"), &SpriteMesh::get_selected_frame);
@@ -492,6 +507,7 @@ void SpriteMesh::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "mesh", PROPERTY_HINT_RESOURCE_TYPE, "Mesh"), "set_mesh", "get_mesh");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "mesh_texture", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_mesh_texture", "get_mesh_texture");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "mesh_normal_map", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_mesh_normal_map", "get_mesh_normal_map");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "mesh_mask", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_mesh_mask", "get_mesh_mask");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "select_frame"), "set_selected_frame", "get_selected_frame");
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "frames_builder", PROPERTY_HINT_MULTILINE_TEXT, ""), "set_frames_builder", "get_frames_builder");
 
