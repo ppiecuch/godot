@@ -287,7 +287,7 @@ SimulationController2D::SimulationController2D() {
 
 #ifdef MODULE_OPENSIMPLEX_ENABLED
 	noise_modulation = false;
-	noise_time_scale = 20;
+	noise_time_scale = 10;
 	noise_pixel_resolution = 10;
 	_noise = newref(OpenSimplexNoise);
 	_noise->set_persistence(0.3); // more smoothness
@@ -463,7 +463,7 @@ SimulationControllerInstance2D::~SimulationControllerInstance2D() {
 
 // BEGIN Mesh elastic-deform.
 
-void DeformMeshInstance2D::_notification(int p_what) {
+void ElasticMeshInstance2D::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_READY: {
 
@@ -475,17 +475,17 @@ void DeformMeshInstance2D::_notification(int p_what) {
 	}
 }
 
-int DeformMeshInstance2D::get_simulation_id() const {
+int ElasticMeshInstance2D::get_simulation_id() const {
 
 	return _sim_id;
 }
 
-bool DeformMeshInstance2D::is_sprite_simulation_paused() const {
+bool ElasticMeshInstance2D::is_sprite_simulation_paused() const {
 
 	return sprite_simulation_pause;
 }
 
-void DeformMeshInstance2D::set_sprite_simulation_pause(bool p_state) {
+void ElasticMeshInstance2D::set_sprite_simulation_pause(bool p_state) {
 
 	if (sprite_simulation_pause != p_state) {
 		sprite_simulation_pause = p_state;
@@ -493,12 +493,12 @@ void DeformMeshInstance2D::set_sprite_simulation_pause(bool p_state) {
 	}
 }
 
-Ref<SimulationController2D> DeformMeshInstance2D::get_controller() const {
+Ref<SimulationController2D> ElasticMeshInstance2D::get_controller() const {
 
 	return controller;
 }
 
-void DeformMeshInstance2D::set_controller(const Ref<SimulationController2D> &p_controller) {
+void ElasticMeshInstance2D::set_controller(const Ref<SimulationController2D> &p_controller) {
 
 	if (controller != p_controller) {
 		if (controller.is_valid()) {
@@ -513,31 +513,31 @@ void DeformMeshInstance2D::set_controller(const Ref<SimulationController2D> &p_c
 	}
 }
 
-Vector2 DeformMeshInstance2D::get_noise_scale() const {
+Vector2 ElasticMeshInstance2D::get_noise_scale() const {
 
 	return noise_scale;
 }
 
-void DeformMeshInstance2D::set_noise_scale(Vector2 p_scale) {
+void ElasticMeshInstance2D::set_noise_scale(Vector2 p_scale) {
 
 	noise_scale = p_scale;
 }
 
-void DeformMeshInstance2D::_bind_methods() {
+void ElasticMeshInstance2D::_bind_methods() {
 
-	ClassDB::bind_method(D_METHOD("set_controller", "controller"), &DeformMeshInstance2D::set_controller);
-	ClassDB::bind_method(D_METHOD("get_controller"), &DeformMeshInstance2D::get_controller);
-	ClassDB::bind_method(D_METHOD("set_sprite_simulation_pause"), &DeformMeshInstance2D::set_sprite_simulation_pause);
-	ClassDB::bind_method(D_METHOD("is_sprite_simulation_paused"), &DeformMeshInstance2D::is_sprite_simulation_paused);
-	ClassDB::bind_method(D_METHOD("set_noise_scale", "scale"), &DeformMeshInstance2D::set_noise_scale);
-	ClassDB::bind_method(D_METHOD("get_noise_scale"), &DeformMeshInstance2D::get_noise_scale);
+	ClassDB::bind_method(D_METHOD("set_controller", "controller"), &ElasticMeshInstance2D::set_controller);
+	ClassDB::bind_method(D_METHOD("get_controller"), &ElasticMeshInstance2D::get_controller);
+	ClassDB::bind_method(D_METHOD("set_sprite_simulation_pause"), &ElasticMeshInstance2D::set_sprite_simulation_pause);
+	ClassDB::bind_method(D_METHOD("is_sprite_simulation_paused"), &ElasticMeshInstance2D::is_sprite_simulation_paused);
+	ClassDB::bind_method(D_METHOD("set_noise_scale", "scale"), &ElasticMeshInstance2D::set_noise_scale);
+	ClassDB::bind_method(D_METHOD("get_noise_scale"), &ElasticMeshInstance2D::get_noise_scale);
 
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "sprite_pause"), "set_sprite_simulation_pause", "is_sprite_simulation_paused");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "controller"), "set_controller", "get_controller");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "noise_scale"), "set_noise_scale", "get_noise_scale");
 }
 
-DeformMeshInstance2D::DeformMeshInstance2D() {
+ElasticMeshInstance2D::ElasticMeshInstance2D() {
 
 	sprite_simulation_pause = false;
 	controller = Ref<SimulationController2D>(NULL);
@@ -546,7 +546,7 @@ DeformMeshInstance2D::DeformMeshInstance2D() {
 	noise_scale = Vector2(1, 0);
 }
 
-DeformMeshInstance2D::~DeformMeshInstance2D() {
+ElasticMeshInstance2D::~ElasticMeshInstance2D() {
 
 	// TODO: Dereference __state_motion_iterator (?)
 }
@@ -556,19 +556,19 @@ DeformMeshInstance2D::~DeformMeshInstance2D() {
 // BEGIN Sprite elastic-deform.
 
 #ifdef TOOLS_ENABLED
-bool DeformSprite::_edit_is_selected_on_click(const Point2 &p_point, double p_tolerance) const {
+bool ElasticSprite::_edit_is_selected_on_click(const Point2 &p_point, double p_tolerance) const {
 
 	return controller.is_valid() ? _edit_get_rect().has_point(p_point) : Sprite::_edit_is_selected_on_click(p_point, p_tolerance);
 }
 
-void DeformSprite::_edit_set_rect(const Rect2 &p_rect) {
+void ElasticSprite::_edit_set_rect(const Rect2 &p_rect) {
 
 	Sprite::_edit_set_rect(p_rect);
 	_sim_dirty = true;
 }
 #endif
 
-void DeformSprite::_update_simulation() {
+void ElasticSprite::_update_simulation() {
 
 	ERR_FAIL_COND(controller.is_null());
 
@@ -587,7 +587,7 @@ void DeformSprite::_update_simulation() {
 	_mesh = Ref<ArrayMesh>(NULL);
 }
 
-void DeformSprite::_update_geom() {
+void ElasticSprite::_update_geom() {
 	ERR_FAIL_COND(_sim_id < 0);
 
 	if (_mesh.is_valid()) {
@@ -612,7 +612,7 @@ void DeformSprite::_update_geom() {
 		_create_geom();
 }
 
-void DeformSprite::_create_geom() {
+void ElasticSprite::_create_geom() {
 	const int &segs = geometry_segments;
 
 	const Rect2 rc = get_rect();
@@ -779,7 +779,7 @@ void DeformSprite::_create_geom() {
 	_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, _mesh_array, Array(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
 }
 
-Rect2 DeformSprite::_get_texture_uv_rect() const {
+Rect2 ElasticSprite::_get_texture_uv_rect() const {
 
 	Rect2 rc(0, 0, 1, 1);
 	if (AtlasTexture *atlas = Object::cast_to<AtlasTexture>(*get_texture())) {
@@ -799,7 +799,7 @@ Rect2 DeformSprite::_get_texture_uv_rect() const {
 	return rc;
 }
 
-void DeformSprite::_check_parent_controller() {
+void ElasticSprite::_check_parent_controller() {
 	SimulationControllerInstance2D *new_controller = nullptr;
 
 	if (SimulationControllerInstance2D *instance = Object::cast_to<SimulationControllerInstance2D>(get_parent())) {
@@ -823,19 +823,19 @@ void DeformSprite::_check_parent_controller() {
 	}
 }
 
-void DeformSprite::_on_simulation_update() {
+void ElasticSprite::_on_simulation_update() {
 
 	_geom_dirty = true;
 	update();
 }
 
-void DeformSprite::_on_simulation_changed() {
+void ElasticSprite::_on_simulation_changed() {
 
 	_sim_dirty = true;
 	update();
 }
 
-void DeformSprite::_notification(int p_what) {
+void ElasticSprite::_notification(int p_what) {
 
 	switch (p_what) {
 		case NOTIFICATION_READY: {
@@ -876,7 +876,7 @@ void DeformSprite::_notification(int p_what) {
 	}
 }
 
-void DeformSprite::_on_texture_changed() {
+void ElasticSprite::_on_texture_changed() {
 
 	// Rebuild simulation
 	if (get_texture().is_valid()) {
@@ -888,12 +888,12 @@ void DeformSprite::_on_texture_changed() {
 	}
 }
 
-int DeformSprite::get_simulation_id() const {
+int ElasticSprite::get_simulation_id() const {
 
 	return _sim_id;
 }
 
-void DeformSprite::set_geometry_anchor(ElasticSimulation::Anchor p_anchor) {
+void ElasticSprite::set_geometry_anchor(ElasticSimulation::Anchor p_anchor) {
 	ERR_FAIL_INDEX(p_anchor, ElasticSimulation::SimAnchorCount);
 
 	geometry_anchor = p_anchor;
@@ -901,17 +901,17 @@ void DeformSprite::set_geometry_anchor(ElasticSimulation::Anchor p_anchor) {
 	update();
 }
 
-ElasticSimulation::Anchor DeformSprite::get_geometry_anchor() const {
+ElasticSimulation::Anchor ElasticSprite::get_geometry_anchor() const {
 
 	return geometry_anchor;
 }
 
-bool DeformSprite::is_geometry_deformation_enabled() const {
+bool ElasticSprite::is_geometry_deformation_enabled() const {
 
 	return geometry_enable_deformation;
 }
 
-void DeformSprite::set_geometry_enable_deformation(bool p_state) {
+void ElasticSprite::set_geometry_enable_deformation(bool p_state) {
 
 	if (geometry_enable_deformation != p_state) {
 		geometry_enable_deformation = p_state;
@@ -919,7 +919,7 @@ void DeformSprite::set_geometry_enable_deformation(bool p_state) {
 	}
 }
 
-void DeformSprite::set_geometry_segments(int p_segments) {
+void ElasticSprite::set_geometry_segments(int p_segments) {
 	ERR_FAIL_COND(p_segments < 1);
 
 	geometry_segments = p_segments;
@@ -927,12 +927,12 @@ void DeformSprite::set_geometry_segments(int p_segments) {
 	update();
 }
 
-int DeformSprite::get_geometry_segments() const {
+int ElasticSprite::get_geometry_segments() const {
 
 	return geometry_segments;
 }
 
-void DeformSprite::set_geometry_pixel_unit(real_t p_unit) {
+void ElasticSprite::set_geometry_pixel_unit(real_t p_unit) {
 	ERR_FAIL_COND(p_unit < 0.001);
 	ERR_FAIL_COND(p_unit > 1);
 
@@ -941,24 +941,24 @@ void DeformSprite::set_geometry_pixel_unit(real_t p_unit) {
 	update();
 }
 
-real_t DeformSprite::get_geometry_pixel_unit() const {
+real_t ElasticSprite::get_geometry_pixel_unit() const {
 
 	return geometry_pixel_unit;
 }
 
-void DeformSprite::set_geometry_size_variation(bool p_state) {
+void ElasticSprite::set_geometry_size_variation(bool p_state) {
 
 	geometry_size_variation = p_state;
 	_sim_dirty = true;
 	update();
 }
 
-bool DeformSprite::is_geometry_size_variation() const {
+bool ElasticSprite::is_geometry_size_variation() const {
 
 	return geometry_size_variation;
 }
 
-void DeformSprite::set_geometry_stiffness(real_t p_stiffness) {
+void ElasticSprite::set_geometry_stiffness(real_t p_stiffness) {
 	ERR_FAIL_COND(p_stiffness > 1);
 	ERR_FAIL_COND(p_stiffness < 0);
 
@@ -969,12 +969,12 @@ void DeformSprite::set_geometry_stiffness(real_t p_stiffness) {
 	}
 }
 
-real_t DeformSprite::get_geometry_stiffness() const {
+real_t ElasticSprite::get_geometry_stiffness() const {
 
 	return geometry_stiffness;
 }
 
-void DeformSprite::set_physics_variation(bool p_variation) {
+void ElasticSprite::set_physics_variation(bool p_variation) {
 
 	if (physics_variation != p_variation) {
 		physics_variation = p_variation;
@@ -983,22 +983,22 @@ void DeformSprite::set_physics_variation(bool p_variation) {
 	}
 }
 
-bool DeformSprite::is_physics_variation() const {
+bool ElasticSprite::is_physics_variation() const {
 
 	return physics_variation;
 }
 
-Vector2 DeformSprite::get_noise_scale() const {
+Vector2 ElasticSprite::get_noise_scale() const {
 
 	return noise_scale;
 }
 
-void DeformSprite::set_noise_scale(Vector2 p_scale) {
+void ElasticSprite::set_noise_scale(Vector2 p_scale) {
 
 	noise_scale = p_scale;
 }
 
-void DeformSprite::set_geometry_debug(bool p_debug) {
+void ElasticSprite::set_geometry_debug(bool p_debug) {
 
 	if (geometry_debug != p_debug) {
 		geometry_debug = p_debug;
@@ -1006,17 +1006,17 @@ void DeformSprite::set_geometry_debug(bool p_debug) {
 	}
 }
 
-bool DeformSprite::get_geometry_debug() const {
+bool ElasticSprite::get_geometry_debug() const {
 
 	return geometry_debug;
 }
 
-bool DeformSprite::is_sprite_simulation_paused() const {
+bool ElasticSprite::is_sprite_simulation_paused() const {
 
 	return sprite_simulation_pause;
 }
 
-void DeformSprite::set_sprite_simulation_pause(bool p_state) {
+void ElasticSprite::set_sprite_simulation_pause(bool p_state) {
 
 	if (sprite_simulation_pause != p_state) {
 		sprite_simulation_pause = p_state;
@@ -1028,12 +1028,12 @@ void DeformSprite::set_sprite_simulation_pause(bool p_state) {
 	}
 }
 
-Ref<SimulationController2D> DeformSprite::get_controller() const {
+Ref<SimulationController2D> ElasticSprite::get_controller() const {
 
 	return controller;
 }
 
-void DeformSprite::set_controller(const Ref<SimulationController2D> &p_controller) {
+void ElasticSprite::set_controller(const Ref<SimulationController2D> &p_controller) {
 
 	if (controller != p_controller) {
 		if (controller.is_valid()) {
@@ -1058,7 +1058,7 @@ inline Point2 middle_point(const Point2 &a, const Point2 &b) {
 	return (a + b) / 2;
 }
 
-void DeformSprite::debug_draw_geometry() {
+void ElasticSprite::debug_draw_geometry() {
 	ERR_FAIL_COND(controller.is_null());
 
 	Ref<ElasticSimulation> sim = controller->get_simulation();
@@ -1095,36 +1095,36 @@ void DeformSprite::debug_draw_geometry() {
 	draw_rect(Rect2(force_end, get_scale().inv()), force_color, true);
 }
 
-void DeformSprite::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("get_controller"), &DeformSprite::get_controller);
-	ClassDB::bind_method(D_METHOD("set_controller", "controller"), &DeformSprite::set_controller);
-	ClassDB::bind_method(D_METHOD("set_sprite_simulation_pause"), &DeformSprite::set_sprite_simulation_pause);
-	ClassDB::bind_method(D_METHOD("is_sprite_simulation_paused"), &DeformSprite::is_sprite_simulation_paused);
-	ClassDB::bind_method(D_METHOD("set_noise_scale"), &DeformSprite::set_noise_scale);
-	ClassDB::bind_method(D_METHOD("get_noise_scale"), &DeformSprite::get_noise_scale);
+void ElasticSprite::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("get_controller"), &ElasticSprite::get_controller);
+	ClassDB::bind_method(D_METHOD("set_controller", "controller"), &ElasticSprite::set_controller);
+	ClassDB::bind_method(D_METHOD("set_sprite_simulation_pause"), &ElasticSprite::set_sprite_simulation_pause);
+	ClassDB::bind_method(D_METHOD("is_sprite_simulation_paused"), &ElasticSprite::is_sprite_simulation_paused);
+	ClassDB::bind_method(D_METHOD("set_noise_scale"), &ElasticSprite::set_noise_scale);
+	ClassDB::bind_method(D_METHOD("get_noise_scale"), &ElasticSprite::get_noise_scale);
 
-	ClassDB::bind_method(D_METHOD("set_geometry_enable_deformation", "state"), &DeformSprite::set_geometry_enable_deformation);
-	ClassDB::bind_method(D_METHOD("is_geometry_deformation_enabled"), &DeformSprite::is_geometry_deformation_enabled);
-	ClassDB::bind_method(D_METHOD("set_geometry_segments", "segments"), &DeformSprite::set_geometry_segments);
-	ClassDB::bind_method(D_METHOD("get_geometry_segments"), &DeformSprite::get_geometry_segments);
-	ClassDB::bind_method(D_METHOD("set_geometry_size_variation", "size_variation"), &DeformSprite::set_geometry_size_variation);
-	ClassDB::bind_method(D_METHOD("is_geometry_size_variation"), &DeformSprite::is_geometry_size_variation);
-	ClassDB::bind_method(D_METHOD("set_geometry_anchor", "anchor"), &DeformSprite::set_geometry_anchor);
-	ClassDB::bind_method(D_METHOD("get_geometry_anchor"), &DeformSprite::get_geometry_anchor);
-	ClassDB::bind_method(D_METHOD("set_geometry_pixel_unit", "pixel_unit"), &DeformSprite::set_geometry_pixel_unit);
-	ClassDB::bind_method(D_METHOD("get_geometry_pixel_unit"), &DeformSprite::get_geometry_pixel_unit);
-	ClassDB::bind_method(D_METHOD("set_geometry_stiffness", "factor"), &DeformSprite::set_geometry_stiffness);
-	ClassDB::bind_method(D_METHOD("get_geometry_stiffness"), &DeformSprite::get_geometry_stiffness);
-	ClassDB::bind_method(D_METHOD("set_physics_variation", "variation"), &DeformSprite::set_physics_variation);
-	ClassDB::bind_method(D_METHOD("is_physics_variation"), &DeformSprite::is_physics_variation);
-	ClassDB::bind_method(D_METHOD("set_geometry_debug", "debug"), &DeformSprite::set_geometry_debug);
-	ClassDB::bind_method(D_METHOD("get_geometry_debug"), &DeformSprite::get_geometry_debug);
+	ClassDB::bind_method(D_METHOD("set_geometry_enable_deformation", "state"), &ElasticSprite::set_geometry_enable_deformation);
+	ClassDB::bind_method(D_METHOD("is_geometry_deformation_enabled"), &ElasticSprite::is_geometry_deformation_enabled);
+	ClassDB::bind_method(D_METHOD("set_geometry_segments", "segments"), &ElasticSprite::set_geometry_segments);
+	ClassDB::bind_method(D_METHOD("get_geometry_segments"), &ElasticSprite::get_geometry_segments);
+	ClassDB::bind_method(D_METHOD("set_geometry_size_variation", "size_variation"), &ElasticSprite::set_geometry_size_variation);
+	ClassDB::bind_method(D_METHOD("is_geometry_size_variation"), &ElasticSprite::is_geometry_size_variation);
+	ClassDB::bind_method(D_METHOD("set_geometry_anchor", "anchor"), &ElasticSprite::set_geometry_anchor);
+	ClassDB::bind_method(D_METHOD("get_geometry_anchor"), &ElasticSprite::get_geometry_anchor);
+	ClassDB::bind_method(D_METHOD("set_geometry_pixel_unit", "pixel_unit"), &ElasticSprite::set_geometry_pixel_unit);
+	ClassDB::bind_method(D_METHOD("get_geometry_pixel_unit"), &ElasticSprite::get_geometry_pixel_unit);
+	ClassDB::bind_method(D_METHOD("set_geometry_stiffness", "factor"), &ElasticSprite::set_geometry_stiffness);
+	ClassDB::bind_method(D_METHOD("get_geometry_stiffness"), &ElasticSprite::get_geometry_stiffness);
+	ClassDB::bind_method(D_METHOD("set_physics_variation", "variation"), &ElasticSprite::set_physics_variation);
+	ClassDB::bind_method(D_METHOD("is_physics_variation"), &ElasticSprite::is_physics_variation);
+	ClassDB::bind_method(D_METHOD("set_geometry_debug", "debug"), &ElasticSprite::set_geometry_debug);
+	ClassDB::bind_method(D_METHOD("get_geometry_debug"), &ElasticSprite::get_geometry_debug);
 
-	ClassDB::bind_method(D_METHOD("get_simulation_id"), &DeformSprite::get_simulation_id);
+	ClassDB::bind_method(D_METHOD("get_simulation_id"), &ElasticSprite::get_simulation_id);
 
-	ClassDB::bind_method(D_METHOD("_on_simulation_update"), &DeformSprite::_on_simulation_update);
-	ClassDB::bind_method(D_METHOD("_on_simulation_changed"), &DeformSprite::_on_simulation_changed);
-	ClassDB::bind_method(D_METHOD("_on_texture_changed"), &DeformSprite::_on_texture_changed);
+	ClassDB::bind_method(D_METHOD("_on_simulation_update"), &ElasticSprite::_on_simulation_update);
+	ClassDB::bind_method(D_METHOD("_on_simulation_changed"), &ElasticSprite::_on_simulation_changed);
+	ClassDB::bind_method(D_METHOD("_on_texture_changed"), &ElasticSprite::_on_texture_changed);
 
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "sprite_pause"), "set_sprite_simulation_pause", "is_sprite_simulation_paused");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "controller"), "set_controller", "get_controller");
@@ -1141,7 +1141,7 @@ void DeformSprite::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "geometry_debug"), "set_geometry_debug", "get_geometry_debug");
 }
 
-DeformSprite::DeformSprite() {
+ElasticSprite::ElasticSprite() {
 
 	sprite_simulation_pause = false;
 	controller = Ref<SimulationController2D>(NULL);
@@ -1163,7 +1163,7 @@ DeformSprite::DeformSprite() {
 	_disabled_base_notifications.append(NOTIFICATION_DRAW); // we want only our drawing code
 }
 
-DeformSprite::~DeformSprite() {
+ElasticSprite::~ElasticSprite() {
 
 	// TODO: Dereference __state_motion_iterator (?)
 }

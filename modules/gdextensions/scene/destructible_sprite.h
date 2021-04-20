@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  destructible_object.h                                                */
+/*  destructible_sprite.h                                                */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -31,16 +31,36 @@
 // -*- C++ -*-
 //
 
-#ifndef GD_DESTRUCTIBLE_2D_H
-#define GD_DESTRUCTIBLE_2D_H
+#ifndef GD_DESTRUCTIBLE_SPRITE_H
+#define GD_DESTRUCTIBLE_SPRITE_H
 
 #include "core/reference.h"
+#include "scene/2d/sprite.h"
 #include "scene/2d/physics_body_2d.h"
 
-class DestructibleObject : public RigidBody2D {
-	GDCLASS(DestructibleObject, RigidBody2D);
+#include <map>
+
+struct explo_object_t;
+
+class DestructibleSprite : public Sprite {
+	GDCLASS(DestructibleSprite, Sprite);
+
+public:
+	enum DestructionType {
+		DESTRUCTION_EXPLODE,
+		DESTRUCTION_COLLAPSE,
+		DestructionTypeCount,
+	};
+	enum DestructionPhysics {
+		DESTRUCTION_PHYSICS_OFF,
+		DESTRUCTION_PHYSICS_STANDARD,
+		DESTRUCTION_PHYSICS_HIGH,
+		DestructionPhysicsCount,
+	};
 
 private:
+	DestructionType destruction_type;
+	DestructionPhysics destruction_physics;
 	int blocks_per_side;
 	real_t blocks_impulse;
 	real_t blocks_gravity_scale;
@@ -52,18 +72,33 @@ private:
 	bool explosion_delay;
 	String fake_explosions_group = "fake_explosion_particles";
 	bool randomize_seed;
+	bool random_depth;
 	bool debug_mode;
 
 	real_t _explosion_delay_timer;
 	real_t _explosion_delay_timer_limit;
 
+	void _add_children(const explo_object_t &child_object);
+	void _explosion(real_t delta, explo_object_t &object);
+	void _detonate(explo_object_t &object);
+	void _setup(explo_object_t &object);
+
+	void _on_debris_timer_timeout(uint64_t object_id);
+
+	std::map<uint64_t, explo_object_t*> _simulations;
+
 public:
-	DestructibleObject();
-	~DestructibleObject();
+	DestructibleSprite();
+	~DestructibleSprite();
+
+	void explode();
 
 protected:
 	void _notification(int p_what);
 	static void _bind_methods();
 };
 
-#endif /* GD_DESTRUCTIBLE_2D_H */
+VARIANT_ENUM_CAST(DestructibleSprite::DestructionType);
+VARIANT_ENUM_CAST(DestructibleSprite::DestructionPhysics);
+
+#endif /* GD_DESTRUCTIBLE_SPRITE_H */

@@ -163,8 +163,8 @@ void register_gdextensions_types() {
 	ClassDB::register_class<ElasticSimulation>();
 	ClassDB::register_class<SimulationController2D>();
 	ClassDB::register_class<SimulationControllerInstance2D>();
-	ClassDB::register_class<DeformMeshInstance2D>();
-	ClassDB::register_class<DeformSprite>();
+	ClassDB::register_class<ElasticMeshInstance2D>();
+	ClassDB::register_class<ElasticSprite>();
 	ClassDB::register_class<Cable2D>();
 	ClassDB::register_class<TouchButton>();
 #ifdef TOOLS_ENABLED

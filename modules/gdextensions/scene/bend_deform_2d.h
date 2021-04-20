@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef BENDDEFORM2D_H
-#define BENDDEFORM2D_H
+#ifndef BEND_DEFORM_2D_H
+#define BEND_DEFORM_2D_H
 
 #include "scene/2d/mesh_instance_2d.h"
 #include "scene/2d/sprite.h"
@@ -161,8 +161,8 @@ public:
 	~SimulationControllerInstance2D();
 };
 
-class DeformMeshInstance2D : public MeshInstance2D {
-	GDCLASS(DeformMeshInstance2D, MeshInstance2D)
+class ElasticMeshInstance2D : public MeshInstance2D {
+	GDCLASS(ElasticMeshInstance2D, MeshInstance2D)
 
 private:
 	int _sim_id;
@@ -195,12 +195,12 @@ public:
 	int get_motion_interpolations() const;
 	void set_motion_interpolations(int p_steps);
 
-	DeformMeshInstance2D();
-	~DeformMeshInstance2D();
+	ElasticMeshInstance2D();
+	~ElasticMeshInstance2D();
 };
 
-class DeformSprite : public Sprite {
-	GDCLASS(DeformSprite, Sprite)
+class ElasticSprite : public Sprite {
+	GDCLASS(ElasticSprite, Sprite)
 
 private:
 	int _sim_id;
@@ -272,8 +272,8 @@ public:
 
 	void debug_draw_geometry();
 
-	DeformSprite();
-	~DeformSprite();
+	ElasticSprite();
+	~ElasticSprite();
 };
 
-#endif // BENDDEFORM2D_H
+#endif // BEND_DEFORM_2D_H
