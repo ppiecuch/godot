@@ -42,8 +42,10 @@
 
 #ifdef DEBUG_ENABLED
 #define DEBUG_PRINT(pText) print_line(pText)
+#define DEBUG_VAR(pVar) print_line(vformat("%s: %s", #pVar, pVar))
 #else
 #define DEBUG_PRINT(pText)
+#define DEBUG_VAR(pVar)
 #endif
 
 #ifdef DEBUG_ENABLED
