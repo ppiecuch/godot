@@ -37,6 +37,10 @@ Some of the modules I am also developing or maintaining every now and then:
   * ```Chipmunk``` physics for Godot (https://github.com/ppiecuch/gd_chipmunk.git)
   * ```Liquidfun``` physics for Godot (https://github.com/ppiecuch/gd_liquidfun.git)
 
+Some additional modules in this repo:
+  * ```gdgenerator``` - procedural geometry (_wip_)
+  * ```gdvoronoi``` - Voronoi grids
+
 Please *notice*, that ```master`` here is _Godot 3_ code (not the _Godot 4_ as in the original repository).
 
 ## Godot Engine
