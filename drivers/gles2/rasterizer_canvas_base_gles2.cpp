@@ -310,7 +310,7 @@ RasterizerStorageGLES2::Texture *RasterizerCanvasBaseGLES2::_bind_canvas_texture
 			} else {
 				// default masking values
 				state.current_mask_cut_off = 0.5;
-				state.current_mask_channels_mixer = Vector3(1,0,0);
+				state.current_mask_channels_mixer = Vector3(1, 0, 0);
 			}
 			state.canvas_shader.set_uniform(CanvasShaderGLES2::MASK_CUT_OFF, state.current_mask_cut_off);
 			state.canvas_shader.set_uniform(CanvasShaderGLES2::MASK_CHANNELS_MIXER, state.current_mask_channels_mixer);

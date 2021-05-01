@@ -37,7 +37,7 @@ extern "C" {
 
 #include <stdint.h>
 
-#define GODOT_RID_SIZE (3*sizeof(void *))
+#define GODOT_RID_SIZE (3 * sizeof(void *))
 
 #ifndef GODOT_CORE_API_GODOT_RID_TYPE_DEFINED
 #define GODOT_CORE_API_GODOT_RID_TYPE_DEFINED

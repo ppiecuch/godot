@@ -77,7 +77,8 @@ class RID {
 	mutable Vector<RID_Props> _props;
 
 	struct _expand_props {
-		template<typename... T> _expand_props(T&&...) {}
+		template <typename... T>
+		_expand_props(T &&...) {}
 	};
 
 public:
@@ -86,7 +87,8 @@ public:
 	RID_Props get_prop(int p_index) const { return _props[p_index]; }
 	bool is_props_valid() const { return _props.size() > 0; }
 	size_t get_props_count() const { return _props.size(); }
-	template<typename... props_types> void set_props(props_types... args) { _expand_props{ 0, (_props.push_back(args), 0)... }; }
+	template <typename... props_types>
+	void set_props(props_types... args) { _expand_props{ 0, (_props.push_back(args), 0)... }; }
 
 	_FORCE_INLINE_ bool operator==(const RID &p_rid) const {
 

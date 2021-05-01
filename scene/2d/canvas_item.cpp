@@ -878,7 +878,7 @@ void CanvasItem::draw_primitive(const Vector<Point2> &p_points, const Vector<Col
 
 	RID rid = p_texture.is_valid() ? p_texture->get_rid() : RID();
 	RID rid_normal = p_normal_map.is_valid() ? p_normal_map->get_rid() : RID();
-	RID rid_mask =  p_mask.is_valid() ? p_mask->get_rid() : RID();
+	RID rid_mask = p_mask.is_valid() ? p_mask->get_rid() : RID();
 
 	VisualServer::get_singleton()->canvas_item_add_primitive(canvas_item, p_points, p_colors, p_uvs, rid, p_width, rid_normal, rid_mask);
 }
