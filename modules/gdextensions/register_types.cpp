@@ -49,6 +49,7 @@
 #include "gd/timer2.h"
 #include "gd/trail_2d.h"
 #include "gd/tween2.h"
+#include "gd/raw_packer.h"
 
 #ifndef EXPERIMENTAL_DISABLED
 #include "gd2c/bytecode_exporter.h"
@@ -71,6 +72,7 @@
 #include "scene/bullet_manager.h"
 #include "scene/cable2d.h"
 #include "scene/cable2d_editor_plugin.h"
+#include "scene/destructible_sprite.h"
 #include "scene/explosion_particles.h"
 #include "scene/figure.h"
 #include "scene/nixie_font.h"
@@ -130,6 +132,7 @@ void register_gdextensions_types() {
 	ClassDB::register_class<RoundProgress>();
 	ClassDB::register_class<Phantom>();
 	ClassDB::register_class<Byteswap>();
+	ClassDB::register_virtual_class<RawPacker>();
 #ifdef MODULE_MBEDTLS_ENABLED
 	ClassDB::register_class<Cripter>();
 #endif
@@ -163,8 +166,9 @@ void register_gdextensions_types() {
 	ClassDB::register_class<ElasticSimulation>();
 	ClassDB::register_class<SimulationController2D>();
 	ClassDB::register_class<SimulationControllerInstance2D>();
-	ClassDB::register_class<ElasticMeshInstance2D>();
 	ClassDB::register_class<ElasticSprite>();
+	ClassDB::register_class<ElasticMeshInstance2D>();
+	ClassDB::register_class<DestructibleSprite>();
 	ClassDB::register_class<Cable2D>();
 	ClassDB::register_class<TouchButton>();
 #ifdef TOOLS_ENABLED
