@@ -794,7 +794,7 @@ public:
 				type = TYPE_PRIMITIVE;
 				width = 1;
 				mask_cut_off = 0.5;
-				mask_channels_mixer = Vector3(1,0,0);
+				mask_channels_mixer = Vector3(1, 0, 0);
 			}
 		};
 
