@@ -164,7 +164,9 @@ ViewportTexture::~ViewportTexture() {
 		vp->viewport_textures.erase(this);
 	}
 
-	VS::get_singleton()->free(proxy);
+	if (VisualServer *vs = VS::get_singleton()) {
+		vs->free(proxy);
+	}
 }
 
 /////////////////////////////////////
@@ -3561,7 +3563,9 @@ Viewport::~Viewport() {
 	for (Set<ViewportTexture *>::Element *E = viewport_textures.front(); E; E = E->next()) {
 		E->get()->vp = NULL;
 	}
-	VisualServer::get_singleton()->free(viewport);
+	if (VisualServer *vs = VisualServer::get_singleton()) {
+		vs->free(viewport);
+	}
 	//SpatialSoundServer::get_singleton()->free(internal_listener);
 	//SpatialSound2DServer::get_singleton()->free(internal_listener_2d);
 }

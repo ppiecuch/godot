@@ -402,7 +402,11 @@ World2D::World2D() {
 
 World2D::~World2D() {
 
-	VisualServer::get_singleton()->free(canvas);
-	Physics2DServer::get_singleton()->free(space);
+	if (VisualServer *vs = VisualServer::get_singleton()) {
+		vs->free(canvas);
+	}
+	if (Physics2DServer *ps = Physics2DServer::get_singleton()) {
+		ps->free(space);
+	}
 	memdelete(indexer);
 }
