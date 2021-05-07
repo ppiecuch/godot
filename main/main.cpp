@@ -79,6 +79,11 @@
 #include "editor/project_manager.h"
 #endif
 
+#ifdef GD2C_ENABLED
+#include "gd2c/gd2c.h"
+#include "gd2c/bytecode_exporter.h"
+#endif
+
 /* Static members */
 
 // Singletons
@@ -307,6 +312,9 @@ void Main::print_help(const char *p_binary) {
 #ifdef DEBUG_METHODS_ENABLED
 	OS::get_singleton()->print("  --gdnative-generate-json-api     Generate JSON dump of the Godot API for GDNative bindings.\n");
 #endif
+#ifdef GD2C_ENABLED
+	OS::get_singleton()->print("  --dump-bytecode <file>           Generate bytecode dump.\n");
+#endif
 	OS::get_singleton()->print("  --test <test>                    Run a unit test (");
 	const char **test_names = tests_get_names();
 	const char *comma = "";
@@ -374,6 +382,11 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	engine->add_singleton(Engine::Singleton("Performance", performance));
 
 	GLOBAL_DEF("debug/settings/crash_handler/message", String("Please include this when reporting the bug on https://github.com/godotengine/godot/issues"));
+
+#ifdef GD2C_ENABLED
+    ClassDB::register_class<GDScriptBytecodeExporter>();
+	ClassDB::register_class<GD2CApi>();
+#endif
 
 	MAIN_PRINT("Main: Parse CMDLine");
 
@@ -1498,6 +1511,11 @@ bool Main::start() {
 	String test;
 	bool check_only = false;
 
+#ifdef GD2C_ENABLED
+	bool dump_script = false;
+	String dump_file;
+#endif
+
 #ifdef TOOLS_ENABLED
 	bool doc_base = true;
 	String _export_preset;
@@ -1542,6 +1560,11 @@ bool Main::start() {
 			bool parsed_pair = true;
 			if (args[i] == "-s" || args[i] == "--script") {
 				script = args[i + 1];
+#ifdef GD2C_ENABLED
+			} else if (args[i] == "--dump-bytecode") {
+				dump_script = true;
+				dump_file = args[i + 1];
+#endif
 			} else if (args[i] == "--test") {
 				test = args[i + 1];
 #ifdef TOOLS_ENABLED
@@ -1654,34 +1677,45 @@ bool Main::start() {
 
 	} else if (script != "") {
 
-		Ref<Script> script_res = ResourceLoader::load(script);
-		ERR_FAIL_COND_V_MSG(script_res.is_null(), false, "Can't load script: " + script);
-
-		if (check_only) {
-			if (!script_res->is_valid()) {
-				OS::get_singleton()->set_exit_code(1);
-			}
+#ifdef GD2C_ENABLED
+		if (dump_script) {
+			GDScriptBytecodeExporter bytecode_exporter;
+			print_line("Dumping " + script + " bytecode to " + dump_file + "...");
+			bytecode_exporter.export_bytecode_to_file(script, dump_file);
+			print_line("OK");
 			return false;
-		}
-
-		if (script_res->can_instance()) {
-
-			StringName instance_type = script_res->get_instance_base_type();
-			Object *obj = ClassDB::instance(instance_type);
-			MainLoop *script_loop = Object::cast_to<MainLoop>(obj);
-			if (!script_loop) {
-				if (obj)
-					memdelete(obj);
-				ERR_FAIL_V_MSG(false, vformat("Can't load the script \"%s\" as it doesn't inherit from SceneTree or MainLoop.", script));
-			}
-
-			script_loop->set_init_script(script_res);
-			main_loop = script_loop;
 		} else {
+#endif
+			Ref<Script> script_res = ResourceLoader::load(script);
+			ERR_FAIL_COND_V_MSG(script_res.is_null(), false, "Can't load script: " + script);
 
-			return false;
+			if (check_only) {
+				if (!script_res->is_valid()) {
+					OS::get_singleton()->set_exit_code(1);
+				}
+				return false;
+			}
+
+			if (script_res->can_instance()) {
+
+				StringName instance_type = script_res->get_instance_base_type();
+				Object *obj = ClassDB::instance(instance_type);
+				MainLoop *script_loop = Object::cast_to<MainLoop>(obj);
+				if (!script_loop) {
+					if (obj)
+						memdelete(obj);
+					ERR_FAIL_V_MSG(false, vformat("Can't load the script \"%s\" as it doesn't inherit from SceneTree or MainLoop.", script));
+				}
+
+				script_loop->set_init_script(script_res);
+				main_loop = script_loop;
+			} else {
+
+				return false;
+			}
+#ifdef GD2C_ENABLED
 		}
-
+#endif
 	} else {
 		main_loop_type = GLOBAL_DEF("application/run/main_loop_type", "");
 	}
