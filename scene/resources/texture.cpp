@@ -944,7 +944,6 @@ RID MaskTexture::get_rid() const {
 	return RID();
 }
 
-
 bool MaskTexture::has_alpha() const {
 
 	if (mask_texture.is_valid())
