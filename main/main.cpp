@@ -313,7 +313,7 @@ void Main::print_help(const char *p_binary) {
 	OS::get_singleton()->print("  --gdnative-generate-json-api     Generate JSON dump of the Godot API for GDNative bindings.\n");
 #endif
 #ifdef GD2C_ENABLED
-	OS::get_singleton()->print("  --dump-bytecode <file>           Generate bytecode dump.\n");
+	OS::get_singleton()->print("  --dump-bytecode <file>           Generate script's bytecode dump.\n");
 #endif
 	OS::get_singleton()->print("  --test <test>                    Run a unit test (");
 	const char **test_names = tests_get_names();
