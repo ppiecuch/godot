@@ -45,16 +45,11 @@
 #include "gd/phantom.h"
 #include "gd/procedural_animation.h"
 #include "gd/procedural_animation_editor_plugin.h"
+#include "gd/raw_packer.h"
 #include "gd/tags.h"
 #include "gd/timer2.h"
 #include "gd/trail_2d.h"
 #include "gd/tween2.h"
-#include "gd/raw_packer.h"
-
-#ifndef EXPERIMENTAL_DISABLED
-#include "gd2c/bytecode_exporter.h"
-#include "gd2c/gd2c.h"
-#endif
 
 #include "statemachine/state.h"
 #include "statemachine/statemachine.h"
@@ -140,10 +135,6 @@ void register_gdextensions_types() {
 	ClassDB::register_class<BSInputEventKey>();
 #ifndef ADVANCED_GUI_DISABLED
 	ClassDB::register_class<InputMapEditor>();
-#endif
-#ifndef EXPERIMENTAL_DISABLED
-	ClassDB::register_class<GDScriptBytecodeExporter>();
-	ClassDB::register_class<GD2CApi>();
 #endif
 
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Timer2", memnew(Timer2)));
