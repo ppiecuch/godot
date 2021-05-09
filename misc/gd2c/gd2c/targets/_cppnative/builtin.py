@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, List
-from gd2c.targets._gdnative.context import FunctionContext
+from gd2c.targets._cppnative.context import FunctionContext
 from gd2c.bytecode import CallBuiltinGDScriptOp
 from gd2c import builtin as BI
 from gd2c.address import GDScriptAddress

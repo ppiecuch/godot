@@ -79,9 +79,9 @@
 #include "editor/project_manager.h"
 #endif
 
-#ifdef GD2C_ENABLED
-#include "gd2c/gd2c.h"
-#include "gd2c/bytecode_exporter.h"
+#ifdef BYTECODE_EXPORT_ENABLED
+#include "bytecode_export/gd2c.h"
+#include "bytecode_export/bytecode_exporter.h"
 #endif
 
 /* Static members */
@@ -312,7 +312,7 @@ void Main::print_help(const char *p_binary) {
 #ifdef DEBUG_METHODS_ENABLED
 	OS::get_singleton()->print("  --gdnative-generate-json-api     Generate JSON dump of the Godot API for GDNative bindings.\n");
 #endif
-#ifdef GD2C_ENABLED
+#ifdef BYTECODE_EXPORT_ENABLED
 	OS::get_singleton()->print("  --dump-bytecode <file>           Generate script's bytecode dump.\n");
 #endif
 	OS::get_singleton()->print("  --test <test>                    Run a unit test (");
@@ -383,7 +383,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 
 	GLOBAL_DEF("debug/settings/crash_handler/message", String("Please include this when reporting the bug on https://github.com/godotengine/godot/issues"));
 
-#ifdef GD2C_ENABLED
+#ifdef BYTECODE_EXPORT_ENABLED
     ClassDB::register_class<GDScriptBytecodeExporter>();
 	ClassDB::register_class<GD2CApi>();
 #endif
@@ -1511,7 +1511,7 @@ bool Main::start() {
 	String test;
 	bool check_only = false;
 
-#ifdef GD2C_ENABLED
+#ifdef BYTECODE_EXPORT_ENABLED
 	bool dump_script = false;
 	String dump_file;
 #endif
@@ -1560,7 +1560,7 @@ bool Main::start() {
 			bool parsed_pair = true;
 			if (args[i] == "-s" || args[i] == "--script") {
 				script = args[i + 1];
-#ifdef GD2C_ENABLED
+#ifdef BYTECODE_EXPORT_ENABLED
 			} else if (args[i] == "--dump-bytecode") {
 				dump_script = true;
 				dump_file = args[i + 1];
@@ -1677,7 +1677,7 @@ bool Main::start() {
 
 	} else if (script != "") {
 
-#ifdef GD2C_ENABLED
+#ifdef BYTECODE_EXPORT_ENABLED
 		if (dump_script) {
 			GDScriptBytecodeExporter bytecode_exporter;
 			print_line("Dumping " + script + " bytecode to " + dump_file + "...");
@@ -1713,7 +1713,7 @@ bool Main::start() {
 
 				return false;
 			}
-#ifdef GD2C_ENABLED
+#ifdef BYTECODE_EXPORT_ENABLED
 		}
 #endif
 	} else {

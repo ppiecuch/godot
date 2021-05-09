@@ -112,7 +112,7 @@ class CPPNativeCodeGen:
             """)           
     
     def _transpile_c_file(self):
-        p = Path(self._output_path, "godotproject.c")
+        p = Path(self._output_path, "godotproject.cpp")
         with p.open(mode="w") as writer:
             writer.write(f"""\
                 #include "gd2c.h"

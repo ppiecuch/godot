@@ -40,7 +40,7 @@ def get_target(target_name: str, project: Project) -> Target:
 		from gd2c.targets.cppnative import CPPNativeTarget
 		return CPPNativeTarget(project)
 
-	raise Exception("target not known")
+	raise Exception("target not known: " + target_name)
 
 def assert_nothing_in_ssa_form(project: Project):
 	for cls in project.iter_classes_in_dependency_order():

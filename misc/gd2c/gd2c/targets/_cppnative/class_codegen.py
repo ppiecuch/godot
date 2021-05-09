@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, IO
 
 if TYPE_CHECKING:
-    from gd2c.targets.gdnative import ClassContext
+    from gd2c.targets.cppnative import ClassContext
 
 def transpile_struct(class_context: ClassContext, writer: IO):
     base_struct_tag = "class_base_t" # class_base_t is defined in gd2c.h

@@ -38,9 +38,9 @@ env.CommandNoCache("#main/app_icon.gen.h", "#main/app_icon.png", run_in_subproce
 if env["tools"]:
     SConscript("tests/SCsub")
 
-if os.path.isdir("gd2c"):
-    env.add_source_files(env.main_sources, "gd2c/*.cpp")
-    env.Append(CPPDEFINES=["GD2C_ENABLED"])
+if os.path.isdir("bytecode_export"):
+    env.add_source_files(env.main_sources, "bytecode_export/*.cpp")
+    env.Append(CPPDEFINES=["BYTECODE_EXPORT_ENABLED"])
     env.Append(CPPPATH=["#modules/gdnative/include"])
 
 lib = env.add_library("main", env.main_sources)
