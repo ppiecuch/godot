@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef __GD2C__
-#define __GD2C__
+#ifndef GD2C_H
+#define GD2C_H
 
 #include "core/reference.h"
 #include "core/ustring.h"
@@ -49,4 +49,4 @@ protected:
 	static void _bind_methods();
 };
 
-#endif // __GD2C__
+#endif

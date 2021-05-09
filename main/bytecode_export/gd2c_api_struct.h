@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef __GD2C_API_STRUCT__
-#define __GD2C_API_STRUCT__
+#ifndef GD2C_API_STRUCT_H
+#define GD2C_API_STRUCT_H
 
 #include "core/array.h"
 #include "gdnative/gdnative.h"
