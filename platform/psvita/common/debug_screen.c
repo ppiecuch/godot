@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  debug_screen.c                                                       */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #ifndef DEBUG_SCREEN_C
 #define DEBUG_SCREEN_C
 
@@ -91,28 +121,37 @@
 *
 */
 
-#include <stdlib.h> // for malloc(), free()
-#include <stdio.h> // for vsnprintf()
-#include <string.h> // for memset(), memcpy()
-#include <stdarg.h> // for va_list, va_start(), va_end()
 #include <inttypes.h>
+#include <stdarg.h> // for va_list, va_start(), va_end()
+#include <stdio.h> // for vsnprintf()
+#include <stdlib.h> // for malloc(), free()
+#include <string.h> // for memset(), memcpy()
 
 #include "debug_screen.h"
 #include "debug_screen_font.c"
 
 #define SCREEN_FB_WIDTH (960) // frame buffer aligned width for accessing vram
-#define SCREEN_FB_SIZE  (2 * 1024 * 1024) // Must be 256KB aligned
+#define SCREEN_FB_SIZE (2 * 1024 * 1024) // Must be 256KB aligned
 #ifndef SCREEN_TAB_SIZE // this allows easy overriding
 #define SCREEN_TAB_SIZE (8)
 #endif
-#define SCREEN_TAB_W    ((F)->size_w * (SCREEN_TAB_SIZE))
+#define SCREEN_TAB_W ((F)->size_w * (SCREEN_TAB_SIZE))
 #define F psvDebugScreenFontCurrent
 
-#define FROM_FULL_RGB(r,g,b ) ( ((b)<<16) | ((g)<<8) | (r) )
-#define CONVERT_RGB_BGR(rgb) rgb = ( (((rgb)&0x0000FF)<<16) | ((rgb)&0x00FF00) | (((rgb)&0xFF0000)>>16) )
+#define FROM_FULL_RGB(r, g, b) (((b) << 16) | ((g) << 8) | (r))
+#define CONVERT_RGB_BGR(rgb) rgb = ((((rgb)&0x0000FF) << 16) | ((rgb)&0x00FF00) | (((rgb)&0xFF0000) >> 16))
 
-#define CLEARSCRNBLOCK(H,toH,W,toW,color) for (int h = (H); h < (toH); h++) for (int w = (W); w < (toW); w++) ((uint32_t*)base)[h*(SCREEN_FB_WIDTH) + w] = (color);
-#define CLEARSCRNLINES(H,toH,color) { uint32_t *pixel = (uint32_t *)base + ((H) * (SCREEN_FB_WIDTH)); int i = (((toH) - (H)) * (SCREEN_FB_WIDTH)); for (; i > 0; i--) *pixel++ = (color); }
+#define CLEARSCRNBLOCK(H, toH, W, toW, color) \
+	for (int h = (H); h < (toH); h++)         \
+		for (int w = (W); w < (toW); w++)     \
+			((uint32_t *)base)[h * (SCREEN_FB_WIDTH) + w] = (color);
+#define CLEARSCRNLINES(H, toH, color)                                   \
+	{                                                                   \
+		uint32_t *pixel = (uint32_t *)base + ((H) * (SCREEN_FB_WIDTH)); \
+		int i = (((toH) - (H)) * (SCREEN_FB_WIDTH));                    \
+		for (; i > 0; i--)                                              \
+			*pixel++ = (color);                                         \
+	}
 
 #define SAVE_STORAGES 16
 
@@ -131,15 +170,15 @@ static PsvDebugScreenFont *psvDebugScreenFontCurrent = &psvDebugScreenFont;
 #include <psp2/display.h>
 #include <psp2/kernel/sysmem.h>
 #include <psp2/kernel/threadmgr.h>
-static void* base; // pointer to frame buffer
+static void *base; // pointer to frame buffer
 #else
 #define NO_psvDebugScreenInit
 #ifndef psvDebugScreenInitReplacement
 #define psvDebugScreenInitReplacement(...)
 #endif
-#define sceKernelLockMutex(m,v,x) m=v
-#define sceKernelUnlockMutex(m,v) m=v
-static char base[(SCREEN_FB_WIDTH) * (SCREEN_HEIGHT) * 4];
+#define sceKernelLockMutex(m, v, x) m = v
+#define sceKernelUnlockMutex(m, v) m = v
+static char base[(SCREEN_FB_WIDTH) * (SCREEN_HEIGHT)*4];
 #endif
 
 static uint32_t DARK_COLORS_BGR[8] = {
@@ -227,15 +266,15 @@ static void psvDebugScreenSetColors(void) {
 	}
 
 	// foregound color
-	if ((colors.fgIndex<=7) && (colors.fgIntensity==1)) { // ANSI palette with increased intensity
+	if ((colors.fgIndex <= 7) && (colors.fgIntensity == 1)) { // ANSI palette with increased intensity
 		colors.fgIndex |= 0x8;
-	} else if ((colors.fgIndex<=15) && (colors.fgIntensity!=1)) { // ANSI palette with standard/decreased intensity
+	} else if ((colors.fgIndex <= 15) && (colors.fgIntensity != 1)) { // ANSI palette with standard/decreased intensity
 		colors.fgIndex &= 0x7;
 	}
 	if (colors.fgTrueColorFlag) {
 		*color_fg = colors.fgTrueColor;
 	} else {
-		if ((colors.fgIndex<=7) && (colors.fgIntensity==2)) { // "ANSI" palette with decreased intensity
+		if ((colors.fgIndex <= 7) && (colors.fgIntensity == 2)) { // "ANSI" palette with decreased intensity
 			*color_fg = DARK_COLORS_BGR[colors.fgIndex];
 		} else { // ANSI/VTERM/GREYSCALE palette
 			*color_fg = ANSI_COLORS_BGR[colors.fgIndex];
@@ -244,15 +283,15 @@ static void psvDebugScreenSetColors(void) {
 	*color_fg |= 0xFF000000; // opaque
 
 	// backgound color
-	if ((colors.bgIndex<=7) && (colors.bgIntensity==1)) { // ANSI palette with increased intensity
+	if ((colors.bgIndex <= 7) && (colors.bgIntensity == 1)) { // ANSI palette with increased intensity
 		colors.bgIndex |= 0x8;
-	} else if ((colors.bgIndex<=15) && (colors.bgIntensity!=1)) { // ANSI palette with standard/decreased intensity
+	} else if ((colors.bgIndex <= 15) && (colors.bgIntensity != 1)) { // ANSI palette with standard/decreased intensity
 		colors.bgIndex &= 0x7;
 	}
 	if (colors.bgTrueColorFlag) {
 		*color_bg = colors.bgTrueColor;
 	} else {
-		if ((colors.bgIndex<=7) && (colors.bgIntensity==2)) { // "ANSI" palette with decreased intensity
+		if ((colors.bgIndex <= 7) && (colors.bgIntensity == 2)) { // "ANSI" palette with decreased intensity
 			*color_bg = DARK_COLORS_BGR[colors.bgIndex];
 		} else { // ANSI/VTERM/GREYSCALE palette
 			*color_bg = ANSI_COLORS_BGR[colors.bgIndex];
@@ -271,7 +310,7 @@ static size_t psvDebugScreenEscape(const unsigned char *str) {
 	int *colorTrueColorFlag;
 	uint32_t *colorTrueColor;
 	unsigned char *colorIndex, *colorIntensity;
-	for (i = 0, argc = 0; (argc < (sizeof(arg)/sizeof(*arg))) && (str[i] != '\0'); i++) {
+	for (i = 0, argc = 0; (argc < (sizeof(arg) / sizeof(*arg))) && (str[i] != '\0'); i++) {
 		switch (str[i]) {
 			// numeric char
 			case '0':
@@ -291,38 +330,52 @@ static size_t psvDebugScreenEscape(const unsigned char *str) {
 			// CSI commands
 			// save/restore position
 			case 's':
-				if (arg[0]<SAVE_STORAGES) { savedX[arg[0]] = coordX; savedY[arg[0]] = coordY; }
+				if (arg[0] < SAVE_STORAGES) {
+					savedX[arg[0]] = coordX;
+					savedY[arg[0]] = coordY;
+				}
 				return i;
 			case 'u':
-				if (arg[0]<SAVE_STORAGES) { coordX = savedX[arg[0]]; coordY = savedY[arg[0]]; }
+				if (arg[0] < SAVE_STORAGES) {
+					coordX = savedX[arg[0]];
+					coordY = savedY[arg[0]];
+				}
 				return i;
 			// cursor movement
-			case 'A': coordY -= arg[0]    * (F)->size_h; return i;
-			case 'B': coordY += arg[0]    * (F)->size_h; return i;
-			case 'C': coordX += arg[0]    * (F)->size_w; return i;
-			case 'D': coordX -= arg[0]    * (F)->size_w; return i;
+			case 'A': coordY -= arg[0] * (F)->size_h; return i;
+			case 'B': coordY += arg[0] * (F)->size_h; return i;
+			case 'C': coordX += arg[0] * (F)->size_w; return i;
+			case 'D': coordX -= arg[0] * (F)->size_w; return i;
 			// cursor movement to beginning of next/previous line(s)
-			case 'E': coordY += arg[0]    * (F)->size_h; coordX = 0; return i;
-			case 'F': coordY -= arg[0]    * (F)->size_h; coordX = 0; return i;
+			case 'E':
+				coordY += arg[0] * (F)->size_h;
+				coordX = 0;
+				return i;
+			case 'F':
+				coordY -= arg[0] * (F)->size_h;
+				coordX = 0;
+				return i;
 			// cursor positioning
-			case 'G': coordX = (arg[0]-1) * (F)->size_w; return i;
+			case 'G': coordX = (arg[0] - 1) * (F)->size_w; return i;
 			case 'H':
 			case 'f':
-				coordY = (arg[0]-1) * (F)->size_h;
-				coordX = (arg[1]-1) * (F)->size_w;
+				coordY = (arg[0] - 1) * (F)->size_h;
+				coordX = (arg[1] - 1) * (F)->size_w;
 				return i;
 			// clear part of "J"=screen or "K"=Line, so J code re-uses part of K
 			case 'J':
 			case 'K':
-				if (arg[0]==0) { // from cursor to end of line/screen
+				if (arg[0] == 0) { // from cursor to end of line/screen
 					CLEARSCRNBLOCK(coordY, coordY + (F)->size_h, coordX, (SCREEN_WIDTH), colors.color_bg); // line
-					if (str[i]=='J') CLEARSCRNLINES(coordY + (F)->size_h, (SCREEN_HEIGHT), colors.color_bg); // screen
-				} else if (arg[0]==1) { // from beginning of line/screen to cursor
+					if (str[i] == 'J') CLEARSCRNLINES(coordY + (F)->size_h, (SCREEN_HEIGHT), colors.color_bg); // screen
+				} else if (arg[0] == 1) { // from beginning of line/screen to cursor
 					CLEARSCRNBLOCK(coordY, coordY + (F)->size_h, 0, coordX, colors.color_bg); // line
-					if (str[i]=='J') CLEARSCRNLINES(0, coordY, colors.color_bg); // screen
-				} else if (arg[0]==2) { // whole line/screen
-					if (str[i]=='K') CLEARSCRNLINES(coordY, coordY + (F)->size_h, colors.color_bg) // line
-					else if (str[i]=='J') CLEARSCRNLINES(0, (SCREEN_HEIGHT), colors.color_bg); // screen
+					if (str[i] == 'J') CLEARSCRNLINES(0, coordY, colors.color_bg); // screen
+				} else if (arg[0] == 2) { // whole line/screen
+					if (str[i] == 'K')
+						CLEARSCRNLINES(coordY, coordY + (F)->size_h, colors.color_bg) // line
+					else if (str[i] == 'J')
+						CLEARSCRNLINES(0, (SCREEN_HEIGHT), colors.color_bg); // screen
 				}
 				return i;
 			// color
@@ -356,19 +409,19 @@ static size_t psvDebugScreenEscape(const unsigned char *str) {
 						case 38: // foreground color
 						case 48: // background color
 							mode = arg[c] / 10;
-							colorTrueColorFlag = mode&1 ? &colors.fgTrueColorFlag : &colors.bgTrueColorFlag;
-							if (arg[c+1]==5) { // 8-bit: [0-15][16-231][232-255] color map
+							colorTrueColorFlag = mode & 1 ? &colors.fgTrueColorFlag : &colors.bgTrueColorFlag;
+							if (arg[c + 1] == 5) { // 8-bit: [0-15][16-231][232-255] color map
 								*colorTrueColorFlag = 0;
-								colorIndex = mode&1 ? &colors.fgIndex : &colors.bgIndex;
-								*colorIndex = arg[c+2] & 0xFF;
-								colorIntensity = mode&1 ? &colors.fgIntensity : &colors.bgIntensity;
-								*colorIntensity = ((*colorIndex>=8) && (*colorIndex<=15)) ? 1 : 22;
-								c+=2; // extra arguments
-							} else if (arg[c+1]==2) { // 24-bit color space
+								colorIndex = mode & 1 ? &colors.fgIndex : &colors.bgIndex;
+								*colorIndex = arg[c + 2] & 0xFF;
+								colorIntensity = mode & 1 ? &colors.fgIntensity : &colors.bgIntensity;
+								*colorIntensity = ((*colorIndex >= 8) && (*colorIndex <= 15)) ? 1 : 22;
+								c += 2; // extra arguments
+							} else if (arg[c + 1] == 2) { // 24-bit color space
 								*colorTrueColorFlag = 1;
-								colorTrueColor = mode&1 ? &colors.fgTrueColor : &colors.bgTrueColor;
-								*colorTrueColor = FROM_FULL_RGB(arg[c+2], arg[c+3], arg[c+4]);
-								c+=4; // extra arguments
+								colorTrueColor = mode & 1 ? &colors.fgTrueColor : &colors.bgTrueColor;
+								*colorTrueColor = FROM_FULL_RGB(arg[c + 2], arg[c + 3], arg[c + 4]);
+								c += 4; // extra arguments
 							}
 							continue;
 							break;
@@ -385,15 +438,15 @@ static size_t psvDebugScreenEscape(const unsigned char *str) {
 						default:
 							// ANSI colors (30-37, 40-47, 90-97, 100-107)
 							mode = arg[c] / 10;
-							if ((mode!=3) && (mode!=4) && (mode!=9) && (mode!=10)) continue; // skip unsupported modes
+							if ((mode != 3) && (mode != 4) && (mode != 9) && (mode != 10)) continue; // skip unsupported modes
 							unit = arg[c] % 10;
-							if (unit>7) continue; // skip unsupported modes
-							colorTrueColorFlag = mode&1 ? &colors.fgTrueColorFlag : &colors.bgTrueColorFlag;
+							if (unit > 7) continue; // skip unsupported modes
+							colorTrueColorFlag = mode & 1 ? &colors.fgTrueColorFlag : &colors.bgTrueColorFlag;
 							*colorTrueColorFlag = 0;
-							colorIndex = mode&1 ? &colors.fgIndex : &colors.bgIndex;
+							colorIndex = mode & 1 ? &colors.fgIndex : &colors.bgIndex;
 							*colorIndex = unit;
-							colorIntensity = mode&1 ? &colors.fgIntensity : &colors.bgIntensity;
-							*colorIntensity = mode&8 ? 1 : 22;
+							colorIntensity = mode & 1 ? &colors.fgIntensity : &colors.bgIntensity;
+							*colorIntensity = mode & 8 ? 1 : 22;
 							break;
 					}
 				}
@@ -419,7 +472,7 @@ int psvDebugScreenInit() {
 #else
 	mutex = sceKernelCreateMutex("log_mutex", 0, 0, NULL);
 	SceUID displayblock = sceKernelAllocMemBlock("display", SCE_KERNEL_MEMBLOCK_TYPE_USER_CDRAM_RW, (SCREEN_FB_SIZE), NULL);
-	sceKernelGetMemBlockBase(displayblock, (void**)&base);
+	sceKernelGetMemBlockBase(displayblock, (void **)&base);
 	SceDisplayFrameBuf frame = { sizeof(frame), base, (SCREEN_FB_WIDTH), 0, (SCREEN_WIDTH), (SCREEN_HEIGHT) };
 	return sceDisplaySetFrameBuf(&frame, SCE_DISPLAY_SETBUF_NEXTFRAME);
 #endif
@@ -433,8 +486,8 @@ int psvDebugScreenSet() {
 /*
 * Draw text onto debug screen
 */
-int psvDebugScreenPuts(const char * _text) {
-	const unsigned char*text = (const unsigned char*)_text;
+int psvDebugScreenPuts(const char *_text) {
+	const unsigned char *text = (const unsigned char *)_text;
 	int c;
 	unsigned char t;
 	unsigned char drawDummy;
@@ -450,10 +503,10 @@ int psvDebugScreenPuts(const char * _text) {
 	uint32_t *pixel;
 
 	sceKernelLockMutex(mutex, 1, NULL);
-	for (c = 0; text[c] ; c++) {
+	for (c = 0; text[c]; c++) {
 		t = text[c];
 		// handle CSI sequence
-		if ((t == '\e') && (text[c+1] == '[')) {
+		if ((t == '\e') && (text[c + 1] == '[')) {
 			c += psvDebugScreenEscape(text + c + 2) + 2;
 			if (coordX < 0) coordX = 0; // CSI position are 1-based,
 			if (coordY < 0) coordY = 0; // prevent 0-based coordinate from producing a negative X/Y
@@ -486,7 +539,7 @@ int psvDebugScreenPuts(const char * _text) {
 
 		// draw glyph or dummy glyph (dotted line in the middle)
 		// works also with not byte-aligned glyphs
-		vram = ((uint32_t*)base) + coordX + (coordY * (SCREEN_FB_WIDTH));
+		vram = ((uint32_t *)base) + coordX + (coordY * (SCREEN_FB_WIDTH));
 		row = 0;
 		// check if glyph is available in font
 		if ((t > (F)->last) || (t < (F)->first)) {
@@ -494,9 +547,10 @@ int psvDebugScreenPuts(const char * _text) {
 		} else {
 			drawDummy = 0;
 			bitmap_offset = (t - (F)->first) * bits_per_glyph;
-			font = &(F)->glyphs[ (bitmap_offset / 8) ];
+			font = &(F)->glyphs[(bitmap_offset / 8)];
 			mask = 1 << 7;
-			for (col = (bitmap_offset % 8); col > 0; col--, mask >>= 1);
+			for (col = (bitmap_offset % 8); col > 0; col--, mask >>= 1)
+				;
 		}
 		// special case: dummy glyph, clear to middle height
 		max_row = 0;
@@ -505,7 +559,7 @@ int psvDebugScreenPuts(const char * _text) {
 			for (; row < max_row; row++, vram += (SCREEN_FB_WIDTH)) {
 				pixel = vram;
 				col = 0;
-				for (; col < (F)->size_w ; col++) {
+				for (; col < (F)->size_w; col++) {
 					*pixel++ = colors.color_bg;
 				}
 			}
@@ -520,22 +574,25 @@ int psvDebugScreenPuts(const char * _text) {
 		for (; row < max_row; row++, vram += (SCREEN_FB_WIDTH)) {
 			pixel = vram;
 			col = 0;
-			for (; col < (F)->width ; col++, mask >>= 1) {
+			for (; col < (F)->width; col++, mask >>= 1) {
 				if (drawDummy) {
-					*pixel++ = (col&1) ? colors.color_fg : colors.color_bg;
+					*pixel++ = (col & 1) ? colors.color_fg : colors.color_bg;
 				} else {
-					if (!mask) { font++; mask = 1 << 7; } // no more bits: we exhausted this byte
-					*pixel++ = (*font&mask) ? colors.color_fg : colors.color_bg;
+					if (!mask) {
+						font++;
+						mask = 1 << 7;
+					} // no more bits: we exhausted this byte
+					*pixel++ = (*font & mask) ? colors.color_fg : colors.color_bg;
 				}
 			}
 			// right margin
-			for (; col < (F)->size_w ; col++)
+			for (; col < (F)->size_w; col++)
 				*pixel++ = colors.color_bg;
 		}
 		// draw bottom margin
 		max_row = (F)->size_h;
 		for (; row < (F)->size_h; row++, vram += (SCREEN_FB_WIDTH))
-			for (pixel = vram, col = 0; col < (F)->size_w ; col++)
+			for (pixel = vram, col = 0; col < (F)->size_w; col++)
 				*pixel++ = colors.color_bg;
 		// advance X position
 		coordX += (F)->size_w;
@@ -544,12 +601,10 @@ int psvDebugScreenPuts(const char * _text) {
 	return c;
 }
 
-
 /*
 * Printf text onto debug screen
 */
-__attribute__((__format__ (__printf__, 1, 2)))
-int psvDebugScreenPrintf(const char *format, ...) {
+__attribute__((__format__(__printf__, 1, 2))) int psvDebugScreenPrintf(const char *format, ...) {
 	char buf[4096];
 
 	va_list opt;
@@ -672,20 +727,32 @@ PsvDebugScreenFont *psvDebugScreenScaleFont2x(PsvDebugScreenFont *source_font) {
 			target_bitmap2 = target_bitmap + target_next_row_bytes; // advance full bytes
 			target_mask2 = target_mask; // advance remaining bits
 			for (col = target_next_row_bits; col > 0; col--, target_mask2 >>= 1) {
-				if (!target_mask2) { target_bitmap2++; target_mask2 = 1 << 7; } // no more bits: we advance to the next target byte
+				if (!target_mask2) {
+					target_bitmap2++;
+					target_mask2 = 1 << 7;
+				} // no more bits: we advance to the next target byte
 			}
 			// Get pixel from source bitmap
 			for (col = source_font->width; col > 0; col--, source_mask >>= 1) {
-				if (!source_mask) { source_bitmap++; source_mask = 1 << 7; } // no more bits: we advance to the next source byte
+				if (!source_mask) {
+					source_bitmap++;
+					source_mask = 1 << 7;
+				} // no more bits: we advance to the next source byte
 				pixel = *source_bitmap & source_mask;
 				// Put pixels into target bitmap
 				for (count = 2; count > 0; count--) {
 					// duplicate column in origial row
-					if (!target_mask) { target_bitmap++; target_mask = 1 << 7; } // no more bits: we advance to the next target byte
+					if (!target_mask) {
+						target_bitmap++;
+						target_mask = 1 << 7;
+					} // no more bits: we advance to the next target byte
 					if (pixel) *target_bitmap |= target_mask;
 					target_mask >>= 1;
 					// duplicate column in duplicated row
-					if (!target_mask2) { target_bitmap2++; target_mask2 = 1 << 7; } // no more bits: we advance to the next target byte
+					if (!target_mask2) {
+						target_bitmap2++;
+						target_mask2 = 1 << 7;
+					} // no more bits: we advance to the next target byte
 					if (pixel) *target_bitmap2 |= target_mask2;
 					target_mask2 >>= 1;
 				}

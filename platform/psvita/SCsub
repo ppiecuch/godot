@@ -2,7 +2,8 @@ Import("env")
 
 sys = ["vitasdk_libc.cpp"]
 audio = ["audio/audio_driver_sce.cpp"]
-video = ["video/rasterizer_gxm.cpp", "video/texture_loader_gxm.cpp"]
+video = ["video/texture_loader_gxm.cpp"]
 
+SConscript("video/scmpiglet/SCsub")
 
 env.Program("#bin/godot", ["os_psvita.cpp", "godot_psvita.cpp"] + sys + audio + video)

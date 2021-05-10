@@ -64,7 +64,7 @@ def configure(env):
     env["bits"] = "32"
     env["arch"] = "arm"
 
-    env.Append(CPPPATH=["#platform/psvita"])
+    env.Append(CPPPATH=["#platform/psvita", "#platform/psvita/video/scmpiglet/include"])
     env["CC"] = "arm-vita-eabi-gcc"
     env["CXX"] = "arm-vita-eabi-g++"
     env["LD"] = "arm-vita-eabi-g++"
@@ -109,6 +109,7 @@ def configure(env):
 
     env.Append(
         CPPDEFINES=[
+			"PSVITA_ENABLED",
             "PTHREAD_ENABLED",
             "PTHREAD_NO_RENAME",
             "LIBC_FILEIO_ENABLED",

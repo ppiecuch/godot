@@ -34,6 +34,9 @@
 
 #include "os_psvita.h"
 
+// set SceLibc heap size (2MB minimum)
+unsigned int sceLibcHeapSize = 2 * 1024 * 1024;
+
 int main(int argc, char *argv[]) {
 	OSPSVita os;
 
