@@ -69,8 +69,8 @@ class CPPNativeCodeGen:
         with p.open(mode="w") as header:
             header.write(f"""\
                 #ifndef __GD2C_GODOTPROJECT__
-                #define __GD2C_GODOTPROJECT__            
-            
+                #define __GD2C_GODOTPROJECT__
+
                 #include "gd2c.h"
             """)
 
@@ -90,13 +90,13 @@ class CPPNativeCodeGen:
 
                         if func.len_constants:
                             header.write(f"""godot_variant {func_context.local_constants_array_identifier}[{func.len_constants}];\n""")
-                            
+
                         header.write(f"""int {func_context.initialized_local_constants_array_identifier} = 0;\n""")
 
 
             for cls in self.project.iter_classes_in_dependency_order():
                 class_context = self.class_contexts[cls.type_id]
-                class_codegen.transpile_property_signatures(class_context, header)             
+                class_codegen.transpile_property_signatures(class_context, header)
 
             for cls in self.project.iter_classes_in_dependency_order():
                 class_context = self.class_contexts[cls.type_id]
@@ -109,8 +109,8 @@ class CPPNativeCodeGen:
 
             header.write(f"""\
                 #endif
-            """)           
-    
+            """)
+
     def _transpile_c_file(self):
         p = Path(self._output_path, "godotproject.cpp")
         with p.open(mode="w") as writer:
@@ -125,12 +125,12 @@ class CPPNativeCodeGen:
 
             for cls in self.project.iter_classes_in_dependency_order():
                 class_context = self.class_contexts[cls.type_id]
-                class_codegen.transpile_ctor(class_context, writer)                
-                class_codegen.transpile_dtor(class_context, writer)       
-                class_codegen.transpile_property_implementations(class_context, writer)         
+                class_codegen.transpile_ctor(class_context, writer)
+                class_codegen.transpile_dtor(class_context, writer)
+                class_codegen.transpile_property_implementations(class_context, writer)
                 for func_context in class_context.function_contexts.values():
                     function_codegen.transpile_function(func_context, writer)
-                
+
                 class_codegen.transpile_vtable(class_context, writer)
 
             self._transpile_gdnative_init(writer)
@@ -142,7 +142,7 @@ class CPPNativeCodeGen:
             void GDN_EXPORT {self.project.export_prefix}_gdnative_init(godot_gdnative_init_options *p_options) {{
                 //printf("Enter: {self.project.export_prefix}_gdnative_init\\n");
                 api10 = p_options->api_struct;
-                
+
                 const godot_gdnative_api_struct *extension = api10->next;
                 while (extension) {{
                     if (extension->version.major == 1 && extension->version.minor == 1) {{
@@ -167,7 +167,7 @@ class CPPNativeCodeGen:
                                 extension = extension->next;
                             }}
                         }}; break;
-                        
+
                         default:
                             break;
                     }}
@@ -175,10 +175,10 @@ class CPPNativeCodeGen:
 
                 gd2c_api_initialize();
                 vtable_init_base();
-                
+
                 api10->godot_variant_new_nil(&__nil);
                 //printf("Exit: {self.project.export_prefix}_gdnative_init\\n");
-            }}        
+            }}
         """)
 
     def _transpile_gdnative_terminate(self, writer: IO):
@@ -197,7 +197,7 @@ class CPPNativeCodeGen:
         writer.write(f"""\
             void GDN_EXPORT {self.project.export_prefix}_nativescript_init(void *p_handle) {{
                 //printf("Enter: {self.project.export_prefix}_nativescript_init\\n");
-        
+
         """)
 
         def visitor(cls: GDScriptClass, depth: int):
@@ -323,22 +323,22 @@ class CPPNativeCodeGen:
     def _transpile_class_constants_initialization(self, writer: IO) -> None:
         for cls in self.project.iter_classes_in_dependency_order():
             class_context = self.class_contexts[cls.type_id]
-            for cc in class_context.constant_contexts.values():                    
+            for cc in class_context.constant_contexts.values():
                 writer.write(f"""\
                     {{
                         uint8_t data[] = {{ {','.join(map(lambda b: str(b), cc.constant.data))} }};
                         int bytesRead;
                         gd2c10->variant_decode(&{class_context.constants_array_identifier}[{cc.index}], data, {len(cc.constant.data)}, &bytesRead, true);
                     }}
-                """)    
+                """)
 
     def _transpile_class_constants_destruction(self, writer: IO) -> None:
         for cls in self.project.iter_classes_in_dependency_order():
             class_context = self.class_contexts[cls.type_id]
-            for cc in class_context.constant_contexts.values():        
+            for cc in class_context.constant_contexts.values():
                 writer.write(f"""\
                     api10->godot_variant_destroy(&{class_context.constants_array_identifier}[{cc.index}]);
-                """)      
+                """)
 
             for func in class_context.cls.functions():
                 function_context = class_context.get_function_context(func.name)
@@ -349,5 +349,5 @@ class CPPNativeCodeGen:
                     for i in range(function_context.func.len_constants):
                         writer.write(f"""api10->godot_variant_destroy(&{function_context.local_constants_array_identifier}[{i}]);\n""")
 
-                    writer.write(f"""}}\n""")                                       
+                    writer.write(f"""}}\n""")
 

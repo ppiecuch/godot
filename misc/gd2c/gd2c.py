@@ -48,7 +48,7 @@ def assert_nothing_in_ssa_form(project: Project):
 			if func.cfg:
 				assert not func.cfg.is_in_ssa_form
 
-if __name__ == "__main__":   
+if __name__ == "__main__":
 	import argparse
 	import sys
 

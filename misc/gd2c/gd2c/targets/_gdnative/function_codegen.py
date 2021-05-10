@@ -20,7 +20,7 @@ def __transpile_signature(function_context: FunctionContext) -> str:
 
 def transpile_signature(function_context: FunctionContext, file: IO):
     file.write(__transpile_signature(function_context))
-    file.write(";\n")   
+    file.write(";\n")
 
 def transpile_function(function_context: FunctionContext, file: IO):
     assert function_context
@@ -29,10 +29,10 @@ def transpile_function(function_context: FunctionContext, file: IO):
 
     file.write(__transpile_signature(function_context))
     file.write(f"""\
-        {{   
+        {{
             //printf("Enter: {function_context.function_identifier}\\n");
             struct {function_context.class_context.struct_tag} *p_user_data = (struct {function_context.class_context.struct_tag}*)_p_user_data;
-            godot_bool __flag;   
+            godot_bool __flag;
             godot_variant_call_error __error;
             godot_variant __return_value;
             api10->godot_variant_new_nil(&__return_value);
@@ -42,7 +42,7 @@ def transpile_function(function_context: FunctionContext, file: IO):
     if function_context.func.has_constants:
         file.write(f"""\
             if (0 == {function_context.initialized_local_constants_array_identifier}) {{
-        """) 
+        """)
         for const in function_context.func.constants():
             loaded = False
             if const.vtype == VariantType.OBJECT and const.declaration.startswith("Resource("):
@@ -60,11 +60,11 @@ def transpile_function(function_context: FunctionContext, file: IO):
                             godot_string resource_path;
                             api10->godot_string_new(&resource_path);
                             api10->godot_string_parse_utf8_with_len(&resource_path, data, {len(utf8)});
-                            gd2c10->resource_load(&{function_context.local_constants_array_identifier}[{const.index}], &resource_path);                        
+                            gd2c10->resource_load(&{function_context.local_constants_array_identifier}[{const.index}], &resource_path);
                             api10->godot_string_destroy(&resource_path);
                         }}
                         """)
-                    
+
                     loaded = True
 
             if not loaded:
@@ -74,8 +74,8 @@ def transpile_function(function_context: FunctionContext, file: IO):
                         int bytesRead;
                         gd2c10->variant_decode(&{function_context.local_constants_array_identifier}[{const.index}], data, {len(const.data)}, &bytesRead, true);
                     }}
-                """) 
-            
+                """)
+
         for index, name in enumerate(function_context.func.global_names):
             utf8 = bytes(name, 'UTF-8')
             file.write(f"""\
@@ -88,7 +88,7 @@ def transpile_function(function_context: FunctionContext, file: IO):
                 """)
 
         file.write(f"""\
-                {function_context.initialized_local_constants_array_identifier} = 1;            
+                {function_context.initialized_local_constants_array_identifier} = 1;
             }}
         """)
 
@@ -175,11 +175,11 @@ def __transpile_op(function_context: FunctionContext, node: Block, op: GDScriptO
             __flag = api10->godot_variant_as_bool({FC.variables[op.condition].address_of()});
             if (!__flag) goto {branch.label};
             goto {fallthrough.label};
-        """)     
+        """)
 
     def opcode_line(op: LineGDScriptOp):
         nonlocal FC
-        # Ignore  
+        # Ignore
         pass
 
     def opcode_assign(op: AssignGDScriptOp):
@@ -217,7 +217,7 @@ def __transpile_op(function_context: FunctionContext, node: Block, op: GDScriptO
         assert FC.func.cfg.exit_node
 
         file.write(f"""\
-            api10->godot_variant_new_copy(&__return_value, {FC.variables[op.source].address_of()});        
+            api10->godot_variant_new_copy(&__return_value, {FC.variables[op.source].address_of()});
             goto {FC.func.cfg.exit_node.label};
         """)
 
@@ -255,7 +255,7 @@ def __transpile_op(function_context: FunctionContext, node: Block, op: GDScriptO
                         //
                         // Call to base _init is always ignored
                         //
-                        
+
                         """)
                     return
                 else:
@@ -272,8 +272,8 @@ def __transpile_op(function_context: FunctionContext, node: Block, op: GDScriptO
                 godot_variant *args[] = {{ {", ".join([
                     FC.variables[addr].address_of() for addr in op.args
                 ])} }};
-            """)     
-            args = "args"        
+            """)
+            args = "args"
         else:
             args = "(void*)0"
 
@@ -282,7 +282,7 @@ def __transpile_op(function_context: FunctionContext, node: Block, op: GDScriptO
         if isinstance(op, CallReturnGDScriptOp):
             file.write("godot_variant call_result = ")
 
-        if vtable_entry:                
+        if vtable_entry:
             base_chain = "base->" if call_base else ""
             file.write(\
                 f"p_user_data->__vtable->{base_chain}methods[{vtable_entry.index}](" \
@@ -291,7 +291,7 @@ def __transpile_op(function_context: FunctionContext, node: Block, op: GDScriptO
                     f"p_user_data, " \
                     f"{op.arg_count}, " \
                     f"{args});\n")
-        else:                
+        else:
             file.write(\
                 f"api10->godot_variant_call(" \
                     f"{receiver}, " \
@@ -302,7 +302,7 @@ def __transpile_op(function_context: FunctionContext, node: Block, op: GDScriptO
 
         if isinstance(op, CallReturnGDScriptOp):
             file.write(f"""\
-                api10->godot_variant_new_copy({FC.variables[op.dest].address_of()}, &call_result);            
+                api10->godot_variant_new_copy({FC.variables[op.dest].address_of()}, &call_result);
                 api10->godot_variant_destroy(&call_result);
             """)
 
@@ -420,7 +420,7 @@ def __transpile_op(function_context: FunctionContext, node: Block, op: GDScriptO
             }} else {{
                 gd2c10->variant_iter_get({FC.variables[op.container].address_of()}, {FC.variables[op.counter].address_of()}, {FC.variables[op.iterator].address_of()}, &__flag);
                 goto {fallthrough.label};
-            }}        
+            }}
         """)
 
     def opcode_iterate(op: IterateGDScriptOp):
@@ -437,7 +437,7 @@ def __transpile_op(function_context: FunctionContext, node: Block, op: GDScriptO
             }} else {{
                 gd2c10->variant_iter_get({FC.variables[op.container].address_of()}, {FC.variables[op.counter].address_of()}, {FC.variables[op.iterator].address_of()}, &__flag);
                 goto {fallthrough.label};
-            }}        
+            }}
         """)
 
     def opcode_extendstest(op: ExtendsTestGDScriptOp):
@@ -471,8 +471,8 @@ def __transpile_op(function_context: FunctionContext, node: Block, op: GDScriptO
                 godot_variant *args[] = {{ {", ".join([
                     FC.variables[addr].address_of() for addr in op.args
                 ])} }};
-            """)     
-            args = "args"        
+            """)
+            args = "args"
         else:
             args = "(void*)0"
 
@@ -484,7 +484,7 @@ def __transpile_op(function_context: FunctionContext, node: Block, op: GDScriptO
     def opcode_copyparameter(op: CopyParameterGDScriptOp):
         nonlocal FC
         file.write(f"""\
-            if (p_num_args > {op.parameter.address.offset}) 
+            if (p_num_args > {op.parameter.address.offset})
                 api10->godot_variant_new_copy({FC.variables[op.dest].address_of()}, {FC.variables[op.parameter.address.address].address_of()});
             """)
 
@@ -500,7 +500,7 @@ def __transpile_op(function_context: FunctionContext, node: Block, op: GDScriptO
     #file.write(f"""printf("C LINE %i\\n", __LINE__);\n""")
 
     if op.opcode == OPCODE_OPERATOR:
-        opcode_operator(op) # type: ignore     
+        opcode_operator(op) # type: ignore
     elif op.opcode == OPCODE_SET:
         opcode_set(op) # type: ignore
     elif op.opcode == OPCODE_GET:
@@ -591,4 +591,4 @@ def __transpile_op(function_context: FunctionContext, node: Block, op: GDScriptO
     else:
         file.write(f"// {str(op)};\n")
 
-    
+

@@ -24,7 +24,7 @@ def annotate_coroutines(func: GDScriptFunction) -> None:
 
 
 def annotate_assigned_parameters(func: GDScriptFunction) -> None:
-    """Analyzes the function and marks parameters as const in methods 
+    """Analyzes the function and marks parameters as const in methods
     where they are not modified, and not passed to functions that may modify
     them.
 
@@ -36,7 +36,7 @@ def annotate_assigned_parameters(func: GDScriptFunction) -> None:
     assert func
     assert func.cfg
     assert not func.cfg.is_in_ssa_form
-                        
+
     func.cfg.live_variable_analysis()
     for parameter in func.parameters():
         parameter.is_assigned = False

@@ -26,8 +26,8 @@ def transpile_struct(class_context: ClassContext, writer: IO):
 
     writer.write(f"""\
         }};
-    """)      
-    
+    """)
+
     writer.write(f"""int {class_context.constants_initialized_identifier} = 0;\n""")
 
 def transpile_constant_declarations(class_context: ClassContext, writer: IO):
@@ -66,7 +66,7 @@ def transpile_class_constant_initialization(self, class_context: ClassContext, w
     if class_context.cls.has_constants:
         writer.write(f"""\
             if (0 == {class_context.constants_initialized_identifier}) {{
-        """) 
+        """)
         for const in class_context.cls.constants():
             writer.write(f"""\
                 {{
@@ -74,12 +74,12 @@ def transpile_class_constant_initialization(self, class_context: ClassContext, w
                     int bytesRead;
                     gd2c10->variant_decode({class_context.address_of_constant(const.name)}, data, {len(const.data)}, &bytesRead, true);
                 }}
-            """) 
+            """)
 
         writer.write(f"""\
-                {class_context.constants_initialized_identifier} = 1;            
+                {class_context.constants_initialized_identifier} = 1;
             }}
-        """)            
+        """)
 
 def transpile_ctor_signature(class_context: ClassContext, writer: IO):
     writer.write(f"""\
@@ -99,7 +99,7 @@ def transpile_ctor(class_context: ClassContext, writer: IO):
     if function_context:
         writer.write(f"""\
             {function_context.function_identifier}(p_instance, (void *)0, user_data, 0, (void*)0);
-        """)        
+        """)
 
     writer.write(f"""\
             printf("Exit: {class_context.ctor_identifier}\\n");
@@ -170,4 +170,4 @@ def transpile_property_signatures(class_context: ClassContext, writer: IO):
                 void *_p_user_data,
                 godot_variant *p_value
             );
-        """)      
+        """)

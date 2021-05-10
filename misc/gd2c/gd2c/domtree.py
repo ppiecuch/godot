@@ -14,7 +14,7 @@ class DomTreeNode:
         node._parent = self
         if node is not self:
             self._children.add(node)
-    
+
     def remove_child(self, child: 'DomTreeNode'):
         self._children.remove(child)
 
@@ -48,8 +48,8 @@ class DomTree:
         elif isinstance(what, DomTreeNode):
             return self._nodes[what.block]
 
-        raise Exception("what must be str, Block, or DomTreeNode")        
-    
+        raise Exception("what must be str, Block, or DomTreeNode")
+
     def frontier(self, what: Union[str, Block, DomTreeNode]) -> FrozenSet[Block]:
         if isinstance(what, str):
             c = self._cfg.node(what)
@@ -111,7 +111,7 @@ def _assign_dfs_numbers(cfg: ControlFlowGraph) -> Dict[Block, Temp]:
         cfg_node = cast(Block, stack.pop())
         if cfg_node in visited:
             continue
-        
+
         visited.add(cfg_node)
         nodes[cfg_node] = Temp(cfg_node, dfs)
         dfs += 1
@@ -121,7 +121,7 @@ def _assign_dfs_numbers(cfg: ControlFlowGraph) -> Dict[Block, Temp]:
 
 def _mark_dominators(cfg: ControlFlowGraph, reachable: Dict[Block, Temp], node: Block):
     assert cfg.entry_node
-    
+
     visited: Set[Block] = set()
     stack = [cfg.entry_node]
     dfs = reachable[node].dfs
@@ -152,11 +152,11 @@ def _make_tree(cfg: ControlFlowGraph, reachable: Dict[Block, Temp]) -> DomTree:
     return DomTree(cfg, dfs[0], nodes.values())
 
 def build_domtree_naive(cfg: ControlFlowGraph) -> DomTree:
-    dfs_numbers = _assign_dfs_numbers(cfg)  
+    dfs_numbers = _assign_dfs_numbers(cfg)
     for t in sorted(dfs_numbers.values(), key=lambda n: n.dfs, reverse=True):
         _mark_dominators(cfg, dfs_numbers, t.node)
     dfs_numbers[cfg.entry_node].dom = dfs_numbers[cfg.entry_node].dfs # type: ignore
-    
+
     return _make_tree(cfg, dfs_numbers)
 
 

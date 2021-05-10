@@ -51,7 +51,7 @@ class Project:
         fp = Path(filepath)
         if not fp.is_absolute():
             fp = Path(self._root, filepath)
-        
+
         return PurePath(fp.absolute())
 
     def to_resource_path(self, filepath: Union[Path, PathLike, str]) -> str:
@@ -107,28 +107,32 @@ class Project:
                 cls = self._classes_by_name.get(key, None)
         elif isinstance(key, int):
             cls = self._classes_by_type_id.get(key, None)
-        else: 
-            raise Exception("Key must be str or int") 
+        else:
+            raise Exception("Key must be str or int")
 
         if cls:
             del self._classes_by_resource_path[cls.resource_path]
             del self._classes_by_name[cls.name]
             del self._classes_by_type_id[cls.type_id]
 
-    def generate_unique_class_name(self):
+    def generate_unique_class_name(self, base_name: str):
         """Generates a type id that is guaranteed to not have been generated for this project.
         """
-        if Project.__next_type_id > 2_000_000_000:
+        if Project.__next_type_id > 2_000:
             raise Exception("Too many classes")
-
         Project.__next_type_id += 1
-        return f'Class_{Project.__next_type_id}'
-    
+        """ TODO: Donot append type_id if name is already unique
+        """
+        if base_name:
+            return f'Class{base_name}{Project.__next_type_id}'
+        else:
+            return f'Class_{Project.__next_type_id}'
+
     def generate_unique_class_type_id(self):
         """Generates a class name that is guaranteed to not have been generated for this project.
-        Class names are not related to generated type_ids. "Class1" does not necessarily correspond 
+        Class names are not related to generated type_ids. "Class1" does not necessarily correspond
         to GDScriptClass with type_id == 1
-        """        
+        """
         if Project.__next_type_id > 2_000_000_000:
             raise Exception("Too many classes")
 
@@ -154,7 +158,7 @@ class Project:
 
         [iterate(c, 0) for c in self._classes_by_type_id.values() if not c.base_resource_path]
         return classes
-        
+
 def load_project(root_path: str) -> Project:
     project = Project(root_path)
 

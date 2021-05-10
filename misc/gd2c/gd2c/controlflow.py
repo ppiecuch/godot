@@ -46,7 +46,7 @@ class Block:
     @property
     def ins(self) -> FrozenSet[int]:
         return self._ins
-    
+
     @ins.setter
     def ins(self, value: Iterable[int]):
         self._ins = frozenset(value)
@@ -54,7 +54,7 @@ class Block:
     @property
     def outs(self) -> FrozenSet[int]:
         return self._outs
-    
+
     @outs.setter
     def outs(self, value: Iterable[int]):
         self._outs = frozenset(value)
@@ -67,7 +67,7 @@ class Block:
     def last_op(self) -> Optional[GDScriptOp]:
         if any(self._ops):
             return self._ops[-1]
-        
+
         return None
 
     @property
@@ -84,7 +84,7 @@ class Block:
     @defs.setter
     def defs(self, value: Iterable[int]):
         self._defs = frozenset(value)
-    
+
     @property
     def uses(self) -> FrozenSet[int]:
         return self._uses
@@ -116,12 +116,12 @@ class Block:
         a branch instruction will raise an error."""
         for op in ops:
             self.append_op(op)
-    
+
     def insert_ops_before(self, insert_before: Union[GDScriptOp], ops: Iterable[GDScriptOp]):
         """Insert a sequence of ops into the block before GDScriptOp insert_before.
 
-        Attempting to insert a branch instruction will raise an exception if the block is locked. 
-        If a branch operation is to be inserted, you must split the block and insert new 
+        Attempting to insert a branch instruction will raise an exception if the block is locked.
+        If a branch operation is to be inserted, you must split the block and insert new
         nodes into the control flow graph.
 
         Args:
@@ -209,7 +209,7 @@ class ControlFlowGraph:
         if (edge.source, edge.dest) in self._edges:
             return
 
-        self._edges[(edge.source, edge.dest)] = edge        
+        self._edges[(edge.source, edge.dest)] = edge
 
     def add_node(self, node: Block):
         self._nodes[node.label] = node
@@ -244,7 +244,7 @@ class ControlFlowGraph:
     @entry_node.setter
     def entry_node(self, value: Block):
         self._entry_node = value
-    
+
     @property
     def exit_node(self) -> Optional[Block]:
         return self._exit_node
@@ -264,7 +264,7 @@ class ControlFlowGraph:
     def node_from_address(self, original_node_address: int) -> Block:
         label = self.node_label_from_address(original_node_address)
         return self._nodes[label]
-        
+
     def visit_nodes(self, visitor: Callable[[Block], None]):
         assert self.entry_node
 
@@ -274,7 +274,7 @@ class ControlFlowGraph:
             node = worklist.pop()
             if node in visited:
                 continue
-                
+
             visitor(node)
 
             visited.add(node)
@@ -296,7 +296,7 @@ class ControlFlowGraph:
             du.defs = node.defs
             du.ins = set(node.uses)
             defuses[node] = du
-        
+
         # propagate live variables througout the CFG. May take
         # multiple iterations. We're done when we complete an
         # iteration that makes no changes
@@ -354,7 +354,7 @@ class ControlFlowGraph:
                 continue
 
             node_ip[node.label] = ip
-            visited.add(node)        
+            visited.add(node)
 
             for op in node.ops:
                 if not isinstance(op, PseudoGDScriptOp):
@@ -387,9 +387,9 @@ class ControlFlowGraph:
     def pretty_print(self, print_def_use: bool = True, print_in_out: bool = True):
         worklist = [self._entry_node]
         visited: Set[Block] = set()
-        
+
         print("-- BEGIN CFG --")
-        
+
         while any(worklist):
             node = worklist.pop()
             assert node
@@ -404,7 +404,7 @@ class ControlFlowGraph:
                 worklist.append(self._nodes[str(node.last_op.fallthrough)])
             elif ('0' in self._nodes) and isinstance(node.last_op, JumpIfGDScriptOp):
                 # Here we assume nodes are labeled with the address of the block that created them
-                worklist.append(self._nodes[str(node.last_op.fallthrough)])                
+                worklist.append(self._nodes[str(node.last_op.fallthrough)])
                 worklist.append(self._nodes[str(node.last_op.branch)])
             elif ('0' in self._nodes) and isinstance(node.last_op, JumpToDefaultArgumentGDScriptOp):
                 worklist.append(self._nodes[str(node.last_op.fallthrough)])
@@ -434,7 +434,7 @@ class ControlFlowGraph:
                 print(f"|    EMPTY BLOCK")
 
             print("")
-        
+
         print("-- END CFG --")
 
 def build_control_flow_graph(func: GDScriptFunction) -> ControlFlowGraph:
@@ -443,8 +443,8 @@ def build_control_flow_graph(func: GDScriptFunction) -> ControlFlowGraph:
     visited: Set[int] = set()
     ops = list(func.ops())
 
-    # Clear reached flag on all ops to be set later. 
-    # Godot inserts some unreachable instructions which throws off 
+    # Clear reached flag on all ops to be set later.
+    # Godot inserts some unreachable instructions which throws off
     # cfg generation. There may be more elegant solutions to the problems
     # created by the unreachable instructions, but this is the easiest way
     # to handle it.
@@ -482,8 +482,8 @@ def build_control_flow_graph(func: GDScriptFunction) -> ControlFlowGraph:
                 worklist.append(op.fallthrough)
                 break
             elif isinstance(op, JumpToDefaultArgumentGDScriptOp):
-                worklist.extend(op.jump_table)    
-                worklist.append(op.fallthrough)  
+                worklist.extend(op.jump_table)
+                worklist.append(op.fallthrough)
                 break
             elif isinstance(op, (ReturnGDScriptOp, EndGDScriptOp)):
                 worklist.append(EXIT_NODE_ADDRESS)
@@ -502,7 +502,7 @@ def build_control_flow_graph(func: GDScriptFunction) -> ControlFlowGraph:
                     break
                 elif op_ip >= begin_ip and op.reached:
                     block.append_op(op)
-            
+
             # Every block must end in a branch instruction unless it is
             # the terminating block
             if block.last_op and not block.last_op.is_branch:
@@ -561,6 +561,6 @@ def build_control_flow_graph(func: GDScriptFunction) -> ControlFlowGraph:
 
 
 
-                
 
-  
+
+

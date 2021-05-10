@@ -41,10 +41,10 @@ def _insert_phi_ops(func: GDScriptFunction):
     defs: Set[int] = set()
     for block in cfg.nodes():
         defs = defs | block.defs
-    
+
     for variable in defs:
         worklist = set([block for block in cfg.nodes() if variable in block.defs])
-        has_phi: Set[Block] = set()        
+        has_phi: Set[Block] = set()
         visited = set(worklist)
 
         while any(worklist):
@@ -109,7 +109,7 @@ def _rename_variables(func: GDScriptFunction):
             if isinstance(op, PhiGDScriptOp):
                 value = new_value(op.address)
                 op.ssa_dest = value
-        
+
         for op in block.ops:
             for addr in op.reads:
                 op.set_rhs_ssa(addr, values[addr][stacks[addr][-1]])

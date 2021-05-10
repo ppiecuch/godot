@@ -5,7 +5,7 @@ from gd2c.bytecode import *
 from gd2c.gdscriptclass import GDScriptFunction
 from gd2c.address import *
 from gd2c import analysis
-    
+
 def insert_initializers_transformation(func: GDScriptFunction):
     """Inserts Initialize ops for all implicit stack variables."""
     assert func.cfg
@@ -24,7 +24,7 @@ def insert_initializers_transformation(func: GDScriptFunction):
                 initialize_ops.append(InitializeGDScriptOp(addr))
 
     node = func.cfg.entry_node
-    node.insert_ops_before(node.last_op, initialize_ops)  
+    node.insert_ops_before(node.last_op, initialize_ops)
 
 def insert_destructors_transformation(func: GDScriptFunction):
     """Inserts destructor calls for variants that were created in the
@@ -47,7 +47,7 @@ def insert_destructors_transformation(func: GDScriptFunction):
 
     node = func.cfg.exit_node
     if node.last_op:
-        node.insert_ops_before(node.last_op, ops)  
+        node.insert_ops_before(node.last_op, ops)
     else:
         node.append_ops(ops)
 
@@ -63,7 +63,7 @@ def replace_init_calls_with_noop_transformation(func: GDScriptFunction):
                 name = func_context.global_names[op.name_index]
             elif isinstance(op, CallSelfBaseGDScriptOp):
                 name = func_context.func.global_names[op.name_index]
-            
+
             if name == "_init":
                 remove.append(op)
 
@@ -72,7 +72,7 @@ def replace_init_calls_with_noop_transformation(func: GDScriptFunction):
 
     assert func
     assert func.cfg
-    func.cfg.visit_nodes(visit)     
+    func.cfg.visit_nodes(visit)
 
 def insert_parameter_copies(func: GDScriptFunction):
     """Inserts a copy operation for parameters that are written to in the function to

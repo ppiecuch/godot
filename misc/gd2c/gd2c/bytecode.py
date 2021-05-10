@@ -240,8 +240,8 @@ class ExtendsTestGDScriptOp(GDScriptOp):
     @staticmethod
     def extract(func: GDScriptFunction, bytecode: List[int], index: int) -> 'ExtendsTestGDScriptOp':
         return ExtendsTestGDScriptOp(
-            sv2stack(bytecode[index + 1]), 
-            sv2stack(bytecode[index + 2]), 
+            sv2stack(bytecode[index + 1]),
+            sv2stack(bytecode[index + 2]),
             sv2stack(bytecode[index + 3]))
 
 class IsBuiltInGDScriptOp(GDScriptOp):
@@ -277,8 +277,8 @@ class IsBuiltInGDScriptOp(GDScriptOp):
     @staticmethod
     def extract(func: GDScriptFunction, bytecode: List[int], index: int) -> 'IsBuiltInGDScriptOp':
         return IsBuiltInGDScriptOp(
-            sv2stack(bytecode[index + 1]), 
-            bytecode[index + 2], 
+            sv2stack(bytecode[index + 1]),
+            bytecode[index + 2],
             sv2stack(bytecode[index + 3]))
 
 class OperatorGDScriptOp(GDScriptOp):
@@ -1429,7 +1429,7 @@ class IterateGDScriptOp(GDScriptOp):
         branch = bytecode[index + 3]
         iterator = sv2stack(bytecode[index + 4])
         fallthrough = index + 5
-        return IterateGDScriptOp(counter, container, branch, fallthrough, iterator)    
+        return IterateGDScriptOp(counter, container, branch, fallthrough, iterator)
 
 class PseudoGDScriptOp(GDScriptOp):
     def __init__(self, opcode: int):

@@ -70,7 +70,7 @@ class GDScriptFunctionParameter:
     address: GDScriptAddress
 
     def __init__(self, name: str, vtype: Union[VariantType, int], index: int):
-        self.name = name        
+        self.name = name
         self.vtype = VariantType.get(vtype)
         self.index = index
         self.is_assigned = False
@@ -94,7 +94,7 @@ class GDScriptFunction:
     yields: bool
 
     TYPE_METHOD = 0
-    
+
     def __init__(self, name: str, function_type: int):
         self.name = name
         self.function_type = function_type
@@ -136,7 +136,7 @@ class GDScriptFunction:
             for parameter in self._parameters.values():
                 if parameter.name == what:
                     return parameter
-        
+
         raise Exception("parameter not found")
 
     @property
@@ -184,14 +184,14 @@ class GDScriptFunction:
                 print(f"        is_assigned: {is_assigned}")
         else:
             print(f"    NONE")
-        
+
         print(f"  Default arguments jump table:")
         if any(self.default_arguments_jump_table):
             for d in self.default_arguments_jump_table:
                 print(f"    {d}")
         else:
             print(f"    NONE")
-        
+
         print(f"  Constants:")
         if any(self.constants()):
             for const in sorted(self.constants(), key=lambda v: v.index):
@@ -209,9 +209,9 @@ class GDScriptFunction:
         if print_bytecode:
             print(f"  Ops:")
             for ip, op in self.ops():
-                print(f"{str(ip).rjust(8)}: {str(op)}")  
+                print(f"{str(ip).rjust(8)}: {str(op)}")
 
-        print(f"")      
+        print(f"")
 
 class GDScriptClass:
     _built_in_type: Optional[str]
@@ -225,8 +225,8 @@ class GDScriptClass:
     _signals: Set[str]
     _functions: Dict[str, GDScriptFunction]
     globals: Dict[int, GDScriptGlobal]
-    _ctor: Optional[GDScriptFunction] 
-    _dtor: Optional[GDScriptFunction] 
+    _ctor: Optional[GDScriptFunction]
+    _dtor: Optional[GDScriptFunction]
 
     def __init__(self, resource_path: str, name: str, type_id: int):
         self._built_in_type = None
@@ -331,7 +331,7 @@ class GDScriptClass:
     @property
     def len_members(self) -> int:
         return len(self._members)
-    
+
     def add_signal(self, signal: str):
         self._signals.add(signal)
 
@@ -359,4 +359,4 @@ class GDScriptClass:
 
         return sorted(result, key=lambda it: it.index)
 
-    
+

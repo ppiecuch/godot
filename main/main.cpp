@@ -80,8 +80,8 @@
 #endif
 
 #ifdef BYTECODE_EXPORT_ENABLED
-#include "bytecode_export/gd2c.h"
 #include "bytecode_export/bytecode_exporter.h"
+#include "bytecode_export/gd2c.h"
 #endif
 
 /* Static members */
@@ -384,7 +384,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	GLOBAL_DEF("debug/settings/crash_handler/message", String("Please include this when reporting the bug on https://github.com/godotengine/godot/issues"));
 
 #ifdef BYTECODE_EXPORT_ENABLED
-    ClassDB::register_class<GDScriptBytecodeExporter>();
+	ClassDB::register_class<GDScriptBytecodeExporter>();
 	ClassDB::register_class<GD2CApi>();
 #endif
 

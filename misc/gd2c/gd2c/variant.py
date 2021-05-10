@@ -41,7 +41,7 @@ class VariantType:
             return _vtypes[int(value)]
         elif value is None:
             return VariantType.NIL
-            
+
         raise "Value must be int, str, or VariantType"
 
     def __init__(self, value: int, name: str):
@@ -53,7 +53,7 @@ class VariantType:
     @property
     def value(self):
         return self._value
-    
+
     @property
     def name(self):
         return self._name
@@ -97,4 +97,4 @@ VariantType.POOL_REAL_ARRAY = VariantType(22, "POOL_REAL_ARRAY")
 VariantType.POOL_STRING_ARRAY = VariantType(23, "POOL_STRING_ARRAY")
 VariantType.POOL_VECTOR2_ARRAY = VariantType(24, "POOL_VECTOR2_ARRAY")
 VariantType.POOL_VECTOR3_ARRAY = VariantType(25, "POOL_VECTOR3_ARRAY")
-VariantType.POOL_COLOR_ARRAY = VariantType(26, "POOL_COLOR_ARRAY")            
+VariantType.POOL_COLOR_ARRAY = VariantType(26, "POOL_COLOR_ARRAY")

@@ -11,7 +11,7 @@ class Variable:
     var_type: int
     cls: GDScriptClass
     _identifier: str
-    
+
     def __init__(self, func_context: 'FunctionContext', address: int):
         self.func_context = func_context
         self.address = GDScriptAddress(address)
@@ -24,7 +24,7 @@ class Variable:
 
     def define(self) -> str:
         assert self.identifier
-        return f"godot_variant {self.identifier};\n"    
+        return f"godot_variant {self.identifier};\n"
 
     def needs_definition(self) -> bool:
         return self.address.offset >= self.func_context.func.len_parameters \
@@ -108,7 +108,7 @@ class FunctionContext:
         assert class_context
 
         self.func = func
-        self.class_context = class_context    
+        self.class_context = class_context
         self.function_identifier =  f"{self.class_context.cls.name}_{self.func.name}_func"
         self.local_constants_array_identifier = f"{self.class_context.cls.name}_{self.func.name}_local_const"
         self.initialized_local_constants_array_identifier = f"{self.class_context.cls.name}_{self.func.name}_local_const_initialized"
@@ -254,7 +254,7 @@ class ClassContext:
         for entry in self.vtable_entries:
             if entry.func_context.func.name == method_name:
                 return entry
-        
+
         return None
 
     def get_function_context(self, what: Union[str, GDScriptFunction]) -> FunctionContext:

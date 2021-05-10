@@ -4,10 +4,10 @@ from gd2c.project import Project
 from gd2c.gdscriptclass import GDScriptFunction
 from gd2c.controlflow import build_control_flow_graph, Block
 from gd2c.bytecode import OPCODE_BREAKPOINT, OPCODE_LINE, GDScriptOp, JumpToDefaultArgumentGDScriptOp
- 
+
 def strip_debug(func: GDScriptFunction) -> bool:
     """Strips debug instructions from bytecode.
-    
+
     Arguments:
     func -- the function to strip. The function must have its control-flow graph set.
     """
@@ -34,7 +34,7 @@ def strip_debug(func: GDScriptFunction) -> bool:
 def make_coroutine(func: GDScriptFunction):
     """Transforms the function into a coroutine that can be yielded and
     resumed. The transformed function will return a coroutine script class
-    instance which may or may not be completed when control is passed back 
+    instance which may or may not be completed when control is passed back
     to the caller.
 
     Arguments:
@@ -152,5 +152,4 @@ def dead_code_elimination(func: GDScriptFunction) -> bool:
     assert func.cfg.is_in_ssa_form
     print("dead_code_elimination not implemented")
     return False
-
 

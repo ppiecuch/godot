@@ -6,6 +6,14 @@ from gd2c.bytecode import extract
 from typing import List, Iterable, TYPE_CHECKING
 import json
 
+def to_camel_case(snake_str: str, capitalize_first: bool = True):
+    components = snake_str.split('_')
+    # We capitalize the first letter of each component
+    if capitalize_first:
+        return ''.join(x.title() for x in components[0:])
+    else:
+        return components[0] + ''.join(x.title() for x in components[1:])
+
 if TYPE_CHECKING:
     from gd2c.project import Project
 
@@ -20,12 +28,12 @@ class JsonGDScriptLoader:
 
     def _build_class(self, physical_path: Path, data) -> GDScriptClass:
         cls = GDScriptClass(
-            self._project.to_resource_path(str(physical_path)), 
-            data.get("name", None) or self._project.generate_unique_class_name(), 
+            self._project.to_resource_path(str(physical_path)),
+            data.get("name", None) or self._project.generate_unique_class_name(to_camel_case(physical_path.with_suffix('').stem)),
             self._project.generate_unique_class_type_id())
         cls.base_resource_path = data["base_type"]
         cls.built_in_type = data["type"]
-        
+
         for index, entry in enumerate(data["global_constants"]):
             glob = GDScriptGlobal(index, entry["name"], entry["original_name"], entry["type_code"], entry["kind_code"], entry["value"], entry["source"])
             cls.globals[glob.index] = glob
@@ -52,8 +60,8 @@ class JsonGDScriptLoader:
             len_jump_table = len(func.default_arguments_jump_table)
             for pindex, pentry in enumerate(entry["parameters"]):
                 param = GDScriptFunctionParameter(
-                    pentry["name"], 
-                    VariantType.get(pentry["type"]), 
+                    pentry["name"],
+                    VariantType.get(pentry["type"]),
                     pindex)
                 param.is_optional = pindex >= num_parameters - len_jump_table
                 func.add_parameter(param)
@@ -61,17 +69,17 @@ class JsonGDScriptLoader:
             for centry in entry["constants"]:
                 mconst = GDScriptFunctionConstant(
                     int(centry["index"]),
-                    centry["type"], 
-                    bytes(list(map(lambda x: int(x), centry["data"]))), 
+                    centry["type"],
+                    bytes(list(map(lambda x: int(x), centry["data"]))),
                     centry["declaration"])
-                func.add_constant(mconst)         
+                func.add_constant(mconst)
 
             ip = 0
             while ip < len(entry["bytecode"]):
                 op = extract(func, entry["bytecode"], ip)
                 func.add_op(ip, op)
-                ip += op.stride  
+                ip += op.stride
 
-            cls.add_function(func)     
+            cls.add_function(func)
 
         return cls

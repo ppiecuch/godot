@@ -12,13 +12,13 @@ if TYPE_CHECKING:
 disallowed_builtins: List[int] = [
     BI.OBJ_WEAKREF, # Not sure yet
     BI.FUNC_FUNCREF, # Not sure yet
-    BI.GET_STACK, # Should probably just return empty array    
+    BI.GET_STACK, # Should probably just return empty array
 ]
 
 
 def call_builtin(function_context: FunctionContext, op: CallBuiltinGDScriptOp, file: IO) -> None:
     FC = function_context
-    
+
     # First check for built-ins implemented via intrinsic
     if op.function_index == BI.TYPE_CONVERT:
         type_convert(function_context, op, file)
@@ -57,7 +57,7 @@ def resource_load(function_context: FunctionContext, op: CallBuiltinGDScriptOp, 
             gd2c10->resource_load({function_context.variables[op.dest].address_of()}, &resource_path);
             api10->godot_string_destroy(&resource_path);
             api10->godot_string_destroy(&extension);
-        }}        
+        }}
         """)
 
 def type_convert(function_context: FunctionContext, op: CallBuiltinGDScriptOp, file: IO) -> None:
@@ -72,4 +72,4 @@ def type_convert(function_context: FunctionContext, op: CallBuiltinGDScriptOp, f
             gd2c10->variant_convert({dest.address_of()}, t, (const godot_variant **)args, 1, &err);
         }}
         """)
-    
+
