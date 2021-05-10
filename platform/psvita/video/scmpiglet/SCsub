@@ -1,0 +1,54 @@
+Import("env")
+
+build_opt = ["-Wl,-q", "-Wall", "-Wno-incompatible-pointer-types", "-Wno-pointer-sign", "-O3", "-nostartfiles", "-nostdlib", "-DVITA", "-D__VITA__"]
+link_opt= []
+
+lib_src = [
+  "src/pib.c",
+  "src/hooks.c",
+  "src/patches.c",
+  "src/sha1.c",
+  "src/shacccgpatch.c",
+  "src/sysmodepatch.c",
+  "src/essl.c",
+]
+
+# library:
+
+env_static = env.Clone()
+env_static.Append(CPPPATH=["."])
+env_static.Append(CFLAGS=[build_opt])
+env_static.Append(LDFLAGS=[link_opt])
+
+sources = lib_src
+
+lib = env_static.Library("pib", sources)
+
+combine_libraries = [
+  "libSceGxm_stub_weak.a",
+  "libSceDisplay_stub_weak.a",
+  "libSceThreadmgr_stub_weak.a",
+  "libSceLibKernel_stub_weak.a",
+  "liblibScePiglet_stub_weak.a",
+  "libtaihen_stub_weak.a",
+  "libSceShaccCg_stub_weak.a",
+  "libSceAppMgr_stub_weak.a",
+  "libSceSharedFb_stub_weak.a",
+  "libSceGxmInternalForVsh_stub_weak.a",
+  "libSceGxmInternal_stub_weak.a",
+]
+
+# stubs:
+
+piglet = "platform/psvita/video/scmpiglet/"
+output = "out"
+
+build_shacc_out = [output + "/libSceShaccCg_stub_weak.a", output + "/libSceShaccCg_stub.a"]
+build_shacc_in = "shacc_stub/nids.yml"
+build_shacc_stub = "vita-libs-gen '{0}' '{1}' && mv '{1}/Makefile' '{1}/Makefile.shacc' && make -f Makefile.shacc -C '{1}'".format(piglet + build_shacc_in, piglet + output)
+env_static.Command(build_shacc_out, build_shacc_in, build_shacc_stub)
+
+build_piglet_out = [output + "/libScePiglet_stub_weak.a", output + "/libScePiglet_stub.a"]
+build_piglet_in = "piglet_stub/nids.yml"
+build_piglet_stub = "vita-libs-gen '{0}' '{1}' && mv '{1}/Makefile' '{1}/Makefile.piglet' && make -f Makefile.piglet -C '{1}'".format(piglet + build_piglet_in, piglet + output)
+env_static.Command(build_piglet_out, build_piglet_in, build_piglet_stub)
