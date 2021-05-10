@@ -50,7 +50,7 @@ def get_flags():
 		("builtin_zlib", True),
 		("builtin_libpng", True),
 		("builtin_pcre2_with_jit", False),
-		("thread_support", False),
+		("feature_multiplethreads_allowed", False),
 	]
 
 
@@ -80,7 +80,6 @@ def configure(env):
 
 	env["bits"] = "32"
 	env["arch"] = "arm"
-	env["no_thread_support"] = True
 
 	env.Append(CPPPATH=["#platform/psp"])
 	env["CC"] = "psp-gcc"
