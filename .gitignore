@@ -27,6 +27,10 @@ platform/android/java/nativeSrcsConfigs/.cxx/
 platform/3ds/video/shaders/2d.h
 platform/3ds/video/shaders/3d.h
 
+# PSVita auto generated stub files
+platform/psvita/video/scmpiglet/out
+platform/psvita/video/scmpiglet/combine
+
 # General c++ generated files
 *.lib
 *.o
@@ -38,6 +42,7 @@ platform/3ds/video/shaders/3d.h
 *.os
 *.Plo
 *.lo
+*.wo
 # Binutils tmp linker output of the form "stXXXXXX" where "X" is alphanumeric
 st[A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9]
 
@@ -114,6 +119,9 @@ bld/
 [Oo]bj/
 *.debug
 *.dSYM
+*.hex
+*.suprx
+*.skprx
 
 # Visual Studio cache/options directory
 .vs/
@@ -131,6 +139,7 @@ TestResult.xml
 
 *.o
 *.a
+*.wo
 *_i.c
 *_p.c
 *_i.h
