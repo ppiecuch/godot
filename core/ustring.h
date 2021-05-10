@@ -98,16 +98,20 @@ public:
 		return *this;
 	}
 	_FORCE_INLINE_ CharString(const char *p_cstr) { copy_from(p_cstr); }
+	_FORCE_INLINE_ CharString(const char *p_data, size_t p_len) { copy_from(p_data, p_len); }
 
 	CharString &operator=(const char *p_cstr);
 	bool operator<(const CharString &p_right) const;
 	CharString &operator+=(char p_char);
-	int length() const { return size() ? size() - 1 : 0; }
+	_FORCE_INLINE_ int length() const { return size() ? size() - 1 : 0; }
+	_FORCE_INLINE_ bool empty() const { return length() == 0; }
 	const char *get_data() const;
+	_FORCE_INLINE_ const char *c_str() const { return get_data(); }
 	operator const char *() const { return get_data(); };
 
 protected:
 	void copy_from(const char *p_cstr);
+	void copy_from(const char *p_data, size_t p_len);
 };
 
 typedef wchar_t CharType;
@@ -129,6 +133,7 @@ class String {
 	static const CharType _null;
 
 	void copy_from(const char *p_cstr);
+	void copy_from(const char *p_data, size_t p_len);
 	void copy_from(const CharType *p_cstr, const int p_clip_to = -1);
 	void copy_from(const CharType &p_char);
 	void copy_from_unchecked(const CharType *p_char, const int p_length);
@@ -299,6 +304,7 @@ public:
 	CharString utf8() const;
 	bool parse_utf8(const char *p_utf8, int p_len = -1); //return true on error
 	static String utf8(const char *p_utf8, int p_len = -1);
+	static String utf8(const CharString &p_utf8);
 
 	static uint32_t hash(const CharType *p_cstr, int p_len); /* hash the string */
 	static uint32_t hash(const CharType *p_cstr); /* hash the string */
@@ -366,6 +372,7 @@ public:
 	}
 
 	String(const char *p_str);
+	String(const char *p_data, size_t p_len);
 	String(const CharType *p_str, int p_clip_to_len = -1);
 	String(const StrRange &p_range);
 };

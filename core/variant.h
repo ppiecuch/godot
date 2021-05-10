@@ -281,6 +281,7 @@ public:
 	Variant(float p_float);
 	Variant(double p_double);
 	Variant(const String &p_string);
+	Variant(const CharString &p_string);
 	Variant(const StringName &p_string);
 	Variant(const char *const p_cstring);
 	Variant(const CharType *p_wstring);

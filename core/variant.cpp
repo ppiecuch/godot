@@ -2261,6 +2261,11 @@ Variant::Variant(const StringName &p_string) {
 	type = STRING;
 	memnew_placement(_data._mem, String(p_string.operator String()));
 }
+Variant::Variant(const CharString &p_string) {
+
+	type = STRING;
+	memnew_placement(_data._mem, String(String::utf8(p_string)));
+}
 Variant::Variant(const String &p_string) {
 
 	type = STRING;

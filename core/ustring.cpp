@@ -151,6 +151,25 @@ void CharString::copy_from(const char *p_cstr) {
 	strcpy(ptrw(), p_cstr);
 }
 
+void CharString::copy_from(const char *p_data, size_t p_len) {
+
+	if (!p_data) {
+		resize(0);
+		return;
+	}
+
+	if (p_len == 0) {
+		resize(0);
+		return;
+	}
+
+	resize(p_len + 1); // include terminating null char
+
+	memcpy(ptrw(), p_data, p_len);
+
+	ptrw()[p_len] = 0;
+}
+
 void String::copy_from(const char *p_cstr) {
 
 	if (!p_cstr) {
@@ -178,6 +197,32 @@ void String::copy_from(const char *p_cstr) {
 
 		dst[i] = p_cstr[i];
 	}
+}
+
+void String::copy_from(const char *p_data, size_t p_len) {
+
+	if (!p_data) {
+
+		resize(0);
+		return;
+	}
+
+	if (p_len == 0) {
+
+		resize(0);
+		return;
+	}
+
+	resize(p_len + 1); // include 0
+
+	CharType *dst = this->ptrw();
+
+	for (int i = 0; i < p_len; i++) {
+
+		dst[i] = p_data[i];
+	}
+
+	dst[p_len] = 0;
 }
 
 void String::copy_from(const CharType *p_cstr, const int p_clip_to) {
@@ -1422,6 +1467,14 @@ String String::utf8(const char *p_utf8, int p_len) {
 	return ret;
 };
 
+String String::utf8(const CharString &p_utf8) {
+
+	String ret;
+	ret.parse_utf8(p_utf8.ptr(), p_utf8.length());
+
+	return ret;
+};
+
 bool String::parse_utf8(const char *p_utf8, int p_len) {
 
 #define _UNICERROR(m_err) print_line("Unicode error: " + String(m_err));
@@ -1670,6 +1723,11 @@ String::String(CharType p_char) {
 String::String(const char *p_str) {
 
 	copy_from(p_str);
+}
+
+String::String(const char *p_data, size_t p_len) {
+
+	copy_from(p_data, p_len);
 }
 
 String::String(const CharType *p_str, int p_clip_to_len) {
@@ -4432,7 +4490,7 @@ String String::sprintf(const Array &values, bool *error) const {
 				}
 
 				default: {
-					return "unsupported format character";
+					return "unsupported format character in: " + *this;
 				}
 			}
 		} else { // Not in format string.
