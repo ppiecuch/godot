@@ -38,10 +38,10 @@ env.CommandNoCache("#main/app_icon.gen.h", "#main/app_icon.png", run_in_subproce
 if env["tools"]:
     SConscript("tests/SCsub")
 
-if os.path.isdir("bytecode_export"):
-    env.add_source_files(env.main_sources, "bytecode_export/*.cpp")
-    env.Append(CPPDEFINES=["BYTECODE_EXPORT_ENABLED"])
-    env.Append(CPPPATH=["#modules/gdnative/include"])
+    if os.path.isdir("bytecode_export"):
+        env.add_source_files(env.main_sources, "bytecode_export/*.cpp")
+        env.Append(CPPDEFINES=["BYTECODE_EXPORT_ENABLED"])
+        env.Append(CPPPATH=["#modules/gdnative/include"])
 
 lib = env.add_library("main", env.main_sources)
 env.Prepend(LIBS=[lib])
