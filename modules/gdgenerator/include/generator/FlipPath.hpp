@@ -63,7 +63,7 @@ public:
 		void next() { edges_.next(); }
 
 	private:
-		typename EdgeGeneratorType<TransformPath<Path> >::Type edges_;
+		typename EdgeGeneratorType<TransformPath<Path>>::Type edges_;
 
 		Edges(const TransformPath<Path> &path) :
 				edges_{ path.edges() } {}

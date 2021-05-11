@@ -83,7 +83,7 @@ private:
 	using Impl = MergeMesh<
 			CylinderMesh,
 			detail::Cap,
-			UvFlipMesh<FlipMesh<detail::Cap> > >;
+			UvFlipMesh<FlipMesh<detail::Cap>>>;
 	Impl mergeMesh_;
 
 public:

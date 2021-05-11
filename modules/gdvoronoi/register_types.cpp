@@ -32,7 +32,6 @@
 #include "voronoi.h"
 
 void register_gdvoronoi_types() {
-
 	ClassDB::register_class<Voronoi>();
 	ClassDB::register_class<VoronoiDiagram>();
 	ClassDB::register_class<VoronoiSite>();

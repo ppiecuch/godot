@@ -39,7 +39,6 @@
 #include "3ds_godot.h"
 
 class AudioDriver3ds : public AudioDriver {
-
 	enum {
 		NDSP_BUFFER_COUNT = 3,
 	};

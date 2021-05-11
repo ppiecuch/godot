@@ -50,12 +50,10 @@
 #endif
 
 static void _thread_id_key_destr_callback(void *p_value) {
-
 	memdelete(static_cast<PosixThread::ID *>(p_value));
 }
 
 static pthread_key_t _create_thread_id_key() {
-
 	pthread_key_t key;
 	pthread_key_create(&key, &_thread_id_key_destr_callback);
 	return key;
@@ -68,7 +66,6 @@ static thread_local PosixThread::ID caller_id = 0;
 static thread_local bool caller_id_cached = false;
 
 void *PosixThread::thread_callback(void *p_userdata) {
-
 	PosixThread *t = reinterpret_cast<PosixThread *>(p_userdata);
 	t->id = ATOMIC_INCREMENT(&next_thread_id);
 	pthread_setspecific(thread_id_key, (void *)memnew(ID(t->id)));
@@ -86,7 +83,6 @@ void *PosixThread::thread_callback(void *p_userdata) {
 }
 
 void PosixThread::start(PosixThread::Callback p_callback, void *p_user, const Settings &p_settings) {
-
 	if (pthread != 0) {
 #ifdef DEBUG_ENABLED
 		WARN_PRINT("A Thread object has been re-started without wait_to_finish() having been called on it. Please do so to ensure correct cleanup of the thread.");
@@ -105,7 +101,6 @@ void PosixThread::start(PosixThread::Callback p_callback, void *p_user, const Se
 }
 
 PosixThread::ID PosixThread::get_thread_id() {
-
 	void *value = pthread_getspecific(thread_id_key);
 
 	if (value)
@@ -117,7 +112,6 @@ PosixThread::ID PosixThread::get_thread_id() {
 }
 
 PosixThread::ID PosixThread::get_caller_id() {
-
 	if (likely(caller_id_cached)) {
 		return caller_id;
 	} else {
@@ -128,18 +122,15 @@ PosixThread::ID PosixThread::get_caller_id() {
 }
 
 bool PosixThread::is_started() const {
-
 	return pthread != 0;
 }
 
 void PosixThread::wait_to_finish() {
-
 	pthread_join(pthread, NULL);
 	pthread = 0;
 }
 
 Error PosixThread::set_name(const String &p_name) {
-
 #ifdef PTHREAD_NO_RENAME
 	return ERR_UNAVAILABLE;
 
@@ -168,7 +159,6 @@ Error PosixThread::set_name(const String &p_name) {
 }
 
 PosixThread::PosixThread() {
-
 	pthread = 0;
 }
 

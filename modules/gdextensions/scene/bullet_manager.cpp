@@ -84,7 +84,6 @@ Node *BulletManagerBullet::get_type() const {
 }
 
 void BulletManagerBulletType::set_texture(const Ref<Texture> &p_texture) {
-
 	if (p_texture == texture)
 		return;
 
@@ -105,12 +104,10 @@ void BulletManagerBulletType::set_texture(const Ref<Texture> &p_texture) {
 }
 
 Ref<Texture> BulletManagerBulletType::get_texture() const {
-
 	return texture;
 }
 
 void BulletManagerBulletType::set_normal_map(const Ref<Texture> &p_normal_map) {
-
 	if (p_normal_map == normal_map)
 		return;
 
@@ -130,34 +127,28 @@ void BulletManagerBulletType::set_normal_map(const Ref<Texture> &p_normal_map) {
 }
 
 Ref<Texture> BulletManagerBulletType::get_normal_map() const {
-
 	return normal_map;
 }
 
 void BulletManagerBulletType::set_vframes(int p_amount) {
-
 	ERR_FAIL_COND(p_amount < 1);
 	vframes = p_amount;
 	_change_notify();
 }
 int BulletManagerBulletType::get_vframes() const {
-
 	return vframes;
 }
 
 void BulletManagerBulletType::set_hframes(int p_amount) {
-
 	ERR_FAIL_COND(p_amount < 1);
 	hframes = p_amount;
 	_change_notify();
 }
 int BulletManagerBulletType::get_hframes() const {
-
 	return hframes;
 }
 
 void BulletManagerBulletType::set_frame(int p_frame) {
-
 	ERR_FAIL_INDEX(p_frame, vframes * hframes);
 
 	frame = p_frame;
@@ -166,7 +157,6 @@ void BulletManagerBulletType::set_frame(int p_frame) {
 }
 
 int BulletManagerBulletType::get_frame() const {
-
 	return frame;
 }
 
@@ -206,13 +196,11 @@ Rect2 BulletManagerBulletType::get_region_rect() const {
 }
 
 void BulletManagerBulletType::set_rotate_visual(bool p_rotate_visual) {
-
 	rotate_visual = p_rotate_visual;
 	_change_notify();
 }
 
 bool BulletManagerBulletType::is_rotating_visual() const {
-
 	return rotate_visual;
 }
 
@@ -228,44 +216,36 @@ void BulletManagerBulletType::set_collision_shape(const Ref<Shape2D> &p_shape) {
 }
 
 Ref<Shape2D> BulletManagerBulletType::get_collision_shape() const {
-
 	return collision_shape;
 }
 
 void BulletManagerBulletType::set_collision_mask(uint32_t p_mask) {
-
 	collision_mask = p_mask;
 	Physics2DServer::get_singleton()->area_set_collision_mask(area, collision_mask);
 }
 
 uint32_t BulletManagerBulletType::get_collision_mask() const {
-
 	return collision_mask;
 }
 
 void BulletManagerBulletType::set_collision_layer(uint32_t p_layer) {
-
 	collision_layer = p_layer;
 	Physics2DServer::get_singleton()->area_set_collision_layer(area, collision_layer);
 }
 
 uint32_t BulletManagerBulletType::get_collision_layer() const {
-
 	return collision_layer;
 }
 
 void BulletManagerBulletType::set_rotate_physics(bool p_rotate_physics) {
-
 	rotate_physics = p_rotate_physics;
 }
 
 bool BulletManagerBulletType::is_rotating_physics() const {
-
 	return rotate_physics;
 }
 
 void BulletManagerBulletType::_update_cached_rects() {
-
 	Rect2 base_rect;
 
 	if (region) {
@@ -485,10 +465,8 @@ BulletManagerBulletType::~BulletManagerBulletType() {
 }
 
 void BulletManager::_notification(int p_what) {
-
 	switch (p_what) {
 		case NOTIFICATION_ENTER_TREE: {
-
 		} break;
 
 		case NOTIFICATION_READY: {
@@ -593,7 +571,6 @@ void BulletManager::_draw_bullets() {
 }
 
 void BulletManager::_update_bullets() {
-
 	Physics2DServer *ps = Physics2DServer::get_singleton();
 	float delta = get_physics_process_delta_time();
 	// int size = _active_bullets.size();

@@ -267,7 +267,8 @@ int stbi_write_tga_with_rle = 1;
 static void stbiw__writefv(stbi__write_context *s, const char *fmt, va_list v) {
 	while (*fmt) {
 		switch (*fmt++) {
-			case ' ': break;
+			case ' ':
+				break;
 			case '1': {
 				unsigned char x = STBIW_UCHAR(va_arg(v, int));
 				s->func(s->context, &x, 1);
@@ -596,7 +597,8 @@ void stbiw__write_hdr_scanline(stbi__write_context *s, int width, int ncomp, uns
 				// dump up to first run
 				while (x < r) {
 					int len = r - x;
-					if (len > 128) len = 128;
+					if (len > 128)
+						len = 128;
 					stbiw__write_dump_data(s, len, &comp[x]);
 					x += len;
 				}
@@ -608,7 +610,8 @@ void stbiw__write_hdr_scanline(stbi__write_context *s, int width, int ncomp, uns
 					// output run up to r
 					while (x < r) {
 						int len = r - x;
-						if (len > 127) len = 127;
+						if (len > 127)
+							len = 127;
 						stbiw__write_run_data(s, len, comp[x]);
 						x += len;
 					}
@@ -679,7 +682,8 @@ static void *stbiw__sbgrowf(void **arr, int increment, int itemsize) {
 	void *p = STBIW_REALLOC_SIZED(*arr ? stbiw__sbraw(*arr) : 0, *arr ? (stbiw__sbm(*arr) * itemsize + sizeof(int) * 2) : 0, itemsize * m + sizeof(int) * 2);
 	STBIW_ASSERT(p);
 	if (p) {
-		if (!*arr) ((int *)p)[1] = 0;
+		if (!*arr)
+			((int *)p)[1] = 0;
 		*arr = (void *)((int *)p + 2);
 		stbiw__sbm(*arr) = m;
 	}
@@ -707,7 +711,8 @@ static int stbiw__zlib_bitrev(int code, int codebits) {
 static unsigned int stbiw__zlib_countm(unsigned char *a, unsigned char *b, int limit) {
 	int i;
 	for (i = 0; i < limit && i < 258; ++i)
-		if (a[i] != b[i]) break;
+		if (a[i] != b[i])
+			break;
 	return i;
 }
 
@@ -747,7 +752,8 @@ unsigned char *stbi_zlib_compress(unsigned char *data, int data_len, int *out_le
 	int i, j, bitcount = 0;
 	unsigned char *out = NULL;
 	unsigned char ***hash_table = (unsigned char ***)STBIW_MALLOC(stbiw__ZHASH * sizeof(char **));
-	if (quality < 5) quality = 5;
+	if (quality < 5)
+		quality = 5;
 
 	stbiw__sbpush(out, 0x78); // DEFLATE 32K window
 	stbiw__sbpush(out, 0x5e); // FLEVEL = 1
@@ -767,7 +773,8 @@ unsigned char *stbi_zlib_compress(unsigned char *data, int data_len, int *out_le
 		for (j = 0; j < n; ++j) {
 			if (hlist[j] - data > i - 32768) { // if entry lies within window
 				int d = stbiw__zlib_countm(hlist[j], data + i, data_len - i);
-				if (d >= best) best = d, bestloc = hlist[j];
+				if (d >= best)
+					best = d, bestloc = hlist[j];
 			}
 		}
 		// when hash table entry is too long, delete half the entries
@@ -799,11 +806,13 @@ unsigned char *stbi_zlib_compress(unsigned char *data, int data_len, int *out_le
 			for (j = 0; best > lengthc[j + 1] - 1; ++j)
 				;
 			stbiw__zlib_huff(j + 257);
-			if (lengtheb[j]) stbiw__zlib_add(best - lengthc[j], lengtheb[j]);
+			if (lengtheb[j])
+				stbiw__zlib_add(best - lengthc[j], lengtheb[j]);
 			for (j = 0; d > distc[j + 1] - 1; ++j)
 				;
 			stbiw__zlib_add(stbiw__zlib_bitrev(j, 5), 5);
-			if (disteb[j]) stbiw__zlib_add(d - distc[j], disteb[j]);
+			if (disteb[j])
+				stbiw__zlib_add(d - distc[j], disteb[j]);
 			i += best;
 		} else {
 			stbiw__zlib_huffb(data[i]);
@@ -899,8 +908,10 @@ static void stbiw__wpcrc(unsigned char **data, int len) {
 
 static unsigned char stbiw__paeth(int a, int b, int c) {
 	int p = a + b - c, pa = abs(p - a), pb = abs(p - b), pc = abs(p - c);
-	if (pa <= pb && pa <= pc) return STBIW_UCHAR(a);
-	if (pb <= pc) return STBIW_UCHAR(b);
+	if (pa <= pb && pa <= pc)
+		return STBIW_UCHAR(a);
+	if (pb <= pc)
+		return STBIW_UCHAR(b);
 	return STBIW_UCHAR(c);
 }
 
@@ -915,7 +926,8 @@ unsigned char *stbi_write_png_to_mem(unsigned char *pixels, int stride_bytes, in
 		stride_bytes = x * n;
 
 	filt = (unsigned char *)STBIW_MALLOC((x * n + 1) * y);
-	if (!filt) return 0;
+	if (!filt)
+		return 0;
 	line_buffer = (signed char *)STBIW_MALLOC(x * n);
 	if (!line_buffer) {
 		STBIW_FREE(filt);
@@ -932,26 +944,55 @@ unsigned char *stbi_write_png_to_mem(unsigned char *pixels, int stride_bytes, in
 				unsigned char *z = pixels + stride_bytes * j;
 				for (i = 0; i < n; ++i)
 					switch (type) {
-						case 0: line_buffer[i] = z[i]; break;
-						case 1: line_buffer[i] = z[i]; break;
-						case 2: line_buffer[i] = z[i] - z[i - stride_bytes]; break;
-						case 3: line_buffer[i] = z[i] - (z[i - stride_bytes] >> 1); break;
-						case 4: line_buffer[i] = (signed char)(z[i] - stbiw__paeth(0, z[i - stride_bytes], 0)); break;
-						case 5: line_buffer[i] = z[i]; break;
-						case 6: line_buffer[i] = z[i]; break;
+						case 0:
+							line_buffer[i] = z[i];
+							break;
+						case 1:
+							line_buffer[i] = z[i];
+							break;
+						case 2:
+							line_buffer[i] = z[i] - z[i - stride_bytes];
+							break;
+						case 3:
+							line_buffer[i] = z[i] - (z[i - stride_bytes] >> 1);
+							break;
+						case 4:
+							line_buffer[i] = (signed char)(z[i] - stbiw__paeth(0, z[i - stride_bytes], 0));
+							break;
+						case 5:
+							line_buffer[i] = z[i];
+							break;
+						case 6:
+							line_buffer[i] = z[i];
+							break;
 					}
 				for (i = n; i < x * n; ++i) {
 					switch (type) {
-						case 0: line_buffer[i] = z[i]; break;
-						case 1: line_buffer[i] = z[i] - z[i - n]; break;
-						case 2: line_buffer[i] = z[i] - z[i - stride_bytes]; break;
-						case 3: line_buffer[i] = z[i] - ((z[i - n] + z[i - stride_bytes]) >> 1); break;
-						case 4: line_buffer[i] = z[i] - stbiw__paeth(z[i - n], z[i - stride_bytes], z[i - stride_bytes - n]); break;
-						case 5: line_buffer[i] = z[i] - (z[i - n] >> 1); break;
-						case 6: line_buffer[i] = z[i] - stbiw__paeth(z[i - n], 0, 0); break;
+						case 0:
+							line_buffer[i] = z[i];
+							break;
+						case 1:
+							line_buffer[i] = z[i] - z[i - n];
+							break;
+						case 2:
+							line_buffer[i] = z[i] - z[i - stride_bytes];
+							break;
+						case 3:
+							line_buffer[i] = z[i] - ((z[i - n] + z[i - stride_bytes]) >> 1);
+							break;
+						case 4:
+							line_buffer[i] = z[i] - stbiw__paeth(z[i - n], z[i - stride_bytes], z[i - stride_bytes - n]);
+							break;
+						case 5:
+							line_buffer[i] = z[i] - (z[i - n] >> 1);
+							break;
+						case 6:
+							line_buffer[i] = z[i] - stbiw__paeth(z[i - n], 0, 0);
+							break;
 					}
 				}
-				if (p) break;
+				if (p)
+					break;
 				for (i = 0; i < x * n; ++i)
 					est += abs((signed char)line_buffer[i]);
 				if (est < bestval) {
@@ -967,11 +1008,13 @@ unsigned char *stbi_write_png_to_mem(unsigned char *pixels, int stride_bytes, in
 	STBIW_FREE(line_buffer);
 	zlib = stbi_zlib_compress(filt, y * (x * n + 1), &zlen, 8); // increase 8 to get smaller but use more memory
 	STBIW_FREE(filt);
-	if (!zlib) return 0;
+	if (!zlib)
+		return 0;
 
 	// each tag requires 12 bytes of overhead
 	out = (unsigned char *)STBIW_MALLOC(8 + 12 + 13 + 12 + zlen + 12);
-	if (!out) return 0;
+	if (!out)
+		return 0;
 	*out_len = 8 + 12 + 13 + 12 + zlen + 12;
 
 	o = out;
@@ -1009,7 +1052,8 @@ STBIWDEF int stbi_write_png(char const *filename, int x, int y, int comp, const 
 	FILE *f;
 	int len;
 	unsigned char *png = stbi_write_png_to_mem((unsigned char *)data, stride_bytes, x, y, comp, &len);
-	if (png == NULL) return 0;
+	if (png == NULL)
+		return 0;
 	f = fopen(filename, "wb");
 	if (!f) {
 		STBIW_FREE(png);
@@ -1025,7 +1069,8 @@ STBIWDEF int stbi_write_png(char const *filename, int x, int y, int comp, const 
 STBIWDEF int stbi_write_png_to_func(stbi_write_func *func, void *context, int x, int y, int comp, const void *data, int stride_bytes) {
 	int len;
 	unsigned char *png = stbi_write_png_to_mem((unsigned char *)data, stride_bytes, x, y, comp, &len);
-	if (png == NULL) return 0;
+	if (png == NULL)
+		return 0;
 	func(context, png, len);
 	STBIW_FREE(png);
 	return 1;

@@ -77,7 +77,8 @@ static real_t ease_circ_out(real_t t, real_t b, real_t c, real_t d) {
 }
 static real_t ease_circ_inout(real_t t, real_t b, real_t c, real_t d) {
 	t /= d / 2.0f;
-	if (t < 1.0f) return (-c / 2.0f * (Math::sqrt(1.0f - t * t) - 1.0f) + b);
+	if (t < 1.0f)
+		return (-c / 2.0f * (Math::sqrt(1.0f - t * t) - 1.0f) + b);
 	t -= 2.0f;
 	return (c / 2.0f * (Math::sqrt(1.0f - t * t) + 1.0f) + b);
 }
@@ -92,7 +93,8 @@ static real_t ease_cubic_out(real_t t, real_t b, real_t c, real_t d) {
 }
 static real_t ease_cubic_inout(real_t t, real_t b, real_t c, real_t d) {
 	t /= d / 2.0f;
-	if (t < 1.0f) return (c / 2.0f * t * t * t + b);
+	if (t < 1.0f)
+		return (c / 2.0f * t * t * t + b);
 	t -= 2.0f;
 	return (c / 2.0f * (t * t * t + 2.0f) + b);
 }
@@ -106,7 +108,8 @@ static real_t ease_quad_out(real_t t, real_t b, real_t c, real_t d) {
 	return (-c * t * (t - 2.0f) + b);
 }
 static real_t ease_quad_inout(real_t t, real_t b, real_t c, real_t d) {
-	if ((t /= d / 2) < 1) return (((c / 2) * (t * t)) + b);
+	if ((t /= d / 2) < 1)
+		return (((c / 2) * (t * t)) + b);
 	return (-c / 2.0f * (((t - 1.0f) * (t - 3.0f)) - 1.0f) + b);
 }
 // Exponential Easing functions
@@ -117,9 +120,12 @@ static real_t ease_expo_out(real_t t, real_t b, real_t c, real_t d) {
 	return (t == d) ? (b + c) : (c * (-Math::pow(2.0f, -10.0f * t / d) + 1.0f) + b);
 }
 static real_t ease_expo_inout(real_t t, real_t b, real_t c, real_t d) {
-	if (t == 0.0f) return b;
-	if (t == d) return (b + c);
-	if ((t /= d / 2.0f) < 1.0f) return (c / 2.0f * Math::pow(2.0f, 10.0f * (t - 1.0f)) + b);
+	if (t == 0.0f)
+		return b;
+	if (t == d)
+		return (b + c);
+	if ((t /= d / 2.0f) < 1.0f)
+		return (c / 2.0f * Math::pow(2.0f, 10.0f * (t - 1.0f)) + b);
 	return (c / 2.0f * (-Math::pow(2.0f, -10.0f * (t - 1.0f)) + 2.0f) + b);
 }
 // Back Easing functions
@@ -166,8 +172,10 @@ static real_t ease_bounce_inout(real_t t, real_t b, real_t c, real_t d) {
 }
 // Elastic Easing functions
 static real_t ease_elastic_in(real_t t, real_t b, real_t c, real_t d) {
-	if (t == 0.0f) return b;
-	if ((t /= d) == 1.0f) return (b + c);
+	if (t == 0.0f)
+		return b;
+	if ((t /= d) == 1.0f)
+		return (b + c);
 	const real_t p = d * 0.3f;
 	const real_t a = c;
 	const real_t s = p / 4.0f;
@@ -175,16 +183,20 @@ static real_t ease_elastic_in(real_t t, real_t b, real_t c, real_t d) {
 	return (-(postFix * Math::sin((t * d - s) * (2.0f * Math_PI) / p)) + b);
 }
 static real_t ease_elastic_out(real_t t, real_t b, real_t c, real_t d) {
-	if (t == 0.0f) return b;
-	if ((t /= d) == 1.0f) return (b + c);
+	if (t == 0.0f)
+		return b;
+	if ((t /= d) == 1.0f)
+		return (b + c);
 	const real_t p = d * 0.3f;
 	const real_t a = c;
 	const real_t s = p / 4.0f;
 	return (a * Math::pow(2.0f, -10.0f * t) * Math::sin((t * d - s) * (2.0f * Math_PI) / p) + c + b);
 }
 static real_t ease_elastic_inout(real_t t, real_t b, real_t c, real_t d) {
-	if (t == 0.0f) return b;
-	if ((t /= d / 2.0f) == 2.0f) return (b + c);
+	if (t == 0.0f)
+		return b;
+	if ((t /= d / 2.0f) == 2.0f)
+		return (b + c);
 	const real_t p = d * (0.3f * 1.5f);
 	const real_t a = c;
 	const real_t s = p / 4.0f;
@@ -255,7 +267,6 @@ static inline void _dump_xform(const CharTransform &xform) {
 }
 
 struct Label::AnimationController {
-
 	virtual bool init_transition(Label *p_owner, real_t p_duration, ease_func_t p_ease, WordCache *p_cache_in, WordCache *p_cache_out) = 0;
 	virtual bool update(real_t p_dt, ease_func_t p_ease) = 0; // -> true: transition done
 	virtual const std::vector<WordCache *> get_draw_cache() = 0;
@@ -272,7 +283,6 @@ struct Label::AnimationController {
 };
 
 struct Label::AnimationNone : public Label::AnimationController {
-
 	virtual bool init_transition(Label *p_owner, real_t p_duration, ease_func_t p_ease, WordCache *p_cache_in, WordCache *p_cache_out) { return false; }
 	virtual bool update(real_t p_dt, ease_func_t p_ease) { return true; }
 	virtual const std::vector<WordCache *> get_draw_cache() { return std::vector<WordCache *>(); }
@@ -282,7 +292,6 @@ struct Label::AnimationNone : public Label::AnimationController {
 };
 
 struct Label::GenericDualTransformController : public Label::AnimationController {
-
 	enum AnimationOrient {
 		ANIMATION_WHEEL_UP,
 		ANIMATION_WHEEL_DOWN,
@@ -366,7 +375,6 @@ struct Label::GenericDualTransformController : public Label::AnimationController
 		return true;
 	}
 	virtual bool update(real_t p_dt, ease_func_t p_ease) {
-
 		if (!active) {
 			return true;
 		}
@@ -381,16 +389,16 @@ struct Label::GenericDualTransformController : public Label::AnimationController
 	}
 	virtual const std::vector<WordCache *> get_draw_cache() { return std::vector<WordCache *>{ &cache_in, &cache_out }; }
 	virtual const CharTransform *get_char_xform(const WordCache *p_cache, int p_pos) {
-
 		if (!change_new_chars_only || !_same_char(cache_in, cache_out, p_pos)) {
-			if (p_cache == &cache_in) return &xform_in;
-			if (p_cache == &cache_out) return &xform_out;
+			if (p_cache == &cache_in)
+				return &xform_in;
+			if (p_cache == &cache_out)
+				return &xform_out;
 		}
 		return nullptr;
 	}
 	virtual bool is_done() const { return !active; }
 	virtual bool is_valid() const {
-
 		if (!owner)
 			return false;
 		else
@@ -398,14 +406,12 @@ struct Label::GenericDualTransformController : public Label::AnimationController
 	}
 
 	GenericDualTransformController(AnimationOrient p_orientation, bool p_change_new_chars_only) {
-
 		orientation = p_orientation;
 		change_new_chars_only = p_change_new_chars_only;
 	}
 };
 
 struct Label::GenericSingleTransformController : public Label::AnimationController {
-
 	enum AnimationOrient {
 
 		ANIMATION_ROTATE_H,
@@ -467,7 +473,6 @@ struct Label::GenericSingleTransformController : public Label::AnimationControll
 		return true;
 	}
 	virtual bool update(real_t p_dt, ease_func_t p_ease) {
-
 		if (!active) {
 			return true;
 		}
@@ -486,7 +491,6 @@ struct Label::GenericSingleTransformController : public Label::AnimationControll
 		return false;
 	}
 	virtual const std::vector<WordCache *> get_draw_cache() {
-
 		if (current >= 0) {
 			return std::vector<WordCache *>{ &cache_in }; // new text
 		} else {
@@ -498,13 +502,11 @@ struct Label::GenericSingleTransformController : public Label::AnimationControll
 	virtual bool is_valid() const { return !!owner; }
 
 	GenericSingleTransformController(AnimationOrient p_orientation) {
-
 		orientation = p_orientation;
 	}
 };
 
 struct Label::GenericMulti1TransformController : public Label::AnimationController {
-
 	enum AnimationOrient {
 
 		ANIMATION_ROTATE_H,
@@ -593,7 +595,6 @@ struct Label::GenericMulti1TransformController : public Label::AnimationControll
 		return true;
 	}
 	virtual bool update(real_t p_dt, ease_func_t p_ease) {
-
 		if (!active) {
 			return true;
 		}
@@ -605,7 +606,6 @@ struct Label::GenericMulti1TransformController : public Label::AnimationControll
 		return true;
 	}
 	virtual const std::vector<WordCache *> get_draw_cache() {
-
 		return std::vector<WordCache *>{ &cache_out, &cache_in };
 	}
 	virtual const CharTransform *get_char_xform(const WordCache *p_cache, int p_pos) {
@@ -614,11 +614,15 @@ struct Label::GenericMulti1TransformController : public Label::AnimationControll
 		static CharTransform _hidden(true);
 		const _xform &info = trans_info[p_pos];
 		if (info.current > 0) {
-			if (p_cache == &cache_out) return &_hidden;
-			if (p_cache == &cache_in) return &info.xform;
+			if (p_cache == &cache_out)
+				return &_hidden;
+			if (p_cache == &cache_in)
+				return &info.xform;
 		} else {
-			if (p_cache == &cache_out) return &info.xform;
-			if (p_cache == &cache_in) return &_hidden;
+			if (p_cache == &cache_out)
+				return &info.xform;
+			if (p_cache == &cache_in)
+				return &_hidden;
 		}
 		return nullptr;
 	}
@@ -626,13 +630,11 @@ struct Label::GenericMulti1TransformController : public Label::AnimationControll
 	virtual bool is_valid() const { return !!owner; }
 
 	GenericMulti1TransformController(AnimationOrient p_orientation) {
-
 		orientation = p_orientation;
 	}
 };
 
 struct Label::GenericMulti2TransformController : public Label::AnimationController {
-
 	enum AnimationOrient {
 
 		ANIMATION_SLIDE_UP,
@@ -719,7 +721,6 @@ struct Label::GenericMulti2TransformController : public Label::AnimationControll
 		return true;
 	}
 	virtual bool update(real_t p_dt, ease_func_t p_ease) {
-
 		if (!active) {
 			return true;
 		}
@@ -731,28 +732,27 @@ struct Label::GenericMulti2TransformController : public Label::AnimationControll
 		return true;
 	}
 	virtual const std::vector<WordCache *> get_draw_cache() {
-
 		return std::vector<WordCache *>{ &cache_out, &cache_in };
 	}
 	virtual const CharTransform *get_char_xform(const WordCache *p_cache, int p_pos) {
 		ERR_FAIL_INDEX_V(p_pos, trans_info.size(), nullptr);
 
 		const _xform &info = trans_info[p_pos];
-		if (p_cache == &cache_in) return &info.xform_in;
-		if (p_cache == &cache_out) return &info.xform_out;
+		if (p_cache == &cache_in)
+			return &info.xform_in;
+		if (p_cache == &cache_out)
+			return &info.xform_out;
 		return nullptr;
 	}
 	virtual bool is_done() const { return !active; }
 	virtual bool is_valid() const { return !!owner; }
 
 	GenericMulti2TransformController(AnimationOrient p_orientation) {
-
 		orientation = p_orientation;
 	}
 };
 
 std::unique_ptr<Label::AnimationController> AnimationControllerFactory(Label::TransitionEffect p_effect) {
-
 	switch (p_effect) {
 		case Label::TRANSITIONEFFECT_NONE:
 			return std::unique_ptr<Label::AnimationController>(new Label::AnimationNone());

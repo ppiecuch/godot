@@ -154,27 +154,35 @@ public:
 
 	/// Quaternions are equal if both parts are equal.
 	bool operator==(const quaternion<T> &q) const {
-		if (real != q.real) return false;
-		if (imag != q.imag) return false;
+		if (real != q.real)
+			return false;
+		if (imag != q.imag)
+			return false;
 		return true;
 	}
 
 	bool operator==(const T &a) const {
-		if (real != a) return false;
-		if (imag != vec<T, 3>{ 0 }) return false;
+		if (real != a)
+			return false;
+		if (imag != vec<T, 3>{ 0 })
+			return false;
 		return true;
 	}
 
 	bool operator==(const vec<T, 3> &v) const {
-		if (real != T{ 0 }) return false;
-		if (imag != v) return false;
+		if (real != T{ 0 })
+			return false;
+		if (imag != v)
+			return false;
 		return true;
 	}
 
 	/// Quaternions are not equal if either of the parts are not equal.
 	bool operator!=(const quaternion<T> &q) const {
-		if (real != q.real) return true;
-		if (imag != q.imag) return true;
+		if (real != q.real)
+			return true;
+		if (imag != q.imag)
+			return true;
 		return false;
 	}
 

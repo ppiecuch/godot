@@ -52,7 +52,6 @@ class RWLock : public RWLockPosix {
 #include <shared_mutex>
 
 class RWLock {
-
 	mutable std::shared_timed_mutex mutex;
 
 public:
@@ -91,7 +90,6 @@ public:
 #else
 
 class RWLock {
-
 public:
 	void read_lock() const {}
 	void read_unlock() const {}

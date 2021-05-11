@@ -92,10 +92,14 @@ struct rect_wh {
 	int perimeter() const { return 2 * w + 2 * h; }
 	int fits(const rect_wh &bigger, bool allowFlip) const // 0 - no, 1 - yes, 2 - flipped, 3 - perfectly, 4 perfectly flipped
 	{
-		if (w == bigger.w && h == bigger.h) return 3;
-		if (allowFlip && h == bigger.w && w == bigger.h) return 4;
-		if (w <= bigger.w && h <= bigger.h) return 1;
-		if (allowFlip && h <= bigger.w && w <= bigger.h) return 2;
+		if (w == bigger.w && h == bigger.h)
+			return 3;
+		if (allowFlip && h == bigger.w && w == bigger.h)
+			return 4;
+		if (w <= bigger.w && h <= bigger.h)
+			return 1;
+		if (allowFlip && h <= bigger.w && w <= bigger.h)
+			return 2;
 		return 0;
 	}
 	Size2i size() const { return Size2i(w, h); }
@@ -225,17 +229,24 @@ struct node {
 
 	node *insert(rect_xywhf &img, bool allowFlip) {
 		if (c[0].pn && c[0].fill) {
-			if (auto newn = c[0].pn->insert(img, allowFlip)) return newn;
+			if (auto newn = c[0].pn->insert(img, allowFlip))
+				return newn;
 			return c[1].pn->insert(img, allowFlip);
 		}
 
-		if (id) return 0;
+		if (id)
+			return 0;
 		int f = img.fits(rect_xywh(rc), allowFlip);
 
 		switch (f) {
-			case 0: return 0;
-			case 1: img.flipped = false; break;
-			case 2: img.flipped = true; break;
+			case 0:
+				return 0;
+			case 1:
+				img.flipped = false;
+				break;
+			case 2:
+				img.flipped = true;
+				break;
 			case 3:
 				id = true;
 				img.flipped = false;
@@ -271,8 +282,10 @@ struct node {
 	}
 
 	~node() {
-		if (c[0].pn) delete c[0].pn;
-		if (c[1].pn) delete c[1].pn;
+		if (c[0].pn)
+			delete c[0].pn;
+		if (c[1].pn)
+			delete c[1].pn;
 	}
 };
 
@@ -301,7 +314,8 @@ static rect_wh _rect2D(rect_xywhf *const *v, int n, int max_s, bool allowFlip, s
 
 		while (true) {
 			if (root.rc.w() > min_bin.w) {
-				if (min_func > -1) break;
+				if (min_func > -1)
+					break;
 				_area = 0;
 
 				root.reset(min_bin);
@@ -380,7 +394,8 @@ static bool _pack_rects(rect_xywhf *const *v, int n, int max_s, bool allowFlip, 
 	rect_wh _rect(max_s, max_s);
 
 	for (int i = 0; i < n; ++i)
-		if (!v[i]->fits(_rect, allowFlip)) return false;
+		if (!v[i]->fits(_rect, allowFlip))
+			return false;
 
 	std::vector<rect_xywhf *> vec[2], *p[2] = { vec, vec + 1 };
 	vec[0].resize(n);
@@ -396,7 +411,8 @@ static bool _pack_rects(rect_xywhf *const *v, int n, int max_s, bool allowFlip, 
 		b->size = _rect2D(&((*p[0])[0]), static_cast<int>(p[0]->size()), max_s, allowFlip, b->rects, *p[1]);
 		p[0]->clear();
 
-		if (!p[1]->size()) break;
+		if (!p[1]->size())
+			break;
 
 		std::swap(p[0], p[1]);
 	}
@@ -527,7 +543,7 @@ struct TextureMergeOptions {
 			max_atlas_size(max_atlas_size) {}
 };
 
-static Dictionary merge_images(Vector<Ref<Image> > images, Vector<String> names, const TextureMergeOptions &options = TextureMergeOptions()) {
+static Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, const TextureMergeOptions &options = TextureMergeOptions()) {
 	ERR_FAIL_COND_V(images.size() != names.size(), Dictionary());
 
 	const int margin = options.margin;
@@ -615,12 +631,10 @@ static Dictionary merge_images(Vector<Ref<Image> > images, Vector<String> names,
 				ERR_CONTINUE_MSG(input_format_offset == 0, "Image format is not supported, Skipping!");
 
 				for (int y = 0; y < r->h; ++y) {
-
 					const int orig_img_indx = (rect_pos_y + y) * img_width * input_format_offset + rect_pos_x * input_format_offset;
 					const int start_indx = (r->y + y) * b.size.w * atlas_channels + r->x * atlas_channels;
 
 					for (int x = 0; x < r->w; ++x) {
-
 						switch (input_format_offset) {
 							case 4:
 							case 3: {

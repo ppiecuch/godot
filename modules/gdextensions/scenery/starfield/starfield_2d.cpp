@@ -33,7 +33,6 @@
 
 #ifdef TOOLS_ENABLED
 Dictionary Starfield2D::_edit_get_state() const {
-
 	Dictionary state = Node2D::_edit_get_state();
 	state["view_size"] = get_view_size();
 
@@ -41,7 +40,6 @@ Dictionary Starfield2D::_edit_get_state() const {
 }
 
 void Starfield2D::_edit_set_state(const Dictionary &p_state) {
-
 	Node2D::_edit_set_state(p_state);
 	set_view_size(p_state["view_size"]);
 }
@@ -68,15 +66,12 @@ void Starfield2D::_notification(int p_what) {
 	ERR_FAIL_COND(_starfield.is_null());
 
 	switch (p_what) {
-
 		case NOTIFICATION_READY: {
-
 			_starfield->ready(this);
 			set_process(true);
 		} break;
 
 		case NOTIFICATION_PROCESS: {
-
 			if (movement_active) {
 				const real_t dt = get_process_delta_time();
 				_starfield->move(dt, movement_vector);
@@ -85,14 +80,12 @@ void Starfield2D::_notification(int p_what) {
 		} break;
 
 		case NOTIFICATION_DRAW: {
-
 			_starfield->draw(this);
 		} break;
 	}
 }
 
 void Starfield2D::set_movement_vector(const Vector2 &p_movement) {
-
 	if (p_movement != movement_vector) {
 		movement_vector = p_movement;
 		emit_signal("movement_changed");
@@ -101,12 +94,10 @@ void Starfield2D::set_movement_vector(const Vector2 &p_movement) {
 }
 
 Vector2 Starfield2D::get_movement_vector() const {
-
 	return movement_vector;
 }
 
 void Starfield2D::set_view_size(const Size2 &p_size) {
-
 	if (p_size != view_size) {
 		view_size = p_size;
 		item_rect_changed();
@@ -116,19 +107,16 @@ void Starfield2D::set_view_size(const Size2 &p_size) {
 }
 
 Size2 Starfield2D::get_view_size() const {
-
 	return view_size;
 }
 
 void Starfield2D::set_movement_active(bool p_state) {
-
 	if (p_state != movement_active) {
 		movement_active = p_state;
 	}
 }
 
 bool Starfield2D::is_movement_active() const {
-
 	return movement_active;
 }
 
@@ -167,7 +155,6 @@ void Starfield2D::set_layer_color_opt(int p_layer, Color p_base_color, real_t p_
 }
 
 void Starfield2D::_bind_methods() {
-
 	BIND_ENUM_CONSTANT_CUSTOM(Starfield::STAR1_TEXTURE, "STAR1_TEXTURE");
 	BIND_ENUM_CONSTANT_CUSTOM(Starfield::STAR2_TEXTURE, "STAR2_TEXTURE");
 	BIND_ENUM_CONSTANT_CUSTOM(Starfield::STAR3_TEXTURE, "STAR3_TEXTURE");
@@ -203,7 +190,6 @@ void Starfield2D::_bind_methods() {
 }
 
 Starfield2D::Starfield2D() {
-
 	movement_vector = Vector2(1, 1);
 	movement_active = false;
 	view_size = Vector2(100, 100);

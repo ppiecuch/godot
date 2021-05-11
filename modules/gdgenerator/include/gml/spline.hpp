@@ -45,8 +45,10 @@ namespace detail {
 template <typename T, int N>
 vec<T, N> bezierImpl(
 		const vec<T, N> *p, int n, T t1, T t2, int stride = 1) {
-	if (n == 1) return *p;
-	if (n == 2) return t1 * p[0] + t2 * p[stride];
+	if (n == 1)
+		return *p;
+	if (n == 2)
+		return t1 * p[0] + t2 * p[stride];
 	return t1 * bezierImpl(p, n - 1, t1, t2, stride) +
 		   t2 * bezierImpl(p + stride, n - 1, t1, t2, stride);
 }

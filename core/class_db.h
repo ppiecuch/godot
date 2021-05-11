@@ -296,7 +296,6 @@ public:
 
 	template <class N, class M>
 	static MethodBind *bind_method(N p_method_name, M p_method, const Variant &p_def1, const Variant &p_def2, const Variant &p_def3, const Variant &p_def4, const Variant &p_def5, const Variant &p_def6, const Variant &p_def7, const Variant &p_def8, const Variant &p_def9) {
-
 		MethodBind *bind = create_method_bind(p_method);
 		const Variant *ptr[9] = { &p_def1, &p_def2, &p_def3, &p_def4, &p_def5, &p_def6, &p_def7, &p_def8, &p_def9 };
 

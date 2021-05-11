@@ -36,7 +36,6 @@
 #include "scene/main/node.h"
 
 class ENetNode : public Node {
-
 	GDCLASS(ENetNode, Node);
 
 public:

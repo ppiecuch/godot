@@ -784,7 +784,8 @@ static int stb_easy_font_width(char *text) {
 	float max_len = 0;
 	while (*text) {
 		if (*text == '\n') {
-			if (len > max_len) max_len = len;
+			if (len > max_len)
+				max_len = len;
 			len = 0;
 		} else {
 			len += stb_easy_font_charinfo[*text - 32].advance & 15;
@@ -792,7 +793,8 @@ static int stb_easy_font_width(char *text) {
 		}
 		++text;
 	}
-	if (len > max_len) max_len = len;
+	if (len > max_len)
+		max_len = len;
 	return (int)ceil(max_len);
 }
 

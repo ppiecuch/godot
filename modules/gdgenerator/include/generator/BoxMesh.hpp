@@ -68,7 +68,7 @@ public:
 
 class BoxFaces {
 private:
-	using Impl = MergeMesh<BoxFace, UvFlipMesh<FlipMesh<BoxFace> > >;
+	using Impl = MergeMesh<BoxFace, UvFlipMesh<FlipMesh<BoxFace>>>;
 	Impl mergeMesh_;
 
 public:
@@ -91,7 +91,7 @@ class BoxMesh {
 private:
 	using Impl = MergeMesh<
 			AxisSwapMesh<detail::BoxFaces>,
-			UvFlipMesh<AxisSwapMesh<detail::BoxFaces> >,
+			UvFlipMesh<AxisSwapMesh<detail::BoxFaces>>,
 			detail::BoxFaces>;
 	Impl mergeMesh_;
 

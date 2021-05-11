@@ -146,7 +146,6 @@ void CharString::copy_from(const char *p_cstr) {
 }
 
 void CharString::copy_from(const char *p_data, size_t p_len) {
-
 	if (!p_data) {
 		resize(0);
 		return;
@@ -256,15 +255,12 @@ void String::copy_from(const char *p_cstr) {
 }
 
 void String::copy_from(const char *p_data, size_t p_len) {
-
 	if (!p_data) {
-
 		resize(0);
 		return;
 	}
 
 	if (p_len == 0) {
-
 		resize(0);
 		return;
 	}
@@ -274,7 +270,6 @@ void String::copy_from(const char *p_data, size_t p_len) {
 	CharType *dst = this->ptrw();
 
 	for (int i = 0; i < p_len; i++) {
-
 		dst[i] = p_data[i];
 	}
 
@@ -726,13 +721,10 @@ String String::capitalize() const {
 }
 
 String String::underscore_to_camelcase() const {
-
 	String cam;
 	for (int i = 0; i < this->get_slice_count("_"); i++) {
-
 		String slice = this->get_slicec('_', i);
 		if (slice.length() > 0) {
-
 			slice[0] = _find_upper(slice[0]);
 			cam += slice;
 		}
@@ -1501,7 +1493,6 @@ String String::utf8(const char *p_utf8, int p_len) {
 };
 
 String String::utf8(const CharString &p_utf8) {
-
 	String ret;
 	ret.parse_utf8(p_utf8.ptr(), p_utf8.length());
 
@@ -1749,7 +1740,6 @@ String::String(const char *p_str) {
 }
 
 String::String(const char *p_data, size_t p_len) {
-
 	copy_from(p_data, p_len);
 }
 
@@ -4233,7 +4223,8 @@ String String::sprintf(const Array &values, bool *error) const {
 	bool left_justified = false;
 	bool show_sign = false;
 
-	if (error) *error = true;
+	if (error)
+		*error = true;
 
 	for (; *self; self++) {
 		const CharType c = *self;
@@ -4492,7 +4483,8 @@ String String::sprintf(const Array &values, bool *error) const {
 		return "not all arguments converted during string formatting";
 	}
 
-	if (error) *error = false;
+	if (error)
+		*error = false;
 	return formatted;
 }
 

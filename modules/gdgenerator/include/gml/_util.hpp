@@ -68,7 +68,8 @@ template <
 T repeat(T val, T min, T max) {
 	using std::fmod;
 	T temp = fmod(val - min, max - min);
-	if (temp < static_cast<T>(0)) temp += max - min;
+	if (temp < static_cast<T>(0))
+		temp += max - min;
 	return temp + min;
 }
 
@@ -81,7 +82,8 @@ template <
 		typename std::enable_if<std::is_integral<T>::value, int>::type = 0>
 T repeat(T val, T min, T max) {
 	T temp = (val - min) % (max - min);
-	if (temp < static_cast<T>(0)) temp += max - min;
+	if (temp < static_cast<T>(0))
+		temp += max - min;
 	return temp + min;
 }
 
@@ -91,7 +93,6 @@ T repeat(T val, T min, T max) {
 /// @tparam TI Must be an unsigned integral type.
 template <typename TF, typename TI>
 TF unpackUnorm(TI val) {
-
 	static_assert(
 			std::is_integral<TI>::value && !std::is_signed<TI>::value,
 			"TI must be an unsigned integral type.");
@@ -109,7 +110,6 @@ TF unpackUnorm(TI val) {
 /// @tparam TF Must be a floating point type.
 template <typename TI, typename TF>
 TI packUnorm(TF val) {
-
 	static_assert(
 			std::is_integral<TI>::value && !std::is_signed<TI>::value,
 			"TI must be an unsigned integral type.");
@@ -130,7 +130,6 @@ TI packUnorm(TF val) {
 /// @tparam TI Must be a signed integral type.
 template <typename TF, typename TI>
 TF unpackSnorm(TI val) {
-
 	static_assert(
 			std::is_integral<TI>::value && std::is_signed<TI>::value,
 			"TI must be a signed integral type.");
@@ -151,7 +150,6 @@ TF unpackSnorm(TI val) {
 /// @tparam TF Must be a floating point type.
 template <typename TI, typename TF>
 TI packSnorm(TF val) {
-
 	static_assert(
 			std::is_integral<TI>::value && std::is_signed<TI>::value,
 			"TI must be a signed integral type.");

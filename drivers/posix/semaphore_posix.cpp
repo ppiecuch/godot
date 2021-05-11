@@ -73,7 +73,6 @@ static void cgsem_destroy(cgsem_t *cgsem) {
 #endif
 
 Error SemaphorePosix::wait() const {
-
 #if defined(OSX_ENABLED) || defined(IOS_ENABLED)
 	return cgsem_wait(&sem);
 #else
@@ -91,7 +90,6 @@ Error SemaphorePosix::wait() const {
 }
 
 Error SemaphorePosix::post() const {
-
 #if defined(OSX_ENABLED) || defined(IOS_ENABLED)
 	return cgsem_post(&sem);
 #else
@@ -99,7 +97,6 @@ Error SemaphorePosix::post() const {
 #endif
 }
 int SemaphorePosix::get() const {
-
 #if defined(OSX_ENABLED) || defined(IOS_ENABLED)
 	return 0;
 #else
@@ -111,7 +108,6 @@ int SemaphorePosix::get() const {
 }
 
 SemaphorePosix::SemaphorePosix() {
-
 #if defined(OSX_ENABLED) || defined(IOS_ENABLED)
 	cgsem_init(&sem);
 #else
@@ -122,7 +118,6 @@ SemaphorePosix::SemaphorePosix() {
 }
 
 SemaphorePosix::~SemaphorePosix() {
-
 #if defined(OSX_ENABLED) || defined(IOS_ENABLED)
 	cgsem_destroy(&sem);
 #else

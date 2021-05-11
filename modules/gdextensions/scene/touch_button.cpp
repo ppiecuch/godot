@@ -53,10 +53,8 @@ SOFTWARE.
 #include "touch_button.h"
 
 void TouchButton::_notification(int p_what) {
-
 	switch (p_what) {
 		case NOTIFICATION_ENTER_TREE: {
-
 			if (!Engine::get_singleton()->is_editor_hint()) {
 				set_process_input(is_visible_in_tree());
 			}
@@ -77,7 +75,6 @@ void TouchButton::_notification(int p_what) {
 }
 
 void TouchButton::_input(Ref<InputEvent> p_event) {
-
 	if (!get_tree())
 		return;
 
@@ -132,7 +129,6 @@ void TouchButton::_gui_input(Ref<InputEvent> p_event) {
 }
 
 void TouchButton::_unhandled_input(Ref<InputEvent> p_event) {
-
 	if (p_event->get_device() == -1) {
 		//accept_event();
 		return;

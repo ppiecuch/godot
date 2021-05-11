@@ -52,7 +52,6 @@ protected:
 	static GodotErrorHandler *singleton;
 
 	struct ErrorObject {
-
 		String source_file;
 		String source_func;
 		int source_line;

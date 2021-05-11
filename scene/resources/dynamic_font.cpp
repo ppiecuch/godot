@@ -280,7 +280,7 @@ void DynamicFontAtSize::set_texture_flags(uint32_t p_flags) {
 	}
 }
 
-float DynamicFontAtSize::draw_char(RID p_canvas_item, const CharTransform &p_char_xform, const Point2 &p_pos, CharType p_char, CharType p_next, const Color &p_modulate, const Vector<Ref<DynamicFontAtSize> > &p_fallbacks, bool p_advance_only, bool p_outline) const {
+float DynamicFontAtSize::draw_char(RID p_canvas_item, const CharTransform &p_char_xform, const Point2 &p_pos, CharType p_char, CharType p_next, const Color &p_modulate, const Vector<Ref<DynamicFontAtSize>> &p_fallbacks, bool p_advance_only, bool p_outline) const {
 	if (!valid) {
 		return 0;
 	}

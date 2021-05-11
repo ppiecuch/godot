@@ -36,7 +36,6 @@
 #include "scene/resources/text_file.h"
 
 int encode_tile_and_flipping(int tid, int fx, int fy, int atlas_id = 0) {
-
 	//24 bits of id code. We encode the ATLAS id in 8 bits, and the tile_id in 16 bits
 	int atlas_id_code = (int(atlas_id) & 0xff) << 16;
 	int id_code = int(tid) & 0x0000ffff;
@@ -151,7 +150,6 @@ void Autotilemap::map_ids_to_tiles(TileMap *tilemap) {
 			Variant id_to_atlas = _id_to_atlas[i];
 			for (int y = 1; y < _height - 1; y++) {
 				for (int x = 1; x < _width - 1; x++) {
-
 					//TODO access data only once for all autotilers!
 					int src_tile_id = _data[y + x * _height];
 					if (src_tile_id == int(id_to_atlas.get("src_tile"))) {
@@ -175,7 +173,6 @@ void Autotilemap::apply_autotiling(TileMap *tilemap) {
 
 		for (int y = 1; y < _height - 1; y++) {
 			for (int x = 1; x < _width - 1; x++) {
-
 				int src_tile_id = _data[y + x * _height];
 				if (!autotiler->is_source_tile(src_tile_id)) {
 					//tilemap->set_cell(_top_left.x + x, _top_left.y + y, 0,
@@ -207,7 +204,6 @@ void Autotilemap::apply_autotiling(TileMap *tilemap) {
 }
 
 void Autotilemap::apply_blob_terrain_autotiling(TileMap *tilemap) {
-
 	int n = 0;
 	int ne = 0;
 	int e = 0;
@@ -322,7 +318,6 @@ void Autotilemap::apply_blob_terrain_autotiling(TileMap *tilemap) {
 }
 
 void Autotilemap::apply_blob_autotiling(TileMap *tilemap) {
-
 	int n = 0;
 	int ne = 0;
 	int e = 0;
@@ -399,7 +394,6 @@ void Autotilemap::set_value_relative_to_tl(int x, int y, int v) {
 }
 
 void Autotilemap::load_from_json(const String &json_file) {
-
 	Error err;
 	FileAccessRef f = FileAccess::open(json_file, FileAccess::READ, &err);
 	if (!f) {

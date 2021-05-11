@@ -56,7 +56,8 @@ public:
 	class Edges {
 	public:
 		Edge generate() const {
-			if (!head_.done()) return head_.generate();
+			if (!head_.done())
+				return head_.generate();
 
 			Edge edge = tail_.generate();
 			edge.vertices += head_VertexCount;
@@ -76,7 +77,7 @@ public:
 
 	private:
 		typename EdgeGeneratorType<Head>::Type head_;
-		typename EdgeGeneratorType<MergeShape<Tail...> >::Type tail_;
+		typename EdgeGeneratorType<MergeShape<Tail...>>::Type tail_;
 
 		int head_VertexCount;
 
@@ -94,7 +95,8 @@ public:
 	class Vertices {
 	public:
 		ShapeVertex generate() const {
-			if (!head_.done()) return head_.generate();
+			if (!head_.done())
+				return head_.generate();
 			return tail_.generate();
 		}
 
@@ -111,7 +113,7 @@ public:
 
 	private:
 		typename VertexGeneratorType<Head>::Type head_;
-		typename VertexGeneratorType<MergeShape<Tail...> >::Type tail_;
+		typename VertexGeneratorType<MergeShape<Tail...>>::Type tail_;
 		bool mAllDone;
 
 		Vertices(const MergeShape &shape) :

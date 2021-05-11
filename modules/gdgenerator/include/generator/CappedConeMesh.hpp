@@ -52,7 +52,7 @@ class CappedConeMesh {
 private:
 	using Impl = MergeMesh<
 			ConeMesh,
-			UvFlipMesh<FlipMesh<TranslateMesh<DiskMesh> > > >;
+			UvFlipMesh<FlipMesh<TranslateMesh<DiskMesh>>>>;
 	Impl mergeMesh_;
 
 public:

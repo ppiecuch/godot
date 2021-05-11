@@ -163,7 +163,8 @@ void SvgWriter::writePoint(const gml::dvec3 &p, const gml::dvec3 &color) {
 
 void SvgWriter::writeLine(
 		const gml::dvec3 &p1, const gml::dvec3 &p2, const gml::dvec3 &color) {
-	if (p1 == p2) return;
+	if (p1 == p2)
+		return;
 	elems_.push_back(
 			std::unique_ptr<BaseElem>{ new LineElem{ project(p1), project(p2), color } });
 }
@@ -171,13 +172,15 @@ void SvgWriter::writeLine(
 void SvgWriter::writeTriangle(
 		const gml::dvec3 &p1, const gml::dvec3 &p2, const gml::dvec3 &p3,
 		const gml::dvec3 &color) {
-	if (p1 == p2 || p2 == p3 || p1 == p3) return;
+	if (p1 == p2 || p2 == p3 || p1 == p3)
+		return;
 
 	auto pp1 = project(p1);
 	auto pp2 = project(p2);
 	auto pp3 = project(p3);
 
-	if (cullface_ && gml::normal(pp1, pp2, pp3)[2] > 0.0) return;
+	if (cullface_ && gml::normal(pp1, pp2, pp3)[2] > 0.0)
+		return;
 
 	elems_.push_back(std::unique_ptr<BaseElem>{ new TriangleElem(
 			pp1, pp2, pp3, color) });

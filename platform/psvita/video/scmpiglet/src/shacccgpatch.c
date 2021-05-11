@@ -1,30 +1,59 @@
-/*****************************************************************************
- * 
+/*************************************************************************/
+/*  shacccgpatch.c                                                       */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
+ *
  *  Copyright (c) 2020 by SonicMastr <sonicmastr@gmail.com>
- * 
+ *
  *  This file is part of Pigs In A Blanket
- * 
+ *
  *  Pigs in a Blanket is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU Lesser General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU Lesser General Public License
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
- * 
+ *
  ****************************************************************************/
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include <psp2/shacccg.h>
 #include <psp2/kernel/clib.h>
+#include <psp2/shacccg.h>
 
 #include "common.h"
 #include "debug.h"
@@ -33,111 +62,103 @@
 static SceShaccCgSourceFile source;
 static const SceShaccCgCompileOutput *output = NULL;
 
-static size_t logShaccCg(const SceShaccCgCompileOutput *output, char *shaderLog)
-{
-    for (int i = 0; i < output->diagnosticCount; ++i) {
+static size_t logShaccCg(const SceShaccCgCompileOutput *output, char *shaderLog) {
+	for (int i = 0; i < output->diagnosticCount; ++i) {
 		const SceShaccCgDiagnosticMessage *log = &output->diagnostics[i];
-        char diagnosticLevel[8];
-        switch (log->level)
-        {
-            case SCE_SHACCCG_DIAGNOSTIC_LEVEL_INFO:
-                strcpy(diagnosticLevel, "INFO");
-                break;
-            case SCE_SHACCCG_DIAGNOSTIC_LEVEL_WARNING:
-                strcpy(diagnosticLevel, "WARNING");
-                break;
-            case SCE_SHACCCG_DIAGNOSTIC_LEVEL_ERROR:
-                strcpy(diagnosticLevel, "ERROR");
-                break;
-        }
-        if (log->location)
-            sprintf(shaderLog, "[%s] Line %d: %s\n", diagnosticLevel, log->location->lineNumber, log->message);
+		char diagnosticLevel[8];
+		switch (log->level) {
+			case SCE_SHACCCG_DIAGNOSTIC_LEVEL_INFO:
+				strcpy(diagnosticLevel, "INFO");
+				break;
+			case SCE_SHACCCG_DIAGNOSTIC_LEVEL_WARNING:
+				strcpy(diagnosticLevel, "WARNING");
+				break;
+			case SCE_SHACCCG_DIAGNOSTIC_LEVEL_ERROR:
+				strcpy(diagnosticLevel, "ERROR");
+				break;
+		}
+		if (log->location)
+			sprintf(shaderLog, "[%s] Line %d: %s\n", diagnosticLevel, log->location->lineNumber, log->message);
 		else
-            sprintf(shaderLog, "[%s] %s\n", diagnosticLevel, log->message); // Haven't ran into a case where this happens. May need confirmation.
+			sprintf(shaderLog, "[%s] %s\n", diagnosticLevel, log->message); // Haven't ran into a case where this happens. May need confirmation.
 	}
-    return strlen(shaderLog);
+	return strlen(shaderLog);
 }
 
-static SceShaccCgSourceFile *openFile_callback(const char *filename, const SceShaccCgSourceLocation *includedFrom, const SceShaccCgCompileOptions *compileOptions, ScePVoid userData, const char **errorString)
-{
-    return &source;
+static SceShaccCgSourceFile *openFile_callback(const char *filename, const SceShaccCgSourceLocation *includedFrom, const SceShaccCgCompileOptions *compileOptions, ScePVoid userData, const char **errorString) {
+	return &source;
 }
 
-int pglPlatformShaderCompiler_CustomPatch(int a1, void *shader)
-{
-    source.fileName = "";  // Crashes Otherwise. Name doesn't matter
-    source.text = *(char **)(shader + 0x20);  // Shader Data Pointer
-    LOG(source.text);
-    source.size = *(int *)(shader + 0x24);  // Shader Data Size Pointer
+int pglPlatformShaderCompiler_CustomPatch(int a1, void *shader) {
+	source.fileName = ""; // Crashes Otherwise. Name doesn't matter
+	source.text = *(char **)(shader + 0x20); // Shader Data Pointer
+	LOG(source.text);
+	source.size = *(int *)(shader + 0x24); // Shader Data Size Pointer
 
-    if (source.size >= 3 && !strncmp(source.text, "GXP", 3))
-    {
-        SceUInt8 *shaderData = malloc(source.size);
-        memcpy(shaderData, source.text, source.size);
-        *(SceUInt8**)(shader + 0x34) = shaderData;   // Compiled Shader Data Pointer
-        *(SceInt32*)(shader + 0x38) = source.size;  // Compiled Shader Data Size Pointer
-        *(int*)(&shader + 0x30) = 1;    // Flags Indicating Successful Compile
-        *(int*)(&shader + 0x1d) = 2;
-        
-        return 1;
-    }
-    else {
-        SceShaccCgCallbackList callback = {0};
-        SceShaccCgCompileOptions options;
+	if (source.size >= 3 && !strncmp(source.text, "GXP", 3)) {
+		SceUInt8 *shaderData = malloc(source.size);
+		memcpy(shaderData, source.text, source.size);
+		*(SceUInt8 **)(shader + 0x34) = shaderData; // Compiled Shader Data Pointer
+		*(SceInt32 *)(shader + 0x38) = source.size; // Compiled Shader Data Size Pointer
+		*(int *)(&shader + 0x30) = 1; // Flags Indicating Successful Compile
+		*(int *)(&shader + 0x1d) = 2;
 
-        sceShaccCgInitializeCallbackList(&callback, 1);
-        callback.openFile = openFile_callback;
-        sceShaccCgInitializeCompileOptions(&options);
+		return 1;
+	} else {
+		SceShaccCgCallbackList callback = { 0 };
+		SceShaccCgCompileOptions options;
 
-        int shaderType = *(int *)(shader + 0x1c);
-        switch (shaderType)
-        {
-            case 1:
-                options.targetProfile = SCE_SHACCCG_PROFILE_VP;
-                break;
-            case 2:
-                options.targetProfile = SCE_SHACCCG_PROFILE_FP;
-                break;
-        }
+		sceShaccCgInitializeCallbackList(&callback, 1);
+		callback.openFile = openFile_callback;
+		sceShaccCgInitializeCompileOptions(&options);
 
-        options.mainSourceFile = source.fileName;
-        options.entryFunctionName = "main";
-        options.macroDefinitions = NULL;
-        options.locale = 0; // 0 US, 1 JP
-        options.useFx = 0;
-        options.warningLevel = 3;
-        options.optimizationLevel = 3;
-        options.useFastmath = 1;
-        options.useFastint = 1;
-        options.warningsAsErrors = 0;
-        options.useFastprecision = 0;
-        options.pedantic = 0;
-        options.performanceWarnings = 0;
+		int shaderType = *(int *)(shader + 0x1c);
+		switch (shaderType) {
+			case 1:
+				options.targetProfile = SCE_SHACCCG_PROFILE_VP;
+				break;
+			case 2:
+				options.targetProfile = SCE_SHACCCG_PROFILE_FP;
+				break;
+		}
 
-        output = sceShaccCgCompileProgram(&options, &callback, 0);
-    }
+		options.mainSourceFile = source.fileName;
+		options.entryFunctionName = "main";
+		options.macroDefinitions = NULL;
+		options.locale = 0; // 0 US, 1 JP
+		options.useFx = 0;
+		options.warningLevel = 3;
+		options.optimizationLevel = 3;
+		options.useFastmath = 1;
+		options.useFastint = 1;
+		options.warningsAsErrors = 0;
+		options.useFastprecision = 0;
+		options.pedantic = 0;
+		options.performanceWarnings = 0;
 
-    char log[0x1024];
-    size_t logLength = logShaccCg(output, log); // Prepare the Shader Log
-    SceUInt8 *shaderLogData = malloc(logLength + 1);
-    memcpy(shaderLogData, log, logLength + 1);
-    *(SceInt32*)(shader + 0x2c) = logLength + 1; // Shader Log Length
-    *(SceUInt8**)(shader + 0x28) = shaderLogData; // Shader Log Data
+		output = sceShaccCgCompileProgram(&options, &callback, 0);
+	}
 
-    if (output->programData)
-    {
-        SceUInt8 *shaderData;
-        uint32_t shaderDataSize;
-        EsslCreateBinary(output, &shaderData, &shaderDataSize, *(uint32_t *)(shader + 0x1C) == 1);
-        
-        *(SceUInt8**)(shader + 0x34) = shaderData;   // Compiled Shader Data Pointer
-        *(SceInt32*)(shader + 0x38) = shaderDataSize;  // Compiled Shader Data Size Pointer
-        *(int*)(&shader + 0x30) = 1;    // Flags Indicating Successful Compile
-        *(int*)(&shader + 0x1d) = 2;
+	char log[0x1024];
+	size_t logLength = logShaccCg(output, log); // Prepare the Shader Log
+	SceUInt8 *shaderLogData = malloc(logLength + 1);
+	memcpy(shaderLogData, log, logLength + 1);
+	*(SceInt32 *)(shader + 0x2c) = logLength + 1; // Shader Log Length
+	*(SceUInt8 **)(shader + 0x28) = shaderLogData; // Shader Log Data
 
-        sceShaccCgDestroyCompileOutput(output);
-        return 1;
-    }
-    *(int*)(&shader + 0x30) = 0;
-    return 0;
+	if (output->programData) {
+		SceUInt8 *shaderData;
+		uint32_t shaderDataSize;
+		EsslCreateBinary(output, &shaderData, &shaderDataSize, *(uint32_t *)(shader + 0x1C) == 1);
+
+		*(SceUInt8 **)(shader + 0x34) = shaderData; // Compiled Shader Data Pointer
+		*(SceInt32 *)(shader + 0x38) = shaderDataSize; // Compiled Shader Data Size Pointer
+		*(int *)(&shader + 0x30) = 1; // Flags Indicating Successful Compile
+		*(int *)(&shader + 0x1d) = 2;
+
+		sceShaccCgDestroyCompileOutput(output);
+		return 1;
+	}
+	*(int *)(&shader + 0x30) = 0;
+	return 0;
 }

@@ -108,7 +108,8 @@ void Phantom::_update_fixed_frame() {
 
 void Phantom::_update_and_draw() {
 	int t = sprites.size();
-	if (t == 0) return;
+	if (t == 0)
+		return;
 	RID ci = get_canvas_item();
 	Transform2D m = get_global_transform().affine_inverse();
 

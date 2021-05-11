@@ -41,11 +41,12 @@
 
 using namespace generator;
 
-ConvexPolygonMesh::Triangles::Triangles(const ConvexPolygonMesh &mesh) noexcept : mMesh{ &mesh },
-																				  mOdd{ false },
-																				  mSegmentIndex{ 0 },
-																				  mSideIndex{ 0 },
-																				  mRingIndex{ 0 } {
+ConvexPolygonMesh::Triangles::Triangles(const ConvexPolygonMesh &mesh) noexcept :
+		mMesh{ &mesh },
+		mOdd{ false },
+		mSegmentIndex{ 0 },
+		mSideIndex{ 0 },
+		mRingIndex{ 0 } {
 }
 
 bool ConvexPolygonMesh::Triangles::done() const noexcept {
@@ -54,7 +55,8 @@ bool ConvexPolygonMesh::Triangles::done() const noexcept {
 }
 
 Triangle ConvexPolygonMesh::Triangles::generate() const {
-	if (done()) throw std::runtime_error("Done!");
+	if (done())
+		throw std::runtime_error("Done!");
 
 	Triangle triangle{};
 
@@ -84,7 +86,8 @@ Triangle ConvexPolygonMesh::Triangles::generate() const {
 }
 
 void ConvexPolygonMesh::Triangles::next() {
-	if (done()) throw std::runtime_error("Done!");
+	if (done())
+		throw std::runtime_error("Done!");
 
 	if (mRingIndex == mMesh->mRings - 1) {
 		++mSegmentIndex;
@@ -99,11 +102,9 @@ void ConvexPolygonMesh::Triangles::next() {
 			}
 		}
 	} else {
-
 		mOdd = !mOdd;
 
 		if (!mOdd) {
-
 			++mSegmentIndex;
 
 			if (mSegmentIndex == mMesh->mSegments) {
@@ -122,11 +123,12 @@ void ConvexPolygonMesh::Triangles::next() {
 	}
 }
 
-ConvexPolygonMesh::Vertices::Vertices(const ConvexPolygonMesh &mesh) noexcept : mMesh{ &mesh },
-																				mCenterDone{ false },
-																				mSegmentIndex{ 0 },
-																				mSideIndex{ 0 },
-																				mRingIndex{ 0 } {
+ConvexPolygonMesh::Vertices::Vertices(const ConvexPolygonMesh &mesh) noexcept :
+		mMesh{ &mesh },
+		mCenterDone{ false },
+		mSegmentIndex{ 0 },
+		mSideIndex{ 0 },
+		mRingIndex{ 0 } {
 }
 
 bool ConvexPolygonMesh::Vertices::done() const noexcept {
@@ -135,12 +137,12 @@ bool ConvexPolygonMesh::Vertices::done() const noexcept {
 }
 
 MeshVertex ConvexPolygonMesh::Vertices::generate() const {
-	if (done()) throw std::runtime_error("Done!");
+	if (done())
+		throw std::runtime_error("Done!");
 
 	MeshVertex vertex{};
 
 	if (mCenterDone) {
-
 		const double ringDelta = static_cast<double>(mRingIndex) / mMesh->mRings;
 		const double segmentDelta = static_cast<double>(mSegmentIndex) / mMesh->mSegments;
 
@@ -166,12 +168,12 @@ MeshVertex ConvexPolygonMesh::Vertices::generate() const {
 }
 
 void ConvexPolygonMesh::Vertices::next() {
-	if (done()) throw std::runtime_error("Done!");
+	if (done())
+		throw std::runtime_error("Done!");
 
 	if (!mCenterDone) {
 		mCenterDone = true;
 	} else {
-
 		++mSegmentIndex;
 
 		if (mSegmentIndex == mMesh->mSegments) {
@@ -180,7 +182,6 @@ void ConvexPolygonMesh::Vertices::next() {
 			++mSideIndex;
 
 			if (mSideIndex == static_cast<int>(mMesh->mVertices.size())) {
-
 				mSideIndex = 0;
 
 				++mRingIndex;
@@ -232,21 +233,23 @@ gml::dvec3 calcNormal(const gml::dvec3 &center, const std::vector<gml::dvec3> &v
 } // namespace
 
 ConvexPolygonMesh::ConvexPolygonMesh(
-		double radius, int sides, int segments, int rings) noexcept : ConvexPolygonMesh{ makeVertices(radius, sides), segments, rings } {}
+		double radius, int sides, int segments, int rings) noexcept :
+		ConvexPolygonMesh{ makeVertices(radius, sides), segments, rings } {}
 
 ConvexPolygonMesh::ConvexPolygonMesh(
-		const std::vector<gml::dvec2> &vertices, int segments, int rings) noexcept : ConvexPolygonMesh{ convertVertices(vertices), segments, rings } {}
+		const std::vector<gml::dvec2> &vertices, int segments, int rings) noexcept :
+		ConvexPolygonMesh{ convertVertices(vertices), segments, rings } {}
 
 ConvexPolygonMesh::ConvexPolygonMesh(
-		std::vector<gml::dvec3> vertices, int segments, int rings) noexcept : mVertices{ std::move(vertices) },
-																			  mSegments{ segments },
-																			  mRings{ rings },
-																			  mCenter{ calcCenter(mVertices) },
-																			  mNormal{ calcNormal(mCenter, mVertices) },
-																			  mTangent{},
-																			  mBitangent{},
-																			  mTexDelta{} {
-
+		std::vector<gml::dvec3> vertices, int segments, int rings) noexcept :
+		mVertices{ std::move(vertices) },
+		mSegments{ segments },
+		mRings{ rings },
+		mCenter{ calcCenter(mVertices) },
+		mNormal{ calcNormal(mCenter, mVertices) },
+		mTangent{},
+		mBitangent{},
+		mTexDelta{} {
 	if (mVertices.size() > 0) {
 		mTangent = gml::normalize(mVertices.at(0) - mCenter);
 		mBitangent = gml::cross(mNormal, mTangent);

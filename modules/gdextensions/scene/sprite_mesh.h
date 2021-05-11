@@ -37,7 +37,6 @@
 #include "scene/resources/texture.h"
 
 class SpriteMesh : public Node2D {
-
 	GDCLASS(SpriteMesh, Node2D);
 
 private:

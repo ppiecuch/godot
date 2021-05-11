@@ -62,9 +62,9 @@ public:
 
 		int mIndex;
 
-		std::shared_ptr<const BezierMesh<4, 4> > mPatchMesh;
+		std::shared_ptr<const BezierMesh<4, 4>> mPatchMesh;
 
-		typename TriangleGeneratorType<BezierMesh<4, 4> >::Type mTriangles;
+		typename TriangleGeneratorType<BezierMesh<4, 4>>::Type mTriangles;
 
 		explicit Triangles(const TeapotMesh &mesh) noexcept;
 
@@ -84,9 +84,9 @@ public:
 
 		// Needs be a shared_ptr in order to make copy/move not to mess up the
 		// internal pointer in mTriangles.
-		std::shared_ptr<const BezierMesh<4, 4> > mPatchMesh;
+		std::shared_ptr<const BezierMesh<4, 4>> mPatchMesh;
 
-		typename VertexGeneratorType<BezierMesh<4, 4> >::Type mVertices;
+		typename VertexGeneratorType<BezierMesh<4, 4>>::Type mVertices;
 
 		explicit Vertices(const TeapotMesh &mesh) noexcept;
 

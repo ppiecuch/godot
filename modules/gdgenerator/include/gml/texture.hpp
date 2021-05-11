@@ -56,7 +56,8 @@ TF texelCenter(TI index, TS size) {
 	static_assert(std::is_integral<TS>::value, "TS must an integral type.");
 	static_assert(std::is_floating_point<TF>::value, "TF must a floating point type.");
 
-	if (size == static_cast<TS>(0)) return static_cast<TF>(0);
+	if (size == static_cast<TS>(0))
+		return static_cast<TF>(0);
 	return (static_cast<TF>(index) + static_cast<TF>(0.5)) / static_cast<TF>(size);
 }
 
@@ -161,7 +162,7 @@ int faceAt(const gml::vec<TF, 3> &direction) {
 /// @param direction The direction vector. Need not be normalized.
 /// @return 0: +X, 1: -X, 2: +Y, 3: -Y, 4: +Z, 5: -Z.
 template <typename TF>
-std::pair<int, gml::vec<TF, 2> > cubeTexCoord(const gml::vec<TF, 3> &direction) {
+std::pair<int, gml::vec<TF, 2>> cubeTexCoord(const gml::vec<TF, 3> &direction) {
 	static_assert(std::is_floating_point<TF>::value, "TF must a floating point type.");
 
 	auto fn = [](TF sc, TF tc, TF ma) -> gml::vec<TF, 2> {

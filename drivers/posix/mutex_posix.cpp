@@ -35,20 +35,16 @@
 #if defined(UNIX_ENABLED) || defined(PTHREAD_ENABLED)
 
 void MutexPosix::lock() const {
-
 	pthread_mutex_lock(&mutex);
 }
 void MutexPosix::unlock() const {
-
 	pthread_mutex_unlock(&mutex);
 }
 Error MutexPosix::try_lock() const {
-
 	return (pthread_mutex_trylock(&mutex) == 0) ? OK : ERR_BUSY;
 }
 
 MutexPosix::MutexPosix(bool p_recursive) {
-
 	pthread_mutexattr_init(&attr);
 	if (p_recursive)
 		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
@@ -56,7 +52,6 @@ MutexPosix::MutexPosix(bool p_recursive) {
 }
 
 MutexPosix::~MutexPosix() {
-
 	pthread_mutex_destroy(&mutex);
 }
 

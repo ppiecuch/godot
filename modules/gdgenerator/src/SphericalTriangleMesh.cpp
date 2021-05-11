@@ -51,7 +51,8 @@ bool SphericalTriangleMesh::Triangles::done() const noexcept {
 }
 
 Triangle SphericalTriangleMesh::Triangles::generate() const {
-	if (done()) throw std::out_of_range("Done!");
+	if (done())
+		throw std::out_of_range("Done!");
 
 	Triangle triangle;
 
@@ -69,9 +70,11 @@ Triangle SphericalTriangleMesh::Triangles::generate() const {
 }
 
 void SphericalTriangleMesh::Triangles::next() {
-	if (done()) throw std::out_of_range("Done!");
+	if (done())
+		throw std::out_of_range("Done!");
 
-	if (col_ % 2 == 0) ++i_;
+	if (col_ % 2 == 0)
+		++i_;
 
 	++col_;
 	if (col_ == 2 * (mesh_->segments_ - row_) - 1) {
@@ -91,7 +94,8 @@ bool SphericalTriangleMesh::Vertices::done() const noexcept {
 }
 
 MeshVertex SphericalTriangleMesh::Vertices::generate() const {
-	if (done()) throw std::out_of_range("Done!");
+	if (done())
+		throw std::out_of_range("Done!");
 
 	MeshVertex vertex;
 
@@ -115,7 +119,8 @@ MeshVertex SphericalTriangleMesh::Vertices::generate() const {
 }
 
 void SphericalTriangleMesh::Vertices::next() {
-	if (done()) throw std::out_of_range("Done!");
+	if (done())
+		throw std::out_of_range("Done!");
 
 	++col_;
 	if (col_ > mesh_->segments_ - row_) {

@@ -613,7 +613,6 @@ Label::WordCache Label::calculate_word_cache(const Ref<Font> &font, const String
 }
 
 int Label::get_line_size(const WordCache &cache, int line) const {
-
 	int line_size = 0;
 	WordList *wc = cache.words;
 	while (wc && wc->line != line)
@@ -626,7 +625,6 @@ int Label::get_line_size(const WordCache &cache, int line) const {
 }
 
 void Label::regenerate_word_cache() {
-
 	Ref<Font> font = get_font("font");
 
 	_RemoveCacheList(word_cache.words);
@@ -779,34 +777,27 @@ int Label::get_total_character_count() const {
 }
 
 void Label::set_horizontal_spacing(float p_offset) {
-
 	if (horizontal_spacing != p_offset) {
-
 		horizontal_spacing = p_offset;
 		word_cache_dirty = true;
 		update();
 	}
 }
 float Label::get_horizontal_spacing() const {
-
 	return horizontal_spacing;
 }
 void Label::set_vertical_spacing(float p_offset) {
-
 	if (vertical_spacing != p_offset) {
-
 		vertical_spacing = p_offset;
 		word_cache_dirty = true;
 		update();
 	}
 }
 float Label::get_vertical_spacing() const {
-
 	return vertical_spacing;
 }
 
 void Label::set_transition_duration(float p_duration) {
-
 	if (p_duration != transition_duration) {
 		transition_duration = p_duration;
 		update();
@@ -814,7 +805,6 @@ void Label::set_transition_duration(float p_duration) {
 }
 
 float Label::get_transition_duration() const {
-
 	return transition_duration;
 }
 
@@ -822,7 +812,6 @@ void Label::set_transition_effect(TransitionEffect p_effect) {
 	ERR_FAIL_INDEX(p_effect, TRANSITIONEFFECT_COUNT);
 
 	if (p_effect != transition_effect) {
-
 		transition_effect = p_effect;
 		_transition_controller = AnimationControllerFactory(p_effect);
 		if (p_effect == TRANSITIONEFFECT_NONE) {
@@ -837,12 +826,10 @@ void Label::set_transition_effect(TransitionEffect p_effect) {
 }
 
 Label::TransitionEffect Label::get_transition_effect() const {
-
 	return transition_effect;
 }
 
 void Label::set_transition_ease(TransitionEase p_ease) {
-
 	if (p_ease != transition_ease) {
 		transition_ease = p_ease;
 		update();
@@ -850,17 +837,14 @@ void Label::set_transition_ease(TransitionEase p_ease) {
 }
 
 Label::TransitionEase Label::get_transition_ease() const {
-
 	return transition_ease;
 }
 
 bool Label::is_transition_active() const {
-
 	return !_transition_controller->is_done();
 }
 
 bool Label::is_transition_enabled() const {
-
 	return transition_effect != TRANSITIONEFFECT_NONE;
 }
 

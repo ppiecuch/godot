@@ -48,7 +48,7 @@ namespace generator {
 /// @image html CylinderMesh.svg
 class CylinderMesh {
 private:
-	using Impl = AxisSwapMesh<LatheMesh<LineShape> >;
+	using Impl = AxisSwapMesh<LatheMesh<LineShape>>;
 	Impl axisSwapMesh_;
 
 public:

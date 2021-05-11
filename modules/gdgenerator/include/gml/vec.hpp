@@ -262,7 +262,8 @@ public:
 	/// Vectors are equal if all of the corresponding components are equal
 	bool operator==(const vec<T, N> &v) const {
 		for (int i = 0; i < N; ++i) {
-			if (data_[i] != v.data_[i]) return false;
+			if (data_[i] != v.data_[i])
+				return false;
 		}
 		return true;
 	}
@@ -270,7 +271,8 @@ public:
 	/// Vectors are not equal if any of the corresponding components are not equal
 	bool operator!=(const vec<T, N> &v) const {
 		for (int i = 0; i < N; ++i) {
-			if (data_[i] != v.data_[i]) return true;
+			if (data_[i] != v.data_[i])
+				return true;
 		}
 		return false;
 	}
@@ -279,8 +281,10 @@ public:
 	/// Used to make vec function as map key
 	bool operator<(const vec<T, N> &v) const {
 		for (int i = 0; i < N; ++i) {
-			if (data_[i] < v.data_[i]) return true;
-			if (v.data_[i] < data_[i]) return false;
+			if (data_[i] < v.data_[i])
+				return true;
+			if (v.data_[i] < data_[i])
+				return false;
 		}
 		return false;
 	}
@@ -359,7 +363,8 @@ template <typename T, int N>
 std::ostream &operator<<(std::ostream &os, const vec<T, N> &v) {
 	os << '(';
 	for (int i = 0; i < N; ++i) {
-		if (i > 0) os << ',';
+		if (i > 0)
+			os << ',';
 		os << v[i];
 	}
 	os << ')';
@@ -468,7 +473,8 @@ vec<T, N> refract(const vec<T, N> &v, const vec<T, N> &n, const T &eta) {
 	using std::sqrt;
 	T d = dot(n, v);
 	T k = T{ 1 } - eta * eta * (T{ 1 } - d * d);
-	if (k < T{ 0 }) return vec<T, N>{ T{ 0 } };
+	if (k < T{ 0 })
+		return vec<T, N>{ T{ 0 } };
 	return eta * v - (eta * d + sqrt(k)) * n;
 }
 
@@ -502,7 +508,8 @@ T angle(const vec<T, N> &v1, const vec<T, N> &v2) {
 	using std::sqrt;
 
 	const T len = sqrt(dot(v1, v1) * dot(v2, v2));
-	if (len <= numeric_limits<T>::epsilon()) return T{ 0 };
+	if (len <= numeric_limits<T>::epsilon())
+		return T{ 0 };
 	return acos(clamp(dot(v1, v2) / len, T{ -1 }, T{ 1 }));
 }
 

@@ -70,7 +70,6 @@ public:
 
 private:
 	struct ParticleType {
-
 		bool dead;
 		real_t alpha;
 		Color color;

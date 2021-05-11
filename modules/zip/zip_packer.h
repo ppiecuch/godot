@@ -38,7 +38,6 @@
 #include "thirdparty/minizip/zip.h"
 
 class ZIPPacker : public Reference {
-
 	GDCLASS(ZIPPacker, Object);
 
 	FileAccess *f;

@@ -256,7 +256,6 @@ void InputStorageNode::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_PHYSICS_PROCESS:
 			if (_storage != NULL) {
-
 				_storage->frame_begin();
 				for (int i = 0, t = pressed.size(); i < t; ++i) {
 					_storage->pressed_event(pressed[i]);

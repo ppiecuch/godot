@@ -101,7 +101,6 @@ real_t _GodotMathExtension::camera_get_position_distance(const Object *p_camera,
 Vector2 _GodotMathExtension::get_2d_position_from_3d_position_with_screen_limits(const Object *p_camera, const Vector3 &p_position_3d,
 		const Vector2 &screen_size, const Vector2 &screen_center,
 		const Vector2 &screen_mins, const Vector2 &screen_max) {
-
 	ERR_FAIL_NULL_V(p_camera, Vector2());
 	if (const Camera *camera = Object::cast_to<Camera>(p_camera))
 		return GodotMathExtension::get_2d_position_from_3d_position_with_screen_limits(camera, p_position_3d, screen_size, screen_center, screen_mins, screen_max);

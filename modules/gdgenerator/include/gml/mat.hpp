@@ -244,7 +244,8 @@ public:
 	/// Matrices are equal if all corresponding components are equal.
 	bool operator==(const mat<T, C, R> &m) const {
 		for (int i = 0; i < C; ++i) {
-			if (data_[i] != m.data_[i]) return false;
+			if (data_[i] != m.data_[i])
+				return false;
 		}
 		return true;
 	}
@@ -252,7 +253,8 @@ public:
 	/// Matrices are not equal if any of the corresponding components are not equal
 	bool operator!=(const mat<T, C, R> &m) const {
 		for (int i = 0; i < C; ++i) {
-			if (data_[i] != m.data_[i]) return true;
+			if (data_[i] != m.data_[i])
+				return true;
 		}
 		return false;
 	}
@@ -293,7 +295,8 @@ template <typename T, int C, int R>
 std::ostream &operator<<(std::ostream &os, const mat<T, C, R> &m) {
 	os << '(';
 	for (int i = 0; i < C; ++i) {
-		if (i > 0) os << ',';
+		if (i > 0)
+			os << ',';
 		os << m[i];
 	}
 	os << ')';
@@ -491,7 +494,6 @@ mat<T, 4, 4> rotate(const T &angle, const vec<T, 3> &axis) {
 /// Generates rotation matrix from a rotation quaternion
 template <typename T>
 mat<T, 4, 4> rotate(const quaternion<T> &q) {
-
 	const T xx = q.imag[0] * q.imag[0];
 	const T xy = q.imag[0] * q.imag[1];
 	const T xz = q.imag[0] * q.imag[2];

@@ -504,7 +504,6 @@ void PoolVector<T>::push_back(const T &p_val) {
 
 template <class T>
 void PoolVector<T>::push_multi(int p_num, T p_val) {
-
 	const int bs = size();
 	resize(bs + p_num);
 	for (int i = 0; i < p_num; ++i)
@@ -513,7 +512,6 @@ void PoolVector<T>::push_multi(int p_num, T p_val) {
 
 template <class T>
 void PoolVector<T>::insert_multi(int p_pos, int p_num, T p_val) {
-
 	const int last_index = p_pos + p_num - 1;
 
 	ERR_FAIL_INDEX(last_index, size());

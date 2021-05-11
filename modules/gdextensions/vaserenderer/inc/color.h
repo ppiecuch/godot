@@ -30,18 +30,24 @@
 
 float &Color_get(Color &C, int index) {
 	switch (index) {
-		case 0: return C.r;
-		case 1: return C.g;
-		case 2: return C.b;
-		default: return C.r;
+		case 0:
+			return C.r;
+		case 1:
+			return C.g;
+		case 2:
+			return C.b;
+		default:
+			return C.r;
 	}
 }
 bool Color_valid_range(float t) {
 	return t >= 0 && t <= 1;
 }
 Color Color_between(const Color &A, const Color &B, float t = 0.5f) {
-	if (t < 0.0f) t = 0.0f;
-	if (t > 1.0f) t = 1.0f;
+	if (t < 0.0f)
+		t = 0.0f;
+	if (t > 1.0f)
+		t = 1.0f;
 
 	float kt = 1.0f - t;
 	Color C = {

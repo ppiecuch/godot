@@ -901,7 +901,7 @@ struct ExportLibsData {
 };
 
 void EditorExportPlatformIOS::_add_assets_to_project(const Ref<EditorExportPreset> &p_preset, Vector<uint8_t> &p_project_data, const Vector<IOSExportAsset> &p_additional_assets) {
-	Vector<Ref<EditorExportPlugin> > export_plugins = EditorExport::get_singleton()->get_export_plugins();
+	Vector<Ref<EditorExportPlugin>> export_plugins = EditorExport::get_singleton()->get_export_plugins();
 	Vector<String> frameworks;
 	for (int i = 0; i < export_plugins.size(); ++i) {
 		Vector<String> plugin_frameworks = export_plugins[i]->get_ios_frameworks();

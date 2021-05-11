@@ -81,7 +81,6 @@ GDWaterSplash::GDWaterSplash() {
 }
 
 void GDWaterSplash::_update() {
-
 	// Is size changed,
 	if (size_changed_) {
 		float dx = rect_.size.x;
@@ -105,9 +104,7 @@ void GDWaterSplash::_update() {
 }
 
 void GDWaterSplash::_notification(int p_what) {
-
 	switch (p_what) {
-
 		case NOTIFICATION_ENTER_TREE: {
 			update();
 		} break;
@@ -250,17 +247,14 @@ void GDWaterSplash::set_drag(const Vector2 &val) {
 }
 
 void GDWaterSplash::set_texture(const Ref<Texture> &p_texture) {
-
 	texture = p_texture;
 }
 
 Ref<Texture> GDWaterSplash::get_texture() const {
-
 	return texture;
 }
 
 void GDWaterSplash::_bind_methods() {
-
 	ClassDB::bind_method(D_METHOD("set_size", "size"), &GDWaterSplash::set_size);
 	ClassDB::bind_method(D_METHOD("get_size"), &GDWaterSplash::get_size);
 	ADD_PROPERTY(PropertyInfo(Variant::RECT2, "size"), "set_size", "get_size");

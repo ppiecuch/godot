@@ -1665,7 +1665,6 @@ Error ResourceFormatSaverTextInstance::save(const String &p_path, const RES &p_r
 			f->store_line("]");
 
 			for (int j = 0; j < state->get_node_property_count(i); j++) {
-
 				String nm = String(state->get_node_property_name(i, j)).property_name_encode();
 				String vars;
 				if (String(state->get_node_property_name(i, j)).property_name_encode() == "__meta__") {

@@ -47,7 +47,7 @@ namespace generator {
 template <typename Mesh>
 class MirrorMesh {
 private:
-	using Impl = MergeMesh<Mesh, AxisFlipMesh<Mesh> >;
+	using Impl = MergeMesh<Mesh, AxisFlipMesh<Mesh>>;
 	Impl mergeMesh_;
 
 public:

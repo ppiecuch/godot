@@ -74,13 +74,15 @@ public:
 
 		int mDelta;
 
-		explicit Triangles(const RepeatMesh *repeatMesh) noexcept : mRepeatMesh{ repeatMesh },
-																	mTriangles{ repeatMesh->mMesh.triangles() },
-																	mIndex{ repeatMesh->mVertexCount > 0 ? 0 : repeatMesh->mInstances },
-																	mDelta{ 0 } {}
+		explicit Triangles(const RepeatMesh *repeatMesh) noexcept :
+				mRepeatMesh{ repeatMesh },
+				mTriangles{ repeatMesh->mMesh.triangles() },
+				mIndex{ repeatMesh->mVertexCount > 0 ? 0 : repeatMesh->mInstances },
+				mDelta{ 0 } {}
 
 		int countTriangles() const noexcept {
-			if (mRepeatMesh->mInstances < 1) return 0;
+			if (mRepeatMesh->mInstances < 1)
+				return 0;
 
 			return count(mRepeatMesh->mMesh.triangles()) *
 						   (mRepeatMesh->mInstances - mIndex - 1) +
@@ -132,7 +134,8 @@ public:
 		gml::dvec3 mDelta;
 
 		int countVertices() const noexcept {
-			if (mRepeatMesh->mInstances < 1) return 0;
+			if (mRepeatMesh->mInstances < 1)
+				return 0;
 
 			return mRepeatMesh->mVertexCount *
 						   (mRepeatMesh->mInstances - mIndex - 1) +
@@ -149,10 +152,11 @@ public:
 	/// @param mesh The mesh to repeat.
 	/// @param instances Number of times to repeat. If <1 an empty mesh results.
 	/// @param delta An offset aplied to each copy.
-	explicit RepeatMesh(Mesh mesh, int instances, const gml::dvec3 &delta) noexcept : mMesh{ std::move(mesh) },
-																					  mInstances{ instances },
-																					  mDelta{ delta },
-																					  mVertexCount{ count(mMesh.vertices()) } {}
+	explicit RepeatMesh(Mesh mesh, int instances, const gml::dvec3 &delta) noexcept :
+			mMesh{ std::move(mesh) },
+			mInstances{ instances },
+			mDelta{ delta },
+			mVertexCount{ count(mMesh.vertices()) } {}
 
 	Triangles triangles() const noexcept {
 		return Triangles{ this };

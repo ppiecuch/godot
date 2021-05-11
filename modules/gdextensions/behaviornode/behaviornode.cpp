@@ -59,7 +59,8 @@ BehaviorNode::Status BehaviorNode::_traversal_children(const Variant &target, co
 		}
 		for (int i = 0; i < t; ++i) {
 			BehaviorNode *child = Object::cast_to<BehaviorNode>(get_child(i));
-			if (child == checked) continue;
+			if (child == checked)
+				continue;
 			bool is_focus;
 			if (child) {
 				if ((int)child->call("step", target, env) == STATUS_RUNNING) {

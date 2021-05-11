@@ -44,7 +44,7 @@ namespace generator {
  */
 class GridShape {
 private:
-	using Impl = MergeShape<RepeatShape<LineShape>, RepeatShape<LineShape> >;
+	using Impl = MergeShape<RepeatShape<LineShape>, RepeatShape<LineShape>>;
 
 	Impl mImpl;
 

@@ -2497,29 +2497,47 @@ bool ShaderLanguage::is_stencil_test_type(TokenType p_type) {
 
 ShaderLanguage::StencilTest::StencilActionType ShaderLanguage::get_stencil_action_type(TokenType p_type) {
 	switch (p_type) {
-		case TK_STENCIL_ACTION_KEEP: return StencilTest::STENCIL_ACTION_KEEP;
-		case TK_STENCIL_ACTION_ZERO: return StencilTest::STENCIL_ACTION_ZERO;
-		case TK_STENCIL_ACTION_INCR: return StencilTest::STENCIL_ACTION_INCR;
-		case TK_STENCIL_ACTION_DECR: return StencilTest::STENCIL_ACTION_DECR;
-		case TK_STENCIL_ACTION_INVERT: return StencilTest::STENCIL_ACTION_INVERT;
-		case TK_STENCIL_ACTION_REPLACE: return StencilTest::STENCIL_ACTION_REPLACE;
-		case TK_STENCIL_ACTION_INCR_WRAP: return StencilTest::STENCIL_ACTION_INCR_WRAP;
-		case TK_STENCIL_ACTION_DECR_WRAP: return StencilTest::STENCIL_ACTION_DECR_WRAP;
-		default: ERR_FAIL_V(StencilTest::STENCIL_ACTION_KEEP);
+		case TK_STENCIL_ACTION_KEEP:
+			return StencilTest::STENCIL_ACTION_KEEP;
+		case TK_STENCIL_ACTION_ZERO:
+			return StencilTest::STENCIL_ACTION_ZERO;
+		case TK_STENCIL_ACTION_INCR:
+			return StencilTest::STENCIL_ACTION_INCR;
+		case TK_STENCIL_ACTION_DECR:
+			return StencilTest::STENCIL_ACTION_DECR;
+		case TK_STENCIL_ACTION_INVERT:
+			return StencilTest::STENCIL_ACTION_INVERT;
+		case TK_STENCIL_ACTION_REPLACE:
+			return StencilTest::STENCIL_ACTION_REPLACE;
+		case TK_STENCIL_ACTION_INCR_WRAP:
+			return StencilTest::STENCIL_ACTION_INCR_WRAP;
+		case TK_STENCIL_ACTION_DECR_WRAP:
+			return StencilTest::STENCIL_ACTION_DECR_WRAP;
+		default:
+			ERR_FAIL_V(StencilTest::STENCIL_ACTION_KEEP);
 	}
 }
 
 ShaderLanguage::StencilTest::StencilTestType ShaderLanguage::get_stencil_test_type(TokenType p_type) {
 	switch (p_type) {
-		case TK_STENCIL_TEST_ALWAYS: return StencilTest::STENCIL_TEST_ALWAYS;
-		case TK_STENCIL_TEST_NEVER: return StencilTest::STENCIL_TEST_NEVER;
-		case TK_STENCIL_TEST_EQUAL: return StencilTest::STENCIL_TEST_EQUAL;
-		case TK_STENCIL_TEST_NOT_EQUAL: return StencilTest::STENCIL_TEST_NOT_EQUAL;
-		case TK_STENCIL_TEST_LESS: return StencilTest::STENCIL_TEST_LESS;
-		case TK_STENCIL_TEST_LESS_EQUAL: return StencilTest::STENCIL_TEST_LESS_EQUAL;
-		case TK_STENCIL_TEST_GREATER: return StencilTest::STENCIL_TEST_GREATER;
-		case TK_STENCIL_TEST_GREATER_EQUAL: return StencilTest::STENCIL_TEST_GREATER_EQUAL;
-		default: ERR_FAIL_V(StencilTest::STENCIL_TEST_ALWAYS);
+		case TK_STENCIL_TEST_ALWAYS:
+			return StencilTest::STENCIL_TEST_ALWAYS;
+		case TK_STENCIL_TEST_NEVER:
+			return StencilTest::STENCIL_TEST_NEVER;
+		case TK_STENCIL_TEST_EQUAL:
+			return StencilTest::STENCIL_TEST_EQUAL;
+		case TK_STENCIL_TEST_NOT_EQUAL:
+			return StencilTest::STENCIL_TEST_NOT_EQUAL;
+		case TK_STENCIL_TEST_LESS:
+			return StencilTest::STENCIL_TEST_LESS;
+		case TK_STENCIL_TEST_LESS_EQUAL:
+			return StencilTest::STENCIL_TEST_LESS_EQUAL;
+		case TK_STENCIL_TEST_GREATER:
+			return StencilTest::STENCIL_TEST_GREATER;
+		case TK_STENCIL_TEST_GREATER_EQUAL:
+			return StencilTest::STENCIL_TEST_GREATER_EQUAL;
+		default:
+			ERR_FAIL_V(StencilTest::STENCIL_TEST_ALWAYS);
 	}
 }
 
@@ -2697,7 +2715,6 @@ void ShaderLanguage::get_keyword_list(List<String> *r_keywords) {
 	idx = 0;
 
 	while (stencil_keyword_list[idx].text) {
-
 		kws.insert(stencil_keyword_list[idx].text);
 		idx++;
 	}
@@ -5384,7 +5401,8 @@ Error ShaderLanguage::_parse_shader(const Map<StringName, FunctionInfo> &p_funct
 			} break;
 			case TK_STENCIL: {
 				Error err = _parse_stencil_block(has_front_stencil, has_back_stencil);
-				if (err != OK) return err;
+				if (err != OK)
+					return err;
 			} break;
 			default: {
 				//function or constant variable
@@ -5830,9 +5848,12 @@ Error ShaderLanguage::_parse_stencil_block(bool &p_has_front, bool &p_has_back) 
 					_set_error("Integer out of range (0-255)");
 					return ERR_PARSE_ERROR;
 				}
-				if (property_type == TK_STENCIL_VALUE) stencil.value = (int)tk.constant;
-				if (property_type == TK_STENCIL_MASK_READ) stencil.read_mask = (int)tk.constant;
-				if (property_type == TK_STENCIL_MASK_WRITE) stencil.write_mask = (int)tk.constant;
+				if (property_type == TK_STENCIL_VALUE)
+					stencil.value = (int)tk.constant;
+				if (property_type == TK_STENCIL_MASK_READ)
+					stencil.read_mask = (int)tk.constant;
+				if (property_type == TK_STENCIL_MASK_WRITE)
+					stencil.write_mask = (int)tk.constant;
 
 				tk = _get_token();
 				if (tk.type != TK_SEMICOLON) {
@@ -5862,9 +5883,12 @@ Error ShaderLanguage::_parse_stencil_block(bool &p_has_front, bool &p_has_back) 
 					_set_error("Expected stencil acion");
 					return ERR_PARSE_ERROR;
 				}
-				if (property_type == TK_STENCIL_PASS) stencil.pass = get_stencil_action_type(tk.type);
-				if (property_type == TK_STENCIL_FAIL_STENCIL) stencil.fail_stencil = get_stencil_action_type(tk.type);
-				if (property_type == TK_STENCIL_FAIL_DEPTH) stencil.fail_depth = get_stencil_action_type(tk.type);
+				if (property_type == TK_STENCIL_PASS)
+					stencil.pass = get_stencil_action_type(tk.type);
+				if (property_type == TK_STENCIL_FAIL_STENCIL)
+					stencil.fail_stencil = get_stencil_action_type(tk.type);
+				if (property_type == TK_STENCIL_FAIL_DEPTH)
+					stencil.fail_depth = get_stencil_action_type(tk.type);
 
 				tk = _get_token();
 				if (tk.type != TK_SEMICOLON) {

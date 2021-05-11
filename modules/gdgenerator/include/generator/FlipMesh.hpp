@@ -63,7 +63,7 @@ public:
 		void next() { triangles_.next(); }
 
 	private:
-		typename TriangleGeneratorType<TransformMesh<Mesh> >::Type triangles_;
+		typename TriangleGeneratorType<TransformMesh<Mesh>>::Type triangles_;
 
 		Triangles(const TransformMesh<Mesh> &mesh) :
 				triangles_{ mesh.triangles() } {}

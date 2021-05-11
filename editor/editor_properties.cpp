@@ -1863,7 +1863,6 @@ EditorPropertyTransform::EditorPropertyTransform() {
 ////////////// COLOR PICKER //////////////////////
 
 void EditorPropertyColor::_color_changed(const Color &p_color) {
-
 	emit_changed(get_edited_property(), p_color, "", true);
 }
 

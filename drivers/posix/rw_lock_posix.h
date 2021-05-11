@@ -38,7 +38,6 @@
 #include <pthread.h>
 
 class RWLockPosix {
-
 	mutable pthread_rwlock_t rwlock;
 
 public:

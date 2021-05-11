@@ -46,7 +46,6 @@ extern "C" {
 class String;
 
 class Thread {
-
 	friend class Main;
 
 public:
@@ -92,7 +91,6 @@ private:
 };
 
 class Mutex {
-
 	const bool is_recursive;
 	mutable LightLock lightLock;
 	mutable RecursiveLock recursiveLock;
@@ -107,7 +105,6 @@ public:
 };
 
 class Semaphore {
-
 public:
 	Error wait() const { return OK; };
 	Error post() const { return OK; };
@@ -115,7 +112,6 @@ public:
 };
 
 class RWLock {
-
 public:
 	void read_lock() const {}
 	void read_unlock() const {}

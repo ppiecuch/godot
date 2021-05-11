@@ -45,7 +45,6 @@
 class String;
 
 class PosixThread {
-
 public:
 	friend class Main;
 

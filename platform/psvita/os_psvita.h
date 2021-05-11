@@ -43,7 +43,6 @@
 #endif
 
 class OSPSVita : public OS {
-
 	enum {
 		PAD_COUNT = 5,
 	};

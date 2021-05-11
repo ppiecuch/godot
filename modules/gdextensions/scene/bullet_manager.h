@@ -41,7 +41,6 @@
 class BulletManager;
 
 class BulletManagerBulletType : public Node2D {
-
 	GDCLASS(BulletManagerBulletType, Node2D)
 
 	Ref<Texture> texture;
@@ -142,7 +141,6 @@ struct BulletManagerBullet {
 };
 
 class BulletManager : public Node2D {
-
 	GDCLASS(BulletManager, Node2D)
 
 	Point2 pos;

@@ -46,7 +46,6 @@ static thread_local Thread::ID caller_id = 0;
 static thread_local bool caller_id_cached = false;
 
 void *Thread::thread_callback(void *p_userdata) {
-
 	Thread *t = reinterpret_cast<Thread *>(p_userdata);
 	t->id = AtomicIncrement(&next_thread_id);
 
@@ -63,7 +62,6 @@ void *Thread::thread_callback(void *p_userdata) {
 }
 
 void Thread::start(Thread::Callback p_callback, void *p_user, const Thread::Settings &p_settings) {
-
 	// Get base thread priority for relative priority setting
 	int32_t priority;
 	svcGetThreadPriority(&priority, (Thread::main_thread_id == 0) ? CUR_THREAD_HANDLE : Thread::main_thread_id);
@@ -80,25 +78,21 @@ void Thread::start(Thread::Callback p_callback, void *p_user, const Thread::Sett
 }
 
 bool Thread::is_started() const {
-
 	return thread != 0;
 }
 
 void Thread::wait_to_finish() {
-
 	threadJoin(thread, U64_MAX);
 	threadFree(thread);
 }
 
 Thread::ID Thread::get_thread_id() {
-
 	if (!threadGetCurrent())
 		return CUR_THREAD_HANDLE;
 	return threadGetHandle(threadGetCurrent());
 }
 
 Thread::ID Thread::get_caller_id() {
-
 	if (likely(caller_id_cached)) {
 		return caller_id;
 	} else {
@@ -109,7 +103,6 @@ Thread::ID Thread::get_caller_id() {
 }
 
 Thread::Thread() {
-
 	thread = 0;
 	id = 0;
 }
@@ -123,7 +116,6 @@ Thread::~Thread() {
 
 Mutex::Mutex(bool p_recursive) :
 		is_recursive(p_recursive) {
-
 	if (is_recursive)
 		RecursiveLock_Init(&recursiveLock);
 	else
@@ -134,7 +126,6 @@ Mutex::~Mutex() {
 }
 
 void Mutex::lock() const {
-
 	if (is_recursive)
 		RecursiveLock_Lock(&recursiveLock);
 	else
@@ -142,7 +133,6 @@ void Mutex::lock() const {
 }
 
 void Mutex::unlock() const {
-
 	if (is_recursive)
 		RecursiveLock_Unlock(&recursiveLock);
 	else
@@ -150,7 +140,6 @@ void Mutex::unlock() const {
 }
 
 Error Mutex::try_lock() const {
-
 	int ret;
 	if (is_recursive)
 		ret = RecursiveLock_TryLock(&recursiveLock);

@@ -40,7 +40,6 @@
 #include "vegetation_instance.h"
 
 void VegetationInstance::_bind_methods() {
-
 	ClassDB::bind_method(D_METHOD("set_instance_count", "count"), &VegetationInstance::set_instance_count);
 	ClassDB::bind_method(D_METHOD("get_instance_count"), &VegetationInstance::get_instance_count);
 	ClassDB::bind_method(D_METHOD("set_populate_axis", "axis_num"), &VegetationInstance::set_populate_axis);
@@ -70,7 +69,6 @@ void VegetationInstance::_bind_methods() {
 }
 
 void VegetationInstance::populate(const NodePath &surface_source) {
-
 	Ref<Mesh> mesh;
 	Ref<MultiMesh> old_multimesh;
 	old_multimesh = get_multimesh();
@@ -129,7 +127,6 @@ void VegetationInstance::populate(const NodePath &surface_source) {
 	float area_accum = 0;
 	Map<float, int> triangle_area_map;
 	for (int i = 0; i < facecount; i++) {
-
 		float area = r[i].get_area();
 		;
 		if (area < CMP_EPSILON)
@@ -154,7 +151,6 @@ void VegetationInstance::populate(const NodePath &surface_source) {
 	}
 
 	for (int i = 0; i < instance_count; i++) {
-
 		float areapos = Math::random(0.0f, area_accum);
 
 		Map<float, int>::Element *E = triangle_area_map.find_closest(areapos);

@@ -49,7 +49,7 @@ namespace generator {
 /// @image html SphereMesh.svg
 class SphereMesh {
 private:
-	using Impl = AxisSwapMesh<LatheMesh<CircleShape> >;
+	using Impl = AxisSwapMesh<LatheMesh<CircleShape>>;
 	Impl axisSwapMesh_;
 
 public:

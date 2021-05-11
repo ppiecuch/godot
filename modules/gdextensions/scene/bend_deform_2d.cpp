@@ -82,7 +82,6 @@ static bool _add_node_noise_modulation_value(Object *node, Ref<OpenSimplexNoise>
 }
 
 static void _draw_debug_marker(CanvasItem *node, const Point2 &p0, real_t dir, int marker_length, int head_length, int head_width, const Color &marker_color = Color::named("white")) {
-
 	const Vector2 unit = Vector2(Math::cos(dir), Math::sin(dir));
 	const Vector2 p1 = p0 + unit * marker_length;
 
@@ -92,7 +91,8 @@ static void _draw_debug_marker(CanvasItem *node, const Point2 &p0, real_t dir, i
 	const real_t dy = p1.y - p0.y;
 	const real_t length = Math::sqrt(dx * dx + dy * dy);
 
-	if (head_length < 1 || length < head_length) return;
+	if (head_length < 1 || length < head_length)
+		return;
 
 	// ux,uy is a unit vector parallel to the line.
 	const real_t ux = dx / length;
@@ -115,7 +115,6 @@ static void _draw_debug_marker(CanvasItem *node, const Point2 &p0, real_t dir, i
 }
 
 Vector<Object *> SimulationController2D::_get_connected_nodes() const {
-
 	// get the list of listeners of "simulation_progress" signal
 
 	List<Connection> connections;
@@ -129,12 +128,10 @@ Vector<Object *> SimulationController2D::_get_connected_nodes() const {
 }
 
 Ref<ElasticSimulation> SimulationController2D::get_simulation() const {
-
 	return _sim;
 }
 
 void SimulationController2D::set_simulation_pause(bool p_state) {
-
 	if (simulation_paused != p_state) {
 		simulation_paused = p_state;
 		_notify_simulation_change();
@@ -142,7 +139,6 @@ void SimulationController2D::set_simulation_pause(bool p_state) {
 }
 
 bool SimulationController2D::is_simulation_paused() const {
-
 	return simulation_paused;
 }
 
@@ -153,53 +149,43 @@ void SimulationController2D::set_simulation_precision(SimulationPrecision p_prec
 }
 
 SimulationController2D::SimulationPrecision SimulationController2D::get_simulation_precision() const {
-
 	return simulation_precision;
 }
 
 void SimulationController2D::set_simulation_force(const Vector2 &p_force) {
-
 	simulation_force = p_force;
 }
 
 Vector2 SimulationController2D::get_simulation_force() const {
-
 	return simulation_force;
 }
 
 #ifdef MODULE_OPENSIMPLEX_ENABLED
 void SimulationController2D::set_noise_modulation(bool p_state) {
-
 	noise_modulation = p_state;
 }
 
 bool SimulationController2D::is_noise_modulation_active() const {
-
 	return noise_modulation;
 }
 
 int SimulationController2D::get_noise_time_scale() const {
-
 	return noise_time_scale;
 }
 
 void SimulationController2D::set_noise_time_scale(int p_scale) {
-
 	noise_time_scale = p_scale;
 }
 
 void SimulationController2D::set_noise_pixel_resolution(int p_res) {
-
 	noise_pixel_resolution = p_res;
 }
 
 int SimulationController2D::get_noise_pixel_resolution() const {
-
 	return noise_pixel_resolution;
 }
 
 Vector2 SimulationController2D::get_current_noise_modulation(const Vector2 &pos) const {
-
 	return Vector2(
 			Math::map(_noise->get_multi_noise_3d(pos.x / noise_pixel_resolution, pos.y / noise_pixel_resolution, _time_progress), -1, 1, 0, Math_Two_PI),
 			Math::map(_noise->get_multi_noise_3d(10000 + pos.x / (2 * noise_pixel_resolution), 10000 + pos.y / (2 * noise_pixel_resolution), _time_progress), -1, 1, 0, 1));
@@ -207,7 +193,6 @@ Vector2 SimulationController2D::get_current_noise_modulation(const Vector2 &pos)
 #endif
 
 void SimulationController2D::simulation_progress(real_t p_delta) {
-
 	if (!simulation_paused) {
 		if (noise_modulation) {
 			std::map<simid_t, Vector2> forces;
@@ -229,13 +214,11 @@ void SimulationController2D::simulation_progress(real_t p_delta) {
 }
 
 void SimulationController2D::reset_simulation() {
-
 	_sim->reset_sim();
 	emit_signal("simulation_progress");
 }
 
 Vector2 SimulationController2D::get_simulation_force_for_node(Node *p_node) {
-
 #ifdef MODULE_OPENSIMPLEX_ENABLED
 	if (noise_modulation) {
 		Vector2 node_force;
@@ -248,7 +231,6 @@ Vector2 SimulationController2D::get_simulation_force_for_node(Node *p_node) {
 }
 
 void SimulationController2D::_bind_methods() {
-
 	BIND_ENUM_CONSTANT(PRECISION_LOW);
 	BIND_ENUM_CONSTANT(PRECISION_MEDIUM);
 	BIND_ENUM_CONSTANT(PRECISION_HIGH);
@@ -281,7 +263,6 @@ void SimulationController2D::_bind_methods() {
 }
 
 SimulationController2D::SimulationController2D() {
-
 	_sim = newref(ElasticSimulation);
 	_time_progress = 0;
 
@@ -313,22 +294,18 @@ Size2 SimulationControllerDebugInstance2D::_edit_get_scale() const {
 #endif
 
 Transform2D SimulationControllerDebugInstance2D::get_transform() const {
-
 	return Transform2D();
 }
 
 int SimulationControllerDebugInstance2D::get_cell_size() const {
-
 	return cell_size;
 }
 
 void SimulationControllerDebugInstance2D::set_cell_size(int p_size) {
-
 	cell_size = p_size;
 }
 
 String SimulationControllerDebugInstance2D::get_configuration_warning() const {
-
 	String warning = CanvasItem::get_configuration_warning();
 	if (Object::cast_to<SimulationControllerInstance2D>(get_parent()) == nullptr) {
 		warning += TTR("A SimulationControllerDebugInstance2D only works with a SimulationControllerInstance2D as parent node.");
@@ -337,20 +314,16 @@ String SimulationControllerDebugInstance2D::get_configuration_warning() const {
 }
 
 void SimulationControllerDebugInstance2D::_notification(int p_what) {
-
 	switch (p_what) {
 		case NOTIFICATION_PARENTED:
 		case NOTIFICATION_ENTER_TREE: {
-
 			update_configuration_warning();
 			set_process(Object::cast_to<SimulationControllerInstance2D>(get_parent()) != nullptr);
 		} break;
 		case NOTIFICATION_PROCESS: {
-
 			update();
 		} break;
 		case NOTIFICATION_DRAW: {
-
 			if (SimulationControllerInstance2D *instance = Object::cast_to<SimulationControllerInstance2D>(get_parent())) {
 				Ref<SimulationController2D> controller = instance->get_controller();
 				if (controller.is_valid()) {
@@ -373,7 +346,6 @@ void SimulationControllerDebugInstance2D::_notification(int p_what) {
 }
 
 void SimulationControllerDebugInstance2D::_bind_methods() {
-
 	ClassDB::bind_method(D_METHOD("get_cell_size"), &SimulationControllerDebugInstance2D::get_cell_size);
 	ClassDB::bind_method(D_METHOD("set_cell_size"), &SimulationControllerDebugInstance2D::set_cell_size);
 
@@ -381,27 +353,22 @@ void SimulationControllerDebugInstance2D::_bind_methods() {
 }
 
 SimulationControllerDebugInstance2D::SimulationControllerDebugInstance2D() {
-
 	cell_size = 20;
 }
 
 void SimulationControllerInstance2D::_on_controller_changed() {
-
 	set_process_internal(!controller->is_simulation_paused());
 }
 
 void SimulationControllerInstance2D::_notification(int p_what) {
-
 	switch (p_what) {
 		case NOTIFICATION_READY: {
-
 			if (controller.is_null()) {
 				// create default controller
 				set_controller(Ref<SimulationController2D>(memnew(SimulationController2D)));
 			}
 		} break;
 		case NOTIFICATION_INTERNAL_PROCESS: {
-
 			const real_t dt = get_process_delta_time();
 			controller->simulation_progress(dt);
 		} break;
@@ -409,12 +376,10 @@ void SimulationControllerInstance2D::_notification(int p_what) {
 }
 
 Ref<SimulationController2D> SimulationControllerInstance2D::get_controller() const {
-
 	return controller;
 }
 
 void SimulationControllerInstance2D::set_controller(const Ref<SimulationController2D> &p_controller) {
-
 	if (controller != p_controller) {
 		if (controller.is_valid())
 			controller->disconnect("simulation_changed", this, "_on_controller_changed");
@@ -426,12 +391,10 @@ void SimulationControllerInstance2D::set_controller(const Ref<SimulationControll
 }
 
 bool SimulationControllerInstance2D::get_debug_controller() const {
-
 	return _debug_node && _debug_node->is_visible();
 }
 
 void SimulationControllerInstance2D::set_debug_controller(bool p_debug) {
-
 	if (p_debug && !_debug_node) {
 		add_child(_debug_node = memnew(SimulationControllerDebugInstance2D));
 	}
@@ -439,7 +402,6 @@ void SimulationControllerInstance2D::set_debug_controller(bool p_debug) {
 }
 
 void SimulationControllerInstance2D::_bind_methods() {
-
 	ClassDB::bind_method(D_METHOD("get_controller"), &SimulationControllerInstance2D::get_controller);
 	ClassDB::bind_method(D_METHOD("set_controller"), &SimulationControllerInstance2D::set_controller);
 	ClassDB::bind_method(D_METHOD("set_debug_controller"), &SimulationControllerInstance2D::set_debug_controller);
@@ -452,7 +414,6 @@ void SimulationControllerInstance2D::_bind_methods() {
 }
 
 SimulationControllerInstance2D::SimulationControllerInstance2D() {
-
 	_debug_node = nullptr;
 }
 
@@ -466,27 +427,22 @@ SimulationControllerInstance2D::~SimulationControllerInstance2D() {
 void ElasticMeshInstance2D::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_READY: {
-
 			set_notify_local_transform(true);
 		} break;
 		case NOTIFICATION_DRAW: {
-
 		} break;
 	}
 }
 
 int ElasticMeshInstance2D::get_simulation_id() const {
-
 	return _sim_id;
 }
 
 bool ElasticMeshInstance2D::is_sprite_simulation_paused() const {
-
 	return sprite_simulation_pause;
 }
 
 void ElasticMeshInstance2D::set_sprite_simulation_pause(bool p_state) {
-
 	if (sprite_simulation_pause != p_state) {
 		sprite_simulation_pause = p_state;
 		update();
@@ -494,12 +450,10 @@ void ElasticMeshInstance2D::set_sprite_simulation_pause(bool p_state) {
 }
 
 Ref<SimulationController2D> ElasticMeshInstance2D::get_controller() const {
-
 	return controller;
 }
 
 void ElasticMeshInstance2D::set_controller(const Ref<SimulationController2D> &p_controller) {
-
 	if (controller != p_controller) {
 		if (controller.is_valid()) {
 			controller->disconnect("simulation_progress", this, "_on_simulation_update");
@@ -514,17 +468,14 @@ void ElasticMeshInstance2D::set_controller(const Ref<SimulationController2D> &p_
 }
 
 Vector2 ElasticMeshInstance2D::get_noise_scale() const {
-
 	return noise_scale;
 }
 
 void ElasticMeshInstance2D::set_noise_scale(Vector2 p_scale) {
-
 	noise_scale = p_scale;
 }
 
 void ElasticMeshInstance2D::_bind_methods() {
-
 	ClassDB::bind_method(D_METHOD("set_controller", "controller"), &ElasticMeshInstance2D::set_controller);
 	ClassDB::bind_method(D_METHOD("get_controller"), &ElasticMeshInstance2D::get_controller);
 	ClassDB::bind_method(D_METHOD("set_sprite_simulation_pause"), &ElasticMeshInstance2D::set_sprite_simulation_pause);
@@ -538,7 +489,6 @@ void ElasticMeshInstance2D::_bind_methods() {
 }
 
 ElasticMeshInstance2D::ElasticMeshInstance2D() {
-
 	sprite_simulation_pause = false;
 	controller = Ref<SimulationController2D>(NULL);
 
@@ -547,7 +497,6 @@ ElasticMeshInstance2D::ElasticMeshInstance2D() {
 }
 
 ElasticMeshInstance2D::~ElasticMeshInstance2D() {
-
 	// TODO: Dereference __state_motion_iterator (?)
 }
 
@@ -557,19 +506,16 @@ ElasticMeshInstance2D::~ElasticMeshInstance2D() {
 
 #ifdef TOOLS_ENABLED
 bool ElasticSprite::_edit_is_selected_on_click(const Point2 &p_point, double p_tolerance) const {
-
 	return controller.is_valid() ? _edit_get_rect().has_point(p_point) : Sprite::_edit_is_selected_on_click(p_point, p_tolerance);
 }
 
 void ElasticSprite::_edit_set_rect(const Rect2 &p_rect) {
-
 	Sprite::_edit_set_rect(p_rect);
 	_sim_dirty = true;
 }
 #endif
 
 void ElasticSprite::_update_simulation() {
-
 	ERR_FAIL_COND(controller.is_null());
 
 	Ref<ElasticSimulation> sim = controller->get_simulation();
@@ -780,7 +726,6 @@ void ElasticSprite::_create_geom() {
 }
 
 Rect2 ElasticSprite::_get_texture_uv_rect() const {
-
 	Rect2 rc(0, 0, 1, 1);
 	if (AtlasTexture *atlas = Object::cast_to<AtlasTexture>(*get_texture())) {
 		if (atlas->get_atlas().is_valid()) {
@@ -824,19 +769,16 @@ void ElasticSprite::_check_parent_controller() {
 }
 
 void ElasticSprite::_on_simulation_update() {
-
 	_geom_dirty = true;
 	update();
 }
 
 void ElasticSprite::_on_simulation_changed() {
-
 	_sim_dirty = true;
 	update();
 }
 
 void ElasticSprite::_notification(int p_what) {
-
 	switch (p_what) {
 		case NOTIFICATION_READY: {
 			set_notify_local_transform(true);
@@ -877,7 +819,6 @@ void ElasticSprite::_notification(int p_what) {
 }
 
 void ElasticSprite::_on_texture_changed() {
-
 	// Rebuild simulation
 	if (get_texture().is_valid()) {
 		if (Ref<ElasticSimulation> sim = controller->get_simulation())
@@ -889,7 +830,6 @@ void ElasticSprite::_on_texture_changed() {
 }
 
 int ElasticSprite::get_simulation_id() const {
-
 	return _sim_id;
 }
 
@@ -902,17 +842,14 @@ void ElasticSprite::set_geometry_anchor(ElasticSimulation::Anchor p_anchor) {
 }
 
 ElasticSimulation::Anchor ElasticSprite::get_geometry_anchor() const {
-
 	return geometry_anchor;
 }
 
 bool ElasticSprite::is_geometry_deformation_enabled() const {
-
 	return geometry_enable_deformation;
 }
 
 void ElasticSprite::set_geometry_enable_deformation(bool p_state) {
-
 	if (geometry_enable_deformation != p_state) {
 		geometry_enable_deformation = p_state;
 		update();
@@ -928,7 +865,6 @@ void ElasticSprite::set_geometry_segments(int p_segments) {
 }
 
 int ElasticSprite::get_geometry_segments() const {
-
 	return geometry_segments;
 }
 
@@ -942,19 +878,16 @@ void ElasticSprite::set_geometry_pixel_unit(real_t p_unit) {
 }
 
 real_t ElasticSprite::get_geometry_pixel_unit() const {
-
 	return geometry_pixel_unit;
 }
 
 void ElasticSprite::set_geometry_size_variation(bool p_state) {
-
 	geometry_size_variation = p_state;
 	_sim_dirty = true;
 	update();
 }
 
 bool ElasticSprite::is_geometry_size_variation() const {
-
 	return geometry_size_variation;
 }
 
@@ -970,12 +903,10 @@ void ElasticSprite::set_geometry_stiffness(real_t p_stiffness) {
 }
 
 real_t ElasticSprite::get_geometry_stiffness() const {
-
 	return geometry_stiffness;
 }
 
 void ElasticSprite::set_physics_variation(bool p_variation) {
-
 	if (physics_variation != p_variation) {
 		physics_variation = p_variation;
 		_sim_dirty = true;
@@ -984,22 +915,18 @@ void ElasticSprite::set_physics_variation(bool p_variation) {
 }
 
 bool ElasticSprite::is_physics_variation() const {
-
 	return physics_variation;
 }
 
 Vector2 ElasticSprite::get_noise_scale() const {
-
 	return noise_scale;
 }
 
 void ElasticSprite::set_noise_scale(Vector2 p_scale) {
-
 	noise_scale = p_scale;
 }
 
 void ElasticSprite::set_geometry_debug(bool p_debug) {
-
 	if (geometry_debug != p_debug) {
 		geometry_debug = p_debug;
 		update();
@@ -1007,17 +934,14 @@ void ElasticSprite::set_geometry_debug(bool p_debug) {
 }
 
 bool ElasticSprite::get_geometry_debug() const {
-
 	return geometry_debug;
 }
 
 bool ElasticSprite::is_sprite_simulation_paused() const {
-
 	return sprite_simulation_pause;
 }
 
 void ElasticSprite::set_sprite_simulation_pause(bool p_state) {
-
 	if (sprite_simulation_pause != p_state) {
 		sprite_simulation_pause = p_state;
 		if (_sim_id >= 0 && controller.is_valid()) {
@@ -1029,12 +953,10 @@ void ElasticSprite::set_sprite_simulation_pause(bool p_state) {
 }
 
 Ref<SimulationController2D> ElasticSprite::get_controller() const {
-
 	return controller;
 }
 
 void ElasticSprite::set_controller(const Ref<SimulationController2D> &p_controller) {
-
 	if (controller != p_controller) {
 		if (controller.is_valid()) {
 			controller->disconnect("simulation_progress", this, "_on_simulation_update");
@@ -1142,7 +1064,6 @@ void ElasticSprite::_bind_methods() {
 }
 
 ElasticSprite::ElasticSprite() {
-
 	sprite_simulation_pause = false;
 	controller = Ref<SimulationController2D>(NULL);
 	noise_scale = Vector2(1, 0);
@@ -1164,7 +1085,6 @@ ElasticSprite::ElasticSprite() {
 }
 
 ElasticSprite::~ElasticSprite() {
-
 	// TODO: Dereference __state_motion_iterator (?)
 }
 

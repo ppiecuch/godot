@@ -45,33 +45,27 @@
 #include <sys/time.h>
 
 int OSPSVita::get_video_driver_count() const {
-
 	return 1;
 };
 
 const char *OSPSVita::get_video_driver_name(int p_driver) const {
-
 	return "GXM";
 };
 
 int OSPSVita::get_audio_driver_count() const {
-
 	return 1;
 };
 
 const char *OSPSVita::get_audio_driver_name(int p_driver) const {
-
 	return "SCE";
 };
 
 void OSPSVita::initialize_core() {
-
 	FileAccess::make_default<FileAccessUnix>(FileAccess::ACCESS_RESOURCES);
 	DirAccess::make_default<DirAccessUnix>(DirAccess::ACCESS_RESOURCES);
 };
 
 Error OSPSVita::initialize(const VideoMode &p_desired, int p_video_driver, int p_audio_driver) {
-
 	OS::VideoMode vm;
 	vm.resizable = false;
 	vm.fullscreen = true;
@@ -110,13 +104,11 @@ void OSPSVita::swap_buffers(){
 };
 
 void OSPSVita::set_main_loop(MainLoop *p_main_loop) {
-
 	main_loop = p_main_loop;
 	input->set_main_loop(p_main_loop);
 };
 
 void OSPSVita::_mouse_button(Vector2 p_pos, bool p_pressed) {
-
 	Ref<InputEventMouseButton> ev;
 	ev.instance();
 
@@ -135,7 +127,6 @@ void OSPSVita::_mouse_button(Vector2 p_pos, bool p_pressed) {
 };
 
 void OSPSVita::_mouse_motion(Vector2 p_pos, Vector2 p_rel) {
-
 	Ref<InputEventMouseMotion> ev;
 	ev.instance();
 
@@ -152,7 +143,6 @@ void OSPSVita::_mouse_motion(Vector2 p_pos, Vector2 p_rel) {
 };
 
 void OSPSVita::_screen_touch(int fid, Vector2 p_pos, bool p_pressed) {
-
 	Ref<InputEventScreenTouch> ev;
 	ev.instance();
 
@@ -164,7 +154,6 @@ void OSPSVita::_screen_touch(int fid, Vector2 p_pos, bool p_pressed) {
 };
 
 void OSPSVita::_screen_drag(int fid, Vector2 p_pos, Vector2 old_pos) {
-
 	Ref<InputEventScreenDrag> ev;
 	ev.instance();
 	ev->set_index(fid);
@@ -175,7 +164,6 @@ void OSPSVita::_screen_drag(int fid, Vector2 p_pos, Vector2 old_pos) {
 };
 
 void OSPSVita::_process_axis(int p_device, int p_axis, int p_value) {
-
 	InputDefault::JoyAxis axis;
 	axis.min = 1;
 	axis.value = (float)p_value / 32768.0;
@@ -188,14 +176,12 @@ void OSPSVita::process_events(){
 };
 
 void OSPSVita::run() {
-
 	if (!main_loop)
 		return;
 
 	main_loop->init();
 
 	while (true) {
-
 		process_events(); // get rid of pending events
 		if (Main::iteration())
 			break;
@@ -205,7 +191,6 @@ void OSPSVita::run() {
 };
 
 void OSPSVita::delete_main_loop() {
-
 	if (main_loop)
 		memdelete(main_loop);
 	main_loop = NULL;
@@ -216,7 +201,6 @@ void OSPSVita::finalize(){
 };
 
 void OSPSVita::finalize_core() {
-
 	if (main_loop)
 		memdelete(main_loop);
 	main_loop = NULL;
@@ -228,7 +212,6 @@ void OSPSVita::finalize_core() {
 };
 
 bool OSPSVita::_check_internal_feature_support(const String &p_feature) {
-
 	if (p_feature == "mobile" || p_feature == "etc" || p_feature == "etc2") {
 		//TODO support etc2 only if GLES3 driver is selected
 		return true;
@@ -250,17 +233,14 @@ bool OSPSVita::_check_internal_feature_support(const String &p_feature) {
 };
 
 String OSPSVita::get_stdin_string(bool p_block) {
-
 	return "";
 };
 
 Point2 OSPSVita::get_mouse_position() const {
-
 	return Point2();
 };
 
 int OSPSVita::get_mouse_button_state() const {
-
 	return 0;
 };
 
@@ -273,52 +253,42 @@ void OSPSVita::set_video_mode(const VideoMode &p_video_mode, int p_screen){
 };
 
 OS::VideoMode OSPSVita::get_video_mode(int p_screen) const {
-
 	return default_video_mode;
 };
 
 Size2 OSPSVita::get_window_size() const {
-
 	return Size2(default_video_mode.width, default_video_mode.height);
 };
 
 void OSPSVita::get_fullscreen_mode_list(List<VideoMode> *p_list, int p_screen) const {
-
 	p_list->push_back(default_video_mode);
 };
 
 Error OSPSVita::execute(const String &p_path, const List<String> &p_arguments, bool p_blocking, ProcessID *r_child_id, String *r_pipe, int *r_exitcode, bool read_stderr, Mutex *p_pipe_mutex) {
-
 	return ERR_UNAVAILABLE;
 };
 
 Error OSPSVita::kill(const ProcessID &p_pid) {
-
 	return ERR_UNAVAILABLE;
 };
 
 bool OSPSVita::has_environment(const String &p_var) const {
-
 	return false;
 };
 
 String OSPSVita::get_environment(const String &p_var) const {
-
 	return "";
 };
 
 bool OSPSVita::set_environment(const String &p_var, const String &p_value) const {
-
 	return false;
 }
 
 String OSPSVita::get_name() const {
-
 	return "PSP2";
 };
 
 MainLoop *OSPSVita::get_main_loop() const {
-
 	return main_loop;
 };
 
@@ -343,7 +313,6 @@ OS::Date OSPSVita::get_date(bool utc) const {
 };
 
 OS::Time OSPSVita::get_time(bool utc) const {
-
 	time_t t = time(NULL);
 	struct tm *lt;
 	if (utc)
@@ -359,7 +328,6 @@ OS::Time OSPSVita::get_time(bool utc) const {
 };
 
 OS::TimeZoneInfo OSPSVita::get_time_zone_info() const {
-
 	time_t t = time(NULL);
 	struct tm *lt = localtime(&t);
 	char name[16];
@@ -386,12 +354,10 @@ OS::TimeZoneInfo OSPSVita::get_time_zone_info() const {
 };
 
 void OSPSVita::delay_usec(uint32_t p_usec) const {
-
 	sceKernelDelayThread(p_usec);
 };
 
 uint64_t OSPSVita::get_ticks_usec() const {
-
 	SceRtcTick ticks = { 0 };
 	sceRtcGetCurrentTick(&ticks);
 
@@ -404,7 +370,6 @@ uint64_t OSPSVita::get_ticks_usec() const {
 };
 
 bool OSPSVita::can_draw() const {
-
 	return true;
 };
 
@@ -417,17 +382,14 @@ void OSPSVita::set_custom_mouse_cursor(const RES &p_cursor, CursorShape p_shape,
 };
 
 void OSPSVita::alert(const String &p_alert, const String &p_title) {
-
 	printf("%s: %s\n", p_title.utf8().get_data(), p_alert.utf8().get_data());
 };
 
 String OSPSVita::get_resource_dir() const {
-
 	return resource_dir;
 };
 
 OSPSVita::OSPSVita() {
-
 	printf("*** creating OS %p\n", this);
 	main_loop = NULL;
 

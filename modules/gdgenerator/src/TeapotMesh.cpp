@@ -172,17 +172,19 @@ static const gml::dvec3 teapotData[32][4][4] = {
 			{ { 0.00, -1.50, 0.15 }, { 0.84, -1.50, 0.15 }, { 1.50, -0.84, 0.15 }, { 1.50, 0.00, 0.15 } } }
 };
 
-TeapotMesh::Triangles::Triangles(const TeapotMesh &mesh) noexcept : mMesh{ &mesh },
-																	mIndex{ 0 },
-																	mPatchMesh{ std::make_shared<BezierMesh<4, 4> >(teapotData[0], gml::ivec2{ mesh.mSegments, mesh.mSegments }) },
-																	mTriangles{ mPatchMesh->triangles() } {}
+TeapotMesh::Triangles::Triangles(const TeapotMesh &mesh) noexcept :
+		mMesh{ &mesh },
+		mIndex{ 0 },
+		mPatchMesh{ std::make_shared<BezierMesh<4, 4>>(teapotData[0], gml::ivec2{ mesh.mSegments, mesh.mSegments }) },
+		mTriangles{ mPatchMesh->triangles() } {}
 
 bool TeapotMesh::Triangles::done() const noexcept {
 	return mIndex == 32;
 }
 
 Triangle TeapotMesh::Triangles::generate() const {
-	if (done()) throw std::out_of_range("Done!");
+	if (done())
+		throw std::out_of_range("Done!");
 
 	Triangle triangle = mTriangles.generate();
 
@@ -196,7 +198,8 @@ Triangle TeapotMesh::Triangles::generate() const {
 }
 
 void TeapotMesh::Triangles::next() {
-	if (done()) throw std::out_of_range("Done!");
+	if (done())
+		throw std::out_of_range("Done!");
 
 	mTriangles.next();
 
@@ -204,7 +207,7 @@ void TeapotMesh::Triangles::next() {
 		++mIndex;
 
 		if (!done()) {
-			mPatchMesh = std::make_shared<BezierMesh<4, 4> >(
+			mPatchMesh = std::make_shared<BezierMesh<4, 4>>(
 					teapotData[mIndex], gml::ivec2{ mMesh->mSegments, mMesh->mSegments });
 
 			mTriangles = mPatchMesh->triangles();
@@ -212,10 +215,11 @@ void TeapotMesh::Triangles::next() {
 	}
 }
 
-TeapotMesh::Vertices::Vertices(const TeapotMesh &mesh) noexcept : mMesh{ &mesh },
-																  mIndex{ 0 },
-																  mPatchMesh{ std::make_shared<BezierMesh<4, 4> >(teapotData[0], gml::ivec2{ mesh.mSegments, mesh.mSegments }) },
-																  mVertices{ mPatchMesh->vertices() } {
+TeapotMesh::Vertices::Vertices(const TeapotMesh &mesh) noexcept :
+		mMesh{ &mesh },
+		mIndex{ 0 },
+		mPatchMesh{ std::make_shared<BezierMesh<4, 4>>(teapotData[0], gml::ivec2{ mesh.mSegments, mesh.mSegments }) },
+		mVertices{ mPatchMesh->vertices() } {
 }
 
 bool TeapotMesh::Vertices::done() const noexcept {
@@ -233,7 +237,7 @@ void TeapotMesh::Vertices::next() {
 		++mIndex;
 
 		if (!done()) {
-			mPatchMesh = std::make_shared<BezierMesh<4, 4> >(
+			mPatchMesh = std::make_shared<BezierMesh<4, 4>>(
 					teapotData[mIndex], gml::ivec2{ mMesh->mSegments, mMesh->mSegments });
 
 			mVertices = mPatchMesh->vertices();
@@ -241,8 +245,9 @@ void TeapotMesh::Vertices::next() {
 	}
 }
 
-TeapotMesh::TeapotMesh(int segments) noexcept : mSegments{ segments },
-												mPatchVertexCount{ count(BezierMesh<4, 4>{ teapotData[0], { segments, segments } }.vertices()) } {
+TeapotMesh::TeapotMesh(int segments) noexcept :
+		mSegments{ segments },
+		mPatchVertexCount{ count(BezierMesh<4, 4>{ teapotData[0], { segments, segments } }.vertices()) } {
 }
 
 TeapotMesh::Triangles TeapotMesh::triangles() const noexcept {

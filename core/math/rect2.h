@@ -252,7 +252,6 @@ struct Rect2 {
 	}
 
 	_FORCE_INLINE_ Rect2 move_by(const Point2 &p_vector) const {
-
 		return Rect2(position + p_vector, size);
 	}
 

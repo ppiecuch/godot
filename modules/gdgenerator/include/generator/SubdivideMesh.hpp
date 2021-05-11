@@ -98,7 +98,8 @@ public:
 		bool done() const noexcept { return triangles_.done(); }
 
 		Triangle generate() const {
-			if (i_ == 0) triangle_ = triangles_.generate();
+			if (i_ == 0)
+				triangle_ = triangles_.generate();
 
 			if (i_ == 3) {
 				return Triangle{ { vertexFromEdge(triangle_.vertices[0], triangle_.vertices[1]),
@@ -137,7 +138,8 @@ public:
 				triangle_{} {}
 
 		int vertexFromEdge(int a, int b) const {
-			if (a > b) std::swap(a, b);
+			if (a > b)
+				std::swap(a, b);
 			return static_cast<int>(mesh_->vertexCache_.size()) + mesh_->edgeMap_.at({ a, b });
 		}
 

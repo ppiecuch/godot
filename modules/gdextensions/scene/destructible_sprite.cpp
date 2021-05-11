@@ -87,7 +87,6 @@ static inline Sprite *_safe_sprite(Node *node) {
 }
 
 void DestructibleSprite::_explosion(real_t delta, explo_object_t &object) {
-
 	if (object.detonate) {
 		if (debug_mode) {
 			print_line(vformat("'%s' object exploded!", get_name()));
@@ -163,7 +162,6 @@ void DestructibleSprite::_on_debris_timer_timeout(uint64_t object_id) {
 }
 
 void DestructibleSprite::_detonate(explo_object_t &object) {
-
 	for (int i = 0; i < get_child_count(); i++) {
 		Node *child = get_child(i);
 		if (Particles2D *particles = Object::cast_to<Particles2D>(child)) {
@@ -220,7 +218,6 @@ void DestructibleSprite::_detonate(explo_object_t &object) {
 }
 
 void DestructibleSprite::_add_children(const explo_object_t &child_object) {
-
 	for (int i = 0; i < child_object.blocks.size(); i++) {
 		child_object.blocks_container->add_child(child_object.blocks[i], true);
 	}
@@ -229,7 +226,6 @@ void DestructibleSprite::_add_children(const explo_object_t &child_object) {
 }
 
 void DestructibleSprite::_setup(explo_object_t &object) {
-
 	object.blocks_impulse = blocks_impulse;
 	object.blocks_gravity_scale = blocks_gravity_scale;
 	object.collision_one_way = collision_one_way;
@@ -325,67 +321,54 @@ void DestructibleSprite::_setup(explo_object_t &object) {
 }
 
 void DestructibleSprite::set_destruction_types(DestructionType p_type) {
-
 	destruction_type = p_type;
 }
 
 void DestructibleSprite::set_destruction_physics(DestructionPhysics p_physics) {
-
 	destruction_physics = p_physics;
 }
 
 void DestructibleSprite::set_blocks_per_side(int p_blocks_per_side) {
-
 	blocks_per_side = p_blocks_per_side;
 }
 
 void DestructibleSprite::set_blocks_impulse(real_t p_blocks_impulse) {
-
 	blocks_impulse = p_blocks_impulse;
 }
 
 void DestructibleSprite::set_blocks_gravity_scale(real_t p_blocks_gravity_scale) {
-
 	blocks_gravity_scale = p_blocks_gravity_scale;
 }
 
 void DestructibleSprite::set_debris_max_time(real_t p_debris_max_time) {
-
 	debris_max_time = p_debris_max_time;
 }
 
 void DestructibleSprite::set_remove_debris(bool p_remove_debris) {
-
 	remove_debris = p_remove_debris;
 }
 
 void DestructibleSprite::set_collision_layers(int p_collision_layers) {
-
 	collision_layers = p_collision_layers;
 }
 
 void DestructibleSprite::set_collision_masks(int p_collision_masks) {
-
 	collision_masks = p_collision_masks;
 }
 
 void DestructibleSprite::set_collision_one_way(bool p_collision_one_way) {
-
 	collision_one_way = p_collision_one_way;
 }
 
 void DestructibleSprite::set_explosion_delay(bool p_explosion_delay) {
-
 	explosion_delay = p_explosion_delay;
 }
 
 void DestructibleSprite::set_randomize_seed(bool p_randomize_seed) {
-
 	randomize_seed = p_randomize_seed;
 }
 
 void DestructibleSprite::set_debug_mode(bool p_debug_mode) {
-
 	debug_mode = p_debug_mode;
 }
 
@@ -397,17 +380,13 @@ void DestructibleSprite::explode() {
 }
 
 void DestructibleSprite::_notification(int p_what) {
-
 	switch (p_what) {
 		case NOTIFICATION_READY: {
-
 		} break;
 		case NOTIFICATION_PARENTED:
 		case NOTIFICATION_ENTER_TREE: {
-
 		} break;
 		case NOTIFICATION_PROCESS: {
-
 		} break;
 		case NOTIFICATION_DRAW: {
 		}
@@ -415,7 +394,6 @@ void DestructibleSprite::_notification(int p_what) {
 }
 
 void DestructibleSprite::_bind_methods() {
-
 	BIND_ENUM_CONSTANT(DESTRUCTION_EXPLODE);
 	BIND_ENUM_CONSTANT(DESTRUCTION_COLLAPSE);
 	BIND_ENUM_CONSTANT(DESTRUCTION_PHYSICS_OFF);
@@ -467,7 +445,6 @@ void DestructibleSprite::_bind_methods() {
 }
 
 DestructibleSprite::DestructibleSprite() {
-
 	destruction_type = DESTRUCTION_COLLAPSE;
 	destruction_physics = DESTRUCTION_PHYSICS_STANDARD;
 	blocks_per_side = 6;

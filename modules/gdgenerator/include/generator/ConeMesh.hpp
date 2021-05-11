@@ -48,7 +48,7 @@ namespace generator {
 /// @image html ConeMesh.svg
 class ConeMesh {
 private:
-	using Impl = AxisSwapMesh<LatheMesh<LineShape> >;
+	using Impl = AxisSwapMesh<LatheMesh<LineShape>>;
 	Impl axisSwapMesh_;
 
 public:

@@ -45,20 +45,17 @@
 class ShaderMetal {
 protected:
 	struct Enum {
-
 		uint64_t mask;
 		uint64_t shift;
 		const char *defines[16];
 	};
 
 	struct EnumValue {
-
 		uint64_t set_mask;
 		uint64_t clear_mask;
 	};
 
 	struct AttributePair {
-
 		const char *name;
 		int index;
 	};
@@ -69,19 +66,16 @@ protected:
 	};
 
 	struct TexUnitPair {
-
 		const char *name;
 		int index;
 	};
 
 	struct UBOPair {
-
 		const char *name;
 		int index;
 	};
 
 	struct Feedback {
-
 		const char *name;
 		int conditional;
 	};
@@ -100,7 +94,6 @@ private:
 	int attribute_pair_count;
 
 	struct CustomCode {
-
 		String vertex;
 		String vertex_globals;
 		String fragment;
@@ -114,7 +107,6 @@ private:
 	};
 
 	struct Version {
-
 		int id;
 		int vert_id;
 		int frag_id;
@@ -134,7 +126,6 @@ private:
 	Version *version;
 
 	union VersionKey {
-
 		struct {
 			uint32_t version;
 			uint32_t code_version;
@@ -145,7 +136,6 @@ private:
 	};
 
 	struct VersionKeyHash {
-
 		static _FORCE_INLINE_ uint32_t hash(const VersionKey &p_key) { return HashMapHasherDefault::hash(p_key.key); };
 	};
 
@@ -225,12 +215,9 @@ public:
 	void free_custom_shader(uint32_t p_code_id);
 
 	void set_uniform_default(int p_idx, const Variant &p_value) {
-
 		if (p_value.get_type() == Variant::NIL) {
-
 			uniform_defaults.erase(p_idx);
 		} else {
-
 			uniform_defaults[p_idx] = p_value;
 		}
 		uniforms_dirty = true;
@@ -240,20 +227,17 @@ public:
 	_FORCE_INLINE_ bool is_version_valid() const { return version && version->ok; }
 
 	void set_uniform_camera(int p_idx, const CameraMatrix &p_mat) {
-
 		uniform_cameras[p_idx] = p_mat;
 		uniforms_dirty = true;
 	};
 
 	_FORCE_INLINE_ void set_texture_uniform(int p_idx, const Variant &p_value) {
-
 		ERR_FAIL_COND(!version);
 		ERR_FAIL_INDEX(p_idx, version->texture_uniform_locations.size());
 		_set_uniform_variant(version->texture_uniform_locations[p_idx], p_value);
 	}
 
 	_FORCE_INLINE_ int get_texture_uniform_location(int p_idx) {
-
 		ERR_FAIL_COND_V(!version, -1);
 		ERR_FAIL_INDEX_V(p_idx, version->texture_uniform_locations.size(), -1);
 		return version->texture_uniform_locations[p_idx];
@@ -284,14 +268,12 @@ public:
 // called a lot, made inline
 
 int ShaderMetal::_get_uniform(int p_which) const {
-
 	ERR_FAIL_INDEX_V(p_which, uniform_count, -1);
 	ERR_FAIL_COND_V(!version, -1);
 	return version->uniform_location[p_which];
 }
 
 void ShaderMetal::_set_conditional(int p_which, bool p_value) {
-
 	ERR_FAIL_INDEX(p_which, conditional_count);
 	if (p_value)
 		new_conditional_version.version |= (1 << p_which);

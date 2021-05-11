@@ -42,7 +42,6 @@
 #include "scene/gui/range.h"
 
 class RoundProgress : public Range {
-
 	GDCLASS(RoundProgress, Range);
 
 	bool value_visible;

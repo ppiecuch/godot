@@ -34,7 +34,6 @@
 #include "zip_reader.h"
 
 void register_zip_types() {
-
 	ClassDB::register_class<ZIPReader>();
 	ClassDB::register_class<ZIPPacker>();
 }

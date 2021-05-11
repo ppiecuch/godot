@@ -36,7 +36,6 @@
 #define GME_MATH_TAU 3.14159265358979323846 * 2
 
 class GodotMathExtension : public Object {
-
 	GDCLASS(GodotMathExtension, Object);
 
 	static GodotMathExtension *singleton;
@@ -104,7 +103,6 @@ public:
 	static _FORCE_INLINE_ Vector2 get_2d_position_from_3d_position_with_screen_limits(const Camera *p_camera, const Vector3 &p_position_3d,
 			const Vector2 &screen_size, const Vector2 &screen_center,
 			const Vector2 &screen_mins, const Vector2 &screen_max) {
-
 		bool is_behind = camera_get_position_distance(p_camera, p_position_3d) < 0.0f;
 		;
 
@@ -243,7 +241,6 @@ public:
 };
 
 class _GodotMathExtension : public Object {
-
 	GDCLASS(_GodotMathExtension, Object);
 
 	static _GodotMathExtension *singleton;

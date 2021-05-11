@@ -157,7 +157,6 @@ LineBuilder2D::LineBuilder2D() {
 }
 
 void LineBuilder2D::_bind_methods() {
-
 	ClassDB::bind_method("get_points", &LineBuilder2D::get_points);
 	ClassDB::bind_method("set_points", &LineBuilder2D::set_points);
 	ClassDB::bind_method("set_default_color", &LineBuilder2D::set_default_color);

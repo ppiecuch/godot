@@ -48,7 +48,7 @@ namespace generator {
 /// @image html TorusMesh.svg
 class TorusMesh {
 private:
-	using Impl = AxisSwapMesh<LatheMesh<TranslateShape<CircleShape> > >;
+	using Impl = AxisSwapMesh<LatheMesh<TranslateShape<CircleShape>>>;
 	Impl axisSwapMesh_;
 
 public:

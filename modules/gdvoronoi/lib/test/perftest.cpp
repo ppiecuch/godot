@@ -106,11 +106,11 @@ struct Context {
 	std::vector<voronoi::VoronoiSite *> vpp_sites;
 #endif
 #if defined(USE_BOOST)
-	std::vector<boost::polygon::point_data<float> > boost_points;
+	std::vector<boost::polygon::point_data<float>> boost_points;
 #endif
 
-	std::vector<std::pair<PointF, PointF> > collectededges;
-	std::vector<std::pair<PointF, std::vector<std::pair<PointF, PointF> > > > collectedcells;
+	std::vector<std::pair<PointF, PointF>> collectededges;
+	std::vector<std::pair<PointF, std::vector<std::pair<PointF, PointF>>>> collectedcells;
 };
 
 #define MAP_DIMENSION 4096
@@ -200,7 +200,7 @@ int jc_voronoi(Context *context) {
 		for (int i = 0; i < context->count; ++i) {
 			const jcv_site &site = sites[i];
 
-			std::vector<std::pair<PointF, PointF> > collectedsiteedges;
+			std::vector<std::pair<PointF, PointF>> collectedsiteedges;
 
 			const jcv_graphedge *e = site.edges;
 			while (e) {
@@ -275,7 +275,7 @@ int voronoiplusplus_voronoi(Context *context) {
 		//for( size_t i = 0; i < cells.size(); ++i )
 		for (std::map<voronoi::VoronoiSite *, voronoi::VoronoiCell *>::const_iterator it = cells.begin();
 				it != cells.end(); ++it) {
-			std::vector<std::pair<PointF, PointF> > collectedsiteedges;
+			std::vector<std::pair<PointF, PointF>> collectedsiteedges;
 
 			const voronoi::VoronoiSite &site = *it->first;
 			const voronoi::VoronoiCell &cell = *it->second;
@@ -350,7 +350,7 @@ static int boost_voronoi(Context *context) {
 			const boost::polygon::voronoi_diagram<double>::cell_type &cell = *it;
 			const boost::polygon::voronoi_diagram<double>::edge_type *edge = cell.incident_edge();
 
-			std::vector<std::pair<PointF, PointF> > collectedgraphedges;
+			std::vector<std::pair<PointF, PointF>> collectedgraphedges;
 			do {
 				//if(edge->is_primary())
 				{
@@ -390,7 +390,8 @@ static void plot_line(int x0, int y0, int x1, int y1, unsigned char *image, int 
 
 	for (;;) { // loop
 		plot(x0, y0, image, dimension, dimension, nchannels, color);
-		if (x0 == x1 && y0 == y1) break;
+		if (x0 == x1 && y0 == y1)
+			break;
 		e2 = 2 * err;
 		if (e2 >= dy) {
 			err += dy;
@@ -474,7 +475,7 @@ static void output_image(const char *name, Context *context) {
 
 	for (size_t i = 0; i < context->collectedcells.size(); ++i) {
 		const PointF &site = context->collectedcells[i].first;
-		const std::vector<std::pair<PointF, PointF> > &edges = context->collectedcells[i].second;
+		const std::vector<std::pair<PointF, PointF>> &edges = context->collectedcells[i].second;
 
 		unsigned char color_tri[3];
 		int colorcount = 0;

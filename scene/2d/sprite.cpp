@@ -174,7 +174,6 @@ Ref<Texture> Sprite::get_normal_map() const {
 }
 
 void Sprite::set_mask(const Ref<MaskTexture> &p_texture) {
-
 	if (mask.is_valid())
 		mask->disconnect(CoreStringNames::get_singleton()->changed, this, "_texture_changed");
 
@@ -187,7 +186,6 @@ void Sprite::set_mask(const Ref<MaskTexture> &p_texture) {
 }
 
 Ref<MaskTexture> Sprite::get_mask() const {
-
 	return mask;
 }
 

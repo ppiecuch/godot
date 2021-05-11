@@ -343,7 +343,6 @@ public:
 		StencilActionType fail_stencil;
 
 		union StencilKey {
-
 			struct {
 				uint64_t value : 8;
 				uint64_t read_mask : 8;
@@ -362,7 +361,6 @@ public:
 		};
 
 		_FORCE_INLINE_ StencilKey _compute_key() const {
-
 			StencilKey mk;
 			mk.key = 0;
 			mk.value = value;

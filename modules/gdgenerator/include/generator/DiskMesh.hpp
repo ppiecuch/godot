@@ -47,7 +47,7 @@ namespace generator {
 /// @image html DiskMesh.svg
 class DiskMesh {
 private:
-	using Impl = AxisSwapMesh<LatheMesh<LineShape> >;
+	using Impl = AxisSwapMesh<LatheMesh<LineShape>>;
 	Impl axisSwapMesh_;
 
 public:

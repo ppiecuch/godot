@@ -107,14 +107,12 @@ static Ref<Starfield::CacheInfo> _texture_cache;
 } // namespace
 
 void Starfield::_regenerate() {
-
 	for (unsigned int l = 0; l < _layers.size(); ++l) {
 		regenerate(l);
 	}
 }
 
 void Starfield::_update_mesh() {
-
 	if (_mesh_solid.is_valid())
 		_mesh_solid->clear_mesh();
 	if (_mesh_textured.is_valid())
@@ -122,21 +120,18 @@ void Starfield::_update_mesh() {
 
 	Array mesh_array;
 	for (auto &layer : _layers) {
-
 		mesh_array.clear();
 		mesh_array.resize(VS::ARRAY_MAX);
 		mesh_array[VS::ARRAY_VERTEX] = layer.vertexes;
 		mesh_array[VS::ARRAY_COLOR] = layer.colors;
 
 		if (layer.uv.size() > 0) {
-
 			mesh_array[VS::ARRAY_TEX_UV] = layer.uv;
 
 			if (_mesh_textured.is_null())
 				_mesh_textured = newref(ArrayMesh);
 			_mesh_textured->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array, Array(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
 		} else {
-
 			if (_mesh_solid.is_null())
 				_mesh_solid = newref(ArrayMesh);
 			if (layer.star_size == 0 && layer.texture_id == STAR_POINT) {
@@ -150,7 +145,6 @@ void Starfield::_update_mesh() {
 }
 
 layerid_t Starfield::add_stars(int p_number_of_stars, Size2 p_layer_size, real_t p_star_size, StarTexture p_texture_id, const Color &p_color) {
-
 	if (p_texture_id > STAR_TEXTURE_VALID) {
 		WARN_PRINT("Invalid texture id.");
 		p_texture_id = STAR1_TEXTURE;
@@ -243,12 +237,24 @@ void Starfield::move(real_t p_delta, Vector2 p_movement) {
 				//const real_t anim_speed = 1/MAX(layer.star_pulsation, 0.2);
 				StarTexture new_texture_id = layer.texture_id;
 				switch (layer.texture_id) {
-					case STAR12_TEXTURE_FRAME1: new_texture_id = STAR12_TEXTURE_FRAME2; break;
-					case STAR12_TEXTURE_FRAME2: new_texture_id = STAR12_TEXTURE_FRAME3; break;
-					case STAR12_TEXTURE_FRAME3: new_texture_id = STAR12_TEXTURE_FRAME4; break;
-					case STAR12_TEXTURE_FRAME4: new_texture_id = STAR12_TEXTURE_FRAME5; break;
-					case STAR12_TEXTURE_FRAME5: new_texture_id = STAR12_TEXTURE_FRAME6; break;
-					case STAR12_TEXTURE_FRAME6: new_texture_id = STAR12_TEXTURE_FRAME1; break;
+					case STAR12_TEXTURE_FRAME1:
+						new_texture_id = STAR12_TEXTURE_FRAME2;
+						break;
+					case STAR12_TEXTURE_FRAME2:
+						new_texture_id = STAR12_TEXTURE_FRAME3;
+						break;
+					case STAR12_TEXTURE_FRAME3:
+						new_texture_id = STAR12_TEXTURE_FRAME4;
+						break;
+					case STAR12_TEXTURE_FRAME4:
+						new_texture_id = STAR12_TEXTURE_FRAME5;
+						break;
+					case STAR12_TEXTURE_FRAME5:
+						new_texture_id = STAR12_TEXTURE_FRAME6;
+						break;
+					case STAR12_TEXTURE_FRAME6:
+						new_texture_id = STAR12_TEXTURE_FRAME1;
+						break;
 					default:
 						// not an animated texture
 						continue;
@@ -277,7 +283,6 @@ void Starfield::move(real_t p_delta, Vector2 p_movement) {
 }
 
 void Starfield::_push_quad(PoolVector2Array &array, Point2 origin, real_t size) {
-
 	const Vector2 sidex(size, 0);
 	const Vector2 sidey(0, size);
 
@@ -294,7 +299,6 @@ void Starfield::_push_quad(PoolVector2Array &array, Point2 origin, real_t size) 
 }
 
 void Starfield::_insert_quad(PoolVector2Array &array, int position, Point2 origin, real_t size) {
-
 	const Vector2 sidex(size, 0);
 	const Vector2 sidey(0, size);
 
@@ -329,7 +333,6 @@ void Starfield::regenerate(layerid_t p_layer) {
 	auto wp = positions.write();
 	auto wc = colors.write();
 	for (int p = 0; p < layer.num_stars; ++p) {
-
 		auto &position = wp[p];
 		auto &color = wc[p];
 		position = { random_value(0, layer.layer_size.x), random_value(0, layer.layer_size.y) };
@@ -338,11 +341,9 @@ void Starfield::regenerate(layerid_t p_layer) {
 	}
 
 	if (layer.star_size == 0 && layer.texture_id == STAR_POINT) {
-
 		layer.vertexes = positions;
 		layer.colors = colors;
 	} else {
-
 		PoolVector2Array vertexes, uv;
 		PoolColorArray vertexes_color;
 
@@ -447,11 +448,10 @@ void Starfield::ready(Node2D *p_owner) {
 	ERR_FAIL_COND(p_owner == nullptr);
 
 	if (!_texture_cache.is_valid()) {
-
 		Ref<CacheInfo> cache_info = newref(CacheInfo);
 
 		// build texture atlas from resources
-		Vector<Ref<Image> > images;
+		Vector<Ref<Image>> images;
 		Vector<String> names;
 		std::vector<EmbedImageItem> embed(embed_starfield_res, embed_starfield_res + embed_starfield_res_count);
 		for (const auto &r : embed) {
@@ -471,20 +471,17 @@ void Starfield::ready(Node2D *p_owner) {
 
 		Array pages = atlas_info["_generated_images"];
 		if (pages.size() > 1) {
-
 			WARN_PRINT("Too many texture pages - using only first one for Starfield.");
 		}
 		Ref<Image> atlas_image = pages[0];
 
 		Vector2 atlas_size(1, 1);
 		if (atlas_image.is_valid()) {
-
 			Ref<ImageTexture> texture = newref(ImageTexture);
 			texture->create_from_image(atlas_image);
 			atlas_size = texture->get_size();
 			cache_info->texture = texture;
 		} else {
-
 			WARN_PRINT("Atlas image is not valid, Skipping!");
 		}
 
@@ -554,7 +551,6 @@ void Starfield::ready(Node2D *p_owner) {
 }
 
 Starfield::Starfield() {
-
 	_mesh_solid = Ref<ArrayMesh>(NULL);
 	_mesh_textured = Ref<ArrayMesh>(NULL);
 	_needs_refresh = false;

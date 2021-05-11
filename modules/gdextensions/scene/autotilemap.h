@@ -208,7 +208,7 @@ private:
 	int _height = 0;
 	int _base_tile = 0;
 	Vector<int32_t> _data; //TypedArray instead?
-	Vector<Ref<Autotiler> > _autotilers;
+	Vector<Ref<Autotiler>> _autotilers;
 	bool _blob_mode = false;
 };
 

@@ -98,7 +98,6 @@ void _register_global_resources(Object *ref) {
 
 #ifdef TOOLS_ENABLED
 static void editor_init_callback() {
-
 	Engine::get_singleton()->add_singleton(Engine::Singleton("GodotErrorHandler", memnew(GodotErrorHandler)));
 
 	EditorNode::get_singleton()->add_editor_plugin(memnew(Cable2DEditorPlugin(EditorNode::get_singleton()))); /* Cable2D */
@@ -108,7 +107,6 @@ static void editor_init_callback() {
 #endif
 
 void register_gdextensions_types() {
-
 	ClassDB::register_class<BehaviorNode>();
 	ClassDB::register_class<TimerBNode>();
 	ClassDB::register_class<ProbabilityBNode>();
@@ -198,7 +196,6 @@ void register_gdextensions_types() {
 }
 
 void unregister_gdextensions_types() {
-
 	if (Timer2 *instance = Timer2::get_singleton())
 		memdelete(instance);
 	if (Tween2 *instance = Tween2::get_singleton())

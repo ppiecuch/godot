@@ -66,12 +66,14 @@ public:
 	using reference = value_type &;
 
 	/// Creates a dummy end iterator.
-	Iterator() noexcept : generator_{ nullptr },
-						  value_{} {}
+	Iterator() noexcept :
+			generator_{ nullptr },
+			value_{} {}
 
 	/// Iterator to the given generator.
-	Iterator(Generator &generator) noexcept : generator_{ &generator },
-											  value_{} {
+	Iterator(Generator &generator) noexcept :
+			generator_{ &generator },
+			value_{} {
 		if (generator_->done())
 			generator_ = nullptr;
 		else
@@ -82,7 +84,8 @@ public:
 	/// Might make the iterator "out of range".
 	/// @throws std::out_of_range If the iterator is out of range.
 	Iterator &operator++() {
-		if (!generator_) throw std::out_of_range("Iterator out of range!");
+		if (!generator_)
+			throw std::out_of_range("Iterator out of range!");
 		generator_->next();
 		if (generator_->done())
 			generator_ = nullptr;
@@ -94,14 +97,16 @@ public:
 	/// Get reference to the current generated value.
 	/// @throws std::out_of_range If the iterator is out of range.
 	const typename Iterator::value_type &operator*() const {
-		if (!generator_) throw std::out_of_range("Iterator out of range!");
+		if (!generator_)
+			throw std::out_of_range("Iterator out of range!");
 		return value_;
 	}
 
 	/// Get pointer to the current generated value.
 	/// @throws std::out_of_range If the iterator is out of range
 	const typename Iterator::value_type *operator->() const {
-		if (!generator_) throw std::out_of_range("Iterator out of range!");
+		if (!generator_)
+			throw std::out_of_range("Iterator out of range!");
 		return &value_;
 	}
 

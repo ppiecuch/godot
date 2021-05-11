@@ -51,7 +51,7 @@ private:
 	using Impl = MergeMesh<
 			CylinderMesh,
 			TranslateMesh<SphereMesh>,
-			TranslateMesh<SphereMesh> >;
+			TranslateMesh<SphereMesh>>;
 	Impl mergeMesh_;
 
 public:

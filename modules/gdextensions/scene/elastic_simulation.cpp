@@ -90,7 +90,8 @@ struct Particle {
 	Particle(const Point2 &xy, real_t mass) :
 			fixed(NO), mass(mass) { rest = position = previous = xy; }
 	void correct(const Vector2 &v) {
-		if (!fixed) position += v;
+		if (!fixed)
+			position += v;
 	}
 	void simulate(real_t delta, const Vector2 &force) {
 		if (!fixed) {
@@ -162,11 +163,11 @@ struct Sim {
 // Simple beam simulation
 
 class Simulation {
-
 private:
 	float _ALWAYS_INLINE_ _deform_angle(int orientation, float angle) {
 		// converting atan2 result to: 0 .. 180|180 .. 0
-		if (angle < 0) angle = -angle;
+		if (angle < 0)
+			angle = -angle;
 		// return always-positive deform angle
 		return Math::abs(orientation + angle);
 	}
@@ -312,7 +313,6 @@ public:
 // Mesh FFD 2D deformation
 
 class MeshDeformation {
-
 	Vector2 S, T; // Local coordinate system
 	int Sc, Tc; // Number of controls for S, T respectively.  (Sc, Tc must be >= 1)
 	ParticleParamsArray vparams; // mesh vertex info and parameters
@@ -377,7 +377,6 @@ class MeshDeformation {
 } // namespace sim3
 
 static Vector2Array _sim_geometry(const Size2 &p_rect, int p_segments, bool p_dynamic_split, ElasticSimulation::Anchor p_anchor, Vector2 &starting, Vector2 &opposite) {
-
 	const bool vert = p_anchor == ElasticSimulation::SIM_ANCHOR_BOTTOM || p_anchor == ElasticSimulation::SIM_ANCHOR_TOP;
 	const bool horiz = p_anchor == ElasticSimulation::SIM_ANCHOR_LEFT || p_anchor == ElasticSimulation::SIM_ANCHOR_RIGHT;
 
@@ -457,9 +456,12 @@ static Vector2Array _sim_geometry(const Size2 &p_rect, int p_segments, bool p_dy
 int _ALWAYS_INLINE_ _get_orientation(ElasticSimulation::Anchor anchor) {
 	switch (anchor) {
 		case ElasticSimulation::SIM_ANCHOR_TOP:
-		case ElasticSimulation::SIM_ANCHOR_BOTTOM: return -90;
-		case ElasticSimulation::SIM_ANCHOR_LEFT: return 0;
-		case ElasticSimulation::SIM_ANCHOR_RIGHT: return -180;
+		case ElasticSimulation::SIM_ANCHOR_BOTTOM:
+			return -90;
+		case ElasticSimulation::SIM_ANCHOR_LEFT:
+			return 0;
+		case ElasticSimulation::SIM_ANCHOR_RIGHT:
+			return -180;
 		default: {
 			WARN_PRINT("Invalid anchor value.");
 			return 0;
@@ -468,7 +470,6 @@ int _ALWAYS_INLINE_ _get_orientation(ElasticSimulation::Anchor anchor) {
 }
 
 int ElasticSimulation::make_sim(const Size2 &p_rect, int p_segments, bool p_dynamic_split, Anchor p_anchor, real_t p_stiffness_factor, bool p_variation) {
-
 	ERR_FAIL_COND_V(p_segments < 1, -1);
 
 #ifdef DEBUG_ENABLED
@@ -484,7 +485,6 @@ int ElasticSimulation::make_sim(const Size2 &p_rect, int p_segments, bool p_dyna
 }
 
 void ElasticSimulation::update_sim(simid_t p_sim_id, const Size2 &p_rect, int p_segments, bool p_dynamic_split, Anchor p_anchor, real_t p_stiffness_factor, bool p_variation) {
-
 	ERR_FAIL_INDEX(p_sim_id, _sim->simulations.size());
 	ERR_FAIL_COND(p_segments < 0);
 
@@ -521,9 +521,12 @@ void ElasticSimulation::set_sim_state(simid_t p_sim_id, State p_state) {
 ElasticSimulation::State ElasticSimulation::get_sim_state(simid_t p_sim_id) const {
 	ERR_FAIL_INDEX_V(p_sim_id, _sim->simulations.size(), SIM_STATE_REMOVED);
 	switch (_sim->simulations[p_sim_id].state) {
-		case sim3::Sim::StateRunning: return SIM_STATE_RUNNING;
-		case sim3::Sim::StatePaused: return SIM_STATE_PAUSED;
-		default: return SIM_STATE_REMOVED;
+		case sim3::Sim::StateRunning:
+			return SIM_STATE_RUNNING;
+		case sim3::Sim::StatePaused:
+			return SIM_STATE_PAUSED;
+		default:
+			return SIM_STATE_REMOVED;
 	}
 }
 
@@ -534,7 +537,6 @@ void ElasticSimulation::remove_sim(simid_t p_sim_id) {
 }
 
 void ElasticSimulation::reset_sim() {
-
 	_sim->reset();
 }
 
@@ -584,13 +586,11 @@ ElasticSimulation::Constraint ElasticSimulation::get_sim_constraint_at(simid_t p
 }
 
 void ElasticSimulation::simulate_all(float p_delta, const Vector2 &p_force) {
-
 	time_passed += p_delta;
 	_sim->simulate(p_delta, p_force);
 }
 
 void ElasticSimulation::simulate(float p_delta, const std::map<simid_t, Vector2> &p_forces) {
-
 	std::vector<Vector2> forces(_sim->simulations.size());
 	for (const auto &f : p_forces) {
 		ERR_FAIL_INDEX(f.first, _sim->simulations.size());
@@ -601,7 +601,6 @@ void ElasticSimulation::simulate(float p_delta, const std::map<simid_t, Vector2>
 }
 
 void ElasticSimulation::_bind_methods() {
-
 	BIND_ENUM_CONSTANT(SIM_ANCHOR_LEFT);
 	BIND_ENUM_CONSTANT(SIM_ANCHOR_RIGHT);
 	BIND_ENUM_CONSTANT(SIM_ANCHOR_TOP);
@@ -613,13 +612,11 @@ void ElasticSimulation::_bind_methods() {
 }
 
 ElasticSimulation::ElasticSimulation() {
-
 	time_passed = 0.0;
 	_sim = std::unique_ptr<sim3::Simulation>(new sim3::Simulation());
 }
 
 ElasticSimulation::~ElasticSimulation() {
-
 	if (sim3::Simulation *sim = _sim.release())
 		delete sim;
 }

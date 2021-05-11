@@ -499,7 +499,6 @@ private:
 
 						// copy default plugins
 						if (copy_addons->is_pressed() && DirAccess::exists(addons_path)) {
-
 							PoolStringArray dirs;
 							DirAccess *addons_da = DirAccess::open(addons_path);
 							if (addons_da) {
@@ -1722,7 +1721,6 @@ void ProjectList::_panel_input(const Ref<InputEvent> &p_ev, Node *p_hb) {
 
 		switch (mb->get_button_index()) {
 			case BUTTON_LEFT: {
-
 				if (mb->get_shift() && _selected_project_keys.size() > 0 && _last_clicked != "" && clicked_project.project_key != _last_clicked) {
 					int anchor_index = -1;
 					for (int i = 0; i < _projects.size(); ++i) {
@@ -2280,9 +2278,7 @@ void ProjectManager::_show_about() {
 }
 
 void ProjectManager::_project_menu_id_pressed(int p_option) {
-
 	switch (p_option) {
-
 		case ID_CLEAR_CACHE: {
 			_clear_project_cache();
 		} break;
@@ -2298,7 +2294,6 @@ void ProjectManager::_project_menu_id_pressed(int p_option) {
 }
 
 void ProjectManager::_clear_project_cache_confirm() {
-
 	String &key = _last_context_project.key;
 	String &path = _last_context_project.path;
 
@@ -2337,14 +2332,12 @@ void ProjectManager::_clear_project_cache_confirm() {
 }
 
 void ProjectManager::_clear_project_cache() {
-
 	clear_project_cache_ask->set_text(TTR("Clear cache of selected project?"));
 	clear_project_cache_ask->get_label()->set_align(Label::ALIGN_CENTER);
 	clear_project_cache_ask->popup_centered_minsize();
 }
 
 void ProjectManager::_clear_project_import_confirm() {
-
 	String &key = _last_context_project.key;
 	String &path = _last_context_project.path;
 
@@ -2365,14 +2358,12 @@ void ProjectManager::_clear_project_import_confirm() {
 }
 
 void ProjectManager::_clear_project_import() {
-
 	clear_project_import_ask->set_text(TTR("Clear .import folder from this project?\nYou will need to import all resources again after opening the project."));
 	clear_project_import_ask->get_label()->set_align(Label::ALIGN_CENTER);
 	clear_project_import_ask->popup_centered_minsize();
 }
 
 void ProjectManager::_clear_project_data_confirm() {
-
 	String &key = _last_context_project.key;
 	String &path = _last_context_project.path;
 
@@ -2404,7 +2395,6 @@ void ProjectManager::_clear_project_data_confirm() {
 }
 
 void ProjectManager::_clear_project_data() {
-
 	clear_project_data_ask->set_text(TTR("Clear user data from this project?\nIt will delete all files stored in user://."));
 	clear_project_data_ask->get_label()->set_align(Label::ALIGN_CENTER);
 	clear_project_data_ask->popup_centered_minsize();

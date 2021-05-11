@@ -36,7 +36,6 @@
 #include "scene/resources/texture.h"
 
 class NixieFont : public Node2D {
-
 	GDCLASS(NixieFont, Node2D);
 
 public:

@@ -35,7 +35,6 @@
 #include "editor/plugins/abstract_polygon_2d_editor.h"
 
 class Cable2DEditor : public AbstractPolygon2DEditor {
-
 	GDCLASS(Cable2DEditor, AbstractPolygon2DEditor);
 
 	Cable2D *node;
@@ -54,7 +53,6 @@ public:
 };
 
 class Cable2DEditorPlugin : public AbstractPolygon2DEditorPlugin {
-
 	GDCLASS(Cable2DEditorPlugin, AbstractPolygon2DEditorPlugin);
 
 public:

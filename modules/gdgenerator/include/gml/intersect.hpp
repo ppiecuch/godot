@@ -50,7 +50,7 @@ namespace gml {
 /// @param viewportSize Size of the viewport
 /// @return Ray origin and unit length ray direction vector.
 template <typename T, typename TI, typename TS>
-std::tuple<vec<T, 3>, vec<T, 3> > pickRay(
+std::tuple<vec<T, 3>, vec<T, 3>> pickRay(
 		const vec<TI, 2> &mpos,
 		const mat<T, 4, 4> &view, const mat<T, 4, 4> &proj,
 		const vec<TI, 2> &viewportOrigin, const vec<TS, 2> &viewportSize) {
@@ -64,7 +64,7 @@ std::tuple<vec<T, 3>, vec<T, 3> > pickRay(
 /// @param viewportSize Size of the viewport
 /// @return Ray origin and unit length ray direction vector.
 template <typename T, typename TI, typename TS>
-std::tuple<vec<T, 3>, vec<T, 3> > pickRay(
+std::tuple<vec<T, 3>, vec<T, 3>> pickRay(
 		const vec<TI, 2> &mpos,
 		const mat<T, 4, 4> &invProjView,
 		const vec<TI, 2> &viewportOrigin, const vec<TS, 2> &viewportSize) {

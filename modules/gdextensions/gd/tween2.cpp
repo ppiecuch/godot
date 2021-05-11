@@ -82,7 +82,6 @@ Variant TweenProperty::lerp(Variant from, Variant to, float per) {
 	r.element = Math::lerp(i.element, d.element, per);
 
 	switch (from.get_type()) {
-
 		case Variant::BOOL:
 			result = ((int)Math::lerp((int)from, (int)to, per)) >= 0.5;
 			break;

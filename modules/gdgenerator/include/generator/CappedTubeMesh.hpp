@@ -77,7 +77,7 @@ public:
 /// @image html CappedTubeMesh.svg
 class CappedTubeMesh {
 private:
-	using Impl = MergeMesh<TubeMesh, detail::TubeCap, FlipMesh<detail::TubeCap> >;
+	using Impl = MergeMesh<TubeMesh, detail::TubeCap, FlipMesh<detail::TubeCap>>;
 	Impl mergeMesh_;
 
 public:

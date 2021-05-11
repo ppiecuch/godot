@@ -56,7 +56,8 @@ public:
 	class Triangles {
 	public:
 		Triangle generate() const {
-			if (!head_.done()) return head_.generate();
+			if (!head_.done())
+				return head_.generate();
 
 			Triangle triangle = tail_.generate();
 			triangle.vertices += head_VertexCount;
@@ -76,7 +77,7 @@ public:
 
 	private:
 		typename TriangleGeneratorType<Head>::Type head_;
-		typename TriangleGeneratorType<MergeMesh<Tail...> >::Type tail_;
+		typename TriangleGeneratorType<MergeMesh<Tail...>>::Type tail_;
 
 		int head_VertexCount;
 
@@ -94,7 +95,8 @@ public:
 	class Vertices {
 	public:
 		MeshVertex generate() const {
-			if (!head_.done()) return head_.generate();
+			if (!head_.done())
+				return head_.generate();
 			return tail_.generate();
 		}
 
@@ -111,7 +113,7 @@ public:
 
 	private:
 		typename VertexGeneratorType<Head>::Type head_;
-		typename VertexGeneratorType<MergeMesh<Tail...> >::Type tail_;
+		typename VertexGeneratorType<MergeMesh<Tail...>>::Type tail_;
 
 		bool mAllDone;
 

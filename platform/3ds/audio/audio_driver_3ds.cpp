@@ -38,7 +38,6 @@
 static int channel_num = 1;
 
 Error AudioDriver3ds::init() {
-
 	if (ndspInit() < 0)
 		return FAILED;
 
@@ -78,7 +77,6 @@ Error AudioDriver3ds::init() {
 };
 
 void AudioDriver3ds::thread_func(void *p_udata) {
-
 	int buffer_index = 0;
 	ndspWaveBuf *buffer;
 
@@ -87,7 +85,6 @@ void AudioDriver3ds::thread_func(void *p_udata) {
 	int sample_count = ad->buffer_size * ad->channels;
 
 	while (!ad->exit_thread) {
-
 		buffer = &ad->ndsp_buffers[buffer_index % NDSP_BUFFER_COUNT];
 
 		while (!ad->exit_thread && (!ad->active || buffer->status != NDSP_WBUF_DONE))
@@ -121,32 +118,26 @@ void AudioDriver3ds::thread_func(void *p_udata) {
 };
 
 void AudioDriver3ds::start() {
-
 	active = true;
 };
 
 int AudioDriver3ds::get_mix_rate() const {
-
 	return mix_rate;
 };
 
 AudioDriver::SpeakerMode AudioDriver3ds::get_speaker_mode() const {
-
 	return output_format;
 };
 
 void AudioDriver3ds::lock() {
-
 	mutex.lock();
 };
 
 void AudioDriver3ds::unlock() {
-
 	mutex.unlock();
 };
 
 void AudioDriver3ds::finish() {
-
 	exit_thread = true;
 	if (thread.is_started()) {
 		thread.wait_to_finish();

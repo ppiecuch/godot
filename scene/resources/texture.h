@@ -243,7 +243,6 @@ public:
 VARIANT_ENUM_CAST(ImageTexture::Storage);
 
 class MaskTexture : public Texture {
-
 	GDCLASS(MaskTexture, Texture);
 	RES_BASE_EXTENSION("msktex");
 

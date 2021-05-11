@@ -41,7 +41,6 @@
 #include "scene/resources/mesh_data_tool.h"
 
 class SphericalWaves : public Reference {
-
 	GDCLASS(SphericalWaves, Reference);
 
 	real_t *currentAmplitudes;

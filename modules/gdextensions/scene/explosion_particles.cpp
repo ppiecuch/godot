@@ -44,7 +44,6 @@
 
 #ifdef TOOLS_ENABLED
 Dictionary FakeExplosionParticles2D::_edit_get_state() const {
-
 	Dictionary state = Node2D::_edit_get_state();
 	state["view_size"] = get_view_size();
 
@@ -180,7 +179,6 @@ T FakeExplosionParticles2D::_rand_array(const std::vector<T> &array) {
 }
 
 void FakeExplosionParticles2D::_particles_explode(real_t delta) {
-
 	for (auto &particle : _particles) {
 		particle.velocity.x *= particle.velocity_increment.x;
 		particle.velocity.y *= particle.velocity_increment.y;
@@ -205,7 +203,6 @@ void FakeExplosionParticles2D::_particles_explode(real_t delta) {
 }
 
 void FakeExplosionParticles2D::_create_particles() {
-
 	// Set initial values.
 	const int particles_number = _get_random_number();
 	// Empty the particles array.
@@ -228,7 +225,6 @@ void FakeExplosionParticles2D::_create_particles() {
 }
 
 void FakeExplosionParticles2D::_on_particles_timer_timeout() {
-
 	// Create new particles every time the timer times out.
 	_create_particles();
 	if (_repeat_counter == 0)
@@ -238,7 +234,6 @@ void FakeExplosionParticles2D::_on_particles_timer_timeout() {
 }
 
 void FakeExplosionParticles2D::_notification(int p_what) {
-
 	switch (p_what) {
 		case NOTIFICATION_READY: {
 		} break;
@@ -267,10 +262,12 @@ void FakeExplosionParticles2D::_notification(int p_what) {
 					case CLIP_NONE: {
 					} break;
 					case CLIP_INSIDE: {
-						if (_is_inside_circle(emitter_origin, spread_radius, particle_position)) continue;
+						if (_is_inside_circle(emitter_origin, spread_radius, particle_position))
+							continue;
 					} break;
 					case CLIP_OUTSIDE: {
-						if (!_is_inside_circle(emitter_origin, spread_radius, particle_position)) continue;
+						if (!_is_inside_circle(emitter_origin, spread_radius, particle_position))
+							continue;
 					} break;
 					default: {
 						WARN_PRINT("Invalid view clipping mode.");
@@ -431,7 +428,6 @@ void FakeExplosionParticles2D::repeat_explosion(float p_wait_time, int p_repeat_
 }
 
 void FakeExplosionParticles2D::_bind_methods() {
-
 	BIND_ENUM_CONSTANT(CLIP_NONE);
 	BIND_ENUM_CONSTANT(CLIP_OUTSIDE);
 	BIND_ENUM_CONSTANT(CLIP_INSIDE);
@@ -496,7 +492,6 @@ void FakeExplosionParticles2D::_bind_methods() {
 }
 
 FakeExplosionParticles2D::FakeExplosionParticles2D() {
-
 	min_particles_number = 20;
 	max_particles_number = 40;
 
@@ -523,14 +518,12 @@ FakeExplosionParticles2D::FakeExplosionParticles2D() {
 }
 
 void RigidBodyParticlesTracker::_on_remover_timeout() {
-
 	if (particle) {
 		particle->queue_delete();
 	}
 }
 
 void RigidBodyParticlesTracker::_notification(int p_what) {
-
 	switch (p_what) {
 		case NOTIFICATION_READY: {
 			if ((_remover = memnew(Timer))) {
@@ -556,12 +549,10 @@ void RigidBodyParticlesTracker::_notification(int p_what) {
 }
 
 void RigidBodyParticlesTracker::_bind_methods() {
-
 	ClassDB::bind_method(D_METHOD("_on_remover_timeout"), &RigidBodyParticlesTracker::_on_remover_timeout);
 }
 
 RigidBodyParticlesTracker::RigidBodyParticlesTracker::RigidBodyParticlesTracker() {
-
 	particle = nullptr;
 	lifetime = 0;
 	impulse_angle = 0;
@@ -572,7 +563,6 @@ RigidBodyParticlesTracker::RigidBodyParticlesTracker::RigidBodyParticlesTracker(
 }
 
 void RigidBodyParticles2D::_on_shot_timer_timeout() {
-
 	_emit_count = 0;
 	_iteration += 1;
 	_shot_started = false;
@@ -585,7 +575,6 @@ void RigidBodyParticles2D::_on_shot_timer_timeout() {
 }
 
 void RigidBodyParticles2D::_notification(int p_what) {
-
 	switch (p_what) {
 		case NOTIFICATION_READY: {
 			if ((_shot_timer = new Timer())) {
@@ -608,7 +597,6 @@ void RigidBodyParticles2D::_notification(int p_what) {
 }
 
 void RigidBodyParticles2D::_bind_methods() {
-
 	ClassDB::bind_method(D_METHOD("_on_shot_timer_timeout"), &RigidBodyParticles2D::_on_shot_timer_timeout);
 
 	ADD_SIGNAL(MethodInfo("shot_started"));
@@ -616,7 +604,6 @@ void RigidBodyParticles2D::_bind_methods() {
 }
 
 RigidBodyParticles2D::RigidBodyParticles2D() {
-
 	emitting = true;
 	amount = 8;
 	amount_random = 0;

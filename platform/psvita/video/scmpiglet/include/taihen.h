@@ -1,8 +1,38 @@
+/*************************************************************************/
+/*  taihen.h                                                             */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 /**
  * @brief      CFW framework for Vita
  */
-#ifndef TAI_HEADER
-#define TAI_HEADER
+#ifndef TAIHEN_H_
+#define TAIHEN_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,49 +81,49 @@ extern "C" {
  *             This supplements the output of `sceKernelGetModuleInfo`
  */
 typedef struct _tai_module_info {
-  size_t size;                ///< Structure size, set to sizeof(tai_module_info_t)
-  SceUID modid;               ///< Module UID
-  uint32_t module_nid;        ///< Module NID
-  char name[27];              ///< Module name
-  uintptr_t exports_start;    ///< Pointer to export table in process address space
-  uintptr_t exports_end;      ///< Pointer to end of export table
-  uintptr_t imports_start;    ///< Pointer to import table in process address space
-  uintptr_t imports_end;      ///< Pointer to end of import table
+	size_t size; ///< Structure size, set to sizeof(tai_module_info_t)
+	SceUID modid; ///< Module UID
+	uint32_t module_nid; ///< Module NID
+	char name[27]; ///< Module name
+	uintptr_t exports_start; ///< Pointer to export table in process address space
+	uintptr_t exports_end; ///< Pointer to end of export table
+	uintptr_t imports_start; ///< Pointer to import table in process address space
+	uintptr_t imports_end; ///< Pointer to end of import table
 } tai_module_info_t;
 
 /**
  * @brief      Pass hook arguments to kernel
  */
 typedef struct _tai_hook_args {
-  size_t size;
-  const char *module;
-  uint32_t library_nid;
-  uint32_t func_nid;
-  const void *hook_func;
+	size_t size;
+	const char *module;
+	uint32_t library_nid;
+	uint32_t func_nid;
+	const void *hook_func;
 } tai_hook_args_t;
 
 /**
  * @brief      Pass offset arguments to kernel
  */
 typedef struct _tai_offset_args {
-  size_t size;
-  SceUID modid;
-  int segidx;
-  uint32_t offset;
-  int thumb;
-  const void *source;
-  size_t source_size;
+	size_t size;
+	SceUID modid;
+	int segidx;
+	uint32_t offset;
+	int thumb;
+	const void *source;
+	size_t source_size;
 } tai_offset_args_t;
 
 /**
  * @brief      Pass module arguments to kernel
  */
 typedef struct _tai_module_args {
-  size_t size;
-  SceUID pid;
-  size_t args;
-  void *argp;
-  int flags;
+	size_t size;
+	SceUID pid;
+	size_t args;
+	void *argp;
+	int flags;
 } tai_module_args_t;
 
 /**
@@ -137,12 +167,12 @@ typedef struct _tai_module_args {
  *  ```c
  *  SceUID open_hook(const char *path, int flags, SceMode mode) {
  *    SceUID ret;
- *    
+ *
  *    if (strcmp(path, "ux0:id.dat") == 0) {
  *      path = "ux0:id-redirect.dat";
  *      printf("redirecting path\n");
  *    }
- *    
+ *
  *    ret = TAI_CONTINUE(SceUID, open_ref, path, flags, mode);
  *    printf("opened: %s, return: %x\n", path, ret);
  *    return ret;
@@ -200,7 +230,7 @@ typedef struct _tai_module_args {
  *  Note that calling the original `ksceIoOpen` will recurse
  *  back to `recurse_open_hook` so it is _very important_ to avoid an
  *  infinite recursion. In this case, we check that the parameter is
- *  not the same, but more complex checks may be needed for other 
+ *  not the same, but more complex checks may be needed for other
  *  function.
  */
 /** @{ */
@@ -218,9 +248,9 @@ typedef uintptr_t tai_hook_ref_t;
  * @brief      Internal structure
  */
 struct _tai_hook_user {
-  uintptr_t next;
-  void *func;
-  void *old;
+	uintptr_t next;
+	void *func;
+	void *old;
 };
 
 /** @name Kernel Hooks
@@ -235,9 +265,9 @@ int taiGetModuleInfoForKernel(SceUID pid, const char *module, tai_module_info_t 
 int taiHookReleaseForKernel(SceUID tai_uid, tai_hook_ref_t hook);
 /** @} */
 
-/** 
+/**
  * @name User Hooks
- * Hooks exports to user 
+ * Hooks exports to user
  */
 /** @{ */
 SceUID taiHookFunctionExportForUser(tai_hook_ref_t *p_hook, tai_hook_args_t *args);
@@ -269,13 +299,13 @@ int taiHookRelease(SceUID tai_uid, tai_hook_ref_t hook);
  * @return     { description_of_the_return_value }
  */
 HELPER SceUID taiHookFunctionExport(tai_hook_ref_t *p_hook, const char *module, uint32_t library_nid, uint32_t func_nid, const void *hook_func) {
-  tai_hook_args_t args;
-  args.size = sizeof(args);
-  args.module = module;
-  args.library_nid = library_nid;
-  args.func_nid = func_nid;
-  args.hook_func = hook_func;
-  return taiHookFunctionExportForUser(p_hook, &args);
+	tai_hook_args_t args;
+	args.size = sizeof(args);
+	args.module = module;
+	args.library_nid = library_nid;
+	args.func_nid = func_nid;
+	args.hook_func = hook_func;
+	return taiHookFunctionExportForUser(p_hook, &args);
 }
 
 /**
@@ -299,13 +329,13 @@ HELPER SceUID taiHookFunctionExport(tai_hook_ref_t *p_hook, const char *module, 
  * @param[in]  hook_func           The hook function
  */
 HELPER SceUID taiHookFunctionImport(tai_hook_ref_t *p_hook, const char *module, uint32_t import_library_nid, uint32_t import_func_nid, const void *hook_func) {
-  tai_hook_args_t args;
-  args.size = sizeof(args);
-  args.module = module;
-  args.library_nid = import_library_nid;
-  args.func_nid = import_func_nid;
-  args.hook_func = hook_func;
-  return taiHookFunctionImportForUser(p_hook, &args);
+	tai_hook_args_t args;
+	args.size = sizeof(args);
+	args.module = module;
+	args.library_nid = import_library_nid;
+	args.func_nid = import_func_nid;
+	args.hook_func = hook_func;
+	return taiHookFunctionImportForUser(p_hook, &args);
 }
 
 /**
@@ -322,14 +352,14 @@ HELPER SceUID taiHookFunctionImport(tai_hook_ref_t *p_hook, const char *module, 
  *                        space)
  */
 HELPER SceUID taiHookFunctionOffset(tai_hook_ref_t *p_hook, SceUID modid, int segidx, uint32_t offset, int thumb, const void *hook_func) {
-  tai_offset_args_t args;
-  args.size = sizeof(args);
-  args.modid = modid;
-  args.segidx = segidx;
-  args.offset = offset;
-  args.thumb = thumb;
-  args.source = hook_func;
-  return taiHookFunctionOffsetForUser(p_hook, &args);
+	tai_offset_args_t args;
+	args.size = sizeof(args);
+	args.modid = modid;
+	args.segidx = segidx;
+	args.offset = offset;
+	args.thumb = thumb;
+	args.source = hook_func;
+	return taiHookFunctionOffsetForUser(p_hook, &args);
 }
 /** @} */
 
@@ -342,15 +372,13 @@ HELPER SceUID taiHookFunctionOffset(tai_hook_ref_t *p_hook, SceUID modid, int se
  *
  * @return     Return value from the hook chain
  */
-#define TAI_CONTINUE(type, hook, ...) ({ \
-  struct _tai_hook_user *cur, *next; \
-  cur = (struct _tai_hook_user *)(hook); \
-  next = (struct _tai_hook_user *)cur->next; \
-  (next == NULL) ? \
-    ((type(*)())cur->old)(__VA_ARGS__) \
-  : \
-    ((type(*)())next->func)(__VA_ARGS__) \
-  ; \
+#define TAI_CONTINUE(type, hook, ...) ({          \
+	struct _tai_hook_user *cur, *next;            \
+	cur = (struct _tai_hook_user *)(hook);        \
+	next = (struct _tai_hook_user *)cur->next;    \
+	(next == NULL) ?                              \
+			  ((type(*)())cur->old)(__VA_ARGS__) :  \
+			  ((type(*)())next->func)(__VA_ARGS__); \
 })
 #else // __GNUC__
 #error Non-GCC compatible compilers are currently unsupported
@@ -371,7 +399,7 @@ HELPER SceUID taiHookFunctionOffset(tai_hook_ref_t *p_hook, SceUID modid, int se
 /** @{ */
 
 /** @name Kernel Injections
- * Injection exports to kernel 
+ * Injection exports to kernel
  */
 /** @{ */
 SceUID taiInjectAbsForKernel(SceUID pid, void *dest, const void *src, size_t size);
@@ -379,9 +407,9 @@ SceUID taiInjectDataForKernel(SceUID pid, SceUID modid, int segidx, uint32_t off
 int taiInjectReleaseForKernel(SceUID tai_uid);
 /** @} */
 
-/** 
+/**
  * @name User Injections
- * Injection exports to user 
+ * Injection exports to user
  */
 /** @{ */
 SceUID taiInjectAbs(void *dest, const void *src, size_t size);
@@ -400,14 +428,14 @@ int taiInjectRelease(SceUID tai_uid);
  * @param[in]  size    The size of the injection in bytes
  */
 HELPER SceUID taiInjectData(SceUID modid, int segidx, uint32_t offset, const void *data, size_t size) {
-  tai_offset_args_t args;
-  args.size = sizeof(args);
-  args.modid = modid;
-  args.segidx = segidx;
-  args.offset = offset;
-  args.source_size = size;
-  args.source = data;
-  return taiInjectDataForUser(&args);
+	tai_offset_args_t args;
+	args.size = sizeof(args);
+	args.modid = modid;
+	args.segidx = segidx;
+	args.offset = offset;
+	args.source_size = size;
+	args.source = data;
+	return taiInjectDataForUser(&args);
 }
 /** @} */
 
@@ -452,12 +480,12 @@ int taiStopUnloadModuleForPidForUser(SceUID modid, tai_module_args_t *args, void
  * @param      res    Return value of `module_start`
  */
 HELPER int taiStartKernelModule(SceUID modid, int args, void *argp, int flags, void *opt, int *res) {
-  tai_module_args_t argg;
-  argg.size = sizeof(argg);
-  argg.args = args;
-  argg.argp = argp;
-  argg.flags = flags;
-  return taiStartKernelModuleForUser(modid, &argg, opt, res);
+	tai_module_args_t argg;
+	argg.size = sizeof(argg);
+	argg.args = args;
+	argg.argp = argp;
+	argg.flags = flags;
+	return taiStartKernelModuleForUser(modid, &argg, opt, res);
 }
 
 /**
@@ -471,12 +499,12 @@ HELPER int taiStartKernelModule(SceUID modid, int args, void *argp, int flags, v
  * @param[in]  flags  The flags
  */
 HELPER SceUID taiLoadStartKernelModule(const char *path, int args, void *argp, int flags) {
-  tai_module_args_t argg;
-  argg.size = sizeof(argg);
-  argg.args = args;
-  argg.argp = argp;
-  argg.flags = flags;
-  return taiLoadStartKernelModuleForUser(path, &argg);
+	tai_module_args_t argg;
+	argg.size = sizeof(argg);
+	argg.args = args;
+	argg.argp = argp;
+	argg.flags = flags;
+	return taiLoadStartKernelModuleForUser(path, &argg);
 }
 
 /**
@@ -491,13 +519,13 @@ HELPER SceUID taiLoadStartKernelModule(const char *path, int args, void *argp, i
  * @param[in]  flags  The flags
  */
 HELPER SceUID taiLoadStartModuleForPid(SceUID pid, const char *path, int args, void *argp, int flags) {
-  tai_module_args_t argg;
-  argg.size = sizeof(argg);
-  argg.pid = pid;
-  argg.args = args;
-  argg.argp = argp;
-  argg.flags = flags;
-  return taiLoadStartModuleForPidForUser(path, &argg);
+	tai_module_args_t argg;
+	argg.size = sizeof(argg);
+	argg.pid = pid;
+	argg.args = args;
+	argg.argp = argp;
+	argg.flags = flags;
+	return taiLoadStartModuleForPidForUser(path, &argg);
 }
 
 /**
@@ -513,12 +541,12 @@ HELPER SceUID taiLoadStartModuleForPid(SceUID pid, const char *path, int args, v
  * @param      res    Return value of `module_stop`
  */
 HELPER int taiStopKernelModule(SceUID modid, int args, void *argp, int flags, void *opt, int *res) {
-  tai_module_args_t argg;
-  argg.size = sizeof(argg);
-  argg.args = args;
-  argg.argp = argp;
-  argg.flags = flags;
-  return taiStopKernelModuleForUser(modid, &argg, opt, res);
+	tai_module_args_t argg;
+	argg.size = sizeof(argg);
+	argg.args = args;
+	argg.argp = argp;
+	argg.flags = flags;
+	return taiStopKernelModuleForUser(modid, &argg, opt, res);
 }
 
 /**
@@ -534,12 +562,12 @@ HELPER int taiStopKernelModule(SceUID modid, int args, void *argp, int flags, vo
  * @param      res    Return value of `module_stop`
  */
 HELPER int taiStopUnloadKernelModule(SceUID modid, int args, void *argp, int flags, void *opt, int *res) {
-  tai_module_args_t argg;
-  argg.size = sizeof(argg);
-  argg.args = args;
-  argg.argp = argp;
-  argg.flags = flags;
-  return taiStopUnloadKernelModuleForUser(modid, &argg, opt, res);
+	tai_module_args_t argg;
+	argg.size = sizeof(argg);
+	argg.args = args;
+	argg.argp = argp;
+	argg.flags = flags;
+	return taiStopUnloadKernelModuleForUser(modid, &argg, opt, res);
 }
 
 /**
@@ -556,13 +584,13 @@ HELPER int taiStopUnloadKernelModule(SceUID modid, int args, void *argp, int fla
  * @param      res    Return value of `module_stop`
  */
 HELPER int taiStopModuleForPid(SceUID pid, SceUID modid, int args, void *argp, int flags, void *opt, int *res) {
-  tai_module_args_t argg;
-  argg.size = sizeof(argg);
-  argg.pid = pid;
-  argg.args = args;
-  argg.argp = argp;
-  argg.flags = flags;
-  return taiStopModuleForPidForUser(modid, &argg, opt, res);
+	tai_module_args_t argg;
+	argg.size = sizeof(argg);
+	argg.pid = pid;
+	argg.args = args;
+	argg.argp = argp;
+	argg.flags = flags;
+	return taiStopModuleForPidForUser(modid, &argg, opt, res);
 }
 
 /**
@@ -579,13 +607,13 @@ HELPER int taiStopModuleForPid(SceUID pid, SceUID modid, int args, void *argp, i
  * @param      res    Return value of `module_stop`
  */
 HELPER int taiStopUnloadModuleForPid(SceUID pid, SceUID modid, int args, void *argp, int flags, void *opt, int *res) {
-  tai_module_args_t argg;
-  argg.size = sizeof(argg);
-  argg.pid = pid;
-  argg.args = args;
-  argg.argp = argp;
-  argg.flags = flags;
-  return taiStopUnloadModuleForPidForUser(modid, &argg, opt, res);
+	tai_module_args_t argg;
+	argg.size = sizeof(argg);
+	argg.pid = pid;
+	argg.args = args;
+	argg.argp = argp;
+	argg.flags = flags;
+	return taiStopUnloadModuleForPidForUser(modid, &argg, opt, res);
 }
 
 /** @} */
@@ -617,4 +645,4 @@ int taiMemcpyKernelToUser(void *user_dst, const void *kernel_src, size_t len);
 }
 #endif
 
-#endif // TAI_HEADER
+#endif // TAIHEN_H_

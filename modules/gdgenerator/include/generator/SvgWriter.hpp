@@ -117,7 +117,7 @@ private:
 
 	bool cullface_;
 
-	mutable std::vector<std::unique_ptr<BaseElem> > elems_;
+	mutable std::vector<std::unique_ptr<BaseElem>> elems_;
 
 public:
 	/// @param width Width of the image in pixels
@@ -167,7 +167,6 @@ public:
 	template <typename Shape>
 	void writeShape(
 			const Shape &shape, bool writeVertices = false, bool writeAxis = false) {
-
 		std::vector<ShapeVertex> vertices{};
 		for (const auto &vertex : shape.vertices()) {
 			vertices.push_back(vertex);
@@ -203,7 +202,6 @@ public:
 	template <typename Path>
 	void writePath(
 			const Path &path, bool writeVertices = false, bool writeAxis = false) {
-
 		std::vector<PathVertex> vertices{};
 		for (const auto &temp : path.vertices()) {
 			vertices.push_back(temp);
@@ -233,7 +231,6 @@ public:
 	template <typename Mesh>
 	void writeMesh(
 			const Mesh &mesh, bool writeVertices = false, bool writeNormals = false) {
-
 		std::vector<MeshVertex> vertices{};
 		for (const MeshVertex &vertex : mesh.vertices()) {
 			vertices.push_back(vertex);

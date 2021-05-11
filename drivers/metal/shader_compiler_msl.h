@@ -39,8 +39,7 @@
 class ShaderCompilerMetal {
 public:
 	struct IdentifierActions {
-
-		Map<StringName, Pair<int *, int> > render_mode_values;
+		Map<StringName, Pair<int *, int>> render_mode_values;
 		Map<StringName, bool *> render_mode_flags;
 		Map<StringName, bool *> usage_flag_pointers;
 		Map<StringName, bool *> write_flag_pointers;
@@ -53,7 +52,6 @@ public:
 	};
 
 	struct GeneratedCode {
-
 		Vector<CharString> defines;
 		Vector<StringName> texture_uniforms;
 		Vector<ShaderLanguage::DataType> texture_types;
@@ -76,7 +74,6 @@ private:
 	ShaderLanguage parser;
 
 	struct DefaultIdentifierActions {
-
 		Map<StringName, String> renames;
 		Map<StringName, String> render_mode_defines;
 		Map<StringName, String> usage_defines;

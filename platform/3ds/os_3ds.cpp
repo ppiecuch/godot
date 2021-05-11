@@ -198,7 +198,6 @@ Error OS_3DS::set_cwd(const String &p_cwd) {
 }
 
 OS::Date OS_3DS::get_date(bool utc) const {
-
 	time_t t = time(NULL);
 	struct tm *lt;
 	if (utc)

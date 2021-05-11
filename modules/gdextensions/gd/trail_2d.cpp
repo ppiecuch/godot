@@ -35,7 +35,6 @@
 #include "trail_2d.h"
 
 void TrailPoint2D::_update_frame(bool minus) {
-
 	_update_position(minus);
 	if (minus) {
 		if (trail_enable && (span_frame == 0 || (++span_count > span_frame))) {
@@ -48,7 +47,6 @@ void TrailPoint2D::_update_frame(bool minus) {
 }
 
 void TrailPoint2D::_update_position(bool minus) {
-
 	Vector2 new_pos = get_global_position();
 	Vector2 offset = (new_pos - old_position) / get_global_transform().get_scale();
 	old_position = new_pos;
@@ -66,7 +64,6 @@ void TrailPoint2D::_update_position(bool minus) {
 }
 
 void TrailPoint2D::_normal_points(int idx, int total, Vector2 &res1, Vector2 &res2) {
-
 	const int count = trail_items[idx].count;
 	bool has_before = false, has_front = false;
 	Point2 pos_o = trail_items[idx].position, pos_f = pos_o, pos_b = pos_o;
@@ -114,11 +111,8 @@ void TrailPoint2D::_normal_points(int idx, int total, Vector2 &res1, Vector2 &re
 }
 
 void TrailPoint2D::_update_trail_target() {
-
 	if (is_inside_tree()) {
-
 		if (target_path != NodePath() && has_node(target_path)) {
-
 			CanvasItem *nt = Object::cast_to<CanvasItem>(get_node(target_path));
 
 			if (nt != trail_target) {
@@ -137,31 +131,27 @@ void TrailPoint2D::_update_trail_target() {
 }
 
 void TrailPoint2D::_on_exit_tree() {
-
 	if (trail_target != nullptr) {
-
 		trail_target->disconnect("tree_exiting", this, "_on_exit_tree");
 		trail_target = nullptr;
 	}
 }
 
 Rect2 TrailPoint2D::get_item_rect() const {
-
 	return Rect2(Point2(-10, -10), Size2(20, 20));
 }
 
 real_t determinant(Vector2 v1, Vector2 v2) {
-
 	return v1.x * v2.y - v2.x * v1.y;
 }
 
 int intersect(Point2 point_a1, Point2 point_a2, Point2 point_b1, Point2 point_b2, Point2 *result) {
-
 	const real_t delta = determinant(point_a2 - point_a1, point_b1 - point_b2);
 	const real_t d1 = determinant(point_b1 - point_a1, point_b1 - point_b2);
 	const real_t d2 = determinant(point_a2 - point_a1, point_b1 - point_a1);
 	if (delta == 0) {
-		if (d1 == 0 || d2 == 0) return -1;
+		if (d1 == 0 || d2 == 0)
+			return -1;
 		return 0;
 	}
 	const real_t namenda = d1 / delta;
@@ -180,7 +170,6 @@ int intersect(Point2 point_a1, Point2 point_a2, Point2 point_b1, Point2 point_b2
 }
 
 void TrailPoint2D::_notification(int p_what) {
-
 	switch (p_what) {
 		case NOTIFICATION_READY: {
 			set_physics_process(true);
@@ -210,7 +199,8 @@ void TrailPoint2D::_notification(int p_what) {
 
 		case NOTIFICATION_DRAW: {
 			const int total = trail_items.size();
-			if (wave != 0) time_during += get_process_delta_time();
+			if (wave != 0)
+				time_during += get_process_delta_time();
 			for (int n = total - 2; n >= 0; n--) {
 				if (trail_items[n].count > 0) {
 					const real_t per1 = 1 - trail_items[n].count / (real_t)(total - 1);
@@ -221,7 +211,8 @@ void TrailPoint2D::_notification(int p_what) {
 									  &p2 = trail_items[n + 1].position;
 						if (p1 != p2) {
 							real_t f = 1 - per1;
-							if (f > 1) f = 1;
+							if (f > 1)
+								f = 1;
 							draw_line(p1, p2, line_color.is_valid() ? line_color->get_color_at_offset(per1) : Color(1, 1, 1, 1 - per1), f * line_width);
 						}
 					} else {
@@ -239,7 +230,6 @@ void TrailPoint2D::_notification(int p_what) {
 }
 
 void TrailPoint2D::_bind_methods() {
-
 	ClassDB::bind_method(D_METHOD("get_trail_enable"), &TrailPoint2D::get_trail_enable);
 	ClassDB::bind_method(D_METHOD("set_trail_enable", "trail_enable"), &TrailPoint2D::set_trail_enable);
 
@@ -286,12 +276,10 @@ void TrailPoint2D::_bind_methods() {
 }
 
 Rect2 TrailLine2D::get_item_rect() const {
-
 	return Rect2(Point2(-10, -10), Size2(20, 20));
 }
 
 void TrailLine2D::_update_frame(bool minus) {
-
 	_update_position(minus);
 	if (minus) {
 		if (trail_enable && (span_frame == 0 || (++span_count > span_frame))) {
@@ -307,7 +295,6 @@ void TrailLine2D::_update_frame(bool minus) {
 }
 
 void TrailLine2D::_update_position(bool minus) {
-
 	Vector2 new_pos = get_global_position();
 	Vector2 offset = (new_pos - old_position) / get_global_transform().get_scale();
 	old_position = new_pos;
@@ -323,11 +310,11 @@ void TrailLine2D::_update_position(bool minus) {
 	}
 }
 
-Vector<Vector<Point2> > simplify(Vector<Point2> original) {
-
-	Vector<Vector<Point2> > new_vs;
+Vector<Vector<Point2>> simplify(Vector<Point2> original) {
+	Vector<Vector<Point2>> new_vs;
 	int total = original.size();
-	if (total < 3) return new_vs;
+	if (total < 3)
+		return new_vs;
 	int i = 0;
 	Vector<Point2> n_path;
 	n_path.push_back(original[0]);
@@ -346,7 +333,8 @@ Vector<Vector<Point2> > simplify(Vector<Point2> original) {
 				next = (next + 1) % total;
 			}
 		}
-		if (!conti) break;
+		if (!conti)
+			break;
 		const Vector2 &p2 = original[next];
 		n_path.push_back(p2);
 		i = next;
@@ -355,7 +343,8 @@ Vector<Vector<Point2> > simplify(Vector<Point2> original) {
 	if (total >= 3) {
 		int off = 0;
 		while (off < total) {
-			if (total <= 3) break;
+			if (total <= 3)
+				break;
 			Point2 &p1 = n_path.write[off], p2 = n_path[(off + 1) % total];
 			int c_off = off + 1;
 			while (c_off < total) {
@@ -377,7 +366,7 @@ Vector<Vector<Point2> > simplify(Vector<Point2> original) {
 						n_path.remove(off + 1);
 					}
 					total = n_path.size();
-					Vector<Vector<Point2> > s_p = simplify(vs);
+					Vector<Vector<Point2>> s_p = simplify(vs);
 					for (int k = 0, t = s_p.size(); k < t; ++k) {
 						new_vs.push_back(s_p[k]);
 					}
@@ -396,7 +385,7 @@ Vector<Vector<Point2> > simplify(Vector<Point2> original) {
 						vs.push_back(n_path[off + 1]);
 						n_path.remove(off + 1);
 					}
-					Vector<Vector<Point2> > s_p = simplify(vs);
+					Vector<Vector<Point2>> s_p = simplify(vs);
 					for (int k = 0, t = s_p.size(); k < t; ++k) {
 						new_vs.push_back(s_p[k]);
 					}
@@ -412,13 +401,13 @@ Vector<Vector<Point2> > simplify(Vector<Point2> original) {
 			off += 1;
 		}
 	}
-	if (total > 3) new_vs.push_back(n_path);
+	if (total > 3)
+		new_vs.push_back(n_path);
 
 	return new_vs;
 }
 
 void TrailLine2D::_notification(int p_what) {
-
 	switch (p_what) {
 		case NOTIFICATION_READY: {
 			set_physics_process(true);
@@ -468,7 +457,6 @@ void TrailLine2D::_notification(int p_what) {
 }
 
 void TrailLine2D::_bind_methods() {
-
 	ClassDB::bind_method(D_METHOD("get_trail_enable"), &TrailLine2D::get_trail_enable);
 	ClassDB::bind_method(D_METHOD("set_trail_enable", "trail_enable"), &TrailLine2D::set_trail_enable);
 

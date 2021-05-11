@@ -39,7 +39,6 @@
 #include "round_progress.h"
 
 Size2 RoundProgress::get_minimum_size() const {
-
 	Ref<StyleBox> bg = get_stylebox("bg");
 	Ref<Font> font = get_font("font");
 
@@ -51,9 +50,7 @@ Size2 RoundProgress::get_minimum_size() const {
 }
 
 void RoundProgress::_notification(int p_what) {
-
 	if (p_what == NOTIFICATION_DRAW) {
-
 		Ref<StyleBox> bg = get_stylebox("bg");
 		Ref<StyleBox> fg = get_stylebox("fg");
 		Ref<Font> font = get_font("font");
@@ -64,7 +61,6 @@ void RoundProgress::_notification(int p_what) {
 		int mp = fg->get_minimum_size().width;
 		int p = r * get_size().width - mp;
 		if (p > 0) {
-
 			draw_style_box(fg, Rect2(Point2(), Size2(p + fg->get_minimum_size().width, get_size().height)));
 		}
 
@@ -76,25 +72,21 @@ void RoundProgress::_notification(int p_what) {
 }
 
 void RoundProgress::set_value_visible(bool p_visible) {
-
 	value_visible = p_visible;
 	update();
 }
 
 bool RoundProgress::is_value_visible() const {
-
 	return value_visible;
 }
 
 void RoundProgress::_bind_methods() {
-
 	ClassDB::bind_method(D_METHOD("set_value_visible", "visible"), &RoundProgress::set_value_visible);
 	ClassDB::bind_method(D_METHOD("is_value_visible"), &RoundProgress::is_value_visible);
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "value/visible"), "set_value_visible", "is_value_visible");
 }
 
 RoundProgress::RoundProgress() {
-
 	set_v_size_flags(0);
 	value_visible = true;
 }

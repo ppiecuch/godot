@@ -84,7 +84,8 @@ bool Banner::pushFullWidth(unsigned c) {
 	unsigned cw = charWidth[c];
 
 	// controllo che il carattere stia nel buffer
-	if (charPosition + cw > maxLenght) return false;
+	if (charPosition + cw > maxLenght)
+		return false;
 
 	unsigned maxlen = maxLenght - charPosition;
 	for (unsigned i = 0; i < Height; ++i)
@@ -105,7 +106,8 @@ bool Banner::pushMonospaced(unsigned c) {
 	unsigned dd = Width >= cw ? Width - cw : 0; // extra spazi
 
 	// controllo che il carattere stia nel buffer
-	if (charPosition + cw + dd > maxLenght) return false;
+	if (charPosition + cw + dd > maxLenght)
+		return false;
 
 	// centratura carattere
 	unsigned dR = dd / 2;
@@ -138,11 +140,13 @@ bool Banner::pushPacked(unsigned c) {
 	unsigned overlap = rspaces[0] + f->lspaces[0];
 	for (unsigned i = 1; i < Height; ++i) {
 		unsigned tmp = rspaces[i] + f->lspaces[i];
-		if (tmp < overlap) overlap = tmp;
+		if (tmp < overlap)
+			overlap = tmp;
 	}
 
 	// controllo che il carattere stia nel buffer
-	if (charPosition + cw > maxLenght + overlap) return false;
+	if (charPosition + cw > maxLenght + overlap)
+		return false;
 
 	for (unsigned i = 0; i < Height; ++i) {
 		// copio porzione di stringa
@@ -180,12 +184,16 @@ bool Banner::pushPacked(unsigned c) {
 
 char Banner::smushingRules(char left, char right) const {
 	// rule 0: left blank use right
-	if (left == ' ') return right;
+	if (left == ' ')
+		return right;
 	// rule 1: equal character smushing
-	if (left == right) return right;
+	if (left == right)
+		return right;
 	// rule 2: underscore smushing
-	if (left == '_' && strchr("|/\\[]{}()<>", right) != nullptr) return right;
-	if (right == '_' && strchr("|/\\[]{}()<>", left) != nullptr) return left;
+	if (left == '_' && strchr("|/\\[]{}()<>", right) != nullptr)
+		return right;
+	if (right == '_' && strchr("|/\\[]{}()<>", left) != nullptr)
+		return left;
 	// rule 3: hierarchy smushing
 	/* ELIMINATED
     unsigned class_left  = findClass( left );
@@ -196,16 +204,25 @@ char Banner::smushingRules(char left, char right) const {
     }
     */
 	// rule 4: opposite pair smushing
-	if (left == '[' && right == ']') return '|';
-	if (left == ']' && right == '[') return '|';
-	if (left == '{' && right == '}') return '|';
-	if (left == '}' && right == '{') return '|';
-	if (left == '(' && right == ')') return '|';
-	if (left == ')' && right == '(') return '|';
+	if (left == '[' && right == ']')
+		return '|';
+	if (left == ']' && right == '[')
+		return '|';
+	if (left == '{' && right == '}')
+		return '|';
+	if (left == '}' && right == '{')
+		return '|';
+	if (left == '(' && right == ')')
+		return '|';
+	if (left == ')' && right == '(')
+		return '|';
 	// rule 5: big X smushing
-	if (left == '/' && right == '\\') return '|';
-	if (left == '\\' && right == '/') return 'Y';
-	if (left == '>' && right == '<') return 'X';
+	if (left == '/' && right == '\\')
+		return '|';
+	if (left == '\\' && right == '/')
+		return 'Y';
+	if (left == '>' && right == '<')
+		return 'X';
 	// rule 6: hardblack smushing
 	// extra rules
 	return '\0';
@@ -228,7 +245,8 @@ bool Banner::pushSmushed(unsigned c) {
 	unsigned overlap = rspaces[0] + fchar->lspaces[0];
 	for (unsigned i = 1; i < Height; ++i) {
 		unsigned tmp = rspaces[i] + fchar->lspaces[i];
-		if (tmp < overlap) overlap = tmp;
+		if (tmp < overlap)
+			overlap = tmp;
 	}
 
 	// calcolo smush se possibile
@@ -242,12 +260,14 @@ bool Banner::pushSmushed(unsigned c) {
 				do_smush = do_smush && (smush[i] != '\0');
 			}
 		}
-		if (do_smush) ++overlap;
+		if (do_smush)
+			++overlap;
 	}
 
 	// controllo che il carattere stia nel buffer
 	unsigned cwo = cw - overlap; // >= 0
-	if (charPosition + cwo > maxLenght) return false;
+	if (charPosition + cwo > maxLenght)
+		return false;
 
 	for (unsigned i = 0; i < Height; ++i) {
 		char *pline = lines[i] + charPosition;
@@ -274,7 +294,8 @@ bool Banner::pushSmushed(unsigned c) {
 	// aggiorno spazi liberi alla destra ultimo carattere inserito
 	for (unsigned i = 0; i < Height; ++i) {
 		rspaces[i] += cwo;
-		if (rspaces[i] > fchar->rspaces[i]) rspaces[i] = fchar->rspaces[i];
+		if (rspaces[i] > fchar->rspaces[i])
+			rspaces[i] = fchar->rspaces[i];
 	}
 	//std::copy( f -> rspaces, f -> rspaces + Height, rspaces );
 	return true;
@@ -307,7 +328,8 @@ void Banner::fillForPrint(char const message[]) {
 	for (unsigned i = 0; i < Height; ++i) {
 		char *p = lines[i];
 		do {
-			if (*p == Hardblank) *p = ' ';
+			if (*p == Hardblank)
+				*p = ' ';
 		} while (*p++ != '\0');
 	}
 
@@ -317,7 +339,8 @@ void Banner::fillForPrint(char const message[]) {
 			char *p = lines[i];
 			do {
 				for (unsigned k = 0; mappingFrom[k] && mappingTo[k]; k++) {
-					if (*p == mappingFrom[k]) *p = mappingTo[k];
+					if (*p == mappingFrom[k])
+						*p = mappingTo[k];
 				}
 			} while (*p++ != '\0');
 		}
@@ -332,7 +355,6 @@ Banner::print(
 		ostream_type &s,
 		char const top[],
 		char const bottom[]) {
-
 	fillForPrint(message);
 
 	for (unsigned i = 0; i < strlen(top); ++i) {
@@ -356,7 +378,6 @@ void Banner::printFramed(
 		char const message[],
 		ostream_type &s,
 		FrameMode fm) {
-
 	fillForPrint(message);
 
 	switch (fm) {

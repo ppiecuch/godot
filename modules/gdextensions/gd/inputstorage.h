@@ -126,7 +126,8 @@ public:
 
 	int get_storage_size() { return _storage == NULL ? 0 : _storage->storage_size; }
 	void set_storage_size(int size) {
-		if (_storage != NULL) _storage->storage_size = size;
+		if (_storage != NULL)
+			_storage->storage_size = size;
 	}
 
 	InputStorageNode() {

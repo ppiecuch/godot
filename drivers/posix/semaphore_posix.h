@@ -49,7 +49,6 @@ typedef struct cgsem cgsem_t;
 #endif
 
 class SemaphorePosix {
-
 #if defined(OSX_ENABLED) || defined(IOS_ENABLED)
 	mutable cgsem_t sem;
 #else

@@ -51,9 +51,10 @@ public:
 	/// UV texture coordinates
 	gml::dvec2 texCoord;
 
-	MeshVertex() noexcept : position{},
-							normal{},
-							texCoord{} {}
+	MeshVertex() noexcept :
+			position{},
+			normal{},
+			texCoord{} {}
 };
 
 } // namespace generator

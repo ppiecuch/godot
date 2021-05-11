@@ -131,7 +131,6 @@ void TextConsole::load_font(FontSize p_font) {
 	const EmbedImageItem &data = embed_debug_font[p_font];
 
 	if (!_font_cache[p_font].is_valid()) {
-
 		constexpr Image::Format _image_format[] = {
 			Image::Format::FORMAT_MAX,
 			Image::Format::FORMAT_LA8,
@@ -365,12 +364,10 @@ void TextConsole::set_pixel_ratio(real_t p_scale) {
 }
 
 void TextConsole::logl(const String &p_msg) {
-
 	logl(p_msg, _default_fg_color_index, _default_bg_color_index);
 }
 
 void TextConsole::logl(const String &p_msg, ColorIndex foreground, ColorIndex background) {
-
 	// next line
 	_cursor_pos = Point2i(0, _put(p_msg, _cursor_pos, foreground, background).y + 1);
 	if (_cursor_pos.y == _con_size.height) {
@@ -380,7 +377,6 @@ void TextConsole::logl(const String &p_msg, ColorIndex foreground, ColorIndex ba
 }
 
 void TextConsole::logf(FigFontFace p_face, const String &p_msg) {
-
 	logf(p_face, p_msg, _default_fg_color_index, _default_bg_color_index);
 }
 
@@ -410,7 +406,6 @@ void TextConsole::logv(const Array &p_log) {
 }
 
 TextConsole::TextConsole() {
-
 	_dirty_screen = false;
 	_cursor_pos = Point2i(0, 0);
 	_default_bg_color_index = COLOR_TRANSPARENT, _default_fg_color_index = COLOR_WHITE;
@@ -418,7 +413,6 @@ TextConsole::TextConsole() {
 }
 
 TextConsole::~TextConsole() {
-
 	if (_screen)
 		memdelete_arr(_screen);
 }
@@ -435,18 +429,13 @@ Size2 ConsoleInstance::_edit_get_scale() const {
 #endif
 
 Transform2D ConsoleInstance::get_transform() const {
-
 	return Transform2D();
 }
 
 void ConsoleInstance::_notification(int p_notification) {
-
 	switch (p_notification) {
-
 		case NOTIFICATION_ENTER_TREE: {
-
 			if (!console.is_valid()) {
-
 				console = newref(TextConsole);
 				console->load_font(TextConsole::DOS_8x12);
 				Viewport *viewport = get_viewport();
@@ -457,7 +446,6 @@ void ConsoleInstance::_notification(int p_notification) {
 		} break;
 
 		case NOTIFICATION_DRAW: {
-
 			if (console.is_valid()) {
 				console->draw(get_canvas_item(), get_global_transform().affine_inverse());
 			}
@@ -474,7 +462,6 @@ void ConsoleInstance::console_msg(const String &p_msg) {
 }
 
 Error ConsoleInstance::_process_codes(const String &p_concodes) {
-
 	static const String colors_value[] = {
 		"black",
 		"blue",
@@ -509,7 +496,6 @@ Error ConsoleInstance::_process_codes(const String &p_concodes) {
 	}
 
 	while (pos < p_concodes.length()) {
-
 		int brk_pos = p_concodes.find("[", pos);
 
 		if (brk_pos < 0)
@@ -531,7 +517,6 @@ Error ConsoleInstance::_process_codes(const String &p_concodes) {
 		Vector<String> split_tag_block = tag.split(" ", false);
 
 		if (tag.begins_with("/") && tag_stack.size()) {
-
 			bool tag_ok = tag_stack.size() && tag_stack.front()->get() == tag.substr(1, tag.length());
 
 			if (tag_stack.front()->get() == "fg")
@@ -549,7 +534,6 @@ Error ConsoleInstance::_process_codes(const String &p_concodes) {
 			tag_stack.pop_front();
 
 		} else if (tag.begins_with("fg=") || tag.begins_with("bg=")) {
-
 			String col = tag.substr(3, tag.length());
 			int color_index = -1;
 
@@ -584,7 +568,6 @@ Ref<TextConsole> ConsoleInstance::get_console() const {
 }
 
 void ConsoleInstance::_bind_methods() {
-
 	ClassDB::bind_method(D_METHOD("get_console"), &ConsoleInstance::get_console);
 
 	BIND_ENUM_CONSTANT_CUSTOM(TextConsole::COLOR_BLACK, "COLOR_BLACK");
@@ -611,6 +594,5 @@ void ConsoleInstance::_bind_methods() {
 }
 
 ConsoleInstance::ConsoleInstance() {
-
 	console = Ref<TextConsole>(NULL);
 }

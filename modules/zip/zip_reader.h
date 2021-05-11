@@ -38,7 +38,6 @@
 #include "thirdparty/minizip/unzip.h"
 
 class ZIPReader : public Reference {
-
 	GDCLASS(ZIPReader, Object)
 
 	FileAccess *f;

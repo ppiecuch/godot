@@ -36,7 +36,6 @@
 #include <string.h>
 
 Error AudioDriverSCE::init() {
-
 	active = false;
 	thread_exited = false;
 	exit_thread = false;
@@ -58,12 +57,10 @@ Error AudioDriverSCE::init() {
 };
 
 void AudioDriverSCE::thread_func(void *p_udata) {
-
 	int buffer_index = 0;
 	AudioDriverSCE *ad = (AudioDriverSCE *)p_udata;
 
 	while (!ad->exit_thread) {
-
 		while (!ad->exit_thread && (!ad->active))
 			OS::get_singleton()->delay_usec(10000);
 
@@ -83,32 +80,26 @@ void AudioDriverSCE::thread_func(void *p_udata) {
 };
 
 void AudioDriverSCE::start() {
-
 	active = true;
 };
 
 int AudioDriverSCE::get_mix_rate() const {
-
 	return mix_rate;
 };
 
 AudioDriver::SpeakerMode AudioDriverSCE::get_speaker_mode() const {
-
 	return output_format;
 };
 
 void AudioDriverSCE::lock() {
-
 	mutex.lock();
 };
 
 void AudioDriverSCE::unlock() {
-
 	mutex.unlock();
 };
 
 void AudioDriverSCE::finish() {
-
 	exit_thread = true;
 	if (thread.is_started()) {
 		thread.wait_to_finish();

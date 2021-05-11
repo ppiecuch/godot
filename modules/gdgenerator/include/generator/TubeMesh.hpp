@@ -48,7 +48,7 @@ namespace generator {
 /// @image html TubeMesh.svg
 class TubeMesh {
 private:
-	using Impl = MergeMesh<CylinderMesh, FlipMesh<UvFlipMesh<CylinderMesh> > >;
+	using Impl = MergeMesh<CylinderMesh, FlipMesh<UvFlipMesh<CylinderMesh>>>;
 	Impl mergeMesh_;
 
 public:

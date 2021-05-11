@@ -56,8 +56,10 @@ public:
 			transformMesh_{
 				std::move(mesh),
 				[u, v](MeshVertex &vertex) {
-					if (u) vertex.texCoord[0] = 1.0 - vertex.texCoord[0];
-					if (v) vertex.texCoord[1] = 1.0 - vertex.texCoord[1];
+					if (u)
+						vertex.texCoord[0] = 1.0 - vertex.texCoord[0];
+					if (v)
+						vertex.texCoord[1] = 1.0 - vertex.texCoord[1];
 				}
 			} {}
 

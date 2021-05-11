@@ -60,7 +60,6 @@ void Heatmap::_bind_methods() {
 }
 
 void Heatmap::_notification(int p_what) {
-
 	switch (p_what) {
 		case NOTIFICATION_READY: {
 			_ready();
@@ -271,7 +270,6 @@ Vector2 Heatmap::refresh_cells_heat(Vector2 t_cell_position) {
 				HeatCell new_cell = HeatCell(point, layer + 1);
 
 				if (cell_index != index && cell_index >= 0 && cell_index < m_cells_heat_cache.size() && m_cells_heat_cache[cell_index] == -1 && !is_out_of_bounds(point) && std::find(queue.begin(), queue.end(), new_cell) == queue.end() && std::find(m_obstacles.begin(), m_obstacles.end(), point) == m_obstacles.end()) {
-
 					queue.push_back(new_cell);
 				}
 			}

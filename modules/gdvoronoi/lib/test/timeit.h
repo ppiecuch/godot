@@ -155,7 +155,7 @@ public:
 		m_Count = count;
 
 #if defined(USE_CHRONO)
-		std::vector<std::chrono::duration<double> > times;
+		std::vector<std::chrono::duration<double>> times;
 #else
 		std::vector<double> times;
 #endif
@@ -271,7 +271,7 @@ public:
 
 private:
 #if defined(USE_CHRONO)
-	void calc_times(std::vector<std::chrono::duration<double> > &times) {
+	void calc_times(std::vector<std::chrono::duration<double>> &times) {
 		std::sort(times.begin(), times.end());
 
 		std::chrono::duration<float> total(0);

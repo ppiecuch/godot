@@ -62,7 +62,6 @@ Error ImageLoaderBMP::convert_to_image(Ref<Image> p_image,
 			ERR_FAIL_COND_V(height % 2 != 0, ERR_UNAVAILABLE);
 
 		} else if (bits_per_pixel == 16) {
-
 			ERR_FAIL_V(ERR_UNAVAILABLE);
 		}
 

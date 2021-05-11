@@ -525,7 +525,6 @@ GDMonoAssembly *GDMono::get_loaded_assembly(const String &p_name) {
 }
 
 bool GDMono::load_assembly(const String &p_name, GDMonoAssembly **r_assembly, bool p_refonly) {
-
 #ifdef DEBUG_ENABLED
 	CRASH_COND(!r_assembly);
 #endif
@@ -539,7 +538,6 @@ bool GDMono::load_assembly(const String &p_name, GDMonoAssembly **r_assembly, bo
 }
 
 bool GDMono::load_assembly(const String &p_name, MonoAssemblyName *p_aname, GDMonoAssembly **r_assembly, bool p_refonly) {
-
 #ifdef DEBUG_ENABLED
 	CRASH_COND(!r_assembly);
 #endif
@@ -569,7 +567,6 @@ bool GDMono::load_assembly(const String &p_name, MonoAssemblyName *p_aname, GDMo
 }
 
 bool GDMono::load_assembly(const String &p_name, MonoAssemblyName *p_aname, GDMonoAssembly **r_assembly, bool p_refonly, const Vector<String> &p_search_dirs) {
-
 #ifdef DEBUG_ENABLED
 	CRASH_COND(!r_assembly);
 #endif

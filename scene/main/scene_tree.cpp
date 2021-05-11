@@ -1950,7 +1950,6 @@ void SceneTree::_call_idle_callbacks() {
 }
 
 void SceneTree::_call_exit_callbacks() {
-
 	for (int i = 0; i < exit_callback_count; i++) {
 		exit_callbacks[i]();
 	}
@@ -2011,7 +2010,6 @@ void SceneTree::get_argument_options(const StringName &p_function, int p_idx, Li
 }
 
 void SceneTree::console_show(bool p_state) {
-
 	if (Node *node = get_edited_scene_root() ? get_edited_scene_root() : current_scene) {
 		if (p_state) {
 			if (!node->has_node(text_console_name)) {
@@ -2030,7 +2028,6 @@ void SceneTree::console_show(bool p_state) {
 }
 
 void SceneTree::console_msg(const String &p_msg) {
-
 	if (Node *node = get_edited_scene_root() ? get_edited_scene_root() : current_scene) {
 		if (node->has_node(text_console_name)) {
 			if (ConsoleInstance *con = Object::cast_to<ConsoleInstance>(node->get_node(text_console_name))) {

@@ -202,9 +202,7 @@ Error BitmapFont::create_from_fnt(const String &p_file) {
 		// as this is valid xml file, assume xml bmformat
 		// based on https://github.com/godotengine/godot/blob/master/editor/collada/collada.cpp
 		while (parser->read() == OK) {
-
 			if (parser->get_node_type() == XMLParser::NODE_ELEMENT) {
-
 				if (parser->get_node_name() == "info") {
 					if (parser->has_attribute("face"))
 						set_name(parser->get_attribute_value("face"));
@@ -220,9 +218,7 @@ Error BitmapFont::create_from_fnt(const String &p_file) {
 				}
 
 				if (parser->get_node_name() == "page") {
-
 					if (parser->has_attribute("file")) {
-
 						String base_dir = p_file.get_base_dir();
 						String file = base_dir.plus_file(parser->get_attribute_value("file"));
 						Ref<Texture> tex = ResourceLoader::load(file);
@@ -268,7 +264,6 @@ Error BitmapFont::create_from_fnt(const String &p_file) {
 				}
 
 				if (parser->get_node_name() == "kerning") {
-
 					CharType first = 0, second = 0;
 					int k = 0;
 

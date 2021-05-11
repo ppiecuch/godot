@@ -49,7 +49,6 @@ void ENetNode::_notification(int p_what) {
 }
 
 void ENetNode::_update_process_mode() {
-
 	bool idle = signal_mode == MODE_IDLE || poll_mode == MODE_IDLE;
 	bool physics = signal_mode == MODE_PHYSICS || poll_mode == MODE_PHYSICS;
 
@@ -69,7 +68,6 @@ void ENetNode::_update_process_mode() {
 }
 
 void ENetNode::set_signal_mode(NetProcessMode p_mode) {
-
 	if (signal_mode == p_mode)
 		return;
 
@@ -83,7 +81,6 @@ ENetNode::NetProcessMode ENetNode::get_signal_mode() const {
 }
 
 void ENetNode::set_poll_mode(NetProcessMode p_mode) {
-
 	if (poll_mode == p_mode)
 		return;
 
@@ -123,50 +120,42 @@ void ENetNode::set_network_peer(const Ref<ENetPacketPeer> &p_network_peer) {
 }
 
 bool ENetNode::is_network_server() const {
-
 	ERR_FAIL_COND_V(!network_peer.is_valid(), false);
 	return network_peer->is_server();
 }
 
 int ENetNode::get_network_unique_id() const {
-
 	ERR_FAIL_COND_V(!network_peer.is_valid(), 0);
 	return network_peer->get_unique_id();
 }
 
 Error ENetNode::kick_client(int p_id) {
-
 	ERR_FAIL_COND_V(!network_peer.is_valid(), ERR_UNCONFIGURED);
 
 	return network_peer->disconnect_peer(p_id);
 }
 
 void ENetNode::_network_peer_connected(int p_id) {
-
 	connected_peers.insert(p_id);
 	//path_get_cache.insert(p_id,PathGetCache());
 	emit_signal("network_peer_connected", p_id);
 }
 
 void ENetNode::_network_peer_disconnected(int p_id) {
-
 	connected_peers.erase(p_id);
 	//path_get_cache.erase(p_id); //I no longer need your cache, sorry
 	emit_signal("network_peer_disconnected", p_id);
 }
 
 void ENetNode::_connected_to_server() {
-
 	emit_signal("connected_to_server");
 }
 
 void ENetNode::_connection_failed() {
-
 	emit_signal("connection_failed");
 }
 
 void ENetNode::_server_disconnected() {
-
 	emit_signal("server_disconnected");
 }
 
@@ -203,7 +192,6 @@ Error ENetNode::put_packet(NetworkedMultiplayerPeer::TransferMode p_mode, int p_
 }
 
 void ENetNode::_network_poll() {
-
 	if (!network_peer.is_valid() || network_peer->get_connection_status() == NetworkedMultiplayerPeer::CONNECTION_DISCONNECTED)
 		return;
 
@@ -211,17 +199,14 @@ void ENetNode::_network_poll() {
 }
 
 void ENetNode::_network_process() {
-
 	if (!network_peer.is_valid() || network_peer->get_connection_status() == NetworkedMultiplayerPeer::CONNECTION_DISCONNECTED)
 		return;
 
 	while (network_peer->get_available_packet_count()) {
-
 		int sender = network_peer->get_packet_peer();
 		int channel = network_peer->get_packet_channel();
 
 		if (channel == -1) {
-
 			int len;
 			const uint8_t *packet;
 
@@ -233,7 +218,6 @@ void ENetNode::_network_process() {
 			_network_process_packet(sender, packet, len);
 
 		} else {
-
 			PoolVector<uint8_t> pkt;
 
 			Error err = network_peer->get_packet_buffer(pkt);

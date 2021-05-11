@@ -49,7 +49,6 @@
 */
 
 class OS_3DS : public OS {
-
 	MainLoop *main_loop;
 	VisualServer *visual_server;
 	InputDefault *input;

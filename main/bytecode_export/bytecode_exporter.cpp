@@ -60,8 +60,10 @@ String kv(char *key, double value) {
 int put_var(const Variant &p_packet, Vector<uint8_t> *data) {
 	int len;
 	Error err = encode_variant(p_packet, NULL, len, false); // compute len first
-	if (err) return err;
-	if (len == 0) return OK;
+	if (err)
+		return err;
+	if (len == 0)
+		return OK;
 
 	uint8_t *buf = (uint8_t *)alloca(len);
 	ERR_FAIL_COND_V(!buf, ERR_OUT_OF_MEMORY);
@@ -115,7 +117,8 @@ void GDScriptBytecodeExporter::export_bytecode_to_file(String input_script_path,
 	comma1 = false;
 	for (int i = 0; i < gcc; ++i) {
 		int value = GlobalConstants::get_global_constant_value(i);
-		if (comma1) json.append(",");
+		if (comma1)
+			json.append(",");
 		json.append("{");
 		json.append("\"source\":\"GlobalConstants\",");
 		json.append("\"original_name\":" + q(String(GlobalConstants::get_global_constant_name(i))) + ",");
@@ -130,7 +133,8 @@ void GDScriptBytecodeExporter::export_bytecode_to_file(String input_script_path,
 
 	// GDSCriptLanguage-defined constants
 	TRACE("hard coded constants");
-	if (comma1) json.append(",");
+	if (comma1)
+		json.append(",");
 	json.append("{\"source\":\"hard-coded\",\"name\":\"PI\",\"original_name\":\"PI\",\"value\":\"" + rtos(Math_PI) + "\",\"type_code\":" + itos(Variant::Type::REAL) + ",\"index\":" + itos(global_index++) + ",\"kind_code\":-1},");
 	json.append("{\"source\":\"hard-coded\",\"name\":\"TAU\",\"original_name\":\"TAU\",\"value\":\"" + rtos(Math_TAU) + "\",\"type_code\":" + itos(Variant::Type::REAL) + ",\"index\":" + itos(global_index++) + ",\"kind_code\":-1},");
 	json.append("{\"source\":\"hard-coded\",\"name\":\"INF\",\"original_name\":\"INF\",\"value\":\"" + rtos(Math_INF) + "\",\"type_code\":" + itos(Variant::Type::REAL) + ",\"index\":" + itos(global_index++) + ",\"kind_code\":-1},");
@@ -211,7 +215,8 @@ void GDScriptBytecodeExporter::export_bytecode_to_file(String input_script_path,
 
 	comma1 = false;
 	for (int i = 0; i < objectJson.size(); ++i) {
-		if (comma1) json.append(",");
+		if (comma1)
+			json.append(",");
 		json.append(objectJson[i]);
 		comma1 = true;
 	}
@@ -234,7 +239,8 @@ void GDScriptBytecodeExporter::export_bytecode_to_file(String input_script_path,
 		GDScriptDataType member_type = script->get_member_type(member->get());
 		int member_index = get_member_index(*script.ptr(), member->get());
 
-		if (comma1) json.append(",");
+		if (comma1)
+			json.append(",");
 		json.append("{");
 		json.append("\"index\":" + itos(member_index) + ",");
 		json.append("\"name\":\"" + member->get() + "\",");
@@ -258,7 +264,8 @@ void GDScriptBytecodeExporter::export_bytecode_to_file(String input_script_path,
 	comma1 = false;
 	json.append("\"constants\":[");
 	for (Map<StringName, Variant>::Element *constant = constants.front(); constant; constant = constant->next()) {
-		if (comma1) json.append(",");
+		if (comma1)
+			json.append(",");
 		String vars;
 		VariantWriter::write_to_string(constant->value(), vars);
 
@@ -273,7 +280,8 @@ void GDScriptBytecodeExporter::export_bytecode_to_file(String input_script_path,
 		int len = put_var(constant->value(), &variantBuffer);
 		bool comma3 = false;
 		for (int j = 0; j < len; ++j) {
-			if (comma3) json.append(",");
+			if (comma3)
+				json.append(",");
 			json.append(itos(variantBuffer[j]));
 			comma3 = true;
 		}
@@ -289,7 +297,8 @@ void GDScriptBytecodeExporter::export_bytecode_to_file(String input_script_path,
 	comma1 = false;
 	json.append("\"signals\":[");
 	for (List<MethodInfo>::Element *signal = signals.front(); signal; signal = signal->next()) {
-		if (comma1) json.append(",");
+		if (comma1)
+			json.append(",");
 		json.append("\"" + signal->get().name + "\"");
 		comma1 = true;
 	}
@@ -308,7 +317,8 @@ void GDScriptBytecodeExporter::export_bytecode_to_file(String input_script_path,
 			GDScriptFunction *f = ((GDScript *)script.ptr())->get_member_functions()[method->get().name];
 			TRACE("  found method...");
 
-			if (comma1) json.append(",");
+			if (comma1)
+				json.append(",");
 			json.append("{");
 			json.append("\"name\": \"" + method->get().name + "\",");
 			String s = itos(method->get().id);
@@ -324,7 +334,8 @@ void GDScriptBytecodeExporter::export_bytecode_to_file(String input_script_path,
 			TRACE("  arguments:");
 			for (int i = 0; i < f->get_argument_count(); ++i) {
 				TRACE("    argument");
-				if (comma2) json.append(",");
+				if (comma2)
+					json.append(",");
 				json.append("{");
 				json.append("\"name\":\"" + f->get_argument_name(i) + "\",");
 				json.append("\"type\":" + itos(f->get_argument_type(i).builtin_type) + ",");
@@ -339,7 +350,8 @@ void GDScriptBytecodeExporter::export_bytecode_to_file(String input_script_path,
 			TRACE("  default_arguments");
 			comma2 = false;
 			for (int i = 0; i < f->get_default_argument_count(); ++i) {
-				if (comma2) json.append(",");
+				if (comma2)
+					json.append(",");
 				json.append(itos(f->get_default_argument_addr(i)));
 				comma2 = true;
 			}
@@ -348,7 +360,8 @@ void GDScriptBytecodeExporter::export_bytecode_to_file(String input_script_path,
 			json.append("\"global_names\": [");
 			comma2 = false;
 			for (int i = 0; i < f->get_global_name_count(); ++i) {
-				if (comma2) json.append(",");
+				if (comma2)
+					json.append(",");
 				json.append("\"" + f->get_global_name(i) + "\"");
 				comma2 = true;
 			}
@@ -359,7 +372,8 @@ void GDScriptBytecodeExporter::export_bytecode_to_file(String input_script_path,
 			comma2 = false;
 			for (int i = 0; i < f->get_constant_count(); ++i) {
 				TRACE("    constant");
-				if (comma2) json.append(",");
+				if (comma2)
+					json.append(",");
 				variantBuffer.clear();
 				int len = put_var(f->get_constant(i), &variantBuffer);
 
@@ -374,7 +388,8 @@ void GDScriptBytecodeExporter::export_bytecode_to_file(String input_script_path,
 				json.append("\"data\":[");
 				bool comma3 = false;
 				for (int j = 0; j < len; ++j) {
-					if (comma3) json.append(",");
+					if (comma3)
+						json.append(",");
 					json.append(itos(variantBuffer[j]));
 					comma3 = true;
 				}
@@ -388,7 +403,8 @@ void GDScriptBytecodeExporter::export_bytecode_to_file(String input_script_path,
 			json.append("\"bytecode\":[");
 			comma2 = false;
 			for (int i = 0; i < f->get_code_size(); ++i) {
-				if (comma2) json.append(",");
+				if (comma2)
+					json.append(",");
 				json.append(itos(f->get_code()[i]));
 				comma2 = true;
 			}

@@ -35,7 +35,6 @@
 #include "scene/resources/texture.h"
 
 class TexturePanning : public Node2D {
-
 	GDCLASS(TexturePanning, Node2D);
 
 private:

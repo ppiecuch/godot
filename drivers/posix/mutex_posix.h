@@ -36,7 +36,6 @@
 #include <pthread.h>
 
 class MutexPosix {
-
 	mutable pthread_mutexattr_t attr;
 	mutable pthread_mutex_t mutex;
 

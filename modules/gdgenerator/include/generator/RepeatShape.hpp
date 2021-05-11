@@ -74,13 +74,15 @@ public:
 
 		int mDelta;
 
-		explicit Edges(const RepeatShape *repeatShape) noexcept : mRepeatShape{ repeatShape },
-																  mEdges{ repeatShape->mShape.edges() },
-																  mIndex{ repeatShape->mVertexCount > 0 ? 0 : repeatShape->mInstances },
-																  mDelta{ 0 } {}
+		explicit Edges(const RepeatShape *repeatShape) noexcept :
+				mRepeatShape{ repeatShape },
+				mEdges{ repeatShape->mShape.edges() },
+				mIndex{ repeatShape->mVertexCount > 0 ? 0 : repeatShape->mInstances },
+				mDelta{ 0 } {}
 
 		int countEdges() const noexcept {
-			if (mRepeatShape->mInstances < 1) return 0;
+			if (mRepeatShape->mInstances < 1)
+				return 0;
 
 			return count(mRepeatShape->mShape.edges()) *
 						   (mRepeatShape->mInstances - mIndex - 1) +
@@ -132,7 +134,8 @@ public:
 		gml::dvec2 mDelta;
 
 		int countVertices() const noexcept {
-			if (mRepeatShape->mInstances < 1) return 0;
+			if (mRepeatShape->mInstances < 1)
+				return 0;
 
 			return mRepeatShape->mVertexCount *
 						   (mRepeatShape->mInstances - mIndex - 1) +
@@ -149,10 +152,11 @@ public:
 	/// @param shape The shape to repeat.
 	/// @param instances Number of times to repeat. If <1 an empty shape results.
 	/// @param delta An offset aplied to each copy.
-	explicit RepeatShape(Shape shape, int instances, const gml::dvec2 &delta) noexcept : mShape{ std::move(shape) },
-																						 mInstances{ instances },
-																						 mDelta{ delta },
-																						 mVertexCount{ count(mShape.vertices()) } {}
+	explicit RepeatShape(Shape shape, int instances, const gml::dvec2 &delta) noexcept :
+			mShape{ std::move(shape) },
+			mInstances{ instances },
+			mDelta{ delta },
+			mVertexCount{ count(mShape.vertices()) } {}
 
 	Edges edges() const noexcept {
 		return Edges{ this };

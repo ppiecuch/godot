@@ -172,7 +172,6 @@ bool Vector<T>::push_back(T p_elem) {
 
 template <class T>
 bool Vector<T>::push_back(T p_elem1, T p_elem2) {
-
 	Error err = resize(size() + 2);
 	ERR_FAIL_COND_V(err, true);
 	set(size() - 2, p_elem1);
@@ -183,7 +182,6 @@ bool Vector<T>::push_back(T p_elem1, T p_elem2) {
 
 template <class T>
 bool Vector<T>::push_back(T p_elem1, T p_elem2, T p_elem3) {
-
 	Error err = resize(size() + 3);
 	ERR_FAIL_COND_V(err, true);
 	set(size() - 3, p_elem1);
@@ -195,7 +193,6 @@ bool Vector<T>::push_back(T p_elem1, T p_elem2, T p_elem3) {
 
 template <class T>
 bool Vector<T>::push_back(T p_elem1, T p_elem2, T p_elem3, T p_elem4) {
-
 	Error err = resize(size() + 4);
 	ERR_FAIL_COND_V(err, true);
 	set(size() - 4, p_elem1);

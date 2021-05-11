@@ -54,7 +54,6 @@ namespace boost {
 namespace detail {
 
 inline void current_function_helper() {
-
 #if defined(__GNUC__) || (defined(__MWERKS__) && (__MWERKS__ >= 0x3000)) || (defined(__ICC) && (__ICC >= 600))
 
 #define BOOST_CURRENT_FUNCTION __PRETTY_FUNCTION__

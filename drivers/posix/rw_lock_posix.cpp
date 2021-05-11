@@ -37,7 +37,6 @@
 #include <stdio.h>
 
 void RWLockPosix::read_lock() const {
-
 	int err = pthread_rwlock_rdlock(&rwlock);
 	if (err != 0) {
 		perror("Acquiring lock failed");
@@ -46,12 +45,10 @@ void RWLockPosix::read_lock() const {
 }
 
 void RWLockPosix::read_unlock() const {
-
 	pthread_rwlock_unlock(&rwlock);
 }
 
 Error RWLockPosix::read_try_lock() {
-
 	if (pthread_rwlock_tryrdlock(&rwlock) != 0) {
 		return ERR_BUSY;
 	} else {
@@ -60,18 +57,15 @@ Error RWLockPosix::read_try_lock() {
 }
 
 void RWLockPosix::write_lock() {
-
 	int err = pthread_rwlock_wrlock(&rwlock);
 	ERR_FAIL_COND(err != 0);
 }
 
 void RWLockPosix::write_unlock() {
-
 	pthread_rwlock_unlock(&rwlock);
 }
 
 Error RWLockPosix::write_try_lock() {
-
 	if (pthread_rwlock_trywrlock(&rwlock) != 0) {
 		return ERR_BUSY;
 	} else {
@@ -80,13 +74,11 @@ Error RWLockPosix::write_try_lock() {
 }
 
 RWLockPosix::RWLockPosix() {
-
 	//rwlock = PTHREAD_RWLOCK_INITIALIZER; fails on OSX
 	pthread_rwlock_init(&rwlock, NULL);
 }
 
 RWLockPosix::~RWLockPosix() {
-
 	pthread_rwlock_destroy(&rwlock);
 }
 

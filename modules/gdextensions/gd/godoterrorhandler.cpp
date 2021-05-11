@@ -33,7 +33,6 @@
 GodotErrorHandler *GodotErrorHandler::singleton = NULL;
 
 GodotErrorHandler::GodotErrorHandler() {
-
 	eh.errfunc = _err_handler;
 	eh.userdata = this;
 	add_error_handler(&eh);
@@ -42,7 +41,6 @@ GodotErrorHandler::GodotErrorHandler() {
 }
 
 GodotErrorHandler::~GodotErrorHandler() {
-
 	remove_error_handler(&eh);
 	singleton = NULL;
 }
@@ -52,7 +50,6 @@ GodotErrorHandler *GodotErrorHandler::get_singleton() {
 }
 
 void GodotErrorHandler::_err_handler(void *ud, const char *p_func, const char *p_file, int p_line, const char *p_err, const char *p_descr, ErrorHandlerType p_type) {
-
 	static String _lastError = "";
 	static int _lastErrorCnt = 1;
 	String _error = vformat("%s:%d", p_file, p_line);

@@ -93,7 +93,6 @@ bool SpriteMesh::_edit_use_rect() const {
 void SpriteMesh::_update_mesh_xform() {
 	if (mesh.is_valid() && !_mesh_data.empty()) {
 		if (ArrayMesh *array_mesh = Object::cast_to<ArrayMesh>(*mesh)) {
-
 			PoolVector3Array vertexes = _mesh_data[VS::ARRAY_VERTEX];
 			PoolVector3Array xform_vertexes;
 			ERR_FAIL_COND(xform_vertexes.resize(vertexes.size()) != OK);
@@ -142,7 +141,6 @@ void SpriteMesh::_notification(int p_what) {
 }
 
 void SpriteMesh::set_mesh(const Ref<Mesh> &p_mesh) {
-
 	if (mesh == p_mesh)
 		return;
 
@@ -170,14 +168,12 @@ Ref<Mesh> SpriteMesh::get_mesh() const {
 }
 
 void SpriteMesh::_update_xform_values() {
-
 	mesh_angle = _mesh_xform.get_euler();
 	mesh_scale = _mesh_xform.get_scale();
 	_mesh_xform_dirty = false;
 }
 
 void SpriteMesh::_update_transform() {
-
 	_mesh_xform.set_euler_scale(mesh_angle, mesh_scale);
 
 	if (!is_inside_tree())
@@ -190,7 +186,6 @@ void SpriteMesh::_update_transform() {
 }
 
 void SpriteMesh::set_mesh_rotation(Vector3 p_radians) {
-
 	if (_mesh_xform_dirty)
 		_update_xform_values();
 	mesh_angle = p_radians;
@@ -205,40 +200,33 @@ Vector3 SpriteMesh::get_mesh_rotation() const {
 }
 
 void SpriteMesh::set_mesh_rotation_x_degrees(float p_degrees) {
-
 	mesh_angle.x = Math::deg2rad(p_degrees);
 	_update_transform();
 }
 
 float SpriteMesh::get_mesh_rotation_x_degrees() const {
-
 	return Math::rad2deg(mesh_angle.x);
 }
 
 void SpriteMesh::set_mesh_rotation_y_degrees(float p_degrees) {
-
 	mesh_angle.y = Math::deg2rad(p_degrees);
 	_update_transform();
 }
 
 float SpriteMesh::get_mesh_rotation_y_degrees() const {
-
 	return Math::rad2deg(mesh_angle.y);
 }
 
 void SpriteMesh::set_mesh_rotation_z_degrees(float p_degrees) {
-
 	mesh_angle.z = Math::deg2rad(p_degrees);
 	_update_transform();
 }
 
 float SpriteMesh::get_mesh_rotation_z_degrees() const {
-
 	return Math::rad2deg(mesh_angle.z);
 }
 
 void SpriteMesh::set_mesh_orientation(const Basis &p_basis) {
-
 	_mesh_xform = p_basis;
 	_mesh_xform_dirty = true;
 
@@ -249,12 +237,10 @@ void SpriteMesh::set_mesh_orientation(const Basis &p_basis) {
 }
 
 Basis SpriteMesh::get_mesh_orientation() const {
-
 	return _mesh_xform;
 }
 
 void SpriteMesh::set_mesh_scale(const Vector3 &p_scale) {
-
 	if (_mesh_xform_dirty)
 		_update_xform_values();
 	mesh_scale = p_scale;
@@ -276,7 +262,6 @@ Vector3 SpriteMesh::get_mesh_scale() const {
 }
 
 void SpriteMesh::set_mesh_texture(const Ref<Texture> &p_texture) {
-
 	if (texture == p_texture)
 		return;
 	texture = p_texture;
@@ -290,7 +275,6 @@ Ref<Texture> SpriteMesh::get_mesh_texture() const {
 }
 
 void SpriteMesh::set_mesh_normal_map(const Ref<Texture> &p_texture) {
-
 	if (normal_map != p_texture) {
 		normal_map = p_texture;
 		update();
@@ -298,12 +282,10 @@ void SpriteMesh::set_mesh_normal_map(const Ref<Texture> &p_texture) {
 }
 
 Ref<Texture> SpriteMesh::get_mesh_normal_map() const {
-
 	return normal_map;
 }
 
 void SpriteMesh::set_mesh_mask(const Ref<Texture> &p_texture) {
-
 	if (mask != p_texture) {
 		mask = p_texture;
 		update();
@@ -311,12 +293,10 @@ void SpriteMesh::set_mesh_mask(const Ref<Texture> &p_texture) {
 }
 
 Ref<Texture> SpriteMesh::get_mesh_mask() const {
-
 	return mask;
 }
 
 void SpriteMesh::set_selected_frame(int p_frame) {
-
 	if (selected_frame != p_frame) {
 		selected_frame = p_frame;
 	}
@@ -327,7 +307,6 @@ int SpriteMesh::get_selected_frame() const {
 }
 
 void SpriteMesh::set_frames_builder(const String &p_input) {
-
 	if (frames_builder != p_input) {
 		if (!p_input.empty()) {
 			Variant input;
@@ -407,31 +386,26 @@ void SpriteMesh::set_frames_builder(const String &p_input) {
 }
 
 String SpriteMesh::get_frames_builder() const {
-
 	return frames_builder;
 }
 
 void SpriteMesh::set_centered(bool p_center) {
-
 	centered = p_center;
 	update();
 	item_rect_changed();
 }
 
 bool SpriteMesh::is_centered() const {
-
 	return centered;
 }
 
 void SpriteMesh::set_offset(const Point2 &p_offset) {
-
 	offset = p_offset;
 	update();
 	item_rect_changed();
 	_change_notify("offset");
 }
 Point2 SpriteMesh::get_offset() const {
-
 	return offset;
 }
 
@@ -461,7 +435,6 @@ void SpriteMesh::_validate_property(PropertyInfo &property) const {
 }
 
 void SpriteMesh::_mesh_changed() {
-
 	// Changes to the mesh need to trigger an update to make
 	// the editor redraw the sprite with the updated mesh.
 	if (mesh.is_valid()) {
@@ -525,7 +498,6 @@ void SpriteMesh::_bind_methods() {
 }
 
 SpriteMesh::SpriteMesh() {
-
 	centered = true;
 	offset = Vector2(0, 0);
 	mesh_angle = Vector3(0, 0, 0);

@@ -33,22 +33,18 @@
 #include "core/os/os.h"
 
 void ENetPacketPeer::set_transfer_mode(TransferMode p_mode) {
-
 	transfer_mode = p_mode;
 }
 
 NetworkedMultiplayerPeer::TransferMode ENetPacketPeer::get_transfer_mode() const {
-
 	return transfer_mode;
 }
 
 void ENetPacketPeer::set_target_peer(int p_peer) {
-
 	target_peer = p_peer;
 }
 
 int ENetPacketPeer::get_packet_peer() const {
-
 	ERR_FAIL_COND_V(!active, 1);
 	ERR_FAIL_COND_V(incoming_packets.size() == 0, 1);
 
@@ -56,7 +52,6 @@ int ENetPacketPeer::get_packet_peer() const {
 }
 
 int ENetPacketPeer::get_packet_channel() const {
-
 	ERR_FAIL_COND_V(!active, 1);
 	ERR_FAIL_COND_V(incoming_packets.size() == 0, 1);
 
@@ -64,7 +59,6 @@ int ENetPacketPeer::get_packet_channel() const {
 }
 
 Error ENetPacketPeer::disconnect_peer(int p_id) {
-
 	ERR_FAIL_COND_V(!active, ERR_UNCONFIGURED);
 	ERR_FAIL_COND_V(!peer_map.has(p_id), ERR_DOES_NOT_EXIST);
 
@@ -73,7 +67,6 @@ Error ENetPacketPeer::disconnect_peer(int p_id) {
 }
 
 Error ENetPacketPeer::create_server(int p_port, int p_channels, int p_max_clients, int p_in_bandwidth, int p_out_bandwidth) {
-
 	ERR_FAIL_COND_V(active, ERR_ALREADY_IN_USE);
 
 	ENetAddress address;
@@ -112,7 +105,6 @@ Error ENetPacketPeer::create_server(int p_port, int p_channels, int p_max_client
 	return OK;
 }
 Error ENetPacketPeer::create_client(const IP_Address &p_ip, int p_port, int p_channels, int p_in_bandwidth, int p_out_bandwidth) {
-
 	ERR_FAIL_COND_V(active, ERR_ALREADY_IN_USE);
 
 	host = enet_host_create(NULL /* create a client host */,
@@ -159,7 +151,6 @@ Error ENetPacketPeer::create_client(const IP_Address &p_ip, int p_port, int p_ch
 }
 
 void ENetPacketPeer::poll() {
-
 	ERR_FAIL_COND(!active);
 
 	_pop_current_packet();
@@ -167,7 +158,6 @@ void ENetPacketPeer::poll() {
 	ENetEvent event;
 	/* Wait up to 1000 milliseconds for an event. */
 	while (true) {
-
 		if (!host || !active) //might have been disconnected while emitting a notification
 			return;
 
@@ -207,7 +197,6 @@ void ENetPacketPeer::poll() {
 				if (server) {
 					//someone connected, let it know of all the peers available
 					for (Map<int, ENetPeer *>::Element *E = peer_map.front(); E; E = E->next()) {
-
 						if (E->key() == *new_id)
 							continue;
 						//send existing peers to new peer
@@ -222,13 +211,11 @@ void ENetPacketPeer::poll() {
 						enet_peer_send(E->get(), SYSCH_CONFIG, packet);
 					}
 				} else {
-
 					emit_signal("connection_succeeded");
 				}
 
 			} break;
 			case ENET_EVENT_TYPE_DISCONNECT: {
-
 				/* Reset the peer's client information. */
 
 				int *id = (int *)event.peer->data;
@@ -238,11 +225,9 @@ void ENetPacketPeer::poll() {
 						emit_signal("connection_failed");
 					}
 				} else {
-
 					if (server) {
 						//someone disconnected, let it know to everyone else
 						for (Map<int, ENetPeer *>::Element *E = peer_map.front(); E; E = E->next()) {
-
 							if (E->key() == *id)
 								continue;
 							//send the new peer to existing peers
@@ -264,7 +249,6 @@ void ENetPacketPeer::poll() {
 
 			} break;
 			case ENET_EVENT_TYPE_RECEIVE: {
-
 				if (event.channelID == SYSCH_CONFIG) {
 					//some config message
 					ERR_CONTINUE(event.packet->dataLength < 8);
@@ -277,13 +261,11 @@ void ENetPacketPeer::poll() {
 
 					switch (msg) {
 						case SYSMSG_ADD_PEER: {
-
 							peer_map[id] = NULL;
 							emit_signal("peer_connected", id);
 
 						} break;
 						case SYSMSG_REMOVE_PEER: {
-
 							peer_map.erase(id);
 							emit_signal("peer_disconnected", id);
 						} break;
@@ -291,7 +273,6 @@ void ENetPacketPeer::poll() {
 
 					enet_packet_destroy(event.packet);
 				} else {
-
 					Packet packet;
 					packet.packet = event.packet;
 					packet.channel = -1;
@@ -322,7 +303,6 @@ void ENetPacketPeer::poll() {
 							incoming_packets.push_back(packet);
 							//and make copies for sending
 							for (Map<int, ENetPeer *>::Element *E = peer_map.front(); E; E = E->next()) {
-
 								if (uint32_t(E->key()) == source) //do not resend to self
 									continue;
 
@@ -336,7 +316,6 @@ void ENetPacketPeer::poll() {
 
 							//and make copies for sending
 							for (Map<int, ENetPeer *>::Element *E = peer_map.front(); E; E = E->next()) {
-
 								if (uint32_t(E->key()) == source || E->key() == -target) //do not resend to self, also do not send to excluded
 									continue;
 
@@ -362,7 +341,6 @@ void ENetPacketPeer::poll() {
 							enet_peer_send(peer_map[target], event.channelID, packet.packet);
 						}
 					} else {
-
 						incoming_packets.push_back(packet);
 					}
 					//destroy packet later..
@@ -382,7 +360,6 @@ bool ENetPacketPeer::is_server() const {
 }
 
 void ENetPacketPeer::close_connection() {
-
 	if (!active)
 		return;
 
@@ -409,11 +386,9 @@ void ENetPacketPeer::close_connection() {
 }
 
 int ENetPacketPeer::get_available_packet_count() const {
-
 	return incoming_packets.size();
 }
 Error ENetPacketPeer::get_packet(const uint8_t **r_buffer, int &r_buffer_size) {
-
 	ERR_FAIL_COND_V(incoming_packets.size() == 0, ERR_UNAVAILABLE);
 
 	_pop_current_packet();
@@ -427,7 +402,6 @@ Error ENetPacketPeer::get_packet(const uint8_t **r_buffer, int &r_buffer_size) {
 	return OK;
 }
 Error ENetPacketPeer::put_packet(const uint8_t *p_buffer, int p_buffer_size) {
-
 	int channel = SYSCH_RELIABLE;
 
 	switch (transfer_mode) {
@@ -446,7 +420,6 @@ Error ENetPacketPeer::put_packet(const uint8_t *p_buffer, int p_buffer_size) {
 }
 
 Error ENetPacketPeer::_put_packet_channel(const PoolVector<uint8_t> &p_buffer, int p_channel) {
-
 	int len = p_buffer.size();
 	if (len == 0)
 		return OK;
@@ -456,7 +429,6 @@ Error ENetPacketPeer::_put_packet_channel(const PoolVector<uint8_t> &p_buffer, i
 }
 
 Error ENetPacketPeer::put_packet_channel(const uint8_t *p_buffer, int p_buffer_size, int p_channel) {
-
 	ERR_FAIL_COND_V(!active, ERR_UNCONFIGURED);
 	ERR_FAIL_COND_V(connection_status != CONNECTION_CONNECTED, ERR_UNCONFIGURED);
 	ERR_FAIL_COND_V(p_channel >= channels, ERR_INVALID_PARAMETER);
@@ -478,7 +450,6 @@ Error ENetPacketPeer::put_packet_channel(const uint8_t *p_buffer, int p_buffer_s
 	Map<int, ENetPeer *>::Element *E = NULL;
 
 	if (target_peer != 0) {
-
 		E = peer_map.find(ABS(target_peer));
 		if (!E) {
 			ERR_FAIL_V_MSG(ERR_INVALID_PARAMETER, "Invalid Target Peer: " + itos(target_peer));
@@ -492,7 +463,6 @@ Error ENetPacketPeer::put_packet_channel(const uint8_t *p_buffer, int p_buffer_s
 	memcpy(&packet->data[12], p_buffer, p_buffer_size);
 
 	if (server) {
-
 		if (target_peer == 0) {
 			enet_host_broadcast(host, p_channel, packet);
 		} else if (target_peer < 0) {
@@ -502,7 +472,6 @@ Error ENetPacketPeer::put_packet_channel(const uint8_t *p_buffer, int p_buffer_s
 			int exclude = -target_peer;
 
 			for (Map<int, ENetPeer *>::Element *F = peer_map.front(); F; F = F->next()) {
-
 				if (F->key() == exclude) // exclude packet
 					continue;
 
@@ -516,7 +485,6 @@ Error ENetPacketPeer::put_packet_channel(const uint8_t *p_buffer, int p_buffer_s
 			enet_peer_send(E->get(), p_channel, packet);
 		}
 	} else {
-
 		ERR_FAIL_COND_V(!peer_map.has(1), ERR_BUG);
 		enet_peer_send(peer_map[1], p_channel, packet); //send to server for broadcast..
 	}
@@ -527,12 +495,10 @@ Error ENetPacketPeer::put_packet_channel(const uint8_t *p_buffer, int p_buffer_s
 }
 
 int ENetPacketPeer::get_max_packet_size() const {
-
 	return 1 << 24; //anything is good
 }
 
 void ENetPacketPeer::_pop_current_packet() {
-
 	if (current_packet.packet) {
 		enet_packet_destroy(current_packet.packet);
 		current_packet.packet = NULL;
@@ -541,16 +507,13 @@ void ENetPacketPeer::_pop_current_packet() {
 }
 
 NetworkedMultiplayerPeer::ConnectionStatus ENetPacketPeer::get_connection_status() const {
-
 	return connection_status;
 }
 
 uint32_t ENetPacketPeer::_gen_unique_id() const {
-
 	uint32_t hash = 0;
 
 	while (hash == 0 || hash == 1) {
-
 		hash = hash_djb2_one_32(
 				(uint32_t)OS::get_singleton()->get_ticks_usec());
 		hash = hash_djb2_one_32(
@@ -573,33 +536,27 @@ uint32_t ENetPacketPeer::_gen_unique_id() const {
 }
 
 int ENetPacketPeer::get_unique_id() const {
-
 	ERR_FAIL_COND_V(!active, 0);
 	return unique_id;
 }
 
 void ENetPacketPeer::set_refuse_new_connections(bool p_enable) {
-
 	refuse_connections = p_enable;
 }
 
 bool ENetPacketPeer::is_refusing_new_connections() const {
-
 	return refuse_connections;
 }
 
 void ENetPacketPeer::set_compression_mode(CompressionMode p_mode) {
-
 	compression_mode = p_mode;
 }
 
 ENetPacketPeer::CompressionMode ENetPacketPeer::get_compression_mode() const {
-
 	return compression_mode;
 }
 
 size_t ENetPacketPeer::enet_compress(void *context, const ENetBuffer *inBuffers, size_t inBufferCount, size_t inLimit, enet_uint8 *outData, size_t outLimit) {
-
 	ENetPacketPeer *enet = (ENetPacketPeer *)(context);
 
 	if (size_t(enet->src_compressor_mem.size()) < inLimit) {
@@ -649,16 +606,13 @@ size_t ENetPacketPeer::enet_compress(void *context, const ENetBuffer *inBuffers,
 }
 
 size_t ENetPacketPeer::enet_decompress(void *context, const enet_uint8 *inData, size_t inLimit, enet_uint8 *outData, size_t outLimit) {
-
 	ENetPacketPeer *enet = (ENetPacketPeer *)(context);
 	int ret = -1;
 	switch (enet->compression_mode) {
 		case COMPRESS_FASTLZ: {
-
 			ret = Compression::decompress(outData, outLimit, inData, inLimit, Compression::MODE_FASTLZ);
 		} break;
 		case COMPRESS_ZLIB: {
-
 			ret = Compression::decompress(outData, outLimit, inData, inLimit, Compression::MODE_DEFLATE);
 		} break;
 		default: {
@@ -672,11 +626,8 @@ size_t ENetPacketPeer::enet_decompress(void *context, const enet_uint8 *inData, 
 }
 
 void ENetPacketPeer::_setup_compressor() {
-
 	switch (compression_mode) {
-
 		case COMPRESS_NONE: {
-
 			enet_host_compress(host, NULL);
 		} break;
 		case COMPRESS_RANGE_CODER: {
@@ -684,19 +635,16 @@ void ENetPacketPeer::_setup_compressor() {
 		} break;
 		case COMPRESS_FASTLZ:
 		case COMPRESS_ZLIB: {
-
 			enet_host_compress(host, &enet_compressor);
 		} break;
 	}
 }
 
 void ENetPacketPeer::enet_compressor_destroy(void *context) {
-
 	//do none
 }
 
 void ENetPacketPeer::_bind_methods() {
-
 	ClassDB::bind_method(D_METHOD("get_packet_channel"), &ENetPacketPeer::get_packet_channel);
 	ClassDB::bind_method(D_METHOD("create_server", "port", "channels", "max_clients", "in_bandwidth", "out_bandwidth"), &ENetPacketPeer::create_server, DEFVAL(1), DEFVAL(32), DEFVAL(0), DEFVAL(0));
 	ClassDB::bind_method(D_METHOD("create_client", "ip", "port", "channels", "in_bandwidth", "out_bandwidth"), &ENetPacketPeer::create_client, DEFVAL(1), DEFVAL(0), DEFVAL(0));
@@ -713,7 +661,6 @@ void ENetPacketPeer::_bind_methods() {
 }
 
 ENetPacketPeer::ENetPacketPeer() {
-
 	active = false;
 	server = false;
 	refuse_connections = false;
@@ -732,7 +679,6 @@ ENetPacketPeer::ENetPacketPeer() {
 }
 
 ENetPacketPeer::~ENetPacketPeer() {
-
 	close_connection();
 }
 

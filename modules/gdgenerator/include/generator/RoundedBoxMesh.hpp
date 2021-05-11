@@ -72,7 +72,7 @@ public:
 
 class BoxEdges {
 private:
-	using Impl = MirrorMesh<MirrorMesh<BoxEdge> >;
+	using Impl = MirrorMesh<MirrorMesh<BoxEdge>>;
 	Impl mirrorMesh_;
 
 public:
@@ -108,7 +108,7 @@ public:
 
 class BoxCorners {
 private:
-	using Impl = MirrorMesh<MirrorMesh<MirrorMesh<BoxCorner> > >;
+	using Impl = MirrorMesh<MirrorMesh<MirrorMesh<BoxCorner>>>;
 	Impl mirrorMesh_;
 
 public:
@@ -132,7 +132,7 @@ class RoundedBoxMesh {
 private:
 	using Impl = MergeMesh<
 			AxisSwapMesh<detail::BoxFaces>,
-			UvFlipMesh<AxisSwapMesh<detail::BoxFaces> >,
+			UvFlipMesh<AxisSwapMesh<detail::BoxFaces>>,
 			detail::BoxFaces,
 			AxisSwapMesh<detail::BoxEdges>,
 			AxisSwapMesh<detail::BoxEdges>,

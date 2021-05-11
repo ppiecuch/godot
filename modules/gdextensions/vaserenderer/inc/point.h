@@ -142,8 +142,10 @@ public:
 		x = -y_value;
 	}
 	void follow_signs(const Point &a) {
-		if ((x > 0) != (a.x > 0)) x = -x;
-		if ((y > 0) != (a.y > 0)) y = -y;
+		if ((x > 0) != (a.x > 0))
+			x = -x;
+		if ((y > 0) != (a.y > 0))
+			y = -y;
 	}
 	void follow_magnitude(const Point &a);
 	void follow_direction(const Point &a);
@@ -246,8 +248,10 @@ public:
 
 		real_t mua = numera / denom;
 		real_t mub = numerb / denom;
-		if (ua_out) *ua_out = mua;
-		if (ub_out) *ub_out = mub;
+		if (ua_out)
+			*ua_out = mua;
+		if (ub_out)
+			*ub_out = mub;
 
 		Pout.x = P1.x + mua * (P2.x - P1.x);
 		Pout.y = P1.y + mua * (P2.y - P1.y);

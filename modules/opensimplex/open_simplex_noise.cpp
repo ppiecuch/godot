@@ -51,7 +51,6 @@ void OpenSimplexNoise::_init_seeds() {
 	}
 	Math::seed(seed);
 	for (int it = 0; it < 256; ++it) {
-
 		const uint8_t next_num = Math::random(0, 255);
 		_rand_perm[it] = next_num;
 		_rand_perm[it + 256] = next_num;
@@ -315,15 +314,14 @@ static unsigned char simplex[64][4] = {
 };
 
 static _FORCE_INLINE_ float _grad(int hash, float x) {
-
 	int h = hash & 15;
 	float grad = 1.0 + (h & 7); // Gradient value 1.0, 2.0, ..., 8.0
-	if (h & 8) grad = -grad; // Set a random sign for the gradient
+	if (h & 8)
+		grad = -grad; // Set a random sign for the gradient
 	return (grad * x); // Multiply the gradient with the distance
 }
 
 static _FORCE_INLINE_ float _grad(int hash, float x, float y) {
-
 	int h = hash & 7; // Convert low 3 bits of hash code
 	float u = h < 4 ? x : y; // into 8 simple gradient directions,
 	float v = h < 4 ? y : x; // and compute the dot product with (x,y).
@@ -331,7 +329,6 @@ static _FORCE_INLINE_ float _grad(int hash, float x, float y) {
 }
 
 static _FORCE_INLINE_ float _grad(int hash, float x, float y, float z) {
-
 	int h = hash & 15; // Convert low 4 bits of hash code into 12 simple
 	float u = h < 8 ? x : y; // gradient directions, and compute dot product.
 	float v = h < 4 ? y : h == 12 || h == 14 ? x :
@@ -340,7 +337,6 @@ static _FORCE_INLINE_ float _grad(int hash, float x, float y, float z) {
 }
 
 static _FORCE_INLINE_ float _grad(int hash, float x, float y, float z, float t) {
-
 	int h = hash & 31; // Convert low 5 bits of hash code into 32 simple
 	float u = h < 24 ? x : y; // gradient directions, and compute dot product.
 	float v = h < 16 ? y : z;
@@ -349,7 +345,6 @@ static _FORCE_INLINE_ float _grad(int hash, float x, float y, float z, float t) 
 }
 
 float OpenSimplexNoise::get_simplex_noise_1d(float x) const {
-
 	int i0 = FASTFLOOR(x);
 	int i1 = i0 + 1;
 	float x0 = x - i0;
@@ -373,7 +368,6 @@ float OpenSimplexNoise::get_simplex_noise_1d(float x) const {
 }
 
 float OpenSimplexNoise::get_simplex_noise_2d(float x, float y) const {
-
 #define F2 0.366025403f // F2 = 0.5*(sqrt(3.0)-1.0)
 #define G2 0.211324865f // G2 = (3.0-Math.sqrt(3.0))/6.0
 
@@ -449,7 +443,6 @@ float OpenSimplexNoise::get_simplex_noise_2d(float x, float y) const {
 }
 
 float OpenSimplexNoise::get_simplex_noise_3d(float x, float y, float z) const {
-
 	// Simple skewing factors for the 3D case
 #define F3 0.333333333f
 #define G3 0.166666667f
@@ -590,7 +583,6 @@ float OpenSimplexNoise::get_simplex_noise_3d(float x, float y, float z) const {
 }
 
 float OpenSimplexNoise::get_simplex_noise_4d(float x, float y, float z, float w) const {
-
 #define F4 0.309016994f // F4 = (Math.sqrt(5.0)-1.0)/4.0
 #define G4 0.138196601f // G4 = (5.0-Math.sqrt(5.0))/20.0
 
@@ -729,7 +721,6 @@ float OpenSimplexNoise::get_simplex_noise_4d(float x, float y, float z, float w)
 
 // Get 1D Simplex Noise ( with lacunarity, persistance, octaves )
 float OpenSimplexNoise::get_multi_noise_1d(float x) const {
-
 	int i;
 	float frequency = 1 / period;
 	float amplitude = 1;
@@ -746,7 +737,6 @@ float OpenSimplexNoise::get_multi_noise_1d(float x) const {
 
 // Get 2D Simplex Noise ( with lacunarity, persistence, octaves )
 float OpenSimplexNoise::get_multi_noise_2d(float x, float y) const {
-
 	float frequency = 1 / period;
 	float amplitude = 1;
 	float sum = 0;
@@ -762,7 +752,6 @@ float OpenSimplexNoise::get_multi_noise_2d(float x, float y) const {
 
 // Get 3D Simplex Noise ( with lacunarity, persistence, octaves )
 float OpenSimplexNoise::get_multi_noise_3d(float x, float y, float z) const {
-
 	float frequency = 1 / period;
 	float amplitude = 1;
 	float sum = 0;
@@ -778,7 +767,6 @@ float OpenSimplexNoise::get_multi_noise_3d(float x, float y, float z) const {
 
 // Get Get 4D Simplex Noise ( with lacunarity, persistence, octaves )
 float OpenSimplexNoise::get_multi_noise_4d(float x, float y, float z, float w) const {
-
 	float frequency = 1.0f;
 	float amplitude = 1.0f;
 	float sum = 0.0f;

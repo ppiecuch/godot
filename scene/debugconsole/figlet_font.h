@@ -242,7 +242,6 @@ typedef enum {
 
 //! Class implementing the "figlet" algorithm
 class Banner {
-
 	FontFiglet const *characters; //!< pointer to the font structures
 	char const Hardblank; //!< character used for the "hardblank" in the font definition
 	unsigned const Height; //!< vertical dimension (lines) of the font

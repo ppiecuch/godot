@@ -83,7 +83,6 @@ int main(int argc, char **argv) {
 	printf("# Edges\n");
 	sites = jcv_diagram_get_sites(&diagram);
 	for (i = 0; i < diagram.numsites; i++) {
-
 		graph_edge = sites[i].edges;
 		while (graph_edge) {
 			// This approach will potentially print shared edges twice

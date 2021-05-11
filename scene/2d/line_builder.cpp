@@ -37,7 +37,8 @@
 #define PUSH_BACK_IF(nm, op)                             \
 	template <typename T>                                \
 	void push_back_if_##nm(Vector<T> &p_arr, T p_elem) { \
-		if (p_elem op) p_arr.push_back(p_elem);          \
+		if (p_elem op)                                   \
+			p_arr.push_back(p_elem);                     \
 	}
 
 PUSH_BACK_IF(gtzero, > 0);
@@ -82,7 +83,8 @@ static Vector2 find_intersection(const Vector2 &p0, const Vector2 &p1, const Vec
 
 	const real_t denom = s10_x * s32_y - s32_x * s10_y;
 
-	if (denom == 0) return Failed; // collinear
+	if (denom == 0)
+		return Failed; // collinear
 
 	const bool denom_is_positive = denom > 0;
 
@@ -91,12 +93,15 @@ static Vector2 find_intersection(const Vector2 &p0, const Vector2 &p1, const Vec
 
 	const real_t s_numer = s10_x * s02_y - s10_y * s02_x;
 
-	if ((s_numer < 0) == denom_is_positive) return Failed; // no collision
+	if ((s_numer < 0) == denom_is_positive)
+		return Failed; // no collision
 
 	const real_t t_numer = s32_x * s02_y - s32_y * s02_x;
 
-	if ((t_numer < 0) == denom_is_positive) return Failed; // no collision
-	if ((s_numer > denom) == denom_is_positive || (t_numer > denom) == denom_is_positive) return Failed; // no collision
+	if ((t_numer < 0) == denom_is_positive)
+		return Failed; // no collision
+	if ((s_numer > denom) == denom_is_positive || (t_numer > denom) == denom_is_positive)
+		return Failed; // no collision
 
 	// collision detected
 
@@ -539,7 +544,6 @@ void LineBuilder::strip_add_quad(Vector2 up, Vector2 down, Color color, float uv
 	int vi = vertices.size();
 
 	if (uvx > 1 && _repeat_segment && vertices.size() && texture_mode == Line2D::LINE_TEXTURE_TILE) {
-
 		const float last_remainings = ceil(_last_uvx) - _last_uvx; // remainings of the last tile
 		const float dist = uvx - _last_uvx;
 
@@ -741,7 +745,6 @@ void LineBuilder::new_arc_tiled_texture(Vector2 center, Vector2 vbegin, float an
 }
 
 void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float angle_delta, Color color, Rect2 uv_rect) {
-
 	// Make a standalone arc that doesn't use existing vertices,
 	// build with stripes not triangle fans,
 	// with undistorted UVs from within a square section (possible spans across

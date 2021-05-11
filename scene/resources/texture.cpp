@@ -865,7 +865,6 @@ String ResourceFormatLoaderStreamTexture::get_resource_type(const String &p_path
 //////////////////////////////////////////
 
 int MaskTexture::get_width() const {
-
 	if (mask_texture.is_valid())
 		return mask_texture->get_width();
 
@@ -873,7 +872,6 @@ int MaskTexture::get_width() const {
 }
 
 int MaskTexture::get_height() const {
-
 	if (mask_texture.is_valid())
 		return mask_texture->get_height();
 
@@ -881,7 +879,6 @@ int MaskTexture::get_height() const {
 }
 
 RID MaskTexture::get_rid() const {
-
 	if (mask_texture.is_valid()) {
 		RID rid = mask_texture->get_rid();
 		rid.set_props(get_cut_off(), get_channels_mixer());
@@ -892,7 +889,6 @@ RID MaskTexture::get_rid() const {
 }
 
 bool MaskTexture::has_alpha() const {
-
 	if (mask_texture.is_valid())
 		return mask_texture->has_alpha();
 
@@ -900,13 +896,11 @@ bool MaskTexture::has_alpha() const {
 }
 
 void MaskTexture::set_flags(uint32_t p_flags) {
-
 	if (mask_texture.is_valid())
 		mask_texture->set_flags(p_flags);
 }
 
 uint32_t MaskTexture::get_flags() const {
-
 	if (mask_texture.is_valid())
 		return mask_texture->get_flags();
 
@@ -914,7 +908,6 @@ uint32_t MaskTexture::get_flags() const {
 }
 
 void MaskTexture::set_mask_texture(const Ref<Texture> &p_mask) {
-
 	if (mask_texture == p_mask)
 		return;
 	mask_texture = p_mask;
@@ -923,12 +916,10 @@ void MaskTexture::set_mask_texture(const Ref<Texture> &p_mask) {
 }
 
 Ref<Texture> MaskTexture::get_mask_texture() const {
-
 	return mask_texture;
 }
 
 void MaskTexture::set_cut_off(const real_t &p_cut_off) {
-
 	if (mask_cut_off == p_cut_off)
 		return;
 	mask_cut_off = p_cut_off;
@@ -937,12 +928,10 @@ void MaskTexture::set_cut_off(const real_t &p_cut_off) {
 }
 
 real_t MaskTexture::get_cut_off() const {
-
 	return mask_cut_off;
 }
 
 void MaskTexture::set_channels_mixer(const Vector3 &p_channels_mixer) {
-
 	if (mask_channels_mixer == p_channels_mixer)
 		return;
 	mask_channels_mixer = p_channels_mixer;
@@ -951,12 +940,10 @@ void MaskTexture::set_channels_mixer(const Vector3 &p_channels_mixer) {
 }
 
 Vector3 MaskTexture::get_channels_mixer() const {
-
 	return mask_channels_mixer;
 }
 
 void MaskTexture::_bind_methods() {
-
 	ClassDB::bind_method(D_METHOD("set_mask_texture", "mask"), &MaskTexture::set_mask_texture);
 	ClassDB::bind_method(D_METHOD("get_mask_texture"), &MaskTexture::get_mask_texture);
 

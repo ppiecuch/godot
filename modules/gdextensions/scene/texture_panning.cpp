@@ -33,7 +33,6 @@
 
 #ifdef TOOLS_ENABLED
 Dictionary TexturePanning::_edit_get_state() const {
-
 	Dictionary state = Node2D::_edit_get_state();
 	state["view_size"] = get_view_size();
 
@@ -41,7 +40,6 @@ Dictionary TexturePanning::_edit_get_state() const {
 }
 
 void TexturePanning::_edit_set_state(const Dictionary &p_state) {
-
 	Node2D::_edit_set_state(p_state);
 	set_view_size(p_state["view_size"]);
 }
@@ -67,7 +65,6 @@ void TexturePanning::_refresh() {
 }
 
 void TexturePanning::set_texture(Ref<Texture> p_texture) {
-
 	if (texture != p_texture) {
 		texture = p_texture;
 		update();
@@ -75,12 +72,10 @@ void TexturePanning::set_texture(Ref<Texture> p_texture) {
 }
 
 Ref<Texture> TexturePanning::get_texture() const {
-
 	return texture;
 }
 
 void TexturePanning::set_texture_scale(Vector2 p_scale) {
-
 	if (texture_scale != p_scale) {
 		texture_scale = p_scale;
 		update();
@@ -88,24 +83,20 @@ void TexturePanning::set_texture_scale(Vector2 p_scale) {
 }
 
 Vector2 TexturePanning::get_texture_scale() const {
-
 	return texture_scale;
 }
 
 void TexturePanning::set_scrolling_active(bool p_state) {
-
 	if (p_state != scrolling_active) {
 		scrolling_active = p_state;
 	}
 }
 
 bool TexturePanning::is_scrolling_active() const {
-
 	return scrolling_active;
 }
 
 void TexturePanning::set_scrolling_speed(const Vector2 &p_speed) {
-
 	if (p_speed != scrolling_speed) {
 		scrolling_speed = p_speed;
 		emit_signal("scrolling_changed");
@@ -114,12 +105,10 @@ void TexturePanning::set_scrolling_speed(const Vector2 &p_speed) {
 }
 
 Vector2 TexturePanning::get_scrolling_speed() const {
-
 	return scrolling_speed;
 }
 
 void TexturePanning::set_view_size(const Size2 &p_size) {
-
 	if (p_size != view_size) {
 		view_size = p_size;
 		item_rect_changed();
@@ -129,12 +118,10 @@ void TexturePanning::set_view_size(const Size2 &p_size) {
 }
 
 Size2 TexturePanning::get_view_size() const {
-
 	return view_size;
 }
 
 void TexturePanning::_notification(int p_what) {
-
 	switch (p_what) {
 		case NOTIFICATION_READY: {
 		} break;
@@ -152,7 +139,6 @@ void TexturePanning::_notification(int p_what) {
 }
 
 void TexturePanning::_bind_methods() {
-
 	ClassDB::bind_method(D_METHOD("set_texture"), &TexturePanning::set_texture);
 	ClassDB::bind_method(D_METHOD("get_texture"), &TexturePanning::get_texture);
 	ClassDB::bind_method(D_METHOD("set_texture_scale"), &TexturePanning::set_texture_scale);
@@ -175,7 +161,6 @@ void TexturePanning::_bind_methods() {
 }
 
 TexturePanning::TexturePanning() {
-
 	texture = Ref<Texture>(NULL);
 	texture_scale = Vector2(2, 2);
 	view_size = Vector2(100, 100);

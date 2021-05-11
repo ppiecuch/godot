@@ -74,10 +74,11 @@ public:
 
 		int mDelta;
 
-		explicit Edges(const RepeatPath *repeatPath) noexcept : mRepeatPath{ repeatPath },
-																mEdges{ repeatPath->mPath.edges() },
-																mIndex{ repeatPath->mVertexCount > 0 ? 0 : repeatPath->mInstances },
-																mDelta{ 0 } {
+		explicit Edges(const RepeatPath *repeatPath) noexcept :
+				mRepeatPath{ repeatPath },
+				mEdges{ repeatPath->mPath.edges() },
+				mIndex{ repeatPath->mVertexCount > 0 ? 0 : repeatPath->mInstances },
+				mDelta{ 0 } {
 		}
 
 		friend class RepeatPath;
@@ -121,7 +122,8 @@ public:
 		gml::dvec3 mDelta;
 
 		int countVertices() const noexcept {
-			if (mRepeatPath->mInstances < 1) return 0;
+			if (mRepeatPath->mInstances < 1)
+				return 0;
 
 			return mRepeatPath->mVertexCount *
 						   (mRepeatPath->mInstances - mIndex - 1) +
@@ -138,10 +140,11 @@ public:
 	/// @param path The path to repeat.
 	/// @param instances Number of times to repeat. If <1 an empty path results.
 	/// @param delta An offset aplied to each copy.
-	explicit RepeatPath(Path path, int instances, const gml::dvec3 &delta) noexcept : mPath{ std::move(path) },
-																					  mInstances{ instances },
-																					  mDelta{ delta },
-																					  mVertexCount{ count(mPath.vertices()) } {}
+	explicit RepeatPath(Path path, int instances, const gml::dvec3 &delta) noexcept :
+			mPath{ std::move(path) },
+			mInstances{ instances },
+			mDelta{ delta },
+			mVertexCount{ count(mPath.vertices()) } {}
 
 	Edges edges() const noexcept {
 		return Edges{ this };

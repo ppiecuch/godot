@@ -930,7 +930,6 @@ ArrayMesh::BlendShapeMode ArrayMesh::get_blend_shape_mode() const {
 }
 
 void ArrayMesh::surface_set_active(int p_idx, bool p_active) {
-
 	ERR_FAIL_INDEX(p_idx, surfaces.size());
 
 	if (surfaces[p_idx].is_active == p_active)

@@ -60,7 +60,7 @@ class TimerNode : public Node {
 	GDCLASS(TimerNode, Node);
 
 public:
-	Vector<Ref<TimerObject> > timer_objs;
+	Vector<Ref<TimerObject>> timer_objs;
 	void check_queue();
 
 protected:

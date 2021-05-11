@@ -326,7 +326,9 @@ static size_t psvDebugScreenEscape(const unsigned char *str) {
 				arg[argc] = (arg[argc] * 10) + (str[i] - '0');
 				continue;
 			// argument separator
-			case ';': argc++; continue;
+			case ';':
+				argc++;
+				continue;
 			// CSI commands
 			// save/restore position
 			case 's':
@@ -342,10 +344,18 @@ static size_t psvDebugScreenEscape(const unsigned char *str) {
 				}
 				return i;
 			// cursor movement
-			case 'A': coordY -= arg[0] * (F)->size_h; return i;
-			case 'B': coordY += arg[0] * (F)->size_h; return i;
-			case 'C': coordX += arg[0] * (F)->size_w; return i;
-			case 'D': coordX -= arg[0] * (F)->size_w; return i;
+			case 'A':
+				coordY -= arg[0] * (F)->size_h;
+				return i;
+			case 'B':
+				coordY += arg[0] * (F)->size_h;
+				return i;
+			case 'C':
+				coordX += arg[0] * (F)->size_w;
+				return i;
+			case 'D':
+				coordX -= arg[0] * (F)->size_w;
+				return i;
 			// cursor movement to beginning of next/previous line(s)
 			case 'E':
 				coordY += arg[0] * (F)->size_h;
@@ -356,7 +366,9 @@ static size_t psvDebugScreenEscape(const unsigned char *str) {
 				coordX = 0;
 				return i;
 			// cursor positioning
-			case 'G': coordX = (arg[0] - 1) * (F)->size_w; return i;
+			case 'G':
+				coordX = (arg[0] - 1) * (F)->size_w;
+				return i;
 			case 'H':
 			case 'f':
 				coordY = (arg[0] - 1) * (F)->size_h;
@@ -367,10 +379,12 @@ static size_t psvDebugScreenEscape(const unsigned char *str) {
 			case 'K':
 				if (arg[0] == 0) { // from cursor to end of line/screen
 					CLEARSCRNBLOCK(coordY, coordY + (F)->size_h, coordX, (SCREEN_WIDTH), colors.color_bg); // line
-					if (str[i] == 'J') CLEARSCRNLINES(coordY + (F)->size_h, (SCREEN_HEIGHT), colors.color_bg); // screen
+					if (str[i] == 'J')
+						CLEARSCRNLINES(coordY + (F)->size_h, (SCREEN_HEIGHT), colors.color_bg); // screen
 				} else if (arg[0] == 1) { // from beginning of line/screen to cursor
 					CLEARSCRNBLOCK(coordY, coordY + (F)->size_h, 0, coordX, colors.color_bg); // line
-					if (str[i] == 'J') CLEARSCRNLINES(0, coordY, colors.color_bg); // screen
+					if (str[i] == 'J')
+						CLEARSCRNLINES(0, coordY, colors.color_bg); // screen
 				} else if (arg[0] == 2) { // whole line/screen
 					if (str[i] == 'K')
 						CLEARSCRNLINES(coordY, coordY + (F)->size_h, colors.color_bg) // line
@@ -438,9 +452,11 @@ static size_t psvDebugScreenEscape(const unsigned char *str) {
 						default:
 							// ANSI colors (30-37, 40-47, 90-97, 100-107)
 							mode = arg[c] / 10;
-							if ((mode != 3) && (mode != 4) && (mode != 9) && (mode != 10)) continue; // skip unsupported modes
+							if ((mode != 3) && (mode != 4) && (mode != 9) && (mode != 10))
+								continue; // skip unsupported modes
 							unit = arg[c] % 10;
-							if (unit > 7) continue; // skip unsupported modes
+							if (unit > 7)
+								continue; // skip unsupported modes
 							colorTrueColorFlag = mode & 1 ? &colors.fgTrueColorFlag : &colors.bgTrueColorFlag;
 							*colorTrueColorFlag = 0;
 							colorIndex = mode & 1 ? &colors.fgIndex : &colors.bgIndex;
@@ -508,8 +524,10 @@ int psvDebugScreenPuts(const char *_text) {
 		// handle CSI sequence
 		if ((t == '\e') && (text[c + 1] == '[')) {
 			c += psvDebugScreenEscape(text + c + 2) + 2;
-			if (coordX < 0) coordX = 0; // CSI position are 1-based,
-			if (coordY < 0) coordY = 0; // prevent 0-based coordinate from producing a negative X/Y
+			if (coordX < 0)
+				coordX = 0; // CSI position are 1-based,
+			if (coordY < 0)
+				coordY = 0; // prevent 0-based coordinate from producing a negative X/Y
 			continue;
 		}
 		// handle non-printable characters #1 (line-dependent codes)
@@ -567,7 +585,8 @@ int psvDebugScreenPuts(const char *_text) {
 		// draw font glyph or dummy glyph
 		if (drawDummy) {
 			max_row++;
-			if (max_row > (F)->height) max_row = (F)->height;
+			if (max_row > (F)->height)
+				max_row = (F)->height;
 		} else {
 			max_row = (F)->height;
 		}
@@ -633,8 +652,10 @@ void psvDebugScreenGetColorStateCopy(ColorState *copy) {
 * Return copy of pixel coordinates
 */
 void psvDebugScreenGetCoordsXY(int *x, int *y) {
-	if (x) *x = coordX;
-	if (y) *y = coordY;
+	if (x)
+		*x = coordX;
+	if (y)
+		*y = coordY;
 }
 
 /*
@@ -643,11 +664,13 @@ void psvDebugScreenGetCoordsXY(int *x, int *y) {
 void psvDebugScreenSetCoordsXY(int *x, int *y) {
 	if (x) {
 		coordX = *x;
-		if (coordX < 0) coordX = 0;
+		if (coordX < 0)
+			coordX = 0;
 	}
 	if (y) {
 		coordY = *y;
-		if (coordY < 0) coordY = 0;
+		if (coordY < 0)
+			coordY = 0;
 	}
 }
 
@@ -662,7 +685,8 @@ PsvDebugScreenFont *psvDebugScreenGetFont(void) {
 * Set font
 */
 PsvDebugScreenFont *psvDebugScreenSetFont(PsvDebugScreenFont *font) {
-	if ((font) && (font->glyphs)) F = font;
+	if ((font) && (font->glyphs))
+		F = font;
 	return F;
 }
 
@@ -685,7 +709,8 @@ PsvDebugScreenFont *psvDebugScreenScaleFont2x(PsvDebugScreenFont *source_font) {
 	int target_next_row_bytes, target_next_row_bits;
 	unsigned char pixel;
 
-	if (!source_font) return NULL;
+	if (!source_font)
+		return NULL;
 
 	// allocate target structure and bitmap
 	target_font = (PsvDebugScreenFont *)malloc(sizeof(PsvDebugScreenFont));
@@ -706,7 +731,8 @@ PsvDebugScreenFont *psvDebugScreenScaleFont2x(PsvDebugScreenFont *source_font) {
 	}
 	align = size % 8;
 	size /= 8;
-	if (align) size++;
+	if (align)
+		size++;
 
 	// allocate and initialize target bitmap
 	target_font->glyphs = (unsigned char *)malloc(size);
@@ -746,14 +772,16 @@ PsvDebugScreenFont *psvDebugScreenScaleFont2x(PsvDebugScreenFont *source_font) {
 						target_bitmap++;
 						target_mask = 1 << 7;
 					} // no more bits: we advance to the next target byte
-					if (pixel) *target_bitmap |= target_mask;
+					if (pixel)
+						*target_bitmap |= target_mask;
 					target_mask >>= 1;
 					// duplicate column in duplicated row
 					if (!target_mask2) {
 						target_bitmap2++;
 						target_mask2 = 1 << 7;
 					} // no more bits: we advance to the next target byte
-					if (pixel) *target_bitmap2 |= target_mask2;
+					if (pixel)
+						*target_bitmap2 |= target_mask2;
 					target_mask2 >>= 1;
 				}
 			}

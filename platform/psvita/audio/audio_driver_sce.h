@@ -37,7 +37,6 @@
 #include "core/os/thread.h"
 
 class AudioDriverSCE : public AudioDriver {
-
 	enum {
 		NDSP_BUFFER_COUNT = 3,
 	};

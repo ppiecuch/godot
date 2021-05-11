@@ -56,14 +56,11 @@ Line2D *get_bounds_rect(const Rect2 &rc) {
 }
 
 class TestMainLoop : public SceneTree {
-
 public:
 	virtual void request_quit() {
-
 		quit();
 	}
 	virtual void init() {
-
 		SceneTree::init();
 
 		Panel *frame = memnew(Panel);
@@ -133,7 +130,6 @@ public:
 };
 
 MainLoop *test() {
-
 	return memnew(TestMainLoop);
 }
 } // namespace TestFont

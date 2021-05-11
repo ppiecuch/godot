@@ -54,8 +54,9 @@ public:
 		Edge generate() const {
 			Edge edge_ = edges_.generate();
 
-			if (i_ % 2 == 0) return Edge{ { edge_.vertices[0],
-					static_cast<int>(path_->vertexCache_.size()) + i_ / 2 } };
+			if (i_ % 2 == 0)
+				return Edge{ { edge_.vertices[0],
+						static_cast<int>(path_->vertexCache_.size()) + i_ / 2 } };
 
 			return Edge{ { static_cast<int>(path_->vertexCache_.size()) + i_ / 2,
 					edge_.vertices[1] } };
@@ -63,7 +64,8 @@ public:
 
 		void next() {
 			++i_;
-			if (i_ % 2 == 0) edges_.next();
+			if (i_ % 2 == 0)
+				edges_.next();
 		}
 
 	private:

@@ -42,20 +42,22 @@
 #include PLATFORM_MUTEX_H
 
 class MutexLock {
-
 	Mutex *mutex;
 
 public:
 	MutexLock(Mutex *p_mutex) :
 			mutex(p_mutex) {
-		if (mutex) mutex->lock();
+		if (mutex)
+			mutex->lock();
 	}
 	MutexLock(Mutex &p_mutex) :
 			mutex(&p_mutex) {
-		if (mutex) mutex->lock();
+		if (mutex)
+			mutex->lock();
 	}
 	~MutexLock() {
-		if (mutex) mutex->unlock();
+		if (mutex)
+			mutex->unlock();
 	}
 };
 
@@ -76,20 +78,22 @@ public:
 };
 
 class MutexLock {
-
 	Mutex *mutex;
 
 public:
 	_ALWAYS_INLINE_ MutexLock(Mutex *p_mutex) :
 			mutex(p_mutex) {
-		if (mutex) mutex->lock();
+		if (mutex)
+			mutex->lock();
 	}
 	_ALWAYS_INLINE_ MutexLock(Mutex &p_mutex) :
 			mutex(&p_mutex) {
-		if (mutex) mutex->lock();
+		if (mutex)
+			mutex->lock();
 	}
 	_ALWAYS_INLINE_ ~MutexLock() {
-		if (mutex) mutex->unlock();
+		if (mutex)
+			mutex->unlock();
 	}
 };
 

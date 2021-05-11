@@ -125,7 +125,8 @@ T angle(const glm::tvec2<T> &v1, const glm::tvec2<T> &v2) {
 	using std::sqrt;
 
 	const T len = sqrt(dot(v1, v1) * dot(v2, v2));
-	if (len <= std::numeric_limits<T>::epsilon()) return T{ 0 };
+	if (len <= std::numeric_limits<T>::epsilon())
+		return T{ 0 };
 	return acos(clamp(dot(v1, v2) / len, T{ -1 }, T{ 1 }));
 }
 
@@ -136,7 +137,8 @@ T angle(const glm::tvec3<T> &v1, const glm::tvec3<T> &v2) {
 	using std::sqrt;
 
 	const T len = sqrt(dot(v1, v1) * dot(v2, v2));
-	if (len <= std::numeric_limits<T>::epsilon()) return T{ 0 };
+	if (len <= std::numeric_limits<T>::epsilon())
+		return T{ 0 };
 	return acos(clamp(dot(v1, v2) / len, T{ -1 }, T{ 1 }));
 }
 
@@ -250,8 +252,10 @@ namespace detail {
 template <typename VecT, typename T>
 VecT bezierImpl(
 		const VecT *p, int n, T t1, T t2, int stride = 1) {
-	if (n == 1) return *p;
-	if (n == 2) return t1 * p[0] + t2 * p[stride];
+	if (n == 1)
+		return *p;
+	if (n == 2)
+		return t1 * p[0] + t2 * p[stride];
 	return t1 * bezierImpl(p, n - 1, t1, t2, stride) +
 		   t2 * bezierImpl(p + stride, n - 1, t1, t2, stride);
 }

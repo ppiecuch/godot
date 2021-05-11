@@ -1192,12 +1192,10 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_CALL_STACK) {
-
 				OPCODE_BREAK;
 			}
 
 			OPCODE(OPCODE_CALL_STACK_RETURN) {
-
 				OPCODE_BREAK;
 			}
 

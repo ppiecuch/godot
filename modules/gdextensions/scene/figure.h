@@ -37,12 +37,10 @@
 #include "scene/resources/skin.h"
 
 class Figure : public Node2D {
-
 	GDCLASS(Figure, Node2D);
 
 private:
 	struct Bone {
-
 		String name;
 
 		bool enabled;
@@ -85,13 +83,11 @@ private:
 
 	// bind helpers
 	Array _get_bound_child_nodes_to_bone(int p_bone) const {
-
 		Array bound;
 		List<Node *> children;
 		get_bound_child_nodes_to_bone(p_bone, &children);
 
 		for (int i = 0; i < children.size(); i++) {
-
 			bound.push_back(children[i]);
 		}
 		return bound;

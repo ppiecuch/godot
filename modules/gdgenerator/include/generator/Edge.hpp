@@ -45,9 +45,11 @@ class Edge {
 public:
 	gml::ivec2 vertices;
 
-	Edge() noexcept : vertices{} {}
+	Edge() noexcept :
+			vertices{} {}
 
-	explicit Edge(const gml::ivec2 &vertices) noexcept : vertices{ vertices } {}
+	explicit Edge(const gml::ivec2 &vertices) noexcept :
+			vertices{ vertices } {}
 };
 
 } // namespace generator

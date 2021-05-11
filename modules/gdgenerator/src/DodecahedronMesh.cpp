@@ -91,17 +91,19 @@ static std::vector<gml::dvec3> makeVertices(int faceIndex) noexcept {
 	return result;
 }
 
-DodecahedronMesh::Triangles::Triangles(const DodecahedronMesh &mesh) noexcept : mMesh{ &mesh },
-																				mFaceIndex{ 0 },
-																				mFaceMesh{ std::make_shared<ConvexPolygonMesh>(makeVertices(0), mMesh->mSegments, mMesh->mRings) },
-																				mTriangles{ mFaceMesh->triangles() } {}
+DodecahedronMesh::Triangles::Triangles(const DodecahedronMesh &mesh) noexcept :
+		mMesh{ &mesh },
+		mFaceIndex{ 0 },
+		mFaceMesh{ std::make_shared<ConvexPolygonMesh>(makeVertices(0), mMesh->mSegments, mMesh->mRings) },
+		mTriangles{ mFaceMesh->triangles() } {}
 
 bool DodecahedronMesh::Triangles::done() const noexcept {
 	return mFaceIndex == ::polygons.size();
 }
 
 Triangle DodecahedronMesh::Triangles::generate() const {
-	if (done()) throw std::out_of_range("Done!");
+	if (done())
+		throw std::out_of_range("Done!");
 
 	Triangle triangle = mTriangles.generate();
 
@@ -115,7 +117,8 @@ Triangle DodecahedronMesh::Triangles::generate() const {
 }
 
 void DodecahedronMesh::Triangles::next() {
-	if (done()) throw std::out_of_range("Done!");
+	if (done())
+		throw std::out_of_range("Done!");
 
 	mTriangles.next();
 
@@ -132,13 +135,14 @@ void DodecahedronMesh::Triangles::next() {
 	}
 }
 
-DodecahedronMesh::Vertices::Vertices(const DodecahedronMesh &mesh) noexcept : mMesh{ &mesh },
-																			  mFaceIndex{ 0 },
-																			  mFaceMesh{ std::make_shared<ConvexPolygonMesh>(
-																					  makeVertices(0),
-																					  mMesh->mSegments,
-																					  mMesh->mRings) },
-																			  mVertices{ mFaceMesh->vertices() } {
+DodecahedronMesh::Vertices::Vertices(const DodecahedronMesh &mesh) noexcept :
+		mMesh{ &mesh },
+		mFaceIndex{ 0 },
+		mFaceMesh{ std::make_shared<ConvexPolygonMesh>(
+				makeVertices(0),
+				mMesh->mSegments,
+				mMesh->mRings) },
+		mVertices{ mFaceMesh->vertices() } {
 }
 
 bool DodecahedronMesh::Vertices::done() const noexcept {
@@ -146,7 +150,6 @@ bool DodecahedronMesh::Vertices::done() const noexcept {
 }
 
 MeshVertex DodecahedronMesh::Vertices::generate() const {
-
 	MeshVertex vertex = mVertices.generate();
 
 	vertex.position *= mMesh->mRadius;
@@ -171,10 +174,11 @@ void DodecahedronMesh::Vertices::next() {
 	}
 }
 
-DodecahedronMesh::DodecahedronMesh(double radius, int segments, int rings) noexcept : mRadius{ radius },
-																					  mSegments{ segments },
-																					  mRings{ rings },
-																					  mFaceVertexCount{ count(ConvexPolygonMesh{ 1.0, 5u, segments, rings }.vertices()) } {
+DodecahedronMesh::DodecahedronMesh(double radius, int segments, int rings) noexcept :
+		mRadius{ radius },
+		mSegments{ segments },
+		mRings{ rings },
+		mFaceVertexCount{ count(ConvexPolygonMesh{ 1.0, 5u, segments, rings }.vertices()) } {
 }
 
 DodecahedronMesh::Triangles DodecahedronMesh::triangles() const noexcept {

@@ -63,7 +63,7 @@ public:
 		void next() { edges_.next(); }
 
 	private:
-		typename EdgeGeneratorType<TransformShape<Shape> >::Type edges_;
+		typename EdgeGeneratorType<TransformShape<Shape>>::Type edges_;
 
 		Edges(const TransformShape<Shape> &shape) :
 				edges_{ shape.edges() } {}

@@ -34,7 +34,6 @@
 #include "scene/resources/texture.h"
 
 void register_3ds_exporter() {
-
 	Ref<Image> img = memnew(Image(_3ds_logo));
 	Ref<ImageTexture> logo;
 	logo.instance();

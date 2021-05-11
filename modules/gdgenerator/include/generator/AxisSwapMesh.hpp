@@ -67,7 +67,7 @@ public:
 	private:
 		const AxisSwapMesh *mesh_;
 
-		typename TriangleGeneratorType<TransformMesh<Mesh> >::Type triangles_;
+		typename TriangleGeneratorType<TransformMesh<Mesh>>::Type triangles_;
 
 		Triangles(const AxisSwapMesh &mesh) :
 				mesh_{ &mesh },
@@ -97,9 +97,12 @@ public:
 				}
 			},
 			flip_{ true } {
-		if (x != Axis::X) flip_ = !flip_;
-		if (y != Axis::Y) flip_ = !flip_;
-		if (z != Axis::Z) flip_ = !flip_;
+		if (x != Axis::X)
+			flip_ = !flip_;
+		if (y != Axis::Y)
+			flip_ = !flip_;
+		if (z != Axis::Z)
+			flip_ = !flip_;
 	}
 
 	Triangles triangles() const noexcept { return { *this }; }

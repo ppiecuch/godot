@@ -51,11 +51,12 @@ BoxFaces::BoxFaces(
 			{ { { size, segments, -delta } }, true, false }
 		} {}
 
-BoxMesh::BoxMesh(const gml::dvec3 &size, const gml::ivec3 &segments) noexcept : mergeMesh_{
-	{ { { size[1], size[2] }, { segments[1], segments[2] }, size[0] },
-			Axis::Z, Axis::X, Axis::Y },
-	{ { { { size[0], size[2] }, { segments[0], segments[2] }, size[1] },
-			  Axis::X, Axis::Z, Axis::Y },
-			true, false },
-	{ { size[0], size[1] }, { segments[0], segments[1] }, size[2] }
-} {}
+BoxMesh::BoxMesh(const gml::dvec3 &size, const gml::ivec3 &segments) noexcept :
+		mergeMesh_{
+			{ { { size[1], size[2] }, { segments[1], segments[2] }, size[0] },
+					Axis::Z, Axis::X, Axis::Y },
+			{ { { { size[0], size[2] }, { segments[0], segments[2] }, size[1] },
+					  Axis::X, Axis::Z, Axis::Y },
+					true, false },
+			{ { size[0], size[1] }, { segments[0], segments[1] }, size[2] }
+		} {}

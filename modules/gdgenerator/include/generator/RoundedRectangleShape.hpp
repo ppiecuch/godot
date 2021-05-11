@@ -51,7 +51,7 @@ private:
 			LineShape, TranslateShape<CircleShape>,
 			LineShape, TranslateShape<CircleShape>,
 			LineShape, TranslateShape<CircleShape>,
-			LineShape, TranslateShape<CircleShape> >;
+			LineShape, TranslateShape<CircleShape>>;
 	Impl mergeShape_;
 
 public:

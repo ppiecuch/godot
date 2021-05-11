@@ -50,7 +50,7 @@ namespace generator {
 /// @image html SphericalConeMesh.svg
 class SphericalConeMesh {
 private:
-	using Impl = TranslateMesh<MergeMesh<ConeMesh, AxisFlipMesh<TranslateMesh<SphereMesh> > > >;
+	using Impl = TranslateMesh<MergeMesh<ConeMesh, AxisFlipMesh<TranslateMesh<SphereMesh>>>>;
 	Impl translateMesh_;
 
 public:

@@ -40,7 +40,6 @@
 #include "servers/visual_server.h"
 
 RID RasterizerStorageMetal::texture_create() {
-
 	MetalTexture *texture = memnew(MetalTexture);
 	ERR_FAIL_COND_V(!texture, RID());
 	return texture_owner.make_rid(texture);
@@ -220,7 +219,7 @@ RID RasterizerStorageMetal::mesh_create() {
 	return mesh_owner.make_rid(mesh);
 }
 
-void RasterizerStorageMetal::mesh_add_surface(RID p_mesh, uint32_t p_format, VS::PrimitiveType p_primitive, const PoolVector<uint8_t> &p_array, int p_vertex_count, const PoolVector<uint8_t> &p_index_array, int p_index_count, const AABB &p_aabb, const Vector<PoolVector<uint8_t> > &p_blend_shapes, const Vector<AABB> &p_bone_aabbs) {
+void RasterizerStorageMetal::mesh_add_surface(RID p_mesh, uint32_t p_format, VS::PrimitiveType p_primitive, const PoolVector<uint8_t> &p_array, int p_vertex_count, const PoolVector<uint8_t> &p_index_array, int p_index_count, const AABB &p_aabb, const Vector<PoolVector<uint8_t>> &p_blend_shapes, const Vector<AABB> &p_bone_aabbs) {
 	MetalMesh *m = mesh_owner.getornull(p_mesh);
 	ERR_FAIL_COND(!m);
 
@@ -312,9 +311,9 @@ AABB RasterizerStorageMetal::mesh_surface_get_aabb(RID p_mesh, int p_surface) co
 
 	return m->surfaces[p_surface].aabb;
 }
-Vector<PoolVector<uint8_t> > RasterizerStorageMetal::mesh_surface_get_blend_shapes(RID p_mesh, int p_surface) const {
+Vector<PoolVector<uint8_t>> RasterizerStorageMetal::mesh_surface_get_blend_shapes(RID p_mesh, int p_surface) const {
 	MetalMesh *m = mesh_owner.getornull(p_mesh);
-	ERR_FAIL_COND_V(!m, Vector<PoolVector<uint8_t> >());
+	ERR_FAIL_COND_V(!m, Vector<PoolVector<uint8_t>>());
 
 	return m->surfaces[p_surface].blend_shapes;
 }
@@ -762,7 +761,6 @@ RID RasterizerStorageMetal::canvas_light_occluder_create() {
 void RasterizerStorageMetal::canvas_light_occluder_set_polylines(RID p_occluder, const PoolVector<Vector2> &p_lines) {}
 
 VS::InstanceType RasterizerStorageMetal::get_base_type(RID p_rid) const {
-
 	if (mesh_owner.owns(p_rid)) {
 		return VS::INSTANCE_MESH;
 	}
@@ -771,7 +769,6 @@ VS::InstanceType RasterizerStorageMetal::get_base_type(RID p_rid) const {
 }
 
 bool RasterizerStorageMetal::free(RID p_rid) {
-
 	if (texture_owner.owns(p_rid)) {
 		// delete the texture
 		MetalTexture *texture = texture_owner.get(p_rid);

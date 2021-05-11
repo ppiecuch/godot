@@ -35,7 +35,6 @@
 #include "core/reference.h"
 
 class BlitterOps {
-
 public:
 	static _FORCE_INLINE_ Rect2 calculate_new_rect_from_mins_max(const Vector2 &p_base_size, const Vector2 &p_mins, const Vector2 &p_max) {
 		return Rect2(Point2((p_base_size.x * p_mins.x), (p_base_size.y * p_mins.y)), Size2((p_base_size.x * p_max.x) - (p_base_size.x * p_mins.x), (p_base_size.y * p_max.y) - (p_base_size.y * p_mins.y)));
@@ -58,11 +57,9 @@ public:
 		int height = ret->get_height();
 
 		for (int i = 0; i < rrect.size.y; i++) {
-
 			if (i < 0 || i >= height)
 				continue;
 			for (int j = 0; j < rrect.size.x; j++) {
-
 				if (j < 0 || j >= width)
 					continue;
 
@@ -107,7 +104,6 @@ public:
 };
 
 class Blitter : public Object {
-
 	GDCLASS(Blitter, Object)
 
 	static Blitter *singleton;

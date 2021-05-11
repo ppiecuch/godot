@@ -1791,11 +1791,10 @@ Variant::operator PoolVector<int>() const {
 }
 #ifdef NEED_LONG_INT
 Variant::operator PoolVector<long int>() const {
-
 	if (type == POOL_INT_ARRAY)
 		return *reinterpret_cast<const PoolVector<long int> *>(_data._mem);
 	else
-		return _convert_array_from_variant<PoolVector<long int> >(*this);
+		return _convert_array_from_variant<PoolVector<long int>>(*this);
 }
 #endif
 Variant::operator PoolVector<real_t>() const {
@@ -1951,13 +1950,11 @@ Variant::operator Vector<int>() const {
 }
 #ifdef NEED_LONG_INT
 Variant::operator Vector<long int>() const {
-
 	PoolVector<long int> from = operator PoolVector<long int>();
 	Vector<long int> to;
 	long int len = from.size();
 	to.resize(len);
 	for (long int i = 0; i < len; i++) {
-
 		to.write[i] = from[i];
 	}
 	return to;
@@ -2118,7 +2115,6 @@ Variant::Variant(const StringName &p_string) {
 	memnew_placement(_data._mem, String(p_string.operator String()));
 }
 Variant::Variant(const CharString &p_string) {
-
 	type = STRING;
 	memnew_placement(_data._mem, String(String::utf8(p_string)));
 }
@@ -2294,7 +2290,6 @@ Variant::Variant(const PoolVector<int> &p_int_array) {
 }
 #ifdef NEED_LONG_INT
 Variant::Variant(const PoolVector<long int> &p_int_array) {
-
 	type = POOL_INT_ARRAY;
 	memnew_placement(_data._mem, PoolVector<long int>(p_int_array));
 }
@@ -2379,7 +2374,6 @@ Variant::Variant(const Vector<int> &p_array) {
 
 #ifdef NEED_LONG_INT
 Variant::Variant(const Vector<long int> &p_array) {
-
 	type = NIL;
 	PoolVector<long int> v;
 	long int len = p_array.size();

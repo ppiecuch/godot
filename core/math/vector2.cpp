@@ -79,7 +79,6 @@ real_t Vector2::angle_to_point(const Vector2 &p_vector2) const {
 }
 
 real_t Vector2::angle_between(const Vector2 &p_left, const Vector2 &p_right) {
-
 	return (p_left - *this).angle_to(p_right - *this);
 }
 
@@ -108,7 +107,6 @@ Vector2 Vector2::round() const {
 }
 
 Vector2 Vector2::rotated_around(const Vector2 &p_origin, real_t p_radians) {
-
 	const real_t _x = x - p_origin.x;
 	const real_t _y = y - p_origin.y;
 	const real_t _sin = Math::sin(p_radians);
@@ -226,7 +224,6 @@ Vector2i Vector2i::operator*(const Vector2i &p_v1) const {
 };
 
 Vector2i Vector2i::operator*(const Vector2 &p_v1) const {
-
 	return Vector2i(x * p_v1.x, y * p_v1.y);
 };
 
@@ -243,7 +240,6 @@ Vector2i Vector2i::operator/(const Vector2i &p_v1) const {
 };
 
 Vector2i Vector2i::operator/(const Vector2 &p_v1) const {
-
 	return Vector2i(x / p_v1.x, y / p_v1.y);
 };
 

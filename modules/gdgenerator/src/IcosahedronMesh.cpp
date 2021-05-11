@@ -95,7 +95,8 @@ bool IcosahedronMesh::Triangles::done() const noexcept {
 }
 
 Triangle IcosahedronMesh::Triangles::generate() const {
-	if (done()) throw std::out_of_range("Done!");
+	if (done())
+		throw std::out_of_range("Done!");
 
 	Triangle triangle = triangles_.generate();
 
@@ -109,7 +110,8 @@ Triangle IcosahedronMesh::Triangles::generate() const {
 }
 
 void IcosahedronMesh::Triangles::next() {
-	if (done()) throw std::out_of_range("Done!");
+	if (done())
+		throw std::out_of_range("Done!");
 
 	triangles_.next();
 
@@ -144,7 +146,8 @@ bool IcosahedronMesh::Vertices::done() const noexcept {
 }
 
 MeshVertex IcosahedronMesh::Vertices::generate() const {
-	if (done()) throw std::out_of_range("Done!");
+	if (done())
+		throw std::out_of_range("Done!");
 
 	MeshVertex vertex = vertices_.generate();
 
@@ -154,7 +157,8 @@ MeshVertex IcosahedronMesh::Vertices::generate() const {
 }
 
 void IcosahedronMesh::Vertices::next() {
-	if (done()) throw std::out_of_range("Done!");
+	if (done())
+		throw std::out_of_range("Done!");
 
 	vertices_.next();
 

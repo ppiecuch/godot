@@ -100,7 +100,7 @@ class TweenNode : public Node {
 	GDCLASS(TweenNode, Node);
 
 private:
-	Vector<Ref<TweenAction> > actions;
+	Vector<Ref<TweenAction>> actions;
 	void check_queue();
 	friend class Tween2;
 
@@ -144,7 +144,7 @@ private:
 
 	bool step(float delta);
 
-	Vector<Ref<TweenProperty> > properties;
+	Vector<Ref<TweenProperty>> properties;
 	friend class Tween2;
 	friend class TweenNode;
 	void set_target(Object *target);

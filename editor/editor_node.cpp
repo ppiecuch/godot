@@ -284,7 +284,6 @@ void EditorNode::disambiguate_filenames(const Vector<String> p_full_paths, Vecto
 }
 
 void EditorNode::_refresh_viewport_if_needed() {
-
 	// PP: refresh 2d editor (to remove selection, that
 	// is still visible when curent scene is closed)
 	if (editor_table.size() - 1 >= EDITOR_2D) {

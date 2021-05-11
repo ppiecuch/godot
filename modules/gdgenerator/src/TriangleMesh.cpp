@@ -51,7 +51,8 @@ bool TriangleMesh::Triangles::done() const noexcept {
 }
 
 Triangle TriangleMesh::Triangles::generate() const {
-	if (done()) throw std::out_of_range("Done!");
+	if (done())
+		throw std::out_of_range("Done!");
 
 	Triangle triangle;
 
@@ -69,9 +70,11 @@ Triangle TriangleMesh::Triangles::generate() const {
 }
 
 void TriangleMesh::Triangles::next() {
-	if (done()) throw std::out_of_range("Done!");
+	if (done())
+		throw std::out_of_range("Done!");
 
-	if (col_ % 2 == 0) ++i_;
+	if (col_ % 2 == 0)
+		++i_;
 
 	++col_;
 	if (col_ == 2 * (mesh_->segments_ - row_) - 1) {
@@ -91,7 +94,8 @@ bool TriangleMesh::Vertices::done() const noexcept {
 }
 
 MeshVertex TriangleMesh::Vertices::generate() const {
-	if (done()) throw std::out_of_range("Done!");
+	if (done())
+		throw std::out_of_range("Done!");
 
 	MeshVertex vertex;
 
@@ -116,7 +120,8 @@ MeshVertex TriangleMesh::Vertices::generate() const {
 }
 
 void TriangleMesh::Vertices::next() {
-	if (done()) throw std::out_of_range("Done!");
+	if (done())
+		throw std::out_of_range("Done!");
 
 	++col_;
 	if (col_ > mesh_->segments_ - row_) {

@@ -37,7 +37,6 @@
 #include <enet/enet.h>
 
 class ENetPacketPeer : public NetworkedMultiplayerPeer {
-
 	GDCLASS(ENetPacketPeer, NetworkedMultiplayerPeer)
 public:
 	enum CompressionMode {
@@ -80,7 +79,6 @@ private:
 	Map<int, ENetPeer *> peer_map;
 
 	struct Packet {
-
 		ENetPacket *packet;
 		int from;
 		int channel;

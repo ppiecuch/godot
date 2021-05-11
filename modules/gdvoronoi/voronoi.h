@@ -81,10 +81,10 @@ struct GodotAllocator {
 };
 
 template <typename K, typename V>
-using map = std::map<K, V, std::less<K>, GodotAllocator<std::pair<const K, V> > >;
+using map = std::map<K, V, std::less<K>, GodotAllocator<std::pair<const K, V>>>;
 
 template <typename T>
-using vector = std::vector<T, GodotAllocator<T> >;
+using vector = std::vector<T, GodotAllocator<T>>;
 
 } // namespace voronoi_detail
 

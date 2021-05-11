@@ -161,7 +161,6 @@ struct TextConsole : public Reference {
 };
 
 class ConsoleInstance : public CanvasItem {
-
 	GDCLASS(ConsoleInstance, CanvasItem);
 
 private:

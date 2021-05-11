@@ -203,7 +203,6 @@ void ProceduralAnimationEditor::on_disconnection_request(const String &from, con
 }
 
 void ProceduralAnimationEditor::on_delete_nodes_request() {
-
 	List<StringName> to_erase;
 
 	for (int i = 0; i < _graph_edit->get_child_count(); i++) {
@@ -312,7 +311,6 @@ void ProceduralAnimationEditor::_delete_request(const StringName &name) {
 }
 
 void ProceduralAnimationEditor::_notification(int p_what) {
-
 	switch (p_what) {
 		case NOTIFICATION_THEME_CHANGED: {
 #if VERSION_MAJOR < 4
@@ -773,7 +771,6 @@ void ProceduralAnimationEditorPlugin::make_visible(bool p_visible) {
 }
 
 ProceduralAnimationEditorPlugin::ProceduralAnimationEditorPlugin(EditorNode *p_node) {
-
 	editor = p_node;
 
 	animation_editor = memnew(ProceduralAnimationEditor(editor));

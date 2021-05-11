@@ -94,7 +94,6 @@ Tree2D::Tree2D() {
 
 #ifdef TOOLS_ENABLED
 Rect2 Tree2D::_edit_get_rect() const {
-
 	if (mesh.is_valid()) {
 		AABB aabb = mesh->get_aabb();
 		return Rect2(aabb.position.x, aabb.position.y, aabb.size.x, aabb.size.y);

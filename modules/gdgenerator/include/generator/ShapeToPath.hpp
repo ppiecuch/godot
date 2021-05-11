@@ -57,7 +57,6 @@ public:
 	class Vertices {
 	public:
 		PathVertex generate() const {
-
 			ShapeVertex shapeVertex = vertices_.generate();
 
 			PathVertex vertex;

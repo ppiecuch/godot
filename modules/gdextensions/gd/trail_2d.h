@@ -127,7 +127,6 @@ public:
 	_FORCE_INLINE_ void set_wave_time_scale(real_t p_scale) { wave_time_scale = p_scale; }
 
 	_FORCE_INLINE_ TrailPoint2D() {
-
 		trail_enable = false;
 		span_frame = 0;
 		line_width = 1;
@@ -140,7 +139,6 @@ public:
 	}
 
 	_FORCE_INLINE_ ~TrailPoint2D() {
-
 		if (trail_target != nullptr) {
 			trail_target->disconnect("tree_exiting", this, "_on_exit_tree");
 		}
@@ -152,7 +150,6 @@ class TrailLine2D : public Node2D {
 
 private:
 	struct TrailItem {
-
 		Vector2 position1, position2;
 		int count;
 
@@ -179,7 +176,7 @@ private:
 	Point2 terminal_position;
 
 	bool _needs_update;
-	Vector<Vector<Point2> > _cache_polys;
+	Vector<Vector<Point2>> _cache_polys;
 
 	void _update_position(bool minus = false);
 	void _update_frame(bool minus = false);
@@ -220,7 +217,6 @@ public:
 	_FORCE_INLINE_ void set_line_color(const Ref<Gradient> &p_color) { line_color = p_color; }
 
 	_FORCE_INLINE_ TrailLine2D() {
-
 		trail_enable = false;
 		span_frame = 0;
 		trail_items.alloc(30);

@@ -136,7 +136,6 @@ MainLoop *test_main(String p_test, const List<String> &p_args) {
 	}
 
 	if (p_test == "font") {
-
 		return TestFont::test();
 	}
 

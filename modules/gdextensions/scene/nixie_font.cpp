@@ -37,13 +37,13 @@
 #define MAKE_RGBA(r, g, b, a) ((uint32_t)(((uint32_t)(r) << 24) | ((uint32_t)(g) << 16) | ((uint32_t)(b) << 8) | (uint32_t)(a)))
 
 static PoolVector<Rect2> _build_tiles(Size2 grid_size, int total_frames, Point2 tex_origin = Point2(0, 0), Size2 tex_size = Size2(1, 1)) {
-
 	PoolVector<Rect2> frames;
 	const real_t cw = tex_size.width / grid_size.width, ch = tex_size.height / grid_size.height;
 	for (int fr = 0; fr < grid_size.height /* rows */; fr++) {
 		for (int fc = 0; fc < grid_size.width /* cols */; fc++) {
 			frames.push_back(Rect2(tex_origin.x + (grid_size.width - fc - 1) * cw, tex_origin.y + fr * ch, cw, ch));
-			if (frames.size() == total_frames) break;
+			if (frames.size() == total_frames)
+				break;
 		}
 	}
 	return frames;
@@ -79,7 +79,6 @@ const int NixieFontRows = 12; // in font sheet
 const int NixieFontChars = NixieFontCols * NixieFontRows; // might be less than Rows*Cols
 
 const struct {
-
 	int t; // timing
 	uint8_t alpha; // alpha
 } LightBlinkingPattern[] = {
@@ -171,27 +170,22 @@ bool NixieFont::_edit_use_rect() const {
 #endif
 
 Size2 NixieFont::_calculate_text_rect(const String &s, int *visible_chars) const {
-
 	real_t max_line_width = 0;
 	real_t line_width = 0;
 	real_t lines_count = 0;
 	int all_chars = 0;
 
 	for (int i = 0; i < s.size(); i++) {
-
 		CharType current = s[i];
 
 		if (current < 32) {
-
 			if (current == '\n') {
-
 				if (line_width > max_line_width)
 					max_line_width = line_width;
 				line_width = 0;
 				lines_count++;
 			}
 		} else {
-
 			line_width++;
 			if (current > 32)
 				all_chars++;
@@ -224,7 +218,6 @@ void NixieFont::_push_texture(PoolVector2Array &array, const Rect2 &quad) {
 }
 
 void NixieFont::_push_quad(PoolVector2Array &array, const Point2 &origin, const Size2 &size) {
-
 	const Vector2 sidex(size.width, 0);
 	const Vector2 sidey(0, size.height);
 
@@ -243,9 +236,7 @@ void NixieFont::_push_quad(PoolVector2Array &array, const Point2 &origin, const 
 #define _push_quad_color(arr, c) arr.push_multi(6, Color(1, 1, 1, c / 255.0));
 
 void NixieFont::_update_animation() {
-
 	if (_dirty) {
-
 		_text_rect_size = _calculate_text_rect(draw_text, &_visible_chars) * _char_size;
 
 		_control.resize(_visible_chars);
@@ -349,14 +340,11 @@ void NixieFont::_update_animation() {
 }
 
 String NixieFont::get_text() {
-
 	return draw_text;
 }
 
 void NixieFont::set_text(String p_text) {
-
 	if (draw_text != p_text) {
-
 		draw_text = p_text;
 		if (draw_text.empty()) {
 			_visible_chars = 0;
@@ -378,17 +366,14 @@ void NixieFont::set_align(Align p_align) {
 }
 
 NixieFont::Align NixieFont::get_align() const {
-
 	return align;
 }
 
 bool NixieFont::get_enable_animation() {
-
 	return enable_animation;
 }
 
 void NixieFont::set_enable_animation(bool p_state) {
-
 	if (p_state != enable_animation) {
 		enable_animation = p_state;
 		set_process(enable_animation);
@@ -397,7 +382,6 @@ void NixieFont::set_enable_animation(bool p_state) {
 }
 
 int NixieFont::get_animation_speed() {
-
 	return animation_speed;
 }
 
@@ -405,14 +389,12 @@ void NixieFont::set_animation_speed(int p_speed) {
 	ERR_FAIL_COND(p_speed < 0 || p_speed > 10);
 
 	if (animation_speed != p_speed) {
-
 		animation_speed = _animation_delay = p_speed;
 		update();
 	}
 }
 
 int NixieFont::get_broken_tube_effect() {
-
 	return broken_tube_effect;
 }
 
@@ -425,7 +407,6 @@ void NixieFont::set_broken_tube_effect(int p_duration) {
 }
 
 void NixieFont::_notification(int p_what) {
-
 	switch (p_what) {
 		case NOTIFICATION_READY: {
 			const EmbedImageItem &e = embed_nixie_font[0];
@@ -469,7 +450,6 @@ void NixieFont::_notification(int p_what) {
 }
 
 void NixieFont::_bind_methods() {
-
 	ClassDB::bind_method(D_METHOD("get_text"), &NixieFont::get_text);
 	ClassDB::bind_method(D_METHOD("set_text"), &NixieFont::set_text);
 	ClassDB::bind_method(D_METHOD("set_align", "align"), &NixieFont::set_align);
@@ -493,7 +473,6 @@ void NixieFont::_bind_methods() {
 }
 
 NixieFont::NixieFont() {
-
 	draw_text = "";
 	animation_speed = 4;
 	enable_animation = false;

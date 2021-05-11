@@ -1908,7 +1908,6 @@ _FORCE_INLINE_ void RasterizerSceneGLES3::_set_stencil_face(GLenum p_face, const
 	if (p_stencil.value != p_state_stencil.value ||
 			p_stencil.read_mask != p_state_stencil.read_mask ||
 			p_stencil.test != p_state_stencil.test) {
-
 		glStencilFuncSeparate(p_face, _get_stencil_test(p_stencil.test), p_stencil.value, p_stencil.read_mask);
 		p_state_stencil.value = p_stencil.value;
 		p_state_stencil.read_mask = p_stencil.read_mask;
@@ -1923,7 +1922,6 @@ _FORCE_INLINE_ void RasterizerSceneGLES3::_set_stencil_face(GLenum p_face, const
 	if (p_stencil.pass != p_state_stencil.pass ||
 			p_stencil.fail_depth != p_state_stencil.fail_depth ||
 			p_stencil.fail_stencil != p_state_stencil.fail_stencil) {
-
 		glStencilOpSeparate(p_face,
 				_get_stencil_op(p_stencil.fail_stencil),
 				_get_stencil_op(p_stencil.fail_depth),
@@ -1936,29 +1934,47 @@ _FORCE_INLINE_ void RasterizerSceneGLES3::_set_stencil_face(GLenum p_face, const
 
 _FORCE_INLINE_ GLenum RasterizerSceneGLES3::_get_stencil_test(ShaderLanguage::StencilTest::StencilTestType p_test) {
 	switch (p_test) {
-		case ShaderLanguage::StencilTest::STENCIL_TEST_ALWAYS: return GL_ALWAYS;
-		case ShaderLanguage::StencilTest::STENCIL_TEST_NEVER: return GL_NEVER;
-		case ShaderLanguage::StencilTest::STENCIL_TEST_EQUAL: return GL_EQUAL;
-		case ShaderLanguage::StencilTest::STENCIL_TEST_NOT_EQUAL: return GL_NOTEQUAL;
-		case ShaderLanguage::StencilTest::STENCIL_TEST_LESS: return GL_LESS;
-		case ShaderLanguage::StencilTest::STENCIL_TEST_LESS_EQUAL: return GL_LEQUAL;
-		case ShaderLanguage::StencilTest::STENCIL_TEST_GREATER: return GL_GREATER;
-		case ShaderLanguage::StencilTest::STENCIL_TEST_GREATER_EQUAL: return GL_GEQUAL;
-		default: ERR_FAIL_V(GL_ALWAYS);
+		case ShaderLanguage::StencilTest::STENCIL_TEST_ALWAYS:
+			return GL_ALWAYS;
+		case ShaderLanguage::StencilTest::STENCIL_TEST_NEVER:
+			return GL_NEVER;
+		case ShaderLanguage::StencilTest::STENCIL_TEST_EQUAL:
+			return GL_EQUAL;
+		case ShaderLanguage::StencilTest::STENCIL_TEST_NOT_EQUAL:
+			return GL_NOTEQUAL;
+		case ShaderLanguage::StencilTest::STENCIL_TEST_LESS:
+			return GL_LESS;
+		case ShaderLanguage::StencilTest::STENCIL_TEST_LESS_EQUAL:
+			return GL_LEQUAL;
+		case ShaderLanguage::StencilTest::STENCIL_TEST_GREATER:
+			return GL_GREATER;
+		case ShaderLanguage::StencilTest::STENCIL_TEST_GREATER_EQUAL:
+			return GL_GEQUAL;
+		default:
+			ERR_FAIL_V(GL_ALWAYS);
 	}
 }
 
 _FORCE_INLINE_ GLenum RasterizerSceneGLES3::_get_stencil_op(ShaderLanguage::StencilTest::StencilActionType p_action) {
 	switch (p_action) {
-		case ShaderLanguage::StencilTest::STENCIL_ACTION_KEEP: return GL_KEEP;
-		case ShaderLanguage::StencilTest::STENCIL_ACTION_ZERO: return GL_ZERO;
-		case ShaderLanguage::StencilTest::STENCIL_ACTION_INCR: return GL_INCR;
-		case ShaderLanguage::StencilTest::STENCIL_ACTION_DECR: return GL_DECR;
-		case ShaderLanguage::StencilTest::STENCIL_ACTION_INVERT: return GL_INVERT;
-		case ShaderLanguage::StencilTest::STENCIL_ACTION_REPLACE: return GL_REPLACE;
-		case ShaderLanguage::StencilTest::STENCIL_ACTION_INCR_WRAP: return GL_INCR_WRAP;
-		case ShaderLanguage::StencilTest::STENCIL_ACTION_DECR_WRAP: return GL_DECR_WRAP;
-		default: ERR_FAIL_V(GL_KEEP);
+		case ShaderLanguage::StencilTest::STENCIL_ACTION_KEEP:
+			return GL_KEEP;
+		case ShaderLanguage::StencilTest::STENCIL_ACTION_ZERO:
+			return GL_ZERO;
+		case ShaderLanguage::StencilTest::STENCIL_ACTION_INCR:
+			return GL_INCR;
+		case ShaderLanguage::StencilTest::STENCIL_ACTION_DECR:
+			return GL_DECR;
+		case ShaderLanguage::StencilTest::STENCIL_ACTION_INVERT:
+			return GL_INVERT;
+		case ShaderLanguage::StencilTest::STENCIL_ACTION_REPLACE:
+			return GL_REPLACE;
+		case ShaderLanguage::StencilTest::STENCIL_ACTION_INCR_WRAP:
+			return GL_INCR_WRAP;
+		case ShaderLanguage::StencilTest::STENCIL_ACTION_DECR_WRAP:
+			return GL_DECR_WRAP;
+		default:
+			ERR_FAIL_V(GL_KEEP);
 	}
 }
 

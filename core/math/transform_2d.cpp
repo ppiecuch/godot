@@ -93,7 +93,6 @@ Transform2D::Transform2D(real_t p_rot, const Vector2 &p_pos) {
 }
 
 Transform2D::Transform2D(real_t p_rot, const Size2 &p_scale, const Vector2 &p_pos) {
-
 	elements[0][0] = Math::cos(p_rot) * p_scale.x;
 	elements[1][1] = Math::cos(p_rot) * p_scale.y;
 	elements[1][0] = -Math::sin(p_rot) * p_scale.y;
