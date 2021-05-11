@@ -14,7 +14,7 @@ fi
 # Apply black.
 echo -e "Formatting Python files..."
 PY_FILES=$($find \( -path "./.git" \
-                -o -path "./thirdparty" \
+                -o -path "./thirdparty" -o -path "./misc" \
                 \) -prune \
                 -o \( -name "SConstruct" \
                 -o -name "SCsub" \
