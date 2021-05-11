@@ -24,7 +24,7 @@ def execute(exe):
 def MergeLibs(env, target, source):
 
 	if not target or len(target) > 1:
-		print("WARNING: Cannot combine into multiple targets.");
+		print("WARNING: Cannot combine into multiple targets.")
 		return None
 	targetlib = target[0]
 	output = piglet + "_combine"
@@ -65,6 +65,11 @@ env_static.Append(LDFLAGS=[link_opt])
 sources = lib_src
 
 lib = env_static.Library("pib", sources)
+piblibname = "" # final library name
+if len and len(lib) > 0:
+	piblibname = lib[0].name
+else:
+	print("WARNING: Cannot get library full name.")
 
 # stubs:
 
@@ -86,6 +91,7 @@ combine_libraries = [
 	vitasdklib + "/libSceAppMgr_stub_weak.a",
 	vitasdklib + "/libSceShaccCg_stub_weak.a",
 	output + "/liblibScePiglet_stub_weak.a",
+	piblibname,
 ]
 
 env_static.Command("libscepib.a", combine_libraries, MergeLibs)
