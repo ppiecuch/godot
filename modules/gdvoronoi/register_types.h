@@ -28,5 +28,10 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-void register_gd_voronoi_types();
-void unregister_gd_voronoi_types();
+#ifndef GDVORONOI_REGISTER_TYPES_H
+#define GDVORONOI_REGISTER_TYPES_H
+
+void register_gdvoronoi_types();
+void unregister_gdvoronoi_types();
+
+#endif // GDVORONOI_REGISTER_TYPES_H
