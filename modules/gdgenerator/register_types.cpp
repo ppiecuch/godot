@@ -35,8 +35,8 @@
 
 #include "register_types.h"
 
-void register_gd_generator_types() {
+void register_gdgenerator_types() {
 }
 
-void unregister_gd_generator_types() {
+void unregister_gdgenerator_types() {
 }

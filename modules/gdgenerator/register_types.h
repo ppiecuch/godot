@@ -28,10 +28,10 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GD_GENERATOR_REGISTER_TYPES_H
-#define GD_GENERATOR_REGISTER_TYPES_H
+#ifndef GDGENERATOR_REGISTER_TYPES_H
+#define GDGENERATOR_REGISTER_TYPES_H
 
-void register_gd_generator_types();
-void unregister_gd_generator_types();
+void register_gdgenerator_types();
+void unregister_gdgenerator_types();
 
-#endif // GD_GENERATOR_REGISTER_TYPES_H
+#endif // GDGENERATOR_REGISTER_TYPES_H
