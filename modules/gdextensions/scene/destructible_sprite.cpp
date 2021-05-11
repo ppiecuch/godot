@@ -36,18 +36,18 @@
 
 #include "destructible_sprite.h"
 #include "explosion_particles.h"
-#include "scene/main/timer.h"
 #include "scene/2d/collision_shape_2d.h"
-#include "scene/2d/particles_2d.h"
 #include "scene/2d/cpu_particles_2d.h"
+#include "scene/2d/particles_2d.h"
 #include "scene/animation/tween.h"
+#include "scene/main/timer.h"
 #include "scene/resources/rectangle_shape_2d.h"
 
 #include <vector>
 
 struct explo_object_t {
 	uint64_t id;
-	std::vector<Node2D*> blocks;
+	std::vector<Node2D *> blocks;
 	Node2D *blocks_container;
 	real_t blocks_gravity_scale;
 	real_t blocks_impulse;
@@ -142,20 +142,20 @@ void DestructibleSprite::_on_debris_timer_timeout(uint64_t object_id) {
 				}
 			}
 		} else if (object.remove_debris) {
-				child_sprite = _safe_sprite(child);
+			child_sprite = _safe_sprite(child);
 		}
 		if (child_sprite) {
 			Color modulate_color = child_sprite->get_modulate();
 			Tween *opacity_tween = memnew(Tween);
 			opacity_tween->connect("tween_completed", this, "_on_opacity_tween_completed");
 			opacity_tween->interpolate_property(
-				child_sprite,
-				NodePath("modulate"),
-				modulate_color,
-				modulate_color.with_alpha(0.0),
-				Math::random(0.0, 1.0),
-				Tween::TRANS_LINEAR,
-				Tween::EASE_IN);
+					child_sprite,
+					NodePath("modulate"),
+					modulate_color,
+					modulate_color.with_alpha(0.0),
+					Math::random(0.0, 1.0),
+					Tween::TRANS_LINEAR,
+					Tween::EASE_IN);
 			add_child(opacity_tween, true);
 			opacity_tween->start();
 		}
@@ -164,7 +164,7 @@ void DestructibleSprite::_on_debris_timer_timeout(uint64_t object_id) {
 
 void DestructibleSprite::_detonate(explo_object_t &object) {
 
-	for (int i = 0;  i < get_child_count(); i++) {
+	for (int i = 0; i < get_child_count(); i++) {
 		Node *child = get_child(i);
 		if (Particles2D *particles = Object::cast_to<Particles2D>(child)) {
 			particles->set_emitting(true);
@@ -175,7 +175,7 @@ void DestructibleSprite::_detonate(explo_object_t &object) {
 		}
 	}
 
-	for (int i = 0;  i < object.blocks_container->get_child_count(); i++) {
+	for (int i = 0; i < object.blocks_container->get_child_count(); i++) {
 		Node *child = object.blocks_container->get_child(i);
 
 		if (RigidBody2D *body = Object::cast_to<RigidBody2D>(child)) {
@@ -204,13 +204,13 @@ void DestructibleSprite::_detonate(explo_object_t &object) {
 			const float child_color = Math::random(100, 255) / 255;
 			Tween *color_tween = memnew(Tween);
 			color_tween->interpolate_property(
-				sprite,
-				NodePath("modulate"),
-				Color(1.0, 1.0, 1.0, 1.0),
-				Color(child_color, child_color, child_color, 1.0),
-				0.25,
-				Tween::TRANS_LINEAR,
-				Tween::EASE_IN);
+					sprite,
+					NodePath("modulate"),
+					Color(1.0, 1.0, 1.0, 1.0),
+					Color(child_color, child_color, child_color, 1.0),
+					0.25,
+					Tween::TRANS_LINEAR,
+					Tween::EASE_IN);
 			add_child(color_tween, true);
 			color_tween->start();
 		}
@@ -221,7 +221,7 @@ void DestructibleSprite::_detonate(explo_object_t &object) {
 
 void DestructibleSprite::_add_children(const explo_object_t &child_object) {
 
-	for (int i = 0;  i < child_object.blocks.size(); i++) {
+	for (int i = 0; i < child_object.blocks.size(); i++) {
 		child_object.blocks_container->add_child(child_object.blocks[i], true);
 	}
 
@@ -245,7 +245,7 @@ void DestructibleSprite::_setup(explo_object_t &object) {
 
 	// Set the debris timer.
 	object.debris_timer = memnew(Timer);
-	object.debris_timer->connect("timeout", this ,"_on_debris_timer_timeout");
+	object.debris_timer->connect("timeout", this, "_on_debris_timer_timeout");
 	object.debris_timer->set_one_shot(true);
 	object.debris_timer->set_wait_time(debris_max_time);
 	object.debris_timer->set_name("debris_timer");
@@ -267,11 +267,11 @@ void DestructibleSprite::_setup(explo_object_t &object) {
 
 	object.collision_extents = Vector2((object.width / 2) / object.hframes, (object.height / 2) / object.vframes);
 	object.collision_position = Vector2((ceil(object.collision_extents.x) - object.collision_extents.x) * -1,
-										(ceil(object.collision_extents.y) - object.collision_extents.y) * -1);
+			(ceil(object.collision_extents.y) - object.collision_extents.y) * -1);
 
 	object.blocks.clear();
 
-	for (int n = 0;  n < object.vframes * object.hframes; n++) {
+	for (int n = 0; n < object.vframes * object.hframes; n++) {
 		Node2D *duplicated_object = Object::cast_to<Node2D>(duplicate(DUPLICATE_USE_INSTANCING));
 		duplicated_object->set_name(vformat("%s_block_%d", get_name(), n)); // Add a unique name to each block
 		if (Sprite *sprite = Object::cast_to<Sprite>(duplicated_object)) {
@@ -311,9 +311,8 @@ void DestructibleSprite::_setup(explo_object_t &object) {
 	for (int x = 0; x < object.hframes; x++) {
 		for (int y = 0; y < object.vframes; y++) {
 			object.blocks[object.frame]->set_position(Vector2(
-				y * (object.width / object.hframes) - object.offset.x + object.collision_extents.x + get_position().x,
-				x * (object.height / object.vframes) - object.offset.y + object.collision_extents.y + get_position().y
-			));
+					y * (object.width / object.hframes) - object.offset.x + object.collision_extents.x + get_position().x,
+					x * (object.height / object.vframes) - object.offset.y + object.collision_extents.y + get_position().y));
 			if (debug_mode) {
 				print_line(vformat("object[%d] position: %s", object.frame, object.blocks[object.frame]->get_position()));
 			}
@@ -323,6 +322,71 @@ void DestructibleSprite::_setup(explo_object_t &object) {
 	}
 
 	call_deferred("add_children", object.id);
+}
+
+void DestructibleSprite::set_destruction_types(DestructionType p_type) {
+
+	destruction_type = p_type;
+}
+
+void DestructibleSprite::set_destruction_physics(DestructionPhysics p_physics) {
+
+	destruction_physics = p_physics;
+}
+
+void DestructibleSprite::set_blocks_per_side(int p_blocks_per_side) {
+
+	blocks_per_side = p_blocks_per_side;
+}
+
+void DestructibleSprite::set_blocks_impulse(real_t p_blocks_impulse) {
+
+	blocks_impulse = p_blocks_impulse;
+}
+
+void DestructibleSprite::set_blocks_gravity_scale(real_t p_blocks_gravity_scale) {
+
+	blocks_gravity_scale = p_blocks_gravity_scale;
+}
+
+void DestructibleSprite::set_debris_max_time(real_t p_debris_max_time) {
+
+	debris_max_time = p_debris_max_time;
+}
+
+void DestructibleSprite::set_remove_debris(bool p_remove_debris) {
+
+	remove_debris = p_remove_debris;
+}
+
+void DestructibleSprite::set_collision_layers(int p_collision_layers) {
+
+	collision_layers = p_collision_layers;
+}
+
+void DestructibleSprite::set_collision_masks(int p_collision_masks) {
+
+	collision_masks = p_collision_masks;
+}
+
+void DestructibleSprite::set_collision_one_way(bool p_collision_one_way) {
+
+	collision_one_way = p_collision_one_way;
+}
+
+void DestructibleSprite::set_explosion_delay(bool p_explosion_delay) {
+
+	explosion_delay = p_explosion_delay;
+}
+
+void DestructibleSprite::set_randomize_seed(bool p_randomize_seed) {
+
+	randomize_seed = p_randomize_seed;
+}
+
+void DestructibleSprite::set_debug_mode(bool p_debug_mode) {
+
+	debug_mode = p_debug_mode;
 }
 
 void DestructibleSprite::explode() {
@@ -346,7 +410,6 @@ void DestructibleSprite::_notification(int p_what) {
 
 		} break;
 		case NOTIFICATION_DRAW: {
-
 		}
 	}
 }
@@ -358,6 +421,33 @@ void DestructibleSprite::_bind_methods() {
 	BIND_ENUM_CONSTANT(DESTRUCTION_PHYSICS_OFF);
 	BIND_ENUM_CONSTANT(DESTRUCTION_PHYSICS_STANDARD);
 	BIND_ENUM_CONSTANT(DESTRUCTION_PHYSICS_HIGH);
+
+	ClassDB::bind_method(D_METHOD("set_destruction_types", "type"), &DestructibleSprite::set_destruction_types);
+	ClassDB::bind_method(D_METHOD("get_destruction_types"), &DestructibleSprite::get_destruction_types);
+	ClassDB::bind_method(D_METHOD("set_destruction_physics", "physics"), &DestructibleSprite::set_destruction_physics);
+	ClassDB::bind_method(D_METHOD("get_destruction_physics"), &DestructibleSprite::get_destruction_physics);
+	ClassDB::bind_method(D_METHOD("set_blocks_per_side", "per_side"), &DestructibleSprite::set_blocks_per_side);
+	ClassDB::bind_method(D_METHOD("get_blocks_per_side"), &DestructibleSprite::get_blocks_per_side);
+	ClassDB::bind_method(D_METHOD("set_blocks_impulse", "impulse"), &DestructibleSprite::set_blocks_impulse);
+	ClassDB::bind_method(D_METHOD("get_blocks_impulse"), &DestructibleSprite::get_blocks_impulse);
+	ClassDB::bind_method(D_METHOD("set_blocks_gravity_scale", "scale"), &DestructibleSprite::set_blocks_gravity_scale);
+	ClassDB::bind_method(D_METHOD("get_blocks_gravity_scale"), &DestructibleSprite::get_blocks_gravity_scale);
+	ClassDB::bind_method(D_METHOD("set_debris_max_time", "max_time"), &DestructibleSprite::set_debris_max_time);
+	ClassDB::bind_method(D_METHOD("get_debris_max_time"), &DestructibleSprite::get_debris_max_time);
+	ClassDB::bind_method(D_METHOD("set_remove_debris", "remove_debris"), &DestructibleSprite::set_remove_debris);
+	ClassDB::bind_method(D_METHOD("get_remove_debris"), &DestructibleSprite::get_remove_debris);
+	ClassDB::bind_method(D_METHOD("set_collision_layers", "layers"), &DestructibleSprite::set_collision_layers);
+	ClassDB::bind_method(D_METHOD("get_collision_layers"), &DestructibleSprite::get_collision_layers);
+	ClassDB::bind_method(D_METHOD("set_collision_masks", "mask"), &DestructibleSprite::set_collision_masks);
+	ClassDB::bind_method(D_METHOD("get_collision_masks"), &DestructibleSprite::get_collision_masks);
+	ClassDB::bind_method(D_METHOD("set_collision_one_way", "one_way"), &DestructibleSprite::set_collision_one_way);
+	ClassDB::bind_method(D_METHOD("get_collision_one_way"), &DestructibleSprite::get_collision_one_way);
+	ClassDB::bind_method(D_METHOD("set_explosion_delay", "delay"), &DestructibleSprite::set_explosion_delay);
+	ClassDB::bind_method(D_METHOD("get_explosion_delay"), &DestructibleSprite::get_explosion_delay);
+	ClassDB::bind_method(D_METHOD("set_randomize_seed", "seed"), &DestructibleSprite::set_randomize_seed);
+	ClassDB::bind_method(D_METHOD("get_randomize_seed"), &DestructibleSprite::get_randomize_seed);
+	ClassDB::bind_method(D_METHOD("set_debug_mode", "mode"), &DestructibleSprite::set_debug_mode);
+	ClassDB::bind_method(D_METHOD("get_debug_mode"), &DestructibleSprite::get_debug_mode);
 
 	ClassDB::bind_method(D_METHOD("_on_debris_timer_timeout", "object_id"), &DestructibleSprite::_on_debris_timer_timeout);
 
@@ -394,4 +484,7 @@ DestructibleSprite::DestructibleSprite() {
 	debug_mode = false;
 	_explosion_delay_timer = 0;
 	_explosion_delay_timer_limit = 0;
+}
+
+DestructibleSprite::~DestructibleSprite() {
 }

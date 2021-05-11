@@ -35,8 +35,8 @@
 #define GD_DESTRUCTIBLE_SPRITE_H
 
 #include "core/reference.h"
-#include "scene/2d/sprite.h"
 #include "scene/2d/physics_body_2d.h"
+#include "scene/2d/sprite.h"
 
 #include <map>
 
@@ -85,13 +85,40 @@ private:
 
 	void _on_debris_timer_timeout(uint64_t object_id);
 
-	std::map<uint64_t, explo_object_t*> _simulations;
+	std::map<uint64_t, explo_object_t *> _simulations;
 
 public:
-	DestructibleSprite();
-	~DestructibleSprite();
+	void set_destruction_types(DestructionType p_type);
+	DestructionType get_destruction_types() const { return destruction_type; }
+	void set_destruction_physics(DestructionPhysics p_physics);
+	DestructionPhysics get_destruction_physics() const { return destruction_physics; }
+	void set_blocks_per_side(int p_blocks_per_side);
+	int get_blocks_per_side() const { return blocks_per_side; }
+	void set_blocks_impulse(real_t p_blocks_impulse);
+	real_t get_blocks_impulse() const { return blocks_impulse; }
+	void set_blocks_gravity_scale(real_t p_blocks_gravity_scale);
+	real_t get_blocks_gravity_scale() const { return blocks_gravity_scale; }
+	void set_debris_max_time(real_t p_debris_max_time);
+	real_t get_debris_max_time() const { return debris_max_time; }
+	void set_remove_debris(bool p_remove_debris);
+	bool get_remove_debris() const { return remove_debris; }
+	void set_collision_layers(int p_collision_layers);
+	int get_collision_layers() const { return collision_layers; }
+	void set_collision_masks(int p_collision_masks);
+	int get_collision_masks() const { return collision_masks; }
+	void set_collision_one_way(bool p_collision_one_way);
+	bool get_collision_one_way() const { return collision_one_way; }
+	void set_explosion_delay(bool p_explosion_delay);
+	bool get_explosion_delay() const { return explosion_delay; }
+	void set_randomize_seed(bool p_randomize_seed);
+	bool get_randomize_seed() const { return randomize_seed; }
+	void set_debug_mode(bool p_debug_mode);
+	bool get_debug_mode() const { return debug_mode; }
 
 	void explode();
+
+	DestructibleSprite();
+	~DestructibleSprite();
 
 protected:
 	void _notification(int p_what);
