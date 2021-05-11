@@ -147,7 +147,7 @@ MonoAssembly *GDMonoAssembly::_preload_hook(MonoAssemblyName *aname, char **, vo
 	return _load_assembly_search(name, search_dirs, refonly);
 }
 
-MonoAssembly *GDMonoAssembly::_load_assembly_search(const String &p_name, MonoAssemblyName *p_aname, bool p_refonly, const Vector<String> &p_search_dirs) {
+MonoAssembly *GDMonoAssembly::_load_assembly_search(const String &p_name, bool p_refonly, const Vector<String> &p_search_dirs) {
 	MonoAssembly *res = NULL;
 	String path;
 
@@ -219,7 +219,7 @@ void GDMonoAssembly::initialize() {
 	mono_install_assembly_load_hook(&assembly_load_hook, NULL);
 }
 
-MonoAssembly *GDMonoAssembly::_real_load_assembly_from(const String &p_path, bool p_refonly, MonoAssemblyName *p_aname) {
+MonoAssembly *GDMonoAssembly::_real_load_assembly_from(const String &p_path, bool p_refonly) {
 	Vector<uint8_t> data = FileAccess::get_file_as_array(p_path);
 	ERR_FAIL_COND_V_MSG(data.empty(), NULL, "Could read the assembly in the specified location");
 
