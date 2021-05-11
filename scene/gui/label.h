@@ -43,7 +43,6 @@ class TestMainLoop;
 }
 
 class Label : public Control {
-
 	GDCLASS(Label, Control);
 
 public:
@@ -127,7 +126,6 @@ private:
 	int get_longest_line_width(const String &s) const;
 
 	struct WordList {
-
 		enum {
 			CHAR_NEWLINE = -1,
 			CHAR_WRAPLINE = -2
@@ -143,13 +141,12 @@ private:
 			line = line_pos = 0;
 			word_len = 0;
 			pixel_width = 0;
-			next = 0;
+			next = nullptr;
 			space_count = 0;
 		}
 	};
 
 	struct WordCache {
-
 		WordList *words;
 		String cache_text;
 		int total_char_cache;

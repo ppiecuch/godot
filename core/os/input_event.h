@@ -32,7 +32,6 @@
 #define INPUT_EVENT_H
 
 #include "core/math/transform_2d.h"
-#include "core/os/copymem.h"
 #include "core/resource.h"
 #include "core/typedefs.h"
 #include "core/ustring.h"
@@ -265,12 +264,12 @@ public:
 };
 
 class InputEventKey : public InputEventWithModifiers {
-
 	GDCLASS(InputEventKey, InputEventWithModifiers);
 
 	bool pressed; /// otherwise release
 
 	uint32_t scancode; ///< check keyboard.h , KeyCode enum, without modifier masks
+	uint32_t physical_scancode;
 	uint32_t unicode; ///unicode
 
 	bool echo; /// true if this is an echo key
@@ -285,6 +284,9 @@ public:
 	void set_scancode(uint32_t p_scancode);
 	uint32_t get_scancode() const;
 
+	void set_physical_scancode(uint32_t p_scancode);
+	uint32_t get_physical_scancode() const;
+
 	void set_unicode(uint32_t p_unicode);
 	uint32_t get_unicode() const;
 
@@ -292,6 +294,7 @@ public:
 	virtual bool is_echo() const G_OVERRIDE;
 
 	uint32_t get_scancode_with_modifiers() const;
+	uint32_t get_physical_scancode_with_modifiers() const;
 
 	virtual bool action_match(const Ref<InputEvent> &p_event, bool *p_pressed, float *p_strength, float p_deadzone) const G_OVERRIDE;
 	virtual bool shortcut_match(const Ref<InputEvent> &p_event) const G_OVERRIDE;
@@ -304,7 +307,6 @@ public:
 };
 
 class InputEventMouse : public InputEventWithModifiers {
-
 	GDCLASS(InputEventMouse, InputEventWithModifiers);
 
 	int button_mask;
@@ -329,7 +331,6 @@ public:
 };
 
 class InputEventMouseButton : public InputEventMouse {
-
 	GDCLASS(InputEventMouseButton, InputEventMouse);
 
 	float factor;
@@ -363,7 +364,6 @@ public:
 };
 
 class InputEventMouseMotion : public InputEventMouse {
-
 	GDCLASS(InputEventMouseMotion, InputEventMouse);
 
 	Vector2 tilt;
@@ -396,7 +396,6 @@ public:
 };
 
 class InputEventJoypadMotion : public InputEvent {
-
 	GDCLASS(InputEventJoypadMotion, InputEvent);
 	int axis; ///< Joypad axis
 	float axis_value; ///< -1 to 1
@@ -475,7 +474,6 @@ public:
 };
 
 class InputEventScreenDrag : public InputEvent {
-
 	GDCLASS(InputEventScreenDrag, InputEvent);
 	int index;
 	Vector2 pos;
@@ -505,7 +503,6 @@ public:
 };
 
 class InputEventAction : public InputEvent {
-
 	GDCLASS(InputEventAction, InputEvent);
 
 	StringName action;
@@ -537,7 +534,6 @@ public:
 };
 
 class InputEventGesture : public InputEventWithModifiers {
-
 	GDCLASS(InputEventGesture, InputEventWithModifiers);
 
 	Vector2 pos;
@@ -551,7 +547,6 @@ public:
 };
 
 class InputEventMagnifyGesture : public InputEventGesture {
-
 	GDCLASS(InputEventMagnifyGesture, InputEventGesture);
 	real_t factor;
 
@@ -569,7 +564,6 @@ public:
 };
 
 class InputEventPanGesture : public InputEventGesture {
-
 	GDCLASS(InputEventPanGesture, InputEventGesture);
 	Vector2 delta;
 

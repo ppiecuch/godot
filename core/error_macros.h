@@ -61,16 +61,15 @@ class String;
 typedef void (*ErrorHandlerFunc)(void *, const char *, const char *, int p_line, const char *, const char *, ErrorHandlerType p_type);
 
 struct ErrorHandlerList {
-
 	ErrorHandlerFunc errfunc;
 	void *userdata;
 
 	ErrorHandlerList *next;
 
 	ErrorHandlerList() {
-		errfunc = 0;
-		next = 0;
-		userdata = 0;
+		errfunc = nullptr;
+		next = nullptr;
+		userdata = nullptr;
 	}
 };
 

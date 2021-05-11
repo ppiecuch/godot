@@ -38,8 +38,9 @@
 #include "scene/resources/animation.h"
 
 #ifdef TOOLS_ENABLED
-// To save/restore animated values
-class AnimatedValuesBackup {
+class AnimatedValuesBackup : public Reference {
+	GDCLASS(AnimatedValuesBackup, Reference);
+
 	struct Entry {
 		Object *object;
 		Vector<StringName> subpath; // Unused if bone
@@ -50,8 +51,12 @@ class AnimatedValuesBackup {
 
 	friend class AnimationPlayer;
 
+protected:
+	static void _bind_methods();
+
 public:
 	void update_skeletons();
+	void restore() const;
 };
 #endif
 
@@ -86,7 +91,6 @@ private:
 	};
 
 	struct TrackNodeCache {
-
 		NodePath path;
 		uint32_t id;
 		RES resource;
@@ -109,7 +113,6 @@ private:
 		bool animation_playing;
 
 		struct PropertyAnim {
-
 			TrackNodeCache *owner;
 			SpecialProperty special; //small optimization
 			Vector<StringName> subpath;
@@ -119,16 +122,15 @@ private:
 			Variant capture;
 
 			PropertyAnim() :
-					owner(NULL),
+					owner(nullptr),
 					special(SP_NONE),
-					object(NULL),
+					object(nullptr),
 					accum_pass(0) {}
 		};
 
 		Map<StringName, PropertyAnim> property_anim;
 
 		struct BezierAnim {
-
 			Vector<StringName> bezier_property;
 			TrackNodeCache *owner;
 			float bezier_accum;
@@ -136,9 +138,9 @@ private:
 			uint64_t accum_pass;
 
 			BezierAnim() :
-					owner(NULL),
+					owner(nullptr),
 					bezier_accum(0.0),
-					object(NULL),
+					object(nullptr),
 					accum_pass(0) {}
 		};
 
@@ -146,10 +148,10 @@ private:
 
 		TrackNodeCache() :
 				id(0),
-				node(NULL),
-				spatial(NULL),
-				node_2d(NULL),
-				skeleton(NULL),
+				node(nullptr),
+				spatial(nullptr),
+				node_2d(nullptr),
+				skeleton(nullptr),
 				bone_idx(-1),
 				accum_pass(0),
 				audio_playing(false),
@@ -159,18 +161,17 @@ private:
 	};
 
 	struct TrackNodeCacheKey {
-
 		uint32_t id;
 		int bone_idx;
 
 		inline bool operator<(const TrackNodeCacheKey &p_right) const {
-
-			if (id < p_right.id)
+			if (id < p_right.id) {
 				return true;
-			else if (id > p_right.id)
+			} else if (id > p_right.id) {
 				return false;
-			else
+			} else {
 				return bone_idx < p_right.bone_idx;
+			}
 		}
 	};
 
@@ -197,7 +198,6 @@ private:
 
 	Map<StringName, AnimationData> animation_set;
 	struct BlendKey {
-
 		StringName from;
 		StringName to;
 		bool operator<(const BlendKey &bk) const { return from == bk.from ? String(to) < String(bk.to) : String(from) < String(bk.from); }
@@ -206,35 +206,30 @@ private:
 	Map<BlendKey, float> blend_times;
 
 	struct PlaybackData {
-
 		AnimationData *from;
 		float pos;
 		float speed_scale;
 
 		PlaybackData() {
-
 			pos = 0;
 			speed_scale = 1.0;
-			from = NULL;
+			from = nullptr;
 		}
 	};
 
 	struct Blend {
-
 		PlaybackData data;
 
 		float blend_time;
 		float blend_left;
 
 		Blend() {
-
 			blend_left = 0;
 			blend_time = 0;
 		}
 	};
 
 	struct Playback {
-
 		List<Blend> blend;
 		PlaybackData current;
 		StringName assigned;
@@ -248,6 +243,7 @@ private:
 	bool end_notify;
 
 	String autoplay;
+	bool reset_on_save;
 	AnimationProcessMode animation_process_mode;
 	AnimationMethodCallMode method_call_mode;
 	bool processing;
@@ -257,7 +253,7 @@ private:
 
 	void _animation_process_animation(AnimationData *p_anim, float p_time, float p_delta, float p_interp, bool p_is_current = true, bool p_seeked = false, bool p_started = false);
 
-	void _ensure_node_caches(AnimationData *p_anim);
+	void _ensure_node_caches(AnimationData *p_anim, Node *p_root_override = NULL);
 	void _animation_process_data(PlaybackData &cd, float p_delta, float p_blend, bool p_seeked, bool p_started);
 	void _animation_process2(float p_delta, bool p_started);
 	void _animation_update_transforms();
@@ -268,12 +264,10 @@ private:
 
 	// bind helpers
 	PoolVector<String> _get_animation_list() const {
-
 		List<StringName> animations;
 		get_animation_list(&animations);
 		PoolVector<String> ret;
 		while (animations.size()) {
-
 			ret.push_back(animations.front()->get());
 			animations.pop_front();
 		}
@@ -339,6 +333,9 @@ public:
 	void set_autoplay(const String &p_name);
 	String get_autoplay() const;
 
+	void set_reset_on_save_enabled(bool p_enabled);
+	bool is_reset_on_save_enabled() const;
+
 	void set_animation_process_mode(AnimationProcessMode p_mode);
 	AnimationProcessMode get_animation_process_mode() const;
 
@@ -360,9 +357,9 @@ public:
 	void get_argument_options(const StringName &p_function, int p_idx, List<String> *r_options) const;
 
 #ifdef TOOLS_ENABLED
-	// These may be interesting for games, but are too dangerous for general use
-	AnimatedValuesBackup backup_animated_values();
-	void restore_animated_values(const AnimatedValuesBackup &p_backup);
+	Ref<AnimatedValuesBackup> backup_animated_values(Node *p_root_override = NULL);
+	Ref<AnimatedValuesBackup> apply_reset(bool p_user_initiated = false);
+	bool can_apply_reset() const;
 #endif
 
 	AnimationPlayer();

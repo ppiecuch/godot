@@ -141,9 +141,9 @@ void PowerX11::check_proc_acpi_battery(const char *node, bool *have_battery, boo
 	const char *base = proc_acpi_battery_path;
 	char info[1024];
 	char state[1024];
-	char *ptr = NULL;
-	char *key = NULL;
-	char *val = NULL;
+	char *ptr = nullptr;
+	char *key = nullptr;
+	char *val = nullptr;
 	bool charge = false;
 	bool choose = false;
 	int maximum = -1;
@@ -154,8 +154,9 @@ void PowerX11::check_proc_acpi_battery(const char *node, bool *have_battery, boo
 	if (!read_power_file(base, node, "state", state, sizeof(state))) {
 		return;
 	} else {
-		if (!read_power_file(base, node, "info", info, sizeof(info)))
+		if (!read_power_file(base, node, "info", info, sizeof(info))) {
 			return;
+		}
 	}
 
 	ptr = &state[0];
@@ -226,9 +227,9 @@ void PowerX11::check_proc_acpi_battery(const char *node, bool *have_battery, boo
 void PowerX11::check_proc_acpi_ac_adapter(const char *node, bool *have_ac) {
 	const char *base = proc_acpi_ac_adapter_path;
 	char state[256];
-	char *ptr = NULL;
-	char *key = NULL;
-	char *val = NULL;
+	char *ptr = nullptr;
+	char *key = nullptr;
+	char *val = nullptr;
 
 	if (!read_power_file(base, node, "state", state, sizeof(state))) {
 		return;
@@ -308,11 +309,13 @@ bool PowerX11::next_string(char **_ptr, char **_str) {
 	}
 
 	str = ptr;
-	while ((*ptr != ' ') && (*ptr != '\n') && (*ptr != '\0'))
+	while ((*ptr != ' ') && (*ptr != '\n') && (*ptr != '\0')) {
 		ptr++;
+	}
 
-	if (*ptr != '\0')
+	if (*ptr != '\0') {
 		*(ptr++) = '\0';
+	}
 
 	*_str = str;
 	*_ptr = ptr;
@@ -336,7 +339,7 @@ bool PowerX11::GetPowerInfo_Linux_proc_apm() {
 	FileAccessRef fd = FileAccess::open(proc_apm_path, FileAccess::READ);
 	char buf[128];
 	char *ptr = &buf[0];
-	char *str = NULL;
+	char *str = nullptr;
 	ssize_t br;
 
 	if (!fd) {

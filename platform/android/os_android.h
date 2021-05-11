@@ -58,7 +58,6 @@ public:
 	};
 
 	struct JoypadEvent {
-
 		int device;
 		int type;
 		int index;
@@ -209,14 +208,9 @@ public:
 	void process_double_tap(int event_android_button_mask, Point2 p_pos);
 	void process_scroll(Point2 p_pos);
 	void process_joy_event(JoypadEvent p_event);
-	void process_key_event(int p_scancode, int p_unicode_char, bool p_pressed);
+	void process_key_event(int p_keycode, int p_scancode, int p_unicode_char, bool p_pressed);
 	void process_event(Ref<InputEvent> p_event);
 	void init_video_mode(int p_video_width, int p_video_height);
-
-	virtual Error native_video_play(String p_path, float p_volume, String p_audio_track, String p_subtitle_track);
-	virtual bool native_video_is_playing() const;
-	virtual void native_video_pause();
-	virtual void native_video_stop();
 
 	virtual bool is_joy_known(int p_device);
 	virtual String get_joy_guid(int p_device) const;

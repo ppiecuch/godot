@@ -36,121 +36,113 @@
 #include "servers/physics_server.h"
 
 void RayCast::set_cast_to(const Vector3 &p_point) {
-
 	cast_to = p_point;
-	if (is_inside_tree() && (Engine::get_singleton()->is_editor_hint() || get_tree()->is_debugging_collisions_hint()))
+	if (is_inside_tree() && (Engine::get_singleton()->is_editor_hint() || get_tree()->is_debugging_collisions_hint())) {
 		update_gizmo();
-	if (is_inside_tree() && get_tree()->is_debugging_collisions_hint())
+	}
+	if (is_inside_tree() && get_tree()->is_debugging_collisions_hint()) {
 		_update_debug_shape();
+	}
 }
 
 Vector3 RayCast::get_cast_to() const {
-
 	return cast_to;
 }
 
 void RayCast::set_collision_mask(uint32_t p_mask) {
-
 	collision_mask = p_mask;
 }
 
 uint32_t RayCast::get_collision_mask() const {
-
 	return collision_mask;
 }
 
 void RayCast::set_collision_mask_bit(int p_bit, bool p_value) {
-
 	uint32_t mask = get_collision_mask();
-	if (p_value)
+	if (p_value) {
 		mask |= 1 << p_bit;
-	else
+	} else {
 		mask &= ~(1 << p_bit);
+	}
 	set_collision_mask(mask);
 }
 
 bool RayCast::get_collision_mask_bit(int p_bit) const {
-
 	return get_collision_mask() & (1 << p_bit);
 }
 
 bool RayCast::is_colliding() const {
-
 	return collided;
 }
 Object *RayCast::get_collider() const {
-
-	if (against == 0)
-		return NULL;
+	if (against == 0) {
+		return nullptr;
+	}
 
 	return ObjectDB::get_instance(against);
 }
 
 int RayCast::get_collider_shape() const {
-
 	return against_shape;
 }
 Vector3 RayCast::get_collision_point() const {
-
 	return collision_point;
 }
 Vector3 RayCast::get_collision_normal() const {
-
 	return collision_normal;
 }
 
 void RayCast::set_enabled(bool p_enabled) {
-
 	enabled = p_enabled;
 	update_gizmo();
 
-	if (is_inside_tree() && !Engine::get_singleton()->is_editor_hint())
+	if (is_inside_tree() && !Engine::get_singleton()->is_editor_hint()) {
 		set_physics_process_internal(p_enabled);
-	if (!p_enabled)
+	}
+	if (!p_enabled) {
 		collided = false;
+	}
 
 	if (is_inside_tree() && get_tree()->is_debugging_collisions_hint()) {
-		if (p_enabled)
+		if (p_enabled) {
 			_update_debug_shape();
-		else
+		} else {
 			_clear_debug_shape();
+		}
 	}
 }
 
 bool RayCast::is_enabled() const {
-
 	return enabled;
 }
 
 void RayCast::set_exclude_parent_body(bool p_exclude_parent_body) {
-
-	if (exclude_parent_body == p_exclude_parent_body)
+	if (exclude_parent_body == p_exclude_parent_body) {
 		return;
+	}
 
 	exclude_parent_body = p_exclude_parent_body;
 
-	if (!is_inside_tree())
+	if (!is_inside_tree()) {
 		return;
+	}
 
 	if (Object::cast_to<CollisionObject>(get_parent())) {
-		if (exclude_parent_body)
+		if (exclude_parent_body) {
 			exclude.insert(Object::cast_to<CollisionObject>(get_parent())->get_rid());
-		else
+		} else {
 			exclude.erase(Object::cast_to<CollisionObject>(get_parent())->get_rid());
+		}
 	}
 }
 
 bool RayCast::get_exclude_parent_body() const {
-
 	return exclude_parent_body;
 }
 
 void RayCast::_notification(int p_what) {
-
 	switch (p_what) {
-
 		case NOTIFICATION_ENTER_TREE: {
-
 			if (enabled && !Engine::get_singleton()->is_editor_hint()) {
 				set_physics_process_internal(true);
 			} else {
@@ -162,33 +154,34 @@ void RayCast::_notification(int p_what) {
 			}
 
 			if (Object::cast_to<CollisionObject>(get_parent())) {
-				if (exclude_parent_body)
+				if (exclude_parent_body) {
 					exclude.insert(Object::cast_to<CollisionObject>(get_parent())->get_rid());
-				else
+				} else {
 					exclude.erase(Object::cast_to<CollisionObject>(get_parent())->get_rid());
+				}
 			}
 
 		} break;
 		case NOTIFICATION_EXIT_TREE: {
-
 			if (enabled) {
 				set_physics_process_internal(false);
 			}
 
-			if (debug_shape)
+			if (debug_shape) {
 				_clear_debug_shape();
+			}
 
 		} break;
 		case NOTIFICATION_INTERNAL_PHYSICS_PROCESS: {
-
-			if (!enabled)
+			if (!enabled) {
 				break;
+			}
 
 			bool prev_collision_state = collided;
 			_update_raycast_state();
 			if (prev_collision_state != collided && get_tree()->is_debugging_collisions_hint()) {
 				if (debug_material.is_valid()) {
-					Ref<SpatialMaterial> line_material = static_cast<Ref<SpatialMaterial> >(debug_material);
+					Ref<SpatialMaterial> line_material = static_cast<Ref<SpatialMaterial>>(debug_material);
 					line_material->set_albedo(collided ? Color(1.0, 0, 0) : Color(1.0, 0.8, 0.6));
 				}
 			}
@@ -207,13 +200,13 @@ void RayCast::_update_raycast_state() {
 	Transform gt = get_global_transform();
 
 	Vector3 to = cast_to;
-	if (to == Vector3())
+	if (to == Vector3()) {
 		to = Vector3(0, 0.01, 0);
+	}
 
 	PhysicsDirectSpaceState::RayResult rr;
 
 	if (dss->intersect_ray(gt.get_origin(), gt.xform(to), rr, exclude, collision_mask, collide_with_bodies, collide_with_areas)) {
-
 		collided = true;
 		against = rr.collider_id;
 		collision_point = rr.position;
@@ -231,60 +224,52 @@ void RayCast::force_raycast_update() {
 }
 
 void RayCast::add_exception_rid(const RID &p_rid) {
-
 	exclude.insert(p_rid);
 }
 
 void RayCast::add_exception(const Object *p_object) {
-
 	ERR_FAIL_NULL(p_object);
 	const CollisionObject *co = Object::cast_to<CollisionObject>(p_object);
-	if (!co)
+	if (!co) {
 		return;
+	}
 	add_exception_rid(co->get_rid());
 }
 
 void RayCast::remove_exception_rid(const RID &p_rid) {
-
 	exclude.erase(p_rid);
 }
 
 void RayCast::remove_exception(const Object *p_object) {
-
 	ERR_FAIL_NULL(p_object);
 	const CollisionObject *co = Object::cast_to<CollisionObject>(p_object);
-	if (!co)
+	if (!co) {
 		return;
+	}
 	remove_exception_rid(co->get_rid());
 }
 
 void RayCast::clear_exceptions() {
-
 	exclude.clear();
 }
 
 void RayCast::set_collide_with_areas(bool p_clip) {
-
 	collide_with_areas = p_clip;
 }
 
 bool RayCast::is_collide_with_areas_enabled() const {
-
 	return collide_with_areas;
 }
 
 void RayCast::set_collide_with_bodies(bool p_clip) {
-
 	collide_with_bodies = p_clip;
 }
 
 bool RayCast::is_collide_with_bodies_enabled() const {
-
 	return collide_with_bodies;
 }
 
 void RayCast::_bind_methods() {
-
 	ClassDB::bind_method(D_METHOD("set_enabled", "enabled"), &RayCast::set_enabled);
 	ClassDB::bind_method(D_METHOD("is_enabled"), &RayCast::is_enabled);
 
@@ -333,11 +318,10 @@ void RayCast::_bind_methods() {
 }
 
 void RayCast::_create_debug_shape() {
-
 	if (!debug_material.is_valid()) {
 		debug_material = Ref<SpatialMaterial>(memnew(SpatialMaterial));
 
-		Ref<SpatialMaterial> line_material = static_cast<Ref<SpatialMaterial> >(debug_material);
+		Ref<SpatialMaterial> line_material = static_cast<Ref<SpatialMaterial>>(debug_material);
 		line_material->set_flag(SpatialMaterial::FLAG_UNSHADED, true);
 		line_material->set_line_width(3.0);
 		line_material->set_albedo(Color(1.0, 0.8, 0.6));
@@ -353,17 +337,19 @@ void RayCast::_create_debug_shape() {
 }
 
 void RayCast::_update_debug_shape() {
-
-	if (!enabled)
+	if (!enabled) {
 		return;
+	}
 
-	if (!debug_shape)
+	if (!debug_shape) {
 		_create_debug_shape();
+	}
 
 	MeshInstance *mi = static_cast<MeshInstance *>(debug_shape);
 	Ref<ArrayMesh> mesh = mi->get_mesh();
-	if (!mesh.is_valid())
+	if (!mesh.is_valid()) {
 		return;
+	}
 
 	Vector<Vector3> verts;
 	verts.push_back(Vector3());
@@ -383,35 +369,35 @@ void RayCast::_update_debug_shape() {
 		int array_size = sizeof(Vector3) * verts.size();
 		byte_array.resize(array_size);
 		PoolByteArray::Write w = byte_array.write();
-		copymem(w.ptr(), verts.ptr(), array_size);
+		memcpy(w.ptr(), verts.ptr(), array_size);
 
 		VS::get_singleton()->mesh_surface_update_region(mesh->get_rid(), 0, 0, byte_array);
 	}
 }
 
 void RayCast::_clear_debug_shape() {
-
-	if (!debug_shape)
+	if (!debug_shape) {
 		return;
+	}
 
 	MeshInstance *mi = static_cast<MeshInstance *>(debug_shape);
-	if (mi->is_inside_tree())
+	if (mi->is_inside_tree()) {
 		mi->queue_delete();
-	else
+	} else {
 		memdelete(mi);
+	}
 
-	debug_shape = NULL;
+	debug_shape = nullptr;
 }
 
 RayCast::RayCast() {
-
 	enabled = false;
 	against = 0;
 	collided = false;
 	against_shape = 0;
 	collision_mask = 1;
 	cast_to = Vector3(0, -1, 0);
-	debug_shape = NULL;
+	debug_shape = nullptr;
 	exclude_parent_body = true;
 	collide_with_areas = false;
 	collide_with_bodies = true;

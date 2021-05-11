@@ -38,6 +38,7 @@
 #include "editor/inspector_dock.h"
 #include "editor/property_editor.h"
 #include "editor/scene_tree_dock.h"
+#include "scene/gui/link_button.h"
 
 typedef void (*EditorNodeInitCallback)();
 typedef void (*EditorPluginInitializeCallback)();
@@ -87,7 +88,6 @@ class ToolButton;
 class VSplitContainer;
 
 class EditorNode : public Node {
-
 	GDCLASS(EditorNode, Node);
 
 public:
@@ -425,7 +425,7 @@ private:
 	HBoxContainer *bottom_panel_hb;
 	HBoxContainer *bottom_panel_hb_editors;
 	VBoxContainer *bottom_panel_vb;
-	Label *version_label;
+	LinkButton *version_btn;
 	ToolButton *bottom_panel_raise;
 
 	Tree *disk_changed_list;
@@ -480,6 +480,7 @@ private:
 	void _close_messages();
 	void _show_messages();
 	void _vp_resized();
+	void _version_button_pressed();
 
 	int _save_external_resources();
 
@@ -527,7 +528,7 @@ private:
 	Set<FileDialog *> file_dialogs;
 	Set<EditorFileDialog *> editor_file_dialogs;
 
-	Map<String, Ref<Texture> > icon_type_cache;
+	Map<String, Ref<Texture>> icon_type_cache;
 	void _build_icon_type_cache();
 
 	bool _initializing_addons;
@@ -550,12 +551,13 @@ private:
 	void _find_node_types(Node *p_node, int &count_2d, int &count_3d);
 	void _save_scene_with_preview(String p_file, int p_idx = -1);
 
-	Map<String, Set<String> > dependency_errors;
+	Map<String, Set<String>> dependency_errors;
 
 	static void _dependency_error_report(void *ud, const String &p_path, const String &p_dep, const String &p_type) {
 		EditorNode *en = (EditorNode *)ud;
-		if (!en->dependency_errors.has(p_path))
+		if (!en->dependency_errors.has(p_path)) {
 			en->dependency_errors[p_path] = Set<String>();
+		}
 		en->dependency_errors[p_path].insert(p_dep + "::" + p_type);
 	}
 
@@ -636,7 +638,7 @@ private:
 
 	void _update_update_spinner();
 
-	Vector<Ref<EditorResourceConversionPlugin> > resource_conversion_plugins;
+	Vector<Ref<EditorResourceConversionPlugin>> resource_conversion_plugins;
 
 	PrintHandlerList print_handler;
 	static void _print_handler(void *p_this, const String &p_string, bool p_error);
@@ -812,10 +814,11 @@ public:
 	static void progress_end_task_bg(const String &p_task);
 
 	void save_scene_to_path(String p_file, bool p_with_preview = true) {
-		if (p_with_preview)
+		if (p_with_preview) {
 			_save_scene_with_preview(p_file);
-		else
+		} else {
 			_save_scene(p_file);
+		}
 	}
 
 	bool is_scene_in_use(const String &p_path);
@@ -866,7 +869,7 @@ public:
 
 	void add_resource_conversion_plugin(const Ref<EditorResourceConversionPlugin> &p_plugin);
 	void remove_resource_conversion_plugin(const Ref<EditorResourceConversionPlugin> &p_plugin);
-	Vector<Ref<EditorResourceConversionPlugin> > find_resource_conversion_plugin(const Ref<Resource> &p_for_resource);
+	Vector<Ref<EditorResourceConversionPlugin>> find_resource_conversion_plugin(const Ref<Resource> &p_for_resource);
 
 	static void add_init_callback(EditorNodeInitCallback p_callback) { _init_callbacks.push_back(p_callback); }
 	static void add_build_callback(EditorBuildCallback p_callback);
@@ -882,7 +885,6 @@ public:
 };
 
 struct EditorProgress {
-
 	String task;
 	bool step(const String &p_state, int p_step = -1, bool p_force_refresh = true) { return EditorNode::progress_task_step(task, p_state, p_step, p_force_refresh); }
 	EditorProgress(const String &p_task, const String &p_label, int p_amount, bool p_can_cancel = false) {
@@ -923,7 +925,6 @@ public:
 };
 
 struct EditorProgressBG {
-
 	String task;
 	void step(int p_step = -1) { EditorNode::progress_task_step_bg(task, p_step); }
 	EditorProgressBG(const String &p_task, const String &p_label, int p_amount) {

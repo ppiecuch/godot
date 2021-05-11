@@ -489,7 +489,7 @@ Error ENetPacketPeer::put_packet_channel(const uint8_t *p_buffer, int p_buffer_s
 	encode_uint32(unique_id, &packet->data[0]); //source ID
 	encode_uint32(target_peer, &packet->data[4]); //dest ID
 	encode_uint32(packet_flags, &packet->data[8]); //dest ID
-	copymem(&packet->data[12], p_buffer, p_buffer_size);
+	memcpy(&packet->data[12], p_buffer, p_buffer_size);
 
 	if (server) {
 
@@ -611,7 +611,7 @@ size_t ENetPacketPeer::enet_compress(void *context, const ENetBuffer *inBuffers,
 	while (total) {
 		for (size_t i = 0; i < inBufferCount; i++) {
 			int to_copy = MIN(total, int(inBuffers[i].dataLength));
-			copymem(&enet->src_compressor_mem.write[ofs], inBuffers[i].data, to_copy);
+			memcpy(&enet->src_compressor_mem.write[ofs], inBuffers[i].data, to_copy);
 			ofs += to_copy;
 			total -= to_copy;
 		}
@@ -643,7 +643,7 @@ size_t ENetPacketPeer::enet_compress(void *context, const ENetBuffer *inBuffers,
 	if (ret > int(outLimit))
 		return 0; //do not bother
 
-	copymem(outData, enet->dst_compressor_mem.ptr(), ret);
+	memcpy(outData, enet->dst_compressor_mem.ptr(), ret);
 
 	return ret;
 }

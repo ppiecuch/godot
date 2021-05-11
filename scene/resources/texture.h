@@ -43,7 +43,6 @@
 #include "servers/visual_server.h"
 
 class Texture : public Resource {
-
 	GDCLASS(Texture, Resource);
 	OBJ_SAVE_TYPE(Texture); // Saves derived classes with common type so they can be interchanged.
 
@@ -89,7 +88,6 @@ VARIANT_ENUM_CAST(Texture::Flags);
 class BitMap;
 
 class ImageTexture : public Texture {
-
 	GDCLASS(ImageTexture, Texture);
 	RES_BASE_EXTENSION("tex");
 
@@ -163,7 +161,6 @@ public:
 };
 
 class StreamTexture : public Texture {
-
 	GDCLASS(StreamTexture, Texture);
 
 public:
@@ -237,7 +234,7 @@ public:
 
 class ResourceFormatLoaderStreamTexture : public ResourceFormatLoader {
 public:
-	virtual RES load(const String &p_path, const String &p_original_path = "", Error *r_error = NULL);
+	virtual RES load(const String &p_path, const String &p_original_path = "", Error *r_error = nullptr);
 	virtual void get_recognized_extensions(List<String> *p_extensions) const;
 	virtual bool handles_type(const String &p_type) const;
 	virtual String get_resource_type(const String &p_path) const;
@@ -280,7 +277,6 @@ public:
 };
 
 class AtlasTexture : public Texture {
-
 	GDCLASS(AtlasTexture, Texture);
 	RES_BASE_EXTENSION("atlastex");
 
@@ -327,7 +323,6 @@ public:
 class Mesh;
 
 class MeshTexture : public Texture {
-
 	GDCLASS(MeshTexture, Texture);
 	RES_BASE_EXTENSION("meshtex");
 
@@ -368,13 +363,11 @@ public:
 };
 
 class LargeTexture : public Texture {
-
 	GDCLASS(LargeTexture, Texture);
 	RES_BASE_EXTENSION("largetex");
 
 protected:
 	struct Piece {
-
 		Point2 offset;
 		Ref<Texture> texture;
 	};
@@ -418,7 +411,6 @@ public:
 };
 
 class CubeMap : public Resource {
-
 	GDCLASS(CubeMap, Resource);
 	RES_BASE_EXTENSION("cubemap");
 
@@ -458,7 +450,9 @@ private:
 
 	_FORCE_INLINE_ bool _is_valid() const {
 		for (int i = 0; i < 6; i++) {
-			if (valid[i]) return true;
+			if (valid[i]) {
+				return true;
+			}
 		}
 		return false;
 	}
@@ -499,7 +493,6 @@ VARIANT_ENUM_CAST(CubeMap::Side)
 VARIANT_ENUM_CAST(CubeMap::Storage)
 
 class TextureLayered : public Resource {
-
 	GDCLASS(TextureLayered, Resource);
 
 public:
@@ -563,7 +556,6 @@ public:
 VARIANT_ENUM_CAST(TextureLayered::Flags)
 
 class Texture3D : public TextureLayered {
-
 	GDCLASS(Texture3D, TextureLayered);
 
 public:
@@ -572,7 +564,6 @@ public:
 };
 
 class TextureArray : public TextureLayered {
-
 	GDCLASS(TextureArray, TextureLayered);
 
 public:
@@ -582,14 +573,13 @@ public:
 
 class ResourceFormatLoaderTextureLayered : public ResourceFormatLoader {
 public:
-	virtual RES load(const String &p_path, const String &p_original_path = "", Error *r_error = NULL);
+	virtual RES load(const String &p_path, const String &p_original_path = "", Error *r_error = nullptr);
 	virtual void get_recognized_extensions(List<String> *p_extensions) const;
 	virtual bool handles_type(const String &p_type) const;
 	virtual String get_resource_type(const String &p_path) const;
 };
 
 class CurveTexture : public Texture {
-
 	GDCLASS(CurveTexture, Texture);
 	RES_BASE_EXTENSION("curvetex")
 
@@ -642,7 +632,6 @@ class GradientTexture : public Texture {
 
 public:
 	struct Point {
-
 		float offset;
 		Color color;
 		bool operator<(const Point &p_ponit) const {
@@ -724,7 +713,6 @@ private:
 	RID proxy;
 
 	struct Frame {
-
 		Ref<Texture> texture;
 		float delay_sec;
 

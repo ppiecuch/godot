@@ -142,7 +142,6 @@ enum PropertyUsageFlags {
 #define ADD_GROUP(m_name, m_prefix) ClassDB::add_property_group(get_class_static(), m_name, m_prefix)
 
 struct PropertyInfo {
-
 	Variant::Type type;
 	String name;
 	StringName class_name; //for classes
@@ -172,7 +171,6 @@ struct PropertyInfo {
 			hint(p_hint),
 			hint_string(p_hint_string),
 			usage(p_usage) {
-
 		if (hint == PROPERTY_HINT_RESOURCE_TYPE) {
 			class_name = hint_string;
 		} else {
@@ -204,7 +202,6 @@ struct PropertyInfo {
 Array convert_property_list(const List<PropertyInfo> *p_list);
 
 struct MethodInfo {
-
 	String name;
 	PropertyInfo return_val;
 	uint32_t flags;
@@ -283,8 +280,9 @@ public:                                                                         
 		return String(#m_class);                                                                                                  \
 	}                                                                                                                             \
 	virtual const StringName *_get_class_namev() const G_OVERRIDE {                                                               \
-		if (!_class_name)                                                                                                         \
+		if (!_class_name) {                                                                                                       \
 			_class_name = get_class_static();                                                                                     \
+		}                                                                                                                         \
 		return &_class_name;                                                                                                      \
 	}                                                                                                                             \
 	static _FORCE_INLINE_ void *get_class_ptr_static() {                                                                          \
@@ -313,18 +311,12 @@ public:                                                                         
 	static String inherits_static() {                                                                                             \
 		return String(#m_inherits);                                                                                               \
 	}                                                                                                                             \
-	virtual bool is_class(const String &p_class) const G_OVERRIDE {                                                               \
-		return (p_class == (#m_class)) ? true : m_inherits::is_class(p_class);                                                    \
-	}                                                                                                                             \
-	virtual bool is_class_ptr(void *p_ptr) const G_OVERRIDE {                                                                     \
-		return (p_ptr == get_class_ptr_static()) ? true : m_inherits::is_class_ptr(p_ptr);                                        \
-	}                                                                                                                             \
+	virtual bool is_class(const String &p_class) const G_OVERRIDE { return (p_class == (#m_class)) ? true : m_inherits::is_class(p_class); } \
+	virtual bool is_class_ptr(void *p_ptr) const G_OVERRIDE { return (p_ptr == get_class_ptr_static()) ? true : m_inherits::is_class_ptr(p_ptr);} \
 	static void get_valid_parents_static(List<String> *p_parents) {                                                               \
-                                                                                                                                  \
 		if (m_class::_get_valid_parents_static != m_inherits::_get_valid_parents_static) {                                        \
 			m_class::_get_valid_parents_static(p_parents);                                                                        \
 		}                                                                                                                         \
-                                                                                                                                  \
 		m_inherits::get_valid_parents_static(p_parents);                                                                          \
 	}                                                                                                                             \
                                                                                                                                   \
@@ -336,12 +328,14 @@ protected:                                                                      
 public:                                                                                                                           \
 	static void initialize_class() {                                                                                              \
 		static bool initialized = false;                                                                                          \
-		if (initialized)                                                                                                          \
+		if (initialized) {                                                                                                        \
 			return;                                                                                                               \
+		}                                                                                                                         \
 		m_inherits::initialize_class();                                                                                           \
 		ClassDB::_add_class<m_class>();                                                                                           \
-		if (m_class::_get_bind_methods() != m_inherits::_get_bind_methods())                                                      \
+		if (m_class::_get_bind_methods() != m_inherits::_get_bind_methods()) {                                                    \
 			_bind_methods();                                                                                                      \
+		}                                                                                                                         \
 		initialized = true;                                                                                                       \
 	}                                                                                                                             \
                                                                                                                                   \
@@ -354,8 +348,7 @@ protected:                                                                      
 	}                                                                                                                             \
 	virtual bool _getv(const StringName &p_name, Variant &r_ret) const G_OVERRIDE {                                               \
 		if (m_class::_get_get() != m_inherits::_get_get()) {                                                                      \
-			if (_get(p_name, r_ret))                                                                                              \
-				return true;                                                                                                      \
+			if (_get(p_name, r_ret)) return true;                                                                                 \
 		}                                                                                                                         \
 		return m_inherits::_getv(p_name, r_ret);                                                                                  \
 	}                                                                                                                             \
@@ -364,9 +357,7 @@ protected:                                                                      
 	}                                                                                                                             \
 	virtual bool _setv(const StringName &p_name, const Variant &p_property) G_OVERRIDE {                                          \
 		if (m_inherits::_setv(p_name, p_property)) return true;                                                                   \
-		if (m_class::_get_set() != m_inherits::_get_set()) {                                                                      \
-			return _set(p_name, p_property);                                                                                      \
-		}                                                                                                                         \
+		if (m_class::_get_set() != m_inherits::_get_set()) return _set(p_name, p_property);                                       \
 		return false;                                                                                                             \
 	}                                                                                                                             \
 	_FORCE_INLINE_ void (Object::*_get_get_property_list() const)(List<PropertyInfo> * p_list) const {                            \
@@ -377,13 +368,15 @@ protected:                                                                      
 			m_inherits::_get_property_listv(p_list, p_reversed);                                                                  \
 		}                                                                                                                         \
 		p_list->push_back(PropertyInfo(Variant::NIL, get_class_static(), PROPERTY_HINT_NONE, String(), PROPERTY_USAGE_CATEGORY)); \
-		if (!_is_gpl_reversed())                                                                                                  \
+		if (!_is_gpl_reversed()) {                                                                                                \
 			ClassDB::get_property_list(#m_class, p_list, true, this);                                                             \
+		}                                                                                                                         \
 		if (m_class::_get_get_property_list() != m_inherits::_get_get_property_list()) {                                          \
 			_get_property_list(p_list);                                                                                           \
 		}                                                                                                                         \
-		if (_is_gpl_reversed())                                                                                                   \
+		if (_is_gpl_reversed()) {                                                                                                 \
 			ClassDB::get_property_list(#m_class, p_list, true, this);                                                             \
+		}                                                                                                                         \
 		if (p_reversed) {                                                                                                         \
 			m_inherits::_get_property_listv(p_list, p_reversed);                                                                  \
 		}                                                                                                                         \
@@ -392,13 +385,15 @@ protected:                                                                      
 		return (void (Object::*)(int)) & m_class::_notification;                                                                  \
 	}                                                                                                                             \
 	virtual void _notificationv(int p_notification, bool p_reversed) G_OVERRIDE {                                                 \
-		if (!p_reversed && !_disabled_base_notifications.has(p_notification))                                                     \
+		if (!p_reversed && !_disabled_base_notifications.has(p_notification)) {                                                   \
 			m_inherits::_notificationv(p_notification, p_reversed);                                                               \
+		}                                                                                                                         \
 		if (m_class::_get_notification() != m_inherits::_get_notification()) {                                                    \
 			_notification(p_notification);                                                                                        \
 		}                                                                                                                         \
-		if (p_reversed && !_disabled_base_notifications.has(p_notification))                                                      \
+		if (p_reversed && !_disabled_base_notifications.has(p_notification)) {                                                    \
 			m_inherits::_notificationv(p_notification, p_reversed);                                                               \
+		}                                                                                                                         \
 	}                                                                                                                             \
                                                                                                                                   \
 private:
@@ -429,7 +424,6 @@ public:
 	};
 
 	struct Connection {
-
 		Object *source;
 		StringName signal;
 		Object *target;
@@ -440,8 +434,8 @@ public:
 
 		operator Variant() const;
 		Connection() {
-			source = NULL;
-			target = NULL;
+			source = nullptr;
+			target = nullptr;
 			flags = 0;
 		}
 		Connection(const Variant &p_variant);
@@ -459,9 +453,7 @@ private:
 	friend void postinitialize_handler(Object *);
 
 	struct Signal {
-
 		struct Target {
-
 			ObjectID _id;
 			StringName method;
 
@@ -475,7 +467,6 @@ private:
 		};
 
 		struct Slot {
-
 			int reference_count;
 			Connection conn;
 			List<Connection>::Element *cE;
@@ -573,8 +564,9 @@ protected:
 	Variant _call_deferred_bind(const Variant **p_args, int p_argcount, Variant::CallError &r_error);
 
 	virtual const StringName *_get_class_namev() const {
-		if (!_class_name)
+		if (!_class_name) {
 			_class_name = get_class_static();
+		}
 		return &_class_name;
 	}
 
@@ -597,8 +589,9 @@ public:
 #ifdef TOOLS_ENABLED
 	_FORCE_INLINE_ void _change_notify(const char *p_property = "") {
 		_edited = true;
-		for (Set<Object *>::Element *E = change_receptors.front(); E; E = E->next())
+		for (Set<Object *>::Element *E = change_receptors.front(); E; E = E->next()) {
 			((Object *)(E->get()))->_changed_callback(this, p_property);
+		}
 	}
 #else
 	_FORCE_INLINE_ void _change_notify(const char *p_what = "") {}
@@ -679,10 +672,10 @@ public:
 	//void set(const String& p_name, const Variant& p_value);
 	//Variant get(const String& p_name) const;
 
-	void set(const StringName &p_name, const Variant &p_value, bool *r_valid = NULL);
-	Variant get(const StringName &p_name, bool *r_valid = NULL) const;
-	void set_indexed(const Vector<StringName> &p_names, const Variant &p_value, bool *r_valid = NULL);
-	Variant get_indexed(const Vector<StringName> &p_names, bool *r_valid = NULL) const;
+	void set(const StringName &p_name, const Variant &p_value, bool *r_valid = nullptr);
+	Variant get(const StringName &p_name, bool *r_valid = nullptr) const;
+	void set_indexed(const Vector<StringName> &p_names, const Variant &p_value, bool *r_valid = nullptr);
+	Variant get_indexed(const Vector<StringName> &p_names, bool *r_valid = nullptr) const;
 
 	void get_property_list(List<PropertyInfo> *p_list, bool p_reversed = false) const;
 
@@ -699,8 +692,8 @@ public:
 	virtual String to_string();
 
 	//used mainly by script, get and set all INCLUDING string
-	virtual Variant getvar(const Variant &p_key, bool *r_valid = NULL) const;
-	virtual void setvar(const Variant &p_key, const Variant &p_value, bool *r_valid = NULL);
+	virtual Variant getvar(const Variant &p_key, bool *r_valid = nullptr) const;
+	virtual void setvar(const Variant &p_key, const Variant &p_value, bool *r_valid = nullptr);
 
 	/* SCRIPT */
 
@@ -746,8 +739,8 @@ public:
 	void set_block_signals(bool p_block);
 	bool is_blocking_signals() const;
 
-	Variant::Type get_static_property_type(const StringName &p_property, bool *r_valid = NULL) const;
-	Variant::Type get_static_property_type_indexed(const Vector<StringName> &p_path, bool *r_valid = NULL) const;
+	Variant::Type get_static_property_type(const StringName &p_property, bool *r_valid = nullptr) const;
+	Variant::Type get_static_property_type_indexed(const Vector<StringName> &p_path, bool *r_valid = nullptr) const;
 
 	virtual void get_translatable_strings(List<String> *p_strings) const;
 
@@ -784,11 +777,8 @@ bool predelete_handler(Object *p_object);
 void postinitialize_handler(Object *p_object);
 
 class ObjectDB {
-
 	struct ObjectPtrHash {
-
 		static _FORCE_INLINE_ uint32_t hash(const Object *p_obj) {
-
 			union {
 				const Object *p;
 				unsigned long i;

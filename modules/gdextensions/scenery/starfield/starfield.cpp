@@ -460,7 +460,7 @@ void Starfield::ready(Node2D *p_owner) {
 			image.instance();
 			PoolByteArray data;
 			data.resize(r.size);
-			std::memcpy(data.write().ptr(), r.pixels, r.size);
+			memcpy(data.write().ptr(), r.pixels, r.size);
 			image->create(r.width, r.height, false, r.channels == 4 ? Image::FORMAT_RGBA8 : Image::FORMAT_RGB8, data);
 			images.push_back(image);
 			names.push_back(r.image);

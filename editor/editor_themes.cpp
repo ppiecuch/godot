@@ -106,7 +106,6 @@ static Ref<Texture> flip_icon(Ref<Texture> p_texture, bool p_flip_y = false, boo
 
 #ifdef SVG_ENABLED
 static Ref<ImageTexture> editor_generate_icon(int p_index, bool p_convert_color, float p_scale = EDSCALE, bool p_force_filter = false) {
-
 	Ref<ImageTexture> icon = memnew(ImageTexture);
 	Ref<Image> img = memnew(Image);
 
@@ -119,10 +118,11 @@ static Ref<ImageTexture> editor_generate_icon(int p_index, bool p_convert_color,
 	const bool upsample = !Math::is_equal_approx(Math::round(p_scale), p_scale);
 	ImageLoaderSVG::create_image_from_string(img, editor_icons_sources[p_index], p_scale, upsample, p_convert_color);
 
-	if ((p_scale - (float)((int)p_scale)) > 0.0 || is_gizmo || p_force_filter)
+	if ((p_scale - (float)((int)p_scale)) > 0.0 || is_gizmo || p_force_filter) {
 		icon->create_from_image(img); // in this case filter really helps
-	else
+	} else {
 		icon->create_from_image(img, 0);
+	}
 
 	return icon;
 }
@@ -133,7 +133,6 @@ static Ref<ImageTexture> editor_generate_icon(int p_index, bool p_convert_color,
 #endif
 
 void editor_register_and_generate_icons(Ref<Theme> p_theme, bool p_dark_theme = true, int p_thumb_size = 32, bool p_only_thumbs = false) {
-
 #ifdef SVG_ENABLED
 	// The default icon theme is designed to be used for a dark theme.
 	// This dictionary stores color codes to convert to other colors
@@ -276,14 +275,13 @@ void editor_register_and_generate_icons(Ref<Theme> p_theme, bool p_dark_theme = 
 		}
 	}
 
-	ImageLoaderSVG::set_convert_colors(NULL);
+	ImageLoaderSVG::set_convert_colors(nullptr);
 #else
 	WARN_PRINT("SVG support disabled, editor icons won't be rendered.");
 #endif
 }
 
 Ref<Theme> create_editor_theme(const Ref<Theme> p_theme) {
-
 	Ref<Theme> theme = Ref<Theme>(memnew(Theme));
 
 	const float default_contrast = 0.25;
@@ -441,7 +439,7 @@ Ref<Theme> create_editor_theme(const Ref<Theme> p_theme) {
 	//Register icons + font
 
 	// the resolution and the icon color (dark_theme bool) has not changed, so we do not regenerate the icons
-	if (p_theme != NULL && fabs(p_theme->get_constant("scale", "Editor") - EDSCALE) < 0.00001 && (bool)p_theme->get_constant("dark_theme", "Editor") == dark_theme) {
+	if (p_theme != nullptr && fabs(p_theme->get_constant("scale", "Editor") - EDSCALE) < 0.00001 && (bool)p_theme->get_constant("dark_theme", "Editor") == dark_theme) {
 		// register already generated icons
 		for (int i = 0; i < editor_icons_count; i++) {
 			theme->set_icon(editor_icons_names[i], "EditorIcons", p_theme->get_icon(editor_icons_names[i], "EditorIcons"));
@@ -450,7 +448,7 @@ Ref<Theme> create_editor_theme(const Ref<Theme> p_theme) {
 		editor_register_and_generate_icons(theme, dark_theme, thumb_size);
 	}
 	// thumbnail size has changed, so we regenerate the medium sizes
-	if (p_theme != NULL && fabs((double)p_theme->get_constant("thumb_size", "Editor") - thumb_size) > 0.00001) {
+	if (p_theme != nullptr && fabs((double)p_theme->get_constant("thumb_size", "Editor") - thumb_size) > 0.00001) {
 		editor_register_and_generate_icons(p_theme, dark_theme, thumb_size, true);
 	}
 

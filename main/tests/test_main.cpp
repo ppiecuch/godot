@@ -49,7 +49,6 @@
 #include "test_string.h"
 
 const char **tests_get_names() {
-
 	static const char *test_names[] = {
 		"string",
 		"math",
@@ -67,88 +66,72 @@ const char **tests_get_names() {
 		"ordered_hash_map",
 		"astar",
 		"font",
-		NULL
+		nullptr,
 	};
 
 	return test_names;
 }
 
 MainLoop *test_main(String p_test, const List<String> &p_args) {
-
 	if (p_test == "string") {
-
 		return TestString::test();
 	}
 
 	if (p_test == "math") {
-
 		return TestMath::test();
 	}
 
 	if (p_test == "basis") {
-
 		return TestBasis::test();
 	}
 
 	if (p_test == "physics") {
-
 		return TestPhysics::test();
 	}
 
 	if (p_test == "physics_2d") {
-
 		return TestPhysics2D::test();
 	}
 
 	if (p_test == "render") {
-
 		return TestRender::test();
 	}
 
 	if (p_test == "oa_hash_map") {
-
 		return TestOAHashMap::test();
 	}
 
 #ifndef _3D_DISABLED
 	if (p_test == "gui") {
-
 		return TestGUI::test();
 	}
 #endif
 
 	if (p_test == "shaderlang") {
-
 		return TestShaderLang::test();
 	}
 
 	if (p_test == "gd_tokenizer") {
-
 		return TestGDScript::test(TestGDScript::TEST_TOKENIZER);
 	}
 
 	if (p_test == "gd_parser") {
-
 		return TestGDScript::test(TestGDScript::TEST_PARSER);
 	}
 
 	if (p_test == "gd_compiler") {
-
 		return TestGDScript::test(TestGDScript::TEST_COMPILER);
 	}
 
 	if (p_test == "gd_bytecode") {
-
 		return TestGDScript::test(TestGDScript::TEST_BYTECODE);
 	}
 
 	if (p_test == "ordered_hash_map") {
-
 		return TestOrderedHashMap::test();
 	}
 
 	if (p_test == "astar") {
-
 		return TestAStar::test();
 	}
 
@@ -158,13 +141,12 @@ MainLoop *test_main(String p_test, const List<String> &p_args) {
 	}
 
 	print_line("Unknown test: " + p_test);
-	return NULL;
+	return nullptr;
 }
 
 #else
 
 const char **tests_get_names() {
-
 	static const char *test_names[] = {
 		NULL
 	};
@@ -173,7 +155,6 @@ const char **tests_get_names() {
 }
 
 MainLoop *test_main(String p_test, const List<String> &p_args) {
-
 	return NULL;
 }
 

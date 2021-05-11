@@ -105,7 +105,6 @@ public:
 #endif
 
 class RWLockRead {
-
 	const RWLock &lock;
 
 public:
@@ -119,7 +118,6 @@ public:
 };
 
 class RWLockWrite {
-
 	RWLock &lock;
 
 public:

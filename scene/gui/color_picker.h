@@ -44,7 +44,6 @@
 #include "scene/gui/tool_button.h"
 
 class ColorPicker : public BoxContainer {
-
 	GDCLASS(ColorPicker, BoxContainer);
 
 private:
@@ -72,6 +71,8 @@ private:
 	int presets_per_row;
 
 	Color color;
+	Color old_color;
+	bool display_old_color = false;
 	bool raw_mode_enabled;
 	bool hsv_mode_enabled;
 	bool deferred_mode_enabled;
@@ -113,6 +114,10 @@ public:
 	void _set_pick_color(const Color &p_color, bool p_update_sliders);
 	void set_pick_color(const Color &p_color);
 	Color get_pick_color() const;
+	void set_old_color(const Color &p_color);
+
+	void set_display_old_color(bool p_enabled);
+	bool is_displaying_old_color() const;
 
 	void add_preset(const Color &p_color);
 	void erase_preset(const Color &p_color);
@@ -139,7 +144,6 @@ public:
 };
 
 class ColorPickerButton : public Button {
-
 	GDCLASS(ColorPickerButton, Button);
 
 	PopupPanel *popup;
@@ -147,6 +151,7 @@ class ColorPickerButton : public Button {
 	Color color;
 	bool edit_alpha;
 
+	void _about_to_show();
 	void _color_changed(const Color &p_color);
 	void _modal_closed();
 

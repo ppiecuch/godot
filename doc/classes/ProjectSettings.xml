@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="ProjectSettings" inherits="Object" version="3.3">
+<class name="ProjectSettings" inherits="Object" version="3.4">
 	<brief_description>
 		Contains global variables accessible from everywhere.
 	</brief_description>
 	<description>
 		Contains global variables accessible from everywhere. Use [method get_setting], [method set_setting] or [method has_setting] to access them. Variables stored in [code]project.godot[/code] are also loaded into ProjectSettings, making this object very useful for reading custom game configuration options.
 		When naming a Project Settings property, use the full path to the setting including the category. For example, [code]"application/config/name"[/code] for the project name. Category and property names can be viewed in the Project Settings dialog.
+		[b]Feature tags:[/b] Project settings can be overriden for specific platforms and configurations (debug, release, ...) using [url=https://docs.godotengine.org/en/latest/tutorials/export/feature_tags.html]feature tags[/url].
 		[b]Overriding:[/b] Any project setting can be overridden by creating a file named [code]override.cfg[/code] in the project's root directory. This can also be used in exported projects by placing this file in the same directory as the project binary. Overriding will still take the base project settings' [url=https://docs.godotengine.org/en/latest/tutorials/export/feature_tags.html]feature tags[/url] in account. Therefore, make sure to [i]also[/i] override the setting with the desired feature tags if you want them to override base project settings on all platforms and configurations.
 	</description>
 	<tutorials>
@@ -513,6 +514,14 @@
 			If [code]Use Vsync[/code] is enabled and this setting is [code]true[/code], enables vertical synchronization via the operating system's window compositor when in windowed mode and the compositor is enabled. This will prevent stutter in certain situations. (Windows only.)
 			[b]Note:[/b] This option is experimental and meant to alleviate stutter experienced by some users. However, some users have experienced a Vsync framerate halving (e.g. from 60 FPS to 30 FPS) when using it.
 		</member>
+		<member name="editor/main_run_args" type="String" setter="" getter="" default="&quot;&quot;">
+			The command-line arguments to append to Godot's own command line when running the project. This doesn't affect the editor itself.
+			It is possible to make another executable run Godot by using the [code]%command%[/code] placeholder. The placeholder will be replaced with Godot's own command line. Program-specific arguments should be placed [i]before[/i] the placeholder, whereas Godot-specific arguments should be placed [i]after[/i] the placeholder.
+			For example, this can be used to force the project to run on the dedicated GPU in a NVIDIA Optimus system on Linux:
+			[codeblock]
+			prime-run %command%
+			[/codeblock]
+		</member>
 		<member name="editor/script_templates_search_path" type="String" setter="" getter="" default="&quot;res://script_templates&quot;">
 			Search path for project-specific script templates. Godot will search for script templates both in the editor-specific path and in this project-specific path.
 		</member>
@@ -935,9 +944,11 @@
 		</member>
 		<member name="physics/2d/bp_hash_table_size" type="int" setter="" getter="" default="4096">
 			Size of the hash table used for the broad-phase 2D hash grid algorithm.
+			[b]Note:[/b] Not used if [member ProjectSettings.physics/2d/use_bvh] is enabled.
 		</member>
 		<member name="physics/2d/cell_size" type="int" setter="" getter="" default="128">
 			Cell size used for the broad-phase 2D hash grid algorithm (in pixels).
+			[b]Note:[/b] Not used if [member ProjectSettings.physics/2d/use_bvh] is enabled.
 		</member>
 		<member name="physics/2d/default_angular_damp" type="float" setter="" getter="" default="1.0">
 			The default angular damp in 2D.
@@ -965,6 +976,7 @@
 		</member>
 		<member name="physics/2d/large_object_surface_threshold_in_cells" type="int" setter="" getter="" default="512">
 			Threshold defining the surface size that constitutes a large object with regard to cells in the broad-phase 2D hash grid algorithm.
+			[b]Note:[/b] Not used if [member ProjectSettings.physics/2d/use_bvh] is enabled.
 		</member>
 		<member name="physics/2d/physics_engine" type="String" setter="" getter="" default="&quot;DEFAULT&quot;">
 			Sets which physics engine to use for 2D physics.
@@ -982,6 +994,9 @@
 		</member>
 		<member name="physics/2d/time_before_sleep" type="float" setter="" getter="" default="0.5">
 			Time (in seconds) of inactivity before which a 2D physics body will put to sleep. See [constant Physics2DServer.SPACE_PARAM_BODY_TIME_TO_SLEEP].
+		</member>
+		<member name="physics/2d/use_bvh" type="bool" setter="" getter="" default="true">
+			Enables the use of bounding volume hierarchy instead of hash grid for 2D physics spatial partitioning. This may give better performance.
 		</member>
 		<member name="physics/3d/active_soft_world" type="bool" setter="" getter="" default="true">
 			Sets whether the 3D physics world will be created with support for [SoftBody] physics. Only applies to the Bullet physics engine.
@@ -1011,7 +1026,7 @@
 			[b]Note:[/b] Good values are in the range [code]0[/code] to [code]1[/code]. At value [code]0[/code] objects will keep moving with the same velocity. Values greater than [code]1[/code] will aim to reduce the velocity to [code]0[/code] in less than a second e.g. a value of [code]2[/code] will aim to reduce the velocity to [code]0[/code] in half a second. A value equal to or greater than the physics frame rate ([member ProjectSettings.physics/common/physics_fps], [code]60[/code] by default) will bring the object to a stop in one iteration.
 		</member>
 		<member name="physics/3d/godot_physics/use_bvh" type="bool" setter="" getter="" default="true">
-			Enables the use of bounding volume hierarchy instead of octree for physics spatial partitioning. This may give better performance.
+			Enables the use of bounding volume hierarchy instead of octree for 3D physics spatial partitioning. This may give better performance.
 		</member>
 		<member name="physics/3d/physics_engine" type="String" setter="" getter="" default="&quot;DEFAULT&quot;">
 			Sets which physics engine to use for 3D physics.

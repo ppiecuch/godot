@@ -33,7 +33,7 @@
 #include "core/project_settings.h"
 #include "servers/audio_server.h"
 
-VideoDecoderServer *VideoDecoderServer::instance = NULL;
+VideoDecoderServer *VideoDecoderServer::instance = nullptr;
 
 static VideoDecoderServer decoder_server;
 
@@ -105,7 +105,6 @@ int64_t GDAPI godot_videodecoder_file_seek(void *ptr, int64_t pos, int whence) {
 }
 
 void GDAPI godot_videodecoder_register_decoder(const godot_videodecoder_interface_gdnative *p_interface) {
-
 	decoder_server.register_decoder_interface(p_interface);
 }
 }
@@ -113,7 +112,7 @@ void GDAPI godot_videodecoder_register_decoder(const godot_videodecoder_interfac
 // VideoStreamPlaybackGDNative starts here.
 
 bool VideoStreamPlaybackGDNative::open_file(const String &p_file) {
-	ERR_FAIL_COND_V(interface == NULL, false);
+	ERR_FAIL_COND_V(interface == nullptr, false);
 	file = FileAccess::open(p_file, FileAccess::READ);
 	bool file_opened = interface->open_file(data_struct, file);
 
@@ -146,7 +145,7 @@ void VideoStreamPlaybackGDNative::update(float p_delta) {
 		return;
 	}
 	time += p_delta;
-	ERR_FAIL_COND(interface == NULL);
+	ERR_FAIL_COND(interface == nullptr);
 	interface->update(data_struct, p_delta);
 
 	// Don't mix if there's no audio (num_channels == 0).
@@ -185,7 +184,7 @@ void VideoStreamPlaybackGDNative::update(float p_delta) {
 void VideoStreamPlaybackGDNative::update_texture() {
 	PoolByteArray *pba = (PoolByteArray *)interface->get_videoframe(data_struct);
 
-	if (pba == NULL) {
+	if (pba == nullptr) {
 		playing = false;
 		return;
 	}
@@ -201,44 +200,46 @@ VideoStreamPlaybackGDNative::VideoStreamPlaybackGDNative() :
 		texture(Ref<ImageTexture>(memnew(ImageTexture))),
 		playing(false),
 		paused(false),
-		mix_udata(NULL),
-		mix_callback(NULL),
+		mix_udata(nullptr),
+		mix_callback(nullptr),
 		num_channels(-1),
 		time(0),
 		seek_backward(false),
 		mix_rate(0),
 		delay_compensation(0),
-		pcm(NULL),
+		pcm(nullptr),
 		pcm_write_idx(0),
 		samples_decoded(0),
-		file(NULL),
-		interface(NULL),
-		data_struct(NULL) {}
+		file(nullptr),
+		interface(nullptr),
+		data_struct(nullptr) {}
 
 VideoStreamPlaybackGDNative::~VideoStreamPlaybackGDNative() {
 	cleanup();
 }
 
 void VideoStreamPlaybackGDNative::cleanup() {
-	if (data_struct)
+	if (data_struct) {
 		interface->destructor(data_struct);
-	if (pcm)
+	}
+	if (pcm) {
 		memfree(pcm);
+	}
 	if (file) {
 		file->close();
 		memdelete(file);
-		file = NULL;
+		file = nullptr;
 	}
-	pcm = NULL;
+	pcm = nullptr;
 	time = 0;
 	num_channels = -1;
-	interface = NULL;
-	data_struct = NULL;
+	interface = nullptr;
+	data_struct = nullptr;
 }
 
 void VideoStreamPlaybackGDNative::set_interface(const godot_videodecoder_interface_gdnative *p_interface) {
-	ERR_FAIL_COND(p_interface == NULL);
-	if (interface != NULL) {
+	ERR_FAIL_COND(p_interface == nullptr);
+	if (interface != nullptr) {
 		cleanup();
 	}
 	interface = p_interface;
@@ -256,7 +257,6 @@ bool VideoStreamPlaybackGDNative::is_paused() const {
 }
 
 void VideoStreamPlaybackGDNative::play() {
-
 	stop();
 
 	playing = true;
@@ -273,10 +273,11 @@ void VideoStreamPlaybackGDNative::stop() {
 }
 
 void VideoStreamPlaybackGDNative::seek(float p_time) {
-	ERR_FAIL_COND(interface == NULL);
+	ERR_FAIL_COND(interface == nullptr);
 	interface->seek(data_struct, p_time);
-	if (p_time < time)
+	if (p_time < time) {
 		seek_backward = true;
+	}
 	time = p_time;
 	// reset audio buffers
 	memset(pcm, 0, num_channels * AUX_BUFFER_SIZE * sizeof(float));
@@ -293,13 +294,12 @@ Ref<Texture> VideoStreamPlaybackGDNative::get_texture() const {
 }
 
 float VideoStreamPlaybackGDNative::get_length() const {
-	ERR_FAIL_COND_V(interface == NULL, 0);
+	ERR_FAIL_COND_V(interface == nullptr, 0);
 	return interface->get_length(data_struct);
 }
 
 float VideoStreamPlaybackGDNative::get_playback_position() const {
-
-	ERR_FAIL_COND_V(interface == NULL, 0);
+	ERR_FAIL_COND_V(interface == nullptr, 0);
 	return interface->get_playback_position(data_struct);
 }
 
@@ -313,24 +313,23 @@ void VideoStreamPlaybackGDNative::set_loop(bool p_enable) {
 }
 
 void VideoStreamPlaybackGDNative::set_audio_track(int p_idx) {
-	ERR_FAIL_COND(interface == NULL);
+	ERR_FAIL_COND(interface == nullptr);
 	interface->set_audio_track(data_struct, p_idx);
 }
 
 void VideoStreamPlaybackGDNative::set_mix_callback(AudioMixCallback p_callback, void *p_userdata) {
-
 	mix_udata = p_userdata;
 	mix_callback = p_callback;
 }
 
 int VideoStreamPlaybackGDNative::get_channels() const {
-	ERR_FAIL_COND_V(interface == NULL, 0);
+	ERR_FAIL_COND_V(interface == nullptr, 0);
 
 	return (num_channels > 0) ? num_channels : 0;
 }
 
 int VideoStreamPlaybackGDNative::get_mix_rate() const {
-	ERR_FAIL_COND_V(interface == NULL, 0);
+	ERR_FAIL_COND_V(interface == nullptr, 0);
 
 	return mix_rate;
 }
@@ -340,27 +339,26 @@ int VideoStreamPlaybackGDNative::get_mix_rate() const {
 Ref<VideoStreamPlayback> VideoStreamGDNative::instance_playback() {
 	Ref<VideoStreamPlaybackGDNative> pb = memnew(VideoStreamPlaybackGDNative);
 	VideoDecoderGDNative *decoder = decoder_server.get_decoder(file.get_extension().to_lower());
-	if (decoder == NULL)
-		return NULL;
+	if (decoder == nullptr) {
+		return nullptr;
+	}
 	pb->set_interface(decoder->interface);
 	pb->set_audio_track(audio_track);
-	if (pb->open_file(file))
+	if (pb->open_file(file)) {
 		return pb;
-	return NULL;
+	}
+	return nullptr;
 }
 
 void VideoStreamGDNative::set_file(const String &p_file) {
-
 	file = p_file;
 }
 
 String VideoStreamGDNative::get_file() {
-
 	return file;
 }
 
 void VideoStreamGDNative::_bind_methods() {
-
 	ClassDB::bind_method(D_METHOD("set_file", "file"), &VideoStreamGDNative::set_file);
 	ClassDB::bind_method(D_METHOD("get_file"), &VideoStreamGDNative::get_file);
 
@@ -368,7 +366,6 @@ void VideoStreamGDNative::_bind_methods() {
 }
 
 void VideoStreamGDNative::set_audio_track(int p_track) {
-
 	audio_track = p_track;
 }
 
@@ -406,7 +403,8 @@ bool ResourceFormatLoaderVideoStreamGDNative::handles_type(const String &p_type)
 
 String ResourceFormatLoaderVideoStreamGDNative::get_resource_type(const String &p_path) const {
 	String el = p_path.get_extension().to_lower();
-	if (VideoDecoderServer::get_instance()->get_extensions().has(el))
+	if (VideoDecoderServer::get_instance()->get_extensions().has(el)) {
 		return "VideoStreamGDNative";
+	}
 	return "";
 }

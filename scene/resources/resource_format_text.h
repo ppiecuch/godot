@@ -38,7 +38,6 @@
 #include "scene/resources/packed_scene.h"
 
 class ResourceInteractiveLoaderText : public ResourceInteractiveLoader {
-
 	bool translation_remapped;
 	String local_path;
 	String res_path;
@@ -85,7 +84,6 @@ class ResourceInteractiveLoaderText : public ResourceInteractiveLoader {
 	};
 
 	struct DummyReadData {
-
 		Map<RES, int> external_resources;
 		Map<int, RES> rev_external_resources;
 		Set<RES> resource_set;
@@ -130,7 +128,7 @@ public:
 class ResourceFormatLoaderText : public ResourceFormatLoader {
 public:
 	static ResourceFormatLoaderText *singleton;
-	virtual Ref<ResourceInteractiveLoader> load_interactive(const String &p_path, const String &p_original_path = "", Error *r_error = NULL);
+	virtual Ref<ResourceInteractiveLoader> load_interactive(const String &p_path, const String &p_original_path = "", Error *r_error = nullptr);
 	virtual void get_recognized_extensions_for_type(const String &p_type, List<String> *p_extensions) const;
 	virtual void get_recognized_extensions(List<String> *p_extensions) const;
 	virtual bool handles_type(const String &p_type) const;
@@ -144,7 +142,6 @@ public:
 };
 
 class ResourceFormatSaverTextInstance {
-
 	String local_path;
 
 	Ref<PackedScene> packed_scene;

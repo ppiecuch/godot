@@ -39,7 +39,6 @@
 class SyntaxHighlighter;
 
 class TextEdit : public Control {
-
 	GDCLASS(TextEdit, Control);
 
 public:
@@ -48,7 +47,6 @@ public:
 	};
 
 	struct ColorRegion {
-
 		Color color;
 		String begin_key;
 		String end_key;
@@ -66,7 +64,6 @@ public:
 	class Text {
 	public:
 		struct ColorRegionInfo {
-
 			int region;
 			bool end;
 			ColorRegionInfo() {
@@ -168,7 +165,6 @@ private:
 	} cursor;
 
 	struct Selection {
-
 		enum Mode {
 
 			MODE_NONE,
@@ -207,7 +203,6 @@ private:
 	} selection;
 
 	struct Cache {
-
 		Ref<Texture> tab_icon;
 		Ref<Texture> space_icon;
 		Ref<Texture> can_fold_icon;
@@ -256,7 +251,6 @@ private:
 		int info_gutter_width;
 		int minimap_width;
 		Cache() {
-
 			row_height = 0;
 			line_spacing = 0;
 			line_number_w = 0;
@@ -268,10 +262,9 @@ private:
 	} cache;
 
 	Map<int, int> color_region_cache;
-	Map<int, Map<int, HighlighterInfo> > syntax_highlighting_cache;
+	Map<int, Map<int, HighlighterInfo>> syntax_highlighting_cache;
 
 	struct TextOperation {
-
 		enum Type {
 			TYPE_NONE,
 			TYPE_INSERT,
@@ -532,7 +525,7 @@ private:
 protected:
 	virtual String get_tooltip(const Point2 &p_pos) const;
 
-	void _insert_text(int p_line, int p_char, const String &p_text, int *r_end_line = NULL, int *r_end_char = NULL);
+	void _insert_text(int p_line, int p_char, const String &p_text, int *r_end_line = nullptr, int *r_end_char = nullptr);
 	void _remove_text(int p_from_line, int p_from_column, int p_to_line, int p_to_column);
 	void _insert_text_at_cursor(const String &p_text);
 	void _gui_input(const Ref<InputEvent> &p_gui_input);

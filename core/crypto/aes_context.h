@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  copymem.h                                                            */
+/*  aes_context.h                                                        */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,23 +28,41 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef COPYMEM_H
-#define COPYMEM_H
+#ifndef AES_CONTEXT_H
+#define AES_CONTEXT_H
 
-#include "core/typedefs.h"
+#include "core/crypto/crypto_core.h"
+#include "core/reference.h"
 
-#ifdef PLATFORM_COPYMEM
+class AESContext : public Reference {
+	GDCLASS(AESContext, Reference);
 
-#include "platform_copymem.h" // included from platform/<current_platform>/platform_copymem.h"
+public:
+	enum Mode {
+		MODE_ECB_ENCRYPT,
+		MODE_ECB_DECRYPT,
+		MODE_CBC_ENCRYPT,
+		MODE_CBC_DECRYPT,
+		MODE_MAX
+	};
 
-#else
+private:
+	Mode mode;
+	CryptoCore::AESContext ctx;
+	PoolByteArray iv;
 
-#include <string.h>
+protected:
+	static void _bind_methods();
 
-#define copymem(to, from, count) memcpy(to, from, count)
-#define zeromem(to, count) memset(to, 0, count)
-#define movemem(to, from, count) memmove(to, from, count)
+public:
+	Error start(Mode p_mode, PoolByteArray p_key, PoolByteArray p_iv = PoolByteArray());
+	PoolByteArray update(PoolByteArray p_src);
+	PoolByteArray get_iv_state();
+	void finish();
 
-#endif
+	AESContext();
+};
 
-#endif
+VARIANT_ENUM_CAST(AESContext::Mode);
+
+#endif // AES_CONTEXT_H

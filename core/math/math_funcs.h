@@ -41,7 +41,6 @@
 #include <math.h>
 
 class Math {
-
 	static RandomPCG default_rand;
 
 public:
@@ -202,8 +201,8 @@ public:
 		value += 0.0;
 		return value;
 	}
-	static _ALWAYS_INLINE_ int posmod(int p_x, int p_y) {
-		int value = p_x % p_y;
+	static _ALWAYS_INLINE_ int64_t posmod(int64_t p_x, int64_t p_y) {
+		int64_t value = p_x % p_y;
 		if ((value < 0 && p_y > 0) || (value > 0 && p_y < 0)) {
 			value += p_y;
 		}
@@ -334,7 +333,6 @@ public:
 	}
 
 	static _ALWAYS_INLINE_ float absf(float g) {
-
 		union {
 			float f;
 			uint32_t i;
@@ -346,7 +344,6 @@ public:
 	}
 
 	static _ALWAYS_INLINE_ double absd(double g) {
-
 		union {
 			double d;
 			uint64_t i;
@@ -358,7 +355,6 @@ public:
 
 	//this function should be as fast as possible and rounding mode should not matter
 	static _ALWAYS_INLINE_ int fast_ftoi(float a) {
-
 		static int b;
 
 #if (defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0603) || WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP // windows 8 phone?
@@ -413,7 +409,6 @@ public:
 	}
 
 	static _ALWAYS_INLINE_ float halfptr_to_float(const uint16_t *h) {
-
 		union {
 			uint32_t u32;
 			float f32;
@@ -428,7 +423,6 @@ public:
 	}
 
 	static _ALWAYS_INLINE_ uint16_t make_half_float(float f) {
-
 		union {
 			float fv;
 			uint32_t ui;
@@ -459,7 +453,6 @@ public:
 		}
 		// check if exponent is <= -15
 		else if (exp <= 0x38000000) {
-
 			/*// store a denorm half-float value or zero
 		exp = (0x38000000 - exp) >> 23;
 		mantissa >>= (14 + exp);
@@ -484,10 +477,11 @@ public:
 		if (p_step != 0) {
 			float a = Math::stepify(p_target - p_offset, p_step + p_separation) + p_offset;
 			float b = a;
-			if (p_target >= 0)
+			if (p_target >= 0) {
 				b -= p_separation;
-			else
+			} else {
 				b += p_step;
+			}
 			return (Math::abs(p_target - a) < Math::abs(p_target - b)) ? a : b;
 		}
 		return p_target;

@@ -85,57 +85,52 @@ void RasterizerCanvasGLES3::_legacy_canvas_render_item(Item *p_ci, RenderItemSta
 	storage->info.render._2d_item_count++;
 
 	if (r_ris.prev_distance_field != p_ci->distance_field) {
-
 		state.canvas_shader.set_conditional(CanvasShaderGLES3::USE_DISTANCE_FIELD, p_ci->distance_field);
 		r_ris.prev_distance_field = p_ci->distance_field;
 		r_ris.rebind_shader = true;
 	}
 
 	if (r_ris.current_clip != p_ci->final_clip_owner) {
-
 		r_ris.current_clip = p_ci->final_clip_owner;
 
 		//setup clip
 		if (r_ris.current_clip) {
-
 			glEnable(GL_SCISSOR_TEST);
 			int y = storage->frame.current_rt->height - (r_ris.current_clip->final_clip_rect.position.y + r_ris.current_clip->final_clip_rect.size.y);
-			if (storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_VFLIP])
+			if (storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_VFLIP]) {
 				y = r_ris.current_clip->final_clip_rect.position.y;
+			}
 
 			glScissor(r_ris.current_clip->final_clip_rect.position.x, y, r_ris.current_clip->final_clip_rect.size.x, r_ris.current_clip->final_clip_rect.size.y);
 
 		} else {
-
 			glDisable(GL_SCISSOR_TEST);
 		}
 	}
 
 	if (p_ci->copy_back_buffer) {
-
 		if (p_ci->copy_back_buffer->full) {
-
 			_copy_texscreen(Rect2());
 		} else {
 			_copy_texscreen(p_ci->copy_back_buffer->rect);
 		}
 	}
 
-	RasterizerStorageGLES3::Skeleton *skeleton = NULL;
+	RasterizerStorageGLES3::Skeleton *skeleton = nullptr;
 
 	{
 		//skeleton handling
 		if (p_ci->skeleton.is_valid() && storage->skeleton_owner.owns(p_ci->skeleton)) {
 			skeleton = storage->skeleton_owner.get(p_ci->skeleton);
 			if (!skeleton->use_2d) {
-				skeleton = NULL;
+				skeleton = nullptr;
 			} else {
 				state.skeleton_transform = r_ris.item_group_base_transform * skeleton->base_transform_2d;
 				state.skeleton_transform_inverse = state.skeleton_transform.affine_inverse();
 			}
 		}
 
-		bool use_skeleton = skeleton != NULL;
+		bool use_skeleton = skeleton != nullptr;
 		if (r_ris.prev_use_skeleton != use_skeleton) {
 			r_ris.rebind_shader = true;
 			state.canvas_shader.set_conditional(CanvasShaderGLES3::USE_SKELETON, use_skeleton);
@@ -157,21 +152,18 @@ void RasterizerCanvasGLES3::_legacy_canvas_render_item(Item *p_ci, RenderItemSta
 	RID material = material_owner->material;
 
 	if (material != r_ris.canvas_last_material || r_ris.rebind_shader) {
-
 		RasterizerStorageGLES3::Material *material_ptr = storage->material_owner.getornull(material);
-		RasterizerStorageGLES3::Shader *shader_ptr = NULL;
+		RasterizerStorageGLES3::Shader *shader_ptr = nullptr;
 
 		if (material_ptr) {
-
 			shader_ptr = material_ptr->shader;
 
 			if (shader_ptr && shader_ptr->mode != VS::SHADER_CANVAS_ITEM) {
-				shader_ptr = NULL; //do not use non canvasitem shader
+				shader_ptr = nullptr; //do not use non canvasitem shader
 			}
 		}
 
 		if (shader_ptr) {
-
 			if (shader_ptr->canvas_item.uses_screen_texture && !state.canvas_texscreen_used) {
 				//copy if not copied before
 				_copy_texscreen(Rect2());
@@ -181,7 +173,6 @@ void RasterizerCanvasGLES3::_legacy_canvas_render_item(Item *p_ci, RenderItemSta
 			}
 
 			if (shader_ptr != r_ris.shader_cache || r_ris.rebind_shader) {
-
 				if (shader_ptr->canvas_item.uses_time) {
 					VisualServerRaster::redraw_request();
 				}
@@ -199,12 +190,10 @@ void RasterizerCanvasGLES3::_legacy_canvas_render_item(Item *p_ci, RenderItemSta
 			ShaderLanguage::ShaderNode::Uniform::Hint *texture_hints = shader_ptr->texture_hints.ptrw();
 
 			for (int i = 0; i < tc; i++) {
-
 				glActiveTexture(GL_TEXTURE2 + i);
 
 				RasterizerStorageGLES3::Texture *t = storage->texture_owner.getornull(textures[i]);
 				if (!t) {
-
 					switch (texture_hints[i]) {
 						case ShaderLanguage::ShaderNode::Uniform::HINT_BLACK_ALBEDO:
 						case ShaderLanguage::ShaderNode::Uniform::HINT_BLACK: {
@@ -269,14 +258,11 @@ void RasterizerCanvasGLES3::_legacy_canvas_render_item(Item *p_ci, RenderItemSta
 		}
 
 		switch (blend_mode) {
-
 			case RasterizerStorageGLES3::Shader::CanvasItem::BLEND_MODE_DISABLED: {
-
 				// nothing to do here
 
 			} break;
 			case RasterizerStorageGLES3::Shader::CanvasItem::BLEND_MODE_MIX: {
-
 				glBlendEquation(GL_FUNC_ADD);
 				if (storage->frame.current_rt && storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_TRANSPARENT]) {
 					glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -286,7 +272,6 @@ void RasterizerCanvasGLES3::_legacy_canvas_render_item(Item *p_ci, RenderItemSta
 
 			} break;
 			case RasterizerStorageGLES3::Shader::CanvasItem::BLEND_MODE_ADD: {
-
 				glBlendEquation(GL_FUNC_ADD);
 				if (storage->frame.current_rt && storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_TRANSPARENT]) {
 					glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE, GL_SRC_ALPHA, GL_ONE);
@@ -296,7 +281,6 @@ void RasterizerCanvasGLES3::_legacy_canvas_render_item(Item *p_ci, RenderItemSta
 
 			} break;
 			case RasterizerStorageGLES3::Shader::CanvasItem::BLEND_MODE_SUB: {
-
 				glBlendEquation(GL_FUNC_REVERSE_SUBTRACT);
 				if (storage->frame.current_rt && storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_TRANSPARENT]) {
 					glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE, GL_SRC_ALPHA, GL_ONE);
@@ -349,28 +333,24 @@ void RasterizerCanvasGLES3::_legacy_canvas_render_item(Item *p_ci, RenderItemSta
 	} else {
 		state.canvas_shader.set_uniform(CanvasShaderGLES3::SCREEN_PIXEL_SIZE, Vector2(1.0, 1.0));
 	}
-	if (unshaded || (state.canvas_item_modulate.a > 0.001 && (!r_ris.shader_cache || r_ris.shader_cache->canvas_item.light_mode != RasterizerStorageGLES3::Shader::CanvasItem::LIGHT_MODE_LIGHT_ONLY) && !p_ci->light_masked))
+	if (unshaded || (state.canvas_item_modulate.a > 0.001 && (!r_ris.shader_cache || r_ris.shader_cache->canvas_item.light_mode != RasterizerStorageGLES3::Shader::CanvasItem::LIGHT_MODE_LIGHT_ONLY) && !p_ci->light_masked)) {
 		_legacy_canvas_item_render_commands(p_ci, r_ris.current_clip, reclip, nullptr);
+	}
 
 	if ((blend_mode == RasterizerStorageGLES3::Shader::CanvasItem::BLEND_MODE_MIX || blend_mode == RasterizerStorageGLES3::Shader::CanvasItem::BLEND_MODE_PMALPHA) && r_ris.item_group_light && !unshaded) {
-
 		Light *light = r_ris.item_group_light;
 		bool light_used = false;
 		VS::CanvasLightMode mode = VS::CANVAS_LIGHT_MODE_ADD;
 		state.canvas_item_modulate = p_ci->final_modulate; // remove the canvas modulate
 
 		while (light) {
-
 			if (p_ci->light_mask & light->item_mask && r_ris.item_group_z >= light->z_min && r_ris.item_group_z <= light->z_max && p_ci->global_rect_cache.intersects_transformed(light->xform_cache, light->rect_cache)) {
-
 				//intersects this light
 
 				if (!light_used || mode != light->mode) {
-
 					mode = light->mode;
 
 					switch (mode) {
-
 						case VS::CANVAS_LIGHT_MODE_ADD: {
 							glBlendEquation(GL_FUNC_ADD);
 							glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -390,7 +370,6 @@ void RasterizerCanvasGLES3::_legacy_canvas_render_item(Item *p_ci, RenderItemSta
 				}
 
 				if (!light_used) {
-
 					state.canvas_shader.set_conditional(CanvasShaderGLES3::USE_LIGHTING, true);
 					light_used = true;
 				}
@@ -428,7 +407,6 @@ void RasterizerCanvasGLES3::_legacy_canvas_render_item(Item *p_ci, RenderItemSta
 				glBindBufferBase(GL_UNIFORM_BUFFER, 1, static_cast<LightInternal *>(light->light_internal.get_data())->ubo);
 
 				if (has_shadow) {
-
 					RasterizerStorageGLES3::CanvasLightShadow *cls = storage->canvas_light_shadow_owner.get(light->shadow_buffer);
 					glActiveTexture(GL_TEXTURE0 + storage->config.max_texture_image_units - 2);
 					glBindTexture(GL_TEXTURE_2D, cls->distance);
@@ -456,7 +434,6 @@ void RasterizerCanvasGLES3::_legacy_canvas_render_item(Item *p_ci, RenderItemSta
 		}
 
 		if (light_used) {
-
 			state.canvas_shader.set_conditional(CanvasShaderGLES3::USE_LIGHTING, false);
 			state.canvas_shader.set_conditional(CanvasShaderGLES3::USE_SHADOWS, false);
 			state.canvas_shader.set_conditional(CanvasShaderGLES3::SHADOW_FILTER_NEAREST, false);
@@ -497,11 +474,11 @@ void RasterizerCanvasGLES3::_legacy_canvas_render_item(Item *p_ci, RenderItemSta
 	}
 
 	if (reclip) {
-
 		glEnable(GL_SCISSOR_TEST);
 		int y = storage->frame.current_rt->height - (r_ris.current_clip->final_clip_rect.position.y + r_ris.current_clip->final_clip_rect.size.y);
-		if (storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_VFLIP])
+		if (storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_VFLIP]) {
 			y = r_ris.current_clip->final_clip_rect.position.y;
+		}
 		glScissor(r_ris.current_clip->final_clip_rect.position.x, y, r_ris.current_clip->final_clip_rect.size.width, r_ris.current_clip->final_clip_rect.size.height);
 	}
 }
@@ -535,13 +512,10 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 				RasterizerCanvas::Item::Command *const *commands = batch.item->commands.ptr();
 
 				for (int i = batch.first_command; i < end_command; i++) {
-
 					Item::Command *c = commands[i];
 
 					switch (c->type) {
-
 						case Item::Command::TYPE_LINE: {
-
 							Item::CommandLine *line = static_cast<Item::CommandLine *>(c);
 							_set_texture_rect_mode(false);
 
@@ -556,15 +530,17 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 								};
 
 #ifdef GLES_OVER_GL
-								if (line->antialiased)
+								if (line->antialiased) {
 									glEnable(GL_LINE_SMOOTH);
+								}
 #endif
 								//glLineWidth(line->width);
-								_draw_gui_primitive(2, verts, NULL, NULL);
+								_draw_gui_primitive(2, verts, nullptr, nullptr);
 
 #ifdef GLES_OVER_GL
-								if (line->antialiased)
+								if (line->antialiased) {
 									glDisable(GL_LINE_SMOOTH);
+								}
 #endif
 							} else {
 								//thicker line
@@ -579,7 +555,7 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 								};
 
 								//glLineWidth(line->width);
-								_draw_gui_primitive(4, verts, NULL, NULL);
+								_draw_gui_primitive(4, verts, nullptr, nullptr);
 #ifdef GLES_OVER_GL
 								if (line->antialiased) {
 									glEnable(GL_LINE_SMOOTH);
@@ -588,7 +564,7 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 											verts[j],
 											verts[(j + 1) % 4],
 										};
-										_draw_gui_primitive(2, vertsl, NULL, NULL);
+										_draw_gui_primitive(2, vertsl, nullptr, nullptr);
 									}
 									glDisable(GL_LINE_SMOOTH);
 								}
@@ -596,34 +572,32 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 							}
 						} break;
 						case Item::Command::TYPE_POLYLINE: {
-
 							Item::CommandPolyLine *pline = static_cast<Item::CommandPolyLine *>(c);
 							_set_texture_rect_mode(false);
 
 							_bind_canvas_texture(RID(), RID(), RID());
 
 							if (pline->triangles.size()) {
-
 #ifdef RASTERIZER_EXTRA_CHECKS
 								if (pline->triangle_colors.ptr() && (pline->triangle_colors.size() != 1)) {
 									RAST_DEV_DEBUG_ASSERT(pline->triangle_colors.size() == pline->triangles.size());
 								}
 #endif
-								_draw_generic(GL_TRIANGLE_STRIP, pline->triangles.size(), pline->triangles.ptr(), NULL, pline->triangle_colors.ptr(), pline->triangle_colors.size() == 1);
+								_draw_generic(GL_TRIANGLE_STRIP, pline->triangles.size(), pline->triangles.ptr(), nullptr, pline->triangle_colors.ptr(), pline->triangle_colors.size() == 1);
 #ifdef GLES_OVER_GL
 								glEnable(GL_LINE_SMOOTH);
 								if (pline->multiline) {
 									//needs to be different
 								} else {
-									_draw_generic(GL_LINE_LOOP, pline->lines.size(), pline->lines.ptr(), NULL, pline->line_colors.ptr(), pline->line_colors.size() == 1);
+									_draw_generic(GL_LINE_LOOP, pline->lines.size(), pline->lines.ptr(), nullptr, pline->line_colors.ptr(), pline->line_colors.size() == 1);
 								}
 								glDisable(GL_LINE_SMOOTH);
 #endif
 							} else {
-
 #ifdef GLES_OVER_GL
-								if (pline->antialiased)
+								if (pline->antialiased) {
 									glEnable(GL_LINE_SMOOTH);
+								}
 #endif
 
 								if (pline->multiline) {
@@ -633,25 +607,24 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 
 									while (todo) {
 										int to_draw = MIN(max_per_call, todo);
-										_draw_generic(GL_LINES, to_draw * 2, &pline->lines.ptr()[offset], NULL, pline->line_colors.size() == 1 ? pline->line_colors.ptr() : &pline->line_colors.ptr()[offset], pline->line_colors.size() == 1);
+										_draw_generic(GL_LINES, to_draw * 2, &pline->lines.ptr()[offset], nullptr, pline->line_colors.size() == 1 ? pline->line_colors.ptr() : &pline->line_colors.ptr()[offset], pline->line_colors.size() == 1);
 										todo -= to_draw;
 										offset += to_draw * 2;
 									}
 
 								} else {
-
-									_draw_generic(GL_LINE_STRIP, pline->lines.size(), pline->lines.ptr(), NULL, pline->line_colors.ptr(), pline->line_colors.size() == 1);
+									_draw_generic(GL_LINE_STRIP, pline->lines.size(), pline->lines.ptr(), nullptr, pline->line_colors.ptr(), pline->line_colors.size() == 1);
 								}
 
 #ifdef GLES_OVER_GL
-								if (pline->antialiased)
+								if (pline->antialiased) {
 									glDisable(GL_LINE_SMOOTH);
+								}
 #endif
 							}
 
 						} break;
 						case Item::Command::TYPE_RECT: {
-
 							Item::CommandRect *rect = static_cast<Item::CommandRect *>(c);
 
 							//set color
@@ -662,11 +635,9 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 							if (use_nvidia_rect_workaround) {
 								render_rect_nvidia_workaround(rect, texture);
 							} else {
-
 								_set_texture_rect_mode(true);
 
 								if (texture) {
-
 									bool untile = false;
 
 									if (rect->flags & CANVAS_RECT_TILE && !(texture->flags & VS::TEXTURE_FLAG_REPEAT)) {
@@ -735,7 +706,6 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 							} // if not use nvidia workaround
 						} break;
 						case Item::Command::TYPE_NINEPATCH: {
-
 							Item::CommandNinePatch *np = static_cast<Item::CommandNinePatch *>(c);
 
 							_set_texture_rect_mode(true, true);
@@ -747,13 +717,11 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 							Size2 texpixel_size;
 
 							if (!texture) {
-
 								texpixel_size = Size2(1, 1);
 
 								state.canvas_shader.set_uniform(CanvasShaderGLES3::SRC_RECT, Color(0, 0, 1, 1));
 
 							} else {
-
 								if (np->source != Rect2()) {
 									texpixel_size = Size2(1.0 / np->source.size.width, 1.0 / np->source.size.height);
 									state.canvas_shader.set_uniform(CanvasShaderGLES3::SRC_RECT, Color(np->source.position.x / texture->width, np->source.position.y / texture->height, np->source.size.x / texture->width, np->source.size.y / texture->height));
@@ -776,7 +744,6 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 							storage->info.render._2d_draw_call_count++;
 						} break;
 						case Item::Command::TYPE_PRIMITIVE: {
-
 							Item::CommandPrimitive *primitive = static_cast<Item::CommandPrimitive *>(c);
 							_set_texture_rect_mode(false);
 
@@ -793,7 +760,6 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 							// if only a single color specified
 							const Color *colors = primitive->colors.ptr();
 							if (primitive->colors.size() == 1 && primitive->points.size() > 1) {
-
 								Color col = primitive->colors[0];
 								glVertexAttrib4f(VS::ARRAY_COLOR, col.r, col.g, col.b, col.a);
 								colors = nullptr;
@@ -815,7 +781,6 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 
 						} break;
 						case Item::Command::TYPE_POLYGON: {
-
 							Item::CommandPolygon *polygon = static_cast<Item::CommandPolygon *>(c);
 							_set_texture_rect_mode(false);
 
@@ -841,7 +806,6 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 
 						} break;
 						case Item::Command::TYPE_MESH: {
-
 							Item::CommandMesh *mesh = static_cast<Item::CommandMesh *>(c);
 							_set_texture_rect_mode(false);
 
@@ -856,7 +820,6 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 
 							RasterizerStorageGLES3::Mesh *mesh_data = storage->mesh_owner.getornull(mesh->mesh);
 							if (mesh_data) {
-
 								for (int j = 0; j < mesh_data->surfaces.size(); j++) {
 									RasterizerStorageGLES3::Surface *s = mesh_data->surfaces[j];
 									if (s->active) {
@@ -872,7 +835,7 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 											glDepthMask(GL_TRUE);
 										}
 										if (s->index_array_len) {
-											glDrawElements(gl_primitive[s->primitive], s->index_array_len, (s->array_len >= (1 << 16)) ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, 0);
+											glDrawElements(gl_primitive[s->primitive], s->index_array_len, (s->array_len >= (1 << 16)) ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, nullptr);
 										} else {
 											glDrawArrays(gl_primitive[s->primitive], 0, s->array_len);
 										}
@@ -891,18 +854,19 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 
 						} break;
 						case Item::Command::TYPE_MULTIMESH: {
-
 							Item::CommandMultiMesh *mmesh = static_cast<Item::CommandMultiMesh *>(c);
 
 							RasterizerStorageGLES3::MultiMesh *multi_mesh = storage->multimesh_owner.getornull(mmesh->multimesh);
 
-							if (!multi_mesh)
+							if (!multi_mesh) {
 								break;
+							}
 
 							RasterizerStorageGLES3::Mesh *mesh_data = storage->mesh_owner.getornull(multi_mesh->mesh);
 
-							if (!mesh_data)
+							if (!mesh_data) {
 								break;
+							}
 
 							RasterizerStorageGLES3::Texture *texture = _bind_canvas_texture(mmesh->texture, mmesh->normal_map, mmesh->mask);
 
@@ -922,6 +886,8 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 							if (amount == -1) {
 								amount = multi_mesh->size;
 							}
+
+							glVertexAttrib4f(VS::ARRAY_COLOR, 1.0, 1.0, 1.0, 1.0);
 
 							for (int j = 0; j < mesh_data->surfaces.size(); j++) {
 								RasterizerStorageGLES3::Surface *s = mesh_data->surfaces[j];
@@ -954,7 +920,6 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 								int custom_data_ofs = color_ofs;
 
 								switch (multi_mesh->color_format) {
-
 									case VS::MULTIMESH_COLOR_MAX:
 									case VS::MULTIMESH_COLOR_NONE: {
 										glDisableVertexAttribArray(11);
@@ -976,7 +941,6 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 								}
 
 								switch (multi_mesh->custom_data_format) {
-
 									case VS::MULTIMESH_CUSTOM_DATA_MAX:
 									case VS::MULTIMESH_CUSTOM_DATA_NONE: {
 										glDisableVertexAttribArray(12);
@@ -996,7 +960,7 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 								}
 
 								if (s->index_array_len) {
-									glDrawElementsInstanced(gl_primitive[s->primitive], s->index_array_len, (s->array_len >= (1 << 16)) ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, 0, amount);
+									glDrawElementsInstanced(gl_primitive[s->primitive], s->index_array_len, (s->array_len >= (1 << 16)) ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, nullptr, amount);
 								} else {
 									glDrawArraysInstanced(gl_primitive[s->primitive], 0, s->array_len, amount);
 								}
@@ -1012,15 +976,16 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 
 						} break;
 						case Item::Command::TYPE_PARTICLES: {
-
 							Item::CommandParticles *particles_cmd = static_cast<Item::CommandParticles *>(c);
 
 							RasterizerStorageGLES3::Particles *particles = storage->particles_owner.getornull(particles_cmd->particles);
-							if (!particles)
+							if (!particles) {
 								break;
+							}
 
-							if (particles->inactive && !particles->emitting)
+							if (particles->inactive && !particles->emitting) {
 								break;
+							}
 
 							glVertexAttrib4f(VS::ARRAY_COLOR, 1, 1, 1, 1); //not used, so keep white
 
@@ -1046,7 +1011,6 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 							}
 
 							if (!particles->use_local_coords) {
-
 								Transform2D inv_xf;
 								inv_xf.set_axis(0, Vector2(particles->emission_transform.basis.get_axis(0).x, particles->emission_transform.basis.get_axis(0).y));
 								inv_xf.set_axis(1, Vector2(particles->emission_transform.basis.get_axis(1).x, particles->emission_transform.basis.get_axis(1).y));
@@ -1066,7 +1030,6 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 							int amount = particles->amount;
 
 							if (particles->draw_order != VS::PARTICLES_DRAW_ORDER_LIFETIME) {
-
 								glEnableVertexAttribArray(8); //xform x
 								glVertexAttribPointer(8, 4, GL_FLOAT, GL_FALSE, stride, CAST_INT_TO_UCHAR_PTR(sizeof(float) * 4 * 3));
 								glVertexAttribDivisor(8, 1);
@@ -1077,7 +1040,7 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 								glVertexAttribPointer(10, 4, GL_FLOAT, GL_FALSE, stride, CAST_INT_TO_UCHAR_PTR(sizeof(float) * 4 * 5));
 								glVertexAttribDivisor(10, 1);
 								glEnableVertexAttribArray(11); //color
-								glVertexAttribPointer(11, 4, GL_FLOAT, GL_FALSE, stride, NULL);
+								glVertexAttribPointer(11, 4, GL_FLOAT, GL_FALSE, stride, nullptr);
 								glVertexAttribDivisor(11, 1);
 								glEnableVertexAttribArray(12); //custom
 								glVertexAttribPointer(12, 4, GL_FLOAT, GL_FALSE, stride, CAST_INT_TO_UCHAR_PTR(sizeof(float) * 4 * 2));
@@ -1121,7 +1084,7 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 									glVertexAttribPointer(10, 4, GL_FLOAT, GL_FALSE, stride, CAST_INT_TO_UCHAR_PTR(sizeof(float) * 4 * 5));
 									glVertexAttribDivisor(10, 1);
 									glEnableVertexAttribArray(11); //color
-									glVertexAttribPointer(11, 4, GL_FLOAT, GL_FALSE, stride, NULL);
+									glVertexAttribPointer(11, 4, GL_FLOAT, GL_FALSE, stride, nullptr);
 									glVertexAttribDivisor(11, 1);
 									glEnableVertexAttribArray(12); //custom
 									glVertexAttribPointer(12, 4, GL_FLOAT, GL_FALSE, stride, CAST_INT_TO_UCHAR_PTR(sizeof(float) * 4 * 2));
@@ -1142,7 +1105,6 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 
 						} break;
 						case Item::Command::TYPE_CIRCLE: {
-
 							_set_texture_rect_mode(false);
 
 							Item::CommandCircle *circle = static_cast<Item::CommandCircle *>(c);
@@ -1152,7 +1114,6 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 							int indices[numpoints * 3];
 
 							for (int j = 0; j < numpoints; j++) {
-
 								points[j] = circle->pos + Vector2(Math::sin(j * Math_PI * 2.0 / numpoints), Math::cos(j * Math_PI * 2.0 / numpoints)) * circle->radius;
 								indices[j * 3 + 0] = j;
 								indices[j * 3 + 1] = (j + 1) % numpoints;
@@ -1160,36 +1121,32 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 							}
 
 							_bind_canvas_texture(RID(), RID(), RID());
-							_draw_polygon(indices, numpoints * 3, numpoints + 1, points, NULL, &circle->color, true, NULL, NULL);
+							_draw_polygon(indices, numpoints * 3, numpoints + 1, points, nullptr, &circle->color, true, nullptr, nullptr);
 
 							//_draw_polygon(numpoints*3,indices,points,NULL,&circle->color,RID(),true);
 							//canvas_draw_circle(circle->indices.size(),circle->indices.ptr(),circle->points.ptr(),circle->uvs.ptr(),circle->colors.ptr(),circle->texture,circle->colors.size()==1);
 						} break;
 						case Item::Command::TYPE_TRANSFORM: {
-
 							Item::CommandTransform *transform = static_cast<Item::CommandTransform *>(c);
 							state.extra_matrix = transform->xform;
 							state.canvas_shader.set_uniform(CanvasShaderGLES3::EXTRA_MATRIX, state.extra_matrix);
 
 						} break;
 						case Item::Command::TYPE_CLIP_IGNORE: {
-
 							Item::CommandClipIgnore *ci = static_cast<Item::CommandClipIgnore *>(c);
 							if (p_current_clip) {
-
 								if (ci->ignore != r_reclip) {
 									if (ci->ignore) {
-
 										glDisable(GL_SCISSOR_TEST);
 										r_reclip = true;
 									} else {
-
 										glEnable(GL_SCISSOR_TEST);
 										//glScissor(viewport.x+current_clip->final_clip_rect.pos.x,viewport.y+ (viewport.height-(current_clip->final_clip_rect.pos.y+current_clip->final_clip_rect.size.height)),
 										//current_clip->final_clip_rect.size.width,current_clip->final_clip_rect.size.height);
 										int y = storage->frame.current_rt->height - (p_current_clip->final_clip_rect.position.y + p_current_clip->final_clip_rect.size.y);
-										if (storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_VFLIP])
+										if (storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_VFLIP]) {
 											y = p_current_clip->final_clip_rect.position.y;
+										}
 
 										glScissor(p_current_clip->final_clip_rect.position.x, y, p_current_clip->final_clip_rect.size.x, p_current_clip->final_clip_rect.size.y);
 
@@ -1225,36 +1182,31 @@ void RasterizerCanvasGLES3::render_joined_item(const BItemJoined &p_bij, RenderI
 	Item *p_ci = bdata.item_refs[p_bij.first_item_ref].item;
 
 	if (r_ris.prev_distance_field != p_ci->distance_field) {
-
 		state.canvas_shader.set_conditional(CanvasShaderGLES3::USE_DISTANCE_FIELD, p_ci->distance_field);
 		r_ris.prev_distance_field = p_ci->distance_field;
 		r_ris.rebind_shader = true;
 	}
 
 	if (r_ris.current_clip != p_ci->final_clip_owner) {
-
 		r_ris.current_clip = p_ci->final_clip_owner;
 
 		//setup clip
 		if (r_ris.current_clip) {
-
 			glEnable(GL_SCISSOR_TEST);
 			int y = storage->frame.current_rt->height - (r_ris.current_clip->final_clip_rect.position.y + r_ris.current_clip->final_clip_rect.size.y);
-			if (storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_VFLIP])
+			if (storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_VFLIP]) {
 				y = r_ris.current_clip->final_clip_rect.position.y;
+			}
 
 			glScissor(r_ris.current_clip->final_clip_rect.position.x, y, r_ris.current_clip->final_clip_rect.size.x, r_ris.current_clip->final_clip_rect.size.y);
 
 		} else {
-
 			glDisable(GL_SCISSOR_TEST);
 		}
 	}
 
 	if (p_ci->copy_back_buffer) {
-
 		if (p_ci->copy_back_buffer->full) {
-
 			_copy_texscreen(Rect2());
 		} else {
 			_copy_texscreen(p_ci->copy_back_buffer->rect);
@@ -1262,21 +1214,20 @@ void RasterizerCanvasGLES3::render_joined_item(const BItemJoined &p_bij, RenderI
 	}
 
 	if (!bdata.settings_use_batching || !bdata.settings_use_software_skinning) {
-
-		RasterizerStorageGLES3::Skeleton *skeleton = NULL;
+		RasterizerStorageGLES3::Skeleton *skeleton = nullptr;
 
 		//skeleton handling
 		if (p_ci->skeleton.is_valid() && storage->skeleton_owner.owns(p_ci->skeleton)) {
 			skeleton = storage->skeleton_owner.get(p_ci->skeleton);
 			if (!skeleton->use_2d) {
-				skeleton = NULL;
+				skeleton = nullptr;
 			} else {
 				state.skeleton_transform = r_ris.item_group_base_transform * skeleton->base_transform_2d;
 				state.skeleton_transform_inverse = state.skeleton_transform.affine_inverse();
 			}
 		}
 
-		bool use_skeleton = skeleton != NULL;
+		bool use_skeleton = skeleton != nullptr;
 		if (r_ris.prev_use_skeleton != use_skeleton) {
 			r_ris.rebind_shader = true;
 			state.canvas_shader.set_conditional(CanvasShaderGLES3::USE_SKELETON, use_skeleton);
@@ -1299,21 +1250,18 @@ void RasterizerCanvasGLES3::render_joined_item(const BItemJoined &p_bij, RenderI
 	RID material = material_owner->material;
 
 	if (material != r_ris.canvas_last_material || r_ris.rebind_shader) {
-
 		RasterizerStorageGLES3::Material *material_ptr = storage->material_owner.getornull(material);
-		RasterizerStorageGLES3::Shader *shader_ptr = NULL;
+		RasterizerStorageGLES3::Shader *shader_ptr = nullptr;
 
 		if (material_ptr) {
-
 			shader_ptr = material_ptr->shader;
 
 			if (shader_ptr && shader_ptr->mode != VS::SHADER_CANVAS_ITEM) {
-				shader_ptr = NULL; //do not use non canvasitem shader
+				shader_ptr = nullptr; //do not use non canvasitem shader
 			}
 		}
 
 		if (shader_ptr) {
-
 			if (shader_ptr->canvas_item.uses_screen_texture && !state.canvas_texscreen_used) {
 				//copy if not copied before
 				_copy_texscreen(Rect2());
@@ -1323,7 +1271,6 @@ void RasterizerCanvasGLES3::render_joined_item(const BItemJoined &p_bij, RenderI
 			}
 
 			if (shader_ptr != r_ris.shader_cache || r_ris.rebind_shader) {
-
 				if (shader_ptr->canvas_item.uses_time) {
 					VisualServerRaster::redraw_request();
 				}
@@ -1341,12 +1288,10 @@ void RasterizerCanvasGLES3::render_joined_item(const BItemJoined &p_bij, RenderI
 			ShaderLanguage::ShaderNode::Uniform::Hint *texture_hints = shader_ptr->texture_hints.ptrw();
 
 			for (int i = 0; i < tc; i++) {
-
 				glActiveTexture(GL_TEXTURE2 + i);
 
 				RasterizerStorageGLES3::Texture *t = storage->texture_owner.getornull(textures[i]);
 				if (!t) {
-
 					switch (texture_hints[i]) {
 						case ShaderLanguage::ShaderNode::Uniform::HINT_BLACK_ALBEDO:
 						case ShaderLanguage::ShaderNode::Uniform::HINT_BLACK: {
@@ -1428,14 +1373,11 @@ void RasterizerCanvasGLES3::render_joined_item(const BItemJoined &p_bij, RenderI
 		}
 
 		switch (blend_mode) {
-
 			case RasterizerStorageGLES3::Shader::CanvasItem::BLEND_MODE_DISABLED: {
-
 				// nothing to do here
 
 			} break;
 			case RasterizerStorageGLES3::Shader::CanvasItem::BLEND_MODE_MIX: {
-
 				glBlendEquation(GL_FUNC_ADD);
 				if (storage->frame.current_rt && storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_TRANSPARENT]) {
 					glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -1445,7 +1387,6 @@ void RasterizerCanvasGLES3::render_joined_item(const BItemJoined &p_bij, RenderI
 
 			} break;
 			case RasterizerStorageGLES3::Shader::CanvasItem::BLEND_MODE_ADD: {
-
 				glBlendEquation(GL_FUNC_ADD);
 				if (storage->frame.current_rt && storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_TRANSPARENT]) {
 					glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE, GL_SRC_ALPHA, GL_ONE);
@@ -1455,7 +1396,6 @@ void RasterizerCanvasGLES3::render_joined_item(const BItemJoined &p_bij, RenderI
 
 			} break;
 			case RasterizerStorageGLES3::Shader::CanvasItem::BLEND_MODE_SUB: {
-
 				glBlendEquation(GL_FUNC_REVERSE_SUBTRACT);
 				if (storage->frame.current_rt && storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_TRANSPARENT]) {
 					glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE, GL_SRC_ALPHA, GL_ONE);
@@ -1524,33 +1464,32 @@ void RasterizerCanvasGLES3::render_joined_item(const BItemJoined &p_bij, RenderI
 	}
 	if (unshaded || (state.canvas_item_modulate.a > 0.001 && (!r_ris.shader_cache || r_ris.shader_cache->canvas_item.light_mode != RasterizerStorageGLES3::Shader::CanvasItem::LIGHT_MODE_LIGHT_ONLY) && !p_ci->light_masked)) {
 		RasterizerStorageGLES3::Material *material_ptr = nullptr;
-		render_joined_item_commands(p_bij, NULL, reclip, material_ptr, false);
+		render_joined_item_commands(p_bij, nullptr, reclip, material_ptr, false, r_ris);
 	}
 
 	if ((blend_mode == RasterizerStorageGLES3::Shader::CanvasItem::BLEND_MODE_MIX || blend_mode == RasterizerStorageGLES3::Shader::CanvasItem::BLEND_MODE_PMALPHA) && r_ris.item_group_light && !unshaded) {
-
 		Light *light = r_ris.item_group_light;
 		bool light_used = false;
 		VS::CanvasLightMode mode = VS::CANVAS_LIGHT_MODE_ADD;
-		state.canvas_item_modulate = p_ci->final_modulate; // remove the canvas modulate
+
+		// we leave this set to 1, 1, 1, 1 if using software because the colors are baked into the vertices
+		if (p_bij.is_single_item()) {
+			state.canvas_item_modulate = p_ci->final_modulate; // remove the canvas modulate
+		}
 
 		while (light) {
-
 			// use the bounding rect of the joined items, NOT only the bounding rect of the first item.
 			// note this is a cost of batching, the light culling will be less effective
 
 			// note that the r_ris.item_group_z will be out of date because we are using deferred rendering till canvas_render_items_end()
 			// so we have to test z against the stored value in the joined item
 			if (p_ci->light_mask & light->item_mask && p_bij.z_index >= light->z_min && p_bij.z_index <= light->z_max && p_bij.bounding_rect.intersects_transformed(light->xform_cache, light->rect_cache)) {
-
 				//intersects this light
 
 				if (!light_used || mode != light->mode) {
-
 					mode = light->mode;
 
 					switch (mode) {
-
 						case VS::CANVAS_LIGHT_MODE_ADD: {
 							glBlendEquation(GL_FUNC_ADD);
 							glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -1570,7 +1509,6 @@ void RasterizerCanvasGLES3::render_joined_item(const BItemJoined &p_bij, RenderI
 				}
 
 				if (!light_used) {
-
 					state.canvas_shader.set_conditional(CanvasShaderGLES3::USE_LIGHTING, true);
 					light_used = true;
 				}
@@ -1610,7 +1548,6 @@ void RasterizerCanvasGLES3::render_joined_item(const BItemJoined &p_bij, RenderI
 				glBindBufferBase(GL_UNIFORM_BUFFER, 1, static_cast<LightInternal *>(light->light_internal.get_data())->ubo);
 
 				if (has_shadow) {
-
 					RasterizerStorageGLES3::CanvasLightShadow *cls = storage->canvas_light_shadow_owner.get(light->shadow_buffer);
 					glActiveTexture(GL_TEXTURE0 + storage->config.max_texture_image_units - 2);
 					glBindTexture(GL_TEXTURE_2D, cls->distance);
@@ -1637,10 +1574,10 @@ void RasterizerCanvasGLES3::render_joined_item(const BItemJoined &p_bij, RenderI
 				// this can greatly reduce fill rate ..
 				// at the cost of glScissor commands, so is optional
 				if (!bdata.settings_scissor_lights || r_ris.current_clip) {
-					render_joined_item_commands(p_bij, NULL, reclip, nullptr, true);
+					render_joined_item_commands(p_bij, nullptr, reclip, nullptr, true, r_ris);
 				} else {
 					bool scissor = _light_scissor_begin(p_bij.bounding_rect, light->xform_cache, light->rect_cache);
-					render_joined_item_commands(p_bij, NULL, reclip, nullptr, true);
+					render_joined_item_commands(p_bij, nullptr, reclip, nullptr, true, r_ris);
 					if (scissor) {
 						glDisable(GL_SCISSOR_TEST);
 					}
@@ -1651,7 +1588,6 @@ void RasterizerCanvasGLES3::render_joined_item(const BItemJoined &p_bij, RenderI
 		}
 
 		if (light_used) {
-
 			state.canvas_shader.set_conditional(CanvasShaderGLES3::USE_LIGHTING, false);
 			state.canvas_shader.set_conditional(CanvasShaderGLES3::USE_SHADOWS, false);
 			state.canvas_shader.set_conditional(CanvasShaderGLES3::SHADOW_FILTER_NEAREST, false);
@@ -1692,11 +1628,11 @@ void RasterizerCanvasGLES3::render_joined_item(const BItemJoined &p_bij, RenderI
 	}
 
 	if (reclip) {
-
 		glEnable(GL_SCISSOR_TEST);
 		int y = storage->frame.current_rt->height - (r_ris.current_clip->final_clip_rect.position.y + r_ris.current_clip->final_clip_rect.size.y);
-		if (storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_VFLIP])
+		if (storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_VFLIP]) {
 			y = r_ris.current_clip->final_clip_rect.position.y;
+		}
 		glScissor(r_ris.current_clip->final_clip_rect.position.x, y, r_ris.current_clip->final_clip_rect.size.width, r_ris.current_clip->final_clip_rect.size.height);
 	}
 }
@@ -1744,24 +1680,24 @@ bool RasterizerCanvasGLES3::try_join_item(Item *p_ci, RenderItemState &r_ris, bo
 		join = false;
 	}
 
-	RasterizerStorageGLES3::Skeleton *skeleton = NULL;
+	RasterizerStorageGLES3::Skeleton *skeleton = nullptr;
 
 	{
 		//skeleton handling
 		if (p_ci->skeleton.is_valid() && storage->skeleton_owner.owns(p_ci->skeleton)) {
 			skeleton = storage->skeleton_owner.get(p_ci->skeleton);
 			if (!skeleton->use_2d) {
-				skeleton = NULL;
+				skeleton = nullptr;
 			}
 		}
 
 		bool skeleton_prevent_join = false;
 
-		bool use_skeleton = skeleton != NULL;
+		bool use_skeleton = skeleton != nullptr;
 		if (r_ris.prev_use_skeleton != use_skeleton) {
-
-			if (!bdata.settings_use_software_skinning)
+			if (!bdata.settings_use_software_skinning) {
 				r_ris.rebind_shader = true;
+			}
 
 			r_ris.prev_use_skeleton = use_skeleton;
 			//			join = false;
@@ -1777,8 +1713,9 @@ bool RasterizerCanvasGLES3::try_join_item(Item *p_ci, RenderItemState &r_ris, bo
 		}
 
 		if (skeleton_prevent_join) {
-			if (!bdata.settings_use_software_skinning)
+			if (!bdata.settings_use_software_skinning) {
 				join = false;
+			}
 		}
 	}
 
@@ -1788,9 +1725,8 @@ bool RasterizerCanvasGLES3::try_join_item(Item *p_ci, RenderItemState &r_ris, bo
 	RasterizerStorageGLES3::Material *material_ptr = storage->material_owner.getornull(material);
 
 	if (material != r_ris.canvas_last_material || r_ris.rebind_shader) {
-
 		join = false;
-		RasterizerStorageGLES3::Shader *shader_ptr = NULL;
+		RasterizerStorageGLES3::Shader *shader_ptr = nullptr;
 
 		if (material_ptr) {
 			shader_ptr = material_ptr->shader;
@@ -1802,7 +1738,7 @@ bool RasterizerCanvasGLES3::try_join_item(Item *p_ci, RenderItemState &r_ris, bo
 			}
 
 			if (shader_ptr && shader_ptr->mode != VS::SHADER_CANVAS_ITEM) {
-				shader_ptr = NULL; // not a canvas item shader, don't use.
+				shader_ptr = nullptr; // not a canvas item shader, don't use.
 			}
 		}
 
@@ -1838,10 +1774,8 @@ bool RasterizerCanvasGLES3::try_join_item(Item *p_ci, RenderItemState &r_ris, bo
 	// does the shader contain BUILTINs which should break the batching?
 	bdata.joined_item_batch_flags = 0;
 	if (r_ris.shader_cache) {
-
 		unsigned int and_flags = r_ris.shader_cache->canvas_item.batch_flags & (RasterizerStorageCommon::PREVENT_COLOR_BAKING | RasterizerStorageCommon::PREVENT_VERTEX_BAKING | RasterizerStorageCommon::PREVENT_ITEM_JOINING);
 		if (and_flags) {
-
 			// special case for preventing item joining altogether
 			if (and_flags & RasterizerStorageCommon::PREVENT_ITEM_JOINING) {
 				join = false;
@@ -1850,7 +1784,6 @@ bool RasterizerCanvasGLES3::try_join_item(Item *p_ci, RenderItemState &r_ris, bo
 				// save the flags so that they don't need to be recalculated in the 2nd pass
 				bdata.joined_item_batch_flags |= r_ris.shader_cache->canvas_item.batch_flags;
 			} else {
-
 				bool use_larger_fvfs = true;
 
 				if (and_flags == RasterizerStorageCommon::PREVENT_COLOR_BAKING) {
@@ -1878,7 +1811,6 @@ bool RasterizerCanvasGLES3::try_join_item(Item *p_ci, RenderItemState &r_ris, bo
 	}
 
 	if ((blend_mode == RasterizerStorageGLES3::Shader::CanvasItem::BLEND_MODE_MIX || blend_mode == RasterizerStorageGLES3::Shader::CanvasItem::BLEND_MODE_PMALPHA) && r_ris.item_group_light && !unshaded) {
-
 		// we cannot join lit items easily.
 		// it is possible, but not if they overlap, because
 		// a + light_blend + b + light_blend IS NOT THE SAME AS
@@ -1904,7 +1836,6 @@ bool RasterizerCanvasGLES3::try_join_item(Item *p_ci, RenderItemState &r_ris, bo
 
 				// note that as a cost of batching, the light culling will be less effective
 				if (p_ci->light_mask & light->item_mask && r_ris.item_group_z >= light->z_min && r_ris.item_group_z <= light->z_max) {
-
 					// Note that with the above test, it is possible to also include a bound check.
 					// Tests so far have indicated better performance without it, but there may be reason to change this at a later stage,
 					// so I leave the line here for reference:
@@ -1931,7 +1862,6 @@ bool RasterizerCanvasGLES3::try_join_item(Item *p_ci, RenderItemState &r_ris, bo
 			} else {
 				// only do these checks if necessary
 				if (join && (!r_batch_break)) {
-
 					// we still can't join, even if the lights are exactly the same, if there is overlap between the previous and this item
 					if (r_ris.joined_item && light_bitfield) {
 						if ((int)r_ris.joined_item->num_item_refs <= bdata.settings_light_max_join_items) {
@@ -1993,7 +1923,6 @@ bool RasterizerCanvasGLES3::try_join_item(Item *p_ci, RenderItemState &r_ris, bo
 }
 
 void RasterizerCanvasGLES3::canvas_render_items_implementation(Item *p_item_list, int p_z, const Color &p_modulate, Light *p_light, const Transform2D &p_base_transform) {
-
 	// parameters are easier to pass around in a structure
 	RenderItemState ris;
 	ris.item_group_z = p_z;
@@ -2007,7 +1936,7 @@ void RasterizerCanvasGLES3::canvas_render_items_implementation(Item *p_item_list
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	state.current_tex = RID();
-	state.current_tex_ptr = NULL;
+	state.current_tex_ptr = nullptr;
 	state.current_normal = RID();
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, storage->resources.white_tex);
@@ -2026,7 +1955,6 @@ void RasterizerCanvasGLES3::canvas_render_items_implementation(Item *p_item_list
 		}
 	} else {
 		while (p_item_list) {
-
 			Item *ci = p_item_list;
 			_legacy_canvas_render_item(ci, ris, p_base_transform);
 			p_item_list = p_item_list->next;
@@ -2041,10 +1969,10 @@ void RasterizerCanvasGLES3::canvas_render_items_implementation(Item *p_item_list
 }
 
 void RasterizerCanvasGLES3::_batch_upload_buffers() {
-
 	// noop?
-	if (!bdata.vertices.size())
+	if (!bdata.vertices.size()) {
 		return;
+	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, bdata.gl_vertex_buffer);
 
@@ -2056,7 +1984,7 @@ void RasterizerCanvasGLES3::_batch_upload_buffers() {
 
 	// orphan the old (for now)
 	if (bdata.buffer_mode_batch_upload_send_null) {
-		glBufferData(GL_ARRAY_BUFFER, 0, 0, buffer_usage_flag); // GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, 0, nullptr, buffer_usage_flag); // GL_DYNAMIC_DRAW);
 	}
 
 	switch (bdata.fvf) {
@@ -2084,7 +2012,6 @@ void RasterizerCanvasGLES3::_batch_upload_buffers() {
 }
 
 void RasterizerCanvasGLES3::_batch_render_lines(const Batch &p_batch, RasterizerStorageGLES3::Material *p_material, bool p_anti_alias) {
-
 	_set_texture_rect_mode(false);
 
 	_bind_canvas_texture(RID(), RID(), RID());
@@ -2099,8 +2026,9 @@ void RasterizerCanvasGLES3::_batch_render_lines(const Batch &p_batch, Rasterizer
 	int num_elements = p_batch.num_commands * 2;
 
 #ifdef GLES_OVER_GL
-	if (p_anti_alias)
+	if (p_anti_alias) {
 		glEnable(GL_LINE_SMOOTH);
+	}
 #endif
 
 	glDrawArrays(GL_LINES, offset, num_elements);
@@ -2110,8 +2038,9 @@ void RasterizerCanvasGLES3::_batch_render_lines(const Batch &p_batch, Rasterizer
 	glBindVertexArray(0);
 
 #ifdef GLES_OVER_GL
-	if (p_anti_alias)
+	if (p_anti_alias) {
 		glDisable(GL_LINE_SMOOTH);
+	}
 #endif
 }
 
@@ -2271,7 +2200,7 @@ void RasterizerCanvasGLES3::initialize() {
 
 	if (bdata.vertex_buffer_size_bytes) {
 		glBindBuffer(GL_ARRAY_BUFFER, bdata.gl_vertex_buffer);
-		glBufferData(GL_ARRAY_BUFFER, bdata.vertex_buffer_size_bytes, NULL, GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, bdata.vertex_buffer_size_bytes, nullptr, GL_DYNAMIC_DRAW);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 		// pre fill index buffer, the indices never need to change so can be static
@@ -2304,7 +2233,6 @@ void RasterizerCanvasGLES3::initialize() {
 
 	// vertex array objects
 	for (int vao = 0; vao < 5; vao++) {
-
 		int sizeof_vert;
 		switch (vao) {
 			case 0:
@@ -2397,6 +2325,5 @@ void RasterizerCanvasGLES3::initialize() {
 }
 
 RasterizerCanvasGLES3::RasterizerCanvasGLES3() {
-
 	batch_constructor();
 }

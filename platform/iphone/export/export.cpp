@@ -48,7 +48,6 @@
 #include <sys/stat.h>
 
 class EditorExportPlatformIOS : public EditorExportPlatform {
-
 	GDCLASS(EditorExportPlatformIOS, EditorExportPlatform);
 
 	int version_code;
@@ -80,7 +79,6 @@ class EditorExportPlatformIOS : public EditorExportPlatform {
 		Vector<String> capabilities;
 	};
 	struct ExportArchitecture {
-
 		String name;
 		bool is_default;
 
@@ -118,8 +116,7 @@ class EditorExportPlatformIOS : public EditorExportPlatform {
 	Error _export_additional_assets(const String &p_out_dir, const Vector<SharedObject> &p_libraries, Vector<IOSExportAsset> &r_exported_assets);
 	Error _export_ios_plugins(const Ref<EditorExportPreset> &p_preset, IOSConfigData &p_config_data, const String &dest_dir, Vector<IOSExportAsset> &r_exported_assets, bool p_debug);
 
-	bool is_package_name_valid(const String &p_package, String *r_error = NULL) const {
-
+	bool is_package_name_valid(const String &p_package, String *r_error = nullptr) const {
 		String pname = p_package;
 
 		if (pname.length() == 0) {
@@ -148,7 +145,6 @@ class EditorExportPlatformIOS : public EditorExportPlatform {
 		while (!ea->quit_request.is_set()) {
 			// Nothing to do if we already know the plugins have changed.
 			if (!ea->plugins_changed.is_set()) {
-
 				ea->plugins_lock.lock();
 
 				Vector<PluginConfigIOS> loaded_plugins = get_plugins();
@@ -208,7 +204,6 @@ public:
 	virtual bool can_export(const Ref<EditorExportPreset> &p_preset, String &r_error, bool &r_missing_templates) const;
 
 	virtual void get_platform_features(List<String> *r_features) {
-
 		r_features->push_back("mobile");
 		r_features->push_back("iOS");
 	}
@@ -300,7 +295,6 @@ public:
 };
 
 void EditorExportPlatformIOS::get_preset_features(const Ref<EditorExportPreset> &p_preset, List<String> *r_features) {
-
 	String driver = ProjectSettings::get_singleton()->get("rendering/quality/driver/driver_name");
 	r_features->push_back("pvrtc");
 	if (driver == "GLES3") {
@@ -341,7 +335,6 @@ static const LoadingScreenInfo loading_screen_infos[] = {
 };
 
 void EditorExportPlatformIOS::get_export_options(List<ExportOption> *r_options) {
-
 	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "custom_template/debug", PROPERTY_HINT_GLOBAL_FILE, "*.zip"), ""));
 	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "custom_template/release", PROPERTY_HINT_GLOBAL_FILE, "*.zip"), ""));
 
@@ -597,7 +590,7 @@ void EditorExportPlatformIOS::_fix_config_file(const Ref<EditorExportPreset> &p_
 }
 
 String EditorExportPlatformIOS::_get_additional_plist_content() {
-	Vector<Ref<EditorExportPlugin> > export_plugins = EditorExport::get_singleton()->get_export_plugins();
+	Vector<Ref<EditorExportPlugin>> export_plugins = EditorExport::get_singleton()->get_export_plugins();
 	String result;
 	for (int i = 0; i < export_plugins.size(); ++i) {
 		result += export_plugins[i]->get_ios_plist_content();
@@ -606,11 +599,13 @@ String EditorExportPlatformIOS::_get_additional_plist_content() {
 }
 
 String EditorExportPlatformIOS::_get_linker_flags() {
-	Vector<Ref<EditorExportPlugin> > export_plugins = EditorExport::get_singleton()->get_export_plugins();
+	Vector<Ref<EditorExportPlugin>> export_plugins = EditorExport::get_singleton()->get_export_plugins();
 	String result;
 	for (int i = 0; i < export_plugins.size(); ++i) {
 		String flags = export_plugins[i]->get_ios_linker_flags();
-		if (flags.length() == 0) continue;
+		if (flags.length() == 0) {
+			continue;
+		}
 		if (result.length() > 0) {
 			result += ' ';
 		}
@@ -621,7 +616,7 @@ String EditorExportPlatformIOS::_get_linker_flags() {
 }
 
 String EditorExportPlatformIOS::_get_cpp_code() {
-	Vector<Ref<EditorExportPlugin> > export_plugins = EditorExport::get_singleton()->get_export_plugins();
+	Vector<Ref<EditorExportPlugin>> export_plugins = EditorExport::get_singleton()->get_export_plugins();
 	String result;
 	for (int i = 0; i < export_plugins.size(); ++i) {
 		result += export_plugins[i]->get_ios_cpp_code();
@@ -1172,7 +1167,7 @@ Error EditorExportPlatformIOS::_export_additional_assets(const String &p_out_dir
 }
 
 Error EditorExportPlatformIOS::_export_additional_assets(const String &p_out_dir, const Vector<SharedObject> &p_libraries, Vector<IOSExportAsset> &r_exported_assets) {
-	Vector<Ref<EditorExportPlugin> > export_plugins = EditorExport::get_singleton()->get_export_plugins();
+	Vector<Ref<EditorExportPlugin>> export_plugins = EditorExport::get_singleton()->get_export_plugins();
 	for (int i = 0; i < export_plugins.size(); i++) {
 		Vector<String> linked_frameworks = export_plugins[i]->get_ios_frameworks();
 		Error err = _export_additional_assets(p_out_dir, linked_frameworks, true, false, r_exported_assets);
@@ -1183,8 +1178,9 @@ Error EditorExportPlatformIOS::_export_additional_assets(const String &p_out_dir
 		ERR_FAIL_COND_V(err, err);
 
 		Vector<String> project_static_libs = export_plugins[i]->get_ios_project_static_libs();
-		for (int j = 0; j < project_static_libs.size(); j++)
+		for (int j = 0; j < project_static_libs.size(); j++) {
 			project_static_libs.write[j] = project_static_libs[j].get_file(); // Only the file name as it's copied to the project
+		}
 		err = _export_additional_assets(p_out_dir, project_static_libs, true, true, r_exported_assets);
 		ERR_FAIL_COND_V(err, err);
 
@@ -1421,10 +1417,11 @@ Error EditorExportPlatformIOS::export_project(const Ref<EditorExportPreset> &p_p
 	String team_id = p_preset->get("application/app_store_team_id");
 	ERR_FAIL_COND_V_MSG(team_id.length() == 0, ERR_CANT_OPEN, "App Store Team ID not specified - cannot configure the project.");
 
-	if (p_debug)
+	if (p_debug) {
 		src_pkg_name = p_preset->get("custom_template/debug");
-	else
+	} else {
 		src_pkg_name = p_preset->get("custom_template/release");
+	}
 
 	if (src_pkg_name == "") {
 		String err;
@@ -1470,8 +1467,9 @@ Error EditorExportPlatformIOS::export_project(const Ref<EditorExportPreset> &p_p
 	String pack_path = dest_dir + binary_name + ".pck";
 	Vector<SharedObject> libraries;
 	Error err = save_pack(p_preset, pack_path, &libraries);
-	if (err)
+	if (err) {
 		return err;
+	}
 
 	if (ep.step("Extracting and configuring Xcode project", 1)) {
 		return ERR_SKIP;
@@ -1481,12 +1479,13 @@ Error EditorExportPlatformIOS::export_project(const Ref<EditorExportPreset> &p_p
 
 	print_line("Static library: " + library_to_use);
 	String pkg_name;
-	if (p_preset->get("application/name") != "")
+	if (p_preset->get("application/name") != "") {
 		pkg_name = p_preset->get("application/name"); // app_name
-	else if (String(ProjectSettings::get_singleton()->get("application/config/name")) != "")
+	} else if (String(ProjectSettings::get_singleton()->get("application/config/name")) != "") {
 		pkg_name = String(ProjectSettings::get_singleton()->get("application/config/name"));
-	else
+	} else {
 		pkg_name = "Unnamed";
+	}
 
 	bool found_library = false;
 	int total_size = 0;
@@ -1522,7 +1521,7 @@ Error EditorExportPlatformIOS::export_project(const Ref<EditorExportPreset> &p_p
 	ERR_FAIL_COND_V(!tmp_app_path, ERR_CANT_CREATE);
 
 	print_line("Unzipping...");
-	FileAccess *src_f = NULL;
+	FileAccess *src_f = nullptr;
 	zlib_filefunc_def io = zipio_create_io_from_file(&src_f);
 	unzFile src_pkg_zip = unzOpen2(src_pkg_name.utf8().get_data(), &io);
 	if (!src_pkg_zip) {
@@ -1544,7 +1543,7 @@ Error EditorExportPlatformIOS::export_project(const Ref<EditorExportPreset> &p_p
 		//get filename
 		unz_file_info info;
 		char fname[16384];
-		ret = unzGetCurrentFileInfo(src_pkg_zip, &info, fname, 16384, NULL, 0, NULL, 0);
+		ret = unzGetCurrentFileInfo(src_pkg_zip, &info, fname, 16384, nullptr, 0, nullptr, 0);
 
 		String file = fname;
 
@@ -1636,7 +1635,7 @@ Error EditorExportPlatformIOS::export_project(const Ref<EditorExportPreset> &p_p
 	}
 
 	// Copy project static libs to the project
-	Vector<Ref<EditorExportPlugin> > export_plugins = EditorExport::get_singleton()->get_export_plugins();
+	Vector<Ref<EditorExportPlugin>> export_plugins = EditorExport::get_singleton()->get_export_plugins();
 	for (int i = 0; i < export_plugins.size(); i++) {
 		Vector<String> project_static_libs = export_plugins[i]->get_ios_project_static_libs();
 		for (int j = 0; j < project_static_libs.size(); j++) {
@@ -1657,12 +1656,14 @@ Error EditorExportPlatformIOS::export_project(const Ref<EditorExportPreset> &p_p
 		err = tmp_app_path->make_dir_recursive(iconset_dir);
 	}
 	memdelete(tmp_app_path);
-	if (err)
+	if (err) {
 		return err;
+	}
 
 	err = _export_icons(p_preset, iconset_dir);
-	if (err)
+	if (err) {
 		return err;
+	}
 
 	bool use_storyboard = p_preset->get("storyboard/use_launch_screen_storyboard");
 
@@ -1772,7 +1773,6 @@ Error EditorExportPlatformIOS::export_project(const Ref<EditorExportPreset> &p_p
 }
 
 bool EditorExportPlatformIOS::can_export(const Ref<EditorExportPreset> &p_preset, String &r_error, bool &r_missing_templates) const {
-
 	String err;
 	bool valid = false;
 
@@ -1830,14 +1830,14 @@ bool EditorExportPlatformIOS::can_export(const Ref<EditorExportPreset> &p_preset
 		err += etc_error;
 	}
 
-	if (!err.empty())
+	if (!err.empty()) {
 		r_error = err;
+	}
 
 	return valid;
 }
 
 EditorExportPlatformIOS::EditorExportPlatformIOS() {
-
 	Ref<Image> img = memnew(Image(_iphone_logo));
 	logo.instance();
 	logo->create_from_image(img);
@@ -1853,7 +1853,6 @@ EditorExportPlatformIOS::~EditorExportPlatformIOS() {
 }
 
 void register_iphone_exporter() {
-
 	Ref<EditorExportPlatformIOS> platform;
 	platform.instance();
 

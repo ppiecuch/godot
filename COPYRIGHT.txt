@@ -103,6 +103,8 @@ Files: ./servers/physics/gjk_epa.cpp
  ./servers/physics/joints/pin_joint_sw.h
  ./servers/physics/joints/slider_joint_sw.cpp
  ./servers/physics/joints/slider_joint_sw.h
+ ./servers/physics/shape_sw.cpp
+ ./servers/physics/shape_sw.h
 Comment: Bullet Continuous Collision Detection and Physics Library
 Copyright: 2003-2008, Erwin Coumans
  2007-2021, Juan Linietsky, Ariel Manzur.
@@ -132,6 +134,11 @@ Comment: Convection Texture Tools Stand-Alone Kernels
 Copyright: 2018, Eric Lasota
  2018, Microsoft Corp.
 License: Expat
+
+Files: ./thirdparty/embree/
+Comment: Embree
+Copyright: 2009-2021 Intel Corporation
+License: Apache-2.0
 
 Files: ./thirdparty/enet/
 Comment: ENet
