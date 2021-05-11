@@ -24,6 +24,10 @@ def get_name():
 
 def can_build():
 
+    if not "VITASDK" in os.environ:
+        return False
+    if os.name == "nt":
+        return False
     return True
 
 
