@@ -30,6 +30,8 @@
 
 #include "raw_packer.h"
 
+static const CharType TerminatingZero('\0');
+
 Error RawPacker::encode(const String &fmt, const Array &array, uint8_t *buf, int &len) {
 	Variant::Type type;
 	int j = 0;
@@ -149,7 +151,7 @@ Error RawPacker::encode(const String &fmt, const Array &array, uint8_t *buf, int
 					}
 				}
 
-				size_str += '\0';
+				size_str += TerminatingZero;
 
 				i += size_str.length();
 
@@ -334,7 +336,7 @@ Error RawPacker::decode(const String &fmt, Array &array, const uint8_t *buf, int
 					}
 				}
 
-				size_str += '\0';
+				size_str += TerminatingZero;
 
 				i += size_str.length();
 
@@ -345,7 +347,7 @@ Error RawPacker::decode(const String &fmt, Array &array, const uint8_t *buf, int
 				if (str_size == 0) {
 					ERR_FAIL_COND_V(size < len + 1, ERR_INVALID_DATA)
 
-					str += '\0';
+					str += TerminatingZero;
 					buf += 1;
 					len += 1;
 				} else {
@@ -359,7 +361,7 @@ Error RawPacker::decode(const String &fmt, Array &array, const uint8_t *buf, int
 						k += 1;
 					}
 
-					str += '\0';
+					str += TerminatingZero;
 					buf += (str_size - k);
 					len += str_size;
 				}
@@ -380,7 +382,7 @@ Error RawPacker::decode(const String &fmt, Array &array, const uint8_t *buf, int
 					ERR_FAIL_COND_V(size < len + 1, ERR_INVALID_DATA);
 				}
 
-				str += '\0';
+				str += TerminatingZero;
 				buf += 1;
 				len += 1;
 				array.push_back(str);
