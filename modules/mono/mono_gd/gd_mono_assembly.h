@@ -93,7 +93,7 @@ class GDMonoAssembly {
 	static MonoAssembly *_preload_hook(MonoAssemblyName *aname, char **assemblies_path, void *user_data, bool refonly);
 
 	static MonoAssembly *_real_load_assembly_from(const String &p_path, bool p_refonly);
-	static MonoAssembly *_load_assembly_search(const String &p_name, const Vector<String> &p_search_dirs, bool p_refonly);
+	static MonoAssembly *_load_assembly_search(const String &p_name, bool p_refonly, const Vector<String> &p_search_dirs);
 
 	friend class GDMono;
 	static void initialize();
