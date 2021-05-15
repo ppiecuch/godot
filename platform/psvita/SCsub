@@ -2,7 +2,7 @@ Import("env")
 
 sys = ["vitasdk_libc.cpp"]
 audio = ["audio/audio_driver_sce.cpp"]
-video = ["video/texture_loader_gxm.cpp"]
+video = []
 
 SConscript("video/SCsub")
 
