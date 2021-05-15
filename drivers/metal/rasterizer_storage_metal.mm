@@ -41,20 +41,52 @@
 
 #import <Metal/Metal.h>
 
-static void MetalUploadTextureData(id<MTLTexture> texture, Rect2 rect, int slice, const void *pixels, int pitch) {
+struct RasterizerStorageMetal::MetalTexture : public RID_Data {
+	id<MTLTexture> mtl;
+	int width;
+	int height;
+	uint32_t flags;
+	Image::Format format;
+	Ref<Image> image;
+	String path;
+	bool active;
+	size_t total_data_size;
+};
 
-    [texture replaceRegion:MTLRegionMake2D(rect.position.x, rect.position.y, rect.size.width, rect.size.height)
-               mipmapLevel:0
-                     slice:slice
-                 withBytes:pixels
-               bytesPerRow:pitch
-             bytesPerImage:0];
+struct RasterizerStorageMetal::MetalSurface {
+	uint32_t format;
+	VS::PrimitiveType primitive;
+	PoolVector<uint8_t> array;
+	int vertex_count;
+	PoolVector<uint8_t> index_array;
+	int index_count;
+	bool active;
+	AABB aabb;
+	Vector<PoolVector<uint8_t>> blend_shapes;
+	Vector<AABB> bone_aabbs;
+};
+
+struct RasterizerStorageMetal::MetalMesh : public RID_Data {
+	Vector<MetalSurface> surfaces;
+	int blend_shape_count;
+	VS::BlendShapeMode blend_shape_mode;
+};
+
+static MTLStorageMode MetalGetStorageMode(id<MTLResource> resource) {
+    /* iOS 8 does not have this method. */
+    if ([resource respondsToSelector:@selector(storageMode)]) {
+        return resource.storageMode;
+    }
+    return MTLStorageModeShared;
 }
 
 
 RID RasterizerStorageMetal::texture_create() {
 	MetalTexture *texture = memnew(MetalTexture);
 	ERR_FAIL_COND_V(!texture, RID());
+	texture->mtl = nil;
+	texture->active = false;
+	texture->total_data_size = 0;
 	return texture_owner.make_rid(texture);
 }
 

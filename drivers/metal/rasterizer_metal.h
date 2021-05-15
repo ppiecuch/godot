@@ -118,33 +118,9 @@ public:
 class RasterizerStorageMetal : public RasterizerStorage {
 public:
 	/* TEXTURE API */
-	struct MetalTexture : public RID_Data {
-		int width;
-		int height;
-		uint32_t flags;
-		Image::Format format;
-		Ref<Image> image;
-		String path;
-	};
-
-	struct MetalSurface {
-		uint32_t format;
-		VS::PrimitiveType primitive;
-		PoolVector<uint8_t> array;
-		int vertex_count;
-		PoolVector<uint8_t> index_array;
-		int index_count;
-		bool active;
-		AABB aabb;
-		Vector<PoolVector<uint8_t>> blend_shapes;
-		Vector<AABB> bone_aabbs;
-	};
-
-	struct MetalMesh : public RID_Data {
-		Vector<MetalSurface> surfaces;
-		int blend_shape_count;
-		VS::BlendShapeMode blend_shape_mode;
-	};
+	struct MetalTexture;
+	struct MetalSurface;
+	struct MetalMesh;
 
 	mutable RID_Owner<MetalTexture> texture_owner;
 	mutable RID_Owner<MetalMesh> mesh_owner;
