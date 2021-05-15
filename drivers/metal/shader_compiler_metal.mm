@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  shader_compiler_msl.mm                                               */
+/*  shader_compiler_metal.mm                                             */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,7 +28,9 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "shader_compiler_msl.h"
+#ifdef METAL_ENABLED
+
+#include "shader_compiler_metal.h"
 
 #include "core/os/os.h"
 #include "core/project_settings.h"
@@ -322,7 +324,7 @@ static String get_constant_text(SL::DataType p_type, const Vector<SL::ConstantNo
 	}
 }
 
-void ShaderCompilerMSL::_dump_function_deps(SL::ShaderNode *p_node, const StringName &p_for_func, const Map<StringName, String> &p_func_code, String &r_to_add, Set<StringName> &added) {
+void ShaderCompilerMetal::_dump_function_deps(SL::ShaderNode *p_node, const StringName &p_for_func, const Map<StringName, String> &p_func_code, String &r_to_add, Set<StringName> &added) {
 	int fidx = -1;
 
 	for (int i = 0; i < p_node->functions.size(); i++) {
@@ -370,7 +372,7 @@ void ShaderCompilerMSL::_dump_function_deps(SL::ShaderNode *p_node, const String
 	}
 }
 
-String ShaderCompilerMSL::_dump_node_code(SL::Node *p_node, int p_level, GeneratedCode &r_gen_code, IdentifierActions &p_actions, const DefaultIdentifierActions &p_default_actions, bool p_assigning, bool p_use_scope) {
+String ShaderCompilerMetal::_dump_node_code(SL::Node *p_node, int p_level, GeneratedCode &r_gen_code, IdentifierActions &p_actions, const DefaultIdentifierActions &p_default_actions, bool p_assigning, bool p_use_scope) {
 	String code;
 
 	switch (p_node->type) {
@@ -864,7 +866,7 @@ String ShaderCompilerMSL::_dump_node_code(SL::Node *p_node, int p_level, Generat
 	return code;
 }
 
-Error ShaderCompilerMSL::compile(VS::ShaderMode p_mode, const String &p_code, IdentifierActions *p_actions, const String &p_path, GeneratedCode &r_gen_code) {
+Error ShaderCompilerMetal::compile(VS::ShaderMode p_mode, const String &p_code, IdentifierActions *p_actions, const String &p_path, GeneratedCode &r_gen_code) {
 	Error err = parser.compile(p_code, ShaderTypes::get_singleton()->get_functions(p_mode), ShaderTypes::get_singleton()->get_modes(p_mode), ShaderTypes::get_singleton()->get_types());
 
 	if (err != OK) {
@@ -903,7 +905,7 @@ Error ShaderCompilerMSL::compile(VS::ShaderMode p_mode, const String &p_code, Id
 	return OK;
 }
 
-ShaderCompilerMSL::ShaderCompilerMSL() {
+ShaderCompilerMetal::ShaderCompilerMetal() {
 	/** CANVAS ITEM SHADER **/
 
 	actions[VS::SHADER_CANVAS_ITEM].renames["VERTEX"] = "outvec.xy";
@@ -1110,3 +1112,5 @@ ShaderCompilerMSL::ShaderCompilerMSL() {
 		internal_functions.insert(E->get());
 	}
 }
+
+#endif // METAL_ENABLED

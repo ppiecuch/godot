@@ -180,40 +180,4 @@ RasterizerScene *RasterizerMetal::get_scene() {
 	return &scene;
 }
 
-void RasterizerMetal::set_boot_image(const Ref<Image> &p_image, const Color &p_color, bool p_scale, bool p_use_filter) {}
-void RasterizerMetal::set_shader_time_scale(float p_scale) {}
-
-void RasterizerMetal::initialize() {}
-void RasterizerMetal::begin_frame(double frame_step) {}
-void RasterizerMetal::set_current_render_target(RID p_render_target) {}
-void RasterizerMetal::restore_render_target(bool p_3d_was_drawn) {}
-void RasterizerMetal::clear_render_target(const Color &p_color) {}
-void RasterizerMetal::blit_render_target_to_screen(RID p_render_target, const Rect2 &p_screen_rect, int p_screen) {}
-void RasterizerMetal::output_lens_distorted_to_screen(RID p_render_target, const Rect2 &p_screen_rect, float p_k1, float p_k2, const Vector2 &p_eye_center, float p_oversample) {}
-void RasterizerMetal::end_frame(bool p_swap_buffers) {}
-void RasterizerMetal::finalize() {}
-
-Error RasterizerMetal::is_viable() {
-	return OK;
-}
-
-Rasterizer *RasterizerMetal::_create_current() {
-	return memnew(RasterizerMetal);
-}
-
-void RasterizerMetal::make_current() {
-	_create_func = _create_current;
-}
-
-bool RasterizerMetal::is_low_end() const {
-	return true;
-}
-
-const char *gl_check_for_error(bool p_print_error) {
-	return nullptr;
-}
-
-RasterizerMetal::RasterizerMetal() {}
-RasterizerMetal::~RasterizerMetal() {}
-
 #endif // METAL_ENABLED

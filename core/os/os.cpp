@@ -668,7 +668,11 @@ void OS::center_window() {
 }
 
 int OS::get_video_driver_count() const {
+#ifdef METAL_ENABLED
+	return 3;
+#else
 	return 2;
+#endif
 }
 
 const char *OS::get_video_driver_name(int p_driver) const {
@@ -676,6 +680,11 @@ const char *OS::get_video_driver_name(int p_driver) const {
 		case VIDEO_DRIVER_GLES2:
 			return "GLES2";
 		case VIDEO_DRIVER_GLES3:
+			return "GLES3";
+#ifdef METAL_ENABLED
+		case VIDEO_DRIVER_METAL:
+			return "METAL";
+#endif
 		default:
 			return "GLES3";
 	}

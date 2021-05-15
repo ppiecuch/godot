@@ -1631,7 +1631,7 @@ Error OS_OSX::initialize(const VideoMode &p_desired, int p_video_driver, int p_a
 	/*
 	if (fbconfig->alphaBits > 0)
 		ADD_ATTR2(NSOpenGLPFAAlphaSize, fbconfig->alphaBits);
-*/
+	*/
 
 	ADD_ATTR2(NSOpenGLPFADepthSize, 24);
 
@@ -1640,14 +1640,14 @@ Error OS_OSX::initialize(const VideoMode &p_desired, int p_video_driver, int p_a
 	/*
 	if (fbconfig->stereo)
 		ADD_ATTR(NSOpenGLPFAStereo);
-*/
+	*/
 
 	/*
 	if (fbconfig->samples > 0) {
 		ADD_ATTR2(NSOpenGLPFASampleBuffers, 1);
 		ADD_ATTR2(NSOpenGLPFASamples, fbconfig->samples);
 	}
-*/
+	*/
 
 	// NOTE: All NSOpenGLPixelFormats on the relevant cards support sRGB
 	//       framebuffer, so there's no need (and no way) to request it

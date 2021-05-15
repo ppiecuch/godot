@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  shader_compiler_msl.h                                                */
+/*  shader_compiler_metal.h                                              */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef SHADERCOMPILERMSL_H
-#define SHADERCOMPILERMSL_H
+#ifndef SHADERCOMPILERMETAL_H
+#define SHADERCOMPILERMETAL_H
 
 #include "core/pair.h"
 #include "servers/visual/shader_language.h"
@@ -101,4 +101,4 @@ public:
 	ShaderCompilerMetal();
 };
 
-#endif // SHADERCOMPILERMSL_H
+#endif // SHADERCOMPILERMETAL_H

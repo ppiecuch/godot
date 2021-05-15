@@ -39,6 +39,19 @@
 #include "servers/visual/rasterizer.h"
 #include "servers/visual_server.h"
 
+#import <Metal/Metal.h>
+
+static void MetalUploadTextureData(id<MTLTexture> texture, Rect2 rect, int slice, const void *pixels, int pitch) {
+
+    [texture replaceRegion:MTLRegionMake2D(rect.position.x, rect.position.y, rect.size.width, rect.size.height)
+               mipmapLevel:0
+                     slice:slice
+                 withBytes:pixels
+               bytesPerRow:pitch
+             bytesPerImage:0];
+}
+
+
 RID RasterizerStorageMetal::texture_create() {
 	MetalTexture *texture = memnew(MetalTexture);
 	ERR_FAIL_COND_V(!texture, RID());
@@ -779,6 +792,26 @@ bool RasterizerStorageMetal::free(RID p_rid) {
 }
 
 bool RasterizerStorageMetal::has_os_feature(const String &p_feature) const {
+	if (p_feature == "bptc") {
+		return false;
+	}
+
+	if (p_feature == "s3tc") {
+		return false;
+	}
+
+	if (p_feature == "etc") {
+		return true;
+	}
+
+	if (p_feature == "etc2") {
+		return true;
+	}
+
+	if (p_feature == "pvrtc") {
+		return true;
+	}
+
 	return false;
 }
 

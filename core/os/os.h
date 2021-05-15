@@ -183,6 +183,9 @@ public:
 	enum VideoDriver {
 		VIDEO_DRIVER_GLES3,
 		VIDEO_DRIVER_GLES2,
+#ifdef METAL_ENABLED
+		VIDEO_DRIVER_METAL,
+#endif
 		VIDEO_DRIVER_MAX,
 	};
 
