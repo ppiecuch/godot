@@ -44,6 +44,8 @@
 
 #include <Carbon/Carbon.h>
 #import <Cocoa/Cocoa.h>
+#import <QuartzCore/CAMetalLayer.h>
+#import <Metal/Metal.h>
 #include <IOKit/IOCFPlugIn.h>
 #include <IOKit/IOKitLib.h>
 #include <IOKit/hid/IOHIDKeys.h>
@@ -460,6 +462,8 @@ static NSCursor *cursorFromSelector(SEL selector, SEL fallback = nil) {
 - (void)cancelComposition;
 - (BOOL)wantsUpdateLayer;
 - (void)updateLayer;
+// OpenGL-based interface
+// Metal-based interface
 @end
 
 @implementation GodotContentView
