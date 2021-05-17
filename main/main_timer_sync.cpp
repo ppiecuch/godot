@@ -216,9 +216,9 @@ MainFrameTime MainTimerSync::advance_checked(float p_frame_slice, int p_iteratio
 	if (time_accum < -1e-7) {
 		WARN_PRINT_ONCE("Final value of `time_accum` is negative. It should always be between 0 and `p_idle_step`. This hints at an engine bug.");
 	}
-	if (time_accum > p_idle_step + 1e-7) {
-		WARN_PRINT_ONCE("Final value of `time_accum` is larger than `p_idle_step`. It should always be between 0 and `p_idle_step`. This hints at an engine bug.");
-	}
+// 	if (time_accum > p_idle_step + 1e-7) {
+// 		WARN_PRINT_ONCE("Final value of `time_accum` is larger than `p_idle_step`. It should always be between 0 and `p_idle_step`. This hints at an engine bug.");
+// 	}
 #endif
 
 	// track deficit
