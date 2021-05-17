@@ -52,9 +52,9 @@ public:
 		DestructionTypeCount,
 	};
 	enum DestructionPhysics {
-		DESTRUCTION_PHYSICS_OFF,
-		DESTRUCTION_PHYSICS_STANDARD,
-		DESTRUCTION_PHYSICS_HIGH,
+		DESTRUCTION_PHYSICS_OFF,      // simple particles
+		DESTRUCTION_PHYSICS_STANDARD, //< debris are quad shapes
+		DESTRUCTION_PHYSICS_HIGH,     //< debris are polygon shapes
 		DestructionPhysicsCount,
 	};
 
@@ -75,14 +75,12 @@ private:
 	bool random_depth;
 	bool debug_mode;
 
-	real_t _explosion_delay_timer;
-	real_t _explosion_delay_timer_limit;
-
-	void _add_children(const explo_object_t &child_object);
+	bool _simulate(explo_object_t &object, real_t delta);
 	void _explosion(real_t delta, explo_object_t &object);
 	void _detonate(explo_object_t &object);
 	void _setup(explo_object_t &object);
 
+	void _add_children(uint64_t object_id);
 	void _on_debris_timer_timeout(uint64_t object_id);
 
 	std::map<uint64_t, explo_object_t *> _simulations;
@@ -115,7 +113,9 @@ public:
 	void set_debug_mode(bool p_debug_mode);
 	bool get_debug_mode() const { return debug_mode; }
 
-	void explode();
+	bool is_active_explosions();
+	int explosions_in_progress();
+	void explode(real_t delay);
 
 	DestructibleSprite();
 	~DestructibleSprite();

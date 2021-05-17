@@ -43,10 +43,15 @@
 #include "scene/main/timer.h"
 #include "scene/resources/rectangle_shape_2d.h"
 
+#include "common/gd_core.h"
+
 #include <vector>
 
 struct explo_object_t {
 	uint64_t id;
+	real_t delay;
+	DestructibleSprite::DestructionType destruction_type;
+	DestructibleSprite::DestructionPhysics destruction_physics;
 	std::vector<Node2D *> blocks;
 	Node2D *blocks_container;
 	real_t blocks_gravity_scale;
@@ -62,9 +67,8 @@ struct explo_object_t {
 	int frame;
 	bool can_detonate;
 	bool has_detonated;
-	int height, width;
+	real_t height, width;
 	int hframes, vframes;
-	Vector2 offset;
 	bool remove_debris;
 };
 
@@ -86,6 +90,38 @@ static inline Sprite *_safe_sprite(Node *node) {
 	}
 }
 
+static inline real_t _get_random_time() {
+	Math::randomize();
+	return Math::random(0.05, 0.1);
+}
+
+static inline Vector2 _get_random_velocity(real_t min_particles_velocity = 200, real_t max_particles_velocity = 600) {
+	Math::randomize();
+	return Vector2(
+			Math::random(
+					-Math::random(min_particles_velocity, max_particles_velocity),
+					Math::random(min_particles_velocity, max_particles_velocity)),
+			Math::random(
+					-Math::random(min_particles_velocity * 2, max_particles_velocity * 2),
+					-Math::random(min_particles_velocity * 2, max_particles_velocity * 2)));
+}
+
+static inline Vector2 _get_random_velocity_increment() {
+	Math::randomize();
+	return Vector2(Math::random(0.991, 1.009), Math::random(0.991, 1.009));
+}
+
+static inline Vector2 _get_random_gravity(real_t min_particles_gravity = 2, real_t max_particles_gravity = 6) {
+	Math::randomize();
+	return Vector2(
+			Math::random(
+					-Math::random(min_particles_gravity, max_particles_gravity),
+					Math::random(min_particles_gravity, max_particles_gravity)),
+			Math::random(
+					Math::random(min_particles_gravity * 2, max_particles_gravity * 2),
+					Math::random(min_particles_gravity * 2, max_particles_gravity * 2)));
+}
+
 void DestructibleSprite::_explosion(real_t delta, explo_object_t &object) {
 	if (object.detonate) {
 		if (debug_mode) {
@@ -97,23 +133,7 @@ void DestructibleSprite::_explosion(real_t delta, explo_object_t &object) {
 			child->apply_central_impulse(Vector2(Math::random(-object.blocks_impulse, object.blocks_impulse), -object.blocks_impulse));
 		}
 
-		// Add a delay before setting 'object.detonate' to 'false'.
-		// Sometimes 'object.detonate' is set to 'false' so quickly that the explosion never happens.
-		// If this happens, try setting 'explosion_delay' to 'true'.
-		if (explosion_delay) {
-			// Removed the yield timer because it was throwing
-			// 'Resumed after yield, but class instance is gone' errors
-			// when freeing the blocks.
-			// yield(get_tree().create_timer(delta), "timeout")
-			_explosion_delay_timer_limit = delta;
-			_explosion_delay_timer += delta;
-			if (_explosion_delay_timer > _explosion_delay_timer_limit) {
-				_explosion_delay_timer -= _explosion_delay_timer_limit;
-				object.detonate = false;
-			}
-		} else {
-			object.detonate = false;
-		}
+		object.detonate = false;
 	}
 }
 
@@ -123,7 +143,7 @@ void DestructibleSprite::_on_debris_timer_timeout(uint64_t object_id) {
 	const explo_object_t &object = *_simulations[object_id];
 
 	if (debug_mode) {
-		print_line(vformat("'%s' object's debris timer timed out.", get_name()));
+		print_line(vformat("[%s/debris_timer_timeout] object's debris timer timed out.", get_name()));
 	}
 
 	for (int i = 0; i < object.blocks_container->get_child_count(); i++) {
@@ -217,15 +237,25 @@ void DestructibleSprite::_detonate(explo_object_t &object) {
 	object.debris_timer->start();
 }
 
-void DestructibleSprite::_add_children(const explo_object_t &child_object) {
+void DestructibleSprite::_add_children(uint64_t object_id) {
+	ERR_FAIL_COND(_simulations.count(object_id) == 0);
+
+	const explo_object_t &child_object = *_simulations[object_id];
+
 	for (int i = 0; i < child_object.blocks.size(); i++) {
 		child_object.blocks_container->add_child(child_object.blocks[i], true);
 	}
 
 	add_child(child_object.blocks_container, true);
+
+	if (debug_mode) {
+		DEBUG_PRINT(vformat("[%s/add] %d blocks and 1 container added to hierarchy", get_name(), int(child_object.blocks.size())));
+	}
 }
 
 void DestructibleSprite::_setup(explo_object_t &object) {
+	object.destruction_type = destruction_type;
+	object.destruction_physics = destruction_physics;
 	object.blocks_impulse = blocks_impulse;
 	object.blocks_gravity_scale = blocks_gravity_scale;
 	object.collision_one_way = collision_one_way;
@@ -241,7 +271,7 @@ void DestructibleSprite::_setup(explo_object_t &object) {
 
 	// Set the debris timer.
 	object.debris_timer = memnew(Timer);
-	object.debris_timer->connect("timeout", this, "_on_debris_timer_timeout");
+	object.debris_timer->connect("timeout", this, "_on_debris_timer_timeout", varray(object.id));
 	object.debris_timer->set_one_shot(true);
 	object.debris_timer->set_wait_time(debris_max_time);
 	object.debris_timer->set_name("debris_timer");
@@ -249,16 +279,29 @@ void DestructibleSprite::_setup(explo_object_t &object) {
 
 	// Check if the sprite is using 'Region' to get the proper width and height.
 	if (is_region()) {
-		object.width = get_region_rect().size.x;
-		object.height = get_region_rect().size.y;
+		object.width = get_region_rect().size.width;
+		object.height = get_region_rect().size.height;
 	} else {
 		object.width = get_texture()->get_width();
 		object.height = get_texture()->get_height();
 	}
 
+	// Get the number of blocks in horiontal and vertical.
+	const real_t block_size = MAX(object.width, object.height) / blocks_per_side;
+	object.hframes = object.width / block_size;
+	object.vframes = object.height / block_size;
+
+	if (debug_mode) {
+		DEBUG_PRINT(vformat("[%s/setup] object's blocks per side: %d x %d (block size %d, physics %s)",
+							get_name(), object.hframes, object.vframes, block_size,
+							destruction_physics == DESTRUCTION_PHYSICS_OFF ? "off" : "on")
+		);
+	}
+
 	// Check if the sprite is centered to get the offset.
+	Vector2 object_offset = Vector2(block_size, block_size) / -2;
 	if (is_centered()) {
-		object.offset = Vector2(object.width / 2, object.height / 2);
+		object_offset += Vector2(object.width, object.height) / 2;
 	}
 
 	object.collision_extents = Vector2((object.width / 2) / object.hframes, (object.height / 2) / object.vframes);
@@ -274,9 +317,23 @@ void DestructibleSprite::_setup(explo_object_t &object) {
 			sprite->set_vframes(object.vframes);
 			sprite->set_hframes(object.hframes);
 			sprite->set_frame(n);
+			// duplicates will be a child of this sprite
+			sprite->set_position(Vector2(0, 0));
+			sprite->set_scale(Vector2(1, 1));
+			// always centered
+			sprite->set_centered(true);
 		}
 
-		if (destruction_physics == DESTRUCTION_PHYSICS_OFF) {
+		if (debug_mode) {
+			const float overlay[] = {0.4, 1};
+			duplicated_object->set_modulate(Color::solid(overlay[(n / object.hframes) % 2 == 0 ? n % 2 == 0 : n % 2 != 0], 0.9));
+		}
+
+		if (object.destruction_physics == DESTRUCTION_PHYSICS_OFF) {
+			duplicated_object->set_meta("time", 0);
+			duplicated_object->set_meta("velocity", _get_random_velocity(200, blocks_impulse));
+			duplicated_object->set_meta("increment", _get_random_velocity_increment());
+			duplicated_object->set_meta("gravity", _get_random_gravity() * object.blocks_gravity_scale);
 			object.blocks.push_back(duplicated_object); // Just append it to the blocks array
 		} else {
 			// Root node
@@ -295,29 +352,64 @@ void DestructibleSprite::_setup(explo_object_t &object) {
 			root_object->add_child(collision);
 			object.blocks.push_back(root_object); // Append it to the blocks array
 		}
-
-		if (debug_mode) {
-			object.blocks[n]->set_modulate(Color(Math::random(0, 1), Math::random(0, 1), Math::random(0, 1), 0.9));
-		}
 	}
 
 	object.frame = 0;
 
 	// Position each block in place to create the whole sprite.
-	for (int x = 0; x < object.hframes; x++) {
-		for (int y = 0; y < object.vframes; y++) {
-			object.blocks[object.frame]->set_position(Vector2(
-					y * (object.width / object.hframes) - object.offset.x + object.collision_extents.x + get_position().x,
-					x * (object.height / object.vframes) - object.offset.y + object.collision_extents.y + get_position().y));
-			if (debug_mode) {
-				print_line(vformat("object[%d] position: %s", object.frame, object.blocks[object.frame]->get_position()));
+	const Vector2 cell = Vector2(object.width / object.hframes, object.height / object.vframes);
+	for (int y = 0; y < object.vframes; y++) {
+		for (int x = 0; x < object.hframes; x++) {
+			Vector2 position = Vector2(x, y) * cell - object_offset;
+			if (object.destruction_physics != DESTRUCTION_PHYSICS_OFF) {
+				position += object.collision_extents;
 			}
-
+			object.blocks[object.frame]->set_position(position);
+			if (debug_mode) {
+				print_line(vformat("  block %d position: %s", object.frame, position));
+			}
 			object.frame++;
 		}
 	}
 
-	call_deferred("add_children", object.id);
+	call_deferred("_add_children", object.id);
+}
+
+bool DestructibleSprite::_simulate(explo_object_t &object, real_t delta) {
+	bool dead = true;
+	for (int i = 0; i < object.blocks.size(); i++) {
+		Node2D *block = object.blocks[i];
+
+		if (block->get_modulate().a > 0) {
+			const Vector2 gravity = block->get_meta("gravity");
+			const Vector2 velocity = (Vector2)block->get_meta("velocity") * (Vector2)block->get_meta("increment");
+			real_t time = block->get_meta("time");
+			const Vector2 position = block->get_position() + (velocity + gravity) * delta;
+
+			block->set_position(position);
+			block->set_rotation(time);
+			time += delta;
+
+			if (time > _get_random_time()) {
+				// fade out the particles
+				Color c = block->get_modulate();
+				if (c.a > 0) {
+					c.a -= delta;
+				}
+				if (c.a < 0) {
+					c.a = 0;
+				}
+				block->set_modulate(c);
+			}
+
+			block->set_meta("velocity", velocity);
+			block->set_meta("time", time);
+
+			// if the particle is invisible ...
+			dead &= block->get_modulate().a == 0;
+		}
+	}
+	return dead;
 }
 
 void DestructibleSprite::set_destruction_types(DestructionType p_type) {
@@ -333,6 +425,9 @@ void DestructibleSprite::set_blocks_per_side(int p_blocks_per_side) {
 }
 
 void DestructibleSprite::set_blocks_impulse(real_t p_blocks_impulse) {
+	ERR_FAIL_COND(p_blocks_impulse<=0);
+	ERR_FAIL_COND(p_blocks_impulse>1000);
+
 	blocks_impulse = p_blocks_impulse;
 }
 
@@ -372,11 +467,29 @@ void DestructibleSprite::set_debug_mode(bool p_debug_mode) {
 	debug_mode = p_debug_mode;
 }
 
-void DestructibleSprite::explode() {
+void DestructibleSprite::explode(real_t delay) {
+	ERR_FAIL_COND(delay < 0);
+
 	explo_object_t *object = memnew(explo_object_t);
 	object->id = reinterpret_cast<uint64_t>(object);
+	object->delay = delay;
+	object->can_detonate = true;
 
-	_setup(*object);
+	_simulations[object->id] = object;
+
+	set_process(true);
+}
+
+bool DestructibleSprite::is_active_explosions() {
+	return _simulations.size() > 0;
+}
+
+int DestructibleSprite::explosions_in_progress() {
+	return _simulations.size();
+}
+
+#define _erasekey(map, id) { \
+	memdelete(map[id]); map.erase(id); \
 }
 
 void DestructibleSprite::_notification(int p_what) {
@@ -387,6 +500,44 @@ void DestructibleSprite::_notification(int p_what) {
 		case NOTIFICATION_ENTER_TREE: {
 		} break;
 		case NOTIFICATION_PROCESS: {
+			const real_t &delta = get_process_delta_time();
+			for (auto &s : _simulations) {
+				explo_object_t &object = *s.second;
+				if (object.can_detonate) {
+					if (object.delay <= 0) {
+						object.can_detonate = false;
+						object.detonate = true;
+						_setup(object);
+					} else {
+						object.delay -= delta;
+					}
+				}
+			}
+			std::vector<uint64_t> dead;
+			for (auto &s : _simulations) {
+				explo_object_t &object = *s.second;
+				if (object.detonate) {
+					if (object.destruction_physics == DESTRUCTION_PHYSICS_OFF) {
+						// simulate particles
+						if (_simulate(object, delta)) {
+							dead.push_back(s.first);
+						}
+					} else {
+						// initiate detonation
+						object.detonate = false;
+						_detonate(object);
+					}
+				}
+			}
+			if (dead.size() > 0) {
+				for (auto &id : dead) {
+					_simulations[id]->blocks_container->queue_delete();
+					_erasekey(_simulations, id);
+				}
+			}
+			if (_simulations.size() == 0) {
+				set_process(false); // nothing to process
+			}
 		} break;
 		case NOTIFICATION_DRAW: {
 		}
@@ -427,12 +578,17 @@ void DestructibleSprite::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_debug_mode", "mode"), &DestructibleSprite::set_debug_mode);
 	ClassDB::bind_method(D_METHOD("get_debug_mode"), &DestructibleSprite::get_debug_mode);
 
+	ClassDB::bind_method(D_METHOD("explode", "delay"), &DestructibleSprite::explode);
+	ClassDB::bind_method(D_METHOD("explosions_in_progress"), &DestructibleSprite::explosions_in_progress);
+	ClassDB::bind_method(D_METHOD("is_active_explosions"), &DestructibleSprite::is_active_explosions);
+
 	ClassDB::bind_method(D_METHOD("_on_debris_timer_timeout", "object_id"), &DestructibleSprite::_on_debris_timer_timeout);
+	ClassDB::bind_method(D_METHOD("_add_children", "object_id"), &DestructibleSprite::_add_children);
 
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "destruction_type", PROPERTY_HINT_ENUM, "Explode,Collapse"), "set_destruction_types", "get_destruction_types");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "destruction_physics", PROPERTY_HINT_ENUM, "Off,Standard,High"), "set_destruction_physics", "get_destruction_physics");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "blocks_per_side"), "set_blocks_per_side", "get_blocks_per_side");
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "blocks_impulse"), "set_blocks_impulse", "get_blocks_impulse");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "blocks_impulse", PROPERTY_HINT_RANGE, "0,1000,50"), "set_blocks_impulse", "get_blocks_impulse");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "blocks_gravity_scale"), "set_blocks_gravity_scale", "get_blocks_gravity_scale");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "debris_max_time"), "set_debris_max_time", "get_debris_max_time");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "remove_debris"), "set_remove_debris", "get_remove_debris");
@@ -459,8 +615,6 @@ DestructibleSprite::DestructibleSprite() {
 	random_depth = true;
 	randomize_seed = false;
 	debug_mode = false;
-	_explosion_delay_timer = 0;
-	_explosion_delay_timer_limit = 0;
 }
 
 DestructibleSprite::~DestructibleSprite() {

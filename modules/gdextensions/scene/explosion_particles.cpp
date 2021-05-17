@@ -188,15 +188,17 @@ void FakeExplosionParticles2D::_particles_explode(real_t delta) {
 
 		if (particle.time > _get_random_time()) {
 			// fade out the particles
-			if (particle.color.a > 0)
+			if (particle.color.a > 0) {
 				particle.color.a -= particle.alpha * delta;
-
-			if (particle.color.a < 0)
+			}
+			if (particle.color.a < 0) {
 				particle.color.a = 0;
+			}
 		}
 		// if the particle is invisible ...
-		if (particle.color.a == 0)
+		if (particle.color.a == 0) {
 			particle.dead = true;
+		}
 	}
 	// remove dead ones
 	_particles.erase(std::remove_if(_particles.begin(), _particles.end(), [](const ParticleType &p) { return p.dead; }), _particles.end());
