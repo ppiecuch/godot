@@ -160,11 +160,11 @@ def configure(env):
             "OSX_ENABLED",
             "UNIX_ENABLED",
             "GLES_ENABLED",
+            "METAL_ENABLED",
+            "GL_SILENCE_DEPRECATION",
             "APPLE_STYLE_KEYS",
             "COREAUDIO_ENABLED",
             "COREMIDI_ENABLED",
-            "METAL_ENABLED",
-            "GL_SILENCE_DEPRECATION",
         ]
     )
     env.Append(
@@ -184,6 +184,8 @@ def configure(env):
             "-framework",
             "CoreMIDI",
             "-lz",
+            "-framework",
+            "QuartzCore",
             "-framework",
             "IOKit",
             "-framework",

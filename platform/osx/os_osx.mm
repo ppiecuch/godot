@@ -454,16 +454,38 @@ static NSCursor *cursorFromSelector(SEL selector, SEL fallback = nil) {
 
 @end
 
-@interface GodotContentView : NSOpenGLView <NSTextInputClient> {
+typedef enum BackingLayerTag : NSUInteger {
+	kGodotOpenGLBacking,
+	kGodotMetalBacking,
+} BackingLayerType;
+
+@interface GodotContentView : NSView <NSTextInputClient> {
 	NSTrackingArea *trackingArea;
 	NSMutableAttributedString *markedText;
 	bool imeInputEventInProgress;
+	BackingLayerType backingLayerType;
+	CALayer *backingLayer;
+	// OpenGL support
+	NSOpenGLContext     *openGLContext;
+	NSOpenGLPixelFormat *pixelFormat;
+	// Metal support
 }
+- (instancetype)initForBackend:(BackingLayerType)viewType;
 - (void)cancelComposition;
 - (BOOL)wantsUpdateLayer;
 - (void)updateLayer;
 // OpenGL-based interface
++ (NSOpenGLPixelFormat *)defaultPixelFormat;
+- (id)initWithFrame:(NSRect)frameRect
+        pixelFormat:(NSOpenGLPixelFormat *)format;
+- (void)setOpenGLContext:(NSOpenGLContext *)context;
+- (NSOpenGLContext *)openGLContext;
+- (void)setPixelFormat:(NSOpenGLPixelFormat *)format;
+- (NSOpenGLPixelFormat *)pixelFormat;
+- (void)clearGLContext;
+- (void)deallocOpenGL;
 // Metal-based interface
+- (void)deallocMetal;
 @end
 
 @implementation GodotContentView
@@ -478,14 +500,23 @@ static NSCursor *cursorFromSelector(SEL selector, SEL fallback = nil) {
 	return YES;
 }
 
+/*- (CALayer *)makeBackingLayer
+{
+    if (kGodotOpenGLBacking == backingLayerType) return [[CAOpenGLLayer alloc] init];
+    if (kGodotMetalBacking == backingLayerType) return [[CAMetalLayer alloc] init];
+    NSLog(@"Cannot create backing layer for rendering view.");
+    return nil;
+}*/
+
 - (void)updateLayer {
 	[OS_OSX::singleton->context update];
 }
 
-- (id)init {
+- (instancetype)initForBackend:(BackingLayerType)viewType {
 	self = [super init];
 	trackingArea = nil;
 	imeInputEventInProgress = false;
+	backingLayerType = viewType;
 	[self updateTrackingAreas];
 #if MAC_OS_X_VERSION_MIN_REQUIRED >= 101400
 	[self registerForDraggedTypes:[NSArray arrayWithObject:NSPasteboardTypeFileURL]];
@@ -499,6 +530,7 @@ static NSCursor *cursorFromSelector(SEL selector, SEL fallback = nil) {
 - (void)dealloc {
 	[trackingArea release];
 	[markedText release];
+	[self deallocOpenGL];
 	[super dealloc];
 }
 
@@ -1386,6 +1418,149 @@ inline void sendPanEvent(double dx, double dy, int modifierFlags) {
 	}
 }
 
+// OpenGL interface
+
+- (void) initDetails {
+	NSNotificationCenter *ntfcenter;
+
+	[self setWantsBestResolutionOpenGLSurface: YES];
+	[self setPostsFrameChangedNotifications: YES];
+
+	ntfcenter = [NSNotificationCenter defaultCenter];
+	[ntfcenter addObserver: self
+					selector: @selector(_surfaceNeedsUpdate:)
+						name: NSViewGlobalFrameDidChangeNotification
+					object: self];
+	[ntfcenter addObserver: self
+					selector: @selector(_surfaceNeedsUpdate:)
+						name: NSViewFrameDidChangeNotification
+					object: self];
+}
+
+- (instancetype)initWithFrame:(NSRect)frameRect {
+	return [self initWithFrame: self.frame
+                   pixelFormat: [[self class] defaultPixelFormat]];
+}
+
+- (instancetype)initWithFrame:(NSRect)frameRect
+                  pixelFormat:(NSOpenGLPixelFormat *)format {
+
+	self = [super initWithFrame:frameRect];
+
+	if (self) {
+		[self setPixelFormat: format];
+		[self initDetails];
+	}
+	return self;
+}
+
+- (BOOL)isFlipped {
+	return NO;
+}
+
+- (BOOL)mouseDownCanMoveWindow {
+	return NO;
+}
+
+- (void) _surfaceNeedsUpdate:(NSNotification *)notification {
+	[[self openGLContext] makeCurrentContext];
+	[self update];
+}
+
+- (void)lockFocus {
+	[super lockFocus];
+	NSOpenGLContext *context = [self openGLContext];
+	if ([context view] != self) {
+		[context setView: self];
+	}
+}
+
+- (void) viewDidMoveToWindow {
+	[super viewDidMoveToWindow];
+	if (!self.window) {
+		[[self openGLContext] clearDrawable];
+		return;
+	}
+	[self.openGLContext setView: self];
+}
+
+#pragma mark -
+
++ (NSOpenGLPixelFormat *)defaultPixelFormat {
+	static NSOpenGLPixelFormat *pixelFormat;
+
+	if (pixelFormat)
+		return pixelFormat;
+
+	#define PixelFormatAttrib(...) __VA_ARGS__
+	NSOpenGLPixelFormatAttribute attribs[] = {
+		PixelFormatAttrib(NSOpenGLPFADoubleBuffer),
+		PixelFormatAttrib(NSOpenGLPFAAccelerated),
+		PixelFormatAttrib(NSOpenGLPFABackingStore, YES),
+		PixelFormatAttrib(NSOpenGLPFAColorSize, 24),
+		PixelFormatAttrib(NSOpenGLPFADepthSize, 24),
+		PixelFormatAttrib(NSOpenGLPFAAlphaSize, 8),
+		PixelFormatAttrib(NSOpenGLPFAOpenGLProfile),
+		PixelFormatAttrib(NSOpenGLProfileVersion3_2Core),
+		0
+	};
+	#undef PixelFormatAttrib
+
+	pixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes: attribs];
+	return pixelFormat;
+}
+
+- (NSOpenGLContext *)openGLContext {
+	if (!openGLContext) {
+		openGLContext = [[NSOpenGLContext alloc] initWithFormat: pixelFormat
+                                                   shareContext: nil];
+		[self setOpenGLContext: openGLContext];
+	}
+
+	return openGLContext;
+}
+
+- (void)setOpenGLContext:(NSOpenGLContext *)context {
+	if (context != openGLContext) {
+		[self clearGLContext];
+		openGLContext = context;
+		[openGLContext setView: self];
+	}
+}
+
+- (NSOpenGLPixelFormat *)pixelFormat {
+	return pixelFormat;
+}
+
+- (void)setPixelFormat:(NSOpenGLPixelFormat *)format {
+	pixelFormat = format;
+}
+
+- (void)clearGLContext {
+	if (openGLContext) {
+		[openGLContext clearDrawable];
+	}
+}
+
+- (void)update {
+	NSOpenGLContext *context = [self openGLContext];
+	[context makeCurrentContext];
+	[context update];
+}
+
+- (void)deallocOpenGL {
+	[[NSNotificationCenter defaultCenter] removeObserver: self];
+	[NSOpenGLContext clearCurrentContext];
+	[self clearGLContext];
+
+	openGLContext = nil;
+	pixelFormat   = nil;
+}
+
+// Metal interface
+
+- (void)deallocMetal {
+}
 @end
 
 @interface GodotWindow : NSWindow {
@@ -1576,7 +1751,7 @@ Error OS_OSX::initialize(const VideoMode &p_desired, int p_video_driver, int p_a
 
 	ERR_FAIL_COND_V(window_object == nil, ERR_UNAVAILABLE);
 
-	window_view = [[GodotContentView alloc] init];
+	window_view = [[GodotContentView alloc] initForBackend:kGodotOpenGLBacking];
 	if (NSAppKitVersionNumber >= NSAppKitVersionNumber10_14) {
 		[window_view setWantsLayer:TRUE];
 	}
