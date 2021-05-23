@@ -83,6 +83,10 @@ def install_ndk_if_needed(env):
 
         extension = ".bat" if os.name == "nt" else ""
         sdkmanager_path = env["ANDROID_SDK_ROOT"] + "/cmdline-tools/latest/bin/sdkmanager" + extension
+        if not os.path.isfile(sdkmanager_path):
+            sdkmanager_path = env["ANDROID_SDK_ROOT"] + "/tools/bin/sdkmanager" + extension
+        if not os.path.isfile(sdkmanager_path):
+            raise Exception("Cannot locate sdkmanager.")
         ndk_download_args = "ndk;" + get_project_ndk_version()
         subprocess.check_call([sdkmanager_path, ndk_download_args])
 
