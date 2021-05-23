@@ -316,8 +316,9 @@ static unsigned char simplex[64][4] = {
 static _FORCE_INLINE_ float _grad(int hash, float x) {
 	int h = hash & 15;
 	float grad = 1.0 + (h & 7); // Gradient value 1.0, 2.0, ..., 8.0
-	if (h & 8)
+	if (h & 8) {
 		grad = -grad; // Set a random sign for the gradient
+	}
 	return (grad * x); // Multiply the gradient with the distance
 }
 
