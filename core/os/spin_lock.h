@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  javascript_eval.h                                                    */
+/*  spin_lock.h                                                          */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,26 +28,24 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef JAVASCRIPT_EVAL_H
-#define JAVASCRIPT_EVAL_H
+#ifndef SPIN_LOCK_H
+#define SPIN_LOCK_H
 
-#include "core/object.h"
+#include "core/typedefs.h"
 
-class JavaScript : public Object {
-private:
-	GDCLASS(JavaScript, Object);
+#include <atomic>
 
-	static JavaScript *singleton;
-
-protected:
-	static void _bind_methods();
+class SpinLock {
+	std::atomic_flag locked = ATOMIC_FLAG_INIT;
 
 public:
-	Variant eval(const String &p_code, bool p_use_global_exec_context = false);
-
-	static JavaScript *get_singleton();
-	JavaScript();
-	~JavaScript();
+	_ALWAYS_INLINE_ void lock() {
+		while (locked.test_and_set(std::memory_order_acquire)) {
+			;
+		}
+	}
+	_ALWAYS_INLINE_ void unlock() {
+		locked.clear(std::memory_order_release);
+	}
 };
-
-#endif // JAVASCRIPT_EVAL_H
+#endif // SPIN_LOCK_H

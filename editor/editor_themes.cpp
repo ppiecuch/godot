@@ -217,6 +217,7 @@ void editor_register_and_generate_icons(Ref<Theme> p_theme, bool p_dark_theme = 
 		exceptions.insert("ProceduralSky");
 		exceptions.insert("EditorControlAnchor");
 		exceptions.insert("DefaultProjectIcon");
+		exceptions.insert("GuiChecked");
 		exceptions.insert("GuiCloseCustomizable");
 		exceptions.insert("GuiGraphNodePort");
 		exceptions.insert("GuiResizer");
@@ -1259,6 +1260,7 @@ Ref<Theme> create_editor_theme(const Ref<Theme> p_theme) {
 
 	const Color symbol_color = Color(0.34, 0.57, 1.0).linear_interpolate(mono_color, dark_theme ? 0.5 : 0.3);
 	const Color keyword_color = Color(1.0, 0.44, 0.52);
+	const Color control_flow_keyword_color = dark_theme ? Color(1.0, 0.55, 0.8) : Color(0.8, 0.4, 0.6);
 	const Color basetype_color = dark_theme ? Color(0.26, 1.0, 0.76) : Color(0.0, 0.76, 0.38);
 	const Color type_color = basetype_color.linear_interpolate(mono_color, dark_theme ? 0.4 : 0.3);
 	const Color usertype_color = basetype_color.linear_interpolate(mono_color, dark_theme ? 0.7 : 0.5);
@@ -1298,6 +1300,7 @@ Ref<Theme> create_editor_theme(const Ref<Theme> p_theme) {
 	if (text_editor_color_theme == "Adaptive") {
 		setting->set_initial_value("text_editor/highlighting/symbol_color", symbol_color, true);
 		setting->set_initial_value("text_editor/highlighting/keyword_color", keyword_color, true);
+		setting->set_initial_value("text_editor/highlighting/control_flow_keyword_color", control_flow_keyword_color, true);
 		setting->set_initial_value("text_editor/highlighting/base_type_color", basetype_color, true);
 		setting->set_initial_value("text_editor/highlighting/engine_type_color", type_color, true);
 		setting->set_initial_value("text_editor/highlighting/user_type_color", usertype_color, true);

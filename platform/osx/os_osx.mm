@@ -324,6 +324,9 @@ static NSCursor *cursorFromSelector(SEL selector, SEL fallback = nil) {
 
 	if (!OS_OSX::singleton->resizable)
 		[OS_OSX::singleton->window_object setStyleMask:[OS_OSX::singleton->window_object styleMask] & ~NSWindowStyleMaskResizable];
+
+	if (OS_OSX::singleton->on_top)
+		[OS_OSX::singleton->window_object setLevel:NSFloatingWindowLevel];
 }
 
 - (void)windowDidChangeBackingProperties:(NSNotification *)notification {
@@ -1866,6 +1869,11 @@ Error OS_OSX::initialize(const VideoMode &p_desired, int p_video_driver, int p_a
 		[window_object makeKeyAndOrderFront:nil];
 	}
 
+	on_top = p_desired.always_on_top;
+	if (p_desired.always_on_top && !p_desired.fullscreen) {
+		[window_object setLevel:NSFloatingWindowLevel];
+	}
+
 	if (p_desired.fullscreen)
 		zoomed = true;
 
@@ -2412,31 +2420,45 @@ MainLoop *OS_OSX::get_main_loop() const {
 }
 
 String OS_OSX::get_config_path() const {
+	// The XDG Base Directory specification technically only applies on Linux/*BSD, but it doesn't hurt to support it on macOS as well.
 	if (has_environment("XDG_CONFIG_HOME")) {
-		return get_environment("XDG_CONFIG_HOME");
-	} else if (has_environment("HOME")) {
-		return get_environment("HOME").plus_file("Library/Application Support");
-	} else {
-		return ".";
+		if (get_environment("XDG_CONFIG_HOME").is_abs_path()) {
+			return get_environment("XDG_CONFIG_HOME");
+		} else {
+			WARN_PRINT_ONCE("`XDG_CONFIG_HOME` is a relative path. Ignoring its value and falling back to `$HOME/Library/Application Support` or `.` per the XDG Base Directory specification.");
+		}
 	}
+	if (has_environment("HOME")) {
+		return get_environment("HOME").plus_file("Library/Application Support");
+	}
+	return ".";
 }
 
 String OS_OSX::get_data_path() const {
+	// The XDG Base Directory specification technically only applies on Linux/*BSD, but it doesn't hurt to support it on macOS as well.
 	if (has_environment("XDG_DATA_HOME")) {
-		return get_environment("XDG_DATA_HOME");
-	} else {
-		return get_config_path();
+		if (get_environment("XDG_DATA_HOME").is_abs_path()) {
+			return get_environment("XDG_DATA_HOME");
+		} else {
+			WARN_PRINT_ONCE("`XDG_DATA_HOME` is a relative path. Ignoring its value and falling back to `get_config_path()` per the XDG Base Directory specification.");
+		}
 	}
+	return get_config_path();
 }
 
 String OS_OSX::get_cache_path() const {
+	// The XDG Base Directory specification technically only applies on Linux/*BSD, but it doesn't hurt to support it on macOS as well.
 	if (has_environment("XDG_CACHE_HOME")) {
-		return get_environment("XDG_CACHE_HOME");
-	} else if (has_environment("HOME")) {
-		return get_environment("HOME").plus_file("Library/Caches");
-	} else {
-		return get_config_path();
+		if (get_environment("XDG_CACHE_HOME").is_abs_path()) {
+			return get_environment("XDG_CACHE_HOME");
+		} else {
+			WARN_PRINT_ONCE("`XDG_CACHE_HOME` is a relative path. Ignoring its value and falling back to `$HOME/Libary/Caches` or `get_config_path()` per the XDG Base Directory specification.");
+		}
 	}
+	if (has_environment("HOME")) {
+		return get_environment("HOME").plus_file("Library/Caches");
+	}
+	return get_config_path();
 }
 
 String OS_OSX::get_bundle_resource_dir() const {
@@ -2713,7 +2735,11 @@ void OS_OSX::_update_window() {
 		[window_object setHidesOnDeactivate:YES];
 	} else {
 		// Reset these when our window is not a borderless window that covers up the screen
-		[window_object setLevel:NSNormalWindowLevel];
+		if (on_top & !zoomed) {
+			[window_object setLevel:NSFloatingWindowLevel];
+		} else {
+			[window_object setLevel:NSNormalWindowLevel];
+		}
 		[window_object setHidesOnDeactivate:NO];
 	}
 }
@@ -2881,6 +2907,7 @@ void OS_OSX::set_window_fullscreen(bool p_enabled) {
 	}
 
 	if (zoomed != p_enabled) {
+		[window_object setLevel:NSNormalWindowLevel];
 		if (layered_window)
 			set_window_per_pixel_transparency_enabled(false);
 		if (!resizable)
@@ -2976,6 +3003,14 @@ void OS_OSX::set_window_always_on_top(bool p_enabled) {
 		return;
 	}
 
+	on_top = p_enabled;
+
+	if (zoomed)
+		return;
+
+	if (is_window_always_on_top() == p_enabled)
+		return;
+
 	if (p_enabled)
 		[window_object setLevel:NSFloatingWindowLevel];
 	else
@@ -2983,7 +3018,11 @@ void OS_OSX::set_window_always_on_top(bool p_enabled) {
 }
 
 bool OS_OSX::is_window_always_on_top() const {
-	return [window_object level] == NSFloatingWindowLevel;
+	if (zoomed) {
+		return on_top;
+	} else {
+		return [window_object level] == NSFloatingWindowLevel;
+	}
 }
 
 bool OS_OSX::is_window_focused() const {

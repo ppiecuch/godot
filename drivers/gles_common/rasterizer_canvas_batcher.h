@@ -500,7 +500,7 @@ public:
 		TransformMode orig_transform_mode;
 
 		// support for extra matrices
-		bool extra_matrix_sent; // whether sent on this item (in which case sofware transform can't be used untl end of item)
+		bool extra_matrix_sent; // whether sent on this item (in which case software transform can't be used untl end of item)
 		int transform_extra_command_number_p1; // plus one to allow fast checking against zero
 		Transform2D transform_combined; // final * extra
 		Transform2D skeleton_base_inverse_xform; // used in software skinning
@@ -2563,6 +2563,13 @@ PREAMBLE(void)::render_joined_item_commands(const BItemJoined &p_bij, Rasterizer
 		bdata.use_large_verts = true;
 		bdata.fvf = RasterizerStorageCommon::FVF_LARGE;
 	}
+
+	// make sure the jointed item flags state is up to date, as it is read indirectly in
+	// a couple of places from the state rather than from the joined item.
+	// we could alternatively make sure to only read directly from the joined item
+	// during the render, but it is probably more bug future proof to make sure both
+	// are up to date.
+	bdata.joined_item_batch_flags = p_bij.flags;
 
 	// in the special case of custom shaders that read from VERTEX (i.e. vertex position)
 	// we want to disable software transform of extra matrix

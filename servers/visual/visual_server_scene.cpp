@@ -736,7 +736,7 @@ void VisualServerScene::instance_set_visible(RID p_instance, bool p_visible) {
 
 	instance->visible = p_visible;
 
-	// give the opportunity for the spatial paritioning scene to use a special implementation of visibility
+	// give the opportunity for the spatial partitioning scene to use a special implementation of visibility
 	// for efficiency (supported in BVH but not octree)
 
 	// slightly bug prone optimization here - we want to avoid doing a collision check twice
@@ -2096,8 +2096,8 @@ void VisualServerScene::_prepare_scene(const Transform p_cam_transform, const Ca
 
 				geom->gi_probes_dirty = false;
 			}
-
-			ins->depth = near_plane.distance_to(ins->transform.origin);
+			Vector3 aabb_center = ins->transformed_aabb.position + (ins->transformed_aabb.size * 0.5);
+			ins->depth = near_plane.distance_to(aabb_center);
 			ins->depth_layer = CLAMP(int(ins->depth * 16 / z_far), 0, 15);
 		}
 

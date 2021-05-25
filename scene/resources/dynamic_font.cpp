@@ -256,6 +256,10 @@ Size2 DynamicFontAtSize::get_char_size(CharType p_char, CharType p_next, const V
 }
 
 String DynamicFontAtSize::get_available_chars() const {
+	if (!valid) {
+		return "";
+	}
+
 	String chars;
 
 	FT_UInt gindex;
@@ -895,7 +899,7 @@ float DynamicFont::draw_char_xform(RID p_canvas_item, const CharTransform &p_cha
 
 	if (p_outline) {
 		if (outline_data_at_size.is_valid() && outline_cache_id.outline_size > 0) {
-			outline_data_at_size->draw_char(p_canvas_item, p_char_xform, p_pos, p_char, p_next, p_modulate * outline_color, fallback_outline_data_at_size, false, true); // Draw glpyh outline.
+			outline_data_at_size->draw_char(p_canvas_item, p_char_xform, p_pos, p_char, p_next, p_modulate * outline_color, fallback_outline_data_at_size, false, true); // Draw glyph outline.
 		}
 		return data_at_size->draw_char(p_canvas_item, p_char_xform, p_pos, p_char, p_next, p_modulate, fallback_data_at_size, true, false) + spacing; // Return advance of the base glyph.
 	} else {
