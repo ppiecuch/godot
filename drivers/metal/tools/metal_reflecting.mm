@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  metal_reflecting.mm                                                  */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 // Reference:
 // ----------
 // https://github.com/marrony/metal-compute-pipeline/blob/master/main.m
@@ -14,13 +44,13 @@
 // g++ -o metal_reflecting metal_reflecting.mm -framework Metal -framework Foundation
 
 #include <unistd.h>
-#include <iostream>
 #include <fstream>
+#include <iostream>
+#include <map>
+#include <regex>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <map>
-#include <regex>
 
 #import <Metal/Metal.h>
 
@@ -41,19 +71,26 @@ bool output_attribs = true;
 
 static void build_metal_header(const std::string &filename, const std::string &include, const std::string &class_suffix);
 
-static inline std::string up(std::string str) { std::transform(str.begin(), str.end(), str.begin(), ::toupper); return str; }
+static inline std::string up(std::string str) {
+	std::transform(str.begin(), str.end(), str.begin(), ::toupper);
+	return str;
+}
 
-static inline NSString* ec(const char* src) { return [NSString stringWithCString:src encoding:[NSString defaultCStringEncoding]]; }
-static inline std::string ce(NSString *str) { return std::string([str UTF8String]); }
+static inline NSString *ec(const char *src) {
+	return [NSString stringWithCString:src encoding:[NSString defaultCStringEncoding]];
+}
+static inline std::string ce(NSString *str) {
+	return std::string([str UTF8String]);
+}
 
 static inline std::string rp(std::string str, char from_char, char to_char) {
 	std::replace(str.begin(), str.end(), from_char, to_char);
 	return str;
 }
 
-static std::string rp(std::string str, const std::string& from_str, const std::string& to_str) {
+static std::string rp(std::string str, const std::string &from_str, const std::string &to_str) {
 	size_t start_pos = 0;
-	while((start_pos = str.find(from_str, start_pos)) != std::string::npos) {
+	while ((start_pos = str.find(from_str, start_pos)) != std::string::npos) {
 		str.replace(start_pos, from_str.length(), to_str);
 		start_pos += to_str.length(); // handles case where 'to' is a substring of 'from'
 	}
@@ -72,7 +109,7 @@ static std::string title(std::string str) {
 	return str;
 }
 
-static std::istream& safe_get_line(std::istream& is, std::string& t) {
+static std::istream &safe_get_line(std::istream &is, std::string &t) {
 	t.clear();
 	// The characters in the stream are read one-by-one using a std::streambuf.
 	// That is faster than reading them one-by-one using the std::istream.
@@ -80,7 +117,7 @@ static std::istream& safe_get_line(std::istream& is, std::string& t) {
 	// The sentry object performs various tasks,
 	// such as thread synchronization and updating the stream state.
 	std::istream::sentry se(is, true);
-	std::streambuf* sb = is.rdbuf();
+	std::streambuf *sb = is.rdbuf();
 
 	for (;;) {
 		int c = sb->sbumpc();
@@ -102,119 +139,201 @@ static std::istream& safe_get_line(std::istream& is, std::string& t) {
 	}
 }
 
-static inline bool file_exists (const std::string& name) {
-	return ( access( name.c_str(), F_OK ) != -1 );
+static inline bool file_exists(const std::string &name) {
+	return (access(name.c_str(), F_OK) != -1);
 }
 
 static std::vector<std::string> read_all(const std::string &file_name) {
 	std::vector<std::string> all;
 	std::ifstream infile(file_name);
-	if(!infile.is_open()) {
-		for(const auto &p : search_paths) {
+	if (!infile.is_open()) {
+		for (const auto &p : search_paths) {
 			infile.open(p + file_name);
 			if (infile.is_open()) {
 				break;
 			}
 		}
 	}
-	if(!infile.is_open()) {
+	if (!infile.is_open()) {
 		NSLog(@"*** %s: cannot open file", file_name.c_str());
 		exit(EXIT_FAILURE);
 	}
 	for (std::string line; safe_get_line(infile, line);) {
-		if(line.size() > 0) {
+		if (line.size() > 0) {
 			all.push_back(line);
 		}
 	}
 	return all;
 }
 
-
 static std::string mtlDataTypeToString(MTLDataType mtlType) {
 	switch (mtlType) {
-		case MTLDataTypeNone: return "None";
-		case MTLDataTypeStruct: return "Struct";
-		case MTLDataTypeArray: return "Array";
-		case MTLDataTypeFloat: return "Float";
-		case MTLDataTypeFloat2: return "Float2";
-		case MTLDataTypeFloat3: return "Float3";
-		case MTLDataTypeFloat4: return "Float4";
-		case MTLDataTypeFloat2x2: return "Float2x2";
-		case MTLDataTypeFloat2x3: return "Float2x3";
-		case MTLDataTypeFloat2x4: return "Float2x4";
-		case MTLDataTypeFloat3x2: return "Float3x2";
-		case MTLDataTypeFloat3x3: return "Float3x3";
-		case MTLDataTypeFloat3x4: return "Float3x4";
-		case MTLDataTypeFloat4x2: return "Float4x2";
-		case MTLDataTypeFloat4x3: return "Float4x3";
-		case MTLDataTypeFloat4x4: return "Float4x4";
-		case MTLDataTypeHalf: return "Half";
-		case MTLDataTypeHalf2: return "Half2";
-		case MTLDataTypeHalf3: return "Half3";
-		case MTLDataTypeHalf4: return "Half4";
-		case MTLDataTypeHalf2x2: return "Half2x2";
-		case MTLDataTypeHalf2x3: return "Half2x3";
-		case MTLDataTypeHalf2x4: return "Half2x4";
-		case MTLDataTypeHalf3x2: return "Half3x2";
-		case MTLDataTypeHalf3x3: return "Half3x3";
-		case MTLDataTypeHalf3x4: return "Half3x4";
-		case MTLDataTypeHalf4x2: return "Half4x2";
-		case MTLDataTypeHalf4x3: return "Half4x3";
-		case MTLDataTypeHalf4x4: return "Half4x4";
-		case MTLDataTypeInt: return "Int";
-		case MTLDataTypeInt2: return "Int2";
-		case MTLDataTypeInt3: return "Int3";
-		case MTLDataTypeInt4: return "Int4";
-		case MTLDataTypeUInt: return "UInt";
-		case MTLDataTypeUInt2: return "UInt2";
-		case MTLDataTypeUInt3: return "UInt3";
-		case MTLDataTypeUInt4: return "UInt4";
-		case MTLDataTypeShort: return "Short";
-		case MTLDataTypeShort2: return "Short2";
-		case MTLDataTypeShort3: return "Short3";
-		case MTLDataTypeShort4: return "Short4";
-		case MTLDataTypeUShort: return "UShort";
-		case MTLDataTypeUShort2: return "UShort2";
-		case MTLDataTypeUShort3: return "UShort3";
-		case MTLDataTypeUShort4: return "UShort4";
-		case MTLDataTypeChar: return "Char";
-		case MTLDataTypeChar2: return "Char2";
-		case MTLDataTypeChar3: return "Char3";
-		case MTLDataTypeChar4: return "Char4";
-		case MTLDataTypeUChar: return "UChar";
-		case MTLDataTypeUChar2: return "UChar2";
-		case MTLDataTypeUChar3: return "UChar3";
-		case MTLDataTypeUChar4: return "UChar4";
-		case MTLDataTypeBool: return "Bool";
-		case MTLDataTypeBool2: return "Bool2";
-		case MTLDataTypeBool3: return "Bool3";
-		case MTLDataTypeBool4: return "Bool4";
-		case MTLDataTypeTexture: return "Texture";
-		case MTLDataTypeSampler: return "Sampler";
-		case MTLDataTypePointer: return "Pointer";
-		case MTLDataTypeR8Unorm: return "R8Unorm";
-		case MTLDataTypeR8Snorm: return "R8Snorm";
-		case MTLDataTypeR16Unorm: return "R16Unorm";
-		case MTLDataTypeR16Snorm: return "R16Snorm";
-		case MTLDataTypeRG8Unorm: return "RG8Unorm";
-		case MTLDataTypeRG8Snorm: return "RG8Snorm";
-		case MTLDataTypeRG16Unorm: return "RG16Unorm";
-		case MTLDataTypeRG16Snorm: return "RG16Snorm";
-		case MTLDataTypeRGBA8Unorm: return "RGBA8Unorm";
-		case MTLDataTypeRGBA8Unorm_sRGB: return "RGBA8Unorm_sRGB";
-		case MTLDataTypeRGBA8Snorm: return "RGBA8Snorm";
-		case MTLDataTypeRGBA16Unorm: return "RGBA16Unorm";
-		case MTLDataTypeRGBA16Snorm: return "RGBA16Snorm";
-		case MTLDataTypeRGB10A2Unorm: return "RGB10A2Unorm";
-		case MTLDataTypeRG11B10Float: return "RG11B10Float";
-		case MTLDataTypeRGB9E5Float: return "RGB9E5Float";
-		case MTLDataTypeRenderPipeline: return "RenderPipeline";
-		case MTLDataTypeComputePipeline: return "ComputePipeline";
-		case MTLDataTypeIndirectCommandBuffer: return "IndirectCommandBuffer";
-		case MTLDataTypeVisibleFunctionTable: return "VisibleFunctionTable";
-		case MTLDataTypeIntersectionFunctionTable: return "IntersectionFunctionTable";
-		case MTLDataTypePrimitiveAccelerationStructure: return "PrimitiveAccelerationStructure";
-		case MTLDataTypeInstanceAccelerationStructure: return "InstanceAccelerationStructure";
+		case MTLDataTypeNone:
+			return "None";
+		case MTLDataTypeStruct:
+			return "Struct";
+		case MTLDataTypeArray:
+			return "Array";
+		case MTLDataTypeFloat:
+			return "Float";
+		case MTLDataTypeFloat2:
+			return "Float2";
+		case MTLDataTypeFloat3:
+			return "Float3";
+		case MTLDataTypeFloat4:
+			return "Float4";
+		case MTLDataTypeFloat2x2:
+			return "Float2x2";
+		case MTLDataTypeFloat2x3:
+			return "Float2x3";
+		case MTLDataTypeFloat2x4:
+			return "Float2x4";
+		case MTLDataTypeFloat3x2:
+			return "Float3x2";
+		case MTLDataTypeFloat3x3:
+			return "Float3x3";
+		case MTLDataTypeFloat3x4:
+			return "Float3x4";
+		case MTLDataTypeFloat4x2:
+			return "Float4x2";
+		case MTLDataTypeFloat4x3:
+			return "Float4x3";
+		case MTLDataTypeFloat4x4:
+			return "Float4x4";
+		case MTLDataTypeHalf:
+			return "Half";
+		case MTLDataTypeHalf2:
+			return "Half2";
+		case MTLDataTypeHalf3:
+			return "Half3";
+		case MTLDataTypeHalf4:
+			return "Half4";
+		case MTLDataTypeHalf2x2:
+			return "Half2x2";
+		case MTLDataTypeHalf2x3:
+			return "Half2x3";
+		case MTLDataTypeHalf2x4:
+			return "Half2x4";
+		case MTLDataTypeHalf3x2:
+			return "Half3x2";
+		case MTLDataTypeHalf3x3:
+			return "Half3x3";
+		case MTLDataTypeHalf3x4:
+			return "Half3x4";
+		case MTLDataTypeHalf4x2:
+			return "Half4x2";
+		case MTLDataTypeHalf4x3:
+			return "Half4x3";
+		case MTLDataTypeHalf4x4:
+			return "Half4x4";
+		case MTLDataTypeInt:
+			return "Int";
+		case MTLDataTypeInt2:
+			return "Int2";
+		case MTLDataTypeInt3:
+			return "Int3";
+		case MTLDataTypeInt4:
+			return "Int4";
+		case MTLDataTypeUInt:
+			return "UInt";
+		case MTLDataTypeUInt2:
+			return "UInt2";
+		case MTLDataTypeUInt3:
+			return "UInt3";
+		case MTLDataTypeUInt4:
+			return "UInt4";
+		case MTLDataTypeShort:
+			return "Short";
+		case MTLDataTypeShort2:
+			return "Short2";
+		case MTLDataTypeShort3:
+			return "Short3";
+		case MTLDataTypeShort4:
+			return "Short4";
+		case MTLDataTypeUShort:
+			return "UShort";
+		case MTLDataTypeUShort2:
+			return "UShort2";
+		case MTLDataTypeUShort3:
+			return "UShort3";
+		case MTLDataTypeUShort4:
+			return "UShort4";
+		case MTLDataTypeChar:
+			return "Char";
+		case MTLDataTypeChar2:
+			return "Char2";
+		case MTLDataTypeChar3:
+			return "Char3";
+		case MTLDataTypeChar4:
+			return "Char4";
+		case MTLDataTypeUChar:
+			return "UChar";
+		case MTLDataTypeUChar2:
+			return "UChar2";
+		case MTLDataTypeUChar3:
+			return "UChar3";
+		case MTLDataTypeUChar4:
+			return "UChar4";
+		case MTLDataTypeBool:
+			return "Bool";
+		case MTLDataTypeBool2:
+			return "Bool2";
+		case MTLDataTypeBool3:
+			return "Bool3";
+		case MTLDataTypeBool4:
+			return "Bool4";
+		case MTLDataTypeTexture:
+			return "Texture";
+		case MTLDataTypeSampler:
+			return "Sampler";
+		case MTLDataTypePointer:
+			return "Pointer";
+		case MTLDataTypeR8Unorm:
+			return "R8Unorm";
+		case MTLDataTypeR8Snorm:
+			return "R8Snorm";
+		case MTLDataTypeR16Unorm:
+			return "R16Unorm";
+		case MTLDataTypeR16Snorm:
+			return "R16Snorm";
+		case MTLDataTypeRG8Unorm:
+			return "RG8Unorm";
+		case MTLDataTypeRG8Snorm:
+			return "RG8Snorm";
+		case MTLDataTypeRG16Unorm:
+			return "RG16Unorm";
+		case MTLDataTypeRG16Snorm:
+			return "RG16Snorm";
+		case MTLDataTypeRGBA8Unorm:
+			return "RGBA8Unorm";
+		case MTLDataTypeRGBA8Unorm_sRGB:
+			return "RGBA8Unorm_sRGB";
+		case MTLDataTypeRGBA8Snorm:
+			return "RGBA8Snorm";
+		case MTLDataTypeRGBA16Unorm:
+			return "RGBA16Unorm";
+		case MTLDataTypeRGBA16Snorm:
+			return "RGBA16Snorm";
+		case MTLDataTypeRGB10A2Unorm:
+			return "RGB10A2Unorm";
+		case MTLDataTypeRG11B10Float:
+			return "RG11B10Float";
+		case MTLDataTypeRGB9E5Float:
+			return "RGB9E5Float";
+		case MTLDataTypeRenderPipeline:
+			return "RenderPipeline";
+		case MTLDataTypeComputePipeline:
+			return "ComputePipeline";
+		case MTLDataTypeIndirectCommandBuffer:
+			return "IndirectCommandBuffer";
+		case MTLDataTypeVisibleFunctionTable:
+			return "VisibleFunctionTable";
+		case MTLDataTypeIntersectionFunctionTable:
+			return "IntersectionFunctionTable";
+		case MTLDataTypePrimitiveAccelerationStructure:
+			return "PrimitiveAccelerationStructure";
+		case MTLDataTypeInstanceAccelerationStructure:
+			return "InstanceAccelerationStructure";
 	}
 	return "<unknown>";
 }
@@ -225,62 +344,118 @@ static int sizeMtlDataType(MTLDataType mtlType) {
 	const int FLOAT_SIZE = 4;
 	const int INT_SIZE = 4;
 	switch (mtlType) {
-		case MTLDataTypeFloat: return FLOAT_SIZE;
-		case MTLDataTypeFloat2: return FLOAT_SIZE * 2;
-		case MTLDataTypeFloat3: return FLOAT_SIZE * 3;
-		case MTLDataTypeFloat4: return FLOAT_SIZE * 4;
-		case MTLDataTypeFloat2x2: return FLOAT_SIZE * 2 * 2;
-		case MTLDataTypeFloat2x3: return FLOAT_SIZE * 2 * 3;
-		case MTLDataTypeFloat2x4: return FLOAT_SIZE * 2 * 4;
-		case MTLDataTypeFloat3x2: return FLOAT_SIZE * 3 * 2;
-		case MTLDataTypeFloat3x3: return FLOAT_SIZE * 3 * 3;
-		case MTLDataTypeFloat3x4: return FLOAT_SIZE * 3 * 4;
-		case MTLDataTypeFloat4x2: return FLOAT_SIZE * 4 * 2;
-		case MTLDataTypeFloat4x3: return FLOAT_SIZE * 4 * 3;
-		case MTLDataTypeFloat4x4: return FLOAT_SIZE * 4 * 4;
-		case MTLDataTypeHalf: return HALF_SIZE;
-		case MTLDataTypeHalf2: return HALF_SIZE * 2;
-		case MTLDataTypeHalf3: return HALF_SIZE * 3;
-		case MTLDataTypeHalf4: return HALF_SIZE * 4;
-		case MTLDataTypeHalf2x2: return HALF_SIZE * 2 * 2;
-		case MTLDataTypeHalf2x3: return HALF_SIZE * 2 * 3;
-		case MTLDataTypeHalf2x4: return HALF_SIZE * 2 * 4;
-		case MTLDataTypeHalf3x2: return HALF_SIZE * 3 * 2;
-		case MTLDataTypeHalf3x3: return HALF_SIZE * 3 * 3;
-		case MTLDataTypeHalf3x4: return HALF_SIZE * 3 * 4;
-		case MTLDataTypeHalf4x2: return HALF_SIZE * 4 * 2;
-		case MTLDataTypeHalf4x3: return HALF_SIZE * 4 * 3;
-		case MTLDataTypeHalf4x4: return HALF_SIZE * 4 * 4;
-		case MTLDataTypeInt: return INT_SIZE;
-		case MTLDataTypeInt2: return INT_SIZE * 2;
-		case MTLDataTypeInt3: return INT_SIZE * 3;
-		case MTLDataTypeInt4: return INT_SIZE * 4;
-		case MTLDataTypeUInt: return INT_SIZE;
-		case MTLDataTypeUInt2: return INT_SIZE * 2;
-		case MTLDataTypeUInt3: return INT_SIZE * 3;
-		case MTLDataTypeUInt4: return INT_SIZE * 4;
-		case MTLDataTypeShort: return HALF_SIZE;
-		case MTLDataTypeShort2: return HALF_SIZE * 2;
-		case MTLDataTypeShort3: return HALF_SIZE * 3;
-		case MTLDataTypeShort4: return HALF_SIZE * 4;
-		case MTLDataTypeUShort: return HALF_SIZE;
-		case MTLDataTypeUShort2: return HALF_SIZE * 2;
-		case MTLDataTypeUShort3: return HALF_SIZE * 3;
-		case MTLDataTypeUShort4: return HALF_SIZE * 4;
-		case MTLDataTypeChar: return 1;
-		case MTLDataTypeChar2: return 2;
-		case MTLDataTypeChar3: return 3;
-		case MTLDataTypeChar4: return 4;
-		case MTLDataTypeUChar: return 1;
-		case MTLDataTypeUChar2: return 2;
-		case MTLDataTypeUChar3: return 3;
-		case MTLDataTypeUChar4: return 4;
-		case MTLDataTypeBool: return 1;
-		case MTLDataTypeBool2: return 2;
-		case MTLDataTypeBool3: return 3;
-		case MTLDataTypeBool4: return 4;
-		case MTLDataTypeTexture: return 8;
-		case MTLDataTypePointer: return 8;
+		case MTLDataTypeFloat:
+			return FLOAT_SIZE;
+		case MTLDataTypeFloat2:
+			return FLOAT_SIZE * 2;
+		case MTLDataTypeFloat3:
+			return FLOAT_SIZE * 3;
+		case MTLDataTypeFloat4:
+			return FLOAT_SIZE * 4;
+		case MTLDataTypeFloat2x2:
+			return FLOAT_SIZE * 2 * 2;
+		case MTLDataTypeFloat2x3:
+			return FLOAT_SIZE * 2 * 3;
+		case MTLDataTypeFloat2x4:
+			return FLOAT_SIZE * 2 * 4;
+		case MTLDataTypeFloat3x2:
+			return FLOAT_SIZE * 3 * 2;
+		case MTLDataTypeFloat3x3:
+			return FLOAT_SIZE * 3 * 3;
+		case MTLDataTypeFloat3x4:
+			return FLOAT_SIZE * 3 * 4;
+		case MTLDataTypeFloat4x2:
+			return FLOAT_SIZE * 4 * 2;
+		case MTLDataTypeFloat4x3:
+			return FLOAT_SIZE * 4 * 3;
+		case MTLDataTypeFloat4x4:
+			return FLOAT_SIZE * 4 * 4;
+		case MTLDataTypeHalf:
+			return HALF_SIZE;
+		case MTLDataTypeHalf2:
+			return HALF_SIZE * 2;
+		case MTLDataTypeHalf3:
+			return HALF_SIZE * 3;
+		case MTLDataTypeHalf4:
+			return HALF_SIZE * 4;
+		case MTLDataTypeHalf2x2:
+			return HALF_SIZE * 2 * 2;
+		case MTLDataTypeHalf2x3:
+			return HALF_SIZE * 2 * 3;
+		case MTLDataTypeHalf2x4:
+			return HALF_SIZE * 2 * 4;
+		case MTLDataTypeHalf3x2:
+			return HALF_SIZE * 3 * 2;
+		case MTLDataTypeHalf3x3:
+			return HALF_SIZE * 3 * 3;
+		case MTLDataTypeHalf3x4:
+			return HALF_SIZE * 3 * 4;
+		case MTLDataTypeHalf4x2:
+			return HALF_SIZE * 4 * 2;
+		case MTLDataTypeHalf4x3:
+			return HALF_SIZE * 4 * 3;
+		case MTLDataTypeHalf4x4:
+			return HALF_SIZE * 4 * 4;
+		case MTLDataTypeInt:
+			return INT_SIZE;
+		case MTLDataTypeInt2:
+			return INT_SIZE * 2;
+		case MTLDataTypeInt3:
+			return INT_SIZE * 3;
+		case MTLDataTypeInt4:
+			return INT_SIZE * 4;
+		case MTLDataTypeUInt:
+			return INT_SIZE;
+		case MTLDataTypeUInt2:
+			return INT_SIZE * 2;
+		case MTLDataTypeUInt3:
+			return INT_SIZE * 3;
+		case MTLDataTypeUInt4:
+			return INT_SIZE * 4;
+		case MTLDataTypeShort:
+			return HALF_SIZE;
+		case MTLDataTypeShort2:
+			return HALF_SIZE * 2;
+		case MTLDataTypeShort3:
+			return HALF_SIZE * 3;
+		case MTLDataTypeShort4:
+			return HALF_SIZE * 4;
+		case MTLDataTypeUShort:
+			return HALF_SIZE;
+		case MTLDataTypeUShort2:
+			return HALF_SIZE * 2;
+		case MTLDataTypeUShort3:
+			return HALF_SIZE * 3;
+		case MTLDataTypeUShort4:
+			return HALF_SIZE * 4;
+		case MTLDataTypeChar:
+			return 1;
+		case MTLDataTypeChar2:
+			return 2;
+		case MTLDataTypeChar3:
+			return 3;
+		case MTLDataTypeChar4:
+			return 4;
+		case MTLDataTypeUChar:
+			return 1;
+		case MTLDataTypeUChar2:
+			return 2;
+		case MTLDataTypeUChar3:
+			return 3;
+		case MTLDataTypeUChar4:
+			return 4;
+		case MTLDataTypeBool:
+			return 1;
+		case MTLDataTypeBool2:
+			return 2;
+		case MTLDataTypeBool3:
+			return 3;
+		case MTLDataTypeBool4:
+			return 4;
+		case MTLDataTypeTexture:
+			return 8;
+		case MTLDataTypePointer:
+			return 8;
 		default: {
 			NSLog(@"Unsupported Metal type: %ld", long(mtlType));
 			exit(EXIT_FAILURE);
@@ -290,48 +465,89 @@ static int sizeMtlDataType(MTLDataType mtlType) {
 }
 
 std::string mtlTypeToVariantHint(MTLDataType mtlType) {
-	switch(mtlType) {
-		case MTLDataTypeFloat: return "Variant::REAL";
-		case MTLDataTypeFloat2: return "Variant::VECTOR2";
-		case MTLDataTypeFloat3: return "Variant::VECTOR3";
-		case MTLDataTypeFloat4: return "Variant::POOL_REAL_ARRAY";
-		case MTLDataTypeFloat2x2: return "Variant::TRANSFORM2D";
-		case MTLDataTypeFloat2x3: return "";
-		case MTLDataTypeFloat2x4: return "";
-		case MTLDataTypeFloat3x2: return "";
-		case MTLDataTypeFloat3x3: return "Variant::BASIS";
-		case MTLDataTypeFloat3x4: return "";
-		case MTLDataTypeFloat4x2: return "";
-		case MTLDataTypeFloat4x3: return "";
-		case MTLDataTypeFloat4x4: return "Variant::TRANSFORM";
-		case MTLDataTypeInt: return "Variant::INT";
-		case MTLDataTypeInt2: return "Variant::POOL_INT_ARRAY";
-		case MTLDataTypeInt3: return "Variant::POOL_INT_ARRAY";
-		case MTLDataTypeInt4: return "Variant::POOL_INT_ARRAY";
-		case MTLDataTypeUInt: return "Variant::INT";
-		case MTLDataTypeUInt2: return "Variant::POOL_INT_ARRAY";
-		case MTLDataTypeUInt3: return "Variant::POOL_INT_ARRAY";
-		case MTLDataTypeUInt4: return "Variant::POOL_INT_ARRAY";
-		case MTLDataTypeShort: return "Variant::INT";
-		case MTLDataTypeShort2: return "Variant::POOL_INT_ARRAY";
-		case MTLDataTypeShort3: return "Variant::POOL_INT_ARRAY";
-		case MTLDataTypeShort4: return "Variant::POOL_INT_ARRAY";
-		case MTLDataTypeUShort: return "";
-		case MTLDataTypeUShort2: return "Variant::POOL_INT_ARRAY";
-		case MTLDataTypeUShort3: return "Variant::POOL_INT_ARRAY";
-		case MTLDataTypeUShort4: return "Variant::POOL_INT_ARRAY";
-		case MTLDataTypeChar: return "Variant::INT";
-		case MTLDataTypeChar2: return "Variant::POOL_BYTE_ARRAY";
-		case MTLDataTypeChar3: return "Variant::POOL_BYTE_ARRAY";
-		case MTLDataTypeChar4: return "Variant::POOL_BYTE_ARRAY";
-		case MTLDataTypeUChar: return "Variant::INT";
-		case MTLDataTypeUChar2: return "Variant::POOL_BYTE_ARRAY";
-		case MTLDataTypeUChar3: return "Variant::POOL_BYTE_ARRAY";
-		case MTLDataTypeUChar4: return "Variant::POOL_BYTE_ARRAY";
-		case MTLDataTypeBool: return "Variant::BOOL";
-		case MTLDataTypeBool2: return "Variant::POOL_BYTE_ARRAY";
-		case MTLDataTypeBool3: return "Variant::POOL_BYTE_ARRAY";
-		case MTLDataTypeBool4: return "Variant::POOL_BYTE_ARRAY";
+	switch (mtlType) {
+		case MTLDataTypeFloat:
+			return "Variant::REAL";
+		case MTLDataTypeFloat2:
+			return "Variant::VECTOR2";
+		case MTLDataTypeFloat3:
+			return "Variant::VECTOR3";
+		case MTLDataTypeFloat4:
+			return "Variant::POOL_REAL_ARRAY";
+		case MTLDataTypeFloat2x2:
+			return "Variant::TRANSFORM2D";
+		case MTLDataTypeFloat2x3:
+			return "";
+		case MTLDataTypeFloat2x4:
+			return "";
+		case MTLDataTypeFloat3x2:
+			return "";
+		case MTLDataTypeFloat3x3:
+			return "Variant::BASIS";
+		case MTLDataTypeFloat3x4:
+			return "";
+		case MTLDataTypeFloat4x2:
+			return "";
+		case MTLDataTypeFloat4x3:
+			return "";
+		case MTLDataTypeFloat4x4:
+			return "Variant::TRANSFORM";
+		case MTLDataTypeInt:
+			return "Variant::INT";
+		case MTLDataTypeInt2:
+			return "Variant::POOL_INT_ARRAY";
+		case MTLDataTypeInt3:
+			return "Variant::POOL_INT_ARRAY";
+		case MTLDataTypeInt4:
+			return "Variant::POOL_INT_ARRAY";
+		case MTLDataTypeUInt:
+			return "Variant::INT";
+		case MTLDataTypeUInt2:
+			return "Variant::POOL_INT_ARRAY";
+		case MTLDataTypeUInt3:
+			return "Variant::POOL_INT_ARRAY";
+		case MTLDataTypeUInt4:
+			return "Variant::POOL_INT_ARRAY";
+		case MTLDataTypeShort:
+			return "Variant::INT";
+		case MTLDataTypeShort2:
+			return "Variant::POOL_INT_ARRAY";
+		case MTLDataTypeShort3:
+			return "Variant::POOL_INT_ARRAY";
+		case MTLDataTypeShort4:
+			return "Variant::POOL_INT_ARRAY";
+		case MTLDataTypeUShort:
+			return "";
+		case MTLDataTypeUShort2:
+			return "Variant::POOL_INT_ARRAY";
+		case MTLDataTypeUShort3:
+			return "Variant::POOL_INT_ARRAY";
+		case MTLDataTypeUShort4:
+			return "Variant::POOL_INT_ARRAY";
+		case MTLDataTypeChar:
+			return "Variant::INT";
+		case MTLDataTypeChar2:
+			return "Variant::POOL_BYTE_ARRAY";
+		case MTLDataTypeChar3:
+			return "Variant::POOL_BYTE_ARRAY";
+		case MTLDataTypeChar4:
+			return "Variant::POOL_BYTE_ARRAY";
+		case MTLDataTypeUChar:
+			return "Variant::INT";
+		case MTLDataTypeUChar2:
+			return "Variant::POOL_BYTE_ARRAY";
+		case MTLDataTypeUChar3:
+			return "Variant::POOL_BYTE_ARRAY";
+		case MTLDataTypeUChar4:
+			return "Variant::POOL_BYTE_ARRAY";
+		case MTLDataTypeBool:
+			return "Variant::BOOL";
+		case MTLDataTypeBool2:
+			return "Variant::POOL_BYTE_ARRAY";
+		case MTLDataTypeBool3:
+			return "Variant::POOL_BYTE_ARRAY";
+		case MTLDataTypeBool4:
+			return "Variant::POOL_BYTE_ARRAY";
 		default: {
 			NSLog(@"Unsupported Metal type: %ld", long(mtlType));
 			exit(EXIT_FAILURE);
@@ -343,7 +559,8 @@ std::string mtlTypeToVariantHint(MTLDataType mtlType) {
 
 int main(int argc, const char *argv[]) {
 	// skip over program name
-	--argc; ++argv;
+	--argc;
+	++argv;
 
 	if (argc < 1) {
 		NSLog(@"*** Missing argument for file shader path");
@@ -353,7 +570,7 @@ int main(int argc, const char *argv[]) {
 	std::string src = "";
 	std::string input_file(argv[0]);
 	std::ifstream infile(input_file);
-	if(!infile.is_open()) {
+	if (!infile.is_open()) {
 		NSLog(@"*** %s: file not found/cannot open", input_file.c_str());
 		exit(EXIT_FAILURE);
 	}
@@ -371,23 +588,29 @@ int main(int argc, const char *argv[]) {
 				if (processed_files.count(include_file) == 0) {
 					processed_files[include_file] = read_all(include_file);
 				}
-				src += "#line 1 \"" + include_file + "\"\n"; line_count++;
+				src += "#line 1 \"" + include_file + "\"\n";
+				line_count++;
 				for (const auto &ln : processed_files[include_file]) {
-					src += ln + "\n"; line_count++; shader_lines.push_back(ln + "\n");
+					src += ln + "\n";
+					line_count++;
+					shader_lines.push_back(ln + "\n");
 				}
-				line_count++; src += "#line 1 \"" + input_file + "\"\n";
+				line_count++;
+				src += "#line 1 \"" + input_file + "\"\n";
 				continue;
 			}
 		} else if (std::regex_match(line, matches, define_expression)) {
 			conditionals.push_back(matches[1]);
 		}
-		line_count++; src += line + "\n"; shader_lines.push_back(line + "\n");
+		line_count++;
+		src += line + "\n";
+		shader_lines.push_back(line + "\n");
 	}
 
 	id<MTLDevice> device = MTLCreateSystemDefaultDevice();
 
 	NSError *errors = nil;
-	id<MTLLibrary> lib = [device newLibraryWithSource: ec(src.c_str()) options:nil error:&errors];
+	id<MTLLibrary> lib = [device newLibraryWithSource:ec(src.c_str()) options:nil error:&errors];
 	if (errors && !lib) {
 		NSLog(@"[Failed to created library from source] %@", [errors localizedDescription]);
 		exit(EXIT_FAILURE);
@@ -395,12 +618,12 @@ int main(int argc, const char *argv[]) {
 	if (errors && lib) {
 		NSLog(@"[Library created with warning] %@", [errors localizedDescription]);
 	}
-	id<MTLFunction> vertexProgram = [lib newFunctionWithName: ec("vertexFunction")];
+	id<MTLFunction> vertexProgram = [lib newFunctionWithName:ec("vertexFunction")];
 	if (!vertexProgram) {
 		NSLog(@"Failed to create vertex program");
 		exit(EXIT_FAILURE);
 	}
-	id<MTLFunction> fragmentProgram = [lib newFunctionWithName: ec("fragmentFunction")];
+	id<MTLFunction> fragmentProgram = [lib newFunctionWithName:ec("fragmentFunction")];
 	if (!fragmentProgram) {
 		NSLog(@"Failed to create fragment program");
 		exit(EXIT_FAILURE);
@@ -408,15 +631,15 @@ int main(int argc, const char *argv[]) {
 
 	MTLRenderPipelineDescriptor *pipelineStateDescriptor = [[MTLRenderPipelineDescriptor alloc] init];
 	pipelineStateDescriptor.label = @"DummyPipeline";
-	[pipelineStateDescriptor setVertexFunction: vertexProgram];
-	[pipelineStateDescriptor setFragmentFunction: fragmentProgram];
+	[pipelineStateDescriptor setVertexFunction:vertexProgram];
+	[pipelineStateDescriptor setFragmentFunction:fragmentProgram];
 	pipelineStateDescriptor.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm;
 	// added dummy topology
 	pipelineStateDescriptor.inputPrimitiveTopology = MTLPrimitiveTopologyClassPoint;
 
-	MTLRenderPipelineReflection* reflection;
+	MTLRenderPipelineReflection *reflection;
 	MTLPipelineOption option = MTLPipelineOptionBufferTypeInfo | MTLPipelineOptionArgumentInfo;
-	id <MTLRenderPipelineState> pipelineState = [device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor options:option reflection:&reflection error:&errors];
+	id<MTLRenderPipelineState> pipelineState = [device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor options:option reflection:&reflection error:&errors];
 	if (errors || !pipelineState) {
 		NSLog(@"Failed to created Metal pipeline state: %@", [errors localizedDescription]);
 		exit(EXIT_FAILURE);
@@ -427,7 +650,7 @@ int main(int argc, const char *argv[]) {
 		attributes.push_back(std::make_pair(ce(arg.name), arg.index));
 		if (arg.bufferDataType == MTLDataTypeStruct) {
 			uniform_buffer_size = arg.bufferDataSize;
-			for( MTLStructMember *uniform in arg.bufferStructType.members ) {
+			for (MTLStructMember *uniform in arg.bufferStructType.members) {
 				NSLog(@"  member: %@ type: %s, location: %ld", uniform.name, mtlDataTypeToString(uniform.dataType).c_str(), long(uniform.offset));
 				if (uniform.dataType == MTLDataTypeArray) {
 					// array
@@ -454,7 +677,7 @@ static void build_metal_header(const std::string &filename, const std::string &i
 	fd << "/* WARNING, THIS FILE WAS GENERATED, DO NOT EDIT */\n";
 
 	std::string out_file_base = out_file;
-	out_file_base = out_file_base.substr(std::string::npos==out_file_base.rfind("/") ? 0 : out_file_base.rfind("/") + 1);
+	out_file_base = out_file_base.substr(std::string::npos == out_file_base.rfind("/") ? 0 : out_file_base.rfind("/") + 1);
 	std::string out_file_ifdef = up(rp(out_file_base, ".", "_"));
 	fd << "#ifndef " << out_file_ifdef << class_suffix << "_120\n";
 	fd << "#define " << out_file_ifdef << class_suffix << "_120\n";
@@ -494,9 +717,9 @@ static void build_metal_header(const std::string &filename, const std::string &i
 	fd << "\t_FORCE_INLINE_ template<typename T> cpy(Uniforms p_uniform, const T &p_a, const T &p_b) { const T src[]={p_a,p_b}; memcpy(uniform_buffer.get()+get_uniform_ofs(p_uniform), src, 2*sizeof(T); };\n";
 	fd << "\t_FORCE_INLINE_ template<typename T> cpy(Uniforms p_uniform, const T &p_a, const T &p_b, const T &p_c) { const T src[]={p_a,p_b,p_c}; memcpy(uniform_buffer.get()+get_uniform_ofs(p_uniform), src, 3*sizeof(T); };\n";
 	fd << "\t#ifdef DEBUG_ENABLED\n";
-	fd << "\t#define _FU ERR_FAIL_COND(p_uniform>" << uniforms.size()-1 << "); if (!is_version_valid()) return; ERR_FAIL_COND( get_active()!=this );\n";
+	fd << "\t#define _FU ERR_FAIL_COND(p_uniform>" << uniforms.size() - 1 << "); if (!is_version_valid()) return; ERR_FAIL_COND( get_active()!=this );\n";
 	fd << "\t#else\n";
-	fd << "\t#define _FU if (p_uniform>" << uniforms.size()-1 << ") return;\n";
+	fd << "\t#define _FU if (p_uniform>" << uniforms.size() - 1 << ") return;\n";
 	fd << "\t#endif\n\n";
 	fd << "\t_FORCE_INLINE_ void set_uniform(Uniforms p_uniform, float p_value) { _FU cpy(p_uniform,p_value); }\n\n";
 	fd << "\t_FORCE_INLINE_ void set_uniform(Uniforms p_uniform, double p_value) { _FU cpy(p_uniform,p_value); }\n\n";
@@ -604,8 +827,9 @@ static void build_metal_header(const std::string &filename, const std::string &i
 	if (!uniforms.empty()) {
 		fd << "\t\tstatic UniformPair _uniform_pairs[]={\n";
 		if (!uniforms.empty()) {
-			int index = 0; for (const auto &x : uniforms) {
-				fd << "\t\t\t{\"" <<  std::get<0>(x) << "\"," << index++ << "},\n";
+			int index = 0;
+			for (const auto &x : uniforms) {
+				fd << "\t\t\t{\"" << std::get<0>(x) << "\"," << index++ << "},\n";
 			}
 		}
 		fd << "\t\t};\n\n";
@@ -646,18 +870,16 @@ static void build_metal_header(const std::string &filename, const std::string &i
 	fd << "\t\t0};\n\n";
 
 	if (output_attribs) {
-		fd <<
-			"\t\tsetup(_conditional_strings," << conditionals.size()
-			<< ",_uniform_pairs," << uniforms.size()
-			<< ",_attribute_pairs," << attributes.size()
-			<< ", _texunit_pairs," << texunits.size()
-			<< ",_shader_code);\n";
+		fd << "\t\tsetup(_conditional_strings," << conditionals.size()
+		   << ",_uniform_pairs," << uniforms.size()
+		   << ",_attribute_pairs," << attributes.size()
+		   << ", _texunit_pairs," << texunits.size()
+		   << ",_shader_code);\n";
 	} else {
-		fd <<
-			"\t\tsetup(_conditional_strings," << conditionals.size()
-			<< ",_uniform_pairs," << uniforms.size()
-			<< ",_texunit_pairs," << texunits.size()
-			<< ",_shader_code);\n";
+		fd << "\t\tsetup(_conditional_strings," << conditionals.size()
+		   << ",_uniform_pairs," << uniforms.size()
+		   << ",_texunit_pairs," << texunits.size()
+		   << ",_shader_code);\n";
 	}
 
 	fd << "\t}\n\n";
@@ -667,7 +889,7 @@ static void build_metal_header(const std::string &filename, const std::string &i
 		fd << "\tstatic std::tuple<std::string, int, int, int, Variant::Type> _uniform_info[]={\n";
 		if (!uniforms.empty()) {
 			for (const auto &x : uniforms) {
-				fd << "\t\t{\"" <<  std::get<0>(x) << "\"," << std::get<1>(x) << "," << std::get<2>(x) << "," << std::get<3>(x) << "," << std::get<4>(x) << "},\n";
+				fd << "\t\t{\"" << std::get<0>(x) << "\"," << std::get<1>(x) << "," << std::get<2>(x) << "," << std::get<3>(x) << "," << std::get<4>(x) << "},\n";
 			}
 		}
 		fd << "\t};\n\n";

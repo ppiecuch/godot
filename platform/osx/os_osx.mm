@@ -44,12 +44,12 @@
 
 #include <Carbon/Carbon.h>
 #import <Cocoa/Cocoa.h>
-#import <QuartzCore/CAMetalLayer.h>
-#import <Metal/Metal.h>
 #include <IOKit/IOCFPlugIn.h>
 #include <IOKit/IOKitLib.h>
 #include <IOKit/hid/IOHIDKeys.h>
 #include <IOKit/hid/IOHIDLib.h>
+#import <Metal/Metal.h>
+#import <QuartzCore/CAMetalLayer.h>
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 101200
 #include <os/log.h>
 #endif
@@ -469,7 +469,7 @@ typedef enum BackingLayerTag : NSUInteger {
 	BackingLayerType backingLayerType;
 	CALayer *backingLayer;
 	// OpenGL support
-	NSOpenGLContext     *openGLContext;
+	NSOpenGLContext *openGLContext;
 	NSOpenGLPixelFormat *pixelFormat;
 	// Metal support
 }
@@ -480,7 +480,7 @@ typedef enum BackingLayerTag : NSUInteger {
 // OpenGL-based interface
 + (NSOpenGLPixelFormat *)defaultPixelFormat;
 - (id)initWithFrame:(NSRect)frameRect
-        pixelFormat:(NSOpenGLPixelFormat *)format;
+		pixelFormat:(NSOpenGLPixelFormat *)format;
 - (void)setOpenGLContext:(NSOpenGLContext *)context;
 - (NSOpenGLContext *)openGLContext;
 - (void)setPixelFormat:(NSOpenGLPixelFormat *)format;
@@ -1423,35 +1423,34 @@ inline void sendPanEvent(double dx, double dy, int modifierFlags) {
 
 // OpenGL interface
 
-- (void) initDetails {
+- (void)initDetails {
 	NSNotificationCenter *ntfcenter;
 
-	[self setWantsBestResolutionOpenGLSurface: YES];
-	[self setPostsFrameChangedNotifications: YES];
+	[self setWantsBestResolutionOpenGLSurface:YES];
+	[self setPostsFrameChangedNotifications:YES];
 
 	ntfcenter = [NSNotificationCenter defaultCenter];
-	[ntfcenter addObserver: self
-					selector: @selector(_surfaceNeedsUpdate:)
-						name: NSViewGlobalFrameDidChangeNotification
-					object: self];
-	[ntfcenter addObserver: self
-					selector: @selector(_surfaceNeedsUpdate:)
-						name: NSViewFrameDidChangeNotification
-					object: self];
+	[ntfcenter addObserver:self
+				  selector:@selector(_surfaceNeedsUpdate:)
+					  name:NSViewGlobalFrameDidChangeNotification
+					object:self];
+	[ntfcenter addObserver:self
+				  selector:@selector(_surfaceNeedsUpdate:)
+					  name:NSViewFrameDidChangeNotification
+					object:self];
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect {
-	return [self initWithFrame: self.frame
-                   pixelFormat: [[self class] defaultPixelFormat]];
+	return [self initWithFrame:self.frame
+				   pixelFormat:[[self class] defaultPixelFormat]];
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect
-                  pixelFormat:(NSOpenGLPixelFormat *)format {
-
+				  pixelFormat:(NSOpenGLPixelFormat *)format {
 	self = [super initWithFrame:frameRect];
 
 	if (self) {
-		[self setPixelFormat: format];
+		[self setPixelFormat:format];
 		[self initDetails];
 	}
 	return self;
@@ -1465,7 +1464,7 @@ inline void sendPanEvent(double dx, double dy, int modifierFlags) {
 	return NO;
 }
 
-- (void) _surfaceNeedsUpdate:(NSNotification *)notification {
+- (void)_surfaceNeedsUpdate:(NSNotification *)notification {
 	[[self openGLContext] makeCurrentContext];
 	[self update];
 }
@@ -1474,17 +1473,17 @@ inline void sendPanEvent(double dx, double dy, int modifierFlags) {
 	[super lockFocus];
 	NSOpenGLContext *context = [self openGLContext];
 	if ([context view] != self) {
-		[context setView: self];
+		[context setView:self];
 	}
 }
 
-- (void) viewDidMoveToWindow {
+- (void)viewDidMoveToWindow {
 	[super viewDidMoveToWindow];
 	if (!self.window) {
 		[[self openGLContext] clearDrawable];
 		return;
 	}
-	[self.openGLContext setView: self];
+	[self.openGLContext setView:self];
 }
 
 #pragma mark -
@@ -1495,7 +1494,7 @@ inline void sendPanEvent(double dx, double dy, int modifierFlags) {
 	if (pixelFormat)
 		return pixelFormat;
 
-	#define PixelFormatAttrib(...) __VA_ARGS__
+#define PixelFormatAttrib(...) __VA_ARGS__
 	NSOpenGLPixelFormatAttribute attribs[] = {
 		PixelFormatAttrib(NSOpenGLPFADoubleBuffer),
 		PixelFormatAttrib(NSOpenGLPFAAccelerated),
@@ -1507,17 +1506,17 @@ inline void sendPanEvent(double dx, double dy, int modifierFlags) {
 		PixelFormatAttrib(NSOpenGLProfileVersion3_2Core),
 		0
 	};
-	#undef PixelFormatAttrib
+#undef PixelFormatAttrib
 
-	pixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes: attribs];
+	pixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:attribs];
 	return pixelFormat;
 }
 
 - (NSOpenGLContext *)openGLContext {
 	if (!openGLContext) {
-		openGLContext = [[NSOpenGLContext alloc] initWithFormat: pixelFormat
-                                                   shareContext: nil];
-		[self setOpenGLContext: openGLContext];
+		openGLContext = [[NSOpenGLContext alloc] initWithFormat:pixelFormat
+												   shareContext:nil];
+		[self setOpenGLContext:openGLContext];
 	}
 
 	return openGLContext;
@@ -1527,7 +1526,7 @@ inline void sendPanEvent(double dx, double dy, int modifierFlags) {
 	if (context != openGLContext) {
 		[self clearGLContext];
 		openGLContext = context;
-		[openGLContext setView: self];
+		[openGLContext setView:self];
 	}
 }
 
@@ -1552,12 +1551,12 @@ inline void sendPanEvent(double dx, double dy, int modifierFlags) {
 }
 
 - (void)deallocOpenGL {
-	[[NSNotificationCenter defaultCenter] removeObserver: self];
+	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	[NSOpenGLContext clearCurrentContext];
 	[self clearGLContext];
 
 	openGLContext = nil;
-	pixelFormat   = nil;
+	pixelFormat = nil;
 }
 
 // Metal interface

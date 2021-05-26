@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  rasterizer_storage_metal.cpp                                         */
+/*  rasterizer_storage_metal.mm                                          */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -73,13 +73,12 @@ struct RasterizerStorageMetal::MetalMesh : public RID_Data {
 };
 
 static MTLStorageMode MetalGetStorageMode(id<MTLResource> resource) {
-    /* iOS 8 does not have this method. */
-    if ([resource respondsToSelector:@selector(storageMode)]) {
-        return resource.storageMode;
-    }
-    return MTLStorageModeShared;
+	/* iOS 8 does not have this method. */
+	if ([resource respondsToSelector:@selector(storageMode)]) {
+		return resource.storageMode;
+	}
+	return MTLStorageModeShared;
 }
-
 
 RID RasterizerStorageMetal::texture_create() {
 	MetalTexture *texture = memnew(MetalTexture);
