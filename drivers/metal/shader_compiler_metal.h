@@ -92,6 +92,7 @@ private:
 	Set<StringName> used_flag_pointers;
 	Set<StringName> used_rmode_defines;
 	Set<StringName> internal_functions;
+	Set<StringName> fragment_varyings;
 
 	DefaultIdentifierActions actions[VS::SHADER_MAX];
 

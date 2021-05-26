@@ -114,6 +114,8 @@ static int _get_datatype_size(SL::DataType p_type) {
 			return 16;
 		case SL::TYPE_SAMPLEREXT:
 			return 16;
+		case SL::TYPE_STRUCT:
+			return 0;
 	}
 
 	ERR_FAIL_V(0);
@@ -183,6 +185,8 @@ static int _get_datatype_alignment(SL::DataType p_type) {
 			return 16;
 		case SL::TYPE_SAMPLEREXT:
 			return 16;
+		case SL::TYPE_STRUCT:
+			return 0;
 	}
 
 	ERR_FAIL_V(0);
@@ -357,11 +361,20 @@ void ShaderCompilerMetal::_dump_function_deps(SL::ShaderNode *p_node, const Stri
 		r_to_add += "\n";
 
 		String header;
-		header = _typestr(fnode->return_type) + " " + _mkid(fnode->name) + "(";
+		if (fnode->return_type == SL::TYPE_STRUCT) {
+			header += _mkid(fnode->return_struct_name) + " " + _mkid(fnode->name) + "(";
+		} else {
+			header += _typestr(fnode->return_type) + " " + _mkid(fnode->name) + "(";
+		}
 		for (int i = 0; i < fnode->arguments.size(); i++) {
-			if (i > 0)
+			if (i > 0) {
 				header += ", ";
-			header += _qualstr(fnode->arguments[i].qualifier) + _prestr(fnode->arguments[i].precision) + _typestr(fnode->arguments[i].type) + " " + _mkid(fnode->arguments[i].name);
+			}
+			if (fnode->arguments[i].type == SL::TYPE_STRUCT) {
+				header += _qualstr(fnode->arguments[i].qualifier) + _mkid(fnode->arguments[i].type_str) + " " + _mkid(fnode->arguments[i].name);
+			} else {
+				header += _qualstr(fnode->arguments[i].qualifier) + _prestr(fnode->arguments[i].precision) + _typestr(fnode->arguments[i].type) + " " + _mkid(fnode->arguments[i].name);
+			}
 		}
 
 		header += ")\n";
@@ -400,6 +413,42 @@ String ShaderCompilerMetal::_dump_node_code(SL::Node *p_node, int p_level, Gener
 				*p_actions.front_stencil = pnode->front_stencil;
 				*p_actions.uses_stencil = pnode->front_stencil.uses_stencil() || pnode->back_stencil.uses_stencil();
 			}
+
+			// structs
+
+			for (int i = 0; i < pnode->vstructs.size(); i++) {
+				SL::StructNode *st = pnode->vstructs[i].shader_struct;
+				String struct_code;
+
+				struct_code += "struct ";
+				struct_code += _mkid(pnode->vstructs[i].name);
+				struct_code += " ";
+				struct_code += "{\n";
+				for (int j = 0; j < st->members.size(); j++) {
+					SL::MemberNode *m = st->members[j];
+					if (m->datatype == SL::TYPE_STRUCT) {
+						struct_code += _mkid(m->struct_name);
+					} else {
+						struct_code += _prestr(m->precision);
+						struct_code += _typestr(m->datatype);
+					}
+					struct_code += " ";
+					struct_code += m->name;
+					if (m->array_size > 0) {
+						struct_code += "[";
+						struct_code += itos(m->array_size);
+						struct_code += "]";
+					}
+					struct_code += ";\n";
+				}
+				struct_code += "}";
+				struct_code += ";\n";
+
+				r_gen_code.vertex_global += struct_code;
+				r_gen_code.fragment_global += struct_code;
+			}
+
+			// uniforms
 
 			int max_texture_uniforms = 0;
 			int max_uniforms = 0;
@@ -476,7 +525,16 @@ String ShaderCompilerMetal::_dump_node_code(SL::Node *p_node, int p_level, Gener
 				r_gen_code.uniform_total_size += r_gen_code.uniform_total_size % 16;
 			}
 
+			// varyings
+
+			List<Pair<StringName, SL::ShaderNode::Varying>> var_frag_to_light;
+
 			for (Map<StringName, SL::ShaderNode::Varying>::Element *E = pnode->varyings.front(); E; E = E->next()) {
+				if (E->get().stage == SL::ShaderNode::Varying::STAGE_FRAGMENT_TO_LIGHT || E->get().stage == SL::ShaderNode::Varying::STAGE_FRAGMENT) {
+					var_frag_to_light.push_back(Pair<StringName, SL::ShaderNode::Varying>(E->key(), E->get()));
+					fragment_varyings.insert(E->key());
+					continue;
+				}
 				String vcode;
 				String interp_mode = _interpstr(E->get().interpolation);
 				vcode += _prestr(E->get().precision);
@@ -492,11 +550,32 @@ String ShaderCompilerMetal::_dump_node_code(SL::Node *p_node, int p_level, Gener
 				r_gen_code.fragment_global += interp_mode + "in " + vcode;
 			}
 
+			if (var_frag_to_light.size() > 0) {
+				String gcode = "\n\nstruct {\n";
+				for (List<Pair<StringName, SL::ShaderNode::Varying>>::Element *E = var_frag_to_light.front(); E; E = E->next()) {
+					gcode += "\t" + _prestr(E->get().second.precision) + _typestr(E->get().second.type) + " " + _mkid(E->get().first);
+					if (E->get().second.array_size > 0) {
+						gcode += "[";
+						gcode += itos(E->get().second.array_size);
+						gcode += "]";
+					}
+					gcode += ";\n";
+				}
+				gcode += "} frag_to_light;\n";
+				r_gen_code.fragment_global += gcode;
+			}
+
+			// constants
+
 			for (int i = 0; i < pnode->vconstants.size(); i++) {
 				String gcode;
 				gcode += "const ";
-				gcode += _prestr(pnode->vconstants[i].precision);
-				gcode += _typestr(pnode->vconstants[i].type);
+				if (pnode->vconstants[i].type == SL::TYPE_STRUCT) {
+					gcode += _mkid(pnode->vconstants[i].type_str);
+				} else {
+					gcode += _prestr(pnode->vconstants[i].precision);
+					gcode += _typestr(pnode->vconstants[i].type);
+				}
 				gcode += " " + _mkid(String(pnode->vconstants[i].name));
 				gcode += "=";
 				gcode += _dump_node_code(pnode->vconstants[i].initializer, p_level, r_gen_code, p_actions, p_default_actions, p_assigning);
@@ -542,6 +621,8 @@ String ShaderCompilerMetal::_dump_node_code(SL::Node *p_node, int p_level, Gener
 
 			//code+=dump_node_code(pnode->body,p_level);
 		} break;
+		case SL::Node::TYPE_STRUCT: {
+		} break;
 		case SL::Node::TYPE_FUNCTION: {
 		} break;
 		case SL::Node::TYPE_BLOCK: {
@@ -573,8 +654,12 @@ String ShaderCompilerMetal::_dump_node_code(SL::Node *p_node, int p_level, Gener
 			if (vdnode->is_const) {
 				declaration += "const ";
 			}
-			declaration += _prestr(vdnode->precision);
-			declaration += _typestr(vdnode->datatype);
+			if (vdnode->datatype == SL::TYPE_STRUCT) {
+				declaration += _mkid(vdnode->struct_name);
+			} else {
+				declaration += _prestr(vdnode->precision);
+				declaration += _typestr(vdnode->datatype);
+			}
 			for (int i = 0; i < vdnode->declarations.size(); i++) {
 				if (i > 0) {
 					declaration += ",";
@@ -626,6 +711,26 @@ String ShaderCompilerMetal::_dump_node_code(SL::Node *p_node, int p_level, Gener
 			}
 
 		} break;
+		case SL::Node::TYPE_ARRAY_CONSTRUCT: {
+			SL::ArrayConstructNode *arr_con_node = (SL::ArrayConstructNode *)p_node;
+			int sz = arr_con_node->initializer.size();
+			if (arr_con_node->datatype == SL::TYPE_STRUCT) {
+				code += _mkid(arr_con_node->struct_name);
+			} else {
+				code += _typestr(arr_con_node->datatype);
+			}
+			code += "[";
+			code += itos(arr_con_node->initializer.size());
+			code += "]";
+			code += "(";
+			for (int i = 0; i < sz; i++) {
+				code += _dump_node_code(arr_con_node->initializer[i], p_level, r_gen_code, p_actions, p_default_actions, p_assigning);
+				if (i != sz - 1) {
+					code += ", ";
+				}
+			}
+			code += ")";
+		} break;
 		case SL::Node::TYPE_ARRAY_DECLARATION: {
 			SL::ArrayDeclarationNode *adnode = (SL::ArrayDeclarationNode *)p_node;
 
@@ -633,8 +738,12 @@ String ShaderCompilerMetal::_dump_node_code(SL::Node *p_node, int p_level, Gener
 			if (adnode->is_const) {
 				declaration += "const ";
 			}
-			declaration += _prestr(adnode->precision);
-			declaration += _typestr(adnode->datatype);
+			if (adnode->datatype == SL::TYPE_STRUCT) {
+				declaration += _mkid(adnode->struct_name);
+			} else {
+				declaration += _prestr(adnode->precision);
+				declaration += _typestr(adnode->datatype);
+			}
 			for (int i = 0; i < adnode->declarations.size(); i++) {
 				if (i > 0) {
 					declaration += ",";
@@ -647,8 +756,11 @@ String ShaderCompilerMetal::_dump_node_code(SL::Node *p_node, int p_level, Gener
 				declaration += "]";
 				int sz = adnode->declarations[i].initializer.size();
 				if (sz > 0) {
-					declaration += "=";
-					declaration += _typestr(adnode->datatype);
+					if (adnode->datatype == SL::TYPE_STRUCT) {
+						declaration += _mkid(adnode->struct_name);
+					} else {
+						declaration += _typestr(adnode->datatype);
+					}
 					declaration += "[";
 					declaration += itos(sz);
 					declaration += "]";
