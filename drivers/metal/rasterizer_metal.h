@@ -585,6 +585,7 @@ protected:
 	RasterizerStorageMetal storage;
 	RasterizerSceneMetal scene;
 
+	void *device;
 public:
 	RasterizerStorage *get_storage();
 	RasterizerCanvas *get_canvas();

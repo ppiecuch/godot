@@ -40,6 +40,7 @@
 #include "servers/visual_server.h"
 
 #import <Metal/Metal.h>
+#import "shaders/_godot_common.h"
 
 struct RasterizerStorageMetal::MetalTexture : public RID_Data {
 	id<MTLTexture> mtl;
@@ -72,7 +73,7 @@ struct RasterizerStorageMetal::MetalMesh : public RID_Data {
 	VS::BlendShapeMode blend_shape_mode;
 };
 
-static MTLStorageMode MetalGetStorageMode(id<MTLResource> resource) {
+static inline MTLStorageMode metal_get_storage_mode(id<MTLResource> resource) {
 	/* iOS 8 does not have this method. */
 	if ([resource respondsToSelector:@selector(storageMode)]) {
 		return resource.storageMode;

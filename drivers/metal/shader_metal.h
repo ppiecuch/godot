@@ -161,7 +161,7 @@ private:
 
 	Version *get_current_version();
 
-	static ShaderMTL *active;
+	static ShaderMetal *active;
 
 	int max_image_units;
 

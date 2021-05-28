@@ -39,6 +39,9 @@
 #include "servers/visual/rasterizer.h"
 #include "servers/visual_server.h"
 
+#import <Metal/Metal.h>
+#import "shaders/_godot_common.h"
+
 /* SHADOW ATLAS API */
 
 RID RasterizerSceneMetal::shadow_atlas_create() {
