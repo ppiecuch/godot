@@ -6,3 +6,4 @@ env.add_source_files(env.drivers_sources, "*.cpp")
 env.add_source_files(env.drivers_sources, "*.mm")
 
 SConscript("shaders/SCsub")
+SConscript("tools/SCsub")

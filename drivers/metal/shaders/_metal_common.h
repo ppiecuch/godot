@@ -57,7 +57,7 @@ float random(float2 p) {
 }
 
 float3 hsv2rgb(float h, float s, float v) {
-	float3 a = fract(h + float3(0.0, 2.0, 1.0)/3.0)*6.0-3.0;
+	float3 a = fract(h + float3(0.0, 2.0, 1.0) / 3.0) * 6.0 - 3.0;
 	a = clamp(abs(a) - 1.0, 0.0, 1.0) - 1.0;
 	a = a * s + 1.0;
 	return a * v;
@@ -92,7 +92,6 @@ float fbm(float2 uv) {
 	return sum;
 }
 
-
 float2 select2(float2 a, float2 b, bool2 c) {
 	float2 ret;
 
@@ -123,7 +122,8 @@ float4 select4(float4 a, float4 b, bool4 c) {
 	return ret;
 }
 
-template<typename T> float4 texel2DFetch(texture2d<T> tex, sampler smp, int2 size, int2 coord) {
+template <typename T>
+float4 texel2DFetch(texture2d<T> tex, sampler smp, int2 size, int2 coord) {
 	float x_coord = float(2 * coord.x + 1) / float(size.x * 2);
 	float y_coord = float(2 * coord.y + 1) / float(size.y * 2);
 
@@ -410,7 +410,8 @@ float3x3 inverse(float3x3 m) {
 
 	return float3x3(c01, (-m[2].z * m[0].y + m[0].z * m[2].y), (m[1].z * m[0].y - m[0].z * m[1].y),
 				   c11, (m[2].z * m[0].x - m[0].z * m[2].x), (-m[1].z * m[0].x + m[0].z * m[1].x),
-				   c21, (-m[2].y * m[0].x + m[0].y * m[2].x), (m[1].y * m[0].x - m[0].y * m[1].x)) * d;
+				   c21, (-m[2].y * m[0].x + m[0].y * m[2].x), (m[1].y * m[0].x - m[0].y * m[1].x)) *
+		   d;
 }
 
 float4x4 inverse(float4x4 m) {

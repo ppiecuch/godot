@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  metal_utils.h                                                        */
+/*  driver_data.h                                                        */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,23 +28,13 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include <algorithm>
-#include <limits>
+#import <Metal/Metal.h>
 
-template <typename T>
-inline constexpr bool is_pow2(T x) {
-	static_assert(std::is_integral<T>::value, "is_pow2 must be called on an integer type.");
-	return (x & (x - 1)) == 0 && (x != 0);
-}
-
-template <typename T>
-T round_up(const T value, const T alignment) {
-	auto temp = value + alignment - static_cast<T>(1);
-	return temp - temp % alignment;
-}
-
-template <typename T>
-constexpr T round_up_pow2(const T value, const T alignment) {
-	assert(is_pow2(alignment));
-	return (value + alignment - 1) & ~(alignment - 1);
-}
+@interface MetalRenderData : NSObject
+@property(nonatomic, retain) id<MTLDevice> mtldevice;
+@property(nonatomic, retain) id<MTLCommandQueue> mtlcmdqueue;
+@property(nonatomic, retain) id<MTLCommandBuffer> mtlcmdbuffer;
+@property(nonatomic, retain) id<MTLRenderCommandEncoder> mtlcmdencoder;
+@property(nonatomic, retain) MTLRenderPassDescriptor *mtlpassdesc;
+@property(nonatomic, assign) int pipelinescount;
+@end

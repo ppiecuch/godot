@@ -11,7 +11,7 @@ from collections import OrderedDict
 
 # Local
 import methods
-import gles_builders
+import gles_builders, metal_builders
 from platform_methods import run_in_subprocess
 
 # scan possible build platforms
@@ -636,6 +636,13 @@ if selected_platform in platform_list:
             BUILDERS={
                 "GLES2_GLSL": env.Builder(
                     action=run_in_subprocess(gles_builders.build_gles2_headers), suffix="glsl.gen.h", src_suffix=".glsl"
+                )
+            }
+        )
+        env.Append(
+            BUILDERS={
+                "METAL_SL": env.Builder(
+                    action=run_in_subprocess(metal_builders.build_metal_headers), suffix="metal.gen.h", src_suffix=".metal"
                 )
             }
         )

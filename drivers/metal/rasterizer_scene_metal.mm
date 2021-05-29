@@ -39,8 +39,8 @@
 #include "servers/visual/rasterizer.h"
 #include "servers/visual_server.h"
 
-#import <Metal/Metal.h>
 #import "shaders/_godot_common.h"
+#import <Metal/Metal.h>
 
 /* SHADOW ATLAS API */
 
@@ -172,15 +172,5 @@ void RasterizerCanvasMetal::draw_window_margins(int *p_margins, RID *p_margin_te
 
 RasterizerCanvasMetal::RasterizerCanvasMetal() {}
 RasterizerCanvasMetal::~RasterizerCanvasMetal() {}
-
-RasterizerStorage *RasterizerMetal::get_storage() {
-	return &storage;
-}
-RasterizerCanvas *RasterizerMetal::get_canvas() {
-	return &canvas;
-}
-RasterizerScene *RasterizerMetal::get_scene() {
-	return &scene;
-}
 
 #endif // METAL_ENABLED

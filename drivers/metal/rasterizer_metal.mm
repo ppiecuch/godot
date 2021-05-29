@@ -32,14 +32,15 @@
 
 #include "rasterizer_metal.h"
 
-#include <Availability.h>
-
 #import <Metal/Metal.h>
 #import <QuartzCore/CAMetalLayer.h>
+#import <TargetConditionals.h>
 
 #ifdef __MACOSX__
 #import <AppKit/NSView.h>
 #endif
+
+#import "driver_data.h"
 
 static inline Error is_metal_available() {
 	// this checks a weak symbol.
@@ -53,12 +54,20 @@ static inline Error is_metal_available() {
 	return OK;
 }
 
+static inline MTLStorageMode metal_get_storage_mode(id<MTLResource> resource) {
+	/* iOS 8 does not have this method. */
+	if ([resource respondsToSelector:@selector(storageMode)]) {
+		return resource.storageMode;
+	}
+	return MTLStorageModeShared;
+}
+
 static id<MTLDevice> get_default_metal_device() {
 	id<MTLDevice> device = MTLCreateSystemDefaultDevice();
 	if (!device) {
 		// check manually for available devices
 		NSArray<id<MTLDevice>> *devices = MTLCopyAllDevices();
-		if(devices) {
+		if (devices) {
 			NSLog(@"   |                                |           | C           C|");
 			NSLog(@"   |                                |           | o    A      a|");
 			NSLog(@"   |                                |           | m    p      t|");
@@ -68,21 +77,21 @@ static id<MTLDevice> get_default_metal_device() {
 			NSLog(@"   |                                |           |12312345671212|");
 			NSLog(@"---+--------------------------------+-----------+--------------+");
 			for (int i = 0; i < devices.count; ++i) {
-				if(devices[i]) {
+				if (devices[i]) {
 					const int FamilyCapsEnums = 14;
-					char family_str[FamilyCapsEnums+1] = "______________";
-if (@available(macOS 10.15, *)) {
-					static MTLGPUFamily family[FamilyCapsEnums] = {MTLGPUFamilyCommon1, MTLGPUFamilyCommon2, MTLGPUFamilyCommon3, MTLGPUFamilyApple1, MTLGPUFamilyApple2, MTLGPUFamilyApple3, MTLGPUFamilyApple4, MTLGPUFamilyApple5, MTLGPUFamilyApple6, MTLGPUFamilyApple7, MTLGPUFamilyMac1, MTLGPUFamilyMac2, MTLGPUFamilyMacCatalyst1, MTLGPUFamilyMacCatalyst2};
-					for (int f = 0; f < FamilyCapsEnums; ++f) {
-						if (family[f] == -1) {
-							family_str[f] = '?';
-						} else if ([devices[i] supportsFamily:family[f]]) {
-							family_str[f] = '.';
-						} else {
-							family_str[f] = ' ';
+					char family_str[FamilyCapsEnums + 1] = "______________";
+					if (@available(macOS 10.15, *)) {
+						static MTLGPUFamily family[FamilyCapsEnums] = { MTLGPUFamilyCommon1, MTLGPUFamilyCommon2, MTLGPUFamilyCommon3, MTLGPUFamilyApple1, MTLGPUFamilyApple2, MTLGPUFamilyApple3, MTLGPUFamilyApple4, MTLGPUFamilyApple5, MTLGPUFamilyApple6, MTLGPUFamilyApple7, MTLGPUFamilyMac1, MTLGPUFamilyMac2, MTLGPUFamilyMacCatalyst1, MTLGPUFamilyMacCatalyst2 };
+						for (int f = 0; f < FamilyCapsEnums; ++f) {
+							if (family[f] == -1) {
+								family_str[f] = '?';
+							} else if ([devices[i] supportsFamily:family[f]]) {
+								family_str[f] = '.';
+							} else {
+								family_str[f] = ' ';
+							}
 						}
 					}
-}
 					if (!device || !devices[i].lowPower) {
 						device = devices[i];
 					}
@@ -94,16 +103,38 @@ if (@available(macOS 10.15, *)) {
 	return device;
 }
 
+RasterizerStorage *RasterizerMetal::get_storage() {
+	return storage;
+}
+RasterizerCanvas *RasterizerMetal::get_canvas() {
+	return canvas;
+}
+RasterizerScene *RasterizerMetal::get_scene() {
+	return scene;
+}
+
+Rasterizer *RasterizerMetal::_create_current() {
+	return memnew(RasterizerMetal);
+}
+
+void RasterizerMetal::make_current() {
+	_create_func = _create_current;
+}
+
 void RasterizerMetal::set_boot_image(const Ref<Image> &p_image, const Color &p_color, bool p_scale, bool p_use_filter) {}
 void RasterizerMetal::set_shader_time_scale(float p_scale) {}
 
 void RasterizerMetal::initialize() {
-	device = get_default_metal_device();
+	id<MTLDevice> device = get_default_metal_device();
 	if (!device) {
 		ERR_PRINT("Cannot create default Metal device - not available or not supported");
 		return;
 	}
+	MetalRenderData *data = [[MetalRenderData alloc] init];
+	data.mtldevice = device;
+	driverdata = (void *)CFBridgingRetain(data);
 }
+
 void RasterizerMetal::begin_frame(double frame_step) {}
 void RasterizerMetal::set_current_render_target(RID p_render_target) {}
 void RasterizerMetal::restore_render_target(bool p_3d_was_drawn) {}
@@ -117,23 +148,64 @@ Error RasterizerMetal::is_viable() {
 	return is_metal_available();
 }
 
-Rasterizer *RasterizerMetal::_create_current() {
-	return memnew(RasterizerMetal);
-}
-
-void RasterizerMetal::make_current() {
-	_create_func = _create_current;
-}
-
 bool RasterizerMetal::is_low_end() const {
 	return true;
 }
 
-const char *gl_check_for_error(bool p_print_error) {
+const char *RasterizerMetal::gl_check_for_error(bool p_print_error) {
 	return nullptr;
 }
 
-RasterizerMetal::RasterizerMetal() {}
-RasterizerMetal::~RasterizerMetal() {}
+Ref<Image> RasterizerMetal::read_pixels(const Rect2 &p_region) {
+	@autoreleasepool {
+		MetalRenderData *data = (__bridge MetalRenderData *)driverdata;
+
+		[data.mtlcmdencoder endEncoding];
+		id<MTLTexture> mtltexture = data.mtlpassdesc.colorAttachments[0].texture;
+
+#ifdef TARGET_OS_MAC
+		/* on macOS with managed-storage textures, we need to tell the driver to
+	* update the CPU-side copy of the texture data.
+	* NOTE: Currently all of our textures are managed on macOS. We'll need some
+	* extra copying for any private textures. */
+		if (metal_get_storage_mode(mtltexture) == MTLStorageModeManaged) {
+			id<MTLBlitCommandEncoder> blit = [data.mtlcmdbuffer blitCommandEncoder];
+			[blit synchronizeResource:mtltexture];
+			[blit endEncoding];
+		}
+#endif
+		/* Commit the current command buffer and wait until it's completed, to make
+	* sure the GPU has finished rendering to it by the time we read it. */
+		[data.mtlcmdbuffer commit];
+		[data.mtlcmdbuffer waitUntilCompleted];
+		data.mtlcmdencoder = nil;
+		data.mtlcmdbuffer = nil;
+
+		MTLRegion mtlregion = MTLRegionMake2D(p_region.position.x, p_region.position.y, p_region.size.width, p_region.size.height);
+		// we only do BGRA8 or RGBA8 at the moment, so 4 will do.
+		const int pitch = p_region.size.width * 4;
+		void *pixels = memalloc(pitch * p_region.size.height);
+		if (!pixels) {
+			ERR_FAIL_V_MSG(Ref<Image>(), "Out of memory");
+		}
+		[mtltexture getBytes:pixels bytesPerRow:pitch fromRegion:mtlregion mipmapLevel:0];
+		Ref<Image> img;
+		// TODO build image from data
+		return img;
+	}
+}
+
+RasterizerMetal::RasterizerMetal() {
+	storage = memnew(RasterizerStorageMetal);
+	canvas = memnew(RasterizerCanvasMetal);
+	scene = memnew(RasterizerSceneMetal);
+	driverdata = nullptr;
+}
+
+RasterizerMetal::~RasterizerMetal() {
+	memdelete(storage);
+	memdelete(canvas);
+	memdelete(scene);
+}
 
 #endif // METAL_ENABLED

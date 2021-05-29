@@ -39,16 +39,23 @@
 #include "servers/visual/rasterizer.h"
 #include "servers/visual_server.h"
 
-#import <Metal/Metal.h>
+#import "driver_data.h"
 #import "shaders/_godot_common.h"
+#import <Metal/Metal.h>
+
+static inline id<MTLDevice> metal_device(void *driverdata) {
+	MetalRenderData *data = (__bridge MetalRenderData *)driverdata;
+	return data.mtldevice;
+}
 
 struct RasterizerStorageMetal::MetalTexture : public RID_Data {
-	id<MTLTexture> mtl;
+	id<MTLTexture> mtltex;
+	MTLTextureDescriptor *mtltexdesc;
 	int width;
 	int height;
 	uint32_t flags;
 	Image::Format format;
-	Ref<Image> image;
+	Vector<Ref<Image>> images;
 	String path;
 	bool active;
 	size_t total_data_size;
@@ -73,18 +80,11 @@ struct RasterizerStorageMetal::MetalMesh : public RID_Data {
 	VS::BlendShapeMode blend_shape_mode;
 };
 
-static inline MTLStorageMode metal_get_storage_mode(id<MTLResource> resource) {
-	/* iOS 8 does not have this method. */
-	if ([resource respondsToSelector:@selector(storageMode)]) {
-		return resource.storageMode;
-	}
-	return MTLStorageModeShared;
-}
-
 RID RasterizerStorageMetal::texture_create() {
 	MetalTexture *texture = memnew(MetalTexture);
 	ERR_FAIL_COND_V(!texture, RID());
-	texture->mtl = nil;
+	texture->mtltex = nil;
+	texture->mtltexdesc = nil;
 	texture->active = false;
 	texture->total_data_size = 0;
 	return texture_owner.make_rid(texture);
@@ -97,19 +97,107 @@ void RasterizerStorageMetal::texture_allocate(RID p_texture, int p_width, int p_
 	t->height = p_height;
 	t->flags = p_flags;
 	t->format = p_format;
-	t->image = Ref<Image>(memnew(Image));
-	t->image->create(p_width, p_height, false, p_format);
+	MTLPixelFormat pixfmt = MTLPixelFormatInvalid;
+	switch (p_format) {
+		case Image::FORMAT_L8: {
+		} break;
+		case Image::FORMAT_LA8: {
+		} break;
+		case Image::FORMAT_R8: {
+			pixfmt = MTLPixelFormatR8Unorm;
+		} break;
+		case Image::FORMAT_RG8: {
+		} break;
+		case Image::FORMAT_RGB8: {
+			pixfmt = MTLPixelFormatRGBA8Unorm;
+		} break;
+		case Image::FORMAT_RGBA8: {
+			pixfmt = MTLPixelFormatRGBA8Unorm;
+		} break;
+		case Image::FORMAT_RGBA4444: {
+		} break;
+		case Image::FORMAT_RGBA5551: {
+		} break;
+		case Image::FORMAT_RF: {
+		} break;
+		case Image::FORMAT_RGF: {
+		} break;
+		case Image::FORMAT_RGBF: {
+		} break;
+		case Image::FORMAT_RGBAF: {
+		} break;
+		case Image::FORMAT_RH: {
+		} break;
+		case Image::FORMAT_RGH: {
+		} break;
+		case Image::FORMAT_RGBH: {
+		} break;
+		case Image::FORMAT_RGBAH: {
+		} break;
+		case Image::FORMAT_RGBE9995: {
+		} break;
+		case Image::FORMAT_DXT1: {
+		} break;
+		case Image::FORMAT_DXT3: {
+		} break;
+		case Image::FORMAT_DXT5: {
+		} break;
+		case Image::FORMAT_RGTC_R: {
+		} break;
+		case Image::FORMAT_RGTC_RG: {
+		} break;
+		case Image::FORMAT_BPTC_RGBA: {
+		} break;
+		case Image::FORMAT_BPTC_RGBF: {
+		} break;
+		case Image::FORMAT_BPTC_RGBFU: {
+		} break;
+		case Image::FORMAT_PVRTC2: {
+		} break;
+		case Image::FORMAT_PVRTC2A: {
+		} break;
+		case Image::FORMAT_PVRTC4: {
+		} break;
+		case Image::FORMAT_PVRTC4A: {
+		} break;
+		case Image::FORMAT_ETC: {
+		} break;
+		case Image::FORMAT_ETC2_R11: {
+		} break;
+		case Image::FORMAT_ETC2_R11S: {
+		} break;
+		case Image::FORMAT_ETC2_RG11: {
+		} break;
+		case Image::FORMAT_ETC2_RG11S: {
+		} break;
+		case Image::FORMAT_ETC2_RGB8: {
+		} break;
+		case Image::FORMAT_ETC2_RGBA8: {
+		} break;
+		case Image::FORMAT_ETC2_RGB8A1: {
+		} break;
+		default: {
+			ERR_FAIL_MSG("Unsupported or unknown texture format");
+		}
+	}
+	t->mtltexdesc = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:pixfmt width:(NSUInteger)p_width height:(NSUInteger)p_height mipmapped:NO];
+	/* Not available in iOS 8. */
+	if ([t->mtltexdesc respondsToSelector:@selector(usage)]) {
+		t->mtltexdesc.usage = MTLTextureUsageShaderRead;
+	}
+	t->mtltex = [metal_device(RasterizerMetal::driverdata) newTextureWithDescriptor:t->mtltexdesc];
+	t->active = true;
 }
-void RasterizerStorageMetal::texture_set_data(RID p_texture, const Ref<Image> &p_image, int p_level) {
+void RasterizerStorageMetal::texture_set_data(RID p_texture, const Ref<Image> &p_image, int p_layer) {
 	MetalTexture *t = texture_owner.getornull(p_texture);
 	ERR_FAIL_COND(!t);
+	ERR_FAIL_COND(!t->active);
 	t->width = p_image->get_width();
 	t->height = p_image->get_height();
 	t->format = p_image->get_format();
-	t->image->create(t->width, t->height, false, t->format, p_image->get_data());
 }
 
-void RasterizerStorageMetal::texture_set_data_partial(RID p_texture, const Ref<Image> &p_image, int src_x, int src_y, int src_w, int src_h, int dst_x, int dst_y, int p_dst_mip, int p_level) {
+void RasterizerStorageMetal::texture_set_data_partial(RID p_texture, const Ref<Image> &p_image, int src_x, int src_y, int src_w, int src_h, int dst_x, int dst_y, int p_dst_mip, int p_layer) {
 	MetalTexture *t = texture_owner.get(p_texture);
 
 	ERR_FAIL_COND(!t);
@@ -118,14 +206,12 @@ void RasterizerStorageMetal::texture_set_data_partial(RID p_texture, const Ref<I
 	ERR_FAIL_COND(src_w <= 0 || src_h <= 0);
 	ERR_FAIL_COND(src_x < 0 || src_y < 0 || src_x + src_w > p_image->get_width() || src_y + src_h > p_image->get_height());
 	ERR_FAIL_COND(dst_x < 0 || dst_y < 0 || dst_x + src_w > t->width || dst_y + src_h > t->height);
-
-	t->image->blit_rect(p_image, Rect2(src_x, src_y, src_w, src_h), Vector2(dst_x, dst_y));
 }
 
-Ref<Image> RasterizerStorageMetal::texture_get_data(RID p_texture, int p_level) const {
+Ref<Image> RasterizerStorageMetal::texture_get_data(RID p_texture, int p_layer) const {
 	MetalTexture *t = texture_owner.getornull(p_texture);
 	ERR_FAIL_COND_V(!t, Ref<Image>());
-	return t->image;
+	return t->images[p_layer];
 }
 void RasterizerStorageMetal::texture_set_flags(RID p_texture, uint32_t p_flags) {
 	MetalTexture *t = texture_owner.getornull(p_texture);

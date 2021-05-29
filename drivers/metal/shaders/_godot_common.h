@@ -49,16 +49,16 @@ typedef enum {
 } IndexSematic;
 
 #ifdef __METAL_VERSION__
-# define __VERTEX_POSITION__ [[position]]
-# define __ATTRIB_POSITION__ [[attribute(VertexPosition)]]
-# define __ATTRIB_NORMAL__   [[attribute(VertexNormal)]]
-# define __ATTRIB_UV__       [[attribute(VertexUV)]]
+#define __VERTEX_POSITION__ [[position]]
+#define __ATTRIB_POSITION__ [[attribute(VertexPosition)]]
+#define __ATTRIB_NORMAL__ [[attribute(VertexNormal)]]
+#define __ATTRIB_UV__ [[attribute(VertexUV)]]
 #else
-# include <simd/simd.h>
-# define __VERTEX_POSITION__
-# define __ATTRIB_POSITION__
-# define __ATTRIB_NORMAL__
-# define __ATTRIB_UV__
+#include <simd/simd.h>
+#define __VERTEX_POSITION__
+#define __ATTRIB_POSITION__
+#define __ATTRIB_NORMAL__
+#define __ATTRIB_UV__
 using namespace simd;
 #endif
 
@@ -93,7 +93,7 @@ typedef struct __attribute__((__aligned__(256))) {
 
 typedef struct __attribute__((__aligned__(256))) {
 	float3 position __ATTRIB_POSITION__;
-	float2 texture  __ATTRIB_UV__;
+	float2 texture __ATTRIB_UV__;
 	float4 color;
 	float4 modulate;
 } attributes_t;

@@ -128,11 +128,11 @@ public:
 	RID texture_create();
 
 	void texture_allocate(RID p_texture, int p_width, int p_height, int p_depth_3d, Image::Format p_format, VisualServer::TextureType p_type = VS::TEXTURE_TYPE_2D, uint32_t p_flags = VS::TEXTURE_FLAGS_DEFAULT);
-	void texture_set_data(RID p_texture, const Ref<Image> &p_image, int p_level);
+	void texture_set_data(RID p_texture, const Ref<Image> &p_image, int p_layer);
 
-	void texture_set_data_partial(RID p_texture, const Ref<Image> &p_image, int src_x, int src_y, int src_w, int src_h, int dst_x, int dst_y, int p_dst_mip, int p_level);
+	void texture_set_data_partial(RID p_texture, const Ref<Image> &p_image, int src_x, int src_y, int src_w, int src_h, int dst_x, int dst_y, int p_dst_mip, int p_layer);
 
-	Ref<Image> texture_get_data(RID p_texture, int p_level) const;
+	Ref<Image> texture_get_data(RID p_texture, int p_layer) const;
 	void texture_set_flags(RID p_texture, uint32_t p_flags);
 	uint32_t texture_get_flags(RID p_texture) const;
 	Image::Format texture_get_format(RID p_texture) const;
@@ -551,8 +551,6 @@ public:
 	String get_video_adapter_name() const;
 	String get_video_adapter_vendor() const;
 
-	static RasterizerStorage *base_singleton;
-
 	RasterizerStorageMetal();
 	~RasterizerStorageMetal();
 };
@@ -581,11 +579,10 @@ public:
 
 class RasterizerMetal : public Rasterizer {
 protected:
-	RasterizerCanvasMetal canvas;
-	RasterizerStorageMetal storage;
-	RasterizerSceneMetal scene;
+	RasterizerCanvasMetal *canvas;
+	RasterizerStorageMetal *storage;
+	RasterizerSceneMetal *scene;
 
-	void *device;
 public:
 	RasterizerStorage *get_storage();
 	RasterizerCanvas *get_canvas();
@@ -604,15 +601,18 @@ public:
 	void end_frame(bool p_swap_buffers);
 	void finalize();
 
+	Ref<Image> read_pixels(const Rect2 &p_region);
+
 	static Error is_viable();
 
 	static Rasterizer *_create_current();
-
 	static void make_current();
 
 	bool is_low_end() const;
 
 	const char *gl_check_for_error(bool p_print_error = true);
+
+	static void *driverdata;
 
 	RasterizerMetal();
 	~RasterizerMetal();
