@@ -2734,7 +2734,7 @@ void OS_OSX::_update_window() {
 		[window_object setHidesOnDeactivate:YES];
 	} else {
 		// Reset these when our window is not a borderless window that covers up the screen
-		if (on_top & !zoomed) {
+		if (on_top && !zoomed) {
 			[window_object setLevel:NSFloatingWindowLevel];
 		} else {
 			[window_object setLevel:NSNormalWindowLevel];
@@ -3524,6 +3524,7 @@ OS_OSX *OS_OSX::singleton = NULL;
 OS_OSX::OS_OSX() {
 	context = nullptr;
 
+	on_top = false;
 	memset(cursors, 0, sizeof(cursors));
 	key_event_pos = 0;
 	mouse_mode = OS::MOUSE_MODE_VISIBLE;
