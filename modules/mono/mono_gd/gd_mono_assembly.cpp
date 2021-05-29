@@ -144,7 +144,7 @@ MonoAssembly *GDMonoAssembly::_search_hook(MonoAssemblyName *aname, void *user_d
 
 MonoAssembly *GDMonoAssembly::_preload_hook(MonoAssemblyName *aname, char **, void *user_data, bool refonly) {
 	String name = String::utf8(mono_assembly_name_get_name(aname));
-	return _load_assembly_search(name, search_dirs, refonly);
+	return _load_assembly_search(name, refonly, search_dirs);
 }
 
 MonoAssembly *GDMonoAssembly::_load_assembly_search(const String &p_name, bool p_refonly, const Vector<String> &p_search_dirs) {
@@ -417,7 +417,7 @@ GDMonoAssembly *GDMonoAssembly::load(const String &p_name, MonoAssemblyName *p_a
 	MonoAssembly *assembly = mono_assembly_invoke_search_hook(p_aname);
 
 	if (!assembly) {
-		assembly = _load_assembly_search(p_name, p_search_dirs, p_refonly);
+		assembly = _load_assembly_search(p_name, p_refonly, p_search_dirs);
 		if (!assembly) {
 			return nullptr;
 		}
