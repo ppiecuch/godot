@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  vitasdk_libc.cpp                                                     */
+/*  shader_compiler.cpp                                                  */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,67 +28,56 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include <core/error_macros.h>
+// See the original implementation: https://code.google.com/p/nya-engine/
 
-#include <errno.h>
-#include <stdlib.h>
-#include <sys/types.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <string.h>
 
-#include <psp2/io/stat.h>
+#include "shader_code_parser.h"
 
-#define R_OK 0
-#define R_ERR -1
+const char *help = "Usage: shader_compiler %%mode%%\n"
+				   "accepts shader's code from stdin\n"
+				   "stderr output begins with Error: if something goes wrong\n"
+				   "outputs shader text to stdout\n"
+				   "modes:\n"
+				   "glsl2hlsl - converts glsl shader to hlsl\n"
+				   "\n";
 
-extern "C" char *getcwd(char *path, size_t path_size) {
-	char *buf = path;
-	if (buf == NULL) {
-		buf = (char *)malloc(1);
-		path_size = 1;
+int main(int argc, char *argv[]) {
+	if (argc < 2) {
+		fprintf(stderr, "[Error] No arguments\n");
+		printf("%s", help);
+		return 0;
 	}
-	if (buf == NULL)
-		return NULL;
-	if (path_size < 1)
-		return NULL;
-	*buf = 0;
-	return buf;
-}
 
-extern "C" int chmod(const char *path, mode_t mode) {
-	WARN_PRINT("chmod unsupported");
-	return R_ERR;
-}
+#ifndef __APPLE__
+	setmode(fileno(stdout), O_BINARY);
+	setmode(fileno(stdin), O_BINARY);
+#endif
 
-extern "C" int fchmod(int fdes, mode_t mode) {
-	return R_OK;
-}
+	std::string shader_code;
+	char buf[512];
+	for (size_t size = fread(buf, 1, sizeof(buf), stdin); size > 0; size = fread(buf, 1, sizeof(buf), stdin))
+		shader_code.append(buf, size);
 
-extern "C" int mkdir(const char *path, mode_t mode) {
-	if (!sceIoMkdir(path, mode)) {
-		WARN_PRINT("sceIoMkdir failed");
-		return R_ERR;
+	if (shader_code.empty()) {
+		fprintf(stderr, "[Error] Empty stdin\n");
+		printf("%s", help);
+		return 0;
 	}
-	return R_OK;
-}
 
-extern "C" int rmdir(const char *path) {
-	if (!sceIoRmdir(path)) {
-		WARN_PRINT("sceIoRmdir failed");
-		return R_ERR;
+	if (strcmp(argv[1], "glsl2hlsl") == 0) {
+		shader_code_parser parser(shader_code.c_str(), "_gl_", "_flip_y_");
+		if (!parser.convert_to_hlsl()) {
+			fprintf(stderr, "[Error] Cannot convert to hlsl: %s", parser.get_error());
+			return -1;
+		}
+
+		printf("%s", parser.get_code());
+		return 0;
 	}
-	return R_OK;
-}
 
-extern "C" int chdir(const char *path) {
-	WARN_PRINT("chdir unsupported");
-	return R_ERR;
-}
-
-extern "C" ssize_t readlink(const char *path, char *buf, size_t bufsize) {
-	WARN_PRINT("readlink unsupported");
-	return 0;
-}
-
-extern "C" int symlink(const char *path1, const char *path2) {
-	WARN_PRINT("symlink unsupported");
-	return R_ERR;
+	fprintf(stderr, "[Error] Invalid compile mode: %s\n", argv[1]);
+	return -1;
 }

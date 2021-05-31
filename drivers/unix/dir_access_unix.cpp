@@ -41,6 +41,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef PSVITA_ENABLED
+#include <sys/stat.h>
+#define lstat stat
+#endif
+
 #if !defined(ANDROID_ENABLED) && !defined(NO_STATVFS)
 #include <sys/statvfs.h>
 #endif

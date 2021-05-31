@@ -1,4 +1,6 @@
 import os, version, errno, sys, subprocess, platform
+import cg_builders
+from platform_methods import run_in_subprocess
 
 if version.major > 2:
 	yes = True
@@ -119,6 +121,14 @@ def configure(env):
 			env.Append(CCFLAGS=["-g2"])
 	elif env["target"] == "debug":
 		env.Append(CCFLAGS=["-g2", "-Wall", "-DDEBUG_ENABLED", "-DDEBUG_MEMORY_ENABLED"])
+
+	env.Append(
+		BUILDERS={
+			"GLES2_TO_CG": env.Builder(
+				action=run_in_subprocess(cg_builders.build_cg_headers), suffix="cg.gen.h", src_suffix=".glsl"
+			)
+		}
+	)
 
 	env.Append(
 		CPPDEFINES=[

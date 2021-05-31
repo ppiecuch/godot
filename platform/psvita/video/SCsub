@@ -1,3 +1,9 @@
 Import("env")
 
+# need to build tools first as they will be used in shader builders later
+# (not sure if this is the right ways to force building)
+# TODO: check correct Windows version
+env.Execute(Action("cd tools && scons -Qf tools.scons"))
+
 SConscript("scepiglet/SCsub")
+SConscript("shaders/SCsub")

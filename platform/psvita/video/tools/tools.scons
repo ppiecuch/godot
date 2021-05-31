@@ -1,0 +1,10 @@
+import sys
+
+# this is a host-only tool and does not require any special
+# build settings
+# TODO build for windows with msvc
+if sys.platform == "darwin" or sys.platform == "linux":
+	env_app = Environment()
+	env_app.Replace(CXX = "g++")
+	env_app.Replace(CXXFLAGS = "")
+	env_app.Program("shader_compiler", ["shader_code_parser.cpp", "shader_compiler.cpp"])

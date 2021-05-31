@@ -1,0 +1,14 @@
+#!/usr/bin/env python
+
+Import("env")
+
+if "GLES2_TO_CG" in env["BUILDERS"]:
+    env.GLES2_TO_CG("#drivers/gles2/shaders/copy.glsl")
+    env.GLES2_TO_CG("#drivers/gles2/shaders/canvas.glsl")
+    env.GLES2_TO_CG("#drivers/gles2/shaders/canvas_shadow.glsl")
+    env.GLES2_TO_CG("#drivers/gles2/shaders/scene.glsl")
+    env.GLES2_TO_CG("#drivers/gles2/shaders/cubemap_filter.glsl")
+    env.GLES2_TO_CG("#drivers/gles2/shaders/cube_to_dp.glsl")
+    env.GLES2_TO_CG("#drivers/gles2/shaders/effect_blur.glsl")
+    env.GLES2_TO_CG("#drivers/gles2/shaders/tonemap.glsl")
+    env.GLES2_TO_CG("#drivers/gles2/shaders/lens_distorted.glsl")
