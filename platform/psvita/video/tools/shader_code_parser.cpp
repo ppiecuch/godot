@@ -52,6 +52,8 @@ bool shader_code_parser::convert_to_hlsl() {
 	m_uniforms.clear();
 	m_attributes.clear();
 
+	std::string prefix = "#define CG 1\n#define USE_GLES_OVER_CG 1\n\n";
+
 	parse_predefined_uniforms(m_replace_str.c_str(), true);
 	if (!m_uniforms.empty()) {
 		std::sort(m_uniforms.begin(), m_uniforms.end());
@@ -88,6 +90,7 @@ bool shader_code_parser::convert_to_hlsl() {
 		prefix.append("float4 " + replace_constructor + "4(float4 a){return a;}\n");
 	}
 
+	replace_precision();
 	replace_hlsl_mul("mul");
 	replace_hlsl_types();
 
@@ -106,7 +109,7 @@ bool shader_code_parser::convert_to_hlsl() {
 		const char *types[] = { "Texture2D", "TextureCube" };
 
 		char buf[512];
-		sprintf(buf, "%s %s: register(t%d); SamplerState %s_nya_st: register(s%d);\n",
+		sprintf(buf, "%s %s: register(t%d); SamplerState %s__st: register(s%d);\n",
 				types[v.type - type_sampler2d], v.name.c_str(), samplers_count, v.name.c_str(), samplers_count);
 		prefix.append(buf);
 		++samplers_count;
@@ -624,6 +627,18 @@ bool shader_code_parser::parse_attributes(const char *info_replace_str, const ch
 }
 
 bool shader_code_parser::replace_hlsl_types() {
+	replace_variable("highp vec2", "float2");
+	replace_variable("highp vec3", "float3");
+	replace_variable("highp vec4", "float4");
+	replace_variable("mediump vec2", "half2");
+	replace_variable("mediump vec3", "half3");
+	replace_variable("mediump vec4", "half4");
+	replace_variable("lowp vec2", "fixed2");
+	replace_variable("lowp vec3", "fixed3");
+	replace_variable("lowp vec4", "fixed4");
+	replace_variable("highp float", "float");
+	replace_variable("mediump float", "half");
+	replace_variable("lowp float", "fixed");
 	replace_variable("vec2", "float2");
 	replace_variable("vec3", "float3");
 	replace_variable("vec4", "float4");
@@ -910,6 +925,55 @@ bool shader_code_parser::replace_variable(const char *from, const char *to, size
 	}
 
 	return result;
+}
+#define float half
+#define float2 half2
+#define float3 half3
+#define float4 half4
+#define float3x3 half3x3
+#define float4x4 half4x4
+#define float4x3 half4x3
+
+bool shader_code_parser::replace_precision() {
+	size_t i = 0;
+	const char *str = "precision ";
+	const size_t str_len = strlen(str);
+	while ((i = m_code.find(str, i)) != std::string::npos) {
+		size_t prec_from = i + str_len;
+		while (m_code[prec_from] <= ' ')
+			if (++prec_from >= m_code.length())
+				return false;
+		size_t prec_to = prec_from;
+		while (m_code[prec_to] > ' ')
+			if (++prec_to >= m_code.length())
+				return false;
+
+		size_t type_from = prec_to + 1;
+		while (m_code[type_from] <= ' ')
+			if (++type_from >= m_code.length())
+				return false;
+		size_t type_to = type_from;
+		while (m_code[type_to] > ' ' && m_code[type_to] != ';')
+			if (++type_to >= m_code.length())
+				return false;
+
+		const std::string precision = m_code.substr(prec_from, prec_to - prec_from);
+		const std::string type_name = m_code.substr(type_from, type_to - type_from);
+
+		m_code.erase(i, type_to - i + 1);
+		std::string ins;
+		if (precision == "highp")
+			ins = "//{default precision for "+type_name+" type}";
+		else if (precision == "mediump")
+			ins = "//{medium precision for "+type_name+" type}";
+		else if (precision == "lowp")
+			ins = "//{low precision for "+type_name+" type}";
+		if (!ins.empty()) {
+			m_code.insert(i, ins);
+			i += ins.length();
+		}
+	}
+	return true;
 }
 
 bool shader_code_parser::find_variable(const char *str, size_t start_pos) {

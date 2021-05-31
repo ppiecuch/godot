@@ -7,6 +7,8 @@ import errno
 from subprocess import Popen, PIPE, STDOUT
 from platform_methods import subprocess_main
 
+excluded_cond = ["GL_ES"]
+
 def runexe(exe, **kwargs):
 	try:
 		p = Popen(exe, stdout=PIPE, stdin=PIPE, stderr=STDOUT)
@@ -87,7 +89,8 @@ def include_file_in_legacygl_header(filename, header_data, depth):
 					header_data.enums[enumbase].append(ifdefline)
 
 			elif not ifdefline in header_data.conditionals:
-				header_data.conditionals += [ifdefline]
+				if not ifdefline in excluded_cond:
+					header_data.conditionals += [ifdefline]
 
 		if line.find("uniform") != -1 and line.lower().find("texunit:") != -1:
 			# texture unit

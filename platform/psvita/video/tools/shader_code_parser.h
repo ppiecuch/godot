@@ -106,6 +106,7 @@ private:
 	bool replace_hlsl_types();
 	bool replace_hlsl_mul(const char *func_name);
 	bool replace_variable(const char *from, const char *to, size_t start_pos = 0);
+	bool replace_precision();
 	bool find_variable(const char *str, size_t start_pos = 0);
 
 private:
