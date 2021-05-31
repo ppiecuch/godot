@@ -179,7 +179,7 @@ void DestructibleSprite::_initiate_detonation(uint64_t object_id) {
 	const explo_object_t &object = *_simulations[object_id];
 
 	// add blocks childeren
-	for (int i = 0; i < object.blocks.size(); i++) {
+	for (size_t i = 0; i < object.blocks.size(); i++) {
 		object.blocks_container->add_child(object.blocks[i], true);
 	}
 
