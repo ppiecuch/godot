@@ -48,18 +48,18 @@ typedef enum {
 	TextureShadow = 6,
 } IndexSematic;
 
+#include <simd/simd.h>
+
 #ifdef __METAL_VERSION__
 #define __VERTEX_POSITION__ [[position]]
 #define __ATTRIB_POSITION__ [[attribute(VertexPosition)]]
 #define __ATTRIB_NORMAL__ [[attribute(VertexNormal)]]
 #define __ATTRIB_UV__ [[attribute(VertexUV)]]
 #else
-#include <simd/simd.h>
 #define __VERTEX_POSITION__
 #define __ATTRIB_POSITION__
 #define __ATTRIB_NORMAL__
 #define __ATTRIB_UV__
-using namespace simd;
 #endif
 
 // Reference:
@@ -69,12 +69,12 @@ using namespace simd;
 // 3. https://stackoverflow.com/questions/51790490/explaining-the-different-types-in-metal-and-simd
 
 typedef struct __attribute__((__aligned__(256))) {
-	simd_float4x4 light_matrix;
-	simd_float4x4 local_matrix;
-	simd_float4x4 shadow_matrix;
-	float4 color;
-	float4 shadow_color;
-	float2 light_pos;
+	simd::float4x4 light_matrix;
+	simd::float4x4 local_matrix;
+	simd::float4x4 shadow_matrix;
+	simd::float4 color;
+	simd::float4 shadow_color;
+	simd::float2 light_pos;
 	float shadowpixel_size;
 	float shadow_gradient;
 	float light_height;
@@ -83,19 +83,19 @@ typedef struct __attribute__((__aligned__(256))) {
 } uniforms_t;
 
 typedef struct __attribute__((__aligned__(256))) {
-	simd_float4x4 modelview_matrix;
-	simd_float4x4 extra_matrix;
-	simd_float4x4 world_matrix;
-	simd_float4x4 inv_world_matrix;
-	simd_float4x4 projection_matrix;
+	simd::float4x4 modelview_matrix;
+	simd::float4x4 extra_matrix;
+	simd::float4x4 world_matrix;
+	simd::float4x4 inv_world_matrix;
+	simd::float4x4 projection_matrix;
 	float time;
 } canvas_item_uniforms_t;
 
 typedef struct __attribute__((__aligned__(256))) {
-	float3 position __ATTRIB_POSITION__;
-	float2 texture __ATTRIB_UV__;
-	float4 color;
-	float4 modulate;
+	simd::float3 position __ATTRIB_POSITION__;
+	simd::float2 texture __ATTRIB_UV__;
+	simd::float4 color;
+	simd::float4 modulate;
 } attributes_t;
 
 #endif /* METAL_GODOT_COMMON_H */
