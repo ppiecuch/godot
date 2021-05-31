@@ -25,7 +25,7 @@ SConscript("winmidi/SCsub")
 # Graphics drivers
 if env["platform"] != "3ds" and env["platform"] != "psp":
     if env["platform"] != "server":
-        if env["platform"] != "psvita" and env["platform"] != "frt":
+        if env["platform"] != "psvita":
             SConscript("gles3/SCsub")
         SConscript("gles2/SCsub")
         SConscript("gles_common/SCsub")
