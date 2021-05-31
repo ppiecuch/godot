@@ -963,11 +963,11 @@ bool shader_code_parser::replace_precision() {
 		m_code.erase(i, type_to - i + 1);
 		std::string ins;
 		if (precision == "highp")
-			ins = "//{default precision for "+type_name+" type}";
+			ins = "//{default precision for " + type_name + " type}";
 		else if (precision == "mediump")
-			ins = "//{medium precision for "+type_name+" type}";
+			ins = "//{medium precision for " + type_name + " type}";
 		else if (precision == "lowp")
-			ins = "//{low precision for "+type_name+" type}";
+			ins = "//{low precision for " + type_name + " type}";
 		if (!ins.empty()) {
 			m_code.insert(i, ins);
 			i += ins.length();
