@@ -52,9 +52,9 @@ public:
 		DestructionTypeCount,
 	};
 	enum DestructionPhysics {
-		DESTRUCTION_PHYSICS_OFF,      // simple particles
+		DESTRUCTION_PHYSICS_OFF, // simple particles
 		DESTRUCTION_PHYSICS_STANDARD, //< debris are quad shapes
-		DESTRUCTION_PHYSICS_HIGH,     //< debris are polygon shapes
+		DESTRUCTION_PHYSICS_HIGH, //< debris are polygon shapes
 		DestructionPhysicsCount,
 	};
 
@@ -69,20 +69,18 @@ private:
 	int collision_layers;
 	int collision_masks;
 	bool collision_one_way;
-	bool explosion_delay;
-	String fake_explosions_group = "fake_explosion_particles";
 	bool randomize_seed;
 	bool random_depth;
 	bool debug_mode;
 
-	bool _simulate(explo_object_t &object, real_t delta);
-	void _explosion(real_t delta, explo_object_t &object);
-	void _detonate(explo_object_t &object);
-	void _setup(explo_object_t &object);
-
-	void _add_children(uint64_t object_id);
+	void _prepare_detonation(explo_object_t &object);
+	void _initiate_detonation(uint64_t object_id);
 	void _on_debris_timer_timeout(uint64_t object_id);
+	void _on_opacity_tween_completed(Object *obj, String key);
 
+	void _simulate_particles(explo_object_t &object, real_t delta);
+
+	bool _reset_at_end;
 	std::map<uint64_t, explo_object_t *> _simulations;
 
 public:
@@ -106,8 +104,6 @@ public:
 	int get_collision_masks() const { return collision_masks; }
 	void set_collision_one_way(bool p_collision_one_way);
 	bool get_collision_one_way() const { return collision_one_way; }
-	void set_explosion_delay(bool p_explosion_delay);
-	bool get_explosion_delay() const { return explosion_delay; }
 	void set_randomize_seed(bool p_randomize_seed);
 	bool get_randomize_seed() const { return randomize_seed; }
 	void set_debug_mode(bool p_debug_mode);
@@ -116,6 +112,7 @@ public:
 	bool is_active_explosions();
 	int explosions_in_progress();
 	void explode(real_t delay);
+	void reset();
 
 	DestructibleSprite();
 	~DestructibleSprite();
