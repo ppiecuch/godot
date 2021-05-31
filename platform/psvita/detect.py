@@ -58,7 +58,7 @@ def checkexe(exe):
 	try:
 		output = subprocess.check_output(exe).strip().splitlines()
 		for ln in output:
-			print("> " + ln)
+			print("> " + str(ln))
 	except OSError as e:
 		if e.errno == errno.ENOENT:
 			return False
