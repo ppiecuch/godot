@@ -30,6 +30,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #include "core/io/json.h"
 #include "core/math/math_funcs.h"
@@ -48,6 +49,10 @@
 // https://github.com/pyvista/pyvista-support/issues/20 (Project points/surface to a plane)
 // https://github.com/patrikhuber/eos/issues/140
 // * https://gamedev.stackexchange.com/questions/10261/android-collision-detection-of-a-3d-object-based-on-a-2d-projection
+// https://github.com/Huangtingting93/Trace_outline/blob/main/trace_outline.py
+// * https://www.h3xed.com/programming/create-2d-mesh-outline-in-unity-silhouette
+// https://stackoverflow.com/questions/62748136/how-to-get-outer-edges-of-a-mesh-edges-which-are-part-of-only-one-triangle
+
 
 #define get_mesh_surf_info(mesh) \
 	((Dictionary)(mesh->has_meta("_mesh_surf_info") ? (Dictionary)mesh->get_meta("_mesh_surf_info") : Dictionary()))
@@ -89,6 +94,56 @@ bool SpriteMesh::_edit_use_rect() const {
 	return mesh.is_valid();
 }
 #endif
+
+void SpriteMesh::_update_mesh_outline(const PoolVector3Array &p_vertices, const PoolIntArray &p_triangles) {
+	// Get just the outer edges from the mesh's triangles (ignore or remove any shared edges)
+	typedef std::pair<int, int> index_pair_t;
+	std::map<index_pair_t, index_pair_t> edges;
+	for (int i = 0; i < p_triangles.size() - 1; i += 3) {
+		for (int e = 0; e < 3; e++) {
+			const int vert1 = p_triangles[i + e];
+			const int vert2 = p_triangles[i + e + 1 > i + 2 ? i : i + e + 1];
+			const auto &edge = index_pair_t(MIN(vert1, vert2), MAX(vert1, vert2));
+			if (edges.count(edge)) {
+				edges.erase(edge); // shared edge
+			} else {
+				edges[edge] = index_pair_t(vert1, vert2);
+			}
+		}
+	}
+
+	// Create edge lookup Dictionary
+	std::map<int, int> lookup;
+	for(const auto &edge : edges) {
+		// const auto &key = edge.first;
+		const auto &value = edge.second;
+		if (lookup.count(value.first) == 0) {
+			lookup[value.first] = value.second;
+		}
+	}
+
+	mesh_outline.clear();
+
+	int start_vert = 0;
+	int next_vert = start_vert;
+	int highest_vert = start_vert;
+	while (true) { // loop through edge vertices in order
+		mesh_outline.push_back(Vector2(p_vertices[next_vert].x, p_vertices[next_vert].y));
+		next_vert = lookup[next_vert]; // get next vertex
+		if (next_vert > highest_vert) { // store highest vertex (to know what shape to move to next)
+			highest_vert = next_vert;
+		}
+		if (next_vert == start_vert) { // shape complete
+			mesh_outline.push_back(Vector2(p_vertices[next_vert].x, p_vertices[next_vert].y)); // finish this shape's line
+			if (lookup.count(highest_vert + 1)) { // go to next shape if one exists
+				start_vert = highest_vert + 1; // set starting and next vertices
+				next_vert = start_vert;
+				continue; // continue to next loop
+			}
+			break; // no more verts
+		}
+	}
+}
 
 void SpriteMesh::_update_mesh_xform() {
 	if (mesh.is_valid() && !_mesh_data.empty()) {
@@ -135,6 +190,9 @@ void SpriteMesh::_notification(int p_what) {
 			draw_mesh(mesh, texture, normal_map, mask, xform);
 			if (_mesh_debug) {
 				draw_rect(Rect2(ofs, s), Color::named("yellow"), false);
+				if (mesh_outline.size()) {
+					draw_polyline(mesh_outline, Color::named("magenta"));
+				}
 			}
 		}
 	}

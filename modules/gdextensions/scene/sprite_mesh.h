@@ -48,6 +48,8 @@ private:
 	Vector3 mesh_angle;
 	Vector3 mesh_scale;
 
+	Vector<Vector2> mesh_outline;
+
 	bool centered;
 	Point2 offset;
 
@@ -106,6 +108,7 @@ public:
 	virtual bool _edit_use_rect() const;
 #endif
 
+	void _update_mesh_outline(const PoolVector3Array &p_vertices, const PoolIntArray &p_triangles);
 	void _update_xform_values();
 	void _update_mesh_xform();
 	void _update_transform();
