@@ -207,6 +207,7 @@ void DestructibleSprite::_initiate_detonation(uint64_t object_id) {
 			const real_t block_scale = Math::random(0.5, 1.2);
 			if (Sprite *sprite = Object::cast_to<Sprite>(block)) {
 				sprite->set_scale(Vector2(block_scale, block_scale));
+				sprite->set_meta("scale", block_scale);
 			}
 			if (random_depth) {
 				block->set_z_index(Math::randf() < 0.5 ? 0 : -1);
@@ -397,6 +398,13 @@ void DestructibleSprite::_simulate_particles(explo_object_t &object, real_t delt
 				// fade out the particles
 				Color c = block->get_modulate();
 				if (c.a > 0) {
+					if (blocks_fade_size) {
+						if (Sprite *sprite = Object::cast_to<Sprite>(block)) {
+							const real_t scale = block->get_meta("scale");
+							const real_t block_scale = scale * MAX(0.4, c.a) * MAX(0.4, c.a);
+							sprite->set_scale(Size2(block_scale, block_scale));
+						}
+					}
 					c.a -= delta;
 				}
 				if (c.a < 0) {
@@ -440,6 +448,10 @@ void DestructibleSprite::set_blocks_impulse(real_t p_blocks_impulse) {
 
 void DestructibleSprite::set_blocks_gravity_scale(real_t p_blocks_gravity_scale) {
 	blocks_gravity_scale = p_blocks_gravity_scale;
+}
+
+void DestructibleSprite::set_blocks_fade_size(bool p_blocks_fade_size) {
+	blocks_fade_size = p_blocks_fade_size;
 }
 
 void DestructibleSprite::set_debris_max_time(real_t p_debris_max_time) {
@@ -574,6 +586,8 @@ void DestructibleSprite::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_blocks_impulse"), &DestructibleSprite::get_blocks_impulse);
 	ClassDB::bind_method(D_METHOD("set_blocks_gravity_scale", "scale"), &DestructibleSprite::set_blocks_gravity_scale);
 	ClassDB::bind_method(D_METHOD("get_blocks_gravity_scale"), &DestructibleSprite::get_blocks_gravity_scale);
+	ClassDB::bind_method(D_METHOD("set_blocks_fade_size", "fade"), &DestructibleSprite::set_blocks_fade_size);
+	ClassDB::bind_method(D_METHOD("is_blocks_fade_size"), &DestructibleSprite::is_blocks_fade_size);
 	ClassDB::bind_method(D_METHOD("set_debris_max_time", "max_time"), &DestructibleSprite::set_debris_max_time);
 	ClassDB::bind_method(D_METHOD("get_debris_max_time"), &DestructibleSprite::get_debris_max_time);
 	ClassDB::bind_method(D_METHOD("set_remove_debris", "remove_debris"), &DestructibleSprite::set_remove_debris);
@@ -603,6 +617,7 @@ void DestructibleSprite::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "blocks_per_side"), "set_blocks_per_side", "get_blocks_per_side");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "blocks_impulse", PROPERTY_HINT_RANGE, "0,1000,50"), "set_blocks_impulse", "get_blocks_impulse");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "blocks_gravity_scale"), "set_blocks_gravity_scale", "get_blocks_gravity_scale");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "blocks_fade_size"), "set_blocks_fade_size", "is_blocks_fade_size");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "debris_max_time"), "set_debris_max_time", "get_debris_max_time");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "remove_debris"), "set_remove_debris", "get_remove_debris");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "collision_layers"), "set_collision_layers", "get_collision_layers");
@@ -619,6 +634,7 @@ DestructibleSprite::DestructibleSprite() {
 	blocks_per_side = 6;
 	blocks_impulse = 600;
 	blocks_gravity_scale = 10;
+	blocks_fade_size = true;
 	debris_max_time = 5;
 	remove_debris = false;
 	collision_layers = 1;
