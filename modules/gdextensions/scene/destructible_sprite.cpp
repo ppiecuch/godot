@@ -218,7 +218,7 @@ void DestructibleSprite::_initiate_detonation(uint64_t object_id) {
 				const real_t child_gravity_scale = object.blocks_gravity_scale;
 				body->set_gravity_scale(child_gravity_scale);
 
-				const real_t block_scale = Math::random(0.5, 1.5);
+				const real_t block_scale = Math::random(0.5, 0.8);
 				if (Sprite *sprite = _safe_sprite(body->get_child(0))) {
 					sprite->set_scale(Vector2(block_scale, block_scale));
 					// color
@@ -247,7 +247,7 @@ void DestructibleSprite::_initiate_detonation(uint64_t object_id) {
 				}
 				body->set_mode(RigidBody2D::MODE_RIGID);
 				// trigger impulse
-				//body->apply_central_impulse(Vector2(Math::random(-object.blocks_impulse, object.blocks_impulse), -object.blocks_impulse));
+				body->apply_central_impulse(Vector2(Math::random(-object.blocks_impulse, object.blocks_impulse), -object.blocks_impulse));
 			} else {
 				WARN_PRINT("Block should be RigidBody2D, not a " + block->get_class());
 			}
@@ -366,9 +366,6 @@ void DestructibleSprite::_prepare_detonation(explo_object_t &object) {
 	for (int y = 0; y < object_vframes; y++) {
 		for (int x = 0; x < object_hframes; x++) {
 			Vector2 position = Vector2(x, y) * cell - object_offset;
-			if (object.destruction_physics != DESTRUCTION_PHYSICS_OFF) {
-				position += object.collision_extents;
-			}
 			object.blocks[object_frame]->set_position(position);
 			if (debug_mode) {
 				DEBUG_PRINT(vformat("  block %d position: %s", object_frame, position));
