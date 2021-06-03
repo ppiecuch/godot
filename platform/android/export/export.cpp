@@ -855,7 +855,8 @@ class EditorExportPlatformAndroid : public EditorExportPlatform {
 		int version_code = p_preset->get("version/code");
 		String package_name = p_preset->get("package/unique_name");
 
-		const int screen_orientation = _get_android_orientation_value(_get_screen_orientation());
+		const int screen_orientation = _get_android_orientation_value(
+				OS::get_singleton()->get_screen_orientation_from_string(GLOBAL_GET("display/window/handheld/orientation")));
 
 		bool min_gles3 = ProjectSettings::get_singleton()->get("rendering/quality/driver/driver_name") == "GLES3" &&
 						 !ProjectSettings::get_singleton()->get("rendering/quality/driver/fallback_to_gles2");
@@ -866,6 +867,8 @@ class EditorExportPlatformAndroid : public EditorExportPlatform {
 
 		int xr_mode_index = p_preset->get("xr_features/xr_mode");
 		bool focus_awareness = p_preset->get("xr_features/focus_awareness");
+
+		bool backup_allowed = p_preset->get("user_data_backup/allow");
 
 		Vector<String> perms;
 		// Write permissions into the perms variable.
@@ -963,6 +966,10 @@ class EditorExportPlatformAndroid : public EditorExportPlatform {
 
 						if (tname == "application" && attrname == "requestLegacyExternalStorage") {
 							encode_uint32(has_storage_permission ? 0xFFFFFFFF : 0, &p_manifest.write[iofs + 16]);
+						}
+
+						if (tname == "application" && attrname == "allowBackup") {
+							encode_uint32(backup_allowed, &p_manifest.write[iofs + 16]);
 						}
 
 						if (tname == "instrumentation" && attrname == "targetPackage") {
@@ -1737,6 +1744,8 @@ public:
 		r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "screen/support_normal"), true));
 		r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "screen/support_large"), true));
 		r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "screen/support_xlarge"), true));
+
+		r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "user_data_backup/allow"), false));
 
 		r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "command_line/extra_args"), ""));
 
