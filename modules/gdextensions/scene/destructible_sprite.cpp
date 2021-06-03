@@ -204,12 +204,12 @@ void DestructibleSprite::_initiate_detonation(uint64_t object_id) {
 	// initiate blocks
 	if (object.destruction_physics == DESTRUCTION_PHYSICS_OFF) {
 		for (auto *block : object.blocks) {
-			const real_t block_scale = Math::random(0.5, 1.2);
+			const real_t block_scale = blocks_fade_size ?  Math::random(0.8, 1.2) : Math::random(0.6, 1.0);
 			if (Sprite *sprite = Object::cast_to<Sprite>(block)) {
 				sprite->set_scale(Vector2(block_scale, block_scale));
 				sprite->set_meta("scale", block_scale);
 			}
-			if (random_depth) {
+			if (blocks_random_depth) {
 				block->set_z_index(Math::randf() < 0.5 ? 0 : -1);
 			}
 		}
@@ -219,9 +219,10 @@ void DestructibleSprite::_initiate_detonation(uint64_t object_id) {
 				const real_t child_gravity_scale = object.blocks_gravity_scale;
 				body->set_gravity_scale(child_gravity_scale);
 
-				const real_t block_scale = Math::random(0.5, 0.8);
+				const real_t block_scale = Math::random(0.5, 1.0);
 				if (Sprite *sprite = _safe_sprite(body->get_child(0))) {
-					sprite->set_scale(Vector2(block_scale, block_scale));
+					print_line(vformat("%s -> %f", sprite->get_scale(), block_scale));
+					//sprite->set_scale(Vector2(block_scale, block_scale));
 					// color
 					const float child_color = Math::random(100, 255) / 255;
 					Tween *color_tween = memnew(Tween);
@@ -237,13 +238,13 @@ void DestructibleSprite::_initiate_detonation(uint64_t object_id) {
 					color_tween->start();
 				}
 				if (CollisionShape2D *collision = _safe_collision_shape_2d(body->get_child(1))) {
-					collision->set_scale(Vector2(block_scale, block_scale));
+					//collision->set_scale(Vector2(block_scale, block_scale));
 				}
 				body->set_mass(block_scale);
 				body->set_collision_layer(Math::randf() < 0.5 ? 0 : object.collision_layers);
 				body->set_collision_mask(Math::randf() < 0.5 ? 0 : object.collision_masks);
 
-				if (random_depth) {
+				if (blocks_random_depth) {
 					body->set_z_index(Math::randf() < 0.5 ? 0 : -1);
 				}
 				body->set_mode(RigidBody2D::MODE_RIGID);
@@ -329,10 +330,10 @@ void DestructibleSprite::_prepare_detonation(explo_object_t &object) {
 			sprite->set_centered(true);
 		}
 
-		if (debug_mode) {
-			const float overlay[] = { 0.4, 1 };
-			duplicated_object->set_modulate(Color::solid(overlay[(n / object_hframes) % 2 == 0 ? n % 2 == 0 : n % 2 != 0], 0.9));
-		}
+		//if (debug_mode) {
+		//	const float overlay[] = { 0.4, 1 };
+		//	duplicated_object->set_modulate(Color::solid(overlay[(n / object_hframes) % 2 == 0 ? n % 2 == 0 : n % 2 != 0], 0.9));
+		//}
 
 		duplicated_object->set_meta("simulation_id", object.id);
 
@@ -378,6 +379,11 @@ void DestructibleSprite::_prepare_detonation(explo_object_t &object) {
 	call_deferred("_initiate_detonation", object.id);
 }
 
+static real_t ease_scale(real_t t, real_t b = 1.0, real_t c = -0.9, real_t d = 1.0) {
+	t = t / d - 1.0f;
+	return (c * (t * t * t + 1.0f) + b);
+}
+
 void DestructibleSprite::_simulate_particles(explo_object_t &object, real_t delta) {
 	ERR_FAIL_COND(object.id == 0);
 	ERR_FAIL_COND(object.blocks.size() == 0);
@@ -401,7 +407,7 @@ void DestructibleSprite::_simulate_particles(explo_object_t &object, real_t delt
 					if (blocks_fade_size) {
 						if (Sprite *sprite = Object::cast_to<Sprite>(block)) {
 							const real_t scale = block->get_meta("scale");
-							const real_t block_scale = scale * MAX(0.4, c.a) * MAX(0.4, c.a);
+							const real_t block_scale = scale * ease_scale(1 - c.a);
 							sprite->set_scale(Size2(block_scale, block_scale));
 						}
 					}
@@ -452,6 +458,10 @@ void DestructibleSprite::set_blocks_gravity_scale(real_t p_blocks_gravity_scale)
 
 void DestructibleSprite::set_blocks_fade_size(bool p_blocks_fade_size) {
 	blocks_fade_size = p_blocks_fade_size;
+}
+
+void DestructibleSprite::set_blocks_random_depth(bool p_blocks_random_depth) {
+	blocks_random_depth = p_blocks_random_depth;
 }
 
 void DestructibleSprite::set_debris_max_time(real_t p_debris_max_time) {
@@ -586,8 +596,10 @@ void DestructibleSprite::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_blocks_impulse"), &DestructibleSprite::get_blocks_impulse);
 	ClassDB::bind_method(D_METHOD("set_blocks_gravity_scale", "scale"), &DestructibleSprite::set_blocks_gravity_scale);
 	ClassDB::bind_method(D_METHOD("get_blocks_gravity_scale"), &DestructibleSprite::get_blocks_gravity_scale);
-	ClassDB::bind_method(D_METHOD("set_blocks_fade_size", "fade"), &DestructibleSprite::set_blocks_fade_size);
+	ClassDB::bind_method(D_METHOD("set_blocks_random_depth", "fade"), &DestructibleSprite::set_blocks_random_depth);
 	ClassDB::bind_method(D_METHOD("is_blocks_fade_size"), &DestructibleSprite::is_blocks_fade_size);
+	ClassDB::bind_method(D_METHOD("set_blocks_fade_size", "fade"), &DestructibleSprite::set_blocks_fade_size);
+	ClassDB::bind_method(D_METHOD("is_blocks_random_depth"), &DestructibleSprite::is_blocks_random_depth);
 	ClassDB::bind_method(D_METHOD("set_debris_max_time", "max_time"), &DestructibleSprite::set_debris_max_time);
 	ClassDB::bind_method(D_METHOD("get_debris_max_time"), &DestructibleSprite::get_debris_max_time);
 	ClassDB::bind_method(D_METHOD("set_remove_debris", "remove_debris"), &DestructibleSprite::set_remove_debris);
@@ -618,6 +630,7 @@ void DestructibleSprite::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "blocks_impulse", PROPERTY_HINT_RANGE, "0,1000,50"), "set_blocks_impulse", "get_blocks_impulse");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "blocks_gravity_scale"), "set_blocks_gravity_scale", "get_blocks_gravity_scale");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "blocks_fade_size"), "set_blocks_fade_size", "is_blocks_fade_size");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "blocks_random_depth"), "set_blocks_random_depth", "is_blocks_random_depth");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "debris_max_time"), "set_debris_max_time", "get_debris_max_time");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "remove_debris"), "set_remove_debris", "get_remove_debris");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "collision_layers"), "set_collision_layers", "get_collision_layers");
@@ -632,15 +645,15 @@ DestructibleSprite::DestructibleSprite() {
 	destruction_type = DESTRUCTION_COLLAPSE;
 	destruction_physics = DESTRUCTION_PHYSICS_STANDARD;
 	blocks_per_side = 6;
-	blocks_impulse = 600;
+	blocks_impulse = 300;
 	blocks_gravity_scale = 10;
+	blocks_random_depth = false;
 	blocks_fade_size = true;
 	debris_max_time = 5;
 	remove_debris = false;
 	collision_layers = 1;
 	collision_masks = 1;
 	collision_one_way = false;
-	random_depth = true;
 	randomize_seed = false;
 	debug_mode = false;
 }

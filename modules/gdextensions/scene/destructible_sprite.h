@@ -64,6 +64,7 @@ private:
 	int blocks_per_side;
 	real_t blocks_impulse;
 	real_t blocks_gravity_scale;
+	bool blocks_random_depth;
 	bool blocks_fade_size;
 	real_t debris_max_time;
 	bool remove_debris;
@@ -71,7 +72,6 @@ private:
 	int collision_masks;
 	bool collision_one_way;
 	bool randomize_seed;
-	bool random_depth;
 	bool debug_mode;
 
 	void _prepare_detonation(explo_object_t &object);
@@ -97,6 +97,8 @@ public:
 	real_t get_blocks_gravity_scale() const { return blocks_gravity_scale; }
 	void set_blocks_fade_size(bool p_blocks_fade_size);
 	bool is_blocks_fade_size() const { return blocks_fade_size; }
+	void set_blocks_random_depth(bool p_blocks_random_depth);
+	bool is_blocks_random_depth() const { return blocks_random_depth; }
 	void set_debris_max_time(real_t p_debris_max_time);
 	real_t get_debris_max_time() const { return debris_max_time; }
 	void set_remove_debris(bool p_remove_debris);
