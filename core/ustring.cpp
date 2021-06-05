@@ -269,7 +269,7 @@ void String::copy_from(const char *p_data, size_t p_len) {
 
 	CharType *dst = this->ptrw();
 
-	for (int i = 0; i < p_len; i++) {
+	for (size_t i = 0; i < p_len; i++) {
 		dst[i] = p_data[i];
 	}
 
