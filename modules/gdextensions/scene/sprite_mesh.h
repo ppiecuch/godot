@@ -48,6 +48,7 @@ private:
 	Vector3 mesh_angle;
 	Vector3 mesh_scale;
 
+	bool auto_collision_shape;
 	Vector<Vector2> mesh_outline;
 
 	bool centered;
@@ -125,7 +126,6 @@ public:
 
 	void set_selected_frame(int p_frame);
 	int get_selected_frame() const;
-
 	void set_frames_builder(const String &p_input);
 	String get_frames_builder() const;
 
@@ -142,6 +142,9 @@ public:
 	float get_mesh_rotation_y_degrees() const;
 	void set_mesh_rotation_z_degrees(float p_degrees);
 	float get_mesh_rotation_z_degrees() const;
+
+	void set_auto_collision_shape(bool state);
+	bool is_auto_collision_shape();
 
 	void set_centered(bool p_center);
 	bool is_centered() const;

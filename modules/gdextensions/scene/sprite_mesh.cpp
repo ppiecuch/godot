@@ -28,9 +28,9 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
 
 #include "core/io/json.h"
 #include "core/math/math_funcs.h"
@@ -52,7 +52,6 @@
 // https://github.com/Huangtingting93/Trace_outline/blob/main/trace_outline.py
 // * https://www.h3xed.com/programming/create-2d-mesh-outline-in-unity-silhouette
 // https://stackoverflow.com/questions/62748136/how-to-get-outer-edges-of-a-mesh-edges-which-are-part-of-only-one-triangle
-
 
 #define get_mesh_surf_info(mesh) \
 	((Dictionary)(mesh->has_meta("_mesh_surf_info") ? (Dictionary)mesh->get_meta("_mesh_surf_info") : Dictionary()))
@@ -96,6 +95,7 @@ bool SpriteMesh::_edit_use_rect() const {
 #endif
 
 void SpriteMesh::_update_mesh_outline(const PoolVector3Array &p_vertices, const PoolIntArray &p_triangles) {
+	ERR_FAIL_COND_MSG(p_triangles.size() == 0, "Automtic outline only works for indexed meshes");
 	// Get just the outer edges from the mesh's triangles (ignore or remove any shared edges)
 	typedef std::pair<int, int> index_pair_t;
 	std::map<index_pair_t, index_pair_t> edges;
@@ -114,7 +114,7 @@ void SpriteMesh::_update_mesh_outline(const PoolVector3Array &p_vertices, const 
 
 	// Create edge lookup Dictionary
 	std::map<int, int> lookup;
-	for(const auto &edge : edges) {
+	for (const auto &edge : edges) {
 		// const auto &key = edge.first;
 		const auto &value = edge.second;
 		if (lookup.count(value.first) == 0) {
@@ -165,6 +165,11 @@ void SpriteMesh::_update_mesh_xform() {
 			array_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array, Array(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
 
 			item_rect_changed();
+
+			// update outline shape
+			if (auto_collision_shape) {
+				_update_mesh_outline(xform_vertexes, _mesh_data[VS::ARRAY_INDEX]);
+			}
 		} else {
 			WARN_PRINT("Cannot transform non ArrayMesh object.");
 		}
@@ -447,6 +452,14 @@ String SpriteMesh::get_frames_builder() const {
 	return frames_builder;
 }
 
+void SpriteMesh::set_auto_collision_shape(bool state) {
+	auto_collision_shape = state;
+}
+
+bool SpriteMesh::is_auto_collision_shape() {
+	return auto_collision_shape;
+}
+
 void SpriteMesh::set_centered(bool p_center) {
 	centered = p_center;
 	update();
@@ -510,6 +523,9 @@ void SpriteMesh::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_mesh_mask", "mask"), &SpriteMesh::set_mesh_mask);
 	ClassDB::bind_method(D_METHOD("get_mesh_mask"), &SpriteMesh::get_mesh_mask);
 
+	ClassDB::bind_method(D_METHOD("set_auto_collision_shape", "auto"), &SpriteMesh::set_auto_collision_shape);
+	ClassDB::bind_method(D_METHOD("is_auto_collision_shape"), &SpriteMesh::is_auto_collision_shape);
+
 	ClassDB::bind_method(D_METHOD("set_selected_frame", "frame"), &SpriteMesh::set_selected_frame);
 	ClassDB::bind_method(D_METHOD("get_selected_frame"), &SpriteMesh::get_selected_frame);
 	ClassDB::bind_method(D_METHOD("set_frames_builder", "description"), &SpriteMesh::set_frames_builder);
@@ -541,6 +557,7 @@ void SpriteMesh::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "mesh_mask", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_mesh_mask", "get_mesh_mask");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "select_frame"), "set_selected_frame", "get_selected_frame");
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "frames_builder", PROPERTY_HINT_MULTILINE_TEXT, ""), "set_frames_builder", "get_frames_builder");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "auto_collision_shape"), "set_auto_collision_shape", "is_auto_collision_shape");
 
 	ADD_GROUP("Mesh Transform", "mesh_");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "mesh_centered"), "set_centered", "is_centered");
@@ -560,6 +577,7 @@ SpriteMesh::SpriteMesh() {
 	offset = Vector2(0, 0);
 	mesh_angle = Vector3(0, 0, 0);
 	mesh_scale = Vector3(1, 1, 1);
+	auto_collision_shape = false;
 	selected_frame = 0;
 	frames_builder = "";
 	_mesh_xform = Basis(mesh_angle, mesh_scale);
