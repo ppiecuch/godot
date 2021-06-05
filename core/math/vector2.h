@@ -142,6 +142,11 @@ struct Vector2 {
 	bool operator<=(const Vector2 &p_vec2) const { return x == p_vec2.x ? (y <= p_vec2.y) : (x < p_vec2.x); }
 	bool operator>=(const Vector2 &p_vec2) const { return x == p_vec2.x ? (y >= p_vec2.y) : (x > p_vec2.x); }
 
+	bool operator<(const real_t &rvalue) const { return x == rvalue ? (y < rvalue) : (x < rvalue); }
+	bool operator>(const real_t &rvalue) const { return x == rvalue ? (y > rvalue) : (x > rvalue); }
+	bool operator<=(const real_t &rvalue) const { return x == rvalue ? (y <= rvalue) : (x < rvalue); }
+	bool operator>=(const real_t &rvalue) const { return x == rvalue ? (y >= rvalue) : (x > rvalue); }
+
 	real_t angle() const;
 
 	void set_rotation(real_t p_radians) {
@@ -172,6 +177,9 @@ struct Vector2 {
 
 	_FORCE_INLINE_ Vector2 min(const Vector2 &p_b) { return Vector2(MIN(x, p_b.x), MIN(y, p_b.y)); }
 	_FORCE_INLINE_ Vector2 max(const Vector2 &p_b) { return Vector2(MAX(x, p_b.x), MAX(y, p_b.y)); }
+
+	_FORCE_INLINE_ real_t min() { return MIN(x, y); }
+	_FORCE_INLINE_ real_t max() { return MAX(x, y); }
 
 	_FORCE_INLINE_ Vector2 clamp(const Vector2 &p_a, const Vector2 &p_b) { return Vector2(CLAMP(x, p_a.x, p_b.x), CLAMP(y, p_a.y, p_b.y)); }
 
