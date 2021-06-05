@@ -5335,20 +5335,16 @@ void GLTFDocument::_convert_grid_map_to_gltf(Node *p_scene_parent, const GLTFNod
 		GLTFNode *new_gltf_node = memnew(GLTFNode);
 		gltf_node->children.push_back(state->nodes.size());
 		state->nodes.push_back(new_gltf_node);
-		Vector3 cell_location = cells[k];
-		int32_t cell = grid_map->get_cell_item(
-				Vector3(cell_location.x, cell_location.y, cell_location.z));
+		const Vector3 cell_location = cells[k];
+		const int32_t cell = grid_map->get_cell_item(cell_location.x, cell_location.y, cell_location.z);
 		MeshInstance *import_mesh_node = memnew(MeshInstance);
 		import_mesh_node->set_mesh(grid_map->get_mesh_library()->get_item_mesh(cell));
 		Transform cell_xform;
-		cell_xform.basis.set_orthogonal_index(
-				grid_map->get_cell_item_orientation(
-						Vector3(cell_location.x, cell_location.y, cell_location.z)));
+		cell_xform.basis.set_orthogonal_index(grid_map->get_cell_item_orientation(cell_location.x, cell_location.y, cell_location.z));
 		cell_xform.basis.scale(Vector3(grid_map->get_cell_scale(),
 				grid_map->get_cell_scale(),
 				grid_map->get_cell_scale()));
-		cell_xform.set_origin(grid_map->map_to_world(
-				Vector3(cell_location.x, cell_location.y, cell_location.z)));
+		cell_xform.set_origin(grid_map->map_to_world(cell_location.x, cell_location.y, cell_location.z));
 		Ref<GLTFMesh> gltf_mesh;
 		gltf_mesh.instance();
 		gltf_mesh = import_mesh_node;
