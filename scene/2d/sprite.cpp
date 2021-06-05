@@ -103,7 +103,7 @@ void Sprite::_get_rects(Rect2 &r_src_rect, Rect2 &r_dst_rect, bool &r_filter_cli
 		dest_offset = dest_offset.floor();
 	}
 
-	r_dst_rect = Rect2(dest_offset, frame_size);
+	r_dst_rect = Rect2(dest_offset * texture_scale, frame_size * texture_scale);
 
 	if (hflip) {
 		r_dst_rect.size.x = -r_dst_rect.size.x;
@@ -191,6 +191,17 @@ Ref<MaskTexture> Sprite::get_mask() const {
 
 Ref<Texture> Sprite::get_texture() const {
 	return texture;
+}
+
+void Sprite::set_texture_scale(const Size2 &p_scale) {
+	texture_scale = p_scale;
+	update();
+	item_rect_changed();
+	_change_notify();
+}
+
+Size2 Sprite::get_texture_scale() const {
+	return texture_scale;
 }
 
 void Sprite::set_centered(bool p_center) {
@@ -380,9 +391,9 @@ Rect2 Sprite::get_rect() const {
 	Size2i s;
 
 	if (region) {
-		s = region_rect.size;
+		s = region_rect.size * texture_scale;
 	} else {
-		s = texture->get_size();
+		s = texture->get_size() * texture_scale;
 	}
 
 	s = s / Point2(hframes, vframes);
@@ -425,6 +436,9 @@ void Sprite::_texture_changed() {
 void Sprite::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_texture", "texture"), &Sprite::set_texture);
 	ClassDB::bind_method(D_METHOD("get_texture"), &Sprite::get_texture);
+
+	ClassDB::bind_method(D_METHOD("set_texture_scale", "scale"), &Sprite::set_texture_scale);
+	ClassDB::bind_method(D_METHOD("get_texture_scale"), &Sprite::get_texture_scale);
 
 	ClassDB::bind_method(D_METHOD("set_normal_map", "normal_map"), &Sprite::set_normal_map);
 	ClassDB::bind_method(D_METHOD("get_normal_map"), &Sprite::get_normal_map);
@@ -475,6 +489,7 @@ void Sprite::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("texture_changed"));
 
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "texture", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_texture", "get_texture");
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "texture_scale"), "set_texture_scale", "get_texture_scale");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "normal_map", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_normal_map", "get_normal_map");
 	ADD_GROUP("Masking", "mask_");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "mask", PROPERTY_HINT_RESOURCE_TYPE, "MaskTexture"), "set_mask", "get_mask");
@@ -496,6 +511,7 @@ void Sprite::_bind_methods() {
 }
 
 Sprite::Sprite() {
+	texture_scale = Size2(1.0, 1.0);
 	centered = true;
 	hflip = false;
 	vflip = false;

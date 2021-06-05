@@ -47,6 +47,7 @@ class Sprite : public Node2D {
 	bool hflip;
 	bool vflip;
 	bool region;
+	Size2 texture_scale;
 	Rect2 region_rect;
 	bool region_filter_clip;
 
@@ -84,6 +85,9 @@ public:
 
 	void set_texture(const Ref<Texture> &p_texture);
 	Ref<Texture> get_texture() const;
+
+	void set_texture_scale(const Size2 &p_scale);
+	Size2 get_texture_scale() const;
 
 	void set_normal_map(const Ref<Texture> &p_texture);
 	Ref<Texture> get_normal_map() const;

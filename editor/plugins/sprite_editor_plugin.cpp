@@ -118,6 +118,15 @@ void SpriteEditor::_menu_option(int p_option) {
 	selected_menu_item = (Menu)p_option;
 
 	switch (p_option) {
+		case MENU_OPTION_UPDATE_TEXTURE_SCALE: {
+			UndoRedo *ur = EditorNode::get_singleton()->get_undo_redo();
+			ur->create_action(TTR("Update Texture Scale"));
+			ur->add_do_method(node, "set_texture_scale", node->get_scale());
+			ur->add_do_method(node, "set_scale", Size2(1.0, 1.0));
+			ur->add_undo_method(node, "set_texture_scale", node->get_texture_scale());
+			ur->add_undo_method(node, "set_scale", node->get_scale());
+			ur->commit_action();
+		} break;
 		case MENU_OPTION_CONVERT_TO_MESH_2D: {
 			debug_uv_dialog->get_ok()->set_text(TTR("Create Mesh2D"));
 			debug_uv_dialog->set_title(TTR("Mesh2D Preview"));
@@ -309,6 +318,8 @@ void SpriteEditor::_create_node() {
 		} break;
 		case MENU_OPTION_CREATE_LIGHT_OCCLUDER_2D: {
 			_create_light_occluder_2d_node();
+		} break;
+		default: {
 		} break;
 	}
 }
@@ -515,6 +526,7 @@ SpriteEditor::SpriteEditor() {
 	options->get_popup()->add_item(TTR("Convert to Polygon2D"), MENU_OPTION_CONVERT_TO_POLYGON_2D);
 	options->get_popup()->add_item(TTR("Create CollisionPolygon2D Sibling"), MENU_OPTION_CREATE_COLLISION_POLY_2D);
 	options->get_popup()->add_item(TTR("Create LightOccluder2D Sibling"), MENU_OPTION_CREATE_LIGHT_OCCLUDER_2D);
+	options->get_popup()->add_item(TTR("Update Texture Scale"), MENU_OPTION_UPDATE_TEXTURE_SCALE);
 	options->set_switch_on_hover(true);
 
 	options->get_popup()->connect("id_pressed", this, "_menu_option");
