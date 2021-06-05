@@ -47,6 +47,7 @@
 #include "common/gd_core.h"
 
 #include <algorithm>
+#include <functional>
 #include <vector>
 
 #define FSIGN(a) ((a) > 0 ? 1 : -1)
@@ -160,7 +161,9 @@ void DestructibleSprite::_on_debris_timer_timeout(uint64_t object_id) {
 					opacity_tween->start();
 				}
 			} else {
-				body->set_mode(RigidBody2D::MODE_STATIC);
+				if (body->get_linear_velocity().abs() < 0.0001) {
+					body->set_mode(RigidBody2D::MODE_STATIC);
+				}
 				if (CollisionShape2D *collision = _safe_collision_shape_2d(body->get_child(1))) {
 					collision->set_disabled(true);
 				}
@@ -204,7 +207,7 @@ void DestructibleSprite::_initiate_detonation(uint64_t object_id) {
 	// initiate blocks
 	if (object.destruction_physics == DESTRUCTION_PHYSICS_OFF) {
 		for (auto *block : object.blocks) {
-			const real_t block_scale = blocks_fade_size ?  Math::random(0.8, 1.2) : Math::random(0.6, 1.0);
+			const real_t block_scale = blocks_fade_size ? Math::random(0.8, 1.2) : Math::random(0.6, 1.0);
 			if (Sprite *sprite = Object::cast_to<Sprite>(block)) {
 				sprite->set_scale(Vector2(block_scale, block_scale));
 				sprite->set_meta("scale", block_scale);
@@ -221,7 +224,6 @@ void DestructibleSprite::_initiate_detonation(uint64_t object_id) {
 
 				const real_t block_scale = Math::random(0.5, 1.0);
 				if (Sprite *sprite = _safe_sprite(body->get_child(0))) {
-					print_line(vformat("%s -> %f", sprite->get_scale(), block_scale));
 					//sprite->set_scale(Vector2(block_scale, block_scale));
 					// color
 					const float child_color = Math::random(100, 255) / 255;
@@ -284,33 +286,28 @@ void DestructibleSprite::_prepare_detonation(explo_object_t &object) {
 	object.blocks_container->add_child(object.debris_timer, true);
 
 	// Check if the sprite is using 'Region' to get the proper width and height.
-	real_t object_width, object_height;
-	if (is_region()) {
-		object_width = get_region_rect().size.width;
-		object_height = get_region_rect().size.height;
-	} else {
-		object_width = get_texture()->get_width();
-		object_height = get_texture()->get_height();
-	}
+	Size2 object_size = get_texture_scale() * (is_region() ? get_region_rect().size : get_texture()->get_size());
 
 	// Get the number of blocks in horiontal and vertical.
-	const real_t block_size = MAX(object_width, object_height) / blocks_per_side;
-	int object_hframes = object_width / block_size;
-	int object_vframes = object_height / block_size;
+	const real_t block_size = object_size.max() / blocks_per_side;
+	const Size2 object_frames = object_size / block_size;
+	const int object_hframes = object_frames.width;
+	const int object_vframes = object_frames.height;
+	const Size2 cell_size = object_size / Size2(object_hframes, object_vframes);
 
 	if (debug_mode) {
-		DEBUG_PRINT(vformat("[%s/prepare_detonation] object's blocks per side: %d x %d (block size %d, physics %s)",
-				get_name(), object_hframes, object_vframes, block_size,
+		DEBUG_PRINT(vformat("[%s/prepare_detonation] object's blocks per side: %d x %d (block size %s, physics %s)",
+				get_name(), object_hframes, object_vframes, cell_size,
 				destruction_physics == DESTRUCTION_PHYSICS_OFF ? "off" : "on"));
 	}
 
 	// Check if the sprite is centered to get the offset.
-	Vector2 object_offset = Vector2(block_size, block_size) / -2;
+	Vector2 object_offset = cell_size / -2;
 	if (is_centered()) {
-		object_offset += Vector2(object_width, object_height) / 2;
+		object_offset += object_size / 2;
 	}
 
-	object.collision_extents = Vector2((object_width / 2) / object_hframes, (object_height / 2) / object_vframes);
+	object.collision_extents = cell_size / 2;
 	object.collision_position = Vector2((ceil(object.collision_extents.x) - object.collision_extents.x) * -1,
 			(ceil(object.collision_extents.y) - object.collision_extents.y) * -1);
 
@@ -325,7 +322,6 @@ void DestructibleSprite::_prepare_detonation(explo_object_t &object) {
 			sprite->set_frame(n);
 			// duplicates will be a child of this sprite
 			sprite->set_position(Vector2(0, 0));
-			sprite->set_scale(Vector2(1, 1));
 			// always centered
 			sprite->set_centered(true);
 		}
@@ -364,10 +360,9 @@ void DestructibleSprite::_prepare_detonation(explo_object_t &object) {
 	int object_frame = 0;
 
 	// Position each block in place to create the whole sprite.
-	const Vector2 cell = Vector2(object_width / object_hframes, object_height / object_vframes);
 	for (int y = 0; y < object_vframes; y++) {
 		for (int x = 0; x < object_hframes; x++) {
-			Vector2 position = Vector2(x, y) * cell - object_offset;
+			Vector2 position = Vector2(x, y) * cell_size - object_offset;
 			object.blocks[object_frame]->set_position(position);
 			if (debug_mode) {
 				DEBUG_PRINT(vformat("  block %d position: %s", object_frame, position));
@@ -397,7 +392,8 @@ void DestructibleSprite::_simulate_particles(explo_object_t &object, real_t delt
 			const Vector2 position = block->get_position() + (velocity + gravity) * delta;
 
 			block->set_position(position);
-			block->set_rotation(2 * (object.id & 1 ? time : -time));
+			const uint64_t block_id = reinterpret_cast<uint64_t>(block) >> 8; // compensate mem. aligment
+			block->set_rotation(2 * (block_id & 1 ? time : -time));
 			time += delta;
 
 			if (time > _get_random_time()) {
@@ -439,6 +435,7 @@ void DestructibleSprite::set_destruction_types(DestructionType p_type) {
 
 void DestructibleSprite::set_destruction_physics(DestructionPhysics p_physics) {
 	destruction_physics = p_physics;
+	update_configuration_warning();
 }
 
 void DestructibleSprite::set_blocks_per_side(int p_blocks_per_side) {
@@ -529,12 +526,24 @@ void DestructibleSprite::reset() {
 
 void DestructibleSprite::_notification(int p_what) {
 	switch (p_what) {
+#ifdef TOOLS_ENABLED
+		case NOTIFICATION_LOCAL_TRANSFORM_CHANGED: {
+			if (Engine::get_singleton()->is_editor_hint()) {
+				update_configuration_warning();
+			}
+		} break;
+#endif
 		case NOTIFICATION_READY: {
 		} break;
 		case NOTIFICATION_DRAW: {
 		} break;
 		case NOTIFICATION_PARENTED:
 		case NOTIFICATION_ENTER_TREE: {
+#ifdef TOOLS_ENABLED
+			if (Engine::get_singleton()->is_editor_hint()) {
+				set_notify_local_transform(true); //used for warnings and only in editor
+			}
+#endif
 		} break;
 		case NOTIFICATION_PROCESS: {
 			const real_t delta = get_process_delta_time();
@@ -577,6 +586,21 @@ void DestructibleSprite::_notification(int p_what) {
 			}
 		} break;
 	}
+}
+
+String DestructibleSprite::get_configuration_warning() const {
+	Transform2D t = get_transform();
+
+	String warning = Sprite::get_configuration_warning();
+
+	if (destruction_physics != DESTRUCTION_PHYSICS_OFF && (ABS(t.elements[0].length() - 1.0) > 0.05 || ABS(t.elements[1].length() - 1.0) > 0.05)) {
+		if (warning != String()) {
+			warning += "\n\n";
+		}
+		warning += TTR("Non-unit Sprite's scaling can lead to drawing artefacts when the physics engine is running.");
+	}
+
+	return warning;
 }
 
 void DestructibleSprite::_bind_methods() {

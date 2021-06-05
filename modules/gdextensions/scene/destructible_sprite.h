@@ -119,6 +119,8 @@ public:
 	void explode(real_t delay);
 	void reset();
 
+	virtual String get_configuration_warning() const;
+
 	DestructibleSprite();
 	~DestructibleSprite();
 
