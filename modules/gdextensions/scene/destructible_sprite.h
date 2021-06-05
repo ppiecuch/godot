@@ -78,6 +78,7 @@ private:
 	void _initiate_detonation(uint64_t object_id);
 	void _on_debris_timer_timeout(uint64_t object_id);
 	void _on_opacity_tween_completed(Object *obj, String key);
+	void _on_debris_screen_exit(uint64_t object_id, Object *obj);
 
 	void _simulate_particles(explo_object_t &object, real_t delta);
 

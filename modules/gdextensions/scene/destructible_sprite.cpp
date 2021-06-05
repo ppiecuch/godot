@@ -40,6 +40,7 @@
 #include "scene/2d/collision_shape_2d.h"
 #include "scene/2d/cpu_particles_2d.h"
 #include "scene/2d/particles_2d.h"
+#include "scene/2d/visibility_notifier_2d.h"
 #include "scene/animation/tween.h"
 #include "scene/main/timer.h"
 #include "scene/resources/rectangle_shape_2d.h"
@@ -112,6 +113,22 @@ static inline Vector2 _get_random_velocity_increment() {
 			Math::random(0.901, 1.005), Math::random(0.92, 0.98));
 }
 
+void DestructibleSprite::_on_debris_screen_exit(uint64_t object_id, Object *obj) {
+	ERR_FAIL_NULL(obj);
+
+	if(_simulations.count(object_id)) { // might already be removed
+		explo_object_t *object = _simulations[object_id];
+		object->blocks.erase(
+				std::remove(object->blocks.begin(), object->blocks.end(), obj), object->blocks.end());
+		if (object->blocks.empty()) {
+			object->id = 0; // dead
+			if (debug_mode) {
+				DEBUG_PRINT(vformat("[%s/debris_screen_exit] explosion 0x%x removed.", get_name(), object_id));
+			}
+		}
+	}
+}
+
 void DestructibleSprite::_on_opacity_tween_completed(Object *obj, String key) {
 	ERR_FAIL_NULL(obj);
 	const uint64_t object_id = obj->get_meta("simulation_id");
@@ -136,12 +153,13 @@ void DestructibleSprite::_on_debris_timer_timeout(uint64_t object_id) {
 	ERR_FAIL_COND(object_id == 0);
 	ERR_FAIL_COND(_simulations.count(object_id) == 0);
 
-	const explo_object_t &object = *_simulations[object_id];
+	explo_object_t &object = *_simulations[object_id];
 
 	if (debug_mode) {
-		DEBUG_PRINT(vformat("[%s/debris_timer_timeout] object's debris timer timed out.", get_name()));
+		DEBUG_PRINT(vformat("[%s/debris_timer_timeout] 0x%x object's debris timer timed out.", get_name(), object_id));
 	}
 
+	bool restart_timer = false;
 	for (auto *block : object.blocks) {
 		if (RigidBody2D *body = Object::cast_to<RigidBody2D>(block)) {
 			if (object.remove_debris) {
@@ -161,16 +179,27 @@ void DestructibleSprite::_on_debris_timer_timeout(uint64_t object_id) {
 					opacity_tween->start();
 				}
 			} else {
-				if (body->get_linear_velocity().abs() < 0.0001) {
+				if (body->get_linear_velocity().abs() < 0.05) {
 					body->set_mode(RigidBody2D::MODE_STATIC);
+				} else {
+					if (debug_mode) {
+						if (Sprite *sprite = _safe_sprite(body->get_child(0))) {
+							DEBUG_PRINT(vformat("[%s/debris_timer_timeout] frame %d still running: %s", get_name(), sprite->get_frame(), body->get_linear_velocity().abs()));
+						}
+					}
+					restart_timer = true;
 				}
 				if (CollisionShape2D *collision = _safe_collision_shape_2d(body->get_child(1))) {
 					collision->set_disabled(true);
 				}
-				if (debug_mode) {
-					DEBUG_PRINT(vformat("[%s/debris_timer_timeout] explosion 0x%x completed.", get_name(), object_id));
-				}
 			}
+		}
+	}
+	if (restart_timer) {
+		object.debris_timer->start();
+	} else if (!object.remove_debris) {
+		if (debug_mode) {
+			DEBUG_PRINT(vformat("[%s/debris_timer_timeout] explosion 0x%x completed static.", get_name(), object_id));
 		}
 	}
 }
@@ -337,6 +366,7 @@ void DestructibleSprite::_prepare_detonation(explo_object_t &object) {
 			duplicated_object->set_meta("time", 0);
 			duplicated_object->set_meta("velocity", _get_random_velocity(blocks_impulse));
 			duplicated_object->set_meta("increment", _get_random_velocity_increment());
+			duplicated_object->add_child(memnew(VisibilityNotifier2D));
 			object.blocks.push_back(duplicated_object); // Just append it to the blocks array
 		} else {
 			// Root node
@@ -353,6 +383,9 @@ void DestructibleSprite::_prepare_detonation(explo_object_t &object) {
 			}
 			root_object->add_child(duplicated_object);
 			root_object->add_child(collision);
+			VisibilityNotifier2D *vis = memnew(VisibilityNotifier2D);
+			vis->connect("screen_exited", this, "_on_debris_screen_exit", varray(object.id, root_object));
+			root_object->add_child(vis);
 			object.blocks.push_back(root_object); // Append it to the blocks array
 		}
 	}
@@ -412,10 +445,16 @@ void DestructibleSprite::_simulate_particles(explo_object_t &object, real_t delt
 				if (c.a < 0) {
 					c.a = 0;
 				}
+				// if the particle is out of screen ...
+				if (VisibilityNotifier2D *vis = Object::cast_to<VisibilityNotifier2D>(block->get_child(0))) {
+					if (!vis->is_on_screen()) {
+						c.a = 0;
+					}
+				}
 				block->set_modulate(c);
 				// if the particle is invisible ...
 				if (dead) {
-					dead &= block->get_modulate().a == 0;
+					dead &= c.a == 0;
 				}
 			} else {
 				dead = false;
@@ -646,6 +685,7 @@ void DestructibleSprite::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("_on_debris_timer_timeout", "object_id"), &DestructibleSprite::_on_debris_timer_timeout);
 	ClassDB::bind_method(D_METHOD("_on_opacity_tween_completed", "object", "key"), &DestructibleSprite::_on_opacity_tween_completed);
+	ClassDB::bind_method(D_METHOD("_on_debris_screen_exit", "object_id", "object"), &DestructibleSprite::_on_debris_screen_exit);
 	ClassDB::bind_method(D_METHOD("_initiate_detonation", "object_id"), &DestructibleSprite::_initiate_detonation);
 
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "destruction_type", PROPERTY_HINT_ENUM, "Explode,Collapse"), "set_destruction_types", "get_destruction_types");
