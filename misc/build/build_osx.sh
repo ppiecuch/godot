@@ -52,10 +52,16 @@ fi
 echo_header "*** Building $target editor for macOS ..."
 scons -j4 platform=osx $SCONS_FLAGS
 
+if [ -x "$(command -v gcp)" ]; then
+	cp="gcp -u"
+else
+	cp="cp"
+fi
+
 echo_header "*** Packaging app ..."
-cp -rv "$GODOT_DIR/misc/dist/osx_tools.app" "$GODOT_DIR/bin/Godot-master.app"
+$cp -rv "$GODOT_DIR/misc/dist/osx_tools.app" "$GODOT_DIR/bin/Godot-master.app"
 mkdir -p "$GODOT_DIR/bin/Godot-master.app/Contents/MacOS"
-cp -v "$GODOT_DIR/bin/godot.osx.tools.64" "$GODOT_DIR/bin/Godot-master.app/Contents/MacOS/Godot"
+$cp -v "$GODOT_DIR/bin/godot.osx.tools.64" "$GODOT_DIR/bin/Godot-master.app/Contents/MacOS/Godot"
 
 echo_success "*** Finished building editor for macOS."
 
