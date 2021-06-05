@@ -224,7 +224,7 @@ void DestructibleSprite::_initiate_detonation(uint64_t object_id) {
 
 				const real_t block_scale = Math::random(0.5, 1.0);
 				if (Sprite *sprite = _safe_sprite(body->get_child(0))) {
-					//sprite->set_scale(Vector2(block_scale, block_scale));
+					sprite->set_scale(Vector2(block_scale, block_scale));
 					// color
 					const float child_color = Math::random(100, 255) / 255;
 					Tween *color_tween = memnew(Tween);
@@ -240,7 +240,7 @@ void DestructibleSprite::_initiate_detonation(uint64_t object_id) {
 					color_tween->start();
 				}
 				if (CollisionShape2D *collision = _safe_collision_shape_2d(body->get_child(1))) {
-					//collision->set_scale(Vector2(block_scale, block_scale));
+					collision->set_scale(Vector2(block_scale, block_scale));
 				}
 				body->set_mass(block_scale);
 				body->set_collision_layer(Math::randf() < 0.5 ? 0 : object.collision_layers);
