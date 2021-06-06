@@ -1,6 +1,6 @@
 Import("env")
 
-sys = ["thread_3ds.cpp"]
+sys = ["thread_3ds.cpp", "3ds_libc.cpp"]
 audio = ["audio/audio_driver_3ds.cpp"]
 video = ["video/rasterizer_citro3d.cpp", "video/util.cpp"]
 
