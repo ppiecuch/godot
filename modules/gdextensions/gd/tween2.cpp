@@ -388,7 +388,7 @@ void Tween2::_add_node(Object *node) {
 }
 
 void Tween2::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("to:TweenAction", "target", "during"), &Tween2::to);
+	ClassDB::bind_method(D_METHOD("to", "target", "during"), &Tween2::to);
 	ClassDB::bind_method(D_METHOD("cancel", "target"), &Tween2::cancel);
 	ClassDB::bind_method(D_METHOD("_add_node", "node"), &Tween2::_add_node);
 
