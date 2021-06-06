@@ -183,9 +183,11 @@ void DestructibleSprite::_on_debris_timer_timeout(uint64_t object_id) {
 					body->set_mode(RigidBody2D::MODE_STATIC);
 				} else {
 					if (debug_mode) {
+#ifdef DEBUG_ENABLED
 						if (Sprite *sprite = _safe_sprite(body->get_child(0))) {
 							DEBUG_PRINT(vformat("[%s/debris_timer_timeout] frame %d still running: %s", get_name(), sprite->get_frame(), body->get_linear_velocity().abs()));
 						}
+#endif
 					}
 					restart_timer = true;
 				}
@@ -280,7 +282,17 @@ void DestructibleSprite::_initiate_detonation(uint64_t object_id) {
 				}
 				body->set_mode(RigidBody2D::MODE_RIGID);
 				// trigger impulse
-				body->apply_central_impulse(Vector2(Math::random(-object.blocks_impulse, object.blocks_impulse), -object.blocks_impulse));
+				switch (object.destruction_type) {
+					case DESTRUCTION_EXPLODE: {
+						body->apply_central_impulse(Vector2(Math::random(-object.blocks_impulse, object.blocks_impulse), -object.blocks_impulse));
+					} break;
+					case DESTRUCTION_COLLAPSE: {
+						body->apply_central_impulse(Vector2(Math::random(-object.blocks_impulse, object.blocks_impulse), object.blocks_impulse) / 5);
+					} break;
+					default: {
+						WARN_PRINT("Cannot trigger unknown destruction type.");
+					}
+				}
 			} else {
 				WARN_PRINT("Block should be RigidBody2D, not a " + block->get_class());
 			}
@@ -469,10 +481,18 @@ void DestructibleSprite::_simulate_particles(explo_object_t &object, real_t delt
 }
 
 void DestructibleSprite::set_destruction_types(DestructionType p_type) {
+	if (p_type == DESTRUCTION_COLLAPSE && destruction_physics == DESTRUCTION_PHYSICS_OFF) {
+		WARN_PRINT("Collapsing is only possible with enabled destruction physics.");
+		return;
+	}
 	destruction_type = p_type;
 }
 
 void DestructibleSprite::set_destruction_physics(DestructionPhysics p_physics) {
+	if (p_physics == DESTRUCTION_PHYSICS_OFF && destruction_type == DESTRUCTION_COLLAPSE) {
+		WARN_PRINT("Physics is required for collapsing destruction.");
+		return;
+	}
 	destruction_physics = p_physics;
 	update_configuration_warning();
 }
@@ -706,7 +726,7 @@ void DestructibleSprite::_bind_methods() {
 
 DestructibleSprite::DestructibleSprite() {
 	_reset_at_end = false;
-	destruction_type = DESTRUCTION_COLLAPSE;
+	destruction_type = DESTRUCTION_EXPLODE;
 	destruction_physics = DESTRUCTION_PHYSICS_STANDARD;
 	blocks_per_side = 6;
 	blocks_impulse = 300;
