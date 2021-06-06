@@ -116,7 +116,7 @@ static inline Vector2 _get_random_velocity_increment() {
 void DestructibleSprite::_on_debris_screen_exit(uint64_t object_id, Object *obj) {
 	ERR_FAIL_NULL(obj);
 
-	if(_simulations.count(object_id)) { // might already be removed
+	if (_simulations.count(object_id)) { // might already be removed
 		explo_object_t *object = _simulations[object_id];
 		object->blocks.erase(
 				std::remove(object->blocks.begin(), object->blocks.end(), obj), object->blocks.end());
