@@ -4,162 +4,181 @@ Import("env")
 
 working = "#platform/psvita/video/scepiglet/"
 
+
 def execute(exe):
 
-	try:
-		output = subprocess.check_output(exe, shell=True).strip().splitlines()
-		for ln in output:
-			print("> " + ln)
-	except OSError as e:
-		if e.errno == errno.ENOENT:
-			return False
-	return True
+    try:
+        output = subprocess.check_output(exe, shell=True).strip().splitlines()
+        for ln in output:
+            print("> " + ln)
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            return False
+    return True
+
 
 def MergeLibs(env, target, source):
 
-	if not target or len(target) > 1:
-		print("WARNING: Cannot combine into multiple targets.")
-		return None
-	targetlib = target[0]
-	output = Dir(working + "/combine").abspath
-	print("Rapack multiple archives files into single target: " + targetlib.name)
-	if os.path.exists(output):
-		shutil.rmtree(output, ignore_errors=True)
-	os.makedirs(output)
-	for f in source:
-		print(" .." + f.name)
-		execute("cd '%s' && arm-vita-eabi-ar -x '%s'"%(output, f.abspath))
-	execute("cd '%s' && ls *.o > objs.lst && arm-vita-eabi-ar -qc ../%s @objs.lst"%(output, targetlib.name))
-	shutil.rmtree(output, ignore_errors=True)
+    if not target or len(target) > 1:
+        print("WARNING: Cannot combine into multiple targets.")
+        return None
+    targetlib = target[0]
+    output = Dir(working + "/combine").abspath
+    print("Rapack multiple archives files into single target: " + targetlib.name)
+    if os.path.exists(output):
+        shutil.rmtree(output, ignore_errors=True)
+    os.makedirs(output)
+    for f in source:
+        print(" .." + f.name)
+        execute("cd '%s' && arm-vita-eabi-ar -x '%s'" % (output, f.abspath))
+    execute("cd '%s' && ls *.o > objs.lst && arm-vita-eabi-ar -qc ../%s @objs.lst" % (output, targetlib.name))
+    shutil.rmtree(output, ignore_errors=True)
 
-	env.Prepend(LIBS=["../%s"%targetlib.name])
+    env.Prepend(LIBS=["../%s" % targetlib.name])
 
-	return None
+    return None
+
 
 # Main
 
 # make sure this is sane environment
 for p in ["#thirdparty/vitasdk/piglet", "#thirdparty/vitasdk/taihen", working]:
-	if not os.path.exists(Dir(p).abspath):
-		print("Missing required location: " + p)
-		sys.exit(255)
+    if not os.path.exists(Dir(p).abspath):
+        print("Missing required location: " + p)
+        sys.exit(255)
 
-env.Append(CPPPATH=[
-	"#thirdparty/vitasdk/piglet/include",
-	"#thirdparty/vitasdk/taihen/include",
-	"#thirdparty/vitasdk/taihen/src/substitute/lib",
-	"#thirdparty/vitasdk/taihen/src/taihen-parser/include",
-])
+env.Append(
+    CPPPATH=[
+        "#thirdparty/vitasdk/piglet/include",
+        "#thirdparty/vitasdk/taihen/include",
+        "#thirdparty/vitasdk/taihen/src/substitute/lib",
+        "#thirdparty/vitasdk/taihen/src/taihen-parser/include",
+    ]
+)
 
 vitasdk = ""
 if "VITASDK" in os.environ:
-	vitasdk = os.environ["VITASDK"]
+    vitasdk = os.environ["VITASDK"]
 else:
-	print("WARNING: VITASDK not defined in the environment variables.");
+    print("WARNING: VITASDK not defined in the environment variables.")
 
 env_module = env.Clone()
-env_module.Append(CFLAGS=[
-	"-Wall",
-	"-Wl,-q",
-	"-nostdlib",
-	"-DVITA",
-	"-D__VITA__",
-])
+env_module.Append(
+    CFLAGS=[
+        "-Wall",
+        "-Wl,-q",
+        "-nostdlib",
+        "-DVITA",
+        "-D__VITA__",
+    ]
+)
 env_module.Append(LINKFLAGS=["-Wl,-q", "-nostdlib"])
 
 # taiHEN library
 
 env_taihen = env_module.Clone()
-env_taihen.Append(CFLAGS=[
-	"-Os",
-	"-Wno-unused-variable",
-	"-Wno-unused-but-set-variable",
-	"-Wno-format",
-	"-Wno-strict-aliasing",
-	"-Wno-attributes",
-	"-Wl,-q",
-	"-ffunction-sections",
-	"-fdata-sections",
-	"-iquote src/substitute/lib",
-	"-DNO_DYNAMIC_LINKER_STUFF",
-	"-DNO_PTHREADS",
-	"-DNO_CTYPE",
-	"-DNO_STRING",
-])
+env_taihen.Append(
+    CFLAGS=[
+        "-Os",
+        "-Wno-unused-variable",
+        "-Wno-unused-but-set-variable",
+        "-Wno-format",
+        "-Wno-strict-aliasing",
+        "-Wno-attributes",
+        "-Wl,-q",
+        "-ffunction-sections",
+        "-fdata-sections",
+        "-iquote src/substitute/lib",
+        "-DNO_DYNAMIC_LINKER_STUFF",
+        "-DNO_PTHREADS",
+        "-DNO_CTYPE",
+        "-DNO_STRING",
+    ]
+)
 env_taihen.Append(LINKFLAGS=["-Wl,-z,nocopyreloc"])
 
 if env["taihen_logging"] == "yes":
-	env_taihen.Append(CPPDEFINES=['ENABLE_LOGGING', 'TRANSFORM_DIS_VERBOSE'])
+    env_taihen.Append(CPPDEFINES=["ENABLE_LOGGING", "TRANSFORM_DIS_VERBOSE"])
 
 if env.has_key("msvc_version"):
-	env_taihen.Append(CPPDEFINES=['inline=__inline'])
+    env_taihen.Append(CPPDEFINES=["inline=__inline"])
 
 taihen_src = [
-	"#thirdparty/vitasdk/taihen/src/hen.c",
-	"#thirdparty/vitasdk/taihen/src/module.c",
-	"#thirdparty/vitasdk/taihen/src/patches.c",
-	"#thirdparty/vitasdk/taihen/src/plugin.c",
-	"#thirdparty/vitasdk/taihen/src/proc_map.c",
-	"#thirdparty/vitasdk/taihen/src/taihen.c",
-	"#thirdparty/vitasdk/taihen/src/taihen-user.c",
-	"#thirdparty/vitasdk/taihen/src/posix-compat.c",
-	"#thirdparty/vitasdk/taihen/src/slab.c",
-	"#thirdparty/vitasdk/taihen/src/substitute/lib/hook-functions.c",
-	"#thirdparty/vitasdk/taihen/src/substitute/lib/jump-dis.c",
-	"#thirdparty/vitasdk/taihen/src/substitute/lib/strerror.c",
-	"#thirdparty/vitasdk/taihen/src/substitute/lib/transform-dis.c",
-	"#thirdparty/vitasdk/taihen/src/substitute/lib/cbit/vec.c",
-	"#thirdparty/vitasdk/taihen/src/substitute/lib/vita/execmem.c",
-	"#thirdparty/vitasdk/taihen/src/taihen-parser/src/lexer.c",
-	"#thirdparty/vitasdk/taihen/src/taihen-parser/src/parser.c",
+    "#thirdparty/vitasdk/taihen/src/hen.c",
+    "#thirdparty/vitasdk/taihen/src/module.c",
+    "#thirdparty/vitasdk/taihen/src/patches.c",
+    "#thirdparty/vitasdk/taihen/src/plugin.c",
+    "#thirdparty/vitasdk/taihen/src/proc_map.c",
+    "#thirdparty/vitasdk/taihen/src/taihen.c",
+    "#thirdparty/vitasdk/taihen/src/taihen-user.c",
+    "#thirdparty/vitasdk/taihen/src/posix-compat.c",
+    "#thirdparty/vitasdk/taihen/src/slab.c",
+    "#thirdparty/vitasdk/taihen/src/substitute/lib/hook-functions.c",
+    "#thirdparty/vitasdk/taihen/src/substitute/lib/jump-dis.c",
+    "#thirdparty/vitasdk/taihen/src/substitute/lib/strerror.c",
+    "#thirdparty/vitasdk/taihen/src/substitute/lib/transform-dis.c",
+    "#thirdparty/vitasdk/taihen/src/substitute/lib/cbit/vec.c",
+    "#thirdparty/vitasdk/taihen/src/substitute/lib/vita/execmem.c",
+    "#thirdparty/vitasdk/taihen/src/taihen-parser/src/lexer.c",
+    "#thirdparty/vitasdk/taihen/src/taihen-parser/src/parser.c",
 ]
-taihenapp = env_taihen.Program("taihen", taihen_src, PROGSUFFIX="", LIBS=[
-	"gcc",
-	"SceSysmemForDriver_stub",
-	"SceSysmemForKernel_stub",
-	"SceSysclibForDriver_stub",
-	"SceCpuForKernel_stub",
-	"SceCpuForDriver_stub",
-	"SceSysrootForKernel_stub",
-	"SceThreadmgrForDriver_stub",
-	"SceModulemgrForKernel_stub",
-	"SceModulemgrForDriver_stub",
-	"SceIofilemgrForDriver_stub",
-	"SceSblACMgrForDriver_stub",
-	"SceSblAIMgrForDriver_stub",
-	"SceDebugForDriver_stub",
-	"SceCtrlForDriver_stub",
-])
+taihenapp = env_taihen.Program(
+    "taihen",
+    taihen_src,
+    PROGSUFFIX="",
+    LIBS=[
+        "gcc",
+        "SceSysmemForDriver_stub",
+        "SceSysmemForKernel_stub",
+        "SceSysclibForDriver_stub",
+        "SceCpuForKernel_stub",
+        "SceCpuForDriver_stub",
+        "SceSysrootForKernel_stub",
+        "SceThreadmgrForDriver_stub",
+        "SceModulemgrForKernel_stub",
+        "SceModulemgrForDriver_stub",
+        "SceIofilemgrForDriver_stub",
+        "SceSblACMgrForDriver_stub",
+        "SceSblAIMgrForDriver_stub",
+        "SceDebugForDriver_stub",
+        "SceCtrlForDriver_stub",
+    ],
+)
 
 taihen = Dir("#thirdparty/vitasdk/taihen/").abspath
 taihen_output = Dir(working + "/output/taihen/").abspath
 
 build_taihen_deps = [
-	taihenapp[0].abspath,
-	taihen + "/exports.yml",
-	taihen_output + "/taihen-stubs.yml",
-	taihen_output + "/taihen.velf",
-	File(working + "/taihen.skprx").abspath,
+    taihenapp[0].abspath,
+    taihen + "/exports.yml",
+    taihen_output + "/taihen-stubs.yml",
+    taihen_output + "/taihen.velf",
+    File(working + "/taihen.skprx").abspath,
 ]
 env_taihen.Command(
-	build_taihen_deps[2],
-	[build_taihen_deps[0], build_taihen_deps[1]],
-	"vita-elf-export kernel '{0}' '{1}' '{2}'".format(build_taihen_deps[0], build_taihen_deps[1], build_taihen_deps[2])
+    build_taihen_deps[2],
+    [build_taihen_deps[0], build_taihen_deps[1]],
+    "vita-elf-export kernel '{0}' '{1}' '{2}'".format(build_taihen_deps[0], build_taihen_deps[1], build_taihen_deps[2]),
 )
 env_taihen.Command(
-	[taihen_output + "/libtaihen_stub_weak.a", taihen_output + "/libtaihen_stub.a", taihen_output + "/libtaihenForKernel_stub.a", taihen_output + "/libtaihenModuleUtils_stub.a"],
-	build_taihen_deps[2],
-	"vita-libs-gen '{0}' '{1}' && make -C '{1}'".format(build_taihen_deps[2], taihen_output)
+    [
+        taihen_output + "/libtaihen_stub_weak.a",
+        taihen_output + "/libtaihen_stub.a",
+        taihen_output + "/libtaihenForKernel_stub.a",
+        taihen_output + "/libtaihenModuleUtils_stub.a",
+    ],
+    build_taihen_deps[2],
+    "vita-libs-gen '{0}' '{1}' && make -C '{1}'".format(build_taihen_deps[2], taihen_output),
 )
 env_taihen.Command(
-	build_taihen_deps[3],
-	[build_taihen_deps[0], build_taihen_deps[1]],
-	"vita-elf-create -e '{0}' '{1}' '{2}'".format(build_taihen_deps[1], build_taihen_deps[0], build_taihen_deps[3])
+    build_taihen_deps[3],
+    [build_taihen_deps[0], build_taihen_deps[1]],
+    "vita-elf-create -e '{0}' '{1}' '{2}'".format(build_taihen_deps[1], build_taihen_deps[0], build_taihen_deps[3]),
 )
 env_taihen.Command(
-	build_taihen_deps[4],
-	build_taihen_deps[3],
-	"vita-make-fself -c '{0}' '{1}'".format(build_taihen_deps[3], build_taihen_deps[4])
+    build_taihen_deps[4],
+    build_taihen_deps[3],
+    "vita-make-fself -c '{0}' '{1}'".format(build_taihen_deps[3], build_taihen_deps[4]),
 )
 
 # ScePiglet library
@@ -168,21 +187,23 @@ piglet = Dir("#thirdparty/vitasdk/piglet/").abspath
 piglet_output = Dir(working + "/output/piglet/").abspath
 
 env_piglet = env_module.Clone()
-env_piglet.Append(CFLAGS=[
-	"-O3",
-	"-Wno-incompatible-pointer-types",
-	"-Wno-pointer-sign",
-	"-nostartfiles",
-])
+env_piglet.Append(
+    CFLAGS=[
+        "-O3",
+        "-Wno-incompatible-pointer-types",
+        "-Wno-pointer-sign",
+        "-nostartfiles",
+    ]
+)
 
 piglet_src = [
-	"#thirdparty/vitasdk/piglet/src/pib.c",
-	"#thirdparty/vitasdk/piglet/src/hooks.c",
-	"#thirdparty/vitasdk/piglet/src/patches.c",
-	"#thirdparty/vitasdk/piglet/src/sha1.c",
-	"#thirdparty/vitasdk/piglet/src/shacccgpatch.c",
-	"#thirdparty/vitasdk/piglet/src/sysmodepatch.c",
-	"#thirdparty/vitasdk/piglet/src/essl.c",
+    "#thirdparty/vitasdk/piglet/src/pib.c",
+    "#thirdparty/vitasdk/piglet/src/hooks.c",
+    "#thirdparty/vitasdk/piglet/src/patches.c",
+    "#thirdparty/vitasdk/piglet/src/sha1.c",
+    "#thirdparty/vitasdk/piglet/src/shacccgpatch.c",
+    "#thirdparty/vitasdk/piglet/src/sysmodepatch.c",
+    "#thirdparty/vitasdk/piglet/src/essl.c",
 ]
 
 libpiglet = env_piglet.Library("pib", piglet_src)
@@ -199,15 +220,15 @@ env_piglet.Command(build_piglet_out, build_piglet_in, build_piglet_stub)
 
 vitasdklib = vitasdk + "/arm-vita-eabi/lib"
 combine_libraries = [
-	vitasdklib + "/libSceDisplay_stub_weak.a",
-	vitasdklib + "/libSceGxm_stub_weak.a",
-	vitasdklib + "/libSceThreadmgrForDriver_stub.a",
-	vitasdklib + "/libSceLibKernel_stub_weak.a",
-	vitasdklib + "/libSceAppMgr_stub_weak.a",
-	vitasdklib + "/libSceShaccCg_stub_weak.a",
-	taihen_output + "/libtaihen_stub_weak.a",
-	piglet_output + "/liblibScePiglet_stub_weak.a",
-	piblibname,
+    vitasdklib + "/libSceDisplay_stub_weak.a",
+    vitasdklib + "/libSceGxm_stub_weak.a",
+    vitasdklib + "/libSceThreadmgrForDriver_stub.a",
+    vitasdklib + "/libSceLibKernel_stub_weak.a",
+    vitasdklib + "/libSceAppMgr_stub_weak.a",
+    vitasdklib + "/libSceShaccCg_stub_weak.a",
+    taihen_output + "/libtaihen_stub_weak.a",
+    piglet_output + "/liblibScePiglet_stub_weak.a",
+    piblibname,
 ]
 
 env_piglet.Command("libscepib.a", combine_libraries, MergeLibs)
