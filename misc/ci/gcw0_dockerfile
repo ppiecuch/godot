@@ -1,4 +1,4 @@
-FROM i386/ubuntu:xenial
+FROM amd64/ubuntu:bionic
 
 MAINTAINER Pawel Piecuch <piecuch.pawel@gmail.com>
 
@@ -10,7 +10,7 @@ LABEL description="GCW Zero development toolchain"
 RUN mkdir -p /opt
 
 RUN apt-get update \
-  && apt-get install -y bzip2 xz-utils less curl scons nano make ca-certificates \
+  && apt-get install -y bzip2 xz-utils less curl scons libx11-dev make ca-certificates \
   && apt-get autoclean \
   && rm -rf /var/lib/apt/lists/* \
   && echo "*** Fetching toolchain $version ..." \

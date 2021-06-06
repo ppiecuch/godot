@@ -111,13 +111,13 @@ def configure(env):
 
     env.Append(CCFLAGS=["-D_3DS", "-DARM11"])
     env.Append(CCFLAGS=["-march=armv6k", "-mtune=mpcore", "-mfloat-abi=hard", "-mtp=soft"])
-    env.Append(CCFLAGS=["-mword-relocations", "-fomit-frame-pointer"])
+    env.Append(CCFLAGS=["-mword-relocations", "-fomit-frame-pointer", "-fno-strict-overflow"])
 
     env.Append(
         CCFLAGS=[
             "-Wno-maybe-uninitialized",
             "-Wno-strict-aliasing",
-            "-fno-strict-overflow",
+            "-Wno-nonnull",
             "-Wno-switch",
             "-Wno-sign-compare",
             "-Wno-shadow=compatible-local",
