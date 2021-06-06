@@ -50,7 +50,7 @@ void FileAccessNetworkClient::unlock_mutex() {
 	mutex.unlock();
 }
 
-void FileAccessNetworkClient::put_32(int p_32) {
+void FileAccessNetworkClient::put_32(int32_t p_32) {
 	uint8_t buf[4];
 	encode_uint32(p_32, buf);
 	client->put_data(buf, 4);
@@ -64,7 +64,7 @@ void FileAccessNetworkClient::put_64(int64_t p_64) {
 	DEBUG_PRINT("put64: " + itos(p_64));
 }
 
-int FileAccessNetworkClient::get_32() {
+int32_t FileAccessNetworkClient::get_32() {
 	uint8_t buf[4];
 	client->get_data(buf, 4);
 	return decode_uint32(buf);
