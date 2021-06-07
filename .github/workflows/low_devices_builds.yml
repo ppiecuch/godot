@@ -35,7 +35,7 @@ jobs:
       # Install all packages (except scons)
       - name: Configure dependencies
         run: |
-          sudo apt-get install wget
+          sudo apt-get install -y wget
 
       # Upload cache on completion and check it out now
       - name: Load .scons_cache directory
@@ -116,7 +116,7 @@ jobs:
       # Install all packages (except scons)
       - name: Configure dependencies
         run: |
-          sudo apt-get install wget
+          sudo apt-get install -y wget
 
       # Upload cache on completion and check it out now
       - name: Load .scons_cache directory
@@ -176,7 +176,7 @@ jobs:
       # Install all packages (except scons)
       - name: Configure dependencies
         run: |
-          sudo apt-get install wget xz-utils cmake
+          sudo apt-get install -y wget xz-utils cmake
 
       # Checkout and configure VitaSDK package
       - name: Checkout VDPM package
@@ -255,7 +255,7 @@ jobs:
       # Install all packages (except scons)
       - name: Configure dependencies
         run: |
-          sudo apt-get install wget
+          sudo apt-get install -y wget
 
       # Upload cache on completion and check it out now
       - name: Load .scons_cache directory
