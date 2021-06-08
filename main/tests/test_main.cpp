@@ -48,6 +48,7 @@
 #include "test_render.h"
 #include "test_shader_lang.h"
 #include "test_string.h"
+#include "test_xml_parser.h"
 
 const char **tests_get_names() {
 	static const char *test_names[] = {
@@ -59,6 +60,7 @@ const char **tests_get_names() {
 		"render",
 		"oa_hash_map",
 		"gui",
+		"font",
 		"shaderlang",
 		"gd_tokenizer",
 		"gd_parser",
@@ -66,8 +68,8 @@ const char **tests_get_names() {
 		"gd_bytecode",
 		"ordered_hash_map",
 		"astar",
-		"font",
-		nullptr,
+		"xml_parser",
+		nullptr
 	};
 
 	return test_names;
@@ -140,8 +142,13 @@ MainLoop *test_main(String p_test, const List<String> &p_args) {
 		return TestAStar::test();
 	}
 
+<<<<<<< HEAD
 	if (p_test == "font") {
 		return TestFont::test();
+=======
+	if (p_test == "xml_parser") {
+		return TestXMLParser::test();
+>>>>>>> f80b15bebc5f3ea72697e8e8bdd7fb19a4d526a6
 	}
 
 	print_line("Unknown test: " + p_test);

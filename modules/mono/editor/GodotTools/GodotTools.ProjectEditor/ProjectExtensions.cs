@@ -2,7 +2,8 @@ using GodotTools.Core;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using DotNet.Globbing;
+using System.Linq;
+using Microsoft.Build.Globbing;
 using Microsoft.Build.Construction;
 
 namespace GodotTools.ProjectEditor
