@@ -110,6 +110,9 @@ MainLoop *test_main(String p_test, const List<String> &p_args) {
 	}
 #endif
 
+	if (p_test == "font") {
+		return TestFont::test();
+
 	if (p_test == "shaderlang") {
 		return TestShaderLang::test();
 	}
@@ -142,13 +145,8 @@ MainLoop *test_main(String p_test, const List<String> &p_args) {
 		return TestAStar::test();
 	}
 
-<<<<<<< HEAD
-	if (p_test == "font") {
-		return TestFont::test();
-=======
 	if (p_test == "xml_parser") {
 		return TestXMLParser::test();
->>>>>>> f80b15bebc5f3ea72697e8e8bdd7fb19a4d526a6
 	}
 
 	print_line("Unknown test: " + p_test);
