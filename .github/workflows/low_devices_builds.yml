@@ -323,7 +323,7 @@ jobs:
       - name: Configure dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y --allow-unauthenticated wget python3 python3-pip python-is-python3
+          sudo apt-get install -y --allow-unauthenticated wget python3 python3-pip
 
       # Environment for devkitPro
       - name: Configure devKit
