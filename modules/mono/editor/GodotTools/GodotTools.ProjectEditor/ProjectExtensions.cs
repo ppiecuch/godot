@@ -3,8 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Microsoft.Build.Globbing;
 using Microsoft.Build.Construction;
+using Microsoft.Build.Globbing;
 
 namespace GodotTools.ProjectEditor
 {
@@ -12,8 +12,6 @@ namespace GodotTools.ProjectEditor
     {
         public static ProjectItemElement FindItemOrNull(this ProjectRootElement root, string itemType, string include, bool noCondition = false)
         {
-            GlobOptions globOptions = new GlobOptions {Evaluation = {CaseInsensitive = false}};
-
             string normalizedInclude = include.NormalizePath();
 
             foreach (var itemGroup in root.ItemGroups)
@@ -26,7 +24,7 @@ namespace GodotTools.ProjectEditor
                     if (item.ItemType != itemType)
                         continue;
 
-                    var glob = Glob.Parse(item.Include.NormalizePath(), globOptions);
+                    var glob = MSBuildGlob.Parse(item.Include.NormalizePath());
 
                     if (glob.IsMatch(normalizedInclude))
                         return item;
@@ -35,10 +33,9 @@ namespace GodotTools.ProjectEditor
 
             return null;
         }
+
         public static ProjectItemElement FindItemOrNullAbs(this ProjectRootElement root, string itemType, string include, bool noCondition = false)
         {
-            GlobOptions globOptions = new GlobOptions {Evaluation = {CaseInsensitive = false}};
-
             string normalizedInclude = Path.GetFullPath(include).NormalizePath();
 
             foreach (var itemGroup in root.ItemGroups)
@@ -51,7 +48,7 @@ namespace GodotTools.ProjectEditor
                     if (item.ItemType != itemType)
                         continue;
 
-                    var glob = Glob.Parse(Path.GetFullPath(item.Include).NormalizePath(), globOptions);
+                    var glob = MSBuildGlob.Parse(Path.GetFullPath(item.Include).NormalizePath());
 
                     if (glob.IsMatch(normalizedInclude))
                         return item;
@@ -117,6 +114,20 @@ namespace GodotTools.ProjectEditor
             }
 
             return Guid.Empty;
+        }
+
+        public static bool AreDefaultCompileItemsEnabled(this ProjectRootElement root)
+        {
+            var enableDefaultCompileItemsProps = root.PropertyGroups
+                .Where(g => string.IsNullOrEmpty(g.Condition))
+                .SelectMany(g => g.Properties
+                    .Where(p => p.Name == "EnableDefaultCompileItems" && string.IsNullOrEmpty(p.Condition)));
+
+            bool enableDefaultCompileItems = true;
+            foreach (var prop in enableDefaultCompileItemsProps)
+                enableDefaultCompileItems = prop.Value.Equals("true", StringComparison.OrdinalIgnoreCase);
+
+            return enableDefaultCompileItems;
         }
     }
 }
