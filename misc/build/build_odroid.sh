@@ -25,6 +25,7 @@ if [ ! -e "$CROSS/$CC" ]; then
 
 	echo "*** Running docker toolchain $VERSION (with script $NAME).."
 	docker run --rm -t -v "$APPDIR:/app" odroid_dev:$VERSION "./${SCRIPTDIR/$APPDIR/}/$NAME"
+
 	exit
 fi
 
