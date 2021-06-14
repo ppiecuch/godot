@@ -81,7 +81,7 @@ struct explo_object_t {
 static inline CollisionShape2D *_safe_collision_shape(Node *node) {
 	if (CollisionShape2D *collision = Object::cast_to<CollisionShape2D>(node->get_child(COLLISIONS_CHILD))) {
 		return collision;
-	} else if (CollisionPolygon2D *collision = Object::cast_to<CollisionPolygon2D>(node->get_child(COLLISIONS_CHILD))) {
+	} else if (Object::cast_to<CollisionPolygon2D>(node->get_child(COLLISIONS_CHILD))) {
 		return nullptr;
 	} else {
 		WARN_PRINT(vformat("%s: Collision object not found.", node->get_name()));
@@ -92,7 +92,7 @@ static inline CollisionShape2D *_safe_collision_shape(Node *node) {
 static inline CollisionPolygon2D *_safe_collision_polygon(Node *node) {
 	if (CollisionPolygon2D *collision = Object::cast_to<CollisionPolygon2D>(node->get_child(COLLISIONS_CHILD))) {
 		return collision;
-	} else if (CollisionShape2D *collision = Object::cast_to<CollisionShape2D>(node->get_child(COLLISIONS_CHILD))) {
+	} else if (Object::cast_to<CollisionShape2D>(node->get_child(COLLISIONS_CHILD))) {
 		return nullptr;
 	} else {
 		WARN_PRINT(vformat("%s: Collision object not found.", node->get_name()));
