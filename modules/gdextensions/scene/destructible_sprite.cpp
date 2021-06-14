@@ -37,17 +37,17 @@
 // https://github.com/ScyDev/Godot-Scripts/blob/master/polygon-merge.gd
 
 #include "destructible_sprite.h"
-#include "explosion_particles.h"
 #include "core/io/config_file.h"
+#include "explosion_particles.h"
+#include "scene/2d/collision_polygon_2d.h"
 #include "scene/2d/collision_shape_2d.h"
 #include "scene/2d/cpu_particles_2d.h"
 #include "scene/2d/particles_2d.h"
 #include "scene/2d/visibility_notifier_2d.h"
-#include "scene/2d/collision_polygon_2d.h"
 #include "scene/animation/tween.h"
 #include "scene/main/timer.h"
-#include "scene/resources/rectangle_shape_2d.h"
 #include "scene/resources/bit_map.h"
+#include "scene/resources/rectangle_shape_2d.h"
 
 #include "common/gd_core.h"
 
@@ -58,7 +58,7 @@
 #define FSIGN(a) ((a) > 0 ? 1 : -1)
 #define FDIFFSIGN(x, y) (((x) > (y)) - ((x) < (y)))
 
-#define SPRITE_CHILD     0
+#define SPRITE_CHILD 0
 #define VISIBILITY_CHILD 1
 #define COLLISIONS_CHILD 2
 
@@ -134,7 +134,7 @@ void DestructibleSprite::_texture_changed() {
 }
 
 void DestructibleSprite::_update_texture_shapes() {
-	if(get_texture().is_null()) {
+	if (get_texture().is_null()) {
 		// nothing to do - keep old cache
 		return;
 	}
@@ -175,7 +175,8 @@ void DestructibleSprite::_update_texture_shapes() {
 				PoolByteArray nblocks = cache.get_value("cache", cache_key);
 				_outline_cache.resize(nblocks.size());
 				// Load cached values
-				int lines = 0; for (int pi = 0; pi < nblocks.size(); pi++) {
+				int lines = 0;
+				for (int pi = 0; pi < nblocks.size(); pi++) {
 					const int nlines = nblocks[pi];
 					_outline_cache.write[pi].resize(nlines);
 					for (int i = 0; i < nlines; i++) {
@@ -217,7 +218,8 @@ void DestructibleSprite::_update_texture_shapes() {
 		if (!res_path.empty()) {
 			cache.set_value("cache", "path", res_path);
 			PoolByteArray nlines;
-			int lines = 0; for (int pi = 0; pi < _outline_cache.size(); pi++) {
+			int lines = 0;
+			for (int pi = 0; pi < _outline_cache.size(); pi++) {
 				nlines.push_back(_outline_cache[pi].size());
 				for (int i = 0; i < _outline_cache[pi].size(); i++) {
 					cache.set_value(cache_key, String::num(lines), _outline_cache[pi][i]);
@@ -310,12 +312,12 @@ void DestructibleSprite::_on_debris_timer_timeout(uint64_t object_id) {
 				}
 				if (CollisionShape2D *collision = _safe_collision_shape(body)) {
 					collision->set_disabled(true);
-				}
-				else if (CollisionPolygon2D *collision = _safe_collision_polygon(body)) {
+				} else if (CollisionPolygon2D *collision = _safe_collision_polygon(body)) {
 					int index = collision->get_index();
-					while(CollisionPolygon2D *c = Object::cast_to<CollisionPolygon2D>(body->get_child(index))) {
+					while (CollisionPolygon2D *c = Object::cast_to<CollisionPolygon2D>(body->get_child(index))) {
 						c->set_disabled(true);
-						if (++index == body->get_child_count()) break;
+						if (++index == body->get_child_count())
+							break;
 					}
 				}
 			}
@@ -401,13 +403,13 @@ void DestructibleSprite::_initiate_detonation(uint64_t object_id) {
 					if (CollisionShape2D *collision = _safe_collision_shape(body)) {
 						collision->set_scale(collision->get_scale() * scale_factor);
 						collision->set_position(collision->get_position() * scale_factor);
-					}
-					else if (CollisionPolygon2D *collision = _safe_collision_polygon(body)) {
+					} else if (CollisionPolygon2D *collision = _safe_collision_polygon(body)) {
 						int index = collision->get_index();
-						while(CollisionPolygon2D *c = Object::cast_to<CollisionPolygon2D>(body->get_child(index))) {
+						while (CollisionPolygon2D *c = Object::cast_to<CollisionPolygon2D>(body->get_child(index))) {
 							c->set_scale(c->get_scale() * scale_factor);
 							c->set_position(c->get_position() * scale_factor);
-							if (++index == body->get_child_count()) break;
+							if (++index == body->get_child_count())
+								break;
 						}
 					}
 					body->set_mass(body->get_mass() * scale_factor);
