@@ -310,10 +310,10 @@ void DestructibleSprite::_on_debris_timer_timeout(uint64_t object_id) {
 					}
 					restart_timer = true;
 				}
-				if (CollisionShape2D *collision = _safe_collision_shape(body)) {
-					collision->set_disabled(true);
-				} else if (CollisionPolygon2D *collision = _safe_collision_polygon(body)) {
-					int index = collision->get_index();
+				if (CollisionShape2D *collision_shape = _safe_collision_shape(body)) {
+					collision_shape->set_disabled(true);
+				} else if (CollisionPolygon2D *collision_poly = _safe_collision_polygon(body)) {
+					int index = collision_poly->get_index();
 					while (CollisionPolygon2D *c = Object::cast_to<CollisionPolygon2D>(body->get_child(index))) {
 						c->set_disabled(true);
 						if (++index == body->get_child_count())
@@ -400,11 +400,11 @@ void DestructibleSprite::_initiate_detonation(uint64_t object_id) {
 					color_tween->start();
 				}
 				if (scale_block) {
-					if (CollisionShape2D *collision = _safe_collision_shape(body)) {
-						collision->set_scale(collision->get_scale() * scale_factor);
-						collision->set_position(collision->get_position() * scale_factor);
-					} else if (CollisionPolygon2D *collision = _safe_collision_polygon(body)) {
-						int index = collision->get_index();
+					if (CollisionShape2D *collision_shape = _safe_collision_shape(body)) {
+						collision_shape->set_scale(collision_shape->get_scale() * scale_factor);
+						collision_shape->set_position(collision_shape->get_position() * scale_factor);
+					} else if (CollisionPolygon2D *collision_poly = _safe_collision_polygon(body)) {
+						int index = collision_poly->get_index();
 						while (CollisionPolygon2D *c = Object::cast_to<CollisionPolygon2D>(body->get_child(index))) {
 							c->set_scale(c->get_scale() * scale_factor);
 							c->set_position(c->get_position() * scale_factor);
@@ -423,23 +423,25 @@ void DestructibleSprite::_initiate_detonation(uint64_t object_id) {
 				}
 				body->set_mode(RigidBody2D::MODE_RIGID);
 
-				// Create a random angular velocity for each block, depending on its mass.
-				const real_t block_angular_velocity = Math::random(-object.blocks_impulse / body->get_weight(), object.blocks_impulse / body->get_weight());
-				// Set the angular velocity for each block.
-				body->set_angular_velocity(block_angular_velocity);
-				// Create a random impulse for each block.
-				const real_t block_rotation = Math::random(0, 360);
+				if (object.blocks_impulse > 0) {
+					// Create a random angular velocity for each block, depending on its mass.
+					const real_t block_angular_velocity = Math::random(-object.blocks_impulse / body->get_weight(), object.blocks_impulse / body->get_weight());
+					// Set the angular velocity for each block.
+					body->set_angular_velocity(block_angular_velocity);
+					// Create a random impulse for each block.
+					const real_t block_rotation = Math::random(0, 360);
 
-				// trigger impulse
-				switch (object.destruction_type) {
-					case DESTRUCTION_EXPLODE: {
-						body->apply_central_impulse(Vector2(blocks_impulse, blocks_impulse).rotated(Math::deg2rad(block_rotation)));
-					} break;
-					case DESTRUCTION_COLLAPSE: {
-						body->apply_central_impulse(Vector2(blocks_impulse, -blocks_impulse).rotated(Math::deg2rad(block_rotation)));
-					} break;
-					default: {
-						WARN_PRINT("Cannot trigger unknown destruction type.");
+					// trigger impulse
+					switch (object.destruction_type) {
+						case DESTRUCTION_EXPLODE: {
+							body->apply_central_impulse(Vector2(blocks_impulse, blocks_impulse).rotated(Math::deg2rad(block_rotation)));
+						} break;
+						case DESTRUCTION_COLLAPSE: {
+							body->apply_central_impulse(Vector2(blocks_impulse, -blocks_impulse).rotated(Math::deg2rad(block_rotation)));
+						} break;
+						default: {
+							WARN_PRINT("Cannot trigger unknown destruction type.");
+						}
 					}
 				}
 			} else {
