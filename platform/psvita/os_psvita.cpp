@@ -61,6 +61,8 @@ const char *OSPSVita::get_audio_driver_name(int p_driver) const {
 };
 
 void OSPSVita::initialize_core() {
+	setenv("HOME", "app0:", 1);
+
 	FileAccess::make_default<FileAccessUnix>(FileAccess::ACCESS_RESOURCES);
 	DirAccess::make_default<DirAccessUnix>(DirAccess::ACCESS_RESOURCES);
 };
@@ -390,8 +392,8 @@ String OSPSVita::get_resource_dir() const {
 };
 
 OSPSVita::OSPSVita() {
-	printf("*** creating OS %p\n", this);
-	main_loop = NULL;
+	printf("*** creating OS object %p\n", this);
+	main_loop = nullptr;
 
 	sceRtcGetCurrentTick(&ticks_start);
 	ticks_per_sec = sceRtcGetTickResolution();
