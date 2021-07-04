@@ -3896,6 +3896,14 @@ bool String::is_valid_float() const {
 	return numbers_found;
 }
 
+String String::append_path(const String &p_path) const {
+	if (ends_with("/") && p_path.begins_with("/"))
+		return *this + p_path.substr(1);
+	if (!ends_with("/") && !p_path.begins_with("/"))
+		return *this + "/" + p_path;
+	return *this + p_path;
+}
+
 String String::path_to_file(const String &p_path) const {
 	// Don't get base dir for src, this is expected to be a dir already.
 	String src = this->replace("\\", "/");

@@ -325,6 +325,7 @@ public:
 	bool is_abs_path() const;
 	bool is_rel_path() const;
 	bool is_resource_file() const;
+	String append_path(const String &p_path) const;
 	String path_to(const String &p_path) const;
 	String path_to_file(const String &p_path) const;
 	String get_base_dir() const;
