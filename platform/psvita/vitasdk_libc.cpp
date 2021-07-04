@@ -33,8 +33,13 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
 
 #include <psp2/io/stat.h>
+#include <psp2/net.h>
+
+#define SCE_ERRNO_MASK 0xFF
 
 #define R_OK 0
 #define R_ERR -1
@@ -91,4 +96,41 @@ extern "C" ssize_t readlink(const char *path, char *buf, size_t bufsize) {
 extern "C" int symlink(const char *path1, const char *path2) {
 	WARN_PRINT("symlink unsupported");
 	return R_ERR;
+}
+
+extern "C" struct hostent *gethostbyaddr(const void *__addr, socklen_t __len, int __type) {
+	static struct hostent ent;
+	char name[NI_MAXHOST];
+	static char sname[NI_MAXHOST] = "";
+	static char *addrlist[2] = { nullptr, nullptr };
+
+	if (__type != AF_INET) {
+		errno = SCE_NET_ERROR_RESOLVER_ENOSUPPORT;
+		return nullptr;
+	}
+
+	int rid = sceNetResolverCreate("resolver", nullptr, 0);
+	if (rid < 0) {
+		errno = rid & SCE_ERRNO_MASK;
+		return nullptr;
+	}
+
+	int err = sceNetResolverStartAton(rid, __addr, name, sizeof(name), 0, 0, 0);
+	sceNetResolverDestroy(rid);
+	if (err < 0) {
+		errno = err & SCE_ERRNO_MASK;
+		return nullptr;
+	}
+
+	strncpy(sname, name, NI_MAXHOST - 1);
+	addrlist[0] = (char *) __addr;
+
+	ent.h_name = sname;
+	ent.h_aliases = 0;
+	ent.h_addrtype = __type;
+	ent.h_length = sizeof(struct SceNetInAddr);
+	ent.h_addr_list = addrlist;
+	ent.h_addr = addrlist[0];
+
+	return &ent;
 }
