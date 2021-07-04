@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  godoterrorhandler.cpp                                                */
+/*  godot_error_handler.cpp                                              */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,7 +28,7 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "godoterrorhandler.h"
+#include "godot_error_handler.h"
 
 GodotErrorHandler *GodotErrorHandler::singleton = NULL;
 

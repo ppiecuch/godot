@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  inputstorage.cpp                                                     */
+/*  input_storage.cpp                                                    */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,7 +28,7 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "inputstorage.h"
+#include "input_storage.h"
 
 #include "core/os/input.h"
 #include "core/os/main_loop.h"

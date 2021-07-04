@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  inputstorage.h                                                       */
+/*  input_storage.h                                                      */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -140,4 +140,4 @@ public:
 	~InputStorageNode() {}
 };
 
-#endif
+#endif // INPUT_STORAGE_B_NODE_H

@@ -38,9 +38,10 @@
 #include "gd/bs_input_event_key.h"
 #include "gd/byteswap.h"
 #include "gd/cripter.h"
-#include "gd/godoterrorhandler.h"
+#include "gd/error_reporter.h"
+#include "gd/godot_error_handler.h"
 #include "gd/input_map_editor.h"
-#include "gd/inputstorage.h"
+#include "gd/input_storage.h"
 #include "gd/line_builder_2d.h"
 #include "gd/phantom.h"
 #include "gd/procedural_animation.h"
@@ -189,6 +190,8 @@ void register_gdextensions_types() {
 
 	ClassDB::register_class<Smooth>();
 	ClassDB::register_class<Smooth2D>();
+
+	ClassDB::register_class<ErrorReporter>();
 
 #ifdef TOOLS_ENABLED
 	EditorNode::add_init_callback(editor_init_callback);
