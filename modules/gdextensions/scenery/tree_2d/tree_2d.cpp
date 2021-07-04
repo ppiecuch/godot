@@ -62,7 +62,7 @@ void Tree2D::set_mesh(const Ref<Mesh> &p_mesh) {
 			mesh->surface_set_material(surf, mat_shadows);
 		}
 		if (m.is_valid() && m != mesh->surface_get_material(surf))
-			WARN_PRINTS("Replaced material for surface " + n);
+			WARN_PRINT("Replaced material for surface " + n);
 	}
 	update();
 	emit_signal("mesh_changed");
