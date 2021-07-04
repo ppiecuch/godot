@@ -1912,9 +1912,6 @@ void ProjectManager::_unhandled_input(const Ref<InputEvent> &p_ev) {
 			case KEY_ENTER: {
 				_open_selected_projects_ask();
 			} break;
-			case KEY_DELETE: {
-				_erase_project();
-			} break;
 			case KEY_HOME: {
 				if (_project_list->get_project_count() > 0) {
 					_project_list->select_project(0);
@@ -2558,34 +2555,10 @@ ProjectManager::ProjectManager() {
 		float custom_display_scale = EditorSettings::get_singleton()->get("interface/editor/custom_display_scale");
 
 		switch (display_scale) {
-			case 0: {
+			case 0:
 				// Try applying a suitable display scale automatically.
-				// The code below is adapted in `editor/editor_settings.cpp` and `editor/editor_node.cpp`.
-				// Make sure to update those when modifying the code below.
-#ifdef OSX_ENABLED
-				editor_set_scale(OS::get_singleton()->get_screen_max_scale());
-#else
-				const int screen = OS::get_singleton()->get_current_screen();
-				float scale;
-				if (OS::get_singleton()->get_screen_dpi(screen) >= 192 && OS::get_singleton()->get_screen_size(screen).y >= 1400) {
-					// hiDPI display.
-					scale = 2.0;
-				} else if (OS::get_singleton()->get_screen_size(screen).y >= 1700) {
-					// Likely a hiDPI display, but we aren't certain due to the returned DPI.
-					// Use an intermediate scale to handle this situation.
-					scale = 1.5;
-				} else if (OS::get_singleton()->get_screen_size(screen).y <= 800) {
-					// Small loDPI display. Use a smaller display scale so that editor elements fit more easily.
-					// Icons won't look great, but this is better than having editor elements overflow from its window.
-					scale = 0.75;
-				} else {
-					scale = 1.0;
-				}
-
-				editor_set_scale(scale);
-#endif
-			} break;
-
+				editor_set_scale(EditorSettings::get_singleton()->get_auto_display_scale());
+				break;
 			case 1:
 				editor_set_scale(0.75);
 				break;
@@ -2718,12 +2691,14 @@ ProjectManager::ProjectManager() {
 
 	Button *open = memnew(Button);
 	open->set_text(TTR("Edit"));
+	open->set_shortcut(ED_SHORTCUT("project_manager/edit_project", TTR("Edit Project"), KEY_MASK_CMD | KEY_E));
 	tree_vb->add_child(open);
 	open->connect("pressed", this, "_open_selected_projects_ask");
 	open_btn = open;
 
 	Button *run = memnew(Button);
 	run->set_text(TTR("Run"));
+	run->set_shortcut(ED_SHORTCUT("project_manager/run_project", TTR("Run Project"), KEY_MASK_CMD | KEY_R));
 	tree_vb->add_child(run);
 	run->connect("pressed", this, "_run_project");
 	run_btn = run;
@@ -2732,6 +2707,7 @@ ProjectManager::ProjectManager() {
 
 	Button *scan = memnew(Button);
 	scan->set_text(TTR("Scan"));
+	scan->set_shortcut(ED_SHORTCUT("project_manager/scan_projects", TTR("Scan Projects"), KEY_MASK_CMD | KEY_S));
 	tree_vb->add_child(scan);
 	scan->connect("pressed", this, "_scan_projects");
 
@@ -2747,22 +2723,26 @@ ProjectManager::ProjectManager() {
 
 	Button *create = memnew(Button);
 	create->set_text(TTR("New Project"));
+	create->set_shortcut(ED_SHORTCUT("project_manager/new_project", TTR("New Project"), KEY_MASK_CMD | KEY_N));
 	tree_vb->add_child(create);
 	create->connect("pressed", this, "_new_project");
 
 	Button *import = memnew(Button);
 	import->set_text(TTR("Import"));
+	import->set_shortcut(ED_SHORTCUT("project_manager/import_project", TTR("Import Project"), KEY_MASK_CMD | KEY_I));
 	tree_vb->add_child(import);
 	import->connect("pressed", this, "_import_project");
 
 	Button *rename = memnew(Button);
 	rename->set_text(TTR("Rename"));
+	rename->set_shortcut(ED_SHORTCUT("project_manager/rename_project", TTR("Rename Project"), KEY_F2));
 	tree_vb->add_child(rename);
 	rename->connect("pressed", this, "_rename_project");
 	rename_btn = rename;
 
 	Button *erase = memnew(Button);
 	erase->set_text(TTR("Remove"));
+	erase->set_shortcut(ED_SHORTCUT("project_manager/remove_project", TTR("Remove Project"), KEY_DELETE));
 	tree_vb->add_child(erase);
 	erase->connect("pressed", this, "_erase_project");
 	erase_btn = erase;
@@ -2803,7 +2783,7 @@ ProjectManager::ProjectManager() {
 	version_btn = memnew(LinkButton);
 	String hash = String(VERSION_HASH);
 	if (hash.length() != 0) {
-		hash = "." + hash.left(9);
+		hash = " " + vformat("[%s]", hash.left(9));
 	}
 	version_btn->set_text("v" VERSION_FULL_BUILD + hash);
 	// Fade the version label to be less prominent, but still readable.

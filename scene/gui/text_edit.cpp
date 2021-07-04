@@ -716,10 +716,18 @@ void TextEdit::_notification(int p_what) {
 				}
 			}
 
-			if (line_length_guideline) {
-				int x = xmargin_beg + (int)cache.font->get_char_size('0').width * line_length_guideline_col - cursor.x_ofs;
-				if (x > xmargin_beg && x < xmargin_end) {
-					VisualServer::get_singleton()->canvas_item_add_line(ci, Point2(x, 0), Point2(x, size.height), cache.line_length_guideline_color);
+			if (line_length_guidelines) {
+				const int hard_x = xmargin_beg + (int)cache.font->get_char_size('0').width * line_length_guideline_hard_col - cursor.x_ofs;
+				if (hard_x > xmargin_beg && hard_x < xmargin_end) {
+					VisualServer::get_singleton()->canvas_item_add_line(ci, Point2(hard_x, 0), Point2(hard_x, size.height), cache.line_length_guideline_color);
+				}
+
+				// Draw a "Soft" line length guideline, less visible than the hard line length guideline.
+				// It's usually set to a lower column compared to the hard line length guideline.
+				// Only drawn if its column differs from the hard line length guideline.
+				const int soft_x = xmargin_beg + (int)cache.font->get_char_size('0').width * line_length_guideline_soft_col - cursor.x_ofs;
+				if (hard_x != soft_x && soft_x > xmargin_beg && soft_x < xmargin_end) {
+					VisualServer::get_singleton()->canvas_item_add_line(ci, Point2(soft_x, 0), Point2(soft_x, size.height), cache.line_length_guideline_color * Color(1, 1, 1, 0.5));
 				}
 			}
 
@@ -1590,8 +1598,9 @@ void TextEdit::_notification(int p_what) {
 				int scroll_rectangle_width = get_constant("completion_scroll_width");
 				int width = 0;
 
-				// Compute max width of the panel based on the longest completion option
-				if (completion_options_size < 50) {
+				// Compute max width of the panel based on the longest completion option.
+				// Limit the number of results for automatic width calculation to avoid freezing while showing results.
+				if (completion_options_size < 1000) {
 					for (int i = 0; i < completion_options_size; i++) {
 						int line_width = MIN(cache.font->get_string_size(completion_options[i].display).x, cmax_width);
 						if (line_width > width) {
@@ -1599,6 +1608,7 @@ void TextEdit::_notification(int p_what) {
 						}
 					}
 				} else {
+					// Fall back to predetermined width.
 					width = cmax_width;
 				}
 
@@ -4575,7 +4585,7 @@ void TextEdit::cursor_set_line(int p_row, bool p_adjust_viewport, bool p_can_be_
 				if (p_row - move_up > 0 && !is_line_hidden(p_row - move_up)) {
 					p_row -= move_up;
 				} else {
-					WARN_PRINTS(("Cursor set to hidden line " + itos(p_row) + " and there are no nonhidden lines."));
+					WARN_PRINT(("Cursor set to hidden line " + itos(p_row) + " and there are no nonhidden lines."));
 				}
 			}
 		}
@@ -6790,13 +6800,18 @@ bool TextEdit::is_show_line_numbers_enabled() const {
 	return line_numbers;
 }
 
-void TextEdit::set_show_line_length_guideline(bool p_show) {
-	line_length_guideline = p_show;
+void TextEdit::set_show_line_length_guidelines(bool p_show) {
+	line_length_guidelines = p_show;
 	update();
 }
 
-void TextEdit::set_line_length_guideline_column(int p_column) {
-	line_length_guideline_col = p_column;
+void TextEdit::set_line_length_guideline_soft_column(int p_column) {
+	line_length_guideline_soft_col = p_column;
+	update();
+}
+
+void TextEdit::set_line_length_guideline_hard_column(int p_column) {
+	line_length_guideline_hard_col = p_column;
 	update();
 }
 
@@ -7282,8 +7297,9 @@ TextEdit::TextEdit() {
 	tooltip_obj = nullptr;
 	line_numbers = false;
 	line_numbers_zero_padded = false;
-	line_length_guideline = false;
-	line_length_guideline_col = 80;
+	line_length_guidelines = false;
+	line_length_guideline_soft_col = 80;
+	line_length_guideline_hard_col = 100;
 	draw_bookmark_gutter = false;
 	draw_breakpoint_gutter = false;
 	draw_fold_gutter = false;

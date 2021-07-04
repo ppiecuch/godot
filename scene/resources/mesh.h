@@ -206,6 +206,7 @@ public:
 
 	int get_surface_count() const;
 	void surface_remove(int p_idx);
+	void clear_surfaces();
 
 	void surface_set_active(int p_idx, bool p_active);
 	void surface_set_custom_aabb(int p_idx, const AABB &p_aabb); //only recognized by driver

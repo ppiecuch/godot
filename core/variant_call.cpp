@@ -501,6 +501,7 @@ struct _VariantCall {
 	VCALL_LOCALMEM0R(Quat, is_normalized);
 	VCALL_LOCALMEM1R(Quat, is_equal_approx);
 	VCALL_LOCALMEM0R(Quat, inverse);
+	VCALL_LOCALMEM1R(Quat, angle_to);
 	VCALL_LOCALMEM1R(Quat, dot);
 	VCALL_LOCALMEM1R(Quat, xform);
 	VCALL_LOCALMEM2R(Quat, slerp);
@@ -647,6 +648,24 @@ struct _VariantCall {
 		decompressed.resize(result);
 
 		r_ret = decompressed;
+	}
+
+	static void _call_PoolByteArray_decompress_dynamic(Variant &r_ret, Variant &p_self, const Variant **p_args) {
+		PoolByteArray *ba = reinterpret_cast<PoolByteArray *>(p_self._data._mem);
+		PoolByteArray *decompressed = memnew(PoolByteArray);
+		int max_output_size = (int)(*p_args[0]);
+		Compression::Mode mode = (Compression::Mode)(int)(*p_args[1]);
+
+		decompressed->resize(1024);
+		int result = Compression::decompress_dynamic(decompressed, max_output_size, ba->read().ptr(), ba->size(), mode);
+
+		if (result == OK) {
+			r_ret = decompressed;
+		} else {
+			decompressed->resize(0);
+			r_ret = decompressed;
+			ERR_FAIL_MSG("Decompression failed.");
+		}
 	}
 
 	static void _call_PoolByteArray_hex_encode(Variant &r_ret, Variant &p_self, const Variant **p_args) {
@@ -1806,6 +1825,7 @@ void register_variant_methods() {
 	ADDFUNC0R(QUAT, BOOL, Quat, is_normalized, varray());
 	ADDFUNC1R(QUAT, BOOL, Quat, is_equal_approx, QUAT, "quat", varray());
 	ADDFUNC0R(QUAT, QUAT, Quat, inverse, varray());
+	ADDFUNC1R(QUAT, REAL, Quat, angle_to, QUAT, "to", varray());
 	ADDFUNC1R(QUAT, REAL, Quat, dot, QUAT, "b", varray());
 	ADDFUNC1R(QUAT, VECTOR3, Quat, xform, VECTOR3, "v", varray());
 	ADDFUNC2R(QUAT, QUAT, Quat, slerp, QUAT, "to", REAL, "weight", varray());
@@ -1904,6 +1924,7 @@ void register_variant_methods() {
 	ADDFUNC0R(POOL_BYTE_ARRAY, STRING, PoolByteArray, hex_encode, varray());
 	ADDFUNC1R(POOL_BYTE_ARRAY, POOL_BYTE_ARRAY, PoolByteArray, compress, INT, "compression_mode", varray(0));
 	ADDFUNC2R(POOL_BYTE_ARRAY, POOL_BYTE_ARRAY, PoolByteArray, decompress, INT, "buffer_size", INT, "compression_mode", varray(0));
+	ADDFUNC2R(POOL_BYTE_ARRAY, POOL_BYTE_ARRAY, PoolByteArray, decompress_dynamic, INT, "max_output_size", INT, "compression_mode", varray(0));
 
 	ADDFUNC0R(POOL_INT_ARRAY, INT, PoolIntArray, size, varray());
 	ADDFUNC0R(POOL_INT_ARRAY, BOOL, PoolIntArray, empty, varray());

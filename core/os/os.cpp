@@ -176,7 +176,7 @@ int OS::get_process_id() const {
 };
 
 void OS::vibrate_handheld(int p_duration_ms) {
-	WARN_PRINTS("vibrate_handheld() only works with Android and iOS");
+	WARN_PRINT("vibrate_handheld() only works with Android and iOS");
 }
 
 bool OS::is_stdout_verbose() const {
@@ -332,6 +332,11 @@ String OS::get_bundle_resource_dir() const {
 // OS specific path for user://
 String OS::get_user_data_dir() const {
 	return ".";
+};
+
+// Android OS path to app's external data storage
+String OS::get_external_data_dir() const {
+	return get_user_data_dir();
 };
 
 // Absolute path to res://

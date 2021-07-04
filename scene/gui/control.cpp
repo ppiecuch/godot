@@ -88,6 +88,10 @@ void Control::_edit_set_state(const Dictionary &p_state) {
 	data.margin[MARGIN_RIGHT] = margins[2];
 	data.margin[MARGIN_BOTTOM] = margins[3];
 	_size_changed();
+	_change_notify("anchor_left");
+	_change_notify("anchor_right");
+	_change_notify("anchor_top");
+	_change_notify("anchor_bottom");
 }
 
 void Control::_edit_set_position(const Point2 &p_position) {
@@ -965,6 +969,7 @@ Color Control::get_color(const StringName &p_name, const StringName &p_node_type
 	}
 
 	StringName type = p_node_type ? p_node_type : get_class_name();
+
 	// try with custom themes
 	Control *theme_owner = data.theme_owner;
 
@@ -1005,6 +1010,7 @@ int Control::get_constant(const StringName &p_name, const StringName &p_node_typ
 	}
 
 	StringName type = p_node_type ? p_node_type : get_class_name();
+
 	// try with custom themes
 	Control *theme_owner = data.theme_owner;
 
@@ -1098,7 +1104,7 @@ bool Control::has_icon(const StringName &p_name, const StringName &p_node_type) 
 	}
 
 	if (Theme::get_project_default().is_valid()) {
-		if (Theme::get_project_default()->has_color(p_name, type)) {
+		if (Theme::get_project_default()->has_icon(p_name, type)) {
 			return true;
 		}
 	}

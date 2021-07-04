@@ -79,6 +79,7 @@
 #include "editor/editor_log.h"
 #include "editor/editor_plugin.h"
 #include "editor/editor_properties.h"
+#include "editor/editor_resource_picker.h"
 #include "editor/editor_resource_preview.h"
 #include "editor/editor_run_native.h"
 #include "editor/editor_run_script.h"
@@ -525,7 +526,7 @@ void EditorNode::_notification(int p_what) {
 		} break;
 
 		case MainLoop::NOTIFICATION_WM_FOCUS_IN: {
-			// Restore the original FPS cap after focusing back on the editor
+			// Restore the original FPS cap after focusing back on the editor.
 			OS::get_singleton()->set_low_processor_usage_mode_sleep_usec(int(EDITOR_GET("interface/editor/low_processor_mode_sleep_usec")));
 
 			EditorFileSystem::get_singleton()->scan_changes();
@@ -533,7 +534,12 @@ void EditorNode::_notification(int p_what) {
 		} break;
 
 		case MainLoop::NOTIFICATION_WM_FOCUS_OUT: {
-			// Set a low FPS cap to decrease CPU/GPU usage while the editor is unfocused
+			// Save on focus loss before applying the FPS limit to avoid slowing down the saving process.
+			if (EDITOR_GET("interface/editor/save_on_focus_loss")) {
+				_menu_option_confirm(FILE_SAVE_SCENE, false);
+			}
+
+			// Set a low FPS cap to decrease CPU/GPU usage while the editor is unfocused.
 			OS::get_singleton()->set_low_processor_usage_mode_sleep_usec(int(EDITOR_GET("interface/editor/unfocused_low_processor_mode_sleep_usec")));
 		} break;
 
@@ -614,6 +620,7 @@ void EditorNode::_notification(int p_what) {
 			p->set_item_icon(p->get_item_index(HELP_DOCS), gui_base->get_icon("Instance", "EditorIcons"));
 			p->set_item_icon(p->get_item_index(HELP_QA), gui_base->get_icon("Instance", "EditorIcons"));
 			p->set_item_icon(p->get_item_index(HELP_REPORT_A_BUG), gui_base->get_icon("Instance", "EditorIcons"));
+			p->set_item_icon(p->get_item_index(HELP_SUGGEST_A_FEATURE), gui_base->get_icon("Instance", "EditorIcons"));
 			p->set_item_icon(p->get_item_index(HELP_SEND_DOCS_FEEDBACK), gui_base->get_icon("Instance", "EditorIcons"));
 			p->set_item_icon(p->get_item_index(HELP_COMMUNITY), gui_base->get_icon("Instance", "EditorIcons"));
 			p->set_item_icon(p->get_item_index(HELP_ABOUT), gui_base->get_icon("Godot", "EditorIcons"));
@@ -1521,15 +1528,6 @@ void EditorNode::_save_scene(String p_file, int idx) {
 		return;
 	}
 
-	// force creation of node path cache
-	// (hacky but needed for the tree to update properly)
-	Node *dummy_scene = sdata->instance(PackedScene::GEN_EDIT_STATE_INSTANCE);
-	if (!dummy_scene) {
-		show_accept(TTR("Couldn't save scene. Likely dependencies (instances or inheritance) couldn't be satisfied."), TTR("OK"));
-		return;
-	}
-	memdelete(dummy_scene);
-
 	int flg = 0;
 	if (EditorSettings::get_singleton()->get("filesystem/on_save/compress_binary_resources")) {
 		flg |= ResourceSaver::FLAG_COMPRESS;
@@ -2083,9 +2081,14 @@ void EditorNode::_edit_current() {
 	if (!inspector_only) {
 		EditorPlugin *main_plugin = editor_data.get_editor(current_obj);
 
-		for (int i = 0; i < editor_table.size(); i++) {
-			if (editor_table[i] == main_plugin && !main_editor_buttons[i]->is_visible()) {
-				main_plugin = nullptr; //if button is not visible, then no plugin active
+		int plugin_index = 0;
+		for (; plugin_index < editor_table.size(); plugin_index++) {
+			if (editor_table[plugin_index] == main_plugin) {
+				if (!main_editor_buttons[plugin_index]->is_visible()) {
+					main_plugin = nullptr; //if button is not visible, then no plugin active
+				}
+
+				break;
 			}
 		}
 
@@ -2099,26 +2102,8 @@ void EditorNode::_edit_current() {
 
 			else if (main_plugin != editor_plugin_screen && (!ScriptEditor::get_singleton() || !ScriptEditor::get_singleton()->is_visible_in_tree() || ScriptEditor::get_singleton()->can_take_away_focus())) {
 				// update screen main_plugin
-
-				if (!changing_scene) {
-					if (editor_plugin_screen) {
-						editor_plugin_screen->make_visible(false);
-					}
-					editor_plugin_screen = main_plugin;
-					editor_plugin_screen->edit(current_obj);
-
-					editor_plugin_screen->make_visible(true);
-
-					int plugin_count = editor_data.get_editor_plugin_count();
-					for (int i = 0; i < plugin_count; i++) {
-						editor_data.get_editor_plugin(i)->notify_main_screen_changed(editor_plugin_screen->get_name());
-					}
-
-					for (int i = 0; i < editor_table.size(); i++) {
-						main_editor_buttons[i]->set_pressed(editor_table[i] == main_plugin);
-					}
-				}
-
+				_editor_select(plugin_index);
+				main_plugin->edit(current_obj);
 			} else {
 				editor_plugin_screen->edit(current_obj);
 			}
@@ -2655,6 +2640,9 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 		case FILE_EXPLORE_ANDROID_BUILD_TEMPLATES: {
 			OS::get_singleton()->shell_open("file://" + ProjectSettings::get_singleton()->get_resource_path().plus_file("android"));
 		} break;
+		case RUN_RELOAD_CURRENT_PROJECT: {
+			restart_editor();
+		} break;
 		case FILE_QUIT:
 		case RUN_PROJECT_MANAGER: {
 			if (!p_confirmed) {
@@ -2818,6 +2806,9 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 		case HELP_REPORT_A_BUG: {
 			OS::get_singleton()->shell_open("https://github.com/godotengine/godot/issues");
 		} break;
+		case HELP_SUGGEST_A_FEATURE: {
+			OS::get_singleton()->shell_open("https://github.com/godotengine/godot-proposals#readme");
+		} break;
 		case HELP_SEND_DOCS_FEEDBACK: {
 			OS::get_singleton()->shell_open("https://github.com/godotengine/godot-docs/issues");
 		} break;
@@ -2881,7 +2872,7 @@ void EditorNode::_tool_menu_option(int p_idx) {
 				handler->call(callback, (const Variant **)&ud, 1, ce);
 				if (ce.error != Variant::CallError::CALL_OK) {
 					String err = Variant::get_call_error_text(handler, callback, (const Variant **)&ud, 1, ce);
-					ERR_PRINTS("Error calling function from tool menu: " + err);
+					ERR_PRINT("Error calling function from tool menu: " + err);
 				}
 			} // else it's a submenu so don't do anything.
 		} break;
@@ -3811,6 +3802,8 @@ void EditorNode::register_editor_types() {
 	ClassDB::register_class<ScriptCreateDialog>();
 	ClassDB::register_class<EditorFeatureProfile>();
 	ClassDB::register_class<EditorSpinSlider>();
+	ClassDB::register_class<EditorResourcePicker>();
+	ClassDB::register_class<EditorScriptPicker>();
 	ClassDB::register_virtual_class<FileSystemDock>();
 
 	// FIXME: Is this stuff obsolete, or should it be ported to new APIs?
@@ -4113,7 +4106,7 @@ void EditorNode::show_warning(const String &p_text, const String &p_title) {
 		warning->set_title(p_title);
 		warning->popup_centered_minsize();
 	} else {
-		WARN_PRINTS(p_title + " " + p_text);
+		WARN_PRINT(p_title + " " + p_text);
 	}
 }
 
@@ -5712,34 +5705,10 @@ EditorNode::EditorNode() {
 		int display_scale = EditorSettings::get_singleton()->get("interface/editor/display_scale");
 
 		switch (display_scale) {
-			case 0: {
+			case 0:
 				// Try applying a suitable display scale automatically.
-				// The code below is adapted in `editor/editor_settings.cpp` and `editor/project_manager.cpp`.
-				// Make sure to update those when modifying the code below.
-#ifdef OSX_ENABLED
-				editor_set_scale(OS::get_singleton()->get_screen_max_scale());
-#else
-				const int screen = OS::get_singleton()->get_current_screen();
-				float scale;
-				if (OS::get_singleton()->get_screen_dpi(screen) >= 192 && OS::get_singleton()->get_screen_size(screen).y >= 1400) {
-					// hiDPI display.
-					scale = 2.0;
-				} else if (OS::get_singleton()->get_screen_size(screen).y >= 1700) {
-					// Likely a hiDPI display, but we aren't certain due to the returned DPI.
-					// Use an intermediate scale to handle this situation.
-					scale = 1.5;
-				} else if (OS::get_singleton()->get_screen_size(screen).y <= 800) {
-					// Small loDPI display. Use a smaller display scale so that editor elements fit more easily.
-					// Icons won't look great, but this is better than having editor elements overflow from its window.
-					scale = 0.75;
-				} else {
-					scale = 1.0;
-				}
-
-				editor_set_scale(scale);
-#endif
-			} break;
-
+				editor_set_scale(EditorSettings::get_singleton()->get_auto_display_scale());
+				break;
 			case 1:
 				editor_set_scale(0.75);
 				break;
@@ -5878,6 +5847,7 @@ EditorNode::EditorNode() {
 	EDITOR_DEF("run/output/always_open_output_on_play", true);
 	EDITOR_DEF("run/output/always_close_output_on_stop", true);
 	EDITOR_DEF("run/auto_save/save_before_running", true);
+	EDITOR_DEF("interface/editor/save_on_focus_loss", false);
 	EDITOR_DEF_RST("interface/editor/save_each_scene_on_quit", true);
 	EDITOR_DEF("interface/editor/quit_confirmation", true);
 	EDITOR_DEF("interface/editor/show_update_spinner", false);
@@ -6280,6 +6250,7 @@ EditorNode::EditorNode() {
 	tool_menu->add_item(TTR("Orphan Resource Explorer..."), TOOLS_ORPHAN_RESOURCES);
 
 	p->add_separator();
+	p->add_item(TTR("Reload Current Project"), RUN_RELOAD_CURRENT_PROJECT);
 #ifdef OSX_ENABLED
 	p->add_shortcut(ED_SHORTCUT("editor/quit_to_project_list", TTR("Quit to Project List"), KEY_MASK_SHIFT + KEY_MASK_ALT + KEY_Q), RUN_PROJECT_MANAGER, true);
 #else
@@ -6402,6 +6373,7 @@ EditorNode::EditorNode() {
 	p->add_icon_shortcut(gui_base->get_icon("Instance", "EditorIcons"), ED_SHORTCUT("editor/online_docs", TTR("Online Documentation")), HELP_DOCS);
 	p->add_icon_shortcut(gui_base->get_icon("Instance", "EditorIcons"), ED_SHORTCUT("editor/q&a", TTR("Questions & Answers")), HELP_QA);
 	p->add_icon_shortcut(gui_base->get_icon("Instance", "EditorIcons"), ED_SHORTCUT("editor/report_a_bug", TTR("Report a Bug")), HELP_REPORT_A_BUG);
+	p->add_icon_shortcut(gui_base->get_icon("Instance", "EditorIcons"), ED_SHORTCUT("editor/suggest_a_feature", TTR("Suggest a Feature")), HELP_SUGGEST_A_FEATURE);
 	p->add_icon_shortcut(gui_base->get_icon("Instance", "EditorIcons"), ED_SHORTCUT("editor/send_docs_feedback", TTR("Send Docs Feedback")), HELP_SEND_DOCS_FEEDBACK);
 	p->add_icon_shortcut(gui_base->get_icon("Instance", "EditorIcons"), ED_SHORTCUT("editor/community", TTR("Community")), HELP_COMMUNITY);
 	p->add_separator();
@@ -6627,7 +6599,7 @@ EditorNode::EditorNode() {
 	version_btn->set_text(VERSION_FULL_CONFIG);
 	String hash = String(VERSION_HASH);
 	if (hash.length() != 0) {
-		hash = "." + hash.left(9);
+		hash = " " + vformat("[%s]", hash.left(9));
 	}
 	// Set the text to copy in metadata as it slightly differs from the button's text.
 	version_btn->set_meta(META_TEXT_TO_COPY, "v" VERSION_FULL_BUILD + hash);

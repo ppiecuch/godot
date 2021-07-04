@@ -519,7 +519,7 @@ void RasterizerStorageGLES2::texture_allocate(RID p_texture, int p_width, int p_
 	texture->format = p_format;
 
 	if (texture->width > config.max_texture_size || texture->height > config.max_texture_size) {
-		WARN_PRINTS("Cannot create texture larger than maximum hardware supported size of " + itos(config.max_texture_size) + ". Setting size to maximum.");
+		WARN_PRINT("Cannot create texture larger than maximum hardware supported size of " + itos(config.max_texture_size) + ". Setting size to maximum.");
 		texture->width = MIN(texture->width, config.max_texture_size);
 		texture->height = MIN(texture->height, config.max_texture_size);
 	}
@@ -644,7 +644,7 @@ void RasterizerStorageGLES2::texture_set_data(RID p_texture, const Ref<Image> &p
 
 	if (texture->resize_to_po2) {
 		if (p_image->is_compressed()) {
-			ERR_PRINTS("Texture '" + texture->path + "' is required to be a power of 2 because it uses either mipmaps or repeat, so it was decompressed. This will hurt performance and memory usage.");
+			ERR_PRINT("Texture '" + texture->path + "' is required to be a power of 2 because it uses either mipmaps or repeat, so it was decompressed. This will hurt performance and memory usage.");
 		}
 
 		if (img == p_image) {
@@ -4634,7 +4634,7 @@ void RasterizerStorageGLES2::_render_target_allocate(RenderTarget *rt) {
 	}
 
 	if (rt->width > config.max_viewport_dimensions[0] || rt->height > config.max_viewport_dimensions[1]) {
-		WARN_PRINTS("Cannot create render target larger than maximum hardware supported size of (" + itos(config.max_viewport_dimensions[0]) + ", " + itos(config.max_viewport_dimensions[1]) + "). Setting size to maximum.");
+		WARN_PRINT("Cannot create render target larger than maximum hardware supported size of (" + itos(config.max_viewport_dimensions[0]) + ", " + itos(config.max_viewport_dimensions[1]) + "). Setting size to maximum.");
 		rt->width = MIN(rt->width, config.max_viewport_dimensions[0]);
 		rt->height = MIN(rt->height, config.max_viewport_dimensions[1]);
 	}
@@ -4768,7 +4768,7 @@ void RasterizerStorageGLES2::_render_target_allocate(RenderTarget *rt) {
 		int max_samples = 0;
 		glGetIntegerv(GL_MAX_SAMPLES, &max_samples);
 		if (msaa > max_samples) {
-			WARN_PRINTS("MSAA must be <= GL_MAX_SAMPLES, falling-back to GL_MAX_SAMPLES = " + itos(max_samples));
+			WARN_PRINT("MSAA must be <= GL_MAX_SAMPLES, falling-back to GL_MAX_SAMPLES = " + itos(max_samples));
 			msaa = max_samples;
 		}
 

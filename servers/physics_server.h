@@ -123,8 +123,8 @@ public:
 	void set_margin(float p_margin);
 	float get_margin() const;
 
-	void set_collision_mask(int p_collision_mask);
-	int get_collision_mask() const;
+	void set_collision_mask(uint32_t p_collision_mask);
+	uint32_t get_collision_mask() const;
 
 	void set_exclude(const Vector<RID> &p_exclude);
 	Vector<RID> get_exclude() const;
@@ -214,10 +214,14 @@ public:
 	PhysicsShapeQueryResult();
 };
 
+class PhysicsTestMotionResult;
+
 class PhysicsServer : public Object {
 	GDCLASS(PhysicsServer, Object);
 
 	static PhysicsServer *singleton;
+
+	virtual bool _body_test_motion(RID p_body, const Transform &p_from, const Vector3 &p_motion, bool p_infinite_inertia, const Ref<PhysicsTestMotionResult> &p_result = Ref<PhysicsTestMotionResult>());
 
 protected:
 	static void _bind_methods();
@@ -479,16 +483,11 @@ public:
 		Vector3 collision_point;
 		Vector3 collision_normal;
 		Vector3 collider_velocity;
-		int collision_local_shape;
-		ObjectID collider_id;
+		int collision_local_shape = 0;
+		ObjectID collider_id = 0;
 		RID collider;
-		int collider_shape;
+		int collider_shape = 0;
 		Variant collider_metadata;
-		MotionResult() {
-			collision_local_shape = 0;
-			collider_id = 0;
-			collider_shape = 0;
-		}
 	};
 
 	virtual bool body_test_motion(RID p_body, const Transform &p_from, const Vector3 &p_motion, bool p_infinite_inertia, MotionResult *r_result = nullptr, bool p_exclude_raycast_shapes = true) = 0;
@@ -760,6 +759,32 @@ public:
 
 	PhysicsServer();
 	~PhysicsServer();
+};
+
+class PhysicsTestMotionResult : public Reference {
+	GDCLASS(PhysicsTestMotionResult, Reference);
+
+	PhysicsServer::MotionResult result;
+	bool colliding = false;
+	friend class PhysicsServer;
+
+protected:
+	static void _bind_methods();
+
+public:
+	PhysicsServer::MotionResult *get_result_ptr() const { return const_cast<PhysicsServer::MotionResult *>(&result); }
+
+	//bool is_colliding() const;
+	Vector3 get_motion() const;
+	Vector3 get_motion_remainder() const;
+
+	Vector3 get_collision_point() const;
+	Vector3 get_collision_normal() const;
+	Vector3 get_collider_velocity() const;
+	ObjectID get_collider_id() const;
+	RID get_collider_rid() const;
+	Object *get_collider() const;
+	int get_collider_shape() const;
 };
 
 typedef PhysicsServer *(*CreatePhysicsServerCallback)();

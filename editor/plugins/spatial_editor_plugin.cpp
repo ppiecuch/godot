@@ -336,7 +336,7 @@ void SpatialEditorViewport::_update_camera(float p_interp_delta) {
 		equal = false;
 	}
 
-	if (!equal || p_interp_delta == 0 || is_freelook_active() || is_orthogonal != orthogonal) {
+	if (!equal || p_interp_delta == 0 || is_orthogonal != orthogonal) {
 		camera->set_global_transform(to_camera_transform(camera_cursor));
 
 		if (orthogonal) {
@@ -4752,11 +4752,11 @@ void SpatialEditor::_update_camera_override_button(bool p_game_running) {
 
 	if (p_game_running) {
 		button->set_disabled(false);
-		button->set_tooltip(TTR("Game Camera Override\nNo game instance running."));
+		button->set_tooltip(TTR("Project Camera Override\nOverrides the running project's camera with the editor viewport camera."));
 	} else {
 		button->set_disabled(true);
 		button->set_pressed(false);
-		button->set_tooltip(TTR("Game Camera Override\nOverrides game camera with editor viewport camera."));
+		button->set_tooltip(TTR("Project Camera Override\nNo project instance running. Run the project from the editor to use this feature."));
 	}
 }
 
@@ -6331,7 +6331,7 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 
 	p->add_separator();
 	p->add_check_shortcut(ED_SHORTCUT("spatial_editor/view_origin", TTR("View Origin")), MENU_VIEW_ORIGIN);
-	p->add_check_shortcut(ED_SHORTCUT("spatial_editor/view_grid", TTR("View Grid")), MENU_VIEW_GRID);
+	p->add_check_shortcut(ED_SHORTCUT("spatial_editor/view_grid", TTR("View Grid"), KEY_MASK_CMD + KEY_G), MENU_VIEW_GRID);
 
 	p->add_separator();
 	p->add_shortcut(ED_SHORTCUT("spatial_editor/settings", TTR("Settings...")), MENU_VIEW_CAMERA_SETTINGS);

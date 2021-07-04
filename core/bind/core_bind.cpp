@@ -105,7 +105,7 @@ PoolStringArray _ResourceLoader::get_dependencies(const String &p_path) {
 
 #ifndef DISABLE_DEPRECATED
 bool _ResourceLoader::has(const String &p_path) {
-	WARN_PRINTS("ResourceLoader.has() is deprecated, please replace it with the equivalent has_cached() or the new exists().");
+	WARN_PRINT("ResourceLoader.has() is deprecated, please replace it with the equivalent has_cached() or the new exists().");
 	return has_cached(p_path);
 }
 #endif // DISABLE_DEPRECATED
@@ -1045,6 +1045,10 @@ String _OS::get_user_data_dir() const {
 	return OS::get_singleton()->get_user_data_dir();
 };
 
+String _OS::get_external_data_dir() const {
+	return OS::get_singleton()->get_external_data_dir();
+}
+
 Error _OS::native_video_play(String p_path, float p_volume, String p_audio_track, String p_subtitle_track) {
 	return OS::get_singleton()->native_video_play(p_path, p_volume, p_audio_track, p_subtitle_track);
 };
@@ -1079,6 +1083,21 @@ void _OS::move_window_to_foreground() {
 
 int64_t _OS::get_native_handle(HandleType p_handle_type) {
 	return (int64_t)OS::get_singleton()->get_native_handle(p_handle_type);
+}
+
+String _OS::get_config_dir() const {
+	// Exposed as `get_config_dir()` instead of `get_config_path()` for consistency with other exposed OS methods.
+	return OS::get_singleton()->get_config_path();
+}
+
+String _OS::get_data_dir() const {
+	// Exposed as `get_data_dir()` instead of `get_data_path()` for consistency with other exposed OS methods.
+	return OS::get_singleton()->get_data_path();
+}
+
+String _OS::get_cache_dir() const {
+	// Exposed as `get_cache_dir()` instead of `get_cache_path()` for consistency with other exposed OS methods.
+	return OS::get_singleton()->get_cache_path();
 }
 
 bool _OS::is_debug_build() const {
@@ -1315,7 +1334,11 @@ void _OS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_dynamic_memory_usage"), &_OS::get_dynamic_memory_usage);
 
 	ClassDB::bind_method(D_METHOD("get_user_data_dir"), &_OS::get_user_data_dir);
+	ClassDB::bind_method(D_METHOD("get_external_data_dir"), &_OS::get_external_data_dir);
 	ClassDB::bind_method(D_METHOD("get_system_dir", "dir"), &_OS::get_system_dir);
+	ClassDB::bind_method(D_METHOD("get_config_dir"), &_OS::get_config_dir);
+	ClassDB::bind_method(D_METHOD("get_data_dir"), &_OS::get_data_dir);
+	ClassDB::bind_method(D_METHOD("get_cache_dir"), &_OS::get_cache_dir);
 	ClassDB::bind_method(D_METHOD("get_unique_id"), &_OS::get_unique_id);
 
 	ClassDB::bind_method(D_METHOD("is_ok_left_and_cancel_right"), &_OS::is_ok_left_and_cancel_right);
@@ -3048,7 +3071,7 @@ Ref<JSONParseResult> _JSON::parse(const String &p_json) {
 	result->error = JSON::parse(p_json, result->result, result->error_string, result->error_line);
 
 	if (result->error != OK) {
-		ERR_PRINTS(vformat("Error parsing JSON at line %s: %s", result->error_line, result->error_string));
+		ERR_PRINT(vformat("Error parsing JSON at line %s: %s", result->error_line, result->error_string));
 	}
 	return result;
 }

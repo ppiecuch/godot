@@ -245,6 +245,58 @@ void EditorSpatialGizmo::add_lines(const Vector<Vector3> &p_lines, const Ref<Mat
 	instances.push_back(ins);
 }
 
+void EditorSpatialGizmo::add_vertices(const Vector<Vector3> &p_vertices, const Ref<Material> &p_material, Mesh::PrimitiveType p_primitive_type, bool p_billboard, const Color &p_modulate) {
+	if (p_vertices.empty()) {
+		return;
+	}
+
+	ERR_FAIL_COND(!spatial_node);
+	Instance ins;
+
+	Ref<ArrayMesh> mesh = memnew(ArrayMesh);
+	Array a;
+	a.resize(Mesh::ARRAY_MAX);
+
+	a[Mesh::ARRAY_VERTEX] = p_vertices;
+
+	PoolVector<Color> color;
+	color.resize(p_vertices.size());
+	{
+		PoolVector<Color>::Write w = color.write();
+		for (int i = 0; i < p_vertices.size(); i++) {
+			if (is_selected()) {
+				w[i] = Color(1, 1, 1, 0.8) * p_modulate;
+			} else {
+				w[i] = Color(1, 1, 1, 0.2) * p_modulate;
+			}
+		}
+	}
+
+	a[Mesh::ARRAY_COLOR] = color;
+
+	mesh->add_surface_from_arrays(p_primitive_type, a);
+	mesh->surface_set_material(0, p_material);
+
+	if (p_billboard) {
+		float md = 0;
+		for (int i = 0; i < p_vertices.size(); i++) {
+			md = MAX(0, p_vertices[i].length());
+		}
+		if (md) {
+			mesh->set_custom_aabb(AABB(Vector3(-md, -md, -md), Vector3(md, md, md) * 2.0));
+		}
+	}
+
+	ins.billboard = p_billboard;
+	ins.mesh = mesh;
+	if (valid) {
+		ins.create_instance(spatial_node, hidden);
+		VS::get_singleton()->instance_set_transform(ins.instance, spatial_node->get_global_transform());
+	}
+
+	instances.push_back(ins);
+}
+
 void EditorSpatialGizmo::add_unscaled_billboard(const Ref<Material> &p_material, float p_scale, const Color &p_modulate) {
 	ERR_FAIL_COND(!spatial_node);
 	Instance ins;
@@ -583,8 +635,6 @@ bool EditorSpatialGizmo::intersect_ray(Camera *p_camera, const Point2 &p_point, 
 			r_normal = -p_camera->project_ray_normal(p_point);
 			return true;
 		}
-
-		return false;
 	}
 
 	if (collision_segments.size()) {
@@ -635,8 +685,6 @@ bool EditorSpatialGizmo::intersect_ray(Camera *p_camera, const Point2 &p_point, 
 			r_normal = -p_camera->project_ray_normal(p_point);
 			return true;
 		}
-
-		return false;
 	}
 
 	if (collision_mesh.is_valid()) {
@@ -1177,7 +1225,6 @@ CameraSpatialGizmoPlugin::CameraSpatialGizmoPlugin() {
 	Color gizmo_color = EDITOR_DEF("editors/3d_gizmos/gizmo_colors/camera", Color(0.8, 0.4, 0.8));
 
 	create_material("camera_material", gizmo_color);
-	create_icon_material("camera_icon", SpatialEditor::get_singleton()->get_icon("GizmoCamera", "EditorIcons"));
 	create_handle_material("handles");
 }
 
@@ -1278,7 +1325,6 @@ void CameraSpatialGizmoPlugin::redraw(EditorSpatialGizmo *p_gizmo) {
 	Vector<Vector3> handles;
 
 	Ref<Material> material = get_material("camera_material", p_gizmo);
-	Ref<Material> icon = get_material("camera_icon", p_gizmo);
 
 #define ADD_TRIANGLE(m_a, m_b, m_c) \
 	{                               \
@@ -1370,7 +1416,6 @@ void CameraSpatialGizmoPlugin::redraw(EditorSpatialGizmo *p_gizmo) {
 #undef ADD_QUAD
 
 	p_gizmo->add_lines(lines, material);
-	p_gizmo->add_unscaled_billboard(icon, 0.05);
 	p_gizmo->add_handles(handles, get_material("handles"));
 
 	ClippedCamera *clipcam = Object::cast_to<ClippedCamera>(camera);
@@ -1851,16 +1896,15 @@ void RayCastSpatialGizmoPlugin::redraw(EditorSpatialGizmo *p_gizmo) {
 
 	p_gizmo->clear();
 
-	Vector<Vector3> lines;
+	const Ref<SpatialMaterial> material = raycast->is_enabled() ? raycast->get_debug_material() : get_material("shape_material_disabled");
 
-	lines.push_back(Vector3());
-	lines.push_back(raycast->get_cast_to());
+	p_gizmo->add_lines(raycast->get_debug_line_vertices(), material);
 
-	const Ref<SpatialMaterial> material =
-			get_material(raycast->is_enabled() ? "shape_material" : "shape_material_disabled", p_gizmo);
+	if (raycast->get_debug_shape_thickness() > 1) {
+		p_gizmo->add_vertices(raycast->get_debug_shape_vertices(), material, Mesh::PRIMITIVE_TRIANGLE_STRIP);
+	}
 
-	p_gizmo->add_lines(lines, material);
-	p_gizmo->add_collision_segments(lines);
+	p_gizmo->add_collision_segments(raycast->get_debug_line_vertices());
 }
 
 /////
