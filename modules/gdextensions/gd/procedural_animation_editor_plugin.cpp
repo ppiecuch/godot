@@ -120,7 +120,7 @@ void ProceduralAnimationEditor::clear_keyframe_nodes() {
 			continue;
 		}
 
-		ProceduralAnimationEditorGraphNode *gn = Object::cast_to<ProceduralAnimationEditorGraphNode>(n);
+		ProceduralAnimationEditorGraphNode *gn = cast_to<ProceduralAnimationEditorGraphNode>(n);
 
 		if (!gn) {
 			continue;
@@ -158,7 +158,7 @@ void ProceduralAnimationEditor::on_connection_request(const String &from, const 
 
 	Node *f = _graph_edit->get_node_or_null(from);
 
-	ProceduralAnimationEditorGraphNode *gn = Object::cast_to<ProceduralAnimationEditorGraphNode>(f);
+	ProceduralAnimationEditorGraphNode *gn = cast_to<ProceduralAnimationEditorGraphNode>(f);
 
 	if (gn != NULL) {
 		int ni = _animation->get_keyframe_next_keyframe_index(gn->get_id());
@@ -169,7 +169,7 @@ void ProceduralAnimationEditor::on_connection_request(const String &from, const 
 
 		_animation->set_keyframe_next_keyframe_index(gn->get_id(), to.to_int());
 	} else {
-		GraphNode *g = Object::cast_to<GraphNode>(f);
+		GraphNode *g = cast_to<GraphNode>(f);
 
 		if (g != NULL) {
 			int st = _animation->get_start_frame_index();
@@ -187,12 +187,12 @@ void ProceduralAnimationEditor::on_connection_request(const String &from, const 
 void ProceduralAnimationEditor::on_disconnection_request(const String &from, const int from_slot, const String &to, const int to_slot) {
 	Node *f = _graph_edit->get_node_or_null(from);
 
-	ProceduralAnimationEditorGraphNode *gn = Object::cast_to<ProceduralAnimationEditorGraphNode>(f);
+	ProceduralAnimationEditorGraphNode *gn = cast_to<ProceduralAnimationEditorGraphNode>(f);
 
 	if (gn != NULL) {
 		_animation->set_keyframe_next_keyframe_index(gn->get_id(), -1);
 	} else {
-		GraphNode *g = Object::cast_to<GraphNode>(f);
+		GraphNode *g = cast_to<GraphNode>(f);
 
 		if (g != NULL) {
 			_animation->set_start_frame_index(-1);
@@ -206,7 +206,7 @@ void ProceduralAnimationEditor::on_delete_nodes_request() {
 	List<StringName> to_erase;
 
 	for (int i = 0; i < _graph_edit->get_child_count(); i++) {
-		GraphNode *gn = Object::cast_to<GraphNode>(_graph_edit->get_child(i));
+		GraphNode *gn = cast_to<GraphNode>(_graph_edit->get_child(i));
 		if (gn) {
 			if (gn->is_selected() && gn->is_close_button_visible()) {
 				to_erase.push_back(gn->get_name());
@@ -275,7 +275,7 @@ void ProceduralAnimationEditor::_delete_request(const StringName &name) {
 
 	Node *n = _graph_edit->get_node_or_null(NodePath(name));
 
-	ProceduralAnimationEditorGraphNode *g = Object::cast_to<ProceduralAnimationEditorGraphNode>(n);
+	ProceduralAnimationEditorGraphNode *g = cast_to<ProceduralAnimationEditorGraphNode>(n);
 
 	if (g == NULL)
 		return;
@@ -292,7 +292,7 @@ void ProceduralAnimationEditor::_delete_request(const StringName &name) {
 			} else {
 				Node *fn = _graph_edit->get_node_or_null(NodePath(c.from));
 
-				ProceduralAnimationEditorGraphNode *fg = Object::cast_to<ProceduralAnimationEditorGraphNode>(fn);
+				ProceduralAnimationEditorGraphNode *fg = cast_to<ProceduralAnimationEditorGraphNode>(fn);
 
 				if (fg != NULL) {
 					_animation->set_keyframe_next_keyframe_index(fg->get_id(), -1);
@@ -729,8 +729,8 @@ void ProceduralAnimationEditorGraphNode::_bind_methods() {
 // S  --------        ProceduralAnimationEditorPlugin        --------
 
 void ProceduralAnimationEditorPlugin::edit(Object *p_object) {
-	if (Object::cast_to<ProceduralAnimation>(p_object)) {
-		animation_editor->edit(Object::cast_to<ProceduralAnimation>(p_object));
+	if (cast_to<ProceduralAnimation>(p_object)) {
+		animation_editor->edit(cast_to<ProceduralAnimation>(p_object));
 		animation_editor_button->show();
 	} else {
 		animation_editor_button->set_pressed(false);
@@ -746,7 +746,7 @@ bool ProceduralAnimationEditorPlugin::handles(Object *p_object) const {
 	}
 
 	if (p_object->is_class("AnimationPlayer")) {
-		AnimationPlayer *player = Object::cast_to<AnimationPlayer>(p_object);
+		AnimationPlayer *player = cast_to<AnimationPlayer>(p_object);
 
 		String an = player->get_assigned_animation();
 

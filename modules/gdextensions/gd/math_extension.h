@@ -213,7 +213,7 @@ public:
 	/** Get local rotation of a spatial node as a quaternion. */
 	static Quat spatial_get_rotation_quat(const Node *spatial) {
 		ERR_FAIL_NULL_V(spatial, Quat());
-		if (const Spatial *sp = Object::cast_to<Spatial>(spatial))
+		if (const Spatial *sp = cast_to<Spatial>(spatial))
 			return sp->get_transform().basis.get_rotation_quat();
 		return Quat();
 	}
@@ -221,7 +221,7 @@ public:
 	/** Set local rotation of a spatial node from a quaternion. This will reset local scale to one. */
 	static void spatial_set_rotation_quat(Node *spatial, const Quat &rotation) {
 		ERR_FAIL_NULL(spatial);
-		if (Spatial *sp = Object::cast_to<Spatial>(spatial)) {
+		if (Spatial *sp = cast_to<Spatial>(spatial)) {
 			Transform transform = sp->get_transform();
 			transform.set_basis(Basis(rotation));
 			sp->set_transform(transform);
@@ -231,7 +231,7 @@ public:
 	/** Set local rotation of a spatial node from a quaternion. This will keep local scale. */
 	static void spatial_set_rotation_quat_keep_scale(Node *spatial, const Quat &rotation) {
 		ERR_FAIL_NULL(spatial);
-		if (Spatial *sp = Object::cast_to<Spatial>(spatial)) {
+		if (Spatial *sp = cast_to<Spatial>(spatial)) {
 			Transform transform = sp->get_transform();
 			Vector3 original_scale(transform.basis.get_scale());
 			transform.set_basis(Basis(rotation, original_scale));

@@ -113,7 +113,7 @@ void TrailPoint2D::_normal_points(int idx, int total, Vector2 &res1, Vector2 &re
 void TrailPoint2D::_update_trail_target() {
 	if (is_inside_tree()) {
 		if (target_path != NodePath() && has_node(target_path)) {
-			CanvasItem *nt = Object::cast_to<CanvasItem>(get_node(target_path));
+			CanvasItem *nt = cast_to<CanvasItem>(get_node(target_path));
 
 			if (nt != trail_target) {
 				if (trail_target != nullptr) {

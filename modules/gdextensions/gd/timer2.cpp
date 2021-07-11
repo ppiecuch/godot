@@ -102,7 +102,7 @@ Timer2::~Timer2() {
 Ref<TimerObject> Timer2::wait(float p_time) {
 	const String timer_key = "new_timer";
 	MainLoop *main_loop = OS::get_singleton()->get_main_loop();
-	SceneTree *tree = Object::cast_to<SceneTree>(main_loop);
+	SceneTree *tree = cast_to<SceneTree>(main_loop);
 	ERR_FAIL_COND_V(tree == NULL, NULL);
 
 	Viewport *viewport = tree->get_root();
@@ -127,7 +127,7 @@ Ref<TimerObject> Timer2::wait(float p_time) {
 Ref<TimerObject> Timer2::wait_trigger(float p_time, Object *p_target, String p_method) {
 	const String timer_key = "new_timer";
 	MainLoop *main_loop = OS::get_singleton()->get_main_loop();
-	SceneTree *tree = Object::cast_to<SceneTree>(main_loop);
+	SceneTree *tree = cast_to<SceneTree>(main_loop);
 	ERR_FAIL_COND_V(tree == NULL, NULL);
 
 	Viewport *viewport = tree->get_root();
@@ -143,7 +143,7 @@ Ref<TimerObject> Timer2::wait_trigger(float p_time, Object *p_target, String p_m
 		tree->connect("idle_frame", this, "_add_node", vector, 0);
 
 	} else {
-		timer_node = Object::cast_to<TimerNode>(viewport->get_node(timer_key));
+		timer_node = cast_to<TimerNode>(viewport->get_node(timer_key));
 	}
 
 	Ref<TimerObject> obj = memnew(TimerObject);
@@ -162,11 +162,11 @@ Timer2 *Timer2::get_singleton() {
 
 void Timer2::_add_node(Object *node) {
 	MainLoop *main_loop = OS::get_singleton()->get_main_loop();
-	SceneTree *tree = Object::cast_to<SceneTree>(main_loop);
+	SceneTree *tree = cast_to<SceneTree>(main_loop);
 	ERR_FAIL_COND(tree == NULL);
 
 	tree->disconnect("idle_frame", this, "_add_node");
-	tree->get_root()->add_child(Object::cast_to<TimerNode>(node));
+	tree->get_root()->add_child(cast_to<TimerNode>(node));
 }
 
 void Timer2::_bind_methods() {

@@ -90,7 +90,7 @@ void VegetationInstance::populate(const NodePath &surface_source) {
 		return;
 	}
 
-	GeometryInstance *ss_instance = Object::cast_to<MeshInstance>(ss_node);
+	GeometryInstance *ss_instance = cast_to<MeshInstance>(ss_node);
 
 	if (!ss_instance) {
 		ERR_PRINT("MultiMeshInstance::_populate: surface_source is not a geometryInstance");

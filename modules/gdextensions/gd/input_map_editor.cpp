@@ -477,7 +477,7 @@ void InputMapEditor::_action_activated() {
 }
 
 void InputMapEditor::_action_button_pressed(Object *p_obj, int p_column, int p_id) {
-	TreeItem *ti = Object::cast_to<TreeItem>(p_obj);
+	TreeItem *ti = cast_to<TreeItem>(p_obj);
 
 	ERR_FAIL_COND(!ti);
 

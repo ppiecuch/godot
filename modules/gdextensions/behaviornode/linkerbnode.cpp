@@ -56,7 +56,7 @@ void LinkerBNode::_reset(const Variant &target) {
 
 void LinkerBNode::update_link_path() {
 	if (is_inside_tree() && link_path != NodePath() && has_node(link_path)) {
-		link_target = Object::cast_to<BehaviorNode>(get_node(link_path));
+		link_target = cast_to<BehaviorNode>(get_node(link_path));
 	} else {
 		link_target = NULL;
 	}

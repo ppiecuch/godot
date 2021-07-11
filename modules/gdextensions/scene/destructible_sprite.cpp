@@ -253,7 +253,7 @@ void DestructibleSprite::_on_opacity_tween_completed(Object *obj, String key) {
 	const uint64_t object_id = obj->get_meta("simulation_id");
 	ERR_FAIL_COND(_simulations.count(object_id) == 0);
 
-	if (Node *node = Object::cast_to<Node>(obj)) {
+	if (Node *node = cast_to<Node>(obj)) {
 		ERR_FAIL_NULL(node->get_parent());
 
 		explo_object_t *object = _simulations[object_id];
@@ -280,7 +280,7 @@ void DestructibleSprite::_on_debris_timer_timeout(uint64_t object_id) {
 
 	bool restart_timer = false;
 	for (auto *block : object.blocks) {
-		if (RigidBody2D *body = Object::cast_to<RigidBody2D>(block)) {
+		if (RigidBody2D *body = cast_to<RigidBody2D>(block)) {
 			if (object.remove_debris) {
 				if (Sprite *sprite = _safe_sprite(body)) {
 					Color modulate_color = sprite->get_modulate();
@@ -314,7 +314,7 @@ void DestructibleSprite::_on_debris_timer_timeout(uint64_t object_id) {
 					collision_shape->set_disabled(true);
 				} else if (CollisionPolygon2D *collision_poly = _safe_collision_polygon(body)) {
 					int index = collision_poly->get_index();
-					while (CollisionPolygon2D *c = Object::cast_to<CollisionPolygon2D>(body->get_child(index))) {
+					while (CollisionPolygon2D *c = cast_to<CollisionPolygon2D>(body->get_child(index))) {
 						c->set_disabled(true);
 						if (++index == body->get_child_count())
 							break;
@@ -352,11 +352,11 @@ void DestructibleSprite::_initiate_detonation(uint64_t object_id) {
 	// start connected particles
 	for (int i = 0; i < get_child_count(); i++) {
 		Node *child = get_child(i);
-		if (Particles2D *particles2d = Object::cast_to<Particles2D>(child)) {
+		if (Particles2D *particles2d = cast_to<Particles2D>(child)) {
 			particles2d->set_emitting(true);
-		} else if (CPUParticles2D *particlescpu = Object::cast_to<CPUParticles2D>(child)) {
+		} else if (CPUParticles2D *particlescpu = cast_to<CPUParticles2D>(child)) {
 			particlescpu->set_emitting(true);
-		} else if (FakeExplosionParticles2D *fakeparticles = Object::cast_to<FakeExplosionParticles2D>(child)) {
+		} else if (FakeExplosionParticles2D *fakeparticles = cast_to<FakeExplosionParticles2D>(child)) {
 			fakeparticles->single_explosion();
 		}
 	}
@@ -365,7 +365,7 @@ void DestructibleSprite::_initiate_detonation(uint64_t object_id) {
 	if (object.destruction_physics == DESTRUCTION_PHYSICS_OFF) {
 		for (auto *block : object.blocks) {
 			const real_t block_scale = random_debris_scale ? Math::random(0.8, 1.2) : Math::random(0.6, 1.0);
-			if (Sprite *sprite = Object::cast_to<Sprite>(block)) {
+			if (Sprite *sprite = cast_to<Sprite>(block)) {
 				sprite->set_scale(Vector2(block_scale, block_scale));
 				sprite->set_meta("scale", block_scale);
 			}
@@ -375,7 +375,7 @@ void DestructibleSprite::_initiate_detonation(uint64_t object_id) {
 		}
 	} else {
 		for (auto *block : object.blocks) {
-			if (RigidBody2D *body = Object::cast_to<RigidBody2D>(block)) {
+			if (RigidBody2D *body = cast_to<RigidBody2D>(block)) {
 				body->set_gravity_scale(gravity_scale);
 
 				const bool scale_block = random_debris_scale && Math::randf() < 0.5;
@@ -405,7 +405,7 @@ void DestructibleSprite::_initiate_detonation(uint64_t object_id) {
 						collision_shape->set_position(collision_shape->get_position() * scale_factor);
 					} else if (CollisionPolygon2D *collision_poly = _safe_collision_polygon(body)) {
 						int index = collision_poly->get_index();
-						while (CollisionPolygon2D *c = Object::cast_to<CollisionPolygon2D>(body->get_child(index))) {
+						while (CollisionPolygon2D *c = cast_to<CollisionPolygon2D>(body->get_child(index))) {
 							c->set_scale(c->get_scale() * scale_factor);
 							c->set_position(c->get_position() * scale_factor);
 							if (++index == body->get_child_count())
@@ -504,10 +504,10 @@ void DestructibleSprite::_prepare_detonation(explo_object_t &object) {
 		for (int x = 0; x < object_hframes; x++) {
 			const int n = y * object_hframes + x;
 
-			Node2D *duplicated_object = Object::cast_to<Node2D>(duplicate(DUPLICATE_USE_INSTANCING));
+			Node2D *duplicated_object = cast_to<Node2D>(duplicate(DUPLICATE_USE_INSTANCING));
 			duplicated_object->set_meta("simulation_id", object.id);
 
-			if (Sprite *sprite = Object::cast_to<Sprite>(duplicated_object)) {
+			if (Sprite *sprite = cast_to<Sprite>(duplicated_object)) {
 				sprite->set_vframes(object_vframes);
 				sprite->set_hframes(object_hframes);
 				sprite->set_frame(n);
@@ -607,7 +607,7 @@ void DestructibleSprite::_simulate_particles(explo_object_t &object, real_t delt
 				Color c = block->get_modulate();
 				if (c.a > 0) {
 					if (random_debris_scale) {
-						if (Sprite *sprite = Object::cast_to<Sprite>(block)) {
+						if (Sprite *sprite = cast_to<Sprite>(block)) {
 							const real_t scale = block->get_meta("scale");
 							const real_t block_scale = scale * ease_scale(1 - c.a);
 							sprite->set_scale(Size2(block_scale, block_scale));
@@ -619,7 +619,7 @@ void DestructibleSprite::_simulate_particles(explo_object_t &object, real_t delt
 					c.a = 0;
 				}
 				// if the particle is out of screen ...
-				if (VisibilityNotifier2D *vis = Object::cast_to<VisibilityNotifier2D>(block->get_child(0))) {
+				if (VisibilityNotifier2D *vis = cast_to<VisibilityNotifier2D>(block->get_child(0))) {
 					if (!vis->is_on_screen()) {
 						c.a = 0;
 					}

@@ -38,7 +38,7 @@ BehaviorNode::Status BehaviorNode::_traversal_children(const Variant &target, co
 	BehaviorNode *checked = NULL;
 	do {
 		if (_behavior_node_type == TYPE_CONDITION && _focus_node_path != String("") && has_node(_focus_node_path)) {
-			BehaviorNode *child = Object::cast_to<BehaviorNode>(get_node(_focus_node_path));
+			BehaviorNode *child = cast_to<BehaviorNode>(get_node(_focus_node_path));
 			if (child && child != this) {
 				if (!child->get_will_focus())
 					_focus_node_path = NodePath();
@@ -58,7 +58,7 @@ BehaviorNode::Status BehaviorNode::_traversal_children(const Variant &target, co
 			}
 		}
 		for (int i = 0; i < t; ++i) {
-			BehaviorNode *child = Object::cast_to<BehaviorNode>(get_child(i));
+			BehaviorNode *child = cast_to<BehaviorNode>(get_child(i));
 			if (child == checked)
 				continue;
 			bool is_focus;
@@ -94,7 +94,7 @@ void BehaviorNode::send_notify(const Variant &from, const StringName &key, const
 	for (int i = 0; i < count; ++i) {
 		Node *node = get_child(i);
 		if (node) {
-			BehaviorNode *bn = Object::cast_to<BehaviorNode>(node);
+			BehaviorNode *bn = cast_to<BehaviorNode>(node);
 			if (bn) {
 				bn->send_notify(from, key, value);
 			}
@@ -122,14 +122,14 @@ BehaviorNode::Status BehaviorNode::step(const Variant &target, Dictionary env) {
 }
 
 void BehaviorNode::set_focus() {
-	BehaviorNode *parent = Object::cast_to<BehaviorNode>(get_parent());
+	BehaviorNode *parent = cast_to<BehaviorNode>(get_parent());
 	if (parent) {
 		parent->_focus_node_path = parent->get_path_to(this);
 	}
 }
 
 void BehaviorNode::clear_focus() {
-	BehaviorNode *parent = Object::cast_to<BehaviorNode>(get_parent());
+	BehaviorNode *parent = cast_to<BehaviorNode>(get_parent());
 	if (parent && parent->_focus_node_path == parent->get_path_to(this)) {
 		parent->_focus_node_path = NodePath();
 	}
@@ -141,7 +141,7 @@ void BehaviorNode::reset(const Variant &target) {
 
 	int t = get_child_count();
 	for (int i = 0; i < t; ++i) {
-		BehaviorNode *child = Object::cast_to<BehaviorNode>(get_child(i));
+		BehaviorNode *child = cast_to<BehaviorNode>(get_child(i));
 		if (child) {
 			child->reset(target);
 		}

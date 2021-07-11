@@ -102,17 +102,17 @@ InputStorage::~InputStorage() {
 
 void InputStorage::_add_node(Object *node) {
 	MainLoop *main_loop = OS::get_singleton()->get_main_loop();
-	SceneTree *tree = Object::cast_to<SceneTree>(main_loop);
+	SceneTree *tree = cast_to<SceneTree>(main_loop);
 	ERR_FAIL_COND(tree == NULL);
 
 	tree->disconnect("idle_frame", this, "_add_node");
-	tree->get_root()->add_child(Object::cast_to<InputStorageNode>(node));
+	tree->get_root()->add_child(cast_to<InputStorageNode>(node));
 }
 
 void InputStorage::start(PoolStringArray events) {
 	const String node_key = "input_storage_node";
 	MainLoop *main_loop = OS::get_singleton()->get_main_loop();
-	SceneTree *tree = Object::cast_to<SceneTree>(main_loop);
+	SceneTree *tree = cast_to<SceneTree>(main_loop);
 	ERR_FAIL_COND(tree == NULL);
 
 	Viewport *viewport = tree->get_root();

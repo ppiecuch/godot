@@ -41,7 +41,7 @@ void Phantom::_update_targets() {
 		for (int i = 0, t = target_paths.size(); i < t; ++i) {
 			NodePath path = target_paths[i];
 			if (has_node(path)) {
-				Sprite *sprite = Object::cast_to<Sprite>(get_node(path));
+				Sprite *sprite = cast_to<Sprite>(get_node(path));
 				if (sprite) {
 					targets.push_back(sprite);
 				}
@@ -55,7 +55,7 @@ void Phantom::make_item() {
 	DrawSprite sprite;
 	sprite.life = life_frame;
 	for (int i = 0, t = targets.size(); i < t; ++i) {
-		Sprite *target = Object::cast_to<Sprite>((Object *)targets[i]);
+		Sprite *target = cast_to<Sprite>((Object *)targets[i]);
 		Item item;
 		item.position = target->get_global_position();
 		item.offset = target->get_offset();

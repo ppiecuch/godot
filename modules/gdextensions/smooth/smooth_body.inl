@@ -146,7 +146,7 @@ void SMOOTHCLASS::set_target(const Object *p_target)
 	smooth_print_line("SCRIPT set_Target");
 
 	// is it a SMOOTHNODE?
-	const SMOOTHNODE * pSMOOTHNODE = Object::cast_to<SMOOTHNODE>(p_target);
+	const SMOOTHNODE * pSMOOTHNODE = cast_to<SMOOTHNODE>(p_target);
 
 	if (!pSMOOTHNODE)
 	{
@@ -173,7 +173,7 @@ void SMOOTHCLASS::_set_target(const Object *p_target)
 	if (p_target)
 	{
 		// check is SMOOTHNODE
-		const SMOOTHNODE *pSMOOTHNODE = Object::cast_to<SMOOTHNODE>(p_target);
+		const SMOOTHNODE *pSMOOTHNODE = cast_to<SMOOTHNODE>(p_target);
 
 		if (pSMOOTHNODE)
 		{
@@ -196,7 +196,7 @@ void SMOOTHCLASS::ResolveTargetPath()
 	if (has_node(m_path_target))
 	{
 		smooth_print_line("has_node");
-		SMOOTHNODE * pNode = Object::cast_to<SMOOTHNODE>(get_node(m_path_target));
+		SMOOTHNODE * pNode = cast_to<SMOOTHNODE>(get_node(m_path_target));
 		if (pNode)
 		{
 			smooth_print_line("node_was " SMOOTH_TOSTRING(SMOOTHNODE));

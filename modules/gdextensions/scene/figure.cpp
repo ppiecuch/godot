@@ -316,7 +316,7 @@ bool Figure::_get(const StringName &p_path, Variant &r_ret) const {
 		for (const List<uint32_t>::Element *E = bones[which].nodes_bound.front(); E; E = E->next()) {
 			Object *obj = ObjectDB::get_instance(E->get());
 			ERR_CONTINUE(!obj);
-			Node *node = Object::cast_to<Node>(obj);
+			Node *node = cast_to<Node>(obj);
 			ERR_CONTINUE(!node);
 			NodePath npath = get_path_to(node);
 			children.push_back(npath);
@@ -635,7 +635,7 @@ void Figure::get_bound_child_nodes_to_bone(int p_bone, List<Node *> *p_bound) co
 	for (const List<uint32_t>::Element *E = bones[p_bone].nodes_bound.front(); E; E = E->next()) {
 		Object *obj = ObjectDB::get_instance(E->get());
 		ERR_CONTINUE(!obj);
-		p_bound->push_back(Object::cast_to<Node>(obj));
+		p_bound->push_back(cast_to<Node>(obj));
 	}
 }
 

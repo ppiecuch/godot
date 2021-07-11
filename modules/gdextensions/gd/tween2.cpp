@@ -344,7 +344,7 @@ Tween2 *Tween2::get_singleton() {
 Ref<TweenAction> Tween2::to(Object *target, float during) {
 	const String tween_key = "new_tween";
 	MainLoop *main_loop = OS::get_singleton()->get_main_loop();
-	SceneTree *tree = Object::cast_to<SceneTree>(main_loop);
+	SceneTree *tree = cast_to<SceneTree>(main_loop);
 	ERR_FAIL_COND_V(tree == NULL, NULL);
 
 	Viewport *viewport = tree->get_root();
@@ -380,11 +380,11 @@ void Tween2::cancel(Object *target) {
 
 void Tween2::_add_node(Object *node) {
 	MainLoop *main_loop = OS::get_singleton()->get_main_loop();
-	SceneTree *tree = Object::cast_to<SceneTree>(main_loop);
+	SceneTree *tree = cast_to<SceneTree>(main_loop);
 	ERR_FAIL_COND(tree == NULL);
 
 	tree->disconnect("idle_frame", this, "_add_node");
-	tree->get_root()->add_child(Object::cast_to<TweenNode>(node));
+	tree->get_root()->add_child(cast_to<TweenNode>(node));
 }
 
 void Tween2::_bind_methods() {

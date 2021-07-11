@@ -301,7 +301,7 @@ void Heatmap::on_Events_player_moved(Node *t_player) {
 		return;
 	}
 
-	if (Node2D *t_player2d = Object::cast_to<Node2D>(t_player)) {
+	if (Node2D *t_player2d = cast_to<Node2D>(t_player)) {
 		Vector2 player_cell_position = m_grid->world_to_map(t_player2d->get_global_position());
 		bool out_of_bounds = is_out_of_bounds(player_cell_position);
 		Vector2 difference = player_cell_position - m_last_player_cell_position;

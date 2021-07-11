@@ -307,7 +307,7 @@ void SimulationControllerDebugInstance2D::set_cell_size(int p_size) {
 
 String SimulationControllerDebugInstance2D::get_configuration_warning() const {
 	String warning = CanvasItem::get_configuration_warning();
-	if (Object::cast_to<SimulationControllerInstance2D>(get_parent()) == nullptr) {
+	if (cast_to<SimulationControllerInstance2D>(get_parent()) == nullptr) {
 		warning += TTR("A SimulationControllerDebugInstance2D only works with a SimulationControllerInstance2D as parent node.");
 	}
 	return warning;
@@ -318,13 +318,13 @@ void SimulationControllerDebugInstance2D::_notification(int p_what) {
 		case NOTIFICATION_PARENTED:
 		case NOTIFICATION_ENTER_TREE: {
 			update_configuration_warning();
-			set_process(Object::cast_to<SimulationControllerInstance2D>(get_parent()) != nullptr);
+			set_process(cast_to<SimulationControllerInstance2D>(get_parent()) != nullptr);
 		} break;
 		case NOTIFICATION_PROCESS: {
 			update();
 		} break;
 		case NOTIFICATION_DRAW: {
-			if (SimulationControllerInstance2D *instance = Object::cast_to<SimulationControllerInstance2D>(get_parent())) {
+			if (SimulationControllerInstance2D *instance = cast_to<SimulationControllerInstance2D>(get_parent())) {
 				Ref<SimulationController2D> controller = instance->get_controller();
 				if (controller.is_valid()) {
 					if (Viewport *viewport = get_viewport()) {
@@ -727,7 +727,7 @@ void ElasticSprite::_create_geom() {
 
 Rect2 ElasticSprite::_get_texture_uv_rect() const {
 	Rect2 rc(0, 0, 1, 1);
-	if (AtlasTexture *atlas = Object::cast_to<AtlasTexture>(*get_texture())) {
+	if (AtlasTexture *atlas = cast_to<AtlasTexture>(*get_texture())) {
 		if (atlas->get_atlas().is_valid()) {
 			const float tw = atlas->get_atlas()->get_width();
 			const float th = atlas->get_atlas()->get_height();
@@ -747,7 +747,7 @@ Rect2 ElasticSprite::_get_texture_uv_rect() const {
 void ElasticSprite::_check_parent_controller() {
 	SimulationControllerInstance2D *new_controller = nullptr;
 
-	if (SimulationControllerInstance2D *instance = Object::cast_to<SimulationControllerInstance2D>(get_parent())) {
+	if (SimulationControllerInstance2D *instance = cast_to<SimulationControllerInstance2D>(get_parent())) {
 		// always use parent controller
 		new_controller = instance;
 	} else if (controller.is_null()) {
@@ -755,7 +755,7 @@ void ElasticSprite::_check_parent_controller() {
 		// controller is not valid
 		Node *next = get_parent();
 		while (next) {
-			if (SimulationControllerInstance2D *next_instance = Object::cast_to<SimulationControllerInstance2D>(next)) {
+			if (SimulationControllerInstance2D *next_instance = cast_to<SimulationControllerInstance2D>(next)) {
 				new_controller = next_instance;
 				break;
 			}

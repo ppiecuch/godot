@@ -337,7 +337,7 @@ int BulletManagerBulletType::get_bullet_id(int shape_index) {
 void BulletManagerBulletType::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_PARENTED: {
-			_bullet_manager = Object::cast_to<BulletManager>(get_parent());
+			_bullet_manager = cast_to<BulletManager>(get_parent());
 			if (!_bullet_manager) {
 				return;
 			}
@@ -701,7 +701,7 @@ void BulletManager::clear_by_type(BulletManagerBulletType *type) {
 }
 
 void BulletManager::_clear_by_type_script(Object *type) {
-	BulletManagerBulletType *castedType = Object::cast_to<BulletManagerBulletType>(type);
+	BulletManagerBulletType *castedType = cast_to<BulletManagerBulletType>(type);
 	if (!castedType)
 		return;
 	clear_by_type(castedType);

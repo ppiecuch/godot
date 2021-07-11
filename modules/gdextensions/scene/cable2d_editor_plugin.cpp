@@ -35,7 +35,7 @@ Node2D *Cable2DEditor::_get_node() const {
 }
 
 void Cable2DEditor::_set_node(Node *p_line) {
-	node = Object::cast_to<Cable2D>(p_line);
+	node = cast_to<Cable2D>(p_line);
 }
 
 bool Cable2DEditor::_is_line() const {

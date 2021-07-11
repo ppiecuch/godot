@@ -93,7 +93,7 @@ real_t _GodotMathExtension::smoother_step(real_t t) {
 
 real_t _GodotMathExtension::camera_get_position_distance(const Object *p_camera, const Vector3 &p_pos) {
 	ERR_FAIL_NULL_V(p_camera, 0.0f);
-	if (const Camera *camera = Object::cast_to<Camera>(p_camera))
+	if (const Camera *camera = cast_to<Camera>(p_camera))
 		return GodotMathExtension::camera_get_position_distance(camera, p_pos);
 	return 0.0f;
 }
@@ -102,14 +102,14 @@ Vector2 _GodotMathExtension::get_2d_position_from_3d_position_with_screen_limits
 		const Vector2 &screen_size, const Vector2 &screen_center,
 		const Vector2 &screen_mins, const Vector2 &screen_max) {
 	ERR_FAIL_NULL_V(p_camera, Vector2());
-	if (const Camera *camera = Object::cast_to<Camera>(p_camera))
+	if (const Camera *camera = cast_to<Camera>(p_camera))
 		return GodotMathExtension::get_2d_position_from_3d_position_with_screen_limits(camera, p_position_3d, screen_size, screen_center, screen_mins, screen_max);
 	return Vector2();
 }
 
 Vector2 _GodotMathExtension::get_2d_position_from_3d_position(const Object *p_camera, const Vector3 &p_position_3d) {
 	ERR_FAIL_NULL_V(p_camera, Vector2());
-	if (const Camera *camera = Object::cast_to<Camera>(p_camera))
+	if (const Camera *camera = cast_to<Camera>(p_camera))
 		return GodotMathExtension::get_2d_position_from_3d_position(camera, p_position_3d);
 	return Vector2();
 }

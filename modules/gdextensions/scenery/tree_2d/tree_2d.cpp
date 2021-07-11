@@ -51,7 +51,7 @@ void Tree2D::set_mesh(const Ref<Mesh> &p_mesh) {
 	Ref<CanvasItemMaterial> mat_decors = Ref<CanvasItemMaterial>(memnew(CanvasItemMaterial));
 	for (int surf = 0; surf < mesh->get_surface_count(); surf++) {
 		String n = "n/a";
-		if (ArrayMesh *arraymesh = Object::cast_to<ArrayMesh>(*mesh))
+		if (ArrayMesh *arraymesh = cast_to<ArrayMesh>(*mesh))
 			n = arraymesh->surface_get_name(surf);
 		Ref<Material> m = mesh->surface_get_material(surf);
 		if (n == "branch") {

@@ -147,7 +147,7 @@ void SpriteMesh::_update_mesh_outline(const PoolVector3Array &p_vertices, const 
 
 void SpriteMesh::_update_mesh_xform() {
 	if (mesh.is_valid() && !_mesh_data.empty()) {
-		if (ArrayMesh *array_mesh = Object::cast_to<ArrayMesh>(*mesh)) {
+		if (ArrayMesh *array_mesh = cast_to<ArrayMesh>(*mesh)) {
 			PoolVector3Array vertexes = _mesh_data[VS::ARRAY_VERTEX];
 			PoolVector3Array xform_vertexes;
 			ERR_FAIL_COND(xform_vertexes.resize(vertexes.size()) != OK);
@@ -207,7 +207,7 @@ void SpriteMesh::set_mesh(const Ref<Mesh> &p_mesh) {
 	if (mesh == p_mesh)
 		return;
 
-	if (*p_mesh && Object::cast_to<ArrayMesh>(*p_mesh) == nullptr) {
+	if (*p_mesh && cast_to<ArrayMesh>(*p_mesh) == nullptr) {
 		WARN_PRINT("Not an ArrayMesh object: do not know how to transform this.");
 		return;
 	}
@@ -215,7 +215,7 @@ void SpriteMesh::set_mesh(const Ref<Mesh> &p_mesh) {
 	mesh = p_mesh;
 
 	_mesh_data.clear();
-	if (ArrayMesh *array_mesh = Object::cast_to<ArrayMesh>(*mesh))
+	if (ArrayMesh *array_mesh = cast_to<ArrayMesh>(*mesh))
 		_mesh_data = array_mesh->surface_get_arrays(0);
 
 	_mesh_dirty = true;
