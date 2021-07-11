@@ -448,6 +448,22 @@ bool XMLParser::is_empty() const {
 	return node_empty;
 }
 
+Error XMLParser::open_cbuffer(const char *p_buffer, uint64_t p_size) {
+	ERR_FAIL_COND_V(p_buffer == 0, ERR_INVALID_DATA);
+	ERR_FAIL_COND_V(p_size == 0, ERR_INVALID_DATA);
+
+	if (data) {
+		memdelete_arr(data);
+	}
+
+	length = p_size;
+	data = memnew_arr(char, length + 1);
+	memcpy(data, p_buffer, length);
+	data[length] = 0;
+	P = data;
+	return OK;
+}
+
 Error XMLParser::open_buffer(const Vector<uint8_t> &p_buffer) {
 	ERR_FAIL_COND_V(p_buffer.size() == 0, ERR_INVALID_DATA);
 

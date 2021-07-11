@@ -111,6 +111,8 @@ public:
 	Error open(const String &p_path);
 	Error open_buffer(const Vector<uint8_t> &p_buffer);
 
+	Error open_cbuffer(const char *p_buffer, uint64_t p_size);
+
 	void close();
 
 	XMLParser();
