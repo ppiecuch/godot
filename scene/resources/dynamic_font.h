@@ -51,11 +51,11 @@ public:
 	struct CacheID {
 		union {
 			struct {
-				uint32_t size : 16;
+				uint32_t size : 15;
 				uint32_t outline_size : 8;
 				uint32_t mipmaps : 1;
 				uint32_t filter : 1;
-				uint32_t unused : 6;
+				uint32_t stretch : 7; // 0 .. 99%
 			};
 			uint32_t key;
 		};
@@ -244,6 +244,9 @@ public:
 
 	void set_size(int p_size);
 	int get_size() const;
+
+	void set_stretch_scale(int p_scale);
+	int get_stretch_scale() const;
 
 	void set_outline_size(int p_size);
 	int get_outline_size() const;

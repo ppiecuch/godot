@@ -214,6 +214,7 @@ protected:
 	static void _bind_methods();
 
 public:
+	Error create_from_fnt_ptr(const char *p_fnt_data, int p_fnt_data_size, const uint8_t *p_tex_image);
 	Error create_from_fnt(const String &p_file);
 
 	void set_height(float p_height);

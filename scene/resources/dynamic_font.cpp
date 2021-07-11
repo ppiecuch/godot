@@ -38,6 +38,17 @@
 #define __STDC_LIMIT_MACROS
 #include <stdint.h>
 
+// Convert the given value from pixel space into 16.16 space
+template <typename TRetType, typename TParamType>
+inline TRetType convertTo16Dot16(TParamType in_value) {
+	return static_cast<TRetType>(in_value * 0x10000L);
+}
+
+template <typename TRetType, typename TParamType>
+inline TRetType convertTo26Dot6(TParamType in_value) {
+	return static_cast<TRetType>(in_value * 64);
+}
+
 bool DynamicFontData::CacheID::operator<(CacheID right) const {
 	return key < right.key;
 }
@@ -141,8 +152,8 @@ Error DynamicFontAtSize::_load() {
 		fargs.memory_size = font->font_mem_size;
 		fargs.flags = FT_OPEN_MEMORY;
 		fargs.stream = &stream;
-		error = FT_Open_Face(library, &fargs, 0, &face);
 
+		error = FT_Open_Face(library, &fargs, 0, &face);
 	} else {
 		FT_Done_FreeType(library);
 		ERR_FAIL_V_MSG(ERR_UNCONFIGURED, "DynamicFont uninitialized.");
@@ -157,6 +168,15 @@ Error DynamicFontAtSize::_load() {
 	} else if (error) {
 		FT_Done_FreeType(library);
 		ERR_FAIL_V_MSG(ERR_FILE_CANT_OPEN, "Error loading font.");
+	}
+
+	if (id.stretch > 0  && id.stretch < 100) {
+		const FT_Fixed stretch_factor = convertTo16Dot16<FT_Fixed>(id.stretch / 100.0);
+		FT_Matrix matrix = {
+			stretch_factor, 0,
+			0,              convertTo16Dot16<FT_Fixed>(1)
+		};
+		FT_Set_Transform (face, &matrix, nullptr);
 	}
 
 	if (FT_HAS_COLOR(face) && face->num_fixed_sizes > 0) {
@@ -756,6 +776,20 @@ Color DynamicFont::get_outline_color() const {
 	return outline_color;
 }
 
+void DynamicFont::set_stretch_scale(int p_stretch) {
+	if (cache_id.stretch == p_stretch) {
+		return;
+	}
+	cache_id.stretch = p_stretch;
+	outline_cache_id.stretch = p_stretch;
+	_reload_cache();
+}
+
+int DynamicFont::get_stretch_scale() const {
+	return cache_id.stretch;
+}
+
+
 bool DynamicFont::get_use_mipmaps() const {
 	return cache_id.mipmaps;
 }
@@ -1017,6 +1051,9 @@ void DynamicFont::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_size", "data"), &DynamicFont::set_size);
 	ClassDB::bind_method(D_METHOD("get_size"), &DynamicFont::get_size);
 
+	ClassDB::bind_method(D_METHOD("set_stretch_scale", "data"), &DynamicFont::set_stretch_scale);
+	ClassDB::bind_method(D_METHOD("get_stretch_scale"), &DynamicFont::get_stretch_scale);
+
 	ClassDB::bind_method(D_METHOD("set_outline_size", "size"), &DynamicFont::set_outline_size);
 	ClassDB::bind_method(D_METHOD("get_outline_size"), &DynamicFont::get_outline_size);
 
@@ -1038,6 +1075,7 @@ void DynamicFont::_bind_methods() {
 
 	ADD_GROUP("Settings", "");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "size", PROPERTY_HINT_RANGE, "1,1024,1"), "set_size", "get_size");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "stretch_scale", PROPERTY_HINT_RANGE, "0,99,1"), "set_stretch_scale", "get_stretch_scale");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "outline_size", PROPERTY_HINT_RANGE, "0,1024,1"), "set_outline_size", "get_outline_size");
 	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "outline_color"), "set_outline_color", "get_outline_color");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "use_mipmaps"), "set_use_mipmaps", "get_use_mipmaps");
