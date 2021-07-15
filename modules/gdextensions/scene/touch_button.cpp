@@ -75,11 +75,13 @@ void TouchButton::_notification(int p_what) {
 }
 
 void TouchButton::_input(Ref<InputEvent> p_event) {
-	if (!get_tree())
+	if (!get_tree()) {
 		return;
+	}
 
-	if (p_event->get_device() == -1)
+	if (p_event->get_device() == -1) {
 		return;
+	}
 
 	ERR_FAIL_COND(!is_visible_in_tree());
 
