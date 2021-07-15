@@ -31,10 +31,10 @@
 #include <core/error_macros.h>
 
 #include <errno.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <netdb.h>
+#include <stdlib.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 
 #include <psp2/io/stat.h>
 #include <psp2/net.h>
@@ -123,7 +123,7 @@ extern "C" struct hostent *gethostbyaddr(const void *__addr, socklen_t __len, in
 	}
 
 	strncpy(sname, name, NI_MAXHOST - 1);
-	addrlist[0] = (char *) __addr;
+	addrlist[0] = (char *)__addr;
 
 	ent.h_name = sname;
 	ent.h_aliases = 0;

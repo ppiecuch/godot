@@ -170,13 +170,13 @@ Error DynamicFontAtSize::_load() {
 		ERR_FAIL_V_MSG(ERR_FILE_CANT_OPEN, "Error loading font.");
 	}
 
-	if (id.stretch > 0  && id.stretch < 100) {
+	if (id.stretch > 0 && id.stretch < 100) {
 		const FT_Fixed stretch_factor = convertTo16Dot16<FT_Fixed>(id.stretch / 100.0);
 		FT_Matrix matrix = {
 			stretch_factor, 0,
-			0,              convertTo16Dot16<FT_Fixed>(1)
+			0, convertTo16Dot16<FT_Fixed>(1)
 		};
-		FT_Set_Transform (face, &matrix, nullptr);
+		FT_Set_Transform(face, &matrix, nullptr);
 	}
 
 	if (FT_HAS_COLOR(face) && face->num_fixed_sizes > 0) {
@@ -788,7 +788,6 @@ void DynamicFont::set_stretch_scale(int p_stretch) {
 int DynamicFont::get_stretch_scale() const {
 	return cache_id.stretch;
 }
-
 
 bool DynamicFont::get_use_mipmaps() const {
 	return cache_id.mipmaps;

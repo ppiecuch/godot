@@ -105,7 +105,8 @@ void GodotErrorHandler::_err_handler(void *ud, const char *p_func, const char *p
 
 #if 0
 
-# Godot Error Handler (from https://github.com/binogure-studio/godot-error-handler)
+#Godot Error Handler(from https \
+		: //github.com/binogure-studio/godot-error-handler)
 
 Simple error handler module for Godot Engine
 
@@ -132,18 +133,18 @@ func _ready():
   GodotErrorHandler.connect('error_threw', self, 'error_handler')
 
 func error_handler(dump = null):
-  # Dump contains following informations
-  #	dump["error"] name
-  #	dump["error_descr"] description
-  #	dump["source_file"] file
-  #	dump["source_line"] line number
-  #	dump["source_func"] function name
-  #	dump["warning"] = true/false
-  #	dump["callstack"] = callstack (only in debug)
+#Dump contains following informations
+#dump["error"] name
+#dump["error_descr"] description
+#dump["source_file"] file
+#dump["source_line"] line number
+#dump["source_func"] function name
+#dump["warning"] = true / false
+#dump["callstack"] = callstack(only in debug)
   print(dump)
 ```
 
-# License
+#License
 
 [See LICENSE file](./LICENSE)
 
