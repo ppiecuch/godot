@@ -528,8 +528,9 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 					ScreenToClient(hWnd, &coords);
 
 					// Don't calculate relative mouse movement if we don't have focus in CAPTURED mode.
-					if (!window_has_focus && mouse_mode == MOUSE_MODE_CAPTURED)
+					if (!window_has_focus && mouse_mode == MOUSE_MODE_CAPTURED) {
 						break;
+					}
 
 					Ref<InputEventMouseMotion> mm;
 					mm.instance();
@@ -659,8 +660,9 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 			}
 
 			// Don't calculate relative mouse movement if we don't have focus in CAPTURED mode.
-			if (!window_has_focus && mouse_mode == MOUSE_MODE_CAPTURED)
+			if (!window_has_focus && mouse_mode == MOUSE_MODE_CAPTURED) {
 				break;
+			}|
 
 			Ref<InputEventMouseMotion> mm;
 			mm.instance();
@@ -892,20 +894,23 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 				case WM_MOUSEWHEEL: {
 					mb->set_pressed(true);
 					int motion = (short)HIWORD(wParam);
-					if (!motion)
+					if (!motion) {
 						return 0;
+					}
 
-					if (motion > 0)
+					if (motion > 0) {
 						mb->set_button_index(BUTTON_WHEEL_UP);
-					else
+					} else {
 						mb->set_button_index(BUTTON_WHEEL_DOWN);
+					}
 
 				} break;
 				case WM_MOUSEHWHEEL: {
 					mb->set_pressed(true);
 					int motion = (short)HIWORD(wParam);
-					if (!motion)
+					if (!motion) {
 						return 0;
+					}
 
 					if (motion < 0) {
 						mb->set_button_index(BUTTON_WHEEL_LEFT);
@@ -917,24 +922,27 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 				} break;
 				case WM_XBUTTONDOWN: {
 					mb->set_pressed(true);
-					if (HIWORD(wParam) == XBUTTON1)
+					if (HIWORD(wParam) == XBUTTON1) {
 						mb->set_button_index(BUTTON_XBUTTON1);
-					else
+					} else {
 						mb->set_button_index(BUTTON_XBUTTON2);
+					}
 				} break;
 				case WM_XBUTTONUP: {
 					mb->set_pressed(false);
-					if (HIWORD(wParam) == XBUTTON1)
+					if (HIWORD(wParam) == XBUTTON1) {
 						mb->set_button_index(BUTTON_XBUTTON1);
-					else
+					} else {
 						mb->set_button_index(BUTTON_XBUTTON2);
+					}
 				} break;
 				case WM_XBUTTONDBLCLK: {
 					mb->set_pressed(true);
-					if (HIWORD(wParam) == XBUTTON1)
+					if (HIWORD(wParam) == XBUTTON1) {
 						mb->set_button_index(BUTTON_XBUTTON1);
-					else
+					} else {
 						mb->set_button_index(BUTTON_XBUTTON2);
+					}
 					mb->set_doubleclick(true);
 				} break;
 				default: {
@@ -946,10 +954,11 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 			mb->set_shift((wParam & MK_SHIFT) != 0);
 			mb->set_alt(alt_mem);
 			//mb->get_alt()=(wParam&MK_MENU)!=0;
-			if (mb->is_pressed())
+			if (mb->is_pressed()) {
 				last_button_state |= (1 << (mb->get_button_index() - 1));
-			else
+			} else {
 				last_button_state &= ~(1 << (mb->get_button_index() - 1));
+			}
 			mb->set_button_mask(last_button_state);
 
 			mb->set_position(Vector2(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)));
@@ -1139,7 +1148,7 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 		} break;
 		case WM_SETCURSOR: {
 			if (LOWORD(lParam) == HTCLIENT) {
-				if (window_has_focus && (mouse_mode == MOUSE_MODE_HIDDEN || mouse_mode == MOUSE_MODE_CAPTURED)) {
+				if (window_has_focus && (mouse_mode == MOUSE_MODE_HIDDEN || mouse_mode == MOUSE_MODE_CAPTURED || mouse_mode == MOUSE_MODE_CONFINED_HIDDEN)) {
 					//Hide the cursor
 					if (hCursor == NULL) {
 						hCursor = SetCursor(NULL);
@@ -1798,7 +1807,8 @@ void OS_Windows::set_mouse_mode(MouseMode p_mode) {
 }
 
 void OS_Windows::_set_mouse_mode_impl(MouseMode p_mode) {
-	if (p_mode == MOUSE_MODE_CAPTURED || p_mode == MOUSE_MODE_CONFINED) {
+	if (p_mode == MOUSE_MODE_CAPTURED || p_mode == MOUSE_MODE_CONFINED || p_mode == MOUSE_MODE_CONFINED_HIDDEN) {
+		// Mouse is grabbed (captured or confined).
 		RECT clipRect;
 		GetClientRect(hWnd, &clipRect);
 		ClientToScreen(hWnd, (POINT *)&clipRect.left);
@@ -1812,11 +1822,12 @@ void OS_Windows::_set_mouse_mode_impl(MouseMode p_mode) {
 			SetCapture(hWnd);
 		}
 	} else {
+		// Mouse is free to move around (not captured or confined).
 		ReleaseCapture();
 		ClipCursor(NULL);
 	}
 
-	if (p_mode == MOUSE_MODE_CAPTURED || p_mode == MOUSE_MODE_HIDDEN) {
+	if (p_mode == MOUSE_MODE_HIDDEN || p_mode == MOUSE_MODE_CAPTURED || p_mode == MOUSE_MODE_CONFINED_HIDDEN) {
 		if (hCursor == NULL) {
 			hCursor = SetCursor(NULL);
 		} else {
@@ -2011,7 +2022,7 @@ void OS_Windows::set_window_position(const Point2 &p_position) {
 	MoveWindow(hWnd, p_position.x, p_position.y, r.right - r.left, r.bottom - r.top, TRUE);
 
 	// Don't let the mouse leave the window when moved
-	if (mouse_mode == MOUSE_MODE_CONFINED) {
+	if (mouse_mode == MOUSE_MODE_CONFINED || mouse_mode == MOUSE_MODE_CONFINED_HIDDEN) {
 		RECT rect;
 		GetClientRect(hWnd, &rect);
 		ClientToScreen(hWnd, (POINT *)&rect.left);
@@ -2092,7 +2103,7 @@ void OS_Windows::set_window_size(const Size2 p_size) {
 	MoveWindow(hWnd, rect.left, rect.top, w, h, TRUE);
 
 	// Don't let the mouse leave the window when resizing to a smaller resolution
-	if (mouse_mode == MOUSE_MODE_CONFINED) {
+	if (mouse_mode == MOUSE_MODE_CONFINED || mouse_mode == MOUSE_MODE_CONFINED_HIDDEN) {
 		RECT crect;
 		GetClientRect(hWnd, &crect);
 		ClientToScreen(hWnd, (POINT *)&crect.left);
