@@ -3318,6 +3318,10 @@ String String::rstrip(const String &p_chars) const {
 	return substr(0, end + 1);
 }
 
+String String::trim() const {
+	return strip_edges(true, true);
+}
+
 String String::simplify_path() const {
 	String s = *this;
 	String drive;

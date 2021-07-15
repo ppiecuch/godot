@@ -293,6 +293,7 @@ public:
 	String strip_escapes() const;
 	String lstrip(const String &p_chars) const;
 	String rstrip(const String &p_chars) const;
+	String trim() const;
 	String get_extension() const;
 	String get_basename() const;
 	String plus_file(const String &p_file) const;
