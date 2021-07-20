@@ -40,7 +40,14 @@
 			<return type="Camera">
 			</return>
 			<description>
-				Returns the active 3D camera.
+				Returns the currently active 3D camera.
+			</description>
+		</method>
+		<method name="get_camera_2d" qualifiers="const">
+			<return type="Camera2D">
+			</return>
+			<description>
+				Returns the currently active 2D camera. Returns null if there are no active cameras.
 			</description>
 		</method>
 		<method name="get_final_transform" qualifiers="const">
