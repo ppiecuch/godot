@@ -770,12 +770,9 @@ public:
 	RID get_collider_rid() const;
 	Object *get_collider() const;
 	int get_collider_shape() const;
-<<<<<<< HEAD
-=======
 	real_t get_collision_depth() const;
 	real_t get_collision_safe_fraction() const;
 	real_t get_collision_unsafe_fraction() const;
->>>>>>> 51f8247871c84736a3c3f56375deb432a4cb305a
 };
 
 typedef PhysicsServer *(*CreatePhysicsServerCallback)();
