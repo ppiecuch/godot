@@ -288,6 +288,7 @@ private:
 	bool on_floor;
 	bool on_ceiling;
 	bool on_wall;
+	bool sync_to_physics = false;
 	Vector<Collision> colliders;
 	Vector<Ref<KinematicCollision>> slide_colliders;
 	Ref<KinematicCollision> motion_cache;
@@ -297,12 +298,15 @@ private:
 	Ref<KinematicCollision> _move(const Vector3 &p_motion, bool p_infinite_inertia = true, bool p_exclude_raycast_shapes = true, bool p_test_only = false);
 	Ref<KinematicCollision> _get_slide_collision(int p_bounce);
 
+	Transform last_valid_transform;
+	void _direct_state_changed(Object *p_state);
+
 protected:
 	void _notification(int p_what);
 	static void _bind_methods();
 
 public:
-	bool move_and_collide(const Vector3 &p_motion, bool p_infinite_inertia, Collision &r_collision, bool p_exclude_raycast_shapes = true, bool p_test_only = false);
+	bool move_and_collide(const Vector3 &p_motion, bool p_infinite_inertia, Collision &r_collision, bool p_exclude_raycast_shapes = true, bool p_test_only = false, bool p_cancel_sliding = true);
 	bool test_move(const Transform &p_from, const Vector3 &p_motion, bool p_infinite_inertia);
 
 	bool separate_raycast_shapes(bool p_infinite_inertia, Collision &r_collision);
@@ -323,6 +327,9 @@ public:
 
 	int get_slide_count() const;
 	Collision get_slide_collision(int p_bounce) const;
+
+	void set_sync_to_physics(bool p_enable);
+	bool is_sync_to_physics_enabled() const;
 
 	KinematicBody();
 	~KinematicBody();

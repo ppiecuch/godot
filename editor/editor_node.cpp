@@ -142,6 +142,7 @@
 #include "editor/plugins/physical_bone_plugin.h"
 #include "editor/plugins/polygon_2d_editor_plugin.h"
 #include "editor/plugins/resource_preloader_editor_plugin.h"
+#include "editor/plugins/room_manager_editor_plugin.h"
 #include "editor/plugins/root_motion_editor_plugin.h"
 #include "editor/plugins/script_editor_plugin.h"
 #include "editor/plugins/script_text_editor.h"
@@ -160,6 +161,7 @@
 #include "editor/plugins/tile_map_editor_plugin.h"
 #include "editor/plugins/tile_set_editor_plugin.h"
 #include "editor/plugins/version_control_editor_plugin.h"
+#include "editor/plugins/viewport_preview_editor_plugin.h"
 #include "editor/plugins/visual_shader_editor_plugin.h"
 #include "editor/progress_dialog.h"
 #include "editor/project_export.h"
@@ -2232,6 +2234,10 @@ void EditorNode::_run(bool p_current, const String &p_custom) {
 	_playing_edited = p_current;
 }
 
+void EditorNode::_android_build_source_selected(const String &p_file) {
+	export_template_manager->install_android_template_from_file(p_file);
+}
+
 void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 	if (!p_confirmed) { //this may be a hack..
 		current_option = (MenuOptions)p_option;
@@ -2669,7 +2675,7 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 						}
 
 						save_confirmation->get_ok()->set_text(TTR("Save & Quit"));
-						save_confirmation->set_text((p_option == FILE_QUIT ? TTR("Save changes to the following scene(s) before quitting?") : TTR("Save changes the following scene(s) before opening Project Manager?")) + unsaved_scenes);
+						save_confirmation->set_text((p_option == FILE_QUIT ? TTR("Save changes to the following scene(s) before quitting?") : TTR("Save changes to the following scene(s) before opening Project Manager?")) + unsaved_scenes);
 						save_confirmation->popup_centered_minsize();
 					}
 				}
@@ -2761,6 +2767,10 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 		case SETTINGS_MANAGE_EXPORT_TEMPLATES: {
 			export_template_manager->popup_manager();
 
+		} break;
+		case SETTINGS_INSTALL_ANDROID_BUILD_TEMPLATE: {
+			custom_build_manage_templates->hide();
+			file_android_build_source->popup_centered_ratio();
 		} break;
 		case SETTINGS_MANAGE_FEATURE_PROFILES: {
 			feature_profile_manager->popup_centered_clamped(Size2(900, 800) * EDSCALE, 0.8);
@@ -3901,6 +3911,21 @@ String EditorNode::_to_absolute_plugin_path(const String &p_plugin_name) {
 	return "res://addons/" + p_plugin_name + "/plugin.cfg";
 }
 
+void EditorNode::_pick_main_scene_custom_action(const String &p_custom_action_name) {
+	if (p_custom_action_name == "select_current") {
+		Node *scene = editor_data.get_edited_scene_root();
+
+		if (!scene) {
+			show_accept(TTR("There is no defined scene to run."), TTR("OK"));
+			return;
+		}
+
+		pick_main_scene->hide();
+		current_option = SETTINGS_PICK_MAIN_SCENE;
+		_dialog_action(scene->get_filename());
+	}
+}
+
 Ref<Texture> EditorNode::get_object_icon(const Object *p_object, const String &p_fallback) const {
 	ERR_FAIL_COND_V(!p_object || !gui_base, nullptr);
 
@@ -4617,6 +4642,14 @@ bool EditorNode::ensure_main_scene(bool p_from_native) {
 		current_option = -1;
 		pick_main_scene->set_text(TTR("No main scene has ever been defined, select one?\nYou can change it later in \"Project Settings\" under the 'application' category."));
 		pick_main_scene->popup_centered_minsize();
+
+		if (editor_data.get_edited_scene_root()) {
+			select_current_scene_button->set_disabled(false);
+			select_current_scene_button->grab_focus();
+		} else {
+			select_current_scene_button->set_disabled(true);
+		}
+
 		return false;
 	}
 
@@ -5502,6 +5535,7 @@ void EditorNode::_bind_methods() {
 	ClassDB::bind_method("_unhandled_input", &EditorNode::_unhandled_input);
 	ClassDB::bind_method("_update_file_menu_opened", &EditorNode::_update_file_menu_opened);
 	ClassDB::bind_method("_update_file_menu_closed", &EditorNode::_update_file_menu_closed);
+	ClassDB::bind_method("_android_build_source_selected", &EditorNode::_android_build_source_selected);
 
 	ClassDB::bind_method(D_METHOD("push_item", "object", "property", "inspector_only"), &EditorNode::push_item, DEFVAL(""), DEFVAL(false));
 
@@ -5551,6 +5585,7 @@ void EditorNode::_bind_methods() {
 	ClassDB::bind_method("_update_scene_tabs", &EditorNode::_update_scene_tabs);
 	ClassDB::bind_method("_discard_changes", &EditorNode::_discard_changes);
 	ClassDB::bind_method("_update_recent_scenes", &EditorNode::_update_recent_scenes);
+	ClassDB::bind_method("_pick_main_scene_custom_action", &EditorNode::_pick_main_scene_custom_action);
 
 	ClassDB::bind_method("_clear_undo_history", &EditorNode::_clear_undo_history);
 	ClassDB::bind_method("_dropped_files", &EditorNode::_dropped_files);
@@ -6250,7 +6285,7 @@ EditorNode::EditorNode() {
 	tool_menu->add_item(TTR("Orphan Resource Explorer..."), TOOLS_ORPHAN_RESOURCES);
 
 	p->add_separator();
-	p->add_item(TTR("Reload Current Project"), RUN_RELOAD_CURRENT_PROJECT);
+	p->add_shortcut(ED_SHORTCUT("editor/reload_current_project", TTR("Reload Current Project")), RUN_RELOAD_CURRENT_PROJECT);
 #ifdef OSX_ENABLED
 	p->add_shortcut(ED_SHORTCUT("editor/quit_to_project_list", TTR("Quit to Project List"), KEY_MASK_SHIFT + KEY_MASK_ALT + KEY_Q), RUN_PROJECT_MANAGER, true);
 #else
@@ -6648,8 +6683,17 @@ EditorNode::EditorNode() {
 	custom_build_manage_templates = memnew(ConfirmationDialog);
 	custom_build_manage_templates->set_text(TTR("Android build template is missing, please install relevant templates."));
 	custom_build_manage_templates->get_ok()->set_text(TTR("Manage Templates"));
+	custom_build_manage_templates->add_button(TTR("Install from file"))->connect("pressed", this, "_menu_option", varray(SETTINGS_INSTALL_ANDROID_BUILD_TEMPLATE));
 	custom_build_manage_templates->connect("confirmed", this, "_menu_option", varray(SETTINGS_MANAGE_EXPORT_TEMPLATES));
 	gui_base->add_child(custom_build_manage_templates);
+
+	file_android_build_source = memnew(EditorFileDialog);
+	file_android_build_source->set_title(TTR("Select android sources file"));
+	file_android_build_source->set_access(EditorFileDialog::ACCESS_FILESYSTEM);
+	file_android_build_source->set_mode(EditorFileDialog::MODE_OPEN_FILE);
+	file_android_build_source->add_filter("*.zip");
+	file_android_build_source->connect("file_selected", this, "_android_build_source_selected");
+	gui_base->add_child(file_android_build_source);
 
 	install_android_build_template = memnew(ConfirmationDialog);
 	install_android_build_template->set_text(TTR("This will set up your project for custom Android builds by installing the source template to \"res://android/build\".\nYou can then apply modifications and build your own custom APK on export (adding modules, changing the AndroidManifest.xml, etc.).\nNote that in order to make custom builds instead of using pre-built APKs, the \"Use Custom Build\" option should be enabled in the Android export preset."));
@@ -6788,6 +6832,8 @@ EditorNode::EditorNode() {
 	add_editor_plugin(memnew(Particles2DEditorPlugin(this)));
 	add_editor_plugin(memnew(GIProbeEditorPlugin(this)));
 	add_editor_plugin(memnew(BakedLightmapEditorPlugin(this)));
+	add_editor_plugin(memnew(RoomManagerEditorPlugin(this)));
+	add_editor_plugin(memnew(RoomEditorPlugin(this)));
 	add_editor_plugin(memnew(Path2DEditorPlugin(this)));
 	add_editor_plugin(memnew(PathEditorPlugin(this)));
 	add_editor_plugin(memnew(Line2DEditorPlugin(this)));
@@ -6805,6 +6851,7 @@ EditorNode::EditorNode() {
 	add_editor_plugin(memnew(PhysicalBonePlugin(this)));
 	add_editor_plugin(memnew(MeshEditorPlugin(this)));
 	add_editor_plugin(memnew(MaterialEditorPlugin(this)));
+	add_editor_plugin(memnew(ViewportPreviewEditorPlugin(this)));
 
 	for (int i = 0; i < EditorPlugins::get_plugin_count(); i++) {
 		add_editor_plugin(EditorPlugins::create(i, this));
@@ -6917,6 +6964,8 @@ EditorNode::EditorNode() {
 	gui_base->add_child(pick_main_scene);
 	pick_main_scene->get_ok()->set_text(TTR("Select"));
 	pick_main_scene->connect("confirmed", this, "_menu_option", varray(SETTINGS_PICK_MAIN_SCENE));
+	select_current_scene_button = pick_main_scene->add_button(TTR("Select Current"), true, "select_current");
+	pick_main_scene->connect("custom_action", this, "_pick_main_scene_custom_action");
 
 	for (int i = 0; i < _init_callbacks.size(); i++) {
 		_init_callbacks[i]();

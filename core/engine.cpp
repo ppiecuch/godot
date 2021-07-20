@@ -83,6 +83,10 @@ float Engine::get_time_scale() const {
 	return _time_scale;
 }
 
+void Engine::set_portals_active(bool p_active) {
+	_portals_active = p_active;
+}
+
 Dictionary Engine::get_version_info() const {
 	Dictionary dict;
 	dict["major"] = VERSION_MAJOR;
@@ -178,6 +182,14 @@ String Engine::get_license_text() const {
 	return String(GODOT_LICENSE_TEXT);
 }
 
+void Engine::set_print_error_messages(bool p_enabled) {
+	_print_error_enabled = p_enabled;
+}
+
+bool Engine::is_printing_error_messages() const {
+	return _print_error_enabled;
+}
+
 void Engine::add_singleton(const Singleton &p_singleton) {
 	singletons.push_back(p_singleton);
 	singleton_ptrs[p_singleton.name] = p_singleton.ptr;
@@ -222,6 +234,7 @@ Engine::Engine() {
 	_frame_ticks = 0;
 	_frame_step = 0;
 	editor_hint = false;
+	_portals_active = false;
 }
 #include <assert.h>
 Engine::Singleton::Singleton(const StringName &p_name, Object *p_ptr) :

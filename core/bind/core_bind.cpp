@@ -2577,10 +2577,11 @@ void _Thread::_start_func(void *ud) {
 	memdelete(tud);
 	Variant::CallError ce;
 	const Variant *arg[1] = { &t->userdata };
+	int argc = (int)(arg[0]->get_type() != Variant::NIL);
 
 	Thread::set_name(t->target_method);
 
-	t->ret = t->target_instance->call(t->target_method, arg, 1, ce);
+	t->ret = t->target_instance->call(t->target_method, arg, argc, ce);
 	if (ce.error != Variant::CallError::CALL_OK) {
 		String reason;
 		switch (ce.error) {
@@ -2959,6 +2960,14 @@ bool _Engine::is_editor_hint() const {
 	return Engine::get_singleton()->is_editor_hint();
 }
 
+void _Engine::set_print_error_messages(bool p_enabled) {
+	Engine::get_singleton()->set_print_error_messages(p_enabled);
+}
+
+bool _Engine::is_printing_error_messages() const {
+	return Engine::get_singleton()->is_printing_error_messages();
+}
+
 void _Engine::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_iterations_per_second", "iterations_per_second"), &_Engine::set_iterations_per_second);
 	ClassDB::bind_method(D_METHOD("get_iterations_per_second"), &_Engine::get_iterations_per_second);
@@ -2993,7 +3002,11 @@ void _Engine::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_editor_hint", "enabled"), &_Engine::set_editor_hint);
 	ClassDB::bind_method(D_METHOD("is_editor_hint"), &_Engine::is_editor_hint);
 
+	ClassDB::bind_method(D_METHOD("set_print_error_messages", "enabled"), &_Engine::set_print_error_messages);
+	ClassDB::bind_method(D_METHOD("is_printing_error_messages"), &_Engine::is_printing_error_messages);
+
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "editor_hint"), "set_editor_hint", "is_editor_hint");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "print_error_messages"), "set_print_error_messages", "is_printing_error_messages");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "iterations_per_second"), "set_iterations_per_second", "get_iterations_per_second");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "target_fps"), "set_target_fps", "get_target_fps");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "time_scale"), "set_time_scale", "get_time_scale");

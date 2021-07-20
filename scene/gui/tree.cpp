@@ -436,6 +436,10 @@ void TreeItem::remove_child(TreeItem *p_item) {
 		c = &(*c)->next;
 	}
 
+	if (tree) {
+		tree->update();
+	}
+
 	ERR_FAIL();
 }
 
@@ -844,7 +848,9 @@ TreeItem::~TreeItem() {
 	clear_children();
 
 	if (parent) {
-		parent->remove_child(this);
+		parent->remove_child(this); // Also updates the Tree.
+	} else if (tree) {
+		tree->update();
 	}
 
 	if (tree && tree->root == this) {
@@ -1159,7 +1165,7 @@ int Tree::draw_item(const Point2i &p_pos, const Point2 &p_draw_ofs, const Size2 
 				}
 			}
 
-			if ((select_mode == SELECT_ROW && selected_item == p_item) || p_item->cells[i].selected) {
+			if ((select_mode == SELECT_ROW && selected_item == p_item) || p_item->cells[i].selected || !p_item->has_meta("__focus_rect")) {
 				Rect2i r(cell_rect.position, cell_rect.size);
 
 				if (p_item->cells[i].text.size() > 0) {
@@ -1578,6 +1584,10 @@ void Tree::_range_click_timeout() {
 				range_click_timer->stop();
 				return;
 			}
+		}
+
+		if (!root) {
+			return;
 		}
 
 		click_handled = false;

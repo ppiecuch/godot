@@ -5037,14 +5037,6 @@ bool TextEdit::is_wrap_enabled() const {
 	return wrap_enabled;
 }
 
-void TextEdit::set_max_chars(int p_max_chars) {
-	max_chars = p_max_chars;
-}
-
-int TextEdit::get_max_chars() const {
-	return max_chars;
-}
-
 void TextEdit::_reset_caret_blink_timer() {
 	if (caret_blink_enabled) {
 		draw_caret = true;
@@ -7213,7 +7205,6 @@ TextEdit::TextEdit() {
 	draw_spaces = false;
 	override_selected_font_color = false;
 	draw_caret = true;
-	max_chars = 0;
 	clear();
 	wrap_enabled = false;
 	wrap_at = 0;

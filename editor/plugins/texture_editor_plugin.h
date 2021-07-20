@@ -35,21 +35,15 @@
 #include "editor/editor_plugin.h"
 #include "scene/resources/texture.h"
 
-class TextureEditor : public Control {
-	GDCLASS(TextureEditor, Control);
+class TexturePreview : public MarginContainer {
+	GDCLASS(TexturePreview, MarginContainer);
 
-	Ref<Texture> texture;
-
-protected:
-	void _notification(int p_what);
-	void _gui_input(Ref<InputEvent> p_event);
-	void _changed_callback(Object *p_changed, const char *p_prop);
-	static void _bind_methods();
+private:
+	TextureRect *texture_display;
 
 public:
-	void edit(Ref<Texture> p_texture);
-	TextureEditor();
-	~TextureEditor();
+	TextureRect *get_texture_display();
+	TexturePreview(Ref<Texture> p_texture, bool p_show_metadata);
 };
 
 class EditorInspectorPluginTexture : public EditorInspectorPlugin {

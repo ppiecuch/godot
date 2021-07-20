@@ -973,10 +973,52 @@ Ref<KinematicCollision> KinematicBody::_move(const Vector3 &p_motion, bool p_inf
 	return Ref<KinematicCollision>();
 }
 
-bool KinematicBody::move_and_collide(const Vector3 &p_motion, bool p_infinite_inertia, Collision &r_collision, bool p_exclude_raycast_shapes, bool p_test_only) {
+bool KinematicBody::move_and_collide(const Vector3 &p_motion, bool p_infinite_inertia, Collision &r_collision, bool p_exclude_raycast_shapes, bool p_test_only, bool p_cancel_sliding) {
+	if (sync_to_physics) {
+		ERR_PRINT("Functions move_and_slide and move_and_collide do not work together with 'sync to physics' option. Please read the documentation.");
+	}
+
 	Transform gt = get_global_transform();
 	PhysicsServer::MotionResult result;
 	bool colliding = PhysicsServer::get_singleton()->body_test_motion(get_rid(), gt, p_motion, p_infinite_inertia, &result, p_exclude_raycast_shapes);
+
+	// Restore direction of motion to be along original motion,
+	// in order to avoid sliding due to recovery,
+	// but only if collision depth is low enough to avoid tunneling.
+	if (p_cancel_sliding) {
+		real_t motion_length = p_motion.length();
+		real_t precision = 0.001;
+
+		if (colliding) {
+			// Can't just use margin as a threshold because collision depth is calculated on unsafe motion,
+			// so even in normal resting cases the depth can be a bit more than the margin.
+			precision += motion_length * (result.collision_unsafe_fraction - result.collision_safe_fraction);
+
+			if (result.collision_depth > (real_t)margin + precision) {
+				p_cancel_sliding = false;
+			}
+		}
+
+		if (p_cancel_sliding) {
+			// When motion is null, recovery is the resulting motion.
+			Vector3 motion_normal;
+			if (motion_length > CMP_EPSILON) {
+				motion_normal = p_motion / motion_length;
+			}
+
+			// Check depth of recovery.
+			real_t projected_length = result.motion.dot(motion_normal);
+			Vector3 recovery = result.motion - motion_normal * projected_length;
+			real_t recovery_length = recovery.length();
+			// Fixes cases where canceling slide causes the motion to go too deep into the ground,
+			// because we're only taking rest information into account and not general recovery.
+			if (recovery_length < (real_t)margin + precision) {
+				// Apply adjustment to motion.
+				result.motion = motion_normal * projected_length;
+				result.remainder = p_motion - result.motion;
+			}
+		}
+	}
 
 	if (colliding) {
 		r_collision.collider_metadata = result.collider_metadata;
@@ -1019,8 +1061,17 @@ Vector3 KinematicBody::move_and_slide(const Vector3 &p_linear_velocity, const Ve
 		}
 	}
 
+	Vector3 current_floor_velocity = floor_velocity;
+	if (on_floor && on_floor_body.is_valid()) {
+		// This approach makes sure there is less delay between the actual body velocity and the one we saved.
+		PhysicsDirectBodyState *bs = PhysicsServer::get_singleton()->body_get_direct_state(on_floor_body);
+		if (bs) {
+			current_floor_velocity = bs->get_linear_velocity();
+		}
+	}
+
 	// Hack in order to work with calling from _process as well as from _physics_process; calling from thread is risky
-	Vector3 motion = (floor_velocity + body_velocity) * (Engine::get_singleton()->is_in_physics_frame() ? get_physics_process_delta_time() : get_process_delta_time());
+	Vector3 motion = (current_floor_velocity + body_velocity) * (Engine::get_singleton()->is_in_physics_frame() ? get_physics_process_delta_time() : get_process_delta_time());
 
 	on_floor = false;
 	on_floor_body = RID();
@@ -1030,14 +1081,17 @@ Vector3 KinematicBody::move_and_slide(const Vector3 &p_linear_velocity, const Ve
 	floor_normal = Vector3();
 	floor_velocity = Vector3();
 
-	while (p_max_slides) {
+	// No sliding on first attempt to keep floor motion stable when possible,
+	// when stop on slope is enabled.
+	bool sliding_enabled = !p_stop_on_slope;
+	for (int iteration = 0; iteration < p_max_slides; ++iteration) {
 		Collision collision;
 		bool found_collision = false;
 
 		for (int i = 0; i < 2; ++i) {
 			bool collided;
 			if (i == 0) { //collide
-				collided = move_and_collide(motion, p_infinite_inertia, collision);
+				collided = move_and_collide(motion, p_infinite_inertia, collision, true, false, !sliding_enabled);
 				if (!collided) {
 					motion = Vector3(); //clear because no collision happened and motion completed
 				}
@@ -1053,7 +1107,6 @@ Vector3 KinematicBody::move_and_slide(const Vector3 &p_linear_velocity, const Ve
 				found_collision = true;
 
 				colliders.push_back(collision);
-				motion = collision.remainder;
 
 				if (up_direction == Vector3()) {
 					//all is a wall
@@ -1067,9 +1120,13 @@ Vector3 KinematicBody::move_and_slide(const Vector3 &p_linear_velocity, const Ve
 						floor_velocity = collision.collider_vel;
 
 						if (p_stop_on_slope) {
-							if ((body_velocity_normal + up_direction).length() < 0.01 && collision.travel.length() < 1) {
+							if ((body_velocity_normal + up_direction).length() < 0.01) {
 								Transform gt = get_global_transform();
-								gt.origin -= collision.travel.slide(up_direction);
+								if (collision.travel.length() > margin) {
+									gt.origin -= collision.travel.slide(up_direction);
+								} else {
+									gt.origin -= collision.travel;
+								}
 								set_global_transform(gt);
 								return Vector3();
 							}
@@ -1081,22 +1138,26 @@ Vector3 KinematicBody::move_and_slide(const Vector3 &p_linear_velocity, const Ve
 					}
 				}
 
-				motion = motion.slide(collision.normal);
-				body_velocity = body_velocity.slide(collision.normal);
+				if (sliding_enabled || !on_floor) {
+					motion = collision.remainder.slide(collision.normal);
+					body_velocity = body_velocity.slide(collision.normal);
 
-				for (int j = 0; j < 3; j++) {
-					if (locked_axis & (1 << j)) {
-						body_velocity[j] = 0;
+					for (int j = 0; j < 3; j++) {
+						if (locked_axis & (1 << j)) {
+							body_velocity[j] = 0;
+						}
 					}
+				} else {
+					motion = collision.remainder;
 				}
 			}
+
+			sliding_enabled = true;
 		}
 
 		if (!found_collision || motion == Vector3()) {
 			break;
 		}
-
-		--p_max_slides;
 	}
 
 	return body_velocity;
@@ -1114,7 +1175,7 @@ Vector3 KinematicBody::move_and_slide_with_snap(const Vector3 &p_linear_velocity
 	Collision col;
 	Transform gt = get_global_transform();
 
-	if (move_and_collide(p_snap, p_infinite_inertia, col, false, true)) {
+	if (move_and_collide(p_snap, p_infinite_inertia, col, false, true, false)) {
 		bool apply = true;
 		if (up_direction != Vector3()) {
 			if (Math::acos(col.normal.dot(up_direction)) <= p_floor_max_angle + FLOOR_ANGLE_THRESHOLD) {
@@ -1125,7 +1186,11 @@ Vector3 KinematicBody::move_and_slide_with_snap(const Vector3 &p_linear_velocity
 				if (p_stop_on_slope) {
 					// move and collide may stray the object a bit because of pre un-stucking,
 					// so only ensure that motion happens on floor direction in this case.
-					col.travel = col.travel.project(up_direction);
+					if (col.travel.length() > margin) {
+						col.travel = col.travel.project(up_direction);
+					} else {
+						col.travel = Vector3();
+					}
 				}
 			} else {
 				apply = false; //snapped with floor direction, but did not snap to a floor, do not snap.
@@ -1241,8 +1306,50 @@ Ref<KinematicCollision> KinematicBody::_get_slide_collision(int p_bounce) {
 	return slide_colliders[p_bounce];
 }
 
+void KinematicBody::set_sync_to_physics(bool p_enable) {
+	if (sync_to_physics == p_enable) {
+		return;
+	}
+	sync_to_physics = p_enable;
+
+	if (Engine::get_singleton()->is_editor_hint()) {
+		return;
+	}
+
+	if (p_enable) {
+		PhysicsServer::get_singleton()->body_set_force_integration_callback(get_rid(), this, "_direct_state_changed");
+		set_only_update_transform_changes(true);
+		set_notify_local_transform(true);
+	} else {
+		PhysicsServer::get_singleton()->body_set_force_integration_callback(get_rid(), nullptr, "");
+		set_only_update_transform_changes(false);
+		set_notify_local_transform(false);
+	}
+}
+
+bool KinematicBody::is_sync_to_physics_enabled() const {
+	return sync_to_physics;
+}
+
+void KinematicBody::_direct_state_changed(Object *p_state) {
+	if (!sync_to_physics) {
+		return;
+	}
+
+	PhysicsDirectBodyState *state = Object::cast_to<PhysicsDirectBodyState>(p_state);
+	ERR_FAIL_COND_MSG(!state, "Method '_direct_state_changed' must receive a valid PhysicsDirectBodyState object as argument");
+
+	last_valid_transform = state->get_transform();
+	set_notify_local_transform(false);
+	set_global_transform(last_valid_transform);
+	set_notify_local_transform(true);
+	_on_transform_changed();
+}
+
 void KinematicBody::_notification(int p_what) {
 	if (p_what == NOTIFICATION_ENTER_TREE) {
+		last_valid_transform = get_global_transform();
+
 		// Reset move_and_slide() data.
 		on_floor = false;
 		on_floor_body = RID();
@@ -1250,6 +1357,17 @@ void KinematicBody::_notification(int p_what) {
 		on_wall = false;
 		colliders.clear();
 		floor_velocity = Vector3();
+	}
+
+	if (p_what == NOTIFICATION_LOCAL_TRANSFORM_CHANGED) {
+		//used by sync to physics, send the new transform to the physics
+		Transform new_transform = get_global_transform();
+		PhysicsServer::get_singleton()->body_set_state(get_rid(), PhysicsServer::BODY_STATE_TRANSFORM, new_transform);
+		//but then revert changes
+		set_notify_local_transform(false);
+		set_global_transform(last_valid_transform);
+		set_notify_local_transform(true);
+		_on_transform_changed();
 	}
 }
 
@@ -1275,11 +1393,17 @@ void KinematicBody::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_slide_count"), &KinematicBody::get_slide_count);
 	ClassDB::bind_method(D_METHOD("get_slide_collision", "slide_idx"), &KinematicBody::_get_slide_collision);
 
+	ClassDB::bind_method(D_METHOD("set_sync_to_physics", "enable"), &KinematicBody::set_sync_to_physics);
+	ClassDB::bind_method(D_METHOD("is_sync_to_physics_enabled"), &KinematicBody::is_sync_to_physics_enabled);
+
+	ClassDB::bind_method(D_METHOD("_direct_state_changed"), &KinematicBody::_direct_state_changed);
+
 	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "move_lock_x", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "set_axis_lock", "get_axis_lock", PhysicsServer::BODY_AXIS_LINEAR_X);
 	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "move_lock_y", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "set_axis_lock", "get_axis_lock", PhysicsServer::BODY_AXIS_LINEAR_Y);
 	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "move_lock_z", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "set_axis_lock", "get_axis_lock", PhysicsServer::BODY_AXIS_LINEAR_Z);
 
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "collision/safe_margin", PROPERTY_HINT_RANGE, "0.001,256,0.001"), "set_safe_margin", "get_safe_margin");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "motion/sync_to_physics"), "set_sync_to_physics", "is_sync_to_physics_enabled");
 }
 
 KinematicBody::KinematicBody() :

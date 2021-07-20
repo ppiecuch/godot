@@ -1206,6 +1206,7 @@ void SpatialEditorViewport::_sinput(const Ref<InputEvent> &p_event) {
 					}
 
 					_edit.mouse_pos = b->get_position();
+					_edit.original_mouse_pos = b->get_position();
 					_edit.snap = spatial_editor->is_snap_enabled();
 					_edit.mode = TRANSFORM_NONE;
 
@@ -1412,7 +1413,8 @@ void SpatialEditorViewport::_sinput(const Ref<InputEvent> &p_event) {
 			} else if (nav_scheme == NAVIGATION_MODO && m->get_alt()) {
 				nav_mode = NAVIGATION_ORBIT;
 			} else {
-				if (clicked) {
+				const bool movement_threshold_passed = _edit.original_mouse_pos.distance_to(_edit.mouse_pos) > 8 * EDSCALE;
+				if (clicked && movement_threshold_passed) {
 					if (!clicked_includes_current) {
 						_select_clicked(clicked_wants_append, true);
 						// Processing was deferred.
@@ -1925,6 +1927,13 @@ void SpatialEditorViewport::_sinput(const Ref<InputEvent> &p_event) {
 	if (k.is_valid()) {
 		if (!k->is_pressed()) {
 			return;
+		}
+
+		if (EditorSettings::get_singleton()->get("editors/3d/navigation/emulate_numpad")) {
+			const uint32_t code = k->get_scancode();
+			if (code >= KEY_0 && code <= KEY_9) {
+				k->set_scancode(code - KEY_0 + KEY_KP_0);
+			}
 		}
 
 		if (ED_IS_SHORTCUT("spatial_editor/snap", p_event)) {
@@ -2442,6 +2451,7 @@ void SpatialEditorViewport::_notification(int p_what) {
 		}
 
 		if (show_info) {
+			const String viewport_size = vformat(String::utf8("%d × %d"), viewport->get_size().x, viewport->get_size().y);
 			String text;
 			text += "X: " + rtos(current_camera->get_translation().x).pad_decimals(1) + "\n";
 			text += "Y: " + rtos(current_camera->get_translation().y).pad_decimals(1) + "\n";
@@ -2451,9 +2461,8 @@ void SpatialEditorViewport::_notification(int p_what) {
 
 			text += TTR("Size") +
 					vformat(
-							": %dx%d (%.1fMP)\n",
-							viewport->get_size().x,
-							viewport->get_size().y,
+							": %s (%.1fMP)\n",
+							viewport_size,
 							viewport->get_size().x * viewport->get_size().y * 0.000001);
 			text += TTR("Objects Drawn") + ": " + itos(viewport->get_render_info(Viewport::RENDER_INFO_OBJECTS_IN_FRAME)) + "\n";
 			text += TTR("Material Changes") + ": " + itos(viewport->get_render_info(Viewport::RENDER_INFO_MATERIAL_CHANGES_IN_FRAME)) + "\n";
@@ -2998,6 +3007,7 @@ void SpatialEditorViewport::_init_gizmo_instance(int p_idx) {
 		VS::get_singleton()->instance_set_visible(move_gizmo_instance[i], false);
 		VS::get_singleton()->instance_geometry_set_cast_shadows_setting(move_gizmo_instance[i], VS::SHADOW_CASTING_SETTING_OFF);
 		VS::get_singleton()->instance_set_layer_mask(move_gizmo_instance[i], layer);
+		VS::get_singleton()->instance_set_portal_mode(move_gizmo_instance[i], VisualServer::INSTANCE_PORTAL_MODE_GLOBAL);
 
 		move_plane_gizmo_instance[i] = VS::get_singleton()->instance_create();
 		VS::get_singleton()->instance_set_base(move_plane_gizmo_instance[i], spatial_editor->get_move_plane_gizmo(i)->get_rid());
@@ -3005,6 +3015,7 @@ void SpatialEditorViewport::_init_gizmo_instance(int p_idx) {
 		VS::get_singleton()->instance_set_visible(move_plane_gizmo_instance[i], false);
 		VS::get_singleton()->instance_geometry_set_cast_shadows_setting(move_plane_gizmo_instance[i], VS::SHADOW_CASTING_SETTING_OFF);
 		VS::get_singleton()->instance_set_layer_mask(move_plane_gizmo_instance[i], layer);
+		VS::get_singleton()->instance_set_portal_mode(move_plane_gizmo_instance[i], VisualServer::INSTANCE_PORTAL_MODE_GLOBAL);
 
 		rotate_gizmo_instance[i] = VS::get_singleton()->instance_create();
 		VS::get_singleton()->instance_set_base(rotate_gizmo_instance[i], spatial_editor->get_rotate_gizmo(i)->get_rid());
@@ -3012,6 +3023,7 @@ void SpatialEditorViewport::_init_gizmo_instance(int p_idx) {
 		VS::get_singleton()->instance_set_visible(rotate_gizmo_instance[i], false);
 		VS::get_singleton()->instance_geometry_set_cast_shadows_setting(rotate_gizmo_instance[i], VS::SHADOW_CASTING_SETTING_OFF);
 		VS::get_singleton()->instance_set_layer_mask(rotate_gizmo_instance[i], layer);
+		VS::get_singleton()->instance_set_portal_mode(rotate_gizmo_instance[i], VisualServer::INSTANCE_PORTAL_MODE_GLOBAL);
 
 		scale_gizmo_instance[i] = VS::get_singleton()->instance_create();
 		VS::get_singleton()->instance_set_base(scale_gizmo_instance[i], spatial_editor->get_scale_gizmo(i)->get_rid());
@@ -3019,6 +3031,7 @@ void SpatialEditorViewport::_init_gizmo_instance(int p_idx) {
 		VS::get_singleton()->instance_set_visible(scale_gizmo_instance[i], false);
 		VS::get_singleton()->instance_geometry_set_cast_shadows_setting(scale_gizmo_instance[i], VS::SHADOW_CASTING_SETTING_OFF);
 		VS::get_singleton()->instance_set_layer_mask(scale_gizmo_instance[i], layer);
+		VS::get_singleton()->instance_set_portal_mode(scale_gizmo_instance[i], VisualServer::INSTANCE_PORTAL_MODE_GLOBAL);
 
 		scale_plane_gizmo_instance[i] = VS::get_singleton()->instance_create();
 		VS::get_singleton()->instance_set_base(scale_plane_gizmo_instance[i], spatial_editor->get_scale_plane_gizmo(i)->get_rid());
@@ -3026,6 +3039,7 @@ void SpatialEditorViewport::_init_gizmo_instance(int p_idx) {
 		VS::get_singleton()->instance_set_visible(scale_plane_gizmo_instance[i], false);
 		VS::get_singleton()->instance_geometry_set_cast_shadows_setting(scale_plane_gizmo_instance[i], VS::SHADOW_CASTING_SETTING_OFF);
 		VS::get_singleton()->instance_set_layer_mask(scale_plane_gizmo_instance[i], layer);
+		VS::get_singleton()->instance_set_portal_mode(scale_plane_gizmo_instance[i], VisualServer::INSTANCE_PORTAL_MODE_GLOBAL);
 	}
 
 	// Rotation white outline
@@ -3062,14 +3076,12 @@ void SpatialEditorViewport::_toggle_camera_preview(bool p_activate) {
 		if (!preview) {
 			preview_camera->hide();
 		}
-		view_menu->set_disabled(false);
 		surface->update();
 
 	} else {
 		previewing = preview;
 		previewing->connect("tree_exiting", this, "_preview_exited_scene");
 		VS::get_singleton()->viewport_attach_camera(viewport->get_viewport_rid(), preview->get_camera()); //replace
-		view_menu->set_disabled(true);
 		surface->update();
 	}
 }
@@ -3302,7 +3314,6 @@ void SpatialEditorViewport::set_state(const Dictionary &p_state) {
 			previewing = Object::cast_to<Camera>(pv);
 			previewing->connect("tree_exiting", this, "_preview_exited_scene");
 			VS::get_singleton()->viewport_attach_camera(viewport->get_viewport_rid(), previewing->get_camera()); //replace
-			view_menu->set_disabled(true);
 			surface->update();
 			preview_camera->set_pressed(true);
 			preview_camera->show();
@@ -5855,7 +5866,7 @@ void SpatialEditor::snap_selected_nodes_to_floor() {
 		}
 
 		if (snapped_to_floor) {
-			undo_redo->create_action(TTR("Snap Nodes To Floor"));
+			undo_redo->create_action(TTR("Snap Nodes to Floor"));
 
 			// Perform snapping if at least one node can be snapped
 			for (int i = 0; i < keys.size(); i++) {
@@ -5980,6 +5991,15 @@ void SpatialEditor::remove_control_from_menu_panel(Control *p_control) {
 void SpatialEditor::set_can_preview(Camera *p_preview) {
 	for (int i = 0; i < 4; i++) {
 		viewports[i]->set_can_preview(p_preview);
+	}
+}
+
+void SpatialEditor::set_message(String p_message, float p_time) {
+	for (uint32_t i = 0; i < VIEWPORTS_COUNT; i++) {
+		SpatialEditorViewport *viewport = get_editor_viewport(i);
+		if (viewport->is_visible()) {
+			viewport->set_message(p_message, p_time);
+		}
 	}
 }
 

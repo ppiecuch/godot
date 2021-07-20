@@ -94,8 +94,6 @@ public:
 	PhysicsDirectBodyState();
 };
 
-class PhysicsShapeQueryResult;
-
 class PhysicsShapeQueryParameters : public Reference {
 	GDCLASS(PhysicsShapeQueryParameters, Reference);
 	friend class PhysicsDirectSpaceState;
@@ -194,25 +192,7 @@ public:
 	PhysicsDirectSpaceState();
 };
 
-class PhysicsShapeQueryResult : public Reference {
-	GDCLASS(PhysicsShapeQueryResult, Reference);
-
-	Vector<PhysicsDirectSpaceState::ShapeResult> result;
-
-	friend class PhysicsDirectSpaceState;
-
-protected:
-	static void _bind_methods();
-
-public:
-	int get_result_count() const;
-	RID get_result_rid(int p_idx) const;
-	ObjectID get_result_object_id(int p_idx) const;
-	Object *get_result_object(int p_idx) const;
-	int get_result_object_shape(int p_idx) const;
-
-	PhysicsShapeQueryResult();
-};
+class PhysicsTestMotionResult;
 
 class PhysicsTestMotionResult;
 
@@ -483,6 +463,9 @@ public:
 		Vector3 collision_point;
 		Vector3 collision_normal;
 		Vector3 collider_velocity;
+		real_t collision_depth = 0.0;
+		real_t collision_safe_fraction = 0.0;
+		real_t collision_unsafe_fraction = 0.0;
 		int collision_local_shape = 0;
 		ObjectID collider_id = 0;
 		RID collider;
@@ -748,6 +731,8 @@ public:
 
 	virtual bool is_flushing_queries() const = 0;
 
+	virtual void set_collision_iterations(int p_iterations) = 0;
+
 	enum ProcessInfo {
 
 		INFO_ACTIVE_OBJECTS,
@@ -785,6 +770,12 @@ public:
 	RID get_collider_rid() const;
 	Object *get_collider() const;
 	int get_collider_shape() const;
+<<<<<<< HEAD
+=======
+	real_t get_collision_depth() const;
+	real_t get_collision_safe_fraction() const;
+	real_t get_collision_unsafe_fraction() const;
+>>>>>>> 51f8247871c84736a3c3f56375deb432a4cb305a
 };
 
 typedef PhysicsServer *(*CreatePhysicsServerCallback)();

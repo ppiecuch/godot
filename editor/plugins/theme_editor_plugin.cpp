@@ -1375,12 +1375,15 @@ void ThemeItemEditorDialog::_item_tree_button_pressed(Object *p_item, int p_colu
 	_update_edit_item_tree(edited_item_type);
 }
 
-void ThemeItemEditorDialog::_add_theme_type() {
-	edited_theme->add_icon_type(edit_add_type_value->get_text());
-	edited_theme->add_stylebox_type(edit_add_type_value->get_text());
-	edited_theme->add_font_type(edit_add_type_value->get_text());
-	edited_theme->add_color_type(edit_add_type_value->get_text());
-	edited_theme->add_constant_type(edit_add_type_value->get_text());
+void ThemeItemEditorDialog::_add_theme_type(const String &p_new_text) {
+	const String new_type = edit_add_type_value->get_text().strip_edges();
+	edit_add_type_value->clear();
+
+	edited_theme->add_icon_type(new_type);
+	edited_theme->add_stylebox_type(new_type);
+	edited_theme->add_font_type(new_type);
+	edited_theme->add_color_type(new_type);
+	edited_theme->add_constant_type(new_type);
 	_update_edit_types();
 
 	// Force emit a change so that other parts of the editor can update.
@@ -1699,11 +1702,12 @@ ThemeItemEditorDialog::ThemeItemEditorDialog() {
 	edit_dialog_side_vb->add_child(edit_add_type_hb);
 	edit_add_type_value = memnew(LineEdit);
 	edit_add_type_value->set_h_size_flags(Control::SIZE_EXPAND_FILL);
+	edit_add_type_value->connect("text_entered", this, "_add_theme_type");
 	edit_add_type_hb->add_child(edit_add_type_value);
 	Button *edit_add_type_button = memnew(Button);
 	edit_add_type_button->set_text(TTR("Add"));
 	edit_add_type_hb->add_child(edit_add_type_button);
-	edit_add_type_button->connect("pressed", this, "_add_theme_type");
+	edit_add_type_button->connect("pressed", this, "_add_theme_type", varray(""));
 
 	VBoxContainer *edit_items_vb = memnew(VBoxContainer);
 	edit_items_vb->set_h_size_flags(Control::SIZE_EXPAND_FILL);
@@ -2326,6 +2330,7 @@ void ThemeTypeEditor::_list_type_selected(int p_index) {
 }
 
 void ThemeTypeEditor::_add_type_button_cbk() {
+	add_type_filter->clear();
 	add_type_dialog->popup_centered(Size2(560, 420) * EDSCALE);
 	add_type_filter->grab_focus();
 }
@@ -3074,7 +3079,7 @@ ThemeEditor::ThemeEditor() {
 
 	theme_type_editor = memnew(ThemeTypeEditor);
 	main_hs->add_child(theme_type_editor);
-	theme_type_editor->set_custom_minimum_size(Size2(360, 0) * EDSCALE);
+	theme_type_editor->set_custom_minimum_size(Size2(280, 0) * EDSCALE);
 }
 
 void ThemeEditorPlugin::edit(Object *p_node) {
