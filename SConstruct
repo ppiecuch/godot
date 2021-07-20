@@ -561,13 +561,6 @@ if selected_platform in platform_list:
         sys.modules.pop("config")
 
     env.module_list = modules_enabled
-
-    # Let the editor knows what modules are enabled
-    for x in env.module_list:
-        if x in env.disabled_modules:
-            continue
-        env.Append(CPPDEFINES=["MODULE_" + x.upper() + "_ENABLED"])
-
     methods.update_version(env.module_version_string)
 
     env["PROGSUFFIX"] = suffix + env.module_version_string + env["PROGSUFFIX"]

@@ -156,13 +156,13 @@ void Label::_notification(int p_what) {
 		}
 
 		int line = 0, line_to = lines_skipped + (lines_visible > 0 ? lines_visible : 1);
+		float total_h = 0;
 
 		if (!wc) {
 			// nothing to draw
 			goto draw_next;
 		}
 
-		float total_h = 0;
 		total_h += lines_visible * font_h;
 		total_h += style->get_margin(MARGIN_TOP) + style->get_margin(MARGIN_BOTTOM);
 
