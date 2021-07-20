@@ -32,6 +32,12 @@
 #include <string>
 #include <vector>
 
+#include "modules/modules_enabled.gen.h"
+
+#ifndef MODULE_OPENSIMPLEX_ENABLED
+#error OpenSimplex module is required for noise support.
+#endif
+
 #include "scene/main/viewport.h"
 #include "scene/resources/mesh.h"
 #include "scene/resources/mesh_data_tool.h"
@@ -114,6 +120,7 @@ static void _draw_debug_marker(CanvasItem *node, const Point2 &p0, real_t dir, i
 	// node->draw_circle(p0, 1, marker_color);
 }
 
+
 Vector<Object *> SimulationController2D::_get_connected_nodes() const {
 	// get the list of listeners of "simulation_progress" signal
 
@@ -160,7 +167,6 @@ Vector2 SimulationController2D::get_simulation_force() const {
 	return simulation_force;
 }
 
-#ifdef MODULE_OPENSIMPLEX_ENABLED
 void SimulationController2D::set_noise_modulation(bool p_state) {
 	noise_modulation = p_state;
 }
@@ -190,7 +196,6 @@ Vector2 SimulationController2D::get_current_noise_modulation(const Vector2 &pos)
 			Math::map(_noise->get_multi_noise_3d(pos.x / noise_pixel_resolution, pos.y / noise_pixel_resolution, _time_progress), -1, 1, 0, Math_Two_PI),
 			Math::map(_noise->get_multi_noise_3d(10000 + pos.x / (2 * noise_pixel_resolution), 10000 + pos.y / (2 * noise_pixel_resolution), _time_progress), -1, 1, 0, 1));
 }
-#endif
 
 void SimulationController2D::simulation_progress(real_t p_delta) {
 	if (!simulation_paused) {
@@ -219,14 +224,12 @@ void SimulationController2D::reset_simulation() {
 }
 
 Vector2 SimulationController2D::get_simulation_force_for_node(Node *p_node) {
-#ifdef MODULE_OPENSIMPLEX_ENABLED
 	if (noise_modulation) {
 		Vector2 node_force;
 		if (_get_node_noise_modulation_value(p_node, _noise, _time_progress, noise_pixel_resolution, node_force)) {
 			return node_force * simulation_force;
 		}
 	}
-#endif
 	return simulation_force;
 }
 
@@ -266,13 +269,11 @@ SimulationController2D::SimulationController2D() {
 	_sim = newref(ElasticSimulation);
 	_time_progress = 0;
 
-#ifdef MODULE_OPENSIMPLEX_ENABLED
 	noise_modulation = false;
 	noise_time_scale = 10;
 	noise_pixel_resolution = 10;
 	_noise = newref(OpenSimplexNoise);
 	_noise->set_persistence(0.3); // more smoothness
-#endif
 
 	simulation_paused = true;
 	simulation_precision = PRECISION_MEDIUM;

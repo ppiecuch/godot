@@ -34,9 +34,7 @@
 #include "scene/2d/mesh_instance_2d.h"
 #include "scene/2d/sprite.h"
 
-#ifdef MODULE_OPENSIMPLEX_ENABLED
 #include "modules/opensimplex/open_simplex_noise.h"
-#endif
 
 #include "elastic_simulation.h"
 
@@ -59,12 +57,10 @@ private:
 	SimulationPrecision simulation_precision;
 	Vector2 simulation_force;
 
-#ifdef MODULE_OPENSIMPLEX_ENABLED
 	bool noise_modulation;
 	int noise_time_scale;
 	int noise_pixel_resolution;
 	Ref<OpenSimplexNoise> _noise;
-#endif
 
 	Vector<Object *> _get_connected_nodes() const;
 
@@ -83,7 +79,6 @@ public:
 	void set_simulation_force(const Vector2 &p_force);
 	Vector2 get_simulation_force() const;
 
-#ifdef MODULE_OPENSIMPLEX_ENABLED
 	void set_noise_modulation(bool p_state);
 	bool is_noise_modulation_active() const;
 	void set_noise_pixel_resolution(int p_res);
@@ -92,7 +87,6 @@ public:
 	int get_noise_time_scale() const;
 
 	Vector2 get_current_noise_modulation(const Vector2 &pos) const; // return [angle,magnitude]
-#endif
 
 	Ref<ElasticSimulation> get_simulation() const;
 
