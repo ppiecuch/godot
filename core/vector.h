@@ -64,11 +64,13 @@ private:
 
 public:
 	bool push_back(T p_elem);
+	/// some convinient push functions (pair/triangle/quad)
 	bool push_back(T p_elem1, T p_elem2);
 	bool push_back(T p_elem1, T p_elem2, T p_elem3);
 	bool push_back(T p_elem1, T p_elem2, T p_elem3, T p_elem4);
 	bool push_multi(int p_num, T p_elem);
 
+	void fill(T p_elem);
 	void remove(int p_index) { _cowdata.remove(p_index); }
 	void erase(const T &p_val) {
 		int idx = find(p_val);
@@ -157,8 +159,9 @@ template <class T>
 void Vector<T>::append_array(int p_num, const T p_other[]) {
 	const int bs = size();
 	resize(bs + p_num);
-	for (int i = 0; i < p_num; ++i)
+	for (int i = 0; i < p_num; ++i) {
 		ptrw()[bs + i] = p_other[i];
+	}
 }
 
 template <class T>
@@ -208,9 +211,18 @@ bool Vector<T>::push_multi(int p_num, T p_elem) {
 	const int bs = size();
 	Error err = resize(bs + p_num);
 	ERR_FAIL_COND_V(err, true);
-	for (int i = 0; i < p_num; ++i)
+	for (int i = 0; i < p_num; ++i) {
 		ptrw()[bs + i] = p_elem;
+	}
 	return false;
+}
+
+template <class T>
+void Vector<T>::fill(T p_elem) {
+	T *p = ptrw();
+	for (int i = 0; i < size(); i++) {
+		p[i] = p_elem;
+	}
 }
 
 #endif

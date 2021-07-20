@@ -567,6 +567,7 @@ struct _VariantCall {
 	VCALL_LOCALMEM1(Array, resize);
 	VCALL_LOCALMEM2(Array, insert);
 	VCALL_LOCALMEM1(Array, remove);
+	VCALL_LOCALMEM1(Array, fill);
 	VCALL_LOCALMEM0R(Array, front);
 	VCALL_LOCALMEM0R(Array, back);
 	VCALL_LOCALMEM2R(Array, find);
@@ -688,6 +689,7 @@ struct _VariantCall {
 	VCALL_LOCALMEM1(PoolByteArray, resize);
 	VCALL_LOCALMEM2R(PoolByteArray, insert);
 	VCALL_LOCALMEM1(PoolByteArray, remove);
+	VCALL_LOCALMEM1(PoolByteArray, fill);
 	VCALL_LOCALMEM1(PoolByteArray, append);
 	VCALL_LOCALMEM1(PoolByteArray, append_array);
 	VCALL_LOCALMEM0(PoolByteArray, invert);
@@ -701,6 +703,7 @@ struct _VariantCall {
 	VCALL_LOCALMEM1(PoolIntArray, resize);
 	VCALL_LOCALMEM2R(PoolIntArray, insert);
 	VCALL_LOCALMEM1(PoolIntArray, remove);
+	VCALL_LOCALMEM1(PoolIntArray, fill);
 	VCALL_LOCALMEM1(PoolIntArray, append);
 	VCALL_LOCALMEM1(PoolIntArray, append_array);
 	VCALL_LOCALMEM0(PoolIntArray, invert);
@@ -713,6 +716,7 @@ struct _VariantCall {
 	VCALL_LOCALMEM1(PoolRealArray, resize);
 	VCALL_LOCALMEM2R(PoolRealArray, insert);
 	VCALL_LOCALMEM1(PoolRealArray, remove);
+	VCALL_LOCALMEM1(PoolRealArray, fill);
 	VCALL_LOCALMEM1(PoolRealArray, append);
 	VCALL_LOCALMEM1(PoolRealArray, append_array);
 	VCALL_LOCALMEM0(PoolRealArray, invert);
@@ -725,6 +729,7 @@ struct _VariantCall {
 	VCALL_LOCALMEM1(PoolStringArray, resize);
 	VCALL_LOCALMEM2R(PoolStringArray, insert);
 	VCALL_LOCALMEM1(PoolStringArray, remove);
+	VCALL_LOCALMEM1(PoolStringArray, fill);
 	VCALL_LOCALMEM1(PoolStringArray, append);
 	VCALL_LOCALMEM1(PoolStringArray, append_array);
 	VCALL_LOCALMEM0(PoolStringArray, invert);
@@ -738,6 +743,7 @@ struct _VariantCall {
 	VCALL_LOCALMEM1(PoolVector2Array, resize);
 	VCALL_LOCALMEM2R(PoolVector2Array, insert);
 	VCALL_LOCALMEM1(PoolVector2Array, remove);
+	VCALL_LOCALMEM1(PoolVector2Array, fill);
 	VCALL_LOCALMEM1(PoolVector2Array, append);
 	VCALL_LOCALMEM1(PoolVector2Array, append_array);
 	VCALL_LOCALMEM0(PoolVector2Array, invert);
@@ -750,6 +756,7 @@ struct _VariantCall {
 	VCALL_LOCALMEM1(PoolVector3Array, resize);
 	VCALL_LOCALMEM2R(PoolVector3Array, insert);
 	VCALL_LOCALMEM1(PoolVector3Array, remove);
+	VCALL_LOCALMEM1(PoolVector3Array, fill);
 	VCALL_LOCALMEM1(PoolVector3Array, append);
 	VCALL_LOCALMEM1(PoolVector3Array, append_array);
 	VCALL_LOCALMEM0(PoolVector3Array, invert);
@@ -762,6 +769,7 @@ struct _VariantCall {
 	VCALL_LOCALMEM1(PoolColorArray, resize);
 	VCALL_LOCALMEM2R(PoolColorArray, insert);
 	VCALL_LOCALMEM1(PoolColorArray, remove);
+	VCALL_LOCALMEM1(PoolColorArray, fill);
 	VCALL_LOCALMEM1(PoolColorArray, append);
 	VCALL_LOCALMEM1(PoolColorArray, append_array);
 	VCALL_LOCALMEM0(PoolColorArray, invert);
@@ -1888,6 +1896,7 @@ void register_variant_methods() {
 	ADDFUNC1NC(ARRAY, NIL, Array, resize, INT, "size", varray());
 	ADDFUNC2NC(ARRAY, NIL, Array, insert, INT, "position", NIL, "value", varray());
 	ADDFUNC1NC(ARRAY, NIL, Array, remove, INT, "position", varray());
+	ADDFUNC1NC(ARRAY, NIL, Array, fill, NIL, "value", varray());
 	ADDFUNC1NC(ARRAY, NIL, Array, erase, NIL, "value", varray());
 	ADDFUNC0R(ARRAY, NIL, Array, front, varray());
 	ADDFUNC0R(ARRAY, NIL, Array, back, varray());
@@ -1916,6 +1925,7 @@ void register_variant_methods() {
 	ADDFUNC1(POOL_BYTE_ARRAY, NIL, PoolByteArray, append, INT, "byte", varray());
 	ADDFUNC1(POOL_BYTE_ARRAY, NIL, PoolByteArray, append_array, POOL_BYTE_ARRAY, "array", varray());
 	ADDFUNC1(POOL_BYTE_ARRAY, NIL, PoolByteArray, remove, INT, "idx", varray());
+	ADDFUNC1(POOL_BYTE_ARRAY, NIL, PoolByteArray, fill, INT, "value", varray());
 	ADDFUNC2R(POOL_BYTE_ARRAY, INT, PoolByteArray, insert, INT, "idx", INT, "byte", varray());
 	ADDFUNC1(POOL_BYTE_ARRAY, NIL, PoolByteArray, resize, INT, "idx", varray());
 	ADDFUNC0(POOL_BYTE_ARRAY, NIL, PoolByteArray, invert, varray());
@@ -1935,6 +1945,7 @@ void register_variant_methods() {
 	ADDFUNC1(POOL_INT_ARRAY, NIL, PoolIntArray, append, INT, "integer", varray());
 	ADDFUNC1(POOL_INT_ARRAY, NIL, PoolIntArray, append_array, POOL_INT_ARRAY, "array", varray());
 	ADDFUNC1(POOL_INT_ARRAY, NIL, PoolIntArray, remove, INT, "idx", varray());
+	ADDFUNC1(POOL_INT_ARRAY, NIL, PoolIntArray, fill, INT, "value", varray());
 	ADDFUNC2R(POOL_INT_ARRAY, INT, PoolIntArray, insert, INT, "idx", INT, "integer", varray());
 	ADDFUNC1(POOL_INT_ARRAY, NIL, PoolIntArray, resize, INT, "idx", varray());
 	ADDFUNC0(POOL_INT_ARRAY, NIL, PoolIntArray, invert, varray());
@@ -1946,6 +1957,7 @@ void register_variant_methods() {
 	ADDFUNC1(POOL_REAL_ARRAY, NIL, PoolRealArray, append, REAL, "value", varray());
 	ADDFUNC1(POOL_REAL_ARRAY, NIL, PoolRealArray, append_array, POOL_REAL_ARRAY, "array", varray());
 	ADDFUNC1(POOL_REAL_ARRAY, NIL, PoolRealArray, remove, INT, "idx", varray());
+	ADDFUNC1(POOL_REAL_ARRAY, NIL, PoolRealArray, fill, REAL, "value", varray());
 	ADDFUNC2R(POOL_REAL_ARRAY, INT, PoolRealArray, insert, INT, "idx", REAL, "value", varray());
 	ADDFUNC1(POOL_REAL_ARRAY, NIL, PoolRealArray, resize, INT, "idx", varray());
 	ADDFUNC0(POOL_REAL_ARRAY, NIL, PoolRealArray, invert, varray());
@@ -1957,6 +1969,7 @@ void register_variant_methods() {
 	ADDFUNC1(POOL_STRING_ARRAY, NIL, PoolStringArray, append, STRING, "string", varray());
 	ADDFUNC1(POOL_STRING_ARRAY, NIL, PoolStringArray, append_array, POOL_STRING_ARRAY, "array", varray());
 	ADDFUNC1(POOL_STRING_ARRAY, NIL, PoolStringArray, remove, INT, "idx", varray());
+	ADDFUNC1(POOL_STRING_ARRAY, NIL, PoolStringArray, fill, STRING, "value", varray());
 	ADDFUNC2R(POOL_STRING_ARRAY, INT, PoolStringArray, insert, INT, "idx", STRING, "string", varray());
 	ADDFUNC1(POOL_STRING_ARRAY, NIL, PoolStringArray, resize, INT, "idx", varray());
 	ADDFUNC0(POOL_STRING_ARRAY, NIL, PoolStringArray, invert, varray());
@@ -1969,6 +1982,7 @@ void register_variant_methods() {
 	ADDFUNC1(POOL_VECTOR2_ARRAY, NIL, PoolVector2Array, append, VECTOR2, "vector2", varray());
 	ADDFUNC1(POOL_VECTOR2_ARRAY, NIL, PoolVector2Array, append_array, POOL_VECTOR2_ARRAY, "array", varray());
 	ADDFUNC1(POOL_VECTOR2_ARRAY, NIL, PoolVector2Array, remove, INT, "idx", varray());
+	ADDFUNC1(POOL_VECTOR2_ARRAY, NIL, PoolVector2Array, fill, VECTOR2, "value", varray());
 	ADDFUNC2R(POOL_VECTOR2_ARRAY, INT, PoolVector2Array, insert, INT, "idx", VECTOR2, "vector2", varray());
 	ADDFUNC1(POOL_VECTOR2_ARRAY, NIL, PoolVector2Array, resize, INT, "idx", varray());
 	ADDFUNC0(POOL_VECTOR2_ARRAY, NIL, PoolVector2Array, invert, varray());
@@ -1980,6 +1994,7 @@ void register_variant_methods() {
 	ADDFUNC1(POOL_VECTOR3_ARRAY, NIL, PoolVector3Array, append, VECTOR3, "vector3", varray());
 	ADDFUNC1(POOL_VECTOR3_ARRAY, NIL, PoolVector3Array, append_array, POOL_VECTOR3_ARRAY, "array", varray());
 	ADDFUNC1(POOL_VECTOR3_ARRAY, NIL, PoolVector3Array, remove, INT, "idx", varray());
+	ADDFUNC1(POOL_VECTOR3_ARRAY, NIL, PoolVector3Array, fill, VECTOR3, "value", varray());
 	ADDFUNC2R(POOL_VECTOR3_ARRAY, INT, PoolVector3Array, insert, INT, "idx", VECTOR3, "vector3", varray());
 	ADDFUNC1(POOL_VECTOR3_ARRAY, NIL, PoolVector3Array, resize, INT, "idx", varray());
 	ADDFUNC0(POOL_VECTOR3_ARRAY, NIL, PoolVector3Array, invert, varray());
@@ -1991,6 +2006,7 @@ void register_variant_methods() {
 	ADDFUNC1(POOL_COLOR_ARRAY, NIL, PoolColorArray, append, COLOR, "color", varray());
 	ADDFUNC1(POOL_COLOR_ARRAY, NIL, PoolColorArray, append_array, POOL_COLOR_ARRAY, "array", varray());
 	ADDFUNC1(POOL_COLOR_ARRAY, NIL, PoolColorArray, remove, INT, "idx", varray());
+	ADDFUNC1(POOL_COLOR_ARRAY, NIL, PoolColorArray, fill, COLOR, "idx", varray());
 	ADDFUNC2R(POOL_COLOR_ARRAY, INT, PoolColorArray, insert, INT, "idx", COLOR, "color", varray());
 	ADDFUNC1(POOL_COLOR_ARRAY, NIL, PoolColorArray, resize, INT, "idx", varray());
 	ADDFUNC0(POOL_COLOR_ARRAY, NIL, PoolColorArray, invert, varray());

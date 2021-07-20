@@ -119,6 +119,11 @@ void Array::insert(int p_pos, const Variant &p_value) {
 	_p->array.insert(p_pos, p_value);
 }
 
+void Array::fill(const Variant &p_value) {
+	ERR_FAIL_COND(!_p->typed.validate(p_value, "fill"));
+	_p->array.fill(p_value);
+}
+
 void Array::erase(const Variant &p_value) {
 	_p->array.erase(p_value);
 }
