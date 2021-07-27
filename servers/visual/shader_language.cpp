@@ -948,6 +948,8 @@ void ShaderLanguage::clear() {
 	completion_class = SubClassTag::TAG_GLOBAL;
 	completion_struct = StringName();
 
+	unknown_varying_usages.clear();
+
 	error_line = 0;
 	tk_line = 1;
 	char_idx = 0;
@@ -1051,6 +1053,9 @@ bool ShaderLanguage::_find_identifier(const BlockNode *p_block, const Map<String
 	if (shader->constants.has(p_identifier)) {
 		if (r_data_type) {
 			*r_data_type = shader->constants[p_identifier].type;
+		}
+		if (r_array_size) {
+			*r_array_size = shader->constants[p_identifier].array_size;
 		}
 		if (r_type) {
 			*r_type = IDENTIFIER_CONSTANT;
@@ -2249,6 +2254,11 @@ bool ShaderLanguage::_validate_function_call(BlockNode *p_block, OperatorNode *p
 								}
 								StringName var_name = static_cast<const VariableNode *>(p_func->arguments[arg_idx + 1])->name;
 
+								if (shader->varyings.has(var_name)) {
+									_set_error(vformat("Varyings cannot be passed for '%s' parameter!", "out"));
+									return false;
+								}
+
 								const BlockNode *b = p_block;
 								bool valid = false;
 								while (b) {
@@ -2577,6 +2587,20 @@ ShaderLanguage::StencilTest::StencilTestType ShaderLanguage::get_stencil_test_ty
 		default:
 			ERR_FAIL_V(StencilTest::STENCIL_TEST_ALWAYS);
 	}
+}
+
+bool ShaderLanguage::is_token_operator_assign(TokenType p_type) {
+	return (p_type == TK_OP_ASSIGN ||
+			p_type == TK_OP_ASSIGN_ADD ||
+			p_type == TK_OP_ASSIGN_SUB ||
+			p_type == TK_OP_ASSIGN_MUL ||
+			p_type == TK_OP_ASSIGN_DIV ||
+			p_type == TK_OP_ASSIGN_MOD ||
+			p_type == TK_OP_ASSIGN_SHIFT_LEFT ||
+			p_type == TK_OP_ASSIGN_SHIFT_RIGHT ||
+			p_type == TK_OP_ASSIGN_BIT_AND ||
+			p_type == TK_OP_ASSIGN_BIT_OR ||
+			p_type == TK_OP_ASSIGN_BIT_XOR);
 }
 
 bool ShaderLanguage::convert_constant(ConstantNode *p_constant, DataType p_to_type, ConstantNode::Value *p_value) {
@@ -2920,8 +2944,8 @@ bool ShaderLanguage::_is_operator_assign(Operator p_op) const {
 }
 
 bool ShaderLanguage::_validate_varying_assign(ShaderNode::Varying &p_varying, String *r_message) {
-	if (current_function == String("light")) {
-		*r_message = RTR("Varying may not be assigned in the 'light' function.");
+	if (current_function != String("vertex") && current_function != String("fragment")) {
+		*r_message = vformat(RTR("Varying may not be assigned in the '%s' function."), current_function);
 		return false;
 	}
 	switch (p_varying.stage) {
@@ -2932,12 +2956,14 @@ bool ShaderLanguage::_validate_varying_assign(ShaderNode::Varying &p_varying, St
 				p_varying.stage = ShaderNode::Varying::STAGE_FRAGMENT;
 			}
 			break;
+		case ShaderNode::Varying::STAGE_VERTEX_TO_FRAGMENT_LIGHT:
 		case ShaderNode::Varying::STAGE_VERTEX:
 			if (current_function == String("fragment")) {
 				*r_message = RTR("Varyings which assigned in 'vertex' function may not be reassigned in 'fragment' or 'light'.");
 				return false;
 			}
 			break;
+		case ShaderNode::Varying::STAGE_FRAGMENT_TO_LIGHT:
 		case ShaderNode::Varying::STAGE_FRAGMENT:
 			if (current_function == String("vertex")) {
 				*r_message = RTR("Varyings which assigned in 'fragment' function may not be reassigned in 'vertex' or 'light'.");
@@ -2953,13 +2979,14 @@ bool ShaderLanguage::_validate_varying_assign(ShaderNode::Varying &p_varying, St
 bool ShaderLanguage::_validate_varying_using(ShaderNode::Varying &p_varying, String *r_message) {
 	switch (p_varying.stage) {
 		case ShaderNode::Varying::STAGE_UNKNOWN:
-			*r_message = RTR("Varying must be assigned before using!");
+			VaryingUsage usage;
+			usage.var = &p_varying;
+			usage.line = tk_line;
+			unknown_varying_usages.push_back(usage);
 			return false;
 		case ShaderNode::Varying::STAGE_VERTEX:
-			if (current_function == String("fragment")) {
-				p_varying.stage = ShaderNode::Varying::STAGE_VERTEX_TO_FRAGMENT;
-			} else if (current_function == String("light")) {
-				p_varying.stage = ShaderNode::Varying::STAGE_VERTEX_TO_LIGHT;
+			if (current_function == String("fragment") || current_function == String("light")) {
+				p_varying.stage = ShaderNode::Varying::STAGE_VERTEX_TO_FRAGMENT_LIGHT;
 			}
 			break;
 		case ShaderNode::Varying::STAGE_FRAGMENT:
@@ -2967,21 +2994,22 @@ bool ShaderLanguage::_validate_varying_using(ShaderNode::Varying &p_varying, Str
 				p_varying.stage = ShaderNode::Varying::STAGE_FRAGMENT_TO_LIGHT;
 			}
 			break;
-		case ShaderNode::Varying::STAGE_VERTEX_TO_FRAGMENT:
-			if (current_function == String("light")) {
-				*r_message = RTR("Varying must only be used in two different stages, which can be 'vertex' 'fragment' and 'light'");
-				return false;
-			}
-			break;
-		case ShaderNode::Varying::STAGE_VERTEX_TO_LIGHT:
-			if (current_function == String("fragment")) {
-				*r_message = RTR("Varying must only be used in two different stages, which can be 'vertex' 'fragment' and 'light'");
-				return false;
-			}
-			break;
 		default:
 			break;
 	}
+	return true;
+}
+
+bool ShaderLanguage::_check_varying_usages(int *r_error_line, String *r_error_message) const {
+	for (const List<ShaderLanguage::VaryingUsage>::Element *E = unknown_varying_usages.front(); E; E = E->next()) {
+		ShaderNode::Varying::Stage stage = E->get().var->stage;
+		if (stage != ShaderNode::Varying::STAGE_UNKNOWN && stage != ShaderNode::Varying::STAGE_VERTEX && stage != ShaderNode::Varying::STAGE_VERTEX_TO_FRAGMENT_LIGHT) {
+			*r_error_line = E->get().line;
+			*r_error_message = RTR("Fragment-stage varying could not been accessed in custom function!");
+			return false;
+		}
+	}
+
 	return true;
 }
 
@@ -3030,7 +3058,7 @@ bool ShaderLanguage::_validate_assign(Node *p_node, const Map<StringName, BuiltI
 	} else if (p_node->type == Node::TYPE_ARRAY) {
 		ArrayNode *arr = static_cast<ArrayNode *>(p_node);
 
-		if (arr->is_const) {
+		if (shader->constants.has(arr->name) || arr->is_const) {
 			if (r_message) {
 				*r_message = RTR("Constants cannot be modified.");
 			}
@@ -3573,6 +3601,10 @@ ShaderLanguage::Node *ShaderLanguage::_parse_expression(BlockNode *p_block, cons
 												} else if (shader->uniforms.has(varname)) {
 													error = true;
 												} else {
+													if (shader->varyings.has(varname)) {
+														_set_error(vformat("Varyings cannot be passed for '%s' parameter!", _get_qualifier_str(call_function->arguments[i].qualifier)));
+														return nullptr;
+													}
 													if (p_builtin_types.has(varname)) {
 														BuiltInInfo info = p_builtin_types[varname];
 														if (info.constant) {
@@ -3634,7 +3666,8 @@ ShaderLanguage::Node *ShaderLanguage::_parse_expression(BlockNode *p_block, cons
 						Token next_token = _get_token();
 						_set_tkpos(prev_pos);
 						String error;
-						if (next_token.type == TK_OP_ASSIGN) {
+
+						if (is_token_operator_assign(next_token.type)) {
 							if (!_validate_varying_assign(shader->varyings[identifier], &error)) {
 								_set_error(error);
 								return nullptr;
@@ -4881,7 +4914,7 @@ Error ShaderLanguage::_parse_block(BlockNode *p_block, const Map<StringName, Bui
 							}
 
 							DataType type2;
-							String struct_name2 = "";
+							StringName struct_name2 = "";
 
 							if (shader->structs.has(tk.text)) {
 								type2 = TYPE_STRUCT;
@@ -6238,6 +6271,32 @@ Error ShaderLanguage::_parse_shader(const Map<StringName, FunctionInfo> &p_funct
 						constant.type_str = struct_name;
 						constant.precision = precision;
 						constant.initializer = nullptr;
+						constant.array_size = 0;
+
+						bool unknown_size = false;
+
+						if (tk.type == TK_BRACKET_OPEN) {
+							if (VisualServer::get_singleton()->is_low_end()) {
+								_set_error("Global const arrays are supported only on high-end platform!");
+								return ERR_PARSE_ERROR;
+							}
+							tk = _get_token();
+							if (tk.type == TK_BRACKET_CLOSE) {
+								unknown_size = true;
+								tk = _get_token();
+							} else if (tk.type == TK_INT_CONSTANT && ((int)tk.constant) > 0) {
+								constant.array_size = (int)tk.constant;
+								tk = _get_token();
+								if (tk.type != TK_BRACKET_CLOSE) {
+									_set_error("Expected ']'");
+									return ERR_PARSE_ERROR;
+								}
+								tk = _get_token();
+							} else {
+								_set_error("Expected integer constant > 0 or ']'");
+								return ERR_PARSE_ERROR;
+							}
+						}
 
 						if (tk.type == TK_OP_ASSIGN) {
 							if (!is_constant) {
@@ -6245,32 +6304,216 @@ Error ShaderLanguage::_parse_shader(const Map<StringName, FunctionInfo> &p_funct
 								return ERR_PARSE_ERROR;
 							}
 
-							//variable created with assignment! must parse an expression
-							Node *expr = _parse_and_reduce_expression(nullptr, Map<StringName, BuiltInInfo>());
-							if (!expr) {
-								return ERR_PARSE_ERROR;
-							}
+							if (constant.array_size > 0 || unknown_size) {
+								bool full_def = false;
 
-							if (expr->type == Node::TYPE_OPERATOR && ((OperatorNode *)expr)->op == OP_CALL) {
-								_set_error("Expected constant expression after '='");
-								return ERR_PARSE_ERROR;
-							}
+								ArrayDeclarationNode::Declaration decl;
+								decl.name = name;
+								decl.size = constant.array_size;
 
-							constant.initializer = static_cast<ConstantNode *>(expr);
+								tk = _get_token();
 
-							if (is_struct) {
-								if (expr->get_datatype_name() != struct_name) {
-									_set_error("Invalid assignment of '" + (expr->get_datatype() == TYPE_STRUCT ? expr->get_datatype_name() : get_datatype_name(expr->get_datatype())) + "' to '" + struct_name + "'");
+								if (tk.type != TK_CURLY_BRACKET_OPEN) {
+									if (unknown_size) {
+										_set_error("Expected '{'");
+										return ERR_PARSE_ERROR;
+									}
+
+									full_def = true;
+
+									DataPrecision precision2 = PRECISION_DEFAULT;
+									if (is_token_precision(tk.type)) {
+										precision2 = get_token_precision(tk.type);
+										tk = _get_token();
+										if (!is_token_nonvoid_datatype(tk.type)) {
+											_set_error("Expected datatype after precision");
+											return ERR_PARSE_ERROR;
+										}
+									}
+
+									StringName struct_name2;
+									DataType type2;
+
+									if (shader->structs.has(tk.text)) {
+										type2 = TYPE_STRUCT;
+										struct_name2 = tk.text;
+									} else {
+										if (!is_token_variable_datatype(tk.type)) {
+											_set_error("Invalid data type for array");
+											return ERR_PARSE_ERROR;
+										}
+										type2 = get_token_datatype(tk.type);
+									}
+
+									int array_size2 = 0;
+									tk = _get_token();
+									if (tk.type == TK_BRACKET_OPEN) {
+										TkPos pos2 = _get_tkpos();
+										tk = _get_token();
+										if (tk.type == TK_BRACKET_CLOSE) {
+											array_size2 = constant.array_size;
+											tk = _get_token();
+										} else {
+											_set_tkpos(pos2);
+
+											Node *n = _parse_and_reduce_expression(NULL, Map<StringName, BuiltInInfo>());
+											if (!n || n->type != Node::TYPE_CONSTANT || n->get_datatype() != TYPE_INT) {
+												_set_error("Expected single integer constant > 0");
+												return ERR_PARSE_ERROR;
+											}
+
+											ConstantNode *cnode = (ConstantNode *)n;
+											if (cnode->values.size() == 1) {
+												array_size2 = cnode->values[0].sint;
+												if (array_size2 <= 0) {
+													_set_error("Expected single integer constant > 0");
+													return ERR_PARSE_ERROR;
+												}
+											} else {
+												_set_error("Expected single integer constant > 0");
+												return ERR_PARSE_ERROR;
+											}
+
+											tk = _get_token();
+											if (tk.type != TK_BRACKET_CLOSE) {
+												_set_error("Expected ']");
+												return ERR_PARSE_ERROR;
+											} else {
+												tk = _get_token();
+											}
+										}
+									} else {
+										_set_error("Expected '[");
+										return ERR_PARSE_ERROR;
+									}
+
+									if (constant.precision != precision2 || constant.type != type2 || struct_name != struct_name2 || constant.array_size != array_size2) {
+										String error_str = "Cannot convert from '";
+										if (type2 == TYPE_STRUCT) {
+											error_str += struct_name2;
+										} else {
+											if (precision2 != PRECISION_DEFAULT) {
+												error_str += get_precision_name(precision2);
+												error_str += " ";
+											}
+											error_str += get_datatype_name(type2);
+										}
+										error_str += "[";
+										error_str += itos(array_size2);
+										error_str += "]'";
+										error_str += " to '";
+										if (type == TYPE_STRUCT) {
+											error_str += struct_name;
+										} else {
+											if (precision != PRECISION_DEFAULT) {
+												error_str += get_precision_name(precision);
+												error_str += " ";
+											}
+											error_str += get_datatype_name(type);
+										}
+										error_str += "[";
+										error_str += itos(constant.array_size);
+										error_str += "]'";
+										_set_error(error_str);
+										return ERR_PARSE_ERROR;
+									}
+								}
+								bool curly = tk.type == TK_CURLY_BRACKET_OPEN;
+
+								if (unknown_size) {
+									if (!curly) {
+										_set_error("Expected '{'");
+										return ERR_PARSE_ERROR;
+									}
+								} else {
+									if (full_def) {
+										if (curly) {
+											_set_error("Expected '('");
+											return ERR_PARSE_ERROR;
+										}
+									}
+								}
+
+								if (tk.type == TK_PARENTHESIS_OPEN || curly) { // initialization
+									while (true) {
+										Node *n = _parse_and_reduce_expression(NULL, Map<StringName, BuiltInInfo>());
+										if (!n) {
+											return ERR_PARSE_ERROR;
+										}
+
+										if (n->type == Node::TYPE_OPERATOR && ((OperatorNode *)n)->op == OP_CALL) {
+											_set_error("Expected constant expression");
+											return ERR_PARSE_ERROR;
+										}
+
+										if (constant.type != n->get_datatype() || n->get_datatype_name() != struct_name) {
+											_set_error("Invalid assignment of '" + (n->get_datatype() == TYPE_STRUCT ? n->get_datatype_name() : get_datatype_name(n->get_datatype())) + "' to '" + (is_struct ? String(struct_name) : get_datatype_name(constant.type)) + "'");
+											return ERR_PARSE_ERROR;
+										}
+
+										tk = _get_token();
+										if (tk.type == TK_COMMA) {
+											decl.initializer.push_back(n);
+											continue;
+										} else if (!curly && tk.type == TK_PARENTHESIS_CLOSE) {
+											decl.initializer.push_back(n);
+											break;
+										} else if (curly && tk.type == TK_CURLY_BRACKET_CLOSE) {
+											decl.initializer.push_back(n);
+											break;
+										} else {
+											if (curly)
+												_set_error("Expected '}' or ','");
+											else
+												_set_error("Expected ')' or ','");
+											return ERR_PARSE_ERROR;
+										}
+									}
+									if (unknown_size) {
+										decl.size = decl.initializer.size();
+										constant.array_size = decl.initializer.size();
+									} else if (decl.initializer.size() != constant.array_size) {
+										_set_error("Array size mismatch");
+										return ERR_PARSE_ERROR;
+									}
+								}
+								ConstantNode *expr = memnew(ConstantNode);
+
+								expr->datatype = constant.type;
+
+								expr->struct_name = constant.type_str;
+
+								expr->array_size = constant.array_size;
+
+								expr->array_declarations.push_back(decl);
+
+								constant.initializer = static_cast<ConstantNode *>(expr);
+							} else {
+								//variable created with assignment! must parse an expression
+								Node *expr = _parse_and_reduce_expression(NULL, Map<StringName, BuiltInInfo>());
+								if (!expr)
+									return ERR_PARSE_ERROR;
+								if (expr->type == Node::TYPE_OPERATOR && ((OperatorNode *)expr)->op == OP_CALL) {
+									_set_error("Expected constant expression after '='");
 									return ERR_PARSE_ERROR;
 								}
-							} else if (type != expr->get_datatype()) {
-								_set_error("Invalid assignment of '" + get_datatype_name(expr->get_datatype()) + "' to '" + get_datatype_name(type) + "'");
-								return ERR_PARSE_ERROR;
+
+								constant.initializer = static_cast<ConstantNode *>(expr);
+
+								if (type != expr->get_datatype() || expr->get_datatype_name() != struct_name) {
+									_set_error("Invalid assignment of '" + (expr->get_datatype() == TYPE_STRUCT ? expr->get_datatype_name() : get_datatype_name(expr->get_datatype())) + "' to '" + (is_struct ? String(struct_name) : get_datatype_name(type)) + "'");
+									return ERR_PARSE_ERROR;
+								}
 							}
 							tk = _get_token();
 						} else {
-							_set_error("Expected initialization of constant");
-							return ERR_PARSE_ERROR;
+							if (constant.array_size > 0 || unknown_size) {
+								_set_error("Expected array initialization");
+								return ERR_PARSE_ERROR;
+							} else {
+								_set_error("Expected initialization of constant");
+								return ERR_PARSE_ERROR;
+							}
 						}
 
 						shader->constants[name] = constant;
@@ -6486,12 +6729,12 @@ Error ShaderLanguage::_parse_shader(const Map<StringName, FunctionInfo> &p_funct
 		tk = _get_token();
 	}
 
-	for (Map<StringName, ShaderNode::Varying>::Element *E = shader->varyings.front(); E; E = E->next()) {
-		if (E->get().stage == ShaderNode::Varying::STAGE_VERTEX || E->get().stage == ShaderNode::Varying::STAGE_FRAGMENT) {
-			_set_tkpos(E->get().tkpos);
-			_set_error(RTR("Varying must only be used in two different stages, which can be 'vertex' 'fragment' and 'light'"));
-			return ERR_PARSE_ERROR;
-		}
+	int error_line;
+	String error_message;
+	if (!_check_varying_usages(&error_line, &error_message)) {
+		_set_tkpos({ 0, error_line });
+		_set_error(error_message);
+		return ERR_PARSE_ERROR;
 	}
 
 	return OK;

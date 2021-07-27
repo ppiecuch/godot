@@ -3434,58 +3434,16 @@ Vector3 SpatialEditorViewport::_get_instance_position(const Point2 &p_pos) const
 	Vector3 world_ray = _get_ray(p_pos);
 	Vector3 world_pos = _get_ray_pos(p_pos);
 
-	Vector<ObjectID> instances = VisualServer::get_singleton()->instances_cull_ray(world_pos, world_ray, get_tree()->get_root()->get_world()->get_scenario());
-	Set<Ref<EditorSpatialGizmo>> found_gizmos;
-
-	float closest_dist = MAX_DISTANCE;
-
 	Vector3 point = world_pos + world_ray * MAX_DISTANCE;
-	Vector3 normal = Vector3(0.0, 0.0, 0.0);
 
-	for (int i = 0; i < instances.size(); i++) {
-		MeshInstance *mesh_instance = Object::cast_to<MeshInstance>(ObjectDB::get_instance(instances[i]));
+	PhysicsDirectSpaceState *ss = get_tree()->get_root()->get_world()->get_direct_space_state();
+	PhysicsDirectSpaceState::RayResult result;
 
-		if (!mesh_instance) {
-			continue;
-		}
-
-		Ref<EditorSpatialGizmo> seg = mesh_instance->get_gizmo();
-
-		if ((!seg.is_valid()) || found_gizmos.has(seg)) {
-			continue;
-		}
-
-		found_gizmos.insert(seg);
-
-		Vector3 hit_point;
-		Vector3 hit_normal;
-		bool inters = seg->intersect_ray(camera, p_pos, hit_point, hit_normal, nullptr, false);
-
-		if (!inters) {
-			continue;
-		}
-
-		float dist = world_pos.distance_to(hit_point);
-
-		if (dist < 0) {
-			continue;
-		}
-
-		if (dist < closest_dist) {
-			closest_dist = dist;
-			point = hit_point;
-			normal = hit_normal;
-		}
+	if (ss->intersect_ray(world_pos, world_pos + world_ray * MAX_DISTANCE, result)) {
+		point = result.position;
 	}
-	Vector3 offset = Vector3();
-	for (int i = 0; i < 3; i++) {
-		if (normal[i] > 0.0) {
-			offset[i] = (preview_bounds->get_size()[i] - (preview_bounds->get_size()[i] + preview_bounds->get_position()[i]));
-		} else if (normal[i] < 0.0) {
-			offset[i] = -(preview_bounds->get_size()[i] + preview_bounds->get_position()[i]);
-		}
-	}
-	return point + offset;
+
+	return point;
 }
 
 AABB SpatialEditorViewport::_calculate_spatial_bounds(const Spatial *p_parent, bool p_exclude_toplevel_transform) {
@@ -3896,6 +3854,7 @@ SpatialEditorViewport::SpatialEditorViewport(SpatialEditor *p_spatial_editor, Ed
 
 	preview_camera = memnew(CheckBox);
 	preview_camera->set_text(TTR("Preview"));
+	preview_camera->set_shortcut(ED_SHORTCUT("spatial_editor/toggle_camera_preview", TTR("Toggle Camera Preview"), KEY_MASK_CMD | KEY_P));
 	vbox->add_child(preview_camera);
 	preview_camera->set_h_size_flags(0);
 	preview_camera->hide();
@@ -4400,14 +4359,18 @@ Object *SpatialEditor::_get_editor_data(Object *p_what) {
 	VS::get_singleton()->instance_geometry_set_cast_shadows_setting(
 			si->sbox_instance,
 			VS::SHADOW_CASTING_SETTING_OFF);
-	VS::get_singleton()->instance_set_layer_mask(si->sbox_instance, 1 << SpatialEditorViewport::MISC_TOOL_LAYER);
+	// Use the Edit layer to hide the selection box when View Gizmos is disabled, since it is a bit distracting.
+	// It's still possible to approximately guess what is selected by looking at the manipulation gizmo position.
+	VS::get_singleton()->instance_set_layer_mask(si->sbox_instance, 1 << SpatialEditorViewport::GIZMO_EDIT_LAYER);
 	si->sbox_instance_xray = VisualServer::get_singleton()->instance_create2(
 			selection_box_xray->get_rid(),
 			sp->get_world()->get_scenario());
 	VS::get_singleton()->instance_geometry_set_cast_shadows_setting(
 			si->sbox_instance_xray,
 			VS::SHADOW_CASTING_SETTING_OFF);
-	VS::get_singleton()->instance_set_layer_mask(si->sbox_instance_xray, 1 << SpatialEditorViewport::MISC_TOOL_LAYER);
+	// Use the Edit layer to hide the selection box when View Gizmos is disabled, since it is a bit distracting.
+	// It's still possible to approximately guess what is selected by looking at the manipulation gizmo position.
+	VS::get_singleton()->instance_set_layer_mask(si->sbox_instance_xray, 1 << SpatialEditorViewport::GIZMO_EDIT_LAYER);
 
 	return si;
 }
@@ -6202,8 +6165,7 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 	button_binds.write[0] = MENU_TOOL_SELECT;
 	tool_button[TOOL_MODE_SELECT]->connect("pressed", this, "_menu_item_pressed", button_binds);
 	tool_button[TOOL_MODE_SELECT]->set_shortcut(ED_SHORTCUT("spatial_editor/tool_select", TTR("Select Mode"), KEY_Q));
-	tool_button[TOOL_MODE_SELECT]->set_tooltip(keycode_get_string(KEY_MASK_CMD) + TTR("Drag: Rotate\nAlt+Drag: Move\nAlt+RMB: Depth list selection"));
-
+	tool_button[TOOL_MODE_SELECT]->set_tooltip(keycode_get_string(KEY_MASK_CMD) + TTR("Drag: Rotate selected node around pivot.") + "\n" + TTR("Alt+RMB: Show list of all nodes at position clicked, including locked."));
 	hbc_menu->add_child(memnew(VSeparator));
 
 	tool_button[TOOL_MODE_MOVE] = memnew(ToolButton);

@@ -434,66 +434,6 @@ void PhysicsTestMotionResult::_bind_methods() {
 
 ///////////////////////////////
 
-Vector3 PhysicsTestMotionResult::get_motion() const {
-	return result.motion;
-}
-
-Vector3 PhysicsTestMotionResult::get_motion_remainder() const {
-	return result.remainder;
-}
-
-Vector3 PhysicsTestMotionResult::get_collision_point() const {
-	return result.collision_point;
-}
-
-Vector3 PhysicsTestMotionResult::get_collision_normal() const {
-	return result.collision_normal;
-}
-
-Vector3 PhysicsTestMotionResult::get_collider_velocity() const {
-	return result.collider_velocity;
-}
-
-ObjectID PhysicsTestMotionResult::get_collider_id() const {
-	return result.collider_id;
-}
-
-RID PhysicsTestMotionResult::get_collider_rid() const {
-	return result.collider;
-}
-
-Object *PhysicsTestMotionResult::get_collider() const {
-	return ObjectDB::get_instance(result.collider_id);
-}
-
-int PhysicsTestMotionResult::get_collider_shape() const {
-	return result.collider_shape;
-}
-
-void PhysicsTestMotionResult::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("get_motion"), &PhysicsTestMotionResult::get_motion);
-	ClassDB::bind_method(D_METHOD("get_motion_remainder"), &PhysicsTestMotionResult::get_motion_remainder);
-	ClassDB::bind_method(D_METHOD("get_collision_point"), &PhysicsTestMotionResult::get_collision_point);
-	ClassDB::bind_method(D_METHOD("get_collision_normal"), &PhysicsTestMotionResult::get_collision_normal);
-	ClassDB::bind_method(D_METHOD("get_collider_velocity"), &PhysicsTestMotionResult::get_collider_velocity);
-	ClassDB::bind_method(D_METHOD("get_collider_id"), &PhysicsTestMotionResult::get_collider_id);
-	ClassDB::bind_method(D_METHOD("get_collider_rid"), &PhysicsTestMotionResult::get_collider_rid);
-	ClassDB::bind_method(D_METHOD("get_collider"), &PhysicsTestMotionResult::get_collider);
-	ClassDB::bind_method(D_METHOD("get_collider_shape"), &PhysicsTestMotionResult::get_collider_shape);
-
-	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "motion"), "", "get_motion");
-	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "motion_remainder"), "", "get_motion_remainder");
-	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "collision_point"), "", "get_collision_point");
-	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "collision_normal"), "", "get_collision_normal");
-	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "collider_velocity"), "", "get_collider_velocity");
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "collider_id", PROPERTY_HINT_OBJECT_ID), "", "get_collider_id");
-	ADD_PROPERTY(PropertyInfo(Variant::_RID, "collider_rid"), "", "get_collider_rid");
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "collider"), "", "get_collider");
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "collider_shape"), "", "get_collider_shape");
-}
-
-///////////////////////////////////////
-
 bool PhysicsServer::_body_test_motion(RID p_body, const Transform &p_from, const Vector3 &p_motion, bool p_infinite_inertia, const Ref<PhysicsTestMotionResult> &p_result) {
 	MotionResult *r = nullptr;
 	if (p_result.is_valid()) {
