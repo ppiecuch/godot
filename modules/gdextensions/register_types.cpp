@@ -38,6 +38,7 @@
 #include "gd/bs_input_event_key.h"
 #include "gd/byteswap.h"
 #include "gd/cripter.h"
+#include "gd/dist_rand.h"
 #include "gd/error_reporter.h"
 #include "gd/godot_error_handler.h"
 #include "gd/input_map_editor.h"
@@ -47,10 +48,13 @@
 #include "gd/procedural_animation.h"
 #include "gd/procedural_animation_editor_plugin.h"
 #include "gd/raw_packer.h"
+#include "gd/resources_config.h"
+#include "gd/resource_importer_json.h"
 #include "gd/tags.h"
 #include "gd/timer2.h"
 #include "gd/trail_2d.h"
 #include "gd/tween2.h"
+#include "gd/voronoi.h"
 
 #include "statemachine/state.h"
 #include "statemachine/statemachine.h"
@@ -108,6 +112,14 @@ static void editor_init_callback() {
 #endif
 
 void register_gdextensions_types() {
+	ClassDB::register_class<RealNormal>();
+	ClassDB::register_class<IntNormal>();
+
+	ClassDB::register_class<Voronoi>();
+	ClassDB::register_class<VoronoiDiagram>();
+	ClassDB::register_class<VoronoiSite>();
+	ClassDB::register_class<VoronoiEdge>();
+
 	ClassDB::register_class<BehaviorNode>();
 	ClassDB::register_class<TimerBNode>();
 	ClassDB::register_class<ProbabilityBNode>();
@@ -135,17 +147,20 @@ void register_gdextensions_types() {
 #ifndef ADVANCED_GUI_DISABLED
 	ClassDB::register_class<InputMapEditor>();
 #endif
-
-	Engine::get_singleton()->add_singleton(Engine::Singleton("Timer2", memnew(Timer2)));
-	Engine::get_singleton()->add_singleton(Engine::Singleton("Tween2", memnew(Tween2)));
-	Engine::get_singleton()->add_singleton(Engine::Singleton("InputStorage", memnew(InputStorage)));
-
 	ClassDB::register_class<StateMachine>();
 	ClassDB::register_class<State>();
 
+	Engine::get_singleton()->add_singleton(Engine::Singleton("Resources", memnew(Resources)));
+	Engine::get_singleton()->add_singleton(Engine::Singleton("Timer2", memnew(Timer2)));
+	Engine::get_singleton()->add_singleton(Engine::Singleton("Tween2", memnew(Tween2)));
+	Engine::get_singleton()->add_singleton(Engine::Singleton("InputStorage", memnew(InputStorage)));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("DebugDraw", memnew(DebugDraw)));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Tags", memnew(Tags)));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Blitter", memnew(Blitter)));
+
+	ClassDB::register_class<JSONData>();
+	Ref<ResourceImporterJSON> json_data = memnew(ResourceImporterJSON);
+	ResourceFormatImporter::get_singleton()->add_importer(json_data);
 
 	ClassDB::register_class<PixelSpaceshipsOptions>();
 	ClassDB::register_class<PixelSpaceshipsMask>();
@@ -199,20 +214,30 @@ void register_gdextensions_types() {
 }
 
 void unregister_gdextensions_types() {
-	if (Timer2 *instance = Timer2::get_singleton())
+	if (Resources *instance = Resources::get_singleton()) {
 		memdelete(instance);
-	if (Tween2 *instance = Tween2::get_singleton())
+	}
+	if (Timer2 *instance = Timer2::get_singleton()) {
 		memdelete(instance);
-	if (InputStorage *instance = InputStorage::get_singleton())
+	}
+	if (Tween2 *instance = Tween2::get_singleton()) {
 		memdelete(instance);
-	if (DebugDraw *instance = DebugDraw::get_singleton())
+	}
+	if (InputStorage *instance = InputStorage::get_singleton()) {
 		memdelete(instance);
-	if (Tags *instance = Tags::get_singleton())
+	}
+	if (DebugDraw *instance = DebugDraw::get_singleton()) {
 		memdelete(instance);
-	if (Blitter *instance = Blitter::get_singleton())
+	}
+	if (Tags *instance = Tags::get_singleton()) {
 		memdelete(instance);
+	}
+	if (Blitter *instance = Blitter::get_singleton()) {
+		memdelete(instance);
+	}
 #ifdef TOOLS_ENABLED
-	if (GodotErrorHandler *instance = GodotErrorHandler::get_singleton())
+	if (GodotErrorHandler *instance = GodotErrorHandler::get_singleton()) {
 		memdelete(instance);
+	}
 #endif
 }

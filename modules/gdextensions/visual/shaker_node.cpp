@@ -1,7 +1,6 @@
 #include "shaker_node.h"
 
 void ShakerNode::_notification(int p_what) {
-
 	switch (p_what) {
 		case NOTIFICATION_READY: {
 		} break;
@@ -11,7 +10,7 @@ void ShakerNode::_notification(int p_what) {
 	}
 }
 
-void ShakerNode::set_target_node_path(NodePath *p_node) {
+void ShakerNode::set_target_node_path(const NodePath &p_node) {
 }
 
 void ShakerNode::set_target_group_name(const String &p_name) {
@@ -35,9 +34,8 @@ void ShakerNode::_bind_methods() {
 ShakerNode::ShakerNode() {
 	affect_position = true;
 	affect_rotation = true;
-	max_rotation_shake = true;
-	max_position_shake = 15;
-	target_node_path = 1;
+	max_rotation_shake = 15;
+	max_position_shake = 1;
 	trauma_decay = 0.01;
 	use_time_scale = true;
 }
