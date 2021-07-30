@@ -373,6 +373,13 @@ public:
 		resize(s - 1);
 	}
 
+	void fill(const T &p_elem) {
+		Write w = write();
+		for (int i = 0; i < size(); i++) {
+			w[i] = p_elem;
+		}
+	}
+
 	inline int size() const;
 	inline bool empty() const;
 	T get(int p_index) const;

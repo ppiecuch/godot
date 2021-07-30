@@ -187,6 +187,7 @@ public:
 	bool is_shared() const;
 	bool is_zero() const;
 	bool is_one() const;
+	bool is_nil() const;
 
 	operator bool() const;
 	operator signed int() const;
@@ -467,6 +468,13 @@ Vector<Variant> varray(const Variant &p_arg1, const Variant &p_arg2);
 Vector<Variant> varray(const Variant &p_arg1, const Variant &p_arg2, const Variant &p_arg3);
 Vector<Variant> varray(const Variant &p_arg1, const Variant &p_arg2, const Variant &p_arg3, const Variant &p_arg4);
 Vector<Variant> varray(const Variant &p_arg1, const Variant &p_arg2, const Variant &p_arg3, const Variant &p_arg4, const Variant &p_arg5);
+
+Array array();
+Array array(const Variant &p_arg1);
+Array array(const Variant &p_arg1, const Variant &p_arg2);
+Array array(const Variant &p_arg1, const Variant &p_arg2, const Variant &p_arg3);
+Array array(const Variant &p_arg1, const Variant &p_arg2, const Variant &p_arg3, const Variant &p_arg4);
+Array array(const Variant &p_arg1, const Variant &p_arg2, const Variant &p_arg3, const Variant &p_arg4, const Variant &p_arg5);
 
 struct VariantHasher {
 	static _FORCE_INLINE_ uint32_t hash(const Variant &p_variant) { return p_variant.hash(); }

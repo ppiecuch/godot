@@ -803,6 +803,10 @@ bool Variant::is_one() const {
 	return false;
 }
 
+bool Variant::is_nil() const {
+	return type == NIL;
+}
+
 void Variant::reference(const Variant &p_variant) {
 	switch (type) {
 		case NIL:
@@ -3038,6 +3042,47 @@ Vector<Variant> varray(const Variant &p_arg1, const Variant &p_arg2, const Varia
 	v.push_back(p_arg3);
 	v.push_back(p_arg4);
 	v.push_back(p_arg5);
+	return v;
+}
+
+Array array() {
+	return Array();
+}
+
+Array array(const Variant &p_arg1) {
+	Array v;
+	v.append(p_arg1);
+	return v;
+}
+Array array(const Variant &p_arg1, const Variant &p_arg2) {
+	Array v;
+	v.append(p_arg1);
+	v.append(p_arg2);
+	return v;
+}
+Array array(const Variant &p_arg1, const Variant &p_arg2, const Variant &p_arg3) {
+	Array v;
+	v.append(p_arg1);
+	v.append(p_arg2);
+	v.append(p_arg3);
+	return v;
+}
+Array array(const Variant &p_arg1, const Variant &p_arg2, const Variant &p_arg3, const Variant &p_arg4) {
+	Array v;
+	v.append(p_arg1);
+	v.append(p_arg2);
+	v.append(p_arg3);
+	v.append(p_arg4);
+	return v;
+}
+
+Array array(const Variant &p_arg1, const Variant &p_arg2, const Variant &p_arg3, const Variant &p_arg4, const Variant &p_arg5) {
+	Array v;
+	v.append(p_arg1);
+	v.append(p_arg2);
+	v.append(p_arg3);
+	v.append(p_arg4);
+	v.append(p_arg5);
 	return v;
 }
 
