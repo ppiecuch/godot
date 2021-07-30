@@ -29,9 +29,16 @@
 #include <stdio.h>
 #include <dirent.h>
 
-#define IFF(X) {if (NULL != X) {free(X);}}
-#define IFFN(X) {if (NULL != X) {free(X); X =NULL;}}
-#define IFFNF(X,FUNC) {if (NULL != X) {FUNC(X); X =NULL;}}
+#ifdef GD_CQUEUE
+#include "core/os/memory.h"
+#else
+#define memalloc memalloc
+#define memfree  free
+#endif
+
+#define IFF(X) {if (nullptr != X) {memfree(X);}}
+#define IFFN(X) {if (nullptr != X) {memfree(X); X =nullptr;}}
+#define IFFNF(X,FUNC) {if (nullptr != X) {FUNC(X); X =nullptr;}}
 #define UNUSED __attribute__((unused))
 
 #define MAX_FILE_NAME 1024
@@ -46,8 +53,8 @@
 
 typedef struct _FileKey {
 	time_t time;
-	time_t clock;
-}FileKey;
+	clock_t clock;
+} FileKey;
 
 struct FileItr {
 	FileKey key;
@@ -57,7 +64,7 @@ struct FileItr {
 
 
 struct Queue {
-	char * path;
+	char *path;
 
 	// push and pop iter
 	struct FileItr read;
@@ -89,34 +96,34 @@ struct Footer{
 
 int fileItr_opened(struct FileItr *itrp ) WARN_UNUSED_RETURN;
 int fileItr_opened(struct FileItr *itrp ) {
-	return itrp->binlogfd != NULL;
+	return itrp->binlogfd != nullptr;
 }
 
-const char * queue_get_last_error(const struct Queue * const q) WARN_UNUSED_RETURN;
-const char * queue_get_last_error(const struct Queue * const q) {
+const char *queue_get_last_error(const Queue *const q) WARN_UNUSED_RETURN;
+const char *queue_get_last_error(const Queue *const q) {
 	return q->error_strp;
 }
-static void queue_set_error(struct Queue *const q, const char *what, const char *errstr) {
+static void queue_set_error(Queue *const q, const char *what, const char *errstr) {
 	IFF(q->error_strp);
 	char * ptr;
 	asprintf(&ptr, "%s %s", what, errstr);
 	q->error_strp= ptr;
 }
 
-int queue_is_opened (const struct Queue * const q) WARN_UNUSED_RETURN;
-int queue_is_opened (const struct Queue * const q) {
-	return NULL != q->path;
+int queue_is_opened (const Queue *const q) WARN_UNUSED_RETURN;
+int queue_is_opened (const Queue *const q) {
+	return nullptr != q->path;
 }
 
-static struct Queue * readoptions (va_list argp) WARN_UNUSED_RETURN;
-static struct Queue * readoptions (va_list argp) {
-	struct Queue * q = malloc(sizeof (struct Queue));
+static Queue *readoptions (va_list argp) WARN_UNUSED_RETURN;
+static Queue *readoptions (va_list argp) {
+	Queue *q = (Queue*)memalloc(sizeof (struct Queue));
 	memset(q, 0, sizeof(struct Queue));
-	const char * p;
-	q->max_bin_log_size= 10 *1024 *1024;
+	const char *p;
+	q->max_bin_log_size= 10*1024 *1024;
 	q->max_size_in_bytes = DEFAULT_MAX_Q_SIZE_IN_BYTES;
 	q->max_entries = DEFAULT_MAX_Q_ENTRIES;
-	for (p = va_arg(argp, char *); p != NULL; p = va_arg(argp,char *)) {
+	for (p = va_arg(argp, char *); p != nullptr; p = va_arg(argp,char *)) {
 		if (0 == strcmp(p, "maxBinLogSize")) {
 			q->max_bin_log_size= va_arg(argp, ssize_t);
 		}
@@ -133,18 +140,18 @@ static struct Queue * readoptions (va_list argp) {
 	return q;
 }
 
-static const char *getFileName(const char *prefix, FileKey *keyp ,const char * path, char *file) {
+static const char *getFileName(const char *prefix, FileKey *keyp ,const char *path, char *file) {
 	snprintf(file, MAX_FILE_NAME-1,"%s/%s.%lu.%lu", path,prefix, (unsigned long)keyp->time,(unsigned long)keyp->clock);
 	return file;
 }
 
-static const char *getBinLogFileName(FileKey *keyp, const char * path, char *file) {
+static const char *getBinLogFileName(FileKey *keyp, const char *path, char *file) {
 	return getFileName("bin_log",keyp,path, file);
 }
 
-static ssize_t getFileSize(FILE * fd) WARN_UNUSED_RETURN;
-static ssize_t getFileSize(FILE * fd) {
-	if (NULL == fd) return 0;
+static ssize_t getFileSize(FILE *fd) WARN_UNUSED_RETURN;
+static ssize_t getFileSize(FILE *fd) {
+	if (nullptr == fd) return 0;
 	struct stat stat;
 	fstat(fileno(fd), &stat);
 	return stat.st_size;
@@ -221,17 +228,17 @@ static int checkLastEntry(FILE *fd, ssize_t filesize) {
 	return chopOffIncompleteWrite(fd);
 }
 
-static int openJournalAtTime(FileKey * keyp, const char * path, struct FileItr * itr) WARN_UNUSED_RETURN;
-static int openJournalAtTime(FileKey * keyp, const char * path, struct FileItr * itr) {
+static int openJournalAtTime(FileKey *keyp, const char *path, struct FileItr *itr) WARN_UNUSED_RETURN;
+static int openJournalAtTime(FileKey *keyp, const char *path, struct FileItr *itr) {
 	char file[MAX_FILE_NAME];
 	getBinLogFileName(keyp,path, file);
 	itr->binlogfd= fopen (getBinLogFileName(keyp, path, file), "r+");
-	if (NULL == itr->binlogfd)
+	if (nullptr == itr->binlogfd)
 		itr->binlogfd= fopen (file, "w+");
-	if (NULL ==itr->binlogfd) {
+	if (nullptr ==itr->binlogfd) {
 		return -1;
 	}
-	//setbuf(itr->binlogfd, NULL);
+	//setbuf(itr->binlogfd, nullptr);
 	itr->bsize = getFileSize(itr->binlogfd);
 	itr->key = *keyp;
 	if (0 == itr->bsize )
@@ -250,10 +257,10 @@ static int openJournalAtTime(FileKey * keyp, const char * path, struct FileItr *
 /**
  * @return number of entries in the journal that are marked done
  */
-static ssize_t countEntries(const char * file) WARN_UNUSED_RETURN;
-static ssize_t countEntries(const char * file) {
+static ssize_t countEntries(const char *file) WARN_UNUSED_RETURN;
+static ssize_t countEntries(const char *file) {
 	FILE * cf = fopen(file, "r");
-	if (NULL == cf) {
+	if (nullptr == cf) {
 		return 0;
 	}
 	struct JournalEntry je;
@@ -272,13 +279,13 @@ static int binlogfilter(const struct dirent *ent) {
 	return (0 == strncmp(ent->d_name, "bin_log.", 8))? 1 : 0;
 }
 
-static void getTimeClockFromName(const char * d_name, time_t *timep,clock_t *clockp) {
+static void getTimeClockFromName(const char * d_name, time_t *timep, clock_t *clockp) {
 	char * clockstrp;
 	*timep = strtoull(d_name +8, &clockstrp, 10);
-	*clockp = strtoull(clockstrp+1, NULL, 10);
+	*clockp = strtoull(clockstrp+1, nullptr, 10);
 }
-static int binlogsort(const struct dirent ** app, const struct dirent ** bpp) WARN_UNUSED_RETURN;
-static int binlogsort(const struct dirent ** app, const struct dirent ** bpp) {
+static int binlogsort(const struct dirent **app, const struct dirent **bpp) WARN_UNUSED_RETURN;
+static int binlogsort(const struct dirent **app, const struct dirent **bpp) {
 	time_t timea, timeb;
 	clock_t clocka, clockb;
 	getTimeClockFromName((*app)->d_name, &timea,&clocka);
@@ -286,7 +293,7 @@ static int binlogsort(const struct dirent ** app, const struct dirent ** bpp) {
 	return timea == timeb ? clocka -clockb : timea - timeb;
 }
 
-static int setCountLengthByStatingFiles(struct Queue *q) {
+static int setCountLengthByStatingFiles(Queue *q) {
 	q->count = q->bin_size= 0;
 	struct stat bin_stat;
 	struct dirent **namelist;
@@ -299,46 +306,46 @@ static int setCountLengthByStatingFiles(struct Queue *q) {
 	} else {
 		while (n--) {
 			FileKey key;
-			getTimeClockFromName(namelist[n]->d_name, &key.time,&key.clock);
+			getTimeClockFromName(namelist[n]->d_name, &key.time, &key.clock);
 			if (0 == stat(getBinLogFileName(&key,  q->path, file), &bin_stat)) {
 				q->count =countEntries(getBinLogFileName(&key, q->path, file));
 				q->bin_size+= bin_stat.st_size;
 			}
-			free(namelist[n]);
+			memfree(namelist[n]);
 		}
-		free(namelist);
+		memfree(namelist);
 	}
 	return LIBQUEUE_SUCCESS;
 }
 
-static FileKey getNextOldestJournal(const struct Queue *q, FileKey *oldkey) WARN_UNUSED_RETURN;
-static FileKey getNextOldestJournal(const struct Queue *q, FileKey *oldkey) {
+static FileKey getNextOldestJournal(const Queue *q, FileKey *oldkey) WARN_UNUSED_RETURN;
+static FileKey getNextOldestJournal(const Queue *q, FileKey *oldkey) {
 	FileKey key = {0,0};
 	FileKey ckey= {0,0};
-	FileKey oldestkey = {ULONG_MAX,ULONG_MAX};
+	FileKey oldestkey = {LONG_MAX,ULONG_MAX};
 	struct dirent **namelist;
 	int n = scandir(q->path, &namelist, binlogfilter, binlogsort);
 	if (n < 0) {
-		queue_set_error((struct Queue *)q, "failed to scan dir", strerror(errno));
+		queue_set_error((Queue *)q, "failed to scan dir", strerror(errno));
 		return key;
 	} else {
 		while (n--) {
-			getTimeClockFromName(namelist[n]->d_name, &ckey.time,&ckey.clock);
+			getTimeClockFromName(namelist[n]->d_name, &ckey.time, &ckey.clock);
 			if (FILE_KEY_LESS(ckey,oldestkey) &&
 					FILE_KEY_GREATER(ckey, (*oldkey))) {
 				oldestkey = ckey;
 			}
-			free(namelist[n]);
+			memfree(namelist[n]);
 		}
-		free(namelist);
+		memfree(namelist);
 	}
-	if (ULONG_MAX != oldestkey.time) {
+	if (LONG_MAX != oldestkey.time) {
 		return oldestkey;
 	}
 	return key;
 }
-static FileKey getOldestJournal(const struct Queue *q) WARN_UNUSED_RETURN;
-static FileKey getOldestJournal(const struct Queue *q) {
+static FileKey getOldestJournal(const Queue *q) WARN_UNUSED_RETURN;
+static FileKey getOldestJournal(const Queue *q) {
 	FileKey key = {0, 0};
 	return getNextOldestJournal(q, &key);
 }
@@ -346,32 +353,32 @@ static FileKey getOldestJournal(const struct Queue *q) {
 /**
  * @return 1 if newest entry found, 0 there are no entries
  */
-static int newestEntry(struct Queue *q, FileKey * key) WARN_UNUSED_RETURN;
-static int newestEntry(struct Queue *q, FileKey * key) {
+static int newestEntry(Queue *q, FileKey *key) WARN_UNUSED_RETURN;
+static int newestEntry(Queue *q, FileKey *key) {
 	int found =0;
 	struct dirent **namelist;
 	int n;
-	if (NULL == q->path) {
+	if (nullptr == q->path) {
 		return 0;
 	}
 	n = scandir(q->path, &namelist, binlogfilter, binlogsort);
 	if (n < 0) {
-		queue_set_error((struct Queue *)q, "failed to scan dir", strerror(errno));
+		queue_set_error((Queue *)q, "failed to scan dir", strerror(errno));
 		return 0;
 	} else {
 		if (n > 0) {
-			getTimeClockFromName(namelist[n-1]->d_name, &(key->time),&(key->clock));
+			getTimeClockFromName(namelist[n-1]->d_name, &(key->time), &(key->clock));
 			found =1;
 		}
 		while (n--) {
-			free(namelist[n]);
+			memfree(namelist[n]);
 		}
-		free(namelist);
+		memfree(namelist);
 	}
 	return found;
 }
-static int writeAndFlushData(FILE *file, const void * data, ssize_t size) WARN_UNUSED_RETURN;
-static int writeAndFlushData(FILE *file, const void * data, ssize_t size) {
+static int writeAndFlushData(FILE *file, const void *data, ssize_t size) WARN_UNUSED_RETURN;
+static int writeAndFlushData(FILE *file, const void *data, ssize_t size) {
 	if (1 != fwrite(data, size, 1, file) ) {
 		return LIBQUEUE_FAILURE;
 	}
@@ -382,10 +389,10 @@ static int writeAndFlushData(FILE *file, const void * data, ssize_t size) {
 }
 
 
-static void setFileToWriteTo(struct Queue * q) {
+static void setFileToWriteTo(Queue * q) {
 	FileKey key;
 	if (!newestEntry(q,&key)) {
-		key.time= time(NULL);
+		key.time= time(nullptr);
 		key.clock= clock();
 	}
 	if (-1 == openJournalAtTime(&key, q->path, &q->write)) {
@@ -393,10 +400,10 @@ static void setFileToWriteTo(struct Queue * q) {
 	}
 }
 
-struct Queue * queue_open_with_options(const char * const path,... ) {
+Queue * queue_open_with_options(const char *const path,... ) {
 	va_list argp;
 	va_start(argp, path);
-	struct Queue * q = readoptions(argp);
+	Queue * q = readoptions(argp);
 	va_end(argp);
 	if (F_OK != access(path, R_OK|W_OK)) {
 		q-> error_strp = strdup("can not access path");
@@ -409,19 +416,19 @@ struct Queue * queue_open_with_options(const char * const path,... ) {
 	setCountLengthByStatingFiles(q);
 	return q;
 }
-struct Queue * queue_open(const char * const path) {
-	return queue_open_with_options(path,NULL);
+Queue * queue_open(const char * const path) {
+	return queue_open_with_options(path,nullptr);
 }
 
-static void closeFileItr(struct FileItr * fip){
+static void closeFileItr(struct FileItr *fip){
 	if (fip->binlogfd) {
 		fclose(fip->binlogfd);
 	}
-	fip->binlogfd=NULL;
+	fip->binlogfd=nullptr;
 }
 
-int queue_close(struct Queue *q) {
-	assert(q != NULL);
+int queue_close(Queue *q) {
+	assert(q != nullptr);
 	IFFN(q->path);
 	closeFileItr(&q->read);
 	closeFileItr(&q->write);
@@ -431,10 +438,10 @@ int queue_close(struct Queue *q) {
 	return LIBQUEUE_SUCCESS;
 }
 
-int queue_push(struct Queue * const q, struct QueueData * const d) {
-	assert(q != NULL);
-	assert(d != NULL);
-	assert(d->v != NULL);
+int queue_push(Queue *const q, struct QueueData *const d) {
+	assert(q != nullptr);
+	assert(d != nullptr);
+	assert(d->v != nullptr);
 	if (q->count +1 > q->max_entries) {
 		queue_set_error(q, "max entries reached","");
 		return LIBQUEUE_FAILURE;
@@ -452,7 +459,7 @@ int queue_push(struct Queue * const q, struct QueueData * const d) {
 	}
 	if (q->write.bsize + d->vlen > q->max_bin_log_size ) {
 		closeFileItr (&q->write);
-		FileKey key= {time(NULL), clock()};
+		FileKey key= {time(nullptr), clock()};
 		if (-1 == openJournalAtTime(&key, q->path, &q->write)) {
 			queue_set_error(q, "failed to open binlog or journal", strerror(errno));
 			return LIBQUEUE_FAILURE;
@@ -464,7 +471,7 @@ int queue_push(struct Queue * const q, struct QueueData * const d) {
 	}
 	struct JournalEntry entry;
 	entry.size = d->vlen;
-	entry.csum= chksum(d->v, d->vlen);
+	entry.csum= chksum((char*)(d->v), d->vlen);
 	entry.done = 0;
 	struct Footer foot;
 	foot.offsetToJournalEntry = ftell (q->write.binlogfd);
@@ -486,9 +493,9 @@ int queue_push(struct Queue * const q, struct QueueData * const d) {
 	return LIBQUEUE_SUCCESS;
 }
 
-static int queue_peek_h(struct Queue * const q,  int64_t idx, struct QueueData * const d,struct JournalEntry  *je) {
-	assert(q != NULL);
-	assert(d != NULL);
+static int queue_peek_h(Queue *const q,  int64_t idx, struct QueueData *const d,struct JournalEntry *je) {
+	assert(q != nullptr);
+	assert(d != nullptr);
 	if (0 ==  fileItr_opened(&q->read) ) {
 		FileKey key =  getOldestJournal(q);
 		if (0 ==key.time) {
@@ -525,7 +532,7 @@ static int queue_peek_h(struct Queue * const q,  int64_t idx, struct QueueData *
 	ssize_t offset = ftell(q->read.binlogfd);
 	if (d) {
 		d->vlen = je->size;
-		d->v = malloc (d->vlen );
+		d->v = memalloc (d->vlen );
 		if (1 != fread(d->v,  d->vlen,1, q->read.binlogfd)) {
 			// record has not been fully written yet;
 			fseek(q->read.binlogfd,offset - sizeof(*je), SEEK_SET);
@@ -536,15 +543,15 @@ static int queue_peek_h(struct Queue * const q,  int64_t idx, struct QueueData *
 	return LIBQUEUE_SUCCESS;
 }
 
-static int queue_index_lookup(const struct Queue * const q,  int64_t idx, struct FileItr * itr,struct QueueData * const d, struct JournalEntry  *je) {
-	assert(q != NULL);
-	assert(d != NULL);
+static int queue_index_lookup(const Queue *const q,  int64_t idx, struct FileItr *itr,struct QueueData *const d, struct JournalEntry *je) {
+	assert(q != nullptr);
+	assert(d != nullptr);
 	if (0 ==  fileItr_opened(itr) ) {
 		FileKey key =  getOldestJournal(q);
 		if (0 ==key.time) {
-			queue_set_error((struct Queue *)q,"queue is empty","");
+			queue_set_error((Queue *)q,"queue is empty","");
 			d->vlen = 0;
-			d->v = NULL;
+			d->v = nullptr;
 			return LIBQUEUE_FAILURE;
 		}
 		if (-1 == openJournalAtTime(&key, q->path, itr)) {
@@ -553,7 +560,7 @@ static int queue_index_lookup(const struct Queue * const q,  int64_t idx, struct
 	}
 	if (!fileItr_opened(itr)) {
 		d->vlen = 0;
-		d->v = NULL;
+		d->v = nullptr;
 		return LIBQUEUE_FAILURE;
 	}
 	int read=0;
@@ -570,14 +577,14 @@ static int queue_index_lookup(const struct Queue * const q,  int64_t idx, struct
 	if (0 == read || idx > 0) {
 		if (FILE_KEY_EQUAL(q->write.key, itr->key)) {
 			d->vlen = 0;
-			d->v = NULL;
+			d->v = nullptr;
 			return LIBQUEUE_FAILURE;
 		}
 		closeFileItr(itr);
 		itr->key = getNextOldestJournal(q, &(itr->key));
 		if (0 == itr->key.time ) {
 			d->vlen = 0;
-			d->v = NULL;
+			d->v = nullptr;
 			return LIBQUEUE_FAILURE;
 		}
 		if (0 != openJournalAtTime(&itr->key, q->path, itr)) {
@@ -588,7 +595,7 @@ static int queue_index_lookup(const struct Queue * const q,  int64_t idx, struct
 	ssize_t offset = ftell(itr->binlogfd);
 	if (d) {
 		d->vlen = je->size;
-		d->v = malloc (d->vlen );
+		d->v = memalloc (d->vlen );
 		if ( 1 !=  fread(d->v,  d->vlen,1, itr->binlogfd)) {
 			return LIBQUEUE_FAILURE;
 		}
@@ -600,7 +607,7 @@ static int queue_index_lookup(const struct Queue * const q,  int64_t idx, struct
 /**
  * NOTE, you can only peek 0, idx not implemented yet
  */
-int queue_peek(struct Queue * const q, int64_t idx, struct QueueData * const d) {
+int queue_peek(Queue *const q, int64_t idx, struct QueueData *const d) {
 	struct FileItr itr;
 	memset(&itr, 0, sizeof(itr));
 	struct JournalEntry  je;
@@ -609,12 +616,12 @@ int queue_peek(struct Queue * const q, int64_t idx, struct QueueData * const d) 
 	return results;
 }
 
-int queue_pop(struct Queue * const q, struct QueueData * const d) {
+int queue_pop(Queue *const q, struct QueueData *const d) {
 	struct JournalEntry  je;
 	if (LIBQUEUE_SUCCESS != queue_peek_h(q,0, d,&je)) {
 		if (d) {
 			d->vlen = 0;
-			d->v = NULL;
+			d->v = nullptr;
 		}
 		return LIBQUEUE_FAILURE;
 	}
@@ -623,7 +630,7 @@ int queue_pop(struct Queue * const q, struct QueueData * const d) {
 	if (LIBQUEUE_FAILURE == writeAndFlushData(q->read.binlogfd, &je,sizeof(je))) {
 		queue_set_error(q, "failed to mark entry done: ", strerror(errno));
 		d->vlen = 0;
-		d->v = NULL;
+		d->v = nullptr;
 		return LIBQUEUE_FAILURE;
 	}
 	fseek(q->read.binlogfd,je.size + sizeof(struct Footer), SEEK_CUR);
@@ -632,16 +639,16 @@ int queue_pop(struct Queue * const q, struct QueueData * const d) {
 	return LIBQUEUE_SUCCESS;
 }
 
-int queue_count(struct Queue * const q, int64_t * const countp) {
-	assert(q != NULL);
-	assert(countp != NULL);
+int queue_count(Queue *const q, int64_t *const countp) {
+	assert(q != nullptr);
+	assert(countp != nullptr);
 	*countp=q->count;
 	return LIBQUEUE_SUCCESS;
 }
 
-int queue_len(struct Queue * const q, int64_t * const lenbuf) {
-	assert(q != NULL);
-	assert(lenbuf != NULL);
+int queue_len(Queue *const q, int64_t *const lenbuf) {
+	assert(q != nullptr);
+	assert(lenbuf != nullptr);
 	if (0 == q->count )
 		*lenbuf = 0;
 	else
@@ -649,3 +656,13 @@ int queue_len(struct Queue * const q, int64_t * const lenbuf) {
 	return LIBQUEUE_SUCCESS;
 }
 
+// queueutils
+
+int closequeue(Queue *q) {
+	if(queue_close(q) == LIBQUEUE_SUCCESS)
+		return EXIT_SUCCESS;
+	else {
+		puts("Failed to close the queue properly.");
+		return EXIT_FAILURE;
+	}
+}

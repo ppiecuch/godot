@@ -25,7 +25,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
-#include <error.h>
+#include <errno.h>
 #include <errno.h>
 #include <libgen.h>
 #include <stdio.h>
@@ -44,7 +44,7 @@ extern "C"
 #define QUEUE_TUNINGSUFFIX "#type=kct#zcomp=gz#opts=c"
 
 #define QUEUEUTILS_QUEUE (".")
-#define SELECTQUEUE(pvar) ((pvar)!=NULL?(pvar):(QUEUEUTILS_QUEUE))
+#define SELECTQUEUE(pvar) ((pvar)!=nullptr?(pvar):(QUEUEUTILS_QUEUE))
 
 enum {
   LIBQUEUE_FAILURE = -1,
@@ -58,23 +58,22 @@ struct QueueData {
   void *v;
   u_int64_t vlen ;
 };
-struct Queue * queue_open_with_options(const char *path,...) WARN_UNUSED_RETURN;
-struct Queue * queue_open(const char * path) WARN_UNUSED_RETURN;
-int queue_repair_with_options(const char * path,...) WARN_UNUSED_RETURN;
-int queue_repair(const char * path) WARN_UNUSED_RETURN;
-int queue_is_opened (const struct Queue * const q) WARN_UNUSED_RETURN;
-int queue_push(struct Queue *q, struct QueueData *d) WARN_UNUSED_RETURN;
-int queue_pop(struct Queue *q, struct QueueData *d) WARN_UNUSED_RETURN;
-int queue_len(struct Queue *q, int64_t *len) WARN_UNUSED_RETURN;
-int queue_count(struct Queue *q, int64_t *count) WARN_UNUSED_RETURN;
-int queue_compact(struct Queue *q) WARN_UNUSED_RETURN;
-int queue_peek(struct Queue *q, int64_t s, struct QueueData *d) WARN_UNUSED_RETURN;
-int queue_poke(struct Queue *q, int64_t s, struct QueueData *d) WARN_UNUSED_RETURN;
-int queue_close(struct Queue *q) WARN_UNUSED_RETURN;
-int queue_opened(struct Queue *q) WARN_UNUSED_RETURN;
-const char * queue_get_last_error(const struct Queue * const q) WARN_UNUSED_RETURN;
 
-int closequeue(struct Queue *q);
+Queue *queue_open_with_options(const char *path,...) WARN_UNUSED_RETURN;
+Queue *queue_open(const char *path) WARN_UNUSED_RETURN;
+int queue_is_opened (const Queue * const q) WARN_UNUSED_RETURN;
+int queue_push(Queue *q, QueueData *d) WARN_UNUSED_RETURN;
+int queue_pop(Queue *q, QueueData *d) WARN_UNUSED_RETURN;
+int queue_len(Queue *q, int64_t *len) WARN_UNUSED_RETURN;
+int queue_count(Queue *q, int64_t *count) WARN_UNUSED_RETURN;
+int queue_compact(Queue *q) WARN_UNUSED_RETURN;
+int queue_peek(Queue *q, int64_t s, QueueData *d) WARN_UNUSED_RETURN;
+int queue_poke(Queue *q, int64_t s, QueueData *d) WARN_UNUSED_RETURN;
+int queue_close(Queue *q) WARN_UNUSED_RETURN;
+int queue_opened(Queue *q) WARN_UNUSED_RETURN;
+const char *queue_get_last_error(const Queue * const q) WARN_UNUSED_RETURN;
+
+int closequeue(Queue *q);
 
 #ifdef __cplusplus
 }
@@ -82,7 +81,7 @@ int closequeue(struct Queue *q);
 
 #if 0
 cqueue
-========
+======
 
 cqueue is a C library that provides persistent, named data queues for
 programs. Arbitrarily many queues can co-exist, given they have distinct
@@ -124,13 +123,13 @@ API Overview
 /*
   Intransparent data type. Nothing to see here...
 */
-struct Queue;
+Queue;
 
 /*
   Data structure used to store data in, and retrieve data from the
   queue
 */
-struct QueueData {
+QueueData {
   void *v;
   size_t vlen;
 };
@@ -149,7 +148,7 @@ struct QueueData {
   This function ensures that ${path}/libqueue exist. If it doesn't
   and cannot be created OR not written to, this function fails.
 */
-struct Queue *  queue_open(const char *path);
+Queue *  queue_open(const char *path);
 
 
 /*
@@ -164,51 +163,51 @@ struct Queue *  queue_open(const char *path);
 	maxSizeInByte     Max number of appropriate disk usage of queue. queue_push will return LIBQUEUE_FAILURE if attempt is made to exceed this limit
 
  */
-struct Queue *  queue_open_with_options(const char *path,..., NULL);
+Queue *  queue_open_with_options(const char *path,..., NULL);
 
 
 /*
-  Push a data object onto the queue. struct QueueData must be filled
+  Push a data object onto the queue. QueueData must be filled
   appropriately: d->v is a void* pointer to the data, d->vlen holds the
   data size.
 
 */
-int queue_push(struct Queue *q, struct QueueData *d);
+int queue_push(Queue *q, QueueData *d);
 
 /*
   Pop data from the queue. The library will store the data in the passed
   QueueData struct. d->v must be freed by the user.
 */
-int queue_pop(struct Queue *q, struct QueueData *d);
+int queue_pop(Queue *q, QueueData *d);
 
 /*
   returns total size of all files used by the queue unless there are zero elements
   in which it will return 0
 
 */
-int queue_len(struct Queue *q, int64_t *len);
+int queue_len(Queue *q, int64_t *len);
 
 /*
   returns numbers of elements in the queue
 */
-int queue_count(struct Queue *q, int64_t *countp);
+int queue_count(Queue *q, int64_t *countp);
 
 /*
   compacts the queue on file system to use take up less disk space if possible
 */
-int queue_compact(struct Queue *q);
+int queue_compact(Queue *q);
 /*
   Like queue_pop(), but doesn't remove the data object from the queue
   and returns the data at queue position s. Indexing is not used
 */
-int queue_peek(struct Queue *q, int64_t s, struct QueueData *d);
+int queue_peek(Queue *q, int64_t s, QueueData *d);
 
 /*
    Like queue_push(), but over-writes the data at queue position s. This
    function cannot be used to append new data to the queue. Indexing
    starts from zero. s must be positive.
  */
-int queue_poke(struct Queue *q, int64_t s, struct QueueData *d);
+int queue_poke(Queue *q, int64_t s, QueueData *d);
 
 
 /*
@@ -216,10 +215,10 @@ int queue_poke(struct Queue *q, int64_t s, struct QueueData *d);
   sure that the data has been properly stored. Undefined behaviour may
   occur if the concluding call to this function is omitted.
 */
-int queue_close(struct Queue *q);
+int queue_close(Queue *q);
 ```
 
-<code>struct Queue</code> is an opaque data type the fields of which
+<code>Queue</code> is an opaque data type the fields of which
 should not be accessed directly.
 
 Building
