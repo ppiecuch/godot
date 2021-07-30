@@ -46,7 +46,23 @@ class Array {
 	inline int _clamp_slice_index(int p_index) const;
 
 public:
-	Variant &operator[](int p_idx);
+	// trivial c++11 iterator
+	template<typename A, typename V> struct iteratorT {
+		A *_array;
+		int _index;
+		iteratorT(A *_array, int _index) : _array(_array), _index(_index) { }
+		bool operator!=(const iteratorT<A, V> &other) const { return (_array != other._array) || (_index != other._index); }
+		V &operator*() { return (*_array)[_index]; }
+		iteratorT<A, V> operator++() { _index++; return *this; }
+	};
+	typedef iteratorT<Array, Variant> iterator;
+	typedef iteratorT<const Array, const Variant> const_iterator;
+	iterator begin() { return iterator(this, 0); }
+	iterator end() { return iterator(this, size()); }
+	const_iterator begin() const { return const_iterator(this, 0); }
+	const_iterator end() const { return const_iterator(this, size()); }
+
+    Variant &operator[](int p_idx);
 	const Variant &operator[](int p_idx) const;
 
 	void set(int p_idx, const Variant &p_value);

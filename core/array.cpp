@@ -120,7 +120,6 @@ void Array::insert(int p_pos, const Variant &p_value) {
 }
 
 void Array::fill(const Variant &p_value) {
-	ERR_FAIL_COND(!_p->typed.validate(p_value, "fill"));
 	_p->array.fill(p_value);
 }
 
