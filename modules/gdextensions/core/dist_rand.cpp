@@ -3,23 +3,23 @@
 // distrand
 //
 // Copyright © 2017 M T Harry Ayres
-// 
-// Permission is hereby granted, free of charge, to any person obtaining a copy 
-// of this software and associated documentation files (the "Software"), to deal 
-// in the Software without restriction, including without limitation the rights 
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell 
-// copies of the Software, and to permit persons to whom the Software is 
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
-// The above copyright notice and this permission notice shall be included in 
+//
+// The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 //
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -33,13 +33,13 @@ template <typename T, class C> real_t BaseNormal<T, C>::dr_boxmuller(const T mu,
 	static real_t Zu, Zv; // The two deviates
 	real_t U, V, s, R, Q; // Two random numbers (U & V), the sum of their cubes (s), the root of that (R) and Q which is the square root of the natural log of s multiplied by negative two.
 	static bool generate, negative; // These two bools control function behaviour.
-	
+
 	int control = (rand());
 	negative = ((control & 1<<0) == 1); // See if our new random int is odd
 	// Seems biased.
-	
+
 	generate = !generate; // Generate two at a time, so only do it every other time.
-	
+
 	if(!generate) { // So if we're not generating a number this time
 		if(negative) { // and we want a negative (half the time)
 			return real_t(mu) - Zv * real_t(sigma);
@@ -47,26 +47,26 @@ template <typename T, class C> real_t BaseNormal<T, C>::dr_boxmuller(const T mu,
 			return real_t(mu) + Zv * real_t(sigma);
 		}
 	}
-	
+
 	do {	// Generate the random values
 		U = Math::randf(); // Godot idiom.
 		V = Math::randf();
 		s = (U*U + V*V); // This one is calculated here because it controls the loop
 	} while(s <= epsilon || s >= 1);
-	
+
 	// These two are calculated outside the loop to save a miniscule bit of runtime
 	R = sqrt(s);
 	Q = sqrt(-2*log(s));
-	
+
 	// Calculate both variates. Common terms became variables to, again, save a miniscule bit of runtime
 	// Cast to typename T
 	Zu = (U/R)*Q;
 	Zv = (V/R)*Q;
-	
+
 	if(negative) { // If we want a negative value, return here
 		return real_t(mu) - Zu * real_t(sigma);
 	}
-	
+
 	return real_t(mu) + Zu * real_t(sigma); // Otherwise return here
 }
 
