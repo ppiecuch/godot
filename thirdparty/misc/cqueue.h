@@ -27,7 +27,6 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <errno.h>
-#include <libgen.h>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>

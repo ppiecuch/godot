@@ -80,8 +80,8 @@ struct Queue {
 	//settings
 	size_t max_bin_log_size; //
 	char   fail_if_missing;
-	ssize_t max_size_in_bytes;
-	ssize_t max_entries;
+	size_t max_size_in_bytes;
+	size_t max_entries;
 };
 
 struct JournalEntry {
@@ -91,7 +91,7 @@ struct JournalEntry {
 };
 
 struct Footer{
-	ssize_t offsetToJournalEntry;
+	size_t offsetToJournalEntry;
 };
 
 int fileItr_opened(struct FileItr *itrp ) WARN_UNUSED_RETURN;
@@ -211,7 +211,7 @@ static int checkLastEntry(FILE *fd, ssize_t filesize) {
 	if (rtn != 0 && rtn != 1) {
 		return -1;
 	}
-	if (foot.offsetToJournalEntry > (filesize-sizeof(foot) )) {
+	if (foot.offsetToJournalEntry > (filesize - sizeof(foot) )) {
 		if (0 != chopOffIncompleteWrite(fd)) {
 			return -1;
 		}
@@ -223,7 +223,7 @@ static int checkLastEntry(FILE *fd, ssize_t filesize) {
 	if (rtn != 1 &&  rtn != 0) {
 		return -1;
 	}
-	if (filesize == foot.offsetToJournalEntry+ je.size + sizeof(foot))
+	if (filesize == foot.offsetToJournalEntry + je.size + sizeof(foot))
 		return 0; // we are good
 	return chopOffIncompleteWrite(fd);
 }
@@ -322,7 +322,7 @@ static FileKey getNextOldestJournal(const Queue *q, FileKey *oldkey) WARN_UNUSED
 static FileKey getNextOldestJournal(const Queue *q, FileKey *oldkey) {
 	FileKey key = {0,0};
 	FileKey ckey= {0,0};
-	FileKey oldestkey = {LONG_MAX,ULONG_MAX};
+	FileKey oldestkey = {LONG_MAX,LONG_MAX};
 	struct dirent **namelist;
 	int n = scandir(q->path, &namelist, binlogfilter, binlogsort);
 	if (n < 0) {
