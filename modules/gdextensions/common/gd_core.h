@@ -37,6 +37,12 @@
 #include "core/ustring.h"
 #include "scene/main/scene_tree.h"
 
+#if __has_feature(cxx_exceptions) || defined(__cpp_exceptions) \
+	|| defined(__EXCEPTIONS) \
+	|| (defined(_MSC_VER) && defined(_CPPUNWIND))
+#define _HAS_EXCEPTIONS
+#endif
+
 #define safe_delete(pPtr) (memdelete(pPtr), pPtr = nullptr)
 #define newref(pClass) Ref<pClass>(memnew(pClass))
 
