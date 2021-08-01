@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef BOOST_CURRENT_FUNCTION_HPP_INCLUDED
-#define BOOST_CURRENT_FUNCTION_HPP_INCLUDED
+#ifndef CURRENT_FUNCTION_H
+#define CURRENT_FUNCTION_H
 
 // MS compatible compilers support #pragma once
 
@@ -48,10 +48,6 @@
 //
 //  http://www.boost.org/libs/utility/current_function.html
 //
-
-namespace boost {
-
-namespace detail {
 
 inline void current_function_helper() {
 #if defined(__GNUC__) || (defined(__MWERKS__) && (__MWERKS__ >= 0x3000)) || (defined(__ICC) && (__ICC >= 600))
@@ -85,8 +81,4 @@ inline void current_function_helper() {
 #endif
 }
 
-} // namespace detail
-
-} // namespace boost
-
-#endif // #ifndef BOOST_CURRENT_FUNCTION_HPP_INCLUDED
+#endif // CURRENT_FUNCTION_H
