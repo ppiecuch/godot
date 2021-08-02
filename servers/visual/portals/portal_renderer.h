@@ -132,7 +132,7 @@ public:
 
 	PortalHandle portal_create();
 	void portal_destroy(PortalHandle p_portal);
-	void portal_set_geometry(PortalHandle p_portal, const Vector<Vector3> &p_points);
+	void portal_set_geometry(PortalHandle p_portal, const Vector<Vector3> &p_points, real_t p_margin);
 	void portal_link(PortalHandle p_portal, RoomHandle p_room_from, RoomHandle p_room_to, bool p_two_way);
 	void portal_set_active(PortalHandle p_portal, bool p_active);
 
@@ -159,6 +159,7 @@ public:
 	// for use in the editor only, to allow a cheap way of turning off portals
 	// if there has been a change, e.g. moving a room etc.
 	void rooms_unload() { _ensure_unloaded(); }
+	bool rooms_is_loaded() const { return _loaded; }
 
 	// debugging
 	void set_debug_sprawl(bool p_active) { _debug_sprawl = p_active; }

@@ -41,8 +41,7 @@ class MeshInstance;
 class GeometryInstance;
 class VisualInstance;
 
-#define GODOT_PORTAL_DELINEATOR String("_")
-#define GODOT_PORTAL_WILDCARD String("*")
+#define GODOT_PORTAL_WILDCARD ('*')
 
 class RoomManager : public Spatial {
 	GDCLASS(RoomManager, Spatial);
@@ -135,6 +134,12 @@ public:
 	// an easy way of grabbing the active room manager for tools purposes
 #ifdef TOOLS_ENABLED
 	static RoomManager *active_room_manager;
+
+	// static versions of functions for use from editor toolbars
+	static void static_rooms_set_active(bool p_active);
+	static bool static_rooms_get_active();
+	static bool static_rooms_get_active_and_loaded();
+	static void static_rooms_convert();
 #endif
 
 private:
@@ -194,8 +199,7 @@ private:
 	bool _remove_redundant_dangling_nodes(Spatial *p_node);
 
 	// helper funcs
-	bool _name_starts_with(const Node *p_node, String p_search_string, bool p_allow_no_delineator = false);
-	void _check_for_misnamed_node(const Node *p_node, String p_start_string);
+	bool _name_ends_with(const Node *p_node, String p_postfix) const;
 	template <class NODE_TYPE>
 	NODE_TYPE *_resolve_path(NodePath p_path) const;
 	template <class NODE_TYPE>
@@ -215,7 +219,7 @@ private:
 	void debug_print_line(String p_string, int p_priority = 0);
 
 public:
-	static String _find_name_after(Node *p_node, String p_string_start);
+	static String _find_name_before(Node *p_node, String p_postfix, bool p_allow_no_postfix = false);
 	static void show_warning(const String &p_string, const String &p_extra_string = "", bool p_alert = true);
 	static real_t _get_default_portal_margin() { return _default_portal_margin; }
 

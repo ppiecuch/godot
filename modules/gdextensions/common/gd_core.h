@@ -37,6 +37,21 @@
 #include "core/ustring.h"
 #include "scene/main/scene_tree.h"
 
+#include <ostream>
+#include <vector>
+#include <list>
+#include <deque>
+
+#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) || __cplusplus >= 201703L)
+# define CPP17
+#endif
+#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201402L) || __cplusplus >= 201402L)
+# define CPP14
+#endif
+#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201103L) || __cplusplus >= 201103L)
+# define CPP11
+#endif
+
 #if __has_feature(cxx_exceptions) || defined(__cpp_exceptions) \
 	|| defined(__EXCEPTIONS) \
 	|| (defined(_MSC_VER) && defined(_CPPUNWIND))
@@ -86,5 +101,96 @@ static inline void _trace(int line, const char *file, const String &text) {
 
 static const Vector2 ONE = Vector2(1, 1);
 static const Vector2 ZERO = Vector2(0, 0);
+
+
+
+/// operator<< overload to display the contents of a vector.
+template <typename T, typename A>
+std::ostream& operator<<(std::ostream& os, const std::vector<T, A>& vec) {
+    os << "[";
+    std::string comma;
+    for (auto& v : vec) {
+        os << comma << v;
+        comma = ", ";
+    }
+    os << "]";
+    return os;
+}
+
+/// operator<< overload to display the contents of a list.
+template <typename T, typename A>
+std::ostream& operator<<(std::ostream& os, const std::list<T, A>& list) {
+    os << "[";
+    std::string comma;
+    for (auto& v : list) {
+        os << comma << v;
+        comma = ", ";
+    }
+    os << "]";
+    return os;
+}
+
+/// operator<< overload to display the contents of a deque.
+template <typename T, typename A>
+std::ostream& operator<<(std::ostream& os, const std::deque<T, A>& deq) {
+    os << "[";
+    std::string comma;
+    for (auto& v : deq) {
+        os << comma << v;
+        comma = ", ";
+    }
+    os << "]";
+    return os;
+}
+
+
+#ifndef CPP14
+
+#include <type_traits>
+#include <memory>
+
+namespace std {
+    template<class T> struct _Unique_if {
+        typedef std::unique_ptr<T> _Single_object;
+    };
+
+    template<class T> struct _Unique_if<T[]> {
+        typedef std::unique_ptr<T[]> _Unknown_bound;
+    };
+
+    template<class T, size_t N> struct _Unique_if<T[N]> {
+        typedef void _Known_bound;
+    };
+
+    template<class T, class... Args>
+        typename _Unique_if<T>::_Single_object
+        make_unique(Args&&... args) {
+            return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+        }
+
+    template<class T>
+        typename _Unique_if<T>::_Unknown_bound
+        make_unique(size_t n) {
+            typedef typename std::remove_extent<T>::type U;
+            return std::unique_ptr<T>(new U[n]());
+        }
+
+    template<class T, class... Args>
+        typename _Unique_if<T>::_Known_bound
+        make_unique(Args&&...) = delete;
+
+    template<class Iterator>
+        reverse_iterator<Iterator> make_reverse_iterator(Iterator i) {
+            return reverse_iterator<Iterator>(i);
+        }
+}
+#endif // CPP14
+
+namespace std {
+	template<typename T>
+		using deleted_unique_ptr = unique_ptr<T, function<void(T*)>>;
+	template<typename T>
+		deleted_unique_ptr<T> make_gd_unique_ptr(T *p) { return deleted_unique_ptr<T> (p, [](T* p) { memdelete(p); }); }
+}
 
 #endif // GD_CORE_H

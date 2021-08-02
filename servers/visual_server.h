@@ -68,6 +68,10 @@ protected:
 public:
 	static VisualServer *get_singleton();
 	static VisualServer *create();
+	static Vector2 norm_to_oct(const Vector3 v);
+	static Vector2 tangent_to_oct(const Vector3 v, const float sign, const bool high_precision);
+	static Vector3 oct_to_norm(const Vector2 v);
+	static Vector3 oct_to_tangent(const Vector2 v, float *out_sign);
 
 	enum {
 
@@ -263,8 +267,9 @@ public:
 		ARRAY_FLAG_USE_2D_VERTICES = ARRAY_COMPRESS_INDEX << 1,
 		ARRAY_FLAG_USE_16_BIT_BONES = ARRAY_COMPRESS_INDEX << 2,
 		ARRAY_FLAG_USE_DYNAMIC_UPDATE = ARRAY_COMPRESS_INDEX << 3,
+		ARRAY_FLAG_USE_OCTAHEDRAL_COMPRESSION = ARRAY_COMPRESS_INDEX << 4,
 
-		ARRAY_COMPRESS_DEFAULT = ARRAY_COMPRESS_NORMAL | ARRAY_COMPRESS_TANGENT | ARRAY_COMPRESS_COLOR | ARRAY_COMPRESS_TEX_UV | ARRAY_COMPRESS_TEX_UV2 | ARRAY_COMPRESS_WEIGHTS
+		ARRAY_COMPRESS_DEFAULT = ARRAY_COMPRESS_NORMAL | ARRAY_COMPRESS_TANGENT | ARRAY_COMPRESS_COLOR | ARRAY_COMPRESS_TEX_UV | ARRAY_COMPRESS_TEX_UV2 | ARRAY_COMPRESS_WEIGHTS | ARRAY_FLAG_USE_OCTAHEDRAL_COMPRESSION
 
 	};
 
@@ -876,7 +881,7 @@ public:
 
 	virtual RID portal_create() = 0;
 	virtual void portal_set_scenario(RID p_portal, RID p_scenario) = 0;
-	virtual void portal_set_geometry(RID p_portal, const Vector<Vector3> &p_points, float p_margin) = 0;
+	virtual void portal_set_geometry(RID p_portal, const Vector<Vector3> &p_points, real_t p_margin) = 0;
 	virtual void portal_link(RID p_portal, RID p_room_from, RID p_room_to, bool p_two_way) = 0;
 	virtual void portal_set_active(RID p_portal, bool p_active) = 0;
 
@@ -905,6 +910,9 @@ public:
 	virtual void rooms_set_params(RID p_scenario, int p_portal_depth_limit) = 0;
 	virtual void rooms_set_debug_feature(RID p_scenario, RoomsDebugFeature p_feature, bool p_active) = 0;
 	virtual void rooms_update_gameplay_monitor(RID p_scenario, const Vector<Vector3> &p_camera_positions) = 0;
+
+	// don't use this in a game!
+	virtual bool rooms_is_loaded(RID p_scenario) const = 0;
 
 	// callbacks are used to send messages back from the visual server to scene tree in thread friendly manner
 	virtual void callbacks_register(VisualServerCallbacks *p_callbacks) = 0;
