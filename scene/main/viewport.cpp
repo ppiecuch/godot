@@ -952,7 +952,7 @@ void Viewport::_camera_2d_set(Camera2D *p_camera_2d) {
 	camera_2d = p_camera_2d;
 }
 
- bool Viewport::_camera_add(Camera *p_camera) {
+bool Viewport::_camera_add(Camera *p_camera) {
 	cameras.insert(p_camera);
 	return cameras.size() == 1;
 }
@@ -1161,7 +1161,7 @@ Camera2D *Viewport::get_camera_2d() const {
 	return camera_2d;
 }
 
- Camera *Viewport::get_camera() const {
+Camera *Viewport::get_camera() const {
 	return camera;
 }
 

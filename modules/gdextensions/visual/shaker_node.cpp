@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  shaker_node.cpp                                                      */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #include "shaker_node.h"
 
 void ShakerNode::_notification(int p_what) {
@@ -17,7 +47,6 @@ void ShakerNode::set_target_group_name(const String &p_name) {
 }
 
 void ShakerNode::_bind_methods() {
-
 	ClassDB::bind_method(D_METHOD("set_target_node_path"), &ShakerNode::set_target_node_path);
 	ClassDB::bind_method(D_METHOD("set_target_group_name"), &ShakerNode::set_target_group_name);
 
@@ -108,29 +137,29 @@ func _process(delta: float) -> void:
 					_node.translate(Vector3(x_shake, y_shake, z_shake))
 
 		else:
-			# Restore the node's position to it's original value if it has been modified
+#Restore the node 's position to it' s original value if it has been modified
 			if _is_node_position_modified:
 				if _node is Node2D:
 					_node.position = get_original_position()
 				if _node is Spatial:
 					_node.translation = get_original_position()
 				_is_node_position_modified = false
-			# Restore the node's rotation to it's original value if it has been modified
+#Restore the node 's rotation to it' s original value if it has been modified
 			if _is_node_rotation_modified:
 				_node.rotation = get_original_rotation()
 				_is_node_rotation_modified = false
-			# Save the node position and rotation
+#Save the node position and rotation
 			set_original_position(_node)
 			set_original_rotation(_node)
 
-	# Decrease trauma linearly
+#Decrease trauma linearly
 	_trauma_amount = max(_trauma_amount - trauma_decay * Engine.time_scale, 0)
 
-# Trauma
+#Trauma
 func add_trauma(amount: float) -> void:
 	_trauma_amount = min(_trauma_amount + amount, 1)
 
-# Node path
+#Node path
 func set_node_path(new_value: NodePath) -> void:
 	node_path = new_value
 	_node = get_node(node_path)
@@ -138,7 +167,7 @@ func set_node_path(new_value: NodePath) -> void:
 		set_original_position(_node)
 		set_original_rotation(_node)
 
-# Original position
+#Original position
 func set_original_position(node: Node) -> void:
 	if node is Node2D:
 		original_position.x = node.position.x
@@ -152,7 +181,7 @@ func get_original_position():
 	if _node is Spatial:
 		return original_position
 
-# Original rotation
+#Original rotation
 func set_original_rotation(node: Node) -> void:
 	if node is Node2D:
 		original_rotation.x = node.rotation
@@ -165,12 +194,12 @@ func get_original_rotation():
 	if _node is Spatial:
 		return original_rotation
 
-# Noise
+#Noise
 func _get_noise(x: int) -> float:
 	var y: float = _elapsed_game_seconds * 1000 if use_time_scale else randi()
 	return _noise_generator.get_noise_2d(x, y)
 
-# Shake
+#Shake
 func _get_shake(maximum: float, amount: float, x: int) -> float:
 	return maximum * amount * _get_noise(x)
 

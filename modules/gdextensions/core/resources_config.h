@@ -45,7 +45,7 @@ struct ObjectNode {
 	Attribs attribs;
 
 	ObjectNode(const String &p_name = "", const String &p_value = "", const Attribs &p_attribs = Attribs()) :
-			name(p_name), value(p_value), attribs(p_attribs) { }
+			name(p_name), value(p_value), attribs(p_attribs) {}
 	const ObjectNode &get(const String &p_res_name);
 };
 

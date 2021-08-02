@@ -48,9 +48,9 @@
 
 #include "resources_config.h"
 
-#include "core/os/file_access.h"
 #include "core/io/json.h"
 #include "core/io/resource_loader.h"
+#include "core/os/file_access.h"
 
 #include <vector>
 
@@ -74,7 +74,7 @@ Resources *Resources::instance = nullptr;
 const ObjectNode &ObjectNode::get(const String &p_res_name) {
 	Vector<String> names = p_res_name.split(".");
 	ObjectNode *node = this;
-	for(int n = 0; n < names.size(); n++) {
+	for (int n = 0; n < names.size(); n++) {
 		node = &node->attribs[names[n]];
 	}
 	return *node;
@@ -87,7 +87,7 @@ ObjectNode ObjectConfig::load_config_file(const String &p_file, String &error_st
 	if (not file) {
 		error_string = "Can not open config file for reading.";
 	} else {
-		std::vector<ObjectNode*> nodes;
+		std::vector<ObjectNode *> nodes;
 		nodes.push_back(&root);
 
 		while (not file->eof_reached()) {
@@ -147,7 +147,7 @@ void ObjectConfig::_dump(const ObjectNode &p_node, int level) {
 	String pad = String(level ? "|" : "+").rpad(level * 2);
 	String brn = String("|").rpad(level * 2, "-");
 	print_line(vformat((p_node.value == "Section" ? brn : pad) + "%s = %s", p_node.name, p_node.value));
-	for(const auto &n : p_node.attribs) {
+	for (const auto &n : p_node.attribs) {
 		_dump(n.second, level + 1);
 	}
 }
@@ -169,7 +169,7 @@ void Resources::load_config() {
 				break;
 			} else {
 #ifdef DEBUG_ENABLED
-			print_line("Failed to load resources: " + error_line);
+				print_line("Failed to load resources: " + error_line);
 #endif
 			}
 		}

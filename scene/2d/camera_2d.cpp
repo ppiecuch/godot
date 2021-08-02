@@ -414,7 +414,7 @@ void Camera2D::_make_current(Object *p_which) {
 				get_viewport()->_camera_2d_set(nullptr);
 			}
 			update();
- 		}
+		}
 	}
 }
 

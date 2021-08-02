@@ -1,3 +1,32 @@
+/*************************************************************************/
+/*  dist_rand.h                                                          */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
 
 //
 // distrand
@@ -34,12 +63,12 @@
 #else
 #include <cstdlib>
 #endif
-#include "core/reference.h"
 #include "core/math/math_funcs.h" // Godot mathematical functions, including randf.
+#include "core/reference.h"
 
 template <typename T, class C>
 class BaseNormal : public Reference {
-	GDCLASS(BaseNormal,Reference);
+	GDCLASS(BaseNormal, Reference);
 
 protected:
 	int bookmark;
@@ -61,7 +90,7 @@ public:
 };
 
 class IntNormal : public BaseNormal<int, PoolIntArray> { // Inherits Reference from base class
-	GDCLASS(IntNormal,Reference);
+	GDCLASS(IntNormal, Reference);
 
 	using BaseNormal<int, PoolIntArray>::dr_boxmuller;
 	int round(float);
@@ -70,19 +99,19 @@ protected:
 	static void _bind_methods();
 
 public:
-// 	In order to work in gdscript it seems that these must be explicitly written.
+	// 	In order to work in gdscript it seems that these must be explicitly written.
 	void generate(int count); // IntNormal needs to round the boxmuller result.
-	void setparameters(int mean, int deviation) {BaseNormal<int, PoolIntArray>::setparameters(mean, deviation);};
-	int getvalue(int i) {return BaseNormal<int, PoolIntArray>::getvalue(i);};
-	int getnext() {return BaseNormal<int, PoolIntArray>::getnext();};
-	int getsingle() {return BaseNormal<int, PoolIntArray>::getsingle();};
+	void setparameters(int mean, int deviation) { BaseNormal<int, PoolIntArray>::setparameters(mean, deviation); };
+	int getvalue(int i) { return BaseNormal<int, PoolIntArray>::getvalue(i); };
+	int getnext() { return BaseNormal<int, PoolIntArray>::getnext(); };
+	int getsingle() { return BaseNormal<int, PoolIntArray>::getsingle(); };
 
-	IntNormal() : BaseNormal() {};
+	IntNormal() :
+			BaseNormal(){};
 };
 
-
 class RealNormal : public BaseNormal<real_t, PoolRealArray> { // Inherits Reference from base class
-	GDCLASS(RealNormal,Reference);
+	GDCLASS(RealNormal, Reference);
 
 	using BaseNormal<real_t, PoolRealArray>::dr_boxmuller;
 
@@ -90,14 +119,15 @@ protected:
 	static void _bind_methods();
 
 public:
-// 	In order to work in gdscript it seems that these must be explicitly written.
-	void setparameters(real_t mean, real_t deviation) {BaseNormal<real_t, PoolRealArray>::setparameters(mean, deviation);};
-	void generate(int count) {BaseNormal<real_t, PoolRealArray>::generate(count);};
-	real_t getvalue(int i) {return BaseNormal<real_t, PoolRealArray>::getvalue(i);};
-	real_t getnext() {return BaseNormal<real_t, PoolRealArray>::getnext();};
-	real_t getsingle() {return BaseNormal<real_t, PoolRealArray>::getsingle();};
+	// 	In order to work in gdscript it seems that these must be explicitly written.
+	void setparameters(real_t mean, real_t deviation) { BaseNormal<real_t, PoolRealArray>::setparameters(mean, deviation); };
+	void generate(int count) { BaseNormal<real_t, PoolRealArray>::generate(count); };
+	real_t getvalue(int i) { return BaseNormal<real_t, PoolRealArray>::getvalue(i); };
+	real_t getnext() { return BaseNormal<real_t, PoolRealArray>::getnext(); };
+	real_t getsingle() { return BaseNormal<real_t, PoolRealArray>::getsingle(); };
 
-	RealNormal() : BaseNormal() {};
+	RealNormal() :
+			BaseNormal(){};
 };
 
 #endif

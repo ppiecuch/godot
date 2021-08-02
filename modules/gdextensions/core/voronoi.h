@@ -201,22 +201,22 @@ Example usage
 -----------------
 
 ```gdscript
-# Create voronoi generator
+#Create voronoi generator
 var generator = Voronoi.new()
 generator.set_points(list_of_vector2)
-# optional: set boundaries for diagram, otherwise boundaries are computed based on points
+#optional : set boundaries for diagram, otherwise boundaries are computed based on points
 generator.set_boundaries(rect2_bounds)
-# optional: relax points N times, resulting in more equal sites
+#optional : relax points N times, resulting in more equal sites
 generator.relax_points(2)
 
-# Generate diagram
+#Generate diagram
 var diagram = generator.generate_diagram()
 
-# Iterate over sites
+#Iterate over sites
 for site in diagram.sites():
 	draw_circle(site.center())
 
-# Iterate over edges
+#Iterate over edges
 for edge in diagram.edges():
 	draw_line(edge.start(), edge.end())
 ```

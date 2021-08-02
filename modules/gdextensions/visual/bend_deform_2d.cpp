@@ -120,7 +120,6 @@ static void _draw_debug_marker(CanvasItem *node, const Point2 &p0, real_t dir, i
 	// node->draw_circle(p0, 1, marker_color);
 }
 
-
 Vector<Object *> SimulationController2D::_get_connected_nodes() const {
 	// get the list of listeners of "simulation_progress" signal
 
