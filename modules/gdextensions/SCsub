@@ -14,7 +14,6 @@ modules = [
     "environment/tree_2d",
     "environment/spherical_waves",
     "environment/water_splash",
-    "environment/vegetation_instance",
     "environment/starfield",
     "environment/spider_anim",
     "smooth",
@@ -23,6 +22,9 @@ modules = [
     "benet",
     "behaviornode",
 ]
+
+if not env["disable_3d"]:
+    modules += ["environment/vegetation_instance", "ccd/src"]
 
 ignore = []
 if env["platform"] == "3ds" or env["platform"] == "psp":
@@ -38,8 +40,10 @@ for m in modules:
 thirdparty_sources = [
     "#thirdparty/misc/cqueue.cpp",
 ]
+if not env["disable_3d"]:
+    thirdparty_sources += Glob("#thirdparty/libccd/src/*.c") + Glob("#thirdparty/libccd/src/testsuites/*.c")
 
-env_module.Append(CPPPATH=["#thirdparty/enet", "#thirdparty", "."])
+env_module.Append(CPPPATH=["#thirdparty/enet", "#thirdparty/libccd/src", "#thirdparty", "."])
 env_module.Append(CPPDEFINES=["GD_CQUEUE", "GD_GODOT_ENET", "GD_NO_UNUSED_FUNCTIONS"])
 
 # Compile as a static library

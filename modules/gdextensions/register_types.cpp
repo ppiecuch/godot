@@ -96,6 +96,10 @@
 #include "benet/enet_node.h"
 #include "benet/enet_packet_peer.h"
 
+#ifndef _3D_DISABLED
+#include "ccd/gd_ccd.h"
+#endif
+
 static Vector<Object *> _global_resources;
 void _register_global_resources(Object *ref) {
 	_global_resources.push_back(ref);
@@ -207,6 +211,12 @@ void register_gdextensions_types() {
 	ClassDB::register_class<Smooth2D>();
 
 	ClassDB::register_class<ErrorReporter>();
+
+#ifndef _3D_DISABLED
+	ClassDB::register_class<CCDBox>();
+	ClassDB::register_class<CCDSphere>();
+	ClassDB::register_class<CCDCylinder>();
+#endif
 
 #ifdef TOOLS_ENABLED
 	EditorNode::add_init_callback(editor_init_callback);

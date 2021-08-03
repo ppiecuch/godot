@@ -1,34 +1,34 @@
 # godotccd
-A GDNative plugin for the [Godot Engine](https://godotengine.org/) (3.3+) that implements [libccd](https://github.com/danfis/libccd) - a lightning fast collision checking library for convex shapes.  
-Features boxes, cylinders and spheres.  
+A GDNative plugin for the [Godot Engine](https://godotengine.org/) (3.3+) that implements [libccd](https://github.com/danfis/libccd) - a lightning fast collision checking library for convex shapes.
+Features boxes, cylinders and spheres.
 Both GJK and MPR algorithms are included, so you can pick the one you want.
 
 ### What this is and isn't
-**It is:** A module that allows extremely fast collision checking between arbitrary boxes, cylinders and spheres independent of Godot's internal simulations, scenes & rendering. And only that.  
+**It is:** A module that allows extremely fast collision checking between arbitrary boxes, cylinders and spheres independent of Godot's internal simulations, scenes & rendering. And only that.
 **It isn't:** A replacement for Godot's physics or collision system.
 
 ### Why not use Godot's physics for all collision checking?
-I was looking for a way to do very fast collision checking without requiring any kind of existing nodes, and unrelated to Godot's physics system as that would have been too slow and cumbersome for my needs.  
-Godot's collision checking is perfectly fine for most "everyday" needs, but if you need something very fast to do hundreds of checks for very simple shapes in less than a second, it won't suffice.  
+I was looking for a way to do very fast collision checking without requiring any kind of existing nodes, and unrelated to Godot's physics system as that would have been too slow and cumbersome for my needs.
+Godot's collision checking is perfectly fine for most "everyday" needs, but if you need something very fast to do hundreds of checks for very simple shapes in less than a second, it won't suffice.
 
-The reason why Godot's physics is not sufficient for all cases is that Godot requires multiple physics frames until collision checks between objects in its physics world can even work. After something is added or moved, some physics frames need to pass until you can check for collisions.  
+The reason why Godot's physics is not sufficient for all cases is that Godot requires multiple physics frames until collision checks between objects in its physics world can even work. After something is added or moved, some physics frames need to pass until you can check for collisions.
 That just doesn't cut it if you need maximum performance for a few hundred collision checks **right now**.
 
-Basically, I just needed the math to do quick collision checking, but Godot doesn't offer "just the maths".  
+Basically, I just needed the math to do quick collision checking, but Godot doesn't offer "just the maths".
 Hence I decided to implement [libccd](https://github.com/danfis/libccd), which is fast, lightweight and has a license fitting Godot's own.
 
 ### How to build
-Note that I build for linux 64bit release in this guide, but you can change those options, of course (check the [build system documentation](https://docs.godotengine.org/en/3.1/development/compiling/introduction_to_the_buildsystem.html)).  
+Note that I build for linux 64bit release in this guide, but you can change those options, of course (check the [build system documentation](https://docs.godotengine.org/en/3.1/development/compiling/introduction_to_the_buildsystem.html)).
 I don't see a reason why this module wouldn't work on any other desktop platform.
 
 1. Check out the repo
-2. Initialize the submodules:  
+2. Initialize the submodules:
 
 ```
 git submodule update --init --recursive
 ```
 
-3. Build Godot's cpp bindings:  
+3. Build Godot's cpp bindings:
 ```
 cd godot-cpp
 scons platform=linux generate_bindings=yes bits=64 target=release -j 4
@@ -41,7 +41,7 @@ scons platforms=linux target=release -j 4
 The compiled gdnative module should now be under demo/godotccd/bin.
 
 ### How to integrate godotccd into your project
-After building, copy the `demo/addons/godotccd` folder to your own project, make sure to place it in an identical path, e.g. `<yourProject>/addons/godotccd`. Otherwise, the paths inside the various files won't work.  
+After building, copy the `demo/addons/godotccd` folder to your own project, make sure to place it in an identical path, e.g. `<yourProject>/addons/godotccd`. Otherwise, the paths inside the various files won't work.
 Of course, you are free to place it anywhere, but then you'll have to adjust the paths yourself.
 
 Please also read [this guide](https://docs.godotengine.org/en/3.1/tutorials/plugins/gdnative/gdnative-cpp-example.html#using-the-gdnative-module) on how to use C++ GDNative modules.
@@ -113,29 +113,29 @@ Again, I might add more here if the need comes up.
 
 ### Demo/Example code
 
-There is a demo! And it showcases the extreme speed difference between doing collision checks with freshly added shapes via Godot's Area and godotccd shapes.  
+There is a demo! And it showcases the extreme speed difference between doing collision checks with freshly added shapes via Godot's Area and godotccd shapes.
 
 Simply open the project under /demo. But don't forget to compile the module first.
 
-It also shows that the fastest Godot variant is actually Godot's area after all shapes have been added and "registered" by its physics world. Of course, that is only fast as long as nothing moves or is removed/added, etc. so no further waiting for physics frames is required to check collisions.  
+It also shows that the fastest Godot variant is actually Godot's area after all shapes have been added and "registered" by its physics world. Of course, that is only fast as long as nothing moves or is removed/added, etc. so no further waiting for physics frames is required to check collisions.
 Which isn't realistic in all cases - hence the need for this module.
 
 ### Hints
 
-**Prepare Your Shapes:**  
-Since there is a rather large cost in creating new native objects from GDScript (as well as a certain overhead in calling native functions), it is wise to have the boxes, spheres and cylinders you need created beforehand. Even initialized, if possible.  
+**Prepare Your Shapes:**
+Since there is a rather large cost in creating new native objects from GDScript (as well as a certain overhead in calling native functions), it is wise to have the boxes, spheres and cylinders you need created beforehand. Even initialized, if possible.
 Not strictly necessary, mind you, as it is still very fast doing ad-hoc as the demo shows. But if you're using this module, you probably need to squeeze as much performance as possible.
 
-**GJK vs MPR:**  
-Supposedly, MPR is faster, but a bit less accurate. In my tests, I could see the performance difference, but only from 1000+ objects being checked against each other at the same time. If you "only" need to perform a few hundred checks, you're unlikely to notice a difference.  
+**GJK vs MPR:**
+Supposedly, MPR is faster, but a bit less accurate. In my tests, I could see the performance difference, but only from 1000+ objects being checked against each other at the same time. If you "only" need to perform a few hundred checks, you're unlikely to notice a difference.
 When it comes to differences in accuracy, even with an enormous amount of checks, I did not see a difference larger than 0.1% between both methods. Maybe there would be a larger difference with extremely small or large objects.
 As it is, I would probably recommend MPR, since it is about 10-20% faster at least for very large amounts of collision checks.
 
-**The collision results are not 100% equal to Godot's!**  
+**The collision results are not 100% equal to Godot's!**
 That is true. If you need a module that returns 100% the same results as Godot's Area in all cases and "just" 99.X% is not enough, then this module is not for you.
 
-This is most likely due to differences in how collision math is done internally between Godot and libccd. You will find a few collisions checks (only in **very** close call cases) to not return the same result in Godot and godotccd.  
-I've never found this to affect more than 1% of cases, but it does happen.  
+This is most likely due to differences in how collision math is done internally between Godot and libccd. You will find a few collisions checks (only in **very** close call cases) to not return the same result in Godot and godotccd.
+I've never found this to affect more than 1% of cases, but it does happen.
 
 Please note that this becomes irrelevant if you perform continuous checks on moving objects. In that case, both godotccd and Godot's Area will find the collision(s) reliably, it might merely be a frame or two later than the other method.
 
