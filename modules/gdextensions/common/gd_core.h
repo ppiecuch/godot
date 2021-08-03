@@ -34,6 +34,7 @@
 #include "core/class_db.h"
 #include "core/math/vector2.h"
 #include "core/os/os.h"
+#include "core/engine.h"
 #include "core/ustring.h"
 #include "scene/main/scene_tree.h"
 
@@ -56,6 +57,13 @@
 #define _HAS_EXCEPTIONS
 #endif
 
+#if TOOLS_ENABLED
+#define IN_EDITOR (Engine::get_singleton()->is_editor_hint() || OS::get_singleton()->is_no_window_mode_enabled())
+#else
+#define IN_EDITOR (false)
+#endif
+
+
 #define safe_delete(pPtr) (memdelete(pPtr), pPtr = nullptr)
 #define newref(pClass) Ref<pClass>(memnew(pClass))
 
@@ -68,17 +76,13 @@
 #endif
 
 #ifdef DEBUG_ENABLED
-
 // Bind constant with custom name
 #define BIND_ENUM_CONSTANT_CUSTOM(pConstant, pName) \
 	ClassDB::bind_integer_constant(get_class_static(), __constant_get_enum_name(pConstant, pName), pName, ((int)(pConstant)));
-
 #else
-
 // Bind constant with custom name
 #define BIND_ENUM_CONSTANT_CUSTOM(pConstant, pName) \
 	ClassDB::bind_integer_constant(get_class_static(), StringName(), pName, ((int)(pConstant)));
-
 #endif // DEBUG_ENABLED
 
 static inline void _trace(int line, const char *file, const String &text) {
