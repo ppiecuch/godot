@@ -1,0 +1,615 @@
+[gd_scene load_steps=7 format=2]
+
+[ext_resource path="res://Main.gd" type="Script" id=1]
+[ext_resource path="res://fonts/action_font.tres" type="DynamicFont" id=2]
+[ext_resource path="res://fonts/table_font.tres" type="DynamicFont" id=3]
+
+[sub_resource type="SphereShape" id=1]
+
+[sub_resource type="BoxShape" id=2]
+
+[sub_resource type="CylinderShape" id=3]
+
+[node name="Main" type="Spatial"]
+script = ExtResource( 1 )
+
+[node name="SphereArea" type="Area" parent="."]
+
+[node name="CollisionShape" type="CollisionShape" parent="SphereArea"]
+shape = SubResource( 1 )
+
+[node name="BoxArea" type="Area" parent="."]
+
+[node name="CollisionShape" type="CollisionShape" parent="BoxArea"]
+shape = SubResource( 2 )
+
+[node name="BoxArea2" type="Area" parent="."]
+transform = Transform( 0.423662, 0.90582, 0, -0.873733, 0.408654, -0.263806, -0.238961, 0.111764, 0.964576, 65.88, 0, 58.707 )
+
+[node name="CollisionShape" type="CollisionShape" parent="BoxArea2"]
+shape = SubResource( 2 )
+
+[node name="BoxArea3" type="Area" parent="."]
+transform = Transform( 0.779382, -0.626549, -8.38968e-08, -0.60128, -0.747948, -0.281136, 0.176145, 0.219112, -0.959668, 66.871, 0, 56.254 )
+
+[node name="CollisionShape" type="CollisionShape" parent="BoxArea3"]
+shape = SubResource( 2 )
+
+[node name="CylinderArea" type="Area" parent="."]
+
+[node name="CollisionShape" type="CollisionShape" parent="CylinderArea"]
+shape = SubResource( 3 )
+
+[node name="lblAdvance" type="RichTextLabel" parent="."]
+margin_left = 290.0
+margin_top = 840.0
+margin_right = 1140.0
+margin_bottom = 890.0
+custom_fonts/normal_font = ExtResource( 2 )
+bbcode_enabled = true
+bbcode_text = "[center]Press Space to begin the next test...[/center]"
+text = "Press Space to begin the next test..."
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+margin_right = 1440.0
+margin_bottom = 278.0
+grow_horizontal = 0
+grow_vertical = 0
+alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
+margin_right = 1440.0
+margin_bottom = 32.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+alignment = 1
+
+[node name="RichTextLabel" type="RichTextLabel" parent="VBoxContainer/HBoxContainer"]
+margin_right = 195.0
+margin_bottom = 32.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+
+[node name="VSeparator" type="VSeparator" parent="VBoxContainer/HBoxContainer"]
+margin_left = 199.0
+margin_right = 203.0
+margin_bottom = 32.0
+
+[node name="RichTextLabel2" type="RichTextLabel" parent="VBoxContainer/HBoxContainer"]
+margin_left = 207.0
+margin_right = 402.0
+margin_bottom = 32.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+bbcode_text = "[center]Box <> Box[/center]"
+text = "Box <> Box"
+
+[node name="VSeparator2" type="VSeparator" parent="VBoxContainer/HBoxContainer"]
+margin_left = 406.0
+margin_right = 410.0
+margin_bottom = 32.0
+
+[node name="RichTextLabel3" type="RichTextLabel" parent="VBoxContainer/HBoxContainer"]
+margin_left = 414.0
+margin_right = 610.0
+margin_bottom = 32.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+bbcode_text = "[center]Sphere <> Sphere[/center]"
+text = "Sphere <> Sphere"
+
+[node name="VSeparator3" type="VSeparator" parent="VBoxContainer/HBoxContainer"]
+margin_left = 614.0
+margin_right = 618.0
+margin_bottom = 32.0
+
+[node name="RichTextLabel4" type="RichTextLabel" parent="VBoxContainer/HBoxContainer"]
+margin_left = 622.0
+margin_right = 817.0
+margin_bottom = 32.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+bbcode_text = "[center]Cylinder <> Cylinder[/center]"
+text = "Cylinder <> Cylinder"
+
+[node name="VSeparator4" type="VSeparator" parent="VBoxContainer/HBoxContainer"]
+margin_left = 821.0
+margin_right = 825.0
+margin_bottom = 32.0
+
+[node name="RichTextLabel5" type="RichTextLabel" parent="VBoxContainer/HBoxContainer"]
+margin_left = 829.0
+margin_right = 1025.0
+margin_bottom = 32.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+bbcode_text = "[center]Box <> Sphere[/center]"
+text = "Box <> Sphere"
+
+[node name="VSeparator5" type="VSeparator" parent="VBoxContainer/HBoxContainer"]
+margin_left = 1029.0
+margin_right = 1033.0
+margin_bottom = 32.0
+
+[node name="RichTextLabel6" type="RichTextLabel" parent="VBoxContainer/HBoxContainer"]
+margin_left = 1037.0
+margin_right = 1232.0
+margin_bottom = 32.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+bbcode_text = "[center]Box <> Cylinder[/center]"
+text = "Box <> Cylinder"
+
+[node name="VSeparator6" type="VSeparator" parent="VBoxContainer/HBoxContainer"]
+margin_left = 1236.0
+margin_right = 1240.0
+margin_bottom = 32.0
+
+[node name="RichTextLabel7" type="RichTextLabel" parent="VBoxContainer/HBoxContainer"]
+margin_left = 1244.0
+margin_right = 1440.0
+margin_bottom = 32.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+bbcode_text = "[center]Sphere <> Cylinder[/center]"
+text = "Sphere <> Cylinder"
+
+[node name="HSeparator" type="HSeparator" parent="VBoxContainer"]
+margin_top = 36.0
+margin_right = 1440.0
+margin_bottom = 40.0
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer"]
+margin_top = 44.0
+margin_right = 1440.0
+margin_bottom = 108.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+alignment = 1
+
+[node name="lblAreaTitle" type="RichTextLabel" parent="VBoxContainer/HBoxContainer2"]
+margin_right = 195.0
+margin_bottom = 64.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+bbcode_text = "[center]Godot's Area[/center]"
+text = "Godot's Area"
+
+[node name="VSeparator" type="VSeparator" parent="VBoxContainer/HBoxContainer2"]
+margin_left = 199.0
+margin_right = 203.0
+margin_bottom = 64.0
+
+[node name="lblAreaBB" type="RichTextLabel" parent="VBoxContainer/HBoxContainer2"]
+margin_left = 207.0
+margin_right = 402.0
+margin_bottom = 64.0
+rect_min_size = Vector2( 0, 64 )
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+
+[node name="VSeparator2" type="VSeparator" parent="VBoxContainer/HBoxContainer2"]
+margin_left = 406.0
+margin_right = 410.0
+margin_bottom = 64.0
+
+[node name="lblAreaSS" type="RichTextLabel" parent="VBoxContainer/HBoxContainer2"]
+margin_left = 414.0
+margin_right = 610.0
+margin_bottom = 64.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+
+[node name="VSeparator3" type="VSeparator" parent="VBoxContainer/HBoxContainer2"]
+margin_left = 614.0
+margin_right = 618.0
+margin_bottom = 64.0
+
+[node name="lblAreaCC" type="RichTextLabel" parent="VBoxContainer/HBoxContainer2"]
+margin_left = 622.0
+margin_right = 817.0
+margin_bottom = 64.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+
+[node name="VSeparator4" type="VSeparator" parent="VBoxContainer/HBoxContainer2"]
+margin_left = 821.0
+margin_right = 825.0
+margin_bottom = 64.0
+
+[node name="lblAreaBS" type="RichTextLabel" parent="VBoxContainer/HBoxContainer2"]
+margin_left = 829.0
+margin_right = 1025.0
+margin_bottom = 64.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+
+[node name="VSeparator5" type="VSeparator" parent="VBoxContainer/HBoxContainer2"]
+margin_left = 1029.0
+margin_right = 1033.0
+margin_bottom = 64.0
+
+[node name="lblAreaBC" type="RichTextLabel" parent="VBoxContainer/HBoxContainer2"]
+margin_left = 1037.0
+margin_right = 1232.0
+margin_bottom = 64.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+
+[node name="VSeparator6" type="VSeparator" parent="VBoxContainer/HBoxContainer2"]
+margin_left = 1236.0
+margin_right = 1240.0
+margin_bottom = 64.0
+
+[node name="lblAreaSC" type="RichTextLabel" parent="VBoxContainer/HBoxContainer2"]
+margin_left = 1244.0
+margin_right = 1440.0
+margin_bottom = 64.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+
+[node name="HSeparator2" type="HSeparator" parent="VBoxContainer"]
+margin_top = 112.0
+margin_right = 1440.0
+margin_bottom = 116.0
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="VBoxContainer"]
+margin_top = 120.0
+margin_right = 1440.0
+margin_bottom = 152.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="lblGJKTitle" type="RichTextLabel" parent="VBoxContainer/HBoxContainer3"]
+margin_right = 195.0
+margin_bottom = 32.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+bbcode_text = "[center]godotccd GJK[/center]"
+text = "godotccd GJK"
+
+[node name="VSeparator" type="VSeparator" parent="VBoxContainer/HBoxContainer3"]
+margin_left = 199.0
+margin_right = 203.0
+margin_bottom = 32.0
+
+[node name="lblGJKBB" type="RichTextLabel" parent="VBoxContainer/HBoxContainer3"]
+margin_left = 207.0
+margin_right = 402.0
+margin_bottom = 32.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+
+[node name="VSeparator2" type="VSeparator" parent="VBoxContainer/HBoxContainer3"]
+margin_left = 406.0
+margin_right = 410.0
+margin_bottom = 32.0
+
+[node name="lblGJKSS" type="RichTextLabel" parent="VBoxContainer/HBoxContainer3"]
+margin_left = 414.0
+margin_right = 610.0
+margin_bottom = 32.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+
+[node name="VSeparator3" type="VSeparator" parent="VBoxContainer/HBoxContainer3"]
+margin_left = 614.0
+margin_right = 618.0
+margin_bottom = 32.0
+
+[node name="lblGJKCC" type="RichTextLabel" parent="VBoxContainer/HBoxContainer3"]
+margin_left = 622.0
+margin_right = 817.0
+margin_bottom = 32.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+
+[node name="VSeparator4" type="VSeparator" parent="VBoxContainer/HBoxContainer3"]
+margin_left = 821.0
+margin_right = 825.0
+margin_bottom = 32.0
+
+[node name="lblGJKBS" type="RichTextLabel" parent="VBoxContainer/HBoxContainer3"]
+margin_left = 829.0
+margin_right = 1025.0
+margin_bottom = 32.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+
+[node name="VSeparator5" type="VSeparator" parent="VBoxContainer/HBoxContainer3"]
+margin_left = 1029.0
+margin_right = 1033.0
+margin_bottom = 32.0
+
+[node name="lblGJKBC" type="RichTextLabel" parent="VBoxContainer/HBoxContainer3"]
+margin_left = 1037.0
+margin_right = 1232.0
+margin_bottom = 32.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+
+[node name="VSeparator6" type="VSeparator" parent="VBoxContainer/HBoxContainer3"]
+margin_left = 1236.0
+margin_right = 1240.0
+margin_bottom = 32.0
+
+[node name="lblGJKSC" type="RichTextLabel" parent="VBoxContainer/HBoxContainer3"]
+margin_left = 1244.0
+margin_right = 1440.0
+margin_bottom = 32.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+
+[node name="HSeparator3" type="HSeparator" parent="VBoxContainer"]
+margin_top = 156.0
+margin_right = 1440.0
+margin_bottom = 160.0
+
+[node name="HBoxContainer4" type="HBoxContainer" parent="VBoxContainer"]
+margin_top = 164.0
+margin_right = 1440.0
+margin_bottom = 196.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="lblMPRTitle" type="RichTextLabel" parent="VBoxContainer/HBoxContainer4"]
+margin_right = 195.0
+margin_bottom = 32.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+bbcode_text = "[center]godotccd MPR[/center]"
+text = "godotccd MPR"
+
+[node name="VSeparator" type="VSeparator" parent="VBoxContainer/HBoxContainer4"]
+margin_left = 199.0
+margin_right = 203.0
+margin_bottom = 32.0
+
+[node name="lblMPRBB" type="RichTextLabel" parent="VBoxContainer/HBoxContainer4"]
+margin_left = 207.0
+margin_right = 402.0
+margin_bottom = 32.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+
+[node name="VSeparator2" type="VSeparator" parent="VBoxContainer/HBoxContainer4"]
+margin_left = 406.0
+margin_right = 410.0
+margin_bottom = 32.0
+
+[node name="lblMPRSS" type="RichTextLabel" parent="VBoxContainer/HBoxContainer4"]
+margin_left = 414.0
+margin_right = 610.0
+margin_bottom = 32.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+
+[node name="VSeparator3" type="VSeparator" parent="VBoxContainer/HBoxContainer4"]
+margin_left = 614.0
+margin_right = 618.0
+margin_bottom = 32.0
+
+[node name="lblMPRCC" type="RichTextLabel" parent="VBoxContainer/HBoxContainer4"]
+margin_left = 622.0
+margin_right = 817.0
+margin_bottom = 32.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+
+[node name="VSeparator4" type="VSeparator" parent="VBoxContainer/HBoxContainer4"]
+margin_left = 821.0
+margin_right = 825.0
+margin_bottom = 32.0
+
+[node name="lblMPRBS" type="RichTextLabel" parent="VBoxContainer/HBoxContainer4"]
+margin_left = 829.0
+margin_right = 1025.0
+margin_bottom = 32.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+
+[node name="VSeparator5" type="VSeparator" parent="VBoxContainer/HBoxContainer4"]
+margin_left = 1029.0
+margin_right = 1033.0
+margin_bottom = 32.0
+
+[node name="lblMPRBC" type="RichTextLabel" parent="VBoxContainer/HBoxContainer4"]
+margin_left = 1037.0
+margin_right = 1232.0
+margin_bottom = 32.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+
+[node name="VSeparator6" type="VSeparator" parent="VBoxContainer/HBoxContainer4"]
+margin_left = 1236.0
+margin_right = 1240.0
+margin_bottom = 32.0
+
+[node name="lblMPRSC" type="RichTextLabel" parent="VBoxContainer/HBoxContainer4"]
+margin_left = 1244.0
+margin_right = 1440.0
+margin_bottom = 32.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+
+[node name="HSeparator4" type="HSeparator" parent="VBoxContainer"]
+margin_top = 200.0
+margin_right = 1440.0
+margin_bottom = 204.0
+
+[node name="HBoxContainer5" type="HBoxContainer" parent="VBoxContainer"]
+margin_top = 208.0
+margin_right = 1440.0
+margin_bottom = 278.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="lblInfoTitle" type="RichTextLabel" parent="VBoxContainer/HBoxContainer5"]
+margin_right = 195.0
+margin_bottom = 70.0
+rect_min_size = Vector2( 0, 70 )
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+bbcode_text = "[center]GJK & MPR[/center]
+[center]with info[/center]"
+text = "GJK & MPR
+with info"
+
+[node name="VSeparator" type="VSeparator" parent="VBoxContainer/HBoxContainer5"]
+margin_left = 199.0
+margin_right = 203.0
+margin_bottom = 70.0
+
+[node name="lblInfoBB" type="RichTextLabel" parent="VBoxContainer/HBoxContainer5"]
+margin_left = 207.0
+margin_right = 402.0
+margin_bottom = 70.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+
+[node name="VSeparator2" type="VSeparator" parent="VBoxContainer/HBoxContainer5"]
+margin_left = 406.0
+margin_right = 410.0
+margin_bottom = 70.0
+
+[node name="lblInfoSS" type="RichTextLabel" parent="VBoxContainer/HBoxContainer5"]
+margin_left = 414.0
+margin_right = 610.0
+margin_bottom = 70.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+
+[node name="VSeparator3" type="VSeparator" parent="VBoxContainer/HBoxContainer5"]
+margin_left = 614.0
+margin_right = 618.0
+margin_bottom = 70.0
+
+[node name="lblInfoCC" type="RichTextLabel" parent="VBoxContainer/HBoxContainer5"]
+margin_left = 622.0
+margin_right = 817.0
+margin_bottom = 70.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+
+[node name="VSeparator4" type="VSeparator" parent="VBoxContainer/HBoxContainer5"]
+margin_left = 821.0
+margin_right = 825.0
+margin_bottom = 70.0
+
+[node name="lblInfoBS" type="RichTextLabel" parent="VBoxContainer/HBoxContainer5"]
+margin_left = 829.0
+margin_right = 1025.0
+margin_bottom = 70.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+
+[node name="VSeparator5" type="VSeparator" parent="VBoxContainer/HBoxContainer5"]
+margin_left = 1029.0
+margin_right = 1033.0
+margin_bottom = 70.0
+
+[node name="lblInfoBC" type="RichTextLabel" parent="VBoxContainer/HBoxContainer5"]
+margin_left = 1037.0
+margin_right = 1232.0
+margin_bottom = 70.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+
+[node name="VSeparator6" type="VSeparator" parent="VBoxContainer/HBoxContainer5"]
+margin_left = 1236.0
+margin_right = 1240.0
+margin_bottom = 70.0
+
+[node name="lblInfoSC" type="RichTextLabel" parent="VBoxContainer/HBoxContainer5"]
+margin_left = 1244.0
+margin_right = 1440.0
+margin_bottom = 70.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/normal_font = ExtResource( 3 )
+bbcode_enabled = true
+
+[node name="lblDescription" type="RichTextLabel" parent="."]
+margin_left = 170.0
+margin_top = 380.0
+margin_right = 1280.0
+margin_bottom = 790.0
+custom_fonts/normal_font = ExtResource( 3 )
+text = "Test results are: milliseconds (number of collisions)
+
+The \"goal\" of the test is to check if a new shape to be added collides with previously added shapes.
+Each test is done by adding _X_ shapes.
+Before each shape is added at a random position, it is tested for collision with each already existing shape. And then added anyway (to make the test a bit faster).
+Therefore, the first added shape requires 0 collision checks, and the last one up to _X-1_.
+
+Area specialties:
+The Area results are actually still \"too fast\" due to the physics_fps being set to an unreasonably high number (300fps, so that this test row would complete faster).
+The second row of Area is a test in which all shapes have been pre-added to make sure all collisions can be tested at once. That isn't a realistic test (usually, things move around and get added/removed), but it shows that the slowness of Godot's collision checking definitely comes from having to wait for physics frames.
+"
