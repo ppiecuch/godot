@@ -35,6 +35,8 @@
 #include "core/math/vector2.h"
 #include "core/os/os.h"
 #include "core/engine.h"
+#include "core/list.h"
+#include "core/array.h"
 #include "core/ustring.h"
 #include "scene/main/scene_tree.h"
 
@@ -100,6 +102,22 @@ static inline void _trace(int line, const char *file, const String &text) {
 			WARN_PRINT("Cannot register exit callback."); \
 		}                                                 \
 	}
+
+template <typename T> List<T> array_to_list(const Array &p_array) {
+	List<T> ret;
+	for(int i = 0; i < p_array.size(); i++) {
+		ret.push_back(p_array[i]);
+	}
+	return ret;
+}
+
+template <typename T> Array list_to_array(const List<T> &p_list) {
+	Array ret;
+	for (const typename List<T>::Element *E = p_list.front(); E; E = E->next()) {
+		ret.append(E->get());
+	}
+	return ret;
+}
 
 static const Vector2 ONE = Vector2(1, 1);
 static const Vector2 ZERO = Vector2(0, 0);
