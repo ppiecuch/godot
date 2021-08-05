@@ -50,16 +50,21 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Spati
 	String current_name;
 	String base_path = p_path.get_base_dir();
 	Dictionary meta;
+
+	auto save_meta = [&]() {
+		if (current.is_valid()) {
+			current->set_meta("mtl", meta);
+			meta = Dictionary();
+		}
+	};
+
 	while (true) {
 		String l = f->get_line().strip_edges();
 
 		if (l.begins_with("newmtl ")) {
 			//newmtl
 
-			if (current.is_valid()) {
-				current->set_meta("mtl", meta);
-				meta = Dictionary();
-			}
+			save_meta();
 
 			current_name = l.replace("newmtl", "").strip_edges();
 			current.instance();
@@ -215,10 +220,7 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Spati
 	}
 
 	// save outstanding meta:
-	if (current.is_valid()) {
-		current->set_meta("mtl", meta);
-		meta = Dictionary();
-	}
+	save_meta();
 
 	return OK;
 }
