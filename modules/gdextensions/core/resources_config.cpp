@@ -169,7 +169,7 @@ void Resources::load_config() {
 				break;
 			} else {
 #ifdef DEBUG_ENABLED
-				print_line("Failed to load resources: " + error_line);
+				print_line("Failed to load/parse resources: " + error_line);
 #endif
 			}
 		}
@@ -189,10 +189,10 @@ RES Resources::get_resource(const String &p_res_name) {
 		const ObjectNode &res = config_root.get(p_res_name);
 		res_path = res.name;
 		res_hint = res.value;
-		if (res_hint == "Texture") {
+		if (res_hint == "Texture" or res_hint == "Mesh") {
 			res_path = res.attribs.at("file").value;
 		}
-		ERR_FAIL_COND_V_MSG(res_path.empty(), RES(), "Resources not found.");
+		ERR_FAIL_COND_V_MSG(res_path.empty(), RES(), "Resource not found.");
 		_resources_loaded[p_res_name] = std::make_pair(res_path, res_hint);
 	}
 	return ResourceLoader::load(res_path, res_hint);
