@@ -58,7 +58,7 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Spati
 
 			if (current.is_valid()) {
 				current->set_meta("mtl", meta);
-				meta.clear();
+				meta = Dictionary();
 			}
 
 			current_name = l.replace("newmtl", "").strip_edges();
@@ -212,6 +212,12 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Spati
 		} else if (f->eof_reached()) {
 			break;
 		}
+	}
+
+	// save outstanding meta:
+	if (current.is_valid()) {
+		current->set_meta("mtl", meta);
+		meta = Dictionary();
 	}
 
 	return OK;
