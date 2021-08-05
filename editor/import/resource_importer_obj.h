@@ -33,6 +33,23 @@
 
 #include "resource_importer_scene.h"
 
+class EditorOBJPostImport : public Reference {
+	GDCLASS(EditorOBJPostImport, Reference);
+
+	String source_folder;
+	String source_file;
+
+protected:
+	static void _bind_methods();
+
+public:
+	String get_source_folder() const;
+	String get_source_file() const;
+	virtual List<Ref<Mesh>> post_import(List<Ref<Mesh>> p_meshes);
+	virtual void init(const String &p_source_folder, const String &p_source_file);
+	EditorOBJPostImport();
+};
+
 class EditorOBJImporter : public EditorSceneImporter {
 	GDCLASS(EditorOBJImporter, EditorSceneImporter);
 

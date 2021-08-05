@@ -36,6 +36,7 @@
 #include "scene/3d/spatial.h"
 #include "scene/resources/mesh.h"
 #include "scene/resources/surface_tool.h"
+#include "editor/plugins/material_editor_plugin.h"
 
 uint32_t EditorOBJImporter::get_import_flags() const {
 	return IMPORT_SCENE;
@@ -48,22 +49,31 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Spati
 	Ref<SpatialMaterial> current;
 	String current_name;
 	String base_path = p_path.get_base_dir();
+	Dictionary meta;
 	while (true) {
 		String l = f->get_line().strip_edges();
 
 		if (l.begins_with("newmtl ")) {
-			//vertex
+			//newmtl
+
+			if (current.is_valid()) {
+				current->set_meta("mtl", meta);
+				meta.clear();
+			}
 
 			current_name = l.replace("newmtl", "").strip_edges();
 			current.instance();
 			current->set_name(current_name);
 			material_map[current_name] = current;
 		} else if (l.begins_with("Ka ")) {
-			//uv
+			//ambient
 			WARN_PRINT("OBJ: Ambient light for material '" + current_name + "' is ignored in PBR");
 
+			Vector<String> v = l.split(" ", false);
+			ERR_FAIL_COND_V(v.size() < 4, ERR_INVALID_DATA);
+			meta["Ka"] = Color(v[1].to_float(), v[2].to_float(), v[3].to_float());
 		} else if (l.begins_with("Kd ")) {
-			//normal
+			//albedo
 			ERR_FAIL_COND_V(current.is_null(), ERR_FILE_CORRUPT);
 			Vector<String> v = l.split(" ", false);
 			ERR_FAIL_COND_V(v.size() < 4, ERR_INVALID_DATA);
@@ -72,8 +82,9 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Spati
 			c.g = v[2].to_float();
 			c.b = v[3].to_float();
 			current->set_albedo(c);
+			meta["Kd"] = c;
 		} else if (l.begins_with("Ks ")) {
-			//normal
+			//metalness
 			ERR_FAIL_COND_V(current.is_null(), ERR_FILE_CORRUPT);
 			Vector<String> v = l.split(" ", false);
 			ERR_FAIL_COND_V(v.size() < 4, ERR_INVALID_DATA);
@@ -82,15 +93,18 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Spati
 			float b = v[3].to_float();
 			float metalness = MAX(r, MAX(g, b));
 			current->set_metallic(metalness);
+			meta["Ks"] = metalness;
 		} else if (l.begins_with("Ns ")) {
 			//normal
 			ERR_FAIL_COND_V(current.is_null(), ERR_FILE_CORRUPT);
 			Vector<String> v = l.split(" ", false);
 			ERR_FAIL_COND_V(v.size() != 2, ERR_INVALID_DATA);
 			float s = v[1].to_float();
-			current->set_metallic((1000.0 - s) / 1000.0);
+			float m = (1000.0 - s) / 1000.0;
+			current->set_metallic(m);
+			meta["Ns"] = m;
 		} else if (l.begins_with("d ")) {
-			//normal
+			//transparency
 			ERR_FAIL_COND_V(current.is_null(), ERR_FILE_CORRUPT);
 			Vector<String> v = l.split(" ", false);
 			ERR_FAIL_COND_V(v.size() != 2, ERR_INVALID_DATA);
@@ -101,8 +115,10 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Spati
 			if (c.a < 0.99) {
 				current->set_feature(SpatialMaterial::FEATURE_TRANSPARENT, true);
 			}
+			meta["Kd"] = c;
+			meta["d"] = d;
 		} else if (l.begins_with("Tr ")) {
-			//normal
+			//transparency
 			ERR_FAIL_COND_V(current.is_null(), ERR_FILE_CORRUPT);
 			Vector<String> v = l.split(" ", false);
 			ERR_FAIL_COND_V(v.size() != 2, ERR_INVALID_DATA);
@@ -113,13 +129,14 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Spati
 			if (c.a < 0.99) {
 				current->set_feature(SpatialMaterial::FEATURE_TRANSPARENT, true);
 			}
-
+			meta["Kd"] = c;
+			meta["Tr"] = d;
 		} else if (l.begins_with("map_Ka ")) {
-			//uv
+			//ambient texture
 			WARN_PRINT("OBJ: Ambient light texture for material '" + current_name + "' is ignored in PBR");
 
 		} else if (l.begins_with("map_Kd ")) {
-			//normal
+			//albedo texture
 			ERR_FAIL_COND_V(current.is_null(), ERR_FILE_CORRUPT);
 
 			String p = l.replace("map_Kd", "").replace("\\", "/").strip_edges();
@@ -159,7 +176,7 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Spati
 			}
 
 		} else if (l.begins_with("map_Ns ")) {
-			//normal
+			//roughness texture
 			ERR_FAIL_COND_V(current.is_null(), ERR_FILE_CORRUPT);
 
 			String p = l.replace("map_Ns", "").replace("\\", "/").strip_edges();
@@ -178,7 +195,7 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Spati
 				r_missing_deps->push_back(path);
 			}
 		} else if (l.begins_with("map_bump ")) {
-			//normal
+			//normalmap texture
 			ERR_FAIL_COND_V(current.is_null(), ERR_FILE_CORRUPT);
 
 			String p = l.replace("map_bump", "").replace("\\", "/").strip_edges();
@@ -200,7 +217,7 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Spati
 	return OK;
 }
 
-static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_single_mesh, bool p_generate_tangents, bool p_optimize, Vector3 p_scale_mesh, Vector3 p_offset_mesh, List<String> *r_missing_deps) {
+static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_single_mesh, bool p_generate_tangents, bool p_optimize, bool p_to_shadermaterial, Vector3 p_scale_mesh, Vector3 p_offset_mesh, List<String> *r_missing_deps) {
 	FileAccessRef f = FileAccess::open(p_path, FileAccess::READ);
 	ERR_FAIL_COND_V_MSG(!f, ERR_CANT_OPEN, vformat("Couldn't open OBJ file '%s', it may not exist or not be readable.", p_path));
 
@@ -217,6 +234,9 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 	Vector<Vector2> uvs;
 	String name;
 
+	Ref<SpatialMaterialConversionPlugin> spatial_mat_convert = memnew(SpatialMaterialConversionPlugin);
+
+	Map<String, Ref<ShaderMaterial>> material_map_conv;
 	Map<String, Map<String, Ref<SpatialMaterial>>> material_map;
 
 	Ref<SurfaceTool> surf_tool = memnew(SurfaceTool);
@@ -345,7 +365,19 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 				print_verbose("OBJ: Current material " + current_material + " has " + itos(material_map.has(current_material_library) && material_map[current_material_library].has(current_material)));
 
 				if (material_map.has(current_material_library) && material_map[current_material_library].has(current_material)) {
-					surf_tool->set_material(material_map[current_material_library][current_material]);
+					if (p_to_shadermaterial) {
+						String key = current_material_library + ":" + current_material;
+						if (not material_map_conv.has(key)) {
+							material_map[current_material_library][current_material]->flush_changes(); // materialize shader
+							material_map_conv[key] = spatial_mat_convert->convert(material_map[current_material_library][current_material]);
+							if (material_map[current_material_library][current_material]->has_meta("mtl")) {
+								material_map_conv[key]->set_meta("mtl", material_map[current_material_library][current_material]->get_meta("mtl"));
+							}
+						}
+						surf_tool->set_material(material_map_conv[key]);
+					} else {
+						surf_tool->set_material(material_map[current_material_library][current_material]);
+					}
 				}
 
 				mesh = surf_tool->commit(mesh, mesh_flags);
@@ -386,13 +418,11 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 			if (l.begins_with("g ")) {
 				current_group = l.substr(2, l.length()).strip_edges();
 			}
-
 		} else if (l.begins_with("mtllib ")) { //parse material
-
 			current_material_library = l.replace("mtllib", "").strip_edges();
 			if (!material_map.has(current_material_library)) {
 				Map<String, Ref<SpatialMaterial>> lib;
-				Error err = _parse_material_library(current_material_library, lib, r_missing_deps);
+				Error err = FileAccess::exists(current_material_library) ? _parse_material_library(current_material_library, lib, r_missing_deps) : ERR_CANT_OPEN;
 				if (err == ERR_CANT_OPEN) {
 					String dir = p_path.get_base_dir();
 					err = _parse_material_library(dir.plus_file(current_material_library), lib, r_missing_deps);
@@ -414,7 +444,7 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 Node *EditorOBJImporter::import_scene(const String &p_path, uint32_t p_flags, int p_bake_fps, List<String> *r_missing_deps, Error *r_err) {
 	List<Ref<Mesh>> meshes;
 
-	Error err = _parse_obj(p_path, meshes, false, p_flags & IMPORT_GENERATE_TANGENT_ARRAYS, p_flags & IMPORT_USE_COMPRESSION, Vector3(1, 1, 1), Vector3(0, 0, 0), r_missing_deps);
+	Error err = _parse_obj(p_path, meshes, false, p_flags & IMPORT_GENERATE_TANGENT_ARRAYS, p_flags & IMPORT_USE_COMPRESSION, false, Vector3(1, 1, 1), Vector3(0, 0, 0), r_missing_deps);
 
 	if (err != OK) {
 		if (r_err) {
@@ -479,6 +509,21 @@ void ResourceImporterOBJ::get_import_options(List<ImportOption> *r_options, int 
 	r_options->push_back(ImportOption(PropertyInfo(Variant::VECTOR3, "scale_mesh"), Vector3(1, 1, 1)));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::VECTOR3, "offset_mesh"), Vector3(0, 0, 0)));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::BOOL, "optimize_mesh"), true));
+	r_options->push_back(ImportOption(PropertyInfo(Variant::BOOL, "convert_to_shadermaterial"), false));
+
+	List<String> script_extentions;
+	ResourceLoader::get_recognized_extensions_for_type("Script", &script_extentions);
+
+	String script_ext_hint;
+
+	for (List<String>::Element *E = script_extentions.front(); E; E = E->next()) {
+		if (script_ext_hint != "") {
+			script_ext_hint += ",";
+		}
+		script_ext_hint += "*." + E->get();
+	}
+
+	r_options->push_back(ImportOption(PropertyInfo(Variant::STRING, "custom_script", PROPERTY_HINT_FILE, script_ext_hint), ""));
 }
 bool ResourceImporterOBJ::get_option_visibility(const String &p_option, const Map<StringName, Variant> &p_options) const {
 	return true;
@@ -487,10 +532,37 @@ bool ResourceImporterOBJ::get_option_visibility(const String &p_option, const Ma
 Error ResourceImporterOBJ::import(const String &p_source_file, const String &p_save_path, const Map<StringName, Variant> &p_options, List<String> *r_platform_variants, List<String> *r_gen_files, Variant *r_metadata) {
 	List<Ref<Mesh>> meshes;
 
-	Error err = _parse_obj(p_source_file, meshes, true, p_options["generate_tangents"], p_options["optimize_mesh"], p_options["scale_mesh"], p_options["offset_mesh"], nullptr);
+	Error err = _parse_obj(p_source_file, meshes, true, p_options["generate_tangents"], p_options["optimize_mesh"], p_options["convert_to_shadermaterial"], p_options["scale_mesh"], p_options["offset_mesh"], nullptr);
 
 	ERR_FAIL_COND_V(err != OK, err);
 	ERR_FAIL_COND_V(meshes.size() != 1, ERR_BUG);
+
+
+	String post_import_script_path = p_options["custom_script"];
+	Ref<EditorOBJPostImport> post_import_script;
+
+	if (post_import_script_path != "") {
+		print_verbose("OBJ: Running Custom Script...");
+
+		Ref<Script> scr = ResourceLoader::load(post_import_script_path);
+		if (!scr.is_valid()) {
+			print_verbose(vformat("Couldn't load post-import script: %s",  post_import_script_path));
+		} else {
+			post_import_script = Ref<EditorOBJPostImport>(memnew(EditorOBJPostImport));
+			post_import_script->set_script(scr.get_ref_ptr());
+			if (!post_import_script->get_script_instance()) {
+				print_verbose(vformat("Invalid/broken script for post-import: %s",  post_import_script_path));
+				post_import_script.unref();
+				return ERR_CANT_CREATE;
+			}
+		}
+	}
+
+	if (post_import_script.is_valid()) {
+		String base_path = p_save_path.get_base_dir();
+		post_import_script->init(base_path, p_source_file);
+		meshes = post_import_script->post_import(meshes);
+	}
 
 	String save_path = p_save_path + ".mesh";
 
@@ -504,4 +576,64 @@ Error ResourceImporterOBJ::import(const String &p_source_file, const String &p_s
 }
 
 ResourceImporterOBJ::ResourceImporterOBJ() {
+}
+
+/////////////////////////////////
+
+List<Ref<Mesh>> _array_to_list(const Array &p_array) {
+	List<Ref<Mesh>> ret;
+	for(int i = 0; i < p_array.size(); i++) {
+		ret.push_back(p_array[i]);
+	}
+	return ret;
+}
+
+Array _list_to_array(const List<Ref<Mesh>> &p_list) {
+	Array ret;
+	for (const List<Ref<Mesh>>::Element *E = p_list.front(); E; E = E->next()) {
+		ret.append(E->get());
+	}
+	return ret;
+}
+
+void EditorOBJPostImport::_bind_methods() {
+	BIND_VMETHOD(MethodInfo(Variant::ARRAY, "post_import", PropertyInfo(Variant::ARRAY, "meshes")));
+
+	ClassDB::bind_method(D_METHOD("get_source_folder"), &EditorOBJPostImport::get_source_folder);
+	ClassDB::bind_method(D_METHOD("get_source_file"), &EditorOBJPostImport::get_source_file);
+}
+
+List<Ref<Mesh>> EditorOBJPostImport::post_import(List<Ref<Mesh>> p_meshes) {
+	if (get_script_instance()) {
+		Variant::CallError ce;
+		ce.error = Variant::CallError::CALL_OK;
+		Variant vref = _list_to_array(p_meshes);
+		const Variant *refp[] = { &vref };
+		Variant ret = get_script_instance()->call("post_import", refp, 1, ce);
+
+		if (ret.get_type() != Variant::ARRAY || ce.error != Variant::CallError::CALL_OK) {
+			// script failed
+			return p_meshes;
+		}
+
+		return _array_to_list(ret);
+	}
+
+	return p_meshes;
+}
+
+String EditorOBJPostImport::get_source_folder() const {
+	return source_folder;
+}
+
+String EditorOBJPostImport::get_source_file() const {
+	return source_file;
+}
+
+void EditorOBJPostImport::init(const String &p_source_folder, const String &p_source_file) {
+	source_folder = p_source_folder;
+	source_file = p_source_file;
+}
+
+EditorOBJPostImport::EditorOBJPostImport() {
 }

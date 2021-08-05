@@ -3818,6 +3818,7 @@ void EditorNode::register_editor_types() {
 
 	// FIXME: Is this stuff obsolete, or should it be ported to new APIs?
 	ClassDB::register_class<EditorScenePostImport>();
+	ClassDB::register_class<EditorOBJPostImport>();
 	//ClassDB::register_type<EditorImportExport>();
 }
 
