@@ -413,27 +413,26 @@ void InspectorDock::update(Object *p_object) {
 
 	current = p_object;
 
-	if (!p_object) {
-		object_menu->set_disabled(true);
-		warning->hide();
-		search->set_editable(false);
-		editor_path->clear_path();
-		return;
-	}
+	const bool is_object = p_object != nullptr;
+	const bool is_resource = is_object && p_object->is_class("Resource");
+	const bool is_node = is_object && p_object->is_class("Node");
 
-	bool is_resource = p_object->is_class("Resource");
-	bool is_node = p_object->is_class("Node");
-
-	object_menu->set_disabled(false);
-	search->set_editable(true);
-	editor_path->enable_path();
-
+	object_menu->set_disabled(!is_object);
+	search->set_editable(is_object);
 	resource_save_button->set_disabled(!is_resource);
-	open_docs_button->set_visible(is_resource || is_node);
+	open_docs_button->set_disabled(!is_resource && !is_node);
 
 	PopupMenu *resource_extra_popup = resource_extra_button->get_popup();
 	resource_extra_popup->set_item_disabled(resource_extra_popup->get_item_index(RESOURCE_COPY), !is_resource);
 	resource_extra_popup->set_item_disabled(resource_extra_popup->get_item_index(RESOURCE_MAKE_BUILT_IN), !is_resource);
+
+	if (!is_object) {
+		warning->hide();
+		editor_path->clear_path();
+		return;
+	}
+
+	editor_path->enable_path();
 
 	PopupMenu *p = object_menu->get_popup();
 
@@ -570,7 +569,7 @@ InspectorDock::InspectorDock(EditorNode *p_editor, EditorData &p_editor_data) {
 
 	open_docs_button = memnew(Button);
 	open_docs_button->set_flat(true);
-	open_docs_button->set_visible(false);
+	open_docs_button->set_disabled(true);
 	open_docs_button->set_tooltip(TTR("Open documentation for this object."));
 	open_docs_button->set_icon(get_icon("HelpSearch", "EditorIcons"));
 	open_docs_button->set_shortcut(ED_SHORTCUT("property_editor/open_help", TTR("Open Documentation")));

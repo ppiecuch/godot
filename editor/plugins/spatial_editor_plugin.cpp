@@ -136,9 +136,11 @@ void ViewportRotationControl::_draw_axis(const Axis2D &p_axis) {
 	}
 
 	if (front) {
-		String axis_name = direction == 0 ? "X" : (direction == 1 ? "Y" : "Z");
 		draw_circle(p_axis.screen_point, AXIS_CIRCLE_RADIUS, c);
-		draw_char(get_font("rotation_control", "EditorFonts"), p_axis.screen_point + Vector2(-4.0, 5.0) * EDSCALE, axis_name, "", Color(0.3, 0.3, 0.3));
+		if (positive) {
+			String axis_name = direction == 0 ? "X" : (direction == 1 ? "Y" : "Z");
+			draw_char(get_font("rotation_control", "EditorFonts"), p_axis.screen_point + Vector2(-4.0, 5.0) * EDSCALE, axis_name, "", Color(0.0, 0.0, 0.0));
+		}
 	} else {
 		draw_circle(p_axis.screen_point, AXIS_CIRCLE_RADIUS * (0.55 + (0.2 * (1.0 + p_axis.z_axis))), c);
 	}
@@ -4305,28 +4307,31 @@ void SpatialEditor::show_advanced_portal_tools(bool p_show) {
 }
 
 void SpatialEditor::update_portal_tools() {
-	// the view portal culling toggle
-	int view_portal_item_index = view_menu->get_popup()->get_item_index(MENU_VIEW_PORTAL_CULLING);
-	if (RoomManager::active_room_manager) {
-		view_menu->get_popup()->set_item_disabled(view_portal_item_index, false);
+	// just some protection against calling null pointers, hopefully not needed
+	if (view_menu && view_menu->get_popup()) {
+		// the view portal culling toggle
+		int view_portal_item_index = view_menu->get_popup()->get_item_index(MENU_VIEW_PORTAL_CULLING);
+		if (RoomManager::active_room_manager) {
+			view_menu->get_popup()->set_item_disabled(view_portal_item_index, false);
 
-		bool active = RoomManager::static_rooms_get_active();
-		view_menu->get_popup()->set_item_checked(view_portal_item_index, active);
-	} else {
-		view_menu->get_popup()->set_item_disabled(view_portal_item_index, true);
-	}
+			bool active = RoomManager::static_rooms_get_active();
+			view_menu->get_popup()->set_item_checked(view_portal_item_index, active);
+		} else {
+			view_menu->get_popup()->set_item_disabled(view_portal_item_index, true);
+		}
 
-	// toolbar button
-	Button *const button = tool_button[TOOL_CONVERT_ROOMS];
+		// toolbar button
+		Button *const button = tool_button[TOOL_CONVERT_ROOMS];
 
-	if (RoomManager::active_room_manager) {
-		button->show();
-	} else {
-		button->hide();
-	}
+		if (RoomManager::active_room_manager) {
+			button->show();
+		} else {
+			button->hide();
+		}
 
-	for (uint32_t i = 0; i < VIEWPORTS_COUNT; i++) {
-		viewports[i]->_update_name();
+		for (uint32_t i = 0; i < VIEWPORTS_COUNT; i++) {
+			viewports[i]->_update_name();
+		}
 	}
 }
 
@@ -6391,7 +6396,9 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 	hbc_menu->add_child(context_menu_container);
 	_update_context_menu_stylebox();
 
+	// Get the view menu popup and have it stay open when a checkable item is selected
 	p = view_menu->get_popup();
+	p->set_hide_on_checkable_item_selection(false);
 
 	accept = memnew(AcceptDialog);
 	editor->get_gui_base()->add_child(accept);
@@ -6579,6 +6586,10 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 	EDITOR_DEF("editors/3d/navigation/show_viewport_rotation_gizmo", true);
 
 	over_gizmo_handle = -1;
+
+	// make sure the portal tools are off by default
+	// (when no RoomManager is present)
+	update_portal_tools();
 }
 
 SpatialEditor::~SpatialEditor() {

@@ -968,7 +968,7 @@ void _OS::print_all_textures_by_size() {
 		ResourceCache::get_cached_resources(&rsrc);
 
 		for (List<Ref<Resource>>::Element *E = rsrc.front(); E; E = E->next()) {
-			if (!E->get()->is_class("ImageTexture")) {
+			if (!E->get()->is_class("Texture")) {
 				continue;
 			}
 
@@ -988,14 +988,30 @@ void _OS::print_all_textures_by_size() {
 
 	imgs.sort();
 
-	for (List<_OSCoreBindImg>::Element *E = imgs.front(); E; E = E->next()) {
-		total -= E->get().vram;
+	if (imgs.size() == 0) {
+		print_line("No textures seem used in this project.");
+	} else {
+		print_line("Textures currently in use, sorted by VRAM usage:\n"
+				   "Path - VRAM usage (Dimensions)");
 	}
+
+	for (List<_OSCoreBindImg>::Element *E = imgs.front(); E; E = E->next()) {
+		print_line(vformat("%s - %s %s",
+				E->get().path,
+				String::humanize_size(E->get().vram),
+				E->get().size));
+	}
+
+	print_line(vformat("Total VRAM usage: %s.", String::humanize_size(total)));
 }
 
 void _OS::print_resources_by_type(const Vector<String> &p_types) {
-	Map<String, int> type_count;
+	ERR_FAIL_COND_MSG(p_types.size() == 0,
+			"At least one type should be provided to print resources by type.");
 
+	print_line(vformat("Resources currently in use for the following types: %s", p_types));
+
+	Map<String, int> type_count;
 	List<Ref<Resource>> resources;
 	ResourceCache::get_cached_resources(&resources);
 
@@ -1018,8 +1034,20 @@ void _OS::print_resources_by_type(const Vector<String> &p_types) {
 		}
 
 		type_count[r->get_class()]++;
+
+		print_line(vformat("%s: %s", r->get_class(), r->get_path()));
+
+		List<String> metas;
+		r->get_meta_list(&metas);
+		for (List<String>::Element *F = metas.front(); F; F = F->next()) {
+			print_line(vformat("  %s: %s", F->get(), r->get_meta(F->get())));
+		}
 	}
-};
+
+	for (Map<String, int>::Element *E = type_count.front(); E; E = E->next()) {
+		print_line(vformat("%s count: %d", E->key(), E->get()));
+	}
+}
 
 bool _OS::has_virtual_keyboard() const {
 	return OS::get_singleton()->has_virtual_keyboard();
@@ -2589,7 +2617,36 @@ void _Thread::_start_func(void *ud) {
 	memdelete(tud);
 	Variant::CallError ce;
 	const Variant *arg[1] = { &t->userdata };
-	int argc = (int)(arg[0]->get_type() != Variant::NIL);
+	int argc = 0;
+	if (arg[0]->get_type() != Variant::NIL) {
+		// Just pass to the target function whatever came as user data
+		argc = 1;
+	} else {
+		// There are two cases of null user data:
+		// a) The target function has zero parameters and the caller is just honoring that.
+		// b) The target function has at least one parameter with no default and the caller is
+		//    leveraging the fact that user data defaults to null in Thread.start().
+		//    We care about the case of more than one parameter because, even if a thread
+		//    function can have one at most, out mindset here is to do our best with the
+		//    only/first one and let the call handle any other error conditions, like too
+		//    much arguments.
+		// We must check if we are in case b).
+		int target_param_count = 0;
+		int target_default_arg_count = 0;
+		Ref<Script> script = t->target_instance->get_script();
+		if (script.is_valid()) {
+			MethodInfo mi = script->get_method_info(t->target_method);
+			target_param_count = mi.arguments.size();
+			target_default_arg_count = mi.default_arguments.size();
+		} else {
+			MethodBind *method = ClassDB::get_method(t->target_instance->get_class_name(), t->target_method);
+			target_param_count = method->get_argument_count();
+			target_default_arg_count = method->get_default_argument_count();
+		}
+		if (target_param_count >= 1 && target_default_arg_count == target_param_count) {
+			argc = 1;
+		}
+	}
 
 	Thread::set_name(t->target_method);
 
