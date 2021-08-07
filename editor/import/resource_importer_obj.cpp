@@ -32,11 +32,11 @@
 
 #include "core/io/resource_saver.h"
 #include "core/os/file_access.h"
+#include "editor/plugins/material_editor_plugin.h"
 #include "scene/3d/mesh_instance.h"
 #include "scene/3d/spatial.h"
 #include "scene/resources/mesh.h"
 #include "scene/resources/surface_tool.h"
-#include "editor/plugins/material_editor_plugin.h"
 
 uint32_t EditorOBJImporter::get_import_flags() const {
 	return IMPORT_SCENE;
@@ -545,7 +545,6 @@ Error ResourceImporterOBJ::import(const String &p_source_file, const String &p_s
 	ERR_FAIL_COND_V(err != OK, err);
 	ERR_FAIL_COND_V(meshes.size() != 1, ERR_BUG);
 
-
 	String post_import_script_path = p_options["custom_script"];
 	Ref<EditorOBJPostImport> post_import_script;
 
@@ -554,12 +553,12 @@ Error ResourceImporterOBJ::import(const String &p_source_file, const String &p_s
 
 		Ref<Script> scr = ResourceLoader::load(post_import_script_path);
 		if (!scr.is_valid()) {
-			print_verbose(vformat("Couldn't load post-import script: %s",  post_import_script_path));
+			print_verbose(vformat("Couldn't load post-import script: %s", post_import_script_path));
 		} else {
 			post_import_script = Ref<EditorOBJPostImport>(memnew(EditorOBJPostImport));
 			post_import_script->set_script(scr.get_ref_ptr());
 			if (!post_import_script->get_script_instance()) {
-				print_verbose(vformat("Invalid/broken script for post-import: %s",  post_import_script_path));
+				print_verbose(vformat("Invalid/broken script for post-import: %s", post_import_script_path));
 				post_import_script.unref();
 				return ERR_CANT_CREATE;
 			}
@@ -590,7 +589,7 @@ ResourceImporterOBJ::ResourceImporterOBJ() {
 
 List<Ref<Mesh>> _array_to_list(const Array &p_array) {
 	List<Ref<Mesh>> ret;
-	for(int i = 0; i < p_array.size(); i++) {
+	for (int i = 0; i < p_array.size(); i++) {
 		ret.push_back(p_array[i]);
 	}
 	return ret;

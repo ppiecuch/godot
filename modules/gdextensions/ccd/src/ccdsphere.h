@@ -87,7 +87,7 @@ public:
 
 	virtual Vector3 getPosition() const;
 	virtual Quat getRotation() const;
-	virtual void *getCCDStruct() const{ return (void *)&ccdSphere; }
+	virtual void *getCCDStruct() const { return (void *)&ccdSphere; }
 	virtual int getCCDType() const { return CCDTYPE_SPHERE; }
 
 	CCDSphere();
