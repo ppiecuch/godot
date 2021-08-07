@@ -2060,6 +2060,18 @@ void register_variant_methods() {
 	ADDFUNC1R(BASIS, BASIS, Basis, scaled, VECTOR3, "scale", varray());
 	ADDFUNC0R(BASIS, VECTOR3, Basis, get_scale, varray());
 	ADDFUNC0R(BASIS, VECTOR3, Basis, get_euler, varray());
+	ADDFUNC0R(BASIS, VECTOR3, Basis, get_euler_xyz, varray());
+	ADDFUNC1(BASIS, NIL, Basis, set_euler_xyz, VECTOR3, "angles", varray());
+	ADDFUNC0R(BASIS, VECTOR3, Basis, get_euler_xzy, varray());
+	ADDFUNC1(BASIS, NIL, Basis, set_euler_xzy, VECTOR3, "angles", varray());
+	ADDFUNC0R(BASIS, VECTOR3, Basis, get_euler_yzx, varray());
+	ADDFUNC1(BASIS, NIL, Basis, set_euler_yzx, VECTOR3, "angles", varray());
+	ADDFUNC0R(BASIS, VECTOR3, Basis, get_euler_yxz, varray());
+	ADDFUNC1(BASIS, NIL, Basis, set_euler_yxz, VECTOR3, "angles", varray());
+	ADDFUNC0R(BASIS, VECTOR3, Basis, get_euler_zxy, varray());
+	ADDFUNC1(BASIS, NIL, Basis, set_euler_zxy, VECTOR3, "angles", varray());
+	ADDFUNC0R(BASIS, VECTOR3, Basis, get_euler_zyx, varray());
+	ADDFUNC1(BASIS, NIL, Basis, set_euler_zyx, VECTOR3, "angles", varray());
 	ADDFUNC1R(BASIS, REAL, Basis, tdotx, VECTOR3, "with", varray());
 	ADDFUNC1R(BASIS, REAL, Basis, tdoty, VECTOR3, "with", varray());
 	ADDFUNC1R(BASIS, REAL, Basis, tdotz, VECTOR3, "with", varray());
