@@ -310,7 +310,6 @@ enum KeyModifierMask {
 #else
 	KEY_MASK_CMD = KEY_MASK_CTRL,
 #endif
-
 	KEY_MASK_KPAD = (1 << 29),
 	KEY_MASK_GROUP_SWITCH = (1 << 30)
 	// bit 31 can't be used because variant uses regular 32 bits int as datatype
