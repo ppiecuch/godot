@@ -333,10 +333,18 @@ RID VisualServer::get_white_texture() {
 // Resulting 2D vector in range [-1, 1]
 // See http://jcgt.org/published/0003/02/01/ for details
 Vector2 VisualServer::norm_to_oct(const Vector3 v) {
-	const float invL1Norm = (1.0f) / (Math::absf(v.x) + Math::absf(v.y) + Math::absf(v.z));
+	const float L1Norm = Math::absf(v.x) + Math::absf(v.y) + Math::absf(v.z);
+
+	// NOTE: this will mean it decompresses to 0,0,1
+	// Discussed heavily here: https://github.com/godotengine/godot/pull/51268 as to why we did this
+	if (Math::is_zero_approx(L1Norm)) {
+		WARN_PRINT_ONCE("Octahedral compression cannot be used to compress a zero-length vector, please use normalized normal values or disable octahedral compression")
+		return Vector2(0, 0);
+	}
+
+	const float invL1Norm = 1.0f / L1Norm;
 
 	Vector2 res;
-
 	if (v.z < 0.0f) {
 		res.x = (1.0f - Math::absf(v.y * invL1Norm)) * SGN(v.x);
 		res.y = (1.0f - Math::absf(v.x * invL1Norm)) * SGN(v.y);
@@ -491,7 +499,7 @@ Error VisualServer::_surface_set_data(Array p_arrays, uint32_t p_format, uint32_
 				// setting vertices means regenerating the AABB
 
 				if (p_format & ARRAY_FLAG_USE_OCTAHEDRAL_COMPRESSION) {
-					if (p_format & ARRAY_COMPRESS_NORMAL) {
+					if ((p_format & ARRAY_COMPRESS_NORMAL) && (p_format & ARRAY_FORMAT_TANGENT) && (p_format & ARRAY_COMPRESS_TANGENT)) {
 						for (int i = 0; i < p_vertex_array_len; i++) {
 							Vector2 res = norm_to_oct(src[i]);
 							int8_t vector[2] = {
@@ -878,7 +886,10 @@ uint32_t VisualServer::mesh_surface_make_offsets_from_format(uint32_t p_format, 
 			} break;
 			case VS::ARRAY_NORMAL: {
 				if (p_format & ARRAY_FLAG_USE_OCTAHEDRAL_COMPRESSION) {
-					if (p_format & ARRAY_COMPRESS_NORMAL) {
+					// normal will always be oct32 (4 byte) encoded
+					// UNLESS tangent exists and is also compressed
+					// then it will be oct16 encoded along with tangent
+					if ((p_format & ARRAY_COMPRESS_NORMAL) && (p_format & ARRAY_FORMAT_TANGENT) && (p_format & ARRAY_COMPRESS_TANGENT)) {
 						elem_size = sizeof(uint8_t) * 2;
 					} else {
 						elem_size = sizeof(uint16_t) * 2;
@@ -1083,7 +1094,10 @@ void VisualServer::mesh_add_surface_from_arrays(RID p_mesh, PrimitiveType p_prim
 			} break;
 			case VS::ARRAY_NORMAL: {
 				if (p_compress_format & ARRAY_FLAG_USE_OCTAHEDRAL_COMPRESSION) {
-					if (p_compress_format & ARRAY_COMPRESS_NORMAL) {
+					// normal will always be oct32 (4 byte) encoded
+					// UNLESS tangent exists and is also compressed
+					// then it will be oct16 encoded along with tangent
+					if ((p_compress_format & ARRAY_COMPRESS_NORMAL) && (format & ARRAY_FORMAT_TANGENT) && (p_compress_format & ARRAY_COMPRESS_TANGENT)) {
 						elem_size = sizeof(uint8_t) * 2;
 					} else {
 						elem_size = sizeof(uint16_t) * 2;
@@ -1286,7 +1300,10 @@ Array VisualServer::_get_array_from_surface(uint32_t p_format, PoolVector<uint8_
 			} break;
 			case VS::ARRAY_NORMAL: {
 				if (p_format & ARRAY_FLAG_USE_OCTAHEDRAL_COMPRESSION) {
-					if (p_format & ARRAY_COMPRESS_NORMAL) {
+					// normal will always be oct32 (4 byte) encoded
+					// UNLESS tangent exists and is also compressed
+					// then it will be oct16 encoded along with tangent
+					if ((p_format & ARRAY_COMPRESS_NORMAL) && (p_format & ARRAY_FORMAT_TANGENT) && (p_format & ARRAY_COMPRESS_TANGENT)) {
 						elem_size = sizeof(uint8_t) * 2;
 					} else {
 						elem_size = sizeof(uint16_t) * 2;
@@ -1443,7 +1460,7 @@ Array VisualServer::_get_array_from_surface(uint32_t p_format, PoolVector<uint8_
 				arr.resize(p_vertex_len);
 
 				if (p_format & ARRAY_FLAG_USE_OCTAHEDRAL_COMPRESSION) {
-					if (p_format & ARRAY_COMPRESS_NORMAL) {
+					if (p_format & ARRAY_COMPRESS_NORMAL && (p_format & ARRAY_FORMAT_TANGENT) && (p_format & ARRAY_COMPRESS_TANGENT)) {
 						PoolVector<Vector3>::Write w = arr.write();
 
 						for (int j = 0; j < p_vertex_len; j++) {
@@ -1995,6 +2012,7 @@ void VisualServer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("viewport_set_msaa", "viewport", "msaa"), &VisualServer::viewport_set_msaa);
 	ClassDB::bind_method(D_METHOD("viewport_set_use_fxaa", "viewport", "fxaa"), &VisualServer::viewport_set_use_fxaa);
 	ClassDB::bind_method(D_METHOD("viewport_set_use_debanding", "viewport", "debanding"), &VisualServer::viewport_set_use_debanding);
+	ClassDB::bind_method(D_METHOD("viewport_set_sharpen_intensity", "viewport", "intensity"), &VisualServer::viewport_set_sharpen_intensity);
 	ClassDB::bind_method(D_METHOD("viewport_set_hdr", "viewport", "enabled"), &VisualServer::viewport_set_hdr);
 	ClassDB::bind_method(D_METHOD("viewport_set_usage", "viewport", "usage"), &VisualServer::viewport_set_usage);
 	ClassDB::bind_method(D_METHOD("viewport_get_render_info", "viewport", "info"), &VisualServer::viewport_get_render_info);
@@ -2596,6 +2614,14 @@ VisualServer::VisualServer() {
 	ProjectSettings::get_singleton()->set_custom_property_info("rendering/batching/lights/max_join_items", PropertyInfo(Variant::INT, "rendering/batching/lights/max_join_items", PROPERTY_HINT_RANGE, "0,512"));
 	ProjectSettings::get_singleton()->set_custom_property_info("rendering/batching/parameters/item_reordering_lookahead", PropertyInfo(Variant::INT, "rendering/batching/parameters/item_reordering_lookahead", PROPERTY_HINT_RANGE, "0,256"));
 	ProjectSettings::get_singleton()->set_custom_property_info("rendering/batching/precision/uv_contract_amount", PropertyInfo(Variant::INT, "rendering/batching/precision/uv_contract_amount", PROPERTY_HINT_RANGE, "0,10000"));
+
+	// Portal rendering settings
+	GLOBAL_DEF("rendering/portals/pvs/use_simple_pvs", false);
+	GLOBAL_DEF("rendering/portals/pvs/pvs_logging", false);
+	GLOBAL_DEF("rendering/portals/gameplay/use_signals", true);
+	GLOBAL_DEF("rendering/portals/optimize/remove_danglers", true);
+	GLOBAL_DEF("rendering/portals/debug/logging", true);
+	GLOBAL_DEF("rendering/portals/advanced/flip_imported_portals", false);
 }
 
 VisualServer::~VisualServer() {

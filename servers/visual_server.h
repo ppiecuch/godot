@@ -693,6 +693,7 @@ public:
 	virtual void viewport_set_msaa(RID p_viewport, ViewportMSAA p_msaa) = 0;
 	virtual void viewport_set_use_fxaa(RID p_viewport, bool p_fxaa) = 0;
 	virtual void viewport_set_use_debanding(RID p_viewport, bool p_debanding) = 0;
+	virtual void viewport_set_sharpen_intensity(RID p_viewport, float p_intensity) = 0;
 
 	enum ViewportUsage {
 		VIEWPORT_USAGE_2D,
@@ -904,7 +905,7 @@ public:
 	virtual void room_prepare(RID p_room, int32_t p_priority) = 0;
 	virtual void rooms_and_portals_clear(RID p_scenario) = 0;
 	virtual void rooms_unload(RID p_scenario) = 0;
-	virtual void rooms_finalize(RID p_scenario, bool p_generate_pvs, bool p_cull_using_pvs, bool p_use_secondary_pvs, bool p_use_signals, String p_pvs_filename) = 0;
+	virtual void rooms_finalize(RID p_scenario, bool p_generate_pvs, bool p_cull_using_pvs, bool p_use_secondary_pvs, bool p_use_signals, String p_pvs_filename, bool p_use_simple_pvs, bool p_log_pvs_generation) = 0;
 	virtual void rooms_override_camera(RID p_scenario, bool p_override, const Vector3 &p_point, const Vector<Plane> *p_convex) = 0;
 	virtual void rooms_set_active(RID p_scenario, bool p_active) = 0;
 	virtual void rooms_set_params(RID p_scenario, int p_portal_depth_limit) = 0;

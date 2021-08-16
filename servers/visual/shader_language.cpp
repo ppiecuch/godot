@@ -1321,7 +1321,7 @@ bool ShaderLanguage::_validate_operator(OperatorNode *p_op, DataType *r_ret_type
 			DataType nb = p_op->arguments[1]->get_datatype();
 
 			if (na == nb) {
-				valid = (na > TYPE_BOOL && na < TYPE_MAT2) || (p_op->op == OP_ASSIGN_MUL && na >= TYPE_MAT2 && na <= TYPE_MAT4);
+				valid = (na > TYPE_BOOL && na <= TYPE_MAT4);
 				ret_type = na;
 			} else if (na == TYPE_IVEC2 && nb == TYPE_INT) {
 				valid = true;
@@ -3639,6 +3639,7 @@ ShaderLanguage::Node *ShaderLanguage::_parse_expression(BlockNode *p_block, cons
 				bool is_const = false;
 				int array_size = 0;
 				StringName struct_name;
+				bool is_local = false;
 
 				if (p_block && p_block->block_tag != SubClassTag::TAG_GLOBAL) {
 					int idx = 0;
@@ -3664,9 +3665,16 @@ ShaderLanguage::Node *ShaderLanguage::_parse_expression(BlockNode *p_block, cons
 					if (ident_type == IDENTIFIER_VARYING) {
 						TkPos prev_pos = _get_tkpos();
 						Token next_token = _get_token();
-						_set_tkpos(prev_pos);
-						String error;
 
+						// An array of varyings.
+						if (next_token.type == TK_BRACKET_OPEN) {
+							_get_token(); // Pass constant.
+							_get_token(); // Pass TK_BRACKET_CLOSE.
+							next_token = _get_token();
+						}
+						_set_tkpos(prev_pos);
+
+						String error;
 						if (is_token_operator_assign(next_token.type)) {
 							if (!_validate_varying_assign(shader->varyings[identifier], &error)) {
 								_set_error(error);
@@ -3684,6 +3692,8 @@ ShaderLanguage::Node *ShaderLanguage::_parse_expression(BlockNode *p_block, cons
 						_set_error("Can't use function as identifier: " + String(identifier));
 						return nullptr;
 					}
+
+					is_local = ident_type == IDENTIFIER_LOCAL_VAR || ident_type == IDENTIFIER_FUNCTION_ARGUMENT;
 				}
 
 				Node *index_expression = nullptr;
@@ -3760,6 +3770,7 @@ ShaderLanguage::Node *ShaderLanguage::_parse_expression(BlockNode *p_block, cons
 					arrname->call_expression = call_expression;
 					arrname->assign_expression = assign_expression;
 					arrname->is_const = is_const;
+					arrname->is_local = is_local;
 					expr = arrname;
 
 				} else {
@@ -3768,6 +3779,7 @@ ShaderLanguage::Node *ShaderLanguage::_parse_expression(BlockNode *p_block, cons
 					varname->datatype_cache = data_type;
 					varname->is_const = is_const;
 					varname->struct_name = struct_name;
+					varname->is_local = is_local;
 					expr = varname;
 				}
 			}
@@ -5934,6 +5946,7 @@ Error ShaderLanguage::_parse_shader(const Map<StringName, FunctionInfo> &p_funct
 				DataInterpolation interpolation = INTERPOLATION_SMOOTH;
 				DataType type;
 				StringName name;
+				int array_size = 0;
 
 				tk = _get_token();
 				if (is_token_interpolation(tk.type)) {
@@ -5964,6 +5977,30 @@ Error ShaderLanguage::_parse_shader(const Map<StringName, FunctionInfo> &p_funct
 				}
 
 				tk = _get_token();
+
+				if (tk.type == TK_BRACKET_OPEN) {
+					if (uniform) {
+						_set_error(vformat("Uniform arrays are not yet implemented!"));
+						return ERR_PARSE_ERROR;
+					}
+					tk = _get_token();
+
+					if (tk.type == TK_INT_CONSTANT && tk.constant > 0) {
+						array_size = (int)tk.constant;
+
+						tk = _get_token();
+						if (tk.type == TK_BRACKET_CLOSE) {
+							tk = _get_token();
+						} else {
+							_set_error("Expected ']'");
+							return ERR_PARSE_ERROR;
+						}
+					} else {
+						_set_error("Expected integer constant > 0");
+						return ERR_PARSE_ERROR;
+					}
+				}
+
 				if (tk.type != TK_IDENTIFIER) {
 					_set_error("Expected identifier!");
 					return ERR_PARSE_ERROR;
@@ -6148,6 +6185,7 @@ Error ShaderLanguage::_parse_shader(const Map<StringName, FunctionInfo> &p_funct
 					varying.precision = precision;
 					varying.interpolation = interpolation;
 					varying.tkpos = name_pos;
+					varying.array_size = array_size;
 
 					tk = _get_token();
 					if (tk.type != TK_SEMICOLON && tk.type != TK_BRACKET_OPEN) {
@@ -6156,6 +6194,10 @@ Error ShaderLanguage::_parse_shader(const Map<StringName, FunctionInfo> &p_funct
 					}
 
 					if (tk.type == TK_BRACKET_OPEN) {
+						if (array_size > 0) {
+							_set_error("Array size is already defined!");
+							return ERR_PARSE_ERROR;
+						}
 						tk = _get_token();
 						if (tk.type == TK_INT_CONSTANT && tk.constant > 0) {
 							varying.array_size = (int)tk.constant;
@@ -6553,6 +6595,12 @@ Error ShaderLanguage::_parse_shader(const Map<StringName, FunctionInfo> &p_funct
 				Map<StringName, BuiltInInfo> builtin_types;
 				if (p_functions.has(name)) {
 					builtin_types = p_functions[name].built_ins;
+				}
+
+				if (p_functions.has("global")) { // Adds global variables: 'TIME'
+					for (Map<StringName, BuiltInInfo>::Element *E = p_functions["global"].built_ins.front(); E; E = E->next()) {
+						builtin_types.insert(E->key(), E->value());
+					}
 				}
 
 				ShaderNode::Function function;
@@ -7082,17 +7130,27 @@ Error ShaderLanguage::complete(const String &p_code, const Map<StringName, Funct
 					block = block->parent_block;
 				}
 
-				if (comp_ident && skip_function != StringName() && p_functions.has(skip_function)) {
-					for (Map<StringName, BuiltInInfo>::Element *E = p_functions[skip_function].built_ins.front(); E; E = E->next()) {
-						ScriptCodeCompletionOption::Kind kind = ScriptCodeCompletionOption::KIND_MEMBER;
-						if (E->get().constant) {
-							kind = ScriptCodeCompletionOption::KIND_CONSTANT;
-						}
-						matches.insert(E->key(), kind);
-					}
-				}
-
 				if (comp_ident) {
+					if (p_functions.has("global")) {
+						for (Map<StringName, BuiltInInfo>::Element *E = p_functions["global"].built_ins.front(); E; E = E->next()) {
+							ScriptCodeCompletionOption::Kind kind = ScriptCodeCompletionOption::KIND_MEMBER;
+							if (E->get().constant) {
+								kind = ScriptCodeCompletionOption::KIND_CONSTANT;
+							}
+							matches.insert(E->key(), kind);
+						}
+					}
+
+					if (skip_function != StringName() && p_functions.has(skip_function)) {
+						for (Map<StringName, BuiltInInfo>::Element *E = p_functions[skip_function].built_ins.front(); E; E = E->next()) {
+							ScriptCodeCompletionOption::Kind kind = ScriptCodeCompletionOption::KIND_MEMBER;
+							if (E->get().constant) {
+								kind = ScriptCodeCompletionOption::KIND_CONSTANT;
+							}
+							matches.insert(E->key(), kind);
+						}
+					}
+
 					for (const Map<StringName, ShaderNode::Varying>::Element *E = shader->varyings.front(); E; E = E->next()) {
 						matches.insert(E->key(), ScriptCodeCompletionOption::KIND_VARIABLE);
 					}

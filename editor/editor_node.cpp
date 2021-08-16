@@ -521,8 +521,10 @@ void EditorNode::_notification(int p_what) {
 
 			_update_debug_options();
 
-			// Save the project after opening to mark it as last modified.
-			ProjectSettings::get_singleton()->save();
+			// Save the project after opening to mark it as last modified, except in headless mode.
+			if (OS::get_singleton()->can_draw() && !OS::get_singleton()->is_no_window_mode_enabled()) {
+				ProjectSettings::get_singleton()->save();
+			}
 
 			/* DO NOT LOAD SCENES HERE, WAIT FOR FILE SCANNING AND REIMPORT TO COMPLETE */
 		} break;
@@ -1496,7 +1498,9 @@ static void _reset_animation_players(Node *p_node, List<Ref<AnimatedValuesBackup
 		AnimationPlayer *player = Object::cast_to<AnimationPlayer>(p_node->get_child(i));
 		if (player && player->is_reset_on_save_enabled() && player->can_apply_reset()) {
 			Ref<AnimatedValuesBackup> old_values = player->apply_reset();
-			r_anim_backups->push_back(old_values);
+			if (old_values.is_valid()) {
+				r_anim_backups->push_back(old_values);
+			}
 		}
 		_reset_animation_players(p_node->get_child(i), r_anim_backups);
 	}
@@ -4892,6 +4896,16 @@ void EditorNode::_scene_tab_input(const Ref<InputEvent> &p_input) {
 			}
 			scene_tabs_context_menu->set_position(mb->get_global_position());
 			scene_tabs_context_menu->popup();
+		}
+		if (mb->get_button_index() == BUTTON_WHEEL_UP && mb->is_pressed()) {
+			int previous_tab = editor_data.get_edited_scene() - 1;
+			previous_tab = previous_tab >= 0 ? previous_tab : editor_data.get_edited_scene_count() - 1;
+			_scene_tab_changed(previous_tab);
+		}
+		if (mb->get_button_index() == BUTTON_WHEEL_DOWN && mb->is_pressed()) {
+			int next_tab = editor_data.get_edited_scene() + 1;
+			next_tab %= editor_data.get_edited_scene_count();
+			_scene_tab_changed(next_tab);
 		}
 	}
 }

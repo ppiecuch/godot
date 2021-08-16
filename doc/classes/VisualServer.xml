@@ -15,7 +15,7 @@
 		In 2D, all visible objects are some form of canvas item. In order to be visible, a canvas item needs to be the child of a canvas attached to a viewport, or it needs to be the child of another canvas item that is eventually attached to the canvas.
 	</description>
 	<tutorials>
-		<link>https://docs.godotengine.org/en/3.3/tutorials/optimization/using_servers.html</link>
+		<link>https://docs.godotengine.org/en/3.4/tutorials/optimization/using_servers.html</link>
 	</tutorials>
 	<methods>
 		<method name="black_bars_set_images">
@@ -3046,6 +3046,14 @@
 				Sets the size of the shadow atlas's images (used for omni and spot lights). The value will be rounded up to the nearest power of 2.
 			</description>
 		</method>
+		<method name="viewport_set_sharpen_intensity">
+			<return type="void" />
+			<argument index="0" name="viewport" type="RID" />
+			<argument index="1" name="intensity" type="float" />
+			<description>
+				Sets the sharpening [code]intensity[/code] for the [code]viewport[/code]. If set to a value greater than [code]0.0[/code], contrast-adaptive sharpening will be applied to the 3D viewport. This has a low performance cost and can be used to recover some of the sharpness lost from using FXAA. Values around [code]0.5[/code] generally give the best results. See also [method viewport_set_use_fxaa].
+			</description>
+		</method>
 		<method name="viewport_set_size">
 			<return type="void" />
 			<argument index="0" name="viewport" type="RID" />
@@ -3101,7 +3109,7 @@
 			<argument index="0" name="viewport" type="RID" />
 			<argument index="1" name="fxaa" type="bool" />
 			<description>
-				Enables fast approximate antialiasing for this viewport. FXAA is a popular screen-space antialiasing method, which is fast but will make the image look blurry, especially at lower resolutions. It can still work relatively well at large resolutions such as 1440p and 4K.
+				Enables fast approximate antialiasing for this viewport. FXAA is a popular screen-space antialiasing method, which is fast but will make the image look blurry, especially at lower resolutions. It can still work relatively well at large resolutions such as 1440p and 4K. Some of the lost sharpness can be recovered by enabling contrast-adaptive sharpening (see [method viewport_set_sharpen_intensity]).
 			</description>
 		</method>
 		<method name="viewport_set_vflip">

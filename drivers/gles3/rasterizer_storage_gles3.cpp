@@ -3403,15 +3403,15 @@ void RasterizerStorageGLES3::mesh_add_surface(RID p_mesh, uint32_t p_format, VS:
 			} break;
 			case VS::ARRAY_NORMAL: {
 				if (p_format & VS::ARRAY_FLAG_USE_OCTAHEDRAL_COMPRESSION) {
+					// Always pack normal and tangent into vec4
+					// normal will be xy tangent will be zw
+					// normal will always be oct32 (4 byte) encoded
+					// UNLESS tangent exists and is also compressed
+					// then it will be oct16 encoded along with tangent
 					attribs[i].normalized = GL_TRUE;
-					attribs[i].size = 2;
-					if (p_format & VS::ARRAY_COMPRESS_NORMAL) {
-						attribs[i].type = GL_BYTE;
-						attributes_stride += 2;
-					} else {
-						attribs[i].type = GL_SHORT;
-						attributes_stride += 4;
-					}
+					attribs[i].size = 4;
+					attribs[i].type = GL_SHORT;
+					attributes_stride += 4;
 				} else {
 					attribs[i].size = 3;
 
@@ -3429,13 +3429,14 @@ void RasterizerStorageGLES3::mesh_add_surface(RID p_mesh, uint32_t p_format, VS:
 			} break;
 			case VS::ARRAY_TANGENT: {
 				if (p_format & VS::ARRAY_FLAG_USE_OCTAHEDRAL_COMPRESSION) {
-					attribs[i].normalized = GL_TRUE;
-					attribs[i].size = 2;
+					attribs[i].enabled = false;
 					if (p_format & VS::ARRAY_COMPRESS_TANGENT) {
-						attribs[i].type = GL_BYTE;
-						attributes_stride += 2;
+						// normal and tangent will each be oct16 (2 bytes each)
+						// pack into single vec4<GL_BYTE> for memory bandwidth
+						// savings while keeping 4 byte alignment
+						attribs[VS::ARRAY_NORMAL].type = GL_BYTE;
 					} else {
-						attribs[i].type = GL_SHORT;
+						// normal and tangent will each be oct32 (4 bytes each)
 						attributes_stride += 4;
 					}
 				} else {
@@ -3852,6 +3853,18 @@ VS::BlendShapeMode RasterizerStorageGLES3::mesh_get_blend_shape_mode(RID p_mesh)
 	ERR_FAIL_COND_V(!mesh, VS::BLEND_SHAPE_MODE_NORMALIZED);
 
 	return mesh->blend_shape_mode;
+}
+
+void RasterizerStorageGLES3::mesh_set_blend_shape_values(RID p_mesh, PoolVector<float> p_values) {
+	Mesh *mesh = mesh_owner.getornull(p_mesh);
+	ERR_FAIL_COND(!mesh);
+	mesh->blend_shape_values = p_values;
+}
+
+PoolVector<float> RasterizerStorageGLES3::mesh_get_blend_shape_values(RID p_mesh) const {
+	const Mesh *mesh = mesh_owner.getornull(p_mesh);
+	ERR_FAIL_COND_V(!mesh, PoolVector<float>());
+	return mesh->blend_shape_values;
 }
 
 void RasterizerStorageGLES3::mesh_surface_update_region(RID p_mesh, int p_surface, int p_offset, const PoolVector<uint8_t> &p_data) {
@@ -7507,6 +7520,13 @@ void RasterizerStorageGLES3::render_target_set_use_debanding(RID p_render_target
 	ERR_FAIL_COND(!rt);
 
 	rt->use_debanding = p_debanding;
+}
+
+void RasterizerStorageGLES3::render_target_set_sharpen_intensity(RID p_render_target, float p_intensity) {
+	RenderTarget *rt = render_target_owner.getornull(p_render_target);
+	ERR_FAIL_COND(!rt);
+
+	rt->sharpen_intensity = p_intensity;
 }
 
 /* CANVAS SHADOW */
