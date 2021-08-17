@@ -78,6 +78,7 @@ struct RasterizerStorageMetal::MetalMesh : public RID_Data {
 	Vector<MetalSurface> surfaces;
 	int blend_shape_count;
 	VS::BlendShapeMode blend_shape_mode;
+	PoolRealArray blend_shape_values;
 };
 
 RID RasterizerStorageMetal::texture_create() {
@@ -388,6 +389,17 @@ VS::BlendShapeMode RasterizerStorageMetal::mesh_get_blend_shape_mode(RID p_mesh)
 	MetalMesh *m = mesh_owner.getornull(p_mesh);
 	ERR_FAIL_COND_V(!m, VS::BLEND_SHAPE_MODE_NORMALIZED);
 	return m->blend_shape_mode;
+}
+
+void RasterizerStorageMetal::mesh_set_blend_shape_values(RID p_mesh, PoolVector<float> p_values) {
+	MetalMesh *m = mesh_owner.getornull(p_mesh);
+	ERR_FAIL_COND(!m);
+	m->blend_shape_values = p_values;
+}
+PoolVector<float> RasterizerStorageMetal::mesh_get_blend_shape_values(RID p_mesh) const {
+	MetalMesh *m = mesh_owner.getornull(p_mesh);
+	ERR_FAIL_COND_V(!m, PoolRealArray());
+	return m->blend_shape_values;
 }
 
 void RasterizerStorageMetal::mesh_surface_update_region(RID p_mesh, int p_surface, int p_offset, const PoolVector<uint8_t> &p_data) {}
@@ -877,6 +889,7 @@ void RasterizerStorageMetal::render_target_clear_used(RID p_render_target) {}
 void RasterizerStorageMetal::render_target_set_msaa(RID p_render_target, VS::ViewportMSAA p_msaa) {}
 void RasterizerStorageMetal::render_target_set_use_fxaa(RID p_render_target, bool p_fxaa) {}
 void RasterizerStorageMetal::render_target_set_use_debanding(RID p_render_target, bool p_debanding) {}
+void RasterizerStorageMetal::render_target_set_sharpen_intensity(RID p_render_target, float p_intensity) {}
 
 /* CANVAS SHADOW */
 
