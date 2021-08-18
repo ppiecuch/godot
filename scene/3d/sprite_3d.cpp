@@ -559,11 +559,7 @@ void Sprite3D::_draw() {
 		}
 
 		float v_uv[2] = { uvs[i].x, uvs[i].y };
-<<<<<<< HEAD
-		memcpy(&write_buffer[i * mesh_stride + mesh_surface_offsets[VS::ARRAY_TEX_UV]], v_uv, sizeof(float) * 2);
-=======
 		memcpy(&write_buffer[i * mesh_stride[VS::ARRAY_TEX_UV] + mesh_surface_offsets[VS::ARRAY_TEX_UV]], v_uv, 8);
->>>>>>> 3baf5563e89707381df6fcaea6e68ddfc3df4b77
 
 		float v_vertex[3] = { vtx.x, vtx.y, vtx.z };
 		memcpy(&write_buffer[i * mesh_stride[VS::ARRAY_VERTEX] + mesh_surface_offsets[VS::ARRAY_VERTEX]], &v_vertex, sizeof(float) * 3);
@@ -908,11 +904,7 @@ void AnimatedSprite3D::_draw() {
 		}
 
 		float v_uv[2] = { uvs[i].x, uvs[i].y };
-<<<<<<< HEAD
-		memcpy(&write_buffer[i * mesh_stride + mesh_surface_offsets[VS::ARRAY_TEX_UV]], v_uv, sizeof(float) * 2);
-=======
-		memcpy(&write_buffer[i * mesh_stride[VS::ARRAY_TEX_UV] + mesh_surface_offsets[VS::ARRAY_TEX_UV]], v_uv, 8);
->>>>>>> 3baf5563e89707381df6fcaea6e68ddfc3df4b77
+		memcpy(&write_buffer[i * mesh_stride[VS::ARRAY_TEX_UV] + mesh_surface_offsets[VS::ARRAY_TEX_UV]], v_uv, sizeof(float) * 2);
 
 		float v_vertex[3] = { vtx.x, vtx.y, vtx.z };
 		memcpy(&write_buffer[i * mesh_stride[VS::ARRAY_VERTEX] + mesh_surface_offsets[VS::ARRAY_VERTEX]], &v_vertex, sizeof(float) * 3);
