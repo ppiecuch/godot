@@ -287,9 +287,9 @@ public:
 	virtual RID mesh_create() = 0;
 
 	virtual uint32_t mesh_surface_get_format_offset(uint32_t p_format, int p_vertex_len, int p_index_len, int p_array_index) const;
-	virtual uint32_t mesh_surface_get_format_stride(uint32_t p_format, int p_vertex_len, int p_index_len) const;
+	virtual uint32_t mesh_surface_get_format_stride(uint32_t p_format, int p_vertex_len, int p_index_len, int p_array_index) const;
 	/// Returns stride
-	virtual uint32_t mesh_surface_make_offsets_from_format(uint32_t p_format, int p_vertex_len, int p_index_len, uint32_t *r_offsets) const;
+	virtual void mesh_surface_make_offsets_from_format(uint32_t p_format, int p_vertex_len, int p_index_len, uint32_t *r_offsets, uint32_t *r_strides) const;
 	virtual void mesh_add_surface_from_arrays(RID p_mesh, PrimitiveType p_primitive, const Array &p_arrays, const Array &p_blend_shapes = Array(), uint32_t p_compress_format = ARRAY_COMPRESS_DEFAULT);
 	virtual void mesh_add_surface(RID p_mesh, uint32_t p_format, PrimitiveType p_primitive, const PoolVector<uint8_t> &p_array, int p_vertex_count, const PoolVector<uint8_t> &p_index_array, int p_index_count, const AABB &p_aabb, const Vector<PoolVector<uint8_t>> &p_blend_shapes = Vector<PoolVector<uint8_t>>(), const Vector<AABB> &p_bone_aabbs = Vector<AABB>()) = 0;
 
@@ -891,6 +891,20 @@ public:
 	virtual void roomgroup_prepare(RID p_roomgroup, ObjectID p_roomgroup_object_id) = 0;
 	virtual void roomgroup_set_scenario(RID p_roomgroup, RID p_scenario) = 0;
 	virtual void roomgroup_add_room(RID p_roomgroup, RID p_room) = 0;
+
+	// Occluders
+	enum OccluderType {
+		OCCLUDER_TYPE_UNDEFINED,
+		OCCLUDER_TYPE_SPHERE,
+		OCCLUDER_TYPE_NUM_TYPES,
+	};
+
+	virtual RID occluder_create() = 0;
+	virtual void occluder_set_scenario(RID p_occluder, RID p_scenario, VisualServer::OccluderType p_type) = 0;
+	virtual void occluder_spheres_update(RID p_occluder, const Vector<Plane> &p_spheres) = 0;
+	virtual void occluder_set_transform(RID p_occluder, const Transform &p_xform) = 0;
+	virtual void occluder_set_active(RID p_occluder, bool p_active) = 0;
+	virtual void set_use_occlusion_culling(bool p_enable) = 0;
 
 	// Rooms
 	enum RoomsDebugFeature {

@@ -6,7 +6,7 @@ env:
   GODOT_BASE_BRANCH: master
   SCONSFLAGS: platform=javascript verbose=yes warnings=all werror=yes debug_symbols=no --jobs=2
   SCONS_CACHE_LIMIT: 4096
-  EM_VERSION: 2.0.15
+  EM_VERSION: 2.0.25
   EM_CACHE_FOLDER: 'emsdk-cache'
   RETENTION_DAYS: 2
 
@@ -36,6 +36,7 @@ jobs:
             ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}-${{github.sha}}
             ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}
             ${{github.job}}-${{env.GODOT_BASE_BRANCH}}
+        continue-on-error: true
 
       # Additional cache for Emscripten generated system libraries
       - name: Load Emscripten cache
@@ -63,7 +64,7 @@ jobs:
           scons --version
 
       - name: Set up Emscripten latest
-        uses: mymindstorm/setup-emsdk@v7
+        uses: mymindstorm/setup-emsdk@v10
         with:
           version: ${{env.EM_VERSION}}
           actions-cache-folder: ${{env.EM_CACHE_FOLDER}}

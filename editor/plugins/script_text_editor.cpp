@@ -790,6 +790,8 @@ void ScriptEditor::_update_modified_scripts_for_external_editor(Ref<Script> p_fo
 			script->set_source_code(rel_script->get_source_code());
 			script->set_last_modified_time(rel_script->get_last_modified_time());
 			script->update_exports();
+
+			_trigger_live_script_reload();
 		}
 	}
 }
@@ -1407,6 +1409,7 @@ void ScriptTextEditor::_bind_methods() {
 	ClassDB::bind_method("_show_warnings_panel", &ScriptTextEditor::_show_warnings_panel);
 	ClassDB::bind_method("_warning_clicked", &ScriptTextEditor::_warning_clicked);
 	ClassDB::bind_method("_color_changed", &ScriptTextEditor::_color_changed);
+	ClassDB::bind_method("_prepare_edit_menu", &ScriptTextEditor::_prepare_edit_menu);
 
 	ClassDB::bind_method("get_drag_data_fw", &ScriptTextEditor::get_drag_data_fw);
 	ClassDB::bind_method("can_drop_data_fw", &ScriptTextEditor::can_drop_data_fw);
@@ -1688,6 +1691,13 @@ void ScriptTextEditor::_color_changed(const Color &p_color) {
 	code_editor->get_text_edit()->update();
 }
 
+void ScriptTextEditor::_prepare_edit_menu() {
+	const TextEdit *tx = code_editor->get_text_edit();
+	PopupMenu *popup = edit_menu->get_popup();
+	popup->set_item_disabled(popup->get_item_index(EDIT_UNDO), !tx->has_undo());
+	popup->set_item_disabled(popup->get_item_index(EDIT_REDO), !tx->has_redo());
+}
+
 void ScriptTextEditor::_make_context_menu(bool p_selection, bool p_color, bool p_foldable, bool p_open_docs, bool p_goto_definition, Vector2 p_pos) {
 	context_menu->clear();
 	context_menu->add_shortcut(ED_GET_SHORTCUT("script_text_editor/undo"), EDIT_UNDO);
@@ -1726,6 +1736,10 @@ void ScriptTextEditor::_make_context_menu(bool p_selection, bool p_color, bool p
 			context_menu->add_item(TTR("Pick Color"), EDIT_PICK_COLOR);
 		}
 	}
+
+	const TextEdit *tx = code_editor->get_text_edit();
+	context_menu->set_item_disabled(context_menu->get_item_index(EDIT_UNDO), !tx->has_undo());
+	context_menu->set_item_disabled(context_menu->get_item_index(EDIT_REDO), !tx->has_redo());
 
 	context_menu->set_position(get_global_transform().xform(p_pos));
 	context_menu->set_size(Vector2(1, 1));
@@ -1795,6 +1809,7 @@ void ScriptTextEditor::_enable_code_editor() {
 	search_menu->get_popup()->add_shortcut(ED_GET_SHORTCUT("script_text_editor/contextual_help"), HELP_CONTEXTUAL);
 	search_menu->get_popup()->connect("id_pressed", this, "_edit_option");
 	edit_hb->add_child(edit_menu);
+	edit_menu->connect("about_to_show", this, "_prepare_edit_menu");
 	edit_menu->get_popup()->add_shortcut(ED_GET_SHORTCUT("script_text_editor/undo"), EDIT_UNDO);
 	edit_menu->get_popup()->add_shortcut(ED_GET_SHORTCUT("script_text_editor/redo"), EDIT_REDO);
 	edit_menu->get_popup()->add_separator();
