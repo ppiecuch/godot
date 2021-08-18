@@ -302,9 +302,10 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 			Vector<String> face[3];
 			face[0] = v[1].split("/");
 			face[1] = v[2].split("/");
-			ERR_FAIL_COND_V(face[0].size() == 0, ERR_FILE_CORRUPT);
 
+			ERR_FAIL_COND_V(face[0].size() == 0, ERR_FILE_CORRUPT);
 			ERR_FAIL_COND_V(face[0].size() != face[1].size(), ERR_FILE_CORRUPT);
+
 			for (int i = 2; i < v.size() - 1; i++) {
 				face[2] = v[i + 1].split("/");
 
@@ -323,6 +324,13 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 						}
 						ERR_FAIL_INDEX_V(norm, normals.size(), ERR_FILE_CORRUPT);
 						surf_tool->add_normal(normals[norm]);
+					} else if (normals.size() == vertices.size()) {
+						// Assume one normal per vertex
+						int norm = face[idx][0].to_int() - 1;
+						if (norm < 0) {
+							norm += normals.size() + 1;
+						}
+						surf_tool->add_normal(normals[norm]);
 					}
 
 					if (face[idx].size() >= 2 && face[idx][1] != String()) {
@@ -331,6 +339,13 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 							uv += uvs.size() + 1;
 						}
 						ERR_FAIL_INDEX_V(uv, uvs.size(), ERR_FILE_CORRUPT);
+						surf_tool->add_uv(uvs[uv]);
+					} else if (normals.size() == uvs.size()) {
+						// Assume one uv per vertex
+						int uv = face[idx][0].to_int() - 1;
+						if (uv < 0) {
+							uv += uvs.size() + 1;
+						}
 						surf_tool->add_uv(uvs[uv]);
 					}
 
