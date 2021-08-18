@@ -309,6 +309,7 @@ void Label::_notification(int p_what) {
 					}
 				}
 
+				const int last_char = from->word_len - 1;
 				for (int i = 0; i < from->word_len; i++) {
 					if (visible_chars < 0 || chars_total < visible_chars) {
 						CharType c = cc->cache_text[i + pos];
@@ -322,6 +323,9 @@ void Label::_notification(int p_what) {
 							x_ofs += drawer.draw_char(ci, *xform, Point2(x_ofs, y_ofs), c, n, font_color);
 						} else {
 							x_ofs += drawer.draw_char(ci, Point2(x_ofs, y_ofs), c, n, font_color);
+						}
+						if (i < last_char) {
+							x_ofs += horizontal_spacing;
 						}
 						chars_total++;
 					}
@@ -401,6 +405,9 @@ int Label::get_longest_line_width(const String &s) const {
 		}
 
 		if (current < 32) {
+			if (line_width) {
+				line_width -= horizontal_spacing; // remove last spacing
+			}
 			if (current == '\n') {
 				if (line_width > max_line_width) {
 					max_line_width = line_width;
@@ -516,7 +523,7 @@ Label::WordCache Label::calculate_word_cache(const Ref<Font> &font, const String
 				}
 				last = wc;
 
-				wc->pixel_width = current_word_size;
+				wc->pixel_width = current_word_size - horizontal_spacing; // remove last horizontal_spacing
 				wc->char_pos = word_pos;
 				wc->word_len = i - word_pos;
 				wc->line = cache.line_count - 1;
@@ -576,7 +583,7 @@ Label::WordCache Label::calculate_word_cache(const Ref<Font> &font, const String
 			}
 		}
 
-		if ((autowrap && (line_width >= word_cache.width) && ((last && last->char_pos >= 0) || separatable)) || insert_newline) {
+		if ((autowrap && (line_width - horizontal_spacing >= word_cache.width) && ((last && last->char_pos >= 0) || separatable)) || insert_newline) {
 			if (separatable) {
 				if (current_word_size > 0) {
 					WordList *wc = memnew(WordList);
@@ -587,7 +594,7 @@ Label::WordCache Label::calculate_word_cache(const Ref<Font> &font, const String
 					}
 					last = wc;
 
-					wc->pixel_width = current_word_size - char_width;
+					wc->pixel_width = current_word_size - char_width - horizontal_spacing;
 					wc->char_pos = word_pos;
 					wc->word_len = i - word_pos;
 					wc->line = cache.line_count - 1;
@@ -643,7 +650,7 @@ void Label::regenerate_word_cache() {
 	if (!autowrap) {
 		word_cache.minsize.width = word_cache.width;
 	}
-	int line_spacing = get_constant("line_spacing");
+	const int line_spacing = get_constant("line_spacing");
 
 	if (max_lines_visible > 0 && word_cache.line_count > max_lines_visible) {
 		word_cache.minsize.height = (font->get_height() * max_lines_visible) + (line_spacing * (max_lines_visible - 1));
