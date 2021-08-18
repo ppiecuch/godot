@@ -1234,6 +1234,17 @@ void Node::remove_child(Node *p_child) {
 	}
 }
 
+void Node::remove_all_child() {
+	int cc = data.children.size();
+	if (cc) {
+		Node *const *cd = data.children.ptr();
+
+		for (int i = 0; i < cc; i++) {
+			cd[i]->queue_delete();
+		}
+	}
+}
+
 int Node::get_child_count() const {
 	return data.children.size();
 }
@@ -2716,6 +2727,7 @@ void Node::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_name"), &Node::get_name);
 	ClassDB::bind_method(D_METHOD("add_child", "node", "legible_unique_name"), &Node::add_child, DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("remove_child", "node"), &Node::remove_child);
+	ClassDB::bind_method(D_METHOD("remove_all_child"), &Node::remove_all_child);
 	ClassDB::bind_method(D_METHOD("get_child_count"), &Node::get_child_count);
 	ClassDB::bind_method(D_METHOD("get_children"), &Node::_get_children);
 	ClassDB::bind_method(D_METHOD("get_child", "idx"), &Node::get_child);
