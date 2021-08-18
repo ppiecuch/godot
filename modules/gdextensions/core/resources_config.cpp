@@ -189,7 +189,7 @@ RES Resources::get_resource(const String &p_res_name) {
 		const ObjectNode &res = config_root.get(p_res_name);
 		res_path = res.name;
 		res_hint = res.value;
-		if (res_hint == "Texture" or res_hint == "Mesh") {
+		if (res.attribs.count("file")) {
 			res_path = res.attribs.at("file").value;
 		}
 		ERR_FAIL_COND_V_MSG(res_path.empty(), RES(), "Resource not found.");
