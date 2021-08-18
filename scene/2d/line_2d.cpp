@@ -31,6 +31,7 @@
 #include "line_2d.h"
 #include "line_builder.h"
 
+#include "core/engine.h"
 #include "core/core_string_names.h"
 
 // Needed so we can bind functions
@@ -333,23 +334,24 @@ void Line2D::_draw() {
 			texture_rid, -1, RID(), RID(),
 			_antialiased, true);
 
-// DEBUG
-// Draw wireframe
-#if 1
-	if (lb.indices.size() % 3 == 0) {
-		// int lbvsize = lb.vertices.size();
-		Color col(1, 1, 0);
-		for (int i = 0; i < lb.indices.size(); i += 3) {
-			Vector2 a = lb.vertices[lb.indices[i]];
-			Vector2 b = lb.vertices[lb.indices[i + 1]];
-			Vector2 c = lb.vertices[lb.indices[i + 2]];
-			draw_line(a, b, col);
-			draw_line(b, c, col);
-			draw_line(c, a, col);
-		}
-		for (int i = 0; i < lb.vertices.size(); ++i) {
-			Vector2 p = lb.vertices[i];
-			draw_rect(Rect2(p.x - 1, p.y - 1, 2, 2), Color(1, 1, 0, 0.5));
+// Draw wireframe inside editor
+#ifdef TOOLS_ENABLED
+	if (Engine::get_singleton()->is_editor_hint()) {
+		if (lb.indices.size() % 3 == 0) {
+			Color col(1, 1, 0);
+			Color debug(1, 1, 0, 0.5);
+			for (int i = 0; i < lb.indices.size(); i += 3) {
+				Vector2 a = lb.vertices[lb.indices[i]];
+				Vector2 b = lb.vertices[lb.indices[i + 1]];
+				Vector2 c = lb.vertices[lb.indices[i + 2]];
+				draw_line(a, b, col);
+				draw_line(b, c, col);
+				draw_line(c, a, col);
+			}
+			for (int i = 0; i < lb.vertices.size(); ++i) {
+				Vector2 p = lb.vertices[i];
+				draw_rect(Rect2(p.x - 1, p.y - 1, 2, 2), debug);
+			}
 		}
 	}
 #endif

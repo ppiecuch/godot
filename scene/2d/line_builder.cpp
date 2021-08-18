@@ -633,7 +633,6 @@ void LineBuilder::strip_add_tri(Vector2 up, Orientation orientation) {
 	if (texture_mode != Line2D::LINE_TEXTURE_NONE) {
 		// UVs are just one slice of the texture all along
 		// (otherwise we can't share the bottom vertice)
-		print_line(vformat("strip_add_tri uvs: %f", uvs[_last_index[opposite_orientation]]));
 		uvs.push_back(uvs[_last_index[opposite_orientation]]);
 	}
 
@@ -789,11 +788,6 @@ void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float a
 		uv_segs.push_back(1);
 	push_back_if_gtzero(uv_segs, uv1 - Math::floor(uv1));
 
-	print_line(vformat("new_arc uvs_rect: {%s}, {%s}", String(uv_rect), String(interpolate(uv_rect, Vector2(0.5f, 0.5f)))));
-	for (int s = 0; s < uv_segs.size(); ++s) {
-		print_line(vformat("%d uv_segs: %f", s, uv_segs[s]));
-	}
-
 	// Center vertice
 	int vi = vertices.size();
 	vertices.push_back(center);
@@ -840,7 +834,6 @@ void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float a
 	int seg_index = 0, seg_step = 1;
 	Vector2 half_s = center + ho * segs[seg_index]; // band along the half arc
 	for (int ti = 1; ti < steps + 1; ++ti, t += angle_step) {
-		print_line(vformat("ti %d t %f seg_index %d seg_step %d", ti, t, seg_index, seg_step));
 		const Vector2 so = center + Vector2(Math::cos(t), Math::sin(t)) * radius;
 		const Vector2 ro(radius * seg_step, 0); // -radius or radius vector
 		const Vector2 edge = find_intersection(half_s, half_s + ro, last_so, so);
@@ -858,8 +851,6 @@ void LineBuilder::new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float a
 		add_vertex(t, half_s, color);
 		last_so = so;
 	}
-
-	print_line(vformat("steps:%d vi0:%d, size:%d, new:%d", steps, vi, vertices.size(), vertices.size() - vi));
 
 	const int vi0 = vi++;
 	const int st = sc * 2 - 1;
