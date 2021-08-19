@@ -49,3 +49,7 @@ double RandomPCG::random(double p_from, double p_to) {
 float RandomPCG::random(float p_from, float p_to) {
 	return randf() * (p_to - p_from) + p_from;
 }
+
+int RandomPCG::random(int p_from, int p_to) {
+	return rand() * (p_to - p_from) + p_from;
+}

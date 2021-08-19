@@ -292,7 +292,7 @@ public:
 
 	static double random(double from, double to);
 	static float random(float from, float to);
-	static real_t random(int from, int to) { return (real_t)random((real_t)from, (real_t)to); }
+	static int random(int from, int to);
 
 	static _ALWAYS_INLINE_ bool is_equal_approx_ratio(real_t a, real_t b, real_t epsilon = CMP_EPSILON, real_t min_epsilon = CMP_EPSILON) {
 		// this is an approximate way to check that numbers are close, as a ratio of their average size
