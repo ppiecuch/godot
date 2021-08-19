@@ -31,8 +31,8 @@
 #include "line_2d.h"
 #include "line_builder.h"
 
-#include "core/engine.h"
 #include "core/core_string_names.h"
+#include "core/engine.h"
 
 // Needed so we can bind functions
 VARIANT_ENUM_CAST(Line2D::LineJointMode)
