@@ -119,7 +119,7 @@ Vector2 FakeExplosionParticles2D::_get_random_gravity() {
 
 int FakeExplosionParticles2D::_get_random_number() {
 	Math::randomize();
-	return Math::round(Math::rand_range(min_particles_number, max_particles_number));
+	return Math::rand_range(min_particles_number, max_particles_number);
 }
 
 Point2 FakeExplosionParticles2D::_get_random_position() {
