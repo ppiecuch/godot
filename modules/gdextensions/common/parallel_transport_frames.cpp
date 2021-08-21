@@ -1,9 +1,38 @@
+/*************************************************************************/
+/*  parallel_transport_frames.cpp                                        */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
 
 /*
  *  parallel_transport_frames.cpp
  *
  *  Copyright (c) 2012, Neil Mendoza, http://www.neilmendoza.com
- *  All rights reserved. 
+ *  All rights reserved.
  *
  * https://forum.openframeworks.cc/t/how-to-specify-the-starting-orientation-with-ofxptf/28299
  * https://github.com/neilmendoza/ofxPtf/blob/master/src/ParallelTransportFrames.cpp
@@ -11,15 +40,19 @@
  */
 
 #include "parallel_transport_frames.h"
+
+#include "scene/3d/multimesh_instance.h"
+
 #include <limits>
 
-ParallelTransportFrames::ParallelTransportFrames() : max_points(4), max_frames(std::numeric_limits<unsigned>::max()) { }
+ParallelTransportFrames::ParallelTransportFrames() :
+		max_points(4), max_frames(std::numeric_limits<unsigned>::max()) {}
 
 bool ParallelTransportFrames::add_point(real_t x, real_t y, real_t z) {
 	return add_point(Vector3(x, y, z));
 }
 
-bool ParallelTransportFrames::add_point(const Vector3& point) {
+bool ParallelTransportFrames::add_point(const Vector3 &point) {
 	points.push_back(point);
 	while (points.size() > max_points) {
 		points.pop_front();
@@ -39,9 +72,10 @@ void ParallelTransportFrames::first_frame() {
 	Vector3 n = t.cross(points[2] - points[0]);
 	n.normalize();
 
-	if(n.length_squared() == 0) {
+	if (n.length_squared() == 0) {
 		int i = Math::abs(t[0]) < Math::abs(t[1]) ? 0 : 1;
-		if (Math::abs(t[2]) < Math::abs(t[i])) i = 2;
+		if (Math::abs(t[2]) < Math::abs(t[i]))
+			i = 2;
 
 		Vector3 v(0);
 		v[i] = 1;
@@ -63,24 +97,24 @@ void ParallelTransportFrames::next_frame() {
 	Vector3 axis;
 	real_t angle = 0;
 
-	if(prev_tangent.length_squared() != 0 && cur_tangent.length_squared() != 0) {
-
+	if (prev_tangent.length_squared() != 0 && cur_tangent.length_squared() != 0) {
 		cur_tangent.normalize();
 
 		real_t dot = prev_tangent.dot(cur_tangent);
 
-		if( dot > 1 ) dot = 1;
-		else if( dot < -1.0 ) dot = -1;
+		if (dot > 1)
+			dot = 1;
+		else if (dot < -1.0)
+			dot = -1;
 
-		angle = Math::acos( dot );
+		angle = Math::acos(dot);
 		axis = prev_tangent.cross(cur_tangent);
 	}
 
 	if (axis.length_squared() != 0 && angle != 0) {
-
 		Transform r(Basis(axis, angle), Vector3());
 		Transform tj(Basis(), points.back());
-		Transform ti(Basis(),-points[points.size() - 2]);
+		Transform ti(Basis(), -points[points.size() - 2]);
 
 		frames.push_back(tj * r * ti * frames.back());
 	} else {
@@ -104,12 +138,50 @@ Vector3 ParallelTransportFrames::calc_current_normal() const {
 	return normal_matrix().xform(get_start_normal());
 }
 
-void ParallelTransportFrames::debug_draw(CanvasItem &canvas, real_t axis_size) {
-	for (int i = 0; i < frames.size(); ++i) {
-		Transform tr = frames[i].rotated(Vector3(0, 1, 0, 90); // ??
-		canvas.draw_circle(0, 0, axis_size * 2);
-		canvas.draw_axis(axis_size);
+// https://godotengine.org/qa/43701/how-do-draw-lines-like-the-ones-that-appear-the-axis-the-editor
+MultiMeshInstance *ParallelTransportFrames::debug_draw_node(MultiMeshInstance *&node, real_t axis_size) {
+	static Ref<ArrayMesh> _axis;
+
+	if (node == 0) {
+		node = memnew(MultiMeshInstance);
 	}
+
+	if (not _axis) {
+		_axis = Ref<ArrayMesh>(memnew(ArrayMesh));
+		Array mesh_array;
+		mesh_array.resize(VS::ARRAY_MAX);
+		mesh_array[VS::ARRAY_VERTEX] = parray(
+				Vector3(0, 0, 0),
+				Vector3(1, 0, 0),
+				Vector3(0, 0, 0),
+				Vector3(0, 1, 0),
+				Vector3(0, 0, 0),
+				Vector3(0, 0, 1));
+		mesh_array[VS::ARRAY_COLOR] = parray(
+				Color::named("red"),
+				Color::named("red"),
+				Color::named("green"),
+				Color::named("green"),
+				Color::named("blue"),
+				Color::named("blue"));
+		_axis->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, mesh_array, Array());
+
+		Ref<MultiMesh> multi_mesh = memnew(MultiMesh);
+		multi_mesh->set_mesh(_axis);
+		node->set_multimesh(multi_mesh);
+	}
+
+	Ref<MultiMesh> multi_mesh = node->get_multimesh();
+	if (multi_mesh->get_instance_count() < frames.size()) {
+		multi_mesh->set_instance_count(frames.size());
+	}
+	multi_mesh->set_visible_instance_count(frames.size());
+	for (int i = 0; i < frames.size(); ++i) {
+		Transform tr = frames[i].scaled(Vector3::fill(axis_size)).rotated(Vector3(0, 1, 0), 90); // ??
+		multi_mesh->set_instance_transform(i, tr);
+	}
+
+	return node;
 }
 
 void ParallelTransportFrames::clear() {

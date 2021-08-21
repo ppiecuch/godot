@@ -1,10 +1,40 @@
+/*************************************************************************/
+/*  sr_graph.h                                                           */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 /* sr_graph - v1.2 - public domain plot tracer; no warranties implied, use at your own risk.
- 
+
  Usage:
 	 All colors are defined by their red, green, blue components
 	 taking values in [0.0,1.0].
 	 Start by creating a graph using:
- 
+
 		 setup(min x, max x, min y, max y, ratio, margins, red, green, blue);
 
 		        +----+(1,1)
@@ -12,52 +42,52 @@
 		        |    |
 		 (-1,-1)+----+
 
-	 You specify the bounds of the graph (minimal and maximal values on both 
+	 You specify the bounds of the graph (minimal and maximal values on both
 	 axes), the screen ratio, the margins for all sides (between 0 - no margin - and 1 - no
 	 graph -; left+right and bottom+top margins need to be < 2), and the  background color.
 	 This will return an integer ID that you will use as a reference to the graph for later calls.
- 
-	 The graph can be customized by adding axes with arrows (automatically 
+
+	 The graph can be customized by adding axes with arrows (automatically
 	 oriented  toward the increasing values on both axes). You can specify their
 	 width (in [0,1]) and set their color. By default the axes will pass through
-	 the (0,0) point or stick to the sides of the graph the closest to it. You 
+	 the (0,0) point or stick to the sides of the graph the closest to it. You
 	 can also force them to stick on the side by setting 'side axis' to true.
- 
+
 		 add_axes(graphID, width, red, green, blue, side axis);
- 
-	 A regular grid can also be added. Specify the spacing between grid lines on 
-	 both axis, the width (in [0,1]) and color. The grid can either start from 
+
+	 A regular grid can also be added. Specify the spacing between grid lines on
+	 both axis, the width (in [0,1]) and color. The grid can either start from
 	 the left and bottom side of the graph, or be centered on the (0,0) point by
 	 setting 'zero align' to true.
- 
+
 		 add_grid(graphID, step x, step y, width, red, green, blue, zero align);
-	
-	 You can plot continuous curves by specifying lists of X and Y coordinates, 
-	 along with the width ([0,1]) and color of the lines. Points clouds can be 
-	 added in a similar manner, by specifying X and Y coordinates, a point size 
-	 and color. Finally you can also add histograms, by specifying a set of 
-	 values and a number of bins ; spacing between bars and their color should 
+
+	 You can plot continuous curves by specifying lists of X and Y coordinates,
+	 along with the width ([0,1]) and color of the lines. Points clouds can be
+	 added in a similar manner, by specifying X and Y coordinates, a point size
+	 and color. Finally you can also add histograms, by specifying a set of
+	 values and a number of bins ; spacing between bars and their color should
 	 also be specified.
-	
+
 		 add_curve(graphID, x values, y values, line width, red, green, blue);
 		 add_points(graphID, x values, y values, point size, red, green, blue);
 		 add_hist(graphID, number of bins, values, spacing, red, green, blue);
- 
+
 	 These three functions return integers IDs that can then be used to update a
 	 given plot on a given graph at a later time by calling respectively:
- 
+
 		 update_points(graphID, points cloud id, new x values, new y values);
 		 update_curve(graphID, curve id, new x values, new y values);
 		 update_hist(graphID, histogram id, new values);
- 
+
 	 All settings (width, size, bins, colors) are preserved. The IDs are managed
 	 separately for each graph and each type of plot.
- 
+
 	 Call:
- 
+
 		 draw(graphID, screen ratio);
-	
-	 to draw a graph in the current viewport. If a screen ratio is specified, 
+
+	 to draw a graph in the current viewport. If a screen ratio is specified,
 	 the graph will be rescaled to avoid any deformation ; else, nothing is done
 	 to prevent deformations when resizing the window.
 
@@ -65,17 +95,16 @@
 	 1.0 First public version! Support for curves, bar charts, points, axes with
 		 arrows, grid, real-time updates.
 	 1.1 Raylib conversion; c-compatible code
-	 1.2 Godot conversion
+	 1.2 Godot conversion; switch to PoolArrays, mesh drawing
 
  License:
 	 See end of file.
+
+ Reference:
+	 https://github.com/armadillu/ofxHistoryPlot/blob/master/src/ofxHistoryPlot.cpp
+	 https://www.desultoryquest.com/blog/real-time-plotting-on-windows-using-opengl/
+
 */
-
-// Reference:
-// ----------
-// https://github.com/armadillu/ofxHistoryPlot/blob/master/src/ofxHistoryPlot.cpp
-// https://www.desultoryquest.com/blog/real-time-plotting-on-windows-using-opengl/
-
 
 #ifndef SR_GRAPH_H
 #define SR_GRAPH_H
