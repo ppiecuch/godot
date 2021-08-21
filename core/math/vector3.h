@@ -162,6 +162,8 @@ struct Vector3 {
 	_FORCE_INLINE_ Vector3 min(const Vector3 &p_b) { return Vector3(MIN(x, p_b.x), MIN(y, p_b.y), MIN(z, p_b.z)); }
 	_FORCE_INLINE_ Vector3 max(const Vector3 &p_b) { return Vector3(MAX(x, p_b.x), MAX(y, p_b.y), MAX(z, p_b.z)); }
 
+	_FORCE_INLINE_ static Vector3 fill(real_t p_v) { return Vector3(p_v, p_v, p_v); }
+
 	operator String() const;
 
 	_FORCE_INLINE_ Vector3(real_t p_x, real_t p_y, real_t p_z) {
