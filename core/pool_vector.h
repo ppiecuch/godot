@@ -661,4 +661,60 @@ void PoolVector<T>::invert() {
 	}
 }
 
+template <class T>
+PoolVector<T> parray() {
+	PoolVector<T>();
+}
+template <class T>
+PoolVector<T> parray(const T &p_arg1) {
+	PoolVector<T> p;
+	p.push_back(p_arg1);
+	return p;
+}
+template <class T>
+PoolVector<T> parray(const T &p_arg1, const T &p_arg2) {
+	PoolVector<T> p;
+	p.push_back(p_arg1);
+	p.push_back(p_arg2);
+	return p;
+}
+template <class T>
+PoolVector<T> parray(const T &p_arg1, const T &p_arg2, const T &p_arg3) {
+	PoolVector<T> p;
+	p.push_back(p_arg1);
+	p.push_back(p_arg2);
+	p.push_back(p_arg3);
+	return p;
+}
+template <class T>
+PoolVector<T> parray(const T &p_arg1, const T &p_arg2, const T &p_arg3, const T &p_arg4) {
+	PoolVector<T> p;
+	p.push_back(p_arg1);
+	p.push_back(p_arg2);
+	p.push_back(p_arg3);
+	p.push_back(p_arg4);
+	return p;
+}
+template <class T>
+PoolVector<T> parray(const T &p_arg1, const T &p_arg2, const T &p_arg3, const T &p_arg4, const T &p_arg5) {
+	PoolVector<T> p;
+	p.push_back(p_arg1);
+	p.push_back(p_arg2);
+	p.push_back(p_arg3);
+	p.push_back(p_arg4);
+	p.push_back(p_arg5);
+	return p;
+}
+template <class T>
+PoolVector<T> parray(const T &p_arg1, const T &p_arg2, const T &p_arg3, const T &p_arg4, const T &p_arg5, const T &p_arg6) {
+	PoolVector<T> p;
+	p.push_back(p_arg1);
+	p.push_back(p_arg2);
+	p.push_back(p_arg3);
+	p.push_back(p_arg4);
+	p.push_back(p_arg5);
+	p.push_back(p_arg6);
+	return p;
+}
+
 #endif // POOL_VECTOR_H
