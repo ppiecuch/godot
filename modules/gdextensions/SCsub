@@ -10,6 +10,7 @@ env_module = env_modules.Clone()
 sources = Glob("*.cpp")
 modules = [
     "core",
+    "common",
     "visual",
     "environment/tree_2d",
     "environment/spherical_waves",
