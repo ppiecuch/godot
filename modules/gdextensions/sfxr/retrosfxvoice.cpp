@@ -1,4 +1,34 @@
+/*************************************************************************/
+/*  retrosfxvoice.cpp                                                    */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
 
+//
 // This code was originally part of a program called SFXR written by Dr Petter Circa 2007.
 // http://www.drpetter.se/project_sfxr.html
 // I took this code and modified it somewhat for Gilderos procedural sound effects. I also added
@@ -10,6 +40,7 @@
 // are also under the same license.
 //
 // Paul Carter 2018
+//
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -32,10 +63,7 @@ static DirAccess *_current_dir = nullptr;
 struct G_FILE {
 	FileAccess *fa;
 	static String fixpath(const String &p_path) {
-		if (_current_dir
-			&& !p_path.is_abs_path()
-			&& !FileAccess::exists(p_path)
-		) {
+		if (_current_dir && !p_path.is_abs_path() && !FileAccess::exists(p_path)) {
 			return _current_dir->get_current_dir().append_path(p_path);
 		}
 		return p_path;
@@ -62,8 +90,12 @@ struct G_FILE {
 	}
 };
 
-G_FILE *g_open_read(const char* name) { return G_FILE::fopen_read(name); }
-G_FILE *g_open_write(const char* name) { return G_FILE::fopen_write(name); }
+G_FILE *g_open_read(const char *name) {
+	return G_FILE::fopen_read(name);
+}
+G_FILE *g_open_write(const char *name) {
+	return G_FILE::fopen_write(name);
+}
 int g_close(G_FILE *f) {
 	if (f) {
 		if (f->fa) {
@@ -78,10 +110,17 @@ int g_close(G_FILE *f) {
 int g_seek(G_FILE *f, off_t offset, int whence) {
 	if (f) {
 		switch (whence) {
-			case SEEK_SET: f->fa->seek(offset); break;
-			case SEEK_CUR: f->fa->seek(f->fa->get_position() + offset); break;
-			case SEEK_END: f->fa->seek_end(offset); break;
-			default: return FAILURE;
+			case SEEK_SET:
+				f->fa->seek(offset);
+				break;
+			case SEEK_CUR:
+				f->fa->seek(f->fa->get_position() + offset);
+				break;
+			case SEEK_END:
+				f->fa->seek_end(offset);
+				break;
+			default:
+				return FAILURE;
 		}
 		return SUCCESS;
 	}
@@ -93,16 +132,16 @@ off_t g_tell(G_FILE *f) {
 	}
 	return FAILURE;
 }
-ssize_t g_read(void* buf, size_t len, size_t cnt, G_FILE *f) {
+ssize_t g_read(void *buf, size_t len, size_t cnt, G_FILE *f) {
 	if (f) {
-		return f->fa->get_buffer((uint8_t*)buf, cnt * len);
+		return f->fa->get_buffer((uint8_t *)buf, cnt * len);
 	}
 	return SUCCESS;
 }
-ssize_t g_write(const void* buf, size_t len, size_t cnt, G_FILE *f) {
+ssize_t g_write(const void *buf, size_t len, size_t cnt, G_FILE *f) {
 	if (f) {
 		if (f->fa) {
-			f->fa->store_buffer((const uint8_t*)buf, cnt * len);
+			f->fa->store_buffer((const uint8_t *)buf, cnt * len);
 		} else {
 			WARN_PRINT("Undefined file access - information lost.");
 			return 0;
@@ -124,7 +163,7 @@ ssize_t g_filesize(G_FILE *f) {
 
 //////////////////////////////////////////////////////////////////////////
 
-#define rnd(n) (rand()%(n+1))
+#define rnd(n) (rand() % (n + 1))
 
 #define PI 3.14159265f
 
@@ -185,16 +224,16 @@ void RetroSFXVoice::ResetParams() {
 
 	//////////////////////////////////////////////////////////////////////////
 
-	m_Voice.FXMorphParams.fBaseFreq=0.3f;
-	m_Voice.FXMorphParams.fFreqLimit=0.0f;
-	m_Voice.FXMorphParams.fFreqRamp=0.0f;
-	m_Voice.FXMorphParams.fFreqDRamp=0.0f;
-	m_Voice.FXMorphParams.fDuty=0.0f;
-	m_Voice.FXMorphParams.fDutyRamp=0.0f;
+	m_Voice.FXMorphParams.fBaseFreq = 0.3f;
+	m_Voice.FXMorphParams.fFreqLimit = 0.0f;
+	m_Voice.FXMorphParams.fFreqRamp = 0.0f;
+	m_Voice.FXMorphParams.fFreqDRamp = 0.0f;
+	m_Voice.FXMorphParams.fDuty = 0.0f;
+	m_Voice.FXMorphParams.fDutyRamp = 0.0f;
 
-	m_Voice.FXMorphParams.fVibStrength=0.0f;
-	m_Voice.FXMorphParams.fVibSpeed=0.0f;
-	m_Voice.FXMorphParams.fVibDelay=0.0f;
+	m_Voice.FXMorphParams.fVibStrength = 0.0f;
+	m_Voice.FXMorphParams.fVibSpeed = 0.0f;
+	m_Voice.FXMorphParams.fVibDelay = 0.0f;
 
 	//	m_morph_env_attack = 0;
 	//	m_morph_env_sustain = 0.3;
@@ -219,8 +258,8 @@ void RetroSFXVoice::ResetParams() {
 //////////////////////////////////////////////////////////////////////////
 
 int RetroSFXVoice::ReadData(void *pDest, int nSize, int nUnits, unsigned char *&pRAWData) {
-	int read_size = nSize*nUnits;
-	memcpy(pDest, pRAWData, nSize*nUnits);
+	int read_size = nSize * nUnits;
+	memcpy(pDest, pRAWData, nSize * nUnits);
 	pRAWData += read_size;
 
 	return read_size;
@@ -231,7 +270,7 @@ int RetroSFXVoice::ReadData(void *pDest, int nSize, int nUnits, unsigned char *&
 bool RetroSFXVoice::LoadSettings(unsigned char *pRAWData) {
 	int version = 0;
 	ReadData(&version, 1, sizeof(int), pRAWData);
-	if(version != SFXR0100) {
+	if (version != SFXR0100) {
 		return false;
 	}
 
@@ -315,7 +354,7 @@ bool RetroSFXVoice::LoadSettings(unsigned char *pRAWData) {
 
 //////////////////////////////////////////////////////////////////////////
 
-bool RetroSFXVoice::LoadSettings(const char* filename) {
+bool RetroSFXVoice::LoadSettings(const char *filename) {
 	if (G_FILE *fp = g_open_read(filename)) {
 		const int file_size = g_filesize(fp);
 		std::unique_ptr<char[]> ptr(new char[file_size]);
@@ -334,9 +373,9 @@ bool RetroSFXVoice::LoadSettings(const char* filename) {
 
 //////////////////////////////////////////////////////////////////////////
 
-bool RetroSFXVoice::SaveSettings(const char* filename) {
-	G_FILE* file = g_open_write(filename);
-	if(not file) {
+bool RetroSFXVoice::SaveSettings(const char *filename) {
+	G_FILE *file = g_open_write(filename);
+	if (not file) {
 		return false;
 	}
 
@@ -431,7 +470,7 @@ bool RetroSFXVoice::CompareSettings(RetroSFXVoice *pOther) {
 //////////////////////////////////////////////////////////////////////////
 
 void RetroSFXVoice::Reset(bool restart) {
-	if(!restart) {
+	if (!restart) {
 		phase = 0;
 
 		m_FXWorkParams.fBaseFreq = m_Voice.FXBaseParams.fBaseFreq;
@@ -450,7 +489,7 @@ void RetroSFXVoice::Reset(bool restart) {
 		m_FXWorkParams.fEnvDecay = m_Voice.FXBaseParams.fEnvDecay;
 		m_FXWorkParams.fEnvPunch = m_Voice.FXBaseParams.fEnvPunch;
 
-		m_FXWorkParams.fLPFResonance = m_Voice.FXBaseParams.fLPFResonance ;
+		m_FXWorkParams.fLPFResonance = m_Voice.FXBaseParams.fLPFResonance;
 		m_FXWorkParams.fLPFFreq = m_Voice.FXBaseParams.fLPFFreq;
 		m_FXWorkParams.fLPFRamp = m_Voice.FXBaseParams.fLPFRamp;
 		m_FXWorkParams.fHPFFreq = m_Voice.FXBaseParams.fHPFFreq;
@@ -465,32 +504,33 @@ void RetroSFXVoice::Reset(bool restart) {
 		m_FXWorkParams.fArmMod = m_Voice.FXBaseParams.fArmMod;
 	}
 
-	fperiod = 100.0 / (m_FXWorkParams.fBaseFreq*m_FXWorkParams.fBaseFreq + 0.001);
+	fperiod = 100.0 / (m_FXWorkParams.fBaseFreq * m_FXWorkParams.fBaseFreq + 0.001);
 	period = (int)fperiod;
-	fmaxperiod = 100.0 / (m_FXWorkParams.fFreqLimit*m_FXWorkParams.fFreqLimit + 0.001);
+	fmaxperiod = 100.0 / (m_FXWorkParams.fFreqLimit * m_FXWorkParams.fFreqLimit + 0.001);
 	fslide = 1 - Math::pow(m_FXWorkParams.fFreqRamp, 3) * 0.01;
 	fdslide = -Math::pow(m_FXWorkParams.fFreqDRamp, 3) * 0.000001;
 	square_duty = 0.5 - m_FXWorkParams.fDuty * 0.5;
 	square_slide = -m_FXWorkParams.fDutyRamp * 0.00005;
-	if(m_FXWorkParams.fArmMod >= 0) {
+	if (m_FXWorkParams.fArmMod >= 0) {
 		arm_mod = 1.0 - Math::pow(m_FXWorkParams.fArmMod, 2) * 0.9;
 	} else {
 		arm_mod = 1.0 + Math::pow(m_FXWorkParams.fArmMod, 2) * 10.0;
 	}
 	arm_time = 0;
 	arm_limit = (int)(Math::pow(1 - m_FXWorkParams.fArmSpeed, 2) * 20000 + 32);
-	if(m_FXWorkParams.fArmSpeed == 1) {
+	if (m_FXWorkParams.fArmSpeed == 1) {
 		arm_limit = 0;
 	}
 
-	if(!restart) {
+	if (!restart) {
 		// reset filter
 		fltp = 0;
 		fltdp = 0;
 		fltw = pow(m_FXWorkParams.fLPFFreq, 3) * 0.1;
 		fltw_d = 1 + m_FXWorkParams.fLPFRamp * 0.0001;
 		fltdmp = 5 / (1 + pow(m_FXWorkParams.fLPFResonance, 2) * 20) * (0.01 + fltw);
-		if(fltdmp > 0.8) fltdmp = 0.8;
+		if (fltdmp > 0.8)
+			fltdmp = 0.8;
 		fltphp = 0;
 		flthp = Math::pow(m_FXWorkParams.fHPFFreq, 2) * 0.1;
 		flthm_d = 1 + m_FXWorkParams.fHPFRamp * 0.0003;
@@ -506,21 +546,23 @@ void RetroSFXVoice::Reset(bool restart) {
 		env_length[1] = (int)(m_FXWorkParams.fEnvSustain * m_FXWorkParams.fEnvSustain * 100000.0);
 		env_length[2] = (int)(m_FXWorkParams.fEnvDecay * m_FXWorkParams.fEnvDecay * 100000.0);
 
-		fphase=pow(m_FXWorkParams.fPHAOffset, 2) * 1020.0;
-		if (m_FXWorkParams.fPHAOffset < 0) fphase = -fphase;
-		fdphase=pow(m_FXWorkParams.fPHARamp, 2) * 1;
-		if (m_FXWorkParams.fPHARamp < 0) fdphase = -fdphase;
+		fphase = pow(m_FXWorkParams.fPHAOffset, 2) * 1020.0;
+		if (m_FXWorkParams.fPHAOffset < 0)
+			fphase = -fphase;
+		fdphase = pow(m_FXWorkParams.fPHARamp, 2) * 1;
+		if (m_FXWorkParams.fPHARamp < 0)
+			fdphase = -fdphase;
 		iphase = Math::abs(fphase);
 		ipp = 0;
-		for(int i = 0; i < 1024; i++) {
+		for (int i = 0; i < 1024; i++) {
 			phaser_buffer[i] = 0;
 		}
-		for(int i = 0; i < 32; i++) {
+		for (int i = 0; i < 32; i++) {
 			noise_buffer[i] = GenNoise();
 		}
 		rem_time = 0;
 		rem_limit = (int)(pow(1 - m_FXWorkParams.fRepeatSpeed, 2) * 20000 + 32);
-		if(m_FXWorkParams.fRepeatSpeed == 0) {
+		if (m_FXWorkParams.fRepeatSpeed == 0) {
 			rem_limit = 0;
 		}
 	}
@@ -530,7 +572,7 @@ void RetroSFXVoice::Reset(bool restart) {
 
 void RetroSFXVoice::Play(void *pData) {
 	if (pData) {
-		RetroVoice103 *pVoice103 = (RetroVoice103*)pData;
+		RetroVoice103 *pVoice103 = (RetroVoice103 *)pData;
 		if (pVoice103->nVersion == SFXR0100) {
 			memcpy(&m_Voice, pData, sizeof(RetroVoice103));
 		}
@@ -562,12 +604,12 @@ int RetroSFXVoice::GetVoiceLengthInSamples() {
 int RetroSFXVoice::Render(int nSamples, short *pBuffer) {
 	int nSamplesRendered = 0;
 
-	for(int i=0; i<nSamples; i++) {
-		if(!m_bPlayingSample) {
+	for (int i = 0; i < nSamples; i++) {
+		if (!m_bPlayingSample) {
 			break;
 		}
 		rem_time++;
-		if(rem_limit != 0 && rem_time >= rem_limit) {
+		if (rem_limit != 0 && rem_time >= rem_limit) {
 			rem_time = 0;
 			Reset(true);
 
@@ -606,92 +648,100 @@ int RetroSFXVoice::Render(int nSamples, short *pBuffer) {
 
 		// frequency envelopes/arpeggios
 		arm_time++;
-		if(arm_limit != 0 && arm_time >= arm_limit) {
+		if (arm_limit != 0 && arm_time >= arm_limit) {
 			arm_time = 0;
 			fperiod *= arm_mod;
 		}
 		fslide += fdslide;
 		fperiod *= fslide;
-		if(fperiod > fmaxperiod) {
+		if (fperiod > fmaxperiod) {
 			fperiod = fmaxperiod;
-			if(m_FXWorkParams.fFreqLimit > 0) {
+			if (m_FXWorkParams.fFreqLimit > 0) {
 				m_bPlayingSample = false;
 			}
 		}
 		float rfperiod = (float)fperiod;
-		if(vib_amp > 0) {
+		if (vib_amp > 0) {
 			vib_phase += vib_speed;
-			rfperiod = (float)fperiod*(1 + Math::sin(vib_phase) * vib_amp);
+			rfperiod = (float)fperiod * (1 + Math::sin(vib_phase) * vib_amp);
 		}
 		period = (int)rfperiod;
-		if(period<8) period = 8;
-		square_duty+=square_slide;
-		if(square_duty < 0) square_duty = 0;
-		if(square_duty > 0.5) square_duty = 0.5;
+		if (period < 8)
+			period = 8;
+		square_duty += square_slide;
+		if (square_duty < 0)
+			square_duty = 0;
+		if (square_duty > 0.5)
+			square_duty = 0.5;
 		// volume envelope
 		env_time++;
-		if(env_time > env_length[env_stage]) {
+		if (env_time > env_length[env_stage]) {
 			env_time = 0;
 			env_stage++;
-			if(env_stage == 3) {
+			if (env_stage == 3) {
 				m_bPlayingSample = false;
 			}
 		}
-		if(env_stage == 0)
-			env_vol = (float)env_time/env_length[0];
-		if(env_stage == 1)
-			env_vol = 1 + pow(1 - (float)env_time/env_length[1], 1) * 2 * m_FXWorkParams.fEnvPunch;
-		if(env_stage == 2)
-			env_vol = 1 - (float)env_time/env_length[2];
+		if (env_stage == 0)
+			env_vol = (float)env_time / env_length[0];
+		if (env_stage == 1)
+			env_vol = 1 + pow(1 - (float)env_time / env_length[1], 1) * 2 * m_FXWorkParams.fEnvPunch;
+		if (env_stage == 2)
+			env_vol = 1 - (float)env_time / env_length[2];
 
 		// phaser step
 		fphase += fdphase;
 		iphase = abs((int)fphase);
-		if(iphase>1023) iphase = 1023;
+		if (iphase > 1023)
+			iphase = 1023;
 
-		if(flthm_d != 0) {
+		if (flthm_d != 0) {
 			flthp *= flthm_d;
-			if(flthp < 0.00001) flthp = 0.00001;
-			if(flthp > 0.1) flthp = 0.1;
+			if (flthp < 0.00001)
+				flthp = 0.00001;
+			if (flthp > 0.1)
+				flthp = 0.1;
 		}
 
-		float ssample=0;
-		for(int si = 0; si < 8; si++) { // 8x oversampling
+		float ssample = 0;
+		for (int si = 0; si < 8; si++) { // 8x oversampling
 			float sample = 0;
 			phase++;
-			if(phase >= period) {
+			if (phase >= period) {
 				// phase=0;
 				phase %= period;
-				if(m_Voice.nWaveformType == 3)
-					for(int i = 0; i < 32; i++) {
+				if (m_Voice.nWaveformType == 3)
+					for (int i = 0; i < 32; i++) {
 						noise_buffer[i] = GenNoise();
 					}
 			}
 			// base waveform
-			float fp = (float)phase/period;
-			switch(m_Voice.nWaveformType) {
-			case 0: // square
-				if(fp<square_duty)
-					sample = 0.5;
-				else
-					sample = -0.5;
-				break;
-			case 1: // sawtooth
-				sample = 1 - fp * 2;
-				break;
-			case 2: // sine
-				sample = Math::sin(fp * 2 * PI);
-				break;
-			case 3: // noise
-				sample = noise_buffer[phase * 32 / period];
-				break;
+			float fp = (float)phase / period;
+			switch (m_Voice.nWaveformType) {
+				case 0: // square
+					if (fp < square_duty)
+						sample = 0.5;
+					else
+						sample = -0.5;
+					break;
+				case 1: // sawtooth
+					sample = 1 - fp * 2;
+					break;
+				case 2: // sine
+					sample = Math::sin(fp * 2 * PI);
+					break;
+				case 3: // noise
+					sample = noise_buffer[phase * 32 / period];
+					break;
 			}
 			// lp filter
 			float pp = fltp;
 			fltw *= fltw_d;
-			if(fltw < 0.0) fltw = 0;
-			if(fltw > 0.1) fltw = 0.1;
-			if(m_FXWorkParams.fLPFFreq != 1) {
+			if (fltw < 0.0)
+				fltw = 0;
+			if (fltw > 0.1)
+				fltw = 0.1;
+			if (m_FXWorkParams.fLPFFreq != 1) {
 				fltdp += (sample - fltp) * fltw;
 				fltdp -= fltdp * fltdmp;
 			} else {
@@ -705,7 +755,7 @@ int RetroSFXVoice::Render(int nSamples, short *pBuffer) {
 			sample = fltphp;
 			// phaser
 			phaser_buffer[ipp & 1023] = sample;
-			sample += phaser_buffer[(ipp-iphase + 1024) & 1023];
+			sample += phaser_buffer[(ipp - iphase + 1024) & 1023];
 			ipp = (ipp + 1) & 1023;
 			// final accumulation and envelope application
 			ssample += sample * env_vol;
@@ -714,10 +764,12 @@ int RetroSFXVoice::Render(int nSamples, short *pBuffer) {
 
 		ssample *= 2 * m_Voice.fSoundVol;
 
-		if(pBuffer != nullptr) {
+		if (pBuffer != nullptr) {
 			// Clamp
-			if(ssample > 1) ssample = 1;
-			if(ssample < -1) ssample = -1;
+			if (ssample > 1)
+				ssample = 1;
+			if (ssample < -1)
+				ssample = -1;
 
 			*pBuffer += (short)(ssample * 32767.0f);
 			pBuffer++;
