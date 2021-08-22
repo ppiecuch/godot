@@ -96,6 +96,10 @@
 #include "benet/enet_node.h"
 #include "benet/enet_packet_peer.h"
 
+#ifdef TOOLS_ENABLED
+#include "qrcodetexture/qrcodetexture.h"
+#endif
+
 #ifndef _3D_DISABLED
 #include "ccd/gd_ccd.h"
 #endif
@@ -210,7 +214,11 @@ void register_gdextensions_types() {
 	ClassDB::register_class<Smooth>();
 	ClassDB::register_class<Smooth2D>();
 
+	ClassDB::register_class<QRCodeTexture>();
+
+#ifdef TOOLS_ENABLED
 	ClassDB::register_class<ErrorReporter>();
+#endif
 
 #ifndef _3D_DISABLED
 	ClassDB::register_class<CCDBox>();

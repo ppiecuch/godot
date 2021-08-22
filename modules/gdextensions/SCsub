@@ -22,7 +22,11 @@ modules = [
     "statemachine",
     "benet",
     "behaviornode",
+    "qrcodetexture",
 ]
+
+if env["tools"]:
+    modules += ["qrcodetexture"]
 
 if not env["disable_3d"]:
     modules += ["environment/vegetation_instance", "ccd/src"]

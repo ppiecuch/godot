@@ -1,14 +1,40 @@
-/* qrcode.cpp */
+/*************************************************************************/
+/*  qrcodetexture.cpp                                                    */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
 
 #include "qrcodetexture.h"
 
+#include <iostream>
 #include <string>
 #include <vector>
-#include <iostream>
-
 
 void QRCodeTexture::_bind_methods() {
-
 	ClassDB::bind_method(D_METHOD("get_content"), &QRCodeTexture::get_content);
 	ClassDB::bind_method(D_METHOD("set_content", "content"), &QRCodeTexture::set_content);
 
@@ -28,12 +54,10 @@ void QRCodeTexture::_bind_methods() {
 }
 
 QRCodeTexture::QRCodeTexture() {
-
 	create_from_image(GetImage(content, border), Texture::FLAG_MIPMAPS);
 }
 
 Ref<Image> QRCodeTexture::GetImage(String p_string, const int p_border, Color p_color) {
-
 	QrCode::Ecc errCorLvl;
 	switch (error_correction_level) {
 		case 2:
@@ -61,9 +85,9 @@ Ref<Image> QRCodeTexture::GetImage(String p_string, const int p_border, Color p_
 	int index = 0;
 	for (int i = 0; i < size; i++) {
 		for (int j = 0; j < size; j++) {
-			wd8[index++] = qr.getModule(i - p_border, j - p_border) ? (int) (p_color.r * 255) : 255;
-			wd8[index++] = qr.getModule(i - p_border, j - p_border) ? (int) (p_color.g * 255) : 255;
-			wd8[index++] = qr.getModule(i - p_border, j - p_border) ? (int) (p_color.b * 255) : 255;
+			wd8[index++] = qr.getModule(i - p_border, j - p_border) ? (int)(p_color.r * 255) : 255;
+			wd8[index++] = qr.getModule(i - p_border, j - p_border) ? (int)(p_color.g * 255) : 255;
+			wd8[index++] = qr.getModule(i - p_border, j - p_border) ? (int)(p_color.b * 255) : 255;
 		}
 	}
 
@@ -71,7 +95,7 @@ Ref<Image> QRCodeTexture::GetImage(String p_string, const int p_border, Color p_
 	return image;
 }
 
-void QRCodeTexture::set_content(const String& p_string) {
+void QRCodeTexture::set_content(const String &p_string) {
 	if (content == p_string) {
 		return;
 	}
@@ -99,7 +123,6 @@ void QRCodeTexture::set_color(const Color &p_color) {
 	update_qrcode();
 }
 
-
 void QRCodeTexture::set_border(const int &p_border) {
 	if (border == p_border) {
 		return;
@@ -112,7 +135,7 @@ int QRCodeTexture::get_border() const {
 	return border;
 }
 
-void QRCodeTexture::set_ecl(const int& p_ecl) {
+void QRCodeTexture::set_ecl(const int &p_ecl) {
 	if (error_correction_level == p_ecl) {
 		return;
 	}
