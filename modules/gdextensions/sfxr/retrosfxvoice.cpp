@@ -468,19 +468,19 @@ void RetroSFXVoice::Reset(bool restart) {
 	fperiod = 100.0 / (m_FXWorkParams.fBaseFreq*m_FXWorkParams.fBaseFreq + 0.001);
 	period = (int)fperiod;
 	fmaxperiod = 100.0 / (m_FXWorkParams.fFreqLimit*m_FXWorkParams.fFreqLimit + 0.001);
-	fslide = 1.0 - pow((double)m_FXWorkParams.fFreqRamp, 3.0) * 0.01;
-	fdslide = -pow((double)m_FXWorkParams.fFreqDRamp, 3.0) * 0.000001;
+	fslide = 1 - Math::pow(m_FXWorkParams.fFreqRamp, 3) * 0.01;
+	fdslide = -Math::pow(m_FXWorkParams.fFreqDRamp, 3) * 0.000001;
 	square_duty = 0.5 - m_FXWorkParams.fDuty * 0.5;
 	square_slide = -m_FXWorkParams.fDutyRamp * 0.00005;
 	if(m_FXWorkParams.fArmMod >= 0) {
-		arm_mod = 1.0 - pow((double)m_FXWorkParams.fArmMod, 2.0) * 0.9;
+		arm_mod = 1.0 - Math::pow(m_FXWorkParams.fArmMod, 2) * 0.9;
 	} else {
-		arm_mod = 1.0 + pow((double)m_FXWorkParams.fArmMod, 2.0) * 10.0;
+		arm_mod = 1.0 + Math::pow(m_FXWorkParams.fArmMod, 2) * 10.0;
 	}
 	arm_time = 0;
-	arm_limit = (int)(pow(1.0f-m_FXWorkParams.fArmSpeed, 2) * 20000 + 32);
+	arm_limit = (int)(Math::pow(1 - m_FXWorkParams.fArmSpeed, 2) * 20000 + 32);
 	if(m_FXWorkParams.fArmSpeed == 1) {
-		arm_limit=0;
+		arm_limit = 0;
 	}
 
 	if(!restart) {
@@ -492,19 +492,19 @@ void RetroSFXVoice::Reset(bool restart) {
 		fltdmp = 5 / (1 + pow(m_FXWorkParams.fLPFResonance, 2) * 20) * (0.01 + fltw);
 		if(fltdmp > 0.8) fltdmp = 0.8;
 		fltphp = 0;
-		flthp = pow(m_FXWorkParams.fHPFFreq, 2.0f) * 0.1;
+		flthp = Math::pow(m_FXWorkParams.fHPFFreq, 2) * 0.1;
 		flthm_d = 1 + m_FXWorkParams.fHPFRamp * 0.0003;
 		// reset vibrato
 		vib_phase = 0;
-		vib_speed = pow(m_Voice.FXBaseParams.fVibSpeed, 2) * 0.01;
+		vib_speed = Math::pow(m_Voice.FXBaseParams.fVibSpeed, 2) * 0.01;
 		vib_amp = m_FXWorkParams.fVibStrength * 0.5;
 		// reset envelope
 		env_vol = 0;
 		env_stage = 0;
 		env_time = 0;
-		env_length[0] = (int)(m_FXWorkParams.fEnvAttack*m_FXWorkParams.fEnvAttack * 100000.0);
-		env_length[1] = (int)(m_FXWorkParams.fEnvSustain*m_FXWorkParams.fEnvSustain * 100000.0);
-		env_length[2] = (int)(m_FXWorkParams.fEnvDecay*m_FXWorkParams.fEnvDecay * 100000.0);
+		env_length[0] = (int)(m_FXWorkParams.fEnvAttack * m_FXWorkParams.fEnvAttack * 100000.0);
+		env_length[1] = (int)(m_FXWorkParams.fEnvSustain * m_FXWorkParams.fEnvSustain * 100000.0);
+		env_length[2] = (int)(m_FXWorkParams.fEnvDecay * m_FXWorkParams.fEnvDecay * 100000.0);
 
 		fphase=pow(m_FXWorkParams.fPHAOffset, 2) * 1020.0;
 		if (m_FXWorkParams.fPHAOffset < 0) fphase = -fphase;
@@ -537,7 +537,7 @@ void RetroSFXVoice::Play(void *pData) {
 	}
 	m_WavSamplesRendered = 0;
 	Reset(false);
-	m_bPlayingSample=true;
+	m_bPlayingSample = true;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -621,7 +621,7 @@ int RetroSFXVoice::Render(int nSamples, short *pBuffer) {
 		float rfperiod = (float)fperiod;
 		if(vib_amp > 0) {
 			vib_phase += vib_speed;
-			rfperiod = (float)fperiod*(1 + sinf(vib_phase) * vib_amp);
+			rfperiod = (float)fperiod*(1 + Math::sin(vib_phase) * vib_amp);
 		}
 		period = (int)rfperiod;
 		if(period<8) period = 8;
@@ -656,14 +656,14 @@ int RetroSFXVoice::Render(int nSamples, short *pBuffer) {
 		}
 
 		float ssample=0;
-		for(int si=0; si<8; si++) { // 8x oversampling
+		for(int si = 0; si < 8; si++) { // 8x oversampling
 			float sample = 0;
 			phase++;
 			if(phase >= period) {
 				// phase=0;
 				phase %= period;
 				if(m_Voice.nWaveformType == 3)
-					for(int i=0; i<32; i++) {
+					for(int i = 0; i < 32; i++) {
 						noise_buffer[i] = GenNoise();
 					}
 			}
@@ -680,7 +680,7 @@ int RetroSFXVoice::Render(int nSamples, short *pBuffer) {
 				sample = 1 - fp * 2;
 				break;
 			case 2: // sine
-				sample = (float)sin(fp * 2 * PI);
+				sample = Math::sin(fp * 2 * PI);
 				break;
 			case 3: // noise
 				sample = noise_buffer[phase * 32 / period];
@@ -744,10 +744,10 @@ float RetroSFXVoice::GenNoise() {
 //////////////////////////////////////////////////////////////////////////
 
 void RetroSFXVoice::Morph(float &fMorphVar, float fMorphDest) {
-	const float fDiff = fMorphDest - fMorphVar;
+	const float diff = fMorphDest - fMorphVar;
 
-	if (fDiff != 0) {
-		fMorphVar += fDiff * m_Voice.fMorphRate;
+	if (diff != 0) {
+		fMorphVar += diff * m_Voice.fMorphRate;
 	}
 }
 
