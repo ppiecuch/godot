@@ -99,4 +99,4 @@ public:
 	ResourceImporterJSON() {}
 	~ResourceImporterJSON() {}
 };
-#endif // RESOURCE_IMPORTER_LOTTIE
+#endif // RESOURCE_IMPORTER_JSON
