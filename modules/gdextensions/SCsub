@@ -22,6 +22,7 @@ modules = [
     "statemachine",
     "benet",
     "behaviornode",
+    "sfxr",
     "qrcodetexture",
 ]
 
