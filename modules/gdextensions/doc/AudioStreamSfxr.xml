@@ -9,6 +9,8 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+	</methods>
+	<members>
 		<member name="wave_type" type="int" setter="set_wave_type" getter="get_wave_type" default="0">
 			Shape of the wave.
 		</member>
@@ -113,12 +115,36 @@
 		<member name="compression_amount" type="float" setter="set_compression_amount" getter="get_compression_amount" default="0.3">
 			Pushes amplitudes together into a narrower range to make them stand out more. Very good for sound effects, where you want them to stick out against background music.
 		</member>
-	</methods>
+	</members>
 	<signals>
 	</signals>
 	<constants>
-		<constant name="FORMAT_HEIGHTMAP" value="0" enum="Format">
-			Format as heightmap, grayscale, scalar noise image. Suitable for terrain generation.
+		<constant name="SQUAREWAV" value="0" enum="WaveFormType">
+			Shape of the wave: Square.
+		</constant>
+		<constant name="SAWTOOTH" value="1" enum="WaveFormType">
+			Shape of the wave: Saw-tooth.
+		</constant>
+		<constant name="SINWAVE" value="2" enum="WaveFormType">
+			Shape of the wave: Sin.
+		</constant>
+		<constant name="NOISEWAVE" value="3" enum="WaveFormType">
+			Shape of the wave: Noise.
+		</constant>
+		<constant name="TRIANGLEWAVE" value="4" enum="WaveFormType">
+			Shape of the wave: Triangle.
+		</constant>
+		<constant name="PINKNOISEWAVE" value="5" enum="WaveFormType">
+			Shape of the wave: Pink-noise.
+		</constant>
+		<constant name="TANWAVE" value="6" enum="WaveFormType">
+			Shape of the wave: Tan.
+		</constant>
+		<constant name="WHISTLEWAVE" value="7" enum="WaveFormType">
+			Shape of the wave: Whistle.
+		</constant>
+		<constant name="BREAKERWAVE" value="8" enum="WaveFormType">
+			Shape of the wave: Breaker.
 		</constant>
 	</constants>
 </class>

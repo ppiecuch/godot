@@ -353,9 +353,9 @@ public:
 		return m->blend_shape_value;
 	}
 
-	void mesh_surface_update_region(RID p_mesh, int p_surface, int p_offset, const PoolVector<uint8_t> &p_data) { }
+	void mesh_surface_update_region(RID p_mesh, int p_surface, int p_offset, const PoolVector<uint8_t> &p_data) {}
 
-	void mesh_surface_set_material(RID p_mesh, int p_surface, RID p_material) { }
+	void mesh_surface_set_material(RID p_mesh, int p_surface, RID p_material) {}
 	RID mesh_surface_get_material(RID p_mesh, int p_surface) const { return RID(); }
 
 	int mesh_surface_get_array_len(RID p_mesh, int p_surface) const {

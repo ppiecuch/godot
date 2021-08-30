@@ -31,19 +31,19 @@
 #include <core/error_macros.h>
 #include <core/variant.h>
 
-#include <errno.h>
-#include <string.h>
-#include <netdb.h>
 #include <dirent.h>
+#include <errno.h>
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 
 #include <psp2/io/devctl.h>
+#include <psp2/io/dirent.h>
 #include <psp2/io/fcntl.h>
 #include <psp2/io/stat.h>
-#include <psp2/io/dirent.h>
 #include <psp2/net/net.h>
 
 #define SCE_ERRNO_MASK 0xFF
@@ -55,20 +55,21 @@
 
 int _get_info(const char *path, uint32_t *size, uint32_t *folders, uint32_t *files) {
 	SceUID dfd = sceIoDopen(path);
-	if(dfd >= 0) {
+	if (dfd >= 0) {
 		struct SceIoDirent dir;
 		memset(&dir, 0, sizeof(SceIoDirent));
 
-		while(sceIoDread(dfd, &dir) > 0) {
-			if(dir.d_name[0] != '.') {
-				char *new_path = (char*)malloc(strlen(path) + strlen(dir.d_name) + 2);
+		while (sceIoDread(dfd, &dir) > 0) {
+			if (dir.d_name[0] != '.') {
+				char *new_path = (char *)malloc(strlen(path) + strlen(dir.d_name) + 2);
 				sprintf(new_path, "%s/%s", path, dir.d_name);
 
 				int res = _get_info(new_path, size, folders, files);
 
 				free(new_path);
 
-				if(res < 0) return res;
+				if (res < 0)
+					return res;
 			}
 
 			memset(&dir, 0, sizeof(SceIoDirent));
@@ -82,7 +83,8 @@ int _get_info(const char *path, uint32_t *size, uint32_t *folders, uint32_t *fil
 		memset(&stat, 0, sizeof(SceIoStat));
 
 		int res = sceIoGetstat(path, &stat);
-		if(res < 0) return res;
+		if (res < 0)
+			return res;
 
 		(*size) += stat.st_size;
 		(*files)++;
@@ -92,23 +94,25 @@ int _get_info(const char *path, uint32_t *size, uint32_t *folders, uint32_t *fil
 }
 
 int _remove_file_or_dir(const char *path, int *removed = nullptr) {
-	if(removed) *removed = 0;
+	if (removed)
+		*removed = 0;
 
 	SceUID dfd = sceIoDopen(path);
-	if(dfd >= 0) {
+	if (dfd >= 0) {
 		struct SceIoDirent dir;
 		memset(&dir, 0, sizeof(SceIoDirent));
 
-		while(sceIoDread(dfd, &dir) > 0) {
-			if(dir.d_name[0] != '.') {
-				char *new_path = (char*)malloc(strlen(path) + strlen(dir.d_name) + 2);
+		while (sceIoDread(dfd, &dir) > 0) {
+			if (dir.d_name[0] != '.') {
+				char *new_path = (char *)malloc(strlen(path) + strlen(dir.d_name) + 2);
 				sprintf(new_path, "%s/%s", path, dir.d_name);
 
 				int res = _remove_file_or_dir(new_path, 0);
 
 				free(new_path);
 
-				if(res < 0) return res;
+				if (res < 0)
+					return res;
 			}
 			memset(&dir, 0, sizeof(SceIoDirent));
 		}
@@ -129,19 +133,20 @@ int _remove_file_or_dir(const char *path, int *removed = nullptr) {
 }
 
 int _file_copy(const char *src, const char *dest, int *copied = nullptr) {
-	if(copied) *copied = 0;
+	if (copied)
+		*copied = 0;
 
 	SceUID dfd = sceIoDopen(src);
-	if(dfd >= 0) {
+	if (dfd >= 0) {
 		struct SceIoDirent dir;
 		memset(&dir, 0, sizeof(SceIoDirent));
 
-		while(sceIoDread(dfd, &dir) > 0) {
-			if(dir.d_name[0] != '.') {
-				char *src_path = (char*)malloc(strlen(src) + strlen(dir.d_name) + 2);
+		while (sceIoDread(dfd, &dir) > 0) {
+			if (dir.d_name[0] != '.') {
+				char *src_path = (char *)malloc(strlen(src) + strlen(dir.d_name) + 2);
 				sprintf(src_path, "%s/%s", src, dir.d_name);
 
-				char *dest_path = (char*)malloc(strlen(dest) + strlen(dir.d_name) + 2);
+				char *dest_path = (char *)malloc(strlen(dest) + strlen(dir.d_name) + 2);
 				sprintf(dest_path, "%s/%s", dest, dir.d_name);
 
 				int res = _file_copy(src_path, dest_path, 0);
@@ -149,7 +154,8 @@ int _file_copy(const char *src, const char *dest, int *copied = nullptr) {
 				free(dest_path);
 				free(src_path);
 
-				if(res < 0) return res;
+				if (res < 0)
+					return res;
 			}
 
 			memset(&dir, 0, sizeof(SceIoDirent));
@@ -160,16 +166,18 @@ int _file_copy(const char *src, const char *dest, int *copied = nullptr) {
 		sceIoMkdir(dest, 0777);
 	} else {
 		SceUID fdsrc = sceIoOpen(src, SCE_O_RDONLY, 0);
-		if(fdsrc < 0) return fdsrc;
+		if (fdsrc < 0)
+			return fdsrc;
 
 		SceUID fddest = sceIoOpen(dest, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0777);
-		if(fddest < 0) return fddest;
+		if (fddest < 0)
+			return fddest;
 
 		uint32_t size_buf = 0x10000;
 		void *buf = malloc(size_buf);
 
 		int read;
-		while((read = sceIoRead(fdsrc, buf, size_buf)) > 0) {
+		while ((read = sceIoRead(fdsrc, buf, size_buf)) > 0) {
 			sceIoWrite(fddest, buf, read);
 			if (copied) {
 				*copied += read;
@@ -272,7 +280,7 @@ extern "C" struct hostent *gethostbyaddr(const void *__addr, socklen_t __len, in
 		return nullptr;
 	}
 
-	int err = sceNetResolverStartAton(rid, (SceNetInAddr*)__addr, name, sizeof(name), 0, 0, 0);
+	int err = sceNetResolverStartAton(rid, (SceNetInAddr *)__addr, name, sizeof(name), 0, 0, 0);
 	sceNetResolverDestroy(rid);
 	if (err < 0) {
 		errno = err & SCE_ERRNO_MASK;
@@ -293,16 +301,16 @@ extern "C" struct hostent *gethostbyaddr(const void *__addr, socklen_t __len, in
 }
 
 extern "C" int scandir(const char *dir, struct dirent ***namelist_out,
-		int(*filter)(const struct dirent *),
-		int(*compar)(const struct dirent **, const struct dirent **))
-{
+		int (*filter)(const struct dirent *),
+		int (*compar)(const struct dirent **, const struct dirent **)) {
 	int ret = -1, dir_uid = -1, name_alloc = 4, name_count = 0;
 	struct dirent **namelist = nullptr, *ent;
 	SceIoDirent sce_ent;
 
-	namelist = (dirent**)malloc(sizeof(*namelist) * name_alloc);
+	namelist = (dirent **)malloc(sizeof(*namelist) * name_alloc);
 	if (namelist == nullptr) {
-		LOG_PRINT("%s:%i: OOM\n", __FILE__, __LINE__); goto fail;
+		LOG_PRINT("%s:%i: OOM\n", __FILE__, __LINE__);
+		goto fail;
 	}
 
 	// try to read first..
@@ -313,32 +321,35 @@ extern "C" int scandir(const char *dir, struct dirent ***namelist_out,
 		memset(&sce_ent, 0, sizeof(sce_ent));
 		ret = sceIoDread(dir_uid, &sce_ent);
 		if (ret < 0) {
-			LOG_PRINT("sceIoDread(\"%s\") failed with %i\n", dir, ret); goto fail;
+			LOG_PRINT("sceIoDread(\"%s\") failed with %i\n", dir, ret);
+			goto fail;
 		}
 	} else {
 		LOG_PRINT("sceIoDopen(\"%s\") failed with %i\n", dir, dir_uid);
 	}
 
 	while (ret > 0) {
-		ent = (dirent*)malloc(sizeof(*ent));
+		ent = (dirent *)malloc(sizeof(*ent));
 		if (ent == nullptr) {
-			LOG_PRINT("%s:%i: OOM\n", __FILE__, __LINE__); goto fail;
+			LOG_PRINT("%s:%i: OOM\n", __FILE__, __LINE__);
+			goto fail;
 		}
 		ent->d_stat = sce_ent.d_stat;
 		ent->d_stat.st_attr &= SCE_SO_IFMT; // serves as d_type
 		strncpy(ent->d_name, sce_ent.d_name, sizeof(ent->d_name));
-		ent->d_name[sizeof(ent->d_name)-1] = 0;
+		ent->d_name[sizeof(ent->d_name) - 1] = 0;
 		if (filter == nullptr || filter(ent))
-		     namelist[name_count++] = ent;
-		else free(ent);
+			namelist[name_count++] = ent;
+		else
+			free(ent);
 
-		if (name_count >= name_alloc)
-		{
-			dirent** tmp;
+		if (name_count >= name_alloc) {
+			dirent **tmp;
 			name_alloc *= 2;
-			tmp = (dirent**)realloc(namelist, sizeof(*namelist) * name_alloc);
+			tmp = (dirent **)realloc(namelist, sizeof(*namelist) * name_alloc);
 			if (tmp == nullptr) {
-				LOG_PRINT("%s:%i: OOM\n", __FILE__, __LINE__); goto fail;
+				LOG_PRINT("%s:%i: OOM\n", __FILE__, __LINE__);
+				goto fail;
 			}
 			namelist = tmp;
 		}

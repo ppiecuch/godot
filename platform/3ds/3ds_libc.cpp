@@ -31,8 +31,8 @@
 #include <core/error_macros.h>
 
 #include <errno.h>
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <sys/types.h>
 
 #define R_OK 0
@@ -50,14 +50,14 @@ extern "C" int symlink(const char *path1, const char *path2) {
 
 extern "C" int asprintf(char **ret, const char *format, ...) {
 	va_list ap;
-	*ret = nullptr;  /* Ensure value can be passed to free() */
+	*ret = nullptr; /* Ensure value can be passed to free() */
 
 	va_start(ap, format);
 	int count = vsnprintf(nullptr, 0, format, ap);
 	va_end(ap);
 
 	if (count >= 0) {
-		char* buffer = (char*)malloc(count + 1);
+		char *buffer = (char *)malloc(count + 1);
 		if (buffer == nullptr) {
 			return -1;
 		}

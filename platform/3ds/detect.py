@@ -123,7 +123,7 @@ def configure(env):
             "-Wno-shadow=compatible-local",
         ]
     )
-    env.Append(CXXFLAGS=["-Wno-psabi", "-Wno-class-memaccess"])
+    env.Append(CXXFLAGS=["-fno-exceptions", "-Wno-psabi", "-Wno-class-memaccess"])
 
     devkitpro_path = os.environ["DEVKITPRO"]
     ctrulib_path = os.environ["CTRULIB"]

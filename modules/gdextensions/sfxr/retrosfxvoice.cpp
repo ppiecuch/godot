@@ -799,7 +799,7 @@ int RetroSFXVoice::Render(int nSamples, BufferCallback *pCallback) {
 						noise_buffer[n] = GenNoise();
 					}
 				} else if (m_Voice.nWaveformType == 5) {
-					for(int n = 0; n < 32; n++) {
+					for (int n = 0; n < 32; n++) {
 						pink_noise_buffer[n] = GenPinkNoise();
 					}
 				}

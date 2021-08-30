@@ -56,14 +56,14 @@
 #endif
 
 #if defined(__has_feature)
-# if __has_feature(cxx_exceptions)
-#  define _HAS_EXCEPTIONS
-# endif
+#if __has_feature(cxx_exceptions)
+#define _HAS_EXCEPTIONS
+#endif
 #endif
 #ifndef _HAS_EXCEPTIONS
-# if defined(__cpp_exceptions) || defined(__EXCEPTIONS) || (defined(_MSC_VER) && defined(_CPPUNWIND))
-#  define _HAS_EXCEPTIONS
-# endif
+#if defined(__cpp_exceptions) || defined(__EXCEPTIONS) || (defined(_MSC_VER) && defined(_CPPUNWIND))
+#define _HAS_EXCEPTIONS
+#endif
 #endif
 
 #if TOOLS_ENABLED

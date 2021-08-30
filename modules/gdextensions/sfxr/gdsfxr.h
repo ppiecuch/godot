@@ -164,6 +164,7 @@ protected:
 		ClassDB::bind_method(D_METHOD("set_hp_filter_cutoff", "value"), &AudioStreamSfxr::set_hp_filter_cutoff);
 		ClassDB::bind_method(D_METHOD("get_hp_filter_cutoff"), &AudioStreamSfxr::get_hp_filter_cutoff);
 		ClassDB::bind_method(D_METHOD("set_hp_filter_cutoff_sweep", "value"), &AudioStreamSfxr::set_hp_filter_cutoff_sweep);
+		ClassDB::bind_method(D_METHOD("get_hp_filter_cutoff_sweep"), &AudioStreamSfxr::get_hp_filter_cutoff_sweep);
 		ClassDB::bind_method(D_METHOD("get_bit_crush"), &AudioStreamSfxr::get_bit_crush);
 		ClassDB::bind_method(D_METHOD("set_bit_crush", "value"), &AudioStreamSfxr::set_bit_crush);
 		ClassDB::bind_method(D_METHOD("get_bit_crush_sweep"), &AudioStreamSfxr::get_bit_crush_sweep);
