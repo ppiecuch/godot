@@ -1753,7 +1753,7 @@ void EditorFileSystem::_reimport_file(const String &p_file) {
 	Error err = importer->import(p_file, base_path, params, &import_variants, &gen_files, &metadata);
 
 	if (err != OK) {
-		ERR_PRINT("Error importing '" + p_file + "'.");
+		ERR_PRINT("Error importing '" + p_file + "', code: " + String::num(err) + ".");
 	}
 
 	//as import is complete, save the .import file
