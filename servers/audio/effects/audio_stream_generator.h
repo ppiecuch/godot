@@ -73,7 +73,7 @@ protected:
 	static void _bind_methods();
 
 public:
-	virtual void start(float p_from_pos = 0.0);
+	virtual void start(float p_from_pos = 0);
 	virtual void stop();
 	virtual bool is_playing() const;
 
