@@ -28,6 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
+#pragma once
+
 //
 // This code was originally part of a program called SFXR written by Dr Petter Circa 2007.
 // http://www.drpetter.se/project_sfxr.html
@@ -45,10 +47,14 @@
 //////////////////////////////////////////////////////////////////////////
 
 #define SFXR0100 (0x46580100) // FX 1.00
+#define SFXR0140 (0x46580400) // FX 1.40
 
 //////////////////////////////////////////////////////////////////////////
 
 typedef struct _FXParams103 {
+	int fOvertones;
+	float fOvertoneRamp;
+
 	float fBaseFreq;
 	float fFreqLimit;
 	float fFreqRamp;
@@ -68,17 +74,22 @@ typedef struct _FXParams103 {
 	float fLPFResonance;
 	float fLPFFreq;
 	float fLPFRamp;
-
 	float fHPFFreq;
 	float fHPFRamp;
+	float fBitCrush;
+	float fBitCrushSweep;
+	float fCompressionAmount;
 
-	float fPHAOffset;
-	float fPHARamp;
+	float fFlangerOffset;
+	float fFlangerRamp;
 
 	float fRepeatSpeed;
 
+	float fArmRepeat;
 	float fArmSpeed;
 	float fArmMod;
+	float fArmSpeed2;
+	float fArmMod2;
 } FXParams103;
 
 //////////////////////////////////////////////////////////////////////////
@@ -95,25 +106,35 @@ typedef struct _RetroVoice103 {
 
 //////////////////////////////////////////////////////////////////////////
 
+struct BufferCallback {
+	void operator()(float sample) { append_sample(sample); }
+	virtual void append_sample(float sample) = 0;
+};
+
 class RetroSFXVoice {
 public:
 	RetroSFXVoice();
-	~RetroSFXVoice();
 
 	void ResetParams();
-	int ReadData(void *pDest, int nSize, int nUnits, unsigned char *&pRAWData);
-	bool LoadSettings(unsigned char *pRAWData);
-	bool LoadSettings(const char *filename);
-	bool SaveSettings(const char *filename);
+	int ReadData(void *pDest, int nSize, int nUnits, unsigned char *&pData);
+	bool LoadSettings(unsigned char *pData);
+	bool LoadSettings(const char *pFilename);
+	bool SaveSettings(const char *pFilename);
 	bool CompareSettings(RetroSFXVoice *pOther);
 	void Reset(bool restart);
 	void Play(void *pData = 0);
 	void Play(bool bCalculateLength);
-	int GetVoiceLengthInSamples();
-	int Render(int nSamples, short *pBuffer);
-	float GenNoise();
+	int GetVoiceLengthInSamples() const;
+	int Render(int nSamples, BufferCallback *pCallback);
+	float GenNoise() const;
+	float GenPinkNoise() const;
+
+	void Mutate();
+	void Randomize();
 
 	void Morph(float &fMorphVar, float fMorphDest);
+	bool ExportWav(const char *pFilename, int pWavBits = 16, int pWavFreq = 44100);
+
 	//////////////////////////////////////////////////////////////////////////
 
 	bool IsActive();
@@ -147,7 +168,7 @@ public:
 	int iphase;
 	float phaser_buffer[1024];
 	int ipp;
-	float noise_buffer[32];
+	float noise_buffer[32], pink_noise_buffer[32];
 	float fltp;
 	float fltdp;
 	float fltw;

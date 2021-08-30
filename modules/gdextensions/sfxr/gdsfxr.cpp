@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  gdsfx.cpp                                                            */
+/*  gdsfxr.cpp                                                           */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,8 +28,6 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include <stdio.h>
-
 #define GAUDIO_NO_ERROR 0
 #define GAUDIO_CANNOT_OPEN_FILE -1
 #define GAUDIO_UNRECOGNIZED_FORMAT -2
@@ -39,8 +37,6 @@
 #define g_id unsigned int
 #define gaudio_Error int
 
-#include <iostream>
-
 #define LOG1(a) std::cout << a << "\n";
 #define LOG2(a, b) std::cout << a << b << "\n";
 #define LOG3(a, b, c) std::cout << a << b << c << "\n";
@@ -49,106 +45,219 @@
 #include <stdlib.h>
 #include <string.h>
 #include <algorithm>
+#include <iostream>
 #include <map>
 
-#include "gdsfx.h"
+#include "gdsfxr.h"
 #include "retrosfxvoice.h"
 
-struct GGSFXHandle {
-	int nBytesRead;
-	RetroSFXVoice *pSFXVoice;
-};
-static std::map<g_id, GGSFXHandle *> ctxmap;
-static g_id s_nextgid = 1;
+#include "core/os/file_access.h"
 
-g_id g_NextId() {
-	return s_nextgid++;
+/// AudioStreamSfxr
+
+void AudioStreamSfxr::_update_voice() {
+	struct SampleBuffer : public BufferCallback {
+		PoolRealArray data;
+
+		virtual void append_sample(float sample) { data.push_back(sample); }
+		size_t samples() const { return data.size(); }
+	};
+
+	SampleBuffer buffer;
+	sfx_voice.Play();
+	while (sfx_voice.IsActive()) {
+		sfx_voice.Render(256, &buffer);
+	}
+
+	_cache = buffer.data;
+	_dirty = false;
 }
 
-g_id gaudio_SFXOpen(const char *fileName, int *numChannels, int *sampleRate, int *bitsPerSample, int *numSamples, gaudio_Error *error) {
-	GGSFXHandle *handle = new GGSFXHandle();
+void AudioStreamSfxr::from_file(const String p_file) {
+	if (not sfx_voice.LoadSettings(p_file.utf8().get_data())) {
+		ERR_PRINT("Failed to load sfx settings from " + p_file);
+	}
+}
 
-	handle->nBytesRead = 0;
-	handle->pSFXVoice = new RetroSFXVoice();
+void AudioStreamSfxr::from_dict(const Dictionary &p_dict) {
+}
 
-	if (handle->pSFXVoice->LoadSettings(fileName) == false) {
-		if (error) {
-			*error = GAUDIO_ERROR_WHILE_READING;
-			delete handle;
-			return 0;
+Error AudioStreamSfxr::save_to_wav(const String &p_path, int quality, int sample_size) {
+	ERR_FAIL_COND_V_MSG(sample_size != 8 && sample_size != 16, ERR_PARAMETER_RANGE_ERROR, "Invalid wave bits size (8/16)");
+	ERR_FAIL_COND_V_MSG(quality != 11025 && quality != 22050 && quality != 44100, ERR_PARAMETER_RANGE_ERROR, "Invalid wave freq. size (11025/22050/44100)");
+
+	if (not sfx_voice.ExportWav(p_path.utf8().get_data(), sample_size, quality)) {
+		WARN_PRINT("Export to wav file failed: " + p_path);
+		return ERR_FILE_CANT_WRITE;
+	}
+
+	return OK;
+}
+
+int AudioStreamSfxr::fill(AudioFrame *p_buffer, int p_frames, int p_from) {
+	if (_dirty) {
+		const_cast<AudioStreamSfxr *>(this)->_update_voice();
+	}
+
+	ERR_FAIL_COND_V(p_from >= _cache.size(), 0);
+
+	for (int p = p_from; p < p_from + p_frames; p++) {
+		if (p == _cache.size()) {
+			return p - p_from;
+		}
+		const float sample = _cache[p];
+		*p_buffer++ = AudioFrame(sample, sample);
+	}
+
+	return p_frames;
+}
+
+float AudioStreamSfxr::get_length() const {
+	if (_dirty) {
+		const_cast<AudioStreamSfxr *>(this)->_update_voice();
+	}
+	return sfx_voice.GetVoiceLengthInSamples() / 44100.0;
+}
+
+Ref<AudioStreamPlayback> AudioStreamSfxr::instance_playback() {
+	Ref<AudioStreamPlaybackSfxr> sfx;
+
+	sfx.instance();
+	sfx->sfx_stream = Ref<AudioStreamSfxr>(this);
+
+	return sfx;
+}
+
+String AudioStreamSfxr::get_stream_name() const {
+	return "SFXR Stream";
+}
+
+AudioStreamSfxr::AudioStreamSfxr() {
+	_dirty = true;
+	loop = false;
+	loop_offset = 0;
+	sfx_voice.ResetParams();
+}
+
+/// AudioStreamPlaybackSfxr
+
+void AudioStreamPlaybackSfxr::mix(AudioFrame *p_buffer, float p_rate_scale, int p_frames) {
+	ERR_FAIL_COND(!active);
+
+	int filled = sfx_stream->fill(p_buffer, p_frames, sample_position);
+	int todo = p_frames - filled;
+
+	sample_position += filled;
+
+	if (todo) {
+		//end of file!
+		if (sfx_stream->loop) {
+			do {
+				seek(sfx_stream->loop_offset);
+				filled = sfx_stream->fill(p_buffer, p_frames, sample_position);
+				todo = p_frames - filled;
+				sample_position += filled;
+			} while (todo > 0);
+			loops++;
+		} else {
+			for (int i = filled; i < p_frames; i++) {
+				p_buffer[i] = AudioFrame(0, 0);
+			}
+			active = false;
 		}
 	}
-
-	handle->pSFXVoice->Play();
-
-	if (numChannels) {
-		*numChannels = 1;
-	}
-	if (sampleRate) {
-		*sampleRate = 44100;
-	}
-	if (bitsPerSample) {
-		*bitsPerSample = 16;
-	}
-	if (numSamples) {
-		*numSamples = handle->pSFXVoice->GetVoiceLengthInSamples();
-	}
-	if (error) {
-		*error = GAUDIO_NO_ERROR;
-	}
-
-	g_id gid = g_NextId();
-	ctxmap[gid] = handle;
-
-	return gid;
 }
 
-void gaudio_SFXClose(g_id id) {
-	GGSFXHandle *handle = ctxmap[id];
-	ctxmap.erase(id);
-	if (handle) {
-		if (handle->pSFXVoice) {
-			delete handle->pSFXVoice;
-		}
-		delete handle;
-	}
+void AudioStreamPlaybackSfxr::start(float p_from_pos) {
+	active = true;
+	loops = 0;
+	seek(p_from_pos);
+}
+void AudioStreamPlaybackSfxr::stop() {
+	active = false;
 }
 
-int gaudio_SFXSeek(g_id id, long int offset, int whence) {
-	GGSFXHandle *handle = ctxmap[id];
-
-	if ((offset == 0) && (whence == SEEK_SET)) {
-		handle->pSFXVoice->Play();
-		handle->nBytesRead = 0;
-	} else if (whence == SEEK_CUR) {
-		handle->nBytesRead += offset;
-	} else if ((offset == 0) && (whence == SEEK_END)) {
-		handle->pSFXVoice->Play();
-		handle->nBytesRead = handle->pSFXVoice->GetVoiceLengthInSamples() * 2;
-	}
-
-	return handle->nBytesRead;
+bool AudioStreamPlaybackSfxr::is_playing() const {
+	return active;
 }
 
-long int gaudio_SFXTell(g_id id) {
-	GGSFXHandle *handle = ctxmap[id];
-	return handle->nBytesRead;
+int AudioStreamPlaybackSfxr::get_loop_count() const {
+	return loops;
 }
 
-size_t gaudio_SFXRead(g_id id, size_t size, void *data) {
-	GGSFXHandle *handle = ctxmap[id];
+float AudioStreamPlaybackSfxr::get_playback_position() const {
+	return sample_position / sfx_stream->get_sample_rate();
+}
 
-	// clamp the size we will be rendering
-	int nActualSize = handle->pSFXVoice->GetVoiceLengthInSamples() * 2;
-	if ((handle->nBytesRead + size) > nActualSize) {
-		size = (nActualSize - handle->nBytesRead);
+void AudioStreamPlaybackSfxr::seek(float p_time) {
+	if (!active) {
+		return;
 	}
+	if (p_time >= sfx_stream->get_length()) {
+		p_time = 0;
+	}
+	sample_position = sfx_stream->get_sample_rate() * p_time;
+}
 
-	memset(data, 0, size);
+float AudioStreamPlaybackSfxr::get_length() const {
+	return sfx_stream->get_length();
+}
 
-	// i hope size is a multiple of two here....
-	int nLocalBytesRead = handle->pSFXVoice->Render(size / 2, (short *)data) * 2;
-	handle->nBytesRead += nLocalBytesRead;
+AudioStreamPlaybackSfxr::AudioStreamPlaybackSfxr() {
+	active = false;
+	loops = 0;
+	sample_position = 0;
+}
 
-	return nLocalBytesRead;
+/// Sfx resource importer
+
+String ResourceImporterSfxr::get_preset_name(int p_idx) const {
+	return String();
+}
+
+void ResourceImporterSfxr::get_import_options(List<ImportOption> *r_options, int p_preset) const {
+	r_options->push_back(ImportOption(PropertyInfo(Variant::BOOL, "edit/loop"), false));
+	r_options->push_back(ImportOption(PropertyInfo(Variant::REAL, "edit/loop_offset"), 0));
+}
+
+bool ResourceImporterSfxr::get_option_visibility(const String &p_option, const Map<StringName, Variant> &p_options) const {
+	return true;
+}
+
+String ResourceImporterSfxr::get_importer_name() const {
+	return "SFXR";
+}
+
+String ResourceImporterSfxr::get_visible_name() const {
+	return "RetroSoundFX";
+}
+
+void ResourceImporterSfxr::get_recognized_extensions(List<String> *p_extensions) const {
+	p_extensions->push_back("sfx");
+}
+
+String ResourceImporterSfxr::get_save_extension() const {
+	return "res";
+}
+
+String ResourceImporterSfxr::get_resource_type() const {
+	return "AudioStreamSfxr";
+}
+
+int ResourceImporterSfxr::get_preset_count() const {
+	return 0;
+}
+
+Error ResourceImporterSfxr::import(const String &p_source_file, const String &p_save_path, const Map<StringName, Variant> &p_options, List<String> *r_platform_variants, List<String> *r_gen_files, Variant *r_metadata) {
+	const bool loop = p_options["edit/loop"];
+	const float loop_offset = p_options["edit/loop_offset"];
+
+	Ref<AudioStreamSfxr> sfx_stream;
+	sfx_stream.instance();
+
+	sfx_stream->from_file(p_source_file);
+	sfx_stream->set_loop(loop);
+	sfx_stream->set_loop_offset(loop_offset);
+
+	return ResourceSaver::save(p_save_path + ".res", sfx_stream);
 }

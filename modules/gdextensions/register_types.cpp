@@ -96,6 +96,8 @@
 #include "benet/enet_node.h"
 #include "benet/enet_packet_peer.h"
 
+#include "sfxr/gdsfxr.h"
+
 #ifdef TOOLS_ENABLED
 #include "qrcodetexture/qrcodetexture.h"
 #endif
@@ -167,8 +169,17 @@ void register_gdextensions_types() {
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Blitter", memnew(Blitter)));
 
 	ClassDB::register_class<JSONData>();
+#ifdef TOOLS_ENABLED
 	Ref<ResourceImporterJSON> json_data = memnew(ResourceImporterJSON);
 	ResourceFormatImporter::get_singleton()->add_importer(json_data);
+#endif
+
+	ClassDB::register_class<AudioStreamSfxr>();
+	ClassDB::register_class<AudioStreamPlaybackSfxr>();
+#ifdef TOOLS_ENABLED
+	Ref<ResourceImporterSfxr> sfx_data = memnew(ResourceImporterSfxr);
+	ResourceFormatImporter::get_singleton()->add_importer(sfx_data);
+#endif
 
 	ClassDB::register_class<PixelSpaceshipsOptions>();
 	ClassDB::register_class<PixelSpaceshipsMask>();
@@ -214,9 +225,8 @@ void register_gdextensions_types() {
 	ClassDB::register_class<Smooth>();
 	ClassDB::register_class<Smooth2D>();
 
-	ClassDB::register_class<QRCodeTexture>();
-
 #ifdef TOOLS_ENABLED
+	ClassDB::register_class<QRCodeTexture>();
 	ClassDB::register_class<ErrorReporter>();
 #endif
 
