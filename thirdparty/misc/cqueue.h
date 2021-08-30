@@ -55,7 +55,7 @@ struct Queue;
 
 struct QueueData {
   void *v;
-  u_int64_t vlen ;
+  size_t vlen ;
 };
 
 Queue *queue_open_with_options(const char *path,...) WARN_UNUSED_RETURN;
