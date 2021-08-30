@@ -55,8 +55,15 @@
 #define CPP11
 #endif
 
-#if __has_feature(cxx_exceptions) || defined(__cpp_exceptions) || defined(__EXCEPTIONS) || (defined(_MSC_VER) && defined(_CPPUNWIND))
-#define _HAS_EXCEPTIONS
+#if defined(__has_feature)
+# if __has_feature(cxx_exceptions)
+#  define _HAS_EXCEPTIONS
+# endif
+#endif
+#ifndef _HAS_EXCEPTIONS
+# if defined(__cpp_exceptions) || defined(__EXCEPTIONS) || (defined(_MSC_VER) && defined(_CPPUNWIND))
+#  define _HAS_EXCEPTIONS
+# endif
 #endif
 
 #if TOOLS_ENABLED
@@ -212,7 +219,7 @@ template <typename T>
 using deleted_unique_ptr = unique_ptr<T, function<void(T *)>>;
 template <typename T>
 deleted_unique_ptr<T> make_gd_unique_ptr(T *p) {
-	return deleted_unique_ptr<T>(p, [](T *p) { memdelete(p); });
+	return deleted_unique_ptr<T>(p, [](T *ptr) { memdelete(ptr); });
 }
 } // namespace std
 
