@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="AudioStreamSfxr" inherits="AudioStream" version="3.4">
+	<brief_description>
+		Sound FX generator.
+	</brief_description>
+	<description>
+		 Make sound effects for computer games - based on https://www.bfxr.net and http://drpetter.se/project_sfxr.html.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<member name="wave_type" type="int" setter="set_wave_type" getter="get_wave_type" default="0">
+			Shape of the wave.
+		</member>
+		<member name="volume" type="float" setter="set_volume" getter="get_volume" default="0.8">
+			Overall volume of the current sound.
+		</member>
+
+		<member name="attack_time" type="float" setter="set_attack_time" getter="get_attack_time" default="0">
+			Length of the volume envelope attack.
+		</member>
+		<member name="sustain_time" type="float" setter="set_sustain_time" getter="get_sustain_time" default="0.3">
+			Length of the volume envelope sustain.
+		</member>
+		<member name="sustain_punch" type="float" setter="set_sustain_punch" getter="get_sustain_punch" default="0">
+			Tilts the sustain envelope for more 'pop'.
+		</member>
+		<member name="decay_time" type="float" setter="set_decay_time" getter="get_decay_time" default="0.4">
+			Length of the volume envelope decay (yes, I know it's called release).
+		</member>
+
+		<member name="start_frequency" type="float" setter="set_start_frequency" getter="get_start_frequency" default="0.3">
+			Base note of the sound.
+		</member>
+		<member name="min_frequency" type="float" setter="set_min_frequency" getter="get_min_frequency" default="0">
+			If sliding, the sound will stop at this frequency, to prevent really low notes.  If unlocked, this is set to zero during randomization.
+		</member>
+		<member name="slide" type="float" setter="set_min_frequency" getter="get_min_frequency" default="0">
+			Slides the frequency up or down.
+		</member>
+		<member name="delta_slide" type="float" setter="set_delta_slide" getter="get_delta_slide" default="0">
+			Accelerates the frequency slide.  Can be used to get the frequency to change direction.
+		</member>
+		<member name="vibrato_depth" type="float" setter="set_vibrato_depth" getter="get_vibrato_depth" default="0">
+			Strength of the vibrato effect.
+		</member>
+		<member name="vibrato_speed" type="float" setter="set_vibrato_speed" getter="get_vibrato_speed" default="0">
+			Speed of the vibrato effect (i.e. frequency).
+		</member>
+
+		<member name="overtones" type="int" setter="set_overtones" getter="get_overtones" default="0">
+			Overlays copies of the waveform with copies and multiples of its frequency. Good for bulking out or otherwise enriching the texture of the sounds (warning: this is the number 1 cause of generation slowdown!).
+		</member>
+		<member name="overtone_falloff" type="float" setter="set_overtone_falloff" getter="get_overtone_falloff" default="0">
+			The rate at which higher overtones should decay.
+		</member>
+
+		<member name="change_repeat" type="float" setter="set_change_repeat" getter="get_change_repeat" default="0">
+			Larger Values means more pitch jumps, which can be useful for arpeggiation.
+		</member>
+		<member name="change_amount" type="float" setter="set_change_amount" getter="get_change_amount" default="0">
+			Jump in pitch, either up or down.
+		</member>
+		<member name="change_speed" type="float" setter="set_change_speed" getter="get_change_speed" default="0">
+			How quickly the note shift happens.
+		</member>
+		<member name="change_amount2" type="float" setter="set_change_amount2" getter="get_change_amount2" default="0">
+			Jump in pitch, either up or down.
+		</member>
+		<member name="change_speed2" type="float" setter="set_change_speed2" getter="get_change_speed2" default="0">
+			How quickly the note shift happens.
+		</member>
+
+		<member name="square_duty" type="float" setter="set_square_duty" getter="get_square_duty" default="0">
+			Square waveform only : Controls the ratio between the up and down states of the square wave, changing the tibre.
+		</member>
+		<member name="duty_sweep" type="float" setter="set_duty_sweep" getter="get_duty_sweep" default="0">
+			Square waveform only: Sweeps the duty up or down.
+		</member>
+
+		<member name="repeat_speed" type="float" setter="set_repeat_speed" getter="get_repeat_speed" default="0">
+			Speed of the note repeating - certain variables are reset each time.
+		</member>
+
+		<member name="flanger_offset" type="float" setter="set_flanger_offset" getter="get_flanger_offset" default="0">
+			Offsets a second copy of the wave by a small phase, changing the tibre.
+		</member>
+		<member name="flanger_sweep" type="float" setter="set_flanger_sweep" getter="get_flanger_sweep" default="0">
+			Sweeps the phase up or down.
+		</member>
+
+		<member name="lp_filter_cutoff" type="float" setter="set_lp_filter_cutoff" getter="get_lp_filter_cutoff" default="1">
+			Frequency at which the low-pass filter starts attenuating higher frequencies. Named most likely to result in 'Huh why can't I hear anything?' at her high-school grad.
+		</member>
+		<member name="lp_filter_cutoff_sweep" type="float" setter="set_lp_filter_cutoff_sweep" getter="get_lp_filter_cutoff_sweep" default="0">
+			Sweeps the low-pass cutoff up or down.
+		</member>
+		<member name="lp_filter_resonance" type="float" setter="set_lp_filter_resonance" getter="get_lp_filter_resonance" default="0">
+			Changes the attenuation rate for the low-pass filter, changing the timbre.
+		</member>
+		<member name="hp_filter_cutoff" type="float" setter="set_lp_filter_cutoff" getter="get_lp_filter_cutoff" default="0">
+			Frequency at which the high-pass filter starts attenuating lower frequencies.
+		</member>
+		<member name="hp_filter_cutoff_sweep" type="float" setter="set_lp_filter_cutoff_sweep" getter="get_lp_filter_cutoff_sweep" default="0">
+			Resamples the audio at a lower frequency.
+		</member>
+		<member name="bit_crush" type="float" setter="set_bit_crush" getter="get_bit_crush" default="0">
+			Resamples the audio at a lower frequency.
+		</member>
+		<member name="bit_crush_sweep" type="float" setter="set_bit_crush_sweep" getter="get_bit_crush_sweep" default="0">
+			Sweeps the Bit Crush filter up or down.
+		</member>
+		<member name="compression_amount" type="float" setter="set_compression_amount" getter="get_compression_amount" default="0.3">
+			Pushes amplitudes together into a narrower range to make them stand out more. Very good for sound effects, where you want them to stick out against background music.
+		</member>
+	</methods>
+	<signals>
+	</signals>
+	<constants>
+		<constant name="FORMAT_HEIGHTMAP" value="0" enum="Format">
+			Format as heightmap, grayscale, scalar noise image. Suitable for terrain generation.
+		</constant>
+	</constants>
+</class>

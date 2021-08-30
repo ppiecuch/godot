@@ -7,10 +7,11 @@ def configure(env):
 
 
 def get_doc_path():
-    return "doc_classes"
+    return "doc"
 
 
 def get_doc_classes():
     return [
         "ErrorReporter",
+        "AudioStreamSfxr",
     ]
