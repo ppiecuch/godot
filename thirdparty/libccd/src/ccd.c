@@ -819,9 +819,9 @@ simplexToPolytope2_not_touching_contact:
 static int expandPolytope(ccd_pt_t *pt, ccd_pt_el_t *el,
                           const ccd_support_t *newv)
 {
-    ccd_pt_vertex_t *v[5];
-    ccd_pt_edge_t *e[8];
-    ccd_pt_face_t *f[2];
+    ccd_pt_vertex_t *v[5] = { 0 };
+    ccd_pt_edge_t *e[8] = { 0 };
+    ccd_pt_face_t *f[2] = { 0 };
 
 
     // element can be either segment or triangle

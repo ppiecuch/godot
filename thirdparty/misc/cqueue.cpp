@@ -142,7 +142,8 @@ const char *queue_get_last_error(const Queue *const q) {
 static void queue_set_error(Queue *const q, const char *what, const char *errstr) {
 	IFF(q->error_strp);
 	char *ptr;
-	asprintf(&ptr, "%s %s", what, errstr);
+	if (asprintf(&ptr, "%s %s", what, errstr) == -1)
+		perror("Failed building a string");
 	q->error_strp = ptr;
 }
 
