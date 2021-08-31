@@ -34,15 +34,16 @@
 #include "core/array.h"
 #include "core/class_db.h"
 #include "core/engine.h"
+#include "core/error_macros.h"
 #include "core/list.h"
 #include "core/math/vector2.h"
 #include "core/os/os.h"
 #include "core/ustring.h"
 #include "scene/main/scene_tree.h"
 
+#include <ostream>
 #include <deque>
 #include <list>
-#include <ostream>
 #include <vector>
 
 #if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) || __cplusplus >= 201703L)
@@ -64,6 +65,14 @@
 #if defined(__cpp_exceptions) || defined(__EXCEPTIONS) || (defined(_MSC_VER) && defined(_CPPUNWIND))
 #define _HAS_EXCEPTIONS
 #endif
+#endif
+
+#ifdef _HAS_EXCEPTIONS
+#define ERR_THROW(_E) throw _E
+#define ERR_THROW_V(_E, _V) throw _E
+#else
+#define ERR_THROW(_E) { ERR_PRINT(vformat("Exception thrown: %s", _E.what())); return; }
+#define ERR_THROW_V(_E, _V) do { ERR_PRINT(vformat("Exception thrown: %s", _E.what())); return _V; } while (0)
 #endif
 
 #if TOOLS_ENABLED
@@ -214,6 +223,8 @@ reverse_iterator<Iterator> make_reverse_iterator(Iterator i) {
 } // namespace std
 #endif // CPP14
 
+/// make_gd_unique_ptr(ptr)
+/// ptr will be deleted using 'memdelete' function
 namespace std {
 template <typename T>
 using deleted_unique_ptr = unique_ptr<T, function<void(T *)>>;
