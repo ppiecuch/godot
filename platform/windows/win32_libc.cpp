@@ -38,6 +38,10 @@
 #define R_OK 0
 #define R_ERR -1
 
+struct dirent {
+	char *d_name;
+};
+
 extern "C" int asprintf(char **ret, const char *format, ...) {
 	va_list ap;
 	*ret = nullptr; /* Ensure value can be passed to free() */
@@ -62,4 +66,12 @@ extern "C" int asprintf(char **ret, const char *format, ...) {
 		*ret = buffer;
 	}
 	return count;
+}
+
+extern "C" int ftruncate(int fd, off_t length) {
+}
+
+extern "C" int scandir(const char *dir, struct dirent ***namelist_out,
+		int (*filter)(const struct dirent *),
+		int (*compar)(const struct dirent **, const struct dirent **)) {
 }
