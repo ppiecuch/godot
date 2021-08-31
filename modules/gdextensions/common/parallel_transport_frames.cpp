@@ -146,7 +146,7 @@ MultiMeshInstance *ParallelTransportFrames::debug_draw_node(MultiMeshInstance *&
 		node = memnew(MultiMeshInstance);
 	}
 
-	if (not _axis) {
+	if (!_axis) {
 		_axis = Ref<ArrayMesh>(memnew(ArrayMesh));
 		Array mesh_array;
 		mesh_array.resize(VS::ARRAY_MAX);

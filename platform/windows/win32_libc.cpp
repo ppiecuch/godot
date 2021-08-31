@@ -69,6 +69,33 @@ extern "C" int asprintf(char **ret, const char *format, ...) {
 }
 
 extern "C" int ftruncate(int fd, off_t length) {
+	/***
+	Set size of file stream 'fd' to 'length'.
+		File pointer isn't modified (undefined behavior on shrinked files beyond the current pointer?)
+		Shrinked bytes are lost
+		Extended bytes are set to 0
+		If file is mapped and shrinked beyond whole mapped pages, the pages are discarded
+		In our impementation we ignore all mapping related code as ftruncate is called before a file is mapped or after it's unmapped within leveldb.
+		The WinAPI call used, SetEndOfFile, requires that the file is unmapped, however there won't be an issue on this front (at this point).
+
+		No extended bytes will be set to 0, as there doesn't seem to be a need for that. In order to perform this task, find the end of the file and add the extra 0s from there on,
+		as necessary.
+	***/
+
+	HANDLE hF = (HANDLE)_get_osfhandle(fd);
+
+	if(hF) {
+		unsigned cpos = _tell(fd); // save current file pointer pos for restoring later
+		if(cpos != 0xFFFFFFFF) {
+			if(SetFilePointer((HANDLE)hF, length, 0, FILE_BEGIN) != 0xFFFFFFFF) { // set file pointer to length
+				if(SetEndOfFile((HANDLE)hF)) {
+					SetFilePointer((HANDLE)hF, cpos, 0, FILE_BEGIN); //file size has been changed, set pointer to back to cpos
+					return 0; //returns 0 on success
+				}
+			}
+		}
+	}
+	return -1;
 }
 
 extern "C" int scandir(const char *dir, struct dirent ***namelist_out,
