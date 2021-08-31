@@ -19,9 +19,9 @@ RUN apt-get update \
   && echo "*** Fetching toolchain $version ..." \
   && curl -sL $toolchain | tar xJ \
   && echo "*** Fetching Khronos headers ..." \
-  && curl -L https://github.com/KhronosGroup/OpenGL-Registry/tarball/master \
+  && curl -L https://github.com/KhronosGroup/OpenGL-Registry/tarball/main \
   | tar --strip-components 2 --directory /opt/usr/include/api --wildcards -xzf - "*/api" \
-  && curl -L https://github.com/KhronosGroup/EGL-Registry/tarball/master \
+  && curl -L https://github.com/KhronosGroup/EGL-Registry/tarball/main \
   | tar --strip-components 2 --directory /opt/usr/include/api --wildcards -xzf - "*/api"
 
 ENV PKG_CONFIG_PATH=/opt/usr/share/pkgconfig
