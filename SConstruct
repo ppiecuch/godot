@@ -232,13 +232,22 @@ if selected_platform in ["linux", "bsd", "linuxbsd"]:
     # Alias for convenience.
     selected_platform = "x11"
 
-# Detect platform family
+# Detect platform/hardware family
 if selected_platform in ["x11", "frt", "osx", "iphone", "android", "nx"]:
     env_base["os_family"] = "os_unix"
 elif sys.platform == "win32":
     env_base["os_family"] = "os_windows"
 else:
     env_base["os_family"] = "os_other"
+
+if selected_platform in ["x11", "osx", "win32"]:
+    env_base["hw_family"] = "hw_desktop"
+elif selected_platform in ["iphone", "android"]:
+    env_base["hw_family"] = "hw_mobile"
+elif selected_platform in ["frt", "psvita", "3ds", "nx"]:
+    env_base["hw_family"] = "hw_portable"
+else:
+    env_base["hw_family"] = "hw_other"
 
 # Make sure to update this to the found, valid platform as it's used through the buildsystem as the reference.
 # It should always be re-set after calling `opts.Update()` otherwise it uses the original input value.
