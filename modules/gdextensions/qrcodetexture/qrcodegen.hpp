@@ -218,6 +218,12 @@ public:
 public:
 	QrSegment(const Mode &md, int numCh, std::vector<bool> &&dt);
 
+	/*
+	 * Creates an empty/invalid QR Code segment with no data.
+	 */
+public:
+	QrSegment();
+
 	/*---- Methods ----*/
 
 	/*
@@ -369,6 +375,12 @@ private:
 	 */
 public:
 	QrCode(int ver, Ecc ecl, const std::vector<std::uint8_t> &dataCodewords, int msk);
+
+	/*
+	 * Creates an empty/invalid QR Code with no data.
+	 */
+public:
+	QrCode();
 
 	/*---- Public instance methods ----*/
 
