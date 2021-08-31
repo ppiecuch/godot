@@ -19,6 +19,8 @@
 
 #include "cqueue.h"
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #ifndef _WIN32
@@ -93,7 +95,7 @@ typedef struct _FileKey {
 struct FileItr {
 	FileKey key;
 	FILE *binlogfd;
-	ssize_t bsize;
+	size_t bsize;
 };
 
 
@@ -159,13 +161,13 @@ static Queue *readoptions (va_list argp) {
 	q->max_entries = DEFAULT_MAX_Q_ENTRIES;
 	for (p = va_arg(argp, char *); p != nullptr; p = va_arg(argp,char *)) {
 		if (0 == strcmp(p, "maxBinLogSize")) {
-			q->max_bin_log_size= va_arg(argp, ssize_t);
+			q->max_bin_log_size= va_arg(argp, size_t);
 		}
 		if (0 == strcmp(p, "maxSizeInBytes")) {
-			q->max_size_in_bytes= va_arg(argp, ssize_t);
+			q->max_size_in_bytes= va_arg(argp, size_t);
 		}
 		if (0 == strcmp(p, "maxEntries")) {
-			q->max_entries= va_arg(argp, ssize_t);
+			q->max_entries= va_arg(argp, size_t);
 		}
 		if (0 == strcmp(p, "failIfMissing")) {
 		   q-> fail_if_missing = 1;
@@ -183,16 +185,16 @@ static const char *getBinLogFileName(FileKey *keyp, const char *path, char *file
 	return getFileName("bin_log",keyp,path, file);
 }
 
-static ssize_t getFileSize(FILE *fd) WARN_UNUSED_RETURN;
-static ssize_t getFileSize(FILE *fd) {
+static size_t getFileSize(FILE *fd) WARN_UNUSED_RETURN;
+static size_t getFileSize(FILE *fd) {
 	if (nullptr == fd) return 0;
 	struct stat stat;
 	fstat(fileno(fd), &stat);
 	return stat.st_size;
 }
 
-static unsigned int chksum(char *d, ssize_t size) WARN_UNUSED_RETURN;
-static unsigned int chksum(char *d, ssize_t size) {
+static unsigned int chksum(char *d, size_t size) WARN_UNUSED_RETURN;
+static unsigned int chksum(char *d, size_t size) {
 	unsigned int sum = 0;
 	while (size) {
 		switch (size) {
@@ -291,14 +293,14 @@ static int openJournalAtTime(FileKey *keyp, const char *path, struct FileItr *it
 /**
  * @return number of entries in the journal that are marked done
  */
-static ssize_t countEntries(const char *file) WARN_UNUSED_RETURN;
-static ssize_t countEntries(const char *file) {
+static size_t countEntries(const char *file) WARN_UNUSED_RETURN;
+static size_t countEntries(const char *file) {
 	FILE * cf = fopen(file, "r");
 	if (nullptr == cf) {
 		return 0;
 	}
 	struct JournalEntry je;
-	ssize_t count=0;
+	size_t count=0;
 	while (1 == fread(&je, sizeof(je),1, cf)) {
 		if (0 == je.done)
 			count++;
@@ -411,8 +413,8 @@ static int newestEntry(Queue *q, FileKey *key) {
 	}
 	return found;
 }
-static int writeAndFlushData(FILE *file, const void *data, ssize_t size) WARN_UNUSED_RETURN;
-static int writeAndFlushData(FILE *file, const void *data, ssize_t size) {
+static int writeAndFlushData(FILE *file, const void *data, size_t size) WARN_UNUSED_RETURN;
+static int writeAndFlushData(FILE *file, const void *data, size_t size) {
 	if (1 != fwrite(data, size, 1, file) ) {
 		return LIBQUEUE_FAILURE;
 	}
@@ -563,7 +565,7 @@ static int queue_peek_h(Queue *const q,  int64_t idx, struct QueueData *const d,
 		}
 		return queue_peek_h(q,idx,d,je);
 	}
-	ssize_t offset = ftell(q->read.binlogfd);
+	size_t offset = ftell(q->read.binlogfd);
 	if (d) {
 		d->vlen = je->size;
 		d->v = memalloc (d->vlen );
@@ -626,7 +628,7 @@ static int queue_index_lookup(const Queue *const q,  int64_t idx, struct FileItr
 		}
 		return queue_index_lookup(q,idx,itr, d,je);
 	}
-	ssize_t offset = ftell(itr->binlogfd);
+	size_t offset = ftell(itr->binlogfd);
 	if (d) {
 		d->vlen = je->size;
 		d->v = memalloc (d->vlen );
