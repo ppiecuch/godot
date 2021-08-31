@@ -23,6 +23,13 @@
 				Returns [code]true[/code] if the specified [code]axis[/code] is locked. See also [member move_lock_x], [member move_lock_y] and [member move_lock_z].
 			</description>
 		</method>
+		<method name="get_floor_angle" qualifiers="const">
+			<return type="float" />
+			<argument index="0" name="up_direction" type="Vector3" default="Vector3( 0, 1, 0 )" />
+			<description>
+				Returns the floor's collision angle at the last collision point according to [code]up_direction[/code], which is [code]Vector3.UP[/code] by default. This value is always positive and only valid after calling [method move_and_slide] and when [method is_on_floor] returns [code]true[/code].
+			</description>
+		</method>
 		<method name="get_floor_normal" qualifiers="const">
 			<return type="Vector3" />
 			<description>
@@ -33,6 +40,12 @@
 			<return type="Vector3" />
 			<description>
 				Returns the linear velocity of the floor at the last collision point. Only valid after calling [method move_and_slide] or [method move_and_slide_with_snap] and when [method is_on_floor] returns [code]true[/code].
+			</description>
+		</method>
+		<method name="get_last_slide_collision">
+			<return type="KinematicCollision" />
+			<description>
+				Returns a [KinematicCollision], which contains information about the latest collision that occurred during the last call to [method move_and_slide].
 			</description>
 		</method>
 		<method name="get_slide_collision">
@@ -131,6 +144,15 @@
 		</method>
 	</methods>
 	<members>
+		<member name="axis_lock_motion_x" type="bool" setter="set_axis_lock" getter="get_axis_lock" default="false">
+			Lock the body's X axis movement.
+		</member>
+		<member name="axis_lock_motion_y" type="bool" setter="set_axis_lock" getter="get_axis_lock" default="false">
+			Lock the body's Y axis movement.
+		</member>
+		<member name="axis_lock_motion_z" type="bool" setter="set_axis_lock" getter="get_axis_lock" default="false">
+			Lock the body's Z axis movement.
+		</member>
 		<member name="collision/safe_margin" type="float" setter="set_safe_margin" getter="get_safe_margin" default="0.001">
 			Extra margin used for collision recovery in motion functions (see [method move_and_collide], [method move_and_slide], [method move_and_slide_with_snap]).
 			If the body is at least this close to another body, it will consider them to be colliding and will be pushed away before performing the actual motion.
@@ -141,13 +163,13 @@
 			If [code]true[/code], the body's movement will be synchronized to the physics frame. This is useful when animating movement via [AnimationPlayer], for example on moving platforms. Do [b]not[/b] use together with [method move_and_slide] or [method move_and_collide] functions.
 		</member>
 		<member name="move_lock_x" type="bool" setter="set_axis_lock" getter="get_axis_lock" default="false">
-			Lock the body's X axis movement.
+			Lock the body's X axis movement. Deprecated alias for [member axis_lock_motion_x].
 		</member>
 		<member name="move_lock_y" type="bool" setter="set_axis_lock" getter="get_axis_lock" default="false">
-			Lock the body's Y axis movement.
+			Lock the body's Y axis movement. Deprecated alias for [member axis_lock_motion_y].
 		</member>
 		<member name="move_lock_z" type="bool" setter="set_axis_lock" getter="get_axis_lock" default="false">
-			Lock the body's Z axis movement.
+			Lock the body's Z axis movement. Deprecated alias for [member axis_lock_motion_z].
 		</member>
 	</members>
 	<constants>

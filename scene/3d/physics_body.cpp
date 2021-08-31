@@ -1066,7 +1066,7 @@ Vector3 KinematicBody::_move_and_slide_internal(const Vector3 &p_linear_velocity
 	float delta = Engine::get_singleton()->is_in_physics_frame() ? get_physics_process_delta_time() : get_process_delta_time();
 
 	Vector3 current_floor_velocity = floor_velocity;
-	if ((on_floor || on_wall) && on_floor_body.is_valid()) {
+	if (on_floor && on_floor_body.is_valid()) {
 		// This approach makes sure there is less delay between the actual body velocity and the one we saved.
 		PhysicsDirectBodyState *bs = PhysicsServer::get_singleton()->body_get_direct_state(on_floor_body);
 		if (bs) {
@@ -1193,7 +1193,7 @@ Vector3 KinematicBody::_move_and_slide_internal(const Vector3 &p_linear_velocity
 		}
 	}
 
-	if (!on_floor && !on_wall) {
+	if (!on_floor) {
 		// Add last platform velocity when just left a moving platform.
 		return body_velocity + current_floor_velocity;
 	}
@@ -1223,8 +1223,6 @@ void KinematicBody::_set_collision_direction(const Collision &p_collision, const
 			on_ceiling = true;
 		} else {
 			on_wall = true;
-			on_floor_body = p_collision.collider_rid;
-			floor_velocity = p_collision.collider_vel;
 		}
 	}
 }
@@ -1242,6 +1240,11 @@ bool KinematicBody::is_on_ceiling() const {
 
 Vector3 KinematicBody::get_floor_normal() const {
 	return floor_normal;
+}
+
+real_t KinematicBody::get_floor_angle(const Vector3 &p_up_direction) const {
+	ERR_FAIL_COND_V(p_up_direction == Vector3(), 0);
+	return Math::acos(floor_normal.dot(p_up_direction));
 }
 
 Vector3 KinematicBody::get_floor_velocity() const {
@@ -1291,6 +1294,11 @@ bool KinematicBody::separate_raycast_shapes(bool p_infinite_inertia, Collision &
 }
 
 void KinematicBody::set_axis_lock(PhysicsServer::BodyAxis p_axis, bool p_lock) {
+	if (p_lock) {
+		locked_axis |= p_axis;
+	} else {
+		locked_axis &= (~p_axis);
+	}
 	PhysicsServer::get_singleton()->body_set_axis_lock(get_rid(), p_axis, p_lock);
 }
 
@@ -1328,6 +1336,13 @@ Ref<KinematicCollision> KinematicBody::_get_slide_collision(int p_bounce) {
 
 	slide_colliders.write[p_bounce]->collision = colliders[p_bounce];
 	return slide_colliders[p_bounce];
+}
+
+Ref<KinematicCollision> KinematicBody::_get_last_slide_collision() {
+	if (colliders.size() == 0) {
+		return Ref<KinematicCollision>();
+	}
+	return _get_slide_collision(colliders.size() - 1);
 }
 
 void KinematicBody::set_sync_to_physics(bool p_enable) {
@@ -1406,6 +1421,7 @@ void KinematicBody::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_on_ceiling"), &KinematicBody::is_on_ceiling);
 	ClassDB::bind_method(D_METHOD("is_on_wall"), &KinematicBody::is_on_wall);
 	ClassDB::bind_method(D_METHOD("get_floor_normal"), &KinematicBody::get_floor_normal);
+	ClassDB::bind_method(D_METHOD("get_floor_angle", "up_direction"), &KinematicBody::get_floor_angle, DEFVAL(Vector3(0.0, 1.0, 0.0)));
 	ClassDB::bind_method(D_METHOD("get_floor_velocity"), &KinematicBody::get_floor_velocity);
 
 	ClassDB::bind_method(D_METHOD("set_axis_lock", "axis", "lock"), &KinematicBody::set_axis_lock);
@@ -1416,12 +1432,17 @@ void KinematicBody::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("get_slide_count"), &KinematicBody::get_slide_count);
 	ClassDB::bind_method(D_METHOD("get_slide_collision", "slide_idx"), &KinematicBody::_get_slide_collision);
+	ClassDB::bind_method(D_METHOD("get_last_slide_collision"), &KinematicBody::_get_last_slide_collision);
 
 	ClassDB::bind_method(D_METHOD("set_sync_to_physics", "enable"), &KinematicBody::set_sync_to_physics);
 	ClassDB::bind_method(D_METHOD("is_sync_to_physics_enabled"), &KinematicBody::is_sync_to_physics_enabled);
 
 	ClassDB::bind_method(D_METHOD("_direct_state_changed"), &KinematicBody::_direct_state_changed);
 
+	ADD_GROUP("Axis Lock", "axis_lock_");
+	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "axis_lock_motion_x"), "set_axis_lock", "get_axis_lock", PhysicsServer::BODY_AXIS_LINEAR_X);
+	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "axis_lock_motion_y"), "set_axis_lock", "get_axis_lock", PhysicsServer::BODY_AXIS_LINEAR_Y);
+	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "axis_lock_motion_z"), "set_axis_lock", "get_axis_lock", PhysicsServer::BODY_AXIS_LINEAR_Z);
 	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "move_lock_x", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "set_axis_lock", "get_axis_lock", PhysicsServer::BODY_AXIS_LINEAR_X);
 	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "move_lock_y", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "set_axis_lock", "get_axis_lock", PhysicsServer::BODY_AXIS_LINEAR_Y);
 	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "move_lock_z", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "set_axis_lock", "get_axis_lock", PhysicsServer::BODY_AXIS_LINEAR_Z);
@@ -1451,6 +1472,7 @@ KinematicBody::~KinematicBody() {
 		}
 	}
 }
+
 ///////////////////////////////////////
 
 Vector3 KinematicCollision::get_position() const {
@@ -1465,6 +1487,12 @@ Vector3 KinematicCollision::get_travel() const {
 Vector3 KinematicCollision::get_remainder() const {
 	return collision.remainder;
 }
+
+real_t KinematicCollision::get_angle(const Vector3 &p_up_direction) const {
+	ERR_FAIL_COND_V(p_up_direction == Vector3(), 0);
+	return collision.get_angle(p_up_direction);
+}
+
 Object *KinematicCollision::get_local_shape() const {
 	if (!owner) {
 		return nullptr;
@@ -1513,6 +1541,7 @@ void KinematicCollision::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_normal"), &KinematicCollision::get_normal);
 	ClassDB::bind_method(D_METHOD("get_travel"), &KinematicCollision::get_travel);
 	ClassDB::bind_method(D_METHOD("get_remainder"), &KinematicCollision::get_remainder);
+	ClassDB::bind_method(D_METHOD("get_angle", "up_direction"), &KinematicCollision::get_angle, DEFVAL(Vector3(0.0, 1.0, 0.0)));
 	ClassDB::bind_method(D_METHOD("get_local_shape"), &KinematicCollision::get_local_shape);
 	ClassDB::bind_method(D_METHOD("get_collider"), &KinematicCollision::get_collider);
 	ClassDB::bind_method(D_METHOD("get_collider_id"), &KinematicCollision::get_collider_id);

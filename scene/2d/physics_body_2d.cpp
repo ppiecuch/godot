@@ -1111,8 +1111,7 @@ Vector2 KinematicBody2D::_move_and_slide_internal(const Vector2 &p_linear_veloci
 	float delta = Engine::get_singleton()->is_in_physics_frame() ? get_physics_process_delta_time() : get_process_delta_time();
 
 	Vector2 current_floor_velocity = floor_velocity;
-
-	if ((on_floor || on_wall) && on_floor_body.is_valid()) {
+	if (on_floor && on_floor_body.is_valid()) {
 		//this approach makes sure there is less delay between the actual body velocity and the one we saved
 		Physics2DDirectBodyState *bs = Physics2DServer::get_singleton()->body_get_direct_state(on_floor_body);
 		if (bs) {
@@ -1234,7 +1233,7 @@ Vector2 KinematicBody2D::_move_and_slide_internal(const Vector2 &p_linear_veloci
 		}
 	}
 
-	if (!on_floor && !on_wall) {
+	if (!on_floor) {
 		// Add last platform velocity when just left a moving platform.
 		return body_velocity + current_floor_velocity;
 	}
@@ -1264,8 +1263,6 @@ void KinematicBody2D::_set_collision_direction(const Collision &p_collision, con
 			on_ceiling = true;
 		} else {
 			on_wall = true;
-			on_floor_body = p_collision.collider_rid;
-			floor_velocity = p_collision.collider_vel;
 		}
 	}
 }
@@ -1282,6 +1279,11 @@ bool KinematicBody2D::is_on_ceiling() const {
 
 Vector2 KinematicBody2D::get_floor_normal() const {
 	return floor_normal;
+}
+
+real_t KinematicBody2D::get_floor_angle(const Vector2 &p_up_direction) const {
+	ERR_FAIL_COND_V(p_up_direction == Vector2(), 0);
+	return Math::acos(floor_normal.dot(p_up_direction));
 }
 
 Vector2 KinematicBody2D::get_floor_velocity() const {
@@ -1324,6 +1326,13 @@ Ref<KinematicCollision2D> KinematicBody2D::_get_slide_collision(int p_bounce) {
 
 	slide_colliders.write[p_bounce]->collision = colliders[p_bounce];
 	return slide_colliders[p_bounce];
+}
+
+Ref<KinematicCollision2D> KinematicBody2D::_get_last_slide_collision() {
+	if (colliders.size() == 0) {
+		return Ref<KinematicCollision2D>();
+	}
+	return _get_slide_collision(colliders.size() - 1);
 }
 
 void KinematicBody2D::set_sync_to_physics(bool p_enable) {
@@ -1399,6 +1408,7 @@ void KinematicBody2D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_on_ceiling"), &KinematicBody2D::is_on_ceiling);
 	ClassDB::bind_method(D_METHOD("is_on_wall"), &KinematicBody2D::is_on_wall);
 	ClassDB::bind_method(D_METHOD("get_floor_normal"), &KinematicBody2D::get_floor_normal);
+	ClassDB::bind_method(D_METHOD("get_floor_angle", "up_direction"), &KinematicBody2D::get_floor_angle, DEFVAL(Vector2(0.0, -1.0)));
 	ClassDB::bind_method(D_METHOD("get_floor_velocity"), &KinematicBody2D::get_floor_velocity);
 
 	ClassDB::bind_method(D_METHOD("set_safe_margin", "pixels"), &KinematicBody2D::set_safe_margin);
@@ -1406,6 +1416,7 @@ void KinematicBody2D::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("get_slide_count"), &KinematicBody2D::get_slide_count);
 	ClassDB::bind_method(D_METHOD("get_slide_collision", "slide_idx"), &KinematicBody2D::_get_slide_collision);
+	ClassDB::bind_method(D_METHOD("get_last_slide_collision"), &KinematicBody2D::_get_last_slide_collision);
 
 	ClassDB::bind_method(D_METHOD("set_sync_to_physics", "enable"), &KinematicBody2D::set_sync_to_physics);
 	ClassDB::bind_method(D_METHOD("is_sync_to_physics_enabled"), &KinematicBody2D::is_sync_to_physics_enabled);
@@ -1451,6 +1462,12 @@ Vector2 KinematicCollision2D::get_travel() const {
 Vector2 KinematicCollision2D::get_remainder() const {
 	return collision.remainder;
 }
+
+real_t KinematicCollision2D::get_angle(const Vector2 &p_up_direction) const {
+	ERR_FAIL_COND_V(p_up_direction == Vector2(), 0);
+	return collision.get_angle(p_up_direction);
+}
+
 Object *KinematicCollision2D::get_local_shape() const {
 	if (!owner) {
 		return nullptr;
@@ -1499,6 +1516,7 @@ void KinematicCollision2D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_normal"), &KinematicCollision2D::get_normal);
 	ClassDB::bind_method(D_METHOD("get_travel"), &KinematicCollision2D::get_travel);
 	ClassDB::bind_method(D_METHOD("get_remainder"), &KinematicCollision2D::get_remainder);
+	ClassDB::bind_method(D_METHOD("get_angle", "up_direction"), &KinematicCollision2D::get_angle, DEFVAL(Vector2(0.0, -1.0)));
 	ClassDB::bind_method(D_METHOD("get_local_shape"), &KinematicCollision2D::get_local_shape);
 	ClassDB::bind_method(D_METHOD("get_collider"), &KinematicCollision2D::get_collider);
 	ClassDB::bind_method(D_METHOD("get_collider_id"), &KinematicCollision2D::get_collider_id);

@@ -291,6 +291,7 @@ struct _VariantCall {
 	VCALL_LOCALMEM0R(String, empty);
 	VCALL_LOCALMEM1R(String, humanize_size);
 	VCALL_LOCALMEM0R(String, is_abs_path);
+	VCALL_LOCALMEM0R(String, simplify_path);
 	VCALL_LOCALMEM0R(String, is_rel_path);
 	VCALL_LOCALMEM0R(String, get_base_dir);
 	VCALL_LOCALMEM0R(String, get_file);
@@ -562,6 +563,7 @@ struct _VariantCall {
 	VCALL_LOCALMEM1(Array, push_front);
 	VCALL_LOCALMEM0R(Array, pop_back);
 	VCALL_LOCALMEM0R(Array, pop_front);
+	VCALL_LOCALMEM1R(Array, pop_at);
 	VCALL_LOCALMEM1(Array, append);
 	VCALL_LOCALMEM1(Array, append_array);
 	VCALL_LOCALMEM1(Array, resize);
@@ -1698,6 +1700,7 @@ void register_variant_methods() {
 	ADDFUNC0R(STRING, BOOL, String, empty, varray());
 	ADDFUNC1R(STRING, STRING, String, humanize_size, INT, "size", varray());
 	ADDFUNC0R(STRING, BOOL, String, is_abs_path, varray());
+	ADDFUNC0R(STRING, BOOL, String, simplify_path, varray());
 	ADDFUNC0R(STRING, BOOL, String, is_rel_path, varray());
 	ADDFUNC0R(STRING, STRING, String, get_base_dir, varray());
 	ADDFUNC0R(STRING, STRING, String, get_file, varray());
@@ -1907,6 +1910,7 @@ void register_variant_methods() {
 	ADDFUNC1R(ARRAY, BOOL, Array, has, NIL, "value", varray());
 	ADDFUNC0RNC(ARRAY, NIL, Array, pop_back, varray());
 	ADDFUNC0RNC(ARRAY, NIL, Array, pop_front, varray());
+	ADDFUNC1RNC(ARRAY, NIL, Array, pop_at, INT, "position", varray());
 	ADDFUNC0NC(ARRAY, NIL, Array, sort, varray());
 	ADDFUNC2NC(ARRAY, NIL, Array, sort_custom, OBJECT, "obj", STRING, "func", varray());
 	ADDFUNC0NC(ARRAY, NIL, Array, shuffle, varray());
