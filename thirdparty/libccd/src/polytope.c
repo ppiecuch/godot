@@ -252,9 +252,15 @@ ccd_pt_el_t *ccdPtNearest(ccd_pt_t *pt)
 
 void ccdPtDumpSVT(ccd_pt_t *pt, const char *fn)
 {
-    FILE *fout;
+    FILE *fout = NULL;
 
+#ifdef _WIN32
+    errno_t err = fopen_s(&fout, fn, "a");
+	if (err != 0)
+		perror("fopen_s failed");
+#else
     fout = fopen(fn, "a");
+#endif
     if (fout == NULL)
         return;
 
