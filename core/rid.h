@@ -84,8 +84,8 @@ public:
 	_FORCE_INLINE_ RID_Data *get_data() const { return _data; }
 
 	_FORCE_INLINE_ RID_Prop get_prop(int p_index) const { return _props->get(p_index); }
-	_FORCE_INLINE_ bool is_props_valid() const { return _props and _props->size() > 0; }
-	_FORCE_INLINE_ size_t get_props_count() const { return _props ? _props->size() : 0; }
+	_FORCE_INLINE_ bool is_props_valid() const { return (_props && _props->size() > 0); }
+	_FORCE_INLINE_ size_t get_props_count() const { return (_props ? _props->size() : 0); }
 
 	template <typename... props_types>
 	void set_props(props_types... args) {

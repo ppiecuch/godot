@@ -72,7 +72,7 @@ CCDCylinder::CCDCylinder() :
 		CCDBase() {
 	// Init sphere
 	ccdCylinder.type = CCD_OBJ_CYL;
-	ccdCylinder.quat = { .q = { 0., 0., 0., 1. } };
+	ccdCylinder.quat = {{ 0., 0., 0., 1. }};
 }
 
 void CCDCylinder::initialize(Vector3 position, Quat rotation, float radius, float height) {

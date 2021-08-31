@@ -15,6 +15,7 @@ common_win = [
     "joypad_windows.cpp",
     "power_windows.cpp",
     "windows_terminal_logger.cpp",
+    "win32_libc.cpp",
 ]
 
 res_file = "godot_res.rc"

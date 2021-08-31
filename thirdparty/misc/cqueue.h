@@ -28,11 +28,20 @@
 #include <errno.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 
+#if defined(__GNUC__) && (__GNUC__ >= 4)
 #define WARN_UNUSED_RETURN __attribute__ ((warn_unused_result))
+#elif defined(_MSC_VER) && (_MSC_VER >= 1700)
+#define WARN_UNUSED_RETURN _Check_return_
+#else
+#define WARN_UNUSED_RETURN
+#endif
 
 #ifdef __cplusplus
 extern "C"

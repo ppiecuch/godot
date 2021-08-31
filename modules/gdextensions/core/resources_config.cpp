@@ -84,13 +84,13 @@ ObjectNode ObjectConfig::load_config_file(const String &p_file, String &error_st
 	ObjectNode root("root", "root"); // Returns the root node
 
 	FileAccessRef file = FileAccess::open(p_file, FileAccess::READ);
-	if (not file) {
+	if (!file) {
 		error_string = "Can not open config file for reading.";
 	} else {
 		std::vector<ObjectNode *> nodes;
 		nodes.push_back(&root);
 
-		while (not file->eof_reached()) {
+		while (!file->eof_reached()) {
 			String line = _strip_comments(file->get_line()).trim();
 
 			int assign = line.find("=");
@@ -177,10 +177,10 @@ void Resources::load_config() {
 }
 
 RES Resources::get_resource(const String &p_res_name) {
-	if (not loaded) {
+	if (!loaded) {
 		load_config();
 	}
-	ERR_FAIL_COND_V_MSG(not loaded, RES(), "Resources configuration file not loaded.");
+	ERR_FAIL_COND_V_MSG(!loaded, RES(), "Resources configuration file not loaded.");
 	String res_path, res_hint;
 	if (_resources_loaded.count(p_res_name)) {
 		res_path = _resources_loaded[p_res_name].first;

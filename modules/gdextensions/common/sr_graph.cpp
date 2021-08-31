@@ -100,7 +100,7 @@ typedef struct {
 	PoolRealArray buffer;
 	Color color;
 	real_t param0;
-	unsigned int param1;
+	unsigned param1;
 } _rg_curve;
 
 typedef enum {
@@ -132,13 +132,13 @@ typedef struct {
 
 typedef struct {
 	PoolRealArray buffer_quad;
-	uint cid;
-	uint pcid;
-	uint lcid;
-	uint rid;
-	uint prid;
-	uint lrid;
-	uint psid;
+	unsigned cid;
+	unsigned pcid;
+	unsigned lcid;
+	unsigned rid;
+	unsigned prid;
+	unsigned lrid;
+	unsigned psid;
 } _rg_internal_state;
 
 typedef enum {
@@ -172,7 +172,7 @@ int rg_setup(real_t minx, real_t maxx, real_t miny, real_t maxy, real_t ratio, c
 	}
 	// Create a graph with the given infos.
 	_rg_graph graph;
-	graph.color = (Color){ bg_r, bg_g, bg_b };
+	graph.color = Color{ bg_r, bg_g, bg_b };
 	graph.minx = minx;
 	graph.maxx = maxx;
 	graph.miny = miny;
@@ -203,7 +203,7 @@ void rg_add_axes(int graph_id, real_t width, real_t axis_r, real_t axis_g, real_
 	_rg_generate_axis(RG_HORIZONTAL, graph->margins, graph->ratio, width, graph->miny, graph->maxy, axis_on_side, graph->minx > graph->maxx, axis_data);
 	_rg_generate_axis(RG_VERTICAL, graph->margins, graph->ratio, width, graph->minx, graph->maxx, axis_on_side, graph->miny > graph->maxy, axis_data);
 
-	graph->color_axes = (Color){ axis_r, axis_g, axis_b };
+	graph->color_axes = Color{ axis_r, axis_g, axis_b };
 	graph->buffer_axes = axis_data;
 }
 
@@ -265,7 +265,7 @@ void rg_add_grid(int graph_id, real_t stepx, real_t stepy, real_t width, real_t 
 			_rg_get_line(-1 + graph->margins[lt], 1 - graph->margins[tp], 1 - graph->margins[rt], 1 - graph->margins[tp], width, graph->ratio, grid_data);
 		}
 	}
-	graph->color_grid = (Color){ lines_r, lines_g, lines_b };
+	graph->color_grid = Color{ lines_r, lines_g, lines_b };
 	graph->buffer_grid = grid_data;
 }
 
@@ -276,13 +276,13 @@ int rg_add_curve(int graph_id, const PoolRealArray &xs, const PoolRealArray &ys,
 	_rg_graph *graph = &_rg_graphs.write[graph_id];
 	// Generate the lines.
 	_rg_curve curve;
-	curve.color = (Color){ color_r, color_g, color_b };
+	curve.color = Color{ color_r, color_g, color_b };
 	curve.param0 = width;
 	_rg_generate_curve(graph, xs, ys, &curve);
 	graph->curves.push_back(curve);
 	// Generate the points junctions.
 	_rg_curve curvepoints;
-	curvepoints.color = (Color){ color_r, color_g, color_b };
+	curvepoints.color = Color{ color_r, color_g, color_b };
 	curvepoints.param0 = width;
 	_rg_generate_points(graph, xs, ys, &curvepoints);
 	graph->curvespoints.push_back(curvepoints);
@@ -313,7 +313,7 @@ int rg_add_points(const int graph_id, const PoolRealArray &xs, const PoolRealArr
 	}
 	_rg_graph *graph = &_rg_graphs.write[graph_id];
 	_rg_curve curve;
-	curve.color = (Color){ color_r, color_g, color_b };
+	curve.color = Color{ color_r, color_g, color_b };
 	curve.param0 = size;
 	_rg_generate_points(graph, xs, ys, &curve);
 	graph->points.push_back(curve);
@@ -339,7 +339,7 @@ int rg_add_hist(int graph_id, unsigned bins, const PoolRealArray &ys, real_t spa
 	}
 	_rg_graph *graph = &_rg_graphs.write[graph_id];
 	_rg_curve curve;
-	curve.color = (Color){ color_r, color_g, color_b };
+	curve.color = Color{ color_r, color_g, color_b };
 	curve.param0 = spacing;
 	curve.param1 = bins;
 	_rg_generate_hist(graph, ys, &curve);

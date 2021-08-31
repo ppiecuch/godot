@@ -71,7 +71,7 @@ void CCDSphere::_bind_methods() {
 CCDSphere::CCDSphere() {
 	// Init sphere
 	ccdSphere.type = CCD_OBJ_SPHERE;
-	ccdSphere.quat = { .q = { 0., 0., 0., 1. } };
+	ccdSphere.quat = {{ 0., 0., 0., 1. }};
 }
 
 void CCDSphere::initialize(Vector3 position, Quat rotation, float radius) {

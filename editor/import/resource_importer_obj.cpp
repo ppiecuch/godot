@@ -390,7 +390,7 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 				if (material_map.has(current_material_library) && material_map[current_material_library].has(current_material)) {
 					if (p_to_shadermaterial) {
 						String key = current_material_library + ":" + current_material;
-						if (not material_map_conv.has(key)) {
+						if (!material_map_conv.has(key)) {
 							material_map[current_material_library][current_material]->flush_changes(); // materialize shader
 							material_map_conv[key] = spatial_mat_convert->convert(material_map[current_material_library][current_material]);
 							if (material_map[current_material_library][current_material]->has_meta("mtl")) {

@@ -41,9 +41,9 @@
 #include "core/ustring.h"
 #include "scene/main/scene_tree.h"
 
-#include <ostream>
 #include <deque>
 #include <list>
+#include <ostream>
 #include <vector>
 
 #if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) || __cplusplus >= 201703L)
@@ -71,8 +71,16 @@
 #define ERR_THROW(_E) throw _E
 #define ERR_THROW_V(_E, _V) throw _E
 #else
-#define ERR_THROW(_E) { ERR_PRINT(vformat("Exception thrown: %s", _E.what())); return; }
-#define ERR_THROW_V(_E, _V) do { ERR_PRINT(vformat("Exception thrown: %s", _E.what())); return _V; } while (0)
+#define ERR_THROW(_E)                                          \
+	{                                                          \
+		ERR_PRINT(vformat("Exception thrown: %s", _E.what())); \
+		return;                                                \
+	}
+#define ERR_THROW_V(_E, _V)                                    \
+	do {                                                       \
+		ERR_PRINT(vformat("Exception thrown: %s", _E.what())); \
+		return _V;                                             \
+	} while (0)
 #endif
 
 #if TOOLS_ENABLED

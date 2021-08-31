@@ -23,7 +23,6 @@ modules = [
     "benet",
     "behaviornode",
     "sfxr",
-    "qrcodetexture",
 ]
 
 if env["tools"]:

@@ -140,13 +140,13 @@ off_t g_tell(G_FILE *f) {
 	}
 	return FAILURE;
 }
-ssize_t g_read(void *buf, size_t len, size_t cnt, G_FILE *f) {
+size_t g_read(void *buf, size_t len, size_t cnt, G_FILE *f) {
 	if (f) {
 		return f->fa->get_buffer((uint8_t *)buf, cnt * len);
 	}
-	return SUCCESS;
+	return 0;
 }
-ssize_t g_write(const void *buf, size_t len, size_t cnt, G_FILE *f) {
+size_t g_write(const void *buf, size_t len, size_t cnt, G_FILE *f) {
 	if (f) {
 		if (f->fa) {
 			f->fa->store_buffer((const uint8_t *)buf, cnt * len);
@@ -158,7 +158,7 @@ ssize_t g_write(const void *buf, size_t len, size_t cnt, G_FILE *f) {
 	}
 	return 0;
 }
-ssize_t g_filesize(G_FILE *f) {
+size_t g_filesize(G_FILE *f) {
 	if (f) {
 		return f->fa->get_len();
 	}
@@ -442,7 +442,7 @@ bool RetroSFXVoice::LoadSettings(const char *pFilename) {
 
 bool RetroSFXVoice::SaveSettings(const char *pFilename) {
 	G_FILE *file = g_open_write(pFilename);
-	if (not file) {
+	if (!file) {
 		return false;
 	}
 

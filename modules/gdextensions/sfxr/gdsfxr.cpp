@@ -74,7 +74,7 @@ void AudioStreamSfxr::_update_voice() {
 }
 
 void AudioStreamSfxr::from_file(const String p_file) {
-	if (not sfx_voice.LoadSettings(p_file.utf8().get_data())) {
+	if (!sfx_voice.LoadSettings(p_file.utf8().get_data())) {
 		ERR_PRINT("Failed to load sfx settings from " + p_file);
 	}
 }
@@ -86,7 +86,7 @@ Error AudioStreamSfxr::save_to_wav(const String &p_path, int quality, int sample
 	ERR_FAIL_COND_V_MSG(sample_size != 8 && sample_size != 16, ERR_PARAMETER_RANGE_ERROR, "Invalid wave bits size (8/16)");
 	ERR_FAIL_COND_V_MSG(quality != 11025 && quality != 22050 && quality != 44100, ERR_PARAMETER_RANGE_ERROR, "Invalid wave freq. size (11025/22050/44100)");
 
-	if (not sfx_voice.ExportWav(p_path.utf8().get_data(), sample_size, quality)) {
+	if (!sfx_voice.ExportWav(p_path.utf8().get_data(), sample_size, quality)) {
 		WARN_PRINT("Export to wav file failed: " + p_path);
 		return ERR_FILE_CANT_WRITE;
 	}

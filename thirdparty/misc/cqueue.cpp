@@ -21,14 +21,18 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifndef _WIN32
 #include <sys/file.h>
+#endif
 #include <stdarg.h>
 #include <limits.h>
 #include <fcntl.h>
 #include <string.h>
 #include <time.h>
 #include <stdio.h>
+#ifndef _WIN32
 #include <dirent.h>
+#endif
 
 #ifdef __psp2__
 extern "C" int scandir(const char *dir, struct dirent ***namelist_out,
@@ -39,6 +43,25 @@ extern "C" int scandir(const char *dir, struct dirent ***namelist_out,
 #ifdef _3DS
 extern "C" int asprintf(char **ret, const char *format, ...);
 #endif // _3DS
+
+#ifdef _WIN32
+#include  <io.h>
+struct dirent {
+	char *d_name;
+};
+#define F_OK 0
+#define W_OK 2
+#define R_OK 4
+extern "C" int asprintf(char **ret, const char *format, ...);
+extern "C" int ftruncate(int fd, off_t length);
+extern "C" int scandir(const char *dir, struct dirent ***namelist_out,
+	int(*filter)(const struct dirent *),
+	int(*compar)(const struct dirent **, const struct dirent **));
+#define fileno _fileno
+#define strdup _strdup
+#define unlink _unlink
+#define access _access
+#endif
 
 #ifdef GD_CQUEUE
 #include "core/os/memory.h"
@@ -195,7 +218,7 @@ static int chopOffIncompleteWrite(FILE *fd) {
 	fseek(fd, 0, SEEK_SET);
 	struct Footer foot;
 	struct JournalEntry je;
-	ssize_t goodOffset = 0;
+	size_t goodOffset = 0;
 	while (1 == fread(&je, sizeof (je),1, fd)) {
 		if (-1 == fseek (fd, je.size, SEEK_CUR)) {
 			// data did not complete write
@@ -214,8 +237,8 @@ static int chopOffIncompleteWrite(FILE *fd) {
 	return 0;
 }
 
-static int checkLastEntry(FILE *fd, ssize_t filesize) WARN_UNUSED_RETURN;
-static int checkLastEntry(FILE *fd, ssize_t filesize) {
+static int checkLastEntry(FILE *fd, size_t filesize) WARN_UNUSED_RETURN;
+static int checkLastEntry(FILE *fd, size_t filesize) {
 	fseek(fd, - sizeof(struct Footer), SEEK_END);
 	struct Footer foot;
 	int rtn = fread(&foot, sizeof(foot), 1, fd);
