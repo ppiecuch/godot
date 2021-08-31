@@ -56,24 +56,24 @@ public:
 	virtual ~RID_Data();
 };
 
-union RID_Props {
+union RID_Prop {
 	int int_value;
-	float float_value;
+	real_t real_value;
 	Vector2 vec2_value;
 	Vector3 vec3_value;
 
-	RID_Props() {}
-	RID_Props(int v) { int_value = v; }
-	RID_Props(float v) { float_value = v; }
-	RID_Props(const Vector2 &v) { vec2_value = v; }
-	RID_Props(const Vector3 &v) { vec3_value = v; }
+	RID_Prop() {}
+	RID_Prop(int v) { int_value = v; }
+	RID_Prop(real_t v) { real_value = v; }
+	RID_Prop(const Vector2 &v) { vec2_value = v; }
+	RID_Prop(const Vector3 &v) { vec3_value = v; }
 };
 
 class RID {
 	friend class RID_OwnerBase;
 
 	mutable RID_Data *_data;
-	mutable Vector<RID_Props> _props;
+	mutable Vector<RID_Prop> *_props;
 
 	struct _expand_props {
 		template <typename... T>
@@ -83,11 +83,16 @@ class RID {
 public:
 	_FORCE_INLINE_ RID_Data *get_data() const { return _data; }
 
-	RID_Props get_prop(int p_index) const { return _props[p_index]; }
-	bool is_props_valid() const { return _props.size() > 0; }
-	size_t get_props_count() const { return _props.size(); }
+	_FORCE_INLINE_ RID_Prop get_prop(int p_index) const { return _props->get(p_index); }
+	_FORCE_INLINE_ bool is_props_valid() const { return _props and _props->size() > 0; }
+	_FORCE_INLINE_ size_t get_props_count() const { return _props ? _props->size() : 0; }
+
 	template <typename... props_types>
-	void set_props(props_types... args) { _expand_props{ 0, (_props.push_back(args), 0)... }; }
+	void set_props(props_types... args) {
+		ERR_FAIL_COND_MSG(_props, "Property already set");
+		_props = memnew(Vector<RID_Prop>); // TODO: cleanup memory allocation
+		_expand_props{ 0, (_props->push_back(args), 0)... };
+	}
 
 	_FORCE_INLINE_ bool operator==(const RID &p_rid) const {
 		return _data == p_rid._data;
@@ -110,6 +115,7 @@ public:
 
 	_FORCE_INLINE_ RID() {
 		_data = nullptr;
+		_props = nullptr;
 	}
 };
 
@@ -132,7 +138,7 @@ protected:
 	}
 
 	_FORCE_INLINE_ void _remove_owner(RID &p_rid) {
-		p_rid._data->_owner = NULL;
+		p_rid._data->_owner = nullptr;
 	}
 #endif
 

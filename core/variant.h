@@ -174,7 +174,7 @@ private:
 		Basis *_basis;
 		Transform *_transform;
 		void *_ptr; //generic pointer
-		uint8_t _mem[sizeof(ObjData) > (sizeof(real_t) * 8) ? sizeof(ObjData) : (sizeof(real_t) * 8)];
+		uint8_t _mem[sizeof(ObjData) > (sizeof(real_t) * 4) ? sizeof(ObjData) : (sizeof(real_t) * 4)];
 	} _data GCC_ALIGNED_8;
 
 	void reference(const Variant &p_variant);
