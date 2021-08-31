@@ -72,7 +72,7 @@ CCDBox::CCDBox() :
 		CCDBase() {
 	// Init sphere
 	ccdBox.type = CCD_OBJ_BOX;
-	ccdBox.quat = {{ 0., 0., 0., 1. }};
+	ccdBox.quat = { { 0., 0., 0., 1. } };
 }
 
 void CCDBox::initialize(Vector3 position, Quat rotation, Vector3 dimensions) {
