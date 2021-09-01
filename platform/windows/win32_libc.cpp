@@ -31,9 +31,12 @@
 #include <core/error_macros.h>
 
 #include <errno.h>
+#include <io.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <sys/types.h>
+
+#include <windows.h>
 
 #define R_OK 0
 #define R_ERR -1
@@ -84,11 +87,11 @@ extern "C" int ftruncate(int fd, off_t length) {
 
 	HANDLE hF = (HANDLE)_get_osfhandle(fd);
 
-	if(hF) {
+	if (hF) {
 		unsigned cpos = _tell(fd); // save current file pointer pos for restoring later
-		if(cpos != 0xFFFFFFFF) {
-			if(SetFilePointer((HANDLE)hF, length, 0, FILE_BEGIN) != 0xFFFFFFFF) { // set file pointer to length
-				if(SetEndOfFile((HANDLE)hF)) {
+		if (cpos != 0xFFFFFFFF) {
+			if (SetFilePointer((HANDLE)hF, length, 0, FILE_BEGIN) != 0xFFFFFFFF) { // set file pointer to length
+				if (SetEndOfFile((HANDLE)hF)) {
 					SetFilePointer((HANDLE)hF, cpos, 0, FILE_BEGIN); //file size has been changed, set pointer to back to cpos
 					return 0; //returns 0 on success
 				}
@@ -101,4 +104,86 @@ extern "C" int ftruncate(int fd, off_t length) {
 extern "C" int scandir(const char *dir, struct dirent ***namelist_out,
 		int (*filter)(const struct dirent *),
 		int (*compar)(const struct dirent **, const struct dirent **)) {
+	int len;
+	char *find_in, *d;
+	WIN32_FIND_DATA find;
+	HANDLE h;
+	int nDir = 0, NDir = 0;
+	struct dirent **dir = 0, *select_dir;
+	unsigned long ret;
+
+	len = strlen(dirname);
+	find_in = (char *)malloc(len + 5);
+
+	if (!find_in)
+		return -1;
+
+	strcpy(find_in, dirname);
+	for (d = find_in; *d; d++) {
+		if (*d == '/')
+			*d = '\\';
+	}
+	if ((len == 0)) {
+		strcpy(find_in, ".\\*");
+	}
+	if ((len == 1) && (d[-1] == '.')) {
+		strcpy(find_in, ".\\*");
+	}
+	if ((len > 0) && (d[-1] == '\\')) {
+		*d++ = '*';
+		*d = 0;
+	}
+	if ((len > 1) && (d[-1] == '.') && (d[-2] == '\\')) {
+		d[-1] = '*';
+	}
+
+	if ((h = FindFirstFile(find_in, &find)) == INVALID_HANDLE_VALUE) {
+		free(find_in);
+		ret = GetLastError();
+		if (ret != ERROR_NO_MORE_FILES) {
+			nDir = -1;
+		}
+		*namelist = dir;
+		return nDir;
+	}
+
+	do {
+		select_dir = (struct dirent *)malloc(sizeof(struct dirent) + strlen(find.cFileName) + 2);
+		strcpy(select_dir->d_name, find.cFileName);
+		if (find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+			strcat(select_dir->d_name, "/"); // Append a trailing slash to directory names...
+		}
+		if (!select || (*select)(select_dir)) {
+			if (nDir == NDir) {
+				struct dirent **temp_dir = (dirent **)calloc(sizeof(struct dirent *), NDir + 33);
+				if (NDir) {
+					memcpy(temp_dir, dir, sizeof(struct dirent *) * NDir);
+				}
+				if (dir) {
+					free(dir);
+				}
+				dir = temp_dir;
+				NDir += 32;
+			}
+			dir[nDir] = select_dir;
+			nDir++;
+			dir[nDir] = 0;
+		} else {
+			free(select_dir);
+		}
+	} while (FindNextFile(h, &find));
+	ret = GetLastError();
+	if (ret != ERROR_NO_MORE_FILES) {
+		// don't return an error code, because the dir list may still be valid up to this point
+	}
+	FindClose(h);
+
+	free(find_in);
+
+	if (compar) {
+		qsort(dir, nDir, sizeof(*dir), (int (*)(const void *, const void *))compar);
+	}
+
+	*namelist = dir;
+	return nDir;
 }
