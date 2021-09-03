@@ -4,13 +4,9 @@ Import("env")
 Import("env_modules")
 
 env_module = env_modules.Clone()
-env_module.Append(CPPPATH=[".", "include"])
+env_module.Append(CPPPATH=[".", "#thirdparty/libgenerator/inc"])
 
-env_module.add_source_files(env.modules_sources, "*.cpp")
-env_module.add_source_files(env.modules_sources, "src/*.cpp")
-
-sources = Glob("*.cpp")
-sources += Glob("src/*.cpp")
+sources = Glob("*.cpp") + Glob("#thirdparty/libgenerator/src/*.cpp")
 
 # Compile as a static library
 lib = env_module.Library("gd_generator", sources)
