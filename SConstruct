@@ -241,13 +241,13 @@ else:
     env_base["os_family"] = "os_other"
 
 if selected_platform in ["x11", "osx", "win32"]:
-    env_base["hw_family"] = "hw_desktop"
+    env_base["hw_class"] = "hw_desktop_class"
 elif selected_platform in ["iphone", "android"]:
-    env_base["hw_family"] = "hw_mobile"
+    env_base["hw_class"] = "hw_mobile_class"
 elif selected_platform in ["frt", "psvita", "3ds", "nx"]:
-    env_base["hw_family"] = "hw_portable"
+    env_base["hw_class"] = "hw_portable_class"
 else:
-    env_base["hw_family"] = "hw_other"
+    env_base["hw_class"] = "hw_other"
 
 # Make sure to update this to the found, valid platform as it's used through the buildsystem as the reference.
 # It should always be re-set after calling `opts.Update()` otherwise it uses the original input value.
