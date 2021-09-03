@@ -1,0 +1,65 @@
+#ifndef GD_GEOM_GEN_H
+#define GD_GEOM_GEN_H
+
+#include "scene/3d/spatial.h"
+
+class GdGeomGen : public Spatial {
+	GDCLASS(GdGeomGen, Spatial);
+
+	public:
+		enum GeomShape {
+			// Shapes
+			GEOM_BEZIER_SHAPE,
+			GEOM_CIRCLE_SHAPE,
+			GEOM_EMPTY_SHAPE,
+			GEOM_LINE_SHAPE,
+			GEOM_RECTANGLE_SHAPE,
+			GEOM_ROUNDED_RECTANGLE_SHAPE,
+			GEOM_GRID_SHAPE,
+			// Paths
+			GEOM_EMPTY_PATH,
+			GEOM_HELIX_PATH,
+			GEOM_KNOT_PATH,
+			GEOM_LINE_PATH,
+			// Meshes
+			GEOM_BEZIER_MESH,
+			GEOM_BOX_MESH,
+			GEOM_CAPPED_CYLINDER_MESH,
+			GEOM_CAPPED_CONE_MESH,
+			GEOM_CAPPED_TUBE_MESH,
+			GEOM_CONE_MESH,
+			GEOM_CAPSULE_MESH,
+			GEOM_CONVEX_POLYGON_MESH,
+			GEOM_CYLINDER_MESH,
+			GEOM_DODECAHEDRON_MESH,
+			GEOM_DISK_MESH,
+			GEOM_EMPTY_MESH,
+			GEOM_ICOSAHEDRON_MESH,
+			GEOM_ICOSPHERE_MESH,
+			GEOM_PLANE_MESH,
+			GEOM_ROUNDED_BOX_MESH,
+			GEOM_SPHERE_MESH,
+			GEOM_SPHERICAL_CONE_MESH,
+			GEOM_SPHERICAL_TRIANGLE_MESH,
+			GEOM_SPRING_MESH,
+			GEOM_TEAPOT_MESH,
+			GEOM_TORUSKNOT_MESH,
+			GEOM_TORUS_MESH,
+			GEOM_TRIANGLE_MESH,
+			GEOM_TUBE_MESH,
+		};
+
+	private:
+		void _update_geometry();
+
+	protected:
+		static void _bind_methods();
+
+		void _notification(int p_what);
+
+	public:
+		GdGeomGen();
+		~GdGeomGen();
+};
+
+#endif // GD_GEOM_GEN_H
