@@ -77,7 +77,7 @@ void ParallelTransportFrames::first_frame() {
 		if (Math::abs(t[2]) < Math::abs(t[i]))
 			i = 2;
 
-		Vector3 v(0);
+		Vector3 v;
 		v[i] = 1;
 		n = t.cross(v);
 		n.normalize();
