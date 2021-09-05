@@ -300,7 +300,7 @@
 			</argument>
 			<description>
 				Assigns the given value to all elements in the array. This can typically be used together with [method resize] to create an array with a given size and initialized elements:
-				[codeblocks]
+				[codeblock]
 				[gdscript]
 				var array = []
 				array.resize(10)
@@ -311,7 +311,7 @@
 				array.Resize(10);
 				array.Fill(0); // Initialize the 10 elements to 0.
 				[/csharp]
-				[/codeblocks]
+				[/codeblock]
 			</description>
 		</method>
 		<method name="resize">
