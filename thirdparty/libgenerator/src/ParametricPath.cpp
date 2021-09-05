@@ -7,16 +7,18 @@
 
 #include "generator/ParametricPath.hpp"
 
+#include "common/gd_core.h"
+
 using namespace generator;
 
 ParametricPath::Edges::Edges(const ParametricPath &path) :
-		path_{ &path },
-		i_{ 0 } {
+	path_{ &path },
+	i_{ 0 } {
 }
 
 Edge ParametricPath::Edges::generate() const {
 	if (done())
-		throw std::out_of_range("Done!");
+		ERR_THROW_V(std::out_of_range("Done!"), Edge());
 	return Edge{ { i_, i_ + 1 } };
 }
 
@@ -26,17 +28,17 @@ bool ParametricPath::Edges::done() const noexcept {
 
 void ParametricPath::Edges::next() {
 	if (done())
-		throw std::out_of_range("Done!");
+		ERR_THROW(std::out_of_range("Done!"));
 	++i_;
 }
 
 ParametricPath::Vertices::Vertices(const ParametricPath &path) :
-		path_{ &path },
-		i_{ 0 } {}
+	path_{ &path },
+	i_{ 0 } {}
 
 PathVertex ParametricPath::Vertices::generate() const {
 	if (done())
-		throw std::out_of_range("Done!");
+		ERR_THROW(std::out_of_range("Done!"));
 
 	return path_->eval_(i_ * path_->delta_);
 }
@@ -49,16 +51,16 @@ bool ParametricPath::Vertices::done() const noexcept {
 
 void ParametricPath::Vertices::next() {
 	if (done())
-		throw std::out_of_range("Done!");
+		ERR_THROW(std::out_of_range("Done!"));
 	++i_;
 }
 
 ParametricPath::ParametricPath(
-		std::function<PathVertex(double)> eval,
-		int segments) noexcept :
-		eval_{ std::move(eval) },
-		segments_{ segments },
-		delta_{ 1.0 / segments } {}
+	std::function<PathVertex(double)> eval,
+	int segments) noexcept :
+	eval_{ std::move(eval) },
+	segments_{ segments },
+	delta_{ 1.0 / segments } {}
 
 ParametricPath::Edges ParametricPath::edges() const noexcept {
 	return *this;

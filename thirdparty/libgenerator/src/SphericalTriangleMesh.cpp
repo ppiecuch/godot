@@ -7,15 +7,17 @@
 
 #include "generator/SphericalTriangleMesh.hpp"
 
+#include "common/gd_core.h"
+
 #include <stdexcept>
 
 using namespace generator;
 
 SphericalTriangleMesh::Triangles::Triangles(const SphericalTriangleMesh &mesh) :
-		mesh_{ &mesh },
-		row_{ 0 },
-		col_{ 0 },
-		i_{ 0 } {}
+	mesh_{ &mesh },
+	row_{ 0 },
+	col_{ 0 },
+	i_{ 0 } {}
 
 bool SphericalTriangleMesh::Triangles::done() const noexcept {
 	return row_ == mesh_->segments_;
@@ -23,7 +25,7 @@ bool SphericalTriangleMesh::Triangles::done() const noexcept {
 
 Triangle SphericalTriangleMesh::Triangles::generate() const {
 	if (done())
-		throw std::out_of_range("Done!");
+		ERR_THROW_V(std::out_of_range("Done!"), Triangle());
 
 	Triangle triangle;
 
@@ -42,7 +44,7 @@ Triangle SphericalTriangleMesh::Triangles::generate() const {
 
 void SphericalTriangleMesh::Triangles::next() {
 	if (done())
-		throw std::out_of_range("Done!");
+		ERR_THROW(std::out_of_range("Done!"));
 
 	if (col_ % 2 == 0)
 		++i_;
@@ -66,7 +68,7 @@ bool SphericalTriangleMesh::Vertices::done() const noexcept {
 
 MeshVertex SphericalTriangleMesh::Vertices::generate() const {
 	if (done())
-		throw std::out_of_range("Done!");
+		ERR_THROW(std::out_of_range("Done!"));
 
 	MeshVertex vertex;
 
@@ -91,7 +93,7 @@ MeshVertex SphericalTriangleMesh::Vertices::generate() const {
 
 void SphericalTriangleMesh::Vertices::next() {
 	if (done())
-		throw std::out_of_range("Done!");
+		ERR_THROW(std::out_of_range("Done!"));
 
 	++col_;
 	if (col_ > mesh_->segments_ - row_) {
@@ -101,23 +103,23 @@ void SphericalTriangleMesh::Vertices::next() {
 }
 
 SphericalTriangleMesh::SphericalTriangleMesh(
-		double radius,
-		int segments) :
-		SphericalTriangleMesh{
-			gml::dvec3{ radius, 0.0, 0.0 },
-			gml::dvec3{ 0.0, radius, 0.0 },
-			gml::dvec3{ 0.0, 0.0, radius },
-			segments
-		} {}
+	double radius,
+	int segments) :
+	SphericalTriangleMesh{
+		gml::dvec3{ radius, 0.0, 0.0 },
+		gml::dvec3{ 0.0, radius, 0.0 },
+		gml::dvec3{ 0.0, 0.0, radius },
+		segments
+	} {}
 
 SphericalTriangleMesh::SphericalTriangleMesh(
-		const gml::dvec3 &v0, const gml::dvec3 &v1, const gml::dvec3 &v2,
-		int segments) :
-		v0_{ v0 },
-		v1_{ v1 },
-		v2_{ v2 },
-		normal_{ gml::normal(v0, v1, v2) },
-		segments_{ segments } {}
+	const gml::dvec3 &v0, const gml::dvec3 &v1, const gml::dvec3 &v2,
+	int segments) :
+	v0_{ v0 },
+	v1_{ v1 },
+	v2_{ v2 },
+	normal_{ gml::normal(v0, v1, v2) },
+	segments_{ segments } {}
 
 SphericalTriangleMesh::Triangles SphericalTriangleMesh::triangles() const noexcept {
 	return *this;

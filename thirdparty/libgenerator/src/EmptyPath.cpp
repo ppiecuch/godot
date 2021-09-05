@@ -7,10 +7,12 @@
 
 #include "generator/EmptyPath.hpp"
 
+#include "common/gd_core.h"
+
 using namespace generator;
 
 Edge EmptyPath::Edges::generate() const {
-	throw std::out_of_range("Called generate on an EmptyPath!");
+	ERR_THROW_V(std::out_of_range("Called generate on an EmptyPath!"), Triangle());
 }
 
 bool EmptyPath::Edges::done() const noexcept {
@@ -18,13 +20,13 @@ bool EmptyPath::Edges::done() const noexcept {
 }
 
 void EmptyPath::Edges::next() {
-	throw std::out_of_range("Called next on an EmptyPath!");
+	ERR_THROW(std::out_of_range("Called next on an EmptyPath!"));
 }
 
 EmptyPath::Edges::Edges() {}
 
 PathVertex EmptyPath::Vertices::generate() const {
-	throw std::out_of_range("Called generate on an EmptyPath!");
+	ERR_THROW(std::out_of_range("Called generate on an EmptyPath!"));
 }
 
 bool EmptyPath::Vertices::done() const noexcept {
@@ -32,7 +34,7 @@ bool EmptyPath::Vertices::done() const noexcept {
 }
 
 void EmptyPath::Vertices::next() {
-	throw std::out_of_range("Called next on an EmptyPath!");
+	ERR_THROW(std::out_of_range("Called next on an EmptyPath!"));
 }
 
 EmptyPath::Vertices::Vertices() {}

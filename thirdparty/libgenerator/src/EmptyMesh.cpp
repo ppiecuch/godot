@@ -7,12 +7,14 @@
 
 #include "generator/EmptyMesh.hpp"
 
+#include "common/gd_core.h"
+
 using namespace generator;
 
 EmptyMesh::Triangles::Triangles() {}
 
 Triangle EmptyMesh::Triangles::generate() const {
-	throw std::out_of_range("Called generate on an EmptyMesh!");
+	ERR_THROW_V(std::out_of_range("Called generate on an EmptyMesh!"), Triangle());
 }
 
 bool EmptyMesh::Triangles::done() const noexcept {
@@ -20,13 +22,13 @@ bool EmptyMesh::Triangles::done() const noexcept {
 }
 
 void EmptyMesh::Triangles::next() {
-	throw std::out_of_range("Called next on an EmptyMesh!");
+	ERR_THROW(std::out_of_range("Called next on an EmptyMesh!"));
 }
 
 EmptyMesh::Vertices::Vertices() {}
 
 MeshVertex EmptyMesh::Vertices::generate() const {
-	throw std::out_of_range("Called generate on an EmptyMesh!");
+	ERR_THROW(std::out_of_range("Called generate on an EmptyMesh!"));
 }
 
 bool EmptyMesh::Vertices::done() const noexcept {
@@ -34,7 +36,7 @@ bool EmptyMesh::Vertices::done() const noexcept {
 }
 
 void EmptyMesh::Vertices::next() {
-	throw std::out_of_range("Called next on an EmptyMesh!");
+	ERR_THROW(std::out_of_range("Called next on an EmptyMesh!"));
 }
 
 EmptyMesh::EmptyMesh() {}

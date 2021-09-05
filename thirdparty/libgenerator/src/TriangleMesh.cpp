@@ -9,6 +9,8 @@
 
 #include <stdexcept>
 
+#include "common/gd_core.h"
+
 using namespace generator;
 
 TriangleMesh::Triangles::Triangles(const TriangleMesh &mesh) :

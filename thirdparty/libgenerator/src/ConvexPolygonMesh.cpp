@@ -10,6 +10,8 @@
 #include "generator/CircleShape.hpp"
 #include "generator/Iterator.hpp"
 
+#include "common/gd_core.h"
+
 using namespace generator;
 
 ConvexPolygonMesh::Triangles::Triangles(const ConvexPolygonMesh &mesh) noexcept :
@@ -27,7 +29,7 @@ bool ConvexPolygonMesh::Triangles::done() const noexcept {
 
 Triangle ConvexPolygonMesh::Triangles::generate() const {
 	if (done())
-		throw std::runtime_error("Done!");
+		ERR_THROW_V(std::runtime_error("Done!"), Triangle());
 
 	Triangle triangle{};
 
@@ -58,7 +60,7 @@ Triangle ConvexPolygonMesh::Triangles::generate() const {
 
 void ConvexPolygonMesh::Triangles::next() {
 	if (done())
-		throw std::runtime_error("Done!");
+		ERR_THROW(std::runtime_error("Done!"));
 
 	if (mRingIndex == mMesh->mRings - 1) {
 		++mSegmentIndex;
@@ -109,7 +111,7 @@ bool ConvexPolygonMesh::Vertices::done() const noexcept {
 
 MeshVertex ConvexPolygonMesh::Vertices::generate() const {
 	if (done())
-		throw std::runtime_error("Done!");
+		ERR_THROW(std::runtime_error("Done!"));
 
 	MeshVertex vertex{};
 
@@ -140,7 +142,7 @@ MeshVertex ConvexPolygonMesh::Vertices::generate() const {
 
 void ConvexPolygonMesh::Vertices::next() {
 	if (done())
-		throw std::runtime_error("Done!");
+		ERR_THROW(std::runtime_error("Done!"));
 
 	if (!mCenterDone) {
 		mCenterDone = true;
@@ -204,23 +206,23 @@ gml::dvec3 calcNormal(const gml::dvec3 &center, const std::vector<gml::dvec3> &v
 } // namespace
 
 ConvexPolygonMesh::ConvexPolygonMesh(
-		double radius, int sides, int segments, int rings) noexcept :
-		ConvexPolygonMesh{ makeVertices(radius, sides), segments, rings } {}
+	double radius, int sides, int segments, int rings) noexcept :
+	ConvexPolygonMesh{ makeVertices(radius, sides), segments, rings } {}
 
 ConvexPolygonMesh::ConvexPolygonMesh(
-		const std::vector<gml::dvec2> &vertices, int segments, int rings) noexcept :
-		ConvexPolygonMesh{ convertVertices(vertices), segments, rings } {}
+	const std::vector<gml::dvec2> &vertices, int segments, int rings) noexcept :
+	ConvexPolygonMesh{ convertVertices(vertices), segments, rings } {}
 
 ConvexPolygonMesh::ConvexPolygonMesh(
-		std::vector<gml::dvec3> vertices, int segments, int rings) noexcept :
-		mVertices{ std::move(vertices) },
-		mSegments{ segments },
-		mRings{ rings },
-		mCenter{ calcCenter(mVertices) },
-		mNormal{ calcNormal(mCenter, mVertices) },
-		mTangent{},
-		mBitangent{},
-		mTexDelta{} {
+	std::vector<gml::dvec3> vertices, int segments, int rings) noexcept :
+	mVertices{ std::move(vertices) },
+	mSegments{ segments },
+	mRings{ rings },
+	mCenter{ calcCenter(mVertices) },
+	mNormal{ calcNormal(mCenter, mVertices) },
+	mTangent{},
+	mBitangent{},
+	mTexDelta{} {
 	if (mVertices.size() > 0) {
 		mTangent = gml::normalize(mVertices.at(0) - mCenter);
 		mBitangent = gml::cross(mNormal, mTangent);

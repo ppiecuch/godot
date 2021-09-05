@@ -9,12 +9,14 @@
 
 #include <stdexcept>
 
+#include "common/gd_core.h"
+
 using namespace generator;
 
 EmptyShape::Edges::Edges() {}
 
 Edge EmptyShape::Edges::generate() const {
-	throw std::out_of_range("Called generate on an EmptyShape!");
+	ERR_THROW_V(std::out_of_range("Called generate on an EmptyShape!"), Edge());
 }
 
 bool EmptyShape::Edges::done() const noexcept {
@@ -22,13 +24,13 @@ bool EmptyShape::Edges::done() const noexcept {
 }
 
 void EmptyShape::Edges::next() {
-	throw std::out_of_range("Called next on an EmptyShape!");
+	ERR_THROW(std::out_of_range("Called next on an EmptyShape!"));
 }
 
 EmptyShape::Vertices::Vertices() {}
 
 ShapeVertex EmptyShape::Vertices::generate() const {
-	throw std::out_of_range("Called generate on an EmptyShape!");
+	ERR_THROW(std::out_of_range("Called generate on an EmptyShape!"));
 }
 
 bool EmptyShape::Vertices::done() const noexcept {
@@ -36,7 +38,7 @@ bool EmptyShape::Vertices::done() const noexcept {
 }
 
 void EmptyShape::Vertices::next() {
-	throw std::out_of_range("Called next on an EmptyShape!");
+	ERR_THROW(std::out_of_range("Called next on an EmptyShape!"));
 }
 
 EmptyShape::Edges EmptyShape::edges() const noexcept {

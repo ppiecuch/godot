@@ -11,6 +11,8 @@
 #include <array>
 #include <memory>
 
+#include "common/gd_core.h"
+
 using namespace generator;
 
 static const double a = (1.0 + std::sqrt(5.0)) / 2.0;
@@ -74,7 +76,7 @@ bool DodecahedronMesh::Triangles::done() const noexcept {
 
 Triangle DodecahedronMesh::Triangles::generate() const {
 	if (done())
-		throw std::out_of_range("Done!");
+		ERR_THROW_V(std::out_of_range("Done!"), Triangle());
 
 	Triangle triangle = mTriangles.generate();
 
@@ -89,7 +91,7 @@ Triangle DodecahedronMesh::Triangles::generate() const {
 
 void DodecahedronMesh::Triangles::next() {
 	if (done())
-		throw std::out_of_range("Done!");
+		ERR_THROW(std::out_of_range("Done!"));
 
 	mTriangles.next();
 

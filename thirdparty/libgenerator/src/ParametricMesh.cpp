@@ -7,16 +7,18 @@
 
 #include "generator/ParametricMesh.hpp"
 
+#include "common/gd_core.h"
+
 using namespace generator;
 
 ParametricMesh::Triangles::Triangles(const ParametricMesh &mesh) :
-		mesh_{ &mesh },
-		i_{ 0 },
-		even_{ false } {}
+	mesh_{ &mesh },
+	i_{ 0 },
+	even_{ false } {}
 
 Triangle ParametricMesh::Triangles::generate() const {
 	if (done())
-		throw std::out_of_range("Done!");
+		ERR_THROW_V(std::out_of_range("Done!"), Triangle());
 
 	Triangle triangle;
 
@@ -47,7 +49,7 @@ bool ParametricMesh::Triangles::done() const noexcept {
 
 void ParametricMesh::Triangles::next() {
 	if (done())
-		throw std::out_of_range("Done!");
+		ERR_THROW(std::out_of_range("Done!"));
 
 	even_ = !even_;
 
@@ -61,11 +63,11 @@ void ParametricMesh::Triangles::next() {
 }
 
 ParametricMesh::Vertices::Vertices(const ParametricMesh &mesh) :
-		mesh_{ &mesh }, i_{ 0 } {}
+	mesh_{ &mesh }, i_{ 0 } {}
 
 MeshVertex ParametricMesh::Vertices::generate() const {
 	if (done())
-		throw std::out_of_range("Done!");
+		ERR_THROW(std::out_of_range("Done!"));
 
 	return mesh_->eval_({ i_[0] * mesh_->delta_[0], i_[1] * mesh_->delta_[1] });
 }
@@ -78,7 +80,7 @@ bool ParametricMesh::Vertices::done() const noexcept {
 
 void ParametricMesh::Vertices::next() {
 	if (done())
-		throw std::out_of_range("Done!");
+		ERR_THROW(std::out_of_range("Done!"));
 
 	++i_[0];
 	if (i_[0] > mesh_->segments_[0]) {
@@ -88,11 +90,11 @@ void ParametricMesh::Vertices::next() {
 }
 
 ParametricMesh::ParametricMesh(
-		std::function<MeshVertex(const gml::dvec2 &t)> eval,
-		const gml::ivec2 &segments) noexcept :
-		eval_{ std::move(eval) },
-		segments_{ segments },
-		delta_{ 1.0 / segments[0], 1.0 / segments[1] } {}
+	std::function<MeshVertex(const gml::dvec2 &t)> eval,
+	const gml::ivec2 &segments) noexcept :
+	eval_{ std::move(eval) },
+	segments_{ segments },
+	delta_{ 1.0 / segments[0], 1.0 / segments[1] } {}
 
 ParametricMesh::Triangles ParametricMesh::triangles() const noexcept {
 	return *this;
