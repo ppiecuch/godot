@@ -171,10 +171,26 @@ struct Vector3 {
 		y = p_y;
 		z = p_z;
 	}
-	_FORCE_INLINE_ Vector3(const real_t *p_arr) {
+	_FORCE_INLINE_ Vector3(const float *p_arr) {
 		x = p_arr[0];
 		y = p_arr[1];
 		z = p_arr[2];
+	}
+	_FORCE_INLINE_ Vector3(const double *p_arr) {
+		x = p_arr[0];
+		y = p_arr[1];
+		z = p_arr[2];
+	}
+	// simple constructors for 2d vectors
+	_FORCE_INLINE_ Vector3(const float *p_arr, float p_z) {
+		x = p_arr[0];
+		y = p_arr[1];
+		z = p_z;
+	}
+	_FORCE_INLINE_ Vector3(const double *p_arr, double p_z) {
+		x = p_arr[0];
+		y = p_arr[1];
+		z = p_z;
 	}
 	_FORCE_INLINE_ Vector3() { x = y = z = 0; }
 };
