@@ -121,9 +121,9 @@ struct MeshWriter {
 		}
 		for (const Triangle &triangle : mesh.triangles()) {
 			auto t = triangle.vertices;
-			index.push_back(t[0]);
-			index.push_back(t[1]);
-			index.push_back(t[2]);
+			verts.index.push_back(t[0]);
+			verts.index.push_back(t[1]);
+			verts.index.push_back(t[2]);
 		}
 	}
 
@@ -132,8 +132,8 @@ struct MeshWriter {
 		PoolVector3Array norm;
 		PoolVector2Array tex;
 		PoolColorArray color;
+		PoolIntArray index;
 	} verts, lines, points;
-	PoolIntArray index;
 };
 
 static void generate_axis(MeshWriter &writer, Axis axis) {
@@ -157,21 +157,31 @@ static void generate_axis(MeshWriter &writer, Axis axis) {
 
 template <typename Shape>
 static void generate_shape(MeshWriter &writer, const Shape &shape, bool write_vertices, bool write_axis) {
-	generate_axis(writer, Axis::X);
-	generate_axis(writer, Axis::Y);
+	if (write_axis) {
+		generate_axis(writer, Axis::X);
+		generate_axis(writer, Axis::Y);
+	}
 	writer.write_shape(shape, write_vertices, write_axis);
 }
 
 template <typename Path>
 static void generate_path(MeshWriter &writer, const Path &path, bool write_vertices, bool write_axis) {
-	generate_axis(writer, Axis::X);
-	generate_axis(writer, Axis::Y);
-	generate_axis(writer, Axis::Z);
+	if (write_axis) {
+		generate_axis(writer, Axis::X);
+		generate_axis(writer, Axis::Y);
+		generate_axis(writer, Axis::Z);
+	}
 	writer.write_path(path, write_vertices, write_axis);
 }
 
 template <typename Mesh>
-static void generate_mesh(MeshWriter &writer, const Mesh &mesh) {
+static void generate_mesh(MeshWriter &writer, const Mesh &mesh, bool write_axis) {
+	if (write_axis) {
+		generate_axis(writer, Axis::X);
+		generate_axis(writer, Axis::Y);
+		generate_axis(writer, Axis::Z);
+	}
+	writer.write_mesh(mesh);
 }
 
 void ProceduralMesh::_update_preview() {
@@ -213,73 +223,73 @@ void ProceduralMesh::_update_preview() {
 			break;
 
 		case GEOM_EMPTY_MESH:
-			generate_mesh(writer, EmptyMesh{});
+			generate_mesh(writer, EmptyMesh{}, debug_axis);
 			break;
 		case GEOM_BOX_MESH:
-			generate_mesh(writer, BoxMesh{});
+			generate_mesh(writer, BoxMesh{}, debug_axis);
 			break;
 		case GEOM_ROUNDED_BOX_MESH:
-			generate_mesh(writer, RoundedBoxMesh{});
+			generate_mesh(writer, RoundedBoxMesh{}, debug_axis);
 			break;
 		case GEOM_CAPPED_CYLINDER_MESH:
-			generate_mesh(writer, CappedCylinderMesh{});
+			generate_mesh(writer, CappedCylinderMesh{}, debug_axis);
 			break;
 		case GEOM_CAPPED_CONE_MESH:
-			generate_mesh(writer, CappedConeMesh{});
+			generate_mesh(writer, CappedConeMesh{}, debug_axis);
 			break;
 		case GEOM_CAPPED_TUBE_MESH:
-			generate_mesh(writer, CappedTubeMesh{});
+			generate_mesh(writer, CappedTubeMesh{}, debug_axis);
 			break;
 		case GEOM_CONE_MESH:
-			generate_mesh(writer, ConeMesh{});
+			generate_mesh(writer, ConeMesh{}, debug_axis);
 			break;
 		case GEOM_SPHERICAL_CONE_MESH:
-			generate_mesh(writer, SphericalConeMesh{});
+			generate_mesh(writer, SphericalConeMesh{}, debug_axis);
 			break;
 		case GEOM_CAPSULE_MESH:
-			generate_mesh(writer, CapsuleMesh{});
+			generate_mesh(writer, CapsuleMesh{}, debug_axis);
 			break;
 		case GEOM_CONVEX_POLYGON_MESH:
-			generate_mesh(writer, ConvexPolygonMesh{});
+			generate_mesh(writer, ConvexPolygonMesh{}, debug_axis);
 			break;
 		case GEOM_CYLINDER_MESH:
-			generate_mesh(writer, CylinderMesh{});
+			generate_mesh(writer, CylinderMesh{}, debug_axis);
 			break;
 		case GEOM_DISK_MESH:
-			generate_mesh(writer, DiskMesh{});
+			generate_mesh(writer, DiskMesh{}, debug_axis);
 			break;
 		case GEOM_DODECAHEDRON_MESH:
-			generate_mesh(writer, DodecahedronMesh{});
+			generate_mesh(writer, DodecahedronMesh{}, debug_axis);
 			break;
 		case GEOM_ICOSAHEDRON_MESH:
-			generate_mesh(writer, IcosahedronMesh{});
+			generate_mesh(writer, IcosahedronMesh{}, debug_axis);
 			break;
 		case GEOM_ICOSPHERE_MESH:
-			generate_mesh(writer, IcoSphereMesh{});
+			generate_mesh(writer, IcoSphereMesh{}, debug_axis);
 			break;
 		case GEOM_PLANE_MESH:
-			generate_mesh(writer, PlaneMesh{});
+			generate_mesh(writer, PlaneMesh{}, debug_axis);
 			break;
 		case GEOM_SPHERE_MESH:
-			generate_mesh(writer, SphereMesh{});
+			generate_mesh(writer, SphereMesh{}, debug_axis);
 			break;
 		case GEOM_SPHERICAL_TRIANGLE_MESH:
-			generate_mesh(writer, SphericalTriangleMesh{});
+			generate_mesh(writer, SphericalTriangleMesh{}, debug_axis);
 			break;
 		case GEOM_SPRING_MESH:
-			generate_mesh(writer, SpringMesh{});
+			generate_mesh(writer, SpringMesh{}, debug_axis);
 			break;
 		case GEOM_TORUS_KNOT_MESH:
-			generate_mesh(writer, TorusKnotMesh{});
+			generate_mesh(writer, TorusKnotMesh{}, debug_axis);
 			break;
 		case GEOM_TORUS_MESH:
-			generate_mesh(writer, TorusMesh{});
+			generate_mesh(writer, TorusMesh{}, debug_axis);
 			break;
 		case GEOM_TRIANGLE_MESH:
-			generate_mesh(writer, generator::TriangleMesh{});
+			generate_mesh(writer, generator::TriangleMesh{}, debug_axis);
 			break;
 		case GEOM_TUBE_MESH:
-			generate_mesh(writer, TubeMesh{});
+			generate_mesh(writer, TubeMesh{}, debug_axis);
 			break;
 		case GEOM_BEZIER_MESH: {
 			const gml::dvec3 cp[4][4] = {
@@ -288,19 +298,19 @@ void ProceduralMesh::_update_preview() {
 				{ { -1.00, 0.33, 2.66 }, { -0.33, 0.33, 0.00 }, { 0.33, 0.33, 2.00 }, { 1.0, 0.33, 2.66 } },
 				{ { -1.00, 1.00, -1.33 }, { -0.33, 1.00, -1.33 }, { 0.33, 1.00, 0.00 }, { 1.0, 1.00, -0.66 } }
 			};
-			generate_mesh(writer, BezierMesh<4, 4>{ cp, { 8, 8 } });
+			generate_mesh(writer, BezierMesh<4, 4>{ cp, { 8, 8 } }, debug_axis);
 		} break;
 		case GEOM_TEAPOT_MESH:
-			generate_mesh(writer, TeapotMesh{});
+			generate_mesh(writer, TeapotMesh{}, debug_axis);
 			break;
 	}
 	// build mesh from data
 	clear_surfaces();
 	if (writer.verts.pos.size() + writer.lines.pos.size() + writer.points.pos.size()) {
 		print_verbose("Building new mesh:");
-		print_verbose(" - triangles: " + String::num(writer.verts.pos.size()) + ", t:" + String::num(writer.verts.tex.size()) + ", n:" + String::num(writer.verts.norm.size()));
-		print_verbose(" - lines: " + String::num(writer.lines.pos.size()) + ", t:" + String::num(writer.lines.tex.size()) + ", n:" + String::num(writer.lines.norm.size()));
-		print_verbose(" - points: " + String::num(writer.points.pos.size()) + ", t:" + String::num(writer.points.tex.size()) + ", n:" + String::num(writer.points.norm.size()));
+		print_verbose(" - triangles: " + String::num(writer.verts.pos.size()) + ", t:" + String::num(writer.verts.tex.size()) + ", n:" + String::num(writer.verts.norm.size()) + ", i:" + String::num(writer.verts.index.size()));
+		print_verbose(" - lines: " + String::num(writer.lines.pos.size()) + ", t:" + String::num(writer.lines.tex.size()) + ", n:" + String::num(writer.lines.norm.size()) + ", i:" + String::num(writer.lines.index.size()));
+		print_verbose(" - points: " + String::num(writer.points.pos.size()) + ", t:" + String::num(writer.points.tex.size()) + ", n:" + String::num(writer.points.norm.size()) + ", i:" + String::num(writer.points.index.size()));
 		if (writer.verts.pos.size()) {
 			Array mesh_array;
 			mesh_array.resize(VS::ARRAY_MAX);
@@ -309,6 +319,10 @@ void ProceduralMesh::_update_preview() {
 				mesh_array[VS::ARRAY_TEX_UV] = writer.verts.tex;
 			if (writer.verts.norm.size())
 				mesh_array[VS::ARRAY_NORMAL] = writer.verts.norm;
+			if (writer.verts.color.size())
+				mesh_array[VS::ARRAY_COLOR] = writer.verts.color;
+			if (writer.verts.index.size())
+				mesh_array[VS::ARRAY_INDEX] = writer.verts.index;
 			add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array, Array());
 		}
 		if (writer.lines.pos.size()) {
@@ -319,6 +333,10 @@ void ProceduralMesh::_update_preview() {
 				mesh_array[VS::ARRAY_TEX_UV] = writer.lines.tex;
 			if (writer.lines.norm.size())
 				mesh_array[VS::ARRAY_NORMAL] = writer.lines.norm;
+			if (writer.lines.color.size())
+				mesh_array[VS::ARRAY_COLOR] = writer.lines.color;
+			if (writer.lines.index.size())
+				mesh_array[VS::ARRAY_INDEX] = writer.lines.index;
 			add_surface_from_arrays(Mesh::PRIMITIVE_LINES, mesh_array, Array());
 		}
 		if (writer.points.pos.size()) {
@@ -329,6 +347,10 @@ void ProceduralMesh::_update_preview() {
 				mesh_array[VS::ARRAY_TEX_UV] = writer.points.tex;
 			if (writer.points.norm.size())
 				mesh_array[VS::ARRAY_NORMAL] = writer.points.norm;
+			if (writer.points.color.size())
+				mesh_array[VS::ARRAY_COLOR] = writer.points.color;
+			if (writer.points.index.size())
+				mesh_array[VS::ARRAY_INDEX] = writer.points.index;
 			add_surface_from_arrays(Mesh::PRIMITIVE_POINTS, mesh_array, Array());
 		}
 	}
@@ -388,7 +410,6 @@ void ProceduralMesh::_bind_methods() {
 	BIND_ENUM_CONSTANT(GEOM_ROUNDED_RECTANGLE_SHAPE);
 	BIND_ENUM_CONSTANT(GEOM_CIRCLE_SHAPE);
 	BIND_ENUM_CONSTANT(GEOM_GRID_SHAPE);
-	BIND_ENUM_CONSTANT(GEOM_BEZIER_SHAPE);
 	BIND_ENUM_CONSTANT(GEOM_BEZIER_SHAPE);
 
 	BIND_ENUM_CONSTANT(GEOM_EMPTY_PATH);
