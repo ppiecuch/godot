@@ -31,11 +31,12 @@
 /* register_types.cpp */
 
 #include <core/print_string.h>
-#include <scene/2d/canvas_item.h>
 
+#include "gdgeomgen.h"
 #include "register_types.h"
 
 void register_gdgenerator_types() {
+	ClassDB::register_class<GdGeomGen>();
 }
 
 void unregister_gdgenerator_types() {
