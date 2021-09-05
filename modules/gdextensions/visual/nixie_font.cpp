@@ -349,7 +349,7 @@ void NixieFont::set_text(String p_text) {
 		if (draw_text.empty()) {
 			_visible_chars = 0;
 			_text_rect_size = Size2(0, 0);
-			_mesh = Ref<ArrayMesh>(NULL);
+			_mesh = Ref<ArrayMesh>(nullptr);
 			_dirty = false;
 		} else {
 			_dirty = true;
