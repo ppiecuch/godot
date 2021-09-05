@@ -44,6 +44,7 @@
 #include <list>
 #include <ostream>
 #include <vector>
+#include <functional>
 
 #if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) || __cplusplus >= 201703L)
 #define CPP17
@@ -234,7 +235,7 @@ reverse_iterator<Iterator> make_reverse_iterator(Iterator i) {
 /// ptr will be deleted using 'memdelete' function
 namespace std {
 template <typename T>
-using deleted_unique_ptr = unique_ptr<T, function<void(T *)>>;
+using deleted_unique_ptr = unique_ptr<T, std::function<void(T *)>>;
 template <typename T>
 deleted_unique_ptr<T> make_gd_unique_ptr(T *p) {
 	return deleted_unique_ptr<T>(p, [](T *ptr) { memdelete(ptr); });
