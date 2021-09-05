@@ -427,10 +427,10 @@ void ProceduralMesh::_bind_methods() {
 	BIND_ENUM_CONSTANT(GEOM_CAPPED_CYLINDER_MESH);
 	BIND_ENUM_CONSTANT(GEOM_CONE_MESH);
 	BIND_ENUM_CONSTANT(GEOM_CAPPED_CONE_MESH);
+	BIND_ENUM_CONSTANT(GEOM_SPHERICAL_CONE_MESH);
 	BIND_ENUM_CONSTANT(GEOM_TUBE_MESH);
 	BIND_ENUM_CONSTANT(GEOM_CAPPED_TUBE_MESH);
 	BIND_ENUM_CONSTANT(GEOM_CAPSULE_MESH);
-	BIND_ENUM_CONSTANT(GEOM_SPHERICAL_CONE_MESH);
 	BIND_ENUM_CONSTANT(GEOM_CONVEX_POLYGON_MESH);
 	BIND_ENUM_CONSTANT(GEOM_DODECAHEDRON_MESH);
 	BIND_ENUM_CONSTANT(GEOM_ICOSAHEDRON_MESH);
@@ -451,7 +451,7 @@ void ProceduralMesh::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_debug_axis"), &ProceduralMesh::get_debug_axis);
 
 	ADD_GROUP("Generator", "");
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "primitive", PROPERTY_HINT_ENUM, "EmptyShape,LineShape,RectangleShape,RoundRectangleShape,CircleShape,GridShape,BezierShape,EmptyPath, LinePath,KnotPath,HelixPath,EmptyMesh,PlaneMesh,BoxMesh,RoundedBoxMesh,SphereMesh,DiskMesh,CylinderMesh,CappedConeMesh,ConeMesh,CappedConeMesh,TubeMesh,CappedTubeMesh,CapsuleMesh,SphericalConeMesh,ConvexPolygonMesh,DodecahedronMesh,IcosahedronMesh,TriangleMesh,SphericalTriangleMesh,SpringMesh,TorusKnotMesh,TorusMesh,BezierMesh,TeapotMesh"), "set_primitive", "get_primitive");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "primitive", PROPERTY_HINT_ENUM, "EmptyShape,LineShape,RectangleShape,RoundRectangleShape,CircleShape,GridShape,BezierShape,EmptyPath, LinePath,KnotPath,HelixPath,EmptyMesh,PlaneMesh,BoxMesh,RoundedBoxMesh,SphereMesh,DiskMesh,CylinderMesh,CappedCylinderMesh,ConeMesh,CappedConeMesh,SphericalConeMesh,TubeMesh,CappedTubeMesh,CapsuleMesh,ConvexPolygonMesh,DodecahedronMesh,IcosahedronMesh,IcosphereMesh,TriangleMesh,SphericalTriangleMesh,SpringMesh,TorusKnotMesh,TorusMesh,BezierMesh,TeapotMesh"), "set_primitive", "get_primitive");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "debug_vertices"), "set_debug_vertices", "get_debug_vertices");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "debug_axis"), "set_debug_axis", "get_debug_axis");
 }
