@@ -67,7 +67,7 @@ ParametricMesh::Vertices::Vertices(const ParametricMesh &mesh) :
 
 MeshVertex ParametricMesh::Vertices::generate() const {
 	if (done())
-		ERR_THROW(std::out_of_range("Done!"));
+		ERR_THROW_V(std::out_of_range("Done!"), MeshVertex());
 
 	return mesh_->eval_({ i_[0] * mesh_->delta_[0], i_[1] * mesh_->delta_[1] });
 }

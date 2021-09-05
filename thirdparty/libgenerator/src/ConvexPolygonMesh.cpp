@@ -111,7 +111,7 @@ bool ConvexPolygonMesh::Vertices::done() const noexcept {
 
 MeshVertex ConvexPolygonMesh::Vertices::generate() const {
 	if (done())
-		ERR_THROW(std::runtime_error("Done!"));
+		ERR_THROW_V(std::runtime_error("Done!"), MeshVertex());
 
 	MeshVertex vertex{};
 

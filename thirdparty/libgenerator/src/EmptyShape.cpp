@@ -30,7 +30,7 @@ void EmptyShape::Edges::next() {
 EmptyShape::Vertices::Vertices() {}
 
 ShapeVertex EmptyShape::Vertices::generate() const {
-	ERR_THROW(std::out_of_range("Called generate on an EmptyShape!"));
+	ERR_THROW_V(std::out_of_range("Called generate on an EmptyShape!"), ShapeVertex());
 }
 
 bool EmptyShape::Vertices::done() const noexcept {

@@ -124,7 +124,7 @@ bool IcosahedronMesh::Vertices::done() const noexcept {
 
 MeshVertex IcosahedronMesh::Vertices::generate() const {
 	if (done())
-		ERR_THROW(std::out_of_range("Done!"));
+		ERR_THROW_V(std::out_of_range("Done!"), MeshVertex());
 
 	MeshVertex vertex = vertices_.generate();
 

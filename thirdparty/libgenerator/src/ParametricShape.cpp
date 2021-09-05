@@ -34,7 +34,7 @@ void ParametricShape::Edges::next() {
 
 ShapeVertex ParametricShape::Vertices::generate() const {
 	if (done())
-		ERR_THROW(std::out_of_range("Done!"));
+		ERR_THROW_V(std::out_of_range("Done!"), ShapeVertex());
 
 	return shape_->eval_(i_ * shape_->delta_);
 }

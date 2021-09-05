@@ -28,7 +28,7 @@ void EmptyMesh::Triangles::next() {
 EmptyMesh::Vertices::Vertices() {}
 
 MeshVertex EmptyMesh::Vertices::generate() const {
-	ERR_THROW(std::out_of_range("Called generate on an EmptyMesh!"));
+	ERR_THROW_V(std::out_of_range("Called generate on an EmptyMesh!"), MeshVertex());
 }
 
 bool EmptyMesh::Vertices::done() const noexcept {

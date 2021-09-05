@@ -14,10 +14,10 @@
 using namespace generator;
 
 TriangleMesh::Triangles::Triangles(const TriangleMesh &mesh) :
-		mesh_{ &mesh },
-		row_{ 0 },
-		col_{ 0 },
-		i_{ 0 } {}
+	mesh_{ &mesh },
+	row_{ 0 },
+	col_{ 0 },
+	i_{ 0 } {}
 
 bool TriangleMesh::Triangles::done() const noexcept {
 	return row_ == mesh_->segments_;
@@ -25,7 +25,7 @@ bool TriangleMesh::Triangles::done() const noexcept {
 
 Triangle TriangleMesh::Triangles::generate() const {
 	if (done())
-		throw std::out_of_range("Done!");
+		ERR_THROW_V(std::out_of_range("Done!"), Triangle());
 
 	Triangle triangle;
 
@@ -44,7 +44,7 @@ Triangle TriangleMesh::Triangles::generate() const {
 
 void TriangleMesh::Triangles::next() {
 	if (done())
-		throw std::out_of_range("Done!");
+		ERR_THROW(std::out_of_range("Done!"));
 
 	if (col_ % 2 == 0)
 		++i_;
@@ -68,7 +68,7 @@ bool TriangleMesh::Vertices::done() const noexcept {
 
 MeshVertex TriangleMesh::Vertices::generate() const {
 	if (done())
-		throw std::out_of_range("Done!");
+		ERR_THROW_V(std::out_of_range("Done!"), MeshVertex());
 
 	MeshVertex vertex;
 
@@ -94,7 +94,7 @@ MeshVertex TriangleMesh::Vertices::generate() const {
 
 void TriangleMesh::Vertices::next() {
 	if (done())
-		throw std::out_of_range("Done!");
+		ERR_THROW(std::out_of_range("Done!"));
 
 	++col_;
 	if (col_ > mesh_->segments_ - row_) {
@@ -104,21 +104,21 @@ void TriangleMesh::Vertices::next() {
 }
 
 TriangleMesh::TriangleMesh(double radius, int segments) :
-		TriangleMesh{
-			radius * gml::normalize(gml::dvec3{ -1.0, -1.0, 0.0 }),
-			radius * gml::normalize(gml::dvec3{ 1.0, -1.0, 0.0 }),
-			gml::dvec3{ 0.0, radius, 0.0 },
-			segments
-		} {}
+	TriangleMesh{
+		radius * gml::normalize(gml::dvec3{ -1.0, -1.0, 0.0 }),
+		radius * gml::normalize(gml::dvec3{ 1.0, -1.0, 0.0 }),
+		gml::dvec3{ 0.0, radius, 0.0 },
+		segments
+	} {}
 
 TriangleMesh::TriangleMesh(
-		const gml::dvec3 &v0, const gml::dvec3 &v1, const gml::dvec3 &v2,
-		int segments) :
-		v0_{ v0 },
-		v1_{ v1 },
-		v2_{ v2 },
-		normal_{ gml::normal(v0, v1, v2) },
-		segments_{ segments } {}
+	const gml::dvec3 &v0, const gml::dvec3 &v1, const gml::dvec3 &v2,
+	int segments) :
+	v0_{ v0 },
+	v1_{ v1 },
+	v2_{ v2 },
+	normal_{ gml::normal(v0, v1, v2) },
+	segments_{ segments } {}
 
 TriangleMesh::Triangles TriangleMesh::triangles() const noexcept {
 	return { *this };

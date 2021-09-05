@@ -38,7 +38,7 @@ ParametricPath::Vertices::Vertices(const ParametricPath &path) :
 
 PathVertex ParametricPath::Vertices::generate() const {
 	if (done())
-		ERR_THROW(std::out_of_range("Done!"));
+		ERR_THROW_V(std::out_of_range("Done!"), PathVertex());
 
 	return path_->eval_(i_ * path_->delta_);
 }
