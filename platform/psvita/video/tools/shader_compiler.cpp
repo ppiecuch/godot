@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
 		return 0;
 	}
 
-#ifndef __APPLE__
+#if O_BINARY
 	setmode(fileno(stdout), O_BINARY);
 	setmode(fileno(stdin), O_BINARY);
 #endif

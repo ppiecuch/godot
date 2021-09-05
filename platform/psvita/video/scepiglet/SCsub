@@ -100,7 +100,7 @@ env_taihen.Append(LINKFLAGS=["-Wl,-z,nocopyreloc"])
 if env["taihen_logging"] == "yes":
     env_taihen.Append(CPPDEFINES=["ENABLE_LOGGING", "TRANSFORM_DIS_VERBOSE"])
 
-if env.has_key("msvc_version"):
+if "msvc_version" in env:
     env_taihen.Append(CPPDEFINES=["inline=__inline"])
 
 taihen_src = [
