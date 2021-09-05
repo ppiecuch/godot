@@ -41,10 +41,10 @@
 #include "core/ustring.h"
 
 #include <deque>
+#include <functional>
 #include <list>
 #include <ostream>
 #include <vector>
-#include <functional>
 
 #if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) || __cplusplus >= 201703L)
 #define CPP17

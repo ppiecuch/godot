@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  gdgeomgen.cpp                                                        */
+/*  gd_procedural_mesh.cpp                                               */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -143,7 +143,7 @@ static void generate_axis(MeshWriter &writer, Axis axis) {
 	gml::dvec3 end{};
 	end[static_cast<unsigned>(axis)] = 1.5;
 
-	LinePath line{gml::dvec3{}, end, gml::dvec3{}, 15};
+	LinePath line{ gml::dvec3{}, end, gml::dvec3{}, 15 };
 	auto xx = line.vertices();
 	auto prev = xx.generate().position;
 	xx.next();
