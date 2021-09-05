@@ -28,6 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <core/error_macros.h>
 
 #include <errno.h>
@@ -101,8 +103,8 @@ extern "C" int ftruncate(int fd, off_t length) {
 	return -1;
 }
 
-extern "C" int scandir(const char *dir, struct dirent ***namelist_out,
-		int (*filter)(const struct dirent *),
+extern "C" int scandir(const char *dirname, struct dirent ***namelist,
+		int (*select)(const struct dirent *),
 		int (*compar)(const struct dirent **, const struct dirent **)) {
 	int len;
 	char *find_in, *d;
