@@ -28,14 +28,13 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GD_GEOM_GEN_H
-#define GD_GEOM_GEN_H
+#ifndef GD_PROCEDURAL_MESH_H
+#define GD_PROCEDURAL_MESH_H
 
-#include "scene/3d/mesh_instance.h"
-#include "scene/3d/spatial.h"
+#include "scene/resources/mesh.h"
 
-class GdGeomGen : public Spatial {
-	GDCLASS(GdGeomGen, Spatial);
+class ProceduralMesh : public ArrayMesh {
+	GDCLASS(ProceduralMesh, ArrayMesh);
 
 public:
 	enum GeomPrimitive {
@@ -89,14 +88,12 @@ private:
 	Vector<Vector3> bezier_mesh_cp;
 	bool debug_axis, debug_vertices;
 
-	MeshInstance *_mesh;
 	void _update_preview();
 
 protected:
 	static void _bind_methods();
 
 	void _get_property_list(List<PropertyInfo> *p_list) const;
-	void _notification(int p_what);
 
 public:
 	void set_primitive(int p_geom);
@@ -106,9 +103,9 @@ public:
 	void set_debug_axis(bool p_state);
 	bool get_debug_axis() const;
 
-	GdGeomGen();
-	~GdGeomGen();
+	ProceduralMesh();
+	~ProceduralMesh();
 };
-VARIANT_ENUM_CAST(GdGeomGen::GeomPrimitive);
+VARIANT_ENUM_CAST(ProceduralMesh::GeomPrimitive);
 
-#endif // GD_GEOM_GEN_H
+#endif // GD_PROCEDURAL_MESH_H

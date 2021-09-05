@@ -28,7 +28,7 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "gdgeomgen.h"
+#include "gd_procedural_mesh.h"
 #include "core/variant.h"
 
 #include "generator/generator.hpp"
@@ -143,7 +143,7 @@ static void generate_axis(MeshWriter &writer, Axis axis) {
 	gml::dvec3 end{};
 	end[static_cast<unsigned>(axis)] = 1.5;
 
-	LinePath line{ gml::dvec3{}, end, gml::dvec3{}, 15 };
+	LinePath line{gml::dvec3{}, end, gml::dvec3{}, 15};
 	auto xx = line.vertices();
 	auto prev = xx.generate().position;
 	xx.next();
@@ -174,7 +174,7 @@ template <typename Mesh>
 static void generate_mesh(MeshWriter &writer, const Mesh &mesh) {
 }
 
-void GdGeomGen::_update_preview() {
+void ProceduralMesh::_update_preview() {
 	MeshWriter writer;
 	switch (primitive) {
 		case GEOM_EMPTY_SHAPE:
@@ -295,16 +295,12 @@ void GdGeomGen::_update_preview() {
 			break;
 	}
 	// build mesh from data
-	if (!_mesh) {
-		_mesh = memnew(MeshInstance);
-		add_child(_mesh);
-	}
+	clear_surfaces();
 	if (writer.verts.pos.size() + writer.lines.pos.size() + writer.points.pos.size()) {
 		print_verbose("Building new mesh:");
-		print_verbose(" - triangles: " + String::num(writer.verts.pos.size()) + ", " + String::num(writer.verts.tex.size()) + ", " + String::num(writer.verts.norm.size()));
-		print_verbose(" - lines: " + String::num(writer.lines.pos.size()) + ", " + String::num(writer.lines.tex.size()) + ", " + String::num(writer.lines.norm.size()));
-		print_verbose(" - points: " + String::num(writer.points.pos.size()) + ", " + String::num(writer.points.tex.size()) + ", " + String::num(writer.points.norm.size()));
-		Ref<ArrayMesh> mesh = memnew(ArrayMesh);
+		print_verbose(" - triangles: " + String::num(writer.verts.pos.size()) + ", t:" + String::num(writer.verts.tex.size()) + ", n:" + String::num(writer.verts.norm.size()));
+		print_verbose(" - lines: " + String::num(writer.lines.pos.size()) + ", t:" + String::num(writer.lines.tex.size()) + ", n:" + String::num(writer.lines.norm.size()));
+		print_verbose(" - points: " + String::num(writer.points.pos.size()) + ", t:" + String::num(writer.points.tex.size()) + ", n:" + String::num(writer.points.norm.size()));
 		if (writer.verts.pos.size()) {
 			Array mesh_array;
 			mesh_array.resize(VS::ARRAY_MAX);
@@ -313,7 +309,7 @@ void GdGeomGen::_update_preview() {
 				mesh_array[VS::ARRAY_TEX_UV] = writer.verts.tex;
 			if (writer.verts.norm.size())
 				mesh_array[VS::ARRAY_NORMAL] = writer.verts.norm;
-			mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array, Array());
+			add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array, Array());
 		}
 		if (writer.lines.pos.size()) {
 			Array mesh_array;
@@ -323,7 +319,7 @@ void GdGeomGen::_update_preview() {
 				mesh_array[VS::ARRAY_TEX_UV] = writer.lines.tex;
 			if (writer.lines.norm.size())
 				mesh_array[VS::ARRAY_NORMAL] = writer.lines.norm;
-			mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, mesh_array, Array());
+			add_surface_from_arrays(Mesh::PRIMITIVE_LINES, mesh_array, Array());
 		}
 		if (writer.points.pos.size()) {
 			Array mesh_array;
@@ -333,46 +329,40 @@ void GdGeomGen::_update_preview() {
 				mesh_array[VS::ARRAY_TEX_UV] = writer.points.tex;
 			if (writer.points.norm.size())
 				mesh_array[VS::ARRAY_NORMAL] = writer.points.norm;
-			mesh->add_surface_from_arrays(Mesh::PRIMITIVE_POINTS, mesh_array, Array());
+			add_surface_from_arrays(Mesh::PRIMITIVE_POINTS, mesh_array, Array());
 		}
-		_mesh->set_mesh(mesh);
-	} else {
-		_mesh->set_mesh(nullptr);
 	}
 }
 
-void GdGeomGen::set_primitive(int p_geom) {
+void ProceduralMesh::set_primitive(int p_geom) {
 	ERR_FAIL_INDEX(p_geom, GEOM_LAST_PRIMITIVE);
 	primitive = (GeomPrimitive)p_geom;
 	_update_preview();
 }
 
-GdGeomGen::GeomPrimitive GdGeomGen::get_primitive() const {
+ProceduralMesh::GeomPrimitive ProceduralMesh::get_primitive() const {
 	return primitive;
 }
 
-void GdGeomGen::set_debug_vertices(bool p_state) {
+void ProceduralMesh::set_debug_vertices(bool p_state) {
 	debug_vertices = p_state;
 	_update_preview();
 }
 
-bool GdGeomGen::get_debug_vertices() const {
+bool ProceduralMesh::get_debug_vertices() const {
 	return debug_vertices;
 }
 
-void GdGeomGen::set_debug_axis(bool p_state) {
+void ProceduralMesh::set_debug_axis(bool p_state) {
 	debug_axis = p_state;
 	_update_preview();
 }
 
-bool GdGeomGen::get_debug_axis() const {
+bool ProceduralMesh::get_debug_axis() const {
 	return debug_axis;
 }
 
-void GdGeomGen::_notification(int p_what) {
-}
-
-void GdGeomGen::_get_property_list(List<PropertyInfo> *p_list) const {
+void ProceduralMesh::_get_property_list(List<PropertyInfo> *p_list) const {
 	if (p_list) {
 		if (primitive == GEOM_BEZIER_SHAPE) {
 			p_list->push_back(PropertyInfo(Variant::INT, "bezier_shape_num_cp", PROPERTY_HINT_RANGE, "1,4"));
@@ -391,7 +381,7 @@ void GdGeomGen::_get_property_list(List<PropertyInfo> *p_list) const {
 	}
 }
 
-void GdGeomGen::_bind_methods() {
+void ProceduralMesh::_bind_methods() {
 	BIND_ENUM_CONSTANT(GEOM_EMPTY_SHAPE);
 	BIND_ENUM_CONSTANT(GEOM_LINE_SHAPE);
 	BIND_ENUM_CONSTANT(GEOM_RECTANGLE_SHAPE);
@@ -407,6 +397,7 @@ void GdGeomGen::_bind_methods() {
 	BIND_ENUM_CONSTANT(GEOM_HELIX_PATH);
 
 	BIND_ENUM_CONSTANT(GEOM_EMPTY_MESH);
+	BIND_ENUM_CONSTANT(GEOM_PLANE_MESH);
 	BIND_ENUM_CONSTANT(GEOM_BOX_MESH);
 	BIND_ENUM_CONSTANT(GEOM_ROUNDED_BOX_MESH);
 	BIND_ENUM_CONSTANT(GEOM_SPHERE_MESH);
@@ -423,30 +414,28 @@ void GdGeomGen::_bind_methods() {
 	BIND_ENUM_CONSTANT(GEOM_DODECAHEDRON_MESH);
 	BIND_ENUM_CONSTANT(GEOM_ICOSAHEDRON_MESH);
 	BIND_ENUM_CONSTANT(GEOM_ICOSPHERE_MESH);
-	BIND_ENUM_CONSTANT(GEOM_PLANE_MESH);
+	BIND_ENUM_CONSTANT(GEOM_TRIANGLE_MESH);
 	BIND_ENUM_CONSTANT(GEOM_SPHERICAL_TRIANGLE_MESH);
 	BIND_ENUM_CONSTANT(GEOM_SPRING_MESH);
 	BIND_ENUM_CONSTANT(GEOM_TORUS_KNOT_MESH);
 	BIND_ENUM_CONSTANT(GEOM_TORUS_MESH);
-	BIND_ENUM_CONSTANT(GEOM_TRIANGLE_MESH);
 	BIND_ENUM_CONSTANT(GEOM_BEZIER_MESH);
 	BIND_ENUM_CONSTANT(GEOM_TEAPOT_MESH);
 
-	ClassDB::bind_method(D_METHOD("set_primitive", "geom"), &GdGeomGen::set_primitive);
-	ClassDB::bind_method(D_METHOD("get_primitive"), &GdGeomGen::get_primitive);
-	ClassDB::bind_method(D_METHOD("set_debug_vertices", "geom"), &GdGeomGen::set_debug_vertices);
-	ClassDB::bind_method(D_METHOD("get_debug_vertices"), &GdGeomGen::get_debug_vertices);
-	ClassDB::bind_method(D_METHOD("set_debug_axis", "geom"), &GdGeomGen::set_debug_axis);
-	ClassDB::bind_method(D_METHOD("get_debug_axis"), &GdGeomGen::get_debug_axis);
+	ClassDB::bind_method(D_METHOD("set_primitive", "geom"), &ProceduralMesh::set_primitive);
+	ClassDB::bind_method(D_METHOD("get_primitive"), &ProceduralMesh::get_primitive);
+	ClassDB::bind_method(D_METHOD("set_debug_vertices", "geom"), &ProceduralMesh::set_debug_vertices);
+	ClassDB::bind_method(D_METHOD("get_debug_vertices"), &ProceduralMesh::get_debug_vertices);
+	ClassDB::bind_method(D_METHOD("set_debug_axis", "geom"), &ProceduralMesh::set_debug_axis);
+	ClassDB::bind_method(D_METHOD("get_debug_axis"), &ProceduralMesh::get_debug_axis);
 
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "primitive", PROPERTY_HINT_ENUM, "EmptyShape,LineShape,RectangleShape,RoundRectangleShape,CircleShape,GridShape,BezierShape,EmptyPath, LinePath,KnotPath,HelixPath"), "set_primitive", "get_primitive");
-
+	ADD_GROUP("Generator", "");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "primitive", PROPERTY_HINT_ENUM, "EmptyShape,LineShape,RectangleShape,RoundRectangleShape,CircleShape,GridShape,BezierShape,EmptyPath, LinePath,KnotPath,HelixPath,EmptyMesh,PlaneMesh,BoxMesh,RoundedBoxMesh,SphereMesh,DiskMesh,CylinderMesh,CappedConeMesh,ConeMesh,CappedConeMesh,TubeMesh,CappedTubeMesh,CapsuleMesh,SphericalConeMesh,ConvexPolygonMesh,DodecahedronMesh,IcosahedronMesh,TriangleMesh,SphericalTriangleMesh,SpringMesh,TorusKnotMesh,TorusMesh,BezierMesh,TeapotMesh"), "set_primitive", "get_primitive");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "debug_vertices"), "set_debug_vertices", "get_debug_vertices");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "debug_axis"), "set_debug_axis", "get_debug_axis");
 }
 
-GdGeomGen::GdGeomGen() {
-	_mesh = nullptr;
+ProceduralMesh::ProceduralMesh() {
 	primitive = GEOM_EMPTY_SHAPE;
 	bezier_shape_num_cp = 4;
 	bezier_mesh_num_cp = Size2(4, 4);
@@ -454,5 +443,5 @@ GdGeomGen::GdGeomGen() {
 	debug_vertices = false;
 }
 
-GdGeomGen::~GdGeomGen() {
+ProceduralMesh::~ProceduralMesh() {
 }

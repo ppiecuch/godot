@@ -32,11 +32,11 @@
 
 #include <core/print_string.h>
 
-#include "gdgeomgen.h"
+#include "gd_procedural_mesh.h"
 #include "register_types.h"
 
 void register_gdgenerator_types() {
-	ClassDB::register_class<GdGeomGen>();
+	ClassDB::register_class<ProceduralMesh>();
 }
 
 void unregister_gdgenerator_types() {
