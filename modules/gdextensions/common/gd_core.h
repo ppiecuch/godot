@@ -39,7 +39,6 @@
 #include "core/math/vector2.h"
 #include "core/os/os.h"
 #include "core/ustring.h"
-#include "scene/main/scene_tree.h"
 
 #include <deque>
 #include <list>
