@@ -42,9 +42,12 @@
 #include "core/ustring.h"
 #include "thread_posix.h"
 
-#if defined(__psp__) || defined(__psp2__)
+#if defined(__psp__)
 #include <pte_osal.h>
 #define ATOMIC_INCREMENT pte_osAtomicIncrement
+#elif defined(__psp2__)
+#include <atomic>
+#define ATOMIC_INCREMENT(p) __atomic_add_fetch(p, 1, __ATOMIC_SEQ_CST)
 #else
 #define ATOMIC_INCREMENT atomic_increment
 #endif

@@ -71,10 +71,10 @@
 #endif
 
 #ifdef __GNUC__
-#ifdef __htons
+#if !defined(htons) && defined(__htons)
 #define htons __htons
 #endif
-#ifdef __ntohs
+#if !defined(__ntohs) && defined(__ntohs)
 #define ntohs __ntohs
 #endif
 #endif

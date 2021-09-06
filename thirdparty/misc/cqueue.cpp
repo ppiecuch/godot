@@ -23,23 +23,18 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifndef _WIN32
-#include <sys/file.h>
-#endif
 #include <stdarg.h>
 #include <limits.h>
 #include <fcntl.h>
 #include <string.h>
 #include <time.h>
 #include <stdio.h>
-#ifndef _WIN32
-#include <dirent.h>
-#endif
 
 #ifdef __psp2__
 extern "C" int scandir(const char *dir, struct dirent ***namelist_out,
 	int(*filter)(const struct dirent *),
 	int(*compar)(const struct dirent **, const struct dirent **));
+extern "C" int asprintf(char **ret, const char *format, ...);
 #endif // __psp2__
 
 #ifdef _3DS
@@ -63,6 +58,9 @@ extern "C" int scandir(const char *dir, struct dirent ***namelist_out,
 #define strdup _strdup
 #define unlink _unlink
 #define access _access
+#else
+#include <sys/file.h>
+#include <dirent.h>
 #endif
 
 #ifdef GD_CQUEUE

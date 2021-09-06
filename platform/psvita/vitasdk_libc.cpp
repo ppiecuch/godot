@@ -36,6 +36,7 @@
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -380,4 +381,30 @@ end:
 		sceIoDclose(dir_uid);
 	}
 	return ret;
+}
+
+extern "C" int asprintf(char **ret, const char *format, ...) {
+	va_list ap;
+	*ret = nullptr; /* Ensure value can be passed to free() */
+
+	va_start(ap, format);
+	int count = vsnprintf(nullptr, 0, format, ap);
+	va_end(ap);
+
+	if (count >= 0) {
+		char *buffer = (char *)malloc(count + 1);
+		if (buffer == nullptr) {
+			return -1;
+		}
+		va_start(ap, format);
+		count = vsnprintf(buffer, count + 1, format, ap);
+		va_end(ap);
+
+		if (count < 0) {
+			free(buffer);
+			return count;
+		}
+		*ret = buffer;
+	}
+	return count;
 }
