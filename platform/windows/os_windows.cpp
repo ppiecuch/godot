@@ -663,9 +663,8 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 			if (!window_has_focus && mouse_mode == MOUSE_MODE_CAPTURED) {
 				break;
 			}
-			|
 
-					Ref<InputEventMouseMotion> mm;
+			Ref<InputEventMouseMotion> mm;
 			mm.instance();
 
 			if (pen_info.penMask & PEN_MASK_PRESSURE) {
