@@ -34,9 +34,9 @@
 #include <dirent.h>
 #include <errno.h>
 #include <netdb.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
