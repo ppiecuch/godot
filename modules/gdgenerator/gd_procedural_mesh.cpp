@@ -303,6 +303,8 @@ void ProceduralMesh::_update_preview() {
 		case GEOM_TEAPOT_MESH:
 			generate_mesh(writer, TeapotMesh{}, debug_axis);
 			break;
+		default:
+			WARN_PRINT("Unknown geometry primitive: " + String::num(primitive));
 	}
 	// build mesh from data
 	clear_surfaces();
@@ -357,7 +359,7 @@ void ProceduralMesh::_update_preview() {
 }
 
 void ProceduralMesh::set_primitive(int p_geom) {
-	ERR_FAIL_INDEX(p_geom, GEOM_LAST_PRIMITIVE);
+	ERR_FAIL_INDEX(p_geom, GEOM_PRIMITIVES_COUNT);
 	primitive = (GeomPrimitive)p_geom;
 	_update_preview();
 }
@@ -389,18 +391,154 @@ void ProceduralMesh::_get_property_list(List<PropertyInfo> *p_list) const {
 		if (primitive == GEOM_BEZIER_SHAPE) {
 			p_list->push_back(PropertyInfo(Variant::INT, "bezier_shape_num_cp", PROPERTY_HINT_RANGE, "1,4"));
 			for (int i = 0; i < bezier_shape_num_cp; i++) {
-				String prep = "control_point/" + itos(i) + "/";
+				String prep = "control_points/" + itos(i) + "/";
+				p_list->push_back(PropertyInfo(Variant::VECTOR2, prep));
 			}
 		} else if (primitive == GEOM_BEZIER_MESH) {
 			p_list->push_back(PropertyInfo(Variant::INT, "bezier_mesh_num_cp/rows", PROPERTY_HINT_RANGE, "1,4"));
 			p_list->push_back(PropertyInfo(Variant::INT, "bezier_mesh_num_cp/cols", PROPERTY_HINT_RANGE, "1,4"));
 			for (int i = 0; i < bezier_mesh_num_cp.x; i++) {
 				for (int j = 0; j < bezier_mesh_num_cp.y; j++) {
-					String prep = "control_point/" + itos(i) + "x" + itos(j) + "/";
+					String prep = "control_points/" + itos(i) + "x" + itos(j) + "/";
+					p_list->push_back(PropertyInfo(Variant::VECTOR3, prep));
 				}
 			}
 		}
+
+		if (primitive >= GEOM_EMPTY_SHAPE && primitive <= GEOM_BEZIER_SHAPE) {
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/axis_swap"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/flip"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/merge"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/repeat"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/rotate"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/scale"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/subdivide"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/transform"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/translate"));
+		} else if (primitive >= GEOM_EMPTY_PATH && primitive <= GEOM_HELIX_PATH) {
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/axis_swap"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/flip"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/merge"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/repeat"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/rotate"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/scale"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/subdivide"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/transform"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/translate"));
+		} else if (primitive >= GEOM_EMPTY_MESH && primitive <= GEOM_TEAPOT_MESH) {
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/axis_swap"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/extrude"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/flip"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/lathe"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/merge"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/repeat"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/rotate"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/scale"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/spherify"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/subdivide"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/transform"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/translate"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/uv_swap"));
+		}
 	}
+}
+
+bool ProceduralMesh::_set(const StringName &p_path, const Variant &p_value) {
+	String path = p_path;
+
+	if (path.begins_with("control_points/")) {
+		String cp = path.substr(15);
+	} else if (path.begins_with("modifiers/")) {
+		String modif = path.substr(10);
+		if (modif == "axis_swap") {
+			modif_axis_swap = p_value;
+		} else if (modif == "extrude") {
+			modif_extrude = p_value;
+		} else if (modif == "flip") {
+			modif_flip = p_value;
+		} else if (modif == "lathe") {
+			modif_lathe = p_value;
+		} else if (modif == "merge") {
+			modif_merge = p_value;
+		} else if (modif == "repeat") {
+			modif_repeat = p_value;
+		} else if (modif == "rotate") {
+			modif_rotate = p_value;
+		} else if (modif == "scale") {
+			modif_scale = p_value;
+		} else if (modif == "spherify") {
+			modif_spherify = p_value;
+		} else if (modif == "subdivide") {
+			modif_spherify = p_value;
+		} else if (modif == "transform") {
+			modif_transform = p_value;
+		} else if (modif == "translate") {
+			modif_translate = p_value;
+		} else if (modif == "uv_swap") {
+			modif_uv_swap = p_value;
+		} else {
+			WARN_PRINT("Unknown modifier: " + modif);
+		}
+	} else if (path == "bezier_shape_num_cp") {
+		bezier_shape_num_cp = p_value;
+	} else if (path == "bezier_mesh_num_cp/rows") {
+		bezier_mesh_num_cp.x = p_value;
+	} else if (path == "bezier_mesh_num_cp/cols") {
+		bezier_mesh_num_cp.y = p_value;
+	} else {
+		return false;
+	}
+
+	return true;
+}
+
+bool ProceduralMesh::_get(const StringName &p_path, Variant &r_ret) const {
+	String path = p_path;
+
+	if (path.begins_with("control_points/")) {
+		String cp = path.substr(15);
+	} else if (path.begins_with("modifiers/")) {
+		String modif = path.substr(10);
+		if (modif == "axis_swap") {
+			r_ret = modif_axis_swap;
+		} else if (modif == "extrude") {
+			r_ret = modif_extrude;
+		} else if (modif == "flip") {
+			r_ret = modif_flip;
+		} else if (modif == "lathe") {
+			r_ret = modif_lathe;
+		} else if (modif == "merge") {
+			r_ret = modif_merge;
+		} else if (modif == "repeat") {
+			r_ret = modif_repeat;
+		} else if (modif == "rotate") {
+			r_ret = modif_rotate;
+		} else if (modif == "scale") {
+			r_ret = modif_scale;
+		} else if (modif == "spherify") {
+			r_ret = modif_spherify;
+		} else if (modif == "subdivide") {
+			r_ret = modif_spherify;
+		} else if (modif == "transform") {
+			r_ret = modif_transform;
+		} else if (modif == "translate") {
+			r_ret = modif_translate;
+		} else if (modif == "uv_swap") {
+			r_ret = modif_uv_swap;
+		} else {
+			WARN_PRINT("Unknown modifier: " + modif);
+		}
+	} else if (path == "bezier_shape_num_cp") {
+		r_ret = bezier_shape_num_cp;
+	} else if (path == "bezier_mesh_num_cp/rows") {
+		r_ret = bezier_mesh_num_cp.x;
+	} else if (path == "bezier_mesh_num_cp/cols") {
+		r_ret = bezier_mesh_num_cp.y;
+	} else {
+		return false;
+	}
+
+	return true;
 }
 
 void ProceduralMesh::_bind_methods() {
@@ -459,9 +597,9 @@ void ProceduralMesh::_bind_methods() {
 ProceduralMesh::ProceduralMesh() {
 	primitive = GEOM_EMPTY_SHAPE;
 	bezier_shape_num_cp = 4;
-	bezier_mesh_num_cp = Size2(4, 4);
-	debug_axis = false;
-	debug_vertices = false;
+	bezier_mesh_num_cp = Size2i(4, 4);
+	modif_axis_swap = modif_extrude = modif_flip = modif_lathe = modif_merge = modif_repeat = modif_rotate = modif_scale = modif_spherify = modif_subdivide = modif_transform = modif_translate = modif_uv_swap = false;
+	debug_axis = debug_vertices = false;
 }
 
 ProceduralMesh::~ProceduralMesh() {

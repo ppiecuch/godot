@@ -33,10 +33,32 @@
 
 #include "scene/resources/mesh.h"
 
+// Simple runtime preview generation:
+// ----------------------------------
+// func _ready():
+//     remove_all_child()
+//     randomize()
+//     textures.shuffle() # randomize textures list
+//     for y in range(0, 5):
+//         for x in range(0, 7):
+//             var mesh_inst = MeshInstance.new()
+//             mesh_inst.translation = Vector3(x * space, y * space, 0) - origin
+//             var mesh = ProceduralMesh.new()
+//             var index:int = y * 7 + x
+//             mesh.primitive = 35 if index == 11 else index # Show teapot instead of the EmptyMesh
+//             var mat = SpatialMaterial.new()
+//             mat.albedo_texture = load(textures[index])
+//             mat.params_cull_mode = SpatialMaterial.CULL_DISABLED
+//             if mesh.get_surface_count() > 0:
+//                 mesh.surface_set_material(0, mat)
+//             mesh_inst.mesh = mesh
+//             add_child(mesh_inst)
+
 class ProceduralMesh : public ArrayMesh {
 	GDCLASS(ProceduralMesh, ArrayMesh);
 
 public:
+	// NOTE: Order is important here
 	enum GeomPrimitive {
 		// Shapes
 		GEOM_EMPTY_SHAPE,
@@ -77,15 +99,68 @@ public:
 		GEOM_TORUS_MESH,
 		GEOM_BEZIER_MESH,
 		GEOM_TEAPOT_MESH,
+		//
+		GEOM_PRIMITIVES_COUNT
 	};
-	const int GEOM_LAST_PRIMITIVE = GEOM_TEAPOT_MESH;
+
+	enum GeomModifiers {
+		// Shape modifiers
+		MODIF_AXISSWAP_SHAPE,
+		MODIF_FLIP_SHAPE,
+		MODIF_MERGE_SHAPE,
+		MODIF_REPEAT_SHAPE,
+		MODIF_ROTATE_SHAPE,
+		MODIF_SCALE_SHAPE,
+		MODIF_SUBDIVIDE_SHAPE,
+		MODIF_TRANSFORM_SHAPE,
+		MODIF_TRANSLATE_SHAPE,
+		// Path modifiers
+		MODIF_AXISSWAP_PATH,
+		MODIF_FLIP_PATH,
+		MODIF_MERGE_PATH,
+		MODIF_REPEAT_PATH,
+		MODIF_ROTATE_PATH,
+		MODIF_SCALE_PATH,
+		MODIF_SUBDIVIDE_PATH,
+		MODIF_TRANSFORM_PATH,
+		MODIF_TRANSLATE_PATH,
+		// Mesh modifiers
+		MODIF_AXISSWAP_MESH,
+		MODIF_EXTRUDE_MESH,
+		MODIF_FLIP_MESH,
+		MODIF_LATHE_MESH,
+		MODIF_MERGE_MESH,
+		MODIF_REPEAT_MESH,
+		MODIF_ROTATE_MESH,
+		MODIF_SCALE_MESH,
+		MODIF_SPHERIFY_MESH,
+		MODIF_SUBDIVIDE_MESH,
+		MODIF_TRANSFORM_MESH,
+		MODIF_TRANSLATE_MESH,
+		MODIF_UVSWAP_MESH,
+		//
+		MODIF_GEOM_COUNT
+	};
 
 private:
 	GeomPrimitive primitive;
 	int bezier_shape_num_cp; // 1 dim
 	Vector<Vector2> bezier_shape_cp;
-	Size2 bezier_mesh_num_cp; // 2 dim
+	Size2i bezier_mesh_num_cp; // 2 dim
 	Vector<Vector3> bezier_mesh_cp;
+	bool modif_axis_swap,
+			modif_extrude,
+			modif_flip,
+			modif_lathe,
+			modif_merge,
+			modif_repeat,
+			modif_rotate,
+			modif_scale,
+			modif_spherify,
+			modif_subdivide,
+			modif_transform,
+			modif_translate,
+			modif_uv_swap;
 	bool debug_axis, debug_vertices;
 
 	void _update_preview();
@@ -94,6 +169,8 @@ protected:
 	static void _bind_methods();
 
 	void _get_property_list(List<PropertyInfo> *p_list) const;
+	bool _set(const StringName &p_path, const Variant &p_value);
+	bool _get(const StringName &p_path, Variant &r_ret) const;
 
 public:
 	void set_primitive(int p_geom);
@@ -107,5 +184,6 @@ public:
 	~ProceduralMesh();
 };
 VARIANT_ENUM_CAST(ProceduralMesh::GeomPrimitive);
+VARIANT_ENUM_CAST(ProceduralMesh::GeomModifiers);
 
 #endif // GD_PROCEDURAL_MESH_H
