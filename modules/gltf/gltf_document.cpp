@@ -4583,8 +4583,8 @@ Error GLTFDocument::_parse_lights(Ref<GLTFState> state) {
 			light->inner_cone_angle = spot["innerConeAngle"];
 			light->outer_cone_angle = spot["outerConeAngle"];
 			ERR_CONTINUE_MSG(light->inner_cone_angle >= light->outer_cone_angle, "The inner angle must be smaller than the outer angle.");
-		} else if (type != "point" && type != "directional") {
-			ERR_CONTINUE_MSG(ERR_PARSE_ERROR, "Light type is unknown.");
+		} else {
+			ERR_CONTINUE_MSG(type != "point" && type != "directional", "Light type is unknown.");
 		}
 
 		state->lights.push_back(light);
