@@ -12,7 +12,7 @@ excluded_cond = ["GL_ES"]
 
 def runexe(exe, **kwargs):
     try:
-        p = Popen(exe, stdout=PIPE, stdin=PIPE, stderr=STDOUT)
+        p = Popen(exe, stdout=PIPE, stdin=PIPE, stderr=STDOUT, universal_newlines=True)
         return p.communicate(**kwargs)[0].strip().splitlines()
     except OSError as e:
         if e.errno == errno.ENOENT:
