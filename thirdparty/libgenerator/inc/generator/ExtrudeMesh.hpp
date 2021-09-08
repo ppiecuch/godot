@@ -66,11 +66,8 @@ public:
 
 	private:
 		const ExtrudeMesh *mesh_;
-
 		decltype(mesh_->shape_.edges()) shapeEdges_;
-
 		decltype(mesh_->path_.edges()) pathEdges_;
-
 		bool odd_;
 
 		Triangles(const ExtrudeMesh &mesh) :
@@ -120,9 +117,7 @@ public:
 
 	private:
 		const ExtrudeMesh *mesh_;
-
 		decltype(mesh_->shape_.vertices()) shapeVertices_;
-
 		decltype(mesh_->path_.vertices()) pathVertices_;
 
 		Vertices(const ExtrudeMesh &mesh) :
@@ -140,15 +135,13 @@ public:
 	/// @param shape Shape to be extruded.
 	/// @param path Path to extrude along.
 	ExtrudeMesh(Shape shape, Path path) :
-			shape_{ std::move(shape) },
-			path_{ std::move(path) },
-			shapeVertexCount_{ count(shape_.vertices()) } {}
+		shape_{ std::move(shape) },
+		path_{ std::move(path) },
+		shapeVertexCount_{ count(shape_.vertices()) } {}
 
 private:
 	Shape shape_;
-
 	Path path_;
-
 	int shapeVertexCount_;
 };
 

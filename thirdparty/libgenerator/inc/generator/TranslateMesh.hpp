@@ -20,13 +20,16 @@ private:
 	Impl transformMesh_;
 
 public:
+	/// @param mesh Passthrough source data mesh.
+	TranslateMesh(Mesh mesh) : transformMesh_{ std::move(mesh) } {}
+
 	/// @param mesh Source data mesh.
 	/// @param delta Amount to increment vertex positions.
 	TranslateMesh(Mesh mesh, const gml::dvec3 &delta) :
-			transformMesh_{
-				std::move(mesh),
-				[delta](MeshVertex &value) { value.position += delta; }
-			} {}
+		transformMesh_{
+			std::move(mesh),
+			[delta](MeshVertex &value) { value.position += delta; }
+		} {}
 
 	using Triangles = typename Impl::Triangles;
 

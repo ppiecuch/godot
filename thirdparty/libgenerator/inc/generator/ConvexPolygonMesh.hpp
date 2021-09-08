@@ -21,7 +21,7 @@ namespace generator {
 /// Subdivided along each side to segments and radially to rings.
 /// @image html ConvexPolygonMesh.svg
 class ConvexPolygonMesh {
-private:
+public:
 	class Triangles {
 	public:
 		bool done() const noexcept;
@@ -58,6 +58,7 @@ private:
 		friend class ConvexPolygonMesh;
 	};
 
+private:
 	std::vector<gml::dvec3> mVertices;
 	int mSegments;
 	int mRings;

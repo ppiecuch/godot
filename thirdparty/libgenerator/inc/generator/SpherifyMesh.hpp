@@ -20,20 +20,26 @@ private:
 	Impl transformMesh_;
 
 public:
+	/// @param mesh Passthrought source data mesh.
+	SpherifyMesh(Mesh mesh) : transformMesh_{ std::move(mesh) } {}
+
+	/// @param mesh Source data mesh.
+	/// @param radius Spherify radius factor.
+	/// @param factor Spherify factor.
 	SpherifyMesh(Mesh mesh, double radius, double factor) :
-			transformMesh_{
-				std::move(mesh),
-				[radius, factor](MeshVertex &value) {
-					value.position = gml::mix(
-							value.position,
-							radius * gml::normalize(value.position),
-							factor);
-					value.normal = gml::normalize(gml::mix(
-							value.normal,
-							gml::normalize(value.position),
-							factor));
-				}
-			} {}
+		transformMesh_{
+			std::move(mesh),
+			[radius, factor](MeshVertex &value) {
+				value.position = gml::mix(
+						value.position,
+						radius * gml::normalize(value.position),
+						factor);
+				value.normal = gml::normalize(gml::mix(
+						value.normal,
+						gml::normalize(value.position),
+						factor));
+			}
+		} {}
 
 	using Triangles = typename Impl::Triangles;
 

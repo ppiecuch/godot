@@ -95,7 +95,6 @@ public:
 
 	private:
 		const SubdivideMesh *mesh_;
-
 		int i_;
 
 		typename TriangleGeneratorType<Mesh>::Type triangles_;
@@ -103,10 +102,10 @@ public:
 		mutable Triangle triangle_;
 
 		Triangles(const SubdivideMesh &mesh) :
-				mesh_{ &mesh },
-				i_{ 0 },
-				triangles_{ mesh.mesh_.triangles() },
-				triangle_{} {}
+			mesh_{ &mesh },
+			i_{ 0 },
+			triangles_{ mesh.mesh_.triangles() },
+			triangle_{} {}
 
 		int vertexFromEdge(int a, int b) const {
 			if (a > b)
@@ -147,14 +146,13 @@ public:
 
 	private:
 		const SubdivideMesh *mesh_;
-
 		int edgeIndex_;
 		int vertexIndex_;
 
 		Vertices(const SubdivideMesh &mesh) :
-				mesh_{ &mesh },
-				edgeIndex_{ 0 },
-				vertexIndex_{ 0 } {}
+			mesh_{ &mesh },
+			edgeIndex_{ 0 },
+			vertexIndex_{ 0 } {}
 
 		friend class SubdivideMesh;
 	};
@@ -187,13 +185,15 @@ public:
 
 private:
 	Mesh mesh_;
-
 	std::vector<Edge> edgeCache_;
-
 	std::map<gml::ivec2, int> edgeMap_;
-
 	std::vector<MeshVertex> vertexCache_;
 };
+
+template <typename Mesh, int Iterations>
+SubdivideMesh<Mesh, Iterations> subdivide(Mesh mesh) {
+	return SubdivideMesh<Mesh, Iterations>{ std::move(mesh) };
+}
 
 } // namespace generator
 

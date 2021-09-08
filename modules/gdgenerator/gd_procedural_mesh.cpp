@@ -30,6 +30,7 @@
 
 #include "gd_procedural_mesh.h"
 #include "core/variant.h"
+#include "scene/main/node.h"
 
 #include "generator/generator.hpp"
 using namespace generator;
@@ -155,8 +156,95 @@ static void generate_axis(MeshWriter &writer, Axis axis) {
 	}
 }
 
+static generator::MeshVertex process_script(Node *mesh_node, generator::MeshVertex mesh_vertex) {
+	if (mesh_node && mesh_node->get_script_instance()) {
+		Array vertex;
+		Variant v = mesh_node->get_script_instance()->call("_process_geom_modifier", vertex);
+		if (v.get_type() == Variant::ARRAY) {
+			// update mesh vertex
+		}
+	}
+	return mesh_vertex;
+}
+
+// Passthrough modifiers
+template <typename Mesh>
+AxisSwapMesh<Mesh> axisSwapMeshIf(bool cond, Mesh mesh, const ProceduralMesh::GeomAxis axis[]) {
+	if (cond)
+		return AxisSwapMesh<Mesh>{ std::move(mesh), static_cast<generator::Axis>(axis[0]), static_cast<generator::Axis>(axis[1]), static_cast<generator::Axis>(axis[2]) };
+	else
+		return AxisSwapMesh<Mesh>{ std::move(mesh) };
+}
+
+template <typename Mesh>
+FlipMesh<Mesh> flipMeshIf(bool cond, Mesh mesh) {
+	if (cond)
+		return FlipMesh<Mesh>{ std::move(mesh) };
+	else
+		return FlipMesh<Mesh>{ &mesh };
+}
+
+template <typename Mesh>
+RotateMesh<Mesh> rotateMeshIf(bool cond, Mesh mesh, const Quat &rotation) {
+	if (cond)
+		return RotateMesh<Mesh>{ std::move(mesh), { rotation.w, { rotation.x, rotation.y, rotation.z } } };
+	else
+		return RotateMesh<Mesh>{ std::move(mesh) };
+}
+
+template <typename Mesh>
+ScaleMesh<Mesh> scaleMeshIf(bool cond, Mesh mesh, const Vector3 &delta) {
+	if (cond)
+		return ScaleMesh<Mesh>{ std::move(mesh), { delta[0], delta[1], delta[2] } };
+	else
+		return ScaleMesh<Mesh>{ std::move(mesh) };
+}
+
+template <typename Mesh>
+SpherifyMesh<Mesh> spherifyMeshIf(bool cond, Mesh mesh, const real_t params[]) {
+	if (cond)
+		return SpherifyMesh<Mesh>{ std::move(mesh), params[0] /* radius */, params[1] /* factor */ };
+	else
+		return SpherifyMesh<Mesh>{ std::move(mesh) };
+}
+
+template <typename Mesh>
+TranslateMesh<Mesh> translateMeshIf(bool cond, Mesh mesh, const Vector3 &delta) {
+	if (cond)
+		return TranslateMesh<Mesh>{ std::move(mesh), { delta[0], delta[1], delta[2] } };
+	else
+		return TranslateMesh<Mesh>{ std::move(mesh) };
+}
+
+template <typename Mesh>
+TransformMesh<Mesh> transformMeshIf(bool cond, Mesh mesh, Node *node) {
+	if (cond)
+		return TransformMesh<Mesh>{ std::move(mesh), [node](MeshVertex &value) {
+									   return process_script(node, value);
+								   } };
+	else
+		return TransformMesh<Mesh>{ std::move(mesh) };
+}
+
+template <typename Mesh>
+UvFlipMesh<Mesh> uvFlipMeshIf(bool cond, Mesh mesh, const bool param[]) {
+	if (cond)
+		return UvFlipMesh<Mesh>{ std::move(mesh), param[0] /* u */, param[1] /* v */ };
+	else
+		return UvFlipMesh<Mesh>{ std::move(mesh) };
+}
+
+template <typename Mesh>
+UvSwapMesh<Mesh> uvSwapMeshIf(bool cond, Mesh mesh) {
+	if (cond)
+		return UvSwapMesh<Mesh>{ std::move(mesh) };
+	else
+		return UvSwapMesh<Mesh>{ &mesh };
+}
+// end.
+
 template <typename Shape>
-static void generate_shape(MeshWriter &writer, const Shape &shape, bool write_vertices, bool write_axis) {
+static void generate_shape(MeshWriter &writer, const Shape &shape, const ProceduralMesh::GeomModifiersStatus &modifiers, bool write_vertices, bool write_axis) {
 	if (write_axis) {
 		generate_axis(writer, Axis::X);
 		generate_axis(writer, Axis::Y);
@@ -165,7 +253,7 @@ static void generate_shape(MeshWriter &writer, const Shape &shape, bool write_ve
 }
 
 template <typename Path>
-static void generate_path(MeshWriter &writer, const Path &path, bool write_vertices, bool write_axis) {
+static void generate_path(MeshWriter &writer, const Path &path, const ProceduralMesh::GeomModifiersStatus &modifiers, bool write_vertices, bool write_axis) {
 	if (write_axis) {
 		generate_axis(writer, Axis::X);
 		generate_axis(writer, Axis::Y);
@@ -175,121 +263,138 @@ static void generate_path(MeshWriter &writer, const Path &path, bool write_verti
 }
 
 template <typename Mesh>
-static void generate_mesh(MeshWriter &writer, const Mesh &mesh, bool write_axis) {
+static void generate_mesh(MeshWriter &writer, const Mesh &mesh, const ProceduralMesh::GeomModifiersStatus &modifiers, bool write_axis) {
+	const auto xmesh =
+			axisSwapMeshIf(modifiers.axis_swap,
+					flipMeshIf(modifiers.flip,
+							rotateMeshIf(modifiers.translate,
+									scaleMeshIf(modifiers.rotate,
+											spherifyMeshIf(modifiers.spherify,
+													transformMeshIf(modifiers.transform,
+															translateMeshIf(modifiers.scale,
+																	uvFlipMeshIf(modifiers.uv_flip,
+																			uvSwapMeshIf(modifiers.uv_swap, mesh),
+																			modifiers.uv_flip_param),
+																	modifiers.translate_param),
+															modifiers.transform_node),
+													modifiers.spherify_param),
+											modifiers.scale_param),
+									modifiers.rotate_param)),
+					modifiers.axis_swap_param);
 	if (write_axis) {
 		generate_axis(writer, Axis::X);
 		generate_axis(writer, Axis::Y);
 		generate_axis(writer, Axis::Z);
 	}
-	writer.write_mesh(mesh);
+	writer.write_mesh(xmesh);
 }
 
 void ProceduralMesh::_update_preview() {
 	MeshWriter writer;
 	switch (primitive) {
 		case GEOM_EMPTY_SHAPE:
-			generate_shape(writer, CircleShape{}, debug_vertices, debug_axis);
+			generate_shape(writer, EmptyShape{}, modifiers, debug_vertices, debug_axis);
 			break;
 		case GEOM_LINE_SHAPE:
-			generate_shape(writer, LineShape{}, debug_vertices, debug_axis);
+			generate_shape(writer, LineShape{}, modifiers, debug_vertices, debug_axis);
 			break;
 		case GEOM_RECTANGLE_SHAPE:
-			generate_shape(writer, RectangleShape{}, debug_vertices, debug_axis);
+			generate_shape(writer, RectangleShape{}, modifiers, debug_vertices, debug_axis);
 			break;
 		case GEOM_ROUNDED_RECTANGLE_SHAPE:
-			generate_shape(writer, RoundedRectangleShape{}, debug_vertices, debug_axis);
+			generate_shape(writer, RoundedRectangleShape{}, modifiers, debug_vertices, debug_axis);
 			break;
 		case GEOM_CIRCLE_SHAPE:
-			generate_shape(writer, CircleShape{}, debug_vertices, debug_axis);
+			generate_shape(writer, CircleShape{}, modifiers, debug_vertices, debug_axis);
 			break;
 		case GEOM_GRID_SHAPE:
-			generate_shape(writer, GridShape{}, debug_vertices, debug_axis);
+			generate_shape(writer, GridShape{}, modifiers, debug_vertices, debug_axis);
 			break;
 		case GEOM_BEZIER_SHAPE:
-			generate_shape(writer, BezierShape<4>{ { { -1.0, -1.0 }, { -0.5, 1.0 }, { 0.5, -1.0 }, { 1.0, 1.0 } } }, debug_vertices, debug_axis);
+			generate_shape(writer, BezierShape<4>{ { { -1.0, -1.0 }, { -0.5, 1.0 }, { 0.5, -1.0 }, { 1.0, 1.0 } } }, modifiers, debug_vertices, debug_axis);
 			break;
 
 		case GEOM_EMPTY_PATH:
-			generate_path(writer, EmptyPath{}, debug_vertices, debug_axis);
+			generate_path(writer, EmptyPath{}, modifiers, debug_vertices, debug_axis);
 			break;
 		case GEOM_LINE_PATH:
-			generate_path(writer, LinePath{}, debug_vertices, debug_axis);
+			generate_path(writer, LinePath{}, modifiers, debug_vertices, debug_axis);
 			break;
 		case GEOM_KNOT_PATH:
-			generate_path(writer, KnotPath{}, debug_vertices, debug_axis);
+			generate_path(writer, KnotPath{}, modifiers, debug_vertices, debug_axis);
 			break;
 		case GEOM_HELIX_PATH:
-			generate_path(writer, HelixPath{}, debug_vertices, debug_axis);
+			generate_path(writer, HelixPath{}, modifiers, debug_vertices, debug_axis);
 			break;
 
 		case GEOM_EMPTY_MESH:
-			generate_mesh(writer, EmptyMesh{}, debug_axis);
+			generate_mesh(writer, EmptyMesh{}, modifiers, debug_axis);
 			break;
 		case GEOM_BOX_MESH:
-			generate_mesh(writer, BoxMesh{}, debug_axis);
+			generate_mesh(writer, BoxMesh{}, modifiers, debug_axis);
 			break;
 		case GEOM_ROUNDED_BOX_MESH:
-			generate_mesh(writer, RoundedBoxMesh{}, debug_axis);
+			generate_mesh(writer, RoundedBoxMesh{}, modifiers, debug_axis);
 			break;
 		case GEOM_CAPPED_CYLINDER_MESH:
-			generate_mesh(writer, CappedCylinderMesh{}, debug_axis);
+			generate_mesh(writer, CappedCylinderMesh{}, modifiers, debug_axis);
 			break;
 		case GEOM_CAPPED_CONE_MESH:
-			generate_mesh(writer, CappedConeMesh{}, debug_axis);
+			generate_mesh(writer, CappedConeMesh{}, modifiers, debug_axis);
 			break;
 		case GEOM_CAPPED_TUBE_MESH:
-			generate_mesh(writer, CappedTubeMesh{}, debug_axis);
+			generate_mesh(writer, CappedTubeMesh{}, modifiers, debug_axis);
 			break;
 		case GEOM_CONE_MESH:
-			generate_mesh(writer, ConeMesh{}, debug_axis);
+			generate_mesh(writer, ConeMesh{}, modifiers, debug_axis);
 			break;
 		case GEOM_SPHERICAL_CONE_MESH:
-			generate_mesh(writer, SphericalConeMesh{}, debug_axis);
+			generate_mesh(writer, SphericalConeMesh{}, modifiers, debug_axis);
 			break;
 		case GEOM_CAPSULE_MESH:
-			generate_mesh(writer, CapsuleMesh{}, debug_axis);
+			generate_mesh(writer, CapsuleMesh{}, modifiers, debug_axis);
 			break;
 		case GEOM_CONVEX_POLYGON_MESH:
-			generate_mesh(writer, ConvexPolygonMesh{}, debug_axis);
+			generate_mesh(writer, ConvexPolygonMesh{}, modifiers, debug_axis);
 			break;
 		case GEOM_CYLINDER_MESH:
-			generate_mesh(writer, CylinderMesh{}, debug_axis);
+			generate_mesh(writer, CylinderMesh{}, modifiers, debug_axis);
 			break;
 		case GEOM_DISK_MESH:
-			generate_mesh(writer, DiskMesh{}, debug_axis);
+			generate_mesh(writer, DiskMesh{}, modifiers, debug_axis);
 			break;
 		case GEOM_DODECAHEDRON_MESH:
-			generate_mesh(writer, DodecahedronMesh{}, debug_axis);
+			generate_mesh(writer, DodecahedronMesh{}, modifiers, debug_axis);
 			break;
 		case GEOM_ICOSAHEDRON_MESH:
-			generate_mesh(writer, IcosahedronMesh{}, debug_axis);
+			generate_mesh(writer, IcosahedronMesh{}, modifiers, debug_axis);
 			break;
 		case GEOM_ICOSPHERE_MESH:
-			generate_mesh(writer, IcoSphereMesh{}, debug_axis);
+			generate_mesh(writer, IcoSphereMesh{}, modifiers, debug_axis);
 			break;
 		case GEOM_PLANE_MESH:
-			generate_mesh(writer, PlaneMesh{}, debug_axis);
+			generate_mesh(writer, PlaneMesh{}, modifiers, debug_axis);
 			break;
 		case GEOM_SPHERE_MESH:
-			generate_mesh(writer, SphereMesh{}, debug_axis);
+			generate_mesh(writer, SphereMesh{}, modifiers, debug_axis);
 			break;
 		case GEOM_SPHERICAL_TRIANGLE_MESH:
-			generate_mesh(writer, SphericalTriangleMesh{}, debug_axis);
+			generate_mesh(writer, SphericalTriangleMesh{}, modifiers, debug_axis);
 			break;
 		case GEOM_SPRING_MESH:
-			generate_mesh(writer, SpringMesh{}, debug_axis);
+			generate_mesh(writer, SpringMesh{}, modifiers, debug_axis);
 			break;
 		case GEOM_TORUS_KNOT_MESH:
-			generate_mesh(writer, TorusKnotMesh{}, debug_axis);
+			generate_mesh(writer, TorusKnotMesh{}, modifiers, debug_axis);
 			break;
 		case GEOM_TORUS_MESH:
-			generate_mesh(writer, TorusMesh{}, debug_axis);
+			generate_mesh(writer, TorusMesh{}, modifiers, debug_axis);
 			break;
 		case GEOM_TRIANGLE_MESH:
-			generate_mesh(writer, generator::TriangleMesh{}, debug_axis);
+			generate_mesh(writer, generator::TriangleMesh{}, modifiers, debug_axis);
 			break;
 		case GEOM_TUBE_MESH:
-			generate_mesh(writer, TubeMesh{}, debug_axis);
+			generate_mesh(writer, TubeMesh{}, modifiers, debug_axis);
 			break;
 		case GEOM_BEZIER_MESH: {
 			const gml::dvec3 cp[4][4] = {
@@ -298,10 +403,10 @@ void ProceduralMesh::_update_preview() {
 				{ { -1.00, 0.33, 2.66 }, { -0.33, 0.33, 0.00 }, { 0.33, 0.33, 2.00 }, { 1.0, 0.33, 2.66 } },
 				{ { -1.00, 1.00, -1.33 }, { -0.33, 1.00, -1.33 }, { 0.33, 1.00, 0.00 }, { 1.0, 1.00, -0.66 } }
 			};
-			generate_mesh(writer, BezierMesh<4, 4>{ cp, { 8, 8 } }, debug_axis);
+			generate_mesh(writer, BezierMesh<4, 4>{ cp, { 8, 8 } }, modifiers, debug_axis);
 		} break;
 		case GEOM_TEAPOT_MESH:
-			generate_mesh(writer, TeapotMesh{}, debug_axis);
+			generate_mesh(writer, TeapotMesh{}, modifiers, debug_axis);
 			break;
 		default:
 			WARN_PRINT("Unknown geometry primitive: " + String::num(primitive));
@@ -427,17 +532,12 @@ void ProceduralMesh::_get_property_list(List<PropertyInfo> *p_list) const {
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/translate"));
 		} else if (primitive >= GEOM_EMPTY_MESH && primitive <= GEOM_TEAPOT_MESH) {
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/axis_swap"));
-			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/extrude"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/flip"));
-			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/lathe"));
-			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/merge"));
-			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/repeat"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/rotate"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/scale"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/spherify"));
-			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/subdivide"));
-			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/transform"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/translate"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/uv_flip"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/uv_swap"));
 		}
 	}
@@ -451,31 +551,21 @@ bool ProceduralMesh::_set(const StringName &p_path, const Variant &p_value) {
 	} else if (path.begins_with("modifiers/")) {
 		String modif = path.substr(10);
 		if (modif == "axis_swap") {
-			modif_axis_swap = p_value;
-		} else if (modif == "extrude") {
-			modif_extrude = p_value;
+			modifiers.axis_swap = p_value;
 		} else if (modif == "flip") {
-			modif_flip = p_value;
-		} else if (modif == "lathe") {
-			modif_lathe = p_value;
-		} else if (modif == "merge") {
-			modif_merge = p_value;
-		} else if (modif == "repeat") {
-			modif_repeat = p_value;
+			modifiers.flip = p_value;
 		} else if (modif == "rotate") {
-			modif_rotate = p_value;
+			modifiers.rotate = p_value;
 		} else if (modif == "scale") {
-			modif_scale = p_value;
+			modifiers.scale = p_value;
 		} else if (modif == "spherify") {
-			modif_spherify = p_value;
-		} else if (modif == "subdivide") {
-			modif_spherify = p_value;
-		} else if (modif == "transform") {
-			modif_transform = p_value;
+			modifiers.spherify = p_value;
 		} else if (modif == "translate") {
-			modif_translate = p_value;
+			modifiers.translate = p_value;
+		} else if (modif == "uv_flip") {
+			modifiers.uv_flip = p_value;
 		} else if (modif == "uv_swap") {
-			modif_uv_swap = p_value;
+			modifiers.uv_swap = p_value;
 		} else {
 			WARN_PRINT("Unknown modifier: " + modif);
 		}
@@ -500,31 +590,21 @@ bool ProceduralMesh::_get(const StringName &p_path, Variant &r_ret) const {
 	} else if (path.begins_with("modifiers/")) {
 		String modif = path.substr(10);
 		if (modif == "axis_swap") {
-			r_ret = modif_axis_swap;
-		} else if (modif == "extrude") {
-			r_ret = modif_extrude;
+			r_ret = modifiers.axis_swap;
 		} else if (modif == "flip") {
-			r_ret = modif_flip;
-		} else if (modif == "lathe") {
-			r_ret = modif_lathe;
-		} else if (modif == "merge") {
-			r_ret = modif_merge;
-		} else if (modif == "repeat") {
-			r_ret = modif_repeat;
+			r_ret = modifiers.flip;
 		} else if (modif == "rotate") {
-			r_ret = modif_rotate;
+			r_ret = modifiers.rotate;
 		} else if (modif == "scale") {
-			r_ret = modif_scale;
+			r_ret = modifiers.scale;
 		} else if (modif == "spherify") {
-			r_ret = modif_spherify;
-		} else if (modif == "subdivide") {
-			r_ret = modif_spherify;
-		} else if (modif == "transform") {
-			r_ret = modif_transform;
+			r_ret = modifiers.spherify;
 		} else if (modif == "translate") {
-			r_ret = modif_translate;
+			r_ret = modifiers.translate;
+		} else if (modif == "uv_flip") {
+			r_ret = modifiers.uv_flip;
 		} else if (modif == "uv_swap") {
-			r_ret = modif_uv_swap;
+			r_ret = modifiers.uv_swap;
 		} else {
 			WARN_PRINT("Unknown modifier: " + modif);
 		}
@@ -598,7 +678,7 @@ ProceduralMesh::ProceduralMesh() {
 	primitive = GEOM_EMPTY_SHAPE;
 	bezier_shape_num_cp = 4;
 	bezier_mesh_num_cp = Size2i(4, 4);
-	modif_axis_swap = modif_extrude = modif_flip = modif_lathe = modif_merge = modif_repeat = modif_rotate = modif_scale = modif_spherify = modif_subdivide = modif_transform = modif_translate = modif_uv_swap = false;
+	modifiers.axis_swap = modifiers.flip = modifiers.rotate = modifiers.scale = modifiers.spherify = modifiers.transform = modifiers.translate = modifiers.uv_swap = false;
 	debug_axis = debug_vertices = false;
 }
 

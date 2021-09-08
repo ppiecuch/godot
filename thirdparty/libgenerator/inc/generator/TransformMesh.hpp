@@ -27,7 +27,8 @@ public:
 	public:
 		MeshVertex generate() const {
 			auto vertex = vertices_.generate();
-			mesh_->mutate_(vertex);
+			if (mesh_->mutate_)
+				mesh_->mutate_(vertex);
 			return vertex;
 		}
 
@@ -46,6 +47,9 @@ public:
 
 		friend class TransformMesh;
 	};
+
+	/// @param mesh Passthrough source data mesh.
+	explicit TransformMesh(Mesh mesh) : mesh_{ std::move(mesh) } {}
 
 	/// @param mesh Source data mesh.
 	/// @param mutate Callback function that gets called once per vertex.

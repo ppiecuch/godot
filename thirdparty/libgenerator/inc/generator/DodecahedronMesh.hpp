@@ -22,7 +22,7 @@ namespace generator {
 /// Each face optionally subdivided along edges and/or radius.
 /// @image html DodecahedronMesh.svg
 class DodecahedronMesh {
-private:
+public:
 	class Triangles {
 	public:
 		bool done() const noexcept;
@@ -67,12 +67,10 @@ private:
 		friend class DodecahedronMesh;
 	};
 
+private:
 	double mRadius;
-
 	int mSegments;
-
 	int mRings;
-
 	int mFaceVertexCount;
 
 public:

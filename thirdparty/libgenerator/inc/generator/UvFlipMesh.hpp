@@ -20,19 +20,22 @@ private:
 	Impl transformMesh_;
 
 public:
+	/// @param mesh Passthrought source data mesh.
+	UvFlipMesh(Mesh mesh) : transformMesh_{ std::move(mesh) } {}
+
 	/// @param mesh Source data mesh.
 	/// @param u Flip u
 	/// @param v Flip v
 	UvFlipMesh(Mesh mesh, bool u, bool v) :
-			transformMesh_{
-				std::move(mesh),
-				[u, v](MeshVertex &vertex) {
-					if (u)
-						vertex.texCoord[0] = 1.0 - vertex.texCoord[0];
-					if (v)
-						vertex.texCoord[1] = 1.0 - vertex.texCoord[1];
-				}
-			} {}
+		transformMesh_{
+			std::move(mesh),
+			[u, v](MeshVertex &vertex) {
+				if (u)
+					vertex.texCoord[0] = 1.0 - vertex.texCoord[0];
+				if (v)
+					vertex.texCoord[1] = 1.0 - vertex.texCoord[1];
+			}
+		} {}
 
 	using Triangles = typename Impl::Triangles;
 
@@ -44,8 +47,8 @@ public:
 };
 
 template <typename Mesh>
-UvFlipMesh<Mesh> uvFlipMesh(Mesh mesh) {
-	return UvFlipMesh<Mesh>{ std::move(mesh) };
+UvFlipMesh<Mesh> uvFlipMesh(Mesh mesh, bool u, bool v) {
+	return UvFlipMesh<Mesh>{ std::move(mesh), u, v };
 }
 
 } // namespace generator

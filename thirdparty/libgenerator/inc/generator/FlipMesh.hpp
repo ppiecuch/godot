@@ -42,11 +42,15 @@ public:
 		friend class FlipMesh;
 	};
 
+	/// Constructor for passthrough modifier
+	/// @param mesh Passthrough source data mesh.
+	FlipMesh(Mesh *mesh) : transformMesh_{ std::move(*mesh) } {}
+
 	/// @param mesh Source data mesh.
 	FlipMesh(Mesh mesh) :
-			transformMesh_{ std::move(mesh), [](MeshVertex &vertex) {
-							   vertex.normal *= -1.0;
-						   } } {}
+		transformMesh_{ std::move(mesh), [](MeshVertex &vertex) {
+							vertex.normal *= -1.0;
+						} } {}
 
 	Triangles triangles() const noexcept { return this->transformMesh_; }
 

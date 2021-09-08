@@ -20,14 +20,18 @@ private:
 	Impl transformMesh_;
 
 public:
+	/// Constructor for passthrough modifier
+	/// @param mesh Passthrough source data mesh
+	UvSwapMesh(Mesh *mesh) : transformMesh_{ std::move(*mesh) } {}
+
 	/// @param mesh Source data mesh
 	UvSwapMesh(Mesh mesh) :
-			transformMesh_{
-				std::move(mesh),
-				[](MeshVertex &vertex) {
-					std::swap(vertex.texCoord[0], vertex.texCoord[1]);
-				}
-			} {}
+		transformMesh_{
+			std::move(mesh),
+			[](MeshVertex &vertex) {
+				std::swap(vertex.texCoord[0], vertex.texCoord[1]);
+			}
+		} {}
 
 	using Triangles = typename Impl::Triangles;
 

@@ -58,6 +58,12 @@ class ProceduralMesh : public ArrayMesh {
 	GDCLASS(ProceduralMesh, ArrayMesh);
 
 public:
+	enum GeomAxis {
+		GEOM_AXIS_X,
+		GEOM_AXIS_Y,
+		GEOM_AXIS_Z,
+	};
+
 	// NOTE: Order is important here
 	enum GeomPrimitive {
 		// Shapes
@@ -142,25 +148,32 @@ public:
 		MODIF_GEOM_COUNT
 	};
 
+	struct GeomModifiersStatus {
+		bool axis_swap;
+		GeomAxis axis_swap_param[3];
+		bool flip;
+		bool rotate;
+		Quat rotate_param;
+		bool scale;
+		Vector3 scale_param{ 1, 1, 1 };
+		bool spherify;
+		real_t spherify_param[2] = { 0, 0 };
+		bool transform;
+		Node *transform_node = nullptr;
+		bool translate;
+		Vector3 translate_param;
+		bool uv_flip;
+		bool uv_flip_param[2] = { 0, 0 };
+		bool uv_swap;
+	};
+
 private:
 	GeomPrimitive primitive;
 	int bezier_shape_num_cp; // 1 dim
 	Vector<Vector2> bezier_shape_cp;
 	Size2i bezier_mesh_num_cp; // 2 dim
 	Vector<Vector3> bezier_mesh_cp;
-	bool modif_axis_swap,
-			modif_extrude,
-			modif_flip,
-			modif_lathe,
-			modif_merge,
-			modif_repeat,
-			modif_rotate,
-			modif_scale,
-			modif_spherify,
-			modif_subdivide,
-			modif_transform,
-			modif_translate,
-			modif_uv_swap;
+	GeomModifiersStatus modifiers;
 	bool debug_axis, debug_vertices;
 
 	void _update_preview();

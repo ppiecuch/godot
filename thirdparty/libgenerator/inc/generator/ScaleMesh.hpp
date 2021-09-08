@@ -20,16 +20,19 @@ private:
 	Impl transformMesh_;
 
 public:
+	/// @param mesh Passthrought source data mesh.
+	ScaleMesh(Mesh mesh) : transformMesh_{ std::move(mesh) } {}
+
 	/// @param mesh Source data mesh.
 	/// @param scale Scale factors. Must not be zero!
 	ScaleMesh(Mesh mesh, const gml::dvec3 &scale) :
-			transformMesh_{
-				std::move(mesh),
-				[scale](MeshVertex &value) {
-					value.position *= scale;
-					value.normal = normalize(scale * value.normal);
-				}
-			} {}
+		transformMesh_{
+			std::move(mesh),
+			[scale](MeshVertex &value) {
+				value.position *= scale;
+				value.normal = normalize(scale * value.normal);
+			}
+		} {}
 
 	using Triangles = typename Impl::Triangles;
 

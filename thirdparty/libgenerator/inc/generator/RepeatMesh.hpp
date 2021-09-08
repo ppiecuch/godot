@@ -44,11 +44,8 @@ public:
 
 	private:
 		const RepeatMesh *mRepeatMesh;
-
 		typename TriangleGeneratorType<Mesh>::Type mTriangles;
-
 		int mIndex;
-
 		int mDelta;
 
 		explicit Triangles(const RepeatMesh *repeatMesh) noexcept :
@@ -103,11 +100,8 @@ public:
 				mDelta{} {}
 
 		const RepeatMesh *mRepeatMesh;
-
 		typename VertexGeneratorType<Mesh>::Type mVertices;
-
 		int mIndex;
-
 		gml::dvec3 mDelta;
 
 		int countVertices() const noexcept {
@@ -145,11 +139,8 @@ public:
 
 private:
 	Mesh mMesh;
-
 	int mInstances;
-
 	gml::dvec3 mDelta;
-
 	int mVertexCount;
 };
 

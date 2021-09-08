@@ -28,9 +28,7 @@ public:
 		Triangles(const ParametricMesh &mesh);
 
 		const ParametricMesh *mesh_;
-
 		gml::ivec2 i_;
-
 		bool even_;
 
 		friend class ParametricMesh;
@@ -46,7 +44,6 @@ public:
 		Vertices(const ParametricMesh &mesh);
 
 		const ParametricMesh *mesh_;
-
 		gml::ivec2 i_;
 
 		friend class ParametricMesh;
@@ -65,9 +62,7 @@ public:
 
 private:
 	std::function<MeshVertex(const gml::dvec2 &t)> eval_;
-
 	gml::ivec2 segments_;
-
 	gml::dvec2 delta_;
 };
 

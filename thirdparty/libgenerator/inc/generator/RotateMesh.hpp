@@ -21,16 +21,19 @@ private:
 	Impl transformMesh_;
 
 public:
+	/// @param mesh Passthrough source mesh data.
+	RotateMesh(Mesh mesh) : transformMesh_{ std::move(mesh) } {}
+
 	/// @param mesh Source mesh data.
 	/// @param rotation Quaternion presenting the rotation.
 	RotateMesh(Mesh mesh, const gml::dquat &rotation) :
-			transformMesh_{
-				std::move(mesh),
-				[rotation](MeshVertex &value) {
-					value.position = gml::transform(rotation, value.position);
-					value.normal = gml::transform(rotation, value.normal);
-				}
-			} {}
+		transformMesh_{
+			std::move(mesh),
+			[rotation](MeshVertex &value) {
+				value.position = gml::transform(rotation, value.position);
+				value.normal = gml::transform(rotation, value.normal);
+			}
+		} {}
 
 	/// @param mesh Source mesh data.
 	/// @param angle Counterclockwise angle around the given axis.
@@ -39,14 +42,14 @@ public:
 			RotateMesh{ std::move(mesh), gml::qrotate(angle, axis) } {}
 
 	RotateMesh(Mesh mesh, double angle, Axis axis) :
-			RotateMesh{
-				std::move(mesh),
-				gml::qrotate(
-						angle,
-						axis == Axis::X ?
-								  gml::dvec3{ 1.0, 0.0, 0.0 } :
-								  (axis == Axis::Y ? gml::dvec3{ 0.0, 1.0, 0.0 } : gml::dvec3{ 0.0, 0.0, 1.0 }))
-			} {}
+		RotateMesh{
+			std::move(mesh),
+			gml::qrotate(
+					angle,
+					axis == Axis::X ?
+								gml::dvec3{ 1.0, 0.0, 0.0 } :
+								(axis == Axis::Y ? gml::dvec3{ 0.0, 1.0, 0.0 } : gml::dvec3{ 0.0, 0.0, 1.0 }))
+		} {}
 
 	using Triangles = typename Impl::Triangles;
 
