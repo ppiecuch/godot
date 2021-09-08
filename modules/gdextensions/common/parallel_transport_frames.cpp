@@ -172,11 +172,12 @@ MultiMeshInstance *ParallelTransportFrames::debug_draw_node(MultiMeshInstance *&
 	}
 
 	Ref<MultiMesh> multi_mesh = node->get_multimesh();
-	if (multi_mesh->get_instance_count() < frames.size()) {
-		multi_mesh->set_instance_count(frames.size());
+	const int fsize = frames.size();
+	if (multi_mesh->get_instance_count() < fsize) {
+		multi_mesh->set_instance_count(fsize);
 	}
-	multi_mesh->set_visible_instance_count(frames.size());
-	for (int i = 0; i < frames.size(); ++i) {
+	multi_mesh->set_visible_instance_count(fsize);
+	for (int i = 0; i < fsize; ++i) {
 		Transform tr = frames[i].scaled(Vector3::fill(axis_size)).rotated(Vector3(0, 1, 0), 90); // ??
 		multi_mesh->set_instance_transform(i, tr);
 	}

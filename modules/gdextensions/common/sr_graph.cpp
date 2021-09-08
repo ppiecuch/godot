@@ -601,7 +601,7 @@ static void _rg_generate_curve(const _rg_graph *graph, const PoolRealArray &xs, 
 	PoolRealArray curve_data;
 	real_t x0 = ax * xs[0] + bx;
 	real_t y0 = ay * ys[0] + by;
-	for (unsigned int i = 1; i < xs.size(); ++i) {
+	for (size_t i = 1; i < xs.size(); ++i) {
 		const real_t x1 = ax * xs[i] + bx;
 		const real_t y1 = ay * ys[i] + by;
 		_rg_get_line(x0, y0, x1, y1, curve->param0, graph->ratio, curve_data);
@@ -640,7 +640,7 @@ static void _rg_generate_hist(const _rg_graph *graph, const PoolRealArray &ys, _
 	PoolIntArray bin_counts;
 	bin_counts.resize(curve->param1);
 	auto bin_counts_write = bin_counts.write();
-	for (unsigned i = 0; i < ys.size(); ++i) {
+	for (size_t i = 0; i < ys.size(); ++i) {
 		const int j = (unsigned)Math::floor((ys[i] - graph->minx) / bin_size);
 		if (j < 0 || j >= bin_counts.size()) {
 			continue;
@@ -658,7 +658,7 @@ static void _rg_generate_hist(const _rg_graph *graph, const PoolRealArray &ys, _
 
 	const real_t bin_width = MAX(0, (2 - graph->margins[lt] - graph->margins[rt]) / (real_t)curve->param1 - curve->param0);
 
-	for (int i = 0; i < curve->param1; ++i) {
+	for (unsigned i = 0; i < curve->param1; ++i) {
 		if (bin_counts[i] == 0) {
 			continue;
 		}
