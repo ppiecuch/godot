@@ -355,7 +355,7 @@ jobs:
         env:
           SCONS_CACHE: ${{github.workspace}}/.scons_cache/
         run: |
-          scons -j2 platform=3ds verbose=yes warnings=all werror=yes target=release tools=no disable_3ds=yes
+          scons -j2 platform=3ds verbose=yes warnings=all werror=yes target=release tools=no disable_3d=yes
 
       - name: Upload template
         uses: actions/upload-artifact@v2
