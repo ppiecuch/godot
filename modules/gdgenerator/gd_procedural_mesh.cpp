@@ -235,6 +235,14 @@ UvFlipMesh<Mesh> uvFlipMeshIf(bool cond, Mesh mesh, const bool param[]) {
 }
 
 template <typename Mesh>
+UvScaleMesh<Mesh> uvScaleMeshIf(bool cond, Mesh mesh, const Vector2 &delta) {
+	if (cond)
+		return UvScaleMesh<Mesh>{ std::move(mesh), { delta[0], delta[1] } };
+	else
+		return UvScaleMesh<Mesh>{ &mesh };
+}
+
+template <typename Mesh>
 UvSwapMesh<Mesh> uvSwapMeshIf(bool cond, Mesh mesh) {
 	if (cond)
 		return UvSwapMesh<Mesh>{ std::move(mesh) };
@@ -273,8 +281,10 @@ static void generate_mesh(MeshWriter &writer, const Mesh &mesh, const Procedural
 													transformMeshIf(modifiers.transform,
 															translateMeshIf(modifiers.scale,
 																	uvFlipMeshIf(modifiers.uv_flip,
-																			uvSwapMeshIf(modifiers.uv_swap, mesh),
-																			modifiers.uv_flip_param),
+																			uvScaleMeshIf(modifiers.uv_scale,
+																				uvSwapMeshIf(modifiers.uv_swap, mesh),
+																				modifiers.uv_flip_param),
+																			modifiers.uv_scale_param),
 																	modifiers.translate_param),
 															modifiers.transform_node),
 													modifiers.spherify_param),
@@ -311,7 +321,13 @@ void ProceduralMesh::_update_preview() {
 			generate_shape(writer, GridShape{}, modifiers, debug_vertices, debug_axis);
 			break;
 		case GEOM_BEZIER_SHAPE:
-			generate_shape(writer, BezierShape<4>{ { { -1.0, -1.0 }, { -0.5, 1.0 }, { 0.5, -1.0 }, { 1.0, 1.0 } } }, modifiers, debug_vertices, debug_axis);
+			switch (bezier_shape_num_cp) {
+				case 2: generate_shape(writer, BezierShape<2>{ { { -1.0, -1.0 }, { 1.0, 1.0 } } }, modifiers, debug_vertices, debug_axis); break;
+				case 3: generate_shape(writer, BezierShape<3>{ { { -1.0, -1.0 }, { -0.6, 0.6 }, { 1.0, 1.0 } } }, modifiers, debug_vertices, debug_axis); break;
+				case 4: generate_shape(writer, BezierShape<4>{ { { -1.0, -1.0 }, { -0.5, 1.0 }, { 0.5, -1.0 }, { 1.0, 1.0 } } }, modifiers, debug_vertices, debug_axis); break;
+				default:
+					WARN_PRINT("Invalid number of control points: " + String::num(bezier_shape_num_cp));
+			}
 			break;
 
 		case GEOM_EMPTY_PATH:
@@ -494,14 +510,14 @@ bool ProceduralMesh::get_debug_axis() const {
 void ProceduralMesh::_get_property_list(List<PropertyInfo> *p_list) const {
 	if (p_list) {
 		if (primitive == GEOM_BEZIER_SHAPE) {
-			p_list->push_back(PropertyInfo(Variant::INT, "bezier_shape_num_cp", PROPERTY_HINT_RANGE, "1,4"));
+			p_list->push_back(PropertyInfo(Variant::INT, "bezier_shape_num_cp", PROPERTY_HINT_RANGE, "2,4"));
 			for (int i = 0; i < bezier_shape_num_cp; i++) {
 				String prep = "control_points/" + itos(i) + "/";
 				p_list->push_back(PropertyInfo(Variant::VECTOR2, prep));
 			}
 		} else if (primitive == GEOM_BEZIER_MESH) {
-			p_list->push_back(PropertyInfo(Variant::INT, "bezier_mesh_num_cp/rows", PROPERTY_HINT_RANGE, "1,4"));
-			p_list->push_back(PropertyInfo(Variant::INT, "bezier_mesh_num_cp/cols", PROPERTY_HINT_RANGE, "1,4"));
+			p_list->push_back(PropertyInfo(Variant::INT, "bezier_mesh_num_cp/rows", PROPERTY_HINT_RANGE, "2,4"));
+			p_list->push_back(PropertyInfo(Variant::INT, "bezier_mesh_num_cp/cols", PROPERTY_HINT_RANGE, "2,4"));
 			for (int i = 0; i < bezier_mesh_num_cp.x; i++) {
 				for (int j = 0; j < bezier_mesh_num_cp.y; j++) {
 					String prep = "control_points/" + itos(i) + "x" + itos(j) + "/";
@@ -513,21 +529,15 @@ void ProceduralMesh::_get_property_list(List<PropertyInfo> *p_list) const {
 		if (primitive >= GEOM_EMPTY_SHAPE && primitive <= GEOM_BEZIER_SHAPE) {
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/axis_swap"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/flip"));
-			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/merge"));
-			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/repeat"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/rotate"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/scale"));
-			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/subdivide"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/transform"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/translate"));
 		} else if (primitive >= GEOM_EMPTY_PATH && primitive <= GEOM_HELIX_PATH) {
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/axis_swap"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/flip"));
-			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/merge"));
-			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/repeat"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/rotate"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/scale"));
-			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/subdivide"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/transform"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/translate"));
 		} else if (primitive >= GEOM_EMPTY_MESH && primitive <= GEOM_TEAPOT_MESH) {
@@ -538,6 +548,7 @@ void ProceduralMesh::_get_property_list(List<PropertyInfo> *p_list) const {
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/spherify"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/translate"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/uv_flip"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/uv_scale"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/uv_swap"));
 		}
 	}
@@ -560,21 +571,43 @@ bool ProceduralMesh::_set(const StringName &p_path, const Variant &p_value) {
 			modifiers.scale = p_value;
 		} else if (modif == "spherify") {
 			modifiers.spherify = p_value;
+		} else if (modif == "transform") {
+			modifiers.transform = p_value;
 		} else if (modif == "translate") {
 			modifiers.translate = p_value;
 		} else if (modif == "uv_flip") {
 			modifiers.uv_flip = p_value;
+		} else if (modif == "uv_scale") {
+			modifiers.uv_scale = p_value;
 		} else if (modif == "uv_swap") {
 			modifiers.uv_swap = p_value;
 		} else {
 			WARN_PRINT("Unknown modifier: " + modif);
 		}
 	} else if (path == "bezier_shape_num_cp") {
-		bezier_shape_num_cp = p_value;
+		const int value = p_value;
+		ERR_FAIL_COND_V(value < 2 || value > 4, true);
+		bezier_shape_num_cp = value;
+	} else if (path == "bezier_shape_cp") {
+		bezier_shape_cp = p_value;
 	} else if (path == "bezier_mesh_num_cp/rows") {
-		bezier_mesh_num_cp.x = p_value;
+		const int value = p_value;
+		ERR_FAIL_COND_V(value < 2 || value > 4, true);
+		bezier_mesh_num_cp.x = value;
 	} else if (path == "bezier_mesh_num_cp/cols") {
-		bezier_mesh_num_cp.y = p_value;
+		const int value = p_value;
+		ERR_FAIL_COND_V(value < 2 || value > 4, true);
+		bezier_mesh_num_cp.y = value;
+	} else if (path == "bezier_mesh_cp") {
+		ERR_FAIL_COND_V(p_value.get_type() != Variant::ARRAY, true);
+		const Array value = p_value;
+		auto bezier_mesh_cp_w = bezier_mesh_cp.write;
+		for (int y = 0; y < bezier_mesh_num_cp.height; y++) {
+			const Array row = value[y];
+			for (int x = 0; x < bezier_mesh_num_cp.width; x++) {
+				bezier_mesh_cp_w[y * bezier_mesh_num_cp.width + x] = row[x];
+			}
+		}
 	} else {
 		return false;
 	}
@@ -599,10 +632,14 @@ bool ProceduralMesh::_get(const StringName &p_path, Variant &r_ret) const {
 			r_ret = modifiers.scale;
 		} else if (modif == "spherify") {
 			r_ret = modifiers.spherify;
+		} else if (modif == "transform") {
+			r_ret = modifiers.transform;
 		} else if (modif == "translate") {
 			r_ret = modifiers.translate;
 		} else if (modif == "uv_flip") {
 			r_ret = modifiers.uv_flip;
+		} else if (modif == "uv_scale") {
+			r_ret = modifiers.uv_scale;
 		} else if (modif == "uv_swap") {
 			r_ret = modifiers.uv_swap;
 		} else {
@@ -610,10 +647,24 @@ bool ProceduralMesh::_get(const StringName &p_path, Variant &r_ret) const {
 		}
 	} else if (path == "bezier_shape_num_cp") {
 		r_ret = bezier_shape_num_cp;
+	} else if (path == "bezier_shape_cp") {
+		r_ret = bezier_shape_cp;
 	} else if (path == "bezier_mesh_num_cp/rows") {
 		r_ret = bezier_mesh_num_cp.x;
 	} else if (path == "bezier_mesh_num_cp/cols") {
 		r_ret = bezier_mesh_num_cp.y;
+	} else if (path == "bezier_mesh_num_cp") {
+		r_ret = Size2(bezier_mesh_num_cp.x, bezier_mesh_num_cp.y);
+	} else if (path == "bezier_mesh_cp") {
+		Array cp;
+		for (int y = 0; y < bezier_mesh_num_cp.height; y++) {
+			for (int x = 0; x < bezier_mesh_num_cp.width; x++) {
+				Array row;
+				row.append(bezier_mesh_cp[y * bezier_mesh_num_cp.width + x]);
+				cp.append(row);
+			}
+		}
+		r_ret = cp;
 	} else {
 		return false;
 	}
@@ -677,8 +728,9 @@ void ProceduralMesh::_bind_methods() {
 ProceduralMesh::ProceduralMesh() {
 	primitive = GEOM_EMPTY_SHAPE;
 	bezier_shape_num_cp = 4;
+	bezier_shape_cp.push_back({-1.0, -1.0}, {-0.5, 1.0}, {0.5, -1.0},{1.0, 1.0});
 	bezier_mesh_num_cp = Size2i(4, 4);
-	modifiers.axis_swap = modifiers.flip = modifiers.rotate = modifiers.scale = modifiers.spherify = modifiers.transform = modifiers.translate = modifiers.uv_swap = false;
+	modifiers.axis_swap = modifiers.flip = modifiers.rotate = modifiers.scale = modifiers.spherify = modifiers.transform = modifiers.translate = modifiers.uv_scale = modifiers.uv_swap = false;
 	debug_axis = debug_vertices = false;
 }
 

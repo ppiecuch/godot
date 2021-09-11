@@ -164,6 +164,8 @@ public:
 		Vector3 translate_param;
 		bool uv_flip;
 		bool uv_flip_param[2] = { 0, 0 };
+		bool uv_scale;
+		Vector2 uv_scale_param{ 1, 1 };
 		bool uv_swap;
 	};
 
@@ -172,7 +174,7 @@ private:
 	int bezier_shape_num_cp; // 1 dim
 	Vector<Vector2> bezier_shape_cp;
 	Size2i bezier_mesh_num_cp; // 2 dim
-	Vector<Vector3> bezier_mesh_cp;
+	Vector<Vector3> bezier_mesh_cp; // row major
 	GeomModifiersStatus modifiers;
 	bool debug_axis, debug_vertices;
 

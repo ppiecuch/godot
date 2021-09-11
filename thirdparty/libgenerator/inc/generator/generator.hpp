@@ -94,6 +94,7 @@
 #include "TriangleMesh.hpp"
 #include "TubeMesh.hpp"
 #include "UvFlipMesh.hpp"
+#include "UvScaleMesh.hpp"
 #include "UvSwapMesh.hpp"
 #include "math.hpp"
 #include "utils.hpp"
