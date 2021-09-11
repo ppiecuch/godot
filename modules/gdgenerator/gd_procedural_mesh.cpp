@@ -239,7 +239,7 @@ UvScaleMesh<Mesh> uvScaleMeshIf(bool cond, Mesh mesh, const Vector2 &delta) {
 	if (cond)
 		return UvScaleMesh<Mesh>{ std::move(mesh), { delta[0], delta[1] } };
 	else
-		return UvScaleMesh<Mesh>{ &mesh };
+		return UvScaleMesh<Mesh>{ std::move(mesh) };
 }
 
 template <typename Mesh>
@@ -283,8 +283,8 @@ static void generate_mesh(MeshWriter &writer, const Mesh &mesh, const Procedural
 																	uvFlipMeshIf(modifiers.uv_flip,
 																			uvScaleMeshIf(modifiers.uv_scale,
 																				uvSwapMeshIf(modifiers.uv_swap, mesh),
-																				modifiers.uv_flip_param),
-																			modifiers.uv_scale_param),
+																				modifiers.uv_scale_param),
+																			modifiers.uv_flip_param),
 																	modifiers.translate_param),
 															modifiers.transform_node),
 													modifiers.spherify_param),
