@@ -38,9 +38,9 @@
 
 DebugDraw *DebugDraw::singleton = NULL;
 
-DebugDraw::DebugDraw() :
-		ready(false) {
+DebugDraw::DebugDraw() : ready(false) {
 	ERR_FAIL_COND(singleton);
+	skip_canvas_transform = false;
 	singleton = this;
 }
 
@@ -48,16 +48,16 @@ DebugDraw::~DebugDraw() {
 	if (ready) {
 		auto *vs = VS::get_singleton();
 
-		for (auto *e = drawings.front(); e; e = e->next())
+		for (auto *e = drawings.front(); e; e = e->next()) {
 			vs->free(e->get().canvas_item);
-
-		auto *st = SceneTree::get_singleton();
-		st->disconnect("idle_frame", this, "_idle_frame");
-
+		}
+		if (auto *st = SceneTree::get_singleton()) {
+			st->disconnect("idle_frame", this, "_idle_frame");
+		}
 		vs->free(canvas);
 	}
 
-	singleton = NULL;
+	singleton = nullptr;
 }
 
 bool DebugDraw::init() {
@@ -65,8 +65,8 @@ bool DebugDraw::init() {
 	ERR_FAIL_NULL_V(st, false);
 
 	auto *vs = VS::get_singleton();
-	Viewport *viewport = st->get_root()->get_viewport();
 
+	Viewport *viewport = st->get_root()->get_viewport();
 	ERR_FAIL_NULL_V(viewport, false);
 
 	canvas = vs->canvas_create();
@@ -79,32 +79,32 @@ bool DebugDraw::init() {
 	return ready = true;
 }
 
-void DebugDraw::circle(const Vector2 &position, float radius, const Color &color, float duration) {
+void DebugDraw::circle(const Vector2 &position, real_t radius, const Color &color, real_t duration) {
 	if (ready || init()) {
 		auto *vs = VS::get_singleton();
 		Drawing d = { vs->canvas_item_create(), duration };
 		vs->canvas_item_set_parent(d.canvas_item, canvas);
-		vs->canvas_item_add_circle(d.canvas_item, position, radius, color);
+		vs->canvas_item_add_circle(d.canvas_item, _viewport_xform(position), radius, color);
 		drawings.push_back(d);
 	}
 }
 
-void DebugDraw::line(const Vector2 &a, const Vector2 &b, const Color &color, float width, float duration) {
+void DebugDraw::line(const Vector2 &a, const Vector2 &b, const Color &color, real_t width, real_t duration) {
 	if (ready || init()) {
 		auto *vs = VS::get_singleton();
 		Drawing d = { vs->canvas_item_create(), duration };
 		vs->canvas_item_set_parent(d.canvas_item, canvas);
-		vs->canvas_item_add_line(d.canvas_item, a, b, color, width);
+		vs->canvas_item_add_line(d.canvas_item, _viewport_xform(a), _viewport_xform(b), color, width);
 		drawings.push_back(d);
 	}
 }
 
-void DebugDraw::rect(const Rect2 &rect, const Color &color, float width, float duration) {
+void DebugDraw::rect(const Rect2 &rect, const Color &color, real_t width, real_t duration) {
 	if (ready || init()) {
-		Vector2 tl = rect.position;
-		Vector2 tr = rect.position + Vector2(rect.size.x, 0);
-		Vector2 bl = rect.position + Vector2(0, rect.size.y);
-		Vector2 br = rect.position + rect.size;
+		Vector2 tl = _viewport_xform(rect.position);
+		Vector2 tr = _viewport_xform(rect.position + Vector2(rect.size.x, 0));
+		Vector2 bl = _viewport_xform(rect.position + Vector2(0, rect.size.y));
+		Vector2 br = _viewport_xform(rect.position + rect.size);
 
 		auto *vs = VS::get_singleton();
 		Drawing d = { vs->canvas_item_create(), duration };
@@ -117,17 +117,17 @@ void DebugDraw::rect(const Rect2 &rect, const Color &color, float width, float d
 	}
 }
 
-void DebugDraw::area(const Rect2 &rect, const Color &color, float duration) {
+void DebugDraw::area(const Rect2 &rect, const Color &color, real_t duration) {
 	if (ready || init()) {
 		auto *vs = VS::get_singleton();
 		Drawing d = { vs->canvas_item_create(), duration };
 		vs->canvas_item_set_parent(d.canvas_item, canvas);
-		vs->canvas_item_add_rect(d.canvas_item, rect, color);
+		vs->canvas_item_add_rect(d.canvas_item, _viewport_xform(rect), color);
 		drawings.push_back(d);
 	}
 }
 
-void DebugDraw::print(const String &text, const Color &color, float duration) {
+void DebugDraw::print(const String &text, const Color &color, real_t duration) {
 	if (ready || init()) {
 		auto *vs = VS::get_singleton();
 		Drawing d = { vs->canvas_item_create(), duration };
@@ -135,7 +135,7 @@ void DebugDraw::print(const String &text, const Color &color, float duration) {
 		default_font->draw(d.canvas_item, Vector2(1, 1), text, color.inverted());
 		default_font->draw(d.canvas_item, Vector2(), text, color);
 		auto offset = (prints.size() + 1) * default_font->get_height();
-		vs->canvas_item_set_transform(d.canvas_item, Transform2D(.0f, Vector2(10.f, 10.f + offset)));
+		vs->canvas_item_set_transform(d.canvas_item, Transform2D(0, _viewport_xform(Vector2(10, 10 + offset))));
 		prints.push_back(d);
 	}
 }
@@ -156,16 +156,38 @@ void DebugDraw::clear() {
 	}
 }
 
+Vector2 DebugDraw::_viewport_xform(Vector2 position) const {
+	if (!skip_canvas_transform) {
+		if (auto *st = SceneTree::get_singleton()) {
+			if (Viewport *viewport = st->get_root()->get_viewport()) {
+				position = viewport->get_canvas_transform().xform(position);
+			}
+		}
+	}
+	return position;
+}
+
+Rect2 DebugDraw::_viewport_xform(Rect2 rect) const {
+	if (!skip_canvas_transform) {
+		if (auto *st = SceneTree::get_singleton()) {
+			if (Viewport *viewport = st->get_root()->get_viewport()) {
+				rect = viewport->get_canvas_transform().xform(rect);
+			}
+		}
+	}
+	return rect;
+}
+
 void DebugDraw::_idle_frame() {
 	auto *vs = VS::get_singleton();
 	auto *st = SceneTree::get_singleton();
-	const float delta = st->get_idle_process_time();
+	const real_t delta = st->get_idle_process_time();
 
 	// remove dead drawings
 	for (auto *e = drawings.front(); e;) {
 		auto &d = e->get();
 
-		if (d.time_left < .0f) {
+		if (d.time_left < 0) {
 			vs->free(d.canvas_item);
 			auto old = e;
 			e = e->next();
@@ -182,19 +204,27 @@ void DebugDraw::_idle_frame() {
 	for (auto *e = prints.front(); e;) {
 		auto &d = e->get();
 
-		if (d.time_left < .0f) {
+		if (d.time_left < 0) {
 			vs->free(d.canvas_item);
 			auto old = e;
 			e = e->next();
 			old->erase();
 		} else {
 			auto offset = (print_count + 1) * default_font->get_height();
-			vs->canvas_item_set_transform(d.canvas_item, Transform2D(.0f, Vector2(10.f, 10.f + offset)));
+			vs->canvas_item_set_transform(d.canvas_item, Transform2D(0, Vector2(10, 10 + offset)));
 			++print_count;
 			d.time_left -= delta;
 			e = e->next();
 		}
 	}
+}
+
+void DebugDraw::set_skip_canvas_transform(bool p_state) {
+	skip_canvas_transform = p_state;
+}
+
+bool DebugDraw::is_skip_canvas_transform() const {
+	return skip_canvas_transform;
 }
 
 DebugDraw *DebugDraw::get_singleton() {
@@ -210,5 +240,10 @@ void DebugDraw::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("clear"), &DebugDraw::clear);
 
+	ClassDB::bind_method(D_METHOD("set_skip_canvas_transform", "state"), &DebugDraw::set_skip_canvas_transform);
+	ClassDB::bind_method(D_METHOD("is_skip_canvas_transform"), &DebugDraw::is_skip_canvas_transform);
+
 	ClassDB::bind_method(D_METHOD("_idle_frame"), &DebugDraw::_idle_frame);
+
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "skip_canvas_transform"), "set_skip_canvas_transform", "is_skip_canvas_transform");
 }

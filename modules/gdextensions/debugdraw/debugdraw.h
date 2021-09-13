@@ -38,44 +38,51 @@
 class DebugDraw : public Object {
 	GDCLASS(DebugDraw, Object);
 
-public:
-	/** Lifecycle */
-	DebugDraw();
-	~DebugDraw();
-
-	/** Singleton */
-	static DebugDraw *get_singleton();
-
-	/** Methods */
-	void circle(const Vector2 &position, float radius, const Color &color, float duration = .0f);
-	void line(const Vector2 &a, const Vector2 &b, const Color &color, float width = 1, float duration = .0f);
-	void rect(const Rect2 &rect, const Color &color, float width = 1, float duration = .0f);
-	void area(const Rect2 &rect, const Color &color, float duration = .0f);
-	void print(const String &text, const Color &color, float duration = .0f);
-
-	void clear();
+private:
 	void _idle_frame();
+	Vector2 _viewport_xform(Vector2 position) const;
+	Rect2 _viewport_xform(Rect2 rect) const;
+
+	bool skip_canvas_transform;
 
 protected:
-	/** Godot bindings */
 	static void _bind_methods();
 
-	/** Singleton */
 	static DebugDraw *singleton;
 
-	/** Current drawings */
+	/// Current drawings
 	struct Drawing {
 		RID canvas_item;
-		float time_left;
+		real_t time_left;
 	};
 
 	List<Drawing> drawings, prints;
 	Ref<Font> default_font;
 	RID canvas;
 
-	/** State */
+	/// State
 	bool init();
 	bool ready;
+
+public:
+	/// Singleton
+	static DebugDraw *get_singleton();
+
+	/// Methods
+	void circle(const Vector2 &position, real_t radius, const Color &color, real_t duration = 0);
+	void line(const Vector2 &a, const Vector2 &b, const Color &color, real_t width = 1, real_t duration = 0);
+	void rect(const Rect2 &rect, const Color &color, real_t width = 1, real_t duration = 0);
+	void area(const Rect2 &rect, const Color &color, real_t duration = 0);
+	void print(const String &text, const Color &color, real_t duration = 0);
+
+	void clear();
+
+	void set_skip_canvas_transform(bool p_state);
+	bool is_skip_canvas_transform() const;
+
+	DebugDraw();
+	~DebugDraw();
+
 };
 
 #endif // DEBUGDRAW_H
