@@ -36,6 +36,7 @@
 class Position2D : public Node2D {
 	GDCLASS(Position2D, Node2D);
 
+	bool show_in_debug_build;
 	void _draw_cross();
 
 protected:
@@ -50,6 +51,9 @@ public:
 
 	void set_gizmo_extents(float p_extents);
 	float get_gizmo_extents() const;
+
+	void set_show_in_debug_build(bool p_show);
+	bool is_show_in_debug_build() const;
 
 	Position2D();
 };

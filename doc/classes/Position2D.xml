@@ -10,6 +10,11 @@
 	</tutorials>
 	<methods>
 	</methods>
+	<members>
+		<member name="show_in_debug_build" type="bool" setter="set_show_in_debug_build" getter="is_show_in_debug_build">
+			If set to true, marker is displayed not only in the editor but also on runtime in debug builds. If debug is enabled, this property is true by default and false otherwise.
+		</member>
+	</members>
 	<constants>
 	</constants>
 </class>
