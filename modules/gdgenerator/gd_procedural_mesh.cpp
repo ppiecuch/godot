@@ -614,8 +614,20 @@ bool ProceduralMesh::_set(const StringName &p_path, const Variant &p_value) {
 		const int value = p_value;
 		ERR_FAIL_COND_V(value < 2 || value > 4, true);
 		bezier_shape_num_cp = value;
+		if (bezier_shape_cp.size() < bezier_shape_num_cp) {
+			bezier_shape_cp.resize(bezier_shape_num_cp);
+		}
 	} else if (path == "bezier_shape_cp") {
-		bezier_shape_cp = p_value;
+		ERR_FAIL_COND_V(p_value.get_type() != Variant::ARRAY, true);
+		Array cp = p_value;
+		ERR_FAIL_COND_V(cp.size() < 2 || cp.size() > 4, true);
+		bezier_shape_num_cp = cp.size();
+		if (bezier_shape_cp.size() < bezier_shape_num_cp) {
+			bezier_shape_cp.resize(bezier_shape_num_cp);
+		}
+		for (int i = 0; i < cp.size(); i++) {
+			bezier_shape_cp.write[i] = cp[i];
+		}
 	} else if (path == "bezier_mesh_num_seg/x") {
 		const int value = p_value;
 		ERR_FAIL_COND_V(value < 2 || value > 16, true);
@@ -627,19 +639,24 @@ bool ProceduralMesh::_set(const StringName &p_path, const Variant &p_value) {
 	} else if (path == "bezier_mesh_num_cp/rows") {
 		const int value = p_value;
 		ERR_FAIL_COND_V(value < 2 || value > 4, true);
-		bezier_mesh_num_cp.x = value;
+		bezier_mesh_num_cp.height = value;
+		if (bezier_mesh_cp.size() < bezier_mesh_num_cp.width * bezier_mesh_num_cp.height) {
+			bezier_mesh_cp.resize(bezier_mesh_num_cp.width * bezier_mesh_num_cp.height);
+		}
 	} else if (path == "bezier_mesh_num_cp/cols") {
 		const int value = p_value;
 		ERR_FAIL_COND_V(value < 2 || value > 4, true);
-		bezier_mesh_num_cp.y = value;
+		bezier_mesh_num_cp.width = value;
+		if (bezier_mesh_cp.size() < bezier_mesh_num_cp.width * bezier_mesh_num_cp.height) {
+			bezier_mesh_cp.resize(bezier_mesh_num_cp.width * bezier_mesh_num_cp.height);
+		}
 	} else if (path == "bezier_mesh_cp") {
 		ERR_FAIL_COND_V(p_value.get_type() != Variant::ARRAY, true);
 		const Array value = p_value;
-		auto bezier_mesh_cp_w = bezier_mesh_cp.write;
 		for (int y = 0; y < bezier_mesh_num_cp.height; y++) {
 			const Array row = value[y];
 			for (int x = 0; x < bezier_mesh_num_cp.width; x++) {
-				bezier_mesh_cp_w[y * bezier_mesh_num_cp.width + x] = row[x];
+				bezier_mesh_cp.write[y * bezier_mesh_num_cp.width + x] = row[x];
 			}
 		}
 	} else {
