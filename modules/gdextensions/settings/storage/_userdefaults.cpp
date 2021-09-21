@@ -1,10 +1,39 @@
+/*************************************************************************/
+/*  _userdefaults.cpp                                                    */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
 
-#include <CoreFoundation/CoreFoundation.h>
 #include <CoreFoundation/CFPreferences.h>
+#include <CoreFoundation/CoreFoundation.h>
 
+#include "core/os/os.h"
 #include "core/ustring.h"
 #include "core/vector.h"
-#include "core/os/os.h"
 
 #include <memory>
 
@@ -20,12 +49,13 @@ public:
 	Variant get(const String &key, const Variant &default_val = Variant()) const;
 
 	SettingsStorage();
+	~SettingsStorage();
 };
 
 String SettingsStorage::_to_godot_string(CFStringRef cf_string) {
 	String ret;
 	if (cf_string) {
-		CFIndex length = sizeof(UniChar) * CFStringGetLength( cf_string ) + 1;
+		CFIndex length = sizeof(UniChar) * CFStringGetLength(cf_string) + 1;
 		char *result = (char *)calloc(1, length);
 		if (result) {
 			if (!CFStringGetCString(cf_string, result, length, kCFStringEncodingASCII)) {
@@ -52,7 +82,7 @@ void SettingsStorage::_sync() {
 
 Variant SettingsStorage::get(const String &key, const Variant &default_val) const {
 	Variant ret = default_val;
-	CFStringRef nom = CFStringCreateWithCString (nullptr, key.utf8().c_str(), CFStringGetSystemEncoding());
+	CFStringRef nom = CFStringCreateWithCString(nullptr, key.utf8().c_str(), CFStringGetSystemEncoding());
 	ERR_FAIL_COND_V(nom == nullptr, ret);
 
 	CFTypeRef value = CFPreferencesCopyAppValue(nom, kCFPreferencesCurrentApplication);
@@ -88,11 +118,11 @@ Variant SettingsStorage::get(const String &key, const Variant &default_val) cons
 				}
 			}
 		} else if (CFGetTypeID(value) == CFStringGetTypeID()) {
-			CFIndex length = sizeof(UniChar) * CFStringGetLength(CFStringRef(value) ) + 1;
-			char *result = (char*)calloc(1, length);
+			CFIndex length = sizeof(UniChar) * CFStringGetLength(CFStringRef(value)) + 1;
+			char *result = (char *)calloc(1, length);
 			if (result) {
 				if (!CFStringGetCString(CFStringRef(value), result, length, kCFStringEncodingASCII)) {
-					if (CFStringGetCString(CFStringRef(value), result, length, kCFStringEncodingUTF8 ) ) {
+					if (CFStringGetCString(CFStringRef(value), result, length, kCFStringEncodingUTF8)) {
 						ret = String::utf8(result);
 					}
 				} else {
@@ -107,7 +137,7 @@ Variant SettingsStorage::get(const String &key, const Variant &default_val) cons
 }
 
 void SettingsStorage::set(const String &key, const Variant &value) {
-	CFStringRef nom = CFStringCreateWithCString (nullptr, key.utf8().c_str(), CFStringGetSystemEncoding());
+	CFStringRef nom = CFStringCreateWithCString(nullptr, key.utf8().c_str(), CFStringGetSystemEncoding());
 	ERR_FAIL_COND(nom == nullptr);
 	switch (value.get_type()) {
 		case Variant::BOOL: {
@@ -127,7 +157,7 @@ void SettingsStorage::set(const String &key, const Variant &value) {
 			const double val = value;
 			CFNumberRef cftype = CFNumberCreate(nullptr, kCFNumberDoubleType, &val);
 			if (cftype != nullptr) {
-				CFPreferencesSetAppValue (nom, cftype, kCFPreferencesCurrentApplication);
+				CFPreferencesSetAppValue(nom, cftype, kCFPreferencesCurrentApplication);
 				CFRelease(cftype);
 				_sync();
 			}
@@ -149,4 +179,8 @@ void SettingsStorage::set(const String &key, const Variant &value) {
 
 SettingsStorage::SettingsStorage() {
 	_last_sync_time = OS::get_singleton()->get_ticks_msec();
+}
+
+SettingsStorage::~SettingsStorage() {
+	CFPreferencesAppSynchronize(kCFPreferencesCurrentApplication);
 }
