@@ -12,8 +12,8 @@ env:
 jobs:
   macos-editor:
     runs-on: "macos-latest"
-
     name: macOS Editor (target=release_debug, tools=yes)
+    if: "contains(github.event.head_commit.message, '[ci]')"
 
     steps:
       - uses: actions/checkout@v2
@@ -65,6 +65,7 @@ jobs:
   macos-template:
     runs-on: "macos-latest"
     name: macOS Template (target=release, tools=no)
+    if: "contains(github.event.head_commit.message, '[ci]')"
 
     steps:
       - uses: actions/checkout@v2
@@ -113,11 +114,9 @@ jobs:
           retention-days: ${{env.RETENTION_DAYS}}
 
   windows-editor:
-    # Windows 10 with latest image
     runs-on: "windows-latest"
-
-    # Windows Editor - checkout with the plugin
     name: Windows Editor (target=release_debug, tools=yes)
+    if: "contains(github.event.head_commit.message, '[ci]')"
 
     steps:
     - uses: actions/checkout@v2
@@ -170,6 +169,7 @@ jobs:
   windows-template:
     runs-on: "windows-latest"
     name: Windows Template (target=release, tools=no)
+    if: "contains(github.event.head_commit.message, '[ci]')"
 
     steps:
     - uses: actions/checkout@v2
@@ -221,6 +221,7 @@ jobs:
   linux-editor:
     runs-on: "ubuntu-20.04"
     name: Linux Headless w/ Mono (target=release_debug, tools=yes)
+    if: "contains(github.event.head_commit.message, '[ci]')"
 
     steps:
       - uses: actions/checkout@v2
@@ -277,6 +278,7 @@ jobs:
   linux-server:
     runs-on: "ubuntu-20.04"
     name: Linux Server w/ Mono (target=release, tools=no)
+    if: "contains(github.event.head_commit.message, '[ci]')"
 
     steps:
       - uses: actions/checkout@v2
@@ -332,6 +334,7 @@ jobs:
   linux-editor-mono:
     runs-on: "ubuntu-20.04"
     name: Linx Editor w/ Mono (target=release_debug, tools=yes)
+    if: "contains(github.event.head_commit.message, '[ci]')"
 
     steps:
       - uses: actions/checkout@v2
@@ -398,6 +401,7 @@ jobs:
   linux-template-mono:
     runs-on: "ubuntu-20.04"
     name: Linux Template w/ Mono (target=release, tools=no)
+    if: "contains(github.event.head_commit.message, '[ci]')"
 
     steps:
       - uses: actions/checkout@v2

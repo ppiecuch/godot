@@ -13,6 +13,7 @@ jobs:
   linux-editor-sanitizers:
     runs-on: "ubuntu-20.04"
     name: Editor and exported project with sanitizers (target=debug/release, tools=yes/no, use_ubsan=yes, use_asan=yes)
+    if: "contains(github.event.head_commit.message, '[san]')"
 
     steps:
       - uses: actions/checkout@v2

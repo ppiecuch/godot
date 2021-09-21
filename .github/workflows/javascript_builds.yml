@@ -14,6 +14,7 @@ jobs:
   javascript-template:
     runs-on: "ubuntu-20.04"
     name: JavaScript Template (target=release, tools=no)
+    if: "contains(github.event.head_commit.message, '[ci]')"
 
     steps:
       - uses: actions/checkout@v2
