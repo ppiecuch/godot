@@ -35,6 +35,8 @@
 #include "generator/generator.hpp"
 using namespace generator;
 
+#include <vector>
+
 struct MeshWriter {
 	void write_point(const gml::dvec2 &p, const Color &color = { 1, 1, 1 }) {
 		points.pos.push_back(Vector3(p.data(), 0));
@@ -66,7 +68,7 @@ struct MeshWriter {
 
 	template <typename Path>
 	void write_path(const Path &path, bool write_vertices = false, bool write_axis = false) {
-		std::vector<PathVertex> vertices{};
+		std::vector<PathVertex> vertices;
 		for (const auto &v : path.vertices()) {
 			vertices.push_back(v);
 		}
@@ -89,7 +91,7 @@ struct MeshWriter {
 
 	template <typename Shape>
 	void write_shape(const Shape &shape, bool write_vertices = false, bool write_axis = false) {
-		std::vector<ShapeVertex> vertices{};
+		std::vector<ShapeVertex> vertices;
 		for (const auto &vertex : shape.vertices()) {
 			vertices.push_back(vertex);
 		}
@@ -195,7 +197,7 @@ RotateMesh<Mesh> rotateMeshIf(bool cond, Mesh mesh, const Quat &rotation) {
 template <typename Mesh>
 ScaleMesh<Mesh> scaleMeshIf(bool cond, Mesh mesh, const Vector3 &delta) {
 	if (cond)
-		return ScaleMesh<Mesh>{ std::move(mesh), { delta[0], delta[1], delta[2] } };
+		return ScaleMesh<Mesh>{ std::move(mesh), { delta.coord } };
 	else
 		return ScaleMesh<Mesh>{ std::move(mesh) };
 }
@@ -211,7 +213,7 @@ SpherifyMesh<Mesh> spherifyMeshIf(bool cond, Mesh mesh, const real_t params[]) {
 template <typename Mesh>
 TranslateMesh<Mesh> translateMeshIf(bool cond, Mesh mesh, const Vector3 &delta) {
 	if (cond)
-		return TranslateMesh<Mesh>{ std::move(mesh), { delta[0], delta[1], delta[2] } };
+		return TranslateMesh<Mesh>{ std::move(mesh), { delta.coord } };
 	else
 		return TranslateMesh<Mesh>{ std::move(mesh) };
 }
@@ -237,7 +239,7 @@ UvFlipMesh<Mesh> uvFlipMeshIf(bool cond, Mesh mesh, const bool param[]) {
 template <typename Mesh>
 UvScaleMesh<Mesh> uvScaleMeshIf(bool cond, Mesh mesh, const Vector2 &delta) {
 	if (cond)
-		return UvScaleMesh<Mesh>{ std::move(mesh), { delta[0], delta[1] } };
+		return UvScaleMesh<Mesh>{ std::move(mesh), { delta.coord } };
 	else
 		return UvScaleMesh<Mesh>{ std::move(mesh) };
 }
@@ -289,7 +291,7 @@ static void generate_mesh(MeshWriter &writer, const Mesh &mesh, const Procedural
 															modifiers.transform_node),
 													modifiers.spherify_param),
 											modifiers.scale_param),
-									modifiers.rotate_param)),
+									Quat(modifiers.rotate_param))),
 					modifiers.axis_swap_param);
 	if (write_axis) {
 		generate_axis(writer, Axis::X);
@@ -322,9 +324,9 @@ void ProceduralMesh::_update_preview() {
 			break;
 		case GEOM_BEZIER_SHAPE:
 			switch (bezier_shape_num_cp) {
-				case 2: generate_shape(writer, BezierShape<2>{ { { -1.0, -1.0 }, { 1.0, 1.0 } } }, modifiers, debug_vertices, debug_axis); break;
-				case 3: generate_shape(writer, BezierShape<3>{ { { -1.0, -1.0 }, { -0.6, 0.6 }, { 1.0, 1.0 } } }, modifiers, debug_vertices, debug_axis); break;
-				case 4: generate_shape(writer, BezierShape<4>{ { { -1.0, -1.0 }, { -0.5, 1.0 }, { 0.5, -1.0 }, { 1.0, 1.0 } } }, modifiers, debug_vertices, debug_axis); break;
+				case 2: generate_shape(writer, BezierShape<2>{{{bezier_shape_cp[0].coord}, {bezier_shape_cp[1].coord}}}, modifiers, debug_vertices, debug_axis); break;
+				case 3: generate_shape(writer, BezierShape<3>{{{bezier_shape_cp[0].coord}, {bezier_shape_cp[1].coord}, {bezier_shape_cp[2].coord}}}, modifiers, debug_vertices, debug_axis); break;
+				case 4: generate_shape(writer, BezierShape<4>{{{bezier_shape_cp[0].coord}, {bezier_shape_cp[1].coord}, {bezier_shape_cp[2].coord}, {bezier_shape_cp[3].coord}}}, modifiers, debug_vertices, debug_axis); break;
 				default:
 					WARN_PRINT("Invalid number of control points: " + String::num(bezier_shape_num_cp));
 			}
@@ -419,7 +421,10 @@ void ProceduralMesh::_update_preview() {
 				{ { -1.00, 0.33, 2.66 }, { -0.33, 0.33, 0.00 }, { 0.33, 0.33, 2.00 }, { 1.0, 0.33, 2.66 } },
 				{ { -1.00, 1.00, -1.33 }, { -0.33, 1.00, -1.33 }, { 0.33, 1.00, 0.00 }, { 1.0, 1.00, -0.66 } }
 			};
-			generate_mesh(writer, BezierMesh<4, 4>{ cp, { 8, 8 } }, modifiers, debug_axis);
+			if (bezier_mesh_num_cp == Size2i{2,2}) {
+			} else if (bezier_mesh_num_cp == Size2i{3,3}) {
+			}
+			generate_mesh(writer, BezierMesh<4, 4>{ cp, { bezier_mesh_num_seg.coord } }, modifiers, debug_axis);
 		} break;
 		case GEOM_TEAPOT_MESH:
 			generate_mesh(writer, TeapotMesh{}, modifiers, debug_axis);
@@ -524,31 +529,42 @@ void ProceduralMesh::_get_property_list(List<PropertyInfo> *p_list) const {
 					p_list->push_back(PropertyInfo(Variant::VECTOR3, prep));
 				}
 			}
+			p_list->push_back(PropertyInfo(Variant::INT, "bezier_mesh_num_seg/x", PROPERTY_HINT_RANGE, "2,16"));
+			p_list->push_back(PropertyInfo(Variant::INT, "bezier_mesh_num_seg/y", PROPERTY_HINT_RANGE, "2,16"));
 		}
 
 		if (primitive >= GEOM_EMPTY_SHAPE && primitive <= GEOM_BEZIER_SHAPE) {
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/axis_swap"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/flip"));
-			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/rotate"));
-			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/scale"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/rotate/enable"));
+			p_list->push_back(PropertyInfo(Variant::VECTOR3, "modifiers/rotate/rotation"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/scale/enable"));
+			p_list->push_back(PropertyInfo(Variant::VECTOR3, "modifiers/scale/scaling"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/transform"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/translate"));
 		} else if (primitive >= GEOM_EMPTY_PATH && primitive <= GEOM_HELIX_PATH) {
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/axis_swap"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/flip"));
-			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/rotate"));
-			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/scale"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/rotate/enable"));
+			p_list->push_back(PropertyInfo(Variant::VECTOR3, "modifiers/rotate/rotation"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/scale/enable"));
+			p_list->push_back(PropertyInfo(Variant::VECTOR3, "modifiers/scale/scaling"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/transform"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/translate"));
 		} else if (primitive >= GEOM_EMPTY_MESH && primitive <= GEOM_TEAPOT_MESH) {
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/axis_swap"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/flip"));
-			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/rotate"));
-			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/scale"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/rotate/enable"));
+			p_list->push_back(PropertyInfo(Variant::VECTOR3, "modifiers/rotate/rotation"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/scale/enable"));
+			p_list->push_back(PropertyInfo(Variant::VECTOR3, "modifiers/scale/scaling"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/spherify"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/translate"));
-			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/uv_flip"));
-			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/uv_scale"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/uv_flip/enable"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/uv_flip/u"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/uv_flip/v"));
+			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/uv_scale/enable"));
+			p_list->push_back(PropertyInfo(Variant::VECTOR3, "modifiers/uv_scale/scaling"));
 			p_list->push_back(PropertyInfo(Variant::BOOL, "modifiers/uv_swap"));
 		}
 	}
@@ -562,25 +578,35 @@ bool ProceduralMesh::_set(const StringName &p_path, const Variant &p_value) {
 	} else if (path.begins_with("modifiers/")) {
 		String modif = path.substr(10);
 		if (modif == "axis_swap") {
-			modifiers.axis_swap = p_value;
+			modifiers.axis_swap = p_value; _update_preview();
 		} else if (modif == "flip") {
-			modifiers.flip = p_value;
-		} else if (modif == "rotate") {
-			modifiers.rotate = p_value;
-		} else if (modif == "scale") {
-			modifiers.scale = p_value;
+			modifiers.flip = p_value; _update_preview();
+		} else if (modif == "rotate/enable") {
+			modifiers.rotate = p_value; _update_preview();
+		} else if (modif == "rotate/rotation") {
+			modifiers.rotate_param = p_value; _update_preview();
+		} else if (modif == "scale/enable") {
+			modifiers.scale = p_value; _update_preview();
+		} else if (modif == "scale/scaling") {
+			modifiers.scale_param = p_value; _update_preview();
 		} else if (modif == "spherify") {
-			modifiers.spherify = p_value;
+			modifiers.spherify = p_value; _update_preview();
 		} else if (modif == "transform") {
-			modifiers.transform = p_value;
+			modifiers.transform = p_value; _update_preview();
 		} else if (modif == "translate") {
-			modifiers.translate = p_value;
-		} else if (modif == "uv_flip") {
-			modifiers.uv_flip = p_value;
-		} else if (modif == "uv_scale") {
-			modifiers.uv_scale = p_value;
+			modifiers.translate = p_value; _update_preview();
+		} else if (modif == "uv_flip/enable") {
+			modifiers.uv_flip = p_value; _update_preview();
+		} else if (modif == "uv_flip/u") {
+			modifiers.uv_flip_param[0] = p_value; _update_preview();
+		} else if (modif == "uv_flip/v") {
+			modifiers.uv_flip_param[1] = p_value; _update_preview();
+		} else if (modif == "uv_scale/enable") {
+			modifiers.uv_scale = p_value; _update_preview();
+		} else if (modif == "uv_scale/scaling") {
+			modifiers.uv_scale_param = p_value; _update_preview();
 		} else if (modif == "uv_swap") {
-			modifiers.uv_swap = p_value;
+			modifiers.uv_swap = p_value; _update_preview();
 		} else {
 			WARN_PRINT("Unknown modifier: " + modif);
 		}
@@ -590,6 +616,14 @@ bool ProceduralMesh::_set(const StringName &p_path, const Variant &p_value) {
 		bezier_shape_num_cp = value;
 	} else if (path == "bezier_shape_cp") {
 		bezier_shape_cp = p_value;
+	} else if (path == "bezier_mesh_num_seg/x") {
+		const int value = p_value;
+		ERR_FAIL_COND_V(value < 2 || value > 16, true);
+		bezier_mesh_num_seg.x = value;
+	} else if (path == "bezier_mesh_num_seg/y") {
+		const int value = p_value;
+		ERR_FAIL_COND_V(value < 2 || value > 16, true);
+		bezier_mesh_num_seg.y = value;
 	} else if (path == "bezier_mesh_num_cp/rows") {
 		const int value = p_value;
 		ERR_FAIL_COND_V(value < 2 || value > 4, true);
@@ -626,20 +660,30 @@ bool ProceduralMesh::_get(const StringName &p_path, Variant &r_ret) const {
 			r_ret = modifiers.axis_swap;
 		} else if (modif == "flip") {
 			r_ret = modifiers.flip;
-		} else if (modif == "rotate") {
+		} else if (modif == "rotate/enable") {
 			r_ret = modifiers.rotate;
-		} else if (modif == "scale") {
+		} else if (modif == "rotate/rotation") {
+			r_ret = modifiers.rotate_param;
+		} else if (modif == "scale/enable") {
 			r_ret = modifiers.scale;
+		} else if (modif == "scale/scaling") {
+			r_ret = modifiers.scale_param;
 		} else if (modif == "spherify") {
 			r_ret = modifiers.spherify;
 		} else if (modif == "transform") {
 			r_ret = modifiers.transform;
 		} else if (modif == "translate") {
 			r_ret = modifiers.translate;
-		} else if (modif == "uv_flip") {
+		} else if (modif == "uv_flip/enable") {
 			r_ret = modifiers.uv_flip;
-		} else if (modif == "uv_scale") {
+		} else if (modif == "uv_flip/u") {
+			r_ret = modifiers.uv_flip_param[0];
+		} else if (modif == "uv_flip/v") {
+			r_ret = modifiers.uv_flip_param[1];
+		} else if (modif == "uv_scale/enable") {
 			r_ret = modifiers.uv_scale;
+		} else if (modif == "uv_scale/scaling") {
+			r_ret = modifiers.uv_scale_param;
 		} else if (modif == "uv_swap") {
 			r_ret = modifiers.uv_swap;
 		} else {
@@ -649,6 +693,10 @@ bool ProceduralMesh::_get(const StringName &p_path, Variant &r_ret) const {
 		r_ret = bezier_shape_num_cp;
 	} else if (path == "bezier_shape_cp") {
 		r_ret = bezier_shape_cp;
+	} else if (path == "bezier_mesh_num_seg/x") {
+		r_ret = bezier_mesh_num_seg.x;
+	} else if (path == "bezier_mesh_num_seg/y") {
+		r_ret = bezier_mesh_num_seg.y;
 	} else if (path == "bezier_mesh_num_cp/rows") {
 		r_ret = bezier_mesh_num_cp.x;
 	} else if (path == "bezier_mesh_num_cp/cols") {
@@ -728,8 +776,13 @@ void ProceduralMesh::_bind_methods() {
 ProceduralMesh::ProceduralMesh() {
 	primitive = GEOM_EMPTY_SHAPE;
 	bezier_shape_num_cp = 4;
-	bezier_shape_cp.push_back({-1.0, -1.0}, {-0.5, 1.0}, {0.5, -1.0},{1.0, 1.0});
+	bezier_shape_cp.push_back({-1.0, -1.0}, {-0.5, 1.0}, {0.5, -1.0}, {1.0, 1.0});
 	bezier_mesh_num_cp = Size2i(4, 4);
+	bezier_mesh_num_seg = Size2i(8, 8);
+	bezier_mesh_cp.push_back({-1.00, -1.00, 2.66}, {-0.33, -1.00, 0.66}, {0.33, -1.00, -0.66}, {1.0, -1.00, 1.33});
+	bezier_mesh_cp.push_back({-1.00, -0.33, 0.66}, {-0.33, -0.33, 2.00}, {0.33, -0.33, 0.00}, {1.0, -0.33, -0.66});
+	bezier_mesh_cp.push_back({-1.00, 0.33, 2.66}, {-0.33, 0.33, 0.00}, {0.33, 0.33, 2.00}, {1.0, 0.33, 2.66});
+	bezier_mesh_cp.push_back({-1.00, 1.00, -1.33}, {-0.33, 1.00, -1.33}, {0.33, 1.00, 0.00}, {1.0, 1.00, -0.66});
 	modifiers.axis_swap = modifiers.flip = modifiers.rotate = modifiers.scale = modifiers.spherify = modifiers.transform = modifiers.translate = modifiers.uv_scale = modifiers.uv_swap = false;
 	debug_axis = debug_vertices = false;
 }

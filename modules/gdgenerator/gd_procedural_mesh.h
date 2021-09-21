@@ -153,7 +153,7 @@ public:
 		GeomAxis axis_swap_param[3];
 		bool flip;
 		bool rotate;
-		Quat rotate_param;
+		Vector3 rotate_param;
 		bool scale;
 		Vector3 scale_param{ 1, 1, 1 };
 		bool spherify;
@@ -163,7 +163,7 @@ public:
 		bool translate;
 		Vector3 translate_param;
 		bool uv_flip;
-		bool uv_flip_param[2] = { 0, 0 };
+		bool uv_flip_param[2] = { false, false };
 		bool uv_scale;
 		Vector2 uv_scale_param{ 1, 1 };
 		bool uv_swap;
@@ -174,6 +174,7 @@ private:
 	int bezier_shape_num_cp; // 1 dim
 	Vector<Vector2> bezier_shape_cp;
 	Size2i bezier_mesh_num_cp; // 2 dim
+	Size2i bezier_mesh_num_seg;
 	Vector<Vector3> bezier_mesh_cp; // row major
 	GeomModifiersStatus modifiers;
 	bool debug_axis, debug_vertices;
