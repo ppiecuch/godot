@@ -79,10 +79,10 @@ bool BSInputEventKey::action_match(const Ref<InputEvent> &p_event, bool *p_press
 
 	bool match = code == event_code;
 	if (match) {
-		if (p_pressed != NULL)
+		if (p_pressed != nullptr)
 			*p_pressed = key->is_pressed();
-		if (p_strength != NULL)
-			*p_strength = (p_pressed != NULL && *p_pressed) ? 1.0f : 0.0f;
+		if (p_strength != nullptr)
+			*p_strength = (p_pressed != nullptr && *p_pressed) ? 1.0f : 0.0f;
 	}
 	return match;
 }
