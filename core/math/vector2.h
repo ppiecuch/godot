@@ -303,12 +303,18 @@ struct Vector2i {
 	};
 
 	union {
-		int x;
-		int width;
-	};
-	union {
-		int y;
-		int height;
+		struct {
+			union {
+				int x;
+				int width;
+			};
+			union {
+				int y;
+				int height;
+			};
+		};
+
+		int coord[2];
 	};
 
 	_FORCE_INLINE_ int &operator[](int p_idx) {
