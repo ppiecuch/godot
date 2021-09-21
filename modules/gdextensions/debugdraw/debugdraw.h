@@ -82,7 +82,6 @@ public:
 
 	DebugDraw();
 	~DebugDraw();
-
 };
 
 #endif // DEBUGDRAW_H

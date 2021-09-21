@@ -38,7 +38,8 @@
 
 DebugDraw *DebugDraw::singleton = NULL;
 
-DebugDraw::DebugDraw() : ready(false) {
+DebugDraw::DebugDraw() :
+		ready(false) {
 	ERR_FAIL_COND(singleton);
 	skip_canvas_transform = false;
 	singleton = this;

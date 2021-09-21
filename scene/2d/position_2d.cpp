@@ -64,7 +64,7 @@ void Position2D::_notification(int p_what) {
 			}
 			if (Engine::get_singleton()->is_editor_hint()
 #ifdef DEBUG_ENABLED
-				|| show_in_debug_build
+					|| show_in_debug_build
 #endif
 			) {
 				_draw_cross();
