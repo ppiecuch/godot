@@ -39,10 +39,10 @@ public:
 			data_[i] = a;
 	}
 
-	/// Initializes components from a C-array.
+	/// Initializes components from a C-array of any type.
 	/// The data MUST have at least N components or behaviour is undefined.
 	/// If data is null assertion error will occur.
-	explicit vec(const T *data) {
+	template<typename P> vec(const P *data) {
 		assert(data != nullptr);
 		for (int i = 0; i < N; ++i)
 			data_[i] = data[i];

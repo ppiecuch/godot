@@ -5,6 +5,11 @@ import version
 Import("env")
 Import("env_modules")
 
+is_gcc = "gcc" in os.path.basename(env["CC"])
+is_clang_or_gcc = (
+    ("gcc" in os.path.basename(env["CC"])) or ("clang" in os.path.basename(env["CC"])) or ("osxcross" in env)
+)
+
 env_module = env_modules.Clone()
 
 sources = Glob("*.cpp")
@@ -22,6 +27,7 @@ modules = [
     "statemachine",
     "benet",
     "behaviornode",
+    "settings",
     "sfxr",
 ]
 

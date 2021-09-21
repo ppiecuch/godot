@@ -90,6 +90,8 @@
 #include "environment/vegetation_instance/vegetation_instance.h"
 #include "environment/water_splash/gd_water_splash.h"
 
+#include "settings/settings.h"
+
 #include "smooth/smooth.h"
 #include "smooth/smooth_2d.h"
 
@@ -167,6 +169,7 @@ void register_gdextensions_types() {
 	Engine::get_singleton()->add_singleton(Engine::Singleton("DebugDraw", memnew(DebugDraw)));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Tags", memnew(Tags)));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Blitter", memnew(Blitter)));
+	Engine::get_singleton()->add_singleton(Engine::Singleton("Settings", memnew(Settings)));
 
 	ClassDB::register_class<JSONData>();
 #ifdef TOOLS_ENABLED
@@ -261,6 +264,9 @@ void unregister_gdextensions_types() {
 		memdelete(instance);
 	}
 	if (Blitter *instance = Blitter::get_singleton()) {
+		memdelete(instance);
+	}
+	if (Settings *instance = Settings::get_singleton()) {
 		memdelete(instance);
 	}
 #ifdef TOOLS_ENABLED
