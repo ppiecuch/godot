@@ -266,6 +266,9 @@
 		<member name="audio/mix_rate" type="int" setter="" getter="" default="44100">
 			The mixing rate used for audio (in Hz). In general, it's better to not touch this and leave it to the host operating system.
 		</member>
+		<member name="audio/mix_rate.web" type="int" setter="" getter="" default="0">
+			Safer override for [member audio/mix_rate] in the Web platform. Here [code]0[/code] means "let the browser choose" (since some browsers do not like forcing the mix rate).
+		</member>
 		<member name="audio/output_latency" type="int" setter="" getter="" default="15">
 			Output latency in milliseconds for audio. Lower values will result in lower audio latency at the cost of increased CPU usage. Low values may result in audible cracking on slower hardware.
 		</member>
@@ -447,10 +450,14 @@
 			If [code]true[/code], the home indicator is hidden automatically. This only affects iOS devices without a physical home button.
 		</member>
 		<member name="display/window/per_pixel_transparency/allowed" type="bool" setter="" getter="" default="false">
-			If [code]true[/code], allows per-pixel transparency in a desktop window. This affects performance, so leave it on [code]false[/code] unless you need it.
+			If [code]true[/code], allows per-pixel transparency for the window background. This affects performance, so leave it on [code]false[/code] unless you need it.
+			See [member OS.window_per_pixel_transparency_enabled] for more details.
+			[b]Note:[/b] This feature is implemented on HTML5, Linux, macOS, Windows, and Android.
 		</member>
 		<member name="display/window/per_pixel_transparency/enabled" type="bool" setter="" getter="" default="false">
 			Sets the window background to transparent when it starts.
+			See [member OS.window_per_pixel_transparency_enabled] for more details.
+			[b]Note:[/b] This feature is implemented on HTML5, Linux, macOS, Windows, and Android.
 		</member>
 		<member name="display/window/size/always_on_top" type="bool" setter="" getter="" default="false">
 			Forces the main window to be always on top.

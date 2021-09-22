@@ -389,13 +389,13 @@ bool Object::Connection::operator<(const Connection &p_conn) const {
 			if (target == p_conn.target) {
 				return method < p_conn.method;
 			} else {
-				return target < p_conn.target;
+				return target->get_instance_id() < p_conn.target->get_instance_id();
 			}
 		} else {
 			return signal < p_conn.signal;
 		}
 	} else {
-		return source < p_conn.source;
+		return source->get_instance_id() < p_conn.source->get_instance_id();
 	}
 }
 Object::Connection::Connection(const Variant &p_variant) {
@@ -999,7 +999,6 @@ void Object::cancel_delete() {
 	_predelete_ok = true;
 }
 
-#ifdef DEBUG_ENABLED
 ObjectRC *Object::_use_rc() {
 	// The RC object is lazily created the first time it's requested;
 	// that way, there's no need to allocate and release it at all if this Object
@@ -1027,7 +1026,6 @@ ObjectRC *Object::_use_rc() {
 		rc = _rc.load(std::memory_order_acquire);
 	}
 }
-#endif
 
 void Object::set_script_and_instance(const RefPtr &p_script, ScriptInstance *p_instance) {
 	//this function is not meant to be used in any of these ways
@@ -1965,9 +1963,7 @@ Object::Object() {
 	_emitting = false;
 	memset(_script_instance_bindings, 0, sizeof(void *) * MAX_SCRIPT_INSTANCE_BINDINGS);
 	script_instance = nullptr;
-#ifdef DEBUG_ENABLED
 	_rc.store(nullptr, std::memory_order_release);
-#endif
 #ifdef TOOLS_ENABLED
 
 	_edited = false;
@@ -1980,14 +1976,12 @@ Object::Object() {
 }
 
 Object::~Object() {
-#ifdef DEBUG_ENABLED
 	ObjectRC *rc = _rc.load(std::memory_order_acquire);
 	if (rc) {
 		if (rc->invalidate()) {
 			memdelete(rc);
 		}
 	}
-#endif
 
 	if (script_instance) {
 		memdelete(script_instance);

@@ -338,7 +338,7 @@ Vector2 VisualServer::norm_to_oct(const Vector3 v) {
 	// NOTE: this will mean it decompresses to 0,0,1
 	// Discussed heavily here: https://github.com/godotengine/godot/pull/51268 as to why we did this
 	if (Math::is_zero_approx(L1Norm)) {
-		WARN_PRINT_ONCE("Octahedral compression cannot be used to compress a zero-length vector, please use normalized normal values or disable octahedral compression")
+		WARN_PRINT_ONCE("Octahedral compression cannot be used to compress a zero-length vector, please use normalized normal values or disable octahedral compression");
 		return Vector2(0, 0);
 	}
 
@@ -2504,6 +2504,7 @@ void VisualServer::_bind_methods() {
 	BIND_ENUM_CONSTANT(ENV_TONE_MAPPER_REINHARD);
 	BIND_ENUM_CONSTANT(ENV_TONE_MAPPER_FILMIC);
 	BIND_ENUM_CONSTANT(ENV_TONE_MAPPER_ACES);
+	BIND_ENUM_CONSTANT(ENV_TONE_MAPPER_ACES_FITTED);
 
 	BIND_ENUM_CONSTANT(ENV_SSAO_QUALITY_LOW);
 	BIND_ENUM_CONSTANT(ENV_SSAO_QUALITY_MEDIUM);

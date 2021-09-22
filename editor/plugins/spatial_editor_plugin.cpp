@@ -266,15 +266,13 @@ void SpatialEditorViewport::_update_camera(float p_interp_delta) {
 		if (is_freelook_active()) {
 			// Higher inertia should increase "lag" (lerp with factor between 0 and 1)
 			// Inertia of zero should produce instant movement (lerp with factor of 1) in this case it returns a really high value and gets clamped to 1.
-			real_t inertia = EDITOR_GET("editors/3d/freelook/freelook_inertia");
-			inertia = MAX(0.001, inertia);
+			const real_t inertia = EDITOR_GET("editors/3d/freelook/freelook_inertia");
 			real_t factor = (1.0 / inertia) * p_interp_delta;
 
 			// We interpolate a different point here, because in freelook mode the focus point (cursor.pos) orbits around eye_pos
 			camera_cursor.eye_pos = old_camera_cursor.eye_pos.linear_interpolate(cursor.eye_pos, CLAMP(factor, 0, 1));
 
-			float orbit_inertia = EDITOR_GET("editors/3d/navigation_feel/orbit_inertia");
-			orbit_inertia = MAX(0.0001, orbit_inertia);
+			const float orbit_inertia = EDITOR_GET("editors/3d/navigation_feel/orbit_inertia");
 			camera_cursor.x_rot = Math::lerp(old_camera_cursor.x_rot, cursor.x_rot, MIN(1.f, p_interp_delta * (1 / orbit_inertia)));
 			camera_cursor.y_rot = Math::lerp(old_camera_cursor.y_rot, cursor.y_rot, MIN(1.f, p_interp_delta * (1 / orbit_inertia)));
 
@@ -289,24 +287,9 @@ void SpatialEditorViewport::_update_camera(float p_interp_delta) {
 			camera_cursor.pos = camera_cursor.eye_pos + forward * camera_cursor.distance;
 
 		} else {
-			//when not being manipulated, move softly
-			float free_orbit_inertia = EDITOR_GET("editors/3d/navigation_feel/orbit_inertia");
-			float free_translation_inertia = EDITOR_GET("editors/3d/navigation_feel/translation_inertia");
-			//when being manipulated, move more quickly
-			float manip_orbit_inertia = EDITOR_GET("editors/3d/navigation_feel/manipulation_orbit_inertia");
-			float manip_translation_inertia = EDITOR_GET("editors/3d/navigation_feel/manipulation_translation_inertia");
-
-			float zoom_inertia = EDITOR_GET("editors/3d/navigation_feel/zoom_inertia");
-
-			//determine if being manipulated
-			bool manipulated = Input::get_singleton()->get_mouse_button_mask() & (2 | 4);
-			manipulated |= Input::get_singleton()->is_key_pressed(KEY_SHIFT);
-			manipulated |= Input::get_singleton()->is_key_pressed(KEY_ALT);
-			manipulated |= Input::get_singleton()->is_key_pressed(KEY_CONTROL);
-
-			float orbit_inertia = MAX(0.00001, manipulated ? manip_orbit_inertia : free_orbit_inertia);
-			float translation_inertia = MAX(0.0001, manipulated ? manip_translation_inertia : free_translation_inertia);
-			zoom_inertia = MAX(0.0001, zoom_inertia);
+			const float orbit_inertia = EDITOR_GET("editors/3d/navigation_feel/orbit_inertia");
+			const float translation_inertia = EDITOR_GET("editors/3d/navigation_feel/translation_inertia");
+			const float zoom_inertia = EDITOR_GET("editors/3d/navigation_feel/zoom_inertia");
 
 			camera_cursor.x_rot = Math::lerp(old_camera_cursor.x_rot, cursor.x_rot, MIN(1.f, p_interp_delta * (1 / orbit_inertia)));
 			camera_cursor.y_rot = Math::lerp(old_camera_cursor.y_rot, cursor.y_rot, MIN(1.f, p_interp_delta * (1 / orbit_inertia)));
@@ -757,7 +740,7 @@ void SpatialEditorViewport::_update_name() {
 			if (orthogonal) {
 				name = TTR("Left Orthogonal");
 			} else {
-				name = TTR("Right Perspective");
+				name = TTR("Left Perspective");
 			}
 		} break;
 		case VIEW_TYPE_RIGHT: {
@@ -1611,6 +1594,8 @@ void SpatialEditorViewport::_sinput(const Ref<InputEvent> &p_event) {
 							float scale = center_inters_dist - center_click_dist;
 							motion = Vector3(scale, scale, scale);
 						}
+
+						motion /= click.distance_to(_edit.center);
 
 						List<Node *> &selection = editor_selection->get_selected_node_list();
 
@@ -3907,16 +3892,17 @@ SpatialEditorViewport::SpatialEditorViewport(SpatialEditor *p_spatial_editor, Ed
 	view_menu->get_popup()->set_item_checked(view_menu->get_popup()->get_item_index(VIEW_DISPLAY_NORMAL), true);
 	view_menu->get_popup()->add_separator();
 	view_menu->get_popup()->add_check_shortcut(ED_SHORTCUT("spatial_editor/view_environment", TTR("View Environment")), VIEW_ENVIRONMENT);
+	view_menu->get_popup()->set_item_checked(view_menu->get_popup()->get_item_index(VIEW_ENVIRONMENT), true);
 	view_menu->get_popup()->add_check_shortcut(ED_SHORTCUT("spatial_editor/view_gizmos", TTR("View Gizmos")), VIEW_GIZMOS);
+	view_menu->get_popup()->set_item_checked(view_menu->get_popup()->get_item_index(VIEW_GIZMOS), true);
 	view_menu->get_popup()->add_check_shortcut(ED_SHORTCUT("spatial_editor/view_information", TTR("View Information")), VIEW_INFORMATION);
 	view_menu->get_popup()->add_check_shortcut(ED_SHORTCUT("spatial_editor/view_fps", TTR("View FPS")), VIEW_FPS);
-	view_menu->get_popup()->set_item_checked(view_menu->get_popup()->get_item_index(VIEW_ENVIRONMENT), true);
 	view_menu->get_popup()->add_separator();
 	view_menu->get_popup()->add_check_shortcut(ED_SHORTCUT("spatial_editor/view_half_resolution", TTR("Half Resolution")), VIEW_HALF_RESOLUTION);
 	view_menu->get_popup()->add_separator();
 	view_menu->get_popup()->add_check_shortcut(ED_SHORTCUT("spatial_editor/view_audio_listener", TTR("Audio Listener")), VIEW_AUDIO_LISTENER);
 	view_menu->get_popup()->add_check_shortcut(ED_SHORTCUT("spatial_editor/view_audio_doppler", TTR("Enable Doppler")), VIEW_AUDIO_DOPPLER);
-	view_menu->get_popup()->set_item_checked(view_menu->get_popup()->get_item_index(VIEW_GIZMOS), true);
+	view_menu->get_popup()->set_item_checked(view_menu->get_popup()->get_item_index(VIEW_AUDIO_DOPPLER), true);
 
 	view_menu->get_popup()->add_separator();
 	view_menu->get_popup()->add_check_shortcut(ED_SHORTCUT("spatial_editor/view_cinematic_preview", TTR("Cinematic Preview")), VIEW_CINEMATIC_PREVIEW);
@@ -6235,6 +6221,7 @@ void SpatialEditor::_register_all_gizmos() {
 	add_gizmo_plugin(Ref<CameraSpatialGizmoPlugin>(memnew(CameraSpatialGizmoPlugin)));
 	add_gizmo_plugin(Ref<LightSpatialGizmoPlugin>(memnew(LightSpatialGizmoPlugin)));
 	add_gizmo_plugin(Ref<AudioStreamPlayer3DSpatialGizmoPlugin>(memnew(AudioStreamPlayer3DSpatialGizmoPlugin)));
+	add_gizmo_plugin(Ref<ListenerSpatialGizmoPlugin>(memnew(ListenerSpatialGizmoPlugin)));
 	add_gizmo_plugin(Ref<MeshInstanceSpatialGizmoPlugin>(memnew(MeshInstanceSpatialGizmoPlugin)));
 	add_gizmo_plugin(Ref<SoftBodySpatialGizmoPlugin>(memnew(SoftBodySpatialGizmoPlugin)));
 	add_gizmo_plugin(Ref<Sprite3DSpatialGizmoPlugin>(memnew(Sprite3DSpatialGizmoPlugin)));
@@ -6952,7 +6939,8 @@ String EditorSpatialGizmoPlugin::get_name() const {
 	if (get_script_instance() && get_script_instance()->has_method("get_name")) {
 		return get_script_instance()->call("get_name");
 	}
-	return TTR("Nameless gizmo");
+	WARN_PRINT_ONCE("A 3D editor gizmo has no name defined (it will appear as \"Unnamed Gizmo\" in the \"View > Gizmos\" menu). To resolve this, override the `get_name()` function to return a String in the script that extends EditorSpatialGizmoPlugin.");
+	return TTR("Unnamed Gizmo");
 }
 
 int EditorSpatialGizmoPlugin::get_priority() const {

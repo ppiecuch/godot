@@ -64,7 +64,9 @@ class SceneTreeDock : public VBoxContainer {
 		TOOL_COPY,
 		TOOL_PASTE,
 		TOOL_RENAME,
+#ifdef MODULE_REGEX_ENABLED
 		TOOL_BATCH_RENAME,
+#endif // MODULE_REGEX_ENABLED
 		TOOL_REPLACE,
 		TOOL_EXTEND_SCRIPT,
 		TOOL_ATTACH_SCRIPT,
@@ -108,7 +110,9 @@ class SceneTreeDock : public VBoxContainer {
 
 	int current_option;
 	CreateDialog *create_dialog;
+#ifdef MODULE_REGEX_ENABLED
 	RenameDialog *rename_dialog;
+#endif // MODULE_REGEX_ENABLED
 
 	ToolButton *button_add;
 	ToolButton *button_instance;
@@ -265,6 +269,7 @@ protected:
 public:
 	String get_filter();
 	void set_filter(const String &p_filter);
+	void save_branch_to_file(String p_directory);
 
 	void _focus_node();
 

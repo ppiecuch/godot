@@ -1,5 +1,11 @@
 [![Godot Engine logo](/logo.png)](https://godotengine.org)
 
+<p align="center">
+  <a href="https://godotengine.org">
+    <img src="logo_outlined.svg" width="400" alt="Godot Engine logo">
+  </a>
+</p>
+
 ## Support my work ...
 
 You can support my (_Pawel Piecuch_) work on __Godot Engine__ enhancements:

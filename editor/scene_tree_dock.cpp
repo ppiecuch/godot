@@ -82,10 +82,12 @@ void SceneTreeDock::_unhandled_key_input(Ref<InputEvent> p_event) {
 		return;
 	}
 
-	if (ED_IS_SHORTCUT("scene_tree/batch_rename", p_event)) {
-		_tool_selected(TOOL_BATCH_RENAME);
-	} else if (ED_IS_SHORTCUT("scene_tree/rename", p_event)) {
+	if (ED_IS_SHORTCUT("scene_tree/rename", p_event)) {
 		_tool_selected(TOOL_RENAME);
+#ifdef MODULE_REGEX_ENABLED
+	} else if (ED_IS_SHORTCUT("scene_tree/batch_rename", p_event)) {
+		_tool_selected(TOOL_BATCH_RENAME);
+#endif // MODULE_REGEX_ENABLED
 	} else if (ED_IS_SHORTCUT("scene_tree/add_child_node", p_event)) {
 		_tool_selected(TOOL_NEW);
 	} else if (ED_IS_SHORTCUT("scene_tree/instance_scene", p_event)) {
@@ -332,6 +334,7 @@ void SceneTreeDock::_tool_selected(int p_tool, bool p_confirm_override) {
 	current_option = p_tool;
 
 	switch (p_tool) {
+#ifdef MODULE_REGEX_ENABLED
 		case TOOL_BATCH_RENAME: {
 			if (!profile_allow_editing) {
 				break;
@@ -340,6 +343,7 @@ void SceneTreeDock::_tool_selected(int p_tool, bool p_confirm_override) {
 				rename_dialog->popup_centered();
 			}
 		} break;
+#endif // MODULE_REGEX_ENABLED
 		case TOOL_RENAME: {
 			if (!profile_allow_editing) {
 				break;
@@ -2811,11 +2815,13 @@ void SceneTreeDock::_tree_rmb(const Vector2 &p_menu_pos) {
 		}
 	}
 
+#ifdef MODULE_REGEX_ENABLED
 	if (profile_allow_editing && selection.size() > 1) {
 		//this is not a commonly used action, it makes no sense for it to be where it was nor always present.
 		menu->add_separator();
 		menu->add_icon_shortcut(get_icon("Rename", "EditorIcons"), ED_GET_SHORTCUT("scene_tree/batch_rename"), TOOL_BATCH_RENAME);
 	}
+#endif // MODULE_REGEX_ENABLED
 	menu->add_separator();
 	menu->add_icon_item(get_icon("Help", "EditorIcons"), TTR("Open Documentation"), TOOL_OPEN_DOCUMENTATION);
 
@@ -2839,6 +2845,11 @@ String SceneTreeDock::get_filter() {
 void SceneTreeDock::set_filter(const String &p_filter) {
 	filter->set_text(p_filter);
 	scene_tree->set_filter(p_filter);
+}
+
+void SceneTreeDock::save_branch_to_file(String p_directory) {
+	new_scene_from_dialog->set_current_dir(p_directory);
+	_tool_selected(TOOL_NEW_SCENE_FROM);
 }
 
 void SceneTreeDock::_focus_node() {
@@ -3297,8 +3308,10 @@ SceneTreeDock::SceneTreeDock(EditorNode *p_editor, Node *p_scene_root, EditorSel
 	create_dialog->connect("create", this, "_create");
 	create_dialog->connect("favorites_updated", this, "_update_create_root_dialog");
 
+#ifdef MODULE_REGEX_ENABLED
 	rename_dialog = memnew(RenameDialog(scene_tree, &editor_data->get_undo_redo()));
 	add_child(rename_dialog);
+#endif // MODULE_REGEX_ENABLED
 
 	script_create_dialog = memnew(ScriptCreateDialog);
 	script_create_dialog->set_inheritance_base_type("Node");

@@ -28,15 +28,18 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
+// Define PLATFORM_THREAD_H in platform_config.h
+// Overriding the platform implementation is required in some proprietary platforms
+
 #include "thread.h"
+
+#ifndef PLATFORM_THREAD_H
+#ifndef NO_THREADS
 
 #include "core/script_language.h"
 
-#if !defined(NO_THREADS) && !defined(PLATFORM_THREAD_H)
-#if defined(PTHREAD_ENABLED)
-
+#ifdef PTHREAD_ENABLED
 #include "drivers/posix/thread_posix.cpp"
-
 #else
 
 #include "core/safe_refcount.h"
@@ -140,3 +143,4 @@ Thread::ID Thread::get_caller_id() {
 }
 #endif // PTHREAD_ENABLED
 #endif // NO_THREADS
+#endif // PLATFORM_THREAD_H

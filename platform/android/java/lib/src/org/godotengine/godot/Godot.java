@@ -130,6 +130,7 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 	private boolean use_32_bits = false;
 	private boolean use_immersive = false;
 	private boolean use_debug_opengl = false;
+	private boolean translucent = false;
 	private boolean mStatePaused;
 	private boolean activityResumed;
 	private int mState;
@@ -361,6 +362,8 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 				(int)getResources().getDimension(R.dimen.text_edit_height)));
 		// ...add to FrameLayout
 		containerLayout.addView(edittext);
+
+		mView = new GodotView(activity, this, xrMode, use_gl3, use_32_bits, use_debug_opengl, translucent);
 		containerLayout.addView(mView, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 
 		edittext.setView(mView);
@@ -401,7 +404,11 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 		for (GodotPlugin plugin : pluginRegistry.getAllPlugins()) {
 			View pluginView = plugin.onMainCreate(activity);
 			if (pluginView != null) {
-				containerLayout.addView(pluginView);
+				if (plugin.shouldBeOnTop()) {
+					containerLayout.addView(pluginView);
+				} else {
+					containerLayout.addView(pluginView, 0);
+				}
 			}
 		}
 	}
@@ -423,7 +430,7 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 	@SuppressLint("MissingPermission")
 	@Keep
 	private void vibrate(int durationMs) {
-		if (requestPermission("VIBRATE")) {
+		if (durationMs > 0 && requestPermission("VIBRATE")) {
 			Vibrator v = (Vibrator)getContext().getSystemService(Context.VIBRATOR_SERVICE);
 			if (v != null) {
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -612,6 +619,8 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 				use_32_bits = true;
 			} else if (command_line[i].equals("--debug_opengl")) {
 				use_debug_opengl = true;
+			} else if (command_line[i].equals("--translucent")) {
+				translucent = true;
 			} else if (command_line[i].equals("--use_immersive")) {
 				use_immersive = true;
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) { // check if the application runs on an android 4.4+

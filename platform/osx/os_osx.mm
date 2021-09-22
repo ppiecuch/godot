@@ -308,6 +308,8 @@ static NSCursor *cursorFromSelector(SEL selector, SEL fallback = nil) {
 
 	[OS_OSX::singleton->window_object setContentMinSize:NSMakeSize(0, 0)];
 	[OS_OSX::singleton->window_object setContentMaxSize:NSMakeSize(FLT_MAX, FLT_MAX)];
+	// Force window resize event.
+	[self windowDidResize:notification];
 }
 
 - (void)windowDidExitFullScreen:(NSNotification *)notification {
@@ -327,6 +329,9 @@ static NSCursor *cursorFromSelector(SEL selector, SEL fallback = nil) {
 
 	if (OS_OSX::singleton->on_top)
 		[OS_OSX::singleton->window_object setLevel:NSFloatingWindowLevel];
+
+	// Force window resize event.
+	[self windowDidResize:notification];
 }
 
 - (void)windowDidChangeBackingProperties:(NSNotification *)notification {
@@ -2571,7 +2576,7 @@ Error OS_OSX::shell_open(String p_uri) {
 
 String OS_OSX::get_locale() const {
 	NSString *locale_code = [[NSLocale preferredLanguages] objectAtIndex:0];
-	return [locale_code UTF8String];
+	return String([locale_code UTF8String]).replace("-", "_");
 }
 
 void OS_OSX::swap_buffers() {

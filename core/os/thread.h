@@ -28,19 +28,22 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef OS_THREAD_H
-#define OS_THREAD_H
+// Define PLATFORM_THREAD_H in platform_config.h
+// Overriding the platform implementation is required in some proprietary platforms
+#ifndef THREAD_H
+#define THREAD_H
+
+#include "platform_config.h"
+
+#ifdef PLATFORM_THREAD_H
+#include PLATFORM_THREAD_H
+#else
 
 #include "core/error_list.h"
 #include "core/safe_refcount.h"
 #include "core/typedefs.h"
-#include "platform_config.h"
 
-#if defined(PLATFORM_THREAD_H)
-
-#include PLATFORM_THREAD_H
-
-#elif defined(PTHREAD_ENABLED)
+#ifdef PTHREAD_ENABLED
 
 #include "drivers/posix/thread_posix.h"
 
@@ -49,7 +52,7 @@ class Thread : public PosixThread {
 
 #else
 
-#if !defined(NO_THREADS)
+#ifndef NO_THREADS
 #include <thread>
 #endif
 
@@ -128,5 +131,6 @@ public:
 #endif
 };
 
-#endif // PLATFORM_THREAD_H
-#endif // OS_THREAD_H
+#endif // PTHREAD_ENABLED
+#endif // PLATFORM_CUSTOM_THREAD_H
+#endif // THREAD_H

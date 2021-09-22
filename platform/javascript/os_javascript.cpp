@@ -267,6 +267,10 @@ EM_BOOL OS_JavaScript::keydown_callback(int p_event_type, const EmscriptenKeyboa
 		return false;
 	}
 	os->input->parse_input_event(ev);
+
+	// Make sure to flush all events so we can call restricted APIs inside the event.
+	os->input->flush_buffered_events();
+
 	// Resume audio context after input in case autoplay was denied.
 	os->resume_audio();
 	return true;
@@ -276,13 +280,22 @@ EM_BOOL OS_JavaScript::keypress_callback(int p_event_type, const EmscriptenKeybo
 	OS_JavaScript *os = get_singleton();
 	os->deferred_key_event->set_unicode(p_event->charCode);
 	os->input->parse_input_event(os->deferred_key_event);
+
+	// Make sure to flush all events so we can call restricted APIs inside the event.
+	os->input->flush_buffered_events();
+
 	return true;
 }
 
 EM_BOOL OS_JavaScript::keyup_callback(int p_event_type, const EmscriptenKeyboardEvent *p_event, void *p_user_data) {
+	OS_JavaScript *os = get_singleton();
 	Ref<InputEventKey> ev = setup_key_event(p_event);
 	ev->set_pressed(false);
-	get_singleton()->input->parse_input_event(ev);
+	os->input->parse_input_event(ev);
+
+	// Make sure to flush all events so we can call restricted APIs inside the event.
+	os->input->flush_buffered_events();
+
 	return ev->get_scancode() != KEY_UNKNOWN && ev->get_scancode() != 0;
 }
 
@@ -363,8 +376,13 @@ EM_BOOL OS_JavaScript::mouse_button_callback(int p_event_type, const EmscriptenM
 	ev->set_button_mask(mask);
 
 	os->input->parse_input_event(ev);
+
+	// Make sure to flush all events so we can call restricted APIs inside the event.
+	os->input->flush_buffered_events();
+
 	// Resume audio context after input in case autoplay was denied.
 	os->resume_audio();
+
 	// Prevent multi-click text selection and wheel-click scrolling anchor.
 	// Context menu is prevented through contextmenu event.
 	return true;
@@ -599,9 +617,10 @@ EM_BOOL OS_JavaScript::wheel_callback(int p_event_type, const EmscriptenWheelEve
 	ev->set_button_mask(input->get_mouse_button_mask() | button_flag);
 	input->parse_input_event(ev);
 
-	ev->set_pressed(false);
-	ev->set_button_mask(input->get_mouse_button_mask() & ~button_flag);
-	input->parse_input_event(ev);
+	Ref<InputEventMouseButton> release = ev->duplicate();
+	release->set_pressed(false);
+	release->set_button_mask(input->get_mouse_button_mask() & ~button_flag);
+	input->parse_input_event(release);
 
 	return true;
 }
@@ -615,7 +634,6 @@ bool OS_JavaScript::has_touchscreen_ui_hint() const {
 EM_BOOL OS_JavaScript::touch_press_callback(int p_event_type, const EmscriptenTouchEvent *p_event, void *p_user_data) {
 	OS_JavaScript *os = get_singleton();
 	Ref<InputEventScreenTouch> ev;
-	ev.instance();
 	int lowest_id_index = -1;
 	for (int i = 0; i < p_event->numTouches; ++i) {
 		const EmscriptenTouchPoint &touch = p_event->touches[i];
@@ -623,6 +641,7 @@ EM_BOOL OS_JavaScript::touch_press_callback(int p_event_type, const EmscriptenTo
 			lowest_id_index = i;
 		if (!touch.isChanged)
 			continue;
+		ev.instance();
 		ev->set_index(touch.identifier);
 		ev->set_position(compute_position_in_canvas(touch.clientX, touch.clientY));
 		os->touches[i] = ev->get_position();
@@ -630,6 +649,10 @@ EM_BOOL OS_JavaScript::touch_press_callback(int p_event_type, const EmscriptenTo
 
 		os->input->parse_input_event(ev);
 	}
+
+	// Make sure to flush all events so we can call restricted APIs inside the event.
+	os->input->flush_buffered_events();
+
 	// Resume audio context after input in case autoplay was denied.
 	os->resume_audio();
 	return true;
@@ -638,7 +661,6 @@ EM_BOOL OS_JavaScript::touch_press_callback(int p_event_type, const EmscriptenTo
 EM_BOOL OS_JavaScript::touchmove_callback(int p_event_type, const EmscriptenTouchEvent *p_event, void *p_user_data) {
 	OS_JavaScript *os = get_singleton();
 	Ref<InputEventScreenDrag> ev;
-	ev.instance();
 	int lowest_id_index = -1;
 	for (int i = 0; i < p_event->numTouches; ++i) {
 		const EmscriptenTouchPoint &touch = p_event->touches[i];
@@ -646,6 +668,7 @@ EM_BOOL OS_JavaScript::touchmove_callback(int p_event_type, const EmscriptenTouc
 			lowest_id_index = i;
 		if (!touch.isChanged)
 			continue;
+		ev.instance();
 		ev->set_index(touch.identifier);
 		ev->set_position(compute_position_in_canvas(touch.clientX, touch.clientY));
 		Point2 &prev = os->touches[i];
@@ -729,11 +752,14 @@ const char *OS_JavaScript::get_video_driver_name(int p_driver) const {
 // Audio
 
 int OS_JavaScript::get_audio_driver_count() const {
-	return 1;
+	return audio_drivers.size();
 }
 
 const char *OS_JavaScript::get_audio_driver_name(int p_driver) const {
-	return "JavaScript";
+	if (audio_drivers.size() <= p_driver) {
+		return "Unknown";
+	}
+	return audio_drivers[p_driver]->get_name();
 }
 
 // Clipboard
@@ -847,7 +873,7 @@ Error OS_JavaScript::initialize(const VideoMode &p_desired, int p_video_driver, 
 	EMSCRIPTEN_RESULT result;
 #define EM_CHECK(ev)                         \
 	if (result != EMSCRIPTEN_RESULT_SUCCESS) \
-	ERR_PRINT("Error while setting " #ev " callback: Code " + itos(result))
+		ERR_PRINT("Error while setting " #ev " callback: Code " + itos(result));
 #define SET_EM_CALLBACK(target, ev, cb)                               \
 	result = emscripten_set_##ev##_callback(target, NULL, true, &cb); \
 	EM_CHECK(ev)
@@ -939,9 +965,7 @@ MainLoop *OS_JavaScript::get_main_loop() const {
 }
 
 void OS_JavaScript::resume_audio() {
-	if (audio_driver_javascript) {
-		audio_driver_javascript->resume();
-	}
+	AudioDriverJavaScript::resume();
 }
 
 void OS_JavaScript::fs_sync_callback() {
@@ -954,6 +978,8 @@ bool OS_JavaScript::main_loop_iterate() {
 		idb_needs_sync = false;
 		godot_js_os_fs_sync(&OS_JavaScript::fs_sync_callback);
 	}
+
+	input->flush_buffered_events();
 
 	if (godot_js_display_gamepad_sample() == OK)
 		process_joypads();
@@ -997,9 +1023,10 @@ void OS_JavaScript::finalize() {
 	emscripten_webgl_commit_frame();
 	memdelete(visual_server);
 	emscripten_webgl_destroy_context(webgl_ctx);
-	if (audio_driver_javascript) {
-		memdelete(audio_driver_javascript);
+	for (int i = 0; i < audio_drivers.size(); i++) {
+		memdelete(audio_drivers[i]);
 	}
+	audio_drivers.clear();
 }
 
 // Miscellaneous
@@ -1193,7 +1220,6 @@ OS_JavaScript::OS_JavaScript() {
 
 	main_loop = NULL;
 	visual_server = NULL;
-	audio_driver_javascript = NULL;
 
 	swap_ok_cancel = false;
 	idb_available = godot_js_os_fs_is_persistent() != 0;
@@ -1201,8 +1227,13 @@ OS_JavaScript::OS_JavaScript() {
 	idb_is_syncing = false;
 
 	if (AudioDriverJavaScript::is_available()) {
-		audio_driver_javascript = memnew(AudioDriverJavaScript);
-		AudioDriverManager::add_driver(audio_driver_javascript);
+#ifdef NO_THREADS
+		audio_drivers.push_back(memnew(AudioDriverScriptProcessor));
+#endif
+		audio_drivers.push_back(memnew(AudioDriverWorklet));
+	}
+	for (int i = 0; i < audio_drivers.size(); i++) {
+		AudioDriverManager::add_driver(audio_drivers[i]);
 	}
 
 	Vector<Logger *> loggers;

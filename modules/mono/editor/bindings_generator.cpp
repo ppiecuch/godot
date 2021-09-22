@@ -377,7 +377,7 @@ String BindingsGenerator::bbcode_to_xml(const String &p_bbcode, const TypeInterf
 					xml_output.append(link_target);
 					xml_output.append("</c>");
 				}
-			} else if (link_tag == "const") {
+			} else if (link_tag == "constant") {
 				if (!target_itype || !target_itype->is_object_type) {
 					if (OS::get_singleton()->is_stdout_verbose()) {
 						if (target_itype) {
@@ -940,7 +940,7 @@ Error BindingsGenerator::generate_cs_core_project(const String &p_proj_dir) {
 #define ADD_INTERNAL_CALL(m_icall)                                                               \
 	if (!m_icall.editor_only) {                                                                  \
 		cs_icalls_content.append(MEMBER_BEGIN "[MethodImpl(MethodImplOptions.InternalCall)]\n"); \
-		cs_icalls_content.append(INDENT2 "internal extern static ");                             \
+		cs_icalls_content.append(INDENT2 "internal static extern ");                             \
 		cs_icalls_content.append(m_icall.im_type_out + " ");                                     \
 		cs_icalls_content.append(m_icall.name + "(");                                            \
 		cs_icalls_content.append(m_icall.im_sig + ");\n");                                       \
@@ -1044,7 +1044,7 @@ Error BindingsGenerator::generate_cs_editor_project(const String &p_proj_dir) {
 #define ADD_INTERNAL_CALL(m_icall)                                                               \
 	if (m_icall.editor_only) {                                                                   \
 		cs_icalls_content.append(MEMBER_BEGIN "[MethodImpl(MethodImplOptions.InternalCall)]\n"); \
-		cs_icalls_content.append(INDENT2 "internal extern static ");                             \
+		cs_icalls_content.append(INDENT2 "internal static extern ");                             \
 		cs_icalls_content.append(m_icall.im_type_out + " ");                                     \
 		cs_icalls_content.append(m_icall.name + "(");                                            \
 		cs_icalls_content.append(m_icall.im_sig + ");\n");                                       \
@@ -2578,7 +2578,13 @@ bool BindingsGenerator::_arg_default_value_from_variant(const Variant &p_val, Ar
 			break;
 		case Variant::STRING:
 		case Variant::NODE_PATH:
-			r_iarg.default_argument = "\"" + r_iarg.default_argument + "\"";
+			if (r_iarg.type.cname == name_cache.type_NodePath) {
+				r_iarg.default_argument = "(%s)\"" + r_iarg.default_argument + "\"";
+				r_iarg.def_param_mode = ArgumentInterface::NULLABLE_REF;
+			} else {
+				CRASH_COND(r_iarg.type.cname != name_cache.type_String);
+				r_iarg.default_argument = "\"" + r_iarg.default_argument + "\"";
+			}
 			break;
 		case Variant::PLANE: {
 			Plane plane = p_val.operator Plane();
