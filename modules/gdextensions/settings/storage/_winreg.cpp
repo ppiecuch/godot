@@ -32,10 +32,41 @@
 
 #include <windows.h>
 
+static String key_path(const String &rKey) {
+    int idx = rKey.lastIndexOf('\\');
+    if (idx == -1) {
+        return String();
+	}
+    return rKey.left(idx + 1);
+}
+
+static String key_name(const String &rKey) {
+    int idx = rKey.lastIndexOf(QLatin1Char('\\'));
+
+    String res;
+    if (idx == -1)
+        res = rKey;
+    else
+        res = rKey.mid(idx + 1);
+
+    if (res == "Default" || res == ".") {
+        res = QLatin1String("");
+	}
+    return res;
+}
+
+static String escaped_key(String key) {
+	return key.replace("\\", "/");
+}
+
+static String unescaped_key(String key) {
+	return key.replace("/", "\\");
+}
+
 class SettingsStorage {
 public:
 	SettingsStorage(const String &organization, const String &application, REGSAM access = 0);
-	SettingsStorage(String rKey, REGSAM access = 0);
+	SettingsStorage(String key, REGSAM access = 0);
 	~SettingsStorage();
 
 	void remove(const String &key);
@@ -74,7 +105,7 @@ SettingsStorage::SettingsStorage(const String &organization, const String &appli
 
 SettingsStorage::SettingsStorage(String path, REGSAM access) :
 		access(access) {
-	if (path.startsWith('\\')) {
+	if (path.begins_width('\\')) {
 		path.remove(0, 1);
 	}
 
@@ -119,16 +150,16 @@ SettingsStorage::SettingsStorage(String path, REGSAM access) :
 void SettingsStorage::set(const String &key, const Variant &value) {
 	ERR_FAIL_COND((writeHandle() == 0, "Access error");
 
-    String rKey = escapedKey(key);
+	String _key = escaped_key(key);
 
-    HKEY handle = createOrOpenKey(writeHandle(), registryPermissions, keyPath(rKey), access);
+	HKEY handle = createOrOpenKey(writeHandle(), registryPermissions, key_path(_key), access);
 	ERR_FAIL_COND((handle() == 0, "Access error");
 
-    DWORD type;
-    QByteArray regValueBuff;
+	DWORD type;
+	PoolByteArray regValueBuff;
 
-    // Determine the type
-    switch (value.type()) {
+	// Determine the type
+	switch (value.type()) {
 		case Variant::List:
 		case Variant::StringList: {
 			// If none of the elements contains '\0', we can use REG_MULTI_SZ, the
@@ -145,12 +176,12 @@ void SettingsStorage::set(const String &key, const Variant &value) {
 
 			if (type == REG_BINARY) {
 				String s = variantToString(value);
-				regValueBuff = QByteArray(reinterpret_cast<const char *>(s.utf16()), s.length() * 2);
+				regValueBuff = PoolByteArray(reinterpret_cast<const char *>(s.utf16()), s.length() * 2);
 			} else {
 				StringList::const_iterator it = l.constBegin();
 				for (; it != l.constEnd(); ++it) {
 					const String &s = *it;
-					regValueBuff += QByteArray(reinterpret_cast<const char *>(s.utf16()), (s.length() + 1) * 2);
+					regValueBuff += PoolByteArray(reinterpret_cast<const char *>(s.utf16()), (s.length() + 1) * 2);
 				}
 				regValueBuff.append((char)0);
 				regValueBuff.append((char)0);
@@ -162,7 +193,7 @@ void SettingsStorage::set(const String &key, const Variant &value) {
 		case Variant::UInt: {
 			type = REG_DWORD;
 			int32 i = value;
-			regValueBuff = QByteArray(reinterpret_cast<const char *>(&i), sizeof(qint32));
+			regValueBuff = PoolByteArray(reinterpret_cast<const char *>(&i), sizeof(qint32));
 			break;
 		}
 
@@ -170,7 +201,7 @@ void SettingsStorage::set(const String &key, const Variant &value) {
 		case Variant::ULongLong: {
 			type = REG_QWORD;
 			qint64 i = value.toLongLong();
-			regValueBuff = QByteArray(reinterpret_cast<const char *>(&i), sizeof(qint64));
+			regValueBuff = PoolByteArray(reinterpret_cast<const char *>(&i), sizeof(qint64));
 			break;
 		}
 
@@ -185,29 +216,28 @@ void SettingsStorage::set(const String &key, const Variant &value) {
 			int length = s.length();
 			if (type == REG_SZ)
 				++length;
-			regValueBuff = QByteArray(reinterpret_cast<const char *>(s.utf16()),
-					int(sizeof(wchar_t)) * length);
+			regValueBuff = PoolByteArray(reinterpret_cast<const char *>(s.utf16()), int(sizeof(wchar_t)) * length);
 			break;
 		}
-    }
+	}
 
-    // set the value
-    LONG res = RegSetValueEx(handle, reinterpret_cast<const wchar_t *>(keyName(rKey).utf16()), 0, type,
-                             reinterpret_cast<const unsigned char*>(regValueBuff.constData()),
-                             regValueBuff.size());
+	// set the value
+	LONG res = RegSetValueEx(handle, reinterpret_cast<const wchar_t *>(key_name(_key).utf16()), 0, type,
+							reinterpret_cast<const unsigned char*>(regValueBuff.constData()),
+							regValueBuff.size());
 
-    if (res != ERROR_SUCCESS) {
-		WARN_PRINT("Settings: failed to set subkey " + key);
-    }
-    RegCloseKey(handle);
+	if (res != ERROR_SUCCESS) {
+		WARN_PRINT("Settings: failed to set subkey " + _key);
+	}
+	RegCloseKey(handle);
 }
 
 bool SettingsStorage::get(const String &key, Variant *value) const {
-	String rKey = escapedKey(key);
+	String key = escaped_key(key);
 
 	for (const RegistryKey &r : regList) {
 		HKEY handle = r.handle();
-		if (handle != 0 && readKey(handle, rKey, value))
+		if (handle != 0 && readKey(handle, key, value))
 			return true;
 
 		if (!fallbacks)

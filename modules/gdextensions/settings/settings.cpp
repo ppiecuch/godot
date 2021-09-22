@@ -31,12 +31,13 @@
 #include "settings.h"
 
 #include "core/os/os.h"
+#include "core/io/marshalls.h"
 #include "core/project_settings.h"
 #include "core/variant.h"
 
 Settings *Settings::instance;
 
-_FORCE_INLINE_ String get_app_name() {
+static String get_app_name() {
 	String appname = ProjectSettings::get_singleton()->get("application/config/name");
 	if (appname.empty()) {
 		appname = OS::get_singleton()->get_executable_path().get_basename();
@@ -54,6 +55,35 @@ _FORCE_INLINE_ String get_app_name() {
 	appname += " (debug)";
 #endif
 	return appname;
+}
+
+static PoolByteArray encode_var(const Variant data) {
+	PoolByteArray ret;
+	int len;
+	Error err = encode_variant(data, nullptr, len);
+	if (err != OK) {
+		WARN_PRINT("Unexpected error encoding variable to bytes");
+		return ret;
+	}
+	ret.resize(len);
+	{
+		PoolByteArray::Write w = ret.write();
+		encode_variant(data, w.ptr(), len);
+	}
+	return ret;
+}
+
+static Variant decode_var(const PoolByteArray p_data) {
+	Variant ret;
+	PoolByteArray data = p_data;
+	PoolByteArray::Read r = data.read();
+	Error err = decode_variant(ret, r.ptr(), data.size(), nullptr);
+	if (err != OK) {
+		WARN_PRINT("Unexpected error decoding bytes to variable");
+		Variant f;
+		return f;
+	}
+	return ret;
 }
 
 #if defined(ANDROID_ENABLED)
@@ -85,6 +115,7 @@ void Settings::_bind_methods() {
 
 Settings::Settings() {
 	storage = Ref<SettingsStorage>(memnew(SettingsStorage));
+	print_verbose(vformat("Open Settings with '%s' name", get_app_name()));
 	instance = this;
 }
 
