@@ -13,7 +13,7 @@ env_module.Append(CPPPATH=[".", "#modules/gdextensions", "#thirdparty/libgenerat
 sources = Glob("*.cpp") + Glob("#thirdparty/libgenerator/src/*.cpp")
 
 if is_gcc:
-	env_module.Append(CPPFLAGS=["-Wno-nonnull", "-Wno-array-bounds"]) # silent false warnings
+    env_module.Append(CPPFLAGS=["-Wno-nonnull", "-Wno-array-bounds"]) # silent false warnings
 
 # Compile as a static library
 lib = env_module.Library("gd_generator", sources)

@@ -72,11 +72,11 @@ def configure(env):
     if env["arch"] == "x86":  # i386
         env["bits"] = "32"
         if not env["ios_simulator"]:
-            print("WARNING: setting ios_simulator might be required for this architecture");
+            print("WARNING: setting ios_simulator might be required for this architecture")
     elif env["arch"] == "x86_64":
         env["bits"] = "64"
         if not env["ios_simulator"]:
-            print("WARNING: setting ios_simulator might be required for this architecture");
+            print("WARNING: setting ios_simulator might be required for this architecture")
     elif env["arch"] == "arm" or env["arch"] == "arm32" or env["arch"] == "armv7" or env["bits"] == "32":  # arm
         env["arch"] = "arm"
         env["bits"] = "32"
