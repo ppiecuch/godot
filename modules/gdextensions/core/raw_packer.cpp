@@ -345,13 +345,13 @@ Error RawPacker::decode(const String &fmt, Array &array, const uint8_t *buf, int
 				String str;
 
 				if (str_size == 0) {
-					ERR_FAIL_COND_V(size < len + 1, ERR_INVALID_DATA)
+					ERR_FAIL_COND_V(size < len + 1, ERR_INVALID_DATA);
 
 					str += TerminatingZero;
 					buf += 1;
 					len += 1;
 				} else {
-					ERR_FAIL_COND_V(size < len + str_size, ERR_INVALID_DATA)
+					ERR_FAIL_COND_V(size < len + str_size, ERR_INVALID_DATA);
 
 					int k = 0;
 

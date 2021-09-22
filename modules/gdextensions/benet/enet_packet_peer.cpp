@@ -283,7 +283,7 @@ void ENetPacketPeer::poll() {
 
 					uint32_t *id = (uint32_t *)event.peer->data;
 
-					ERR_CONTINUE(event.packet->dataLength < 12)
+					ERR_CONTINUE(event.packet->dataLength < 12);
 
 					uint32_t source = decode_uint32(&event.packet->data[0]);
 					int target = decode_uint32(&event.packet->data[4]);

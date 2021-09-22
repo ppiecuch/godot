@@ -28,14 +28,10 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-/*cripter.h*/
-
 #ifndef CRIPTER_H
 #define CRIPTER_H
 
-#ifdef MODULE_MBEDTLS_ENABLED
-
-#include "core/io/marshalls.h"
+#include "core/variant.h"
 #include "core/reference.h"
 
 class Cripter : public Reference {
@@ -68,7 +64,5 @@ public:
 
 	Cripter();
 };
-
-#endif // MODULE_MBEDTLS_ENABLED
 
 #endif // CRIPTER_H

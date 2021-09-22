@@ -28,10 +28,6 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-/*cripter.cpp*/
-
-#ifdef MODULE_MBEDTLS_ENABLED
-
 #include "thirdparty/mbedtls/include/mbedtls/aes.h"
 #include "thirdparty/mbedtls/include/mbedtls/ctr_drbg.h"
 #include "thirdparty/mbedtls/include/mbedtls/entropy.h"
@@ -42,6 +38,7 @@
 #include "thirdparty/mbedtls/include/mbedtls/error.h" //  ---  Desenvolver   ---
 
 #include "core/print_string.h"
+#include "core/io/marshalls.h"
 
 #include <stdint.h>
 #include <vector>
@@ -127,7 +124,7 @@ PoolByteArray Cripter::encrypt_byte_GCM(const PoolByteArray p_input, const Strin
 	mbedtls_gcm_setkey(&ctx, MBEDTLS_CIPHER_ID_AES, key, 256);
 
 	if (add_len == 0) {
-		_err = mbedtls_gcm_crypt_and_tag(&ctx, MBEDTLS_GCM_ENCRYPT, input.size(), iv, EXT_SIZE, NULL, 0, input.data(), output.data(), TAG_SIZE, tag);
+		_err = mbedtls_gcm_crypt_and_tag(&ctx, MBEDTLS_GCM_ENCRYPT, input.size(), iv, EXT_SIZE, nullptr, 0, input.data(), output.data(), TAG_SIZE, tag);
 		if (_err != 0) {
 			mbedtls_strerror(_err, erro, sizeof(erro));
 			print_error(erro);
@@ -190,7 +187,7 @@ PoolByteArray Cripter::decrypt_byte_GCM(const PoolByteArray p_input, const Strin
 	mbedtls_gcm_setkey(&ctx, MBEDTLS_CIPHER_ID_AES, key, 256);
 
 	if (add_len == 0) {
-		_err = mbedtls_gcm_auth_decrypt(&ctx, input.size(), iv, EXT_SIZE, NULL, 0, tag, TAG_SIZE, input.data(), output.data());
+		_err = mbedtls_gcm_auth_decrypt(&ctx, input.size(), iv, EXT_SIZE, nullptr, 0, tag, TAG_SIZE, input.data(), output.data());
 		if (_err != 0) {
 			mbedtls_strerror(_err, erro, sizeof(erro));
 			print_error(erro);
@@ -445,7 +442,7 @@ PoolByteArray Cripter::encode_var(const Variant data) const {
 	//Encoder
 	PoolByteArray ret;
 	int len;
-	Error err = encode_variant(data, NULL, len);
+	Error err = encode_variant(data, nullptr, len);
 	if (err != OK) {
 		print_line("Unexpected error encoding variable to bytes");
 		return ret;
@@ -463,7 +460,7 @@ Variant Cripter::decode_var(const PoolByteArray p_data) const {
 	Variant ret;
 	PoolByteArray data = p_data;
 	PoolByteArray::Read r = data.read();
-	Error err = decode_variant(ret, r.ptr(), data.size(), NULL);
+	Error err = decode_variant(ret, r.ptr(), data.size(), nullptr);
 	if (err != OK) {
 		print_line("Unexpected error decoding bytes to variable");
 		Variant f;
@@ -491,6 +488,4 @@ void Cripter::_bind_methods() {
 }
 
 Cripter::Cripter() {
-} /*cripter.cpp*/
-
-#endif // MODULE_MBEDTLS_ENABLED
+}

@@ -37,7 +37,9 @@
 #include "core/blitter.h"
 #include "core/bs_input_event_key.h"
 #include "core/byteswap.h"
+#ifdef MODULE_MBEDTLS_ENABLED
 #include "core/cripter.h"
+#endif
 #include "core/dist_rand.h"
 #include "core/error_reporter.h"
 #include "core/godot_error_handler.h"
