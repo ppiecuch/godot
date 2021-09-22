@@ -32,25 +32,25 @@
 
 #include <windows.h>
 
-static String key_path(const String &rKey) {
-	int idx = rKey.lastIndexOf('\\');
+static String key_path(const String &key) {
+	int idx = key.rfind('\\');
 	if (idx == -1) {
 		return String();
 	}
-	return rKey.left(idx + 1);
+	return key.substr(0, idx + 1); // left
 }
 
-static String key_name(const String &rKey) {
-	int idx = rKey.lastIndexOf(QLatin1Char('\\'));
+static String key_name(const String &key) {
+	int idx = key.rfind('\\');
 
 	String res;
-	if (idx == -1)
-		res = rKey;
-	else
-		res = rKey.mid(idx + 1);
-
+	if (idx == -1) {
+		res = key;
+	} else {
+		res = key.substr(idx + 1);
+	}
 	if (res == "Default" || res == ".") {
-		res = QLatin1String("");
+		res = String();
 	}
 	return res;
 }
@@ -112,28 +112,28 @@ SettingsStorage::SettingsStorage(String path, REGSAM access) :
 	int keyLength;
 	HKEY keyName;
 
-	if (path.startsWith(("HKEY_CURRENT_USER")) {
+	if (path.begins_width(("HKEY_CURRENT_USER")) {
 		keyLength = 17;
 		keyName = HKEY_CURRENT_USER;
-	} else if (path.startsWith(("HKCU")) {
+	} else if (path.begins_width(("HKCU")) {
 		keyLength = 4;
 		keyName = HKEY_CURRENT_USER;
-	} else if (path.startsWith(("HKEY_LOCAL_MACHINE")) {
+	} else if (path.begins_width(("HKEY_LOCAL_MACHINE")) {
 		keyLength = 18;
 		keyName = HKEY_LOCAL_MACHINE;
-	} else if (path.startsWith(("HKLM")) {
+	} else if (path.begins_width(("HKLM")) {
 		keyLength = 4;
 		keyName = HKEY_LOCAL_MACHINE;
-	} else if (path.startsWith(("HKEY_CLASSES_ROOT")) {
+	} else if (path.begins_width(("HKEY_CLASSES_ROOT")) {
 		keyLength = 17;
 		keyName = HKEY_CLASSES_ROOT;
-	} else if (path.startsWith(("HKCR")) {
+	} else if (path.begins_width(("HKCR")) {
 		keyLength = 4;
 		keyName = HKEY_CLASSES_ROOT;
-	} else if (path.startsWith(("HKEY_USERS")) {
+	} else if (path.begins_width(("HKEY_USERS")) {
 		keyLength = 10;
 		keyName = HKEY_USERS;
-	} else if (path.startsWith(("HKU")) {
+	} else if (path.begins_width(("HKU")) {
 		keyLength = 3;
 		keyName = HKEY_USERS;
 	} else {

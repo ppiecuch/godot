@@ -90,7 +90,7 @@ static Variant decode_var(const PoolByteArray p_data) {
 #include "storage/_sharedpreferences.cpp"
 #elif defined(IOS_ENABLED) || defined(OSX_ENABLED)
 #include "storage/_userdefaults.cpp"
-#elif defined(WIN32_ENABLED)
+#elif defined(WINDOWS_ENABLED)
 #include "storage/_winreg.cpp"
 #else
 #include "storage/_configfile.cpp"
