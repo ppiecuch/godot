@@ -50,11 +50,6 @@ jobs:
       - name: Compilation
         uses: ./.github/actions/godot-build
         with:
-<<<<<<< HEAD
-          name: ${{ github.job }}
-          path: bin/*
-          retention-days: ${{env.RETENTION_DAYS}}
-=======
           sconsflags: ${{ env.SCONSFLAGS }}
           platform: javascript
           target: release
@@ -62,4 +57,3 @@ jobs:
 
       - name: Upload artifact
         uses: ./.github/actions/upload-artifact
->>>>>>> 23bb5883cb0de5455afe8b9d473f0d67d72487b3
