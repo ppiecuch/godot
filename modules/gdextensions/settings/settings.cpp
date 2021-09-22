@@ -30,8 +30,8 @@
 
 #include "settings.h"
 
-#include "core/os/os.h"
 #include "core/io/marshalls.h"
+#include "core/os/os.h"
 #include "core/project_settings.h"
 #include "core/variant.h"
 

@@ -33,26 +33,26 @@
 #include <windows.h>
 
 static String key_path(const String &rKey) {
-    int idx = rKey.lastIndexOf('\\');
-    if (idx == -1) {
-        return String();
+	int idx = rKey.lastIndexOf('\\');
+	if (idx == -1) {
+		return String();
 	}
-    return rKey.left(idx + 1);
+	return rKey.left(idx + 1);
 }
 
 static String key_name(const String &rKey) {
-    int idx = rKey.lastIndexOf(QLatin1Char('\\'));
+	int idx = rKey.lastIndexOf(QLatin1Char('\\'));
 
-    String res;
-    if (idx == -1)
-        res = rKey;
-    else
-        res = rKey.mid(idx + 1);
+	String res;
+	if (idx == -1)
+		res = rKey;
+	else
+		res = rKey.mid(idx + 1);
 
-    if (res == "Default" || res == ".") {
-        res = QLatin1String("");
+	if (res == "Default" || res == ".") {
+		res = QLatin1String("");
 	}
-    return res;
+	return res;
 }
 
 static String escaped_key(String key) {

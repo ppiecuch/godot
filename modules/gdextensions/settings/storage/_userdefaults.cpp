@@ -178,7 +178,7 @@ void SettingsStorage::set(const String &key, const Variant &value) {
 		}
 		default: {
 			PoolByteArray val = encode_var(value);
-            CFDataRef cftype = CFDataCreate(kCFAllocatorDefault, reinterpret_cast<const UInt8 *>(val.read().ptr()), CFIndex(val.size()));
+			CFDataRef cftype = CFDataCreate(kCFAllocatorDefault, reinterpret_cast<const UInt8 *>(val.read().ptr()), CFIndex(val.size()));
 			if (cftype != nullptr) {
 				CFPreferencesSetAppValue(nom, cftype, kCFPreferencesCurrentApplication);
 				CFRelease(cftype);

@@ -31,8 +31,8 @@
 #ifndef CRIPTER_H
 #define CRIPTER_H
 
-#include "core/variant.h"
 #include "core/reference.h"
+#include "core/variant.h"
 
 class Cripter : public Reference {
 	GDCLASS(Cripter, Reference);
