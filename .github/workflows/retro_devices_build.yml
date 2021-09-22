@@ -1,4 +1,4 @@
-name: 🐜 Low-devices Builds
+name: 🐜 Retro-devices Builds
 on: [push, pull_request]
 
 # https://github.community/t/how-to-use-docker-compose-with-github-actions/16850
