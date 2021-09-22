@@ -14,9 +14,8 @@ concurrency:
 
 jobs:
   build-windows:
-    # Windows 10 with latest image
     runs-on: "windows-latest"
-    name: Static Checks (clang-format, black format, file format, documentation checks)
+    if: "contains(github.event.head_commit.message, '[ci]')"
     name: ${{ matrix.name }}
     strategy:
       fail-fast: false
