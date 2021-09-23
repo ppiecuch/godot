@@ -32,6 +32,8 @@
 
 #include <windows.h>
 
+/// Helpers
+
 static String key_path(const String &key) {
 	int idx = key.rfind("\\");
 	if (idx == -1) {
@@ -63,41 +65,94 @@ static String unescaped_key(String key) {
 	return key.replace("/", "\\");
 }
 
+// Open a key with the specified "perms".
+// "access" is to explicitly use the 32- or 64-bit branch.
+static HKEY openKey(HKEY parentHandle, REGSAM perms, const String &subKey, REGSAM access = 0) {
+	HKEY resultHandle = 0;
+	LONG res = RegOpenKeyEx(parentHandle, reinterpret_cast<const wchar_t *>(subKey.c_str()()),
+			0, perms | access, &resultHandle);
 
-class RegistryKey
-{
+	if (res == ERROR_SUCCESS) {
+		return resultHandle;
+	}
+	return 0;
+}
+
+// Open a key with the specified "perms", create it if it does not exist.
+// "access" is to explicitly use the 32- or 64-bit branch.
+static HKEY createOrOpenKey(HKEY parentHandle, REGSAM perms, const String &subKey, REGSAM access = 0) {
+	// try to open it
+	HKEY resultHandle = openKey(parentHandle, perms, subKey, access);
+	if (resultHandle != 0)
+		return resultHandle;
+
+	// try to create it
+	LONG res = RegCreateKeyEx(parentHandle, reinterpret_cast<const wchar_t *>(subKey.c_str()()), 0, 0,
+			REG_OPTION_NON_VOLATILE, perms | access, 0, &resultHandle, 0);
+
+	if (res == ERROR_SUCCESS) {
+		return resultHandle;
+	}
+
+	return 0;
+}
+
+// Open or create a key in read-write mode if possible, otherwise read-only.
+// "access" is to explicitly use the 32- or 64-bit branch.
+static HKEY createOrOpenKey(HKEY parentHandle, const String &subKey, bool *readOnly, REGSAM access = 0) {
+	// try to open or create it read/write
+	HKEY resultHandle = createOrOpenKey(parentHandle, registryPermissions, subKey, access);
+	if (resultHandle != 0) {
+		if (readOnly != 0) {
+			*readOnly = false;
+		}
+		return resultHandle;
+	}
+	// try to open or create it read/only
+	resultHandle = createOrOpenKey(parentHandle, KEY_READ, subKey, access);
+	if (resultHandle != 0) {
+		if (readOnly != 0) {
+			*readOnly = true;
+		}
+		return resultHandle;
+	}
+	return 0;
+}
+
+class RegistryKey {
 public:
-    RegistryKey(HKEY parent_handle = 0, const String &key = String(), bool read_only = true, REGSAM access = 0)
-	: _parent_handle(parent_handle), _handle(0), _key(key), _read_only(read_only), _access(access) {}
-    String key() const { return _key; }
-    HKEY handle() const;
-    HKEY parentHandle() const { return _parent_handle; }
-    bool read_only() const { return _read_only; }
-    void close();
+	RegistryKey(HKEY parent_handle = 0, const String &key = String(), bool read_only = true, REGSAM access = 0) :
+			_parent_handle(parent_handle), _handle(0), _key(key), _read_only(read_only), _access(access) {}
+	String key() const { return _key; }
+	HKEY handle() const;
+	HKEY parentHandle() const { return _parent_handle; }
+	bool read_only() const { return _read_only; }
+	void close();
+
 private:
-    HKEY _parent_handle;
-    mutable HKEY _handle;
-    String _key;
-    mutable bool _read_only;
-    REGSAM _access;
+	HKEY _parent_handle;
+	mutable HKEY _handle;
+	String _key;
+	mutable bool _read_only;
+	REGSAM _access;
 };
 
 HKEY RegistryKey::handle() const {
-    if (_handle != 0)
-        return _handle;
+	if (_handle != 0)
+		return _handle;
 
-    if (_read_only)
-        _handle = openKey(_parent_handle, KEY_READ, _key, _access);
-    else
-        _handle = createOrOpenKey(_parent_handle, _key, &_read_only, _access);
+	if (_read_only)
+		_handle = openKey(_parent_handle, KEY_READ, _key, _access);
+	else
+		_handle = createOrOpenKey(_parent_handle, _key, &_read_only, _access);
 
-    return _handle;
+	return _handle;
 }
 
 void RegistryKey::close() {
-    if (m_handle != 0)
-        RegCloseKey(m_handle);
-    m_handle = 0;
+	if (m_handle != 0)
+		RegCloseKey(m_handle);
+	m_handle = 0;
 }
 
 typedef Vector<RegistryKey> RegistryKeyList;
@@ -116,7 +171,7 @@ public:
 	void flush();
 	bool isWritable() const;
 	HKEY writeHandle() const;
-	bool readKey(HKEY parentHandle, const String &rSubKey, Variant *value) const;
+	bool readKey(HKEY parentHandle, const String &subKey, Variant *value) const;
 	String fileName() const;
 
 private:
@@ -142,7 +197,8 @@ SettingsStorage::SettingsStorage(const String &organization, const String &appli
 	ERR_FAIL_COND_MSG(regList.empty(), "Access error");
 }
 
-SettingsStorage::SettingsStorage(String path, REGSAM access) : access(access) {
+SettingsStorage::SettingsStorage(String path, REGSAM access) :
+		access(access) {
 	if (path.begins_width("\\")) {
 		path.remove(0);
 	}
@@ -227,16 +283,14 @@ void SettingsStorage::set(const String &key, const Variant &value) {
 			break;
 		}
 
-		case Variant::TYPE_INT:
-		case Variant::UInt: {
+		case Variant::INT: {
 			type = REG_DWORD;
 			int32 i = value;
 			regValueBuff = PoolByteArray(reinterpret_cast<const char *>(&i), sizeof(qint32));
 			break;
 		}
 
-		case Variant::LongLong:
-		case Variant::ULongLong: {
+		case Variant::LONG: {
 			type = REG_QWORD;
 			qint64 i = value.toLongLong();
 			regValueBuff = PoolByteArray(reinterpret_cast<const char *>(&i), sizeof(qint64));
@@ -250,7 +304,7 @@ void SettingsStorage::set(const String &key, const Variant &value) {
 			// If the string does not contain '\0', we can use REG_SZ, the native registry
 			// string type. Otherwise we use REG_BINARY.
 			String s = variantToString(value);
-			type = s.contains(QChar::Null) ? REG_BINARY : REG_SZ;
+			type = s.contains(0) ? REG_BINARY : REG_SZ;
 			int length = s.length();
 			if (type == REG_SZ)
 				++length;
@@ -261,8 +315,8 @@ void SettingsStorage::set(const String &key, const Variant &value) {
 
 	// set the value
 	LONG res = RegSetValueEx(handle, reinterpret_cast<const wchar_t *>(key_name(_key).utf16()), 0, type,
-							reinterpret_cast<const unsigned char*>(regValueBuff.constData()),
-							regValueBuff.size());
+			reinterpret_cast<const unsigned char *>(regValueBuff.constData()),
+			regValueBuff.size());
 
 	if (res != ERROR_SUCCESS) {
 		WARN_PRINT("Settings: failed to set subkey " + _key);
@@ -285,9 +339,9 @@ bool SettingsStorage::get(const String &key, Variant *value) const {
 	return false;
 }
 
-bool SettingsStorage::readKey(HKEY parentHandle, const String &rSubKey, Variant *value) const {
-	String rSubkeyName = keyName(rSubKey);
-	String rSubkeyPath = keyPath(rSubKey);
+bool SettingsStorage::readKey(HKEY parentHandle, const String &subKey, Variant *value) const {
+	String rSubkeyName = keyName(subKey);
+	String rSubkeyPath = keyPath(subKey);
 
 	// open a handle on the subkey
 	HKEY handle = openKey(parentHandle, KEY_READ, rSubkeyPath, access);

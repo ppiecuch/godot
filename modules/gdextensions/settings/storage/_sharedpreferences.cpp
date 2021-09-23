@@ -169,7 +169,7 @@ public:
 	Variant getValue(const char *id) {
 		if (jobject map = env->CallObjectMethod(joSharedPreferences, jmGetAll)) {
 			if (jobject obj = env->CallObjectMethod(map, jmMapGet, env->NewStringUTF(id))) {
-				Variant ret =  _jobject_to_variant(env, obj);
+				Variant ret = _jobject_to_variant(env, obj);
 				if (ret.get_type() == Variant::STRING) {
 					String val = ret;
 					Vector<String> split = val.split(";");
