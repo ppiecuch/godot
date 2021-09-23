@@ -354,7 +354,7 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 		containerLayout = new FrameLayout(activity);
 		containerLayout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 
-		mView = new GodotView(activity, this, xrMode, use_gl3, use_32_bits, use_debug_opengl);
+		mView = new GodotView(activity, this, xrMode, use_gl3, use_32_bits, use_debug_opengl, translucent);
 
 		// GodotEditText layout
 		GodotEditText edittext = new GodotEditText(activity, mView);
