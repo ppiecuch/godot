@@ -30,12 +30,20 @@
 
 #include <jni.h>
 
+#include "core/bind/core_bind.h"
+#include "core/io/marshalls.h"
 #include "platform/android/java_godot_wrapper.h"
 #include "platform/android/jni_utils.h"
 #include "platform/android/os_android.h"
 #include "platform/android/string_android.h"
 
 #include <string>
+
+static bool isinstanceof(JNIEnv *env, jobject obj, const char *name) {
+	ERR_FAIL_COND_V(name == nullptr, false);
+	ERR_FAIL_COND_V(obj == nullptr, false);
+	return env->IsInstanceOf(obj, env->FindClass(name));
+}
 
 static _FORCE_INLINE_ GodotJavaWrapper *_get_gd_java() {
 	if (OS_Android *os = (OS_Android *)OS::get_singleton()) {
@@ -110,7 +118,7 @@ public:
 public:
 	//Note: Per default, this doesn't keep the reference to the sharedPreferences java object alive
 	//longer than the lifetime of the JNIEnv.
-	//With keepReference=true the joSharedPreferences is kept 'alive' and you can still use the class after the original JNIEnv* has become invalid -
+	//With keepReference = true the joSharedPreferences is kept 'alive' and you can still use the class after the original JNIEnv* has become invalid -
 	//but make sure to refresh the JNIEnv* object with a new valid reference via replaceJNI()
 	SharedPreferences(JNIEnv *env, jobject androidContext, const char *name, const bool keepReference = false) {
 		this->env = env;
@@ -126,6 +134,7 @@ public:
 		jmGetInt = env->GetMethodID(jcSharedPreferences, "getInt", "(Ljava/lang/String;I)I");
 		jmGetFloat = env->GetMethodID(jcSharedPreferences, "getFloat", "(Ljava/lang/String;F)F");
 		jmGetString = env->GetMethodID(jcSharedPreferences, "getString", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
+		jmGetStringSet = env->GetMethodID(jcSharedPreferences, "getStringSet", "(Ljava/lang/String;Ljava/util/Set;)Ljava/util/Set;");
 		jmGetAll = env->GetMethodID(jcSharedPreferences, "getAll", "()Ljava/util/Map;");
 		//find the 1 function we need to create the SharedPreferences.Editor object
 		jmEdit = env->GetMethodID(jcSharedPreferences, "edit", "()Landroid/content/SharedPreferences$Editor;");
@@ -150,16 +159,27 @@ private:
 	jmethodID jmGetInt;
 	jmethodID jmGetFloat;
 	jmethodID jmGetString;
+	jmethodID jmGetStringSet;
 	jmethodID jmGetAll;
 	jmethodID jmMapGet;
 	jmethodID jmEdit;
 
 public:
 	// https://gist.github.com/theeasiestway/e5f453715cecc55b5ca57d0628b9f12a
-	Variant getEntry(const char *id) {
+	Variant getValue(const char *id) {
 		if (jobject map = env->CallObjectMethod(joSharedPreferences, jmGetAll)) {
 			if (jobject obj = env->CallObjectMethod(map, jmMapGet, env->NewStringUTF(id))) {
-				return _jobject_to_variant(env, obj);
+				Variant ret =  _jobject_to_variant(env, obj);
+				if (ret.get_type() == Variant::STRING) {
+					String val = ret;
+					Vector<String> split = val.split(";");
+					if (split.size() > 1) {
+						if (split[0] == split[1].md5_text()) {
+							ret = _Marshalls::get_singleton()->base64_to_variant(split[1]);
+						}
+					}
+				}
+				return ret;
 			}
 		}
 		return Variant();
@@ -231,12 +251,16 @@ void SettingsStorage::set(const String &key, const Variant &value) {
 			_sync();
 		}
 		default:
+			String payload = _Marshalls::get_singleton()->variant_to_base64(value);
+			String val = payload.md5_text() + ";" + payload;
+			prefs.edit().putString(key.utf8().c_str(), String(value).utf8().c_str());
+			_sync();
 			break;
 	}
 }
 
 Variant SettingsStorage::get(const String &key) {
-	return prefs.getEntry(key.utf8().c_str());
+	return prefs.getValue(key.utf8().c_str());
 }
 
 SettingsStorage::SettingsStorage() :

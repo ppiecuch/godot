@@ -57,7 +57,7 @@ static String get_app_name() {
 	return appname;
 }
 
-static PoolByteArray encode_var(const Variant data) {
+static PoolByteArray encode_var(const Variant &data) {
 	PoolByteArray ret;
 	int len;
 	Error err = encode_variant(data, nullptr, len);
@@ -73,7 +73,7 @@ static PoolByteArray encode_var(const Variant data) {
 	return ret;
 }
 
-static Variant decode_var(const PoolByteArray p_data) {
+static Variant decode_var(const PoolByteArray &p_data) {
 	Variant ret;
 	PoolByteArray data = p_data;
 	PoolByteArray::Read r = data.read();
@@ -84,6 +84,12 @@ static Variant decode_var(const PoolByteArray p_data) {
 		return f;
 	}
 	return ret;
+}
+
+static Error decode_var(const PoolByteArray &p_data, Variant r_ret) {
+	PoolByteArray data = p_data;
+	PoolByteArray::Read r = data.read();
+	return decode_variant(r_ret, r.ptr(), data.size(), nullptr);
 }
 
 #if defined(ANDROID_ENABLED)

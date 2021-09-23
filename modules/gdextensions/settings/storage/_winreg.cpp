@@ -33,15 +33,15 @@
 #include <windows.h>
 
 static String key_path(const String &key) {
-	int idx = key.rfind('\\');
+	int idx = key.rfind("\\");
 	if (idx == -1) {
 		return String();
 	}
-	return key.substr(0, idx + 1); // left
+	return key.substr(0, idx + 1);
 }
 
 static String key_name(const String &key) {
-	int idx = key.rfind('\\');
+	int idx = key.rfind("\\");
 
 	String res;
 	if (idx == -1) {
@@ -62,6 +62,45 @@ static String escaped_key(String key) {
 static String unescaped_key(String key) {
 	return key.replace("/", "\\");
 }
+
+
+class RegistryKey
+{
+public:
+    RegistryKey(HKEY parent_handle = 0, const String &key = String(), bool read_only = true, REGSAM access = 0)
+	: _parent_handle(parent_handle), _handle(0), _key(key), _read_only(read_only), _access(access) {}
+    String key() const { return _key; }
+    HKEY handle() const;
+    HKEY parentHandle() const { return _parent_handle; }
+    bool read_only() const { return _read_only; }
+    void close();
+private:
+    HKEY _parent_handle;
+    mutable HKEY _handle;
+    String _key;
+    mutable bool _read_only;
+    REGSAM _access;
+};
+
+HKEY RegistryKey::handle() const {
+    if (_handle != 0)
+        return _handle;
+
+    if (_read_only)
+        _handle = openKey(_parent_handle, KEY_READ, _key, _access);
+    else
+        _handle = createOrOpenKey(_parent_handle, _key, &_read_only, _access);
+
+    return _handle;
+}
+
+void RegistryKey::close() {
+    if (m_handle != 0)
+        RegCloseKey(m_handle);
+    m_handle = 0;
+}
+
+typedef Vector<RegistryKey> RegistryKeyList;
 
 class SettingsStorage {
 public:
@@ -90,7 +129,7 @@ SettingsStorage::SettingsStorage(const String &organization, const String &appli
 	if (!organization.empty()) {
 		String prefix = "Software\\" + organization;
 		String orgPrefix = prefix + "\\OrganizationDefaults";
-		String appPrefix = prefix + '\\' + application;
+		String appPrefix = prefix + "\\" + application;
 
 		if (!application.empty())
 			regList.append(RegistryKey(HKEY_CURRENT_USER, appPrefix, !regList.empty(), access));
@@ -100,13 +139,12 @@ SettingsStorage::SettingsStorage(const String &organization, const String &appli
 		regList.append(RegistryKey(HKEY_LOCAL_MACHINE, orgPrefix, !regList.empty(), access));
 	}
 
-	ERR_FAIL_COND((regList.empty(), "Access error");
+	ERR_FAIL_COND_MSG(regList.empty(), "Access error");
 }
 
-SettingsStorage::SettingsStorage(String path, REGSAM access) :
-		access(access) {
-	if (path.begins_width('\\')) {
-		path.remove(0, 1);
+SettingsStorage::SettingsStorage(String path, REGSAM access) : access(access) {
+	if (path.begins_width("\\")) {
+		path.remove(0);
 	}
 
 	int keyLength;
@@ -142,18 +180,18 @@ SettingsStorage::SettingsStorage(String path, REGSAM access) :
 
 	if (path.length() == keyLength) {
 		regList.append(RegistryKey(keyName, String(), false, access));
-	} else if (path[keyLength] == '\\') {
+	} else if (path[keyLength] == "\\") {
 		regList.append(RegistryKey(keyName, path.mid(keyLength + 1), false, access));
 	}
 }
 
 void SettingsStorage::set(const String &key, const Variant &value) {
-	ERR_FAIL_COND((writeHandle() == 0, "Access error");
+	ERR_FAIL_COND_MSG(writeHandle() == 0, "Access error");
 
 	String _key = escaped_key(key);
 
 	HKEY handle = createOrOpenKey(writeHandle(), registryPermissions, key_path(_key), access);
-	ERR_FAIL_COND((handle() == 0, "Access error");
+	ERR_FAIL_COND_MSG(handle() == 0, "Access error");
 
 	DWORD type;
 	PoolByteArray regValueBuff;
@@ -168,7 +206,7 @@ void SettingsStorage::set(const String &key, const Variant &value) {
 			StringList l = variantListToStringList(value.toList());
 			StringList::const_iterator it = l.constBegin();
 			for (; it != l.constEnd(); ++it) {
-				if ((*it).length() == 0 || it->contains(QChar::Null)) {
+				if ((*it).length() == 0 || it->contains(0)) {
 					type = REG_BINARY;
 					break;
 				}
@@ -293,9 +331,10 @@ bool SettingsStorage::readKey(HKEY parentHandle, const String &rSubKey, Variant 
 		}
 
 		default:
-			qWarning("QSettings: Unknown data %d type in Windows registry", static_cast<int>(dataType));
-			if (value != 0)
+			WARN_PRINT("Settings: Unknown data %d type in Windows registry", static_cast<int>(dataType));
+			if (value != 0) {
 				*value = Variant();
+			}
 			break;
 	}
 
@@ -307,7 +346,7 @@ HKEY SettingsStorage::writeHandle() const {
 	if (regList.empty())
 		return 0;
 	const RegistryKey &key = regList.at(0);
-	if (key.handle() == 0 || key.readOnly())
+	if (key.handle() == 0 || key.read_only())
 		return 0;
 	return key.handle();
 }
