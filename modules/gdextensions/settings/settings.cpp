@@ -92,7 +92,7 @@ static Variant decode_var(const PoolByteArray &p_data) {
 	}
 	return ret;
 }
-#endif
+#endif // __linux__
 
 #if defined(ANDROID_ENABLED)
 #include "storage/_sharedpreferences.cpp"
