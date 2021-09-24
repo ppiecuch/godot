@@ -453,7 +453,7 @@ if selected_platform in platform_list:
     else:  # GCC, Clang
         version = methods.get_compiler_version(env) or [-1, -1]
 
-        common_warnings = []
+        common_warnings = ["-Wno-strict-overflow"]
 
         # Disable clang c++11 warnings
         if not methods.using_gcc(env):
