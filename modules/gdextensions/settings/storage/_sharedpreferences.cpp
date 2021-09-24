@@ -264,7 +264,7 @@ Variant SettingsStorage::get(const String &key) {
 }
 
 SettingsStorage::SettingsStorage() :
-	prefs(get_jni_env(), _get_activity(), get_app_name().utf8().c_str()) {
+		prefs(get_jni_env(), _get_activity(), get_app_name().utf8().c_str()) {
 	_last_sync_time = OS::get_singleton()->get_ticks_msec();
 }
 

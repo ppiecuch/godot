@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "core/variant.h"
 #include "core/int_types.h"
+#include "core/variant.h"
 
 #define UNICODE
 #include <windows.h>
@@ -40,7 +40,6 @@ static const REGSAM registryPermissions = KEY_READ | KEY_WRITE;
 
 typedef Vector<String> StringList;
 typedef PoolVector<wchar_t> PoolCharArray;
-
 
 static String key_path(const String &key) {
 	int idx = key.rfind("\\");
@@ -72,7 +71,8 @@ static String unescaped_key(String key) {
 	return key.replace("/", "\\");
 }
 
-template <typename T> static PoolVector<T> from_data(const T *data, size_t data_count) {
+template <typename T>
+static PoolVector<T> from_data(const T *data, size_t data_count) {
 	PoolVector<T> pv;
 	pv.resize(data_count);
 	if (data) {
@@ -199,7 +199,6 @@ static void delete_child_groups(HKEY parentHandle, REGSAM access = 0) {
 		}
 	}
 }
-
 
 class RegistryKey {
 public:

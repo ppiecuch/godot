@@ -129,7 +129,6 @@ Settings::~Settings() {
 	instance = nullptr;
 }
 
-
 #ifdef DOCTEST
 TEST_CASE("Storing") {
 	Settings *settings = Settings::get_singleton();
