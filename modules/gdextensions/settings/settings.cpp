@@ -35,6 +35,12 @@
 #include "core/project_settings.h"
 #include "core/variant.h"
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 Settings *Settings::instance;
 
 static String get_app_name() {
@@ -86,12 +92,6 @@ static Variant decode_var(const PoolByteArray &p_data) {
 	return ret;
 }
 
-static Error decode_var(const PoolByteArray &p_data, Variant r_ret) {
-	PoolByteArray data = p_data;
-	PoolByteArray::Read r = data.read();
-	return decode_variant(r_ret, r.ptr(), data.size(), nullptr);
-}
-
 #if defined(ANDROID_ENABLED)
 #include "storage/_sharedpreferences.cpp"
 #elif defined(IOS_ENABLED) || defined(OSX_ENABLED)
@@ -128,3 +128,34 @@ Settings::Settings() {
 Settings::~Settings() {
 	instance = nullptr;
 }
+
+
+#ifdef DOCTEST
+TEST_CASE("Storing") {
+	Settings *settings = Settings::get_singleton();
+	SUBCASE("int") {
+		settings->setv("int", 99);
+		CHECK(settings->getv("int") == 99);
+	}
+	SUBCASE("float") {
+		settings->setv("float", 1.25);
+		CHECK(settings->getv("float") == 1.25);
+	}
+	SUBCASE("Dictionary") {
+		Dictionary map1;
+		map1["1"] = 1;
+		map1["2"] = 2.5;
+		map1["3"] = "3";
+		settings->setv("dict", map1);
+		Dictionary ret1 = settings->getv("dict");
+		CHECK(ret1.has_all(array("1", "2", "3")));
+		CHECK(ret1["1"] == 1 and ret1["2"] == 2.5 and ret1["3"] == "3");
+	}
+	SUBCASE("Array") {
+		Array arr1 = array(1, 2.5, "3");
+		settings->setv("array", arr1);
+		Array ret1 = settings->getv("array");
+		CHECK(ret1[0] == 1 and ret1[1] == 2.5 and ret1[2] == "3");
+	}
+}
+#endif
