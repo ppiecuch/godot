@@ -63,6 +63,7 @@ static String get_app_name() {
 	return appname;
 }
 
+#ifndef __linux__
 static PoolByteArray encode_var(const Variant &data) {
 	PoolByteArray ret;
 	int len;
@@ -91,6 +92,7 @@ static Variant decode_var(const PoolByteArray &p_data) {
 	}
 	return ret;
 }
+#endif
 
 #if defined(ANDROID_ENABLED)
 #include "storage/_sharedpreferences.cpp"
