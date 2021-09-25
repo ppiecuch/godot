@@ -29,6 +29,7 @@
 /*************************************************************************/
 
 #include "core/int_types.h"
+#include "core/reference.h"
 #include "core/variant.h"
 
 #define UNICODE
@@ -200,7 +201,7 @@ static void delete_child_groups(HKEY parentHandle, REGSAM access = 0) {
 	}
 }
 
-class RegistryKey : public Reference {
+class RegistryKey {
 public:
 	RegistryKey(HKEY parent_handle = 0, const String &key = String(), bool read_only = true, REGSAM access = 0) :
 			_parent_handle(parent_handle), _handle(0), _key(key), _read_only(read_only), _access(access) {}
@@ -238,7 +239,7 @@ void RegistryKey::close() {
 
 typedef Vector<RegistryKey> RegistryKeyList;
 
-class SettingsStorage {
+class SettingsStorage : public Reference {
 public:
 	SettingsStorage(const String &organization = "GodotSoftware", const String &application = get_app_name(), REGSAM access = 0);
 	SettingsStorage(String key, REGSAM access = 0);
