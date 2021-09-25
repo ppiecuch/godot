@@ -65,9 +65,9 @@ private:
 public:
 	// trivial c++11 iterator
 	struct iterator {
-		Vector<T> *_array;
+		const Vector<T> *_array;
 		int _index;
-		iterator(Vector<T> *_array, int _index) :
+		iterator(const Vector<T> *_array, int _index) :
 				_array(_array), _index(_index) {}
 		bool operator!=(const iterator &other) const { return (_array != other._array) || (_index != other._index); }
 		T operator*() { return _array->get(_index); }

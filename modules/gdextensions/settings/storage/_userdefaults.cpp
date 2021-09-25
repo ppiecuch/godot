@@ -32,6 +32,7 @@
 #include <CoreFoundation/CoreFoundation.h>
 
 #include "core/os/os.h"
+#include "core/reference.h"
 #include "core/ustring.h"
 #include "core/vector.h"
 

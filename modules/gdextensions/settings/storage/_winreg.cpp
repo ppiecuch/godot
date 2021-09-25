@@ -200,7 +200,7 @@ static void delete_child_groups(HKEY parentHandle, REGSAM access = 0) {
 	}
 }
 
-class RegistryKey {
+class RegistryKey : public Reference {
 public:
 	RegistryKey(HKEY parent_handle = 0, const String &key = String(), bool read_only = true, REGSAM access = 0) :
 			_parent_handle(parent_handle), _handle(0), _key(key), _read_only(read_only), _access(access) {}
@@ -261,6 +261,12 @@ private:
 	REGSAM access;
 	bool fallbacks;
 };
+
+SettingsStorage::~SettingsStorage() {
+	for (int i = 0; i < regList.size(); ++i)
+		regList[i].close();
+	}
+}
 
 SettingsStorage::SettingsStorage(const String &organization, const String &application, REGSAM access) :
 		access(access), fallbacks(true) {
