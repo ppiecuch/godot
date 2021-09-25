@@ -181,9 +181,8 @@ public:
 							ret = _Marshalls::get_singleton()->base64_to_variant(split[2]);
 						}
 #ifdef DEBUG_ENABLED
-						else
-						{
-							WARN_PRINT("Serialized data corrupted.");
+						else {
+							WARN_PRINT("Serialized data are propably corrupted.");
 						}
 #endif
 					}
