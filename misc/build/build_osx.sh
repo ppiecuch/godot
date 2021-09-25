@@ -3,6 +3,7 @@
 set -e
 
 CPU=$(sysctl -n hw.physicalcpu)
+
 if [ -z "$CPU" ]; then
 	CPU=2
 fi

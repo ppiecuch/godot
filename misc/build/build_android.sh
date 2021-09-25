@@ -8,7 +8,9 @@ set -e
 CPU=2
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
-	CPU=$(sysctl -n hw.physicalcpu)
+        CPU=$(sysctl -n hw.physicalcpu)
+elif [[ "$OSTYPE" == "linux"* ]]; then
+        CPU=$(nproc)
 fi
 
 export ANDROID_SDK_ROOT=$HOME/Library/Android/sdk
