@@ -85,6 +85,10 @@
 #include "bytecode_export/gd2c.h"
 #endif
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#endif
+
 /* Static members */
 
 // Singletons
@@ -322,6 +326,9 @@ void Main::print_help(const char *p_binary) {
 #endif
 #ifdef BYTECODE_EXPORT_ENABLED
 	OS::get_singleton()->print("  --dump-bytecode <file>           Generate script's bytecode dump.\n");
+#endif
+#ifdef DOCTEST
+	OS::get_singleton()->print("  --doctest                        Run embedded tests from doctest.\n");
 #endif
 	OS::get_singleton()->print("  --test <test>                    Run a unit test (");
 	const char **test_names = tests_get_names();
@@ -1607,6 +1614,10 @@ bool Main::start() {
 				editor = true;
 				_export_preset = args[i + 1];
 				export_pack_only = true;
+#endif
+#ifdef DOCTEST
+			} else if (args[i] == "--doctest") {
+				return doctest::Context(argc, argv).run();
 #endif
 			} else {
 				// The parameter does not match anything known, don't skip the next argument
