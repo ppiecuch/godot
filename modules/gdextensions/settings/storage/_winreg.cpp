@@ -264,7 +264,7 @@ private:
 };
 
 SettingsStorage::~SettingsStorage() {
-	for (int i = 0; i < regList.size(); ++i)
+	for (int i = 0; i < regList.size(); ++i) {
 		regList[i].close();
 	}
 }
