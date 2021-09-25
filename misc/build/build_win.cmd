@@ -1,5 +1,9 @@
 @ECHO OFF
 
+REM Prerequsits:
+REM ------------
+REM c:\Python\27\Scripts\pip.exe install pywin32
+
 CLS
 
 SETLOCAL
