@@ -4,9 +4,12 @@ FROM sdthirlwall/raspberry-pi-cross-compiler
 RUN curl -L https://github.com/raspberrypi/firmware/tarball/master \
 	| tar --strip-components 1 --directory $SYSROOT --wildcards -xzf - "*/opt/vc"
 
-# Jessie is no longer available from raspbian.org
-RUN sed -i "s~archive.raspbian.org/raspbian~mirrors.sohu.com/raspbian/raspbian~g" $SYSROOT/etc/apt/sources.list
+# Install some native tools
+RUN install-debian --update dnsutils pkg-config scons
 
-# Install some native and raspbian build-time tools
-RUN install-debian --update pkg-config scons \
-	&& install-raspbian --update libgles2-mesa-dev libpng-dev libz-dev
+# Jessie is no longer available from raspbian.org
+RUN echo "$(dig +short mirrors.sohu.com) mirrors.sohu.com" >> $SYSROOT/etc/hosts \
+	&& sed -i "s~archive.raspbian.org/raspbian~mirrors.sohu.com/raspbian/raspbian~g" $SYSROOT/etc/apt/sources.list
+
+# Install some raspbian build-time tools
+RUN install-raspbian --update libgles2-mesa-dev libpng-dev libz-dev
