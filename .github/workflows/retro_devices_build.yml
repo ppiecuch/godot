@@ -5,6 +5,8 @@ on: [push, pull_request]
 # https://github.com/sdt/docker-raspberry-pi-cross-compiler
 # https://www.raspberrypi.org/forums/viewtopic.php?t=11629
 
+# https://releases.linaro.org/components/toolchain/binaries/6.3-2017.05/aarch64-linux-gnu/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu.tar.xz
+
 
 # Global Cache Settings
 env:
@@ -15,7 +17,7 @@ env:
   GCW0_TOOLCHAIN: 2021-03-10
   ODROID_TAG: 2020-10-01
   ODROID_ARCH: gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu
-  ODROID_TOOLCHAIN: https://releases.linaro.org/components/toolchain/binaries/6.3-2017.05/aarch64-linux-gnu/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu.tar.xz
+  ODROID_TOOLCHAIN: https://github.com/respeaker/toolchains/raw/master/gcc-linaro-6.3.1-2017.05-x86_64_arm-linux-gnueabihf.tar.xz
   RETENTION_DAYS: 2
 
 jobs:

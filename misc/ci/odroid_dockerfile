@@ -17,7 +17,7 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/* \
   && cd /opt \
   && echo "*** Fetching toolchain $version ..." \
-  && curl -sL $toolchain | tar xJ \
+  && curl -skL $toolchain | tar xJ \
   && echo "*** Fetching Khronos headers ..." \
   && curl -L https://github.com/KhronosGroup/OpenGL-Registry/tarball/main \
   | tar --strip-components 2 --directory /opt/usr/include/api --wildcards -xzf - "*/api" \
