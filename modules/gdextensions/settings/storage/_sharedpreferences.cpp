@@ -173,10 +173,19 @@ public:
 				if (ret.get_type() == Variant::STRING) {
 					String val = ret;
 					Vector<String> split = val.split(";");
-					if (split.size() > 1) {
-						if (split[0] == split[1].md5_text()) {
-							ret = _Marshalls::get_singleton()->base64_to_variant(split[1]);
+					if (split.size() == 3 && split[0] == "V") {
+#ifdef DEBUG_ENABLED
+						if (split[1] == split[2].md5_text())
+#endif
+						{
+							ret = _Marshalls::get_singleton()->base64_to_variant(split[2]);
 						}
+#ifdef DEBUG_ENABLED
+						else
+						{
+							WARN_PRINT("Serialized data corrupted.");
+						}
+#endif
 					}
 				}
 				return ret;
@@ -252,7 +261,7 @@ void SettingsStorage::set(const String &key, const Variant &value) {
 		}
 		default:
 			String payload = _Marshalls::get_singleton()->variant_to_base64(value);
-			String val = payload.md5_text() + ";" + payload;
+			String val = "V;" + payload.md5_text() + ";" + payload;
 			prefs.edit().putString(key.utf8().c_str(), String(value).utf8().c_str());
 			_sync();
 			break;
