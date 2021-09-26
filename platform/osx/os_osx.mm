@@ -467,7 +467,26 @@ typedef enum BackingLayerTag : NSUInteger {
 	kGodotMetalBacking,
 } BackingLayerType;
 
-@interface GodotContentView : NSView <NSTextInputClient> {
+enum TouchBarAction {
+	ACTION_PLAY,
+	ACTION_PAUSE,
+	ACTION_STOP,
+	ACTION_PLAY_SCENE,
+	ACTION_PLAY_CUSTOM,
+};
+
+static NSDictionary *touchBarButtonEditorActions = @{
+	@"godot.play" : @[ [NSNumber numberWithInt:ACTION_PLAY], @"Run" ],
+	@"godot.pause" : @[ [NSNumber numberWithInt:ACTION_PAUSE], @"Pause Scene" ],
+	@"godot.stop" : @[ [NSNumber numberWithInt:ACTION_STOP], @"Stop" ],
+	@"godot.play_scene" : @[ [NSNumber numberWithInt:ACTION_PLAY_SCENE], @"Play Scene" ],
+	@"godot.play_custom" : @[ [NSNumber numberWithInt:ACTION_PLAY_CUSTOM], @"Play Custom" ],
+};
+
+static NSDictionary *touchBarButtonRuntimeActions = @{
+};
+
+@interface GodotContentView : NSView <NSTextInputClient, NSTouchBarDelegate> {
 	NSTrackingArea *trackingArea;
 	NSMutableAttributedString *markedText;
 	bool imeInputEventInProgress;
@@ -1426,8 +1445,7 @@ inline void sendPanEvent(double dx, double dy, int modifierFlags) {
 	}
 }
 
-// OpenGL interface
-
+#pragma mark OpenGL interface
 - (void)initDetails {
 	NSNotificationCenter *ntfcenter;
 
@@ -1564,10 +1582,50 @@ inline void sendPanEvent(double dx, double dy, int modifierFlags) {
 	pixelFormat = nil;
 }
 
-// Metal interface
-
+#pragma mark Metal interface
 - (void)deallocMetal {
 }
+
+#pragma mark NSTouchBarDelegate/NSTouchBarProvider
+// https://github.com/OpenTTD/OpenTTD/commit/753b1d7e155ffe7b3585273998278aceee25fa1a#diff-491420423ac8b908eb1a5e8ada4e788114e40eb60e198119310351e35ebfc408
+- (void)touchBarButtonAction:(id)sender {
+	if (@available(macOS 10.15, *)) {
+		/*
+		NSButtonTouchBarItem *btn = (NSButtonTouchBarItem *)sender;
+		NSNumber *hotkeyIndex = [[touchBarButtonActions objectForKey:btn.identifier] objectAtIndex:0];
+		if (OS_OSX::singleton->get_main_loop())
+			OS_OSX::singleton->get_main_loop()->notification(hotkeyIndex.intValue);
+*/
+	}
+}
+
+- (nullable NSTouchBar *)makeTouchBar {
+	if (Engine::get_singleton()->is_editor_hint()) {
+		NSTouchBar *bar = [[NSTouchBar alloc] init];
+		bar.delegate = self;
+		bar.defaultItemIdentifiers = [touchBarButtonEditorActions allKeys];
+		return bar;
+	} else {
+		return nullptr;
+	}
+}
+
+- (nullable NSTouchBarItem *)touchBar:(NSTouchBar *)touchBar makeItemForIdentifier:(NSTouchBarItemIdentifier)identifier {
+	if (@available(macOS 10.15, *)) {
+		NSButtonTouchBarItem *button = [[NSButtonTouchBarItem alloc] initWithIdentifier:identifier];
+		button.target = self;
+		button.action = @selector(touchBarButtonAction:);
+		if (Engine::get_singleton()->is_editor_hint()) {
+			button.title = NSLocalizedString([[touchBarButtonEditorActions objectForKey:identifier] objectAtIndex:1], @"");
+		} else {
+			button.title = NSLocalizedString([[touchBarButtonRuntimeActions objectForKey:identifier] objectAtIndex:1], @"");
+		}
+		return button;
+	} else {
+		return nullptr;
+	}
+}
+
 @end
 
 @interface GodotWindow : NSWindow {
