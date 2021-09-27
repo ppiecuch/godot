@@ -483,8 +483,7 @@ static NSDictionary *touchBarButtonEditorActions = @{
 	@"godot.play_custom" : @[ [NSNumber numberWithInt:ACTION_PLAY_CUSTOM], @"Play Custom" ],
 };
 
-static NSDictionary *touchBarButtonRuntimeActions = @{
-};
+static NSDictionary *touchBarButtonRuntimeActions = @{};
 
 @interface GodotContentView : NSView <NSTextInputClient, NSTouchBarDelegate> {
 	NSTrackingArea *trackingArea;
