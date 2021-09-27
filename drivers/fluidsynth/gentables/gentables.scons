@@ -1,0 +1,12 @@
+import sys
+
+tools = "gentables"
+
+# this is a host-only tool and does not require any special
+# build settings
+env_app = Environment()
+fluid_root = ARGUMENTS.get('fluid_root', "")
+if fluid_root:
+	tools = fluid_root + "/" + tools
+	env_app.Replace(CPPPATH = fluid_root)
+env_app.Program("make_tables", [tools + "/make_tables.c", tools + "/gen_conv.c", tools + "/gen_rvoice_dsp.c"])

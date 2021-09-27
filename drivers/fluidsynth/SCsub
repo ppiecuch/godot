@@ -1,0 +1,27 @@
+#!/usr/bin/env python
+import os
+
+Import("env")
+
+fluidsynth = Dir("#thirdparty/fluidsynth/").abspath
+working = Dir("#drivers/fluidsynth/").abspath
+
+# Check if env, is correct
+for p in [fluidsynth, working]:
+	if not os.path.exists(p):
+		print("Missing required location: " + p)
+		sys.exit(255)
+
+# Need to build tools first as they will be used later
+# (not sure if this is the right ways to force building)
+env.Execute(Action("cd gentables && scons -Qf gentables.scons fluid_root='{0}'".format(fluidsynth)))
+
+gen_tables_out = [working + "/utils/fluid_conv_tables.inc.h", working + "/utils/fluid_rvoice_dsp_tables.inc.h"]
+gen_tables_in = working + "/gentables/make_tables"
+gen_tables_cmd = "cd '{0}' && mkdir -p utils && gentables/make_tables utils/".format(working)
+env.Command(gen_tables_out, gen_tables_in, gen_tables_cmd)
+
+env.Prepend(CPPPATH=["utils", fluidsynth, fluidsynth + "/include", fluidsynth + "/utils", fluidsynth + "/synth", fluidsynth + "/midi", fluidsynth + "/rvoice", fluidsynth + "/sfloader", fluidsynth + "/drivers"])
+env.add_source_files(env.drivers_sources, fluidsynth + "/utils/*.c")
+env.add_source_files(env.drivers_sources, fluidsynth + "/synth/*.c")
+env.add_source_files(env.drivers_sources, "*.cpp")

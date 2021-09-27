@@ -21,8 +21,11 @@ def add_source_files(self, sources, files, warn_duplicates=True):
                 return
             files = [files]
         else:
-            dir_path = self.Dir(".").abspath
-            files = sorted(glob.glob(dir_path + "/" + files))
+            if files.startswith("/"):
+                files = sorted(glob.glob(files))
+            else:
+                dir_path = self.Dir(".").abspath
+                files = sorted(glob.glob(dir_path + "/" + files))
 
     # Add each path as compiled Object following environment (self) configuration
     for path in files:
