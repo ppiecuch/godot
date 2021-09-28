@@ -407,7 +407,7 @@ def split_lib(self, libname, src_list=None, env_lib=None):
 
 def shell_cmd(self, key):
     _shell = {
-        "windows": {
+        "win32": {
             "COPY" : "copy /y",
             "COPY_DIR" : "xcopy /s /q /y /i",
             "MOVE" : "move",
@@ -433,8 +433,8 @@ def shell_cmd(self, key):
     }
     if sys.platform == "darwin" or sys.platform == "linux":
         return _shell["posix"][key]
-    elif sys.platform == "windows":
-        return _shell["windows"][key]
+    elif sys.platform == "win32":
+        return _shell["win32"][key]
     else:
         return ""
 
