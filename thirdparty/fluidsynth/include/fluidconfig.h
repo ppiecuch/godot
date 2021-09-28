@@ -21,9 +21,7 @@
 #endif
 
 /* Define to 1 if you have the <inttypes.h> header file. */
-#ifdef __linux__
 #define HAVE_INTTYPES_H 1
-#endif
 
 /* Define to 1 if you have the <io.h> header file. */
 #ifdef _WIN32
@@ -37,17 +35,15 @@
 #define HAVE_MATH_H 1
 
 /* Define if compiling the mixer with multi-thread support */
-#ifdef __APPLE__
 #define ENABLE_MIXER_THREADS 1
-#endif
 
 /* Define to 1 if you have the <pthread.h> header file. */
-#ifdef __APPLE__
+#ifdef __linux__
 #define HAVE_PTHREAD_H 1
 #endif
 
 /* Define to 1 if you have the <signal.h> header file. */
-#ifdef __APPLE__
+#ifdef __linux__
 #define HAVE_SIGNAL_H 1
 #endif
 
@@ -78,22 +74,16 @@
 #endif
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
-#ifdef __APPLE__
 #define HAVE_SYS_STAT_H 1
-#endif
 
 /* Define to 1 if you have the <sys/time.h> header file. */
-#ifdef __linux__
 #define HAVE_SYS_TIME_H 1
-#endif
 
 /* Define to 1 if you have the <sys/types.h> header file. */
-#ifndef _WIN32
 #define HAVE_SYS_TYPES_H 1
-#endif
 
 /* Define to 1 if you have the <unistd.h> header file. */
-#ifndef _WIN32
+#ifdef __linux__
 #define HAVE_UNISTD_H 1
 #endif
 

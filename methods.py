@@ -407,32 +407,32 @@ def split_lib(self, libname, src_list=None, env_lib=None):
 
 def shell_cmd(self, key):
     _shell = {
-        'windows': {
-            'COPY'            : 'copy /y',
-            'COPY_DIR'        : 'xcopy /s /q /y /i',
-            'MOVE'            : 'move',
-            'DEL_FILE'        : 'del',
-            'DEL_DIR'         : 'rmdir',
-            'CHK_DIR_EXISTS'  : 'if not exist',
-            'MKDIR'           : 'mkdir',
-            'THEN'            : ''
+        "windows": {
+            "COPY"            : "copy /y",
+            "COPY_DIR"        : "xcopy /s /q /y /i",
+            "MOVE"            : "move",
+            "DEL_FILE"        : "del",
+            "DEL_DIR"         : "rmdir",
+            "CHK_DIR_EXISTS"  : "if not exist",
+            "MKDIR"           : "mkdir",
+            "THEN"            : ""
         },
-        'posix': {
-            'COPY'            : 'cp -f',
-            'COPY_FILE'       : 'cp',
-            'COPY_DIR'        : 'cp -r',
-            'MOVE'            : 'mv -f',
-            'DEL_FILE'        : 'rm -f',
-            'DEL_DIR'         : 'rmdir',
-            'CHK_DIR_EXISTS'  : 'test -d',
-            'MKDIR'           : 'mkdir -p',
-            'THEN'            : '||'
+        "posix": {
+            "COPY"            : "cp -f",
+            "COPY_FILE"       : "cp",
+            "COPY_DIR"        : "cp -r",
+            "MOVE"            : "mv -f",
+            "DEL_FILE"        : "rm -f",
+            "DEL_DIR"         : "rmdir",
+            "CHK_DIR_EXISTS"  : "test -d",
+            "MKDIR"           : "mkdir -p",
+            "THEN"            : "||"
         }
     }
     if sys.platform == "darwin" or sys.platform == "linux":
-        return _shell['posix'][key]
+        return _shell["posix"][key]
     elif sys.platform == "windows":
-        return _shell['windows'][key]
+        return _shell["windows"][key]
     else:
         return ""
 
