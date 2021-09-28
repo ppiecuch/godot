@@ -48,12 +48,19 @@
  * 02110-1301, USA
  */
 
+#include "fluidconfig.h"
+
 #include "core/os/dir_access.h"
 #include "core/os/file_access.h"
 #include "core/os/os.h"
 
+#if HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+
 extern "C" double
-fluid_utime(void) {
+fluid_utime(void)
+{
 	return OS::get_singleton()->get_ticks_usec();
 }
 
@@ -62,7 +69,8 @@ enum {
 	FILE_TEST_IS_REGULAR,
 };
 extern "C" bool
-fluid_file_test(const char *path, int test_op) {
+fluid_file_test(const char *path, int test_op)
+{
 	if (test_op == FILE_TEST_EXISTS) {
 		return FileAccess::exists(path) || DirAccess::exists(path);
 	}
@@ -71,4 +79,30 @@ fluid_file_test(const char *path, int test_op) {
 	}
 	WARN_PRINT("Unknown file test operation");
 	return false;
+}
+
+#ifdef HAVE_SYS_STAT_H
+typedef struct stat fluid_stat_buf_t;
+#else
+typedef struct _fluid_stat_buf_t{ int st_mtime; } fluid_stat_buf_t;
+#endif
+
+static bool _is_link(const String &path) {
+	DirAccessRef da(DirAccess::create_for_path(path));
+	return da->is_link(path);
+}
+
+extern "C" bool fluid_stat(const char *path, fluid_stat_buf_t *statbuf)
+{
+#ifdef HAVE_SYS_STAT_H
+	if (DirAccess::exists(path)) { if (statbuf) statbuf->st_mode = S_IFDIR; }
+	else if (FileAccess::exists(path)) { if (statbuf) statbuf->st_mode = S_IFREG; }
+	else return false;
+	if (_is_link(path)) { if (statbuf) statbuf->st_mode = S_IFLNK; }
+	if (statbuf) {  statbuf->st_ctime = statbuf->st_mtime = FileAccess::get_modified_time(path); }
+#else
+	if (!DirAccess::exists(path) && !FileAccess::exists(path)) return false;
+	if (statbuf) {  statbuf->st_ctime = statbuf->st_mtime = FileAccess::get_modified_time(path); }
+#endif
+	return true;
 }

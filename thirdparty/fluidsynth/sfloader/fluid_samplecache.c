@@ -57,7 +57,11 @@ struct _fluid_samplecache_entry_t
 };
 
 static fluid_list_t *samplecache_list = NULL;
+#ifdef FLUID_MUTEX_INIT
 static fluid_mutex_t samplecache_mutex = FLUID_MUTEX_INIT;
+#else
+static fluid_mutex_t samplecache_mutex;
+#endif
 
 static fluid_samplecache_entry_t *new_samplecache_entry(SFData *sf, unsigned int sample_start,
         unsigned int sample_end, int sample_type, time_t mtime);

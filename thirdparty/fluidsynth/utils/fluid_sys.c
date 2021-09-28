@@ -395,18 +395,6 @@ fluid_thread_self_set_prio(int prio_level)
     }
 }
 
-
-#elif defined(__OS2__)  /* OS/2 specific stuff */
-
-void
-fluid_thread_self_set_prio(int prio_level)
-{
-    if(prio_level > 0)
-    {
-        DosSetPriority(PRTYS_THREAD, PRTYC_REGULAR, PRTYD_MAXIMUM, 0);
-    }
-}
-
 #else   /* POSIX stuff..  Nice POSIX..  Good POSIX. */
 
 void
@@ -425,90 +413,11 @@ fluid_thread_self_set_prio(int prio_level)
             return;
         }
 
-#ifdef DBUS_SUPPORT
-        /* Try to gain high priority via rtkit */
-
-        if(fluid_rtkit_make_realtime(0, prio_level) == 0)
-        {
-            return;
-        }
-
-#endif
         FLUID_LOG(FLUID_WARN, "Failed to set thread to high priority");
     }
 }
 
-#ifdef FPE_CHECK
-
-/***************************************************************
- *
- *               Floating point exceptions
- *
- *  The floating point exception functions were taken from Ircam's
- *  jMax source code. https://www.ircam.fr/jmax
- *
- *  FIXME: check in config for i386 machine
- *
- *  Currently not used. I leave the code here in case we want to pick
- *  this up again some time later.
- */
-
-/* Exception flags */
-#define _FPU_STATUS_IE    0x001  /* Invalid Operation */
-#define _FPU_STATUS_DE    0x002  /* Denormalized Operand */
-#define _FPU_STATUS_ZE    0x004  /* Zero Divide */
-#define _FPU_STATUS_OE    0x008  /* Overflow */
-#define _FPU_STATUS_UE    0x010  /* Underflow */
-#define _FPU_STATUS_PE    0x020  /* Precision */
-#define _FPU_STATUS_SF    0x040  /* Stack Fault */
-#define _FPU_STATUS_ES    0x080  /* Error Summary Status */
-
-/* Macros for accessing the FPU status word.  */
-
-/* get the FPU status */
-#define _FPU_GET_SW(sw) __asm__ ("fnstsw %0" : "=m" (*&sw))
-
-/* clear the FPU status */
-#define _FPU_CLR_SW() __asm__ ("fnclex" : : )
-
-/* Purpose:
- * Checks, if the floating point unit has produced an exception, print a message
- * if so and clear the exception.
- */
-unsigned int fluid_check_fpe_i386(char *explanation)
-{
-    unsigned int s;
-
-    _FPU_GET_SW(s);
-    _FPU_CLR_SW();
-
-    s &= _FPU_STATUS_IE | _FPU_STATUS_DE | _FPU_STATUS_ZE | _FPU_STATUS_OE | _FPU_STATUS_UE;
-
-    if(s)
-    {
-        FLUID_LOG(FLUID_WARN, "FPE exception (before or in %s): %s%s%s%s%s", explanation,
-                  (s & _FPU_STATUS_IE) ? "Invalid operation " : "",
-                  (s & _FPU_STATUS_DE) ? "Denormal number " : "",
-                  (s & _FPU_STATUS_ZE) ? "Zero divide " : "",
-                  (s & _FPU_STATUS_OE) ? "Overflow " : "",
-                  (s & _FPU_STATUS_UE) ? "Underflow " : "");
-    }
-
-    return s;
-}
-
-/* Purpose:
- * Clear floating point exception.
- */
-void fluid_clear_fpe_i386(void)
-{
-    _FPU_CLR_SW();
-}
-
-#endif	// ifdef FPE_CHECK
-
-
-#endif	// #else    (its POSIX)
+#endif	// (its POSIX)
 
 
 /***************************************************************
@@ -991,14 +900,12 @@ new_fluid_thread(const char *name, fluid_thread_func_t func, void *data, int pri
         info->func = func;
         info->data = data;
         info->prio_level = prio_level;
+
+        data = info;
         func = fluid_thread_high_prio;
     }
 
-#if _WIN32
-    *thread = CreateThread(NULL, 0, func, data, 0, NULL);
-#else
-    pthread_create(thread, NULL, func, data);
-#endif
+    _new_thread(thread, func, data);
 
     if(!thread)
     {
@@ -1008,12 +915,8 @@ new_fluid_thread(const char *name, fluid_thread_func_t func, void *data, int pri
     }
 
     if(detach)
-    { // Release thread reference, if caller wants to detach
-#if _WIN32
-        CloseHandle(*thread);
-#else
-        pthread_detach(*thread);
-#endif
+    {
+        _detach_thread(thread); // Release thread reference, if caller wants to detach
     }
 
     return thread;
@@ -1037,13 +940,7 @@ delete_fluid_thread(fluid_thread_t *thread)
 int
 fluid_thread_join(fluid_thread_t *thread)
 {
-#ifdef _WIN32
-    WaitForSingleObject(*thread, INFINITE);
-    CloseHandle(*thread);
-#else
-    pthread_join(*thread, NULL);
-#endif
-
+    _thread_join(thread);
     return FLUID_OK;
 }
 

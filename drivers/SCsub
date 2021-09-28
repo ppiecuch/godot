@@ -21,7 +21,8 @@ if env["xaudio2"]:
 SConscript("alsamidi/SCsub")
 SConscript("coremidi/SCsub")
 SConscript("winmidi/SCsub")
-SConscript("fluidsynth/SCsub")
+if not env["disable_experimental"]:
+    SConscript("fluidsynth/SCsub")
 
 # Graphics drivers
 if env["platform"] != "3ds" and env["platform"] != "psp":

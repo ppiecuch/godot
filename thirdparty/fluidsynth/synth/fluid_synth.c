@@ -25,15 +25,6 @@
 #include "fluid_settings.h"
 #include "fluid_sfont.h"
 #include "fluid_defsfont.h"
-#include "fluid_instpatch.h"
-
-#ifdef TRAP_ON_FPE
-#define _GNU_SOURCE
-#include <fenv.h>
-
-/* seems to not be declared in fenv.h */
-extern int feenableexcept(int excepts);
-#endif
 
 #define FLUID_API_RETURN(return_value) \
   do { fluid_synth_api_exit(synth); \
@@ -476,14 +467,6 @@ fluid_synth_init(void)
     fluid_mod_set_dest(&custom_balance_mod, GEN_CUSTOM_BALANCE);     /* Destination: stereo balance */
     /* Amount: 96 dB of attenuation (on the opposite channel) */
     fluid_mod_set_amount(&custom_balance_mod, FLUID_PEAK_ATTENUATION); /* Amount: 960 */
-
-#if defined(LIBINSTPATCH_SUPPORT)
-    /* defer libinstpatch init to fluid_instpatch.c to avoid #include "libinstpatch.h" */
-    if(!fluid_instpatch_supports_multi_init())
-    {
-        fluid_instpatch_init();
-    }
-#endif
 }
 
 static FLUID_INLINE unsigned int fluid_synth_get_ticks(fluid_synth_t *synth)

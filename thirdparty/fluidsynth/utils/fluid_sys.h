@@ -146,10 +146,21 @@ char* fluid_get_windows_error(void);
 #define FLUID_INT_TO_POINTER(x)   ((void *)(intptr_t)(x))
 
 /* Endian detection */
-#define FLUID_IS_BIG_ENDIAN       (G_BYTE_ORDER == G_BIG_ENDIAN)
+#define SWAP32(l) ((((l) >> 24) & 0x000000ff) | (((l) >> 8) & 0x0000ff00) | (((l) << 8) & 0x00ff0000) | (((l) << 24) & 0xff000000))
+#define SWAP16(w) ((((w) >> 8) & 0x00ff) | (((w) << 8) & 0xff00))
 
-#define FLUID_LE32TOH(x)          GINT32_FROM_LE(x)
-#define FLUID_LE16TOH(x)          GINT16_FROM_LE(x)
+#ifdef WORDS_BIGENDIAN
+#define FLUID_IS_BIG_ENDIAN       (1)
+#define INT16_FROM_LE(val)        SWAP16(val)
+#define INT32_FROM_LE(val)        SWAP32(val)
+#else
+#define FLUID_IS_BIG_ENDIAN       (0)
+#define INT16_FROM_LE(val)        ((signed short)(val))
+#define INT32_FROM_LE(val)        ((signed int)(val))
+#endif
+
+#define FLUID_LE32TOH(x)          INT32_FROM_LE(x)
+#define FLUID_LE16TOH(x)          INT16_FROM_LE(x)
 
 #if FLUID_IS_BIG_ENDIAN
 #define FLUID_FOURCC(_a, _b, _c, _d) \
@@ -199,7 +210,7 @@ int fluid_timer_is_running(const fluid_timer_t *timer);
 long fluid_timer_get_interval(const fluid_timer_t * timer);
 
 
-/* Sockets and I/O */
+/* I/O */
 
 int fluid_istream_readline(fluid_istream_t in, fluid_ostream_t out, char *prompt, char *buf, int len);
 int fluid_ostream_printf(fluid_ostream_t out, const char *format, ...);
@@ -298,8 +309,12 @@ typedef void *(*fluid_thread_func_t)(void* data);
 #define fluid_thread_id_t               pthread_t              /* Data type for a thread ID */
 #define fluid_thread_get_id()           pthread_self()         /* Get unique "ID" for current thread */
 
+#define _new_thread(thread, func, data) pthread_create(thread, NULL, func, data);
+#define _detach_thread(thread) pthread_detach(*thread)
+#define _thread_join(thread) pthread_join(*thread, NULL)
+
 fluid_thread_t* new_fluid_thread(const char *name, fluid_thread_func_t func, void *data,
-                                 int prio_level, int detach);
+                                int prio_level, int detach);
 void delete_fluid_thread(fluid_thread_t* thread);
 void fluid_thread_self_set_prio (int prio_level);
 int fluid_thread_join(fluid_thread_t* thread);
@@ -393,6 +408,10 @@ typedef DWORD (WINAPI *fluid_thread_func_t)(void* data);
 #define fluid_thread_id_t               DWORD                  /* Data type for a thread ID */
 #define fluid_thread_get_id()           GetCurrentThreadId()   /* Get unique "ID" for current thread */
 
+#define _new_thread(thread, func, data) *thread = CreateThread(NULL, 0, func, data, 0, NULL)
+#define _detach_thread(thread) CloseHandle(*thread);
+#define _thread_join(thread) { WaitForSingleObject(*thread, INFINITE); CloseHandle(*thread); }
+
 fluid_thread_t* new_fluid_thread(const char *name, fluid_thread_func_t func, void *data,
                                  int prio_level, int detach);
 void delete_fluid_thread(fluid_thread_t* thread);
@@ -408,12 +427,12 @@ int fluid_thread_join(fluid_thread_t* thread);
 
 
 /* File access */
-#define fluid_stat(_filename, _statbuf)   g_stat((_filename), (_statbuf))
 #ifdef HAVE_SYS_STAT_H
 typedef struct stat fluid_stat_buf_t;
 #else
-typedef struct _fluid_stat_buf_t{int st_mtime;} fluid_stat_buf_t;
+typedef struct _fluid_stat_buf_t{ int st_mtime; } fluid_stat_buf_t;
 #endif
+bool fluid_stat(const char *filename, fluid_stat_buf_t *statbuf);
 
 enum {
 	FILE_TEST_EXISTS,
