@@ -22,7 +22,6 @@
 #include "fluid_hash.h"
 #include "fluid_synth.h"
 #include "fluid_adriver.h"
-#include "fluid_mdriver.h"
 #include "fluid_settings.h"
 #include "fluid_midi.h"
 
@@ -332,7 +331,6 @@ fluid_settings_init(fluid_settings_t *settings)
     fluid_player_settings(settings);
     fluid_file_renderer_settings(settings);
     fluid_audio_driver_settings(settings);
-    fluid_midi_driver_settings(settings);
 }
 
 static int

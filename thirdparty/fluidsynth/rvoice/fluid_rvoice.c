@@ -98,8 +98,6 @@ fluid_rvoice_calc_amp(fluid_rvoice_t *voice)
     /* Volume increment to go from voice->amp to target_amp in FLUID_BUFSIZE steps */
     voice->dsp.amp_incr = (target_amp - voice->dsp.amp) / FLUID_BUFSIZE;
 
-    fluid_check_fpe("voice_write amplitude calculation");
-
     /* no volume and not changing? - No need to process */
     if((voice->dsp.amp == 0.0f) && (voice->dsp.amp_incr == 0.0f))
     {
@@ -132,7 +130,6 @@ fluid_rvoice_check_sample_sanity(fluid_rvoice_t *voice)
     /* make sure we have enough samples surrounding the loop */
     int min_index_loop = (int) voice->dsp.sample->start + FLUID_MIN_LOOP_PAD;
     int max_index_loop = (int) voice->dsp.sample->end - FLUID_MIN_LOOP_PAD + 1;	/* 'end' is last valid sample, loopend can be + 1 */
-    fluid_check_fpe("voice_check_sample_sanity start");
 
 #if 0
     printf("Sample from %i to %i\n", voice->dsp.sample->start, voice->dsp.sample->end);
@@ -285,7 +282,6 @@ fluid_rvoice_check_sample_sanity(fluid_rvoice_t *voice)
 #if 0
     printf("Sane? playback loop from %i to %i\n", voice->dsp.loopstart, voice->dsp.loopend);
 #endif
-    fluid_check_fpe("voice_check_sample_sanity");
 }
 
 
@@ -332,7 +328,6 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
     /******************* vol env **********************/
 
     fluid_adsr_env_calc(&voice->envlfo.volenv, 1);
-    fluid_check_fpe("voice_write vol env");
 
     if(fluid_adsr_env_get_section(&voice->envlfo.volenv) == FLUID_VOICE_ENVFINISHED)
     {
@@ -342,14 +337,11 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
     /******************* mod env **********************/
 
     fluid_adsr_env_calc(&voice->envlfo.modenv, 0);
-    fluid_check_fpe("voice_write mod env");
 
     /******************* lfo **********************/
 
     fluid_lfo_calc(&voice->envlfo.modlfo, ticks);
-    fluid_check_fpe("voice_write mod LFO");
     fluid_lfo_calc(&voice->envlfo.viblfo, ticks);
-    fluid_check_fpe("voice_write vib LFO");
 
     /******************* amplitude **********************/
 
@@ -412,8 +404,6 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
         }
     }
 
-    fluid_check_fpe("voice_write phase calculation");
-
     /* if phase_incr is not advancing, set it to the minimum fraction value (prevent stuckage) */
     if(voice->dsp.phase_incr == 0)
     {
@@ -450,8 +440,6 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
         count = fluid_rvoice_dsp_interpolate_7th_order(&voice->dsp, dsp_buf, is_looping);
         break;
     }
-
-    fluid_check_fpe("voice_write interpolation");
 
     if(count == 0)
     {

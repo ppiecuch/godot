@@ -23,7 +23,6 @@
 #include "fluid_sys.h"
 #include "fluid_rev.h"
 #include "fluid_chorus.h"
-#include "fluid_ladspa.h"
 #include "fluid_synth.h"
 
 
@@ -1222,7 +1221,7 @@ int fluid_rvoice_mixer_get_active_voices(fluid_rvoice_mixer_t *mixer)
 static FLUID_INLINE fluid_rvoice_t *
 fluid_mixer_get_mt_rvoice(fluid_rvoice_mixer_t *mixer)
 {
-    int i = fluid_atomic_int_exchange_and_add(&mixer->current_rvoice, 1);
+    int i = fluid_atomic_int_add(&mixer->current_rvoice, 1);
 
     if(i >= mixer->active_voices)
     {

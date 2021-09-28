@@ -137,8 +137,6 @@ fluid_iir_filter_apply(fluid_iir_filter_t *iir_filter,
         iir_filter->b02 = dsp_b02;
         iir_filter->b1 = dsp_b1;
         iir_filter->filter_coeff_incr_count = dsp_filter_coeff_incr_count;
-
-        fluid_check_fpe("voice_filter");
     }
 }
 
@@ -361,8 +359,6 @@ fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t *iir_filter,
             /* Have to add the increments filter_coeff_incr_count times. */
             iir_filter->filter_coeff_incr_count = transition_samples;
         }
-
-        fluid_check_fpe("voice_write filter calculation");
     }
 }
 
@@ -411,9 +407,5 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
         fluid_iir_filter_calculate_coefficients(iir_filter, FLUID_BUFSIZE,
                                                 output_rate);
     }
-
-
-    fluid_check_fpe("voice_write DSP coefficients");
-
 }
 
