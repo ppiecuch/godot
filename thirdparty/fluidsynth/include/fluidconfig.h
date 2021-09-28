@@ -7,6 +7,7 @@
 /* Define if building for Mac OS X Darwin */
 #ifdef __APPLE__
 #define DARWIN 1
+#define __LINUX__ 1
 #endif
 
 /* Soundfont to load automatically in some use cases */
@@ -16,7 +17,7 @@
 #define HAVE_ERRNO_H 1
 
 /* Define to 1 if you have the <fcntl.h> header file. */
-#ifdef __linux__
+#ifdef __LINUX__
 #define HAVE_FCNTL_H 1
 #endif
 
@@ -38,12 +39,12 @@
 #define ENABLE_MIXER_THREADS 1
 
 /* Define to 1 if you have the <pthread.h> header file. */
-#ifdef __linux__
+#ifdef __LINUX__
 #define HAVE_PTHREAD_H 1
 #endif
 
 /* Define to 1 if you have the <signal.h> header file. */
-#ifdef __linux__
+#ifdef __LINUX__
 #define HAVE_SIGNAL_H 1
 #endif
 
@@ -69,7 +70,7 @@
 #define HAVE_STRING_H 1
 
 /* Define to 1 if you have the <sys/mman.h> header file. */
-#ifdef __linux__
+#ifdef __LINUX__
 #define HAVE_SYS_MMAN_H 1
 #endif
 
@@ -83,7 +84,7 @@
 #define HAVE_SYS_TYPES_H 1
 
 /* Define to 1 if you have the <unistd.h> header file. */
-#ifdef __linux__
+#ifdef __LINUX__
 #define HAVE_UNISTD_H 1
 #endif
 
