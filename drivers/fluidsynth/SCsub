@@ -18,7 +18,7 @@ env.Execute(Action('cd gentables && scons -Qf gentables.scons fluid_root="{0}"'.
 
 gen_tables_out = [working + "/utils/fluid_conv_tables.inc.h", working + "/utils/fluid_rvoice_dsp_tables.inc.h"]
 gen_tables_in = working + "/gentables/make_tables{0}".format(env.shell_cmd('EXE_EXT'))
-gen_tables_cmd = 'cd "{0}" && {1} utils {2} mkdir utils && gentables/make_tables{3} utils/'.format(working, env.shell_cmd('CHK_DIR_EXISTS'),  env.shell_cmd('THEN'), env.shell_cmd('EXE_EXT'))
+gen_tables_cmd = 'cd "{0}" && ({1} utils {2} mkdir utils) && gentables{4}make_tables{3} utils/'.format(working, env.shell_cmd('CHK_DIR_EXISTS'),  env.shell_cmd('THEN'), env.shell_cmd('EXE_EXT'), env.shell_cmd('SEP'))
 env.Command(gen_tables_out, gen_tables_in, gen_tables_cmd)
 
 env.Prepend(
