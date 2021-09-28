@@ -3,6 +3,15 @@
 #include "make_tables.h"
 
 
+/* Math constants */
+#ifndef M_PI
+#define M_PI 3.1415926535897932384626433832795
+#endif
+
+#ifndef M_LN10
+#define M_LN10 2.3025850929940456840179914546844
+#endif
+
 /* conversion tables */
 static double fluid_ct2hz_tab[FLUID_CENTS_HZ_SIZE];
 static double fluid_cb2amp_tab[FLUID_CB_AMP_SIZE];
