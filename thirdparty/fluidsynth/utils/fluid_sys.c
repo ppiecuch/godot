@@ -856,7 +856,7 @@ new_fluid_cond(void)
 
 #endif
 
-static fpointer
+static fluid_thread_return_t
 fluid_thread_high_prio(fpointer data)
 {
     fluid_thread_info_t *info = data;

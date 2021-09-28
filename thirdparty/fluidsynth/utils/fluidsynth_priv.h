@@ -52,18 +52,23 @@
  *         BASIC TYPES
  */
 
-#if defined(WITH_FLOAT)
+#ifdef WITH_FLOAT
 typedef float fluid_real_t;
 #else
 typedef double fluid_real_t;
 #endif
 
-#if defined(SUPPORTS_VLA)
-#  define FLUID_DECLARE_VLA(_type, _name, _len) \
+#ifdef SUPPORTS_VLA
+# define FLUID_DECLARE_VLA(_type, _name, _len) \
      _type _name[_len]
 #else
+# ifdef _WIN32
+#  define FLUID_DECLARE_VLA(_type, _name, _len) \
+     _type* _name = _alloca(sizeof(_type)*(_len))
+# else
 #  define FLUID_DECLARE_VLA(_type, _name, _len) \
      _type* _name = alloca(sizeof(_type)*(_len))
+# endif
 #endif
 
 typedef void* fpointer;
