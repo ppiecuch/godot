@@ -2,6 +2,11 @@
 #include "rvoice/fluid_rvoice_dsp_tables.h"
 #include "make_tables.h"
 
+/* Math constants */
+#ifndef M_PI
+#define M_PI 3.1415926535897932384626433832795
+#endif
+
 /* Linear interpolation table (2 coefficients centered on 1st) */
 static double interp_coeff_linear[FLUID_INTERP_MAX][2];
 

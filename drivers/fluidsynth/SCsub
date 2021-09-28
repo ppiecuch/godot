@@ -14,11 +14,11 @@ for p in [fluidsynth, working]:
 
 # Need to build tools first as they will be used later
 # (not sure if this is the right ways to force building)
-env.Execute(Action("cd gentables && scons -Qf gentables.scons fluid_root=\"{0}\"".format(fluidsynth)))
+env.Execute(Action('cd gentables && scons -Qf gentables.scons fluid_root="{0}"'.format(fluidsynth)))
 
 gen_tables_out = [working + "/utils/fluid_conv_tables.inc.h", working + "/utils/fluid_rvoice_dsp_tables.inc.h"]
-gen_tables_in = working + "/gentables/make_tables"
-gen_tables_cmd = "cd '{0}' && mkdir -p utils && gentables/make_tables utils/".format(working)
+gen_tables_in = working + "/gentables/make_tables{0}".format(env['PROGPREFIX'])
+gen_tables_cmd = 'cd "{0}" && {1} utils {2} mkdir utils && gentables/make_tables{3} utils/'.format(working, env.shell_cmd('CHK_DIR_EXISTS'),  env.shell_cmd('THEN'), env['PROGPREFIX'])
 env.Command(gen_tables_out, gen_tables_in, gen_tables_cmd)
 
 env.Prepend(

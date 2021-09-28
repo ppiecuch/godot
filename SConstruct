@@ -88,6 +88,7 @@ env_base.__class__.add_module_version_string = methods.add_module_version_string
 env_base.__class__.add_source_files = methods.add_source_files
 env_base.__class__.use_windows_spawn_fix = methods.use_windows_spawn_fix
 env_base.__class__.split_lib = methods.split_lib
+env_base.__class__.shell_cmd = methods.shell_cmd
 
 env_base.__class__.add_shared_library = methods.add_shared_library
 env_base.__class__.add_library = methods.add_library
