@@ -103,8 +103,10 @@ extern "C" bool fluid_stat(const char *path, fluid_stat_buf_t *statbuf) {
 	} else
 		return false;
 	if (_is_link(path)) {
+#ifndef WINDOWS_ENABLED
 		if (statbuf)
 			statbuf->st_mode = S_IFLNK;
+#endif
 	}
 	if (statbuf) {
 		statbuf->st_ctime = statbuf->st_mtime = FileAccess::get_modified_time(path);

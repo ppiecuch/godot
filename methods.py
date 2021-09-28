@@ -408,25 +408,27 @@ def split_lib(self, libname, src_list=None, env_lib=None):
 def shell_cmd(self, key):
     _shell = {
         "windows": {
-            "COPY"            : "copy /y",
-            "COPY_DIR"        : "xcopy /s /q /y /i",
-            "MOVE"            : "move",
-            "DEL_FILE"        : "del",
-            "DEL_DIR"         : "rmdir",
-            "CHK_DIR_EXISTS"  : "if not exist",
-            "MKDIR"           : "mkdir",
-            "THEN"            : ""
+            "COPY" : "copy /y",
+            "COPY_DIR" : "xcopy /s /q /y /i",
+            "MOVE" : "move",
+            "DEL_FILE" : "del",
+            "DEL_DIR" : "rmdir",
+            "CHK_DIR_EXISTS" : "if not exist",
+            "MKDIR" : "mkdir",
+            "THEN" : "",
+            "EXE_EXT" : ".exe"
         },
         "posix": {
-            "COPY"            : "cp -f",
-            "COPY_FILE"       : "cp",
-            "COPY_DIR"        : "cp -r",
-            "MOVE"            : "mv -f",
-            "DEL_FILE"        : "rm -f",
-            "DEL_DIR"         : "rmdir",
-            "CHK_DIR_EXISTS"  : "test -d",
-            "MKDIR"           : "mkdir -p",
-            "THEN"            : "||"
+            "COPY" : "cp -f",
+            "COPY_FILE" : "cp",
+            "COPY_DIR" : "cp -r",
+            "MOVE" : "mv -f",
+            "DEL_FILE" : "rm -f",
+            "DEL_DIR" : "rmdir",
+            "CHK_DIR_EXISTS" : "test -d",
+            "MKDIR" : "mkdir -p",
+            "THEN" : "||",
+            "EXE_EXT" : ""
         }
     }
     if sys.platform == "darwin" or sys.platform == "linux":
