@@ -1,9 +1,11 @@
+#ifdef __MACH__
+
 #define _POSIX_C_SOURCE 200809L
 #include <unistd.h>
 
 #include "fluid_timing_mach.h"
 
-#if (defined(__MACH__) && TIMING_MACH_BEFORE_10_12)
+#if defined(__MACH__) && TIMING_MACH_BEFORE_10_12
 /* ******** */
 /* __MACH__ */
 
@@ -33,10 +35,10 @@ extern void timespec_monoadd(struct timespec *ts_out,
 
 /* __MACH__ */
 /* ******** */
-#endif
+#endif // __MACH__
 
 
-#if (defined(__MACH__) && TIMING_MACH_BEFORE_10_12)
+#if defined(__MACH__) && TIMING_MACH_BEFORE_10_12
 /* ******** */
 /* __MACH__ */
 
@@ -123,3 +125,5 @@ int itimer_step (struct timespec *ts_target, const struct timespec *ts_step) {
     }
     return retval;
 }
+
+#endif // __MACH__

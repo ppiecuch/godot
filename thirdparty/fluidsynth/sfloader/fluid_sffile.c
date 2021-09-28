@@ -26,14 +26,6 @@
 #include "fluid_sfont.h"
 #include "fluid_sys.h"
 
-#if LIBSNDFILE_SUPPORT
-#include <sndfile.h>
-#endif
-
-#if LIBINSTPATCH_SUPPORT
-#include <libinstpatch/libinstpatch.h>
-#endif
-
 /*=================================sfload.c========================
   Borrowed from Smurf SoundFont Editor by Josh Green
   =================================================================*/
@@ -304,17 +296,6 @@ int fluid_is_soundfont(const char *filename)
         {
             break;  // seems to be SF2, stop here
         }
-#ifdef LIBINSTPATCH_SUPPORT
-        else
-        {
-            IpatchFileHandle *fhandle = ipatch_file_identify_open(filename, NULL);
-            if(fhandle != NULL)
-            {
-                retcode = (ipatch_file_identify(fhandle->file, NULL) == IPATCH_TYPE_DLS_FILE);
-                ipatch_file_close(fhandle);
-            }
-        }
-#endif
     }
     while(0);
 
@@ -680,13 +661,11 @@ static int process_info(SFData *sf, int size)
 
             if(sf->version.major == 3)
             {
-#if !LIBSNDFILE_SUPPORT
                 FLUID_LOG(FLUID_WARN,
                           "Sound font version is %d.%d but fluidsynth was compiled without"
                           " support for (v3.x)",
                           sf->version.major, sf->version.minor);
                 return FALSE;
-#endif
             }
             else if(sf->version.major > 2)
             {
@@ -2310,218 +2289,7 @@ error_exit:
 }
 
 
-/* Ogg Vorbis loading and decompression */
-#if LIBSNDFILE_SUPPORT
-
-/* Virtual file access routines to allow loading individually compressed
- * samples from the Soundfont sample data chunk using the file callbacks
- * passing in during opening of the file */
-typedef struct _sfvio_data_t
-{
-    SFData *sffile;
-    sf_count_t start;  /* start byte offset of compressed data */
-    sf_count_t end;    /* end byte offset of compressed data */
-    sf_count_t offset; /* current virtual file offset from start byte offset */
-
-} sfvio_data_t;
-
-static sf_count_t sfvio_get_filelen(void *user_data)
-{
-    sfvio_data_t *data = user_data;
-
-    return (data->end + 1) - data->start;
-}
-
-static sf_count_t sfvio_seek(sf_count_t offset, int whence, void *user_data)
-{
-    sfvio_data_t *data = user_data;
-    SFData *sf = data->sffile;
-    sf_count_t new_offset;
-
-    switch(whence)
-    {
-    case SEEK_SET:
-        new_offset = offset;
-        break;
-
-    case SEEK_CUR:
-        new_offset = data->offset + offset;
-        break;
-
-    case SEEK_END:
-        new_offset = sfvio_get_filelen(user_data) + offset;
-        break;
-
-    default:
-        goto fail; /* proper error handling not possible?? */
-    }
-
-    new_offset += data->start;
-    fluid_rec_mutex_lock(sf->mtx);
-    if (data->start <= new_offset && new_offset <= data->end &&
-        sf->fcbs->fseek(sf->sffd, new_offset, SEEK_SET) != FLUID_FAILED)
-    {
-        data->offset = new_offset - data->start;
-    }
-    fluid_rec_mutex_unlock(sf->mtx);
-
-fail:
-    return data->offset;
-}
-
-static sf_count_t sfvio_read(void *ptr, sf_count_t count, void *user_data)
-{
-    sfvio_data_t *data = user_data;
-    SFData *sf = data->sffile;
-    sf_count_t remain;
-
-    remain = sfvio_get_filelen(user_data) - data->offset;
-
-    if(count > remain)
-    {
-        count = remain;
-    }
-
-    if(count == 0)
-    {
-        return count;
-    }
-
-    fluid_rec_mutex_lock(sf->mtx);
-    if (sf->fcbs->fseek(sf->sffd, data->start + data->offset, SEEK_SET) == FLUID_FAILED)
-    {
-        FLUID_LOG(FLUID_ERR, "This should never happen: fseek failed in sfvoid_read()");
-        count = 0;
-    }
-    else
-    {
-        if (sf->fcbs->fread(ptr, count, sf->sffd) == FLUID_FAILED)
-        {
-            FLUID_LOG(FLUID_ERR, "Failed to read compressed sample data");
-            count = 0;
-        }
-    }
-    fluid_rec_mutex_unlock(sf->mtx);
-
-    data->offset += count;
-
-    return count;
-}
-
-static sf_count_t sfvio_tell(void *user_data)
-{
-    sfvio_data_t *data = user_data;
-
-    return data->offset;
-}
-
-/**
- * Read Ogg Vorbis compressed data from the Soundfont and decompress it, returning the number of samples
- * in the decompressed WAV. Only 16-bit mono samples are supported.
- *
- * Note that this function takes byte indices for start and end source data. The sample headers in SF3
- * files use byte indices, so those pointers can be passed directly to this function.
- *
- * This function uses a virtual file structure in order to read the Ogg Vorbis
- * data from arbitrary locations in the source file.
- */
-static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigned int end_byte, short **data)
-{
-    SNDFILE *sndfile;
-    SF_INFO sfinfo;
-    SF_VIRTUAL_IO sfvio =
-    {
-        sfvio_get_filelen,
-        sfvio_seek,
-        sfvio_read,
-        NULL,
-        sfvio_tell
-    };
-    sfvio_data_t sfdata;
-    short *wav_data = NULL;
-
-    if((start_byte > sf->samplesize) || (end_byte > sf->samplesize))
-    {
-        FLUID_LOG(FLUID_ERR, "Ogg Vorbis data offsets exceed sample data chunk");
-        return -1;
-    }
-
-    // Initialize file position indicator and SF_INFO structure
-    sfdata.sffile = sf;
-    sfdata.start = sf->samplepos + start_byte;
-    sfdata.end = sf->samplepos + end_byte;
-    sfdata.offset = -1;
-
-    /* Seek to sfdata.start, the beginning of Ogg Vorbis data in Soundfont */
-    sfvio_seek(0, SEEK_SET, &sfdata);
-    if (sfdata.offset != 0)
-    {
-        FLUID_LOG(FLUID_ERR, "Failed to seek to compressed sample position");
-        return -1;
-    }
-
-    FLUID_MEMSET(&sfinfo, 0, sizeof(sfinfo));
-
-    // Open sample as a virtual file
-    sndfile = sf_open_virtual(&sfvio, SFM_READ, &sfinfo, &sfdata);
-
-    if(!sndfile)
-    {
-        FLUID_LOG(FLUID_ERR, "sf_open_virtual(): %s", sf_strerror(sndfile));
-        return -1;
-    }
-
-    // Empty sample
-    if(sfinfo.frames <= 0 || sfinfo.channels <= 0)
-    {
-        FLUID_LOG(FLUID_DBG, "Empty decompressed sample");
-        *data = NULL;
-        sf_close(sndfile);
-        return 0;
-    }
-
-    // Mono sample
-    if(sfinfo.channels != 1)
-    {
-        FLUID_LOG(FLUID_DBG, "Unsupported channel count %d in ogg sample", sfinfo.channels);
-        goto error_exit;
-    }
-
-    if((sfinfo.format & SF_FORMAT_OGG) == 0)
-    {
-        FLUID_LOG(FLUID_WARN, "OGG sample is not OGG compressed, this is not officially supported");
-    }
-
-    wav_data = FLUID_ARRAY(short, sfinfo.frames * sfinfo.channels);
-
-    if(!wav_data)
-    {
-        FLUID_LOG(FLUID_ERR, "Out of memory");
-        goto error_exit;
-    }
-
-    /* Automatically decompresses the Ogg Vorbis data to 16-bit PCM */
-    if(sf_readf_short(sndfile, wav_data, sfinfo.frames) < sfinfo.frames)
-    {
-        FLUID_LOG(FLUID_DBG, "Decompression failed!");
-        FLUID_LOG(FLUID_ERR, "sf_readf_short(): %s", sf_strerror(sndfile));
-        goto error_exit;
-    }
-
-    sf_close(sndfile);
-
-    *data = wav_data;
-
-    return sfinfo.frames;
-
-error_exit:
-    FLUID_FREE(wav_data);
-    sf_close(sndfile);
-    return -1;
-}
-#else
 static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigned int end_byte, short **data)
 {
     return -1;
 }
-#endif
