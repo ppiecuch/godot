@@ -22,7 +22,7 @@ def add_source_files(self, sources, files, warn_duplicates=True):
                 return
             files = [files]
         else:
-            if files.startswith("/"):
+            if files.startswith("/") or os.path.splitdrive(files)[0] != None:
                 files = sorted(glob.glob(files))
             else:
                 dir_path = self.Dir(".").abspath
