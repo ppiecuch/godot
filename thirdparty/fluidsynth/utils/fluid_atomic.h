@@ -23,15 +23,9 @@
 
 #if defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_4) || defined(__riscos__)
 
-typedef struct {
-    volatile int value;
-} fluid_atomic_int_t;
-typedef struct {
-    volatile unsigned value;
-} fluid_atomic_uint_t;
-typedef struct {
-    volatile float value;
-} fluid_atomic_float_t;
+typedef volatile int fluid_atomic_int_t;
+typedef volatile unsigned fluid_atomic_uint_t;
+typedef volatile float fluid_atomic_float_t;
 
 #elif defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN

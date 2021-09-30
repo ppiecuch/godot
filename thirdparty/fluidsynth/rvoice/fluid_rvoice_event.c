@@ -81,7 +81,7 @@ fluid_rvoice_eventhandler_push_ptr(fluid_rvoice_eventhandler_t *handler,
 static int fluid_rvoice_eventhandler_push_LOCAL(fluid_rvoice_eventhandler_t *handler, const fluid_rvoice_event_t *src_event)
 {
     fluid_rvoice_event_t *event;
-    int old_queue_stored = fluid_atomic_int_add(&handler->queue_stored, 1);
+    int old_queue_stored = fluid_atomic_int_exchange_and_add(&handler->queue_stored, 1);
 
     event = fluid_ringbuffer_get_inptr(handler->queue, old_queue_stored);
 

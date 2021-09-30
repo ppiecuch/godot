@@ -29,9 +29,33 @@
 #endif
 #endif // STATIC_ASSERT
 
-#include "fluid_atomic.h"
 
 #if defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_4) || defined(__riscos__)
+
+#ifdef __ATOMIC_SEQ_CST // Use GCC's new atomic operations.
+
+#define FLUID_ATOMIC_ORDER __ATOMIC_SEQ_CST
+#define fluid_atomic_int_exchange_and_add(atomic, val) (__atomic_add_fetch(atomic, val, FLUID_ATOMIC_ORDER))
+#define fluid_atomic_int_get(atomic) __atomic_load_n(atomic, FLUID_ATOMIC_ORDER)
+#define fluid_atomic_int_set(atomic, val) __atomic_store_n(atomic, val, FLUID_ATOMIC_ORDER)
+#define fluid_atomic_int_dec_and_test(atomic) (__atomic_sub_fetch(atomic, 1, FLUID_ATOMIC_ORDER) == 0)
+
+static FLUID_INLINE int
+fluid_atomic_int_compare_and_exchange(volatile int* atomic, int _old, int _new)
+{
+	return __atomic_compare_exchange_n(atomic, &_old, _new, 0, FLUID_ATOMIC_ORDER, FLUID_ATOMIC_ORDER);
+}
+
+#define fluid_atomic_pointer_get(atomic) __atomic_load_n(atomic, FLUID_ATOMIC_ORDER)
+#define fluid_atomic_pointer_set(atomic, val) __atomic_store_n(atomic, val, FLUID_ATOMIC_ORDER)
+
+static FLUID_INLINE int
+fluid_atomic_pointer_compare_and_exchange(volatile void* atomic, volatile void* _old, void* _new)
+{
+	return __atomic_compare_exchange_n((volatile void**)atomic, &_old, _new, 0, FLUID_ATOMIC_ORDER, FLUID_ATOMIC_ORDER);
+}
+
+#else // Use older __sync atomics.
 
 #define fluid_atomic_int_add(atomic, val) __extension__ ({            \
             STATIC_ASSERT(sizeof((atomic)->value) == sizeof(int),     \
@@ -61,6 +85,8 @@
                           "Atomic must be the size of an int");         \
             __sync_bool_compare_and_swap(&(atomic)->value, (oldval), (newval));})
 
+#define fluid_atomic_int_exchange_and_add(atomic, val) fluid_atomic_int_add(atomic, val)
+
 #define fluid_atomic_float_get(atomic) __extension__ ({   \
   STATIC_ASSERT(sizeof((atomic)->value) == sizeof(float), \
                 "Atomic must be the size of a float");    \
@@ -73,27 +99,55 @@
       (atomic)->value = (val);                                \
       __sync_synchronize();})
 
+static FLUID_INLINE void*
+fluid_atomic_pointer_get(volatile void* atomic) { __sync_synchronize(); return *(void**)atomic; }
+
+static FLUID_INLINE void
+fluid_atomic_pointer_set(volatile void* atomic, void* val) { *(void**)atomic = val; __sync_synchronize(); }
+
+#define fluid_atomic_pointer_compare_and_exchange fluid_atomic_int_compare_and_exchange
+
+#endif // __ATOMIC_SEQ_CST
+
 #elif defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
 #define fluid_atomic_int_inc(atomic) InterlockedIncrement((atomic))
 #define fluid_atomic_int_add(atomic, val) InterlockedAdd((atomic), (val))
-#define fluid_atomic_int_get(atomic) (*(LONG*)(atomic))
-#define fluid_atomic_int_set(atomic, val) InterlockedExchange((atomic), (val))
-#define fluid_atomic_int_exchange_and_add(atomic, add)  \
-    InterlockedExchangeAdd((atomic), (add))
+#define fluid_atomic_int_get(atomic) (*(int*)(atomic))
+#define fluid_atomic_int_set(atomic, val) InterlockedExchange((LONG volatile*)(atomic), (LONG)(val))
+#define fluid_atomic_int_dec_and_test(atomic) (InterlockedDecrement((LONG volatile*)(atomic)) == 0)
+#define fluid_atomic_int_exchange_and_add(atomic, add) InterlockedExchangeAdd((LONG  volatile*)(atomic), (LONG)(add))
+#define fluid_atomic_int_compare_and_exchange(atomic, _old, _new) InterlockedCompareExchange((LONG volatile*)(atomic), (LONG)(_new), (LONG)(_old))
+#define fluid_atomic_pointer_get(atomic) (*(void**)atomic)
+#define fluid_atomic_pointer_set(atomic, val) (void)(InterlockedExchangePointer(atomic, val))
 
-#define fluid_atomic_float_get(atomic) (*(FLOAT*)(atomic))
+#else
 
-static inline float
-fluid_atomic_float_set(fluid_atomic_float_t *atomic, float val)
-{
-    LONG ival = *(LONG*)&val;
-    LONG rval = InterlockedExchange(atomic, ival);
-    return *(float*)&rval;
-}
+#error Unsupported platform/compiler
 
 #endif
+
+#define fluid_atomic_int_add(atomic, val) (void)(fluid_atomic_int_exchange_and_add( atomic, val))
+#define fluid_atomic_int_inc(atomic) fluid_atomic_int_add(atomic, 1)
+
+static FLUID_INLINE void
+fluid_atomic_float_set(volatile float *fptr, float val)
+{
+  int32_t ival;
+  memcpy (&ival, &val, 4);
+  fluid_atomic_int_set ((volatile int *)fptr, ival);
+}
+
+static FLUID_INLINE float
+fluid_atomic_float_get(volatile float *fptr)
+{
+  int32_t ival;
+  float fval;
+  ival = fluid_atomic_int_get ((volatile int *)fptr);
+  memcpy (&fval, &ival, 4);
+  return fval;
+}
 
 #endif /* _FLUID_ATOMIC_PRIV_H */

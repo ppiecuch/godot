@@ -689,7 +689,7 @@ fluid_hashtable_unref(fluid_hashtable_t *hashtable)
     fluid_return_if_fail(hashtable != NULL);
     fluid_return_if_fail(fluid_atomic_int_get(&hashtable->ref_count) > 0);
 
-    if (fluid_atomic_int_add(&hashtable->ref_count, -1) - 1 == 0)
+    if (fluid_atomic_int_exchange_and_add(&hashtable->ref_count, -1) - 1 == 0)
     {
         fluid_hashtable_remove_all_nodes(hashtable, TRUE);
         FLUID_FREE(hashtable->nodes);

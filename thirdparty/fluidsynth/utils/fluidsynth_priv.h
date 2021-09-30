@@ -73,7 +73,7 @@ typedef double fluid_real_t;
 
 typedef void* fpointer;
 
-/** Atomic types  */
+/* Atomic types */
 #include "fluid_atomic.h"
 
 /***************************************************************
@@ -300,6 +300,12 @@ do { strncpy(_dst,_src,_n-1); \
 #endif
 
 /* Misc */
+#define FLUID_STMT_START do
+#define FLUID_STMT_END while (0)
+
+#define fluid_strify2(x) #x
+#define fluid_strify(x) fluid_strify2(x)
+
 #if defined(__INTEL_COMPILER)
 #define FLUID_RESTRICT restrict
 #elif defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
@@ -324,5 +330,8 @@ else \
 #define fluid_return_val_if_fail(cond, val) \
  fluid_return_if_fail(cond) (val)
 
+
+ /* Internationalization */
+#define _(s) s
 
 #endif /* _FLUIDSYNTH_PRIV_H */
