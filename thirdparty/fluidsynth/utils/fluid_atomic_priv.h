@@ -55,48 +55,46 @@ fluid_atomic_pointer_compare_and_exchange(volatile void* atomic, volatile void* 
 	return __atomic_compare_exchange_n((volatile void**)atomic, &_old, _new, 0, FLUID_ATOMIC_ORDER, FLUID_ATOMIC_ORDER);
 }
 
+#define fluid_atomic_int_add(atomic, val) (void)(fluid_atomic_int_exchange_and_add( atomic, val))
+#define fluid_atomic_int_inc(atomic) fluid_atomic_int_add(atomic, 1)
+
 #else // Use older __sync atomics.
 
 #define fluid_atomic_int_add(atomic, val) __extension__ ({            \
-            STATIC_ASSERT(sizeof((atomic)->value) == sizeof(int),     \
+            STATIC_ASSERT(sizeof(atomic) == sizeof(int),     \
                           "Atomic must be the size of an int");       \
-            __sync_fetch_and_add(&(atomic)->value, (val));})
+            __sync_fetch_and_add(&atomic, (val));})
 
 #define fluid_atomic_int_get(atomic) __extension__ ({             \
-            STATIC_ASSERT(sizeof((atomic)->value) == sizeof(int), \
+            STATIC_ASSERT(sizeof(atomic) == sizeof(int), \
                           "Atomic must be the size of an int");   \
             __sync_synchronize();                                 \
-            (atomic)->value;})
+            atomic;})
 
 #define fluid_atomic_int_set(atomic, newval) __extension__ ({         \
-                STATIC_ASSERT(sizeof((atomic)->value) == sizeof(int), \
+                STATIC_ASSERT(sizeof(atomic) == sizeof(int), \
                               "Atomic must be the size of an int");   \
-                (atomic)->value = (newval);                           \
+                atomic = (newval);                           \
                 __sync_synchronize();})
 
-#define fluid_atomic_int_inc(atomic) __extension__ ({             \
-            STATIC_ASSERT(sizeof((atomic)->value) == sizeof(int), \
-                          "Atomic must be the size of an int");   \
-            __sync_synchronize();                                 \
-            __sync_fetch_and_add(&(atomic)->value, 1);})
-
 #define fluid_atomic_int_compare_and_exchange(atomic, oldval, newval) __extension__ ({ \
-            STATIC_ASSERT(sizeof((atomic)->value) == sizeof(int),       \
+            STATIC_ASSERT(sizeof(atomic) == sizeof(int),       \
                           "Atomic must be the size of an int");         \
-            __sync_bool_compare_and_swap(&(atomic)->value, (oldval), (newval));})
+            __sync_bool_compare_and_swap(&atomic, (oldval), (newval));})
 
 #define fluid_atomic_int_exchange_and_add(atomic, val) fluid_atomic_int_add(atomic, val)
+#define fluid_atomic_int_inc(atomic) fluid_atomic_int_add(atomic, 1)
 
 #define fluid_atomic_float_get(atomic) __extension__ ({   \
-  STATIC_ASSERT(sizeof((atomic)->value) == sizeof(float), \
+  STATIC_ASSERT(sizeof(atomic) == sizeof(float), \
                 "Atomic must be the size of a float");    \
   __sync_synchronize();                                   \
-  (atomic)->value;})
+  atomic;})
 
 #define fluid_atomic_float_set(atomic, val) __extension__ ({  \
-      STATIC_ASSERT(sizeof((atomic)->value) == sizeof(float), \
+      STATIC_ASSERT(sizeof(atomic) == sizeof(float), \
                     "Atomic must be the size of a float");    \
-      (atomic)->value = (val);                                \
+      atomic = (val);                                \
       __sync_synchronize();})
 
 static FLUID_INLINE void*
@@ -128,9 +126,6 @@ fluid_atomic_pointer_set(volatile void* atomic, void* val) { *(void**)atomic = v
 #error Unsupported platform/compiler
 
 #endif
-
-#define fluid_atomic_int_add(atomic, val) (void)(fluid_atomic_int_exchange_and_add( atomic, val))
-#define fluid_atomic_int_inc(atomic) fluid_atomic_int_add(atomic, 1)
 
 static FLUID_INLINE void
 fluid_atomic_float_set(volatile float *fptr, float val)

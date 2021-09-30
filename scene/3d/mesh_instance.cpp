@@ -390,6 +390,9 @@ void MeshInstance::_update_skinning() {
 	RID skeleton = skin_ref->get_skeleton();
 	ERR_FAIL_COND(!skeleton.is_valid());
 
+	Vector3 aabb_min = Vector3(FLT_MAX, FLT_MAX, FLT_MAX);
+	Vector3 aabb_max = Vector3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+
 	VisualServer *visual_server = VisualServer::get_singleton();
 
 	// Prepare bone transforms.
@@ -499,10 +502,19 @@ void MeshInstance::_update_skinning() {
 					tangent = transform.basis.xform(tangent_read);
 				}
 			}
+
+			aabb_min.x = MIN(aabb_min.x, vertex.x);
+			aabb_min.y = MIN(aabb_min.y, vertex.y);
+			aabb_min.z = MIN(aabb_min.z, vertex.z);
+			aabb_max.x = MAX(aabb_max.x, vertex.x);
+			aabb_max.y = MAX(aabb_max.y, vertex.y);
+			aabb_max.z = MAX(aabb_max.z, vertex.z);
 		}
 
 		visual_server->mesh_surface_update_region(mesh_rid, surface_index, 0, buffer);
 	}
+
+	visual_server->mesh_set_custom_aabb(mesh_rid, AABB(aabb_min, aabb_max - aabb_min));
 
 	software_skinning_flags |= SoftwareSkinning::FLAG_BONES_READY;
 }

@@ -496,6 +496,19 @@ void EditorNode::_notification(int p_what) {
 		} break;
 
 		case NOTIFICATION_READY: {
+			{
+				_initializing_addons = true;
+				Vector<String> addons;
+				if (ProjectSettings::get_singleton()->has_setting("editor_plugins/enabled")) {
+					addons = ProjectSettings::get_singleton()->get("editor_plugins/enabled");
+				}
+
+				for (int i = 0; i < addons.size(); i++) {
+					set_addon_plugin_enabled(addons[i], true);
+				}
+				_initializing_addons = false;
+			}
+
 			VisualServer::get_singleton()->viewport_set_hide_scenario(get_scene_root()->get_viewport_rid(), true);
 			VisualServer::get_singleton()->viewport_set_hide_canvas(get_scene_root()->get_viewport_rid(), true);
 			VisualServer::get_singleton()->viewport_set_disable_environment(get_viewport()->get_viewport_rid(), true);
@@ -847,18 +860,6 @@ void EditorNode::_sources_changed(bool p_exist) {
 			load_scene(defer_load_scene);
 			defer_load_scene = "";
 		}
-
-		// Only enable addons once resources have been imported
-		_initializing_addons = true;
-		Vector<String> addons;
-		if (ProjectSettings::get_singleton()->has_setting("editor_plugins/enabled")) {
-			addons = ProjectSettings::get_singleton()->get("editor_plugins/enabled");
-		}
-
-		for (int i = 0; i < addons.size(); i++) {
-			set_addon_plugin_enabled(addons[i], true);
-		}
-		_initializing_addons = false;
 	}
 }
 
@@ -1623,13 +1624,15 @@ void EditorNode::restart_editor() {
 void EditorNode::_save_all_scenes() {
 	for (int i = 0; i < editor_data.get_edited_scene_count(); i++) {
 		Node *scene = editor_data.get_edited_scene_root(i);
-		if (scene && scene->get_filename() != "") {
+		if (scene && scene->get_filename() != "" && DirAccess::exists(scene->get_filename().get_base_dir())) {
 			if (i != editor_data.get_edited_scene()) {
 				_save_scene(scene->get_filename(), i);
 			} else {
 				_save_scene_with_preview(scene->get_filename());
 			}
-		} // else: ignore new scenes
+		} else {
+			show_warning(TTR("Could not save one or more scenes!"), TTR("Save All Scenes"));
+		}
 	}
 
 	_save_default_environment();
@@ -2355,20 +2358,22 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 		case SCENE_TAB_CLOSE:
 		case FILE_SAVE_SCENE: {
 			int scene_idx = (p_option == FILE_SAVE_SCENE) ? -1 : tab_closing;
-
 			Node *scene = editor_data.get_edited_scene_root(scene_idx);
 			if (scene && scene->get_filename() != "") {
-				if (scene_idx != editor_data.get_edited_scene()) {
-					_save_scene_with_preview(scene->get_filename(), scene_idx);
+				if (DirAccess::exists(scene->get_filename().get_base_dir())) {
+					if (scene_idx != editor_data.get_edited_scene()) {
+						_save_scene_with_preview(scene->get_filename(), scene_idx);
+					} else {
+						_save_scene_with_preview(scene->get_filename());
+					}
+
+					if (scene_idx != -1) {
+						_discard_changes();
+					}
+					save_layout();
 				} else {
-					_save_scene_with_preview(scene->get_filename());
+					show_save_accept(vformat(TTR("%s no longer exists! Please specify a new save location."), scene->get_filename().get_base_dir()), TTR("OK"));
 				}
-
-				if (scene_idx != -1) {
-					_discard_changes();
-				}
-				save_layout();
-
 				break;
 			}
 			FALLTHROUGH;
@@ -4141,6 +4146,13 @@ void EditorNode::show_accept(const String &p_text, const String &p_title) {
 	accept->get_ok()->set_text(p_title);
 	accept->set_text(p_text);
 	accept->popup_centered_minsize();
+}
+
+void EditorNode::show_save_accept(const String &p_text, const String &p_title) {
+	current_option = -1;
+	save_accept->get_ok()->set_text(p_title);
+	save_accept->set_text(p_text);
+	save_accept->popup_centered();
 }
 
 void EditorNode::show_warning(const String &p_text, const String &p_title) {
@@ -6191,6 +6203,10 @@ EditorNode::EditorNode() {
 	accept = memnew(AcceptDialog);
 	gui_base->add_child(accept);
 	accept->connect("confirmed", this, "_menu_confirm_current");
+
+	save_accept = memnew(AcceptDialog);
+	gui_base->add_child(save_accept);
+	save_accept->connect("confirmed", this, "_menu_option", make_binds((int)MenuOptions::FILE_SAVE_AS_SCENE));
 
 	project_export = memnew(ProjectExportDialog);
 	gui_base->add_child(project_export);
