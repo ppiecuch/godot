@@ -32,7 +32,7 @@
 #include "fluid_atomic.h"
 
 #ifndef _FLUID_SYS_H
-#warning Missing fluid_sys.h - some definitions might be missing
+#warning "Missing fluid_sys.h - some definitions might be missing"
 #endif
 
 #if defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_4) || defined(__riscos__)
@@ -116,7 +116,7 @@ fluid_atomic_pointer_set(volatile void* atomic, void* val) { *(void**)atomic = v
 
 #else
 
-#error Unsupported platform/compiler
+#error "Unsupported platform/compiler"
 
 #endif
 

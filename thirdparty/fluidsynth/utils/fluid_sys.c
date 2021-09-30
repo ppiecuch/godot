@@ -860,7 +860,7 @@ fluid_thread_high_prio(fpointer data)
     info->func(info->data);
     FLUID_FREE(info);
 
-    return NULL;
+    return fluid_thread_null_value;
 }
 
 /**
@@ -983,7 +983,7 @@ fluid_timer_run(void *data)
         FLUID_FREE(timer);
     }
 
-    return FLUID_THREAD_RETURN_VALUE;
+    return fluid_thread_null_value;
 }
 
 fluid_timer_t *

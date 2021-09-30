@@ -300,7 +300,7 @@ typedef pthread_key_t fluid_private_t;
 /* other thread implementations might change this for their needs */
 typedef void *fluid_thread_return_t;
 /* static return value for thread functions which requires a return value */
-#define FLUID_THREAD_RETURN_VALUE (NULL)
+#define fluid_thread_null_value (NULL)
 
 typedef pthread_t fluid_thread_t;
 typedef void *(*fluid_thread_func_t)(void* data);
@@ -399,7 +399,7 @@ typedef DWORD fluid_private_t;
 /* Threads */
 
 typedef DWORD fluid_thread_return_t;
-#define FLUID_THREAD_RETURN_VALUE (0)
+#define fluid_thread_null_value (0)
 
 typedef HANDLE fluid_thread_t;
 typedef DWORD (WINAPI *fluid_thread_func_t)(void* data);

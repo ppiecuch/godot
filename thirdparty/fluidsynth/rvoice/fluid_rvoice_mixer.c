@@ -1295,7 +1295,7 @@ fluid_mixer_thread_func(void *data)
         }
     }
 
-    return FLUID_THREAD_RETURN_VALUE;
+    return fluid_thread_null_value;
 }
 
 static void
@@ -1492,14 +1492,11 @@ fluid_render_loop_multithread(fluid_rvoice_mixer_t *mixer, int current_blockcoun
         }
     }
 
-    //FLUID_LOG(FLUID_DBG, "Blockcount: %d, mixed %d of %d voices myself, waits = %d",
-    //	    current_blockcount, test, mixer->active_voices, waits);
+    //FLUID_LOG(FLUID_DBG, "Blockcount: %d, mixed %d of %d voices myself, waits = %d", current_blockcount, test, mixer->active_voices, waits);
 }
 
 static void delete_rvoice_mixer_threads(fluid_rvoice_mixer_t *mixer)
 {
-    int i;
-
     // if no threads have been created yet (e.g. because a previous error prevented creation of threads
     // mutexes and condition variables), skip terminating threads
     if(mixer->thread_count != 0)
@@ -1508,7 +1505,7 @@ static void delete_rvoice_mixer_threads(fluid_rvoice_mixer_t *mixer)
         // Signal threads to wake up
         fluid_cond_mutex_lock(mixer->wakeup_threads_m);
 
-        for(i = 0; i < mixer->thread_count; i++)
+        for(int i = 0; i < mixer->thread_count; i++)
         {
             fluid_atomic_int_set(&mixer->threads[i].ready, THREAD_BUF_TERMINATE);
         }
@@ -1516,7 +1513,7 @@ static void delete_rvoice_mixer_threads(fluid_rvoice_mixer_t *mixer)
         fluid_cond_broadcast(mixer->wakeup_threads);
         fluid_cond_mutex_unlock(mixer->wakeup_threads_m);
 
-        for(i = 0; i < mixer->thread_count; i++)
+        for(int i = 0; i < mixer->thread_count; i++)
         {
             if(mixer->threads[i].thread)
             {

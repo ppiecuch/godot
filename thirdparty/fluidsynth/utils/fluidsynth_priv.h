@@ -317,15 +317,14 @@ do { strncpy(_dst,_src,_n-1); \
 #define FLUID_N_ELEMENTS(struct)  (sizeof (struct) / sizeof (struct[0]))
 #define FLUID_MEMBER_SIZE(struct, member)  ( sizeof (((struct *)0)->member) )
 
-
-#define fluid_return_if_fail(cond) \
-if(cond) \
-    ; \
-else \
-    return
-
-#define fluid_return_val_if_fail(cond, val) \
- fluid_return_if_fail(cond) (val)
+#define fluid_return_val_if_fail(expr, ret) \
+FLUID_STMT_START { \
+    if (!(expr)) { \
+        FLUID_LOG(FLUID_ERR, "condition failed: %s", #expr); \
+        return ret; \
+    } \
+} FLUID_STMT_END
+#define fluid_return_if_fail(expr) fluid_return_val_if_fail(expr,)
 
 
 /* Atomic types */
