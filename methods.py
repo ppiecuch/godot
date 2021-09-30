@@ -314,7 +314,7 @@ def use_windows_spawn_fix(self, platform=None):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             startupinfo=startupinfo,
-            shell=False,
+            shell=True,
             env=env,
         )
         _, err = proc.communicate()
