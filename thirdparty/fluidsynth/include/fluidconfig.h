@@ -10,6 +10,11 @@
 #define __LINUX__ 1
 #endif
 
+/* Define if building for Nintendo NX */
+#ifdef __NX__
+#define __LINUX__ 1
+#endif
+
 /* Soundfont to load automatically in some use cases */
 #define DEFAULT_SOUNDFONT "default.sf2"
 

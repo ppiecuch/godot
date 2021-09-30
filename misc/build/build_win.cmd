@@ -5,7 +5,6 @@ REM ------------
 REM c:\Python\27\Scripts\pip.exe install pywin32
 
 CLS
-
 SETLOCAL
 
 PATH=%PATH%;%CD%\bin;%CD%\misc\tools
