@@ -313,19 +313,20 @@ typedef void *(*fluid_thread_func_t)(void* data);
 #define _detach_thread(thread) pthread_detach(*thread)
 #define _thread_join(thread) pthread_join(*thread, NULL)
 
-fluid_thread_t* new_fluid_thread(const char *name, fluid_thread_func_t func, void *data,
-                                int prio_level, int detach);
+fluid_thread_t* new_fluid_thread(const char *name, fluid_thread_func_t func, void *data, int prio_level, int detach);
 void delete_fluid_thread(fluid_thread_t* thread);
 void fluid_thread_self_set_prio (int prio_level);
 int fluid_thread_join(fluid_thread_t* thread);
 
-#else
+#elif defined(_WIN32)
+
+#define fluid_mwinapi_call(_f, _r, ...) FLUID_STMT_START { \
+if ((__VA_ARGS__) == (_r)) \
+    FLUID_LOG(FLUID_ERR, #_f " failed"); \
+} FLUID_STMT_END
 
 static FLUID_INLINE void
-fluid_win32_mutex_init(PHANDLE m)
-{
-    *m = CreateMutex(NULL, TRUE, NULL);
-}
+fluid_win32_mutex_init(PHANDLE m) { *m = CreateMutex(NULL, TRUE, NULL); }
 
 /* Regular mutex */
 typedef SRWLOCK fluid_mutex_t;
@@ -375,8 +376,7 @@ typedef CONDITION_VARIABLE fluid_cond_t;
 static FLUID_INLINE fluid_cond_t *
 new_fluid_cond (void)
 {
-    fluid_cond_t *cond;
-    cond = malloc(sizeof(fluid_cond_t));
+    fluid_cond_t *cond = (fluid_cond_t *)malloc(sizeof(fluid_cond_t));
     fluid_cond_init(cond);
     return cond;
 }
@@ -412,13 +412,16 @@ typedef DWORD (WINAPI *fluid_thread_func_t)(void* data);
 #define _detach_thread(thread) CloseHandle(*thread);
 #define _thread_join(thread) { WaitForSingleObject(*thread, INFINITE); CloseHandle(*thread); }
 
-fluid_thread_t* new_fluid_thread(const char *name, fluid_thread_func_t func, void *data,
-                                 int prio_level, int detach);
+fluid_thread_t* new_fluid_thread(const char *name, fluid_thread_func_t func, void *data, int prio_level, int detach);
 void delete_fluid_thread(fluid_thread_t* thread);
 void fluid_thread_self_set_prio (int prio_level);
 int fluid_thread_join(fluid_thread_t* thread);
 
-#endif /* HAVE_PTHREAD_H */
+#else
+
+#error "Unsupported platform/compiler"
+
+#endif /* HAVE_PTHREAD_H, _WIN32 */
 
 
 /* Atomic operations */
