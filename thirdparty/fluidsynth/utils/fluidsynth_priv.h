@@ -73,9 +73,6 @@ typedef double fluid_real_t;
 
 typedef void* fpointer;
 
-/* Atomic types */
-#include "fluid_atomic.h"
-
 /***************************************************************
  *
  *       FORWARD DECLARATIONS
@@ -331,7 +328,11 @@ else \
  fluid_return_if_fail(cond) (val)
 
 
- /* Internationalization */
+/* Atomic types */
+#include "fluid_atomic.h"
+
+
+/* Internationalization */
 #define _(s) s
 
 #endif /* _FLUIDSYNTH_PRIV_H */

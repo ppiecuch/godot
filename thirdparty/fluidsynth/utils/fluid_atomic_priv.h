@@ -29,6 +29,11 @@
 #endif
 #endif // STATIC_ASSERT
 
+#include "fluid_atomic.h"
+
+#ifndef _FLUID_SYS_H
+#warning Missing fluid_sys.h - some definitions might be missing
+#endif
 
 #if defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_4) || defined(__riscos__)
 
@@ -85,18 +90,6 @@ fluid_atomic_pointer_compare_and_exchange(volatile void* atomic, volatile void* 
 #define fluid_atomic_int_exchange_and_add(atomic, val) fluid_atomic_int_add(atomic, val)
 #define fluid_atomic_int_inc(atomic) fluid_atomic_int_add(atomic, 1)
 
-#define fluid_atomic_float_get(atomic) __extension__ ({   \
-  STATIC_ASSERT(sizeof(atomic) == sizeof(float), \
-                "Atomic must be the size of a float");    \
-  __sync_synchronize();                                   \
-  atomic;})
-
-#define fluid_atomic_float_set(atomic, val) __extension__ ({  \
-      STATIC_ASSERT(sizeof(atomic) == sizeof(float), \
-                    "Atomic must be the size of a float");    \
-      atomic = (val);                                \
-      __sync_synchronize();})
-
 static FLUID_INLINE void*
 fluid_atomic_pointer_get(volatile void* atomic) { __sync_synchronize(); return *(void**)atomic; }
 
@@ -128,20 +121,20 @@ fluid_atomic_pointer_set(volatile void* atomic, void* val) { *(void**)atomic = v
 #endif
 
 static FLUID_INLINE void
-fluid_atomic_float_set(volatile float *fptr, float val)
+fluid_atomic_float_set(fluid_atomic_float_t *fptr, float val)
 {
   int32_t ival;
-  memcpy (&ival, &val, 4);
-  fluid_atomic_int_set ((volatile int *)fptr, ival);
+  FLUID_MEMCPY(&ival, &val, 4);
+  fluid_atomic_int_set ((fluid_atomic_int_t *)fptr, ival);
 }
 
 static FLUID_INLINE float
-fluid_atomic_float_get(volatile float *fptr)
+fluid_atomic_float_get(fluid_atomic_float_t *fptr)
 {
   int32_t ival;
   float fval;
-  ival = fluid_atomic_int_get ((volatile int *)fptr);
-  memcpy (&fval, &ival, 4);
+  ival = fluid_atomic_int_get ((fluid_atomic_int_t *)fptr);
+  FLUID_MEMCPY(&fval, &ival, 4);
   return fval;
 }
 
