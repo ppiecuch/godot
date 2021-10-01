@@ -519,6 +519,7 @@ struct _VariantCall {
 	VCALL_LOCALMEM0R(Color, to_argb64);
 	VCALL_LOCALMEM0R(Color, to_abgr64);
 	VCALL_LOCALMEM0R(Color, to_rgba64);
+	VCALL_LOCALMEM1R(Color, with_alpha);
 	VCALL_LOCALMEM0R(Color, gray);
 	VCALL_LOCALMEM0R(Color, inverted);
 	VCALL_LOCALMEM0R(Color, contrasted);
@@ -1853,6 +1854,7 @@ void register_variant_methods() {
 	ADDFUNC0R(COLOR, INT, Color, to_argb64, varray());
 	ADDFUNC0R(COLOR, INT, Color, to_abgr64, varray());
 	ADDFUNC0R(COLOR, INT, Color, to_rgba64, varray());
+	ADDFUNC1R(COLOR, COLOR, Color, with_alpha, REAL, "alpha", varray());
 	ADDFUNC0R(COLOR, REAL, Color, gray, varray());
 	ADDFUNC0R(COLOR, COLOR, Color, inverted, varray());
 	ADDFUNC0R(COLOR, COLOR, Color, contrasted, varray());
