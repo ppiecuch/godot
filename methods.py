@@ -323,6 +323,7 @@ def use_windows_spawn_fix(self, platform=None):
             print("=====")
             print(err)
             if output:
+                print("Return:")
                 for ln in output.strip().splitlines():
                     print("> " + ln)
             print("=====")
