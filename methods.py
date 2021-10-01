@@ -317,18 +317,30 @@ def use_windows_spawn_fix(self, platform=None):
             shell=True,
             env=env,
         )
-        _, err = proc.communicate()
+        output, err = proc.communicate()
         rv = proc.wait()
         if rv:
             print("=====")
             print(err)
+            if output:
+                for ln in output.strip().splitlines():
+                    print("> " + ln)
             print("=====")
         return rv
+
+    def checkEnv(key, env):
+        if not key in env:
+            if key in os.environ:
+                env[key] = os.environ[key]
 
     def mySpawn(sh, escape, cmd, args, env):
 
         newargs = " ".join(args[1:])
         cmdline = cmd + " " + newargs
+
+        # cmd/bat scripts relay on OS env. variable
+        for key in ["OS", "PROCESSOR_ARCHITECTURE"]:
+            checkEnv(key, env)
 
         rv = 0
         env = {str(key): str(value) for key, value in iteritems(env)}
