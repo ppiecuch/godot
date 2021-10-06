@@ -28,9 +28,6 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-// Must include Winsock before windows.h (included by os_windows.h)
-#include "drivers/unix/net_socket_posix.h"
-
 #include "os_windows.h"
 
 #include "core/io/marshalls.h"
@@ -38,6 +35,7 @@
 #include "core/version_generated.gen.h"
 #include "drivers/gles2/rasterizer_gles2.h"
 #include "drivers/gles3/rasterizer_gles3.h"
+#include "drivers/unix/net_socket_posix.h"
 #include "drivers/windows/dir_access_windows.h"
 #include "drivers/windows/file_access_windows.h"
 #include "joypad_windows.h"
@@ -95,7 +93,6 @@ static BOOL CALLBACK _MonitorEnumProcSize(HMONITOR hMonitor, HDC hdcMonitor, LPR
 	return TRUE;
 }
 
-#ifdef DEBUG_ENABLED
 static String format_error_message(DWORD id) {
 	LPWSTR messageBuffer = NULL;
 	size_t size = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
@@ -107,7 +104,6 @@ static String format_error_message(DWORD id) {
 
 	return msg;
 }
-#endif // DEBUG_ENABLED
 
 extern HINSTANCE godot_hinstance;
 

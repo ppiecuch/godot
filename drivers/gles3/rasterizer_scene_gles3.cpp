@@ -2016,8 +2016,6 @@ void RasterizerSceneGLES3::_render_list(RenderList::Element **p_elements, int p_
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_STENCIL_TEST);
 
-	state.scene_shader.set_conditional(SceneShaderGLES3::USE_SKELETON, false);
-
 	state.current_blend_mode = -1;
 	state.current_line_width = -1;
 	state.current_depth_draw = -1;
@@ -2030,16 +2028,20 @@ void RasterizerSceneGLES3::_render_list(RenderList::Element **p_elements, int p_
 	int current_blend_mode = -1;
 
 	uint32_t prev_shading = 0xFFFFFFFF;
-	RasterizerStorageGLES3::Skeleton *prev_skeleton = nullptr;
-
 	state.scene_shader.set_conditional(SceneShaderGLES3::SHADELESS, true); //by default unshaded (easier to set)
+
+	RasterizerStorageGLES3::Skeleton *prev_skeleton = nullptr;
+	state.scene_shader.set_conditional(SceneShaderGLES3::USE_SKELETON, false);
 
 	bool first = true;
 	bool prev_use_instancing = false;
+	state.scene_shader.set_conditional(SceneShaderGLES3::USE_INSTANCING, false);
 	bool prev_octahedral_compression = false;
+	state.scene_shader.set_conditional(SceneShaderGLES3::ENABLE_OCTAHEDRAL_COMPRESSION, false);
 
 	storage->info.render.draw_call_count += p_element_count;
 	bool prev_opaque_prepass = false;
+	state.scene_shader.set_conditional(SceneShaderGLES3::USE_OPAQUE_PREPASS, false);
 
 	int64_t prev_fstencil = -1, prev_bstencil = -1;
 

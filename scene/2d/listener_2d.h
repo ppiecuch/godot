@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  room_group.cpp                                                       */
+/*  listener_2d.h                                                        */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,70 +28,34 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "room_group.h"
+#ifndef LISTENER_2D_H
+#define LISTENER_2D_H
 
-#include "room.h"
-#include "room_manager.h"
+#include "scene/2d/node_2d.h"
+#include "scene/main/viewport.h"
 
-void RoomGroup::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("set_roomgroup_priority", "p_priority"), &RoomGroup::set_roomgroup_priority);
-	ClassDB::bind_method(D_METHOD("get_roomgroup_priority"), &RoomGroup::get_roomgroup_priority);
+class Listener2D : public Node2D {
+	GDCLASS(Listener2D, Node2D);
 
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "roomgroup_priority", PROPERTY_HINT_RANGE, "-16,16,1", PROPERTY_USAGE_DEFAULT), "set_roomgroup_priority", "get_roomgroup_priority");
-}
+private:
+	bool current = false;
 
-RoomGroup::RoomGroup() {
-	_room_group_rid = VisualServer::get_singleton()->roomgroup_create();
-}
+	friend class Viewport;
 
-RoomGroup::~RoomGroup() {
-	if (_room_group_rid != RID()) {
-		VisualServer::get_singleton()->free(_room_group_rid);
-	}
-}
+protected:
+	void _update_listener();
 
-String RoomGroup::get_configuration_warning() const {
-	String warning = Spatial::get_configuration_warning();
+	bool _set(const StringName &p_name, const Variant &p_value);
+	bool _get(const StringName &p_name, Variant &r_ret) const;
+	void _get_property_list(List<PropertyInfo> *p_list) const;
+	void _notification(int p_what);
 
-	if (Room::detect_nodes_of_type<RoomManager>(this)) {
-		if (!warning.empty()) {
-			warning += "\n\n";
-		}
-		warning += TTR("The RoomManager should not be placed inside a RoomGroup.");
-	}
+	static void _bind_methods();
 
-	return warning;
-}
+public:
+	void make_current();
+	void clear_current();
+	bool is_current() const;
+};
 
-void RoomGroup::clear() {
-	_roomgroup_ID = -1;
-}
-
-void RoomGroup::add_room(Room *p_room) {
-	VisualServer::get_singleton()->roomgroup_add_room(_room_group_rid, p_room->_room_rid);
-}
-
-// extra editor links to the room manager to allow unloading
-// on change, or re-converting
-void RoomGroup::_changed() {
-#ifdef TOOLS_ENABLED
-	RoomManager *rm = RoomManager::active_room_manager;
-	if (!rm) {
-		return;
-	}
-
-	rm->_rooms_changed("changed RoomGroup " + get_name());
 #endif
-}
-
-void RoomGroup::_notification(int p_what) {
-	switch (p_what) {
-		case NOTIFICATION_ENTER_WORLD: {
-			ERR_FAIL_COND(get_world().is_null());
-			VisualServer::get_singleton()->roomgroup_set_scenario(_room_group_rid, get_world()->get_scenario());
-		} break;
-		case NOTIFICATION_EXIT_WORLD: {
-			VisualServer::get_singleton()->roomgroup_set_scenario(_room_group_rid, RID());
-		} break;
-	}
-}

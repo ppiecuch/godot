@@ -28,12 +28,10 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-// Define PLATFORM_THREAD_H in platform_config.h
-// Overriding the platform implementation is required in some proprietary platforms
 
 #include "thread.h"
 
-#ifndef PLATFORM_THREAD_H
+#ifndef PLATFORM_THREAD_H // // See details in thread.h
 #ifndef NO_THREADS
 
 #include "core/script_language.h"

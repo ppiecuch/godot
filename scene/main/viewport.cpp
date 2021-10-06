@@ -36,6 +36,7 @@
 #include "core/project_settings.h"
 #include "scene/2d/camera_2d.h"
 #include "scene/2d/collision_object_2d.h"
+#include "scene/2d/listener_2d.cpp"
 #include "scene/3d/camera.h"
 #include "scene/3d/collision_object.h"
 #include "scene/3d/listener.h"
@@ -54,16 +55,16 @@
 #include "servers/physics_2d_server.h"
 
 void ViewportTexture::setup_local_to_scene() {
+	Node *local_scene = get_local_scene();
+	if (!local_scene) {
+		return;
+	}
+
 	if (vp) {
 		vp->viewport_textures.erase(this);
 	}
 
 	vp = nullptr;
-
-	Node *local_scene = get_local_scene();
-	if (!local_scene) {
-		return;
-	}
 
 	Node *vpn = local_scene->get_node(path);
 	ERR_FAIL_COND_MSG(!vpn, "ViewportTexture: Path to node is invalid.");
@@ -723,6 +724,7 @@ void Viewport::set_size(const Size2 &p_size) {
 	VS::get_singleton()->viewport_set_size(viewport, size.width, size.height);
 
 	_update_stretch_transform();
+	update_configuration_warning();
 
 	emit_signal("size_changed");
 }
@@ -785,12 +787,15 @@ void Viewport::set_as_audio_listener_2d(bool p_enable) {
 	}
 
 	audio_listener_2d = p_enable;
-
 	_update_listener_2d();
 }
 
 bool Viewport::is_audio_listener_2d() const {
 	return audio_listener_2d;
+}
+
+Listener2D *Viewport::get_listener_2d() const {
+	return listener_2d;
 }
 
 void Viewport::enable_canvas_transform_override(bool p_enable) {
@@ -982,6 +987,21 @@ void Viewport::_camera_make_next_current(Camera *p_exclude) {
 	}
 }
 #endif
+
+void Viewport::_listener_2d_set(Listener2D *p_listener) {
+	if (listener_2d == p_listener) {
+		return;
+	} else if (listener_2d) {
+		listener_2d->clear_current();
+	}
+	listener_2d = p_listener;
+}
+
+void Viewport::_listener_2d_remove(Listener2D *p_listener) {
+	if (listener_2d == p_listener) {
+		listener_2d = nullptr;
+	}
+}
 
 void Viewport::_canvas_layer_add(CanvasLayer *p_canvas_layer) {
 	canvas_layers.insert(p_canvas_layer);
@@ -2946,11 +2966,11 @@ String Viewport::get_configuration_warning() const {
 
 	String warning = Node::get_configuration_warning();
 
-	if (size.x == 0 || size.y == 0) {
+	if (size.x <= 1 || size.y <= 1) {
 		if (warning != String()) {
 			warning += "\n\n";
 		}
-		warning += TTR("Viewport size must be greater than 0 to render anything.");
+		warning += TTR("The Viewport size must be greater than or equal to 2 pixels on both dimensions to render anything.");
 	}
 	return warning;
 }

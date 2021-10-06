@@ -112,13 +112,6 @@ void _err_print_index_error(const char *p_function, const char *p_file, int p_li
 #define GENERATE_TRAP __builtin_trap();
 #endif
 
-// Used to strip debug messages in release mode
-#ifdef DEBUG_ENABLED
-#define DEBUG_STR(m_msg) m_msg
-#else
-#define DEBUG_STR(m_msg) ""
-#endif
-
 // (*): See https://stackoverflow.com/questions/257418/do-while-0-what-is-it-good-for
 
 /**
@@ -138,11 +131,11 @@ void _err_print_index_error(const char *p_function, const char *p_file, int p_li
  * error message and returns from the function. This macro should be preferred to
  * `ERR_FAIL_COND_MSG` for bounds checking.
  */
-#define ERR_FAIL_INDEX_MSG(m_index, m_size, m_msg)                                                                                \
-	if (unlikely((m_index) < 0 || (m_index) >= (m_size))) {                                                                       \
-		_err_print_index_error(FUNCTION_STR, __FILE__, __LINE__, m_index, m_size, _STR(m_index), _STR(m_size), DEBUG_STR(m_msg)); \
-		return;                                                                                                                   \
-	} else                                                                                                                        \
+#define ERR_FAIL_INDEX_MSG(m_index, m_size, m_msg)                                                                     \
+	if (unlikely((m_index) < 0 || (m_index) >= (m_size))) {                                                            \
+		_err_print_index_error(FUNCTION_STR, __FILE__, __LINE__, m_index, m_size, _STR(m_index), _STR(m_size), m_msg); \
+		return;                                                                                                        \
+	} else                                                                                                             \
 		((void)0)
 
 /**
@@ -162,11 +155,11 @@ void _err_print_index_error(const char *p_function, const char *p_file, int p_li
  * prints a custom error message and returns the value specified in `m_retval`.
  * This macro should be preferred to `ERR_FAIL_COND_V_MSG` for bounds checking.
  */
-#define ERR_FAIL_INDEX_V_MSG(m_index, m_size, m_retval, m_msg)                                                                    \
-	if (unlikely((m_index) < 0 || (m_index) >= (m_size))) {                                                                       \
-		_err_print_index_error(FUNCTION_STR, __FILE__, __LINE__, m_index, m_size, _STR(m_index), _STR(m_size), DEBUG_STR(m_msg)); \
-		return m_retval;                                                                                                          \
-	} else                                                                                                                        \
+#define ERR_FAIL_INDEX_V_MSG(m_index, m_size, m_retval, m_msg)                                                         \
+	if (unlikely((m_index) < 0 || (m_index) >= (m_size))) {                                                            \
+		_err_print_index_error(FUNCTION_STR, __FILE__, __LINE__, m_index, m_size, _STR(m_index), _STR(m_size), m_msg); \
+		return m_retval;                                                                                               \
+	} else                                                                                                             \
 		((void)0)
 
 /**
@@ -198,11 +191,11 @@ void _err_print_index_error(const char *p_function, const char *p_file, int p_li
  * prints a custom error message and returns the value specified in `m_retval`.
  * This macro should be preferred to `ERR_FAIL_COND_V_MSG` for unsigned bounds checking.
  */
-#define ERR_FAIL_UNSIGNED_INDEX_V_MSG(m_index, m_size, m_retval, m_msg)                                                           \
-	if (unlikely((m_index) >= (m_size))) {                                                                                        \
-		_err_print_index_error(FUNCTION_STR, __FILE__, __LINE__, m_index, m_size, _STR(m_index), _STR(m_size), DEBUG_STR(m_msg)); \
-		return m_retval;                                                                                                          \
-	} else                                                                                                                        \
+#define ERR_FAIL_UNSIGNED_INDEX_V_MSG(m_index, m_size, m_retval, m_msg)                                                \
+	if (unlikely((m_index) >= (m_size))) {                                                                             \
+		_err_print_index_error(FUNCTION_STR, __FILE__, __LINE__, m_index, m_size, _STR(m_index), _STR(m_size), m_msg); \
+		return m_retval;                                                                                               \
+	} else                                                                                                             \
 		((void)0)
 
 /**
@@ -257,11 +250,11 @@ void _err_print_index_error(const char *p_function, const char *p_file, int p_li
 /**
  * If `m_param` is `null`, prints a custom error message and returns from the function.
  */
-#define ERR_FAIL_NULL_MSG(m_param, m_msg)                                                                                 \
-	if (unlikely(!m_param)) {                                                                                             \
-		_err_print_error(FUNCTION_STR, __FILE__, __LINE__, "Parameter \"" _STR(m_param) "\" is null.", DEBUG_STR(m_msg)); \
-		return;                                                                                                           \
-	} else                                                                                                                \
+#define ERR_FAIL_NULL_MSG(m_param, m_msg)                                                                      \
+	if (unlikely(!m_param)) {                                                                                  \
+		_err_print_error(FUNCTION_STR, __FILE__, __LINE__, "Parameter \"" _STR(m_param) "\" is null.", m_msg); \
+		return;                                                                                                \
+	} else                                                                                                     \
 		((void)0)
 
 /**
@@ -277,11 +270,11 @@ void _err_print_index_error(const char *p_function, const char *p_file, int p_li
 /**
  * If `m_param` is `null`, prints a custom error message and returns the value specified in `m_retval`.
  */
-#define ERR_FAIL_NULL_V_MSG(m_param, m_retval, m_msg)                                                                     \
-	if (unlikely(!m_param)) {                                                                                             \
-		_err_print_error(FUNCTION_STR, __FILE__, __LINE__, "Parameter \"" _STR(m_param) "\" is null.", DEBUG_STR(m_msg)); \
-		return m_retval;                                                                                                  \
-	} else                                                                                                                \
+#define ERR_FAIL_NULL_V_MSG(m_param, m_retval, m_msg)                                                          \
+	if (unlikely(!m_param)) {                                                                                  \
+		_err_print_error(FUNCTION_STR, __FILE__, __LINE__, "Parameter \"" _STR(m_param) "\" is null.", m_msg); \
+		return m_retval;                                                                                       \
+	} else                                                                                                     \
 		((void)0)
 
 /**
@@ -297,29 +290,12 @@ void _err_print_index_error(const char *p_function, const char *p_file, int p_li
 /**
  * If `m_cond` evaluates to `true`, prints a custom error message and returns from the function.
  */
-#define ERR_FAIL_COND_MSG(m_cond, m_msg)                                                                                 \
-	if (unlikely(m_cond)) {                                                                                              \
-		_err_print_error(FUNCTION_STR, __FILE__, __LINE__, "Condition \"" _STR(m_cond) "\" is true.", DEBUG_STR(m_msg)); \
-		return;                                                                                                          \
-	} else                                                                                                               \
+#define ERR_FAIL_COND_MSG(m_cond, m_msg)                                                                      \
+	if (unlikely(m_cond)) {                                                                                   \
+		_err_print_error(FUNCTION_STR, __FILE__, __LINE__, "Condition \"" _STR(m_cond) "\" is true.", m_msg); \
+		return;                                                                                               \
+	} else                                                                                                    \
 		((void)0)
-
-/**
- * Should assert only if making a build with dev asserts.
- * This should be a 'free' check for program flow and should not be needed in any releases,
- *  only used in dev builds.
- */
-// #define DEV_ASSERTS_ENABLED
-#ifdef DEV_ASSERTS_ENABLED
-#define DEV_ASSERT(m_cond)                                                                                              \
-	if (unlikely(!(m_cond))) {                                                                                          \
-		_err_print_error(FUNCTION_STR, __FILE__, __LINE__, "FATAL: DEV_ASSERT failed  \"" _STR(m_cond) "\" is false."); \
-		GENERATE_TRAP                                                                                                   \
-	} else                                                                                                              \
-		((void)0)
-#else
-#define DEV_ASSERT(m_cond)
-#endif
 
 /**
  * If `m_cond` evaluates to `true`, crashes the engine immediately with a generic error message.
@@ -336,11 +312,11 @@ void _err_print_index_error(const char *p_function, const char *p_file, int p_li
  * If `m_cond` evaluates to `true`, crashes the engine immediately with a custom error message.
  * Only use this if there's no sensible fallback (i.e. the error is unrecoverable).
  */
-#define CRASH_COND_MSG(m_cond, m_msg)                                                                                           \
-	if (unlikely(m_cond)) {                                                                                                     \
-		_err_print_error(FUNCTION_STR, __FILE__, __LINE__, "FATAL: Condition \"" _STR(m_cond) "\" is true.", DEBUG_STR(m_msg)); \
-		GENERATE_TRAP                                                                                                           \
-	} else                                                                                                                      \
+#define CRASH_COND_MSG(m_cond, m_msg)                                                                                \
+	if (unlikely(m_cond)) {                                                                                          \
+		_err_print_error(FUNCTION_STR, __FILE__, __LINE__, "FATAL: Condition \"" _STR(m_cond) "\" is true.", m_msg); \
+		GENERATE_TRAP                                                                                                \
+	} else                                                                                                           \
 		((void)0)
 
 /**
@@ -356,11 +332,11 @@ void _err_print_index_error(const char *p_function, const char *p_file, int p_li
 /**
  * If `m_cond` evaluates to `true`, prints a custom error message and returns the value specified in `m_retval`.
  */
-#define ERR_FAIL_COND_V_MSG(m_cond, m_retval, m_msg)                                                                                               \
-	if (unlikely(m_cond)) {                                                                                                                        \
-		_err_print_error(FUNCTION_STR, __FILE__, __LINE__, "Condition \"" _STR(m_cond) "\" is true. Returned: " _STR(m_retval), DEBUG_STR(m_msg)); \
-		return m_retval;                                                                                                                           \
-	} else                                                                                                                                         \
+#define ERR_FAIL_COND_V_MSG(m_cond, m_retval, m_msg)                                                                                    \
+	if (unlikely(m_cond)) {                                                                                                             \
+		_err_print_error(FUNCTION_STR, __FILE__, __LINE__, "Condition \"" _STR(m_cond) "\" is true. Returned: " _STR(m_retval), m_msg); \
+		return m_retval;                                                                                                                \
+	} else                                                                                                                              \
 		((void)0)
 
 /**
@@ -376,11 +352,11 @@ void _err_print_index_error(const char *p_function, const char *p_file, int p_li
 /**
  * If `m_cond` evaluates to `true`, prints a custom error message and continues the loop the macro is located in.
  */
-#define ERR_CONTINUE_MSG(m_cond, m_msg)                                                                                              \
-	if (unlikely(m_cond)) {                                                                                                          \
-		_err_print_error(FUNCTION_STR, __FILE__, __LINE__, "Condition \"" _STR(m_cond) "\" is true. Continuing.", DEBUG_STR(m_msg)); \
-		continue;                                                                                                                    \
-	} else                                                                                                                           \
+#define ERR_CONTINUE_MSG(m_cond, m_msg)                                                                                   \
+	if (unlikely(m_cond)) {                                                                                               \
+		_err_print_error(FUNCTION_STR, __FILE__, __LINE__, "Condition \"" _STR(m_cond) "\" is true. Continuing.", m_msg); \
+		continue;                                                                                                         \
+	} else                                                                                                                \
 		((void)0)
 
 /**
@@ -396,11 +372,11 @@ void _err_print_index_error(const char *p_function, const char *p_file, int p_li
 /**
  * If `m_cond` evaluates to `true`, prints a custom error message and breaks from the loop the macro is located in.
  */
-#define ERR_BREAK_MSG(m_cond, m_msg)                                                                                               \
-	if (unlikely(m_cond)) {                                                                                                        \
-		_err_print_error(FUNCTION_STR, __FILE__, __LINE__, "Condition \"" _STR(m_cond) "\" is true. Breaking.", DEBUG_STR(m_msg)); \
-		break;                                                                                                                     \
-	} else                                                                                                                         \
+#define ERR_BREAK_MSG(m_cond, m_msg)                                                                                    \
+	if (unlikely(m_cond)) {                                                                                             \
+		_err_print_error(FUNCTION_STR, __FILE__, __LINE__, "Condition \"" _STR(m_cond) "\" is true. Breaking.", m_msg); \
+		break;                                                                                                          \
+	} else                                                                                                              \
 		((void)0)
 
 /**
@@ -416,11 +392,11 @@ void _err_print_index_error(const char *p_function, const char *p_file, int p_li
 /**
  * Prints a custom error message and returns from the function.
  */
-#define ERR_FAIL_MSG(m_msg)                                                                     \
-	if (true) {                                                                                 \
-		_err_print_error(FUNCTION_STR, __FILE__, __LINE__, "Method failed.", DEBUG_STR(m_msg)); \
-		return;                                                                                 \
-	} else                                                                                      \
+#define ERR_FAIL_MSG(m_msg)                                                          \
+	if (true) {                                                                      \
+		_err_print_error(FUNCTION_STR, __FILE__, __LINE__, "Method failed.", m_msg); \
+		return;                                                                      \
+	} else                                                                           \
 		((void)0)
 
 /**
@@ -436,11 +412,11 @@ void _err_print_index_error(const char *p_function, const char *p_file, int p_li
 /**
  * Prints a custom error message and returns the value specified in `m_retval`.
  */
-#define ERR_FAIL_V_MSG(m_retval, m_msg)                                                                                     \
-	if (true) {                                                                                                             \
-		_err_print_error(FUNCTION_STR, __FILE__, __LINE__, "Method failed. Returning: " __STR(m_retval), DEBUG_STR(m_msg)); \
-		return m_retval;                                                                                                    \
-	} else                                                                                                                  \
+#define ERR_FAIL_V_MSG(m_retval, m_msg)                                                                          \
+	if (true) {                                                                                                  \
+		_err_print_error(FUNCTION_STR, __FILE__, __LINE__, "Method failed. Returning: " __STR(m_retval), m_msg); \
+		return m_retval;                                                                                         \
+	} else                                                                                                       \
 		((void)0)
 
 /**
@@ -458,11 +434,11 @@ void _err_print_index_error(const char *p_function, const char *p_file, int p_li
  * Crashes the engine immediately with a custom error message.
  * Only use this if there's no sensible fallback (i.e. the error is unrecoverable).
  */
-#define CRASH_NOW_MSG(m_msg)                                                                           \
-	if (true) {                                                                                        \
-		_err_print_error(FUNCTION_STR, __FILE__, __LINE__, "FATAL: Method failed.", DEBUG_STR(m_msg)); \
-		GENERATE_TRAP                                                                                  \
-	} else                                                                                             \
+#define CRASH_NOW_MSG(m_msg)                                                                \
+	if (true) {                                                                             \
+		_err_print_error(FUNCTION_STR, __FILE__, __LINE__, "FATAL: Method failed.", m_msg); \
+		GENERATE_TRAP                                                                       \
+	} else                                                                                  \
 		((void)0)
 
 /**
@@ -534,4 +510,43 @@ void _err_print_index_error(const char *p_function, const char *p_file, int p_li
 	} else                                                                                                                                                        \
 		((void)0)
 
+#endif
+
+/**
+ * This should be a 'free' assert for program flow and should not be needed in any releases,
+ *  only used in dev builds.
+ */
+#ifdef DEV_ENABLED
+#define DEV_ASSERT(m_cond)                                                                                              \
+	if (unlikely(!(m_cond))) {                                                                                          \
+		_err_print_error(FUNCTION_STR, __FILE__, __LINE__, "FATAL: DEV_ASSERT failed  \"" _STR(m_cond) "\" is false."); \
+		GENERATE_TRAP                                                                                                   \
+	} else                                                                                                              \
+		((void)0)
+#else
+#define DEV_ASSERT(m_cond)
+#endif
+
+/**
+ * These should be 'free' checks for program flow and should not be needed in any releases,
+ *  only used in dev builds.
+ */
+#ifdef DEV_ENABLED
+#define DEV_CHECK(m_cond)                                              \
+	if (unlikely(!(m_cond))) {                                         \
+		ERR_PRINT("DEV_CHECK failed  \"" _STR(m_cond) "\" is false."); \
+	} else                                                             \
+		((void)0)
+#else
+#define DEV_CHECK(m_cond)
+#endif
+
+#ifdef DEV_ENABLED
+#define DEV_CHECK_ONCE(m_cond)                                                   \
+	if (unlikely(!(m_cond))) {                                                   \
+		ERR_PRINT_ONCE("DEV_CHECK_ONCE failed  \"" _STR(m_cond) "\" is false."); \
+	} else                                                                       \
+		((void)0)
+#else
+#define DEV_CHECK_ONCE(m_cond)
 #endif

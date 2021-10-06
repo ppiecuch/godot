@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  room_group.cpp                                                       */
+/*  listener_2d.cpp                                                      */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,70 +28,85 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "room_group.h"
+#include "listener_2d.h"
 
-#include "room.h"
-#include "room_manager.h"
-
-void RoomGroup::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("set_roomgroup_priority", "p_priority"), &RoomGroup::set_roomgroup_priority);
-	ClassDB::bind_method(D_METHOD("get_roomgroup_priority"), &RoomGroup::get_roomgroup_priority);
-
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "roomgroup_priority", PROPERTY_HINT_RANGE, "-16,16,1", PROPERTY_USAGE_DEFAULT), "set_roomgroup_priority", "get_roomgroup_priority");
-}
-
-RoomGroup::RoomGroup() {
-	_room_group_rid = VisualServer::get_singleton()->roomgroup_create();
-}
-
-RoomGroup::~RoomGroup() {
-	if (_room_group_rid != RID()) {
-		VisualServer::get_singleton()->free(_room_group_rid);
-	}
-}
-
-String RoomGroup::get_configuration_warning() const {
-	String warning = Spatial::get_configuration_warning();
-
-	if (Room::detect_nodes_of_type<RoomManager>(this)) {
-		if (!warning.empty()) {
-			warning += "\n\n";
+bool Listener2D::_set(const StringName &p_name, const Variant &p_value) {
+	if (p_name == "current") {
+		if (p_value.operator bool()) {
+			make_current();
+		} else {
+			clear_current();
 		}
-		warning += TTR("The RoomManager should not be placed inside a RoomGroup.");
+	} else {
+		return false;
 	}
-
-	return warning;
+	return true;
 }
 
-void RoomGroup::clear() {
-	_roomgroup_ID = -1;
+bool Listener2D::_get(const StringName &p_name, Variant &r_ret) const {
+	if (p_name == "current") {
+		if (is_inside_tree() && get_tree()->is_node_being_edited(this)) {
+			r_ret = current;
+		} else {
+			r_ret = is_current();
+		}
+	} else {
+		return false;
+	}
+	return true;
 }
 
-void RoomGroup::add_room(Room *p_room) {
-	VisualServer::get_singleton()->roomgroup_add_room(_room_group_rid, p_room->_room_rid);
+void Listener2D::_get_property_list(List<PropertyInfo> *p_list) const {
+	p_list->push_back(PropertyInfo(Variant::BOOL, "current"));
 }
 
-// extra editor links to the room manager to allow unloading
-// on change, or re-converting
-void RoomGroup::_changed() {
-#ifdef TOOLS_ENABLED
-	RoomManager *rm = RoomManager::active_room_manager;
-	if (!rm) {
+void Listener2D::_notification(int p_what) {
+	switch (p_what) {
+		case NOTIFICATION_ENTER_TREE: {
+			if (!get_tree()->is_node_being_edited(this) && current) {
+				make_current();
+			}
+		} break;
+		case NOTIFICATION_EXIT_TREE: {
+			if (!get_tree()->is_node_being_edited(this)) {
+				if (is_current()) {
+					clear_current();
+					current = true; // Keep it true.
+				} else {
+					current = false;
+				}
+			}
+		} break;
+	}
+}
+
+void Listener2D::make_current() {
+	current = true;
+	if (!is_inside_tree()) {
 		return;
 	}
-
-	rm->_rooms_changed("changed RoomGroup " + get_name());
-#endif
+	get_viewport()->_listener_2d_set(this);
 }
 
-void RoomGroup::_notification(int p_what) {
-	switch (p_what) {
-		case NOTIFICATION_ENTER_WORLD: {
-			ERR_FAIL_COND(get_world().is_null());
-			VisualServer::get_singleton()->roomgroup_set_scenario(_room_group_rid, get_world()->get_scenario());
-		} break;
-		case NOTIFICATION_EXIT_WORLD: {
-			VisualServer::get_singleton()->roomgroup_set_scenario(_room_group_rid, RID());
-		} break;
+void Listener2D::clear_current() {
+	current = false;
+	if (!is_inside_tree()) {
+		return;
 	}
+	get_viewport()->_listener_2d_remove(this);
+}
+
+bool Listener2D::is_current() const {
+	if (is_inside_tree() && !get_tree()->is_node_being_edited(this)) {
+		return get_viewport()->get_listener_2d() == this;
+	} else {
+		return current;
+	}
+	return false;
+}
+
+void Listener2D::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("make_current"), &Listener2D::make_current);
+	ClassDB::bind_method(D_METHOD("clear_current"), &Listener2D::clear_current);
+	ClassDB::bind_method(D_METHOD("is_current"), &Listener2D::is_current);
 }

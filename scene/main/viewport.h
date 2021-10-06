@@ -40,6 +40,7 @@
 class Camera;
 class Camera2D;
 class Listener;
+class Listener2D;
 class Control;
 class CanvasItem;
 class CanvasLayer;
@@ -181,6 +182,7 @@ private:
 	Camera *camera;
 	Camera2D *camera_2d;
 	Set<Camera *> cameras;
+	Listener2D *listener_2d = nullptr;
 	Set<CanvasLayer *> canvas_layers;
 
 	RID viewport;
@@ -404,6 +406,10 @@ private:
 	friend class Camera2D;
 	void _camera_2d_set(Camera2D *p_camera_2d);
 
+	friend class Listener2D;
+	void _listener_2d_set(Listener2D *p_listener);
+	void _listener_2d_remove(Listener2D *p_listener);
+
 	friend class CanvasLayer;
 	void _canvas_layer_add(CanvasLayer *p_canvas_layer);
 	void _canvas_layer_remove(CanvasLayer *p_canvas_layer);
@@ -441,6 +447,7 @@ public:
 	void set_as_audio_listener(bool p_enable);
 	bool is_audio_listener() const;
 
+	Listener2D *get_listener_2d() const;
 	void set_as_audio_listener_2d(bool p_enable);
 	bool is_audio_listener_2d() const;
 

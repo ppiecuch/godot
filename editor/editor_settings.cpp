@@ -444,6 +444,7 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 	_initial_set("text_editor/navigation/show_minimap", true);
 	_initial_set("text_editor/navigation/minimap_width", 80);
 	hints["text_editor/navigation/minimap_width"] = PropertyInfo(Variant::INT, "text_editor/navigation/minimap_width", PROPERTY_HINT_RANGE, "50,250,1");
+	_initial_set("text_editor/navigation/mouse_extra_buttons_navigate_history", true);
 
 	// Appearance
 	_initial_set("text_editor/appearance/show_line_numbers", true);
@@ -544,6 +545,9 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 	_initial_set("editors/3d/default_fov", 70.0);
 	_initial_set("editors/3d/default_z_near", 0.05);
 	_initial_set("editors/3d/default_z_far", 500.0);
+
+	_initial_set("editors/3d/lightmap_baking_number_of_cpu_threads", 0);
+	hints["editors/3d/lightmap_baking_number_of_cpu_threads"] = PropertyInfo(Variant::INT, "editors/3d/lightmap_baking_number_of_cpu_threads", PROPERTY_HINT_RANGE, "-2,128,1", PROPERTY_USAGE_DEFAULT);
 
 	// 3D: Navigation
 	_initial_set("editors/3d/navigation/navigation_scheme", 0);
