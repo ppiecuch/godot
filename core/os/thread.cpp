@@ -28,7 +28,6 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-
 #include "thread.h"
 
 #ifndef PLATFORM_THREAD_H // // See details in thread.h
