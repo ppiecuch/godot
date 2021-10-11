@@ -34,6 +34,7 @@
 #include "editor/audio_stream_preview.h"
 #include "editor/editor_node.h"
 
+#include "core/area_prober.h"
 #include "core/blitter.h"
 #include "core/bs_input_event_key.h"
 #include "core/byteswap.h"
@@ -140,6 +141,7 @@ void register_gdextensions_types() {
 	ClassDB::register_class<LinkerBNode>();
 	ClassDB::register_class<StatusBNode>();
 
+	ClassDB::register_class<AreaProber>();
 	ClassDB::register_class<Timer2>();
 	ClassDB::register_class<TimerObject>();
 	ClassDB::register_class<Tween2>();
