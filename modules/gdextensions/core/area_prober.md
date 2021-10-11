@@ -14,7 +14,7 @@ It's pretty straight forward to use:
 -- For collision mask using `.set_collision_mask(mask:int)`
 -- For allowing or denying collisions with bodies and areas you can use `.set_collision_detect_bodies(value:bool)` and `.set_collision_detect_areas(value:bool)` respectively
 - After that you just use `.probe(position:Vector2)`, the function will return an empty array if there is no avaliable colliders in the give area and will return an array of arrays if there is, each element of the returning array is an array with a fixed size of 2, the first element is the collider reference and the second is which shape of that given collider was detected.
- 
+
 
 ## Note from Strauji
 For a while now i've been making VoidStrike: The Online Space Shooter, and one recurring problem i had is that i needed to get the closests bodies to the player ship, or to another given body, until now i used an Area2D as a child of that node and called it a night, but over the time that started to take it's toll on the game performance, so i had to find an way to make this process easier and lighter
