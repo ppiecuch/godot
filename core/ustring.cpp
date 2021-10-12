@@ -1153,6 +1153,10 @@ String String::chr(CharType p_char) {
 	return String(c);
 }
 String String::num(double p_num, int p_decimals) {
+	if (Math::is_nan(p_num)) {
+		return "nan";
+	}
+
 #ifndef NO_USE_STDLIB
 
 	if (p_decimals > 16) {
@@ -1441,6 +1445,10 @@ String String::num_real(double p_num) {
 }
 
 String String::num_scientific(double p_num) {
+	if (Math::is_nan(p_num)) {
+		return "nan";
+	}
+
 #ifndef NO_USE_STDLIB
 
 	char buf[256];
@@ -4547,6 +4555,16 @@ String TTR(const String &p_text) {
 	return p_text;
 }
 
+String DTR(const String &p_text) {
+	// Comes straight from the XML, so remove indentation and any trailing whitespace.
+	const String text = p_text.dedent().strip_edges();
+
+	if (TranslationServer::get_singleton()) {
+		return TranslationServer::get_singleton()->doc_translate(text);
+	}
+
+	return text;
+}
 #endif
 
 String RTR(const String &p_text) {

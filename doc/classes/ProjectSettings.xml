@@ -200,6 +200,11 @@
 			The project's name. It is used both by the Project Manager and by exporters. The project name can be translated by translating its value in localization files. The window title will be set to match the project name automatically on startup.
 			[b]Note:[/b] Changing this value will also change the user data folder's path if [member application/config/use_custom_user_dir] is [code]false[/code]. After renaming the project, you will no longer be able to access existing data in [code]user://[/code] unless you rename the old folder to match the new project name. See [url=https://docs.godotengine.org/en/3.4/tutorials/io/data_paths.html]Data paths[/url] in the documentation for more information.
 		</member>
+		<member name="application/config/project_data_dir_name" type="String" setter="" getter="" default="&quot;.import&quot;">
+			The project data directory is used for storing project-specific data (metadata, shader cache, etc.).
+			[b]Note:[/b] Restart the application after changing this setting.
+			[b]Note:[/b] Changing this value can help on platforms or with third-party tools where specific directory patterns are disallowed. Only modify this setting if you know that your environment requires it, as changing the default can impact compatibility with some external tools or plugins which expect the default [code].import[/code] folder.
+		</member>
 		<member name="application/config/project_settings_override" type="String" setter="" getter="" default="&quot;&quot;">
 			Specifies a file to override project settings. For example: [code]user://custom_settings.cfg[/code]. See "Overriding" in the [ProjectSettings] class description at the top for more information.
 			[b]Note:[/b] Regardless of this setting's value, [code]res://override.cfg[/code] will still be read to override the project settings.
@@ -257,7 +262,7 @@
 		<member name="audio/default_bus_layout" type="String" setter="" getter="" default="&quot;res://default_bus_layout.tres&quot;">
 			Default [AudioBusLayout] resource file to use in the project, unless overridden by the scene.
 		</member>
-		<member name="audio/driver" type="String" setter="" getter="" default="&quot;PulseAudio&quot;">
+		<member name="audio/driver" type="String" setter="" getter="">
 			Specifies the audio driver to use. This setting is platform-dependent as each platform supports different audio drivers. If left empty, the default audio driver will be used.
 		</member>
 		<member name="audio/enable_audio_input" type="bool" setter="" getter="" default="false">
@@ -488,7 +493,7 @@
 		<member name="display/window/size/width" type="int" setter="" getter="" default="1024">
 			Sets the game's main viewport width. On desktop platforms, this is the default window size. Stretch mode settings also use this as a reference when enabled.
 		</member>
-		<member name="display/window/tablet_driver" type="String" setter="" getter="" default="&quot;&quot;">
+		<member name="display/window/tablet_driver" type="String" setter="" getter="">
 			Specifies the tablet driver to use. If left empty, the default driver will be used.
 		</member>
 		<member name="display/window/vsync/use_vsync" type="bool" setter="" getter="" default="true">
@@ -515,7 +520,7 @@
 		<member name="gui/common/default_scroll_deadzone" type="int" setter="" getter="" default="0">
 			Default value for [member ScrollContainer.scroll_deadzone], which will be used for all [ScrollContainer]s unless overridden.
 		</member>
-		<member name="gui/common/swap_ok_cancel" type="bool" setter="" getter="" default="false">
+		<member name="gui/common/swap_ok_cancel" type="bool" setter="" getter="">
 			If [code]true[/code], swaps OK and Cancel buttons in dialogs on Windows and UWP to follow interface conventions.
 		</member>
 		<member name="gui/common/text_edit_undo_stack_max_size" type="int" setter="" getter="" default="1024">
@@ -1377,6 +1382,10 @@
 		<member name="rendering/quality/shading/force_vertex_shading.mobile" type="bool" setter="" getter="" default="true">
 			Lower-end override for [member rendering/quality/shading/force_vertex_shading] on mobile devices, due to performance concerns or driver support.
 		</member>
+		<member name="rendering/quality/shading/use_physical_light_attenuation" type="bool" setter="" getter="" default="false">
+			If [code]true[/code], enables new physical light attenuation for [OmniLight]s and [SpotLight]s. This results in more realistic lighting appearance with a very small performance cost. When physical light attenuation is enabled, lights will appear to be darker as a result of the new attenuation formula. This can be compensated by adjusting the lights' energy or attenuation values.
+			Changes to this setting will only be applied upon restarting the application.
+		</member>
 		<member name="rendering/quality/shadow_atlas/cubemap_size" type="int" setter="" getter="" default="512">
 			Size for cubemap into which the shadow is rendered before being copied into the shadow atlas. A higher number can result in higher resolution shadows when used with a higher [member rendering/quality/shadow_atlas/size]. Setting higher than a quarter of the [member rendering/quality/shadow_atlas/size] will not result in a perceptible increase in visual quality.
 		</member>
@@ -1446,23 +1455,23 @@
 		</member>
 		<member name="rendering/vram_compression/import_bptc" type="bool" setter="" getter="" default="false">
 			If [code]true[/code], the texture importer will import VRAM-compressed textures using the BPTC algorithm. This texture compression algorithm is only supported on desktop platforms, and only when using the GLES3 renderer.
-			[b]Note:[/b] Changing this setting does [i]not[/i] impact textures that were already imported before. To make this setting apply to textures that were already imported, exit the editor, remove the [code].import/[/code] folder located inside the project folder then restart the editor.
+			[b]Note:[/b] Changing this setting does [i]not[/i] impact textures that were already imported before. To make this setting apply to textures that were already imported, exit the editor, remove the [code].import/[/code] folder located inside the project folder then restart the editor (see [member application/config/project_data_dir_name]).
 		</member>
 		<member name="rendering/vram_compression/import_etc" type="bool" setter="" getter="" default="false">
 			If [code]true[/code], the texture importer will import VRAM-compressed textures using the Ericsson Texture Compression algorithm. This algorithm doesn't support alpha channels in textures.
-			[b]Note:[/b] Changing this setting does [i]not[/i] impact textures that were already imported before. To make this setting apply to textures that were already imported, exit the editor, remove the [code].import/[/code] folder located inside the project folder then restart the editor.
+			[b]Note:[/b] Changing this setting does [i]not[/i] impact textures that were already imported before. To make this setting apply to textures that were already imported, exit the editor, remove the [code].import/[/code] folder located inside the project folder then restart the editor (see [member application/config/project_data_dir_name]).
 		</member>
 		<member name="rendering/vram_compression/import_etc2" type="bool" setter="" getter="" default="true">
 			If [code]true[/code], the texture importer will import VRAM-compressed textures using the Ericsson Texture Compression 2 algorithm. This texture compression algorithm is only supported when using the GLES3 renderer.
-			[b]Note:[/b] Changing this setting does [i]not[/i] impact textures that were already imported before. To make this setting apply to textures that were already imported, exit the editor, remove the [code].import/[/code] folder located inside the project folder then restart the editor.
+			[b]Note:[/b] Changing this setting does [i]not[/i] impact textures that were already imported before. To make this setting apply to textures that were already imported, exit the editor, remove the [code].import/[/code] folder located inside the project folder then restart the editor (see [member application/config/project_data_dir_name]).
 		</member>
 		<member name="rendering/vram_compression/import_pvrtc" type="bool" setter="" getter="" default="false">
 			If [code]true[/code], the texture importer will import VRAM-compressed textures using the PowerVR Texture Compression algorithm. This texture compression algorithm is only supported on iOS.
-			[b]Note:[/b] Changing this setting does [i]not[/i] impact textures that were already imported before. To make this setting apply to textures that were already imported, exit the editor, remove the [code].import/[/code] folder located inside the project folder then restart the editor.
+			[b]Note:[/b] Changing this setting does [i]not[/i] impact textures that were already imported before. To make this setting apply to textures that were already imported, exit the editor, remove the [code].import/[/code] folder located inside the project folder then restart the editor (see [member application/config/project_data_dir_name]).
 		</member>
 		<member name="rendering/vram_compression/import_s3tc" type="bool" setter="" getter="" default="true">
 			If [code]true[/code], the texture importer will import VRAM-compressed textures using the S3 Texture Compression algorithm. This algorithm is only supported on desktop platforms and consoles.
-			[b]Note:[/b] Changing this setting does [i]not[/i] impact textures that were already imported before. To make this setting apply to textures that were already imported, exit the editor, remove the [code].import/[/code] folder located inside the project folder then restart the editor.
+			[b]Note:[/b] Changing this setting does [i]not[/i] impact textures that were already imported before. To make this setting apply to textures that were already imported, exit the editor, remove the [code].import/[/code] folder located inside the project folder then restart the editor (see [member application/config/project_data_dir_name]).
 		</member>
 		<member name="world/2d/cell_size" type="int" setter="" getter="" default="100">
 			Cell size used for the 2D hash grid that [VisibilityNotifier2D] uses (in pixels).
