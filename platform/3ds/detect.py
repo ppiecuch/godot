@@ -156,11 +156,17 @@ def configure(env):
     environ = "export DEVKITPRO=%s;" % devkitpro_path
 
     if not check(env, "builtin_freetype"):
-        env.ParseConfig("%s %s/portlibs/3ds/bin/arm-none-eabi-pkg-config freetype2 --cflags --libs" % (environ, devkitpro_path))
+        env.ParseConfig(
+            "%s %s/portlibs/3ds/bin/arm-none-eabi-pkg-config freetype2 --cflags --libs" % (environ, devkitpro_path)
+        )
     if not check(env, "builtin_libpng"):
-        env.ParseConfig("%s %s/portlibs/3ds/bin/arm-none-eabi-pkg-config libpng --cflags --libs" % (environ, devkitpro_path))
+        env.ParseConfig(
+            "%s %s/portlibs/3ds/bin/arm-none-eabi-pkg-config libpng --cflags --libs" % (environ, devkitpro_path)
+        )
     if not check(env, "builtin_zlib"):
-        env.ParseConfig("%s %s/portlibs/3ds/bin/arm-none-eabi-pkg-config zlib --cflags --libs" % (environ, devkitpro_path))
+        env.ParseConfig(
+            "%s %s/portlibs/3ds/bin/arm-none-eabi-pkg-config zlib --cflags --libs" % (environ, devkitpro_path)
+        )
 
     env.Append(
         CPPDEFINES=[
