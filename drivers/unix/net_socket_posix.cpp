@@ -56,7 +56,7 @@
 #include <netinet/in.h>
 
 #include <sys/socket.h>
-#ifdef JAVASCRIPT_ENABLED
+#if defined(JAVASCRIPT_ENABLED) || defined(NDS_ENABLED)
 #include <arpa/inet.h>
 #endif
 

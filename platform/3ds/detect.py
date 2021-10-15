@@ -51,6 +51,7 @@ def get_flags():
 
     return [
         ("tools", False),
+        ("module_bullet_enabled", False),
         ("module_squish_enabled", False),
         ("module_theora_enabled", False),
         ("module_dds_enabled", False),
@@ -58,9 +59,13 @@ def get_flags():
         ("module_etc1_enabled", False),
         ("module_upnp_enabled", False),
         ("module_webm_enabled", False),
+        ("module_webp_enabled", False),
         ("builtin_zlib", False),
         ("builtin_libpng", False),
         ("builtin_pcre2_with_jit", False),
+        ("disable_3d", True),
+        ("disable_advanced_gui", True),
+        ("disable_experimental", True),
         ("feature_multiplethreads_allowed", False),
     ]
 
@@ -148,15 +153,18 @@ def configure(env):
     elif env["target"] == "debug":
         env.Append(CCFLAGS=["-g2", "-Wall", "-DDEBUG_ENABLED", "-DDEBUG_MEMORY_ENABLED"])
 
+    environ = "export DEVKITPRO=%s;" % devkitpro_path
+
     if not check(env, "builtin_freetype"):
-        env.ParseConfig("%s/portlibs/3ds/bin/arm-none-eabi-pkg-config freetype2 --cflags --libs" % devkitpro_path)
+        env.ParseConfig("%s %s/portlibs/3ds/bin/arm-none-eabi-pkg-config freetype2 --cflags --libs" % (environ, devkitpro_path))
     if not check(env, "builtin_libpng"):
-        env.ParseConfig("%s/portlibs/3ds/bin/arm-none-eabi-pkg-config libpng --cflags --libs" % devkitpro_path)
+        env.ParseConfig("%s %s/portlibs/3ds/bin/arm-none-eabi-pkg-config libpng --cflags --libs" % (environ, devkitpro_path))
     if not check(env, "builtin_zlib"):
-        env.ParseConfig("%s/portlibs/3ds/bin/arm-none-eabi-pkg-config zlib --cflags --libs" % devkitpro_path)
+        env.ParseConfig("%s %s/portlibs/3ds/bin/arm-none-eabi-pkg-config zlib --cflags --libs" % (environ, devkitpro_path))
 
     env.Append(
         CPPDEFINES=[
+            "NDS_ENABLED",
             "NEED_LONG_INT",
             "UNIX_SOCKETS_ENABLED",
             "IP6_UNAVAILABLE",
