@@ -130,6 +130,13 @@ def configure(env):
         }
     )
 
+    if not check(env, "builtin_freetype"):
+        env.ParseConfig("arm-vita-eabi-pkg-config freetype2 --cflags --libs")
+    if not check(env, "builtin_libpng"):
+        env.ParseConfig("arm-vita-eabi-pkg-config libpng --cflags --libs")
+    if not check(env, "builtin_zlib"):
+        env.ParseConfig("arm-vita-eabi-pkg-config zlib --cflags --libs")
+
     env.Append(
         CPPDEFINES=[
             "PSVITA_ENABLED",

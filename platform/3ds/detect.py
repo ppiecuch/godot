@@ -148,20 +148,12 @@ def configure(env):
     elif env["target"] == "debug":
         env.Append(CCFLAGS=["-g2", "-Wall", "-DDEBUG_ENABLED", "-DDEBUG_MEMORY_ENABLED"])
 
-    envstr = (
-        "PKG_CONFIG_DIR= PKG_CONFIG_PATH= PKG_CONFIG_LIBDIR="
-        + devkitpro_path
-        + "/portlibs/3ds/lib/pkgconfig:"
-        + devkitpro_path
-        + "/portlibs/armv6k/lib/pkgconfig"
-    )
-
     if not check(env, "builtin_freetype"):
-        env.ParseConfig("%s pkg-config freetype2 --cflags --libs" % envstr)
+        env.ParseConfig("%s/portlibs/3ds/bin/arm-none-eabi-pkg-config freetype2 --cflags --libs" % devkitpro_path)
     if not check(env, "builtin_libpng"):
-        env.ParseConfig("%s pkg-config libpng --cflags --libs" % envstr)
+        env.ParseConfig("%s/portlibs/3ds/bin/arm-none-eabi-pkg-config libpng --cflags --libs" % devkitpro_path)
     if not check(env, "builtin_zlib"):
-        env.ParseConfig("%s pkg-config zlib --cflags --libs" % envstr)
+        env.ParseConfig("%s/portlibs/3ds/bin/arm-none-eabi-pkg-config zlib --cflags --libs" % devkitpro_path)
 
     env.Append(
         CPPDEFINES=[
