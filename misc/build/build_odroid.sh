@@ -29,8 +29,16 @@ if [ ! -e "$CROSS/$CC" ]; then
 	exit
 fi
 
+CPU=2
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+	CPU=$(sysctl -n hw.physicalcpu)
+elif [[ "$OSTYPE" == "linux"* ]]; then
+	CPU=$(nproc)
+fi
+
 PATH=/usr/bin:/bin:/sbin:/usr/local/bin:$CROSS
-scons -j2 platform=frt frt_arch=odroid target=release disable_3d=true disable_experimental=yes
+scons -j$CPU platform=frt frt_arch=odroid target=release disable_3d=true disable_experimental=yes
 
 mkdir -p bin/templates/frt
 mv -v bin/godot.frt.opt.aarch64.odroid bin/templates/frt/
