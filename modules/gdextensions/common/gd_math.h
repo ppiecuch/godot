@@ -34,6 +34,9 @@
 #include "core/math/math_defs.h"
 #include "core/math/math_funcs.h"
 
+#define Math_360_Deg 360
+#define Math_180_Deg 180
+
 constexpr real_t Math_PI_by_180 = Math_PI / 180;
 constexpr real_t Math_180_by_PI = 180 / Math_PI;
 
