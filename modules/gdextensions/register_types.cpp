@@ -87,7 +87,7 @@
 
 #include "environment/spherical_waves/spherical_waves.h"
 #include "environment/spider_anim/spider.h"
-#include "environment/spider_anim/spider_insects.h"
+#include "environment/spider_anim/stage.h"
 #include "environment/starfield/starfield_2d.h"
 #include "environment/tree_2d/tree_2d.h"
 #include "environment/vegetation_instance/vegetation_instance.h"
@@ -221,8 +221,8 @@ void register_gdextensions_types() {
 	ClassDB::register_class<FakeExplosionParticles2D>();
 	ClassDB::register_class<NixieFont>();
 	ClassDB::register_class<Spider>();
-	ClassDB::register_virtual_class<InsectsManager>();
-	ClassDB::register_class<InsectsManagerInstance>();
+	ClassDB::register_virtual_class<SpiderStage>();
+	ClassDB::register_class<SpiderStageInstance>();
 
 #ifdef MODULE_ENET_ENABLED
 	ClassDB::register_class<ENetPacketPeer>();

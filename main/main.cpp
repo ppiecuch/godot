@@ -82,7 +82,6 @@
 
 #ifdef BYTECODE_EXPORT_ENABLED
 #include "bytecode_export/bytecode_exporter.h"
-#include "bytecode_export/gd2c.h"
 #endif
 
 #ifdef DOCTEST
@@ -400,7 +399,6 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 
 #ifdef BYTECODE_EXPORT_ENABLED
 	ClassDB::register_class<GDScriptBytecodeExporter>();
-	ClassDB::register_class<GD2CApi>();
 #endif
 
 	MAIN_PRINT("Main: Parse CMDLine");
