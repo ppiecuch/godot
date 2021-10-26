@@ -43,7 +43,7 @@ protected:
 public:
 	void export_bytecode_to_file(String input_script_path, String output_json_path);
 
-	GDScriptBytecodeExporter() { }
+	GDScriptBytecodeExporter() {}
 };
 
 #endif // BYTECODE_EXPORTER_H
