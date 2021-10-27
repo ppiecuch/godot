@@ -45,6 +45,7 @@
 #include "test_ordered_hash_map.h"
 #include "test_physics.h"
 #include "test_physics_2d.h"
+#include "test_random_number_generator.h"
 #include "test_render.h"
 #include "test_shader_lang.h"
 #include "test_string.h"
@@ -55,6 +56,7 @@ const char **tests_get_names() {
 	static const char *test_names[] = {
 		"string",
 		"math",
+		"rng",
 		"basis",
 		"transform",
 		"physics",
@@ -84,6 +86,10 @@ MainLoop *test_main(String p_test, const List<String> &p_args) {
 
 	if (p_test == "math") {
 		return TestMath::test();
+	}
+
+	if (p_test == "rng") {
+		return TestRandomNumberGenerator::test();
 	}
 
 	if (p_test == "basis") {

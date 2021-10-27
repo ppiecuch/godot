@@ -70,6 +70,11 @@ public:
 		}
 	}
 
+	_FORCE_INLINE_ Vector2 randv_circle() {
+		real_t t = randbase.randf() * Math_TAU;
+		return Vector2(Math::cos(t), Math::sin(t));
+	}
+
 	RandomNumberGenerator();
 };
 

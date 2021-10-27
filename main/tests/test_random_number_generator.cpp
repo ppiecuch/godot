@@ -1,12 +1,12 @@
 /*************************************************************************/
-/*  random_number_generator.cpp                                          */
+/*  test_random_number_generator.h                                       */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -28,28 +28,66 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "random_number_generator.h"
+#include "test_random_number_generator.h"
 
-RandomNumberGenerator::RandomNumberGenerator() {}
+#include "core/math/random_number_generator.h"
+#include "core/os/os.h"
 
-void RandomNumberGenerator::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("set_seed", "seed"), &RandomNumberGenerator::set_seed);
-	ClassDB::bind_method(D_METHOD("get_seed"), &RandomNumberGenerator::get_seed);
+namespace TestRandomNumberGenerator {
 
-	ClassDB::bind_method(D_METHOD("set_state", "state"), &RandomNumberGenerator::set_state);
-	ClassDB::bind_method(D_METHOD("get_state"), &RandomNumberGenerator::get_state);
-
-	ClassDB::bind_method(D_METHOD("randi"), &RandomNumberGenerator::randi);
-	ClassDB::bind_method(D_METHOD("randf"), &RandomNumberGenerator::randf);
-	ClassDB::bind_method(D_METHOD("randfn", "mean", "deviation"), &RandomNumberGenerator::randfn, DEFVAL(0.0), DEFVAL(1.0));
-	ClassDB::bind_method(D_METHOD("randf_range", "from", "to"), &RandomNumberGenerator::randf_range);
-	ClassDB::bind_method(D_METHOD("randi_range", "from", "to"), &RandomNumberGenerator::randi_range);
-	ClassDB::bind_method(D_METHOD("randv_circle"), &RandomNumberGenerator::randv_circle);
-	ClassDB::bind_method(D_METHOD("randomize"), &RandomNumberGenerator::randomize);
-
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "seed"), "set_seed", "get_seed");
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "state"), "set_state", "get_state");
-	// Default values are non-deterministic, override for doc generation purposes.
-	ADD_PROPERTY_DEFAULT("seed", 0);
-	ADD_PROPERTY_DEFAULT("state", 0);
+bool test_rng_on_unit_circle() {
+	bool ok = true;
+	Ref<RandomNumberGenerator> rng = memnew(RandomNumberGenerator);
+	rng->set_seed(0);
+	for (int i = 0; i < 100; ++i) {
+		const Vector2 &point = rng->randv_circle();
+		ok = ok && Math::is_equal_approx(point.length(), real_t(1.0));
+		ok = ok && point.is_normalized();
+	}
+	return ok;
 }
+
+bool stress_rng_on_unit_circle() {
+	Ref<RandomNumberGenerator> rng = memnew(RandomNumberGenerator);
+	rng->set_seed(0);
+	real_t start = OS::get_singleton()->get_system_time_secs();
+	printf("randv_circle stress test (100000)\n");
+	for (int i = 0; i < 100000; ++i) {
+		rng->randv_circle();
+	}
+	real_t stop = OS::get_singleton()->get_system_time_secs();
+	printf("  .. %0.f/call\n", stop - start);
+	return true;
+}
+
+typedef bool (*TestFunc)();
+
+TestFunc test_funcs[] = {
+	test_rng_on_unit_circle,
+	stress_rng_on_unit_circle,
+	nullptr
+};
+
+MainLoop *test() {
+	int count = 0;
+	int passed = 0;
+
+	while (true) {
+		if (!test_funcs[count]) {
+			break;
+		}
+		bool pass = test_funcs[count]();
+		if (pass) {
+			passed++;
+		}
+		OS::get_singleton()->print("\t%s\n", pass ? "PASS" : "FAILED");
+
+		count++;
+	}
+	OS::get_singleton()->print("\n");
+	OS::get_singleton()->print("Passed %i of %i tests\n", passed, count);
+	return nullptr;
+}
+
+
+} // namespace TestRandomNumberGenerator
