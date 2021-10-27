@@ -9,7 +9,7 @@ from gd2c import domtree
 from gd2c import ssa
 from gd2c import analysis
 
-def print_stuff(project, print_cfg, print_domtree):
+def print_info(project, print_cfg, print_domtree):
 	for cls in project.classes():
 		print(f"---------------------------------------------")
 		print(f"Class: {cls.name}")
@@ -32,10 +32,6 @@ def print_stuff(project, print_cfg, print_domtree):
 		print("\n")
 
 def get_target(target_name: str, project: Project) -> Target:
-	if target_name == "gdnative":
-		from gd2c.targets.gdnative import GDNativeTarget
-		return GDNativeTarget(project)
-
 	if target_name == "cppnative":
 		from gd2c.targets.cppnative import CPPNativeTarget
 		return CPPNativeTarget(project)
@@ -95,7 +91,7 @@ if __name__ == "__main__":
 
 			# Transforms not requiring SSA form
 			transform.strip_debug(func)
-			#func.cfg.pretty_print()
+			# func.cfg.pretty_print()
 
 			# Transforms done in SSA form
 			if False:
@@ -122,11 +118,10 @@ if __name__ == "__main__":
 	target = get_target(project_target, project)
 	target.transform()
 
-
 	# Phase 3: Emit code
 	target.emit(project_output_path)
 
-	# print_stuff(project, False, False)
+	# print_info(project, False, False)
 	for cls in project.iter_classes_in_dependency_order():
 		print(cls.resource_path, cls.name, sep=" -> ")
 
