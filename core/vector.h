@@ -65,12 +65,12 @@ private:
 public:
 	// trivial c++11 iterator
 	struct iterator {
-		const Vector<T> *_array;
+		Vector<T> *_array;
 		int _index;
-		iterator(const Vector<T> *_array, int _index) :
-				_array(_array), _index(_index) {}
+		iterator(Vector<T> *_array, int _index) : _array(_array), _index(_index) {}
+		iterator(const Vector<T> *_array, int _index) : _array(const_cast<Vector<T> *>(_array)), _index(_index) {}
 		bool operator!=(const iterator &other) const { return (_array != other._array) || (_index != other._index); }
-		T operator*() { return _array->get(_index); }
+		_FORCE_INLINE_ T &operator*() { return _array->write[_index]; }
 		const T &operator*() const { return _array->get(_index); }
 		iterator operator++() {
 			_index++;
