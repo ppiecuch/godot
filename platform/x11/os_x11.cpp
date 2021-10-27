@@ -2470,8 +2470,8 @@ void OS_X11::process_xevents() {
 					} break;
 #ifdef TOUCH_ENABLED
 					case XI_TouchBegin: // Fall-through
-							// Disabled hand-in-hand with the grabbing
-							//XIAllowTouchEvents(x11_display, event_data->deviceid, event_data->detail, x11_window, XIAcceptTouch);
+										// Disabled hand-in-hand with the grabbing
+										//XIAllowTouchEvents(x11_display, event_data->deviceid, event_data->detail, x11_window, XIAcceptTouch);
 
 					case XI_TouchEnd: {
 						bool is_begin = event_data->evtype == XI_TouchBegin;

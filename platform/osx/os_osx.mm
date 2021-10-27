@@ -528,10 +528,10 @@ static NSDictionary *touchBarButtonRuntimeActions = @{};
 
 /*- (CALayer *)makeBackingLayer
 {
-    if (kGodotOpenGLBacking == backingLayerType) return [[CAOpenGLLayer alloc] init];
-    if (kGodotMetalBacking == backingLayerType) return [[CAMetalLayer alloc] init];
-    NSLog(@"Cannot create backing layer for rendering view.");
-    return nil;
+	if (kGodotOpenGLBacking == backingLayerType) return [[CAOpenGLLayer alloc] init];
+	if (kGodotMetalBacking == backingLayerType) return [[CAMetalLayer alloc] init];
+	NSLog(@"Cannot create backing layer for rendering view.");
+	return nil;
 }*/
 
 - (void)updateLayer {

@@ -4831,7 +4831,7 @@ void EditorNode::_scene_tab_closed(int p_tab, int option) {
 	}
 
 	bool unsaved = (p_tab == editor_data.get_edited_scene()) ?
-							 saved_version != editor_data.get_undo_redo().get_version() :
+						   saved_version != editor_data.get_undo_redo().get_version() :
 							 editor_data.get_scene_version(p_tab) != 0;
 	if (unsaved) {
 		save_confirmation->get_ok()->set_text(TTR("Save & Close"));

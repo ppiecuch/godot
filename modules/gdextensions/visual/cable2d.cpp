@@ -254,7 +254,7 @@ void Cable2D::_draw() {
 			draw_line(_rendered_points[i], _rendered_points[i + 1], _color, _width);
 		}
 		/*draw_circle(_rendered_points[i], _width / 2.0,
-                Color(1.0, 0.0, 0.0, 1.0));*/
+				Color(1.0, 0.0, 0.0, 1.0));*/
 	}
 }
 

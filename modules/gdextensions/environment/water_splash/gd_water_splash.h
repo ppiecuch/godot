@@ -77,8 +77,8 @@ public:
 	Color get_color() const;
 
 	/**
-   * Physical Parameters
-   */
+	 * Physical Parameters
+	 */
 	void set_tension(const float &value);
 	float get_tension() const;
 

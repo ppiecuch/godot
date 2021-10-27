@@ -342,7 +342,7 @@ protected:                                                                      
 		initialize_class();                                                                                                                        \
 	}                                                                                                                                              \
 	_FORCE_INLINE_ bool (Object::*_get_get() const)(const StringName &p_name, Variant &) const {                                                   \
-		return (bool (Object::*)(const StringName &, Variant &) const) & m_class::_get;                                                            \
+		return (bool(Object::*)(const StringName &, Variant &) const) & m_class::_get;                                                             \
 	}                                                                                                                                              \
 	virtual bool _getv(const StringName &p_name, Variant &r_ret) const G_OVERRIDE {                                                                \
 		if (m_class::_get_get() != m_inherits::_get_get()) {                                                                                       \
@@ -352,7 +352,7 @@ protected:                                                                      
 		return m_inherits::_getv(p_name, r_ret);                                                                                                   \
 	}                                                                                                                                              \
 	_FORCE_INLINE_ bool (Object::*_get_set() const)(const StringName &p_name, const Variant &p_property) {                                         \
-		return (bool (Object::*)(const StringName &, const Variant &)) & m_class::_set;                                                            \
+		return (bool(Object::*)(const StringName &, const Variant &)) & m_class::_set;                                                             \
 	}                                                                                                                                              \
 	virtual bool _setv(const StringName &p_name, const Variant &p_property) G_OVERRIDE {                                                           \
 		if (m_inherits::_setv(p_name, p_property))                                                                                                 \
@@ -362,7 +362,7 @@ protected:                                                                      
 		return false;                                                                                                                              \
 	}                                                                                                                                              \
 	_FORCE_INLINE_ void (Object::*_get_get_property_list() const)(List<PropertyInfo> * p_list) const {                                             \
-		return (void (Object::*)(List<PropertyInfo> *) const) & m_class::_get_property_list;                                                       \
+		return (void(Object::*)(List<PropertyInfo> *) const) & m_class::_get_property_list;                                                        \
 	}                                                                                                                                              \
 	virtual void _get_property_listv(List<PropertyInfo> *p_list, bool p_reversed) const {                                                          \
 		if (!p_reversed) {                                                                                                                         \
@@ -383,7 +383,7 @@ protected:                                                                      
 		}                                                                                                                                          \
 	}                                                                                                                                              \
 	_FORCE_INLINE_ void (Object::*_get_notification() const)(int) {                                                                                \
-		return (void (Object::*)(int)) & m_class::_notification;                                                                                   \
+		return (void(Object::*)(int)) & m_class::_notification;                                                                                    \
 	}                                                                                                                                              \
 	virtual void _notificationv(int p_notification, bool p_reversed) G_OVERRIDE {                                                                  \
 		if (!p_reversed && !_disabled_base_notifications.has(p_notification)) {                                                                    \

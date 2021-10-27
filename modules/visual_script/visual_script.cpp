@@ -2483,19 +2483,19 @@ void VisualScriptLanguage::debug_get_stack_level_locals(int p_level, List<String
 	}
 
 	/*
-    ERR_FAIL_INDEX(p_level,_debug_call_stack_pos);
+	ERR_FAIL_INDEX(p_level,_debug_call_stack_pos);
 
 
-    VisualFunction *f = _call_stack[l].function;
+	VisualFunction *f = _call_stack[l].function;
 
-    List<Pair<StringName,int> > locals;
+	List<Pair<StringName,int> > locals;
 
-    f->debug_get_stack_member_state(*_call_stack[l].line,&locals);
-    for( List<Pair<StringName,int> >::Element *E = locals.front();E;E=E->next() ) {
+	f->debug_get_stack_member_state(*_call_stack[l].line,&locals);
+	for( List<Pair<StringName,int> >::Element *E = locals.front();E;E=E->next() ) {
 
 	p_locals->push_back(E->get().first);
 	p_values->push_back(_call_stack[l].stack[E->get().second]);
-    }
+	}
 */
 }
 void VisualScriptLanguage::debug_get_stack_level_members(int p_level, List<String> *p_members, List<Variant> *p_values, int p_max_subitems, int p_max_depth) {

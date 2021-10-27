@@ -37,9 +37,9 @@
 
 		 setup(min x, max x, min y, max y, ratio, margins, red, green, blue);
 
-		        +----+(1,1)
-		        |    |
-		        |    |
+				+----+(1,1)
+				|    |
+				|    |
 		 (-1,-1)+----+
 
 	 You specify the bounds of the graph (minimal and maximal values on both

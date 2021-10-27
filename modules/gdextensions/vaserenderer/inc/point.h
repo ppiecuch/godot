@@ -275,4 +275,4 @@ public:
 /* after all,
  * sizeof(Vec2)=16  sizeof(Point)=16
  * Point is not heavier, just more powerful :)
-*/
+ */

@@ -32,94 +32,94 @@
 #define DEBUG_SCREEN_C
 
 /*
-* debug_screen.c
-* --------------
-*
-* - psvDebugScreenInit()
-*    Initializes debug screen for output.
-*
-* - psvDebugScreenPuts()
-*    Similar to the C library function puts() writes a string to the debug
-*    screen up to but not including the NUL character.
-*    Supports the most important CSI sequences of ECMA-48 / ISO/IEC 6429:1992.
-*    Graphic Rendition Combination Mode (GRCM) supported is Cumulative.
-*    Modifications:
-*    - CSI SGR codes 30-37/38/39 & 40-47/48/49 set standard/fitting/default intensity, so instead of "\e[1;31m" use "\e31;1m"
-*    - ANSI color #8 is made darker (40<>80), so that "dark" white is still lighter than "bright" dark
-*    - support 16 save storages for CSI s and CSI u, e.g "\e[8s" and "\e[8u"
-*    [1] https://en.wikipedia.org/wiki/ANSI_escape_code#CSI_sequences
-*    [2] https://jonasjacek.github.io/colors/
-*    [3] https://www.ecma-international.org/publications/standards/Ecma-048.htm
-*    [4] https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
-*    [5] http://man7.org/linux/man-pages/man4/console_codes.4.html
-*
-*    (CSI = "\e[")
-*     CSI [n] s   = Save Cursor Position to slot #n (0-15). Default 0.
-*     CSI [n] u   = Restore Cursor Position from slot #n (0-15). Default 0.
-*     CSI n A     = Cursor Up <n> times.
-*     CSI n B     = Cursor Down <n> times.
-*     CSI n C     = Cursor Forward <n> times.
-*     CSI n D     = Cursor Back <n> times.
-*     CSI n E     = Cursor Next Line <n> times and to Beginning of that Line.
-*     CSI n F     = Cursor Previous Line <n> times and to Beginning of that Line.
-*     CSI n G     = Cursor to Column <n>. The value is 1-based and defaults to 1 (first column) if omitted.
-*     CSI n ; m H = Cursor to Row <n> and Column <m>. The values are 1-based and default to 1 (top left corner) if omitted.
-*     CSI n ; m f = Cursor to Row <n> and Column <m>. The values are 1-based and default to 1 (top left corner) if omitted.
-*     CSI [n] J   = Clears part of the screen. Cursor position does not change.
-*                   0 (default) from cursor to end of screen.
-*                   1 from cursor to beginning of the screen.
-*                   2 entire screen
-*     CSI [n] K   = Clears part of the line. Cursor position does not change.
-*                   0 (default) from cursor to end of line.
-*                   1 from cursor to beginning of line.
-*                   2 clear entire line.
-*     CSI [n] m = Sets the appearance of the following characters.
-*               0       Reset all (colors and inversion) (default)
-*               1       Increased intensity ("bright" color)
-*               2       Decreased intensity ("faint"/"dark" color)
-*               7       Enable inversion
-*               22      Standard intensity ("normal" color)
-*               27      Disable inversion
-*               30–37   Set ANSI foreground color with standard intensity
-*               38      Set foreground color. Arguments are 5;<n> or 2;<r>;<g>;<b>
-*               39      Default foreground color
-*               40–47   Set standard ANSI background color with standard intensity
-*               48      Set background color. Arguments are 5;<n> or 2;<r>;<g>;<b>
-*               49      Default background color
-*               90–97   Set ANSI foreground color with increased intensity
-*               100–107 Set ANSI background color with increased intensity
-*
-* - psvDebugScreenPrintf()
-*    Similar to the C library function printf() formats a string and ouputs
-*    it via psvDebugScreenPuts() to the debug screen.
-*
-* - psvDebugScreenGetColorStateCopy(ColorState *copy)
-*    Get copy of current color state.
-*
-* - psvDebugScreenGetCoordsXY(int *x, int *y)
-*    Get copy of current pixel coordinates.
-*    Allows for multiple and custom position stores.
-*    Allows correct positioning when using different font sizes.
-*
-* - psvDebugScreenSetCoordsXY(int *x, int *y)
-*    Set pixel coordinates.
-*    Allows for multiple and custom position stores.
-*    Allows correct positioning when using different font sizes.
-*
-* - PsvDebugScreenFont *psvDebugScreenGetFont()
-*    Get current font.
-*
-* - PsvDebugScreenFont *psvDebugScreenSetFont(PsvDebugScreenFont *font) {
-*    Set font. Returns current font.
-*
-* - PsvDebugScreenFont *psvDebugScreenScaleFont2x(PsvDebugScreenFont *source_font) {
-*    Scales a font by 2 (e.g. 8x8 to 16x16) and returns new scaled font.
-*
-* Also see the following samples:
-* - debugscreen
-* - debug_print
-*
-*/
+ * debug_screen.c
+ * --------------
+ *
+ * - psvDebugScreenInit()
+ *    Initializes debug screen for output.
+ *
+ * - psvDebugScreenPuts()
+ *    Similar to the C library function puts() writes a string to the debug
+ *    screen up to but not including the NUL character.
+ *    Supports the most important CSI sequences of ECMA-48 / ISO/IEC 6429:1992.
+ *    Graphic Rendition Combination Mode (GRCM) supported is Cumulative.
+ *    Modifications:
+ *    - CSI SGR codes 30-37/38/39 & 40-47/48/49 set standard/fitting/default intensity, so instead of "\e[1;31m" use "\e31;1m"
+ *    - ANSI color #8 is made darker (40<>80), so that "dark" white is still lighter than "bright" dark
+ *    - support 16 save storages for CSI s and CSI u, e.g "\e[8s" and "\e[8u"
+ *    [1] https://en.wikipedia.org/wiki/ANSI_escape_code#CSI_sequences
+ *    [2] https://jonasjacek.github.io/colors/
+ *    [3] https://www.ecma-international.org/publications/standards/Ecma-048.htm
+ *    [4] https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
+ *    [5] http://man7.org/linux/man-pages/man4/console_codes.4.html
+ *
+ *    (CSI = "\e[")
+ *     CSI [n] s   = Save Cursor Position to slot #n (0-15). Default 0.
+ *     CSI [n] u   = Restore Cursor Position from slot #n (0-15). Default 0.
+ *     CSI n A     = Cursor Up <n> times.
+ *     CSI n B     = Cursor Down <n> times.
+ *     CSI n C     = Cursor Forward <n> times.
+ *     CSI n D     = Cursor Back <n> times.
+ *     CSI n E     = Cursor Next Line <n> times and to Beginning of that Line.
+ *     CSI n F     = Cursor Previous Line <n> times and to Beginning of that Line.
+ *     CSI n G     = Cursor to Column <n>. The value is 1-based and defaults to 1 (first column) if omitted.
+ *     CSI n ; m H = Cursor to Row <n> and Column <m>. The values are 1-based and default to 1 (top left corner) if omitted.
+ *     CSI n ; m f = Cursor to Row <n> and Column <m>. The values are 1-based and default to 1 (top left corner) if omitted.
+ *     CSI [n] J   = Clears part of the screen. Cursor position does not change.
+ *                   0 (default) from cursor to end of screen.
+ *                   1 from cursor to beginning of the screen.
+ *                   2 entire screen
+ *     CSI [n] K   = Clears part of the line. Cursor position does not change.
+ *                   0 (default) from cursor to end of line.
+ *                   1 from cursor to beginning of line.
+ *                   2 clear entire line.
+ *     CSI [n] m = Sets the appearance of the following characters.
+ *               0       Reset all (colors and inversion) (default)
+ *               1       Increased intensity ("bright" color)
+ *               2       Decreased intensity ("faint"/"dark" color)
+ *               7       Enable inversion
+ *               22      Standard intensity ("normal" color)
+ *               27      Disable inversion
+ *               30–37   Set ANSI foreground color with standard intensity
+ *               38      Set foreground color. Arguments are 5;<n> or 2;<r>;<g>;<b>
+ *               39      Default foreground color
+ *               40–47   Set standard ANSI background color with standard intensity
+ *               48      Set background color. Arguments are 5;<n> or 2;<r>;<g>;<b>
+ *               49      Default background color
+ *               90–97   Set ANSI foreground color with increased intensity
+ *               100–107 Set ANSI background color with increased intensity
+ *
+ * - psvDebugScreenPrintf()
+ *    Similar to the C library function printf() formats a string and ouputs
+ *    it via psvDebugScreenPuts() to the debug screen.
+ *
+ * - psvDebugScreenGetColorStateCopy(ColorState *copy)
+ *    Get copy of current color state.
+ *
+ * - psvDebugScreenGetCoordsXY(int *x, int *y)
+ *    Get copy of current pixel coordinates.
+ *    Allows for multiple and custom position stores.
+ *    Allows correct positioning when using different font sizes.
+ *
+ * - psvDebugScreenSetCoordsXY(int *x, int *y)
+ *    Set pixel coordinates.
+ *    Allows for multiple and custom position stores.
+ *    Allows correct positioning when using different font sizes.
+ *
+ * - PsvDebugScreenFont *psvDebugScreenGetFont()
+ *    Get current font.
+ *
+ * - PsvDebugScreenFont *psvDebugScreenSetFont(PsvDebugScreenFont *font) {
+ *    Set font. Returns current font.
+ *
+ * - PsvDebugScreenFont *psvDebugScreenScaleFont2x(PsvDebugScreenFont *source_font) {
+ *    Scales a font by 2 (e.g. 8x8 to 16x16) and returns new scaled font.
+ *
+ * Also see the following samples:
+ * - debugscreen
+ * - debug_print
+ *
+ */
 
 #include <inttypes.h>
 #include <stdarg.h> // for va_list, va_start(), va_end()
@@ -224,8 +224,8 @@ static uint32_t ANSI_COLORS_BGR[256] = {
 };
 
 /*
-* Reset foreground color to default
-*/
+ * Reset foreground color to default
+ */
 static void psvDebugScreenResetFgColor(void) {
 	colors.fgTrueColorFlag = 0;
 	colors.fgTrueColor = 0;
@@ -234,8 +234,8 @@ static void psvDebugScreenResetFgColor(void) {
 }
 
 /*
-* Reset background color to default
-*/
+ * Reset background color to default
+ */
 static void psvDebugScreenResetBgColor(void) {
 	colors.bgTrueColorFlag = 0;
 	colors.bgTrueColor = 0;
@@ -244,15 +244,15 @@ static void psvDebugScreenResetBgColor(void) {
 }
 
 /*
-* Reset inversion state to default
-*/
+ * Reset inversion state to default
+ */
 static void psvDebugScreenResetInversion(void) {
 	colors.inversion = colors.inversionDefault;
 }
 
 /*
-* Determine colors according to current color state
-*/
+ * Determine colors according to current color state
+ */
 static void psvDebugScreenSetColors(void) {
 	uint32_t *color_fg, *color_bg;
 
@@ -301,8 +301,8 @@ static void psvDebugScreenSetColors(void) {
 }
 
 /*
-* Parse CSI sequences
-*/
+ * Parse CSI sequences
+ */
 static size_t psvDebugScreenEscape(const unsigned char *str) {
 	unsigned int i, argc, arg[32] = { 0 };
 	unsigned int c;
@@ -474,8 +474,8 @@ static size_t psvDebugScreenEscape(const unsigned char *str) {
 }
 
 /*
-* Initialize debug screen
-*/
+ * Initialize debug screen
+ */
 int psvDebugScreenInit() {
 	psvDebugScreenResetFgColor();
 	psvDebugScreenResetBgColor();
@@ -500,8 +500,8 @@ int psvDebugScreenSet() {
 }
 
 /*
-* Draw text onto debug screen
-*/
+ * Draw text onto debug screen
+ */
 int psvDebugScreenPuts(const char *_text) {
 	const unsigned char *text = (const unsigned char *)_text;
 	int c;
@@ -621,8 +621,8 @@ int psvDebugScreenPuts(const char *_text) {
 }
 
 /*
-* Printf text onto debug screen
-*/
+ * Printf text onto debug screen
+ */
 __attribute__((__format__(__printf__, 1, 2))) int psvDebugScreenPrintf(const char *format, ...) {
 	char buf[4096];
 
@@ -636,8 +636,8 @@ __attribute__((__format__(__printf__, 1, 2))) int psvDebugScreenPrintf(const cha
 }
 
 /*
-* Return copy of color state
-*/
+ * Return copy of color state
+ */
 void psvDebugScreenGetColorStateCopy(ColorState *copy) {
 	if (copy) {
 		memcpy(copy, &colors, sizeof(ColorState));
@@ -649,8 +649,8 @@ void psvDebugScreenGetColorStateCopy(ColorState *copy) {
 }
 
 /*
-* Return copy of pixel coordinates
-*/
+ * Return copy of pixel coordinates
+ */
 void psvDebugScreenGetCoordsXY(int *x, int *y) {
 	if (x)
 		*x = coordX;
@@ -659,8 +659,8 @@ void psvDebugScreenGetCoordsXY(int *x, int *y) {
 }
 
 /*
-* Set pixel coordinates
-*/
+ * Set pixel coordinates
+ */
 void psvDebugScreenSetCoordsXY(int *x, int *y) {
 	if (x) {
 		coordX = *x;
@@ -675,15 +675,15 @@ void psvDebugScreenSetCoordsXY(int *x, int *y) {
 }
 
 /*
-* Return pointer to current font
-*/
+ * Return pointer to current font
+ */
 PsvDebugScreenFont *psvDebugScreenGetFont(void) {
 	return F;
 }
 
 /*
-* Set font
-*/
+ * Set font
+ */
 PsvDebugScreenFont *psvDebugScreenSetFont(PsvDebugScreenFont *font) {
 	if ((font) && (font->glyphs))
 		F = font;
@@ -691,8 +691,8 @@ PsvDebugScreenFont *psvDebugScreenSetFont(PsvDebugScreenFont *font) {
 }
 
 /*
-* Return scaled-by-2 copy of font
-*/
+ * Return scaled-by-2 copy of font
+ */
 PsvDebugScreenFont *psvDebugScreenScaleFont2x(PsvDebugScreenFont *source_font) {
 	// works also with not byte-aligned glyphs
 	PsvDebugScreenFont *target_font;

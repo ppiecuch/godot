@@ -181,10 +181,10 @@ void AudioFilterSW::prepare_coefficients(Coeffs *p_coeffs) {
 
 	//undenormalise
 	/*    p_coeffs->b0=undenormalise(p_coeffs->b0);
-    p_coeffs->b1=undenormalise(p_coeffs->b1);
-    p_coeffs->b2=undenormalise(p_coeffs->b2);
-    p_coeffs->a1=undenormalise(p_coeffs->a1);
-    p_coeffs->a2=undenormalise(p_coeffs->a2);*/
+	p_coeffs->b1=undenormalise(p_coeffs->b1);
+	p_coeffs->b2=undenormalise(p_coeffs->b2);
+	p_coeffs->a1=undenormalise(p_coeffs->a1);
+	p_coeffs->a2=undenormalise(p_coeffs->a2);*/
 }
 
 void AudioFilterSW::set_stages(int p_stages) { //adjust for multiple stages

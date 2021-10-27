@@ -165,9 +165,9 @@ Ref<Image> RasterizerMetal::read_pixels(const Rect2 &p_region) {
 
 #ifdef TARGET_OS_MAC
 		/* on macOS with managed-storage textures, we need to tell the driver to
-	* update the CPU-side copy of the texture data.
-	* NOTE: Currently all of our textures are managed on macOS. We'll need some
-	* extra copying for any private textures. */
+		 * update the CPU-side copy of the texture data.
+		 * NOTE: Currently all of our textures are managed on macOS. We'll need some
+		 * extra copying for any private textures. */
 		if (metal_get_storage_mode(mtltexture) == MTLStorageModeManaged) {
 			id<MTLBlitCommandEncoder> blit = [data.mtlcmdbuffer blitCommandEncoder];
 			[blit synchronizeResource:mtltexture];
@@ -175,7 +175,7 @@ Ref<Image> RasterizerMetal::read_pixels(const Rect2 &p_region) {
 		}
 #endif
 		/* Commit the current command buffer and wait until it's completed, to make
-	* sure the GPU has finished rendering to it by the time we read it. */
+		 * sure the GPU has finished rendering to it by the time we read it. */
 		[data.mtlcmdbuffer commit];
 		[data.mtlcmdbuffer waitUntilCompleted];
 		data.mtlcmdencoder = nil;

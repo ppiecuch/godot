@@ -3296,7 +3296,7 @@ Error CSharpScript::load_source_code(const String &p_path) {
 
 	ERR_FAIL_COND_V_MSG(ferr != OK, ferr,
 			ferr == ERR_INVALID_DATA ?
-					  "Script '" + p_path + "' contains invalid unicode (UTF-8), so it was not loaded."
+					"Script '" + p_path + "' contains invalid unicode (UTF-8), so it was not loaded."
 										  " Please ensure that scripts are saved in valid UTF-8 unicode." :
 					  "Failed to read file: '" + p_path + "'.");
 

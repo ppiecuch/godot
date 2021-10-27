@@ -440,9 +440,9 @@ void TokenizeBinary(TokenList &output_tokens, const char *input, size_t length) 
 
 	//uint32_t offset = 0x15;
 	/*    const char* cursor = input + 0x15;
-    const uint32_t flags = ReadWord(input, cursor, input + length);
-    const uint8_t padding_0 = ReadByte(input, cursor, input + length); // unused
-    const uint8_t padding_1 = ReadByte(input, cursor, input + length); // unused*/
+	const uint32_t flags = ReadWord(input, cursor, input + length);
+	const uint8_t padding_0 = ReadByte(input, cursor, input + length); // unused
+	const uint8_t padding_1 = ReadByte(input, cursor, input + length); // unused*/
 
 	if (strncmp(input, "Kaydara FBX Binary", 18)) {
 		TokenizeError("magic bytes not found", 0);

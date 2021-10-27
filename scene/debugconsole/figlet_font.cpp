@@ -173,12 +173,12 @@ bool Banner::pushPacked(unsigned c) {
   inline
   unsigned
   findClass( char c ) {
-    if ( c == '|' ) return 1;
-    if ( c == '/' || c == '\\' ) return 3;
-    if ( c == '[' || c == ']'  ) return 4;
-    if ( c == '{' || c == '}'  ) return 5;
-    if ( c == '(' || c == ')'  ) return 6;
-    return 0;
+	if ( c == '|' ) return 1;
+	if ( c == '/' || c == '\\' ) return 3;
+	if ( c == '[' || c == ']'  ) return 4;
+	if ( c == '{' || c == '}'  ) return 5;
+	if ( c == '(' || c == ')'  ) return 6;
+	return 0;
   }
   */
 
@@ -196,13 +196,13 @@ char Banner::smushingRules(char left, char right) const {
 		return left;
 	// rule 3: hierarchy smushing
 	/* ELIMINATED
-    unsigned class_left  = findClass( left );
-    unsigned class_right = findClass( right );
-    if ( class_left > 0 && class_right > 0 ) {
-      if      ( class_left < class_right ) return right;
-      else if ( class_left > class_right ) return left;
-    }
-    */
+	unsigned class_left  = findClass( left );
+	unsigned class_right = findClass( right );
+	if ( class_left > 0 && class_right > 0 ) {
+	  if      ( class_left < class_right ) return right;
+	  else if ( class_left > class_right ) return left;
+	}
+	*/
 	// rule 4: opposite pair smushing
 	if (left == '[' && right == ']')
 		return '|';
@@ -229,13 +229,13 @@ char Banner::smushingRules(char left, char right) const {
 
 	// not clear it if work well, for the moment are disables
 	/*
-    if ( left == '<' && right == '|' ) return '<';
-    if ( left == '|' && right == '/' ) return '/';
-    if ( left == '|' && right == '(' ) return right;
-    if ( left == ')' && right == '|' ) return left;
-    if ( (left == '\\' || left == '/') && right == '|' ) return left;
-    return '\0';
-    */
+	if ( left == '<' && right == '|' ) return '<';
+	if ( left == '|' && right == '/' ) return '/';
+	if ( left == '|' && right == '(' ) return right;
+	if ( left == ')' && right == '|' ) return left;
+	if ( (left == '\\' || left == '/') && right == '|' ) return left;
+	return '\0';
+	*/
 }
 
 bool Banner::pushSmushed(unsigned c) {

@@ -3187,7 +3187,7 @@ void CanvasItemEditor::_draw_ruler_tool() {
 
 			float arc_1_start_angle =
 					end_to_begin.x < 0 ?
-							  (end_to_begin.y < 0 ? 3.0 * Math_PI / 2.0 - vertical_angle_rad : Math_PI / 2.0) :
+							(end_to_begin.y < 0 ? 3.0 * Math_PI / 2.0 - vertical_angle_rad : Math_PI / 2.0) :
 							  (end_to_begin.y < 0 ? 3.0 * Math_PI / 2.0 : Math_PI / 2.0 - vertical_angle_rad);
 			float arc_1_end_angle = arc_1_start_angle + vertical_angle_rad;
 			// Constrain arc to triangle height & max size
@@ -3195,7 +3195,7 @@ void CanvasItemEditor::_draw_ruler_tool() {
 
 			float arc_2_start_angle =
 					end_to_begin.x < 0 ?
-							  (end_to_begin.y < 0 ? 0.0 : -horizontal_angle_rad) :
+							(end_to_begin.y < 0 ? 0.0 : -horizontal_angle_rad) :
 							  (end_to_begin.y < 0 ? Math_PI - horizontal_angle_rad : Math_PI);
 			float arc_2_end_angle = arc_2_start_angle + horizontal_angle_rad;
 			// Constrain arc to triangle width & max size
@@ -5211,9 +5211,9 @@ void CanvasItemEditor::_popup_callback(int p_op) {
 						ctrl->set_position(Point2());
 					}
 					/*
-                                   if (key_scale)
+								   if (key_scale)
 				   AnimationPlayerEditor::singleton->get_track_editor()->insert_node_value_key(ctrl,"rect/size",ctrl->get_size());
-                                   */
+								   */
 				}
 			}
 

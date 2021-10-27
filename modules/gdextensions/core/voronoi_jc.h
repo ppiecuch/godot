@@ -32,153 +32,153 @@
 
 ABOUT:
 
-    A fast single file 2D voronoi diagram generator.
+	A fast single file 2D voronoi diagram generator.
 
 HISTORY:
 
-    0.6     2018-10-21  - Removed JCV_CEIL/JCV_FLOOR/JCV_FABS
-                        - Optimizations: Fewer indirections, better beach head approximation
-    0.5     2018-10-14  - Fixed issue where the graph edge had the wrong edge assigned (issue #28)
-                        - Fixed issue where a point was falsely passing the jcv_is_valid() test (issue #22)
-                        - Fixed jcv_diagram_get_edges() so it now returns _all_ edges (issue #28)
-                        - Added jcv_diagram_get_next_edge() to skip zero length edges (issue #10)
-                        - Added defines JCV_CEIL/JCV_FLOOR/JCV_FLT_MAX for easier configuration
-    0.4     2017-06-03  - Increased the max number of events that are preallocated
-    0.3     2017-04-16  - Added clipping box as input argument (Automatically calcuated if needed)
-                        - Input points are pruned based on bounding box
-    0.2     2016-12-30  - Fixed issue of edges not being closed properly
-                        - Fixed issue when having many events
-                        - Fixed edge sorting
-                        - Code cleanup
-    0.1                 Initial version
+	0.6     2018-10-21  - Removed JCV_CEIL/JCV_FLOOR/JCV_FABS
+						- Optimizations: Fewer indirections, better beach head approximation
+	0.5     2018-10-14  - Fixed issue where the graph edge had the wrong edge assigned (issue #28)
+						- Fixed issue where a point was falsely passing the jcv_is_valid() test (issue #22)
+						- Fixed jcv_diagram_get_edges() so it now returns _all_ edges (issue #28)
+						- Added jcv_diagram_get_next_edge() to skip zero length edges (issue #10)
+						- Added defines JCV_CEIL/JCV_FLOOR/JCV_FLT_MAX for easier configuration
+	0.4     2017-06-03  - Increased the max number of events that are preallocated
+	0.3     2017-04-16  - Added clipping box as input argument (Automatically calcuated if needed)
+						- Input points are pruned based on bounding box
+	0.2     2016-12-30  - Fixed issue of edges not being closed properly
+						- Fixed issue when having many events
+						- Fixed edge sorting
+						- Code cleanup
+	0.1                 Initial version
 
 LICENSE:
 
-    The MIT License (MIT)
+	The MIT License (MIT)
 
-    Copyright (c) 2018 Mathias Westerdahl
+	Copyright (c) 2018 Mathias Westerdahl
 
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    in the Software without restriction, including without limitation the rights
-    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
+	Permission is hereby granted, free of charge, to any person obtaining a copy
+	of this software and associated documentation files (the "Software"), to deal
+	in the Software without restriction, including without limitation the rights
+	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+	copies of the Software, and to permit persons to whom the Software is
+	furnished to do so, subject to the following conditions:
 
-    The above copyright notice and this permission notice shall be included in all
-    copies or substantial portions of the Software.
+	The above copyright notice and this permission notice shall be included in all
+	copies or substantial portions of the Software.
 
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-    SOFTWARE.
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+	SOFTWARE.
 
 
 DISCLAIMER:
 
-    This software is supplied "AS IS" without any warranties and support
+	This software is supplied "AS IS" without any warranties and support
 
 USAGE:
 
-    The input points are pruned if
+	The input points are pruned if
 
-        * There are duplicates points
-        * The input points are outside of the bounding box
+		* There are duplicates points
+		* The input points are outside of the bounding box
 
-    The input bounding box is optional (calculated automatically)
+	The input bounding box is optional (calculated automatically)
 
-    The input domain is (-FLT_MAX, FLT_MAX] (for floats)
+	The input domain is (-FLT_MAX, FLT_MAX] (for floats)
 
-    The api consists of these functions:
+	The api consists of these functions:
 
-    void jcv_diagram_generate( int num_points, const jcv_point* points, const jcv_rect* rect, jcv_diagram* diagram );
-    void jcv_diagram_generate_useralloc( int num_points, const jcv_point* points, const jcv_rect* rect, void* userallocctx, FJCVAllocFn allocfn, FJCVFreeFn freefn, jcv_diagram* diagram );
-    void jcv_diagram_free( jcv_diagram* diagram );
+	void jcv_diagram_generate( int num_points, const jcv_point* points, const jcv_rect* rect, jcv_diagram* diagram );
+	void jcv_diagram_generate_useralloc( int num_points, const jcv_point* points, const jcv_rect* rect, void* userallocctx, FJCVAllocFn allocfn, FJCVFreeFn freefn, jcv_diagram* diagram );
+	void jcv_diagram_free( jcv_diagram* diagram );
 
-    const jcv_site* jcv_diagram_get_sites( const jcv_diagram* diagram );
-    const jcv_edge* jcv_diagram_get_edges( const jcv_diagram* diagram );
-    const jcv_edge* jcv_diagram_get_next_edge( const jcv_edge* edge );
+	const jcv_site* jcv_diagram_get_sites( const jcv_diagram* diagram );
+	const jcv_edge* jcv_diagram_get_edges( const jcv_diagram* diagram );
+	const jcv_edge* jcv_diagram_get_next_edge( const jcv_edge* edge );
 
-    An example usage:
+	An example usage:
 
-    #define JC_VORONOI_IMPLEMENTATION
-    // If you wish to use doubles
-    //#define JCV_REAL_TYPE double
-    //#define JCV_ATAN2 atan2
-    //#define JCV_FLT_MAX 1.7976931348623157E+308
-    #include "jc_voronoi.h"
+	#define JC_VORONOI_IMPLEMENTATION
+	// If you wish to use doubles
+	//#define JCV_REAL_TYPE double
+	//#define JCV_ATAN2 atan2
+	//#define JCV_FLT_MAX 1.7976931348623157E+308
+	#include "jc_voronoi.h"
 
-    void draw_edges(const jcv_diagram* diagram);
-    void draw_cells(const jcv_diagram* diagram);
+	void draw_edges(const jcv_diagram* diagram);
+	void draw_cells(const jcv_diagram* diagram);
 
-    void generate_and_draw(int numpoints, const jcv_point* points)
-    {
-        jcv_diagram diagram;
-        memset(&diagram, 0, sizeof(jcv_diagram));
-        jcv_diagram_generate(count, points, 0, &diagram);
+	void generate_and_draw(int numpoints, const jcv_point* points)
+	{
+		jcv_diagram diagram;
+		memset(&diagram, 0, sizeof(jcv_diagram));
+		jcv_diagram_generate(count, points, 0, &diagram);
 
-        draw_edges(diagram);
-        draw_cells(diagram);
+		draw_edges(diagram);
+		draw_cells(diagram);
 
-        jcv_diagram_free( &diagram );
-    }
+		jcv_diagram_free( &diagram );
+	}
 
-    void draw_edges(const jcv_diagram* diagram)
-    {
-        // If all you need are the edges
-        const jcv_edge* edge = jcv_diagram_get_edges( diagram );
-        while( edge )
-        {
-            draw_line(edge->pos[0], edge->pos[1]);
-            edge = jcv_diagram_get_next_edge(edge);
-        }
-    }
+	void draw_edges(const jcv_diagram* diagram)
+	{
+		// If all you need are the edges
+		const jcv_edge* edge = jcv_diagram_get_edges( diagram );
+		while( edge )
+		{
+			draw_line(edge->pos[0], edge->pos[1]);
+			edge = jcv_diagram_get_next_edge(edge);
+		}
+	}
 
-    void draw_cells(const jcv_diagram* diagram)
-    {
-        // If you want to draw triangles, or relax the diagram,
-        // you can iterate over the sites and get all edges easily
-        const jcv_site* sites = jcv_diagram_get_sites( diagram );
-        for( int i = 0; i < diagram->numsites; ++i )
-        {
-            const jcv_site* site = &sites[i];
+	void draw_cells(const jcv_diagram* diagram)
+	{
+		// If you want to draw triangles, or relax the diagram,
+		// you can iterate over the sites and get all edges easily
+		const jcv_site* sites = jcv_diagram_get_sites( diagram );
+		for( int i = 0; i < diagram->numsites; ++i )
+		{
+			const jcv_site* site = &sites[i];
 
-            const jcv_graphedge* e = site->edges;
-            while( e )
-            {
-                draw_triangle( site->p, e->pos[0], e->pos[1]);
-                e = e->next;
-            }
-        }
-    }
+			const jcv_graphedge* e = site->edges;
+			while( e )
+			{
+				draw_triangle( site->p, e->pos[0], e->pos[1]);
+				e = e->next;
+			}
+		}
+	}
 
-    // Here is a simple example of how to do the relaxations of the cells
-    void relax_points(const jcv_diagram* diagram, jcv_point* points)
-    {
-        const jcv_site* sites = jcv_diagram_get_sites(diagram);
-        for( int i = 0; i < diagram->numsites; ++i )
-        {
-            const jcv_site* site = &sites[i];
-            jcv_point sum = site->p;
-            int count = 1;
+	// Here is a simple example of how to do the relaxations of the cells
+	void relax_points(const jcv_diagram* diagram, jcv_point* points)
+	{
+		const jcv_site* sites = jcv_diagram_get_sites(diagram);
+		for( int i = 0; i < diagram->numsites; ++i )
+		{
+			const jcv_site* site = &sites[i];
+			jcv_point sum = site->p;
+			int count = 1;
 
-            const jcv_graphedge* edge = site->edges;
+			const jcv_graphedge* edge = site->edges;
 
-            while( edge )
-            {
-                sum.x += edge->pos[0].x;
-                sum.y += edge->pos[0].y;
-                ++count;
-                edge = edge->next;
-            }
+			while( edge )
+			{
+				sum.x += edge->pos[0].x;
+				sum.y += edge->pos[0].y;
+				++count;
+				edge = edge->next;
+			}
 
-            points[site->index].x = sum.x / count;
-            points[site->index].y = sum.y / count;
-        }
-    }
+			points[site->index].x = sum.x / count;
+			points[site->index].y = sum.y / count;
+		}
+	}
 
  */
 

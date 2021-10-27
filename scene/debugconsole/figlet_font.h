@@ -76,14 +76,14 @@ All rights reserved.
 
   int
   main() {
-    Figlet::standard.print("Fractions");
-    for ( int i = 2; i <= 4; ++i ) {
-      ostringstream ss;
-      ss << "5/" << i << " = " << 5.0/i;
-      Figlet::small.print(ss.str().c_str());
-    }
-    cout << "ALL DONE!\n";
-    return 0;
+	Figlet::standard.print("Fractions");
+	for ( int i = 2; i <= 4; ++i ) {
+	  ostringstream ss;
+	  ss << "5/" << i << " = " << 5.0/i;
+	  Figlet::small.print(ss.str().c_str());
+	}
+	cout << "ALL DONE!\n";
+	return 0;
   }
   ~~~~~~~~~~~~~
 
@@ -137,10 +137,10 @@ All rights reserved.
 
   Only four mode of print the same string:
 
-    - FIGLET_SMUSHED     standard way of figlet print
-    - FIGLET_PACKED      letters are moved left but no overlapping are permitted
-    - FIGLET_FULLWIDTH   letters are printed at width defined in the font
-    - FIGLET_MONOSPACED  letters are printed with equal width
+	- FIGLET_SMUSHED     standard way of figlet print
+	- FIGLET_PACKED      letters are moved left but no overlapping are permitted
+	- FIGLET_FULLWIDTH   letters are printed at width defined in the font
+	- FIGLET_MONOSPACED  letters are printed with equal width
 
   The effect are the following
   ~~~~~~~~~~~~~~~~~~
@@ -164,7 +164,7 @@ All rights reserved.
   | |\/| |  / _ \  | '_ \   / _ \   / __|  | '_ \   / _` |   / __|   / _ \  / _` |
   | |  | | | (_) | | | | | | (_) |  \__ \  | |_) | | (_| |  | (__   |  __/ | (_| |
   |_|  |_|  \___/  |_| |_|  \___/   |___/  | .__/   \__,_|   \___|   \___|  \__,_|
-                                           |_|
+										   |_|
   ~~~~~~~~~~~~~~~~~~
  */
 
@@ -173,8 +173,8 @@ All rights reserved.
 
   Only two framing are available:
 
-    - FIGLET_SINGLE  single frame around a string
-    - FIGLET_DOUBLE  double frame around a string
+	- FIGLET_SINGLE  single frame around a string
+	- FIGLET_DOUBLE  double frame around a string
 
   The effect are the following
 
@@ -275,12 +275,12 @@ class Banner {
 public:
 	//! Constructor of `Banner` class
 	/*!
-    :|: \param characters none
-    :|: \param Hardblank  none
-    :|: \param Height     none
-    :|: \param FontMaxLen none
-    :|: \param FontSize   none
-    \*/
+	:|: \param characters none
+	:|: \param Hardblank  none
+	:|: \param Height     none
+	:|: \param FontMaxLen none
+	:|: \param FontSize   none
+	\*/
 	explicit Banner(FontFiglet const *characters,
 			char Hardblank,
 			unsigned Height,

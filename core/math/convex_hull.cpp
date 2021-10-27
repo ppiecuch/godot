@@ -759,7 +759,7 @@ int32_t ConvexHullInternal::Rational64::compare(const Rational64 &b) const {
 			: "a"(denominator), [bn] "g"(b.numerator), [tn] "g"(numerator), [bd] "g"(b.denominator)
 			: "%rdx", "cc");
 	return result ? result ^ sign // if sign is +1, only bit 0 of result is inverted, which does not change the sign of result (and cannot result in zero)
-					// if sign is -1, all bits of result are inverted, which changes the sign of result (and again cannot result in zero)
+								  // if sign is -1, all bits of result are inverted, which changes the sign of result (and again cannot result in zero)
 					:
 					  0;
 

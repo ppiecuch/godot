@@ -35,7 +35,7 @@
  * @class Vector
  * @author Juan Linietsky
  * Vector container. Regular Vector Container. Use with care and for smaller arrays when possible. Use PoolVector for large arrays.
-*/
+ */
 
 #include "core/cowdata.h"
 #include "core/error_macros.h"
@@ -67,8 +67,10 @@ public:
 	struct iterator {
 		Vector<T> *_array;
 		int _index;
-		iterator(Vector<T> *_array, int _index) : _array(_array), _index(_index) {}
-		iterator(const Vector<T> *_array, int _index) : _array(const_cast<Vector<T> *>(_array)), _index(_index) {}
+		iterator(Vector<T> *_array, int _index) :
+				_array(_array), _index(_index) {}
+		iterator(const Vector<T> *_array, int _index) :
+				_array(const_cast<Vector<T> *>(_array)), _index(_index) {}
 		bool operator!=(const iterator &other) const { return (_array != other._array) || (_index != other._index); }
 		_FORCE_INLINE_ T &operator*() { return _array->write[_index]; }
 		const T &operator*() const { return _array->get(_index); }
