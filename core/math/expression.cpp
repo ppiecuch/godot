@@ -78,6 +78,8 @@ const char *Expression::func_name[Expression::FUNC_MAX] = {
 	"randi",
 	"randf",
 	"rand_range",
+	"randf_vector",
+	"rand_range_vector",
 	"seed",
 	"rand_seed",
 	"deg2rad",
@@ -130,6 +132,7 @@ int Expression::get_func_argument_count(BuiltinFunc p_func) {
 		case MATH_RANDOMIZE:
 		case MATH_RAND:
 		case MATH_RANDF:
+		case MATH_RANDF_VECTOR:
 			return 0;
 		case MATH_SIN:
 		case MATH_COS:
@@ -181,6 +184,7 @@ int Expression::get_func_argument_count(BuiltinFunc p_func) {
 		case MATH_EASE:
 		case MATH_STEPIFY:
 		case MATH_RANDOM:
+		case MATH_RANDOM_VECTOR:
 		case MATH_POLAR2CARTESIAN:
 		case MATH_CARTESIAN2POLAR:
 		case LOGIC_MAX:
@@ -409,10 +413,20 @@ void Expression::exec_func(BuiltinFunc p_func, const Variant **p_inputs, Variant
 		case MATH_RANDF: {
 			*r_return = Math::randf();
 		} break;
+		case MATH_RANDF_VECTOR: {
+			*r_return = Vector2(Math::randf(), Math::randf());
+		} break;
 		case MATH_RANDOM: {
 			VALIDATE_ARG_NUM(0);
 			VALIDATE_ARG_NUM(1);
 			*r_return = Math::random((double)*p_inputs[0], (double)*p_inputs[1]);
+		} break;
+		case MATH_RANDOM_VECTOR: {
+			VALIDATE_ARG_NUM(0);
+			VALIDATE_ARG_NUM(1);
+			*r_return = Vector2(
+					Math::random((double)*p_inputs[0], (double)*p_inputs[1]),
+					Math::random((double)*p_inputs[0], (double)*p_inputs[1]));
 		} break;
 		case MATH_SEED: {
 			VALIDATE_ARG_NUM(0);

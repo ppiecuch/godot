@@ -85,6 +85,8 @@ const char *GDScriptFunctions::get_func_name(Function p_func) {
 		"randi",
 		"randf",
 		"rand_range",
+		"randf_vector",
+		"rand_range_vector",
 		"seed",
 		"rand_seed",
 		"deg2rad",
@@ -437,6 +439,18 @@ void GDScriptFunctions::call(Function p_func, const Variant **p_args, int p_arg_
 			VALIDATE_ARG_NUM(0);
 			VALIDATE_ARG_NUM(1);
 			r_ret = Math::random((double)*p_args[0], (double)*p_args[1]);
+		} break;
+		case MATH_RANDF_VECTOR: {
+			VALIDATE_ARG_COUNT(0);
+			r_ret = Vector2(Math::randf(), Math::randf());
+		} break;
+		case MATH_RANDOM_VECTOR: {
+			VALIDATE_ARG_COUNT(2);
+			VALIDATE_ARG_NUM(0);
+			VALIDATE_ARG_NUM(1);
+			r_ret = Vector2(
+					Math::random((double)*p_args[0], (double)*p_args[1]),
+					Math::random((double)*p_args[0], (double)*p_args[1]));
 		} break;
 		case MATH_SEED: {
 			VALIDATE_ARG_COUNT(1);
@@ -1670,6 +1684,16 @@ MethodInfo GDScriptFunctions::get_info(Function p_func) {
 		case MATH_RANDOM: {
 			MethodInfo mi("rand_range", PropertyInfo(Variant::REAL, "from"), PropertyInfo(Variant::REAL, "to"));
 			mi.return_val.type = Variant::REAL;
+			return mi;
+		} break;
+		case MATH_RANDF_VECTOR: {
+			MethodInfo mi("randf_vector");
+			mi.return_val.type = Variant::VECTOR2;
+			return mi;
+		} break;
+		case MATH_RANDOM_VECTOR: {
+			MethodInfo mi("rand_range_vector", PropertyInfo(Variant::REAL, "from"), PropertyInfo(Variant::REAL, "to"));
+			mi.return_val.type = Variant::VECTOR2;
 			return mi;
 		} break;
 		case MATH_SEED: {
