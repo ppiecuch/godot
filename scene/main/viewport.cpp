@@ -36,7 +36,7 @@
 #include "core/project_settings.h"
 #include "scene/2d/camera_2d.h"
 #include "scene/2d/collision_object_2d.h"
-#include "scene/2d/listener_2d.cpp"
+#include "scene/2d/listener_2d.h"
 #include "scene/3d/camera.h"
 #include "scene/3d/collision_object.h"
 #include "scene/3d/listener.h"
