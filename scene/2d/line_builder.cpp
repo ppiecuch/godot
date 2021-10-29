@@ -200,9 +200,9 @@ void LineBuilder::build() {
 	_last_uvx = 0;
 	bool retrieve_curve = curve != nullptr;
 	bool distance_required = _interpolate_color ||
-							 retrieve_curve ||
-							 texture_mode == Line2D::LINE_TEXTURE_TILE ||
-							 texture_mode == Line2D::LINE_TEXTURE_STRETCH;
+			retrieve_curve ||
+			texture_mode == Line2D::LINE_TEXTURE_TILE ||
+			texture_mode == Line2D::LINE_TEXTURE_STRETCH;
 	if (distance_required) {
 		total_distance = calculate_total_distance(points);
 		// Adjust totalDistance.
