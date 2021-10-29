@@ -221,7 +221,7 @@ void register_gdextensions_types() {
 	ClassDB::register_class<FakeExplosionParticles2D>();
 	ClassDB::register_class<NixieFont>();
 	ClassDB::register_class<Spider>();
-	ClassDB::register_virtual_class<SpiderStage>();
+	ClassDB::register_class<SpiderStage>();
 	ClassDB::register_class<SpiderStageInstance>();
 
 #ifdef MODULE_ENET_ENABLED
