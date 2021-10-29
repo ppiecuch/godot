@@ -992,6 +992,10 @@ struct _VariantCall {
 		r_ret = Vector2(*p_args[0], *p_args[1]);
 	}
 
+	static void Vector2_init2(Variant &r_ret, const Variant **p_args) {
+		r_ret = Vector2(*p_args[0], *p_args[0]);
+	}
+
 	static void Rect2_init1(Variant &r_ret, const Variant **p_args) {
 		r_ret = Rect2(*p_args[0], *p_args[1]);
 	}
@@ -2103,6 +2107,7 @@ void register_variant_methods() {
 	/* REGISTER CONSTRUCTORS */
 
 	_VariantCall::add_constructor(_VariantCall::Vector2_init1, Variant::VECTOR2, "x", Variant::REAL, "y", Variant::REAL);
+	_VariantCall::add_constructor(_VariantCall::Vector2_init2, Variant::VECTOR2, "v", Variant::REAL);
 
 	_VariantCall::add_constructor(_VariantCall::Rect2_init1, Variant::RECT2, "position", Variant::VECTOR2, "size", Variant::VECTOR2);
 	_VariantCall::add_constructor(_VariantCall::Rect2_init2, Variant::RECT2, "x", Variant::REAL, "y", Variant::REAL, "width", Variant::REAL, "height", Variant::REAL);
