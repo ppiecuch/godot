@@ -651,4 +651,3 @@ BroadPhase2DHashGrid::~BroadPhase2DHashGrid() {
 
 	memdelete_arr(hash_table);
 }
-

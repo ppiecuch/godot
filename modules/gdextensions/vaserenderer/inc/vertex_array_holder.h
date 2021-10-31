@@ -87,7 +87,7 @@ public:
 			vert.insert(vert.end(), hold.vert.begin(), hold.vert.end());
 			color.insert(color.end(), hold.color.begin(), hold.color.end());
 		} else if (drawmode == Mesh::PRIMITIVE_TRIANGLES &&
-				   hold.drawmode == Mesh::PRIMITIVE_TRIANGLES_STRIP) {
+				hold.drawmode == Mesh::PRIMITIVE_TRIANGLES_STRIP) {
 			const int &a = count;
 			for (int b = 2; b < hold.count; b++) {
 				for (int k = 0; k < 3; k++, a++) {

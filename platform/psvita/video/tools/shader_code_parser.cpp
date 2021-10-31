@@ -175,7 +175,7 @@ bool shader_code_parser::convert_to_hlsl() {
 		prefix.append("\n");
 
 		m_code.append("\nfloat4 main(" + m_replace_str + "vsout " + input_var + "):SV_TARGET{" + in_var_assign +
-					  m_replace_str + "main();return " + ps_out_var + ";}\n");
+				m_replace_str + "main();return " + ps_out_var + ";}\n");
 	} else {
 		if (!parse_attributes(m_replace_str.c_str(), (input_var + ".").c_str())) {
 			m_error.append("unable to parse attributes\n");
@@ -236,7 +236,7 @@ bool shader_code_parser::convert_to_hlsl() {
 			out_var_assign.append(out_var + "." + vs_pos_out + ".y*=" + m_flip_y_uniform + ";");
 
 		m_code.append("\n" + m_replace_str + "vsout main(" + m_replace_str + "vsin " + input_var + "_){" + input_var + "=" + input_var + "_;" +
-					  m_replace_str + "main();" + m_replace_str + "vsout " + out_var + ";" + out_var_assign + "return " + out_var + ";}\n");
+				m_replace_str + "main();" + m_replace_str + "vsout " + out_var + ";" + out_var_assign + "return " + out_var + ";}\n");
 	}
 
 	if (m_uniforms.size() > predefined_count) {

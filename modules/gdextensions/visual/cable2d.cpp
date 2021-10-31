@@ -186,7 +186,7 @@ void Cable2D::update_cable(float delta) {
 			_rendered_points.set(i, _points[i / _segments]);
 		} else {
 			Vector2 point_force = (_point_forces[segment] * (1.0 - force_blend)) +
-								  (_point_forces[segment + 1] * force_blend);
+					(_point_forces[segment + 1] * force_blend);
 
 			Vector2 pt = _rendered_points[i];
 			Vector2 new_pt = pt;

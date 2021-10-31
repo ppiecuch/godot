@@ -1071,7 +1071,7 @@ static void jcv_fillgaps(jcv_diagram *diagram) {
 					gap->next = current->next;
 					current->next = gap;
 				} else if (jcv_point_on_edge(&current->pos[1], &diagram->min, &diagram->max) &&
-						   jcv_point_on_edge(&next->pos[0], &diagram->min, &diagram->max)) {
+						jcv_point_on_edge(&next->pos[0], &diagram->min, &diagram->max)) {
 					jcv_graphedge *gap = jcv_alloc_graphedge(internal);
 					jcv_create_corner_edge(internal, site, current, gap);
 					gap->edge = jcv_create_gap_edge(internal, site, gap);

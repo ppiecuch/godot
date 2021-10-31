@@ -83,8 +83,8 @@ void texture_tile_sw(C3D_Tex *tex, const void *data, int w, int h) {
 // Minimum texture dimension seems to be 64 pixels
 void texture_tile_hw(C3D_Tex *tex, const void *data, int w, int h) {
 	const u32 flags = (GX_TRANSFER_FLIP_VERT(1) | GX_TRANSFER_OUT_TILED(1) | GX_TRANSFER_RAW_COPY(0) |
-					   GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGBA8) | GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGBA8) |
-					   GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_NO));
+			GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGBA8) | GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGBA8) |
+			GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_NO));
 
 	GSPGPU_FlushDataCache(data, w * h * 4);
 

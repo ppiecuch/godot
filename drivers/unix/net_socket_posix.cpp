@@ -92,8 +92,7 @@
 #define _SS_MAXSIZE 128
 #define _SS_ALIGNSIZE (sizeof(int64_t))
 #define _SS_PAD1SIZE (_SS_ALIGNSIZE - sizeof(sa_family_t))
-#define _SS_PAD2SIZE (_SS_MAXSIZE - (sizeof(sa_family_t) + \
-											_SS_PAD1SIZE + _SS_ALIGNSIZE))
+#define _SS_PAD2SIZE (_SS_MAXSIZE - (sizeof(sa_family_t) + _SS_PAD1SIZE + _SS_ALIGNSIZE))
 struct sockaddr_storage {
 	sa_family_t ss_family;
 

@@ -202,20 +202,20 @@ Matrix2D Matrix2D::inverted(bool *invertible) const {
 
 bool Matrix2D::operator==(const Matrix2D &m) const {
 	return _m11 == m._m11 &&
-		   _m12 == m._m12 &&
-		   _m21 == m._m21 &&
-		   _m22 == m._m22 &&
-		   _dx == m._dx &&
-		   _dy == m._dy;
+			_m12 == m._m12 &&
+			_m21 == m._m21 &&
+			_m22 == m._m22 &&
+			_dx == m._dx &&
+			_dy == m._dy;
 }
 
 bool Matrix2D::operator!=(const Matrix2D &m) const {
 	return _m11 != m._m11 ||
-		   _m12 != m._m12 ||
-		   _m21 != m._m21 ||
-		   _m22 != m._m22 ||
-		   _dx != m._dx ||
-		   _dy != m._dy;
+			_m12 != m._m12 ||
+			_m21 != m._m21 ||
+			_m22 != m._m22 ||
+			_dx != m._dx ||
+			_dy != m._dy;
 }
 
 Matrix2D &Matrix2D::operator*=(const Matrix2D &m) {
