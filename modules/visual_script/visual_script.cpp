@@ -2480,7 +2480,7 @@ void VisualScriptLanguage::debug_get_stack_level_locals(int p_level, List<String
 		p_locals->push_back("working_mem/mem_" + itos(i));
 		p_values->push_back((*_call_stack[l].work_mem)[i]);
 	}
-// }
+}
 
 void VisualScriptLanguage::debug_get_stack_level_members(int p_level, List<String> *p_members, List<Variant> *p_values, int p_max_subitems, int p_max_depth) {
 	if (_debug_parse_err_node >= 0) {
