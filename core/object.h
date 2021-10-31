@@ -268,6 +268,7 @@ private:
 
 #define GDCLASS(m_class, m_inherits)                                                                                                    \
 private:                                                                                                                                \
+	Vector<int> _disabled_base_notifications;                                                                                                            \
 	void operator=(const m_class &p_rval) {}                                                                                            \
 	mutable StringName _class_name;                                                                                                     \
 	friend class ClassDB;                                                                                                               \
