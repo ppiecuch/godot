@@ -7,11 +7,12 @@ set "_errorlevel=errorlevel"
 set "__errorlevel=_errorlevel"
 set "line="
 
-set cmd=$1
-set source=$2
+set source=%1
+shift
+set opts=%*
 
 for /F "delims=" %%A in ('
-    ^( %cmd% ^& call set /p "=%%%%%%__errorlevel%%%%%%"^ <NUL ^) ^| findstr /V /X "%source%"
+    ^( cl %opts% ^& call set /p "=%%%%%%__errorlevel%%%%%%"^<NUL ^) ^| findstr /V /X "%source%"
     ') do (
     setlocal EnableDelayedExpansion
     echo(!line!
