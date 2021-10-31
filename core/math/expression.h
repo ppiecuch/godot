@@ -60,6 +60,7 @@ public:
 		MATH_POW,
 		MATH_LOG,
 		MATH_EXP,
+		MATH_MAP,
 		MATH_ISNAN,
 		MATH_ISINF,
 		MATH_EASE,

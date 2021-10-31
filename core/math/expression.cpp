@@ -61,6 +61,7 @@ const char *Expression::func_name[Expression::FUNC_MAX] = {
 	"pow",
 	"log",
 	"exp",
+	"map",
 	"is_nan",
 	"is_inf",
 	"ease",
@@ -203,6 +204,7 @@ int Expression::get_func_argument_count(BuiltinFunc p_func) {
 		case MATH_WRAPF:
 		case LOGIC_CLAMP:
 			return 3;
+		case MATH_MAP:
 		case MATH_RANGE_LERP:
 			return 5;
 		case FUNC_MAX: {
@@ -332,6 +334,14 @@ void Expression::exec_func(BuiltinFunc p_func, const Variant **p_inputs, Variant
 		case MATH_EXP: {
 			VALIDATE_ARG_NUM(0);
 			*r_return = Math::exp((double)*p_inputs[0]);
+		} break;
+		case MATH_MAP: {
+			VALIDATE_ARG_NUM(0);
+			VALIDATE_ARG_NUM(1);
+			VALIDATE_ARG_NUM(2);
+			VALIDATE_ARG_NUM(3);
+			VALIDATE_ARG_NUM(4);
+			*r_return = Math::map((double)*p_inputs[0], (double)*p_inputs[1], (double)*p_inputs[2], (double)*p_inputs[3], (double)*p_inputs[4]);
 		} break;
 		case MATH_ISNAN: {
 			VALIDATE_ARG_NUM(0);
