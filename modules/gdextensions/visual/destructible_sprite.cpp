@@ -799,7 +799,7 @@ void DestructibleSprite::_notification(int p_what) {
 				} else if (object.blocks.empty()) {
 					if (object.delay <= 0) {
 						_prepare_detonation(object);
-						_disabled_base_notifications.append(NOTIFICATION_DRAW); // we want only blocks to be displayed
+						_disabled_base_notifications.push_back(NOTIFICATION_DRAW); // we want only blocks to be displayed
 					} else {
 						object.delay -= delta;
 					}

@@ -1081,7 +1081,7 @@ ElasticSprite::ElasticSprite() {
 	_sim_dirty = false;
 	_geom_dirty = false;
 
-	_disabled_base_notifications.append(NOTIFICATION_DRAW); // we want only our drawing code
+	_disabled_base_notifications.push_back(NOTIFICATION_DRAW); // we want only our drawing code
 }
 
 ElasticSprite::~ElasticSprite() {
