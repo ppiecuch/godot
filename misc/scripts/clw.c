@@ -1,34 +1,74 @@
+/*************************************************************************/
+/*  clw.c                                                                */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #include <fcntl.h>
 #include <io.h>
 #include <stdio.h>
 #include <string.h>
 #include <windows.h>
 
-void __fatal(const char* msg, ...) {
+void __fatal(const char *msg, ...) {
 	va_list ap;
 	fprintf(stderr, "clw: fatal: ");
 	va_start(ap, msg);
 	vfprintf(stderr, msg, ap);
 	va_end(ap);
 	fprintf(stderr, "\n");
-# ifdef _WIN32
+#ifdef _WIN32
 	// On Windows, some tools may inject extra threads.
 	// exit() may block on locks held by those threads, so forcibly exit.
 	fflush(stderr);
 	fflush(stdout);
 	ExitProcess(1);
-# else
+#else
 	exit(1);
-# endif
+#endif
 }
 
 typedef struct {
-	char* string;
+	char *string;
 	int size;
 } string;
 
-string string_new() { string s; s.string = NULL; s.size = 0; return s; }
-string string_init(const char *cstr) { string s; s.string = _strdup(cstr); s.size = strlen(cstr); return s; }
+string string_new() {
+	string s;
+	s.string = NULL;
+	s.size = 0;
+	return s;
+}
+string string_init(const char *cstr) {
+	string s;
+	s.string = _strdup(cstr);
+	s.size = strlen(cstr);
+	return s;
+}
 void string_append(string *s, const char *data, size_t data_len) {
 	s->string = realloc(s->string, s->size + data_len);
 	if (!s->string) {
@@ -36,29 +76,33 @@ void string_append(string *s, const char *data, size_t data_len) {
 	}
 	s->size = s->size + data_len;
 }
-char *string_cstr(string s) { return s.string; }
-int string_size(string s) { return s.size; }
+char *string_cstr(string s) {
+	return s.string;
+}
+int string_size(string s) {
+	return s.size;
+}
 
 string GetLastErrorString() {
 	DWORD err = GetLastError();
 
-	char* msg_buf = NULL;
+	char *msg_buf = NULL;
 	FormatMessageA(
-		FORMAT_MESSAGE_ALLOCATE_BUFFER |
-		FORMAT_MESSAGE_FROM_SYSTEM |
-		FORMAT_MESSAGE_IGNORE_INSERTS,
-		NULL,
-		err,
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		(char*)&msg_buf,
-		0,
-		NULL);
+			FORMAT_MESSAGE_ALLOCATE_BUFFER |
+					FORMAT_MESSAGE_FROM_SYSTEM |
+					FORMAT_MESSAGE_IGNORE_INSERTS,
+			NULL,
+			err,
+			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			(char *)&msg_buf,
+			0,
+			NULL);
 	string msg = string_init(msg_buf);
 	LocalFree(msg_buf);
 	return msg;
 }
 
-void Win32Fatal(const char* function) {
+void Win32Fatal(const char *function) {
 	__fatal("%s: %s", function, string_cstr(GetLastErrorString()));
 }
 
@@ -69,7 +113,7 @@ int RunCmd(char *command, string *output) {
 
 	// Must be inheritable so subprocesses can dup to children.
 	HANDLE nul =
-		CreateFileA("NUL", GENERIC_READ,
+			CreateFileA("NUL", GENERIC_READ,
 					FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
 					&security_attributes, OPEN_EXISTING, 0, NULL);
 	if (nul == INVALID_HANDLE_VALUE) {
@@ -91,14 +135,14 @@ int RunCmd(char *command, string *output) {
 	startup_info.dwFlags |= STARTF_USESTDHANDLES;
 
 	if (!CreateProcessA(NULL, command, NULL, NULL,
-			/* inherit handles */ TRUE, 0,
-			NULL, NULL,
-			&startup_info, &process_info)) {
+				/* inherit handles */ TRUE, 0,
+				NULL, NULL,
+				&startup_info, &process_info)) {
 		Win32Fatal("CreateProcess");
 	}
 
 	if (!CloseHandle(nul) ||
-		!CloseHandle(stdout_write)) {
+			!CloseHandle(stdout_write)) {
 		Win32Fatal("CloseHandle");
 	}
 
@@ -107,9 +151,7 @@ int RunCmd(char *command, string *output) {
 	while (read_len) {
 		char buf[64 << 10];
 		read_len = 0;
-		if (!ReadFile(stdout_read, buf, sizeof(buf), &read_len, NULL)
-			&& GetLastError() != ERROR_BROKEN_PIPE)
-		{
+		if (!ReadFile(stdout_read, buf, sizeof(buf), &read_len, NULL) && GetLastError() != ERROR_BROKEN_PIPE) {
 			Win32Fatal("ReadFile");
 		}
 		string_append(output, buf, read_len);
@@ -123,8 +165,8 @@ int RunCmd(char *command, string *output) {
 		Win32Fatal("GetExitCodeProcess");
 
 	if (!CloseHandle(stdout_read) ||
-		!CloseHandle(process_info.hProcess) ||
-		!CloseHandle(process_info.hThread)) {
+			!CloseHandle(process_info.hProcess) ||
+			!CloseHandle(process_info.hThread)) {
 		Win32Fatal("CloseHandle");
 	}
 
@@ -132,7 +174,7 @@ int RunCmd(char *command, string *output) {
 }
 
 int main() {
-	char* command = GetCommandLineA();
+	char *command = GetCommandLineA();
 
 	string output = string_new();
 	int exit_code = RunCmd(command, &output);
