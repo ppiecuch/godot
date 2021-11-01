@@ -63,6 +63,9 @@ string string_new() {
 	s.size = 0;
 	return s;
 }
+void string_free(string *s) {
+	free(s->string);
+}
 string string_init(const char *cstr) {
 	string s;
 	s.string = _strdup(cstr);
@@ -75,6 +78,7 @@ void string_append(string *s, const char *data, size_t data_len) {
 	if (!s->string) {
 		__fatal("failed to realloc string");
 	}
+	memcpy(s->string + s->size, data, data_len);
 	s->string[new_size] = 0;
 	s->size = new_size;
 }
