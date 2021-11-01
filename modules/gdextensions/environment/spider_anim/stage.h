@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  spider_insects.h                                                     */
+/*  stage.h                                                              */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,38 +28,27 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GD_SPIDER_INSECTS_H
-#define GD_SPIDER_INSECTS_H
+#ifndef GD_SPIDER_STAGE_H
+#define GD_SPIDER_STAGE_H
 
 #include "scene/2d/node_2d.h"
 
-class SpiderInsects : public Node2D {
-	GDCLASS(SpiderInsects, Node2D);
-
-protected:
-	static void _bind_methods() {}
-
-	void _notification(int p_what) {}
-
-	SpiderInsects() {}
-};
-
-class InsectsManager : public Reference {
-	GDCLASS(InsectsManager, Reference)
+class SpiderStage : public Resource {
+	GDCLASS(SpiderStage, Resource)
 
 public:
-	InsectsManager() {}
+	SpiderStage() {}
 };
 
-class InsectsManagerInstance : public Node2D {
-	GDCLASS(InsectsManagerInstance, Node2D);
+class SpiderStageInstance : public Node2D {
+	GDCLASS(SpiderStageInstance, Node2D);
 
 protected:
 	static void _bind_methods() {}
 
 	void _notification(int p_what) {}
 
-	InsectsManagerInstance() {}
+	SpiderStageInstance() {}
 };
 
-#endif // GD_SPIDER_INSECTS_H
+#endif // GD_SPIDER_STAGE_H
