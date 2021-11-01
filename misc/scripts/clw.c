@@ -70,11 +70,16 @@ string string_init(const char *cstr) {
 	return s;
 }
 void string_append(string *s, const char *data, size_t data_len) {
-	s->string = realloc(s->string, s->size + data_len);
+	int new_size = s->size + data_len;
+	s->string = realloc(s->string, new_size + 1);
 	if (!s->string) {
 		__fatal("failed to realloc string");
 	}
-	s->size = s->size + data_len;
+	s->string[new_size] = 0;
+	s->size = new_size;
+}
+void string_cappend(string *s, const char *cstr) {
+	string_append(s, cstr, strlen(cstr));
 }
 char *string_cstr(string s) {
 	return s.string;
@@ -174,10 +179,13 @@ int RunCmd(char *command, string *output) {
 }
 
 int main() {
-	char *command = GetCommandLineA();
+	char *cc = getenv("CC");
 
 	string output = string_new();
-	int exit_code = RunCmd(command, &output);
+	string command = string_init(cc ? cc : "cl.exe");
+	string_cappend(&command, " ");
+	string_cappend(&command, GetCommandLineA());
+	int exit_code = RunCmd(string_cstr(command), &output);
 
 	_setmode(_fileno(stdout), _O_BINARY);
 	// Avoid printf and C strings, since the actual output might contain null bytes like UTF-16 does (yuck).
