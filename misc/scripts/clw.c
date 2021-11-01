@@ -4,16 +4,6 @@
 #include <string.h>
 #include <windows.h>
 
-typedef struct {
-	char* string;
-	int size;
-} string;
-
-string string_new() { string s; s->string = malloc(512); s->size = 512; return s; }
-string string_init(const char *cstr) { string s; s->string = strdup(cstr); s->size = strlen(cstr); return s; }
-void string_append(string *s, const char *data, size_t data_len);
-const char *string_cstr(const string *s) { return s->string; }
-
 void __fatal(const char* msg, ...) {
 	va_list ap;
 	fprintf(stderr, "clw: fatal: ");
@@ -31,6 +21,23 @@ void __fatal(const char* msg, ...) {
 	exit(1);
 # endif
 }
+
+typedef struct {
+	char* string;
+	int size;
+} string;
+
+string string_new() { string s; s.string = NULL; s.size = 0; return s; }
+string string_init(const char *cstr) { string s; s.string = _strdup(cstr); s.size = strlen(cstr); return s; }
+void string_append(string *s, const char *data, size_t data_len) {
+	s->string = realloc(s->string, s->size + data_len);
+	if (!s->string) {
+		__fatal("failed to realloc string");
+	}
+	s->size = s->size + data_len;
+}
+char *string_cstr(string s) { return s.string; }
+int string_size(string s) { return s.size; }
 
 string GetLastErrorString() {
 	DWORD err = GetLastError();
@@ -51,16 +58,12 @@ string GetLastErrorString() {
 	return msg;
 }
 
-void Win32Fatal(const char* function, const char* hint) {
-	if (hint) {
-		__fatal("%s: %s (%s)", function, string_cstr(GetLastErrorString()), hint);
-	} else {
-		__fatal("%s: %s", function, string_cstr(GetLastErrorString()));
-	}
+void Win32Fatal(const char* function) {
+	__fatal("%s: %s", function, string_cstr(GetLastErrorString()));
 }
 
-int RunCmd(const char *command, string *output) {
-	SECURITY_ATTRIBUTES security_attributes = {};
+int RunCmd(char *command, string *output) {
+	SECURITY_ATTRIBUTES security_attributes;
 	security_attributes.nLength = sizeof(SECURITY_ATTRIBUTES);
 	security_attributes.bInheritHandle = TRUE;
 
@@ -69,27 +72,27 @@ int RunCmd(const char *command, string *output) {
 		CreateFileA("NUL", GENERIC_READ,
 					FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
 					&security_attributes, OPEN_EXISTING, 0, NULL);
-	if (nul == INVALID_HANDLE_VALUE)
+	if (nul == INVALID_HANDLE_VALUE) {
 		__fatal("couldn't open nul");
-
+	}
 	HANDLE stdout_read, stdout_write;
-	if (!CreatePipe(&stdout_read, &stdout_write, &security_attributes, 0))
+	if (!CreatePipe(&stdout_read, &stdout_write, &security_attributes, 0)) {
 		Win32Fatal("CreatePipe");
-
-	if (!SetHandleInformation(stdout_read, HANDLE_FLAG_INHERIT, 0))
+	}
+	if (!SetHandleInformation(stdout_read, HANDLE_FLAG_INHERIT, 0)) {
 		Win32Fatal("SetHandleInformation");
-
-	PROCESS_INFORMATION process_info = {};
-	STARTUPINFOA startup_info = {};
+	}
+	PROCESS_INFORMATION process_info;
+	STARTUPINFOA startup_info;
 	startup_info.cb = sizeof(STARTUPINFOA);
 	startup_info.hStdInput = nul;
-	startup_info.hStdError = ::GetStdHandle(STD_ERROR_HANDLE);
+	startup_info.hStdError = GetStdHandle(STD_ERROR_HANDLE);
 	startup_info.hStdOutput = stdout_write;
 	startup_info.dwFlags |= STARTF_USESTDHANDLES;
 
-	if (!CreateProcessA(NULL, (char*)command.c_str(), NULL, NULL,
+	if (!CreateProcessA(NULL, command, NULL, NULL,
 			/* inherit handles */ TRUE, 0,
-			env_block_, NULL,
+			NULL, NULL,
 			&startup_info, &process_info)) {
 		Win32Fatal("CreateProcess");
 	}
@@ -104,9 +107,10 @@ int RunCmd(const char *command, string *output) {
 	while (read_len) {
 		char buf[64 << 10];
 		read_len = 0;
-		if (!::ReadFile(stdout_read, buf, sizeof(buf), &read_len, NULL) &&
-			GetLastError() != ERROR_BROKEN_PIPE) {
-		Win32Fatal("ReadFile");
+		if (!ReadFile(stdout_read, buf, sizeof(buf), &read_len, NULL)
+			&& GetLastError() != ERROR_BROKEN_PIPE)
+		{
+			Win32Fatal("ReadFile");
 		}
 		string_append(output, buf, read_len);
 	}
@@ -130,12 +134,12 @@ int RunCmd(const char *command, string *output) {
 int main() {
 	char* command = GetCommandLineA();
 
-	string output;
+	string output = string_new();
 	int exit_code = RunCmd(command, &output);
 
 	_setmode(_fileno(stdout), _O_BINARY);
 	// Avoid printf and C strings, since the actual output might contain null bytes like UTF-16 does (yuck).
-	fwrite(&output[0], 1, output.size(), stdout);
+	fwrite(string_cstr(output), 1, string_size(output), stdout);
 
 	return exit_code;
 }
