@@ -118,7 +118,7 @@ static inline void _trace(int line, const char *file, const String &text) {
 #define _register_global_ref(pRef)                        \
 	{                                                     \
 		if (SceneTree *sc = SceneTree::get_singleton()) { \
-			sc->add_exit_callback([=]() {                 \
+			sc->add_exit_callback([&]() {                 \
 				pRef.unref();                             \
 			});                                           \
 		} else {                                          \
