@@ -53,44 +53,20 @@ void __fatal(const char *msg, ...) {
 }
 
 typedef struct {
-	char *string;
+	char *mem;
 	int size;
 } string;
 
-string string_new() {
-	string s;
-	s.string = NULL;
-	s.size = 0;
-	return s;
-}
-void string_free(string *s) {
-	free(s->string);
-}
-string string_init(const char *cstr) {
-	string s;
-	s.string = _strdup(cstr);
-	s.size = strlen(cstr);
-	return s;
-}
-void string_append(string *s, const char *data, size_t data_len) {
-	int new_size = s->size + data_len;
-	s->string = realloc(s->string, new_size + 1);
-	if (!s->string) {
-		__fatal("failed to realloc string");
-	}
-	memcpy(s->string + s->size, data, data_len);
-	s->string[new_size] = 0;
-	s->size = new_size;
-}
-void string_cappend(string *s, const char *cstr) {
-	string_append(s, cstr, strlen(cstr));
-}
-char *string_cstr(string s) {
-	return s.string;
-}
-int string_size(string s) {
-	return s.size;
-}
+char *_strrstr(const char *s, const char *search);
+int _strends(char *s, const char *find);
+
+string string_new();
+void string_free(string *s);
+string string_init(const char *cstr);
+void string_append(string *s, const char *data, size_t data_len);
+void string_cappend(string *s, const char *cstr);
+char *string_mem(string s);
+int string_size(string s);
 
 string GetLastErrorString() {
 	DWORD err = GetLastError();
@@ -112,7 +88,7 @@ string GetLastErrorString() {
 }
 
 void Win32Fatal(const char *function) {
-	__fatal("%s: %s", function, string_cstr(GetLastErrorString()));
+	__fatal("%s: %s", function, string_mem(GetLastErrorString()));
 }
 
 int RunCmd(char *command, string *output) {
@@ -121,10 +97,9 @@ int RunCmd(char *command, string *output) {
 	security_attributes.bInheritHandle = TRUE;
 
 	// Must be inheritable so subprocesses can dup to children.
-	HANDLE nul =
-			CreateFileA("NUL", GENERIC_READ,
-					FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-					&security_attributes, OPEN_EXISTING, 0, NULL);
+	HANDLE nul = CreateFileA("NUL", GENERIC_READ,
+			FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+			&security_attributes, OPEN_EXISTING, 0, NULL);
 	if (nul == INVALID_HANDLE_VALUE) {
 		__fatal("couldn't open nul");
 	}
@@ -150,8 +125,7 @@ int RunCmd(char *command, string *output) {
 		Win32Fatal("CreateProcess");
 	}
 
-	if (!CloseHandle(nul) ||
-			!CloseHandle(stdout_write)) {
+	if (!CloseHandle(nul) || !CloseHandle(stdout_write)) {
 		Win32Fatal("CloseHandle");
 	}
 
@@ -167,18 +141,16 @@ int RunCmd(char *command, string *output) {
 	}
 
 	// Wait for it to exit and grab its exit code.
-	if (WaitForSingleObject(process_info.hProcess, INFINITE) == WAIT_FAILED)
+	if (WaitForSingleObject(process_info.hProcess, INFINITE) == WAIT_FAILED) {
 		Win32Fatal("WaitForSingleObject");
+	}
 	DWORD exit_code = 0;
-	if (!GetExitCodeProcess(process_info.hProcess, &exit_code))
+	if (!GetExitCodeProcess(process_info.hProcess, &exit_code)) {
 		Win32Fatal("GetExitCodeProcess");
-
-	if (!CloseHandle(stdout_read) ||
-			!CloseHandle(process_info.hProcess) ||
-			!CloseHandle(process_info.hThread)) {
+	}
+	if (!CloseHandle(stdout_read) || !CloseHandle(process_info.hProcess) || !CloseHandle(process_info.hThread)) {
 		Win32Fatal("CloseHandle");
 	}
-
 	return exit_code;
 }
 
@@ -189,11 +161,89 @@ int main() {
 	string command = string_init(cc ? cc : "cl.exe");
 	string_cappend(&command, " ");
 	string_cappend(&command, GetCommandLineA());
-	int exit_code = RunCmd(string_cstr(command), &output);
+	int exit_code = RunCmd(string_mem(command), &output);
+
+#define _ends(find) (memcmp(lstart + llen - strlen(find), find, strlen(find)) == 0)
+
+	if (string_size(output)) {
+		char *str = string_mem(output);
+		int size = string_size(output);
+		for (int stop = 0, start = 0; stop < size; stop++) {
+			if (str[stop] == '\n') {
+				char *lstart = str + start;
+				int llen = stop - start;
+				if (llen && lstart[llen - 1] == '\r') {
+					llen--;
+				}
+				// filter out line
+				if (_ends(".c") || _ends(".cc") || _ends(".cxx") || _ends(".cpp")) {
+					memmove(str + start, str + stop, size - stop);
+					size -= stop - start;
+				}
+				start = stop + 1;
+			}
+		}
+		if (size != string_size(output)) {
+			output.size = size;
+		}
+	}
 
 	_setmode(_fileno(stdout), _O_BINARY);
 	// Avoid printf and C strings, since the actual output might contain null bytes like UTF-16 does (yuck).
-	fwrite(string_cstr(output), 1, string_size(output), stdout);
+	fwrite(string_mem(output), 1, string_size(output), stdout);
 
 	return exit_code;
+}
+
+// -- string management
+
+char *_strrstr(const char *s, const char *search) {
+	char *ptr, *last = NULL;
+	ptr = (char *)s;
+	while ((ptr = strstr(ptr, search))) {
+		last = ptr++;
+	}
+	return last;
+}
+int _strends(char *s, const char *find) {
+	char *begin = _strrstr(s, find);
+	if (begin == NULL) {
+		return 0;
+	}
+	return strcmp(begin, find) == 0;
+}
+
+string string_new() {
+	string s;
+	s.mem = NULL;
+	s.size = 0;
+	return s;
+}
+void string_free(string *s) {
+	free(s->mem);
+}
+string string_init(const char *cstr) {
+	string s;
+	s.mem = _strdup(cstr);
+	s.size = strlen(cstr);
+	return s;
+}
+void string_append(string *s, const char *data, size_t data_len) {
+	int new_size = s->size + data_len;
+	s->mem = realloc(s->mem, new_size + 1);
+	if (!s->mem) {
+		__fatal("failed to realloc string");
+	}
+	memcpy(s->mem + s->size, data, data_len);
+	s->mem[new_size] = 0;
+	s->size = new_size;
+}
+void string_cappend(string *s, const char *cstr) {
+	string_append(s, cstr, strlen(cstr));
+}
+char *string_mem(string s) {
+	return s.mem;
+}
+int string_size(string s) {
+	return s.size;
 }
