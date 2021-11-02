@@ -28,6 +28,16 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
+// Wrapper script for MSVC's cl.exe that filters out filename.
+//
+// When cl.exe is run by 'make' we want to be behave more like
+// gcc and be silent by default. There seems to be no flag which
+// tells cl.exe to suppress the name of the file its compiling
+// so we use a wrapper script to filter its output.
+//
+// This was inspired by ninja's msvc wrapper:
+// src/msvc_helper-win32.cc:CLParser::FilterInputFilename
+
 #include <fcntl.h>
 #include <io.h>
 #include <stdio.h>
