@@ -296,7 +296,7 @@ void AudioDriverCoreAudio::set_sleep_state(bool p_sleeping) {
 			ERR_PRINT("AudioOutputUnitStart failed, code: " + itos(result));
 			return;
 		}
- 	}
+	}
 	sleeping = p_sleeping;
 }
 

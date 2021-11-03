@@ -45,14 +45,18 @@
 #endif
 
 #ifdef NO_THREADS
-static _FORCE_INLINE_ int AtomicIncrement(int volatile * pw) { return (*pw)++; }
-static _FORCE_INLINE_ int AtomicDecrement(int volatile * pw) { return (*pw)--; }
+static _FORCE_INLINE_ int AtomicIncrement(int volatile *pw) {
+	return (*pw)++;
+}
+static _FORCE_INLINE_ int AtomicDecrement(int volatile *pw) {
+	return (*pw)--;
+}
 #elif defined(_MSC_VER) // MSVC
-#define AtomicIncrement(pw) _InterlockedIncrement((volatile long*)(pw))
-#define AtomicDecrement(pw) _InterlockedDecrement((volatile long*)(pw))
+#define AtomicIncrement(pw) _InterlockedIncrement((volatile long *)(pw))
+#define AtomicDecrement(pw) _InterlockedDecrement((volatile long *)(pw))
 #elif defined(__GNUC__) // GCC
-#define AtomicIncrement(pw) __sync_fetch_and_add((volatile long*)(pw), 1)
-#define AtomicDecrement(pw) __sync_fetch_and_sub((volatile long*)(pw), 1)
+#define AtomicIncrement(pw) __sync_fetch_and_add((volatile long *)(pw), 1)
+#define AtomicDecrement(pw) __sync_fetch_and_sub((volatile long *)(pw), 1)
 #else
 #error Unsupported atomics
 #endif
@@ -936,13 +940,13 @@ void AudioServer::notify_source_is_playing() {
 	}
 }
 
- void AudioServer::notify_source_stopped_playing() {
+void AudioServer::notify_source_stopped_playing() {
 	if (AtomicDecrement(&playing_sources_count) == 0) {
 		last_playback_time_msec = OS::get_singleton()->get_ticks_msec();
 	}
 }
 
- void AudioServer::init_channels_and_buffers() {
+void AudioServer::init_channels_and_buffers() {
 	channel_count = get_channel_count();
 	temp_buffer.resize(channel_count);
 
@@ -957,11 +961,9 @@ void AudioServer::notify_source_is_playing() {
 		}
 	}
 
-	if (Engine::get_singleton()->is_editor_hint()
-		&& playing_sources_count == 0
-		&& last_playback_time_msec < OS::get_singleton()->get_ticks_msec() - 15000) {
- 		AudioDriver::get_singleton()->set_sleep_state(true);
- 	}
+	if (Engine::get_singleton()->is_editor_hint() && playing_sources_count == 0 && last_playback_time_msec < OS::get_singleton()->get_ticks_msec() - 15000) {
+		AudioDriver::get_singleton()->set_sleep_state(true);
+	}
 }
 
 void AudioServer::init() {

@@ -255,7 +255,7 @@ private:
 	Set<CallbackItem> update_callbacks;
 
 	size_t playing_sources_count;
- 	uint64_t last_playback_time_msec;
+	uint64_t last_playback_time_msec;
 
 	friend class AudioDriver;
 	void _driver_process(int p_frames, int32_t *p_buffer);
@@ -334,7 +334,7 @@ public:
 	float get_global_rate_scale() const;
 
 	void notify_source_is_playing();
- 	void notify_source_stopped_playing();
+	void notify_source_stopped_playing();
 
 	virtual void init();
 	virtual void finish();
@@ -388,7 +388,7 @@ VARIANT_ENUM_CAST(AudioServer::SpeakerMode)
 
 class AudioPlaybackTracker {
 	bool has_playback_lock;
- 	Mutex playback_lock_mutex;
+	Mutex playback_lock_mutex;
 
 public:
 	void notify_audio_is_playing() {
@@ -407,7 +407,8 @@ public:
 		}
 	}
 
-	AudioPlaybackTracker() : has_playback_lock(false) {}
+	AudioPlaybackTracker() :
+			has_playback_lock(false) {}
 };
 
 class AudioBusLayout : public Resource {
