@@ -137,6 +137,9 @@ void AudioStreamPlayer3D::_calc_output_vol(const Vector3 &source_dir, real_t tig
 }
 
 void AudioStreamPlayer3D::_mix_audio() {
+	if (!is_playing()) {
+		audio_activity.notify_audio_stopped_playing();
+	}
 	if (!stream_playback.is_valid() || !active.is_set() ||
 			(stream_paused && !stream_paused_fade_out)) {
 		return;
@@ -340,6 +343,7 @@ void AudioStreamPlayer3D::_notification(int p_what) {
 
 	if (p_what == NOTIFICATION_EXIT_TREE) {
 		AudioServer::get_singleton()->remove_callback(_mix_audios, this);
+		audio_activity.notify_audio_stopped_playing();
 	}
 
 	if (p_what == NOTIFICATION_PAUSED) {
@@ -688,6 +692,7 @@ void AudioStreamPlayer3D::play(float p_from_pos) {
 		setplay.set(p_from_pos);
 		output_ready.clear();
 		set_physics_process_internal(true);
+		audio_activity.notify_audio_is_playing();
 	}
 }
 

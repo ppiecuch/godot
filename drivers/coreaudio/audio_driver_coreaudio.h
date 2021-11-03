@@ -45,6 +45,7 @@ class AudioDriverCoreAudio : public AudioDriver {
 	AudioComponentInstance input_unit;
 
 	bool active;
+	bool sleeping;
 	Mutex mutex;
 
 	String device_name;
@@ -95,6 +96,7 @@ public:
 	virtual void start();
 	virtual int get_mix_rate() const;
 	virtual SpeakerMode get_speaker_mode() const;
+	virtual void set_sleep_state(bool p_sleeping);
 
 	virtual void lock();
 	virtual void unlock();

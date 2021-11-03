@@ -94,6 +94,9 @@ void AudioStreamPlayer::_mix_internal(bool p_fadeout) {
 }
 
 void AudioStreamPlayer::_mix_audio() {
+	if (!is_playing()) {
+		audio_activity.notify_audio_stopped_playing();
+	}
 	if (use_fadeout) {
 		_mix_to_bus(fadeout_buffer.ptr(), fadeout_buffer.size());
 		use_fadeout = false;
@@ -152,6 +155,7 @@ void AudioStreamPlayer::_notification(int p_what) {
 
 	if (p_what == NOTIFICATION_EXIT_TREE) {
 		AudioServer::get_singleton()->remove_callback(_mix_audios, this);
+		audio_activity.notify_audio_stopped_playing();
 	}
 
 	if (p_what == NOTIFICATION_PAUSED) {
@@ -239,6 +243,7 @@ void AudioStreamPlayer::play(float p_from_pos) {
 		stop_has_priority.clear();
 		active.set();
 		set_process_internal(true);
+		audio_activity.notify_audio_is_playing();
 	}
 }
 

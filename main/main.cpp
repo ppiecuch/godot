@@ -1173,8 +1173,16 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		video_driver_idx = 0;
 	}
 
-	if (audio_driver == "") { // specified in project.godot
-		audio_driver = GLOBAL_DEF_RST_NOVAL("audio/driver", OS::get_singleton()->get_audio_driver_name(0));
+	// If not overridden by `--audio-driver`:
+	if (audio_driver == "") {
+		if (project_manager) {
+			// The project manager doesn't need to play sound.
+			// Disable audio output so it doesn't appear in the list of applications outputting sound in the OS.
+			// This should also slightly speed up the project manager startup.
+			audio_driver = "Dummy";
+		} else {
+			audio_driver = GLOBAL_DEF_RST_NOVAL("audio/driver/driver", AudioDriverManager::get_driver(0)->get_name());
+		}
 	}
 
 	for (int i = 0; i < OS::get_singleton()->get_audio_driver_count(); i++) {

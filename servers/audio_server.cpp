@@ -44,6 +44,19 @@
 #define MARK_EDITED
 #endif
 
+#ifdef NO_THREADS
+static _FORCE_INLINE_ int AtomicIncrement(int volatile * pw) { return (*pw)++; }
+static _FORCE_INLINE_ int AtomicDecrement(int volatile * pw) { return (*pw)--; }
+#elif defined(_MSC_VER) // MSVC
+#define AtomicIncrement(pw) _InterlockedIncrement((volatile long*)(pw))
+#define AtomicDecrement(pw) _InterlockedDecrement((volatile long*)(pw))
+#elif defined(__GNUC__) // GCC
+#define AtomicIncrement(pw) __sync_fetch_and_add((volatile long*)(pw), 1)
+#define AtomicDecrement(pw) __sync_fetch_and_sub((volatile long*)(pw), 1)
+#else
+#error Unsupported atomics
+#endif
+
 AudioDriver *AudioDriver::singleton = nullptr;
 AudioDriver *AudioDriver::get_singleton() {
 	return singleton;
@@ -916,7 +929,20 @@ float AudioServer::get_global_rate_scale() const {
 	return global_rate_scale;
 }
 
-void AudioServer::init_channels_and_buffers() {
+void AudioServer::notify_source_is_playing() {
+	if (AtomicIncrement(&playing_sources_count) == 1) {
+		print_verbose("Audio is playing - wake up audio driver.");
+		AudioDriver::get_singleton()->set_sleep_state(false);
+	}
+}
+
+ void AudioServer::notify_source_stopped_playing() {
+	if (AtomicDecrement(&playing_sources_count) == 0) {
+		last_playback_time_msec = OS::get_singleton()->get_ticks_msec();
+	}
+}
+
+ void AudioServer::init_channels_and_buffers() {
 	channel_count = get_channel_count();
 	temp_buffer.resize(channel_count);
 
@@ -930,6 +956,12 @@ void AudioServer::init_channels_and_buffers() {
 			buses.write[i]->channels.write[j].buffer.resize(buffer_size);
 		}
 	}
+
+	if (Engine::get_singleton()->is_editor_hint()
+		&& playing_sources_count == 0
+		&& last_playback_time_msec < OS::get_singleton()->get_ticks_msec() - 15000) {
+ 		AudioDriver::get_singleton()->set_sleep_state(true);
+ 	}
 }
 
 void AudioServer::init() {
@@ -1348,6 +1380,8 @@ AudioServer::AudioServer() {
 	mix_time = 0;
 	mix_size = 0;
 	global_rate_scale = 1;
+	playing_sources_count = 0;
+	last_playback_time_msec = 0;
 }
 
 AudioServer::~AudioServer() {

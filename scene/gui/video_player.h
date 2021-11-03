@@ -69,6 +69,7 @@ class VideoPlayer : public Control {
 	int bus_index;
 
 	StringName bus;
+	AudioPlaybackTracker audio_activity;
 
 	void _mix_audio();
 	static int _audio_mix_callback(void *p_udata, const float *p_data, int p_frames);

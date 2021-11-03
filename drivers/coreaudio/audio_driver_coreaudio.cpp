@@ -202,7 +202,7 @@ OSStatus AudioDriverCoreAudio::output_callback(void *inRefCon,
 	ad->unlock();
 
 	return 0;
-};
+}
 
 OSStatus AudioDriverCoreAudio::input_callback(void *inRefCon,
 		AudioUnitRenderActionFlags *ioActionFlags,
@@ -243,24 +243,34 @@ OSStatus AudioDriverCoreAudio::input_callback(void *inRefCon,
 }
 
 void AudioDriverCoreAudio::start() {
-	if (!active) {
+	if (active) {
+		return;
+	}
+	if (!sleeping) {
 		OSStatus result = AudioOutputUnitStart(audio_unit);
 		if (result != noErr) {
 			ERR_PRINT("AudioOutputUnitStart failed, code: " + itos(result));
 		} else {
 			active = true;
 		}
+	} else {
+		active = true; // Driver is sleeping, so don't call AudioOutputUnitStart yet.
 	}
 };
 
 void AudioDriverCoreAudio::stop() {
-	if (active) {
+	if (!active) {
+		return;
+	}
+	if (!sleeping) {
 		OSStatus result = AudioOutputUnitStop(audio_unit);
 		if (result != noErr) {
 			ERR_PRINT("AudioOutputUnitStop failed, code: " + itos(result));
 		} else {
 			active = false;
 		}
+	} else {
+		active = false; // Driver is sleeping so no need to call AudioOutputUnitStop.
 	}
 }
 
@@ -270,15 +280,33 @@ int AudioDriverCoreAudio::get_mix_rate() const {
 
 AudioDriver::SpeakerMode AudioDriverCoreAudio::get_speaker_mode() const {
 	return get_speaker_mode_by_total_channels(channels);
-};
+}
+
+void AudioDriverCoreAudio::set_sleep_state(bool p_sleeping) {
+	if (active && !sleeping && p_sleeping) {
+		OSStatus result = AudioOutputUnitStop(audio_unit);
+		if (result != noErr) {
+			ERR_PRINT("AudioOutputUnitStop failed, code: " + itos(result));
+			return;
+		}
+	}
+	if (active && sleeping && !p_sleeping) {
+		OSStatus result = AudioOutputUnitStart(audio_unit);
+		if (result != noErr) {
+			ERR_PRINT("AudioOutputUnitStart failed, code: " + itos(result));
+			return;
+		}
+ 	}
+	sleeping = p_sleeping;
+}
 
 void AudioDriverCoreAudio::lock() {
 	mutex.lock();
-};
+}
 
 void AudioDriverCoreAudio::unlock() {
 	mutex.unlock();
-};
+}
 
 bool AudioDriverCoreAudio::try_lock() {
 	return mutex.try_lock() == OK;
@@ -671,6 +699,7 @@ AudioDriverCoreAudio::AudioDriverCoreAudio() :
 		audio_unit(NULL),
 		input_unit(NULL),
 		active(false),
+		sleeping(false),
 		device_name("Default"),
 		capture_device_name("Default"),
 		mix_rate(0),

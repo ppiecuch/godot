@@ -36,16 +36,17 @@
 #include "scene/main/viewport.h"
 
 void AudioStreamPlayer2D::_mix_audio() {
+	if (!is_playing()) {
+		audio_activity.notify_audio_stopped_playing();
+	}
 	if (!stream_playback.is_valid() || !active.is_set() ||
 			(stream_paused && !stream_paused_fade_out)) {
 		return;
 	}
-
 	if (setseek.get() >= 0.0) {
 		stream_playback->start(setseek.get());
 		setseek.set(-1.0); //reset seek
 	}
-
 	//get data
 	AudioFrame *buffer = mix_buffer.ptrw();
 	int buffer_size = mix_buffer.size();
@@ -154,6 +155,7 @@ void AudioStreamPlayer2D::_notification(int p_what) {
 
 	if (p_what == NOTIFICATION_EXIT_TREE) {
 		AudioServer::get_singleton()->remove_callback(_mix_audios, this);
+		audio_activity.notify_audio_stopped_playing();
 	}
 
 	if (p_what == NOTIFICATION_PAUSED) {
@@ -317,12 +319,14 @@ void AudioStreamPlayer2D::play(float p_from_pos) {
 	if (!is_playing()) {
 		// Reset the prev_output_count if the stream is stopped
 		prev_output_count = 0;
+		audio_activity.notify_audio_stopped_playing();
 	}
 
 	if (stream_playback.is_valid()) {
 		setplay.set(p_from_pos);
 		output_ready.clear();
 		set_physics_process_internal(true);
+		audio_activity.notify_audio_stopped_playing();
 	}
 }
 

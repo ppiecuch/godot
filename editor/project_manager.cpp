@@ -2569,6 +2569,11 @@ ProjectManager::ProjectManager() {
 		EditorSettings::create();
 	}
 
+	// Turn off some servers we aren't going to be using in the Project Manager.
+	PhysicsServer::get_singleton()->set_active(false);
+	Physics2DServer::get_singleton()->set_active(false);
+	ScriptServer::set_scripting_enabled(false);
+
 	EditorSettings::get_singleton()->set_optimize_save(false); //just write settings as they came
 
 	{

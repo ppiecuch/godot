@@ -66,6 +66,7 @@ private:
 	StringName bus;
 
 	MixTarget mix_target;
+	AudioPlaybackTracker audio_activity;
 
 	void _mix_internal(bool p_fadeout);
 	void _mix_audio();

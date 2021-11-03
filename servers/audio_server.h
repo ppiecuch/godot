@@ -111,6 +111,8 @@ public:
 	unsigned int get_input_position() { return input_position; }
 	unsigned int get_input_size() { return input_size; }
 
+	virtual void set_sleep_state(bool p_sleep) {}
+
 #ifdef DEBUG_ENABLED
 	uint64_t get_profiling_time() const { return prof_time; }
 	void reset_profiling_time() { prof_time = 0; }
@@ -252,6 +254,9 @@ private:
 	Set<CallbackItem> callbacks;
 	Set<CallbackItem> update_callbacks;
 
+	size_t playing_sources_count;
+ 	uint64_t last_playback_time_msec;
+
 	friend class AudioDriver;
 	void _driver_process(int p_frames, int32_t *p_buffer);
 
@@ -328,6 +333,9 @@ public:
 	void set_global_rate_scale(float p_scale);
 	float get_global_rate_scale() const;
 
+	void notify_source_is_playing();
+ 	void notify_source_stopped_playing();
+
 	virtual void init();
 	virtual void finish();
 	virtual void update();
@@ -377,6 +385,30 @@ public:
 };
 
 VARIANT_ENUM_CAST(AudioServer::SpeakerMode)
+
+class AudioPlaybackTracker {
+	bool has_playback_lock;
+ 	Mutex playback_lock_mutex;
+
+public:
+	void notify_audio_is_playing() {
+		MutexLock lock(playback_lock_mutex);
+		if (!has_playback_lock) {
+			AudioServer::get_singleton()->notify_source_is_playing();
+			has_playback_lock = true;
+		}
+	}
+
+	void notify_audio_stopped_playing() {
+		MutexLock lock(playback_lock_mutex);
+		if (has_playback_lock) {
+			AudioServer::get_singleton()->notify_source_stopped_playing();
+			has_playback_lock = false;
+		}
+	}
+
+	AudioPlaybackTracker() : has_playback_lock(false) {}
+};
 
 class AudioBusLayout : public Resource {
 	GDCLASS(AudioBusLayout, Resource);

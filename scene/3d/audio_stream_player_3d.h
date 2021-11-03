@@ -134,10 +134,9 @@ private:
 	float max_distance;
 
 	Ref<SpatialVelocityTracker> velocity_tracker;
-
 	DopplerTracking doppler_tracking;
-
 	OutOfRangeMode out_of_range_mode;
+	AudioPlaybackTracker audio_activity;
 
 	float _get_attenuation_db(float p_distance) const;
 

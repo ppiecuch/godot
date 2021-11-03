@@ -89,6 +89,8 @@ private:
 	float max_distance;
 	float attenuation;
 
+	AudioPlaybackTracker audio_activity;
+
 protected:
 	void _validate_property(PropertyInfo &property) const;
 	void _notification(int p_what);
