@@ -50,6 +50,7 @@ name is available.
     Bhuvan Vemula (Bhu1-V)
     Błażej Szczygieł (zaps166)
     Bojidar Marinov (bojidar-bg)
+    Brian Semrau (briansemrau)
     Bruno Lourenço (MadEqua)
     bruvzg
     Cameron Reikes (creikey)
@@ -109,6 +110,7 @@ name is available.
     Ilaria Cislaghi (QbieShay)
     Indah Sylvia (ISylvox)
     J08nY
+    Jake Young (Duroxxigar)
     Jakub Grzesik (kubecz3k)
     James Buck (jbuck3)
     Jean-Michel Bernard (jmb462)
@@ -133,8 +135,8 @@ name is available.
     Leon Krause (eska014)
     Lucien Menassol (Kanabenki)
     Lyuma
-    m4nu3lf
     Maganty Rushyendra (mrushyendra)
+    Manuele Finocchiaro (m4nu3lf)
     Marcel Admiraal (madmiraal)
     Marcelo Fernandez (marcelofg55)
     Marc Gilleron (Zylann)
@@ -208,6 +210,7 @@ name is available.
     박한얼 (volzhs)
     V. Vamsi Krishna (vkbsb)
     Wilhem Barbier (nounoursheureux)
+    William Deurwaarder (williamd67)
     Will Nations (willnationsdev)
     Wilson E. Alvarez (Rubonnek)
     Xavier Cho (mysticfall)
