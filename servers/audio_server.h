@@ -176,6 +176,7 @@ private:
 
 	float channel_disable_threshold_db;
 	uint32_t channel_disable_frames;
+	uint32_t driver_sleep_time;
 
 	int channel_count;
 	int to_mix;
