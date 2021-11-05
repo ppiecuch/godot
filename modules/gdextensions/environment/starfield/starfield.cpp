@@ -113,11 +113,12 @@ void Starfield::_regenerate() {
 }
 
 void Starfield::_update_mesh() {
-	if (_mesh_solid.is_valid())
+	if (_mesh_solid.is_valid()) {
 		_mesh_solid->clear_mesh();
-	if (_mesh_textured.is_valid())
+	}
+	if (_mesh_textured.is_valid()) {
 		_mesh_textured->clear_mesh();
-
+	}
 	Array mesh_array;
 	for (auto &layer : _layers) {
 		mesh_array.clear();
@@ -128,12 +129,14 @@ void Starfield::_update_mesh() {
 		if (layer.uv.size() > 0) {
 			mesh_array[VS::ARRAY_TEX_UV] = layer.uv;
 
-			if (_mesh_textured.is_null())
+			if (_mesh_textured.is_null()) {
 				_mesh_textured = newref(ArrayMesh);
+			}
 			_mesh_textured->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array, Array(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
 		} else {
-			if (_mesh_solid.is_null())
+			if (_mesh_solid.is_null()) {
 				_mesh_solid = newref(ArrayMesh);
+			}
 			if (layer.star_size == 0 && layer.texture_id == STAR_POINT) {
 				_mesh_solid->add_surface_from_arrays(Mesh::PRIMITIVE_POINTS, mesh_array, Array(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
 			} else {
@@ -358,8 +361,9 @@ void Starfield::regenerate(layerid_t p_layer) {
 		for (int p = 0, q = 0; p < layer.num_stars; ++p, q += QUAD_SIZE) {
 			_insert_quad(vertexes, q, positions[p], layer.star_size);
 			vertexes_color.insert_multi(q, 6, colors[p]);
-			if (textured_star)
+			if (textured_star) {
 				uv.insert_array(q, _texture_cache->rects[layer.texture_id]);
+			}
 		}
 		layer.vertexes = vertexes;
 		layer.colors = vertexes_color;
@@ -438,10 +442,12 @@ void Starfield::draw(Node2D *p_canvas) {
 		_regenerate();
 		_update_mesh();
 	}
-	if (_mesh_textured.is_valid())
+	if (_mesh_textured.is_valid()) {
 		p_canvas->draw_mesh(_mesh_textured, _texture_cache->texture, Ref<Texture>());
-	if (_mesh_solid.is_valid())
+	}
+	if (_mesh_solid.is_valid()) {
 		p_canvas->draw_mesh(_mesh_solid, Ref<Texture>(), Ref<Texture>());
+	}
 }
 
 void Starfield::ready(Node2D *p_owner) {
