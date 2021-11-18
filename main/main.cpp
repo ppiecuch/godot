@@ -1623,10 +1623,6 @@ bool Main::start() {
 				_export_preset = args[i + 1];
 				export_pack_only = true;
 #endif
-#ifdef DOCTEST
-			} else if (args[i] == "--doctest") {
-				return doctest::Context(argc, argv).run();
-#endif
 			} else {
 				// The parameter does not match anything known, don't skip the next argument
 				parsed_pair = false;
@@ -1634,6 +1630,15 @@ bool Main::start() {
 			if (parsed_pair) {
 				i++;
 			}
+#ifdef DOCTEST
+		} else if (args[i] == "--doctest") {
+			const char *argv[] = {
+				"godot",
+				NULL
+			};
+			printf("\n");
+			return doctest::Context(1, argv).run();
+#endif
 		} else if (args[i] == "--doctool") {
 			// Handle case where no path is given to --doctool.
 			doc_tool_path = ".";

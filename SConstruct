@@ -341,6 +341,14 @@ if env_base["no_editor_splash"]:
 if not env_base["deprecated"]:
     env_base.Append(CPPDEFINES=["DISABLE_DEPRECATED"])
 
+if os.path.exists("thirdparty/doctest/doctest.h"):
+    print("(Custom) Doctest found.")
+    env_base["doctest"] = True
+    env_base.Prepend(CPPPATH=["#thirdparty"])
+    env_base.Append(CPPDEFINES=["DOCTEST"])
+else:
+    env_base["doctest"] = False
+
 if selected_platform in platform_list:
     tmppath = "./platform/" + selected_platform
     sys.path.insert(0, tmppath)
