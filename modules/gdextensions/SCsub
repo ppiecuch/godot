@@ -16,6 +16,7 @@ sources = Glob("*.cpp")
 modules = [
     "core",
     "common",
+    "bulletkit",
     "visual",
     "environment/tree_2d",
     "environment/spherical_waves",

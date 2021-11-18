@@ -89,7 +89,7 @@ int InputNode::queue_down(const PoolStringArray &actions, int offset) const {
 InputStorage::InputStorage() {
 	singleton = this;
 
-	_this_frame = NULL;
+	_this_frame = nullptr;
 
 	storage_size = 30;
 	storage_node = NULL;
@@ -97,13 +97,13 @@ InputStorage::InputStorage() {
 }
 
 InputStorage::~InputStorage() {
-	singleton = NULL;
+	singleton = nullptr;
 }
 
 void InputStorage::_add_node(Object *node) {
 	MainLoop *main_loop = OS::get_singleton()->get_main_loop();
 	SceneTree *tree = cast_to<SceneTree>(main_loop);
-	ERR_FAIL_COND(tree == NULL);
+	ERR_FAIL_COND(tree == nullptr);
 
 	tree->disconnect("idle_frame", this, "_add_node");
 	tree->get_root()->add_child(cast_to<InputStorageNode>(node));
@@ -113,11 +113,11 @@ void InputStorage::start(PoolStringArray events) {
 	const String node_key = "input_storage_node";
 	MainLoop *main_loop = OS::get_singleton()->get_main_loop();
 	SceneTree *tree = cast_to<SceneTree>(main_loop);
-	ERR_FAIL_COND(tree == NULL);
+	ERR_FAIL_COND(tree == nullptr);
 
 	Viewport *viewport = tree->get_root();
-	ERR_FAIL_COND(viewport == NULL);
-	if (storage_node == NULL) {
+	ERR_FAIL_COND(viewport == nullptr);
+	if (storage_node == nullptr) {
 		storage_node = memnew(InputStorageNode);
 		storage_node->set_name(node_key);
 		storage_node->_storage = this;
@@ -131,14 +131,14 @@ void InputStorage::start(PoolStringArray events) {
 }
 
 void InputStorage::resume() {
-	if (storage_node != NULL) {
+	if (storage_node != nullptr) {
 		storage_node->set_process_input(true);
 		storage_node->set_physics_process(true);
 	}
 }
 
 void InputStorage::close() {
-	if (storage_node != NULL) {
+	if (storage_node != nullptr) {
 		storage_node->set_process_input(false);
 		storage_node->set_physics_process(false);
 		storage_node->pressed.clear();
@@ -151,12 +151,12 @@ void InputStorage::frame_begin() {
 }
 
 void InputStorage::pressed_event(const String &event) {
-	if (_this_frame != NULL)
+	if (_this_frame != nullptr)
 		_this_frame->pressed_action(event);
 }
 
 void InputStorage::down_event(const String &event) {
-	if (_this_frame != NULL)
+	if (_this_frame != nullptr)
 		_this_frame->down_action(event);
 }
 
@@ -255,7 +255,7 @@ void InputStorage::_bind_methods() {
 void InputStorageNode::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_PHYSICS_PROCESS:
-			if (_storage != NULL) {
+			if (_storage != nullptr) {
 				_storage->frame_begin();
 				for (int i = 0, t = pressed.size(); i < t; ++i) {
 					_storage->pressed_event(pressed[i]);
@@ -266,7 +266,7 @@ void InputStorageNode::_notification(int p_what) {
 }
 
 void InputStorageNode::_input(const Ref<InputEvent> &p_event) {
-	if (_storage != NULL) {
+	if (_storage != nullptr) {
 		for (int i = 0, t = events.size(); i < t; ++i) {
 			if (p_event->is_action(events[i]) && !p_event->is_echo()) {
 				if (p_event->is_pressed()) {

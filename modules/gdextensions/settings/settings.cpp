@@ -136,11 +136,11 @@ TEST_CASE("Storing") {
 	Settings *settings = Settings::get_singleton();
 	SUBCASE("int") {
 		settings->setv("int", 99);
-		CHECK(settings->getv("int") == 99);
+		REQUIRE(settings->getv("int") == Variant(99));
 	}
 	SUBCASE("float") {
 		settings->setv("float", 1.25);
-		CHECK(settings->getv("float") == 1.25);
+		CHECK(settings->getv("float") == Variant(1.25));
 	}
 	SUBCASE("Dictionary") {
 		Dictionary map1;
@@ -148,15 +148,19 @@ TEST_CASE("Storing") {
 		map1["2"] = 2.5;
 		map1["3"] = "3";
 		settings->setv("dict", map1);
-		Dictionary ret1 = settings->getv("dict");
-		CHECK(ret1.has_all(array("1", "2", "3")));
-		CHECK(ret1["1"] == 1 and ret1["2"] == 2.5 and ret1["3"] == "3");
+		Dictionary ret = settings->getv("dict");
+		REQUIRE(ret.has_all(array("1", "2", "3")));
+		REQUIRE(ret["1"] == Variant(1));
+		REQUIRE(ret["2"] == Variant(2.5));
+		REQUIRE(ret["3"] == "3");
 	}
 	SUBCASE("Array") {
 		Array arr1 = array(1, 2.5, "3");
 		settings->setv("array", arr1);
-		Array ret1 = settings->getv("array");
-		CHECK(ret1[0] == 1 and ret1[1] == 2.5 and ret1[2] == "3");
+		Array ret = settings->getv("array");
+		REQUIRE(ret[0] == Variant(1));
+		REQUIRE(ret[1] == Variant(2.5));
+		REQUIRE(ret[2] == "3");
 	}
 }
 #endif

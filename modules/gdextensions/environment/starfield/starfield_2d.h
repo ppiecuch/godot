@@ -51,6 +51,11 @@ private:
 
 	Ref<Starfield> _starfield;
 
+protected:
+	static void _bind_methods();
+
+	void _notification(int p_what);
+
 public:
 #ifdef TOOLS_ENABLED
 	Dictionary _edit_get_state() const;
@@ -79,11 +84,6 @@ public:
 
 	Starfield2D();
 	~Starfield2D();
-
-protected:
-	static void _bind_methods();
-
-	void _notification(int p_what);
 };
 
 #endif /* GD_STARFIELD_2D_H */

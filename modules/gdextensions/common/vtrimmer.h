@@ -34,6 +34,6 @@ extern struct vertex_trimmer_opt_t {
 	bool use_index_buffer;
 } vertex_trimmer_default_opt;
 
-bool vertex_trimmer(const Ref<Image> &image, vertex_trimmer_opt_t *opt);
+bool vertex_trimmer(Ref<Image> &image, vertex_trimmer_opt_t *opt);
 
 #endif // vtrimmer_h

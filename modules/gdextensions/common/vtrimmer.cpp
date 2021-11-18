@@ -10,15 +10,10 @@
 */
 #include "vtrimmer.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#ifndef __APPLE__
-# include <malloc.h>
-#endif
-
-#include <string>
+#include "core/math/vector2.h"
 
 _FORCE_INLINE_ static real_t distance(const Point2 &pt1, const Point2 &pt2) { return pt1.distance_to(pt2); }
+_FORCE_INLINE_ static real_t dot(const Point2 &pt1, const Point2 &pt2) { return pt1.dot(pt2); }
 
 vertex_trimmer_opt_t vertex_trimmer_default_opt = {
 	4,
@@ -40,6 +35,13 @@ struct CHNode {
 	Point2 Point;
 };
 
+
+static real_t AreaX2Of(const Point2 &v0, const Point2 &v1, const Point2 &v2) {
+	Point2 u = v1 - v0;
+	Point2 v = v2 - v0;
+	return /*fabsf*/(u.y * v.x - u.x * v.y);
+}
+
 class ConvexHull {
 
 	CHNode *m_Root;
@@ -47,13 +49,31 @@ class ConvexHull {
 	unsigned m_Count;
 
 public:
-	ConvexHull();
-	~ConvexHull();
+	ConvexHull() {
+		m_Root = m_Curr = nullptr;
+		m_Count = 0;
+	}
+	~ConvexHull() { Clear(); }
 
-	void Clear();
+	void Clear() {
+		if (m_Root) {
+			CHNode *node = m_Root;
+			CHNode *next;
+			do {
+				next = node->Next;
+				memdelete(node);
+				node = next;
+			} while (node != m_Root);
+
+			m_Root = nullptr;
+			m_Count = 0;
+		}
+		m_Curr = nullptr;
+	}
+
 	bool InsertPoint(const Point2 &point);
 	bool RemoveLeastRelevantEdge();
-	unsigned FindOptimalPolygon(Point2 *dest, unsigned vertex_count, float *area = nullptr);
+	unsigned FindOptimalPolygon(Point2 *dest, unsigned vertex_count, real_t *area = nullptr);
 
 	bool GoToFirst() { return (m_Curr = m_Root) != nullptr; }
 	bool GoToNext () { return (m_Curr = m_Curr->Next) != m_Root; }
@@ -63,7 +83,21 @@ public:
 	const Point2 &GetPrevPoint() const { return m_Curr->Prev->Point; }
 
 	unsigned GetCount() const { return m_Count; }
-	float GetArea() const;
+	real_t GetArea() const {
+		if (m_Count < 3) {
+			return 0;
+		}
+		real_t area = 0;
+		const Point2 &v0 = m_Root->Point;
+		CHNode *node = m_Root->Next;
+		do {
+			const Point2 &v1 = node->Point;
+			node = node->Next;
+			const Point2 &v2 = node->Point;
+			area += AreaX2Of(v0, v1, v2);
+		} while (node != m_Root);
+		return 0.5 * area;
+	}
 };
 
 struct WorkPacket {
@@ -74,9 +108,10 @@ struct WorkPacket {
 	unsigned Rotation;
 };
 
-_FORCE_INLINE_ static unsigned FindOptimalRotation(Point2 *vertices, unsigned vertex_count, unsigned *indices);
+static int FindOptimalRotation(Point2 *vertices, int vertex_count, unsigned *indices);
 
-bool vertex_trimmer(const Ref<Image> &image, const std::string base_file_name, vertex_trimmer_opt_t *opt) {
+
+bool vertex_trimmer(Ref<Image> &image, vertex_trimmer_opt_t *opt) {
 	unsigned threshold = 0;
 	unsigned vertex_count = 4;
 	Point2 scale(1, 1);
@@ -106,38 +141,50 @@ bool vertex_trimmer(const Ref<Image> &image, const std::string base_file_name, v
 	const real_t threshold_f = (real_t) threshold;
 
 	if (threshold > 255) {
-		WARN_PRINT(vformat("(vertex_trimmer) Error: Threshold %d out of range", threshold));
-		return false;
+		ERR_FAIL_V_MSG(false, vformat("(vertex_trimmer) Error: Threshold %d out of range", threshold));
 	}
 
 	if (vertex_count < 3 || vertex_count > 8) {
-		WARN_PRINT(vformat("(vertex_trimmer) Error: Vertex count %d out of range", vertex_count));
-		return false;
+		ERR_FAIL_V_MSG(false, vformat("(vertex_trimmer) Error: Vertex count %d out of range", vertex_count));
 	}
 
-	const bool using_atlas = (atlas_x > 1 || atlas_y > 1);
+	// const bool using_atlas = (atlas_x > 1 || atlas_y > 1);
 
 	Ref<Image> img = image->converted(Image::FORMAT_L8);
 	ERR_FAIL_NULL_V(img, false);
 
-	while (dilate_count--) {
-		img = img->dilate();
-	}
-
 	const int w = img->get_width();
 	const int h = img->get_height();
-	const unsigned char *pixels = img->get_data().read().ptr();
 
-	// Threshold the pixels
-#if 0
-	int set_pixels = 0;
-	for (int i = 0; i < w * h; i++) {
-		unsigned c = (pixels[i] > threshold)? 1 : 0;
-		pixels[i] = c;
-		set_pixels += c;
+	if (dilate_count) {
+		const int data_size = img->get_data().size();
+		unsigned char *copy = (unsigned char *)memalloc(data_size);
+		while (dilate_count--) {
+			unsigned char *dst = img->get_data().write().ptr();
+			memcpy(copy, dst, data_size);
+			for (int y = 0; y < h; y++) {
+				for (int x = 0; x < w; x++) {
+					const int startX = MAX(x - 1, 0);
+					const int endX = MIN(x + 2, w);
+					const int startY = MAX(y - 1, 0);
+					const int endY = MIN(y + 2, h);
+					int max = 0;
+					for (int iy = startY; iy < endY; iy++) {
+						for (int ix = startX; ix < endX; ix++) {
+							const int c = copy[iy * w + ix];
+							if (c > max) {
+								max = c;
+							}
+						}
+					}
+					*dst++ = max;
+				}
+			}
+		}
+		memfree(copy);
 	}
-	print_verbose(vformat("Set pixels: %.2f%%\n", real_t(100 * set_pixels) / real_t(w * h)));
-#endif
+
+	const unsigned char *pixels = img->get_data().read().ptr();
 	const int tile_w = w / atlas_x;
 	const int tile_h = h / atlas_y;
 
@@ -146,8 +193,8 @@ bool vertex_trimmer(const Ref<Image> &image, const std::string base_file_name, v
 
 	// Set up convex hulls
 	WorkPacket *packets = new WorkPacket[atlas_x * atlas_y];
-	for (unsigned ay = 0; ay < atlas_y; ay++) {
-		for (unsigned ax = 0; ax < atlas_x; ax++) {
+	for (int ay = 0; ay < atlas_y; ay++) {
+		for (int ax = 0; ax < atlas_x; ax++) {
 			ConvexHull &hull = packets[ay * atlas_x + ax].Hull;
 
 			const int start_x = ax * tile_w;
@@ -180,56 +227,56 @@ bool vertex_trimmer(const Ref<Image> &image, const std::string base_file_name, v
 			// Edge cases
 			const unsigned char *row = pixels + start_y * w;
 			for (int x = start_x; x < end_x; x++) {
-				int c0 = row[x + 0];
-				int c1 = row[x + 1];
+				const int c0 = row[x + 0];
+				const int c1 = row[x + 1];
 
 				if ((c0 > threshold) != (c1 > threshold)) {
-					real_t d0 = (real_t) c0;
-					real_t d1 = (real_t) c1;
+					const real_t d0 = c0;
+					const real_t d1 = c1;
 
-					real_t sub_pixel_x = (threshold_f - d0) / (d1 - d0);
+					const real_t sub_pixel_x = (threshold_f - d0) / (d1 - d0);
 					hull.InsertPoint(Point2(x - start_x - off_x + sub_pixel_x, -corner_off_y));
 				}
 			}
 
 			row = pixels + end_y * w;
 			for (int x = start_x; x < end_x; x++) {
-				int c0 = row[x + 0];
-				int c1 = row[x + 1];
+				const int c0 = row[x + 0];
+				const int c1 = row[x + 1];
 
 				if ((c0 > threshold) != (c1 > threshold)) {
-					real_t d0 = (real_t) c0;
-					real_t d1 = (real_t) c1;
+					const real_t d0 = c0;
+					const real_t d1 = c1;
 
-					real_t sub_pixel_x = (threshold_f - d0) / (d1 - d0);
+					const real_t sub_pixel_x = (threshold_f - d0) / (d1 - d0);
 					hull.InsertPoint(Point2(x - start_x - off_x + sub_pixel_x, corner_off_y));
 				}
 			}
 
 			const unsigned char *col = pixels + start_x;
 			for (int y = start_y; y < end_y; y++) {
-				int c0 = col[(y + 0) * w];
-				int c1 = col[(y + 1) * w];
+				const int c0 = col[(y + 0) * w];
+				const int c1 = col[(y + 1) * w];
 
 				if ((c0 > threshold) != (c1 > threshold)) {
-					real_t d0 = (real_t) c0;
-					real_t d1 = (real_t) c1;
+					const real_t d0 = c0;
+					const real_t d1 = c1;
 
-					real_t sub_pixel_y = (threshold_f - d0) / (d1 - d0);
+					const real_t sub_pixel_y = (threshold_f - d0) / (d1 - d0);
 					hull.InsertPoint(Point2(-corner_off_x, y - start_y - off_y + sub_pixel_y));
 				}
 			}
 
 			col = pixels + end_x;
 			for (int y = start_y; y < end_y; y++) {
-				int c0 = col[(y + 0) * w];
-				int c1 = col[(y + 1) * w];
+				const int c0 = col[(y + 0) * w];
+				const int c1 = col[(y + 1) * w];
 
 				if ((c0 > threshold) != (c1 > threshold)) {
-					real_t d0 = (real_t) c0;
-					real_t d1 = (real_t) c1;
+					const real_t d0 = c0;
+					const real_t d1 = c1;
 
-					real_t sub_pixel_y = (threshold_f - d0) / (d1 - d0);
+					const real_t sub_pixel_y = (threshold_f - d0) / (d1 - d0);
 					hull.InsertPoint(Point2(corner_off_x, y - start_y - off_y + sub_pixel_y));
 				}
 			}
@@ -240,10 +287,10 @@ bool vertex_trimmer(const Ref<Image> &image, const std::string base_file_name, v
 				const unsigned char *row1 = pixels + (y + 1) * w;
 
 				for (int x = start_x; x < end_x; x++) {
-					int c00 = row0[x + 0];
-					int c01 = row0[x + 1];
-					int c10 = row1[x + 0];
-					int c11 = row1[x + 1];
+					const int c00 = row0[x + 0];
+					const int c01 = row0[x + 1];
+					const int c10 = row1[x + 0];
+					const int c11 = row1[x + 1];
 
 					int count = 0;
 					if (c00 > threshold) { ++count; }
@@ -252,72 +299,63 @@ bool vertex_trimmer(const Ref<Image> &image, const std::string base_file_name, v
 					if (c11 > threshold) { ++count; }
 
 					if (count > 0 && count < 4) {
-						real_t d00 = (real_t) c00;
-						real_t d01 = (real_t) c01;
-						real_t d10 = (real_t) c10;
-						real_t d11 = (real_t) c11;
+						const real_t d00 = c00;
+						const real_t d01 = c01;
+						const real_t d10 = c10;
+						const real_t d11 = c11;
 
 						for (int n = 0; n <= sub_pixel; n++) {
 							// Lerping factors
-							real_t f0 = real_t(n) / real_t(sub_pixel);
-							real_t f1 = 1.0f - f0;
+							const real_t f0 = real_t(n) / real_t(sub_pixel);
+							const real_t f1 = 1 - f0;
 
-							real_t x0 = d00 * f1 + d10 * f0;
-							real_t x1 = d01 * f1 + d11 * f0;
+							const real_t x0 = d00 * f1 + d10 * f0;
+							const real_t x1 = d01 * f1 + d11 * f0;
 
 							if ((x0 > threshold_f) != (x1 > threshold_f)) {
-								real_t sub_pixel_x = (threshold_f - x0) / (x1 - x0);
+								const real_t sub_pixel_x = (threshold_f - x0) / (x1 - x0);
 								hull.InsertPoint(Point2(x - start_x - off_x + sub_pixel_x, y - start_y - off_y + f0));
 							}
 
-							real_t y0 = d00 * f1 + d01 * f0;
-							real_t y1 = d10 * f1 + d11 * f0;
+							const real_t y0 = d00 * f1 + d01 * f0;
+							const real_t y1 = d10 * f1 + d11 * f0;
 
 							if ((y0 > threshold_f) != (y1 > threshold_f)) {
-								real_t sub_pixel_y = (threshold_f - y0) / (y1 - y0);
+								const real_t sub_pixel_y = (threshold_f - y0) / (y1 - y0);
 								hull.InsertPoint(Point2(x - start_x - off_x + f0, y - start_y - off_y + sub_pixel_y));
 							}
 						}
 					}
-
 				}
-
 			}
 
 			print_verbose(vformat("Convex hull has %d vertices", hull.GetCount()));
 			if (hull.GetCount() > max_hull_size) {
-				real_t area_before = hull.GetArea();
-
+				const real_t area_before = hull.GetArea();
 				do {
 					if (!hull.RemoveLeastRelevantEdge()) {
 						break;
 					}
 				} while (hull.GetCount() > max_hull_size);
-
 				real_t area_after = hull.GetArea();
-
 				print_verbose(vformat("Convex hull was reduced to %d vertices. Area expanded from %.2f%% to %.2f%%", hull.GetCount(), 100.0 * area_before / (tile_w * tile_h), 100.0 * area_after / (tile_w * tile_h)));
 			}
 		}
 	}
 
 	// Do the heavy work
-	for (unsigned n = 0; n < atlas_x * atlas_y; n++) {
+	for (int n = 0; n < atlas_x * atlas_y; n++) {
 		WorkPacket &packet = packets[n];
-
-		const unsigned count = packet.Hull.FindOptimalPolygon(packet.Polygon, vertex_count, &packet.Area);
+		const int count = packet.Hull.FindOptimalPolygon(packet.Polygon, vertex_count, &packet.Area);
 		packet.HullArea = packet.Hull.GetArea();
-
 		// Scale-bias the results
-		for (unsigned i = 0; i < count; i++) {
+		for (int i = 0; i < count; i++) {
 			packet.Polygon[i] = packet.Polygon[i] * scale + bias;
 		}
-
 		// If fewer vertices were returned than asked for, just repeat the last vertex
-		for (unsigned i = count; i < vertex_count; i++) {
+		for (int i = count; i < vertex_count; i++) {
 			packet.Polygon[i] = packet.Polygon[count - 1];
 		}
-
 		// Optimize vertex ordering
 		if (use_index_buffer) {
 			packet.Rotation = FindOptimalRotation(packet.Polygon, vertex_count, indices);
@@ -331,33 +369,516 @@ bool vertex_trimmer(const Ref<Image> &image, const std::string base_file_name, v
 	return true;
 }
 
-static unsigned FindOptimalRotation(Point2 *vertices, unsigned vertex_count, unsigned *indices) {
-	const unsigned index_count = (vertex_count - 2) * 3;
+static int FindOptimalRotation(Point2 *vertices, int vertex_count, unsigned *indices) {
+	const int index_count = (vertex_count - 2) * 3;
 
-	unsigned optimal = 0;
+	int optimal = 0;
 	real_t min_length = FLT_MAX;
 
-	for (unsigned i = 0; i < vertex_count; i++) {
+	for (int i = 0; i < vertex_count; i++) {
 		real_t sum = 0;
-		for (unsigned k = 0; k < index_count; k += 3) {
-			unsigned i0 = (indices[k + 0] + i) % vertex_count;
-			unsigned i1 = (indices[k + 1] + i) % vertex_count;
-			unsigned i2 = (indices[k + 2] + i) % vertex_count;
-
+		for (int k = 0; k < index_count; k += 3) {
+			const int i0 = (indices[k + 0] + i) % vertex_count;
+			const int i1 = (indices[k + 1] + i) % vertex_count;
+			const int i2 = (indices[k + 2] + i) % vertex_count;
 			const Point2 &v0 = vertices[i0];
 			const Point2 &v1 = vertices[i1];
 			const Point2 &v2 = vertices[i2];
-
 			sum += distance(v0, v1);
 			sum += distance(v1, v2);
 			sum += distance(v2, v0);
 		}
-
 		if (sum < min_length) {
 			optimal = i;
 			min_length = sum;
 		}
 	}
-
 	return optimal;
+}
+
+
+/// ConvexHull
+
+struct Line {
+	Point2 v;
+	Point2 d;
+};
+
+#define perp(u, v) ((u).x * (v).y - (u).y * (v).x)
+
+static bool Intersect(Point2 &point, const Line &line0, const Line &line1) {
+#if 0
+	const real_t d = perp(line0.d, line1.d);
+	if (d > -0.000000000001) { // Parallel lines
+		return false;
+}
+	Point2 diff = line0.v - line1.v;
+
+	const real_t t = perp(line1.d, diff);
+
+	if (t > 0.0) { // Intersects on the wrong side
+		return false;
+}
+	point = line0.v + (t / d) * line0.d;
+	return true;
+#else
+	const real_t d = perp(line0.d, line1.d);
+	if (Math::abs(d) < 0.000000000001) { // Parallel lines
+		return false;
+	}
+	const real_t t = perp(line1.d, line0.v - line1.v) / d;
+	if (t < 0.5) {// Intersects on the wrong side
+		return false;
+	}
+	point = line0.v + t * line0.d;
+	return true;
+#endif
+}
+
+static bool IntersectNoParallelCheck(Point2 &point, const Line &line0, const Line &line1) {
+	const real_t d = perp(line0.d, line1.d);
+	const real_t t = perp(line1.d, line0.v - line1.v) / d;
+	if (t < 0.5) { // Intersects on the wrong side
+		return false;
+	}
+	point = line0.v + t * line0.d;
+	return true;
+}
+
+bool ConvexHull::InsertPoint(const Point2 &point) {
+	if (m_Count < 2) {
+		CHNode *node = new CHNode;
+		node->Point = point;
+		if (m_Root == nullptr) {
+			m_Root = node;
+		} else {
+			node->Prev = m_Root;
+			node->Next = m_Root;
+		}
+		m_Root->Next = node;
+		m_Root->Prev = node;
+		++m_Count;
+		return true;
+	}
+
+	CHNode *node = m_Root;
+
+	const Point2 &v0 = node->Prev->Point;
+	const Point2 &v1 = node->Point;
+
+	Point2 dir = v1 - v0;
+	Point2 nrm(-dir.y, dir.x);
+
+	if (dot(point - v0, nrm) > 0) {
+		do {
+			node = node->Prev;
+			const Point2 &v0 = node->Prev->Point;
+			const Point2 &v1 = node->Point;
+
+			Point2 dir = v1 - v0;
+			Point2 nrm(-dir.y, dir.x);
+
+			if (dot(point - v0, nrm) <= 0) {
+				node = node->Next;
+				break;
+			}
+		} while (true);
+	} else {
+		do
+		{
+			const Point2 &v0 = node->Point;
+			node = node->Next;
+			const Point2 &v1 = node->Point;
+
+			Point2 dir = v1 - v0;
+			Point2 nrm(-dir.y, dir.x);
+
+			if (dot(point - v0, nrm) > 0) {
+				break;
+			}
+			if (node == m_Root) {
+				return false;
+			}
+		} while (true);
+	}
+	do {
+		const Point2 &v0 = node->Point;
+		const Point2 &v1 = node->Next->Point;
+
+		Point2 dir = v1 - v0;
+		Point2 nrm(-dir.y, dir.x);
+
+		if (dot(point - v0, nrm) <= 0) {
+			break;
+		}
+
+		// Delete this node
+		node->Prev->Next = node->Next;
+		node->Next->Prev = node->Prev;
+
+		CHNode *del = node;
+		node = node->Next;
+		memdelete(del);
+		--m_Count;
+
+	} while(true);
+
+	CHNode *new_node = memnew(CHNode);
+	new_node->Point = point;
+	++m_Count;
+
+	new_node->Prev = node->Prev;
+	new_node->Next = node;
+
+	node->Prev->Next = new_node;
+	node->Prev = new_node;
+
+	m_Root = new_node;
+
+	return true;
+}
+
+bool ConvexHull::RemoveLeastRelevantEdge() {
+	CHNode *min_node = nullptr;
+	Point2 min_pos;
+	real_t min_area = 1e10;
+
+	CHNode *node = m_Root;
+	do {
+		const Point2 &v0 = node->Prev->Point;
+		const Point2 &v1 = node->Point;
+		const Point2 &v2 = node->Next->Point;
+		const Point2 &v3 = node->Next->Next->Point;
+
+		Line line0 = { v0, v1 - v0 };
+		Line line1 = { v2, v3 - v2 };
+
+		Point2 v;
+		if (IntersectNoParallelCheck(v, line0, line1)) {
+			const real_t area = AreaX2Of(v1, v, v2);
+			if (area < min_area) {
+				min_node = node;
+				min_pos = v;
+				min_area = area;
+			}
+		}
+		node = node->Next;
+	} while (node != m_Root);
+
+	if (min_node) {
+		min_node->Point = min_pos;
+
+		CHNode *del = min_node->Next;
+		min_node->Next->Next->Prev = min_node;
+		min_node->Next = min_node->Next->Next;
+
+		if (del == m_Root) {
+			m_Root = min_node;
+		}
+		memdelete(del);
+		--m_Count;
+		return true;
+	}
+	return false;
+}
+
+unsigned ConvexHull::FindOptimalPolygon(Point2 *dest, unsigned vertex_count, real_t *area) {
+	if (vertex_count > m_Count) {
+		vertex_count = m_Count;
+	}
+	if (vertex_count < 3) {
+		if (area) {
+			*area = 0;
+		}
+		return 0;
+	}
+	if (vertex_count > 8) {
+		vertex_count = 8;
+	}
+	// Allocate memory on stack
+	Line *lines = (Line *)alloca(m_Count * sizeof(Line));
+
+	CHNode *node = m_Root;
+
+	// Precompute lines
+	int n = 0;
+	do {
+		lines[n].v = node->Point;
+		lines[n].d = node->Next->Point - node->Point;
+		// lines[n].v += 0.5 * lines[n].d; // Move origin to center of line
+		node = node->Next;
+		++n;
+	} while (node != m_Root);
+
+	ERR_FAIL_COND_V(n == m_Count, 0);
+
+	real_t min_area = 1e10;
+
+	Point2 v[8];
+	Point2 &v0 = v[0];
+	Point2 &v1 = v[1];
+	Point2 &v2 = v[2];
+	Point2 &v3 = v[3];
+	Point2 &v4 = v[4];
+	Point2 &v5 = v[5];
+	Point2 &v6 = v[6];
+	Point2 &v7 = v[7];
+
+	// This can probably be made a lot prettier and generic
+	switch (vertex_count) {
+		case 3: {
+			for (int x = 0; x < n; x++) {
+				for (int y = x + 1; y < n; y++) {
+					if (Intersect(v0, lines[x], lines[y])) {
+						for (int z = y + 1; z < n; z++) {
+							if (Intersect(v1, lines[y], lines[z])) {
+								if (Intersect(v2, lines[z], lines[x])) {
+									Point2 u0 = v1 - v0;
+									Point2 u1 = v2 - v0;
+									const real_t area = (u0.y * u1.x - u0.x * u1.y);
+									if (area < min_area) {
+										min_area = area;
+										dest[0] = v0;
+										dest[1] = v1;
+										dest[2] = v2;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		} break;
+		case 4: {
+			for (int x = 0; x < n; x++) {
+				for (int y = x + 1; y < n; y++) {
+					if (Intersect(v0, lines[x], lines[y])) {
+						for (int z = y + 1; z < n; z++) {
+							if (Intersect(v1, lines[y], lines[z])) {
+								for (int w = z + 1; w < n; w++) {
+									if (Intersect(v2, lines[z], lines[w])) {
+										if (Intersect(v3, lines[w], lines[x])) {
+											Point2 u0 = v1 - v0;
+											Point2 u1 = v2 - v0;
+											Point2 u2 = v3 - v0;
+											const real_t area =
+												(u0.y * u1.x - u0.x * u1.y) +
+												(u1.y * u2.x - u1.x * u2.y);
+											if (area < min_area) {
+												min_area = area;
+												dest[0] = v0;
+												dest[1] = v1;
+												dest[2] = v2;
+												dest[3] = v3;
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		} break;
+		case 5: {
+			for (int x = 0; x < n; x++) {
+				for (int y = x + 1; y < n; y++) {
+					if (Intersect(v0, lines[x], lines[y])) {
+						for (int z = y + 1; z < n; z++) {
+							if (Intersect(v1, lines[y], lines[z])) {
+								for (int w = z + 1; w < n; w++) {
+									if (Intersect(v2, lines[z], lines[w])) {
+										for (int r = w + 1; r < n; r++) {
+											if (Intersect(v3, lines[w], lines[r])) {
+												if (Intersect(v4, lines[r], lines[x])) {
+													Point2 u0 = v1 - v0;
+													Point2 u1 = v2 - v0;
+													Point2 u2 = v3 - v0;
+													Point2 u3 = v4 - v0;
+													const real_t area =
+														(u0.y * u1.x - u0.x * u1.y) +
+														(u1.y * u2.x - u1.x * u2.y) +
+														(u2.y * u3.x - u2.x * u3.y);
+													if (area < min_area) {
+														min_area = area;
+														dest[0] = v0;
+														dest[1] = v1;
+														dest[2] = v2;
+														dest[3] = v3;
+														dest[4] = v4;
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		} break;
+		case 6: {
+			for (int x = 0; x < n; x++) {
+				for (int y = x + 1; y < n; y++) {
+					if (Intersect(v0, lines[x], lines[y])) {
+						for (int z = y + 1; z < n; z++) {
+							if (Intersect(v1, lines[y], lines[z])) {
+								for (int w = z + 1; w < n; w++) {
+									if (Intersect(v2, lines[z], lines[w])) {
+										for (int r = w + 1; r < n; r++) {
+											if (Intersect(v3, lines[w], lines[r])) {
+												for (int s = r + 1; s < n; s++) {
+													if (Intersect(v4, lines[r], lines[s])) {
+														if (Intersect(v5, lines[s], lines[x])) {
+															Point2 u0 = v1 - v0;
+															Point2 u1 = v2 - v0;
+															Point2 u2 = v3 - v0;
+															Point2 u3 = v4 - v0;
+															Point2 u4 = v5 - v0;
+															const real_t area =
+																(u0.y * u1.x - u0.x * u1.y) +
+																(u1.y * u2.x - u1.x * u2.y) +
+																(u2.y * u3.x - u2.x * u3.y) +
+																(u3.y * u4.x - u3.x * u4.y);
+															if (area < min_area) {
+																min_area = area;
+																dest[0] = v0;
+																dest[1] = v1;
+																dest[2] = v2;
+																dest[3] = v3;
+																dest[4] = v4;
+																dest[5] = v5;
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		} break;
+		case 7: {
+			for (int x = 0; x < n; x++) {
+				for (int y = x + 1; y < n; y++) {
+					if (Intersect(v0, lines[x], lines[y])) {
+						for (int z = y + 1; z < n; z++) {
+							if (Intersect(v1, lines[y], lines[z])) {
+								for (int w = z + 1; w < n; w++) {
+									if (Intersect(v2, lines[z], lines[w])) {
+										for (int r = w + 1; r < n; r++) {
+											if (Intersect(v3, lines[w], lines[r])) {
+												for (int s = r + 1; s < n; s++) {
+													if (Intersect(v4, lines[r], lines[s])) {
+														for (int t = s + 1; t < n; t++) {
+															if (Intersect(v5, lines[s], lines[t])) {
+																if (Intersect(v6, lines[t], lines[x])) {
+																	Point2 u0 = v1 - v0;
+																	Point2 u1 = v2 - v0;
+																	Point2 u2 = v3 - v0;
+																	Point2 u3 = v4 - v0;
+																	Point2 u4 = v5 - v0;
+																	Point2 u5 = v6 - v0;
+																	const real_t area =
+																		(u0.y * u1.x - u0.x * u1.y) +
+																		(u1.y * u2.x - u1.x * u2.y) +
+																		(u2.y * u3.x - u2.x * u3.y) +
+																		(u3.y * u4.x - u3.x * u4.y) +
+																		(u4.y * u5.x - u4.x * u5.y);
+																	if (area < min_area) {
+																		min_area = area;
+																		dest[0] = v0;
+																		dest[1] = v1;
+																		dest[2] = v2;
+																		dest[3] = v3;
+																		dest[4] = v4;
+																		dest[5] = v5;
+																		dest[6] = v6;
+																	}
+																}
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		} break;
+		case 8: {
+			for (int x = 0; x < n; x++) {
+				for (int y = x + 1; y < n; y++) {
+					if (Intersect(v0, lines[x], lines[y])) {
+						for (int z = y + 1; z < n; z++) {
+							if (Intersect(v1, lines[y], lines[z])) {
+								for (int w = z + 1; w < n; w++) {
+									if (Intersect(v2, lines[z], lines[w])) {
+										for (int r = w + 1; r < n; r++) {
+											if (Intersect(v3, lines[w], lines[r])) {
+												for (int s = r + 1; s < n; s++) {
+													if (Intersect(v4, lines[r], lines[s])) {
+														for (int t = s + 1; t < n; t++) {
+															if (Intersect(v5, lines[s], lines[t])) {
+																for (int u = t + 1; u < n; u++) {
+																	if (Intersect(v6, lines[t], lines[u])) {
+																		if (Intersect(v7, lines[u], lines[x])) {
+																			Point2 u0 = v1 - v0;
+																			Point2 u1 = v2 - v0;
+																			Point2 u2 = v3 - v0;
+																			Point2 u3 = v4 - v0;
+																			Point2 u4 = v5 - v0;
+																			Point2 u5 = v6 - v0;
+																			Point2 u6 = v7 - v0;
+																			const real_t area =
+																				(u0.y * u1.x - u0.x * u1.y) +
+																				(u1.y * u2.x - u1.x * u2.y) +
+																				(u2.y * u3.x - u2.x * u3.y) +
+																				(u3.y * u4.x - u3.x * u4.y) +
+																				(u4.y * u5.x - u4.x * u5.y) +
+																				(u5.y * u6.x - u5.x * u6.y);
+																			if (area < min_area) {
+																				min_area = area;
+																				dest[0] = v0;
+																				dest[1] = v1;
+																				dest[2] = v2;
+																				dest[3] = v3;
+																				dest[4] = v4;
+																				dest[5] = v5;
+																				dest[6] = v6;
+																				dest[7] = v7;
+																			}
+																		}
+																	}
+																}
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		} break;
+	}
+
+	if (area != nullptr) {
+		*area = 0.5 * min_area;
+	}
+
+	return vertex_count;
 }

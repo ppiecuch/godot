@@ -59,6 +59,8 @@
 #include "core/tween2.h"
 #include "core/voronoi.h"
 
+#include "bulletkit/gdlibrary.h"
+
 #include "statemachine/state.h"
 #include "statemachine/statemachine.h"
 
@@ -127,6 +129,8 @@ static void editor_init_callback() {
 #endif
 
 void register_gdextensions_types() {
+	register_bullet_kit();
+
 	ClassDB::register_class<RealNormal>();
 	ClassDB::register_class<IntNormal>();
 
