@@ -134,8 +134,10 @@ public:
 		return Variant(get_ref_ptr());
 	}
 
-	void operator=(const Ref &p_from) {
+	// this operator can be chained
+	Ref &operator=(const Ref &p_from) {
 		ref(p_from);
+		return *this;
 	}
 
 	template <class T_Other>
