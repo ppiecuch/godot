@@ -1021,6 +1021,10 @@ struct _VariantCall {
 		r_ret = Vector3(*p_args[0], *p_args[1], *p_args[2]);
 	}
 
+	static void Vector3_init2(Variant &r_ret, const Variant **p_args) {
+		r_ret = Vector3(*p_args[0], *p_args[0], *p_args[0]);
+	}
+
 	static void Plane_init1(Variant &r_ret, const Variant **p_args) {
 		r_ret = Plane(*p_args[0], *p_args[1], *p_args[2], *p_args[3]);
 	}
@@ -2116,6 +2120,7 @@ void register_variant_methods() {
 	_VariantCall::add_constructor(_VariantCall::Transform2D_init3, Variant::TRANSFORM2D, "x_axis", Variant::VECTOR2, "y_axis", Variant::VECTOR2, "origin", Variant::VECTOR2);
 
 	_VariantCall::add_constructor(_VariantCall::Vector3_init1, Variant::VECTOR3, "x", Variant::REAL, "y", Variant::REAL, "z", Variant::REAL);
+	_VariantCall::add_constructor(_VariantCall::Vector3_init2, Variant::VECTOR3, "v", Variant::REAL);
 
 	_VariantCall::add_constructor(_VariantCall::Plane_init1, Variant::PLANE, "a", Variant::REAL, "b", Variant::REAL, "c", Variant::REAL, "d", Variant::REAL);
 	_VariantCall::add_constructor(_VariantCall::Plane_init2, Variant::PLANE, "v1", Variant::VECTOR3, "v2", Variant::VECTOR3, "v3", Variant::VECTOR3);
