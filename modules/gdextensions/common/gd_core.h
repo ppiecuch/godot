@@ -40,8 +40,8 @@
 #include "core/os/os.h"
 #include "core/ustring.h"
 
-#include <deque>
 #include <algorithm>
+#include <deque>
 #include <functional>
 #include <list>
 #include <ostream>

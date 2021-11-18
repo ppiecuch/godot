@@ -1,31 +1,61 @@
+/*************************************************************************/
+/*  sproutline.h                                                         */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 /* sproutline - v0.10 - public domain sprite outline detector - http://github.org/ands/sproutline
-                        no warranty implied; use at your own risk
+						no warranty implied; use at your own risk
 
    You can #define S2O_MALLOC to avoid using malloc
 
 
    QUICK NOTES:
-      Primarily of interest to game developers.
-      - Recommended to be used with stb_image.
-      - Detects outlines in sprite images with alpha channels.
-      - Extracts outlines as clockwise paths.
-      - Simplifies outlines based on a distance metric.
+	  Primarily of interest to game developers.
+	  - Recommended to be used with stb_image.
+	  - Detects outlines in sprite images with alpha channels.
+	  - Extracts outlines as clockwise paths.
+	  - Simplifies outlines based on a distance metric.
 
    Full documentation under "DOCUMENTATION" below.
 
 
    Revision 0.10 release notes:
 
-      - Initial release of sproutline.h.
+	  - Initial release of sproutline.h.
 
-      - Added S2O_MALLOC macro for replacing the memory allocator.
-        Unlike most STB libraries, this macro doesn't support a context parameter,
-        so if you need to pass a context in to the allocator, you'll have to
-        store it in a global or a thread-local variable.
+	  - Added S2O_MALLOC macro for replacing the memory allocator.
+		Unlike most STB libraries, this macro doesn't support a context parameter,
+		so if you need to pass a context in to the allocator, you'll have to
+		store it in a global or a thread-local variable.
 
 
    Revision history:
-      0.10  (2015-10-22) initial version
+	  0.10  (2015-10-22) initial version
 
  ============================    Contributors    =========================
 
@@ -61,7 +91,7 @@ License:
 //        // ... ALPHA_THRESHOLD = 1..255 (the min value to be considered solid)
 //        // ... DISTANCE_THRESHOLD = 0.0f..Inf (~0.5f is a suitable value)
 //        // ... a greater value results in fewer points in the output
-//        
+//
 //        outline = s2o_extract_outline_path(outlined, w, h, &l, outline);
 //    };
 //    free(outline);
@@ -133,13 +163,15 @@ extern "C" {
 // PRIMARY API
 //
 
-S2ODEF s2o_uc * s2o_rgba_to_alpha          (const s2o_uc *data, int w, int h);
-S2ODEF s2o_uc * s2o_alpha_to_thresholded   (const s2o_uc *data, int w, int h, s2o_uc threshold);
-S2ODEF s2o_uc * s2o_thresholded_to_outlined(const s2o_uc *data, int w, int h);
+S2ODEF s2o_uc *s2o_rgba_to_alpha(const s2o_uc *data, int w, int h);
+S2ODEF s2o_uc *s2o_alpha_to_thresholded(const s2o_uc *data, int w, int h, s2o_uc threshold);
+S2ODEF s2o_uc *s2o_thresholded_to_outlined(const s2o_uc *data, int w, int h);
 
-typedef struct { short x, y; } s2o_point;
-S2ODEF s2o_point * s2o_extract_outline_path(s2o_uc *data, int w, int h, int *point_count, s2o_point *reusable_outline);
-S2ODEF void        s2o_distance_based_path_simplification(s2o_point *outline, int *outline_length, float distance_threshold);
+typedef struct {
+	short x, y;
+} s2o_point;
+S2ODEF s2o_point *s2o_extract_outline_path(s2o_uc *data, int w, int h, int *point_count, s2o_point *reusable_outline);
+S2ODEF void s2o_distance_based_path_simplification(s2o_point *outline, int *outline_length, float distance_threshold);
 
 #ifdef __cplusplus
 }

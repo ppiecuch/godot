@@ -1,19 +1,52 @@
+/*************************************************************************/
+/*  vtrimmer.cpp                                                         */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
 
 /*
-* This file is a part of the work done by Humus. You are free to
-* use the code in any way you like, modified, unmodified or copied
-* into your own work. However, I expect you to respect these points:
-*  - If you use this file and its contents unmodified, or use a major
-*    part of this file, please credit the author and leave this note.
-*  - For use in anything commercial, please request my approval.
-*  - Share your work and ideas too as much as you can.
-*/
+ * This file is a part of the work done by Humus. You are free to
+ * use the code in any way you like, modified, unmodified or copied
+ * into your own work. However, I expect you to respect these points:
+ *  - If you use this file and its contents unmodified, or use a major
+ *    part of this file, please credit the author and leave this note.
+ *  - For use in anything commercial, please request my approval.
+ *  - Share your work and ideas too as much as you can.
+ */
 #include "vtrimmer.h"
 
 #include "core/math/vector2.h"
 
-_FORCE_INLINE_ static real_t distance(const Point2 &pt1, const Point2 &pt2) { return pt1.distance_to(pt2); }
-_FORCE_INLINE_ static real_t dot(const Point2 &pt1, const Point2 &pt2) { return pt1.dot(pt2); }
+_FORCE_INLINE_ static real_t distance(const Point2 &pt1, const Point2 &pt2) {
+	return pt1.distance_to(pt2);
+}
+_FORCE_INLINE_ static real_t dot(const Point2 &pt1, const Point2 &pt2) {
+	return pt1.dot(pt2);
+}
 
 vertex_trimmer_opt_t vertex_trimmer_default_opt = {
 	4,
@@ -35,15 +68,13 @@ struct CHNode {
 	Point2 Point;
 };
 
-
 static real_t AreaX2Of(const Point2 &v0, const Point2 &v1, const Point2 &v2) {
 	Point2 u = v1 - v0;
 	Point2 v = v2 - v0;
-	return /*fabsf*/(u.y * v.x - u.x * v.y);
+	return /*fabsf*/ (u.y * v.x - u.x * v.y);
 }
 
 class ConvexHull {
-
 	CHNode *m_Root;
 	CHNode *m_Curr;
 	unsigned m_Count;
@@ -76,7 +107,7 @@ public:
 	unsigned FindOptimalPolygon(Point2 *dest, unsigned vertex_count, real_t *area = nullptr);
 
 	bool GoToFirst() { return (m_Curr = m_Root) != nullptr; }
-	bool GoToNext () { return (m_Curr = m_Curr->Next) != m_Root; }
+	bool GoToNext() { return (m_Curr = m_Curr->Next) != m_Root; }
 
 	const Point2 &GetCurrPoint() const { return m_Curr->Point; }
 	const Point2 &GetNextPoint() const { return m_Curr->Next->Point; }
@@ -110,7 +141,6 @@ struct WorkPacket {
 
 static int FindOptimalRotation(Point2 *vertices, int vertex_count, unsigned *indices);
 
-
 bool vertex_trimmer(Ref<Image> &image, vertex_trimmer_opt_t *opt) {
 	unsigned threshold = 0;
 	unsigned vertex_count = 4;
@@ -138,7 +168,7 @@ bool vertex_trimmer(Ref<Image> &image, vertex_trimmer_opt_t *opt) {
 		use_index_buffer = opt->use_index_buffer;
 	}
 
-	const real_t threshold_f = (real_t) threshold;
+	const real_t threshold_f = (real_t)threshold;
 
 	if (threshold > 255) {
 		ERR_FAIL_V_MSG(false, vformat("(vertex_trimmer) Error: Threshold %d out of range", threshold));
@@ -293,10 +323,18 @@ bool vertex_trimmer(Ref<Image> &image, vertex_trimmer_opt_t *opt) {
 					const int c11 = row1[x + 1];
 
 					int count = 0;
-					if (c00 > threshold) { ++count; }
-					if (c01 > threshold) { ++count; }
-					if (c10 > threshold) { ++count; }
-					if (c11 > threshold) { ++count; }
+					if (c00 > threshold) {
+						++count;
+					}
+					if (c01 > threshold) {
+						++count;
+					}
+					if (c10 > threshold) {
+						++count;
+					}
+					if (c11 > threshold) {
+						++count;
+					}
 
 					if (count > 0 && count < 4) {
 						const real_t d00 = c00;
@@ -364,7 +402,7 @@ bool vertex_trimmer(Ref<Image> &image, vertex_trimmer_opt_t *opt) {
 		}
 	}
 
-	delete [] packets;
+	delete[] packets;
 
 	return true;
 }
@@ -396,7 +434,6 @@ static int FindOptimalRotation(Point2 *vertices, int vertex_count, unsigned *ind
 	return optimal;
 }
 
-
 /// ConvexHull
 
 struct Line {
@@ -427,7 +464,7 @@ static bool Intersect(Point2 &point, const Line &line0, const Line &line1) {
 		return false;
 	}
 	const real_t t = perp(line1.d, line0.v - line1.v) / d;
-	if (t < 0.5) {// Intersects on the wrong side
+	if (t < 0.5) { // Intersects on the wrong side
 		return false;
 	}
 	point = line0.v + t * line0.d;
@@ -484,8 +521,7 @@ bool ConvexHull::InsertPoint(const Point2 &point) {
 			}
 		} while (true);
 	} else {
-		do
-		{
+		do {
 			const Point2 &v0 = node->Point;
 			node = node->Next;
 			const Point2 &v1 = node->Point;
@@ -521,7 +557,7 @@ bool ConvexHull::InsertPoint(const Point2 &point) {
 		memdelete(del);
 		--m_Count;
 
-	} while(true);
+	} while (true);
 
 	CHNode *new_node = memnew(CHNode);
 	new_node->Point = point;
@@ -662,8 +698,8 @@ unsigned ConvexHull::FindOptimalPolygon(Point2 *dest, unsigned vertex_count, rea
 											Point2 u1 = v2 - v0;
 											Point2 u2 = v3 - v0;
 											const real_t area =
-												(u0.y * u1.x - u0.x * u1.y) +
-												(u1.y * u2.x - u1.x * u2.y);
+													(u0.y * u1.x - u0.x * u1.y) +
+													(u1.y * u2.x - u1.x * u2.y);
 											if (area < min_area) {
 												min_area = area;
 												dest[0] = v0;
@@ -696,9 +732,9 @@ unsigned ConvexHull::FindOptimalPolygon(Point2 *dest, unsigned vertex_count, rea
 													Point2 u2 = v3 - v0;
 													Point2 u3 = v4 - v0;
 													const real_t area =
-														(u0.y * u1.x - u0.x * u1.y) +
-														(u1.y * u2.x - u1.x * u2.y) +
-														(u2.y * u3.x - u2.x * u3.y);
+															(u0.y * u1.x - u0.x * u1.y) +
+															(u1.y * u2.x - u1.x * u2.y) +
+															(u2.y * u3.x - u2.x * u3.y);
 													if (area < min_area) {
 														min_area = area;
 														dest[0] = v0;
@@ -737,10 +773,10 @@ unsigned ConvexHull::FindOptimalPolygon(Point2 *dest, unsigned vertex_count, rea
 															Point2 u3 = v4 - v0;
 															Point2 u4 = v5 - v0;
 															const real_t area =
-																(u0.y * u1.x - u0.x * u1.y) +
-																(u1.y * u2.x - u1.x * u2.y) +
-																(u2.y * u3.x - u2.x * u3.y) +
-																(u3.y * u4.x - u3.x * u4.y);
+																	(u0.y * u1.x - u0.x * u1.y) +
+																	(u1.y * u2.x - u1.x * u2.y) +
+																	(u2.y * u3.x - u2.x * u3.y) +
+																	(u3.y * u4.x - u3.x * u4.y);
 															if (area < min_area) {
 																min_area = area;
 																dest[0] = v0;
@@ -785,11 +821,11 @@ unsigned ConvexHull::FindOptimalPolygon(Point2 *dest, unsigned vertex_count, rea
 																	Point2 u4 = v5 - v0;
 																	Point2 u5 = v6 - v0;
 																	const real_t area =
-																		(u0.y * u1.x - u0.x * u1.y) +
-																		(u1.y * u2.x - u1.x * u2.y) +
-																		(u2.y * u3.x - u2.x * u3.y) +
-																		(u3.y * u4.x - u3.x * u4.y) +
-																		(u4.y * u5.x - u4.x * u5.y);
+																			(u0.y * u1.x - u0.x * u1.y) +
+																			(u1.y * u2.x - u1.x * u2.y) +
+																			(u2.y * u3.x - u2.x * u3.y) +
+																			(u3.y * u4.x - u3.x * u4.y) +
+																			(u4.y * u5.x - u4.x * u5.y);
 																	if (area < min_area) {
 																		min_area = area;
 																		dest[0] = v0;
@@ -840,12 +876,12 @@ unsigned ConvexHull::FindOptimalPolygon(Point2 *dest, unsigned vertex_count, rea
 																			Point2 u5 = v6 - v0;
 																			Point2 u6 = v7 - v0;
 																			const real_t area =
-																				(u0.y * u1.x - u0.x * u1.y) +
-																				(u1.y * u2.x - u1.x * u2.y) +
-																				(u2.y * u3.x - u2.x * u3.y) +
-																				(u3.y * u4.x - u3.x * u4.y) +
-																				(u4.y * u5.x - u4.x * u5.y) +
-																				(u5.y * u6.x - u5.x * u6.y);
+																					(u0.y * u1.x - u0.x * u1.y) +
+																					(u1.y * u2.x - u1.x * u2.y) +
+																					(u2.y * u3.x - u2.x * u3.y) +
+																					(u3.y * u4.x - u3.x * u4.y) +
+																					(u4.y * u5.x - u4.x * u5.y) +
+																					(u5.y * u6.x - u5.x * u6.y);
 																			if (area < min_area) {
 																				min_area = area;
 																				dest[0] = v0;
