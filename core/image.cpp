@@ -408,48 +408,32 @@ static void _convert(int p_width, int p_height, const uint8_t *p_src, uint8_t *p
 	}
 }
 
-void Image::convert(Format p_new_format) {
-	if (data.size() == 0) {
-		return;
-	}
-
-	if (p_new_format == format) {
-		return;
-	}
-
-	ERR_FAIL_COND_MSG(write_lock.ptr(), "Cannot convert image when it is locked.");
-
+Ref<Image> Image::converted(Format p_new_format) {
 	if (format > FORMAT_RGBE9995 || p_new_format > FORMAT_RGBE9995) {
-		ERR_FAIL_MSG("Cannot convert to <-> from compressed formats. Use compress() and decompress() instead.");
+		ERR_FAIL_V_MSG(Ref<Image>(), "Cannot convert to <-> from compressed formats. Use compress() and decompress() instead.");
 
 	} else if (format > FORMAT_RGBA8 || p_new_format > FORMAT_RGBA8) {
 		//use put/set pixel which is slower but works with non byte formats
-		Image new_img(width, height, false, p_new_format);
+		Ref<Image> new_img = memnew(Image(width, height, false, p_new_format));
 		lock();
-		new_img.lock();
+		new_img->lock();
 
 		for (int i = 0; i < width; i++) {
 			for (int j = 0; j < height; j++) {
-				new_img.set_pixel(i, j, get_pixel(i, j));
+				new_img->set_pixel(i, j, get_pixel(i, j));
 			}
 		}
 
 		unlock();
-		new_img.unlock();
+		new_img->unlock();
 
-		if (has_mipmaps()) {
-			new_img.generate_mipmaps();
-		}
-
-		_copy_internals_from(new_img);
-
-		return;
+		return new_img;
 	}
 
-	Image new_img(width, height, false, p_new_format);
+	Ref<Image> new_img = memnew(Image(width, height, false, p_new_format));
 
 	PoolVector<uint8_t>::Read r = data.read();
-	PoolVector<uint8_t>::Write w = new_img.data.write();
+	PoolVector<uint8_t>::Write w = new_img->data.write();
 
 	const uint8_t *rptr = r.ptr();
 	uint8_t *wptr = w.ptr();
@@ -552,12 +536,28 @@ void Image::convert(Format p_new_format) {
 	r.release();
 	w.release();
 
-	bool gen_mipmaps = mipmaps;
+	return new_img;
+}
 
-	_copy_internals_from(new_img);
+void Image::convert(Format p_new_format) {
+	if (data.size() == 0) {
+		return;
+	}
 
-	if (gen_mipmaps) {
-		generate_mipmaps();
+	if (p_new_format == format) {
+		return;
+	}
+
+	ERR_FAIL_COND_MSG(write_lock.ptr(), "Cannot convert image when it is locked.");
+
+	if (Ref<Image> new_img = converted(p_new_format)) {
+		bool gen_mipmaps = mipmaps;
+
+		_copy_internals_from(**new_img);
+
+		if (gen_mipmaps) {
+			generate_mipmaps();
+		}
 	}
 }
 

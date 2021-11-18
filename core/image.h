@@ -214,6 +214,7 @@ public:
 	 * Convert the image to another format, conversion only to raw byte format
 	 */
 	void convert(Format p_new_format);
+	Ref<Image> converted(Format p_new_format);
 
 	/**
 	 * Get the current image format.
