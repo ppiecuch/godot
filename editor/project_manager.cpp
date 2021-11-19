@@ -503,8 +503,9 @@ private:
 								String n = addons_da->get_next();
 								while (n != String()) {
 									if (n != "." && n != "..") {
-										if (addons_da->current_is_dir())
+										if (addons_da->current_is_dir()) {
 											dirs.push_back(n);
+										}
 									}
 									n = addons_da->get_next();
 								}
