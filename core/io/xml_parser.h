@@ -86,7 +86,7 @@ private:
 	bool _parse_cdata();
 	void _parse_comment();
 	void _parse_opening_xml_element();
-	void _parse_current_node();
+	Error _parse_current_node();
 
 	static void _bind_methods();
 

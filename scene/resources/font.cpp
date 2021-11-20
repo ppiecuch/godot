@@ -292,234 +292,239 @@ Error BitmapFont::create_from_fnt(const String &p_file) {
 	Ref<XMLParser> parser = memnew(XMLParser);
 	Error err = parser->open(p_file);
 
-	if (err == OK) {
-		// as this is valid xml file, assume xml bmformat
-		// based on https://github.com/godotengine/godot/blob/master/editor/collada/collada.cpp
-		while (parser->read() == OK) {
-			if (parser->get_node_type() == XMLParser::NODE_ELEMENT) {
-				if (parser->get_node_name() == "info") {
-					if (parser->has_attribute("face"))
-						set_name(parser->get_attribute_value("face"));
-					else
-						ERR_PRINT("BMFont xml: face attribute not found.");
-				}
+	ERR_FAIL_COND_V_MSG(err != OK, err, "Can't open font: " + p_file + ".");
 
-				if (parser->get_node_name() == "common") {
-					if (parser->has_attribute("lineHeight"))
-						set_height(parser->get_attribute_value("lineHeight").to_int());
-					if (parser->has_attribute("base"))
-						set_ascent(parser->get_attribute_value("base").to_int());
+	// as this is valid xml file, assume xml bmformat
+	// based on https://github.com/godotengine/godot/blob/master/editor/collada/collada.cpp
+	while ((err = parser->read()) == OK) {
+		if (parser->get_node_type() == XMLParser::NODE_ELEMENT) {
+			if (parser->get_node_name() == "info") {
+				if (parser->has_attribute("face")) {
+					set_name(parser->get_attribute_value("face"));
+				} else {
+					ERR_PRINT("BMFont xml: face attribute not found.");
 				}
+			}
 
-				if (parser->get_node_name() == "page") {
-					if (parser->has_attribute("file")) {
-						String base_dir = p_file.get_base_dir();
-						String file = base_dir.plus_file(parser->get_attribute_value("file"));
-						Ref<Texture> tex = ResourceLoader::load(file);
-						if (tex.is_null()) {
-							ERR_PRINT("Can't load font texture!");
-						} else {
-							add_texture(tex);
-						}
+			if (parser->get_node_name() == "common") {
+				if (parser->has_attribute("lineHeight"))
+					set_height(parser->get_attribute_value("lineHeight").to_int());
+				if (parser->has_attribute("base"))
+					set_ascent(parser->get_attribute_value("base").to_int());
+			}
+
+			if (parser->get_node_name() == "page") {
+				if (parser->has_attribute("file")) {
+					String base_dir = p_file.get_base_dir();
+					String file = base_dir.plus_file(parser->get_attribute_value("file"));
+					Ref<Texture> tex = ResourceLoader::load(file);
+					if (tex.is_null()) {
+						ERR_PRINT("Can't load font texture!");
+					} else {
+						add_texture(tex);
 					}
 				}
-
-				if (parser->get_node_name() == "char") {
-					CharType idx = 0;
-					if (parser->has_attribute("id"))
-						idx = parser->get_attribute_value("id").to_int();
-
-					Rect2 rect;
-
-					if (parser->has_attribute("x"))
-						rect.position.x = parser->get_attribute_value("x").to_int();
-					if (parser->has_attribute("y"))
-						rect.position.y = parser->get_attribute_value("y").to_int();
-					if (parser->has_attribute("width"))
-						rect.size.width = parser->get_attribute_value("width").to_int();
-					if (parser->has_attribute("height"))
-						rect.size.height = parser->get_attribute_value("height").to_int();
-
-					Point2 ofs;
-
-					if (parser->has_attribute("xoffset"))
-						ofs.x = parser->get_attribute_value("xoffset").to_int();
-					if (parser->has_attribute("yoffset"))
-						ofs.y = parser->get_attribute_value("yoffset").to_int();
-
-					int texture = 0;
-					if (parser->has_attribute("page"))
-						texture = parser->get_attribute_value("page").to_int();
-					int advance = -1;
-					if (parser->has_attribute("xadvance"))
-						advance = parser->get_attribute_value("xadvance").to_int();
-
-					add_char(idx, texture, rect, ofs, advance);
-				}
-
-				if (parser->get_node_name() == "kerning") {
-					CharType first = 0, second = 0;
-					int k = 0;
-
-					if (parser->has_attribute("first"))
-						first = parser->get_attribute_value("first").to_int();
-					if (parser->has_attribute("second"))
-						second = parser->get_attribute_value("second").to_int();
-					if (parser->has_attribute("amount"))
-						k = parser->get_attribute_value("amount").to_int();
-
-					add_kerning_pair(first, second, -k);
-				}
-
-				// only one/first <font> per file
-				if (parser->get_node_type() == XMLParser::NODE_ELEMENT_END && parser->get_node_name() == "font")
-					break;
 			}
+
+			if (parser->get_node_name() == "char") {
+				CharType idx = 0;
+				if (parser->has_attribute("id"))
+					idx = parser->get_attribute_value("id").to_int();
+
+				Rect2 rect;
+
+				if (parser->has_attribute("x"))
+					rect.position.x = parser->get_attribute_value("x").to_int();
+				if (parser->has_attribute("y"))
+					rect.position.y = parser->get_attribute_value("y").to_int();
+				if (parser->has_attribute("width"))
+					rect.size.width = parser->get_attribute_value("width").to_int();
+				if (parser->has_attribute("height"))
+					rect.size.height = parser->get_attribute_value("height").to_int();
+
+				Point2 ofs;
+
+				if (parser->has_attribute("xoffset"))
+					ofs.x = parser->get_attribute_value("xoffset").to_int();
+				if (parser->has_attribute("yoffset"))
+					ofs.y = parser->get_attribute_value("yoffset").to_int();
+
+				int texture = 0;
+				if (parser->has_attribute("page"))
+					texture = parser->get_attribute_value("page").to_int();
+				int advance = -1;
+				if (parser->has_attribute("xadvance"))
+					advance = parser->get_attribute_value("xadvance").to_int();
+
+				add_char(idx, texture, rect, ofs, advance);
+			}
+
+			if (parser->get_node_name() == "kerning") {
+				CharType first = 0, second = 0;
+				int k = 0;
+
+				if (parser->has_attribute("first"))
+					first = parser->get_attribute_value("first").to_int();
+				if (parser->has_attribute("second"))
+					second = parser->get_attribute_value("second").to_int();
+				if (parser->has_attribute("amount"))
+					k = parser->get_attribute_value("amount").to_int();
+
+				add_kerning_pair(first, second, -k);
+			}
+
+			// only one/first <font> per file
+			if (parser->get_node_type() == XMLParser::NODE_ELEMENT_END && parser->get_node_name() == "font")
+				break;
 		}
-		return OK;
 	}
 
-	FileAccess *f = FileAccess::open(p_file, FileAccess::READ);
+	if (err == ERR_INVALID_DATA) {
+		// check for text version
+		FileAccess *f = FileAccess::open(p_file, FileAccess::READ);
 
-	ERR_FAIL_COND_V_MSG(!f, ERR_FILE_NOT_FOUND, "Can't open font: " + p_file + ".");
+		ERR_FAIL_COND_V_MSG(!f, ERR_FILE_NOT_FOUND, "Can't open font: " + p_file + ".");
 
-	while (true) {
-		String line = f->get_line();
+		while (true) {
+			String line = f->get_line();
 
-		int delimiter = line.find(" ");
-		String type = line.substr(0, delimiter);
-		int pos = delimiter + 1;
-		Map<String, String> keys;
-
-		while (pos < line.size() && line[pos] == ' ') {
-			pos++;
-		}
-
-		while (pos < line.size()) {
-			int eq = line.find("=", pos);
-			if (eq == -1) {
-				break;
-			}
-			String key = line.substr(pos, eq - pos);
-			int end = -1;
-			String value;
-			if (line[eq + 1] == '"') {
-				end = line.find("\"", eq + 2);
-				if (end == -1) {
-					break;
-				}
-				value = line.substr(eq + 2, end - 1 - eq - 1);
-				pos = end + 1;
-			} else {
-				end = line.find(" ", eq + 1);
-				if (end == -1) {
-					end = line.size();
-				}
-
-				value = line.substr(eq + 1, end - eq);
-
-				pos = end;
-			}
+			const int delimiter = line.find(" ");
+			String type = line.substr(0, delimiter);
+			int pos = delimiter + 1;
+			Map<String, String> keys;
 
 			while (pos < line.size() && line[pos] == ' ') {
 				pos++;
 			}
 
-			keys[key] = value;
-		}
-
-		if (type == "info") {
-			if (keys.has("face")) {
-				set_name(keys["face"]);
-			}
-			/*
-			if (keys.has("size"))
-				font->set_height(keys["size"].to_int());
-			*/
-
-		} else if (type == "common") {
-			if (keys.has("lineHeight")) {
-				set_height(keys["lineHeight"].to_int());
-			}
-			if (keys.has("base")) {
-				set_ascent(keys["base"].to_int());
-			}
-
-		} else if (type == "page") {
-			if (keys.has("file")) {
-				String base_dir = p_file.get_base_dir();
-				String file = base_dir.plus_file(keys["file"]);
-				Ref<Texture> tex = ResourceLoader::load(file);
-				if (tex.is_null()) {
-					ERR_PRINT("Can't load font texture!");
-				} else {
-					add_texture(tex);
+			while (pos < line.size()) {
+				int eq = line.find("=", pos);
+				if (eq == -1) {
+					break;
 				}
-			}
-		} else if (type == "char") {
-			CharType idx = 0;
-			if (keys.has("id")) {
-				idx = keys["id"].to_int();
+				String key = line.substr(pos, eq - pos);
+				int end = -1;
+				String value;
+				if (line[eq + 1] == '"') {
+					end = line.find("\"", eq + 2);
+					if (end == -1) {
+						break;
+					}
+					value = line.substr(eq + 2, end - 1 - eq - 1);
+					pos = end + 1;
+				} else {
+					end = line.find(" ", eq + 1);
+					if (end == -1) {
+						end = line.size();
+					}
+
+					value = line.substr(eq + 1, end - eq);
+
+					pos = end;
+				}
+
+				while (pos < line.size() && line[pos] == ' ') {
+					pos++;
+				}
+
+				keys[key] = value;
 			}
 
-			Rect2 rect;
+			if (type == "info") {
+				if (keys.has("face")) {
+					set_name(keys["face"]);
+				} else {
+					ERR_PRINT("BMFont fnt: face attribute not found.");
+				}
+				/*
+				if (keys.has("size"))
+					font->set_height(keys["size"].to_int());
+				*/
 
-			if (keys.has("x")) {
-				rect.position.x = keys["x"].to_int();
-			}
-			if (keys.has("y")) {
-				rect.position.y = keys["y"].to_int();
-			}
-			if (keys.has("width")) {
-				rect.size.width = keys["width"].to_int();
-			}
-			if (keys.has("height")) {
-				rect.size.height = keys["height"].to_int();
+			} else if (type == "common") {
+				if (keys.has("lineHeight")) {
+					set_height(keys["lineHeight"].to_int());
+				}
+				if (keys.has("base")) {
+					set_ascent(keys["base"].to_int());
+				}
+
+			} else if (type == "page") {
+				if (keys.has("file")) {
+					String base_dir = p_file.get_base_dir();
+					String file = base_dir.plus_file(keys["file"]);
+					Ref<Texture> tex = ResourceLoader::load(file);
+					if (tex.is_null()) {
+						ERR_PRINT("Can't load font texture!");
+					} else {
+						add_texture(tex);
+					}
+				}
+			} else if (type == "char") {
+				CharType idx = 0;
+				if (keys.has("id")) {
+					idx = keys["id"].to_int();
+				}
+
+				Rect2 rect;
+
+				if (keys.has("x")) {
+					rect.position.x = keys["x"].to_int();
+				}
+				if (keys.has("y")) {
+					rect.position.y = keys["y"].to_int();
+				}
+				if (keys.has("width")) {
+					rect.size.width = keys["width"].to_int();
+				}
+				if (keys.has("height")) {
+					rect.size.height = keys["height"].to_int();
+				}
+
+				Point2 ofs;
+
+				if (keys.has("xoffset")) {
+					ofs.x = keys["xoffset"].to_int();
+				}
+				if (keys.has("yoffset")) {
+					ofs.y = keys["yoffset"].to_int();
+				}
+
+				int texture = 0;
+				if (keys.has("page")) {
+					texture = keys["page"].to_int();
+				}
+				int advance = -1;
+				if (keys.has("xadvance")) {
+					advance = keys["xadvance"].to_int();
+				}
+
+				add_char(idx, texture, rect, ofs, advance);
+
+			} else if (type == "kerning") {
+				CharType first = 0, second = 0;
+				int k = 0;
+
+				if (keys.has("first")) {
+					first = keys["first"].to_int();
+				}
+				if (keys.has("second")) {
+					second = keys["second"].to_int();
+				}
+				if (keys.has("amount")) {
+					k = keys["amount"].to_int();
+				}
+
+				add_kerning_pair(first, second, -k);
 			}
 
-			Point2 ofs;
-
-			if (keys.has("xoffset")) {
-				ofs.x = keys["xoffset"].to_int();
+			if (f->eof_reached()) {
+				break;
 			}
-			if (keys.has("yoffset")) {
-				ofs.y = keys["yoffset"].to_int();
-			}
-
-			int texture = 0;
-			if (keys.has("page")) {
-				texture = keys["page"].to_int();
-			}
-			int advance = -1;
-			if (keys.has("xadvance")) {
-				advance = keys["xadvance"].to_int();
-			}
-
-			add_char(idx, texture, rect, ofs, advance);
-
-		} else if (type == "kerning") {
-			CharType first = 0, second = 0;
-			int k = 0;
-
-			if (keys.has("first")) {
-				first = keys["first"].to_int();
-			}
-			if (keys.has("second")) {
-				second = keys["second"].to_int();
-			}
-			if (keys.has("amount")) {
-				k = keys["amount"].to_int();
-			}
-
-			add_kerning_pair(first, second, -k);
 		}
 
-		if (f->eof_reached()) {
-			break;
-		}
+		memdelete(f);
 	}
-
-	memdelete(f);
 
 	return OK;
 }

@@ -292,7 +292,7 @@ void XMLParser::_parse_opening_xml_element() {
 	}
 }
 
-void XMLParser::_parse_current_node() {
+Error XMLParser::_parse_current_node() {
 	char *start = P;
 	node_offset = P - data;
 
@@ -301,15 +301,15 @@ void XMLParser::_parse_current_node() {
 		++P;
 	}
 
+	if (!*P) {
+		return ERR_INVALID_DATA;
+	}
+
 	if (P - start > 0) {
 		// we found some text, store it
 		if (_set_text(start, P)) {
-			return;
+			return OK;
 		}
-	}
-
-	if (!*P) {
-		return;
 	}
 
 	++P;
@@ -331,6 +331,8 @@ void XMLParser::_parse_current_node() {
 			_parse_opening_xml_element();
 			break;
 	}
+	// check for invalid xml
+	return node_type == NODE_NONE ? ERR_INVALID_DATA : OK;
 }
 
 uint64_t XMLParser::get_node_offset() const {
@@ -377,8 +379,7 @@ void XMLParser::_bind_methods() {
 Error XMLParser::read() {
 	// if not end reached, parse the node
 	if (P && (P - data) < (int64_t)length - 1 && *P != 0) {
-		_parse_current_node();
-		return OK;
+		return _parse_current_node();
 	}
 
 	return ERR_FILE_EOF;
