@@ -40,8 +40,8 @@ if env["tools"]:
         env.Append(CPPDEFINES=["BYTECODE_EXPORT_ENABLED"])
         env.Append(CPPPATH=["#modules/gdnative/include"])
 
-if env["doctest"]:
-    env.add_source_files(env.main_sources, "#thirdparty/doctest/doctest.cpp")
+    if env["doctest"]:
+        env.add_source_files(env.main_sources, "#thirdparty/doctest/doctest.cpp")
 
 lib = env.add_library("main", env.main_sources)
 env.Prepend(LIBS=[lib])
