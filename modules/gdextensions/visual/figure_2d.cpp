@@ -41,44 +41,44 @@ const real_t REAL_MIN = std::numeric_limits<real_t>::min();
 const real_t REAL_MAX = std::numeric_limits<real_t>::max();
 
 #ifdef TOOLS_ENABLED
-Dictionary Figure::_edit_get_state() const {
+Dictionary Figure2D::_edit_get_state() const {
 	Dictionary state = Node2D::_edit_get_state();
 	state["figure_offset"] = figure_offset;
 	return state;
 }
 
-void Figure::_edit_set_state(const Dictionary &p_state) {
+void Figure2D::_edit_set_state(const Dictionary &p_state) {
 	Node2D::_edit_set_state(p_state);
 	set_figure_offset(p_state["figure_offset"]);
 }
 
-void Figure::_edit_set_pivot(const Point2 &p_pivot) {
+void Figure2D::_edit_set_pivot(const Point2 &p_pivot) {
 	set_figure_offset(get_figure_offset() - p_pivot);
 	set_position(get_transform().xform(p_pivot));
 }
 
-Point2 Figure::_edit_get_pivot() const {
+Point2 Figure2D::_edit_get_pivot() const {
 	return figure_offset;
 }
 
-bool Figure::_edit_use_pivot() const {
+bool Figure2D::_edit_use_pivot() const {
 	return true;
 }
 
-bool Figure::_edit_is_selected_on_click(const Point2 &p_point, double p_tolerance) const {
+bool Figure2D::_edit_is_selected_on_click(const Point2 &p_point, double p_tolerance) const {
 	return get_rect().has_point(p_point);
 }
 
-Rect2 Figure::_edit_get_rect() const {
+Rect2 Figure2D::_edit_get_rect() const {
 	return get_rect();
 }
 
-bool Figure::_edit_use_rect() const {
+bool Figure2D::_edit_use_rect() const {
 	return true;
 }
 #endif
 
-void Figure::_update_figure_shape() {
+void Figure2D::_update_figure_shape() {
 	_figure_lines.clear();
 	_figure_aabb = AABB();
 
@@ -147,13 +147,13 @@ void Figure::_update_figure_shape() {
 	_figure_aabb.size = pt_max - pt_min;
 }
 
-void Figure::_update_xform_values() {
+void Figure2D::_update_xform_values() {
 	figure_angle = _figure_xform.get_euler();
 	figure_scale = _figure_xform.get_scale();
 	_figure_xform_dirty = false;
 }
 
-void Figure::_update_transform() {
+void Figure2D::_update_transform() {
 	_figure_xform.set_euler_scale(figure_angle, figure_scale);
 
 	Transform2D xform(get_rotation(), get_scale(), get_position() + figure_offset);
@@ -168,7 +168,7 @@ void Figure::_update_transform() {
 	update();
 }
 
-void Figure::set_figure_scale(const Vector3 &p_scale) {
+void Figure2D::set_figure_scale(const Vector3 &p_scale) {
 	if (_figure_xform_dirty)
 		_update_xform_values();
 	figure_scale = p_scale * Vector3(1, -1, 1); // by default we y-mirror
@@ -182,55 +182,55 @@ void Figure::set_figure_scale(const Vector3 &p_scale) {
 	_update_transform();
 }
 
-Vector3 Figure::get_figure_scale() const {
+Vector3 Figure2D::get_figure_scale() const {
 	if (_figure_xform_dirty)
-		((Figure *)this)->_update_xform_values();
+		((Figure2D *)this)->_update_xform_values();
 
 	return figure_scale * Vector3(1, -1, 1);
 }
 
-void Figure::set_figure_rotation(Vector3 p_radians) {
+void Figure2D::set_figure_rotation(Vector3 p_radians) {
 	if (_figure_xform_dirty)
 		_update_xform_values();
 	figure_angle = p_radians;
 	_update_transform();
 }
 
-Vector3 Figure::get_figure_rotation() const {
+Vector3 Figure2D::get_figure_rotation() const {
 	if (_figure_xform_dirty)
-		((Figure *)this)->_update_xform_values();
+		((Figure2D *)this)->_update_xform_values();
 
 	return figure_angle;
 }
 
-void Figure::set_figure_rotation_x_degrees(float p_degrees) {
+void Figure2D::set_figure_rotation_x_degrees(float p_degrees) {
 	figure_angle.x = Math::deg2rad(p_degrees);
 	_update_transform();
 }
 
-void Figure::set_figure_rotation_y_degrees(float p_degrees) {
+void Figure2D::set_figure_rotation_y_degrees(float p_degrees) {
 	figure_angle.y = Math::deg2rad(p_degrees);
 	_update_transform();
 }
 
-void Figure::set_figure_rotation_z_degrees(float p_degrees) {
+void Figure2D::set_figure_rotation_z_degrees(float p_degrees) {
 	figure_angle.z = Math::deg2rad(p_degrees);
 	_update_transform();
 }
 
-float Figure::get_figure_rotation_x_degrees() const {
+float Figure2D::get_figure_rotation_x_degrees() const {
 	return Math::rad2deg(figure_angle.x);
 }
 
-float Figure::get_figure_rotation_y_degrees() const {
+float Figure2D::get_figure_rotation_y_degrees() const {
 	return Math::rad2deg(figure_angle.y);
 }
 
-float Figure::get_figure_rotation_z_degrees() const {
+float Figure2D::get_figure_rotation_z_degrees() const {
 	return Math::rad2deg(figure_angle.z);
 }
 
-void Figure::set_figure_orientation(const Basis &p_basis) {
+void Figure2D::set_figure_orientation(const Basis &p_basis) {
 	_figure_xform = p_basis * FLIP_Y;
 	_figure_xform_dirty = true;
 
@@ -240,11 +240,11 @@ void Figure::set_figure_orientation(const Basis &p_basis) {
 	_notify_transform();
 }
 
-Basis Figure::get_figure_orientation() const {
+Basis Figure2D::get_figure_orientation() const {
 	return _figure_xform * FLIP_Y;
 }
 
-bool Figure::_set(const StringName &p_path, const Variant &p_value) {
+bool Figure2D::_set(const StringName &p_path, const Variant &p_value) {
 	String path = p_path;
 
 	if (!path.begins_with("bones/"))
@@ -289,7 +289,7 @@ bool Figure::_set(const StringName &p_path, const Variant &p_value) {
 	return true;
 }
 
-bool Figure::_get(const StringName &p_path, Variant &r_ret) const {
+bool Figure2D::_get(const StringName &p_path, Variant &r_ret) const {
 	String path = p_path;
 
 	if (!path.begins_with("bones/"))
@@ -328,7 +328,7 @@ bool Figure::_get(const StringName &p_path, Variant &r_ret) const {
 
 	return true;
 }
-void Figure::_get_property_list(List<PropertyInfo> *p_list) const {
+void Figure2D::_get_property_list(List<PropertyInfo> *p_list) const {
 	for (int i = 0; i < bones.size(); i++) {
 		String prep = "bones/" + itos(i) + "/";
 		p_list->push_back(PropertyInfo(Variant::STRING, prep + "name"));
@@ -340,7 +340,7 @@ void Figure::_get_property_list(List<PropertyInfo> *p_list) const {
 	}
 }
 
-void Figure::_update_process_order() {
+void Figure2D::_update_process_order() {
 	if (!process_order_dirty)
 		return;
 
@@ -391,7 +391,7 @@ void Figure::_update_process_order() {
 	process_order_dirty = false;
 }
 
-void Figure::_notification(int p_what) {
+void Figure2D::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_DRAW: {
 			if (_figure_dirty) {
@@ -476,14 +476,14 @@ void Figure::_notification(int p_what) {
 	}
 }
 
-void Figure::clear_bones_global_pose_override() {
+void Figure2D::clear_bones_global_pose_override() {
 	for (int i = 0; i < bones.size(); i += 1) {
 		bones.write[i].global_pose_override_amount = 0;
 	}
 	_make_dirty();
 }
 
-void Figure::set_bone_global_pose_override(int p_bone, const Transform &p_pose, float p_amount, bool p_persistent) {
+void Figure2D::set_bone_global_pose_override(int p_bone, const Transform &p_pose, float p_amount, bool p_persistent) {
 	ERR_FAIL_INDEX(p_bone, bones.size());
 	bones.write[p_bone].global_pose_override_amount = p_amount;
 	bones.write[p_bone].global_pose_override = p_pose;
@@ -491,15 +491,15 @@ void Figure::set_bone_global_pose_override(int p_bone, const Transform &p_pose, 
 	_make_dirty();
 }
 
-Transform Figure::get_bone_global_pose(int p_bone) const {
+Transform Figure2D::get_bone_global_pose(int p_bone) const {
 	ERR_FAIL_INDEX_V(p_bone, bones.size(), Transform());
 	if (dirty)
-		const_cast<Figure *>(this)->notification(NOTIFICATION_UPDATE_FIGURE);
+		const_cast<Figure2D *>(this)->notification(NOTIFICATION_UPDATE_FIGURE);
 	return bones[p_bone].pose_global;
 }
 
 // Figure creation api
-void Figure::add_bone(const String &p_name) {
+void Figure2D::add_bone(const String &p_name) {
 	ERR_FAIL_COND(p_name == "" || p_name.find(":") != -1 || p_name.find("/") != -1);
 
 	for (int i = 0; i < bones.size(); i++) {
@@ -514,7 +514,7 @@ void Figure::add_bone(const String &p_name) {
 	_make_dirty();
 	update();
 }
-int Figure::find_bone(const String &p_name) const {
+int Figure2D::find_bone(const String &p_name) const {
 	for (int i = 0; i < bones.size(); i++) {
 		if (bones[i].name == p_name)
 			return i;
@@ -522,13 +522,13 @@ int Figure::find_bone(const String &p_name) const {
 
 	return -1;
 }
-String Figure::get_bone_name(int p_bone) const {
+String Figure2D::get_bone_name(int p_bone) const {
 	ERR_FAIL_INDEX_V(p_bone, bones.size(), "");
 
 	return bones[p_bone].name;
 }
 
-bool Figure::is_bone_parent_of(int p_bone, int p_parent_bone_id) const {
+bool Figure2D::is_bone_parent_of(int p_bone, int p_parent_bone_id) const {
 	int parent_of_bone = get_bone_parent(p_bone);
 
 	if (-1 == parent_of_bone)
@@ -540,11 +540,11 @@ bool Figure::is_bone_parent_of(int p_bone, int p_parent_bone_id) const {
 	return is_bone_parent_of(parent_of_bone, p_parent_bone_id);
 }
 
-int Figure::get_bone_count() const {
+int Figure2D::get_bone_count() const {
 	return bones.size();
 }
 
-void Figure::set_bone_parent(int p_bone, int p_parent) {
+void Figure2D::set_bone_parent(int p_bone, int p_parent) {
 	ERR_FAIL_INDEX(p_bone, bones.size());
 	ERR_FAIL_COND(p_parent != -1 && (p_parent < 0));
 
@@ -553,7 +553,7 @@ void Figure::set_bone_parent(int p_bone, int p_parent) {
 	_make_dirty();
 }
 
-void Figure::unparent_bone_and_rest(int p_bone) {
+void Figure2D::unparent_bone_and_rest(int p_bone) {
 	ERR_FAIL_INDEX(p_bone, bones.size());
 
 	_update_process_order();
@@ -570,46 +570,46 @@ void Figure::unparent_bone_and_rest(int p_bone) {
 	_make_dirty();
 }
 
-void Figure::set_bone_disable_rest(int p_bone, bool p_disable) {
+void Figure2D::set_bone_disable_rest(int p_bone, bool p_disable) {
 	ERR_FAIL_INDEX(p_bone, bones.size());
 	bones.write[p_bone].disable_rest = p_disable;
 }
 
-bool Figure::is_bone_rest_disabled(int p_bone) const {
+bool Figure2D::is_bone_rest_disabled(int p_bone) const {
 	ERR_FAIL_INDEX_V(p_bone, bones.size(), false);
 	return bones[p_bone].disable_rest;
 }
 
-int Figure::get_bone_parent(int p_bone) const {
+int Figure2D::get_bone_parent(int p_bone) const {
 	ERR_FAIL_INDEX_V(p_bone, bones.size(), -1);
 
 	return bones[p_bone].parent;
 }
 
-void Figure::set_bone_rest(int p_bone, const Transform &p_rest) {
+void Figure2D::set_bone_rest(int p_bone, const Transform &p_rest) {
 	ERR_FAIL_INDEX(p_bone, bones.size());
 
 	bones.write[p_bone].rest = p_rest;
 	_make_dirty();
 }
-Transform Figure::get_bone_rest(int p_bone) const {
+Transform Figure2D::get_bone_rest(int p_bone) const {
 	ERR_FAIL_INDEX_V(p_bone, bones.size(), Transform());
 
 	return bones[p_bone].rest;
 }
 
-void Figure::set_bone_enabled(int p_bone, bool p_enabled) {
+void Figure2D::set_bone_enabled(int p_bone, bool p_enabled) {
 	ERR_FAIL_INDEX(p_bone, bones.size());
 
 	bones.write[p_bone].enabled = p_enabled;
 	_make_dirty();
 }
-bool Figure::is_bone_enabled(int p_bone) const {
+bool Figure2D::is_bone_enabled(int p_bone) const {
 	ERR_FAIL_INDEX_V(p_bone, bones.size(), false);
 	return bones[p_bone].enabled;
 }
 
-void Figure::bind_child_node_to_bone(int p_bone, Node *p_node) {
+void Figure2D::bind_child_node_to_bone(int p_bone, Node *p_node) {
 	ERR_FAIL_NULL(p_node);
 	ERR_FAIL_INDEX(p_bone, bones.size());
 
@@ -622,14 +622,14 @@ void Figure::bind_child_node_to_bone(int p_bone, Node *p_node) {
 
 	bones.write[p_bone].nodes_bound.push_back(id);
 }
-void Figure::unbind_child_node_from_bone(int p_bone, Node *p_node) {
+void Figure2D::unbind_child_node_from_bone(int p_bone, Node *p_node) {
 	ERR_FAIL_NULL(p_node);
 	ERR_FAIL_INDEX(p_bone, bones.size());
 
 	uint32_t id = p_node->get_instance_id();
 	bones.write[p_bone].nodes_bound.erase(id);
 }
-void Figure::get_bound_child_nodes_to_bone(int p_bone, List<Node *> *p_bound) const {
+void Figure2D::get_bound_child_nodes_to_bone(int p_bone, List<Node *> *p_bound) const {
 	ERR_FAIL_INDEX(p_bone, bones.size());
 
 	for (const List<uint32_t>::Element *E = bones[p_bone].nodes_bound.front(); E; E = E->next()) {
@@ -639,7 +639,7 @@ void Figure::get_bound_child_nodes_to_bone(int p_bone, List<Node *> *p_bound) co
 	}
 }
 
-void Figure::clear_bones() {
+void Figure2D::clear_bones() {
 	bones.clear();
 	process_order_dirty = true;
 	version++;
@@ -648,7 +648,7 @@ void Figure::clear_bones() {
 
 // posing api
 
-void Figure::set_bone_pose(int p_bone, const Transform &p_pose) {
+void Figure2D::set_bone_pose(int p_bone, const Transform &p_pose) {
 	ERR_FAIL_INDEX(p_bone, bones.size());
 
 	bones.write[p_bone].pose = p_pose;
@@ -656,12 +656,12 @@ void Figure::set_bone_pose(int p_bone, const Transform &p_pose) {
 		_make_dirty();
 	}
 }
-Transform Figure::get_bone_pose(int p_bone) const {
+Transform Figure2D::get_bone_pose(int p_bone) const {
 	ERR_FAIL_INDEX_V(p_bone, bones.size(), Transform());
 	return bones[p_bone].pose;
 }
 
-void Figure::set_bone_custom_pose(int p_bone, const Transform &p_custom_pose) {
+void Figure2D::set_bone_custom_pose(int p_bone, const Transform &p_custom_pose) {
 	ERR_FAIL_INDEX(p_bone, bones.size());
 	//ERR_FAIL_COND( !is_inside_scene() );
 
@@ -671,12 +671,12 @@ void Figure::set_bone_custom_pose(int p_bone, const Transform &p_custom_pose) {
 	_make_dirty();
 }
 
-Transform Figure::get_bone_custom_pose(int p_bone) const {
+Transform Figure2D::get_bone_custom_pose(int p_bone) const {
 	ERR_FAIL_INDEX_V(p_bone, bones.size(), Transform());
 	return bones[p_bone].custom_pose;
 }
 
-void Figure::_make_dirty() {
+void Figure2D::_make_dirty() {
 	if (dirty)
 		return;
 
@@ -684,13 +684,13 @@ void Figure::_make_dirty() {
 	dirty = true;
 }
 
-int Figure::get_process_order(int p_idx) {
+int Figure2D::get_process_order(int p_idx) {
 	ERR_FAIL_INDEX_V(p_idx, bones.size(), -1);
 	_update_process_order();
 	return process_order[p_idx];
 }
 
-void Figure::localize_rests() {
+void Figure2D::localize_rests() {
 	_update_process_order();
 
 	for (int i = bones.size() - 1; i >= 0; i--) {
@@ -701,69 +701,69 @@ void Figure::localize_rests() {
 	}
 }
 
-Rect2 Figure::get_rect() const {
+Rect2 Figure2D::get_rect() const {
 	return Rect2(_figure_aabb.position.x, _figure_aabb.position.y, _figure_aabb.size.x, _figure_aabb.size.y);
 }
 
-Point2 Figure::get_figure_offset() const {
+Point2 Figure2D::get_figure_offset() const {
 	return figure_offset;
 }
 
-void Figure::set_figure_offset(const Point2 &p_offset) {
+void Figure2D::set_figure_offset(const Point2 &p_offset) {
 	figure_offset = p_offset;
 	_update_transform();
 }
 
-void Figure::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("add_bone", "name"), &Figure::add_bone);
-	ClassDB::bind_method(D_METHOD("find_bone", "name"), &Figure::find_bone);
-	ClassDB::bind_method(D_METHOD("get_bone_name", "bone_idx"), &Figure::get_bone_name);
+void Figure2D::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("add_bone", "name"), &Figure2D::add_bone);
+	ClassDB::bind_method(D_METHOD("find_bone", "name"), &Figure2D::find_bone);
+	ClassDB::bind_method(D_METHOD("get_bone_name", "bone_idx"), &Figure2D::get_bone_name);
 
-	ClassDB::bind_method(D_METHOD("get_bone_parent", "bone_idx"), &Figure::get_bone_parent);
-	ClassDB::bind_method(D_METHOD("set_bone_parent", "bone_idx", "parent_idx"), &Figure::set_bone_parent);
+	ClassDB::bind_method(D_METHOD("get_bone_parent", "bone_idx"), &Figure2D::get_bone_parent);
+	ClassDB::bind_method(D_METHOD("set_bone_parent", "bone_idx", "parent_idx"), &Figure2D::set_bone_parent);
 
-	ClassDB::bind_method(D_METHOD("get_bone_count"), &Figure::get_bone_count);
+	ClassDB::bind_method(D_METHOD("get_bone_count"), &Figure2D::get_bone_count);
 
-	ClassDB::bind_method(D_METHOD("unparent_bone_and_rest", "bone_idx"), &Figure::unparent_bone_and_rest);
+	ClassDB::bind_method(D_METHOD("unparent_bone_and_rest", "bone_idx"), &Figure2D::unparent_bone_and_rest);
 
-	ClassDB::bind_method(D_METHOD("get_bone_rest", "bone_idx"), &Figure::get_bone_rest);
-	ClassDB::bind_method(D_METHOD("set_bone_rest", "bone_idx", "rest"), &Figure::set_bone_rest);
+	ClassDB::bind_method(D_METHOD("get_bone_rest", "bone_idx"), &Figure2D::get_bone_rest);
+	ClassDB::bind_method(D_METHOD("set_bone_rest", "bone_idx", "rest"), &Figure2D::set_bone_rest);
 
-	ClassDB::bind_method(D_METHOD("localize_rests"), &Figure::localize_rests);
+	ClassDB::bind_method(D_METHOD("localize_rests"), &Figure2D::localize_rests);
 
-	ClassDB::bind_method(D_METHOD("set_bone_disable_rest", "bone_idx", "disable"), &Figure::set_bone_disable_rest);
-	ClassDB::bind_method(D_METHOD("is_bone_rest_disabled", "bone_idx"), &Figure::is_bone_rest_disabled);
+	ClassDB::bind_method(D_METHOD("set_bone_disable_rest", "bone_idx", "disable"), &Figure2D::set_bone_disable_rest);
+	ClassDB::bind_method(D_METHOD("is_bone_rest_disabled", "bone_idx"), &Figure2D::is_bone_rest_disabled);
 
-	ClassDB::bind_method(D_METHOD("bind_child_node_to_bone", "bone_idx", "node"), &Figure::bind_child_node_to_bone);
-	ClassDB::bind_method(D_METHOD("unbind_child_node_from_bone", "bone_idx", "node"), &Figure::unbind_child_node_from_bone);
-	ClassDB::bind_method(D_METHOD("get_bound_child_nodes_to_bone", "bone_idx"), &Figure::_get_bound_child_nodes_to_bone);
+	ClassDB::bind_method(D_METHOD("bind_child_node_to_bone", "bone_idx", "node"), &Figure2D::bind_child_node_to_bone);
+	ClassDB::bind_method(D_METHOD("unbind_child_node_from_bone", "bone_idx", "node"), &Figure2D::unbind_child_node_from_bone);
+	ClassDB::bind_method(D_METHOD("get_bound_child_nodes_to_bone", "bone_idx"), &Figure2D::_get_bound_child_nodes_to_bone);
 
-	ClassDB::bind_method(D_METHOD("clear_bones"), &Figure::clear_bones);
+	ClassDB::bind_method(D_METHOD("clear_bones"), &Figure2D::clear_bones);
 
-	ClassDB::bind_method(D_METHOD("get_bone_pose", "bone_idx"), &Figure::get_bone_pose);
-	ClassDB::bind_method(D_METHOD("set_bone_pose", "bone_idx", "pose"), &Figure::set_bone_pose);
+	ClassDB::bind_method(D_METHOD("get_bone_pose", "bone_idx"), &Figure2D::get_bone_pose);
+	ClassDB::bind_method(D_METHOD("set_bone_pose", "bone_idx", "pose"), &Figure2D::set_bone_pose);
 
-	ClassDB::bind_method(D_METHOD("clear_bones_global_pose_override"), &Figure::clear_bones_global_pose_override);
-	ClassDB::bind_method(D_METHOD("set_bone_global_pose_override", "bone_idx", "pose", "amount", "persistent"), &Figure::set_bone_global_pose_override, DEFVAL(false));
-	ClassDB::bind_method(D_METHOD("get_bone_global_pose", "bone_idx"), &Figure::get_bone_global_pose);
+	ClassDB::bind_method(D_METHOD("clear_bones_global_pose_override"), &Figure2D::clear_bones_global_pose_override);
+	ClassDB::bind_method(D_METHOD("set_bone_global_pose_override", "bone_idx", "pose", "amount", "persistent"), &Figure2D::set_bone_global_pose_override, DEFVAL(false));
+	ClassDB::bind_method(D_METHOD("get_bone_global_pose", "bone_idx"), &Figure2D::get_bone_global_pose);
 
-	ClassDB::bind_method(D_METHOD("get_bone_custom_pose", "bone_idx"), &Figure::get_bone_custom_pose);
-	ClassDB::bind_method(D_METHOD("set_bone_custom_pose", "bone_idx", "custom_pose"), &Figure::set_bone_custom_pose);
+	ClassDB::bind_method(D_METHOD("get_bone_custom_pose", "bone_idx"), &Figure2D::get_bone_custom_pose);
+	ClassDB::bind_method(D_METHOD("set_bone_custom_pose", "bone_idx", "custom_pose"), &Figure2D::set_bone_custom_pose);
 
-	ClassDB::bind_method(D_METHOD("set_figure_offset", "offset"), &Figure::set_figure_offset);
-	ClassDB::bind_method(D_METHOD("get_figure_offset"), &Figure::get_figure_offset);
-	ClassDB::bind_method(D_METHOD("set_figure_scale", "figure_scale"), &Figure::set_figure_scale);
-	ClassDB::bind_method(D_METHOD("get_figure_scale"), &Figure::get_figure_scale);
-	ClassDB::bind_method(D_METHOD("set_figure_rotation", "figure_rotation"), &Figure::set_figure_rotation);
-	ClassDB::bind_method(D_METHOD("get_figure_rotation"), &Figure::get_figure_rotation);
-	ClassDB::bind_method(D_METHOD("set_figure_rotation_x_degrees", "figure_rotation_x_degrees"), &Figure::set_figure_rotation_x_degrees);
-	ClassDB::bind_method(D_METHOD("get_figure_rotation_x_degrees"), &Figure::get_figure_rotation_x_degrees);
-	ClassDB::bind_method(D_METHOD("set_figure_rotation_y_degrees", "figure_rotation_x_degrees"), &Figure::set_figure_rotation_y_degrees);
-	ClassDB::bind_method(D_METHOD("get_figure_rotation_y_degrees"), &Figure::get_figure_rotation_y_degrees);
-	ClassDB::bind_method(D_METHOD("set_figure_rotation_z_degrees", "figure_rotation_x_degrees"), &Figure::set_figure_rotation_z_degrees);
-	ClassDB::bind_method(D_METHOD("get_figure_rotation_z_degrees"), &Figure::get_figure_rotation_z_degrees);
-	ClassDB::bind_method(D_METHOD("set_figure_orientation", "figure_orientation"), &Figure::set_figure_orientation);
-	ClassDB::bind_method(D_METHOD("get_figure_orientation"), &Figure::get_figure_orientation);
+	ClassDB::bind_method(D_METHOD("set_figure_offset", "offset"), &Figure2D::set_figure_offset);
+	ClassDB::bind_method(D_METHOD("get_figure_offset"), &Figure2D::get_figure_offset);
+	ClassDB::bind_method(D_METHOD("set_figure_scale", "figure_scale"), &Figure2D::set_figure_scale);
+	ClassDB::bind_method(D_METHOD("get_figure_scale"), &Figure2D::get_figure_scale);
+	ClassDB::bind_method(D_METHOD("set_figure_rotation", "figure_rotation"), &Figure2D::set_figure_rotation);
+	ClassDB::bind_method(D_METHOD("get_figure_rotation"), &Figure2D::get_figure_rotation);
+	ClassDB::bind_method(D_METHOD("set_figure_rotation_x_degrees", "figure_rotation_x_degrees"), &Figure2D::set_figure_rotation_x_degrees);
+	ClassDB::bind_method(D_METHOD("get_figure_rotation_x_degrees"), &Figure2D::get_figure_rotation_x_degrees);
+	ClassDB::bind_method(D_METHOD("set_figure_rotation_y_degrees", "figure_rotation_x_degrees"), &Figure2D::set_figure_rotation_y_degrees);
+	ClassDB::bind_method(D_METHOD("get_figure_rotation_y_degrees"), &Figure2D::get_figure_rotation_y_degrees);
+	ClassDB::bind_method(D_METHOD("set_figure_rotation_z_degrees", "figure_rotation_x_degrees"), &Figure2D::set_figure_rotation_z_degrees);
+	ClassDB::bind_method(D_METHOD("get_figure_rotation_z_degrees"), &Figure2D::get_figure_rotation_z_degrees);
+	ClassDB::bind_method(D_METHOD("set_figure_orientation", "figure_orientation"), &Figure2D::set_figure_orientation);
+	ClassDB::bind_method(D_METHOD("get_figure_orientation"), &Figure2D::get_figure_orientation);
 
 	ADD_GROUP("Figure Transform", "figure_");
 	ADD_PROPERTY(PropertyInfo(Variant::BASIS, "figure_orientation", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "set_figure_orientation", "get_figure_orientation");
@@ -777,7 +777,7 @@ void Figure::_bind_methods() {
 	BIND_CONSTANT(NOTIFICATION_UPDATE_FIGURE);
 }
 
-Figure::Figure() :
+Figure2D::Figure2D() :
 		_bone_transformer(this) {
 	figure_offset = Point2(0, 0);
 	figure_angle = Vector3(0, 0, 0);
@@ -794,5 +794,5 @@ Figure::Figure() :
 	set_meta(BONE_TRANSFORMER_KEY, &_bone_transformer);
 }
 
-Figure::~Figure() {
+Figure2D::~Figure2D() {
 }

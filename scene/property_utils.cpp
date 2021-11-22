@@ -113,7 +113,8 @@ struct _FastPackState {
 	SceneState *state = nullptr;
 	int node = -1;
 	_FastPackState() {}
-	_FastPackState(SceneState *state, int node) : state(state), node(node) {}
+	_FastPackState(SceneState *state, int node) :
+			state(state), node(node) {}
 };
 } // namespace
 

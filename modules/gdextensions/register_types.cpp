@@ -75,8 +75,8 @@
 #include "visual/autotilemap.h"
 #include "visual/bend_deform_2d.h"
 #include "visual/bullet_manager.h"
-#include "visual/cable2d.h"
-#include "visual/cable2d_editor_plugin.h"
+#include "visual/cable_2d.h"
+#include "visual/cable_2d_editor_plugin.h"
 #include "visual/destructible_sprite.h"
 #include "visual/explosion_particles.h"
 #include "visual/figure_2d.h"
@@ -211,7 +211,7 @@ void register_gdextensions_types() {
 	ClassDB::register_class<AudioStreamPreviewGenerator>();
 #endif
 	ClassDB::register_class<SpriteMesh>();
-	ClassDB::register_class<Figure>();
+	ClassDB::register_class<Figure2D>();
 
 	ClassDB::register_class<Tree2D>();
 	ClassDB::register_class<GDWaterSplash>();

@@ -308,7 +308,9 @@ void RasterizerStorageMetal::shader_get_custom_defines(RID p_shader, Vector<Stri
 void RasterizerStorageMetal::shader_remove_custom_define(RID p_shader, const String &p_define) {}
 
 void RasterizerStorageMetal::set_shader_async_hidden_forbidden(bool p_forbidden) {}
-bool RasterizerStorageMetal::is_shader_async_hidden_forbidden() { return false; }
+bool RasterizerStorageMetal::is_shader_async_hidden_forbidden() {
+	return false;
+}
 
 /* COMMON MATERIAL API */
 

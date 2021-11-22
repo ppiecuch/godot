@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  cable2d_editor_plugin.h                                              */
+/*  cable_2d.h                                                           */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,35 +28,67 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef CABLE_2D_EDITOR_PLUGIN_H
-#define CABLE_2D_EDITOR_PLUGIN_H
+/* cable2d.h */
+#ifndef CABLE2D_H
+#define CABLE2D_H
 
-#include "cable2d.h"
-#include "editor/plugins/abstract_polygon_2d_editor.h"
+#include "scene/2d/node_2d.h"
 
-class Cable2DEditor : public AbstractPolygon2DEditor {
-	GDCLASS(Cable2DEditor, AbstractPolygon2DEditor);
+class Cable2D : public Node2D {
+	GDCLASS(Cable2D, Node2D);
 
-	Cable2D *node;
+public:
+	Cable2D();
+
+	void set_points(const PoolVector<Vector2> &p_points);
+	PoolVector<Vector2> get_points() const;
+
+	void set_points_forces(const PoolVector<Vector2> &p_forces);
+	PoolVector<Vector2> get_points_forces() const;
+
+	void set_point_force(int index, Vector2 force);
+	Vector2 get_point_force(int index) const;
+
+	void set_color(Color color);
+	Color get_color() const;
+
+	void set_width(float width);
+	float get_width() const;
+
+	void set_segments(int segments);
+	int get_segments() const;
+
+	void set_restlength_scale(float scale);
+	float get_restlength_scale() const;
+
+	void set_iterations(int iterations);
+	int get_iterations() const;
+
+private:
+	void rebuild_points();
+	void update_rest_length();
+
+	void update_cable(float delta);
+	void update_constraints();
 
 protected:
-	virtual Node2D *_get_node() const;
-	virtual void _set_node(Node *p_line);
+	void _notification(int p_what);
+	void _draw();
 
-	virtual bool _is_line() const;
-	virtual Variant _get_polygon(int p_idx) const;
-	virtual void _set_polygon(int p_idx, const Variant &p_polygon) const;
-	virtual void _action_set_polygon(int p_idx, const Variant &p_previous, const Variant &p_polygon);
+	static void _bind_methods();
 
 public:
-	Cable2DEditor(EditorNode *p_editor);
+	PoolVector<Vector2> _points; // Pinned points
+	PoolVector<Vector2> _rendered_points;
+	PoolVector<Vector2> _old_points;
+	PoolVector<float> _rest_lengths;
+	PoolVector<Vector2> _point_forces; // Allows for scripts to sway the cables per segment.
+	int _segments; // Number of points inbetween the pinned points.
+	float _width;
+	float _restlength_scale;
+	float _force_damping;
+	int _iterations;
+	Color _color;
 };
 
-class Cable2DEditorPlugin : public AbstractPolygon2DEditorPlugin {
-	GDCLASS(Cable2DEditorPlugin, AbstractPolygon2DEditorPlugin);
-
-public:
-	Cable2DEditorPlugin(EditorNode *p_node);
-};
-
-#endif // CABLE_2D_EDITOR_PLUGIN_H
+#endif

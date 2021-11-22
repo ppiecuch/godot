@@ -28,10 +28,13 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef 3ds_gfx_hw_h
-#define 3ds_gfx_hw_h
+#ifndef 3DS_GFX_HW_H
+#define 3DS_GFX_HW_H
 
 #include "scene/2d/node_2d.h"
+
+struct OAMTable;
+struct SpriteEntry;
 
 enum NdsScreen {
 	SCREEN_TOP,
@@ -55,6 +58,12 @@ enum NdsBackgroundBitmapSize {
 class NdsSprite : public Node2D {
 	GDCLASS(NdsSprite, Node2D);
 
+	int oam_id;
+
+	void _update_oam(OAMTable *p_oam);
+	void _init_oam(OAMTable *p_oam);
+	void _set_visibility(SpriteEntry *p_sprite_entry, bool p_hidden, bool p_affine, bool p_double_bound);
+
 public:
 	NdsSprite();
 	~NdsSprite();
@@ -68,4 +77,4 @@ public:
 	~NdsBackground();
 };
 
-#endif // 3ds_gfx_hw_h
+#endif // 3DS_GFX_HW_H

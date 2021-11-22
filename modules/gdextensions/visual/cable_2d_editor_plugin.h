@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  cable2d_editor_plugin.cpp                                            */
+/*  cable_2d_editor_plugin.h                                             */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,39 +28,35 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "cable2d_editor_plugin.h"
+#ifndef CABLE_2D_EDITOR_PLUGIN_H
+#define CABLE_2D_EDITOR_PLUGIN_H
 
-Node2D *Cable2DEditor::_get_node() const {
-	return node;
-}
+#include "cable_2d.h"
+#include "editor/plugins/abstract_polygon_2d_editor.h"
 
-void Cable2DEditor::_set_node(Node *p_line) {
-	node = cast_to<Cable2D>(p_line);
-}
+class Cable2DEditor : public AbstractPolygon2DEditor {
+	GDCLASS(Cable2DEditor, AbstractPolygon2DEditor);
 
-bool Cable2DEditor::_is_line() const {
-	return true;
-}
+	Cable2D *node;
 
-Variant Cable2DEditor::_get_polygon(int p_idx) const {
-	return _get_node()->get("points");
-}
+protected:
+	virtual Node2D *_get_node() const;
+	virtual void _set_node(Node *p_line);
 
-void Cable2DEditor::_set_polygon(int p_idx, const Variant &p_polygon) const {
-	_get_node()->set("points", p_polygon);
-}
+	virtual bool _is_line() const;
+	virtual Variant _get_polygon(int p_idx) const;
+	virtual void _set_polygon(int p_idx, const Variant &p_polygon) const;
+	virtual void _action_set_polygon(int p_idx, const Variant &p_previous, const Variant &p_polygon);
 
-void Cable2DEditor::_action_set_polygon(int p_idx, const Variant &p_previous, const Variant &p_polygon) {
-	Node2D *node = _get_node();
-	undo_redo->add_do_method(node, "set_points", p_polygon);
-	undo_redo->add_undo_method(node, "set_points", p_previous);
-}
+public:
+	Cable2DEditor(EditorNode *p_editor);
+};
 
-Cable2DEditor::Cable2DEditor(EditorNode *p_editor) :
-		AbstractPolygon2DEditor(p_editor) {
-	node = NULL;
-}
+class Cable2DEditorPlugin : public AbstractPolygon2DEditorPlugin {
+	GDCLASS(Cable2DEditorPlugin, AbstractPolygon2DEditorPlugin);
 
-Cable2DEditorPlugin::Cable2DEditorPlugin(EditorNode *p_node) :
-		AbstractPolygon2DEditorPlugin(p_node, memnew(Cable2DEditor(p_node)), "Cable2D") {
-}
+public:
+	Cable2DEditorPlugin(EditorNode *p_node);
+};
+
+#endif // CABLE_2D_EDITOR_PLUGIN_H
