@@ -88,6 +88,7 @@ public:
 
 		RID skeleton;
 		RID material_override;
+		RID material_overlay;
 
 		Transform transform;
 
@@ -247,6 +248,9 @@ public:
 	virtual void shader_add_custom_define(RID p_shader, const String &p_define) = 0;
 	virtual void shader_get_custom_defines(RID p_shader, Vector<String> *p_defines) const = 0;
 	virtual void shader_remove_custom_define(RID p_shader, const String &p_define) = 0;
+
+	virtual void set_shader_async_hidden_forbidden(bool p_forbidden) = 0;
+	virtual bool is_shader_async_hidden_forbidden() = 0;
 
 	/* COMMON MATERIAL API */
 

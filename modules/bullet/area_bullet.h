@@ -148,7 +148,6 @@ public:
 
 	virtual void dispatch_callbacks();
 	void call_event(CollisionObjectBullet *p_otherObject, PhysicsServer::AreaBodyStatus p_status);
-	void set_on_state_change(ObjectID p_id, const StringName &p_method, const Variant &p_udata = Variant());
 	void scratch();
 
 	void clear_overlaps(bool p_notify);
@@ -157,7 +156,7 @@ public:
 
 	virtual void on_collision_filters_change();
 	virtual void on_collision_checker_start() {}
-	virtual void on_collision_checker_end() { isTransformChanged = false; }
+	virtual void on_collision_checker_end() { updated = false; }
 
 	void add_overlap(CollisionObjectBullet *p_otherObject);
 	void put_overlap_as_exit(int p_index);

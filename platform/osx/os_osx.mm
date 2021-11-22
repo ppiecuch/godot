@@ -391,14 +391,6 @@ static NSCursor *cursorFromSelector(SEL selector, SEL fallback = nil) {
 		CGLEnable((CGLContextObj)[OS_OSX::singleton->context CGLContextObj], kCGLCESurfaceBackingSize);
 	}
 
-	if (OS_OSX::singleton->main_loop) {
-		Main::force_redraw();
-		//Event retrieval blocks until resize is over. Call Main::iteration() directly.
-		if (!Main::is_iterating()) { //avoid cyclic loop
-			Main::iteration();
-		}
-	}
-
 	/*
 	_GodotInputFramebufferSize(window, fbRect.size.width, fbRect.size.height);
 	_GodotInputWindowSize(window, contentRect.size.width, contentRect.size.height);
@@ -1909,6 +1901,8 @@ Error OS_OSX::initialize(const VideoMode &p_desired, int p_video_driver, int p_a
 
 	[window_view setOpenGLContext:context];
 
+	context_offscreen = [[NSOpenGLContext alloc] initWithFormat:pixelFormat shareContext:nil];
+
 	[context makeCurrentContext];
 
 	GLint dim[2];
@@ -1916,6 +1910,11 @@ Error OS_OSX::initialize(const VideoMode &p_desired, int p_video_driver, int p_a
 	dim[1] = window_size.height;
 	CGLSetParameter((CGLContextObj)[context CGLContextObj], kCGLCPSurfaceBackingSize, &dim[0]);
 	CGLEnable((CGLContextObj)[context CGLContextObj], kCGLCESurfaceBackingSize);
+
+	if (get_render_thread_mode() != RENDER_THREAD_UNSAFE) {
+		CGLError err = CGLEnable((CGLContextObj)[context CGLContextObj], kCGLCEMPEngine); // Enable multithreading.
+		ERR_FAIL_COND_V(err != kCGLNoError, ERR_UNAVAILABLE);
+	}
 
 	set_use_vsync(p_desired.use_vsync);
 
@@ -2668,6 +2667,18 @@ OS::VideoMode OS_OSX::get_video_mode(int p_screen) const {
 }
 
 void OS_OSX::get_fullscreen_mode_list(List<VideoMode> *p_list, int p_screen) const {
+}
+
+bool OS_OSX::is_offscreen_gl_available() const {
+	return context_offscreen != nil;
+}
+
+void OS_OSX::set_offscreen_gl_current(bool p_current) {
+	if (p_current) {
+		[context makeCurrentContext];
+	} else {
+		[NSOpenGLContext clearCurrentContext];
+	}
 }
 
 int OS_OSX::get_screen_count() const {
@@ -3530,11 +3541,25 @@ void OS_OSX::force_process_input() {
 	joypad_osx->process_joypads();
 }
 
+void OS_OSX::pre_wait_observer_cb(CFRunLoopObserverRef p_observer, CFRunLoopActivity p_activiy, void *p_context) {
+	// Prevent main loop from sleeping and redraw window during resize / modal popups.
+
+	if (get_singleton()->get_main_loop()) {
+		Main::force_redraw();
+		if (!Main::is_iterating()) { // Avoid cyclic loop.
+			Main::iteration();
+		}
+	}
+
+	CFRunLoopWakeUp(CFRunLoopGetCurrent()); // Prevent main loop from sleeping.
+}
+
 void OS_OSX::run() {
 	force_quit = false;
 
-	if (!main_loop)
+	if (!main_loop) {
 		return;
+	}
 
 	main_loop->init();
 
@@ -3543,10 +3568,8 @@ void OS_OSX::run() {
 		set_window_fullscreen(true);
 	}
 
-	//uint64_t last_ticks=get_ticks_usec();
-
-	//int frames=0;
-	//uint64_t frame=0;
+	CFRunLoopObserverRef pre_wait_observer = CFRunLoopObserverCreate(kCFAllocatorDefault, kCFRunLoopBeforeWaiting, true, 0, &pre_wait_observer_cb, nullptr);
+	CFRunLoopAddObserver(CFRunLoopGetCurrent(), pre_wait_observer, kCFRunLoopCommonModes);
 
 	bool quit = false;
 
@@ -3562,6 +3585,9 @@ void OS_OSX::run() {
 			ERR_PRINT("NSException: " + String([exception reason].UTF8String));
 		}
 	};
+
+	CFRunLoopRemoveObserver(CFRunLoopGetCurrent(), pre_wait_observer, kCFRunLoopCommonModes);
+	CFRelease(pre_wait_observer);
 
 	main_loop->finish();
 }
@@ -3659,6 +3685,7 @@ OS_OSX *OS_OSX::singleton = NULL;
 
 OS_OSX::OS_OSX() {
 	context = nullptr;
+	context_offscreen = nullptr;
 
 	on_top = false;
 	memset(cursors, 0, sizeof(cursors));

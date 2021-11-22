@@ -127,7 +127,6 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 	private Button mWiFiSettingsButton;
 
 	private XRMode xrMode = XRMode.REGULAR;
-	private boolean use_32_bits = false;
 	private boolean use_immersive = false;
 	private boolean use_debug_opengl = false;
 	private boolean translucent = false;
@@ -362,7 +361,7 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 		// ...add to FrameLayout
 		containerLayout.addView(edittext);
 
-		mView = new GodotView(activity, this, xrMode, use_gl3, use_32_bits, use_debug_opengl, translucent);
+		mView = new GodotView(activity, this, xrMode, use_gl3, use_debug_opengl, translucent);
 		containerLayout.addView(mView, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 
 		edittext.setView(mView);
@@ -410,6 +409,18 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 				}
 			}
 		}
+	}
+
+	public boolean createOffscreenGL() {
+		return mView.createOffscreenGL();
+	}
+
+	public void destroyOffscreenGL() {
+		mView.destroyOffscreenGL();
+	}
+
+	public void setOffscreenGLCurrent(boolean p_current) {
+		mView.setOffscreenGLCurrent(p_current);
 	}
 
 	public void setKeepScreenOn(final boolean p_enabled) {
@@ -614,8 +625,6 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 				xrMode = XRMode.REGULAR;
 			} else if (command_line[i].equals(XRMode.OVR.cmdLineArg)) {
 				xrMode = XRMode.OVR;
-			} else if (command_line[i].equals("--use_depth_32")) {
-				use_32_bits = true;
 			} else if (command_line[i].equals("--debug_opengl")) {
 				use_debug_opengl = true;
 			} else if (command_line[i].equals("--translucent")) {

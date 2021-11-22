@@ -192,6 +192,8 @@ public:
 	BIND2C(shader_get_custom_defines, RID, Vector<String> *)
 	BIND2(shader_remove_custom_define, RID, const String &)
 
+	BIND1(set_shader_async_hidden_forbidden, bool)
+
 	/* COMMON MATERIAL API */
 
 	BIND0R(RID, material_create)
@@ -600,7 +602,7 @@ public:
 	BIND8(rooms_finalize, RID, bool, bool, bool, bool, String, bool, bool)
 	BIND4(rooms_override_camera, RID, bool, const Vector3 &, const Vector<Plane> *)
 	BIND2(rooms_set_active, RID, bool)
-	BIND2(rooms_set_params, RID, int)
+	BIND3(rooms_set_params, RID, int, real_t)
 	BIND3(rooms_set_debug_feature, RID, RoomsDebugFeature, bool)
 	BIND2(rooms_update_gameplay_monitor, RID, const Vector<Vector3> &)
 
@@ -618,6 +620,7 @@ public:
 	BIND3(instance_geometry_set_flag, RID, InstanceFlags, bool)
 	BIND2(instance_geometry_set_cast_shadows_setting, RID, ShadowCastingSetting)
 	BIND2(instance_geometry_set_material_override, RID, RID)
+	BIND2(instance_geometry_set_material_overlay, RID, RID)
 
 	BIND5(instance_geometry_set_draw_range, RID, float, float, float, float)
 	BIND2(instance_geometry_set_as_instance_lod, RID, RID)

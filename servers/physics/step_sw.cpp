@@ -141,7 +141,7 @@ void StepSW::_check_suspend(BodySW *p_island, real_t p_delta) {
 
 void StepSW::step(SpaceSW *p_space, real_t p_delta, int p_iterations) {
 	p_space->lock(); // can't access space during this
-
+	p_space->set_step(p_delta);
 	p_space->setup(); //update inertias, etc
 
 	const SelfList<BodySW>::List *body_list = &p_space->get_active_body_list();
@@ -161,6 +161,9 @@ void StepSW::step(SpaceSW *p_space, real_t p_delta, int p_iterations) {
 	}
 
 	p_space->set_active_objects(active_count);
+
+	// Update the broadphase to register collision pairs.
+	p_space->update();
 
 	{ //profile
 		profile_endtime = OS::get_singleton()->get_ticks_usec();
@@ -278,7 +281,6 @@ void StepSW::step(SpaceSW *p_space, real_t p_delta, int p_iterations) {
 		profile_begtime = profile_endtime;
 	}
 
-	p_space->update();
 	p_space->unlock();
 	_step++;
 }

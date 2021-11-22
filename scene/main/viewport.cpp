@@ -650,10 +650,11 @@ void Viewport::_process_picking(bool p_ignore_paused) {
 			if (camera) {
 				Vector3 from = camera->project_ray_origin(pos);
 				Vector3 dir = camera->project_ray_normal(pos);
+				float far = camera->far;
 
 				PhysicsDirectSpaceState *space = PhysicsServer::get_singleton()->space_get_direct_state(find_world()->get_space());
 				if (space) {
-					bool col = space->intersect_ray(from, from + dir * 10000, result, Set<RID>(), 0xFFFFFFFF, true, true, true);
+					bool col = space->intersect_ray(from, from + dir * far, result, Set<RID>(), 0xFFFFFFFF, true, true, true);
 					ObjectID new_collider = 0;
 					if (col) {
 						CollisionObject *co = Object::cast_to<CollisionObject>(result.collider);
@@ -2698,6 +2699,10 @@ void Viewport::_drop_physics_mouseover(bool p_paused_only) {
 		if (o) {
 			CollisionObject2D *co = Object::cast_to<CollisionObject2D>(o);
 			if (co) {
+				if (!co->is_inside_tree()) {
+					to_erase.push_back(E);
+					continue;
+				}
 				if (p_paused_only && co->can_process()) {
 					continue;
 				}
@@ -2716,7 +2721,9 @@ void Viewport::_drop_physics_mouseover(bool p_paused_only) {
 	if (physics_object_over) {
 		CollisionObject *co = Object::cast_to<CollisionObject>(ObjectDB::get_instance(physics_object_over));
 		if (co) {
-			if (!(p_paused_only && co->can_process())) {
+			if (!co->is_inside_tree()) {
+				physics_object_over = physics_object_capture = 0;
+			} else if (!(p_paused_only && co->can_process())) {
 				co->_mouse_exit();
 				physics_object_over = physics_object_capture = 0;
 			}

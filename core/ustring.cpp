@@ -42,6 +42,7 @@
 #include "core/translation.h"
 #include "core/ucaps.h"
 #include "core/variant.h"
+#include "core/version_generated.gen.h"
 
 #include <wchar.h>
 #include <cstdint>
@@ -1540,10 +1541,15 @@ bool String::parse_utf8(const char *p_utf8, int p_len) {
 					skip = 2;
 				} else if ((c & 0xF8) == 0xF0) {
 					skip = 3;
+					if (sizeof(wchar_t) == 2) {
+						str_size++; // encode as surrogate pair.
+					}
 				} else if ((c & 0xFC) == 0xF8) {
 					skip = 4;
+					// invalid character, too long to encode as surrogates.
 				} else if ((c & 0xFE) == 0xFC) {
 					skip = 5;
+					// invalid character, too long to encode as surrogates.
 				} else {
 					_UNICERROR("invalid skip");
 					return true; //invalid utf8
@@ -1635,12 +1641,14 @@ bool String::parse_utf8(const char *p_utf8, int p_len) {
 			}
 		}
 
-		//printf("char %i, len %i\n",unichar,len);
-		if (sizeof(wchar_t) == 2 && unichar > 0xFFFF) {
-			unichar = ' '; //too long for windows
+		if (sizeof(wchar_t) == 2 && unichar > 0x10FFFF) {
+			unichar = ' '; // invalid character, too long to encode as surrogates.
+		} else if (sizeof(wchar_t) == 2 && unichar > 0xFFFF) {
+			*(dst++) = uint32_t((unichar >> 10) + 0xD7C0); // lead surrogate.
+			*(dst++) = uint32_t((unichar & 0x3FF) | 0xDC00); // trail surrogate.
+		} else {
+			*(dst++) = unichar;
 		}
-
-		*(dst++) = unichar;
 		cstr_size -= len;
 		p_utf8 += len;
 	}
@@ -1658,6 +1666,18 @@ CharString String::utf8() const {
 	int fl = 0;
 	for (int i = 0; i < l; i++) {
 		uint32_t c = d[i];
+		if ((c & 0xfffffc00) == 0xd800) { // decode surrogate pair.
+			if ((i < l - 1) && (d[i + 1] & 0xfffffc00) == 0xdc00) {
+				c = (c << 10UL) + d[i + 1] - ((0xd800 << 10UL) + 0xdc00 - 0x10000);
+				i++; // skip trail surrogate.
+			} else {
+				fl += 1;
+				continue;
+			}
+		} else if ((c & 0xfffffc00) == 0xdc00) {
+			fl += 1;
+			continue;
+		}
 		if (c <= 0x7f) { // 7 bits.
 			fl += 1;
 		} else if (c <= 0x7ff) { // 11 bits
@@ -1666,7 +1686,6 @@ CharString String::utf8() const {
 			fl += 3;
 		} else if (c <= 0x001fffff) { // 21 bits
 			fl += 4;
-
 		} else if (c <= 0x03ffffff) { // 26 bits
 			fl += 5;
 		} else if (c <= 0x7fffffff) { // 31 bits
@@ -1686,6 +1705,18 @@ CharString String::utf8() const {
 
 	for (int i = 0; i < l; i++) {
 		uint32_t c = d[i];
+		if ((c & 0xfffffc00) == 0xd800) { // decode surrogate pair.
+			if ((i < l - 1) && (d[i + 1] & 0xfffffc00) == 0xdc00) {
+				c = (c << 10UL) + d[i + 1] - ((0xd800 << 10UL) + 0xdc00 - 0x10000);
+				i++; // skip trail surrogate.
+			} else {
+				APPEND_CHAR(' ');
+				continue;
+			}
+		} else if ((c & 0xfffffc00) == 0xdc00) {
+			APPEND_CHAR(' ');
+			continue;
+		}
 
 		if (c <= 0x7f) { // 7 bits.
 			APPEND_CHAR(c);
@@ -4174,7 +4205,7 @@ String String::property_name_encode() const {
 	// as well as '"', '=' or ' ' (32)
 	const CharType *cstr = c_str();
 	for (int i = 0; cstr[i]; i++) {
-		if (cstr[i] == '=' || cstr[i] == '"' || cstr[i] < 33 || cstr[i] > 126) {
+		if (cstr[i] == '=' || cstr[i] == '"' || cstr[i] == ';' || cstr[i] == '[' || cstr[i] == ']' || cstr[i] < 33 || cstr[i] > 126) {
 			return "\"" + c_escape_multiline() + "\"";
 		}
 	}
@@ -4546,15 +4577,19 @@ String TTR(const String &p_text) {
 	return p_text;
 }
 
+/* DTR is used for the documentation, handling descriptions extracted from the XML.
+ * It also replaces `$DOCS_URL` with the actual URL to the documentation's branch,
+ * to allow dehardcoding it in the XML and doing proper substitutions everywhere.
+ */
 String DTR(const String &p_text) {
 	// Comes straight from the XML, so remove indentation and any trailing whitespace.
 	const String text = p_text.dedent().strip_edges();
 
 	if (TranslationServer::get_singleton()) {
-		return TranslationServer::get_singleton()->doc_translate(text);
+		return String(TranslationServer::get_singleton()->doc_translate(text)).replace("$DOCS_URL", VERSION_DOCS_URL);
 	}
 
-	return text;
+	return text.replace("$DOCS_URL", VERSION_DOCS_URL);
 }
 #endif
 

@@ -6,8 +6,8 @@
 	<description>
 		Contains global variables accessible from everywhere. Use [method get_setting], [method set_setting] or [method has_setting] to access them. Variables stored in [code]project.godot[/code] are also loaded into ProjectSettings, making this object very useful for reading custom game configuration options.
 		When naming a Project Settings property, use the full path to the setting including the category. For example, [code]"application/config/name"[/code] for the project name. Category and property names can be viewed in the Project Settings dialog.
-		[b]Feature tags:[/b] Project settings can be overridden for specific platforms and configurations (debug, release, ...) using [url=https://docs.godotengine.org/en/latest/tutorials/export/feature_tags.html]feature tags[/url].
-		[b]Overriding:[/b] Any project setting can be overridden by creating a file named [code]override.cfg[/code] in the project's root directory. This can also be used in exported projects by placing this file in the same directory as the project binary. Overriding will still take the base project settings' [url=https://docs.godotengine.org/en/latest/tutorials/export/feature_tags.html]feature tags[/url] in account. Therefore, make sure to [i]also[/i] override the setting with the desired feature tags if you want them to override base project settings on all platforms and configurations.
+		[b]Feature tags:[/b] Project settings can be overridden for specific platforms and configurations (debug, release, ...) using [url=$DOCS_URL/getting_started/workflow/export/feature_tags.html]feature tags[/url].
+		[b]Overriding:[/b] Any project setting can be overridden by creating a file named [code]override.cfg[/code] in the project's root directory. This can also be used in exported projects by placing this file in the same directory as the project binary. Overriding will still take the base project settings' [url=$DOCS_URL/getting_started/workflow/export/feature_tags.html]feature tags[/url] in account. Therefore, make sure to [i]also[/i] override the setting with the desired feature tags if you want them to override base project settings on all platforms and configurations.
 	</description>
 	<tutorials>
 		<link title="3D Physics Tests Demo">https://godotengine.org/asset-library/asset/675</link>
@@ -67,7 +67,7 @@
 			<return type="String" />
 			<argument index="0" name="path" type="String" />
 			<description>
-				Returns the absolute, native OS path corresponding to the localized [code]path[/code] (starting with [code]res://[/code] or [code]user://[/code]). The returned path will vary depending on the operating system and user preferences. See [url=https://docs.godotengine.org/en/3.4/tutorials/io/data_paths.html]File paths in Godot projects[/url] to see what those paths convert to. See also [method localize_path].
+				Returns the absolute, native OS path corresponding to the localized [code]path[/code] (starting with [code]res://[/code] or [code]user://[/code]). The returned path will vary depending on the operating system and user preferences. See [url=$DOCS_URL/tutorials/io/data_paths.html]File paths in Godot projects[/url] to see what those paths convert to. See also [method localize_path].
 				[b]Note:[/b] [method globalize_path] with [code]res://[/code] will not work in an exported project. Instead, prepend the executable's base directory to the path when running from an exported project:
 				[codeblock]
 				var path = ""
@@ -198,7 +198,7 @@
 		</member>
 		<member name="application/config/name" type="String" setter="" getter="" default="&quot;&quot;">
 			The project's name. It is used both by the Project Manager and by exporters. The project name can be translated by translating its value in localization files. The window title will be set to match the project name automatically on startup.
-			[b]Note:[/b] Changing this value will also change the user data folder's path if [member application/config/use_custom_user_dir] is [code]false[/code]. After renaming the project, you will no longer be able to access existing data in [code]user://[/code] unless you rename the old folder to match the new project name. See [url=https://docs.godotengine.org/en/3.4/tutorials/io/data_paths.html]Data paths[/url] in the documentation for more information.
+			[b]Note:[/b] Changing this value will also change the user data folder's path if [member application/config/use_custom_user_dir] is [code]false[/code]. After renaming the project, you will no longer be able to access existing data in [code]user://[/code] unless you rename the old folder to match the new project name. See [url=$DOCS_URL/tutorials/io/data_paths.html]Data paths[/url] in the documentation for more information.
 		</member>
 		<member name="application/config/project_settings_override" type="String" setter="" getter="" default="&quot;&quot;">
 			Specifies a file to override project settings. For example: [code]user://custom_settings.cfg[/code]. See "Overriding" in the [ProjectSettings] class description at the top for more information.
@@ -276,7 +276,9 @@
 			Safer override for [member audio/mix_rate] in the Web platform. Here [code]0[/code] means "let the browser choose" (since some browsers do not like forcing the mix rate).
 		</member>
 		<member name="audio/output_latency" type="int" setter="" getter="" default="15">
-			Output latency in milliseconds for audio. Lower values will result in lower audio latency at the cost of increased CPU usage. Low values may result in audible cracking on slower hardware.
+			Specifies the preferred output latency in milliseconds for audio. Lower values will result in lower audio latency at the cost of increased CPU usage. Low values may result in audible cracking on slower hardware.
+			Audio output latency may be constrained by the host operating system and audio hardware drivers. If the host can not provide the specified audio output latency then Godot will attempt to use the nearest latency allowed by the host. As such you should always use [method AudioServer.get_output_latency] to determine the actual audio output latency.
+			[b]Note:[/b] This setting is ignored on Windows.
 		</member>
 		<member name="audio/output_latency.web" type="int" setter="" getter="" default="50">
 			Safer override for [member audio/output_latency] in the Web platform, to avoid audio issues especially on mobile devices.
@@ -475,7 +477,7 @@
 		</member>
 		<member name="display/window/size/fullscreen" type="bool" setter="" getter="" default="false">
 			Sets the main window to full screen when the project starts. Note that this is not [i]exclusive[/i] fullscreen. On Windows and Linux, a borderless window is used to emulate fullscreen. On macOS, a new desktop is used to display the running project.
-			Regardless of the platform, enabling fullscreen will change the window size to match the monitor's size. Therefore, make sure your project supports [url=https://docs.godotengine.org/en/3.4/tutorials/rendering/multiple_resolutions.html]multiple resolutions[/url] when enabling fullscreen mode.
+			Regardless of the platform, enabling fullscreen will change the window size to match the monitor's size. Therefore, make sure your project supports [url=$DOCS_URL/tutorials/rendering/multiple_resolutions.html]multiple resolutions[/url] when enabling fullscreen mode.
 			[b]Note:[/b] This setting is ignored on iOS, Android, and HTML5.
 		</member>
 		<member name="display/window/size/height" type="int" setter="" getter="" default="600">
@@ -949,6 +951,20 @@
 		<member name="memory/limits/multithreaded_server/rid_pool_prealloc" type="int" setter="" getter="" default="60">
 			This is used by servers when used in multi-threading mode (servers and visual). RIDs are preallocated to avoid stalling the server requesting them on threads. If servers get stalled too often when loading resources in a thread, increase this number.
 		</member>
+		<member name="mono/debugger_agent/port" type="int" setter="" getter="" default="23685">
+		</member>
+		<member name="mono/debugger_agent/wait_for_debugger" type="bool" setter="" getter="" default="false">
+		</member>
+		<member name="mono/debugger_agent/wait_timeout" type="int" setter="" getter="" default="3000">
+		</member>
+		<member name="mono/profiler/args" type="String" setter="" getter="" default="&quot;log:calls,alloc,sample,output=output.mlpd&quot;">
+		</member>
+		<member name="mono/profiler/enabled" type="bool" setter="" getter="" default="false">
+		</member>
+		<member name="mono/runtime/unhandled_exception_policy" type="int" setter="" getter="" default="0">
+			The policy to use for unhandled Mono (C#) exceptions. The default "Terminate Application" exits the project as soon as an unhandled exception is thrown. "Log Error" logs an error message to the console instead, and will not interrupt the project execution when an unhandled exception is thrown.
+			[b]Note:[/b] The unhandled exception policy is always set to "Log Error" in the editor, which also includes C# [code]tool[/code] scripts running within the editor as well as editor plugin code.
+		</member>
 		<member name="network/limits/debugger_stdout/max_chars_per_second" type="int" setter="" getter="" default="2048">
 			Maximum amount of characters allowed to send as output from the debugger. Over this value, content is dropped. This helps not to stall the debugger connection.
 		</member>
@@ -1221,6 +1237,39 @@
 		<member name="rendering/gles2/compatibility/enable_high_float.Android" type="bool" setter="" getter="" default="false">
 			If [code]true[/code] and available on the target Android device, enables high floating point precision for all shader computations in GLES2.
 			[b]Warning:[/b] High floating point precision can be extremely slow on older devices and is often not available at all. Use with caution.
+		</member>
+		<member name="rendering/gles3/shaders/log_active_async_compiles_count" type="bool" setter="" getter="" default="false">
+			If [code]true[/code], every time an asynchronous shader compilation or an asynchronous shader reconstruction from cache starts or finishes, a line will be logged telling how many of those are happening.
+			If the platform doesn't support parallel shader compile, but only the compile queue via a secondary GL context, what the message will tell is the number of shader compiles currently queued.
+			[b]Note:[/b] This setting is only meaningful if [code]rendering/gles3/shaders/shader_compilation_mode[/code] is [b]not[/b] [code]Synchronous[/code].
+		</member>
+		<member name="rendering/gles3/shaders/max_simultaneous_compiles" type="int" setter="" getter="" default="2">
+			This is the maximum number of shaders that can be compiled (or reconstructed from cache) at the same time.
+			At runtime, while that count is reached, other shaders that can be asynchronously compiled will just use their fallback, without their setup being started until the count gets lower.
+			This is a way to balance the CPU work between running the game and compiling the shaders. The goal is to have as many asynchronous compiles in flight as possible without impacting the responsiveness of the game, which beyond some point would destroy the benefits of asynchronous compilation. In other words, you may be able to afford that the FPS lowers a bit, and that will already be better than the stalling that synchronous compilation could cause.
+			The default value is a conservative one, so you are advised to tweak it according to the hardware you are targeting.
+			[b]Note:[/b] This setting is only meaningful if [code]rendering/gles3/shaders/shader_compilation_mode[/code] is [b]not[/b] [code]Synchronous[/code].
+		</member>
+		<member name="rendering/gles3/shaders/max_simultaneous_compiles.mobile" type="int" setter="" getter="" default="1">
+			The default is a very conservative override for [code]rendering/gles3/shaders/max_concurrent_compiles[/code].
+			Depending on the specific devices you are targeting, you may want to raise it.
+			[b]Note:[/b] This setting is only meaningful if [code]rendering/gles3/shaders/shader_compilation_mode[/code] is [b]not[/b] [code]Synchronous[/code].
+		</member>
+		<member name="rendering/gles3/shaders/shader_cache_size_mb" type="int" setter="" getter="" default="512">
+			The maximum size, in megabytes, that the ubershader cache can grow up to. On startup, the least recently used entries will be deleted until the total size is within bounds.
+			[b]Note:[/b] This setting is only meaningful if [code]rendering/gles3/shaders/shader_compilation_mode[/code] is set to [code]Asynchronous + Cache[/code].
+		</member>
+		<member name="rendering/gles3/shaders/shader_cache_size_mb.mobile" type="int" setter="" getter="" default="128">
+			An override for [code]rendering/gles3/shaders/ubershader_cache_size_mb[/code], so a smaller maximum size can be configured for mobile platforms, where storage space is more limited.
+			[b]Note:[/b] This setting is only meaningful if [code]rendering/gles3/shaders/shader_compilation_mode[/code] is set to [code]Asynchronous + Cache[/code].
+		</member>
+		<member name="rendering/gles3/shaders/shader_compilation_mode" type="int" setter="" getter="" default="0">
+			If set to [code]Asynchronous[/code] and available on the target device, asynchronous compilation of shaders is enabled (in contrast to [code]Asynchronous[/code]).
+			That means that when a shader is first used under some new rendering situation, the game won't stall while such shader is being compiled. Instead, a fallback will be used and the real shader will be compiled in the background. Once the actual shader is compiled, it will be used the next times it's used to draw a frame.
+			Depending on the async mode configured for a given material/shader, the fallback will be an "ubershader" (the default) or just skip rendering any item it is applied to.
+			An ubershader is a very complex shader, slow but suited to any rendering situation, that the engine generates internally so it can be used from the beginning while the traditional conditioned, optimized version of it is being compiled.
+			In order to save some loading time, you can use [code]Asynchronous + Cache[/code], which also causes the ubershaders to be cached into storage so they can be ready faster next time they are used (provided the platform provides support for it).
+			[b]Warning:[/b] Async. compilation is currently only supported for spatial and particle materials/shaders.
 		</member>
 		<member name="rendering/limits/buffers/blend_shape_max_buffer_size_kb" type="int" setter="" getter="" default="4096">
 			Max buffer size for blend shapes. Any blend shape bigger than this will not work.

@@ -201,7 +201,6 @@ private:
 	JoystickList _get_output_axis(String output);
 	void _button_event(int p_device, int p_index, bool p_pressed);
 	void _axis_event(int p_device, int p_axis, float p_value);
-	float _handle_deadzone(int p_device, int p_axis, float p_value);
 
 	void _parse_input_event_impl(const Ref<InputEvent> &p_event, bool p_is_emulated);
 
@@ -230,13 +229,12 @@ public:
 	virtual float get_action_raw_strength(const StringName &p_action, bool p_exact = false) const G_OVERRIDE;
 
 	virtual float get_joy_axis(int p_device, int p_axis) const G_OVERRIDE;
-	virtual String get_joy_name(int p_idx) G_OVERRIDE;
+	String get_joy_name(int p_idx);
 	virtual Array get_connected_joypads() G_OVERRIDE;
 	virtual Vector2 get_joy_vibration_strength(int p_device) G_OVERRIDE;
 	virtual float get_joy_vibration_duration(int p_device) G_OVERRIDE;
 	virtual uint64_t get_joy_vibration_timestamp(int p_device) G_OVERRIDE;
-	virtual void joy_connection_changed(int p_idx, bool p_connected, String p_name, String p_guid = "") G_OVERRIDE;
-	void parse_joypad_mapping(String p_mapping, bool p_update_existing);
+	void joy_connection_changed(int p_idx, bool p_connected, String p_name, String p_guid = "");
 
 	virtual Vector3 get_gravity() const G_OVERRIDE;
 	virtual Vector3 get_accelerometer() const G_OVERRIDE;

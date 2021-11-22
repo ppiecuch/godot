@@ -216,7 +216,6 @@ public:
 	int surface_get_array_index_len(int p_idx) const G_OVERRIDE;
 	uint32_t surface_get_format(int p_idx) const G_OVERRIDE;
 	PrimitiveType surface_get_primitive_type(int p_idx) const G_OVERRIDE;
-	bool surface_is_alpha_sorting_enabled(int p_idx) const;
 
 	virtual void surface_set_material(int p_idx, const Ref<Material> &p_material) G_OVERRIDE;
 	virtual Ref<Material> surface_get_material(int p_idx) const G_OVERRIDE;

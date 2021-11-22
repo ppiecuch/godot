@@ -1632,7 +1632,7 @@ void EditorNode::_save_all_scenes() {
 				} else {
 					_save_scene_with_preview(scene->get_filename());
 				}
-			} else {
+			} else if (scene->get_filename() != "") {
 				all_saved = false;
 			}
 		}
@@ -2119,7 +2119,8 @@ void EditorNode::_edit_current() {
 
 		if (main_plugin) {
 			// special case if use of external editor is true
-			if (main_plugin->get_name() == "Script" && current_obj->get_class_name() != StringName("VisualScript") && (bool(EditorSettings::get_singleton()->get("text_editor/external/use_external_editor")) || overrides_external_editor(current_obj))) {
+			Resource *res = Object::cast_to<Resource>(current_obj);
+			if (main_plugin->get_name() == "Script" && current_obj->get_class_name() != StringName("VisualScript") && res && !res->get_path().empty() && res->get_path().find("::") == -1 && (bool(EditorSettings::get_singleton()->get("text_editor/external/use_external_editor")) || overrides_external_editor(current_obj))) {
 				if (!changing_scene) {
 					main_plugin->edit(current_obj);
 				}
@@ -2759,6 +2760,13 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 			EditorSettings::get_singleton()->set_project_metadata("debug_options", "run_debug_navigation", !ischecked);
 
 		} break;
+		case RUN_DEBUG_SHADER_FALLBACKS: {
+			bool ischecked = debug_menu->get_popup()->is_item_checked(debug_menu->get_popup()->get_item_index(RUN_DEBUG_SHADER_FALLBACKS));
+			debug_menu->get_popup()->set_item_checked(debug_menu->get_popup()->get_item_index(RUN_DEBUG_SHADER_FALLBACKS), !ischecked);
+			run_native->set_debug_shader_fallbacks(!ischecked);
+			editor_run.set_debug_shader_fallbacks(!ischecked);
+			EditorSettings::get_singleton()->set_project_metadata("debug_options", "run_debug_shader_fallbacks", !ischecked);
+		} break;
 		case RUN_RELOAD_SCRIPTS: {
 			bool ischecked = debug_menu->get_popup()->is_item_checked(debug_menu->get_popup()->get_item_index(RUN_RELOAD_SCRIPTS));
 			debug_menu->get_popup()->set_item_checked(debug_menu->get_popup()->get_item_index(RUN_RELOAD_SCRIPTS), !ischecked);
@@ -3015,6 +3023,7 @@ void EditorNode::_update_debug_options() {
 	bool check_file_server = EditorSettings::get_singleton()->get_project_metadata("debug_options", "run_file_server", false);
 	bool check_debug_collisons = EditorSettings::get_singleton()->get_project_metadata("debug_options", "run_debug_collisons", false);
 	bool check_debug_navigation = EditorSettings::get_singleton()->get_project_metadata("debug_options", "run_debug_navigation", false);
+	bool check_debug_shader_fallbacks = EditorSettings::get_singleton()->get_project_metadata("debug_options", "run_debug_shader_fallbacks", false);
 	bool check_live_debug = EditorSettings::get_singleton()->get_project_metadata("debug_options", "run_live_debug", true);
 	bool check_reload_scripts = EditorSettings::get_singleton()->get_project_metadata("debug_options", "run_reload_scripts", true);
 
@@ -3029,6 +3038,9 @@ void EditorNode::_update_debug_options() {
 	}
 	if (check_debug_navigation) {
 		_menu_option_confirm(RUN_DEBUG_NAVIGATION, true);
+	}
+	if (check_debug_shader_fallbacks) {
+		_menu_option_confirm(RUN_DEBUG_SHADER_FALLBACKS, true);
 	}
 	if (check_live_debug) {
 		_menu_option_confirm(RUN_LIVE_DEBUG, true);
@@ -3600,7 +3612,7 @@ Error EditorNode::load_scene(const String &p_scene, bool p_ignore_broken_deps, b
 		sdata->set_path(lpath, true); //take over path
 	}
 
-	Node *new_scene = sdata->instance(PackedScene::GEN_EDIT_STATE_MAIN);
+	Node *new_scene = sdata->instance(p_set_inherited ? PackedScene::GEN_EDIT_STATE_MAIN_INHERITED : PackedScene::GEN_EDIT_STATE_MAIN);
 
 	if (!new_scene) {
 		sdata.unref();
@@ -6357,32 +6369,50 @@ EditorNode::EditorNode() {
 	p = debug_menu->get_popup();
 	p->set_hide_on_window_lose_focus(true);
 	p->set_hide_on_checkable_item_selection(false);
+
 	p->add_check_shortcut(ED_SHORTCUT("editor/deploy_with_remote_debug", TTR("Deploy with Remote Debug")), RUN_DEPLOY_REMOTE_DEBUG);
 	p->set_item_tooltip(
 			p->get_item_count() - 1,
 			TTR("When this option is enabled, using one-click deploy will make the executable attempt to connect to this computer's IP so the running project can be debugged.\nThis option is intended to be used for remote debugging (typically with a mobile device).\nYou don't need to enable it to use the GDScript debugger locally."));
+
 	p->add_check_shortcut(ED_SHORTCUT("editor/small_deploy_with_network_fs", TTR("Small Deploy with Network Filesystem")), RUN_FILE_SERVER);
 	p->set_item_tooltip(
 			p->get_item_count() - 1,
 			TTR("When this option is enabled, using one-click deploy for Android will only export an executable without the project data.\nThe filesystem will be provided from the project by the editor over the network.\nOn Android, deploying will use the USB cable for faster performance. This option speeds up testing for projects with large assets."));
+
 	p->add_separator();
+
 	p->add_check_shortcut(ED_SHORTCUT("editor/visible_collision_shapes", TTR("Visible Collision Shapes")), RUN_DEBUG_COLLISONS);
 	p->set_item_tooltip(
 			p->get_item_count() - 1,
 			TTR("When this option is enabled, collision shapes and raycast nodes (for 2D and 3D) will be visible in the running project."));
+
 	p->add_check_shortcut(ED_SHORTCUT("editor/visible_navigation", TTR("Visible Navigation")), RUN_DEBUG_NAVIGATION);
 	p->set_item_tooltip(
 			p->get_item_count() - 1,
 			TTR("When this option is enabled, navigation meshes and polygons will be visible in the running project."));
+
+	if (GLOBAL_GET("rendering/quality/driver/driver_name") == "GLES3") {
+		p->add_separator();
+
+		p->add_check_shortcut(ED_SHORTCUT("editor/use_shader_fallbacks", TTR("Force Shader Fallbacks")), RUN_DEBUG_SHADER_FALLBACKS);
+		p->set_item_tooltip(
+				p->get_item_count() - 1,
+				TTR("When this option is enabled, shaders will be used in their fallback form (either visible via an ubershader or hidden) during all the run time.\nThis is useful for verifying the look and performance of fallbacks, which are normally displayed briefly.\nAsynchronous shader compilation must be enabled in the project settings for this option to make a difference."));
+	}
+
 	p->add_separator();
+
 	p->add_check_shortcut(ED_SHORTCUT("editor/sync_scene_changes", TTR("Synchronize Scene Changes")), RUN_LIVE_DEBUG);
 	p->set_item_tooltip(
 			p->get_item_count() - 1,
 			TTR("When this option is enabled, any changes made to the scene in the editor will be replicated in the running project.\nWhen used remotely on a device, this is more efficient when the network filesystem option is enabled."));
+
 	p->add_check_shortcut(ED_SHORTCUT("editor/sync_script_changes", TTR("Synchronize Script Changes")), RUN_RELOAD_SCRIPTS);
 	p->set_item_tooltip(
 			p->get_item_count() - 1,
 			TTR("When this option is enabled, any script that is saved will be reloaded in the running project.\nWhen used remotely on a device, this is more efficient when the network filesystem option is enabled."));
+
 	p->connect("id_pressed", this, "_menu_option");
 
 	menu_hb->add_spacer();

@@ -1346,10 +1346,10 @@ void VisualServerScene::rooms_set_active(RID p_scenario, bool p_active) {
 	scenario->_portal_renderer.rooms_set_active(p_active);
 }
 
-void VisualServerScene::rooms_set_params(RID p_scenario, int p_portal_depth_limit) {
+void VisualServerScene::rooms_set_params(RID p_scenario, int p_portal_depth_limit, real_t p_roaming_expansion_margin) {
 	Scenario *scenario = scenario_owner.getornull(p_scenario);
 	ERR_FAIL_COND(!scenario);
-	scenario->_portal_renderer.rooms_set_params(p_portal_depth_limit);
+	scenario->_portal_renderer.rooms_set_params(p_portal_depth_limit, p_roaming_expansion_margin);
 }
 
 void VisualServerScene::rooms_set_debug_feature(RID p_scenario, VisualServer::RoomsDebugFeature p_feature, bool p_active) {
@@ -1518,6 +1518,20 @@ void VisualServerScene::instance_geometry_set_material_override(RID p_instance, 
 
 	if (instance->material_override.is_valid()) {
 		VSG::storage->material_add_instance_owner(instance->material_override, instance);
+	}
+}
+void VisualServerScene::instance_geometry_set_material_overlay(RID p_instance, RID p_material) {
+	Instance *instance = instance_owner.get(p_instance);
+	ERR_FAIL_COND(!instance);
+
+	if (instance->material_overlay.is_valid()) {
+		VSG::storage->material_remove_instance_owner(instance->material_overlay, instance);
+	}
+	instance->material_overlay = p_material;
+	instance->base_changed(false, true);
+
+	if (instance->material_overlay.is_valid()) {
+		VSG::storage->material_add_instance_owner(instance->material_overlay, instance);
 	}
 }
 
@@ -2875,7 +2889,11 @@ bool VisualServerScene::_render_reflection_probe_step(Instance *p_instance, int 
 		}
 
 		_prepare_scene(xform, cm, false, RID(), VSG::storage->reflection_probe_get_cull_mask(p_instance->base), p_instance->scenario->self, shadow_atlas, reflection_probe->instance, reflection_probe->previous_room_id_hint);
+
+		bool async_forbidden_backup = VSG::storage->is_shader_async_hidden_forbidden();
+		VSG::storage->set_shader_async_hidden_forbidden(true);
 		_render_scene(xform, cm, 0, false, RID(), p_instance->scenario->self, shadow_atlas, reflection_probe->instance, p_step);
+		VSG::storage->set_shader_async_hidden_forbidden(async_forbidden_backup);
 
 	} else {
 		//do roughness postprocess step until it believes it's done
@@ -3984,6 +4002,11 @@ void VisualServerScene::_update_dirty_instance(Instance *p_instance) {
 				}
 			}
 
+			if (p_instance->material_overlay.is_valid()) {
+				can_cast_shadows = can_cast_shadows || VSG::storage->material_casts_shadows(p_instance->material_overlay);
+				is_animated = is_animated || VSG::storage->material_is_animated(p_instance->material_overlay);
+			}
+
 			if (can_cast_shadows != geom->can_cast_shadows) {
 				//ability to cast shadows change, let lights now
 				for (List<Instance *>::Element *E = geom->lighting.front(); E; E = E->next()) {
@@ -4053,6 +4076,7 @@ bool VisualServerScene::free(RID p_rid) {
 		instance_set_scenario(p_rid, RID());
 		instance_set_base(p_rid, RID());
 		instance_geometry_set_material_override(p_rid, RID());
+		instance_geometry_set_material_overlay(p_rid, RID());
 		instance_attach_skeleton(p_rid, RID());
 
 		update_dirty_instances(); //in case something changed this

@@ -678,6 +678,15 @@ bool OS::has_feature(const String &p_feature) {
 	if (p_feature == "riscv") {
 		return true;
 	}
+#elif defined(__powerpc__)
+#if defined(__powerpc64__)
+	if (p_feature == "ppc64") {
+		return true;
+	}
+#endif
+	if (p_feature == "ppc") {
+		return true;
+	}
 #endif
 
 	if (_check_internal_feature_support(p_feature)) {
@@ -732,6 +741,12 @@ const char *OS::get_video_driver_name(int p_driver) const {
 			return "GLES3";
 	}
 }
+
+bool OS::is_offscreen_gl_available() const {
+	return false;
+}
+
+void OS::set_offscreen_gl_current(bool p_current) {}
 
 int OS::get_audio_driver_count() const {
 	return AudioDriverManager::get_driver_count();

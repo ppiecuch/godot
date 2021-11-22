@@ -245,6 +245,8 @@ void Camera2D::_notification(int p_what) {
 
 		} break;
 		case NOTIFICATION_ENTER_TREE: {
+			ERR_FAIL_COND(!is_inside_tree());
+
 			if (is_current()) {
 				viewport->_camera_2d_set(this);
 			}

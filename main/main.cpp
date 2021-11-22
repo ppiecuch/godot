@@ -153,6 +153,7 @@ static bool use_debug_profiler = false;
 #ifdef DEBUG_ENABLED
 static bool debug_collisions = false;
 static bool debug_navigation = false;
+static bool debug_shader_fallbacks = false;
 #endif
 static int frame_delay = 0;
 static bool disable_render_loop = false;
@@ -300,6 +301,7 @@ void Main::print_help(const char *p_binary) {
 #if defined(DEBUG_ENABLED) && !defined(SERVER_ENABLED)
 	OS::get_singleton()->print("  --debug-collisions               Show collision shapes when running the scene.\n");
 	OS::get_singleton()->print("  --debug-navigation               Show navigation polygons when running the scene.\n");
+	OS::get_singleton()->print("  --debug-shader-fallbacks         Use the fallbacks of the shaders which have one when running the scene (GL ES 3 only).\n");
 #endif
 	OS::get_singleton()->print("  --frame-delay <ms>               Simulate high CPU load (delay each frame by <ms> milliseconds).\n");
 	OS::get_singleton()->print("  --time-scale <scale>             Force time scale (higher values are faster, 1.0 is normal speed).\n");
@@ -826,6 +828,8 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 			debug_collisions = true;
 		} else if (I->get() == "--debug-navigation") {
 			debug_navigation = true;
+		} else if (I->get() == "--debug-shader-fallbacks") {
+			debug_shader_fallbacks = true;
 #endif
 		} else if (I->get() == "--remote-debug") {
 			if (I->next()) {
@@ -1252,6 +1256,13 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 
 	Engine::get_singleton()->set_frame_delay(frame_delay);
 
+#ifdef DEBUG_ENABLED
+	if (!Engine::get_singleton()->is_editor_hint()) {
+		GLOBAL_DEF("rendering/gles3/shaders/debug_shader_fallbacks", debug_shader_fallbacks);
+		ProjectSettings::get_singleton()->set_hide_from_editor("rendering/gles3/shaders/debug_shader_fallbacks", true);
+	}
+#endif
+
 	message_queue = memnew(MessageQueue);
 
 	if (p_second_phase) {
@@ -1655,6 +1666,19 @@ bool Main::start() {
 			DirAccessRef da = DirAccess::open(doc_tool_path);
 			ERR_FAIL_COND_V_MSG(!da, false, "Argument supplied to --doctool must be a valid directory path.");
 		}
+
+#ifndef MODULE_MONO_ENABLED
+		// Hack to define Mono-specific project settings even on non-Mono builds,
+		// so that we don't lose their descriptions and default values in DocData.
+		// Default values should be synced with mono_gd/gd_mono.cpp.
+		GLOBAL_DEF("mono/debugger_agent/port", 23685);
+		GLOBAL_DEF("mono/debugger_agent/wait_for_debugger", false);
+		GLOBAL_DEF("mono/debugger_agent/wait_timeout", 3000);
+		GLOBAL_DEF("mono/profiler/args", "log:calls,alloc,sample,output=output.mlpd");
+		GLOBAL_DEF("mono/profiler/enabled", false);
+		GLOBAL_DEF("mono/runtime/unhandled_exception_policy", 0);
+#endif
+
 		DocData doc;
 		doc.generate(doc_base);
 
@@ -2303,10 +2327,10 @@ bool Main::iteration() {
 	if (frame > 1000000) {
 		if (editor || project_manager) {
 			if (print_fps) {
-				print_line(vformat("Editor FPS: %d (%s mspf)", frames, rtos(1000.0 / frames).pad_decimals(1)));
+				print_line(vformat("Editor FPS: %d (%s mspf)", frames, rtos(1000.0 / frames).pad_decimals(2)));
 			}
 		} else if (GLOBAL_GET("debug/settings/stdout/print_fps") || print_fps) {
-			print_line(vformat("Project FPS: %d (%s mspf)", frames, rtos(1000.0 / frames).pad_decimals(1)));
+			print_line(vformat("Project FPS: %d (%s mspf)", frames, rtos(1000.0 / frames).pad_decimals(2)));
 		}
 
 		Engine::get_singleton()->_fps = frames;

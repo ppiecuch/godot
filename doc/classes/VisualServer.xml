@@ -15,7 +15,7 @@
 		In 2D, all visible objects are some form of canvas item. In order to be visible, a canvas item needs to be the child of a canvas attached to a viewport, or it needs to be the child of another canvas item that is eventually attached to the canvas.
 	</description>
 	<tutorials>
-		<link>https://docs.godotengine.org/en/3.4/tutorials/optimization/using_servers.html</link>
+		<link>$DOCS_URL/tutorials/optimization/using_servers.html</link>
 	</tutorials>
 	<methods>
 		<method name="black_bars_set_images">
@@ -1374,6 +1374,14 @@
 				Sets the flag for a given [enum InstanceFlags]. See [enum InstanceFlags] for more details.
 			</description>
 		</method>
+		<method name="instance_geometry_set_material_overlay">
+			<return type="void" />
+			<argument index="0" name="instance" type="RID" />
+			<argument index="1" name="material" type="RID" />
+			<description>
+				Sets a material that will be rendered for all surfaces on top of active materials for the mesh associated with this instance. Equivalent to [member GeometryInstance.material_overlay].
+			</description>
+		</method>
 		<method name="instance_geometry_set_material_override">
 			<return type="void" />
 			<argument index="0" name="instance" type="RID" />
@@ -2523,6 +2531,15 @@
 			<argument index="0" name="color" type="Color" />
 			<description>
 				Sets the default clear color which is used when a specific clear color has not been selected.
+			</description>
+		</method>
+		<method name="set_shader_async_hidden_forbidden">
+			<return type="void" />
+			<argument index="0" name="forbidden" type="bool" />
+			<description>
+				If asynchronous shader compilation is enabled, this controls whether [constant SpatialMaterial.ASYNC_MODE_HIDDEN] is obeyed.
+				For instance, you may want to enable this temporarily before taking a screenshot. This ensures everything is visible even if shaders with async mode [i]hidden[/i] are not ready yet.
+				Reflection probes use this internally to ensure they capture everything regardless the shaders are ready or not.
 			</description>
 		</method>
 		<method name="set_shader_time_scale">

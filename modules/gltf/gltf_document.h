@@ -31,7 +31,6 @@
 #ifndef GLTF_DOCUMENT_H
 #define GLTF_DOCUMENT_H
 
-#include "editor/import/resource_importer_scene.h"
 #include "gltf_animation.h"
 #include "scene/2d/node_2d.h"
 #include "scene/3d/bone_attachment.h"
@@ -42,6 +41,8 @@
 #include "scene/animation/animation_player.h"
 #include "scene/resources/material.h"
 #include "scene/resources/texture.h"
+
+#include "modules/modules_enabled.gen.h" // For csg, gridmap.
 
 class GLTFState;
 class GLTFSkin;
@@ -247,8 +248,6 @@ private:
 	Error _reparent_non_joint_skeleton_subtrees(
 			Ref<GLTFState> state, Ref<GLTFSkeleton> skeleton,
 			const Vector<GLTFNodeIndex> &non_joints);
-	Error _reparent_to_fake_joint(Ref<GLTFState> state, Ref<GLTFSkeleton> skeleton,
-			const GLTFNodeIndex node_index);
 	Error _determine_skeleton_roots(Ref<GLTFState> state,
 			const GLTFSkeletonIndex skel_i);
 	Error _create_skeletons(Ref<GLTFState> state);

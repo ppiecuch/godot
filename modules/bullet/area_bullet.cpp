@@ -96,8 +96,14 @@ void AreaBullet::dispatch_callbacks() {
 				otherObj.object->on_exit_area(this);
 				overlappingObjects.remove(i); // Remove after callback
 				break;
+			case OVERLAP_STATE_INSIDE: {
+				if (otherObj.object->getType() == TYPE_RIGID_BODY) {
+					RigidBodyBullet *body = static_cast<RigidBodyBullet *>(otherObj.object);
+					body->scratch_space_override_modificator();
+				}
+				break;
+			}
 			case OVERLAP_STATE_DIRTY:
-			case OVERLAP_STATE_INSIDE:
 				break;
 		}
 	}
@@ -164,6 +170,7 @@ int AreaBullet::find_overlapping_object(CollisionObjectBullet *p_colObj) {
 
 void AreaBullet::set_monitorable(bool p_monitorable) {
 	monitorable = p_monitorable;
+	updated = true;
 }
 
 bool AreaBullet::is_monitoring() const {
@@ -173,6 +180,7 @@ bool AreaBullet::is_monitoring() const {
 void AreaBullet::main_shape_changed() {
 	CRASH_COND(!get_main_shape());
 	btGhost->setCollisionShape(get_main_shape());
+	updated = true;
 }
 
 void AreaBullet::reload_body() {
@@ -203,6 +211,7 @@ void AreaBullet::on_collision_filters_change() {
 	if (space) {
 		space->reload_collision_filters(this);
 	}
+	updated = true;
 }
 
 void AreaBullet::add_overlap(CollisionObjectBullet *p_otherObject) {
@@ -252,6 +261,7 @@ void AreaBullet::set_param(PhysicsServer::AreaParameter p_param, const Variant &
 		default:
 			WARN_PRINT("Area doesn't support this parameter in the Bullet backend: " + itos(p_param));
 	}
+	scratch();
 }
 
 Variant AreaBullet::get_param(PhysicsServer::AreaParameter p_param) const {
@@ -288,6 +298,7 @@ void AreaBullet::set_event_callback(Type p_callbackObjectType, ObjectID p_id, co
 		set_godot_object_flags(get_godot_object_flags() | GOF_IS_MONITORING_AREA);
 	} else {
 		set_godot_object_flags(get_godot_object_flags() & (~GOF_IS_MONITORING_AREA));
+		clear_overlaps(true);
 	}
 }
 

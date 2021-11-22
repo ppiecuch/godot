@@ -48,6 +48,9 @@ class VisualServer : public Object {
 
 	int mm_policy;
 	bool render_loop_enabled = true;
+#ifdef DEBUG_ENABLED
+	bool force_shader_fallbacks = false;
+#endif
 
 	void _camera_set_orthogonal(RID p_camera, float p_size, float p_z_near, float p_z_far);
 	void _canvas_item_add_style_box(RID p_item, const Rect2 &p_rect, const Rect2 &p_source, RID p_texture, const Vector<float> &p_margins, const Color &p_modulate = Color(1, 1, 1));
@@ -203,6 +206,8 @@ public:
 	virtual void shader_add_custom_define(RID p_shader, const String &p_define) = 0;
 	virtual void shader_get_custom_defines(RID p_shader, Vector<String> *p_defines) const = 0;
 	virtual void shader_remove_custom_define(RID p_shader, const String &p_define) = 0;
+
+	virtual void set_shader_async_hidden_forbidden(bool p_forbidden) = 0;
 
 	/* COMMON MATERIAL API */
 
@@ -923,7 +928,7 @@ public:
 	virtual void rooms_finalize(RID p_scenario, bool p_generate_pvs, bool p_cull_using_pvs, bool p_use_secondary_pvs, bool p_use_signals, String p_pvs_filename, bool p_use_simple_pvs, bool p_log_pvs_generation) = 0;
 	virtual void rooms_override_camera(RID p_scenario, bool p_override, const Vector3 &p_point, const Vector<Plane> *p_convex) = 0;
 	virtual void rooms_set_active(RID p_scenario, bool p_active) = 0;
-	virtual void rooms_set_params(RID p_scenario, int p_portal_depth_limit) = 0;
+	virtual void rooms_set_params(RID p_scenario, int p_portal_depth_limit, real_t p_roaming_expansion_margin) = 0;
 	virtual void rooms_set_debug_feature(RID p_scenario, RoomsDebugFeature p_feature, bool p_active) = 0;
 	virtual void rooms_update_gameplay_monitor(RID p_scenario, const Vector<Vector3> &p_camera_positions) = 0;
 
@@ -958,6 +963,7 @@ public:
 	virtual void instance_geometry_set_flag(RID p_instance, InstanceFlags p_flags, bool p_enabled) = 0;
 	virtual void instance_geometry_set_cast_shadows_setting(RID p_instance, ShadowCastingSetting p_shadow_casting_setting) = 0;
 	virtual void instance_geometry_set_material_override(RID p_instance, RID p_material) = 0;
+	virtual void instance_geometry_set_material_overlay(RID p_instance, RID p_material) = 0;
 
 	virtual void instance_geometry_set_draw_range(RID p_instance, float p_min, float p_max, float p_min_margin, float p_max_margin) = 0;
 	virtual void instance_geometry_set_as_instance_lod(RID p_instance, RID p_as_lod_of_instance) = 0;
@@ -1158,6 +1164,11 @@ public:
 
 	bool is_render_loop_enabled() const;
 	void set_render_loop_enabled(bool p_enabled);
+
+#ifdef DEBUG_ENABLED
+	bool is_force_shader_fallbacks_enabled() const;
+	void set_force_shader_fallbacks_enabled(bool p_enabled);
+#endif
 
 	VisualServer();
 	virtual ~VisualServer();

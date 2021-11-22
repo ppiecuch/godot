@@ -126,7 +126,7 @@ void BitmapFont::_set_chars(const PoolVector<int> &p_chars) {
 PoolVector<int> BitmapFont::_get_chars() const {
 	PoolVector<int> chars;
 
-	const CharType *key = nullptr;
+	const int32_t *key = nullptr;
 
 	while ((key = char_map.next(key))) {
 		const Character *c = char_map.getptr(*key);
@@ -195,91 +195,87 @@ Error BitmapFont::create_from_fnt_ptr(const char *p_fnt_data, int p_fnt_data_siz
 	Ref<XMLParser> parser = memnew(XMLParser);
 	Error err = parser->open_cbuffer(p_fnt_data, p_fnt_data_size);
 
-	if (err == OK) {
-		// as this is valid xml file, assume xml bmformat
-		// based on https://github.com/godotengine/godot/blob/master/editor/collada/collada.cpp
-		while (parser->read() == OK) {
-			if (parser->get_node_type() == XMLParser::NODE_ELEMENT) {
-				if (parser->get_node_name() == "info") {
-					if (parser->has_attribute("face"))
-						set_name(parser->get_attribute_value("face"));
-					else
-						ERR_PRINT("BMFont xml: face attribute not found.");
-				}
+	ERR_FAIL_COND_V_MSG(err != OK, err, "Can't open font description");
 
-				if (parser->get_node_name() == "common") {
-					if (parser->has_attribute("lineHeight"))
-						set_height(parser->get_attribute_value("lineHeight").to_int());
-					if (parser->has_attribute("base"))
-						set_ascent(parser->get_attribute_value("base").to_int());
-				}
-
-				if (parser->get_node_name() == "page") {
-					Ref<Image> image = memnew(Image(p_tex_image));
-					Ref<ImageTexture> tex = memnew(ImageTexture);
-					tex->create_from_image(image);
-					if (tex.is_null()) {
-						ERR_PRINT("Can't load font texture!");
-					} else {
-						add_texture(tex);
-					}
-				}
-
-				if (parser->get_node_name() == "char") {
-					CharType idx = 0;
-					if (parser->has_attribute("id"))
-						idx = parser->get_attribute_value("id").to_int();
-
-					Rect2 rect;
-
-					if (parser->has_attribute("x"))
-						rect.position.x = parser->get_attribute_value("x").to_int();
-					if (parser->has_attribute("y"))
-						rect.position.y = parser->get_attribute_value("y").to_int();
-					if (parser->has_attribute("width"))
-						rect.size.width = parser->get_attribute_value("width").to_int();
-					if (parser->has_attribute("height"))
-						rect.size.height = parser->get_attribute_value("height").to_int();
-
-					Point2 ofs;
-
-					if (parser->has_attribute("xoffset"))
-						ofs.x = parser->get_attribute_value("xoffset").to_int();
-					if (parser->has_attribute("yoffset"))
-						ofs.y = parser->get_attribute_value("yoffset").to_int();
-
-					int texture = 0;
-					if (parser->has_attribute("page"))
-						texture = parser->get_attribute_value("page").to_int();
-					int advance = -1;
-					if (parser->has_attribute("xadvance"))
-						advance = parser->get_attribute_value("xadvance").to_int();
-
-					add_char(idx, texture, rect, ofs, advance);
-				}
-
-				if (parser->get_node_name() == "kerning") {
-					CharType first = 0, second = 0;
-					int k = 0;
-
-					if (parser->has_attribute("first"))
-						first = parser->get_attribute_value("first").to_int();
-					if (parser->has_attribute("second"))
-						second = parser->get_attribute_value("second").to_int();
-					if (parser->has_attribute("amount"))
-						k = parser->get_attribute_value("amount").to_int();
-
-					add_kerning_pair(first, second, -k);
-				}
-
-				// only one/first <font> per file
-				if (parser->get_node_type() == XMLParser::NODE_ELEMENT_END && parser->get_node_name() == "font")
-					break;
+	while ((err = parser->read()) == OK) {
+		if (parser->get_node_type() == XMLParser::NODE_ELEMENT) {
+			if (parser->get_node_name() == "info") {
+				if (parser->has_attribute("face"))
+					set_name(parser->get_attribute_value("face"));
+				else
+					ERR_PRINT("BMFont xml: face attribute not found.");
 			}
-		}
-		return OK;
-	}
 
+			if (parser->get_node_name() == "common") {
+				if (parser->has_attribute("lineHeight"))
+					set_height(parser->get_attribute_value("lineHeight").to_int());
+				if (parser->has_attribute("base"))
+					set_ascent(parser->get_attribute_value("base").to_int());
+			}
+
+			if (parser->get_node_name() == "page") {
+				Ref<Image> image = memnew(Image(p_tex_image));
+				Ref<ImageTexture> tex = memnew(ImageTexture);
+				tex->create_from_image(image);
+				if (tex.is_null()) {
+					ERR_PRINT("Can't load font texture!");
+				} else {
+					add_texture(tex);
+				}
+			}
+
+			if (parser->get_node_name() == "char") {
+				CharType idx = 0;
+				if (parser->has_attribute("id"))
+					idx = parser->get_attribute_value("id").to_int();
+
+				Rect2 rect;
+
+				if (parser->has_attribute("x"))
+					rect.position.x = parser->get_attribute_value("x").to_int();
+				if (parser->has_attribute("y"))
+					rect.position.y = parser->get_attribute_value("y").to_int();
+				if (parser->has_attribute("width"))
+					rect.size.width = parser->get_attribute_value("width").to_int();
+				if (parser->has_attribute("height"))
+					rect.size.height = parser->get_attribute_value("height").to_int();
+
+				Point2 ofs;
+
+				if (parser->has_attribute("xoffset"))
+					ofs.x = parser->get_attribute_value("xoffset").to_int();
+				if (parser->has_attribute("yoffset"))
+					ofs.y = parser->get_attribute_value("yoffset").to_int();
+
+				int texture = 0;
+				if (parser->has_attribute("page"))
+					texture = parser->get_attribute_value("page").to_int();
+				int advance = -1;
+				if (parser->has_attribute("xadvance"))
+					advance = parser->get_attribute_value("xadvance").to_int();
+
+				add_char(idx, texture, rect, ofs, advance);
+			}
+
+			if (parser->get_node_name() == "kerning") {
+				CharType first = 0, second = 0;
+				int k = 0;
+
+				if (parser->has_attribute("first"))
+					first = parser->get_attribute_value("first").to_int();
+				if (parser->has_attribute("second"))
+					second = parser->get_attribute_value("second").to_int();
+				if (parser->has_attribute("amount"))
+					k = parser->get_attribute_value("amount").to_int();
+
+				add_kerning_pair(first, second, -k);
+			}
+
+			// only one/first <font> per file
+			if (parser->get_node_type() == XMLParser::NODE_ELEMENT_END && parser->get_node_name() == "font")
+				break;
+		}
+	}
 	return err;
 }
 
@@ -448,7 +444,11 @@ Error BitmapFont::create_from_fnt(const String &p_file) {
 				if (keys.has("base")) {
 					set_ascent(keys["base"].to_int());
 				}
-
+			} else if (type == "char") {
+				int32_t idx = 0;
+				if (keys.has("id")) {
+					idx = keys["id"].to_int();
+				}
 			} else if (type == "page") {
 				if (keys.has("file")) {
 					String base_dir = p_file.get_base_dir();
@@ -564,10 +564,10 @@ int BitmapFont::get_character_count() const {
 	return char_map.size();
 };
 
-Vector<CharType> BitmapFont::get_char_keys() const {
-	Vector<CharType> chars;
+Vector<int32_t> BitmapFont::get_char_keys() const {
+	Vector<int32_t> chars;
 	chars.resize(char_map.size());
-	const CharType *ct = nullptr;
+	const int32_t *ct = nullptr;
 	int count = 0;
 	while ((ct = char_map.next(ct))) {
 		chars.write[count++] = *ct;
@@ -576,7 +576,7 @@ Vector<CharType> BitmapFont::get_char_keys() const {
 	return chars;
 };
 
-BitmapFont::Character BitmapFont::get_character(CharType p_char) const {
+BitmapFont::Character BitmapFont::get_character(int32_t p_char) const {
 	if (!char_map.has(p_char)) {
 		ERR_FAIL_V(Character());
 	};
@@ -584,7 +584,7 @@ BitmapFont::Character BitmapFont::get_character(CharType p_char) const {
 	return char_map[p_char];
 };
 
-void BitmapFont::add_char(CharType p_char, int p_texture_idx, const Rect2 &p_rect, const Size2 &p_align, float p_advance) {
+void BitmapFont::add_char(int32_t p_char, int p_texture_idx, const Rect2 &p_rect, const Size2 &p_align, float p_advance) {
 	if (p_advance < 0) {
 		p_advance = p_rect.size.width;
 	}
@@ -599,7 +599,7 @@ void BitmapFont::add_char(CharType p_char, int p_texture_idx, const Rect2 &p_rec
 	char_map[p_char] = c;
 }
 
-void BitmapFont::add_kerning_pair(CharType p_A, CharType p_B, int p_kerning) {
+void BitmapFont::add_kerning_pair(int32_t p_A, int32_t p_B, int p_kerning) {
 	KerningPairKey kpk;
 	kpk.A = p_A;
 	kpk.B = p_B;
@@ -623,7 +623,7 @@ Vector<BitmapFont::KerningPairKey> BitmapFont::get_kerning_pair_keys() const {
 	return ret;
 }
 
-int BitmapFont::get_kerning_pair(CharType p_A, CharType p_B) const {
+int BitmapFont::get_kerning_pair(int32_t p_A, int32_t p_B) const {
 	KerningPairKey kpk;
 	kpk.A = p_A;
 	kpk.B = p_B;
@@ -718,7 +718,15 @@ float BitmapFont::draw_char(RID p_canvas_item, const Point2 &p_pos, CharType p_c
 }
 
 float BitmapFont::draw_char_xform(RID p_canvas_item, const CharTransform &p_char_xform, const Point2 &p_pos, CharType p_char, CharType p_next, const Color &p_modulate, bool p_outline) const {
-	const Character *c = char_map.getptr(p_char);
+	int32_t ch = p_char;
+	if (((p_char & 0xfffffc00) == 0xd800) && (p_next & 0xfffffc00) == 0xdc00) { // decode surrogate pair.
+		ch = (p_char << 10UL) + p_next - ((0xd800 << 10UL) + 0xdc00 - 0x10000);
+	}
+	if ((p_char & 0xfffffc00) == 0xdc00) { // skip trail surrogate.
+		return 0;
+	}
+
+	const Character *c = char_map.getptr(ch);
 
 	if (!c) {
 		if (fallback.is_valid()) {
@@ -749,7 +757,17 @@ float BitmapFont::draw_char_xform(RID p_canvas_item, const CharTransform &p_char
 }
 
 Size2 BitmapFont::get_char_size(CharType p_char, CharType p_next) const {
-	const Character *c = char_map.getptr(p_char);
+	int32_t ch = p_char;
+	bool skip_kerning = false;
+	if (((p_char & 0xfffffc00) == 0xd800) && (p_next & 0xfffffc00) == 0xdc00) { // decode surrogate pair.
+		ch = (p_char << 10UL) + p_next - ((0xd800 << 10UL) + 0xdc00 - 0x10000);
+		skip_kerning = true;
+	}
+	if ((p_char & 0xfffffc00) == 0xdc00) { // skip trail surrogate.
+		return Size2();
+	}
+
+	const Character *c = char_map.getptr(ch);
 
 	if (!c) {
 		if (fallback.is_valid()) {
@@ -760,14 +778,16 @@ Size2 BitmapFont::get_char_size(CharType p_char, CharType p_next) const {
 
 	Size2 ret(c->advance, c->rect.size.y);
 
-	if (p_next) {
-		KerningPairKey kpk;
-		kpk.A = p_char;
-		kpk.B = p_next;
+	if (!skip_kerning) {
+		if (p_next) {
+			KerningPairKey kpk;
+			kpk.A = p_char;
+			kpk.B = p_next;
 
-		const Map<KerningPairKey, int>::Element *E = kerning_map.find(kpk);
-		if (E) {
-			ret.width -= E->get();
+			const Map<KerningPairKey, int>::Element *E = kerning_map.find(kpk);
+			if (E) {
+				ret.width -= E->get();
+			}
 		}
 	}
 

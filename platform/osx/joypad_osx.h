@@ -66,14 +66,14 @@ struct joypad {
 	int id = 0;
 	bool offset_hat = false;
 
-	io_service_t ffservice; /* Interface for force feedback, 0 = no ff */
+	io_service_t ffservice = 0; /* Interface for force feedback, 0 = no ff */
 	FFCONSTANTFORCE ff_constant_force;
-	FFDeviceObjectReference ff_device;
-	FFEffectObjectReference ff_object;
-	uint64_t ff_timestamp;
-	LONG *ff_directions;
+	FFDeviceObjectReference ff_device = nullptr;
+	FFEffectObjectReference ff_object = nullptr;
+	uint64_t ff_timestamp = 0;
+	LONG *ff_directions = nullptr;
 	FFEFFECT ff_effect;
-	DWORD *ff_axes;
+	DWORD *ff_axes = nullptr;
 
 	void add_hid_elements(CFArrayRef p_array);
 	void add_hid_element(IOHIDElementRef p_element);
@@ -106,7 +106,6 @@ private:
 	int get_joy_ref(IOHIDDeviceRef p_device) const;
 
 	void poll_joypads() const;
-	void setup_joypad_objects();
 	void config_hid_manager(CFArrayRef p_matching_array) const;
 
 	void joypad_vibration_start(int p_id, float p_magnitude, float p_duration, uint64_t p_timestamp);

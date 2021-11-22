@@ -34,6 +34,7 @@
 #include "core/io/resource_saver.h"
 #include "core/os/keyboard.h"
 #include "core/os/os.h"
+#include "core/version_generated.gen.h"
 #include "editor/editor_node.h"
 #include "editor/editor_scale.h"
 #include "editor/editor_settings.h"
@@ -171,8 +172,10 @@ void ShaderTextEditor::_load_theme_settings() {
 		}
 	}
 
+	const Color user_type_color = EDITOR_GET("text_editor/highlighting/user_type_color");
+
 	for (List<String>::Element *E = built_ins.front(); E; E = E->next()) {
-		get_text_edit()->add_keyword_color(E->get(), member_variable_color);
+		get_text_edit()->add_keyword_color(E->get(), user_type_color);
 	}
 
 	// Colorize comments.
@@ -337,7 +340,7 @@ void ShaderEditor::_menu_option(int p_option) {
 			shader_editor->remove_all_bookmarks();
 		} break;
 		case HELP_DOCS: {
-			OS::get_singleton()->shell_open("https://docs.godotengine.org/en/3.4/tutorials/shading/shading_reference/index.html");
+			OS::get_singleton()->shell_open(vformat("%s/tutorials/shaders/shader_reference/index.html", VERSION_DOCS_URL));
 		} break;
 	}
 	if (p_option != SEARCH_FIND && p_option != SEARCH_REPLACE && p_option != SEARCH_GOTO_LINE) {

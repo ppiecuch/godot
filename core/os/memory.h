@@ -44,7 +44,6 @@
 #endif
 
 class Memory {
-	Memory();
 #ifdef DEBUG_ENABLED
 	static SafeNumeric<uint64_t> mem_usage;
 	static SafeNumeric<uint64_t> max_usage;

@@ -130,6 +130,8 @@ public:
 	FUNC2SC(shader_get_custom_defines, RID, Vector<String> *)
 	FUNC2(shader_remove_custom_define, RID, const String &)
 
+	FUNC1(set_shader_async_hidden_forbidden, bool)
+
 	/* COMMON MATERIAL API */
 
 	FUNCRID(material)
@@ -523,7 +525,7 @@ public:
 	FUNC8(rooms_finalize, RID, bool, bool, bool, bool, String, bool, bool)
 	FUNC4(rooms_override_camera, RID, bool, const Vector3 &, const Vector<Plane> *)
 	FUNC2(rooms_set_active, RID, bool)
-	FUNC2(rooms_set_params, RID, int)
+	FUNC3(rooms_set_params, RID, int, real_t)
 	FUNC3(rooms_set_debug_feature, RID, RoomsDebugFeature, bool)
 	FUNC2(rooms_update_gameplay_monitor, RID, const Vector<Vector3> &)
 
@@ -541,6 +543,7 @@ public:
 	FUNC3(instance_geometry_set_flag, RID, InstanceFlags, bool)
 	FUNC2(instance_geometry_set_cast_shadows_setting, RID, ShadowCastingSetting)
 	FUNC2(instance_geometry_set_material_override, RID, RID)
+	FUNC2(instance_geometry_set_material_overlay, RID, RID)
 
 	FUNC5(instance_geometry_set_draw_range, RID, float, float, float, float)
 	FUNC2(instance_geometry_set_as_instance_lod, RID, RID)
