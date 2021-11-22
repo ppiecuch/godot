@@ -366,6 +366,14 @@ public:
 	void set_pixelv(const Point2 &p_dst, const Color &p_color);
 	void set_pixel(int p_x, int p_y, const Color &p_color);
 
+	_FORCE_INLINE_ uint8_t *get_raw_ptr() {
+		uint8_t *ptr = write_lock.ptr();
+#ifdef DEBUG_ENABLED
+		ERR_FAIL_COND_V_MSG(!ptr, nullptr, "Image must be locked with 'lock()' before using get_raw_data().");
+#endif
+		return ptr;
+	}
+
 	void copy_internals_from(const Ref<Image> &p_image) {
 		ERR_FAIL_COND_MSG(p_image.is_null(), "It's not a reference to a valid Image object.");
 		format = p_image->format;
