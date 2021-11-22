@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  figure.h                                                             */
+/*  figure_2d.h                                                          */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef FIGURE_H
-#define FIGURE_H
+#ifndef FIGURE_2D_H
+#define FIGURE_2D_H
 
 #include "core/rid.h"
 #include "scene/2d/node_2d.h"
@@ -222,4 +222,4 @@ public:
 	friend class BoneTransform;
 };
 
-#endif // FIGURE_H
+#endif // FIGURE_2D_H

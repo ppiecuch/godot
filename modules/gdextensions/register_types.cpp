@@ -79,7 +79,7 @@
 #include "visual/cable2d_editor_plugin.h"
 #include "visual/destructible_sprite.h"
 #include "visual/explosion_particles.h"
-#include "visual/figure.h"
+#include "visual/figure_2d.h"
 #include "visual/nixie_font.h"
 #include "visual/pixel_spaceships.h"
 #include "visual/round_progress.h"

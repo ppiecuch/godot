@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  figure.cpp                                                           */
+/*  figure_2d.cpp                                                        */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,7 +28,7 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "figure.h"
+#include "figure_2d.h"
 
 #include "core/message_queue.h"
 #include "core/project_settings.h"
