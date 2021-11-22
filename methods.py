@@ -4,8 +4,8 @@ import sys
 import glob
 import subprocess
 from collections import OrderedDict
-from collections.abc import Mapping
-from typing import Iterator
+#from collections.abc import Mapping
+#from typing import Iterator
 from compat import iteritems, isbasestring, open_utf8, decode_utf8, qualname
 
 from SCons import Node
@@ -759,21 +759,21 @@ def generate_vs_project(env, num_jobs):
 
             def add_mode(
                 self,
-                name: str = "",
-                includes: str = "",
-                cli_args: str = "",
-                defines=None,
+                name = "",
+                includes = "",
+                cli_args = "",
+                defines = None,
             ):
                 if defines is None:
                     defines = []
                 self.names.append(name)
                 self.arg_dict["variant"] += [
-                    f'{config}{f"_[{name}]" if name else ""}|{platform}'
+                    ("{config}".format(config=config) + ("_[{name}]".format(name=name) if name else "") + "|{platform}".format(platform=patform))
                     for config in ModuleConfigs.CONFIGURATIONS
                     for platform in ModuleConfigs.PLATFORMS
                 ]
                 self.arg_dict["runfile"] += [
-                    f'bin\\godot.windows.{config_id}.{plat_id}{f".{name}" if name else ""}.exe'
+                    ("bin\\godot.windows.{config_id}.{plat_id}".format(config_id=config_id, plat_id=plat_id) + ("{name}".format(name=name) if name else "") + ".exe")
                     for config_id in ModuleConfigs.CONFIGURATION_IDS
                     for plat_id in ModuleConfigs.PLATFORM_IDS
                 ]
@@ -785,7 +785,7 @@ def generate_vs_project(env, num_jobs):
 
                 configuration_getter = (
                     "$(Configuration"
-                    + "".join([f'.Replace("{name}", "")' for name in self.names[1:]])
+                    + "".join(['.Replace("{name}", "")'.format(name=name) for name in self.names[1:]])
                     + '.Replace("_[]", "")'
                     + ")"
                 )
@@ -794,7 +794,7 @@ def generate_vs_project(env, num_jobs):
                     'cmd /V /C set "plat=$(PlatformTarget)"',
                     '(if "$(PlatformTarget)"=="x64" (set "plat=x86_amd64"))',
                     'set "tools=%s"' % env["tools"],
-                    f'(if "{configuration_getter}"=="release" (set "tools=no"))',
+                    '(if "{configuration_getter}"=="release" (set "tools=no"))'.format(configuration_getter=configuration_getter),
                     'call "' + batch_file + '" !plat!',
                 ]
 
@@ -805,7 +805,7 @@ def generate_vs_project(env, num_jobs):
                 common_build_postfix = [
                     "--directory=\"$(ProjectDir.TrimEnd('\\'))\"",
                     "platform=windows",
-                    f"target={configuration_getter}",
+                    "target={configuration_getter}".format(configuration_getter=configuration_getter),
                     "progress=no",
                     "tools=!tools!",
                     "-j%s" % num_jobs,
@@ -819,15 +819,15 @@ def generate_vs_project(env, num_jobs):
 
             # Mappings interface definitions
 
-            def __iter__(self) -> Iterator[str]:
+            def __iter__(self):
                 for x in self.arg_dict:
                     yield x
 
-            def __len__(self) -> int:
+            def __len__(self):
                 return len(self.names)
 
-            def __getitem__(self, k: str):
-                return self.arg_dict[k]
+            def __getitem__(self, k):
+                return self.arg_dict[str(k)]
 
         add_to_vs_project(env, env.core_sources)
         add_to_vs_project(env, env.drivers_sources)
@@ -866,7 +866,7 @@ def generate_vs_project(env, num_jobs):
             incs=env.vs_incs,
             srcs=env.vs_srcs,
             auto_build_solution=1,
-            **module_configs,
+            **module_configs
         )
     else:
         print(
