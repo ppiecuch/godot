@@ -326,6 +326,7 @@ void Main::print_help(const char *p_binary) {
 #ifdef BYTECODE_EXPORT_ENABLED
 	OS::get_singleton()->print("  --dump-bytecode <file>           Generate script's bytecode dump.\n");
 #endif
+#ifdef TOOLS_ENABLED
 #ifdef DOCTEST
 	OS::get_singleton()->print("  --doctest                        Run embedded tests from doctest.\n");
 #endif
@@ -338,6 +339,7 @@ void Main::print_help(const char *p_binary) {
 		comma = ", ";
 	}
 	OS::get_singleton()->print(").\n");
+#endif
 #endif
 }
 
