@@ -33,6 +33,25 @@
 
 #include "scene/2d/node_2d.h"
 
+enum NdsScreen {
+	SCREEN_TOP,
+	SCREEN_BOTTOM,
+}
+
+enum NdsMode5Background {
+	MODE5_BG0,
+	MODE5_BG1,
+	MODE5_BG2,
+	MODE5_BG3,
+}
+
+enum NdsBackgroundBitmapSize {
+	BITMAP_128x128,
+	BITMAP_256x256,
+	BITMAP_512x256,
+	BITMAP_512x512,
+}
+
 class NdsSprite : public Node2D {
 	GDCLASS(NdsSprite, Node2D);
 
