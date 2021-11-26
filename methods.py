@@ -759,21 +759,29 @@ def generate_vs_project(env, num_jobs):
 
             def add_mode(
                 self,
-                name = "",
-                includes = "",
-                cli_args = "",
-                defines = None,
+                name="",
+                includes="",
+                cli_args="",
+                defines=None,
             ):
                 if defines is None:
                     defines = []
                 self.names.append(name)
                 self.arg_dict["variant"] += [
-                    ("{config}".format(config=config) + ("_[{name}]".format(name=name) if name else "") + "|{platform}".format(platform=patform))
+                    (
+                        "{config}".format(config=config)
+                        + ("_[{name}]".format(name=name) if name else "")
+                        + "|{platform}".format(platform=patform)
+                    )
                     for config in ModuleConfigs.CONFIGURATIONS
                     for platform in ModuleConfigs.PLATFORMS
                 ]
                 self.arg_dict["runfile"] += [
-                    ("bin\\godot.windows.{config_id}.{plat_id}".format(config_id=config_id, plat_id=plat_id) + ("{name}".format(name=name) if name else "") + ".exe")
+                    (
+                        "bin\\godot.windows.{config_id}.{plat_id}".format(config_id=config_id, plat_id=plat_id)
+                        + ("{name}".format(name=name) if name else "")
+                        + ".exe"
+                    )
                     for config_id in ModuleConfigs.CONFIGURATION_IDS
                     for plat_id in ModuleConfigs.PLATFORM_IDS
                 ]
@@ -794,7 +802,9 @@ def generate_vs_project(env, num_jobs):
                     'cmd /V /C set "plat=$(PlatformTarget)"',
                     '(if "$(PlatformTarget)"=="x64" (set "plat=x86_amd64"))',
                     'set "tools=%s"' % env["tools"],
-                    '(if "{configuration_getter}"=="release" (set "tools=no"))'.format(configuration_getter=configuration_getter),
+                    '(if "{configuration_getter}"=="release" (set "tools=no"))'.format(
+                        configuration_getter=configuration_getter
+                    ),
                     'call "' + batch_file + '" !plat!',
                 ]
 
