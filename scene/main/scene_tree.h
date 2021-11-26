@@ -52,6 +52,7 @@ class SceneTreeTimer : public Reference {
 
 	float time_left;
 	bool process_pause;
+	bool ignore_time_scale = false;
 
 protected:
 	static void _bind_methods();
@@ -62,6 +63,9 @@ public:
 
 	void set_pause_mode_process(bool p_pause_mode_process);
 	bool is_pause_mode_process();
+
+	void set_ignore_time_scale(bool p_ignore);
+	bool is_ignore_time_scale();
 
 	void release_connections();
 
