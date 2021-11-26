@@ -4,8 +4,6 @@ import sys
 import glob
 import subprocess
 from collections import OrderedDict
-#from collections.abc import Mapping
-#from typing import Iterator
 from compat import iteritems, isbasestring, open_utf8, decode_utf8, qualname
 
 from SCons import Node
