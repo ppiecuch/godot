@@ -130,7 +130,9 @@ static inline void _trace(int line, const char *file, const String &text) {
 #define for_all(range, func) \
 	std::for_each(std::begin(range), std::end(range), [this](decltype(range)::value_type &e) { func(e); })
 
-#define call_all(range, func) \
+#define call_method(range, func) \
+	std::for_each(std::begin(range), std::end(range), [&](decltype(range)::value_type &e) { e.func; })
+#define call_method_r(range, func) \
 	std::for_each(std::begin(range), std::end(range), [&](decltype(range)::value_type &e) { e->func; })
 
 template <typename T>
