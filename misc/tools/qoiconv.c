@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  qoiconv.c                                                            */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 /*
 
 Command line tool to convert between png <> qoi format
@@ -31,7 +61,6 @@ SOFTWARE.
 
 */
 
-
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_ONLY_PNG
 #define STBI_NO_LINEAR
@@ -43,8 +72,7 @@ SOFTWARE.
 #define QOI_IMPLEMENTATION
 #include "qoi.h"
 
-
-#define STR_ENDS_WITH(S, E) (strcmp(S + strlen(S) - (sizeof(E)-1), E) == 0)
+#define STR_ENDS_WITH(S, E) (strcmp(S + strlen(S) - (sizeof(E) - 1), E) == 0)
 
 int main(int argc, char **argv) {
 	if (argc < 3) {
@@ -59,8 +87,7 @@ int main(int argc, char **argv) {
 	int w, h, channels;
 	if (STR_ENDS_WITH(argv[1], ".png")) {
 		pixels = (void *)stbi_load(argv[1], &w, &h, &channels, 0);
-	}
-	else if (STR_ENDS_WITH(argv[1], ".qoi")) {
+	} else if (STR_ENDS_WITH(argv[1], ".qoi")) {
 		qoi_desc desc;
 		pixels = qoi_read(argv[1], &desc, 0);
 		channels = desc.channels;
@@ -76,14 +103,8 @@ int main(int argc, char **argv) {
 	int encoded = 0;
 	if (STR_ENDS_WITH(argv[2], ".png")) {
 		encoded = stbi_write_png(argv[2], w, h, channels, pixels, 0);
-	}
-	else if (STR_ENDS_WITH(argv[2], ".qoi")) {
-		encoded = qoi_write(argv[2], pixels, &(qoi_desc){
-			.width = w,
-			.height = h,
-			.channels = channels,
-			.colorspace = QOI_SRGB
-		});
+	} else if (STR_ENDS_WITH(argv[2], ".qoi")) {
+		encoded = qoi_write(argv[2], pixels, &(qoi_desc){ .width = w, .height = h, .channels = channels, .colorspace = QOI_SRGB });
 	}
 
 	if (!encoded) {

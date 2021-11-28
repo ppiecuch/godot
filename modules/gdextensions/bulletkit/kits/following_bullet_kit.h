@@ -1,29 +1,58 @@
+/*************************************************************************/
+/*  following_bullet_kit.h                                               */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #ifndef FOLLOWING_BULLET_KIT_H
 #define FOLLOWING_BULLET_KIT_H
 
-#include "scene/resources/texture.h"
-#include "scene/resources/packed_scene.h"
 #include "scene/2d/node_2d.h"
 #include "scene/main/scene_tree.h"
+#include "scene/resources/packed_scene.h"
+#include "scene/resources/texture.h"
 
 #include <cmath>
 
 #include "../bullet_kit.h"
 
-
 // Bullet definition.
 class FollowingBullet : public Bullet {
 	GDCLASS(FollowingBullet, Bullet)
 public:
-	Node2D* target_node = nullptr;
+	Node2D *target_node = nullptr;
 
 	void _init() {}
 
-	void set_target_node(Node2D* node) {
+	void set_target_node(Node2D *node) {
 		target_node = node;
 	}
 
-	Node2D* get_target_node() {
+	Node2D *get_target_node() {
 		return target_node;
 	}
 
@@ -53,10 +82,9 @@ public:
 
 // Bullets pool definition.
 class FollowingBulletsPool : public AbstractBulletsPool<FollowingBulletKit, FollowingBullet> {
-
 	//void _init_bullet(FollowingBullet* bullet); Use default implementation.
 
-	void _enable_bullet(FollowingBullet* bullet) {
+	void _enable_bullet(FollowingBullet *bullet) {
 		// Reset the bullet lifetime.
 		bullet->lifetime = 0.0f;
 		Rect2 texture_rect = Rect2(-kit->texture->get_size() / 2.0f, kit->texture->get_size());
@@ -64,14 +92,14 @@ class FollowingBulletsPool : public AbstractBulletsPool<FollowingBulletKit, Foll
 
 		// Configure the bullet to draw the kit texture each frame.
 		VisualServer::get_singleton()->canvas_item_add_texture_rect(bullet->item_rid,
-			texture_rect,
-			texture_rid);
+				texture_rect,
+				texture_rid);
 	}
 
 	//void _disable_bullet(FollowingBullet* bullet); Use default implementation.
 
-	bool _process_bullet(FollowingBullet* bullet, float delta) {
-		if(bullet->target_node != nullptr) {
+	bool _process_bullet(FollowingBullet *bullet, float delta) {
+		if (bullet->target_node != nullptr) {
 			// Find the rotation to the target node.
 			Vector2 to_target = bullet->target_node->get_global_position() - bullet->transform.get_origin();
 			float rotation_to_target = bullet->velocity.angle_to(to_target);
@@ -83,12 +111,12 @@ class FollowingBulletsPool : public AbstractBulletsPool<FollowingBulletKit, Foll
 		// Apply velocity.
 		bullet->transform.set_origin(bullet->transform.get_origin() + bullet->velocity * delta);
 
-		if(!active_rect.has_point(bullet->transform.get_origin())) {
+		if (!active_rect.has_point(bullet->transform.get_origin())) {
 			// Return true if the bullet should be deleted.
 			return true;
 		}
 		// Rotate the bullet based on its velocity "rotate" is enabled.
-		if(kit->rotate) {
+		if (kit->rotate) {
 			bullet->transform.set_rotation(bullet->velocity.angle());
 		}
 		// Bullet is still alive, increase its lifetime.

@@ -1,26 +1,55 @@
+/*************************************************************************/
+/*  following_dynamic_bullet_kit.h                                       */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #ifndef FOLLOWING_DYNAMIC_BULLET_KIT_H
 #define FOLLOWING_DYNAMIC_BULLET_KIT_H
 
-#include "scene/resources/texture.h"
-#include "scene/resources/packed_scene.h"
-#include "scene/resources/curve.h"
 #include "scene/2d/node_2d.h"
+#include "scene/resources/curve.h"
+#include "scene/resources/packed_scene.h"
+#include "scene/resources/texture.h"
 
 #include "../bullet_kit.h"
-
 
 // Bullet definition.
 class FollowingDynamicBullet : public Bullet {
 	GDCLASS(FollowingDynamicBullet, Bullet)
 public:
-	Node2D* target_node = nullptr;
+	Node2D *target_node = nullptr;
 	float starting_speed = 0;
 
-	void set_target_node(Node2D* node) {
+	void set_target_node(Node2D *node) {
 		target_node = node;
 	}
 
-	Node2D* get_target_node() {
+	Node2D *get_target_node() {
 		return target_node;
 	}
 
@@ -67,20 +96,21 @@ public:
 		ADD_PROPERTY(PropertyInfo(Variant::REAL, "distance_curves_span", PROPERTY_HINT_RANGE, "0.001,65536.0"), "set_distance_curves_span", "get_distance_curves_span");
 		ADD_PROPERTY(PropertyInfo(Variant::BOOL, "lifetime_curves_loop"), "set_lifetime_curves_loop", "get_lifetime_curves_loop");
 		ADD_PROPERTY(PropertyInfo(Variant::INT, "speed_control_mode", PROPERTY_HINT_ENUM,
-			"Based On Lifetime,Based On Target Distance,Based On Angle To Target"), "set_speed_control_mode", "get_speed_control_mode");
+							 "Based On Lifetime,Based On Target Distance,Based On Angle To Target"),
+				"set_speed_control_mode", "get_speed_control_mode");
 		ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "speed_multiplier", PROPERTY_HINT_RESOURCE_TYPE, "Curve"), "set_speed_multiplier", "get_speed_multiplier");
 		ADD_PROPERTY(PropertyInfo(Variant::INT, "turning_speed_control_mode", PROPERTY_HINT_ENUM,
-			"Based On Lifetime,Based On Target Distance,Based On Angle To Target"), "set_turning_speed_control_mode", "get_turning_speed_control_mode");
+							 "Based On Lifetime,Based On Target Distance,Based On Angle To Target"),
+				"set_turning_speed_control_mode", "get_turning_speed_control_mode");
 		ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "turning_speed", PROPERTY_HINT_RESOURCE_TYPE, "Curve"), "set_turning_speed", "get_turning_speed");
 	}
 };
 
 // Bullets pool definition.
 class FollowingDynamicBulletsPool : public AbstractBulletsPool<FollowingDynamicBulletKit, FollowingDynamicBullet> {
-
 	// void _init_bullet(FollowingDynamicBullet* bullet); Use default implementation.
 
-	void _enable_bullet(FollowingDynamicBullet* bullet) {
+	void _enable_bullet(FollowingDynamicBullet *bullet) {
 		// Reset the bullet lifetime.
 		bullet->lifetime = 0.0;
 		Rect2 texture_rect = Rect2(-kit->texture->get_size() / 2.0, kit->texture->get_size());
@@ -88,62 +118,62 @@ class FollowingDynamicBulletsPool : public AbstractBulletsPool<FollowingDynamicB
 
 		// Configure the bullet to draw the kit texture each frame.
 		VisualServer::get_singleton()->canvas_item_add_texture_rect(bullet->item_rid,
-			texture_rect,
-			texture_rid);
+				texture_rect,
+				texture_rid);
 	}
 
 	// void _disable_bullet(FollowingDynamicBullet* bullet); Use default implementation.
 
-	bool _process_bullet(FollowingDynamicBullet* bullet, float delta) {
+	bool _process_bullet(FollowingDynamicBullet *bullet, float delta) {
 		float adjusted_lifetime = bullet->lifetime / kit->lifetime_curves_span;
-		if(kit->lifetime_curves_loop) {
+		if (kit->lifetime_curves_loop) {
 			adjusted_lifetime = fmod(adjusted_lifetime, 1.0f);
 		}
 		float bullet_turning_speed = 0.0;
 		float speed_multiplier = 1.0;
 
-		if(kit->turning_speed.is_valid() && bullet->target_node != nullptr) {
+		if (kit->turning_speed.is_valid() && bullet->target_node != nullptr) {
 			Vector2 to_target = bullet->target_node->get_global_position() - bullet->transform.get_origin();
 			// If based on lifetime.
-			if(kit->turning_speed_control_mode == 0) {
+			if (kit->turning_speed_control_mode == 0) {
 				bullet_turning_speed = kit->turning_speed->interpolate(adjusted_lifetime);
 			}
 			// If based on distance to target.
-			else if(kit->turning_speed_control_mode == 1) {
+			else if (kit->turning_speed_control_mode == 1) {
 				float distance_to_target = to_target.length();
 				bullet_turning_speed = kit->turning_speed->interpolate(distance_to_target / kit->distance_curves_span);
 			}
 			// If based on angle to target.
-			else if(kit->turning_speed_control_mode == 2) {
+			else if (kit->turning_speed_control_mode == 2) {
 				float angle_to_target = bullet->velocity.angle_to(to_target);
 				bullet_turning_speed = kit->turning_speed->interpolate(std::abs(angle_to_target) / Math_PI);
 			}
 		}
-		if(kit->speed_multiplier.is_valid()) {
+		if (kit->speed_multiplier.is_valid()) {
 			// If based on lifetime.
-			if(kit->speed_control_mode <= 0) {
+			if (kit->speed_control_mode <= 0) {
 				speed_multiplier = kit->speed_multiplier->interpolate(adjusted_lifetime);
 			}
 			// If based on target node: 1 or 2.
-			else if(kit->speed_control_mode < 3 && bullet->target_node != nullptr) {
+			else if (kit->speed_control_mode < 3 && bullet->target_node != nullptr) {
 				Vector2 to_target = bullet->target_node->get_global_position() - bullet->transform.get_origin();
 				// If based on distance to target.
-				if(kit->speed_control_mode == 1) {
+				if (kit->speed_control_mode == 1) {
 					float distance_to_target = to_target.length();
 					speed_multiplier = kit->speed_multiplier->interpolate(distance_to_target / kit->distance_curves_span);
 				}
 				// If based on angle to target.
-				else if(kit->speed_control_mode == 2) {
+				else if (kit->speed_control_mode == 2) {
 					float angle_to_target = bullet->velocity.angle_to(to_target);
 					speed_multiplier = kit->speed_multiplier->interpolate(std::abs(angle_to_target) / Math_PI);
 				}
 			}
 		}
 
-		if(speed_multiplier != 1.0f) {
+		if (speed_multiplier != 1.0f) {
 			bullet->velocity = bullet->velocity.normalized() * bullet->starting_speed * speed_multiplier;
 		}
-		if(bullet_turning_speed != 0.0 && bullet->target_node != nullptr) {
+		if (bullet_turning_speed != 0.0 && bullet->target_node != nullptr) {
 			// Find the rotation to the target node.
 			Vector2 to_target = bullet->target_node->get_global_position() - bullet->transform.get_origin();
 			float rotation_to_target = bullet->velocity.angle_to(to_target);
@@ -154,12 +184,12 @@ class FollowingDynamicBulletsPool : public AbstractBulletsPool<FollowingDynamicB
 
 		bullet->transform.set_origin(bullet->transform.get_origin() + bullet->velocity * delta);
 
-		if(!active_rect.has_point(bullet->transform.get_origin())) {
+		if (!active_rect.has_point(bullet->transform.get_origin())) {
 			// Return true if the bullet should be deleted.
 			return true;
 		}
 		// Rotate the bullet based on its velocity "rotate" is enabled.
-		if(kit->rotate) {
+		if (kit->rotate) {
 			bullet->transform.set_rotation(bullet->velocity.angle());
 		}
 		// Bullet is still alive, increase its lifetime.

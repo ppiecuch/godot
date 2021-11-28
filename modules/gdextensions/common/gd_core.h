@@ -249,6 +249,6 @@ template <typename T>
 gd_unique_ptr<T> make_gd_unique_ptr(T *p) {
 	return gd_unique_ptr<T>(p, [](T *ptr) { memdelete(ptr); });
 }
-} // namespace std
+} //namespace stdx
 
 #endif // GD_CORE_H
