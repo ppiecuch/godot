@@ -30,6 +30,7 @@ modules = [
     "behaviornode",
     "settings",
     "sfxr",
+    "vgamepad",
 ]
 
 if env["tools"]:
