@@ -25,15 +25,15 @@
 #ifndef WSLAY_H
 #define WSLAY_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/types.h>
 
-/* GODOT ADDITTION */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+	/* GODOT ADDITTION */
 #if defined(_MSC_VER)
 #include <BaseTsd.h>
 typedef SSIZE_T ssize_t;
