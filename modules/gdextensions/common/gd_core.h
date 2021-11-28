@@ -242,12 +242,12 @@ reverse_iterator<Iterator> make_reverse_iterator(Iterator i) {
 
 /// make_gd_unique_ptr(ptr)
 /// ptr will be deleted using 'memdelete' function
-namespace std {
+namespace stdx {
 template <typename T>
-using deleted_unique_ptr = unique_ptr<T, std::function<void(T *)>>;
+using gd_unique_ptr = std::unique_ptr<T, std::function<void(T *)>>;
 template <typename T>
-deleted_unique_ptr<T> make_gd_unique_ptr(T *p) {
-	return deleted_unique_ptr<T>(p, [](T *ptr) { memdelete(ptr); });
+gd_unique_ptr<T> make_gd_unique_ptr(T *p) {
+	return gd_unique_ptr<T>(p, [](T *ptr) { memdelete(ptr); });
 }
 } // namespace std
 
