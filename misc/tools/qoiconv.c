@@ -3,7 +3,7 @@
 Command line tool to convert between png <> qoi format
 
 Requires "stb_image.h" and "stb_image_write.h"
-Compile with: 
+Compile with:
 	gcc qoiconv.c -std=c99 -O3 -o qoiconv
 
 Dominic Szablewski - https://phoboslab.org
@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
 	else if (STR_ENDS_WITH(argv[2], ".qoi")) {
 		encoded = qoi_write(argv[2], pixels, &(qoi_desc){
 			.width = w,
-			.height = h, 
+			.height = h,
 			.channels = channels,
 			.colorspace = QOI_SRGB
 		});

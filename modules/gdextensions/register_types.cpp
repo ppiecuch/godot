@@ -87,6 +87,8 @@
 #include "visual/texture_panning.h"
 #include "visual/touch_button.h"
 
+#include "vgamepad/vgamepad.h"
+
 #include "environment/spherical_waves/spherical_waves.h"
 #include "environment/spider_anim/spider.h"
 #include "environment/spider_anim/stage.h"
@@ -206,6 +208,7 @@ void register_gdextensions_types() {
 	ClassDB::register_class<DestructibleSprite>();
 	ClassDB::register_class<Cable2D>();
 	ClassDB::register_class<TouchButton>();
+	ClassDB::register_class<VGamePad>();
 #ifdef TOOLS_ENABLED
 	ClassDB::register_class<AudioStreamPreview>();
 	ClassDB::register_class<AudioStreamPreviewGenerator>();

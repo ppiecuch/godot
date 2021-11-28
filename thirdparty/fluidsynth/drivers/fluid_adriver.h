@@ -39,11 +39,13 @@ void fluid_audio_driver_settings(fluid_settings_t *settings);
 /* Defined in fluid_filerenderer.c */
 void fluid_file_renderer_settings(fluid_settings_t *settings);
 #if AUFILE_SUPPORT
-fluid_audio_driver_t *new_fluid_file_audio_driver(fluid_settings_t *settings,
-        fluid_synth_t *synth);
+fluid_audio_driver_t *new_fluid_file_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth);
 void delete_fluid_file_audio_driver(fluid_audio_driver_t *p);
 #endif
 
-
+#if GODOT_FLUIDDRIVER_ENABLED
+fluid_audio_driver_t *new_fluid_godot_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth);
+void delete_fluid_godot_audio_driver(fluid_audio_driver_t *p);
+#endif
 
 #endif  /* _FLUID_AUDRIVER_H */
