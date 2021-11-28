@@ -76,7 +76,7 @@ class DynamicBulletsPool : public AbstractBulletsPool<DynamicBulletKit, DynamicB
 		bullet->lifetime = 0.0f;
 		Rect2 texture_rect = Rect2(-kit->texture->get_size() / 2.0f, kit->texture->get_size());
 		RID texture_rid = kit->texture->get_rid();
-		
+
 		// Configure the bullet to draw the kit texture each frame.
 		VisualServer::get_singleton()->canvas_item_add_texture_rect(bullet->item_rid,
 			texture_rect,

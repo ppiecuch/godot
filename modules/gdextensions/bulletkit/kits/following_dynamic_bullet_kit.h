@@ -85,7 +85,7 @@ class FollowingDynamicBulletsPool : public AbstractBulletsPool<FollowingDynamicB
 		bullet->lifetime = 0.0;
 		Rect2 texture_rect = Rect2(-kit->texture->get_size() / 2.0, kit->texture->get_size());
 		RID texture_rid = kit->texture->get_rid();
-		
+
 		// Configure the bullet to draw the kit texture each frame.
 		VisualServer::get_singleton()->canvas_item_add_texture_rect(bullet->item_rid,
 			texture_rect,
@@ -101,7 +101,7 @@ class FollowingDynamicBulletsPool : public AbstractBulletsPool<FollowingDynamicB
 		}
 		float bullet_turning_speed = 0.0;
 		float speed_multiplier = 1.0;
-		
+
 		if(kit->turning_speed.is_valid() && bullet->target_node != nullptr) {
 			Vector2 to_target = bullet->target_node->get_global_position() - bullet->transform.get_origin();
 			// If based on lifetime.
