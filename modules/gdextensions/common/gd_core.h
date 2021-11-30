@@ -242,13 +242,13 @@ reverse_iterator<Iterator> make_reverse_iterator(Iterator i) {
 
 /// make_gd_unique_ptr(ptr)
 /// ptr will be deleted using 'memdelete' function
-namespace stdx {
+namespace std {
 template <typename T>
 using gd_unique_ptr = std::unique_ptr<T, std::function<void(T *)>>;
 template <typename T>
 gd_unique_ptr<T> make_gd_unique_ptr(T *p) {
 	return gd_unique_ptr<T>(p, [](T *ptr) { memdelete(ptr); });
 }
-} //namespace stdx
+} //namespace std
 
 #endif // GD_CORE_H

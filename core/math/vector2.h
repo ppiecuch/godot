@@ -122,8 +122,8 @@ struct Vector2 {
 	Vector2 operator*(const Vector2 &p_v1) const;
 
 	Vector2 operator*(const real_t &rvalue) const;
-	void operator*=(const real_t &rvalue);
-	void operator*=(const Vector2 &rvalue) { *this = *this * rvalue; }
+	Vector2 &operator*=(const real_t &rvalue);
+	Vector2 &operator*=(const Vector2 &rvalue) { *this = *this * rvalue; return *this; }
 
 	Vector2 operator/(const Vector2 &p_v1) const;
 
@@ -230,9 +230,10 @@ _FORCE_INLINE_ Vector2 Vector2::operator*(const Vector2 &p_v1) const {
 _FORCE_INLINE_ Vector2 Vector2::operator*(const real_t &rvalue) const {
 	return Vector2(x * rvalue, y * rvalue);
 };
-_FORCE_INLINE_ void Vector2::operator*=(const real_t &rvalue) {
+_FORCE_INLINE_ Vector2 &Vector2::operator*=(const real_t &rvalue) {
 	x *= rvalue;
 	y *= rvalue;
+	return *this;
 };
 
 _FORCE_INLINE_ Vector2 Vector2::operator/(const Vector2 &p_v1) const {
