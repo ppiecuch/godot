@@ -213,6 +213,7 @@ public:
 	int find_char(const CharType &p_char, int p_from = 0) const; ///< return <0 if failed
 	int find_last(const String &p_str) const; ///< return <0 if failed
 	bool contains(const CharType &p_char, int p_from = 0) const { return find_char(p_char, p_from) >= 0; }
+	bool has(const String &p_str) const { return find(p_str) >= 0; }
 	int findn(const String &p_str, int p_from = 0) const; ///< return <0 if failed, case insensitive
 	int rfind(const String &p_str, int p_from = -1) const; ///< return <0 if failed
 	int rfindn(const String &p_str, int p_from = -1) const; ///< return <0 if failed, case insensitive
