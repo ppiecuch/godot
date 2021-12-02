@@ -33,6 +33,7 @@
 #include "core/os/main_loop.h"
 #include "core/print_string.h"
 #include "scene/main/viewport.h"
+#include "scene/resources/font.h"
 #include "scene/resources/theme.h"
 #include "servers/visual_server.h"
 
