@@ -118,7 +118,7 @@ struct Vector2 {
 	Vector2 operator+(const Vector2 &p_v) const;
 	Vector2 &operator+=(const Vector2 &p_v);
 	Vector2 operator-(const Vector2 &p_v) const;
-	void operator-=(const Vector2 &p_v);
+	Vector2 &operator-=(const Vector2 &p_v);
 	Vector2 operator*(const Vector2 &p_v1) const;
 
 	Vector2 operator*(const real_t &rvalue) const;
@@ -129,8 +129,8 @@ struct Vector2 {
 
 	Vector2 operator/(const real_t &rvalue) const;
 
-	void operator/=(const real_t &rvalue);
-	void operator/=(const Vector2 &rvalue) { *this = *this / rvalue; }
+	Vector2 &operator/=(const real_t &rvalue);
+	Vector2 &operator/=(const Vector2 &rvalue) { *this = *this / rvalue; return *this; }
 
 	Vector2 operator-() const;
 
@@ -175,13 +175,13 @@ struct Vector2 {
 	_FORCE_INLINE_ static Vector2 min(const Vector2 &p_a, const Vector2 &p_b) { return Vector2(MIN(p_a.x, p_b.x), MIN(p_a.y, p_b.y)); }
 	_FORCE_INLINE_ static Vector2 max(const Vector2 &p_a, const Vector2 &p_b) { return Vector2(MAX(p_a.x, p_b.x), MAX(p_a.y, p_b.y)); }
 
-	_FORCE_INLINE_ Vector2 min(const Vector2 &p_b) { return Vector2(MIN(x, p_b.x), MIN(y, p_b.y)); }
-	_FORCE_INLINE_ Vector2 max(const Vector2 &p_b) { return Vector2(MAX(x, p_b.x), MAX(y, p_b.y)); }
+	_FORCE_INLINE_ Vector2 min(const Vector2 &p_b) const { return Vector2(MIN(x, p_b.x), MIN(y, p_b.y)); }
+	_FORCE_INLINE_ Vector2 max(const Vector2 &p_b) const { return Vector2(MAX(x, p_b.x), MAX(y, p_b.y)); }
 
-	_FORCE_INLINE_ real_t min() { return MIN(x, y); }
-	_FORCE_INLINE_ real_t max() { return MAX(x, y); }
+	_FORCE_INLINE_ real_t min() const { return MIN(x, y); }
+	_FORCE_INLINE_ real_t max() const { return MAX(x, y); }
 
-	_FORCE_INLINE_ Vector2 clamp(const Vector2 &p_a, const Vector2 &p_b) { return Vector2(CLAMP(x, p_a.x, p_b.x), CLAMP(y, p_a.y, p_b.y)); }
+	_FORCE_INLINE_ Vector2 clamp(const Vector2 &p_a, const Vector2 &p_b) const  { return Vector2(CLAMP(x, p_a.x, p_b.x), CLAMP(y, p_a.y, p_b.y)); }
 
 	_FORCE_INLINE_ static Vector2 barycentric(const Vector2 &p_v1, const Vector2 &p_v2, const Vector2 &p_v3, real_t p_amount1, real_t p_amount2) {
 		return Vector2(
@@ -219,9 +219,10 @@ _FORCE_INLINE_ Vector2 &Vector2::operator+=(const Vector2 &p_v) {
 _FORCE_INLINE_ Vector2 Vector2::operator-(const Vector2 &p_v) const {
 	return Vector2(x - p_v.x, y - p_v.y);
 }
-_FORCE_INLINE_ void Vector2::operator-=(const Vector2 &p_v) {
+_FORCE_INLINE_ Vector2 &Vector2::operator-=(const Vector2 &p_v) {
 	x -= p_v.x;
 	y -= p_v.y;
+	return *this;
 }
 
 _FORCE_INLINE_ Vector2 Vector2::operator*(const Vector2 &p_v1) const {
@@ -245,9 +246,10 @@ _FORCE_INLINE_ Vector2 Vector2::operator/(const real_t &rvalue) const {
 	return Vector2(x / rvalue, y / rvalue);
 };
 
-_FORCE_INLINE_ void Vector2::operator/=(const real_t &rvalue) {
+_FORCE_INLINE_ Vector2 &Vector2::operator/=(const real_t &rvalue) {
 	x /= rvalue;
 	y /= rvalue;
+	return *this;
 };
 
 _FORCE_INLINE_ Vector2 Vector2::operator-() const {

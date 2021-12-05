@@ -1971,7 +1971,7 @@ void SceneTree::_call_idle_callbacks() {
 
 void SceneTree::_call_exit_callbacks() {
 	if (exit_callback_count) {
-		print_verbose(vformat("Calling %d exit callbacks", exit_callback_count));
+		print_verbose(vformat("Calling exit callbacks (%d)", exit_callback_count));
 		for (int i = 0; i < exit_callback_count; i++) {
 			exit_callbacks[i]();
 		}
