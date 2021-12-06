@@ -336,8 +336,8 @@ jobs:
       # Environment for devkitPro
       - name: Configure devKit
         run: |
-          echo "${DEVKITARM}/bin" >> $GITHUB_PATH
           echo "CTRULIB=${DEVKITPRO}/libctru" >> $GITHUB_ENV
+          echo "${DEVKITARM}/bin" >> $GITHUB_PATH
 
       # Upload cache on completion and check it out now
       - name: Load .scons_cache directory
