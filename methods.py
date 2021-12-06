@@ -350,7 +350,7 @@ def use_windows_spawn_fix(self, platform=None):
 
         rv = 0
         env = {str(key): str(value) for key, value in iteritems(env)}
-        if len(cmdline) > 10000 and cmd.endswith("ar"):
+        if len(cmdline) > 9500 and cmd.endswith("ar"):
             cmdline = cmd + " " + args[1] + " " + args[2] + " "
             for i in range(3, len(args)):
                 rv = mySubProcess(cmdline + args[i], env)

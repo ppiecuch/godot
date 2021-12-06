@@ -349,14 +349,6 @@ if env_base["no_editor_splash"]:
 if not env_base["deprecated"]:
     env_base.Append(CPPDEFINES=["DISABLE_DEPRECATED"])
 
-if env_base["tools"] and os.path.exists("thirdparty/doctest/doctest.h"):
-    print("(Custom) Doctest enabled.")
-    env_base["doctest"] = True
-    env_base.Prepend(CPPPATH=["#thirdparty"])
-    env_base.Append(CPPDEFINES=["DOCTEST"])
-else:
-    env_base["doctest"] = False
-
 if selected_platform in platform_list:
     tmppath = "./platform/" + selected_platform
     sys.path.insert(0, tmppath)
@@ -430,6 +422,14 @@ if selected_platform in platform_list:
     for f in flag_list:
         if not (f[0] in ARGUMENTS):  # allow command line to override platform flags
             env[f[0]] = f[1]
+
+    if env["tools"] and os.path.exists("thirdparty/doctest/doctest.h"):
+        print("(Custom) Doctest enabled.")
+        env["doctest"] = True
+        env.Prepend(CPPPATH=["#thirdparty"])
+        env.Append(CPPDEFINES=["DOCTEST"])
+    else:
+        env["doctest"] = False
 
     # Must happen after the flags definition, so that they can be used by platform detect
     detect.configure(env)
