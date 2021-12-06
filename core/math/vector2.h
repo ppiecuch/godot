@@ -123,14 +123,20 @@ struct Vector2 {
 
 	Vector2 operator*(const real_t &rvalue) const;
 	Vector2 &operator*=(const real_t &rvalue);
-	Vector2 &operator*=(const Vector2 &rvalue) { *this = *this * rvalue; return *this; }
+	Vector2 &operator*=(const Vector2 &rvalue) {
+		*this = *this * rvalue;
+		return *this;
+	}
 
 	Vector2 operator/(const Vector2 &p_v1) const;
 
 	Vector2 operator/(const real_t &rvalue) const;
 
 	Vector2 &operator/=(const real_t &rvalue);
-	Vector2 &operator/=(const Vector2 &rvalue) { *this = *this / rvalue; return *this; }
+	Vector2 &operator/=(const Vector2 &rvalue) {
+		*this = *this / rvalue;
+		return *this;
+	}
 
 	Vector2 operator-() const;
 
@@ -181,7 +187,7 @@ struct Vector2 {
 	_FORCE_INLINE_ real_t min() const { return MIN(x, y); }
 	_FORCE_INLINE_ real_t max() const { return MAX(x, y); }
 
-	_FORCE_INLINE_ Vector2 clamp(const Vector2 &p_a, const Vector2 &p_b) const  { return Vector2(CLAMP(x, p_a.x, p_b.x), CLAMP(y, p_a.y, p_b.y)); }
+	_FORCE_INLINE_ Vector2 clamp(const Vector2 &p_a, const Vector2 &p_b) const { return Vector2(CLAMP(x, p_a.x, p_b.x), CLAMP(y, p_a.y, p_b.y)); }
 
 	_FORCE_INLINE_ static Vector2 barycentric(const Vector2 &p_v1, const Vector2 &p_v2, const Vector2 &p_v3, real_t p_amount1, real_t p_amount2) {
 		return Vector2(
