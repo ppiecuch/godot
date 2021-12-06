@@ -59,8 +59,9 @@ custom_tools = ["default"]
 
 platform_arg = ARGUMENTS.get("platform", ARGUMENTS.get("p", False))
 
+# NOTE: make sure zip module is always available
 if os.name == "nt" and (platform_arg == "android" or methods.get_cmdline_bool("use_mingw", False)):
-    custom_tools = ["mingw"]
+    custom_tools = ["mingw", "zip"]
 elif platform_arg == "javascript":
     # Use generic POSIX build toolchain for Emscripten.
     custom_tools = ["cc", "c++", "ar", "link", "textfile", "zip"]
