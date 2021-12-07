@@ -153,6 +153,14 @@ opts.Add(
 )
 opts.Add(BoolVariable("disable_3d", "Disable 3D nodes for a smaller executable", False))
 opts.Add(BoolVariable("disable_advanced_gui", "Disable advanced GUI nodes and behaviors", False))
+opts.Add(
+    "enable_gdextensions", "Enable selected components and classes from gdextensions (default everything is build)", ""
+)
+opts.Add(
+    BoolVariable(
+        "build_fluidsynth_driver", "Force building Fluidsynth audio/midi driver (default for editor only)", False
+    )
+)
 opts.Add("enable_gdextensions", "Enable selected components and classes from gdextensions (default everything is build)", "")
 opts.Add(BoolVariable("build_fluidsynth_driver", "Force building Fluidsynth audio/midi driver (default for editor only)", False))
 opts.Add(BoolVariable("no_editor_splash", "Don't use the custom splash screen for the editor", False))
