@@ -29,6 +29,9 @@ if [ ! -e "$CROSS/$CC" ]; then
 	NAME="$(basename "${BASH_SOURCE[0]}")"
 	VERSION=2021-03-10
 
+	# update platform repository
+	(cd platform/frt; git pull)
+
 	echo "*** Running docker toolchain $VERSION (with script $NAME).."
 	docker run --rm -t -v "$APPDIR:/app" gcw_zero_dev:$VERSION "./${SCRIPTDIR/$APPDIR/}/$NAME"
 

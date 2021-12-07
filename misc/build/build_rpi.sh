@@ -2,6 +2,9 @@
 
 export RPXC_IMAGE="rpi_toolchain"
 
+# update platform repository
+(cd platform/frt; git pull)
+
 docker run ${RPXC_IMAGE} > ./bin/rpxc
 chmod +x ./bin/rpxc
 echo "*** Using gcc/toolchain version $(./bin/rpxc -- arm-linux-gnueabihf-gcc --version)"
