@@ -7,7 +7,7 @@ set -e
 		echo "+---"
 		echo "| checking module $m ($(git remote get-url origin))"
 		echo "+---"
-		git status $m
+		git status $m | grep -v "nothing to commit" | grep .
 		echo ""
 	fi)
 done)
