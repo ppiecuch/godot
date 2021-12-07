@@ -38,7 +38,7 @@ elif [[ "$OSTYPE" == "linux"* ]]; then
 fi
 
 PATH=/usr/bin:/bin:/sbin:/usr/local/bin:$CROSS
-scons -j$CPU platform=frt frt_arch=odroid target=release disable_3d=true disable_experimental=yes
+scons -j$CPU platform=frt frt_arch=odroid target=release disable_3d=true
 
 mkdir -p bin/templates/frt
 mv -v bin/godot.frt.opt.aarch64.odroid bin/templates/frt/

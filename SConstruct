@@ -153,7 +153,8 @@ opts.Add(
 )
 opts.Add(BoolVariable("disable_3d", "Disable 3D nodes for a smaller executable", False))
 opts.Add(BoolVariable("disable_advanced_gui", "Disable advanced GUI nodes and behaviors", False))
-opts.Add(BoolVariable("disable_experimental", "Disable experimental modules", False))
+opts.Add("enable_gdextensions", "Enable selected components and classes from gdextensions (default everything is build)", "")
+opts.Add(BoolVariable("build_fluidsynth_driver", "Force building Fluidsynth audio/midi driver (default for editor only)", False))
 opts.Add(BoolVariable("no_editor_splash", "Don't use the custom splash screen for the editor", False))
 opts.Add("system_certs_path", "Use this path as SSL certificates default for editor (for package maintainers)", "")
 opts.Add(BoolVariable("use_precise_math_checks", "Math checks use very precise epsilon (debug option)", False))
@@ -250,6 +251,10 @@ elif selected_platform in ["frt", "psvita", "3ds", "nx"]:
     env_base["hw_class"] = "hw_portable_class"
 else:
     env_base["hw_class"] = "hw_other"
+
+print("INFO: building for platform '%s'" % selected_platform)
+print("INFO: detected OS family '%s'" % env_base["os_family"])
+print("INFO: detected HW class '%s'" % env_base["hw_class"])
 
 # Make sure to update this to the found, valid platform as it's used through the buildsystem as the reference.
 # It should always be re-set after calling `opts.Update()` otherwise it uses the original input value.
@@ -625,8 +630,6 @@ if selected_platform in platform_list:
             sys.exit(255)
         else:
             env.Append(CPPDEFINES=["_3D_DISABLED"])
-    if env["disable_experimental"]:
-        env.Append(CPPDEFINES=["EXPERIMENTAL_DISABLED"])
     if env["disable_advanced_gui"]:
         if env["tools"]:
             print(

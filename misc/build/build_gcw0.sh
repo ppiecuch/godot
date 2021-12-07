@@ -44,7 +44,7 @@ elif [[ "$OSTYPE" == "linux"* ]]; then
 fi
 
 PATH=/usr/bin:/bin:/sbin:/usr/local/bin:$CROSS
-scons -j$CPU platform=frt frt_arch=gcw0 target=release disable_3d=true disable_experimental=yes warnings=all werror=yes
+scons -j$CPU platform=frt frt_arch=gcw0 target=release disable_3d=true warnings=all werror=yes
 
 mkdir -p bin/templates/frt
 mv -v bin/godot.frt.opt.mipsel.gcw0 bin/templates/frt/

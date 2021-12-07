@@ -115,7 +115,7 @@ if [ ! -e "$CROSS/$CC" ]; then
 fi
 
 PATH=/usr/bin:/bin:/sbin:/usr/local/bin:$CROSS
-scons -j 2 platform=frt frt_arch=gcw0 target=release disable_experimental=yes
+scons -j 2 platform=frt frt_arch=gcw0 target=release
 ```
 
 ### Reference:
