@@ -161,8 +161,6 @@ opts.Add(
         "build_fluidsynth_driver", "Force building Fluidsynth audio/midi driver (default for editor only)", False
     )
 )
-opts.Add("enable_gdextensions", "Enable selected components and classes from gdextensions (default everything is build)", "")
-opts.Add(BoolVariable("build_fluidsynth_driver", "Force building Fluidsynth audio/midi driver (default for editor only)", False))
 opts.Add(BoolVariable("no_editor_splash", "Don't use the custom splash screen for the editor", False))
 opts.Add("system_certs_path", "Use this path as SSL certificates default for editor (for package maintainers)", "")
 opts.Add(BoolVariable("use_precise_math_checks", "Math checks use very precise epsilon (debug option)", False))
