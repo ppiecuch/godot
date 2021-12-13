@@ -85,6 +85,7 @@ void ParticlesMaterial::init_shaders() {
 
 	shader_names->color = "color_value";
 	shader_names->color_ramp = "color_ramp";
+	shader_names->color_initial_ramp = "color_initial_ramp";
 
 	shader_names->emission_sphere_radius = "emission_sphere_radius";
 	shader_names->emission_box_extents = "emission_box_extents";
@@ -217,6 +218,10 @@ void ParticlesMaterial::_update_shader() {
 		code += "uniform sampler2D color_ramp;\n";
 	}
 
+	if (color_initial_ramp.is_valid()) {
+		code += "uniform sampler2D color_initial_ramp;\n";
+	}
+
 	if (tex_parameters[PARAM_INITIAL_LINEAR_VELOCITY].is_valid()) {
 		code += "uniform sampler2D linear_velocity_texture;\n";
 	}
@@ -299,6 +304,9 @@ void ParticlesMaterial::_update_shader() {
 	code += "	float scale_rand = rand_from_seed(alt_seed);\n";
 	code += "	float hue_rot_rand = rand_from_seed(alt_seed);\n";
 	code += "	float anim_offset_rand = rand_from_seed(alt_seed);\n";
+	if (color_initial_ramp.is_valid()) {
+		code += "	float color_initial_rand = rand_from_seed(alt_seed);\n";
+	}
 	code += "	float pi = 3.14159;\n";
 	code += "	float degree_to_rad = pi / 180.0;\n";
 	code += "\n";
@@ -315,6 +323,7 @@ void ParticlesMaterial::_update_shader() {
 	code += "		tv = 1.0;\n";
 	code += "	}\n\n";
 	code += "	if (RESTART || restart) {\n";
+	code += "		uint alt_restart_seed = hash(base_number + uint(301184) + RANDOM_SEED);\n";
 
 	if (tex_parameters[PARAM_INITIAL_LINEAR_VELOCITY].is_valid()) {
 		code += "		float tex_linear_velocity = textureLod(linear_velocity_texture, vec2(0.0, 0.0), 0.0).r;\n";
@@ -338,17 +347,17 @@ void ParticlesMaterial::_update_shader() {
 
 	if (flags[FLAG_DISABLE_Z]) {
 		code += "		{\n";
-		code += "			float angle1_rad = rand_from_seed_m1_p1(alt_seed) * spread_rad;\n";
+		code += "			float angle1_rad = rand_from_seed_m1_p1(alt_restart_seed) * spread_rad;\n";
 		code += "			angle1_rad += direction.x != 0.0 ? atan(direction.y, direction.x) : sign(direction.y) * (pi / 2.0);\n";
 		code += "			vec3 rot = vec3(cos(angle1_rad), sin(angle1_rad), 0.0);\n";
-		code += "			VELOCITY = rot * initial_linear_velocity * mix(1.0, rand_from_seed(alt_seed), initial_linear_velocity_random);\n";
+		code += "			VELOCITY = rot * initial_linear_velocity * mix(1.0, rand_from_seed(alt_restart_seed), initial_linear_velocity_random);\n";
 		code += "		}\n";
 
 	} else {
 		//initiate velocity spread in 3D
 		code += "		{\n";
-		code += "			float angle1_rad = rand_from_seed_m1_p1(alt_seed) * spread_rad;\n";
-		code += "			float angle2_rad = rand_from_seed_m1_p1(alt_seed) * spread_rad * (1.0 - flatness);\n";
+		code += "			float angle1_rad = rand_from_seed_m1_p1(alt_restart_seed) * spread_rad;\n";
+		code += "			float angle2_rad = rand_from_seed_m1_p1(alt_restart_seed) * spread_rad * (1.0 - flatness);\n";
 		code += "			vec3 direction_xz = vec3(sin(angle1_rad), 0.0, cos(angle1_rad));\n";
 		code += "			vec3 direction_yz = vec3(0.0, sin(angle2_rad), cos(angle2_rad));\n";
 		code += "			direction_yz.z = direction_yz.z / max(0.0001,sqrt(abs(direction_yz.z))); // better uniform distribution\n";
@@ -363,14 +372,14 @@ void ParticlesMaterial::_update_shader() {
 		code += "			binormal = normalize(binormal);\n";
 		code += "			vec3 normal = cross(binormal, direction_nrm);\n";
 		code += "			spread_direction = binormal * spread_direction.x + normal * spread_direction.y + direction_nrm * spread_direction.z;\n";
-		code += "			VELOCITY = spread_direction * initial_linear_velocity * mix(1.0, rand_from_seed(alt_seed), initial_linear_velocity_random);\n";
+		code += "			VELOCITY = spread_direction * initial_linear_velocity * mix(1.0, rand_from_seed(alt_restart_seed), initial_linear_velocity_random);\n";
 		code += "		}\n";
 	}
 
 	code += "		float base_angle = (initial_angle + tex_angle) * mix(1.0, angle_rand, initial_angle_random);\n";
 	code += "		CUSTOM.x = base_angle * degree_to_rad;\n"; // angle
 	code += "		CUSTOM.y = 0.0;\n"; // phase
-	code += "		CUSTOM.w = (1.0 - lifetime_randomness * rand_from_seed(alt_seed));\n";
+	code += "		CUSTOM.w = (1.0 - lifetime_randomness * rand_from_seed(alt_restart_seed));\n";
 	code += "		CUSTOM.z = (anim_offset + tex_anim_offset) * mix(1.0, anim_offset_rand, anim_offset_random);\n"; // animation offset (0-1)
 
 	switch (emission_shape) {
@@ -378,13 +387,13 @@ void ParticlesMaterial::_update_shader() {
 			//do none
 		} break;
 		case EMISSION_SHAPE_SPHERE: {
-			code += "		float s = rand_from_seed(alt_seed) * 2.0 - 1.0;\n";
-			code += "		float t = rand_from_seed(alt_seed) * 2.0 * pi;\n";
+			code += "		float s = rand_from_seed(alt_restart_seed) * 2.0 - 1.0;\n";
+			code += "		float t = rand_from_seed(alt_restart_seed) * 2.0 * pi;\n";
 			code += "		float radius = emission_sphere_radius * sqrt(1.0 - s * s);\n";
 			code += "		TRANSFORM[3].xyz = vec3(radius * cos(t), radius * sin(t), emission_sphere_radius * s);\n";
 		} break;
 		case EMISSION_SHAPE_BOX: {
-			code += "		TRANSFORM[3].xyz = vec3(rand_from_seed(alt_seed) * 2.0 - 1.0, rand_from_seed(alt_seed) * 2.0 - 1.0, rand_from_seed(alt_seed) * 2.0 - 1.0) * emission_box_extents;\n";
+			code += "		TRANSFORM[3].xyz = vec3(rand_from_seed(alt_restart_seed) * 2.0 - 1.0, rand_from_seed(alt_restart_seed) * 2.0 - 1.0, rand_from_seed(alt_restart_seed) * 2.0 - 1.0) * emission_box_extents;\n";
 		} break;
 		case EMISSION_SHAPE_POINTS:
 		case EMISSION_SHAPE_DIRECTED_POINTS: {
@@ -410,8 +419,8 @@ void ParticlesMaterial::_update_shader() {
 			}
 		} break;
 		case EMISSION_SHAPE_RING: {
-			code += "		float ring_spawn_angle = rand_from_seed(alt_seed) * 2.0 * pi;\n";
-			code += "		float ring_random_radius = rand_from_seed(alt_seed) * (ring_radius - ring_inner_radius) + ring_inner_radius;\n";
+			code += "		float ring_spawn_angle = rand_from_seed(alt_restart_seed) * 2.0 * pi;\n";
+			code += "		float ring_random_radius = rand_from_seed(alt_restart_seed) * (ring_radius - ring_inner_radius) + ring_inner_radius;\n";
 			code += "		vec3 axis = normalize(ring_axis);\n";
 			code += "		vec3 ortho_axis = vec3(0.0);\n";
 			code += "		if (axis == vec3(1.0, 0.0, 0.0)) {\n";
@@ -429,7 +438,7 @@ void ParticlesMaterial::_update_shader() {
 			code += "			vec3(axis.z * axis.x * oc - axis.y * s, axis.z * axis.y * oc + axis.x * s, c + axis.z * axis.z * oc)\n";
 			code += "			) * ortho_axis;\n";
 			code += "		ortho_axis = normalize(ortho_axis);\n";
-			code += "		TRANSFORM[3].xyz = ortho_axis * ring_random_radius + (rand_from_seed(alt_seed) * ring_height - ring_height / 2.0) * axis;\n";
+			code += "		TRANSFORM[3].xyz = ortho_axis * ring_random_radius + (rand_from_seed(alt_restart_seed) * ring_height - ring_height / 2.0) * axis;\n";
 		} break;
 		case EMISSION_SHAPE_MAX: { // Max value for validity check.
 			break;
@@ -556,7 +565,7 @@ void ParticlesMaterial::_update_shader() {
 	code += "		float base_angle = (initial_angle + tex_angle) * mix(1.0, angle_rand, initial_angle_random);\n";
 	code += "		base_angle += CUSTOM.y * LIFETIME * (angular_velocity + tex_angular_velocity) * mix(1.0, rand_from_seed(alt_seed) * 2.0 - 1.0, angular_velocity_random);\n";
 	code += "		CUSTOM.x = base_angle * degree_to_rad;\n"; // angle
-	code += "		CUSTOM.z = (anim_offset + tex_anim_offset) * mix(1.0, anim_offset_rand, anim_offset_random) + CUSTOM.y * (anim_speed + tex_anim_speed) * mix(1.0, rand_from_seed(alt_seed), anim_speed_random);\n"; // angle
+	code += "		CUSTOM.z = (anim_offset + tex_anim_offset) * mix(1.0, anim_offset_rand, anim_offset_random) + tv * (anim_speed + tex_anim_speed) * mix(1.0, rand_from_seed(alt_seed), anim_speed_random);\n"; // angle
 	code += "	}\n";
 	// apply color
 	// apply hue rotation
@@ -592,6 +601,12 @@ void ParticlesMaterial::_update_shader() {
 	} else {
 		code += "	COLOR = hue_rot_mat * color_value;\n";
 	}
+
+	if (color_initial_ramp.is_valid()) {
+		code += "	vec4 start_color = textureLod(color_initial_ramp, vec2(color_initial_rand, 0.0), 0.0);\n";
+		code += "	COLOR *= start_color;\n";
+	}
+
 	if (emission_color_texture.is_valid() && (emission_shape == EMISSION_SHAPE_POINTS || emission_shape == EMISSION_SHAPE_DIRECTED_POINTS)) {
 		code += "	COLOR *= texelFetch(emission_texture_color, emission_tex_ofs, 0);\n";
 	}
@@ -932,6 +947,17 @@ Ref<Texture> ParticlesMaterial::get_color_ramp() const {
 	return color_ramp;
 }
 
+void ParticlesMaterial::set_color_initial_ramp(const Ref<Texture> &p_texture) {
+	color_initial_ramp = p_texture;
+	VisualServer::get_singleton()->material_set_param(_get_material(), shader_names->color_initial_ramp, p_texture);
+	_queue_shader_change();
+	_change_notify();
+}
+
+Ref<Texture> ParticlesMaterial::get_color_initial_ramp() const {
+	return color_initial_ramp;
+}
+
 void ParticlesMaterial::set_flag(Flags p_flag, bool p_enable) {
 	ERR_FAIL_INDEX(p_flag, FLAG_MAX);
 	flags[p_flag] = p_enable;
@@ -1128,7 +1154,7 @@ void ParticlesMaterial::_validate_property(PropertyInfo &property) const {
 		property.usage = 0;
 	}
 
-	if ((property.name == "emission_ring_radius" || property.name == "emission_ring_height" || property.name == "emission_ring_inner_radius") && emission_shape != EMISSION_SHAPE_RING) {
+	if (property.name.begins_with("emission_ring_") && emission_shape != EMISSION_SHAPE_RING) {
 		property.usage = 0;
 	}
 
@@ -1165,6 +1191,9 @@ void ParticlesMaterial::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_color_ramp", "ramp"), &ParticlesMaterial::set_color_ramp);
 	ClassDB::bind_method(D_METHOD("get_color_ramp"), &ParticlesMaterial::get_color_ramp);
+
+	ClassDB::bind_method(D_METHOD("set_color_initial_ramp", "ramp"), &ParticlesMaterial::set_color_initial_ramp);
+	ClassDB::bind_method(D_METHOD("get_color_initial_ramp"), &ParticlesMaterial::get_color_initial_ramp);
 
 	ClassDB::bind_method(D_METHOD("set_flag", "flag", "enable"), &ParticlesMaterial::set_flag);
 	ClassDB::bind_method(D_METHOD("get_flag", "flag"), &ParticlesMaterial::get_flag);
@@ -1284,6 +1313,7 @@ void ParticlesMaterial::_bind_methods() {
 	ADD_GROUP("Color", "");
 	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "color"), "set_color", "get_color");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "color_ramp", PROPERTY_HINT_RESOURCE_TYPE, "GradientTexture"), "set_color_ramp", "get_color_ramp");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "color_initial_ramp", PROPERTY_HINT_RESOURCE_TYPE, "GradientTexture"), "set_color_initial_ramp", "get_color_initial_ramp");
 
 	ADD_GROUP("Hue Variation", "hue_");
 	ADD_PROPERTYI(PropertyInfo(Variant::REAL, "hue_variation", PROPERTY_HINT_RANGE, "-1,1,0.01"), "set_param", "get_param", PARAM_HUE_VARIATION);

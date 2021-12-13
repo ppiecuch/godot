@@ -70,7 +70,7 @@ bool GridMap::_set(const StringName &p_name, const Variant &p_value) {
 			BakedMesh bm;
 			bm.mesh = meshes[i];
 			ERR_CONTINUE(!bm.mesh.is_valid());
-			bm.instance = VS::get_singleton()->instance_create();
+			bm.instance = RID_PRIME(VS::get_singleton()->instance_create());
 			VS::get_singleton()->get_singleton()->instance_set_base(bm.instance, bm.mesh->get_rid());
 			VS::get_singleton()->instance_attach_object_instance_id(bm.instance, get_instance_id());
 			if (is_inside_tree()) {
@@ -295,15 +295,15 @@ void GridMap::set_cell_item(int p_x, int p_y, int p_z, int p_item, int p_rot) {
 		//create octant because it does not exist
 		Octant *g = memnew(Octant);
 		g->dirty = true;
-		g->static_body = PhysicsServer::get_singleton()->body_create(PhysicsServer::BODY_MODE_STATIC);
+		g->static_body = RID_PRIME(PhysicsServer::get_singleton()->body_create(PhysicsServer::BODY_MODE_STATIC));
 		PhysicsServer::get_singleton()->body_attach_object_instance_id(g->static_body, get_instance_id());
 		PhysicsServer::get_singleton()->body_set_collision_layer(g->static_body, collision_layer);
 		PhysicsServer::get_singleton()->body_set_collision_mask(g->static_body, collision_mask);
 		SceneTree *st = SceneTree::get_singleton();
 
 		if (st && st->is_debugging_collisions_hint()) {
-			g->collision_debug = VisualServer::get_singleton()->mesh_create();
-			g->collision_debug_instance = VisualServer::get_singleton()->instance_create();
+			g->collision_debug = RID_PRIME(VisualServer::get_singleton()->mesh_create());
+			g->collision_debug_instance = RID_PRIME(VisualServer::get_singleton()->instance_create());
 			VisualServer::get_singleton()->instance_set_base(g->collision_debug_instance, g->collision_debug);
 		}
 
@@ -416,8 +416,12 @@ bool GridMap::_octant_update(const OctantKey &p_key) {
 	//erase multimeshes
 
 	for (int i = 0; i < g.multimesh_instances.size(); i++) {
-		VS::get_singleton()->free(g.multimesh_instances[i].instance);
-		VS::get_singleton()->free(g.multimesh_instances[i].multimesh);
+		if (g.multimesh_instances[i].instance.is_valid()) {
+			VS::get_singleton()->free(g.multimesh_instances[i].instance);
+		}
+		if (g.multimesh_instances[i].multimesh.is_valid()) {
+			VS::get_singleton()->free(g.multimesh_instances[i].multimesh);
+		}
 	}
 	g.multimesh_instances.clear();
 
@@ -499,7 +503,7 @@ bool GridMap::_octant_update(const OctantKey &p_key) {
 		for (Map<int, List<Pair<Transform, IndexKey>>>::Element *E = multimesh_items.front(); E; E = E->next()) {
 			Octant::MultimeshInstance mmi;
 
-			RID mm = VS::get_singleton()->multimesh_create();
+			RID mm = RID_PRIME(VS::get_singleton()->multimesh_create());
 			VS::get_singleton()->multimesh_allocate(mm, E->get().size(), VS::MULTIMESH_TRANSFORM_3D, VS::MULTIMESH_COLOR_NONE);
 			VS::get_singleton()->multimesh_set_mesh(mm, mesh_library->get_item_mesh(E->key())->get_rid());
 
@@ -518,7 +522,7 @@ bool GridMap::_octant_update(const OctantKey &p_key) {
 				idx++;
 			}
 
-			RID instance = VS::get_singleton()->instance_create();
+			RID instance = RID_PRIME(VS::get_singleton()->instance_create());
 			VS::get_singleton()->instance_set_base(instance, mm);
 
 			if (is_inside_tree()) {
@@ -615,12 +619,18 @@ void GridMap::_octant_clean_up(const OctantKey &p_key) {
 
 	if (g.collision_debug.is_valid()) {
 		VS::get_singleton()->free(g.collision_debug);
-	}
-	if (g.collision_debug_instance.is_valid()) {
-		VS::get_singleton()->free(g.collision_debug_instance);
+		g.collision_debug = RID();
 	}
 
-	PhysicsServer::get_singleton()->free(g.static_body);
+	if (g.collision_debug_instance.is_valid()) {
+		VS::get_singleton()->free(g.collision_debug_instance);
+		g.collision_debug_instance = RID();
+	}
+
+	if (g.static_body.is_valid()) {
+		PhysicsServer::get_singleton()->free(g.static_body);
+		g.static_body = RID();
+	}
 
 	//erase navigation
 	if (navigation) {
@@ -633,8 +643,12 @@ void GridMap::_octant_clean_up(const OctantKey &p_key) {
 	//erase multimeshes
 
 	for (int i = 0; i < g.multimesh_instances.size(); i++) {
-		VS::get_singleton()->free(g.multimesh_instances[i].instance);
-		VS::get_singleton()->free(g.multimesh_instances[i].multimesh);
+		if (g.multimesh_instances[i].instance.is_valid()) {
+			VS::get_singleton()->free(g.multimesh_instances[i].instance);
+		}
+		if (g.multimesh_instances[i].multimesh.is_valid()) {
+			VS::get_singleton()->free(g.multimesh_instances[i].multimesh);
+		}
 	}
 	g.multimesh_instances.clear();
 }
@@ -949,7 +963,9 @@ Vector3 GridMap::_get_offset() const {
 
 void GridMap::clear_baked_meshes() {
 	for (int i = 0; i < baked_meshes.size(); i++) {
-		VS::get_singleton()->free(baked_meshes[i].instance);
+		if (baked_meshes[i].instance.is_valid()) {
+			VS::get_singleton()->free(baked_meshes[i].instance);
+		}
 	}
 	baked_meshes.clear();
 
@@ -1024,7 +1040,7 @@ void GridMap::make_baked_meshes(bool p_gen_lightmap_uv, float p_lightmap_uv_texe
 
 		BakedMesh bm;
 		bm.mesh = mesh;
-		bm.instance = VS::get_singleton()->instance_create();
+		bm.instance = RID_PRIME(VS::get_singleton()->instance_create());
 		VS::get_singleton()->get_singleton()->instance_set_base(bm.instance, bm.mesh->get_rid());
 		VS::get_singleton()->instance_attach_object_instance_id(bm.instance, get_instance_id());
 		if (is_inside_tree()) {

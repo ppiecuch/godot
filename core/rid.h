@@ -35,10 +35,13 @@
 #include "core/math/vector2.h"
 #include "core/math/vector3.h"
 #include "core/os/memory.h"
+#include "core/rid_handle.h"
 #include "core/safe_refcount.h"
 #include "core/set.h"
 #include "core/typedefs.h"
 #include "core/vector.h"
+
+#ifndef RID_HANDLES_ENABLED
 
 class RID_OwnerBase;
 
@@ -220,5 +223,7 @@ public:
 #endif
 	}
 };
+
+#endif // not handles
 
 #endif

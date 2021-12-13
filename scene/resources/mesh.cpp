@@ -1476,7 +1476,7 @@ void ArrayMesh::clear_mesh() {
 }
 
 ArrayMesh::ArrayMesh() {
-	mesh = VisualServer::get_singleton()->mesh_create();
+	mesh = RID_PRIME(VisualServer::get_singleton()->mesh_create());
 	blend_shape_mode = BLEND_SHAPE_MODE_RELATIVE;
 }
 

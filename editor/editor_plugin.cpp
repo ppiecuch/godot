@@ -62,9 +62,9 @@ Array EditorInterface::_make_mesh_previews(const Array &p_meshes, int p_preview_
 Vector<Ref<Texture>> EditorInterface::make_mesh_previews(const Vector<Ref<Mesh>> &p_meshes, Vector<Transform> *p_transforms, int p_preview_size) {
 	int size = p_preview_size;
 
-	RID scenario = VS::get_singleton()->scenario_create();
+	RID scenario = RID_PRIME(VS::get_singleton()->scenario_create());
 
-	RID viewport = VS::get_singleton()->viewport_create();
+	RID viewport = RID_PRIME(VS::get_singleton()->viewport_create());
 	VS::get_singleton()->viewport_set_update_mode(viewport, VS::VIEWPORT_UPDATE_ALWAYS);
 	VS::get_singleton()->viewport_set_vflip(viewport, true);
 	VS::get_singleton()->viewport_set_scenario(viewport, scenario);
@@ -73,10 +73,10 @@ Vector<Ref<Texture>> EditorInterface::make_mesh_previews(const Vector<Ref<Mesh>>
 	VS::get_singleton()->viewport_set_active(viewport, true);
 	RID viewport_texture = VS::get_singleton()->viewport_get_texture(viewport);
 
-	RID camera = VS::get_singleton()->camera_create();
+	RID camera = RID_PRIME(VS::get_singleton()->camera_create());
 	VS::get_singleton()->viewport_attach_camera(viewport, camera);
 
-	RID light = VS::get_singleton()->directional_light_create();
+	RID light = RID_PRIME(VS::get_singleton()->directional_light_create());
 	RID light_instance = VS::get_singleton()->instance_create2(light, scenario);
 
 	RID light2 = VS::get_singleton()->directional_light_create();
@@ -163,6 +163,10 @@ void EditorInterface::edit_resource(const Ref<Resource> &p_resource) {
 
 void EditorInterface::edit_node(Node *p_node) {
 	EditorNode::get_singleton()->edit_node(p_node);
+}
+
+void EditorInterface::edit_script(const Ref<Script> &p_script, int p_line, int p_col, bool p_grab_focus) {
+	ScriptEditor::get_singleton()->edit(p_script, p_line, p_col, p_grab_focus);
 }
 
 void EditorInterface::open_scene_from_path(const String &scene_path) {
@@ -318,6 +322,7 @@ void EditorInterface::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_editor_scale"), &EditorInterface::get_editor_scale);
 	ClassDB::bind_method(D_METHOD("edit_resource", "resource"), &EditorInterface::edit_resource);
 	ClassDB::bind_method(D_METHOD("edit_node", "node"), &EditorInterface::edit_node);
+	ClassDB::bind_method(D_METHOD("edit_script", "script", "line", "column", "grab_focus"), &EditorInterface::edit_script, DEFVAL(-1), DEFVAL(0), DEFVAL(true));
 	ClassDB::bind_method(D_METHOD("open_scene_from_path", "scene_filepath"), &EditorInterface::open_scene_from_path);
 	ClassDB::bind_method(D_METHOD("reload_scene_from_path", "scene_filepath"), &EditorInterface::reload_scene_from_path);
 	ClassDB::bind_method(D_METHOD("play_main_scene"), &EditorInterface::play_main_scene);

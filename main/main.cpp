@@ -41,6 +41,7 @@
 #include "core/message_queue.h"
 #include "core/os/dir_access.h"
 #include "core/os/os.h"
+#include "core/os/time.h"
 #include "core/project_settings.h"
 #include "core/register_core_types.h"
 #include "core/script_debugger_local.h"
@@ -54,7 +55,6 @@
 #include "main/main_timer_sync.h"
 #include "main/performance.h"
 #include "main/splash.gen.h"
-#include "main/splash_editor.gen.h"
 #include "main/tests/test_main.h"
 #include "modules/register_module_types.h"
 #include "platform/register_platform_apis.h"
@@ -78,6 +78,9 @@
 #include "editor/editor_settings.h"
 #include "editor/progress_dialog.h"
 #include "editor/project_manager.h"
+#ifndef NO_EDITOR_SPLASH
+#include "main/splash_editor.gen.h"
+#endif
 #endif
 
 #ifdef BYTECODE_EXPORT_ENABLED
@@ -99,6 +102,7 @@ static InputMap *input_map = nullptr;
 static TranslationServer *translation_server = nullptr;
 static Performance *performance = nullptr;
 static PackedData *packed_data = nullptr;
+static Time *time_singleton = nullptr;
 #ifdef MINIZIP_ENABLED
 static ZipArchive *zip_packed_data = nullptr;
 #endif
@@ -394,6 +398,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 
 	globals = memnew(ProjectSettings);
 	input_map = memnew(InputMap);
+	time_singleton = memnew(Time);
 
 	register_core_settings(); //here globals is present
 
@@ -1294,6 +1299,9 @@ error:
 	if (input_map) {
 		memdelete(input_map);
 	}
+	if (time_singleton) {
+		memdelete(time_singleton);
+	}
 	if (translation_server) {
 		memdelete(translation_server);
 	}
@@ -1512,6 +1520,9 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 
 	register_platform_apis();
 	register_module_types();
+
+	// Theme needs modules to be initialized so that sub-resources can be loaded.
+	initialize_theme();
 
 	GLOBAL_DEF("display/mouse_cursor/custom_image", String());
 	GLOBAL_DEF("display/mouse_cursor/custom_image_hotspot", Vector2());
@@ -2398,6 +2409,10 @@ void Main::cleanup(bool p_force) {
 		ERR_FAIL_COND(!_start_success);
 	}
 
+#ifdef RID_HANDLES_ENABLED
+	g_rid_database.preshutdown();
+#endif
+
 	if (script_debugger) {
 		// Flush any remaining messages
 		script_debugger->idle_poll();
@@ -2472,6 +2487,9 @@ void Main::cleanup(bool p_force) {
 	if (input_map) {
 		memdelete(input_map);
 	}
+	if (time_singleton) {
+		memdelete(time_singleton);
+	}
 	if (translation_server) {
 		memdelete(translation_server);
 	}
@@ -2503,4 +2521,8 @@ void Main::cleanup(bool p_force) {
 	unregister_core_types();
 
 	OS::get_singleton()->finalize_core();
+
+#ifdef RID_HANDLES_ENABLED
+	g_rid_database.shutdown();
+#endif
 }

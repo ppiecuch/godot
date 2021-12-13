@@ -63,7 +63,7 @@
 		<member name="current_path" type="String" setter="set_current_path" getter="get_current_path" default="&quot;res://&quot;">
 			The currently selected file path of the file dialog.
 		</member>
-		<member name="dialog_hide_on_ok" type="bool" setter="set_hide_on_ok" getter="get_hide_on_ok" override="true" default="false" />
+		<member name="dialog_hide_on_ok" type="bool" setter="set_hide_on_ok" getter="get_hide_on_ok" overrides="AcceptDialog" default="false" />
 		<member name="filters" type="PoolStringArray" setter="set_filters" getter="get_filters" default="PoolStringArray(  )">
 			The available file type filters. For example, this shows only [code].png[/code] and [code].gd[/code] files: [code]set_filters(PoolStringArray(["*.png ; PNG Images","*.gd ; GDScript Files"]))[/code].
 		</member>
@@ -76,7 +76,7 @@
 		<member name="show_hidden_files" type="bool" setter="set_show_hidden_files" getter="is_showing_hidden_files" default="false">
 			If [code]true[/code], the dialog will show hidden files.
 		</member>
-		<member name="window_title" type="String" setter="set_title" getter="get_title" override="true" default="&quot;Save a File&quot;" />
+		<member name="window_title" type="String" setter="set_title" getter="get_title" overrides="WindowDialog" default="&quot;Save a File&quot;" />
 	</members>
 	<signals>
 		<signal name="dir_selected">
@@ -125,20 +125,20 @@
 		</constant>
 	</constants>
 	<theme_items>
-		<theme_item name="file" data_type="icon" type="Texture">
-			Custom icon for files.
-		</theme_item>
 		<theme_item name="file_icon_modulate" data_type="color" type="Color" default="Color( 1, 1, 1, 1 )">
 			The color modulation applied to the file icon.
 		</theme_item>
 		<theme_item name="files_disabled" data_type="color" type="Color" default="Color( 0, 0, 0, 0.7 )">
 			The color tint for disabled files (when the [FileDialog] is used in open folder mode).
 		</theme_item>
-		<theme_item name="folder" data_type="icon" type="Texture">
-			Custom icon for folders.
-		</theme_item>
 		<theme_item name="folder_icon_modulate" data_type="color" type="Color" default="Color( 1, 1, 1, 1 )">
 			The color modulation applied to the folder icon.
+		</theme_item>
+		<theme_item name="file" data_type="icon" type="Texture">
+			Custom icon for files.
+		</theme_item>
+		<theme_item name="folder" data_type="icon" type="Texture">
+			Custom icon for folders.
 		</theme_item>
 		<theme_item name="parent_folder" data_type="icon" type="Texture">
 			Custom icon for the parent folder arrow.
