@@ -487,7 +487,7 @@ void VisualServerCanvas::canvas_item_add_line(RID p_item, const Point2 &p_from, 
 			colors.set(n, p_color);
 		}
 
-		canvas_item_add_polygon(p_item, points, colors, uvs, RID(), RID(), false);
+		canvas_item_add_polygon(p_item, points, colors, uvs, RID(), RID(), RID(), false);
 		return;
 	}
 
