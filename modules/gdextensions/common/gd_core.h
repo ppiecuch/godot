@@ -92,6 +92,7 @@
 
 #define safe_delete(pPtr) (memdelete(pPtr), pPtr = nullptr)
 #define newref(pClass) Ref<pClass>(memnew(pClass))
+#define nullref(pClass) Ref<pClass>()
 
 #ifdef DEBUG_ENABLED
 #define DEBUG_PRINT(pText) print_line(pText)
