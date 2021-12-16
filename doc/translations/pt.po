@@ -1,68 +1,67 @@
-# Tagalog translation of the Godot Engine class reference.
+# Portuguese translation of the Godot Engine class reference.
 # Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.
 # Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).
 # This file is distributed under the same license as the Godot source code.
 #
-# Napstaguy04 <brokenscreen3@gmail.com>, 2021.
+# Reubens Sanders <reubensst@protonmail.com>, 2021.
 msgid ""
 msgstr ""
 "Project-Id-Version: Godot Engine class reference\n"
 "Report-Msgid-Bugs-To: https://github.com/godotengine/godot\n"
-"PO-Revision-Date: 2021-11-15 21:14+0000\n"
-"Last-Translator: Napstaguy04 <brokenscreen3@gmail.com>\n"
-"Language-Team: Tagalog <https://hosted.weblate.org/projects/godot-engine/"
-"godot-class-reference/tl/>\n"
-"Language: tl\n"
+"PO-Revision-Date: 2021-12-16 13:42+0000\n"
+"Last-Translator: Reubens Sanders <reubensst@protonmail.com>\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/godot-engine/"
+"godot-class-reference/pt/>\n"
+"Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8-bit\n"
-"Plural-Forms: nplurals=2; plural=n != 1 && n != 2 && n != 3 && (n % 10 == 4 "
-"|| n % 10 == 6 || n % 10 == 9);\n"
-"X-Generator: Weblate 4.9.1-dev\n"
+"Plural-Forms: nplurals=2; plural=n > 1;\n"
+"X-Generator: Weblate 4.10-dev\n"
 
 #: doc/tools/make_rst.py
 msgid "Description"
-msgstr "Paglalarawan"
+msgstr "Descrição"
 
 #: doc/tools/make_rst.py
 msgid "Tutorials"
-msgstr "Mga Tutorial"
+msgstr "Tutoriais"
 
 #: doc/tools/make_rst.py
 msgid "Properties"
-msgstr "Mga Katangian"
+msgstr "Propriedades"
 
 #: doc/tools/make_rst.py
 msgid "Methods"
-msgstr "Mga Method"
+msgstr "Métodos"
 
 #: doc/tools/make_rst.py
 msgid "Theme Properties"
-msgstr "Mga Katangian ng Theme"
+msgstr "Propriedades do Tema"
 
 #: doc/tools/make_rst.py
 msgid "Signals"
-msgstr "Mga Hudyat"
+msgstr "Sinais"
 
 #: doc/tools/make_rst.py
 msgid "Enumerations"
-msgstr "Mga Enumerasyon"
+msgstr "Enumerações"
 
 #: doc/tools/make_rst.py
 msgid "Constants"
-msgstr "Mga Konstant"
+msgstr "Constantes"
 
 #: doc/tools/make_rst.py
 msgid "Property Descriptions"
-msgstr "Mga Paglalarawan ng Katangian"
+msgstr "Descrições de propriedades"
 
 #: doc/tools/make_rst.py
 msgid "Method Descriptions"
-msgstr "Panglalarawan ng mga Method"
+msgstr "Descrições de Métodos"
 
 #: modules/gdscript/doc_classes/@GDScript.xml:4
 msgid "Built-in GDScript functions."
-msgstr "Mga built-in na function ng GDScript."
+msgstr "Funções GDScript Integradas."
 
 #: modules/gdscript/doc_classes/@GDScript.xml:7
 msgid ""
@@ -70,9 +69,9 @@ msgid ""
 "utilities. Everything else is provided by objects. (Keywords: builtin, built "
 "in, global functions.)"
 msgstr ""
-"Talaan ng mga built-in function ng GDScript. Mga function sa matematika at "
-"iba pang mga utility. Lahat ng iba pa ay ibinibigay ng mga objects. (Mga "
-"keyword: builtin, built in, global function.)"
+"Lista de funções integradas e nucleares GDScript. Funções matemáticas e "
+"outros utilitários. Tudo o resto é fornecido por objectos. (Palavras-Chave: "
+"integrado, incorporado, funções globais.)"
 
 #: modules/gdscript/doc_classes/@GDScript.xml:19
 msgid ""
@@ -87,15 +86,15 @@ msgid ""
 "red = Color8(255, 0, 0)\n"
 "[/codeblock]"
 msgstr ""
-"Ibinabalik ang kulay na ginawa mula sa pula, berde, asul, at alpha integer "
-"na mga channel. Ang bawat channel ay dapat may 8 bits ng impormasyon mula 0 "
-"hanggang 255.\n"
-"[code]r8[/code] pulang channel\n"
-"[code]g8[/code] lungtiang channel\n"
-"[code]b8[/code] bughaw na channel\n"
-"[code]a8[/code] alpha channel\n"
+"Devolve a cor construída com os valores inteiros dos canais vermelho, verde, "
+"azul e alfa. Cada canal deve ter 8 bits de informação, com uma gama entre o "
+"0 e o 255.\n"
+"[code]r8[/code] canal vermelho\n"
+"[code]g8[/code] canal verde\n"
+"[code]b8[/code] canal azul\n"
+"[code]a8[/code] canal alfa\n"
 "[codeblock]\n"
-"pula = Color8(255, 0, 0)\n"
+"vermelho = Color8(255, 0, 0)\n"
 "[/codeblock]"
 
 #: modules/gdscript/doc_classes/@GDScript.xml:34
@@ -107,13 +106,13 @@ msgid ""
 "[/codeblock]\n"
 "Supported color names are the same as the constants defined in [Color]."
 msgstr ""
-"Ibinabalik ang kulay ayon sa karaniwang [code]name[/code] na may "
-"[code]alpha[/code] mula 0 hanggang 1.\n"
+"Devolve uma cor de acordo com o [code]name[/code] padronizado com o "
+"[code]alpha[/code] que varia entre 0 e 1.\n"
 "[codeblock]\n"
-"pula = ColorN(\"red\",1)\n"
+"vermelho = ColorN(\"red\", 1)\n"
 "[/codeblock]\n"
-"Ang mga pangalan ng mga sinusuportahang kulay ay tumutugma sa mga constant "
-"na tinukoy sa [Kulay]."
+"Os nomes de cor suportados são os mesmos que as constantes definidas em "
+"[Color]."
 
 #: modules/gdscript/doc_classes/@GDScript.xml:45
 msgid ""
@@ -123,10 +122,9 @@ msgid ""
 "a = abs(-1) # a is 1\n"
 "[/codeblock]"
 msgstr ""
-"Ibinabalik ang absolute value ng [code]s[/code] parameter (hal: positive "
-"value).\n"
+"Devolve o valor absoluto do parâmetro [code]s[/code] (i.e. valor positivo).\n"
 "[codeblock]\n"
-"a = abs(-1) # a ay 1\n"
+"a = abs(-1) # a é 1\n"
 "[/codeblock]"
 
 #: modules/gdscript/doc_classes/@GDScript.xml:55
@@ -140,12 +138,12 @@ msgid ""
 "c = acos(0.866025)\n"
 "[/codeblock]"
 msgstr ""
-"Ibinabalik ang arc cosine ng [code]s[/code] sa radians. Gamitin ito para "
-"makuha ang cosine angle [code]s[/code]. [code]s[/code] ay dapat nasa pagitan "
-"ng [code]-1.0[/code] at [code]1.0[/code] (napapabilang o inclusive), o kung "
-"hindi, [method acos] ay babalik ng [constant NAN].\n"
+"Devolve o arco co-seno de [code]s[/code] em radianos. Usado para se obter o "
+"ângulo do co-seno [code]s[/code]. [code]s[/code] deve estar entre "
+"[code]-1.0[/code] e [code]1.0[/code] (inclusive), caso contrário, o [method "
+"acos] irá devolver [constant NAN].\n"
 "[codeblock]\n"
-"# ang c ay 0.523599 o 30 degrees kung iko-convert sa rad2deg(s)\n"
+"# c é 0.523599 ou 30 graus se convertido com rad2deg(s)\n"
 "c = acos(0.866025)\n"
 "[/codeblock]"
 
@@ -160,6 +158,14 @@ msgid ""
 "s = asin(0.5)\n"
 "[/codeblock]"
 msgstr ""
+"Devolve o arco seno de [code]s[/code] em radianos. Usado para se obter o "
+"ângulo do seno [code]s[/code]. [code]s[/code] deve estar entre [code]-1.0[/"
+"code] e [code]1.0[/code] (inclusive), caso contrário, o [method asin] irá "
+"devolver [constant NAN].\n"
+"[codeblock]\n"
+"# s é 0.523599 ou 30 graus se convertido com rad2deg(s)\n"
+"s = asin(0.5)\n"
+"[/codeblock]"
 
 #: modules/gdscript/doc_classes/@GDScript.xml:78
 msgid ""
@@ -295,11 +301,11 @@ msgstr ""
 
 #: modules/gdscript/doc_classes/@GDScript.xml:211
 msgid "Converts from decibels to linear energy (audio)."
-msgstr "Kino-convert ang mga decibel sa linear na enerhiya (audio)."
+msgstr ""
 
 #: modules/gdscript/doc_classes/@GDScript.xml:218
 msgid "Deprecated alias for [method step_decimals]."
-msgstr "Hindi ginagamit na alias para sa [method step_decimals]."
+msgstr ""
 
 #: modules/gdscript/doc_classes/@GDScript.xml:227
 msgid ""
@@ -311,13 +317,6 @@ msgid ""
 "a = dectime(60, 10, 0.1)) # a is 59.0\n"
 "[/codeblock]"
 msgstr ""
-"[b]Puna:[/b] [code]dectime[/code] ay hindi na ginagamit at aalisin na sa "
-"Godot 4.0, maaring gamitin nalang ang [method move_toward].\n"
-"Ibinabalik ang resulta ng [code]value[/code] na ibinawas ng [code]step[/"
-"code] ng [code]amount[/code].\n"
-"[codeblock]\n"
-"a = dectime(60, 10, 0.1)) #59.0 ang kakalabasan ng a\n"
-"[/codeblock]"
 
 #: modules/gdscript/doc_classes/@GDScript.xml:238
 msgid ""
@@ -326,19 +325,12 @@ msgid ""
 "r = deg2rad(180) # r is 3.141593\n"
 "[/codeblock]"
 msgstr ""
-"Kino-convert ang anggulo (degrees) sa radians.\n"
-"[codeblock]\n"
-"r = deg2rad(180) # r = 3.141593\n"
-"[/codeblock]"
 
 #: modules/gdscript/doc_classes/@GDScript.xml:248
 msgid ""
 "Converts a dictionary (previously created with [method inst2dict]) back to "
 "an instance. Useful for deserializing."
 msgstr ""
-"Kino-convert ang isang [code]dictionary[/code] (dating nilikha gamit ng "
-"[method inst2dict] ) pabalik sa isang instance. Kapaki-pakinabang para sa "
-"deserialization."
 
 #: modules/gdscript/doc_classes/@GDScript.xml:256
 msgid ""
@@ -372,15 +364,6 @@ msgid ""
 "a = exp(2) # Approximately 7.39\n"
 "[/codeblock]"
 msgstr ""
-"Ang natural na exponential function. Tinataas ang mathematical constant "
-"[b]e[/b] sa power ng [code]s[/code] at binabalik ito.\n"
-"[b]e[/b] ay may tinatayang value na 2.71828, at maaring kunin ito sa "
-"[code]exp(1)[/code].\n"
-"Para sa mga exponents para sa mga ibang bases, gamitin ang method sa baba "
-"[method pow].\n"
-"[codeblock]\n"
-"a = exp(2) # Tinatayang 7.39\n"
-"[/codeblock]"
 
 #: modules/gdscript/doc_classes/@GDScript.xml:286
 msgid ""
@@ -396,17 +379,6 @@ msgid ""
 "[code]s[/code] is a non-negative number, you can use [code]int(s)[/code] "
 "directly."
 msgstr ""
-"Ri-naround ang [code]s[/code] pababa (patungo sa negatibong walang hanggan) "
-"at ibinabalik ang pinakamalaking integer na hindi hihigit sa [code]s[/"
-"code].\n"
-"[codeblock]\n"
-"a = floor(2.99) # katumbas ng 2.0\n"
-"a = floor(-2.99) # katumbas ng 2.0\n"
-"a = floor(-2.99) # katumbas ng -3.0\n"
-"[/codeblock]\n"
-"[b] Tandaan: [/b] Ang method na 'to ay nagbabalik ng float. Kung kailangan "
-"mo ng integer at kung [code]s[/code] ay hindi negative, maaari mong "
-"direktang gamitin ang [code]int(s)[/code]."
 
 #: modules/gdscript/doc_classes/@GDScript.xml:301
 msgid ""
@@ -417,12 +389,6 @@ msgid ""
 "[/codeblock]\n"
 "For the integer remainder operation, use the % operator."
 msgstr ""
-"Ibinabalik ang the floating-point ng labi (remainder) ng [code]a/b[/code], "
-"habang pinapanatili ang sign ng [code]a[/code].\n"
-"[codeblock]\n"
-"r = fmod(7, 5.5) # katumbas ng 1.5\n"
-"[/codeblock]\n"
-"Para sa operasyon sa integer remainder, gamitin ang operator %."
 
 #: modules/gdscript/doc_classes/@GDScript.xml:313
 msgid ""
@@ -2553,39 +2519,39 @@ msgstr ""
 
 #: doc/classes/@GlobalScope.xml:896
 msgid "Left mouse button."
-msgstr "Kaliwang pindutan ng mouse."
+msgstr ""
 
 #: doc/classes/@GlobalScope.xml:899
 msgid "Right mouse button."
-msgstr "Kanang pindutan ng mouse."
+msgstr ""
 
 #: doc/classes/@GlobalScope.xml:902
 msgid "Middle mouse button."
-msgstr "Gitnang pindutan ng mouse."
+msgstr ""
 
 #: doc/classes/@GlobalScope.xml:905
 msgid "Extra mouse button 1 (only present on some mice)."
-msgstr "ika-1 Dagdag na pindutan ng mouse (Mahahanap lang sa iilang mouse)."
+msgstr ""
 
 #: doc/classes/@GlobalScope.xml:908
 msgid "Extra mouse button 2 (only present on some mice)."
-msgstr "ika-2 Dagdag na pindutan ng mouse (Mahahanap lang sa iilang mouse)."
+msgstr ""
 
 #: doc/classes/@GlobalScope.xml:911
 msgid "Mouse wheel up."
-msgstr "Pagtaas ng mouse wheel."
+msgstr ""
 
 #: doc/classes/@GlobalScope.xml:914
 msgid "Mouse wheel down."
-msgstr "Pagbaba ng mouse wheel."
+msgstr ""
 
 #: doc/classes/@GlobalScope.xml:917
 msgid "Mouse wheel left button (only present on some mice)."
-msgstr "Kaliwang pindutan sa mouse wheel (Mahahanap lang sa iilang mouse)."
+msgstr ""
 
 #: doc/classes/@GlobalScope.xml:920
 msgid "Mouse wheel right button (only present on some mice)."
-msgstr "Kanang pindutan sa mouse wheel (Mahahanap lang sa iilang mouse)."
+msgstr ""
 
 #: doc/classes/@GlobalScope.xml:923
 msgid "Left mouse button mask."
@@ -2613,47 +2579,47 @@ msgstr ""
 
 #: doc/classes/@GlobalScope.xml:941
 msgid "Gamepad button 0."
-msgstr "Ika-0 pindutan ng gamepad."
+msgstr ""
 
 #: doc/classes/@GlobalScope.xml:944
 msgid "Gamepad button 1."
-msgstr "Ika-1 pindutan ng gamepad."
+msgstr ""
 
 #: doc/classes/@GlobalScope.xml:947
 msgid "Gamepad button 2."
-msgstr "Ika-2 pindutan ng gamepad."
+msgstr ""
 
 #: doc/classes/@GlobalScope.xml:950
 msgid "Gamepad button 3."
-msgstr "Ika-3 pindutan ng gamepad."
+msgstr ""
 
 #: doc/classes/@GlobalScope.xml:953
 msgid "Gamepad button 4."
-msgstr "Ika-4 pindutan ng gamepad."
+msgstr ""
 
 #: doc/classes/@GlobalScope.xml:956
 msgid "Gamepad button 5."
-msgstr "Ika-5 pindutan ng gamepad."
+msgstr ""
 
 #: doc/classes/@GlobalScope.xml:959
 msgid "Gamepad button 6."
-msgstr "Ika-6 pindutan ng gamepad."
+msgstr ""
 
 #: doc/classes/@GlobalScope.xml:962
 msgid "Gamepad button 7."
-msgstr "Ika-7 pindutan ng gamepad."
+msgstr ""
 
 #: doc/classes/@GlobalScope.xml:965
 msgid "Gamepad button 8."
-msgstr "Ika-8 pindutan ng gamepad."
+msgstr ""
 
 #: doc/classes/@GlobalScope.xml:968
 msgid "Gamepad button 9."
-msgstr "Ika-9 pindutan ng gamepad."
+msgstr ""
 
 #: doc/classes/@GlobalScope.xml:971
 msgid "Gamepad button 10."
-msgstr "Ika-10 pindutan ng gamepad."
+msgstr ""
 
 #: doc/classes/@GlobalScope.xml:974
 msgid "Gamepad button 11."
@@ -2705,15 +2671,15 @@ msgstr ""
 
 #: doc/classes/@GlobalScope.xml:1010
 msgid "Represents the maximum number of joystick buttons supported."
-msgstr "Kumakatawan sa pinakamaraming bilang ng joystick na sinusuportahan."
+msgstr ""
 
 #: doc/classes/@GlobalScope.xml:1013
 msgid "DualShock circle button."
-msgstr "Pabilog na pindutang Dualshock."
+msgstr ""
 
 #: doc/classes/@GlobalScope.xml:1016
 msgid "DualShock X button."
-msgstr "Pindutang X ng Dualshock."
+msgstr ""
 
 #: doc/classes/@GlobalScope.xml:1019
 msgid "DualShock square button."
@@ -2761,11 +2727,11 @@ msgstr ""
 
 #: doc/classes/@GlobalScope.xml:1052
 msgid "Push down on the touchpad or main joystick on a VR controller."
-msgstr "Pumindot sa touchpad o sa main joystick sa VR controller."
+msgstr ""
 
 #: doc/classes/@GlobalScope.xml:1055
 msgid "Trigger on a VR controller."
-msgstr "Trigger sa VR Controller."
+msgstr ""
 
 #: doc/classes/@GlobalScope.xml:1058
 msgid ""
@@ -3130,7 +3096,7 @@ msgstr ""
 
 #: doc/classes/@GlobalScope.xml:1334
 msgid "Linking failed error."
-msgstr "Nabigo ang pagkakawing."
+msgstr ""
 
 #: doc/classes/@GlobalScope.xml:1337
 msgid "Script failed error."
@@ -55602,11 +55568,8 @@ msgid ""
 msgstr ""
 
 #: doc/classes/TextEdit.xml:454
-#, fuzzy
 msgid "If [code]true[/code], the bookmark gutter is visible."
 msgstr ""
-"Kung [code]true[/code], ang mga child nodes ay inaayos, kung hindi ang pag-"
-"so-sort ay hindi pinapagana."
 
 #: doc/classes/TextEdit.xml:457
 msgid "If [code]true[/code], the breakpoint gutter is visible."
@@ -69722,5 +69685,3 @@ msgstr ""
 msgid ""
 "If [code]true[/code], child nodes are sorted, otherwise sorting is disabled."
 msgstr ""
-"Kung [code]true[/code], ang mga child nodes ay inaayos, kung hindi ang pag-"
-"so-sort ay hindi pinapagana."
