@@ -60,7 +60,7 @@ popd
 mkdir -p bin/templates/android
 
 mv -v \
-	bin/android_debug.apk bin/android_release.apk bin/godot-lib.debug.aar bin/godot-lib.release.aar \
+	bin/android_source.zip bin/android_debug.apk bin/android_release.apk bin/godot-lib.debug.aar bin/godot-lib.release.aar \
 	bin/templates/android/
 
 # Look for platform plugins:

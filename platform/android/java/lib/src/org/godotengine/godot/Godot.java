@@ -127,6 +127,7 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 	private Button mWiFiSettingsButton;
 
 	private XRMode xrMode = XRMode.REGULAR;
+	private boolean use_32_bits = false;
 	private boolean use_immersive = false;
 	private boolean use_debug_opengl = false;
 	private boolean translucent = false;
@@ -627,6 +628,8 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 				xrMode = XRMode.OVR;
 			} else if (command_line[i].equals(XRMode.OPENXR.cmdLineArg)) {
 				xrMode = XRMode.OPENXR;
+			} else if (command_line[i].equals("--use_depth_32")) {
+				use_32_bits = true;
 			} else if (command_line[i].equals("--debug_opengl")) {
 				use_debug_opengl = true;
 			} else if (command_line[i].equals("--translucent")) {
