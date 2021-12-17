@@ -65,8 +65,6 @@ if os.name == "nt" and (platform_arg == "android" or methods.get_cmdline_bool("u
 elif platform_arg == "javascript":
     # Use generic POSIX build toolchain for Emscripten.
     custom_tools = ["cc", "c++", "ar", "link", "textfile", "zip"]
-if sys.platform == "darwin" and platform_arg == "osx" and os.path.exists("site_scons/site_tools/xcode/__init__.py"):
-    custom_tools = ["default", "xcode"]
 
 # We let SCons build its default ENV as it includes OS-specific things which we don't
 # want to have to pull in manually.
