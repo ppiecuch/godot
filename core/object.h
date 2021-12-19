@@ -364,7 +364,7 @@ protected:                                                                      
 	_FORCE_INLINE_ void (Object::*_get_get_property_list() const)(List<PropertyInfo> * p_list) const {                                             \
 		return (void(Object::*)(List<PropertyInfo> *) const) & m_class::_get_property_list;                                                        \
 	}                                                                                                                                              \
-	virtual void _get_property_listv(List<PropertyInfo> *p_list, bool p_reversed) const G_OVERRIDE {                                                          \
+	virtual void _get_property_listv(List<PropertyInfo> *p_list, bool p_reversed) const G_OVERRIDE {                                               \
 		if (!p_reversed) {                                                                                                                         \
 			m_inherits::_get_property_listv(p_list, p_reversed);                                                                                   \
 		}                                                                                                                                          \
