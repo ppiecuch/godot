@@ -8,6 +8,13 @@ IFS=$'\n\t'
 
 CLANG_FORMAT_FILE_EXTS=(".c" ".h" ".cpp" ".hpp" ".cc" ".hh" ".cxx" ".m" ".mm" ".inc" ".java" ".glsl")
 
+# Exclude excrypted files
+if [ -e misc/scripts/transcrypt ] && [ ! -e .git/crypt ]; then
+	encrypted=$(misc/scripts/transcrypt --list | xargs)
+else
+	encrypted=""
+fi
+
 # Loops through all text files tracked by Git.
 git grep -zIl '' |
 while IFS= read -rd '' f; do
@@ -17,6 +24,8 @@ while IFS= read -rd '' f; do
     elif [[ "$f" == "platform/android/java/lib/src/com/google"* ]]; then
         continue
     elif [[ "$f" == *"-so_wrap."* ]]; then
+        continue
+    elif [[ *"$f"* == "$encrypted" ]]; then
         continue
     fi
 
