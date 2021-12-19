@@ -25,7 +25,7 @@ while IFS= read -rd '' f; do
         continue
     elif [[ "$f" == *"-so_wrap."* ]]; then
         continue
-    elif [[ *"$f"* == "$encrypted" ]]; then
+    elif [[ "$encrypted" == *"$f"* ]]; then
         continue
     fi
 
