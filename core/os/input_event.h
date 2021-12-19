@@ -447,7 +447,7 @@ public:
 	float get_pressure() const;
 
 	virtual bool action_match(const Ref<InputEvent> &p_event, bool *p_pressed, float *p_strength, float *p_raw_strength, float p_deadzone) const G_OVERRIDE;
-	virtual bool shortcut_match(const Ref<InputEvent> &p_event, bool p_exact_match = true) const;
+	virtual bool shortcut_match(const Ref<InputEvent> &p_event, bool p_exact_match = true) const G_OVERRIDE;
 
 	virtual bool is_action_type() const G_OVERRIDE { return true; }
 	virtual String as_text() const G_OVERRIDE;
