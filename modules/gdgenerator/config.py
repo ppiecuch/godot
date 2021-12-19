@@ -2,7 +2,7 @@
 
 
 def can_build(env, platform):
-    return not env["disable_3d"]
+    return env["tools"] and not env["disable_3d"]
 
 
 def configure(env):
