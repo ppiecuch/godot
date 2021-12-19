@@ -83,9 +83,11 @@ public class GodotView extends GLSurfaceView {
 	private EGLContextFactory eglContextFactory;
 	private EGLContext eglSecondaryContext;
 
-	public GodotView(Context context, Godot godot, XRMode xrMode, boolean p_use_gl3, boolean p_use_debug_opengl, boolean p_translucent) {
+	public GodotView(Context context, Godot godot, XRMode xrMode, boolean p_use_gl3,
+			boolean p_use_32_bits, boolean p_use_debug_opengl, boolean p_translucent) {
 		super(context);
 		GLUtils.use_gl3 = p_use_gl3;
+		GLUtils.use_32 = p_use_32_bits;
 		GLUtils.use_debug_opengl = p_use_debug_opengl;
 
 		this.godot = godot;

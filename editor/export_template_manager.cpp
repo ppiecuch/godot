@@ -701,7 +701,11 @@ Error ExportTemplateManager::install_android_template_from_file(const String &p_
 	}
 	ret = unzGoToFirstFile(pkg);
 
-	ProgressDialog::get_singleton()->add_task("uncompress_src", TTR("Uncompressing Android Build Sources"), total_files);
+	if (EditorNode::get_singleton()) {
+		ProgressDialog::get_singleton()->add_task("uncompress_src", TTR("Uncompressing Android Build Sources"), total_files);
+	} else {
+		print_line(TTR("Uncompressing Android Build Sources"));
+	}
 
 	Set<String> dirs_tested;
 	int idx = 0;
@@ -741,13 +745,17 @@ Error ExportTemplateManager::install_android_template_from_file(const String &p_
 			}
 		}
 
-		ProgressDialog::get_singleton()->task_step("uncompress_src", path, idx);
+		if (EditorNode::get_singleton()) {
+			ProgressDialog::get_singleton()->task_step("uncompress_src", path, idx);
+		}
 
 		idx++;
 		ret = unzGoToNextFile(pkg);
 	}
 
-	ProgressDialog::get_singleton()->end_task("uncompress_src");
+	if (EditorNode::get_singleton()) {
+		ProgressDialog::get_singleton()->end_task("uncompress_src");
+	}
 	unzClose(pkg);
 
 	return OK;

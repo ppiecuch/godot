@@ -46,14 +46,14 @@ $IOS_LIPO -create bin/libgodot.iphone.opt.debug.arm64.a bin/libgodot.iphone.opt.
 
 rm -v \
 	bin/libgodot.iphone.opt.arm64.a bin/libgodot.iphone.opt.x86_64.simulator.a \
-	bin/libgodot.iphone.opt.debug.arm64.a bin/libgodot.iphone.opt.debug.x86_64.simulate.a
+	bin/libgodot.iphone.opt.debug.arm64.a bin/libgodot.iphone.opt.debug.x86_64.simulator.a
 
 # Look for platform plugins:
 if [ -d "platform_plugins/ios" ]; then
 	echo_header "*** Building platform plugins"
 	(pushd "platform_plugins/ios"
-		for plugin in impact apn arkit camera icloud gamecenter inappstore; do
-			scons target=release_debug arch=arm64 simulator=no plugin=$plugin version=3.3
+		for plugin in fcuuid impact apn arkit camera icloud gamecenter inappstore photo_picker; do
+			scons target=release_debug arch=arm64 simulator=no plugin=$plugin version=3.x
 		done
 	popd)
 fi

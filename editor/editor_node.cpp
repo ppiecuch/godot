@@ -5704,7 +5704,6 @@ static void _execute_thread(void *p_ud) {
 	if (err != OK) {
 		eta->exitcode = err;
 	}
-
 	eta->done.set();
 }
 
@@ -5734,6 +5733,13 @@ int EditorNode::execute_and_show_output(const String &p_title, const String &p_p
 		}
 		eta.execute_output_mutex.unlock();
 		OS::get_singleton()->delay_usec(1000);
+	}
+
+	if (eta.exitcode != 0 && eta.output.length() && OS::get_singleton()->is_no_window_mode_enabled()) {
+		print_verbose("Execution failed. See output:");
+		print_verbose("-----------------------------");
+		print_verbose(eta.output);
+		print_verbose("-----------------------------");
 	}
 
 	eta.execute_output_thread.wait_to_finish();

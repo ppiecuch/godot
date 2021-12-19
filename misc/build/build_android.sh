@@ -37,48 +37,70 @@ export -f echo_success
 # Building
 # --------
 
-echo_header "*** Starting classical build for Android..."
-
-$SCONS platform=android android_arch=armv7 $OPTIONS tools=no target=release_debug
-$SCONS platform=android android_arch=armv7 $OPTIONS tools=no target=release
-
-$SCONS platform=android android_arch=arm64v8 $OPTIONS tools=no target=release_debug
-$SCONS platform=android android_arch=arm64v8 $OPTIONS tools=no target=release
-
-if [ "$1" == "full" ]; then
-	$SCONS platform=android android_arch=x86 $OPTIONS tools=no target=release_debug
-	$SCONS platform=android android_arch=x86 $OPTIONS tools=no target=release
-
-	$SCONS platform=android android_arch=x86_64 $OPTIONS tools=no target=release_debug
-	$SCONS platform=android android_arch=x86_64 $OPTIONS tools=no target=release
+cmd=""
+if [ "$1" == "skip_plugins" ] || [ "$1" == "build_x86" ]; then
+	cmd="$1"
+	shift
 fi
 
-pushd platform/android/java
-./gradlew generateGodotTemplates
-popd
+# Cleanup
+rm -rfv \
+	bin/libgodot.android.*.so
 
-mkdir -p bin/templates/android
+echo_header "*** Starting classical build for Android..."
+
+$SCONS $* platform=android android_arch=armv7 $OPTIONS tools=no target=release_debug
+$SCONS $* platform=android android_arch=armv7 $OPTIONS tools=no target=release
+
+$SCONS $* platform=android android_arch=arm64v8 $OPTIONS tools=no target=release_debug
+$SCONS $* platform=android android_arch=arm64v8 $OPTIONS tools=no target=release
+
+if [ "$cmd" == "build_x86" ]; then
+	$SCONS $* platform=android android_arch=x86 $OPTIONS tools=no target=release_debug
+	$SCONS $* platform=android android_arch=x86 $OPTIONS tools=no target=release
+
+	$SCONS $* platform=android android_arch=x86_64 $OPTIONS tools=no target=release_debug
+	$SCONS $* platform=android android_arch=x86_64 $OPTIONS tools=no target=release
+fi
+
+(cd platform/android/java && ./gradlew generateGodotTemplates)
+
+template_dir="${TEMPLATE_OUT_DIR}"
+if [ ! -d "$template_dir" ]; then
+	template_dir="bin/templates/android"
+fi
+
+mkdir -p "$template_dir"
 
 mv -v \
 	bin/android_source.zip bin/android_debug.apk bin/android_release.apk bin/godot-lib.debug.aar bin/godot-lib.release.aar \
-	bin/templates/android/
+	"${template_dir}/"
 
 # Look for platform plugins:
-if [ -d "platform_plugins/android" ]; then
-echo_header "*** Building platform plugins"
-godot_lib="$(pwd)/platform/android/java/app/libs/release/godot-lib.release.aar"
-(pushd "platform_plugins/android"
-	for plugin in godot-google-play-billing godot-google-bluetooth godot-google-device-info; do
-	(pushd $plugin
-		if [ -e gd_build_plugin.sh ]; then
-			./gd_build_plugin.sh "$godot_lib"
-		else
-			echo_header "*** Cannot find a gd_build_plugin.sh script for the plugin: $plugin"
-			exit 1
-		fi
-	popd)
-	done
-popd)
+if [ "$cmd" != "skip_plugins" ]; then
+	if [ -d "platform_plugins/android" ]; then
+		for build in debug release; do
+			echo_header "*** Building $build platform plugins"
+			godot_lib="$(pwd)/platform/android/java/app/libs/${build}/godot-lib.${build}.aar"
+			install_dir=""
+			if [ ! -z "${TEMPLATE_OUT_DIR}" ]; then
+				install_dir="${TEMPLATE_OUT_DIR}/plugins/${build}"
+				mkdir -p "${install_dir}"
+			fi
+			(pushd "platform_plugins/android"
+				for plugin in godot-google-play-billing godot-bluetooth godot-device-info; do
+				(pushd $plugin
+					if [ -e gd_build_plugin.sh ]; then
+						./gd_build_plugin.sh "$godot_lib" "$build" "$install_dir"
+					else
+						echo_header "*** Cannot find a gd_build_plugin.sh script for the plugin: $plugin"
+						exit 1
+					fi
+				popd)
+				done
+			popd)
+		done
+	fi
 fi
 
 echo_header "*** Android build successful"

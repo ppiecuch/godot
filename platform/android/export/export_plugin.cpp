@@ -2802,17 +2802,17 @@ Error EditorExportPlatformAndroid::export_project_helper(const Ref<EditorExportP
 	bool apk_expansion = p_preset->get("apk_expansion/enable");
 	Vector<String> enabled_abis = get_enabled_abis(p_preset);
 
-	print_verbose("Exporting for Android...");
-	print_verbose("- debug build: " + bool_to_string(p_debug));
-	print_verbose("- export path: " + p_path);
-	print_verbose("- export format: " + itos(export_format));
-	print_verbose("- sign build: " + bool_to_string(should_sign));
-	print_verbose("- custom build enabled: " + bool_to_string(use_custom_build));
-	print_verbose("- apk expansion enabled: " + bool_to_string(apk_expansion));
-	print_verbose("- enabled abis: " + String(",").join(enabled_abis));
-	print_verbose("- export filter: " + itos(p_preset->get_export_filter()));
-	print_verbose("- include filter: " + p_preset->get_include_filter());
-	print_verbose("- exclude filter: " + p_preset->get_exclude_filter());
+	print_line("Exporting for Android...");
+	print_line("- debug build: " + bool_to_string(p_debug));
+	print_line("- export path: " + p_path);
+	print_line("- export format: " + itos(export_format));
+	print_line("- sign build: " + bool_to_string(should_sign));
+	print_line("- custom build enabled: " + bool_to_string(use_custom_build));
+	print_line("- apk expansion enabled: " + bool_to_string(apk_expansion));
+	print_line("- enabled abis: " + String(",").join(enabled_abis));
+	print_line("- export filter: " + itos(p_preset->get_export_filter()));
+	print_line("- include filter: " + p_preset->get_include_filter());
+	print_line("- exclude filter: " + p_preset->get_exclude_filter());
 
 	Ref<Image> splash_image;
 	Ref<Image> splash_bg_color_image;
@@ -2960,7 +2960,7 @@ Error EditorExportPlatformAndroid::export_project_helper(const Ref<EditorExportP
 		cmdline.push_back("-Pexport_version_name=" + version_name); // argument to specify the version name.
 		cmdline.push_back("-Pexport_version_min_sdk=" + min_sdk_version); // argument to specify the min sdk.
 		cmdline.push_back("-Pexport_version_target_sdk=" + target_sdk_version); // argument to specify the target sdk.
-		cmdline.push_back("-Pexport_enabled_abis=" + enabled_abi_string); // argument to specify enabled ABIs.
+		cmdline.push_back("-Pexport_enabled_abis=" +  enabled_abi_string); // argument to specify enabled ABIs.
 		cmdline.push_back("-Pplugins_local_binaries=" + local_plugins_binaries); // argument to specify the list of plugins local dependencies.
 		cmdline.push_back("-Pplugins_remote_binaries=" + remote_plugins_binaries); // argument to specify the list of plugins remote dependencies.
 		cmdline.push_back("-Pplugins_maven_repos=" + custom_maven_repos); // argument to specify the list of custom maven repos for the plugins dependencies.
@@ -2986,6 +2986,9 @@ Error EditorExportPlatformAndroid::export_project_helper(const Ref<EditorExportP
 					debug_user = EditorSettings::get_singleton()->get("export/android/debug_keystore_user");
 				}
 
+				if (!debug_keystore.is_abs_path()) {
+					debug_keystore = DirAccess::create(DirAccess::ACCESS_FILESYSTEM)->get_current_dir().append_path(debug_keystore);
+				}
 				cmdline.push_back("-Pdebug_keystore_file=" + debug_keystore); // argument to specify the debug keystore file.
 				cmdline.push_back("-Pdebug_keystore_alias=" + debug_user); // argument to specify the debug keystore alias.
 				cmdline.push_back("-Pdebug_keystore_password=" + debug_password); // argument to specify the debug keystore password.
@@ -2994,11 +2997,15 @@ Error EditorExportPlatformAndroid::export_project_helper(const Ref<EditorExportP
 				String release_keystore = p_preset->get("keystore/release");
 				String release_username = p_preset->get("keystore/release_user");
 				String release_password = p_preset->get("keystore/release_password");
+
 				if (!FileAccess::exists(release_keystore)) {
 					EditorNode::add_io_error(TTR("Could not find keystore, unable to export."));
 					return ERR_FILE_CANT_OPEN;
 				}
 
+				if (!release_keystore.is_abs_path()) {
+					release_keystore = DirAccess::create(DirAccess::ACCESS_FILESYSTEM)->get_current_dir().append_path(release_keystore);
+				}
 				cmdline.push_back("-Prelease_keystore_file=" + release_keystore); // argument to specify the release keystore file.
 				cmdline.push_back("-Prelease_keystore_alias=" + release_username); // argument to specify the release keystore alias.
 				cmdline.push_back("-Prelease_keystore_password=" + release_password); // argument to specify the release keystore password.

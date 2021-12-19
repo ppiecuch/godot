@@ -77,6 +77,7 @@
 #include "editor/editor_node.h"
 #include "editor/editor_settings.h"
 #include "editor/editor_translation.h"
+#include "editor/export_template_manager.h"
 #include "editor/progress_dialog.h"
 #include "editor/project_manager.h"
 #ifndef NO_EDITOR_SPLASH
@@ -327,6 +328,7 @@ void Main::print_help(const char *p_binary) {
 	OS::get_singleton()->print("                                   <path> should be absolute or relative to the project directory, and include the filename for the binary (e.g. 'builds/game.exe'). The target directory should exist.\n");
 	OS::get_singleton()->print("  --export-debug <preset> <path>   Same as --export, but using the debug template.\n");
 	OS::get_singleton()->print("  --export-pack <preset> <path>    Same as --export, but only export the game pack for the given preset. The <path> extension determines whether it will be in PCK or ZIP format.\n");
+	OS::get_singleton()->print("  --install-android-export <file>  Install custom Android export template. The <file> points to Android source ZIP package.\n");
 	OS::get_singleton()->print("  --doctool [<path>]               Dump the engine API reference to the given <path> (defaults to current dir) in XML format, merging if existing files are found.\n");
 	OS::get_singleton()->print("  --no-docbase                     Disallow dumping the base types (used with --doctool).\n");
 	OS::get_singleton()->print("  --build-solutions                Build the scripting solutions (e.g. for C# projects). Implies --editor and requires a valid project to edit.\n");
@@ -749,7 +751,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 			// We still pass it to the main arguments since the argument handling itself is not done in this function
 			main_args.push_back(I->get());
 #endif
-		} else if (I->get() == "--export" || I->get() == "--export-debug" || I->get() == "--export-pack") { // Export project
+		} else if (I->get() == "--export" || I->get() == "--export-debug" || I->get() == "--export-pack" || I->get() == "--install-android-export") { // Export project
 
 			editor = true;
 			main_args.push_back(I->get());
@@ -1589,7 +1591,7 @@ bool Main::start() {
 
 #ifdef TOOLS_ENABLED
 	bool doc_base = true;
-	String _export_preset;
+	String _export_preset, _android_export_template;
 	bool export_debug = false;
 	bool export_pack_only = false;
 #endif
@@ -1657,6 +1659,9 @@ bool Main::start() {
 				editor = true;
 				_export_preset = args[i + 1];
 				export_pack_only = true;
+			} else if (args[i] == "--install-android-export") {
+				editor = true;
+				_android_export_template = args[i + 1];
 #endif
 			} else {
 				// The parameter does not match anything known, don't skip the next argument
@@ -1783,9 +1788,9 @@ bool Main::start() {
 #ifdef BYTECODE_EXPORT_ENABLED
 		if (dump_script) {
 			GDScriptBytecodeExporter bytecode_exporter;
-			print_line("Dumping " + script + " bytecode to " + dump_file + "...");
+			print_verbose("Dumping " + script + " bytecode to " + dump_file + "...");
 			bytecode_exporter.export_bytecode_to_file(script, dump_file);
-			print_line("OK");
+			print_verbose("OK");
 			return false;
 		} else {
 #endif
@@ -1962,10 +1967,16 @@ bool Main::start() {
 
 #ifdef TOOLS_ENABLED
 		EditorNode *editor_node = nullptr;
+		if (_android_export_template != "") {
+			ExportTemplateManager *export_template_manager = memnew(ExportTemplateManager);
+			export_template_manager->install_android_template_from_file(_android_export_template);
+			memdelete(export_template_manager);
+			OS::get_singleton()->set_exit_code(EXIT_SUCCESS);
+			return false;
+		}
 		if (editor) {
 			editor_node = memnew(EditorNode);
 			sml->get_root()->add_child(editor_node);
-
 			if (_export_preset != "") {
 				editor_node->export_preset(_export_preset, positional_arg, export_debug, export_pack_only);
 				game_path = ""; // Do not load anything.
