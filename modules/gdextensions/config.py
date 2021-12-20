@@ -23,7 +23,14 @@ def configure(env):
         "vgamepad",
     ]
     opts = Variables()
-    opts.Add(ListVariable("enable_gdextensions_submodules", "Enable gdextensions submodules", "all" if env["tools"] else "none", modules))
+    opts.Add(
+        ListVariable(
+            "enable_gdextensions_submodules",
+            "Enable gdextensions submodules",
+            "all" if env["tools"] else "none",
+            modules,
+        )
+    )
     opts.Update(env)
 
 
