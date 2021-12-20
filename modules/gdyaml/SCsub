@@ -1,0 +1,18 @@
+#!/usr/bin/env python
+
+Import("env")
+Import("env_modules")
+
+env_yaml = env_modules.Clone()
+
+env_yaml.Prepend(CPPPATH=["."])
+env_yaml.Prepend(CPPPATH=["#thirdparty/yaml-cpp/include"])
+
+env_yaml.Append(CPPDEFINES=["YAML_CPP_STATIC_DEFINE"])
+
+sources = Glob("*.cpp") + Glob("#thirdparty/yaml-cpp/src/*.cpp")
+
+# Compile as a static library
+lib = env_yaml.Library("gdyaml", sources)
+# Add the library as a dependency of the final executable
+env.Prepend(LIBS=[lib])
