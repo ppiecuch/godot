@@ -26,6 +26,9 @@ export TERM=xterm
 echo_header() {
 	printf "\e[1;4m$1\e[0m\n"
 }
+echo_bold() {
+	printf "\e[1m$1\e[0m\n"
+}
 echo_success() {
 	printf "\e[1;4;32m$1\e[0m\n"
 }
@@ -80,7 +83,7 @@ mv -v \
 if [ "$cmd" != "skip_plugins" ]; then
 	if [ -d "platform_plugins/android" ]; then
 		for build in debug release; do
-			echo_header "*** Building $build platform plugins"
+			echo_header "*** Building platform plugins ($build)"
 			godot_lib="$(pwd)/platform/android/java/app/libs/${build}/godot-lib.${build}.aar"
 			install_dir=""
 			if [ ! -z "${TEMPLATE_OUT_DIR}" ]; then
@@ -88,15 +91,18 @@ if [ "$cmd" != "skip_plugins" ]; then
 				mkdir -p "${install_dir}"
 			fi
 			(pushd "platform_plugins/android"
-				for plugin in godot-google-play-billing godot-bluetooth godot-device-info; do
-				(pushd $plugin
+				for plugin in godot-direct godot-google-play-billing godot-bluetooth godot-device-info; do
+				(if [ -d $plugin ]; then
+					echo_bold "Building  plugin: $plugin"
+					pushd $plugin
 					if [ -e gd_build_plugin.sh ]; then
 						./gd_build_plugin.sh "$godot_lib" "$build" "$install_dir"
 					else
 						echo_header "*** Cannot find a gd_build_plugin.sh script for the plugin: $plugin"
 						exit 1
 					fi
-				popd)
+					popd
+				fi)
 				done
 			popd)
 		done

@@ -246,8 +246,6 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 	public GodotView mView;
 	private boolean godot_initialized = false;
 
-	private GodotEditText mEditText;
-
 	private SensorManager mSensorManager;
 	private Sensor mAccelerometer;
 	private Sensor mGravity;
@@ -353,10 +351,8 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 		containerLayout = new FrameLayout(activity);
 		containerLayout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 
-		mView = new GodotView(activity, this, xrMode, use_gl3, use_32_bits, use_debug_opengl, translucent);
-
 		// GodotEditText layout
-		GodotEditText edittext = new GodotEditText(activity, mView);
+		GodotEditText edittext = new GodotEditText(activity);
 		edittext.setLayoutParams(new ViewGroup.LayoutParams(LayoutParams.MATCH_PARENT,
 				(int)getResources().getDimension(R.dimen.text_edit_height)));
 		// ...add to FrameLayout
@@ -737,7 +733,7 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle icicle) {
 		if (mDownloaderClientStub != null) {
 			View downloadingExpansionView =
-					inflater.inflate(R.layout.downloading_expansion, container, false);
+				inflater.inflate(R.layout.downloading_expansion, container, false);
 			mPB = (ProgressBar)downloadingExpansionView.findViewById(R.id.progressBar);
 			mStatusText = (TextView)downloadingExpansionView.findViewById(R.id.statusText);
 			mProgressFraction = (TextView)downloadingExpansionView.findViewById(R.id.progressAsFraction);
@@ -789,9 +785,12 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 		for (int i = 0; i < singleton_count; i++) {
 			singletons[i].onMainPause();
 		}
-		for (GodotPlugin plugin : pluginRegistry.getAllPlugins()) {
-			plugin.onMainPause();
-		}
+
+		mView.queueEvent(()->{
+			for (GodotPlugin plugin : pluginRegistry.getAllPlugins()) {
+				plugin.onMainPause();
+			}
+		});
 	}
 
 	public String getClipboard() {
@@ -842,9 +841,12 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 		for (int i = 0; i < singleton_count; i++) {
 			singletons[i].onMainResume();
 		}
-		for (GodotPlugin plugin : pluginRegistry.getAllPlugins()) {
-			plugin.onMainResume();
-		}
+
+		mView.queueEvent(()->{
+			for (GodotPlugin plugin : pluginRegistry.getAllPlugins()) {
+				plugin.onMainResume();
+			}
+		});
 	}
 
 	public void UiChangeListener() {
