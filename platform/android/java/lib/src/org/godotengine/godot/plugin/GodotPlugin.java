@@ -111,7 +111,7 @@ public abstract class GodotPlugin {
 	public final void onRegisterPluginWithGodotNative() {
 		registeredSignals.putAll(
 				registerPluginWithGodotNative(this, getPluginName(), getPluginMethods(), getPluginSignals(),
-					getPluginGDNativeLibrariesPaths()));
+						getPluginGDNativeLibrariesPaths()));
 	}
 
 	/**
@@ -122,8 +122,8 @@ public abstract class GodotPlugin {
 	public static void registerPluginWithGodotNative(Object pluginObject,
 			GodotPluginInfoProvider pluginInfoProvider) {
 		registerPluginWithGodotNative(pluginObject, pluginInfoProvider.getPluginName(),
-			Collections.emptyList(), pluginInfoProvider.getPluginSignals(),
-			pluginInfoProvider.getPluginGDNativeLibrariesPaths());
+				Collections.emptyList(), pluginInfoProvider.getPluginSignals(),
+				pluginInfoProvider.getPluginGDNativeLibrariesPaths());
 
 		// Notify that registration is complete.
 		pluginInfoProvider.onPluginRegistered();
@@ -336,13 +336,13 @@ public abstract class GodotPlugin {
 		try {
 			if (registeredSignals.isEmpty()) {
 				throw new IllegalArgumentException(
-					"No signals registered for plugin " + getPluginName() + ". Signal " + signalName + " is missing.");
+						"No signals registered for plugin " + getPluginName() + ". Signal " + signalName + " is missing.");
 			} else {
 				// Check that the given signal is among the registered set.
 				SignalInfo signalInfo = registeredSignals.get(signalName);
 				if (signalInfo == null) {
 					throw new IllegalArgumentException(
-						"Signal " + signalName + " is not registered for this plugin.");
+							"Signal " + signalName + " is not registered for this plugin.");
 				}
 				emitSignal(getGodot(), getPluginName(), signalInfo, signalArgs);
 			}

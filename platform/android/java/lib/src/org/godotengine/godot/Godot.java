@@ -733,7 +733,7 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle icicle) {
 		if (mDownloaderClientStub != null) {
 			View downloadingExpansionView =
-				inflater.inflate(R.layout.downloading_expansion, container, false);
+					inflater.inflate(R.layout.downloading_expansion, container, false);
 			mPB = (ProgressBar)downloadingExpansionView.findViewById(R.id.progressBar);
 			mStatusText = (TextView)downloadingExpansionView.findViewById(R.id.statusText);
 			mProgressFraction = (TextView)downloadingExpansionView.findViewById(R.id.progressAsFraction);
@@ -786,7 +786,7 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 			singletons[i].onMainPause();
 		}
 
-		mView.queueEvent(()->{
+		mView.queueEvent(() -> {
 			for (GodotPlugin plugin : pluginRegistry.getAllPlugins()) {
 				plugin.onMainPause();
 			}
@@ -842,7 +842,7 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 			singletons[i].onMainResume();
 		}
 
-		mView.queueEvent(()->{
+		mView.queueEvent(() -> {
 			for (GodotPlugin plugin : pluginRegistry.getAllPlugins()) {
 				plugin.onMainResume();
 			}
