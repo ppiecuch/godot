@@ -13,7 +13,7 @@ if [ ! -e "$CROSS/$CC" ]; then
 	if ! command -v docker &> /dev/null
 	then
 		echo "*** Docker is not found - cannot run build script."
-		exit
+		exit 1
 	fi
 	docker_state=$(docker info >/dev/null 2>&1)
 	if [[ $? -ne 0 ]]; then
@@ -25,9 +25,6 @@ if [ ! -e "$CROSS/$CC" ]; then
 	SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 	NAME="$(basename "${BASH_SOURCE[0]}")"
 	VERSION=2020-10-01
-
-	# update platform repository
-	(cd platform/frt; git pull)
 
 	echo "*** Running docker toolchain $VERSION (with script $NAME).."
 	docker run --rm -t -v "$APPDIR:/app" odroid_dev:$VERSION "./${SCRIPTDIR/$APPDIR/}/$NAME"

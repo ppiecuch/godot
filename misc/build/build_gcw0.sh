@@ -11,6 +11,9 @@ LD="mipsel-gcw0-linux-uclibc-g++"
 AR="mipsel-gcw0-linux-uclibc-ar"
 STRIP="mipsel-gcw0-linux-uclibc-strip"
 
+# update platform repository
+(cd platform/frt; git pull)
+
 if [ ! -e "$CROSS/$CC" ]; then
 	# toolchain not found - run docker image
 	if ! command -v docker &> /dev/null
@@ -28,9 +31,6 @@ if [ ! -e "$CROSS/$CC" ]; then
 	SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 	NAME="$(basename "${BASH_SOURCE[0]}")"
 	VERSION=2021-03-10
-
-	# update platform repository
-	(cd platform/frt; git pull)
 
 	echo "*** Running docker toolchain $VERSION (with script $NAME).."
 	docker run --rm -t -v "$APPDIR:/app" gcw_zero_dev:$VERSION "./${SCRIPTDIR/$APPDIR/}/$NAME"

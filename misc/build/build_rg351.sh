@@ -4,6 +4,9 @@ set -e
 
 DOCKER_IMAGE="351elec/351elec-build:latest"
 
+# update platform repository
+(cd platform/frt; git pull)
+
 if [ ! -d "/app" ]; then
 	# toolchain not found - run docker image
 	if ! command -v docker &> /dev/null
@@ -20,9 +23,6 @@ if [ ! -d "/app" ]; then
 	APPDIR="$(cd "$PWD" && pwd)"
 	SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 	NAME="$(basename "${BASH_SOURCE[0]}")"
-
-	# update platform repository
-	(cd platform/frt; git pull)
 
 	echo "*** Running docker toolchain $DOCKER_IMAGE (with script $NAME).."
 	docker run --rm -t -v "$APPDIR:/app" $DOCKER_IMAGE "./${SCRIPTDIR/$APPDIR/}/$NAME"

@@ -2,12 +2,19 @@
 
 set -e
 
+source bash_functions.sh
+
 CPU=2
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
-        CPU=$(sysctl -n hw.physicalcpu)
+	CPU=$(sysctl -n hw.physicalcpu)
 elif [[ "$OSTYPE" == "linux"* ]]; then
 	CPU=$(nproc)
+fi
+
+if [ ! -d /opt/vitasdk ]; then
+	# try run in docker
+	_run_in_docker retro_dev
 fi
 
 export VITASDK=/opt/vitasdk
