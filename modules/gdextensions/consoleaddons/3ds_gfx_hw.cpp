@@ -48,20 +48,24 @@ typedef struct {
 	SpriteEntry *entry;
 } SpriteInfo;
 
-
 // NdsCtru
 
-static NdsCtru *singleton = nullptr;
-
 #define _CTRU_ASSERT_IPC_OK(result) \
-	if (R_FAILED(result)) { \
-		return FAILED; \
+	if (R_FAILED(result)) {         \
+		return FAILED;              \
 	}
 
-#define _CTRU_WARN_IPC_FAIL(result) \
-	if (R_FAILED(result)) { \
+#define _CTRU_WARN_IPC_FAIL(result)                                  \
+	if (R_FAILED(result)) {                                          \
 		WARN_PRINT(GD_CURRENT_FUNCTION " failed to retrive result"); \
 	}
+
+NdsCtru *NdsCtru::get_singleton() {
+	if (instance == nullptr) {
+		instance = memnew(NdsCtru);
+	}
+	return instance;
+}
 
 Error NdsCtru::ac_init() {
 	Result result = acInit();
@@ -255,7 +259,6 @@ int NdsCtru::hiduser_get_sound_volume() {
 	_CTRU_WARN_IPC_FAIL(result);
 	return volume;
 }
-
 
 // NdsSprite
 

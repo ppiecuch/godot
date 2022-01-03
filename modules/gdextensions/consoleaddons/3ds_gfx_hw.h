@@ -57,7 +57,16 @@ enum NdsBackgroundBitmapSize {
 };
 
 class NdsCtru : public Object {
+	GDCLASS(NdsCtru, Object)
+
+	static NdsCtru *instance = nullptr;
+
+protected:
+	NdsCtru();
+
 public:
+	NdsCtru *get_singleton();
+
 	/* ac */
 	Error ac_init(); /* Initializes AC */
 	Error ac_exit(); /* Exits AC */
@@ -93,8 +102,6 @@ public:
 	Error hiduser_disable_gyroscope(); /* Disables the gyroscope */
 	float hiduser_get_gyroscope_raw_to_dps_coefficient(); /* Gets the gyroscope raw to dps coefficient */
 	int hiduser_get_sound_volume(); /* Gets the current volume slider value */
-
-	NdsCtru();
 };
 
 class NdsSprite : public Node2D {
