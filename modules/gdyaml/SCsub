@@ -9,8 +9,10 @@ env_glue = env_modules.Clone()
 env_yaml.Prepend(CPPPATH=["."])
 env_yaml.Prepend(CPPPATH=["#thirdparty/yaml-cpp/include"])
 
-if (env["platform"] == "android" and not env["android_rtti"]) or (env["platform"] == "iphone" and not env["ios_exceptions"]):
-	env_yaml.Append(CPPFLAGS=["-frtti", "-fexceptions"])
+if (env["platform"] == "android" and not env["android_rtti"]) or (
+    env["platform"] == "iphone" and not env["ios_exceptions"]
+):
+    env_yaml.Append(CPPFLAGS=["-frtti", "-fexceptions"])
 
 env_yaml.Append(CPPDEFINES=["YAML_CPP_STATIC_DEFINE"])
 

@@ -59,13 +59,16 @@ thirdparty_sources = [
 if not env["disable_3d"]:
     thirdparty_sources += Glob("#thirdparty/libccd/src/*.c") + Glob("#thirdparty/libccd/src/testsuites/*.c")
 
-env_module.Append(CPPPATH=[
-    "#thirdparty/enet",
-    "#thirdparty/flashdb/inc",
-    "#thirdparty/libccd/src",
-    "#thirdparty",
-    ".",
-])
+env_module.Append(
+    CPPPATH=[
+        "#thirdparty/enet",
+        "#thirdparty/flashdb/inc",
+        "#thirdparty/libccd/src",
+        "#thirdparty",
+        ".",
+    ]
+)
+
 if env["builtin_freetype"]:
     env_module.Prepend(CPPPATH=["#thirdparty/freetype/include"])
 env_module.Append(CPPDEFINES=["GD_CQUEUE", "GD_GODOT_ENET", "GD_NO_UNUSED_FUNCTIONS"])
