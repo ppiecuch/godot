@@ -377,12 +377,14 @@ SpriteBase3D::SpriteBase3D() {
 	PoolRealArray mesh_tangents;
 	PoolColorArray mesh_colors;
 	PoolVector2Array mesh_uvs;
+	PoolIntArray mesh_indices;
 
 	mesh_vertices.resize(4);
 	mesh_normals.resize(4);
 	mesh_tangents.resize(16);
 	mesh_colors.resize(4);
 	mesh_uvs.resize(4);
+	mesh_indices.resize(4);
 
 	// create basic mesh and store format information
 	for (int i = 0; i < 4; i++) {
@@ -394,6 +396,7 @@ SpriteBase3D::SpriteBase3D() {
 		mesh_colors.write()[i] = Color(1.0, 1.0, 1.0, 1.0);
 		mesh_uvs.write()[i] = Vector2(0.0, 0.0);
 		mesh_vertices.write()[i] = Vector3(0.0, 0.0, 0.0);
+		mesh_indices.write()[i] = i;
 	}
 
 	Array mesh_array;
@@ -403,6 +406,7 @@ SpriteBase3D::SpriteBase3D() {
 	mesh_array[VS::ARRAY_TANGENT] = mesh_tangents;
 	mesh_array[VS::ARRAY_COLOR] = mesh_colors;
 	mesh_array[VS::ARRAY_TEX_UV] = mesh_uvs;
+	mesh_array[VS::ARRAY_INDEX] = mesh_indices;
 
 	uint32_t compress_format = (VS::ARRAY_COMPRESS_DEFAULT & ~VS::ARRAY_COMPRESS_TEX_UV) & ~VS::ARRAY_COMPRESS_COLOR;
 	compress_format |= VS::ARRAY_FLAG_USE_DYNAMIC_UPDATE;
