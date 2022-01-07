@@ -30,7 +30,7 @@
 
 /* register_types.cpp */
 
-#include <core/print_string.h>
+#include "core/print_string.h"
 
 #include "gd_procedural_mesh.h"
 #include "register_types.h"
