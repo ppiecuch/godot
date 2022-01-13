@@ -21,6 +21,7 @@ def configure(env):
         "settings",
         "sfxr",
         "vgamepad",
+        "landiscovery",
     ]
     opts = Variables()
     opts.Add(
