@@ -28,8 +28,14 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
+// Reference:
+// ----------
+// 1. https://github.com/Faless/godot-enet-better
+// 2. https://github.com/Faless/tris-benet
+
 #include "enet_node.h"
 #include "core/engine.h"
+#include "core/io/marshalls.h"
 
 void ENetNode::_notification(int p_what) {
 	if (!is_inside_tree() || Engine::get_singleton()->is_editor_hint() || !network_peer.is_valid())
@@ -239,8 +245,11 @@ void ENetNode::_network_process() {
 }
 
 void ENetNode::_network_process_packet(int p_from, const uint8_t *p_packet, int p_packet_len) {
+
+	//
 	// Not implemented yet!
-	/*
+	//
+
 	ERR_FAIL_COND(p_packet_len<5);
 
 	uint8_t packet_type = p_packet[0];
@@ -253,52 +262,46 @@ void ENetNode::_network_process_packet(int p_from, const uint8_t *p_packet, int 
 			ERR_FAIL_COND(p_packet_len<5);
 			uint32_t target = decode_uint32(&p_packet[1]);
 
+			Node *node = nullptr;
 
-			Node *node=NULL;
+			if (target & 0x80000000) {
 
-			if (target&0x80000000) {
-
-				int ofs = target&0x7FFFFFFF;
+				int ofs = target & 0x7FFFFFFF;
 				ERR_FAIL_COND(ofs>=p_packet_len);
 
 				String paths;
-				paths.parse_utf8((const char*)&p_packet[ofs],p_packet_len-ofs);
+				paths.parse_utf8((const char*)&p_packet[ofs], p_packet_len-ofs);
 
 				NodePath np = paths;
 
-				node = get_root()->get_node(np);
-				if (node==NULL) {
-					ERR_EXPLAIN("Failed to get path from RPC: "+String(np));
-					ERR_FAIL_COND(node==NULL);
+				node = root_node->get_node(np);
+				if (node == nullptr) {
+					ERR_FAIL_COND_MSG(node==nullptr, "Failed to get path from RPC: " + String(np));
 				}
 			} else {
-
 				int id = target;
 
-				Map<int,PathGetCache>::Element *E=path_get_cache.find(p_from);
+				Map<int, PathGetCache>::Element *E = path_get_cache.find(p_from);
 				ERR_FAIL_COND(!E);
 
-				Map<int,PathGetCache::NodeInfo>::Element *F=E->get().nodes.find(id);
+				Map<int, PathGetCache::NodeInfo>::Element *F=E->get().nodes.find(id);
 				ERR_FAIL_COND(!F);
 
 				PathGetCache::NodeInfo *ni = &F->get();
-				//do proper caching later
+				// do proper caching later
 
-				node = get_root()->get_node(ni->path);
-				if (node==NULL) {
-					ERR_EXPLAIN("Failed to get cached path from RPC: "+String(ni->path));
-					ERR_FAIL_COND(node==NULL);
+				node = root_node->get_node(ni->path);
+				if (node == nullptr) {
+					ERR_FAIL_COND_MSG(node==nullptr, "Failed to get cached path from RPC: " + String(ni->path));
 				}
-
-
 			}
 
 			ERR_FAIL_COND(p_packet_len<6);
 
-			//detect cstring end
-			int len_end=5;
-			for(;len_end<p_packet_len;len_end++) {
-				if (p_packet[len_end]==0) {
+			// detect cstring end
+			int len_end = 5;
+			for(;len_end<p_packet_len; len_end++) {
+				if (p_packet[len_end] == 0) {
 					break;
 				}
 			}
@@ -307,15 +310,9 @@ void ENetNode::_network_process_packet(int p_from, const uint8_t *p_packet, int 
 
 			StringName name = String::utf8((const char*)&p_packet[5]);
 
+			if (packet_type == NETWORK_COMMAND_REMOTE_CALL) {
 
-
-
-			if (packet_type==NETWORK_COMMAND_REMOTE_CALL) {
-
-				if (!node->can_call_rpc(name))
-					return;
-
-				int ofs = len_end+1;
+				int ofs = len_end + 1;
 
 				ERR_FAIL_COND(ofs>=p_packet_len);
 
@@ -327,47 +324,39 @@ void ENetNode::_network_process_packet(int p_from, const uint8_t *p_packet, int 
 
 				ofs++;
 
-				for(int i=0;i<argc;i++) {
+				for(int i=0; i<argc; i++) {
 
 					ERR_FAIL_COND(ofs>=p_packet_len);
 					int vlen;
-					Error err = decode_variant(args[i],&p_packet[ofs],p_packet_len-ofs,&vlen);
+					Error err = decode_variant(args.write[i], &p_packet[ofs], p_packet_len-ofs, &vlen);
 					ERR_FAIL_COND(err!=OK);
-					//args[i]=p_packet[3+i];
-					argp[i]=&args[i];
-					ofs+=vlen;
+					argp.write[i] = &args[i];
+					ofs += vlen;
 				}
 
 				Variant::CallError ce;
 
-				node->call(name,argp.ptr(),argc,ce);
+				node->call(name, (const Variant **)argp.ptr(), argc,ce);
 				if (ce.error!=Variant::CallError::CALL_OK) {
-					String error = Variant::get_call_error_text(node,name,argp.ptr(),argc,ce);
-					error="RPC - "+error;
-					ERR_PRINTS(error);
+					String error =  "RPC - " + Variant::get_call_error_text(node, name, (const Variant **)argp.ptr(), argc, ce);
+					ERR_PRINT(error);
 				}
-
 			} else {
-
-				if (!node->can_call_rset(name))
-					return;
-
-				int ofs = len_end+1;
+				int ofs = len_end + 1;
 
 				ERR_FAIL_COND(ofs>=p_packet_len);
 
 				Variant value;
-				decode_variant(value,&p_packet[ofs],p_packet_len-ofs);
+				decode_variant(value, &p_packet[ofs], p_packet_len-ofs);
 
 				bool valid;
 
-				node->set(name,value,&valid);
+				node->set(name,value, &valid);
 				if (!valid) {
-					String error = "Error setting remote property '"+String(name)+"', not found in object of type "+node->get_type();
-					ERR_PRINTS(error);
+					String error = "Error setting remote property '" + String(name) + "', not found in object of type " + node->get_class();
+					ERR_PRINT(error);
 				}
 			}
-
 		} break;
 		case NETWORK_COMMAND_SIMPLIFY_PATH: {
 
@@ -375,55 +364,52 @@ void ENetNode::_network_process_packet(int p_from, const uint8_t *p_packet, int 
 			int id = decode_uint32(&p_packet[1]);
 
 			String paths;
-			paths.parse_utf8((const char*)&p_packet[5],p_packet_len-5);
+			paths.parse_utf8((const char*)&p_packet[5], p_packet_len - 5);
 
 			NodePath path = paths;
 
 			if (!path_get_cache.has(p_from)) {
-				path_get_cache[p_from]=PathGetCache();
+				path_get_cache[p_from] = PathGetCache();
 			}
 
 			PathGetCache::NodeInfo ni;
-			ni.path=path;
-			ni.instance=0;
+			ni.path = path;
+			ni.instance = 0;
 
-			path_get_cache[p_from].nodes[id]=ni;
+			path_get_cache[p_from].nodes[id] = ni;
 
-
+			// send ack
 			{
-				//send ack
-
-				//encode path
+				// encode path
 				CharString pname = String(path).utf8();
-				int len = encode_cstring(pname.get_data(),NULL);
+				int len = encode_cstring(pname.get_data(), nullptr);
 
 				Vector<uint8_t> packet;
 
-				packet.resize(1+len);
-				packet[0]=NETWORK_COMMAND_CONFIRM_PATH;
-				encode_cstring(pname.get_data(),&packet[1]);
+				packet.resize(len + 1);
+				packet.write[0] = NETWORK_COMMAND_CONFIRM_PATH;
+				encode_cstring(pname.get_data(), &packet.write[1]);
 
 				network_peer->set_transfer_mode(NetworkedMultiplayerPeer::TRANSFER_MODE_RELIABLE);
 				network_peer->set_target_peer(p_from);
-				network_peer->put_packet(packet.ptr(),packet.size(),0);
+				network_peer->put_packet(packet.ptr(), packet.size());
 			}
 		} break;
 		case NETWORK_COMMAND_CONFIRM_PATH: {
 
 			String paths;
-			paths.parse_utf8((const char*)&p_packet[1],p_packet_len-1);
+			paths.parse_utf8((const char*)&p_packet[1], p_packet_len - 1);
 
 			NodePath path = paths;
 
 			PathSentCache *psc = path_send_cache.getptr(path);
 			ERR_FAIL_COND(!psc);
 
-			Map<int,bool>::Element *E=psc->confirmed_peers.find(p_from);
+			Map<int,bool>::Element *E = psc->confirmed_peers. find(p_from);
 			ERR_FAIL_COND(!E);
-			E->get()=true;
+			E->get() = true;
 		} break;
 	}
-*/
 }
 
 void ENetNode::_bind_methods() {
@@ -476,6 +462,7 @@ void ENetNode::_bind_methods() {
 ENetNode::ENetNode() {
 	poll_mode = MODE_IDLE;
 	signal_mode = MODE_IDLE;
+	root_node = nullptr;
 
 	network_peer = Ref<ENetPacketPeer>();
 

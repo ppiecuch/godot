@@ -32,6 +32,7 @@ modules = [
     "sfxr",
     "flashdb",
     "vgamepad",
+    "landiscovery",
 ]
 
 if env["tools"]:

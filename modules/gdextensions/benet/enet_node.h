@@ -44,11 +44,38 @@ public:
 		MODE_PHYSICS
 	};
 
+	enum NetworkCommands {
+		NETWORK_COMMAND_REMOTE_CALL,
+		NETWORK_COMMAND_REMOTE_SET,
+		NETWORK_COMMAND_SIMPLIFY_PATH,
+		NETWORK_COMMAND_CONFIRM_PATH,
+	};
+
 private:
+	//path sent caches
+	struct PathSentCache {
+		Map<int, bool> confirmed_peers;
+		int id;
+	};
+
+	//path get caches
+	struct PathGetCache {
+		struct NodeInfo {
+			NodePath path;
+			ObjectID instance;
+		};
+
+		Map<int, NodeInfo> nodes;
+	};
+
+	HashMap<NodePath, PathSentCache> path_send_cache;
+	Map<int, PathGetCache> path_get_cache;
+
 	Ref<ENetPacketPeer> network_peer;
 	Set<int> connected_peers;
 	NetProcessMode poll_mode;
 	NetProcessMode signal_mode;
+	Node *root_node;
 
 	void _network_poll();
 	void _network_process();
