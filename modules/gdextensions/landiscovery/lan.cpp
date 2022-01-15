@@ -1,17 +1,46 @@
+/*************************************************************************/
+/*  lan.cpp                                                              */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #include "lan.h"
 
-#include "core/io/json.h"
 #include "common/gd_core.h"
+#include "core/io/json.h"
 
 const int DEFAULT_PORT = 42696;
-
 
 //
 // GdLanAdvertiser
 //
 
 void GdLanAdvertiser::_notification(int p_what) {
-	switch(p_what) {
+	switch (p_what) {
 		case NOTIFICATION_READY: {
 			_broadcast_timer = memnew(Timer);
 			_broadcast_timer->set_wait_time(broadcast_interval);
@@ -42,7 +71,7 @@ void GdLanAdvertiser::_bind_methods() {
 void GdLanAdvertiser::_broadcast() {
 	String msg = JSON::print(server_info);
 	CharString packet = msg.ascii();
-	_udp_socket->put_packet((const uint8_t*)packet.get_data(), packet.size());
+	_udp_socket->put_packet((const uint8_t *)packet.get_data(), packet.size());
 }
 
 GdLanAdvertiser::GdLanAdvertiser() {
@@ -50,13 +79,12 @@ GdLanAdvertiser::GdLanAdvertiser() {
 	broadcast_port = DEFAULT_PORT;
 }
 
-
 //
 // GdLanListener
 //
 
 void GdLanListener::_notification(int p_what) {
-	switch(p_what) {
+	switch (p_what) {
 		case NOTIFICATION_READY: {
 			_cleanup_timer->set_wait_time(server_cleanup_timeout);
 			_cleanup_timer->set_one_shot(false);
