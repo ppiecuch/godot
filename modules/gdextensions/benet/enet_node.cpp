@@ -245,38 +245,34 @@ void ENetNode::_network_process() {
 }
 
 void ENetNode::_network_process_packet(int p_from, const uint8_t *p_packet, int p_packet_len) {
-
 	//
 	// Not implemented yet!
 	//
 
-	ERR_FAIL_COND(p_packet_len<5);
+	ERR_FAIL_COND(p_packet_len < 5);
 
 	uint8_t packet_type = p_packet[0];
 
-	switch(packet_type) {
-
+	switch (packet_type) {
 		case NETWORK_COMMAND_REMOTE_CALL:
 		case NETWORK_COMMAND_REMOTE_SET: {
-
-			ERR_FAIL_COND(p_packet_len<5);
+			ERR_FAIL_COND(p_packet_len < 5);
 			uint32_t target = decode_uint32(&p_packet[1]);
 
 			Node *node = nullptr;
 
 			if (target & 0x80000000) {
-
 				int ofs = target & 0x7FFFFFFF;
-				ERR_FAIL_COND(ofs>=p_packet_len);
+				ERR_FAIL_COND(ofs >= p_packet_len);
 
 				String paths;
-				paths.parse_utf8((const char*)&p_packet[ofs], p_packet_len-ofs);
+				paths.parse_utf8((const char *)&p_packet[ofs], p_packet_len - ofs);
 
 				NodePath np = paths;
 
 				node = root_node->get_node(np);
 				if (node == nullptr) {
-					ERR_FAIL_COND_MSG(node==nullptr, "Failed to get path from RPC: " + String(np));
+					ERR_FAIL_COND_MSG(node == nullptr, "Failed to get path from RPC: " + String(np));
 				}
 			} else {
 				int id = target;
@@ -284,7 +280,7 @@ void ENetNode::_network_process_packet(int p_from, const uint8_t *p_packet, int 
 				Map<int, PathGetCache>::Element *E = path_get_cache.find(p_from);
 				ERR_FAIL_COND(!E);
 
-				Map<int, PathGetCache::NodeInfo>::Element *F=E->get().nodes.find(id);
+				Map<int, PathGetCache::NodeInfo>::Element *F = E->get().nodes.find(id);
 				ERR_FAIL_COND(!F);
 
 				PathGetCache::NodeInfo *ni = &F->get();
@@ -292,66 +288,64 @@ void ENetNode::_network_process_packet(int p_from, const uint8_t *p_packet, int 
 
 				node = root_node->get_node(ni->path);
 				if (node == nullptr) {
-					ERR_FAIL_COND_MSG(node==nullptr, "Failed to get cached path from RPC: " + String(ni->path));
+					ERR_FAIL_COND_MSG(node == nullptr, "Failed to get cached path from RPC: " + String(ni->path));
 				}
 			}
 
-			ERR_FAIL_COND(p_packet_len<6);
+			ERR_FAIL_COND(p_packet_len < 6);
 
 			// detect cstring end
 			int len_end = 5;
-			for(;len_end<p_packet_len; len_end++) {
+			for (; len_end < p_packet_len; len_end++) {
 				if (p_packet[len_end] == 0) {
 					break;
 				}
 			}
 
-			ERR_FAIL_COND(len_end>=p_packet_len);
+			ERR_FAIL_COND(len_end >= p_packet_len);
 
-			StringName name = String::utf8((const char*)&p_packet[5]);
+			StringName name = String::utf8((const char *)&p_packet[5]);
 
 			if (packet_type == NETWORK_COMMAND_REMOTE_CALL) {
-
 				int ofs = len_end + 1;
 
-				ERR_FAIL_COND(ofs>=p_packet_len);
+				ERR_FAIL_COND(ofs >= p_packet_len);
 
 				int argc = p_packet[ofs];
 				Vector<Variant> args;
-				Vector<const Variant*> argp;
+				Vector<const Variant *> argp;
 				args.resize(argc);
 				argp.resize(argc);
 
 				ofs++;
 
-				for(int i=0; i<argc; i++) {
-
-					ERR_FAIL_COND(ofs>=p_packet_len);
+				for (int i = 0; i < argc; i++) {
+					ERR_FAIL_COND(ofs >= p_packet_len);
 					int vlen;
-					Error err = decode_variant(args.write[i], &p_packet[ofs], p_packet_len-ofs, &vlen);
-					ERR_FAIL_COND(err!=OK);
+					Error err = decode_variant(args.write[i], &p_packet[ofs], p_packet_len - ofs, &vlen);
+					ERR_FAIL_COND(err != OK);
 					argp.write[i] = &args[i];
 					ofs += vlen;
 				}
 
 				Variant::CallError ce;
 
-				node->call(name, (const Variant **)argp.ptr(), argc,ce);
-				if (ce.error!=Variant::CallError::CALL_OK) {
-					String error =  "RPC - " + Variant::get_call_error_text(node, name, (const Variant **)argp.ptr(), argc, ce);
+				node->call(name, (const Variant **)argp.ptr(), argc, ce);
+				if (ce.error != Variant::CallError::CALL_OK) {
+					String error = "RPC - " + Variant::get_call_error_text(node, name, (const Variant **)argp.ptr(), argc, ce);
 					ERR_PRINT(error);
 				}
 			} else {
 				int ofs = len_end + 1;
 
-				ERR_FAIL_COND(ofs>=p_packet_len);
+				ERR_FAIL_COND(ofs >= p_packet_len);
 
 				Variant value;
-				decode_variant(value, &p_packet[ofs], p_packet_len-ofs);
+				decode_variant(value, &p_packet[ofs], p_packet_len - ofs);
 
 				bool valid;
 
-				node->set(name,value, &valid);
+				node->set(name, value, &valid);
 				if (!valid) {
 					String error = "Error setting remote property '" + String(name) + "', not found in object of type " + node->get_class();
 					ERR_PRINT(error);
@@ -359,12 +353,11 @@ void ENetNode::_network_process_packet(int p_from, const uint8_t *p_packet, int 
 			}
 		} break;
 		case NETWORK_COMMAND_SIMPLIFY_PATH: {
-
-			ERR_FAIL_COND(p_packet_len<5);
+			ERR_FAIL_COND(p_packet_len < 5);
 			int id = decode_uint32(&p_packet[1]);
 
 			String paths;
-			paths.parse_utf8((const char*)&p_packet[5], p_packet_len - 5);
+			paths.parse_utf8((const char *)&p_packet[5], p_packet_len - 5);
 
 			NodePath path = paths;
 
@@ -396,16 +389,15 @@ void ENetNode::_network_process_packet(int p_from, const uint8_t *p_packet, int 
 			}
 		} break;
 		case NETWORK_COMMAND_CONFIRM_PATH: {
-
 			String paths;
-			paths.parse_utf8((const char*)&p_packet[1], p_packet_len - 1);
+			paths.parse_utf8((const char *)&p_packet[1], p_packet_len - 1);
 
 			NodePath path = paths;
 
 			PathSentCache *psc = path_send_cache.getptr(path);
 			ERR_FAIL_COND(!psc);
 
-			Map<int,bool>::Element *E = psc->confirmed_peers. find(p_from);
+			Map<int, bool>::Element *E = psc->confirmed_peers.find(p_from);
 			ERR_FAIL_COND(!E);
 			E->get() = true;
 		} break;
