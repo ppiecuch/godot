@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -482,6 +482,9 @@ Error ScriptClassParser::_parse_namespace_name(String &r_name, int &r_curly_stac
 		return _parse_namespace_name(r_name, r_curly_stack);
 	} else if (tk == TK_CURLY_BRACKET_OPEN) {
 		r_curly_stack++;
+		return OK;
+	} else if (tk == TK_SYMBOL && String(value) == ";") {
+		// for file-scoped namespace declaration
 		return OK;
 	} else {
 		error_str = "Unexpected token: " + get_token_name(tk);

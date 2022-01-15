@@ -71,7 +71,7 @@
 		<method name="ceil">
 			<return type="Vector2" />
 			<description>
-				Returns the vector with all components rounded up (towards positive infinity).
+				Returns a new vector with all components rounded up (towards positive infinity).
 			</description>
 		</method>
 		<method name="clamped">
@@ -86,7 +86,9 @@
 			<return type="float" />
 			<argument index="0" name="with" type="Vector2" />
 			<description>
-				Returns the cross product of this vector and [code]with[/code].
+				Returns the 2D analog of the cross product for this vector and [code]with[/code].
+				This is the signed area of the parallelogram formed by the two vectors. If the second vector is clockwise from the first vector, then the cross product is the positive area. If counter-clockwise, the cross product is the negative area.
+				[b]Note:[/b] Cross product is not defined in 2D mathematically. This method embeds the 2D vectors in the XY plane of 3D space and uses their cross product's Z component as the analog.
 			</description>
 		</method>
 		<method name="cubic_interpolate">
@@ -134,7 +136,7 @@
 		<method name="floor">
 			<return type="Vector2" />
 			<description>
-				Returns the vector with all components rounded down (towards negative infinity).
+				Returns a new vector with all components rounded down (towards negative infinity).
 			</description>
 		</method>
 		<method name="is_equal_approx">
@@ -183,7 +185,7 @@
 			<argument index="0" name="to" type="Vector2" />
 			<argument index="1" name="delta" type="float" />
 			<description>
-				Moves the vector toward [code]to[/code] by the fixed [code]delta[/code] amount.
+				Returns a new vector moved toward [code]to[/code] by the fixed [code]delta[/code] amount. Will not go past the final value.
 			</description>
 		</method>
 		<method name="normalized">
@@ -210,14 +212,14 @@
 			<return type="Vector2" />
 			<argument index="0" name="b" type="Vector2" />
 			<description>
-				Returns the vector projected onto the vector [code]b[/code].
+				Returns this vector projected onto the vector [code]b[/code].
 			</description>
 		</method>
 		<method name="reflect">
 			<return type="Vector2" />
 			<argument index="0" name="n" type="Vector2" />
 			<description>
-				Returns the vector reflected from a plane defined by the given normal.
+				Returns the vector reflected (i.e. mirrored, or symmetric) over a line defined by the given direction vector [code]n[/code].
 			</description>
 		</method>
 		<method name="rotated">
@@ -230,13 +232,13 @@
 		<method name="round">
 			<return type="Vector2" />
 			<description>
-				Returns the vector with all components rounded to the nearest integer, with halfway cases rounded away from zero.
+				Returns a new vector with all components rounded to the nearest integer, with halfway cases rounded away from zero.
 			</description>
 		</method>
 		<method name="sign">
 			<return type="Vector2" />
 			<description>
-				Returns the vector with each component set to one or negative one, depending on the signs of the components. If a component is zero, it returns positive one.
+				Returns a new vector with each component set to one or negative one, depending on the signs of the components. If a component is zero, it returns positive one.
 			</description>
 		</method>
 		<method name="slerp">

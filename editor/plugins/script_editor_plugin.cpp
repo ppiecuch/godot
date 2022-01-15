@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -717,7 +717,7 @@ void ScriptEditor::_resave_scripts(const String &p_str) {
 	disk_changed->hide();
 }
 
-void ScriptEditor::_reload_scripts() {
+void ScriptEditor::reload_scripts() {
 	for (int i = 0; i < tab_container->get_child_count(); i++) {
 		ScriptEditorBase *se = Object::cast_to<ScriptEditorBase>(tab_container->get_child(i));
 		if (!se) {
@@ -854,7 +854,7 @@ bool ScriptEditor::_test_script_times_on_disk(RES p_for_script) {
 
 	if (need_reload) {
 		if (!need_ask) {
-			script_editor->_reload_scripts();
+			script_editor->reload_scripts();
 			need_reload = false;
 		} else {
 			disk_changed->call_deferred("popup_centered_ratio", 0.5);
@@ -3121,7 +3121,6 @@ void ScriptEditor::_bind_methods() {
 	ClassDB::bind_method("_editor_pause", &ScriptEditor::_editor_pause);
 	ClassDB::bind_method("_editor_stop", &ScriptEditor::_editor_stop);
 	ClassDB::bind_method("_add_callback", &ScriptEditor::_add_callback);
-	ClassDB::bind_method("_reload_scripts", &ScriptEditor::_reload_scripts);
 	ClassDB::bind_method("_resave_scripts", &ScriptEditor::_resave_scripts);
 	ClassDB::bind_method("_res_saved_callback", &ScriptEditor::_res_saved_callback);
 	ClassDB::bind_method("_scene_saved_callback", &ScriptEditor::_scene_saved_callback);
@@ -3176,6 +3175,7 @@ void ScriptEditor::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_current_script"), &ScriptEditor::_get_current_script);
 	ClassDB::bind_method(D_METHOD("get_open_scripts"), &ScriptEditor::_get_open_scripts);
 	ClassDB::bind_method(D_METHOD("open_script_create_dialog", "base_name", "base_path"), &ScriptEditor::open_script_create_dialog);
+	ClassDB::bind_method(D_METHOD("reload_scripts"), &ScriptEditor::reload_scripts);
 
 	ADD_SIGNAL(MethodInfo("editor_script_changed", PropertyInfo(Variant::OBJECT, "script", PROPERTY_HINT_RESOURCE_TYPE, "Script")));
 	ADD_SIGNAL(MethodInfo("script_close", PropertyInfo(Variant::OBJECT, "script", PROPERTY_HINT_RESOURCE_TYPE, "Script")));
@@ -3453,7 +3453,7 @@ ScriptEditor::ScriptEditor(EditorNode *p_editor) {
 		vbc->add_child(disk_changed_list);
 		disk_changed_list->set_v_size_flags(SIZE_EXPAND_FILL);
 
-		disk_changed->connect("confirmed", this, "_reload_scripts");
+		disk_changed->connect("confirmed", this, "reload_scripts");
 		disk_changed->get_ok()->set_text(TTR("Reload"));
 
 		disk_changed->add_button(TTR("Resave"), !OS::get_singleton()->get_swap_ok_cancel(), "resave");

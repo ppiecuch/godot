@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -290,6 +290,8 @@ class EditorExportPlugin : public Reference {
 	Vector<String> ios_bundle_files;
 	String ios_cpp_code;
 
+	Vector<String> osx_plugin_files;
+
 	_FORCE_INLINE_ void _clear() {
 		shared_objects.clear();
 		extra_files.clear();
@@ -302,6 +304,7 @@ class EditorExportPlugin : public Reference {
 		ios_plist_content = "";
 		ios_linker_flags = "";
 		ios_cpp_code = "";
+		osx_plugin_files.clear();
 	}
 
 	void _export_file_script(const String &p_path, const String &p_type, const PoolVector<String> &p_features);
@@ -323,6 +326,8 @@ protected:
 	void add_ios_bundle_file(const String &p_path);
 	void add_ios_cpp_code(const String &p_code);
 
+	void add_osx_plugin_file(const String &p_path);
+
 	void skip();
 
 	virtual void _export_file(const String &p_path, const String &p_type, const Set<String> &p_features);
@@ -338,6 +343,8 @@ public:
 	String get_ios_linker_flags() const;
 	Vector<String> get_ios_bundle_files() const;
 	String get_ios_cpp_code() const;
+
+	const Vector<String> &get_osx_plugin_files() const;
 
 	EditorExportPlugin();
 };

@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -41,7 +41,7 @@ String ShaderCacheGLES3::hash_program(const char *const *p_strings_platform, con
 	CryptoCore::SHA256Context ctx;
 	ctx.start();
 
-	// GL may already reject a binary program if harware/software has changed, but just in case
+	// GL may already reject a binary program if hardware/software has changed, but just in case
 	for (const char *const *s = p_strings_platform; *s; s++) {
 		uint8_t *bytes = reinterpret_cast<uint8_t *>(const_cast<char *>(*s));
 		ctx.update(bytes, strlen(*s));

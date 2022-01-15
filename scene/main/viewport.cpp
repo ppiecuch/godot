@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -3082,6 +3082,19 @@ bool Viewport::get_hdr() const {
 	return hdr;
 }
 
+void Viewport::set_use_32_bpc_depth(bool p_enable) {
+	if (use_32_bpc_depth == p_enable) {
+		return;
+	}
+
+	use_32_bpc_depth = p_enable;
+	VS::get_singleton()->viewport_set_use_32_bpc_depth(viewport, p_enable);
+}
+
+bool Viewport::is_using_32_bpc_depth() const {
+	return use_32_bpc_depth;
+}
+
 void Viewport::set_usage(Usage p_usage) {
 	usage = p_usage;
 	VS::get_singleton()->viewport_set_usage(viewport, VS::ViewportUsage(p_usage));
@@ -3144,7 +3157,7 @@ bool Viewport::is_handling_input_locally() const {
 }
 
 void Viewport::_validate_property(PropertyInfo &property) const {
-	if (VisualServer::get_singleton()->is_low_end() && property.name == "hdr") {
+	if (VisualServer::get_singleton()->is_low_end() && (property.name == "hdr" || property.name == "use_32_bpc_depth")) {
 		property.usage = PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL;
 	}
 }
@@ -3206,6 +3219,9 @@ void Viewport::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_hdr", "enable"), &Viewport::set_hdr);
 	ClassDB::bind_method(D_METHOD("get_hdr"), &Viewport::get_hdr);
+
+	ClassDB::bind_method(D_METHOD("set_use_32_bpc_depth", "enable"), &Viewport::set_use_32_bpc_depth);
+	ClassDB::bind_method(D_METHOD("get_use_32_bpc_depth"), &Viewport::is_using_32_bpc_depth);
 
 	ClassDB::bind_method(D_METHOD("set_usage", "usage"), &Viewport::set_usage);
 	ClassDB::bind_method(D_METHOD("get_usage"), &Viewport::get_usage);
@@ -3299,6 +3315,7 @@ void Viewport::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "debanding"), "set_use_debanding", "get_use_debanding");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "sharpen_intensity"), "set_sharpen_intensity", "get_sharpen_intensity");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "hdr"), "set_hdr", "get_hdr");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "use_32_bpc_depth"), "set_use_32_bpc_depth", "get_use_32_bpc_depth");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "disable_3d"), "set_disable_3d", "is_3d_disabled");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "keep_3d_linear"), "set_keep_3d_linear", "get_keep_3d_linear");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "usage", PROPERTY_HINT_ENUM, "2D,2D Without Sampling,3D,3D Without Effects"), "set_usage", "get_usage");
@@ -3460,6 +3477,7 @@ Viewport::Viewport() {
 	use_debanding = false;
 	sharpen_intensity = 0.0;
 	hdr = true;
+	use_32_bpc_depth = false;
 
 	usage = USAGE_3D;
 	debug_draw = DEBUG_DRAW_DISABLED;

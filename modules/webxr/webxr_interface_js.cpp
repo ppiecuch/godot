@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -415,10 +415,8 @@ void WebXRInterfaceJS::_update_tracker(int p_controller_id) {
 		int *axes = godot_webxr_get_controller_axes(p_controller_id);
 		if (axes) {
 			for (int i = 0; i < axes[0]; i++) {
-				InputDefault::JoyAxis joy_axis;
-				joy_axis.min = -1;
-				joy_axis.value = *((float *)axes + (i + 1));
-				input->joy_axis(p_controller_id + 100, i, joy_axis);
+				float value = *((float *)axes + (i + 1));
+				input->joy_axis(p_controller_id + 100, i, value);
 			}
 			free(axes);
 		}

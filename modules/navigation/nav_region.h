@@ -1,12 +1,12 @@
 /*************************************************************************/
-/*  register_types.cpp                                                   */
+/*  nav_region.h                                                         */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -28,34 +28,62 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "register_types.h"
+#ifndef NAV_REGION_H
+#define NAV_REGION_H
 
-#include "navigation_mesh_editor_plugin.h"
+#include "nav_rid.h"
 
-#ifdef TOOLS_ENABLED
-EditorNavigationMeshGenerator *_nav_mesh_generator = nullptr;
-#endif
+#include "nav_utils.h"
+#include "scene/3d/navigation.h"
+#include <vector>
 
-void register_recast_types() {
-#ifdef TOOLS_ENABLED
-	ClassDB::APIType prev_api = ClassDB::get_current_api();
-	ClassDB::set_current_api(ClassDB::API_EDITOR);
+/**
+	@author AndreaCatania
+*/
 
-	EditorPlugins::add_by_type<NavigationMeshEditorPlugin>();
-	_nav_mesh_generator = memnew(EditorNavigationMeshGenerator);
+class NavMap;
+class NavRegion;
 
-	ClassDB::register_class<EditorNavigationMeshGenerator>();
+class NavRegion : public NavRid {
+	NavMap *map;
+	Transform transform;
+	Ref<NavigationMesh> mesh;
 
-	Engine::get_singleton()->add_singleton(Engine::Singleton("NavigationMeshGenerator", EditorNavigationMeshGenerator::get_singleton()));
+	bool polygons_dirty;
 
-	ClassDB::set_current_api(prev_api);
-#endif
-}
+	/// Cache
+	std::vector<gd::Polygon> polygons;
 
-void unregister_recast_types() {
-#ifdef TOOLS_ENABLED
-	if (_nav_mesh_generator) {
-		memdelete(_nav_mesh_generator);
+public:
+	NavRegion();
+
+	void scratch_polygons() {
+		polygons_dirty = true;
 	}
-#endif
-}
+
+	void set_map(NavMap *p_map);
+	NavMap *get_map() const {
+		return map;
+	}
+
+	void set_transform(Transform transform);
+	const Transform &get_transform() const {
+		return transform;
+	}
+
+	void set_mesh(Ref<NavigationMesh> p_mesh);
+	const Ref<NavigationMesh> get_mesh() const {
+		return mesh;
+	}
+
+	std::vector<gd::Polygon> const &get_polygons() const {
+		return polygons;
+	}
+
+	bool sync();
+
+private:
+	void update_polygons();
+};
+
+#endif // NAV_REGION_H

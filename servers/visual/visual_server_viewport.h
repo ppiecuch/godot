@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -190,6 +190,7 @@ public:
 	void viewport_set_use_debanding(RID p_viewport, bool p_debanding);
 	void viewport_set_sharpen_intensity(RID p_viewport, float p_intensity);
 	void viewport_set_hdr(RID p_viewport, bool p_enabled);
+	void viewport_set_use_32_bpc_depth(RID p_viewport, bool p_enabled);
 	void viewport_set_usage(RID p_viewport, VS::ViewportUsage p_usage);
 
 	virtual int viewport_get_render_info(RID p_viewport, VS::ViewportRenderInfo p_info);

@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -516,6 +516,17 @@ void register_global_constants() {
 	BIND_GLOBAL_ENUM_CONSTANT(MIDI_MESSAGE_PROGRAM_CHANGE);
 	BIND_GLOBAL_ENUM_CONSTANT(MIDI_MESSAGE_CHANNEL_PRESSURE);
 	BIND_GLOBAL_ENUM_CONSTANT(MIDI_MESSAGE_PITCH_BEND);
+	BIND_GLOBAL_ENUM_CONSTANT(MIDI_MESSAGE_SYSTEM_EXCLUSIVE);
+	BIND_GLOBAL_ENUM_CONSTANT(MIDI_MESSAGE_QUARTER_FRAME);
+	BIND_GLOBAL_ENUM_CONSTANT(MIDI_MESSAGE_SONG_POSITION_POINTER);
+	BIND_GLOBAL_ENUM_CONSTANT(MIDI_MESSAGE_SONG_SELECT);
+	BIND_GLOBAL_ENUM_CONSTANT(MIDI_MESSAGE_TUNE_REQUEST);
+	BIND_GLOBAL_ENUM_CONSTANT(MIDI_MESSAGE_TIMING_CLOCK);
+	BIND_GLOBAL_ENUM_CONSTANT(MIDI_MESSAGE_START);
+	BIND_GLOBAL_ENUM_CONSTANT(MIDI_MESSAGE_CONTINUE);
+	BIND_GLOBAL_ENUM_CONSTANT(MIDI_MESSAGE_STOP);
+	BIND_GLOBAL_ENUM_CONSTANT(MIDI_MESSAGE_ACTIVE_SENSING);
+	BIND_GLOBAL_ENUM_CONSTANT(MIDI_MESSAGE_SYSTEM_RESET);
 
 	// error list
 

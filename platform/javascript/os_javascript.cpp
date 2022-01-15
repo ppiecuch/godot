@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -598,24 +598,16 @@ void OS_JavaScript::process_joypads() {
 			continue;
 		}
 		for (int b = 0; b < s_btns_num; b++) {
-			float value = s_btns[b];
 			// Buttons 6 and 7 in the standard mapping need to be
 			// axis to be handled as JOY_ANALOG by Godot.
 			if (s_standard && (b == 6 || b == 7)) {
-				InputDefault::JoyAxis joy_axis;
-				joy_axis.min = 0;
-				joy_axis.value = value;
-				int a = b == 6 ? JOY_ANALOG_L2 : JOY_ANALOG_R2;
-				input->joy_axis(idx, a, joy_axis);
+				input->joy_axis(idx, b, s_btns[b]);
 			} else {
-				input->joy_button(idx, b, value);
+				input->joy_button(idx, b, s_btns[b]);
 			}
 		}
 		for (int a = 0; a < s_axes_num; a++) {
-			InputDefault::JoyAxis joy_axis;
-			joy_axis.min = -1;
-			joy_axis.value = s_axes[a];
-			input->joy_axis(idx, a, joy_axis);
+			input->joy_axis(idx, a, s_axes[a]);
 		}
 	}
 }
@@ -660,7 +652,7 @@ const char *OS_JavaScript::get_audio_driver_name(int p_driver) const {
 // Clipboard
 void OS_JavaScript::update_clipboard_callback(const char *p_text) {
 	// Only call set_clipboard from OS (sets local clipboard)
-	get_singleton()->OS::set_clipboard(p_text);
+	get_singleton()->OS::set_clipboard(String::utf8(p_text));
 }
 
 void OS_JavaScript::set_clipboard(const String &p_text) {
@@ -891,7 +883,7 @@ void OS_JavaScript::finalize() {
 
 // Miscellaneous
 
-Error OS_JavaScript::execute(const String &p_path, const List<String> &p_arguments, bool p_blocking, ProcessID *r_child_id, String *r_pipe, int *r_exitcode, bool read_stderr, Mutex *p_pipe_mutex) {
+Error OS_JavaScript::execute(const String &p_path, const List<String> &p_arguments, bool p_blocking, ProcessID *r_child_id, String *r_pipe, int *r_exitcode, bool read_stderr, Mutex *p_pipe_mutex, bool p_open_console) {
 	Array args;
 	for (const List<String>::Element *E = p_arguments.front(); E; E = E->next()) {
 		args.push_back(E->get());

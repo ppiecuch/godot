@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -402,6 +402,17 @@ public:
 		}
 	};
 
+	struct VaryingFunctionNames {
+		StringName fragment;
+		StringName vertex;
+		StringName light;
+		VaryingFunctionNames() {
+			fragment = "fragment";
+			vertex = "vertex";
+			light = "light";
+		}
+	};
+
 	struct Node {
 		Node *next;
 
@@ -624,6 +635,7 @@ public:
 
 	struct MemberNode : public Node {
 		DataType basetype;
+		bool basetype_const;
 		StringName base_struct_name;
 		DataPrecision precision;
 		DataType datatype;
@@ -641,6 +653,7 @@ public:
 		MemberNode() :
 				Node(TYPE_MEMBER),
 				basetype(TYPE_VOID),
+				basetype_const(false),
 				datatype(TYPE_VOID),
 				array_size(0),
 				owner(nullptr),
@@ -880,13 +893,7 @@ private:
 	StringName current_function;
 	bool last_const = false;
 
-	struct VaryingUsage {
-		ShaderNode::Varying *var;
-		int line;
-	};
-	List<VaryingUsage> unknown_varying_usages;
-
-	bool _check_varying_usages(int *r_error_line, String *r_error_message) const;
+	VaryingFunctionNames varying_function_names;
 
 	TkPos _get_tkpos() {
 		TkPos tkp;
@@ -966,7 +973,6 @@ private:
 	bool _validate_function_call(BlockNode *p_block, OperatorNode *p_func, DataType *r_ret_type, StringName *r_ret_type_str);
 	bool _parse_function_arguments(BlockNode *p_block, const Map<StringName, BuiltInInfo> &p_builtin_types, OperatorNode *p_func, int *r_complete_arg = nullptr);
 	bool _validate_varying_assign(ShaderNode::Varying &p_varying, String *r_message);
-	bool _validate_varying_using(ShaderNode::Varying &p_varying, String *r_message);
 
 	Node *_parse_expression(BlockNode *p_block, const Map<StringName, BuiltInInfo> &p_builtin_types);
 	Node *_parse_array_constructor(BlockNode *p_block, const Map<StringName, BuiltInInfo> &p_builtin_types, DataType p_type, const StringName &p_struct_name, int p_array_size);

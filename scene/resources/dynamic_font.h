@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -85,6 +85,7 @@ private:
 	bool force_autohinter;
 	Hinting hinting;
 	Vector<uint8_t> _fontdata;
+	float override_oversampling;
 
 	String font_path;
 	Map<CacheID, DynamicFontAtSize *> size_cache;
@@ -103,6 +104,9 @@ public:
 	void set_font_path(const String &p_path);
 	String get_font_path() const;
 	void set_force_autohinter(bool p_force);
+
+	float get_override_oversampling() const;
+	void set_override_oversampling(float p_oversampling);
 
 	DynamicFontData();
 	~DynamicFontData();

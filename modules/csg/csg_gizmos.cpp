@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -376,6 +376,16 @@ void CSGShapeSpatialGizmoPlugin::redraw(EditorSpatialGizmo *p_gizmo) {
 
 	p_gizmo->add_lines(lines, material);
 	p_gizmo->add_collision_segments(lines);
+
+	Array csg_meshes = cs->get_meshes();
+	if (csg_meshes.size() != 2) {
+		return;
+	}
+
+	Ref<Mesh> csg_mesh = csg_meshes[1];
+	if (csg_mesh.is_valid()) {
+		p_gizmo->add_collision_triangles(csg_mesh->generate_triangle_mesh());
+	}
 
 	if (p_gizmo->is_selected()) {
 		// Draw a translucent representation of the CSG node

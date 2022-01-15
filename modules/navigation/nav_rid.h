@@ -1,12 +1,12 @@
 /*************************************************************************/
-/*  navigation_mesh_editor_plugin.h                                      */
+/*  nav_rid.h                                                            */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -28,56 +28,21 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef NAVIGATION_MESH_GENERATOR_PLUGIN_H
-#define NAVIGATION_MESH_GENERATOR_PLUGIN_H
+#ifndef NAV_RID_H
+#define NAV_RID_H
 
-#include "editor/editor_node.h"
-#include "editor/editor_plugin.h"
-#include "navigation_mesh_generator.h"
+#include "core/rid.h"
 
-class NavigationMeshEditor : public Control {
-	friend class NavigationMeshEditorPlugin;
+/**
+	@author AndreaCatania
+*/
 
-	GDCLASS(NavigationMeshEditor, Control);
-
-	AcceptDialog *err_dialog;
-
-	HBoxContainer *bake_hbox;
-	ToolButton *button_bake;
-	ToolButton *button_reset;
-	Label *bake_info;
-
-	NavigationMeshInstance *node;
-
-	void _bake_pressed();
-	void _clear_pressed();
-
-protected:
-	void _node_removed(Node *p_node);
-	static void _bind_methods();
-	void _notification(int p_option);
+class NavRid : public RID_Data {
+	RID self;
 
 public:
-	void edit(NavigationMeshInstance *p_nav_mesh_instance);
-	NavigationMeshEditor();
-	~NavigationMeshEditor();
+	_FORCE_INLINE_ void set_self(const RID &p_self) { self = p_self; }
+	_FORCE_INLINE_ RID get_self() const { return self; }
 };
 
-class NavigationMeshEditorPlugin : public EditorPlugin {
-	GDCLASS(NavigationMeshEditorPlugin, EditorPlugin);
-
-	NavigationMeshEditor *navigation_mesh_editor;
-	EditorNode *editor;
-
-public:
-	virtual String get_name() const { return "NavigationMesh"; }
-	bool has_main_screen() const { return false; }
-	virtual void edit(Object *p_object);
-	virtual bool handles(Object *p_object) const;
-	virtual void make_visible(bool p_visible);
-
-	NavigationMeshEditorPlugin(EditorNode *p_node);
-	~NavigationMeshEditorPlugin();
-};
-
-#endif // NAVIGATION_MESH_GENERATOR_PLUGIN_H
+#endif // NAV_RID_H
