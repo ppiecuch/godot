@@ -34,8 +34,8 @@
 #include "scene/main/node.h"
 #include "scene/main/timer.h"
 
-class GdLanAdvertiser : public Node {
-	GDCLASS(GdLanAdvertiser, Object);
+class LanAdvertiser : public Node {
+	GDCLASS(LanAdvertiser, Node);
 
 	real_t broadcast_interval;
 	int broadcast_port;
@@ -51,11 +51,11 @@ protected:
 	void _broadcast();
 
 public:
-	GdLanAdvertiser();
+	LanAdvertiser();
 };
 
-class GdLanListener : public Node {
-	GDCLASS(GdLanListener, Object);
+class LanListener : public Node {
+	GDCLASS(LanListener, Node);
 
 	int listen_port;
 	int server_cleanup_timeout; // Number of seconds to wait when a server
@@ -72,5 +72,5 @@ protected:
 	void _cleanup();
 
 public:
-	GdLanListener();
+	LanListener();
 };

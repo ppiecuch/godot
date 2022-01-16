@@ -174,8 +174,8 @@ void register_gdextensions_types() {
 	ClassDB::register_class<StateMachine>();
 	ClassDB::register_class<State>();
 
-	ClassDB::register_class<GdLanAdvertiser>();
-	ClassDB::register_class<GdLanListener>();
+	ClassDB::register_class<LanAdvertiser>();
+	ClassDB::register_class<LanListener>();
 
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Resources", memnew(Resources)));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Timer2", memnew(Timer2)));

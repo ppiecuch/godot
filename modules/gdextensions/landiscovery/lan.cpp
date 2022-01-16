@@ -37,10 +37,10 @@
 const int DEFAULT_PORT = 42696;
 
 //
-// GdLanAdvertiser
+// LanAdvertiser
 //
 
-void GdLanAdvertiser::_notification(int p_what) {
+void LanAdvertiser::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_READY: {
 			_broadcast_timer = memnew(Timer);
@@ -65,28 +65,30 @@ void GdLanAdvertiser::_notification(int p_what) {
 	}
 }
 
-void GdLanAdvertiser::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("_broadcast"), &GdLanAdvertiser::_broadcast);
+void LanAdvertiser::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("_broadcast"), &LanAdvertiser::_broadcast);
 }
 
-void GdLanAdvertiser::_broadcast() {
+void LanAdvertiser::_broadcast() {
 	String msg = JSON::print(server_info);
 	CharString packet = msg.ascii();
 	_udp_socket->put_packet((const uint8_t *)packet.get_data(), packet.size());
 }
 
-GdLanAdvertiser::GdLanAdvertiser() {
+LanAdvertiser::LanAdvertiser() {
 	broadcast_interval = 1;
 	broadcast_port = DEFAULT_PORT;
+	_broadcast_timer = nullptr;
 }
 
 //
-// GdLanListener
+// LanListener
 //
 
-void GdLanListener::_notification(int p_what) {
+void LanListener::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_READY: {
+			_cleanup_timer = memnew(Timer);
 			_cleanup_timer->set_wait_time(server_cleanup_timeout);
 			_cleanup_timer->set_one_shot(false);
 			_cleanup_timer->set_autostart(true);
@@ -95,9 +97,9 @@ void GdLanListener::_notification(int p_what) {
 
 			_udp_socket = newref(PacketPeerUDP);
 			if (_udp_socket->listen(listen_port) != OK) {
-				ERR_PRINT(vformat("GameServer LAN service: Error listening on port: %d", listen_port));
+				ERR_PRINT(vformat("LAN service: Error listening on port: %d", listen_port));
 			} else {
-				print_verbose(vformat("GameServer LAN service: Listening on port: %d", listen_port));
+				print_verbose(vformat("LAN service: Listening on port: %d", listen_port));
 			}
 		} break;
 		case NOTIFICATION_EXIT_TREE: {
@@ -136,17 +138,18 @@ void GdLanListener::_notification(int p_what) {
 	}
 }
 
-void GdLanListener::_cleanup() {
+void LanListener::_cleanup() {
 }
 
-void GdLanListener::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("_cleanup"), &GdLanListener::_cleanup);
+void LanListener::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("_cleanup"), &LanListener::_cleanup);
 
 	ADD_SIGNAL(MethodInfo("new_server"));
 	ADD_SIGNAL(MethodInfo("remove_server"));
 }
 
-GdLanListener::GdLanListener() {
+LanListener::LanListener() {
 	listen_port = DEFAULT_PORT;
 	server_cleanup_timeout = 3;
+	_cleanup_timer = nullptr;
 }
