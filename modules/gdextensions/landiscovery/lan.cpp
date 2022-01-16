@@ -32,6 +32,7 @@
 
 #include "common/gd_core.h"
 #include "core/io/json.h"
+#include "core/io/ip_address.h"
 
 const int DEFAULT_PORT = 42696;
 
@@ -89,7 +90,7 @@ void GdLanListener::_notification(int p_what) {
 			_cleanup_timer->set_wait_time(server_cleanup_timeout);
 			_cleanup_timer->set_one_shot(false);
 			_cleanup_timer->set_autostart(true);
-			_cleanup_timer->connect("timeout", this, "clean_up");
+			_cleanup_timer->connect("timeout", this, "_cleanup");
 			add_child(_cleanup_timer);
 
 			_udp_socket = newref(PacketPeerUDP);
@@ -107,11 +108,28 @@ void GdLanListener::_notification(int p_what) {
 		} break;
 		case NOTIFICATION_PROCESS: {
 			while (_udp_socket->get_available_packet_count()) {
-				int len;
-				const uint8_t *packet;
-				Error err = _udp_socket->get_packet(&packet, len);
-				if (err != OK) {
-					ERR_PRINT("Error getting packet!");
+				IP_Address server_ip = _udp_socket->get_packet_address();
+				int server_port = _udp_socket->get_packet_port();
+				if (server_ip.is_valid() && server_port > 0) {
+					// new server!
+					if (!_known_servers.has(server_ip)) {
+						int len;
+						const uint8_t *packet;
+						Error err = _udp_socket->get_packet(&packet, len);
+						ERR_CONTINUE_MSG(err != OK, "Error getting packet!");
+						Variant ret;
+						String err_str;
+						int err_line;
+						err = JSON::parse(String((const char*)packet, len), ret, err_str, err_line);
+						ERR_CONTINUE_MSG(err != OK, "Error parsing packet: " + err_str);
+						ERR_CONTINUE_MSG(ret.get_type() != Variant::DICTIONARY, "Unsupported json content");
+						Dictionary peer_info = ret;
+						peer_info["lastSeen"] = OS::get_singleton()->get_unix_time();
+						peer_info["ip"] = server_ip;
+						_known_servers[server_ip] = peer_info;
+						print_verbose(vformat("New server found at address %s:%s - %s", server_ip, server_port, peer_info));
+						emit_signal("new_server", peer_info);
+					}
 				}
 			}
 		} break;

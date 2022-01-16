@@ -72,6 +72,8 @@
 
 #include "debugdraw/debugdraw.h"
 
+#include "landiscovery/lan.h"
+
 #include "visual/autotilemap.h"
 #include "visual/bend_deform_2d.h"
 #include "visual/bullet_manager.h"
@@ -171,6 +173,9 @@ void register_gdextensions_types() {
 #endif
 	ClassDB::register_class<StateMachine>();
 	ClassDB::register_class<State>();
+
+	ClassDB::register_class<GdLanAdvertiser>();
+	ClassDB::register_class<GdLanListener>();
 
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Resources", memnew(Resources)));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Timer2", memnew(Timer2)));
