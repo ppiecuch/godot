@@ -76,7 +76,7 @@
 #define MIN_FOV 0.01
 #define MAX_FOV 179
 
-		void ViewportRotationControl::_notification(int p_what) {
+void ViewportRotationControl::_notification(int p_what) {
 	if (p_what == NOTIFICATION_ENTER_TREE) {
 		axis_menu_options.clear();
 		axis_menu_options.push_back(SpatialEditorViewport::VIEW_RIGHT);
