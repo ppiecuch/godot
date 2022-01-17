@@ -29,6 +29,7 @@
 /*************************************************************************/
 
 #include "core/io/packet_peer_udp.h"
+#include "core/io/udp_server.h"
 #include "core/map.h"
 #include "core/object.h"
 #include "scene/main/node.h"
@@ -51,6 +52,9 @@ protected:
 	void _broadcast();
 
 public:
+	void set_service_info(const Dictionary &p_dict);
+	Dictionary get_service_info() const;
+
 	LanAdvertiser();
 };
 
@@ -61,9 +65,9 @@ class LanListener : public Node {
 	int server_cleanup_timeout; // Number of seconds to wait when a server
 								// hasn't been heard from before remove
 
-	Ref<PacketPeerUDP> _udp_socket;
+	Ref<UDPServer> _udp_server;
 	Timer *_cleanup_timer;
-	Map<String, Dictionary> _known_servers;
+	Map<String, Dictionary> _known_peers;
 
 protected:
 	static void _bind_methods();
@@ -72,5 +76,10 @@ protected:
 	void _cleanup();
 
 public:
+	void set_listen_port(int p_port);
+	int get_listen_port() const;
+	void set_cleanup_timeout(real_t p_timeout);
+	real_t get_cleanup_timeout() const;
+
 	LanListener();
 };

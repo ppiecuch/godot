@@ -65,14 +65,27 @@ void LanAdvertiser::_notification(int p_what) {
 	}
 }
 
-void LanAdvertiser::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("_broadcast"), &LanAdvertiser::_broadcast);
+void LanAdvertiser::_broadcast() {
+	print_line(vformat("info: %s", server_info));
+	if (!server_info.empty()) {
+		_udp_socket->put_var(server_info);
+	}
 }
 
-void LanAdvertiser::_broadcast() {
-	String msg = JSON::print(server_info);
-	CharString packet = msg.ascii();
-	_udp_socket->put_packet((const uint8_t *)packet.get_data(), packet.size());
+void LanAdvertiser::set_service_info(const Dictionary &p_dict) {
+	server_info = p_dict;
+}
+
+Dictionary LanAdvertiser::get_service_info() const {
+	return server_info;
+}
+
+void LanAdvertiser::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("set_service_info"), &LanAdvertiser::set_service_info);
+	ClassDB::bind_method(D_METHOD("get_service_info"), &LanAdvertiser::get_service_info);
+	ClassDB::bind_method(D_METHOD("_broadcast"), &LanAdvertiser::_broadcast);
+
+	ADD_PROPERTY(PropertyInfo(Variant::DICTIONARY, "Service info"), "set_service_info", "get_service_info");
 }
 
 LanAdvertiser::LanAdvertiser() {
@@ -95,42 +108,45 @@ void LanListener::_notification(int p_what) {
 			_cleanup_timer->connect("timeout", this, "_cleanup");
 			add_child(_cleanup_timer);
 
-			_udp_socket = newref(PacketPeerUDP);
-			if (_udp_socket->listen(listen_port) != OK) {
-				ERR_PRINT(vformat("LAN service: Error listening on port: %d", listen_port));
-			} else {
-				print_verbose(vformat("LAN service: Listening on port: %d", listen_port));
+			_udp_server = newref(UDPServer);
+			if (!Engine::get_singleton()->is_editor_hint()) {
+				if (_udp_server->listen(listen_port) != OK) {
+					ERR_PRINT(vformat("LAN service: Error listening on port: %d", listen_port));
+				} else {
+					print_verbose(vformat("LAN service: Listening on port: %d", listen_port));
+				}
 			}
 		} break;
 		case NOTIFICATION_EXIT_TREE: {
 			_cleanup_timer->stop();
-			if (_udp_socket) {
-				_udp_socket->close();
+			if (_udp_server) {
+				_udp_server->stop();
 			}
 		} break;
 		case NOTIFICATION_PROCESS: {
-			while (_udp_socket->get_available_packet_count()) {
-				IP_Address server_ip = _udp_socket->get_packet_address();
-				int server_port = _udp_socket->get_packet_port();
-				if (server_ip.is_valid() && server_port > 0) {
-					// new server!
-					if (!_known_servers.has(server_ip)) {
-						int len;
-						const uint8_t *packet;
-						Error err = _udp_socket->get_packet(&packet, len);
-						ERR_CONTINUE_MSG(err != OK, "Error getting packet!");
-						Variant ret;
-						String err_str;
-						int err_line;
-						err = JSON::parse(String((const char*)packet, len), ret, err_str, err_line);
-						ERR_CONTINUE_MSG(err != OK, "Error parsing packet: " + err_str);
-						ERR_CONTINUE_MSG(ret.get_type() != Variant::DICTIONARY, "Unsupported json content");
-						Dictionary peer_info = ret;
-						peer_info["lastSeen"] = OS::get_singleton()->get_unix_time();
-						peer_info["ip"] = server_ip;
-						_known_servers[server_ip] = peer_info;
-						print_verbose(vformat("New server found at address %s:%s - %s", server_ip, server_port, peer_info));
-						emit_signal("new_server", peer_info);
+			if (_udp_server->is_listening()) {
+				if (_udp_server->poll() == OK) {
+					while (_udp_server->is_connection_available()) {
+						Ref<PacketPeerUDP> peer = _udp_server->take_connection();
+						IP_Address server_ip = peer->get_packet_address();
+						int server_port = peer->get_packet_port();
+						if (server_ip.is_valid() && server_port > 0) {
+							// new peer!
+							if (!_known_peers.has(server_ip)) {
+								Variant ret;
+								ERR_CONTINUE_MSG(peer->get_var(ret)!=OK, "Failed to retrive a var");
+								ERR_CONTINUE_MSG(ret.get_type() != Variant::DICTIONARY, "Unsupported content");
+								Dictionary peer_info = ret;
+								peer_info["lastSeen"] = OS::get_singleton()->get_unix_time();
+								peer_info["peer"] = peer;
+								_known_peers[server_ip] = peer_info;
+								print_verbose(vformat("New server found at address %s:%s - %s", server_ip, server_port, peer_info));
+								emit_signal("new_peer", peer_info);
+							} else {
+								// update heartbeat
+								_known_peers[server_ip]["lastSeen"] = OS::get_singleton()->get_unix_time();
+							}
+						}
 					}
 				}
 			}
@@ -138,18 +154,62 @@ void LanListener::_notification(int p_what) {
 	}
 }
 
+void LanListener::set_listen_port(int p_port) {
+	listen_port = p_port;
+}
+
+int LanListener::get_listen_port() const {
+	return listen_port;
+}
+
+void LanListener::set_cleanup_timeout(real_t p_timeout) {
+	server_cleanup_timeout = p_timeout;
+	if (_cleanup_timer) {
+		_cleanup_timer->set_wait_time(server_cleanup_timeout);
+	}
+}
+
+real_t LanListener::get_cleanup_timeout() const {
+	return server_cleanup_timeout;
+}
+
 void LanListener::_cleanup() {
+	const uint64_t now = OS::get_singleton()->get_unix_time();
+	Vector<String> remove;
+	for (auto *E = _known_peers.front(); E; E = E->next()) {
+		const Dictionary &peer_info = E->value();
+		if (now - uint64_t(peer_info["lastSeen"]) > server_cleanup_timeout) {
+			remove.push_back(E->key());
+		}
+	}
+	for (const auto &peer_ip : remove) {
+		Dictionary peer_info = _known_peers[peer_ip];
+		_known_peers.erase(peer_ip);
+		print_verbose(vformat("Remove peer: %s", peer_ip));
+		emit_signal("remove_peer", peer_info);
+	}
 }
 
 void LanListener::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("set_listen_port"), &LanListener::set_listen_port);
+	ClassDB::bind_method(D_METHOD("get_listen_port"), &LanListener::get_listen_port);
+	ClassDB::bind_method(D_METHOD("set_cleanup_timeout"), &LanListener::set_cleanup_timeout);
+	ClassDB::bind_method(D_METHOD("get_cleanup_timeout"), &LanListener::get_cleanup_timeout);
+
 	ClassDB::bind_method(D_METHOD("_cleanup"), &LanListener::_cleanup);
 
-	ADD_SIGNAL(MethodInfo("new_server"));
-	ADD_SIGNAL(MethodInfo("remove_server"));
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "Listen port"), "set_listen_port", "get_listen_port");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "Cleanup timeout"), "set_cleanup_timeout", "get_cleanup_timeout");
+
+	ADD_SIGNAL(MethodInfo("new_peer", PropertyInfo(Variant::DICTIONARY, "info")));
+	ADD_SIGNAL(MethodInfo("remove_peer",  PropertyInfo(Variant::DICTIONARY, "info")));
 }
 
 LanListener::LanListener() {
 	listen_port = DEFAULT_PORT;
 	server_cleanup_timeout = 3;
 	_cleanup_timer = nullptr;
+	if (!Engine::get_singleton()->is_editor_hint()) {
+		set_process(true);
+	}
 }

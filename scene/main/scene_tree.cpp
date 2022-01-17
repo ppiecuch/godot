@@ -2025,6 +2025,7 @@ void SceneTree::get_argument_options(const StringName &p_function, int p_idx, Li
 }
 
 void SceneTree::console_show(bool p_state) {
+#ifdef GD_INAPP_CONSOLE
 	if (Node *node = get_edited_scene_root() ? get_edited_scene_root() : current_scene) {
 		if (p_state) {
 			if (!node->has_node(text_console_name)) {
@@ -2040,9 +2041,13 @@ void SceneTree::console_show(bool p_state) {
 			}
 		}
 	}
+#else
+	print_verbose("Console not available.");
+#endif
 }
 
 void SceneTree::console_msg(const String &p_msg) {
+#ifdef GD_INAPP_CONSOLE
 	if (Node *node = get_edited_scene_root() ? get_edited_scene_root() : current_scene) {
 		if (node->has_node(text_console_name)) {
 			if (ConsoleInstance *con = Object::cast_to<ConsoleInstance>(node->get_node(text_console_name))) {
@@ -2050,6 +2055,9 @@ void SceneTree::console_msg(const String &p_msg) {
 			}
 		}
 	}
+#else
+	print_verbose(p_msg);
+#endif
 }
 
 SceneTree::SceneTree() {

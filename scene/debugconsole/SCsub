@@ -2,5 +2,7 @@
 
 Import("env")
 
-env.add_source_files(env.scene_sources, "*.cpp")
-env.add_source_files(env.scene_sources, "*.c")
+if not env["production"]:
+	env.add_source_files(env.scene_sources, "*.cpp")
+	env.add_source_files(env.scene_sources, "*.c")
+	env.Append(CPPDEFINES=["GD_INAPP_CONSOLE"])
