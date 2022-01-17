@@ -119,10 +119,14 @@ static Ref<ImageTexture> editor_generate_icon(int p_index, bool p_convert_color,
 	const bool upsample = !Math::is_equal_approx(Math::round(p_scale), p_scale);
 	ImageLoaderSVG::create_image_from_string(img, editor_icons_sources[p_index], p_scale, upsample, p_convert_color);
 
-	if ((p_scale - (float)((int)p_scale)) > 0.0 || is_gizmo || p_force_filter) {
-		icon->create_from_image(img); // in this case filter really helps
+	if (img->empty()) {
+		print_verbose(vformat("Unable to process svg: %s", editor_icons_names[p_index]));
 	} else {
-		icon->create_from_image(img, 0);
+		if ((p_scale - (float)((int)p_scale)) > 0.0 || is_gizmo || p_force_filter) {
+			icon->create_from_image(img); // in this case filter really helps
+		} else {
+			icon->create_from_image(img, 0);
+		}
 	}
 
 	return icon;
