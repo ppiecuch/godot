@@ -40,7 +40,7 @@ class LanAdvertiser : public Node {
 
 	real_t broadcast_interval;
 	int broadcast_port;
-	Dictionary server_info;
+	Dictionary peer_info;
 
 	Ref<PacketPeerUDP> _udp_socket;
 	Timer *_broadcast_timer;
@@ -52,8 +52,12 @@ protected:
 	void _broadcast();
 
 public:
-	void set_service_info(const Dictionary &p_dict);
-	Dictionary get_service_info() const;
+	void set_peer_info(const Dictionary &p_dict);
+	Dictionary get_peer_info() const;
+	void set_broadcast_interval(real_t p_interval);
+	int get_broadcast_interval() const;
+	void set_port(int p_port);
+	int get_port() const;
 
 	LanAdvertiser();
 };
@@ -76,10 +80,47 @@ protected:
 	void _cleanup();
 
 public:
-	void set_listen_port(int p_port);
-	int get_listen_port() const;
+	void set_port(int p_port);
+	int get_port() const;
 	void set_cleanup_timeout(real_t p_timeout);
 	real_t get_cleanup_timeout() const;
 
 	LanListener();
+};
+
+class LanPlayer : public Node {
+	GDCLASS(LanPlayer, Node);
+
+	int broadcast_port, game_port;
+	real_t server_cleanup_timeout, broadcast_interval;
+
+	// advertiser
+	Ref<PacketPeerUDP> _broadcast_socket;
+	Timer *_broadcast_timer;
+	Dictionary peer_info;
+	// listener
+	Ref<UDPServer> _broadcast_server;
+	Timer *_cleanup_timer;
+	Map<String, Dictionary> _known_peers;
+	// game server
+	Ref<UDPServer> _game_server;
+
+protected:
+	static void _bind_methods();
+	void _notification(int p_what);
+
+	void _broadcast();
+	void _cleanup();
+
+public:
+	void set_peer_info(const Dictionary &p_dict);
+	Dictionary get_peer_info() const;
+	void set_broadcast_port(int p_port);
+	int get_broadcast_port() const;
+	void set_game_port(int p_port);
+	int get_game_port() const;
+	void set_cleanup_timeout(real_t p_timeout);
+	real_t get_cleanup_timeout() const;
+
+	LanPlayer();
 };
