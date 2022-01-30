@@ -18,7 +18,7 @@ typedef HMODULE CLEW_DYNLIB_HANDLE;
 #define CLEW_DYNLIB_OPEN LoadLibraryA
 #define CLEW_DYNLIB_CLOSE FreeLibrary
 #define CLEW_DYNLIB_IMPORT GetProcAddress
-#elif defined(_3DS) || defined(__psp__) || defined(__psp2__)
+#elif defined(__3DS__) || defined(__psp__) || defined(__psp2__)
 
 typedef void* CLEW_DYNLIB_HANDLE;
 

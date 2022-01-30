@@ -113,7 +113,7 @@ def configure(env):
     env["RANLIB"] = "arm-none-eabi-ranlib"
     env["AS"] = "arm-none-eabi-as"
 
-    env.Append(CCFLAGS=["-D_3DS", "-DARM11"])
+    env.Append(CCFLAGS=["-D__3DS__", "-DARM11"])
     env.Append(CCFLAGS=["-march=armv6k", "-mtune=mpcore", "-mfloat-abi=hard", "-mtp=soft"])
     env.Append(CCFLAGS=["-mword-relocations", "-fomit-frame-pointer", "-fno-strict-overflow"])
 

@@ -37,9 +37,9 @@ extern "C" int scandir(const char *dir, struct dirent ***namelist_out,
 extern "C" int asprintf(char **ret, const char *format, ...);
 #endif // __psp2__
 
-#ifdef _3DS
+#ifdef __3DS__
 extern "C" int asprintf(char **ret, const char *format, ...);
-#endif // _3DS
+#endif // __3DS__
 
 #ifdef _WIN32
 #include  <io.h>

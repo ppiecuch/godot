@@ -66,11 +66,11 @@
 #if !defined(unix) && !defined(__unix__) && !defined(__unix) && \
     !defined(__APPLE__) && !defined(_WIN32) && !defined(__QNXNTO__) && \
     !defined(__HAIKU__) && \
-    !defined(_3DS) && !defined(__psp__) && !defined(__psp2__)
+    !defined(__3DS__) && !defined(__psp__) && !defined(__psp2__)
 #error "This module only works on Unix and Windows, see MBEDTLS_TIMING_C in config.h"
 #endif
 
-#if !defined(_3DS) && !defined(__psp__) && !defined(__psp2__)
+#if !defined(__3DS__) && !defined(__psp__) && !defined(__psp2__)
 #define HAVE_ALARM
 #endif
 

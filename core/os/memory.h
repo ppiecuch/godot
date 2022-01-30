@@ -35,7 +35,7 @@
 #include "core/safe_refcount.h"
 
 #include <stddef.h>
-#ifdef _3DS
+#ifdef __3DS__
 #include <alloca.h> // for alloca
 #endif
 

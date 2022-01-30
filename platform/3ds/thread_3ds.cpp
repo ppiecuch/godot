@@ -28,7 +28,7 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifdef _3DS
+#ifdef __3DS__
 
 #include "thread_3ds.h"
 #include "core/os/memory.h"
@@ -149,4 +149,4 @@ Error Mutex::try_lock() const {
 	return (ret == 0) ? OK : ERR_BUSY;
 }
 
-#endif // _3DS
+#endif // __3DS__

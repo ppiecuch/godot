@@ -102,7 +102,7 @@ struct PtrToArg {
 	}
 
 MAKE_PTRARG(bool);
-#ifdef _3DS
+#ifdef __3DS__
 MAKE_PTRARG(int);
 MAKE_PTRARG(unsigned int);
 #endif

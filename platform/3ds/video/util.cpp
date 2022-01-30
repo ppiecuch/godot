@@ -28,7 +28,7 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifdef _3DS
+#ifdef __3DS__
 
 #include "util.h"
 
@@ -99,4 +99,4 @@ void texture_tile_hw(C3D_Tex *tex, const void *data, int w, int h) {
 	C3D_TexFlush(tex);
 }
 
-#endif // _3DS
+#endif // __3DS__

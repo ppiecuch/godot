@@ -280,7 +280,7 @@ bool FileAccessUnix::file_exists(const String &p_path) {
 		return false;
 	}
 
-#if !defined(_3DS) && !defined(__psp__) && !defined(__psp2__)
+#if !defined(__3DS__) && !defined(__psp__) && !defined(__psp2__)
 #if defined(UNIX_ENABLED)
 	// See if we have access to the file
 	if (access(filename.utf8().get_data(), F_OK)) {
