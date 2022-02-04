@@ -222,6 +222,10 @@ String _OS::get_clipboard() const {
 	return OS::get_singleton()->get_clipboard();
 }
 
+bool _OS::has_clipboard() const {
+	return OS::get_singleton()->has_clipboard();
+}
+
 int _OS::get_video_driver_count() const {
 	return OS::get_singleton()->get_video_driver_count();
 }
@@ -571,6 +575,10 @@ String _OS::keyboard_get_layout_language(int p_index) const {
 
 String _OS::keyboard_get_layout_name(int p_index) const {
 	return OS::get_singleton()->keyboard_get_layout_name(p_index);
+}
+
+uint32_t _OS::keyboard_get_scancode_from_physical(uint32_t p_scancode) const {
+	return OS::get_singleton()->keyboard_get_scancode_from_physical(p_scancode);
 }
 
 String _OS::get_model_name() const {
@@ -1223,6 +1231,7 @@ void _OS::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_clipboard", "clipboard"), &_OS::set_clipboard);
 	ClassDB::bind_method(D_METHOD("get_clipboard"), &_OS::get_clipboard);
+	ClassDB::bind_method(D_METHOD("has_clipboard"), &_OS::has_clipboard);
 
 	//will not delete for now, just unexpose
 	//ClassDB::bind_method(D_METHOD("set_video_mode","size","fullscreen","resizable","screen"),&_OS::set_video_mode,DEFVAL(0));
@@ -1355,6 +1364,7 @@ void _OS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("keyboard_set_current_layout", "index"), &_OS::keyboard_set_current_layout);
 	ClassDB::bind_method(D_METHOD("keyboard_get_layout_language", "index"), &_OS::keyboard_get_layout_language);
 	ClassDB::bind_method(D_METHOD("keyboard_get_layout_name", "index"), &_OS::keyboard_get_layout_name);
+	ClassDB::bind_method(D_METHOD("keyboard_get_scancode_from_physical", "scancode"), &_OS::keyboard_get_scancode_from_physical);
 
 	ClassDB::bind_method(D_METHOD("can_draw"), &_OS::can_draw);
 	ClassDB::bind_method(D_METHOD("is_userfs_persistent"), &_OS::is_userfs_persistent);

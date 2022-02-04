@@ -67,7 +67,7 @@ float AnimationNodeAnimation::process(float p_time, bool p_seek) {
 	AnimationPlayer *ap = state->player;
 	ERR_FAIL_COND_V(!ap, 0);
 
-	float time = get_parameter(this->time);
+	const float current_time = get_parameter(this->time);
 
 	if (!ap->has_animation(animation)) {
 		AnimationNodeBlendTree *tree = Object::cast_to<AnimationNodeBlendTree>(parent);
@@ -84,6 +84,7 @@ float AnimationNodeAnimation::process(float p_time, bool p_seek) {
 
 	Ref<Animation> anim = ap->get_animation(animation);
 
+	float time = current_time;
 	float step;
 
 	if (p_seek) {
@@ -103,6 +104,7 @@ float AnimationNodeAnimation::process(float p_time, bool p_seek) {
 
 	} else if (time > anim_size) {
 		time = anim_size;
+		step = anim_size - current_time;
 	}
 
 	blend_animation(animation, time, step, p_seek, 1.0);
@@ -318,6 +320,8 @@ void AnimationNodeOneShot::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_use_sync", "enable"), &AnimationNodeOneShot::set_use_sync);
 	ClassDB::bind_method(D_METHOD("is_using_sync"), &AnimationNodeOneShot::is_using_sync);
+
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "mix_mode", PROPERTY_HINT_ENUM, "Blend,Add"), "set_mix_mode", "get_mix_mode");
 
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "fadein_time", PROPERTY_HINT_RANGE, "0,60,0.01,or_greater"), "set_fadein_time", "get_fadein_time");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "fadeout_time", PROPERTY_HINT_RANGE, "0,60,0.01,or_greater"), "set_fadeout_time", "get_fadeout_time");

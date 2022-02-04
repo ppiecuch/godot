@@ -54,6 +54,11 @@ public:
 
 	String get_configuration_warning() const;
 
+#ifdef TOOLS_ENABLED
+	// for editor gizmo
+	virtual AABB get_fallback_gizmo_aabb() const;
+#endif
+
 	Occluder();
 	~Occluder();
 };

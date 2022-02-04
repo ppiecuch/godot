@@ -39,7 +39,7 @@
 			tr.basis.elements[1][0], tr.basis.elements[1][1],     \
 			tr.origin.x, tr.origin.y)
 
-struct Transform2D {
+struct _NO_DISCARD_CLASS_ Transform2D {
 	// Warning #1: basis of Transform2D is stored differently from Basis. In terms of elements array, the basis matrix looks like "on paper":
 	// M = (elements[0][0] elements[1][0])
 	//     (elements[0][1] elements[1][1])

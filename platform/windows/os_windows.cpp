@@ -107,15 +107,23 @@ static String format_error_message(DWORD id) {
 
 extern HINSTANCE godot_hinstance;
 
+void RedirectStream(const char *p_file_name, const char *p_mode, FILE *p_cpp_stream, const DWORD p_std_handle) {
+	const HANDLE h_existing = GetStdHandle(p_std_handle);
+	if (h_existing != INVALID_HANDLE_VALUE) { // Redirect only if attached console have a valid handle.
+		const HANDLE h_cpp = reinterpret_cast<HANDLE>(_get_osfhandle(_fileno(p_cpp_stream)));
+		if (h_cpp == INVALID_HANDLE_VALUE) { // Redirect only if it's not already redirected to the pipe or file.
+			FILE *fp = p_cpp_stream;
+			freopen_s(&fp, p_file_name, p_mode, p_cpp_stream); // Redirect stream.
+			setvbuf(p_cpp_stream, nullptr, _IONBF, 0); // Disable stream buffering.
+		}
+	}
+}
+
 void RedirectIOToConsole() {
 	if (AttachConsole(ATTACH_PARENT_PROCESS)) {
-		FILE *fpstdin = stdin;
-		FILE *fpstdout = stdout;
-		FILE *fpstderr = stderr;
-
-		freopen_s(&fpstdin, "CONIN$", "r", stdin);
-		freopen_s(&fpstdout, "CONOUT$", "w", stdout);
-		freopen_s(&fpstderr, "CONOUT$", "w", stderr);
+		RedirectStream("CONIN$", "r", stdin, STD_INPUT_HANDLE);
+		RedirectStream("CONOUT$", "w", stdout, STD_OUTPUT_HANDLE);
+		RedirectStream("CONOUT$", "w", stderr, STD_ERROR_HANDLE);
 
 		printf("\n"); // Make sure our output is starting from the new line.
 	}
@@ -158,7 +166,9 @@ void OS_Windows::initialize_core() {
 	last_button_state = 0;
 	restore_mouse_trails = 0;
 
+#ifndef WINDOWS_SUBSYSTEM_CONSOLE
 	RedirectIOToConsole();
+#endif
 
 	maximized = false;
 	minimized = false;
@@ -397,7 +407,6 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 
 				mm->set_position(c);
 				mm->set_global_position(c);
-				input->set_mouse_position(c);
 				mm->set_speed(Vector2(0, 0));
 
 				if (raw->data.mouse.usFlags == MOUSE_MOVE_RELATIVE) {
@@ -505,7 +514,6 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 						SetCursorPos(pos.x, pos.y);
 					}
 
-					input->set_mouse_position(mm->get_position());
 					mm->set_speed(input->get_last_mouse_speed());
 
 					if (old_invalid) {
@@ -650,7 +658,6 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 				SetCursorPos(pos.x, pos.y);
 			}
 
-			input->set_mouse_position(mm->get_position());
 			mm->set_speed(input->get_last_mouse_speed());
 
 			if (old_invalid) {
@@ -752,7 +759,6 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 				SetCursorPos(pos.x, pos.y);
 			}
 
-			input->set_mouse_position(mm->get_position());
 			mm->set_speed(input->get_last_mouse_speed());
 
 			if (old_invalid) {
@@ -3245,6 +3251,42 @@ String OS_Windows::keyboard_get_layout_language(int p_index) const {
 	memfree(layouts);
 
 	return String(buf).substr(0, 2);
+}
+
+uint32_t OS_Windows::keyboard_get_scancode_from_physical(uint32_t p_scancode) const {
+	unsigned int modifiers = p_scancode & KEY_MODIFIER_MASK;
+	uint32_t scancode_no_mod = (uint32_t)(p_scancode & KEY_CODE_MASK);
+
+	if (scancode_no_mod == KEY_PRINT ||
+			scancode_no_mod == KEY_KP_ADD ||
+			scancode_no_mod == KEY_KP_5 ||
+			(scancode_no_mod >= KEY_0 && scancode_no_mod <= KEY_9)) {
+		return p_scancode;
+	}
+
+	unsigned int scancode = KeyMappingWindows::get_scancode(scancode_no_mod);
+	if (scancode == 0) {
+		return p_scancode;
+	}
+
+	HKL current_layout = GetKeyboardLayout(0);
+	UINT vk = MapVirtualKeyEx(scancode, MAPVK_VSC_TO_VK, current_layout);
+	if (vk == 0) {
+		return p_scancode;
+	}
+
+	UINT char_code = MapVirtualKeyEx(vk, MAPVK_VK_TO_CHAR, current_layout) & 0x7FFF;
+	// Unlike a similar Linux/BSD check which matches full Latin-1 range,
+	// we limit these to ASCII to fix some layouts, including Arabic ones
+	if (char_code >= 32 && char_code <= 127) {
+		// Godot uses 'braces' instead of 'brackets'
+		if (char_code == KEY_BRACKETLEFT || char_code == KEY_BRACKETRIGHT) {
+			char_code += 32;
+		}
+		return (uint32_t)(char_code | modifiers);
+	}
+
+	return (uint32_t)(KeyMappingWindows::get_keysym(vk) | modifiers);
 }
 
 String _get_full_layout_name_from_registry(HKL p_layout) {

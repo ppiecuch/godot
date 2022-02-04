@@ -42,7 +42,7 @@
 			0, 0, 0,                                         \
 			(t2d).elements[2][0], (t2d).elements[2][1], 0)
 
-class Transform {
+class _NO_DISCARD_CLASS_ Transform {
 public:
 	Basis basis;
 	Vector3 origin;

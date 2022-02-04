@@ -36,7 +36,7 @@
 
 struct Vector2i;
 
-struct Vector2 {
+struct _NO_DISCARD_CLASS_ Vector2 {
 	static const int AXIS_COUNT = 2;
 
 	enum Axis {
@@ -307,7 +307,7 @@ typedef Vector2 Point2;
 
 /* INTEGER STUFF */
 
-struct Vector2i {
+struct _NO_DISCARD_CLASS_ Vector2i {
 	enum Axis {
 		AXIS_X,
 		AXIS_Y,

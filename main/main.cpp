@@ -794,7 +794,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		} else if (I->get().ends_with("project.godot")) {
 			String path;
 			String file = I->get();
-			int sep = MAX(file.find_last("/"), file.find_last("\\"));
+			int sep = MAX(file.rfind("/"), file.rfind("\\"));
 			if (sep == -1) {
 				path = ".";
 			} else {
@@ -966,7 +966,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		ScriptDebuggerRemote *sdr = memnew(ScriptDebuggerRemote);
 		uint16_t debug_port = 6007;
 		if (debug_host.find(":") != -1) {
-			int sep_pos = debug_host.find_last(":");
+			int sep_pos = debug_host.rfind(":");
 			debug_port = debug_host.substr(sep_pos + 1, debug_host.length()).to_int();
 			debug_host = debug_host.substr(0, sep_pos);
 		}
@@ -989,7 +989,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 
 		for (int i = 0; i < breakpoints.size(); i++) {
 			String bp = breakpoints[i];
-			int sp = bp.find_last(":");
+			int sp = bp.rfind(":");
 			ERR_CONTINUE_MSG(sp == -1, "Invalid breakpoint: '" + bp + "', expected file:line format.");
 
 			script_debugger->insert_breakpoint(bp.substr(sp + 1, bp.length()).to_int(), bp.substr(0, sp));
@@ -1096,17 +1096,17 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	GLOBAL_DEF("rendering/2d/options/use_nvidia_rect_flicker_workaround", false);
 
 	GLOBAL_DEF("display/window/size/width", 1024);
-	ProjectSettings::get_singleton()->set_custom_property_info("display/window/size/width", PropertyInfo(Variant::INT, "display/window/size/width", PROPERTY_HINT_RANGE, "0,7680,or_greater")); // 8K resolution
+	ProjectSettings::get_singleton()->set_custom_property_info("display/window/size/width", PropertyInfo(Variant::INT, "display/window/size/width", PROPERTY_HINT_RANGE, "0,7680,1,or_greater")); // 8K resolution
 	GLOBAL_DEF("display/window/size/height", 600);
-	ProjectSettings::get_singleton()->set_custom_property_info("display/window/size/height", PropertyInfo(Variant::INT, "display/window/size/height", PROPERTY_HINT_RANGE, "0,4320,or_greater")); // 8K resolution
+	ProjectSettings::get_singleton()->set_custom_property_info("display/window/size/height", PropertyInfo(Variant::INT, "display/window/size/height", PROPERTY_HINT_RANGE, "0,4320,1,or_greater")); // 8K resolution
 	GLOBAL_DEF("display/window/size/resizable", true);
 	GLOBAL_DEF("display/window/size/borderless", false);
 	GLOBAL_DEF("display/window/size/fullscreen", false);
 	GLOBAL_DEF("display/window/size/always_on_top", false);
 	GLOBAL_DEF("display/window/size/test_width", 0);
-	ProjectSettings::get_singleton()->set_custom_property_info("display/window/size/test_width", PropertyInfo(Variant::INT, "display/window/size/test_width", PROPERTY_HINT_RANGE, "0,7680,or_greater")); // 8K resolution
+	ProjectSettings::get_singleton()->set_custom_property_info("display/window/size/test_width", PropertyInfo(Variant::INT, "display/window/size/test_width", PROPERTY_HINT_RANGE, "0,7680,1,or_greater")); // 8K resolution
 	GLOBAL_DEF("display/window/size/test_height", 0);
-	ProjectSettings::get_singleton()->set_custom_property_info("display/window/size/test_height", PropertyInfo(Variant::INT, "display/window/size/test_height", PROPERTY_HINT_RANGE, "0,4320,or_greater")); // 8K resolution
+	ProjectSettings::get_singleton()->set_custom_property_info("display/window/size/test_height", PropertyInfo(Variant::INT, "display/window/size/test_height", PROPERTY_HINT_RANGE, "0,4320,1,or_greater")); // 8K resolution
 
 	if (use_custom_res) {
 		if (!force_res) {
@@ -1507,7 +1507,7 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 	GLOBAL_DEF("application/config/icon", String());
 	ProjectSettings::get_singleton()->set_custom_property_info("application/config/icon",
 			PropertyInfo(Variant::STRING, "application/config/icon",
-					PROPERTY_HINT_FILE, "*.png,*.webp,*.svg,*.svgz"));
+					PROPERTY_HINT_FILE, "*.png,*.webp,*.svg"));
 
 	GLOBAL_DEF("application/config/macos_native_icon", String());
 	ProjectSettings::get_singleton()->set_custom_property_info("application/config/macos_native_icon", PropertyInfo(Variant::STRING, "application/config/macos_native_icon", PROPERTY_HINT_FILE, "*.icns"));
@@ -2109,7 +2109,7 @@ bool Main::start() {
 						local_game_path = "res://" + local_game_path;
 
 					} else {
-						int sep = local_game_path.find_last("/");
+						int sep = local_game_path.rfind("/");
 
 						if (sep == -1) {
 							DirAccess *da = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);

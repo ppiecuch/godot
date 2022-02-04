@@ -164,6 +164,7 @@ public:
 
 	void set_clipboard(const String &p_text);
 	String get_clipboard() const;
+	bool has_clipboard() const;
 
 	void set_video_mode(const Size2 &p_size, bool p_fullscreen, bool p_resizeable, int p_screen = 0);
 	Size2 get_video_mode(int p_screen = 0) const;
@@ -263,6 +264,7 @@ public:
 	void keyboard_set_current_layout(int p_index);
 	String keyboard_get_layout_language(int p_index) const;
 	String keyboard_get_layout_name(int p_index) const;
+	uint32_t keyboard_get_scancode_from_physical(uint32_t p_scancode) const;
 
 	String get_model_name() const;
 

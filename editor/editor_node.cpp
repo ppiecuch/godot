@@ -2443,13 +2443,21 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 						file->set_current_path(path.replacen("." + ext, "." + extensions.front()->get()));
 					}
 				}
-			} else {
-				String existing;
-				if (extensions.size()) {
-					String root_name(scene->get_name());
-					existing = root_name + "." + extensions.front()->get().to_lower();
+			} else if (extensions.size()) {
+				String root_name = scene->get_name();
+				// Very similar to node naming logic.
+				switch (ProjectSettings::get_singleton()->get("editor/scene/scene_naming").operator int()) {
+					case SCENE_NAME_CASING_AUTO:
+						// Use casing of the root node.
+						break;
+					case SCENE_NAME_CASING_PASCAL_CASE: {
+						root_name = root_name.capitalize().replace(" ", "");
+					} break;
+					case SCENE_NAME_CASING_SNAKE_CASE:
+						root_name = root_name.capitalize().replace(" ", "").replace("-", "_").camelcase_to_underscore();
+						break;
 				}
-				file->set_current_path(existing);
+				file->set_current_path(root_name + "." + extensions.front()->get().to_lower());
 			}
 			file->popup_centered_ratio();
 			file->set_title(TTR("Save Scene As..."));
@@ -5590,6 +5598,9 @@ void EditorNode::_feature_profile_changed() {
 }
 
 void EditorNode::_bind_methods() {
+	GLOBAL_DEF("editor/scene/scene_naming", SCENE_NAME_CASING_AUTO);
+	ProjectSettings::get_singleton()->set_custom_property_info("editor/scene/scene_naming", PropertyInfo(Variant::INT, "editor/scene/scene_naming", PROPERTY_HINT_ENUM, "Auto,PascalCase,snake_case"));
+
 	ClassDB::bind_method("_menu_option", &EditorNode::_menu_option);
 	ClassDB::bind_method("_tool_menu_option", &EditorNode::_tool_menu_option);
 	ClassDB::bind_method("_menu_confirm_current", &EditorNode::_menu_confirm_current);
@@ -6288,8 +6299,8 @@ EditorNode::EditorNode() {
 
 	p = file_menu->get_popup();
 	p->set_hide_on_window_lose_focus(true);
-	p->add_shortcut(ED_SHORTCUT("editor/new_scene", TTR("New Scene")), FILE_NEW_SCENE);
-	p->add_shortcut(ED_SHORTCUT("editor/new_inherited_scene", TTR("New Inherited Scene...")), FILE_NEW_INHERITED_SCENE);
+	p->add_shortcut(ED_SHORTCUT("editor/new_scene", TTR("New Scene"), KEY_MASK_CMD + KEY_N), FILE_NEW_SCENE);
+	p->add_shortcut(ED_SHORTCUT("editor/new_inherited_scene", TTR("New Inherited Scene..."), KEY_MASK_CMD + KEY_MASK_SHIFT + KEY_N), FILE_NEW_INHERITED_SCENE);
 	p->add_shortcut(ED_SHORTCUT("editor/open_scene", TTR("Open Scene..."), KEY_MASK_CMD + KEY_O), FILE_OPEN_SCENE);
 	p->add_shortcut(ED_SHORTCUT("editor/reopen_closed_scene", TTR("Reopen Closed Scene"), KEY_MASK_CMD + KEY_MASK_SHIFT + KEY_T), FILE_OPEN_PREV);
 	p->add_submenu_item(TTR("Open Recent"), "RecentScenes", FILE_OPEN_RECENT);
