@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -256,7 +256,7 @@ public:
 	virtual void set_offscreen_gl_current(bool p_current);
 
 	virtual String get_executable_path() const;
-	virtual Error execute(const String &p_path, const List<String> &p_arguments, bool p_blocking = true, ProcessID *r_child_id = nullptr, String *r_pipe = nullptr, int *r_exitcode = nullptr, bool read_stderr = false, Mutex *p_pipe_mutex = nullptr);
+	virtual Error execute(const String &p_path, const List<String> &p_arguments, bool p_blocking = true, ProcessID *r_child_id = nullptr, String *r_pipe = nullptr, int *r_exitcode = nullptr, bool read_stderr = false, Mutex *p_pipe_mutex = nullptr, bool p_open_console = false);
 
 	virtual LatinKeyboardVariant get_latin_keyboard_variant() const;
 	virtual int keyboard_get_layout_count() const;
@@ -264,6 +264,7 @@ public:
 	virtual void keyboard_set_current_layout(int p_index);
 	virtual String keyboard_get_layout_language(int p_index) const;
 	virtual String keyboard_get_layout_name(int p_index) const;
+	virtual uint32_t keyboard_get_scancode_from_physical(uint32_t p_scancode) const;
 
 	virtual void move_window_to_foreground();
 

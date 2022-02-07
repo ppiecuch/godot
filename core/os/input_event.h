@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -85,7 +85,7 @@ enum JoystickList {
 	JOY_BUTTON_20 = 20,
 	JOY_BUTTON_21 = 21,
 	JOY_BUTTON_22 = 22,
-	JOY_BUTTON_MAX = 23,
+	JOY_BUTTON_MAX = 128, // Android supports up to 36 buttons. DirectInput supports up to 128 buttons.
 
 	JOY_L = JOY_BUTTON_4,
 	JOY_R = JOY_BUTTON_5,
@@ -176,6 +176,17 @@ enum MidiMessageList {
 	MIDI_MESSAGE_PROGRAM_CHANGE = 0xC,
 	MIDI_MESSAGE_CHANNEL_PRESSURE = 0xD,
 	MIDI_MESSAGE_PITCH_BEND = 0xE,
+	MIDI_MESSAGE_SYSTEM_EXCLUSIVE = 0xF0,
+	MIDI_MESSAGE_QUARTER_FRAME = 0xF1,
+	MIDI_MESSAGE_SONG_POSITION_POINTER = 0xF2,
+	MIDI_MESSAGE_SONG_SELECT = 0xF3,
+	MIDI_MESSAGE_TUNE_REQUEST = 0xF6,
+	MIDI_MESSAGE_TIMING_CLOCK = 0xF8,
+	MIDI_MESSAGE_START = 0xFA,
+	MIDI_MESSAGE_CONTINUE = 0xFB,
+	MIDI_MESSAGE_STOP = 0xFC,
+	MIDI_MESSAGE_ACTIVE_SENSING = 0xFE,
+	MIDI_MESSAGE_SYSTEM_RESET = 0xFF,
 };
 
 /**
@@ -213,7 +224,7 @@ public:
 
 	virtual Ref<InputEvent> xformed_by(const Transform2D &p_xform, const Vector2 &p_local_ofs = Vector2()) const;
 
-	virtual bool action_match(const Ref<InputEvent> &p_event, bool *p_pressed, float *p_strength, float *p_raw_strength, float p_deadzone) const;
+	virtual bool action_match(const Ref<InputEvent> &p_event, bool p_exact_match, bool *p_pressed, float *p_strength, float *p_raw_strength, float p_deadzone) const;
 	virtual bool shortcut_match(const Ref<InputEvent> &p_event, bool p_exact_match = true) const;
 	virtual bool is_action_type() const;
 
@@ -301,7 +312,7 @@ public:
 	uint32_t get_scancode_with_modifiers() const;
 	uint32_t get_physical_scancode_with_modifiers() const;
 
-	virtual bool action_match(const Ref<InputEvent> &p_event, bool *p_pressed, float *p_strength, float *p_raw_strength, float p_deadzone) const G_OVERRIDE;
+	virtual bool action_match(const Ref<InputEvent> &p_event, bool p_exact_match, bool *p_pressed, float *p_strength, float *p_raw_strength, float p_deadzone) const G_OVERRIDE;
 	virtual bool shortcut_match(const Ref<InputEvent> &p_event, bool p_exact_match = true) const G_OVERRIDE;
 
 	virtual bool is_action_type() const G_OVERRIDE { return true; }
@@ -360,7 +371,7 @@ public:
 	bool is_doubleclick() const;
 
 	virtual Ref<InputEvent> xformed_by(const Transform2D &p_xform, const Vector2 &p_local_ofs = Vector2()) const G_OVERRIDE;
-	virtual bool action_match(const Ref<InputEvent> &p_event, bool *p_pressed, float *p_strength, float *p_raw_strength, float p_deadzone) const G_OVERRIDE;
+	virtual bool action_match(const Ref<InputEvent> &p_event, bool p_exact_match, bool *p_pressed, float *p_strength, float *p_raw_strength, float p_deadzone) const G_OVERRIDE;
 	virtual bool shortcut_match(const Ref<InputEvent> &p_event, bool p_exact_match = true) const G_OVERRIDE;
 
 	virtual bool is_action_type() const G_OVERRIDE { return true; }
@@ -418,7 +429,7 @@ public:
 
 	virtual bool is_pressed() const G_OVERRIDE;
 
-	virtual bool action_match(const Ref<InputEvent> &p_event, bool *p_pressed, float *p_strength, float *p_raw_strength, float p_deadzone) const G_OVERRIDE;
+	virtual bool action_match(const Ref<InputEvent> &p_event, bool p_exact_match, bool *p_pressed, float *p_strength, float *p_raw_strength, float p_deadzone) const G_OVERRIDE;
 	virtual bool shortcut_match(const Ref<InputEvent> &p_event, bool p_exact_match = true) const G_OVERRIDE;
 
 	virtual bool is_action_type() const G_OVERRIDE { return true; }
@@ -446,7 +457,7 @@ public:
 	void set_pressure(float p_pressure);
 	float get_pressure() const;
 
-	virtual bool action_match(const Ref<InputEvent> &p_event, bool *p_pressed, float *p_strength, float *p_raw_strength, float p_deadzone) const G_OVERRIDE;
+	virtual bool action_match(const Ref<InputEvent> &p_event, bool p_exact_match, bool *p_pressed, float *p_strength, float *p_raw_strength, float p_deadzone) const G_OVERRIDE;
 	virtual bool shortcut_match(const Ref<InputEvent> &p_event, bool p_exact_match = true) const G_OVERRIDE;
 
 	virtual bool is_action_type() const G_OVERRIDE { return true; }
@@ -533,9 +544,9 @@ public:
 
 	virtual bool is_action(const StringName &p_action) const;
 
-	virtual bool action_match(const Ref<InputEvent> &p_event, bool *p_pressed, float *p_strength, float *p_raw_strength, float p_deadzone) const G_OVERRIDE;
-
+	virtual bool action_match(const Ref<InputEvent> &p_event, bool p_exact_match, bool *p_pressed, float *p_strength, float *p_raw_strength, float p_deadzone) const G_OVERRIDE;
 	virtual bool shortcut_match(const Ref<InputEvent> &p_event, bool p_exact_match = true) const G_OVERRIDE;
+
 	virtual bool is_action_type() const G_OVERRIDE { return true; }
 	virtual String as_text() const G_OVERRIDE;
 

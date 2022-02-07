@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -1570,9 +1570,19 @@ void CSharpInstance::get_properties_state_for_reloading(List<Pair<StringName, Va
 
 		ManagedType managedType;
 
-		GDMonoField *field = script->script_class->get_field(state_pair.first);
-		if (!field)
+		GDMonoField *field = nullptr;
+		GDMonoClass *top = script->script_class;
+		while (top && top != script->native) {
+			field = top->get_field(state_pair.first);
+			if (field) {
+				break;
+			}
+
+			top = top->get_parent_class();
+		}
+		if (!field) {
 			continue; // Properties ignored. We get the property baking fields instead.
+		}
 
 		managedType = field->get_type();
 

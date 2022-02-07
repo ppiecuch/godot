@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -94,6 +94,10 @@ bool VisualShaderNode::is_generate_input_var(int p_port) const {
 
 bool VisualShaderNode::is_code_generated() const {
 	return true;
+}
+
+bool VisualShaderNode::is_show_prop_names() const {
+	return false;
 }
 
 Vector<VisualShader::DefaultTextureParam> VisualShaderNode::get_default_texture_parameters(VisualShader::Type p_type, int p_id) const {
@@ -2332,6 +2336,10 @@ void VisualShaderNodeUniform::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_uniform_name"), &VisualShaderNodeUniform::get_uniform_name);
 
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "uniform_name"), "set_uniform_name", "get_uniform_name");
+}
+
+bool VisualShaderNodeUniform::is_show_prop_names() const {
+	return true;
 }
 
 VisualShaderNodeUniform::VisualShaderNodeUniform() {

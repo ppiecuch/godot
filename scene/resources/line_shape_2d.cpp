@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -91,6 +91,10 @@ Rect2 LineShape2D::get_rect() const {
 	rect.expand_to(l2[0]);
 	rect.expand_to(l2[1]);
 	return rect;
+}
+
+real_t LineShape2D::get_enclosing_radius() const {
+	return d;
 }
 
 void LineShape2D::_bind_methods() {

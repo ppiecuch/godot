@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -99,7 +99,7 @@ String ProjectSettings::localize_path(const String &p_path) const {
 	} else {
 		memdelete(dir);
 
-		int sep = path.find_last("/");
+		int sep = path.rfind("/");
 		if (sep == -1) {
 			return "res://" + path;
 		};
@@ -1068,6 +1068,9 @@ ProjectSettings::ProjectSettings() {
 
 	GLOBAL_DEF("editor/script_templates_search_path", "res://script_templates");
 	custom_prop_info["editor/script_templates_search_path"] = PropertyInfo(Variant::STRING, "editor/script_templates_search_path", PROPERTY_HINT_DIR);
+
+	GLOBAL_DEF("editor/version_control/autoload_on_startup", false);
+	GLOBAL_DEF("editor/version_control/plugin_name", "");
 
 	action = Dictionary();
 	action["deadzone"] = Variant(0.5f);

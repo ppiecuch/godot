@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -177,6 +177,7 @@ public:
 
 	virtual void set_clipboard(const String &p_text);
 	virtual String get_clipboard() const;
+	virtual bool has_clipboard() const;
 
 	virtual void set_video_mode(const VideoMode &p_video_mode, int p_screen = 0) = 0;
 	virtual VideoMode get_video_mode(int p_screen = 0) const = 0;
@@ -238,8 +239,6 @@ public:
 	virtual void set_window_always_on_top(bool p_enabled) {}
 	virtual bool is_window_always_on_top() const { return false; }
 	virtual bool is_window_focused() const { return true; }
-	virtual void set_console_visible(bool p_enabled) {}
-	virtual bool is_console_visible() const { return false; }
 	virtual void request_attention() {}
 	virtual void center_window();
 
@@ -294,7 +293,7 @@ public:
 	virtual int get_low_processor_usage_mode_sleep_usec() const;
 
 	virtual String get_executable_path() const;
-	virtual Error execute(const String &p_path, const List<String> &p_arguments, bool p_blocking = true, ProcessID *r_child_id = nullptr, String *r_pipe = nullptr, int *r_exitcode = nullptr, bool read_stderr = false, Mutex *p_pipe_mutex = nullptr) = 0;
+	virtual Error execute(const String &p_path, const List<String> &p_arguments, bool p_blocking = true, ProcessID *r_child_id = nullptr, String *r_pipe = nullptr, int *r_exitcode = nullptr, bool read_stderr = false, Mutex *p_pipe_mutex = nullptr, bool p_open_console = false) = 0;
 	virtual Error kill(const ProcessID &p_pid) = 0;
 	virtual int get_process_id() const;
 	virtual void vibrate_handheld(int p_duration_ms = 500);
@@ -415,6 +414,7 @@ public:
 
 	// returns height of the currently shown virtual keyboard (0 if keyboard is hidden)
 	virtual int get_virtual_keyboard_height() const;
+	virtual uint32_t keyboard_get_scancode_from_physical(uint32_t p_scancode) const;
 
 	virtual void set_cursor_shape(CursorShape p_shape);
 	virtual CursorShape get_cursor_shape() const;

@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -107,70 +107,26 @@ static String format_error_message(DWORD id) {
 
 extern HINSTANCE godot_hinstance;
 
+void RedirectStream(const char *p_file_name, const char *p_mode, FILE *p_cpp_stream, const DWORD p_std_handle) {
+	const HANDLE h_existing = GetStdHandle(p_std_handle);
+	if (h_existing != INVALID_HANDLE_VALUE) { // Redirect only if attached console have a valid handle.
+		const HANDLE h_cpp = reinterpret_cast<HANDLE>(_get_osfhandle(_fileno(p_cpp_stream)));
+		if (h_cpp == INVALID_HANDLE_VALUE) { // Redirect only if it's not already redirected to the pipe or file.
+			FILE *fp = p_cpp_stream;
+			freopen_s(&fp, p_file_name, p_mode, p_cpp_stream); // Redirect stream.
+			setvbuf(p_cpp_stream, nullptr, _IONBF, 0); // Disable stream buffering.
+		}
+	}
+}
+
 void RedirectIOToConsole() {
-	int hConHandle;
+	if (AttachConsole(ATTACH_PARENT_PROCESS)) {
+		RedirectStream("CONIN$", "r", stdin, STD_INPUT_HANDLE);
+		RedirectStream("CONOUT$", "w", stdout, STD_OUTPUT_HANDLE);
+		RedirectStream("CONOUT$", "w", stderr, STD_ERROR_HANDLE);
 
-	intptr_t lStdHandle;
-
-	CONSOLE_SCREEN_BUFFER_INFO coninfo;
-
-	FILE *fp;
-
-	// allocate a console for this app
-
-	AllocConsole();
-
-	// set the screen buffer to be big enough to let us scroll text
-
-	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE),
-
-			&coninfo);
-
-	coninfo.dwSize.Y = MAX_CONSOLE_LINES;
-
-	SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE),
-
-			coninfo.dwSize);
-
-	// redirect unbuffered STDOUT to the console
-
-	lStdHandle = (intptr_t)GetStdHandle(STD_OUTPUT_HANDLE);
-
-	hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
-
-	fp = _fdopen(hConHandle, "w");
-
-	*stdout = *fp;
-
-	setvbuf(stdout, NULL, _IONBF, 0);
-
-	// redirect unbuffered STDIN to the console
-
-	lStdHandle = (intptr_t)GetStdHandle(STD_INPUT_HANDLE);
-
-	hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
-
-	fp = _fdopen(hConHandle, "r");
-
-	*stdin = *fp;
-
-	setvbuf(stdin, NULL, _IONBF, 0);
-
-	// redirect unbuffered STDERR to the console
-
-	lStdHandle = (intptr_t)GetStdHandle(STD_ERROR_HANDLE);
-
-	hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
-
-	fp = _fdopen(hConHandle, "w");
-
-	*stderr = *fp;
-
-	setvbuf(stderr, NULL, _IONBF, 0);
-
-	// make cout, wcout, cin, wcin, wcerr, cerr, wclog and clog
-
-	// point to console as well
+		printf("\n"); // Make sure our output is starting from the new line.
+	}
 }
 
 BOOL WINAPI HandlerRoutine(_In_ DWORD dwCtrlType) {
@@ -210,7 +166,10 @@ void OS_Windows::initialize_core() {
 	last_button_state = 0;
 	restore_mouse_trails = 0;
 
-	//RedirectIOToConsole();
+#ifndef WINDOWS_SUBSYSTEM_CONSOLE
+	RedirectIOToConsole();
+#endif
+
 	maximized = false;
 	minimized = false;
 	borderless = false;
@@ -225,12 +184,8 @@ void OS_Windows::initialize_core() {
 	NetSocketPosix::make_default();
 
 	// We need to know how often the clock is updated
-	if (!QueryPerformanceFrequency((LARGE_INTEGER *)&ticks_per_second))
-		ticks_per_second = 1000;
-	// If timeAtGameStart is 0 then we get the time since
-	// the start of the computer when we call GetGameTime()
-	ticks_start = 0;
-	ticks_start = get_ticks_usec();
+	QueryPerformanceFrequency((LARGE_INTEGER *)&ticks_per_second);
+	QueryPerformanceCounter((LARGE_INTEGER *)&ticks_start);
 
 	// set minimum resolution for periodic timers, otherwise Sleep(n) may wait at least as
 	//  long as the windows scheduler resolution (~16-30ms) even for calls like Sleep(1)
@@ -452,7 +407,6 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 
 				mm->set_position(c);
 				mm->set_global_position(c);
-				input->set_mouse_position(c);
 				mm->set_speed(Vector2(0, 0));
 
 				if (raw->data.mouse.usFlags == MOUSE_MOVE_RELATIVE) {
@@ -560,7 +514,6 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 						SetCursorPos(pos.x, pos.y);
 					}
 
-					input->set_mouse_position(mm->get_position());
 					mm->set_speed(input->get_last_mouse_speed());
 
 					if (old_invalid) {
@@ -705,7 +658,6 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 				SetCursorPos(pos.x, pos.y);
 			}
 
-			input->set_mouse_position(mm->get_position());
 			mm->set_speed(input->get_last_mouse_speed());
 
 			if (old_invalid) {
@@ -807,7 +759,6 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 				SetCursorPos(pos.x, pos.y);
 			}
 
-			input->set_mouse_position(mm->get_position());
 			mm->set_speed(input->get_last_mouse_speed());
 
 			if (old_invalid) {
@@ -2257,31 +2208,6 @@ bool OS_Windows::is_window_focused() const {
 	return window_focused;
 }
 
-bool OS_Windows::_is_win11_terminal() const {
-	HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-	DWORD dwMode = 0;
-	if (GetConsoleMode(hStdOut, &dwMode)) {
-		return ((dwMode & ENABLE_VIRTUAL_TERMINAL_PROCESSING) == ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-	} else {
-		return false;
-	}
-}
-
-void OS_Windows::set_console_visible(bool p_enabled) {
-	if (console_visible == p_enabled)
-		return;
-
-	if (!_is_win11_terminal()) {
-		// GetConsoleWindow is not supported by the Windows Terminal.
-		ShowWindow(GetConsoleWindow(), p_enabled ? SW_SHOW : SW_HIDE);
-		console_visible = p_enabled;
-	}
-}
-
-bool OS_Windows::is_console_visible() const {
-	return console_visible;
-}
-
 bool OS_Windows::get_window_per_pixel_transparency_enabled() const {
 	if (!is_layered_allowed())
 		return false;
@@ -2546,8 +2472,10 @@ uint64_t OS_Windows::get_ticks_usec() const {
 	uint64_t ticks;
 
 	// This is the number of clock ticks since start
-	if (!QueryPerformanceCounter((LARGE_INTEGER *)&ticks))
-		ticks = (UINT64)timeGetTime();
+	QueryPerformanceCounter((LARGE_INTEGER *)&ticks);
+	// Subtract the ticks at game start to get
+	// the ticks since the game started
+	ticks -= ticks_start;
 
 	// Divide by frequency to get the time in seconds
 	// original calculation shown below is subject to overflow
@@ -2567,9 +2495,6 @@ uint64_t OS_Windows::get_ticks_usec() const {
 	// seconds
 	time += seconds * 1000000L;
 
-	// Subtract the time at game start to get
-	// the time since the game started
-	time -= ticks_start;
 	return time;
 }
 
@@ -2825,42 +2750,8 @@ String OS_Windows::_quote_command_line_argument(const String &p_text) const {
 	return p_text;
 }
 
-Error OS_Windows::execute(const String &p_path, const List<String> &p_arguments, bool p_blocking, ProcessID *r_child_id, String *r_pipe, int *r_exitcode, bool read_stderr, Mutex *p_pipe_mutex) {
+Error OS_Windows::execute(const String &p_path, const List<String> &p_arguments, bool p_blocking, ProcessID *r_child_id, String *r_pipe, int *r_exitcode, bool read_stderr, Mutex *p_pipe_mutex, bool p_open_console) {
 	String path = p_path.replace("/", "\\");
-
-	if (p_blocking && r_pipe) {
-		String argss = _quote_command_line_argument(path);
-		for (const List<String>::Element *E = p_arguments.front(); E; E = E->next()) {
-			argss += " " + _quote_command_line_argument(E->get());
-		}
-
-		if (read_stderr) {
-			argss += " 2>&1"; // Read stderr too
-		}
-		// Note: _wpopen is calling command as "cmd.exe /c argss", instead of executing it directly, add extra quotes around full command, to prevent it from stripping quotes in the command.
-		argss = _quote_command_line_argument(argss);
-
-		FILE *f = _wpopen(argss.c_str(), L"r");
-		ERR_FAIL_COND_V(!f, ERR_CANT_OPEN);
-
-		char buf[65535];
-		while (fgets(buf, 65535, f)) {
-			if (p_pipe_mutex) {
-				p_pipe_mutex->lock();
-			}
-			(*r_pipe) += String::utf8(buf);
-			if (p_pipe_mutex) {
-				p_pipe_mutex->unlock();
-			}
-		}
-
-		int rv = _pclose(f);
-		if (r_exitcode) {
-			*r_exitcode = rv;
-		}
-
-		return OK;
-	}
 
 	String cmdline = _quote_command_line_argument(path);
 	const List<String>::Element *I = p_arguments.front();
@@ -2881,17 +2772,62 @@ Error OS_Windows::execute(const String &p_path, const List<String> &p_arguments,
 		modstr.write[i] = cmdline[i];
 	}
 
-	DWORD creation_flags = NORMAL_PRIORITY_CLASS & CREATE_NO_WINDOW;
-	if (p_path == get_executable_path() && GetConsoleWindow() != NULL && _is_win11_terminal()) {
-		// Open a new terminal as a workaround for Windows Terminal bug.
-		creation_flags |= CREATE_NEW_CONSOLE;
+	bool inherit_handles = false;
+	HANDLE pipe[2] = { NULL, NULL };
+	if (p_blocking && r_pipe) {
+		// Create pipe for StdOut and StdErr.
+		SECURITY_ATTRIBUTES sa;
+		sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+		sa.bInheritHandle = true;
+		sa.lpSecurityDescriptor = NULL;
+
+		ERR_FAIL_COND_V(!CreatePipe(&pipe[0], &pipe[1], &sa, 0), ERR_CANT_FORK);
+		ERR_FAIL_COND_V(!SetHandleInformation(pipe[0], HANDLE_FLAG_INHERIT, 0), ERR_CANT_FORK); // Read handle is for host process only and should not be inherited.
+
+		pi.si.dwFlags |= STARTF_USESTDHANDLES;
+		pi.si.hStdOutput = pipe[1];
+		if (read_stderr) {
+			pi.si.hStdError = pipe[1];
+		}
+		inherit_handles = true;
+	}
+	DWORD creaton_flags = NORMAL_PRIORITY_CLASS;
+	if (p_open_console) {
+		creaton_flags |= CREATE_NEW_CONSOLE;
+	} else {
+		creaton_flags |= CREATE_NO_WINDOW;
 	}
 
-	int ret = CreateProcessW(NULL, modstr.ptrw(), NULL, NULL, 0, creation_flags, NULL, NULL, si_w, &pi.pi);
+	int ret = CreateProcessW(NULL, modstr.ptrw(), NULL, NULL, inherit_handles, creaton_flags, NULL, NULL, si_w, &pi.pi);
+	if (!ret && r_pipe) {
+		CloseHandle(pipe[0]); // Cleanup pipe handles.
+		CloseHandle(pipe[1]);
+	}
 	ERR_FAIL_COND_V(ret == 0, ERR_CANT_FORK);
 
 	if (p_blocking) {
-		WaitForSingleObject(pi.pi.hProcess, INFINITE);
+		if (r_pipe) {
+			CloseHandle(pipe[1]); // Close pipe write handle (only child process is writing).
+			char buf[4096];
+			DWORD read = 0;
+			for (;;) { // Read StdOut and StdErr from pipe.
+				bool success = ReadFile(pipe[0], buf, 4096, &read, NULL);
+				if (!success || read == 0) {
+					break;
+				}
+				if (p_pipe_mutex) {
+					p_pipe_mutex->lock();
+				}
+				(*r_pipe) += String::utf8(buf, read);
+				if (p_pipe_mutex) {
+					p_pipe_mutex->unlock();
+				}
+			};
+			CloseHandle(pipe[0]); // Close pipe read handle.
+		} else {
+			WaitForSingleObject(pi.pi.hProcess, INFINITE);
+		}
+
 		if (r_exitcode) {
 			DWORD ret2;
 			GetExitCodeProcess(pi.pi.hProcess, &ret2);
@@ -3317,6 +3253,42 @@ String OS_Windows::keyboard_get_layout_language(int p_index) const {
 	return String(buf).substr(0, 2);
 }
 
+uint32_t OS_Windows::keyboard_get_scancode_from_physical(uint32_t p_scancode) const {
+	unsigned int modifiers = p_scancode & KEY_MODIFIER_MASK;
+	uint32_t scancode_no_mod = (uint32_t)(p_scancode & KEY_CODE_MASK);
+
+	if (scancode_no_mod == KEY_PRINT ||
+			scancode_no_mod == KEY_KP_ADD ||
+			scancode_no_mod == KEY_KP_5 ||
+			(scancode_no_mod >= KEY_0 && scancode_no_mod <= KEY_9)) {
+		return p_scancode;
+	}
+
+	unsigned int scancode = KeyMappingWindows::get_scancode(scancode_no_mod);
+	if (scancode == 0) {
+		return p_scancode;
+	}
+
+	HKL current_layout = GetKeyboardLayout(0);
+	UINT vk = MapVirtualKeyEx(scancode, MAPVK_VSC_TO_VK, current_layout);
+	if (vk == 0) {
+		return p_scancode;
+	}
+
+	UINT char_code = MapVirtualKeyEx(vk, MAPVK_VK_TO_CHAR, current_layout) & 0x7FFF;
+	// Unlike a similar Linux/BSD check which matches full Latin-1 range,
+	// we limit these to ASCII to fix some layouts, including Arabic ones
+	if (char_code >= 32 && char_code <= 127) {
+		// Godot uses 'braces' instead of 'brackets'
+		if (char_code == KEY_BRACKETLEFT || char_code == KEY_BRACKETRIGHT) {
+			char_code += 32;
+		}
+		return (uint32_t)(char_code | modifiers);
+	}
+
+	return (uint32_t)(KeyMappingWindows::get_keysym(vk) | modifiers);
+}
+
 String _get_full_layout_name_from_registry(HKL p_layout) {
 	String id = "SYSTEM\\CurrentControlSet\\Control\\Keyboard Layouts\\" + String::num_int64((int64_t)p_layout, 16, false).lpad(8, "0");
 	String ret;
@@ -3699,7 +3671,6 @@ OS_Windows::OS_Windows(HINSTANCE _hInstance) {
 	minimized = false;
 	was_maximized = false;
 	window_focused = true;
-	console_visible = IsWindowVisible(GetConsoleWindow());
 
 	//Note: Wacom WinTab driver API for pen input, for devices incompatible with Windows Ink.
 	HMODULE wintab_lib = LoadLibraryW(L"wintab32.dll");

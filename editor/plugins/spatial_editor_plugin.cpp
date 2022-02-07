@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -253,6 +253,14 @@ void ViewportRotationControl::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_on_mouse_exited"), &ViewportRotationControl::_on_mouse_exited);
 }
 
+void SpatialEditorViewport::_view_settings_confirmed(real_t p_interp_delta) {
+	// Set FOV override multiplier back to the default, so that the FOV
+	// setting specified in the View menu is correctly applied.
+	cursor.fov_scale = 1.0;
+
+	_update_camera(p_interp_delta);
+}
+
 void SpatialEditorViewport::_update_camera(float p_interp_delta) {
 	bool is_orthogonal = camera->get_projection() == Camera::PROJECTION_ORTHOGONAL;
 
@@ -317,6 +325,8 @@ void SpatialEditorViewport::_update_camera(float p_interp_delta) {
 		equal = false;
 	} else if (!Math::is_equal_approx(old_camera_cursor.distance, camera_cursor.distance, tolerance)) {
 		equal = false;
+	} else if (!Math::is_equal_approx(old_camera_cursor.fov_scale, camera_cursor.fov_scale, tolerance)) {
+		equal = false;
 	}
 
 	if (!equal || p_interp_delta == 0 || is_orthogonal != orthogonal) {
@@ -380,7 +390,7 @@ float SpatialEditorViewport::get_zfar() const {
 	return CLAMP(spatial_editor->get_zfar(), MIN_Z, MAX_Z);
 }
 float SpatialEditorViewport::get_fov() const {
-	return CLAMP(spatial_editor->get_fov(), MIN_FOV, MAX_FOV);
+	return CLAMP(spatial_editor->get_fov() * cursor.fov_scale, MIN_FOV, MAX_FOV);
 }
 
 Transform SpatialEditorViewport::_get_camera_transform() const {
@@ -1161,18 +1171,26 @@ void SpatialEditorViewport::_sinput(const Ref<InputEvent> &p_event) {
 		float zoom_factor = 1 + (ZOOM_FREELOOK_MULTIPLIER - 1) * b->get_factor();
 		switch (b->get_button_index()) {
 			case BUTTON_WHEEL_UP: {
-				if (is_freelook_active()) {
-					scale_freelook_speed(zoom_factor);
+				if (b->get_alt()) {
+					scale_fov(-0.05);
 				} else {
-					scale_cursor_distance(1.0 / zoom_factor);
+					if (is_freelook_active()) {
+						scale_freelook_speed(zoom_factor);
+					} else {
+						scale_cursor_distance(1.0 / zoom_factor);
+					}
 				}
 			} break;
 
 			case BUTTON_WHEEL_DOWN: {
-				if (is_freelook_active()) {
-					scale_freelook_speed(1.0 / zoom_factor);
+				if (b->get_alt()) {
+					scale_fov(0.05);
 				} else {
-					scale_cursor_distance(zoom_factor);
+					if (is_freelook_active()) {
+						scale_freelook_speed(1.0 / zoom_factor);
+					} else {
+						scale_cursor_distance(zoom_factor);
+					}
 				}
 			} break;
 
@@ -2122,6 +2140,18 @@ void SpatialEditorViewport::_sinput(const Ref<InputEvent> &p_event) {
 				emit_signal("toggle_maximize_view", this);
 			}
 		}
+
+		if (ED_IS_SHORTCUT("spatial_editor/decrease_fov", p_event)) {
+			scale_fov(-0.05);
+		}
+
+		if (ED_IS_SHORTCUT("spatial_editor/increase_fov", p_event)) {
+			scale_fov(0.05);
+		}
+
+		if (ED_IS_SHORTCUT("spatial_editor/reset_fov", p_event)) {
+			reset_fov();
+		}
 	}
 
 	// freelook uses most of the useful shortcuts, like save, so its ok
@@ -2217,9 +2247,10 @@ void SpatialEditorViewport::_nav_look(Ref<InputEventWithModifiers> p_event, cons
 		_menu_option(VIEW_PERSPECTIVE);
 	}
 
-	real_t degrees_per_pixel = EditorSettings::get_singleton()->get("editors/3d/navigation_feel/orbit_sensitivity");
-	real_t radians_per_pixel = Math::deg2rad(degrees_per_pixel);
-	bool invert_y_axis = EditorSettings::get_singleton()->get("editors/3d/navigation/invert_y_axis");
+	// Scale mouse sensitivity with camera FOV scale when zoomed in to make it easier to point at things.
+	const real_t degrees_per_pixel = real_t(EditorSettings::get_singleton()->get("editors/3d/freelook/freelook_sensitivity")) * MIN(1.0, cursor.fov_scale);
+	const real_t radians_per_pixel = Math::deg2rad(degrees_per_pixel);
+	const bool invert_y_axis = EditorSettings::get_singleton()->get("editors/3d/navigation/invert_y_axis");
 
 	// Note: do NOT assume the camera has the "current" transform, because it is interpolated and may have "lag".
 	Transform prev_camera_transform = to_camera_transform(cursor);
@@ -2279,6 +2310,16 @@ void SpatialEditorViewport::set_freelook_active(bool active_now) {
 	}
 
 	freelook_active = active_now;
+}
+
+void SpatialEditorViewport::scale_fov(real_t p_fov_offset) {
+	cursor.fov_scale = CLAMP(cursor.fov_scale + p_fov_offset, 0.1, 2.5);
+	surface->update();
+}
+
+void SpatialEditorViewport::reset_fov() {
+	cursor.fov_scale = 1.0;
+	surface->update();
 }
 
 void SpatialEditorViewport::scale_cursor_distance(real_t scale) {
@@ -2568,8 +2609,11 @@ void SpatialEditorViewport::_notification(int p_what) {
 		float sharpen_intensity = ProjectSettings::get_singleton()->get("rendering/quality/filters/sharpen_intensity");
 		viewport->set_sharpen_intensity(sharpen_intensity);
 
-		bool hdr = ProjectSettings::get_singleton()->get("rendering/quality/depth/hdr");
+		const bool hdr = ProjectSettings::get_singleton()->get("rendering/quality/depth/hdr");
 		viewport->set_hdr(hdr);
+
+		const bool use_32_bpc_depth = ProjectSettings::get_singleton()->get("rendering/quality/depth/use_32_bpc_depth");
+		viewport->set_use_32_bpc_depth(use_32_bpc_depth);
 
 		bool show_info = view_menu->get_popup()->is_item_checked(view_menu->get_popup()->get_item_index(VIEW_INFORMATION));
 		info_label->set_visible(show_info);
@@ -3523,6 +3567,7 @@ void SpatialEditorViewport::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_menu_option"), &SpatialEditorViewport::_menu_option);
 	ClassDB::bind_method(D_METHOD("_toggle_camera_preview"), &SpatialEditorViewport::_toggle_camera_preview);
 	ClassDB::bind_method(D_METHOD("_preview_exited_scene"), &SpatialEditorViewport::_preview_exited_scene);
+	ClassDB::bind_method(D_METHOD("_view_settings_confirmed"), &SpatialEditorViewport::_view_settings_confirmed);
 	ClassDB::bind_method(D_METHOD("_update_camera"), &SpatialEditorViewport::_update_camera);
 	ClassDB::bind_method(D_METHOD("update_transform_gizmo_view"), &SpatialEditorViewport::update_transform_gizmo_view);
 	ClassDB::bind_method(D_METHOD("_selection_result_pressed"), &SpatialEditorViewport::_selection_result_pressed);
@@ -3621,7 +3666,11 @@ AABB SpatialEditorViewport::_calculate_spatial_bounds(const Spatial *p_parent, b
 	}
 
 	if (bounds.size == Vector3() && p_parent->get_class_name() != StringName("Spatial")) {
+#ifdef TOOLS_ENABLED
+		bounds = p_parent->get_fallback_gizmo_aabb();
+#else
 		bounds = AABB(Vector3(-0.2, -0.2, -0.2), Vector3(0.4, 0.4, 0.4));
+#endif
 	}
 
 	if (!p_exclude_toplevel_transform) {
@@ -3629,6 +3678,35 @@ AABB SpatialEditorViewport::_calculate_spatial_bounds(const Spatial *p_parent, b
 	}
 
 	return bounds;
+}
+
+Node *SpatialEditorViewport::_sanitize_preview_node(Node *p_node) const {
+	Spatial *spatial = Object::cast_to<Spatial>(p_node);
+	if (spatial == nullptr) {
+		Spatial *replacement_node = memnew(Spatial);
+		replacement_node->set_name(p_node->get_name());
+		p_node->replace_by(replacement_node);
+		memdelete(p_node);
+		p_node = replacement_node;
+	} else {
+		VisualInstance *visual_instance = Object::cast_to<VisualInstance>(spatial);
+		if (visual_instance == nullptr) {
+			Spatial *replacement_node = memnew(Spatial);
+			replacement_node->set_name(spatial->get_name());
+			replacement_node->set_visible(spatial->is_visible());
+			replacement_node->set_transform(spatial->get_transform());
+			replacement_node->set_as_toplevel(spatial->is_set_as_toplevel());
+			p_node->replace_by(replacement_node);
+			memdelete(p_node);
+			p_node = replacement_node;
+		}
+	}
+
+	for (int i = 0; i < p_node->get_child_count(); i++) {
+		_sanitize_preview_node(p_node->get_child(i));
+	}
+
+	return p_node;
 }
 
 void SpatialEditorViewport::_create_preview(const Vector<String> &files) const {
@@ -3647,6 +3725,7 @@ void SpatialEditorViewport::_create_preview(const Vector<String> &files) const {
 				if (scene.is_valid()) {
 					Node *instance = scene->instance();
 					if (instance) {
+						instance = _sanitize_preview_node(instance);
 						preview_node->add_child(instance);
 					}
 				}
@@ -6209,8 +6288,46 @@ VSplitContainer *SpatialEditor::get_shader_split() {
 	return shader_split;
 }
 
-HSplitContainer *SpatialEditor::get_palette_split() {
-	return palette_split;
+void SpatialEditor::add_control_to_left_panel(Control *p_control) {
+	left_panel_split->add_child(p_control);
+	left_panel_split->move_child(p_control, 0);
+}
+
+void SpatialEditor::add_control_to_right_panel(Control *p_control) {
+	right_panel_split->add_child(p_control);
+	right_panel_split->move_child(p_control, 1);
+}
+
+void SpatialEditor::remove_control_from_left_panel(Control *p_control) {
+	left_panel_split->remove_child(p_control);
+}
+
+void SpatialEditor::remove_control_from_right_panel(Control *p_control) {
+	right_panel_split->remove_child(p_control);
+}
+
+void SpatialEditor::move_control_to_left_panel(Control *p_control) {
+	ERR_FAIL_NULL(p_control);
+	if (p_control->get_parent() == left_panel_split) {
+		return;
+	}
+
+	ERR_FAIL_COND(p_control->get_parent() != right_panel_split);
+	right_panel_split->remove_child(p_control);
+
+	add_control_to_left_panel(p_control);
+}
+
+void SpatialEditor::move_control_to_right_panel(Control *p_control) {
+	ERR_FAIL_NULL(p_control);
+	if (p_control->get_parent() == right_panel_split) {
+		return;
+	}
+
+	ERR_FAIL_COND(p_control->get_parent() != left_panel_split);
+	left_panel_split->remove_child(p_control);
+
+	add_control_to_right_panel(p_control);
 }
 
 void SpatialEditor::_request_gizmo(Object *p_obj) {
@@ -6532,6 +6649,9 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 	ED_SHORTCUT("spatial_editor/align_transform_with_view", TTR("Align Transform with View"), KEY_MASK_ALT + KEY_MASK_CMD + KEY_M);
 	ED_SHORTCUT("spatial_editor/align_rotation_with_view", TTR("Align Rotation with View"), KEY_MASK_ALT + KEY_MASK_CMD + KEY_F);
 	ED_SHORTCUT("spatial_editor/freelook_toggle", TTR("Toggle Freelook"), KEY_MASK_SHIFT + KEY_F);
+	ED_SHORTCUT("spatial_editor/decrease_fov", TTR("Decrease Field of View"), KEY_MASK_CMD + KEY_EQUAL); // Usually direct access key for `KEY_PLUS`.
+	ED_SHORTCUT("spatial_editor/increase_fov", TTR("Increase Field of View"), KEY_MASK_CMD + KEY_MINUS);
+	ED_SHORTCUT("spatial_editor/reset_fov", TTR("Reset Field of View to Default"), KEY_MASK_CMD + KEY_0);
 
 	PopupMenu *p;
 
@@ -6605,13 +6725,17 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 
 	/* REST OF MENU */
 
-	palette_split = memnew(HSplitContainer);
-	palette_split->set_v_size_flags(SIZE_EXPAND_FILL);
-	vbc->add_child(palette_split);
+	left_panel_split = memnew(HSplitContainer);
+	left_panel_split->set_v_size_flags(SIZE_EXPAND_FILL);
+	vbc->add_child(left_panel_split);
+
+	right_panel_split = memnew(HSplitContainer);
+	right_panel_split->set_v_size_flags(SIZE_EXPAND_FILL);
+	left_panel_split->add_child(right_panel_split);
 
 	shader_split = memnew(VSplitContainer);
 	shader_split->set_h_size_flags(SIZE_EXPAND_FILL);
-	palette_split->add_child(shader_split);
+	right_panel_split->add_child(shader_split);
 	viewport_base = memnew(SpatialEditorViewportContainer);
 	shader_split->add_child(viewport_base);
 	viewport_base->set_v_size_flags(SIZE_EXPAND_FILL);
@@ -6680,7 +6804,7 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 	settings_vbc->add_margin_child(TTR("View Z-Far:"), settings_zfar);
 
 	for (uint32_t i = 0; i < VIEWPORTS_COUNT; ++i) {
-		settings_dialog->connect("confirmed", viewports[i], "_update_camera", varray(0.0));
+		settings_dialog->connect("confirmed", viewports[i], "_view_settings_confirmed", varray(0.0));
 	}
 
 	/* XFORM DIALOG */

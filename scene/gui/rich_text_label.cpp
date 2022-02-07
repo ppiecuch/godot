@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -374,7 +374,8 @@ int RichTextLabel::_process_line(ItemFrame *p_frame, const Vector2 &p_ofs, int &
 					font_color_shadow = _find_color(text, p_font_color_shadow);
 					if (_find_underline(text) || (_find_meta(text, &meta) && underline_meta)) {
 						underline = true;
-					} else if (_find_strikethrough(text)) {
+					}
+					if (_find_strikethrough(text)) {
 						strikethrough = true;
 					}
 
@@ -448,11 +449,18 @@ int RichTextLabel::_process_line(ItemFrame *p_frame, const Vector2 &p_ofs, int &
 					line_descent = MAX(line_descent, descent);
 					fh = line_ascent + line_descent;
 
+					float align_spacing = 0.0f;
+					bool is_at_line_wrap = false;
 					if (end && c[end - 1] == ' ') {
 						if (align == ALIGN_FILL && p_mode != PROCESS_CACHE) {
 							int ln = MIN(l.offset_caches.size() - 1, line);
 							if (l.space_caches[ln]) {
-								align_ofs = spaces * l.offset_caches[ln] / l.space_caches[ln];
+								align_spacing = l.offset_caches[ln] / l.space_caches[ln];
+								align_ofs = spaces * align_spacing;
+
+								if (l.space_caches[ln] == spaces) {
+									is_at_line_wrap = true;
+								}
 							}
 						}
 						spaces++;
@@ -613,24 +621,28 @@ int RichTextLabel::_process_line(ItemFrame *p_frame, const Vector2 &p_ofs, int &
 							}
 						}
 
+#ifdef TOOLS_ENABLED
+						const float line_width = EDSCALE;
+#else
+						const float line_width = 1.0f;
+#endif
 						if (underline) {
 							Color uc = color;
 							uc.a *= 0.5;
-							int uy = y + lh - line_descent + 2;
-							float underline_width = 1.0;
-#ifdef TOOLS_ENABLED
-							underline_width *= EDSCALE;
-#endif
-							VS::get_singleton()->canvas_item_add_line(ci, p_ofs + Point2(align_ofs + wofs, uy), p_ofs + Point2(align_ofs + wofs + w, uy), uc, underline_width);
-						} else if (strikethrough) {
+
+							const int line_y = y + lh - (line_descent - 2);
+							const Point2 from = p_ofs + Point2(align_ofs + wofs, line_y);
+							const Point2 to = from + Point2(w + (is_at_line_wrap ? 0 : align_spacing), 0);
+							VS::get_singleton()->canvas_item_add_line(ci, from, to, uc, line_width);
+						}
+						if (strikethrough) {
 							Color uc = color;
 							uc.a *= 0.5;
-							int uy = y + lh - (line_ascent + line_descent) / 2;
-							float strikethrough_width = 1.0;
-#ifdef TOOLS_ENABLED
-							strikethrough_width *= EDSCALE;
-#endif
-							VS::get_singleton()->canvas_item_add_line(ci, p_ofs + Point2(align_ofs + wofs, uy), p_ofs + Point2(align_ofs + wofs + w, uy), uc, strikethrough_width);
+
+							const int line_y = y + lh - (line_ascent + line_descent) / 2;
+							const Point2 from = p_ofs + Point2(align_ofs + wofs, line_y);
+							const Point2 to = from + Point2(w + (is_at_line_wrap ? 0 : align_spacing), 0);
+							VS::get_singleton()->canvas_item_add_line(ci, from, to, uc, line_width);
 						}
 					}
 
@@ -1655,6 +1667,7 @@ void RichTextLabel::_remove_item(Item *p_item, const int p_line, const int p_sub
 			_remove_item(p_item->subitems.front()->get(), p_line, p_subitem_line);
 		}
 	}
+	memdelete(p_item);
 }
 
 void RichTextLabel::add_image(const Ref<Texture> &p_image, const int p_width, const int p_height) {
@@ -2152,6 +2165,12 @@ Error RichTextLabel::append_bbcode(const String &p_bbcode) {
 			push_strikethrough();
 			pos = brk_end + 1;
 			tag_stack.push_front(tag);
+		} else if (tag == "lb") {
+			add_text("[");
+			pos = brk_end + 1;
+		} else if (tag == "rb") {
+			add_text("]");
+			pos = brk_end + 1;
 		} else if (tag == "center") {
 			push_align(ALIGN_CENTER);
 			pos = brk_end + 1;
@@ -2686,6 +2705,7 @@ void RichTextLabel::install_effect(const Variant effect) {
 
 int RichTextLabel::get_content_height() const {
 	int total_height = 0;
+	const_cast<RichTextLabel *>(this)->_validate_line_caches(main);
 	if (main->lines.size()) {
 		total_height = main->lines[main->lines.size() - 1].height_accum_cache + get_stylebox("normal")->get_minimum_size().height;
 	}
@@ -2867,7 +2887,6 @@ Size2 RichTextLabel::get_minimum_size() const {
 	}
 
 	if (fixed_width != -1 || fit_content_height) {
-		const_cast<RichTextLabel *>(this)->_validate_line_caches(main);
 		size.y = get_content_height();
 	}
 

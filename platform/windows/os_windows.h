@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -371,8 +371,6 @@ class OS_Windows : public OS {
 
 	CrashHandler crash_handler;
 
-	bool _is_win11_terminal() const;
-
 	void _drag_event(float p_x, float p_y, int idx);
 	void _touch_event(bool p_pressed, float p_x, float p_y, int idx);
 
@@ -414,7 +412,6 @@ protected:
 	bool minimized;
 	bool borderless;
 	bool window_focused;
-	bool console_visible;
 	bool was_maximized;
 
 public:
@@ -469,8 +466,6 @@ public:
 	virtual void set_window_always_on_top(bool p_enabled);
 	virtual bool is_window_always_on_top() const;
 	virtual bool is_window_focused() const;
-	virtual void set_console_visible(bool p_enabled);
-	virtual bool is_console_visible() const;
 	virtual void request_attention();
 	virtual void *get_native_handle(int p_handle_type);
 
@@ -501,7 +496,7 @@ public:
 	virtual void delay_usec(uint32_t p_usec) const;
 	virtual uint64_t get_ticks_usec() const;
 
-	virtual Error execute(const String &p_path, const List<String> &p_arguments, bool p_blocking = true, ProcessID *r_child_id = NULL, String *r_pipe = NULL, int *r_exitcode = NULL, bool read_stderr = false, Mutex *p_pipe_mutex = NULL);
+	virtual Error execute(const String &p_path, const List<String> &p_arguments, bool p_blocking = true, ProcessID *r_child_id = NULL, String *r_pipe = NULL, int *r_exitcode = NULL, bool read_stderr = false, Mutex *p_pipe_mutex = NULL, bool p_open_console = false);
 	virtual Error kill(const ProcessID &p_pid);
 	virtual int get_process_id() const;
 
@@ -532,6 +527,7 @@ public:
 	virtual void keyboard_set_current_layout(int p_index);
 	virtual String keyboard_get_layout_language(int p_index) const;
 	virtual String keyboard_get_layout_name(int p_index) const;
+	virtual uint32_t keyboard_get_scancode_from_physical(uint32_t p_scancode) const;
 
 	virtual void enable_for_stealing_focus(ProcessID pid);
 	virtual void move_window_to_foreground();

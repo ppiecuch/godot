@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -153,7 +153,25 @@ public:
 	}
 };
 
-template <class T, int MAX_CHILDREN, int MAX_ITEMS, bool USE_PAIRS = false, class BOUNDS = AABB, class POINT = Vector3>
+template <class T>
+class BVH_DummyPairTestFunction {
+public:
+	static bool user_collision_check(T *p_a, T *p_b) {
+		// return false if no collision, decided by masks etc
+		return true;
+	}
+};
+
+template <class T>
+class BVH_DummyCullTestFunction {
+public:
+	static bool user_cull_check(T *p_a, T *p_b) {
+		// return false if no collision
+		return true;
+	}
+};
+
+template <class T, int NUM_TREES, int MAX_CHILDREN, int MAX_ITEMS, class USER_PAIR_TEST_FUNCTION = BVH_DummyPairTestFunction<T>, class USER_CULL_TEST_FUNCTION = BVH_DummyCullTestFunction<T>, bool USE_PAIRS = false, class BOUNDS = AABB, class POINT = Vector3>
 class BVH_Tree {
 	friend class BVH;
 
@@ -244,7 +262,7 @@ private:
 				change_root_node(sibling_id, p_tree_id);
 
 				// delete the old root node as no longer needed
-				_nodes.free(p_parent_id);
+				node_free_node_and_leaf(p_parent_id);
 			}
 
 			return;
@@ -257,7 +275,19 @@ private:
 		}
 
 		// put the node on the free list to recycle
-		_nodes.free(p_parent_id);
+		node_free_node_and_leaf(p_parent_id);
+	}
+
+	// A node can either be a node, or a node AND a leaf combo.
+	// Both must be deleted to prevent a leak.
+	void node_free_node_and_leaf(uint32_t p_node_id) {
+		TNode &node = _nodes[p_node_id];
+		if (node.is_leaf()) {
+			int leaf_id = node.get_leaf_id();
+			_leaves.free(leaf_id);
+		}
+
+		_nodes.free(p_node_id);
 	}
 
 	void change_root_node(uint32_t p_new_root_id, uint32_t p_tree_id) {
@@ -349,7 +379,7 @@ private:
 				refit_upward(parent_id);
 
 				// put the node on the free list to recycle
-				_nodes.free(owner_node_id);
+				node_free_node_and_leaf(owner_node_id);
 			}
 
 			// else if no parent, it is the root node. Do not delete

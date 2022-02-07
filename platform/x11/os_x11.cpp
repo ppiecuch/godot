@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -690,7 +690,7 @@ bool OS_X11::refresh_device_info() {
 				if (class_info->number == VALUATOR_ABSX && class_info->mode == XIModeAbsolute) {
 					resolution_x = class_info->resolution;
 					abs_x_min = class_info->min;
-					abs_y_max = class_info->max;
+					abs_x_max = class_info->max;
 					absolute_mode = true;
 				} else if (class_info->number == VALUATOR_ABSY && class_info->mode == XIModeAbsolute) {
 					resolution_y = class_info->resolution;
@@ -704,8 +704,8 @@ bool OS_X11::refresh_device_info() {
 					tilt_x_min = class_info->min;
 					tilt_x_max = class_info->max;
 				} else if (class_info->number == VALUATOR_TILTY && class_info->mode == XIModeAbsolute) {
-					tilt_x_min = class_info->min;
-					tilt_x_max = class_info->max;
+					tilt_y_min = class_info->min;
+					tilt_y_max = class_info->max;
 				}
 			}
 		}
@@ -2452,8 +2452,10 @@ void OS_X11::process_xevents() {
 							Map<int, Vector2>::Element *pen_tilt_x = xi.pen_tilt_x_range.find(device_id);
 							if (pen_tilt_x) {
 								Vector2 pen_tilt_x_range = pen_tilt_x->value();
-								if (pen_tilt_x_range != Vector2()) {
-									xi.tilt.x = ((*values - pen_tilt_x_range[0]) / (pen_tilt_x_range[1] - pen_tilt_x_range[0])) * 2 - 1;
+								if (pen_tilt_x_range[0] != 0 && *values < 0) {
+									xi.tilt.x = *values / -pen_tilt_x_range[0];
+								} else if (pen_tilt_x_range[1] != 0) {
+									xi.tilt.x = *values / pen_tilt_x_range[1];
 								}
 							}
 
@@ -2464,8 +2466,10 @@ void OS_X11::process_xevents() {
 							Map<int, Vector2>::Element *pen_tilt_y = xi.pen_tilt_y_range.find(device_id);
 							if (pen_tilt_y) {
 								Vector2 pen_tilt_y_range = pen_tilt_y->value();
-								if (pen_tilt_y_range != Vector2()) {
-									xi.tilt.y = ((*values - pen_tilt_y_range[0]) / (pen_tilt_y_range[1] - pen_tilt_y_range[0])) * 2 - 1;
+								if (pen_tilt_y_range[0] != 0 && *values < 0) {
+									xi.tilt.y = *values / -pen_tilt_y_range[0];
+								} else if (pen_tilt_y_range[1] != 0) {
+									xi.tilt.y = *values / pen_tilt_y_range[1];
 								}
 							}
 
@@ -2824,7 +2828,6 @@ void OS_X11::process_xevents() {
 				mm->set_button_mask(get_mouse_button_state());
 				mm->set_position(posi);
 				mm->set_global_position(posi);
-				input->set_mouse_position(posi);
 				mm->set_speed(input->get_last_mouse_speed());
 
 				mm->set_relative(rel);
@@ -3867,7 +3870,7 @@ Error OS_X11::move_to_trash(const String &p_path) {
 	if (trash_path == "") {
 		char *dhome = getenv("XDG_DATA_HOME");
 		if (dhome) {
-			trash_path = String(dhome) + "/Trash";
+			trash_path = String::utf8(dhome) + "/Trash";
 		}
 	}
 
@@ -3875,7 +3878,7 @@ Error OS_X11::move_to_trash(const String &p_path) {
 	if (trash_path == "") {
 		char *home = getenv("HOME");
 		if (home) {
-			trash_path = String(home) + "/.local/share/Trash";
+			trash_path = String::utf8(home) + "/.local/share/Trash";
 		}
 	}
 
@@ -3884,7 +3887,7 @@ Error OS_X11::move_to_trash(const String &p_path) {
 
 	// Create needed directories for decided trash can location.
 	{
-		DirAccess *dir_access = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
+		DirAccessRef dir_access = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
 		Error err = dir_access->make_dir_recursive(trash_path);
 
 		// Issue an error if trash can is not created proprely.
@@ -3893,7 +3896,6 @@ Error OS_X11::move_to_trash(const String &p_path) {
 		ERR_FAIL_COND_V_MSG(err != OK, err, "Could not create the trash path \"" + trash_path + "\"/files");
 		err = dir_access->make_dir_recursive(trash_path + "/info");
 		ERR_FAIL_COND_V_MSG(err != OK, err, "Could not create the trash path \"" + trash_path + "\"/info");
-		memdelete(dir_access);
 	}
 
 	// The trash can is successfully created, now we check that we don't exceed our file name length limit.
@@ -3933,16 +3935,15 @@ Error OS_X11::move_to_trash(const String &p_path) {
 	String trash_info = "[Trash Info]\nPath=" + p_path.http_escape() + "\nDeletionDate=" + timestamp + "\n";
 	{
 		Error err;
-		FileAccess *file = FileAccess::open(trash_path + "/info/" + file_name + ".trashinfo", FileAccess::WRITE, &err);
+		FileAccessRef file = FileAccess::open(trash_path + "/info/" + file_name + ".trashinfo", FileAccess::WRITE, &err);
 		ERR_FAIL_COND_V_MSG(err != OK, err, "Can't create trashinfo file:" + trash_path + "/info/" + file_name + ".trashinfo");
 		file->store_string(trash_info);
 		file->close();
 
 		// Rename our resource before moving it to the trash can.
-		DirAccess *dir_access = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
+		DirAccessRef dir_access = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
 		err = dir_access->rename(p_path, p_path.get_base_dir() + "/" + file_name);
 		ERR_FAIL_COND_V_MSG(err != OK, err, "Can't rename file \"" + p_path + "\"");
-		memdelete(dir_access);
 	}
 
 	// Move the given resource to the trash can.
@@ -4098,6 +4099,24 @@ String OS_X11::keyboard_get_layout_name(int p_index) const {
 		XkbFreeKeyboard(kbd, 0, true);
 	}
 	return ret;
+}
+
+uint32_t OS_X11::keyboard_get_scancode_from_physical(uint32_t p_scancode) const {
+	unsigned int modifiers = p_scancode & KEY_MODIFIER_MASK;
+	unsigned int scancode_no_mod = p_scancode & KEY_CODE_MASK;
+	unsigned int xkeycode = KeyMappingX11::get_xlibcode((uint32_t)scancode_no_mod);
+	KeySym xkeysym = XkbKeycodeToKeysym(x11_display, xkeycode, 0, 0);
+	if (xkeysym >= 'a' && xkeysym <= 'z') {
+		xkeysym -= ('a' - 'A');
+	}
+
+	uint32_t key = KeyMappingX11::get_keycode(xkeysym);
+	// If not found, fallback to QWERTY.
+	// This should match the behavior of the event pump
+	if (key == 0) {
+		return p_scancode;
+	}
+	return (uint32_t)(key | modifiers);
 }
 
 void OS_X11::update_real_mouse_position() {

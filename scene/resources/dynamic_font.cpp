@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -66,6 +66,7 @@ Ref<DynamicFontAtSize> DynamicFontData::_get_dynamic_font_at_size(CacheID p_cach
 	dfas.instance();
 
 	dfas->font = Ref<DynamicFontData>(this);
+	dfas->oversampling = (override_oversampling > 0) ? override_oversampling : DynamicFontAtSize::font_oversampling;
 
 	size_cache[p_cache_id] = dfas.ptr();
 	dfas->id = p_cache_id;
@@ -91,6 +92,19 @@ void DynamicFontData::set_force_autohinter(bool p_force) {
 	force_autohinter = p_force;
 }
 
+float DynamicFontData::get_override_oversampling() const {
+	return override_oversampling;
+}
+
+void DynamicFontData::set_override_oversampling(float p_oversampling) {
+	if (override_oversampling == p_oversampling) {
+		return;
+	}
+
+	override_oversampling = p_oversampling;
+	DynamicFont::update_oversampling();
+}
+
 void DynamicFontData::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_antialiased", "antialiased"), &DynamicFontData::set_antialiased);
 	ClassDB::bind_method(D_METHOD("is_antialiased"), &DynamicFontData::is_antialiased);
@@ -99,8 +113,12 @@ void DynamicFontData::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_hinting", "mode"), &DynamicFontData::set_hinting);
 	ClassDB::bind_method(D_METHOD("get_hinting"), &DynamicFontData::get_hinting);
 
+	ClassDB::bind_method(D_METHOD("get_override_oversampling"), &DynamicFontData::get_override_oversampling);
+	ClassDB::bind_method(D_METHOD("set_override_oversampling", "oversampling"), &DynamicFontData::set_override_oversampling);
+
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "antialiased"), "set_antialiased", "is_antialiased");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "hinting", PROPERTY_HINT_ENUM, "None,Light,Normal"), "set_hinting", "get_hinting");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "override_oversampling"), "set_override_oversampling", "get_override_oversampling");
 
 	BIND_ENUM_CONSTANT(HINTING_NONE);
 	BIND_ENUM_CONSTANT(HINTING_LIGHT);
@@ -116,6 +134,7 @@ DynamicFontData::DynamicFontData() {
 	hinting = DynamicFontData::HINTING_NORMAL;
 	font_mem = nullptr;
 	font_mem_size = 0;
+	override_oversampling = 0.0;
 }
 
 DynamicFontData::~DynamicFontData() {
@@ -691,14 +710,18 @@ void DynamicFontAtSize::_update_char(int32_t p_char) {
 }
 
 void DynamicFontAtSize::update_oversampling() {
-	if (oversampling == font_oversampling || !valid) {
+	if (!valid) {
+		return;
+	}
+	float new_oversampling = (font.is_valid() && font->override_oversampling > 0) ? font->override_oversampling : font_oversampling;
+	if (oversampling == new_oversampling) {
 		return;
 	}
 
 	FT_Done_FreeType(library);
 	textures.clear();
 	char_map.clear();
-	oversampling = font_oversampling;
+	oversampling = new_oversampling;
 	valid = false;
 	_load();
 }

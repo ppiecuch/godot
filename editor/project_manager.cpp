@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -51,6 +51,7 @@
 #include "scene/gui/separator.h"
 #include "scene/gui/texture_rect.h"
 #include "scene/gui/tool_button.h"
+#include "servers/navigation_server.h"
 
 // Used to test for GLES3 support.
 #ifndef SERVER_ENABLED
@@ -204,7 +205,7 @@ private:
 						char fname[16384];
 						ret = unzGetCurrentFileInfo(pkg, &info, fname, 16384, nullptr, 0, nullptr, 0);
 
-						if (String(fname).ends_with("project.godot")) {
+						if (String::utf8(fname).ends_with("project.godot")) {
 							break;
 						}
 
@@ -299,7 +300,7 @@ private:
 			// If the project name is empty or default, infer the project name from the selected folder name
 			if (project_name->get_text().strip_edges() == "" || project_name->get_text().strip_edges() == TTR("New Game Project")) {
 				sp = sp.replace("\\", "/");
-				int lidx = sp.find_last("/");
+				int lidx = sp.rfind("/");
 
 				if (lidx != -1) {
 					sp = sp.substr(lidx + 1, sp.length()).capitalize();
@@ -548,7 +549,7 @@ private:
 						char fname[16384];
 						unzGetCurrentFileInfo(pkg, &info, fname, 16384, nullptr, 0, nullptr, 0);
 
-						String name = fname;
+						String name = String::utf8(fname);
 						if (name.ends_with("project.godot")) {
 							zip_root = name.substr(0, name.rfind("project.godot"));
 							break;
@@ -568,7 +569,7 @@ private:
 						char fname[16384];
 						ret = unzGetCurrentFileInfo(pkg, &info, fname, 16384, nullptr, 0, nullptr, 0);
 
-						String path = fname;
+						String path = String::utf8(fname);
 
 						if (path == String() || path == zip_root || !zip_root.is_subsequence_of(path)) {
 							//
@@ -2571,6 +2572,7 @@ ProjectManager::ProjectManager() {
 	}
 
 	// Turn off some servers we aren't going to be using in the Project Manager.
+	NavigationServer::get_singleton()->set_active(false);
 	PhysicsServer::get_singleton()->set_active(false);
 	Physics2DServer::get_singleton()->set_active(false);
 	ScriptServer::set_scripting_enabled(false);

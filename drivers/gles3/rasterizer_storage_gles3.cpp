@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -4313,6 +4313,7 @@ void RasterizerStorageGLES3::mesh_render_blend_shapes(Surface *s, const float *p
 
 	shaders.blend_shapes.set_conditional(BlendShapeShaderGLES3::ENABLE_BLEND, false); //first pass does not blend
 	shaders.blend_shapes.set_conditional(BlendShapeShaderGLES3::USE_2D_VERTEX, s->format & VS::ARRAY_FLAG_USE_2D_VERTICES); //use 2D vertices if needed
+	shaders.blend_shapes.set_conditional(BlendShapeShaderGLES3::ENABLE_OCTAHEDRAL_COMPRESSION, s->format & VS::ARRAY_FLAG_USE_OCTAHEDRAL_COMPRESSION); //use octahedral normal compression
 
 	shaders.blend_shapes.bind();
 
@@ -6481,6 +6482,7 @@ void RasterizerStorageGLES3::_particles_process(Particles *p_particles, float p_
 
 	glBindVertexArray(p_particles->particle_vaos[0]);
 
+	glBindBuffer(GL_ARRAY_BUFFER, 0); // ensure this is unbound per WebGL2 spec
 	glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, p_particles->particle_buffers[1]);
 
 	//		GLint size = 0;
@@ -6918,8 +6920,7 @@ void RasterizerStorageGLES3::_render_target_allocate(RenderTarget *rt) {
 
 	GLenum depth_attachment = config.use_stencil_buffer ? GL_DEPTH_STENCIL_ATTACHMENT : GL_DEPTH_ATTACHMENT;
 
-	bool hdr = rt->flags[RENDER_TARGET_HDR] && config.framebuffer_half_float_supported;
-	//hdr = false;
+	const bool hdr = rt->flags[RENDER_TARGET_HDR] && config.framebuffer_half_float_supported;
 
 	if (!hdr || rt->flags[RENDER_TARGET_NO_3D]) {
 		if (rt->flags[RENDER_TARGET_NO_3D_EFFECTS] && !rt->flags[RENDER_TARGET_TRANSPARENT]) {
@@ -6936,10 +6937,21 @@ void RasterizerStorageGLES3::_render_target_allocate(RenderTarget *rt) {
 			image_format = Image::FORMAT_RGBA8;
 		}
 	} else {
-		color_internal_format = GL_RGBA16F;
-		color_format = GL_RGBA;
-		color_type = GL_HALF_FLOAT;
-		image_format = Image::FORMAT_RGBAH;
+		// HDR enabled.
+		if (rt->flags[RENDER_TARGET_USE_32_BPC_DEPTH]) {
+			// 32 bpc. Can be useful for advanced shaders, but should not be used
+			// for general-purpose rendering as it's slower.
+			color_internal_format = GL_RGBA32F;
+			color_format = GL_RGBA;
+			color_type = GL_FLOAT;
+			image_format = Image::FORMAT_RGBAF;
+		} else {
+			// 16 bpc. This is the default HDR mode.
+			color_internal_format = GL_RGBA16F;
+			color_format = GL_RGBA;
+			color_type = GL_HALF_FLOAT;
+			image_format = Image::FORMAT_RGBAH;
+		}
 	}
 
 	{
@@ -7488,6 +7500,7 @@ void RasterizerStorageGLES3::render_target_set_flag(RID p_render_target, RenderT
 
 	switch (p_flag) {
 		case RENDER_TARGET_HDR:
+		case RENDER_TARGET_USE_32_BPC_DEPTH:
 		case RENDER_TARGET_NO_3D:
 		case RENDER_TARGET_NO_SAMPLING:
 		case RENDER_TARGET_NO_3D_EFFECTS: {
@@ -8137,14 +8150,11 @@ void RasterizerStorageGLES3::initialize() {
 #endif
 	config.parallel_shader_compile_supported = config.extensions.has("GL_KHR_parallel_shader_compile") || config.extensions.has("GL_ARB_parallel_shader_compile");
 #endif
-	if (Engine::get_singleton()->is_editor_hint()) {
-		config.async_compilation_enabled = false;
-		config.shader_cache_enabled = false;
-	} else {
-		int compilation_mode = ProjectSettings::get_singleton()->get("rendering/gles3/shaders/shader_compilation_mode");
-		config.async_compilation_enabled = compilation_mode >= 1;
-		config.shader_cache_enabled = compilation_mode == 2;
-	}
+
+	const int compilation_mode = ProjectSettings::get_singleton()->get("rendering/gles3/shaders/shader_compilation_mode");
+	config.async_compilation_enabled = compilation_mode >= 1;
+	config.shader_cache_enabled = compilation_mode == 2;
+
 	if (config.async_compilation_enabled) {
 		ShaderGLES3::max_simultaneous_compiles = MAX(1, (int)ProjectSettings::get_singleton()->get("rendering/gles3/shaders/max_simultaneous_compiles"));
 #ifdef GLES_OVER_GL

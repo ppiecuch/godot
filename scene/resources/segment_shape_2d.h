@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -55,6 +55,7 @@ public:
 
 	virtual void draw(const RID &p_to_rid, const Color &p_color);
 	virtual Rect2 get_rect() const;
+	virtual real_t get_enclosing_radius() const;
 
 	SegmentShape2D();
 };
@@ -79,6 +80,7 @@ public:
 
 	virtual void draw(const RID &p_to_rid, const Color &p_color);
 	virtual Rect2 get_rect() const;
+	virtual real_t get_enclosing_radius() const;
 
 	RayShape2D();
 };

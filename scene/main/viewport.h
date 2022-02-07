@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -287,6 +287,7 @@ private:
 	bool use_debanding;
 	float sharpen_intensity;
 	bool hdr;
+	bool use_32_bpc_depth;
 
 	Ref<ViewportTexture> default_texture;
 	Set<ViewportTexture *> viewport_textures;
@@ -521,6 +522,9 @@ public:
 
 	void set_hdr(bool p_hdr);
 	bool get_hdr() const;
+
+	void set_use_32_bpc_depth(bool p_enable);
+	bool is_using_32_bpc_depth() const;
 
 	Vector2 get_camera_coords(const Vector2 &p_viewport_coords) const;
 	Vector2 get_camera_rect_size() const;

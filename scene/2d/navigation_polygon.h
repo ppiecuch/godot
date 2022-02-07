@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -32,6 +32,7 @@
 #define NAVIGATION_POLYGON_H
 
 #include "scene/2d/node_2d.h"
+#include "scene/resources/navigation_mesh.h"
 
 class NavigationPolygon : public Resource {
 	GDCLASS(NavigationPolygon, Resource);
@@ -45,6 +46,10 @@ class NavigationPolygon : public Resource {
 
 	mutable Rect2 item_rect;
 	mutable bool rect_cache_dirty;
+
+	Mutex navmesh_generation;
+	// Navigation mesh
+	Ref<NavigationMesh> navmesh;
 
 protected:
 	static void _bind_methods();
@@ -80,7 +85,10 @@ public:
 	Vector<int> get_polygon(int p_idx);
 	void clear_polygons();
 
+	Ref<NavigationMesh> get_mesh();
+
 	NavigationPolygon();
+	~NavigationPolygon();
 };
 
 class Navigation2D;
@@ -89,7 +97,7 @@ class NavigationPolygonInstance : public Node2D {
 	GDCLASS(NavigationPolygonInstance, Node2D);
 
 	bool enabled;
-	int nav_id;
+	RID region;
 	Navigation2D *navigation;
 	Ref<NavigationPolygon> navpoly;
 
@@ -114,6 +122,7 @@ public:
 	String get_configuration_warning() const;
 
 	NavigationPolygonInstance();
+	~NavigationPolygonInstance();
 };
 
 #endif // NAVIGATIONPOLYGON_H

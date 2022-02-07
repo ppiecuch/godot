@@ -187,6 +187,7 @@ opts.Add(BoolVariable("builtin_opus", "Use the built-in Opus library", True))
 opts.Add(BoolVariable("builtin_pcre2", "Use the built-in PCRE2 library", True))
 opts.Add(BoolVariable("builtin_pcre2_with_jit", "Use JIT compiler for the built-in PCRE2 library", True))
 opts.Add(BoolVariable("builtin_recast", "Use the built-in Recast library", True))
+opts.Add(BoolVariable("builtin_rvo2", "Use the built-in RVO2 library", True))
 opts.Add(BoolVariable("builtin_squish", "Use the built-in squish library", True))
 opts.Add(BoolVariable("builtin_xatlas", "Use the built-in xatlas library", True))
 opts.Add(BoolVariable("builtin_zlib", "Use the built-in zlib library", True))
@@ -540,11 +541,11 @@ if selected_platform in platform_list:
 
     if env["target"] == "release":
         if env["tools"]:
-            print("Tools can only be built with targets 'debug' and 'release_debug'.")
-            sys.exit(255)
+            print("ERROR: The editor can only be built with `target=debug` or `target=release_debug`.")
+            print("       Use `tools=no target=release` to build a release export template.")
+            Exit(255)
         suffix += ".opt"
         env.Append(CPPDEFINES=["NDEBUG"])
-
     elif env["target"] == "release_debug":
         if env["tools"]:
             suffix += ".opt.tools"
@@ -552,8 +553,14 @@ if selected_platform in platform_list:
             suffix += ".opt.debug"
     else:
         if env["tools"]:
+            print(
+                "Note: Building a debug binary (which will run slowly). Use `target=release_debug` to build an optimized release binary."
+            )
             suffix += ".tools"
         else:
+            print(
+                "Note: Building a debug binary (which will run slowly). Use `target=release` to build an optimized release binary."
+            )
             suffix += ".debug"
 
     if env["arch"] != "":
