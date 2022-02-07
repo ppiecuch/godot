@@ -191,8 +191,6 @@ void VegetationInstance::populate(const NodePath &surface_source) {
 		multimesh->set_instance_color(i, Color(1, 1, 1, 1));
 	}
 
-	multimesh->get_aabb();
-
 	set_multimesh(multimesh);
 }
 
