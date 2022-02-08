@@ -31,8 +31,8 @@
 #include "lan.h"
 
 #include "common/gd_core.h"
-#include "core/io/json.h"
 #include "core/io/ip_address.h"
+#include "core/io/json.h"
 
 const int DEFAULT_PORT = 42696;
 const int DEFAULT_GAME_PORT = 42699;
@@ -154,7 +154,7 @@ void LanListener::_notification(int p_what) {
 							// new peer!
 							if (!_known_peers.has(server_ip)) {
 								Variant ret;
-								ERR_CONTINUE_MSG(peer->get_var(ret)!=OK, "Failed to retrive a var");
+								ERR_CONTINUE_MSG(peer->get_var(ret) != OK, "Failed to retrive a var");
 								ERR_CONTINUE_MSG(ret.get_type() != Variant::DICTIONARY, "Unsupported content");
 								Dictionary peer_info = ret;
 								peer_info["lastSeen"] = OS::get_singleton()->get_unix_time();
@@ -222,7 +222,7 @@ void LanListener::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "Cleanup timeout"), "set_cleanup_timeout", "get_cleanup_timeout");
 
 	ADD_SIGNAL(MethodInfo("new_peer", PropertyInfo(Variant::DICTIONARY, "info")));
-	ADD_SIGNAL(MethodInfo("remove_peer",  PropertyInfo(Variant::DICTIONARY, "info")));
+	ADD_SIGNAL(MethodInfo("remove_peer", PropertyInfo(Variant::DICTIONARY, "info")));
 }
 
 LanListener::LanListener() {
@@ -298,7 +298,7 @@ void LanPlayer::_notification(int p_what) {
 							// new peer!
 							if (!_known_peers.has(server_ip)) {
 								Variant ret;
-								ERR_CONTINUE_MSG(peer->get_var(ret)!=OK, "Failed to retrive a var");
+								ERR_CONTINUE_MSG(peer->get_var(ret) != OK, "Failed to retrive a var");
 								ERR_CONTINUE_MSG(ret.get_type() != Variant::DICTIONARY, "Unsupported content");
 								Dictionary peer_info = ret;
 								peer_info["lastSeen"] = OS::get_singleton()->get_unix_time();
@@ -392,8 +392,8 @@ void LanPlayer::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "Cleanup timeout"), "set_cleanup_timeout", "get_cleanup_timeout");
 
 	ADD_SIGNAL(MethodInfo("new_peer", PropertyInfo(Variant::DICTIONARY, "info")));
-	ADD_SIGNAL(MethodInfo("remove_peer",  PropertyInfo(Variant::DICTIONARY, "info")));
-	ADD_SIGNAL(MethodInfo("new_message",  PropertyInfo(Variant::DICTIONARY, "msg")));
+	ADD_SIGNAL(MethodInfo("remove_peer", PropertyInfo(Variant::DICTIONARY, "info")));
+	ADD_SIGNAL(MethodInfo("new_message", PropertyInfo(Variant::DICTIONARY, "msg")));
 }
 
 LanPlayer::LanPlayer() {
