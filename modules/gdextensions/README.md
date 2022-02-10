@@ -15,6 +15,7 @@ My own, copied, copied and ported to **Godot3** modules.
  - https://github.com/mjholtzem/Unity-2D-Destruction.git
  - https://github.com/danboo/godot-RigidBodyParticles2D/blob/master/examples/sparks/Particle.gd
  - https://github.com/dbsGen/my_godot_modules.git
+ - https://montemagno.com/ios-android-subscription-implemenation-strategies/
 
 #### Elastic simulation orignal code (js)
 
