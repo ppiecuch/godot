@@ -41,6 +41,11 @@ if env["tools"]:
 if not env["disable_3d"]:
     modules += ["environment/vegetation_instance", "ccd/src"]
 
+if os.path.isdir("iap"):
+    env_module.Prepend(CPPPATH=["iap"])
+    if env["platform"] == "osx":
+        sources += Glob("iap/*.cpp") + Glob("iap/mac/*.mm")
+
 ignore = []
 if env["platform"] == "3ds" or env["platform"] == "psp":
     ignore += ["visual/heatmap.cpp"]
