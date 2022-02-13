@@ -580,14 +580,22 @@ public:
 		return true;
 	}
 
-	const V &operator[](const K &p_key) const {
-		CRASH_COND(!_data._root);
-		const Element *e = find(p_key);
+	const V &take(const K &p_key) {
+		if (!_data._root) {
+			return V();
+		}
+
+		Element *e = _find(p_key);
 		CRASH_COND(!e);
-		return e->_value;
+		const V &res = e->_value;
+		_erase(e);
+		if (_data.size_cache == 0 && _data._root) {
+			_data._free_root();
+		}
+		return res;
 	}
 
-	V &operator[](const K &p_key) {
+	V &get(const K &p_key) {
 		if (!_data._root) {
 			_data._create_root();
 		}
@@ -597,6 +605,17 @@ public:
 			e = insert(p_key, V());
 		}
 
+		return e->_value;
+	}
+
+	V &operator[](const K &p_key) {
+		return get(p_key);
+	}
+
+	const V &operator[](const K &p_key) const {
+		CRASH_COND(!_data._root);
+		const Element *e = find(p_key);
+		CRASH_COND(!e);
 		return e->_value;
 	}
 
