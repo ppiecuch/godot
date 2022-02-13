@@ -2,6 +2,11 @@
 
 set -e
 
+if ! command -v scons &> /dev/null
+then
+	export PATH=$PATH:/opt/local/bin
+fi
+
 # Config
 # ------
 
@@ -24,13 +29,25 @@ export TERM=xterm
 # ---------
 
 echo_header() {
-	printf "\e[1;4m$1\e[0m\n"
-}
-echo_bold() {
-	printf "\e[1m$1\e[0m\n"
+	if [[ "$TERM" =~ "xterm" ]]; then
+		printf "\e[1;4m$1\e[0m\n"
+	else
+		printf "[$1]\n"
+	fi
 }
 echo_success() {
-	printf "\e[1;4;32m$1\e[0m\n"
+	if [[ "$TERM" =~ "xterm" ]]; then
+		printf "\e[1;4;32m$1\e[0m\n"
+	else
+		printf "*** $1\n"
+	fi
+}
+echo_bold() {
+	if [[ "$TERM" =~ "xterm" ]]; then
+		printf "\e[1m$1\e[0m\n"
+	else
+		printf "** $1 **\n"
+	fi
 }
 
 export -f echo_header
