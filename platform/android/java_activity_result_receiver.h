@@ -34,21 +34,19 @@
 #include <jni.h>
 #include <memory>
 
-class ActivityResultReceiverPrivate;
+#include "jni_utils.h"
+
 class ActivityResultReceiver {
-
-	std::shared_ptr<ActivityResultReceiverPrivate> d;
-
-	friend class ActivityResultReceiverPrivate;
+	G_DECL_PRIVATE_IMP(ActivityResultReceiver);
 public:
-	virtual void handleActivityResult(int receiverRequestCode, int resultCode, const jobject &data) = 0;
+	virtual void handleActivityResult(int receiver_request_code, int result_code, const jobject &data) = 0;
 
-	static int getGlobalRequestCode(ActivityResultReceiver *publicObject, int requestCode);
+	static int getGlobalRequestCode(ActivityResultReceiver *public_object, int request_code);
 
 	ActivityResultReceiver();
 	~ActivityResultReceiver();
 };
 
-extern "C" void processActivityResult(jint requestCode, jint resultCode, jobject data);
+extern "C" void processActivityResult(jint request_code, jint result_code, jobject data);
 
 #endif // JAVA_ACTIVITY_RESULT_RECEIVER_H

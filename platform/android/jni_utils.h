@@ -36,6 +36,8 @@
 #include <core/variant.h>
 #include <jni.h>
 
+#include <memory>
+
 struct jvalret {
 	jobject obj;
 	jvalue val;
@@ -51,5 +53,10 @@ Variant _jobject_to_variant(JNIEnv *env, jobject obj);
 Variant::Type get_jni_type(const String &p_type);
 
 const char *get_jni_sig(const String &p_type);
+
+#define G_DECL_PRIVATE_IMP(Class) \
+	class Class##Private; \
+	std::shared_ptr<Class##Private> imp; \
+	friend class Class##Private;
 
 #endif // JNI_UTILS_H

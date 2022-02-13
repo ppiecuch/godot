@@ -35,62 +35,62 @@
 #include "java_activity_result_receiver.h"
 
 
-static int uniqueActivityRequestCode() {
+static int unique_activity_request_code() {
 	static Mutex mutex;
-	static int requestCode = 0x1000; // Reserve all request codes under 0x1000.
+	static int request_code = 0x1000; // Reserve all request codes under 0x1000.
 
 	MutexLock locker(mutex);
-	if (requestCode == INT_MAX)
+	if (request_code == INT_MAX)
 		WARN_PRINT("Unique activity request code has wrapped. Unexpected behavior may occur.");
-	return requestCode++;
+	return request_code++;
 }
 
 class ActivityResultListener {
 public:
 	virtual ~ActivityResultListener();
-	virtual bool handleActivityResult(jint requestCode, jint resultCode, jobject data) = 0;
+	virtual bool handleActivityResult(jint request_code, jint result_code, jobject data) = 0;
 };
 
 static void registerActivityResultListener(ActivityResultListener *listener);
 static void unregisterActivityResultListener(ActivityResultListener *listener);
 
-class ActivityResultReceiverPrivate : public ActivityResultListener {
+class ActivityResultReceiver::ActivityResultReceiverPrivate : public ActivityResultListener {
 public:
 	ActivityResultReceiver *q;
-	mutable Map<int, int> localToGlobalRequestCode;
-	mutable Map<int, int> globalToLocalRequestCode;
+	mutable Map<int, int> local_to_global_request_code;
+	mutable Map<int, int> global_to_local_request_code;
 
-	static ActivityResultReceiverPrivate *get(ActivityResultReceiver *publicObject) {
-		return publicObject->d.get();
+	static ActivityResultReceiverPrivate *get(ActivityResultReceiver *public_object) {
+		return public_object->imp.get();
 	}
-	int globalRequestCode(int localRequestCode) const {
-		if (!localToGlobalRequestCode.has(localRequestCode)) {
-			int globalRequestCode = uniqueActivityRequestCode();
-			localToGlobalRequestCode[localRequestCode] = globalRequestCode;
-			globalToLocalRequestCode[globalRequestCode] = localRequestCode;
+	int globalRequestCode(int local_request_code) const {
+		if (!local_to_global_request_code.has(local_request_code)) {
+			const int global_request_code = unique_activity_request_code();
+			local_to_global_request_code[local_request_code] = global_request_code;
+			global_to_local_request_code[global_request_code] = local_request_code;
 		}
-		return localToGlobalRequestCode[localRequestCode];
+		return local_to_global_request_code.get(local_request_code);
 	}
-	bool handleActivityResult(jint requestCode, jint resultCode, jobject data) {
-		if (globalToLocalRequestCode.has(requestCode)) {
-			q->handleActivityResult(globalToLocalRequestCode[requestCode], resultCode, data);
+	bool handleActivityResult(jint request_code, jint result_code, jobject data) {
+		if (global_to_local_request_code.has(request_code)) {
+			q->handleActivityResult(global_to_local_request_code.get(request_code), result_code, data);
 			return true;
 		}
 		return false;
 	}
+	ActivityResultReceiverPrivate(ActivityResultReceiver *receiver) : q(receiver) { }
 };
 
-int ActivityResultReceiver::getGlobalRequestCode(ActivityResultReceiver *publicObject, int requestCode) {
-	return publicObject->d->globalRequestCode(requestCode);
+int ActivityResultReceiver::getGlobalRequestCode(ActivityResultReceiver *public_object, int request_code) {
+	return public_object->imp->globalRequestCode(request_code);
 }
 
-ActivityResultReceiver::ActivityResultReceiver() : d(new ActivityResultReceiverPrivate) {
-	d->q = this;
-	registerActivityResultListener(d.get());
+ActivityResultReceiver::ActivityResultReceiver() : imp(new ActivityResultReceiverPrivate(this)) {
+	registerActivityResultListener(imp.get());
 }
 
 ActivityResultReceiver::~ActivityResultReceiver() {
-	unregisterActivityResultListener(d.get());
+	unregisterActivityResultListener(imp.get());
 }
 
 
@@ -111,11 +111,11 @@ static void unregisterActivityResultListener(ActivityResultListener *listener) {
 	g_listeners.listeners.erase(listener);
 }
 
-void processActivityResult(jint requestCode, jint resultCode, jobject data) {
+void processActivityResult(jint request_code, jint result_code, jobject data) {
 	MutexLock locker(g_listeners.mutex);
 	const Vector<ActivityResultListener *> &listeners = g_listeners.listeners;
 	for (int i=0; i<listeners.size(); ++i) {
-		if (listeners.get(i)->handleActivityResult(requestCode, resultCode, data))
+		if (listeners.get(i)->handleActivityResult(request_code, result_code, data))
 			break;
 	}
 }
