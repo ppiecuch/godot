@@ -55,4 +55,17 @@ static inline String jstring_to_string(jstring source, JNIEnv *env = NULL) {
 	return result;
 }
 
+/**
+ * Converts Godot String to JNI jstring.
+ * @param source Source Godot String.
+ * @param env JNI environment instance. If null obtained by get_jni_env().
+ * @return JNI string local instance. Note: it is up to the caller to release object.
+ */
+static inline jstring string_to_jstring(const String &source, JNIEnv *env = NULL) {
+	if (!env) {
+		env = get_jni_env();
+	}
+	return env->NewStringUTF(source.utf8().get_data());
+}
+
 #endif // STRING_ANDROID_H

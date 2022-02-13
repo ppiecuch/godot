@@ -520,4 +520,10 @@ JNIEXPORT void JNICALL Java_org_godotengine_godot_GodotLib_onRendererPaused(JNIE
 		os_android->get_main_loop()->notification(MainLoop::NOTIFICATION_APP_PAUSED);
 	}
 }
+
+#include "java_activity_result_receiver.h"
+
+JNIEXPORT void JNICALL Java_org_godotengine_godot_GodotLib_onMainActivityResult(JNIEnv *env, jclass clazz, jint requestCode, jint resultCode, jobject data) {
+	processActivityResult(requestCode, resultCode, data);
+}
 }
