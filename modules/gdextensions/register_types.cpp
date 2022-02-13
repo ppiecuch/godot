@@ -109,6 +109,10 @@
 
 #include "sfxr/gdsfxr.h"
 
+#if defined(OSX_ENABLED) || defined(UWP_ENABLED) || defined (IPHONE_ENABLED)
+#include "iap/gd_iap.h"
+#endif
+
 #ifdef TOOLS_ENABLED
 #include "qrcodetexture/qrcodetexture.h"
 #endif
@@ -186,6 +190,10 @@ void register_gdextensions_types() {
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Tags", memnew(Tags)));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Blitter", memnew(Blitter)));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Settings", memnew(Settings)));
+#if defined(OSX_ENABLED) || defined(UWP_ENABLED) || defined (IPHONE_ENABLED)
+	Engine::get_singleton()->add_singleton(Engine::Singleton("InAppStore", memnew(GdInAppStore)));
+	ClassDB::register_class<GdInAppStoreInstance>();
+#endif
 
 	ClassDB::register_class<JSONData>();
 #ifdef TOOLS_ENABLED

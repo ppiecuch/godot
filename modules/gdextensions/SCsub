@@ -43,8 +43,13 @@ if not env["disable_3d"]:
 
 if os.path.isdir("iap"):
     env_module.Prepend(CPPPATH=["iap"])
-    if env["platform"] == "osx":
-        sources += Glob("iap/*.cpp") + Glob("iap/mac/*.mm")
+    sources += Glob("iap/*.cpp")
+    if env["platform"] == "osx" or env["platform"] == "iphone":
+        sources += Glob("iap/mac/*.mm")
+        env.Append(LINKFLAGS=["-framework", "StoreKit"])
+
+    elif env["platform"] == "android":
+        sources += Glob("iap/android/*.cpp")
 
 ignore = []
 if env["platform"] == "3ds" or env["platform"] == "psp":
