@@ -23,7 +23,6 @@ export ANDROID_NDK_ROOT=$HOME/Library/Android/ndk
 
 export SCONS="scons -j$CPU verbose=yes warnings=no progress=no"
 export OPTIONS="debug_symbols=no debug_experimental=no"
-export TERM=xterm
 
 # Utilities
 # ---------
@@ -109,7 +108,9 @@ if [ "$cmd" != "skip_plugins" ]; then
 			fi
 			(pushd "platform_plugins/android"
 				for plugin in godot-direct godot-google-play-billing godot-bluetooth godot-device-info; do
-				(if [ -d $plugin ]; then
+				(if [ "$plugin" == "godot-google-play-billing" ]; then
+					echo_bold "*** Skipping plugin: godot-google-play-billing"
+				elif [ -d $plugin ]; then
 					echo_bold "Building  plugin: $plugin"
 					pushd $plugin
 					if [ -e gd_build_plugin.sh ]; then
