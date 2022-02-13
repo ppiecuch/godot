@@ -294,6 +294,8 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 		for (GodotPlugin plugin : pluginRegistry.getAllPlugins()) {
 			plugin.onMainActivityResult(requestCode, resultCode, data);
 		}
+
+		GodotLib.onMainActivityResult(requestCode, resultCode, data);
 	}
 
 	@CallSuper

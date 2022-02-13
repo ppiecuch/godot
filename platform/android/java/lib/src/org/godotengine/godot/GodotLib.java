@@ -217,4 +217,10 @@ public class GodotLib {
 	 * @see GodotRenderer#onActivityPaused()
 	 */
 	public static native void onRendererPaused();
+
+	/**
+	 * Deliver Activity result to registered listeners.
+	 * @see Activity#onMainActivityResult()
+	 */
+	public static native void onMainActivityResult(int requestCode, int resultCode, Intent data);
 }
