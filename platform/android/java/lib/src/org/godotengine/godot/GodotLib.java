@@ -31,6 +31,7 @@
 package org.godotengine.godot;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.hardware.SensorEvent;
 
 import javax.microedition.khronos.opengles.GL10;

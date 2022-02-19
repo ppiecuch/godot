@@ -20,7 +20,7 @@ import org.json.JSONException;
 
 import com.android.vending.billing.IInAppBillingService;
 
-public class GdInAppPurchase
+public class InAppPurchase
 {
     private Context m_context = null;
     private IInAppBillingService m_service = null;
@@ -36,11 +36,11 @@ public class GdInAppPurchase
     public static final int RESULT_ITEM_ALREADY_OWNED = 7;
     public static final int RESULT_ITEM_NOT_OWNED = 8;
     public static final int RESULT_QTPURCHASING_ERROR = 9; // No match with any already defined response codes
-    public static final String TAG = "QtInAppPurchase";
+    public static final String TAG = "InAppPurchase";
     public static final String TYPE_INAPP = "inapp";
     public static final int IAP_VERSION = 3;
 
-    // Should be in sync with QInAppTransaction::FailureReason
+    // Should be in sync with jni InAppTransaction::FailureReason
     public static final int FAILUREREASON_NOFAILURE    = 0;
     public static final int FAILUREREASON_USERCANCELED = 1;
     public static final int FAILUREREASON_ERROR        = 2;
@@ -84,7 +84,7 @@ public class GdInAppPurchase
         }
     };
 
-    public GdInAppPurchase(Context context, long nativePointer)
+    public InAppPurchase(Context context, long nativePointer)
     {
         m_context = context;
         m_nativePointer = nativePointer;
