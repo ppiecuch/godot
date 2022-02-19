@@ -68,13 +68,14 @@ class EditorExportPlatformOSX : public EditorExportPlatform {
 			DirAccessRef &dir_access, bool p_sign_enabled, const Ref<EditorExportPreset> &p_preset,
 			const String &p_ent_path);
 	Error _create_dmg(const String &p_dmg_path, const String &p_pkg_name, const String &p_app_path_name);
+	Error _create_pkg(const String &p_pkg_path, const String &p_pkg_name, const String &p_app_path_name);
 	void _zip_folder_recursive(zipFile &p_zip, const String &p_root_path, const String &p_folder, const String &p_pkg_name);
 
 	bool use_codesign() const { return true; }
 #ifdef OSX_ENABLED
-	bool use_dmg() const { return true; }
+	bool have_osx_tools() const { return true; }
 #else
-	bool use_dmg() const { return false; }
+	bool have_osx_tools() const { return false; }
 #endif
 	bool is_package_name_valid(const String &p_package, String *r_error = nullptr) const {
 		String pname = p_package;
@@ -111,8 +112,9 @@ public:
 
 	virtual List<String> get_binary_extensions(const Ref<EditorExportPreset> &p_preset) const {
 		List<String> list;
-		if (use_dmg()) {
+		if (have_osx_tools()) {
 			list.push_back("dmg");
+			list.push_back("pkg");
 		}
 		list.push_back("zip");
 		list.push_back("app");
@@ -765,6 +767,31 @@ Error EditorExportPlatformOSX::_create_dmg(const String &p_dmg_path, const Strin
 	return OK;
 }
 
+Error EditorExportPlatformOSX::_create_pkg(const String &p_pkg_path, const String &p_pkg_name, const String &p_app_path_name) {
+	List<String> args;
+
+	if (FileAccess::exists(p_pkg_path)) {
+		OS::get_singleton()->move_to_trash(p_pkg_path);
+	}
+
+	args.push_back("--component");
+	args.push_back(p_app_path_name);
+	args.push_back("/Applications");
+	args.push_back(p_pkg_path);
+
+	String str;
+	Error err = OS::get_singleton()->execute("productbuild", args, true, nullptr, &str, nullptr, true);
+	ERR_FAIL_COND_V(err != OK, err);
+
+	if (str.find("productbuild: error:") != -1) {
+		print_line("productbuild returned: " + str);
+		EditorNode::add_io_error("productbuild: create failed");
+		return FAILED;
+	}
+
+	return OK;
+}
+
 Error EditorExportPlatformOSX::export_project(const Ref<EditorExportPreset> &p_preset, bool p_debug, const String &p_path, int p_flags) {
 	ExportNotifier notifier(*this, p_preset, p_debug, p_path, p_flags);
 
@@ -820,8 +847,10 @@ Error EditorExportPlatformOSX::export_project(const Ref<EditorExportPreset> &p_p
 	pkg_name = OS::get_singleton()->get_safe_dir_name(pkg_name);
 
 	String export_format;
-	if (use_dmg() && p_path.ends_with("dmg")) {
+	if (have_osx_tools() && p_path.ends_with("dmg")) {
 		export_format = "dmg";
+	} else if (have_osx_tools() && p_path.ends_with("pkg")) {
+		export_format = "pkg";
 	} else if (p_path.ends_with("zip")) {
 		export_format = "zip";
 	} else if (p_path.ends_with("app")) {
@@ -1012,7 +1041,7 @@ Error EditorExportPlatformOSX::export_project(const Ref<EditorExportPreset> &p_p
 	}
 
 	if (err == OK) {
-		if (ep.step(TTR("Making PKG"), 1)) {
+		if (ep.step(TTR("Making PCK"), 1)) {
 			return ERR_SKIP;
 		}
 
@@ -1221,6 +1250,14 @@ Error EditorExportPlatformOSX::export_project(const Ref<EditorExportPreset> &p_p
 					return ERR_SKIP;
 				}
 				err = _code_sign(p_preset, p_path, ent_path);
+			}
+		} else if (export_format == "pkg") {
+			// Create a PKG.
+			if (err == OK) {
+				if (ep.step(TTR("Making PKG"), 3)) {
+					return ERR_SKIP;
+				}
+				err = _create_pkg(p_path, pkg_name, tmp_app_path_name);
 			}
 		} else if (export_format == "zip") {
 			// Create ZIP.
