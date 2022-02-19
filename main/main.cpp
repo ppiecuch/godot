@@ -1113,6 +1113,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 			video_mode.width = GLOBAL_GET("display/window/size/width");
 			video_mode.height = GLOBAL_GET("display/window/size/height");
 
+#ifdef TOOLS_ENABLED
 			if (globals->has_setting("display/window/size/test_width") && globals->has_setting("display/window/size/test_height")) {
 				int tw = globals->get("display/window/size/test_width");
 				if (tw > 0) {
@@ -1123,6 +1124,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 					video_mode.height = th;
 				}
 			}
+#endif
 		}
 
 		video_mode.resizable = GLOBAL_GET("display/window/size/resizable");
