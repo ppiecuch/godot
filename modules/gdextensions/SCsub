@@ -10,12 +10,23 @@ is_clang_or_gcc = (
     ("gcc" in os.path.basename(env["CC"])) or ("clang" in os.path.basename(env["CC"])) or ("osxcross" in env)
 )
 
+def is_enabled(m):
+    mod = os.path.dirname(m) if os.path.dirname(m) else m
+    if "enable_gdextensions_submodules" in env:
+        if "none" in env["enable_gdextensions_submodules"]:
+            return False
+        if not mod in env['enable_gdextensions_submodules']:
+            return False
+    env_module.Append(CPPDEFINES=["GDEXT_%s_ENABLED" % mod.upper()])
+    print("(GDextensions) Enabling submodule iap")
+    return True
+
 env_module = env_modules.Clone()
 
-sources = Glob("*.cpp")
+sources = Glob("*.cpp") + Glob("common/*.cpp")
+
 modules = [
     "core",
-    "common",
     "bulletkit",
     "visual",
     "environment/tree_2d",
@@ -23,6 +34,7 @@ modules = [
     "environment/water_splash",
     "environment/starfield",
     "environment/spider_anim",
+    "fastnoise",
     "smooth",
     "debugdraw",
     "statemachine",
@@ -41,7 +53,7 @@ if env["tools"]:
 if not env["disable_3d"]:
     modules += ["environment/vegetation_instance", "ccd/src"]
 
-if os.path.isdir("iap"):
+if os.path.isdir("iap") and is_enabled("iap"):
     env_module.Prepend(CPPPATH=["iap"])
     sources += Glob("iap/*.cpp")
     if env["platform"] == "osx" or env["platform"] == "iphone":
@@ -60,9 +72,10 @@ if not env["module_mbedtls_enabled"]:
     ignore += ["core/cripter.cpp"]
 
 for m in modules:
-    files = Glob("%s/*.cpp" % m)
-    sources += [f for f in files if str(f) not in ignore]
-    sources += Glob("%s/*.c" % m)
+    if is_enabled(m):
+        files = Glob("%s/*.cpp" % m)
+        sources += [f for f in files if str(f) not in ignore]
+        sources += Glob("%s/*.c" % m)
 
 thirdparty_sources = [
     "#thirdparty/misc/cqueue.cpp",

@@ -109,7 +109,16 @@
 
 #include "sfxr/gdsfxr.h"
 
-#if defined(OSX_ENABLED) || defined(UWP_ENABLED) || defined (IPHONE_ENABLED)
+#include "fastnoise/noise.h"
+
+#if defined(OSX_ENABLED) || defined(UWP_ENABLED) || defined(IPHONE_ENABLED) || defined(ANDROID_ENABLED)
+#include "iap/ginappstore.h"
+#if defined(OSX_ENABLED) || defined(IPHONE_ENABLED)
+#include "iap/mac/gmacinapppurchasebackend.h"
+#endif
+#if defined(ANDROID_ENABLED)
+#include "iap/android/gandroidinapppurchasebackend.h"
+#endif
 #include "iap/gd_iap.h"
 #endif
 
@@ -137,132 +146,171 @@ static void editor_init_callback() {
 #endif
 
 void register_gdextensions_types() {
+#ifdef GDEXT_BULLETKIT_ENABLED
 	register_bullet_kit();
-
-	ClassDB::register_class<RealNormal>();
-	ClassDB::register_class<IntNormal>();
-
-	ClassDB::register_class<Voronoi>();
-	ClassDB::register_class<VoronoiDiagram>();
-	ClassDB::register_class<VoronoiSite>();
-	ClassDB::register_class<VoronoiEdge>();
-
+#endif
+#ifdef GDEXT_BEHAVIORNODE_ENABLED
 	ClassDB::register_class<BehaviorNode>();
 	ClassDB::register_class<TimerBNode>();
 	ClassDB::register_class<ProbabilityBNode>();
 	ClassDB::register_class<LinkerBNode>();
 	ClassDB::register_class<StatusBNode>();
-
+#endif // GDEXT_BEHAVIORNODE_ENABLED
+#ifdef GDEXT_CORE_ENABLED
 	ClassDB::register_class<AreaProber>();
-	ClassDB::register_class<Timer2>();
-	ClassDB::register_class<TimerObject>();
-	ClassDB::register_class<Tween2>();
-	ClassDB::register_class<TweenAction>();
-	ClassDB::register_class<InputStorage>();
-	ClassDB::register_class<InputStorageNode>();
-	ClassDB::register_class<TrailPoint2D>();
-	ClassDB::register_class<TrailLine2D>();
-	ClassDB::register_class<LineBuilder2D>();
-	ClassDB::register_class<RoundProgress>();
-	ClassDB::register_class<Phantom>();
+	ClassDB::register_class<BSInputEventKey>();
 	ClassDB::register_class<Byteswap>();
-	ClassDB::register_virtual_class<RawPacker>();
 #ifdef MODULE_MBEDTLS_ENABLED
 	ClassDB::register_class<Cripter>();
 #endif
-	ClassDB::register_class<ProceduralAnimation>();
-	ClassDB::register_class<BSInputEventKey>();
+#ifdef TOOLS_ENABLED
+	ClassDB::register_class<ErrorReporter>();
+#endif
 #ifndef ADVANCED_GUI_DISABLED
 	ClassDB::register_class<InputMapEditor>();
 #endif
-	ClassDB::register_class<StateMachine>();
-	ClassDB::register_class<State>();
-
-	ClassDB::register_class<LanAdvertiser>();
-	ClassDB::register_class<LanListener>();
-	ClassDB::register_class<LanPlayer>();
-
-	Engine::get_singleton()->add_singleton(Engine::Singleton("Resources", memnew(Resources)));
-	Engine::get_singleton()->add_singleton(Engine::Singleton("Timer2", memnew(Timer2)));
-	Engine::get_singleton()->add_singleton(Engine::Singleton("Tween2", memnew(Tween2)));
-	Engine::get_singleton()->add_singleton(Engine::Singleton("InputStorage", memnew(InputStorage)));
-	Engine::get_singleton()->add_singleton(Engine::Singleton("DebugDraw", memnew(DebugDraw)));
-	Engine::get_singleton()->add_singleton(Engine::Singleton("Tags", memnew(Tags)));
-	Engine::get_singleton()->add_singleton(Engine::Singleton("Blitter", memnew(Blitter)));
-	Engine::get_singleton()->add_singleton(Engine::Singleton("Settings", memnew(Settings)));
-#if defined(OSX_ENABLED) || defined(UWP_ENABLED) || defined (IPHONE_ENABLED)
-	ClassDB::register_class<GdInAppStore>();
-	ClassDB::register_class<GdInAppStoreInstance>();
-#endif
-
+	ClassDB::register_class<InputStorage>();
+	ClassDB::register_class<InputStorageNode>();
+	ClassDB::register_class<IntNormal>();
 	ClassDB::register_class<JSONData>();
 #ifdef TOOLS_ENABLED
 	Ref<ResourceImporterJSON> json_data = memnew(ResourceImporterJSON);
 	ResourceFormatImporter::get_singleton()->add_importer(json_data);
 #endif
 
+	ClassDB::register_class<LineBuilder2D>();
+	ClassDB::register_class<Phantom>();
+	ClassDB::register_virtual_class<RawPacker>();
+	ClassDB::register_class<RealNormal>();
+	ClassDB::register_class<RoundProgress>();
+	ClassDB::register_class<Timer2>();
+	ClassDB::register_class<TimerObject>();
+	ClassDB::register_class<Tween2>();
+	ClassDB::register_class<TweenAction>();
+	ClassDB::register_class<TrailPoint2D>();
+	ClassDB::register_class<TrailLine2D>();
+	ClassDB::register_class<ProceduralAnimation>();
+	ClassDB::register_class<Voronoi>();
+	ClassDB::register_class<VoronoiDiagram>();
+	ClassDB::register_class<VoronoiSite>();
+	ClassDB::register_class<VoronoiEdge>();
+#endif // GDEXT_CORE_ENABLED
+#ifdef GDEXT_STATEMACHINE_ENABLED
+	ClassDB::register_class<StateMachine>();
+	ClassDB::register_class<State>();
+#endif // GDEXT_STATEMACHINE_ENABLED
+#ifdef GDEXT_LANADVERTISER_ENABLED
+	ClassDB::register_class<LanAdvertiser>();
+	ClassDB::register_class<LanListener>();
+	ClassDB::register_class<LanPlayer>();
+#endif // GDEXT_LANADVERTISER_ENABLED
+#ifdef GDEXT_CORE_ENABLED
+	Engine::get_singleton()->add_singleton(Engine::Singleton("Resources", memnew(Resources)));
+	Engine::get_singleton()->add_singleton(Engine::Singleton("Timer2", memnew(Timer2)));
+	Engine::get_singleton()->add_singleton(Engine::Singleton("Tween2", memnew(Tween2)));
+	Engine::get_singleton()->add_singleton(Engine::Singleton("InputStorage", memnew(InputStorage)));
+	Engine::get_singleton()->add_singleton(Engine::Singleton("Tags", memnew(Tags)));
+	Engine::get_singleton()->add_singleton(Engine::Singleton("Blitter", memnew(Blitter)));
+#endif // GDEXT_CORE_ENABLED
+#ifdef GDEXT_SETTINGS_ENABLED
+	Engine::get_singleton()->add_singleton(Engine::Singleton("Settings", memnew(Settings)));
+#endif
+#ifdef GDEXT_DEBUGDRAW_ENABLED
+	Engine::get_singleton()->add_singleton(Engine::Singleton("DebugDraw", memnew(DebugDraw)));
+#endif
+#ifdef GDEXT_IAP_ENABLED
+#if defined(OSX_ENABLED) || defined(UWP_ENABLED) || defined(IPHONE_ENABLED) || defined(ANDROID_ENABLED)
+#if defined(OSX_ENABLED) || defined(IPHONE_ENABLED)
+	ClassDB::register_virtual_class<GMacInAppPurchaseBackend>();
+#endif
+#if defined(ANDROID_ENABLED)
+	ClassDB::register_virtual_class<GAndroidInAppPurchaseBackend>();
+#endif
+	ClassDB::register_class<GdInAppStore>();
+	ClassDB::register_class<GdInAppStoreInstance>();
+#endif
+#endif // GDEXT_IAP_ENABLED
+#ifdef GDEXT_SFXR_ENABLED
 	ClassDB::register_class<AudioStreamSfxr>();
 	ClassDB::register_class<AudioStreamPlaybackSfxr>();
 #ifdef TOOLS_ENABLED
 	Ref<ResourceImporterSfxr> sfx_data = memnew(ResourceImporterSfxr);
 	ResourceFormatImporter::get_singleton()->add_importer(sfx_data);
 #endif
+#endif // GDEXT_SFXR_ENABLED
 
+#ifdef GDEXT_FASTNOISE_ENABLED
+	ClassDB::register_class<FastNoise>();
+#endif
+
+#ifdef GDEXT_VISUAL_ENABLED
+	ClassDB::register_class<Autotilemap>();
+	ClassDB::register_class<BulletManagerBulletType>();
+	ClassDB::register_class<BulletManager>();
+	ClassDB::register_class<Cable2D>();
+	ClassDB::register_class<DestructibleSprite>();
+	ClassDB::register_class<ElasticSimulation>();
+	ClassDB::register_class<ElasticSprite>();
+	ClassDB::register_class<ElasticMeshInstance2D>();
+	ClassDB::register_class<FakeExplosionParticles2D>();
+	ClassDB::register_class<Figure2D>();
+	ClassDB::register_class<NixieFont>();
 	ClassDB::register_class<PixelSpaceshipsOptions>();
 	ClassDB::register_class<PixelSpaceshipsMask>();
 	ClassDB::register_class<PixelSpaceships>();
-	ClassDB::register_class<BulletManagerBulletType>();
-	ClassDB::register_class<BulletManager>();
-	ClassDB::register_class<Autotilemap>();
-	ClassDB::register_class<ElasticSimulation>();
 	ClassDB::register_class<SimulationController2D>();
 	ClassDB::register_class<SimulationControllerInstance2D>();
-	ClassDB::register_class<ElasticSprite>();
-	ClassDB::register_class<ElasticMeshInstance2D>();
-	ClassDB::register_class<DestructibleSprite>();
-	ClassDB::register_class<Cable2D>();
+	ClassDB::register_class<SphericalWaves>();
+	ClassDB::register_class<SpriteMesh>();
+	ClassDB::register_class<Starfield2D>();
 	ClassDB::register_class<TouchButton>();
+	ClassDB::register_class<TexturePanning>();
+#endif // GDEXT_VISUAL_ENABLED
+#ifdef GDEXT_VGAMEPAD_ENABLED
 	ClassDB::register_class<VGamePad>();
+#endif // GDEXT_VGAMEPAD_ENABLED
 #ifdef TOOLS_ENABLED
 	ClassDB::register_class<AudioStreamPreview>();
 	ClassDB::register_class<AudioStreamPreviewGenerator>();
 #endif
-	ClassDB::register_class<SpriteMesh>();
-	ClassDB::register_class<Figure2D>();
 
+#ifdef GDEXT_ENVIRONMENT_ENABLED
 	ClassDB::register_class<Tree2D>();
 	ClassDB::register_class<GDWaterSplash>();
 	ClassDB::register_virtual_class<GDWaterSplashColumn>();
 #ifndef _3D_DISABLED
 	ClassDB::register_class<VegetationInstance>();
 #endif
-	ClassDB::register_class<SphericalWaves>();
-	ClassDB::register_class<Starfield2D>();
-	ClassDB::register_class<TexturePanning>();
-	ClassDB::register_class<FakeExplosionParticles2D>();
-	ClassDB::register_class<NixieFont>();
 	ClassDB::register_class<Spider>();
 	ClassDB::register_class<SpiderStage>();
 	ClassDB::register_class<SpiderStageInstance>();
+#endif // GDEXT_ENVIRONMENT_ENABLED
 
+#ifdef GDEXT_BENET_ENABLED
 #ifdef MODULE_ENET_ENABLED
 	ClassDB::register_class<ENetPacketPeer>();
 	ClassDB::register_class<ENetNode>();
 #endif
+#endif // GDEXT_BENET_ENABLED
 
+#ifdef GDEXT_SMOOTH_ENABLED
 	ClassDB::register_class<Smooth>();
 	ClassDB::register_class<Smooth2D>();
+#endif // GDEXT_SMOOTH_ENABLED
 
+#ifdef GDEXT_CCD_ENABLED
 #ifdef TOOLS_ENABLED
 	ClassDB::register_class<QRCodeTexture>();
-	ClassDB::register_class<ErrorReporter>();
 #endif
+#endif // GDEXT_CCD_ENABLED
 
+#ifdef GDEXT_CCD_ENABLED
 #ifndef _3D_DISABLED
 	ClassDB::register_class<CCDBox>();
 	ClassDB::register_class<CCDSphere>();
 	ClassDB::register_class<CCDCylinder>();
-#endif
+#endif // _3D_DISABLED
+#endif // GDEXT_CCD_ENABLED
 
 #ifdef TOOLS_ENABLED
 	EditorNode::add_init_callback(editor_init_callback);
@@ -270,6 +318,7 @@ void register_gdextensions_types() {
 }
 
 void unregister_gdextensions_types() {
+#ifdef GDEXT_CORE_ENABLED
 	if (Resources *instance = Resources::get_singleton()) {
 		memdelete(instance);
 	}
@@ -282,24 +331,31 @@ void unregister_gdextensions_types() {
 	if (InputStorage *instance = InputStorage::get_singleton()) {
 		memdelete(instance);
 	}
-	if (DebugDraw *instance = DebugDraw::get_singleton()) {
-		memdelete(instance);
-	}
 	if (Tags *instance = Tags::get_singleton()) {
 		memdelete(instance);
 	}
 	if (Blitter *instance = Blitter::get_singleton()) {
 		memdelete(instance);
 	}
-	if (Settings *instance = Settings::get_singleton()) {
-		memdelete(instance);
-	}
-#if defined(OSX_ENABLED) || defined(UWP_ENABLED) || defined (IPHONE_ENABLED)
-	GdInAppStore::release_store();
-#endif
 #ifdef TOOLS_ENABLED
 	if (GodotErrorHandler *instance = GodotErrorHandler::get_singleton()) {
 		memdelete(instance);
 	}
 #endif
+#endif // GDEXT_CORE_ENABLED
+#ifdef GDEXT_DEBUGDRAW_ENABLED
+	if (DebugDraw *instance = DebugDraw::get_singleton()) {
+		memdelete(instance);
+	}
+#endif
+#ifdef GDEXT_SETTINGS_ENABLED
+	if (Settings *instance = Settings::get_singleton()) {
+		memdelete(instance);
+	}
+#endif
+#ifdef GDEXT_IAP_ENABLED
+#if defined(OSX_ENABLED) || defined(UWP_ENABLED) || defined (IPHONE_ENABLED)
+	GdInAppStore::release_store();
+#endif
+#endif // GDEXT_IAP_ENABLED
 }
