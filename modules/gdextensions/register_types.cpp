@@ -343,7 +343,7 @@ void unregister_gdextensions_types() {
 	}
 #endif
 #ifdef GDEXT_IAP_ENABLED
-#if defined(OSX_ENABLED) || defined(UWP_ENABLED) || defined (IPHONE_ENABLED)
+#if defined(OSX_ENABLED) || defined(UWP_ENABLED) || defined(IPHONE_ENABLED)
 	GdInAppStore::release_store();
 #endif
 #endif // GDEXT_IAP_ENABLED

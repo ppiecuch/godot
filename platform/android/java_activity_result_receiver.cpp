@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  java_activity_result_receiver.h                                      */
+/*  java_activity_result_receiver.cpp                                    */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -29,11 +29,10 @@
 /*************************************************************************/
 
 #include "core/map.h"
-#include "core/vector.h"
 #include "core/os/mutex.h"
+#include "core/vector.h"
 
 #include "java_activity_result_receiver.h"
-
 
 static int unique_activity_request_code() {
 	static Mutex mutex;
@@ -78,14 +77,16 @@ public:
 		}
 		return false;
 	}
-	ActivityResultReceiverPrivate(ActivityResultReceiver *receiver) : q(receiver) { }
+	ActivityResultReceiverPrivate(ActivityResultReceiver *receiver) :
+			q(receiver) {}
 };
 
 int ActivityResultReceiver::getGlobalRequestCode(ActivityResultReceiver *public_object, int request_code) {
 	return public_object->imp->globalRequestCode(request_code);
 }
 
-ActivityResultReceiver::ActivityResultReceiver() : imp(new ActivityResultReceiverPrivate(this)) {
+ActivityResultReceiver::ActivityResultReceiver() :
+		imp(new ActivityResultReceiverPrivate(this)) {
 	registerActivityResultListener(imp.get());
 }
 
@@ -93,13 +94,12 @@ ActivityResultReceiver::~ActivityResultReceiver() {
 	unregisterActivityResultListener(imp.get());
 }
 
-
 namespace {
-	struct {
-		Mutex mutex;
-		Vector<ActivityResultListener *> listeners;
-	}  g_listeners;
-}
+struct {
+	Mutex mutex;
+	Vector<ActivityResultListener *> listeners;
+} g_listeners;
+} //namespace
 
 static void registerActivityResultListener(ActivityResultListener *listener) {
 	MutexLock locker(g_listeners.mutex);
@@ -114,7 +114,7 @@ static void unregisterActivityResultListener(ActivityResultListener *listener) {
 void processActivityResult(jint request_code, jint result_code, jobject data) {
 	MutexLock locker(g_listeners.mutex);
 	const Vector<ActivityResultListener *> &listeners = g_listeners.listeners;
-	for (int i=0; i<listeners.size(); ++i) {
+	for (int i = 0; i < listeners.size(); ++i) {
 		if (listeners.get(i)->handleActivityResult(request_code, result_code, data))
 			break;
 	}

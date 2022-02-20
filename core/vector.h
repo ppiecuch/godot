@@ -250,8 +250,6 @@ void Vector<T>::fill(T p_elem) {
 	}
 }
 
-
-
 template <class T>
 Vector<T> vector() {
 	Vector<T>();

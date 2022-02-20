@@ -54,8 +54,8 @@ Variant::Type get_jni_type(const String &p_type);
 
 const char *get_jni_sig(const String &p_type);
 
-#define G_DECL_PRIVATE_IMP(Class) \
-	class Class##Private; \
+#define G_DECL_PRIVATE_IMP(Class)        \
+	class Class##Private;                \
 	std::shared_ptr<Class##Private> imp; \
 	friend class Class##Private;
 

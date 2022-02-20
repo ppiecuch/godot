@@ -70,7 +70,8 @@ using std::uint8_t;
 
 namespace qrcodegen {
 
-QrSegment::Mode::Mode(int mode, int cc0, int cc1, int cc2) : modeBits(mode) {
+QrSegment::Mode::Mode(int mode, int cc0, int cc1, int cc2) :
+		modeBits(mode) {
 	numBitsCharCount[0] = cc0;
 	numBitsCharCount[1] = cc1;
 	numBitsCharCount[2] = cc2;

@@ -38,6 +38,7 @@
 
 class ActivityResultReceiver {
 	G_DECL_PRIVATE_IMP(ActivityResultReceiver);
+
 public:
 	virtual void handleActivityResult(int receiver_request_code, int result_code, const jobject &data) = 0;
 

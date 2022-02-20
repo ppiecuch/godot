@@ -28,22 +28,22 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "core/ustring.h"
 #include "core/map.h"
 #include "core/os/mutex.h"
-#include "platform/android/os_android.h"
+#include "core/ustring.h"
 #include "platform/android/java_godot_wrapper.h"
+#include "platform/android/os_android.h"
 
 #include "java_jni_object.h"
 
 #include <jni.h>
 
 #ifdef __GNUC__
-# define G_LIKELY(expr) __builtin_expect(!!(expr), true)
-# define G_UNLIKELY(expr) __builtin_expect(!!(expr), false)
+#define G_LIKELY(expr) __builtin_expect(!!(expr), true)
+#define G_UNLIKELY(expr) __builtin_expect(!!(expr), false)
 #else
-# define G_LIKELY(x) (x)
-# define G_UNLIKELY(x) (x)
+#define G_LIKELY(x) (x)
+#define G_UNLIKELY(x) (x)
 #endif
 
 #ifdef MULTI_THREAD_ACCESS
@@ -71,7 +71,7 @@ jclass JavaJniEnvironment::findClass(const char *class_name, JNIEnv *env) {
 #ifdef MULTI_THREAD_ACCESS
 		MutexLock locker(cachedClassesLock);
 #endif
-		if(auto *it = cachedClasses.find(key)) {
+		if (auto *it = cachedClasses.find(key)) {
 			return it->value();
 		}
 		jclass fclazz = env->FindClass(class_name);
@@ -89,7 +89,8 @@ jclass JavaJniEnvironment::findClass(const char *class_name, JNIEnv *env) {
 	return clazz;
 }
 
-JavaJniEnvironment::JavaJniEnvironment() : jni_env(get_jni_env()) { }
+JavaJniEnvironment::JavaJniEnvironment() :
+		jni_env(get_jni_env()) {}
 
 class JavaJniObject::JavaJniObjectPrivate {
 public:
@@ -98,7 +99,8 @@ public:
 	bool m_own_jclass;
 	CharString m_className;
 
-	JavaJniObjectPrivate() : m_jobject(0), m_jclass(0), m_own_jclass(true) { }
+	JavaJniObjectPrivate() :
+			m_jobject(0), m_jclass(0), m_own_jclass(true) {}
 	JavaJniObjectPrivate(jobject o) {
 		JavaJniEnvironment env;
 		m_jobject = env->NewGlobalRef(o);
@@ -116,7 +118,6 @@ public:
 		}
 	}
 };
-
 
 static _FORCE_INLINE_ jobject _get_gd_activity() {
 	if (OS_Android *os = (OS_Android *)OS::get_singleton()) {
@@ -208,7 +209,6 @@ static jmethodID getCachedMethodID(JNIEnv *env, jclass clazz, const char *class_
 	return id;
 }
 
-
 static jclass loadClass(const char *class_name, JNIEnv *env, bool bin_encoded) {
 	const String &bin_enc_class_name = bin_encoded ? class_name : encClassName(class_name);
 
@@ -239,8 +239,8 @@ static jclass loadClass(const char *class_name, JNIEnv *env, bool bin_encoded) {
 	return clazz;
 }
 
-
-template <> void JavaJniObject::callMethodV<void>(const char *method_name, const char *sig, va_list args) const {
+template <>
+void JavaJniObject::callMethodV<void>(const char *method_name, const char *sig, va_list args) const {
 	JavaJniEnvironment env;
 	jmethodID id = getCachedMethodID(env, imp->m_jclass, imp->m_className, method_name, sig);
 	if (id) {
@@ -263,12 +263,18 @@ JavaJniObject JavaJniObject::callObjectMethodV(const char *method_name, const ch
 	return obj;
 }
 
-bool JavaJniObject::isValid() const { return imp->m_jobject; }
-jobject JavaJniObject::javaObject() const { return imp->m_jobject; }
-jobject JavaJniObject::object() const { return javaObject(); }
+bool JavaJniObject::isValid() const {
+	return imp->m_jobject;
+}
+jobject JavaJniObject::javaObject() const {
+	return imp->m_jobject;
+}
+jobject JavaJniObject::object() const {
+	return javaObject();
+}
 
 void JavaJniObject::assign(jobject obj) {
-    if (!obj) {
+	if (!obj) {
 		return;
 	}
 	if (isSameObject(obj)) {
@@ -308,7 +314,8 @@ bool JavaJniObject::isSameObject(const JavaJniObject &other) const {
 	return isSameObject(other.imp->m_jobject);
 }
 
-JavaJniObject::JavaJniObject(jobject global_ref) : imp(new JavaJniObjectPrivate()) {
+JavaJniObject::JavaJniObject(jobject global_ref) :
+		imp(new JavaJniObjectPrivate()) {
 	if (!global_ref) {
 		return;
 	}
@@ -319,9 +326,11 @@ JavaJniObject::JavaJniObject(jobject global_ref) : imp(new JavaJniObjectPrivate(
 	env->DeleteLocalRef(cls);
 }
 
-JavaJniObject::JavaJniObject() : imp(new JavaJniObjectPrivate()) { }
+JavaJniObject::JavaJniObject() :
+		imp(new JavaJniObjectPrivate()) {}
 
-JavaJniObject::JavaJniObject(const char *class_name) : imp(new JavaJniObjectPrivate()) {
+JavaJniObject::JavaJniObject(const char *class_name) :
+		imp(new JavaJniObjectPrivate()) {
 	JavaJniEnvironment env;
 	imp->m_className = class_name;
 	imp->m_jclass = loadClass(imp->m_className, env, true);
@@ -339,7 +348,8 @@ JavaJniObject::JavaJniObject(const char *class_name) : imp(new JavaJniObjectPriv
 	}
 }
 
-JavaJniObject::JavaJniObject(const char *class_name, const char *sig, ...) : imp(new JavaJniObjectPrivate()) {
+JavaJniObject::JavaJniObject(const char *class_name, const char *sig, ...) :
+		imp(new JavaJniObjectPrivate()) {
 	JavaJniEnvironment env;
 	imp->m_className = class_name;
 	imp->m_jclass = loadClass(imp->m_className, env, true);
