@@ -213,9 +213,6 @@ void register_gdextensions_types() {
 #endif
 #ifdef GDEXT_IAP_ENABLED
 #if defined(OSX_ENABLED) || defined(UWP_ENABLED) || defined(IPHONE_ENABLED) || defined(ANDROID_ENABLED)
-	ClassDB::register_class<GdInAppStore>();
-	ClassDB::register_class<GdInAppStoreInstance>();
-
 	register_iap_platform();
 #endif
 #endif // GDEXT_IAP_ENABLED
