@@ -108,8 +108,8 @@ if [ "$cmd" != "skip_plugins" ]; then
 			fi
 			(pushd "platform_plugins/android"
 				for plugin in godot-direct godot-google-play-billing godot-bluetooth godot-device-info; do
-				(if [ "$plugin" == "godot-google-play-billing" ]; then
-					echo_bold "*** Skipping plugin: godot-google-play-billing"
+				(if [[ $plugin == -* ]]; then
+					echo_bold "*** Skipping plugin: $plugin"
 				elif [ -d $plugin ]; then
 					echo_bold "Building  plugin: $plugin"
 					pushd $plugin

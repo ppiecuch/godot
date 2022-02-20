@@ -69,7 +69,7 @@ rm -v \
 if [ -d "platform_plugins/ios" ]; then
 	echo_header "*** Building platform plugins"
 	(pushd "platform_plugins/ios"
-		for plugin in fcuuid impact apn arkit camera icloud gamecenter inappstore photo_picker; do
+		for plugin in fcuuid impact apn arkit camera icloud gamecenter photo_picker; do
 			scons target=release_debug arch=arm64 simulator=no plugin=$plugin version=3.x
 		done
 	popd)

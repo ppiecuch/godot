@@ -112,13 +112,6 @@
 #include "fastnoise/noise.h"
 
 #if defined(OSX_ENABLED) || defined(UWP_ENABLED) || defined(IPHONE_ENABLED) || defined(ANDROID_ENABLED)
-#include "iap/ginappstore.h"
-#if defined(OSX_ENABLED) || defined(IPHONE_ENABLED)
-#include "iap/mac/gmacinapppurchasebackend.h"
-#endif
-#if defined(ANDROID_ENABLED)
-#include "iap/android/gandroidinapppurchasebackend.h"
-#endif
 #include "iap/gd_iap.h"
 #endif
 
@@ -220,14 +213,10 @@ void register_gdextensions_types() {
 #endif
 #ifdef GDEXT_IAP_ENABLED
 #if defined(OSX_ENABLED) || defined(UWP_ENABLED) || defined(IPHONE_ENABLED) || defined(ANDROID_ENABLED)
-#if defined(OSX_ENABLED) || defined(IPHONE_ENABLED)
-	ClassDB::register_virtual_class<GMacInAppPurchaseBackend>();
-#endif
-#if defined(ANDROID_ENABLED)
-	ClassDB::register_virtual_class<GAndroidInAppPurchaseBackend>();
-#endif
 	ClassDB::register_class<GdInAppStore>();
 	ClassDB::register_class<GdInAppStoreInstance>();
+
+	register_iap_platform();
 #endif
 #endif // GDEXT_IAP_ENABLED
 #ifdef GDEXT_SFXR_ENABLED
