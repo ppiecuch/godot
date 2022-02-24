@@ -5,10 +5,10 @@ set -e
 CROSS="/opt/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu/bin"
 CC="aarch64-linux-gnu-gcc"
 
-# update platform repository
-(cd platform/frt; git pull)
-
 if [ ! -e "$CROSS/$CC" ]; then
+
+	(cd platform/frt && git pull) # update platform repository
+
 	# toolchain not found - run docker image
 	if ! command -v docker &> /dev/null
 	then
@@ -41,7 +41,7 @@ elif [[ "$OSTYPE" == "linux"* ]]; then
 fi
 
 PATH=/usr/bin:/bin:/sbin:/usr/local/bin:$CROSS
-scons -j$CPU platform=frt frt_arch=odroid target=release disable_3d=true
+scons -j${CPU} platform=frt frt_arch=odroid target=release disable_3d=true
 
 mkdir -p bin/templates/frt
 mv -v bin/godot.frt.opt.aarch64.odroid bin/templates/frt/
