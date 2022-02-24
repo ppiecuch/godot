@@ -223,8 +223,8 @@ bool vertex_trimmer(Ref<Image> &image, vertex_trimmer_opt_t *opt) {
 
 	// Set up convex hulls
 	WorkPacket *packets = new WorkPacket[atlas_x * atlas_y];
-	for (int ay = 0; ay < atlas_y; ay++) {
-		for (int ax = 0; ax < atlas_x; ax++) {
+	for (unsigned ay = 0; ay < atlas_y; ay++) {
+		for (unsigned ax = 0; ax < atlas_x; ax++) {
 			ConvexHull &hull = packets[ay * atlas_x + ax].Hull;
 
 			const int start_x = ax * tile_w;
@@ -257,8 +257,8 @@ bool vertex_trimmer(Ref<Image> &image, vertex_trimmer_opt_t *opt) {
 			// Edge cases
 			const unsigned char *row = pixels + start_y * w;
 			for (int x = start_x; x < end_x; x++) {
-				const int c0 = row[x + 0];
-				const int c1 = row[x + 1];
+				const unsigned c0 = row[x + 0];
+				const unsigned c1 = row[x + 1];
 
 				if ((c0 > threshold) != (c1 > threshold)) {
 					const real_t d0 = c0;
@@ -271,8 +271,8 @@ bool vertex_trimmer(Ref<Image> &image, vertex_trimmer_opt_t *opt) {
 
 			row = pixels + end_y * w;
 			for (int x = start_x; x < end_x; x++) {
-				const int c0 = row[x + 0];
-				const int c1 = row[x + 1];
+				const unsigned c0 = row[x + 0];
+				const unsigned c1 = row[x + 1];
 
 				if ((c0 > threshold) != (c1 > threshold)) {
 					const real_t d0 = c0;
@@ -285,8 +285,8 @@ bool vertex_trimmer(Ref<Image> &image, vertex_trimmer_opt_t *opt) {
 
 			const unsigned char *col = pixels + start_x;
 			for (int y = start_y; y < end_y; y++) {
-				const int c0 = col[(y + 0) * w];
-				const int c1 = col[(y + 1) * w];
+				const unsigned c0 = col[(y + 0) * w];
+				const unsigned c1 = col[(y + 1) * w];
 
 				if ((c0 > threshold) != (c1 > threshold)) {
 					const real_t d0 = c0;
@@ -299,8 +299,8 @@ bool vertex_trimmer(Ref<Image> &image, vertex_trimmer_opt_t *opt) {
 
 			col = pixels + end_x;
 			for (int y = start_y; y < end_y; y++) {
-				const int c0 = col[(y + 0) * w];
-				const int c1 = col[(y + 1) * w];
+				const unsigned c0 = col[(y + 0) * w];
+				const unsigned c1 = col[(y + 1) * w];
 
 				if ((c0 > threshold) != (c1 > threshold)) {
 					const real_t d0 = c0;
@@ -317,10 +317,10 @@ bool vertex_trimmer(Ref<Image> &image, vertex_trimmer_opt_t *opt) {
 				const unsigned char *row1 = pixels + (y + 1) * w;
 
 				for (int x = start_x; x < end_x; x++) {
-					const int c00 = row0[x + 0];
-					const int c01 = row0[x + 1];
-					const int c10 = row1[x + 0];
-					const int c11 = row1[x + 1];
+					const unsigned c00 = row0[x + 0];
+					const unsigned c01 = row0[x + 1];
+					const unsigned c10 = row1[x + 0];
+					const unsigned c11 = row1[x + 1];
 
 					int count = 0;
 					if (c00 > threshold) {
@@ -382,7 +382,7 @@ bool vertex_trimmer(Ref<Image> &image, vertex_trimmer_opt_t *opt) {
 	}
 
 	// Do the heavy work
-	for (int n = 0; n < atlas_x * atlas_y; n++) {
+	for (unsigned n = 0; n < atlas_x * atlas_y; n++) {
 		WorkPacket &packet = packets[n];
 		const int count = packet.Hull.FindOptimalPolygon(packet.Polygon, vertex_count, &packet.Area);
 		packet.HullArea = packet.Hull.GetArea();
@@ -391,7 +391,7 @@ bool vertex_trimmer(Ref<Image> &image, vertex_trimmer_opt_t *opt) {
 			packet.Polygon[i] = packet.Polygon[i] * scale + bias;
 		}
 		// If fewer vertices were returned than asked for, just repeat the last vertex
-		for (int i = count; i < vertex_count; i++) {
+		for (unsigned i = count; i < vertex_count; i++) {
 			packet.Polygon[i] = packet.Polygon[count - 1];
 		}
 		// Optimize vertex ordering
@@ -500,13 +500,13 @@ bool ConvexHull::InsertPoint(const Point2 &point) {
 
 	CHNode *node = m_Root;
 
-	const Point2 &v0 = node->Prev->Point;
-	const Point2 &v1 = node->Point;
+	const Point2 &root_v0 = node->Prev->Point;
+	const Point2 &root_v1 = node->Point;
 
-	Point2 dir = v1 - v0;
-	Point2 nrm(-dir.y, dir.x);
+	Point2 root_dir = root_v1 - root_v0;
+	Point2 root_nrm(-root_dir.y, root_dir.x);
 
-	if (dot(point - v0, nrm) > 0) {
+	if (dot(point - root_v0, root_nrm) > 0) {
 		do {
 			node = node->Prev;
 			const Point2 &v0 = node->Prev->Point;
@@ -637,7 +637,7 @@ unsigned ConvexHull::FindOptimalPolygon(Point2 *dest, unsigned vertex_count, rea
 	CHNode *node = m_Root;
 
 	// Precompute lines
-	int n = 0;
+	unsigned n = 0;
 	do {
 		lines[n].v = node->Point;
 		lines[n].d = node->Next->Point - node->Point;
@@ -663,17 +663,17 @@ unsigned ConvexHull::FindOptimalPolygon(Point2 *dest, unsigned vertex_count, rea
 	// This can probably be made a lot prettier and generic
 	switch (vertex_count) {
 		case 3: {
-			for (int x = 0; x < n; x++) {
-				for (int y = x + 1; y < n; y++) {
+			for (unsigned x = 0; x < n; x++) {
+				for (unsigned y = x + 1; y < n; y++) {
 					if (Intersect(v0, lines[x], lines[y])) {
-						for (int z = y + 1; z < n; z++) {
+						for (unsigned z = y + 1; z < n; z++) {
 							if (Intersect(v1, lines[y], lines[z])) {
 								if (Intersect(v2, lines[z], lines[x])) {
 									Point2 u0 = v1 - v0;
 									Point2 u1 = v2 - v0;
-									const real_t area = (u0.y * u1.x - u0.x * u1.y);
-									if (area < min_area) {
-										min_area = area;
+									const real_t _area = (u0.y * u1.x - u0.x * u1.y);
+									if (_area < min_area) {
+										min_area = _area;
 										dest[0] = v0;
 										dest[1] = v1;
 										dest[2] = v2;
@@ -686,22 +686,22 @@ unsigned ConvexHull::FindOptimalPolygon(Point2 *dest, unsigned vertex_count, rea
 			}
 		} break;
 		case 4: {
-			for (int x = 0; x < n; x++) {
-				for (int y = x + 1; y < n; y++) {
+			for (unsigned x = 0; x < n; x++) {
+				for (unsigned y = x + 1; y < n; y++) {
 					if (Intersect(v0, lines[x], lines[y])) {
-						for (int z = y + 1; z < n; z++) {
+						for (unsigned z = y + 1; z < n; z++) {
 							if (Intersect(v1, lines[y], lines[z])) {
-								for (int w = z + 1; w < n; w++) {
+								for (unsigned w = z + 1; w < n; w++) {
 									if (Intersect(v2, lines[z], lines[w])) {
 										if (Intersect(v3, lines[w], lines[x])) {
 											Point2 u0 = v1 - v0;
 											Point2 u1 = v2 - v0;
 											Point2 u2 = v3 - v0;
-											const real_t area =
+											const real_t _area =
 													(u0.y * u1.x - u0.x * u1.y) +
 													(u1.y * u2.x - u1.x * u2.y);
-											if (area < min_area) {
-												min_area = area;
+											if (_area < min_area) {
+												min_area = _area;
 												dest[0] = v0;
 												dest[1] = v1;
 												dest[2] = v2;
@@ -717,26 +717,26 @@ unsigned ConvexHull::FindOptimalPolygon(Point2 *dest, unsigned vertex_count, rea
 			}
 		} break;
 		case 5: {
-			for (int x = 0; x < n; x++) {
-				for (int y = x + 1; y < n; y++) {
+			for (unsigned x = 0; x < n; x++) {
+				for (unsigned y = x + 1; y < n; y++) {
 					if (Intersect(v0, lines[x], lines[y])) {
-						for (int z = y + 1; z < n; z++) {
+						for (unsigned z = y + 1; z < n; z++) {
 							if (Intersect(v1, lines[y], lines[z])) {
-								for (int w = z + 1; w < n; w++) {
+								for (unsigned w = z + 1; w < n; w++) {
 									if (Intersect(v2, lines[z], lines[w])) {
-										for (int r = w + 1; r < n; r++) {
+										for (unsigned r = w + 1; r < n; r++) {
 											if (Intersect(v3, lines[w], lines[r])) {
 												if (Intersect(v4, lines[r], lines[x])) {
 													Point2 u0 = v1 - v0;
 													Point2 u1 = v2 - v0;
 													Point2 u2 = v3 - v0;
 													Point2 u3 = v4 - v0;
-													const real_t area =
+													const real_t _area =
 															(u0.y * u1.x - u0.x * u1.y) +
 															(u1.y * u2.x - u1.x * u2.y) +
 															(u2.y * u3.x - u2.x * u3.y);
-													if (area < min_area) {
-														min_area = area;
+													if (_area < min_area) {
+														min_area = _area;
 														dest[0] = v0;
 														dest[1] = v1;
 														dest[2] = v2;
@@ -755,16 +755,16 @@ unsigned ConvexHull::FindOptimalPolygon(Point2 *dest, unsigned vertex_count, rea
 			}
 		} break;
 		case 6: {
-			for (int x = 0; x < n; x++) {
-				for (int y = x + 1; y < n; y++) {
+			for (unsigned x = 0; x < n; x++) {
+				for (unsigned y = x + 1; y < n; y++) {
 					if (Intersect(v0, lines[x], lines[y])) {
-						for (int z = y + 1; z < n; z++) {
+						for (unsigned z = y + 1; z < n; z++) {
 							if (Intersect(v1, lines[y], lines[z])) {
-								for (int w = z + 1; w < n; w++) {
+								for (unsigned w = z + 1; w < n; w++) {
 									if (Intersect(v2, lines[z], lines[w])) {
-										for (int r = w + 1; r < n; r++) {
+										for (unsigned r = w + 1; r < n; r++) {
 											if (Intersect(v3, lines[w], lines[r])) {
-												for (int s = r + 1; s < n; s++) {
+												for (unsigned s = r + 1; s < n; s++) {
 													if (Intersect(v4, lines[r], lines[s])) {
 														if (Intersect(v5, lines[s], lines[x])) {
 															Point2 u0 = v1 - v0;
@@ -772,13 +772,13 @@ unsigned ConvexHull::FindOptimalPolygon(Point2 *dest, unsigned vertex_count, rea
 															Point2 u2 = v3 - v0;
 															Point2 u3 = v4 - v0;
 															Point2 u4 = v5 - v0;
-															const real_t area =
+															const real_t _area =
 																	(u0.y * u1.x - u0.x * u1.y) +
 																	(u1.y * u2.x - u1.x * u2.y) +
 																	(u2.y * u3.x - u2.x * u3.y) +
 																	(u3.y * u4.x - u3.x * u4.y);
-															if (area < min_area) {
-																min_area = area;
+															if (_area < min_area) {
+																min_area = _area;
 																dest[0] = v0;
 																dest[1] = v1;
 																dest[2] = v2;
@@ -800,18 +800,18 @@ unsigned ConvexHull::FindOptimalPolygon(Point2 *dest, unsigned vertex_count, rea
 			}
 		} break;
 		case 7: {
-			for (int x = 0; x < n; x++) {
-				for (int y = x + 1; y < n; y++) {
+			for (unsigned x = 0; x < n; x++) {
+				for (unsigned y = x + 1; y < n; y++) {
 					if (Intersect(v0, lines[x], lines[y])) {
-						for (int z = y + 1; z < n; z++) {
+						for (unsigned z = y + 1; z < n; z++) {
 							if (Intersect(v1, lines[y], lines[z])) {
-								for (int w = z + 1; w < n; w++) {
+								for (unsigned w = z + 1; w < n; w++) {
 									if (Intersect(v2, lines[z], lines[w])) {
-										for (int r = w + 1; r < n; r++) {
+										for (unsigned r = w + 1; r < n; r++) {
 											if (Intersect(v3, lines[w], lines[r])) {
-												for (int s = r + 1; s < n; s++) {
+												for (unsigned s = r + 1; s < n; s++) {
 													if (Intersect(v4, lines[r], lines[s])) {
-														for (int t = s + 1; t < n; t++) {
+														for (unsigned t = s + 1; t < n; t++) {
 															if (Intersect(v5, lines[s], lines[t])) {
 																if (Intersect(v6, lines[t], lines[x])) {
 																	Point2 u0 = v1 - v0;
@@ -820,14 +820,14 @@ unsigned ConvexHull::FindOptimalPolygon(Point2 *dest, unsigned vertex_count, rea
 																	Point2 u3 = v4 - v0;
 																	Point2 u4 = v5 - v0;
 																	Point2 u5 = v6 - v0;
-																	const real_t area =
+																	const real_t _area =
 																			(u0.y * u1.x - u0.x * u1.y) +
 																			(u1.y * u2.x - u1.x * u2.y) +
 																			(u2.y * u3.x - u2.x * u3.y) +
 																			(u3.y * u4.x - u3.x * u4.y) +
 																			(u4.y * u5.x - u4.x * u5.y);
-																	if (area < min_area) {
-																		min_area = area;
+																	if (_area < min_area) {
+																		min_area = _area;
 																		dest[0] = v0;
 																		dest[1] = v1;
 																		dest[2] = v2;
@@ -852,20 +852,20 @@ unsigned ConvexHull::FindOptimalPolygon(Point2 *dest, unsigned vertex_count, rea
 			}
 		} break;
 		case 8: {
-			for (int x = 0; x < n; x++) {
-				for (int y = x + 1; y < n; y++) {
+			for (unsigned x = 0; x < n; x++) {
+				for (unsigned y = x + 1; y < n; y++) {
 					if (Intersect(v0, lines[x], lines[y])) {
-						for (int z = y + 1; z < n; z++) {
+						for (unsigned z = y + 1; z < n; z++) {
 							if (Intersect(v1, lines[y], lines[z])) {
-								for (int w = z + 1; w < n; w++) {
+								for (unsigned w = z + 1; w < n; w++) {
 									if (Intersect(v2, lines[z], lines[w])) {
-										for (int r = w + 1; r < n; r++) {
+										for (unsigned r = w + 1; r < n; r++) {
 											if (Intersect(v3, lines[w], lines[r])) {
-												for (int s = r + 1; s < n; s++) {
+												for (unsigned s = r + 1; s < n; s++) {
 													if (Intersect(v4, lines[r], lines[s])) {
-														for (int t = s + 1; t < n; t++) {
+														for (unsigned t = s + 1; t < n; t++) {
 															if (Intersect(v5, lines[s], lines[t])) {
-																for (int u = t + 1; u < n; u++) {
+																for (unsigned u = t + 1; u < n; u++) {
 																	if (Intersect(v6, lines[t], lines[u])) {
 																		if (Intersect(v7, lines[u], lines[x])) {
 																			Point2 u0 = v1 - v0;
@@ -875,15 +875,15 @@ unsigned ConvexHull::FindOptimalPolygon(Point2 *dest, unsigned vertex_count, rea
 																			Point2 u4 = v5 - v0;
 																			Point2 u5 = v6 - v0;
 																			Point2 u6 = v7 - v0;
-																			const real_t area =
+																			const real_t _area =
 																					(u0.y * u1.x - u0.x * u1.y) +
 																					(u1.y * u2.x - u1.x * u2.y) +
 																					(u2.y * u3.x - u2.x * u3.y) +
 																					(u3.y * u4.x - u3.x * u4.y) +
 																					(u4.y * u5.x - u4.x * u5.y) +
 																					(u5.y * u6.x - u5.x * u6.y);
-																			if (area < min_area) {
-																				min_area = area;
+																			if (_area < min_area) {
+																				min_area = _area;
 																				dest[0] = v0;
 																				dest[1] = v1;
 																				dest[2] = v2;

@@ -2,6 +2,22 @@
 
 set -e
 
+CPU=2
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+	CPU=$(sysctl -n hw.physicalcpu)
+elif [[ "$OSTYPE" == "linux"* ]]; then
+	CPU=$(nproc)
+fi
+
+echo_header() {
+	if [[ "$TERM" =~ "xterm" ]]; then
+		printf "\e[1;4m$1\e[0m\n"
+	else
+		printf "[$1]\n"
+	fi
+}
+
 if [ $(uname) == "Darwin" ]; then
 	# toolchain not found - run docker image
 	if ! command -v docker &> /dev/null
@@ -27,6 +43,13 @@ if [ $(uname) == "Darwin" ]; then
 fi
 
 PATH=/usr/bin:/bin:/sbin:/usr/local/bin
-scons -j2 p=server target=release tools=no
 
+mkdir -p bin/templates
+
+echo_header "*** Building server/release engine for Linux ..."
+scons -j${CPU} p=server target=release tools=no
 mv -v bin/godot_server.x11.opt.64 bin/templates/
+
+echo_header "*** Building template/release engine for Linux ..."
+scons -j${CPU} p=linux target=release tools=no
+mv -v bin/godot.x11.opt.64 bin/templates/
