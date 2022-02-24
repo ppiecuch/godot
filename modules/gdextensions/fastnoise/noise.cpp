@@ -3,10 +3,10 @@
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
-/*                    http://www.godotengine.org                         */
+/*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2016 Juan Linietsky, Ariel Manzur.                 */
-/* This file is (c) 2016 Marc Gilleron <moc.liamg@norellig.cram>         */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -30,19 +30,17 @@
 
 #include "noise.h"
 
-
-FastNoise::FastNoise() : Reference() {
-    
+FastNoise::FastNoise() :
+		Reference() {
 }
 
 void FastNoise::set_cellular_noise_lookup(Ref<FastNoise> other_noise) {
+	_cellular_lookup_ref = other_noise;
 
-    _cellular_lookup_ref = other_noise;
-
-    if (_cellular_lookup_ref.is_null())
-        _noise.SetCellularNoiseLookup(NULL);
-    else
-        _noise.SetCellularNoiseLookup(&_cellular_lookup_ref->_noise);
+	if (_cellular_lookup_ref.is_null())
+		_noise.SetCellularNoiseLookup(NULL);
+	else
+		_noise.SetCellularNoiseLookup(&_cellular_lookup_ref->_noise);
 }
 
 void FastNoise::set_cellular_distance_2_indices(int index0, int index1) {
@@ -59,7 +57,6 @@ PoolIntArray FastNoise::get_cellular_distance_2_indices() const {
 }
 
 void FastNoise::_bind_methods() {
-    
 	ClassDB::bind_method(D_METHOD("set_seed", "seed"), &FastNoise::set_seed);
 	ClassDB::bind_method(D_METHOD("get_seed"), &FastNoise::get_seed);
 
@@ -108,41 +105,37 @@ void FastNoise::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_noise_3dv", "pos"), &FastNoise::get_noise_3dv);
 	ClassDB::bind_method(D_METHOD("get_simplex_4d", "x", "y", "z", "w"), &FastNoise::get_simplex_4d);
 	ClassDB::bind_method(D_METHOD("get_white_noise_4d", "x", "y", "z", "w"), &FastNoise::get_white_noise_4d);
-    // TODO Bind intermediary functions?
+	// TODO Bind intermediary functions?
 
-	BIND_ENUM_CONSTANT( TYPE_VALUE );
-	BIND_ENUM_CONSTANT( TYPE_VALUE_FRACTAL );
-	BIND_ENUM_CONSTANT( TYPE_PERLIN );
-	BIND_ENUM_CONSTANT( TYPE_PERLIN_FRACTAL );
-	BIND_ENUM_CONSTANT( TYPE_SIMPLEX );
-	BIND_ENUM_CONSTANT( TYPE_SIMPLEX_FRACTAL );
-	BIND_ENUM_CONSTANT( TYPE_CELLULAR );
-	BIND_ENUM_CONSTANT( TYPE_WHITE_NOISE );
-	BIND_ENUM_CONSTANT( TYPE_CUBIC );
-	BIND_ENUM_CONSTANT( TYPE_CUBIC_FRACTAL );
+	BIND_ENUM_CONSTANT(TYPE_VALUE);
+	BIND_ENUM_CONSTANT(TYPE_VALUE_FRACTAL);
+	BIND_ENUM_CONSTANT(TYPE_PERLIN);
+	BIND_ENUM_CONSTANT(TYPE_PERLIN_FRACTAL);
+	BIND_ENUM_CONSTANT(TYPE_SIMPLEX);
+	BIND_ENUM_CONSTANT(TYPE_SIMPLEX_FRACTAL);
+	BIND_ENUM_CONSTANT(TYPE_CELLULAR);
+	BIND_ENUM_CONSTANT(TYPE_WHITE_NOISE);
+	BIND_ENUM_CONSTANT(TYPE_CUBIC);
+	BIND_ENUM_CONSTANT(TYPE_CUBIC_FRACTAL);
 
-	BIND_ENUM_CONSTANT( INTERP_LINEAR );
-	BIND_ENUM_CONSTANT( INTERP_QUINTIC );
-	BIND_ENUM_CONSTANT( INTERP_HERMITE );
+	BIND_ENUM_CONSTANT(INTERP_LINEAR);
+	BIND_ENUM_CONSTANT(INTERP_QUINTIC);
+	BIND_ENUM_CONSTANT(INTERP_HERMITE);
 
-	BIND_ENUM_CONSTANT( FRACTAL_FBM );
-	BIND_ENUM_CONSTANT( FRACTAL_BILLOW );
-	BIND_ENUM_CONSTANT( FRACTAL_RIGID_MULTI );
+	BIND_ENUM_CONSTANT(FRACTAL_FBM);
+	BIND_ENUM_CONSTANT(FRACTAL_BILLOW);
+	BIND_ENUM_CONSTANT(FRACTAL_RIGID_MULTI);
 
-	BIND_ENUM_CONSTANT( DISTANCE_EUCLIDEAN );
-	BIND_ENUM_CONSTANT( DISTANCE_MANHATTAN );
-	BIND_ENUM_CONSTANT( DISTANCE_NATURAL );
+	BIND_ENUM_CONSTANT(DISTANCE_EUCLIDEAN);
+	BIND_ENUM_CONSTANT(DISTANCE_MANHATTAN);
+	BIND_ENUM_CONSTANT(DISTANCE_NATURAL);
 
-	BIND_ENUM_CONSTANT( RETURN_CELL_VALUE );
-	BIND_ENUM_CONSTANT( RETURN_NOISE_LOOKUP );
-	BIND_ENUM_CONSTANT( RETURN_DISTANCE );
-	BIND_ENUM_CONSTANT( RETURN_DISTANCE_2 );
-	BIND_ENUM_CONSTANT( RETURN_DISTANCE_2_ADD );
-	BIND_ENUM_CONSTANT( RETURN_DISTANCE_2_SUB );
-	BIND_ENUM_CONSTANT( RETURN_DISTANCE_2_MUL );
-	BIND_ENUM_CONSTANT( RETURN_DISTANCE_2_DIV );
-
+	BIND_ENUM_CONSTANT(RETURN_CELL_VALUE);
+	BIND_ENUM_CONSTANT(RETURN_NOISE_LOOKUP);
+	BIND_ENUM_CONSTANT(RETURN_DISTANCE);
+	BIND_ENUM_CONSTANT(RETURN_DISTANCE_2);
+	BIND_ENUM_CONSTANT(RETURN_DISTANCE_2_ADD);
+	BIND_ENUM_CONSTANT(RETURN_DISTANCE_2_SUB);
+	BIND_ENUM_CONSTANT(RETURN_DISTANCE_2_MUL);
+	BIND_ENUM_CONSTANT(RETURN_DISTANCE_2_DIV);
 }
-
-
-

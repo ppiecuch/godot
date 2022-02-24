@@ -1,6 +1,6 @@
 ## Random Godot Engine modules/extensions
 
-My own, copied, copied and ported to **Godot3** modules.
+My own, found or ported to **Godot3** modules.
 
 ### Extensions:
  * animation_manager.cpp
@@ -10,6 +10,8 @@ My own, copied, copied and ported to **Godot3** modules.
  * phantom.cpp
  * timer2.cpp
  * tween2.cpp
+
+and many more - they are groupped in subdirectories and can be individually enabled/disabled using ```enable_gdextensions_submodules``` cli parameters (see: ```config.py```). Some code might be private (and encrypted) - just remove them or exclude from building.
 
 ### Reference
  - https://github.com/mjholtzem/Unity-2D-Destruction.git

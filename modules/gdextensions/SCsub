@@ -18,7 +18,7 @@ def is_enabled(m):
         if not mod in env["enable_gdextensions_submodules"]:
             return False
     env_module.Append(CPPDEFINES=["GDEXT_%s_ENABLED" % mod.upper()])
-    print("(GDextensions) Enabling submodule iap")
+    print("(GDextensions) Enabling submodule %s" % m)
     return True
 
 env_module = env_modules.Clone()
