@@ -607,8 +607,9 @@ void PortalOcclusionCuller::whittle_polys() {
 						//print_line("poly is occluded " + itos(t));
 
 						// this condition should never happen, we should never be checking occludee against itself
+#ifdef TOOLS_ENABLED
 						DEV_ASSERT(_polys[t].poly_source_id != _polys[n].poly_source_id);
-
+#endif
 						// unordered remove
 						_polys[t] = _polys[_num_polys - 1];
 						_precalced_poly[t] = _precalced_poly[_num_polys - 1];
