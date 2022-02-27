@@ -13,13 +13,14 @@ ext=" \
 
 for m in \
 	gd_cpython gd_luascript \
-	gd_distrand gd_behavior_tree \
 	gd_sqlite gd_unqlite \
 	gd_chipmunk gd_liquidfun \
 	gd_spine gd_dragonbones \
-	gd_vector_graphics gd_polyvector gd_bullet_hell \
-	gd_raknet gd_enet gd_thread_pool \
-	gd_goost gd_texture_packer; do
+	gd_vector_graphics gd_polyvector \
+	gd_behavior_tree gd_bullet_hell \
+	gd_raknet gd_enet \
+	gd_thread_pool gd_texture_packer \
+	gd_goosty; do
 	echo "+--"
     echo "| checking module: $m"
     echo "+--"
