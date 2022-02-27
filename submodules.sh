@@ -12,6 +12,7 @@ ext=" \
 "
 
 for m in \
+	gd_cpython gd_luascript \
 	gd_distrand gd_behavior_tree \
 	gd_sqlite gd_unqlite \
 	gd_chipmunk gd_liquidfun \
