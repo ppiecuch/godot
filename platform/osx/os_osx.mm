@@ -1783,8 +1783,6 @@ int OS_OSX::get_current_video_driver() const {
 
 Error OS_OSX::initialize(const VideoMode &p_desired, int p_video_driver, int p_audio_driver) {
 	/*** OSX INITIALIZATION ***/
-	/*** OSX INITIALIZATION ***/
-	/*** OSX INITIALIZATION ***/
 
 	keyboard_layout_dirty = true;
 	displays_arrangement_dirty = true;

@@ -3022,6 +3022,17 @@ Vector<Variant> varray(const Variant &p_arg1, const Variant &p_arg2, const Varia
 	return v;
 }
 
+Vector<Variant> varray(const Variant &p_arg1, const Variant &p_arg2, const Variant &p_arg3, const Variant &p_arg4, const Variant &p_arg5, const Variant &p_arg6) {
+	Vector<Variant> v;
+	v.push_back(p_arg1);
+	v.push_back(p_arg2);
+	v.push_back(p_arg3);
+	v.push_back(p_arg4);
+	v.push_back(p_arg5);
+	v.push_back(p_arg6);
+	return v;
+}
+
 Array array() {
 	return Array();
 }
@@ -3060,6 +3071,17 @@ Array array(const Variant &p_arg1, const Variant &p_arg2, const Variant &p_arg3,
 	v.append(p_arg3);
 	v.append(p_arg4);
 	v.append(p_arg5);
+	return v;
+}
+
+Array array(const Variant &p_arg1, const Variant &p_arg2, const Variant &p_arg3, const Variant &p_arg4, const Variant &p_arg5, const Variant &p_arg6) {
+	Array v;
+	v.append(p_arg1);
+	v.append(p_arg2);
+	v.append(p_arg3);
+	v.append(p_arg4);
+	v.append(p_arg5);
+	v.append(p_arg6);
 	return v;
 }
 

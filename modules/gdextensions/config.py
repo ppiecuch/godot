@@ -13,6 +13,7 @@ def configure(env):
         "bulletkit",
         "visual",
         "environment",
+        "fastnoise",
         "smooth",
         "debugdraw",
         "statemachine",
@@ -21,6 +22,7 @@ def configure(env):
         "settings",
         "sfxr",
         "vgamepad",
+        "iap",
         "landiscovery",
     ]
     opts = Variables()

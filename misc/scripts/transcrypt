@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
-set -euo pipefail
+
+case "$BASH_VERSION" in 
+	*win-bash*) set -eu ;;
+	*) set -euo pipefail ;;
+esac
 
 #
 # transcrypt - https://github.com/elasticdog/transcrypt

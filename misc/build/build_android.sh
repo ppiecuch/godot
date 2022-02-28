@@ -2,6 +2,11 @@
 
 set -e
 
+if ! command -v scons &> /dev/null
+then
+	export PATH=$PATH:/opt/local/bin
+fi
+
 # Config
 # ------
 
@@ -18,19 +23,30 @@ export ANDROID_NDK_ROOT=$HOME/Library/Android/ndk
 
 export SCONS="scons -j$CPU verbose=yes warnings=no progress=no"
 export OPTIONS="debug_symbols=no debug_experimental=no"
-export TERM=xterm
 
 # Utilities
 # ---------
 
 echo_header() {
-	printf "\e[1;4m$1\e[0m\n"
-}
-echo_bold() {
-	printf "\e[1m$1\e[0m\n"
+	if [[ "$TERM" =~ "xterm" ]]; then
+		printf "\e[1;4m$1\e[0m\n"
+	else
+		printf "[$1]\n"
+	fi
 }
 echo_success() {
-	printf "\e[1;4;32m$1\e[0m\n"
+	if [[ "$TERM" =~ "xterm" ]]; then
+		printf "\e[1;4;32m$1\e[0m\n"
+	else
+		printf "*** $1\n"
+	fi
+}
+echo_bold() {
+	if [[ "$TERM" =~ "xterm" ]]; then
+		printf "\e[1m$1\e[0m\n"
+	else
+		printf "** $1 **\n"
+	fi
 }
 
 export -f echo_header
@@ -92,7 +108,9 @@ if [ "$cmd" != "skip_plugins" ]; then
 			fi
 			(pushd "platform_plugins/android"
 				for plugin in godot-direct godot-google-play-billing godot-bluetooth godot-device-info; do
-				(if [ -d $plugin ]; then
+				(if [[ $plugin == -* ]]; then
+					echo_bold "*** Skipping plugin: $plugin"
+				elif [ -d $plugin ]; then
 					echo_bold "Building  plugin: $plugin"
 					pushd $plugin
 					if [ -e gd_build_plugin.sh ]; then

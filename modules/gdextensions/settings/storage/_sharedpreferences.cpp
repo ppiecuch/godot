@@ -49,6 +49,7 @@ static _FORCE_INLINE_ GodotJavaWrapper *_get_gd_java() {
 	if (OS_Android *os = (OS_Android *)OS::get_singleton()) {
 		return os->get_godot_java();
 	}
+	WARN_PRINT("GodotJavaWrapper not found");
 	return nullptr;
 }
 

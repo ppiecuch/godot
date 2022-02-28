@@ -31,6 +31,7 @@
 package org.godotengine.godot;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.hardware.SensorEvent;
 
 import javax.microedition.khronos.opengles.GL10;
@@ -217,4 +218,10 @@ public class GodotLib {
 	 * @see GodotRenderer#onActivityPaused()
 	 */
 	public static native void onRendererPaused();
+
+	/**
+	 * Deliver Activity result to registered listeners.
+	 * @see Activity#onMainActivityResult()
+	 */
+	public static native void onMainActivityResult(int requestCode, int resultCode, Intent data);
 }

@@ -1,18 +1,35 @@
 #!/bin/bash
 
-#!/bin/bash
-
 set -e
 
+if ! command -v scons &> /dev/null
+then
+	export PATH=$PATH:/opt/local/bin
+fi
 
 # Utilities
 # ---------
 
 echo_header() {
-	printf "\e[1;4m$1\e[0m\n"
+	if [[ "$TERM" =~ "xterm" ]]; then
+		printf "\e[1;4m$1\e[0m\n"
+	else
+		printf "[$1]\n"
+	fi
 }
 echo_success() {
-	printf "\e[1;4;32m$1\e[0m\n"
+	if [[ "$TERM" =~ "xterm" ]]; then
+		printf "\e[1;4;32m$1\e[0m\n"
+	else
+		printf "*** $1\n"
+	fi
+}
+echo_bold() {
+	if [[ "$TERM" =~ "xterm" ]]; then
+		printf "\e[1m$1\e[0m\n"
+	else
+		printf "** $1 **\n"
+	fi
 }
 
 export -f echo_header
@@ -52,7 +69,7 @@ rm -v \
 if [ -d "platform_plugins/ios" ]; then
 	echo_header "*** Building platform plugins"
 	(pushd "platform_plugins/ios"
-		for plugin in fcuuid impact apn arkit camera icloud gamecenter inappstore photo_picker; do
+		for plugin in fcuuid impact apn arkit camera icloud gamecenter photo_picker; do
 			scons target=release_debug arch=arm64 simulator=no plugin=$plugin version=3.x
 		done
 	popd)
