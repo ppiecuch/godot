@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-case "$BASH_VERSION" in 
+case "$BASH_VERSION" in
 	*win-bash*) set -eu ;;
 	*) set -euo pipefail ;;
 esac
