@@ -10,7 +10,9 @@ is_clang_or_gcc = (
     ("gcc" in os.path.basename(env["CC"])) or ("clang" in os.path.basename(env["CC"])) or ("osxcross" in env)
 )
 
+
 sub_enabled = []
+
 def is_enabled(m):
     mod = os.path.dirname(m) if os.path.dirname(m) else m
     if "enable_gdextensions_submodules" in env:
@@ -22,6 +24,7 @@ def is_enabled(m):
     if m not in sub_enabled:
         sub_enabled.append(m)
     return True
+
 
 env_module = env_modules.Clone()
 
