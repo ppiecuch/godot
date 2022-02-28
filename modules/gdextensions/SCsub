@@ -13,6 +13,7 @@ is_clang_or_gcc = (
 
 sub_enabled = []
 
+
 def is_enabled(m):
     mod = os.path.dirname(m) if os.path.dirname(m) else m
     if "enable_gdextensions_submodules" in env:
