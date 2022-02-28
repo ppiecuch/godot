@@ -53,7 +53,14 @@ bool stress_rng_on_unit_circle() {
 	real_t start = OS::get_singleton()->get_system_time_secs();
 	printf("randv_circle stress test (100000)\n");
 	for (int i = 0; i < 100000; ++i) {
+#ifdef __GNUC__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-result"
+#endif
 		rng->randv_circle();
+#ifdef __GNUC__
+#pragma clang diagnostic pop
+#endif
 	}
 	real_t stop = OS::get_singleton()->get_system_time_secs();
 	printf("  .. %0.f/call\n", stop - start);
