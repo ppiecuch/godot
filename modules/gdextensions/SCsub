@@ -10,6 +10,7 @@ is_clang_or_gcc = (
     ("gcc" in os.path.basename(env["CC"])) or ("clang" in os.path.basename(env["CC"])) or ("osxcross" in env)
 )
 
+sub_enabled = []
 def is_enabled(m):
     mod = os.path.dirname(m) if os.path.dirname(m) else m
     if "enable_gdextensions_submodules" in env:
@@ -18,7 +19,8 @@ def is_enabled(m):
         if not mod in env["enable_gdextensions_submodules"]:
             return False
     env_module.Append(CPPDEFINES=["GDEXT_%s_ENABLED" % mod.upper()])
-    print("(GDextensions) Enabling submodule %s" % m)
+    if m not in sub_enabled:
+        sub_enabled.append(m)
     return True
 
 env_module = env_modules.Clone()
@@ -102,3 +104,6 @@ env_module.Append(CPPDEFINES=["GD_CQUEUE", "GD_GODOT_ENET", "GD_NO_UNUSED_FUNCTI
 lib = env_module.Library("gdextensions", thirdparty_sources + sources)
 # Add the library as a dependency of the final executable
 env.Prepend(LIBS=[lib])
+
+if sub_enabled:
+    print("(GDextensions) Enabling submodules: %s" % sorted(sub_enabled))
