@@ -11,6 +11,7 @@ def configure(env):
     modules = [
         "core",
         "bulletkit",
+        "blitter",
         "visual",
         "environment",
         "fastnoise",
