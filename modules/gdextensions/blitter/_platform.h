@@ -67,19 +67,18 @@
 #endif
 #if defined(ANDROID) || defined(__ANDROID__)
 #undef __ANDROID__
-#undef __LINUX__ /* do we need to do this? */
+#undef __LINUX__ // do we need to do this?
 #define __ANDROID__ 1
 #endif
 
 #if defined(__APPLE__)
-/* lets us know what version of Mac OS X we're compiling on */
+// lets us know what version of Mac OS X we're compiling on
 #include "AvailabilityMacros.h"
 #include "TargetConditionals.h"
 
-/* Fix building with older SDKs that don't define these
-   See this for more information:
-   https://stackoverflow.com/questions/12132933/preprocessor-macro-for-os-x-targets
-*/
+// Fix building with older SDKs that don't define these
+// See this for more information:
+// https://stackoverflow.com/questions/12132933/preprocessor-macro-for-os-x-targets
 #ifndef TARGET_OS_MACCATALYST
 #define TARGET_OS_MACCATALYST 0
 #endif
@@ -101,19 +100,19 @@
 #define __TVOS__ 1
 #endif
 #if TARGET_OS_IPHONE
-/* if compiling for iOS */
+// if compiling for iOS
 #undef __IPHONEOS__
 #define __IPHONEOS__ 1
 #undef __MACOSX__
 #else
-/* if not compiling for iOS */
+// if not compiling for iOS
 #undef __MACOSX__
 #define __MACOSX__ 1
 #if MAC_OS_X_VERSION_MIN_REQUIRED < 1060
 #error SDL for Mac OS X only supports deploying on 10.6 and above.
-#endif /* MAC_OS_X_VERSION_MIN_REQUIRED < 1060 */
-#endif /* TARGET_OS_IPHONE */
-#endif /* defined(__APPLE__) */
+#endif // MAC_OS_X_VERSION_MIN_REQUIRED < 1060
+#endif // TARGET_OS_IPHONE
+#endif // defined(__APPLE__)
 
 #if defined(__NetBSD__)
 #undef __NETBSD__
@@ -145,7 +144,7 @@
 #endif
 
 #if defined(WIN32) || defined(_WIN32) || defined(__CYGWIN__) || defined(__MINGW32__)
-/* Try to find out if we're compiling for WinRT or non-WinRT */
+// Try to find out if we're compiling for WinRT or non-WinRT
 #if defined(_MSC_VER) && defined(__has_include)
 #if __has_include(<winapifamily.h>)
 #define HAVE_WINAPIFAMILY_H 1
@@ -153,8 +152,8 @@
 #define HAVE_WINAPIFAMILY_H 0
 #endif
 
-/* If _USING_V110_SDK71_ is defined it means we are using the Windows XP toolset. */
-#elif defined(_MSC_VER) && (_MSC_VER >= 1700 && !_USING_V110_SDK71_) /* _MSC_VER == 1700 for Visual Studio 2012 */
+// If _USING_V110_SDK71_ is defined it means we are using the Windows XP toolset.
+#elif defined(_MSC_VER) && (_MSC_VER >= 1700 && !_USING_V110_SDK71_) // _MSC_VER == 1700 for Visual Studio 2012
 #define HAVE_WINAPIFAMILY_H 1
 #else
 #define HAVE_WINAPIFAMILY_H 0
@@ -165,7 +164,7 @@
 #define WINAPI_FAMILY_WINRT (!WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) && WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP))
 #else
 #define WINAPI_FAMILY_WINRT 0
-#endif /* HAVE_WINAPIFAMILY_H */
+#endif // HAVE_WINAPIFAMILY_H
 
 #if WINAPI_FAMILY_WINRT
 #undef __WINRT__
@@ -174,7 +173,7 @@
 #undef __WINDOWS__
 #define __WINDOWS__ 1
 #endif
-#endif /* defined(WIN32) || defined(_WIN32) || defined(__CYGWIN__) */
+#endif // defined(WIN32) || defined(_WIN32) || defined(__CYGWIN__)
 
 #if defined(__WINDOWS__)
 #undef __WIN32__
@@ -185,9 +184,8 @@
 #define __PSP__ 1
 #endif
 
-/* The NACL compiler defines __native_client__ and __pnacl__
- * Ref: http://www.chromium.org/nativeclient/pnacl/stability-of-the-pnacl-bitcode-abi
- */
+// The NACL compiler defines __native_client__ and __pnacl__
+// Ref: http://www.chromium.org/nativeclient/pnacl/stability-of-the-pnacl-bitcode-abi
 #if defined(__native_client__)
 #undef __LINUX__
 #undef __NACL__
@@ -197,7 +195,7 @@
 #undef __LINUX__
 #undef __PNACL__
 #define __PNACL__ 1
-/* PNACL with newlib supports static linking only */
+// PNACL with newlib supports static linking only
 #define __SDL_NOGETPROCADDR__
 #endif
 
@@ -205,7 +203,7 @@
 #define __VITA__ 1
 #endif
 
-/* CPU architecture */
+// CPU architecture
 #if defined(__x86_64__) || defined(_M_X64)
 #define CPU_X86_64
 #define CPU_X86
