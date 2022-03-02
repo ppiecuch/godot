@@ -91,9 +91,9 @@ public:
 					}
 				} else {
 					if (invert_alpha) {
-						src_pixel.a = 0.0f;
+						src_pixel.a = 0.0;
 					} else {
-						src_pixel.a = 1.0f;
+						src_pixel.a = 1.0;
 					}
 					ret->set_pixel(p_dest_point.x + j, p_dest_point.y + i, src_pixel);
 				}
@@ -112,7 +112,7 @@ protected:
 	static void _bind_methods();
 
 public:
-	static Blitter *get_singleton();
+	static Blitter *get_singleton() { return singleton; }
 
 	Rect2 calculate_new_rect_from_mins_max(const Vector2 &p_base_size, const Vector2 &p_mins, const Vector2 &p_max);
 	Vector2 calculate_new_size_from_mins_max(const Vector2 &p_base_size, const Vector2 &p_mins, const Vector2 &p_max);
@@ -121,4 +121,5 @@ public:
 	Ref<Image> blit_rect_modulate_inverted_alpha_translucent(const Ref<Image> p_src, const Rect2 &p_src_rect, const Ref<Image> p_dest, const Point2 &p_dest_point, const Color &p_modulate);
 
 	Blitter();
+	~Blitter();
 };

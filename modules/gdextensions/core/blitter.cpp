@@ -40,10 +40,6 @@ void Blitter::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("blit_rect_modulate_inverted_alpha_translucent", "p_src:Image", "p_src_rect", "p_dest_point", "p_modulate"), &Blitter::blit_rect_modulate_inverted_alpha_translucent);
 }
 
-Blitter *Blitter::get_singleton() {
-	return singleton;
-}
-
 Rect2 Blitter::calculate_new_rect_from_mins_max(const Vector2 &p_base_size, const Vector2 &p_mins, const Vector2 &p_max) {
 	return BlitterOps::calculate_new_rect_from_mins_max(p_base_size, p_mins, p_max);
 }
@@ -66,4 +62,8 @@ Ref<Image> Blitter::blit_rect_modulate_inverted_alpha_translucent(const Ref<Imag
 
 Blitter::Blitter() {
 	singleton = this;
+}
+
+Blitter::~Blitter() {
+	singleton = nullptr;
 }
