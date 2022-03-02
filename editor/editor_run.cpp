@@ -49,6 +49,10 @@ Error EditorRun::run(const String &p_scene, const String &p_custom_args, const L
 
 	String resource_path = ProjectSettings::get_singleton()->get_resource_path();
 
+	if (OS::get_singleton()->is_stdout_verbose()) {
+		args.push_back("--verbose");
+	}
+
 	if (resource_path != "") {
 		args.push_back("--path");
 		args.push_back(resource_path.replace(" ", "%20"));
