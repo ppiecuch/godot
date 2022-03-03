@@ -16,5 +16,5 @@ thirdparty/* linguist-vendored
 *.png binary
 *.ttf binary
 
-modules/gdextensions/environment/spider_anim/spider.cpp filter=crypt diff=crypt merge=crypt
-modules/gdextensions/iap/** filter=crypt diff=crypt merge=crypt
+modules/gdextensions/submodules/environment/spider_anim/spider.cpp filter=crypt diff=crypt merge=crypt
+modules/gdextensions/submodules/iap/** filter=crypt diff=crypt merge=crypt
