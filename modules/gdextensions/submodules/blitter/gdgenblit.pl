@@ -337,7 +337,7 @@ sub output_copyfunc
 
     my $dst_has_alpha = ($dst =~ /A/) ? 1 : 0;
     my $ignore_dst_alpha = !$dst_has_alpha && !$blend;
-    
+
     my $src_has_alpha = ($src =~ /A/) ? 1 : 0;
 
     my $is_modulateA_done = 0;
