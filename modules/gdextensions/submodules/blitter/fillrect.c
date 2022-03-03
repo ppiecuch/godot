@@ -34,7 +34,6 @@
 #include "blit.h"
 
 #ifdef __SSE__
-/* *INDENT-OFF* */
 
 #if defined(_MSC_VER) && !defined(__clang__)
 #define SSE_BEGIN             \
@@ -257,66 +256,22 @@ int SDL_FillRect(SDL_Surface *dst, const SDL_Rect *rect, Uint32 color) {
 	return SDL_FillRects(dst, rect, 1, color);
 }
 
-#if SDL_ARM_NEON_BLITTERS
-void FillRect8ARMNEONAsm(int32_t w, int32_t h, uint8_t *dst, int32_t dst_stride, uint8_t src);
-void FillRect16ARMNEONAsm(int32_t w, int32_t h, uint16_t *dst, int32_t dst_stride, uint16_t src);
-void FillRect32ARMNEONAsm(int32_t w, int32_t h, uint32_t *dst, int32_t dst_stride, uint32_t src);
-
-static void fill_8_neon(Uint8 *pixels, int pitch, Uint32 color, int w, int h) {
-	FillRect8ARMNEONAsm(w, h, (uint8_t *)pixels, pitch >> 0, color);
-	return;
-}
-
-static void fill_16_neon(Uint8 *pixels, int pitch, Uint32 color, int w, int h) {
-	FillRect16ARMNEONAsm(w, h, (uint16_t *)pixels, pitch >> 1, color);
-	return;
-}
-
-static void fill_32_neon(Uint8 *pixels, int pitch, Uint32 color, int w, int h) {
-	FillRect32ARMNEONAsm(w, h, (uint32_t *)pixels, pitch >> 2, color);
-	return;
-}
-#endif
-
-#if SDL_ARM_SIMD_BLITTERS
-void FillRect8ARMSIMDAsm(int32_t w, int32_t h, uint8_t *dst, int32_t dst_stride, uint8_t src);
-void FillRect16ARMSIMDAsm(int32_t w, int32_t h, uint16_t *dst, int32_t dst_stride, uint16_t src);
-void FillRect32ARMSIMDAsm(int32_t w, int32_t h, uint32_t *dst, int32_t dst_stride, uint32_t src);
-
-static void fill_8_simd(Uint8 *pixels, int pitch, Uint32 color, int w, int h) {
-	FillRect8ARMSIMDAsm(w, h, (uint8_t *)pixels, pitch >> 0, color);
-	return;
-}
-
-static void fill_16_simd(Uint8 *pixels, int pitch, Uint32 color, int w, int h) {
-	FillRect16ARMSIMDAsm(w, h, (uint16_t *)pixels, pitch >> 1, color);
-	return;
-}
-
-static void fill_32_simd(Uint8 *pixels, int pitch, Uint32 color, int w, int h) {
-	FillRect32ARMSIMDAsm(w, h, (uint32_t *)pixels, pitch >> 2, color);
-	return;
-}
-#endif
-
-int SDL_FillRects(SDL_Surface *dst, const SDL_Rect *rects, int count,
-		Uint32 color) {
+int SDL_FillRects(SDL_Surface *dst, const SDL_Rect *rects, int count, Uint32 color) {
 	SDL_Rect clipped;
 	Uint8 *pixels;
 	const SDL_Rect *rect;
 	void (*fill_function)(Uint8 * pixels, int pitch, Uint32 color, int w, int h) = NULL;
-	int i;
 
 	if (!dst) {
 		return SDL_InvalidParamError("SDL_FillRects(): dst");
 	}
 
-	/* Nothing to do */
+	// Nothing to do
 	if (dst->w == 0 || dst->h == 0) {
 		return 0;
 	}
 
-	/* Perform software fill */
+	// Perform software fill
 	if (!dst->pixels) {
 		return SDL_SetError("SDL_FillRects(): You must lock the surface");
 	}
@@ -325,9 +280,8 @@ int SDL_FillRects(SDL_Surface *dst, const SDL_Rect *rects, int count,
 		return SDL_InvalidParamError("SDL_FillRects(): rects");
 	}
 
-	/* This function doesn't usually work on surfaces < 8 bpp
-	 * Except: support for 4bits, when filling full size.
-	 */
+	// This function doesn't usually work on surfaces < 8 bpp
+	// Except: support for 4bits, when filling full size.
 	if (dst->format->BitsPerPixel < 8) {
 		if (count == 1) {
 			const SDL_Rect *r = &rects[0];
@@ -341,37 +295,6 @@ int SDL_FillRects(SDL_Surface *dst, const SDL_Rect *rects, int count,
 		}
 		return SDL_SetError("SDL_FillRects(): Unsupported surface format");
 	}
-
-#if SDL_ARM_NEON_BLITTERS
-	if (SDL_HasNEON() && dst->format->BytesPerPixel != 3 && fill_function == NULL) {
-		switch (dst->format->BytesPerPixel) {
-			case 1:
-				fill_function = fill_8_neon;
-				break;
-			case 2:
-				fill_function = fill_16_neon;
-				break;
-			case 4:
-				fill_function = fill_32_neon;
-				break;
-		}
-	}
-#endif
-#if SDL_ARM_SIMD_BLITTERS
-	if (SDL_HasARMSIMD() && dst->format->BytesPerPixel != 3 && fill_function == NULL) {
-		switch (dst->format->BytesPerPixel) {
-			case 1:
-				fill_function = fill_8_simd;
-				break;
-			case 2:
-				fill_function = fill_16_simd;
-				break;
-			case 4:
-				fill_function = fill_32_simd;
-				break;
-		}
-	}
-#endif
 
 	if (fill_function == NULL) {
 		switch (dst->format->BytesPerPixel) {
@@ -401,7 +324,7 @@ int SDL_FillRects(SDL_Surface *dst, const SDL_Rect *rects, int count,
 			}
 
 			case 3:
-				/* 24-bit RGB is a slow path, at least for now. */
+				// 24-bit RGB is a slow path, at least for now.
 				{
 					fill_function = SDL_FillRect3;
 					break;
@@ -423,9 +346,9 @@ int SDL_FillRects(SDL_Surface *dst, const SDL_Rect *rects, int count,
 		}
 	}
 
-	for (i = 0; i < count; ++i) {
+	for (int i = 0; i < count; ++i) {
 		rect = &rects[i];
-		/* Perform clipping */
+		// Perform clipping
 		if (!SDL_IntersectRect(rect, &dst->clip_rect, &clipped)) {
 			continue;
 		}
@@ -437,7 +360,7 @@ int SDL_FillRects(SDL_Surface *dst, const SDL_Rect *rects, int count,
 		fill_function(pixels, dst->pitch, color, rect->w, rect->h);
 	}
 
-	/* We're done! */
+	// We're done!
 	return 0;
 }
 

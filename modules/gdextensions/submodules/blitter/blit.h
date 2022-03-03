@@ -37,16 +37,10 @@
 #include "_endian.h"
 #include "_surface.h"
 
-/* pixman ARM blitters are 32 bit only : */
-#if defined(__aarch64__) || defined(_M_ARM64)
-#undef SDL_ARM_SIMD_BLITTERS
-#undef SDL_ARM_NEON_BLITTERS
-#endif
-
-/* Table to do pixel byte expansion */
+// Table to do pixel byte expansion
 extern Uint8 *SDL_expand_byte[9];
 
-/* SDL blit copy flags */
+// SDL blit copy flags
 #define SDL_COPY_MODULATE_COLOR 0x00000001
 #define SDL_COPY_MODULATE_ALPHA 0x00000002
 #define SDL_COPY_BLEND 0x00000010
@@ -60,7 +54,7 @@ extern Uint8 *SDL_expand_byte[9];
 #define SDL_COPY_RLE_ALPHAKEY 0x00004000
 #define SDL_COPY_RLE_MASK (SDL_COPY_RLE_DESIRED | SDL_COPY_RLE_COLORKEY | SDL_COPY_RLE_ALPHAKEY)
 
-/* SDL blit CPU flags */
+// SDL blit CPU flags
 #define SDL_CPU_ANY 0x00000000
 #define SDL_CPU_MMX 0x00000001
 #define SDL_CPU_3DNOW 0x00000002
@@ -69,8 +63,7 @@ extern Uint8 *SDL_expand_byte[9];
 #define SDL_CPU_ALTIVEC_PREFETCH 0x00000010
 #define SDL_CPU_ALTIVEC_NOPREFETCH 0x00000020
 
-typedef struct
-{
+typedef struct {
 	Uint8 *src;
 	int src_w, src_h;
 	int src_pitch;
@@ -89,8 +82,7 @@ typedef struct
 
 typedef void (*SDL_BlitFunc)(SDL_BlitInfo *info);
 
-typedef struct
-{
+typedef struct {
 	Uint32 src_format;
 	Uint32 dst_format;
 	int flags;
@@ -98,7 +90,7 @@ typedef struct
 	SDL_BlitFunc func;
 } SDL_BlitFuncEntry;
 
-/* Blit mapping definition */
+// Blit mapping definition
 typedef struct SDL_BlitMap {
 	SDL_Surface *dst;
 	int identity;
@@ -106,24 +98,21 @@ typedef struct SDL_BlitMap {
 	void *data;
 	SDL_BlitInfo info;
 
-	/* the version count matches the destination; mismatch indicates
-	   an invalid mapping */
+	// the version count matches the destination; mismatch indicates an invalid mapping
 	Uint32 dst_palette_version;
 	Uint32 src_palette_version;
 } SDL_BlitMap;
 
-/* Functions found in SDL_blit.c */
+// Functions found in blit.c
 extern int SDL_CalculateBlit(SDL_Surface *surface);
 
-/* Functions found in SDL_blit_*.c */
+// Functions found in blit_*.c
 extern SDL_BlitFunc SDL_CalculateBlit0(SDL_Surface *surface);
 extern SDL_BlitFunc SDL_CalculateBlit1(SDL_Surface *surface);
 extern SDL_BlitFunc SDL_CalculateBlitN(SDL_Surface *surface);
 extern SDL_BlitFunc SDL_CalculateBlitA(SDL_Surface *surface);
 
-/*
- * Useful macros for blitting routines
- */
+// Useful macros for blitting routines
 
 #if defined(__GNUC__)
 #define DECLARE_ALIGNED(t, v, a) t __attribute__((aligned(a))) v
@@ -133,7 +122,7 @@ extern SDL_BlitFunc SDL_CalculateBlitA(SDL_Surface *surface);
 #define DECLARE_ALIGNED(t, v, a) t v
 #endif
 
-/* Load pixel of the specified format from a buffer and get its R-G-B values */
+// Load pixel of the specified format from a buffer and get its R-G-B values
 #define RGB_FROM_PIXEL(Pixel, fmt, r, g, b)                                     \
 	{                                                                           \
 		r = SDL_expand_byte[fmt->Rloss][((Pixel & fmt->Rmask) >> fmt->Rshift)]; \
@@ -399,7 +388,7 @@ extern SDL_BlitFunc SDL_CalculateBlitA(SDL_Surface *surface);
 		}                                                \
 	} while (0)
 
-/* FIXME: this isn't correct, especially for Alpha (maximum != 255) */
+// FIXME: this isn't correct, especially for Alpha (maximum != 255)
 #define PIXEL_FROM_RGBA(Pixel, fmt, r, g, b, a)      \
 	{                                                \
 		Pixel = ((r >> fmt->Rloss) << fmt->Rshift) | \
@@ -445,7 +434,7 @@ extern SDL_BlitFunc SDL_CalculateBlitA(SDL_Surface *surface);
 		}                                                 \
 	}
 
-/* Blend the RGB values of two pixels with an alpha value */
+// Blend the RGB values of two pixels with an alpha value
 #define ALPHA_BLEND_RGB(sR, sG, sB, A, dR, dG, dB)            \
 	do {                                                      \
 		dR = (Uint8)((((int)(sR - dR) * (int)A) / 255) + dR); \
@@ -453,7 +442,7 @@ extern SDL_BlitFunc SDL_CalculateBlitA(SDL_Surface *surface);
 		dB = (Uint8)((((int)(sB - dB) * (int)A) / 255) + dB); \
 	} while (0)
 
-/* Blend the RGBA values of two pixels */
+// Blend the RGBA values of two pixels
 #define ALPHA_BLEND_RGBA(sR, sG, sB, sA, dR, dG, dB, dA)       \
 	do {                                                       \
 		dR = (Uint8)((((int)(sR - dR) * (int)sA) / 255) + dR); \
@@ -462,15 +451,15 @@ extern SDL_BlitFunc SDL_CalculateBlitA(SDL_Surface *surface);
 		dA = (Uint8)((int)sA + dA - ((int)sA * dA) / 255);     \
 	} while (0)
 
-/* This is a very useful loop for optimizing blitters */
+// This is a very useful loop for optimizing blitters
 #if defined(_MSC_VER) && (_MSC_VER == 1300)
-/* There's a bug in the Visual C++ 7 optimizer when compiling this code */
+// There's a bug in the Visual C++ 7 optimizer when compiling this code
 #else
 #define USE_DUFFS_LOOP
 #endif
 #ifdef USE_DUFFS_LOOP
 
-/* 8-times unrolled loop */
+// 8-times unrolled loop
 #define DUFFS_LOOP8(pixel_copy_increment, width) \
 	{                                            \
 		int n = (width + 7) / 8;                 \
@@ -503,7 +492,7 @@ extern SDL_BlitFunc SDL_CalculateBlitA(SDL_Surface *surface);
 		}                                        \
 	}
 
-/* 4-times unrolled loop */
+// 4-times unrolled loop
 #define DUFFS_LOOP4(pixel_copy_increment, width) \
 	{                                            \
 		int n = (width + 3) / 4;                 \
@@ -524,11 +513,11 @@ extern SDL_BlitFunc SDL_CalculateBlitA(SDL_Surface *surface);
 		}                                        \
 	}
 
-/* Use the 8-times version of the loop by default */
+// Use the 8-times version of the loop by default
 #define DUFFS_LOOP(pixel_copy_increment, width) \
 	DUFFS_LOOP8(pixel_copy_increment, width)
 
-/* Special version of Duff's device for even more optimization */
+// Special version of Duff's device for even more optimization
 #define DUFFS_LOOP_124(pixel_copy_increment1, \
 		pixel_copy_increment2,                \
 		pixel_copy_increment4, width)         \
@@ -557,7 +546,7 @@ extern SDL_BlitFunc SDL_CalculateBlitA(SDL_Surface *surface);
 
 #else
 
-/* Don't use Duff's device to unroll loops */
+// Don't use Duff's device to unroll loops
 #define DUFFS_LOOP(pixel_copy_increment, width) \
 	{                                           \
 		int n;                                  \
@@ -576,7 +565,7 @@ extern SDL_BlitFunc SDL_CalculateBlitA(SDL_Surface *surface);
 
 #endif /* USE_DUFFS_LOOP */
 
-/* Prevent Visual C++ 6.0 from printing out stupid warnings */
+// Prevent Visual C++ 6.0 from printing out stupid warnings
 #if defined(_MSC_VER) && (_MSC_VER >= 600)
 #pragma warning(disable : 4550)
 #endif

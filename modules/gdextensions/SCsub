@@ -58,10 +58,13 @@ if env["tools"]:
     modules += ["qrcodetexture"]
 
 if not env["disable_3d"]:
-    modules += ["environment/vegetation_instance", "ccd/src"]
+    modules += ["environment/vegetation_instance", "ccd", "ccd/src"]
+
+if not env["production"] and env["feature_multiplethreads_allowed"]
+    modules += ["thread_pool"]
 
 if os.path.isdir("iap") and is_enabled("iap"):
-    env_module.Prepend(CPPPATH=["iap"])
+    env_module.Prepend(CPPPATH=["submodules/iap"])
     sources += Glob("iap/*.cpp")
     if env["platform"] == "osx" or env["platform"] == "iphone":
         sources += Glob("iap/mac/*.mm")
@@ -72,17 +75,17 @@ if os.path.isdir("iap") and is_enabled("iap"):
 
 ignore = []
 if env["platform"] == "3ds" or env["platform"] == "psp":
-    ignore += ["visual/heatmap.cpp"]
+    ignore += ["submodules/visual/heatmap.cpp"]
 if env["disable_advanced_gui"]:
-    ignore += ["core/input_map_editor.cpp"]
+    ignore += ["submodules/core/input_map_editor.cpp"]
 if not env["module_mbedtls_enabled"]:
-    ignore += ["core/cripter.cpp"]
+    ignore += ["submodules/core/cripter.cpp"]
 
 for m in modules:
     if is_enabled(m):
-        files = Glob("%s/*.cpp" % m)
+        files = Glob("submodules/%s/*.cpp" % m)
         sources += [f for f in files if str(f) not in ignore]
-        sources += Glob("%s/*.c" % m)
+        sources += Glob("submodules/%s/*.c" % m)
 
 thirdparty_sources = [
     "#thirdparty/misc/cqueue.cpp",

@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  gd_bitblit.h                                                         */
+/*  gd_bitblit.cpp                                                       */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,24 +28,92 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GD_BITBLIT_H
-#define GD_BITBLIT_H
+#include "gd_bitblit.h"
 
-#include "core/object.h"
+BitBlit *BitBlit::singleton = nullptr;
 
-class BitBlit : public Object {
-	GDCLASS(BitBlit, Object)
+static int _get_pixel_size(Image::Format format) {
+	switch (format) {
+		case Image::FORMAT_RGB8:
+			return 3;
+		case Image::FORMAT_RGBA8:
+			return 4;
+		case Image::FORMAT_LA8:
+			return 2;
+		case Image::FORMAT_L8:
+		case Image::FORMAT_R8:
+		case Image::FORMAT_RG8:
+		case Image::FORMAT_RGBA4444:
+		case Image::FORMAT_RF:
+		case Image::FORMAT_RGF:
+		case Image::FORMAT_RGBF:
+		case Image::FORMAT_RGBAF:
+		case Image::FORMAT_RH:
+		case Image::FORMAT_RGH:
+		case Image::FORMAT_RGBH:
+		case Image::FORMAT_RGBAH:
+		case Image::FORMAT_RGBE9995:
+		case Image::FORMAT_DXT1:
+		case Image::FORMAT_DXT3:
+		case Image::FORMAT_DXT5:
+		case Image::FORMAT_RGTC_R:
+		case Image::FORMAT_RGTC_RG:
+		case Image::FORMAT_BPTC_RGBA:
+		case Image::FORMAT_BPTC_RGBF:
+		case Image::FORMAT_BPTC_RGBFU:
+		case Image::FORMAT_PVRTC2:
+		case Image::FORMAT_PVRTC2A:
+		case Image::FORMAT_PVRTC4:
+		case Image::FORMAT_PVRTC4A:
+		case Image::FORMAT_ETC:
+		case Image::FORMAT_ETC2_R11:
+		case Image::FORMAT_ETC2_R11S:
+		case Image::FORMAT_ETC2_RG11:
+		case Image::FORMAT_ETC2_RG11S:
+		case Image::FORMAT_ETC2_RGB8:
+		case Image::FORMAT_ETC2_RGBA8:
+		case Image::FORMAT_ETC2_RGB8A1:
+#if VERSION_MAJOR >= 4
+		case Image::FORMAT_RGB565:
+		case Image::FORMAT_ETC2_RA_AS_RG:
+		case Image::FORMAT_DXT5_RA_AS_RG:
+#else
+		case Image::FORMAT_RGBA5551:
+#endif
+		case Image::FORMAT_MAX:
+			return 0;
+	}
 
-	static BitBlit *singleton;
+	return 0;
+}
 
-protected:
-	static void _bind_methods();
 
-public:
-	static BitBlit *get_singleton() { return singleton; }
+PoolByteArray BlitSurface::get_data() const { return data; }
 
-	BitBlit();
-	~BitBlit();
-};
+void BlitSurface::_bind_methods() {
+}
 
-#endif // GD_BITBLIT_H
+BlitSurface::BlitSurface(int p_width, int p_height, Image::Format p_format) {
+	ERR_FAIL_COND(p_width > 0);
+	ERR_FAIL_COND(p_height > 0);
+	const int size = _get_pixel_size(p_format);
+	if (size > 0) {
+		data.resize(p_width * p_height * size);
+	} else {
+		WARN_PRINT("Unsuported pixel format");
+	}
+}
+
+BlitSurface::~BlitSurface() { }
+
+
+void BitBlit::_bind_methods() {
+}
+
+BitBlit::BitBlit() {
+	singleton = this;
+}
+
+BitBlit::~BitBlit() {
+	singleton = nullptr;
+}

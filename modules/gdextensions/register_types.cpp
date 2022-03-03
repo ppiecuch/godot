@@ -61,6 +61,8 @@
 
 #include "bulletkit/gdlibrary.h"
 
+#include "blitter/gd_bitblit.h"
+
 #include "statemachine/state.h"
 #include "statemachine/statemachine.h"
 
@@ -109,6 +111,10 @@
 
 #include "sfxr/gdsfxr.h"
 
+#include "thread_pool/thread_pool.h"
+#include "thread_pool/thread_pool_execute_job.h"
+#include "thread_pool/thread_pool_job.h"
+
 #include "fastnoise/noise.h"
 
 #if defined(OSX_ENABLED) || defined(UWP_ENABLED) || defined(IPHONE_ENABLED) || defined(ANDROID_ENABLED)
@@ -138,9 +144,15 @@ static void editor_init_callback() {
 }
 #endif
 
+static ThreadPool *thread_pool = nullptr;
+
 void register_gdextensions_types() {
 #ifdef GDEXT_BULLETKIT_ENABLED
 	register_bullet_kit();
+#endif
+#ifdef GDEXT_BLITTER_ENABLED
+	ClassDB::register_virtual_class<BlitSurface>();
+	Engine::get_singleton()->add_singleton(Engine::Singleton("BitBlit", memnew(BitBlit)));
 #endif
 #ifdef GDEXT_BEHAVIORNODE_ENABLED
 	ClassDB::register_class<BehaviorNode>();
@@ -170,7 +182,14 @@ void register_gdextensions_types() {
 	Ref<ResourceImporterJSON> json_data = memnew(ResourceImporterJSON);
 	ResourceFormatImporter::get_singleton()->add_importer(json_data);
 #endif
+#ifdef GDEXT_THREAD_POOL_ENABLED
+	ClassDB::register_class<ThreadPoolJob>();
+	ClassDB::register_class<ThreadPoolExecuteJob>();
 
+	thread_pool = memnew(ThreadPool);
+	ClassDB::register_class<ThreadPool>();
+	Engine::get_singleton()->add_singleton(Engine::Singleton("ThreadPool", ThreadPool::get_singleton()));
+#endif
 	ClassDB::register_class<LineBuilder2D>();
 	ClassDB::register_class<Phantom>();
 	ClassDB::register_virtual_class<RawPacker>();
@@ -304,6 +323,14 @@ void register_gdextensions_types() {
 }
 
 void unregister_gdextensions_types() {
+	if (thread_pool) {
+		memdelete(thread_pool);
+	}
+#ifdef GDEXT_BLITTER_ENABLED
+	if (BitBlit *instance = BitBlit::get_singleton()) {
+		memdelete(instance);
+	}
+#endif
 #ifdef GDEXT_CORE_ENABLED
 	if (Resources *instance = Resources::get_singleton()) {
 		memdelete(instance);

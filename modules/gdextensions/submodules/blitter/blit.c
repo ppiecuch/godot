@@ -130,7 +130,7 @@ SDL_ChooseBlitFunc(Uint32 src_format, Uint32 dst_format, int flags,
 
 		features = SDL_CPU_ANY;
 
-		/* Allow an override for testing .. */
+		// Allow an override for testing ..
 		if (override) {
 			SDL_sscanf(override, "%u", &features);
 		} else {

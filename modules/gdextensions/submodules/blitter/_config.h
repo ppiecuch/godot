@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  RLEaccel_c.h                                                         */
+/*  _config.h                                                            */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,16 +28,32 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef _RLEaccel_c_h_
-#define _RLEaccel_c_h_
+/// This is a set of defines to configure the submodule features
 
-#include "_internal.h"
+#ifndef _config_h_
+#define _config_h_
 
-/* Useful functions and variables from RLEaccel.c */
+/* General platform specific identifiers */
+#include "_platform.h"
 
-extern int RLESurface(SDL_Surface *surface);
-extern void UnRLESurface(SDL_Surface *surface, int recode);
+/* Useful headers */
+#define STDC_HEADERS 1
+#define HAVE_ALLOCA_H 1
+#define HAVE_CTYPE_H 1
+#define HAVE_FLOAT_H 1
+#define HAVE_INTTYPES_H 1
+#define HAVE_LIMITS_H 1
+#define HAVE_MALLOC_H 1
+#define HAVE_MATH_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_STRING_H 1
+#define HAVE_SYS_TYPES_H 1
 
-#endif /* RLEaccel_c_h_ */
+/* Enable assembly routines */
+#ifdef CPU_POWERPC
+#define SDL_ALTIVEC_BLITTERS 1
+#else
+#define SDL_ALTIVEC_BLITTERS 0
+#endif
 
-/* vi: set ts=4 sw=4 expandtab: */
+#endif /* _config_h_ */

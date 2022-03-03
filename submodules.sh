@@ -19,7 +19,7 @@ for m in \
 	gd_vector_graphics gd_polyvector \
 	gd_behavior_tree gd_bullet_hell \
 	gd_raknet gd_enet \
-	gd_thread_pool gd_texture_packer \
+	gd_texture_packer \
 	gd_goosty; do
 	echo "+--"
     echo "| checking module: $m"

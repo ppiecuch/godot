@@ -29,6 +29,7 @@
 /*************************************************************************/
 
 ///  Header for the enumerated pixel format definitions.
+
 #ifndef _pixels_h_
 #define _pixels_h_
 
@@ -214,22 +215,14 @@ typedef enum {
 	SDL_PIXELFORMAT_ABGR32 = SDL_PIXELFORMAT_RGBA8888,
 #endif
 
-	SDL_PIXELFORMAT_YV12 = // Planar mode: Y + V + U  (3 planes)
-	SDL_DEFINE_PIXELFOURCC('Y', 'V', '1', '2'),
-	SDL_PIXELFORMAT_IYUV = // Planar mode: Y + U + V  (3 planes)
-	SDL_DEFINE_PIXELFOURCC('I', 'Y', 'U', 'V'),
-	SDL_PIXELFORMAT_YUY2 = // Packed mode: Y0+U0+Y1+V0 (1 plane)
-	SDL_DEFINE_PIXELFOURCC('Y', 'U', 'Y', '2'),
-	SDL_PIXELFORMAT_UYVY = // Packed mode: U0+Y0+V0+Y1 (1 plane)
-	SDL_DEFINE_PIXELFOURCC('U', 'Y', 'V', 'Y'),
-	SDL_PIXELFORMAT_YVYU = // Packed mode: Y0+V0+Y1+U0 (1 plane)
-	SDL_DEFINE_PIXELFOURCC('Y', 'V', 'Y', 'U'),
-	SDL_PIXELFORMAT_NV12 = // Planar mode: Y + U/V interleaved  (2 planes)
-	SDL_DEFINE_PIXELFOURCC('N', 'V', '1', '2'),
-	SDL_PIXELFORMAT_NV21 = // Planar mode: Y + V/U interleaved  (2 planes)
-	SDL_DEFINE_PIXELFOURCC('N', 'V', '2', '1'),
-	SDL_PIXELFORMAT_EXTERNAL_OES = // Android video texture format
-	SDL_DEFINE_PIXELFOURCC('O', 'E', 'S', ' ')
+	SDL_PIXELFORMAT_YV12 = SDL_DEFINE_PIXELFOURCC('Y', 'V', '1', '2'), // Planar mode: Y + V + U  (3 planes)
+	SDL_PIXELFORMAT_IYUV = SDL_DEFINE_PIXELFOURCC('I', 'Y', 'U', 'V'), // Planar mode: Y + U + V  (3 planes)
+	SDL_PIXELFORMAT_YUY2 = SDL_DEFINE_PIXELFOURCC('Y', 'U', 'Y', '2'), // Packed mode: Y0+U0+Y1+V0 (1 plane)
+	SDL_PIXELFORMAT_UYVY = SDL_DEFINE_PIXELFOURCC('U', 'Y', 'V', 'Y'), // Packed mode: U0+Y0+V0+Y1 (1 plane)
+	SDL_PIXELFORMAT_YVYU = SDL_DEFINE_PIXELFOURCC('Y', 'V', 'Y', 'U'), // Packed mode: Y0+V0+Y1+U0 (1 plane)
+	SDL_PIXELFORMAT_NV12 = SDL_DEFINE_PIXELFOURCC('N', 'V', '1', '2'), // Planar mode: Y + U/V interleaved  (2 planes)
+	SDL_PIXELFORMAT_NV21 = SDL_DEFINE_PIXELFOURCC('N', 'V', '2', '1'), // Planar mode: Y + V/U interleaved  (2 planes)
+	SDL_PIXELFORMAT_EXTERNAL_OES = SDL_DEFINE_PIXELFOURCC('O', 'E', 'S', ' ') // Android video texture format
 } SDL_PixelFormatEnum;
 
 // The bits of this structure can be directly reinterpreted as an integer-packed
@@ -241,7 +234,6 @@ typedef struct SDL_Color {
 	Uint8 b;
 	Uint8 a;
 } SDL_Color;
-#define SDL_Colour SDL_Color
 
 typedef struct SDL_Palette {
 	int ncolors;
@@ -277,22 +269,13 @@ typedef struct SDL_PixelFormat {
 extern DECLSPEC const char *SDLCALL SDL_GetPixelFormatName(Uint32 format);
 
 // Convert one of the enumerated pixel formats to a bpp value and RGBA masks.
-extern DECLSPEC SDL_bool SDLCALL SDL_PixelFormatEnumToMasks(Uint32 format,
-		int *bpp,
-		Uint32 *Rmask,
-		Uint32 *Gmask,
-		Uint32 *Bmask,
-		Uint32 *Amask);
+extern DECLSPEC SDL_bool SDLCALL SDL_PixelFormatEnumToMasks(Uint32 format, int *bpp, Uint32 *Rmask, Uint32 *Gmask, Uint32 *Bmask, Uint32 *Amask);
 
 // Convert a bpp value and RGBA masks to an enumerated pixel format.
 //
 // This will return `SDL_PIXELFORMAT_UNKNOWN` if the conversion wasn't
 // possible.
-extern DECLSPEC Uint32 SDLCALL SDL_MasksToPixelFormatEnum(int bpp,
-		Uint32 Rmask,
-		Uint32 Gmask,
-		Uint32 Bmask,
-		Uint32 Amask);
+extern DECLSPEC Uint32 SDLCALL SDL_MasksToPixelFormatEnum(int bpp, Uint32 Rmask, Uint32 Gmask, Uint32 Bmask, Uint32 Amask);
 
 // Create an SDL_PixelFormat structure corresponding to a pixel format.
 //

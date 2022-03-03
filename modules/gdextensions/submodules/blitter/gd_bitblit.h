@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  _config.h                                                            */
+/*  gd_bitblit.h                                                         */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,40 +28,47 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-/// This is a set of defines to configure the submodule features
+#ifndef GD_BITBLIT_H
+#define GD_BITBLIT_H
 
-#ifndef _config_h_
-#define _config_h_
+#include "core/object.h"
+#include "core/image.h"
+#include "core/pool_vector.h"
+#include "core/reference.h"
 
-/* General platform specific identifiers */
-#include "_platform.h"
+struct SDL_Surface;
 
-/* Useful headers */
-#define STDC_HEADERS 1
-#define HAVE_ALLOCA_H 1
-#define HAVE_CTYPE_H 1
-#define HAVE_FLOAT_H 1
-#define HAVE_INTTYPES_H 1
-#define HAVE_LIMITS_H 1
-#define HAVE_MALLOC_H 1
-#define HAVE_MATH_H 1
-#define HAVE_STRINGS_H 1
-#define HAVE_STRING_H 1
-#define HAVE_SYS_TYPES_H 1
+class BlitSurface : public Reference {
+	GDCLASS(BlitSurface, Reference)
 
-/* Enable assembly routines */
-#define SDL_ASSEMBLY_ROUTINES 1
-#ifdef CPU_POWERPC
-#define SDL_ALTIVEC_BLITTERS 1
-#else
-#define SDL_ALTIVEC_BLITTERS 0
-#endif
-#ifdef CPU_ARM
-#define SDL_ARM_SIMD_BLITTERS 1
-#define SDL_ARM_NEON_BLITTERS 1
-#else
-#define SDL_ARM_SIMD_BLITTERS 0
-#define SDL_ARM_NEON_BLITTERS 0
-#endif
+	PoolByteArray data;
+	SDL_Surface *surface;
 
-#endif /* _config_h_ */
+protected:
+	static void _bind_methods();
+
+public:
+	PoolByteArray get_data() const;
+
+	BlitSurface(int p_width, int p_height, Image::Format p_format);
+	~BlitSurface();
+};
+
+class BitBlit : public Object {
+	GDCLASS(BitBlit, Object)
+
+	static BitBlit *singleton;
+
+protected:
+	static void _bind_methods();
+
+public:
+	static BitBlit *get_singleton() { return singleton; }
+
+	Ref<BlitSurface> create_surface(int p_width, int p_height);
+
+	BitBlit();
+	~BitBlit();
+};
+
+#endif // GD_BITBLIT_H

@@ -37,7 +37,7 @@
 #include "blit.h"
 #include "pixels_c.h"
 
-/* Lookup tables to expand partial bytes to the full 0..255 range */
+// Lookup tables to expand partial bytes to the full 0..255 range
 
 static Uint8 lookup_0[] = {
 	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255
@@ -87,7 +87,7 @@ Uint8 *SDL_expand_byte[9] = {
 	lookup_8
 };
 
-/* Helper functions */
+// Helper functions
 
 const char *
 SDL_GetPixelFormatName(Uint32 format) {
@@ -140,8 +140,7 @@ SDL_GetPixelFormatName(Uint32 format) {
 }
 
 SDL_bool
-SDL_PixelFormatEnumToMasks(Uint32 format, int *bpp, Uint32 *Rmask,
-		Uint32 *Gmask, Uint32 *Bmask, Uint32 *Amask) {
+SDL_PixelFormatEnumToMasks(Uint32 format, int *bpp, Uint32 *Rmask, Uint32 *Gmask, Uint32 *Bmask, Uint32 *Amask) {
 	Uint32 masks[4];
 
 	/* This function doesn't work with FourCC pixel formats */
@@ -298,8 +297,7 @@ SDL_PixelFormatEnumToMasks(Uint32 format, int *bpp, Uint32 *Rmask,
 }
 
 Uint32
-SDL_MasksToPixelFormatEnum(int bpp, Uint32 Rmask, Uint32 Gmask, Uint32 Bmask,
-		Uint32 Amask) {
+SDL_MasksToPixelFormatEnum(int bpp, Uint32 Rmask, Uint32 Gmask, Uint32 Bmask, Uint32 Amask) {
 	switch (bpp) {
 		case 1:
 			/* SDL defaults to MSB ordering */
@@ -612,7 +610,7 @@ void SDL_FreeFormat(SDL_PixelFormat *format) {
 		return;
 	}
 
-	/* Remove this format from our list */
+	// Remove this format from our list
 	if (format == formats) {
 		formats = format->next;
 	} else if (formats) {
@@ -686,8 +684,7 @@ int SDL_SetPixelFormatPalette(SDL_PixelFormat *format, SDL_Palette *palette) {
 	return 0;
 }
 
-int SDL_SetPaletteColors(SDL_Palette *palette, const SDL_Color *colors,
-		int firstcolor, int ncolors) {
+int SDL_SetPaletteColors(SDL_Palette *palette, const SDL_Color *colors, int firstcolor, int ncolors) {
 	int status = 0;
 
 	/* Verify the parameters */
@@ -723,18 +720,15 @@ void SDL_FreePalette(SDL_Palette *palette) {
 	SDL_free(palette);
 }
 
-/*
- * Calculate an 8-bit (3 red, 3 green, 2 blue) dithered palette of colors
- */
+// Calculate an 8-bit (3 red, 3 green, 2 blue) dithered palette of colors
 void SDL_DitherColors(SDL_Color *colors, int bpp) {
-	int i;
 	if (bpp != 8)
 		return; /* only 8bpp supported right now */
 
-	for (i = 0; i < 256; i++) {
+	for (int i = 0; i < 256; i++) {
 		int r, g, b;
-		/* map each bit field to the full [0, 255] interval,
-		   so 0 is mapped to (0, 0, 0) and 255 to (255, 255, 255) */
+		// map each bit field to the full [0, 255] interval,
+		// so 0 is mapped to (0, 0, 0) and 255 to (255, 255, 255)
 		r = i & 0xe0;
 		r |= r >> 3 | r >> 6;
 		colors[i].r = r;
@@ -757,11 +751,10 @@ Uint8 SDL_FindColor(SDL_Palette *pal, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 	unsigned int smallest;
 	unsigned int distance;
 	int rd, gd, bd, ad;
-	int i;
 	Uint8 pixel = 0;
 
 	smallest = ~0;
-	for (i = 0; i < pal->ncolors; ++i) {
+	for (int i = 0; i < pal->ncolors; ++i) {
 		rd = pal->colors[i].r - r;
 		gd = pal->colors[i].g - g;
 		bd = pal->colors[i].b - b;
@@ -780,11 +773,9 @@ Uint8 SDL_FindColor(SDL_Palette *pal, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 
 /* Tell whether palette is opaque, and if it has an alpha_channel */
 void SDL_DetectPalette(SDL_Palette *pal, SDL_bool *is_opaque, SDL_bool *has_alpha_channel) {
-	int i;
-
 	{
 		SDL_bool all_opaque = SDL_TRUE;
-		for (i = 0; i < pal->ncolors; i++) {
+		for (int i = 0; i < pal->ncolors; i++) {
 			Uint8 alpha_value = pal->colors[i].a;
 			if (alpha_value != SDL_ALPHA_OPAQUE) {
 				all_opaque = SDL_FALSE;
@@ -802,7 +793,7 @@ void SDL_DetectPalette(SDL_Palette *pal, SDL_bool *is_opaque, SDL_bool *has_alph
 
 	{
 		SDL_bool all_transparent = SDL_TRUE;
-		for (i = 0; i < pal->ncolors; i++) {
+		for (int i = 0; i < pal->ncolors; i++) {
 			Uint8 alpha_value = pal->colors[i].a;
 			if (alpha_value != SDL_ALPHA_TRANSPARENT) {
 				all_transparent = SDL_FALSE;
@@ -835,8 +826,7 @@ SDL_MapRGB(const SDL_PixelFormat *format, Uint8 r, Uint8 g, Uint8 b) {
 
 /* Find the pixel value corresponding to an RGBA quadruple */
 Uint32
-SDL_MapRGBA(const SDL_PixelFormat *format, Uint8 r, Uint8 g, Uint8 b,
-		Uint8 a) {
+SDL_MapRGBA(const SDL_PixelFormat *format, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 	if (format->palette == NULL) {
 		return (r >> format->Rloss) << format->Rshift | (g >> format->Gloss) << format->Gshift | (b >> format->Bloss) << format->Bshift | ((Uint32)(a >> format->Aloss) << format->Ashift & format->Amask);
 	} else {
@@ -844,8 +834,7 @@ SDL_MapRGBA(const SDL_PixelFormat *format, Uint8 r, Uint8 g, Uint8 b,
 	}
 }
 
-void SDL_GetRGB(Uint32 pixel, const SDL_PixelFormat *format, Uint8 *r, Uint8 *g,
-		Uint8 *b) {
+void SDL_GetRGB(Uint32 pixel, const SDL_PixelFormat *format, Uint8 *r, Uint8 *g, Uint8 *b) {
 	if (format->palette == NULL) {
 		unsigned v;
 		v = (pixel & format->Rmask) >> format->Rshift;
@@ -865,8 +854,7 @@ void SDL_GetRGB(Uint32 pixel, const SDL_PixelFormat *format, Uint8 *r, Uint8 *g,
 	}
 }
 
-void SDL_GetRGBA(Uint32 pixel, const SDL_PixelFormat *format,
-		Uint8 *r, Uint8 *g, Uint8 *b, Uint8 *a) {
+void SDL_GetRGBA(Uint32 pixel, const SDL_PixelFormat *format, Uint8 *r, Uint8 *g, Uint8 *b, Uint8 *a) {
 	if (format->palette == NULL) {
 		unsigned v;
 		v = (pixel & format->Rmask) >> format->Rshift;
@@ -893,7 +881,6 @@ void SDL_GetRGBA(Uint32 pixel, const SDL_PixelFormat *format,
 static Uint8 *
 Map1to1(SDL_Palette *src, SDL_Palette *dst, int *identical) {
 	Uint8 *map;
-	int i;
 
 	if (identical) {
 		if (src->ncolors <= dst->ncolors) {
@@ -912,7 +899,7 @@ Map1to1(SDL_Palette *src, SDL_Palette *dst, int *identical) {
 		SDL_OutOfMemory();
 		return (NULL);
 	}
-	for (i = 0; i < src->ncolors; ++i) {
+	for (int i = 0; i < src->ncolors; ++i) {
 		map[i] = SDL_FindColor(dst,
 				src->colors[i].r, src->colors[i].g,
 				src->colors[i].b, src->colors[i].a);
@@ -922,8 +909,7 @@ Map1to1(SDL_Palette *src, SDL_Palette *dst, int *identical) {
 
 /* Map from Palette to BitField */
 static Uint8 *
-Map1toN(SDL_PixelFormat *src, Uint8 Rmod, Uint8 Gmod, Uint8 Bmod, Uint8 Amod,
-		SDL_PixelFormat *dst) {
+Map1toN(SDL_PixelFormat *src, Uint8 Rmod, Uint8 Gmod, Uint8 Bmod, Uint8 Amod, SDL_PixelFormat *dst) {
 	Uint8 *map;
 	int i;
 	int bpp;
@@ -1131,10 +1117,8 @@ void SDL_FreeBlitMap(SDL_BlitMap *map) {
 }
 
 void SDL_CalculateGammaRamp(float gamma, Uint16 *ramp) {
-	int i;
-
-	/* Input validation */
-	if (gamma < 0.0f) {
+	// Input validation
+	if (gamma < 0.0) {
 		SDL_InvalidParamError("gamma");
 		return;
 	}
@@ -1143,21 +1127,21 @@ void SDL_CalculateGammaRamp(float gamma, Uint16 *ramp) {
 		return;
 	}
 
-	/* 0.0 gamma is all black */
-	if (gamma == 0.0f) {
+	// 0.0 gamma is all black
+	if (gamma == 0.0) {
 		SDL_memset(ramp, 0, 256 * sizeof(Uint16));
 		return;
-	} else if (gamma == 1.0f) {
-		/* 1.0 gamma is identity */
-		for (i = 0; i < 256; ++i) {
+	} else if (gamma == 1.0) {
+		// 1.0 gamma is identity
+		for (int i = 0; i < 256; ++i) {
 			ramp[i] = (i << 8) | i;
 		}
 		return;
 	} else {
-		/* Calculate a real gamma ramp */
+		// Calculate a real gamma ramp
 		int value;
-		gamma = 1.0f / gamma;
-		for (i = 0; i < 256; ++i) {
+		gamma = 1.0 / gamma;
+		for (int i = 0; i < 256; ++i) {
 			value =
 					(int)(SDL_pow((double)i / 256.0, gamma) * 65535.0 + 0.5);
 			if (value > 65535) {

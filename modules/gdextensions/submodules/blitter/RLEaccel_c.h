@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  gd_bitblit.cpp                                                       */
+/*  RLEaccel_c.h                                                         */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,14 +28,17 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "gd_bitblit.h"
+#ifndef _RLEaccel_c_h_
+#define _RLEaccel_c_h_
 
-BitBlit *BitBlit::singleton = nullptr;
+#include "_internal.h"
+#include "_surface.h"
 
-BitBlit::BitBlit() {
-	singleton = this;
-}
+// Useful functions and variables from RLEaccel.c
 
-BitBlit::~BitBlit() {
-	singleton = nullptr;
-}
+extern int RLESurface(SDL_Surface *surface);
+extern void UnRLESurface(SDL_Surface *surface, int recode);
+
+#endif /* RLEaccel_c_h_ */
+
+/* vi: set ts=4 sw=4 expandtab: */
