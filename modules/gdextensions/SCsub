@@ -22,7 +22,7 @@ def is_enabled(m):
         if not mod in env["enable_gdextensions_submodules"]:
             return False
     env_module.Append(CPPDEFINES=["GDEXT_%s_ENABLED" % mod.upper()])
-    if m not in sub_enabled:
+    if mod not in sub_enabled:
         sub_enabled.append(m)
     return True
 
@@ -54,20 +54,20 @@ modules = [
     "landiscovery",
 ]
 
-if env["tools"]:
+if env["tools"] and is_enabled("qrcodetexture"):
     modules += ["qrcodetexture"]
 
 if not env["disable_3d"]:
     modules += ["environment/vegetation_instance", "ccd", "ccd/src"]
 
-if not env["production"] and env["feature_multiplethreads_allowed"]
+if env["feature_multiplethreads_allowed"]:
     modules += ["thread_pool"]
 
 if os.path.isdir("iap") and is_enabled("iap"):
     env_module.Prepend(CPPPATH=["submodules/iap"])
-    sources += Glob("iap/*.cpp")
+    sources += Glob("submodules/iap/*.cpp")
     if env["platform"] == "osx" or env["platform"] == "iphone":
-        sources += Glob("iap/mac/*.mm")
+        sources += Glob("submodules/iap/mac/*.mm")
         env.Append(LINKFLAGS=["-framework", "StoreKit"])
 
     elif env["platform"] == "android":
@@ -90,7 +90,7 @@ for m in modules:
 thirdparty_sources = [
     "#thirdparty/misc/cqueue.cpp",
 ]
-if not env["disable_3d"]:
+if not env["disable_3d"] and is_enabled("ccd"):
     thirdparty_sources += Glob("#thirdparty/libccd/src/*.c") + Glob("#thirdparty/libccd/src/testsuites/*.c")
 
 env_module.Append(
@@ -100,6 +100,7 @@ env_module.Append(
         "#thirdparty/flashdb/inc",
         "#thirdparty/libccd/src",
         "#thirdparty",
+        "submodules",
         ".",
     ]
 )

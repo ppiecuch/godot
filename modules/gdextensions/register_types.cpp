@@ -121,8 +121,10 @@
 #include "iap/gd_iap.h"
 #endif
 
-#ifdef TOOLS_ENABLED
+#ifdef GDEXT_QRCODETEXTURE_ENABLED
+# ifdef TOOLS_ENABLED
 #include "qrcodetexture/qrcodetexture.h"
+# endif
 #endif
 
 #ifndef _3D_DISABLED
@@ -303,11 +305,12 @@ void register_gdextensions_types() {
 	ClassDB::register_class<Smooth2D>();
 #endif // GDEXT_SMOOTH_ENABLED
 
-#ifdef GDEXT_CCD_ENABLED
-#ifdef TOOLS_ENABLED
+#ifdef GDEXT_QRCODETEXTURE_ENABLED
+# ifdef TOOLS_ENABLED
 	ClassDB::register_class<QRCodeTexture>();
-#endif
-#endif // GDEXT_CCD_ENABLED
+# endif // TOOLS_ENABLED
+#endif // GDEXT_QRCODETEXTURE_ENABLED
+
 
 #ifdef GDEXT_CCD_ENABLED
 #ifndef _3D_DISABLED

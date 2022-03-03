@@ -26,6 +26,7 @@ def configure(env):
         "sfxr",
         "vgamepad",
         "iap",
+        "qrcodetexture",
         "landiscovery",
     ]
     opts = Variables()
