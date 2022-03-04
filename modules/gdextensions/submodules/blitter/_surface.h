@@ -158,7 +158,7 @@ extern DECLSPEC int SDLCALL SDL_BlitSurface(SDL_Surface *src, const SDL_Rect *sr
 //
 // RLE acceleration can substantially speed up blitting of images with large
 // horizontal runs of transparent pixels. See SDL_SetSurfaceRLE() for details.
-extern DECLSPEC int SDLCALL SDL_SetColorKey(SDL_Surface * surface, int flag, Uint32 key);
+extern DECLSPEC int SDLCALL SDL_SetColorKey(SDL_Surface *surface, int flag, Uint32 key);
 
 // Get the color key (transparent pixel) for a surface.
 //

@@ -1,9 +1,39 @@
+/*************************************************************************/
+/*  nakamaclient.cpp                                                     */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #include "nakamaclient.h"
 #include "uuid.h"
 
+#include "core/bind/core_bind.h"
 #include "core/os/os.h"
 #include "core/variant.h"
-#include "core/bind/core_bind.h"
 
 #include "modules/modules_enabled.gen.h"
 
@@ -18,7 +48,6 @@
 #endif
 
 DefaultSession::DefaultSession(const String p_token) {
-
 	const Vector<String> &decoded = p_token.split("\\.");
 
 	ERR_FAIL_COND_MSG(decoded.size() != 3, "Not a valid token.");
@@ -41,12 +70,10 @@ DefaultSession::DefaultSession(const String p_token) {
 }
 
 bool DefaultSession::is_expired() const {
-
 	return is_expired(OS::get_singleton()->get_system_time_secs() * 1000);
 }
 
 bool DefaultSession::is_expired(uint64_t p_now) const {
-
 	return (expire_time - OS::get_singleton()->get_system_time_secs() * 1000) < 0;
 }
 
@@ -55,11 +82,9 @@ DefaultSession *DefaultSession::restore(String p_token) {
 }
 
 void DefaultClient::_rest_request_completed(HTTPRequest::Result p_status, HTTPClient::ResponseCode p_code, const PoolStringArray &headers, const PoolByteArray &p_data) {
-
 	String error_text;
 
 	if (p_status == HTTPRequest::RESULT_SUCCESS && p_code < HTTPClient::RESPONSE_BAD_REQUEST) {
-
 		String str = Utils::bytearray_to_string(p_data);
 		LOGI(str);
 
@@ -69,7 +94,6 @@ void DefaultClient::_rest_request_completed(HTTPRequest::Result p_status, HTTPCl
 		}
 
 		if (const AuthenticateResponse *message = AuthenticateResponse(p_data).get()) {
-
 			const String collation_id = message->get_collation_id();
 			ERR_FAIL_COND_MSG(collation_id.empty(), "Unknown response source.");
 
@@ -97,37 +121,31 @@ void DefaultClient::_rest_request_completed(HTTPRequest::Result p_status, HTTPCl
 }
 
 void DefaultClient::_ws_connection_closed() {
-
 	// Graceful socket disconnect is complete, clean up.
 	collation_ids.clear();
 	emit_signal("session_closed");
 }
 
 void DefaultClient::_ws_connection_error() {
-
 	// Socket has failed and is no longer connected, clean up.
 	collation_ids.clear();
 	emit_signal("session_closed");
 }
 
 void DefaultClient::_ws_connection_established() {
-
 	emit_signal("session_connected");
 }
 
 void DefaultClient::_ws_server_close_request() {
-
 }
 
 void DefaultClient::_ws_data_received() {
-
 	Ref<WebSocketPeer> peer = ws->get_peer(1);
 
 	if (!peer.is_valid() || !peer->is_connected_to_host())
 		return;
 
 	while (peer->get_available_packet_count()) {
-
 		const uint8_t *packet;
 		int len;
 		Error err = peer->get_packet(&packet, len);
@@ -152,19 +170,17 @@ void DefaultClient::_ws_data_received() {
 #define MakeString(str) \
 	(str ? CharString(str->c_str(), str->size()) : CharString())
 
-#define _newumsg(T ...) \
+#define _newumsg(T...) \
 	Ref<NkUncollatedMessage>(memnew(T))
 
-#define _newmsg(T ...) \
+#define _newmsg(T...) \
 	Ref<UncollatedMessage>(memnew(T))
 
 #define _fbloop(T, array) \
 	Utils::mkfbloop<server::T>(array)
 
 void DefaultClient::_process_packet(PoolByteArray data) {
-
 	if (const NkMessage *message = NkMessage(data).get()) {
-
 		const String collation_id = message->get_collation_id();
 		const server::Envelope_::EnvelopeContent *payload = message->get_envelope_payload();
 
@@ -342,45 +358,40 @@ void DefaultClient::_process_packet(PoolByteArray data) {
 }
 
 long DefaultClient::get_server_time() {
-
 	return server_time != 0 ? server_time : OS::get_singleton()->get_system_time_msecs();
 }
 
 bool DefaultClient::user_login(const Ref<DefaultAuthenticateRequest> &auth) {
-
 	return authenticate(auth, "/user/login");
 }
 
 bool DefaultClient::user_register(const Ref<DefaultAuthenticateRequest> &auth) {
-
 	return authenticate(auth, "/user/register");
 }
 
 bool DefaultClient::user_logout() {
-
 	return send(_newumsg(LogoutMessage));
 }
 
 bool DefaultClient::authenticate(const Ref<DefaultAuthenticateRequest> &p_auth, String p_path) {
-
 	String collation_id = uuid1().hex();
 	PoolByteArray payload = p_auth->as_bytes(collation_id);
 
 	String url = Builder::Url()
-			.scheme(ssl ? "https" : "http")
-			.host(host)
-			.port(port)
-			.path(p_path)
-			.build();
+						 .scheme(ssl ? "https" : "http")
+						 .host(host)
+						 .port(port)
+						 .path(p_path)
+						 .build();
 
 	Error ret = Builder::Request()
-			.url(url)
-			.method(HTTPClient::METHOD_POST, payload)
-			.header("Content-Type", "application/octet-stream")
-			.header("Authorization", "Basic " + _Marshalls::get_singleton()->utf8_to_base64(server_key + ":"))
-			.header("Accept-Language", lang)
-			.header("User-Agent", "nakama-godot/0.1.0") // TODO set user-agent based on build version.
-			.make(rest, trace);
+						.url(url)
+						.method(HTTPClient::METHOD_POST, payload)
+						.header("Content-Type", "application/octet-stream")
+						.header("Authorization", "Basic " + _Marshalls::get_singleton()->utf8_to_base64(server_key + ":"))
+						.header("Accept-Language", lang)
+						.header("User-Agent", "nakama-godot/0.1.0") // TODO set user-agent based on build version.
+						.make(rest, trace);
 
 	if (ret != OK) {
 		emit_signal("request_error", "Failed to start a request", ret);
@@ -392,7 +403,6 @@ bool DefaultClient::authenticate(const Ref<DefaultAuthenticateRequest> &p_auth, 
 }
 
 bool DefaultClient::connect_session(const Ref<DefaultSession> &session) {
-
 	Ref<WebSocketPeer> peer = ws->get_peer(1);
 
 	if (peer.is_valid() && peer->is_connected_to_host()) {
@@ -401,17 +411,17 @@ bool DefaultClient::connect_session(const Ref<DefaultSession> &session) {
 	}
 
 	String url = Builder::Url()
-			.scheme(ssl ? "wss" : "ws")
-			.host(host)
-			.port(port)
-			.path("/api")
-			.build();
+						 .scheme(ssl ? "wss" : "ws")
+						 .host(host)
+						 .port(port)
+						 .path("/api")
+						 .build();
 
 	Error ret = Builder::Request()
-		.url(url)
-		.query_parameter("token", session->get_auth_token())
-		.query_parameter("lang", lang)
-		.make(ws, trace);
+						.url(url)
+						.query_parameter("token", session->get_auth_token())
+						.query_parameter("lang", lang)
+						.make(ws, trace);
 
 	if (ret != OK) {
 		emit_signal("session_error", "Failed to start a session", ret);
@@ -422,7 +432,6 @@ bool DefaultClient::connect_session(const Ref<DefaultSession> &session) {
 }
 
 bool DefaultClient::disconnect_session() {
-
 	Ref<WebSocketPeer> peer = ws->get_peer(1);
 
 	if (peer.is_valid()) {
@@ -488,7 +497,6 @@ bool DefaultClient::send(const Ref<NkUncollatedMessage> &message) {
 }
 
 void DefaultClient::_bind_methods() {
-
 	ClassDB::bind_method(D_METHOD("_rest_request_completed"), &DefaultClient::_rest_request_completed);
 	ClassDB::bind_method(D_METHOD("_connection_closed"), &DefaultClient::_ws_connection_closed);
 	ClassDB::bind_method(D_METHOD("_connection_error"), &DefaultClient::_ws_connection_error);
@@ -499,22 +507,21 @@ void DefaultClient::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("request_error", PropertyInfo(Variant::STRING, "error_message"), PropertyInfo(Variant::INT, "error_code")));
 
 	ADD_SIGNAL(MethodInfo("session_error",
-						  PropertyInfo(Variant::INT, "error_code"),
-						  PropertyInfo(Variant::STRING, "error_message"),
-						  PropertyInfo(Variant::STRING, "collation_id")));
-    ADD_SIGNAL(MethodInfo("session_accepted",
-						  PropertyInfo(Variant::STRING, "token"),
-						  PropertyInfo(Variant::STRING, "collation_id")));
-    ADD_SIGNAL(MethodInfo("session_closed"));
+			PropertyInfo(Variant::INT, "error_code"),
+			PropertyInfo(Variant::STRING, "error_message"),
+			PropertyInfo(Variant::STRING, "collation_id")));
+	ADD_SIGNAL(MethodInfo("session_accepted",
+			PropertyInfo(Variant::STRING, "token"),
+			PropertyInfo(Variant::STRING, "collation_id")));
+	ADD_SIGNAL(MethodInfo("session_closed"));
 
-    ADD_SIGNAL(MethodInfo("nk_message",
-						  PropertyInfo(Variant::INT, "payload_case"),
-						  PropertyInfo(Variant::OBJECT, "message"),
-						  PropertyInfo(Variant::STRING, "collation_id")));
+	ADD_SIGNAL(MethodInfo("nk_message",
+			PropertyInfo(Variant::INT, "payload_case"),
+			PropertyInfo(Variant::OBJECT, "message"),
+			PropertyInfo(Variant::STRING, "collation_id")));
 }
 
 DefaultClient::DefaultClient(String p_server_key, String p_host, int p_port, bool p_ssl, int p_timeout) {
-
 	host = p_host;
 	port = p_port;
 	server_key = p_server_key;
@@ -534,7 +541,6 @@ DefaultClient::DefaultClient(String p_server_key, String p_host, int p_port, boo
 }
 
 DefaultClient::~DefaultClient() {
-
 	if (rest) {
 		rest->cancel_request();
 		memdelete(rest);
@@ -546,19 +552,19 @@ DefaultClient::~DefaultClient() {
 #ifdef DOCTEST
 TEST_CASE("Url builder validation") {
 	String http_url = Builder::Url()
-			.scheme("http")
-			.host("127.0.0.1")
-			.port(80)
-			.path("/api")
-			.build();
+							  .scheme("http")
+							  .host("127.0.0.1")
+							  .port(80)
+							  .path("/api")
+							  .build();
 	REQUIRE(http_url == "http://127.0.0.1:80/api");
 
 	String https_url = Builder::Url()
-			.scheme("https")
-			.host("127.0.0.1")
-			.port(80)
-			.path("/api")
-			.build();
+							   .scheme("https")
+							   .host("127.0.0.1")
+							   .port(80)
+							   .path("/api")
+							   .build();
 	REQUIRE(https_url == "https://127.0.0.1:80/api");
 }
 #endif

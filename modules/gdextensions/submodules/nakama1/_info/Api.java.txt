@@ -250,7 +250,7 @@ public final class Api {
      * <code>optional int64 timestamp = 1;</code>
      */
     private void setTimestamp(long value) {
-      
+
       timestamp_ = value;
     }
     /**
@@ -261,7 +261,7 @@ public final class Api {
      * <code>optional int64 timestamp = 1;</code>
      */
     private void clearTimestamp() {
-      
+
       timestamp_ = 0L;
     }
 
@@ -917,7 +917,7 @@ public final class Api {
      * <code>optional int32 code = 1;</code>
      */
     private void setCode(int value) {
-      
+
       code_ = value;
     }
     /**
@@ -928,7 +928,7 @@ public final class Api {
      * <code>optional int32 code = 1;</code>
      */
     private void clearCode() {
-      
+
       code_ = 0;
     }
 
@@ -967,7 +967,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       message_ = value;
     }
     /**
@@ -978,7 +978,7 @@ public final class Api {
      * <code>optional string message = 2;</code>
      */
     private void clearMessage() {
-      
+
       message_ = getDefaultInstance().getMessage();
     }
     /**
@@ -994,7 +994,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       message_ = value.toStringUtf8();
     }
 
@@ -1556,7 +1556,7 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         email_ = value;
       }
       /**
@@ -1567,7 +1567,7 @@ public final class Api {
        * <code>optional string email = 1;</code>
        */
       private void clearEmail() {
-        
+
         email_ = getDefaultInstance().getEmail();
       }
       /**
@@ -1583,7 +1583,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         email_ = value.toStringUtf8();
       }
 
@@ -1622,7 +1622,7 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         password_ = value;
       }
       /**
@@ -1633,7 +1633,7 @@ public final class Api {
        * <code>optional string password = 2;</code>
        */
       private void clearPassword() {
-        
+
         password_ = getDefaultInstance().getPassword();
       }
       /**
@@ -1649,7 +1649,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         password_ = value.toStringUtf8();
       }
 
@@ -2153,7 +2153,7 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         playerId_ = value;
       }
       /**
@@ -2164,7 +2164,7 @@ public final class Api {
        * <code>optional string player_id = 1;</code>
        */
       private void clearPlayerId() {
-        
+
         playerId_ = getDefaultInstance().getPlayerId();
       }
       /**
@@ -2180,7 +2180,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         playerId_ = value.toStringUtf8();
       }
 
@@ -2219,7 +2219,7 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         bundleId_ = value;
       }
       /**
@@ -2230,7 +2230,7 @@ public final class Api {
        * <code>optional string bundle_id = 2;</code>
        */
       private void clearBundleId() {
-        
+
         bundleId_ = getDefaultInstance().getBundleId();
       }
       /**
@@ -2246,7 +2246,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         bundleId_ = value.toStringUtf8();
       }
 
@@ -2270,7 +2270,7 @@ public final class Api {
        * <code>optional int64 timestamp = 3;</code>
        */
       private void setTimestamp(long value) {
-        
+
         timestamp_ = value;
       }
       /**
@@ -2281,7 +2281,7 @@ public final class Api {
        * <code>optional int64 timestamp = 3;</code>
        */
       private void clearTimestamp() {
-        
+
         timestamp_ = 0L;
       }
 
@@ -2320,7 +2320,7 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         salt_ = value;
       }
       /**
@@ -2331,7 +2331,7 @@ public final class Api {
        * <code>optional string salt = 4;</code>
        */
       private void clearSalt() {
-        
+
         salt_ = getDefaultInstance().getSalt();
       }
       /**
@@ -2347,7 +2347,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         salt_ = value.toStringUtf8();
       }
 
@@ -2386,7 +2386,7 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         signature_ = value;
       }
       /**
@@ -2397,7 +2397,7 @@ public final class Api {
        * <code>optional string signature = 5;</code>
        */
       private void clearSignature() {
-        
+
         signature_ = getDefaultInstance().getSignature();
       }
       /**
@@ -2413,7 +2413,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         signature_ = value.toStringUtf8();
       }
 
@@ -2452,7 +2452,7 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         publicKeyUrl_ = value;
       }
       /**
@@ -2463,7 +2463,7 @@ public final class Api {
        * <code>optional string public_key_url = 6;</code>
        */
       private void clearPublicKeyUrl() {
-        
+
         publicKeyUrl_ = getDefaultInstance().getPublicKeyUrl();
       }
       /**
@@ -2479,7 +2479,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         publicKeyUrl_ = value.toStringUtf8();
       }
 
@@ -3187,7 +3187,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       collationId_ = value;
     }
     /**
@@ -3198,7 +3198,7 @@ public final class Api {
      * <code>optional string collationId = 1;</code>
      */
     private void clearCollationId() {
-      
+
       collationId_ = getDefaultInstance().getCollationId();
     }
     /**
@@ -3214,7 +3214,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       collationId_ = value.toStringUtf8();
     }
 
@@ -4738,7 +4738,7 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         token_ = value;
       }
       /**
@@ -4749,7 +4749,7 @@ public final class Api {
        * <code>optional string token = 1;</code>
        */
       private void clearToken() {
-        
+
         token_ = getDefaultInstance().getToken();
       }
       /**
@@ -4765,7 +4765,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         token_ = value.toStringUtf8();
       }
 
@@ -4804,7 +4804,7 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         udpToken_ = value;
       }
       /**
@@ -4815,7 +4815,7 @@ public final class Api {
        * <code>optional string udp_token = 2;</code>
        */
       private void clearUdpToken() {
-        
+
         udpToken_ = getDefaultInstance().getUdpToken();
       }
       /**
@@ -4831,7 +4831,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         udpToken_ = value.toStringUtf8();
       }
 
@@ -5260,7 +5260,7 @@ public final class Api {
        * <code>optional int32 code = 1;</code>
        */
       private void setCode(int value) {
-        
+
         code_ = value;
       }
       /**
@@ -5271,7 +5271,7 @@ public final class Api {
        * <code>optional int32 code = 1;</code>
        */
       private void clearCode() {
-        
+
         code_ = 0;
       }
 
@@ -5310,7 +5310,7 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         message_ = value;
       }
       /**
@@ -5321,7 +5321,7 @@ public final class Api {
        * <code>optional string message = 2;</code>
        */
       private void clearMessage() {
-        
+
         message_ = getDefaultInstance().getMessage();
       }
       /**
@@ -5337,7 +5337,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         message_ = value.toStringUtf8();
       }
 
@@ -5375,7 +5375,7 @@ public final class Api {
           throw new NullPointerException();
         }
         request_ = value;
-        
+
         }
       /**
        * <pre>
@@ -5387,7 +5387,7 @@ public final class Api {
       private void setRequest(
           com.heroiclabs.nakama.Api.AuthenticateRequest.Builder builderForValue) {
         request_ = builderForValue.build();
-        
+
       }
       /**
        * <pre>
@@ -5404,7 +5404,7 @@ public final class Api {
         } else {
           request_ = value;
         }
-        
+
       }
       /**
        * <pre>
@@ -5414,7 +5414,7 @@ public final class Api {
        * <code>optional .server.AuthenticateRequest request = 3;</code>
        */
       private void clearRequest() {  request_ = null;
-        
+
       }
 
       public void writeTo(com.google.protobuf.CodedOutputStream output)
@@ -5900,7 +5900,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       collationId_ = value;
     }
     /**
@@ -5911,7 +5911,7 @@ public final class Api {
      * <code>optional string collation_id = 1;</code>
      */
     private void clearCollationId() {
-      
+
       collationId_ = getDefaultInstance().getCollationId();
     }
     /**
@@ -5927,7 +5927,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       collationId_ = value.toStringUtf8();
     }
 
@@ -7146,7 +7146,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       collationId_ = value;
     }
     /**
@@ -7157,7 +7157,7 @@ public final class Api {
      * <code>optional string collation_id = 1;</code>
      */
     private void clearCollationId() {
-      
+
       collationId_ = getDefaultInstance().getCollationId();
     }
     /**
@@ -7173,7 +7173,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       collationId_ = value.toStringUtf8();
     }
 
@@ -19319,7 +19319,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       id_ = value;
     }
     /**
@@ -19330,7 +19330,7 @@ public final class Api {
      * <code>optional string id = 1;</code>
      */
     private void clearId() {
-      
+
       id_ = getDefaultInstance().getId();
     }
     /**
@@ -19346,7 +19346,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       id_ = value.toStringUtf8();
     }
 
@@ -19385,7 +19385,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       handle_ = value;
     }
     /**
@@ -19396,7 +19396,7 @@ public final class Api {
      * <code>optional string handle = 2;</code>
      */
     private void clearHandle() {
-      
+
       handle_ = getDefaultInstance().getHandle();
     }
     /**
@@ -19412,7 +19412,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       handle_ = value.toStringUtf8();
     }
 
@@ -19451,7 +19451,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       fullname_ = value;
     }
     /**
@@ -19462,7 +19462,7 @@ public final class Api {
      * <code>optional string fullname = 3;</code>
      */
     private void clearFullname() {
-      
+
       fullname_ = getDefaultInstance().getFullname();
     }
     /**
@@ -19478,7 +19478,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       fullname_ = value.toStringUtf8();
     }
 
@@ -19517,7 +19517,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       avatarUrl_ = value;
     }
     /**
@@ -19528,7 +19528,7 @@ public final class Api {
      * <code>optional string avatar_url = 4;</code>
      */
     private void clearAvatarUrl() {
-      
+
       avatarUrl_ = getDefaultInstance().getAvatarUrl();
     }
     /**
@@ -19544,7 +19544,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       avatarUrl_ = value.toStringUtf8();
     }
 
@@ -19583,7 +19583,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       lang_ = value;
     }
     /**
@@ -19594,7 +19594,7 @@ public final class Api {
      * <code>optional string lang = 5;</code>
      */
     private void clearLang() {
-      
+
       lang_ = getDefaultInstance().getLang();
     }
     /**
@@ -19610,7 +19610,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       lang_ = value.toStringUtf8();
     }
 
@@ -19649,7 +19649,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       location_ = value;
     }
     /**
@@ -19660,7 +19660,7 @@ public final class Api {
      * <code>optional string location = 6;</code>
      */
     private void clearLocation() {
-      
+
       location_ = getDefaultInstance().getLocation();
     }
     /**
@@ -19676,7 +19676,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       location_ = value.toStringUtf8();
     }
 
@@ -19715,7 +19715,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       timezone_ = value;
     }
     /**
@@ -19726,7 +19726,7 @@ public final class Api {
      * <code>optional string timezone = 7;</code>
      */
     private void clearTimezone() {
-      
+
       timezone_ = getDefaultInstance().getTimezone();
     }
     /**
@@ -19742,7 +19742,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       timezone_ = value.toStringUtf8();
     }
 
@@ -19781,7 +19781,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       metadata_ = value;
     }
     /**
@@ -19792,7 +19792,7 @@ public final class Api {
      * <code>optional string metadata = 8;</code>
      */
     private void clearMetadata() {
-      
+
       metadata_ = getDefaultInstance().getMetadata();
     }
     /**
@@ -19808,7 +19808,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       metadata_ = value.toStringUtf8();
     }
 
@@ -19832,7 +19832,7 @@ public final class Api {
      * <code>optional int64 created_at = 9;</code>
      */
     private void setCreatedAt(long value) {
-      
+
       createdAt_ = value;
     }
     /**
@@ -19843,7 +19843,7 @@ public final class Api {
      * <code>optional int64 created_at = 9;</code>
      */
     private void clearCreatedAt() {
-      
+
       createdAt_ = 0L;
     }
 
@@ -19867,7 +19867,7 @@ public final class Api {
      * <code>optional int64 updated_at = 10;</code>
      */
     private void setUpdatedAt(long value) {
-      
+
       updatedAt_ = value;
     }
     /**
@@ -19878,7 +19878,7 @@ public final class Api {
      * <code>optional int64 updated_at = 10;</code>
      */
     private void clearUpdatedAt() {
-      
+
       updatedAt_ = 0L;
     }
 
@@ -19902,7 +19902,7 @@ public final class Api {
      * <code>optional int64 last_online_at = 11;</code>
      */
     private void setLastOnlineAt(long value) {
-      
+
       lastOnlineAt_ = value;
     }
     /**
@@ -19913,7 +19913,7 @@ public final class Api {
      * <code>optional int64 last_online_at = 11;</code>
      */
     private void clearLastOnlineAt() {
-      
+
       lastOnlineAt_ = 0L;
     }
 
@@ -21086,7 +21086,7 @@ public final class Api {
         throw new NullPointerException();
       }
       user_ = value;
-      
+
       }
     /**
      * <pre>
@@ -21098,7 +21098,7 @@ public final class Api {
     private void setUser(
         com.heroiclabs.nakama.Api.User.Builder builderForValue) {
       user_ = builderForValue.build();
-      
+
     }
     /**
      * <pre>
@@ -21115,7 +21115,7 @@ public final class Api {
       } else {
         user_ = value;
       }
-      
+
     }
     /**
      * <pre>
@@ -21125,7 +21125,7 @@ public final class Api {
      * <code>optional .server.User user = 1;</code>
      */
     private void clearUser() {  user_ = null;
-      
+
     }
 
     public static final int VERIFIED_FIELD_NUMBER = 2;
@@ -21148,7 +21148,7 @@ public final class Api {
      * <code>optional bool verified = 2;</code>
      */
     private void setVerified(boolean value) {
-      
+
       verified_ = value;
     }
     /**
@@ -21159,7 +21159,7 @@ public final class Api {
      * <code>optional bool verified = 2;</code>
      */
     private void clearVerified() {
-      
+
       verified_ = false;
     }
 
@@ -21198,7 +21198,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       email_ = value;
     }
     /**
@@ -21209,7 +21209,7 @@ public final class Api {
      * <code>optional string email = 3;</code>
      */
     private void clearEmail() {
-      
+
       email_ = getDefaultInstance().getEmail();
     }
     /**
@@ -21225,7 +21225,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       email_ = value.toStringUtf8();
     }
 
@@ -21384,7 +21384,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       facebookId_ = value;
     }
     /**
@@ -21395,7 +21395,7 @@ public final class Api {
      * <code>optional string facebook_id = 5;</code>
      */
     private void clearFacebookId() {
-      
+
       facebookId_ = getDefaultInstance().getFacebookId();
     }
     /**
@@ -21411,7 +21411,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       facebookId_ = value.toStringUtf8();
     }
 
@@ -21450,7 +21450,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       googleId_ = value;
     }
     /**
@@ -21461,7 +21461,7 @@ public final class Api {
      * <code>optional string google_id = 6;</code>
      */
     private void clearGoogleId() {
-      
+
       googleId_ = getDefaultInstance().getGoogleId();
     }
     /**
@@ -21477,7 +21477,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       googleId_ = value.toStringUtf8();
     }
 
@@ -21516,7 +21516,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       gamecenterId_ = value;
     }
     /**
@@ -21527,7 +21527,7 @@ public final class Api {
      * <code>optional string gamecenter_id = 7;</code>
      */
     private void clearGamecenterId() {
-      
+
       gamecenterId_ = getDefaultInstance().getGamecenterId();
     }
     /**
@@ -21543,7 +21543,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       gamecenterId_ = value.toStringUtf8();
     }
 
@@ -21582,7 +21582,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       steamId_ = value;
     }
     /**
@@ -21593,7 +21593,7 @@ public final class Api {
      * <code>optional string steam_id = 8;</code>
      */
     private void clearSteamId() {
-      
+
       steamId_ = getDefaultInstance().getSteamId();
     }
     /**
@@ -21609,7 +21609,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       steamId_ = value.toStringUtf8();
     }
 
@@ -21648,7 +21648,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       customId_ = value;
     }
     /**
@@ -21659,7 +21659,7 @@ public final class Api {
      * <code>optional string custom_id = 9;</code>
      */
     private void clearCustomId() {
-      
+
       customId_ = getDefaultInstance().getCustomId();
     }
     /**
@@ -21675,7 +21675,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       customId_ = value.toStringUtf8();
     }
 
@@ -22854,7 +22854,7 @@ public final class Api {
         throw new NullPointerException();
       }
       self_ = value;
-      
+
       }
     /**
      * <code>optional .server.Self self = 1;</code>
@@ -22862,7 +22862,7 @@ public final class Api {
     private void setSelf(
         com.heroiclabs.nakama.Api.Self.Builder builderForValue) {
       self_ = builderForValue.build();
-      
+
     }
     /**
      * <code>optional .server.Self self = 1;</code>
@@ -22875,13 +22875,13 @@ public final class Api {
       } else {
         self_ = value;
       }
-      
+
     }
     /**
      * <code>optional .server.Self self = 1;</code>
      */
     private void clearSelf() {  self_ = null;
-      
+
     }
 
     public void writeTo(com.google.protobuf.CodedOutputStream output)
@@ -23276,14 +23276,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       handle_ = value;
     }
     /**
      * <code>optional string handle = 1;</code>
      */
     private void clearHandle() {
-      
+
       handle_ = getDefaultInstance().getHandle();
     }
     /**
@@ -23295,7 +23295,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       handle_ = value.toStringUtf8();
     }
 
@@ -23322,14 +23322,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       fullname_ = value;
     }
     /**
      * <code>optional string fullname = 2;</code>
      */
     private void clearFullname() {
-      
+
       fullname_ = getDefaultInstance().getFullname();
     }
     /**
@@ -23341,7 +23341,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       fullname_ = value.toStringUtf8();
     }
 
@@ -23368,14 +23368,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       timezone_ = value;
     }
     /**
      * <code>optional string timezone = 3;</code>
      */
     private void clearTimezone() {
-      
+
       timezone_ = getDefaultInstance().getTimezone();
     }
     /**
@@ -23387,7 +23387,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       timezone_ = value.toStringUtf8();
     }
 
@@ -23414,14 +23414,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       location_ = value;
     }
     /**
      * <code>optional string location = 4;</code>
      */
     private void clearLocation() {
-      
+
       location_ = getDefaultInstance().getLocation();
     }
     /**
@@ -23433,7 +23433,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       location_ = value.toStringUtf8();
     }
 
@@ -23472,7 +23472,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       lang_ = value;
     }
     /**
@@ -23483,7 +23483,7 @@ public final class Api {
      * <code>optional string lang = 5;</code>
      */
     private void clearLang() {
-      
+
       lang_ = getDefaultInstance().getLang();
     }
     /**
@@ -23499,7 +23499,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       lang_ = value.toStringUtf8();
     }
 
@@ -23538,7 +23538,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       metadata_ = value;
     }
     /**
@@ -23549,7 +23549,7 @@ public final class Api {
      * <code>optional string metadata = 6;</code>
      */
     private void clearMetadata() {
-      
+
       metadata_ = getDefaultInstance().getMetadata();
     }
     /**
@@ -23565,7 +23565,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       metadata_ = value.toStringUtf8();
     }
 
@@ -23592,14 +23592,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       avatarUrl_ = value;
     }
     /**
      * <code>optional string avatar_url = 7;</code>
      */
     private void clearAvatarUrl() {
-      
+
       avatarUrl_ = getDefaultInstance().getAvatarUrl();
     }
     /**
@@ -23611,7 +23611,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       avatarUrl_ = value.toStringUtf8();
     }
 
@@ -24242,7 +24242,7 @@ public final class Api {
      *
      * <code>repeated .server.TUsersFetch.UsersFetch users = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.TUsersFetch.UsersFetch> 
+    java.util.List<com.heroiclabs.nakama.Api.TUsersFetch.UsersFetch>
         getUsersList();
     /**
      * <pre>
@@ -24808,7 +24808,7 @@ public final class Api {
      *
      * <code>repeated .server.TUsersFetch.UsersFetch users = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.TUsersFetch.UsersFetchOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.TUsersFetch.UsersFetchOrBuilder>
         getUsersOrBuilderList() {
       return users_;
     }
@@ -25327,7 +25327,7 @@ public final class Api {
     /**
      * <code>repeated .server.User users = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.User> 
+    java.util.List<com.heroiclabs.nakama.Api.User>
         getUsersList();
     /**
      * <code>repeated .server.User users = 1;</code>
@@ -25365,7 +25365,7 @@ public final class Api {
     /**
      * <code>repeated .server.User users = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.UserOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.UserOrBuilder>
         getUsersOrBuilderList() {
       return users_;
     }
@@ -25863,7 +25863,7 @@ public final class Api {
         throw new NullPointerException();
       }
       user_ = value;
-      
+
       }
     /**
      * <pre>
@@ -25875,7 +25875,7 @@ public final class Api {
     private void setUser(
         com.heroiclabs.nakama.Api.User.Builder builderForValue) {
       user_ = builderForValue.build();
-      
+
     }
     /**
      * <pre>
@@ -25892,7 +25892,7 @@ public final class Api {
       } else {
         user_ = value;
       }
-      
+
     }
     /**
      * <pre>
@@ -25902,7 +25902,7 @@ public final class Api {
      * <code>optional .server.User user = 1;</code>
      */
     private void clearUser() {  user_ = null;
-      
+
     }
 
     public static final int STATE_FIELD_NUMBER = 2;
@@ -25933,7 +25933,7 @@ public final class Api {
      * <code>optional int64 state = 2;</code>
      */
     private void setState(long value) {
-      
+
       state_ = value;
     }
     /**
@@ -25948,7 +25948,7 @@ public final class Api {
      * <code>optional int64 state = 2;</code>
      */
     private void clearState() {
-      
+
       state_ = 0L;
     }
 
@@ -26301,7 +26301,7 @@ public final class Api {
     /**
      * <code>repeated .server.TFriendsAdd.FriendsAdd friends = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.TFriendsAdd.FriendsAdd> 
+    java.util.List<com.heroiclabs.nakama.Api.TFriendsAdd.FriendsAdd>
         getFriendsList();
     /**
      * <code>repeated .server.TFriendsAdd.FriendsAdd friends = 1;</code>
@@ -26851,7 +26851,7 @@ public final class Api {
     /**
      * <code>repeated .server.TFriendsAdd.FriendsAdd friends = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.TFriendsAdd.FriendsAddOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.TFriendsAdd.FriendsAddOrBuilder>
         getFriendsOrBuilderList() {
       return friends_;
     }
@@ -28308,7 +28308,7 @@ public final class Api {
     /**
      * <code>repeated .server.Friend friends = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.Friend> 
+    java.util.List<com.heroiclabs.nakama.Api.Friend>
         getFriendsList();
     /**
      * <code>repeated .server.Friend friends = 1;</code>
@@ -28346,7 +28346,7 @@ public final class Api {
     /**
      * <code>repeated .server.Friend friends = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.FriendOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.FriendOrBuilder>
         getFriendsOrBuilderList() {
       return friends_;
     }
@@ -28961,7 +28961,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       id_ = value;
     }
     /**
@@ -28972,7 +28972,7 @@ public final class Api {
      * <code>optional string id = 1;</code>
      */
     private void clearId() {
-      
+
       id_ = getDefaultInstance().getId();
     }
     /**
@@ -28988,7 +28988,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       id_ = value.toStringUtf8();
     }
 
@@ -29012,7 +29012,7 @@ public final class Api {
      * <code>optional bool private = 2;</code>
      */
     private void setPrivate(boolean value) {
-      
+
       private_ = value;
     }
     /**
@@ -29023,7 +29023,7 @@ public final class Api {
      * <code>optional bool private = 2;</code>
      */
     private void clearPrivate() {
-      
+
       private_ = false;
     }
 
@@ -29062,7 +29062,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       creatorId_ = value;
     }
     /**
@@ -29073,7 +29073,7 @@ public final class Api {
      * <code>optional string creator_id = 3;</code>
      */
     private void clearCreatorId() {
-      
+
       creatorId_ = getDefaultInstance().getCreatorId();
     }
     /**
@@ -29089,7 +29089,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       creatorId_ = value.toStringUtf8();
     }
 
@@ -29116,14 +29116,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       name_ = value;
     }
     /**
      * <code>optional string name = 4;</code>
      */
     private void clearName() {
-      
+
       name_ = getDefaultInstance().getName();
     }
     /**
@@ -29135,7 +29135,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       name_ = value.toStringUtf8();
     }
 
@@ -29162,14 +29162,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       description_ = value;
     }
     /**
      * <code>optional string description = 5;</code>
      */
     private void clearDescription() {
-      
+
       description_ = getDefaultInstance().getDescription();
     }
     /**
@@ -29181,7 +29181,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       description_ = value.toStringUtf8();
     }
 
@@ -29208,14 +29208,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       avatarUrl_ = value;
     }
     /**
      * <code>optional string avatar_url = 6;</code>
      */
     private void clearAvatarUrl() {
-      
+
       avatarUrl_ = getDefaultInstance().getAvatarUrl();
     }
     /**
@@ -29227,7 +29227,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       avatarUrl_ = value.toStringUtf8();
     }
 
@@ -29266,7 +29266,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       lang_ = value;
     }
     /**
@@ -29277,7 +29277,7 @@ public final class Api {
      * <code>optional string lang = 7;</code>
      */
     private void clearLang() {
-      
+
       lang_ = getDefaultInstance().getLang();
     }
     /**
@@ -29293,7 +29293,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       lang_ = value.toStringUtf8();
     }
 
@@ -29317,7 +29317,7 @@ public final class Api {
      * <code>optional int64 utc_offset_ms = 8;</code>
      */
     private void setUtcOffsetMs(long value) {
-      
+
       utcOffsetMs_ = value;
     }
     /**
@@ -29328,7 +29328,7 @@ public final class Api {
      * <code>optional int64 utc_offset_ms = 8;</code>
      */
     private void clearUtcOffsetMs() {
-      
+
       utcOffsetMs_ = 0L;
     }
 
@@ -29367,7 +29367,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       metadata_ = value;
     }
     /**
@@ -29378,7 +29378,7 @@ public final class Api {
      * <code>optional string metadata = 9;</code>
      */
     private void clearMetadata() {
-      
+
       metadata_ = getDefaultInstance().getMetadata();
     }
     /**
@@ -29394,7 +29394,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       metadata_ = value.toStringUtf8();
     }
 
@@ -29418,7 +29418,7 @@ public final class Api {
      * <code>optional int64 count = 10;</code>
      */
     private void setCount(long value) {
-      
+
       count_ = value;
     }
     /**
@@ -29429,7 +29429,7 @@ public final class Api {
      * <code>optional int64 count = 10;</code>
      */
     private void clearCount() {
-      
+
       count_ = 0L;
     }
 
@@ -29445,14 +29445,14 @@ public final class Api {
      * <code>optional int64 created_at = 11;</code>
      */
     private void setCreatedAt(long value) {
-      
+
       createdAt_ = value;
     }
     /**
      * <code>optional int64 created_at = 11;</code>
      */
     private void clearCreatedAt() {
-      
+
       createdAt_ = 0L;
     }
 
@@ -29468,14 +29468,14 @@ public final class Api {
      * <code>optional int64 updated_at = 12;</code>
      */
     private void setUpdatedAt(long value) {
-      
+
       updatedAt_ = value;
     }
     /**
      * <code>optional int64 updated_at = 12;</code>
      */
     private void clearUpdatedAt() {
-      
+
       updatedAt_ = 0L;
     }
 
@@ -30363,7 +30363,7 @@ public final class Api {
     /**
      * <code>repeated .server.TGroupsCreate.GroupCreate groups = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.TGroupsCreate.GroupCreate> 
+    java.util.List<com.heroiclabs.nakama.Api.TGroupsCreate.GroupCreate>
         getGroupsList();
     /**
      * <code>repeated .server.TGroupsCreate.GroupCreate groups = 1;</code>
@@ -30529,7 +30529,7 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         name_ = value;
       }
       /**
@@ -30540,7 +30540,7 @@ public final class Api {
        * <code>optional string name = 1;</code>
        */
       private void clearName() {
-        
+
         name_ = getDefaultInstance().getName();
       }
       /**
@@ -30556,7 +30556,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         name_ = value.toStringUtf8();
       }
 
@@ -30583,14 +30583,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         description_ = value;
       }
       /**
        * <code>optional string description = 2;</code>
        */
       private void clearDescription() {
-        
+
         description_ = getDefaultInstance().getDescription();
       }
       /**
@@ -30602,7 +30602,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         description_ = value.toStringUtf8();
       }
 
@@ -30629,14 +30629,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         avatarUrl_ = value;
       }
       /**
        * <code>optional string avatar_url = 3;</code>
        */
       private void clearAvatarUrl() {
-        
+
         avatarUrl_ = getDefaultInstance().getAvatarUrl();
       }
       /**
@@ -30648,7 +30648,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         avatarUrl_ = value.toStringUtf8();
       }
 
@@ -30687,7 +30687,7 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         lang_ = value;
       }
       /**
@@ -30698,7 +30698,7 @@ public final class Api {
        * <code>optional string lang = 4;</code>
        */
       private void clearLang() {
-        
+
         lang_ = getDefaultInstance().getLang();
       }
       /**
@@ -30714,7 +30714,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         lang_ = value.toStringUtf8();
       }
 
@@ -30753,7 +30753,7 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         metadata_ = value;
       }
       /**
@@ -30764,7 +30764,7 @@ public final class Api {
        * <code>optional string metadata = 5;</code>
        */
       private void clearMetadata() {
-        
+
         metadata_ = getDefaultInstance().getMetadata();
       }
       /**
@@ -30780,7 +30780,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         metadata_ = value.toStringUtf8();
       }
 
@@ -30804,7 +30804,7 @@ public final class Api {
        * <code>optional bool private = 6;</code>
        */
       private void setPrivate(boolean value) {
-        
+
         private_ = value;
       }
       /**
@@ -30815,7 +30815,7 @@ public final class Api {
        * <code>optional bool private = 6;</code>
        */
       private void clearPrivate() {
-        
+
         private_ = false;
       }
 
@@ -31400,7 +31400,7 @@ public final class Api {
     /**
      * <code>repeated .server.TGroupsCreate.GroupCreate groups = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.TGroupsCreate.GroupCreateOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.TGroupsCreate.GroupCreateOrBuilder>
         getGroupsOrBuilderList() {
       return groups_;
     }
@@ -31824,7 +31824,7 @@ public final class Api {
     /**
      * <code>repeated .server.TGroupsUpdate.GroupUpdate groups = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.TGroupsUpdate.GroupUpdate> 
+    java.util.List<com.heroiclabs.nakama.Api.TGroupsUpdate.GroupUpdate>
         getGroupsList();
     /**
      * <code>repeated .server.TGroupsUpdate.GroupUpdate groups = 1;</code>
@@ -31989,14 +31989,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         groupId_ = value;
       }
       /**
        * <code>optional string group_id = 1;</code>
        */
       private void clearGroupId() {
-        
+
         groupId_ = getDefaultInstance().getGroupId();
       }
       /**
@@ -32008,7 +32008,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         groupId_ = value.toStringUtf8();
       }
 
@@ -32032,7 +32032,7 @@ public final class Api {
        * <code>optional bool private = 2;</code>
        */
       private void setPrivate(boolean value) {
-        
+
         private_ = value;
       }
       /**
@@ -32043,7 +32043,7 @@ public final class Api {
        * <code>optional bool private = 2;</code>
        */
       private void clearPrivate() {
-        
+
         private_ = false;
       }
 
@@ -32082,7 +32082,7 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         name_ = value;
       }
       /**
@@ -32093,7 +32093,7 @@ public final class Api {
        * <code>optional string name = 3;</code>
        */
       private void clearName() {
-        
+
         name_ = getDefaultInstance().getName();
       }
       /**
@@ -32109,7 +32109,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         name_ = value.toStringUtf8();
       }
 
@@ -32136,14 +32136,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         description_ = value;
       }
       /**
        * <code>optional string description = 4;</code>
        */
       private void clearDescription() {
-        
+
         description_ = getDefaultInstance().getDescription();
       }
       /**
@@ -32155,7 +32155,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         description_ = value.toStringUtf8();
       }
 
@@ -32182,14 +32182,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         avatarUrl_ = value;
       }
       /**
        * <code>optional string avatar_url = 5;</code>
        */
       private void clearAvatarUrl() {
-        
+
         avatarUrl_ = getDefaultInstance().getAvatarUrl();
       }
       /**
@@ -32201,7 +32201,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         avatarUrl_ = value.toStringUtf8();
       }
 
@@ -32240,7 +32240,7 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         lang_ = value;
       }
       /**
@@ -32251,7 +32251,7 @@ public final class Api {
        * <code>optional string lang = 6;</code>
        */
       private void clearLang() {
-        
+
         lang_ = getDefaultInstance().getLang();
       }
       /**
@@ -32267,7 +32267,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         lang_ = value.toStringUtf8();
       }
 
@@ -32306,7 +32306,7 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         metadata_ = value;
       }
       /**
@@ -32317,7 +32317,7 @@ public final class Api {
        * <code>optional string metadata = 7;</code>
        */
       private void clearMetadata() {
-        
+
         metadata_ = getDefaultInstance().getMetadata();
       }
       /**
@@ -32333,7 +32333,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         metadata_ = value.toStringUtf8();
       }
 
@@ -32973,7 +32973,7 @@ public final class Api {
     /**
      * <code>repeated .server.TGroupsUpdate.GroupUpdate groups = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.TGroupsUpdate.GroupUpdateOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.TGroupsUpdate.GroupUpdateOrBuilder>
         getGroupsOrBuilderList() {
       return groups_;
     }
@@ -34022,7 +34022,7 @@ public final class Api {
     /**
      * <code>repeated .server.TGroupsFetch.GroupFetch groups = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.TGroupsFetch.GroupFetch> 
+    java.util.List<com.heroiclabs.nakama.Api.TGroupsFetch.GroupFetch>
         getGroupsList();
     /**
      * <code>repeated .server.TGroupsFetch.GroupFetch groups = 1;</code>
@@ -34572,7 +34572,7 @@ public final class Api {
     /**
      * <code>repeated .server.TGroupsFetch.GroupFetch groups = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.TGroupsFetch.GroupFetchOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.TGroupsFetch.GroupFetchOrBuilder>
         getGroupsOrBuilderList() {
       return groups_;
     }
@@ -35150,7 +35150,7 @@ public final class Api {
      * <code>optional int64 page_limit = 1;</code>
      */
     private void setPageLimit(long value) {
-      
+
       pageLimit_ = value;
     }
     /**
@@ -35161,7 +35161,7 @@ public final class Api {
      * <code>optional int64 page_limit = 1;</code>
      */
     private void clearPageLimit() {
-      
+
       pageLimit_ = 0L;
     }
 
@@ -35185,7 +35185,7 @@ public final class Api {
      * <code>optional bool order_by_asc = 2;</code>
      */
     private void setOrderByAsc(boolean value) {
-      
+
       orderByAsc_ = value;
     }
     /**
@@ -35196,7 +35196,7 @@ public final class Api {
      * <code>optional bool order_by_asc = 2;</code>
      */
     private void clearOrderByAsc() {
-      
+
       orderByAsc_ = false;
     }
 
@@ -35391,7 +35391,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       cursor_ = value;
     }
     /**
@@ -35403,7 +35403,7 @@ public final class Api {
      * <code>optional string cursor = 7;</code>
      */
     private void clearCursor() {
-      
+
       cursor_ = getDefaultInstance().getCursor();
     }
     /**
@@ -35420,7 +35420,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       cursor_ = value.toStringUtf8();
     }
 
@@ -36007,7 +36007,7 @@ public final class Api {
     /**
      * <code>repeated .server.Group groups = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.Group> 
+    java.util.List<com.heroiclabs.nakama.Api.Group>
         getGroupsList();
     /**
      * <code>repeated .server.Group groups = 1;</code>
@@ -36065,7 +36065,7 @@ public final class Api {
     /**
      * <code>repeated .server.Group groups = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.GroupOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.GroupOrBuilder>
         getGroupsOrBuilderList() {
       return groups_;
     }
@@ -36209,7 +36209,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       cursor_ = value;
     }
     /**
@@ -36220,7 +36220,7 @@ public final class Api {
      * <code>optional string cursor = 2;</code>
      */
     private void clearCursor() {
-      
+
       cursor_ = getDefaultInstance().getCursor();
     }
     /**
@@ -36236,7 +36236,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       cursor_ = value.toStringUtf8();
     }
 
@@ -36629,7 +36629,7 @@ public final class Api {
     /**
      * <code>repeated .server.TGroupsSelf.GroupSelf groups_self = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.TGroupsSelf.GroupSelf> 
+    java.util.List<com.heroiclabs.nakama.Api.TGroupsSelf.GroupSelf>
         getGroupsSelfList();
     /**
      * <code>repeated .server.TGroupsSelf.GroupSelf groups_self = 1;</code>
@@ -36733,7 +36733,7 @@ public final class Api {
           throw new NullPointerException();
         }
         group_ = value;
-        
+
         }
       /**
        * <pre>
@@ -36745,7 +36745,7 @@ public final class Api {
       private void setGroup(
           com.heroiclabs.nakama.Api.Group.Builder builderForValue) {
         group_ = builderForValue.build();
-        
+
       }
       /**
        * <pre>
@@ -36762,7 +36762,7 @@ public final class Api {
         } else {
           group_ = value;
         }
-        
+
       }
       /**
        * <pre>
@@ -36772,7 +36772,7 @@ public final class Api {
        * <code>optional .server.Group group = 1;</code>
        */
       private void clearGroup() {  group_ = null;
-        
+
       }
 
       public static final int STATE_FIELD_NUMBER = 2;
@@ -36801,7 +36801,7 @@ public final class Api {
        * <code>optional int64 state = 2;</code>
        */
       private void setState(long value) {
-        
+
         state_ = value;
       }
       /**
@@ -36815,7 +36815,7 @@ public final class Api {
        * <code>optional int64 state = 2;</code>
        */
       private void clearState() {
-        
+
         state_ = 0L;
       }
 
@@ -37164,7 +37164,7 @@ public final class Api {
     /**
      * <code>repeated .server.TGroupsSelf.GroupSelf groups_self = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.TGroupsSelf.GroupSelfOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.TGroupsSelf.GroupSelfOrBuilder>
         getGroupsSelfOrBuilderList() {
       return groupsSelf_;
     }
@@ -37641,7 +37641,7 @@ public final class Api {
         throw new NullPointerException();
       }
       user_ = value;
-      
+
       }
     /**
      * <code>optional .server.User user = 1;</code>
@@ -37649,7 +37649,7 @@ public final class Api {
     private void setUser(
         com.heroiclabs.nakama.Api.User.Builder builderForValue) {
       user_ = builderForValue.build();
-      
+
     }
     /**
      * <code>optional .server.User user = 1;</code>
@@ -37662,13 +37662,13 @@ public final class Api {
       } else {
         user_ = value;
       }
-      
+
     }
     /**
      * <code>optional .server.User user = 1;</code>
      */
     private void clearUser() {  user_ = null;
-      
+
     }
 
     public static final int STATE_FIELD_NUMBER = 2;
@@ -37697,7 +37697,7 @@ public final class Api {
      * <code>optional int64 state = 2;</code>
      */
     private void setState(long value) {
-      
+
       state_ = value;
     }
     /**
@@ -37711,7 +37711,7 @@ public final class Api {
      * <code>optional int64 state = 2;</code>
      */
     private void clearState() {
-      
+
       state_ = 0L;
     }
 
@@ -38084,14 +38084,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       groupId_ = value;
     }
     /**
      * <code>optional string group_id = 1;</code>
      */
     private void clearGroupId() {
-      
+
       groupId_ = getDefaultInstance().getGroupId();
     }
     /**
@@ -38103,7 +38103,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       groupId_ = value.toStringUtf8();
     }
 
@@ -38361,7 +38361,7 @@ public final class Api {
     /**
      * <code>repeated .server.GroupUser users = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.GroupUser> 
+    java.util.List<com.heroiclabs.nakama.Api.GroupUser>
         getUsersList();
     /**
      * <code>repeated .server.GroupUser users = 1;</code>
@@ -38399,7 +38399,7 @@ public final class Api {
     /**
      * <code>repeated .server.GroupUser users = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.GroupUserOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.GroupUserOrBuilder>
         getUsersOrBuilderList() {
       return users_;
     }
@@ -39647,7 +39647,7 @@ public final class Api {
     /**
      * <code>repeated .server.TGroupUsersAdd.GroupUserAdd group_users = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.TGroupUsersAdd.GroupUserAdd> 
+    java.util.List<com.heroiclabs.nakama.Api.TGroupUsersAdd.GroupUserAdd>
         getGroupUsersList();
     /**
      * <code>repeated .server.TGroupUsersAdd.GroupUserAdd group_users = 1;</code>
@@ -39736,14 +39736,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         groupId_ = value;
       }
       /**
        * <code>optional string group_id = 1;</code>
        */
       private void clearGroupId() {
-        
+
         groupId_ = getDefaultInstance().getGroupId();
       }
       /**
@@ -39755,7 +39755,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         groupId_ = value.toStringUtf8();
       }
 
@@ -39782,14 +39782,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         userId_ = value;
       }
       /**
        * <code>optional string user_id = 2;</code>
        */
       private void clearUserId() {
-        
+
         userId_ = getDefaultInstance().getUserId();
       }
       /**
@@ -39801,7 +39801,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         userId_ = value.toStringUtf8();
       }
 
@@ -40112,7 +40112,7 @@ public final class Api {
     /**
      * <code>repeated .server.TGroupUsersAdd.GroupUserAdd group_users = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.TGroupUsersAdd.GroupUserAddOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.TGroupUsersAdd.GroupUserAddOrBuilder>
         getGroupUsersOrBuilderList() {
       return groupUsers_;
     }
@@ -40537,7 +40537,7 @@ public final class Api {
     /**
      * <code>repeated .server.TGroupUsersKick.GroupUserKick group_users = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.TGroupUsersKick.GroupUserKick> 
+    java.util.List<com.heroiclabs.nakama.Api.TGroupUsersKick.GroupUserKick>
         getGroupUsersList();
     /**
      * <code>repeated .server.TGroupUsersKick.GroupUserKick group_users = 1;</code>
@@ -40626,14 +40626,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         groupId_ = value;
       }
       /**
        * <code>optional string group_id = 1;</code>
        */
       private void clearGroupId() {
-        
+
         groupId_ = getDefaultInstance().getGroupId();
       }
       /**
@@ -40645,7 +40645,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         groupId_ = value.toStringUtf8();
       }
 
@@ -40672,14 +40672,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         userId_ = value;
       }
       /**
        * <code>optional string user_id = 2;</code>
        */
       private void clearUserId() {
-        
+
         userId_ = getDefaultInstance().getUserId();
       }
       /**
@@ -40691,7 +40691,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         userId_ = value.toStringUtf8();
       }
 
@@ -41002,7 +41002,7 @@ public final class Api {
     /**
      * <code>repeated .server.TGroupUsersKick.GroupUserKick group_users = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.TGroupUsersKick.GroupUserKickOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.TGroupUsersKick.GroupUserKickOrBuilder>
         getGroupUsersOrBuilderList() {
       return groupUsers_;
     }
@@ -41427,7 +41427,7 @@ public final class Api {
     /**
      * <code>repeated .server.TGroupUsersPromote.GroupUserPromote group_users = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.TGroupUsersPromote.GroupUserPromote> 
+    java.util.List<com.heroiclabs.nakama.Api.TGroupUsersPromote.GroupUserPromote>
         getGroupUsersList();
     /**
      * <code>repeated .server.TGroupUsersPromote.GroupUserPromote group_users = 1;</code>
@@ -41515,14 +41515,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         groupId_ = value;
       }
       /**
        * <code>optional string group_id = 1;</code>
        */
       private void clearGroupId() {
-        
+
         groupId_ = getDefaultInstance().getGroupId();
       }
       /**
@@ -41534,7 +41534,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         groupId_ = value.toStringUtf8();
       }
 
@@ -41561,14 +41561,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         userId_ = value;
       }
       /**
        * <code>optional string user_id = 2;</code>
        */
       private void clearUserId() {
-        
+
         userId_ = getDefaultInstance().getUserId();
       }
       /**
@@ -41580,7 +41580,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         userId_ = value.toStringUtf8();
       }
 
@@ -41891,7 +41891,7 @@ public final class Api {
     /**
      * <code>repeated .server.TGroupUsersPromote.GroupUserPromote group_users = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.TGroupUsersPromote.GroupUserPromoteOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.TGroupUsersPromote.GroupUserPromoteOrBuilder>
         getGroupUsersOrBuilderList() {
       return groupUsers_;
     }
@@ -43066,7 +43066,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       userId_ = value;
     }
     /**
@@ -43077,7 +43077,7 @@ public final class Api {
      * <code>optional string user_id = 1;</code>
      */
     private void clearUserId() {
-      
+
       userId_ = getDefaultInstance().getUserId();
     }
     /**
@@ -43093,7 +43093,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       userId_ = value.toStringUtf8();
     }
 
@@ -43132,7 +43132,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       sessionId_ = value;
     }
     /**
@@ -43143,7 +43143,7 @@ public final class Api {
      * <code>optional string session_id = 2;</code>
      */
     private void clearSessionId() {
-      
+
       sessionId_ = getDefaultInstance().getSessionId();
     }
     /**
@@ -43159,7 +43159,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       sessionId_ = value.toStringUtf8();
     }
 
@@ -43198,7 +43198,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       handle_ = value;
     }
     /**
@@ -43209,7 +43209,7 @@ public final class Api {
      * <code>optional string handle = 3;</code>
      */
     private void clearHandle() {
-      
+
       handle_ = getDefaultInstance().getHandle();
     }
     /**
@@ -43225,7 +43225,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       handle_ = value.toStringUtf8();
     }
 
@@ -43653,7 +43653,7 @@ public final class Api {
     /**
      * <code>repeated .server.TTopicsJoin.TopicJoin joins = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.TTopicsJoin.TopicJoin> 
+    java.util.List<com.heroiclabs.nakama.Api.TTopicsJoin.TopicJoin>
         getJoinsList();
     /**
      * <code>repeated .server.TTopicsJoin.TopicJoin joins = 1;</code>
@@ -44329,7 +44329,7 @@ public final class Api {
     /**
      * <code>repeated .server.TTopicsJoin.TopicJoin joins = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.TTopicsJoin.TopicJoinOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.TTopicsJoin.TopicJoinOrBuilder>
         getJoinsOrBuilderList() {
       return joins_;
     }
@@ -44753,7 +44753,7 @@ public final class Api {
     /**
      * <code>repeated .server.TTopics.Topic topics = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.TTopics.Topic> 
+    java.util.List<com.heroiclabs.nakama.Api.TTopics.Topic>
         getTopicsList();
     /**
      * <code>repeated .server.TTopics.Topic topics = 1;</code>
@@ -44808,7 +44808,7 @@ public final class Api {
        *
        * <code>repeated .server.UserPresence presences = 2;</code>
        */
-      java.util.List<com.heroiclabs.nakama.Api.UserPresence> 
+      java.util.List<com.heroiclabs.nakama.Api.UserPresence>
           getPresencesList();
       /**
        * <pre>
@@ -44890,7 +44890,7 @@ public final class Api {
           throw new NullPointerException();
         }
         topic_ = value;
-        
+
         }
       /**
        * <pre>
@@ -44902,7 +44902,7 @@ public final class Api {
       private void setTopic(
           com.heroiclabs.nakama.Api.TopicId.Builder builderForValue) {
         topic_ = builderForValue.build();
-        
+
       }
       /**
        * <pre>
@@ -44919,7 +44919,7 @@ public final class Api {
         } else {
           topic_ = value;
         }
-        
+
       }
       /**
        * <pre>
@@ -44929,7 +44929,7 @@ public final class Api {
        * <code>optional .server.TopicId topic = 1;</code>
        */
       private void clearTopic() {  topic_ = null;
-        
+
       }
 
       public static final int PRESENCES_FIELD_NUMBER = 2;
@@ -44951,7 +44951,7 @@ public final class Api {
        *
        * <code>repeated .server.UserPresence presences = 2;</code>
        */
-      public java.util.List<? extends com.heroiclabs.nakama.Api.UserPresenceOrBuilder> 
+      public java.util.List<? extends com.heroiclabs.nakama.Api.UserPresenceOrBuilder>
           getPresencesOrBuilderList() {
         return presences_;
       }
@@ -45142,7 +45142,7 @@ public final class Api {
           throw new NullPointerException();
         }
         self_ = value;
-        
+
         }
       /**
        * <pre>
@@ -45154,7 +45154,7 @@ public final class Api {
       private void setSelf(
           com.heroiclabs.nakama.Api.UserPresence.Builder builderForValue) {
         self_ = builderForValue.build();
-        
+
       }
       /**
        * <pre>
@@ -45171,7 +45171,7 @@ public final class Api {
         } else {
           self_ = value;
         }
-        
+
       }
       /**
        * <pre>
@@ -45181,7 +45181,7 @@ public final class Api {
        * <code>optional .server.UserPresence self = 3;</code>
        */
       private void clearSelf() {  self_ = null;
-        
+
       }
 
       public void writeTo(com.google.protobuf.CodedOutputStream output)
@@ -45725,7 +45725,7 @@ public final class Api {
     /**
      * <code>repeated .server.TTopics.Topic topics = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.TTopics.TopicOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.TTopics.TopicOrBuilder>
         getTopicsOrBuilderList() {
       return topics_;
     }
@@ -46147,7 +46147,7 @@ public final class Api {
     /**
      * <code>repeated .server.TopicId topics = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.TopicId> 
+    java.util.List<com.heroiclabs.nakama.Api.TopicId>
         getTopicsList();
     /**
      * <code>repeated .server.TopicId topics = 1;</code>
@@ -46186,7 +46186,7 @@ public final class Api {
     /**
      * <code>repeated .server.TopicId topics = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.TopicIdOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.TopicIdOrBuilder>
         getTopicsOrBuilderList() {
       return topics_;
     }
@@ -46663,7 +46663,7 @@ public final class Api {
         throw new NullPointerException();
       }
       topic_ = value;
-      
+
       }
     /**
      * <code>optional .server.TopicId topic = 1;</code>
@@ -46671,7 +46671,7 @@ public final class Api {
     private void setTopic(
         com.heroiclabs.nakama.Api.TopicId.Builder builderForValue) {
       topic_ = builderForValue.build();
-      
+
     }
     /**
      * <code>optional .server.TopicId topic = 1;</code>
@@ -46684,13 +46684,13 @@ public final class Api {
       } else {
         topic_ = value;
       }
-      
+
     }
     /**
      * <code>optional .server.TopicId topic = 1;</code>
      */
     private void clearTopic() {  topic_ = null;
-      
+
     }
 
     public static final int DATA_FIELD_NUMBER = 2;
@@ -46716,14 +46716,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       data_ = value;
     }
     /**
      * <code>optional string data = 2;</code>
      */
     private void clearData() {
-      
+
       data_ = getDefaultInstance().getData();
     }
     /**
@@ -46735,7 +46735,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       data_ = value.toStringUtf8();
     }
 
@@ -47125,14 +47125,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       messageId_ = value;
     }
     /**
      * <code>optional string message_id = 1;</code>
      */
     private void clearMessageId() {
-      
+
       messageId_ = getDefaultInstance().getMessageId();
     }
     /**
@@ -47144,7 +47144,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       messageId_ = value.toStringUtf8();
     }
 
@@ -47160,14 +47160,14 @@ public final class Api {
      * <code>optional int64 created_at = 2;</code>
      */
     private void setCreatedAt(long value) {
-      
+
       createdAt_ = value;
     }
     /**
      * <code>optional int64 created_at = 2;</code>
      */
     private void clearCreatedAt() {
-      
+
       createdAt_ = 0L;
     }
 
@@ -47183,14 +47183,14 @@ public final class Api {
      * <code>optional int64 expires_at = 3;</code>
      */
     private void setExpiresAt(long value) {
-      
+
       expiresAt_ = value;
     }
     /**
      * <code>optional int64 expires_at = 3;</code>
      */
     private void clearExpiresAt() {
-      
+
       expiresAt_ = 0L;
     }
 
@@ -47217,14 +47217,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       handle_ = value;
     }
     /**
      * <code>optional string handle = 4;</code>
      */
     private void clearHandle() {
-      
+
       handle_ = getDefaultInstance().getHandle();
     }
     /**
@@ -47236,7 +47236,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       handle_ = value.toStringUtf8();
     }
 
@@ -47734,7 +47734,7 @@ public final class Api {
         throw new NullPointerException();
       }
       topic_ = value;
-      
+
       }
     /**
      * <code>optional .server.TopicId topic = 1;</code>
@@ -47742,7 +47742,7 @@ public final class Api {
     private void setTopic(
         com.heroiclabs.nakama.Api.TopicId.Builder builderForValue) {
       topic_ = builderForValue.build();
-      
+
     }
     /**
      * <code>optional .server.TopicId topic = 1;</code>
@@ -47755,13 +47755,13 @@ public final class Api {
       } else {
         topic_ = value;
       }
-      
+
     }
     /**
      * <code>optional .server.TopicId topic = 1;</code>
      */
     private void clearTopic() {  topic_ = null;
-      
+
     }
 
     public static final int USER_ID_FIELD_NUMBER = 2;
@@ -47787,14 +47787,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       userId_ = value;
     }
     /**
      * <code>optional string user_id = 2;</code>
      */
     private void clearUserId() {
-      
+
       userId_ = getDefaultInstance().getUserId();
     }
     /**
@@ -47806,7 +47806,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       userId_ = value.toStringUtf8();
     }
 
@@ -47833,14 +47833,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       messageId_ = value;
     }
     /**
      * <code>optional string message_id = 3;</code>
      */
     private void clearMessageId() {
-      
+
       messageId_ = getDefaultInstance().getMessageId();
     }
     /**
@@ -47852,7 +47852,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       messageId_ = value.toStringUtf8();
     }
 
@@ -47868,14 +47868,14 @@ public final class Api {
      * <code>optional int64 created_at = 4;</code>
      */
     private void setCreatedAt(long value) {
-      
+
       createdAt_ = value;
     }
     /**
      * <code>optional int64 created_at = 4;</code>
      */
     private void clearCreatedAt() {
-      
+
       createdAt_ = 0L;
     }
 
@@ -47891,14 +47891,14 @@ public final class Api {
      * <code>optional int64 expires_at = 5;</code>
      */
     private void setExpiresAt(long value) {
-      
+
       expiresAt_ = value;
     }
     /**
      * <code>optional int64 expires_at = 5;</code>
      */
     private void clearExpiresAt() {
-      
+
       expiresAt_ = 0L;
     }
 
@@ -47925,14 +47925,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       handle_ = value;
     }
     /**
      * <code>optional string handle = 6;</code>
      */
     private void clearHandle() {
-      
+
       handle_ = getDefaultInstance().getHandle();
     }
     /**
@@ -47944,7 +47944,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       handle_ = value.toStringUtf8();
     }
 
@@ -47980,7 +47980,7 @@ public final class Api {
      * <code>optional int64 type = 7;</code>
      */
     private void setType(long value) {
-      
+
       type_ = value;
     }
     /**
@@ -47997,7 +47997,7 @@ public final class Api {
      * <code>optional int64 type = 7;</code>
      */
     private void clearType() {
-      
+
       type_ = 0L;
     }
 
@@ -48024,14 +48024,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       data_ = value;
     }
     /**
      * <code>optional string data = 8;</code>
      */
     private void clearData() {
-      
+
       data_ = getDefaultInstance().getData();
     }
     /**
@@ -48043,7 +48043,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       data_ = value.toStringUtf8();
     }
 
@@ -48996,7 +48996,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       cursor_ = value;
     }
     /**
@@ -49008,7 +49008,7 @@ public final class Api {
      * <code>optional string cursor = 4;</code>
      */
     private void clearCursor() {
-      
+
       cursor_ = getDefaultInstance().getCursor();
     }
     /**
@@ -49025,7 +49025,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       cursor_ = value.toStringUtf8();
     }
 
@@ -49041,14 +49041,14 @@ public final class Api {
      * <code>optional bool forward = 5;</code>
      */
     private void setForward(boolean value) {
-      
+
       forward_ = value;
     }
     /**
      * <code>optional bool forward = 5;</code>
      */
     private void clearForward() {
-      
+
       forward_ = false;
     }
 
@@ -49064,14 +49064,14 @@ public final class Api {
      * <code>optional int64 limit = 6;</code>
      */
     private void setLimit(long value) {
-      
+
       limit_ = value;
     }
     /**
      * <code>optional int64 limit = 6;</code>
      */
     private void clearLimit() {
-      
+
       limit_ = 0L;
     }
 
@@ -49622,7 +49622,7 @@ public final class Api {
     /**
      * <code>repeated .server.TopicMessage messages = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.TopicMessage> 
+    java.util.List<com.heroiclabs.nakama.Api.TopicMessage>
         getMessagesList();
     /**
      * <code>repeated .server.TopicMessage messages = 1;</code>
@@ -49672,7 +49672,7 @@ public final class Api {
     /**
      * <code>repeated .server.TopicMessage messages = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.TopicMessageOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.TopicMessageOrBuilder>
         getMessagesOrBuilderList() {
       return messages_;
     }
@@ -49804,14 +49804,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       cursor_ = value;
     }
     /**
      * <code>optional string cursor = 2;</code>
      */
     private void clearCursor() {
-      
+
       cursor_ = getDefaultInstance().getCursor();
     }
     /**
@@ -49823,7 +49823,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       cursor_ = value.toStringUtf8();
     }
 
@@ -50205,7 +50205,7 @@ public final class Api {
     /**
      * <code>repeated .server.UserPresence joins = 2;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.UserPresence> 
+    java.util.List<com.heroiclabs.nakama.Api.UserPresence>
         getJoinsList();
     /**
      * <code>repeated .server.UserPresence joins = 2;</code>
@@ -50219,7 +50219,7 @@ public final class Api {
     /**
      * <code>repeated .server.UserPresence leaves = 3;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.UserPresence> 
+    java.util.List<com.heroiclabs.nakama.Api.UserPresence>
         getLeavesList();
     /**
      * <code>repeated .server.UserPresence leaves = 3;</code>
@@ -50270,7 +50270,7 @@ public final class Api {
         throw new NullPointerException();
       }
       topic_ = value;
-      
+
       }
     /**
      * <code>optional .server.TopicId topic = 1;</code>
@@ -50278,7 +50278,7 @@ public final class Api {
     private void setTopic(
         com.heroiclabs.nakama.Api.TopicId.Builder builderForValue) {
       topic_ = builderForValue.build();
-      
+
     }
     /**
      * <code>optional .server.TopicId topic = 1;</code>
@@ -50291,13 +50291,13 @@ public final class Api {
       } else {
         topic_ = value;
       }
-      
+
     }
     /**
      * <code>optional .server.TopicId topic = 1;</code>
      */
     private void clearTopic() {  topic_ = null;
-      
+
     }
 
     public static final int JOINS_FIELD_NUMBER = 2;
@@ -50311,7 +50311,7 @@ public final class Api {
     /**
      * <code>repeated .server.UserPresence joins = 2;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.UserPresenceOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.UserPresenceOrBuilder>
         getJoinsOrBuilderList() {
       return joins_;
     }
@@ -50431,7 +50431,7 @@ public final class Api {
     /**
      * <code>repeated .server.UserPresence leaves = 3;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.UserPresenceOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.UserPresenceOrBuilder>
         getLeavesOrBuilderList() {
       return leaves_;
     }
@@ -51550,14 +51550,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       key_ = value;
     }
     /**
      * <code>optional string key = 1;</code>
      */
     private void clearKey() {
-      
+
       key_ = getDefaultInstance().getKey();
     }
     /**
@@ -51569,7 +51569,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       key_ = value.toStringUtf8();
     }
 
@@ -52283,14 +52283,14 @@ public final class Api {
        * <code>optional bool matchAllTerms = 2;</code>
        */
       private void setMatchAllTerms(boolean value) {
-        
+
         matchAllTerms_ = value;
       }
       /**
        * <code>optional bool matchAllTerms = 2;</code>
        */
       private void clearMatchAllTerms() {
-        
+
         matchAllTerms_ = false;
       }
 
@@ -52673,7 +52673,7 @@ public final class Api {
        * <code>optional int64 lower_bound = 1;</code>
        */
       private void setLowerBound(long value) {
-        
+
         lowerBound_ = value;
       }
       /**
@@ -52684,7 +52684,7 @@ public final class Api {
        * <code>optional int64 lower_bound = 1;</code>
        */
       private void clearLowerBound() {
-        
+
         lowerBound_ = 0L;
       }
 
@@ -52708,7 +52708,7 @@ public final class Api {
        * <code>optional int64 upper_bound = 2;</code>
        */
       private void setUpperBound(long value) {
-        
+
         upperBound_ = value;
       }
       /**
@@ -52719,7 +52719,7 @@ public final class Api {
        * <code>optional int64 upper_bound = 2;</code>
        */
       private void clearUpperBound() {
-        
+
         upperBound_ = 0L;
       }
 
@@ -53079,14 +53079,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       name_ = value;
     }
     /**
      * <code>optional string name = 1;</code>
      */
     private void clearName() {
-      
+
       name_ = getDefaultInstance().getName();
     }
     /**
@@ -53098,7 +53098,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       name_ = value.toStringUtf8();
     }
 
@@ -53695,7 +53695,7 @@ public final class Api {
      *
      * <code>repeated .server.MatchmakeFilter filters = 2;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.MatchmakeFilter> 
+    java.util.List<com.heroiclabs.nakama.Api.MatchmakeFilter>
         getFiltersList();
     /**
      * <pre>
@@ -53721,7 +53721,7 @@ public final class Api {
      *
      * <code>repeated .server.PropertyPair properties = 3;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.PropertyPair> 
+    java.util.List<com.heroiclabs.nakama.Api.PropertyPair>
         getPropertiesList();
     /**
      * <pre>
@@ -53779,7 +53779,7 @@ public final class Api {
      * <code>optional int64 required_count = 1;</code>
      */
     private void setRequiredCount(long value) {
-      
+
       requiredCount_ = value;
     }
     /**
@@ -53790,7 +53790,7 @@ public final class Api {
      * <code>optional int64 required_count = 1;</code>
      */
     private void clearRequiredCount() {
-      
+
       requiredCount_ = 0L;
     }
 
@@ -53813,7 +53813,7 @@ public final class Api {
      *
      * <code>repeated .server.MatchmakeFilter filters = 2;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.MatchmakeFilterOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.MatchmakeFilterOrBuilder>
         getFiltersOrBuilderList() {
       return filters_;
     }
@@ -53989,7 +53989,7 @@ public final class Api {
      *
      * <code>repeated .server.PropertyPair properties = 3;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.PropertyPairOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.PropertyPairOrBuilder>
         getPropertiesOrBuilderList() {
       return properties_;
     }
@@ -54767,14 +54767,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       ticket_ = value;
     }
     /**
      * <code>optional string ticket = 1;</code>
      */
     private void clearTicket() {
-      
+
       ticket_ = getDefaultInstance().getTicket();
     }
     /**
@@ -54786,7 +54786,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       ticket_ = value.toStringUtf8();
     }
 
@@ -55089,14 +55089,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       ticket_ = value;
     }
     /**
      * <code>optional string ticket = 1;</code>
      */
     private void clearTicket() {
-      
+
       ticket_ = getDefaultInstance().getTicket();
     }
     /**
@@ -55108,7 +55108,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       ticket_ = value.toStringUtf8();
     }
 
@@ -55401,7 +55401,7 @@ public final class Api {
     /**
      * <code>repeated .server.UserPresence presences = 3;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.UserPresence> 
+    java.util.List<com.heroiclabs.nakama.Api.UserPresence>
         getPresencesList();
     /**
      * <code>repeated .server.UserPresence presences = 3;</code>
@@ -55424,7 +55424,7 @@ public final class Api {
     /**
      * <code>repeated .server.MatchmakeMatched.UserProperty properties = 5;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.MatchmakeMatched.UserProperty> 
+    java.util.List<com.heroiclabs.nakama.Api.MatchmakeMatched.UserProperty>
         getPropertiesList();
     /**
      * <code>repeated .server.MatchmakeMatched.UserProperty properties = 5;</code>
@@ -55471,7 +55471,7 @@ public final class Api {
       /**
        * <code>repeated .server.PropertyPair properties = 2;</code>
        */
-      java.util.List<com.heroiclabs.nakama.Api.PropertyPair> 
+      java.util.List<com.heroiclabs.nakama.Api.PropertyPair>
           getPropertiesList();
       /**
        * <code>repeated .server.PropertyPair properties = 2;</code>
@@ -55485,7 +55485,7 @@ public final class Api {
       /**
        * <code>repeated .server.MatchmakeFilter filters = 3;</code>
        */
-      java.util.List<com.heroiclabs.nakama.Api.MatchmakeFilter> 
+      java.util.List<com.heroiclabs.nakama.Api.MatchmakeFilter>
           getFiltersList();
       /**
        * <code>repeated .server.MatchmakeFilter filters = 3;</code>
@@ -55537,14 +55537,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         userId_ = value;
       }
       /**
        * <code>optional string user_id = 1;</code>
        */
       private void clearUserId() {
-        
+
         userId_ = getDefaultInstance().getUserId();
       }
       /**
@@ -55556,7 +55556,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         userId_ = value.toStringUtf8();
       }
 
@@ -55571,7 +55571,7 @@ public final class Api {
       /**
        * <code>repeated .server.PropertyPair properties = 2;</code>
        */
-      public java.util.List<? extends com.heroiclabs.nakama.Api.PropertyPairOrBuilder> 
+      public java.util.List<? extends com.heroiclabs.nakama.Api.PropertyPairOrBuilder>
           getPropertiesOrBuilderList() {
         return properties_;
       }
@@ -55691,7 +55691,7 @@ public final class Api {
       /**
        * <code>repeated .server.MatchmakeFilter filters = 3;</code>
        */
-      public java.util.List<? extends com.heroiclabs.nakama.Api.MatchmakeFilterOrBuilder> 
+      public java.util.List<? extends com.heroiclabs.nakama.Api.MatchmakeFilterOrBuilder>
           getFiltersOrBuilderList() {
         return filters_;
       }
@@ -56312,7 +56312,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       ticket_ = value;
     }
     /**
@@ -56323,7 +56323,7 @@ public final class Api {
      * <code>optional string ticket = 1;</code>
      */
     private void clearTicket() {
-      
+
       ticket_ = getDefaultInstance().getTicket();
     }
     /**
@@ -56339,7 +56339,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       ticket_ = value.toStringUtf8();
     }
 
@@ -56378,7 +56378,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       token_ = value;
     }
     /**
@@ -56389,7 +56389,7 @@ public final class Api {
      * <code>optional string token = 2;</code>
      */
     private void clearToken() {
-      
+
       token_ = getDefaultInstance().getToken();
     }
     /**
@@ -56405,7 +56405,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       token_ = value.toStringUtf8();
     }
 
@@ -56420,7 +56420,7 @@ public final class Api {
     /**
      * <code>repeated .server.UserPresence presences = 3;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.UserPresenceOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.UserPresenceOrBuilder>
         getPresencesOrBuilderList() {
       return presences_;
     }
@@ -56551,7 +56551,7 @@ public final class Api {
         throw new NullPointerException();
       }
       self_ = value;
-      
+
       }
     /**
      * <code>optional .server.UserPresence self = 4;</code>
@@ -56559,7 +56559,7 @@ public final class Api {
     private void setSelf(
         com.heroiclabs.nakama.Api.UserPresence.Builder builderForValue) {
       self_ = builderForValue.build();
-      
+
     }
     /**
      * <code>optional .server.UserPresence self = 4;</code>
@@ -56572,13 +56572,13 @@ public final class Api {
       } else {
         self_ = value;
       }
-      
+
     }
     /**
      * <code>optional .server.UserPresence self = 4;</code>
      */
     private void clearSelf() {  self_ = null;
-      
+
     }
 
     public static final int PROPERTIES_FIELD_NUMBER = 5;
@@ -56592,7 +56592,7 @@ public final class Api {
     /**
      * <code>repeated .server.MatchmakeMatched.UserProperty properties = 5;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.MatchmakeMatched.UserPropertyOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.MatchmakeMatched.UserPropertyOrBuilder>
         getPropertiesOrBuilderList() {
       return properties_;
     }
@@ -57356,7 +57356,7 @@ public final class Api {
     /**
      * <code>repeated .server.UserPresence presences = 2;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.UserPresence> 
+    java.util.List<com.heroiclabs.nakama.Api.UserPresence>
         getPresencesList();
     /**
      * <code>repeated .server.UserPresence presences = 2;</code>
@@ -57417,14 +57417,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       matchId_ = value;
     }
     /**
      * <code>optional string match_id = 1;</code>
      */
     private void clearMatchId() {
-      
+
       matchId_ = getDefaultInstance().getMatchId();
     }
     /**
@@ -57436,7 +57436,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       matchId_ = value.toStringUtf8();
     }
 
@@ -57451,7 +57451,7 @@ public final class Api {
     /**
      * <code>repeated .server.UserPresence presences = 2;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.UserPresenceOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.UserPresenceOrBuilder>
         getPresencesOrBuilderList() {
       return presences_;
     }
@@ -57582,7 +57582,7 @@ public final class Api {
         throw new NullPointerException();
       }
       self_ = value;
-      
+
       }
     /**
      * <code>optional .server.UserPresence self = 3;</code>
@@ -57590,7 +57590,7 @@ public final class Api {
     private void setSelf(
         com.heroiclabs.nakama.Api.UserPresence.Builder builderForValue) {
       self_ = builderForValue.build();
-      
+
     }
     /**
      * <code>optional .server.UserPresence self = 3;</code>
@@ -57603,13 +57603,13 @@ public final class Api {
       } else {
         self_ = value;
       }
-      
+
     }
     /**
      * <code>optional .server.UserPresence self = 3;</code>
      */
     private void clearSelf() {  self_ = null;
-      
+
     }
 
     public void writeTo(com.google.protobuf.CodedOutputStream output)
@@ -58057,7 +58057,7 @@ public final class Api {
     /**
      * <code>repeated .server.UserPresence joins = 2;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.UserPresence> 
+    java.util.List<com.heroiclabs.nakama.Api.UserPresence>
         getJoinsList();
     /**
      * <code>repeated .server.UserPresence joins = 2;</code>
@@ -58071,7 +58071,7 @@ public final class Api {
     /**
      * <code>repeated .server.UserPresence leaves = 3;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.UserPresence> 
+    java.util.List<com.heroiclabs.nakama.Api.UserPresence>
         getLeavesList();
     /**
      * <code>repeated .server.UserPresence leaves = 3;</code>
@@ -58124,14 +58124,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       matchId_ = value;
     }
     /**
      * <code>optional string match_id = 1;</code>
      */
     private void clearMatchId() {
-      
+
       matchId_ = getDefaultInstance().getMatchId();
     }
     /**
@@ -58143,7 +58143,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       matchId_ = value.toStringUtf8();
     }
 
@@ -58158,7 +58158,7 @@ public final class Api {
     /**
      * <code>repeated .server.UserPresence joins = 2;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.UserPresenceOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.UserPresenceOrBuilder>
         getJoinsOrBuilderList() {
       return joins_;
     }
@@ -58278,7 +58278,7 @@ public final class Api {
     /**
      * <code>repeated .server.UserPresence leaves = 3;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.UserPresenceOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.UserPresenceOrBuilder>
         getLeavesOrBuilderList() {
       return leaves_;
     }
@@ -59126,7 +59126,7 @@ public final class Api {
         throw new NullPointerException();
       }
       match_ = value;
-      
+
       }
     /**
      * <code>optional .server.Match match = 1;</code>
@@ -59134,7 +59134,7 @@ public final class Api {
     private void setMatch(
         com.heroiclabs.nakama.Api.Match.Builder builderForValue) {
       match_ = builderForValue.build();
-      
+
     }
     /**
      * <code>optional .server.Match match = 1;</code>
@@ -59147,13 +59147,13 @@ public final class Api {
       } else {
         match_ = value;
       }
-      
+
     }
     /**
      * <code>optional .server.Match match = 1;</code>
      */
     private void clearMatch() {  match_ = null;
-      
+
     }
 
     public void writeTo(com.google.protobuf.CodedOutputStream output)
@@ -59420,7 +59420,7 @@ public final class Api {
     /**
      * <code>repeated .server.TMatchesJoin.MatchJoin matches = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.TMatchesJoin.MatchJoin> 
+    java.util.List<com.heroiclabs.nakama.Api.TMatchesJoin.MatchJoin>
         getMatchesList();
     /**
      * <code>repeated .server.TMatchesJoin.MatchJoin matches = 1;</code>
@@ -59971,7 +59971,7 @@ public final class Api {
     /**
      * <code>repeated .server.TMatchesJoin.MatchJoin matches = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.TMatchesJoin.MatchJoinOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.TMatchesJoin.MatchJoinOrBuilder>
         getMatchesOrBuilderList() {
       return matches_;
     }
@@ -60395,7 +60395,7 @@ public final class Api {
     /**
      * <code>repeated .server.Match matches = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.Match> 
+    java.util.List<com.heroiclabs.nakama.Api.Match>
         getMatchesList();
     /**
      * <code>repeated .server.Match matches = 1;</code>
@@ -60433,7 +60433,7 @@ public final class Api {
     /**
      * <code>repeated .server.Match matches = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.MatchOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.MatchOrBuilder>
         getMatchesOrBuilderList() {
       return matches_;
     }
@@ -60879,7 +60879,7 @@ public final class Api {
     /**
      * <code>repeated .server.UserPresence presences = 4;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.UserPresence> 
+    java.util.List<com.heroiclabs.nakama.Api.UserPresence>
         getPresencesList();
     /**
      * <code>repeated .server.UserPresence presences = 4;</code>
@@ -60932,14 +60932,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       matchId_ = value;
     }
     /**
      * <code>optional string match_id = 1;</code>
      */
     private void clearMatchId() {
-      
+
       matchId_ = getDefaultInstance().getMatchId();
     }
     /**
@@ -60951,7 +60951,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       matchId_ = value.toStringUtf8();
     }
 
@@ -60975,7 +60975,7 @@ public final class Api {
      * <code>optional int64 op_code = 2;</code>
      */
     private void setOpCode(long value) {
-      
+
       opCode_ = value;
     }
     /**
@@ -60986,7 +60986,7 @@ public final class Api {
      * <code>optional int64 op_code = 2;</code>
      */
     private void clearOpCode() {
-      
+
       opCode_ = 0L;
     }
 
@@ -61005,14 +61005,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       data_ = value;
     }
     /**
      * <code>optional bytes data = 3;</code>
      */
     private void clearData() {
-      
+
       data_ = getDefaultInstance().getData();
     }
 
@@ -61027,7 +61027,7 @@ public final class Api {
     /**
      * <code>repeated .server.UserPresence presences = 4;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.UserPresenceOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.UserPresenceOrBuilder>
         getPresencesOrBuilderList() {
       return presences_;
     }
@@ -61657,14 +61657,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       matchId_ = value;
     }
     /**
      * <code>optional string match_id = 1;</code>
      */
     private void clearMatchId() {
-      
+
       matchId_ = getDefaultInstance().getMatchId();
     }
     /**
@@ -61676,7 +61676,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       matchId_ = value.toStringUtf8();
     }
 
@@ -61702,7 +61702,7 @@ public final class Api {
         throw new NullPointerException();
       }
       presence_ = value;
-      
+
       }
     /**
      * <code>optional .server.UserPresence presence = 2;</code>
@@ -61710,7 +61710,7 @@ public final class Api {
     private void setPresence(
         com.heroiclabs.nakama.Api.UserPresence.Builder builderForValue) {
       presence_ = builderForValue.build();
-      
+
     }
     /**
      * <code>optional .server.UserPresence presence = 2;</code>
@@ -61723,13 +61723,13 @@ public final class Api {
       } else {
         presence_ = value;
       }
-      
+
     }
     /**
      * <code>optional .server.UserPresence presence = 2;</code>
      */
     private void clearPresence() {  presence_ = null;
-      
+
     }
 
     public static final int OP_CODE_FIELD_NUMBER = 3;
@@ -61744,14 +61744,14 @@ public final class Api {
      * <code>optional int64 op_code = 3;</code>
      */
     private void setOpCode(long value) {
-      
+
       opCode_ = value;
     }
     /**
      * <code>optional int64 op_code = 3;</code>
      */
     private void clearOpCode() {
-      
+
       opCode_ = 0L;
     }
 
@@ -61770,14 +61770,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       data_ = value;
     }
     /**
      * <code>optional bytes data = 4;</code>
      */
     private void clearData() {
-      
+
       data_ = getDefaultInstance().getData();
     }
 
@@ -62670,14 +62670,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       userId_ = value;
     }
     /**
      * <code>optional string user_id = 1;</code>
      */
     private void clearUserId() {
-      
+
       userId_ = getDefaultInstance().getUserId();
     }
     /**
@@ -62689,7 +62689,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       userId_ = value.toStringUtf8();
     }
 
@@ -62716,14 +62716,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       bucket_ = value;
     }
     /**
      * <code>optional string bucket = 2;</code>
      */
     private void clearBucket() {
-      
+
       bucket_ = getDefaultInstance().getBucket();
     }
     /**
@@ -62735,7 +62735,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       bucket_ = value.toStringUtf8();
     }
 
@@ -62762,14 +62762,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       collection_ = value;
     }
     /**
      * <code>optional string collection = 3;</code>
      */
     private void clearCollection() {
-      
+
       collection_ = getDefaultInstance().getCollection();
     }
     /**
@@ -62781,7 +62781,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       collection_ = value.toStringUtf8();
     }
 
@@ -62797,14 +62797,14 @@ public final class Api {
      * <code>optional int64 limit = 4;</code>
      */
     private void setLimit(long value) {
-      
+
       limit_ = value;
     }
     /**
      * <code>optional int64 limit = 4;</code>
      */
     private void clearLimit() {
-      
+
       limit_ = 0L;
     }
 
@@ -62831,14 +62831,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       cursor_ = value;
     }
     /**
      * <code>optional string cursor = 5;</code>
      */
     private void clearCursor() {
-      
+
       cursor_ = getDefaultInstance().getCursor();
     }
     /**
@@ -62850,7 +62850,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       cursor_ = value.toStringUtf8();
     }
 
@@ -63310,7 +63310,7 @@ public final class Api {
     /**
      * <code>repeated .server.TStorageFetch.StorageKey keys = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.TStorageFetch.StorageKey> 
+    java.util.List<com.heroiclabs.nakama.Api.TStorageFetch.StorageKey>
         getKeysList();
     /**
      * <code>repeated .server.TStorageFetch.StorageKey keys = 1;</code>
@@ -63419,14 +63419,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         bucket_ = value;
       }
       /**
        * <code>optional string bucket = 1;</code>
        */
       private void clearBucket() {
-        
+
         bucket_ = getDefaultInstance().getBucket();
       }
       /**
@@ -63438,7 +63438,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         bucket_ = value.toStringUtf8();
       }
 
@@ -63465,14 +63465,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         collection_ = value;
       }
       /**
        * <code>optional string collection = 2;</code>
        */
       private void clearCollection() {
-        
+
         collection_ = getDefaultInstance().getCollection();
       }
       /**
@@ -63484,7 +63484,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         collection_ = value.toStringUtf8();
       }
 
@@ -63511,14 +63511,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         record_ = value;
       }
       /**
        * <code>optional string record = 3;</code>
        */
       private void clearRecord() {
-        
+
         record_ = getDefaultInstance().getRecord();
       }
       /**
@@ -63530,7 +63530,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         record_ = value.toStringUtf8();
       }
 
@@ -63557,14 +63557,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         userId_ = value;
       }
       /**
        * <code>optional string user_id = 4;</code>
        */
       private void clearUserId() {
-        
+
         userId_ = getDefaultInstance().getUserId();
       }
       /**
@@ -63576,7 +63576,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         userId_ = value.toStringUtf8();
       }
 
@@ -63997,7 +63997,7 @@ public final class Api {
     /**
      * <code>repeated .server.TStorageFetch.StorageKey keys = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.TStorageFetch.StorageKeyOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.TStorageFetch.StorageKeyOrBuilder>
         getKeysOrBuilderList() {
       return keys_;
     }
@@ -64420,7 +64420,7 @@ public final class Api {
     /**
      * <code>repeated .server.TStorageData.StorageData data = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.TStorageData.StorageData> 
+    java.util.List<com.heroiclabs.nakama.Api.TStorageData.StorageData>
         getDataList();
     /**
      * <code>repeated .server.TStorageData.StorageData data = 1;</code>
@@ -64586,14 +64586,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         bucket_ = value;
       }
       /**
        * <code>optional string bucket = 1;</code>
        */
       private void clearBucket() {
-        
+
         bucket_ = getDefaultInstance().getBucket();
       }
       /**
@@ -64605,7 +64605,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         bucket_ = value.toStringUtf8();
       }
 
@@ -64632,14 +64632,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         collection_ = value;
       }
       /**
        * <code>optional string collection = 2;</code>
        */
       private void clearCollection() {
-        
+
         collection_ = getDefaultInstance().getCollection();
       }
       /**
@@ -64651,7 +64651,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         collection_ = value.toStringUtf8();
       }
 
@@ -64678,14 +64678,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         record_ = value;
       }
       /**
        * <code>optional string record = 3;</code>
        */
       private void clearRecord() {
-        
+
         record_ = getDefaultInstance().getRecord();
       }
       /**
@@ -64697,7 +64697,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         record_ = value.toStringUtf8();
       }
 
@@ -64724,14 +64724,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         userId_ = value;
       }
       /**
        * <code>optional string user_id = 4;</code>
        */
       private void clearUserId() {
-        
+
         userId_ = getDefaultInstance().getUserId();
       }
       /**
@@ -64743,7 +64743,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         userId_ = value.toStringUtf8();
       }
 
@@ -64770,14 +64770,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         value_ = value;
       }
       /**
        * <code>optional string value = 5;</code>
        */
       private void clearValue() {
-        
+
         value_ = getDefaultInstance().getValue();
       }
       /**
@@ -64789,7 +64789,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         value_ = value.toStringUtf8();
       }
 
@@ -64816,14 +64816,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         version_ = value;
       }
       /**
        * <code>optional string version = 6;</code>
        */
       private void clearVersion() {
-        
+
         version_ = getDefaultInstance().getVersion();
       }
       /**
@@ -64835,7 +64835,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         version_ = value.toStringUtf8();
       }
 
@@ -64851,14 +64851,14 @@ public final class Api {
        * <code>optional int32 permission_read = 7;</code>
        */
       private void setPermissionRead(int value) {
-        
+
         permissionRead_ = value;
       }
       /**
        * <code>optional int32 permission_read = 7;</code>
        */
       private void clearPermissionRead() {
-        
+
         permissionRead_ = 0;
       }
 
@@ -64874,14 +64874,14 @@ public final class Api {
        * <code>optional int32 permission_write = 8;</code>
        */
       private void setPermissionWrite(int value) {
-        
+
         permissionWrite_ = value;
       }
       /**
        * <code>optional int32 permission_write = 8;</code>
        */
       private void clearPermissionWrite() {
-        
+
         permissionWrite_ = 0;
       }
 
@@ -64897,14 +64897,14 @@ public final class Api {
        * <code>optional int64 created_at = 9;</code>
        */
       private void setCreatedAt(long value) {
-        
+
         createdAt_ = value;
       }
       /**
        * <code>optional int64 created_at = 9;</code>
        */
       private void clearCreatedAt() {
-        
+
         createdAt_ = 0L;
       }
 
@@ -64920,14 +64920,14 @@ public final class Api {
        * <code>optional int64 updated_at = 10;</code>
        */
       private void setUpdatedAt(long value) {
-        
+
         updatedAt_ = value;
       }
       /**
        * <code>optional int64 updated_at = 10;</code>
        */
       private void clearUpdatedAt() {
-        
+
         updatedAt_ = 0L;
       }
 
@@ -64943,14 +64943,14 @@ public final class Api {
        * <code>optional int64 expires_at = 11;</code>
        */
       private void setExpiresAt(long value) {
-        
+
         expiresAt_ = value;
       }
       /**
        * <code>optional int64 expires_at = 11;</code>
        */
       private void clearExpiresAt() {
-        
+
         expiresAt_ = 0L;
       }
 
@@ -65667,7 +65667,7 @@ public final class Api {
     /**
      * <code>repeated .server.TStorageData.StorageData data = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.TStorageData.StorageDataOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.TStorageData.StorageDataOrBuilder>
         getDataOrBuilderList() {
       return data_;
     }
@@ -65799,14 +65799,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       cursor_ = value;
     }
     /**
      * <code>optional string cursor = 2;</code>
      */
     private void clearCursor() {
-      
+
       cursor_ = getDefaultInstance().getCursor();
     }
     /**
@@ -65818,7 +65818,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       cursor_ = value.toStringUtf8();
     }
 
@@ -66191,7 +66191,7 @@ public final class Api {
     /**
      * <code>repeated .server.TStorageWrite.StorageData data = 3;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.TStorageWrite.StorageData> 
+    java.util.List<com.heroiclabs.nakama.Api.TStorageWrite.StorageData>
         getDataList();
     /**
      * <code>repeated .server.TStorageWrite.StorageData data = 3;</code>
@@ -66331,14 +66331,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         bucket_ = value;
       }
       /**
        * <code>optional string bucket = 1;</code>
        */
       private void clearBucket() {
-        
+
         bucket_ = getDefaultInstance().getBucket();
       }
       /**
@@ -66350,7 +66350,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         bucket_ = value.toStringUtf8();
       }
 
@@ -66377,14 +66377,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         collection_ = value;
       }
       /**
        * <code>optional string collection = 2;</code>
        */
       private void clearCollection() {
-        
+
         collection_ = getDefaultInstance().getCollection();
       }
       /**
@@ -66396,7 +66396,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         collection_ = value.toStringUtf8();
       }
 
@@ -66423,14 +66423,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         record_ = value;
       }
       /**
        * <code>optional string record = 3;</code>
        */
       private void clearRecord() {
-        
+
         record_ = getDefaultInstance().getRecord();
       }
       /**
@@ -66442,7 +66442,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         record_ = value.toStringUtf8();
       }
 
@@ -66469,14 +66469,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         value_ = value;
       }
       /**
        * <code>optional string value = 4;</code>
        */
       private void clearValue() {
-        
+
         value_ = getDefaultInstance().getValue();
       }
       /**
@@ -66488,7 +66488,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         value_ = value.toStringUtf8();
       }
 
@@ -66527,7 +66527,7 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         version_ = value;
       }
       /**
@@ -66538,7 +66538,7 @@ public final class Api {
        * <code>optional string version = 5;</code>
        */
       private void clearVersion() {
-        
+
         version_ = getDefaultInstance().getVersion();
       }
       /**
@@ -66554,7 +66554,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         version_ = value.toStringUtf8();
       }
 
@@ -66570,14 +66570,14 @@ public final class Api {
        * <code>optional int32 permission_read = 6;</code>
        */
       private void setPermissionRead(int value) {
-        
+
         permissionRead_ = value;
       }
       /**
        * <code>optional int32 permission_read = 6;</code>
        */
       private void clearPermissionRead() {
-        
+
         permissionRead_ = 0;
       }
 
@@ -66593,14 +66593,14 @@ public final class Api {
        * <code>optional int32 permission_write = 7;</code>
        */
       private void setPermissionWrite(int value) {
-        
+
         permissionWrite_ = value;
       }
       /**
        * <code>optional int32 permission_write = 7;</code>
        */
       private void clearPermissionWrite() {
-        
+
         permissionWrite_ = 0;
       }
 
@@ -67170,7 +67170,7 @@ public final class Api {
     /**
      * <code>repeated .server.TStorageWrite.StorageData data = 3;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.TStorageWrite.StorageDataOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.TStorageWrite.StorageDataOrBuilder>
         getDataOrBuilderList() {
       return data_;
     }
@@ -67595,7 +67595,7 @@ public final class Api {
     /**
      * <code>repeated .server.TStorageUpdate.StorageUpdate updates = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.TStorageUpdate.StorageUpdate> 
+    java.util.List<com.heroiclabs.nakama.Api.TStorageUpdate.StorageUpdate>
         getUpdatesList();
     /**
      * <code>repeated .server.TStorageUpdate.StorageUpdate updates = 1;</code>
@@ -67651,7 +67651,7 @@ public final class Api {
       /**
        * <code>repeated .server.TStorageUpdate.StorageUpdate.UpdateOp ops = 4;</code>
        */
-      java.util.List<com.heroiclabs.nakama.Api.TStorageUpdate.StorageUpdate.UpdateOp> 
+      java.util.List<com.heroiclabs.nakama.Api.TStorageUpdate.StorageUpdate.UpdateOp>
           getOpsList();
       /**
        * <code>repeated .server.TStorageUpdate.StorageUpdate.UpdateOp ops = 4;</code>
@@ -67729,7 +67729,7 @@ public final class Api {
         /**
          * <code>repeated .server.TStorageUpdate.StorageUpdate.UpdateOp ops = 7;</code>
          */
-        java.util.List<com.heroiclabs.nakama.Api.TStorageUpdate.StorageUpdate.UpdateOp> 
+        java.util.List<com.heroiclabs.nakama.Api.TStorageUpdate.StorageUpdate.UpdateOp>
             getOpsList();
         /**
          * <code>repeated .server.TStorageUpdate.StorageUpdate.UpdateOp ops = 7;</code>
@@ -68028,7 +68028,7 @@ public final class Api {
          * <code>optional int32 op = 1;</code>
          */
         private void setOp(int value) {
-          
+
           op_ = value;
         }
         /**
@@ -68039,7 +68039,7 @@ public final class Api {
          * <code>optional int32 op = 1;</code>
          */
         private void clearOp() {
-          
+
           op_ = 0;
         }
 
@@ -68066,14 +68066,14 @@ public final class Api {
           if (value == null) {
     throw new NullPointerException();
   }
-  
+
           path_ = value;
         }
         /**
          * <code>optional string path = 2;</code>
          */
         private void clearPath() {
-          
+
           path_ = getDefaultInstance().getPath();
         }
         /**
@@ -68085,7 +68085,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-          
+
           path_ = value.toStringUtf8();
         }
 
@@ -68112,14 +68112,14 @@ public final class Api {
           if (value == null) {
     throw new NullPointerException();
   }
-  
+
           value_ = value;
         }
         /**
          * <code>optional string value = 3;</code>
          */
         private void clearValue() {
-          
+
           value_ = getDefaultInstance().getValue();
         }
         /**
@@ -68131,7 +68131,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-          
+
           value_ = value.toStringUtf8();
         }
 
@@ -68158,14 +68158,14 @@ public final class Api {
           if (value == null) {
     throw new NullPointerException();
   }
-  
+
           from_ = value;
         }
         /**
          * <code>optional string from = 4;</code>
          */
         private void clearFrom() {
-          
+
           from_ = getDefaultInstance().getFrom();
         }
         /**
@@ -68177,7 +68177,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-          
+
           from_ = value.toStringUtf8();
         }
 
@@ -68193,14 +68193,14 @@ public final class Api {
          * <code>optional bool conditional = 5;</code>
          */
         private void setConditional(boolean value) {
-          
+
           conditional_ = value;
         }
         /**
          * <code>optional bool conditional = 5;</code>
          */
         private void clearConditional() {
-          
+
           conditional_ = false;
         }
 
@@ -68216,14 +68216,14 @@ public final class Api {
          * <code>optional int64 assert = 6;</code>
          */
         private void setAssert(long value) {
-          
+
           assert_ = value;
         }
         /**
          * <code>optional int64 assert = 6;</code>
          */
         private void clearAssert() {
-          
+
           assert_ = 0L;
         }
 
@@ -68238,7 +68238,7 @@ public final class Api {
         /**
          * <code>repeated .server.TStorageUpdate.StorageUpdate.UpdateOp ops = 7;</code>
          */
-        public java.util.List<? extends com.heroiclabs.nakama.Api.TStorageUpdate.StorageUpdate.UpdateOpOrBuilder> 
+        public java.util.List<? extends com.heroiclabs.nakama.Api.TStorageUpdate.StorageUpdate.UpdateOpOrBuilder>
             getOpsOrBuilderList() {
           return ops_;
         }
@@ -69026,14 +69026,14 @@ public final class Api {
           if (value == null) {
     throw new NullPointerException();
   }
-  
+
           bucket_ = value;
         }
         /**
          * <code>optional string bucket = 1;</code>
          */
         private void clearBucket() {
-          
+
           bucket_ = getDefaultInstance().getBucket();
         }
         /**
@@ -69045,7 +69045,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-          
+
           bucket_ = value.toStringUtf8();
         }
 
@@ -69072,14 +69072,14 @@ public final class Api {
           if (value == null) {
     throw new NullPointerException();
   }
-  
+
           collection_ = value;
         }
         /**
          * <code>optional string collection = 2;</code>
          */
         private void clearCollection() {
-          
+
           collection_ = getDefaultInstance().getCollection();
         }
         /**
@@ -69091,7 +69091,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-          
+
           collection_ = value.toStringUtf8();
         }
 
@@ -69118,14 +69118,14 @@ public final class Api {
           if (value == null) {
     throw new NullPointerException();
   }
-  
+
           record_ = value;
         }
         /**
          * <code>optional string record = 3;</code>
          */
         private void clearRecord() {
-          
+
           record_ = getDefaultInstance().getRecord();
         }
         /**
@@ -69137,7 +69137,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-          
+
           record_ = value.toStringUtf8();
         }
 
@@ -69176,7 +69176,7 @@ public final class Api {
           if (value == null) {
     throw new NullPointerException();
   }
-  
+
           version_ = value;
         }
         /**
@@ -69187,7 +69187,7 @@ public final class Api {
          * <code>optional string version = 4;</code>
          */
         private void clearVersion() {
-          
+
           version_ = getDefaultInstance().getVersion();
         }
         /**
@@ -69203,7 +69203,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-          
+
           version_ = value.toStringUtf8();
         }
 
@@ -69656,7 +69656,7 @@ public final class Api {
           throw new NullPointerException();
         }
         key_ = value;
-        
+
         }
       /**
        * <code>optional .server.TStorageUpdate.StorageUpdate.StorageKey key = 1;</code>
@@ -69664,7 +69664,7 @@ public final class Api {
       private void setKey(
           com.heroiclabs.nakama.Api.TStorageUpdate.StorageUpdate.StorageKey.Builder builderForValue) {
         key_ = builderForValue.build();
-        
+
       }
       /**
        * <code>optional .server.TStorageUpdate.StorageUpdate.StorageKey key = 1;</code>
@@ -69677,13 +69677,13 @@ public final class Api {
         } else {
           key_ = value;
         }
-        
+
       }
       /**
        * <code>optional .server.TStorageUpdate.StorageUpdate.StorageKey key = 1;</code>
        */
       private void clearKey() {  key_ = null;
-        
+
       }
 
       public static final int PERMISSION_READ_FIELD_NUMBER = 2;
@@ -69698,14 +69698,14 @@ public final class Api {
        * <code>optional int32 permission_read = 2;</code>
        */
       private void setPermissionRead(int value) {
-        
+
         permissionRead_ = value;
       }
       /**
        * <code>optional int32 permission_read = 2;</code>
        */
       private void clearPermissionRead() {
-        
+
         permissionRead_ = 0;
       }
 
@@ -69721,14 +69721,14 @@ public final class Api {
        * <code>optional int32 permission_write = 3;</code>
        */
       private void setPermissionWrite(int value) {
-        
+
         permissionWrite_ = value;
       }
       /**
        * <code>optional int32 permission_write = 3;</code>
        */
       private void clearPermissionWrite() {
-        
+
         permissionWrite_ = 0;
       }
 
@@ -69743,7 +69743,7 @@ public final class Api {
       /**
        * <code>repeated .server.TStorageUpdate.StorageUpdate.UpdateOp ops = 4;</code>
        */
-      public java.util.List<? extends com.heroiclabs.nakama.Api.TStorageUpdate.StorageUpdate.UpdateOpOrBuilder> 
+      public java.util.List<? extends com.heroiclabs.nakama.Api.TStorageUpdate.StorageUpdate.UpdateOpOrBuilder>
           getOpsOrBuilderList() {
         return ops_;
       }
@@ -70305,7 +70305,7 @@ public final class Api {
     /**
      * <code>repeated .server.TStorageUpdate.StorageUpdate updates = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.TStorageUpdate.StorageUpdateOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.TStorageUpdate.StorageUpdateOrBuilder>
         getUpdatesOrBuilderList() {
       return updates_;
     }
@@ -70730,7 +70730,7 @@ public final class Api {
     /**
      * <code>repeated .server.TStorageKeys.StorageKey keys = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.TStorageKeys.StorageKey> 
+    java.util.List<com.heroiclabs.nakama.Api.TStorageKeys.StorageKey>
         getKeysList();
     /**
      * <code>repeated .server.TStorageKeys.StorageKey keys = 1;</code>
@@ -70838,14 +70838,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         bucket_ = value;
       }
       /**
        * <code>optional string bucket = 1;</code>
        */
       private void clearBucket() {
-        
+
         bucket_ = getDefaultInstance().getBucket();
       }
       /**
@@ -70857,7 +70857,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         bucket_ = value.toStringUtf8();
       }
 
@@ -70884,14 +70884,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         collection_ = value;
       }
       /**
        * <code>optional string collection = 2;</code>
        */
       private void clearCollection() {
-        
+
         collection_ = getDefaultInstance().getCollection();
       }
       /**
@@ -70903,7 +70903,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         collection_ = value.toStringUtf8();
       }
 
@@ -70930,14 +70930,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         record_ = value;
       }
       /**
        * <code>optional string record = 3;</code>
        */
       private void clearRecord() {
-        
+
         record_ = getDefaultInstance().getRecord();
       }
       /**
@@ -70949,7 +70949,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         record_ = value.toStringUtf8();
       }
 
@@ -70976,14 +70976,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         version_ = value;
       }
       /**
        * <code>optional string version = 4;</code>
        */
       private void clearVersion() {
-        
+
         version_ = getDefaultInstance().getVersion();
       }
       /**
@@ -70995,7 +70995,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         version_ = value.toStringUtf8();
       }
 
@@ -71416,7 +71416,7 @@ public final class Api {
     /**
      * <code>repeated .server.TStorageKeys.StorageKey keys = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.TStorageKeys.StorageKeyOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.TStorageKeys.StorageKeyOrBuilder>
         getKeysOrBuilderList() {
       return keys_;
     }
@@ -71838,7 +71838,7 @@ public final class Api {
     /**
      * <code>repeated .server.TStorageRemove.StorageKey keys = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.TStorageRemove.StorageKey> 
+    java.util.List<com.heroiclabs.nakama.Api.TStorageRemove.StorageKey>
         getKeysList();
     /**
      * <code>repeated .server.TStorageRemove.StorageKey keys = 1;</code>
@@ -71948,14 +71948,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         bucket_ = value;
       }
       /**
        * <code>optional string bucket = 1;</code>
        */
       private void clearBucket() {
-        
+
         bucket_ = getDefaultInstance().getBucket();
       }
       /**
@@ -71967,7 +71967,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         bucket_ = value.toStringUtf8();
       }
 
@@ -71994,14 +71994,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         collection_ = value;
       }
       /**
        * <code>optional string collection = 2;</code>
        */
       private void clearCollection() {
-        
+
         collection_ = getDefaultInstance().getCollection();
       }
       /**
@@ -72013,7 +72013,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         collection_ = value.toStringUtf8();
       }
 
@@ -72040,14 +72040,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         record_ = value;
       }
       /**
        * <code>optional string record = 3;</code>
        */
       private void clearRecord() {
-        
+
         record_ = getDefaultInstance().getRecord();
       }
       /**
@@ -72059,7 +72059,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         record_ = value.toStringUtf8();
       }
 
@@ -72086,14 +72086,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         version_ = value;
       }
       /**
        * <code>optional string version = 4;</code>
        */
       private void clearVersion() {
-        
+
         version_ = getDefaultInstance().getVersion();
       }
       /**
@@ -72105,7 +72105,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         version_ = value.toStringUtf8();
       }
 
@@ -72526,7 +72526,7 @@ public final class Api {
     /**
      * <code>repeated .server.TStorageRemove.StorageKey keys = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.TStorageRemove.StorageKeyOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.TStorageRemove.StorageKeyOrBuilder>
         getKeysOrBuilderList() {
       return keys_;
     }
@@ -73059,14 +73059,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       id_ = value;
     }
     /**
      * <code>optional string id = 1;</code>
      */
     private void clearId() {
-      
+
       id_ = getDefaultInstance().getId();
     }
     /**
@@ -73078,7 +73078,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       id_ = value.toStringUtf8();
     }
 
@@ -73102,7 +73102,7 @@ public final class Api {
      * <code>optional bool authoritative = 2;</code>
      */
     private void setAuthoritative(boolean value) {
-      
+
       authoritative_ = value;
     }
     /**
@@ -73113,7 +73113,7 @@ public final class Api {
      * <code>optional bool authoritative = 2;</code>
      */
     private void clearAuthoritative() {
-      
+
       authoritative_ = false;
     }
 
@@ -73129,14 +73129,14 @@ public final class Api {
      * <code>optional int64 sort = 3;</code>
      */
     private void setSort(long value) {
-      
+
       sort_ = value;
     }
     /**
      * <code>optional int64 sort = 3;</code>
      */
     private void clearSort() {
-      
+
       sort_ = 0L;
     }
 
@@ -73152,14 +73152,14 @@ public final class Api {
      * <code>optional int64 count = 4;</code>
      */
     private void setCount(long value) {
-      
+
       count_ = value;
     }
     /**
      * <code>optional int64 count = 4;</code>
      */
     private void clearCount() {
-      
+
       count_ = 0L;
     }
 
@@ -73186,14 +73186,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       resetSchedule_ = value;
     }
     /**
      * <code>optional string reset_schedule = 5;</code>
      */
     private void clearResetSchedule() {
-      
+
       resetSchedule_ = getDefaultInstance().getResetSchedule();
     }
     /**
@@ -73205,7 +73205,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       resetSchedule_ = value.toStringUtf8();
     }
 
@@ -73232,14 +73232,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       metadata_ = value;
     }
     /**
      * <code>optional string metadata = 6;</code>
      */
     private void clearMetadata() {
-      
+
       metadata_ = getDefaultInstance().getMetadata();
     }
     /**
@@ -73251,7 +73251,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       metadata_ = value.toStringUtf8();
     }
 
@@ -73278,14 +73278,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       nextId_ = value;
     }
     /**
      * <code>optional string next_id = 7;</code>
      */
     private void clearNextId() {
-      
+
       nextId_ = getDefaultInstance().getNextId();
     }
     /**
@@ -73297,7 +73297,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       nextId_ = value.toStringUtf8();
     }
 
@@ -73324,14 +73324,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       prevId_ = value;
     }
     /**
      * <code>optional string prev_id = 8;</code>
      */
     private void clearPrevId() {
-      
+
       prevId_ = getDefaultInstance().getPrevId();
     }
     /**
@@ -73343,7 +73343,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       prevId_ = value.toStringUtf8();
     }
 
@@ -74093,14 +74093,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       leaderboardId_ = value;
     }
     /**
      * <code>optional string leaderboard_id = 1;</code>
      */
     private void clearLeaderboardId() {
-      
+
       leaderboardId_ = getDefaultInstance().getLeaderboardId();
     }
     /**
@@ -74112,7 +74112,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       leaderboardId_ = value.toStringUtf8();
     }
 
@@ -74139,14 +74139,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       ownerId_ = value;
     }
     /**
      * <code>optional string owner_id = 2;</code>
      */
     private void clearOwnerId() {
-      
+
       ownerId_ = getDefaultInstance().getOwnerId();
     }
     /**
@@ -74158,7 +74158,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       ownerId_ = value.toStringUtf8();
     }
 
@@ -74185,14 +74185,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       handle_ = value;
     }
     /**
      * <code>optional string handle = 3;</code>
      */
     private void clearHandle() {
-      
+
       handle_ = getDefaultInstance().getHandle();
     }
     /**
@@ -74204,7 +74204,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       handle_ = value.toStringUtf8();
     }
 
@@ -74243,7 +74243,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       lang_ = value;
     }
     /**
@@ -74254,7 +74254,7 @@ public final class Api {
      * <code>optional string lang = 4;</code>
      */
     private void clearLang() {
-      
+
       lang_ = getDefaultInstance().getLang();
     }
     /**
@@ -74270,7 +74270,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       lang_ = value.toStringUtf8();
     }
 
@@ -74297,14 +74297,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       location_ = value;
     }
     /**
      * <code>optional string location = 5;</code>
      */
     private void clearLocation() {
-      
+
       location_ = getDefaultInstance().getLocation();
     }
     /**
@@ -74316,7 +74316,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       location_ = value.toStringUtf8();
     }
 
@@ -74343,14 +74343,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       timezone_ = value;
     }
     /**
      * <code>optional string timezone = 6;</code>
      */
     private void clearTimezone() {
-      
+
       timezone_ = getDefaultInstance().getTimezone();
     }
     /**
@@ -74362,7 +74362,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       timezone_ = value.toStringUtf8();
     }
 
@@ -74378,14 +74378,14 @@ public final class Api {
      * <code>optional int64 rank = 7;</code>
      */
     private void setRank(long value) {
-      
+
       rank_ = value;
     }
     /**
      * <code>optional int64 rank = 7;</code>
      */
     private void clearRank() {
-      
+
       rank_ = 0L;
     }
 
@@ -74401,14 +74401,14 @@ public final class Api {
      * <code>optional int64 score = 8;</code>
      */
     private void setScore(long value) {
-      
+
       score_ = value;
     }
     /**
      * <code>optional int64 score = 8;</code>
      */
     private void clearScore() {
-      
+
       score_ = 0L;
     }
 
@@ -74424,14 +74424,14 @@ public final class Api {
      * <code>optional int64 num_score = 9;</code>
      */
     private void setNumScore(long value) {
-      
+
       numScore_ = value;
     }
     /**
      * <code>optional int64 num_score = 9;</code>
      */
     private void clearNumScore() {
-      
+
       numScore_ = 0L;
     }
 
@@ -74458,14 +74458,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       metadata_ = value;
     }
     /**
      * <code>optional string metadata = 10;</code>
      */
     private void clearMetadata() {
-      
+
       metadata_ = getDefaultInstance().getMetadata();
     }
     /**
@@ -74477,7 +74477,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       metadata_ = value.toStringUtf8();
     }
 
@@ -74493,14 +74493,14 @@ public final class Api {
      * <code>optional int64 ranked_at = 11;</code>
      */
     private void setRankedAt(long value) {
-      
+
       rankedAt_ = value;
     }
     /**
      * <code>optional int64 ranked_at = 11;</code>
      */
     private void clearRankedAt() {
-      
+
       rankedAt_ = 0L;
     }
 
@@ -74516,14 +74516,14 @@ public final class Api {
      * <code>optional int64 updated_at = 12;</code>
      */
     private void setUpdatedAt(long value) {
-      
+
       updatedAt_ = value;
     }
     /**
      * <code>optional int64 updated_at = 12;</code>
      */
     private void clearUpdatedAt() {
-      
+
       updatedAt_ = 0L;
     }
 
@@ -74539,14 +74539,14 @@ public final class Api {
      * <code>optional int64 expires_at = 13;</code>
      */
     private void setExpiresAt(long value) {
-      
+
       expiresAt_ = value;
     }
     /**
      * <code>optional int64 expires_at = 13;</code>
      */
     private void clearExpiresAt() {
-      
+
       expiresAt_ = 0L;
     }
 
@@ -75446,14 +75446,14 @@ public final class Api {
      * <code>optional int64 limit = 1;</code>
      */
     private void setLimit(long value) {
-      
+
       limit_ = value;
     }
     /**
      * <code>optional int64 limit = 1;</code>
      */
     private void clearLimit() {
-      
+
       limit_ = 0L;
     }
 
@@ -75492,7 +75492,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       cursor_ = value;
     }
     /**
@@ -75503,7 +75503,7 @@ public final class Api {
      * <code>optional string cursor = 2;</code>
      */
     private void clearCursor() {
-      
+
       cursor_ = getDefaultInstance().getCursor();
     }
     /**
@@ -75519,7 +75519,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       cursor_ = value.toStringUtf8();
     }
 
@@ -76015,7 +76015,7 @@ public final class Api {
     /**
      * <code>repeated .server.Leaderboard leaderboards = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.Leaderboard> 
+    java.util.List<com.heroiclabs.nakama.Api.Leaderboard>
         getLeaderboardsList();
     /**
      * <code>repeated .server.Leaderboard leaderboards = 1;</code>
@@ -76065,7 +76065,7 @@ public final class Api {
     /**
      * <code>repeated .server.Leaderboard leaderboards = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.LeaderboardOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.LeaderboardOrBuilder>
         getLeaderboardsOrBuilderList() {
       return leaderboards_;
     }
@@ -76197,14 +76197,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       cursor_ = value;
     }
     /**
      * <code>optional string cursor = 2;</code>
      */
     private void clearCursor() {
-      
+
       cursor_ = getDefaultInstance().getCursor();
     }
     /**
@@ -76216,7 +76216,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       cursor_ = value.toStringUtf8();
     }
 
@@ -76589,7 +76589,7 @@ public final class Api {
     /**
      * <code>repeated .server.TLeaderboardRecordsWrite.LeaderboardRecordWrite records = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.TLeaderboardRecordsWrite.LeaderboardRecordWrite> 
+    java.util.List<com.heroiclabs.nakama.Api.TLeaderboardRecordsWrite.LeaderboardRecordWrite>
         getRecordsList();
     /**
      * <code>repeated .server.TLeaderboardRecordsWrite.LeaderboardRecordWrite records = 1;</code>
@@ -76768,14 +76768,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         leaderboardId_ = value;
       }
       /**
        * <code>optional string leaderboard_id = 1;</code>
        */
       private void clearLeaderboardId() {
-        
+
         leaderboardId_ = getDefaultInstance().getLeaderboardId();
       }
       /**
@@ -76787,7 +76787,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         leaderboardId_ = value.toStringUtf8();
       }
 
@@ -76922,14 +76922,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         location_ = value;
       }
       /**
        * <code>optional string location = 6;</code>
        */
       private void clearLocation() {
-        
+
         location_ = getDefaultInstance().getLocation();
       }
       /**
@@ -76941,7 +76941,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         location_ = value.toStringUtf8();
       }
 
@@ -76968,14 +76968,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         timezone_ = value;
       }
       /**
        * <code>optional string timezone = 7;</code>
        */
       private void clearTimezone() {
-        
+
         timezone_ = getDefaultInstance().getTimezone();
       }
       /**
@@ -76987,7 +76987,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         timezone_ = value.toStringUtf8();
       }
 
@@ -77014,14 +77014,14 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         metadata_ = value;
       }
       /**
        * <code>optional string metadata = 8;</code>
        */
       private void clearMetadata() {
-        
+
         metadata_ = getDefaultInstance().getMetadata();
       }
       /**
@@ -77033,7 +77033,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         metadata_ = value.toStringUtf8();
       }
 
@@ -77642,7 +77642,7 @@ public final class Api {
     /**
      * <code>repeated .server.TLeaderboardRecordsWrite.LeaderboardRecordWrite records = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.TLeaderboardRecordsWrite.LeaderboardRecordWriteOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.TLeaderboardRecordsWrite.LeaderboardRecordWriteOrBuilder>
         getRecordsOrBuilderList() {
       return records_;
     }
@@ -78221,14 +78221,14 @@ public final class Api {
      * <code>optional int64 limit = 2;</code>
      */
     private void setLimit(long value) {
-      
+
       limit_ = value;
     }
     /**
      * <code>optional int64 limit = 2;</code>
      */
     private void clearLimit() {
-      
+
       limit_ = 0L;
     }
 
@@ -78267,7 +78267,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       cursor_ = value;
     }
     /**
@@ -78278,7 +78278,7 @@ public final class Api {
      * <code>optional string cursor = 3;</code>
      */
     private void clearCursor() {
-      
+
       cursor_ = getDefaultInstance().getCursor();
     }
     /**
@@ -78294,7 +78294,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       cursor_ = value.toStringUtf8();
     }
 
@@ -79276,14 +79276,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       leaderboardId_ = value;
     }
     /**
      * <code>optional string leaderboard_id = 1;</code>
      */
     private void clearLeaderboardId() {
-      
+
       leaderboardId_ = getDefaultInstance().getLeaderboardId();
     }
     /**
@@ -79295,7 +79295,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       leaderboardId_ = value.toStringUtf8();
     }
 
@@ -79622,14 +79622,14 @@ public final class Api {
      * <code>optional int64 limit = 7;</code>
      */
     private void setLimit(long value) {
-      
+
       limit_ = value;
     }
     /**
      * <code>optional int64 limit = 7;</code>
      */
     private void clearLimit() {
-      
+
       limit_ = 0L;
     }
 
@@ -79656,14 +79656,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       cursor_ = value;
     }
     /**
      * <code>optional string cursor = 8;</code>
      */
     private void clearCursor() {
-      
+
       cursor_ = getDefaultInstance().getCursor();
     }
     /**
@@ -79675,7 +79675,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       cursor_ = value.toStringUtf8();
     }
 
@@ -80385,7 +80385,7 @@ public final class Api {
     /**
      * <code>repeated .server.LeaderboardRecord records = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.LeaderboardRecord> 
+    java.util.List<com.heroiclabs.nakama.Api.LeaderboardRecord>
         getRecordsList();
     /**
      * <code>repeated .server.LeaderboardRecord records = 1;</code>
@@ -80435,7 +80435,7 @@ public final class Api {
     /**
      * <code>repeated .server.LeaderboardRecord records = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.LeaderboardRecordOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.LeaderboardRecordOrBuilder>
         getRecordsOrBuilderList() {
       return records_;
     }
@@ -80567,14 +80567,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       cursor_ = value;
     }
     /**
      * <code>optional string cursor = 2;</code>
      */
     private void clearCursor() {
-      
+
       cursor_ = getDefaultInstance().getCursor();
     }
     /**
@@ -80586,7 +80586,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       cursor_ = value.toStringUtf8();
     }
 
@@ -81018,14 +81018,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       id_ = value;
     }
     /**
      * <code>optional string id = 1;</code>
      */
     private void clearId() {
-      
+
       id_ = getDefaultInstance().getId();
     }
     /**
@@ -81037,7 +81037,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       id_ = value.toStringUtf8();
     }
 
@@ -81064,14 +81064,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       payload_ = value;
     }
     /**
      * <code>optional string payload = 2;</code>
      */
     private void clearPayload() {
-      
+
       payload_ = getDefaultInstance().getPayload();
     }
     /**
@@ -81083,7 +81083,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       payload_ = value.toStringUtf8();
     }
 
@@ -81515,7 +81515,7 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         productId_ = value;
       }
       /**
@@ -81526,7 +81526,7 @@ public final class Api {
        * <code>optional string product_id = 1;</code>
        */
       private void clearProductId() {
-        
+
         productId_ = getDefaultInstance().getProductId();
       }
       /**
@@ -81542,7 +81542,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         productId_ = value.toStringUtf8();
       }
 
@@ -81581,7 +81581,7 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         receiptData_ = value;
       }
       /**
@@ -81592,7 +81592,7 @@ public final class Api {
        * <code>optional string receipt_data = 2;</code>
        */
       private void clearReceiptData() {
-        
+
         receiptData_ = getDefaultInstance().getReceiptData();
       }
       /**
@@ -81608,7 +81608,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         receiptData_ = value.toStringUtf8();
       }
 
@@ -82064,7 +82064,7 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         productId_ = value;
       }
       /**
@@ -82075,7 +82075,7 @@ public final class Api {
        * <code>optional string product_id = 1;</code>
        */
       private void clearProductId() {
-        
+
         productId_ = getDefaultInstance().getProductId();
       }
       /**
@@ -82091,7 +82091,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         productId_ = value.toStringUtf8();
       }
 
@@ -82130,7 +82130,7 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         productType_ = value;
       }
       /**
@@ -82141,7 +82141,7 @@ public final class Api {
        * <code>optional string product_type = 2;</code>
        */
       private void clearProductType() {
-        
+
         productType_ = getDefaultInstance().getProductType();
       }
       /**
@@ -82157,7 +82157,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         productType_ = value.toStringUtf8();
       }
 
@@ -82196,7 +82196,7 @@ public final class Api {
         if (value == null) {
     throw new NullPointerException();
   }
-  
+
         purchaseToken_ = value;
       }
       /**
@@ -82207,7 +82207,7 @@ public final class Api {
        * <code>optional string purchase_token = 3;</code>
        */
       private void clearPurchaseToken() {
-        
+
         purchaseToken_ = getDefaultInstance().getPurchaseToken();
       }
       /**
@@ -82223,7 +82223,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-        
+
         purchaseToken_ = value.toStringUtf8();
       }
 
@@ -83241,7 +83241,7 @@ public final class Api {
      * <code>optional bool success = 1;</code>
      */
     private void setSuccess(boolean value) {
-      
+
       success_ = value;
     }
     /**
@@ -83252,7 +83252,7 @@ public final class Api {
      * <code>optional bool success = 1;</code>
      */
     private void clearSuccess() {
-      
+
       success_ = false;
     }
 
@@ -83276,7 +83276,7 @@ public final class Api {
      * <code>optional bool seen_before = 2;</code>
      */
     private void setSeenBefore(boolean value) {
-      
+
       seenBefore_ = value;
     }
     /**
@@ -83287,7 +83287,7 @@ public final class Api {
      * <code>optional bool seen_before = 2;</code>
      */
     private void clearSeenBefore() {
-      
+
       seenBefore_ = false;
     }
 
@@ -83311,7 +83311,7 @@ public final class Api {
      * <code>optional bool purchase_provider_reachable = 3;</code>
      */
     private void setPurchaseProviderReachable(boolean value) {
-      
+
       purchaseProviderReachable_ = value;
     }
     /**
@@ -83322,7 +83322,7 @@ public final class Api {
      * <code>optional bool purchase_provider_reachable = 3;</code>
      */
     private void clearPurchaseProviderReachable() {
-      
+
       purchaseProviderReachable_ = false;
     }
 
@@ -83361,7 +83361,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       message_ = value;
     }
     /**
@@ -83372,7 +83372,7 @@ public final class Api {
      * <code>optional string message = 6;</code>
      */
     private void clearMessage() {
-      
+
       message_ = getDefaultInstance().getMessage();
     }
     /**
@@ -83388,7 +83388,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       message_ = value.toStringUtf8();
     }
 
@@ -83427,7 +83427,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       data_ = value;
     }
     /**
@@ -83438,7 +83438,7 @@ public final class Api {
      * <code>optional string data = 5;</code>
      */
     private void clearData() {
-      
+
       data_ = getDefaultInstance().getData();
     }
     /**
@@ -83454,7 +83454,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       data_ = value.toStringUtf8();
     }
 
@@ -84052,14 +84052,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       id_ = value;
     }
     /**
      * <code>optional string id = 1;</code>
      */
     private void clearId() {
-      
+
       id_ = getDefaultInstance().getId();
     }
     /**
@@ -84071,7 +84071,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       id_ = value.toStringUtf8();
     }
 
@@ -84098,14 +84098,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       subject_ = value;
     }
     /**
      * <code>optional string subject = 2;</code>
      */
     private void clearSubject() {
-      
+
       subject_ = getDefaultInstance().getSubject();
     }
     /**
@@ -84117,7 +84117,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       subject_ = value.toStringUtf8();
     }
 
@@ -84144,14 +84144,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       content_ = value;
     }
     /**
      * <code>optional string content = 3;</code>
      */
     private void clearContent() {
-      
+
       content_ = getDefaultInstance().getContent();
     }
     /**
@@ -84163,7 +84163,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       content_ = value.toStringUtf8();
     }
 
@@ -84179,14 +84179,14 @@ public final class Api {
      * <code>optional int64 code = 4;</code>
      */
     private void setCode(long value) {
-      
+
       code_ = value;
     }
     /**
      * <code>optional int64 code = 4;</code>
      */
     private void clearCode() {
-      
+
       code_ = 0L;
     }
 
@@ -84213,14 +84213,14 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       senderId_ = value;
     }
     /**
      * <code>optional string sender_id = 5;</code>
      */
     private void clearSenderId() {
-      
+
       senderId_ = getDefaultInstance().getSenderId();
     }
     /**
@@ -84232,7 +84232,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       senderId_ = value.toStringUtf8();
     }
 
@@ -84248,14 +84248,14 @@ public final class Api {
      * <code>optional int64 created_at = 6;</code>
      */
     private void setCreatedAt(long value) {
-      
+
       createdAt_ = value;
     }
     /**
      * <code>optional int64 created_at = 6;</code>
      */
     private void clearCreatedAt() {
-      
+
       createdAt_ = 0L;
     }
 
@@ -84271,14 +84271,14 @@ public final class Api {
      * <code>optional int64 expires_at = 7;</code>
      */
     private void setExpiresAt(long value) {
-      
+
       expiresAt_ = value;
     }
     /**
      * <code>optional int64 expires_at = 7;</code>
      */
     private void clearExpiresAt() {
-      
+
       expiresAt_ = 0L;
     }
 
@@ -84294,14 +84294,14 @@ public final class Api {
      * <code>optional bool persistent = 8;</code>
      */
     private void setPersistent(boolean value) {
-      
+
       persistent_ = value;
     }
     /**
      * <code>optional bool persistent = 8;</code>
      */
     private void clearPersistent() {
-      
+
       persistent_ = false;
     }
 
@@ -84871,7 +84871,7 @@ public final class Api {
     /**
      * <code>repeated .server.Notification notifications = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.Notification> 
+    java.util.List<com.heroiclabs.nakama.Api.Notification>
         getNotificationsList();
     /**
      * <code>repeated .server.Notification notifications = 1;</code>
@@ -84909,7 +84909,7 @@ public final class Api {
     /**
      * <code>repeated .server.Notification notifications = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.NotificationOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.NotificationOrBuilder>
         getNotificationsOrBuilderList() {
       return notifications_;
     }
@@ -85395,7 +85395,7 @@ public final class Api {
      * <code>optional int64 limit = 1;</code>
      */
     private void setLimit(long value) {
-      
+
       limit_ = value;
     }
     /**
@@ -85406,7 +85406,7 @@ public final class Api {
      * <code>optional int64 limit = 1;</code>
      */
     private void clearLimit() {
-      
+
       limit_ = 0L;
     }
 
@@ -85451,7 +85451,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       resumableCursor_ = value;
     }
     /**
@@ -85464,7 +85464,7 @@ public final class Api {
      * <code>optional string resumable_cursor = 2;</code>
      */
     private void clearResumableCursor() {
-      
+
       resumableCursor_ = getDefaultInstance().getResumableCursor();
     }
     /**
@@ -85482,7 +85482,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       resumableCursor_ = value.toStringUtf8();
     }
 
@@ -85818,7 +85818,7 @@ public final class Api {
     /**
      * <code>repeated .server.Notification notifications = 1;</code>
      */
-    java.util.List<com.heroiclabs.nakama.Api.Notification> 
+    java.util.List<com.heroiclabs.nakama.Api.Notification>
         getNotificationsList();
     /**
      * <code>repeated .server.Notification notifications = 1;</code>
@@ -85878,7 +85878,7 @@ public final class Api {
     /**
      * <code>repeated .server.Notification notifications = 1;</code>
      */
-    public java.util.List<? extends com.heroiclabs.nakama.Api.NotificationOrBuilder> 
+    public java.util.List<? extends com.heroiclabs.nakama.Api.NotificationOrBuilder>
         getNotificationsOrBuilderList() {
       return notifications_;
     }
@@ -86025,7 +86025,7 @@ public final class Api {
       if (value == null) {
     throw new NullPointerException();
   }
-  
+
       resumableCursor_ = value;
     }
     /**
@@ -86037,7 +86037,7 @@ public final class Api {
      * <code>optional string resumable_cursor = 2;</code>
      */
     private void clearResumableCursor() {
-      
+
       resumableCursor_ = getDefaultInstance().getResumableCursor();
     }
     /**
@@ -86054,7 +86054,7 @@ public final class Api {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      
+
       resumableCursor_ = value.toStringUtf8();
     }
 

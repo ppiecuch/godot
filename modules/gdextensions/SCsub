@@ -102,7 +102,7 @@ if is_enabled("flexbuffers") or is_enabled("nakama1"):
         if env["platform"] == "frt" and env["frt_arch"] == "gcw0":
             env_module.Append(CPPDEFINES=["FLATBUFFERS_LOCALE_INDEPENDENT=0"])
         thirdparty_sources += ["#thirdparty/flatbuffers/src/util.cpp"]
-    else:
+    if is_enabled("nakama1"):
         sources += Glob("submodules/nakama1/client/*.cpp")
 
 env_module.Append(

@@ -1,59 +1,117 @@
+/*************************************************************************/
+/*  nakamaclient.h                                                       */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #ifndef NAKAMACLIENT_H
 #define NAKAMACLIENT_H
 
 #include "core/reference.h"
-#include "scene/main/http_request.h"
 #include "modules/websocket/websocket_client.h"
+#include "scene/main/http_request.h"
 
 #include "nakama1_api.h"
 
 #include <map>
 
 namespace Builder {
-	struct Url {
-		String _scheme = "http";
-		String _host;
-		String _port;
-		String _path;
-		Url &scheme(const String &p_scheme) { _scheme = _scheme.empty() ? "http" : p_scheme; return *this; }
-		Url &host(const String &p_host) { _host = p_host; return *this; }
-		Url &port(int p_port) { _port = p_port == -1 ? "" : String::num(p_port); return *this; }
-		Url &path(const String &p_path) { _path = p_path; return *this; }
-		String build() { return vformat("%s://%s%s%s", _scheme, _host, _port.empty() ? "" : ":" + _port, _path.begins_with("/") ? _path : "/" + _path); }
-	};
-	struct Request {
-		String _url;
-		HTTPClient::Method _method = HTTPClient::METHOD_POST;
-		Vector<String> _headers;
-		PoolStringArray _query;
-		PoolByteArray _payload;
-		Request &url(const String &p_url) { _url = p_url; return *this; }
-		Request &header(const String &p_header) { _headers.push_back(p_header); return *this; }
-		Request &header(const String &p_name, const String &p_value) { _headers.push_back(p_name + ":" + p_value); return *this; }
-		Request &query_parameter(const String &p_name, const String &p_value) { _query.push_back(p_name + "=" + p_value); return *this; }
-		Request method(HTTPClient::Method p_method, const PoolByteArray &p_payload) { _method = p_method; _payload = p_payload; return *this; }
-		Error make(HTTPRequest *p_client, bool trace = false) {
-			if (trace) {
-				LOGI("Sending request: " + _url);
-			}
-			p_client->cancel_request();
-			return p_client->request(_url, _headers, true, _method, Utils::bytearray_to_string(_payload));
+struct Url {
+	String _scheme = "http";
+	String _host;
+	String _port;
+	String _path;
+	Url &scheme(const String &p_scheme) {
+		_scheme = _scheme.empty() ? "http" : p_scheme;
+		return *this;
+	}
+	Url &host(const String &p_host) {
+		_host = p_host;
+		return *this;
+	}
+	Url &port(int p_port) {
+		_port = p_port == -1 ? "" : String::num(p_port);
+		return *this;
+	}
+	Url &path(const String &p_path) {
+		_path = p_path;
+		return *this;
+	}
+	String build() { return vformat("%s://%s%s%s", _scheme, _host, _port.empty() ? "" : ":" + _port, _path.begins_with("/") ? _path : "/" + _path); }
+};
+struct Request {
+	String _url;
+	HTTPClient::Method _method = HTTPClient::METHOD_POST;
+	Vector<String> _headers;
+	PoolStringArray _query;
+	PoolByteArray _payload;
+	Request &url(const String &p_url) {
+		_url = p_url;
+		return *this;
+	}
+	Request &header(const String &p_header) {
+		_headers.push_back(p_header);
+		return *this;
+	}
+	Request &header(const String &p_name, const String &p_value) {
+		_headers.push_back(p_name + ":" + p_value);
+		return *this;
+	}
+	Request &query_parameter(const String &p_name, const String &p_value) {
+		_query.push_back(p_name + "=" + p_value);
+		return *this;
+	}
+	Request method(HTTPClient::Method p_method, const PoolByteArray &p_payload) {
+		_method = p_method;
+		_payload = p_payload;
+		return *this;
+	}
+	Error make(HTTPRequest *p_client, bool trace = false) {
+		if (trace) {
+			LOGI("Sending request: " + _url);
 		}
-		Error make(WebSocketClient *p_client, bool trace = false) {
-			if (trace) {
-				LOGI("Sending request: " + _url);
-			}
-			String url = _url;
-			if (!_query.empty()) {
-				String query = _query.join("&");
-				if (!query.empty()) {
-					url = url + "?" + query;
-				}
-			}
-			return p_client->connect_to_url(_url);
+		p_client->cancel_request();
+		return p_client->request(_url, _headers, true, _method, Utils::bytearray_to_string(_payload));
+	}
+	Error make(WebSocketClient *p_client, bool trace = false) {
+		if (trace) {
+			LOGI("Sending request: " + _url);
 		}
-	};
-}
+		String url = _url;
+		if (!_query.empty()) {
+			String query = _query.join("&");
+			if (!query.empty()) {
+				url = url + "?" + query;
+			}
+		}
+		return p_client->connect_to_url(_url);
+	}
+};
+} //namespace Builder
 
 class DefaultSession {
 private:
@@ -125,7 +183,7 @@ public:
 
 	long get_server_time();
 
- 	bool authenticate(const Ref<DefaultAuthenticateRequest> &p_auth, String p_path);
+	bool authenticate(const Ref<DefaultAuthenticateRequest> &p_auth, String p_path);
 
 	bool user_login(const Ref<DefaultAuthenticateRequest> &p_auth);
 	bool user_register(const Ref<DefaultAuthenticateRequest> &p_auth);

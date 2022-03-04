@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  gd_nakama1.cpp                                                       */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #include "gd_nakama1.h"
 
 static GdNakama1 *singleton = nullptr;
@@ -15,7 +45,7 @@ void GdNakama1::_client_session_error(NkErrorCode error_code, String error_messa
 }
 
 void GdNakama1::_client_session_accepted(String session_token, String collation_id) {
-		_authenticated(session_token);
+	_authenticated(session_token);
 }
 
 void GdNakama1::_authenticated(String p_session_token) {
@@ -26,14 +56,13 @@ void GdNakama1::_authenticated(String p_session_token) {
 		nk_session = nullptr;
 	}
 
-    nk_session = memnew(DefaultSession(p_session_token));
-    LOGI("Session token: " + nk_session->get_auth_token());
-    LOGI("Authenticated succesfully. User ID: " + nk_session->get_user_id());
-    emit_signal("authenticated");
+	nk_session = memnew(DefaultSession(p_session_token));
+	LOGI("Session token: " + nk_session->get_auth_token());
+	LOGI("Authenticated succesfully. User ID: " + nk_session->get_user_id());
+	emit_signal("authenticated");
 }
 
 void GdNakama1::_bind_methods() {
-
 	ClassDB::bind_method(D_METHOD("create_client"), &GdNakama1::create_client);
 	ClassDB::bind_method(D_METHOD("authenticate_device"), &GdNakama1::authenticate_device);
 	ClassDB::bind_method(D_METHOD("authenticate_email"), &GdNakama1::authenticate_email);
@@ -57,27 +86,22 @@ void GdNakama1::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "lang"), "set_lang", "get_lang");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "trace"), "set_trace", "get_trace");
 
-    ADD_SIGNAL(MethodInfo("authenticated"));
-    ADD_SIGNAL(MethodInfo("chat_message_recieved",
-						  PropertyInfo(Variant::STRING, "channel_id"),
-						  PropertyInfo(Variant::STRING, "message_id"),
-						  PropertyInfo(Variant::STRING, "message_code"),
-						  PropertyInfo(Variant::INT, "sender_id"),
-						  PropertyInfo(Variant::STRING, "username"),
-						  PropertyInfo(Variant::STRING, "content"))
-	);
+	ADD_SIGNAL(MethodInfo("authenticated"));
+	ADD_SIGNAL(MethodInfo("chat_message_recieved",
+			PropertyInfo(Variant::STRING, "channel_id"),
+			PropertyInfo(Variant::STRING, "message_id"),
+			PropertyInfo(Variant::STRING, "message_code"),
+			PropertyInfo(Variant::INT, "sender_id"),
+			PropertyInfo(Variant::STRING, "username"),
+			PropertyInfo(Variant::STRING, "content")));
 }
 
 void GdNakama1::_notification(int p_what) {
-
 	switch (p_what) {
-
 		case NOTIFICATION_READY: {
-
 		} break;
 
 		case NOTIFICATION_PROCESS: {
-
 			const real_t delta = get_process_delta_time();
 			time_since_last_tick += delta;
 			if (time_since_last_tick > 0.05) {
@@ -88,7 +112,6 @@ void GdNakama1::_notification(int p_what) {
 }
 
 void GdNakama1::create_client(String p_server_key, String p_server_host, int p_port, bool p_ssl, int p_timeout) {
-
 	if (nk_client) {
 		memdelete(nk_client);
 		nk_client = nullptr;
@@ -117,8 +140,7 @@ void GdNakama1::authenticate_email(String p_email, String p_password, bool creat
 }
 
 bool GdNakama1::is_session_expired() {
-
-    return !(nk_session && !nk_session->is_expired());
+	return !(nk_session && !nk_session->is_expired());
 }
 
 void GdNakama1::join_chat_room(String p_room_name) {
@@ -126,7 +148,6 @@ void GdNakama1::join_chat_room(String p_room_name) {
 
 void GdNakama1::write_chat_message(String p_channel_id, String p_content) {
 	ERR_FAIL_NULL(nk_client);
-
 }
 
 void GdNakama1::logout() {
@@ -157,7 +178,9 @@ bool GdNakama1::get_trace() const {
 	return nk_client->get_trace();
 }
 
-GdNakama1 *GdNakama1::get_singleton() { return singleton; }
+GdNakama1 *GdNakama1::get_singleton() {
+	return singleton;
+}
 
 GdNakama1::GdNakama1() {
 	singleton = this;

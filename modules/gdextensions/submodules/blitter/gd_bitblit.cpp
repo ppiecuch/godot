@@ -33,30 +33,32 @@
 
 BitBlit *BitBlit::singleton = nullptr;
 
-PoolByteArray BlitSurface::get_data() const { return data; }
+PoolByteArray BlitSurface::get_data() const {
+	return data;
+}
 
 void BlitSurface::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_data"), &BlitSurface::get_data);
 }
 
-BlitSurface::BlitSurface(int p_width, int p_height, int p_depth) : surface(nullptr) {
+BlitSurface::BlitSurface(int p_width, int p_height, int p_depth) :
+		surface(nullptr) {
 	ERR_FAIL_COND(p_width > 0);
 	ERR_FAIL_COND(p_height > 0);
 	ERR_FAIL_COND(p_depth > 0);
 
 	surface = SDL_CreateRGBEmptySurface(p_width, p_height, p_depth,
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN
-		0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000
+			0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000
 #else
-		0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF
+			0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF
 #endif
 	);
 	data.resize(p_width * p_height * p_depth / 8);
 	surface->pixels = data.write().ptr();
 }
 
-BlitSurface::~BlitSurface() { }
-
+BlitSurface::~BlitSurface() {}
 
 Ref<BlitSurface> BitBlit::create_surface(int p_width, int p_height, int p_depth) {
 	Ref<BlitSurface> surf = memnew(BlitSurface(p_width, p_height, p_depth));

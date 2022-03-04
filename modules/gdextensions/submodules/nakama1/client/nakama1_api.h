@@ -1,19 +1,48 @@
+/*************************************************************************/
+/*  nakama1_api.h                                                        */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #ifndef NAKAMA1_API_H
 #define NAKAMA1_API_H
 
+#include "api_generated.h"
 #include "core/class_db.h"
 #include "core/object.h"
 #include "core/reference.h"
 #include "core/variant.h"
-#include "api_generated.h"
 
 typedef int32_t NkErrorCode;
 
-#define LOGI(string, ...) print_line(vformat(String("(Nakama Info) ")+string, ##__VA_ARGS__));
-#define LOGD(string, ...) print_line(vformat(String("(Nakama Debug) ")+string, ##__VA_ARGS__));
+#define LOGI(string, ...) print_line(vformat(String("(Nakama Info) ") + string, ##__VA_ARGS__));
+#define LOGD(string, ...) print_line(vformat(String("(Nakama Debug) ") + string, ##__VA_ARGS__));
 
 struct Utils {
-
 	_FORCE_INLINE_ static PoolByteArray create_payload(uint8_t *buf_ptr, int buf_size) {
 		PoolByteArray data;
 		data.resize(buf_size);
@@ -45,22 +74,27 @@ struct Utils {
 		return data;
 	}
 
-	template<typename T, typename... Args>
-	static std::unique_ptr<T> make_unique(Args&&... args) {
+	template <typename T, typename... Args>
+	static std::unique_ptr<T> make_unique(Args &&...args) {
 		return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 	}
 
-    template <typename T>
-    struct _fbloop {
+	template <typename T>
+	struct _fbloop {
 		struct iterator {
-			iterator(const flatbuffers::Vector<flatbuffers::Offset<T>> *array, int pointer): array_(array), index_(pointer) { }
-			iterator operator++() { ++index_; return *this; }
+			iterator(const flatbuffers::Vector<flatbuffers::Offset<T>> *array, int pointer) :
+					array_(array), index_(pointer) {}
+			iterator operator++() {
+				++index_;
+				return *this;
+			}
 			bool operator!=(const iterator &other) const { return (array_ != other.array_) || (index_ != other.index_); }
 			const T *operator*() const { return array_->Get(index_); }
 			const flatbuffers::Vector<flatbuffers::Offset<T>> *array_;
 			int index_;
 		};
-		_fbloop(const flatbuffers::Vector<flatbuffers::Offset<T>> *array) : array_(array) { }
+		_fbloop(const flatbuffers::Vector<flatbuffers::Offset<T>> *array) :
+				array_(array) {}
 		iterator begin() const noexcept { return iterator(array_, 0); }
 		iterator end() const noexcept { return iterator(array_, array_->size()); }
 		const flatbuffers::Vector<flatbuffers::Offset<T>> *array_;
@@ -90,39 +124,38 @@ public:
 };
 
 enum {
-  RUNTIME_EXCEPTION = 0, // An unexpected error that is unrecoverable.
-  UNRECOGNIZED_PAYLOAD = 1, // Server received a message that is not recognized.
-  MISSING_PAYLOAD = 2, // Server received an Envelop message but the internal message is unrecognised. Most likely a protocol mismatch.
-  BAD_INPUT = 3, // The message did not include the required data in the correct format.
-  AUTH_ERROR = 4, // Authentication failure.
-  USER_NOT_FOUND = 5, // Login failed because ID/device/email did not exist.
-  USER_REGISTER_INUSE = 6, // Registration failed because ID/device/email exists.
-  USER_LINK_INUSE = 7, // Linking operation failed because link exists.
-  USER_LINK_PROVIDER_UNAVAILABLE = 8, // Linking operation failed because third-party service was unreachable.
-  USER_UNLINK_DISALLOWED = 9, // Unlinking operation failed because you cannot unlink last ID.
-  USER_HANDLE_INUSE = 10, // Handle is in-use by another user.
-  GROUP_NAME_INUSE = 11, // Group names must be unique and it's already in use.
-  GROUP_LAST_ADMIN = 12, // Group leave operation not allowed because the user is the last admin.
-  STORAGE_REJECTED = 13, // Storage write operation failed.
-  MATCH_NOT_FOUND = 14, // Match with given ID was not found in the system.
-  RUNTIME_FUNCTION_NOT_FOUND = 15, // Runtime function name was not found in system registry.
-  RUNTIME_FUNCTION_EXCEPTION = 16, // Runtime function caused an internal server error and did not complete.
+	RUNTIME_EXCEPTION = 0, // An unexpected error that is unrecoverable.
+	UNRECOGNIZED_PAYLOAD = 1, // Server received a message that is not recognized.
+	MISSING_PAYLOAD = 2, // Server received an Envelop message but the internal message is unrecognised. Most likely a protocol mismatch.
+	BAD_INPUT = 3, // The message did not include the required data in the correct format.
+	AUTH_ERROR = 4, // Authentication failure.
+	USER_NOT_FOUND = 5, // Login failed because ID/device/email did not exist.
+	USER_REGISTER_INUSE = 6, // Registration failed because ID/device/email exists.
+	USER_LINK_INUSE = 7, // Linking operation failed because link exists.
+	USER_LINK_PROVIDER_UNAVAILABLE = 8, // Linking operation failed because third-party service was unreachable.
+	USER_UNLINK_DISALLOWED = 9, // Unlinking operation failed because you cannot unlink last ID.
+	USER_HANDLE_INUSE = 10, // Handle is in-use by another user.
+	GROUP_NAME_INUSE = 11, // Group names must be unique and it's already in use.
+	GROUP_LAST_ADMIN = 12, // Group leave operation not allowed because the user is the last admin.
+	STORAGE_REJECTED = 13, // Storage write operation failed.
+	MATCH_NOT_FOUND = 14, // Match with given ID was not found in the system.
+	RUNTIME_FUNCTION_NOT_FOUND = 15, // Runtime function name was not found in system registry.
+	RUNTIME_FUNCTION_EXCEPTION = 16, // Runtime function caused an internal server error and did not complete.
 };
 
-class DefaultAuthenticateRequest: public NkCollatedMessage {
-
+class DefaultAuthenticateRequest : public NkCollatedMessage {
 	server::AuthenticateRequestT *message = nullptr;
 
 public:
 	class Builder {
-		public:
-			static Ref<DefaultAuthenticateRequest> custom(String p_custom);
-			static Ref<DefaultAuthenticateRequest> device(String p_device);
-			static Ref<DefaultAuthenticateRequest> email(String p_email, String p_password);
-			static Ref<DefaultAuthenticateRequest> facebook(String p_oauth_token);
-			static Ref<DefaultAuthenticateRequest> game_center(String p_player_id, String p_bundle_id, long p_timestamp, String p_salt, String p_signature, String p_public_key_url);
-			static Ref<DefaultAuthenticateRequest> google(String p_oauth_token);
-			static Ref<DefaultAuthenticateRequest> steam(String p_session_token);
+	public:
+		static Ref<DefaultAuthenticateRequest> custom(String p_custom);
+		static Ref<DefaultAuthenticateRequest> device(String p_device);
+		static Ref<DefaultAuthenticateRequest> email(String p_email, String p_password);
+		static Ref<DefaultAuthenticateRequest> facebook(String p_oauth_token);
+		static Ref<DefaultAuthenticateRequest> game_center(String p_player_id, String p_bundle_id, long p_timestamp, String p_salt, String p_signature, String p_public_key_url);
+		static Ref<DefaultAuthenticateRequest> google(String p_oauth_token);
+		static Ref<DefaultAuthenticateRequest> steam(String p_session_token);
 	};
 
 	PoolByteArray as_bytes(String p_collation_id) const;
@@ -132,7 +165,6 @@ public:
 };
 
 class AuthenticateResponse {
-
 	const PoolByteArray payload;
 	const server::AuthenticateResponse *message;
 
@@ -197,7 +229,7 @@ public:
 		TOPIC_GROUP,
 	};
 	enum ScoreOperator {
-		SUBMITOP_INCR ,
+		SUBMITOP_INCR,
 		SUBMITOP_DECR,
 		SUBMITOP_SET,
 		SUBMITOP_BEST,
@@ -214,12 +246,12 @@ VARIANT_ENUM_CAST(NkMessage::PayloadCase);
 VARIANT_ENUM_CAST(NkMessage::TopicType);
 VARIANT_ENUM_CAST(NkMessage::ScoreOperator);
 
-template <typename T> class DeferredMessage : public Reference {
+template <typename T>
+class DeferredMessage : public Reference {
 	GDCLASS(DeferredMessage, Reference);
 
 protected:
 	static void _bind_methods() {
-
 		ClassDB::bind_method(D_METHOD("get_content"), &DeferredMessage::get_content);
 	}
 
@@ -229,20 +261,18 @@ public:
 
 	Dictionary get_content() const { return message->UnPackToDict(); }
 
-	DeferredMessage(const PoolByteArray &p_payload, const void *p_content)
-		: message(flatbuffers::GetRoot<T>(p_content))
-		, payload(p_payload) { }
+	DeferredMessage(const PoolByteArray &p_payload, const void *p_content) :
+			message(flatbuffers::GetRoot<T>(p_content)), payload(p_payload) {}
 };
 
-template <typename T> class RequestMessage: public NkCollatedMessage {
-
+template <typename T>
+class RequestMessage : public NkCollatedMessage {
 	PoolByteArray payload;
 
 protected:
 	void _nk_message();
 
 	static void _bind_methods() {
-
 		ClassDB::bind_method(D_METHOD("_nk_message"), &RequestMessage::_nk_message);
 	}
 
@@ -252,8 +282,7 @@ public:
 	RequestMessage();
 };
 
-class LogoutMessage: public NkUncollatedMessage {
-
+class LogoutMessage : public NkUncollatedMessage {
 	PoolByteArray payload;
 
 public:
