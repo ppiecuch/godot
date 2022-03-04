@@ -31,6 +31,7 @@
 #include "register_types.h"
 
 #include "core/engine.h"
+#include "core/io/resource_importer.h"
 #include "editor/audio_stream_preview.h"
 #include "editor/editor_node.h"
 
@@ -122,13 +123,21 @@
 #endif
 
 #ifdef GDEXT_QRCODETEXTURE_ENABLED
-# ifdef TOOLS_ENABLED
+#ifdef TOOLS_ENABLED
 #include "qrcodetexture/qrcodetexture.h"
-# endif
+#endif
 #endif
 
 #ifndef _3D_DISABLED
 #include "ccd/gd_ccd.h"
+#endif
+
+#ifdef GDEXT_NAKAMA1_ENABLED
+#include "nakama1/gd_nakama1.h"
+#endif
+
+#ifdef GDEXT_FLEXBUFFERS_ENABLED
+#include "flexbuffers/resource_importer_flexbuffer.h"
 #endif
 
 static Vector<Object *> _global_resources;
@@ -300,17 +309,29 @@ void register_gdextensions_types() {
 #endif
 #endif // GDEXT_BENET_ENABLED
 
+#ifdef GDEXT_FLEXBUFFERS_ENABLED
+	ClassDB::register_class<FlexbuffersData>();
+	Ref<ResourceImporterFlexbuffers> flexbuffers_data;
+	flexbuffers_data.instance();
+	ResourceFormatImporter::get_singleton()->add_importer(flexbuffers_data);
+#endif
+
+#ifdef GDEXT_NAKAMA1_ENABLED
+	ClassDB::register_virtual_class<NkCollatedMessage>();
+	ClassDB::register_virtual_class<NkUncollatedMessage>();
+	Engine::get_singleton()->add_singleton(Engine::Singleton("GdNakama1", memnew(GdNakama1)));
+#endif
+
 #ifdef GDEXT_SMOOTH_ENABLED
 	ClassDB::register_class<Smooth>();
 	ClassDB::register_class<Smooth2D>();
 #endif // GDEXT_SMOOTH_ENABLED
 
 #ifdef GDEXT_QRCODETEXTURE_ENABLED
-# ifdef TOOLS_ENABLED
+#ifdef TOOLS_ENABLED
 	ClassDB::register_class<QRCodeTexture>();
-# endif // TOOLS_ENABLED
+#endif // TOOLS_ENABLED
 #endif // GDEXT_QRCODETEXTURE_ENABLED
-
 
 #ifdef GDEXT_CCD_ENABLED
 #ifndef _3D_DISABLED
@@ -369,9 +390,14 @@ void unregister_gdextensions_types() {
 		memdelete(instance);
 	}
 #endif
+#ifdef GDEXT_NAKAMA1_ENABLED
+	if (GdNakama1 *instance = GdNakama1::get_singleton()) {
+		memdelete(instance);
+	}
+#endif
 #ifdef GDEXT_IAP_ENABLED
 #if defined(OSX_ENABLED) || defined(UWP_ENABLED) || defined(IPHONE_ENABLED)
 	GdInAppStore::release_store();
-#endif
+# endif
 #endif // GDEXT_IAP_ENABLED
 }

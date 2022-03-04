@@ -29,83 +29,39 @@
 /*************************************************************************/
 
 #include "gd_bitblit.h"
+#include "_surface.h"
 
 BitBlit *BitBlit::singleton = nullptr;
-
-static int _get_pixel_size(Image::Format format) {
-	switch (format) {
-		case Image::FORMAT_RGB8:
-			return 3;
-		case Image::FORMAT_RGBA8:
-			return 4;
-		case Image::FORMAT_LA8:
-			return 2;
-		case Image::FORMAT_L8:
-		case Image::FORMAT_R8:
-		case Image::FORMAT_RG8:
-		case Image::FORMAT_RGBA4444:
-		case Image::FORMAT_RF:
-		case Image::FORMAT_RGF:
-		case Image::FORMAT_RGBF:
-		case Image::FORMAT_RGBAF:
-		case Image::FORMAT_RH:
-		case Image::FORMAT_RGH:
-		case Image::FORMAT_RGBH:
-		case Image::FORMAT_RGBAH:
-		case Image::FORMAT_RGBE9995:
-		case Image::FORMAT_DXT1:
-		case Image::FORMAT_DXT3:
-		case Image::FORMAT_DXT5:
-		case Image::FORMAT_RGTC_R:
-		case Image::FORMAT_RGTC_RG:
-		case Image::FORMAT_BPTC_RGBA:
-		case Image::FORMAT_BPTC_RGBF:
-		case Image::FORMAT_BPTC_RGBFU:
-		case Image::FORMAT_PVRTC2:
-		case Image::FORMAT_PVRTC2A:
-		case Image::FORMAT_PVRTC4:
-		case Image::FORMAT_PVRTC4A:
-		case Image::FORMAT_ETC:
-		case Image::FORMAT_ETC2_R11:
-		case Image::FORMAT_ETC2_R11S:
-		case Image::FORMAT_ETC2_RG11:
-		case Image::FORMAT_ETC2_RG11S:
-		case Image::FORMAT_ETC2_RGB8:
-		case Image::FORMAT_ETC2_RGBA8:
-		case Image::FORMAT_ETC2_RGB8A1:
-#if VERSION_MAJOR >= 4
-		case Image::FORMAT_RGB565:
-		case Image::FORMAT_ETC2_RA_AS_RG:
-		case Image::FORMAT_DXT5_RA_AS_RG:
-#else
-		case Image::FORMAT_RGBA5551:
-#endif
-		case Image::FORMAT_MAX:
-			return 0;
-	}
-
-	return 0;
-}
-
 
 PoolByteArray BlitSurface::get_data() const { return data; }
 
 void BlitSurface::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("get_data"), &BlitSurface::get_data);
 }
 
-BlitSurface::BlitSurface(int p_width, int p_height, Image::Format p_format) {
+BlitSurface::BlitSurface(int p_width, int p_height, int p_depth) : surface(nullptr) {
 	ERR_FAIL_COND(p_width > 0);
 	ERR_FAIL_COND(p_height > 0);
-	const int size = _get_pixel_size(p_format);
-	if (size > 0) {
-		data.resize(p_width * p_height * size);
-	} else {
-		WARN_PRINT("Unsuported pixel format");
-	}
+	ERR_FAIL_COND(p_depth > 0);
+
+	surface = SDL_CreateRGBEmptySurface(p_width, p_height, p_depth,
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
+		0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000
+#else
+		0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF
+#endif
+	);
+	data.resize(p_width * p_height * p_depth / 8);
+	surface->pixels = data.write().ptr();
 }
 
 BlitSurface::~BlitSurface() { }
 
+
+Ref<BlitSurface> BitBlit::create_surface(int p_width, int p_height, int p_depth) {
+	Ref<BlitSurface> surf = memnew(BlitSurface(p_width, p_height, p_depth));
+	return surf;
+}
 
 void BitBlit::_bind_methods() {
 }

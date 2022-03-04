@@ -33,9 +33,10 @@ sources = Glob("*.cpp") + Glob("common/*.cpp")
 
 modules = [
     "core",
+    "visual",
     "bulletkit",
     "blitter",
-    "visual",
+    "benchmark",
     "environment/tree_2d",
     "environment/spherical_waves",
     "environment/water_splash",
@@ -47,6 +48,8 @@ modules = [
     "statemachine",
     "benet",
     "behaviornode",
+    "flexbuffers",
+    "nakama1",
     "settings",
     "sfxr",
     "flashdb",
@@ -92,6 +95,15 @@ thirdparty_sources = [
 ]
 if not env["disable_3d"] and is_enabled("ccd"):
     thirdparty_sources += Glob("#thirdparty/libccd/src/*.c") + Glob("#thirdparty/libccd/src/testsuites/*.c")
+
+if is_enabled("flexbuffers") or is_enabled("nakama1"):
+    env_module.Prepend(CPPPATH="#thirdparty/flatbuffers/include")
+    if is_enabled("flexbuffers"):
+        if env["platform"] == "frt" and env["frt_arch"] == "gcw0":
+            env_module.Append(CPPDEFINES=["FLATBUFFERS_LOCALE_INDEPENDENT=0"])
+        thirdparty_sources += ["#thirdparty/flatbuffers/src/util.cpp"]
+    else:
+        sources += Glob("submodules/nakama1/client/*.cpp")
 
 env_module.Append(
     CPPPATH=[

@@ -28,12 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
+/// Useful functions and variables from pixel.c
+
 #ifndef _pixels_c_h_
 #define _pixels_c_h_
 
 #include "_internal.h"
-
-/// Useful functions and variables from pixel.c
 
 #include "blit.h"
 

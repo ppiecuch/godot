@@ -10,9 +10,10 @@ def configure(env):
 
     modules = [
         "core",
+        "visual",
         "bulletkit",
         "blitter",
-        "visual",
+        "benchmark",
         "environment",
         "fastnoise",
         "smooth",
@@ -20,12 +21,14 @@ def configure(env):
         "statemachine",
         "benet",
         "behaviornode",
+        "flexbuffers",
         "ccd",
         "settings",
         "thread_pool",
         "sfxr",
         "vgamepad",
         "iap",
+        "nakama1",
         "qrcodetexture",
         "landiscovery",
     ]

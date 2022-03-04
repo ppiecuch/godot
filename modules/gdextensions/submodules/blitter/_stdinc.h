@@ -344,7 +344,7 @@ SDL_COMPILE_TIME_ASSERT(sint64, sizeof(Sint64) == 8);
 // This is "-b" for Borland C/C++ and "-ei" for Watcom C/C++ (v11).
 
 #if !defined(__ANDROID__) && !defined(__VITA__)
-/* TODO: include/_stdinc.h:174: error: size of array '_DUMMY_ENUM' is negative */
+// TODO: include/_stdinc.h:174: error: size of array '_DUMMY_ENUM' is negative
 typedef enum {
 	DUMMY_ENUM_VALUE
 } SDL_DUMMY_ENUM;

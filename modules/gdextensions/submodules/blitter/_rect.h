@@ -70,9 +70,7 @@ typedef struct SDL_FRect {
 
 // Returns true if point resides inside a rectangle.
 SDL_FORCE_INLINE SDL_bool SDL_PointInRect(const SDL_Point *p, const SDL_Rect *r) {
-	return ((p->x >= r->x) && (p->x < (r->x + r->w)) && (p->y >= r->y) && (p->y < (r->y + r->h)))
-			? SDL_TRUE
-			: SDL_FALSE;
+	return ((p->x >= r->x) && (p->x < (r->x + r->w)) && (p->y >= r->y) && (p->y < (r->y + r->h))) ? SDL_TRUE : SDL_FALSE;
 }
 
 // Returns true if the rectangle has no area.
@@ -82,9 +80,7 @@ SDL_FORCE_INLINE SDL_bool SDL_RectEmpty(const SDL_Rect *r) {
 
 // Returns true if the two rectangles are equal.
 SDL_FORCE_INLINE SDL_bool SDL_RectEquals(const SDL_Rect *a, const SDL_Rect *b) {
-	return (a && b && (a->x == b->x) && (a->y == b->y) && (a->w == b->w) && (a->h == b->h))
-			? SDL_TRUE
-			: SDL_FALSE;
+	return (a && b && (a->x == b->x) && (a->y == b->y) && (a->w == b->w) && (a->h == b->h)) ? SDL_TRUE : SDL_FALSE;
 }
 
 // Determine whether two rectangles intersect.
@@ -109,7 +105,7 @@ extern DECLSPEC SDL_bool SDLCALL SDL_EnclosePoints(const SDL_Point *points, int 
 // remain unchanged. A line segment that crosses the rectangle at either or
 // both ends will be clipped to the boundary of the rectangle and the new
 // coordinates saved in `X1`, `Y1`, `X2`, and/or `Y2` as necessary.
-extern DECLSPEC SDL_bool SDLCALL SDL_IntersectRectAndLine(const SDL_Rect * rect, int *X1, int *Y1, int *X2, int *Y2);
+extern DECLSPEC SDL_bool SDLCALL SDL_IntersectRectAndLine(const SDL_Rect *rect, int *X1, int *Y1, int *X2, int *Y2);
 
 /* Ends C function definitions when using C++ */
 #ifdef __cplusplus

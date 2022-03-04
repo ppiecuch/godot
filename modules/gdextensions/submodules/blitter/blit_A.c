@@ -56,23 +56,23 @@ BlitNto1SurfaceAlpha(SDL_BlitInfo *info) {
 
 	while (height--) {
 		DUFFS_LOOP4({
-					DISEMBLE_RGB(src, srcbpp, srcfmt, Pixel, sR, sG, sB);
-					dR = dstfmt->palette->colors[*dst].r;
-					dG = dstfmt->palette->colors[*dst].g;
-					dB = dstfmt->palette->colors[*dst].b;
-					ALPHA_BLEND_RGB(sR, sG, sB, A, dR, dG, dB);
-					dR &= 0xff;
-					dG &= 0xff;
-					dB &= 0xff;
-					/* Pack RGB into 8bit pixel */
-					if (palmap == NULL) {
-						*dst = ((dR >> 5) << (3 + 2)) | ((dG >> 5) << (2)) | ((dB >> 6) << (0));
-					} else {
-						*dst = palmap[((dR >> 5) << (3 + 2)) | ((dG >> 5) << (2)) | ((dB >> 6) << (0))];
-					}
-					dst++;
-					src += srcbpp;
-				},
+			DISEMBLE_RGB(src, srcbpp, srcfmt, Pixel, sR, sG, sB);
+			dR = dstfmt->palette->colors[*dst].r;
+			dG = dstfmt->palette->colors[*dst].g;
+			dB = dstfmt->palette->colors[*dst].b;
+			ALPHA_BLEND_RGB(sR, sG, sB, A, dR, dG, dB);
+			dR &= 0xff;
+			dG &= 0xff;
+			dB &= 0xff;
+			/* Pack RGB into 8bit pixel */
+			if (palmap == NULL) {
+				*dst = ((dR >> 5) << (3 + 2)) | ((dG >> 5) << (2)) | ((dB >> 6) << (0));
+			} else {
+				*dst = palmap[((dR >> 5) << (3 + 2)) | ((dG >> 5) << (2)) | ((dB >> 6) << (0))];
+			}
+			dst++;
+			src += srcbpp;
+		},
 				width);
 		src += srcskip;
 		dst += dstskip;
@@ -98,23 +98,23 @@ BlitNto1PixelAlpha(SDL_BlitInfo *info) {
 
 	while (height--) {
 		DUFFS_LOOP4({
-					DISEMBLE_RGBA(src, srcbpp, srcfmt, Pixel, sR, sG, sB, sA);
-					dR = dstfmt->palette->colors[*dst].r;
-					dG = dstfmt->palette->colors[*dst].g;
-					dB = dstfmt->palette->colors[*dst].b;
-					ALPHA_BLEND_RGB(sR, sG, sB, sA, dR, dG, dB);
-					dR &= 0xff;
-					dG &= 0xff;
-					dB &= 0xff;
-					/* Pack RGB into 8bit pixel */
-					if (palmap == NULL) {
-						*dst = ((dR >> 5) << (3 + 2)) | ((dG >> 5) << (2)) | ((dB >> 6) << (0));
-					} else {
-						*dst = palmap[((dR >> 5) << (3 + 2)) | ((dG >> 5) << (2)) | ((dB >> 6) << (0))];
-					}
-					dst++;
-					src += srcbpp;
-				},
+			DISEMBLE_RGBA(src, srcbpp, srcfmt, Pixel, sR, sG, sB, sA);
+			dR = dstfmt->palette->colors[*dst].r;
+			dG = dstfmt->palette->colors[*dst].g;
+			dB = dstfmt->palette->colors[*dst].b;
+			ALPHA_BLEND_RGB(sR, sG, sB, sA, dR, dG, dB);
+			dR &= 0xff;
+			dG &= 0xff;
+			dB &= 0xff;
+			/* Pack RGB into 8bit pixel */
+			if (palmap == NULL) {
+				*dst = ((dR >> 5) << (3 + 2)) | ((dG >> 5) << (2)) | ((dB >> 6) << (0));
+			} else {
+				*dst = palmap[((dR >> 5) << (3 + 2)) | ((dG >> 5) << (2)) | ((dB >> 6) << (0))];
+			}
+			dst++;
+			src += srcbpp;
+		},
 				width);
 		src += srcskip;
 		dst += dstskip;
@@ -142,25 +142,25 @@ BlitNto1SurfaceAlphaKey(SDL_BlitInfo *info) {
 
 	while (height--) {
 		DUFFS_LOOP({
-					DISEMBLE_RGB(src, srcbpp, srcfmt, Pixel, sR, sG, sB);
-					if (Pixel != ckey) {
-						dR = dstfmt->palette->colors[*dst].r;
-						dG = dstfmt->palette->colors[*dst].g;
-						dB = dstfmt->palette->colors[*dst].b;
-						ALPHA_BLEND_RGB(sR, sG, sB, A, dR, dG, dB);
-						dR &= 0xff;
-						dG &= 0xff;
-						dB &= 0xff;
-						// Pack RGB into 8bit pixel
-						if (palmap == NULL) {
-							*dst = ((dR >> 5) << (3 + 2)) | ((dG >> 5) << (2)) | ((dB >> 6) << (0));
-						} else {
-							*dst = palmap[((dR >> 5) << (3 + 2)) | ((dG >> 5) << (2)) | ((dB >> 6) << (0))];
-						}
-					}
-					dst++;
-					src += srcbpp;
-				},
+			DISEMBLE_RGB(src, srcbpp, srcfmt, Pixel, sR, sG, sB);
+			if (Pixel != ckey) {
+				dR = dstfmt->palette->colors[*dst].r;
+				dG = dstfmt->palette->colors[*dst].g;
+				dB = dstfmt->palette->colors[*dst].b;
+				ALPHA_BLEND_RGB(sR, sG, sB, A, dR, dG, dB);
+				dR &= 0xff;
+				dG &= 0xff;
+				dB &= 0xff;
+				// Pack RGB into 8bit pixel
+				if (palmap == NULL) {
+					*dst = ((dR >> 5) << (3 + 2)) | ((dG >> 5) << (2)) | ((dB >> 6) << (0));
+				} else {
+					*dst = palmap[((dR >> 5) << (3 + 2)) | ((dG >> 5) << (2)) | ((dB >> 6) << (0))];
+				}
+			}
+			dst++;
+			src += srcbpp;
+		},
 				width);
 		src += srcskip;
 		dst += dstskip;
@@ -371,7 +371,8 @@ BlitRGBtoRGBPixelAlphaMMX(SDL_BlitInfo *info) {
 			}
 			++srcp;
 			++dstp;
-		}, width);
+		},
+				width);
 		srcp += srcskip;
 		dstp += dstskip;
 	}

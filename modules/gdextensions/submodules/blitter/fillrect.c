@@ -129,11 +129,10 @@ SDL_FillRect1SSE(Uint8 *pixels, int pitch, Uint32 color, int w, int h) {
 
 	SSE_END;
 }
-/* DEFINE_SSE_FILLRECT(1, Uint8) */
+// DEFINE_SSE_FILLRECT(1, Uint8)
 DEFINE_SSE_FILLRECT(2, Uint16)
 DEFINE_SSE_FILLRECT(4, Uint32)
 
-/* *INDENT-ON* */
 #endif /* __SSE__ */
 
 static void
@@ -236,9 +235,7 @@ SDL_FillRect4(Uint8 *pixels, int pitch, Uint32 color, int w, int h) {
 	}
 }
 
-/*
- * This function performs a fast fill of the given rectangle with 'color'
- */
+// This function performs a fast fill of the given rectangle with 'color'
 int SDL_FillRect(SDL_Surface *dst, const SDL_Rect *rect, Uint32 color) {
 	if (!dst) {
 		return SDL_InvalidParamError("SDL_FillRect(): dst");
@@ -354,8 +351,7 @@ int SDL_FillRects(SDL_Surface *dst, const SDL_Rect *rects, int count, Uint32 col
 		}
 		rect = &clipped;
 
-		pixels = (Uint8 *)dst->pixels + rect->y * dst->pitch +
-				rect->x * dst->format->BytesPerPixel;
+		pixels = (Uint8 *)dst->pixels + rect->y * dst->pitch + rect->x * dst->format->BytesPerPixel;
 
 		fill_function(pixels, dst->pitch, color, rect->w, rect->h);
 	}

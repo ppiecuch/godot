@@ -39,9 +39,40 @@
 #include <string.h> /* for strcmp */
 #include <sys/types.h>
 
+/// Godot Control
+
+void SRGraph::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("set_plot_buf_size", "size"), &SRGraph::set_plot_buf_size);
+	ClassDB::bind_method(D_METHOD("get_plot_buf_size"), &SRGraph::get_plot_buf_size);
+
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "plot_buf_size"), "set_plot_buf_size", "get_plot_buf_size");
+	ADD_GROUP("Size", "size_");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "size_width"), "set_plot_size_width", "get_plot_size_width");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "size_height"), "set_plot_size_height", "get_plot_size_height");
+	ADD_GROUP("", "");
+	ADD_GROUP("Margins", "margin_");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "margin_left"), "set_plot_left_margin", "get_plot_left_margin");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "margin_right"), "set_plot_right_margin", "get_plot_right_margin");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "margin_top"), "set_plot_top_margin", "get_plot_top_margin");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "margin_bottom"), "set_plot_bottom_margin", "get_plot_bottom_margin");
+	ADD_GROUP("", "");
+}
+
+SRGraph::SRGraph() {
+	plot_buf_size = 100;
+	plot_size[0] = 1;
+	plot_size[1] = 0.1;
+	plot_margin[0] = 0; // left
+	plot_margin[1] = 0; // right
+	plot_margin[2] = 0.9; // top
+	plot_margin[3] = 0; // bottom
+}
+
+SRGraph::~SRGraph() {}
+
 /// Materials
 
-static const String _rg_vstr = R"(
+static const String _sr_vstr = R"(
 	attribute vec3 v;
 	uniform float ratio;
 	varying vec2 coords;
@@ -57,7 +88,7 @@ static const String _rg_vstr = R"(
 )";
 
 // Quads program
-static const String _rg_fstr = R"(
+static const String _sr_fstr = R"(
 	varying vec2 coords;
 	uniform vec3 color;
 	void fragment() {
@@ -67,7 +98,7 @@ static const String _rg_fstr = R"(
 )";
 
 // Lines program
-static const String _rg_lfstr = R"(
+static const String _sr_lfstr = R"(
 	varying vec2 coords;
 	uniform vec3 color;
 	void fragment() {
@@ -77,7 +108,7 @@ static const String _rg_lfstr = R"(
 )";
 
 // Points program
-static const String _rg_pfstr = R"(
+static const String _sr_pfstr = R"(
 	varying vec2 coords;
 	uniform vec3 color;
 	uniform bool smoothing;
@@ -101,14 +132,14 @@ typedef struct {
 	Color color;
 	real_t param0;
 	unsigned param1;
-} _rg_curve;
+} _sr_curve;
 
 typedef enum {
 	lt,
 	rt,
 	bt,
 	tp
-} _rg_margin;
+} _sr_margin;
 
 typedef struct {
 	Color color;
@@ -122,13 +153,13 @@ typedef struct {
 	Color color_axes;
 	PoolRealArray buffer_grid;
 	Color color_grid;
-	Vector<_rg_curve> curves;
-	Vector<_rg_curve> curvespoints;
-	Vector<_rg_curve> points;
-	Vector<_rg_curve> hists;
+	Vector<_sr_curve> curves;
+	Vector<_sr_curve> curvespoints;
+	Vector<_sr_curve> points;
+	Vector<_sr_curve> hists;
 	bool _dirty;
 	Ref<ArrayMesh> _mesh;
-} _rg_graph;
+} _sr_graph;
 
 typedef struct {
 	PoolRealArray buffer_quad;
@@ -139,39 +170,39 @@ typedef struct {
 	unsigned prid;
 	unsigned lrid;
 	unsigned psid;
-} _rg_internal_state;
+} _sr_internal_state;
 
 typedef enum {
 	RG_VERTICAL,
 	RG_HORIZONTAL
-} _rg_orientation;
+} _sr_orientation;
 
 /// Internal variables.
 
-static bool _rg_is_init = false;
-static _rg_internal_state _rg_state;
-static Vector<_rg_graph> _rg_graphs;
+static bool _sr_is_init = false;
+static _sr_internal_state _sr_state;
+static Vector<_sr_graph> _sr_graphs;
 
 /// Foreward declarations.
 
-static void _rg_internal_setup();
-static void _rg_get_line(real_t p0x, real_t p0y, real_t p1x, real_t p1y, real_t w, real_t ratio, PoolRealArray &points);
-static void _rg_get_rectangle(real_t p0x, real_t p0y, real_t p1x, real_t p1y, real_t w, PoolRealArray &points);
-static void _rg_get_point(real_t p0x, real_t p0y, real_t radius, real_t ratio, PoolRealArray &points);
-static void _rg_generate_axis(_rg_orientation orientation, real_t margins[4], real_t ratio, real_t width, real_t mini, real_t maxi, bool axis_on_side, bool reverse, PoolRealArray &axis_data);
-static void _rg_generate_curve(const _rg_graph *graph, const PoolRealArray &xs, const PoolRealArray &ys, _rg_curve *curve);
-static void _rg_generate_points(const _rg_graph *graph, const PoolRealArray &xs, const PoolRealArray &ys, _rg_curve *curve);
-static void _rg_generate_hist(const _rg_graph *graph, const PoolRealArray &ys, _rg_curve *curve);
+static void _sr_internal_setup();
+static void _sr_get_line(real_t p0x, real_t p0y, real_t p1x, real_t p1y, real_t w, real_t ratio, PoolRealArray &points);
+static void _sr_get_rectangle(real_t p0x, real_t p0y, real_t p1x, real_t p1y, real_t w, PoolRealArray &points);
+static void _sr_get_point(real_t p0x, real_t p0y, real_t radius, real_t ratio, PoolRealArray &points);
+static void _sr_generate_axis(_sr_orientation orientation, real_t margins[4], real_t ratio, real_t width, real_t mini, real_t maxi, bool axis_on_side, bool reverse, PoolRealArray &axis_data);
+static void _sr_generate_curve(const _sr_graph *graph, const PoolRealArray &xs, const PoolRealArray &ys, _sr_curve *curve);
+static void _sr_generate_points(const _sr_graph *graph, const PoolRealArray &xs, const PoolRealArray &ys, _sr_curve *curve);
+static void _sr_generate_hist(const _sr_graph *graph, const PoolRealArray &ys, _sr_curve *curve);
 
 /// Exposed functions.
 
-int rg_setup(real_t minx, real_t maxx, real_t miny, real_t maxy, real_t ratio, const real_t margins[4], real_t bg_r, real_t bg_g, real_t bg_b) {
+int sr_setup(real_t minx, real_t maxx, real_t miny, real_t maxy, real_t ratio, const real_t margins[4], real_t bg_r, real_t bg_g, real_t bg_b) {
 	// If we haven't initialized our GD stuff, do it.
-	if (!_rg_is_init) {
-		_rg_internal_setup();
+	if (!_sr_is_init) {
+		_sr_internal_setup();
 	}
 	// Create a graph with the given infos.
-	_rg_graph graph;
+	_sr_graph graph;
 	graph.color = Color{ bg_r, bg_g, bg_b };
 	graph.minx = minx;
 	graph.maxx = maxx;
@@ -189,29 +220,29 @@ int rg_setup(real_t minx, real_t maxx, real_t miny, real_t maxy, real_t ratio, c
 	graph._dirty = false;
 
 	// Store it.
-	_rg_graphs.push_back(graph);
-	return _rg_graphs.size() - 1;
+	_sr_graphs.push_back(graph);
+	return _sr_graphs.size() - 1;
 }
 
-void rg_add_axes(int graph_id, real_t width, real_t axis_r, real_t axis_g, real_t axis_b, bool axis_on_side) {
-	if (graph_id < 0 || graph_id >= _rg_graphs.size()) {
+void sr_add_axes(int graph_id, real_t width, real_t axis_r, real_t axis_g, real_t axis_b, bool axis_on_side) {
+	if (graph_id < 0 || graph_id >= _sr_graphs.size()) {
 		return;
 	}
-	_rg_graph *graph = &_rg_graphs.write[graph_id];
+	_sr_graph *graph = &_sr_graphs.write[graph_id];
 	/// Generate data for axis.
 	PoolRealArray axis_data;
-	_rg_generate_axis(RG_HORIZONTAL, graph->margins, graph->ratio, width, graph->miny, graph->maxy, axis_on_side, graph->minx > graph->maxx, axis_data);
-	_rg_generate_axis(RG_VERTICAL, graph->margins, graph->ratio, width, graph->minx, graph->maxx, axis_on_side, graph->miny > graph->maxy, axis_data);
+	_sr_generate_axis(RG_HORIZONTAL, graph->margins, graph->ratio, width, graph->miny, graph->maxy, axis_on_side, graph->minx > graph->maxx, axis_data);
+	_sr_generate_axis(RG_VERTICAL, graph->margins, graph->ratio, width, graph->minx, graph->maxx, axis_on_side, graph->miny > graph->maxy, axis_data);
 
 	graph->color_axes = Color{ axis_r, axis_g, axis_b };
 	graph->buffer_axes = axis_data;
 }
 
-void rg_add_grid(int graph_id, real_t stepx, real_t stepy, real_t width, real_t lines_r, real_t lines_g, real_t lines_b, bool free_zero) {
-	if (graph_id < 0 || graph_id >= _rg_graphs.size()) {
+void sr_add_grid(int graph_id, real_t stepx, real_t stepy, real_t width, real_t lines_r, real_t lines_g, real_t lines_b, bool free_zero) {
+	if (graph_id < 0 || graph_id >= _sr_graphs.size()) {
 		return;
 	}
-	_rg_graph *graph = &_rg_graphs.write[graph_id];
+	_sr_graph *graph = &_sr_graphs.write[graph_id];
 	PoolRealArray grid_data;
 
 	const real_t ax = (2 - (graph->margins[lt] + graph->margins[rt])) / (graph->maxx - graph->minx);
@@ -230,16 +261,16 @@ void rg_add_grid(int graph_id, real_t stepx, real_t stepy, real_t width, real_t 
 				x_zero -= shift_H;
 			}
 			for (real_t xi = x_zero; xi >= -1.0f + graph->margins[lt] - 0.0001; xi -= shift_H) {
-				_rg_get_line(xi, -1 + graph->margins[bt], xi, 1 - graph->margins[tp], width, graph->ratio, grid_data);
+				_sr_get_line(xi, -1 + graph->margins[bt], xi, 1 - graph->margins[tp], width, graph->ratio, grid_data);
 			}
 			for (real_t xi = x_zero + shift_H; xi <= 1 - graph->margins[rt] + 0.0001; xi += shift_H) {
-				_rg_get_line(xi, -1 + graph->margins[bt], xi, 1 - graph->margins[tp], width, graph->ratio, grid_data);
+				_sr_get_line(xi, -1 + graph->margins[bt], xi, 1 - graph->margins[tp], width, graph->ratio, grid_data);
 			}
 		} else {
 			for (real_t x = -1 + graph->margins[lt]; x <= 1.0f - graph->margins[rt]; x += shift_H) {
-				_rg_get_line(x, -1 + graph->margins[bt], x, 1 - graph->margins[tp], width, graph->ratio, grid_data);
+				_sr_get_line(x, -1 + graph->margins[bt], x, 1 - graph->margins[tp], width, graph->ratio, grid_data);
 			}
-			_rg_get_line(1 - graph->margins[rt], -1 + graph->margins[bt], 1.0f - graph->margins[rt], 1 - graph->margins[tp], width, graph->ratio, grid_data);
+			_sr_get_line(1 - graph->margins[rt], -1 + graph->margins[bt], 1.0f - graph->margins[rt], 1 - graph->margins[tp], width, graph->ratio, grid_data);
 		}
 	}
 	if (stepy != 0 && graph->maxy != graph->miny) {
@@ -253,119 +284,119 @@ void rg_add_grid(int graph_id, real_t stepx, real_t stepy, real_t width, real_t 
 				y_zero -= shiftV;
 			}
 			for (real_t yi = y_zero; yi >= -1.0f + graph->margins[bt] - 0.0001; yi -= shiftV) {
-				_rg_get_line(-1 + graph->margins[lt], yi, 1 - graph->margins[rt], yi, width, graph->ratio, grid_data);
+				_sr_get_line(-1 + graph->margins[lt], yi, 1 - graph->margins[rt], yi, width, graph->ratio, grid_data);
 			}
 			for (real_t yi = y_zero + shiftV; yi <= 1.0f - graph->margins[tp] + 0.0001; yi += shiftV) {
-				_rg_get_line(-1 + graph->margins[lt], yi, 1 - graph->margins[rt], yi, width, graph->ratio, grid_data);
+				_sr_get_line(-1 + graph->margins[lt], yi, 1 - graph->margins[rt], yi, width, graph->ratio, grid_data);
 			}
 		} else {
 			for (real_t y = -1 + graph->margins[bt]; y < 1 - graph->margins[tp]; y += shiftV) {
-				_rg_get_line(-1 + graph->margins[lt], y, 1 - graph->margins[rt], y, width, graph->ratio, grid_data);
+				_sr_get_line(-1 + graph->margins[lt], y, 1 - graph->margins[rt], y, width, graph->ratio, grid_data);
 			}
-			_rg_get_line(-1 + graph->margins[lt], 1 - graph->margins[tp], 1 - graph->margins[rt], 1 - graph->margins[tp], width, graph->ratio, grid_data);
+			_sr_get_line(-1 + graph->margins[lt], 1 - graph->margins[tp], 1 - graph->margins[rt], 1 - graph->margins[tp], width, graph->ratio, grid_data);
 		}
 	}
 	graph->color_grid = Color{ lines_r, lines_g, lines_b };
 	graph->buffer_grid = grid_data;
 }
 
-int rg_add_curve(int graph_id, const PoolRealArray &xs, const PoolRealArray &ys, real_t width, real_t color_r, real_t color_g, real_t color_b) {
-	if (graph_id < 0 || graph_id >= _rg_graphs.size()) {
+int sr_add_curve(int graph_id, const PoolRealArray &xs, const PoolRealArray &ys, real_t width, real_t color_r, real_t color_g, real_t color_b) {
+	if (graph_id < 0 || graph_id >= _sr_graphs.size()) {
 		return -1;
 	}
-	_rg_graph *graph = &_rg_graphs.write[graph_id];
+	_sr_graph *graph = &_sr_graphs.write[graph_id];
 	// Generate the lines.
-	_rg_curve curve;
+	_sr_curve curve;
 	curve.color = Color{ color_r, color_g, color_b };
 	curve.param0 = width;
-	_rg_generate_curve(graph, xs, ys, &curve);
+	_sr_generate_curve(graph, xs, ys, &curve);
 	graph->curves.push_back(curve);
 	// Generate the points junctions.
-	_rg_curve curvepoints;
+	_sr_curve curvepoints;
 	curvepoints.color = Color{ color_r, color_g, color_b };
 	curvepoints.param0 = width;
-	_rg_generate_points(graph, xs, ys, &curvepoints);
+	_sr_generate_points(graph, xs, ys, &curvepoints);
 	graph->curvespoints.push_back(curvepoints);
 	return graph->curves.size() - 1;
 }
 
-void rg_update_curve(int graph_id, int curve_id, const PoolRealArray &xs, const PoolRealArray &ys) {
-	if (graph_id < 0 || graph_id >= _rg_graphs.size()) {
+void sr_update_curve(int graph_id, int curve_id, const PoolRealArray &xs, const PoolRealArray &ys) {
+	if (graph_id < 0 || graph_id >= _sr_graphs.size()) {
 		return;
 	}
-	_rg_graph *graph = &_rg_graphs.write[graph_id];
+	_sr_graph *graph = &_sr_graphs.write[graph_id];
 	if (curve_id < 0 || curve_id >= graph->curves.size()) {
 		return;
 	}
 	// Update the lines.
-	_rg_curve *curve = &graph->curves.write[curve_id];
+	_sr_curve *curve = &graph->curves.write[curve_id];
 	curve->buffer = PoolRealArray();
-	_rg_generate_curve(graph, xs, ys, curve);
+	_sr_generate_curve(graph, xs, ys, curve);
 	// Update the points junctions.
-	_rg_curve *curvepoints = &graph->curvespoints.write[curve_id];
+	_sr_curve *curvepoints = &graph->curvespoints.write[curve_id];
 	curvepoints->buffer = PoolRealArray();
-	_rg_generate_points(graph, xs, ys, curvepoints);
+	_sr_generate_points(graph, xs, ys, curvepoints);
 }
 
-int rg_add_points(const int graph_id, const PoolRealArray &xs, const PoolRealArray &ys, const real_t size, const real_t color_r, const real_t color_g, const real_t color_b) {
-	if (graph_id < 0 || graph_id >= _rg_graphs.size()) {
+int sr_add_points(const int graph_id, const PoolRealArray &xs, const PoolRealArray &ys, const real_t size, const real_t color_r, const real_t color_g, const real_t color_b) {
+	if (graph_id < 0 || graph_id >= _sr_graphs.size()) {
 		return -1;
 	}
-	_rg_graph *graph = &_rg_graphs.write[graph_id];
-	_rg_curve curve;
+	_sr_graph *graph = &_sr_graphs.write[graph_id];
+	_sr_curve curve;
 	curve.color = Color{ color_r, color_g, color_b };
 	curve.param0 = size;
-	_rg_generate_points(graph, xs, ys, &curve);
+	_sr_generate_points(graph, xs, ys, &curve);
 	graph->points.push_back(curve);
 	return graph->points.size() - 1;
 }
 
-void rg_update_points(const int graph_id, const int curve_id, const PoolRealArray &xs, const PoolRealArray &ys) {
-	if (graph_id < 0 || graph_id >= _rg_graphs.size()) {
+void sr_update_points(const int graph_id, const int curve_id, const PoolRealArray &xs, const PoolRealArray &ys) {
+	if (graph_id < 0 || graph_id >= _sr_graphs.size()) {
 		return;
 	}
-	_rg_graph *graph = &_rg_graphs.write[graph_id];
+	_sr_graph *graph = &_sr_graphs.write[graph_id];
 	if (curve_id < 0 || curve_id >= graph->points.size()) {
 		return;
 	}
-	_rg_curve *curve = &graph->points.write[curve_id];
+	_sr_curve *curve = &graph->points.write[curve_id];
 	curve->buffer = PoolRealArray();
-	_rg_generate_points(graph, xs, ys, curve);
+	_sr_generate_points(graph, xs, ys, curve);
 }
 
-int rg_add_hist(int graph_id, unsigned bins, const PoolRealArray &ys, real_t spacing, real_t color_r, real_t color_g, real_t color_b) {
-	if (graph_id < 0 || graph_id >= _rg_graphs.size()) {
+int sr_add_hist(int graph_id, unsigned bins, const PoolRealArray &ys, real_t spacing, real_t color_r, real_t color_g, real_t color_b) {
+	if (graph_id < 0 || graph_id >= _sr_graphs.size()) {
 		return -1;
 	}
-	_rg_graph *graph = &_rg_graphs.write[graph_id];
-	_rg_curve curve;
+	_sr_graph *graph = &_sr_graphs.write[graph_id];
+	_sr_curve curve;
 	curve.color = Color{ color_r, color_g, color_b };
 	curve.param0 = spacing;
 	curve.param1 = bins;
-	_rg_generate_hist(graph, ys, &curve);
+	_sr_generate_hist(graph, ys, &curve);
 	graph->hists.push_back(curve);
 	return graph->hists.size() - 1;
 }
 
-void rg_update_hist(int graph_id, int curve_id, const PoolRealArray &ys) {
-	if (graph_id < 0 || graph_id >= _rg_graphs.size()) {
+void sr_update_hist(int graph_id, int curve_id, const PoolRealArray &ys) {
+	if (graph_id < 0 || graph_id >= _sr_graphs.size()) {
 		return;
 	}
-	_rg_graph *graph = &_rg_graphs.write[graph_id];
+	_sr_graph *graph = &_sr_graphs.write[graph_id];
 	if (curve_id < 0 || curve_id >= graph->hists.size()) {
 		return;
 	}
-	_rg_curve *curve = &graph->hists.write[curve_id];
+	_sr_curve *curve = &graph->hists.write[curve_id];
 	curve->buffer = PoolRealArray();
-	_rg_generate_hist(graph, ys, curve);
+	_sr_generate_hist(graph, ys, curve);
 }
 
-void rg_draw(CanvasItem *canvas, int graph_id, real_t ratio) {
-	if (graph_id < 0 || graph_id >= _rg_graphs.size()) {
+void sr_draw(CanvasItem *canvas, int graph_id, real_t ratio) {
+	if (graph_id < 0 || graph_id >= _sr_graphs.size()) {
 		return;
 	}
 
-	_rg_graph *graph = &_rg_graphs.write[graph_id];
+	_sr_graph *graph = &_sr_graphs.write[graph_id];
 
 	const real_t smoothing1 = 1, smoothing0 = 0;
 	const real_t final_ratio = (ratio == 0) ? 1 : ratio / graph->ratio;
@@ -387,7 +418,7 @@ void rg_draw(CanvasItem *canvas, int graph_id, real_t ratio) {
 	// Rebuild if necessery
 	if (graph->_dirty) {
 		graph->_mesh = Ref<ArrayMesh>(memnew(ArrayMesh));
-		_add_layer(_rg_state.buffer_quad, graph->color, _shaders[0], graph->_mesh); // Quad
+		_add_layer(_sr_state.buffer_quad, graph->color, _shaders[0], graph->_mesh); // Quad
 		_add_layer(graph->buffer_grid, graph->color_grid, _shaders[0], graph->_mesh); // Grid
 		for (int i = 0; i < graph->hists.size(); ++i) { // Histograms
 			_add_layer(graph->hists[i].buffer, graph->hists[i].color, _shaders[0], graph->_mesh);
@@ -410,7 +441,7 @@ void rg_draw(CanvasItem *canvas, int graph_id, real_t ratio) {
 
 /// Internal functions.
 
-static void _rg_get_line(real_t p0x, real_t p0y, real_t p1x, real_t p1y, real_t w, real_t ratio, PoolRealArray &points) {
+static void _sr_get_line(real_t p0x, real_t p0y, real_t p1x, real_t p1y, real_t w, real_t ratio, PoolRealArray &points) {
 	// Compute normal vector.
 	real_t dirx = p1x - p0x, diry = p1y - p0y;
 	const real_t dir_norm = Math::sqrt(dirx * dirx + diry * diry);
@@ -455,7 +486,7 @@ static void _rg_get_line(real_t p0x, real_t p0y, real_t p1x, real_t p1y, real_t 
 	points.push_back((points.size() / 3) % 6);
 }
 
-static void _rg_get_rectangle(const real_t p0x, const real_t p0y, const real_t p1x, const real_t p1y, const real_t w, PoolRealArray &points) {
+static void _sr_get_rectangle(const real_t p0x, const real_t p0y, const real_t p1x, const real_t p1y, const real_t w, PoolRealArray &points) {
 	const real_t wx = w * 0.5;
 	const real_t ax = p0x - wx;
 	const real_t ay = p0y;
@@ -486,7 +517,7 @@ static void _rg_get_rectangle(const real_t p0x, const real_t p0y, const real_t p
 	points.push_back((points.size() / 3) % 6);
 }
 
-static void _rg_get_point(real_t p0x, real_t p0y, real_t radius, real_t ratio, PoolRealArray &points) {
+static void _sr_get_point(real_t p0x, real_t p0y, real_t radius, real_t ratio, PoolRealArray &points) {
 	const real_t wx = radius;
 	const real_t wy = radius * ratio;
 	const real_t ax = p0x - wx;
@@ -518,7 +549,7 @@ static void _rg_get_point(real_t p0x, real_t p0y, real_t radius, real_t ratio, P
 	points.push_back((points.size() / 3) % 6);
 }
 
-static void _rg_generate_axis(_rg_orientation orientation, real_t margins[4], real_t ratio, real_t width, real_t mini, real_t maxi, bool axis_on_side, bool reverse, PoolRealArray &axis_data) {
+static void _sr_generate_axis(_sr_orientation orientation, real_t margins[4], real_t ratio, real_t width, real_t mini, real_t maxi, bool axis_on_side, bool reverse, PoolRealArray &axis_data) {
 	real_t hy;
 	// Three positions.
 	if (axis_on_side || 0 <= MIN(mini, maxi)) {
@@ -554,11 +585,11 @@ static void _rg_generate_axis(_rg_orientation orientation, real_t margins[4], re
 	auto axis_data_write = axis_data.write();
 
 	if (orientation == RG_VERTICAL) {
-		_rg_get_line(hy, hx0, hy, hx1, width, ratio, axis_data);
-		_rg_get_line(hy, ord + sn * width, hy + sn * ld, ord - sn * ld * ratio, width, ratio, axis_data);
+		_sr_get_line(hy, hx0, hy, hx1, width, ratio, axis_data);
+		_sr_get_line(hy, ord + sn * width, hy + sn * ld, ord - sn * ld * ratio, width, ratio, axis_data);
 	} else {
-		_rg_get_line(hx0, hy, hx1, hy, width, ratio, axis_data);
-		_rg_get_line(ord + sn * width, hy, ord - sn * ld, hy - sn * ld * ratio, width, ratio, axis_data);
+		_sr_get_line(hx0, hy, hx1, hy, width, ratio, axis_data);
+		_sr_get_line(ord + sn * width, hy, ord - sn * ld, hy - sn * ld * ratio, width, ratio, axis_data);
 	}
 	// Correct vertices positions to join the point of the arrow and the tail angles.
 	axis_data_write[axis_data.size() - 3 + sh] = hy;
@@ -571,9 +602,9 @@ static void _rg_generate_axis(_rg_orientation orientation, real_t margins[4], re
 	axis_data_write[axis_data.size() - 5 - sh] = ord - s1;
 
 	if (orientation == RG_VERTICAL) {
-		_rg_get_line(hy, ord + sn * width, hy - sn * ld, ord - sn * ld * ratio, width, ratio, axis_data);
+		_sr_get_line(hy, ord + sn * width, hy - sn * ld, ord - sn * ld * ratio, width, ratio, axis_data);
 	} else {
-		_rg_get_line(ord + sn * width, hy, ord - sn * ld, hy + sn * ld * ratio, width, ratio, axis_data);
+		_sr_get_line(ord + sn * width, hy, ord - sn * ld, hy + sn * ld * ratio, width, ratio, axis_data);
 	}
 	// Correct vertices positions to join the point of the arrow and the tail angles.
 	axis_data_write[axis_data.size() - 9 + sh] = hy;
@@ -588,7 +619,7 @@ static void _rg_generate_axis(_rg_orientation orientation, real_t margins[4], re
 	axis_data_write[axis_data.size() - 5 - sh] = ord - s1;
 }
 
-static void _rg_generate_curve(const _rg_graph *graph, const PoolRealArray &xs, const PoolRealArray &ys, _rg_curve *curve) {
+static void _sr_generate_curve(const _sr_graph *graph, const PoolRealArray &xs, const PoolRealArray &ys, _sr_curve *curve) {
 	if (xs.size() != ys.size() || xs.size() == 0) {
 		return;
 	}
@@ -604,7 +635,7 @@ static void _rg_generate_curve(const _rg_graph *graph, const PoolRealArray &xs, 
 	for (int i = 1; i < xs.size(); ++i) {
 		const real_t x1 = ax * xs[i] + bx;
 		const real_t y1 = ay * ys[i] + by;
-		_rg_get_line(x0, y0, x1, y1, curve->param0, graph->ratio, curve_data);
+		_sr_get_line(x0, y0, x1, y1, curve->param0, graph->ratio, curve_data);
 		x0 = x1;
 		y0 = y1;
 	}
@@ -612,7 +643,7 @@ static void _rg_generate_curve(const _rg_graph *graph, const PoolRealArray &xs, 
 	curve->buffer = curve_data;
 }
 
-static void _rg_generate_points(const _rg_graph *graph, const PoolRealArray &xs, const PoolRealArray &ys, _rg_curve *curve) {
+static void _sr_generate_points(const _sr_graph *graph, const PoolRealArray &xs, const PoolRealArray &ys, _sr_curve *curve) {
 	if (xs.size() != ys.size() || xs.size() == 0) {
 		return;
 	}
@@ -626,13 +657,13 @@ static void _rg_generate_points(const _rg_graph *graph, const PoolRealArray &xs,
 	for (int i = 0; i < xs.size(); ++i) {
 		const real_t x0 = ax * xs[i] + bx;
 		const real_t y0 = ay * ys[i] + by;
-		_rg_get_point(x0, y0, curve->param0, graph->ratio, curve_data);
+		_sr_get_point(x0, y0, curve->param0, graph->ratio, curve_data);
 	}
 
 	curve->buffer = curve_data, curve_data.size();
 }
 
-static void _rg_generate_hist(const _rg_graph *graph, const PoolRealArray &ys, _rg_curve *curve) {
+static void _sr_generate_hist(const _sr_graph *graph, const PoolRealArray &ys, _sr_curve *curve) {
 	if (ys.size() == 0) {
 		return;
 	}
@@ -665,20 +696,20 @@ static void _rg_generate_hist(const _rg_graph *graph, const PoolRealArray &ys, _
 		real_t x0 = ax * (graph->minx + (real_t)(i + 0.5) * bin_size) + bx;
 		real_t y0 = by;
 		real_t y1 = ay * (real_t)bin_counts[i] + by;
-		_rg_get_rectangle(x0, y0, x0, y1, bin_width, hist_data);
+		_sr_get_rectangle(x0, y0, x0, y1, bin_width, hist_data);
 	}
 	curve->buffer = hist_data;
 }
 
-static void _rg_internal_setup() {
+static void _sr_internal_setup() {
 	// build all materials
 	_shaders[0] = Ref<Shader>(memnew(Shader));
-	_shaders[0]->set_code(_rg_vstr + _rg_fstr);
+	_shaders[0]->set_code(_sr_vstr + _sr_fstr);
 	_shaders[1] = Ref<Shader>(memnew(Shader));
-	_shaders[1]->set_code(_rg_vstr + _rg_lfstr);
+	_shaders[1]->set_code(_sr_vstr + _sr_lfstr);
 	_shaders[2] = Ref<Shader>(memnew(Shader));
-	_shaders[2]->set_code(_rg_vstr + _rg_pfstr);
-	_rg_is_init = true;
+	_shaders[2]->set_code(_sr_vstr + _sr_pfstr);
+	_sr_is_init = true;
 }
 
 // Get color from palette: warm, cool or neon.

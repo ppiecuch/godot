@@ -31,8 +31,8 @@
 #ifndef GD_BITBLIT_H
 #define GD_BITBLIT_H
 
-#include "core/object.h"
 #include "core/image.h"
+#include "core/object.h"
 #include "core/pool_vector.h"
 #include "core/reference.h"
 
@@ -49,8 +49,9 @@ protected:
 
 public:
 	PoolByteArray get_data() const;
+	Ref<Image> get_image() const;
 
-	BlitSurface(int p_width, int p_height, Image::Format p_format);
+	BlitSurface(int p_width, int p_height, int p_depth);
 	~BlitSurface();
 };
 
@@ -65,7 +66,7 @@ protected:
 public:
 	static BitBlit *get_singleton() { return singleton; }
 
-	Ref<BlitSurface> create_surface(int p_width, int p_height);
+	Ref<BlitSurface> create_surface(int p_width, int p_height, int p_depth);
 
 	BitBlit();
 	~BitBlit();
