@@ -28,12 +28,15 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-/*
-	Copyright 2020 Nova King (technobaboo)
-	Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-	The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
+
+// Copyright 2020 Nova King (technobaboo)
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+// FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #ifndef RESOURCE_IMPORTER_FLEXBUFFER
 #define RESOURCE_IMPORTER_FLEXBUFFER
@@ -193,7 +196,6 @@ class FlexbuffersData : public Resource {
 
 protected:
 	static void _bind_methods() {
-
 		ClassDB::bind_method(D_METHOD("set_data", "data"), &FlexbuffersData::set_data);
 		ClassDB::bind_method(D_METHOD("get_data"), &FlexbuffersData::get_data);
 		ClassDB::bind_method(D_METHOD("set_flexbuffers", "flexbuffers"), &FlexbuffersData::set_flexbuffers);
@@ -247,4 +249,4 @@ public:
 	ResourceImporterFlexbuffers() {}
 	~ResourceImporterFlexbuffers() {}
 };
-#endif // RESOURCE_IMPORTER_LOTTIE
+#endif // RESOURCE_IMPORTER_FLEXBUFFER

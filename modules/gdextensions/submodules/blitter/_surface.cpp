@@ -152,9 +152,15 @@ SDL_Surface *SDL_CreateRGBSurfaceFrom(void *pixels, int width, int height, int d
 // Create an RGB surface with no buffer assigned
 SDL_Surface *SDL_CreateRGBEmptySurface(int width, int height, int depth, Uint32 Rmask, Uint32 Gmask, Uint32 Bmask, Uint32 Amask) {
 	// Get the pixel format
-	format = SDL_MasksToPixelFormatEnum(depth, Rmask, Gmask, Bmask, Amask);
+	Uint32 format = SDL_MasksToPixelFormatEnum(depth, Rmask, Gmask, Bmask, Amask);
 	if (format == SDL_PIXELFORMAT_UNKNOWN) {
 		SDL_SetError("Unknown pixel format");
+		return NULL;
+	}
+	Sint64 pitch = _CalculatePitch(format, width);
+	if (pitch < 0 || pitch > SDL_MAX_SINT32) {
+		// Overflow...
+		SDL_OutOfMemory();
 		return NULL;
 	}
 	return SDL_CreateRGBSurfaceFrom(0, width, height, depth, pitch, Rmask, Gmask, Bmask, Amask);
@@ -162,10 +168,8 @@ SDL_Surface *SDL_CreateRGBEmptySurface(int width, int height, int depth, Uint32 
 
 // Create an empty RGB surface of the appropriate depth
 SDL_Surface *SDL_CreateRGBSurface(int width, int height, int depth, Uint32 Rmask, Uint32 Gmask, Uint32 Bmask, Uint32 Amask) {
-	Uint32 format;
-
 	// Get the pixel format
-	format = SDL_MasksToPixelFormatEnum(depth, Rmask, Gmask, Bmask, Amask);
+	Uint32 format = SDL_MasksToPixelFormatEnum(depth, Rmask, Gmask, Bmask, Amask);
 	if (format == SDL_PIXELFORMAT_UNKNOWN) {
 		SDL_SetError("Unknown pixel format");
 		return NULL;
