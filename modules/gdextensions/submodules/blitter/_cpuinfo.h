@@ -50,8 +50,8 @@ _m_prefetch(void *__P) {
 	__builtin_prefetch(__P, 0, 3 /* _MM_HINT_T0 */);
 }
 
-#endif /* __PRFCHWINTRIN_H */
-#endif /* __clang__ */
+#endif // __PRFCHWINTRIN_H
+#endif // __clang__
 #include <intrin.h>
 #ifndef _WIN64
 #ifndef __MMX__
@@ -76,7 +76,7 @@ _m_prefetch(void *__P) {
 #include <arm_neon.h>
 #endif
 #else
-/* altivec.h redefining bool causes a number of problems, see bugs 3993 and 4392, so you need to explicitly define SDL_ENABLE_ALTIVEC_H to have it included. */
+// altivec.h redefining bool causes a number of problems, see bugs 3993 and 4392, so you need to explicitly define SDL_ENABLE_ALTIVEC_H to have it included.
 #if defined(HAVE_ALTIVEC_H) && defined(__ALTIVEC__) && !defined(__APPLE_ALTIVEC__) && defined(SDL_ENABLE_ALTIVEC_H)
 #include <altivec.h>
 #endif
@@ -84,20 +84,20 @@ _m_prefetch(void *__P) {
 #if defined(__ARM_NEON)
 #include <arm_neon.h>
 #elif defined(__WINDOWS__) || defined(__WINRT__)
-/* Visual Studio doesn't define __ARM_ARCH, but _M_ARM (if set, always 7), and _M_ARM64 (if set, always 1). */
+// Visual Studio doesn't define __ARM_ARCH, but _M_ARM (if set, always 7), and _M_ARM64 (if set, always 1).
 #if defined(_M_ARM)
 #include <arm_neon.h>
 #include <armintr.h>
-#define __ARM_NEON 1 /* Set __ARM_NEON so that it can be used elsewhere, at compile time */
+#define __ARM_NEON 1 // Set __ARM_NEON so that it can be used elsewhere, at compile time
 #endif
 #if defined(_M_ARM64)
 #include <arm64_neon.h>
 #include <arm64intr.h>
-#define __ARM_NEON 1 /* Set __ARM_NEON so that it can be used elsewhere, at compile time */
+#define __ARM_NEON 1 // Set __ARM_NEON so that it can be used elsewhere, at compile time
 #endif
 #endif
 #endif
-#endif /* compiler version */
+#endif // compiler version
 
 #if defined(__3dNOW__) && !defined(SDL_DISABLE_MM3DNOW_H)
 #include <mm3dnow.h>
@@ -124,24 +124,6 @@ _m_prefetch(void *__P) {
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-// This is a guess for the cacheline size used for padding.
-// Most x86 processors have a 64 byte cache line.
-// The 64-bit PowerPC processors have a 128 byte cache line.
-// We'll use the larger value to be generally safe.
-#define SDL_CACHELINE_SIZE 128
-
-// Get the number of CPU cores available.
-extern DECLSPEC int SDLCALL SDL_GetCPUCount(void);
-
-// Determine the L1 cache line size of the CPU.
-// This is useful for determining multi-threaded structure padding or SIMD
-// prefetch sizes.
-extern DECLSPEC int SDLCALL SDL_GetCPUCacheLineSize(void);
-
-// Determine whether the CPU has the RDTSC instruction.
-// This always returns false on CPUs that aren't using Intel instruction sets.
-extern DECLSPEC SDL_bool SDLCALL SDL_HasRDTSC(void);
 
 // Determine whether the CPU has AltiVec features.
 // This always returns false on CPUs that aren't using PowerPC instruction sets.

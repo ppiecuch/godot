@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  RLEaccel_c.h                                                         */
+/*  bob_font.h                                                           */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,17 +28,13 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef _RLEaccel_c_h_
-#define _RLEaccel_c_h_
+#ifndef _BOBFONT_H_
+#define _BOBFONT_H_
 
-#include "_internal.h"
-#include "_surface.h"
+#include "core/math/math_defs.h"
+#include "core/rid.h"
 
-// Useful functions and variables from RLEaccel.c
+real_t DrawBobString(RID canvas, const char *str, real_t x, real_t y, real_t z, real_t size, bool wire = false);
+real_t DrawBobChar(RID canvas, char ch, real_t x, real_t y, real_t z, real_t size, bool wire = false);
 
-extern int SDL_RLESurface(SDL_Surface *surface);
-extern void SDL_UnRLESurface(SDL_Surface *surface, int recode);
-
-#endif /* RLEaccel_c_h_ */
-
-/* vi: set ts=4 sw=4 expandtab: */
+#endif // _BOBFONT_H_

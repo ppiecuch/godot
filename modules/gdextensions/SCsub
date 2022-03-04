@@ -86,9 +86,8 @@ if not env["module_mbedtls_enabled"]:
 
 for m in modules:
     if is_enabled(m):
-        files = Glob("submodules/%s/*.cpp" % m)
+        files = Glob("submodules/%s/*.cpp" % m) + Glob("submodules/%s/*.c" % m)
         sources += [f for f in files if str(f) not in ignore]
-        sources += Glob("submodules/%s/*.c" % m)
 
 thirdparty_sources = [
     "#thirdparty/misc/cqueue.cpp",

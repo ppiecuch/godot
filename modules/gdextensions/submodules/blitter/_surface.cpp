@@ -28,12 +28,14 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
+extern "C" {
 #include "RLEaccel_c.h"
 #include "pixels_c.h"
 
 #include "_blendmode.h"
 #include "_pixels.h"
 #include "_surface.h"
+}
 
 // Calculate the pad-aligned scanline width of a surface
 static Sint64 _CalculatePitch(Uint32 format, int width) {
@@ -192,7 +194,7 @@ void SDL_FreeSurface(SDL_Surface *surface) {
 
 #if SDL_HAVE_RLE
 	if (surface->flags & SDL_RLEACCEL) {
-		UnRLESurface(surface, 0);
+		SDL_UnRLESurface(surface, 0);
 	}
 #endif
 	if (surface->format) {

@@ -51,7 +51,7 @@
 //      Takes a string and returns the horizontal size and the
 //      vertical size (which can vary if 'text' has newlines).
 //
-//   int stb_easy_font_print(float x, float y,
+//   int stb_easy_font_print(real_t x, real_t y,
 //                           char *text, unsigned char color[4],
 //                           void *vertex_buffer, int vbuf_size)
 //
@@ -65,17 +65,10 @@
 //
 //      The vertices are stored in an interleaved format:
 //
-//         x:float
-//         y:float
-//         z:float
-//         color:uint8[4]
-//
-//      You can ignore z and color if you get them from elsewhere
-//      This format was chosen in the hopes it would make it
-//      easier for you to reuse existing vertex-buffer-drawing code.
-//
-//      If you pass in NULL for color, it becomes 255,255,255,255.
-//
+//         x:real_t
+//         y:real_t
+//         z:real_t
+
 //      Returns the number of quads.
 //
 //      If the buffer isn't large enough, it will truncate.
@@ -84,7 +77,7 @@
 //      If your API doesn't draw quads, build a reusable index
 //      list that allows you to render quads as indexed triangles.
 //
-//   void stb_easy_font_spacing(float spacing)
+//   void stb_easy_font_spacing(real_t spacing)
 //
 //      Use positive values to expand the space between characters,
 //      and small negative values (no smaller than -1.5) to contract
@@ -112,32 +105,16 @@
 //   github:vassvik    --  bug report
 //   github:podsvirov  --  fix multiple definition errors
 
-#if 0
-// SAMPLE CODE:
-//
-//    Here's sample code for old OpenGL; it's a lot more complicated
-//    to make work on modern APIs, and that's your problem.
-//
-void print_string(float x, float y, char *text, float r, float g, float b)
-{
-  static char buffer[99999]; // ~500 chars
-  int num_quads;
-
-  num_quads = stb_easy_font_print(x, y, text, NULL, buffer, sizeof(buffer));
-
-  glColor3f(r,g,b);
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glVertexPointer(2, GL_FLOAT, 16, buffer);
-  glDrawArrays(GL_QUADS, 0, num_quads*4);
-  glDisableClientState(GL_VERTEX_ARRAY);
-}
-#endif
-
-#ifndef INCLUDE_STB_EASY_FONT_H
-#define INCLUDE_STB_EASY_FONT_H
+#ifndef STB_EASY_FONT_H
+#define STB_EASY_FONT_H
 
 #include <math.h>
 #include <stdlib.h>
+
+#include "core/math/math_funcs.h"
+#include "core/rid.h"
+#include "scene/resources/mesh.h"
+#include "servers/visual_server.h"
 
 static struct stb_easy_font_info_struct {
 	unsigned char advance;
@@ -715,73 +692,56 @@ static unsigned char stb_easy_font_vseg[253] = {
 	7,
 };
 
-typedef struct
-{
-	unsigned char c[4];
-} stb_easy_font_color;
-
-static int stb_easy_font_draw_segs(float x, float y, unsigned char *segs, int num_segs, int vertical, stb_easy_font_color c, char *vbuf, int vbuf_size, int offset) {
-	int i, j;
-	for (i = 0; i < num_segs; ++i) {
+static int stb_easy_font_draw_segs(real_t x, real_t y, unsigned char *segs, int num_segs, int vertical, PoolVector2Array vbuf) {
+	for (int i = 0; i < num_segs; ++i) {
 		int len = segs[i] & 7;
-		x += (float)((segs[i] >> 3) & 1);
-		if (len && offset + 64 <= vbuf_size) {
-			float y0 = y + (float)(segs[i] >> 4);
-			for (j = 0; j < 4; ++j) {
-				*(float *)(vbuf + offset + 0) = x + (j == 1 || j == 2 ? (vertical ? 1 : len) : 0);
-				*(float *)(vbuf + offset + 4) = y0 + (j >= 2 ? (vertical ? len : 1) : 0);
-				*(float *)(vbuf + offset + 8) = 0.f;
-				*(stb_easy_font_color *)(vbuf + offset + 12) = c;
-				offset += 16;
+		x += (real_t)((segs[i] >> 3) & 1);
+		if (len) {
+			real_t y0 = y + (real_t)(segs[i] >> 4);
+			for (int j = 0; j < 4; ++j) {
+				const real_t x = x + (j == 1 || j == 2 ? (vertical ? 1 : len) : 0);
+				const real_t y = y0 + (j >= 2 ? (vertical ? len : 1) : 0);
+				vbuf.push_back(Vector2(x, y));
 			}
 		}
 	}
-	return offset;
+	return vbuf.size();
 }
 
-static float stb_easy_font_spacing_val = 0;
-static void stb_easy_font_spacing(float spacing) {
+static real_t stb_easy_font_spacing_val = 0;
+
+static void stb_easy_font_spacing(real_t spacing) {
 	stb_easy_font_spacing_val = spacing;
 }
 
-static int stb_easy_font_print(float x, float y, char *text, unsigned char color[4], void *vertex_buffer, int vbuf_size) {
-	char *vbuf = (char *)vertex_buffer;
-	float start_x = x;
-	int offset = 0;
+static int stb_easy_font_print(real_t x, real_t y, char *text, PoolVector2Array vertex_buffer) {
+	real_t start_x = x;
 
-	stb_easy_font_color c = { 255, 255, 255, 255 }; // use structure copying to avoid needing depending on memcpy()
-	if (color) {
-		c.c[0] = color[0];
-		c.c[1] = color[1];
-		c.c[2] = color[2];
-		c.c[3] = color[3];
-	}
-
-	while (*text && offset < vbuf_size) {
+	while (*text) {
 		if (*text == '\n') {
 			y += 12;
 			x = start_x;
 		} else {
 			unsigned char advance = stb_easy_font_charinfo[*text - 32].advance;
-			float y_ch = advance & 16 ? y + 1 : y;
+			real_t y_ch = advance & 16 ? y + 1 : y;
 			int h_seg, v_seg, num_h, num_v;
 			h_seg = stb_easy_font_charinfo[*text - 32].h_seg;
 			v_seg = stb_easy_font_charinfo[*text - 32].v_seg;
 			num_h = stb_easy_font_charinfo[*text - 32 + 1].h_seg - h_seg;
 			num_v = stb_easy_font_charinfo[*text - 32 + 1].v_seg - v_seg;
-			offset = stb_easy_font_draw_segs(x, y_ch, &stb_easy_font_hseg[h_seg], num_h, 0, c, vbuf, vbuf_size, offset);
-			offset = stb_easy_font_draw_segs(x, y_ch, &stb_easy_font_vseg[v_seg], num_v, 1, c, vbuf, vbuf_size, offset);
+			stb_easy_font_draw_segs(x, y_ch, &stb_easy_font_hseg[h_seg], num_h, 0, vertex_buffer);
+			stb_easy_font_draw_segs(x, y_ch, &stb_easy_font_vseg[v_seg], num_v, 1, vertex_buffer);
 			x += advance & 15;
 			x += stb_easy_font_spacing_val;
 		}
 		++text;
 	}
-	return (unsigned)offset / 64;
+	return vertex_buffer.size() / 4;
 }
 
 static int stb_easy_font_width(char *text) {
-	float len = 0;
-	float max_len = 0;
+	real_t len = 0;
+	real_t max_len = 0;
 	while (*text) {
 		if (*text == '\n') {
 			if (len > max_len)
@@ -793,13 +753,14 @@ static int stb_easy_font_width(char *text) {
 		}
 		++text;
 	}
-	if (len > max_len)
+	if (len > max_len) {
 		max_len = len;
+	}
 	return (int)ceil(max_len);
 }
 
-static int stb_easy_font_height(char *text) {
-	float y = 0;
+static int stb_easy_font_spacing(char *text) {
+	real_t y = 0;
 	int nonempty_line = 0;
 	while (*text) {
 		if (*text == '\n') {
@@ -812,46 +773,57 @@ static int stb_easy_font_height(char *text) {
 	}
 	return (int)ceil(y + (nonempty_line ? 12 : 0));
 }
-#endif
 
-/*
-------------------------------------------------------------------------------
-This software is available under 2 licenses -- choose whichever you prefer.
-------------------------------------------------------------------------------
-ALTERNATIVE A - MIT License
-Copyright (c) 2017 Sean Barrett
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-of the Software, and to permit persons to whom the Software is furnished to do
-so, subject to the following conditions:
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-------------------------------------------------------------------------------
-ALTERNATIVE B - Public Domain (www.unlicense.org)
-This is free and unencumbered software released into the public domain.
-Anyone is free to copy, modify, publish, use, compile, sell, or distribute this
-software, either in source code form or as a compiled binary, for any purpose,
-commercial or non-commercial, and by any means.
-In jurisdictions that recognize copyright laws, the author or authors of this
-software dedicate any and all copyright interest in the software to the public
-domain. We make this dedication for the benefit of the public at large and to
-the detriment of our heirs and successors. We intend this dedication to be an
-overt act of relinquishment in perpetuity of all present and future rights to
-this software under copyright law.
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
-ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-------------------------------------------------------------------------------
-*/
+static void stb_easy_font_print_string(RID canvas, Point2 pos, char *text, const Color &color = Color(1, 1, 1, 1), const Transform2D &xform = Transform2D()) {
+	PoolVector2Array verts;
+	stb_easy_font_print(pos.x, pos.y, text, verts);
+
+	Array mesh_array;
+	mesh_array.resize(VS::ARRAY_MAX);
+	mesh_array[VS::ARRAY_VERTEX] = verts;
+	Ref<ArrayMesh> _mesh = memnew(ArrayMesh);
+	_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array, Array(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
+
+	VisualServer::get_singleton()->canvas_item_add_mesh(canvas, _mesh->get_rid(), xform, color, RID(), RID(), RID());
+}
+#endif // STB_EASY_FONT_H
+
+// ------------------------------------------------------------------------------
+// This software is available under 2 licenses -- choose whichever you prefer.
+// ------------------------------------------------------------------------------
+// ALTERNATIVE A - MIT License
+// Copyright (c) 2017 Sean Barrett
+// Permission is hereby granted, free of charge, to any person obtaining a copy of
+// this software and associated documentation files (the "Software"), to deal in
+// the Software without restriction, including without limitation the rights to
+// use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+// of the Software, and to permit persons to whom the Software is furnished to do
+// so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+// ------------------------------------------------------------------------------
+// ALTERNATIVE B - Public Domain (www.unlicense.org)
+// This is free and unencumbered software released into the public domain.
+// Anyone is free to copy, modify, publish, use, compile, sell, or distribute this
+// software, either in source code form or as a compiled binary, for any purpose,
+// commercial or non-commercial, and by any means.
+// In jurisdictions that recognize copyright laws, the author or authors of this
+// software dedicate any and all copyright interest in the software to the public
+// domain. We make this dedication for the benefit of the public at large and to
+// the detriment of our heirs and successors. We intend this dedication to be an
+// overt act of relinquishment in perpetuity of all present and future rights to
+// this software under copyright law.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+// ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+// ------------------------------------------------------------------------------

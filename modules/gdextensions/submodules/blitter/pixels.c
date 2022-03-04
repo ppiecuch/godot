@@ -687,7 +687,7 @@ int SDL_SetPixelFormatPalette(SDL_PixelFormat *format, SDL_Palette *palette) {
 int SDL_SetPaletteColors(SDL_Palette *palette, const SDL_Color *colors, int firstcolor, int ncolors) {
 	int status = 0;
 
-	/* Verify the parameters */
+	// Verify the parameters
 	if (!palette) {
 		return -1;
 	}
@@ -743,11 +743,9 @@ void SDL_DitherColors(SDL_Color *colors, int bpp) {
 	}
 }
 
-/*
- * Match an RGB value to a particular palette index
- */
+// Match an RGB value to a particular palette index
 Uint8 SDL_FindColor(SDL_Palette *pal, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
-	/* Do colorspace distance matching */
+	// Do colorspace distance matching
 	unsigned int smallest;
 	unsigned int distance;
 	int rd, gd, bd, ad;
@@ -762,7 +760,7 @@ Uint8 SDL_FindColor(SDL_Palette *pal, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 		distance = (rd * rd) + (gd * gd) + (bd * bd) + (ad * ad);
 		if (distance < smallest) {
 			pixel = i;
-			if (distance == 0) { /* Perfect match! */
+			if (distance == 0) { // Perfect match!
 				break;
 			}
 			smallest = distance;
@@ -771,7 +769,7 @@ Uint8 SDL_FindColor(SDL_Palette *pal, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 	return (pixel);
 }
 
-/* Tell whether palette is opaque, and if it has an alpha_channel */
+// Tell whether palette is opaque, and if it has an alpha_channel
 void SDL_DetectPalette(SDL_Palette *pal, SDL_bool *is_opaque, SDL_bool *has_alpha_channel) {
 	{
 		SDL_bool all_opaque = SDL_TRUE;
@@ -784,7 +782,7 @@ void SDL_DetectPalette(SDL_Palette *pal, SDL_bool *is_opaque, SDL_bool *has_alph
 		}
 
 		if (all_opaque) {
-			/* Palette is opaque, with an alpha channel */
+			// Palette is opaque, with an alpha channel
 			*is_opaque = SDL_TRUE;
 			*has_alpha_channel = SDL_TRUE;
 			return;
@@ -802,21 +800,20 @@ void SDL_DetectPalette(SDL_Palette *pal, SDL_bool *is_opaque, SDL_bool *has_alph
 		}
 
 		if (all_transparent) {
-			/* Palette is opaque, without an alpha channel */
+			// Palette is opaque, without an alpha channel
 			*is_opaque = SDL_TRUE;
 			*has_alpha_channel = SDL_FALSE;
 			return;
 		}
 	}
 
-	/* Palette has alpha values */
+	// Palette has alpha values
 	*is_opaque = SDL_FALSE;
 	*has_alpha_channel = SDL_TRUE;
 }
 
-/* Find the opaque pixel value corresponding to an RGB triple */
-Uint32
-SDL_MapRGB(const SDL_PixelFormat *format, Uint8 r, Uint8 g, Uint8 b) {
+// Find the opaque pixel value corresponding to an RGB triple
+Uint32 SDL_MapRGB(const SDL_PixelFormat *format, Uint8 r, Uint8 g, Uint8 b) {
 	if (format->palette == NULL) {
 		return (r >> format->Rloss) << format->Rshift | (g >> format->Gloss) << format->Gshift | (b >> format->Bloss) << format->Bshift | format->Amask;
 	} else {
@@ -824,9 +821,8 @@ SDL_MapRGB(const SDL_PixelFormat *format, Uint8 r, Uint8 g, Uint8 b) {
 	}
 }
 
-/* Find the pixel value corresponding to an RGBA quadruple */
-Uint32
-SDL_MapRGBA(const SDL_PixelFormat *format, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+// Find the pixel value corresponding to an RGBA quadruple
+Uint32 SDL_MapRGBA(const SDL_PixelFormat *format, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 	if (format->palette == NULL) {
 		return (r >> format->Rloss) << format->Rshift | (g >> format->Gloss) << format->Gshift | (b >> format->Bloss) << format->Bshift | ((Uint32)(a >> format->Aloss) << format->Ashift & format->Amask);
 	} else {
@@ -877,14 +873,13 @@ void SDL_GetRGBA(Uint32 pixel, const SDL_PixelFormat *format, Uint8 *r, Uint8 *g
 	}
 }
 
-/* Map from Palette to Palette */
-static Uint8 *
-Map1to1(SDL_Palette *src, SDL_Palette *dst, int *identical) {
+// Map from Palette to Palette
+static Uint8 *Map1to1(SDL_Palette *src, SDL_Palette *dst, int *identical) {
 	Uint8 *map;
 
 	if (identical) {
 		if (src->ncolors <= dst->ncolors) {
-			/* If an identical palette, no need to map */
+			// If an identical palette, no need to map
 			if (src == dst ||
 					(SDL_memcmp(src->colors, dst->colors,
 							 src->ncolors * sizeof(SDL_Color)) == 0)) {
@@ -907,9 +902,8 @@ Map1to1(SDL_Palette *src, SDL_Palette *dst, int *identical) {
 	return (map);
 }
 
-/* Map from Palette to BitField */
-static Uint8 *
-Map1toN(SDL_PixelFormat *src, Uint8 Rmod, Uint8 Gmod, Uint8 Bmod, Uint8 Amod, SDL_PixelFormat *dst) {
+// Map from Palette to BitField
+static Uint8 *Map1toN(SDL_PixelFormat *src, Uint8 Rmod, Uint8 Gmod, Uint8 Bmod, Uint8 Amod, SDL_PixelFormat *dst) {
 	Uint8 *map;
 	int i;
 	int bpp;
@@ -922,7 +916,7 @@ Map1toN(SDL_PixelFormat *src, Uint8 Rmod, Uint8 Gmod, Uint8 Bmod, Uint8 Amod, SD
 		return (NULL);
 	}
 
-	/* We memory copy to the pixel map so the endianness is preserved */
+	// We memory copy to the pixel map so the endianness is preserved
 	for (i = 0; i < pal->ncolors; ++i) {
 		Uint8 R = (Uint8)((pal->colors[i].r * Rmod) / 255);
 		Uint8 G = (Uint8)((pal->colors[i].g * Gmod) / 255);
@@ -936,7 +930,7 @@ Map1toN(SDL_PixelFormat *src, Uint8 Rmod, Uint8 Gmod, Uint8 Bmod, Uint8 Amod, SD
 /* Map from BitField to Dithered-Palette to Palette */
 static Uint8 *
 MapNto1(SDL_PixelFormat *src, SDL_PixelFormat *dst, int *identical) {
-	/* Generate a 256 color dither palette */
+	// Generate a 256 color dither palette
 	SDL_Palette dithered;
 	SDL_Color colors[256];
 	SDL_Palette *pal = dst->palette;
@@ -951,7 +945,7 @@ SDL_BlitMap *
 SDL_AllocBlitMap(void) {
 	SDL_BlitMap *map;
 
-	/* Allocate the empty map */
+	// Allocate the empty map
 	map = (SDL_BlitMap *)SDL_calloc(1, sizeof(*map));
 	if (map == NULL) {
 		SDL_OutOfMemory();
@@ -962,7 +956,7 @@ SDL_AllocBlitMap(void) {
 	map->info.b = 0xFF;
 	map->info.a = 0xFF;
 
-	/* It's ready to go */
+	// It's ready to go
 	return (map);
 }
 
@@ -1034,16 +1028,16 @@ int SDL_MapSurface(SDL_Surface *src, SDL_Surface *dst) {
 	SDL_PixelFormat *dstfmt;
 	SDL_BlitMap *map;
 
-	/* Clear out any previous mapping */
+	// Clear out any previous mapping
 	map = src->map;
 #if SDL_HAVE_RLE
 	if ((src->flags & SDL_RLEACCEL) == SDL_RLEACCEL) {
-		UnRLESurface(src, 1);
+		SDL_UnRLESurface(src, 1);
 	}
 #endif
 	SDL_InvalidateMap(map);
 
-	/* Figure out what kind of mapping we're doing */
+	// Figure out what kind of mapping we're doing
 	map->identity = 0;
 	srcfmt = src->format;
 	dstfmt = dst->format;
@@ -1070,16 +1064,16 @@ int SDL_MapSurface(SDL_Surface *src, SDL_Surface *dst) {
 		}
 	} else {
 		if (SDL_ISPIXELFORMAT_INDEXED(dstfmt->format)) {
-			/* BitField --> Palette */
+			// BitField --> Palette
 			map->info.table = MapNto1(srcfmt, dstfmt, &map->identity);
 			if (!map->identity) {
 				if (map->info.table == NULL) {
 					return (-1);
 				}
 			}
-			map->identity = 0; /* Don't optimize to copy */
+			map->identity = 0; // Don't optimize to copy
 		} else {
-			/* BitField --> BitField */
+			// BitField --> BitField
 			if (srcfmt == dstfmt) {
 				map->identity = 1;
 			}
@@ -1089,7 +1083,7 @@ int SDL_MapSurface(SDL_Surface *src, SDL_Surface *dst) {
 	map->dst = dst;
 
 	if (map->dst) {
-		/* Register BlitMap to the destination surface, to be invalidated when needed */
+		// Register BlitMap to the destination surface, to be invalidated when needed
 		SDL_ListAdd((SDL_ListNode **)&(map->dst->list_blitmap), map);
 	}
 
@@ -1105,7 +1099,7 @@ int SDL_MapSurface(SDL_Surface *src, SDL_Surface *dst) {
 		map->src_palette_version = 0;
 	}
 
-	/* Choose your blitters wisely */
+	// Choose your blitters wisely
 	return (SDL_CalculateBlit(src));
 }
 

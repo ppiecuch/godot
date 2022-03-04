@@ -1362,7 +1362,7 @@ int SDL_RLESurface(SDL_Surface *surface) {
 
 	/* Clear any previous RLE conversion */
 	if ((surface->flags & SDL_RLEACCEL) == SDL_RLEACCEL) {
-		UnRLESurface(surface, 1);
+		SDL_UnRLESurface(surface, 1);
 	}
 
 	/* We don't support RLE encoding of bitmaps */
