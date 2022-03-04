@@ -48,6 +48,7 @@
 #define HAVE_STRINGS_H 1
 #define HAVE_STRING_H 1
 #define HAVE_SYS_TYPES_H 1
+#define HAVE_STDARG_H 1
 
 /* Enable assembly routines */
 #ifdef CPU_POWERPC

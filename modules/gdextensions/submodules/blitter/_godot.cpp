@@ -126,6 +126,28 @@ extern "C" const char *SDL_getenv(const char *name) {
 	return OS::get_singleton()->get_environment(name).ascii().c_str();
 }
 
+// Print/scan string functions
+
+#if defined(MINGW_ENABLED) || defined(_MSC_VER) && _MSC_VER < 1900
+#define gd_vsnprintf(m_buffer, m_count, m_format, m_args_copy) vsnprintf_s(m_buffer, m_count, _TRUNCATE, m_format, m_args_copy)
+#define gd_vscprintf(m_format, m_args_copy) _vscprintf(m_format, m_args_copy)
+#else
+#define gd_vsnprintf(m_buffer, m_count, m_format, m_args_copy) vsnprintf(m_buffer, m_count, m_format, m_args_copy)
+#define gd_vscprintf(m_format, m_args_copy) vsnprintf(NULL, 0, m_format, m_args_copy)
+#endif
+
+extern "C" int SDL_sscanf(const char *text, SDL_SCANF_FORMAT_STRING const char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    int rc = vsscanf(text, fmt, ap);
+    va_end(ap);
+    return rc;
+}
+
+extern "C" int SDL_vsnprintf(SDL_OUT_Z_CAP(maxlen) char *text, size_t maxlen, const char *fmt, va_list ap) {
+	return gd_vsnprintf(text, maxlen, fmt, ap);
+}
+
 // CPU feature detection
 
 #define CPU_HAS_RDTSC (1 << 0)

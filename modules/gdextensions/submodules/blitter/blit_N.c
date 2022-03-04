@@ -84,8 +84,10 @@ static size_t GetL3CacheSize(void) {
 #define VECUINT8_LITERAL(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p) (vector unsigned char)(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p)
 #define VECUINT16_LITERAL(a, b, c, d, e, f, g, h) (vector unsigned short)(a, b, c, d, e, f, g, h)
 #else
-#define VECUINT8_LITERAL(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p) (vector unsigned char) { a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p }
-#define VECUINT16_LITERAL(a, b, c, d, e, f, g, h) (vector unsigned short) { a, b, c, d, e, f, g, h }
+#define VECUINT8_LITERAL(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p) \
+	(vector unsigned char) { a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p }
+#define VECUINT16_LITERAL(a, b, c, d, e, f, g, h) \
+	(vector unsigned short) { a, b, c, d, e, f, g, h }
 #endif
 
 #define UNALIGNED_PTR(x) (((size_t)x) & 0x0000000F)
@@ -199,10 +201,10 @@ static void Blit_RGB888_RGB565Altivec(SDL_BlitInfo *info) {
 	vector unsigned char valpha = vec_splat_u8(0);
 	vector unsigned char vpermute = calc_swizzle32(srcfmt, NULL);
 	vector unsigned char vgmerge = VECUINT8_LITERAL(
-		0x00, 0x02, 0x00, 0x06,
-		0x00, 0x0a, 0x00, 0x0e,
-		0x00, 0x12, 0x00, 0x16,
-		0x00, 0x1a, 0x00, 0x1e);
+			0x00, 0x02, 0x00, 0x06,
+			0x00, 0x0a, 0x00, 0x0e,
+			0x00, 0x12, 0x00, 0x16,
+			0x00, 0x1a, 0x00, 0x1e);
 	vector unsigned short v1 = vec_splat_u16(1);
 	vector unsigned short v3 = vec_splat_u16(3);
 	vector unsigned short v3f = VECUINT16_LITERAL(0x003f, 0x003f, 0x003f, 0x003f, 0x003f, 0x003f, 0x003f, 0x003f);
@@ -3558,26 +3560,26 @@ static const struct blit_table normal_blit_3[] = {
 #if HAVE_FAST_WRITE_INT8
 			NO_ALPHA |
 #endif
-			SET_ALPHA },
+					SET_ALPHA },
 	{ 0x00FF0000, 0x0000FF00, 0x000000FF, 4, 0x00FF0000, 0x0000FF00, 0x000000FF,
 			0, Blit_3or4_to_3or4__same_rgb,
 #if HAVE_FAST_WRITE_INT8
 			NO_ALPHA |
 #endif
-			SET_ALPHA },
+					SET_ALPHA },
 	// 3->4 with inversed rgb triplet
 	{ 0x000000FF, 0x0000FF00, 0x00FF0000, 4, 0x00FF0000, 0x0000FF00, 0x000000FF,
 			0, Blit_3or4_to_3or4__inversed_rgb,
 #if HAVE_FAST_WRITE_INT8
 			NO_ALPHA |
 #endif
-			SET_ALPHA },
+					SET_ALPHA },
 	{ 0x00FF0000, 0x0000FF00, 0x000000FF, 4, 0x000000FF, 0x0000FF00, 0x00FF0000,
 			0, Blit_3or4_to_3or4__inversed_rgb,
 #if HAVE_FAST_WRITE_INT8
 			NO_ALPHA |
 #endif
-			SET_ALPHA },
+					SET_ALPHA },
 	// 3->3 to switch RGB 24 <-> BGR 24
 	{ 0x000000FF, 0x0000FF00, 0x00FF0000, 3, 0x00FF0000, 0x0000FF00, 0x000000FF,
 			0, Blit_3or4_to_3or4__inversed_rgb, NO_ALPHA },
@@ -3615,7 +3617,7 @@ static const struct blit_table normal_blit_4[] = {
 #if HAVE_FAST_WRITE_INT8
 			NO_ALPHA |
 #endif
-			SET_ALPHA | COPY_ALPHA },
+					SET_ALPHA | COPY_ALPHA },
 	{ 0x00FF0000, 0x0000FF00, 0x000000FF, 4, 0x000000FF, 0x0000FF00, 0x00FF0000,
 			0, Blit_3or4_to_3or4__inversed_rgb,
 #if HAVE_FAST_WRITE_INT8

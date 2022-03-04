@@ -103,14 +103,16 @@ typedef enum {
 extern DECLSPEC int SDLCALL SDL_Error(SDL_errorcode code);
 
 // Basic assertion support
-#ifdef _MSC_VER  // stupid /W4 warnings.
-#define SDL_NULL_WHILE_LOOP_CONDITION (0,0)
+#ifdef _MSC_VER // stupid /W4 warnings.
+#define SDL_NULL_WHILE_LOOP_CONDITION (0, 0)
 #else
 #define SDL_NULL_WHILE_LOOP_CONDITION (0)
 #endif
 
 #define SDL_disabled_assert(condition) \
-    do { (void) sizeof ((condition)); } while (SDL_NULL_WHILE_LOOP_CONDITION)
+	do {                               \
+		(void)sizeof((condition));     \
+	} while (SDL_NULL_WHILE_LOOP_CONDITION)
 
 #if defined(DEBUG_ENABLED) || defined(TOOLS_ENABLED)
 extern DECLSPEC void SDL_assert(SDL_bool cond);
