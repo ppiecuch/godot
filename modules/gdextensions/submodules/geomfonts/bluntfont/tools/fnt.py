@@ -80,6 +80,7 @@ print "// Machine-generated from %s by tools/fnt.py, do not edit." % ( sys.argv[
 print '#pragma clang diagnostic ignored "-Wmissing-braces"'
 print '#pragma clang diagnostic ignored "-Wconversion"'
 print ""
+print "// clang-format off"
 print "#define VDATASZ %d" % ( totalsize, )
 print "#define NUMGLYPHS 128"
 
@@ -117,4 +118,4 @@ for stream in streams :
 			print "%g,%g," % ( v[0],v[1] ),
 	print ""
 print "};"
-
+print "// clang-format on"
