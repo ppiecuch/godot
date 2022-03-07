@@ -118,6 +118,8 @@
 
 #include "fastnoise/noise.h"
 
+#include "geomfonts//gd_geomfonts.h"
+
 #if defined(OSX_ENABLED) || defined(UWP_ENABLED) || defined(IPHONE_ENABLED) || defined(ANDROID_ENABLED)
 #include "iap/gd_iap.h"
 #endif
@@ -254,6 +256,10 @@ void register_gdextensions_types() {
 	ResourceFormatImporter::get_singleton()->add_importer(sfx_data);
 #endif
 #endif // GDEXT_SFXR_ENABLED
+
+#ifdef GDEXT_GEOMFONTS_ENABLED
+	ClassDB::register_class<GdGeomFonts>();
+#endif
 
 #ifdef GDEXT_FASTNOISE_ENABLED
 	ClassDB::register_class<FastNoise>();
