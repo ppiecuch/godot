@@ -77,8 +77,11 @@ assert not -1 in sizes
 totalsize = sum( sizes )
 
 print "// Machine-generated from %s by tools/fnt.py, do not edit." % ( sys.argv[1], )
+print '#ifdef __clang__'
+print '#pragma clang diagnostic push'
 print '#pragma clang diagnostic ignored "-Wmissing-braces"'
 print '#pragma clang diagnostic ignored "-Wconversion"'
+print '#endif'
 print ""
 print "// clang-format off"
 print "#define VDATASZ %d" % ( totalsize, )
@@ -119,3 +122,6 @@ for stream in streams :
 	print ""
 print "};"
 print "// clang-format on"
+print '#ifdef __clang__'
+print '#pragma clang diagnostic pop'
+print '#endif'

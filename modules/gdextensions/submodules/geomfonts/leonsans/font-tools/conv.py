@@ -50,8 +50,8 @@ def dump_value(elem, indent = 0):
     print("Unknown: "+elem['type'], file=sys.stderr)
     return "?"
 
-for file in ["../font/number.js"]:
-    f = get_js_code(file)
+for file in ["number.js", "upper.js", "lower.js, "latin.js", "special.js]:
+    f = get_js_code("../font/" + file)
 
     doc = parse(f)
     body = doc['body']
