@@ -105,6 +105,10 @@ if is_enabled("flexbuffers") or is_enabled("nakama1"):
     if is_enabled("nakama1"):
         sources += Glob("submodules/nakama1/client/*.cpp")
 
+if is_enabled("geomfonts"):
+    env_module.Prepend(CPPPATH="submodules/geomfonts/polyfonts")
+    sources += Glob("submodules/geomfonts/polyfonts/fonts/*.c")
+
 env_module.Append(
     CPPPATH=[
         "#thirdparty/enet",

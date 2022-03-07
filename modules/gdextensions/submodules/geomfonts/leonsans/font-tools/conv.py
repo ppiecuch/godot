@@ -60,6 +60,8 @@ for file in ["../font/number.js"]:
     print('// AUTO-GENERATED - %s\n' % datetime.now().strftime("%a %b %d %Y %H:%M:%S"));
     print('#include "util.h"\n')
 
+    print('// clang-format off')
+
     for elem in body:
         if elem['type'] == 'VariableDeclaration':
             for decl in elem['declarations']:
@@ -67,3 +69,5 @@ for file in ["../font/number.js"]:
                 for prop in decl['init']['properties']:
                     print("  { %s, %s }," % (prop['key']['raw'], dump_value(prop['value'])))
                 print("};")
+
+    print('// clang-format on')
