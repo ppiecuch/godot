@@ -18,6 +18,7 @@ def configure(env):
         "fastnoise",
         "smooth",
         "debugdraw",
+        "geomfonts",
         "statemachine",
         "benet",
         "behaviornode",

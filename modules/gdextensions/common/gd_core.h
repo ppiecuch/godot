@@ -57,6 +57,7 @@
 #define CPP11
 #endif
 
+#ifndef _HAS_EXCEPTIONS
 #if defined(__has_feature)
 #if __has_feature(cxx_exceptions)
 #define _HAS_EXCEPTIONS
@@ -67,6 +68,7 @@
 #define _HAS_EXCEPTIONS
 #endif
 #endif
+#endif // _HAS_EXCEPTIONS
 
 #ifdef _HAS_EXCEPTIONS
 #define ERR_THROW(_E) throw _E

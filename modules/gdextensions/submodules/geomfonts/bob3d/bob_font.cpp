@@ -28,7 +28,11 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "bob_font.h"
+#include "core/rid.h"
+#include "core/variant.h"
+#include "core/math/math_defs.h"
+#include "scene/resources/mesh.h"
+#include "servers/visual_server.h"
 
 #define BOBS_X 7
 #define BOBS_Y 7
@@ -102,7 +106,9 @@ char *chars[] = {
 	char_82, char_83, char_84, char_85, char_86, char_87, char_88, char_89, char_90, nullptr
 };
 
-static void DrawBlock(RID canvas, real_t x1, real_t y1, real_t x2, real_t y2, real_t z1, real_t z2, bool wire) {
+static Color default_white(1,1,1,1);
+
+static void DrawBlock(RID canvas, real_t x1, real_t y1, real_t x2, real_t y2, real_t z1, real_t z2, bool wire, const Transform2D &xform = Transform2D(), const Color &modulate = default_white) {
 #define aa 0.7, 0.5, 0.2, 1.0
 #define bb 0.9, 0.5, 0.0, 1.0
 #define cc 1.0, 0.7, 0.0, 1.0
@@ -110,95 +116,149 @@ static void DrawBlock(RID canvas, real_t x1, real_t y1, real_t x2, real_t y2, re
 #define ee 1.0, 0.5, 0.8, 1.0
 
 	struct {
-		real_t v[3];
-		real_t c[4];
-	} _vertices[] = {
-		{ { x1, y1, z1 }, { aa } },
-		{ { x2, y1, z1 }, { aa } },
-		{ { x2, y1, z2 }, { aa } },
-		{ { x1, y1, z2 }, { aa } },
+		Point3 v[24];
+		Color c[24];
+	} _vertices = {
+		{
+			{ x1, y1, z1 },
+			{ x2, y1, z1 },
+			{ x2, y1, z2 },
+			{ x1, y1, z2 },
 
-		{ { x1, y2, z1 }, { aa } },
-		{ { x1, y2, z2 }, { aa } },
-		{ { x2, y2, z2 }, { aa } },
-		{ { x2, y2, z1 }, { aa } },
+			{ x1, y2, z1 },
+			{ x1, y2, z2 },
+			{ x2, y2, z2 },
+			{ x2, y2, z1 },
 
-		{ { x1, y1, z1 }, { bb } },
-		{ { x1, y2, z1 }, { bb } },
-		{ { x1, y2, z2 }, { bb } },
-		{ { x1, y1, z2 }, { bb } },
+			{ x1, y1, z1 },
+			{ x1, y2, z1 },
+			{ x1, y2, z2 },
+			{ x1, y1, z2 },
 
-		{ { x2, y1, z1 }, { bb } },
-		{ { x2, y1, z2 }, { bb } },
-		{ { x2, y2, z2 }, { bb } },
-		{ { x2, y2, z1 }, { bb } },
+			{ x2, y1, z1 },
+			{ x2, y1, z2 },
+			{ x2, y2, z2 },
+			{ x2, y2, z1 },
 
-		{ { x1, y1, z1 }, { cc } },
-		{ { x2, y1, z1 }, { ee } },
-		{ { x2, y2, z1 }, { cc } },
-		{ { x1, y2, z1 }, { dd } },
+			{ x1, y1, z1 },
+			{ x2, y1, z1 },
+			{ x2, y2, z1 },
+			{ x1, y2, z1 },
 
-		{ { x1, y1, z2 }, { cc } },
-		{ { x2, y1, z2 }, { ee } },
-		{ { x2, y2, z2 }, { cc } },
-		{ { x1, y2, z2 }, { dd } }
+			{ x1, y1, z2 },
+			{ x2, y1, z2 },
+			{ x2, y2, z2 },
+			{ x1, y2, z2 }
+		}, {
+			{ aa },
+			{ aa },
+			{ aa },
+			{ aa },
+
+			{ aa },
+			{ aa },
+			{ aa },
+			{ aa },
+
+			{ bb },
+			{ bb },
+			{ bb },
+			{ bb },
+
+			{ bb },
+			{ bb },
+			{ bb },
+			{ bb },
+
+			{ cc },
+			{ ee },
+			{ cc },
+			{ dd },
+
+			{ cc },
+			{ ee },
+			{ cc },
+			{ dd }
+		}
 	};
-	short _faces[][6] = {
-		{ 0, 1, 2, 0, 3, 2 },
-		{ 4, 5, 6, 4, 7, 6 },
-		{ 8, 9, 10, 8, 10, 11 },
+	uint32_t _faces[6][6] = {
+		{  0,  1,  2,  0,  3,  2 },
+		{  4,  5,  6,  4,  7,  6 },
+		{  8,  9, 10,  8, 10, 11 },
 		{ 12, 13, 14, 12, 14, 15 },
 		{ 16, 17, 18, 16, 18, 19 },
 		{ 20, 21, 22, 20, 22, 23 }
 	};
 
+	static PoolIntArray faces_index;
+	if (faces_index.empty()) {
+		faces_index.resize(36);
+		memcpy(faces_index.write().ptr(), _faces, 36 * sizeof(uint32_t));
+	}
+
+	static PoolColorArray verts_color;
+	if (verts_color.empty()) {
+		verts_color.resize(24);
+		memcpy(verts_color.write().ptr(), _vertices.c, 24 * sizeof(Color));
+	}
+
+	PoolVector3Array verts;
+	verts.resize(24);
+	memcpy(verts.write().ptr(), _vertices.v, 24 * sizeof(Point3));
+
+	Array mesh_array;
+	mesh_array.resize(VS::ARRAY_MAX);
+	mesh_array[VS::ARRAY_VERTEX] = verts;
+	mesh_array[VS::ARRAY_COLOR] = verts_color;
+	mesh_array[VS::ARRAY_INDEX] = faces_index;
+	Ref<ArrayMesh> _mesh = memnew(ArrayMesh);
+
 	if (wire) {
-		for (int f = 0; f < 6; ++f) {
-			// glDrawElements(GL_LINE_LOOP, 6, GL_UNSIGNED_SHORT, _faces[f]);
-		}
+		_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINE_LOOP, mesh_array, Array());
 	} else {
-		// glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, _faces);
+		_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array, Array());
 	}
+	VisualServer::get_singleton()->canvas_item_add_mesh(canvas, _mesh->get_rid(), xform, modulate, RID(), RID(), RID());
 }
 
-static void DrawBob(RID canvas, real_t x, real_t y, real_t z, real_t size, bool wire) {
-	DrawBlock(canvas, x, y, x + size * 0.8, y + size * 0.8, z, z + size * 0.8, true);
+static void DrawBob(RID canvas, real_t x, real_t y, real_t z, real_t size, bool wire, const Transform2D &xform = Transform2D(), const Color &modulate = default_white) {
+	DrawBlock(canvas, x, y, x + size * 0.8, y + size * 0.8, z, z + size * 0.8, wire, xform, modulate);
 }
 
-real_t DrawBobString(RID canvas, const char *str, real_t x, real_t y, real_t z, real_t size, bool wire) {
-	char ch = *str;
-	while ((ch = *str) != 0) {
-		DrawBobChar(canvas, ch, x, y, z, size, wire);
-		x = x + size * (BOBS_X + 1);
-		str++;
-	}
-	return x;
-}
-
-real_t DrawBobChar(RID canvas, char ch, real_t x, real_t y, real_t z, real_t size, bool wire) {
-	int i, j;
+real_t DrawBobChar(RID canvas, char ch, const Point3 &pos, real_t size, bool wire, const Transform2D &xform = Transform2D(), const Color &modulate = default_white) {
 	char shft;
-	real_t xp;
+	real_t xp, yp = pos.y;
 
 	if (ch < 32 || ch > 90) {
 		return 0;
 	}
 	char *ptr = chars[ch - 32];
 
-	for (i = 0; i < BOBS_Y; i++) {
-		xp = x;
+	for (int i = 0; i < BOBS_Y; i++) {
+		xp = pos.x;
 		shft = 0x40;
-		for (j = 0; j < BOBS_X; j++) {
+		for (int j = 0; j < BOBS_X; j++) {
 			if ((*ptr) & shft) {
-				DrawBob(canvas, xp, y, z, size, wire);
+				DrawBob(canvas, xp, yp, pos.z, size, wire);
 			}
 			shft = shft >> 1;
 			xp = xp + size;
 		}
-		y = y - size;
+		yp = yp - size;
 		ptr++;
 	}
 	return xp + size;
+}
+
+real_t DrawBobString(RID canvas, const char *str, const Point3 &pos, real_t size, bool wire, const Transform2D &xform = Transform2D(), const Color &modulate = default_white) {
+	char ch = *str;
+	Point3 xp(pos.x, 0, 0);
+	while ((ch = *str) != 0) {
+		DrawBobChar(canvas, ch, pos + xp, size, wire);
+		xp.x = xp.x + size * (BOBS_X + 1);
+		str++;
+	}
+	return xp.x;
 }
 
 // ---

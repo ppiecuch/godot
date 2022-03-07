@@ -67,7 +67,6 @@
 //
 //         x:real_t
 //         y:real_t
-//         z:real_t
 
 //      Returns the number of quads.
 //
@@ -699,9 +698,9 @@ static int stb_easy_font_draw_segs(real_t x, real_t y, unsigned char *segs, int 
 		if (len) {
 			real_t y0 = y + (real_t)(segs[i] >> 4);
 			for (int j = 0; j < 4; ++j) {
-				const real_t x = x + (j == 1 || j == 2 ? (vertical ? 1 : len) : 0);
-				const real_t y = y0 + (j >= 2 ? (vertical ? len : 1) : 0);
-				vbuf.push_back(Vector2(x, y));
+				const real_t px = x + (j == 1 || j == 2 ? (vertical ? 1 : len) : 0);
+				const real_t py = y0 + (j >= 2 ? (vertical ? len : 1) : 0);
+				vbuf.push_back(Vector2(px, py));
 			}
 		}
 	}

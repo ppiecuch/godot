@@ -45,6 +45,7 @@ modules = [
     "fastnoise",
     "smooth",
     "debugdraw",
+    "geomfonts",
     "statemachine",
     "benet",
     "behaviornode",
