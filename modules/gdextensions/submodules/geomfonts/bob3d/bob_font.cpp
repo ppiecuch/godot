@@ -28,9 +28,9 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
+#include "core/math/math_defs.h"
 #include "core/rid.h"
 #include "core/variant.h"
-#include "core/math/math_defs.h"
 #include "scene/resources/mesh.h"
 #include "servers/visual_server.h"
 
@@ -106,7 +106,7 @@ char *chars[] = {
 	char_82, char_83, char_84, char_85, char_86, char_87, char_88, char_89, char_90, nullptr
 };
 
-static Color default_white(1,1,1,1);
+static Color default_white(1, 1, 1, 1);
 
 static void DrawBlock(RID canvas, real_t x1, real_t y1, real_t x2, real_t y2, real_t z1, real_t z2, bool wire, const Transform2D &xform = Transform2D(), const Color &modulate = default_white) {
 #define aa 0.7, 0.5, 0.2, 1.0
@@ -119,72 +119,69 @@ static void DrawBlock(RID canvas, real_t x1, real_t y1, real_t x2, real_t y2, re
 		Point3 v[24];
 		Color c[24];
 	} _vertices = {
-		{
-			{ x1, y1, z1 },
-			{ x2, y1, z1 },
-			{ x2, y1, z2 },
-			{ x1, y1, z2 },
+		{ { x1, y1, z1 },
+				{ x2, y1, z1 },
+				{ x2, y1, z2 },
+				{ x1, y1, z2 },
 
-			{ x1, y2, z1 },
-			{ x1, y2, z2 },
-			{ x2, y2, z2 },
-			{ x2, y2, z1 },
+				{ x1, y2, z1 },
+				{ x1, y2, z2 },
+				{ x2, y2, z2 },
+				{ x2, y2, z1 },
 
-			{ x1, y1, z1 },
-			{ x1, y2, z1 },
-			{ x1, y2, z2 },
-			{ x1, y1, z2 },
+				{ x1, y1, z1 },
+				{ x1, y2, z1 },
+				{ x1, y2, z2 },
+				{ x1, y1, z2 },
 
-			{ x2, y1, z1 },
-			{ x2, y1, z2 },
-			{ x2, y2, z2 },
-			{ x2, y2, z1 },
+				{ x2, y1, z1 },
+				{ x2, y1, z2 },
+				{ x2, y2, z2 },
+				{ x2, y2, z1 },
 
-			{ x1, y1, z1 },
-			{ x2, y1, z1 },
-			{ x2, y2, z1 },
-			{ x1, y2, z1 },
+				{ x1, y1, z1 },
+				{ x2, y1, z1 },
+				{ x2, y2, z1 },
+				{ x1, y2, z1 },
 
-			{ x1, y1, z2 },
-			{ x2, y1, z2 },
-			{ x2, y2, z2 },
-			{ x1, y2, z2 }
-		}, {
-			{ aa },
-			{ aa },
-			{ aa },
-			{ aa },
+				{ x1, y1, z2 },
+				{ x2, y1, z2 },
+				{ x2, y2, z2 },
+				{ x1, y2, z2 } },
+		{ { aa },
+				{ aa },
+				{ aa },
+				{ aa },
 
-			{ aa },
-			{ aa },
-			{ aa },
-			{ aa },
+				{ aa },
+				{ aa },
+				{ aa },
+				{ aa },
 
-			{ bb },
-			{ bb },
-			{ bb },
-			{ bb },
+				{ bb },
+				{ bb },
+				{ bb },
+				{ bb },
 
-			{ bb },
-			{ bb },
-			{ bb },
-			{ bb },
+				{ bb },
+				{ bb },
+				{ bb },
+				{ bb },
 
-			{ cc },
-			{ ee },
-			{ cc },
-			{ dd },
+				{ cc },
+				{ ee },
+				{ cc },
+				{ dd },
 
-			{ cc },
-			{ ee },
-			{ cc },
-			{ dd }
-		}
+				{ cc },
+				{ ee },
+				{ cc },
+				{ dd } }
 	};
 	uint32_t _faces[6][6] = {
-		{  0,  1,  2,  0,  3,  2 },
-		{  4,  5,  6,  4,  7,  6 },
-		{  8,  9, 10,  8, 10, 11 },
+		{ 0, 1, 2, 0, 3, 2 },
+		{ 4, 5, 6, 4, 7, 6 },
+		{ 8, 9, 10, 8, 10, 11 },
 		{ 12, 13, 14, 12, 14, 15 },
 		{ 16, 17, 18, 16, 18, 19 },
 		{ 20, 21, 22, 20, 22, 23 }

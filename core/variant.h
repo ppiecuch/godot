@@ -471,15 +471,15 @@ Array array(const Variant &p_arg1, const Variant &p_arg2, const Variant &p_arg3,
 Array array(const Variant &p_arg1, const Variant &p_arg2, const Variant &p_arg3, const Variant &p_arg4, const Variant &p_arg5, const Variant &p_arg6);
 
 namespace helper {
-# define Arg(N) const String &p_key##N, const Variant &p_arg##N
-	Dictionary dict();
-	Dictionary dict(Arg(1));
-	Dictionary dict(Arg(1), Arg(2));
-	Dictionary dict(Arg(1), Arg(2), Arg(3));
-	Dictionary dict(Arg(1), Arg(2), Arg(3), Arg(4));
-	Dictionary dict(Arg(1), Arg(2), Arg(3), Arg(4), Arg(5));
-	Dictionary dict(Arg(1), Arg(2), Arg(3), Arg(4), Arg(5), Arg(6));
-# undef Arg
+#define Arg(N) const String &p_key##N, const Variant &p_arg##N
+Dictionary dict();
+Dictionary dict(Arg(1));
+Dictionary dict(Arg(1), Arg(2));
+Dictionary dict(Arg(1), Arg(2), Arg(3));
+Dictionary dict(Arg(1), Arg(2), Arg(3), Arg(4));
+Dictionary dict(Arg(1), Arg(2), Arg(3), Arg(4), Arg(5));
+Dictionary dict(Arg(1), Arg(2), Arg(3), Arg(4), Arg(5), Arg(6));
+#undef Arg
 } // namespace helper
 
 struct VariantHasher {

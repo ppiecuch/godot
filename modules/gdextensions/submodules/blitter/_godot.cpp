@@ -137,11 +137,11 @@ extern "C" const char *SDL_getenv(const char *name) {
 #endif
 
 extern "C" int SDL_sscanf(const char *text, SDL_SCANF_FORMAT_STRING const char *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    int rc = vsscanf(text, fmt, ap);
-    va_end(ap);
-    return rc;
+	va_list ap;
+	va_start(ap, fmt);
+	int rc = vsscanf(text, fmt, ap);
+	va_end(ap);
+	return rc;
 }
 
 extern "C" int SDL_vsnprintf(SDL_OUT_Z_CAP(maxlen) char *text, size_t maxlen, const char *fmt, va_list ap) {

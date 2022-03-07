@@ -1,8 +1,38 @@
+/*************************************************************************/
+/*  util.h                                                               */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #include "core/dictionary.h"
 #include "core/math/math_funcs.h"
 
-#include <vector>
 #include <map>
+#include <vector>
 
 constexpr real_t ROTATE_HORIZONTAL = 180 * (Math_PI / 180);
 constexpr real_t ROTATE_VERTICAL = 90 * (Math_PI / 180);
@@ -15,11 +45,14 @@ const char *TOFU = "tofu";
 union InfoValue {
 	real_t f;
 	int i;
-    operator float() const { return f; }
-    operator int() const { return i; }
-	InfoValue(double v) : f(v) { }
-	InfoValue(float v) : f(v) { }
-	InfoValue(int v) : i(v) { }
+	operator float() const { return f; }
+	operator int() const { return i; }
+	InfoValue(double v) :
+			f(v) {}
+	InfoValue(float v) :
+			f(v) {}
+	InfoValue(int v) :
+			i(v) {}
 };
 
 struct FontPathSeg {
@@ -31,11 +64,14 @@ struct FontPathSeg {
 		real_t d[6];
 	};
 	std::map<char, InfoValue> info;
-	real_t &operator [](int index) { return d[index]; }
+	real_t &operator[](int index) { return d[index]; }
 
-	FontPathSeg(char op, real_t p1, real_t p2, const std::map<char, InfoValue> &info) : op(op), _1(p1), _2(p2), info(info) { }
-	FontPathSeg(char op, real_t p1, real_t p2, real_t p3, real_t p4, real_t p5, real_t p6, const std::map<char, InfoValue> &info) : op(op), _1(p1), _2(p2), _3(p3), _4(p4), _5(p5), _6(p6), info(info) { }
-	FontPathSeg(char op, real_t p1, real_t p2, real_t p3, real_t p4, real_t p5, real_t p6) : op(op), _1(p1), _2(p2), _3(p3), _4(p4), _5(p5), _6(p6) { }
+	FontPathSeg(char op, real_t p1, real_t p2, const std::map<char, InfoValue> &info) :
+			op(op), _1(p1), _2(p2), info(info) {}
+	FontPathSeg(char op, real_t p1, real_t p2, real_t p3, real_t p4, real_t p5, real_t p6, const std::map<char, InfoValue> &info) :
+			op(op), _1(p1), _2(p2), _3(p3), _4(p4), _5(p5), _6(p6), info(info) {}
+	FontPathSeg(char op, real_t p1, real_t p2, real_t p3, real_t p4, real_t p5, real_t p6) :
+			op(op), _1(p1), _2(p2), _3(p3), _4(p4), _5(p5), _6(p6) {}
 };
 
 struct FontPath {
@@ -98,8 +134,8 @@ FontData generateFontData(real_t w, real_t fw, real_t fh, real_t x1, real_t x2, 
 	}
 
 	return {
-		{w, FONT_HEIGHT, fw, fh}, // rect
-		{x1, x2, y1, y2}, // ratio
+		{ w, FONT_HEIGHT, fw, fh }, // rect
+		{ x1, x2, y1, y2 }, // ratio
 		arr // p
 	};
 }

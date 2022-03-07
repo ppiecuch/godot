@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  TTFMath.h                                                            */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #pragma once
 
 #include <cstdint>
@@ -15,15 +45,15 @@ struct vec2f {
 	bool operator==(vec2f) const;
 	bool operator!=(vec2f) const;
 
-	vec2f& operator+=(vec2f);
-	vec2f& operator-=(vec2f);
-	vec2f& operator*=(vec2f);
-	vec2f& operator/=(vec2f);
+	vec2f &operator+=(vec2f);
+	vec2f &operator-=(vec2f);
+	vec2f &operator*=(vec2f);
+	vec2f &operator/=(vec2f);
 
-	vec2f& operator+=(float);
-	vec2f& operator-=(float);
-	vec2f& operator*=(float);
-	vec2f& operator/=(float);
+	vec2f &operator+=(float);
+	vec2f &operator-=(float);
+	vec2f &operator*=(float);
+	vec2f &operator/=(float);
 };
 
 vec2f operator+(vec2f, vec2f);
@@ -46,10 +76,10 @@ float cross(vec2f, vec2f); // 2d cross product
 
 struct matrix3x2f {
 	float a, b, c, d, e, f;
-	matrix3x2f();		// intiailized to the identity
+	matrix3x2f(); // intiailized to the identity
 };
 
-vec2f mul(vec2f, const matrix3x2f&);
+vec2f mul(vec2f, const matrix3x2f &);
 vec2f normal(vec2f);
 vec2f lerp(vec2f, vec2f, float); // linear interpolate between the two points
 vec2f quad_lerp(vec2f, vec2f, vec2f, float); // quadratic interpolation
@@ -77,15 +107,15 @@ struct vec2t {
 	bool operator==(vec2t) const;
 	bool operator!=(vec2t) const;
 
-	vec2t& operator+=(vec2t);
-	vec2t& operator-=(vec2t);
-	vec2t& operator*=(vec2t);
-	vec2t& operator/=(vec2t);
+	vec2t &operator+=(vec2t);
+	vec2t &operator-=(vec2t);
+	vec2t &operator*=(vec2t);
+	vec2t &operator/=(vec2t);
 
-	vec2t& operator+=(int16_t);
-	vec2t& operator-=(int16_t);
-	vec2t& operator*=(int16_t);
-	vec2t& operator/=(int16_t);
+	vec2t &operator+=(int16_t);
+	vec2t &operator-=(int16_t);
+	vec2t &operator*=(int16_t);
+	vec2t &operator/=(int16_t);
 };
 
 vec2t operator+(vec2t, vec2t);
@@ -112,8 +142,8 @@ struct matrix3x2t {
 };
 
 int32_t fxmul(int32_t, int32_t);
-matrix3x2t mul(const matrix3x2t&, const matrix3x2t&);
-vec2t mul(vec2t, const matrix3x2t&);
+matrix3x2t mul(const matrix3x2t &, const matrix3x2t &);
+vec2t mul(vec2t, const matrix3x2t &);
 
 struct vec3t {
 	int16_t x, y, z;
@@ -128,15 +158,15 @@ struct vec3t {
 bool operator==(vec3t, vec3t);
 bool operator!=(vec3t, vec3t);
 
-vec3t& operator+=(vec3t&, vec3t);
-vec3t& operator-=(vec3t&, vec3t);
-vec3t& operator*=(vec3t&, vec3t);
-vec3t& operator/=(vec3t&, vec3t);
+vec3t &operator+=(vec3t &, vec3t);
+vec3t &operator-=(vec3t &, vec3t);
+vec3t &operator*=(vec3t &, vec3t);
+vec3t &operator/=(vec3t &, vec3t);
 
-vec3t& operator+=(vec3t&, int16_t);
-vec3t& operator-=(vec3t&, int16_t);
-vec3t& operator*=(vec3t&, int16_t);
-vec3t& operator/=(vec3t&, int16_t);
+vec3t &operator+=(vec3t &, int16_t);
+vec3t &operator-=(vec3t &, int16_t);
+vec3t &operator*=(vec3t &, int16_t);
+vec3t &operator/=(vec3t &, int16_t);
 
 vec3t operator+(vec3t, vec3t);
 vec3t operator-(vec3t, vec3t);
@@ -154,7 +184,7 @@ vec3t operator*(vec3t, int16_t);
 vec3t operator/(vec3t, int16_t);
 
 int32_t dot(vec3t, vec3t);
-vec3t mul(vec3t, const matrix3x2t&);
+vec3t mul(vec3t, const matrix3x2t &);
 
 struct vec4t {
 	int16_t x, y, z, w;
@@ -171,7 +201,7 @@ vec2t RoundBy2(vec2t); // divides by 2 and rounds
 
 int32_t GetTriSign(vec2t p0, vec2t p1, vec2t p2);
 bool IsContained(vec2t p0, vec2t p1, vec2t p2, vec2t p3);
-bool Intersect2D(vec2t p0, vec2t p1, vec2t p2, vec2t p3);	
+bool Intersect2D(vec2t p0, vec2t p1, vec2t p2, vec2t p3);
 int32_t SqrdLen(vec2t p0, vec2t p1);
 vec2t MidPoint(vec2t p0, vec2t p1);
 vec2t ScaledNormal(vec2t v, int16_t w); // normalizes the vector and scales by w
@@ -183,7 +213,7 @@ vec2t quad_lerp(vec2t, vec2t, vec2t, uint16_t); // quadratic interpolation
 
 int32_t GetTriSign(vec3t p0, vec3t p1, vec3t p2);
 bool IsContained(vec3t p0, vec3t p1, vec3t p2, vec3t p3);
-bool Intersect2D(vec3t p0, vec3t p1, vec3t p2, vec3t p3);	
+bool Intersect2D(vec3t p0, vec3t p1, vec3t p2, vec3t p3);
 int32_t SqrdLen(vec3t p0, vec3t p1);
 vec3t MidPoint(vec3t p0, vec3t p1);
 vec3t ScaledNormal(vec3t v, int16_t w);
@@ -193,4 +223,4 @@ vec3t ScaledPerpCCW(vec3t p0, vec3t p1, vec3t p2, int16_t w);
 vec3t lerp(vec3t, vec3t, uint16_t);
 vec3t quad_lerp(vec3t, vec3t, vec3t, uint16_t);
 
-} // namespace
+} //namespace TTFCore

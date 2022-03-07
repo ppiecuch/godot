@@ -1,51 +1,86 @@
+/*************************************************************************/
+/*  TTFTriangulator2DLinear.h                                            */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #pragma once
 
+#include <algorithm>
+#include <cstdint>
 #include <exception>
 #include <vector>
-#include <cstdint>
-#include <algorithm>
 
 #include "TTFExceptions.h"
 #include "TTFMath.h"
-#include "TTFTypes.h"
 #include "TTFTriangulator2D.h"
+#include "TTFTypes.h"
 
 namespace TTFCore {
 
-template <typename TVert, typename TTri> class Triangulator2DLinear : public Triangulator2D<TVert,TTri> {
+template <typename TVert, typename TTri>
+class Triangulator2DLinear : public Triangulator2D<TVert, TTri> {
 	friend class Font;
 
-	protected:
-		// Triangulator2DLinear specific functions
-		void AddCurvatureEdges(TVert pp, TVert ip, TVert pc, size_t vbo);
-		void TraceContourHelper(ContourPoint cp, TVert& p0, TVert& p1, bool& ppc, size_t vbo);
-		void TraceContour(CItr begin, CItr end);
-		void TraceContour();
+protected:
+	// Triangulator2DLinear specific functions
+	void AddCurvatureEdges(TVert pp, TVert ip, TVert pc, size_t vbo);
+	void TraceContourHelper(ContourPoint cp, TVert &p0, TVert &p1, bool &ppc, size_t vbo);
+	void TraceContour(CItr begin, CItr end);
+	void TraceContour();
 
-		// Triangulator private interface
-		std::vector<ContourPoint>& GetContours(); // returns a vector to the contour vector
-		void AppendTriangulation(); // triangulates and appends any contour data into the mesh data
+	// Triangulator private interface
+	std::vector<ContourPoint> &GetContours(); // returns a vector to the contour vector
+	void AppendTriangulation(); // triangulates and appends any contour data into the mesh data
 
-		virtual size_t GetCurveDivideCount(TVert p0, TVert p1, TVert p2) = 0; // returns the number of edge sub-divisions for a given curve (0 = straight line, 1 = 2 edges, 2 = 3, ect...)
+	virtual size_t GetCurveDivideCount(TVert p0, TVert p1, TVert p2) = 0; // returns the number of edge sub-divisions for a given curve (0 = straight line, 1 = 2 edges, 2 = 3, ect...)
 
-	public:
-		Triangulator2DLinear();
-		Triangulator2DLinear(TriangulatorFlags);
+public:
+	Triangulator2DLinear();
+	Triangulator2DLinear(TriangulatorFlags);
 };
 
-template <typename TVert, typename TTri> Triangulator2DLinear<TVert, TTri>::Triangulator2DLinear() :
-	Triangulator2D<TVert,TTri>(TriangulatorFlags::none) {
+template <typename TVert, typename TTri>
+Triangulator2DLinear<TVert, TTri>::Triangulator2DLinear() :
+		Triangulator2D<TVert, TTri>(TriangulatorFlags::none) {
 }
 
-template <typename TVert, typename TTri> Triangulator2DLinear<TVert, TTri>::Triangulator2DLinear(TriangulatorFlags flags_) :
-	Triangulator2D<TVert,TTri>(flags_) {
+template <typename TVert, typename TTri>
+Triangulator2DLinear<TVert, TTri>::Triangulator2DLinear(TriangulatorFlags flags_) :
+		Triangulator2D<TVert, TTri>(flags_) {
 }
 
-template <typename TVert, typename TTri> void Triangulator2DLinear<TVert, TTri>::AddCurvatureEdges(TVert p0, TVert p1, TVert p2, size_t vbo) {
+template <typename TVert, typename TTri>
+void Triangulator2DLinear<TVert, TTri>::AddCurvatureEdges(TVert p0, TVert p1, TVert p2, size_t vbo) {
 	// assume pp has been pushed onto the vertex 'stack' and is the last vertex
 
 	// sanity checks
-	if (p0 == p1 || p1 == p2 || p0 == p2) return;
+	if (p0 == p1 || p1 == p2 || p0 == p2)
+		return;
 
 	// get point count for curve
 	size_t j = std::min<size_t>(GetCurveDivideCount(p0, p1, p2), 0xfffe);
@@ -67,8 +102,8 @@ template <typename TVert, typename TTri> void Triangulator2DLinear<TVert, TTri>:
 	this->AddEdge(ai, i2);
 }
 
-template <typename TVert, typename TTri> void Triangulator2DLinear<TVert, TTri>::TraceContourHelper(ContourPoint cp, TVert& p0, TVert& p1, bool& ppc, size_t vbo) {
-
+template <typename TVert, typename TTri>
+void Triangulator2DLinear<TVert, TTri>::TraceContourHelper(ContourPoint cp, TVert &p0, TVert &p1, bool &ppc, size_t vbo) {
 	// intialize point variables
 	TVert p2 = cp.pos; // point current/under consideration
 	bool cpc = cp.OnCurve(); // current point on curve
@@ -94,10 +129,11 @@ template <typename TVert, typename TTri> void Triangulator2DLinear<TVert, TTri>:
 	}
 }
 
-template <typename TVert, typename TTri> void Triangulator2DLinear<TVert, TTri>::TraceContour(CItr begin, CItr end) {
-
+template <typename TVert, typename TTri>
+void Triangulator2DLinear<TVert, TTri>::TraceContour(CItr begin, CItr end) {
 	// sanity checks
-	if (end - begin < 2) return;
+	if (end - begin < 2)
+		return;
 
 	// init variables
 	size_t vbo = this->verts.size(); // store offset of 1st vertex
@@ -108,16 +144,18 @@ template <typename TVert, typename TTri> void Triangulator2DLinear<TVert, TTri>:
 		TVert p0 = begin->pos; // previous point on curve
 		TVert p1; // intermediate (off curve) point/control point
 		bool ppc = true; // previous point was on the curve
-	
-		for (auto i = begin + 1; i != end; ++i) TraceContourHelper(*i, p0, p1, ppc, vbo);
+
+		for (auto i = begin + 1; i != end; ++i)
+			TraceContourHelper(*i, p0, p1, ppc, vbo);
 		TraceContourHelper(*end, p0, p1, ppc, vbo);
 		TraceContourHelper(*begin, p0, p1, ppc, vbo);
-	} else if ( (begin + 1)->OnCurve() ) {
+	} else if ((begin + 1)->OnCurve()) {
 		TVert p0 = (begin + 1)->pos;
 		TVert p1;
 		bool ppc = true;
-	
-		for (auto i = begin + 2; i != end; ++i) TraceContourHelper(*i, p0, p1, ppc, vbo);
+
+		for (auto i = begin + 2; i != end; ++i)
+			TraceContourHelper(*i, p0, p1, ppc, vbo);
 		TraceContourHelper(*end, p0, p1, ppc, vbo);
 		TraceContourHelper(*begin, p0, p1, ppc, vbo);
 		TraceContourHelper(*(begin + 1), p0, p1, ppc, vbo);
@@ -133,7 +171,8 @@ template <typename TVert, typename TTri> void Triangulator2DLinear<TVert, TTri>:
 		TVert p1;
 		bool ppc = true;
 
-		for (auto i = begin + 1; i != end; ++i) TraceContourHelper(*i, p0, p1, ppc, vbo);
+		for (auto i = begin + 1; i != end; ++i)
+			TraceContourHelper(*i, p0, p1, ppc, vbo);
 		TraceContourHelper(*end, p0, p1, ppc, vbo);
 		TraceContourHelper(*begin, p0, p1, ppc, vbo);
 		TraceContourHelper(cp, p0, p1, ppc, vbo);
@@ -151,12 +190,13 @@ template <typename TVert, typename TTri> void Triangulator2DLinear<TVert, TTri>:
 	this->edges[eeo].ne = ebo;
 }
 
-template <typename TVert, typename TTri> void Triangulator2DLinear<TVert, TTri>::TraceContour() {
-	
+template <typename TVert, typename TTri>
+void Triangulator2DLinear<TVert, TTri>::TraceContour() {
 	CItr begin = this->contours.begin();
 	CItr end = this->contours.end();
 
-	if (end - begin == 0) return;
+	if (end - begin == 0)
+		return;
 	CItr contour_begin = begin;
 	for (auto i = begin + 1; i != end; ++i) {
 		if (i->end_point) {
@@ -166,21 +206,24 @@ template <typename TVert, typename TTri> void Triangulator2DLinear<TVert, TTri>:
 	}
 }
 
-
 // ----- Triangulator private interface -----
-template <typename TVert, typename TTri> std::vector<ContourPoint>& Triangulator2DLinear<TVert, TTri>::GetContours() {
+template <typename TVert, typename TTri>
+std::vector<ContourPoint> &Triangulator2DLinear<TVert, TTri>::GetContours() {
 	return this->contours;
 }
 
-template <typename TVert, typename TTri> void Triangulator2DLinear<TVert, TTri>::AppendTriangulation() {
+template <typename TVert, typename TTri>
+void Triangulator2DLinear<TVert, TTri>::AppendTriangulation() {
 	// Clear() has been called,  GetContours() called and the contour points filled
 
 	TraceContour();
 	TriangulateEdges((this->flags & TriangulatorFlags::use_cdt) == TriangulatorFlags::use_cdt);
 	this->CreateTris();
 
-	if (this->bold_offset != 0) this->ApplyBold();
-	if (this->italic_offset_x != 0 && this->italic_offset_y != 0) this->ApplyItalic();
+	if (this->bold_offset != 0)
+		this->ApplyBold();
+	if (this->italic_offset_x != 0 && this->italic_offset_y != 0)
+		this->ApplyItalic();
 
 	if ((this->flags & TriangulatorFlags::remove_unused_verts) == TriangulatorFlags::remove_unused_verts) {
 		this->RemoveUnusedVerts();
@@ -194,5 +237,4 @@ template <typename TVert, typename TTri> void Triangulator2DLinear<TVert, TTri>:
 	this->tri_edges.clear();
 }
 
-
-} // namespace
+} //namespace TTFCore

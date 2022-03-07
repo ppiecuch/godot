@@ -1,10 +1,40 @@
+/*************************************************************************/
+/*  TTFFont.h                                                            */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #pragma once
 
-#include <exception>
-#include <vector>
-#include <map>
 #include <cstdint>
+#include <exception>
+#include <map>
 #include <string>
+#include <vector>
 
 #include "TTFExceptions.h"
 #include "TTFMath.h"
@@ -24,8 +54,8 @@ struct TableEntry {
 	uint32_t tag; // 'short' tag
 	uint32_t check_sum;
 	char tagstr[5]; // readable tag
-	const char* begin;
-	const char* end;
+	const char *begin;
+	const char *end;
 
 	TableEntry();
 	bool IsValid() const;
@@ -111,146 +141,152 @@ struct CodePoint {
 	CodePoint(uint32_t code, uint16_t platform, uint16_t encoding, uint16_t language);
 };
 
-struct MapFromData { };
+struct MapFromData {};
 
 class Font {
-	private:
-		// internal types
-		typedef std::map<uint32_t,TableEntry> TableMap; // table mapping type
-		typedef const char* FItr; // Font data 'iterator' (can't be void*, as we need to be able to increment and decrement with it)
-		typedef std::pair<FItr,FItr> FRange; // Font data range
+private:
+	// internal types
+	typedef std::map<uint32_t, TableEntry> TableMap; // table mapping type
+	typedef const char *FItr; // Font data 'iterator' (can't be void*, as we need to be able to increment and decrement with it)
+	typedef std::pair<FItr, FItr> FRange; // Font data range
 
-		// font data
-		TableMap table_map; // maps tag -> raw table data
-		std::vector<char> buffer_cache; // stores the raw font data in the case of locally stored data
-		const char* buffer; // ptr to raw font data
+	// font data
+	TableMap table_map; // maps tag -> raw table data
+	std::vector<char> buffer_cache; // stores the raw font data in the case of locally stored data
+	const char *buffer; // ptr to raw font data
 
-		// read helpers
-		// automatically advances the iterator
-		uint8_t ReadBYTE(FItr&) const;
-		int8_t ReadCHAR(FItr&) const;
-		uint16_t ReadUSHORT(FItr&) const;
-		int16_t ReadSHORT(FItr&) const;
-		uint32_t ReadUINT24(FItr&) const;
-		uint32_t ReadULONG(FItr&) const;
-		int32_t ReadLONG(FItr&) const;
-		int32_t ReadFIXED32(FItr&) const; // reads a 16.16 signed value
-		int64_t ReadLONGDATETIME(FItr&) const;
-		int32_t ReadFIXED16(FItr&) const; // reads a 2.14 signed value and converts it to a 16.16
+	// read helpers
+	// automatically advances the iterator
+	uint8_t ReadBYTE(FItr &) const;
+	int8_t ReadCHAR(FItr &) const;
+	uint16_t ReadUSHORT(FItr &) const;
+	int16_t ReadSHORT(FItr &) const;
+	uint32_t ReadUINT24(FItr &) const;
+	uint32_t ReadULONG(FItr &) const;
+	int32_t ReadLONG(FItr &) const;
+	int32_t ReadFIXED32(FItr &) const; // reads a 16.16 signed value
+	int64_t ReadLONGDATETIME(FItr &) const;
+	int32_t ReadFIXED16(FItr &) const; // reads a 2.14 signed value and converts it to a 16.16
 
-		// read helpers
-		// doesn't advance the iterator (used like ReadBYTE(itr + 6))
-		uint8_t ReadBYTE(FItr&&) const;
-		int8_t ReadCHAR(FItr&&) const;
-		uint16_t ReadUSHORT(FItr&&) const;
-		int16_t ReadSHORT(FItr&&) const;
-		uint32_t ReadUINT24(FItr&&) const;
-		uint32_t ReadULONG(FItr&&) const;
-		int32_t ReadLONG(FItr&&) const;
-		int32_t ReadFIXED32(FItr&&) const; // reads a 16.16 signed value
-		int64_t ReadLONGDATETIME(FItr&&) const;
-		int32_t ReadFIXED16(FItr&&) const; // reads a 2.14 signed value converts it to a 16.16
+	// read helpers
+	// doesn't advance the iterator (used like ReadBYTE(itr + 6))
+	uint8_t ReadBYTE(FItr &&) const;
+	int8_t ReadCHAR(FItr &&) const;
+	uint16_t ReadUSHORT(FItr &&) const;
+	int16_t ReadSHORT(FItr &&) const;
+	uint32_t ReadUINT24(FItr &&) const;
+	uint32_t ReadULONG(FItr &&) const;
+	int32_t ReadLONG(FItr &&) const;
+	int32_t ReadFIXED32(FItr &&) const; // reads a 16.16 signed value
+	int64_t ReadLONGDATETIME(FItr &&) const;
+	int32_t ReadFIXED16(FItr &&) const; // reads a 2.14 signed value converts it to a 16.16
 
-		// more read helpers
-		TTFHeader ReadTTFHeader(FItr&) const;
-		TableEntry ReadTableEntry(FItr&) const;
-		HeadTable ReadHeadTable() const;
-		GlyphProfile ReadMAXPTable() const;
-		int16_t GetIndexToLocFormat() const;
-		uint16_t GetNumGlyphs() const;
+	// more read helpers
+	TTFHeader ReadTTFHeader(FItr &) const;
+	TableEntry ReadTableEntry(FItr &) const;
+	HeadTable ReadHeadTable() const;
+	GlyphProfile ReadMAXPTable() const;
+	int16_t GetIndexToLocFormat() const;
+	uint16_t GetNumGlyphs() const;
 
-		// table helpers
-		uint32_t CreateTag(char, char, char, char) const;
-		uint32_t CreateTag(const char*) const;
-		void DecomposeTag(uint32_t, char*) const; // decomposes the tag into a readable string (must be at least 5 characters long)
-		std::string DecomposeTag(uint32_t) const; // decomposes the tag into a readable string
-		TableEntry GetTableEntry(uint32_t) const; // returns the table entry for a tag
-		bool VerifyTableCheckSum(const TableEntry&) const; // returns true if the table checksum is valid, false otherwise
-		bool VerifyNormalCheckSum(const TableEntry&) const; // verifys checksum for all tables but the 'head' table
-		bool VerifyHeadCheckSum(const TableEntry&) const; // verifys checksum for the 'head' table
+	// table helpers
+	uint32_t CreateTag(char, char, char, char) const;
+	uint32_t CreateTag(const char *) const;
+	void DecomposeTag(uint32_t, char *) const; // decomposes the tag into a readable string (must be at least 5 characters long)
+	std::string DecomposeTag(uint32_t) const; // decomposes the tag into a readable string
+	TableEntry GetTableEntry(uint32_t) const; // returns the table entry for a tag
+	bool VerifyTableCheckSum(const TableEntry &) const; // returns true if the table checksum is valid, false otherwise
+	bool VerifyNormalCheckSum(const TableEntry &) const; // verifys checksum for all tables but the 'head' table
+	bool VerifyHeadCheckSum(const TableEntry &) const; // verifys checksum for the 'head' table
 
-		// initial loading functions
-		void CreateTableMap(); // creates table map entries from font data
-		void VerifyTableCheckSums() const; // verifys all the table checksums, throws an exception on error
-		void VerifyRequiredTables() const; // throws if the required tables are not available
-		void VerifyTrueTypeTables() const; // throws if the required tables for true type outlines are not available
+	// initial loading functions
+	void CreateTableMap(); // creates table map entries from font data
+	void VerifyTableCheckSums() const; // verifys all the table checksums, throws an exception on error
+	void VerifyRequiredTables() const; // throws if the required tables are not available
+	void VerifyTrueTypeTables() const; // throws if the required tables for true type outlines are not available
 
-		// CodePoint to glyph index mappings
-		uint16_t GetGlyphIndexF0(FItr, uint16_t language, uint32_t code) const;
-		uint16_t GetGlyphIndexF2(FItr, uint16_t language, uint32_t code) const;
-		uint16_t GetGlyphIndexF4(FItr, uint16_t language, uint32_t code) const;
-		uint16_t GetGlyphIndexF6(FItr, uint16_t language, uint32_t code) const;
-		uint16_t GetGlyphIndexF8(FItr, uint16_t language, uint32_t code) const;
-		uint16_t GetGlyphIndexF10(FItr, uint16_t language, uint32_t code) const;
-		uint16_t GetGlyphIndexF12(FItr, uint16_t language, uint32_t code) const;
-		uint16_t GetGlyphIndexF13(FItr, uint16_t language, uint32_t code) const;
-		uint16_t GetGlyphIndexF14(FItr, uint16_t language, uint32_t code) const;
+	// CodePoint to glyph index mappings
+	uint16_t GetGlyphIndexF0(FItr, uint16_t language, uint32_t code) const;
+	uint16_t GetGlyphIndexF2(FItr, uint16_t language, uint32_t code) const;
+	uint16_t GetGlyphIndexF4(FItr, uint16_t language, uint32_t code) const;
+	uint16_t GetGlyphIndexF6(FItr, uint16_t language, uint32_t code) const;
+	uint16_t GetGlyphIndexF8(FItr, uint16_t language, uint32_t code) const;
+	uint16_t GetGlyphIndexF10(FItr, uint16_t language, uint32_t code) const;
+	uint16_t GetGlyphIndexF12(FItr, uint16_t language, uint32_t code) const;
+	uint16_t GetGlyphIndexF13(FItr, uint16_t language, uint32_t code) const;
+	uint16_t GetGlyphIndexF14(FItr, uint16_t language, uint32_t code) const;
 
-		// data range mappings
-		FRange GetGlyphRange(uint16_t glyph_index) const; // returns the glyph data for the given code point (called from AddGlyphStrokeData())
+	// data range mappings
+	FRange GetGlyphRange(uint16_t glyph_index) const; // returns the glyph data for the given code point (called from AddGlyphStrokeData())
 
-		// metrics helpers
-		vec2t GetKerning(uint16_t g0, uint16_t g1, bool horizontal) const; // returns the kerning value for the two glyphs (either horizontal or vertical kerning)
-		int16_t ParseKernTableF0(FItr, uint16_t g0, uint16_t g1) const; // parses a format 0 kern table
-		int16_t ParseKernTableF2(FItr, uint16_t g0, uint16_t g1) const; // parses a format 2 kern table
-		uint16_t ParseMSKernTable(FItr, uint16_t glyph_index0, uint16_t glyph_index1, bool horizontal, vec2t&) const; // parses a microsoft version'd kern table, returns the length of the sub table in bytes
-		uint32_t ParseAppleKernTable(FItr, uint16_t glyph_index0, uint16_t glyph_index1, bool horizontal, vec2t&) const; // parses an apple version'd kern table, returns the length of the sub table in bytes
+	// metrics helpers
+	vec2t GetKerning(uint16_t g0, uint16_t g1, bool horizontal) const; // returns the kerning value for the two glyphs (either horizontal or vertical kerning)
+	int16_t ParseKernTableF0(FItr, uint16_t g0, uint16_t g1) const; // parses a format 0 kern table
+	int16_t ParseKernTableF2(FItr, uint16_t g0, uint16_t g1) const; // parses a format 2 kern table
+	uint16_t ParseMSKernTable(FItr, uint16_t glyph_index0, uint16_t glyph_index1, bool horizontal, vec2t &) const; // parses a microsoft version'd kern table, returns the length of the sub table in bytes
+	uint32_t ParseAppleKernTable(FItr, uint16_t glyph_index0, uint16_t glyph_index1, bool horizontal, vec2t &) const; // parses an apple version'd kern table, returns the length of the sub table in bytes
 
-		// triangulation functions
-		void FillContours(FItr, ContourData&) const; // used for simple glyphs, fills the contours cache
-		bool ReadGlyphFlags(FItr&, matrix3x2t& matrix, uint16_t& glyph_index) const; // used for complex glyphs, reads the transformation matrix and glyph index, returns true if there are more transforms
-		template <typename TTriangulator> void AppendSimple(FItr, TTriangulator&, matrix3x2t) const; // triangulates the data in the contours cache, appends to the mesh
-		template <typename TTriangulator> void AppendComplex(FItr, TTriangulator&, matrix3x2t) const; // appends the complex glyph to the mesh
-		template <typename TTriangulator> void AppendGlyph(uint16_t glyph_index, TTriangulator&, matrix3x2t) const; // entry point for triangulation
+	// triangulation functions
+	void FillContours(FItr, ContourData &) const; // used for simple glyphs, fills the contours cache
+	bool ReadGlyphFlags(FItr &, matrix3x2t &matrix, uint16_t &glyph_index) const; // used for complex glyphs, reads the transformation matrix and glyph index, returns true if there are more transforms
+	template <typename TTriangulator>
+	void AppendSimple(FItr, TTriangulator &, matrix3x2t) const; // triangulates the data in the contours cache, appends to the mesh
+	template <typename TTriangulator>
+	void AppendComplex(FItr, TTriangulator &, matrix3x2t) const; // appends the complex glyph to the mesh
+	template <typename TTriangulator>
+	void AppendGlyph(uint16_t glyph_index, TTriangulator &, matrix3x2t) const; // entry point for triangulation
 
-	public:
-		explicit Font(std::string file_name); // construct from file
-		Font(const void* raw_data, MapFromData); // map from raw data (no copy made, data must exist for the duration of the Font object)
-		Font(const void* raw_data, size_t length); // copy from raw data
-		Font(const Font&);
-		Font(Font&&);
-		Font& operator=(const Font&);
-		Font& operator=(Font&&);
-		~Font();
+public:
+	explicit Font(std::string file_name); // construct from file
+	Font(const void *raw_data, MapFromData); // map from raw data (no copy made, data must exist for the duration of the Font object)
+	Font(const void *raw_data, size_t length); // copy from raw data
+	Font(const Font &);
+	Font(Font &&);
+	Font &operator=(const Font &);
+	Font &operator=(Font &&);
+	~Font();
 
-		// font info
-		vec4t GetMasterRect() const; // returns a vec4f in font units that encloses every glyph, format is (xMin,yMin,xMax,yMax)
-		FontMetrics GetFontMetrics() const; // returns the horizontal font metrics
-		VFontMetrics GetVFontMetrics() const; // returns the vertical font metrics (if they exists)
-		uint16_t GlyphCount() const; // returns the total number of glyphs in this font
-		uint16_t UnitsPerEM() const; // returns font units per 'EM' square metric, use ((pt_size * screen_dpi) / (72 * units_per_em)) to convert font units to pixels
+	// font info
+	vec4t GetMasterRect() const; // returns a vec4f in font units that encloses every glyph, format is (xMin,yMin,xMax,yMax)
+	FontMetrics GetFontMetrics() const; // returns the horizontal font metrics
+	VFontMetrics GetVFontMetrics() const; // returns the vertical font metrics (if they exists)
+	uint16_t GlyphCount() const; // returns the total number of glyphs in this font
+	uint16_t UnitsPerEM() const; // returns font units per 'EM' square metric, use ((pt_size * screen_dpi) / (72 * units_per_em)) to convert font units to pixels
 
-		// glyph info
-		uint16_t GetGlyphIndex(CodePoint) const; // translates a code point to its glyph index
-		vec4t GetGlyphRect(uint16_t glyph_index) const; // returns a vec4t in font units that encloses the glyph, format is (xMin,yMin,xMax,yMax)
-		vec4t GetGlyphRect(CodePoint) const; // returns a vec4t in font units that encloses the glyph, format is (xMin,yMin,xMax,yMax)
-		GlyphMetrics GetGlyphMetrics(uint16_t glyph_index) const; // returns the specific glyph horizontal metrics
-		GlyphMetrics GetGlyphMetrics(CodePoint) const; // returns the specific glyph horizontal metrics
-		VGlyphMetrics GetVGlyphMetrics(uint16_t glyph_index) const; // returns vertical glyph metrics (specified by glyphIndex)
-		VGlyphMetrics GetVGlyphMetrics(CodePoint) const; // returns the specific glyph vertical metrics (if they exists)
+	// glyph info
+	uint16_t GetGlyphIndex(CodePoint) const; // translates a code point to its glyph index
+	vec4t GetGlyphRect(uint16_t glyph_index) const; // returns a vec4t in font units that encloses the glyph, format is (xMin,yMin,xMax,yMax)
+	vec4t GetGlyphRect(CodePoint) const; // returns a vec4t in font units that encloses the glyph, format is (xMin,yMin,xMax,yMax)
+	GlyphMetrics GetGlyphMetrics(uint16_t glyph_index) const; // returns the specific glyph horizontal metrics
+	GlyphMetrics GetGlyphMetrics(CodePoint) const; // returns the specific glyph horizontal metrics
+	VGlyphMetrics GetVGlyphMetrics(uint16_t glyph_index) const; // returns vertical glyph metrics (specified by glyphIndex)
+	VGlyphMetrics GetVGlyphMetrics(CodePoint) const; // returns the specific glyph vertical metrics (if they exists)
 
-		// kerning info
-		vec2t GetKerning(uint16_t g0, uint16_t g1) const; // returns horizontal kerning value for the pair of glyphs (offset in both x and y directions moving from g1 to g2)
-		vec2t GetKerning(CodePoint, CodePoint) const; // returns horizontal kerning value for the pair of glyphs (offset in both x and y directions moving from g1 to g2)
-		vec2t GetVKerning(uint16_t g0, uint16_t g1) const; // returns vertical kerning value for the pair of glyphs (offset in both x and y directions moving from g1 to g2)
-		vec2t GetVKerning(CodePoint, CodePoint) const; // returns vertical kerning value for the pair of glyphs (offset in both x and y directions moving from g1 to g2)
+	// kerning info
+	vec2t GetKerning(uint16_t g0, uint16_t g1) const; // returns horizontal kerning value for the pair of glyphs (offset in both x and y directions moving from g1 to g2)
+	vec2t GetKerning(CodePoint, CodePoint) const; // returns horizontal kerning value for the pair of glyphs (offset in both x and y directions moving from g1 to g2)
+	vec2t GetVKerning(uint16_t g0, uint16_t g1) const; // returns vertical kerning value for the pair of glyphs (offset in both x and y directions moving from g1 to g2)
+	vec2t GetVKerning(CodePoint, CodePoint) const; // returns vertical kerning value for the pair of glyphs (offset in both x and y directions moving from g1 to g2)
 
-		// glyph triangulation
-		template <typename TTriangulator> void TriangulateGlyph(uint16_t glyph_index, TTriangulator&) const;
-		template <typename TTriangulator> void TriangulateGlyph(CodePoint, TTriangulator&) const;
+	// glyph triangulation
+	template <typename TTriangulator>
+	void TriangulateGlyph(uint16_t glyph_index, TTriangulator &) const;
+	template <typename TTriangulator>
+	void TriangulateGlyph(CodePoint, TTriangulator &) const;
 };
 
-template <typename TTriangulator> void Font::AppendSimple(FItr itr, TTriangulator& triangulator, matrix3x2t transform) const {
-	ContourData& contours = triangulator.GetContours();
+template <typename TTriangulator>
+void Font::AppendSimple(FItr itr, TTriangulator &triangulator, matrix3x2t transform) const {
+	ContourData &contours = triangulator.GetContours();
 	FillContours(itr, contours);
-	for (ContourPoint& p : contours) {
+	for (ContourPoint &p : contours) {
 		p.pos = mul(p.pos, transform);
 	}
 	triangulator.AppendTriangulation();
 }
 
-template <typename TTriangulator> void Font::AppendComplex(FItr itr, TTriangulator& triangulator, matrix3x2t transform) const {
-
+template <typename TTriangulator>
+void Font::AppendComplex(FItr itr, TTriangulator &triangulator, matrix3x2t transform) const {
 	// skip header
 	itr += 10;
 
@@ -264,27 +300,34 @@ template <typename TTriangulator> void Font::AppendComplex(FItr itr, TTriangulat
 	} while (continue_loop);
 }
 
-template <typename TTriangulator> void Font::AppendGlyph(uint16_t glyph_index, TTriangulator& triangulator, matrix3x2t transform) const {
+template <typename TTriangulator>
+void Font::AppendGlyph(uint16_t glyph_index, TTriangulator &triangulator, matrix3x2t transform) const {
 	// get glyph data
 	auto range = GetGlyphRange(glyph_index);
-	if (range.first == range.second) return; // empty / no glyph data
+	if (range.first == range.second)
+		return; // empty / no glyph data
 	FItr itr = range.first;
 
 	// get glyph contours
 	int16_t contour_count = ReadSHORT(itr + 0); // prevent incrementing the iterator
-	if (contour_count > 0) return AppendSimple(itr, triangulator, transform);
-	else if (contour_count == -1) return AppendComplex(itr, triangulator, transform);
-	else throw InvalidFontException("Unknown contour_count in glyph data.");	
+	if (contour_count > 0)
+		return AppendSimple(itr, triangulator, transform);
+	else if (contour_count == -1)
+		return AppendComplex(itr, triangulator, transform);
+	else
+		throw InvalidFontException("Unknown contour_count in glyph data.");
 }
 
-template <typename TTriangulator> void Font::TriangulateGlyph(uint16_t glyph_index, TTriangulator& triangulator) const {
+template <typename TTriangulator>
+void Font::TriangulateGlyph(uint16_t glyph_index, TTriangulator &triangulator) const {
 	triangulator.Clear();
 	AppendGlyph(glyph_index, triangulator, matrix3x2t());
 }
 
-template <typename TTriangulator> void Font::TriangulateGlyph(CodePoint cp, TTriangulator& triangulator) const {
+template <typename TTriangulator>
+void Font::TriangulateGlyph(CodePoint cp, TTriangulator &triangulator) const {
 	triangulator.Clear();
 	AppendGlyph(GetGlyphIndex(cp), triangulator, matrix3x2t());
 }
 
-} // namespace
+} //namespace TTFCore

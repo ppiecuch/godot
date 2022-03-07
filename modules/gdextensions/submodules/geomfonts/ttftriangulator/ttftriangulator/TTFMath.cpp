@@ -1,6 +1,36 @@
-#include <cstdint>
+/*************************************************************************/
+/*  TTFMath.cpp                                                          */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 
 #include "TTFExceptions.h"
 #include "TTFMath.h"
@@ -9,54 +39,59 @@ using namespace TTFCore;
 
 // ----- vec2f -----
 vec2f::vec2f() {}
-vec2f::vec2f(float x_, float y_) : x(x_), y(y_) {}
+vec2f::vec2f(float x_, float y_) :
+		x(x_), y(y_) {}
 
-bool vec2f::operator==(vec2f v) const { return x == v.x && y == v.y; }
-bool vec2f::operator!=(vec2f v) const { return x != v.x || y != v.y; }
+bool vec2f::operator==(vec2f v) const {
+	return x == v.x && y == v.y;
+}
+bool vec2f::operator!=(vec2f v) const {
+	return x != v.x || y != v.y;
+}
 
-vec2f& vec2f::operator+=(vec2f v) {
+vec2f &vec2f::operator+=(vec2f v) {
 	x += v.x;
 	y += v.y;
 	return *this;
 }
 
-vec2f& vec2f::operator-=(vec2f v) {
+vec2f &vec2f::operator-=(vec2f v) {
 	x -= v.x;
 	y -= v.y;
 	return *this;
 }
 
-vec2f& vec2f::operator*=(vec2f v) {
+vec2f &vec2f::operator*=(vec2f v) {
 	x *= v.x;
 	y *= v.y;
 	return *this;
 }
 
-vec2f& vec2f::operator/=(vec2f v) {
+vec2f &vec2f::operator/=(vec2f v) {
 	x /= v.x;
 	y /= v.y;
 	return *this;
 }
 
-vec2f& vec2f::operator+=(float f) {
+vec2f &vec2f::operator+=(float f) {
 	x += f;
 	y += f;
 	return *this;
 }
 
-vec2f& vec2f::operator-=(float f) {
+vec2f &vec2f::operator-=(float f) {
 	x -= f;
 	y -= f;
 	return *this;
 }
 
-vec2f& vec2f::operator*=(float f) {
+vec2f &vec2f::operator*=(float f) {
 	x *= f;
 	y *= f;
 	return *this;
 }
 
-vec2f& vec2f::operator/=(float f) {
+vec2f &vec2f::operator/=(float f) {
 	x /= f;
 	y /= f;
 	return *this;
@@ -111,43 +146,46 @@ vec2f TTFCore::operator/(vec2f v0, float f) {
 }
 
 float TTFCore::dot(vec2f v0, vec2f v1) {
-	return(v0.x*v1.x) + (v0.y*v1.y);
+	return (v0.x * v1.x) + (v0.y * v1.y);
 }
 
 float TTFCore::cross(vec2f v0, vec2f v1) {
-	return(v0.x*v1.y) - (v0.y*v1.x);
+	return (v0.x * v1.y) - (v0.y * v1.x);
 }
 
-
 // ----- matrix3x2f -----
-matrix3x2f::matrix3x2f() : a(1.0f), b(0.0f), c(0.0f), d(1.0f), e(0.0f), f(0.0f) { }
+matrix3x2f::matrix3x2f() :
+		a(1.0f), b(0.0f), c(0.0f), d(1.0f), e(0.0f), f(0.0f) {}
 
-vec2f TTFCore::mul(vec2f v, const matrix3x2f& m) {
+vec2f TTFCore::mul(vec2f v, const matrix3x2f &m) {
 	// obviously you can't multiply a 2d vector with a 3x2 matrix
 	// in this case we 'extend' the 2d vector to a 3d vector by appending 1.0f
 	// course this need'nt be done explicitly
 
-	return vec2f( v.x*m.a + v.y*m.c + m.e , v.x*m.b + v.y*m.d + m.f );
+	return vec2f(v.x * m.a + v.y * m.c + m.e, v.x * m.b + v.y * m.d + m.f);
 }
 
 vec2f TTFCore::normal(vec2f v) {
-	return v / std::sqrtf(dot(v,v));
+	return v / std::sqrtf(dot(v, v));
 }
 
 vec2f TTFCore::lerp(vec2f p0, vec2f p1, float f) {
-	if (f <= 0.0) return p0;
-	if (f >= 1.0) return p1;
+	if (f <= 0.0)
+		return p0;
+	if (f >= 1.0)
+		return p1;
 	return p0 + ((p1 - p0) * f);
 }
 
 vec2f TTFCore::quad_lerp(vec2f p0, vec2f p1, vec2f p2, float f) {
-	if (f <= 0.0) return p0;
-	if (f >= 1.0) return p1;
+	if (f <= 0.0)
+		return p0;
+	if (f >= 1.0)
+		return p1;
 	vec2f t0 = p0 + ((p1 - p0) * f);
 	vec2f t1 = p1 + ((p2 - p1) * f);
 	return t0 + ((t1 - t0) * f);
 }
-
 
 // ---------------------------------------------------------------------------------------------------------------------------
 //	vec3f / vec4f
@@ -155,72 +193,78 @@ vec2f TTFCore::quad_lerp(vec2f p0, vec2f p1, vec2f p2, float f) {
 
 // ----- vec3f -----
 vec3f::vec3f() {}
-vec3f::vec3f(float x_, float y_, float z_) : x(x_), y(y_), z(z_) {}
+vec3f::vec3f(float x_, float y_, float z_) :
+		x(x_), y(y_), z(z_) {}
 
 vec3f TTFCore::normal(vec3f v) {
-	const float w = 1.0f / std::sqrtf(v.x * v.x + v.y + v.y + v.z*v.z);
+	const float w = 1.0f / std::sqrtf(v.x * v.x + v.y + v.y + v.z * v.z);
 	return vec3f(v.x * w, v.y * w, v.z * w);
 }
 
 // ----- vec4f -----
-vec4f::vec4f() { }
-vec4f::vec4f(float x_, float y_, float z_, float w_) : x(x_), y(y_), z(z_), w(w_) { }
-
+vec4f::vec4f() {}
+vec4f::vec4f(float x_, float y_, float z_, float w_) :
+		x(x_), y(y_), z(z_), w(w_) {}
 
 // ---------------------------------------------------------------------------------------------------------------------------
 //	interger functions/types
 // ---------------------------------------------------------------------------------------------------------------------------
 
 // ----- vec2t -----
-vec2t::vec2t() { }
-vec2t::vec2t(int16_t x_, int16_t y_) : x(x_), y(y_) { }
+vec2t::vec2t() {}
+vec2t::vec2t(int16_t x_, int16_t y_) :
+		x(x_), y(y_) {}
 
-bool vec2t::operator==(vec2t v) const { return x == v.x && y == v.y; }
-bool vec2t::operator!=(vec2t v) const { return x != v.x || y != v.y; }
+bool vec2t::operator==(vec2t v) const {
+	return x == v.x && y == v.y;
+}
+bool vec2t::operator!=(vec2t v) const {
+	return x != v.x || y != v.y;
+}
 
-vec2t& vec2t::operator+=(vec2t v) {
+vec2t &vec2t::operator+=(vec2t v) {
 	x += v.x;
 	y += v.y;
 	return *this;
 }
 
-vec2t& vec2t::operator-=(vec2t v) {
+vec2t &vec2t::operator-=(vec2t v) {
 	x -= v.x;
 	y -= v.y;
 	return *this;
 }
 
-vec2t& vec2t::operator*=(vec2t v) {
+vec2t &vec2t::operator*=(vec2t v) {
 	x *= v.x;
 	y *= v.y;
 	return *this;
 }
 
-vec2t& vec2t::operator/=(vec2t v) {
+vec2t &vec2t::operator/=(vec2t v) {
 	x /= v.x;
 	y /= v.y;
 	return *this;
 }
 
-vec2t& vec2t::operator+=(int16_t v) {
+vec2t &vec2t::operator+=(int16_t v) {
 	x += v;
 	y += v;
 	return *this;
 }
 
-vec2t& vec2t::operator-=(int16_t v) {
+vec2t &vec2t::operator-=(int16_t v) {
 	x -= v;
 	y -= v;
 	return *this;
 }
 
-vec2t& vec2t::operator*=(int16_t v) {
+vec2t &vec2t::operator*=(int16_t v) {
 	x *= v;
 	y *= v;
 	return *this;
 }
 
-vec2t& vec2t::operator/=(int16_t v) {
+vec2t &vec2t::operator/=(int16_t v) {
 	x /= v;
 	y /= v;
 	return *this;
@@ -275,23 +319,21 @@ vec2t TTFCore::operator/(vec2t v0, int16_t v) {
 }
 
 int32_t TTFCore::dot(vec2t v0, vec2t v1) {
-
 	int32_t a = v0.x;
 	int32_t b = v0.y;
 	int32_t c = v1.x;
 	int32_t d = v1.y;
 
-	return(a*c) + (b*d);
+	return (a * c) + (b * d);
 }
 
 int32_t TTFCore::cross(vec2t v0, vec2t v1) {
-
 	int32_t a = v0.x;
 	int32_t b = v0.y;
 	int32_t c = v1.x;
 	int32_t d = v1.y;
 
-	return(a*d) - (b*c);
+	return (a * d) - (b * c);
 }
 
 // ----- matrix3x2t -----
@@ -301,7 +343,7 @@ matrix3x2t::matrix3x2t() {
 	c = 0;
 	d = 1 << 16;
 	e = 0;
-	f = 0;	
+	f = 0;
 }
 
 int32_t TTFCore::fxmul(int32_t a, int32_t b) {
@@ -310,8 +352,7 @@ int32_t TTFCore::fxmul(int32_t a, int32_t b) {
 	return static_cast<int32_t>(r);
 }
 
-matrix3x2t TTFCore::mul(const matrix3x2t& m0, const matrix3x2t& m1) {
-	
+matrix3x2t TTFCore::mul(const matrix3x2t &m0, const matrix3x2t &m1) {
 	matrix3x2t m;
 	m.a = fxmul(m0.a, m1.a) + fxmul(m0.b, m1.c);
 	m.b = fxmul(m0.a, m1.b) + fxmul(m0.b, m1.d);
@@ -323,19 +364,16 @@ matrix3x2t TTFCore::mul(const matrix3x2t& m0, const matrix3x2t& m1) {
 	return m;
 }
 
-vec2t TTFCore::mul(vec2t v, const matrix3x2t& m) {
-	
+vec2t TTFCore::mul(vec2t v, const matrix3x2t &m) {
 	const int32_t round = 1 << 15;
 
 	int32_t x = v.x;
 	int32_t y = v.y;
 
 	return vec2t(
-		static_cast<int16_t>((x*m.a + y*m.c + m.e + round) >> 16),
-		static_cast<int16_t>((x*m.b + y*m.d + m.f + round) >> 16)
-	);
+			static_cast<int16_t>((x * m.a + y * m.c + m.e + round) >> 16),
+			static_cast<int16_t>((x * m.b + y * m.d + m.f + round) >> 16));
 }
-
 
 // ----- vec3t -----
 vec3t::vec3t() {}
@@ -360,59 +398,63 @@ vec3t::operator vec2t() const {
 	return vec2t(x, y);
 }
 
-bool TTFCore::operator==(vec3t a, vec3t b) { return a.x == b.x && a.y == b.y && a.z == b.z; }
-bool TTFCore::operator!=(vec3t a, vec3t b) { return a.x != b.x || a.y != b.y || a.z != b.z; }
+bool TTFCore::operator==(vec3t a, vec3t b) {
+	return a.x == b.x && a.y == b.y && a.z == b.z;
+}
+bool TTFCore::operator!=(vec3t a, vec3t b) {
+	return a.x != b.x || a.y != b.y || a.z != b.z;
+}
 
-vec3t& TTFCore::operator+=(vec3t& a, vec3t b) {
+vec3t &TTFCore::operator+=(vec3t &a, vec3t b) {
 	a.x += b.x;
 	a.y += b.y;
 	a.z += b.z;
 	return a;
 }
 
-vec3t& TTFCore::operator-=(vec3t& a, vec3t b) {
+vec3t &TTFCore::operator-=(vec3t &a, vec3t b) {
 	a.x -= b.x;
 	a.y -= b.y;
 	a.z -= b.z;
 	return a;
 }
 
-vec3t& TTFCore::operator*=(vec3t& a, vec3t b) {
+vec3t &TTFCore::operator*=(vec3t &a, vec3t b) {
 	a.x *= b.x;
 	a.y *= b.y;
 	a.z *= b.z;
 	return a;
 }
 
-vec3t& TTFCore::operator/=(vec3t& a, vec3t b) {
+vec3t &TTFCore::operator/=(vec3t &a, vec3t b) {
 	a.x /= b.x;
 	a.y /= b.y;
 	a.z /= b.z;
 	return a;
 }
 
-vec3t& TTFCore::operator+=(vec3t& a, int16_t b) {
+vec3t &TTFCore::operator+=(vec3t &a, int16_t b) {
 	a.x += b;
 	a.y += b;
 	a.z += b;
 	return a;
 }
 
-vec3t& TTFCore::operator-=(vec3t& a, int16_t b) {
+vec3t &TTFCore::operator-=(vec3t &a, int16_t b) {
 	a.x -= b;
 	a.y -= b;
 	a.z -= b;
 	return a;
 }
 
-vec3t& TTFCore::operator*=(vec3t& a, int16_t b) {
+vec3t &TTFCore::operator*=(vec3t &a, int16_t b) {
 	a.x *= b;
 	a.y *= b;
 	a.z *= b;
 	return a;
 }
 
-vec3t& TTFCore::operator/=(vec3t& a, int16_t b) {
+vec3t &TTFCore::operator/=(vec3t &a, int16_t b) {
 	a.x /= b;
 	a.y /= b;
 	a.z /= b;
@@ -468,10 +510,10 @@ vec3t TTFCore::operator/(vec3t a, int16_t b) {
 }
 
 int32_t TTFCore::dot(vec3t a, vec3t b) {
-	return a.x * b.x + a.y *b.y + a.z * b.z;
+	return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
-vec3t TTFCore::mul(vec3t v, const matrix3x2t& m) {
+vec3t TTFCore::mul(vec3t v, const matrix3x2t &m) {
 	// not really a true multiply
 
 	const int32_t round = 1 << 15;
@@ -480,15 +522,13 @@ vec3t TTFCore::mul(vec3t v, const matrix3x2t& m) {
 	int32_t y = v.y;
 
 	return vec3t(
-		static_cast<int16_t>((x*m.a + y*m.c + m.e + round) >> 16),
-		static_cast<int16_t>((x*m.b + y*m.d + m.f + round) >> 16),
-		v.z
-	);
+			static_cast<int16_t>((x * m.a + y * m.c + m.e + round) >> 16),
+			static_cast<int16_t>((x * m.b + y * m.d + m.f + round) >> 16),
+			v.z);
 }
 
-
 // ----- vec4t -----
-vec4t::vec4t() { }
+vec4t::vec4t() {}
 
 vec4t::vec4t(int16_t x_, int16_t y_, int16_t z_, int16_t w_) {
 	x = x_;
@@ -496,7 +536,6 @@ vec4t::vec4t(int16_t x_, int16_t y_, int16_t z_, int16_t w_) {
 	z = z_;
 	w = w_;
 }
-
 
 // ----- various functions -----
 int32_t TTFCore::Abs(int32_t x) {
@@ -506,40 +545,48 @@ int32_t TTFCore::Abs(int32_t x) {
 int32_t TTFCore::IntSqrt(int32_t m) {
 	// by Tristan Muntsinger from http://www.codecodex.com/wiki/Calculate_an_integer_square_root
 
-	if (m <= 0) return 0;
+	if (m <= 0)
+		return 0;
 	uint32_t n = static_cast<uint32_t>(m);
 	uint32_t c = 0x8000;
 	uint32_t g = 0x8000;
 
-	for(;;) {
-        if(g*g > n) g ^= c;
-        c >>= 1;
-        if(c == 0) return static_cast<int32_t>(g);
+	for (;;) {
+		if (g * g > n)
+			g ^= c;
+		c >>= 1;
+		if (c == 0)
+			return static_cast<int32_t>(g);
 		g |= c;
 	}
 }
 
 int16_t TTFCore::RoundBy16(int32_t x) {
 	const int32_t round = 1 << 15;
-	if(x >= 0) return static_cast<int16_t>((x + round) >> 16);
-	else return static_cast<int16_t>((x - round) >> 16);
+	if (x >= 0)
+		return static_cast<int16_t>((x + round) >> 16);
+	else
+		return static_cast<int16_t>((x - round) >> 16);
 }
 
 int32_t TTFCore::RoundBy16Large(int32_t x) {
 	const int32_t round = 1 << 15;
-	if(x >= 0) return(x + round) >> 16;
-	else return(x - round) >> 16;
+	if (x >= 0)
+		return (x + round) >> 16;
+	else
+		return (x - round) >> 16;
 }
 
 int16_t TTFCore::RoundBy2(int16_t x) {
-	if(x >= 0) return(x + 1) >> 1;
-	else return(x - 1) >> 1;
+	if (x >= 0)
+		return (x + 1) >> 1;
+	else
+		return (x - 1) >> 1;
 }
 
 vec2t TTFCore::RoundBy2(vec2t v) {
 	return vec2t(RoundBy2(v.x), RoundBy2(v.y));
 }
-
 
 // ---------------------------------------------------------------------------------------------------------------------------
 //	triangulation helpers
@@ -551,7 +598,7 @@ int32_t TTFCore::GetTriSign(vec2t p0, vec2t p1, vec2t p2) {
 	// +result = CCW rotation = outer, -result = CW rotation = inner
 	vec2t e0 = p2 - p0;
 	vec2t e1 = p1 - p0;
-	return cross(e0,e1); // use the '2d' cross product to determine sign
+	return cross(e0, e1); // use the '2d' cross product to determine sign
 }
 
 bool TTFCore::IsContained(vec2t p0, vec2t p1, vec2t p2, vec2t p3) {
@@ -571,9 +618,12 @@ bool TTFCore::IsContained(vec2t p0, vec2t p1, vec2t p2, vec2t p3) {
 	int32_t c2x3 = cross(v2, v3);
 
 	// determine containment
-	if (c1x2 < 0)			return c1x3 < 0 && c2x3 > 0; // RRL
-	else if (c1x2 > 0)	return c1x3 < 0 || c2x3 > 0; // LRX or LXL
-	else						return c1x3 < 0 && c2x3 > 0 && dot(v1, v2) < 0; // 0RL (if v1 and v2 are directed in the same direction, dot product is positive, the result is degenerate and no vector could be inside)
+	if (c1x2 < 0)
+		return c1x3 < 0 && c2x3 > 0; // RRL
+	else if (c1x2 > 0)
+		return c1x3 < 0 || c2x3 > 0; // LRX or LXL
+	else
+		return c1x3 < 0 && c2x3 > 0 && dot(v1, v2) < 0; // 0RL (if v1 and v2 are directed in the same direction, dot product is positive, the result is degenerate and no vector could be inside)
 }
 
 bool TTFCore::Intersect2D(vec2t p0, vec2t p1, vec2t p2, vec2t p3) {
@@ -591,12 +641,14 @@ bool TTFCore::Intersect2D(vec2t p0, vec2t p1, vec2t p2, vec2t p3) {
 	// solving for u = (qp x r) / (r x s)
 
 	// check null lines
-	if (p0 == p1 || p2 == p3) return false; // return false if either line segment is null
+	if (p0 == p1 || p2 == p3)
+		return false; // return false if either line segment is null
 
 	// check for identical lines
 	// logically I would place this within the (rxs == 0) test
 	// but for performance sake this is 'hoisted' out and above
-	if ((p0 == p2 && p1 == p3) || (p0 == p3 && p1 == p2)) return true; // lines are identical
+	if ((p0 == p2 && p1 == p3) || (p0 == p3 && p1 == p2))
+		return true; // lines are identical
 
 	// initialize variables
 	vec2t r = p1 - p0;
@@ -612,17 +664,20 @@ bool TTFCore::Intersect2D(vec2t p0, vec2t p1, vec2t p2, vec2t p3) {
 			int32_t qpr = dot(qp, r);
 			int32_t qps = dot(qp, s);
 			return (qpr > 0 && qpr < dot(r, r)) || (qps > 0 && qps < dot(s, s)); // intersect
-		} else return false;
+		} else
+			return false;
 	} else {
-
 		// check for vertex sharing
 		// shared vertex and not colinear -> no way they can intersect
-		if (p0 == p2 || p0 == p3 || p1 == p2 || p1 == p3) return false;
+		if (p0 == p2 || p0 == p3 || p1 == p2 || p1 == p3)
+			return false;
 
 		// we use an inclusive check here (>= not >, and <= not <) so that T-like intersections return true
 		// the case where lines intersect only at the vertex is aready covereted above
-		if (rxs > 0) return tt >= 0 && tt <= rxs && ut >= 0 && ut <= rxs;
-		else return tt <= 0 && tt >= rxs && ut <= 0 && ut >= rxs;
+		if (rxs > 0)
+			return tt >= 0 && tt <= rxs && ut >= 0 && ut <= rxs;
+		else
+			return tt <= 0 && tt >= rxs && ut <= 0 && ut >= rxs;
 	}
 
 	// old intersection test
@@ -646,7 +701,7 @@ vec2t TTFCore::ScaledNormal(vec2t v, int16_t w) {
 	// a bit verbose because we perform intermediate calculations with 32-bit integers
 	int32_t x = v.x;
 	int32_t y = v.y;
-	int32_t len = IntSqrt(x*x + y*y);
+	int32_t len = IntSqrt(x * x + y * y);
 	x = (x * static_cast<int32_t>(w)) / len;
 	y = (y * static_cast<int32_t>(w)) / len;
 	return vec2t(static_cast<int16_t>(x), static_cast<int16_t>(y));
@@ -674,9 +729,8 @@ vec2t TTFCore::lerp(vec2t p0, vec2t p1, uint16_t f) {
 }
 
 vec2t TTFCore::quad_lerp(vec2t p0, vec2t p1, vec2t p2, uint16_t f) {
-	return lerp(lerp(p0,p1,f),lerp(p1,p2,f),f);
+	return lerp(lerp(p0, p1, f), lerp(p1, p2, f), f);
 }
-
 
 // ----- vec3t -----
 int32_t TTFCore::GetTriSign(vec3t p0, vec3t p1, vec3t p2) {
@@ -723,5 +777,5 @@ vec3t TTFCore::lerp(vec3t p0, vec3t p1, uint16_t f) {
 }
 
 vec3t TTFCore::quad_lerp(vec3t p0, vec3t p1, vec3t p2, uint16_t f) {
-	return lerp(lerp(p0,p1,f),lerp(p1,p2,f),f);
+	return lerp(lerp(p0, p1, f), lerp(p1, p2, f), f);
 }

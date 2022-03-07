@@ -251,61 +251,61 @@ void Vector<T>::fill(T p_elem) {
 }
 
 namespace helper {
-	template <class T>
-	Vector<T> vector() {
-		Vector<T>();
-	}
-	template <class T>
-	Vector<T> vector(const T &p_arg1) {
-		Vector<T> p;
-		p.push_back(p_arg1);
-		return p;
-	}
-	template <class T>
-	Vector<T> vector(const T &p_arg1, const T &p_arg2) {
-		Vector<T> p;
-		p.push_back(p_arg1);
-		p.push_back(p_arg2);
-		return p;
-	}
-	template <class T>
-	Vector<T> vector(const T &p_arg1, const T &p_arg2, const T &p_arg3) {
-		Vector<T> p;
-		p.push_back(p_arg1);
-		p.push_back(p_arg2);
-		p.push_back(p_arg3);
-		return p;
-	}
-	template <class T>
-	Vector<T> vector(const T &p_arg1, const T &p_arg2, const T &p_arg3, const T &p_arg4) {
-		Vector<T> p;
-		p.push_back(p_arg1);
-		p.push_back(p_arg2);
-		p.push_back(p_arg3);
-		p.push_back(p_arg4);
-		return p;
-	}
-	template <class T>
-	Vector<T> vector(const T &p_arg1, const T &p_arg2, const T &p_arg3, const T &p_arg4, const T &p_arg5) {
-		Vector<T> p;
-		p.push_back(p_arg1);
-		p.push_back(p_arg2);
-		p.push_back(p_arg3);
-		p.push_back(p_arg4);
-		p.push_back(p_arg5);
-		return p;
-	}
-	template <class T>
-	Vector<T> vector(const T &p_arg1, const T &p_arg2, const T &p_arg3, const T &p_arg4, const T &p_arg5, const T &p_arg6) {
-		Vector<T> p;
-		p.push_back(p_arg1);
-		p.push_back(p_arg2);
-		p.push_back(p_arg3);
-		p.push_back(p_arg4);
-		p.push_back(p_arg5);
-		p.push_back(p_arg6);
-		return p;
-	}
+template <class T>
+Vector<T> vector() {
+	Vector<T>();
+}
+template <class T>
+Vector<T> vector(const T &p_arg1) {
+	Vector<T> p;
+	p.push_back(p_arg1);
+	return p;
+}
+template <class T>
+Vector<T> vector(const T &p_arg1, const T &p_arg2) {
+	Vector<T> p;
+	p.push_back(p_arg1);
+	p.push_back(p_arg2);
+	return p;
+}
+template <class T>
+Vector<T> vector(const T &p_arg1, const T &p_arg2, const T &p_arg3) {
+	Vector<T> p;
+	p.push_back(p_arg1);
+	p.push_back(p_arg2);
+	p.push_back(p_arg3);
+	return p;
+}
+template <class T>
+Vector<T> vector(const T &p_arg1, const T &p_arg2, const T &p_arg3, const T &p_arg4) {
+	Vector<T> p;
+	p.push_back(p_arg1);
+	p.push_back(p_arg2);
+	p.push_back(p_arg3);
+	p.push_back(p_arg4);
+	return p;
+}
+template <class T>
+Vector<T> vector(const T &p_arg1, const T &p_arg2, const T &p_arg3, const T &p_arg4, const T &p_arg5) {
+	Vector<T> p;
+	p.push_back(p_arg1);
+	p.push_back(p_arg2);
+	p.push_back(p_arg3);
+	p.push_back(p_arg4);
+	p.push_back(p_arg5);
+	return p;
+}
+template <class T>
+Vector<T> vector(const T &p_arg1, const T &p_arg2, const T &p_arg3, const T &p_arg4, const T &p_arg5, const T &p_arg6) {
+	Vector<T> p;
+	p.push_back(p_arg1);
+	p.push_back(p_arg2);
+	p.push_back(p_arg3);
+	p.push_back(p_arg4);
+	p.push_back(p_arg5);
+	p.push_back(p_arg6);
+	return p;
+}
 } // namespace helper
 
 #endif
