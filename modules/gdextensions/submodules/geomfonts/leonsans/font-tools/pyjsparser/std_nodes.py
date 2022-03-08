@@ -3,8 +3,7 @@ from .pyjsparserdata import *
 
 class Ecma51NotSupported(Exception):
     def __init__(self, feature):
-        super(Ecma51NotSupported,
-              self).__init__("%s is not supported by ECMA 5.1." % feature)
+        super(Ecma51NotSupported, self).__init__("%s is not supported by ECMA 5.1." % feature)
         self.feature = feature
 
     def get_feature(self):
@@ -43,8 +42,7 @@ class BaseNode:
         return self
 
     def finishBinaryExpression(self, operator, left, right):
-        self.type = Syntax.LogicalExpression if (
-            operator == '||' or operator == '&&') else Syntax.BinaryExpression
+        self.type = Syntax.LogicalExpression if (operator == "||" or operator == "&&") else Syntax.BinaryExpression
         self.operator = operator
         self.left = left
         self.right = right
@@ -91,7 +89,9 @@ class BaseNode:
         self.finish()
         return self
 
-    def finishDebuggerStatement(self, ):
+    def finishDebuggerStatement(
+        self,
+    ):
         self.type = Syntax.DebuggerStatement
         self.finish()
         return self
@@ -103,7 +103,9 @@ class BaseNode:
         self.finish()
         return self
 
-    def finishEmptyStatement(self, ):
+    def finishEmptyStatement(
+        self,
+    ):
         self.type = Syntax.EmptyStatement
         self.finish()
         return self
@@ -182,16 +184,16 @@ class BaseNode:
 
     def finishLiteral(self, token):
         self.type = Syntax.Literal
-        self.value = token['value']
-        self.raw = token['raw']
-        if token.get('regex'):
-            self.regex = token['regex']
+        self.value = token["value"]
+        self.raw = token["raw"]
+        if token.get("regex"):
+            self.regex = token["regex"]
         self.finish()
         return self
 
     def finishMemberExpression(self, accessor, object, property):
         self.type = Syntax.MemberExpression
-        self.computed = accessor == '['
+        self.computed = accessor == "["
         self.object = object
         self.property = property
         self.finish()
@@ -231,7 +233,7 @@ class BaseNode:
         return self
 
     def finishPyimport(self, imp):
-        self.type = 'PyimportStatement'
+        self.type = "PyimportStatement"
         self.imp = imp
         self.finish()
         return self
@@ -273,7 +275,9 @@ class BaseNode:
         self.finish()
         return self
 
-    def finishThisExpression(self, ):
+    def finishThisExpression(
+        self,
+    ):
         self.type = Syntax.ThisExpression
         self.finish()
         return self
@@ -295,8 +299,7 @@ class BaseNode:
         return self
 
     def finishUnaryExpression(self, operator, argument):
-        self.type = Syntax.UpdateExpression if (
-            operator == '++' or operator == '--') else Syntax.UnaryExpression
+        self.type = Syntax.UpdateExpression if (operator == "++" or operator == "--") else Syntax.UnaryExpression
         self.operator = operator
         self.argument = argument
         self.prefix = True
@@ -306,7 +309,7 @@ class BaseNode:
     def finishVariableDeclaration(self, declarations):
         self.type = Syntax.VariableDeclaration
         self.declarations = declarations
-        self.kind = 'var'
+        self.kind = "var"
         self.finish()
         return self
 
@@ -341,7 +344,7 @@ class BaseNode:
     def __getattr__(self, item):
         if item in self.__dict__:
             return self.__dict__[item]
-        if item.startswith('finish'):
+        if item.startswith("finish"):
             feature = item[6:]
             raise Ecma51NotSupported(feature)
         else:

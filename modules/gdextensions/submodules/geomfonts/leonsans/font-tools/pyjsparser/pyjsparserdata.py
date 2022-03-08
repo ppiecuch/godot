@@ -31,228 +31,262 @@ if PY3:
     unicode = str
 
 token = {
-    'BooleanLiteral': 1,
-    'EOF': 2,
-    'Identifier': 3,
-    'Keyword': 4,
-    'NullLiteral': 5,
-    'NumericLiteral': 6,
-    'Punctuator': 7,
-    'StringLiteral': 8,
-    'RegularExpression': 9,
-    'Template': 10
+    "BooleanLiteral": 1,
+    "EOF": 2,
+    "Identifier": 3,
+    "Keyword": 4,
+    "NullLiteral": 5,
+    "NumericLiteral": 6,
+    "Punctuator": 7,
+    "StringLiteral": 8,
+    "RegularExpression": 9,
+    "Template": 10,
 }
 
 TokenName = dict((v, k) for k, v in token.items())
 
 FnExprTokens = [
-    '(',
-    '{',
-    '[',
-    'in',
-    'typeof',
-    'instanceof',
-    'new',
-    'return',
-    'case',
-    'delete',
-    'throw',
-    'void',
+    "(",
+    "{",
+    "[",
+    "in",
+    "typeof",
+    "instanceof",
+    "new",
+    "return",
+    "case",
+    "delete",
+    "throw",
+    "void",
     # assignment operators
-    '=',
-    '+=',
-    '-=',
-    '*=',
-    '/=',
-    '%=',
-    '<<=',
-    '>>=',
-    '>>>=',
-    '&=',
-    '|=',
-    '^=',
-    ',',
+    "=",
+    "+=",
+    "-=",
+    "*=",
+    "/=",
+    "%=",
+    "<<=",
+    ">>=",
+    ">>>=",
+    "&=",
+    "|=",
+    "^=",
+    ",",
     # binary/unary operators
-    '+',
-    '-',
-    '*',
-    '/',
-    '%',
-    '++',
-    '--',
-    '<<',
-    '>>',
-    '>>>',
-    '&',
-    '|',
-    '^',
-    '!',
-    '~',
-    '&&',
-    '||',
-    '?',
-    ':',
-    '===',
-    '==',
-    '>=',
-    '<=',
-    '<',
-    '>',
-    '!=',
-    '!=='
+    "+",
+    "-",
+    "*",
+    "/",
+    "%",
+    "++",
+    "--",
+    "<<",
+    ">>",
+    ">>>",
+    "&",
+    "|",
+    "^",
+    "!",
+    "~",
+    "&&",
+    "||",
+    "?",
+    ":",
+    "===",
+    "==",
+    ">=",
+    "<=",
+    "<",
+    ">",
+    "!=",
+    "!==",
 ]
 
 syntax = set(
-    ('AssignmentExpression', 'AssignmentPattern', 'ArrayExpression',
-     'ArrayPattern', 'ArrowFunctionExpression', 'BlockStatement',
-     'BinaryExpression', 'BreakStatement', 'CallExpression', 'CatchClause',
-     'ClassBody', 'ClassDeclaration', 'ClassExpression',
-     'ConditionalExpression', 'ContinueStatement', 'DoWhileStatement',
-     'DebuggerStatement', 'EmptyStatement', 'ExportAllDeclaration',
-     'ExportDefaultDeclaration', 'ExportNamedDeclaration', 'ExportSpecifier',
-     'ExpressionStatement', 'ForStatement', 'ForInStatement',
-     'FunctionDeclaration', 'FunctionExpression', 'Identifier', 'IfStatement',
-     'ImportDeclaration', 'ImportDefaultSpecifier', 'ImportNamespaceSpecifier',
-     'ImportSpecifier', 'Literal', 'LabeledStatement', 'LogicalExpression',
-     'MemberExpression', 'MethodDefinition', 'NewExpression',
-     'ObjectExpression', 'ObjectPattern', 'Program', 'Property', 'RestElement',
-     'ReturnStatement', 'SequenceExpression', 'SpreadElement', 'Super',
-     'SwitchCase', 'SwitchStatement', 'TaggedTemplateExpression',
-     'TemplateElement', 'TemplateLiteral', 'ThisExpression', 'ThrowStatement',
-     'TryStatement', 'UnaryExpression', 'UpdateExpression',
-     'VariableDeclaration', 'VariableDeclarator', 'WhileStatement',
-     'WithStatement'))
+    (
+        "AssignmentExpression",
+        "AssignmentPattern",
+        "ArrayExpression",
+        "ArrayPattern",
+        "ArrowFunctionExpression",
+        "BlockStatement",
+        "BinaryExpression",
+        "BreakStatement",
+        "CallExpression",
+        "CatchClause",
+        "ClassBody",
+        "ClassDeclaration",
+        "ClassExpression",
+        "ConditionalExpression",
+        "ContinueStatement",
+        "DoWhileStatement",
+        "DebuggerStatement",
+        "EmptyStatement",
+        "ExportAllDeclaration",
+        "ExportDefaultDeclaration",
+        "ExportNamedDeclaration",
+        "ExportSpecifier",
+        "ExpressionStatement",
+        "ForStatement",
+        "ForInStatement",
+        "FunctionDeclaration",
+        "FunctionExpression",
+        "Identifier",
+        "IfStatement",
+        "ImportDeclaration",
+        "ImportDefaultSpecifier",
+        "ImportNamespaceSpecifier",
+        "ImportSpecifier",
+        "Literal",
+        "LabeledStatement",
+        "LogicalExpression",
+        "MemberExpression",
+        "MethodDefinition",
+        "NewExpression",
+        "ObjectExpression",
+        "ObjectPattern",
+        "Program",
+        "Property",
+        "RestElement",
+        "ReturnStatement",
+        "SequenceExpression",
+        "SpreadElement",
+        "Super",
+        "SwitchCase",
+        "SwitchStatement",
+        "TaggedTemplateExpression",
+        "TemplateElement",
+        "TemplateLiteral",
+        "ThisExpression",
+        "ThrowStatement",
+        "TryStatement",
+        "UnaryExpression",
+        "UpdateExpression",
+        "VariableDeclaration",
+        "VariableDeclarator",
+        "WhileStatement",
+        "WithStatement",
+    )
+)
 
 supported_syntax = set(
-    ('AssignmentExpression', 'ArrayExpression', 'BlockStatement',
-     'BinaryExpression', 'BreakStatement', 'CallExpression', 'CatchClause',
-     'ConditionalExpression', 'ContinueStatement', 'DoWhileStatement',
-     'DebuggerStatement', 'EmptyStatement', 'ExpressionStatement',
-     'ForStatement', 'ForInStatement', 'FunctionDeclaration',
-     'FunctionExpression', 'Identifier', 'IfStatement', 'Literal',
-     'LabeledStatement', 'LogicalExpression', 'MemberExpression',
-     'MethodDefinition', 'NewExpression', 'ObjectExpression', 'Program',
-     'Property', 'ReturnStatement', 'SequenceExpression', 'SwitchCase',
-     'SwitchStatement', 'ThisExpression', 'ThrowStatement', 'TryStatement',
-     'UnaryExpression', 'UpdateExpression', 'VariableDeclaration',
-     'VariableDeclarator', 'WhileStatement', 'WithStatement'))
+    (
+        "AssignmentExpression",
+        "ArrayExpression",
+        "BlockStatement",
+        "BinaryExpression",
+        "BreakStatement",
+        "CallExpression",
+        "CatchClause",
+        "ConditionalExpression",
+        "ContinueStatement",
+        "DoWhileStatement",
+        "DebuggerStatement",
+        "EmptyStatement",
+        "ExpressionStatement",
+        "ForStatement",
+        "ForInStatement",
+        "FunctionDeclaration",
+        "FunctionExpression",
+        "Identifier",
+        "IfStatement",
+        "Literal",
+        "LabeledStatement",
+        "LogicalExpression",
+        "MemberExpression",
+        "MethodDefinition",
+        "NewExpression",
+        "ObjectExpression",
+        "Program",
+        "Property",
+        "ReturnStatement",
+        "SequenceExpression",
+        "SwitchCase",
+        "SwitchStatement",
+        "ThisExpression",
+        "ThrowStatement",
+        "TryStatement",
+        "UnaryExpression",
+        "UpdateExpression",
+        "VariableDeclaration",
+        "VariableDeclarator",
+        "WhileStatement",
+        "WithStatement",
+    )
+)
 
 # Error messages should be identical to V8.
 messages = {
-    'UnexpectedToken':
-    'Unexpected token %s',
-    'UnexpectedNumber':
-    'Unexpected number',
-    'UnexpectedString':
-    'Unexpected string',
-    'UnexpectedIdentifier':
-    'Unexpected identifier',
-    'UnexpectedReserved':
-    'Unexpected reserved word',
-    'UnexpectedTemplate':
-    'Unexpected quasi %s',
-    'UnexpectedEOS':
-    'Unexpected end of input',
-    'NewlineAfterThrow':
-    'Illegal newline after throw',
-    'InvalidRegExp':
-    'Invalid regular expression',
-    'UnterminatedRegExp':
-    'Invalid regular expression: missing /',
-    'InvalidLHSInAssignment':
-    'Invalid left-hand side in assignment',
-    'InvalidLHSInForIn':
-    'Invalid left-hand side in for-in',
-    'MultipleDefaultsInSwitch':
-    'More than one default clause in switch statement',
-    'NoCatchOrFinally':
-    'Missing catch or finally after try',
-    'UnknownLabel':
-    'Undefined label \'%s\'',
-    'Redeclaration':
-    '%s \'%s\' has already been declared',
-    'IllegalContinue':
-    'Illegal continue statement',
-    'IllegalBreak':
-    'Illegal break statement',
-    'IllegalReturn':
-    'Illegal return statement',
-    'StrictModeWith':
-    'Strict mode code may not include a with statement',
-    'StrictCatchVariable':
-    'Catch variable may not be eval or arguments in strict mode',
-    'StrictVarName':
-    'Variable name may not be eval or arguments in strict mode',
-    'StrictParamName':
-    'Parameter name eval or arguments is not allowed in strict mode',
-    'StrictParamDupe':
-    'Strict mode function may not have duplicate parameter names',
-    'StrictFunctionName':
-    'Function name may not be eval or arguments in strict mode',
-    'StrictOctalLiteral':
-    'Octal literals are not allowed in strict mode.',
-    'StrictDelete':
-    'Delete of an unqualified identifier in strict mode.',
-    'StrictLHSAssignment':
-    'Assignment to eval or arguments is not allowed in strict mode',
-    'StrictLHSPostfix':
-    'Postfix increment/decrement may not have eval or arguments operand in strict mode',
-    'StrictLHSPrefix':
-    'Prefix increment/decrement may not have eval or arguments operand in strict mode',
-    'StrictReservedWord':
-    'Use of future reserved word in strict mode',
-    'TemplateOctalLiteral':
-    'Octal literals are not allowed in template strings.',
-    'ParameterAfterRestParameter':
-    'Rest parameter must be last formal parameter',
-    'DefaultRestParameter':
-    'Unexpected token =',
-    'ObjectPatternAsRestParameter':
-    'Unexpected token {',
-    'DuplicateProtoProperty':
-    'Duplicate __proto__ fields are not allowed in object literals',
-    'ConstructorSpecialMethod':
-    'Class constructor may not be an accessor',
-    'DuplicateConstructor':
-    'A class may only have one constructor',
-    'StaticPrototype':
-    'Classes may not have static property named prototype',
-    'MissingFromClause':
-    'Unexpected token',
-    'NoAsAfterImportNamespace':
-    'Unexpected token',
-    'InvalidModuleSpecifier':
-    'Unexpected token',
-    'IllegalImportDeclaration':
-    'Unexpected token',
-    'IllegalExportDeclaration':
-    'Unexpected token'
+    "UnexpectedToken": "Unexpected token %s",
+    "UnexpectedNumber": "Unexpected number",
+    "UnexpectedString": "Unexpected string",
+    "UnexpectedIdentifier": "Unexpected identifier",
+    "UnexpectedReserved": "Unexpected reserved word",
+    "UnexpectedTemplate": "Unexpected quasi %s",
+    "UnexpectedEOS": "Unexpected end of input",
+    "NewlineAfterThrow": "Illegal newline after throw",
+    "InvalidRegExp": "Invalid regular expression",
+    "UnterminatedRegExp": "Invalid regular expression: missing /",
+    "InvalidLHSInAssignment": "Invalid left-hand side in assignment",
+    "InvalidLHSInForIn": "Invalid left-hand side in for-in",
+    "MultipleDefaultsInSwitch": "More than one default clause in switch statement",
+    "NoCatchOrFinally": "Missing catch or finally after try",
+    "UnknownLabel": "Undefined label '%s'",
+    "Redeclaration": "%s '%s' has already been declared",
+    "IllegalContinue": "Illegal continue statement",
+    "IllegalBreak": "Illegal break statement",
+    "IllegalReturn": "Illegal return statement",
+    "StrictModeWith": "Strict mode code may not include a with statement",
+    "StrictCatchVariable": "Catch variable may not be eval or arguments in strict mode",
+    "StrictVarName": "Variable name may not be eval or arguments in strict mode",
+    "StrictParamName": "Parameter name eval or arguments is not allowed in strict mode",
+    "StrictParamDupe": "Strict mode function may not have duplicate parameter names",
+    "StrictFunctionName": "Function name may not be eval or arguments in strict mode",
+    "StrictOctalLiteral": "Octal literals are not allowed in strict mode.",
+    "StrictDelete": "Delete of an unqualified identifier in strict mode.",
+    "StrictLHSAssignment": "Assignment to eval or arguments is not allowed in strict mode",
+    "StrictLHSPostfix": "Postfix increment/decrement may not have eval or arguments operand in strict mode",
+    "StrictLHSPrefix": "Prefix increment/decrement may not have eval or arguments operand in strict mode",
+    "StrictReservedWord": "Use of future reserved word in strict mode",
+    "TemplateOctalLiteral": "Octal literals are not allowed in template strings.",
+    "ParameterAfterRestParameter": "Rest parameter must be last formal parameter",
+    "DefaultRestParameter": "Unexpected token =",
+    "ObjectPatternAsRestParameter": "Unexpected token {",
+    "DuplicateProtoProperty": "Duplicate __proto__ fields are not allowed in object literals",
+    "ConstructorSpecialMethod": "Class constructor may not be an accessor",
+    "DuplicateConstructor": "A class may only have one constructor",
+    "StaticPrototype": "Classes may not have static property named prototype",
+    "MissingFromClause": "Unexpected token",
+    "NoAsAfterImportNamespace": "Unexpected token",
+    "InvalidModuleSpecifier": "Unexpected token",
+    "IllegalImportDeclaration": "Unexpected token",
+    "IllegalExportDeclaration": "Unexpected token",
 }
 
 PRECEDENCE = {
-    '||': 1,
-    '&&': 2,
-    '|': 3,
-    '^': 4,
-    '&': 5,
-    '==': 6,
-    '!=': 6,
-    '===': 6,
-    '!==': 6,
-    '<': 7,
-    '>': 7,
-    '<=': 7,
-    '>=': 7,
-    'instanceof': 7,
-    'in': 7,
-    '<<': 8,
-    '>>': 8,
-    '>>>': 8,
-    '+': 9,
-    '-': 9,
-    '*': 11,
-    '/': 11,
-    '%': 11
+    "||": 1,
+    "&&": 2,
+    "|": 3,
+    "^": 4,
+    "&": 5,
+    "==": 6,
+    "!=": 6,
+    "===": 6,
+    "!==": 6,
+    "<": 7,
+    ">": 7,
+    "<=": 7,
+    ">=": 7,
+    "instanceof": 7,
+    "in": 7,
+    "<<": 8,
+    ">>": 8,
+    ">>>": 8,
+    "+": 9,
+    "-": 9,
+    "*": 11,
+    "/": 11,
+    "%": 11,
 }
 
 
@@ -269,7 +303,7 @@ class Messages:
 
 
 class PlaceHolders:
-    ArrowParameterPlaceHolder = 'ArrowParameterPlaceHolder'
+    ArrowParameterPlaceHolder = "ArrowParameterPlaceHolder"
 
 
 for k, v in token.items():
@@ -281,47 +315,73 @@ for e in syntax:
 for k, v in messages.items():
     setattr(Messages, k, v)
 
-#http://stackoverflow.com/questions/14245893/efficiently-list-all-characters-in-a-given-unicode-category
-BOM = u'\uFEFF'
-ZWJ = u'\u200D'
-ZWNJ = u'\u200C'
-TAB = u'\u0009'
-VT = u'\u000B'
-FF = u'\u000C'
-SP = u'\u0020'
-NBSP = u'\u00A0'
-LF = u'\u000A'
-CR = u'\u000D'
-LS = u'\u2028'
-PS = u'\u2029'
+# http://stackoverflow.com/questions/14245893/efficiently-list-all-characters-in-a-given-unicode-category
+BOM = "\uFEFF"
+ZWJ = "\u200D"
+ZWNJ = "\u200C"
+TAB = "\u0009"
+VT = "\u000B"
+FF = "\u000C"
+SP = "\u0020"
+NBSP = "\u00A0"
+LF = "\u000A"
+CR = "\u000D"
+LS = "\u2028"
+PS = "\u2029"
 
 
-LETTER_CATEGORIES = set(['Lu', 'Ll', 'Lt', 'Lm', 'Lo', 'Nl'])
+LETTER_CATEGORIES = set(["Lu", "Ll", "Lt", "Lm", "Lo", "Nl"])
 
-COMBINING_MARK_CATEGORIES = set(['Mn', 'Mc'])
-DIGIT_CATEGORIES = set(['Nd'])
-CONNECTOR_PUNCTUATION_CATEGORIES = set(['Pc'])
+COMBINING_MARK_CATEGORIES = set(["Mn", "Mc"])
+DIGIT_CATEGORIES = set(["Nd"])
+CONNECTOR_PUNCTUATION_CATEGORIES = set(["Pc"])
 IDENTIFIER_START_CATEGORIES = LETTER_CATEGORIES.copy()  # and some fucking unicode escape sequence
-IDENTIFIER_PART_CATEGORIES = IDENTIFIER_START_CATEGORIES.union(COMBINING_MARK_CATEGORIES).union(DIGIT_CATEGORIES)\
+IDENTIFIER_PART_CATEGORIES = (
+    IDENTIFIER_START_CATEGORIES.union(COMBINING_MARK_CATEGORIES)
+    .union(DIGIT_CATEGORIES)
     .union(CONNECTOR_PUNCTUATION_CATEGORIES)
+)
 
-EXTRA_IDENTIFIER_START_CHARS = set(('$','_', '\\'))
+EXTRA_IDENTIFIER_START_CHARS = set(("$", "_", "\\"))
 EXTRA_IDENTIFIER_PART_CHARS = EXTRA_IDENTIFIER_START_CHARS.union(set((ZWJ, ZWNJ)))
 
-WHITE_SPACE = set((0x20, 0x09, 0x0B, 0x0C, 0xA0, 0x1680, 0x180E, 0x2000,
-                   0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006, 0x2007,
-                   0x2008, 0x2009, 0x200A, 0x202F, 0x205F, 0x3000, 0xFEFF))
+WHITE_SPACE = set(
+    (
+        0x20,
+        0x09,
+        0x0B,
+        0x0C,
+        0xA0,
+        0x1680,
+        0x180E,
+        0x2000,
+        0x2001,
+        0x2002,
+        0x2003,
+        0x2004,
+        0x2005,
+        0x2006,
+        0x2007,
+        0x2008,
+        0x2009,
+        0x200A,
+        0x202F,
+        0x205F,
+        0x3000,
+        0xFEFF,
+    )
+)
 
 LINE_TERMINATORS = set((0x0A, 0x0D, 0x2028, 0x2029))
 
 
 def isIdentifierStart(ch):
-    uch = (ch if isinstance(ch, unicode) else unichr(ch))
+    uch = ch if isinstance(ch, unicode) else unichr(ch)
     return unicodedata.category(uch) in IDENTIFIER_START_CATEGORIES or uch in EXTRA_IDENTIFIER_START_CHARS
 
 
 def isIdentifierPart(ch):
-    uch =  (ch if isinstance(ch, unicode) else unichr(ch))
+    uch = ch if isinstance(ch, unicode) else unichr(ch)
     return unicodedata.category(uch) in IDENTIFIER_PART_CATEGORIES or uch in EXTRA_IDENTIFIER_PART_CHARS
 
 
@@ -344,11 +404,11 @@ def isLineTerminator(ch):
     return (ord(ch) if isinstance(ch, unicode) else ch) in LINE_TERMINATORS
 
 
-OCTAL = set(('0', '1', '2', '3', '4', '5', '6', '7'))
-DEC = set(('0', '1', '2', '3', '4', '5', '6', '7', '8', '9'))
-HEX = set('0123456789abcdefABCDEF')
-HEX_CONV = dict(('0123456789abcdef' [n], n) for n in xrange(16))
-for i, e in enumerate('ABCDEF', 10):
+OCTAL = set(("0", "1", "2", "3", "4", "5", "6", "7"))
+DEC = set(("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"))
+HEX = set("0123456789abcdefABCDEF")
+HEX_CONV = dict(("0123456789abcdef"[n], n) for n in xrange(16))
+for i, e in enumerate("ABCDEF", 10):
     HEX_CONV[e] = i
 
 
@@ -365,11 +425,10 @@ def isOctalDigit(ch):
 
 
 def isFutureReservedWord(w):
-    return w in ('enum', 'export', 'import', 'super')
+    return w in ("enum", "export", "import", "super")
 
 
-RESERVED_WORD = set(('implements', 'interface', 'package', 'private',
-                     'protected', 'public', 'static', 'yield', 'let'))
+RESERVED_WORD = set(("implements", "interface", "package", "private", "protected", "public", "static", "yield", "let"))
 
 
 def isStrictModeReservedWord(w):
@@ -377,15 +436,50 @@ def isStrictModeReservedWord(w):
 
 
 def isRestrictedWord(w):
-    return w in ('eval', 'arguments')
+    return w in ("eval", "arguments")
 
 
 KEYWORDS = set(
-    ('if', 'in', 'do', 'var', 'for', 'new', 'try', 'let', 'this', 'else',
-     'case', 'void', 'with', 'enum', 'while', 'break', 'catch', 'throw',
-     'const', 'yield', 'class', 'super', 'return', 'typeof', 'delete',
-     'switch', 'export', 'import', 'default', 'finally', 'extends', 'function',
-     'continue', 'debugger', 'instanceof', 'pyimport', 'from'))
+    (
+        "if",
+        "in",
+        "do",
+        "var",
+        "for",
+        "new",
+        "try",
+        "let",
+        "this",
+        "else",
+        "case",
+        "void",
+        "with",
+        "enum",
+        "while",
+        "break",
+        "catch",
+        "throw",
+        "const",
+        "yield",
+        "class",
+        "super",
+        "return",
+        "typeof",
+        "delete",
+        "switch",
+        "export",
+        "import",
+        "default",
+        "finally",
+        "extends",
+        "function",
+        "continue",
+        "debugger",
+        "instanceof",
+        "pyimport",
+        "from",
+    )
+)
 
 
 def isKeyword(w):
@@ -399,9 +493,9 @@ class JsSyntaxError(Exception):
     pass
 
 
-if __name__ == '__main__':
-    assert isLineTerminator('\n')
+if __name__ == "__main__":
+    assert isLineTerminator("\n")
     assert isLineTerminator(0x0A)
-    assert isIdentifierStart('$')
+    assert isIdentifierStart("$")
     assert isIdentifierStart(100)
-    assert isWhiteSpace(' ')
+    assert isWhiteSpace(" ")
