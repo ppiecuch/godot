@@ -38,9 +38,9 @@ A C interface is provided to convert an ASCII string into triangle vertices that
 ## The License
 The Dutch-Blunt font, and its supporting software is (c)2015 by Abraham Stolk.
 
-The font 'Dutch-Blunt' is licensed under the 
+The font 'Dutch-Blunt' is licensed under the
 [SIL OPEN FONT LICENSE.](http://opensource.org/licenses/OFL-1.1)
 
-The API and conversion script is licensed under the 
+The API and conversion script is licensed under the
 [Apache License 2.0](http://opensource.org/licenses/Apache-2.0)
 

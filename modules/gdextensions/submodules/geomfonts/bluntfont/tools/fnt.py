@@ -48,7 +48,7 @@ def process_blob( blob, indexoffset ) :
 # main entry point:
 
 if len( sys.argv ) != 2 :
-	print "Usage: %s foo.obj" % ( sys.argv[0], ) 
+	print "Usage: %s foo.obj" % ( sys.argv[0], )
 	sys.exit( 1 )
 
 f = open( sys.argv[1], 'r' )
