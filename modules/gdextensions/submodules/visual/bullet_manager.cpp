@@ -547,9 +547,7 @@ void BulletManager::_draw_bullets() {
 		return;
 	}
 	List<int>::Element *E = _active_bullets.front();
-	//for(int i = 0; i < bullets.size(); i++) {
 	while (E) {
-		//Bullet* bullet = r[i];
 		BulletManagerBullet *bullet = &_bullets.write[E->get()];
 		BulletManagerBulletType *type = bullet->type;
 		RID ci = type->get_canvas_item();
@@ -564,8 +562,10 @@ void BulletManager::_draw_bullets() {
 			//draw_set_transform_matrix(bullet->matrix);
 		}
 		vs->canvas_item_add_texture_rect_region(ci, type->_cached_dst_rect, type->texture->get_rid(), type->_cached_src_rect);
+
 		//type->collision_shape->draw(ci, get_tree()->get_debug_collisions_color());
 		//draw_texture_rect_region(type->texture, type->_cached_dst_rect, type->_cached_src_rect, Color(1, 1, 1), false, type->normal_map);
+
 		E = E->next();
 	}
 }
@@ -573,7 +573,6 @@ void BulletManager::_draw_bullets() {
 void BulletManager::_update_bullets() {
 	Physics2DServer *ps = Physics2DServer::get_singleton();
 	float delta = get_physics_process_delta_time();
-	// int size = _active_bullets.size();
 	Rect2 visible_rect;
 	_get_visible_rect(visible_rect);
 	visible_rect = visible_rect.grow(bounds_margin);

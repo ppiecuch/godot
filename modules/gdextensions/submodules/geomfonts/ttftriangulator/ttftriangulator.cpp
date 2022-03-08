@@ -148,22 +148,22 @@ void render_msg(const Font &f, const char *msg) {
 #endif
 
 void render_msg(const Font &f, const char *msg) {
-	TTF::FontMetrics font_metrics = f.GetFontMetrics(); // will tell you about the font
+	// TTF::FontMetrics font_metrics = f.GetFontMetrics(); // will tell you about the font
 	// Triangulator2DI, Triangulator2DII, Triangulator2DLinearI, Triangulator2DLinearII
 	TTF::Triangulator2DI triangulator;
 	for (int i = 0; i < strlen(msg); i++) {
 		CodePoint cp(msg[i]);
 		f.TriangulateGlyph(cp, triangulator);
 
+		TTFCore::vec2t kerning;
 		if (i > 0) {
-			TTFCore::vec2t kerning = f.GetKerning(CodePoint(msg[i - 1]), cp);
-			// glTranslatef(0.9*kerning.x*0.001, kerning.y*0.001, 0);
+			kerning = f.GetKerning(CodePoint(msg[i - 1]), cp) * vec2t(0.9 * kerning.x * 0.001, kerning.y * 0.001);
 		}
 
 		struct vertex_t {
 			vec2f pos;
-			signed char texCoord; // 0 = (0,0), 1 = (0.5,0), 2 = (1,1)
-			signed char coef; // -1 = CW edge, 0 = inner segment, +1 = CCW segment
+			int8_t texCoord; // 0 = (0,0), 1 = (0.5,0), 2 = (1,1)
+			int8_t coef; // -1 = CW edge, 0 = inner segment, +1 = CCW segment
 		};
 		Vector<vertex_t> verts;
 
@@ -172,19 +172,21 @@ void render_msg(const Font &f, const char *msg) {
 			TTF::vec2t v1 = triangulator[tri.i1];
 			TTF::vec2t v2 = triangulator[tri.i2];
 
-			verts.push_back((vertex_t){ { 0.001f * v0.x, 0.001f * v0.y }, 0, static_cast<signed char>(tri.coef) });
-			verts.push_back((vertex_t){ { 0.001f * v1.x, 0.001f * v1.y }, 1, static_cast<signed char>(tri.coef) });
-			verts.push_back((vertex_t){ { 0.001f * v2.x, 0.001f * v2.y }, 2, static_cast<signed char>(tri.coef) });
+			verts.push_back((vertex_t){ { 0.001f * v0.x + kerning.x, 0.001f * v0.y + kerning.y }, 0, static_cast<int8_t>(tri.coef) });
+			verts.push_back((vertex_t){ { 0.001f * v1.x + kerning.x, 0.001f * v1.y + kerning.y }, 1, static_cast<int8_t>(tri.coef) });
+			verts.push_back((vertex_t){ { 0.001f * v2.x + kerning.x, 0.001f * v2.y + kerning.y }, 2, static_cast<int8_t>(tri.coef) });
 		}
 
 		if (verts.size()) {
 			// build a mesh
 		}
 
+#ifdef DEBUG_ENABLED
 		printf("%c: %d verts\n", msg[i], verts.size());
 		for (int j = 0; j < verts.size(); j++) {
 			const vertex_t &mv = verts[j];
-			printf("%c %d %d, %d: (%f, %f), %d, %d\n", msg[i], j, j / 3, j % 3, mv.pos.x, mv.pos.y, mv.texCoord, mv.coef);
+			printf("  %c %d %d, %d: (%f, %f), %d, %d\n", msg[i], j, j / 3, j % 3, mv.pos.x, mv.pos.y, mv.texCoord, mv.coef);
 		}
+#endif
 	}
 }

@@ -106,78 +106,78 @@ char *chars[] = {
 	char_82, char_83, char_84, char_85, char_86, char_87, char_88, char_89, char_90, nullptr
 };
 
-static Color default_white(1, 1, 1, 1);
-
-static void DrawBlock(RID canvas, real_t x1, real_t y1, real_t x2, real_t y2, real_t z1, real_t z2, bool wire, const Transform2D &xform = Transform2D(), const Color &modulate = default_white) {
+static void draw_block(Array &mesh_array, real_t x1, real_t y1, real_t x2, real_t y2, real_t z1, real_t z2) {
 #define aa 0.7, 0.5, 0.2, 1.0
 #define bb 0.9, 0.5, 0.0, 1.0
 #define cc 1.0, 0.7, 0.0, 1.0
 #define dd 1.0, 0.2, 0.2, 1.0
 #define ee 1.0, 0.5, 0.8, 1.0
 
+// clang-format off
 	struct {
 		Point3 v[24];
 		Color c[24];
-	} _vertices = {
-		{ { x1, y1, z1 },
-				{ x2, y1, z1 },
-				{ x2, y1, z2 },
-				{ x1, y1, z2 },
+	} _vertices = {{
+		{ x1, y1, z1 },
+		{ x2, y1, z1 },
+		{ x2, y1, z2 },
+		{ x1, y1, z2 },
 
-				{ x1, y2, z1 },
-				{ x1, y2, z2 },
-				{ x2, y2, z2 },
-				{ x2, y2, z1 },
+		{ x1, y2, z1 },
+		{ x1, y2, z2 },
+		{ x2, y2, z2 },
+		{ x2, y2, z1 },
 
-				{ x1, y1, z1 },
-				{ x1, y2, z1 },
-				{ x1, y2, z2 },
-				{ x1, y1, z2 },
+		{ x1, y1, z1 },
+		{ x1, y2, z1 },
+		{ x1, y2, z2 },
+		{ x1, y1, z2 },
 
-				{ x2, y1, z1 },
-				{ x2, y1, z2 },
-				{ x2, y2, z2 },
-				{ x2, y2, z1 },
+		{ x2, y1, z1 },
+		{ x2, y1, z2 },
+		{ x2, y2, z2 },
+		{ x2, y2, z1 },
 
-				{ x1, y1, z1 },
-				{ x2, y1, z1 },
-				{ x2, y2, z1 },
-				{ x1, y2, z1 },
+		{ x1, y1, z1 },
+		{ x2, y1, z1 },
+		{ x2, y2, z1 },
+		{ x1, y2, z1 },
 
-				{ x1, y1, z2 },
-				{ x2, y1, z2 },
-				{ x2, y2, z2 },
-				{ x1, y2, z2 } },
-		{ { aa },
-				{ aa },
-				{ aa },
-				{ aa },
+		{ x1, y1, z2 },
+		{ x2, y1, z2 },
+		{ x2, y2, z2 },
+		{ x1, y2, z2 }
+	},{
+		{ aa },
+		{ aa },
+		{ aa },
+		{ aa },
 
-				{ aa },
-				{ aa },
-				{ aa },
-				{ aa },
+		{ aa },
+		{ aa },
+		{ aa },
+		{ aa },
 
-				{ bb },
-				{ bb },
-				{ bb },
-				{ bb },
+		{ bb },
+		{ bb },
+		{ bb },
+		{ bb },
 
-				{ bb },
-				{ bb },
-				{ bb },
-				{ bb },
+		{ bb },
+		{ bb },
+		{ bb },
+		{ bb },
 
-				{ cc },
-				{ ee },
-				{ cc },
-				{ dd },
+		{ cc },
+		{ ee },
+		{ cc },
+		{ dd },
 
-				{ cc },
-				{ ee },
-				{ cc },
-				{ dd } }
-	};
+		{ cc },
+		{ ee },
+		{ cc },
+		{ dd }
+	}};
 	uint32_t _faces[6][6] = {
 		{ 0, 1, 2, 0, 3, 2 },
 		{ 4, 5, 6, 4, 7, 6 },
@@ -186,6 +186,7 @@ static void DrawBlock(RID canvas, real_t x1, real_t y1, real_t x2, real_t y2, re
 		{ 16, 17, 18, 16, 18, 19 },
 		{ 20, 21, 22, 20, 22, 23 }
 	};
+// clang-format on
 
 	static PoolIntArray faces_index;
 	if (faces_index.empty()) {
@@ -202,28 +203,13 @@ static void DrawBlock(RID canvas, real_t x1, real_t y1, real_t x2, real_t y2, re
 	PoolVector3Array verts;
 	verts.resize(24);
 	memcpy(verts.write().ptr(), _vertices.v, 24 * sizeof(Point3));
-
-	Array mesh_array;
-	mesh_array.resize(VS::ARRAY_MAX);
-	mesh_array[VS::ARRAY_VERTEX] = verts;
-	mesh_array[VS::ARRAY_COLOR] = verts_color;
-	mesh_array[VS::ARRAY_INDEX] = faces_index;
-	Ref<ArrayMesh> _mesh = memnew(ArrayMesh);
-
-	if (wire) {
-		_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINE_LOOP, mesh_array, Array());
-	} else {
-		_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array, Array());
-	}
-	VisualServer::get_singleton()->canvas_item_add_mesh(canvas, _mesh->get_rid(), xform, modulate, RID(), RID(), RID());
 }
 
-static void DrawBob(RID canvas, real_t x, real_t y, real_t z, real_t size, bool wire, const Transform2D &xform = Transform2D(), const Color &modulate = default_white) {
-	DrawBlock(canvas, x, y, x + size * 0.8, y + size * 0.8, z, z + size * 0.8, wire, xform, modulate);
+static void draw_bob(Array &mesh_array, real_t x, real_t y, real_t z, real_t size) {
+	draw_block(mesh_array, x, y, x + size * 0.8, y + size * 0.8, z, z + size * 0.8);
 }
 
-real_t DrawBobChar(RID canvas, char ch, const Point3 &pos, real_t size, bool wire, const Transform2D &xform = Transform2D(), const Color &modulate = default_white) {
-	char shft;
+static real_t draw_bob_char(Array &mesh_array, char ch, const Point3 &pos, real_t size) {
 	real_t xp, yp = pos.y;
 
 	if (ch < 32 || ch > 90) {
@@ -233,10 +219,10 @@ real_t DrawBobChar(RID canvas, char ch, const Point3 &pos, real_t size, bool wir
 
 	for (int i = 0; i < BOBS_Y; i++) {
 		xp = pos.x;
-		shft = 0x40;
+		char shft = 0x40;
 		for (int j = 0; j < BOBS_X; j++) {
-			if ((*ptr) & shft) {
-				DrawBob(canvas, xp, yp, pos.z, size, wire);
+			if (*ptr & shft) {
+				draw_bob(mesh_array, xp, yp, pos.z, size);
 			}
 			shft = shft >> 1;
 			xp = xp + size;
@@ -247,14 +233,60 @@ real_t DrawBobChar(RID canvas, char ch, const Point3 &pos, real_t size, bool wir
 	return xp + size;
 }
 
-real_t DrawBobString(RID canvas, const char *str, const Point3 &pos, real_t size, bool wire, const Transform2D &xform = Transform2D(), const Color &modulate = default_white) {
+static int num_of_draw_bobs(const char *str) {
+	int bobs = 0;
+	char ch = *str;
+	while ((ch = *str) != 0) {
+		if (ch >= 32 && ch <= 90) {
+			char *ptr = chars[ch - 32];
+			for (int i = 0; i < BOBS_Y; i++) {
+				char shft = 0x40;
+				for (int j = 0; j < BOBS_X; j++) {
+					if (*ptr & shft) {
+						bobs++;
+					}
+					shft = shft >> 1;
+				}
+				ptr++;
+			}
+		}
+		str++;
+	}
+	return bobs;
+}
+
+real_t DrawBobString(Ref<ArrayMesh> &mesh, RID canvas, const char *str, const Point3 &pos, real_t size, bool wire) {
+	Array mesh_array;
+	mesh_array.resize(VS::ARRAY_MAX);
+
+	PoolIntArray faces_index;
+	PoolColorArray verts_color;
+	PoolVector3Array verts;
+
+	int bnum = num_of_draw_bobs(str);
+
+	faces_index.resize(bnum * 36);
+	verts_color.resize(bnum * 24);
+	verts.resize(bnum * 24);
+
+	mesh_array[VS::ARRAY_VERTEX] = verts;
+	mesh_array[VS::ARRAY_COLOR] = verts_color;
+	mesh_array[VS::ARRAY_INDEX] = faces_index;
+
 	char ch = *str;
 	Point3 xp(pos.x, 0, 0);
 	while ((ch = *str) != 0) {
-		DrawBobChar(canvas, ch, pos + xp, size, wire);
+		draw_bob_char(mesh_array, ch, pos + xp, size);
 		xp.x = xp.x + size * (BOBS_X + 1);
 		str++;
 	}
+
+	if (wire) {
+		mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINE_LOOP, mesh_array, Array());
+	} else {
+		mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array, Array());
+	}
+
 	return xp.x;
 }
 

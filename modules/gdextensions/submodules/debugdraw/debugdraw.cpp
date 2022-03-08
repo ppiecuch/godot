@@ -39,29 +39,6 @@
 
 DebugDraw *DebugDraw::singleton = NULL;
 
-DebugDraw::DebugDraw() :
-		ready(false) {
-	ERR_FAIL_COND(singleton);
-	skip_canvas_transform = false;
-	singleton = this;
-}
-
-DebugDraw::~DebugDraw() {
-	if (ready) {
-		auto *vs = VS::get_singleton();
-
-		for (auto *e = drawings.front(); e; e = e->next()) {
-			vs->free(e->get().canvas_item);
-		}
-		if (auto *st = SceneTree::get_singleton()) {
-			st->disconnect("idle_frame", this, "_idle_frame");
-		}
-		vs->free(canvas);
-	}
-
-	singleton = nullptr;
-}
-
 bool DebugDraw::init() {
 	auto *st = SceneTree::get_singleton();
 	ERR_FAIL_NULL_V(st, false);
@@ -248,4 +225,27 @@ void DebugDraw::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_idle_frame"), &DebugDraw::_idle_frame);
 
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "skip_canvas_transform"), "set_skip_canvas_transform", "is_skip_canvas_transform");
+}
+
+DebugDraw::DebugDraw() :
+		ready(false) {
+	ERR_FAIL_COND(singleton);
+	skip_canvas_transform = false;
+	singleton = this;
+}
+
+DebugDraw::~DebugDraw() {
+	if (ready) {
+		auto *vs = VS::get_singleton();
+
+		for (auto *e = drawings.front(); e; e = e->next()) {
+			vs->free(e->get().canvas_item);
+		}
+		if (auto *st = SceneTree::get_singleton()) {
+			st->disconnect("idle_frame", this, "_idle_frame");
+		}
+		vs->free(canvas);
+	}
+
+	singleton = nullptr;
 }

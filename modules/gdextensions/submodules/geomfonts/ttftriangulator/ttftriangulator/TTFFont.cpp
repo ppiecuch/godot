@@ -1068,17 +1068,17 @@ bool Font::ReadGlyphFlags(FItr &itr, matrix3x2t &matrix, uint16_t &glyph_index) 
 	// define composite flags
 	const uint16_t ARG_1_AND_2_ARE_WORDS = 0x0001; // If this is set, the arguments are words; otherwise, they are bytes.
 	const uint16_t ARGS_ARE_XY_VALUES = 0x0002; // If this is set, the arguments are xy values; otherwise, they are points.
-	const uint16_t ROUND_XY_TO_GRID = 0x0004; // For the xy values if the preceding is true.
+	_unused const uint16_t ROUND_XY_TO_GRID = 0x0004; // For the xy values if the preceding is true.
 	const uint16_t WE_HAVE_A_SCALE = 0x0008; // This indicates that there is a simple scale for the component. Otherwise, scale = 1.0.
-	const uint16_t RESERVED = 0x0010; // This bit is reserved. Set it to 0.
+	_unused const uint16_t RESERVED = 0x0010; // This bit is reserved. Set it to 0.
 	const uint16_t MORE_COMPONENTS = 0x0020; // Indicates at least one more glyph after this one.
 	const uint16_t WE_HAVE_AN_X_AND_Y_SCALE = 0x0040; // The x direction will use a different scale from the y direction.
 	const uint16_t WE_HAVE_A_TWO_BY_TWO = 0x0080; // There is a 2 by 2 transformation that will be used to scale the component.
-	const uint16_t WE_HAVE_INSTRUCTIONS = 0x0100; // Following the last component are instructions for the composite character.
-	const uint16_t USE_MY_METRICS = 0x0200; // If set, this forces the aw and lsb (and rsb) for the composite to be equal to those from this original glyph. This works for hinted and unhinted characters.
-	const uint16_t OVERLAP_COMPOUND = 0x0400; // Used by Apple in GX fonts.
-	const uint16_t SCALED_COMPONENT_OFFSET = 0x0800; // Composite designed to have the component offset scaled (designed for Apple rasterizer).
-	const uint16_t UNSCALED_COMPONENT_OFFSET = 0x1000; // Composite designed not to have the component offset scaled (designed for the Microsoft TrueType rasterizer).
+	_unused const uint16_t WE_HAVE_INSTRUCTIONS = 0x0100; // Following the last component are instructions for the composite character.
+	_unused const uint16_t USE_MY_METRICS = 0x0200; // If set, this forces the aw and lsb (and rsb) for the composite to be equal to those from this original glyph. This works for hinted and unhinted characters.
+	_unused const uint16_t OVERLAP_COMPOUND = 0x0400; // Used by Apple in GX fonts.
+	_unused const uint16_t SCALED_COMPONENT_OFFSET = 0x0800; // Composite designed to have the component offset scaled (designed for Apple rasterizer).
+	_unused const uint16_t UNSCALED_COMPONENT_OFFSET = 0x1000; // Composite designed not to have the component offset scaled (designed for the Microsoft TrueType rasterizer).
 
 	// intialize variables
 	int32_t &a = matrix.a;
