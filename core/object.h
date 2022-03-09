@@ -46,6 +46,7 @@
 #define VARIANT_ARG_LIST const Variant &p_arg1 = Variant(), const Variant &p_arg2 = Variant(), const Variant &p_arg3 = Variant(), const Variant &p_arg4 = Variant(), const Variant &p_arg5 = Variant(), const Variant &p_arg6 = Variant(), const Variant &p_arg7 = Variant(), const Variant &p_arg8 = Variant()
 #define VARIANT_ARG_PASS p_arg1, p_arg2, p_arg3, p_arg4, p_arg5, p_arg6, p_arg7, p_arg8
 #define VARIANT_ARG_DECLARE const Variant &p_arg1, const Variant &p_arg2, const Variant &p_arg3, const Variant &p_arg4, const Variant &p_arg5, const Variant &p_arg6, const Variant &p_arg7, const Variant &p_arg8
+#define VARIANT_ARG_EMPTY Variant(), Variant(), Variant(), Variant(), Variant(), Variant(), Variant(), Variant()
 #define VARIANT_ARG_MAX 8
 #define VARIANT_ARGPTRS const Variant *argptr[8] = { &p_arg1, &p_arg2, &p_arg3, &p_arg4, &p_arg5, &p_arg6, &p_arg7, &p_arg8 };
 #define VARIANT_ARGPTRS_PASS *argptr[0], *argptr[1], *argptr[2], *argptr[3], *argptr[4], *argptr[5], *argptr[6], *argptr[7]

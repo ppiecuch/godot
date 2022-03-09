@@ -33,11 +33,11 @@
 #include "flow_container.h"
 
 struct _LineData {
-	int child_count = 0;
-	int min_line_height = 0;
-	int min_line_length = 0;
-	int stretch_avail = 0;
-	float stretch_ratio_total = 0;
+	int child_count;
+	int min_line_height;
+	int min_line_length;
+	int stretch_avail;
+	float stretch_ratio_total;
 };
 
 void FlowContainer::_resort() {
