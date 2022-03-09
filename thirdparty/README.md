@@ -246,17 +246,13 @@ from the Android NDK r18.
 ## libwebp
 
 - Upstream: https://chromium.googlesource.com/webm/libwebp/
-- Version: 1.2.1 (9ce5843dbabcfd3f7c39ec7ceba9cbeb213cbfdf, 2021)
+- Version: 1.2.2 (b0a860891dcd4c0c2d7c6149e5cccb6eb881cc21, 2022)
 - License: BSD-3-Clause
 
 Files extracted from upstream source:
 
 - `src/*` except from: `.am`, `.rc` and `.in` files
 - `AUTHORS`, `COPYING`, `PATENTS`
-
-Important: The files `utils/bit_reader_utils.{c,h}` have Godot-made
-changes to ensure they build for Javascript/HTML5. Those
-changes are marked with `// -- GODOT --` comments.
 
 
 ## mbedtls
@@ -368,8 +364,8 @@ Collection of single-file libraries used in Godot components.
   * Modifications: use `const char*` instead of `char*` for input string
 - `stb_rect_pack.h`
   * Upstream: https://github.com/nothings/stb
-  * Version: 1.00
-  * License: Public Domain (Unlicense) or MIT
+  * Version: 1.01 (af1a5bc352164740c1cc1354942b1c6b72eacb8a, 2021)
+  * License: Public Domain or Unlicense or MIT
 - `stb_vorbis.c`
   * Upstream: https://github.com/nothings/stb
   * Version: 1.20 (314d0a6f9af5af27e585336eecea333e95c5a2d8, 2020)

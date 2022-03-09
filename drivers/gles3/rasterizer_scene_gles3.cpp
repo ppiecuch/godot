@@ -1244,7 +1244,7 @@ bool RasterizerSceneGLES3::_setup_material(RasterizerStorageGLES3::Material *p_m
 		glBindTexture(target, tex);
 
 		if (t && storage->config.srgb_decode_supported) {
-			//if SRGB decode extension is present, simply switch the texture to whathever is needed
+			//if SRGB decode extension is present, simply switch the texture to whatever is needed
 			bool must_srgb = false;
 
 			if (t->srgb && (texture_hints[i] == ShaderLanguage::ShaderNode::Uniform::HINT_ALBEDO || texture_hints[i] == ShaderLanguage::ShaderNode::Uniform::HINT_BLACK_ALBEDO)) {
@@ -1299,8 +1299,6 @@ void RasterizerSceneGLES3::_setup_geometry(RenderList::Element *e, const Transfo
 			if (s->blend_shapes.size() && e->instance->blend_values.size()) {
 				//blend shapes, use transform feedback
 				storage->mesh_render_blend_shapes(s, e->instance->blend_values.read().ptr());
-				//disable octahedral compression as the result of blend shapes is always uncompressed cartesian coordinates
-				state.scene_shader.set_conditional(SceneShaderGLES3::ENABLE_OCTAHEDRAL_COMPRESSION, false);
 				//rebind shader
 				state.scene_shader.bind();
 #ifdef DEBUG_ENABLED
@@ -2241,7 +2239,9 @@ void RasterizerSceneGLES3::_render_list(RenderList::Element **p_elements, int p_
 
 		state.scene_shader.set_conditional(SceneShaderGLES3::USE_PHYSICAL_LIGHT_ATTENUATION, storage->config.use_physical_light_attenuation);
 
-		bool octahedral_compression = e->instance->base_type != VS::INSTANCE_IMMEDIATE && ((RasterizerStorageGLES3::Surface *)e->geometry)->format & VisualServer::ArrayFormat::ARRAY_FLAG_USE_OCTAHEDRAL_COMPRESSION;
+		bool octahedral_compression = e->instance->base_type != VS::INSTANCE_IMMEDIATE &&
+				((RasterizerStorageGLES3::Surface *)e->geometry)->format & VisualServer::ArrayFormat::ARRAY_FLAG_USE_OCTAHEDRAL_COMPRESSION &&
+				!(((RasterizerStorageGLES3::Surface *)e->geometry)->blend_shapes.size() && e->instance->blend_values.size());
 		if (octahedral_compression != prev_octahedral_compression) {
 			state.scene_shader.set_conditional(SceneShaderGLES3::ENABLE_OCTAHEDRAL_COMPRESSION, octahedral_compression);
 			rebind = true;
@@ -2514,7 +2514,7 @@ void RasterizerSceneGLES3::_add_geometry_with_material(RasterizerStorageGLES3::G
 	}
 
 	if (p_material->shader->spatial.uses_time) {
-		VisualServerRaster::redraw_request();
+		VisualServerRaster::redraw_request(false);
 	}
 }
 

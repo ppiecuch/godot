@@ -453,7 +453,7 @@ void fill_default_theme(Ref<Theme> &theme, const Ref<Font> &default_font, const 
 	theme->set_color("completion_background_color", "TextEdit", Color(0.17, 0.16, 0.2));
 	theme->set_color("completion_selected_color", "TextEdit", Color(0.26, 0.26, 0.27));
 	theme->set_color("completion_existing_color", "TextEdit", Color(0.87, 0.87, 0.87, 0.13));
-	theme->set_color("completion_scroll_color", "TextEdit", control_font_color_pressed);
+	theme->set_color("completion_scroll_color", "TextEdit", control_font_color_pressed * Color(1, 1, 1, 0.29));
 	theme->set_color("completion_font_color", "TextEdit", Color(0.67, 0.67, 0.67));
 	theme->set_color("font_color", "TextEdit", control_font_color);
 	theme->set_color("font_color_selected", "TextEdit", Color(0, 0, 0));
@@ -478,7 +478,7 @@ void fill_default_theme(Ref<Theme> &theme, const Ref<Font> &default_font, const 
 
 	theme->set_constant("completion_lines", "TextEdit", 7);
 	theme->set_constant("completion_max_width", "TextEdit", 50);
-	theme->set_constant("completion_scroll_width", "TextEdit", 3);
+	theme->set_constant("completion_scroll_width", "TextEdit", 6 * scale);
 	theme->set_constant("line_spacing", "TextEdit", 4 * scale);
 
 	Ref<Texture> empty_icon = memnew(ImageTexture);
@@ -890,6 +890,10 @@ void fill_default_theme(Ref<Theme> &theme, const Ref<Font> &default_font, const 
 	theme->set_constant("separation", "VSplitContainer", 12 * scale);
 	theme->set_constant("autohide", "HSplitContainer", 1 * scale);
 	theme->set_constant("autohide", "VSplitContainer", 1 * scale);
+	theme->set_constant("hseparation", "HFlowContainer", 4 * scale);
+	theme->set_constant("vseparation", "HFlowContainer", 4 * scale);
+	theme->set_constant("hseparation", "VFlowContainer", 4 * scale);
+	theme->set_constant("vseparation", "VFlowContainer", 4 * scale);
 
 	Ref<StyleBoxTexture> sb_pc = make_stylebox(tab_container_bg_png, 4, 4, 4, 4, 7, 7, 7, 7);
 	theme->set_stylebox("panel", "PanelContainer", sb_pc);

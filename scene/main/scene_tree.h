@@ -43,6 +43,7 @@
 
 class PackedScene;
 class Node;
+class Spatial;
 class Viewport;
 class Material;
 class Mesh;
@@ -105,6 +106,11 @@ private:
 		Group() { changed = false; };
 	};
 
+	struct ClientPhysicsInterpolation {
+		SelfList<Spatial>::List _spatials_list;
+		void physics_process();
+	} _client_physics_interpolation;
+
 	Viewport *root;
 
 	uint64_t tree_version;
@@ -124,6 +130,7 @@ private:
 	bool _quit;
 	bool initialized;
 	bool input_handled;
+	bool _physics_interpolation_enabled;
 
 	Size2 last_screen_size;
 	StringName tree_changed_name;
@@ -416,6 +423,12 @@ public:
 
 	void set_refuse_new_network_connections(bool p_refuse);
 	bool is_refusing_new_network_connections() const;
+
+	void set_physics_interpolation_enabled(bool p_enabled);
+	bool is_physics_interpolation_enabled() const;
+
+	void client_physics_interpolation_add_spatial(SelfList<Spatial> *p_elem);
+	void client_physics_interpolation_remove_spatial(SelfList<Spatial> *p_elem);
 
 	static void add_idle_callback(IdleCallback p_callback);
 	static void add_exit_callback(ExitCallback p_callback);

@@ -145,6 +145,8 @@ static const int max_touches = 8;
 
 	[self initTouches];
 
+	self.multipleTouchEnabled = YES;
+
 	// Configure and start accelerometer
 	if (!self.motionManager) {
 		self.motionManager = [[CMMotionManager alloc] init];
@@ -331,7 +333,7 @@ static const int max_touches = 8;
 	}
 }
 
-- (void)touchesBegan:(NSSet *)touchesSet withEvent:(UIEvent *)event {
+- (void)godotTouchesBegan:(NSSet *)touchesSet withEvent:(UIEvent *)event {
 	NSArray *tlist = [event.allTouches allObjects];
 	for (unsigned int i = 0; i < [tlist count]; i++) {
 		if ([touchesSet containsObject:[tlist objectAtIndex:i]]) {
@@ -349,7 +351,7 @@ static const int max_touches = 8;
 	}
 }
 
-- (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event {
+- (void)godotTouchesMoved:(NSSet *)touches withEvent:(UIEvent *)event {
 	NSArray *tlist = [event.allTouches allObjects];
 	for (unsigned int i = 0; i < [tlist count]; i++) {
 		if ([touches containsObject:[tlist objectAtIndex:i]]) {
@@ -370,7 +372,7 @@ static const int max_touches = 8;
 	}
 }
 
-- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
+- (void)godotTouchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
 	NSArray *tlist = [event.allTouches allObjects];
 	for (unsigned int i = 0; i < [tlist count]; i++) {
 		if ([touches containsObject:[tlist objectAtIndex:i]]) {
@@ -388,7 +390,7 @@ static const int max_touches = 8;
 	}
 }
 
-- (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event {
+- (void)godotTouchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event {
 	NSArray *tlist = [event.allTouches allObjects];
 	for (unsigned int i = 0; i < [tlist count]; i++) {
 		if ([touches containsObject:[tlist objectAtIndex:i]]) {

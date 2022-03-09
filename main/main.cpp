@@ -48,7 +48,6 @@
 #include "core/script_language.h"
 #include "core/translation.h"
 #include "core/version.h"
-#include "core/version_hash.gen.h"
 #include "drivers/register_driver_types.h"
 #include "main/app_icon.gen.h"
 #include "main/input_default.h"
@@ -185,7 +184,7 @@ static String unescape_cmdline(const String &p_str) {
 
 static String get_full_version_string() {
 	String hash = String(VERSION_HASH);
-	if (hash.length() != 0) {
+	if (!hash.empty()) {
 		hash = "." + hash.left(9);
 	}
 	return String(VERSION_FULL_BUILD) + hash;
@@ -2320,6 +2319,7 @@ bool Main::iteration() {
 
 		if (OS::get_singleton()->get_main_loop()->iteration(frame_slice * time_scale)) {
 			exit = true;
+			Engine::get_singleton()->_in_physics = false;
 			break;
 		}
 
@@ -2356,7 +2356,16 @@ bool Main::iteration() {
 
 	if (OS::get_singleton()->can_draw() && VisualServer::get_singleton()->is_render_loop_enabled()) {
 		if ((!force_redraw_requested) && OS::get_singleton()->is_in_low_processor_usage_mode()) {
-			if (VisualServer::get_singleton()->has_changed()) {
+			// We can choose whether to redraw as a result of any redraw request, or redraw only for vital requests.
+			VisualServer::ChangedPriority priority = (OS::get_singleton()->is_update_pending() ? VisualServer::CHANGED_PRIORITY_ANY : VisualServer::CHANGED_PRIORITY_HIGH);
+
+			// Determine whether the scene has changed, to know whether to draw.
+			// If it has changed, inform the update pending system so it can keep
+			// particle systems etc updating when running in vital updates only mode.
+			bool has_changed = VisualServer::get_singleton()->has_changed(priority);
+			OS::get_singleton()->set_update_pending(has_changed);
+
+			if (has_changed) {
 				VisualServer::get_singleton()->draw(true, scaled_step); // flush visual commands
 				Engine::get_singleton()->frames_drawn++;
 			}

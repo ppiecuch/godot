@@ -146,6 +146,10 @@ bool OS::is_in_low_processor_usage_mode() const {
 	return low_processor_usage_mode;
 }
 
+void OS::set_update_vital_only(bool p_enabled) {
+	_update_vital_only = p_enabled;
+}
+
 void OS::set_low_processor_usage_mode_sleep_usec(int p_usec) {
 	low_processor_usage_mode_sleep_usec = p_usec;
 }
@@ -508,6 +512,10 @@ int OS::get_processor_count() const {
 	return 1;
 }
 
+String OS::get_processor_name() const {
+	return "";
+}
+
 Error OS::native_video_play(String p_path, float p_volume, String p_audio_track, String p_subtitle_track) {
 	return FAILED;
 }
@@ -848,6 +856,8 @@ OS::OS() {
 	_keep_screen_on = true; // set default value to true, because this had been true before godot 2.0.
 	low_processor_usage_mode = false;
 	low_processor_usage_mode_sleep_usec = 10000;
+	_update_vital_only = false;
+	_update_pending = false;
 	_verbose_stdout = false;
 	_debug_stdout = false;
 	_no_window = false;

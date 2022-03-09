@@ -98,6 +98,15 @@
 static const double abs_resolution_mult = 10000.0;
 static const double abs_resolution_range_mult = 10.0;
 
+static String get_atom_name(Display *p_disp, Atom p_atom) {
+	char *name = XGetAtomName(p_disp, p_atom);
+	ERR_FAIL_NULL_V_MSG(name, String(), "Atom is invalid.");
+	String ret;
+	ret.parse_utf8(name);
+	XFree(name);
+	return ret;
+}
+
 void OS_X11::initialize_core() {
 	crash_handler.initialize();
 
@@ -804,6 +813,20 @@ String OS_X11::get_unique_id() const {
 		}
 	}
 	return machine_id;
+}
+
+String OS_X11::get_processor_name() const {
+	FileAccessRef f = FileAccess::open("/proc/cpuinfo", FileAccess::READ);
+	ERR_FAIL_COND_V_MSG(!f, "", String("Couldn't open `/proc/cpuinfo` to get the CPU model name. Returning an empty string."));
+
+	while (!f->eof_reached()) {
+		const String line = f->get_line();
+		if (line.find("model name") != -1) {
+			return line.split(":")[1].strip_edges();
+		}
+	}
+
+	ERR_FAIL_V_MSG("", String("Couldn't get the CPU model name from `/proc/cpuinfo`. Returning an empty string."));
 }
 
 void OS_X11::finalize() {
@@ -1868,7 +1891,7 @@ void OS_X11::_handle_key_event(XKeyEvent *p_event, LocalVector<XEvent> &p_events
 	// still works in half the cases. (won't handle deadkeys)
 	// For more complex input methods (deadkeys and more advanced)
 	// you have to use XmbLookupString (??).
-	// So.. then you have to chosse which of both results
+	// So.. then you have to choose which of both results
 	// you want to keep.
 	// This is a real bizarreness and cpu waster.
 
@@ -2251,7 +2274,7 @@ static Atom pick_target_from_list(Display *p_display, Atom *p_list, int p_count)
 	for (int i = 0; i < p_count; i++) {
 		Atom atom = p_list[i];
 
-		if (atom != None && String(XGetAtomName(p_display, atom)) == target_type) {
+		if (atom != None && get_atom_name(p_display, atom) == target_type) {
 			return atom;
 		}
 	}
@@ -2260,15 +2283,15 @@ static Atom pick_target_from_list(Display *p_display, Atom *p_list, int p_count)
 
 static Atom pick_target_from_atoms(Display *p_disp, Atom p_t1, Atom p_t2, Atom p_t3) {
 	static const char *target_type = "text/uri-list";
-	if (p_t1 != None && String(XGetAtomName(p_disp, p_t1)) == target_type) {
+	if (p_t1 != None && get_atom_name(p_disp, p_t1) == target_type) {
 		return p_t1;
 	}
 
-	if (p_t2 != None && String(XGetAtomName(p_disp, p_t2)) == target_type) {
+	if (p_t2 != None && get_atom_name(p_disp, p_t2) == target_type) {
 		return p_t2;
 	}
 
-	if (p_t3 != None && String(XGetAtomName(p_disp, p_t3)) == target_type) {
+	if (p_t3 != None && get_atom_name(p_disp, p_t3) == target_type) {
 		return p_t3;
 	}
 
@@ -2638,7 +2661,7 @@ void OS_X11::process_xevents() {
 				window_focused = false;
 
 				if (mouse_mode_grab) {
-					//dear X11, I try, I really try, but you never work, you do whathever you want.
+					//dear X11, I try, I really try, but you never work, you do whatever you want.
 					if (mouse_mode == MOUSE_MODE_CAPTURED) {
 						// Show the cursor if we're in captured mode so it doesn't look weird.
 						XUndefineCursor(x11_display, x11_window);
@@ -2866,6 +2889,7 @@ void OS_X11::process_xevents() {
 					Property p = read_property(x11_display, x11_window, XInternAtom(x11_display, "PRIMARY", 0));
 
 					Vector<String> files = String((char *)p.data).split("\n", false);
+					XFree(p.data);
 					for (int i = 0; i < files.size(); i++) {
 						files.write[i] = files[i].replace("file://", "").http_unescape().strip_edges();
 					}
@@ -2900,6 +2924,7 @@ void OS_X11::process_xevents() {
 					if (more_than_3) {
 						Property p = read_property(x11_display, source, XInternAtom(x11_display, "XdndTypeList", False));
 						requested = pick_target_from_list(x11_display, (Atom *)p.data, p.nitems);
+						XFree(p.data);
 					} else {
 						requested = pick_target_from_atoms(x11_display, event.xclient.data.l[2], event.xclient.data.l[3], event.xclient.data.l[4]);
 					}
@@ -3890,7 +3915,7 @@ Error OS_X11::move_to_trash(const String &p_path) {
 		DirAccessRef dir_access = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
 		Error err = dir_access->make_dir_recursive(trash_path);
 
-		// Issue an error if trash can is not created proprely.
+		// Issue an error if trash can is not created properly.
 		ERR_FAIL_COND_V_MSG(err != OK, err, "Could not create the trash path \"" + trash_path + "\"");
 		err = dir_access->make_dir_recursive(trash_path + "/files");
 		ERR_FAIL_COND_V_MSG(err != OK, err, "Could not create the trash path \"" + trash_path + "\"/files");
@@ -3976,10 +4001,10 @@ OS::LatinKeyboardVariant OS_X11::get_latin_keyboard_variant() const {
 	ERR_FAIL_COND_V(!xkbdesc->names, LATIN_KEYBOARD_QWERTY);
 	ERR_FAIL_COND_V(!xkbdesc->names->symbols, LATIN_KEYBOARD_QWERTY);
 
-	char *layout = XGetAtomName(x11_display, xkbdesc->names->symbols);
-	ERR_FAIL_COND_V(!layout, LATIN_KEYBOARD_QWERTY);
+	String layout = get_atom_name(x11_display, xkbdesc->names->symbols);
+	ERR_FAIL_COND_V(layout.empty(), LATIN_KEYBOARD_QWERTY);
 
-	Vector<String> info = String(layout).split("+");
+	Vector<String> info = layout.split("+");
 	ERR_FAIL_INDEX_V(1, info.size(), LATIN_KEYBOARD_QWERTY);
 
 	if (info[1].find("colemak") != -1) {
@@ -4052,8 +4077,7 @@ String OS_X11::keyboard_get_layout_language(int p_index) const {
 
 		Atom names = kbd->names->symbols;
 		if (names != None) {
-			char *name = XGetAtomName(x11_display, names);
-			Vector<String> info = String(name).split("+");
+			Vector<String> info = get_atom_name(x11_display, names).split("+");
 			if (p_index >= 0 && p_index < _group_count) {
 				if (p_index + 1 < info.size()) {
 					ret = info[p_index + 1]; // Skip "pc" at the start and "inet"/"group" at the end of symbols.
@@ -4063,7 +4087,6 @@ String OS_X11::keyboard_get_layout_language(int p_index) const {
 			} else {
 				ERR_PRINT("Index " + itos(p_index) + "is out of bounds (" + itos(_group_count) + ").");
 			}
-			XFree(name);
 		}
 		XkbFreeKeyboard(kbd, 0, true);
 	}
@@ -4090,9 +4113,7 @@ String OS_X11::keyboard_get_layout_name(int p_index) const {
 		}
 
 		if (p_index >= 0 && p_index < _group_count) {
-			char *full_name = XGetAtomName(x11_display, groups[p_index]);
-			ret.parse_utf8(full_name);
-			XFree(full_name);
+			ret = get_atom_name(x11_display, groups[p_index]);
 		} else {
 			ERR_PRINT("Index " + itos(p_index) + "is out of bounds (" + itos(_group_count) + ").");
 		}

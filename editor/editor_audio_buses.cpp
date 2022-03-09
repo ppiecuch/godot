@@ -324,7 +324,7 @@ float EditorAudioBus::_normalized_volume_to_scaled_db(float normalized) {
 	/* There are three different formulas for the conversion from normalized
 	 * values to relative decibal values.
 	 * One formula is an exponential graph which intends to counteract
-	 * the logorithmic nature of human hearing. This is an approximation
+	 * the logarithmic nature of human hearing. This is an approximation
 	 * of the behaviour of a 'logarithmic potentiometer' found on most
 	 * musical instruments and also emulated in popular software.
 	 * The other two equations are hand-tuned linear tapers that intend to
@@ -1345,7 +1345,7 @@ EditorAudioBuses::EditorAudioBuses() {
 	List<String> ext;
 	ResourceLoader::get_recognized_extensions_for_type("AudioBusLayout", &ext);
 	for (List<String>::Element *E = ext.front(); E; E = E->next()) {
-		file_dialog->add_filter("*." + E->get() + "; Audio Bus Layout");
+		file_dialog->add_filter(vformat("*.%s; %s", E->get(), TTR("Audio Bus Layout")));
 	}
 	add_child(file_dialog);
 	file_dialog->connect("file_selected", this, "_file_dialog_callback");

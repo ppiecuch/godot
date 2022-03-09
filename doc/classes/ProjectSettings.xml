@@ -1152,10 +1152,15 @@
 			[b]Note:[/b] This property is only read when the project starts. To change the physics FPS at runtime, set [member Engine.iterations_per_second] instead.
 			[b]Note:[/b] Only 8 physics ticks may be simulated per rendered frame at most. If more than 8 physics ticks have to be simulated per rendered frame to keep up with rendering, the game will appear to slow down (even if [code]delta[/code] is used consistently in physics calculations). Therefore, it is recommended not to increase [member physics/common/physics_fps] above 240. Otherwise, the game will slow down when the rendering framerate goes below 30 FPS.
 		</member>
+		<member name="physics/common/physics_interpolation" type="bool" setter="" getter="" default="false">
+			If [code]true[/code], the renderer will interpolate the transforms of physics objects between the last two transforms, such that smooth motion is seen when physics ticks do not coincide with rendered frames.
+			[b]Note:[/b] When moving objects to new positions (rather than the usual physics motion) you may want to temporarily turn off interpolation to prevent a visible glitch. You can do this using the [method Node.reset_physics_interpolation] function.
+		</member>
 		<member name="physics/common/physics_jitter_fix" type="float" setter="" getter="" default="0.5">
 			Controls how much physics ticks are synchronized with real time. For 0 or less, the ticks are synchronized. Such values are recommended for network games, where clock synchronization matters. Higher values cause higher deviation of in-game clock and real clock, but allows smoothing out framerate jitters. The default value of 0.5 should be fine for most; values above 2 could cause the game to react to dropped frames with a noticeable delay and are not recommended.
 			[b]Note:[/b] For best results, when using a custom physics interpolation solution, the physics jitter fix should be disabled by setting [member physics/common/physics_jitter_fix] to [code]0[/code].
-			[b]Note:[/b] This property is only read when the project starts. To change the physics FPS at runtime, set [member Engine.physics_jitter_fix] instead.
+			[b]Note:[/b] Jitter fix is automatically disabled at runtime when [member physics/common/physics_interpolation] is enabled.
+			[b]Note:[/b] This property is only read when the project starts. To change the value at runtime, set [member Engine.physics_jitter_fix] instead.
 		</member>
 		<member name="rendering/2d/opengl/batching_send_null" type="int" setter="" getter="" default="0">
 			[b]Experimental.[/b] Calls [code]glBufferData[/code] with NULL data prior to uploading batching data. This may not be necessary but can be used for safety.
@@ -1364,11 +1369,12 @@
 			[b]Note:[/b] Generally you should only use this option if you encounter bugs when it is set to [code]false[/code], i.e. there are problems with the default method.
 		</member>
 		<member name="rendering/quality/depth/hdr" type="bool" setter="" getter="" default="true">
-			If [code]true[/code], allocates the root [Viewport]'s framebuffer with high dynamic range. High dynamic range allows the use of [Color] values greater than 1.
+			If [code]true[/code], allocates the root [Viewport]'s framebuffer with high dynamic range. High dynamic range allows the use of [Color] values greater than 1. This must be set to [code]true[/code] for glow rendering to work if [member Environment.glow_hdr_threshold] is greater than or equal to [code]1.0[/code].
 			[b]Note:[/b] Only available on the GLES3 backend.
 		</member>
 		<member name="rendering/quality/depth/hdr.mobile" type="bool" setter="" getter="" default="false">
-			Lower-end override for [member rendering/quality/depth/hdr] on mobile devices, due to performance concerns or driver support.
+			Lower-end override for [member rendering/quality/depth/hdr] on mobile devices, due to performance concerns or driver support. This must be set to [code]true[/code] for glow rendering to work if [member Environment.glow_hdr_threshold] is greater than or equal to [code]1.0[/code].
+			[b]Note:[/b] Only available on the GLES3 backend.
 		</member>
 		<member name="rendering/quality/depth/use_32_bpc_depth" type="bool" setter="" getter="" default="false">
 			If [code]true[/code], allocates the root [Viewport]'s framebuffer with full floating-point precision (32-bit) instead of half floating-point precision (16-bit). Only effective when [member rendering/quality/depth/hdr] is also enabled.
@@ -1417,7 +1423,7 @@
 			If [code]true[/code], uses nearest-neighbor mipmap filtering when using mipmaps (also called "bilinear filtering"), which will result in visible seams appearing between mipmap stages. This may increase performance in mobile as less memory bandwidth is used. If [code]false[/code], linear mipmap filtering (also called "trilinear filtering") is used.
 		</member>
 		<member name="rendering/quality/intended_usage/framebuffer_allocation" type="int" setter="" getter="" default="2">
-			Strategy used for framebuffer allocation. The simpler it is, the less resources it uses (but the less features it supports). If set to "2D Without Sampling" or "3D Without Effects", sample buffers will not be allocated. This means [code]SCREEN_TEXTURE[/code] and [code]DEPTH_TEXTURE[/code] will not be available in shaders and post-processing effects will not be available in the [Environment].
+			Strategy used for framebuffer allocation. The simpler it is, the less resources it uses (but the less features it supports). If set to "2D Without Sampling" or "3D Without Effects", sample buffers will not be allocated. This means [code]SCREEN_TEXTURE[/code] and [code]DEPTH_TEXTURE[/code] will not be available in shaders and post-processing effects such as glow will not be available in [Environment].
 		</member>
 		<member name="rendering/quality/intended_usage/framebuffer_allocation.mobile" type="int" setter="" getter="" default="3">
 			Lower-end override for [member rendering/quality/intended_usage/framebuffer_allocation] on mobile devices, due to performance concerns or driver support.
@@ -1569,6 +1575,13 @@
 			Cell size used for the 2D hash grid that [VisibilityNotifier2D] uses (in pixels).
 		</member>
 	</members>
+	<signals>
+		<signal name="project_settings_changed">
+			<description>
+				Objects can use this signal to restrict reading of settings only to situations where a change has been made.
+			</description>
+		</signal>
+	</signals>
 	<constants>
 	</constants>
 </class>

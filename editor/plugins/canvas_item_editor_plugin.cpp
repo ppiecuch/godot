@@ -2093,7 +2093,7 @@ bool CanvasItemEditor::_gui_input_scale(const Ref<InputEvent> &p_event) {
 			Point2 drag_to_local = simple_xform.xform(drag_to);
 			Point2 offset = drag_to_local - drag_from_local;
 
-			Size2 scale = canvas_item->call("get_scale");
+			Size2 scale = canvas_item->_edit_get_scale();
 			float ratio = scale.y / scale.x;
 			if (drag_type == DRAG_SCALE_BOTH) {
 				Size2 scale_factor = drag_to_local / drag_from_local;
@@ -2124,7 +2124,7 @@ bool CanvasItemEditor::_gui_input_scale(const Ref<InputEvent> &p_event) {
 				scale.y = roundf(scale.y / snap_scale_step) * snap_scale_step;
 			}
 
-			canvas_item->call("set_scale", scale);
+			canvas_item->_edit_set_scale(scale);
 			return true;
 		}
 
@@ -3766,7 +3766,7 @@ void CanvasItemEditor::_draw_invisible_nodes_positions(Node *p_node, const Trans
 	}
 
 	CanvasItem *canvas_item = Object::cast_to<CanvasItem>(p_node);
-	if (canvas_item && !canvas_item->is_visible()) {
+	if (canvas_item && !canvas_item->is_visible_in_tree()) {
 		return;
 	}
 
@@ -4539,9 +4539,13 @@ void CanvasItemEditor::_set_anchors_and_margins_to_keep_ratio() {
 			undo_redo->add_do_method(control, "set_anchor", MARGIN_BOTTOM, bottom_right_anchor.y, false, true);
 			undo_redo->add_do_method(control, "set_meta", "_edit_use_anchors_", true);
 
-			bool use_anchors = control->has_meta("_edit_use_anchors_") && control->get_meta("_edit_use_anchors_");
+			const bool use_anchors = control->has_meta("_edit_use_anchors_") && control->get_meta("_edit_use_anchors_");
 			undo_redo->add_undo_method(control, "_edit_set_state", control->_edit_get_state());
-			undo_redo->add_undo_method(control, "set_meta", "_edit_use_anchors_", use_anchors);
+			if (use_anchors) {
+				undo_redo->add_undo_method(control, "set_meta", "_edit_use_anchors_", true);
+			} else {
+				undo_redo->add_undo_method(control, "remove_meta", "_edit_use_anchors_");
+			}
 
 			anchors_mode = true;
 			anchor_mode_button->set_pressed(anchors_mode);
@@ -4696,7 +4700,7 @@ void CanvasItemEditor::_button_zoom_plus() {
 }
 
 void CanvasItemEditor::_shortcut_zoom_set(float p_zoom) {
-	_zoom_on_position(p_zoom * MAX(1, EDSCALE), viewport_scrollable->get_size() / 2.0);
+	_zoom_on_position(p_zoom * MAX(1, EDSCALE), viewport->get_local_mouse_position());
 }
 
 void CanvasItemEditor::_button_toggle_smart_snap(bool p_status) {
@@ -4813,7 +4817,11 @@ void CanvasItemEditor::_button_toggle_anchor_mode(bool p_status) {
 			continue;
 		}
 
-		control->set_meta("_edit_use_anchors_", p_status);
+		if (p_status) {
+			control->set_meta("_edit_use_anchors_", true);
+		} else {
+			control->remove_meta("_edit_use_anchors_");
+		}
 	}
 
 	anchors_mode = p_status;
@@ -6479,16 +6487,18 @@ bool CanvasItemEditorViewport::_create_instance(Node *parent, String &path, cons
 	editor_data->get_undo_redo().add_do_method(sed, "live_debug_instance_node", editor->get_edited_scene()->get_path_to(parent), path, new_name);
 	editor_data->get_undo_redo().add_undo_method(sed, "live_debug_remove_node", NodePath(String(editor->get_edited_scene()->get_path_to(parent)) + "/" + new_name));
 
-	CanvasItem *parent_ci = Object::cast_to<CanvasItem>(parent);
-	if (parent_ci) {
+	CanvasItem *instance_ci = Object::cast_to<CanvasItem>(instanced_scene);
+	if (instance_ci) {
 		Vector2 target_pos = canvas_item_editor->get_canvas_transform().affine_inverse().xform(p_point);
 		target_pos = canvas_item_editor->snap_point(target_pos);
-		target_pos = parent_ci->get_global_transform_with_canvas().affine_inverse().xform(target_pos);
-		// Preserve instance position of the original scene.
-		CanvasItem *instance_ci = Object::cast_to<CanvasItem>(instanced_scene);
-		if (instance_ci) {
-			target_pos += instance_ci->_edit_get_position();
+
+		CanvasItem *parent_ci = Object::cast_to<CanvasItem>(parent);
+		if (parent_ci) {
+			target_pos = parent_ci->get_global_transform_with_canvas().affine_inverse().xform(target_pos);
 		}
+		// Preserve instance position of the original scene.
+		target_pos += instance_ci->_edit_get_position();
+
 		editor_data->get_undo_redo().add_do_method(instanced_scene, "set_position", target_pos);
 	}
 
