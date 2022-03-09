@@ -60,7 +60,12 @@ void GdGeomFonts::set_color(const Color &p_color) {
 
 Color GdGeomFonts::get_color() const { return modulate; }
 
-void GdGeomFonts::clear() { _mesh->clear_mesh(); }
+void GdGeomFonts::clear() {
+	_mesh->clear_mesh();
+	if (canvas_item.is_valid()) {
+		VisualServer::get_singleton()->canvas_item_clear(canvas_item);
+	}
+}
 
 void GdGeomFonts::finish() {
 	ERR_FAIL_COND(!canvas_item.is_valid());
