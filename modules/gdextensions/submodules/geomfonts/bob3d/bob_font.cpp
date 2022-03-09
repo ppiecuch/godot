@@ -106,18 +106,28 @@ char *chars[] = {
 	char_82, char_83, char_84, char_85, char_86, char_87, char_88, char_89, char_90, nullptr
 };
 
-static void draw_block(Array &mesh_array, real_t x1, real_t y1, real_t x2, real_t y2, real_t z1, real_t z2) {
+struct bob_mesh {
+	PoolVector3Array verts;
+	PoolColorArray verts_color;
+	PoolIntArray faces_index;
+	bool wire;
+
+	bob_mesh(int bnum, bool wire) : wire(wire) {
+		faces_index.resize(bnum * (wire ? 24 : 36));
+		verts_color.resize(bnum * 24);
+		verts.resize(bnum * 24);
+	}
+};
+
+static void draw_block(bob_mesh &mesh_info, int array_offset, real_t x1, real_t y1, real_t x2, real_t y2, real_t z1, real_t z2) {
 #define aa 0.7, 0.5, 0.2, 1.0
 #define bb 0.9, 0.5, 0.0, 1.0
 #define cc 1.0, 0.7, 0.0, 1.0
 #define dd 1.0, 0.2, 0.2, 1.0
 #define ee 1.0, 0.5, 0.8, 1.0
 
-// clang-format off
-	struct {
-		Point3 v[24];
-		Color c[24];
-	} _vertices = {{
+	// clang-format off
+	Point3 _vertices[24] = {
 		{ x1, y1, z1 },
 		{ x2, y1, z1 },
 		{ x2, y1, z2 },
@@ -147,7 +157,9 @@ static void draw_block(Array &mesh_array, real_t x1, real_t y1, real_t x2, real_
 		{ x2, y1, z2 },
 		{ x2, y2, z2 },
 		{ x1, y2, z2 }
-	},{
+	};
+
+	static Color _colors[24] = {
 		{ aa },
 		{ aa },
 		{ aa },
@@ -177,60 +189,74 @@ static void draw_block(Array &mesh_array, real_t x1, real_t y1, real_t x2, real_
 		{ ee },
 		{ cc },
 		{ dd }
-	}};
-	uint32_t _faces[6][6] = {
-		{ 0, 1, 2, 0, 3, 2 },
-		{ 4, 5, 6, 4, 7, 6 },
-		{ 8, 9, 10, 8, 10, 11 },
-		{ 12, 13, 14, 12, 14, 15 },
-		{ 16, 17, 18, 16, 18, 19 },
-		{ 20, 21, 22, 20, 22, 23 }
 	};
-// clang-format on
 
-	static PoolIntArray faces_index;
-	if (faces_index.empty()) {
-		faces_index.resize(36);
-		memcpy(faces_index.write().ptr(), _faces, 36 * sizeof(uint32_t));
+	const uint32_t vert_offset = array_offset * 24;
+	uint32_t _tri_faces[6][6] = {
+		{ vert_offset + 0, vert_offset + 1, vert_offset + 2, vert_offset + 0, vert_offset + 3, vert_offset + 2 },
+		{ vert_offset + 4, vert_offset + 5, vert_offset + 6, vert_offset + 4, vert_offset + 7, vert_offset + 6 },
+		{ vert_offset + 8, vert_offset + 9, vert_offset + 10, vert_offset + 8, vert_offset + 10, vert_offset + 11 },
+		{ vert_offset + 12, vert_offset + 13, vert_offset + 14, vert_offset + 12, vert_offset + 14, vert_offset + 15 },
+		{ vert_offset + 16, vert_offset + 17, vert_offset + 18, vert_offset + 16, vert_offset + 18, vert_offset + 19 },
+		{ vert_offset + 20, vert_offset + 21, vert_offset + 22, vert_offset + 20, vert_offset + 22, vert_offset + 23 }
+	};
+	uint32_t _wire_faces[14][2] = {
+		{ vert_offset + 16, vert_offset + 20 },
+		{ vert_offset + 17, vert_offset + 21 },
+
+		{ vert_offset + 18, vert_offset + 22 },
+		{ vert_offset + 19, vert_offset + 23 },
+
+		{ vert_offset + 16, vert_offset + 18 },
+		{ vert_offset + 21, vert_offset + 23 },
+
+		{ vert_offset + 16, vert_offset + 17 },
+		{ vert_offset + 17, vert_offset + 18 },
+		{ vert_offset + 18, vert_offset + 19 },
+		{ vert_offset + 19, vert_offset + 20 },
+
+		{ vert_offset + 20, vert_offset + 21 },
+		{ vert_offset + 21, vert_offset + 22 },
+		{ vert_offset + 22, vert_offset + 23 },
+		{ vert_offset + 23, vert_offset + 24 }
+	};
+	// clang-format on
+
+	memcpy(mesh_info.verts.write().ptr() + vert_offset, _vertices, 24 * sizeof(Point3));
+	memcpy(mesh_info.verts_color.write().ptr() + vert_offset, _colors, 24 * sizeof(Color));
+	if (mesh_info.wire) {
+		memcpy(mesh_info.faces_index.write().ptr() + array_offset * 24, _wire_faces, 24 * sizeof(uint32_t));
+	} else {
+		memcpy(mesh_info.faces_index.write().ptr() + array_offset * 36, _tri_faces, 36 * sizeof(uint32_t));
 	}
-
-	static PoolColorArray verts_color;
-	if (verts_color.empty()) {
-		verts_color.resize(24);
-		memcpy(verts_color.write().ptr(), _vertices.c, 24 * sizeof(Color));
-	}
-
-	PoolVector3Array verts;
-	verts.resize(24);
-	memcpy(verts.write().ptr(), _vertices.v, 24 * sizeof(Point3));
 }
 
-static void draw_bob(Array &mesh_array, real_t x, real_t y, real_t z, real_t size) {
-	draw_block(mesh_array, x, y, x + size * 0.8, y + size * 0.8, z, z + size * 0.8);
+static void draw_bob(bob_mesh &mesh_info, int array_offset, real_t x, real_t y, real_t z, real_t size) {
+	draw_block(mesh_info, array_offset, x, y, x + size * 0.8, y + size * 0.8, z, z + size * 0.8);
 }
 
-static real_t draw_bob_char(Array &mesh_array, char ch, const Point3 &pos, real_t size) {
-	real_t xp, yp = pos.y;
+static bool draw_bob_char(bob_mesh &mesh_info, int &array_offset, char ch, const Point3 &pos, real_t size) {
+	real_t yp = pos.y;
 
 	if (ch < 32 || ch > 90) {
-		return 0;
+		return false;
 	}
 	char *ptr = chars[ch - 32];
 
 	for (int i = 0; i < BOBS_Y; i++) {
-		xp = pos.x;
+		real_t xp = pos.x;
 		char shft = 0x40;
 		for (int j = 0; j < BOBS_X; j++) {
 			if (*ptr & shft) {
-				draw_bob(mesh_array, xp, yp, pos.z, size);
+				draw_bob(mesh_info, array_offset, xp, yp, pos.z, size); array_offset++;
 			}
 			shft = shft >> 1;
-			xp = xp + size;
+			xp += size;
 		}
-		yp = yp - size;
+		yp += size;
 		ptr++;
 	}
-	return xp + size;
+	return true;
 }
 
 static int num_of_draw_bobs(const char *str) {
@@ -256,37 +282,31 @@ static int num_of_draw_bobs(const char *str) {
 }
 
 real_t DrawBobString(Ref<ArrayMesh> &mesh, RID canvas, const char *str, const Point3 &pos, real_t size, bool wire) {
-	Array mesh_array;
-	mesh_array.resize(VS::ARRAY_MAX);
+	const int bnum = num_of_draw_bobs(str);
 
-	PoolIntArray faces_index;
-	PoolColorArray verts_color;
-	PoolVector3Array verts;
-
-	int bnum = num_of_draw_bobs(str);
-
-	faces_index.resize(bnum * 36);
-	verts_color.resize(bnum * 24);
-	verts.resize(bnum * 24);
-
-	mesh_array[VS::ARRAY_VERTEX] = verts;
-	mesh_array[VS::ARRAY_COLOR] = verts_color;
-	mesh_array[VS::ARRAY_INDEX] = faces_index;
+	bob_mesh mesh_info(bnum, wire);
 
 	char ch = *str;
+	int array_offset = 0;
 	Point3 xp(pos.x, 0, 0);
 	while ((ch = *str) != 0) {
-		draw_bob_char(mesh_array, ch, pos + xp, size);
-		xp.x = xp.x + size * (BOBS_X + 1);
+		if (draw_bob_char(mesh_info, array_offset, ch, pos + xp, size)) {
+			xp.x += size * (BOBS_X + 1);
+		}
 		str++;
 	}
 
+	Array mesh_array;
+	mesh_array.resize(VS::ARRAY_MAX);
+	mesh_array[VS::ARRAY_VERTEX] = mesh_info.verts;
+	mesh_array[VS::ARRAY_COLOR] = mesh_info.verts_color;
+	mesh_array[VS::ARRAY_INDEX] = mesh_info.faces_index;
+
 	if (wire) {
-		mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINE_LOOP, mesh_array, Array());
+		mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, mesh_array, Array());
 	} else {
 		mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array, Array());
 	}
-
 	return xp.x;
 }
 
