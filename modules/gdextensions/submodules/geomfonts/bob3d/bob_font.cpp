@@ -112,7 +112,8 @@ struct bob_mesh {
 	PoolIntArray faces_index;
 	bool wire;
 
-	bob_mesh(int bnum, bool wire) : wire(wire) {
+	bob_mesh(int bnum, bool wire) :
+			wire(wire) {
 		faces_index.resize(bnum * (wire ? 24 : 36));
 		verts_color.resize(bnum * 24);
 		verts.resize(bnum * 24);
@@ -248,7 +249,8 @@ static bool draw_bob_char(bob_mesh &mesh_info, int &array_offset, char ch, const
 		char shft = 0x40;
 		for (int j = 0; j < BOBS_X; j++) {
 			if (*ptr & shft) {
-				draw_bob(mesh_info, array_offset, xp, yp, pos.z, size); array_offset++;
+				draw_bob(mesh_info, array_offset, xp, yp, pos.z, size);
+				array_offset++;
 			}
 			shft = shft >> 1;
 			xp += size;
