@@ -41,7 +41,7 @@ def dump_value(elem, indent=0):
         elif elem["callee"]["type"] == "MemberExpression":
             # JSON.parse(JSON.stringify(DATA_UU))
             if "name" in elem["callee"]["object"] and elem["callee"]["object"]["name"] == "JSON":
-                return "%s" % elem['arguments'][0]['arguments'][0]["name"]
+                return "%s" % elem["arguments"][0]["arguments"][0]["name"]
             # JSON.parse(JSON.stringify(DATA_LH)).concat(getLatin3(-52, 9))
             elif "property" in elem["callee"] and elem["callee"]["property"]["name"] == "concat":
                 if "callee" in elem["arguments"][0]:
@@ -59,16 +59,21 @@ def dump_value(elem, indent=0):
         if len(elem["properties"]) == 2 and elem["properties"][0]["key"]["name"] == "d":
             d = elem["properties"][0]
             v = elem["properties"][1]
-            args_str.append(tabs + "/* d */ %s, /* v */ %s" % (dump_value(d["value"], indent + 1), dump_value(v["value"], indent + 1)))
+            args_str.append(
+                tabs
+                + "/* d */ %s, /* v */ %s" % (dump_value(d["value"], indent + 1), dump_value(v["value"], indent + 1))
+            )
         else:
             for prop in elem["properties"]:
-                args_str.append(tabs + "{ %s, %s }" % (new_key_name(prop["key"]["name"]), dump_value(prop["value"], indent + 1)))
+                args_str.append(
+                    tabs + "{ %s, %s }" % (new_key_name(prop["key"]["name"]), dump_value(prop["value"], indent + 1))
+                )
         return "{\n" + ",\n".join(args_str) + "}"
     elif elem["type"] == "ArrayExpression":
         for prop in elem["elements"]:
             args_str.append(dump_value(prop, indent + 1))
         return "{" + ",".join(args_str) + "}"
-    print("Unknown: "+elem["type"], file=sys.stderr)
+    print("Unknown: " + elem["type"], file=sys.stderr)
     return "?"
 
 if sys.argv[1]:
@@ -94,7 +99,7 @@ if sys.argv[1]:
                     elif item["type"] == "ReturnStatement":
                         print("#ifdef __clang__")
                         print("#pragma clang diagnostic push")
-                        print("#pragma clang diagnostic ignored \"-Wc++11-narrowing\"")
+                        print('#pragma clang diagnostic ignored "-Wc++11-narrowing"')
                         print("  return %s;" % (dump_value(item["argument"])))
                         print("#pragma clang diagnostic pop")
                         print("#endif")
@@ -104,7 +109,17 @@ if sys.argv[1]:
                 if decl["init"]["type"] == "ObjectExpression":
                     print("const std::map<char16_t, FontData> %s = {" % decl["id"]["name"])
                     for prop in decl["init"]["properties"]:
-                        print("  { u%s, %s }," % ("'\x80'" if prop["key"]["value"] == "tofu" else "'\\''" if prop["key"]["value"] == "'" else prop["key"]["raw"], dump_value(prop["value"])))
+                        print(
+                            "  { u%s, %s },"
+                            % (
+                                "'\x80'"
+                                if prop["key"]["value"] == "tofu"
+                                else "'\\''"
+                                if prop["key"]["value"] == "'"
+                                else prop["key"]["raw"],
+                                dump_value(prop["value"])
+                            )
+                        )
                     print("};")
                 elif decl["init"]["type"] == "ArrayExpression":
                     print("const std::vector<FontPath> %s = %s;" % (decl["id"]["name"], dump_value(decl["init"])))
