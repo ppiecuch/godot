@@ -28,6 +28,9 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
+#ifndef _util_h_
+#define _util_h_
+
 #include "core/dictionary.h"
 #include "core/math/math_funcs.h"
 
@@ -40,7 +43,7 @@ constexpr real_t ROTATE_NONE = -100;
 constexpr real_t VERTEX_GAP = 3;
 constexpr real_t VERTEX_GAP2 = VERTEX_GAP / 2;
 constexpr real_t FONT_HEIGHT = 824;
-const char *TOFU = "tofu";
+const char TOFU = 0x80;
 
 union InfoValue {
 	real_t f;
@@ -66,12 +69,10 @@ struct FontPathSeg {
 	std::map<char, InfoValue> info;
 	real_t &operator[](int index) { return d[index]; }
 
-	FontPathSeg(char op, real_t p1, real_t p2, const std::map<char, InfoValue> &info) :
+	FontPathSeg(char op, real_t p1, real_t p2, const std::map<char, InfoValue> &info = {}) :
 			op(op), _1(p1), _2(p2), info(info) {}
-	FontPathSeg(char op, real_t p1, real_t p2, real_t p3, real_t p4, real_t p5, real_t p6, const std::map<char, InfoValue> &info) :
+	FontPathSeg(char op, real_t p1, real_t p2, real_t p3, real_t p4, real_t p5, real_t p6, const std::map<char, InfoValue> &info = {}) :
 			op(op), _1(p1), _2(p2), _3(p3), _4(p4), _5(p5), _6(p6), info(info) {}
-	FontPathSeg(char op, real_t p1, real_t p2, real_t p3, real_t p4, real_t p5, real_t p6) :
-			op(op), _1(p1), _2(p2), _3(p3), _4(p4), _5(p5), _6(p6) {}
 };
 
 struct FontPath {
@@ -121,7 +122,7 @@ static real_t bezierTangent(real_t a, real_t b, real_t c, real_t d, real_t t) {
 	return (3 * t * t * (-a + 3 * b - 3 * c + d) + 6 * t * (a - 2 * b + c) + 3 * (-a + b));
 }
 
-static real_t getCurveR(real_t x1, real_t y1, real_t x2, real_t y2, real_t x3, real_t y3, real_t x4, real_t y4, real_t t) {
+static real_t getCurveR(real_t x1, real_t y1, real_t x2, real_t y2, real_t x3, real_t y3, real_t x4, real_t y4, real_t t = 0) {
 	const real_t x = bezierTangent(x1, x2, x3, x4, t);
 	const real_t y = bezierTangent(y1, y2, y3, y4, t);
 	return -Math::atan2(x, y);
@@ -139,3 +140,11 @@ FontData generateFontData(real_t w, real_t fw, real_t fh, real_t x1, real_t x2, 
 		arr // p
 	};
 }
+
+_FORCE_INLINE_ std::vector<FontPath> concatPaths(const std::vector<FontPath> &p1, const std::vector<FontPath> &p2) {
+	auto v = p1;
+	v.insert(p1.end(), p2.begin(), p2.end());
+	return v;
+}
+
+#endif // _util_h_

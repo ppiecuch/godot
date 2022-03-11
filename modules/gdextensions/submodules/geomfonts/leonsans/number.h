@@ -1,11 +1,11 @@
 // AUTO-GENERATED - don't edit and use 'conv.py' to re-generate.
-// AUTO-GENERATED - Thu Mar 10 2022 19:33:50
+// AUTO-GENERATED - Fri Mar 11 2022 12:27:20
 
 #include "util.h"
 
 // clang-format off
-const std::map<char, FontData> NUMBER = {
-  { '0', generateFontData(660,270,360,0,0,0,0,{{
+const std::map<char32_t, FontData> NUMBER = {
+  { u'0', generateFontData(660,270,360,0,0,0,0,{{
     /* d */ 1, /* v */ {{'m',270,180,{
           { 'r', ROTATE_HORIZONTAL },
           { 'p', 1 },
@@ -15,7 +15,7 @@ const std::map<char, FontData> NUMBER = {
           { 'r', ROTATE_VERTICAL }}},{'b',209.6,0,270,80.6,270,180,{
           { 'r', ROTATE_HORIZONTAL },
           { 'c', 1 }}}}}}) },
-  { '1', generateFontData(380,76,352,15,15,0,0,{{
+  { u'1', generateFontData(380,76,352,15,15,0,0,{{
     /* d */ -1, /* v */ {{'m',0,51,{
           { 'x', -2 },
           { 'y', 2 },
@@ -27,7 +27,7 @@ const std::map<char, FontData> NUMBER = {
           { 'v', 1 }}},{'l',76,352,{
           { 'y', 0 },
           { 'f', 1 }}}}}}) },
-  { '2', generateFontData(580,210,356,0,0,2,2,{{
+  { u'2', generateFontData(580,210,356,0,0,2,2,{{
     /* d */ -1, /* v */ {{'m',3.9,68.8,{
           { 'x', 1.2 },
           { 'y', 1.2 },
@@ -40,7 +40,7 @@ const std::map<char, FontData> NUMBER = {
           { 'v', 1 }}},{'l',210,356,{
           { 'x', -0.5 },
           { 'f', 1 }}}}}}) },
-  { '3', generateFontData(580,222.1,360,0,0,0,0,{{
+  { u'3', generateFontData(580,222.1,360,0,0,0,0,{{
     /* d */ -1, /* v */ {{'m',10.7,66.3,{
           { 'r', getCurveR(10.7,66.3,11.2,64.8,11.7,63.3,12.3,61.8,0) }}},{'b',11.2,64.8,11.7,63.3,12.3,61.8,{
           { 'r', ROTATE_NONE }}},{'b',25.8,25.9,64.5,0,110.1,0,{
@@ -57,7 +57,7 @@ const std::map<char, FontData> NUMBER = {
           { 'r', ROTATE_HORIZONTAL }}},{'b',222.1,319.7,172,360,110.1,360,{
           { 'r', ROTATE_VERTICAL }}},{'b',56.9,360,12.4,330.2,1,290.3,{
           { 'f', 1 }}}}}}) },
-  { '4', generateFontData(596,236,352,0,0,0,0,{{
+  { u'4', generateFontData(596,236,352,0,0,0,0,{{
     /* d */ 1, /* v */ {{'m',175,352,{
           { 'y', 0 },
           { 'f', 1 }}},{'l',175,0,{
@@ -71,7 +71,7 @@ const std::map<char, FontData> NUMBER = {
           { 'f', 1 },
           { 'v', 1 }}},{'l',236,276,{
           { 'x', -0.5 }}}}}}) },
-  { '5', generateFontData(596,208.5,356,0,-5,-2,-2,{{
+  { u'5', generateFontData(596,208.5,356,0,-5,-2,-2,{{
     /* d */ 1, /* v */ {{'m',0,295.7,{
           { 'r', getCurveR(0,295.7,15.3,333.8,52.2,356.2,97.5,356,0) },
           { 'f', 1 }}},{'b',15.3,333.8,52.2,356.2,97.5,356,{
@@ -86,7 +86,7 @@ const std::map<char, FontData> NUMBER = {
           { 'r', ROTATE_VERTICAL },
           { 'f', 1 }}},{'l',193.5,0,{
           { 'x', -0.5 }}}}}}) },
-  { '6', generateFontData(596,215.8,360,0,-2,0,0,{{
+  { u'6', generateFontData(596,215.8,360,0,-2,0,0,{{
     /* d */ 1, /* v */ {{'m',7.6,272.3,{
           { 'r', ROTATE_HORIZONTAL },
           { 'p', 1 },
@@ -96,7 +96,7 @@ const std::map<char, FontData> NUMBER = {
           { 'r', ROTATE_HORIZONTAL }}},{'b',215.8,311.9,168.7,360,110.8,360,{
           { 'r', ROTATE_VERTICAL }}},{'b',59.5,360,16.8,322.4,7.6,272.4,{
           { 'r', ROTATE_NONE }}},{'b',7.6,272.4,-44.1,8.8,122.2,0.2},{'b',165.5,-2.1,193.8,21,212.1,56.4}}}}) },
-  { '7', generateFontData(540,213,352,0,0,0,0,{{
+  { u'7', generateFontData(540,213,352,0,0,0,0,{{
     /* d */ -1, /* v */ {{'m',0,0,{
           { 'x', 0 },
           { 'r', ROTATE_VERTICAL }}},{'l',213,0,{
@@ -105,7 +105,7 @@ const std::map<char, FontData> NUMBER = {
           { 'r', ROTATE_NONE }}},{'l',72.7,352,{
           { 'y', 0.1 },
           { 'f', 1 }}}}}}) },
-  { '8', generateFontData(596,224,360,0,0,0,0,{{
+  { u'8', generateFontData(596,224,360,0,0,0,0,{{
     /* d */ 1, /* v */ {{'m',112,180,{
           { 'r', ROTATE_HORIZONTAL },
           { 'p', 1 },
@@ -120,7 +120,7 @@ const std::map<char, FontData> NUMBER = {
           { 'r', ROTATE_HORIZONTAL },
           { 'p', 1 },
           { 'f', 1 }}}}}}) },
-  { '9', generateFontData(596,215.8,360,0,-2,0,0,{{
+  { u'9', generateFontData(596,215.8,360,0,-2,0,0,{{
     /* d */ -1, /* v */ {{'m',208.2,88,{
           { 'r', ROTATE_HORIZONTAL },
           { 'p', 1 },

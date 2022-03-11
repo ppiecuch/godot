@@ -29,7 +29,7 @@
 /*************************************************************************/
 
 #include "core/math/math_defs.h"
-#include "core/rid.h"
+#include "core/math/transform.h"
 #include "core/variant.h"
 #include "scene/resources/mesh.h"
 #include "servers/visual_server.h"
@@ -283,7 +283,7 @@ static int num_of_draw_bobs(const char *str) {
 	return bobs;
 }
 
-real_t DrawBobString(Ref<ArrayMesh> &mesh, RID canvas, const char *str, const Point3 &pos, real_t size, bool wire) {
+real_t DrawBobString(Ref<ArrayMesh> &mesh, const char *str, const Point3 &pos, real_t size, bool wire) {
 	const int bnum = num_of_draw_bobs(str);
 
 	bob_mesh mesh_info(bnum, wire);
@@ -296,6 +296,40 @@ real_t DrawBobString(Ref<ArrayMesh> &mesh, RID canvas, const char *str, const Po
 			xp.x += size * (BOBS_X + 1);
 		}
 		str++;
+	}
+
+	Array mesh_array;
+	mesh_array.resize(VS::ARRAY_MAX);
+	mesh_array[VS::ARRAY_VERTEX] = mesh_info.verts;
+	mesh_array[VS::ARRAY_COLOR] = mesh_info.verts_color;
+	mesh_array[VS::ARRAY_INDEX] = mesh_info.faces_index;
+
+	if (wire) {
+		mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, mesh_array, Array());
+	} else {
+		mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array, Array());
+	}
+	return xp.x;
+}
+
+real_t DrawBobString(Ref<ArrayMesh> &mesh, const char *str, const Transform &pretransform, const Point3 &pos, real_t size, bool wire) {
+	const int bnum = num_of_draw_bobs(str);
+
+	bob_mesh mesh_info(bnum, wire);
+
+	char ch = *str;
+	int array_offset = 0;
+	Point3 xp(pos.x, 0, 0);
+	while ((ch = *str) != 0) {
+		if (draw_bob_char(mesh_info, array_offset, ch, pos + xp, size)) {
+			xp.x += size * (BOBS_X + 1);
+		}
+		str++;
+	}
+
+	auto w = mesh_info.verts.write();
+	for (int v = 0; v < mesh_info.verts.size(); ++v) {
+		w[v] = pretransform.xform(mesh_info.verts[v]);
 	}
 
 	Array mesh_array;
