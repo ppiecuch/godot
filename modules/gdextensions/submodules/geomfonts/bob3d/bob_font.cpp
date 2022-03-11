@@ -328,7 +328,7 @@ real_t DrawBobString(Ref<ArrayMesh> &mesh, const char *str, const Transform &pre
 	}
 
 	auto w = mesh_info.verts.write();
-	for (int v = 0; v < mesh_info.verts.size(); ++v) {
+	for (int v = 0; v < mesh_info.verts.size(); v++) {
 		w[v] = pretransform.xform(mesh_info.verts[v]);
 	}
 

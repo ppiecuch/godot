@@ -28,8 +28,10 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "latin.h"
+// clang-format off
 #include "lower.h"
-#include "number.h"
-#include "special.h"
 #include "upper.h"
+#include "number.h"
+#include "latin.h"
+#include "special.h"
+// clang-format on

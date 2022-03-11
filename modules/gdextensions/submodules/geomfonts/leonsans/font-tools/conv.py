@@ -76,6 +76,7 @@ def dump_value(elem, indent=0):
     print("Unknown: " + elem["type"], file=sys.stderr)
     return "?"
 
+
 if sys.argv[1]:
     f = get_js_code(sys.argv[1])
 
@@ -117,7 +118,7 @@ if sys.argv[1]:
                                 else "'\\''"
                                 if prop["key"]["value"] == "'"
                                 else prop["key"]["raw"],
-                                dump_value(prop["value"])
+                                dump_value(prop["value"]),
                             )
                         )
                     print("};")
