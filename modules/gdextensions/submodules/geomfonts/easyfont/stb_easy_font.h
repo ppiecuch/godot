@@ -111,7 +111,6 @@
 #include <stdlib.h>
 
 #include "core/math/math_funcs.h"
-#include "core/rid.h"
 #include "scene/resources/mesh.h"
 #include "servers/visual_server.h"
 
@@ -258,7 +257,7 @@ static int stb_easy_font_height(const char *text) {
 	return (int)ceil(y + (nonempty_line ? 12 : 0));
 }
 
-static void stb_easy_font_print_string(Ref<ArrayMesh> &mesh, RID canvas, Point2 pos, const char *text) {
+static void stb_easy_font_print_string(Ref<ArrayMesh> &mesh, Point2 pos, const char *text) {
 	PoolVector2Array verts;
 	const int nquads = stb_easy_font_print(pos.x, pos.y, text, verts);
 	PoolIntArray indexes;
