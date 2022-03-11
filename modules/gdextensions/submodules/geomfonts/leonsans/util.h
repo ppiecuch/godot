@@ -142,8 +142,10 @@ FontData generateFontData(real_t w, real_t fw, real_t fh, real_t x1, real_t x2, 
 }
 
 _FORCE_INLINE_ std::vector<FontPath> concatPaths(const std::vector<FontPath> &p1, const std::vector<FontPath> &p2) {
-	auto v = p1;
-	v.insert(p1.end(), p2.begin(), p2.end());
+	std::vector<FontPath> v;
+	v.resize(p1.size() + p2.size());
+	memcpy(&v[0], &p1[0], sizeof(FontPath) * p1.size())
+	memcpy(&v[p1.size()], &p2[0], sizeof(FontPath) * p2.size())
 	return v;
 }
 
