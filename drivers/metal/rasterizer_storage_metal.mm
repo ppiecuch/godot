@@ -504,46 +504,46 @@ void RasterizerStorageMetal::mesh_clear(RID p_mesh) {}
 
 /* MULTIMESH API */
 
-RID RasterizerStorageMetal::multimesh_create() {
+RID RasterizerStorageMetal::_multimesh_create() {
 	return RID();
 }
 
-void RasterizerStorageMetal::multimesh_allocate(RID p_multimesh, int p_instances, VS::MultimeshTransformFormat p_transform_format, VS::MultimeshColorFormat p_color_format, VS::MultimeshCustomDataFormat p_data) {}
-int RasterizerStorageMetal::multimesh_get_instance_count(RID p_multimesh) const {
+void RasterizerStorageMetal::_multimesh_allocate(RID p_multimesh, int p_instances, VS::MultimeshTransformFormat p_transform_format, VS::MultimeshColorFormat p_color_format, VS::MultimeshCustomDataFormat p_data) {}
+int RasterizerStorageMetal::_multimesh_get_instance_count(RID p_multimesh) const {
 	return 0;
 }
 
-void RasterizerStorageMetal::multimesh_set_mesh(RID p_multimesh, RID p_mesh) {}
-void RasterizerStorageMetal::multimesh_instance_set_transform(RID p_multimesh, int p_index, const Transform &p_transform) {}
-void RasterizerStorageMetal::multimesh_instance_set_transform_2d(RID p_multimesh, int p_index, const Transform2D &p_transform) {}
-void RasterizerStorageMetal::multimesh_instance_set_color(RID p_multimesh, int p_index, const Color &p_color) {}
-void RasterizerStorageMetal::multimesh_instance_set_custom_data(RID p_multimesh, int p_index, const Color &p_color) {}
+void RasterizerStorageMetal::_multimesh_set_mesh(RID p_multimesh, RID p_mesh) {}
+void RasterizerStorageMetal::_multimesh_instance_set_transform(RID p_multimesh, int p_index, const Transform &p_transform) {}
+void RasterizerStorageMetal::_multimesh_instance_set_transform_2d(RID p_multimesh, int p_index, const Transform2D &p_transform) {}
+void RasterizerStorageMetal::_multimesh_instance_set_color(RID p_multimesh, int p_index, const Color &p_color) {}
+void RasterizerStorageMetal::_multimesh_instance_set_custom_data(RID p_multimesh, int p_index, const Color &p_color) {}
 
-RID RasterizerStorageMetal::multimesh_get_mesh(RID p_multimesh) const {
+RID RasterizerStorageMetal::_multimesh_get_mesh(RID p_multimesh) const {
 	return RID();
 }
 
-Transform RasterizerStorageMetal::multimesh_instance_get_transform(RID p_multimesh, int p_index) const {
+Transform RasterizerStorageMetal::_multimesh_instance_get_transform(RID p_multimesh, int p_index) const {
 	return Transform();
 }
-Transform2D RasterizerStorageMetal::multimesh_instance_get_transform_2d(RID p_multimesh, int p_index) const {
+Transform2D RasterizerStorageMetal::_multimesh_instance_get_transform_2d(RID p_multimesh, int p_index) const {
 	return Transform2D();
 }
-Color RasterizerStorageMetal::multimesh_instance_get_color(RID p_multimesh, int p_index) const {
+Color RasterizerStorageMetal::_multimesh_instance_get_color(RID p_multimesh, int p_index) const {
 	return Color();
 }
-Color RasterizerStorageMetal::multimesh_instance_get_custom_data(RID p_multimesh, int p_index) const {
+Color RasterizerStorageMetal::_multimesh_instance_get_custom_data(RID p_multimesh, int p_index) const {
 	return Color();
 }
 
-void RasterizerStorageMetal::multimesh_set_as_bulk_array(RID p_multimesh, const PoolVector<float> &p_array) {}
+void RasterizerStorageMetal::_multimesh_set_as_bulk_array(RID p_multimesh, const PoolVector<float> &p_array) {}
 
-void RasterizerStorageMetal::multimesh_set_visible_instances(RID p_multimesh, int p_visible) {}
-int RasterizerStorageMetal::multimesh_get_visible_instances(RID p_multimesh) const {
+void RasterizerStorageMetal::_multimesh_set_visible_instances(RID p_multimesh, int p_visible) {}
+int RasterizerStorageMetal::_multimesh_get_visible_instances(RID p_multimesh) const {
 	return 0;
 }
 
-AABB RasterizerStorageMetal::multimesh_get_aabb(RID p_multimesh) const {
+AABB RasterizerStorageMetal::_multimesh_get_aabb(RID p_multimesh) const {
 	return AABB();
 }
 

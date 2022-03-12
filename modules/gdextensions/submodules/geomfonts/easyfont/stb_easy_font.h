@@ -196,7 +196,7 @@ static int stb_easy_font_height(const char *text) {
 	return (int)ceil(y + (nonempty_line ? 12 : 0));
 }
 
-template<typename ArrayT>
+template <typename ArrayT>
 int stb_easy_font_draw_segs(real_t x, real_t y, unsigned char *segs, int num_segs, int vertical, ArrayT &vbuf) {
 	for (int i = 0; i < num_segs; ++i) {
 		int len = segs[i] & 7;
@@ -206,7 +206,7 @@ int stb_easy_font_draw_segs(real_t x, real_t y, unsigned char *segs, int num_seg
 			for (int j = 0; j < 4; ++j) {
 				const real_t px = x + (j == 1 || j == 2 ? (vertical ? 1 : len) : 0);
 				const real_t py = y0 + (j >= 2 ? (vertical ? len : 1) : 0);
-				vbuf.push_back({px, py});
+				vbuf.push_back({ px, py });
 			}
 		}
 	}
@@ -291,7 +291,7 @@ static void stb_easy_font_print_string_xform(Ref<ArrayMesh> &mesh, const Transfo
 	mesh_array.resize(VS::ARRAY_MAX);
 	mesh_array[VS::ARRAY_VERTEX] = verts;
 	mesh_array[VS::ARRAY_INDEX] = indexes;
-	mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array, Array(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
+	mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array, Array());
 }
 #endif // STB_EASY_FONT_H
 

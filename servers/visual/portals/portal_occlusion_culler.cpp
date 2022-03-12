@@ -612,7 +612,6 @@ void PortalOcclusionCuller::whittle_polys() {
 
 #ifdef TOOLS_ENABLED
 						// this condition should never happen, we should never be checking occludee against itself
-#ifdef TOOLS_ENABLED
 						DEV_ASSERT(_polys[t].poly_source_id != _polys[n].poly_source_id);
 #endif
 
