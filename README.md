@@ -1,4 +1,4 @@
-[![Godot Engine logo](/logo.png)](https://godotengine.org)
+# Godot Engine
 
 <p align="center">
   <a href="https://godotengine.org">
@@ -6,14 +6,12 @@
   </a>
 </p>
 
-**[Godot Engine](https://godotengine.org) is a feature-packed, cross-platform
-game engine to create 2D and 3D games from a unified interface.** It provides a
-comprehensive set of [common tools](https://godotengine.org/features), so that users can focus on making games
-without having to reinvent the wheel. Games can be exported with one click to a
-number of platforms, including the major desktop platforms (Linux, macOS,
-Windows), mobile platforms (Android, iOS), as well as Web-based platforms
-(HTML5) and
-[consoles](https://docs.godotengine.org/en/latest/tutorials/platform/consoles.html).
+**Godot Engine** is a feature-packed, cross-platform game engine to create 2D and
+3D games from a unified interface. It provides a comprehensive set of common
+tools, so that users can focus on making games without having to reinvent the
+wheel. Games can be exported in one click to a number of platforms, including
+the major desktop platforms (Linux, Mac OSX, Windows) as well as mobile
+(Android, iOS) and web-based (HTML5) platforms.
 
 ## Support my work ...
 
@@ -34,18 +32,19 @@ The most important topics and focus of my work:
   4.  _PS Vita_ (Homebrew) drivers
   5. _2D_ additions and extensions
 
-Some of the things you may found usefull in this repository:
+Some of the things you may found usefull in this repository (look here for all my work [modules/gdextensions/submodules](modules/gdextensions/submodules):
 
-  * Embedded text console [modules/gdextensions/debugconsole](modules/gdextensions/debugconsole) automatically and globally available from both C++ and GDScript (color support, multiply sizes, basic markers/bbcodes, graphical fonts):
+  * Embedded text console [scene/debugconsole](scene/debugconsole) automatically and globally available from both C++ and GDScript (color support, multiply sizes, basic markers/bbcodes, graphical fonts):
 
   ![Godot Console](modules/gdextensions/_promo/fig-fonts-in-console-small.png)
 
   * Extension of ```Label``` with transition effects [scene/gui/label_transitions.h](scene/gui/label_transitions.h)
-  * *Starfield* component [modules/gdextensions/scenery/starfield/starfield.h](modules/gdextensions/scenery/starfield/starfield.h)
-  * _Nixie_-like ```Label``` animation: [modules/gdextensions/scene/nixie_font.h](modules/gdextensions/scene/nixie_font.h)
-  * _FakeExplosions2D_ particle effect: [modules/gdextensions/scene/explosion_particles.h](modules/gdextensions/scene/explosion_particles.h)
+  * *Starfield* component [modules/gdextensions/submodules/environment/starfield/starfield.h](modules/gdextensions/submodules/environment/starfield/starfield.h)
+  * _Nixie_-like ```Label``` animation: [modules/gdextensions/submodules/visual/nixie_font.h](modules/gdextensions/submodules/visual/nixie_font.h)
+  * _FakeExplosions2D_ particle effect: [modules/gdextensions/submodules/visual/explosion_particles.h](modules/gdextensions/submodules/visual/explosion_particles.h)
   * _BMF_ XML bitmap fonts reader [scene/resources/font.cpp](https://github.com/ppiecuch/godot/blob/master/scene/resources/font.cpp#L211)
-  * _SFXR_ Retro Sound FX Generator [modules/gdextensions/sfxr/gdsfxr.cpp](modules/gdextensions/sfxr/gdsfxr.cpp)
+  * _SFXR_ Retro Sound FX Generator [modules/gdextensions/submodules/sfxr/gdsfxr.cpp](modules/gdextensions/submodules/sfxr/gdsfxr.cpp)
+  * Simple _vector fonts_ (stb_easy_font, leonsans etc) [modules/gdextensions/submodules/geomfonts](modules/gdextensions/submodules/geomfonts)
 
 Some of the modules I am also developing or maintaining every now and then:
 
@@ -55,22 +54,14 @@ Some of the modules I am also developing or maintaining every now and then:
   * ```ParsePlatform``` communication with Parse Platform backend (https://github.com/ppiecuch/gd_parse_platform.git)
 
 Some additional modules in this repo:
-  * ```gdgenerator``` - procedural geometry (_wip_)
+  * ```gdgenerator``` - procedural geometry: [modules/gdgenerator](modules/gdgenerator)
+  * ```gdyaml``` - yaml format support: [modules/gdyaml](modules/gdyaml)
 
 Please *notice*, that ```master`` here is _Godot 3_ code (not the _Godot 4_ as in the original repository).
 
 ## Godot Engine
 
 Homepage: https://godotengine.org
-
-#### 2D and 3D cross-platform game engine
-
-Godot Engine is a feature-packed, cross-platform game engine to create 2D and
-3D games from a unified interface. It provides a comprehensive set of common
-tools, so that users can focus on making games without having to reinvent the
-wheel. Games can be exported in one click to a number of platforms, including
-the major desktop platforms (Linux, Mac OSX, Windows) as well as mobile
-(Android, iOS) and web-based (HTML5) platforms.
 
 #### Free, open source and community-driven
 

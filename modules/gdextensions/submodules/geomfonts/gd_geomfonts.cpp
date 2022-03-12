@@ -77,12 +77,22 @@ void GdGeomFonts::easy_font_add_text(const String &p_text, const Point2 &p_pos, 
 	}
 }
 
+void GdGeomFonts::easy_font_add_text_xform(const String &p_text, const Transform &p_xform, const Point2 &p_pos, real_t p_spacing) {
+	if (_is_ready()) {
+		stb_easy_font_spacing(p_spacing);
+		stb_easy_font_print_string_xform(_mesh, p_xform, p_pos, p_text.ascii().c_str());
+	}
+}
+
 Size2 GdGeomFonts::easy_font_text_size(const String &p_text) {
 	const char *ptr = p_text.ascii().c_str();
 	return Size2(stb_easy_font_width(ptr), stb_easy_font_height(ptr));
 }
 
 void GdGeomFonts::set_transform(const Transform2D &p_xform) {
+	if (canvas_item.is_valid()) {
+		VisualServer::get_singleton()->canvas_item_set_transform(canvas_item, p_xform);
+	}
 	xform = p_xform;
 	emit_signal("changed");
 }
@@ -91,12 +101,15 @@ Transform2D GdGeomFonts::get_transform() const {
 	return xform;
 }
 
-void GdGeomFonts::set_color(const Color &p_color) {
+void GdGeomFonts::set_modulate_color(const Color &p_color) {
+	if (canvas_item.is_valid()) {
+		VisualServer::get_singleton()->canvas_item_set_modulate(canvas_item, p_color);
+	}
 	modulate = p_color;
 	emit_signal("changed");
 }
 
-Color GdGeomFonts::get_color() const {
+Color GdGeomFonts::get_modulate_color() const {
 	return modulate;
 }
 
@@ -116,8 +129,8 @@ void GdGeomFonts::finish() {
 void GdGeomFonts::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_transform"), &GdGeomFonts::set_transform);
 	ClassDB::bind_method(D_METHOD("get_transform"), &GdGeomFonts::get_transform);
-	ClassDB::bind_method(D_METHOD("set_color"), &GdGeomFonts::set_color);
-	ClassDB::bind_method(D_METHOD("get_color"), &GdGeomFonts::get_color);
+	ClassDB::bind_method(D_METHOD("set_modulate_color"), &GdGeomFonts::set_modulate_color);
+	ClassDB::bind_method(D_METHOD("get_modulate_color"), &GdGeomFonts::get_modulate_color);
 
 	ClassDB::bind_method(D_METHOD("clear"), &GdGeomFonts::clear);
 	ClassDB::bind_method(D_METHOD("finish"), &GdGeomFonts::finish);
@@ -126,7 +139,11 @@ void GdGeomFonts::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("bob_font_add_text_xform", "text", "xform", "pos", "size", "wire"), &GdGeomFonts::bob_font_add_text_xform, DEFVAL(Point2()), DEFVAL(1), DEFVAL(true));
 
 	ClassDB::bind_method(D_METHOD("easy_font_add_text", "text", "pos", "spacing"), &GdGeomFonts::easy_font_add_text, DEFVAL(Point2()), DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("easy_font_add_text_xform", "text", "xform", "pos", "spacing"), &GdGeomFonts::easy_font_add_text_xform, DEFVAL(Point2()), DEFVAL(0));
 	ClassDB::bind_method(D_METHOD("easy_font_text_size", "text"), &GdGeomFonts::easy_font_text_size);
+
+	ADD_PROPERTY(PropertyInfo(Variant::TRANSFORM2D, "transform"), "set_transform", "get_transform");
+	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "modulate_color"), "set_modulate__color", "get_modulate__color");
 
 	ADD_SIGNAL(MethodInfo("changed"));
 }

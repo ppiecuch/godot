@@ -69,9 +69,9 @@ struct FontPathSeg {
 	std::map<char, InfoValue> info;
 	real_t &operator[](int index) { return d[index]; }
 
-	FontPathSeg(char op, real_t p1, real_t p2, const std::map<char, InfoValue> &info = {}) :
+	FontPathSeg(char op, real_t p1, real_t p2, const std::map<char, InfoValue> &info = std::map<char, InfoValue>()) :
 			op(op), _1(p1), _2(p2), info(info) {}
-	FontPathSeg(char op, real_t p1, real_t p2, real_t p3, real_t p4, real_t p5, real_t p6, const std::map<char, InfoValue> &info = {}) :
+	FontPathSeg(char op, real_t p1, real_t p2, real_t p3, real_t p4, real_t p5, real_t p6, const std::map<char, InfoValue> &info = std::map<char, InfoValue>()) :
 			op(op), _1(p1), _2(p2), _3(p3), _4(p4), _5(p5), _6(p6), info(info) {}
 };
 
@@ -142,10 +142,8 @@ FontData generateFontData(real_t w, real_t fw, real_t fh, real_t x1, real_t x2, 
 }
 
 _FORCE_INLINE_ std::vector<FontPath> concatPaths(const std::vector<FontPath> &p1, const std::vector<FontPath> &p2) {
-	std::vector<FontPath> v;
-	v.resize(p1.size() + p2.size());
-	memcpy(&v[0], &p1[0], sizeof(FontPath) * p1.size())
-	memcpy(&v[p1.size()], &p2[0], sizeof(FontPath) * p2.size())
+	std::vector<FontPath> v = p1;
+	v.insert(v.end(), p2.begin(), p2.end());
 	return v;
 }
 
