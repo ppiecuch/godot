@@ -19,6 +19,7 @@ def configure(env):
         "smooth",
         "debugdraw",
         "geomfonts",
+        "generator",
         "statemachine",
         "benet",
         "behaviornode",

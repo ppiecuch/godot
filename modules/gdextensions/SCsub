@@ -63,6 +63,12 @@ if env["tools"] and is_enabled("qrcodetexture"):
 
 if not env["disable_3d"]:
     modules += ["environment/vegetation_instance", "ccd", "ccd/src"]
+    if env["tools"] and is_enabled("generator"):
+        modules += ["generator"]
+        env_module.Append(CPPPATH=["#thirdparty/libgenerator/inc"])
+        if is_gcc:
+            env_module.Append(CPPFLAGS=["-Wno-nonnull", "-Wno-array-bounds"])  # silent false warnings
+        sources += Glob("#thirdparty/libgenerator/src/*.cpp")
 
 if env["feature_multiplethreads_allowed"]:
     modules += ["thread_pool"]

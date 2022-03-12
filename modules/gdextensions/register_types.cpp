@@ -77,6 +77,8 @@
 
 #include "landiscovery/lan.h"
 
+#include "generator/gd_procedural_mesh.h"
+
 #include "visual/autotilemap.h"
 #include "visual/bend_deform_2d.h"
 #include "visual/bullet_manager.h"
@@ -259,6 +261,10 @@ void register_gdextensions_types() {
 
 #ifdef GDEXT_GEOMFONTS_ENABLED
 	ClassDB::register_class<GdGeomFonts>();
+#endif
+
+#ifdef GDEXT_GENERATOR_ENABLED
+	ClassDB::register_class<ProceduralMesh>();
 #endif
 
 #ifdef GDEXT_FASTNOISE_ENABLED

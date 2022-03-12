@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  register_types.h                                                     */
+/*  resource_importer_yaml.h                                             */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,10 +28,65 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GDGENERATOR_REGISTER_TYPES_H
-#define GDGENERATOR_REGISTER_TYPES_H
+#ifndef RESOURCE_IMPORTER_YAML
+#define RESOURCE_IMPORTER_YAML
 
-void register_gdgenerator_types();
-void unregister_gdgenerator_types();
+#include "core/io/resource_importer.h"
+#include "core/io/resource_saver.h"
 
-#endif // GDGENERATOR_REGISTER_TYPES_H
+class YAMLData : public Resource {
+	GDCLASS(YAMLData, Resource);
+	Variant data;
+
+protected:
+	static void _bind_methods() {
+		ClassDB::bind_method(D_METHOD("set_data", "data"), &YAMLData::set_data);
+		ClassDB::bind_method(D_METHOD("get_data"), &YAMLData::get_data);
+		ClassDB::bind_method(D_METHOD("set_yaml", "json"), &YAMLData::set_yaml);
+		ClassDB::bind_method(D_METHOD("get_yaml"), &YAMLData::get_yaml);
+
+		ADD_PROPERTY(PropertyInfo(Variant::NIL, "data", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE | PROPERTY_USAGE_NIL_IS_VARIANT), "set_data", "get_data");
+		ADD_PROPERTY(PropertyInfo(Variant::STRING, "yaml", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_EDITOR), "set_yaml", "get_yaml");
+	}
+
+public:
+	Variant get_data() const {
+		return data;
+	}
+	void set_data(Variant p_data) {
+		data = p_data;
+	}
+	String get_yaml() const {
+		return "";
+	}
+	void set_yaml(const String p_string) {
+	}
+	YAMLData() {}
+	~YAMLData() {}
+};
+
+class ResourceImporterYAML : public ResourceImporter {
+	GDCLASS(ResourceImporterYAML, ResourceImporter);
+
+public:
+	virtual String get_importer_name() const;
+	virtual String get_visible_name() const;
+	virtual void get_recognized_extensions(List<String> *p_extensions) const;
+	virtual String get_save_extension() const;
+	virtual String get_resource_type() const;
+
+	virtual int get_preset_count() const;
+	virtual String get_preset_name(int p_idx) const;
+
+	virtual void get_import_options(List<ImportOption> *r_options, int p_preset = 0) const;
+	virtual bool get_option_visibility(const String &p_option, const Map<StringName, Variant> &p_options) const;
+	virtual Error import(const String &p_source_file, const String &p_save_path,
+			const Map<StringName, Variant> &p_options,
+			List<String> *r_platform_variants,
+			List<String> *r_gen_files = NULL,
+			Variant *r_metadata = NULL);
+
+	ResourceImporterYAML() {}
+	~ResourceImporterYAML() {}
+};
+#endif // RESOURCE_IMPORTER_YAML

@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  register_types.cpp                                                   */
+/*  resource_importer_yaml.cpp                                           */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,16 +28,45 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-/* register_types.cpp */
+#include "resource_importer_yaml.h"
+#include "core/io/file_access_pack.h"
 
-#include "core/print_string.h"
-
-#include "gd_procedural_mesh.h"
-#include "register_types.h"
-
-void register_gdgenerator_types() {
-	ClassDB::register_class<ProceduralMesh>();
+String ResourceImporterYAML::get_preset_name(int p_idx) const {
+	return String();
 }
 
-void unregister_gdgenerator_types() {
+void ResourceImporterYAML::get_import_options(List<ImportOption> *r_options, int p_preset) const {
+}
+
+bool ResourceImporterYAML::get_option_visibility(const String &p_option, const Map<StringName, Variant> &p_options) const {
+	return true;
+}
+
+String ResourceImporterYAML::get_importer_name() const {
+	return "YAML";
+}
+
+String ResourceImporterYAML::get_visible_name() const {
+	return "YAML";
+}
+
+void ResourceImporterYAML::get_recognized_extensions(List<String> *p_extensions) const {
+	p_extensions->push_back("yaml");
+}
+
+String ResourceImporterYAML::get_save_extension() const {
+	return "res";
+}
+
+String ResourceImporterYAML::get_resource_type() const {
+	return "YAMLData";
+}
+
+int ResourceImporterYAML::get_preset_count() const {
+	return 0;
+}
+
+Error ResourceImporterYAML::import(const String &p_source_file, const String &p_save_path, const Map<StringName, Variant> &p_options, List<String> *r_platform_variants, List<String> *r_gen_files, Variant *r_metadata) {
+	Ref<YAMLData> yaml_data;
+	return ResourceSaver::save(p_save_path + ".res", yaml_data);
 }
