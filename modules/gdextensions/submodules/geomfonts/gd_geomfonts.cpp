@@ -139,6 +139,7 @@ void GdGeomFonts::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("bob_font_add_text_xform", "text", "xform", "pos", "size", "wire"), &GdGeomFonts::bob_font_add_text_xform, DEFVAL(Point2()), DEFVAL(1), DEFVAL(true));
 
 	ClassDB::bind_method(D_METHOD("easy_font_add_text", "text", "pos", "spacing"), &GdGeomFonts::easy_font_add_text, DEFVAL(Point2()), DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("easy_font_add_text_xform", "text", "xform", "pos", "spacing"), &GdGeomFonts::easy_font_add_text_xform, DEFVAL(Point2()), DEFVAL(0));
 	ClassDB::bind_method(D_METHOD("easy_font_text_size", "text"), &GdGeomFonts::easy_font_text_size);
 
 	ADD_PROPERTY(PropertyInfo(Variant::TRANSFORM2D, "transform"), "set_transform", "get_transform");
