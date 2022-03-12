@@ -172,6 +172,12 @@ struct _NO_DISCARD_CLASS_ Vector3 {
 		y = p_y;
 		z = p_z;
 	}
+	// constructing from 2d vector
+	_FORCE_INLINE_ Vector3(real_t p_x, real_t p_y) {
+		x = p_x;
+		y = p_y;
+		z = 0;
+	}
 	_FORCE_INLINE_ Vector3(const float *p_arr) {
 		x = p_arr[0];
 		y = p_arr[1];

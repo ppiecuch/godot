@@ -53,8 +53,8 @@ protected:
 private:
 	void set_transform(const Transform2D &p_xform);
 	Transform2D get_transform() const;
-	void set_color(const Color &p_color);
-	Color get_color() const;
+	void set_modulate_color(const Color &p_color);
+	Color get_modulate_color() const;
 
 	void clear();
 	void finish();
@@ -63,6 +63,7 @@ private:
 	void bob_font_add_text_xform(const String &p_text, const Transform &p_xform, const Point3 &p_pos = Point3(), real_t p_size = 1, bool p_wire = true);
 
 	void easy_font_add_text(const String &p_text, const Point2 &p_pos = Point2(), real_t p_spacing = 0);
+	void easy_font_add_text_xform(const String &p_text, const Transform &p_xform, const Point2 &p_pos = Point2(), real_t p_spacing = 0);
 	Size2 easy_font_text_size(const String &p_text);
 
 	GdGeomFonts();

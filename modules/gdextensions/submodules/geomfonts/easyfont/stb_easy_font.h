@@ -111,6 +111,7 @@
 #include <stdlib.h>
 
 #include "core/math/math_funcs.h"
+#include "core/math/transform.h"
 #include "scene/resources/mesh.h"
 #include "servers/visual_server.h"
 
@@ -174,7 +175,28 @@ static unsigned char stb_easy_font_vseg[253] = {
 
 // clang-format on
 
-static int stb_easy_font_draw_segs(real_t x, real_t y, unsigned char *segs, int num_segs, int vertical, PoolVector2Array &vbuf) {
+static real_t stb_easy_font_spacing_val = 0;
+
+static void stb_easy_font_spacing(real_t spacing) {
+	stb_easy_font_spacing_val = spacing;
+}
+
+static int stb_easy_font_height(const char *text) {
+	real_t y = 0;
+	int nonempty_line = 0;
+	while (*text) {
+		if (*text == '\n') {
+			y += 12;
+			nonempty_line = 0;
+		} else {
+			nonempty_line = 1;
+		}
+		++text;
+	}
+	return (int)ceil(y + (nonempty_line ? 12 : 0));
+}
+
+template<typename ArrayT> int stb_easy_font_draw_segs(real_t x, real_t y, unsigned char *segs, int num_segs, int vertical, ArrayT &vbuf) {
 	for (int i = 0; i < num_segs; ++i) {
 		int len = segs[i] & 7;
 		x += (real_t)((segs[i] >> 3) & 1);
@@ -183,20 +205,14 @@ static int stb_easy_font_draw_segs(real_t x, real_t y, unsigned char *segs, int 
 			for (int j = 0; j < 4; ++j) {
 				const real_t px = x + (j == 1 || j == 2 ? (vertical ? 1 : len) : 0);
 				const real_t py = y0 + (j >= 2 ? (vertical ? len : 1) : 0);
-				vbuf.push_back(Vector2(px, py));
+				vbuf.push_back({px, py});
 			}
 		}
 	}
 	return vbuf.size();
 }
 
-static real_t stb_easy_font_spacing_val = 0;
-
-static void stb_easy_font_spacing(real_t spacing) {
-	stb_easy_font_spacing_val = spacing;
-}
-
-static int stb_easy_font_print(real_t x, real_t y, const char *text, PoolVector2Array &vertex_buffer) {
+template <typename ArrayT> int stb_easy_font_print(real_t x, real_t y, const char *text, ArrayT &vertex_buffer) {
 	real_t start_x = x;
 
 	while (*text) {
@@ -242,21 +258,6 @@ static int stb_easy_font_width(const char *text) {
 	return (int)ceil(max_len);
 }
 
-static int stb_easy_font_height(const char *text) {
-	real_t y = 0;
-	int nonempty_line = 0;
-	while (*text) {
-		if (*text == '\n') {
-			y += 12;
-			nonempty_line = 0;
-		} else {
-			nonempty_line = 1;
-		}
-		++text;
-	}
-	return (int)ceil(y + (nonempty_line ? 12 : 0));
-}
-
 static void stb_easy_font_print_string(Ref<ArrayMesh> &mesh, Point2 pos, const char *text) {
 	PoolVector2Array verts;
 	const int nquads = stb_easy_font_print(pos.x, pos.y, text, verts);
@@ -264,6 +265,25 @@ static void stb_easy_font_print_string(Ref<ArrayMesh> &mesh, Point2 pos, const c
 	for (int q = 0; q < nquads; q++) {
 		const int v = q * 4;
 		indexes.append_array(parray(v + 0, v + 1, v + 2, v + 0, v + 2, v + 3));
+	}
+	Array mesh_array;
+	mesh_array.resize(VS::ARRAY_MAX);
+	mesh_array[VS::ARRAY_VERTEX] = verts;
+	mesh_array[VS::ARRAY_INDEX] = indexes;
+	mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array, Array(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
+}
+
+static void stb_easy_font_print_string_xform(Ref<ArrayMesh> &mesh, const Transform &pretransform, Point2 pos, const char *text) {
+	PoolVector3Array verts;
+	const int nquads = stb_easy_font_print(pos.x, pos.y, text, verts);
+	PoolIntArray indexes;
+	for (int q = 0; q < nquads; q++) {
+		const int v = q * 4;
+		indexes.append_array(parray(v + 0, v + 1, v + 2, v + 0, v + 2, v + 3));
+	}
+	auto w = verts.write();
+	for (int v = 0; v < verts.size(); v++) {
+		w[v] = pretransform.xform(verts[v]);
 	}
 	Array mesh_array;
 	mesh_array.resize(VS::ARRAY_MAX);
