@@ -32,8 +32,6 @@
 
 #include <cstdint>
 
-#include "TTFExceptions.h"
-
 namespace TTFCore {
 
 struct vec2f {
