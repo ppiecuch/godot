@@ -196,7 +196,8 @@ static int stb_easy_font_height(const char *text) {
 	return (int)ceil(y + (nonempty_line ? 12 : 0));
 }
 
-template<typename ArrayT> int stb_easy_font_draw_segs(real_t x, real_t y, unsigned char *segs, int num_segs, int vertical, ArrayT &vbuf) {
+template<typename ArrayT>
+int stb_easy_font_draw_segs(real_t x, real_t y, unsigned char *segs, int num_segs, int vertical, ArrayT &vbuf) {
 	for (int i = 0; i < num_segs; ++i) {
 		int len = segs[i] & 7;
 		x += (real_t)((segs[i] >> 3) & 1);
@@ -212,7 +213,8 @@ template<typename ArrayT> int stb_easy_font_draw_segs(real_t x, real_t y, unsign
 	return vbuf.size();
 }
 
-template <typename ArrayT> int stb_easy_font_print(real_t x, real_t y, const char *text, ArrayT &vertex_buffer) {
+template <typename ArrayT>
+int stb_easy_font_print(real_t x, real_t y, const char *text, ArrayT &vertex_buffer) {
 	real_t start_x = x;
 
 	while (*text) {
