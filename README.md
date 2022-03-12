@@ -6,14 +6,12 @@
   </a>
 </p>
 
-**[Godot Engine](https://godotengine.org) is a feature-packed, cross-platform
-game engine to create 2D and 3D games from a unified interface.** It provides a
-comprehensive set of [common tools](https://godotengine.org/features), so that users can focus on making games
-without having to reinvent the wheel. Games can be exported with one click to a
-number of platforms, including the major desktop platforms (Linux, macOS,
-Windows), mobile platforms (Android, iOS), as well as Web-based platforms
-(HTML5) and
-[consoles](https://docs.godotengine.org/en/latest/tutorials/platform/consoles.html).
+**Godot Engine** is a feature-packed, cross-platform game engine to create 2D and
+3D games from a unified interface. It provides a comprehensive set of common
+tools, so that users can focus on making games without having to reinvent the
+wheel. Games can be exported in one click to a number of platforms, including
+the major desktop platforms (Linux, Mac OSX, Windows) as well as mobile
+(Android, iOS) and web-based (HTML5) platforms.
 
 ## Support my work ...
 
@@ -64,15 +62,6 @@ Please *notice*, that ```master`` here is _Godot 3_ code (not the _Godot 4_ as i
 ## Godot Engine
 
 Homepage: https://godotengine.org
-
-#### 2D and 3D cross-platform game engine
-
-Godot Engine is a feature-packed, cross-platform game engine to create 2D and
-3D games from a unified interface. It provides a comprehensive set of common
-tools, so that users can focus on making games without having to reinvent the
-wheel. Games can be exported in one click to a number of platforms, including
-the major desktop platforms (Linux, Mac OSX, Windows) as well as mobile
-(Android, iOS) and web-based (HTML5) platforms.
 
 #### Free, open source and community-driven
 
