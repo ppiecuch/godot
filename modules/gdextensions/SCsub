@@ -58,11 +58,17 @@ modules = [
     "landiscovery",
 ]
 
+thirdparty_sources = [
+    "#thirdparty/misc/cqueue.cpp",
+]
+
 if env["tools"] and is_enabled("qrcodetexture"):
     modules += ["qrcodetexture"]
 
 if not env["disable_3d"]:
     modules += ["environment/vegetation_instance", "ccd", "ccd/src"]
+    if is_enabled("ccd"):
+        thirdparty_sources += Glob("#thirdparty/libccd/src/*.c") + Glob("#thirdparty/libccd/src/testsuites/*.c")
     if env["tools"] and is_enabled("generator"):
         modules += ["generator"]
         env_module.Append(CPPPATH=["#thirdparty/libgenerator/inc"])
@@ -79,9 +85,11 @@ if os.path.isdir("iap") and is_enabled("iap"):
     if env["platform"] == "osx" or env["platform"] == "iphone":
         sources += Glob("submodules/iap/mac/*.mm")
         env.Append(LINKFLAGS=["-framework", "StoreKit"])
-
     elif env["platform"] == "android":
         sources += Glob("iap/android/*.cpp")
+
+if env["platform"] == "psvita" and is_enabled("blitter"):
+    sources += Glob("submodules/blitter/arm/*.S")
 
 ignore = []
 if env["platform"] == "3ds" or env["platform"] == "psp":
@@ -95,12 +103,6 @@ for m in modules:
     if is_enabled(m):
         files = Glob("submodules/%s/*.cpp" % m) + Glob("submodules/%s/*.c" % m)
         sources += [f for f in files if str(f) not in ignore]
-
-thirdparty_sources = [
-    "#thirdparty/misc/cqueue.cpp",
-]
-if not env["disable_3d"] and is_enabled("ccd"):
-    thirdparty_sources += Glob("#thirdparty/libccd/src/*.c") + Glob("#thirdparty/libccd/src/testsuites/*.c")
 
 if is_enabled("flexbuffers") or is_enabled("nakama1"):
     env_module.Prepend(CPPPATH="#thirdparty/flatbuffers/include")

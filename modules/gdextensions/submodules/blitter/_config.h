@@ -57,4 +57,9 @@
 #define SDL_ALTIVEC_BLITTERS 0
 #endif
 
+#ifdef PSVITA_ENABLED
+#define SDL_ARM_SIMD_BLITTERS 1
+#define SDL_ARM_NEON_BLITTERS 1
+#endif
+
 #endif /* _config_h_ */
