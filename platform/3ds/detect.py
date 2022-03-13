@@ -1,4 +1,4 @@
-import os, sys, platform, subprocess, version
+import os, sys, platform, subprocess, errno, version
 
 if version.major > 2:
     yes = True
