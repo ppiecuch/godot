@@ -23,6 +23,7 @@ def configure(env):
         "statemachine",
         "benet",
         "behaviornode",
+        "behaviortree",
         "flexbuffers",
         "ccd",
         "settings",

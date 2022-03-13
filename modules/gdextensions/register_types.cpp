@@ -67,11 +67,22 @@
 #include "statemachine/state.h"
 #include "statemachine/statemachine.h"
 
+#ifdef GDEXT_BEHAVIORNODE_ENABLED
 #include "behaviornode/behaviornode.h"
 #include "behaviornode/linkerbnode.h"
 #include "behaviornode/probabilitybnode.h"
 #include "behaviornode/statusbnode.h"
 #include "behaviornode/timebnode.h"
+#endif
+
+#ifdef GDEXT_BEHAVIORTREE_ENABLED
+#include "behaviortree/bt_string_names.h"
+#include "behaviortree/bt_root_node.h"
+#include "behaviortree/bt_action_node.h"
+#include "behaviortree/bt_composite_node.h"
+#include "behaviortree/bt_decorator_node.h"
+#include "behaviortree/bt_custom_parallel_node.h"
+#endif
 
 #include "debugdraw/debugdraw.h"
 
@@ -175,7 +186,17 @@ void register_gdextensions_types() {
 	ClassDB::register_class<ProbabilityBNode>();
 	ClassDB::register_class<LinkerBNode>();
 	ClassDB::register_class<StatusBNode>();
-#endif // GDEXT_BEHAVIORNODE_ENABLED
+#endif
+#ifdef GDEXT_BEHAVIORTREE_ENABLED
+	BTStringNames::create();
+	ClassDB::register_class<BTRootNode>();
+	ClassDB::register_class<BTActionNode>();
+	ClassDB::register_class<BTDecoratorNode>();
+	ClassDB::register_class<BTSequenceNode>();
+	ClassDB::register_class<BTSelectorNode>();
+	ClassDB::register_class<BTParallelNode>();
+	ClassDB::register_class<BTCustomParallelNode>();
+#endif
 #ifdef GDEXT_CORE_ENABLED
 	ClassDB::register_class<AreaProber>();
 	ClassDB::register_class<BSInputEventKey>();
@@ -362,6 +383,9 @@ void unregister_gdextensions_types() {
 	if (thread_pool) {
 		memdelete(thread_pool);
 	}
+#ifdef GDEXT_BEHAVIORTREE_ENABLED
+	BTStringNames::free();
+#endif
 #ifdef GDEXT_BLITTER_ENABLED
 	if (BitBlit *instance = BitBlit::get_singleton()) {
 		memdelete(instance);

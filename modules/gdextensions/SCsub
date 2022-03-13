@@ -46,9 +46,11 @@ modules = [
     "smooth",
     "debugdraw",
     "geomfonts",
+    "generator",
     "statemachine",
     "benet",
     "behaviornode",
+    "behaviortree",
     "flexbuffers",
     "nakama1",
     "settings",
@@ -90,6 +92,9 @@ if os.path.isdir("iap") and is_enabled("iap"):
 
 if env["platform"] == "psvita" and is_enabled("blitter"):
     sources += Glob("submodules/blitter/arm/*.S")
+
+if is_enabled("behaviortree"):
+    env_module.Append(CPPDEFINES=["BEHAVIOR_TREE_AS_GODOT_MODULE"])
 
 ignore = []
 if env["platform"] == "3ds" or env["platform"] == "psp":
