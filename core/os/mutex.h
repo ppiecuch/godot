@@ -65,37 +65,67 @@ public:
 
 #include "drivers/posix/mutex_posix.h"
 
-class Mutex : public MutexPosix {
+class MutexImpl : public MutexPosix {
 public:
-	Mutex() :
+	MutexImpl() :
 			MutexPosix(true) {}
 };
 
-class BinaryMutex : public MutexPosix {
+class BinaryMutexImpl : public MutexPosix {
 public:
-	BinaryMutex() :
+	BinaryMutexImpl() :
 			MutexPosix(false) {}
 };
 
-class MutexLock {
-	Mutex *mutex;
+template <class MutexT>
+class MutableMutex {
+	mutable MutexT mutex;
+	friend class MutexLock;
 
 public:
-	_ALWAYS_INLINE_ MutexLock(Mutex *p_mutex) :
-			mutex(p_mutex) {
-		if (mutex)
-			mutex->lock();
+	_ALWAYS_INLINE_ void lock() const {
+		mutex.lock();
 	}
-	_ALWAYS_INLINE_ MutexLock(Mutex &p_mutex) :
-			mutex(&p_mutex) {
-		if (mutex)
-			mutex->lock();
+
+	_ALWAYS_INLINE_ void unlock() const {
+		mutex.unlock();
 	}
-	_ALWAYS_INLINE_ ~MutexLock() {
-		if (mutex)
-			mutex->unlock();
+
+	_ALWAYS_INLINE_ Error try_lock() const {
+		return mutex.try_lock() ? OK : ERR_BUSY;
 	}
 };
+
+class MutexLock {
+	union {
+		MutexImpl *recursive_mutex;
+		BinaryMutexImpl *binary_mutex;
+	};
+	const bool recursive;
+
+public:
+	_ALWAYS_INLINE_ explicit MutexLock(const MutableMutex<MutexImpl> &p_mutex) :
+			recursive_mutex(&p_mutex.mutex), recursive(true) {
+		recursive_mutex->lock();
+	}
+	_ALWAYS_INLINE_ explicit MutexLock(const MutableMutex<BinaryMutexImpl> &p_mutex) :
+			binary_mutex(&p_mutex.mutex), recursive(false) {
+		binary_mutex->lock();
+	}
+	_ALWAYS_INLINE_ ~MutexLock() {
+		if (recursive) {
+			recursive_mutex->unlock();
+		} else {
+			binary_mutex->unlock();
+		}
+	}
+};
+
+using Mutex = MutableMutex<MutexImpl>; // Recursive, for general use
+using BinaryMutex = MutableMutex<BinaryMutexImpl>; // Non-recursive, handle with care
+
+extern template class MutableMutex<MutexImpl>;
+extern template class MutableMutex<BinaryMutexImpl>;
 
 #else
 
