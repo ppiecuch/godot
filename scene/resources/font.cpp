@@ -444,11 +444,6 @@ Error BitmapFont::create_from_fnt(const String &p_file) {
 				if (keys.has("base")) {
 					set_ascent(keys["base"].to_int());
 				}
-			} else if (type == "char") {
-				int32_t idx = 0;
-				if (keys.has("id")) {
-					idx = keys["id"].to_int();
-				}
 			} else if (type == "page") {
 				if (keys.has("file")) {
 					String base_dir = p_file.get_base_dir();
