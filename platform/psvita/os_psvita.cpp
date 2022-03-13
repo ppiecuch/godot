@@ -166,11 +166,7 @@ void OSPSVita::_screen_drag(int fid, Vector2 p_pos, Vector2 old_pos) {
 };
 
 void OSPSVita::_process_axis(int p_device, int p_axis, int p_value) {
-	InputDefault::JoyAxis axis;
-	axis.min = 1;
-	axis.value = (float)p_value / 32768.0;
-
-	input->joy_axis(p_device, p_axis, axis);
+	input->joy_axis(p_device, p_axis, p_value / 32768.0);
 };
 
 void OSPSVita::process_events(){
@@ -266,7 +262,7 @@ void OSPSVita::get_fullscreen_mode_list(List<VideoMode> *p_list, int p_screen) c
 	p_list->push_back(default_video_mode);
 };
 
-Error OSPSVita::execute(const String &p_path, const List<String> &p_arguments, bool p_blocking, ProcessID *r_child_id, String *r_pipe, int *r_exitcode, bool read_stderr, Mutex *p_pipe_mutex) {
+Error OSPSVita::execute(const String &p_path, const List<String> &p_arguments, bool p_blocking, ProcessID *r_child_id, String *r_pipe, int *r_exitcode, bool read_stderr, Mutex *p_pipe_mutex, bool p_open_console) {
 	return ERR_UNAVAILABLE;
 };
 
