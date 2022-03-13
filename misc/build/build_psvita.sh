@@ -2,7 +2,10 @@
 
 set -e
 
-source build_functions.sh
+APPDIR="$(cd "$PWD" && pwd)"
+SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+source "$SCRIPTDIR/build_functions.sh"
 
 CPU=2
 

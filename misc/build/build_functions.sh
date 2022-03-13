@@ -1,6 +1,6 @@
 
 _get_cpu () {
-	if command -v getconf &> /dev/null
+	if command -v getconf &> /dev/null; then
 		echo $(getconf _NPROCESSORS_ONLN)
 	elif [[ "$OSTYPE" == "darwin"* ]]; then
 		echo $(sysctl -n hw.physicalcpu)
@@ -20,11 +20,14 @@ _run_in_docker () {
 		echo "*** Docker is not found - cannot run build script."
 		exit 1
 	fi
+	oldopt=$- && set +e
 	docker_state=$(docker info >/dev/null 2>&1)
 	if [[ $? -ne 0 ]]; then
 		echo "*** Docker does not seem to be running, run it first."
 		exit 1
 	fi
+
+	set -$oldopt
 
 	APPDIR="$(cd "$PWD" && pwd)"
 	SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
