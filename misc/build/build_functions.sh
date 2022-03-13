@@ -13,6 +13,7 @@ _get_cpu () {
 
 _run_in_docker () {
 	image="$1"
+	script="$2"
 
 	# toolchain not found - run docker image
 	if ! command -v docker &> /dev/null
@@ -31,10 +32,12 @@ _run_in_docker () {
 
 	APPDIR="$(cd "$PWD" && pwd)"
 	SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-	NAME="$(basename "${BASH_SOURCE[0]}")"
+	if [[ -z $script ]]; then
+		script="$(basename "${BASH_SOURCE[0]}")"
+	fi
 
 	echo "*** Running docker toolchain ${image} (with script $NAME).."
-	docker run --rm -t -v "$APPDIR:/app" ${image} "./${SCRIPTDIR/$APPDIR/}/$NAME"
+	docker run --rm -t -v "$APPDIR:/app" ${image} "./${SCRIPTDIR/$APPDIR/}/$script"
 
 	exit
 }

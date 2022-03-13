@@ -17,7 +17,7 @@ fi
 
 if [ ! -d /opt/vitasdk ]; then
 	# try run in docker
-	_run_in_docker retro_dev
+	_run_in_docker retro_dev $(basename "${BASH_SOURCE[0]}")
 fi
 
 export VITASDK=/opt/vitasdk
