@@ -2,7 +2,7 @@
 
 set -e
 
-source bash_functions.sh
+source build_functions.sh
 
 CPU=2
 
