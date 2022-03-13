@@ -43,6 +43,8 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/* clang-format off */
+
 /* Prevent the stack from becoming executable for no reason... */
 #if defined(__linux__) && defined(__ELF__)
 .section .note.GNU-stack,"",%progbits
@@ -373,3 +375,5 @@ generate_composite_function \
     ARGBto565PixelAlpha_process_pixblock_head, \
     ARGBto565PixelAlpha_process_pixblock_tail, \
     ARGBto565PixelAlpha_process_pixblock_tail_head
+
+/* clang-format on */

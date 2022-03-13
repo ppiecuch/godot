@@ -18,6 +18,8 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/* clang-format off */
+
 /* Prevent the stack from becoming executable */
 #if defined(__linux__) && defined(__ELF__)
 .section .note.GNU-stack,"",%progbits
@@ -530,3 +532,5 @@ generate_composite_function \
     nop_macro, /* cleanup */ \
     RGB444toRGB888_process_head, \
     RGB444toRGB888_process_tail
+
+/* clang-format on */
