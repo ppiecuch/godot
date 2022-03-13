@@ -20,10 +20,26 @@ def get_name():
     return "psvita"
 
 
+def checkexe(exe):
+
+    try:
+        output = subprocess.check_output(exe).strip().splitlines()
+        for ln in output:
+            print("> " + str(ln))
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            return False
+    return True
+
+
 def can_build():
 
     if not "VITASDK" in os.environ:
         return False
+    for exe in ["arm-vita-eabi-pkg-config"]:
+        if checkexe("%s --version"):
+            print("%s not found... psvita disabled." % exe)
+            return False
     if os.name == "nt":
         return False
     return True
@@ -50,18 +66,6 @@ def get_flags():
         ("builtin_libpng", True),
         ("builtin_pcre2_with_jit", False),
     ]
-
-
-def checkexe(exe):
-
-    try:
-        output = subprocess.check_output(exe).strip().splitlines()
-        for ln in output:
-            print("> " + str(ln))
-    except OSError as e:
-        if e.errno == errno.ENOENT:
-            return False
-    return True
 
 
 def check(env, key):

@@ -22,6 +22,18 @@ def get_name():
     return "3ds"
 
 
+def checkexe(exe):
+
+    try:
+        output = subprocess.check_output(exe).strip().splitlines()
+        for ln in output:
+            print("> " + ln)
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            return False
+    return True
+
+
 def can_build():
 
     if not "DEVKITPRO" in os.environ:
@@ -33,9 +45,8 @@ def can_build():
     if os.name == "nt":
         return False
 
-    for exe in ["pkg-config", "picasso"]:
-        errorval = os.system("%s --version > /dev/null" % exe)
-        if errorval:
+    for exe in ["arm-none-eabi-pkg-config", "picasso"]:
+        if checkexe("%s --version"):
             print("%s not found... 3ds disabled." % exe)
             return False
 
