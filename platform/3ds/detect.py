@@ -1,8 +1,4 @@
-import os
-import sys
-import platform
-
-import version
+import os, sys, platform, subprocess, version
 
 if version.major > 2:
     yes = True
