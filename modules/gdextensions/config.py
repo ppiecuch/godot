@@ -27,7 +27,7 @@ def configure(env):
         "flexbuffers",
         "ccd",
         "settings",
-        "thread_pool",
+        "threadpool",
         "sfxr",
         "vgamepad",
         "iap",

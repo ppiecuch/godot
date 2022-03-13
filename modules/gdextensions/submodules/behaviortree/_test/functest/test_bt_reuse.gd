@@ -12,7 +12,7 @@ func _ready():
 	var context_bar = Context.new()
 	context_bar.update_result = BTRootNode.BH_SUCCESS
 	var running_data_bar = bt_root.create_running_data()
-	
+
 	bt_root.tick(context_foo) # use default running data
 	bt_root.tick(context_bar, running_data_bar)
 	assert(context_foo.count == 1)

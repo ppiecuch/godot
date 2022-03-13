@@ -1,9 +1,38 @@
+/*************************************************************************/
+/*  virtual_machine.cpp                                                  */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #include "virtual_machine.h"
 
-namespace BehaviorTree
-{
+namespace BehaviorTree {
 
-void VirtualMachine::tick(void* context, VMRunningData& running_data) {
+void VirtualMachine::tick(void *context, VMRunningData &running_data) {
 	BT_ASSERT(structure_data.size() == node_list.size());
 	running_data.tick_begin();
 	size_t num_nodes = structure_data.size();
@@ -13,15 +42,17 @@ void VirtualMachine::tick(void* context, VMRunningData& running_data) {
 	running_data.tick_end();
 }
 
-void VirtualMachine::step(void* context, VMRunningData& running_data) {
+void VirtualMachine::step(void *context, VMRunningData &running_data) {
 	NodeData node_data = structure_data[running_data.index_marker];
-	Node* node = node_list[running_data.index_marker];
+	Node *node = node_list[running_data.index_marker];
 
 	BT_ASSERT(node);
 	E_State state = BH_ERROR;
-	if (node) state = run_action(*node, context, running_data);
+	if (node)
+		state = run_action(*node, context, running_data);
 	// skip this node and its children if this node is null
-	else running_data.index_marker = node_data.end;
+	else
+		running_data.index_marker = node_data.end;
 
 	BT_ASSERT(running_data.index_marker <= node_data.end);
 	if (running_data.index_marker < node_data.end) {
@@ -42,7 +73,7 @@ void VirtualMachine::step(void* context, VMRunningData& running_data) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstrict-overflow"
 #endif
-void VirtualMachine::run_composites(E_State state, void* context, VMRunningData& running_data) {
+void VirtualMachine::run_composites(E_State state, void *context, VMRunningData &running_data) {
 	while (!running_data.running_nodes.empty()) {
 		VMRunningData::RunningNode running_node = running_data.running_nodes.back();
 		state = running_node.node->child_update(*this, running_node.data.index, context, state, running_data);
@@ -62,7 +93,7 @@ void VirtualMachine::run_composites(E_State state, void* context, VMRunningData&
 #pragma GCC diagnostic pop
 #endif
 
-E_State VirtualMachine::run_action(Node& node, void* context, VMRunningData& running_data) {
+E_State VirtualMachine::run_action(Node &node, void *context, VMRunningData &running_data) {
 	IndexType running_node_index = running_data.index_marker;
 	if (running_data.is_current_node_running_on_last_tick()) {
 		running_data.pop_last_running_behavior();
@@ -73,7 +104,7 @@ E_State VirtualMachine::run_action(Node& node, void* context, VMRunningData& run
 	return node.self_update(*this, running_node_index, context, running_data);
 }
 
-void VirtualMachine::cancel_skipped_behaviors(void* context, VMRunningData& running_data) {
+void VirtualMachine::cancel_skipped_behaviors(void *context, VMRunningData &running_data) {
 	while (!running_data.last_tick_running.empty() &&
 			running_data.last_tick_running.back() < running_data.index_marker) {
 		cancel_behavior(context, running_data);
@@ -81,13 +112,14 @@ void VirtualMachine::cancel_skipped_behaviors(void* context, VMRunningData& runn
 	}
 }
 
-void VirtualMachine::cancel_behavior(void* context, VMRunningData& running_data) {
+void VirtualMachine::cancel_behavior(void *context, VMRunningData &running_data) {
 	IndexType index = running_data.last_tick_running.back();
-	Node* node = node_list[index];
-	if (node) node->abort(*this, index, context, running_data);
+	Node *node = node_list[index];
+	if (node)
+		node->abort(*this, index, context, running_data);
 }
 
-void VirtualMachine::move_index_to_node_end(IndexType index, VMRunningData& running_data) {
+void VirtualMachine::move_index_to_node_end(IndexType index, VMRunningData &running_data) {
 	running_data.index_marker = structure_data[index].end;
 }
 
@@ -109,8 +141,7 @@ void VMRunningData::tick_end() {
 	this_tick_running.clear();
 }
 
-struct IndexGreatThanComp
-{
+struct IndexGreatThanComp {
 	bool operator()(IndexType lhs, IndexType rhs) const { return lhs > rhs; }
 };
 
@@ -118,7 +149,7 @@ void VMRunningData::sort_last_running_nodes() {
 	sort<IndexGreatThanComp>(last_tick_running);
 }
 
-bool VMRunningData::is_current_node_running_on_last_tick() const { 
+bool VMRunningData::is_current_node_running_on_last_tick() const {
 	return !last_tick_running.empty() && index_marker == last_tick_running.back();
 }
 
@@ -134,7 +165,7 @@ void VMRunningData::pop_last_running_behavior() {
 #pragma GCC diagnostic pop
 #endif
 
-void VMRunningData::add_running_node(Node* node, NodeData node_data) {
+void VMRunningData::add_running_node(Node *node, NodeData node_data) {
 	BT_ASSERT(node != NULL);
 	RunningNode running = { node, node_data };
 	running_nodes.push_back(running);
@@ -146,4 +177,4 @@ IndexType VMRunningData::move_index_to_running_child() {
 	return index_marker;
 }
 
-} /* BehaviorTree */ 
+} //namespace BehaviorTree

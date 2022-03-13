@@ -76,12 +76,12 @@
 #endif
 
 #ifdef GDEXT_BEHAVIORTREE_ENABLED
-#include "behaviortree/bt_string_names.h"
-#include "behaviortree/bt_root_node.h"
 #include "behaviortree/bt_action_node.h"
 #include "behaviortree/bt_composite_node.h"
-#include "behaviortree/bt_decorator_node.h"
 #include "behaviortree/bt_custom_parallel_node.h"
+#include "behaviortree/bt_decorator_node.h"
+#include "behaviortree/bt_root_node.h"
+#include "behaviortree/bt_string_names.h"
 #endif
 
 #include "debugdraw/debugdraw.h"
@@ -125,9 +125,9 @@
 
 #include "sfxr/gdsfxr.h"
 
-#include "thread_pool/thread_pool.h"
-#include "thread_pool/thread_pool_execute_job.h"
-#include "thread_pool/thread_pool_job.h"
+#include "threadpool/thread_pool.h"
+#include "threadpool/thread_pool_execute_job.h"
+#include "threadpool/thread_pool_job.h"
 
 #include "fastnoise/noise.h"
 
@@ -149,6 +149,10 @@
 
 #ifdef GDEXT_NAKAMA1_ENABLED
 #include "nakama1/gd_nakama1.h"
+#endif
+
+#ifdef GDEXT_PARSEPLATFORM_ENABLED
+#include "parseplatform/gd_parse_platform.h"
 #endif
 
 #ifdef GDEXT_FLEXBUFFERS_ENABLED
@@ -218,7 +222,7 @@ void register_gdextensions_types() {
 	Ref<ResourceImporterJSON> json_data = memnew(ResourceImporterJSON);
 	ResourceFormatImporter::get_singleton()->add_importer(json_data);
 #endif
-#ifdef GDEXT_THREAD_POOL_ENABLED
+#ifdef GDEXT_THREADPOOL_ENABLED
 	ClassDB::register_class<ThreadPoolJob>();
 	ClassDB::register_class<ThreadPoolExecuteJob>();
 
@@ -355,6 +359,15 @@ void register_gdextensions_types() {
 	Engine::get_singleton()->add_singleton(Engine::Singleton("GdNakama1", memnew(GdNakama1)));
 #endif
 
+#ifdef GDEXT_PARSEPLATFORM_ENABLED
+    print_line(vformat("ParsePlatform Godot module: %d.%d.%d", GODOTPARSE_MAJOR, GODOTPARSE_MINOR, GODOTPARSE_PATCH));
+
+	Engine::get_singleton()->add_singleton(Engine::Singleton("GdParseBackend", memnew(GdParseBackend)));
+	ClassDB::register_virtual_class<GdParseError>();
+	ClassDB::register_virtual_class<GdParseQuery>();
+	ClassDB::register_virtual_class<GdParseObject>();
+#endif
+
 #ifdef GDEXT_SMOOTH_ENABLED
 	ClassDB::register_class<Smooth>();
 	ClassDB::register_class<Smooth2D>();
@@ -428,6 +441,11 @@ void unregister_gdextensions_types() {
 #endif
 #ifdef GDEXT_NAKAMA1_ENABLED
 	if (GdNakama1 *instance = GdNakama1::get_singleton()) {
+		memdelete(instance);
+	}
+#endif
+#ifdef GDEXT_PARSEPLATFORM_ENABLED
+	if (GdParseBackend *instance = GdParseBackend::get_singleton()) {
 		memdelete(instance);
 	}
 #endif
