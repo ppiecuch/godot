@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  pixman-arm-simd-asm.h                                                */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 /*
  * Copyright (c) 2012 Raspberry Pi Foundation
  * Copyright (c) 2012 RISC OS Open Ltd
@@ -34,7 +64,7 @@
  *    are preloaded to deal with data (if any) that hangs off the end of the
  *    last iteration of the inner loop, plus any trailing bytes that were not
  *    enough to make up one whole iteration of the inner loop
- * 
+ *
  * There are (in general) three distinct code paths, selected between
  * depending upon how long the pixel row is. If it is long enough that there
  * is at least one iteration of the inner loop (as described above) then
@@ -1035,4 +1065,4 @@ generate_composite_function_common \
 .macro nop_macro x:vararg
 .endm
 
-/* clang-format on */
+													   /* clang-format on */
