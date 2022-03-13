@@ -20,7 +20,7 @@ for m in \
 	gd_behavior_tree gd_bullet_hell \
 	gd_raknet gd_enet \
 	gd_texture_packer \
-	gd_goosty; do
+	gd_goost; do
 	echo "+--"
     echo "| checking module: $m"
     echo "+--"
