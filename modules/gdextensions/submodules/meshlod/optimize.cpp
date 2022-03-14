@@ -219,7 +219,7 @@ void MeshOptimize::simplify(Node *p_root_node) {
 				Spatial *spatial = Object::cast_to<Spatial>(meshes[i].original_node);
 				if (spatial) {
 					mi->set_transform(spatial->get_transform());
-                    
+
                     if (spatial->get_parent()) {
                         spatial->get_parent()->add_child(mi);
                     } else {
@@ -240,7 +240,7 @@ void MeshOptimize::simplify(Node *p_root_node) {
 			spatial->set_name(mesh_instance->get_name());
 		}
 		meshes[i].original_node->replace_by(spatial);
-		
+
 	}
 }
 
