@@ -39,7 +39,7 @@
 #include "scene/animation/animation_player.h"
 #include "scene/resources/curve.h"
 
-#include "earcut.hpp/earcut.hpp"
+#include "earcut/earcut.h"
 #include "resource_importer_swf.h"
 
 #define POLYVECTOR_DEBUG

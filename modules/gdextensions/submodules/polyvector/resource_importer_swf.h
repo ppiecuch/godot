@@ -28,12 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef RESOURCE_IMPORTER_SWF_H_f6e3a78cd13111e78941cec278b6b50a
-#define RESOURCE_IMPORTER_SWF_H_f6e3a78cd13111e78941cec278b6b50a
+#ifndef RESOURCE_IMPORTER_SWF_H
+#define RESOURCE_IMPORTER_SWF_H
 
 using N = uint32_t;
 
-#include "json/json.hpp"
+#include "json/json.h"
 using json = nlohmann::json;
 
 #include "core/io/resource_importer.h"
@@ -47,7 +47,7 @@ using json = nlohmann::json;
 
 #include "libshockwave/swfparser.h"
 
-#define RISWF_SHAPE_AREA_THRESHOLD 0.1f
+#define RISWF_SHAPE_AREA_THRESHOLD 0.1
 
 struct PolyVectorMatrix {
 	float TranslateX = 0.0f;
@@ -219,4 +219,4 @@ public:
 #define PV_JSON_NAME_TRANSFORM "Transform"
 #define PV_JSON_NAME_CXFORM "CXform"
 
-#endif // RESOURCE_IMPORTER_SWF_H_f6e3a78cd13111e78941cec278b6b50a
+#endif // RESOURCE_IMPORTER_SWF_H
