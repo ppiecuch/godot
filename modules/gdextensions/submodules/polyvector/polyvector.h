@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef POLYVECTOR_H_26f336d6d05611e7abc4cec278b6b50a
-#define POLYVECTOR_H_26f336d6d05611e7abc4cec278b6b50a
+#ifndef POLYVECTOR_H
+#define POLYVECTOR_H
 
 #include <map>
 #include <vector>
@@ -62,6 +62,32 @@ struct nth<1, Vector2> {
 
 class PolyVector : public VisualInstance {
 	GDCLASS(PolyVector, VisualInstance)
+
+	Ref<JSONVector> dataVectorFile;
+	Ref<SpatialMaterial> materialDefault;
+	MeshInstanceMap mapMeshDisplay;
+
+	real_t fTime;
+	int8_t iCurveQuality;
+	Vector2 v2Offset;
+	real_t fLayerDepth;
+	real_t fMaxTessellationAngle;
+
+	List<PolyVectorFrame> lFrameData;
+	List<PolyVectorCharacter> lDictionaryData;
+	real_t fFps;
+
+#ifdef POLYVECTOR_DEBUG
+	OS *os;
+	bool bDebugWireframe;
+	Ref<SpatialMaterial> materialDebug;
+	double dTriangulationTime;
+	double dMeshUpdateTime;
+	uint32_t vertex_count;
+#endif
+
+protected:
+	static void _bind_methods();
 
 public:
 	PolyVector();
@@ -100,33 +126,6 @@ public:
 	double get_mesh_update_time();
 	uint32_t get_vertex_count();
 #endif
-
-protected:
-	static void _bind_methods();
-
-private:
-	Ref<JSONVector> dataVectorFile;
-	Ref<SpatialMaterial> materialDefault;
-	MeshInstanceMap mapMeshDisplay;
-
-	real_t fTime;
-	int8_t iCurveQuality;
-	Vector2 v2Offset;
-	real_t fLayerDepth;
-	real_t fMaxTessellationAngle;
-
-	List<PolyVectorFrame> lFrameData;
-	List<PolyVectorCharacter> lDictionaryData;
-	real_t fFps;
-
-#ifdef POLYVECTOR_DEBUG
-	OS *os;
-	bool bDebugWireframe;
-	Ref<SpatialMaterial> materialDebug;
-	double dTriangulationTime;
-	double dMeshUpdateTime;
-	uint32_t vertex_count;
-#endif
 };
 
-#endif // POLYVECTOR_H_26f336d6d05611e7abc4cec278b6b50a
+#endif // POLYVECTOR_H
