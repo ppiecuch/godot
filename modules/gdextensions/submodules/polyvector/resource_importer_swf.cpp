@@ -35,8 +35,7 @@
 #include "resource_importer_swf.h"
 
 #ifdef TOOLS_ENABLED
-		Error
-		ResourceImporterSWF::import(const String &p_source_file, const String &p_save_path, const Map<StringName, Variant> &p_options, List<String> *r_platform_variants, List<String> *r_gen_files, Variant *r_metadata) {
+Error ResourceImporterSWF::import(const String &p_source_file, const String &p_save_path, const Map<StringName, Variant> &p_options, List<String> *r_platform_variants, List<String> *r_gen_files, Variant *r_metadata) {
 	FileAccess *swf = FileAccess::open(p_source_file, FileAccess::READ);
 	ERR_FAIL_COND_V(!swf, ERR_FILE_CANT_READ);
 

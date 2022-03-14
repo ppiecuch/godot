@@ -62,7 +62,7 @@ struct vertex_array_holder {
 	int push(const Point &P, const Color &cc, bool trans = false) {
 		int cur = count();
 		vert.push_back(P);
-		color.push_back(Color{cc.r, cc.g, cc.b, trans ? 0 : cc.a});
+		color.push_back(Color{ cc.r, cc.g, cc.b, trans ? 0 : cc.a });
 		if (jumping) {
 			jumping = false;
 			repeat_last_push();
@@ -131,8 +131,10 @@ struct vertex_array_holder {
 		if (drawmode == Mesh::PRIMITIVE_TRIANGLES) {
 			for (int i = 0; i < count(); i++) {
 				Point P[4];
-				P[0] = get(i); i++;
-				P[1] = get(i); i++;
+				P[0] = get(i);
+				i++;
+				P[1] = get(i);
+				i++;
 				P[2] = get(i);
 				P[3] = P[0];
 				polyline((Vector2 *)P, col, 1, 4, 0);
