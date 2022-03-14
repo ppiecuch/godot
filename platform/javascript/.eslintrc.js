@@ -9,7 +9,7 @@ module.exports = {
 	"parserOptions": {
 		"ecmaVersion": 12,
 	},
-	"ignorePatterns": "*.externs.js",
+	"ignorePatterns": ["*.externs.js", "**/thirdparty/**"],
 	"rules": {
 		"func-names": "off",
 		// Use tabs for consistency with the C++ codebase.
