@@ -32,8 +32,10 @@ def configure(env):
         "vgamepad",
         "iap",
         "nakama1",
+        "discord",
         "qrcodetexture",
         "landiscovery",
+        "meshlod",
     ]
     opts = Variables()
     opts.Add(

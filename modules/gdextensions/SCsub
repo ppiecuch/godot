@@ -54,12 +54,14 @@ modules = [
     "flexbuffers",
     "nakama1",
     "parseplatform",
+    "discord",
     "settings",
     "threadpool",
     "sfxr",
     "flashdb",
     "vgamepad",
     "landiscovery",
+    "meshlod"
 ]
 
 thirdparty_sources = [
@@ -72,13 +74,13 @@ if env["tools"] and is_enabled("qrcodetexture"):
 if not env["disable_3d"]:
     modules += ["environment/vegetation_instance", "ccd", "ccd/src"]
     if is_enabled("ccd"):
-        thirdparty_sources += Glob("#thirdparty/libccd/src/*.c") + Glob("#thirdparty/libccd/src/testsuites/*.c")
+        thirdparty_sources += Glob("thirdparty/libccd/src/*.c") + Glob("thirdparty/libccd/src/testsuites/*.c")
     if env["tools"] and is_enabled("generator"):
         modules += ["generator"]
-        env_module.Append(CPPPATH=["#thirdparty/libgenerator/inc"])
+        env_module.Append(CPPPATH=["thirdparty/libgenerator/inc"])
         if is_gcc:
             env_module.Append(CPPFLAGS=["-Wno-nonnull", "-Wno-array-bounds"])  # silent false warnings
-        sources += Glob("#thirdparty/libgenerator/src/*.cpp")
+        thirdparty_sources += Glob("thirdparty/libgenerator/src/*.cpp")
 
 if env["feature_multiplethreads_allowed"]:
     modules += ["thread_pool"]
@@ -112,11 +114,11 @@ for m in modules:
         sources += [f for f in files if str(f) not in ignore]
 
 if is_enabled("flexbuffers") or is_enabled("nakama1"):
-    env_module.Prepend(CPPPATH="#thirdparty/flatbuffers/include")
+    env_module.Prepend(CPPPATH="thirdparty/flatbuffers/include")
     if is_enabled("flexbuffers"):
         if env["platform"] == "frt" and env["frt_arch"] == "gcw0":
             env_module.Append(CPPDEFINES=["FLATBUFFERS_LOCALE_INDEPENDENT=0"])
-        thirdparty_sources += ["#thirdparty/flatbuffers/src/util.cpp"]
+        thirdparty_sources += ["thirdparty/flatbuffers/src/util.cpp"]
     if is_enabled("nakama1"):
         sources += Glob("submodules/nakama1/client/*.cpp")
 
@@ -128,9 +130,10 @@ env_module.Append(
     CPPPATH=[
         "#thirdparty/enet",
         "#thirdparty/mbedtls/include",
-        "#thirdparty/flashdb/inc",
-        "#thirdparty/libccd/src",
         "#thirdparty",
+        "thirdparty/flashdb/inc",
+        "thirdparty/libccd/src",
+        "thirdparty",
         "submodules",
         ".",
     ]

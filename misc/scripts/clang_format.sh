@@ -19,7 +19,7 @@ fi
 git grep -zIl '' |
 while IFS= read -rd '' f; do
     # Exclude some files.
-    if [[ "$f" == "thirdparty"* ]]; then
+    if [[ "$f" == *"thirdparty"* ]]; then
         continue
     elif [[ "$f" == "platform/android/java/lib/src/com/google"* ]]; then
         continue
