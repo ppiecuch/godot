@@ -69,13 +69,24 @@ if env["tools"] and is_enabled("qrcodetexture"):
 if env["platform"] == "iphone" or env["platform"] == "osx":
     modules += ["multipeer"]
     thirdparty_sources += Glob("thirdparty/MultiPeerKit/Sources/Common/*.m")
-    env_module.Append(CCFLAGS=[
-        '-fobjc-arc',
-        '-fmessage-length=0', '-fno-strict-aliasing', '-fdiagnostics-print-source-range-info',
-        '-fdiagnostics-show-category=id', '-fdiagnostics-parseable-fixits', '-fpascal-strings',
-        '-fblocks', '-MMD', '-MT', 'dependencies', '-Wno-ambiguous-macro', '-Werror=return-type',
-        '-Wall',
-    ])
+    env_module.Append(
+        CCFLAGS=[
+            "-fobjc-arc",
+            "-fmessage-length=0",
+            "-fno-strict-aliasing",
+            "-fdiagnostics-print-source-range-info",
+            "-fdiagnostics-show-category=id",
+            "-fdiagnostics-parseable-fixits",
+            "-fpascal-strings",
+            "-fblocks",
+            "-MMD",
+            "-MT",
+            "dependencies",
+            "-Wno-ambiguous-macro",
+            "-Werror=return-type",
+            "-Wall",
+        ]
+    )
 
 if not env["disable_3d"]:
     modules += ["environment/vegetation_instance", "ccd"]
