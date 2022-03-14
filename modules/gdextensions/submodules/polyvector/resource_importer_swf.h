@@ -117,22 +117,7 @@ typedef Map<uint16_t, MeshInstance *> MeshInstanceMap;
 #ifdef TOOLS_ENABLED
 class ResourceImporterSWF : public ResourceImporter {
 	GDCLASS(ResourceImporterSWF, ResourceImporter)
-public:
-	virtual String get_importer_name() const { return "JSONVector"; }
-	virtual String get_visible_name() const { return "PolyVector"; }
-	virtual void get_recognized_extensions(List<String> *p_extensions) const { p_extensions->push_back("swf"); }
-	virtual String get_save_extension() const { return "vec.json"; }
-	virtual String get_resource_type() const { return "JSONVector"; }
-	virtual bool get_option_visibility(const String &, const Map<StringName, Variant> &) const { return true; }
-	virtual int get_preset_count() const { return 0; }
-	virtual String get_preset_name(int p_idx) const { return String(); }
-	virtual void get_import_options(List<ImportOption> *r_options, int p_preset = 0) const;
 
-	virtual Error import(const String &p_source_file, const String &p_save_path, const Map<StringName, Variant> &p_options, List<String> *r_platform_variants, List<String> *r_gen_files = NULL, Variant *r_metadata = NULL);
-
-	ResourceImporterSWF() {}
-
-private:
 	struct SWFPolygon;
 	typedef std::vector<SWFPolygon> SWFPolygonList;
 	struct SWFPolygon {
@@ -151,10 +136,27 @@ private:
 	_FORCE_INLINE_ bool shape_area_too_small(real_t a) { return (abs(a) < RISWF_SHAPE_AREA_THRESHOLD); }
 	real_t shape_area(SWF::Shape);
 	real_t shape_area(SWF::ShapeList::iterator i) { return this->shape_area(*i); }
+
+public:
+	virtual String get_importer_name() const { return "JSONVector"; }
+	virtual String get_visible_name() const { return "PolyVector"; }
+	virtual void get_recognized_extensions(List<String> *p_extensions) const { p_extensions->push_back("swf"); }
+	virtual String get_save_extension() const { return "vec.json"; }
+	virtual String get_resource_type() const { return "JSONVector"; }
+	virtual bool get_option_visibility(const String &, const Map<StringName, Variant> &) const { return true; }
+	virtual int get_preset_count() const { return 0; }
+	virtual String get_preset_name(int p_idx) const { return String(); }
+	virtual void get_import_options(List<ImportOption> *r_options, int p_preset = 0) const;
+
+	virtual Error import(const String &p_source_file, const String &p_save_path, const Map<StringName, Variant> &p_options, List<String> *r_platform_variants, List<String> *r_gen_files = NULL, Variant *r_metadata = NULL);
+
+	ResourceImporterSWF() {}
 };
 #endif
 
 class ResourceLoaderJSONVector : public ResourceFormatLoader {
+	PolyVectorPath verts_to_curve(json);
+
 public:
 	virtual RES load(const String &p_path, const String &p_original_path = "", Error *r_error = NULL);
 	virtual void get_recognized_extensions(List<String> *p_extensions) const { p_extensions->push_back("vec.json"); }
@@ -164,9 +166,6 @@ public:
 		return "";
 	}
 	virtual bool handles_type(const String &p_type) const { return (p_type == "JSONVector"); }
-
-private:
-	PolyVectorPath verts_to_curve(json);
 };
 
 class JSONVector : public Resource {
@@ -182,7 +181,6 @@ class JSONVector : public Resource {
 	MeshDictionaryMap mapMeshDictionary;
 
 public:
-	JSONVector() {}
 	void add_character(PolyVectorCharacter p_data) { this->dictionary.push_back(p_data); }
 	PolyVectorCharacter get_character(uint16_t i) { return this->dictionary[i]; }
 	List<PolyVectorCharacter> get_dictionary() { return this->dictionary; }
@@ -197,6 +195,8 @@ public:
 	Vector2 get_dimensions() { return this->dimensions; }
 
 	MeshDictionaryMap &get_mesh_dictionary() { return this->mapMeshDictionary; }
+
+	JSONVector() {}
 };
 
 #define PV_JSON_NAME_FPS "FPS"
