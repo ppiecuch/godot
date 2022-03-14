@@ -30,8 +30,8 @@
 
 #ifndef GD_CCD_H
 
-#include "src/ccdbox.h"
-#include "src/ccdcylinder.h"
-#include "src/ccdsphere.h"
+#include "ccdbox.h"
+#include "ccdcylinder.h"
+#include "ccdsphere.h"
 
 #endif // GD_CCD_H

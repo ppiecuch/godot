@@ -42,9 +42,7 @@
 #include "scene/2d/sprite.h"
 #include "scene/resources/texture.h"
 
-#include "queue.hpp"
-
-using namespace GdExtends;
+#include "queue.h"
 
 class Phantom : public Node2D {
 	GDCLASS(Phantom, Node2D);
@@ -66,7 +64,7 @@ protected:
 private:
 	Array target_paths;
 	Array targets;
-	Queue<DrawSprite> sprites;
+	GdExt::Queue<DrawSprite> sprites;
 
 	void _update_targets();
 

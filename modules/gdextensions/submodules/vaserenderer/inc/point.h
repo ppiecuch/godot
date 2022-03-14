@@ -75,7 +75,7 @@ public:
 	Point operator*(int k) const {
 		return Point(x * k, y * k);
 	}
-	Point operator*(real_t k) const {
+	Point operator*(float k) const {
 		return Point(x * k, y * k);
 	}
 	Point operator*(double k) const {
@@ -97,7 +97,7 @@ public:
 		y -= b.y;
 		return *this;
 	}
-	Point &operator*=(const real_t k) {
+	Point &operator*=(const float k) {
 		x *= k;
 		y *= k;
 		return *this;
@@ -108,13 +108,11 @@ public:
 		return *this;
 	}
 
-	static void dot(const Point &a, const Point &b, Point &o) //dot product: o = a dot b
-	{
+	static void dot(const Point &a, const Point &b, Point &o) { // dot product: o = a dot b
 		o.x = a.x * b.x;
 		o.y = a.y * b.y;
 	}
-	Point dot_prod(const Point &b) const //return dot product
-	{
+	Point dot_prod(const Point &b) const { // return dot product
 		return Point(x * b.x, y * b.y);
 	}
 
@@ -142,10 +140,12 @@ public:
 		x = -y_value;
 	}
 	void follow_signs(const Point &a) {
-		if ((x > 0) != (a.x > 0))
+		if ((x > 0) != (a.x > 0)) {
 			x = -x;
-		if ((y > 0) != (a.y > 0))
+		}
+		if ((y > 0) != (a.y > 0)) {
 			y = -y;
+		}
 	}
 	void follow_magnitude(const Point &a);
 	void follow_direction(const Point &a);
@@ -178,7 +178,7 @@ public:
 		return (dx * dx + dy * dy);
 	}
 	static inline real_t distance(const Point &A, const Point &B) {
-		return Math::sqrtf(distance_squared(A, B));
+		return Math::sqrt(distance_squared(A, B));
 	}
 	static Point midpoint(const Point &A, const Point &B) {
 		return (A + B) * 0.5;
@@ -190,14 +190,17 @@ public:
 		const char P2y = P2.y > 0 ? 1 : (P2.y < 0 ? -1 : 0);
 
 		if (P1x != P2x) {
-			if (P1y != P2y)
+			if (P1y != P2y) {
 				return true;
-			if (P1y == 0 || P2y == 0)
+			}
+			if (P1y == 0 || P2y == 0) {
 				return true;
+			}
 		}
 		if (P1y != P2y) {
-			if (P1x == 0 || P2x == 0)
+			if (P1x == 0 || P2x == 0) {
 				return true;
+			}
 		}
 		return false;
 	}
@@ -206,44 +209,44 @@ public:
 	static inline bool anchor_outward_D(Point &V, const Point &b, const Point &c) {
 		return (b.x * V.x - c.x * V.x + b.y * V.y - c.y * V.y) > 0;
 	}
-	static bool anchor_outward(Point &V, const Point &b, const Point &c, bool reverse = false) { //put the correct outward vector at V, with V placed on b, comparing distances from c
+	static bool anchor_outward(Point &V, const Point &b, const Point &c, bool reverse = false) { // put the correct outward vector at V, with V placed on b, comparing distances from c
 		const bool determinant = anchor_outward_D(V, b, c);
-		if (determinant == (!reverse)) { //when reverse==true, it means inward
-			//positive V is the outward vector
+		if (determinant == (!reverse)) { // when reverse==true, it means inward
+			// positive V is the outward vector
 			return false;
 		} else {
-			//negative V is the outward vector
+			// negative V is the outward vector
 			V.x = -V.x;
 			V.y = -V.y;
-			return true; //return whether V is changed
+			return true; // return whether V is changed
 		}
 	}
 	static void anchor_inward(Point &V, const Point &b, const Point &c) {
 		anchor_outward(V, b, c, true);
 	}
 
-	//operations of 4 points
-	static char intersect(const Point &P1, const Point &P2, //line 1
-			const Point &P3, const Point &P4, //line 2
-			Point &Pout, //the output point
-			real_t *ua_out = 0, real_t *ub_out = 0) { //Determine the intersection point of two line segments
+	// operations of 4 points
+	static char intersect(const Point &P1, const Point &P2, // line 1
+			const Point &P3, const Point &P4, // line 2
+			Point &Pout, // the output point
+			real_t *ua_out = 0, real_t *ub_out = 0) { // Determine the intersection point of two line segments
 
-		const denom = (P4.y - P3.y) * (P2.x - P1.x) - (P4.x - P3.x) * (P2.y - P1.y);
-		const numera = (P4.x - P3.x) * (P1.y - P3.y) - (P4.y - P3.y) * (P1.x - P3.x);
-		const numerb = (P2.x - P1.x) * (P1.y - P3.y) - (P2.y - P1.y) * (P1.x - P3.x);
+		const real_t denom = (P4.y - P3.y) * (P2.x - P1.x) - (P4.x - P3.x) * (P2.y - P1.y);
+		const real_t numera = (P4.x - P3.x) * (P1.y - P3.y) - (P4.y - P3.y) * (P1.x - P3.x);
+		const real_t numerb = (P2.x - P1.x) * (P1.y - P3.y) - (P2.y - P1.y) * (P1.x - P3.x);
 
 		if (negligible(numera) &&
 				negligible(numerb) &&
 				negligible(denom)) {
 			Pout.x = (P1.x + P2.x) * 0.5;
 			Pout.y = (P1.y + P2.y) * 0.5;
-			return 2; //meaning the lines coincide
+			return 2; // meaning the lines coincide
 		}
 
 		if (negligible(denom)) {
 			Pout.x = 0;
 			Pout.y = 0;
-			return 0; //meaning lines are parallel
+			return 0; // meaning lines are parallel
 		}
 
 		real_t mua = numera / denom;
@@ -260,19 +263,14 @@ public:
 		bool out2 = mub < 0 || mub > 1;
 
 		if (out1 & out2) {
-			return 5; //the intersection lies outside both segments
+			return 5; // the intersection lies outside both segments
 		} else if (out1) {
-			return 3; //the intersection lies outside segment 1
+			return 3; // the intersection lies outside segment 1
 		} else if (out2) {
-			return 4; //the intersection lies outside segment 2
+			return 4; // the intersection lies outside segment 2
 		} else {
-			return 1; //great
+			return 1; // great
 		}
-		//http://paulbourke.net/geometry/lineline2d/
+		// http://paulbourke.net/geometry/lineline2d/
 	}
-}; //end of class Point
-
-/* after all,
- * sizeof(Vec2)=16  sizeof(Point)=16
- * Point is not heavier, just more powerful :)
- */
+}; // end of class Point

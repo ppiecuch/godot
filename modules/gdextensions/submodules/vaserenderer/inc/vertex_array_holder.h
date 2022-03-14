@@ -31,26 +31,25 @@
 #ifndef VASER_VERTEX_ARRAY_HOLDER_H
 #define VASER_VERTEX_ARRAY_HOLDER_H
 
-class vertex_array_holder {
-public:
-	int count; //counter
+struct vertex_array_holder {
 	int drawmode; //drawing mode
 	bool jumping;
-	PoolVector2Array vert; //because it holds 2d vectors
-	PoolColorArray color; //RGBA
+	PoolVector2Array vert; // because it holds 2d vectors
+	PoolColorArray color; // RGBA
 
 	vertex_array_holder() {
-		count = 0;
 		drawmode = Mesh::PRIMITIVE_TRIANGLES;
 		jumping = false;
 	}
 
-	void set_draw_draw_mode(int mode) { drawmode = mode; }
+	void set_draw_mode(int mode) { drawmode = mode; }
 
-	void clear() { count = 0; }
+	void clear() {
+		vert = PoolVector2Array();
+		color = PoolColorArray();
+	}
 
-	void move(int a, int b) { //move b into a
-
+	void move(int a, int b) { // move b into a
 		vert[a] = vert[b];
 		color[a] = color[b];
 	}
@@ -61,11 +60,9 @@ public:
 	}
 
 	int push(const Point &P, const Color &cc, bool trans = false) {
-		const int cur = count;
+		int cur = count();
 		vert.push_back(P);
-		color.push_back(cc.with_alpha(trans ? 0 : cc.a));
-
-		count++;
+		color.push_back(Color{ cc.r, cc.g, cc.b, trans ? 0 : cc.a });
 		if (jumping) {
 			jumping = false;
 			repeat_last_push();
@@ -73,9 +70,7 @@ public:
 		return cur;
 	}
 
-	void push3(const Point &P1, const Point &P2, const Point &P3,
-			const Color &C1, const Color &C2, const Color &C3,
-			bool trans1 = 0, bool trans2 = 0, bool trans3 = 0) {
+	void push3(const Point &P1, const Point &P2, const Point &P3, const Color &C1, const Color &C2, const Color &C3, bool trans1 = false, bool trans2 = false, bool trans3 = false) {
 		push(P1, C1, trans1);
 		push(P2, C2, trans2);
 		push(P3, C3, trans3);
@@ -83,46 +78,45 @@ public:
 
 	void push(const vertex_array_holder &hold) {
 		if (drawmode == hold.drawmode) {
-			count += hold.count;
-			vert.insert(vert.end(), hold.vert.begin(), hold.vert.end());
-			color.insert(color.end(), hold.color.begin(), hold.color.end());
-		} else if (drawmode == Mesh::PRIMITIVE_TRIANGLES &&
-				hold.drawmode == Mesh::PRIMITIVE_TRIANGLES_STRIP) {
-			const int &a = count;
-			for (int b = 2; b < hold.count; b++) {
-				for (int k = 0; k < 3; k++, a++) {
+			vert.append_array(hold.vert);
+			color.append_array(hold.color);
+		} else if (drawmode == Mesh::PRIMITIVE_TRIANGLES && hold.drawmode == Mesh::PRIMITIVE_TRIANGLE_STRIP) {
+			const int count = hold.vert.size();
+			for (int b = 2; b < count; b++) {
+				for (int k = 0; k < 3; k++) {
 					const int B = b - 2 + k;
 					vert.push_back(hold.vert[B]);
 					color.push_back(hold.color[B]);
 				}
 			}
 		} else {
-			DEBUG("vertex_array_holder:push: unknown type\n");
+			DEBUG("vertex_array_holder:push: unknown type");
 		}
 	}
 
-	Point get(int i) { return vert[i]; }
+	_FORCE_INLINE_ int count() const { return vert.size(); }
+	_FORCE_INLINE_ Point get(int i) const { return vert[i]; }
+	_FORCE_INLINE_ Color get_color(int b) const { return color[b]; }
 
-	Color get_color(int b) { return color[b]; }
-
-	Point get_relative_end(int di = -1) { //di=-1 is the last one
-
-		int i = count + di;
-		if (i < 0)
+	Point get_relative_end(int di = -1) { // -1 is the last one
+		const int cnt = count();
+		int i = cnt + di;
+		if (i < 0) {
 			i = 0;
-		if (i >= count)
-			i = count - 1;
+		}
+		if (i >= cnt) {
+			i = cnt - 1;
+		}
 		return get(i);
 	}
 
 	void repeat_last_push() {
-		const int i = count - 1;
+		const int i = count() - 1;
 		push(vert[i], color[i]);
 	}
 
-	void jump() { //to make a jump in triangle strip by degenerated triangles
-
-		if (drawmode == Mesh::PRIMITIVE_TRIANGLES_STRIP) {
+	void jump() { // to make a jump in triangle strip by degenerated triangles
+		if (drawmode == Mesh::PRIMITIVE_TRIANGLE_STRIP) {
 			repeat_last_push();
 			jumping = true;
 		}
@@ -135,7 +129,7 @@ public:
 	void draw_triangles() {
 		Color col = { 1, 0, 0, 0.5 };
 		if (drawmode == Mesh::PRIMITIVE_TRIANGLES) {
-			for (int i = 0; i < count; i++) {
+			for (int i = 0; i < count(); i++) {
 				Point P[4];
 				P[0] = get(i);
 				i++;
@@ -145,8 +139,8 @@ public:
 				P[3] = P[0];
 				polyline((Vector2 *)P, col, 1, 4, 0);
 			}
-		} else if (drawmode == Mesh::PRIMITIVE_TRIANGLES_STRIP) {
-			for (int i = 2; i < count; i++) {
+		} else if (drawmode == Mesh::PRIMITIVE_TRIANGLE_STRIP) {
+			for (int i = 2; i < count(); i++) {
 				Point P[3];
 				P[0] = get(i - 2);
 				P[1] = get(i);
@@ -157,17 +151,18 @@ public:
 	}
 
 	void swap(vertex_array_holder &B) {
-		const int hold_count = count;
 		const int hold_drawmode = drawmode;
-		bool hold_jumping = jumping;
-		count = B.count;
+		const bool hold_jumping = jumping;
 		drawmode = B.drawmode;
 		jumping = B.jumping;
-		B.count = hold_count;
 		B.drawmode = hold_drawmode;
 		B.jumping = hold_jumping;
-		vert.swap(B.vert);
-		color.swap(B.color);
+		auto v = vert;
+		auto c = color;
+		vert = B.vert;
+		color = B.color;
+		B.vert = v;
+		B.color = c;
 	}
 };
 

@@ -11,9 +11,6 @@ is_clang_or_gcc = (
 )
 
 
-sub_enabled = []
-
-
 def is_enabled(m):
     mod = os.path.dirname(m) if os.path.dirname(m) else m
     if "enable_gdextensions_submodules" in env:
@@ -21,9 +18,6 @@ def is_enabled(m):
             return False
         if not mod in env["enable_gdextensions_submodules"]:
             return False
-    env_module.Append(CPPDEFINES=["GDEXT_%s_ENABLED" % mod.upper()])
-    if mod not in sub_enabled:
-        sub_enabled.append(m)
     return True
 
 
@@ -46,7 +40,6 @@ modules = [
     "smooth",
     "debugdraw",
     "geomfonts",
-    "generator",
     "statemachine",
     "benet",
     "behaviornode",
@@ -56,12 +49,14 @@ modules = [
     "parseplatform",
     "discord",
     "settings",
-    "threadpool",
     "sfxr",
     "flashdb",
+    "sqlite",
     "vgamepad",
     "landiscovery",
-    "meshlod",
+    "polyvector",
+    "vaserenderer",
+    "timelinefx",
 ]
 
 thirdparty_sources = [
@@ -71,8 +66,19 @@ thirdparty_sources = [
 if env["tools"] and is_enabled("qrcodetexture"):
     modules += ["qrcodetexture"]
 
+if env["platform"] == "iphone" or env["platform"] == "osx":
+    modules += ["multipeer"]
+    thirdparty_sources += Glob("thirdparty/MultiPeerKit/Sources/Common/*.m")
+    env_module.Append(CCFLAGS=[
+        '-fobjc-arc',
+        '-fmessage-length=0', '-fno-strict-aliasing', '-fdiagnostics-print-source-range-info',
+        '-fdiagnostics-show-category=id', '-fdiagnostics-parseable-fixits', '-fpascal-strings',
+        '-fblocks', '-MMD', '-MT', 'dependencies', '-Wno-ambiguous-macro', '-Werror=return-type',
+        '-Wall',
+    ])
+
 if not env["disable_3d"]:
-    modules += ["environment/vegetation_instance", "ccd", "ccd/src"]
+    modules += ["environment/vegetation_instance", "ccd"]
     if is_enabled("ccd"):
         thirdparty_sources += Glob("thirdparty/libccd/src/*.c") + Glob("thirdparty/libccd/src/testsuites/*.c")
     if env["tools"]:
@@ -83,10 +89,18 @@ if not env["disable_3d"]:
                 env_module.Append(CPPFLAGS=["-Wno-nonnull", "-Wno-array-bounds"])  # silent false warnings
             thirdparty_sources += Glob("thirdparty/libgenerator/src/*.cpp")
         if is_enabled("meshlod"):
+            modules += ["meshlod"]
             thirdparty_sources += Glob("thirdparty/meshoptimizer/src/*.cpp")
 
 if env["feature_multiplethreads_allowed"]:
-    modules += ["thread_pool"]
+    modules += ["threadpool"]
+
+if env["os_family"] in ["os_windows", "os_unix"]:
+    modules += ["unqlite"]
+    thirdparty_sources += Glob("thirdparty/unqlite/*.c")
+
+if is_enabled("sqlite"):
+    thirdparty_sources += Glob("thirdparty/sqlite/*.c")
 
 if os.path.isdir("iap") and is_enabled("iap"):
     env_module.Prepend(CPPPATH=["submodules/iap"])
@@ -111,11 +125,6 @@ if env["disable_advanced_gui"]:
 if not env["module_mbedtls_enabled"]:
     ignore += ["submodules/core/cripter.cpp"]
 
-for m in modules:
-    if is_enabled(m):
-        files = Glob("submodules/%s/*.cpp" % m) + Glob("submodules/%s/*.c" % m)
-        sources += [f for f in files if str(f) not in ignore]
-
 if is_enabled("flexbuffers") or is_enabled("nakama1"):
     env_module.Prepend(CPPPATH="thirdparty/flatbuffers/include")
     if is_enabled("flexbuffers"):
@@ -128,6 +137,18 @@ if is_enabled("flexbuffers") or is_enabled("nakama1"):
 if is_enabled("geomfonts"):
     env_module.Prepend(CPPPATH="submodules/geomfonts/polyfonts")
     sources += Glob("submodules/geomfonts/polyfonts/fonts/*.c")
+
+if is_enabled("polyvector"):
+    env_module.Append(CPPPATH=["thirdparty/libshockwave/lzma"])
+    env_module.Append(CPPDEFINES=["_7ZIP_ST"])
+    thirdparty_sources += Glob("thirdparty/libshockwave/*.cpp") + Glob("thirdparty/libshockwave/lzma/*.c")
+
+sub_building = []
+for m in modules:
+    if is_enabled(m):
+        files = Glob("submodules/%s/*.cpp" % m) + Glob("submodules/%s/*.c" % m)
+        sources += [f for f in files if str(f) not in ignore]
+        sub_building.append(m)
 
 env_module.Append(
     CPPPATH=[
@@ -151,5 +172,16 @@ lib = env_module.Library("gdextensions", thirdparty_sources + sources)
 # Add the library as a dependency of the final executable
 env.Prepend(LIBS=[lib])
 
-if sub_enabled:
-    print("(GDextensions) Enabling submodules: %s" % sorted(sub_enabled))
+if modules:
+    sub_enabled = []
+    for m in sorted(sub_building):
+        mod = os.path.dirname(m) if os.path.dirname(m) else m
+        if mod not in sub_enabled:
+            if sub_enabled and sub_enabled[-1].startswith(mod):
+                sub_enabled[-1] = sub_enabled[-1] + " " + os.path.basename(m)
+            elif mod != m:
+                sub_enabled.append(mod + ": " + os.path.basename(m))
+            else:
+                sub_enabled.append(m)
+            env_module.Append(CPPDEFINES=["GDEXT_%s_ENABLED" % mod.upper()])
+    print("(GDextensions) Building submodules: %s" % sorted(sub_enabled))

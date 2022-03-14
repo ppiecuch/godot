@@ -1,44 +1,20 @@
 /* Godot renderer and backend */
 
-namespace VASErin { //VASEr internal namespace
+namespace VASErin { // VASEr internal namespace
 
-	Mesh _mesh;
+	Ref<ArrayMesh> _mesh;
 
 	void backend::vah_draw(vertex_array_holder& vah) {
-
-		if ( vah.count > 0) { //save some effort
-
+		if (!vah.vert.empty()) { // save some effort
 			Array mesh_array;
-
-			glVertexPointer(2, GL_FLOAT, 0, &vah.vert[0]);
-			glColorPointer (4, GL_FLOAT, 0, &vah.color[0]);
-			glDrawArrays (vah.glmode, 0, vah.count);
+			mesh_array.resize(VS::ARRAY_MAX);
+			mesh_array[VS::ARRAY_VERTEX] = vah.vert;
+			mesh_array[VS::ARRAY_COLOR] = vah.color;
+			_mesh->add_surface_from_arrays(vah.drawmode, mesh_array, Array(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
 		}
-	}
-
-	void backend::polyline(const Vector2* P, Color C, float W, int length, const polyline_opt*) { //constant color and weight
-
-		int type=0;
-		if( sizeof (Vector2)==8)
-			type = GL_FLOAT;
-
-		assert(type!=0);
-
-		glColor4f(C.r,C.g,C.b,C.a);
-		glLineWidth(W);
-
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glDisableClientState(GL_COLOR_ARRAY);
-		glVertexPointer(2, type, 0, P);
-		glDrawArrays(GL_LINE_STRIP, 0, length);
-		glEnableClientState(GL_COLOR_ARRAY);
-
-		glLineWidth(1);
 	}
 } //sub namespace VASErin
 
-void renderer::init() {}
-
-void renderer::before() {}
-
-void renderer::after() {}
+void renderer::init() { }
+void renderer::before() { }
+void renderer::after() { }

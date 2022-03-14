@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  vaser.cpp                                                            */
+/*  gd_multipeer.cpp                                                     */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,50 +28,53 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "vaser.h"
+#include "gd_multipeer.h"
 
-#include "core/print_string.h"
-#include "core/variant.h"
-#include "scene/resources/mesh.h"
+GdMultiPeer *GdMultiPeer::instance = nullptr;
 
-#ifdef VASER_DEBUG
-#define DEBUG(fmt, ...) print_verbose(vformat(fmt __VA_ARGS__))
-#else
-#define DEBUG(...) \
-	{}
-#endif
+GdMultiPeer *GdMultiPeer::get_singleton() {
+	return instance;
+}
 
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
+void GdMultiPeer::start_advertising() {
+}
 
-#include <vector>
+void GdMultiPeer::stop_advertising() {
+}
 
-// clang-format off
+void GdMultiPeer::start_browsing() {
+}
 
-namespace VASEr {
-namespace VASErin { // VASEr internal namespace
+void GdMultiPeer::stop_browsing() {
+}
 
-const real_t vaser_min_alw = 0.0000001; // smallest value not regarded as zero
-const real_t default_weight = 1;
-const Color default_color = { 0, 0, 0, 1 };
+void GdMultiPeer::disconnect_self() {
+}
 
-#include "inc/color.h"
-#include "inc/point.h"
+Array GdMultiPeer::get_peers() {
+	return Array();
+}
 
-struct vertex_array_holder;
+void GdMultiPeer::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("start_advertising"), &GdMultiPeer::start_advertising);
+	ClassDB::bind_method(D_METHOD("stop_advertising"), &GdMultiPeer::stop_advertising);
+	ClassDB::bind_method(D_METHOD("start_browsing"), &GdMultiPeer::start_browsing);
+	ClassDB::bind_method(D_METHOD("stop_browsing"), &GdMultiPeer::stop_browsing);
+	ClassDB::bind_method(D_METHOD("disconnect_self"), &GdMultiPeer::disconnect_self);
+	ClassDB::bind_method(D_METHOD("get_peers"), &GdMultiPeer::get_peers);
 
-#include "inc/backend.h"
-#include "inc/vertex_array_holder.h"
-#include "inl/agg_curve4.cpp.inl"
-} // namespace VASErin
+	ADD_SIGNAL(MethodInfo("find_peer"));
+	ADD_SIGNAL(MethodInfo("loose_peer"));
+	ADD_SIGNAL(MethodInfo("receiveInvitation_from_peer"));
+	ADD_SIGNAL(MethodInfo("connect_to_peer"));
+	ADD_SIGNAL(MethodInfo("disconnect_from_peer"));
+	ADD_SIGNAL(MethodInfo("receive_data"));
+}
 
-#include "inl/gradient.cpp.inl"
-#include "inl/curve.cpp.inl"
-#include "inl/godot.cpp.inl"
-#include "inl/polyline.cpp.inl"
-} // namespace VASEr
+GdMultiPeer::GdMultiPeer() {
+	instance = this;
+}
 
-// clang-format on
-
-#undef DEBUG
+GdMultiPeer::~GdMultiPeer() {
+	instance = nullptr;
+}

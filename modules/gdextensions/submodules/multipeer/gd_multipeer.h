@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  vaser.cpp                                                            */
+/*  gd_multipeer.h                                                       */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,50 +28,31 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "vaser.h"
+#ifndef GD_MULTIPEER_H
+#define GD_MULTIPEER_H
 
-#include "core/print_string.h"
-#include "core/variant.h"
-#include "scene/resources/mesh.h"
+#include "core/object.h"
 
-#ifdef VASER_DEBUG
-#define DEBUG(fmt, ...) print_verbose(vformat(fmt __VA_ARGS__))
-#else
-#define DEBUG(...) \
-	{}
-#endif
+class GdMultiPeer : public Object {
+	GDCLASS(GdMultiPeer, Object);
 
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
+	static GdMultiPeer *instance;
 
-#include <vector>
+protected:
+	static void _bind_methods();
 
-// clang-format off
+public:
+	static GdMultiPeer *get_singleton();
 
-namespace VASEr {
-namespace VASErin { // VASEr internal namespace
+	void start_advertising();
+	void stop_advertising();
+	void start_browsing();
+	void stop_browsing();
+	void disconnect_self();
+	Array get_peers();
 
-const real_t vaser_min_alw = 0.0000001; // smallest value not regarded as zero
-const real_t default_weight = 1;
-const Color default_color = { 0, 0, 0, 1 };
+	GdMultiPeer();
+	~GdMultiPeer();
+};
 
-#include "inc/color.h"
-#include "inc/point.h"
-
-struct vertex_array_holder;
-
-#include "inc/backend.h"
-#include "inc/vertex_array_holder.h"
-#include "inl/agg_curve4.cpp.inl"
-} // namespace VASErin
-
-#include "inl/gradient.cpp.inl"
-#include "inl/curve.cpp.inl"
-#include "inl/godot.cpp.inl"
-#include "inl/polyline.cpp.inl"
-} // namespace VASEr
-
-// clang-format on
-
-#undef DEBUG
+#endif // GD_MULTIPEER_H

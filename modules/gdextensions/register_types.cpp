@@ -88,10 +88,12 @@
 
 #include "landiscovery/lan.h"
 
-#ifndef _3D_DISABLED
-#ifdef TOOLS_ENABLED
-#include "generator/gd_procedural_mesh.h"
+#ifdef GDEXT_MULTIPEER_ENABLED
+#include "multipeer/gd_multipeer.h"
 #endif
+
+#ifdef GDEXT_GENERATOR_ENABLED
+#include "generator/gd_procedural_mesh.h"
 #endif
 
 #include "visual/autotilemap.h"
@@ -121,6 +123,13 @@
 
 #include "settings/settings.h"
 
+#ifdef GDEXT_SQLITE_ENABLED
+#include "sqlite/gd_sqlite.h"
+#endif
+#ifdef GDEXT_UNQLITE_ENABLED
+#include "unqlite/gd_unqlite.h"
+#endif
+
 #include "smooth/smooth.h"
 #include "smooth/smooth_2d.h"
 
@@ -142,23 +151,22 @@
 #endif
 
 #ifdef GDEXT_QRCODETEXTURE_ENABLED
-#ifdef TOOLS_ENABLED
 #include "qrcodetexture/qrcodetexture.h"
-#endif
 #endif
 
 #ifdef GDEXT_CCD_ENABLED
-#ifndef _3D_DISABLED
 #include "ccd/gd_ccd.h"
 #endif
+
+#ifdef GDEXT_POLYVECTOR_ENABLED
+#include "polyvector/polyvector.h"
+#include "polyvector/resource_importer_swf.h"
+
+static Ref<ResourceLoaderJSONVector> resource_loader_jsonvector;
 #endif
 
 #ifdef GDEXT_MESHLOD_ENABLED
-#ifndef _3D_DISABLED
-#ifdef TOOLS_ENABLED
 #include "meshlod/optimize.h"
-#endif
-#endif
 #endif
 
 #ifdef GDEXT_NAKAMA1_ENABLED
@@ -264,12 +272,15 @@ void register_gdextensions_types() {
 #ifdef GDEXT_STATEMACHINE_ENABLED
 	ClassDB::register_class<StateMachine>();
 	ClassDB::register_class<State>();
-#endif // GDEXT_STATEMACHINE_ENABLED
+#endif
 #ifdef GDEXT_LANADVERTISER_ENABLED
 	ClassDB::register_class<LanAdvertiser>();
 	ClassDB::register_class<LanListener>();
 	ClassDB::register_class<LanPlayer>();
-#endif // GDEXT_LANADVERTISER_ENABLED
+#endif
+#ifdef GDEXT_MULTIPEER_ENABLED
+	Engine::get_singleton()->add_singleton(Engine::Singleton("GdMultiPeer", memnew(GdMultiPeer)));
+#endif
 #ifdef GDEXT_CORE_ENABLED
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Resources", memnew(Resources)));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Timer2", memnew(Timer2)));
@@ -280,6 +291,12 @@ void register_gdextensions_types() {
 #endif // GDEXT_CORE_ENABLED
 #ifdef GDEXT_SETTINGS_ENABLED
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Settings", memnew(Settings)));
+#endif
+#ifdef GDEXT_SQLITE_ENABLED
+	ClassDB::register_class<SQLite>();
+#endif
+#ifdef GDEXT_UNQLITE_ENABLED
+	ClassDB::register_class<UNQLite>();
 #endif
 #ifdef GDEXT_DEBUGDRAW_ENABLED
 	Engine::get_singleton()->add_singleton(Engine::Singleton("DebugDraw", memnew(DebugDraw)));
@@ -299,11 +316,7 @@ void register_gdextensions_types() {
 #endif // GDEXT_SFXR_ENABLED
 
 #ifdef GDEXT_GEOMFONTS_ENABLED
-#ifndef _3D_DISABLED
-#ifdef TOOLS_ENABLED
 	ClassDB::register_class<GdGeomFonts>();
-#endif
-#endif
 #endif
 
 #ifdef GDEXT_GENERATOR_ENABLED
@@ -392,27 +405,35 @@ void register_gdextensions_types() {
 #endif // GDEXT_SMOOTH_ENABLED
 
 #ifdef GDEXT_QRCODETEXTURE_ENABLED
-#ifdef TOOLS_ENABLED
 	ClassDB::register_class<QRCodeTexture>();
-#endif
 #endif // GDEXT_QRCODETEXTURE_ENABLED
 
 #ifdef GDEXT_CCD_ENABLED
-#ifndef _3D_DISABLED
 	ClassDB::register_class<CCDBox>();
 	ClassDB::register_class<CCDSphere>();
 	ClassDB::register_class<CCDCylinder>();
-#endif
 #endif // GDEXT_CCD_ENABLED
 
-#ifdef GDEXT_MESHLOD_ENABLED
-#ifndef _3D_DISABLED
+#ifdef GDEXT_POLYVECTOR_ENABLED
+	ClassDB::register_class<PolyVector>();
+	ClassDB::register_class<JSONVector>();
+
+	resource_loader_jsonvector.instance();
+	ResourceLoader::add_resource_format_loader(resource_loader_jsonvector);
+
 #ifdef TOOLS_ENABLED
+	if (Engine::get_singleton()->is_editor_hint()) {
+		Ref<ResourceImporterSWF> swfdata;
+		swfdata.instance();
+		ResourceFormatImporter::get_singleton()->add_importer(swfdata);
+	}
+#endif
+#endif
+
+#ifdef GDEXT_MESHLOD_ENABLED
 	ClassDB::register_class<MeshOptimize>();
 	EditorPlugins::add_by_type<MeshOptimizePlugin>();
 #endif
-#endif
-#endif // GDEXT_MESHLOD_ENABLED
 
 #ifdef TOOLS_ENABLED
 	EditorNode::add_init_callback(editor_init_callback);
@@ -461,6 +482,10 @@ void unregister_gdextensions_types() {
 		memdelete(instance);
 	}
 #endif
+#ifdef GDEXT_POLYVECTOR_ENABLED
+	ResourceLoader::remove_resource_format_loader(resource_loader_jsonvector);
+	resource_loader_jsonvector.unref();
+#endif
 #ifdef GDEXT_SETTINGS_ENABLED
 	if (Settings *instance = Settings::get_singleton()) {
 		memdelete(instance);
@@ -473,6 +498,11 @@ void unregister_gdextensions_types() {
 #endif
 #ifdef GDEXT_PARSEPLATFORM_ENABLED
 	if (GdParseBackend *instance = GdParseBackend::get_singleton()) {
+		memdelete(instance);
+	}
+#endif
+#ifdef GDEXT_MULTIPEER_ENABLED
+	if (GdMultiPeer *instance = GdMultiPeer::get_singleton()) {
 		memdelete(instance);
 	}
 #endif

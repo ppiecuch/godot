@@ -43,13 +43,17 @@ float &Color_get(Color &C, int index) {
 bool Color_valid_range(float t) {
 	return t >= 0 && t <= 1;
 }
-Color Color_between(const Color &A, const Color &B, float t = 0.5f) {
-	if (t < 0.0f)
-		t = 0.0f;
-	if (t > 1.0f)
-		t = 1.0f;
-
-	float kt = 1.0f - t;
+Color color_with_alpha(const Color &c, float alpha) {
+	return Color{ c.r, c.g, c.b, alpha };
+}
+Color Color_between(const Color &A, const Color &B, float t = 0.5) {
+	if (t < 0.0) {
+		t = 0.0;
+	}
+	if (t > 1.0) {
+		t = 1.0;
+	}
+	float kt = 1.0 - t;
 	Color C = {
 		A.r * kt + B.r * t,
 		A.g * kt + B.g * t,
@@ -59,7 +63,7 @@ Color Color_between(const Color &A, const Color &B, float t = 0.5f) {
 	return C;
 }
 void sRGBtolinear(Color &C, bool exact = false) { //de-Gamma 2.2
-	//from: http://www.xsi-blog.com/archives/133
+	// from: http://www.xsi-blog.com/archives/133
 	if (exact) {
 		for (int i = 0; i < 3; i++) {
 			float &cc = Color_get(C, i);
@@ -69,26 +73,29 @@ void sRGBtolinear(Color &C, bool exact = false) { //de-Gamma 2.2
 			else
 				cc /= 12.92;
 		}
-	} else { //approximate
+	} else { // approximate
+		constexpr real_t degamma = 2.2;
 		for (int i = 0; i < 3; i++) {
 			float &cc = Color_get(C, i);
-			cc = Math::pow(cc, 2.2);
+			cc = Math::pow(cc, degamma);
 		}
 	}
 }
-void lineartosRGB(Color &C, bool exact = false) { //Gamma 2.2
+void lineartosRGB(Color &C, bool exact = false) { // Gamma 2.2
 	if (exact) {
+		constexpr real_t gamma = 1 / 2.4;
 		for (int i = 0; i < 3; i++) {
 			float &cc = Color_get(C, i);
 			if (cc > 0.0031308)
-				cc = 1.055 * Math::pow(cc, 1 / 2.4) - 0.055;
+				cc = 1.055 * Math::pow(cc, gamma) - 0.055;
 			else
 				cc *= 12.92;
 		}
-	} else { //approximate
+	} else { // approximate
+		constexpr real_t gamma = 1 / 2.2;
 		for (int i = 0; i < 3; i++) {
 			float &cc = Color_get(C, i);
-			cc = Math::pow(cc, 1 / 2.2);
+			cc = Math::pow(cc, gamma);
 		}
 	}
 }
@@ -98,10 +105,10 @@ float color_max(float r, float g, float b) {
 float color_min(float r, float g, float b) {
 	return -color_max(-r, -g, -b);
 }
-void RGBtoHSV(float r, float g, float b, float *h, float *s, float *v) { //from: http://www.cs.rit.edu/~ncs/color/t_convert.html
+void RGBtoHSV(float r, float g, float b, float *h, float *s, float *v) { // from: http://www.cs.rit.edu/~ncs/color/t_convert.html
 	// r,g,b values are from 0 to 1
 	// h = [0,360], s = [0,1], v = [0,1]
-	//		if s == 0, then h = -1 (undefined)
+	// if s == 0, then h = -1 (undefined)
 	float min, max, delta;
 	min = color_min(r, g, b);
 	max = color_max(r, g, b);
@@ -110,7 +117,7 @@ void RGBtoHSV(float r, float g, float b, float *h, float *s, float *v) { //from:
 	if (max != 0)
 		*s = delta / max; // s
 	else {
-		// r = g = b = 0		// s = 0, v is undefined
+		// r = g = b = 0 : s = 0, v is undefined
 		*s = 0;
 		*h = -1;
 		return;
@@ -122,8 +129,9 @@ void RGBtoHSV(float r, float g, float b, float *h, float *s, float *v) { //from:
 	else
 		*h = 4 + (r - g) / delta; // between magenta & cyan
 	*h *= 60; // degrees
-	if (*h < 0)
+	if (*h < 0) {
 		*h += 360;
+	}
 }
 void HSVtoRGB(float *r, float *g, float *b, float h, float s, float v) {
 	int i;
@@ -134,7 +142,7 @@ void HSVtoRGB(float *r, float *g, float *b, float h, float s, float v) {
 		return;
 	}
 	h /= 60; // sector 0 to 5
-	i = floor(h);
+	i = Math::floor(h);
 	f = h - i; // factorial part of h
 	p = v * (1 - s);
 	q = v * (1 - s * f);

@@ -28,15 +28,13 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef INPUT_STORAGE_B_NODE_H
-#define INPUT_STORAGE_B_NODE_H
+#ifndef INPUT_STORAGE_H
+#define INPUT_STORAGE_H
 
 #include "core/reference.h"
 #include "scene/main/node.h"
 
-#include "queue.hpp"
-
-using namespace GdExtends;
+#include "queue.h"
 
 class InputNode {
 private:
@@ -60,7 +58,7 @@ class InputStorage : public Object {
 	GDCLASS(InputStorage, Object);
 
 private:
-	Queue<InputNode> storage_events;
+	GdExt::Queue<InputNode> storage_events;
 	InputNode *_this_frame;
 	int storage_size;
 
@@ -140,4 +138,4 @@ public:
 	~InputStorageNode() {}
 };
 
-#endif // INPUT_STORAGE_B_NODE_H
+#endif // INPUT_STORAGE_H

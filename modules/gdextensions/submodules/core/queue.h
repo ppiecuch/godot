@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  vaser.cpp                                                            */
+/*  queue.h                                                              */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,50 +28,98 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "vaser.h"
+//
+// Created by Gen on 16/1/6.
+//
 
-#include "core/print_string.h"
-#include "core/variant.h"
-#include "scene/resources/mesh.h"
+#ifndef GDEXT_QUEUE_H
+#define GDEXT_QUEUE_H
 
-#ifdef VASER_DEBUG
-#define DEBUG(fmt, ...) print_verbose(vformat(fmt __VA_ARGS__))
-#else
-#define DEBUG(...) \
-	{}
-#endif
+#include "core/os/memory.h"
 
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
+namespace GdExt {
 
-#include <vector>
+template <class T>
+class Queue {
+	int _limit;
+	int _size;
+	int _offset;
+	T *mem;
 
-// clang-format off
+public:
+	void alloc(int p_size) {
+		if (mem) {
+			memdelete_arr(mem);
+		}
+		mem = p_size > 0 ? memnew_arr(T, p_size) : NULL;
+		_size = 0;
+		_offset = 0;
+		_limit = p_size;
+	}
 
-namespace VASEr {
-namespace VASErin { // VASEr internal namespace
+	_FORCE_INLINE_ int limit() { return _limit; }
 
-const real_t vaser_min_alw = 0.0000001; // smallest value not regarded as zero
-const real_t default_weight = 1;
-const Color default_color = { 0, 0, 0, 1 };
+	const T &get(int index) const {
+		return operator[](index);
+	}
 
-#include "inc/color.h"
-#include "inc/point.h"
+	T &get(int index) {
+		return operator[](index);
+	}
 
-struct vertex_array_holder;
+	void set(int index, T value) {
+		if (index < _size) {
+			operator[](index);
+		}
+	}
 
-#include "inc/backend.h"
-#include "inc/vertex_array_holder.h"
-#include "inl/agg_curve4.cpp.inl"
-} // namespace VASErin
+	_FORCE_INLINE_ T &operator[](int p_index) {
+		CRASH_BAD_INDEX(p_index, _size);
+		return mem[(_offset + p_index) % _limit];
+	}
 
-#include "inl/gradient.cpp.inl"
-#include "inl/curve.cpp.inl"
-#include "inl/godot.cpp.inl"
-#include "inl/polyline.cpp.inl"
-} // namespace VASEr
+	int size() const {
+		return _size;
+	}
 
-// clang-format on
+	T *push(const T &p_value) {
+		int off = (_offset + _size) % _limit;
+		mem[off] = p_value;
+		_size++;
+		if (_size > _limit) {
+			int m = _size - _limit;
+			_size = _limit;
+			_offset = (_offset + m) % _limit;
+		}
+		return &mem[off];
+	}
 
-#undef DEBUG
+	T pop() {
+		if (_size > 0) {
+			T res = mem[_offset++];
+			_size--;
+			return res;
+		} else {
+			return T();
+		}
+	}
+
+	void clear() {
+		_size = 0;
+	}
+
+	Queue() {
+		mem = NULL;
+		_limit = 0;
+		_size = 0;
+		_offset = 0;
+	}
+	~Queue() {
+		if (mem) {
+			memdelete_arr(mem);
+		}
+	}
+};
+} //namespace GdExt
+
+#endif //GDEXT_QUEUE_H

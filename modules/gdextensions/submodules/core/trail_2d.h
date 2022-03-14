@@ -42,9 +42,7 @@
 #include "scene/2d/node_2d.h"
 #include "scene/2d/position_2d.h"
 
-#include "queue.hpp"
-
-using namespace GdExtends;
+#include "queue.h"
 
 class TrailPoint2D : public Node2D {
 	GDCLASS(TrailPoint2D, Node2D);
@@ -67,7 +65,7 @@ private:
 
 	Vector2 old_position;
 
-	Queue<TrailItem> trail_items;
+	GdExt::Queue<TrailItem> trail_items;
 
 	void _normal_points(int idx, int total, Vector2 &res1, Vector2 &res2);
 	void _update_position(bool minus = false);
@@ -170,7 +168,7 @@ private:
 	int span_count;
 	Ref<Gradient> line_color;
 
-	Queue<TrailItem> trail_items;
+	GdExt::Queue<TrailItem> trail_items;
 
 	Position2D *terminal;
 	Point2 terminal_position;
