@@ -31,8 +31,8 @@
 #ifndef BT_BEHAVIOR_DELEGATE
 #define BT_BEHAVIOR_DELEGATE
 
-#include "core/variant.h"
 #include "core/script_language.h"
+#include "core/variant.h"
 
 #include "bt_node.h"
 #include "typedef.h"

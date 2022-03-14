@@ -360,7 +360,7 @@ void register_gdextensions_types() {
 #endif
 
 #ifdef GDEXT_PARSEPLATFORM_ENABLED
-    print_line(vformat("ParsePlatform Godot module: %d.%d.%d", GODOTPARSE_MAJOR, GODOTPARSE_MINOR, GODOTPARSE_PATCH));
+	print_line(vformat("ParsePlatform Godot module: %d.%d.%d", GODOTPARSE_MAJOR, GODOTPARSE_MINOR, GODOTPARSE_PATCH));
 
 	Engine::get_singleton()->add_singleton(Engine::Singleton("GdParseBackend", memnew(GdParseBackend)));
 	ClassDB::register_virtual_class<GdParseError>();
