@@ -25,12 +25,10 @@
 // MA 02110-1301, USA.
 //----------------------------------------------------------------------------
 
-#include "core/math/math_defs.h"
-
 real_t calc_sq_distance(real_t x1, real_t y1, real_t x2, real_t y2) {
-	real_t dx = x2-x1;
-	real_t dy = y2-y1;
-	return dx * dx + dy * dy;
+	const real_t dx = x2-x1;
+	const real_t dy = y2-y1;
+	return (dx * dx + dy * dy);
 }
 
 void recursive_bezier(real_t x1, real_t y1,
@@ -48,7 +46,7 @@ void recursive_bezier(real_t x1, real_t y1,
 	constexpr real_t curve_angle_tolerance_epsilon = 0.01;
 	constexpr int curve_recursion_limit = 32;
 
-	if(level > curve_recursion_limit)  {
+	if (level > curve_recursion_limit)  {
 		return;
 	}
 
@@ -72,14 +70,14 @@ void recursive_bezier(real_t x1, real_t y1,
 	real_t dx = x4-x1;
 	real_t dy = y4-y1;
 
-	real_t d2 = fabs(((x2 - x4) * dy - (y2 - y4) * dx));
-	real_t d3 = fabs(((x3 - x4) * dy - (y3 - y4) * dx));
+	real_t d2 = Math::absf(((x2 - x4) * dy - (y2 - y4) * dx));
+	real_t d3 = Math::absf(((x3 - x4) * dy - (y3 - y4) * dx));
 	real_t da1, da2, k;
 
-	switch((int(d2 > curve_collinearity_epsilon) << 1) + int(d3 > curve_collinearity_epsilon)) {
-		case 0:
+	switch ((int(d2 > curve_collinearity_epsilon) << 1) + int(d3 > curve_collinearity_epsilon)) {
+		case 0: {
 			// All collinear OR p1==p4
-			//----------------------
+			// ----------------------
 			k = dx*dx + dy*dy;
 			if (k == 0) {
 				d2 = calc_sq_distance(x1, y1, x2, y2);
@@ -116,11 +114,11 @@ void recursive_bezier(real_t x1, real_t y1,
 					return;
 				}
 			}
-		break;
+		} break;
 
-		case 1:
+		case 1: {
 			// p1,p2,p4 are collinear, p3 is significant
-			//----------------------
+			// -----------------------------------------
 			if(d3 * d3 <= m_distance_tolerance_square * (dx*dx + dy*dy)) {
 				if (m_angle_tolerance < curve_angle_tolerance_epsilon) {
 					add_point(obj, x23,y23);
@@ -128,8 +126,8 @@ void recursive_bezier(real_t x1, real_t y1,
 				}
 
 				// Angle Condition
-				//----------------------
-				da1 = fabs(atan2(y4 - y3, x4 - x3) - atan2(y3 - y2, x3 - x2));
+				//----------------
+				da1 = Math::absf(Math::atan2(y4 - y3, x4 - x3) - Math::atan2(y3 - y2, x3 - x2));
 				if (da1 >= Math_PI) da1 = 2*Math_PI - da1;
 
 				if (da1 < m_angle_tolerance) {
@@ -145,11 +143,11 @@ void recursive_bezier(real_t x1, real_t y1,
 					}
 				}
 			}
-		break;
+		} break;
 
-		case 2:
+		case 2: {
 			// p1,p3,p4 are collinear, p2 is significant
-			//----------------------
+			// -----------------------------------------
 			if (d2 * d2 <= m_distance_tolerance_square * (dx*dx + dy*dy)) {
 				if(m_angle_tolerance < curve_angle_tolerance_epsilon) {
 					add_point(obj, x23, y23);
@@ -157,8 +155,8 @@ void recursive_bezier(real_t x1, real_t y1,
 				}
 
 				// Angle Condition
-				//----------------------
-				da1 = fabs(atan2(y3 - y2, x3 - x2) - atan2(y2 - y1, x2 - x1));
+				//----------------
+				da1 = Math::absf(Math::atan2(y3 - y2, x3 - x2) - Math::atan2(y2 - y1, x2 - x1));
 				if (da1 >= Math_PI) da1 = 2*Math_PI - da1;
 
 				if (da1 < m_angle_tolerance) {
@@ -174,15 +172,15 @@ void recursive_bezier(real_t x1, real_t y1,
 					}
 				}
 			}
-		break;
+		} break;
 
-		case 3:
+		case 3: {
 			// Regular case
-			//-----------------
+			//-------------
 			if ((d2 + d3)*(d2 + d3) <= m_distance_tolerance_square * (dx*dx + dy*dy)) {
 				// If the curvature doesn't exceed the distance_tolerance value
 				// we tend to finish subdivisions.
-				//----------------------
+				// ------------------------------------------------------------
 				if(m_angle_tolerance < curve_angle_tolerance_epsilon) {
 					add_point(obj, x23, y23);
 					return;
@@ -190,11 +188,11 @@ void recursive_bezier(real_t x1, real_t y1,
 
 				// Angle & Cusp Condition
 				//----------------------
-				k   = atan2(y3 - y2, x3 - x2);
-				da1 = fabs(k - atan2(y2 - y1, x2 - x1));
-				da2 = fabs(atan2(y4 - y3, x4 - x3) - k);
-				if(da1 >= Math_PI) da1 = 2*Math_PI - da1;
-				if(da2 >= Math_PI) da2 = 2*Math_PI - da2;
+				k   = Math::atan2(y3 - y2, x3 - x2);
+				da1 = Math::absf(k - Math::atan2(y2 - y1, x2 - x1));
+				da2 = Math::absf(Math::atan2(y4 - y3, x4 - x3) - k);
+				if (da1 >= Math_PI) da1 = 2*Math_PI - da1;
+				if (da2 >= Math_PI) da2 = 2*Math_PI - da2;
 
 				if (da1 + da2 < m_angle_tolerance) {
 					// Finally we can stop the recursion
@@ -215,7 +213,7 @@ void recursive_bezier(real_t x1, real_t y1,
 					}
 				}
 			}
-		break;
+		} break;
 	}
 
 	// Continue subdivision

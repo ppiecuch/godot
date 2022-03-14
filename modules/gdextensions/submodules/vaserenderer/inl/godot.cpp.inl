@@ -13,7 +13,7 @@ namespace VASErin { // VASEr internal namespace
 			_mesh->add_surface_from_arrays(vah.drawmode, mesh_array, Array(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
 		}
 	}
-} //sub namespace VASErin
+} // namespace VASErin
 
 void renderer::init() { }
 void renderer::before() { }
