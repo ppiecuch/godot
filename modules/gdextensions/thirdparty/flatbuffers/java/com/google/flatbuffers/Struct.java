@@ -35,7 +35,7 @@ public class Struct {
    * This method exists primarily to allow recycling Table instances without risking memory leaks
    * due to {@code ByteBuffer} references.
    */
-  protected void __reset(int _i, ByteBuffer _bb) { 
+  protected void __reset(int _i, ByteBuffer _bb) {
     bb = _bb;
     if (bb != null) {
       bb_pos = _i;

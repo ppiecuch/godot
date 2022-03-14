@@ -34,7 +34,7 @@ class _InParentNamespaceReader extends fb.TableReader<InParentNamespace> {
   const _InParentNamespaceReader();
 
   @override
-  InParentNamespace createObject(fb.BufferContext bc, int offset) => 
+  InParentNamespace createObject(fb.BufferContext bc, int offset) =>
     new InParentNamespace._(bc, offset);
 }
 

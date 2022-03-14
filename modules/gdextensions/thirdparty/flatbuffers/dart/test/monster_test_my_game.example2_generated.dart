@@ -34,7 +34,7 @@ class _MonsterReader extends fb.TableReader<Monster> {
   const _MonsterReader();
 
   @override
-  Monster createObject(fb.BufferContext bc, int offset) => 
+  Monster createObject(fb.BufferContext bc, int offset) =>
     new Monster._(bc, offset);
 }
 

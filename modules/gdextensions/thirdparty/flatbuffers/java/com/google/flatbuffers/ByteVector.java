@@ -33,7 +33,7 @@ public final class ByteVector extends BaseVector {
    * @return Returns current vector access object assigned to vector data whose offset is stored at
    *         `vector`.
    */
-  public ByteVector __assign(int vector, ByteBuffer bb) { 
+  public ByteVector __assign(int vector, ByteBuffer bb) {
     __reset(vector, Constants.SIZEOF_BYTE, bb); return this;
   }
 

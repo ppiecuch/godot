@@ -1,19 +1,19 @@
 import Foundation
 
 public final class ByteBuffer {
-    
+
     /// pointer to the start of the buffer object in memory
     private var _memory: UnsafeMutableRawPointer
     /// The size of the elements written to the buffer + their paddings
     private var _writerSize: Int = 0
     /// Capacity of UInt8 the buffer can hold
     private var _capacity: Int
-    
+
     /// Aliginment of the current  memory being written to the buffer
     internal var alignment = 1
     /// Current Index which is being used to write to the buffer, it is written from the end to the start of the buffer
     internal var writerIndex: Int { return _capacity - _writerSize }
-    
+
     /// Reader is the position of the current Writer Index (capacity - size)
     public var reader: Int { return writerIndex }
     /// Current size of the buffer
@@ -22,7 +22,7 @@ public final class ByteBuffer {
     public var memory: UnsafeMutableRawPointer { return _memory }
     /// Current capacity for the buffer
     public var capacity: Int { return _capacity }
-    
+
     /// Constructor that creates a Flatbuffer object from a UInt8
     /// - Parameter bytes: Array of UInt8
     public init(bytes: [UInt8]) {
@@ -32,7 +32,7 @@ public final class ByteBuffer {
         _capacity = bytes.count
         _writerSize = _capacity
     }
-    
+
     /// Constructor that creates a Flatbuffer from the Swift Data type object
     /// - Parameter data: Swift data Object
     public init(data: Data) {
@@ -42,7 +42,7 @@ public final class ByteBuffer {
         _capacity = data.count
         _writerSize = _capacity
     }
-    
+
     /// Constructor that creates a Flatbuffer instance with a size
     /// - Parameter size: Length of the buffer
     init(initialSize size: Int) {
@@ -69,7 +69,7 @@ public final class ByteBuffer {
         }
     }
 #endif
-    
+
     /// Creates a copy of the buffer that's being built by calling sizedBuffer
     /// - Parameters:
     ///   - memory: Current memory of the buffer
@@ -80,7 +80,7 @@ public final class ByteBuffer {
         _capacity = count
         _writerSize = _capacity
     }
-    
+
     /// Creates a copy of the existing flatbuffer, by copying it to a different memory.
     /// - Parameters:
     ///   - memory: Current memory of the buffer
@@ -92,16 +92,16 @@ public final class ByteBuffer {
         _capacity = count
         _writerSize = removeBytes
     }
-    
+
     deinit { _memory.deallocate() }
-    
+
     /// Fills the buffer with padding by adding to the writersize
     /// - Parameter padding: Amount of padding between two to be serialized objects
     func fill(padding: UInt32) {
         ensureSpace(size: padding)
         _writerSize += (MemoryLayout<UInt8>.size * Int(padding))
     }
-    
+
     ///Adds an array of type Scalar to the buffer memory
     /// - Parameter elements: An array of Scalars
     func push<T: Scalar>(elements: [T]) {
@@ -111,7 +111,7 @@ public final class ByteBuffer {
             push(value: s, len: MemoryLayout.size(ofValue: s))
         }
     }
-    
+
     /// A custom type of structs that are padded according to the flatbuffer padding,
     /// - Parameters:
     ///   - value: Pointer to the object in memory
@@ -122,7 +122,7 @@ public final class ByteBuffer {
         defer { value.deallocate() }
         _writerSize += size
     }
-    
+
     /// Adds an object of type Scalar into the buffer
     /// - Parameters:
     ///   - value: Object  that will be written to the buffer
@@ -133,7 +133,7 @@ public final class ByteBuffer {
         memcpy(_memory.advanced(by: writerIndex - len), &v, len)
         _writerSize += len
     }
-    
+
     /// Adds a string to the buffer using swift.utf8 object
     /// - Parameter str: String that will be added to the buffer
     /// - Parameter len: length of the string
@@ -147,7 +147,7 @@ public final class ByteBuffer {
             }
         }
     }
-    
+
     /// Writes a string to Bytebuffer using UTF8View
     /// - Parameters:
     ///   - bytes: Pointer to the view
@@ -158,7 +158,7 @@ public final class ByteBuffer {
         _writerSize += len
         return true
     }
-    
+
     /// Write stores an object into the buffer directly or indirectly.
     ///
     /// Direct: ignores the capacity of buffer which would mean we are referring to the direct point in memory
@@ -174,7 +174,7 @@ public final class ByteBuffer {
         }
         _memory.storeBytes(of: value, toByteOffset: index, as: T.self)
     }
-    
+
     /// Makes sure that buffer has enouch space for each of the objects that will be written into it
     /// - Parameter size: size of object
     @discardableResult
@@ -183,7 +183,7 @@ public final class ByteBuffer {
         assert(size < FlatBufferMaxSize, "Buffer can't grow beyond 2 Gigabytes")
         return size
     }
-    
+
     /// Reallocates the buffer incase the object to be written doesnt fit in the current buffer
     /// - Parameter size: Size of the current object
     fileprivate func reallocate(_ size: UInt32) {
@@ -191,10 +191,10 @@ public final class ByteBuffer {
         while _capacity <= _writerSize + Int(size) {
             _capacity = _capacity << 1
         }
-        
+
         /// solution take from Apple-NIO
         _capacity = _capacity.convertToPowerofTwo
-        
+
         let newData = UnsafeMutableRawPointer.allocate(byteCount: _capacity, alignment: alignment)
         newData.initializeMemory(as: UInt8.self, repeating: 0, count: _capacity)
         newData
@@ -203,12 +203,12 @@ public final class ByteBuffer {
         _memory.deallocate()
         _memory = newData
     }
-    
+
     /// Clears the current size of the buffer
     public func clearSize() {
         _writerSize = 0
     }
-    
+
     /// Clears the current instance of the buffer, replacing it with new memory
     public func clear() {
         _writerSize = 0
@@ -216,13 +216,13 @@ public final class ByteBuffer {
         _memory.deallocate()
         _memory = UnsafeMutableRawPointer.allocate(byteCount: _capacity, alignment: alignment)
     }
-    
+
     /// Resizes the buffer size
     /// - Parameter size: new size for the buffer
     internal func resize(_ size: Int) {
         _writerSize = size
     }
-    
+
     /// Reads an object from the buffer
     /// - Parameters:
     ///   - def: Type of the object
@@ -230,7 +230,7 @@ public final class ByteBuffer {
     public func read<T>(def: T.Type, position: Int) -> T {
         return _memory.advanced(by: position).load(as: T.self)
     }
-    
+
     /// Reads a slice from the memory assuming a type of T
     /// - Parameters:
     ///   - index: index of the object to be read from the buffer
@@ -241,7 +241,7 @@ public final class ByteBuffer {
         let array = UnsafeBufferPointer(start: start, count: Int(count))
         return Array(array)
     }
-    
+
     /// Reads a string from the buffer and encodes it to a swift string
     /// - Parameters:
     ///   - index: index of the string in the buffer
@@ -254,7 +254,7 @@ public final class ByteBuffer {
         let bufprt = UnsafeBufferPointer(start: start, count: Int(count))
         return String(bytes: Array(bufprt), encoding: type)
     }
-    
+
     /// Creates a new Flatbuffer object that's duplicated from the current one
     /// - Parameter removeBytes: the amount of bytes to remove from the current Size
     public func duplicate(removing removeBytes: Int = 0) -> ByteBuffer {
@@ -263,7 +263,7 @@ public final class ByteBuffer {
 }
 
 extension ByteBuffer: CustomDebugStringConvertible {
-    
+
     public var debugDescription: String {
         """
         buffer located at: \(_memory), with capacity of \(_capacity)

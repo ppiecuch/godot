@@ -59,7 +59,7 @@ public class BaseVector {
    * This method exists primarily to allow recycling vector instances without risking memory leaks
    * due to {@code ByteBuffer} references.
    */
-  protected void __reset(int _vector, int _element_size, ByteBuffer _bb) { 
+  protected void __reset(int _vector, int _element_size, ByteBuffer _bb) {
     bb = _bb;
     if (bb != null) {
       vector = _vector;

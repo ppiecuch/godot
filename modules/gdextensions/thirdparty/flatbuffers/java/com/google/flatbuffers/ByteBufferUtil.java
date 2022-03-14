@@ -31,7 +31,7 @@ public class ByteBufferUtil {
 
 	/**
      * Extract the size prefix from a `ByteBuffer`.
-     * 
+     *
      * @param bb a size-prefixed buffer
      * @return the size prefix
      */
@@ -42,7 +42,7 @@ public class ByteBufferUtil {
 	/**
      * Create a duplicate of a size-prefixed `ByteBuffer` that has its position
      * advanced just past the size prefix.
-     * 
+     *
      * @param bb a size-prefixed buffer
      * @return a new buffer on the same underlying data that has skipped the
      *         size prefix

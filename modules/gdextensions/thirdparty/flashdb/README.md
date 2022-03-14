@@ -21,7 +21,7 @@ Nowadays, there are more and more types of IoT products, and the types and total
   - Product parameter storage
   - User configuration information storage
   - Small file management
-- **Time Series Database**: 
+- **Time Series Database**:
   - Store dynamically generated structured data: such as environmental monitoring information collected by temperature and humidity sensors, human health information recorded in real time by smart bracelets, etc.
   - Record operation log: store operation log of product history, record of abnormal alarm, etc.
 

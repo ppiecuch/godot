@@ -3,7 +3,7 @@ import Foundation
 public struct Table {
     public private(set) var bb: ByteBuffer
     public private(set) var postion: Int32
-    
+
     public init(bb: ByteBuffer, position: Int32 = 0) {
         guard isLitteEndian else {
             fatalError("Reading/Writing a buffer in big endian machine is not supported on swift")
@@ -11,12 +11,12 @@ public struct Table {
         self.bb = bb
         self.postion = position
     }
-    
+
     public func offset(_ o: Int32) -> Int32 {
         let vtable = postion - bb.read(def: Int32.self, position: Int(postion))
         return o < bb.read(def: VOffset.self, position: Int(vtable)) ? Int32(bb.read(def: Int16.self, position: Int(vtable + o))) : 0
     }
-    
+
     public func indirect(_ o: Int32) -> Int32 { return o + bb.read(def: Int32.self, position: Int(o)) }
 
     /// String reads from the buffer with respect to position of the current table.
@@ -24,7 +24,7 @@ public struct Table {
     public func string(at offset: Int32) -> String? {
         return directString(at: offset + postion)
     }
-    
+
     /// Direct string reads from the buffer disregarding the position of the table.
     /// It would be preferable to use string unless the current position of the table is not needed
     /// - Parameter offset: Offset of the string
@@ -35,7 +35,7 @@ public struct Table {
          let position = offset + Int32(MemoryLayout<Int32>.size)
          return bb.readString(at: position, count: count)
     }
-    
+
     /// Reads from the buffer with respect to the position in the table.
     /// - Parameters:
     ///   - type: Type of Scalar that needs to be read from the buffer
@@ -43,7 +43,7 @@ public struct Table {
     public func readBuffer<T: Scalar>(of type: T.Type, at o: Int32) -> T {
         return directRead(of: T.self, offset: o + postion)
     }
-    
+
     /// Reads from the buffer disregarding the position of the table.
     /// It would be used when reading from an
     ///   ```
@@ -61,7 +61,7 @@ public struct Table {
         let r = bb.read(def: T.self, position: Int(o))
         return r
     }
-    
+
     public func union<T: FlatBufferObject>(_ o: Int32) -> T {
         let o = o + postion
         return directUnion(o)
@@ -70,13 +70,13 @@ public struct Table {
     public func directUnion<T: FlatBufferObject>(_ o: Int32) -> T {
         return T.init(bb, o: o + bb.read(def: Int32.self, position: Int(o)))
     }
-    
+
     public func getVector<T>(at off: Int32) -> [T]? {
         let o = offset(off)
         guard o != 0 else { return nil }
         return bb.readSlice(index: vector(at: o), count: vector(count: o))
     }
-    
+
     /// Vector count gets the count of Elements within the array
     /// - Parameter o: start offset of the vector
     /// - returns: Count of elements
@@ -86,7 +86,7 @@ public struct Table {
         o += bb.read(def: Int32.self, position: Int(o))
         return bb.read(def: Int32.self, position: Int(o))
     }
-    
+
     /// Vector start index in the buffer
     /// - Parameter o:start offset of the vector
     /// - returns: the start index of the vector
@@ -98,14 +98,14 @@ public struct Table {
 }
 
 extension Table {
-    
+
     static public func indirect(_ o: Int32, _ fbb: ByteBuffer) -> Int32 { return o + fbb.read(def: Int32.self, position: Int(o)) }
-    
+
     static public func offset(_ o: Int32, vOffset: Int32, fbb: ByteBuffer) -> Int32 {
         let vTable = Int32(fbb.capacity) - o
         return vTable + Int32(fbb.read(def: Int16.self, position: Int(vTable + vOffset - fbb.read(def: Int32.self, position: Int(vTable)))))
     }
-    
+
     static public func compare(_ off1: Int32, _ off2: Int32, fbb: ByteBuffer) -> Int32 {
         let memorySize = Int32(MemoryLayout<Int32>.size)
         let _off1 = off1 + fbb.read(def: Int32.self, position: Int(off1))
@@ -124,7 +124,7 @@ extension Table {
         }
         return len1 - len2
     }
-    
+
     static public func compare(_ off1: Int32, _ key: [Byte], fbb: ByteBuffer) -> Int32 {
         let memorySize = Int32(MemoryLayout<Int32>.size)
         let _off1 = off1 + fbb.read(def: Int32.self, position: Int(off1))

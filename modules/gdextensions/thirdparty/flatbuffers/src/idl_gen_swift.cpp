@@ -529,11 +529,11 @@ class SwiftGenerator : public BaseGenerator {
     code_.SetValue("SIZE", NumToString(InlineSize(vectortype)));
     code_ += "\tpublic var {{VALUENAME}}Count: Int32 { " + GenOffset() +
              const_string + "{{ACCESS}}.vector(count: o) }";
-    code_.SetValue("CONSTANT", IsScalar(vectortype.base_type) == true
+    code_.SetValue("CONSTANT", IsScalar(vectortype.base_type)
                                    ? field.value.constant
                                    : "nil");
-    auto nullable = IsScalar(vectortype.base_type) == true ? "" : "?";
-    nullable = IsEnum(vectortype) == true ? "?" : nullable;
+    auto nullable = IsScalar(vectortype.base_type) ? "" : "?";
+    nullable = IsEnum(vectortype) ? "?" : nullable;
     if (vectortype.base_type != BASE_TYPE_UNION) {
       code_ += GenArrayMainBody(nullable) + GenOffset() + "\\";
     } else {

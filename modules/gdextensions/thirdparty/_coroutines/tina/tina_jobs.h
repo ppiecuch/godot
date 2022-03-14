@@ -158,7 +158,7 @@ typedef struct _tina_queue _tina_queue;
 struct _tina_queue{
 	void** arr;
 	size_t head, tail, mask;
-	
+
 	// Higher priority queue in the chain. Used for signaling worker threads.
 	_tina_queue* parent;
 	// Lower priority queue in the chain. Used as a fallback when this queue is empty.
@@ -172,10 +172,10 @@ struct _tina_queue{
 
 struct tina_scheduler {
 	_TINA_MUTEX_T _lock;
-	
+
 	_tina_queue* _queues;
 	size_t _queue_count;
-	
+
 	// Keep the jobs and fiber pools in a stack so recently used items are fresh in the cache.
 	_tina_stack _fibers, _job_pool;
 };
@@ -191,11 +191,11 @@ static uintptr_t _tina_jobs_fiber(tina* fiber, uintptr_t value){
 	while(true){
 		tina_job* job = (tina_job*)value;
 		job->desc.func(job);
-		
+
 		// Yield the completed status back to the scheduler, and recieve the next job.
 		value = tina_yield(fiber, _TINA_STATUS_COMPLETED);
 	}
-	
+
 	// Unreachable.
 	return 0;
 }
@@ -225,7 +225,7 @@ tina_scheduler* tina_scheduler_init(void* _buffer, unsigned job_count, unsigned 
 	_TINA_ASSERT((job_count & (job_count - 1)) == 0, "Tina Jobs Error: Job count must be a power of two.");
 	_TINA_ASSERT((stack_size & (stack_size - 1)) == 0, "Tina Jobs Error: Stack size must be a power of two.");
 	uint8_t* cursor = (uint8_t*)_buffer;
-	
+
 	// Sub allocate all of the memory for the various arrays.
 	tina_scheduler* sched = (tina_scheduler*)cursor;
 	cursor += _tina_jobs_align(sizeof(tina_scheduler));
@@ -235,7 +235,7 @@ tina_scheduler* tina_scheduler_init(void* _buffer, unsigned job_count, unsigned 
 	cursor += _tina_jobs_align(fiber_count*sizeof(void*));
 	sched->_job_pool = (_tina_stack){.arr = (void**)cursor, .count = 0};
 	cursor += _tina_jobs_align(job_count*sizeof(void*));
-	
+
 	// Initialize the queues arrays.
 	sched->_queue_count = queue_count;
 	for(unsigned i = 0; i < queue_count; i++){
@@ -246,18 +246,18 @@ tina_scheduler* tina_scheduler_init(void* _buffer, unsigned job_count, unsigned 
 		queue->parent = queue->fallback = NULL;
 		_TINA_COND_INIT(queue->semaphore_signal);
 		queue->semaphore_count = 0;
-		
+
 		cursor += _tina_jobs_align(job_count*sizeof(void*));
 	}
-	
+
 	// Fill the job pool.
 	sched->_job_pool.count = job_count;
 	for(unsigned i = 0; i < job_count; i++){
 		sched->_job_pool.arr[i] = cursor;
-		
+
 		cursor += _tina_jobs_align(sizeof(tina_job));
 	}
-	
+
 	// Initialize the fibers and fill the pool.
 	sched->_fibers.count = fiber_count;
 	for(unsigned i = 0; i < fiber_count; i++){
@@ -265,13 +265,13 @@ tina_scheduler* tina_scheduler_init(void* _buffer, unsigned job_count, unsigned 
 		fiber->name = "TINA JOB FIBER";
 		fiber->user_data = sched;
 		sched->_fibers.arr[i] = fiber;
-		
+
 		cursor += stack_size;
 	}
-	
+
 	// Initialize the control variables.
 	_TINA_MUTEX_INIT(sched->_lock);
-	
+
 	return sched;
 }
 
@@ -332,7 +332,7 @@ static tina_job* _tina_group_process_wait_list(tina_scheduler* sched, tina_group
 			_tina_queue* queue = &sched->_queues[job->desc.queue_idx];
 			queue->arr[queue->head++ & queue->mask] = job;
 			_tina_queue_signal(queue);
-			
+
 			// Unlink from wait list.
 			job->wait_next = NULL;
 			return next;
@@ -340,7 +340,7 @@ static tina_job* _tina_group_process_wait_list(tina_scheduler* sched, tina_group
 			job->wait_next = next;
 		}
 	}
-	
+
 	return job;
 }
 
@@ -352,7 +352,7 @@ static inline unsigned _tina_group_increment(tina_group* group, unsigned count, 
 		unsigned remaining = max_count - group->_count;
 		if(count > remaining) count = remaining;
 	}
-	
+
 	group->_count += count;
 	return count;
 }
@@ -366,7 +366,7 @@ static inline void _tina_job_execute(tina_scheduler* sched, tina_job* job){
 	_TINA_ASSERT(sched->_fibers.count > 0, "Tina Jobs Error: Ran out of fibers.");
 	// Assign a fiber and the thread data. (Jobs that are resuming already have a fiber)
 	if(job->fiber == NULL) job->fiber = (tina*)sched->_fibers.arr[--sched->_fibers.count];
-	
+
 	// Unlock the scheduler while executing the job.
 	_TINA_MUTEX_UNLOCK(sched->_lock);
 	switch(tina_resume(job->fiber, (uintptr_t)job)){
@@ -379,7 +379,7 @@ static inline void _tina_job_execute(tina_scheduler* sched, tina_job* job){
 			// Return the components to the pools.
 			sched->_job_pool.arr[sched->_job_pool.count++] = job;
 			sched->_fibers.arr[sched->_fibers.count++] = job->fiber;
-			
+
 			// Did it have a group, and was it the last job being waited for?
 			tina_group* group = job->group;
 			if(group) _tina_group_decrement(sched, group, 1);
@@ -402,7 +402,7 @@ bool tina_scheduler_run(tina_scheduler* sched, unsigned queue_idx, tina_run_mode
 	bool ran = false;
 	_TINA_MUTEX_LOCK(sched->_lock); {
 		_tina_queue* queue = _tina_get_queue(sched, queue_idx);
-		
+
 		// Keep looping until the interrupt stamp is incremented.
 		unsigned stamp = queue->interrupt_stamp;
 		while(mode != TINA_RUN_LOOP || queue->interrupt_stamp == stamp){
@@ -427,7 +427,7 @@ void tina_scheduler_interrupt(tina_scheduler* sched, unsigned queue_idx){
 	_TINA_MUTEX_LOCK(sched->_lock); {
 		_tina_queue* queue = _tina_get_queue(sched, queue_idx);
 		queue->interrupt_stamp++;
-		
+
 		_TINA_COND_BROADCAST(queue->semaphore_signal);
 		queue->semaphore_count = 0;
 	} _TINA_MUTEX_UNLOCK(sched->_lock);
@@ -436,40 +436,40 @@ void tina_scheduler_interrupt(tina_scheduler* sched, unsigned queue_idx){
 unsigned tina_scheduler_enqueue_batch(tina_scheduler* sched, const tina_job_description* list, unsigned count, tina_group* group, unsigned max_group_count){
 	_TINA_MUTEX_LOCK(sched->_lock); {
 		if(group) count = _tina_group_increment(group, count, max_group_count);
-		
+
 		_TINA_ASSERT(sched->_job_pool.count >= count, "Tina Jobs Error: Ran out of jobs.");
 		for(size_t i = 0; i < count; i++){
 			_TINA_ASSERT(list[i].func, "Tina Jobs Error: Job must have a body function.");
-			
+
 			// Pop a job from the pool.
 			tina_job* job = (tina_job*)sched->_job_pool.arr[--sched->_job_pool.count];
 			(*job) = (tina_job){.desc = list[i], .scheduler = sched, .fiber = NULL, .group = group, .wait_threshold = 0, .wait_next = NULL};
-			
+
 			// Push it to the proper queue.
 			_tina_queue* queue = _tina_get_queue(sched, list[i].queue_idx);
 			queue->arr[queue->head++ & queue->mask] = job;
 			_tina_queue_signal(queue);
 		}
 	} _TINA_MUTEX_UNLOCK(sched->_lock);
-	
+
 	return count;
 }
 
 unsigned tina_job_wait(tina_job* job, tina_group* group, unsigned threshold){
 	_TINA_MUTEX_LOCK(job->scheduler->_lock);
-	
+
 	// Check if we need to wait at all.
 	unsigned count = group->_count;
 	if(count > threshold){
 		// Push onto wait list.
 		job->wait_next = group->_job_list;
 		group->_job_list = job;
-		
+
 		job->wait_threshold = threshold;
 		// NOTE: Scheduler will be unlocked after yielding.
 		tina_yield(job->fiber, _TINA_STATUS_WAITING);
 		job->wait_threshold = 0;
-		
+
 		return group->_count;
 	} else {
 		_TINA_MUTEX_UNLOCK(job->scheduler->_lock);
@@ -484,7 +484,7 @@ void tina_job_yield(tina_job* job){
 unsigned tina_job_switch_queue(tina_job* job, unsigned queue_idx){
 	unsigned old_queue = job->desc.queue_idx;
 	if(queue_idx == old_queue) return queue_idx;
-	
+
 	job->desc.queue_idx = queue_idx;
 	tina_yield(job->fiber, _TINA_STATUS_YIELDING);
 	return old_queue;

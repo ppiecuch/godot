@@ -50,7 +50,7 @@ struct tina {
 	size_t size;
 	// Has the coroutine's body function exited? (readonly)
 	bool completed;
-	
+
 	// Private:
 	tina* _caller;
 	void* _sp;
@@ -122,18 +122,18 @@ const tina TINA_EMPTY = {
 tina* tina_init(void* buffer, size_t size, tina_func* body, void* user_data){
 	_TINA_ASSERT(size >= 64*1024, "Tina Warning: Small stacks tend to not work on modern OSes. (Feel free to disable this if you have your reasons)");
 	if(buffer == NULL) buffer = malloc(size);
-	
+
 	// Make sure 'buffer' is properly aligned.
 	uintptr_t aligned = 1 + ~((1 + ~(uintptr_t)buffer) & -_TINA_MAX_ALIGN);
 	size -= aligned - (uintptr_t)buffer;
-	
+
 	tina* coro = (tina*)aligned;
 	coro->user_data = user_data;
 	coro->completed = false;
 	coro->buffer = buffer;
 	coro->size = size;
 	coro->_magic = TINA_EMPTY._magic;
-	
+
 	// Empty coroutine for the init function to use for a return location.
 	tina dummy = TINA_EMPTY;
 	coro->_caller = &dummy;
@@ -152,7 +152,7 @@ void _tina_context(tina* coro, tina_func* body){
 	// Yield the final return value back to the calling thread.
 	_TINA_ASSERT(coro->_caller, "Tina Error: You must not return from a symmetric coroutine body function.");
 	tina_yield(coro, value);
-	
+
 	_TINA_ASSERT(false, "Tina Error: You cannot resume a coroutine after it has finished.");
 	// Crash predictably if assertions are disabled.
 	abort();
@@ -187,10 +187,10 @@ uintptr_t tina_yield(tina* coro, uintptr_t value){
 #if __ARM_EABI__ && __GNUC__
 	// TODO: Is this an appropriate macro check for a 32 bit ARM ABI?
 	// TODO: Only tested on RPi3.
-	
+
 	// Since the 32 bit ARM version is by far the shortest, I'll document this one.
 	// The other variations are basically the same structurally.
-	
+
 	// _tina_init_stack() sets up the stack and initial execution of the coroutine.
 	asm("_tina_init_stack:");
 	// First things first, save the registers protected by the ABI
@@ -206,7 +206,7 @@ uintptr_t tina_yield(tina* coro, uintptr_t value){
 	// By setting the caller to null, debuggers will show _tina_context() as a base stack frame.
 	asm("  mov lr, #0");
 	asm("  b _tina_context");
-	
+
 	// https://static.docs.arm.com/ihi0042/g/aapcs32.pdf
 	// _tina_swap() is responsible for swapping out the registers and stack pointer.
 	asm("_tina_swap:");
@@ -230,9 +230,9 @@ uintptr_t tina_yield(tina* coro, uintptr_t value){
 	#define ARG2 "rdx"
 	#define ARG3 "rcx"
 	#define RET "rax"
-	
+
 	asm(".intel_syntax noprefix");
-	
+
 	asm(_TINA_SYMBOL(_tina_init_stack:));
 	asm("  push rbp");
 	asm("  push rbx");
@@ -245,7 +245,7 @@ uintptr_t tina_yield(tina* coro, uintptr_t value){
 	asm("  mov rsp, " ARG3);
 	asm("  push 0");
 	asm("  jmp " _TINA_SYMBOL(_tina_context));
-	
+
 	// https://software.intel.com/sites/default/files/article/402129/mpx-linux64-abi.pdf
 	asm(_TINA_SYMBOL(_tina_swap:));
 	asm("  push rbp");
@@ -264,20 +264,20 @@ uintptr_t tina_yield(tina* coro, uintptr_t value){
 	asm("  pop rbp");
 	asm("  mov " RET ", " ARG2);
 	asm("  ret");
-	
+
 	asm(".att_syntax");
 #elif __WIN64__ || defined(_WIN64)
 	// MSVC doesn't allow inline assembly, assemble to binary blob then.
-	
+
 	#if __GNUC__
 		#define TINA_SECTION_ATTRIBUTE __attribute__((section(".text#")))
 	#elif _MSC_VER
 		#pragma section(".text")
 		#define TINA_SECTION_ATTRIBUTE __declspec(allocate(".text"))
 	#else
-		#error Unknown/untested compiler for Win64. 
+		#error Unknown/untested compiler for Win64.
 	#endif
-	
+
 	// Assembled and dumped from win64-init.S
 	TINA_SECTION_ATTRIBUTE
 	const uint64_t _tina_init_stack[] = {

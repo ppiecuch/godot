@@ -43,7 +43,7 @@ public final class FloatVector extends BaseVector {
    * @param j The index from which the float value will be read.
    * @return the float value at the given index.
    */
-  public float get(int j) { 
+  public float get(int j) {
     return bb.getFloat(__element(j));
   }
 }

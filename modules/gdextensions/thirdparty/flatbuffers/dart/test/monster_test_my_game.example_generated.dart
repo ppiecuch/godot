@@ -243,7 +243,7 @@ class _TestReader extends fb.StructReader<Test> {
   int get size => 4;
 
   @override
-  Test createObject(fb.BufferContext bc, int offset) => 
+  Test createObject(fb.BufferContext bc, int offset) =>
     new Test._(bc, offset);
 }
 
@@ -318,7 +318,7 @@ class _TestSimpleTableWithEnumReader extends fb.TableReader<TestSimpleTableWithE
   const _TestSimpleTableWithEnumReader();
 
   @override
-  TestSimpleTableWithEnum createObject(fb.BufferContext bc, int offset) => 
+  TestSimpleTableWithEnum createObject(fb.BufferContext bc, int offset) =>
     new TestSimpleTableWithEnum._(bc, offset);
 }
 
@@ -398,7 +398,7 @@ class _Vec3Reader extends fb.StructReader<Vec3> {
   int get size => 32;
 
   @override
-  Vec3 createObject(fb.BufferContext bc, int offset) => 
+  Vec3 createObject(fb.BufferContext bc, int offset) =>
     new Vec3._(bc, offset);
 }
 
@@ -497,7 +497,7 @@ class _AbilityReader extends fb.StructReader<Ability> {
   int get size => 8;
 
   @override
-  Ability createObject(fb.BufferContext bc, int offset) => 
+  Ability createObject(fb.BufferContext bc, int offset) =>
     new Ability._(bc, offset);
 }
 
@@ -572,7 +572,7 @@ class _StatReader extends fb.TableReader<Stat> {
   const _StatReader();
 
   @override
-  Stat createObject(fb.BufferContext bc, int offset) => 
+  Stat createObject(fb.BufferContext bc, int offset) =>
     new Stat._(bc, offset);
 }
 
@@ -667,7 +667,7 @@ class _ReferrableReader extends fb.TableReader<Referrable> {
   const _ReferrableReader();
 
   @override
-  Referrable createObject(fb.BufferContext bc, int offset) => 
+  Referrable createObject(fb.BufferContext bc, int offset) =>
     new Referrable._(bc, offset);
 }
 
@@ -814,7 +814,7 @@ class _MonsterReader extends fb.TableReader<Monster> {
   const _MonsterReader();
 
   @override
-  Monster createObject(fb.BufferContext bc, int offset) => 
+  Monster createObject(fb.BufferContext bc, int offset) =>
     new Monster._(bc, offset);
 }
 
@@ -1182,64 +1182,64 @@ class MonsterObjectBuilder extends fb.ObjectBuilder {
     fb.Builder fbBuilder) {
     assert(fbBuilder != null);
     final int nameOffset = fbBuilder.writeString(_name);
-    final int inventoryOffset = _inventory?.isNotEmpty == true
+    final int inventoryOffset = _inventory?.isNotEmpty
         ? fbBuilder.writeListUint8(_inventory)
         : null;
     final int testOffset = _test?.getOrCreateOffset(fbBuilder);
-    final int test4Offset = _test4?.isNotEmpty == true
+    final int test4Offset = _test4?.isNotEmpty
         ? fbBuilder.writeListOfStructs(_test4)
         : null;
-    final int testarrayofstringOffset = _testarrayofstring?.isNotEmpty == true
+    final int testarrayofstringOffset = _testarrayofstring?.isNotEmpty
         ? fbBuilder.writeList(_testarrayofstring.map((b) => fbBuilder.writeString(b)).toList())
         : null;
-    final int testarrayoftablesOffset = _testarrayoftables?.isNotEmpty == true
+    final int testarrayoftablesOffset = _testarrayoftables?.isNotEmpty
         ? fbBuilder.writeList(_testarrayoftables.map((b) => b.getOrCreateOffset(fbBuilder)).toList())
         : null;
     final int enemyOffset = _enemy?.getOrCreateOffset(fbBuilder);
-    final int testnestedflatbufferOffset = _testnestedflatbuffer?.isNotEmpty == true
+    final int testnestedflatbufferOffset = _testnestedflatbuffer?.isNotEmpty
         ? fbBuilder.writeListUint8(_testnestedflatbuffer)
         : null;
     final int testemptyOffset = _testempty?.getOrCreateOffset(fbBuilder);
-    final int testarrayofboolsOffset = _testarrayofbools?.isNotEmpty == true
+    final int testarrayofboolsOffset = _testarrayofbools?.isNotEmpty
         ? fbBuilder.writeListBool(_testarrayofbools)
         : null;
-    final int testarrayofstring2Offset = _testarrayofstring2?.isNotEmpty == true
+    final int testarrayofstring2Offset = _testarrayofstring2?.isNotEmpty
         ? fbBuilder.writeList(_testarrayofstring2.map((b) => fbBuilder.writeString(b)).toList())
         : null;
-    final int testarrayofsortedstructOffset = _testarrayofsortedstruct?.isNotEmpty == true
+    final int testarrayofsortedstructOffset = _testarrayofsortedstruct?.isNotEmpty
         ? fbBuilder.writeListOfStructs(_testarrayofsortedstruct)
         : null;
-    final int flexOffset = _flex?.isNotEmpty == true
+    final int flexOffset = _flex?.isNotEmpty
         ? fbBuilder.writeListUint8(_flex)
         : null;
-    final int test5Offset = _test5?.isNotEmpty == true
+    final int test5Offset = _test5?.isNotEmpty
         ? fbBuilder.writeListOfStructs(_test5)
         : null;
-    final int vectorOfLongsOffset = _vectorOfLongs?.isNotEmpty == true
+    final int vectorOfLongsOffset = _vectorOfLongs?.isNotEmpty
         ? fbBuilder.writeListInt64(_vectorOfLongs)
         : null;
-    final int vectorOfDoublesOffset = _vectorOfDoubles?.isNotEmpty == true
+    final int vectorOfDoublesOffset = _vectorOfDoubles?.isNotEmpty
         ? fbBuilder.writeListFloat64(_vectorOfDoubles)
         : null;
     final int parentNamespaceTestOffset = _parentNamespaceTest?.getOrCreateOffset(fbBuilder);
-    final int vectorOfReferrablesOffset = _vectorOfReferrables?.isNotEmpty == true
+    final int vectorOfReferrablesOffset = _vectorOfReferrables?.isNotEmpty
         ? fbBuilder.writeList(_vectorOfReferrables.map((b) => b.getOrCreateOffset(fbBuilder)).toList())
         : null;
-    final int vectorOfWeakReferencesOffset = _vectorOfWeakReferences?.isNotEmpty == true
+    final int vectorOfWeakReferencesOffset = _vectorOfWeakReferences?.isNotEmpty
         ? fbBuilder.writeListUint64(_vectorOfWeakReferences)
         : null;
-    final int vectorOfStrongReferrablesOffset = _vectorOfStrongReferrables?.isNotEmpty == true
+    final int vectorOfStrongReferrablesOffset = _vectorOfStrongReferrables?.isNotEmpty
         ? fbBuilder.writeList(_vectorOfStrongReferrables.map((b) => b.getOrCreateOffset(fbBuilder)).toList())
         : null;
-    final int vectorOfCoOwningReferencesOffset = _vectorOfCoOwningReferences?.isNotEmpty == true
+    final int vectorOfCoOwningReferencesOffset = _vectorOfCoOwningReferences?.isNotEmpty
         ? fbBuilder.writeListUint64(_vectorOfCoOwningReferences)
         : null;
-    final int vectorOfNonOwningReferencesOffset = _vectorOfNonOwningReferences?.isNotEmpty == true
+    final int vectorOfNonOwningReferencesOffset = _vectorOfNonOwningReferences?.isNotEmpty
         ? fbBuilder.writeListUint64(_vectorOfNonOwningReferences)
         : null;
     final int anyUniqueOffset = _anyUnique?.getOrCreateOffset(fbBuilder);
     final int anyAmbiguousOffset = _anyAmbiguous?.getOrCreateOffset(fbBuilder);
-    final int vectorOfEnumsOffset = _vectorOfEnums?.isNotEmpty == true
+    final int vectorOfEnumsOffset = _vectorOfEnums?.isNotEmpty
         ? fbBuilder.writeListUint8(_vectorOfEnums.map((f) => f.value))
         : null;
 
@@ -1390,7 +1390,7 @@ class _TypeAliasesReader extends fb.TableReader<TypeAliases> {
   const _TypeAliasesReader();
 
   @override
-  TypeAliases createObject(fb.BufferContext bc, int offset) => 
+  TypeAliases createObject(fb.BufferContext bc, int offset) =>
     new TypeAliases._(bc, offset);
 }
 
@@ -1505,10 +1505,10 @@ class TypeAliasesObjectBuilder extends fb.ObjectBuilder {
   int finish(
     fb.Builder fbBuilder) {
     assert(fbBuilder != null);
-    final int v8Offset = _v8?.isNotEmpty == true
+    final int v8Offset = _v8?.isNotEmpty
         ? fbBuilder.writeListInt8(_v8)
         : null;
-    final int vf64Offset = _vf64?.isNotEmpty == true
+    final int vf64Offset = _vf64?.isNotEmpty
         ? fbBuilder.writeListFloat64(_vf64)
         : null;
 

@@ -39,7 +39,7 @@ Tina Jobs is a simple fiber based job system built on top of Tina. (Based on the
 * Minimal code footprint: Currently ~300 sloc, which should make it easy to modify and extend
 
 ## Limitations:
-* Not designed for extreme concurrency or throughput 
+* Not designed for extreme concurrency or throughput
 	* Single lock per scheduler, doesn't implement work stealing, etc.
 * No dynamic allocations at runtime means you have to cap the maximum job/fiber counts at init time
 * API stability: I'm still making occasional changes and simplifications

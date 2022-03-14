@@ -36,7 +36,7 @@ extension Scalar where Self: FixedWidthInteger {
 
 extension Double: Scalar {
     public typealias NumericValue = UInt64
-    
+
     public var convertedEndian: UInt64 {
         if isLitteEndian { return self.bitPattern }
         return self.bitPattern.littleEndian
@@ -45,7 +45,7 @@ extension Double: Scalar {
 
 extension Float32: Scalar {
     public typealias NumericValue = UInt32
-    
+
     public var convertedEndian: UInt32 {
         if isLitteEndian { return self.bitPattern }
         return self.bitPattern.littleEndian

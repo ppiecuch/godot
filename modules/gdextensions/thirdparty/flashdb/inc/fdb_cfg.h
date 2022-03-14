@@ -30,7 +30,7 @@
 /* #define FDB_USING_FILE_POSIX_MODE */
 
 /* MCU Endian Configuration, default is Little Endian Order. */
-/* #define FDB_BIG_ENDIAN */ 
+/* #define FDB_BIG_ENDIAN */
 
 /* log print macro. default EF_PRINT macro is printf() */
 /* #define FDB_PRINT(...)              print_verbose(__VA_ARGS__) */

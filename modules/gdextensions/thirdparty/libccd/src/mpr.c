@@ -91,7 +91,7 @@ _ccd_inline int portalReachTolerance(const ccd_simplex_t *portal,
 
 /** Returns true if portal expanded by new point v4 could possibly contain
  *  origin, dir is direction in which v4 was obtained. */
-_ccd_inline int portalCanEncapsuleOrigin(const ccd_simplex_t *portal,   
+_ccd_inline int portalCanEncapsuleOrigin(const ccd_simplex_t *portal,
                                          const ccd_support_t *v4,
                                          const ccd_vec3_t *dir);
 
@@ -533,7 +533,7 @@ _ccd_inline int portalReachTolerance(const ccd_simplex_t *portal,
     return ccdEq(dot1, ccd->mpr_tolerance) || dot1 < ccd->mpr_tolerance;
 }
 
-_ccd_inline int portalCanEncapsuleOrigin(const ccd_simplex_t *portal,   
+_ccd_inline int portalCanEncapsuleOrigin(const ccd_simplex_t *portal,
                                          const ccd_support_t *v4,
                                          const ccd_vec3_t *dir)
 {

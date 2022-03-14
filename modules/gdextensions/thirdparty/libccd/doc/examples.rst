@@ -56,7 +56,7 @@ Here is a skeleton of simple program:
 
         ccd_t ccd;
         CCD_INIT(&ccd); // initialize ccd_t struct
-    
+
         // set up ccd_t struct
         ccd.support1       = support; // support function for first object
         ccd.support2       = support; // support function for second object
@@ -73,7 +73,7 @@ Here is a skeleton of simple program:
 ------------------------------------------
 
 If you want to obtain also penetration info about two intersection objects
-``ccdGJKPenetration()`` function can be used. 
+``ccdGJKPenetration()`` function can be used.
 
 Procedure is almost the same as for the previous case:
 

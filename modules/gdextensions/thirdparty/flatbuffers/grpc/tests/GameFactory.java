@@ -31,7 +31,7 @@ class GameFactory {
     return monster;
   }
 
-  public static Stat createStat(String greeting, long val, int count) { 
+  public static Stat createStat(String greeting, long val, int count) {
     FlatBufferBuilder builder = new FlatBufferBuilder();
     int statOffset = Stat.createStat(builder, builder.createString(greeting), val, count);
     builder.finish(statOffset);

@@ -30,7 +30,7 @@ public protocol Mutable {
 }
 
 extension Mutable {
-    
+
     /// Mutates the memory in the buffer, this is only called from the access function of table and structs
     /// - Parameters:
     ///   - value: New value to be inserted to the buffer
@@ -43,7 +43,7 @@ extension Mutable {
 }
 
 extension Mutable where Self == Table {
-    
+
     /// Mutates a value by calling mutate with respect to the position in the table
     /// - Parameters:
     ///   - value: New value to be inserted to the buffer
@@ -52,7 +52,7 @@ extension Mutable where Self == Table {
         guard index != 0 else { return false }
         return mutate(value: value, o: index + postion)
     }
-    
+
     /// Directly mutates the element by calling mutate
     ///
     /// Mutates the Element at index ignoring the current position by calling mutate
@@ -65,7 +65,7 @@ extension Mutable where Self == Table {
 }
 
 extension Mutable where Self == Struct {
-    
+
     /// Mutates a value by calling mutate with respect to the position in the struct
     /// - Parameters:
     ///   - value: New value to be inserted to the buffer
@@ -73,7 +73,7 @@ extension Mutable where Self == Struct {
     public func mutate<T: Scalar>(_ value: T, index: Int32) -> Bool {
         return mutate(value: value, o: index + postion)
     }
-    
+
     /// Directly mutates the element by calling mutate
     ///
     /// Mutates the Element at index ignoring the current position by calling mutate

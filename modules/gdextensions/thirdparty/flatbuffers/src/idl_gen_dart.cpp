@@ -811,7 +811,7 @@ class DartGenerator : public BaseGenerator {
       code += "    final int " + MakeCamel(field.name, false) + "Offset";
       if (field.value.type.base_type == BASE_TYPE_VECTOR) {
         code +=
-            " = _" + MakeCamel(field.name, false) + "?.isNotEmpty == true\n";
+            " = _" + MakeCamel(field.name, false) + "?.isNotEmpty\n";
         code += "        ? fbBuilder.writeList";
         switch (field.value.type.VectorType().base_type) {
           case BASE_TYPE_STRING:

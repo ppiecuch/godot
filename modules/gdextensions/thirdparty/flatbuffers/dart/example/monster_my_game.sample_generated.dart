@@ -111,7 +111,7 @@ class _Vec3Reader extends fb.StructReader<Vec3> {
   int get size => 12;
 
   @override
-  Vec3 createObject(fb.BufferContext bc, int offset) => 
+  Vec3 createObject(fb.BufferContext bc, int offset) =>
     new Vec3._(bc, offset);
 }
 
@@ -203,7 +203,7 @@ class _MonsterReader extends fb.TableReader<Monster> {
   const _MonsterReader();
 
   @override
-  Monster createObject(fb.BufferContext bc, int offset) => 
+  Monster createObject(fb.BufferContext bc, int offset) =>
     new Monster._(bc, offset);
 }
 
@@ -305,14 +305,14 @@ class MonsterObjectBuilder extends fb.ObjectBuilder {
     fb.Builder fbBuilder) {
     assert(fbBuilder != null);
     final int nameOffset = fbBuilder.writeString(_name);
-    final int inventoryOffset = _inventory?.isNotEmpty == true
+    final int inventoryOffset = _inventory?.isNotEmpty
         ? fbBuilder.writeListUint8(_inventory)
         : null;
-    final int weaponsOffset = _weapons?.isNotEmpty == true
+    final int weaponsOffset = _weapons?.isNotEmpty
         ? fbBuilder.writeList(_weapons.map((b) => b.getOrCreateOffset(fbBuilder)).toList())
         : null;
     final int equippedOffset = _equipped?.getOrCreateOffset(fbBuilder);
-    final int pathOffset = _path?.isNotEmpty == true
+    final int pathOffset = _path?.isNotEmpty
         ? fbBuilder.writeListOfStructs(_path)
         : null;
 
@@ -375,7 +375,7 @@ class _WeaponReader extends fb.TableReader<Weapon> {
   const _WeaponReader();
 
   @override
-  Weapon createObject(fb.BufferContext bc, int offset) => 
+  Weapon createObject(fb.BufferContext bc, int offset) =>
     new Weapon._(bc, offset);
 }
 

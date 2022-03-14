@@ -43,7 +43,7 @@ public final class BooleanVector extends BaseVector {
    * @param j The index from which the boolean will be read.
    * @return the boolean value at the given index.
    */
-  public boolean get(int j) { 
+  public boolean get(int j) {
     return 0 != bb.get(__element(j));
   }
 }

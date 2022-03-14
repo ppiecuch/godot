@@ -690,7 +690,7 @@ void fdb_tsdb_control(fdb_tsdb_t db, int cmd, void *arg)
         break;
     case FDB_TSDB_CTRL_SET_ROLLOVER:
         /* this change MUST after database initialized */
-        FDB_ASSERT(db->parent.init_ok == true);
+        FDB_ASSERT(db->parent.init_ok);
         db->rollover = *(bool *)arg;
         break;
     case FDB_TSDB_CTRL_GET_ROLLOVER:

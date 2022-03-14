@@ -55,7 +55,7 @@ Library libccd is by default compiled in double precision of floating point numb
 ```
 will compile library in single precision.
 
-Installation directory can be changed by options PREFIX, INCLUDEDIR and LIBDIR. 
+Installation directory can be changed by options PREFIX, INCLUDEDIR and LIBDIR.
 For more info type 'make help'.
 
 ### 2. Using Autotools

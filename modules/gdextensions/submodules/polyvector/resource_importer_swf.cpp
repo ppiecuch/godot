@@ -132,7 +132,7 @@ Error ResourceImporterSWF::import(const String &p_source_file, const String &p_s
 								shapeout[PV_JSON_NAME_VERTICES] += (bool(p_options["binary"]) ? v->control.x : double(round(v->control.x * 100.0f) / 100.0L)) * (real_t(p_options["scale"]) / 1000.0);
 								shapeout[PV_JSON_NAME_VERTICES] += (bool(p_options["binary"]) ? -v->control.y : double(round(-v->control.y * 100.0f) / 100.0L)) * (real_t(p_options["scale"]) / 1000.0);
 							}
-							if (shapeout[PV_JSON_NAME_CLOSED] == true && v == (shape->polygon.vertices.end() - 1))
+							if (shapeout[PV_JSON_NAME_CLOSED] && v == (shape->polygon.vertices.end() - 1))
 								break;
 							shapeout[PV_JSON_NAME_VERTICES] += (bool(p_options["binary"]) ? v->anchor.x : double(round(v->anchor.x * 100.0f) / 100.0L)) * (real_t(p_options["scale"]) / 1000.0);
 							shapeout[PV_JSON_NAME_VERTICES] += (bool(p_options["binary"]) ? -v->anchor.y : double(round(-v->anchor.y * 100.0f) / 100.0L)) * (real_t(p_options["scale"]) / 1000.0);

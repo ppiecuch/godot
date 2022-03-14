@@ -143,7 +143,7 @@ class Builder {
   /// true, will cause [writeString] to pool strings in the buffer so that
   /// identical strings will always use the same offset in tables.
   Builder({this.initialSize: 1024, bool internStrings = false}) {
-    if (internStrings == true) {
+    if (internStrings) {
       _strings = new Map<String, int>();
     }
     reset();

@@ -16,7 +16,7 @@
 
 // There are 3 #defines that have an impact on performance / features of this ByteBuffer implementation
 //
-//      UNSAFE_BYTEBUFFER 
+//      UNSAFE_BYTEBUFFER
 //          This will use unsafe code to manipulate the underlying byte array. This
 //          can yield a reasonable performance increase.
 //
@@ -31,7 +31,7 @@
 //          ENABLE_SPAN_T also requires UNSAFE_BYTEBUFFER to be defined
 //
 // Using UNSAFE_BYTEBUFFER and BYTEBUFFER_NO_BOUNDS_CHECK together can yield a
-// performance gain of ~15% for some operations, however doing so is potentially 
+// performance gain of ~15% for some operations, however doing so is potentially
 // dangerous. Do so at your own risk!
 //
 
@@ -697,7 +697,7 @@ namespace FlatBuffers
 #if ENABLE_SPAN_T
             ReadOnlySpan<byte> span = _buffer.ReadOnlySpan.Slice(offset);
             return BinaryPrimitives.ReadUInt64LittleEndian(span);
-#else            
+#else
             fixed (byte* ptr = _buffer.Buffer)
             {
                 return BitConverter.IsLittleEndian

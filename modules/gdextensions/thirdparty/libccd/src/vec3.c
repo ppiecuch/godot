@@ -34,7 +34,7 @@ static ccd_vec3_t points_on_sphere[] = {
 	CCD_VEC3_STATIC(CCD_REAL(-0.723608), CCD_REAL( 0.525725), CCD_REAL( 0.447219)),
 	CCD_VEC3_STATIC(CCD_REAL( 0.276388), CCD_REAL( 0.850649), CCD_REAL( 0.447219)),
 	CCD_VEC3_STATIC(CCD_REAL( 0.894426), CCD_REAL( 0.000000), CCD_REAL( 0.447216)),
-	CCD_VEC3_STATIC(CCD_REAL(-0.000000), CCD_REAL( 0.000000), CCD_REAL( 1.000000)), 
+	CCD_VEC3_STATIC(CCD_REAL(-0.000000), CCD_REAL( 0.000000), CCD_REAL( 1.000000)),
 	CCD_VEC3_STATIC(CCD_REAL( 0.425323), CCD_REAL(-0.309011), CCD_REAL(-0.850654)),
 	CCD_VEC3_STATIC(CCD_REAL(-0.162456), CCD_REAL(-0.499995), CCD_REAL(-0.850654)),
 	CCD_VEC3_STATIC(CCD_REAL( 0.262869), CCD_REAL(-0.809012), CCD_REAL(-0.525738)),
@@ -80,7 +80,7 @@ _ccd_inline ccd_real_t __ccdVec3PointSegmentDist2(const ccd_vec3_t *P,
     //          where - x0 is initial point of segment
     //                - d is direction of segment from x0 (|d| > 0)
     //                - t belongs to <0, 1> interval
-    // 
+    //
     // Than, distance from a segment to some point P can be expressed:
     //      D(t) = |x0 + t.d - P|^2
     //          which is distance from any point on segment. Minimization

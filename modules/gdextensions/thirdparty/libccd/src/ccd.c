@@ -603,7 +603,7 @@ static int simplexToPolytope4(const void *obj1, const void *obj2,
     for (i = 0; i < 4; i++){
         v[i] = ccdPtAddVertex(pt, ccdSimplexPoint(simplex, i));
     }
-    
+
     e[0] = ccdPtAddEdge(pt, v[0], v[1]);
     e[1] = ccdPtAddEdge(pt, v[1], v[2]);
     e[2] = ccdPtAddEdge(pt, v[2], v[0]);
@@ -922,7 +922,7 @@ static int expandPolytope(ccd_pt_t *pt, ccd_pt_el_t *el,
         // following code sorts edges to have e[0] between vertices 0-1,
         // e[1] between 1-2 and e[2] between 2-0
         if (v[2] != v[1] && v[3] != v[1]){
-            // swap e[1] and e[2] 
+            // swap e[1] and e[2]
             e[3] = e[1];
             e[1] = e[2];
             e[2] = e[3];

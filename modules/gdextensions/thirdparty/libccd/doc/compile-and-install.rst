@@ -24,7 +24,7 @@ numbers - you can change this by options ``USE_SINGLE``/``USE_DOUBLE``, i.e.:
 
 will compile library in single precision.
 Installation directory can be changed by options ``PREFIX``, ``INCLUDEDIR``
-and ``LIBDIR``. 
+and ``LIBDIR``.
 For more info type '``make help``'.
 
 
