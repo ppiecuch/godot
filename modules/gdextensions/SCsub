@@ -58,6 +58,7 @@ modules = [
     "polyvector",
     "vaserenderer",
     "timelinefx",
+    "tileengine"
 ]
 
 thirdparty_sources = [
@@ -154,6 +155,11 @@ if is_enabled("polyvector"):
     env_module.Append(CPPPATH=["thirdparty/libshockwave/lzma"])
     env_module.Append(CPPDEFINES=["_7ZIP_ST"])
     thirdparty_sources += Glob("thirdparty/libshockwave/*.cpp") + Glob("thirdparty/libshockwave/lzma/*.c")
+
+if is_enabled("tileengine"):
+    env_module.Append(CPPDEFINES=["TLN_EXCLUDE_WINDOW"])
+    env_module.Append(CPPPATH=["thirdparty/Tilengine/include"])
+    thirdparty_sources += Glob("thirdparty/Tilengine/src/*.c")
 
 if is_enabled("flashdb"):
     thirdparty_sources += Glob("thirdparty/flashdb/src/*.c")

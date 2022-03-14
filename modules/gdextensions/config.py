@@ -44,6 +44,7 @@ def configure(env):
         "polyvector",
         "vaserenderer",
         "meshlod",
+        "tileengine",
     ]
     opts = Variables()
     opts.Add(
