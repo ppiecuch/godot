@@ -58,7 +58,7 @@ modules = [
     "polyvector",
     "vaserenderer",
     "timelinefx",
-    "tileengine"
+    "tileengine",
 ]
 
 thirdparty_sources = [
