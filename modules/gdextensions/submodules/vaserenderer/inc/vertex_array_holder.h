@@ -32,7 +32,7 @@
 #define VASER_VERTEX_ARRAY_HOLDER_H
 
 struct vertex_array_holder {
-	int drawmode; //drawing mode
+	Mesh::PrimitiveType drawmode; //drawing mode
 	bool jumping;
 	PoolVector2Array vert; // because it holds 2d vectors
 	PoolColorArray color; // RGBA
@@ -42,7 +42,7 @@ struct vertex_array_holder {
 		jumping = false;
 	}
 
-	void set_draw_mode(int mode) { drawmode = mode; }
+	void set_draw_mode(Mesh::PrimitiveType mode) { drawmode = mode; }
 
 	void clear() {
 		vert = PoolVector2Array();
@@ -62,7 +62,7 @@ struct vertex_array_holder {
 	int push(const Point &P, const Color &cc, bool trans = false) {
 		int cur = count();
 		vert.push_back(P);
-		color.push_back(Color{ cc.r, cc.g, cc.b, trans ? 0 : cc.a });
+		color.push_back(Color{cc.r, cc.g, cc.b, trans ? 0 : cc.a});
 		if (jumping) {
 			jumping = false;
 			repeat_last_push();
@@ -131,10 +131,8 @@ struct vertex_array_holder {
 		if (drawmode == Mesh::PRIMITIVE_TRIANGLES) {
 			for (int i = 0; i < count(); i++) {
 				Point P[4];
-				P[0] = get(i);
-				i++;
-				P[1] = get(i);
-				i++;
+				P[0] = get(i); i++;
+				P[1] = get(i); i++;
 				P[2] = get(i);
 				P[3] = P[0];
 				polyline((Vector2 *)P, col, 1, 4, 0);
@@ -151,7 +149,7 @@ struct vertex_array_holder {
 	}
 
 	void swap(vertex_array_holder &B) {
-		const int hold_drawmode = drawmode;
+		const Mesh::PrimitiveType hold_drawmode = drawmode;
 		const bool hold_jumping = jumping;
 		drawmode = B.drawmode;
 		jumping = B.jumping;

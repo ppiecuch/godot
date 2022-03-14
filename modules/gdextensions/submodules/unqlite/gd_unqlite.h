@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  gd_discord.h                                                         */
+/*  gd_unqlite.h                                                         */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,34 +28,24 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GD_DISCORD_H
-#define GD_DISCORD_H
+/* gd_unqlite.h */
+#ifndef GD_UNQLITE_H
+#define GD_UNQLITE_H
 
-#include "core/object.h"
-#include "scene/main/http_request.h"
+#include "core/map.h"
+#include "core/reference.h"
+#include "core/ustring.h"
 
-#define GODOTDISCORD_MAJOR 0
-#define GODOTDISCORD_MINOR 0
-#define GODOTDISCORD_PATCH 1
-
-#define GD_STR(x) #x
-#define GODOTDISCORD_VERSION   \
-	GD_STR(GODOTDISCORD_MAJOR) \
-	"." GD_STR(GODOTDISCORD_MINOR) "." GD_STR(GODOTDISCORD_PATCH)
-#define GODOTDISCORD_AGENT vformat("godot-discord (%s)", GODOTDISCORD_VERSION)
-
-class GdDiscordClient : public Object {
-	GDCLASS(GdDiscordClient, Object);
-
-	HTTPRequest *http;
-	void _request_finished(HTTPRequest::Result p_status, HTTPClient::ResponseCode p_code, const PoolStringArray &headers, const PoolByteArray &p_data);
+class UNQLite : public Reference {
+	GDCLASS(UNQLite, Reference);
 
 protected:
-	void _notification(int p_what);
 	static void _bind_methods();
 
 public:
-	GdDiscordClient();
+	UNQLite();
+
+private:
 };
 
-#endif // GD_DISCORD_H
+#endif // GD_UNQLITE_H

@@ -143,6 +143,9 @@ if is_enabled("polyvector"):
     env_module.Append(CPPDEFINES=["_7ZIP_ST"])
     thirdparty_sources += Glob("thirdparty/libshockwave/*.cpp") + Glob("thirdparty/libshockwave/lzma/*.c")
 
+if is_enabled("flashdb"):
+    thirdparty_sources += Glob("thirdparty/flashdb/src/*.c")
+
 sub_building = []
 for m in modules:
     if is_enabled(m):
