@@ -24,6 +24,7 @@ def configure(env):
         "benet",
         "behaviornode",
         "behaviortree",
+        "simpleai",
         "flexbuffers",
         "ccd",
         "settings",
