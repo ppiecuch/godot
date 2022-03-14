@@ -61,7 +61,7 @@ modules = [
     "flashdb",
     "vgamepad",
     "landiscovery",
-    "meshlod"
+    "meshlod",
 ]
 
 thirdparty_sources = [
@@ -75,12 +75,15 @@ if not env["disable_3d"]:
     modules += ["environment/vegetation_instance", "ccd", "ccd/src"]
     if is_enabled("ccd"):
         thirdparty_sources += Glob("thirdparty/libccd/src/*.c") + Glob("thirdparty/libccd/src/testsuites/*.c")
-    if env["tools"] and is_enabled("generator"):
-        modules += ["generator"]
-        env_module.Append(CPPPATH=["thirdparty/libgenerator/inc"])
-        if is_gcc:
-            env_module.Append(CPPFLAGS=["-Wno-nonnull", "-Wno-array-bounds"])  # silent false warnings
-        thirdparty_sources += Glob("thirdparty/libgenerator/src/*.cpp")
+    if env["tools"]:
+        if is_enabled("generator"):
+            modules += ["generator"]
+            env_module.Append(CPPPATH=["thirdparty/libgenerator/inc"])
+            if is_gcc:
+                env_module.Append(CPPFLAGS=["-Wno-nonnull", "-Wno-array-bounds"])  # silent false warnings
+            thirdparty_sources += Glob("thirdparty/libgenerator/src/*.cpp")
+        if is_enabled("meshlod"):
+            thirdparty_sources += Glob("thirdparty/meshoptimizer/src/*.cpp")
 
 if env["feature_multiplethreads_allowed"]:
     modules += ["thread_pool"]

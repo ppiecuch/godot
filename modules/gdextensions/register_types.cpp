@@ -88,7 +88,11 @@
 
 #include "landiscovery/lan.h"
 
+#ifndef _3D_DISABLED
+#ifdef TOOLS_ENABLED
 #include "generator/gd_procedural_mesh.h"
+#endif
+#endif
 
 #include "visual/autotilemap.h"
 #include "visual/bend_deform_2d.h"
@@ -143,8 +147,18 @@
 #endif
 #endif
 
+#ifdef GDEXT_CCD_ENABLED
 #ifndef _3D_DISABLED
 #include "ccd/gd_ccd.h"
+#endif
+#endif
+
+#ifdef GDEXT_MESHLOD_ENABLED
+#ifndef _3D_DISABLED
+#ifdef TOOLS_ENABLED
+#include "meshlod/optimize.h"
+#endif
+#endif
 #endif
 
 #ifdef GDEXT_NAKAMA1_ENABLED
@@ -285,7 +299,11 @@ void register_gdextensions_types() {
 #endif // GDEXT_SFXR_ENABLED
 
 #ifdef GDEXT_GEOMFONTS_ENABLED
+#ifndef _3D_DISABLED
+#ifdef TOOLS_ENABLED
 	ClassDB::register_class<GdGeomFonts>();
+#endif
+#endif
 #endif
 
 #ifdef GDEXT_GENERATOR_ENABLED
@@ -376,7 +394,7 @@ void register_gdextensions_types() {
 #ifdef GDEXT_QRCODETEXTURE_ENABLED
 #ifdef TOOLS_ENABLED
 	ClassDB::register_class<QRCodeTexture>();
-#endif // TOOLS_ENABLED
+#endif
 #endif // GDEXT_QRCODETEXTURE_ENABLED
 
 #ifdef GDEXT_CCD_ENABLED
@@ -384,8 +402,17 @@ void register_gdextensions_types() {
 	ClassDB::register_class<CCDBox>();
 	ClassDB::register_class<CCDSphere>();
 	ClassDB::register_class<CCDCylinder>();
-#endif // _3D_DISABLED
+#endif
 #endif // GDEXT_CCD_ENABLED
+
+#ifdef GDEXT_MESHLOD_ENABLED
+#ifndef _3D_DISABLED
+#ifdef TOOLS_ENABLED
+	ClassDB::register_class<MeshOptimize>();
+	EditorPlugins::add_by_type<MeshOptimizePlugin>();
+#endif
+#endif
+#endif // GDEXT_MESHLOD_ENABLED
 
 #ifdef TOOLS_ENABLED
 	EditorNode::add_init_callback(editor_init_callback);
