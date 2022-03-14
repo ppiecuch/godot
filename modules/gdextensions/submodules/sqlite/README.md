@@ -22,7 +22,7 @@ scons
 
 ```python
 extends Node
-	
+
 var db = SQLite.new();
 
 func _ready():
@@ -33,20 +33,20 @@ func _ready():
 
 	# Create database if not exists
 	db.query("CREATE TABLE IF NOT EXISTS players (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT, playcount INTEGER);");
-	
+
 	# Select Operation
 	for i in db.fetch_array("SELECT * FROM players LIMIT 100;"):
 		print(i);
-		
+
 		# Update Operation
 		db.query("UPDATE players SET playcount='"+str(i["playcount"]+1)+"' WHERE id='"+str(i["id"])+"';");
-	
+
 	# Insert Operation
 	db.query("INSERT INTO players (name, email, playcount) VALUES ('khairul', 'my@mail.com', '0');");
-	
+
 	# Remove Operation
 	db.query("DELETE FROM players WHERE playcount > '5';");
-	
+
 	db.close();
 ```
 
