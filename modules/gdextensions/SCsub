@@ -104,6 +104,9 @@ if not env["disable_3d"]:
         if is_enabled("meshlod"):
             modules += ["meshlod"]
             thirdparty_sources += Glob("thirdparty/meshoptimizer/src/*.cpp")
+        if is_enabled("meshslicer"):
+            modules += ["meshslicer"]
+            sources += Glob("submodules/meshslicer/utils/*.cpp")
 
 if env["feature_multiplethreads_allowed"]:
     modules += ["threadpool"]

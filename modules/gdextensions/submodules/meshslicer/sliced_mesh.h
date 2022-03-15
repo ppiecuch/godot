@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  optimize.h                                                           */
+/*  sliced_mesh.h                                                        */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,57 +28,55 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef SCENE_OPTIMIZE_H
-#define SCENE_OPTIMIZE_H
+#ifndef SLICED_MESH_H
+#define SLICED_MESH_H
 
-#ifdef TOOLS_ENABLED
-#include "core/bind/core_bind.h"
-#include "core/reference.h"
-#include "editor/editor_node.h"
-#include "editor/editor_plugin.h"
-#include "modules/csg/csg_shape.h"
-#include "modules/gridmap/grid_map.h"
-#include "scene/3d/mesh_instance.h"
-#include "scene/main/node.h"
+#include "core/resource.h"
+#include "scene/resources/mesh.h"
+#include "utils/intersector.h"
 
-class MeshOptimize : public Reference {
-private:
-	GDCLASS(MeshOptimize, Reference);
-
-	void _find_all_mesh_instances(Vector<MeshInstance *> &r_items, Node *p_current_node, const Node *p_owner);
-	void _dialog_action(String p_file);
-	void _node_replace_owner(Node *p_base, Node *p_node, Node *p_root);
-
-public:
-	struct MeshInfo {
-		Transform transform;
-		Ref<Mesh> mesh;
-		String name;
-		Node *original_node;
-		NodePath skeleton_path;
-		Ref<Skin> skin;
-	};
-	void optimize(const String p_file, Node *p_root_node);
-	void simplify(Node *p_root_node);
-};
-
-class MeshOptimizePlugin : public EditorPlugin {
-	GDCLASS(MeshOptimizePlugin, EditorPlugin);
-
-	EditorNode *editor;
-	CheckBox *file_export_lib_merge;
-	EditorFileDialog *file_export_lib;
-	Ref<MeshOptimize> scene_optimize;
-	void _dialog_action(String p_file);
+/**
+ * A simple container for the results of a mesh slice.
+ * upper_mesh contains the part of the mesh that was above
+ * the plane normal and lower_mesh contains the part that was
+ * below
+ */
+class SlicedMesh : public Resource {
+	GDCLASS(SlicedMesh, Resource);
 
 protected:
 	static void _bind_methods();
 
 public:
-	MeshOptimizePlugin(EditorNode *p_node);
-	void _notification(int notification);
-	void optimize(Variant p_user_data);
+	Ref<Mesh> upper_mesh;
+	Ref<Mesh> lower_mesh;
+
+	void set_upper_mesh(const Ref<Mesh> &_upper_mesh) {
+		upper_mesh = _upper_mesh;
+	}
+	Ref<Mesh> get_upper_mesh() const {
+		return upper_mesh;
+	};
+
+	void set_lower_mesh(const Ref<Mesh> &_lower_mesh) {
+		lower_mesh = _lower_mesh;
+	}
+	Ref<Mesh> get_lower_mesh() const {
+		return lower_mesh;
+	};
+
+	SlicedMesh(Ref<Mesh> _upper_mesh, Ref<Mesh> _lower_mesh) {
+		upper_mesh = _upper_mesh;
+		lower_mesh = _lower_mesh;
+	}
+
+	/**
+	 * Transforms a vector of split results and a vector of faces representing
+	 * the cross section of a slice and creates an upper and lower mesh from them
+	 */
+	SlicedMesh(const PoolVector<Intersector::SplitResult> &surface_splits, const PoolVector<SlicerFace> &cross_section_faces, Ref<Material> cross_section_material);
+
+	SlicedMesh() {}
 };
 
-#endif
-#endif
+#endif // SLICED_MESH_H

@@ -44,6 +44,7 @@ def configure(env):
         "polyvector",
         "vaserenderer",
         "meshlod",
+        "meshslicer",
         "tileengine",
     ]
     opts = Variables()

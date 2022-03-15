@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -24,7 +24,7 @@
 /* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
 /* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
 /* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
-/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN connect_compatION WITH THE     */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
@@ -49,7 +49,6 @@
 #ifdef TOOLS_ENABLED
 
 void MeshOptimize::_node_replace_owner(Node *p_base, Node *p_node, Node *p_root) {
-
 	p_node->set_owner(p_root);
 	p_node->set_filename("");
 
@@ -99,7 +98,7 @@ void MeshOptimize::simplify(Node *p_root_node) {
 	int step = 0;
 
 	for (int32_t i = 0; i < meshes.size(); i++) {
-		Vector<Ref<Mesh> > lod_meshes;
+		Vector<Ref<Mesh>> lod_meshes;
 		Ref<Mesh> mesh = meshes[i].mesh;
 		for (size_t count_i = 0; count_i < lod_count; count_i++) {
 			Ref<ArrayMesh> result_mesh;
@@ -119,7 +118,7 @@ void MeshOptimize::simplify(Node *p_root_node) {
 				// https://github.com/zeux/meshoptimizer/blob/bce99a4bfdc7bbc72479e1d71c4083329d306347/demo/main.cpp#L414
 				// generate LOD levels, with each subsequent LOD using 70% triangles
 				// note that each LOD uses the same (shared) vertex buffer
-				Vector<Vector<uint32_t> > lods;
+				Vector<Vector<uint32_t>> lods;
 				lods.resize(2);
 				Vector<uint32_t> unsigned_indices;
 				{
@@ -220,15 +219,15 @@ void MeshOptimize::simplify(Node *p_root_node) {
 				if (spatial) {
 					mi->set_transform(spatial->get_transform());
 
-                    if (spatial->get_parent()) {
-                        spatial->get_parent()->add_child(mi);
-                    } else {
-                        spatial->add_child(mi);
-                    }
-                    if (spatial->get_owner() != spatial) {
-                        mi->set_owner(spatial->get_owner());
-                    }
-                }
+					if (spatial->get_parent()) {
+						spatial->get_parent()->add_child(mi);
+					} else {
+						spatial->add_child(mi);
+					}
+					if (spatial->get_owner() != spatial) {
+						mi->set_owner(spatial->get_owner());
+					}
+				}
 			}
 			progress_mesh_simplification.step(TTR("Generating for Mesh: ") + meshes[i].original_node->get_name() + " (" + itos(step) + "/" + itos(meshes.size()) + ")", step);
 			step++;
@@ -240,7 +239,6 @@ void MeshOptimize::simplify(Node *p_root_node) {
 			spatial->set_name(mesh_instance->get_name());
 		}
 		meshes[i].original_node->replace_by(spatial);
-
 	}
 }
 

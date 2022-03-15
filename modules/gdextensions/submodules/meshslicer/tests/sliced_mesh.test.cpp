@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  optimize.h                                                           */
+/*  sliced_mesh.test.cpp                                                 */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,57 +28,37 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef SCENE_OPTIMIZE_H
-#define SCENE_OPTIMIZE_H
+#include "../sliced_mesh.h"
+#include "catch.hpp"
 
-#ifdef TOOLS_ENABLED
-#include "core/bind/core_bind.h"
-#include "core/reference.h"
-#include "editor/editor_node.h"
-#include "editor/editor_plugin.h"
-#include "modules/csg/csg_shape.h"
-#include "modules/gridmap/grid_map.h"
-#include "scene/3d/mesh_instance.h"
-#include "scene/main/node.h"
+TEST_CASE("[SlicedMesh]") {
+	SECTION("Creates new meshes") {
+		Intersector::SplitResult result;
+		PoolVector<Intersector::SplitResult> results;
+		result.material = Ref<SpatialMaterial>();
+		result.lower_faces.push_back(SlicerFace(Vector3(0, 0, 0), Vector3(0, 1, 0), Vector3(0, 1, 1)));
+		result.lower_faces.push_back(SlicerFace(Vector3(0, 1, 1), Vector3(0, 0, 1), Vector3(0, 0, 0)));
 
-class MeshOptimize : public Reference {
-private:
-	GDCLASS(MeshOptimize, Reference);
+		result.upper_faces.push_back(SlicerFace(Vector3(0, 1, 0), Vector3(0, 2, 0), Vector3(0, 2, 1)));
+		result.upper_faces.push_back(SlicerFace(Vector3(0, 2, 1), Vector3(0, 1, 1), Vector3(0, 1, 0)));
 
-	void _find_all_mesh_instances(Vector<MeshInstance *> &r_items, Node *p_current_node, const Node *p_owner);
-	void _dialog_action(String p_file);
-	void _node_replace_owner(Node *p_base, Node *p_node, Node *p_root);
+		results.push_back(result);
 
-public:
-	struct MeshInfo {
-		Transform transform;
-		Ref<Mesh> mesh;
-		String name;
-		Node *original_node;
-		NodePath skeleton_path;
-		Ref<Skin> skin;
-	};
-	void optimize(const String p_file, Node *p_root_node);
-	void simplify(Node *p_root_node);
-};
+		PoolVector<SlicerFace> cross_section_faces;
+		Ref<SpatialMaterial> cross_section_material;
+		cross_section_faces.push_back(SlicerFace(Vector3(0, 1, 0), Vector3(1, 1, 0), Vector3(0, 1, 1)));
 
-class MeshOptimizePlugin : public EditorPlugin {
-	GDCLASS(MeshOptimizePlugin, EditorPlugin);
+		SlicedMesh sliced(results, cross_section_faces, cross_section_material);
+		REQUIRE_FALSE(sliced.lower_mesh.is_null());
+		REQUIRE_FALSE(sliced.upper_mesh.is_null());
 
-	EditorNode *editor;
-	CheckBox *file_export_lib_merge;
-	EditorFileDialog *file_export_lib;
-	Ref<MeshOptimize> scene_optimize;
-	void _dialog_action(String p_file);
+		REQUIRE(sliced.lower_mesh->get_surface_count() == 2);
+		REQUIRE(sliced.upper_mesh->get_surface_count() == 2);
 
-protected:
-	static void _bind_methods();
+		REQUIRE(sliced.lower_mesh->surface_get_material(0) == result.material);
+		REQUIRE(sliced.lower_mesh->surface_get_material(1) == cross_section_material);
 
-public:
-	MeshOptimizePlugin(EditorNode *p_node);
-	void _notification(int notification);
-	void optimize(Variant p_user_data);
-};
-
-#endif
-#endif
+		REQUIRE(sliced.upper_mesh->surface_get_material(0) == result.material);
+		REQUIRE(sliced.upper_mesh->surface_get_material(1) == cross_section_material);
+	}
+}

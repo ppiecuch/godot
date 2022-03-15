@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  optimize.h                                                           */
+/*  triangulator.h                                                       */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,57 +28,25 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef SCENE_OPTIMIZE_H
-#define SCENE_OPTIMIZE_H
+#ifndef TRIANGULATOR_H
+#define TRIANGULATOR_H
 
-#ifdef TOOLS_ENABLED
-#include "core/bind/core_bind.h"
-#include "core/reference.h"
-#include "editor/editor_node.h"
-#include "editor/editor_plugin.h"
-#include "modules/csg/csg_shape.h"
-#include "modules/gridmap/grid_map.h"
-#include "scene/3d/mesh_instance.h"
-#include "scene/main/node.h"
+#include "slicer_face.h"
 
-class MeshOptimize : public Reference {
-private:
-	GDCLASS(MeshOptimize, Reference);
+/**
+ * Contains functions related to performing generative
+ * operations on points
+ */
+namespace Triangulator {
+/**
+ * Calculates the area of a 2 dimensional triangle
+ */
+real_t tri_area_2d(real_t x1, real_t y1, real_t x2, real_t y2, real_t x3, real_t y3);
 
-	void _find_all_mesh_instances(Vector<MeshInstance *> &r_items, Node *p_current_node, const Node *p_owner);
-	void _dialog_action(String p_file);
-	void _node_replace_owner(Node *p_base, Node *p_node, Node *p_root);
+/**
+ * Uses a monotone chain algorithm to generate the faces of a convex hull from a set of points
+ */
+PoolVector<SlicerFace> monotone_chain(const PoolVector<Vector3> &interception_points, Vector3 plane_normal);
+} //namespace Triangulator
 
-public:
-	struct MeshInfo {
-		Transform transform;
-		Ref<Mesh> mesh;
-		String name;
-		Node *original_node;
-		NodePath skeleton_path;
-		Ref<Skin> skin;
-	};
-	void optimize(const String p_file, Node *p_root_node);
-	void simplify(Node *p_root_node);
-};
-
-class MeshOptimizePlugin : public EditorPlugin {
-	GDCLASS(MeshOptimizePlugin, EditorPlugin);
-
-	EditorNode *editor;
-	CheckBox *file_export_lib_merge;
-	EditorFileDialog *file_export_lib;
-	Ref<MeshOptimize> scene_optimize;
-	void _dialog_action(String p_file);
-
-protected:
-	static void _bind_methods();
-
-public:
-	MeshOptimizePlugin(EditorNode *p_node);
-	void _notification(int notification);
-	void optimize(Variant p_user_data);
-};
-
-#endif
-#endif
+#endif // TRIANGULATOR_H

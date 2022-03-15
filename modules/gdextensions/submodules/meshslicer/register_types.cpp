@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  optimize.h                                                           */
+/*  register_types.cpp                                                   */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,57 +28,15 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef SCENE_OPTIMIZE_H
-#define SCENE_OPTIMIZE_H
+#include "register_types.h"
 
-#ifdef TOOLS_ENABLED
-#include "core/bind/core_bind.h"
-#include "core/reference.h"
-#include "editor/editor_node.h"
-#include "editor/editor_plugin.h"
-#include "modules/csg/csg_shape.h"
-#include "modules/gridmap/grid_map.h"
-#include "scene/3d/mesh_instance.h"
-#include "scene/main/node.h"
+#include "core/class_db.h"
+#include "slicer.h"
 
-class MeshOptimize : public Reference {
-private:
-	GDCLASS(MeshOptimize, Reference);
+void register_gd_slicer_types() {
+	ClassDB::register_class<Slicer>();
+	ClassDB::register_class<SlicedMesh>();
+}
 
-	void _find_all_mesh_instances(Vector<MeshInstance *> &r_items, Node *p_current_node, const Node *p_owner);
-	void _dialog_action(String p_file);
-	void _node_replace_owner(Node *p_base, Node *p_node, Node *p_root);
-
-public:
-	struct MeshInfo {
-		Transform transform;
-		Ref<Mesh> mesh;
-		String name;
-		Node *original_node;
-		NodePath skeleton_path;
-		Ref<Skin> skin;
-	};
-	void optimize(const String p_file, Node *p_root_node);
-	void simplify(Node *p_root_node);
-};
-
-class MeshOptimizePlugin : public EditorPlugin {
-	GDCLASS(MeshOptimizePlugin, EditorPlugin);
-
-	EditorNode *editor;
-	CheckBox *file_export_lib_merge;
-	EditorFileDialog *file_export_lib;
-	Ref<MeshOptimize> scene_optimize;
-	void _dialog_action(String p_file);
-
-protected:
-	static void _bind_methods();
-
-public:
-	MeshOptimizePlugin(EditorNode *p_node);
-	void _notification(int notification);
-	void optimize(Variant p_user_data);
-};
-
-#endif
-#endif
+void unregister_gd_slicer_types() {
+}

@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  optimize.h                                                           */
+/*  slicer_vector4.h                                                     */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,57 +28,73 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef SCENE_OPTIMIZE_H
-#define SCENE_OPTIMIZE_H
+#ifndef SLICER_VECTOR4_H
+#define SLICER_VECTOR4_H
 
-#ifdef TOOLS_ENABLED
-#include "core/bind/core_bind.h"
-#include "core/reference.h"
-#include "editor/editor_node.h"
-#include "editor/editor_plugin.h"
-#include "modules/csg/csg_shape.h"
-#include "modules/gridmap/grid_map.h"
-#include "scene/3d/mesh_instance.h"
-#include "scene/main/node.h"
+#include "core/math/math_funcs.h"
+#include "core/ustring.h"
 
-class MeshOptimize : public Reference {
-private:
-	GDCLASS(MeshOptimize, Reference);
-
-	void _find_all_mesh_instances(Vector<MeshInstance *> &r_items, Node *p_current_node, const Node *p_owner);
-	void _dialog_action(String p_file);
-	void _node_replace_owner(Node *p_base, Node *p_node, Node *p_root);
-
-public:
-	struct MeshInfo {
-		Transform transform;
-		Ref<Mesh> mesh;
-		String name;
-		Node *original_node;
-		NodePath skeleton_path;
-		Ref<Skin> skin;
+/**
+ * Godot does not currently have a 4 dimensional Vector class so we just
+ * throw one together ourselves. We're not looking for much more than a
+ * simple container to make the code for vertex tangents, bones, and weights
+ * cleaner. Functionality can be added piecemeal as needed.
+ *
+ * TODO - Would it be better just to use the Godot Color class instead? Functionally
+ * I believe the only difference would be that Color doesn't use `real_t` so values
+ * might have lower precision. It also might just be a bit misleading.
+ */
+struct SlicerVector4 {
+	enum Axis {
+		AXIS_X,
+		AXIS_Y,
+		AXIS_Z,
+		AXIS_W,
 	};
-	void optimize(const String p_file, Node *p_root_node);
-	void simplify(Node *p_root_node);
+
+	union {
+		struct {
+			real_t x;
+			real_t y;
+			real_t z;
+			real_t w;
+		};
+
+		real_t coord[4];
+	};
+
+	_FORCE_INLINE_ const real_t &operator[](int p_axis) const {
+		return coord[p_axis];
+	}
+
+	_FORCE_INLINE_ real_t &operator[](int p_axis) {
+		return coord[p_axis];
+	}
+
+	SlicerVector4 operator*(real_t scalar) const {
+		return SlicerVector4(x * scalar, y * scalar, z * scalar, w * scalar);
+	}
+
+	SlicerVector4 operator+(const SlicerVector4 &other) const {
+		return SlicerVector4(x + other.x, y + other.y, z + other.z, w + other.w);
+	}
+
+	bool operator==(const SlicerVector4 &other) const {
+		return x == other.x && y == other.y && z == other.z && w == other.w;
+	}
+
+	operator String() const {
+		return (rtos(x) + ", " + rtos(y) + ", " + rtos(z), +", " + rtos(w));
+	}
+
+	_FORCE_INLINE_ SlicerVector4(real_t p_x, real_t p_y, real_t p_z, real_t p_w) {
+		x = p_x;
+		y = p_y;
+		z = p_z;
+		w = p_w;
+	}
+
+	_FORCE_INLINE_ SlicerVector4() { x = y = z = w = 0; }
 };
 
-class MeshOptimizePlugin : public EditorPlugin {
-	GDCLASS(MeshOptimizePlugin, EditorPlugin);
-
-	EditorNode *editor;
-	CheckBox *file_export_lib_merge;
-	EditorFileDialog *file_export_lib;
-	Ref<MeshOptimize> scene_optimize;
-	void _dialog_action(String p_file);
-
-protected:
-	static void _bind_methods();
-
-public:
-	MeshOptimizePlugin(EditorNode *p_node);
-	void _notification(int notification);
-	void optimize(Variant p_user_data);
-};
-
-#endif
-#endif
+#endif // SLICER_VECTOR4_H

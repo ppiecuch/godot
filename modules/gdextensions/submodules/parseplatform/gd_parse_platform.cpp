@@ -1,9 +1,39 @@
+/*************************************************************************/
+/*  gd_parse_platform.cpp                                                */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #include "gd_parse_platform.h"
 
-#include "core/string_buffer.h"
-#include "core/project_settings.h"
 #include "core/bind/core_bind.h"
 #include "core/io/json.h"
+#include "core/project_settings.h"
+#include "core/string_buffer.h"
 #include "misc/cqueue.h"
 
 #ifdef DOCTEST
@@ -12,10 +42,10 @@
 #define DOCTEST_CONFIG_DISABLE
 #endif
 
-#define LOGI(string, ...) print_line(vformat(String("(Parse Info) ")+string, ##__VA_ARGS__));
-#define LOGD(string, ...) print_line(vformat(String("(Parse Debug) ")+string, ##__VA_ARGS__));
+#define LOGI(string, ...) print_line(vformat(String("(Parse Info) ") + string, ##__VA_ARGS__));
+#define LOGD(string, ...) print_line(vformat(String("(Parse Debug) ") + string, ##__VA_ARGS__));
 
-#define referr(domain,code,error) Ref<GdParseError>(memnew(GdParseError(domain,code,error)))
+#define referr(domain, code, error) Ref<GdParseError>(memnew(GdParseError(domain, code, error)))
 
 #define REQUESTS_QUEUE "user://request_queue.data"
 
@@ -67,8 +97,8 @@ void GdParseError::_bind_methods() {
 	BIND_ENUM_CONSTANT(ParseDataCodeInvalidType);
 }
 
-GdParseError::GdParseError(Domain p_domain, int p_code, const String &p_description)
-: domain(p_domain), code(p_code), description(p_description) {
+GdParseError::GdParseError(Domain p_domain, int p_code, const String &p_description) :
+		domain(p_domain), code(p_code), description(p_description) {
 }
 
 /// GdParseQuery
@@ -120,7 +150,6 @@ Variant GdParseQuery::constraints() {
 	return buffer.as_string();
 }
 
-
 void GdParseQuery::get_object_by_id(const String &p_object_id) {
 	ERR_FAIL_COND_MSG(busy, "Operation already in progress.");
 	ERR_FAIL_COND(class_name.empty());
@@ -129,7 +158,7 @@ void GdParseQuery::get_object_by_id(const String &p_object_id) {
 	set_busy(true);
 
 	Ref<GdParseError> error = GdParseBackend::get_singleton()
-		->request(HTTPClient::METHOD_GET, "classes/" + class_name + "/" + p_object_id, Variant(), this, "_get_object_by_id_finished");
+									  ->request(HTTPClient::METHOD_GET, "classes/" + class_name + "/" + p_object_id, Variant(), this, "_get_object_by_id_finished");
 
 	if (error) {
 		set_busy(false);
@@ -137,13 +166,13 @@ void GdParseQuery::get_object_by_id(const String &p_object_id) {
 	}
 }
 
-void GdParseQuery::_get_object_by_id_finished(HTTPRequest::Result p_status, HTTPClient::ResponseCode p_code, const PoolStringArray &headers, const PoolByteArray 	&p_data) {
+void GdParseQuery::_get_object_by_id_finished(HTTPRequest::Result p_status, HTTPClient::ResponseCode p_code, const PoolStringArray &headers, const PoolByteArray &p_data) {
 	set_busy(false);
 
 	Ref<GdParseError> error;
 	Dictionary json = GdParseBackend::get_singleton()->retrieve_json_reply(p_data, p_status, p_code, HTTPClient::RESPONSE_OK, error);
 	if (json.empty()) {
-		emit_signal("get_object_by_id_completed",Dictionary(), error);
+		emit_signal("get_object_by_id_completed", Dictionary(), error);
 		return;
 	}
 
@@ -165,7 +194,7 @@ void GdParseQuery::find_objects() {
 	Ref<GdParseError> error;
 	if (not data.is_nil()) {
 		error = GdParseBackend::get_singleton()
-			->request(HTTPClient::METHOD_GET, "classes/" + class_name, data, this, "_find_objects_finished");
+						->request(HTTPClient::METHOD_GET, "classes/" + class_name, data, this, "_find_objects_finished");
 	}
 
 	if (error) {
@@ -174,7 +203,7 @@ void GdParseQuery::find_objects() {
 	}
 }
 
-void GdParseQuery::_find_objects_finished(HTTPRequest::Result p_status, HTTPClient::ResponseCode p_code, const PoolStringArray &headers, const PoolByteArray 	&p_data) {
+void GdParseQuery::_find_objects_finished(HTTPRequest::Result p_status, HTTPClient::ResponseCode p_code, const PoolStringArray &headers, const PoolByteArray &p_data) {
 	set_busy(false);
 
 	Ref<GdParseError> error;
@@ -196,7 +225,6 @@ void GdParseQuery::_find_objects_finished(HTTPRequest::Result p_status, HTTPClie
 	emit_signal("find_objects_completed", objects, error);
 }
 
-
 void GdParseQuery::add_where(const String &p_op, const String &p_key, const Variant &p_what) {
 	ERR_FAIL_COND(p_key.empty());
 	ERR_FAIL_COND(p_what.is_nil());
@@ -214,7 +242,6 @@ void GdParseQuery::add_order(const String &p_key, SortOrder p_sort_order) {
 	entry["key"] = p_key;
 	order.append(entry);
 }
-
 
 String GdParseQuery::get_class_name() const {
 	return class_name;
@@ -295,12 +322,11 @@ static Dictionary filter_map(const Dictionary &map) {
 	return result;
 }
 
-
 static Dictionary merge_map(const Dictionary &base, const Dictionary &other) {
 	Dictionary result = base.duplicate();
 
 	const Variant *next = nullptr;
-	while(const Variant *key = other.next(next)) {
+	while (const Variant *key = other.next(next)) {
 		result[*key] = other[*key];
 		next = key;
 	}
@@ -312,7 +338,7 @@ static Dictionary diff_map(const Dictionary &base, const Dictionary &other) {
 	Dictionary result;
 
 	const Variant *next = nullptr;
-	while(const Variant *key = other.next(next)) {
+	while (const Variant *key = other.next(next)) {
 		const Variant &base_value = base[*key];
 		const Variant &other_value = other[*key];
 		if (base_value != other_value) {
@@ -345,7 +371,7 @@ void GdParseObject::erase() {
 	set_busy(true);
 
 	Ref<GdParseError> error = GdParseBackend::get_singleton()
-		->request(HTTPClient::METHOD_DELETE, "classes/" + class_name + "/" + get_object_id(), Variant(), this, "_erase_finished");
+									  ->request(HTTPClient::METHOD_DELETE, "classes/" + class_name + "/" + get_object_id(), Variant(), this, "_erase_finished");
 
 	if (error) {
 		set_busy(false);
@@ -357,7 +383,7 @@ void GdParseObject::_create_object() {
 	Ref<GdParseError> error;
 
 	error = GdParseBackend::get_singleton()
-		->request(HTTPClient::METHOD_POST, "classes/" + class_name, filter_map(data), this, "_create_object_finished");
+					->request(HTTPClient::METHOD_POST, "classes/" + class_name, filter_map(data), this, "_create_object_finished");
 
 	if (error) {
 		set_busy(false);
@@ -369,7 +395,7 @@ void GdParseObject::_update_object() {
 	Ref<GdParseError> error;
 
 	error = GdParseBackend::get_singleton()
-		->request(HTTPClient::METHOD_PUT, "classes/" + class_name + "/" + get_object_id(), diff_map(filter_map(snapshot), filter_map(data)), this, "_update_object_finished");
+					->request(HTTPClient::METHOD_PUT, "classes/" + class_name + "/" + get_object_id(), diff_map(filter_map(snapshot), filter_map(data)), this, "_update_object_finished");
 
 	if (error) {
 		set_busy(false);
@@ -377,7 +403,7 @@ void GdParseObject::_update_object() {
 	}
 }
 
-void GdParseObject::_update_object_finished(HTTPRequest::Result p_status, HTTPClient::ResponseCode p_code, const PoolStringArray &headers, const PoolByteArray 	&p_data) {
+void GdParseObject::_update_object_finished(HTTPRequest::Result p_status, HTTPClient::ResponseCode p_code, const PoolStringArray &headers, const PoolByteArray &p_data) {
 	set_busy(false);
 
 	Ref<GdParseError> error;
@@ -393,7 +419,7 @@ void GdParseObject::_update_object_finished(HTTPRequest::Result p_status, HTTPCl
 	emit_signal("save_completed", error);
 }
 
-void GdParseObject::_create_object_finished(HTTPRequest::Result p_status, HTTPClient::ResponseCode p_code, const PoolStringArray &headers, const PoolByteArray 	&p_data) {
+void GdParseObject::_create_object_finished(HTTPRequest::Result p_status, HTTPClient::ResponseCode p_code, const PoolStringArray &headers, const PoolByteArray &p_data) {
 	Ref<GdParseError> error;
 	Dictionary response;
 
@@ -410,7 +436,7 @@ void GdParseObject::_create_object_finished(HTTPRequest::Result p_status, HTTPCl
 	emit_signal("save_completed", error);
 }
 
-void GdParseObject::_erase_finished(HTTPRequest::Result p_status, HTTPClient::ResponseCode p_code, const PoolStringArray &headers, const PoolByteArray 	&p_data) {
+void GdParseObject::_erase_finished(HTTPRequest::Result p_status, HTTPClient::ResponseCode p_code, const PoolStringArray &headers, const PoolByteArray &p_data) {
 	set_busy(false);
 
 	Ref<GdParseError> error;
@@ -537,163 +563,197 @@ GdParseObject::GdParseObject() {
 /// GdParseBackend
 
 namespace Utils {
-	_FORCE_INLINE_ static String bytearray_to_string(const PoolByteArray &p_data) {
-		String s;
-		if (p_data.size() >= 0) {
-			PoolByteArray::Read r = p_data.read();
-			CharString cs;
-			cs.resize(p_data.size() + 1);
-			memcpy(cs.ptrw(), r.ptr(), p_data.size());
-			cs[p_data.size()] = 0;
-			s = cs.get_data();
-		}
-		return s;
+_FORCE_INLINE_ static String bytearray_to_string(const PoolByteArray &p_data) {
+	String s;
+	if (p_data.size() >= 0) {
+		PoolByteArray::Read r = p_data.read();
+		CharString cs;
+		cs.resize(p_data.size() + 1);
+		memcpy(cs.ptrw(), r.ptr(), p_data.size());
+		cs[p_data.size()] = 0;
+		s = cs.get_data();
 	}
-	_FORCE_INLINE_ static PoolByteArray string_to_bytearray(const String &p_string) {
-		CharString charstr = p_string.utf8();
-		PoolByteArray retval;
-		size_t len = charstr.length();
-		retval.resize(len);
-		PoolByteArray::Write w = retval.write();
-		memcpy(w.ptr(), charstr.ptr(), len);
-		w.release();
-		return retval;
-	}
-#	define SECOND_KEY "second"
-#	define MINUTE_KEY "minute"
-#	define HOUR_KEY "hour"
-#	define DAY_KEY "day"
-#	define MONTH_KEY "month"
-#	define YEAR_KEY "year"
-#	define WEEKDAY_KEY "weekday"
-#	define TIMEZONE_KEY "timezone"
-#	define DST_KEY "dst"
-	// Parses an ISO-8601 date string to a datetime dictionary that can be parsed by Godot.
-	_FORCE_INLINE_ static Dictionary parse_iso_datetime(const String &p_iso_datetime) {
-		ERR_FAIL_COND_V_MSG(p_iso_datetime.find("T") == -1, Dictionary(), "Invalid iso date string (missing T)");
+	return s;
+}
+_FORCE_INLINE_ static PoolByteArray string_to_bytearray(const String &p_string) {
+	CharString charstr = p_string.utf8();
+	PoolByteArray retval;
+	size_t len = charstr.length();
+	retval.resize(len);
+	PoolByteArray::Write w = retval.write();
+	memcpy(w.ptr(), charstr.ptr(), len);
+	w.release();
+	return retval;
+}
+#define SECOND_KEY "second"
+#define MINUTE_KEY "minute"
+#define HOUR_KEY "hour"
+#define DAY_KEY "day"
+#define MONTH_KEY "month"
+#define YEAR_KEY "year"
+#define WEEKDAY_KEY "weekday"
+#define TIMEZONE_KEY "timezone"
+#define DST_KEY "dst"
+// Parses an ISO-8601 date string to a datetime dictionary that can be parsed by Godot.
+_FORCE_INLINE_ static Dictionary parse_iso_datetime(const String &p_iso_datetime) {
+	ERR_FAIL_COND_V_MSG(p_iso_datetime.find("T") == -1, Dictionary(), "Invalid iso date string (missing T)");
 
-		const Vector<String> &parts = p_iso_datetime.split("T");
-		ERR_FAIL_COND_V_MSG(parts.size() != 2, Dictionary(), "Invalid iso date string (missing date/time part)");
-		const Vector<String> &date = parts[0].split("-");
-		ERR_FAIL_COND_V_MSG(date.size() != 3, Dictionary(), "Invalid iso date string (malformed date part)");
-		const Vector<String> &time = p_iso_datetime.ends_with("Z")
+	const Vector<String> &parts = p_iso_datetime.split("T");
+	ERR_FAIL_COND_V_MSG(parts.size() != 2, Dictionary(), "Invalid iso date string (missing date/time part)");
+	const Vector<String> &date = parts[0].split("-");
+	ERR_FAIL_COND_V_MSG(date.size() != 3, Dictionary(), "Invalid iso date string (malformed date part)");
+	const Vector<String> &time = p_iso_datetime.ends_with("Z")
 			? parts[1].trim_suffix("Z").split(":")
 			: parts[1].split(p_iso_datetime.find("+") >= 0 ? "+" : "-")[0].split(":");
-		ERR_FAIL_COND_V_MSG(time.size() != 3, Dictionary(), "Invalid iso date string (malformed time part)");
+	ERR_FAIL_COND_V_MSG(time.size() != 3, Dictionary(), "Invalid iso date string (malformed time part)");
 #if DEBUG_ENABLED
-#	define _CHECK(k, s) if (!s.is_numeric()) { WARN_PRINT(vformat("(%s) '%s' is not numeric value", #k, s)); }
-		_CHECK(YEAR, date[0]);
-		_CHECK(MONTH, date[1]);
-		_CHECK(DAY, date[2]);
-		_CHECK(HOUR, time[0]);
-		_CHECK(MINUTE, time[1]);
-		_CHECK(SECOND, time[2]);
-#	undef _CHECK
+#define _CHECK(k, s)                                                  \
+	if (!s.is_numeric()) {                                            \
+		WARN_PRINT(vformat("(%s) '%s' is not numeric value", #k, s)); \
+	}
+	_CHECK(YEAR, date[0]);
+	_CHECK(MONTH, date[1]);
+	_CHECK(DAY, date[2]);
+	_CHECK(HOUR, time[0]);
+	_CHECK(MINUTE, time[1]);
+	_CHECK(SECOND, time[2]);
+#undef _CHECK
 #endif
-		Dictionary dict;
-		dict[YEAR_KEY] = date[0].to_int();
-		dict[MONTH_KEY] = date[1].to_int();
-		dict[DAY_KEY] = date[2].to_int();
-		dict[HOUR_KEY] = time[0].to_int();
-		dict[MINUTE_KEY] = time[1].to_int();
-		dict[SECOND_KEY] = time[2].to_int();
+	Dictionary dict;
+	dict[YEAR_KEY] = date[0].to_int();
+	dict[MONTH_KEY] = date[1].to_int();
+	dict[DAY_KEY] = date[2].to_int();
+	dict[HOUR_KEY] = time[0].to_int();
+	dict[MINUTE_KEY] = time[1].to_int();
+	dict[SECOND_KEY] = time[2].to_int();
 
-		if (p_iso_datetime.ends_with("Z")) {
-			dict[TIMEZONE_KEY] = "Z";
-		} else {
-			const int pp = parts[1].find("+"), mp = parts[1].find("-");
-			if (pp >= 0 && mp >= 0) {
-				WARN_PRINT("Malformed timezone info - ignoring section");
-			} else if (pp >= 0 || mp >= 0) {
-				const Vector<String> &tz = parts[1].substr(MAX(pp, mp)).split(":");
-				if (tz.size() > 0) {
-					if (!tz[0].is_numeric()) {
-						WARN_PRINT("Malformed timezone info - ignoring section");
+	if (p_iso_datetime.ends_with("Z")) {
+		dict[TIMEZONE_KEY] = "Z";
+	} else {
+		const int pp = parts[1].find("+"), mp = parts[1].find("-");
+		if (pp >= 0 && mp >= 0) {
+			WARN_PRINT("Malformed timezone info - ignoring section");
+		} else if (pp >= 0 || mp >= 0) {
+			const Vector<String> &tz = parts[1].substr(MAX(pp, mp)).split(":");
+			if (tz.size() > 0) {
+				if (!tz[0].is_numeric()) {
+					WARN_PRINT("Malformed timezone info - ignoring section");
+				} else {
+					const int tz_h = tz[0].to_int();
+					if (tz.size() > 1 && !tz[1].is_numeric()) {
+						WARN_PRINT("Malformed timezone info - ignoring part");
+						dict[TIMEZONE_KEY] = tz_h * 60;
 					} else {
-						const int tz_h = tz[0].to_int();
-						if (tz.size() > 1 && !tz[1].is_numeric()) {
-							WARN_PRINT("Malformed timezone info - ignoring part");
-							dict[TIMEZONE_KEY] = tz_h * 60;
-						} else {
-							dict[TIMEZONE_KEY] = tz_h * 60 + SGN(tz_h) * tz[1].to_int();
-						}
+						dict[TIMEZONE_KEY] = tz_h * 60 + SGN(tz_h) * tz[1].to_int();
 					}
 				}
 			}
 		}
-		return dict;
 	}
-	_FORCE_INLINE_ String datetime_to_iso_string(const Dictionary &p_datetime) {
-		String timezone = "";
-		if (p_datetime.has(TIMEZONE_KEY)) {
-			if (p_datetime[TIMEZONE_KEY].get_type() == Variant::INT || p_datetime[TIMEZONE_KEY].get_type() == Variant::REAL) {
-				const int tz = p_datetime[TIMEZONE_KEY];
-				const int tz_h = tz / 60, tz_m = Math::abs(tz % 60);
-				timezone = (tz >= 0 ? "+" : "") + itos(tz_h).pad_zeros(2) + (tz_m > 0 ? ":" + itos(tz_m).pad_zeros(2) : "");
-			} else if (p_datetime[TIMEZONE_KEY].get_type() == Variant::STRING) {
-				timezone = p_datetime[TIMEZONE_KEY];
-			} else {
-				WARN_PRINT("Unknown timezone format - ignoring.");
-			}
-		}
-		return itos(p_datetime[YEAR_KEY]).pad_zeros(2) +
- 		   "-" +
- 		   itos(p_datetime[MONTH_KEY]).pad_zeros(2) +
- 		   "-" +
- 		   itos(p_datetime[DAY_KEY]).pad_zeros(2) +
- 		   "T" +
- 		   itos(p_datetime[HOUR_KEY]).pad_zeros(2) +
- 		   ":" +
- 		   itos(p_datetime[MINUTE_KEY]).pad_zeros(2) +
- 		   ":" +
- 		   itos(p_datetime[SECOND_KEY]).pad_zeros(2) +
- 		   timezone;
-	}
-	_FORCE_INLINE_ bool is_datetime(const Dictionary &p_data) {
-		return (
-			p_data.has_all(array(HOUR_KEY, MINUTE_KEY, SECOND_KEY)) || p_data.has_all(array(DAY_KEY, MONTH_KEY, YEAR_KEY))
-		);
-	}
+	return dict;
 }
+_FORCE_INLINE_ String datetime_to_iso_string(const Dictionary &p_datetime) {
+	String timezone = "";
+	if (p_datetime.has(TIMEZONE_KEY)) {
+		if (p_datetime[TIMEZONE_KEY].get_type() == Variant::INT || p_datetime[TIMEZONE_KEY].get_type() == Variant::REAL) {
+			const int tz = p_datetime[TIMEZONE_KEY];
+			const int tz_h = tz / 60, tz_m = Math::abs(tz % 60);
+			timezone = (tz >= 0 ? "+" : "") + itos(tz_h).pad_zeros(2) + (tz_m > 0 ? ":" + itos(tz_m).pad_zeros(2) : "");
+		} else if (p_datetime[TIMEZONE_KEY].get_type() == Variant::STRING) {
+			timezone = p_datetime[TIMEZONE_KEY];
+		} else {
+			WARN_PRINT("Unknown timezone format - ignoring.");
+		}
+	}
+	return itos(p_datetime[YEAR_KEY]).pad_zeros(2) +
+			"-" +
+			itos(p_datetime[MONTH_KEY]).pad_zeros(2) +
+			"-" +
+			itos(p_datetime[DAY_KEY]).pad_zeros(2) +
+			"T" +
+			itos(p_datetime[HOUR_KEY]).pad_zeros(2) +
+			":" +
+			itos(p_datetime[MINUTE_KEY]).pad_zeros(2) +
+			":" +
+			itos(p_datetime[SECOND_KEY]).pad_zeros(2) +
+			timezone;
+}
+_FORCE_INLINE_ bool is_datetime(const Dictionary &p_data) {
+	return (
+			p_data.has_all(array(HOUR_KEY, MINUTE_KEY, SECOND_KEY)) || p_data.has_all(array(DAY_KEY, MONTH_KEY, YEAR_KEY)));
+}
+} //namespace Utils
 
 namespace Builder {
-	struct Url {
-		String _scheme = "https";
-		String _host;
-		String _port;
-		String _path;
-		Url &scheme(const String &p_scheme) { _scheme = _scheme.empty() ? "https" : p_scheme; return *this; }
-		Url &host(const String &p_host) { _host = p_host; return *this; }
-		Url &port(int &p_port) { _port = p_port == -1 ? "" : String::num(p_port); return *this; }
-		Url &path(const String &p_path) { _path = p_path; return *this; }
-		String build() { return vformat("%s://%s%s%s", _scheme, _host, _port.empty() ? "" : ":" + _port, _path.begins_with("/") ? _path : "/" + _path); }
-	};
-	struct Request {
-		String _url;
-		HTTPClient::Method _method = HTTPClient::METHOD_GET;
-		Vector<String> _headers;
-		PoolStringArray _query;
-		PoolByteArray _payload;
-		Object *_receiver = nullptr;
-		String _slot;
-		Request &url(const String &p_url) { _url = p_url; return *this; }
-		Request &header(const String &p_header) { _headers.push_back(p_header); return *this; }
-		Request &header(const String &p_name, const String &p_value) { _headers.push_back(p_name + ":" + p_value); return *this; }
-		Request &query_parameter(const String &p_name, const String &p_value) { _query.push_back(p_name + "=" + p_value); return *this; }
-		Request method(HTTPClient::Method p_method, const PoolByteArray &p_payload = PoolByteArray()) { _method = p_method; _payload = p_payload; return *this; }
-		Request slot(Object *p_receiver, const String &p_slot) { _receiver = p_receiver; _slot = p_slot; return *this; }
-		Error make(HTTPRequest *p_client, bool trace = false) {
-			if (trace) {
-				LOGI("Sending request: %s", _url);
-			}
-			p_client->cancel_request();
-			if (_receiver && !_slot.empty()) {
-				p_client->connect("request_completed", _receiver, _slot);
-			}
-			return p_client->request(_url, _headers, true, _method, Utils::bytearray_to_string(_payload));
+struct Url {
+	String _scheme = "https";
+	String _host;
+	String _port;
+	String _path;
+	Url &scheme(const String &p_scheme) {
+		_scheme = _scheme.empty() ? "https" : p_scheme;
+		return *this;
+	}
+	Url &host(const String &p_host) {
+		_host = p_host;
+		return *this;
+	}
+	Url &port(int &p_port) {
+		_port = p_port == -1 ? "" : String::num(p_port);
+		return *this;
+	}
+	Url &path(const String &p_path) {
+		_path = p_path;
+		return *this;
+	}
+	String build() { return vformat("%s://%s%s%s", _scheme, _host, _port.empty() ? "" : ":" + _port, _path.begins_with("/") ? _path : "/" + _path); }
+};
+struct Request {
+	String _url;
+	HTTPClient::Method _method = HTTPClient::METHOD_GET;
+	Vector<String> _headers;
+	PoolStringArray _query;
+	PoolByteArray _payload;
+	Object *_receiver = nullptr;
+	String _slot;
+	Request &url(const String &p_url) {
+		_url = p_url;
+		return *this;
+	}
+	Request &header(const String &p_header) {
+		_headers.push_back(p_header);
+		return *this;
+	}
+	Request &header(const String &p_name, const String &p_value) {
+		_headers.push_back(p_name + ":" + p_value);
+		return *this;
+	}
+	Request &query_parameter(const String &p_name, const String &p_value) {
+		_query.push_back(p_name + "=" + p_value);
+		return *this;
+	}
+	Request method(HTTPClient::Method p_method, const PoolByteArray &p_payload = PoolByteArray()) {
+		_method = p_method;
+		_payload = p_payload;
+		return *this;
+	}
+	Request slot(Object *p_receiver, const String &p_slot) {
+		_receiver = p_receiver;
+		_slot = p_slot;
+		return *this;
+	}
+	Error make(HTTPRequest *p_client, bool trace = false) {
+		if (trace) {
+			LOGI("Sending request: %s", _url);
 		}
-	};
-}
+		p_client->cancel_request();
+		if (_receiver && !_slot.empty()) {
+			p_client->connect("request_completed", _receiver, _slot);
+		}
+		return p_client->request(_url, _headers, true, _method, Utils::bytearray_to_string(_payload));
+	}
+};
+} //namespace Builder
 
 Variant GdParseBackend::jsonify(const Variant &p_data) {
 	Variant::Type data_type = p_data.get_type();
@@ -742,7 +802,7 @@ Variant GdParseBackend::jsonify(const Variant &p_data) {
 Dictionary GdParseBackend::from_raw_data(const Dictionary &p_data) {
 	Dictionary result;
 	const Variant *next = nullptr;
-	while(const Variant *key = p_data.next(next)) {
+	while (const Variant *key = p_data.next(next)) {
 		result[*key] = objectify(p_data[*key]);
 		next = key;
 	}
@@ -768,7 +828,7 @@ Variant GdParseBackend::objectify(const Variant &p_json) {
 	if (!map.has("__type")) {
 		Dictionary result;
 		const Variant *next = nullptr;
-		while(const Variant *key = map.next(next)) {
+		while (const Variant *key = map.next(next)) {
 			result[*key] = objectify(map[*key]);
 			next = key;
 		}
@@ -811,14 +871,14 @@ Ref<GdParseError> GdParseBackend::request(HTTPClient::Method p_op, const String 
 					LOGD("Response query: %s", query);
 				}
 				Error ret = Builder::Request()
-					.url(parse_server_url + p_url + "?" + query)
-					.method(p_op)
-					.header("Content-Type", "application/json")
-					.header("X-Parse-Application-Id", application_id)
-					.header("X-Parse-REST-API-Key", master_key)
-					.header("User-Agent", GODOTPARSE_AGENT)
-					.slot(p_receiver, p_slot)
-					.make(http, trace);
+									.url(parse_server_url + p_url + "?" + query)
+									.method(p_op)
+									.header("Content-Type", "application/json")
+									.header("X-Parse-Application-Id", application_id)
+									.header("X-Parse-REST-API-Key", master_key)
+									.header("User-Agent", GODOTPARSE_AGENT)
+									.slot(p_receiver, p_slot)
+									.make(http, trace);
 				if (ret != OK) {
 					error = referr(GdParseError::DomainParsePlatform, ret, "Cannot start network request");
 				}
@@ -835,14 +895,14 @@ Ref<GdParseError> GdParseBackend::request(HTTPClient::Method p_op, const String 
 					LOGD("Parse JSON: %s", json);
 				}
 				Error ret = Builder::Request()
-					.url(parse_server_url + p_url)
-					.method(p_op, Utils::string_to_bytearray(JSON::print(json)))
-					.header("Content-Type", "application/json")
-					.header("X-Parse-Application-Id", application_id)
-					.header("X-Parse-REST-API-Key", master_key)
-					.header("User-Agent", GODOTPARSE_AGENT)
-					.slot(p_receiver, p_slot)
-					.make(http, trace);
+									.url(parse_server_url + p_url)
+									.method(p_op, Utils::string_to_bytearray(JSON::print(json)))
+									.header("Content-Type", "application/json")
+									.header("X-Parse-Application-Id", application_id)
+									.header("X-Parse-REST-API-Key", master_key)
+									.header("User-Agent", GODOTPARSE_AGENT)
+									.slot(p_receiver, p_slot)
+									.make(http, trace);
 				if (ret != OK) {
 					error = referr(GdParseError::DomainParsePlatform, ret, "Cannot start network request");
 				}
@@ -851,13 +911,13 @@ Ref<GdParseError> GdParseBackend::request(HTTPClient::Method p_op, const String 
 
 		case HTTPClient::METHOD_DELETE: {
 			Error ret = Builder::Request()
-				.url(parse_server_url + p_url)
-				.method(p_op)
-				.header("X-Parse-Application-Id", application_id)
-				.header("X-Parse-REST-API-Key", master_key)
-				.header("User-Agent", GODOTPARSE_AGENT)
-				.slot(p_receiver, p_slot)
-				.make(http, trace);
+								.url(parse_server_url + p_url)
+								.method(p_op)
+								.header("X-Parse-Application-Id", application_id)
+								.header("X-Parse-REST-API-Key", master_key)
+								.header("User-Agent", GODOTPARSE_AGENT)
+								.slot(p_receiver, p_slot)
+								.make(http, trace);
 			if (ret != OK) {
 				error = referr(GdParseError::DomainParsePlatform, ret, "Cannot start network request");
 			};
@@ -872,7 +932,6 @@ Ref<GdParseError> GdParseBackend::request(HTTPClient::Method p_op, const String 
 }
 
 Dictionary GdParseBackend::retrieve_json_reply(const PoolByteArray &p_data, HTTPRequest::Result p_status, HTTPClient::ResponseCode p_code, HTTPClient::ResponseCode p_expected_code, Ref<GdParseError> &p_error) {
-
 	if (p_status != HTTPRequest::RESULT_SUCCESS) {
 		if (trace) {
 			LOGD("Reply: error %s", p_status);
@@ -894,7 +953,7 @@ Dictionary GdParseBackend::retrieve_json_reply(const PoolByteArray &p_data, HTTP
 	int err_line;
 	String err_message;
 	Variant json_data;
-	if(JSON::parse(raw_data, json_data, err_message, err_line) != OK) {
+	if (JSON::parse(raw_data, json_data, err_message, err_line) != OK) {
 		p_error = referr(GdParseError::DomainJson, GdParseError::JsonCodeFailed, err_message);
 		return Dictionary();
 	}
@@ -1051,7 +1110,7 @@ void GdParseBackend::_bind_methods() {
 }
 
 GdParseBackend::GdParseBackend() {
-	if (not (_queue = queue_open(ProjectSettings::get_singleton()->globalize_path(REQUESTS_QUEUE).utf8().c_str()))) {
+	if (not(_queue = queue_open(ProjectSettings::get_singleton()->globalize_path(REQUESTS_QUEUE).utf8().c_str()))) {
 		WARN_PRINT("Failed to open requests queue at: " + ProjectSettings::get_singleton()->globalize_path(REQUESTS_QUEUE));
 	}
 	_query = Ref<GdParseQuery>(memnew(GdParseQuery));
@@ -1075,7 +1134,6 @@ GdParseBackend::~GdParseBackend() {
 		}
 	}
 }
-
 
 #ifdef DOCTEST
 TEST_CASE("Utils functions") {
@@ -1105,7 +1163,7 @@ TEST_CASE("Utils functions") {
 		REQUIRE(int(ret3[HOUR_KEY]) == 0);
 		REQUIRE(int(ret3[MINUTE_KEY]) == 2);
 		REQUIRE(int(ret3[SECOND_KEY]) == 40);
-		REQUIRE(int(ret3[TIMEZONE_KEY]) == 10*60);
+		REQUIRE(int(ret3[TIMEZONE_KEY]) == 10 * 60);
 		REQUIRE(Utils::datetime_to_iso_string(ret3) == "2021-11-18T00:02:40+10");
 		Dictionary ret4 = Utils::parse_iso_datetime("2021-11-18T00:02:40-09:30");
 		REQUIRE(int(ret4[YEAR_KEY]) == 2021);
@@ -1114,7 +1172,7 @@ TEST_CASE("Utils functions") {
 		REQUIRE(int(ret4[HOUR_KEY]) == 0);
 		REQUIRE(int(ret4[MINUTE_KEY]) == 2);
 		REQUIRE(int(ret4[SECOND_KEY]) == 40);
-		REQUIRE(int(ret4[TIMEZONE_KEY]) == -(9*60+30));
+		REQUIRE(int(ret4[TIMEZONE_KEY]) == -(9 * 60 + 30));
 		REQUIRE(Utils::datetime_to_iso_string(ret4) == "2021-11-18T00:02:40-09:30");
 	}
 	SUBCASE("datetime_to_iso_string") {
@@ -1128,11 +1186,11 @@ TEST_CASE("Utils functions") {
 		REQUIRE(Utils::datetime_to_iso_string(datetime_dict) == "2021-11-18T00:02:40");
 		datetime_dict[TIMEZONE_KEY] = "Z";
 		REQUIRE(Utils::datetime_to_iso_string(datetime_dict) == "2021-11-18T00:02:40Z");
-		datetime_dict[TIMEZONE_KEY] = 2*60;
+		datetime_dict[TIMEZONE_KEY] = 2 * 60;
 		REQUIRE(Utils::datetime_to_iso_string(datetime_dict) == "2021-11-18T00:02:40+02");
-		datetime_dict[TIMEZONE_KEY] = -4*60;
+		datetime_dict[TIMEZONE_KEY] = -4 * 60;
 		REQUIRE(Utils::datetime_to_iso_string(datetime_dict) == "2021-11-18T00:02:40-04");
-		datetime_dict[TIMEZONE_KEY] = -3*60-30;
+		datetime_dict[TIMEZONE_KEY] = -3 * 60 - 30;
 		REQUIRE(Utils::datetime_to_iso_string(datetime_dict) == "2021-11-18T00:02:40-03:30");
 		datetime_dict[TIMEZONE_KEY] = "+00:30";
 		REQUIRE(Utils::datetime_to_iso_string(datetime_dict) == "2021-11-18T00:02:40+00:30");
@@ -1147,9 +1205,9 @@ TEST_CASE("Map operations") {
 		map1["3"] = "3";
 		Dictionary ret = filter_map(map1);
 		REQUIRE(ret.has_all(array("1", "2", "3")));
-		REQUIRE(ret["2"]=="2");
-		REQUIRE(ret["2"]=="2");
-		REQUIRE(ret["3"]=="3");
+		REQUIRE(ret["2"] == "2");
+		REQUIRE(ret["2"] == "2");
+		REQUIRE(ret["3"] == "3");
 	}
 	SUBCASE("merge_map") {
 		Dictionary map1;

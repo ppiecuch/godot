@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  optimize.h                                                           */
+/*  slicer_vector4.test.cpp                                              */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,57 +28,51 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef SCENE_OPTIMIZE_H
-#define SCENE_OPTIMIZE_H
+#include "../../utils/slicer_vector4.h"
+#include "../catch.hpp"
 
-#ifdef TOOLS_ENABLED
-#include "core/bind/core_bind.h"
-#include "core/reference.h"
-#include "editor/editor_node.h"
-#include "editor/editor_plugin.h"
-#include "modules/csg/csg_shape.h"
-#include "modules/gridmap/grid_map.h"
-#include "scene/3d/mesh_instance.h"
-#include "scene/main/node.h"
+TEST_CASE("[SlicerVector4]") {
+	SECTION("x,y,z,w maps to coord") {
+		SlicerVector4 vec = SlicerVector4(0.5, 1.5, 2.5, 3.5);
+		REQUIRE(vec.x == 0.5);
+		REQUIRE(vec.y == 1.5);
+		REQUIRE(vec.z == 2.5);
+		REQUIRE(vec.w == 3.5);
 
-class MeshOptimize : public Reference {
-private:
-	GDCLASS(MeshOptimize, Reference);
+		REQUIRE(vec.coord[0] == 0.5);
+		REQUIRE(vec.coord[1] == 1.5);
+		REQUIRE(vec.coord[2] == 2.5);
+		REQUIRE(vec.coord[3] == 3.5);
 
-	void _find_all_mesh_instances(Vector<MeshInstance *> &r_items, Node *p_current_node, const Node *p_owner);
-	void _dialog_action(String p_file);
-	void _node_replace_owner(Node *p_base, Node *p_node, Node *p_root);
+		vec.x = 5.0;
 
-public:
-	struct MeshInfo {
-		Transform transform;
-		Ref<Mesh> mesh;
-		String name;
-		Node *original_node;
-		NodePath skeleton_path;
-		Ref<Skin> skin;
-	};
-	void optimize(const String p_file, Node *p_root_node);
-	void simplify(Node *p_root_node);
-};
+		REQUIRE(vec.x == 5.0);
+		REQUIRE(vec.coord[0] == 5.0);
+	}
 
-class MeshOptimizePlugin : public EditorPlugin {
-	GDCLASS(MeshOptimizePlugin, EditorPlugin);
+	SECTION("operator*") {
+		SlicerVector4 vec = SlicerVector4(1, 2, 3, 4) * 2;
 
-	EditorNode *editor;
-	CheckBox *file_export_lib_merge;
-	EditorFileDialog *file_export_lib;
-	Ref<MeshOptimize> scene_optimize;
-	void _dialog_action(String p_file);
+		REQUIRE(vec.x == 2);
+		REQUIRE(vec.y == 4);
+		REQUIRE(vec.z == 6);
+		REQUIRE(vec.w == 8);
+	}
 
-protected:
-	static void _bind_methods();
+	SECTION("operator*+") {
+		SlicerVector4 vec = SlicerVector4(1, 2, 3, 4) + SlicerVector4(2, 3, 4, 5);
 
-public:
-	MeshOptimizePlugin(EditorNode *p_node);
-	void _notification(int notification);
-	void optimize(Variant p_user_data);
-};
+		REQUIRE(vec.x == 3);
+		REQUIRE(vec.y == 5);
+		REQUIRE(vec.z == 7);
+		REQUIRE(vec.w == 9);
+	}
 
-#endif
-#endif
+	SECTION("operator==") {
+		REQUIRE(SlicerVector4(1, 1, 1, 1) == SlicerVector4(1, 1, 1, 1));
+		REQUIRE_FALSE(SlicerVector4(1, 1, 1, 1) == SlicerVector4(2, 1, 1, 1));
+		REQUIRE_FALSE(SlicerVector4(1, 1, 1, 1) == SlicerVector4(1, 2, 1, 1));
+		REQUIRE_FALSE(SlicerVector4(1, 1, 1, 1) == SlicerVector4(1, 1, 2, 1));
+		REQUIRE_FALSE(SlicerVector4(1, 1, 1, 1) == SlicerVector4(1, 1, 1, 2));
+	}
+}

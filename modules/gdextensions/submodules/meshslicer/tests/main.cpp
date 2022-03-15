@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  optimize.h                                                           */
+/*  main.cpp                                                             */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,57 +28,60 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef SCENE_OPTIMIZE_H
-#define SCENE_OPTIMIZE_H
+#define CATCH_CONFIG_RUNNER
+#include "main/main.h"
+#include "catch.hpp"
+#include "core/math/face3.h"
+#include "platform/server/os_server.h"
+#include <string.h>
 
-#ifdef TOOLS_ENABLED
-#include "core/bind/core_bind.h"
-#include "core/reference.h"
-#include "editor/editor_node.h"
-#include "editor/editor_plugin.h"
-#include "modules/csg/csg_shape.h"
-#include "modules/gridmap/grid_map.h"
-#include "scene/3d/mesh_instance.h"
-#include "scene/main/node.h"
+// Find the index of the --godot argument. If no argument
+// found then returns -1
+int get_start_of_godot_args(int argc, char *argv[]) {
+	// The first index is reserved for the program name so we can skip it
+	for (int i = 1; i < argc; i++) {
+		if (strncmp(argv[i], "--godot", 2) == 0) {
+			return i;
+		}
+	}
 
-class MeshOptimize : public Reference {
-private:
-	GDCLASS(MeshOptimize, Reference);
+	// Because 0 is invalid this could also have just been 0, but
+	// let's try to keep things a little less confusing
+	return -1;
+}
 
-	void _find_all_mesh_instances(Vector<MeshInstance *> &r_items, Node *p_current_node, const Node *p_owner);
-	void _dialog_action(String p_file);
-	void _node_replace_owner(Node *p_base, Node *p_node, Node *p_root);
+// Allocates and fills a new array of char pointers that points to godot arguments
+char **make_godot_args(int godot_args_length, int start_of_godot_args, char *argv[]) {
+	// We shouldn't need to worry too much about memory management here
+	char **godot_args = new char *[godot_args_length];
 
-public:
-	struct MeshInfo {
-		Transform transform;
-		Ref<Mesh> mesh;
-		String name;
-		Node *original_node;
-		NodePath skeleton_path;
-		Ref<Skin> skin;
-	};
-	void optimize(const String p_file, Node *p_root_node);
-	void simplify(Node *p_root_node);
-};
+	// We don't want the --godot arg but we do want the program name
+	godot_args[0] = argv[0];
 
-class MeshOptimizePlugin : public EditorPlugin {
-	GDCLASS(MeshOptimizePlugin, EditorPlugin);
+	for (int i = 1; i < godot_args_length; i++) {
+		godot_args[i] = argv[start_of_godot_args + i];
+	}
 
-	EditorNode *editor;
-	CheckBox *file_export_lib_merge;
-	EditorFileDialog *file_export_lib;
-	Ref<MeshOptimize> scene_optimize;
-	void _dialog_action(String p_file);
+	return godot_args;
+}
 
-protected:
-	static void _bind_methods();
+int main(int argc, char *argv[]) {
+	// Allow passing in commands into both Catch and the Godot server
+	// by splitting on a "--godot" arg
+	int start_of_godot_args = get_start_of_godot_args(argc, argv);
+	int godot_args_length = start_of_godot_args != -1 ? argc - start_of_godot_args : 0;
+	int catch_args_length = argc - godot_args_length;
+	char **godot_args = make_godot_args(godot_args_length, start_of_godot_args, argv);
 
-public:
-	MeshOptimizePlugin(EditorNode *p_node);
-	void _notification(int notification);
-	void optimize(Variant p_user_data);
-};
+	OS_Server os;
+	Error err = Main::setup(argv[0], godot_args_length, godot_args);
+	if (err != OK)
+		return 255;
 
-#endif
-#endif
+	int result = Catch::Session().run(catch_args_length, argv);
+
+	Main::cleanup();
+	delete godot_args;
+
+	return result;
+}
