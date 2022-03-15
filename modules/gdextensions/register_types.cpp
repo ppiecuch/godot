@@ -169,6 +169,10 @@ static Ref<ResourceLoaderJSONVector> resource_loader_jsonvector;
 #include "meshlod/optimize.h"
 #endif
 
+#ifdef GDEXT_MESHSLICER_ENABLED
+#include "meshslicer/slicer.h"
+#endif
+
 #ifdef GDEXT_NAKAMA1_ENABLED
 #include "nakama1/gd_nakama1.h"
 #endif
@@ -433,6 +437,11 @@ void register_gdextensions_types() {
 #ifdef GDEXT_MESHLOD_ENABLED
 	ClassDB::register_class<MeshOptimize>();
 	EditorPlugins::add_by_type<MeshOptimizePlugin>();
+#endif
+
+#ifdef GDEXT_MESHSLICER_ENABLED
+	ClassDB::register_class<Slicer>();
+	ClassDB::register_class<SlicedMesh>();
 #endif
 
 #ifdef TOOLS_ENABLED
