@@ -51,8 +51,6 @@
 #include <IOKit/hid/IOHIDKeys.h>
 #include <IOKit/hid/IOHIDLib.h>
 
-#import <Metal/Metal.h>
-#import <QuartzCore/CAMetalLayer.h>
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 101200
 #include <os/log.h>
 #endif
@@ -494,27 +492,21 @@ static NSDictionary *touchBarButtonRuntimeActions = @{};
 	bool imeInputEventInProgress;
 	BackingLayerType backingLayerType;
 	CALayer *backingLayer;
-	// OpenGL support
 	NSOpenGLContext *openGLContext;
 	NSOpenGLPixelFormat *pixelFormat;
-	// Metal support
 }
 - (instancetype)initForBackend:(BackingLayerType)viewType;
 - (void)cancelComposition;
 - (BOOL)wantsUpdateLayer;
 - (void)updateLayer;
-// OpenGL-based interface
 + (NSOpenGLPixelFormat *)defaultPixelFormat;
-- (id)initWithFrame:(NSRect)frameRect
-		pixelFormat:(NSOpenGLPixelFormat *)format;
+- (id)initWithFrame:(NSRect)frameRect pixelFormat:(NSOpenGLPixelFormat *)format;
 - (void)setOpenGLContext:(NSOpenGLContext *)context;
 - (NSOpenGLContext *)openGLContext;
 - (void)setPixelFormat:(NSOpenGLPixelFormat *)format;
 - (NSOpenGLPixelFormat *)pixelFormat;
 - (void)clearGLContext;
 - (void)deallocOpenGL;
-// Metal-based interface
-- (void)deallocMetal;
 @end
 
 @implementation GodotContentView
@@ -1455,7 +1447,6 @@ inline void sendPanEvent(double dx, double dy, int modifierFlags) {
 	}
 }
 
-#pragma mark OpenGL interface
 - (void)initDetails {
 	NSNotificationCenter *ntfcenter;
 
@@ -1518,8 +1509,6 @@ inline void sendPanEvent(double dx, double dy, int modifierFlags) {
 	}
 	[self.openGLContext setView:self];
 }
-
-#pragma mark -
 
 + (NSOpenGLPixelFormat *)defaultPixelFormat {
 	static NSOpenGLPixelFormat *pixelFormat;
@@ -1590,10 +1579,6 @@ inline void sendPanEvent(double dx, double dy, int modifierFlags) {
 
 	openGLContext = nil;
 	pixelFormat = nil;
-}
-
-#pragma mark Metal interface
-- (void)deallocMetal {
 }
 
 #pragma mark NSTouchBarDelegate/NSTouchBarProvider
@@ -1997,7 +1982,7 @@ Error OS_OSX::initialize(const VideoMode &p_desired, int p_video_driver, int p_a
 	}
 
 	if (gl_initialization_error) {
-		OS::get_singleton()->alert("Your video card driver does not support any of the supported OpenGL versions.\n"
+		OS::get_singleton()->alert("Your video card driver does not support any of the supported OpenGL/Metal versions.\n"
 								   "Please update your drivers or if you have a very old or integrated GPU, upgrade it.",
 				"Unable to initialize Video driver");
 		return ERR_UNAVAILABLE;

@@ -24,6 +24,18 @@ if [[ ! -d $VITASDK ]]; then
 	_run_in_docker retro_dev $(basename "${BASH_SOURCE[0]}")
 fi
 
+echo "Building PSVITA template:"
+echo "-------------------------"
+echo " - host CPU: $CPU"
+echo " - VITASDK: $VITASDK"
+echo " - options:  $*"
+echo ""
+
+if [[ ! -d $VITASDK ]]; then
+	echo "VITASDK ($VITASDK) not found."
+	exit 1
+fi
+
 scons $* -j$CPU p=psvita target=release disable_3d=true disable_advanced_gui=true
 
 mkdir -p bin/templates/psvita

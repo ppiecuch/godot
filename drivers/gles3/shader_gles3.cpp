@@ -653,13 +653,8 @@ ShaderGLES3::Version *ShaderGLES3::get_current_version(bool &r_async_forbidden) 
 
 #ifdef DEBUG_SHADER
 	DEBUG_PRINT("\nVertex Code:\n\n" + String(code_string.get_data()));
-<<<<<<< HEAD
-	for (int i = 0; i < strings.size(); i++) {
-		DEBUG_PRINT("//vert strings " + itos(i) + ":\n" + String(strings[i]));
-=======
 	for (int i = 0; i < strings_vertex.size(); i++) {
-		//print_line("vert strings "+itos(i)+":"+String(strings_vertex[i]));
->>>>>>> dd3acd74bbd0c682f489693e31961aba54bde10a
+		DEBUG_PRINT("// vert strings " + itos(i) + ":\n" + String(strings_vertex[i]));
 	}
 #endif
 
@@ -739,13 +734,8 @@ ShaderGLES3::Version *ShaderGLES3::get_current_version(bool &r_async_forbidden) 
 #ifdef DEBUG_SHADER
 	DEBUG_PRINT("\nFragment Globals:\n\n" + String(code_globals.get_data()));
 	DEBUG_PRINT("\nFragment Code:\n\n" + String(code_string2.get_data()));
-<<<<<<< HEAD
-	for (int i = 0; i < strings.size(); i++) {
-		DEBUG_PRINT("//frag strings " + itos(i) + ":\n" + String(strings[i]));
-=======
 	for (int i = 0; i < strings_fragment.size(); i++) {
-		//print_line("frag strings "+itos(i)+":"+String(strings_fragment[i]));
->>>>>>> dd3acd74bbd0c682f489693e31961aba54bde10a
+		DEBUG_PRINT("// frag strings " + itos(i) + ":\n" + String(strings_fragment[i]));
 	}
 #endif
 

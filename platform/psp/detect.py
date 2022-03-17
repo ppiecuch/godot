@@ -50,7 +50,6 @@ def get_flags():
         ("builtin_zlib", True),
         ("builtin_libpng", True),
         ("builtin_pcre2_with_jit", False),
-        ("feature_multiplethreads_allowed", False),
     ]
 
 

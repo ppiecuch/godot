@@ -72,7 +72,6 @@ def get_flags():
         ("builtin_pcre2_with_jit", False),
         ("disable_3d", True),
         ("disable_advanced_gui", True),
-        ("feature_multiplethreads_allowed", False),
     ]
 
 

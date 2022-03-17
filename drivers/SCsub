@@ -26,13 +26,13 @@ SConscript("fluidsynth/SCsub")
 # Graphics drivers
 if env["platform"] != "3ds" and env["platform"] != "psp":
     if env["platform"] != "server":
-        if env["platform"] != "psvita":
+        if not env["disable_3d"] and env["platform"] != "psvita":
             SConscript("gles3/SCsub")
         SConscript("gles2/SCsub")
         SConscript("gles_common/SCsub")
         SConscript("gl_context/SCsub")
-        if env["platform"] == "osx":
-            SConscript("metal/SCsub")
+        if env["platform"] == "osx" or env["platform"] == "iphone":
+            SConscript("gles3+mgl/SCsub")
     else:
         SConscript("dummy/SCsub")
 

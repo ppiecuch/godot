@@ -104,6 +104,22 @@
 #define DEBUG_VAR(pVar)
 #endif
 
+#ifndef _DEPRECATED
+#if (__GNUC__ >= 4) /* technically, this arrived in gcc 3.1, but oh well. */
+#define _DEPRECATED __attribute__((deprecated))
+#else
+#define _DEPRECATED
+#endif
+#endif
+
+#ifndef _UNUSED
+#ifdef __GNUC__
+#define _UNUSED __attribute__((unused))
+#else
+#define _UNUSED
+#endif
+#endif
+
 #ifdef DEBUG_ENABLED
 // Bind constant with custom name
 #define BIND_ENUM_CONSTANT_CUSTOM(pConstant, pName) \

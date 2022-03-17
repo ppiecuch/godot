@@ -142,7 +142,7 @@ struct _NO_DISCARD_CLASS_ Color {
 
 		// expp = MAX(-B - 1, log2(maxc)) + 1 + B
 
-		float expp = MAX(-B - 1.0f, floor(Math::log(cMax) / Math_LN2)) + 1.0f + B;
+		float expp = MAX(-B - 1.0f, Math::floor(Math::log(cMax) / Math_LN2)) + 1.0f + B;
 
 		float sMax = (float)floor((cMax / Math::pow(2.0f, expp - B - N)) + 0.5f);
 

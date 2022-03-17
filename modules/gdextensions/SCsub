@@ -28,6 +28,7 @@ sources = Glob("*.cpp") + Glob("common/*.cpp")
 modules = [
     "core",
     "visual",
+    "threadpool",
     "bulletkit",
     "blitter",
     "benchmark",
@@ -108,7 +109,6 @@ if not env["disable_3d"]:
             modules += ["meshslicer"]
             sources += Glob("submodules/meshslicer/utils/*.cpp")
 
-if env["feature_multiplethreads_allowed"]:
     modules += ["threadpool"]
 
 if env["os_family"] in ["os_windows", "os_unix"]:
