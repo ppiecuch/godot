@@ -1,0 +1,7 @@
+#!/usr/bin/env python
+
+Import("env")
+
+if env["platform"] == "osx":
+    env_app = env.Clone()
+    env_app.Program("metal_shader_check", ["metal_shader_check.mm"], PROGSUFFIX="", FRAMEWORKS=["Metal", "Foundation"])

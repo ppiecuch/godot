@@ -1,0 +1,9 @@
+#define METAL_SHADER_OUT
+
+#define ShaderGLES3 ShaderMGL
+#define ShaderCacheGLES3 ShaderCacheMGL
+#define RasterizerGLES3 RasterizerMGL
+#define RasterizerCanvasBaseGLES3 RasterizerCanvasBaseMGL
+#define RasterizerCanvasGLES3 RasterizerCanvasMGL
+#define RasterizerStorageGLES3 RasterizerStorageMGL
+#define RasterizerSceneGLES3 RasterizerSceneMGL
