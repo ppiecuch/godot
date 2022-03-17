@@ -751,7 +751,7 @@ const char *OS::get_video_driver_name(int p_driver) const {
 		case VIDEO_DRIVER_GLES3:
 			return "GLES3";
 #ifdef METAL_ENABLED
-		case VIDEO_DRIVER_METAL:
+		case VIDEO_DRIVER_MGL:
 			return "METAL";
 #endif
 		default:
