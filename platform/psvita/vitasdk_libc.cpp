@@ -210,50 +210,6 @@ uint64_t _ms_free_space() {
 	return (uint64_t)devinfo.free_clusters * (uint64_t)devinfo.sector_count * (uint64_t)devinfo.sector_size;
 }
 
-extern "C" char *getcwd(char *path, size_t path_size) {
-	char *buf = path;
-	if (buf == NULL) {
-		buf = (char *)malloc(1);
-		path_size = 1;
-	}
-	if (buf == NULL)
-		return NULL;
-	if (path_size < 1)
-		return NULL;
-	*buf = 0;
-	return buf;
-}
-
-extern "C" int chmod(const char *path, mode_t mode) {
-	WARN_PRINT("chmod unsupported");
-	return R_ERR;
-}
-
-extern "C" int fchmod(int fdes, mode_t mode) {
-	return R_OK;
-}
-
-extern "C" int mkdir(const char *path, mode_t mode) {
-	if (!sceIoMkdir(path, mode)) {
-		WARN_PRINT("sceIoMkdir failed");
-		return R_ERR;
-	}
-	return R_OK;
-}
-
-extern "C" int rmdir(const char *path) {
-	if (!sceIoRmdir(path)) {
-		WARN_PRINT("sceIoRmdir failed");
-		return R_ERR;
-	}
-	return R_OK;
-}
-
-extern "C" int chdir(const char *path) {
-	WARN_PRINT("chdir unsupported");
-	return R_ERR;
-}
-
 extern "C" ssize_t readlink(const char *path, char *buf, size_t bufsize) {
 	WARN_PRINT("readlink unsupported");
 	return 0;
@@ -261,6 +217,15 @@ extern "C" ssize_t readlink(const char *path, char *buf, size_t bufsize) {
 
 extern "C" int symlink(const char *path1, const char *path2) {
 	WARN_PRINT("symlink unsupported");
+	return R_ERR;
+}
+
+extern "C" mode_t umask(mode_t mask) {
+	return 0666;
+}
+
+extern "C" int utime(const char *path, const struct utimbuf *times) {
+	WARN_PRINT("utime unsupported");
 	return R_ERR;
 }
 
@@ -299,88 +264,6 @@ extern "C" struct hostent *gethostbyaddr(const void *__addr, socklen_t __len, in
 	ent.h_addr = addrlist[0];
 
 	return &ent;
-}
-
-extern "C" int scandir(const char *dir, struct dirent ***namelist_out,
-		int (*filter)(const struct dirent *),
-		int (*compar)(const struct dirent **, const struct dirent **)) {
-	int ret = -1, dir_uid = -1, name_alloc = 4, name_count = 0;
-	struct dirent **namelist = nullptr, *ent;
-	SceIoDirent sce_ent;
-
-	namelist = (dirent **)malloc(sizeof(*namelist) * name_alloc);
-	if (namelist == nullptr) {
-		LOG_PRINT("%s:%i: OOM\n", __FILE__, __LINE__);
-		goto fail;
-	}
-
-	// try to read first..
-	dir_uid = sceIoDopen(dir);
-	if (dir_uid >= 0) {
-		/* it is very important to clear SceIoDirent to be passed to sceIoDread(), */
-		/* or else it may crash, probably misinterpreting something in it. */
-		memset(&sce_ent, 0, sizeof(sce_ent));
-		ret = sceIoDread(dir_uid, &sce_ent);
-		if (ret < 0) {
-			LOG_PRINT("sceIoDread(\"%s\") failed with %i\n", dir, ret);
-			goto fail;
-		}
-	} else {
-		LOG_PRINT("sceIoDopen(\"%s\") failed with %i\n", dir, dir_uid);
-	}
-
-	while (ret > 0) {
-		ent = (dirent *)malloc(sizeof(*ent));
-		if (ent == nullptr) {
-			LOG_PRINT("%s:%i: OOM\n", __FILE__, __LINE__);
-			goto fail;
-		}
-		ent->d_stat = sce_ent.d_stat;
-		ent->d_stat.st_attr &= SCE_SO_IFMT; // serves as d_type
-		strncpy(ent->d_name, sce_ent.d_name, sizeof(ent->d_name));
-		ent->d_name[sizeof(ent->d_name) - 1] = 0;
-		if (filter == nullptr || filter(ent))
-			namelist[name_count++] = ent;
-		else
-			free(ent);
-
-		if (name_count >= name_alloc) {
-			dirent **tmp;
-			name_alloc *= 2;
-			tmp = (dirent **)realloc(namelist, sizeof(*namelist) * name_alloc);
-			if (tmp == nullptr) {
-				LOG_PRINT("%s:%i: OOM\n", __FILE__, __LINE__);
-				goto fail;
-			}
-			namelist = tmp;
-		}
-
-		memset(&sce_ent, 0, sizeof(sce_ent));
-		ret = sceIoDread(dir_uid, &sce_ent);
-	}
-
-	// sort
-	if (compar != nullptr && name_count > 3) {
-		qsort(&namelist[2], name_count - 2, sizeof(namelist[0]), (__compar_fn_t)compar);
-	}
-
-	// all done.
-	ret = name_count;
-	*namelist_out = namelist;
-	goto end;
-
-fail:
-	if (namelist != nullptr) {
-		while (name_count--) {
-			free(namelist[name_count]);
-		}
-		free(namelist);
-	}
-end:
-	if (dir_uid >= 0) {
-		sceIoDclose(dir_uid);
-	}
-	return ret;
 }
 
 extern "C" int asprintf(char **ret, const char *format, ...) {

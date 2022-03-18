@@ -18,9 +18,9 @@ fi
 export VITASDK=/opt/vitasdk
 export PATH=$VITASDK/bin:/bin:/sbin:/usr/bin:/opt/local/bin
 
-if [[ ! -d $VITASDK ]]; then
+if [[ ! -d $VITASDK ]] || [[ $1 == "docker" ]]; then
 	# try run this script in docker (using retro_dev image)
-	echo "VITASDK not found. Trying to run in Docker using retro_dev image .."
+	echo "Trying to run the build in Docker using retro_dev image .."
 	_run_in_docker retro_dev $(basename "${BASH_SOURCE[0]}")
 fi
 
