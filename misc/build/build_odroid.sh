@@ -7,7 +7,11 @@ CC="aarch64-linux-gnu-gcc"
 
 if [ ! -e "$CROSS/$CC" ]; then
 
-	(cd platform/frt && git pull) # update platform repository
+	if [[ ! -d platform/frt ]]; then
+		(cd platform && git clone --depth=1 https://github.com/ppiecuch/frt)
+	else
+		(cd platform/frt && git pull) # update platform repository
+	fi
 
 	# toolchain not found - run docker image
 	if ! command -v docker &> /dev/null
