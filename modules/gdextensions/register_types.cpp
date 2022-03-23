@@ -110,6 +110,7 @@
 #include "visual/sprite_mesh.h"
 #include "visual/texture_panning.h"
 #include "visual/touch_button.h"
+#include "visual/widget_controls.h"
 
 #include "vgamepad/vgamepad.h"
 
@@ -353,6 +354,9 @@ void register_gdextensions_types() {
 	ClassDB::register_class<Starfield2D>();
 	ClassDB::register_class<TouchButton>();
 	ClassDB::register_class<TexturePanning>();
+#ifdef TOOLS_ENABLED
+	ClassDB::register_class<ControlWidget>();
+#endif
 #endif // GDEXT_VISUAL_ENABLED
 #ifdef GDEXT_VGAMEPAD_ENABLED
 	ClassDB::register_class<VGamePad>();

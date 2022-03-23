@@ -167,6 +167,13 @@ if is_enabled("tileengine"):
 if is_enabled("flashdb"):
     thirdparty_sources += Glob("thirdparty/flashdb/src/*.c")
 
+if is_enabled("turbobadger"):
+    env_module.Append(CPPPATH=["submodules/turbobadger/src"])
+	if env["module_freetype_enabled"]:
+		env_module.Append(CPPDEFINES=["TB_FONT_RENDERER_FREETYPE"])
+	else:
+		env_module.Append(CPPDEFINES=["TB_FONT_RENDERER_STB"])
+
 sub_building = []
 for m in modules:
     if is_enabled(m):
@@ -189,7 +196,7 @@ env_module.Append(
 
 if env["builtin_freetype"]:
     env_module.Prepend(CPPPATH=["#thirdparty/freetype/include"])
-env_module.Append(CPPDEFINES=["GD_CQUEUE", "GD_GODOT_ENET", "GD_NO_UNUSED_FUNCTIONS"])
+env_module.Append(CPPDEFINES=["GD_CQUEUE", "GD_GODOT_ENET"])
 
 # Compile as a static library
 lib = env_module.Library("gdextensions", thirdparty_sources + sources)
