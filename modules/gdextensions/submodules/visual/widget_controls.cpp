@@ -44,13 +44,12 @@
 
 /// Rotation ball
 
-enum { xcv_rotate_stacks = 8 }; // 32
+enum { xcv_rotate_stacks = 16 }; // 32
 
-static void _rotate_sphere(Ref<ArrayMesh> mesh, real_t r, int slices, int stacks) {
+static void _rotate_sphere(Ref<ArrayMesh> mesh, real_t r, int slices, int stacks, Transform transform = Transform()) {
 	PoolVector3Array verts, norms;
 	PoolVector2Array texs;
-	PoolIntArray indexes, indexes2;
-	PoolColorArray cols;
+	PoolIntArray indexes;
 
 	// There's a backward facing disc on one end visible in LINE mode.
 	// Adjusting s0 and s1 would work also.
@@ -79,9 +78,8 @@ static void _rotate_sphere(Ref<ArrayMesh> mesh, real_t r, int slices, int stacks
 		s1 = 1 - s1;
 
 		// NOTE: Quads look best in wireframe.
-		for (int j = slices + 1; j-- > 0; v += 4) {
+		for (int j = slices + 1; j-- > 0; v += 2) {
 			const real_t t = (real_t)j / slices;
-			print_line(vformat("t=%f j=%d slices=%d", t, j, slices));
 			const real_t lng = 2 * Math_PI * t;
 			const real_t x = Math::cos(lng);
 			const real_t y = Math::sin(lng);
@@ -94,39 +92,21 @@ static void _rotate_sphere(Ref<ArrayMesh> mesh, real_t r, int slices, int stacks
 			norms.push_back({ x * zr1, y * zr1, z1 });
 			verts.push_back({ r * x * zr1, r * y * zr1, r * z1 });
 
-			cols.append_array(parray(Color(1, 0, 0, 1), Color(0, 1, 0, 1)));
-
 			if (j == slices) {
-				print_line(vformat("skip %d", v));
 				continue;
 			}
 
-			//indexes.append_array(parray(v - 2, v - 1, v + 0, v - 2, v + 0, v + 1)); // 0,1,2 0,2,3
-			if (j)
-				indexes.append_array(parray(v - 2, v - 1, v + 0)); // 0,1,2 0,2,3
-
-			// indexes2.append_array(parray(v - 2, v - 1)); // 0,1
-			// indexes2.append_array(parray(v - 2, v + 1)); // 0,3
-			//indexes2.append_array(parray(v - 1, v + 1)); // 1,3
-			indexes2.append_array(parray(v - 2, v + 0)); // 0,2
+			indexes.append_array(parray(v - 2, v - 1, v + 0, v - 1, v + 0, v + 1)); // 0,1,2 1,2,3
 		}
 	}
 
 	Array mesh_array;
 	mesh_array.resize(VS::ARRAY_MAX);
 	mesh_array[VS::ARRAY_VERTEX] = verts;
-	//mesh_array[VS::ARRAY_TEX_UV] = texs;
+	mesh_array[VS::ARRAY_TEX_UV] = texs;
 	mesh_array[VS::ARRAY_NORMAL] = norms;
-	mesh_array[VS::ARRAY_COLOR] = cols;
 	mesh_array[VS::ARRAY_INDEX] = indexes;
 	mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array);
-	print_line(vformat("v: %s", verts));
-	print_line(vformat("i: %s", indexes));
-	print_line(vformat("t: %s", texs));
-	mesh_array[VS::ARRAY_TEX_UV] = Variant();
-	mesh_array[VS::ARRAY_COLOR] = Variant();
-	mesh_array[VS::ARRAY_INDEX] = indexes2;
-	mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, mesh_array);
 }
 
 static void _draw_ball(Ref<ArrayMesh> mesh, real_t radius) {
