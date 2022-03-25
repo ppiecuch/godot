@@ -1916,8 +1916,10 @@ FN_DECIMAL FastNoise::GetNoise(FN_DECIMAL x, FN_DECIMAL y) const {
 	return 0;
 }
 
+#ifdef __GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
+#endif
 
 // White Noise
 FN_DECIMAL FastNoise::GetWhiteNoise(FN_DECIMAL x, FN_DECIMAL y, FN_DECIMAL z, FN_DECIMAL w) const {
@@ -1941,7 +1943,9 @@ FN_DECIMAL FastNoise::GetWhiteNoise(FN_DECIMAL x, FN_DECIMAL y) const {
 			*reinterpret_cast<int *>(&y) ^ (*reinterpret_cast<int *>(&y) >> 16));
 }
 
+#ifdef __GNUC__
 #pragma GCC diagnostic pop
+#endif
 
 FN_DECIMAL FastNoise::GetWhiteNoiseInt(int x, int y, int z, int w) const {
 	return ValCoord4D(m_seed, x, y, z, w);

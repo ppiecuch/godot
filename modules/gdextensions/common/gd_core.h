@@ -47,6 +47,26 @@
 #include <ostream>
 #include <vector>
 
+// Architecture
+#define GD_ARCH_32BIT 0
+#define GD_ARCH_64BIT 0
+
+#if defined(__x86_64__)    \
+ || defined(_M_X64)        \
+ || defined(__aarch64__)   \
+ || defined(__64BIT__)     \
+ || defined(__mips64)      \
+ || defined(__powerpc64__) \
+ || defined(__ppc64__)     \
+ || defined(__LP64__)
+# undef  GD_ARCH_64BIT
+# define GD_ARCH_64BIT 64
+#else
+# undef  GD_ARCH_32BIT
+# define GD_ARCH_32BIT 32
+#endif //
+
+ // C++ variants
 #if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) || __cplusplus >= 201703L)
 #define CPP17
 #endif
