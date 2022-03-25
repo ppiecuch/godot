@@ -39,6 +39,8 @@
  */
 #include "vtrimmer.h"
 
+#if TOOLS_ENABLED
+
 #include "core/math/vector2.h"
 
 _FORCE_INLINE_ static real_t distance(const Point2 &pt1, const Point2 &pt2) {
@@ -71,7 +73,7 @@ struct CHNode {
 static real_t AreaX2Of(const Point2 &v0, const Point2 &v1, const Point2 &v2) {
 	Point2 u = v1 - v0;
 	Point2 v = v2 - v0;
-	return /*fabsf*/ (u.y * v.x - u.x * v.y);
+	return /* Math::absf */ (u.y * v.x - u.x * v.y);
 }
 
 class ConvexHull {
@@ -140,6 +142,9 @@ struct WorkPacket {
 };
 
 static int FindOptimalRotation(Point2 *vertices, int vertex_count, unsigned *indices);
+
+
+/// Public interface:
 
 bool vertex_trimmer(Ref<Image> &image, vertex_trimmer_opt_t *opt) {
 	unsigned threshold = 0;
@@ -433,6 +438,7 @@ static int FindOptimalRotation(Point2 *vertices, int vertex_count, unsigned *ind
 	}
 	return optimal;
 }
+
 
 /// ConvexHull
 
@@ -918,3 +924,5 @@ unsigned ConvexHull::FindOptimalPolygon(Point2 *dest, unsigned vertex_count, rea
 
 	return vertex_count;
 }
+
+#endif // TOOLS_ENABLED

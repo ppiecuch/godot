@@ -16,16 +16,17 @@
 
 /// Rotation ball
 
-enum { xcv_rotate_stacks = 16 }; // 32
+enum { xcv_rotate_stacks = 8 }; // 32
 
-static void _rotate_sphere(real_t r, int slices, int stacks) {
+static void _rotate_sphere(Ref<ArrayMesh> mesh, real_t r, int slices, int stacks) {
 	PoolVector3Array verts, norms;
 	PoolVector2Array texs;
-	PoolColorArray colors;
+	PoolIntArray indexes,indexes2;
+	PoolColorArray cols;
 
 	// There's a backward facing disc on one end visible in LINE mode.
 	// Adjusting s0 and s1 would work also.
-	for(int i = 1; i <= stacks; i++) {
+	for(int i = 1, v = 0; i <= stacks; i++) {
 		real_t s0 = (real_t) (i - 1) / stacks;
 
 		const real_t lat0 = Math_PI * (-0.5 + s0);
@@ -43,15 +44,15 @@ static void _rotate_sphere(real_t r, int slices, int stacks) {
 		// widget's checkerboard. It might be wrong
 		// for a non symmetrical texture.
 		// Note, in theory whether the checkerboard
-		// colors are swithed doesn't matter but it
+		// colors are switched doesn't matter but it
 		// might because of its shadow and it's the
 		// way it's always been.
-		s0 = 1-s0; s1 = 1-s1;
+		s0 = 1 - s0; s1 = 1 - s1;
 
-		// NOTE: Quads look best in wire frame.
-		for(int j = slices + 1; j-->0;) {
-			const real_t t = (real_t) (j - 1) / slices;
-
+		// NOTE: Quads look best in wireframe.
+ 		for(int j = slices + 1; j-->0; v += 2) {
+			const real_t t = (real_t) j / slices;
+print_line(vformat("t=%f j=%d slices=%d",t,j,slices));
 			const real_t lng = 2 * Math_PI * t;
 			const real_t x = Math::cos(lng);
 			const real_t y = Math::sin(lng);
@@ -63,35 +64,45 @@ static void _rotate_sphere(real_t r, int slices, int stacks) {
 			texs.push_back({s1, t});
 			norms.push_back({x * zr1, y * zr1, z1});
 			verts.push_back({r * x * zr1, r * y * zr1, r * z1});
+
+			cols.append_array(parray(Color(1,0,0,1), Color(0,1,0,1)));
+
+			if (j == slices) {
+				print_line(vformat("skip %d",v));
+				continue;
+			}
+
+			//indexes.append_array(parray(v - 2, v - 1, v + 0, v - 2, v + 0, v + 1)); // 0,1,2 0,2,3
+			if (j) indexes.append_array(parray(v - 2, v - 1, v + 0)); // 0,1,2 0,2,3
+
+			// indexes2.append_array(parray(v - 2, v - 1)); // 0,1
+			// indexes2.append_array(parray(v - 2, v + 1)); // 0,3
+			//indexes2.append_array(parray(v - 1, v + 1)); // 1,3
+			indexes2.append_array(parray(v - 2, v + 0)); // 0,2
 		}
 	}
+
+	Array mesh_array;
+	mesh_array.resize(VS::ARRAY_MAX);
+	mesh_array[VS::ARRAY_VERTEX] = verts;
+	//mesh_array[VS::ARRAY_TEX_UV] = texs;
+	mesh_array[VS::ARRAY_NORMAL] = norms;
+	mesh_array[VS::ARRAY_COLOR] = cols;
+	mesh_array[VS::ARRAY_INDEX] = indexes;
+	mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array);
+	print_line(vformat("v: %s",verts));
+	print_line(vformat("i: %s",indexes));
+	print_line(vformat("t: %s",texs));
+	mesh_array[VS::ARRAY_TEX_UV] = Variant();
+	mesh_array[VS::ARRAY_COLOR] = Variant();
+	mesh_array[VS::ARRAY_INDEX] = indexes2;
+	mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, mesh_array);
 }
 
-static bool _draw_ball(float radius, bool t, bool l) {
-	if (t) { // setup_texture
-		enum {
-			dark = 110, // Dark and light colors for _ball checkerboard
-			light = 220,
-
-			checkboard_size = 64 * 2, // pixels across whole texture
-			checkboard_repeat = 32, // pixels across one black/white sector
-		};
-
-		unsigned char c,
-		texture_image[checkboard_size][checkboard_size];
-		for(int i = 0; i < checkboard_size; i++) {
-			for(int j = 0; j < checkboard_size; j++) {
-				c = (i/checkboard_repeat)&1^(j/checkboard_repeat)&1 ? light : dark;
-				texture_image[i][j] = c;
-			}
-		}
-	}
-
+static void _draw_ball(Ref<ArrayMesh> mesh, real_t radius) {
 	if (radius) {
-		_rotate_sphere(radius, xcv_rotate_stacks*3/2, xcv_rotate_stacks);
+		_rotate_sphere(mesh, radius, xcv_rotate_stacks*3/2, xcv_rotate_stacks);
 	}
-
-	return true;
 }
 
 
@@ -129,7 +140,6 @@ static void _draw_2d_arrow(Ref<ArrayMesh> mesh, int radius, bool filled, bool en
 
 	struct mesh_info_t  {
 		PoolVector2Array verts;
-		PoolVector2Array texs;
 		PoolColorArray colors;
 
 		Color curr_color;
@@ -137,9 +147,10 @@ static void _draw_2d_arrow(Ref<ArrayMesh> mesh, int radius, bool filled, bool en
 		void set_color(const Color &color) { curr_color = color; }
 		void set_color(real_t grey) { curr_color = { grey, grey, grey }; }
 		void add_vert(const Vector2 &vert) { colors.push_back(curr_color); verts.push_back(vert); }
+		void add_vert(const Transform2D &transform, const Vector2 &vert) { colors.push_back(curr_color); verts.push_back(transform.xform(vert)); }
 	};
 
-	Transform2D mesh_xform;
+	Transform2D curr_xform;
 
 	const Color white{1, 1, 1};
 	const Color black{0, 0, 0};
@@ -160,16 +171,16 @@ static void _draw_2d_arrow(Ref<ArrayMesh> mesh, int radius, bool filled, bool en
 	if (orientation == 2) {
 		c_rot = 4;
 	} else if (orientation == 0) {
-		c_rot = 0; mesh_xform.rotate(Math::deg2rad(180.0));
+		c_rot = 0; curr_xform.rotate(Math::deg2rad(180.0));
 	} else if (orientation == 1) {
-		c_rot = 2; mesh_xform.rotate(Math::deg2rad(90.0));
+		c_rot = 2; curr_xform.rotate(Math::deg2rad(90.0));
 	} else if (orientation == 3) {
-		c_rot = 6; mesh_xform.rotate(Math::deg2rad(-90.0));
+		c_rot = 6; curr_xform.rotate(Math::deg2rad(-90.0));
 	}
 
 	real_t x1_= radius * 0.2;
 	real_t x2 = x1_ * 2;
-	real_t y0 = trans_type == TRANS_XY ? x1_ : 0;
+	real_t y0 = (trans_type == TRANS_XY) ? x1_ : 0;
 	real_t y1 = radius * 0.54;
 	real_t y2 = y1 + x2;
 	real_t x1a = x1_, x1b = x1_;
@@ -177,7 +188,7 @@ static void _draw_2d_arrow(Ref<ArrayMesh> mesh, int radius, bool filled, bool en
 		real_t x = 0.75;
 
 		if (orientation == 0) {
-			// x1b-=2; x1a+=2;
+			// x1b -= 2; x1a += 2;
 			x1b *= x * 0.8; x1a /= x;
 
 			// y1 += 2; y2 += 0;
@@ -195,7 +206,7 @@ static void _draw_2d_arrow(Ref<ArrayMesh> mesh, int radius, bool filled, bool en
 			// x2 += 6;
 			x2 -= int(y1 + 0.5) - x; // 45
 			
-			//x1b += 4;
+			// x1b += 4;
 			x1b *= 1.7;
 		}
 	}
@@ -245,13 +256,13 @@ static void _draw_2d_arrow(Ref<ArrayMesh> mesh, int radius, bool filled, bool en
 			c_rot += 4; // Indents the shadows - goes from a raised look to embossed
 		}
 
-		mesh_info.add_vert({0, y2});
-		mesh_info.add_vert({-x2, y1});
-		mesh_info.add_vert({-x1b, y1});
-		mesh_info.add_vert({-x1a, 0}); // y0
-		mesh_info.add_vert({x1a, 0}); // y0
-		mesh_info.add_vert({x1b, y1});
-		mesh_info.add_vert({x2, y1});
+		mesh_info.add_vert(curr_xform, {0, y2});
+		mesh_info.add_vert(curr_xform, {-x2, y1});
+		mesh_info.add_vert(curr_xform, {-x1b, y1});
+		mesh_info.add_vert(curr_xform, {-x1a, 0}); // y0
+		mesh_info.add_vert(curr_xform, {x1a, 0}); // y0
+		mesh_info.add_vert(curr_xform, {x1b, y1});
+		mesh_info.add_vert(curr_xform, {x2, y1});
 
 		Array mesh_array;
 		mesh_array.resize(VS::ARRAY_MAX);
@@ -261,7 +272,6 @@ static void _draw_2d_arrow(Ref<ArrayMesh> mesh, int radius, bool filled, bool en
 	}
 
 disabled:
-
 	bool z2 = z1; (orientation ? z1 : z2) = false;
 
 	// Draw arrow outline
@@ -273,9 +283,9 @@ disabled:
 		if (sel != (col = &colors_##io[(i+c_rot)%8]) && sel) { col = 0; }
 # define DRAW_SEG(xa, ya, xb, yb) \
 		if (col) { mesh_info.set_color(*col); \
-		mesh_info.add_vert({xa, ya}); mesh_info.add_vert({xb, yb}); \
-		mesh_info.add_vert({xb, yb}); mesh_info.add_vert({xa, ya}); } // double ends?
-	{
+		mesh_info.add_vert(curr_xform, {xa, ya}); mesh_info.add_vert(curr_xform, {xb, yb}); \
+		mesh_info.add_vert(curr_xform, {xb, yb}); mesh_info.add_vert(curr_xform, {xa, ya}); } // double ends?
+
 		if (!z1) {
 			SET_COL(in, 1); DRAW_SEG(0, y2 - 1, -x2 + 2, y1 + 1); // flipping
 			SET_COL(in, 3); DRAW_SEG(0, y2 - 1, x2 - 2, y1 + 1);
@@ -284,10 +294,8 @@ disabled:
 			SET_COL(out, 3); DRAW_SEG(0, y2, x2, y1);
 		}
 
-		int l = 1;
-		if (bkgd3 == colors_in[(6+c_rot)%8]) l = 3;
-
-		int ll = TRANS_XY == trans_type ? 1 : 0;
+		int l = (bkgd3 == colors_in[(6+c_rot)%8]) ? 3 : 1;
+		int ll = (TRANS_XY == trans_type) ? 1 : 0;
 
 		SET_COL(in, 0); DRAW_SEG(-x1b+1, y1+1, -x1a+1, y0+ll); // flipping
 		SET_COL(in, 6); DRAW_SEG(-x2+l, y1+1, -x1b+1, y1+1); // flipping
@@ -295,9 +303,9 @@ disabled:
 		SET_COL(in, 4); DRAW_SEG(x1b-1, y1+1, x1a-1, y0+ll);
 	
 		if (trans_type == TRANS_Z) { // Fill in gaps.
-			real_t l = 0.5;
-			SET_COL(in, 0); DRAW_SEG(-x1b+l, y1, -x1a+1, y0); // flipping
-			SET_COL(in, 4); DRAW_SEG(x1b-l, y1, x1a-1, y0);
+			const real_t hl = 0.5;
+			SET_COL(in, 0); DRAW_SEG(-x1b+hl, y1, -x1a+1, y0); // flipping
+			SET_COL(in, 4); DRAW_SEG(x1b-hl, y1, x1a-1, y0);
 		}
 
 		if (!z2) { // Saving for end?
@@ -326,8 +334,6 @@ disabled:
 		mesh_array[VS::ARRAY_VERTEX] = mesh_info.verts;
 		mesh_array[VS::ARRAY_COLOR] = mesh_info.colors;
 		mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, mesh_array, Array(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
-	}
-
 # undef SET_COL
 # undef DRAW_SEG
 	}
@@ -370,38 +376,134 @@ static void draw_2d_arrows(Ref<ArrayMesh> mesh, TranslateType trans_type, int ra
 
 /// Node control
 
-void ControlWidget::notifications(int p_what) {
+#ifdef TOOLS_ENABLED
+bool ControlWidget::_edit_is_selected_on_click(const Point2 &p_point, double p_tolerance) const {
+	return control_rect.has_point(p_point);
+}
+
+Rect2 ControlWidget::_edit_get_rect() const {
+	return control_rect;
+}
+
+bool ControlWidget::_edit_use_rect() const {
+	return true;
+}
+#endif
+
+Rect2 ControlWidget::_get_global_rect() const {
+	return Rect2(get_global_position() + control_rect.position, control_rect.size);
+}
+
+bool ControlWidget::_is_point_inside(const Point2 &point) {
+	return _get_global_rect().has_point(point);
+}
+
+void ControlWidget::_notification(int p_what) {
 	switch(p_what) {
 		case NOTIFICATION_DRAW: {
-			if (_dirty) {
-				mesh->clear_mesh();
-				switch(control) {
-					case WIDGET_TRANSLATION_XY: {
-						draw_2d_arrows(mesh, TRANS_XY, radius,  _press, _enabled, _locked);
-					} break;
-					case WIDGET_TRANSLATION_Z: {
-						draw_2d_arrows(mesh, TRANS_Z, radius,  _press, _enabled, _locked);
-					} break;
-					case WIDGET_ROTATION: {
-					} break;
+			if (!ball_texture && control_type == WIDGET_ROTATION) {
+				enum {
+					dark = 110, // Dark and light colors for _ball checkerboard
+					light = 220,
+
+					checkboard_size = 64 * 2, // pixels across whole texture
+					checkboard_repeat = 32, // pixels across one black/white sector
+				};
+
+				unsigned char texture_image[checkboard_size][checkboard_size];
+				for (int i = 0; i < checkboard_size; i++) {
+					for(int j = 0; j < checkboard_size; j++) {
+						unsigned char c = ((i/checkboard_repeat)&1) ^ ((j/checkboard_repeat)&1) ? light : dark;
+						texture_image[i][j] = c;
+					}
 				}
+				Ref<Image> image = newref(Image);
+				PoolByteArray data;
+				data.resize(sizeof(texture_image));
+				memcpy(data.write().ptr(), texture_image, sizeof(texture_image));
+				image->create(checkboard_size, checkboard_size, false, Image::FORMAT_L8, data);
+				Ref<ImageTexture> texture = newref(ImageTexture);
+				texture->create_from_image(image);
+				ball_texture = texture;
 			}
+			mesh->clear_mesh();
+			const int radius = control_rect.size.height / 2;
+			switch(control_type) {
+				case WIDGET_TRANSLATION_XY: {
+					draw_2d_arrows(mesh, TRANS_XY, radius,  _press, _enabled, _locked);
+				} break;
+				case WIDGET_TRANSLATION_Z: {
+					draw_2d_arrows(mesh, TRANS_Z, radius,  _press, _enabled, _locked);
+				} break;
+				case WIDGET_ROTATION: {
+					_draw_ball(mesh, radius);
+				} break;
+			}
+			if (control_themed) {
+				if (!_style) {
+					_style = newref(StyleBoxFlat);
+				}
+				_style->set_border_width_all(_style_info.width);
+				_style->set_corner_radius_all(_style_info.radius);
+				_style->set_bg_color(_style_info.bg_color);
+				_style->set_shadow_size(_style_info.shadow_size);
+				_style->set_shadow_color(_style_info.shadow_color);
+				_style->set_shadow_offset(_style_info.shadow_offset);
+				draw_style_box(_style, control_rect);
+			}
+			draw_mesh(mesh, control_type == WIDGET_ROTATION ? ball_texture : Ref<Texture>());
 		} break;
 	}
 }
 
 void ControlWidget::_input(const Ref<InputEvent> &p_event) {
+	if (!p_event.is_valid()) {
+		return;
+	}
+	if (!get_tree()) {
+		return;
+	}
+
+	ERR_FAIL_COND(!is_visible_in_tree());
+
 	if (!p_event->is_echo()) {
-		if (p_event->is_pressed()) {
+		if (_press != p_event->is_pressed()) {
+			_press = p_event->is_pressed();
+			update();
 		}
+	}
+
+	Ref<InputEventScreenTouch> b = p_event;
+
+	if (b.is_valid() && _is_point_inside(b->get_position())) {
 	}
 }
 
+void ControlWidget::set_control_type(WidgetType p_type) { ERR_FAIL_INDEX(p_type, WIDGET_TYPES); control_type = p_type; update(); }
+WidgetType ControlWidget::get_control_type() const { return control_type; }
+
+void ControlWidget::set_control_themed(bool p_themed) { control_themed = p_themed; update(); }
+bool ControlWidget::get_control_themed() const { return control_themed; }
+
 void ControlWidget::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("set_control_type"), &ControlWidget::set_control_type);
+	ClassDB::bind_method(D_METHOD("get_control_type"), &ControlWidget::get_control_type);
+	ClassDB::bind_method(D_METHOD("set_control_themed"), &ControlWidget::set_control_themed);
+	ClassDB::bind_method(D_METHOD("get_control_themed"), &ControlWidget::get_control_themed);
+
 	ClassDB::bind_method(D_METHOD("_input"), &ControlWidget::_input);
+
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "control_type", PROPERTY_HINT_ENUM, "XY,Z,BALL"), "set_control_type", "get_control_type");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "themed"), "set_control_themed", "get_control_themed");
 }
 
 ControlWidget::ControlWidget() {
 	mesh = newref(ArrayMesh);
-	radius = 5;
+	control_type = WIDGET_TRANSLATION_XY;
+	control_themed = true;
+	control_rect = Rect2(-50, -50, 100, 100);
+	_style_info = StyleInfo{ 2, 2, Color::named("lightgray"), 2, Color::named("black"), Vector2(1, 2) };
+	_enabled = true;
+	_press = false;
+	_locked = 0;
 }

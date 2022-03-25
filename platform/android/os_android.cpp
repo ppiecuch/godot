@@ -440,6 +440,10 @@ String OS_Android::get_model_name() const {
 	return OS_Unix::get_model_name();
 }
 
+String OS_Android::get_custom_name() const {
+	return godot_io_java->get_custom_name();
+}
+
 int OS_Android::get_screen_dpi(int p_screen) const {
 	return godot_io_java->get_screen_dpi();
 }

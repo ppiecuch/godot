@@ -169,10 +169,10 @@ if is_enabled("flashdb"):
 
 if is_enabled("turbobadger"):
     env_module.Append(CPPPATH=["submodules/turbobadger/src"])
-	if env["module_freetype_enabled"]:
-		env_module.Append(CPPDEFINES=["TB_FONT_RENDERER_FREETYPE"])
-	else:
-		env_module.Append(CPPDEFINES=["TB_FONT_RENDERER_STB"])
+    if env["module_freetype_enabled"]:
+        env_module.Append(CPPDEFINES=["TB_FONT_RENDERER_FREETYPE"])
+    else:
+        env_module.Append(CPPDEFINES=["TB_FONT_RENDERER_STB"])
 
 sub_building = []
 for m in modules:

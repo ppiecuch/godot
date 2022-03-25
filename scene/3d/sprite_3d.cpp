@@ -158,7 +158,7 @@ void SpriteBase3D::_im_update() {
 
 	pending_update = false;
 
-	//texture->draw_rect_region(ci,dst_rect,src_rect,modulate);
+	//texture->draw_rect_region(ci, dst_rect, src_rect, modulate);
 }
 
 void SpriteBase3D::_queue_update() {
