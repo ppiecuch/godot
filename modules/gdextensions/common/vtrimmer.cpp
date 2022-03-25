@@ -143,7 +143,6 @@ struct WorkPacket {
 
 static int FindOptimalRotation(Point2 *vertices, int vertex_count, unsigned *indices);
 
-
 /// Public interface:
 
 bool vertex_trimmer(Ref<Image> &image, vertex_trimmer_opt_t *opt) {
@@ -438,7 +437,6 @@ static int FindOptimalRotation(Point2 *vertices, int vertex_count, unsigned *ind
 	}
 	return optimal;
 }
-
 
 /// ConvexHull
 

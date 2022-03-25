@@ -1,20 +1,52 @@
-#include "core/math/math_funcs.h"
+/*************************************************************************/
+/*  pixel_terrain.cpp                                                    */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #include "core/image.h"
+#include "core/math/math_funcs.h"
 
 #include "pixel_terrain.h"
 
 #define TWOPI 6.28
 #define PI 3.14
-#define ftrunc(a) ((a)>>16)
-#define height(h, d) ((((h)-128) * (32) / (d))+100) 
+#define ftrunc(a) ((a) >> 16)
+#define height(h, d) ((((h)-128) * (32) / (d)) + 100)
 
 // 60 degree vision, or pi/3-- (pi/3)/320 (320 v.lines on screen)
 // this is set for 1280x200 rendering view.
 // 320*4 = 1280 width
 // Ray step is the incrimenting variable for the raycaster.
-const real_t RAYSTEP = (TWOPI)/1280;
+const real_t RAYSTEP = (TWOPI) / 1280;
 
-_FORCE_INLINE_ static int tofixed(real_t a) { return (int)(a * 65536); }
+_FORCE_INLINE_ static int tofixed(real_t a) {
+	return (int)(a * 65536);
+}
 
 _FORCE_INLINE_ static void vline(Ref<Image> bmp, int x, int y1, int y2, Color color) {
 	bmp->fill_rect(Rect2(x, y2, 1, y1 - y2), color);
@@ -22,7 +54,6 @@ _FORCE_INLINE_ static void vline(Ref<Image> bmp, int x, int y1, int y2, Color co
 
 // takes bitmap to draw onto, a map bitmap, a texture bitmap, the camera's x, y, angle and height
 void renderframe(Ref<Image> dbl, Ref<Image> map, Ref<Image> cm, int px, int py, real_t pa, real_t pz) {
-
 	// So how does it work?  It throws out rays until it hits something that would be
 	// higher on the screen than the last hill the ray hit.  Then it looks up on the other chart
 	// and finds the appropriate color for that point.  It then draws a vertical line from the previous
@@ -80,7 +111,7 @@ void renderframe(Ref<Image> dbl, Ref<Image> map, Ref<Image> cm, int px, int py, 
 }
 
 void PixelTerrain::_notification(int p_what) {
-	switch(p_what) {
+	switch (p_what) {
 		case NOTIFICATION_DRAW: {
 			dbl->fill(clear_color);
 			renderframe(dbl, map, cm, px, py, pa, 128);
@@ -88,9 +119,15 @@ void PixelTerrain::_notification(int p_what) {
 	}
 }
 
-void PixelTerrain::action_left(real_t p_step) { pa -= 0.1; update(); }
+void PixelTerrain::action_left(real_t p_step) {
+	pa -= 0.1;
+	update();
+}
 
-void PixelTerrain::action_right(real_t p_step) { pa += 0.1; update(); }
+void PixelTerrain::action_right(real_t p_step) {
+	pa += 0.1;
+	update();
+}
 
 void PixelTerrain::action_up() {
 	px += tofixed(Math::cos(pa));
