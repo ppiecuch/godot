@@ -79,7 +79,7 @@ static void _rotate_sphere(Ref<ArrayMesh> mesh, real_t r, int slices, int stacks
 		s1 = 1 - s1;
 
 		// NOTE: Quads look best in wireframe.
-		for (int j = slices + 1; j-- > 0; v += 2) {
+		for (int j = slices + 1; j-- > 0; v += 4) {
 			const real_t t = (real_t)j / slices;
 			print_line(vformat("t=%f j=%d slices=%d", t, j, slices));
 			const real_t lng = 2 * Math_PI * t;
