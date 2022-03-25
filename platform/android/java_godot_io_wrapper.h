@@ -50,6 +50,7 @@ private:
 	jmethodID _get_data_dir = 0;
 	jmethodID _get_locale = 0;
 	jmethodID _get_model = 0;
+	jmethodID _get_custom_name = 0;
 	jmethodID _get_screen_DPI = 0;
 	jmethodID _get_window_safe_area = 0;
 	jmethodID _get_unique_id = 0;

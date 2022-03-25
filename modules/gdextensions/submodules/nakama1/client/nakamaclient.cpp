@@ -29,11 +29,12 @@
 /*************************************************************************/
 
 #include "nakamaclient.h"
-#include "uuid.h"
 
 #include "core/bind/core_bind.h"
 #include "core/os/os.h"
 #include "core/variant.h"
+
+#include "common/uuid.h"
 
 #include "modules/modules_enabled.gen.h"
 

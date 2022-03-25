@@ -592,7 +592,7 @@ static Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, 
 			PoolByteArray atlas_data;
 			atlas_data.resize(b.size.w * b.size.h * atlas_channels);
 
-			//Setup background color
+			// Setup background color
 			const uint8_t cr = background_color.r * 255.0;
 			const uint8_t cg = background_color.g * 255.0;
 			const uint8_t cb = background_color.b * 255.0;
@@ -609,7 +609,7 @@ static Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, 
 			Ref<Image> atlas;
 			atlas.instance();
 
-			//Process rects
+			// Process rects
 			for (uint32_t j = 0; j < b.rects.size(); ++j) {
 				rect_xywhf *r = b.rects[j];
 
@@ -657,6 +657,7 @@ static Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, 
 			}
 
 			atlas->create(b.size.w, b.size.h, false, atlas_channels == 4 ? Image::FORMAT_RGBA8 : Image::FORMAT_RGB8, atlas_data);
+
 			// dump generated atlas:
 			// atlas->save_png(vformat("atlas_%d.png", i));
 

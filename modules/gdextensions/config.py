@@ -46,6 +46,7 @@ def configure(env):
         "meshlod",
         "meshslicer",
         "tileengine",
+        "turbobadger",
     ]
     opts = Variables()
     opts.Add(

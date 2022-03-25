@@ -52,6 +52,7 @@ GodotIOJavaWrapper::GodotIOJavaWrapper(JNIEnv *p_env, jobject p_godot_io_instanc
 		_get_data_dir = p_env->GetMethodID(cls, "getDataDir", "()Ljava/lang/String;");
 		_get_locale = p_env->GetMethodID(cls, "getLocale", "()Ljava/lang/String;");
 		_get_model = p_env->GetMethodID(cls, "getModel", "()Ljava/lang/String;");
+		_get_custom_name = p_env->GetMethodID(cls, "getCustomName", "()Ljava/lang/String;");
 		_get_screen_DPI = p_env->GetMethodID(cls, "getScreenDPI", "()I");
 		_get_window_safe_area = p_env->GetMethodID(cls, "getWindowSafeArea", "()[I"),
 		_get_unique_id = p_env->GetMethodID(cls, "getUniqueID", "()Ljava/lang/String;");
@@ -120,6 +121,17 @@ String GodotIOJavaWrapper::get_model() {
 		JNIEnv *env = get_jni_env();
 		ERR_FAIL_COND_V(env == nullptr, String());
 		jstring s = (jstring)env->CallObjectMethod(godot_io_instance, _get_model);
+		return jstring_to_string(s, env);
+	} else {
+		return String();
+	}
+}
+
+String GodotIOJavaWrapper::get_custom_name() {
+	if (_get_custom_name) {
+		JNIEnv *env = get_jni_env();
+		ERR_FAIL_COND_V(env == nullptr, String());
+		jstring s = (jstring)env->CallObjectMethod(godot_io_instance, _get_custom_name);
 		return jstring_to_string(s, env);
 	} else {
 		return String();

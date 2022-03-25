@@ -221,6 +221,28 @@ public class GodotIO {
 		return Build.MODEL;
 	}
 
+	public String getCustomName() {
+		String name = "";
+
+		name = Settings.System.getString(getContentResolver(), “bluetooth_name”);
+		if (name == null) {
+			name = Settings.Secure.getString(getContentResolver(), “bluetooth_name”);
+		}
+		if (name == null) {
+			try {
+				name = BluetoothAdapter.getDefaultAdapter().getName();
+			} catch (Exception e) {
+			}
+		}
+		if (name == null) {
+			name = Settings.System.getString(getContentResolver(), “device_name”);
+		}
+		if (name == null) {
+			name = Settings.Secure.getString(getContentResolver(), “lock_screen_owner_info”);
+		}
+		return name;
+	}
+
 	public int getScreenDPI() {
 		DisplayMetrics metrics = activity.getApplicationContext().getResources().getDisplayMetrics();
 		return (int)(metrics.density * 160f);

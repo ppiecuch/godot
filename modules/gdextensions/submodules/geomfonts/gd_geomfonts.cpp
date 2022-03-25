@@ -143,7 +143,7 @@ void GdGeomFonts::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("easy_font_text_size", "text"), &GdGeomFonts::easy_font_text_size);
 
 	ADD_PROPERTY(PropertyInfo(Variant::TRANSFORM2D, "transform"), "set_transform", "get_transform");
-	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "modulate_color"), "set_modulate__color", "get_modulate__color");
+	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "modulate_color"), "set_modulate_color", "get_modulate_color");
 
 	ADD_SIGNAL(MethodInfo("changed"));
 }
