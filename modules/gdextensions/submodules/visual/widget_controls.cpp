@@ -46,7 +46,7 @@
 
 enum { xcv_rotate_stacks = 16 }; // 32
 
-static void _rotate_sphere(Ref<ArrayMesh> mesh, real_t r, int slices, int stacks, Transform transform = Transform()) {
+static void _rotate_sphere(Ref<ArrayMesh> mesh, int r, int slices, int stacks, Transform transform = Transform()) {
 	PoolVector3Array verts, norms;
 	PoolVector2Array texs;
 	PoolIntArray indexes;
@@ -109,10 +109,46 @@ static void _rotate_sphere(Ref<ArrayMesh> mesh, real_t r, int slices, int stacks
 	mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array);
 }
 
-static void _draw_ball(Ref<ArrayMesh> mesh, real_t radius) {
-	if (radius) {
-		_rotate_sphere(mesh, radius, xcv_rotate_stacks * 3 / 2, xcv_rotate_stacks);
+static void _draw_ball(Ref<ArrayMesh> mesh, int radius, bool enabled) {
+	_rotate_sphere(mesh, radius, xcv_rotate_stacks * 3 / 2, xcv_rotate_stacks);
+
+	PoolVector2Array verts;
+	PoolColorArray cols;
+	PoolIntArray indexes;
+
+	radius += 1; // pass #1
+	// NOTE: 0.75 is background's color.
+	Color c1 = enabled ? Color::solid(0) : Color::solid(0.7), c2 = Color::solid(0.75);
+	enum { kN = 2 * xcv_rotate_stacks }; // 60
+	const int loop_end[2] = { kN, 0 };
+	for(int pass = 1; pass <= 3; pass++) {
+		for(int k = 0; k < kN; k++) {
+			const real_t phi = 2 * Math_PI * k/kN;
+			const real_t px = Math::cos(phi) * radius;
+			const real_t py = Math::sin(phi) * radius;
+
+			cols.push_back(py<-px ? c1 : c2);
+			verts.push_back({ px, py });
+
+			if (k) {
+				indexes.append_array(parray(k - 1, k));
+			}
+		}
+		indexes.push_array(2, loop_end);
+
+		if (pass == 2) {
+			c1 = Color::solid(0.5); c2 = Color::solid(1); // outer ring
+			radius += 0.75;
+		} else {
+			radius += 0.25; // fill odd pixels
+		}
 	}
+	Array mesh_array;
+	mesh_array.resize(VS::ARRAY_MAX);
+	mesh_array[VS::ARRAY_VERTEX] = verts;
+	mesh_array[VS::ARRAY_COLOR] = cols;
+	mesh_array[VS::ARRAY_INDEX] = indexes;
+	mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, mesh_array, Array(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
 }
 
 /// Translation
@@ -493,7 +529,7 @@ void ControlWidget::_notification(int p_what) {
 					draw_2d_arrows(mesh, TRANS_Z, radius, _press, _enabled, _locked);
 				} break;
 				case WIDGET_ROTATION: {
-					_draw_ball(mesh, radius);
+					_draw_ball(mesh, radius * 0.95, _enabled);
 				} break;
 			}
 			if (control_themed) {
