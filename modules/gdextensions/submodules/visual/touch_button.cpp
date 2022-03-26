@@ -61,8 +61,9 @@ void TouchButton::_notification(int p_what) {
 
 		} break;
 		case NOTIFICATION_VISIBILITY_CHANGED: {
-			if (Engine::get_singleton()->is_editor_hint())
+			if (Engine::get_singleton()->is_editor_hint()) {
 				break;
+			}
 			if (is_visible_in_tree()) {
 				set_process_input(true);
 			} else {
@@ -78,15 +79,15 @@ void TouchButton::_input(Ref<InputEvent> p_event) {
 	if (!get_tree()) {
 		return;
 	}
-
 	if (p_event->get_device() == -1) {
 		return;
 	}
 
 	ERR_FAIL_COND(!is_visible_in_tree());
 
-	if (is_disabled()) // no interaction with disabled button
+	if (is_disabled()) {// no interaction with disabled button
 		return;
+	}
 
 	Ref<InputEventScreenTouch> b = p_event;
 
@@ -104,7 +105,8 @@ void TouchButton::_input(Ref<InputEvent> p_event) {
 		BaseButton::_gui_input(ev);
 		update();
 	}
-	/*
+
+#if 0
 	Ref<InputEventScreenDrag> mm = p_event;
 
 	if (mm.is_valid() && _is_point_inside(mm->get_position())) {
@@ -118,7 +120,8 @@ void TouchButton::_input(Ref<InputEvent> p_event) {
 
 		BaseButton::_gui_input(ev);
 		update();
-	}*/
+	}
+#endif
 }
 
 void TouchButton::_gui_input(Ref<InputEvent> p_event) {
