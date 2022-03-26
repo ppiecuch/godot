@@ -90,6 +90,8 @@ struct _NO_DISCARD_CLASS_ Vector3 {
 	Vector3 limit_length(const real_t p_len = 1.0) const;
 
 	_FORCE_INLINE_ void zero();
+	_FORCE_INLINE_ bool is_zero() const;
+	_FORCE_INLINE_ bool is_approx_zero() const;
 
 	void snap(Vector3 p_val);
 	Vector3 snapped(Vector3 p_val) const;
@@ -132,7 +134,7 @@ struct _NO_DISCARD_CLASS_ Vector3 {
 	_FORCE_INLINE_ Vector3 reflect(const Vector3 &p_normal) const;
 
 	bool is_equal_approx(const Vector3 &p_v) const;
-	inline bool is_equal_approx(const Vector3 &p_v, real_t p_tolerance) const;
+	_FORCE_INLINE_ bool is_equal_approx(const Vector3 &p_v, real_t p_tolerance) const;
 
 	/* Operators */
 
@@ -471,6 +473,14 @@ Vector3 Vector3::inverse() const {
 
 void Vector3::zero() {
 	x = y = z = 0;
+}
+
+bool Vector3::is_zero() const {
+	return x == 0 && y == 0 && z == 0;
+}
+
+bool Vector3::is_approx_zero() const {
+	return Math::is_equal_approx(x,0, (real_t)UNIT_EPSILON) && Math::is_equal_approx(y, 0, (real_t)UNIT_EPSILON) && Math::is_equal_approx(z, 0, (real_t)UNIT_EPSILON);
 }
 
 // slide returns the component of the vector along the given plane, specified by its normal vector.
