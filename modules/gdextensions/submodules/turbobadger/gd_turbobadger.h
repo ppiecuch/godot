@@ -1,0 +1,85 @@
+#ifndef GD_TURBOBADGER_H
+#define GD_TURBOBADGER_H
+
+#include "core/os/input_event.h"
+#include "scene/2d/node_2d.h"
+
+#include "tb_widgets.h"
+#include "renderers/tb_renderer_gd.h"
+
+// The root of widgets in a platform backend.
+
+class AppRootWidget : public tb::TBWidget {
+	Node2D *_app;
+	int mouse_x, mouse_y;
+
+public:
+	// For safe typecasting
+	TBOBJECT_SUBCLASS(AppRootWidget, tb::TBWidget);
+
+	void OnInvalid() { _app->update(); }
+
+	Node2D *GetApp() { return _app; }
+	Point2 ToLocal(const Point2 &pt) const { return _app->to_local(pt); }
+	void SetCursorPos(int mx, int my) { mouse_x = mx; mouse_y = my; }
+	Point2 GetCursorPos() const { return Point2(mouse_x, mouse_y); }
+
+	AppRootWidget(Node2D *app) : _app(app) { }
+};
+
+// Godot Node / application interface and renderer
+
+class GdTurboBadgerCore : public Object {
+	GDCLASS(GdTurboBadgerCore, Object);
+
+	Ref<tb::TBRendererGD> renderer;
+
+	void _timer_callback();
+
+	GdTurboBadgerCore();
+	~GdTurboBadgerCore();
+
+	int _ref;
+
+protected:
+	static void _bind_methods();
+
+public:
+	static GdTurboBadgerCore *get_singleton();
+
+	void init();
+	void release();
+
+	Ref<tb::TBRendererGD> get_renderer() const { return renderer; }
+};
+
+class GdTurboBadger : public Node2D {
+	GDCLASS(GdTurboBadger, Node2D);
+
+	AppRootWidget root;
+	Size2 view_size;
+
+	bool _dirty;
+
+protected:
+	static void _bind_methods();
+	void notifications(int p_what);
+
+	void _input(const Ref<InputEvent> &p_event);
+
+public:
+#ifdef TOOLS_ENABLED
+	virtual bool _edit_is_selected_on_click(const Point2 &p_point, double p_tolerance) const;
+
+	virtual Rect2 _edit_get_rect() const;
+	virtual bool _edit_use_rect() const;
+#endif
+
+	void set_view_size(const Size2 &p_size);
+	Size2 get_view_size() const;
+
+	GdTurboBadger();
+	~GdTurboBadger();
+};
+
+#endif // GD_TURBOBADGER_H
