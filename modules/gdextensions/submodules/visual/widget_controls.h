@@ -37,20 +37,20 @@
 
 enum WidgetType {
 	WIDGET_TRANSLATION_XY,
+	WIDGET_TRANSLATION_X,
+	WIDGET_TRANSLATION_Y,
 	WIDGET_TRANSLATION_Z,
-	WIDGET_ROTATION,
+	WIDGET_ROTATION_SPHERE,
 };
 
-constexpr int WIDGET_TYPES = WIDGET_ROTATION + 1;
+constexpr int WIDGET_TYPES = WIDGET_ROTATION_SPHERE + 1;
 
 class ControlWidget : public Node2D {
 	GDCLASS(ControlWidget, Node2D);
 
 	WidgetType control_type;
-	Ref<Texture> ball_texture;
-	Ref<ArrayMesh> mesh;
 	Rect2 control_rect;
-	bool control_themed;
+	bool themed, enabled;
 
 	Ref<StyleBoxFlat> _style;
 	struct StyleInfo {
@@ -61,8 +61,18 @@ class ControlWidget : public Node2D {
 		Color shadow_color;
 		Vector2 shadow_offset;
 	} _style_info;
-	bool _enabled, _press;
-	char _locked;
+	Ref<ArrayMesh> _mesh;
+	Ref<Texture> _checker;
+
+	struct {
+		bool active;
+		Point2 initial_pos;
+		char locked;
+		Vector3 from_vector, to_vector, locked_axis;
+		Transform tr;
+		void rotate(const Vector3 &axis, real_t angle) { tr.rotate(axis, angle); }
+		void swap() { from_vector = to_vector; }
+	} _state;
 
 	Rect2 _get_global_rect() const;
 	bool _is_point_inside(const Vector2 &vec);
@@ -72,6 +82,7 @@ protected:
 	void _notification(int p_what);
 
 	void _input(const Ref<InputEvent> &p_event);
+	void _unhandled_input(const Ref<InputEvent> &p_event);
 
 public:
 #ifdef TOOLS_ENABLED
@@ -85,7 +96,10 @@ public:
 	WidgetType get_control_type() const;
 
 	void set_control_themed(bool p_themed);
-	bool get_control_themed() const;
+	bool is_control_themed() const;
+
+	void set_control_enabled(bool p_enabled);
+	bool is_control_enabled() const;
 
 	ControlWidget();
 };

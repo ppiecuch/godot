@@ -45,8 +45,13 @@
 /// Rotation ball
 
 enum { xcv_rotate_stacks = 16 }; // 32
+enum {
+	xcv_rotate_speed = 2,
+	xcv_transl_speed1 = 10,
+	xcv_transl_speed2 = 50,
+};
 
-static void _rotate_sphere(Ref<ArrayMesh> mesh, int r, int slices, int stacks, Transform transform = Transform()) {
+static void _rotate_sphere(Ref<ArrayMesh> mesh, int r, int slices, int stacks, Basis transform = Basis()) {
 	PoolVector3Array verts, norms;
 	PoolVector2Array texs;
 	PoolIntArray indexes;
@@ -86,11 +91,11 @@ static void _rotate_sphere(Ref<ArrayMesh> mesh, int r, int slices, int stacks, T
 
 			texs.push_back({ s0, t });
 			norms.push_back({ x * zr0, y * zr0, z0 });
-			verts.push_back({ r * x * zr0, r * y * zr0, r * z0 });
+			verts.push_back(transform.xform({ r * x * zr0, r * y * zr0, r * z0 }));
 
 			texs.push_back({ s1, t });
 			norms.push_back({ x * zr1, y * zr1, z1 });
-			verts.push_back({ r * x * zr1, r * y * zr1, r * z1 });
+			verts.push_back(transform.xform({ r * x * zr1, r * y * zr1, r * z1 }));
 
 			if (j == slices) {
 				continue;
@@ -109,8 +114,8 @@ static void _rotate_sphere(Ref<ArrayMesh> mesh, int r, int slices, int stacks, T
 	mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array);
 }
 
-static void _draw_ball(Ref<ArrayMesh> mesh, int radius, bool enabled) {
-	_rotate_sphere(mesh, radius, xcv_rotate_stacks * 3 / 2, xcv_rotate_stacks);
+static void _draw_ball(Ref<ArrayMesh> mesh, int radius, bool enabled, Basis transform = Basis()) {
+	_rotate_sphere(mesh, radius, xcv_rotate_stacks * 3 / 2, xcv_rotate_stacks, transform);
 
 	PoolVector2Array verts;
 	PoolColorArray cols;
@@ -174,14 +179,21 @@ static void _draw_ball(Ref<ArrayMesh> mesh, int radius, bool enabled) {
 /*                    -x1a,y0    x1a,y0                                     */
 /*                                                                          */
 
-enum TranslateType {
-	TRANS_X,
-	TRANS_XY,
-	TRANS_Y,
-	TRANS_Z,
+enum {
+	TransX,
+	TransY,
+	TransZ,
+	TransXY,
 };
 
-static void _draw_2d_arrow(Ref<ArrayMesh> mesh, int radius, bool filled, bool enabled, int orientation, TranslateType trans_type) {
+enum {
+	Orient0,
+	Orient90,
+	Orient180,
+	Orient270,
+};
+
+static void _draw_2d_arrow(Ref<ArrayMesh> mesh, int radius, bool filled, bool enabled, int orientation, int trans_type) {
 	struct mesh_info_t {
 		PoolVector2Array verts;
 		PoolColorArray colors;
@@ -233,11 +245,11 @@ static void _draw_2d_arrow(Ref<ArrayMesh> mesh, int radius, bool filled, bool en
 
 	real_t x1_ = radius * 0.2;
 	real_t x2 = x1_ * 2;
-	real_t y0 = (trans_type == TRANS_XY) ? x1_ : 0;
+	real_t y0 = (trans_type == TransXY) ? x1_ : 0;
 	real_t y1 = radius * 0.54;
 	real_t y2 = y1 + x2;
 	real_t x1a = x1_, x1b = x1_;
-	if (trans_type == TRANS_Z) {
+	if (trans_type == TransZ) {
 		real_t x = 0.75;
 
 		if (orientation == 0) {
@@ -272,7 +284,7 @@ static void _draw_2d_arrow(Ref<ArrayMesh> mesh, int radius, bool filled, bool en
 		// but I think I did it because the thin neck part
 		// looked either too thin or too fat with the hard
 		// pixel offests.
-		if (false) { // DISABLED: z1 = (TRANS_Z == trans_type)
+		if (false) { // DISABLED: z1 = (TransZ == trans_type)
 			y2 *= orientation ? 1.2 : 1;
 
 			real_t x = 0.5;
@@ -364,7 +376,7 @@ disabled:
 		}
 
 		int l = (bkgd3 == colors_in[(6 + c_rot) % 8]) ? 3 : 1;
-		int ll = (TRANS_XY == trans_type) ? 1 : 0;
+		int ll = (TransXY == trans_type) ? 1 : 0;
 
 		SET_COL(in, 0);
 		DRAW_SEG(-x1b + 1, y1 + 1, -x1a + 1, y0 + ll); // flipping
@@ -375,7 +387,7 @@ disabled:
 		SET_COL(in, 4);
 		DRAW_SEG(x1b - 1, y1 + 1, x1a - 1, y0 + ll);
 
-		if (trans_type == TRANS_Z) { // Fill in gaps.
+		if (trans_type == TransZ) { // Fill in gaps.
 			const real_t hl = 0.5;
 			SET_COL(in, 0);
 			DRAW_SEG(-x1b + hl, y1, -x1a + 1, y0); // flipping
@@ -422,12 +434,12 @@ disabled:
 	}
 }
 
-static void draw_2d_arrows(Ref<ArrayMesh> mesh, TranslateType trans_type, int radius, bool press, bool enabled, char translation_locked /* 'X', 'Y' or 0 */) {
+static void draw_2d_arrows(Ref<ArrayMesh> mesh, int trans_type, int radius, bool press, bool enabled, char translation_locked /* 'X', 'Y' or 0 */) {
 	int o1 = 0, o2 = 0;
-	if (trans_type == TRANS_Z) {
+	if (trans_type == TransZ) {
 		o1 = 2;
 		o2 = 0; // draw_2d_z_arrows(radius);
-	} else if (trans_type == TRANS_XY) { // draw_2d_xy_arrows(radius);
+	} else if (trans_type == TransXY) { // draw_2d_xy_arrows(radius);
 		char lock = press ? translation_locked : 0;
 
 		bool filled = false;
@@ -445,29 +457,59 @@ static void draw_2d_arrows(Ref<ArrayMesh> mesh, TranslateType trans_type, int ra
 		_draw_2d_arrow(mesh, radius, filled, enabled, o1, trans_type);
 		_draw_2d_arrow(mesh, radius, filled, enabled, o2, trans_type);
 
-		if (lock == 'Y')
-			goto X; // LOCK_X
-		if (lock == 'X')
-			goto Y; // LOCK_Y
-
-		o1 = 2;
-		o2 = 3;
-	} else if (trans_type == TRANS_X)
-	X : {
+		if (lock == 'Y') {
+			trans_type = TransX; // LOCK_X
+		} else if (lock == 'X') {
+			trans_type = TransY; // LOCK_Y
+		} else {
+			o1 = 2;
+			o2 = 3;
+		}
+	}
+	if (trans_type == TransX) {
 		o1 = 1;
 		o2 = 3; // draw_2d_x_arrows((int)radius-1);
+	} else if (trans_type == TransY) {
+		o1 = 0;
+		o2 = 2; // draw_2d_y_arrows((int)radius-1);
 	}
-		else if (trans_type == TRANS_Y)
-				Y : {
-			o1 = 0;
-			o2 = 2; // draw_2d_y_arrows((int)radius-1);
-		}
 
 	_draw_2d_arrow(mesh, radius, press, enabled, o1, trans_type);
 	_draw_2d_arrow(mesh, radius, press, enabled, o2, trans_type);
 }
 
 /// Node control
+
+void _mouse_on_sphere(const Point2 &point, const Size2 &window_size, Vector3 *result_vector) {
+	Vector3 p( point.x / window_size.width, point.y / window_size.height, 0);
+	print_line(vformat("p=%s (%s)",p,point));
+	const real_t op_squared = p.length_squared();
+	if (op_squared < 1) {
+		p.z = Math::sqrt(1 - op_squared);
+	} else {
+		p.normalize();
+	}
+	*result_vector = p;
+}
+
+// Force sphere point to be perpendicular to axis
+Vector3 _constrain_to_axis( const Vector3 &loose, const Vector3 &axis ) {
+	Vector3 on_plane = loose - axis * axis.dot( loose );
+	real_t norm = on_plane.length_squared();
+	if( norm > 0 ) {
+		if( on_plane.z < 0 ) {
+			on_plane = -on_plane;
+		}
+		return ( on_plane * ( 1 / Math::sqrt( norm ) ) );
+	}
+
+	if( axis.dot( Vector3( 0, 0, 1 ) ) < 0.0001 ) {
+		on_plane = Vector3( 1, 0, 0 );
+	} else {
+		on_plane = Vector3( -axis.y, axis.x, 0 ).normalized();
+	}
+	return on_plane;
+}
 
 #ifdef TOOLS_ENABLED
 bool ControlWidget::_edit_is_selected_on_click(const Point2 &p_point, double p_tolerance) const {
@@ -493,8 +535,23 @@ bool ControlWidget::_is_point_inside(const Point2 &point) {
 
 void ControlWidget::_notification(int p_what) {
 	switch (p_what) {
+		case NOTIFICATION_ENTER_TREE: {
+			if (!Engine::get_singleton()->is_editor_hint()) {
+				set_process_input(is_visible_in_tree());
+			}
+		} break;
+		case NOTIFICATION_VISIBILITY_CHANGED: {
+			if (Engine::get_singleton()->is_editor_hint()) {
+				break;
+			}
+			if (is_visible_in_tree()) {
+				set_process_input(true);
+			} else {
+				set_process_input(false);
+			}
+		} break;
 		case NOTIFICATION_DRAW: {
-			if (!ball_texture && control_type == WIDGET_ROTATION) {
+			if (!_checker && control_type == WIDGET_ROTATION_SPHERE) {
 				enum {
 					dark = 110, // Dark and light colors for _ball checkerboard
 					light = 220,
@@ -517,22 +574,10 @@ void ControlWidget::_notification(int p_what) {
 				image->create(checkboard_size, checkboard_size, false, Image::FORMAT_L8, data);
 				Ref<ImageTexture> texture = newref(ImageTexture);
 				texture->create_from_image(image);
-				ball_texture = texture;
+				_checker = texture;
 			}
-			mesh->clear_mesh();
-			const int radius = control_rect.size.height / 2;
-			switch (control_type) {
-				case WIDGET_TRANSLATION_XY: {
-					draw_2d_arrows(mesh, TRANS_XY, radius, _press, _enabled, _locked);
-				} break;
-				case WIDGET_TRANSLATION_Z: {
-					draw_2d_arrows(mesh, TRANS_Z, radius, _press, _enabled, _locked);
-				} break;
-				case WIDGET_ROTATION: {
-					_draw_ball(mesh, radius * 0.95, _enabled);
-				} break;
-			}
-			if (control_themed) {
+
+			if (themed) {
 				if (!_style) {
 					_style = newref(StyleBoxFlat);
 				}
@@ -544,7 +589,27 @@ void ControlWidget::_notification(int p_what) {
 				_style->set_shadow_offset(_style_info.shadow_offset);
 				draw_style_box(_style, control_rect);
 			}
-			draw_mesh(mesh, control_type == WIDGET_ROTATION ? ball_texture : Ref<Texture>());
+
+			_mesh->clear_mesh();
+			const int radius = control_rect.size.height / 2;
+			switch (control_type) {
+				case WIDGET_TRANSLATION_XY: {
+					draw_2d_arrows(_mesh, TransXY, radius, _state.active, enabled, _state.locked);
+				} break;
+				case WIDGET_TRANSLATION_X: {
+					draw_2d_arrows(_mesh, TransX, radius, _state.active, enabled, _state.locked);
+				} break;
+				case WIDGET_TRANSLATION_Y: {
+					draw_2d_arrows(_mesh, TransY, radius, _state.active, enabled, _state.locked);
+				} break;
+				case WIDGET_TRANSLATION_Z: {
+					draw_2d_arrows(_mesh, TransZ, radius, _state.active, enabled, _state.locked);
+				} break;
+				case WIDGET_ROTATION_SPHERE: {
+					_draw_ball(_mesh, radius * 0.95, enabled, _state.tr.basis);
+				} break;
+			}
+			draw_mesh(_mesh, control_type == WIDGET_ROTATION_SPHERE ? _checker : Ref<Texture>());
 		} break;
 	}
 }
@@ -559,17 +624,112 @@ void ControlWidget::_input(const Ref<InputEvent> &p_event) {
 
 	ERR_FAIL_COND(!is_visible_in_tree());
 
-	if (!p_event->is_echo()) {
-		if (_press != p_event->is_pressed()) {
-			_press = p_event->is_pressed();
-			update();
+	if (const InputEventMouseButton *e = cast_to<InputEventMouseButton>(*p_event)) {
+		if (e->get_button_index() == BUTTON_LEFT) {
+			if (e->is_pressed()) {
+				if (control_type == WIDGET_ROTATION_SPHERE) {
+					_state.initial_pos = to_local(e->get_position());
+					_mouse_on_sphere( _state.initial_pos, control_rect.size, &_state.from_vector );
+					_state.active = true;
+				} else if (control_type == WIDGET_TRANSLATION_Z) {
+					OS::get_singleton()->set_cursor_shape(OS::CURSOR_HSIZE);
+				} else if (control_type == WIDGET_TRANSLATION_XY) {
+					_state.initial_pos = to_local(e->get_position());
+				}
+				get_tree()->set_input_as_handled();
+			} else if (!e->is_pressed()) {
+				_state.active = false;
+				OS::get_singleton()->set_cursor_shape(OS::CURSOR_ARROW);
+			}
 		}
 	}
 
-	Ref<InputEventScreenTouch> b = p_event;
+	if (const InputEventMouseMotion *e = cast_to<InputEventMouseMotion>(*p_event)) {
+		if (control_type == WIDGET_ROTATION_SPHERE) {
+			if (_is_point_inside(e->get_position())) {
+				if (_state.active) {
+					_mouse_on_sphere(to_local(e->get_position()), control_rect.size, &_state.to_vector);
+					if (_state.to_vector != _state.from_vector) {
+						Vector3 from = _state.from_vector, to = _state.to_vector;
+						if (_state.locked) {
+							from = _constrain_to_axis(from, _state.locked_axis);
+							to = _constrain_to_axis(to, _state.locked_axis);
+						}
+						// the axis to rotate around in view space
+						Vector3 axis = from.cross(to).normalized();
+						real_t angle = Math::acos(MIN(from.dot(to), 1));
+						if (angle && !axis.is_zero()) {
+							print_line(vformat("%f, %s (f:%s, t:%s))", angle, axis, from,to));
+							_state.rotate(axis, (e->get_shift() ? xcv_rotate_speed : 1) * angle);
+							update();
+							emit_signal("transformation_changed", array(_state.tr));
+						} else {
+							print_line(vformat("!! %f, %s (f:%s, t:%s))", angle, axis, from,to));
+						}
+						_state.swap();
+					}
+				}
+			}
+		} else {
+			if (_state.active) {
+				const Point2 center = control_rect.size / 2;
+				const Point2 p = to_local(e->get_position());
 
-	if (b.is_valid() && _is_point_inside(b->get_position())) {
+				real_t xf = p.x + center.x - _state.initial_pos.x;
+				real_t yf = p.y + center.y - _state.initial_pos.y;
+
+				if (e->get_alt()) {
+					const real_t dx = Math::abs(p.x - _state.initial_pos.x);
+					const real_t dy = Math::abs(p.y - _state.initial_pos.y);
+					// update locking
+					if (dx > dy) {
+						_state.locked = 'X';
+						OS::get_singleton()->set_cursor_shape(OS::CURSOR_HSIZE);
+					} else {
+						_state.locked = 'Y';
+						OS::get_singleton()->set_cursor_shape(OS::CURSOR_VSIZE);
+					}
+				} else {
+					if (_state.locked) {
+						OS::get_singleton()->set_cursor_shape(OS::CURSOR_ARROW);
+						_state.locked = 0;
+					}
+				}
+				if (e->get_control()) {
+					xf *= 10; yf *= 10;
+				}
+				if (e->get_shift()) {
+					xf *= 0.1; yf *= 0.1;
+				}
+				switch(control_type) {
+					case WIDGET_TRANSLATION_XY: {
+						if ('Y' == _state.locked) {
+							yf = 0;
+						} else if('X' == _state.locked) {
+							xf = 0;
+						}
+						_state.tr.origin.x += xf;
+						_state.tr.origin.y += yf;
+					} break;
+					case WIDGET_TRANSLATION_X: {
+						_state.tr.origin.x += xf;
+					} break;
+					case WIDGET_TRANSLATION_Y: {
+						_state.tr.origin.y = yf;
+					} break;
+					default: {
+						WARN_PRINT("Unexpected control type.");
+					}
+				}
+				if (xf || yf) {
+					emit_signal("transformation_changed", array(_state.tr));
+				}
+			}
+		}
 	}
+}
+
+void ControlWidget::_unhandled_input(const Ref<InputEvent> &p_event) {
 }
 
 void ControlWidget::set_control_type(WidgetType p_type) {
@@ -577,37 +737,51 @@ void ControlWidget::set_control_type(WidgetType p_type) {
 	control_type = p_type;
 	update();
 }
+
 WidgetType ControlWidget::get_control_type() const {
 	return control_type;
 }
 
 void ControlWidget::set_control_themed(bool p_themed) {
-	control_themed = p_themed;
+	themed = p_themed;
 	update();
 }
-bool ControlWidget::get_control_themed() const {
-	return control_themed;
+bool ControlWidget::is_control_themed() const {
+	return themed;
+}
+
+void ControlWidget::set_control_enabled(bool p_enabled) {
+	enabled = p_enabled;
+	update();
+}
+
+bool ControlWidget::is_control_enabled() const {
+	return enabled;
 }
 
 void ControlWidget::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_control_type"), &ControlWidget::set_control_type);
 	ClassDB::bind_method(D_METHOD("get_control_type"), &ControlWidget::get_control_type);
 	ClassDB::bind_method(D_METHOD("set_control_themed"), &ControlWidget::set_control_themed);
-	ClassDB::bind_method(D_METHOD("get_control_themed"), &ControlWidget::get_control_themed);
+	ClassDB::bind_method(D_METHOD("is_control_themed"), &ControlWidget::is_control_themed);
+	ClassDB::bind_method(D_METHOD("set_control_enabled"), &ControlWidget::set_control_enabled);
+	ClassDB::bind_method(D_METHOD("is_control_enabled"), &ControlWidget::is_control_enabled);
 
 	ClassDB::bind_method(D_METHOD("_input"), &ControlWidget::_input);
 
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "control_type", PROPERTY_HINT_ENUM, "XY,Z,BALL"), "set_control_type", "get_control_type");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "themed"), "set_control_themed", "get_control_themed");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "control_type", PROPERTY_HINT_ENUM, "XY,X,Y,Z,SPHERE"), "set_control_type", "get_control_type");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "enabled"), "set_control_enabled", "is_control_enabled");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "themed"), "set_control_themed", "is_control_themed");
+
+	ADD_SIGNAL(MethodInfo("transformation_changed", PropertyInfo(Variant::TRANSFORM, "tr")));
 }
 
 ControlWidget::ControlWidget() {
-	mesh = newref(ArrayMesh);
 	control_type = WIDGET_TRANSLATION_XY;
-	control_themed = true;
 	control_rect = Rect2(-50, -50, 100, 100);
+	enabled = true;
+	themed = true;
 	_style_info = StyleInfo{ 2, 2, Color::named("lightgray"), 2, Color::named("black"), Vector2(1, 2) };
-	_enabled = true;
-	_press = false;
-	_locked = 0;
+	_state.active = false;
+	_mesh = newref(ArrayMesh);
 }
