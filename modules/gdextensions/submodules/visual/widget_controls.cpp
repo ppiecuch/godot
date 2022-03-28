@@ -126,13 +126,13 @@ static void _draw_ball(Ref<ArrayMesh> mesh, int radius, bool enabled, Basis tran
 	Color c1 = enabled ? Color::solid(0) : Color::solid(0.7), c2 = Color::solid(0.75);
 	enum { kN = 2 * xcv_rotate_stacks }; // 60
 	const int loop_end[2] = { kN, 0 };
-	for(int pass = 1; pass <= 3; pass++) {
-		for(int k = 0; k < kN; k++) {
-			const real_t phi = 2 * Math_PI * k/kN;
+	for (int pass = 1; pass <= 3; pass++) {
+		for (int k = 0; k < kN; k++) {
+			const real_t phi = 2 * Math_PI * k / kN;
 			const real_t px = Math::cos(phi) * radius;
 			const real_t py = Math::sin(phi) * radius;
 
-			cols.push_back(py<-px ? c1 : c2);
+			cols.push_back(py < -px ? c1 : c2);
 			verts.push_back({ px, py });
 
 			if (k) {
@@ -142,7 +142,8 @@ static void _draw_ball(Ref<ArrayMesh> mesh, int radius, bool enabled, Basis tran
 		indexes.push_array(2, loop_end);
 
 		if (pass == 2) {
-			c1 = Color::solid(0.5); c2 = Color::solid(1); // outer ring
+			c1 = Color::solid(0.5);
+			c2 = Color::solid(1); // outer ring
 			radius += 0.75;
 		} else {
 			radius += 0.25; // fill odd pixels
@@ -481,8 +482,8 @@ static void draw_2d_arrows(Ref<ArrayMesh> mesh, int trans_type, int radius, bool
 /// Node control
 
 void _mouse_on_sphere(const Point2 &point, const Size2 &window_size, Vector3 *result_vector) {
-	Vector3 p( point.x / window_size.width, point.y / window_size.height, 0);
-	print_line(vformat("p=%s (%s)",p,point));
+	Vector3 p(point.x / window_size.width, point.y / window_size.height, 0);
+	print_line(vformat("p=%s (%s)", p, point));
 	const real_t op_squared = p.length_squared();
 	if (op_squared < 1) {
 		p.z = Math::sqrt(1 - op_squared);
@@ -493,20 +494,20 @@ void _mouse_on_sphere(const Point2 &point, const Size2 &window_size, Vector3 *re
 }
 
 // Force sphere point to be perpendicular to axis
-Vector3 _constrain_to_axis( const Vector3 &loose, const Vector3 &axis ) {
-	Vector3 on_plane = loose - axis * axis.dot( loose );
+Vector3 _constrain_to_axis(const Vector3 &loose, const Vector3 &axis) {
+	Vector3 on_plane = loose - axis * axis.dot(loose);
 	real_t norm = on_plane.length_squared();
-	if( norm > 0 ) {
-		if( on_plane.z < 0 ) {
+	if (norm > 0) {
+		if (on_plane.z < 0) {
 			on_plane = -on_plane;
 		}
-		return ( on_plane * ( 1 / Math::sqrt( norm ) ) );
+		return (on_plane * (1 / Math::sqrt(norm)));
 	}
 
-	if( axis.dot( Vector3( 0, 0, 1 ) ) < 0.0001 ) {
-		on_plane = Vector3( 1, 0, 0 );
+	if (axis.dot(Vector3(0, 0, 1)) < 0.0001) {
+		on_plane = Vector3(1, 0, 0);
 	} else {
-		on_plane = Vector3( -axis.y, axis.x, 0 ).normalized();
+		on_plane = Vector3(-axis.y, axis.x, 0).normalized();
 	}
 	return on_plane;
 }
@@ -629,7 +630,7 @@ void ControlWidget::_input(const Ref<InputEvent> &p_event) {
 			if (e->is_pressed()) {
 				if (control_type == WIDGET_ROTATION_SPHERE) {
 					_state.initial_pos = to_local(e->get_position());
-					_mouse_on_sphere( _state.initial_pos, control_rect.size, &_state.from_vector );
+					_mouse_on_sphere(_state.initial_pos, control_rect.size, &_state.from_vector);
 					_state.active = true;
 				} else if (control_type == WIDGET_TRANSLATION_Z) {
 					OS::get_singleton()->set_cursor_shape(OS::CURSOR_HSIZE);
@@ -659,12 +660,12 @@ void ControlWidget::_input(const Ref<InputEvent> &p_event) {
 						Vector3 axis = from.cross(to).normalized();
 						real_t angle = Math::acos(MIN(from.dot(to), 1));
 						if (angle && !axis.is_zero()) {
-							print_line(vformat("%f, %s (f:%s, t:%s))", angle, axis, from,to));
+							print_line(vformat("%f, %s (f:%s, t:%s))", angle, axis, from, to));
 							_state.rotate(axis, (e->get_shift() ? xcv_rotate_speed : 1) * angle);
 							update();
 							emit_signal("transformation_changed", array(_state.tr));
 						} else {
-							print_line(vformat("!! %f, %s (f:%s, t:%s))", angle, axis, from,to));
+							print_line(vformat("!! %f, %s (f:%s, t:%s))", angle, axis, from, to));
 						}
 						_state.swap();
 					}
@@ -696,16 +697,18 @@ void ControlWidget::_input(const Ref<InputEvent> &p_event) {
 					}
 				}
 				if (e->get_control()) {
-					xf *= 10; yf *= 10;
+					xf *= 10;
+					yf *= 10;
 				}
 				if (e->get_shift()) {
-					xf *= 0.1; yf *= 0.1;
+					xf *= 0.1;
+					yf *= 0.1;
 				}
-				switch(control_type) {
+				switch (control_type) {
 					case WIDGET_TRANSLATION_XY: {
 						if ('Y' == _state.locked) {
 							yf = 0;
-						} else if('X' == _state.locked) {
+						} else if ('X' == _state.locked) {
 							xf = 0;
 						}
 						_state.tr.origin.x += xf;

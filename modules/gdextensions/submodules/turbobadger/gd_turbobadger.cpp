@@ -1,8 +1,38 @@
+/*************************************************************************/
+/*  gd_turbobadger.cpp                                                   */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
+#include "gd_turbobadger.h"
+#include "animation/tb_widget_animation.h"
+#include "tb_editfield.h"
 #include "tb_msg.h"
 #include "tb_system.h"
-#include "tb_editfield.h"
-#include "animation/tb_widget_animation.h"
-#include "gd_turbobadger.h"
 
 #include "core/os/input.h"
 #include "core/os/keyboard.h"
@@ -17,10 +47,14 @@ using namespace tb;
 MODIFIER_KEYS GetModifierKeys(Ref<InputEventWithModifiers> event) {
 	MODIFIER_KEYS code = TB_MODIFIER_NONE;
 	if (event) {
-		if (event->get_alt()) code |= TB_ALT;
-		if (event->get_command()) code |= TB_CTRL;
-		if (event->get_shift()) code |= TB_SHIFT;
-		if (event->get_metakey()) code |= TB_SUPER;
+		if (event->get_alt())
+			code |= TB_ALT;
+		if (event->get_command())
+			code |= TB_CTRL;
+		if (event->get_shift())
+			code |= TB_SHIFT;
+		if (event->get_metakey())
+			code |= TB_SUPER;
 	}
 	return code;
 }
@@ -97,33 +131,85 @@ static void key_callback(AppRootWidget *root, Ref<InputEventKey> event) {
 	MODIFIER_KEYS modifier = GetModifierKeys(event);
 	bool down = event->is_pressed() || event->is_echo();
 	switch (event->get_scancode()) {
-		case KEY_F1:		InvokeKey(root, 0, TB_KEY_F1, modifier, down); break;
-		case KEY_F2:		InvokeKey(root, 0, TB_KEY_F2, modifier, down); break;
-		case KEY_F3:		InvokeKey(root, 0, TB_KEY_F3, modifier, down); break;
-		case KEY_F4:		InvokeKey(root, 0, TB_KEY_F4, modifier, down); break;
-		case KEY_F5:		InvokeKey(root, 0, TB_KEY_F5, modifier, down); break;
-		case KEY_F6:		InvokeKey(root, 0, TB_KEY_F6, modifier, down); break;
-		case KEY_F7:		InvokeKey(root, 0, TB_KEY_F7, modifier, down); break;
-		case KEY_F8:		InvokeKey(root, 0, TB_KEY_F8, modifier, down); break;
-		case KEY_F9:		InvokeKey(root, 0, TB_KEY_F9, modifier, down); break;
-		case KEY_F10:		InvokeKey(root, 0, TB_KEY_F10, modifier, down); break;
-		case KEY_F11:		InvokeKey(root, 0, TB_KEY_F11, modifier, down); break;
-		case KEY_F12:		InvokeKey(root, 0, TB_KEY_F12, modifier, down); break;
-		case KEY_LEFT:		InvokeKey(root, 0, TB_KEY_LEFT, modifier, down); break;
-		case KEY_UP:		InvokeKey(root, 0, TB_KEY_UP, modifier, down); break;
-		case KEY_RIGHT:		InvokeKey(root, 0, TB_KEY_RIGHT, modifier, down); break;
-		case KEY_DOWN:		InvokeKey(root, 0, TB_KEY_DOWN, modifier, down); break;
-		case KEY_PAGEUP:	InvokeKey(root, 0, TB_KEY_PAGE_UP, modifier, down); break;
-		case KEY_PAGEDOWN:	InvokeKey(root, 0, TB_KEY_PAGE_DOWN, modifier, down); break;
-		case KEY_HOME:		InvokeKey(root, 0, TB_KEY_HOME, modifier, down); break;
-		case KEY_END:		InvokeKey(root, 0, TB_KEY_END, modifier, down); break;
-		case KEY_INSERT:	InvokeKey(root, 0, TB_KEY_INSERT, modifier, down); break;
-		case KEY_TAB:		InvokeKey(root, 0, TB_KEY_TAB, modifier, down); break;
-		case KEY_DELETE:	InvokeKey(root, 0, TB_KEY_DELETE, modifier, down); break;
-		case KEY_BACKSPACE:	InvokeKey(root, 0, TB_KEY_BACKSPACE, modifier, down); break;
+		case KEY_F1:
+			InvokeKey(root, 0, TB_KEY_F1, modifier, down);
+			break;
+		case KEY_F2:
+			InvokeKey(root, 0, TB_KEY_F2, modifier, down);
+			break;
+		case KEY_F3:
+			InvokeKey(root, 0, TB_KEY_F3, modifier, down);
+			break;
+		case KEY_F4:
+			InvokeKey(root, 0, TB_KEY_F4, modifier, down);
+			break;
+		case KEY_F5:
+			InvokeKey(root, 0, TB_KEY_F5, modifier, down);
+			break;
+		case KEY_F6:
+			InvokeKey(root, 0, TB_KEY_F6, modifier, down);
+			break;
+		case KEY_F7:
+			InvokeKey(root, 0, TB_KEY_F7, modifier, down);
+			break;
+		case KEY_F8:
+			InvokeKey(root, 0, TB_KEY_F8, modifier, down);
+			break;
+		case KEY_F9:
+			InvokeKey(root, 0, TB_KEY_F9, modifier, down);
+			break;
+		case KEY_F10:
+			InvokeKey(root, 0, TB_KEY_F10, modifier, down);
+			break;
+		case KEY_F11:
+			InvokeKey(root, 0, TB_KEY_F11, modifier, down);
+			break;
+		case KEY_F12:
+			InvokeKey(root, 0, TB_KEY_F12, modifier, down);
+			break;
+		case KEY_LEFT:
+			InvokeKey(root, 0, TB_KEY_LEFT, modifier, down);
+			break;
+		case KEY_UP:
+			InvokeKey(root, 0, TB_KEY_UP, modifier, down);
+			break;
+		case KEY_RIGHT:
+			InvokeKey(root, 0, TB_KEY_RIGHT, modifier, down);
+			break;
+		case KEY_DOWN:
+			InvokeKey(root, 0, TB_KEY_DOWN, modifier, down);
+			break;
+		case KEY_PAGEUP:
+			InvokeKey(root, 0, TB_KEY_PAGE_UP, modifier, down);
+			break;
+		case KEY_PAGEDOWN:
+			InvokeKey(root, 0, TB_KEY_PAGE_DOWN, modifier, down);
+			break;
+		case KEY_HOME:
+			InvokeKey(root, 0, TB_KEY_HOME, modifier, down);
+			break;
+		case KEY_END:
+			InvokeKey(root, 0, TB_KEY_END, modifier, down);
+			break;
+		case KEY_INSERT:
+			InvokeKey(root, 0, TB_KEY_INSERT, modifier, down);
+			break;
+		case KEY_TAB:
+			InvokeKey(root, 0, TB_KEY_TAB, modifier, down);
+			break;
+		case KEY_DELETE:
+			InvokeKey(root, 0, TB_KEY_DELETE, modifier, down);
+			break;
+		case KEY_BACKSPACE:
+			InvokeKey(root, 0, TB_KEY_BACKSPACE, modifier, down);
+			break;
 		case KEY_ENTER:
-		case KEY_KP_ENTER:	InvokeKey(root, 0, TB_KEY_ENTER, modifier, down); break;
-		case KEY_ESCAPE:	InvokeKey(root, 0, TB_KEY_ESC, modifier, down); break;
+		case KEY_KP_ENTER:
+			InvokeKey(root, 0, TB_KEY_ENTER, modifier, down);
+			break;
+		case KEY_ESCAPE:
+			InvokeKey(root, 0, TB_KEY_ESC, modifier, down);
+			break;
 		case KEY_MENU: {
 			if (TBWidget::focused_widget && !down) {
 				TBWidgetEvent ev(EVENT_TYPE_CONTEXT_MENU);
@@ -214,7 +300,7 @@ static void ReschedulePlatformTimer(real_t fire_time, bool force) {
 		}
 		set_fire_time = fire_time;
 		real_t delay = fire_time - tb::TBSystem::GetTimeMS();
-		unsigned int idelay = (unsigned int) MAX(delay, 0.0);
+		unsigned int idelay = (unsigned int)MAX(delay, 0.0);
 		_sys_timer->set_time_left(idelay);
 	}
 }
@@ -241,7 +327,6 @@ static void drop_callback(tb::TBWidget *root, int count, const char **files_utf8
 		target->InvokeEvent(ev);
 	}
 }
-
 
 // Godot node
 
@@ -273,7 +358,7 @@ void GdTurboBadger::_input(const Ref<InputEvent> &p_event) {
 }
 
 void GdTurboBadger::notifications(int p_what) {
-	switch(p_what) {
+	switch (p_what) {
 		case NOTIFICATION_READY: {
 			GdTurboBadgerCore::get_singleton()->init();
 		} break;
@@ -317,7 +402,8 @@ void GdTurboBadger::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_input"), &GdTurboBadger::_input);
 }
 
-GdTurboBadger::GdTurboBadger() : root(this) {
+GdTurboBadger::GdTurboBadger() :
+		root(this) {
 	_dirty = false;
 	view_size = Size2(640, 480);
 }
@@ -325,7 +411,6 @@ GdTurboBadger::GdTurboBadger() : root(this) {
 GdTurboBadger::~GdTurboBadger() {
 	GdTurboBadgerCore::get_singleton()->release();
 }
-
 
 // Core singleton
 
@@ -360,7 +445,7 @@ GdTurboBadgerCore *GdTurboBadgerCore::get_singleton() {
 	return _tb_core;
 }
 
-GdTurboBadgerCore::init() {
+void GdTurboBadgerCore::init() {
 	if (_ref == 0) {
 		TBWidgetsAnimationManager::Init();
 		tb_core_init(*renderer);
@@ -368,7 +453,7 @@ GdTurboBadgerCore::init() {
 	_ref++;
 }
 
-GdTurboBadgerCore::release() {
+void GdTurboBadgerCore::release() {
 	_ref--;
 
 	ERR_FAIL_COND(_ref < 0);
