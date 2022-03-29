@@ -982,8 +982,8 @@ void TBBlock::Layout(bool update_fragments, bool propagate_height)
 		TBTextFragment *fragment = first_fragment_on_line;
 		while (fragment)
 		{
-			line_height = MAX(fragment->GetHeight(this, styledit->font), line_height);
-			line_baseline = MAX(fragment->GetBaseline(this, styledit->font), line_baseline);
+			line_height = Max(fragment->GetHeight(this, styledit->font), line_height);
+			line_baseline = Max(fragment->GetBaseline(this, styledit->font), line_baseline);
 
 			// These positions are not final. Will be adjusted below.
 			fragment->ypos = line_ypos;
@@ -1033,7 +1033,7 @@ void TBBlock::Layout(bool update_fragments, bool propagate_height)
 				fragment->line_height = adjusted_line_height;
 		}
 
-		line_width_max = MAX(line_width_max, line_width);
+		line_width_max = Max(line_width_max, line_width);
 
 		// This was the first line so calculate the indentation to use for the other lines.
 		if (styledit->packed.wrapping && first_fragment_on_line == fragments.GetFirst())
@@ -1215,8 +1215,8 @@ void TBTextFragment::BuildSelectionRegion(const TBPaintProps *props, TBRegion &b
 
 	int sofs1 = sel->start.block == block ? sel->start.ofs : 0;
 	int sofs2 = sel->stop.block == block ? sel->stop.ofs : block->str_len;
-	sofs1 = MAX(sofs1, (int)ofs);
-	sofs2 = MIN(sofs2, (int)(ofs + len));
+	sofs1 = Max(sofs1, (int)ofs);
+	sofs2 = Min(sofs2, (int)(ofs + len));
 
 	int s1x = GetStringWidth(block, font, block->str.CStr() + ofs, sofs1 - ofs);
 	int s2x = GetStringWidth(block, font, block->str.CStr() + sofs1, sofs2 - sofs1);
@@ -1265,7 +1265,7 @@ void TBTextFragment::Paint(const TBPaintProps *props)
 	if (props->props->data->underline)
 	{
 		int line_h = font->GetHeight() / 16;
-		line_h = MAX(line_h, 1);
+		line_h = Max(line_h, 1);
 		listener->DrawRectFill(TBRect(x, y + GetBaseline(block, font) + 1, GetWidth(block, font), line_h), color);
 	}
 }
@@ -1493,10 +1493,10 @@ void TBStyleEdit::ScrollIfNeeded(bool x, bool y)
 
 void TBStyleEdit::SetScrollPos(int32 x, int32 y)
 {
-	x = MIN(x, GetContentWidth() - layout_width);
-	y = MIN(y, GetContentHeight() - layout_height);
-	x = MAX(x, 0);
-	y = MAX(y, 0);
+	x = Min(x, GetContentWidth() - layout_width);
+	y = Min(y, GetContentHeight() - layout_height);
+	x = Max(x, 0);
+	y = Max(y, 0);
 	if (!packed.multiline_on)
 		y = 0;
 	int dx = scroll_x - x;
@@ -1575,7 +1575,7 @@ int32 TBStyleEdit::GetContentWidth()
 		TBBlock *block = blocks.GetFirst();
 		while (block)
 		{
-			content_width = MAX(content_width, block->line_width_max);
+			content_width = Max(content_width, block->line_width_max);
 			block = block->GetNext();
 		}
 	}

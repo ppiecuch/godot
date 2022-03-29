@@ -60,7 +60,7 @@ void TBWidgetString::Paint(TBWidget *widget, const TBRect &rect, const TBColor &
 	if (m_text_align == TB_TEXT_ALIGN_RIGHT)
 		x += rect.w - m_width;
 	else if (m_text_align == TB_TEXT_ALIGN_CENTER)
-		x += MAX(0, (rect.w - m_width) / 2);
+		x += Max(0, (rect.w - m_width) / 2);
 	int y = rect.y + (rect.h - m_height) / 2;
 
 	if (m_width <= rect.w)
@@ -85,7 +85,7 @@ void TBWidgetString::Paint(TBWidget *widget, const TBRect &rect, const TBColor &
 			startw = new_startw;
 			startlen++;
 		}
-		startlen = MAX(0, startlen - 1);
+		startlen = Max(0, startlen - 1);
 		font->DrawString(x, y, color, m_text, startlen);
 		font->DrawString(x + startw, y, color, end);
 	}
@@ -506,8 +506,8 @@ void TBScrollBar::SetAxis(AXIS axis)
 
 void TBScrollBar::SetLimits(double min, double max, double visible)
 {
-	max = MAX(min, max);
-	visible = MAX(visible, 0.0);
+	max = Max(min, max);
+	visible = Max(visible, 0.0);
 	if (min == m_min && max == m_max && m_visible == visible)
 		return;
 	m_min = min;
@@ -529,7 +529,7 @@ void TBScrollBar::SetLimits(double min, double max, double visible)
 
 void TBScrollBar::SetValueDouble(double value)
 {
-	value = CLAMP(value, m_min, m_max);
+	value = Clamp(value, m_min, m_max);
 	if (value == m_value)
 		return;
 	m_value = value;
@@ -574,7 +574,7 @@ void TBScrollBar::UpdateHandle()
 	// Calculate the mover size and position
 	bool horizontal = m_axis == AXIS_X;
 	int available_pixels = horizontal ? GetRect().w : GetRect().h;
-	int min_thickness_pixels = MIN(GetRect().h, GetRect().w);
+	int min_thickness_pixels = Min(GetRect().h, GetRect().w);
 
 	int visible_pixels = available_pixels;
 
@@ -585,7 +585,7 @@ void TBScrollBar::UpdateHandle()
 
 		// Limit the size of the indicator to the slider thickness so that it doesn't
 		// become too tiny when the visible proportion is very small.
-		visible_pixels = MAX(visible_pixels, min_thickness_pixels);
+		visible_pixels = Max(visible_pixels, min_thickness_pixels);
 
 		m_to_pixel_factor = (double)(available_pixels - visible_pixels) / (m_max - m_min)/*+ 0.5*/;
 	}
@@ -652,7 +652,7 @@ void TBSlider::SetAxis(AXIS axis)
 
 void TBSlider::SetLimits(double min, double max)
 {
-	min = MIN(min, max);
+	min = Min(min, max);
 	if (min == m_min && max == m_max)
 		return;
 	m_min = min;
@@ -663,7 +663,7 @@ void TBSlider::SetLimits(double min, double max)
 
 void TBSlider::SetValueDouble(double value)
 {
-	value = CLAMP(value, m_min, m_max);
+	value = Clamp(value, m_min, m_max);
 	if (value == m_value)
 		return;
 	m_value = value;
@@ -771,8 +771,8 @@ bool TBMover::OnEvent(const TBWidgetEvent &ev)
 		if (target->GetParent())
 		{
 			// Apply limit.
-			rect.x = CLAMP(rect.x, -pointer_down_widget_x, target->GetParent()->GetRect().w - pointer_down_widget_x);
-			rect.y = CLAMP(rect.y, -pointer_down_widget_y, target->GetParent()->GetRect().h - pointer_down_widget_y);
+			rect.x = Clamp(rect.x, -pointer_down_widget_x, target->GetParent()->GetRect().w - pointer_down_widget_x);
+			rect.y = Clamp(rect.y, -pointer_down_widget_y, target->GetParent()->GetRect().h - pointer_down_widget_y);
 		}
 		target->SetRect(rect);
 		return true;
@@ -810,8 +810,8 @@ bool TBResizer::OnEvent(const TBWidgetEvent &ev)
 		rect.h += dy;
 		// Apply limit. We should not use minimum size since we can squeeze
 		// the layout much more, and provide scroll/pan when smaller.
-		rect.w = MAX(rect.w, 50);
-		rect.h = MAX(rect.h, 50);
+		rect.w = Max(rect.w, 50);
+		rect.h = Max(rect.h, 50);
 		target->SetRect(rect);
 	}
 	else

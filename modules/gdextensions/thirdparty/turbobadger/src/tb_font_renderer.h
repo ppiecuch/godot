@@ -27,8 +27,8 @@ public:
 	TBFontGlyphData() : data8(nullptr), data32(nullptr), w(0), h(0), stride(0), rgb(false) {}
 	~TBFontGlyphData() {}
 
-	uint8 *data8;
-	uint32 *data32;
+	const uint8 *data8;
+	const uint32 *data32;
 	int w, h, stride;
 	bool rgb;
 };

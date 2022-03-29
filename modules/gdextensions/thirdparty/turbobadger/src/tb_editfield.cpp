@@ -395,7 +395,7 @@ PreferredSize TBEditField::OnCalculatePreferredContentSize(const SizeConstraints
 		int height = m_style_edit.GetContentHeight();
 		if (m_style_edit.packed.wrapping)
 			m_style_edit.SetLayoutSize(old_layout_width, old_layout_height, true);
-		height = MAX(height, font_height);
+		height = Max(height, font_height);
 
 		ps.min_w = ps.pref_w /*= ps.max_w*/ = width; // should go with the hack above.
 		//ps.min_w = ps.pref_w = ps.max_w = width;
@@ -612,7 +612,7 @@ int TBEditFieldContentFactory::GetContent(const char *text)
 
 TBTextFragmentContent *TBEditFieldContentFactory::CreateFragmentContent(const char *text, int text_len)
 {
-	if (strncmp(text, "<widget ", MIN(text_len, 8)) == 0)
+	if (strncmp(text, "<widget ", Min(text_len, 8)) == 0)
 	{
 		// Create a wrapper for the generated widget.
 		// Its size will adapt to the content.

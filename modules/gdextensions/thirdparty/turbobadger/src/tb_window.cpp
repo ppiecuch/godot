@@ -46,13 +46,13 @@ TBRect TBWindow::GetResizeToFitContentRect(RESIZE_FIT fit)
 	}
 	else if (fit == RESIZE_FIT_CURRENT_OR_NEEDED)
 	{
-		new_w = CLAMP(GetRect().w, ps.min_w, ps.max_w);
-		new_h = CLAMP(GetRect().h, ps.min_h, ps.max_h);
+		new_w = Clamp(GetRect().w, ps.min_w, ps.max_w);
+		new_h = Clamp(GetRect().h, ps.min_h, ps.max_h);
 	}
 	if (GetParent())
 	{
-		new_w = MIN(new_w, GetParent()->GetRect().w);
-		new_h = MIN(new_h, GetParent()->GetRect().h);
+		new_w = Min(new_w, GetParent()->GetRect().w);
+		new_h = Min(new_h, GetParent()->GetRect().h);
 	}
 	return TBRect(GetRect().x, GetRect().y, new_w, new_h);
 }

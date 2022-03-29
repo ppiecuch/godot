@@ -958,14 +958,14 @@ PreferredSize TBWidget::OnCalculatePreferredContentSize(const SizeConstraints &c
 				ps.max_h = 0;
 		}
 		PreferredSize child_ps = child->GetPreferredSize(inner_sc);
-		ps.pref_w = MAX(ps.pref_w, child_ps.pref_w);
-		ps.pref_h = MAX(ps.pref_h, child_ps.pref_h);
-		ps.min_w = MAX(ps.min_w, child_ps.min_w);
-		ps.min_h = MAX(ps.min_h, child_ps.min_h);
+		ps.pref_w = Max(ps.pref_w, child_ps.pref_w);
+		ps.pref_h = Max(ps.pref_h, child_ps.pref_h);
+		ps.min_w = Max(ps.min_w, child_ps.min_w);
+		ps.min_h = Max(ps.min_h, child_ps.min_h);
 		if (apply_max_w)
-			ps.max_w = MAX(ps.max_w, child_ps.max_w);
+			ps.max_w = Max(ps.max_w, child_ps.max_w);
 		if (apply_max_h)
-			ps.max_h = MAX(ps.max_h, child_ps.max_h);
+			ps.max_h = Max(ps.max_h, child_ps.max_h);
 		ps.size_dependency |= child_ps.size_dependency;
 	}
 
@@ -1010,12 +1010,12 @@ PreferredSize TBWidget::OnCalculatePreferredSize(const SizeConstraints &constrai
 		if (e->GetMinWidth() != SKIN_VALUE_NOT_SPECIFIED)
 			ps.min_w = e->GetMinWidth();
 		else
-			ps.min_w = MAX(ps.min_w, e->GetIntrinsicMinWidth());
+			ps.min_w = Max(ps.min_w, e->GetIntrinsicMinWidth());
 
 		if (e->GetMinHeight() != SKIN_VALUE_NOT_SPECIFIED)
 			ps.min_h = e->GetMinHeight();
 		else
-			ps.min_h = MAX(ps.min_h, e->GetIntrinsicMinHeight());
+			ps.min_h = Max(ps.min_h, e->GetIntrinsicMinHeight());
 
 		if (e->GetMaxWidth() != SKIN_VALUE_NOT_SPECIFIED)
 			ps.max_w = e->GetMaxWidth();
@@ -1028,8 +1028,8 @@ PreferredSize TBWidget::OnCalculatePreferredSize(const SizeConstraints &constrai
 			ps.max_h += e->padding_top + e->padding_bottom;
 
 		// Sanitize result
-		ps.pref_w = MAX(ps.pref_w, ps.min_w);
-		ps.pref_h = MAX(ps.pref_h, ps.min_h);
+		ps.pref_w = Max(ps.pref_w, ps.min_w);
+		ps.pref_h = Max(ps.pref_h, ps.min_h);
 	}
 	return ps;
 }
@@ -1077,10 +1077,10 @@ PreferredSize TBWidget::GetPreferredSize(const SizeConstraints &in_constraints)
 		LP_OVERRIDE(pref_h);
 
 		// Sanitize results
-		m_cached_ps.max_w = MAX(m_cached_ps.max_w, m_cached_ps.min_w);
-		m_cached_ps.max_h = MAX(m_cached_ps.max_h, m_cached_ps.min_h);
-		m_cached_ps.pref_w = MAX(m_cached_ps.pref_w, m_cached_ps.min_w);
-		m_cached_ps.pref_h = MAX(m_cached_ps.pref_h, m_cached_ps.min_h);
+		m_cached_ps.max_w = Max(m_cached_ps.max_w, m_cached_ps.min_w);
+		m_cached_ps.max_h = Max(m_cached_ps.max_h, m_cached_ps.min_h);
+		m_cached_ps.pref_w = Max(m_cached_ps.pref_w, m_cached_ps.min_w);
+		m_cached_ps.pref_h = Max(m_cached_ps.pref_h, m_cached_ps.min_h);
 	}
 	return m_cached_ps;
 }
@@ -1433,8 +1433,8 @@ void TBWidget::HandlePanningOnMove(int x, int y)
 	const int dx = pointer_down_widget_x - x;
 	const int dy = pointer_down_widget_y - y;
 	const int threshold = TBSystem::GetPanThreshold();
-	const bool maybe_start_panning_x = ABS(dx) >= threshold;
-	const bool maybe_start_panning_y = ABS(dy) >= threshold;
+	const bool maybe_start_panning_x = Abs(dx) >= threshold;
+	const bool maybe_start_panning_y = Abs(dy) >= threshold;
 
 	// Do panning, or attempt starting panning (we don't know if any widget is scrollable yet)
 	if (captured_widget->m_packed.is_panning || maybe_start_panning_x || maybe_start_panning_y)

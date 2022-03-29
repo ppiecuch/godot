@@ -30,7 +30,7 @@ namespace tb {
 
 float TBScrollerFunction::GetDurationFromSpeed(float start_speed)
 {
-	float abs_start_speed = ABS(start_speed);
+	float abs_start_speed = Abs(start_speed);
 	if (abs_start_speed <= SF_GATE_THRESHOLD)
 		return 0;
 	return -logf(SF_GATE_THRESHOLD / abs_start_speed) * m_decay;
@@ -169,7 +169,7 @@ void TBScroller::OnPanReleased()
 		// Don't start scroll if we have too little speed.
 		// This will prevent us from scrolling accidently.
 		float pan_start_distance_threshold_px = 2 * TBSystem::GetDPI() / 100.0f;
-		if (ABS(m_pan_dx) < pan_start_distance_threshold_px && ABS(m_pan_dy) < pan_start_distance_threshold_px)
+		if (Abs(m_pan_dx) < pan_start_distance_threshold_px && Abs(m_pan_dy) < pan_start_distance_threshold_px)
 		{
 			StopOrSnapScroll();
 			return;
@@ -337,8 +337,8 @@ void TBScroller::OnMessageReceived(TBMessage *msg)
 		double now_ms = TBSystem::GetTimeMS();
 		float elapsed_time_x = (float)(now_ms - m_scroll_start_ms);
 		float elapsed_time_y = elapsed_time_x;
-		elapsed_time_x = MIN(elapsed_time_x, m_scroll_duration_x_ms);
-		elapsed_time_y = MIN(elapsed_time_y, m_scroll_duration_y_ms);
+		elapsed_time_x = Min(elapsed_time_x, m_scroll_duration_x_ms);
+		elapsed_time_y = Min(elapsed_time_y, m_scroll_duration_y_ms);
 
 		// Get the new scroll position from the current distance in each axis.
 		int scroll_x = m_func.GetDistanceAtTimeInt(m_scroll_start_speed_ppms_x, elapsed_time_x);
@@ -371,7 +371,7 @@ void TBScroller::OnMessageReceived(TBMessage *msg)
 		{
 			double next_fire_time = msg->GetFireTime() + PAN_MSG_DELAY_MS;
 			// avoid timer catch-up if program went sleeping for a while.
-			next_fire_time = MAX(next_fire_time, now_ms);
+			next_fire_time = Max(next_fire_time, now_ms);
 			PostMessageOnTime(TBIDC("scroll"), nullptr, next_fire_time);
 		}
 	}

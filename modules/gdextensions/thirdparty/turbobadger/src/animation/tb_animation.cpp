@@ -15,7 +15,7 @@ namespace tb {
 static float sc(float x)
 {
 	float s = x < 0 ? -1.f : 1.f;
-	x = ABS(x);
+	x = Abs(x);
 	if (x >= 1)
 		return s;
 	return s * (x < 0 ? x / 0.5f : (x / (1 + x * x)) / 0.5f);
@@ -87,7 +87,7 @@ void TBAnimationManager::Update()
 		if (obj->animation_duration != 0)
 		{
 			progress = (float)(time_now - obj->animation_start_time) / (float)obj->animation_duration;
-			progress = MIN(progress, 1.0f);
+			progress = Min(progress, 1.0f);
 		}
 
 		// Apply animation curve
@@ -139,7 +139,7 @@ void TBAnimationManager::StartAnimation(TBAnimationObject *obj, ANIMATION_CURVE 
 		animation_duration = 0;
 	obj->adjust_start_time = (animation_time == ANIMATION_TIME_FIRST_UPDATE ? true : false);
 	obj->animation_start_time = TBSystem::GetTimeMS();
-	obj->animation_duration = MAX(animation_duration, 0.0);
+	obj->animation_duration = Max(animation_duration, 0.0);
 	obj->animation_curve = animation_curve;
 	animating_objects.AddLast(obj);
 	obj->InvokeOnAnimationStart();

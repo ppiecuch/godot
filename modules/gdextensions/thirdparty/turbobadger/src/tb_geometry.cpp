@@ -42,8 +42,8 @@ TBRect TBRect::Union(const TBRect &rect) const
 	if (rect.IsEmpty())
 		return *this;
 
-	int minx = MIN(x, rect.x);
-	int miny = MIN(y, rect.y);
+	int minx = Min(x, rect.x);
+	int miny = Min(y, rect.y);
 	int maxx = x + w > rect.x + rect.w ?
 				x + w : rect.x + rect.w;
 	int maxy = y + h > rect.y + rect.h ?
@@ -57,10 +57,10 @@ TBRect TBRect::Clip(const TBRect &clip_rect) const
 	TBRect tmp;
 	if (!Intersects(clip_rect))
 		return tmp;
-	tmp.x = MAX(x, clip_rect.x);
-	tmp.y = MAX(y, clip_rect.y);
-	tmp.w = MIN(x + w, clip_rect.x + clip_rect.w) - tmp.x;
-	tmp.h = MIN(y + h, clip_rect.y + clip_rect.h) - tmp.y;
+	tmp.x = Max(x, clip_rect.x);
+	tmp.y = Max(y, clip_rect.y);
+	tmp.w = Min(x + w, clip_rect.x + clip_rect.w) - tmp.x;
+	tmp.h = Min(y + h, clip_rect.y + clip_rect.h) - tmp.y;
 	return tmp;
 }
 
@@ -113,7 +113,7 @@ bool TBRegion::GrowIfNeeded()
 {
 	if (m_num_rects == m_capacity)
 	{
-		int new_m_capacity = CLAMP(4, m_capacity * 2, 1024);
+		int new_m_capacity = Clamp(4, m_capacity * 2, 1024);
 		TBRect *new_rects = new TBRect[new_m_capacity];
 		if (!new_rects)
 			return false;

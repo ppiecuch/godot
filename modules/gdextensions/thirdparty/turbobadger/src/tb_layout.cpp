@@ -46,8 +46,8 @@ void TBLayout::SetSpacing(int spacing)
 
 void TBLayout::SetOverflowScroll(int overflow_scroll)
 {
-	overflow_scroll = MIN(overflow_scroll, m_overflow);
-	overflow_scroll = MAX(overflow_scroll, 0);
+	overflow_scroll = Min(overflow_scroll, m_overflow);
+	overflow_scroll = Max(overflow_scroll, 0);
 	if (overflow_scroll == m_overflow_scroll)
 		return;
 	m_overflow_scroll = overflow_scroll;
@@ -174,16 +174,16 @@ int TBLayout::GetWantedHeight(WIDGET_GRAVITY gravity, const PreferredSize &ps, i
 	{
 	case LAYOUT_SIZE_GRAVITY:
 		height = ((gravity & WIDGET_GRAVITY_TOP) && (gravity & WIDGET_GRAVITY_BOTTOM)) ?
-									available_height : MIN(available_height, ps.pref_h);
+									available_height : Min(available_height, ps.pref_h);
 		break;
 	case LAYOUT_SIZE_PREFERRED:
-		height = MIN(available_height, ps.pref_h);
+		height = Min(available_height, ps.pref_h);
 		break;
 	case LAYOUT_SIZE_AVAILABLE:
-		height = MIN(available_height, ps.max_h);
+		height = Min(available_height, ps.max_h);
 		break;
 	}
-	height = MIN(height, ps.max_h);
+	height = Min(height, ps.max_h);
 	return height;
 }
 
@@ -275,14 +275,14 @@ void TBLayout::ValidateLayout(const SizeConstraints &constraints, PreferredSize 
 
 		if (QualifyForExpansion(gravity))
 		{
-			int capped_max_w = MIN(layout_rect.w, ps.max_w);
+			int capped_max_w = Min(layout_rect.w, ps.max_w);
 			total_max_pref_diff_w += capped_max_w - ps.pref_w;
 		}
 
 		if (calculate_ps)
 		{
-			calculate_ps->min_h = MAX(calculate_ps->min_h, ps.min_h);
-			calculate_ps->pref_h = MAX(calculate_ps->pref_h, ps.pref_h);
+			calculate_ps->min_h = Max(calculate_ps->min_h, ps.min_h);
+			calculate_ps->pref_h = Max(calculate_ps->pref_h, ps.pref_h);
 			calculate_ps->min_w += ps.min_w + ending_space;
 			calculate_ps->pref_w += ps.pref_w + ending_space;
 			calculate_ps->max_w += ps.max_w + ending_space;
@@ -292,7 +292,7 @@ void TBLayout::ValidateLayout(const SizeConstraints &constraints, PreferredSize 
 			// If we just used its max_h, that could increase the whole layout size
 			// even if the widget wouldn't actually use it.
 			int height = GetWantedHeight(gravity, ps, ps.max_h);
-			calculate_ps->max_h = MAX(calculate_ps->max_h, height);
+			calculate_ps->max_h = Max(calculate_ps->max_h, height);
 
 			calculate_ps->size_dependency |= ps.size_dependency;
 		}
@@ -308,8 +308,8 @@ void TBLayout::ValidateLayout(const SizeConstraints &constraints, PreferredSize 
 	TB_IF_DEBUG_SETTING(LAYOUT_PS_DEBUGGING, last_layout_time = TBSystem::GetTimeMS());
 
 	// Pre Layout step (calculate distribution position)
-	int missing_space = MAX(total_preferred_w - layout_rect.w, 0);
-	int extra_space = MAX(layout_rect.w - total_preferred_w, 0);
+	int missing_space = Max(total_preferred_w - layout_rect.w, 0);
+	int extra_space = Max(layout_rect.w - total_preferred_w, 0);
 
 	int offset = layout_rect.x;
 	if (extra_space && m_packed.layout_mode_dist_pos != LAYOUT_DISTRIBUTION_POSITION_LEFT_TOP)
@@ -320,7 +320,7 @@ void TBLayout::ValidateLayout(const SizeConstraints &constraints, PreferredSize 
 
 		int used_space = total_preferred_w;
 		if (m_packed.layout_mode_dist != LAYOUT_DISTRIBUTION_PREFERRED)
-			used_space += MIN(extra_space, total_max_pref_diff_w);
+			used_space += Min(extra_space, total_max_pref_diff_w);
 
 		if (m_packed.layout_mode_dist_pos == LAYOUT_DISTRIBUTION_POSITION_CENTER)
 			offset += (layout_rect.w - used_space) / 2;
@@ -346,7 +346,7 @@ void TBLayout::ValidateLayout(const SizeConstraints &constraints, PreferredSize 
 			int diff_w = ps.pref_w - ps.min_w;
 			float factor = (float)diff_w / (float)total_min_pref_diff_w;
 			int removed = (int)(missing_space * factor);
-			removed = MIN(removed, diff_w);
+			removed = Min(removed, diff_w);
 			width -= removed;
 
 			total_min_pref_diff_w -= diff_w;
@@ -354,11 +354,11 @@ void TBLayout::ValidateLayout(const SizeConstraints &constraints, PreferredSize 
 		}
 		else if (extra_space && total_max_pref_diff_w && QualifyForExpansion(gravity))
 		{
-			int capped_max_w = MIN(layout_rect.w, ps.max_w);
+			int capped_max_w = Min(layout_rect.w, ps.max_w);
 			int diff_w = capped_max_w - ps.pref_w;
 			float factor = (float)diff_w / (float)total_max_pref_diff_w;
 			int added = (int)(extra_space * factor);
-			added = MIN(added, diff_w);
+			added = Min(added, diff_w);
 			width += added;
 
 			total_max_pref_diff_w -= capped_max_w - ps.pref_w;
@@ -396,7 +396,7 @@ void TBLayout::ValidateLayout(const SizeConstraints &constraints, PreferredSize 
 		child->SetRect(RotRect(rect, m_axis));
 	}
 	// Update overflow and overflow scroll
-	m_overflow = MAX(0, used_space - layout_rect.w);
+	m_overflow = Max(0, used_space - layout_rect.w);
 	SetOverflowScroll(m_overflow_scroll);
 }
 

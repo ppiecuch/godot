@@ -33,13 +33,13 @@ TBTextFragmentContent *TBTextFragmentContentFactory::CreateFragmentContent(const
 		return new TBTextFragmentContentHR(100, 2);
 	else if (strncmp(text, "<u>", text_len) == 0)
 		return new TBTextFragmentContentUnderline();
-	else if (strncmp(text, "<color ", MIN(text_len, 7)) == 0)
+	else if (strncmp(text, "<color ", Min(text_len, 7)) == 0)
 	{
 		TBColor color;
 		color.SetFromString(text + 7, text_len - 8);
 		return new TBTextFragmentContentTextColor(color);
 	}
-	else if (strncmp(text, "</", MIN(text_len, 2)) == 0)
+	else if (strncmp(text, "</", Min(text_len, 2)) == 0)
 		return new TBTextFragmentContentStylePop();
 	return nullptr;
 }

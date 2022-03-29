@@ -186,7 +186,7 @@ public:
 	}
 	virtual int GetMoreData(char *buf, int buf_len)
 	{
-		int consume = MIN(buf_len, m_data_len);
+		int consume = Min(buf_len, m_data_len);
 		memcpy(buf, m_data, consume);
 		m_data += consume;
 		m_data_len -= consume;

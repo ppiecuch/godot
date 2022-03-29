@@ -187,7 +187,7 @@ TBBitmapFragmentMap::~TBBitmapFragmentMap()
 	delete [] m_bitmap_data;
 }
 
-TBBitmapFragment *TBBitmapFragmentMap::CreateNewFragment(int frag_w, int frag_h, int data_stride, uint32 *frag_data, bool add_border)
+TBBitmapFragment *TBBitmapFragmentMap::CreateNewFragment(int frag_w, int frag_h, int data_stride, const uint32 *frag_data, bool add_border)
 {
 	// Finding available space works like this:
 	// The map size is sliced up horizontally in rows (initially just one row covering
@@ -326,11 +326,11 @@ void TBBitmapFragmentMap::FreeFragmentSpace(TBBitmapFragment *frag)
 	}
 }
 
-void TBBitmapFragmentMap::CopyData(TBBitmapFragment *frag, int data_stride, uint32 *frag_data, int border)
+void TBBitmapFragmentMap::CopyData(TBBitmapFragment *frag, int data_stride, const uint32 *frag_data, int border)
 {
 	// Copy the bitmap data
 	uint32 *dst = m_bitmap_data + frag->m_rect.x + frag->m_rect.y * m_bitmap_w;
-	uint32 *src = frag_data;
+	const uint32 *src = frag_data;
 	for (int i = 0; i < frag->m_rect.h; i++)
 	{
 		memcpy(dst, src, frag->m_rect.w * sizeof(uint32));
@@ -427,7 +427,7 @@ TBBitmapFragment *TBBitmapFragmentManager::GetFragmentFromFile(const char *filen
 
 TBBitmapFragment *TBBitmapFragmentManager::CreateNewFragment(const TBID &id, bool dedicated_map,
 															 int data_w, int data_h, int data_stride,
-															 uint32 *data)
+															 const uint32 *data)
 {
 	assert(!GetFragment(id));
 
@@ -448,8 +448,8 @@ TBBitmapFragment *TBBitmapFragmentManager::CreateNewFragment(const TBID &id, boo
 	bool allow_another_map = (m_num_maps_limit == 0 || m_fragment_maps.GetNumItems() < m_num_maps_limit);
 	if (!frag && allow_another_map && m_fragment_maps.GrowIfNeeded())
 	{
-		int po2w = TBGetNearestPowerOfTwo(MAX(data_w, m_default_map_w));
-		int po2h = TBGetNearestPowerOfTwo(MAX(data_h, m_default_map_h));
+		int po2w = TBGetNearestPowerOfTwo(Max(data_w, m_default_map_w));
+		int po2h = TBGetNearestPowerOfTwo(Max(data_h, m_default_map_h));
 		if (dedicated_map)
 		{
 			po2w = TBGetNearestPowerOfTwo(data_w);

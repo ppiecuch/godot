@@ -22,8 +22,8 @@ TBRect TBPopupAlignment::GetAlignedRect(TBWidget *popup, TBWidget *target) const
 	int avoid_w = 0, avoid_h = 0;
 
 	int x = 0, y = 0;
-	int w = MIN(ps.pref_w, root->GetRect().w);
-	int h = MIN(ps.pref_h, root->GetRect().h);
+	int w = Min(ps.pref_w, root->GetRect().w);
+	int h = Min(ps.pref_h, root->GetRect().h);
 
 	if (pos_in_root.x != UNSPECIFIED &&
 		pos_in_root.y != UNSPECIFIED)
@@ -43,11 +43,11 @@ TBRect TBPopupAlignment::GetAlignedRect(TBWidget *popup, TBWidget *target) const
 		if (align == TB_ALIGN_TOP || align == TB_ALIGN_BOTTOM)
 		{
 			if (expand_to_target_width)
-				w = MAX(w, target->GetRect().w);
+				w = Max(w, target->GetRect().w);
 
 			// If the menu is aligned top or bottom, limit its height to the worst case available height.
 			// Being in the center of the root, that is half the root height minus the target rect.
-			h = MIN(h, root->GetRect().h / 2 - target->GetRect().h);
+			h = Min(h, root->GetRect().h / 2 - target->GetRect().h);
 		}
 		avoid_w = target->GetRect().w;
 		avoid_h = target->GetRect().h;
@@ -60,12 +60,12 @@ TBRect TBPopupAlignment::GetAlignedRect(TBWidget *popup, TBWidget *target) const
 	else if (align == TB_ALIGN_RIGHT)
 	{
 		x = x + avoid_w + w > root->GetRect().w ? x - w : x + avoid_w;
-		y = MIN(y, root->GetRect().h - h);
+		y = Min(y, root->GetRect().h - h);
 	}
 	else // if (align == TB_ALIGN_LEFT)
 	{
 		x = x - w < 0 ? x + avoid_w : x - w;
-		y = MIN(y, root->GetRect().h - h);
+		y = Min(y, root->GetRect().h - h);
 	}
 	return TBRect(x, y, w, h);
 }

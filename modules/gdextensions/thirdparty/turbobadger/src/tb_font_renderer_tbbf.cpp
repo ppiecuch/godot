@@ -146,7 +146,7 @@ bool TBBFRenderer::Load(const char *filename, int size)
 	{
 		if (strcmp(n->GetName(), "size") == 0)
 		{
-			if (!size_node || ABS(m_size - n->GetValue().GetInt()) < ABS(m_size - size_node->GetValue().GetInt()))
+			if (!size_node || Abs(m_size - n->GetValue().GetInt()) < Abs(m_size - size_node->GetValue().GetInt()))
 				size_node = n;
 		}
 	}
@@ -213,7 +213,7 @@ GLYPH *TBBFRenderer::FindNext(UCS4 cp, int x)
 {
 	int width = m_img->Width();
 	int height = m_img->Height();
-	uint32 *data32 = m_img->Data();
+	const uint32 *data32 = m_img->Data();
 
 	if (x >= width)
 		return nullptr;

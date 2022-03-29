@@ -99,7 +99,7 @@ TBFontGlyphData *TBFontEffect::Render(TBGlyphMetrics *metrics, const TBFontGlyph
 
 		// Blur!
 		blurGlyph(src->data8, src->w, src->h, src->stride,
-					effect_glyph_data->data8, effect_glyph_data->w, effect_glyph_data->h, effect_glyph_data->w,
+					(uint8*) effect_glyph_data->data8, effect_glyph_data->w, effect_glyph_data->h, effect_glyph_data->w,
 					(float*) m_blur_temp.GetData(), (float*) m_kernel.GetData(), m_blur_radius);
 
 		// Adjust glyph position to compensate for larger size.
@@ -309,7 +309,7 @@ void TBFontFace::RenderGlyph(TBFontGlyph *glyph)
 
 		// The glyph data may be in uint8 format, which we have to convert since we always
 		// create fragments (and TBBitmap) in 32bit format.
-		uint32 *glyph_dsta_src = result_glyph_data->data32;
+		uint32 *glyph_dsta_src = (uint32 *) result_glyph_data->data32;
 		if (!glyph_dsta_src && result_glyph_data->data8)
 		{
 			if (m_temp_buffer.Reserve(result_glyph_data->w * result_glyph_data->h * sizeof(uint32)))

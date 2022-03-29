@@ -79,6 +79,15 @@ public:
 	virtual size_t Read(void *buf, size_t elemSize, size_t count) = 0;
 };
 
+/** Memory/embedded files support */
+struct _finfo_t {
+	const char *fname;
+	const unsigned char *data;
+	size_t len;
+};
+
+void register_mem_files(const _finfo_t *files, int count);
+
 } // namespace tb
 
 #endif // TB_SYSTEM_H

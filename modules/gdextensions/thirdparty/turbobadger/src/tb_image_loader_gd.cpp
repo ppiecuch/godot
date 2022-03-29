@@ -13,10 +13,10 @@ namespace tb {
 
 class GD_Loader : public TBImageLoader
 {
-public:
 	Ref<Image> image;
 
-	GD_Loader() {}
+public:
+	GD_Loader(Ref<Image> image) : image(image) {}
 
 	virtual int Width() { return image->get_width(); }
 	virtual int Height() { return image->get_height(); }
@@ -28,19 +28,9 @@ TBImageLoader *TBImageLoader::CreateFromFile(const char *filename)
 	TBTempBuffer buf;
 	if (buf.AppendFile(filename))
 	{
-		int w, h, comp;
-		if (unsigned char *img_data = stbi_load_from_memory(
-			(unsigned char*) buf.GetData(), buf.GetAppendPos(), &w, &h, &comp, 4))
-		{
-			if (GD_Loader *img = new GD_Loader())
-			{
-				img->width = w;
-				img->height = h;
-				img->data = img_data;
-				return img;
-			}
-			else
-				stbi_image_free(img_data);
+		Ref<Image> image = memnew(Image((uint8_t*)buf.GetData(), buf.GetAppendPos()));
+		if (image.is_valid()) {
+			return new GD_Loader(image);
 		}
 	}
 	return nullptr;

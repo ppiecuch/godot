@@ -285,10 +285,10 @@ void TBScrollContainer::ValidateLayout(const SizeConstraints &constraints)
 		int content_w, content_h;
 		if (m_adapt_content_size)
 		{
-			content_w = MAX(ps.pref_w, m_root.GetRect().w);
-			content_h = MAX(ps.pref_h, m_root.GetRect().h);
+			content_w = Max(ps.pref_w, m_root.GetRect().w);
+			content_h = Max(ps.pref_h, m_root.GetRect().h);
 			if (!visibility.x_on && m_root.GetRect().w < ps.pref_w)
-				content_w = MIN(ps.pref_w, m_root.GetRect().w);
+				content_w = Min(ps.pref_w, m_root.GetRect().w);
 		}
 		else
 		{
@@ -297,8 +297,8 @@ void TBScrollContainer::ValidateLayout(const SizeConstraints &constraints)
 		}
 
 		content_child->SetRect(TBRect(0, 0, content_w, content_h));
-		double limit_max_w = MAX(0, content_w - m_root.GetRect().w);
-		double limit_max_h = MAX(0, content_h - m_root.GetRect().h);
+		double limit_max_w = Max(0, content_w - m_root.GetRect().w);
+		double limit_max_h = Max(0, content_h - m_root.GetRect().h);
 		m_scrollbar_x.SetLimits(0, limit_max_w, m_root.GetRect().w);
 		m_scrollbar_y.SetLimits(0, limit_max_h, m_root.GetRect().h);
 	}

@@ -466,6 +466,8 @@ void GdTurboBadgerCore::release() {
 
 GdTurboBadgerCore::GdTurboBadgerCore() {
 	_ref = 0;
+	// register default theme files
+# include "turbobadger/resources/default_theme.inc"
 }
 
 GdTurboBadgerCore::~GdTurboBadgerCore() {

@@ -113,7 +113,7 @@ public:
 
 	/** Create a new fragment with the given size and data in this map.
 		Returns nullptr if there is not enough room in this map or on any other fail. */
-	TBBitmapFragment *CreateNewFragment(int frag_w, int frag_h, int data_stride, uint32 *frag_data, bool add_border);
+	TBBitmapFragment *CreateNewFragment(int frag_w, int frag_h, int data_stride, const uint32 *frag_data, bool add_border);
 
 	/** Free up the space used by the given fragment, so that other fragments can take its place. */
 	void FreeFragmentSpace(TBBitmapFragment *frag);
@@ -125,7 +125,7 @@ private:
 	friend class TBBitmapFragmentManager;
 	bool ValidateBitmap();
 	void DeleteBitmap();
-	void CopyData(TBBitmapFragment *frag, int data_stride, uint32 *frag_data, int border);
+	void CopyData(TBBitmapFragment *frag, int data_stride, const uint32 *frag_data, int border);
 	TBListAutoDeleteOf<TBFragmentSpaceAllocator> m_rows;
 	int m_bitmap_w, m_bitmap_h;
 	uint32 *m_bitmap_data;
@@ -200,7 +200,7 @@ public:
 		@param data pointer to the data in BGRA32 format. */
 	TBBitmapFragment *CreateNewFragment(const TBID &id, bool dedicated_map,
 										int data_w, int data_h, int data_stride,
-										uint32 *data);
+										const uint32 *data);
 
 	/** Delete the given fragment and free the space it used in its map,
 		so that other fragments can take its place. */

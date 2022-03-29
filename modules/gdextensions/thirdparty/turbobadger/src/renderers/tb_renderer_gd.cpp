@@ -34,7 +34,6 @@ void BindBitmap(TBBitmap *bitmap)
 	if (texture != g_current_texture)
 	{
 		g_current_texture = texture;
-		glBindTexture(GL_TEXTURE_2D, g_current_texture);
 	}
 }
 

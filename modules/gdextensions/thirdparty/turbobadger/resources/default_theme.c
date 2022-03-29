@@ -9,6 +9,7 @@
 
 INCBIN(segoe_white_with_shadow_14, RES_ROOT "default_font/segoe_white_with_shadow_14.png");
 INCBIN(segoe_white_with_shadow_28, RES_ROOT "default_font/segoe_white_with_shadow_28.png");
+INCBIN(segoe_white_with_shadow, RES_ROOT "default_font/segoe_white_with_shadow.tb.txt");
 
 INCBIN(TBSectionContainer, RES_ROOT "default_skin/TBSectionContainer.png");
 INCBIN(arrow_down, RES_ROOT "default_skin/arrow_down.png");
@@ -88,7 +89,7 @@ INCBIN(search_192, RES_ROOT "default_skin/search@192.png");
 INCBIN(search_288, RES_ROOT "default_skin/search@288.png");
 INCBIN(search_384, RES_ROOT "default_skin/search@384.png");
 INCBIN(selection, RES_ROOT "default_skin/selection.png");
-INCBIN(skin_tb, RES_ROOT "default_skin/skin.tb.txt");
+INCBIN(skin, RES_ROOT "default_skin/skin.tb.txt");
 INCBIN(slider_bg_x, RES_ROOT "default_skin/slider_bg_x.png");
 INCBIN(slider_bg_x_192, RES_ROOT "default_skin/slider_bg_x@192.png");
 INCBIN(slider_bg_x_288, RES_ROOT "default_skin/slider_bg_x@288.png");
