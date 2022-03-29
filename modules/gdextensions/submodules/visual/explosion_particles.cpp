@@ -90,10 +90,17 @@ static bool _is_inside_circle(const Point2 &center, real_t r, const Point2 &pt) 
 	return dist <= r * r;
 }
 
-#ifndef GD_NO_UNUSED_FUNCTIONS
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+
 static bool _is_inside_ellipse(const Point2 &center, const Size2 &r, const Point2 &pt) {
 	return (pt.x - center.x) * (pt.x - center.x) / (r.x * r.x) + (pt.y - center.y) * (pt.y - center.y) / (r.y * r.y);
 }
+
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
 #endif
 
 real_t FakeExplosionParticles2D::_get_random_alpha() {

@@ -85,7 +85,7 @@ void TouchButton::_input(Ref<InputEvent> p_event) {
 
 	ERR_FAIL_COND(!is_visible_in_tree());
 
-	if (is_disabled()) {// no interaction with disabled button
+	if (is_disabled()) { // no interaction with disabled button
 		return;
 	}
 

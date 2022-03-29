@@ -480,7 +480,7 @@ bool Vector3::is_zero() const {
 }
 
 bool Vector3::is_approx_zero() const {
-	return Math::is_equal_approx(x,0, (real_t)UNIT_EPSILON) && Math::is_equal_approx(y, 0, (real_t)UNIT_EPSILON) && Math::is_equal_approx(z, 0, (real_t)UNIT_EPSILON);
+	return Math::is_equal_approx(x, 0, (real_t)UNIT_EPSILON) && Math::is_equal_approx(y, 0, (real_t)UNIT_EPSILON) && Math::is_equal_approx(z, 0, (real_t)UNIT_EPSILON);
 }
 
 // slide returns the component of the vector along the given plane, specified by its normal vector.
