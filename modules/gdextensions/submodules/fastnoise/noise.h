@@ -132,27 +132,9 @@ public:
 
 	float get_noise_2d(float x, float y) { return _noise.GetNoise(x, y); }
 
-#if 0
-	float get_gradient_2d(float x, float y) { return _noise.GetGradient(x, y); }
-	float get_simplex_2d(float x, float y) { return _noise.GetSimplex(x, y); }
-	float get_cellular_2d(float x, float y) { return _noise.GetCellular(x, y); }
-	float get_cellular_hq_2d(float x, float y) { return _noise.GetCellularHQ(x, y); }
-	float get_white_noise_2d(float x, float y) { return _noise.GetWhiteNoise(x, y); }
-	float get_value_2d(float x, float y) { return _noise.GetValue(x, y); }
-#endif
-
 	// 3D
 
 	float get_noise_3d(float x, float y, float z) { return _noise.GetNoise(x, y, z); }
-
-#if 0
-	float get_gradient_3d(float x, float y, float z) { return _noise.GetGradient(x, y, z); }
-	float get_simplex_3d(float x, float y, float z) { return _noise.GetSimplex(x, y, z); }
-	float get_cellular_3d(float x, float y, float z) { return _noise.GetCellular(x, y, z); }
-	float get_cellular_hq_3d(float x, float y, float z) { return _noise.GetCellularHQ(x, y, z); }
-	float get_white_noise_3d(float x, float y, float z) { return _noise.GetWhiteNoise(x, y, z); }
-	float get_value_2d(float x, float y, float z) { return _noise.GetValue(x, y, z); }
-#endif
 
 	// 4D
 
