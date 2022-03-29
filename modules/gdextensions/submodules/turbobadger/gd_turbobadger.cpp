@@ -371,8 +371,8 @@ void GdTurboBadger::notifications(int p_what) {
 				root.SetRect(TBRect(0, 0, view_size.width, view_size.height));
 				_dirty = false;
 			}
-			auto renderer = GdTurboBadgerCore::get_singleton()->get_renderer();
-			renderer->BeginPaint(root.GetRect().w, root.GetRect().h);
+			auto *renderer = GdTurboBadgerCore::get_singleton()->get_renderer();
+			renderer->BeginPaint(this, root.GetRect().w, root.GetRect().h);
 			root.InvokePaint(TBWidget::PaintProps());
 			renderer->EndPaint();
 		} break;
@@ -448,7 +448,7 @@ GdTurboBadgerCore *GdTurboBadgerCore::get_singleton() {
 void GdTurboBadgerCore::init() {
 	if (_ref == 0) {
 		TBWidgetsAnimationManager::Init();
-		tb_core_init(*renderer);
+		tb_core_init(&renderer);
 	}
 	_ref++;
 }
@@ -467,7 +467,7 @@ void GdTurboBadgerCore::release() {
 GdTurboBadgerCore::GdTurboBadgerCore() {
 	_ref = 0;
 	// register default theme files
-# include "turbobadger/resources/default_theme.inc"
+#include "turbobadger/resources/default_theme.inc"
 }
 
 GdTurboBadgerCore::~GdTurboBadgerCore() {

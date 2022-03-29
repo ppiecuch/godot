@@ -8,7 +8,7 @@
 
 #include "tb_types.h"
 
-#include "core/reference.h"
+#include "scene/2d/canvas_item.h"
 #include "scene/resources/mesh.h"
 #include "scene/resources/texture.h"
 
@@ -20,6 +20,10 @@ class TBRendererGD;
 
 class TBBitmapGD : public TBBitmap
 {
+	TBRendererGD *m_renderer;
+	Ref<Texture> m_texture;
+
+	void BuildTexture(int width, int height, uint32 *data);
 public:
 	TBBitmapGD(TBRendererGD *renderer);
 	~TBBitmapGD();
@@ -27,20 +31,25 @@ public:
 	virtual int Width() { return m_texture->get_width(); }
 	virtual int Height() { return m_texture->get_height(); }
 	virtual void SetData(uint32 *data);
-public:
-	TBRendererGD *m_renderer;
-	Ref<Texture> m_texture;
+	Ref<Texture> GetTexture() const { return m_texture; }
 };
 
-class TBRendererGD : public Reference, public TBRendererBatcher
+class TBRendererGD : public TBRendererBatcher
 {
 	Ref<ArrayMesh> mesh;
+	void DrawMesh(Ref<Mesh> mesh, TBBitmap *bitmap);
+
+	CanvasItem *_current_canvas = nullptr;
+	TBBitmap *_current_bitmap = nullptr;
+
+	virtual void BeginPaint(int render_target_w, int render_target_h);
+
 public:
 	TBRendererGD();
 
 	// == TBRenderer ====================================================================
 
-	virtual void BeginPaint(int render_target_w, int render_target_h);
+	virtual void BeginPaint(CanvasItem *canvas, int render_target_w, int render_target_h);
 	virtual void EndPaint();
 
 	virtual TBBitmap *CreateBitmap(int width, int height, uint32 *data);

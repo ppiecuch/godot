@@ -35,6 +35,7 @@
 #include "common/gd_core.h"
 #include "core/color.h"
 #include "core/math/math_funcs.h"
+#include "core/os/input.h"
 #include "core/os/input_event.h"
 #include "core/variant.h"
 #include "scene/resources/mesh.h"
@@ -625,22 +626,50 @@ void ControlWidget::_input(const Ref<InputEvent> &p_event) {
 
 	ERR_FAIL_COND(!is_visible_in_tree());
 
+	auto update_cursor = [&]() {
+		if (_state.active) {
+			switch (control_type) {
+				case WIDGET_ROTATION_SPHERE:
+					Input::get_singleton()->set_default_cursor_shape(Input::CURSOR_ARROW);
+					break;
+				case WIDGET_TRANSLATION_X:
+					Input::get_singleton()->set_default_cursor_shape(Input::CURSOR_HSIZE);
+					break;
+				case WIDGET_TRANSLATION_Y:
+				case WIDGET_TRANSLATION_Z:
+					Input::get_singleton()->set_default_cursor_shape(Input::CURSOR_VSIZE);
+					break;
+				case WIDGET_TRANSLATION_XY: {
+					if (_state.locked == 'X') {
+						Input::get_singleton()->set_default_cursor_shape(Input::CURSOR_HSIZE);
+					} else if (_state.locked == 'Y') {
+						Input::get_singleton()->set_default_cursor_shape(Input::CURSOR_VSIZE);
+					} else {
+						Input::get_singleton()->set_default_cursor_shape(Input::CURSOR_CROSS);
+					}
+				} break;
+			}
+		} else {
+			Input::get_singleton()->set_default_cursor_shape(Input::CURSOR_ARROW);
+		}
+	};
+
 	if (const InputEventMouseButton *e = cast_to<InputEventMouseButton>(*p_event)) {
-		if (e->get_button_index() == BUTTON_LEFT) {
-			if (e->is_pressed()) {
-				if (control_type == WIDGET_ROTATION_SPHERE) {
-					_state.initial_pos = to_local(e->get_position());
-					_mouse_on_sphere(_state.initial_pos, control_rect.size, &_state.from_vector);
-					_state.active = true;
-				} else if (control_type == WIDGET_TRANSLATION_Z) {
-					OS::get_singleton()->set_cursor_shape(OS::CURSOR_HSIZE);
-				} else if (control_type == WIDGET_TRANSLATION_XY) {
-					_state.initial_pos = to_local(e->get_position());
+		if (_is_point_inside(e->get_position())) {
+			if (e->get_button_index() == BUTTON_LEFT) {
+				if (e->is_pressed()) {
+					if (!_state.active) {
+						_state.active = true;
+						_state.initial_pos = to_local(e->get_position());
+						if (control_type == WIDGET_ROTATION_SPHERE) {
+							_mouse_on_sphere(_state.initial_pos, control_rect.size, &_state.from_vector);
+						}
+					}
+					get_tree()->set_input_as_handled();
+				} else if (!e->is_pressed()) {
+					_state.active = false;
 				}
-				get_tree()->set_input_as_handled();
-			} else if (!e->is_pressed()) {
-				_state.active = false;
-				OS::get_singleton()->set_cursor_shape(OS::CURSOR_ARROW);
+				update_cursor();
 			}
 		}
 	}
@@ -676,55 +705,64 @@ void ControlWidget::_input(const Ref<InputEvent> &p_event) {
 				const Point2 center = control_rect.size / 2;
 				const Point2 p = to_local(e->get_position());
 
-				real_t xf = p.x + center.x - _state.initial_pos.x;
-				real_t yf = p.y + center.y - _state.initial_pos.y;
+				Point2 pf = p + center - _state.initial_pos;
 
 				if (e->get_alt()) {
-					const real_t dx = Math::abs(p.x - _state.initial_pos.x);
-					const real_t dy = Math::abs(p.y - _state.initial_pos.y);
+					const Vector2 dd = (p - _state.initial_pos).abs();
 					// update locking
-					if (dx > dy) {
-						_state.locked = 'X';
-						OS::get_singleton()->set_cursor_shape(OS::CURSOR_HSIZE);
+					if (dd.x > dd.y) {
+						if (_state.locked != 'X') {
+							_state.locked = 'X';
+							update_cursor();
+						}
+					} else if (dd.x < dd.y) {
+						if (_state.locked != 'Y') {
+							_state.locked = 'Y';
+							update_cursor();
+						}
 					} else {
-						_state.locked = 'Y';
-						OS::get_singleton()->set_cursor_shape(OS::CURSOR_VSIZE);
+						if (_state.locked) {
+							_state.locked = 0;
+							update_cursor();
+						}
 					}
 				} else {
 					if (_state.locked) {
-						OS::get_singleton()->set_cursor_shape(OS::CURSOR_ARROW);
 						_state.locked = 0;
+						update_cursor();
 					}
 				}
+
 				if (e->get_control()) {
-					xf *= 10;
-					yf *= 10;
+					pf *= 10;
 				}
 				if (e->get_shift()) {
-					xf *= 0.1;
-					yf *= 0.1;
+					pf *= 0.1;
 				}
 				switch (control_type) {
 					case WIDGET_TRANSLATION_XY: {
 						if ('Y' == _state.locked) {
-							yf = 0;
+							pf.y = 0;
 						} else if ('X' == _state.locked) {
-							xf = 0;
+							pf.x = 0;
 						}
-						_state.tr.origin.x += xf;
-						_state.tr.origin.y += yf;
+						_state.tr.origin.x += pf.x;
+						_state.tr.origin.y += pf.y;
 					} break;
 					case WIDGET_TRANSLATION_X: {
-						_state.tr.origin.x += xf;
+						_state.tr.origin.x += pf.x;
 					} break;
 					case WIDGET_TRANSLATION_Y: {
-						_state.tr.origin.y = yf;
+						_state.tr.origin.y = pf.y;
+					} break;
+					case WIDGET_TRANSLATION_Z: {
+						_state.tr.origin.z = pf.y;
 					} break;
 					default: {
 						WARN_PRINT("Unexpected control type.");
 					}
 				}
-				if (xf || yf) {
+				if (pf.x || pf.y) {
 					emit_signal("transformation_changed", array(_state.tr));
 				}
 			}

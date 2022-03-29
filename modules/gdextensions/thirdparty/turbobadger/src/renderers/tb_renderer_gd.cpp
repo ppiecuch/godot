@@ -7,8 +7,11 @@
 
 #include "tb_bitmap_fragment.h"
 #include "tb_system.h"
-#include <assert.h>
-#include <stdio.h>
+
+#include "core/variant.h"
+#include "core/image.h"
+#include "common/gd_core.h"
+#include "scene/resources/texture.h"
 
 namespace tb {
 
@@ -16,31 +19,23 @@ namespace tb {
 uint32 dbg_bitmap_validations = 0;
 #endif // TB_RUNTIME_DEBUG_INFO
 
-// == Utilities ===================================================================================
-
-static void Ortho2D(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top)
-{
-	glOrthof(left, right, bottom, top, -1.0, 1.0);
-}
-
-// == Batching ====================================================================================
-
-Ref<Texture> g_current_texture = nullptr;
-TBRendererBatcher::Batch *g_current_batch = nullptr;
-
-void BindBitmap(TBBitmap *bitmap)
-{
-	Ref<Texture> texture = bitmap ? static_cast<TBBitmapGD*>(bitmap)->m_texture : nullptr;
-	if (texture != g_current_texture)
-	{
-		g_current_texture = texture;
-	}
-}
-
 // == TBBitmapGD ==================================================================================
 
+void TBBitmapGD::BuildTexture(int width, int height, uint32 *data)
+{
+	Ref<Image> image = newref(Image);
+	PoolByteArray d;
+	const size_t data_size = width * height * 4; // RGBA only
+	d.resize(data_size);
+	memcpy(d.write().ptr(), data, data_size);
+	image->create(width, height, false, Image::FORMAT_RGBA8, d);
+	Ref<ImageTexture> texture = newref(ImageTexture);
+	texture->create_from_image(image);
+	m_texture = texture;
+}
+
 TBBitmapGD::TBBitmapGD(TBRendererGD *renderer)
-	: m_renderer(renderer), m_w(0), m_h(0), m_texture(0)
+	: m_renderer(renderer), m_texture(0)
 {
 }
 
@@ -48,35 +43,25 @@ TBBitmapGD::~TBBitmapGD()
 {
 	// Must flush and unbind before we delete the texture
 	m_renderer->FlushBitmap(this);
-	if (m_texture == g_current_texture) {
-		BindBitmap(nullptr);
-	}
-	glDeleteTextures(1, &m_texture);
 }
 
 bool TBBitmapGD::Init(int width, int height, uint32 *data)
 {
-	assert(width == TBGetNearestPowerOfTwo(width));
-	assert(height == TBGetNearestPowerOfTwo(height));
+	ERR_FAIL_COND_V(width == TBGetNearestPowerOfTwo(width), false);
+	ERR_FAIL_COND_V(height == TBGetNearestPowerOfTwo(height), false);
 
-	m_w = width;
-	m_h = height;
-
-	glGenTextures(1, &m_texture);
-	BindBitmap(this);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-	SetData(data);
+	BuildTexture(width, height, data);
 
 	return true;
 }
 
 void TBBitmapGD::SetData(uint32 *data)
 {
+	ERR_FAIL_NULL(m_texture);
+
 	m_renderer->FlushBitmap(this);
-	BindBitmap(this);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_w, m_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	BuildTexture(Width(), Height(), data);
+
 	TB_IF_DEBUG_SETTING(RENDER_BATCHES, dbg_bitmap_validations++);
 }
 
@@ -86,20 +71,32 @@ TBRendererGD::TBRendererGD()
 {
 }
 
-void TBRendererGD::BeginPaint(int render_target_w, int render_target_h)
+void TBRendererGD::DrawMesh(Ref<Mesh> mesh, TBBitmap *bitmap)
 {
+	_current_canvas->draw_mesh(mesh, ((TBBitmapGD*)bitmap)->GetTexture());
+}
+
+void TBRendererGD::BeginPaint(CanvasItem *canvas, int render_target_w, int render_target_h)
+{
+	ERR_FAIL_COND_MSG(_current_canvas != nullptr, "Recursive paint call");
+
 #ifdef TB_RUNTIME_DEBUG_INFO
 	dbg_bitmap_validations = 0;
 #endif
 
 	TBRendererBatcher::BeginPaint(render_target_w, render_target_h);
 
-	g_current_texture = nullptr;
-	g_current_batch = nullptr;
+	_current_canvas = canvas;
+	_current_bitmap = nullptr;
+
+	mesh->clear_mesh();
 }
 
 void TBRendererGD::EndPaint()
 {
+	_current_canvas = nullptr;
+	_current_bitmap = nullptr;
+
 	TBRendererBatcher::EndPaint();
 
 #ifdef TB_RUNTIME_DEBUG_INFO
@@ -121,23 +118,39 @@ TBBitmap *TBRendererGD::CreateBitmap(int width, int height, uint32 *data)
 
 void TBRendererGD::RenderBatch(Batch *batch)
 {
-	// Bind texture and array pointers
-	BindBitmap(batch->bitmap);
-	if (g_current_batch != batch)
-	{
-		glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(Vertex), (void *) &batch->vertex[0].r);
-		glTexCoordPointer(2, GL_FLOAT, sizeof(Vertex), (void *) &batch->vertex[0].u);
-		glVertexPointer(2, GL_FLOAT, sizeof(Vertex), (void *) &batch->vertex[0].x);
-		g_current_batch = batch;
+	PoolVector2Array verts;
+	PoolColorArray colors;
+	PoolVector2Array uvs;
+
+	for (int c = 0; c < batch->vertex_count;  c++) {
+		verts.push_back({batch->vertex[c].x, batch->vertex[c].y});
+		uvs.push_back({batch->vertex[c].u, batch->vertex[c].v});
+		colors.push_back({batch->vertex[c].r/255.f, batch->vertex[c].g/255.f, batch->vertex[c].b/255.f, batch->vertex[c].a/255.f});
+	}
+
+	Array mesh_array;
+	mesh_array.resize(VS::ARRAY_MAX);
+	mesh_array[VS::ARRAY_VERTEX] = verts;
+	mesh_array[VS::ARRAY_COLOR] = colors;
+	mesh_array[VS::ARRAY_TEX_UV] = uvs;
+	mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array, Array(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
+
+	// Assuming there are no calls without bitmap
+	if (!_current_bitmap) {
+		_current_bitmap = batch->bitmap;
 	}
 
 	// Flush
-	glDrawArrays(GL_TRIANGLES, 0, batch->vertex_count);
+	if (_current_bitmap != batch->bitmap) {
+		DrawMesh(mesh, batch->bitmap);
+		mesh->clear_mesh();
+		_current_bitmap = batch->bitmap;
+	}
 }
 
 void TBRendererGD::SetClipRect(const TBRect &rect)
 {
-	glScissor(m_clip_rect.x, m_screen_rect.h - (m_clip_rect.y + m_clip_rect.h), m_clip_rect.w, m_clip_rect.h);
+	VisualServer::get_singleton()->canvas_item_set_custom_rect(_current_canvas->get_canvas_item(), true, Rect2(m_clip_rect.x, m_clip_rect.y, m_clip_rect.w, m_clip_rect.h));
 }
 
 } // namespace tb
