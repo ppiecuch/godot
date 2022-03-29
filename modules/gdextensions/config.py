@@ -68,4 +68,7 @@ def get_doc_classes():
     return [
         "ErrorReporter",
         "AudioStreamSfxr",
+        "FastNoiseLite",
+        "Noise",
+        "NoiseTexture",
     ]
