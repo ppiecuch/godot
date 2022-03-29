@@ -34,8 +34,8 @@
 
 #include "common/gd_core.h"
 #include "core/color.h"
-#include "core/os/input.h"
 #include "core/math/math_funcs.h"
+#include "core/os/input.h"
 #include "core/os/input_event.h"
 #include "core/variant.h"
 #include "scene/resources/mesh.h"
@@ -629,10 +629,16 @@ void ControlWidget::_input(const Ref<InputEvent> &p_event) {
 	auto update_cursor = [&]() {
 		if (_state.active) {
 			switch (control_type) {
-				case WIDGET_ROTATION_SPHERE: Input::get_singleton()->set_default_cursor_shape(Input::CURSOR_ARROW); break;
-				case WIDGET_TRANSLATION_X: Input::get_singleton()->set_default_cursor_shape(Input::CURSOR_HSIZE); break;
+				case WIDGET_ROTATION_SPHERE:
+					Input::get_singleton()->set_default_cursor_shape(Input::CURSOR_ARROW);
+					break;
+				case WIDGET_TRANSLATION_X:
+					Input::get_singleton()->set_default_cursor_shape(Input::CURSOR_HSIZE);
+					break;
 				case WIDGET_TRANSLATION_Y:
-				case WIDGET_TRANSLATION_Z: Input::get_singleton()->set_default_cursor_shape(Input::CURSOR_VSIZE); break;
+				case WIDGET_TRANSLATION_Z:
+					Input::get_singleton()->set_default_cursor_shape(Input::CURSOR_VSIZE);
+					break;
 				case WIDGET_TRANSLATION_XY: {
 					if (_state.locked == 'X') {
 						Input::get_singleton()->set_default_cursor_shape(Input::CURSOR_HSIZE);
@@ -656,7 +662,7 @@ void ControlWidget::_input(const Ref<InputEvent> &p_event) {
 						_state.active = true;
 						_state.initial_pos = to_local(e->get_position());
 						if (control_type == WIDGET_ROTATION_SPHERE) {
-							_mouse_on_sphere( _state.initial_pos, control_rect.size, &_state.from_vector );
+							_mouse_on_sphere(_state.initial_pos, control_rect.size, &_state.from_vector);
 						}
 					}
 					get_tree()->set_input_as_handled();
