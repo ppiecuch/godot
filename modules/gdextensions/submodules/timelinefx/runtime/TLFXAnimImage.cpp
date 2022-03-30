@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  gd_turbobadger.h                                                     */
+/*  TLFXAnimImage.cpp                                                    */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,92 +28,83 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GD_TURBOBADGER_H
-#define GD_TURBOBADGER_H
+#include "TLFXAnimImage.h"
 
-#include "core/os/input_event.h"
-#include "scene/2d/node_2d.h"
+#include <string.h> // strcmp
 
-#include "renderers/tb_renderer_gd.h"
-#include "tb_widgets.h"
+namespace TLFX {
 
-// The root of widgets in a platform backend.
+AnimImage::AnimImage() :
+		_width(0), _height(0), _maxRadius(0), _index(0), _frames(1), _importOpt(impPassThrough) {
+}
 
-class AppRootWidget : public tb::TBWidget {
-	Node2D *_app;
-	int mouse_x, mouse_y;
+void AnimImage::SetMaxRadius(float radius) {
+	_maxRadius = radius;
+}
 
-public:
-	// For safe typecasting
-	TBOBJECT_SUBCLASS(AppRootWidget, tb::TBWidget);
+float AnimImage::GetMaxRadius() const {
+	return _maxRadius;
+}
 
-	void OnInvalid() { _app->update(); }
+void AnimImage::SetWidth(float width) {
+	_width = width;
+}
 
-	Node2D *GetApp() { return _app; }
-	Point2 ToLocal(const Point2 &pt) const { return _app->to_local(pt); }
-	void SetCursorPos(int mx, int my) {
-		mouse_x = mx;
-		mouse_y = my;
-	}
-	Point2 GetCursorPos() const { return Point2(mouse_x, mouse_y); }
+float AnimImage::GetWidth() const {
+	return _width;
+}
 
-	AppRootWidget(Node2D *app) :
-			_app(app) {}
-};
+void AnimImage::SetHeight(float height) {
+	_height = height;
+}
 
-// Godot Node / application interface and renderer
+float AnimImage::GetHeight() const {
+	return _height;
+}
 
-class GdTurboBadgerCore : public Object {
-	GDCLASS(GdTurboBadgerCore, Object);
+void AnimImage::SetFramesCount(int frames) {
+	_frames = frames;
+}
 
-	tb::TBRendererGD renderer;
+int AnimImage::GetFramesCount() const {
+	return _frames;
+}
 
-	void _timer_callback();
+void AnimImage::SetIndex(int index) {
+	_index = index;
+}
 
-	GdTurboBadgerCore();
-	~GdTurboBadgerCore();
+int AnimImage::GetIndex() const {
+	return _index;
+}
 
-	int _ref;
+void AnimImage::SetFilename(const char *filename) {
+	_filename = filename;
+}
 
-protected:
-	static void _bind_methods();
+const char *AnimImage::GetFilename() const {
+	return _filename.c_str();
+}
 
-public:
-	static GdTurboBadgerCore *get_singleton();
+void AnimImage::SetImportOpt(const char *opt) {
+	if (strcmp(opt, "GREYSCALE") == 0)
+		_importOpt = impGreyScale;
+	else if (strcmp(opt, "FULLCOLOR") == 0)
+		_importOpt = impFullColour;
+	else if (strcmp(opt, "PASSTHROUGH") == 0)
+		_importOpt = impPassThrough;
+}
 
-	void init();
-	void release();
+AnimImage::ImportOptions AnimImage::GetImportOpt() const {
+	return _importOpt;
+}
 
-	tb::TBRendererGD *get_renderer() { return &renderer; }
-};
+void AnimImage::SetName(const char *name) {
+	_name = name;
+}
 
-class GdTurboBadger : public Node2D {
-	GDCLASS(GdTurboBadger, Node2D);
+const char *AnimImage::GetName() const {
+	return _name.c_str();
+}
 
-	AppRootWidget root;
-	Size2 view_size;
-
-	bool _dirty;
-
-protected:
-	static void _bind_methods();
-	void notifications(int p_what);
-
-	void _input(const Ref<InputEvent> &p_event);
-
-public:
-#ifdef TOOLS_ENABLED
-	virtual bool _edit_is_selected_on_click(const Point2 &p_point, double p_tolerance) const;
-
-	virtual Rect2 _edit_get_rect() const;
-	virtual bool _edit_use_rect() const;
-#endif
-
-	void set_view_size(const Size2 &p_size);
-	Size2 get_view_size() const;
-
-	GdTurboBadger();
-	~GdTurboBadger();
-};
-
-#endif // GD_TURBOBADGER_H
+} // namespace TLFX

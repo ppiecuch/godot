@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  gd_turbobadger.h                                                     */
+/*  TLFXMatrix2.cpp                                                      */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,92 +28,63 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GD_TURBOBADGER_H
-#define GD_TURBOBADGER_H
+#include "TLFXMatrix2.h"
+#include "TLFXVector2.h"
 
-#include "core/os/input_event.h"
-#include "scene/2d/node_2d.h"
+namespace TLFX {
 
-#include "renderers/tb_renderer_gd.h"
-#include "tb_widgets.h"
+Matrix2::Matrix2() :
+		aa(0), ab(0), ba(0), bb(0) {
+}
 
-// The root of widgets in a platform backend.
+TLFX::Matrix2 Matrix2::Create(float aa_ /*= 1.0f*/, float ab_ /*= 0*/, float ba_ /*= 0*/, float bb_ /*= 1.0f*/) {
+	Matrix2 m;
+	m.aa = aa_;
+	m.ab = ab_;
+	m.ba = ba_;
+	m.bb = bb_;
+	return m;
+}
 
-class AppRootWidget : public tb::TBWidget {
-	Node2D *_app;
-	int mouse_x, mouse_y;
+void Matrix2::Set(float aa_ /*= 1.0f*/, float ab_ /*= 0*/, float ba_ /*= 0*/, float bb_ /*= 1.0f*/) {
+	aa = aa_;
+	ab = ab_;
+	ba = ba_;
+	bb = bb_;
+}
 
-public:
-	// For safe typecasting
-	TBOBJECT_SUBCLASS(AppRootWidget, tb::TBWidget);
+void Matrix2::Transpose() {
+	float abt = ab;
+	ab = ba;
+	ba = abt;
+}
 
-	void OnInvalid() { _app->update(); }
+void Matrix2::Scale(float s) {
+	aa *= s;
+	ab *= s;
+	ba *= s;
+	bb *= s;
+}
 
-	Node2D *GetApp() { return _app; }
-	Point2 ToLocal(const Point2 &pt) const { return _app->to_local(pt); }
-	void SetCursorPos(int mx, int my) {
-		mouse_x = mx;
-		mouse_y = my;
-	}
-	Point2 GetCursorPos() const { return Point2(mouse_x, mouse_y); }
+TLFX::Matrix2 Matrix2::Transform(const Matrix2 &m) const {
+	Matrix2 r;
+	r.aa = aa * m.aa + ab * m.ba;
+	r.ab = aa * m.ab + ab * m.bb;
+	r.ba = ba * m.aa + bb * m.ba;
+	r.bb = ba * m.ab + bb * m.bb;
+	return r;
+}
 
-	AppRootWidget(Node2D *app) :
-			_app(app) {}
-};
+Vector2 Matrix2::TransformVector(const Vector2 &v) const {
+	Vector2 tv;
+	tv.x = v.x * aa + v.y * ba;
+	tv.y = v.x * ab + v.y * bb;
+	return tv;
+}
 
-// Godot Node / application interface and renderer
+void Matrix2::TransformPoint(float x, float y, float &tx, float &ty) {
+	tx = x * aa + y * ba;
+	ty = x * ab + y * bb;
+}
 
-class GdTurboBadgerCore : public Object {
-	GDCLASS(GdTurboBadgerCore, Object);
-
-	tb::TBRendererGD renderer;
-
-	void _timer_callback();
-
-	GdTurboBadgerCore();
-	~GdTurboBadgerCore();
-
-	int _ref;
-
-protected:
-	static void _bind_methods();
-
-public:
-	static GdTurboBadgerCore *get_singleton();
-
-	void init();
-	void release();
-
-	tb::TBRendererGD *get_renderer() { return &renderer; }
-};
-
-class GdTurboBadger : public Node2D {
-	GDCLASS(GdTurboBadger, Node2D);
-
-	AppRootWidget root;
-	Size2 view_size;
-
-	bool _dirty;
-
-protected:
-	static void _bind_methods();
-	void notifications(int p_what);
-
-	void _input(const Ref<InputEvent> &p_event);
-
-public:
-#ifdef TOOLS_ENABLED
-	virtual bool _edit_is_selected_on_click(const Point2 &p_point, double p_tolerance) const;
-
-	virtual Rect2 _edit_get_rect() const;
-	virtual bool _edit_use_rect() const;
-#endif
-
-	void set_view_size(const Size2 &p_size);
-	Size2 get_view_size() const;
-
-	GdTurboBadger();
-	~GdTurboBadger();
-};
-
-#endif // GD_TURBOBADGER_H
+} // namespace TLFX

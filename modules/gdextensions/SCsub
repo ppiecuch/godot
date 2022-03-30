@@ -64,7 +64,10 @@ modules = [
 ]
 
 thirdparty_sources = [
-    "#thirdparty/misc/cqueue.cpp",
+    "thirdparty/misc/cqueue.cpp",
+    "thirdparty/misc/pugixml.cpp",
+    "thirdparty/misc/miniz_gzip.c",
+    "thirdparty/misc/miniz_zip.c",
 ]
 
 if env["tools"] and is_enabled("qrcodetexture"):
@@ -159,6 +162,9 @@ if is_enabled("polyvector"):
     env_module.Append(CPPPATH=["thirdparty/libshockwave/lzma"])
     env_module.Append(CPPDEFINES=["_7ZIP_ST"])
     thirdparty_sources += Glob("thirdparty/libshockwave/*.cpp") + Glob("thirdparty/libshockwave/lzma/*.c")
+
+if is_enabled("timelinefx"):
+    sources += Glob("submodules/timelinefx/runtime/*.cpp")
 
 if is_enabled("tileengine"):
     env_module.Append(CPPDEFINES=["TLN_EXCLUDE_WINDOW"])

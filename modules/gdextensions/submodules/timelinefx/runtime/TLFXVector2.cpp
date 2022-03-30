@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  gd_turbobadger.h                                                     */
+/*  TLFXVector2.cpp                                                      */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,92 +28,112 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GD_TURBOBADGER_H
-#define GD_TURBOBADGER_H
+#include "TLFXVector2.h"
 
-#include "core/os/input_event.h"
-#include "scene/2d/node_2d.h"
+#include <cmath>
 
-#include "renderers/tb_renderer_gd.h"
-#include "tb_widgets.h"
-
-// The root of widgets in a platform backend.
-
-class AppRootWidget : public tb::TBWidget {
-	Node2D *_app;
-	int mouse_x, mouse_y;
-
-public:
-	// For safe typecasting
-	TBOBJECT_SUBCLASS(AppRootWidget, tb::TBWidget);
-
-	void OnInvalid() { _app->update(); }
-
-	Node2D *GetApp() { return _app; }
-	Point2 ToLocal(const Point2 &pt) const { return _app->to_local(pt); }
-	void SetCursorPos(int mx, int my) {
-		mouse_x = mx;
-		mouse_y = my;
-	}
-	Point2 GetCursorPos() const { return Point2(mouse_x, mouse_y); }
-
-	AppRootWidget(Node2D *app) :
-			_app(app) {}
-};
-
-// Godot Node / application interface and renderer
-
-class GdTurboBadgerCore : public Object {
-	GDCLASS(GdTurboBadgerCore, Object);
-
-	tb::TBRendererGD renderer;
-
-	void _timer_callback();
-
-	GdTurboBadgerCore();
-	~GdTurboBadgerCore();
-
-	int _ref;
-
-protected:
-	static void _bind_methods();
-
-public:
-	static GdTurboBadgerCore *get_singleton();
-
-	void init();
-	void release();
-
-	tb::TBRendererGD *get_renderer() { return &renderer; }
-};
-
-class GdTurboBadger : public Node2D {
-	GDCLASS(GdTurboBadger, Node2D);
-
-	AppRootWidget root;
-	Size2 view_size;
-
-	bool _dirty;
-
-protected:
-	static void _bind_methods();
-	void notifications(int p_what);
-
-	void _input(const Ref<InputEvent> &p_event);
-
-public:
-#ifdef TOOLS_ENABLED
-	virtual bool _edit_is_selected_on_click(const Point2 &p_point, double p_tolerance) const;
-
-	virtual Rect2 _edit_get_rect() const;
-	virtual bool _edit_use_rect() const;
+#ifndef M_PI
+#define M_PI 3.1415926535897932384626433832795f
 #endif
 
-	void set_view_size(const Size2 &p_size);
-	Size2 get_view_size() const;
+namespace TLFX {
+Vector2::Vector2(float vx, float vy) :
+		x(vx), y(vy) {
+}
 
-	GdTurboBadger();
-	~GdTurboBadger();
-};
+Vector2 Vector2::Create(float vx, float vy) {
+	return Vector2(vx, vy);
+}
 
-#endif // GD_TURBOBADGER_H
+void Vector2::Move(float distanceX, float distanceY) {
+	x += distanceX;
+	y += distanceY;
+}
+
+void Vector2::Move(const Vector2 &distance) {
+	x += distance.x;
+	y += distance.y;
+}
+
+void Vector2::Set(float vx, float vy) {
+	x = vx;
+	y = vy;
+}
+
+void Vector2::Set(const Vector2 &v) {
+	x = v.x;
+	y = v.y;
+}
+
+Vector2 Vector2::Subtract(const Vector2 &v) const {
+	return Vector2(x - v.x, y - v.y);
+}
+
+Vector2 Vector2::Add(const Vector2 &v) const {
+	return Vector2(x + v.x, y + v.y);
+}
+
+Vector2 Vector2::Multiply(const Vector2 &v) const {
+	return Vector2(x * v.x, y * v.y);
+}
+
+Vector2 Vector2::Scale(float scale) const {
+	return Vector2(x * scale, y * scale);
+}
+
+float Vector2::Length() const {
+	return sqrtf(x * x + y * y);
+}
+
+Vector2 Vector2::Unit() const {
+	float length = Length();
+	Vector2 v;
+
+	if (length != 0) {
+		v.x = x / length;
+		v.y = y / length;
+	}
+	return v;
+}
+
+Vector2 Vector2::Normal() const {
+	return Vector2(-y, x);
+}
+
+Vector2 Vector2::LeftNormal() const {
+	return Vector2(y, -x);
+}
+
+void Vector2::Normalize() {
+	float length = Length();
+	if (length != 0) {
+		x /= length;
+		y /= length;
+	}
+}
+
+float Vector2::DotProduct(const Vector2 &v) const {
+	return x * v.x + y * v.y;
+}
+
+float Vector2::GetDistance(float fromx, float fromy, float tox, float toy, bool fast /*= false*/) {
+	float w = tox - fromx;
+	float h = toy - fromy;
+
+	if (fast)
+		return w * w + h * h;
+	else
+		return sqrtf(w * w + h * h);
+}
+
+/**
+ * Get the direction from 1 point to another
+ * Thanks to "Snarkbait" for this little code snippit
+ * @return Angle of difference
+ */
+float Vector2::GetDirection(float fromx, float fromy, float tox, float toy) {
+	// arcus tangens, convert to degrees, add 450 and normalize to 360.
+	return fmodf((atan2f(toy - fromy, tox - fromx) / M_PI * 180.0f + 450.0f), 360.0f);
+}
+
+} // namespace TLFX

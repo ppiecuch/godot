@@ -43,6 +43,7 @@ def configure(env):
         "multipeer",
         "polyvector",
         "vaserenderer",
+        "timelinefx",
         "meshlod",
         "meshslicer",
         "tileengine",
