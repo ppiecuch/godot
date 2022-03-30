@@ -144,6 +144,7 @@
 #include "threadpool/thread_pool_job.h"
 
 #include "fastnoise/noise.h"
+#include "noise/noise.h"
 
 #include "geomfonts//gd_geomfonts.h"
 
@@ -330,6 +331,12 @@ void register_gdextensions_types() {
 
 #ifdef GDEXT_FASTNOISE_ENABLED
 	ClassDB::register_class<FastNoise>();
+#endif
+
+#ifdef GDEXT_NOISE_ENABLED
+	ClassDB::register_class<NoiseTexture>;
+	ClassDB::register_virtual_class<Noise>;
+	ClassDB::register_class<FastNoiseLite>;
 #endif
 
 #ifdef GDEXT_VISUAL_ENABLED

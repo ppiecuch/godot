@@ -43,6 +43,7 @@ def configure(env):
         "multipeer",
         "polyvector",
         "vaserenderer",
+        "timelinefx",
         "meshlod",
         "meshslicer",
         "opensteer",
@@ -70,4 +71,7 @@ def get_doc_classes():
     return [
         "ErrorReporter",
         "AudioStreamSfxr",
+        "FastNoiseLite",
+        "Noise",
+        "NoiseTexture",
     ]
