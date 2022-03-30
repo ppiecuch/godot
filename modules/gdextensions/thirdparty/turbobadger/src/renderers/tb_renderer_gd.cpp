@@ -122,7 +122,8 @@ void TBRendererGD::RenderBatch(Batch *batch)
 	PoolColorArray colors;
 	PoolVector2Array uvs;
 
-	for (int c = 0; c < batch->vertex_count;  c++) {
+	for (int c = 0; c < batch->vertex_count;  c++)
+	{
 		verts.push_back({batch->vertex[c].x, batch->vertex[c].y});
 		uvs.push_back({batch->vertex[c].u, batch->vertex[c].v});
 		colors.push_back({batch->vertex[c].r/255.f, batch->vertex[c].g/255.f, batch->vertex[c].b/255.f, batch->vertex[c].a/255.f});
@@ -136,12 +137,14 @@ void TBRendererGD::RenderBatch(Batch *batch)
 	mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array, Array(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
 
 	// Assuming there are no calls without bitmap
-	if (!_current_bitmap) {
+	if (!_current_bitmap)
+	{
 		_current_bitmap = batch->bitmap;
 	}
 
 	// Flush
-	if (_current_bitmap != batch->bitmap) {
+	if (_current_bitmap != batch->bitmap)
+	{
 		DrawMesh(mesh, batch->bitmap);
 		mesh->clear_mesh();
 		_current_bitmap = batch->bitmap;

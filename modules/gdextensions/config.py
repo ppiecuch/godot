@@ -45,7 +45,9 @@ def configure(env):
         "vaserenderer",
         "meshlod",
         "meshslicer",
+        "opensteer",
         "tileengine",
+        "sparkparticles",
         "turbobadger",
     ]
     opts = Variables()

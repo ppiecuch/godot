@@ -59,7 +59,9 @@ modules = [
     "polyvector",
     "vaserenderer",
     "timelinefx",
+    "opensteer",
     "tileengine",
+    "sparkparticles",
     "turbobadger",
 ]
 
@@ -164,6 +166,14 @@ if is_enabled("tileengine"):
     env_module.Append(CPPDEFINES=["TLN_EXCLUDE_WINDOW"])
     env_module.Append(CPPPATH=["thirdparty/Tilengine/include"])
     thirdparty_sources += Glob("thirdparty/Tilengine/src/*.c")
+
+if is_enabled("opensteer"):
+    thirdparty_sources += Glob("thirdparty/opensteer/src/*.c") + Glob("thirdparty/opensteer/src/*.cpp") + Glob("thirdparty/opensteer/plugins/*.cpp")
+    env_module.Append(CPPPATH=["thirdparty/opensteer/include"])
+
+if is_enabled("spark_particles"):
+    thirdparty_sources += Glob("thirdparty/spark/src/**/*.cpp")
+    env_module.Append(CPPPATH=["thirdparty/spark/ext", "thirdparty/spark/include"])
 
 if is_enabled("flashdb"):
     thirdparty_sources += Glob("thirdparty/flashdb/src/*.c")
