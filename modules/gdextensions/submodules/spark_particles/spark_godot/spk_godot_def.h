@@ -1,12 +1,12 @@
 /*************************************************************************/
-/*  register_types.cpp                                                   */
+/*  spk_godot_def.h                                                      */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -30,8 +30,8 @@
 
 #pragma once
 
-#ifndef H_SPK_GODOT_DEF
-#define H_SPK_GODOT_DEF
+#ifndef SPK_GODOT_DEF_H
+#define SPK_GODOT_DEF_H
 
 #include "core/color.h"
 #include "core/math/vector3.h"
@@ -41,50 +41,46 @@
 #pragma warning(disable : 4275) // disables the warning about exporting DLL classes children of non DLL classes
 #endif
 
-namespace SPK {
+namespace Godot {
 
 class Vector3D;
 class Color;
 
-namespace Godot {
+//////////////////////////
+// Conversion functions //
+//////////////////////////
 
-	//////////////////////////
-	// Conversion functions //
-	//////////////////////////
+/**
+ * @brief Converts a SPARK Vector3D to an Godot Vector3
+ * @param v : the Vector3D to convert
+ * @return the Godot Vector3
+ */
+inline Vector3 spk2godot(const SPK::Vector3D &v);
 
-	/**
-	* @brief Converts a SPARK Vector3D to an Godot Vector3
-	* @param v : the Vector3D to convert
-	* @return the Godot Vector3
-	*/
-	inline Vector3 spk2godot(const SPK::Vector3D& v);
+/**
+ * @brief Converts an Godot Vector3 to a SPARK Vector3D
+ * @param v : the Vector3 to convert
+ * @return the SPARK Vector3D
+ */
+inline SPK::Vector3D godot2spk(const Vector3 &v);
 
-	/**
-	* @brief Converts an Godot Vector3 to a SPARK Vector3D
-	* @param v : the Vector3 to convert
-	* @return the SPARK Vector3D
-	*/
-	inline SPK::Vector3D godot2spk(const Vector3& v);
+/**
+ * @brief Gets an Godot Color from rgba values
+ * @param a : the alpha value
+ * @param r : the red value
+ * @param g : the green value
+ * @param b : the blue value
+ * @return the Godot Color
+ */
+inline Color spk2godot(unsigned char a, unsigned char r, unsigned char g, unsigned char b);
 
-	/**
-	* @brief Gets an Godot Color from rgba values
-	* @param a : the alpha value
-	* @param r : the red value
-	* @param g : the green value
-	* @param b : the blue value
-	* @return the Godot Color
-	*/
-	inline Color spk2godot(unsigned char a, unsigned char  r, unsigned char  g, unsigned char  b);
+/**
+ * @brief Gets an Godot Color from SPK::Color values
+ * @param a : the SPK::Color value
+ * @return the Godot Color
+ */
+inline const Color spk2godot(SPK::Color c);
 
+} // namespace Godot
 
-	/**
-	* @brief Gets an Godot Color from SPK::Color values
-	* @param a : the SPK::Color value
-	* @return the Godot Color
-	*/
-	inline const Color spk2godot(SPK::Color c);
-}
-
-} // namespace SPK
-
-#endif // H_SPK_GODOT_DEF
+#endif // SPK_GODOT_DEF_H

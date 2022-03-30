@@ -1,12 +1,12 @@
 /*************************************************************************/
-/*  register_types.cpp                                                   */
+/*  spk_godot_renderer.cpp                                               */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -28,32 +28,31 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include <Spark/SPARK_Core.h>
-#include "SPK_Godot_Renderer.h"
+#include "spk_godot_renderer.h"
+
+#include "Spark/SPARK_Core.h"
 
 namespace SPK {
 
-IGodotRenderer::IGodotRenderer(bool needs_dataset) : Renderer(needs_dataset)
-{
+IGodotRenderer::IGodotRenderer(bool needs_dataset) :
+		Renderer(needs_dataset) {
 }
 
-void IGodotRenderer::setBlendMode(BlendMode blendMode)
-{
-    switch(blendMode)
-    {
-    case BLEND_MODE_NONE :
-        break;
+void IGodotRenderer::setBlendMode(BlendMode blendMode) {
+	switch (blendMode) {
+		case BLEND_MODE_NONE:
+			break;
 
-    case BLEND_MODE_ADD :
-        break;
+		case BLEND_MODE_ADD:
+			break;
 
-    case BLEND_MODE_ALPHA :
-        break;
+		case BLEND_MODE_ALPHA:
+			break;
 
-    default :
-        SPK_LOG_WARNING("IGodotRenderer::setBlendMode(BlendMode) - Unsupported blending mode. Nothing happens");
-        break;
-    }
+		default:
+			SPK_LOG_WARNING("IGodotRenderer::setBlendMode(BlendMode) - Unsupported blending mode. Nothing happens");
+			break;
+	}
 }
 
 } // namespace SPK

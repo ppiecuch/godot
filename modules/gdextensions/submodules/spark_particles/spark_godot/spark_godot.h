@@ -1,12 +1,12 @@
 /*************************************************************************/
-/*  register_types.cpp                                                   */
+/*  spark_godot.h                                                        */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -30,21 +30,20 @@
 
 #pragma once
 
-#ifndef H_SPARK_GODOT
-#define H_SPARK_GODOT
+#ifndef SPARK_GODOT_H
+#define SPARK_GODOT_H
 
-#include "SPK_Godot_DEF.h"
-#include "SPK_Godot_Buffer.h"
-#include "SPK_Godot_Renderer.h"
-#include "SPK_Godot_QuadRenderer.h"
-#include "SparkParticleEffect.h"
-#include "SparkParticle.h"
+#include "spark_particle.h"
+#include "spark_particle_effect.h"
+#include "spk_godot_buffer.h"
+#include "spk_godot_def.h"
+#include "spk_godot_quadrenderer.h"
+#include "spk_godot_renderer.h"
 
-namespace Godot
-{
+namespace Godot {
 /// Register Spark library objects.
-void RegisterSparkLibrary(Context* context);
+void RegisterSparkLibrary(Context *context);
 
-}
+} // namespace Godot
 
-#endif // H_SPARK_GODOT
+#endif // SPARK_GODOT_H

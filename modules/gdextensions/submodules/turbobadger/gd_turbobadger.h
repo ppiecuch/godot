@@ -57,7 +57,8 @@ public:
 	}
 	Point2 GetCursorPos() const { return Point2(mouse_x, mouse_y); }
 
-	AppRootWidget(Node2D *app) : _app(app) {}
+	AppRootWidget(Node2D *app) :
+			_app(app) {}
 };
 
 // Godot Node / application interface and renderer
@@ -83,7 +84,7 @@ public:
 	void init();
 	void release();
 
-	tb::TBRendererGD* get_renderer() { return &renderer; }
+	tb::TBRendererGD *get_renderer() { return &renderer; }
 };
 
 class GdTurboBadger : public Node2D {

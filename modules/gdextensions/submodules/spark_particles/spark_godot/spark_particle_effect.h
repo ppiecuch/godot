@@ -1,12 +1,12 @@
 /*************************************************************************/
-/*  register_types.cpp                                                   */
+/*  spark_particle_effect.h                                              */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -30,48 +30,44 @@
 
 #pragma once
 
-#ifndef H_SPARKPARTICLEEFFECT
-#define H_SPARKPARTICLEEFFECT
+#ifndef SPARK_PARTICLE_EFFECT_H
+#define SPARK_PARTICLE_EFFECT_H
 
-#include <Spark/SPARK_Core.h>
+#include "Spark/SPARK_Core.h"
 
-namespace Godot
-{
+namespace Godot {
 
 class XMLFile;
 class XMLElement;
 
 /// Spark Particle effect definition.
-class SparkParticleEffect : public Resource
-{
-
+class SparkParticleEffect : public Resource {
 public:
-    /// Construct.
-    SparkParticleEffect();
-    /// Destruct.
-    virtual ~SparkParticleEffect() override;
-    /// Register object factory.
-    static void RegisterObject();
+	/// Construct.
+	SparkParticleEffect();
+	/// Destruct.
+	virtual ~SparkParticleEffect() override;
+	/// Register object factory.
+	static void RegisterObject();
 
-    /// Load resource from stream. May be called from a worker thread. Return true if successful.
-    virtual bool BeginLoad(Deserializer& source) override;
-    /// Finish resource loading. Always called from the main thread. Return true if successful.
-    virtual bool EndLoad() override;
-    /// Save resource. Return true if successful.
-    bool Save(const String &filename) const;
+	/// Load resource from stream. May be called from a worker thread. Return true if successful.
+	virtual bool BeginLoad(Deserializer &source) override;
+	/// Finish resource loading. Always called from the main thread. Return true if successful.
+	virtual bool EndLoad() override;
+	/// Save resource. Return true if successful.
+	bool Save(const String &filename) const;
 
-    /// Get Spark particle system loaded
-    const SPK::Ref<SPK::System> GetSystem() const;
+	/// Get Spark particle system loaded
+	const SPK::Ref<SPK::System> GetSystem() const;
 
-    /// Manually set spark particle system
-    void SetSystem(SPK::Ref<SPK::System> spkSystem);
+	/// Manually set spark particle system
+	void SetSystem(SPK::Ref<SPK::System> spkSystem);
 
 private:
-    /// loaded spark particle system
-    SPK::Ref<SPK::System> loadedSystem_;
-
+	/// loaded spark particle system
+	SPK::Ref<SPK::System> loadedSystem_;
 };
 
 } // namespace Godot
 
-#endif // H_SPARKPARTICLEEFFECT
+#endif // SPARK_PARTICLE_EFFECT_H

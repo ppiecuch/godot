@@ -1,12 +1,12 @@
 /*************************************************************************/
-/*  register_types.cpp                                                   */
+/*  spark_particle_effect.cpp                                            */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -28,81 +28,69 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "../Resource/ResourceCache.h"
 #include "../IO/FileSystem.h"
 #include "../IO/Log.h"
+#include "../Resource/ResourceCache.h"
 
-#include "SparkParticleEffect.h"
-#include "SPK_Urho3D_DEF.h"
+#include "spark_particle_effect.h"
+#include "spk_godot_def.h"
 
 #include "../DebugNew.h"
 
-namespace Urho3D
-{
+namespace Godot {
 
-
-SparkParticleEffect::SparkParticleEffect(Context* context) :
-    Resource(context)
-{
-    loadedSystem_.reset();
+SparkParticleEffect::SparkParticleEffect(Context *context) :
+		Resource(context) {
+	loadedSystem_.reset();
 }
 
-SparkParticleEffect::~SparkParticleEffect()
-{
+SparkParticleEffect::~SparkParticleEffect() {
 }
 
-void SparkParticleEffect::RegisterObject(Context* context)
-{
-    context->RegisterFactory<SparkParticleEffect>();
+void SparkParticleEffect::RegisterObject(Context *context) {
+	context->RegisterFactory<SparkParticleEffect>();
 }
 
-bool SparkParticleEffect::BeginLoad(Deserializer& source)
-{
-    String extension = GetExtension(source.GetName());
-    extension.Erase(0,1); // erase dot in extension
+bool SparkParticleEffect::BeginLoad(Deserializer &source) {
+	String extension = GetExtension(source.GetName());
+	extension.Erase(0, 1); // erase dot in extension
 
-    unsigned dataSize = source.GetSize();
-    SharedArrayPtr<char> data(new char[dataSize]);
-    source.Read(data.Get(), dataSize);
+	unsigned dataSize = source.GetSize();
+	SharedArrayPtr<char> data(new char[dataSize]);
+	source.Read(data.Get(), dataSize);
 
-    loadedSystem_ = SPK::IO::IOManager::get().loadFromBuffer(extension.CString(), data, dataSize);
+	loadedSystem_ = SPK::IO::IOManager::get().loadFromBuffer(extension.CString(), data, dataSize);
 
-    if(loadedSystem_)
-        return true;
-    else
-        URHO3D_LOGERROR(source.GetName() + " unable to load spark effect from file : " + source.GetName());
+	if (loadedSystem_)
+		return true;
+	else
+		URHO3D_LOGERROR(source.GetName() + " unable to load spark effect from file : " + source.GetName());
 
-    return false;
+	return false;
 }
 
-bool SparkParticleEffect::EndLoad()
-{
-    if(!loadedSystem_)
-    {
-       return false;
-    }
+bool SparkParticleEffect::EndLoad() {
+	if (!loadedSystem_) {
+		return false;
+	}
 
-    return true;
+	return true;
 }
 
-bool SparkParticleEffect::Save(const String& filename) const
-{
-    if(loadedSystem_)
-    {
-        return SPK::IO::IOManager::get().save(filename.CString(), loadedSystem_);
-    }
+bool SparkParticleEffect::Save(const String &filename) const {
+	if (loadedSystem_) {
+		return SPK::IO::IOManager::get().save(filename.CString(), loadedSystem_);
+	}
 
-    return false;
+	return false;
 }
 
-const SPK::Ref<SPK::System> SparkParticleEffect::GetSystem() const
-{
-    return loadedSystem_;
+const SPK::Ref<SPK::System> SparkParticleEffect::GetSystem() const {
+	return loadedSystem_;
 }
 
-void SparkParticleEffect::SetSystem(SPK::Ref<SPK::System> spkSystem)
-{
-    loadedSystem_ = spkSystem;
+void SparkParticleEffect::SetSystem(SPK::Ref<SPK::System> spkSystem) {
+	loadedSystem_ = spkSystem;
 }
 
-}
+} //namespace Godot

@@ -1,12 +1,12 @@
 /*************************************************************************/
-/*  register_types.cpp                                                   */
+/*  spk_godot_buffer.cpp                                                 */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -28,23 +28,18 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "SPK_Godot_Buffer.h"
+#include "spk_godot_buffer.h"
 
-namespace SPK {
-namespace URHO {
+namespace Godot {
 
-IGodotBuffer::IGodotBuffer(Urho3D::Context* context, size_t nbParticles, size_t nbVerticesPerParticle, size_t nbIndicesPerParticle) :
-    RenderBuffer()
-  , _context(context)
-{
-    SPK_ASSERT(nbParticles > 0, "IGodotBuffer::IGodotBuffer - The number of particles cannot be 0");
-    SPK_ASSERT(nbVerticesPerParticle > 0, "IGodotBuffer::IGodotBuffer - The number of vertices per particle cannot be 0");
-    SPK_ASSERT(nbIndicesPerParticle > 0, "IGodotBuffer::IGodotBuffer - The number of indices per particle cannot be 0");
+IGodotBuffer::IGodotBuffer(Urho3D::Context *context, size_t nbParticles, size_t nbVerticesPerParticle, size_t nbIndicesPerParticle) :
+		RenderBuffer(), _context(context) {
+	SPK_ASSERT(nbParticles > 0, "IGodotBuffer::IGodotBuffer - The number of particles cannot be 0");
+	SPK_ASSERT(nbVerticesPerParticle > 0, "IGodotBuffer::IGodotBuffer - The number of vertices per particle cannot be 0");
+	SPK_ASSERT(nbIndicesPerParticle > 0, "IGodotBuffer::IGodotBuffer - The number of indices per particle cannot be 0");
 }
 
-IGodotBuffer::~IGodotBuffer()
-{
-
+IGodotBuffer::~IGodotBuffer() {
 }
 
-}}
+} // namespace Godot

@@ -1,12 +1,12 @@
 /*************************************************************************/
-/*  register_types.cpp                                                   */
+/*  spk_godot_def.cpp                                                    */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -28,79 +28,63 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "SPK_Urho3D_DEF.h"
-#include "SPK_Urho3D_QuadRenderer.h"
-#include "SparkParticle.h"
-#include "SparkParticleEffect.h"
-#include <Spark/Core/IO/SPK_IO_Manager.h>
+#include "spk_godot_def.h"
+#include "spark_particle.h"
+#include "spark_particle_effect.h"
+#include "spk_godot_quadrenderer.h"
 
-namespace Urho3D {
+#include "Spark/Core/IO/SPK_IO_Manager.h"
 
-void URHO3D_API RegisterSparkLibrary(Context* context)
-{
-    // Register Urho3D context for urho3d/spark objects
-    SPK::URHO::Urho3DContext::get().registerUrhoContext(context);
+namespace Godot {
 
-    // Register Urho3DQuadRenderer to IO
-    SPK::IO::IOManager::get().registerObject<SPK::URHO::Urho3DQuadRenderer>();
+void URHO3D_API RegisterSparkLibrary(Context *context) {
+	// Register Urho3D context for urho3d/spark objects
+	SPK::URHO::Urho3DContext::get().registerUrhoContext(context);
 
-    // Register Urho3D objects
-    SparkParticleEffect::RegisterObject(context);
-    SparkParticle::RegisterObject(context);
+	// Register Urho3DQuadRenderer to IO
+	SPK::IO::IOManager::get().registerObject<SPK::URHO::Urho3DQuadRenderer>();
+
+	// Register Urho3D objects
+	SparkParticleEffect::RegisterObject(context);
+	SparkParticle::RegisterObject(context);
 }
 
+Urho3DContext::Urho3DContext() {
 }
 
+Urho3DContext &Urho3DContext::get() {
+	static Urho3DContext instance;
+	return instance;
+}
 
-namespace SPK {
-namespace URHO {
+void Urho3DContext::registerUrhoContext(Urho3D::Context *context) {
+	SPK_ASSERT(context, "[registerUrhoContext] : Urho3D context is null.");
+	urhoContext = context;
+}
 
-    Urho3DContext::Urho3DContext()
-    {       
-    }
+Urho3D::Context *Urho3DContext::getUrhoContext() {
+	SPK_ASSERT(urhoContext, "[getUrhoContext] : Urho3D Context is null, use registerUrhoContext");
+	return urhoContext;
+}
 
-    Urho3DContext& Urho3DContext::get()
-    {
-        static Urho3DContext instance;
-        return instance;
-    }    
+//////////////////////////
+// Conversion functions //
+//////////////////////////
 
-    void Urho3DContext::registerUrhoContext(Urho3D::Context* context)
-    {
-        SPK_ASSERT(context, "[registerUrhoContext] : Urho3D context is null.");
-        urhoContext = context;       
-    }
+inline Urho3D::Vector3 spk2urho(const Vector3D &v) {
+	return Urho3D::Vector3(v.x, v.y, v.z);
+}
 
-    Urho3D::Context* Urho3DContext::getUrhoContext()
-    {
-        SPK_ASSERT(urhoContext, "[getUrhoContext] : Urho3D Context is null, use registerUrhoContext");
-        return urhoContext;
-    }
+inline SPK::Vector3D urho2spk(const Urho3D::Vector3 &v) {
+	return Vector3D(v.x_, v.y_, v.z_);
+}
 
+inline Urho3D::Color spk2urho(unsigned char a, unsigned char r, unsigned char g, unsigned char b) {
+	return Urho3D::Color(r, g, b, a);
+}
 
-    //////////////////////////
-    // Conversion functions //
-    //////////////////////////
+inline const Urho3D::Color spk2urho(SPK::Color c) {
+	return Urho3D::Color(c.r, c.g, c.g, c.a);
+}
 
-
-    inline Urho3D::Vector3 spk2urho(const Vector3D& v)
-    {
-        return Urho3D::Vector3(v.x, v.y, v.z);
-    }
-
-    inline SPK::Vector3D urho2spk(const Urho3D::Vector3& v)
-    {
-        return Vector3D(v.x_, v.y_, v.z_);
-    }
-
-    inline Urho3D::Color spk2urho(unsigned char a, unsigned char  r, unsigned char  g, unsigned char  b)
-    {
-        return Urho3D::Color(r,g,b,a);
-    }
-
-    inline const Urho3D::Color spk2urho(SPK::Color c)
-    {
-        return Urho3D::Color(c.r, c.g, c.g, c.a);
-    }
-
-}}
+} // namespace Godot

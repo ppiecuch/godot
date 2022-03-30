@@ -1,12 +1,12 @@
 /*************************************************************************/
-/*  register_types.cpp                                                   */
+/*  spk_godot_renderer.h                                                 */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -30,29 +30,27 @@
 
 #pragma once
 
-#ifndef H_SPK_GODOT_RENDERER
-#define H_SPK_GODOT_RENDERER
+#ifndef SPK_GODOT_RENDERER_H
+#define SPK_GODOT_RENDERER_H
 
-#include "SPK_Godot_DEF.h"
-#include "SPK_Godot_Buffer.h"
+#include "spk_godot_buffer.h"
+#include "spk_godot_def.h"
 
-#include <Spark/Core/SPK_Renderer.h>
+#include "Spark/Core/SPK_Renderer.h"
 
 namespace SPK {
 
 /// The base renderer for all Godot renderers
-class IGodotRenderer : public Renderer
-{
-protected :
+class IGodotRenderer : public Renderer {
+protected:
 	IGodotRenderer(bool needs_dataset = false);
 
-public :
+public:
 	virtual void setBlendMode(BlendMode blendMode) override;
 
 	virtual ~IGodotRenderer() {}
-
 };
 
 } // namespace SPK
 
-#endif // H_SPK_GODOT_RENDERER
+#endif // SPK_GODOT_RENDERER_H

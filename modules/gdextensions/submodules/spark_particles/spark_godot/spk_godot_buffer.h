@@ -1,12 +1,12 @@
 /*************************************************************************/
-/*  register_types.cpp                                                   */
+/*  spk_godot_buffer.h                                                   */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -30,49 +30,39 @@
 
 #pragma once
 
-#ifndef H_SPK_GODOTBUFFER
-#define H_SPK_GODOTBUFFER
+#ifndef SPK_GODOT_BUFFER_H
+#define SPK_GODOT_BUFFER_H
 
-#include <Spark/SPARK_Core.h>
+#include "Spark/SPARK_Core.h"
 
-#include "SPK_Godot_DEF.h"
+#include "spk_godot_def.h"
 
 #include "../Graphics/Geometry.h"
-#include "../Graphics/VertexBuffer.h"
 #include "../Graphics/IndexBuffer.h"
+#include "../Graphics/VertexBuffer.h"
 
-namespace SPK {
 namespace Godot {
 
-class IGodotBuffer : public RenderBuffer
-{
+class IGodotBuffer : public RenderBuffer {
+public:
+	IGodotBuffer(Godot::Context *context, size_t nbParticles, size_t nbVerticesPerParticle, size_t nbIndicesPerParticle);
+	~IGodotBuffer();
 
-public :
-
-    IGodotBuffer(Godot::Context *context, size_t nbParticles, size_t nbVerticesPerParticle, size_t nbIndicesPerParticle);
-    ~IGodotBuffer();
-
-    Godot::SharedPtr<Godot::Geometry>     getGeometry();
-    Godot::VertexBuffer*                  getVertexBuffer() { return _vb; }
-    Godot::IndexBuffer*                   getIndexBuffer() { return _ib; }
+	Godot::SharedPtr<Godot::Geometry> getGeometry();
+	Godot::VertexBuffer *getVertexBuffer() { return _vb; }
+	Godot::IndexBuffer *getIndexBuffer() { return _ib; }
 
 private:
-
-    Godot::Context*                        _context;
-    Godot::SharedPtr<Godot::Geometry>     _geometry;
-    Godot::SharedPtr<Godot::VertexBuffer> _vb;
-    Godot::SharedPtr<Godot::IndexBuffer>  _ib;
-
+	Godot::Context *_context;
+	Godot::SharedPtr<Godot::Geometry> _geometry;
+	Godot::SharedPtr<Godot::VertexBuffer> _vb;
+	Godot::SharedPtr<Godot::IndexBuffer> _ib;
 };
 
-
-inline Godot::SharedPtr<Godot::Geometry> IGodotBuffer::getGeometry()
-{
-    return _geometry;
+inline Godot::SharedPtr<Godot::Geometry> IGodotBuffer::getGeometry() {
+	return _geometry;
 }
 
 } // namespace Godot
 
-} // namespace SPK
-
-#endif // H_SPK_GODOTBUFFER
+#endif // SPK_GODOT_BUFFER_H
