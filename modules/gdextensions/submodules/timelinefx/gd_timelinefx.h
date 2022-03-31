@@ -124,7 +124,7 @@ public:
 	~GdTLFXEffectsLibrary();
 };
 
-class GdTLFXParticleManager : public TLFX::ParticleManager, public Object {
+class GdTLFXParticleManager : public TLFX::ParticleManager, public Reference {
 	GDCLASS(GdTLFXParticleManager, Object);
 
 public:
@@ -141,7 +141,8 @@ private:
 	PoolIntArray indexes;
 
 	Ref<ArrayMesh> _mesh;
-	CanvasItem *_canvas;
+	Ref<CanvasItem> *_canvas;
+	Ref<CanvasItemMaterial> _mat_add, _mat_mul;
 
 	Ref<Texture> _lastTexture;
 	bool _lastAdditive;

@@ -32,7 +32,6 @@
 #define GD_TURBOBADGER_H
 
 #include "core/os/input_event.h"
-#include "scene/main/node.h"
 #include "scene/2d/canvas_item.h"
 
 #include "renderers/tb_renderer_gd.h"
@@ -41,25 +40,24 @@
 // The root of widgets in a platform backend.
 
 class AppRootWidget : public tb::TBWidget {
-	Node2D *_app;
+	CanvasItem *_canvas;
 	int mouse_x, mouse_y;
 
 public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(AppRootWidget, tb::TBWidget);
 
-	void OnInvalid() { _app->update(); }
+	void OnInvalid() { _canvas->update(); }
 
-	Node2D *GetApp() { return _app; }
-	Point2 ToLocal(const Point2 &pt) const { return _app->to_local(pt); }
+	Point2 ToLocal(const Point2 &pt) const { return _canvas->get_global_transform().affine_inverse().xform(pt); }
 	void SetCursorPos(int mx, int my) {
 		mouse_x = mx;
 		mouse_y = my;
 	}
 	Point2 GetCursorPos() const { return Point2(mouse_x, mouse_y); }
 
-	AppRootWidget(Node2D *app) :
-			_app(app) {}
+	AppRootWidget(CanvasItem *canvas) :
+			_canvas(canvas) {}
 };
 
 // Godot Node / application interface and renderer
@@ -88,13 +86,12 @@ public:
 	tb::TBRendererGD *get_renderer() { return &renderer; }
 };
 
-class GdTurboBadger : public Node {
-	GDCLASS(GdTurboBadger, Node);
+class GdTurboBadger : public CanvasItem {
+	GDCLASS(GdTurboBadger, CanvasItem);
 
 	AppRootWidget root;
 	Size2 view_size;
 
-	CanvasItem *_canvas;
 	bool _dirty;
 
 protected:
