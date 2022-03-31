@@ -43,7 +43,7 @@ class SparkParticleEffect;
 
 /// Drawable component that draw a spark particle system.
 class SparkParticle : public Drawable {
-	GODOT_OBJECT(SparkParticle, Drawable);
+	GDCLASS(SparkParticle, Drawable);
 
 public:
 	/// Construct.

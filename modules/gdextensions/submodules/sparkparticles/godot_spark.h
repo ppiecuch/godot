@@ -29,10 +29,13 @@
 /*************************************************************************/
 
 #include "core/reference.h"
-#include "scene/2d/node_2d.h"
+#include "scene/main/node.h"
+#include "scene/2d/canvas_item.h"
 
-class GdSparkParticles : public Node2D {
-	GDCLASS(GdSpark, Node2D);
+class GdSparkParticles : public Node {
+	GDCLASS(GdSparkParticles, Node);
+
+	CanvasItem *_canvas;
 
 protected:
 	static void _bind_methods();
@@ -42,5 +45,5 @@ protected:
 public:
 	Error load_from_file(const String &p_path);
 
-	GdSpark() {}
+	GdSparkParticles() {}
 };

@@ -32,7 +32,8 @@
 #define GD_TURBOBADGER_H
 
 #include "core/os/input_event.h"
-#include "scene/2d/node_2d.h"
+#include "scene/main/node.h"
+#include "scene/2d/canvas_item.h"
 
 #include "renderers/tb_renderer_gd.h"
 #include "tb_widgets.h"
@@ -87,12 +88,13 @@ public:
 	tb::TBRendererGD *get_renderer() { return &renderer; }
 };
 
-class GdTurboBadger : public Node2D {
-	GDCLASS(GdTurboBadger, Node2D);
+class GdTurboBadger : public Node {
+	GDCLASS(GdTurboBadger, Node);
 
 	AppRootWidget root;
 	Size2 view_size;
 
+	CanvasItem *_canvas;
 	bool _dirty;
 
 protected:
