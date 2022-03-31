@@ -109,12 +109,13 @@ class PoolVector {
 
 		//copy the alloc data
 		alloc->size = old_alloc->size;
+		alloc->allocated = old_alloc->allocated;
 		alloc->refcount.init();
 		alloc->pool_id = POOL_ALLOCATOR_INVALID_ID;
 		alloc->lock.set(0);
 
 #ifdef DEBUG_ENABLED
-		MemoryPool::total_memory += alloc->size;
+		MemoryPool::total_memory += alloc->allocated;
 		if (MemoryPool::total_memory > MemoryPool::max_memory) {
 			MemoryPool::max_memory = MemoryPool::total_memory;
 		}
@@ -124,7 +125,7 @@ class PoolVector {
 
 		if (MemoryPool::memory_pool) {
 		} else {
-			alloc->mem = memalloc(alloc->size);
+			alloc->mem = memalloc(alloc->allocated);
 		}
 
 		{
@@ -169,6 +170,7 @@ class PoolVector {
 				memfree(old_alloc->mem);
 				old_alloc->mem = nullptr;
 				old_alloc->size = 0;
+				old_alloc->allocated = 0;
 
 				MemoryPool::alloc_mutex.lock();
 				old_alloc->free_list = MemoryPool::free_list;
@@ -235,6 +237,7 @@ class PoolVector {
 			memfree(alloc->mem);
 			alloc->mem = nullptr;
 			alloc->size = 0;
+			alloc->allocated = 0;
 
 			MemoryPool::alloc_mutex.lock();
 			alloc->free_list = MemoryPool::free_list;
@@ -579,7 +582,7 @@ Error PoolVector<T>::resize(int p_size) {
 	}
 
 	const size_t new_size = sizeof(T) * p_size;
-	const size_t new_alloc = (new_size & 0xff) + 0x100; // round up to 256
+	const size_t new_alloc = (new_size & ~0xff) + 0x100; //round up to 256
 
 	if (alloc->size == new_size) {
 		return OK; //nothing to do
