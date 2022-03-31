@@ -140,8 +140,8 @@ private:
 	PoolColorArray colors;
 	PoolIntArray indexes;
 
+	CanvasItem *_canvas;
 	Ref<ArrayMesh> _mesh;
-	Ref<CanvasItem> *_canvas;
 	Ref<CanvasItemMaterial> _mat_add, _mat_mul;
 
 	Ref<Texture> _lastTexture;
@@ -153,6 +153,7 @@ private:
 		uvs.reset();
 		colors.reset();
 		indexes.reset();
+		_mesh->clear_mesh();
 	}
 
 	virtual void DrawSprite(TLFX::Particle *p, TLFX::AnimImage *sprite, float px, float py, float frame, float x, float y, float rotation, float scaleX, float scaleY, unsigned char r, unsigned char g, unsigned char b, float a, bool additive);
