@@ -50,7 +50,7 @@ struct MemoryPool {
 		SafeNumeric<uint32_t> lock;
 		void *mem;
 		PoolAllocator::ID pool_id;
-		size_t size;
+		size_t size, allocated;
 
 		Alloc *free_list;
 
@@ -58,7 +58,7 @@ struct MemoryPool {
 				lock(0),
 				mem(nullptr),
 				pool_id(POOL_ALLOCATOR_INVALID_ID),
-				size(0),
+				size(0), allocated(0),
 				free_list(nullptr) {
 		}
 	};
@@ -84,7 +84,7 @@ class PoolVector {
 			return;
 		}
 
-		//		ERR_FAIL_COND(alloc->lock>0); should not be illegal to lock this for copy on write, as it's a copy on write after all
+		// ERR_FAIL_COND(alloc->lock>0); should not be illegal to lock this for copy on write, as it's a copy on write after all
 
 		// Refcount should not be zero, otherwise it's a misuse of COW
 		if (alloc->refcount.get() == 1) {
@@ -469,6 +469,7 @@ public:
 	inline T operator[](int p_index) const;
 
 	Error resize(int p_size);
+	void reset() { resize(0); }
 
 	void invert();
 
@@ -568,6 +569,7 @@ Error PoolVector<T>::resize(int p_size) {
 
 		//cleanup the alloc
 		alloc->size = 0;
+		alloc->allocated = 0;
 		alloc->refcount.init();
 		alloc->pool_id = POOL_ALLOCATOR_INVALID_ID;
 		MemoryPool::alloc_mutex.unlock();
@@ -576,7 +578,8 @@ Error PoolVector<T>::resize(int p_size) {
 		ERR_FAIL_COND_V_MSG(alloc->lock.get() > 0, ERR_LOCKED, "Can't resize PoolVector if locked."); //can't resize if locked!
 	}
 
-	size_t new_size = sizeof(T) * p_size;
+	const size_t new_size = sizeof(T) * p_size;
+	const size_t new_alloc = (new_size & 0xff) + 0x100; // round up to 256
 
 	if (alloc->size == new_size) {
 		return OK; //nothing to do
@@ -591,8 +594,8 @@ Error PoolVector<T>::resize(int p_size) {
 
 #ifdef DEBUG_ENABLED
 	MemoryPool::alloc_mutex.lock();
-	MemoryPool::total_memory -= alloc->size;
-	MemoryPool::total_memory += new_size;
+	MemoryPool::total_memory -= alloc->allocated;
+	MemoryPool::total_memory += new_alloc;
 	if (MemoryPool::total_memory > MemoryPool::max_memory) {
 		MemoryPool::max_memory = MemoryPool::total_memory;
 	}
@@ -608,13 +611,14 @@ Error PoolVector<T>::resize(int p_size) {
 			//if some resize
 		} else {
 			if (alloc->size == 0) {
-				alloc->mem = memalloc(new_size);
+				alloc->mem = memalloc(new_alloc);
 			} else {
-				alloc->mem = memrealloc(alloc->mem, new_size);
+				alloc->mem = memrealloc(alloc->mem, new_alloc);
 			}
 		}
 
 		alloc->size = new_size;
+		alloc->allocated = new_alloc;
 
 		Write w = write();
 
@@ -639,6 +643,7 @@ Error PoolVector<T>::resize(int p_size) {
 				memfree(alloc->mem);
 				alloc->mem = nullptr;
 				alloc->size = 0;
+				alloc->allocated = 0;
 
 				MemoryPool::alloc_mutex.lock();
 				alloc->free_list = MemoryPool::free_list;
@@ -647,7 +652,10 @@ Error PoolVector<T>::resize(int p_size) {
 				MemoryPool::alloc_mutex.unlock();
 
 			} else {
-				alloc->mem = memrealloc(alloc->mem, new_size);
+				if (alloc->allocated < new_size) {
+					alloc->mem = memrealloc(alloc->mem, new_alloc);
+					alloc->allocated = new_alloc;
+				}
 				alloc->size = new_size;
 			}
 		}

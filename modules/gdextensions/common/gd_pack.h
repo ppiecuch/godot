@@ -329,11 +329,12 @@ static rect_wh _rect2D(rect_xywhf *const *v, int n, int max_s, bool allowFlip, s
 
 			fit = -1;
 
-			for (i = 0; i < n; ++i)
+			for (i = 0; i < n; ++i) {
 				if (!root.insert(*v[i], allowFlip)) {
 					fit = 1;
 					break;
 				}
+			}
 
 			if (fit == -1 && step <= discard_step)
 				break;
@@ -348,9 +349,7 @@ static rect_wh _rect2D(rect_xywhf *const *v, int n, int max_s, bool allowFlip, s
 		if (!fail && (min_bin.area() >= root.rc.area())) {
 			min_bin = rect_wh(root.rc);
 			min_func = f;
-		}
-
-		else if (fail && (_area > best_area)) {
+		} else if (fail && (_area > best_area)) {
 			best_area = _area;
 			best_func = f;
 		}

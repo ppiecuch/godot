@@ -42,6 +42,7 @@
 
 #include "common/gd_core.h"
 #include "core/reference.h"
+#include "scene/2d/canvas_item.h"
 #include "scene/resources/mesh.h"
 #include "scene/resources/texture.h"
 
@@ -59,6 +60,12 @@ public:
 	}
 	void SetTexture(Ref<Texture> texture) { _texture = texture; }
 	String GetImageName() const { return _image; }
+	Rect2 normalizedTextureSubRect() const {
+		if (const AtlasTexture *t = Object::cast_to<AtlasTexture>(*_texture)) {
+			return t->get_region();
+		}
+		return Rect2(0, 0, 1, 1);
+	}
 
 	virtual bool Load() { return true; }
 
@@ -72,6 +79,7 @@ class GdTLFXEffectsLibrary : public TLFX::EffectsLibrary, public Reference {
 	struct {
 		Ref<ImageTexture> texture;
 		int sizeLimit = 256;
+		Size2 padding{2, 2};
 
 		Ref<Texture> getTexture() const { return texture; }
 		Size2 atlasTextureSize() const { return texture->get_size(); }
@@ -81,7 +89,15 @@ class GdTLFXEffectsLibrary : public TLFX::EffectsLibrary, public Reference {
 			if (limit)
 				sizeLimit = limit;
 		}
+		Ref<Texture> create(const Ref<Image> &image) { return nullptr; }
 	} _atlas;
+
+	const Color white = Color::named("white");
+
+	PoolVector2Array verts;
+	PoolVector2Array uvs;
+	PoolColorArray colors;
+	PoolIntArray indexes;
 
 protected:
 	static void _bind_methods();
@@ -116,22 +132,27 @@ public:
 		FromEffectBlendMode,
 		AddBlendMode,
 		AlphaBlendMode,
-		GlobalBlendModesNum
 	};
 
 private:
-	struct Batch {
-		real_t px, py;
-		real_t frame;
-		real_t x, y;
-		real_t rotation;
-		real_t scaleX, scaleY;
-		Color color;
-	};
-	std::list<Batch> _batch;
+	PoolVector2Array verts;
+	PoolVector2Array uvs;
+	PoolColorArray colors;
+	PoolIntArray indexes;
+
+	Ref<ArrayMesh> _mesh;
+	CanvasItem *_canvas;
+
 	Ref<Texture> _lastTexture;
 	bool _lastAdditive;
 	GlobalBlendModeType _globalBlend;
+
+	void reset() {
+		verts.reset();
+		uvs.reset();
+		colors.reset();
+		indexes.reset();
+	}
 
 	virtual void DrawSprite(TLFX::Particle *p, TLFX::AnimImage *sprite, float px, float py, float frame, float x, float y, float rotation, float scaleX, float scaleY, unsigned char r, unsigned char g, unsigned char b, float a, bool additive);
 
@@ -160,7 +181,6 @@ public:
 		}
 	}
 	void SetGlobalBlendMode(GlobalBlendModeType state) { _globalBlend = state; }
-	void ToggleGlobalBlendMode() { _globalBlend = GlobalBlendModeType((int(_globalBlend) + 1) % GlobalBlendModesNum); }
 
 	GdTLFXParticleManager(int particles = TLFX::ParticleManager::particleLimit, int layers = 1);
 };

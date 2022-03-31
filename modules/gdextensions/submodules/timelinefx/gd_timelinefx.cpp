@@ -36,8 +36,32 @@
 #include "core/engine.h"
 #include "misc/miniz.h"
 
+struct AreaAllocatorNode;
+
+class AreaAllocator {
+	AreaAllocatorNode *root;
+	Size2 areaSize, padding;
+
+	bool allocateInNode(const Size2 &size, Point2 &result, const Rect2 &currentRect, AreaAllocatorNode *node);
+	bool deallocateInNode(const Point2 &pos, AreaAllocatorNode *node);
+	void mergeNodeWithNeighbors(AreaAllocatorNode *node);
+
+public:
+	Rect2 allocate(const Size2 &size);
+	bool allocate(Rect2 &req);
+	bool deallocate(const Rect2 &rect);
+	bool isEmpty() const { return root == 0; }
+	Size2 size() const { return areaSize; }
+
+	AreaAllocator(const Size2 &size, const Size2 &padding = Size2());
+	~AreaAllocator();
+};
+
 static void _image_to_greyscale(Ref<Image> p_image, float p_fact);
 static void _image_to_greyscale_trans(Ref<Image> &p_image);
+
+#define _Gd(o) ((GdImage*)o)
+
 
 GdTLFXEffectsLibrary::GdTLFXEffectsLibrary() {
 	SetUpdateFrequency(Engine::get_singleton()->get_target_fps());
@@ -83,8 +107,8 @@ bool GdTLFXEffectsLibrary::LoadLibrary(const String &library, const String &file
 					" comment: \"%s\"\n"
 					" uncompressed size: %u\n"
 					" compressed size: %u\n"
-					"Is dir: %u\n",
-					file_stat.m_filename, file_stat.m_comment, file_stat.m_uncomp_size, (uint)file_stat.m_comp_size, mz_zip_reader_is_file_a_directory(&zip_archive, i)));
+					" is dir: %u\n",
+					file_stat.m_filename, file_stat.m_comment, file_stat.m_uncomp_size, file_stat.m_comp_size, mz_zip_reader_is_file_a_directory(&zip_archive, i)));
 #endif
 		}
 	}
@@ -101,7 +125,7 @@ bool GdTLFXEffectsLibrary::LoadLibrary(const String &library, const String &file
 }
 
 TLFX::XMLLoader *GdTLFXEffectsLibrary::CreateLoader() const {
-	return new TLFX::PugiXMLLoader(_library.empty() ? 0 : _library.utf8().c_str());
+	return new TLFX::PugiXMLLoader(_library.utf8().c_str());
 }
 
 TLFX::AnimImage *GdTLFXEffectsLibrary::CreateImage() const {
@@ -127,6 +151,8 @@ bool GdTLFXEffectsLibrary::ensureTextureSize(int &w, int &h) {
 }
 
 bool GdTLFXEffectsLibrary::UploadTextures() {
+	using helper::vector;
+
 	// try calculate best fit into current atlas texture:
 	int minw = 0, maxw = 0, minh = 0, maxh = 0;
 	for (TLFX::AnimImage *shape : _shapeList) {
@@ -141,11 +167,13 @@ bool GdTLFXEffectsLibrary::UploadTextures() {
 		if (h > maxh)
 			maxh = h;
 	}
+
 #define SC(x) (sc / (1.1 + (x - minw) / (maxw - minw))) // 1 .. 2
+
 	real_t sc = 1.5;
 	bool done = false;
 	while (!done && sc > 0) {
-		QGL::QAreaAllocator m_allocator(_atlas.atlasTextureSize(), _atlas.padding);
+		AreaAllocator allocator(_atlas.atlasTextureSize(), _atlas.padding);
 		print_verbose(vformat("[GdTLFXEffectsLibrary] Scaling texture atlas with %f", sc));
 		done = true;
 		for (TLFX::AnimImage *shape : _shapeList) {
@@ -157,11 +185,11 @@ bool GdTLFXEffectsLibrary::UploadTextures() {
 				w *= SC(w);
 				h *= SC(h);
 			}
-			Rect2 rc = m_allocator.allocate(Size2(w, h));
+			Rect2 rc = allocator.allocate(Size2(w, h));
 			if (rc.size.width == 0 || rc.size.height == 0) {
 				sc -= 0.05;
 				done = false;
-				break; // next step
+				break; // next try
 			}
 		}
 	}
@@ -182,7 +210,7 @@ bool GdTLFXEffectsLibrary::UploadTextures() {
 		mz_bool status = zip_archive.init_file(_library.utf8().c_str());
 		if (status) {
 			for (TLFX::AnimImage *shape : _shapeList) {
-				const char *filename = shape->GetFilename();
+				const String filename = shape->GetFilename();
 				const int anim_size = Math::pow(2, Math::ceil(Math::log(real_t(shape->GetFramesCount())) / Math_LN2));
 				const int anim_square = Math::sqrt(real_t(anim_size));
 				int w = shape->GetWidth() * anim_square;
@@ -192,16 +220,12 @@ bool GdTLFXEffectsLibrary::UploadTextures() {
 					h *= SC(h);
 				}
 
-				if (filename == 0 || strlen(filename) == 0) {
+				if (filename.empty()) {
 					WARN_PRINT("[GdTLFXEffectsLibrary] Empty image filename");
 					continue;
 				}
 				// Try to extract all the files to the heap.
-				StringList variants;
-				variants
-						<< filename
-						<< QFileInfo(filename).fileName()
-						<< QFileInfo(String(filename).replace("\\", "/")).fileName();
+				Vector<String> variants = vector(filename, filename.get_file(), filename.replace("\\", "/").get_file());
 				for (String fn : variants) {
 					size_t uncomp_size;
 					void *p = mz_zip_reader_extract_file_to_heap(&zip_archive, fn.utf8().c_str(), &uncomp_size, 0);
@@ -211,9 +235,9 @@ bool GdTLFXEffectsLibrary::UploadTextures() {
 
 					print_verbose(vformat("[GdTLFXEffectsLibrary] Successfully extracted file %s (%d bytes)", fn, uint64_t(uncomp_size)));
 
-					Ref<Image> img = QImage::fromData((const uchar *)p, uncomp_size);
+					Ref<Image> img = memnew(Image((uint8_t *)p, uncomp_size));
 
-					if (img.is_null()) {
+					if (img->empty()) {
 						WARN_PRINT(vformat("[GdTLFXEffectsLibrary] Failed to create image: %s", filename));
 						return false;
 					} else {
@@ -229,19 +253,20 @@ bool GdTLFXEffectsLibrary::UploadTextures() {
 								break;
 						}
 
-						// scale images to fit atlas
-						QTexture *texture = _atlas.create(img.scaled(Size2(w, h)));
-						((GdImage *)shape)->SetTexture(texture, filename);
-						if (texture == 0) {
+						img->resize(w, h); // scale images to fit atlas
+						Ref<Texture> texture = _atlas.create(img);
+						_Gd(shape)->SetTexture(texture, filename);
+						if (texture.is_null()) {
 							WARN_PRINT(vformat("[GdTLFXEffectsLibrary] Failed to create texture for image %s (%d / %d frames)", filename, img->get_size(), shape->GetFramesCount()));
 							return false;
-						} else
+						} else {
 							break;
+						}
 					}
 					// We're done.
 					mz_free(p);
 				}
-				if (((GdImage *)shape)->GetTexture().is_null()) {
+				if (_Gd(shape)->GetTexture().is_null()) {
 					WARN_PRINT(vformat("[GdTLFXEffectsLibrary] Failed to extract file %s", filename));
 					return false;
 				}
@@ -254,7 +279,7 @@ bool GdTLFXEffectsLibrary::UploadTextures() {
 	} else {
 		for (TLFX::AnimImage *shape : _shapeList) {
 			const char *filename = shape->GetFilename();
-			const int anim_size = powf(2, Math::ceil(Math::log(real_t(shape->GetFramesCount())) / Math_LN2));
+			const int anim_size = Math::pow(2, Math::ceil(Math::log(real_t(shape->GetFramesCount())) / Math_LN2));
 			const int anim_square = Math::sqrt(real_t(anim_size));
 			int w = shape->GetWidth() * anim_square;
 			int h = shape->GetHeight() * anim_square;
@@ -263,15 +288,16 @@ bool GdTLFXEffectsLibrary::UploadTextures() {
 				h *= SC(h);
 			}
 
-			QFile f(filename);
-			if (!f.exists())
-				f.setFileName(vformat("res:/data/%s", filename));
-			if (!f.exists()) {
+			String f = filename;
+			if (!FileAccess::exists(f)) {
+				f = vformat("res:/data/%s", filename);
+			}
+			if (!FileAccess::exists(f)) {
 				WARN_PRINT(vformat("[GdImage] Failed to load image: %s", filename));
 				return false;
 			}
 			Ref<Image> img = newref(Image);
-			if (img->load(f.fileName()) != OK) {
+			if (img->load(filename) != OK) {
 				WARN_PRINT(vformat("[GdImage] Failed to load image: %s", filename));
 				return false;
 			} else {
@@ -287,9 +313,9 @@ bool GdTLFXEffectsLibrary::UploadTextures() {
 						break;
 				}
 
-				// scale images to fit atlas
-				Ref<Texture> texture = _atlas.create(img.scaled(Size2(w, h)));
-				((GdImage *)shape)->SetTexture(texture, filename);
+				img->resize(w, h); // scale images to fit atlas
+				Ref<Texture> texture = _atlas.create(img);
+				_Gd(shape)->SetTexture(texture, filename);
 				if (texture.is_null()) {
 					WARN_PRINT(vformat("[GdImage] Failed to create texture for image %s (%d / %d frames)", filename, img->get_size(), shape->GetFramesCount()));
 					return false;
@@ -307,116 +333,101 @@ void GdTLFXEffectsLibrary::Debug(Ref<ArrayMesh> &mesh) {
 
 		// draw texture quad:
 
-		glDisable(GL_DEPTH);
-		glEnable(GL_BLEND);
-		glDisable(GL_ALPHA_TEST);
-		glEnable(GL_TEXTURE_2D);
-		dynamic_cast<GdImage *>(sprite)->GetTexture()->bind();
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
 		static real_t f = 0;
 
-		Rect2 rc = dynamic_cast<GdImage *>(sprite)->GetTexture()->normalizedTextureSubRect();
-		const int anim_size = powf(2, ceilf(log2f(sprite->GetFramesCount())));
-		const int anim_square = sqrtf(anim_size);
-		const int anim_frame = int(round(f)) % sprite->GetFramesCount();
+		Rect2 rc = _Gd(sprite)->normalizedTextureSubRect();
+		const int anim_size = Math::pow(2, Math::ceil(Math::log(real_t(sprite->GetFramesCount())) / Math_LN2));
+		const int anim_square = Math::sqrt(real_t(anim_size));
+		const int anim_frame = int(Math::round(f)) % sprite->GetFramesCount();
 		f += 0.1;
 		const int gr = anim_frame / anim_square, gc = anim_frame % anim_square;
-		const float cw = rc.width() / anim_square, ch = rc.height() / anim_square;
-		rc = Rect2(rc.x() + gc * cw, rc.y() + gr * ch, cw, ch);
+		const real_t cw = rc.size.width / anim_square, ch = rc.size.height / anim_square;
+		rc = Rect2(rc.position.x + gc * cw, rc.position.y + gr * ch, cw, ch);
 
-		QGeometryData batch;
-		batch.appendVertex(QVector3D(0, 0, 0));
-		batch.appendVertex(QVector3D(sprite->GetWidth(), 0, 0));
-		batch.appendVertex(QVector3D(sprite->GetWidth(), sprite->GetHeight(), 0));
-		batch.appendVertex(QVector3D(0, sprite->GetHeight(), 0));
-		batch.appendTexCoord(Vector2(rc.x(), rc.y()));
-		batch.appendTexCoord(Vector2(rc.x() + rc.width(), rc.y()));
-		batch.appendTexCoord(Vector2(rc.x() + rc.width(), rc.y() + rc.height()));
-		batch.appendTexCoord(Vector2(rc.x(), rc.y() + rc.height()));
-		batch.appendColor(Qt::white);
-		batch.appendColor(Qt::white);
-		batch.appendColor(Qt::white);
-		batch.appendColor(Qt::white);
-		batch.appendIndices(0, 1, 2);
-		batch.appendIndices(2, 3, 0);
-		batch.draw(p, 0, 6, QGL::Triangles);
-		dynamic_cast<GdImage *>(sprite)->GetTexture()->release();
+		verts.push_back({0, 0});
+		verts.push_back({sprite->GetWidth(), 0});
+		verts.push_back({sprite->GetWidth(), sprite->GetHeight()});
+		verts.push_back({0, sprite->GetHeight()});
+		uvs.push_back({rc.position.x, rc.position.y});
+		uvs.push_back({rc.position.x + rc.size.width, rc.position.y});
+		uvs.push_back({rc.position.x + rc.size.width, rc.position.y + rc.size.height});
+		uvs.push_back({rc.position.x, rc.position.y + rc.size.height});
+		colors.push_multi(4, white);
+		indexes.append_array(parray(0, 1, 2, 2, 3, 0));
 
 		return;
 	}
 }
 
-GdTLFXParticleManager::GdTLFXParticleManager(QGLPainter *p, int particles /*= particleLimit*/, int layers /*= 1*/) :
-		TLFX::ParticleManager(particles, layers), _lastTexture(0), _lastAdditive(true), _globalBlend(FromEffectBlendMode), _p(p) {
+GdTLFXParticleManager::GdTLFXParticleManager(int particles, int layers) :
+		TLFX::ParticleManager(particles, layers), _lastTexture(0), _lastAdditive(true), _globalBlend(FromEffectBlendMode) {
 }
 
 static void _build_tiles(Size2 grid_size, unsigned int total_frames, Point2 tex_origin = Point2(0, 0), Size2 tex_size = Size2(1, 1)) {
 	Vector<Rect2> frames;
-	for (int fr = 0; fr < grid_size.height() /* rows */; fr++)
-		for (int fc = 0; fc < grid_size.width() /* cols */; fc++) {
-			const float cw = tex_size.width() / grid_size.width(), ch = tex_size.height() / grid_size.height();
-			frames.push_back(Rect2(tex_origin.x() + fc * cw, tex_origin.y() + fr * ch, cw, ch));
-			if (frames.size() == total_frames)
+	for (int fr = 0; fr < grid_size.height /* rows */; fr++)
+		for (int fc = 0; fc < grid_size.width /* cols */; fc++) {
+			const real_t cw = tex_size.width / grid_size.width, ch = tex_size.height / grid_size.height;
+			frames.push_back(Rect2(tex_origin.x + fc * cw, tex_origin.y + fr * ch, cw, ch));
+			if (frames.size() == total_frames) {
 				break;
+			}
 		}
 }
 
 void GdTLFXParticleManager::DrawSprite(TLFX::Particle *p, TLFX::AnimImage *sprite, float px, float py, float frame, float x, float y, float rotation, float scaleX, float scaleY, unsigned char r, unsigned char g, unsigned char b, float a, bool additive) {
-#define qFF(C) C *(255.999)
 
-	PoolColorArray colors;
-	PoolVector2Array verts, uvs;
+#define gFF(C) (C*(255.999f))
 
-	uint8_t alpha = qFF(a);
-	if (alpha == 0 || scaleX == 0 || scaleY == 0)
+	if (a == 0 || scaleX == 0 || scaleY == 0) {
 		return;
+	}
 
-	if ((_lastTexture && dynamic_cast<GdImage *>(sprite)->GetTexture()->textureId() != _lastTexture->textureId()) || (additive != _lastAdditive)) {
+	if ((_lastTexture && _Gd(sprite)->GetTexture() != _lastTexture) || (additive != _lastAdditive)) {
 		Flush();
 	}
 
-	Rect2 rc = dynamic_cast<GdImage *>(sprite)->GetTexture()->normalizedTextureSubRect();
+	Rect2 rc = _Gd(sprite)->normalizedTextureSubRect();
 	// calculate frame position in atlas:
 	if (sprite && sprite->GetFramesCount() > 1) {
-		const int anim_size = powf(2, ceilf(log2f(sprite->GetFramesCount())));
-		const int anim_square = sqrtf(anim_size);
-		const int anim_frame = floorf(frame);
+		const int anim_size = Math::pow(2, Math::ceil(Math::log(real_t(sprite->GetFramesCount())) / Math_LN2));
+		const int anim_square = Math::sqrt(real_t(anim_size));
+		const int anim_frame = Math::floor(frame);
 		if (anim_frame >= sprite->GetFramesCount()) {
 			WARN_PRINT(vformat("[GdTLFXParticleManager] Out of range: %d of %d (frames: %d)", frame, anim_frame, sprite->GetFramesCount()));
 		}
 		const int gr = anim_frame / anim_square, gc = anim_frame % anim_square;
-		const float cw = rc.width() / anim_square, ch = rc.height() / anim_square;
-		rc = Rect2(rc.x() + gc * cw, rc.y() + gr * ch, cw, ch);
+		const real_t cw = rc.size.width / anim_square, ch = rc.size.height / anim_square;
+		rc = Rect2(rc.position.x + gc * cw, rc.position.y + gr * ch, cw, ch);
 	}
 
-	batch.appendTexCoord(Vector2(rc.x(), rc.y()));
-	batch.appendTexCoord(Vector2(rc.x() + rc.width(), rc.y()));
-	batch.appendTexCoord(Vector2(rc.x() + rc.width(), rc.y() + rc.height()));
-	batch.appendTexCoord(Vector2(rc.x(), rc.y() + rc.height()));
+	uvs.push_back({rc.position.x, rc.position.y});
+	uvs.push_back({rc.position.x + rc.size.width, rc.position.y});
+	uvs.push_back({rc.position.x + rc.size.width, rc.position.y + rc.size.height});
+	uvs.push_back({rc.position.x, rc.position.y + rc.size.height});
 
-	float x0 = -x * scaleX;
-	float y0 = -y * scaleY;
-	float x1 = x0;
-	float y1 = (-y + sprite->GetHeight()) * scaleY;
-	float x2 = (-x + sprite->GetWidth()) * scaleX;
-	float y2 = y1;
-	float x3 = x2;
-	float y3 = y0;
+	real_t x0 = -x * scaleX;
+	real_t y0 = -y * scaleY;
+	real_t x1 = x0;
+	real_t y1 = (-y + sprite->GetHeight()) * scaleY;
+	real_t x2 = (-x + sprite->GetWidth()) * scaleX;
+	real_t y2 = y1;
+	real_t x3 = x2;
+	real_t y3 = y0;
 
-	float cos = Math::cos(rotation / 180.f * M_PI);
-	float sin = Math::sin(rotation / 180.f * M_PI);
+	real_t cos = Math::cos(rotation / 180 * M_PI);
+	real_t sin = Math::sin(rotation / 180 * M_PI);
 
-	batch.appendVertex(Vector2(px + x0 * cos - y0 * sin, py + x0 * sin + y0 * cos));
-	batch.appendVertex(Vector2(px + x1 * cos - y1 * sin, py + x1 * sin + y1 * cos));
-	batch.appendVertex(Vector2(px + x2 * cos - y2 * sin, py + x2 * sin + y2 * cos));
-	batch.appendVertex(Vector2(px + x3 * cos - y3 * sin, py + x3 * sin + y3 * cos));
+	verts.push_back({px + x0 * cos - y0 * sin, py + x0 * sin + y0 * cos});
+	verts.push_back({px + x1 * cos - y1 * sin, py + x1 * sin + y1 * cos});
+	verts.push_back({px + x2 * cos - y2 * sin, py + x2 * sin + y2 * cos});
+	verts.push_back({px + x3 * cos - y3 * sin, py + x3 * sin + y3 * cos});
 
-	for (int i = 0; i < 4; ++i) {
-		batch.appendColor(Color(r, g, b, alpha));
-	}
+	colors.push_multi(4, {gFF(r), gFF(g), gFF(b), a});
 
-	_lastTexture = dynamic_cast<GdImage *>(sprite)->GetTexture();
+	indexes.append_array(parray(0, 1, 2, 2, 3, 0));
+
+	_lastTexture = _Gd(sprite)->GetTexture();
 	switch (_globalBlend) {
 		case FromEffectBlendMode:
 			_lastAdditive = additive;
@@ -431,41 +442,263 @@ void GdTLFXParticleManager::DrawSprite(TLFX::Particle *p, TLFX::AnimImage *sprit
 }
 
 void GdTLFXParticleManager::Flush() {
-	if (batch.count()) {
-		DEV_ASSERT(_p);
-
-		glDisable(GL_DEPTH);
-		glEnable(GL_BLEND);
-		glDisable(GL_ALPHA_TEST);
-		if (_lastTexture) {
-			glEnable(GL_TEXTURE_2D);
-			_lastTexture->bind();
-		} else
-			glDisable(GL_TEXTURE_2D);
+	if (verts.size()) {
 		if (_lastAdditive) {
 			// ALPHA_ADD
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 		} else {
 			// ALPHA_BLEND
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		}
 
-		QGLBuilder builder;
-		builder.addQuads(batch);
-		QList<QGeometryData> opt = builder.optimized();
-		for (QGeometryData gd : opt) {
-			gd.draw(_p, 0, gd.indexCount());
-		}
-		if (_lastTexture)
-			_lastTexture->release();
-		batch = QGeometryData(); // clear batch data
+		_canvas->draw_mesh(_mesh, _lastTexture);
+
+		reset(); // clear batch data
 	}
+}
+
+// Atlas utilities:
+
+enum SplitType
+{
+	VerticalSplit,
+	HorizontalSplit
+};
+
+static const int maxMargin = 2;
+
+struct AreaAllocatorNode {
+	inline bool isLeaf();
+
+	AreaAllocatorNode *parent;
+	AreaAllocatorNode *left;
+	AreaAllocatorNode *right;
+	int split; // only valid for inner nodes.
+	SplitType splitType;
+	bool isOccupied; // only valid for leaf nodes.
+
+	AreaAllocatorNode(AreaAllocatorNode *parent);
+	~AreaAllocatorNode();
+};
+
+AreaAllocatorNode::AreaAllocatorNode(AreaAllocatorNode *parent)
+	: parent(parent)
+	, left(0)
+	, right(0)
+	, isOccupied(false)
+{
+}
+
+AreaAllocatorNode::~AreaAllocatorNode() {
+	delete left;
+	delete right;
+}
+
+bool AreaAllocatorNode::isLeaf() {
+	DEV_ASSERT((left != 0) == (right != 0));
+	return !left;
+}
+
+
+AreaAllocator::AreaAllocator(const Size2 &size, const Size2 &padding) : areaSize(size), padding(padding) {
+	root = new AreaAllocatorNode(0);
+}
+
+AreaAllocator::~AreaAllocator() {
+	delete root;
+}
+
+Rect2 AreaAllocator::allocate(const Size2 &size) {
+	Point2 point;
+	bool result = allocateInNode(size+padding, point, Rect2(Point2(0, 0), areaSize), root);
+	return result ? Rect2(point, size+padding) : Rect2();
+}
+
+bool AreaAllocator::allocate(Rect2 &req) {
+	return allocateInNode(req.size+padding, req.position, Rect2(Point2(0, 0), areaSize), root);
+}
+
+bool AreaAllocator::deallocate(const Rect2 &rect) {
+	return deallocateInNode(rect.position, root);
+}
+
+bool AreaAllocator::allocateInNode(const Size2 &size, Point2 &result, const Rect2 &currentRect, AreaAllocatorNode *node) {
+	if (size.width > currentRect.size.width || size.height > currentRect.size.height) {
+		return false;
+	}
+	if (node->isLeaf()) {
+		if (node->isOccupied) {
+			return false;
+		}
+		if (size.width + maxMargin >= currentRect.size.width && size.height + maxMargin >= currentRect.size.height) {
+			// Snug fit, occupy entire rectangle.
+			node->isOccupied = true;
+			result = currentRect.position;
+			return true;
+		}
+		// TODO: Reuse nodes.
+		// Split node.
+		node->left = new AreaAllocatorNode(node);
+		node->right = new AreaAllocatorNode(node);
+		Rect2 splitRect = currentRect;
+		if ((currentRect.size.width - size.width) * currentRect.size.height < (currentRect.size.height - size.height) * currentRect.size.width) {
+			node->splitType = HorizontalSplit;
+			node->split = currentRect.top() + size.height;
+			splitRect.size.height = size.height;
+		} else {
+			node->splitType = VerticalSplit;
+			node->split = currentRect.left() + size.width;
+			splitRect.size.width = size.width;
+		}
+		return allocateInNode(size, result, splitRect, node->left);
+	} else {
+		// TODO: avoid unnecessary recursion.
+		//  has been split.
+		Rect2 leftRect = currentRect;
+		Rect2 rightRect = currentRect;
+		if (node->splitType == HorizontalSplit) {
+			leftRect.size.height = node->split - leftRect.top();
+			rightRect.position.y = node->split;
+		} else {
+			leftRect.size.width = node->split - leftRect.left();
+			rightRect.position.x = node->split;
+		}
+		if (allocateInNode(size, result, leftRect, node->left)) {
+			return true;
+		}
+		if (allocateInNode(size, result, rightRect, node->right)) {
+			return true;
+		}
+		return false;
+	}
+}
+
+bool AreaAllocator::deallocateInNode(const Point2 &pos, AreaAllocatorNode *node) {
+	while (!node->isLeaf()) {
+		//  has been split.
+		int cmp = node->splitType == HorizontalSplit ? pos.y : pos.x;
+		node = cmp < node->split ? node->left : node->right;
+	}
+	if (!node->isOccupied) {
+		return false;
+	}
+	node->isOccupied = false;
+	mergeNodeWithNeighbors(node);
+	return true;
+}
+
+void AreaAllocator::mergeNodeWithNeighbors(AreaAllocatorNode *node) {
+	bool done = false;
+	AreaAllocatorNode *parent = 0;
+	AreaAllocatorNode *current = 0;
+	AreaAllocatorNode *sibling;
+	while (!done) {
+		DEV_ASSERT(node->isLeaf());
+		DEV_ASSERT(!node->isOccupied);
+		if (node->parent == 0) {
+			return; // No neighbours.
+		}
+		SplitType splitType = SplitType(node->parent->splitType);
+		done = true;
+
+		// Special case. Might be faster than going through the general code path.
+#if 0
+		// Merge with sibling.
+		parent = node->parent;
+		sibling = (node == parent->left ? parent->right : parent->left);
+		if (sibling->isLeaf() && !sibling->isOccupied) {
+			DEV_ASSERT(!sibling->right);
+			node = parent;
+			parent->isOccupied = false;
+			delete parent->left;
+			delete parent->right;
+			parent->left = parent->right = 0;
+			done = false;
+			continue;
+		}
+#endif
+
+		// Merge with left neighbour.
+		current = node;
+		parent = current->parent;
+		while (parent && current == parent->left && parent->splitType == splitType) {
+			current = parent;
+			parent = parent->parent;
+		}
+
+		if (parent && parent->splitType == splitType) {
+			DEV_ASSERT(current == parent->right);
+			DEV_ASSERT(parent->left);
+
+			AreaAllocatorNode *neighbor = parent->left;
+			while (neighbor->right && neighbor->splitType == splitType) {
+				neighbor = neighbor->right;
+			}
+			if (neighbor->isLeaf() && neighbor->parent->splitType == splitType && !neighbor->isOccupied) {
+				// Left neighbour can be merged.
+				parent->split = neighbor->parent->split;
+
+				parent = neighbor->parent;
+				sibling = neighbor == parent->left ? parent->right : parent->left;
+				AreaAllocatorNode **nodeRef = &root;
+				if (parent->parent) {
+					if (parent == parent->parent->left) {
+						nodeRef = &parent->parent->left;
+					} else {
+						nodeRef = &parent->parent->right;
+					}
+				}
+				sibling->parent = parent->parent;
+				*nodeRef = sibling;
+				parent->left = parent->right = 0;
+				delete parent;
+				delete neighbor;
+				done = false;
+			}
+		}
+
+		// Merge with right neighbour.
+		current = node;
+		parent = current->parent;
+		while (parent && current == parent->right && parent->splitType == splitType) {
+			current = parent;
+			parent = parent->parent;
+		}
+
+		if (parent && parent->splitType == splitType) {
+			DEV_ASSERT(current == parent->left);
+			DEV_ASSERT(parent->right);
+
+			AreaAllocatorNode *neighbor = parent->right;
+			while (neighbor->left && neighbor->splitType == splitType)
+				neighbor = neighbor->left;
+
+			if (neighbor->isLeaf() && neighbor->parent->splitType == splitType && !neighbor->isOccupied) {
+				// Right neighbour can be merged.
+				parent->split = neighbor->parent->split;
+
+				parent = neighbor->parent;
+				sibling = neighbor == parent->left ? parent->right : parent->left;
+				AreaAllocatorNode **nodeRef = &root;
+				if (parent->parent) {
+					if (parent == parent->parent->left)
+						nodeRef = &parent->parent->left;
+					else
+						nodeRef = &parent->parent->right;
+				}
+				sibling->parent = parent->parent;
+				*nodeRef = sibling;
+				parent->left = parent->right = 0;
+				delete parent;
+				delete neighbor;
+				done = false;
+			}
+		}
+	} // end while(!done)
 }
 
 // Image utilities:
 
 static void _image_to_greyscale(Ref<Image> p_image, float p_fact) {
-	if (value == 0.0)
+	if (p_fact == 0.0)
 		return;
 
 	p_image->lock();
@@ -473,12 +706,12 @@ static void _image_to_greyscale(Ref<Image> p_image, float p_fact) {
 	for (int y = 0; y < p_image->get_height(); ++y) {
 		for (int x = 0; x < p_image->get_width(); ++x) {
 			const Color data = p_image->get_pixel(x, y);
-			const float gray = (data.r * .34 + data.g * .5 + data.b * .15
+			const float gray = data.r * .34 + data.g * .5 + data.b * .15;
 
 			if (p_fact == 1.0) {
 				p_image->set_pixel(x, y, { gray, gray, gray, data.a });
 			} else{
-				p_image->set_pixel(x, y, {(p_fact*gray+(1-p_fact)*data.r, (p_fact*gray+(1-p_fact)*data.g, (p_fact*gray+(1-p_fact)*data.b, data.a});
+				p_image->set_pixel(x, y, { p_fact*gray+(1-p_fact)*data.r, p_fact*gray+(1-p_fact)*data.g, p_fact*gray+(1-p_fact)*data.b, data.a });
 			}
 		}
 	}
