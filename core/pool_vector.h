@@ -58,7 +58,8 @@ struct MemoryPool {
 				lock(0),
 				mem(nullptr),
 				pool_id(POOL_ALLOCATOR_INVALID_ID),
-				size(0), allocated(0),
+				size(0),
+				allocated(0),
 				free_list(nullptr) {
 		}
 	};

@@ -60,8 +60,7 @@ public:
 static void _image_to_greyscale(Ref<Image> p_image, float p_fact);
 static void _image_to_greyscale_trans(Ref<Image> &p_image);
 
-#define _Gd(o) ((GdImage*)o)
-
+#define _Gd(o) ((GdImage *)o)
 
 GdTLFXEffectsLibrary::GdTLFXEffectsLibrary() {
 	SetUpdateFrequency(Engine::get_singleton()->get_target_fps());
@@ -344,14 +343,14 @@ void GdTLFXEffectsLibrary::Debug(Ref<ArrayMesh> &mesh) {
 		const real_t cw = rc.size.width / anim_square, ch = rc.size.height / anim_square;
 		rc = Rect2(rc.position.x + gc * cw, rc.position.y + gr * ch, cw, ch);
 
-		verts.push_back({0, 0});
-		verts.push_back({sprite->GetWidth(), 0});
-		verts.push_back({sprite->GetWidth(), sprite->GetHeight()});
-		verts.push_back({0, sprite->GetHeight()});
-		uvs.push_back({rc.position.x, rc.position.y});
-		uvs.push_back({rc.position.x + rc.size.width, rc.position.y});
-		uvs.push_back({rc.position.x + rc.size.width, rc.position.y + rc.size.height});
-		uvs.push_back({rc.position.x, rc.position.y + rc.size.height});
+		verts.push_back({ 0, 0 });
+		verts.push_back({ sprite->GetWidth(), 0 });
+		verts.push_back({ sprite->GetWidth(), sprite->GetHeight() });
+		verts.push_back({ 0, sprite->GetHeight() });
+		uvs.push_back({ rc.position.x, rc.position.y });
+		uvs.push_back({ rc.position.x + rc.size.width, rc.position.y });
+		uvs.push_back({ rc.position.x + rc.size.width, rc.position.y + rc.size.height });
+		uvs.push_back({ rc.position.x, rc.position.y + rc.size.height });
 		colors.push_multi(4, white);
 		indexes.append_array(parray(0, 1, 2, 2, 3, 0));
 
@@ -376,8 +375,7 @@ static void _build_tiles(Size2 grid_size, unsigned int total_frames, Point2 tex_
 }
 
 void GdTLFXParticleManager::DrawSprite(TLFX::Particle *p, TLFX::AnimImage *sprite, float px, float py, float frame, float x, float y, float rotation, float scaleX, float scaleY, unsigned char r, unsigned char g, unsigned char b, float a, bool additive) {
-
-#define gFF(C) (C*(255.999f))
+#define gFF(C) (C * (255.999f))
 
 	if (a == 0 || scaleX == 0 || scaleY == 0) {
 		return;
@@ -401,10 +399,10 @@ void GdTLFXParticleManager::DrawSprite(TLFX::Particle *p, TLFX::AnimImage *sprit
 		rc = Rect2(rc.position.x + gc * cw, rc.position.y + gr * ch, cw, ch);
 	}
 
-	uvs.push_back({rc.position.x, rc.position.y});
-	uvs.push_back({rc.position.x + rc.size.width, rc.position.y});
-	uvs.push_back({rc.position.x + rc.size.width, rc.position.y + rc.size.height});
-	uvs.push_back({rc.position.x, rc.position.y + rc.size.height});
+	uvs.push_back({ rc.position.x, rc.position.y });
+	uvs.push_back({ rc.position.x + rc.size.width, rc.position.y });
+	uvs.push_back({ rc.position.x + rc.size.width, rc.position.y + rc.size.height });
+	uvs.push_back({ rc.position.x, rc.position.y + rc.size.height });
 
 	real_t x0 = -x * scaleX;
 	real_t y0 = -y * scaleY;
@@ -418,12 +416,12 @@ void GdTLFXParticleManager::DrawSprite(TLFX::Particle *p, TLFX::AnimImage *sprit
 	real_t cos = Math::cos(rotation / 180 * M_PI);
 	real_t sin = Math::sin(rotation / 180 * M_PI);
 
-	verts.push_back({px + x0 * cos - y0 * sin, py + x0 * sin + y0 * cos});
-	verts.push_back({px + x1 * cos - y1 * sin, py + x1 * sin + y1 * cos});
-	verts.push_back({px + x2 * cos - y2 * sin, py + x2 * sin + y2 * cos});
-	verts.push_back({px + x3 * cos - y3 * sin, py + x3 * sin + y3 * cos});
+	verts.push_back({ px + x0 * cos - y0 * sin, py + x0 * sin + y0 * cos });
+	verts.push_back({ px + x1 * cos - y1 * sin, py + x1 * sin + y1 * cos });
+	verts.push_back({ px + x2 * cos - y2 * sin, py + x2 * sin + y2 * cos });
+	verts.push_back({ px + x3 * cos - y3 * sin, py + x3 * sin + y3 * cos });
 
-	colors.push_multi(4, {gFF(r), gFF(g), gFF(b), a});
+	colors.push_multi(4, { gFF(r), gFF(g), gFF(b), a });
 
 	indexes.append_array(parray(0, 1, 2, 2, 3, 0));
 
@@ -457,8 +455,7 @@ void GdTLFXParticleManager::Flush() {
 
 // Atlas utilities:
 
-enum SplitType
-{
+enum SplitType {
 	VerticalSplit,
 	HorizontalSplit
 };
@@ -479,12 +476,8 @@ struct AreaAllocatorNode {
 	~AreaAllocatorNode();
 };
 
-AreaAllocatorNode::AreaAllocatorNode(AreaAllocatorNode *parent)
-	: parent(parent)
-	, left(0)
-	, right(0)
-	, isOccupied(false)
-{
+AreaAllocatorNode::AreaAllocatorNode(AreaAllocatorNode *parent) :
+		parent(parent), left(0), right(0), isOccupied(false) {
 }
 
 AreaAllocatorNode::~AreaAllocatorNode() {
@@ -497,8 +490,8 @@ bool AreaAllocatorNode::isLeaf() {
 	return !left;
 }
 
-
-AreaAllocator::AreaAllocator(const Size2 &size, const Size2 &padding) : areaSize(size), padding(padding) {
+AreaAllocator::AreaAllocator(const Size2 &size, const Size2 &padding) :
+		areaSize(size), padding(padding) {
 	root = new AreaAllocatorNode(0);
 }
 
@@ -508,12 +501,12 @@ AreaAllocator::~AreaAllocator() {
 
 Rect2 AreaAllocator::allocate(const Size2 &size) {
 	Point2 point;
-	bool result = allocateInNode(size+padding, point, Rect2(Point2(0, 0), areaSize), root);
-	return result ? Rect2(point, size+padding) : Rect2();
+	bool result = allocateInNode(size + padding, point, Rect2(Point2(0, 0), areaSize), root);
+	return result ? Rect2(point, size + padding) : Rect2();
 }
 
 bool AreaAllocator::allocate(Rect2 &req) {
-	return allocateInNode(req.size+padding, req.position, Rect2(Point2(0, 0), areaSize), root);
+	return allocateInNode(req.size + padding, req.position, Rect2(Point2(0, 0), areaSize), root);
 }
 
 bool AreaAllocator::deallocate(const Rect2 &rect) {
@@ -710,8 +703,8 @@ static void _image_to_greyscale(Ref<Image> p_image, float p_fact) {
 
 			if (p_fact == 1.0) {
 				p_image->set_pixel(x, y, { gray, gray, gray, data.a });
-			} else{
-				p_image->set_pixel(x, y, { p_fact*gray+(1-p_fact)*data.r, p_fact*gray+(1-p_fact)*data.g, p_fact*gray+(1-p_fact)*data.b, data.a });
+			} else {
+				p_image->set_pixel(x, y, { p_fact * gray + (1 - p_fact) * data.r, p_fact * gray + (1 - p_fact) * data.g, p_fact * gray + (1 - p_fact) * data.b, data.a });
 			}
 		}
 	}

@@ -79,7 +79,7 @@ class GdTLFXEffectsLibrary : public TLFX::EffectsLibrary, public Reference {
 	struct {
 		Ref<ImageTexture> texture;
 		int sizeLimit = 256;
-		Size2 padding{2, 2};
+		Size2 padding{ 2, 2 };
 
 		Ref<Texture> getTexture() const { return texture; }
 		Size2 atlasTextureSize() const { return texture->get_size(); }
