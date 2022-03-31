@@ -39,6 +39,11 @@ struct _NO_DISCARD_CLASS_ Rect2 {
 	Point2 position;
 	Size2 size;
 
+	_FORCE_INLINE_ real_t left() const { return position.x; }
+	_FORCE_INLINE_ real_t right() const { return position.x + size.width; }
+	_FORCE_INLINE_ real_t top() const { return position.y; }
+	_FORCE_INLINE_ real_t bottom() const { return position.y + size.height; }
+
 	const Vector2 &get_position() const { return position; }
 	void set_position(const Vector2 &p_pos) { position = p_pos; }
 	const Vector2 &get_size() const { return size; }

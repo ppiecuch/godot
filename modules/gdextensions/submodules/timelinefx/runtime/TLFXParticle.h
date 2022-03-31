@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  TLFXParticle.h                                                       */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #ifdef _MSC_VER
 #pragma once
 #endif
@@ -9,127 +39,126 @@
 
 #include <list>
 
-namespace TLFX
-{
+namespace TLFX {
 
-    class Emitter;
-    class ParticleManager;
-	class Particle;
-	
-	typedef std::list<Particle*> ParticleList;
+class Emitter;
+class ParticleManager;
+class Particle;
 
-    /**
-     * Particle Type - extends tlEntity
-     * This is the object that is spawned by emitter types and maintained by a Particle Manager. Particles are controlled by the emitters and effects they're
-     * parented to.
-     */
-    class Particle : public Entity
-    {
-        typedef Entity base;
-    public:
-        friend class Emitter;
+typedef std::list<Particle *> ParticleList;
 
-        Particle();
+/**
+ * Particle Type - extends tlEntity
+ * This is the object that is spawned by emitter types and maintained by a Particle Manager. Particles are controlled by the emitters and effects they're
+ * parented to.
+ */
+class Particle : public Entity {
+	typedef Entity base;
 
-        /**
-         * Updates the particle.
-         * This is called by the emitter the particle is parented to.
-         */
-        bool Update();
+public:
+	friend class Emitter;
 
-        /**
-         * Resets the particle so it's ready to be recycled by the particle manager
-         */
-        void Reset();
+	Particle();
 
-        void Destroy(bool releaseChildren = true);
+	/**
+	 * Updates the particle.
+	 * This is called by the emitter the particle is parented to.
+	 */
+	bool Update();
 
-        /**
-         * Set the current x coordinate of the particle and capture the old value
-         */
-        void SetX(float x);
+	/**
+	 * Resets the particle so it's ready to be recycled by the particle manager
+	 */
+	void Reset();
 
-        /**
-         * Set the current y coordinate of the particle and capture the old value
-         */
-        void SetY(float y);
+	void Destroy(bool releaseChildren = true);
 
-        /**
-         * Set the current zoom factor of the particle and capture the old value
-         */
-        void SetZ(float z);
+	/**
+	 * Set the current x coordinate of the particle and capture the old value
+	 */
+	void SetX(float x);
 
-        void SetGroupParticles(bool value);
-        bool IsGroupParticles() const;
+	/**
+	 * Set the current y coordinate of the particle and capture the old value
+	 */
+	void SetY(float y);
 
-        void SetLayer(int layer);
-        int GetLayer() const;
+	/**
+	 * Set the current zoom factor of the particle and capture the old value
+	 */
+	void SetZ(float z);
 
-        void SetEffectLayer(int layer);
-        int GetEffectLayer() const;
+	void SetGroupParticles(bool value);
+	bool IsGroupParticles() const;
 
-        void SetEmitter(Emitter *e);
-        Emitter* GetEmitter() const;
+	void SetLayer(int layer);
+	int GetLayer() const;
 
-        void SetParticleManager(ParticleManager *pm);
+	void SetEffectLayer(int layer);
+	int GetEffectLayer() const;
 
-        void SetReleaseSingleParticles(bool value);
+	void SetEmitter(Emitter *e);
+	Emitter *GetEmitter() const;
 
-        void SetVelVariation(float velVariation);
-        float GetVelVariation() const;
+	void SetParticleManager(ParticleManager *pm);
 
-        void SetGSizeX(float gSizeX);
-        float GetGSizeX() const;
-        void SetGSizeY(float gSizeY);
-        float GetGSizeY() const;
+	void SetReleaseSingleParticles(bool value);
 
-        void SetScaleVariationX(float scaleVarX);
-        float GetScaleVariationX() const;
-        void SetScaleVariationY(float scaleVarY);
-        float GetScaleVariationY() const;
+	void SetVelVariation(float velVariation);
+	float GetVelVariation() const;
 
-        void SetEmissionAngle(float emissionAngle);
-        float GetEmissionAngle() const;
+	void SetGSizeX(float gSizeX);
+	float GetGSizeX() const;
+	void SetGSizeY(float gSizeY);
+	float GetGSizeY() const;
 
-        void SetDirectionVairation(float dirVar);
-        float GetDirectionVariation() const;
+	void SetScaleVariationX(float scaleVarX);
+	float GetScaleVariationX() const;
+	void SetScaleVariationY(float scaleVarY);
+	float GetScaleVariationY() const;
 
-        void SetSpinVariation(float spinVar);
-        float GetSpinVariation() const;
+	void SetEmissionAngle(float emissionAngle);
+	float GetEmissionAngle() const;
 
-        void SetWeightVariation(float weightVar);
-        float GetWeightVariation() const;
-		
-		void SetIter(ParticleList::iterator iter);
-		ParticleList::iterator GetIter() const;
+	void SetDirectionVairation(float dirVar);
+	float GetDirectionVariation() const;
 
-    protected:
-        Emitter*                    _emitter;                       // emitter it belongs to
-        // -----------------------------
-        float                       _weightVariation;               // Particle weight variation
-        float                       _scaleVariationX;               // particle size x variation
-        float                       _scaleVariationY;               // particle size y variation
-        float                       _gSizeX;                        // Particle global size x
-        float                       _gSizeY;                        // Particle global size y
-        // -----------------------------
-        float                       _velVariation;                  // velocity variation
-        // -----------------------------
-        float                       _spinVariation;                 // variation of spin speed
-        // -----------------------------
-        float                       _directionVariation;            // Direction variation at spawn time
-        int                         _timeTracker;                   // This is used to keep track of game ticks so that some things can be updated between specific time intervals
-        float                       _randomDirection;               // current direction of the random motion that pulls the particle in different directions
-        float                       _randomSpeed;                   // random speed to apply to the particle movement
-        float                       _emissionAngle;                 // Direction variation at spawn time
-        bool                        _releaseSingleParticle;         // set to true to release single particles and let them decay and die
-        // ----------------------------
-        ParticleManager*            _particleManager;               // link to the particle manager
-        int                         _layer;                         // layer the particle belongs to
-        bool                        _groupParticles;                // whether the particle is added the PM pool or kept in the emitter's pool
-        int                         _effectLayer;
-		
-		ParticleList::iterator      _listIter;                      // for quick deletes from ParticleList
-    };
+	void SetSpinVariation(float spinVar);
+	float GetSpinVariation() const;
+
+	void SetWeightVariation(float weightVar);
+	float GetWeightVariation() const;
+
+	void SetIter(ParticleList::iterator iter);
+	ParticleList::iterator GetIter() const;
+
+protected:
+	Emitter *_emitter; // emitter it belongs to
+	// -----------------------------
+	float _weightVariation; // Particle weight variation
+	float _scaleVariationX; // particle size x variation
+	float _scaleVariationY; // particle size y variation
+	float _gSizeX; // Particle global size x
+	float _gSizeY; // Particle global size y
+	// -----------------------------
+	float _velVariation; // velocity variation
+	// -----------------------------
+	float _spinVariation; // variation of spin speed
+	// -----------------------------
+	float _directionVariation; // Direction variation at spawn time
+	int _timeTracker; // This is used to keep track of game ticks so that some things can be updated between specific time intervals
+	float _randomDirection; // current direction of the random motion that pulls the particle in different directions
+	float _randomSpeed; // random speed to apply to the particle movement
+	float _emissionAngle; // Direction variation at spawn time
+	bool _releaseSingleParticle; // set to true to release single particles and let them decay and die
+	// ----------------------------
+	ParticleManager *_particleManager; // link to the particle manager
+	int _layer; // layer the particle belongs to
+	bool _groupParticles; // whether the particle is added the PM pool or kept in the emitter's pool
+	int _effectLayer;
+
+	ParticleList::iterator _listIter; // for quick deletes from ParticleList
+};
 
 } // namespace TLFX
 
