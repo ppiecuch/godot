@@ -34,8 +34,8 @@
 #include "core/math/vector2.h"
 #include "core/object.h"
 #include "core/typedefs.h"
-#include "scene/main/node.h"
 #include "scene/2d/mesh_instance_2d.h"
+#include "scene/main/node.h"
 #include "scene/resources/mesh.h"
 #include "scene/resources/texture.h"
 

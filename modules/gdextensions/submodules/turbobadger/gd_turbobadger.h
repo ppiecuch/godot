@@ -32,8 +32,8 @@
 #define GD_TURBOBADGER_H
 
 #include "core/os/input_event.h"
-#include "scene/main/node.h"
 #include "scene/2d/node_2d.h"
+#include "scene/main/node.h"
 
 #include "renderers/tb_renderer_gd.h"
 #include "tb_widgets.h"
@@ -93,7 +93,10 @@ class TBRootWidget : public tb::TBWidget, public Node2D {
 	Size2 view_size;
 	int mouse_x, mouse_y;
 
-	void set_cursor_pos(int mx, int my) { mouse_x = mx; mouse_y = my; }
+	void set_cursor_pos(int mx, int my) {
+		mouse_x = mx;
+		mouse_y = my;
+	}
 	Point2 get_cursor_pos() const { return Point2(mouse_x, mouse_y); }
 
 	bool _dirty;
