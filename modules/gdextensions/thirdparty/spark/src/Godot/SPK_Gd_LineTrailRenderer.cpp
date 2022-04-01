@@ -21,13 +21,10 @@
 
 #include <cstring> // for memmove and memcpy
 
-#include <SPARK_Core.h>
-#include "SPK_GL_LineTrailRenderer.h"
+#include "SPARK_Core.h"
+#include "SPK_Gd_LineTrailRenderer.h"
 
-namespace SPK
-{
-namespace GL
-{
+namespace SPK { namespace Godot {
 	GLLineTrailRenderer::GLLineTrailRenderer(size_t nbSamples,float duration,float width) :
 		GLRenderer(true),
 		width(width),
@@ -206,4 +203,4 @@ namespace GL
 			++vertexIt; // skips post degenerated vertex
 		}
 	}
-}}
+}} // namespace

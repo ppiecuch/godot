@@ -27,6 +27,8 @@
 #include "Extensions/Renderers/SPK_QuadRenderBehavior.h"
 #include "Extensions/Renderers/SPK_Oriented3DRenderBehavior.h"
 
+#include "scene/resources/texture.h"
+
 namespace SPK { namespace Godot {
 	/**
 	* @class GLQuadRenderer
@@ -42,9 +44,7 @@ namespace SPK { namespace Godot {
 	* <li>SPK::PARAM_TEXTURE_INDEX (only if not in TEXTURE_NONE mode)</li>
 	* </ul>
 	*/
-	class SPK_GL_PREFIX GLQuadRenderer :	public GLRenderer,
-											public QuadRenderBehavior,
-											public Oriented3DRenderBehavior
+	class GLQuadRenderer :	public GLRenderer, public QuadRenderBehavior, public Oriented3DRenderBehavior
 	{
         SPK_IMPLEMENT_OBJECT(GLQuadRenderer);
 
@@ -64,7 +64,7 @@ namespace SPK { namespace Godot {
 
 		virtual bool setTexturingMode(TextureMode mode);
 
-		void setTexture(GLuint textureIndex);
+		void setTexture(GdTexture textureIndex);
 
 		/////////////
 		// Getters //
@@ -74,16 +74,13 @@ namespace SPK { namespace Godot {
 		* @brief Gets the texture of this GLQuadRenderer
 		* @return the texture of this GLQuadRenderer
 		*/
-		GLuint getTexture() const;
+		GdTexture getTexture() const;
 
 	private :
-
-		static GLboolean* const SPK_GL_TEXTURE_3D_EXT;
-
 		mutable float modelView[16];
 		mutable float invModelView[16];
 
-		GLuint textureIndex;
+		GdTexture textureIndex;
 
 		GLQuadRenderer(float scaleX = 1.0f,float scaleY = 1.0f);
 		GLQuadRenderer(const GLQuadRenderer& renderer);
@@ -114,12 +111,12 @@ namespace SPK { namespace Godot {
 		return SPK_NEW(GLQuadRenderer,scaleX,scaleY);
 	}
 		
-	inline void GLQuadRenderer::setTexture(GLuint textureIndex)
+	inline void GLQuadRenderer::setTexture(GdTexture textureIndex)
 	{
 		this->textureIndex = textureIndex;
 	}
 
-	inline GLuint GLQuadRenderer::getTexture() const
+	inline GdTexture GLQuadRenderer::getTexture() const
 	{
 		return textureIndex;
 	}
@@ -237,8 +234,9 @@ namespace SPK { namespace Godot {
 
 		/* calculate matrix inverse */
 		det = 1 / det;
-		for (int i = 0; i < 16; ++i)
+		for (int i = 0; i < 16; ++i) {
 			invModelView[i] *= det;
+		}
 	}
 }} // namespace
 

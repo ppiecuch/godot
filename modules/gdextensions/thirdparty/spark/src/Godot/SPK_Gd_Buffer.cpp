@@ -19,13 +19,10 @@
 // 3. This notice may not be removed or altered from any source distribution.	//
 //////////////////////////////////////////////////////////////////////////////////
 
-#include <SPARK_Core.h>
-#include "SPK_GL_Buffer.h"
+#include "SPARK_Core.h"
+#include "SPK_Gd_Buffer.h"
 
-namespace SPK
-{
-namespace GL
-{
+namespace SPK { namespace Godot {
 	GLBuffer::GLBuffer(size_t nbVertices,size_t nbTexCoords) :
 		nbVertices(nbVertices),
 		nbTexCoords(nbTexCoords),
@@ -62,7 +59,7 @@ namespace GL
 		}
 	}
 
-	void GLBuffer::render(GLuint primitive,size_t nbVertices)
+	void GLBuffer::render(Mesh::PrimitiveType primitive,size_t nbVertices)
 	{
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glEnableClientState(GL_COLOR_ARRAY);
@@ -84,4 +81,4 @@ namespace GL
 		if (nbTexCoords > 0)
 			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	}
-}}
+}} // namespace

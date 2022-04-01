@@ -22,8 +22,8 @@
 #ifndef H_SPK_GD_LINERENDERER
 #define H_SPK_GD_LINERENDERER
 
-#include "SPK_Gd_Renderer.h"
 #include "SPK_Gd_Buffer.h"
+#include "SPK_Gd_Renderer.h"
 #include "Extensions/Renderers/SPK_LineRenderBehavior.h"
 
 namespace SPK { namespace Godot {
@@ -42,7 +42,7 @@ namespace SPK { namespace Godot {
 	* <li>SPK::PARAM_ALPHA (only if blending is enabled)</li>
 	* </ul>
 	*/
-	class SPK_GL_PREFIX GLLineRenderer : public GLRenderer, public LineRenderBehavior
+	class GLLineRenderer : public GLRenderer, public LineRenderBehavior
 	{
         SPK_IMPLEMENT_OBJECT(GLLineRenderer);
 

@@ -19,27 +19,14 @@
 // 3. This notice may not be removed or altered from any source distribution.	//
 //////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SPK_GL_NO_EXT
-#include <GL/glew.h>
-#endif
+#include "SPARK_Core.h"
+#include "SPK_Gd_QuadRenderer.h"
 
-#include <SPARK_Core.h>
-#include "SPK_GL_QuadRenderer.h"
-
-namespace SPK
-{
-namespace GL
-{
-
-#ifndef SPK_GL_NO_EXT
-	GLboolean* const GLQuadRenderer::SPK_GL_TEXTURE_3D_EXT = &__GLEW_EXT_texture3D;
-#endif
-
+namespace SPK { namespace Godot {
 	GLQuadRenderer::GLQuadRenderer(float scaleX,float scaleY) :
 		GLRenderer(false),
 		QuadRenderBehavior(scaleX,scaleY),
-		Oriented3DRenderBehavior(),
-		textureIndex(0)
+		Oriented3DRenderBehavior()
 	{}
 
 	GLQuadRenderer::GLQuadRenderer(const GLQuadRenderer& renderer) :
@@ -51,7 +38,7 @@ namespace GL
 
 	bool GLQuadRenderer::setTexturingMode(TextureMode mode)
 	{
-		if ((mode == TEXTURE_MODE_3D && !SPK_GL_CHECK_EXTENSION(SPK_GL_TEXTURE_3D_EXT)))
+		if (mode == TEXTURE_MODE_3D)
 			return false;
 
 		texturingMode = mode;
@@ -101,10 +88,6 @@ namespace GL
 			}
 
 			// Binds the texture
-#ifndef SPK_GL_NO_EXT
-			if (SPK_GL_CHECK_EXTENSION(SPK_GL_TEXTURE_3D_EXT))
-				glDisable(GL_TEXTURE_3D_EXT);
-#endif
 			glEnable(GL_TEXTURE_2D);
 			glBindTexture(GL_TEXTURE_2D,textureIndex);
 
@@ -137,10 +120,6 @@ namespace GL
 
 			// Binds the texture
 			glDisable(GL_TEXTURE_2D);
-#ifndef SPK_GL_NO_EXT
-			glEnable(GL_TEXTURE_3D_EXT);
-			glBindTexture(GL_TEXTURE_3D_EXT,textureIndex);
-#endif
 
 			// Selects the correct function
 			if (!group.isEnabled(PARAM_ANGLE))
@@ -156,10 +135,6 @@ namespace GL
 			glDisable(GL_TEXTURE_2D);
 
 			// Selects the correct function
-#ifndef SPK_GL_NO_EXT
-			if (SPK_GL_CHECK_EXTENSION(SPK_GL_TEXTURE_3D_EXT))
-				glDisable(GL_TEXTURE_3D_EXT);
-#endif
 			if (!group.isEnabled(PARAM_ANGLE))
 				renderParticle = &GLQuadRenderer::render2D;
 			else
@@ -256,4 +231,4 @@ namespace GL
 		GLCallColorAndVertex(particle,renderBuffer);
 		GLCallTexture2DAtlas(particle,renderBuffer);
 	}
-}}
+}} // namespace

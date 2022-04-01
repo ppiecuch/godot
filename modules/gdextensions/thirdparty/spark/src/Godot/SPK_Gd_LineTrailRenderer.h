@@ -49,7 +49,7 @@ namespace SPK { namespace Godot {
 	* <li>SPK::PARAM_ALPHA</li>
 	* </ul>
 	*/
-	class SPK_GL_PREFIX GLLineTrailRenderer : public GLRenderer
+	class GLLineTrailRenderer : public GLRenderer
 	{
         SPK_IMPLEMENT_OBJECT(GLLineTrailRenderer);
 
