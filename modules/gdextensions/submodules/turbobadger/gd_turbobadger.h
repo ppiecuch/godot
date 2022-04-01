@@ -32,7 +32,8 @@
 #define GD_TURBOBADGER_H
 
 #include "core/os/input_event.h"
-#include "scene/2d/canvas_item.h"
+#include "scene/main/node.h"
+#include "scene/2d/node_2d.h"
 
 #include "renderers/tb_renderer_gd.h"
 #include "tb_widgets.h"
@@ -86,11 +87,14 @@ public:
 	tb::TBRendererGD *get_renderer() { return &renderer; }
 };
 
-class GdTurboBadger : public CanvasItem {
-	GDCLASS(GdTurboBadger, CanvasItem);
+class TBRootWidget : public tb::TBWidget, public Node2D {
+	GDCLASS(TBRootWidget, Node2D);
 
-	AppRootWidget root;
 	Size2 view_size;
+	int mouse_x, mouse_y;
+
+	void set_cursor_pos(int mx, int my) { mouse_x = mx; mouse_y = my; }
+	Point2 get_cursor_pos() const { return Point2(mouse_x, mouse_y); }
 
 	bool _dirty;
 
@@ -99,6 +103,26 @@ protected:
 	void notifications(int p_what);
 
 	void _input(const Ref<InputEvent> &p_event);
+
+public:
+	TBOBJECT_SUBCLASS(AppRootWidget, tb::TBWidget); // For safe typecasting
+
+	void OnInvalid() { update(); }
+
+	void set_view_size(const Size2 &p_size);
+	Size2 get_view_size() const;
+
+	TBRootWidget();
+};
+
+class GdTurboBadger : public Node {
+	GDCLASS(GdTurboBadger, Node);
+
+	TBRootWidget *root;
+
+protected:
+	static void _bind_methods();
+	void notifications(int p_what);
 
 public:
 #ifdef TOOLS_ENABLED

@@ -34,20 +34,18 @@
 #include "core/math/vector2.h"
 #include "core/object.h"
 #include "core/typedefs.h"
-#include "scene/2d/node_2d.h"
+#include "scene/main/node.h"
+#include "scene/2d/mesh_instance_2d.h"
 #include "scene/resources/mesh.h"
 #include "scene/resources/texture.h"
 
-class Tree2D : public Node2D {
-	GDCLASS(Tree2D, Node2D);
+class Tree2D : public Node {
+	GDCLASS(Tree2D, Node);
 
-private:
+	MeshInstance2D *_mesh;
+
 protected:
-	void _notification(int p_what);
 	static void _bind_methods();
-
-	Ref<Mesh> mesh;
-	Ref<Texture> texture;
 
 public:
 #ifdef TOOLS_ENABLED

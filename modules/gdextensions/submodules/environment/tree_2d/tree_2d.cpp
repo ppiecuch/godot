@@ -31,18 +31,11 @@
 #include "tree_2d.h"
 #include "scene/2d/canvas_item.h"
 
-void Tree2D::_notification(int p_what) {
-	if (p_what == NOTIFICATION_DRAW) {
-		if (mesh.is_valid()) {
-			draw_mesh(mesh, texture, 0);
-		}
-	}
-}
-
 void Tree2D::set_mesh(const Ref<Mesh> &p_mesh) {
-	if (mesh == p_mesh)
+	if (_mesh->get_mesh() == p_mesh) {
 		return;
-	mesh = p_mesh;
+	}
+	Ref<Mesh> mesh = p_mesh;
 	// default materials:
 	Ref<CanvasItemMaterial> mat_branch = Ref<CanvasItemMaterial>(memnew(CanvasItemMaterial));
 	mat_branch->set_stencil_mode(CanvasItemMaterial::STENCIL_MODE_FILL);
@@ -64,42 +57,36 @@ void Tree2D::set_mesh(const Ref<Mesh> &p_mesh) {
 		if (m.is_valid() && m != mesh->surface_get_material(surf))
 			WARN_PRINT("Replaced material for surface " + n);
 	}
-	update();
+	_mesh->set_mesh(p_mesh);
 	emit_signal("mesh_changed");
 	_change_notify("mesh");
 }
 
 Ref<Mesh> Tree2D::get_mesh() const {
-	return mesh;
+	return _mesh->get_mesh();
 }
 
 void Tree2D::set_texture(const Ref<Texture> &p_texture) {
-	if (texture == p_texture)
+	if (_mesh->get_texture() == p_texture) {
 		return;
-	texture = p_texture;
-	update();
+	}
+	_mesh->set_texture(p_texture);
 	emit_signal("texture_changed");
 	_change_notify("texture");
 }
 
 Ref<Texture> Tree2D::get_texture() const {
-	return texture;
-}
-
-Tree2D::~Tree2D() {
-}
-
-Tree2D::Tree2D() {
+	return _mesh->get_texture();
 }
 
 #ifdef TOOLS_ENABLED
 Rect2 Tree2D::_edit_get_rect() const {
-	if (mesh.is_valid()) {
-		AABB aabb = mesh->get_aabb();
+	if (_mesh->get_mesh().is_valid()) {
+		AABB aabb = _mesh->get_mesh()->get_aabb();
 		return Rect2(aabb.position.x, aabb.position.y, aabb.size.x, aabb.size.y);
 	}
 
-	return Node2D::_edit_get_rect();
+	return Rect2();
 }
 #endif
 
@@ -115,4 +102,12 @@ void Tree2D::_bind_methods() {
 
 	ADD_SIGNAL(MethodInfo("texture_changed"));
 	ADD_SIGNAL(MethodInfo("mesh_changed"));
+}
+
+Tree2D::Tree2D() {
+	_mesh = memnew(MeshInstance2D);
+	add_child(_mesh);
+}
+
+Tree2D::~Tree2D() {
 }

@@ -328,9 +328,74 @@ static void drop_callback(tb::TBWidget *root, int count, const char **files_utf8
 	}
 }
 
+
 // Godot node
 
-#define get_rect() Rect2(Point2(0, 0), view_size)
+void TBRootWidget::notifications(int p_what) {
+	switch (p_what) {
+		case NOTIFICATION_READY: {
+			GdTurboBadgerCore::get_singleton()->init();
+		} break;
+		case NOTIFICATION_ENTER_TREE: {
+			// Set initial size which suggest to the backend which size we want the window to be.
+			SetRect(TBRect(0, 0, view_size.width, view_size.height));
+		} break;
+		case NOTIFICATION_DRAW: {
+			if (_dirty) {
+				SetRect(TBRect(0, 0, view_size.width, view_size.height));
+				_dirty = false;
+			}
+			auto *renderer = GdTurboBadgerCore::get_singleton()->get_renderer();
+			renderer->BeginPaint(this, GetRect().w, GetRect().h);
+			InvokePaint(TBWidget::PaintProps());
+			renderer->EndPaint();
+		} break;
+		case NOTIFICATION_INTERNAL_PROCESS: {
+			TBAnimationManager::Update();
+			InvokeProcessStates();
+			InvokeProcess();
+			// If animations are running, reinvalidate immediately
+			if (TBAnimationManager::HasAnimationsRunning()) {
+				update();
+			}
+		} break;
+	}
+}
+
+void TBRootWidget::_input(const Ref<InputEvent> &p_event) {
+	if (!p_event.is_valid()) {
+		return;
+	}
+	if (!get_tree()) {
+		return;
+	}
+
+	ERR_FAIL_COND(!is_visible_in_tree());
+}
+
+void TBRootWidget::set_view_size(const Size2 &p_size) {
+	view_size = p_size;
+	_dirty = true;
+	update();
+}
+
+Size2 TBRootWidget::get_view_size() const {
+	return view_size;
+}
+
+void TBRootWidget::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("set_view_size"), &TBRootWidget::set_view_size);
+	ClassDB::bind_method(D_METHOD("get_view_size"), &TBRootWidget::get_view_size);
+
+	ClassDB::bind_method(D_METHOD("_input"), &TBRootWidget::_input);
+}
+
+TBRootWidget::TBRootWidget() {
+	_dirty = false;
+	view_size = Size2(640, 480);
+}
+
+#define get_rect() Rect2(Point2(0, 0), root->get_view_size())
 
 #ifdef TOOLS_ENABLED
 bool GdTurboBadger::_edit_is_selected_on_click(const Point2 &p_point, double p_tolerance) const {
@@ -346,66 +411,21 @@ bool GdTurboBadger::_edit_use_rect() const {
 }
 #endif
 
-void GdTurboBadger::_input(const Ref<InputEvent> &p_event) {
-	if (!p_event.is_valid()) {
-		return;
-	}
-	if (!get_tree()) {
-		return;
-	}
-
-	ERR_FAIL_COND(!is_visible_in_tree());
-}
-
-void GdTurboBadger::notifications(int p_what) {
-	switch (p_what) {
-		case NOTIFICATION_READY: {
-			GdTurboBadgerCore::get_singleton()->init();
-		} break;
-		case NOTIFICATION_ENTER_TREE: {
-			// Set initial size which suggest to the backend which size we want the window to be.
-			root.SetRect(TBRect(0, 0, view_size.width, view_size.height));
-		} break;
-		case NOTIFICATION_DRAW: {
-			if (_dirty) {
-				root.SetRect(TBRect(0, 0, view_size.width, view_size.height));
-				_dirty = false;
-			}
-			auto *renderer = GdTurboBadgerCore::get_singleton()->get_renderer();
-			renderer->BeginPaint(this, root.GetRect().w, root.GetRect().h);
-			root.InvokePaint(TBWidget::PaintProps());
-			renderer->EndPaint();
-		} break;
-		case NOTIFICATION_INTERNAL_PROCESS: {
-			TBAnimationManager::Update();
-			root.InvokeProcessStates();
-			root.InvokeProcess();
-			// If animations are running, reinvalidate immediately
-			if (TBAnimationManager::HasAnimationsRunning()) {
-				update();
-			}
-		} break;
-	}
-}
-
 void GdTurboBadger::set_view_size(const Size2 &p_size) {
-	view_size = p_size;
-	_dirty = true;
-	update();
+	root->set_view_size(p_size);
 }
 
 Size2 GdTurboBadger::get_view_size() const {
-	return view_size;
+	return root->get_view_size();
 }
 
 void GdTurboBadger::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("_input"), &GdTurboBadger::_input);
+	ClassDB::bind_method(D_METHOD("set_view_size"), &GdTurboBadger::set_view_size);
+	ClassDB::bind_method(D_METHOD("get_view_size"), &GdTurboBadger::get_view_size);
 }
 
-GdTurboBadger::GdTurboBadger() :
-		root(this) {
-	_dirty = false;
-	view_size = Size2(640, 480);
+GdTurboBadger::GdTurboBadger() {
+	add_child(root = memnew(TBRootWidget));
 }
 
 GdTurboBadger::~GdTurboBadger() {
