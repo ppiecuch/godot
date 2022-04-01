@@ -328,7 +328,6 @@ static void drop_callback(tb::TBWidget *root, int count, const char **files_utf8
 	}
 }
 
-
 // Godot node
 
 void TBRootWidget::notifications(int p_what) {
