@@ -25,6 +25,9 @@
 #include "SPK_Gd_Renderer.h"
 #include "Extensions/Renderers/SPK_PointRenderBehavior.h"
 
+#include "core/math/math_funcs.h"
+#include "scene/resources/texture.h"
+
 namespace SPK { namespace Godot {
 	/**
 	* @class GLPointRenderer
@@ -42,8 +45,7 @@ namespace SPK { namespace Godot {
 	* <br>
 	* This renderer do not use any parameters of particles.
 	*/
-	class SPK_GL_PREFIX GLPointRenderer :	public GLRenderer,
-											public PointRenderBehavior
+	class GLPointRenderer :	public GLRenderer, public PointRenderBehavior
 	{
         SPK_IMPLEMENT_OBJECT(GLPointRenderer);
 
@@ -59,57 +61,22 @@ namespace SPK { namespace Godot {
 		virtual bool setType(PointType type);
 
 		/**
-		* @brief Sets the way size of points is computed in this GLPointRenderer
-		*
-		* if universe size is used (true), the extension is checked.<br>
-		* if universe size is not supported by the hardware, false is returned and nothing happens.<br>
-		* <br>
-		* If world size is enabled, the static method setPixelPetUnit(float,int) must be called to set the conversion between pixels and world units.
-		*
-		* @param worldSizeEnabled : true to enable universe size, false to use screen size
-		* @return true the type of size can be set, false otherwise
-		*/
-		bool enableWorldSize(bool worldSizeEnabled);
-
-		/**
 		* @brief Sets the texture of this GLPointRenderer
 		*
 		* Note that the texture is only used if point sprites are used (type is set to SPK::POINT_SPRITE)
 		*
 		* @param textureIndex : the index of the OpenGL texture of this GLPointRenderer
 		*/
-		void setTexture(GLuint textureIndex);
+		void setTexture(GdTexture textureIndex);
 
 		/**
 		* @brief Gets the texture of this GLPointRenderer
 		* @return the texture of this GLPointRenderer
 		*/
-		GLuint getTexture() const;
-
-		/**
-		* @brief Computes a conversion ratio between pixels and universe units
-		*
-		* This method must be called when using GLPointRenderer with world size enabled.<br>
-		* It allows to well transpose world size to pixel size by setting the right OpenGL parameters.<br>
-		* <br>
-		* Note that fovy can be replaced by fovx if screenHeight is replaced by screenWidth.
-		*
-		* @param fovy : the field of view in the y axis in radians
-		* @param screenHeight : the height of the viewport in pixels
-		*/
-		static  void setPixelPerUnit(float fovy,int screenHeight);
-
-		static bool isPointSpriteSupported();
-		static bool isWorldSizeSupported();
+		GdTexture getTexture() const;
 
 	private :
-
-		static GLboolean* const SPK_GL_POINT_SPRITE_EXT;
-		static GLboolean* const SPK_GL_POINT_PARAMETERS_EXT;
-
-		static float pixelPerUnit;
-
-		GLuint textureIndex;
+		GdTexture textureIndex;
 
 		GLPointRenderer(float screenSize = 1.0f);
 		GLPointRenderer(const GLPointRenderer& renderer);
@@ -120,8 +87,7 @@ namespace SPK { namespace Godot {
 
 	inline GLPointRenderer::GLPointRenderer(float screenSize) :
 		GLRenderer(false),
-		PointRenderBehavior(POINT_TYPE_SQUARE,screenSize),
-		textureIndex(0)
+		PointRenderBehavior(POINT_TYPE_SQUARE,screenSize)
 	{}
 
 	inline GLPointRenderer::GLPointRenderer(const GLPointRenderer& renderer) :
@@ -135,20 +101,14 @@ namespace SPK { namespace Godot {
 		return SPK_NEW(GLPointRenderer,screenSize);
 	}
 		
-	inline void GLPointRenderer::setTexture(GLuint textureIndex)
+	inline void GLPointRenderer::setTexture(GdTexture textureIndex)
 	{
 		this->textureIndex = textureIndex;
 	}
 
-	inline GLuint GLPointRenderer::getTexture() const
+	inline GdTexture GLPointRenderer::getTexture() const
 	{
 		return textureIndex;
-	}
-
-	inline void GLPointRenderer::setPixelPerUnit(float fovy,int screenHeight)
-	{
-		// the pixel per unit is computed for a distance from the camera of screenHeight
-		pixelPerUnit = screenHeight / (2.0f * tan(fovy * 0.5f));
 	}
 }} // namespace
 

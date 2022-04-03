@@ -24,24 +24,17 @@
 
 // for windows platform only
 #if defined(WIN32) || defined(_WIN32)
-
-#define SPK_GL_PREFIX
-
-#ifdef _MSC_VER
-#pragma warning(disable : 4275) // disables the warning about exporting DLL classes children of non DLL classes
+# ifdef _MSC_VER
+# pragma warning(disable : 4275) // disables the warning about exporting DLL classes children of non DLL classes
+# endif
 #endif
 
-#else
-#define SPK_GL_PREFIX
-#endif
+#include "scene/resources/mesh.h"
+#include "scene/resources/texture.h"
 
-#ifndef SPK_NO_GL_INC
-
-#if defined(WIN32) || defined(_WIN32)
-#include <windows.h>
-#endif
-
-#endif
+// Godot also defines Ref operator
+typedef Ref<Texture> GdTexture;
+typedef Ref<Mesh> GdMesh;
 
 /**
 * @namespace SPK::Godot

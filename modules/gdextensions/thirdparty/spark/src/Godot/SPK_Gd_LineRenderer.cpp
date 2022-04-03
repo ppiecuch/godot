@@ -19,13 +19,10 @@
 // 3. This notice may not be removed or altered from any source distribution.	//
 //////////////////////////////////////////////////////////////////////////////////
 
-#include <SPARK_Core.h>
-#include "SPK_GL_LineRenderer.h"
+#include "SPARK_Core.h"
+#include "SPK_Gd_LineRenderer.h"
 
-namespace SPK
-{
-namespace GL
-{
+namespace SPK { namespace Godot {
 	GLLineRenderer::GLLineRenderer(float length,float width) :
 		GLRenderer(false),
 		LineRenderBehavior(length,width)
@@ -79,4 +76,4 @@ namespace GL
 			AABBMax.setMax(v);
 		}
 	}
-}}
+}} // namespace

@@ -19,40 +19,26 @@
 // 3. This notice may not be removed or altered from any source distribution.	//
 //////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SPK_GL_NO_EXT
-#include <GL/glew.h>
-#endif
+#include "SPARK_Core.h"
+#include "SPK_Gd_Renderer.h"
 
-#include <SPARK_Core.h>
-#include "SPK_GL_Renderer.h"
-
-namespace SPK
-{
-namespace GL
-{
-#ifndef SPK_GL_NO_EXT
-	GLRenderer::GlewStatus GLRenderer::glewStatus = GLRenderer::GLEW_UNLOADED;
-#endif
-
+namespace SPK { namespace Godot {
 	void GLRenderer::setBlendMode(BlendMode blendMode)
 	{
 		switch(blendMode)
 		{
 		case BLEND_MODE_NONE :
-			srcBlending = GL_ONE;
-			destBlending = GL_ZERO;
+			blendingMode = CanvasItemMaterial::BLEND_MODE_DISABLED;
 			blendingEnabled = false;
 			break;
 
 		case BLEND_MODE_ADD :
-			srcBlending = GL_SRC_ALPHA;
-			destBlending = GL_ONE;
+			blendingMode = CanvasItemMaterial::BLEND_MODE_ADD;
 			blendingEnabled = true;
 			break;
 
 		case BLEND_MODE_ALPHA :
-			srcBlending = GL_SRC_ALPHA;
-			destBlending = GL_ONE_MINUS_SRC_ALPHA;
+			blendingMode = CanvasItemMaterial::BLEND_MODE_MIX;
 			blendingEnabled = true;
 			break;
 
@@ -61,42 +47,4 @@ namespace GL
 			break;
 		}
 	}
-
-	void GLRenderer::saveGLStates()
-	{
-		glPushAttrib(GL_POINT_BIT |
-			GL_LINE_BIT |
-			GL_ENABLE_BIT |
-			GL_COLOR_BUFFER_BIT |
-			GL_CURRENT_BIT |
-			GL_TEXTURE_BIT |
-			GL_DEPTH_BUFFER_BIT |
-			GL_LIGHTING_BIT |
-			GL_POLYGON_BIT);
-	}
-
-	void GLRenderer::restoreGLStates()
-	{
-		glPopAttrib();
-	}
-
-#ifndef SPK_GL_NO_EXT
-	bool GLRenderer::checkExtension(GLboolean* glExt)
-	{
-		if (glewStatus == GLEW_UNLOADED)
-		{
-			int error = glewInit();
-			if (error == GLEW_OK)
-				glewStatus = GLEW_SUPPORTED;
-			else
-			{
-				SPK_LOG_ERROR("GLRenderer::checkExtensions(bool) - Cannot initialize Glew library")
-				glewStatus = GLEW_UNSUPPORTED;
-			}
-		}
-		if (glewStatus == GLEW_SUPPORTED)
-			return *glExt != 0;
-		return false;	
-	}
-#endif
-}}
+}} // namespace

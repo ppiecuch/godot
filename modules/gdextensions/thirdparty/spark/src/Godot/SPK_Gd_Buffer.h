@@ -24,8 +24,10 @@
 
 #include "SPK_Gd_DEF.h"
 
+#include "scene/resources/mesh.h"
+
 namespace SPK { namespace Godot {
-	class SPK_GD_PREFIX GLBuffer : public RenderBuffer
+	class GLBuffer : public RenderBuffer
 	{
 	public :
 
@@ -45,7 +47,7 @@ namespace SPK { namespace Godot {
 		void setNbTexCoords(size_t nb);
 		size_t getNbTexCoords();
 
-		void render(GLuint primitive,size_t nbVertices);
+		void render(Mesh::PrimitiveType primitive, size_t nbVertices);
 
 	private :
 

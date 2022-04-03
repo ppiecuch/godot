@@ -374,8 +374,9 @@ static void _build_tiles(Size2 grid_size, unsigned int total_frames, Point2 tex_
 		}
 }
 
-void GdTLFXParticleManager::DrawSprite(TLFX::Particle *p, TLFX::AnimImage *sprite, float px, float py, float frame, float x, float y, float rotation, float scaleX, float scaleY, unsigned char r, unsigned char g, unsigned char b, float a, bool additive) {
 #define gFF(C) (C * (255.999f))
+
+void GdTLFXParticleManager::DrawSprite(TLFX::Particle *p, TLFX::AnimImage *sprite, float px, float py, float frame, float x, float y, float rotation, float scaleX, float scaleY, unsigned char r, unsigned char g, unsigned char b, float a, bool additive) {
 
 	if (a == 0 || scaleX == 0 || scaleY == 0) {
 		return;
