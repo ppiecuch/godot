@@ -579,7 +579,7 @@ void ControlWidget::_notification(int p_what) {
 				_checker = texture;
 			}
 
-			if (themed) {
+			if (!flat) {
 				if (!_style) {
 					_style = newref(StyleBoxFlat);
 				}
@@ -596,19 +596,19 @@ void ControlWidget::_notification(int p_what) {
 			const int radius = control_rect.size.height / 2;
 			switch (control_type) {
 				case WIDGET_TRANSLATION_XY: {
-					draw_2d_arrows(_mesh, TransXY, radius, _state.active, enabled, _state.locked);
+					draw_2d_arrows(_mesh, TransXY, radius, _state.active, !disabled, _state.locked);
 				} break;
 				case WIDGET_TRANSLATION_X: {
-					draw_2d_arrows(_mesh, TransX, radius, _state.active, enabled, _state.locked);
+					draw_2d_arrows(_mesh, TransX, radius, _state.active, !disabled, _state.locked);
 				} break;
 				case WIDGET_TRANSLATION_Y: {
-					draw_2d_arrows(_mesh, TransY, radius, _state.active, enabled, _state.locked);
+					draw_2d_arrows(_mesh, TransY, radius, _state.active, !disabled, _state.locked);
 				} break;
 				case WIDGET_TRANSLATION_Z: {
-					draw_2d_arrows(_mesh, TransZ, radius, _state.active, enabled, _state.locked);
+					draw_2d_arrows(_mesh, TransZ, radius, _state.active, !disabled, _state.locked);
 				} break;
 				case WIDGET_ROTATION_SPHERE: {
-					_draw_ball(_mesh, radius * 0.95, enabled, _state.tr.basis);
+					_draw_ball(_mesh, radius * 0.95, !disabled, _state.tr.basis);
 				} break;
 			}
 			draw_mesh(_mesh, control_type == WIDGET_ROTATION_SPHERE ? _checker : Ref<Texture>());
@@ -655,21 +655,25 @@ void ControlWidget::_input(const Ref<InputEvent> &p_event) {
 	};
 
 	if (const InputEventMouseButton *e = cast_to<InputEventMouseButton>(*p_event)) {
-		if (_is_point_inside(e->get_position())) {
-			if (e->get_button_index() == BUTTON_LEFT) {
-				if (e->is_pressed()) {
-					if (!_state.active) {
-						_state.active = true;
-						_state.initial_pos = to_local(e->get_position());
-						if (control_type == WIDGET_ROTATION_SPHERE) {
-							_mouse_on_sphere(_state.initial_pos, control_rect.size, &_state.from_vector);
-						}
+		if (e->get_button_index() == BUTTON_LEFT) {
+			if (e->is_pressed() && _is_point_inside(e->get_position())) {
+				if (!_state.active) {
+					_state.active = true;
+					_state.initial_pos = to_local(e->get_position());
+					_state.base_tr = _state.tr;
+					if (control_type == WIDGET_ROTATION_SPHERE) {
+						_mouse_on_sphere(_state.initial_pos, control_rect.size, &_state.from_vector);
 					}
-					get_tree()->set_input_as_handled();
-				} else if (!e->is_pressed()) {
-					_state.active = false;
+					update_cursor();
+					update();
 				}
-				update_cursor();
+				get_tree()->set_input_as_handled();
+			} else if (!e->is_pressed()) {
+				if (_state.active) {
+					_state.active = false;
+					update_cursor();
+					update();
+				}
 			}
 		}
 	}
@@ -692,7 +696,7 @@ void ControlWidget::_input(const Ref<InputEvent> &p_event) {
 							print_line(vformat("%f, %s (f:%s, t:%s))", angle, axis, from, to));
 							_state.rotate(axis, (e->get_shift() ? xcv_rotate_speed : 1) * angle);
 							update();
-							emit_signal("transformation_changed", array(_state.tr));
+							emit_signal("transformation_changed", _state.tr);
 						} else {
 							print_line(vformat("!! %f, %s (f:%s, t:%s))", angle, axis, from, to));
 						}
@@ -702,34 +706,34 @@ void ControlWidget::_input(const Ref<InputEvent> &p_event) {
 			}
 		} else {
 			if (_state.active) {
-				const Point2 center = control_rect.size / 2;
 				const Point2 p = to_local(e->get_position());
+				Point2 pf = resolution * (_state.initial_pos - p);
 
-				Point2 pf = p + center - _state.initial_pos;
-
-				if (e->get_alt()) {
-					const Vector2 dd = (p - _state.initial_pos).abs();
-					// update locking
-					if (dd.x > dd.y) {
-						if (_state.locked != 'X') {
-							_state.locked = 'X';
-							update_cursor();
-						}
-					} else if (dd.x < dd.y) {
-						if (_state.locked != 'Y') {
-							_state.locked = 'Y';
-							update_cursor();
+				if (control_type == WIDGET_TRANSLATION_XY) {
+					if (e->get_alt()) {
+						const Vector2 dd = (p - _state.initial_pos).abs();
+						// update locking
+						if (dd.x > dd.y) {
+							if (_state.locked != 'X') {
+								_state.locked = 'X';
+								update_cursor();
+							}
+						} else if (dd.x < dd.y) {
+							if (_state.locked != 'Y') {
+								_state.locked = 'Y';
+								update_cursor();
+							}
+						} else {
+							if (_state.locked) {
+								_state.locked = 0;
+								update_cursor();
+							}
 						}
 					} else {
 						if (_state.locked) {
 							_state.locked = 0;
 							update_cursor();
 						}
-					}
-				} else {
-					if (_state.locked) {
-						_state.locked = 0;
-						update_cursor();
 					}
 				}
 
@@ -746,24 +750,24 @@ void ControlWidget::_input(const Ref<InputEvent> &p_event) {
 						} else if ('X' == _state.locked) {
 							pf.x = 0;
 						}
-						_state.tr.origin.x += pf.x;
-						_state.tr.origin.y += pf.y;
+						_state.tr.origin.x = _state.base_tr.origin.x + pf.x;
+						_state.tr.origin.y = _state.base_tr.origin.y + pf.y;
 					} break;
 					case WIDGET_TRANSLATION_X: {
-						_state.tr.origin.x += pf.x;
+						_state.tr.origin.x = _state.base_tr.origin.x + pf.x;
 					} break;
 					case WIDGET_TRANSLATION_Y: {
-						_state.tr.origin.y = pf.y;
+						_state.tr.origin.y = _state.base_tr.origin.y + pf.y;
 					} break;
 					case WIDGET_TRANSLATION_Z: {
-						_state.tr.origin.z = pf.y;
+						_state.tr.origin.z = _state.base_tr.origin.z + pf.y;
 					} break;
 					default: {
 						WARN_PRINT("Unexpected control type.");
 					}
 				}
 				if (pf.x || pf.y) {
-					emit_signal("transformation_changed", array(_state.tr));
+					emit_signal("transformation_changed", _state.tr);
 				}
 			}
 		}
@@ -783,36 +787,48 @@ WidgetType ControlWidget::get_control_type() const {
 	return control_type;
 }
 
-void ControlWidget::set_control_themed(bool p_themed) {
-	themed = p_themed;
-	update();
-}
-bool ControlWidget::is_control_themed() const {
-	return themed;
-}
-
-void ControlWidget::set_control_enabled(bool p_enabled) {
-	enabled = p_enabled;
+void ControlWidget::set_control_flat(bool p_flat) {
+	flat = p_flat;
 	update();
 }
 
-bool ControlWidget::is_control_enabled() const {
-	return enabled;
+bool ControlWidget::is_control_flat() const {
+	return flat;
+}
+
+void ControlWidget::set_control_disabled(bool p_disabled) {
+	disabled = p_disabled;
+	update();
+}
+
+bool ControlWidget::is_control_disabled() const {
+	return disabled;
+}
+
+void ControlWidget::set_control_resolution(real_t p_resolution) {
+	resolution = p_resolution;
+}
+
+real_t ControlWidget::get_control_resolution() const {
+	return resolution;
 }
 
 void ControlWidget::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_control_type"), &ControlWidget::set_control_type);
 	ClassDB::bind_method(D_METHOD("get_control_type"), &ControlWidget::get_control_type);
-	ClassDB::bind_method(D_METHOD("set_control_themed"), &ControlWidget::set_control_themed);
-	ClassDB::bind_method(D_METHOD("is_control_themed"), &ControlWidget::is_control_themed);
-	ClassDB::bind_method(D_METHOD("set_control_enabled"), &ControlWidget::set_control_enabled);
-	ClassDB::bind_method(D_METHOD("is_control_enabled"), &ControlWidget::is_control_enabled);
+	ClassDB::bind_method(D_METHOD("set_control_flat"), &ControlWidget::set_control_flat);
+	ClassDB::bind_method(D_METHOD("is_control_flat"), &ControlWidget::is_control_flat);
+	ClassDB::bind_method(D_METHOD("set_control_disabled"), &ControlWidget::set_control_disabled);
+	ClassDB::bind_method(D_METHOD("is_control_disabled"), &ControlWidget::is_control_disabled);
+	ClassDB::bind_method(D_METHOD("set_control_resolution"), &ControlWidget::set_control_resolution);
+	ClassDB::bind_method(D_METHOD("get_control_resolution"), &ControlWidget::get_control_resolution);
 
 	ClassDB::bind_method(D_METHOD("_input"), &ControlWidget::_input);
 
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "control_type", PROPERTY_HINT_ENUM, "XY,X,Y,Z,SPHERE"), "set_control_type", "get_control_type");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "enabled"), "set_control_enabled", "is_control_enabled");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "themed"), "set_control_themed", "is_control_themed");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "disabled"), "set_control_disabled", "is_control_disabled");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "flat"), "set_control_flat", "is_control_flat");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "resolution"), "set_control_resolution", "get_control_resolution");
 
 	ADD_SIGNAL(MethodInfo("transformation_changed", PropertyInfo(Variant::TRANSFORM, "tr")));
 }
@@ -820,9 +836,10 @@ void ControlWidget::_bind_methods() {
 ControlWidget::ControlWidget() {
 	control_type = WIDGET_TRANSLATION_XY;
 	control_rect = Rect2(-50, -50, 100, 100);
-	enabled = true;
-	themed = true;
-	_style_info = StyleInfo{ 2, 2, Color::named("lightgray"), 2, Color::named("black"), Vector2(1, 2) };
+	disabled = false;
+	flat = false;
+	resolution = 1.0;
+	_style_info = StyleInfo{ 2, 2, Color::named("lightgray"), 2, Color::named("darkgray"), Vector2(1, 2) };
 	_state.active = false;
 	_mesh = newref(ArrayMesh);
 }

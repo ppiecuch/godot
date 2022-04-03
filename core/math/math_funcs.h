@@ -91,6 +91,9 @@ public:
 	static _ALWAYS_INLINE_ double fmod(double p_x, double p_y) { return ::fmod(p_x, p_y); }
 	static _ALWAYS_INLINE_ float fmod(float p_x, float p_y) { return ::fmodf(p_x, p_y); }
 
+	static _ALWAYS_INLINE_ double modf(double p_v, double *p_i) { return ::modf(p_v, p_i); }
+	static _ALWAYS_INLINE_ float modf(float p_v, float *p_i) { return ::modff(p_v, p_i); }
+
 	static _ALWAYS_INLINE_ double floor(double p_x) { return ::floor(p_x); }
 	static _ALWAYS_INLINE_ float floor(float p_x) { return ::floorf(p_x); }
 
@@ -102,6 +105,9 @@ public:
 
 	static _ALWAYS_INLINE_ double log(double p_x) { return ::log(p_x); }
 	static _ALWAYS_INLINE_ float log(float p_x) { return ::logf(p_x); }
+
+	static _ALWAYS_INLINE_ double log2(double p_x) { return ::log2(p_x); }
+	static _ALWAYS_INLINE_ float log2(float p_x) { return ::log2f(p_x); }
 
 	static _ALWAYS_INLINE_ double log10(double p_x) { return ::log10(p_x); }
 	static _ALWAYS_INLINE_ float log10(float p_x) { return ::log10f(p_x); }
