@@ -111,6 +111,7 @@
 #include "visual/texture_panning.h"
 #include "visual/touch_button.h"
 #include "visual/widget_controls.h"
+#include "visual/thumb_wheel.h"
 
 #include "vgamepad/vgamepad.h"
 
@@ -361,6 +362,7 @@ void register_gdextensions_types() {
 	ClassDB::register_class<Starfield2D>();
 	ClassDB::register_class<TouchButton>();
 	ClassDB::register_class<TexturePanning>();
+	ClassDB::register_class<ThumbWheelH>();
 #ifdef TOOLS_ENABLED
 	ClassDB::register_class<ControlWidget>();
 #endif
