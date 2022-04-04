@@ -40,7 +40,7 @@ namespace SPK
 	void Collider::modify(Group& group,DataSet* dataSet,float deltaTime) const
 	{
 		float groupSqrRadius = group.getPhysicalRadius() * group.getPhysicalRadius();
-		SPK_ASSERT(group.getOctree() != NULL,"GLQuadRenderer::render(const Group&,const DataSet*,RenderBuffer*) - renderBuffer must not be NULL");
+		SPK_ASSERT(group.getOctree() != NULL,"Collider::modify(Group& group,DataSet* dataSet,float deltaTime) - getOctree must not be NULL");
 		const Octree& octree = *group.getOctree();
 
 		for (GroupIterator particleIt0(group); !particleIt0.end(); ++particleIt0)

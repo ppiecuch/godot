@@ -25,8 +25,8 @@
 #include "SPK_Gd_LineTrailRenderer.h"
 
 namespace SPK { namespace Godot {
-	GLLineTrailRenderer::GLLineTrailRenderer(size_t nbSamples,float duration,float width) :
-		GLRenderer(true),
+	GLLineTrailRenderer::GLLineTrailRenderer(CanvasItem *canvas,size_t nbSamples,float duration,float width) :
+		GLRenderer(canvas,true),
 		width(width),
 		degeneratedColor(0x00000000)
 	{
@@ -164,6 +164,7 @@ namespace SPK { namespace Godot {
 	void GLLineTrailRenderer::render(const Group& group,const DataSet* dataSet,RenderBuffer* renderBuffer) const
 	{
 		// RenderBuffer is not used as dataset already contains organized data for rendering
+		const size_t nb = group.getNbParticles() * (nbSamples + 2);
 		const Vector3D* vertexBuffer = SPK_GET_DATA(const Vector3DArrayData,dataSet,VERTEX_BUFFER_INDEX).getData();
 		const Color* colorBuffer = SPK_GET_DATA(const ColorArrayData,dataSet,COLOR_BUFFER_INDEX).getData();
 
@@ -171,20 +172,12 @@ namespace SPK { namespace Godot {
 		initRenderingOptions();
 
 		// Inits lines' parameters
-		glLineWidth(width);
-		glDisable(GL_TEXTURE_2D);
-		glShadeModel(GL_SMOOTH);
+		Array array;
+		array.resize(ArrayMesh::ARRAY_MAX);
+		array[ArrayMesh::ARRAY_VERTEX] = _from_raw_buffer<PoolVector3Array>(vertexBuffer, nb);
+		array[ArrayMesh::ARRAY_COLOR] = _from_raw_buffer<PoolColorArray>(colorBuffer, nb);
 
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glEnableClientState(GL_COLOR_ARRAY);
-
-		glVertexPointer(3,GL_FLOAT,0,vertexBuffer);
-		glColorPointer(4,GL_UNSIGNED_BYTE,0,colorBuffer);
-
-		glDrawArrays(GL_LINE_STRIP,0,group.getNbParticles() * (nbSamples + 2));
-
-		glDisableClientState(GL_VERTEX_ARRAY);
-		glDisableClientState(GL_COLOR_ARRAY);
+		const_cast<GLLineTrailRenderer*>(this)->addRenderLayer(Mesh::PRIMITIVE_LINE_STRIP, array);
 	}
 
 	void GLLineTrailRenderer::computeAABB(Vector3D& AABBMin,Vector3D& AABBMax,const Group& group,const DataSet* dataSet) const

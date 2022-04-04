@@ -24,14 +24,15 @@
 
 #include "SPK_Gd_DEF.h"
 
-#include "scene/resources/mesh.h"
+#include "scene/2d/canvas_item.h"
 
 namespace SPK { namespace Godot {
+	class GLRenderer;
 	class GLBuffer : public RenderBuffer
 	{
 	public :
 
-		GLBuffer(size_t nbVertices,size_t nbTexCoords = 0);
+		GLBuffer(GLRenderer *renderer,size_t nbVertices,size_t nbTexCoords = 0);
 		~GLBuffer();
 
 		void positionAtStart();
@@ -47,9 +48,11 @@ namespace SPK { namespace Godot {
 		void setNbTexCoords(size_t nb);
 		size_t getNbTexCoords();
 
-		void render(Mesh::PrimitiveType primitive, size_t nbVertices);
+		void render(Mesh::PrimitiveType primitive,GdTexture texture,size_t nbVertices);
+		void render(Mesh::PrimitiveType primitive,size_t nbVertices);
 
 	private :
+		GLRenderer *renderer;
 
 		const size_t nbVertices;
 		size_t nbTexCoords;

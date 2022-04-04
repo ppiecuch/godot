@@ -22,9 +22,11 @@
 #include "SPARK_Core.h"
 #include "SPK_Gd_LineRenderer.h"
 
+#include "scene/resources/mesh.h"
+
 namespace SPK { namespace Godot {
-	GLLineRenderer::GLLineRenderer(float length,float width) :
-		GLRenderer(false),
+	GLLineRenderer::GLLineRenderer(CanvasItem *canvas,float length,float width) :
+		GLRenderer(canvas,false),
 		LineRenderBehavior(length,width)
 	{}
 
@@ -35,7 +37,7 @@ namespace SPK { namespace Godot {
 
 	RenderBuffer* GLLineRenderer::attachRenderBuffer(const Group& group) const
 	{
-		return SPK_NEW(GLBuffer,group.getCapacity() << 1);
+		return SPK_NEW(GLBuffer,const_cast<GLLineRenderer*>(this),group.getCapacity() << 1);
 	}
 
 	void GLLineRenderer::render(const Group& group,const DataSet* dataSet,RenderBuffer* renderBuffer) const
@@ -46,10 +48,6 @@ namespace SPK { namespace Godot {
 
 		initBlending();
 		initRenderingOptions();
-
-		glLineWidth(width);
-		glDisable(GL_TEXTURE_2D);
-		glShadeModel(GL_FLAT);
 
 		for (ConstGroupIterator particleIt(group); !particleIt.end(); ++particleIt)
 		{
@@ -62,7 +60,7 @@ namespace SPK { namespace Godot {
 			buffer.setNextColor(particle.getColor());
 		}
 
-		buffer.render(GL_LINES,group.getNbParticles() << 1);
+		buffer.render(Mesh::PRIMITIVE_LINES,group.getNbParticles() << 1);
 	}
 
 	void GLLineRenderer::computeAABB(Vector3D& AABBMin,Vector3D& AABBMax,const Group& group,const DataSet* dataSet) const

@@ -29,10 +29,23 @@
 /*************************************************************************/
 
 #include "core/reference.h"
-#include "scene/2d/canvas_item.h"
+#include "scene/2d/node_2d.h"
 
-class GdSparkParticles : public CanvasItem {
-	GDCLASS(GdSparkParticles, CanvasItem);
+#include "SPK/SPARK_Core.h"
+#include "Godot/SPK_Gd_Renderer.h"
+
+enum SparkRenderer {
+	SPK_QUAD_REDERER,
+	SPK_LINE_REDERER,
+};
+
+class GdSparkParticles : public Node2D {
+	GDCLASS(GdSparkParticles, Node2D);
+
+	SPK::Ref<SPK::System> _system, system;
+	String xml_path;
+	SparkRenderer renderer_type;
+	SPK::Ref<SPK::Godot::GLRenderer> renderer;
 
 protected:
 	static void _bind_methods();
@@ -42,5 +55,5 @@ protected:
 public:
 	Error load_from_file(const String &p_path);
 
-	GdSparkParticles() {}
+	GdSparkParticles();
 };

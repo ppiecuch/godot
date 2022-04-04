@@ -63,7 +63,7 @@ namespace SPK { namespace Godot {
 		* @brief Creates a new GLLineTrailRenderer
 		* @return A new GLLineTrailRenderer
 		*/
-		static Ref<GLLineTrailRenderer> create(size_t nbSamples = 8,float duration = 1.0f,float width = 1.0f);
+		static Ref<GLLineTrailRenderer> create(CanvasItem *canvas,size_t nbSamples = 8,float duration = 1.0f,float width = 1.0f);
 
 		///////////////
 		// nbSamples //
@@ -157,7 +157,7 @@ namespace SPK { namespace Godot {
 		// Constructor //
 		/////////////////
 
-		GLLineTrailRenderer(size_t nbSamples = 8,float duration = 1.0f,float width = 1.0f);
+		GLLineTrailRenderer(CanvasItem *canvas = nullptr,size_t nbSamples = 8,float duration = 1.0f,float width = 1.0f);
 		GLLineTrailRenderer(const GLLineTrailRenderer& renderer);
 
 		virtual void init(const Particle& particle,DataSet* dataSet) const;
@@ -167,9 +167,9 @@ namespace SPK { namespace Godot {
 		virtual void computeAABB(Vector3D& AABBMin,Vector3D& AABBMax,const Group& group,const DataSet* dataSet) const;
 	};
 
-	inline Ref<GLLineTrailRenderer> GLLineTrailRenderer::create(size_t nbSamples,float duration,float width)
+	inline Ref<GLLineTrailRenderer> GLLineTrailRenderer::create(CanvasItem *canvas,size_t nbSamples,float duration,float width)
 	{
-		return SPK_NEW(GLLineTrailRenderer,nbSamples,duration,width);
+		return SPK_NEW(GLLineTrailRenderer,canvas,nbSamples,duration,width);
 	}
 
 	inline size_t GLLineTrailRenderer::getNbSamples() const

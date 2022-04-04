@@ -21,9 +21,13 @@
 
 #include "SPARK_Core.h"
 #include "SPK_Gd_Buffer.h"
+#include "SPK_Gd_Renderer.h"
+
+#include "core/variant.h"
 
 namespace SPK { namespace Godot {
-	GLBuffer::GLBuffer(size_t nbVertices,size_t nbTexCoords) :
+	GLBuffer::GLBuffer(GLRenderer *renderer, size_t nbVertices,size_t nbTexCoords) :
+		renderer(renderer),
 		nbVertices(nbVertices),
 		nbTexCoords(nbTexCoords),
 		texCoordBuffer(NULL),
@@ -59,26 +63,31 @@ namespace SPK { namespace Godot {
 		}
 	}
 
+	void GLBuffer::render(Mesh::PrimitiveType primitive,GdTexture texture,size_t nbVertices)
+	{
+		PoolVector3Array vertexArray = _from_raw_buffer<PoolVector3Array>(vertexBuffer, nbVertices);
+		PoolColorArray colorArray = _from_raw_buffer<PoolColorArray>(colorBuffer, nbVertices);
+		PoolVector2Array texCoordArray = _from_raw_buffer<PoolVector2Array>(texCoordBuffer, nbTexCoords * 2);
+
+		Array array;
+		array.resize(ArrayMesh::ARRAY_MAX);
+		array[ArrayMesh::ARRAY_VERTEX] = vertexArray;
+		array[ArrayMesh::ARRAY_COLOR] = colorArray;
+		if (nbTexCoords)
+			array[ArrayMesh::ARRAY_TEX_UV] = texCoordArray;
+		renderer->addRenderLayer(primitive, array, texture);
+	}
+
 	void GLBuffer::render(Mesh::PrimitiveType primitive,size_t nbVertices)
 	{
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glEnableClientState(GL_COLOR_ARRAY);
+		PoolVector3Array vertexArray = _from_raw_buffer<PoolVector3Array>(vertexBuffer, nbVertices);
+		PoolColorArray colorArray = _from_raw_buffer<PoolColorArray>(colorBuffer, nbVertices);
 
-		if (nbTexCoords > 0)
-		{
-			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-			glTexCoordPointer(nbTexCoords,GL_FLOAT,0,texCoordBuffer);
-		}
+		Array array;
+		array.resize(ArrayMesh::ARRAY_MAX);
+		array[ArrayMesh::ARRAY_VERTEX] = vertexArray;
+		array[ArrayMesh::ARRAY_COLOR] = colorArray;
 
-		glVertexPointer(3,GL_FLOAT,0,vertexBuffer);
-		glColorPointer(4,GL_UNSIGNED_BYTE,0,colorBuffer);
-	
-		glDrawArrays(primitive,0,nbVertices);
-
-		glDisableClientState(GL_VERTEX_ARRAY);
-		glDisableClientState(GL_COLOR_ARRAY);
-
-		if (nbTexCoords > 0)
-			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		renderer->addRenderLayer(primitive, array);
 	}
 }} // namespace

@@ -35,6 +35,7 @@
 // Godot also defines Ref operator
 typedef Ref<Texture> GdTexture;
 typedef Ref<Mesh> GdMesh;
+typedef Ref<ArrayMesh> GdArrayMesh;
 
 /**
 * @namespace SPK::Godot

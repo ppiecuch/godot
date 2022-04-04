@@ -22,9 +22,11 @@
 #include "SPARK_Core.h"
 #include "SPK_Gd_QuadRenderer.h"
 
+#include <string.h>
+
 namespace SPK { namespace Godot {
-	GLQuadRenderer::GLQuadRenderer(float scaleX,float scaleY) :
-		GLRenderer(false),
+	GLQuadRenderer::GLQuadRenderer(CanvasItem *canvas,float scaleX,float scaleY) :
+		GLRenderer(canvas,false),
 		QuadRenderBehavior(scaleX,scaleY),
 		Oriented3DRenderBehavior()
 	{}
@@ -47,7 +49,7 @@ namespace SPK { namespace Godot {
 
 	RenderBuffer* GLQuadRenderer::attachRenderBuffer(const Group& group) const
 	{
-		return SPK_NEW(GLBuffer,group.getCapacity() << 2);
+		return SPK_NEW(GLBuffer,const_cast<GLQuadRenderer*>(this),group.getCapacity() << 2);
 	}
 
 	void GLQuadRenderer::render(const Group& group,const DataSet* dataSet,RenderBuffer* renderBuffer) const
@@ -56,13 +58,29 @@ namespace SPK { namespace Godot {
 		GLBuffer& buffer = static_cast<GLBuffer&>(*renderBuffer);
 		buffer.positionAtStart(); // Repositions all the buffers at the start
 
-		float oldModelView[16];
+		const Transform2D &tr = getTransform();
+		real_t currModelView[16] = { /* build a 4x4 matrix */
+			tr.elements[0][0],
+			tr.elements[0][1],
+			0,
+			0,
+			tr.elements[1][0],
+			tr.elements[1][1],
+			0,
+			0,
+			0,
+			0,
+			1,
+			0,
+			tr.elements[2][0],
+			tr.elements[2][1],
+			0,
+			1
+		};
 		for (int i = 0; i < 16; ++i)
-			oldModelView[i] = modelView[i];
-		glGetFloatv(GL_MODELVIEW_MATRIX,modelView);
-		for (int i = 0; i < 16; ++i)
-			if (oldModelView[i] != modelView[i])
+			if (currModelView[i] != modelView[i])
 			{
+				memcpy(modelView, currModelView, sizeof(real_t) * 16);
 				invertModelView();
 				break;
 			}
@@ -70,7 +88,7 @@ namespace SPK { namespace Godot {
 		initBlending();
 		initRenderingOptions();
 
-		glShadeModel(GL_FLAT);
+		GdTexture texture;
 
 		switch(texturingMode)
 		{
@@ -87,9 +105,7 @@ namespace SPK { namespace Godot {
 				}
 			}
 
-			// Binds the texture
-			glEnable(GL_TEXTURE_2D);
-			glBindTexture(GL_TEXTURE_2D,textureIndex);
+			texture = textureIndex;
 
 			// Selects the correct function
 			if (!group.isEnabled(PARAM_TEXTURE_INDEX))
@@ -118,8 +134,7 @@ namespace SPK { namespace Godot {
 					buffer.setNextTexCoord(t[i % 12]);
 			}
 
-			// Binds the texture
-			glDisable(GL_TEXTURE_2D);
+			texture = textureIndex;
 
 			// Selects the correct function
 			if (!group.isEnabled(PARAM_ANGLE))
@@ -131,8 +146,6 @@ namespace SPK { namespace Godot {
 		case TEXTURE_MODE_NONE :
 			if (buffer.getNbTexCoords() != 0)
 				buffer.setNbTexCoords(0);
-
-			glDisable(GL_TEXTURE_2D);
 
 			// Selects the correct function
 			if (!group.isEnabled(PARAM_ANGLE))
@@ -146,7 +159,8 @@ namespace SPK { namespace Godot {
 			group,
 			Vector3D(-invModelView[8],-invModelView[9],-invModelView[10]),
 			Vector3D(invModelView[4],invModelView[5],invModelView[6]),
-			Vector3D(invModelView[12],invModelView[13],invModelView[14]));
+			Vector3D(invModelView[12],invModelView[13],invModelView[14])
+		);
 
 		// Fills the buffers
 		if (globalOrientation)
@@ -165,7 +179,7 @@ namespace SPK { namespace Godot {
 			}
 		}
 
-		buffer.render(GL_QUADS,group.getNbParticles() << 2);
+		buffer.render(Mesh::PRIMITIVE_TRIANGLES,texture,group.getNbParticles() << 2);
 	}
 
 	void GLQuadRenderer::computeAABB(Vector3D& AABBMin,Vector3D& AABBMax,const Group& group,const DataSet* dataSet) const

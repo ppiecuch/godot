@@ -54,11 +54,11 @@ namespace SPK { namespace Godot {
 		* @param width : the width of the lines (in screen space)
 		* @return A new GLLineRenderer
 		*/
-		static  Ref<GLLineRenderer> create(float length = 1.0f,float width = 1.0f);
+		static  Ref<GLLineRenderer> create(CanvasItem *canvas,float length = 1.0f,float width = 1.0f);
 
 	private :
 
-		GLLineRenderer(float length = 1.0f,float width = 1.0f);
+		GLLineRenderer(CanvasItem *canvas = nullptr,float length = 1.0f,float width = 1.0f);
 		GLLineRenderer(const GLLineRenderer& renderer);
 
 		virtual RenderBuffer* attachRenderBuffer(const Group& group) const;
@@ -67,9 +67,9 @@ namespace SPK { namespace Godot {
 		virtual void computeAABB(Vector3D& AABBMin,Vector3D& AABBMax,const Group& group,const DataSet* dataSet) const;
 	};
 
-	inline Ref<GLLineRenderer> GLLineRenderer::create(float length,float width)
+	inline Ref<GLLineRenderer> GLLineRenderer::create(CanvasItem *canvas,float length,float width)
 	{
-		return SPK_NEW(GLLineRenderer,length,width);
+		return SPK_NEW(GLLineRenderer,canvas,length,width);
 	}
 }} // namespace
 

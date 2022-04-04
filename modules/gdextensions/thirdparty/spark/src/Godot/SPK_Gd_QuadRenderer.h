@@ -44,7 +44,7 @@ namespace SPK { namespace Godot {
 	* <li>SPK::PARAM_TEXTURE_INDEX (only if not in TEXTURE_NONE mode)</li>
 	* </ul>
 	*/
-	class GLQuadRenderer :	public GLRenderer, public QuadRenderBehavior, public Oriented3DRenderBehavior
+	class GLQuadRenderer : public GLRenderer, public QuadRenderBehavior, public Oriented3DRenderBehavior
 	{
         SPK_IMPLEMENT_OBJECT(GLQuadRenderer);
 
@@ -56,14 +56,13 @@ namespace SPK { namespace Godot {
 		* @param scaleY the scale of the height of the quad
 		* @return A new registered GLQuadRenderer
 		*/
-		static  Ref<GLQuadRenderer> create(float scaleX = 1.0f,float scaleY = 1.0f);
+		static  Ref<GLQuadRenderer> create(CanvasItem *canvas,float scaleX = 1.0f,float scaleY = 1.0f);
 
 		/////////////
 		// Setters //
 		/////////////
 
 		virtual bool setTexturingMode(TextureMode mode);
-
 		void setTexture(GdTexture textureIndex);
 
 		/////////////
@@ -77,12 +76,12 @@ namespace SPK { namespace Godot {
 		GdTexture getTexture() const;
 
 	private :
-		mutable float modelView[16];
-		mutable float invModelView[16];
+		mutable real_t modelView[16];
+		mutable real_t invModelView[16];
 
 		GdTexture textureIndex;
 
-		GLQuadRenderer(float scaleX = 1.0f,float scaleY = 1.0f);
+		GLQuadRenderer(CanvasItem *canvas = nullptr,float scaleX = 1.0f,float scaleY = 1.0f);
 		GLQuadRenderer(const GLQuadRenderer& renderer);
 
 		virtual RenderBuffer* attachRenderBuffer(const Group& group) const;
@@ -106,9 +105,9 @@ namespace SPK { namespace Godot {
 		void render2DAtlasRot(const Particle& particle,GLBuffer& renderBuffer) const;	// Rendering for particles with texture 2D atlas and rotation
 	};
 
-	inline Ref<GLQuadRenderer> GLQuadRenderer::create(float scaleX,float scaleY)
+	inline Ref<GLQuadRenderer> GLQuadRenderer::create(CanvasItem *canvas,float scaleX,float scaleY)
 	{
-		return SPK_NEW(GLQuadRenderer,scaleX,scaleY);
+		return SPK_NEW(GLQuadRenderer,canvas,scaleX,scaleY);
 	}
 		
 	inline void GLQuadRenderer::setTexture(GdTexture textureIndex)
@@ -169,8 +168,8 @@ namespace SPK { namespace Godot {
 
 	inline void GLQuadRenderer::invertModelView() const
 	{
-		float tmp[12];
-		float src[16];
+		real_t tmp[12];
+		real_t src[16];
 
 		/* transpose matrix */
 		for (int i = 0; i < 4; ++i)
@@ -230,7 +229,7 @@ namespace SPK { namespace Godot {
 		invModelView[15] = tmp[10] * src[10] + tmp[4] * src[8] + tmp[9] * src[9] - tmp[8] * src[9] - tmp[11] * src[10] - tmp[5] * src[8];
 
 		/* calculate determinant */
-		float det = src[0] * invModelView[0] + src[1] * invModelView[1] + src[2] * invModelView[2] + src[3] * invModelView[3];
+		real_t det = src[0] * invModelView[0] + src[1] * invModelView[1] + src[2] * invModelView[2] + src[3] * invModelView[3];
 
 		/* calculate matrix inverse */
 		det = 1 / det;

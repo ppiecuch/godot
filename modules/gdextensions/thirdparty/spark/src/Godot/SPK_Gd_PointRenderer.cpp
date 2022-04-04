@@ -44,35 +44,26 @@ namespace SPK { namespace Godot {
 		switch(type)
 		{
 		case POINT_TYPE_SQUARE :
-			glDisable(GL_TEXTURE_2D);
-			glDisable(GL_POINT_SMOOTH);
 			break;
 
 		case POINT_TYPE_SPRITE :
-			glEnable(GL_TEXTURE_2D);
-			glBindTexture(GL_TEXTURE_2D,textureIndex);
 			break;
 
 		case POINT_TYPE_CIRCLE :
-			glDisable(GL_TEXTURE_2D);
-			glEnable(GL_POINT_SMOOTH);
 			break;
 		}
 
-		glPointSize(screenSize);
-
-		// Sends the data to the GPU
 		// RenderBuffer is not used as the data are already well organized for rendering
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glEnableClientState(GL_COLOR_ARRAY);
 
-		glVertexPointer(3,GL_FLOAT,0,group.getPositionAddress());
-		glColorPointer(4,GL_UNSIGNED_BYTE,0,group.getColorAddress());
+		PoolVector3Array vertexArray = _from_raw_buffer<PoolVector3Array>(static_cast<const Vector3D*>(group.getPositionAddress()), group.getNbParticles());
+		PoolColorArray colorArray = _from_raw_buffer<PoolColorArray>(static_cast<const Color*>(group.getColorAddress()), group.getNbParticles());
 
-		glDrawArrays(GL_POINTS,0,group.getNbParticles());
+		Array array;
+		array.resize(ArrayMesh::ARRAY_MAX);
+		array[ArrayMesh::ARRAY_VERTEX] = vertexArray;
+		array[ArrayMesh::ARRAY_COLOR] = colorArray;
 
-		glDisableClientState(GL_VERTEX_ARRAY);
-		glDisableClientState(GL_COLOR_ARRAY);
+		const_cast<GLPointRenderer*>(this)->addRenderLayer(Mesh::PRIMITIVE_POINTS, array);
 	}
 
 	void GLPointRenderer::computeAABB(Vector3D& AABBMin,Vector3D& AABBMax,const Group& group,const DataSet* dataSet) const

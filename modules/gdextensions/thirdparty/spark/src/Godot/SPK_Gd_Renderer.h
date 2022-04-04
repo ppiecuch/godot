@@ -35,11 +35,6 @@ namespace SPK { namespace Godot {
 	class GLRenderer : public Renderer
 	{
 	public :
-
-		////////////////
-		// Destructor //
-		////////////////
-
 		/** @brief Destructor of GLRenderer */
 		virtual  ~GLRenderer() {}
 
@@ -56,21 +51,34 @@ namespace SPK { namespace Godot {
 		*/
 		bool isBlendingEnabled() const;
 
-	protected :
-		GLRenderer(bool NEEDS_DATASET);
+		inline void addRenderLayer(Mesh::PrimitiveType primitive, const Array &mesh_array);
+		inline void addRenderLayer(Mesh::PrimitiveType primitive, const Array &mesh_array, const GdTexture &texture);
 
+		void flushRender();
+
+		Transform2D getTransform() const { return canvas->get_global_transform(); }
+
+	protected :
+		GLRenderer(CanvasItem *canvas,bool NEEDS_DATASET);
+
+		/** @brief Inits the blending of this GLRenderer */
+		void initBlending() const;
 		/** @brief Inits the rendering hints of this GLRenderer */
 		void initRenderingOptions() const;
 
 	private :
 		bool blendingEnabled;
 		CanvasItemMaterial::BlendMode blendingMode;
+		CanvasItem *canvas;
+		static GdArrayMesh _mesh;
+		static GdTexture _lastTexture;
 	};
 
-	inline GLRenderer::GLRenderer(bool NEEDS_DATASET) :
+	inline GLRenderer::GLRenderer(CanvasItem *canvas,bool NEEDS_DATASET) :
 		Renderer(NEEDS_DATASET),
 		blendingEnabled(false),
-		blendingMode(CanvasItemMaterial::BLEND_MODE_MIX)
+		blendingMode(CanvasItemMaterial::BLEND_MODE_MIX),
+		canvas(canvas)
 	{}
 
 	inline void GLRenderer::enableBlending(bool blendingEnabled)
@@ -83,6 +91,10 @@ namespace SPK { namespace Godot {
 		return blendingEnabled;
 	}
 
+	inline void GLRenderer::initBlending() const
+	{
+	}
+
 	inline void GLRenderer::initRenderingOptions() const
 	{
 		// alpha test
@@ -93,6 +105,44 @@ namespace SPK { namespace Godot {
 		if (isRenderingOptionEnabled(RENDERING_OPTION_DEPTH_WRITE))
 		{
 		}
+	}
+
+	inline void GLRenderer::addRenderLayer(Mesh::PrimitiveType primitive, const Array &mesh_array, const GdTexture &texture)
+	{
+		if (texture != _lastTexture && _mesh->get_surface_count()) {
+			flushRender();
+			_lastTexture = texture;
+		}
+		_mesh->add_surface_from_arrays(primitive, mesh_array, Array());
+	}
+
+	inline void GLRenderer::addRenderLayer(Mesh::PrimitiveType primitive, const Array &mesh_array)
+	{
+		if (_lastTexture && _mesh->get_surface_count())
+		{
+			flushRender();
+			_lastTexture = GdTexture(nullptr);
+		}
+		_mesh->add_surface_from_arrays(primitive, mesh_array, Array());
+	}
+
+	inline void GLRenderer::flushRender() {
+		if (_mesh->get_surface_count())
+		{
+			canvas->draw_mesh(_mesh, _lastTexture);
+			_mesh->clear_mesh(); // restart
+		}
+	}
+
+	/** @brief Rendering utilities */
+	template <typename PoolOut, typename VecIn>
+	PoolOut _from_raw_buffer(const VecIn *in, int inCount) {
+		PoolOut r;
+		if (inCount)
+		{
+			memcpy(r.write().ptr(), in, sizeof(VecIn) * inCount);
+		}
+		return r;
 	}
 }} // namespace
 

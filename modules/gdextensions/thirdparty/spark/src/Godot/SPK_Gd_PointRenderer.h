@@ -26,6 +26,7 @@
 #include "Extensions/Renderers/SPK_PointRenderBehavior.h"
 
 #include "core/math/math_funcs.h"
+#include "scene/2d/canvas_item.h"
 #include "scene/resources/texture.h"
 
 namespace SPK { namespace Godot {
@@ -56,7 +57,7 @@ namespace SPK { namespace Godot {
 		* @param size : the size of the points
 		* @return A new registered GLPointRenderer
 		*/
-		static  Ref<GLPointRenderer> create(float screenSize = 1.0f);
+		static  Ref<GLPointRenderer> create(CanvasItem *canvas,float screenSize = 1.0f);
 
 		virtual bool setType(PointType type);
 
@@ -78,15 +79,15 @@ namespace SPK { namespace Godot {
 	private :
 		GdTexture textureIndex;
 
-		GLPointRenderer(float screenSize = 1.0f);
+		GLPointRenderer(CanvasItem *canvas = nullptr,float screenSize = 1.0f);
 		GLPointRenderer(const GLPointRenderer& renderer);
 
 		virtual void render(const Group& group,const DataSet* dataSet,RenderBuffer* renderBuffer) const;
 		virtual void computeAABB(Vector3D& AABBMin,Vector3D& AABBMax,const Group& group,const DataSet* dataSet) const;
 	};
 
-	inline GLPointRenderer::GLPointRenderer(float screenSize) :
-		GLRenderer(false),
+	inline GLPointRenderer::GLPointRenderer(CanvasItem *canvas,float screenSize) :
+		GLRenderer(canvas,false),
 		PointRenderBehavior(POINT_TYPE_SQUARE,screenSize)
 	{}
 
@@ -96,9 +97,9 @@ namespace SPK { namespace Godot {
 		textureIndex(renderer.textureIndex)
 	{}
 
-	inline Ref<GLPointRenderer> GLPointRenderer::create(float screenSize)
+	inline Ref<GLPointRenderer> GLPointRenderer::create(CanvasItem *canvas,float screenSize)
 	{
-		return SPK_NEW(GLPointRenderer,screenSize);
+		return SPK_NEW(GLPointRenderer,canvas,screenSize);
 	}
 		
 	inline void GLPointRenderer::setTexture(GdTexture textureIndex)
