@@ -52,7 +52,7 @@ namespace SPK
 	* </ul>
 	* Groups are contained within a System which commands their update and rendering.
 	*/
-	class SPK_PREFIX Group : public Transformable
+	class Group : public Transformable
 	{
 	friend class Particle;
 	friend class System;
