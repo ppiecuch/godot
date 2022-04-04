@@ -30,7 +30,7 @@ namespace SPK
 	* @class RandomEmitter
 	* @brief An emitter that emits in a random direction
 	*/
-	class SPK_PREFIX RandomEmitter : public Emitter
+	class RandomEmitter : public Emitter
 	{
 	SPK_IMPLEMENT_OBJECT(RandomEmitter)
 

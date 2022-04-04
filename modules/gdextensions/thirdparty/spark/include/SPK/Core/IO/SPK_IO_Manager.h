@@ -33,7 +33,7 @@ namespace SPK
 {
 namespace IO
 {
-	class SPK_PREFIX IOManager
+	class IOManager
 	{
 	public :
 

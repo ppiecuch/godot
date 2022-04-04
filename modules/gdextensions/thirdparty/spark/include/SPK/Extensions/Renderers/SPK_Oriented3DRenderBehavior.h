@@ -81,7 +81,7 @@ namespace SPK
 
 
 	/** @brief Base Interface for rendering particles that can be oriented in a 3D world */
-	class SPK_PREFIX Oriented3DRenderBehavior
+	class Oriented3DRenderBehavior
 	{
 	public :
 

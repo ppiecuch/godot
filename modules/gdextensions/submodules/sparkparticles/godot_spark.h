@@ -31,7 +31,6 @@
 #include "core/reference.h"
 #include "scene/2d/node_2d.h"
 
-#include "SPK/SPARK_Core.h"
 #include "Godot/SPK_Gd_Renderer.h"
 
 enum SparkRenderer {

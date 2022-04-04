@@ -26,7 +26,7 @@
 
 namespace SPK
 {
-	class SPK_PREFIX Sphere : public Zone
+	class Sphere : public Zone
 	{
 	SPK_IMPLEMENT_OBJECT(Sphere)
 

@@ -40,7 +40,7 @@ namespace SPK
 	* The flow defines the rate at which particles are launched and the tank defines the total number of Particles the Emitter can launch.<br>
 	* An emitter is also defined by a range of forces (force min and force max) which defines the force at which particles are emitted <i>(initial velocity = force / mass)</i>.<br>
 	*/
-	class SPK_PREFIX Emitter :	public Transformable
+	class Emitter :	public Transformable
 	{
 	friend class Group;
 

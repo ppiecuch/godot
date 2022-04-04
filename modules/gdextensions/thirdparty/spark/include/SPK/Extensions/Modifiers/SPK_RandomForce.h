@@ -34,7 +34,7 @@ namespace SPK
 	* The force for a given particle is determined between 2 vectors and the period is determined between 2 values.<br>
 	* For each particle, each time the period is reached, the force is randomly generated again.
 	*/
-	class SPK_PREFIX RandomForce : public Modifier
+	class RandomForce : public Modifier
 	{
 	SPK_IMPLEMENT_OBJECT(RandomForce)
 

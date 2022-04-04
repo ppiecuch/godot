@@ -39,7 +39,7 @@ namespace SPK
 namespace IO
 {
 	/** @brief A class to deserialize a System from an XML document */
-	class SPK_PREFIX XMLLoader : public Loader
+	class XMLLoader : public Loader
 	{
 	private :
 
@@ -119,7 +119,7 @@ namespace IO
 
 	// Specialization for bool as vector<bool> is handled differently in the standard (we cannot cast a vector<bool> to a bool* with &v[0])
 	template<>
-	void SPK_PREFIX XMLLoader::setAttributeValueArray<bool>(Attribute& attribute,const pugi::xml_node& element) const;
+	void XMLLoader::setAttributeValueArray<bool>(Attribute& attribute,const pugi::xml_node& element) const;
 }}
 
 #endif

@@ -37,8 +37,8 @@
 enum EnumType { \
 	ENUM_DEF(SPK_ENUM_VALUE) \
 }; \
-template<> SPK_PREFIX std::string getEnumName(EnumType value); \
-template<> SPK_PREFIX EnumType getEnumValue(const std::string& name); \
+template<>std::string getEnumName(EnumType value); \
+template<>EnumType getEnumValue(const std::string& name); \
 
 #define SPK_DEFINE_ENUM(EnumType,ENUM_DEF) \
 template<> \

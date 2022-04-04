@@ -23,7 +23,7 @@
 #define H_SPK_GD_RENDERER
 
 #include "SPK_Gd_DEF.h"
-#include "Core/SPK_Renderer.h"
+#include "SPK/SPARK_Core.h"
 
 #include "scene/2d/canvas_item.h"
 

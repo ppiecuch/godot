@@ -26,7 +26,7 @@
 
 namespace SPK
 {
-	class SPK_PREFIX Transformable : public SPKObject
+	class Transformable : public SPKObject
 	{
 	friend class Transform;
 

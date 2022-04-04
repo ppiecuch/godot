@@ -55,7 +55,7 @@ namespace SPK
 {
     // Note: don't forget to verify static objects that depends on the tracer.
     // For the moment, only SPKContext and IO::Manager depends on it
-    class SPK_PREFIX SPKMemoryTracer
+    classSPKMemoryTracer
     {
     struct BlockInfo;
 

@@ -38,7 +38,7 @@ namespace SPK
 	};
 
 	/** @brief An abstract modifier with a zone attached to it */
-	class SPK_PREFIX ZonedModifier : public Modifier
+	class ZonedModifier : public Modifier
 	{
 
 	SPK_START_DESCRIPTION

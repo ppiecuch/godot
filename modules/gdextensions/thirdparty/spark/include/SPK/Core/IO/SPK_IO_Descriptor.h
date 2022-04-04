@@ -45,7 +45,7 @@ namespace IO
 	* <br>
 	* Descriptors are used by loaders and savers but can also be used to set objects within an application or to retrieve object structure. (in an editor for instance)
 	*/
-	class SPK_PREFIX Descriptor
+	class Descriptor
 	{
 	friend class Attribute;
 	friend class SPK::SPKObject;

@@ -34,7 +34,7 @@ namespace SPK
 	* or another zone that can be set with setNormalZone(Zone*).<br>
 	* If the normal zone is NULL the emitter's zone is used.
 	*/
-	class SPK_PREFIX NormalEmitter : public Emitter
+	class NormalEmitter : public Emitter
 	{
 	SPK_IMPLEMENT_OBJECT(NormalEmitter)
 

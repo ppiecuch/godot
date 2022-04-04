@@ -29,7 +29,7 @@ namespace SPK
 namespace IO
 {
 	/** @brief A class to deserialize a System from a spk format stream */
-	class SPK_PREFIX SPKLoader : public Loader
+	class SPKLoader : public Loader
 	{
 	private :
 

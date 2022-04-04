@@ -26,7 +26,7 @@
 
 namespace SPK
 {
-	class SPK_PREFIX Gravity : public Modifier
+	class Gravity : public Modifier
 	{
 	SPK_IMPLEMENT_OBJECT(Gravity)
 
@@ -61,7 +61,7 @@ namespace SPK
         virtual void modify(Group& group,DataSet* dataSet,float deltaTime) const override;
 	};
 
-	class SPK_PREFIX Friction : public Modifier
+	class Friction : public Modifier
 	{
 	SPK_IMPLEMENT_OBJECT(Friction)
 

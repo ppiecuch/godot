@@ -26,7 +26,7 @@
 
 namespace SPK
 {
-	class SPK_PREFIX Box : public Zone
+	class Box : public Zone
 	{
 	SPK_IMPLEMENT_OBJECT(Box)
 

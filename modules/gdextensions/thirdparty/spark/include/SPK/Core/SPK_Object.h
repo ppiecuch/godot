@@ -83,14 +83,14 @@ namespace SPK
 	namespace IO { class IOManager; }
 
 
-    class SPK_PREFIX SPKObjectMeta
+    class SPKObjectMeta
     {
     public:
         virtual void fillAttributeList(std::vector<IO::Attribute>& attributes) const = 0;
     };
 
 	/** @brief The base class of all SPARK objects */
-    class SPK_PREFIX SPKObject : public SPKObjectMeta
+    class SPKObject : public SPKObjectMeta
 	{
 	template<typename T> friend class Ref;
 

@@ -39,7 +39,7 @@ namespace SPK
 	* <br>
 	* A pool of copied emitter is used internally to avoid creating too many emitters.
 	*/
-	class SPK_PREFIX SpawnParticlesAction : public Action
+	class SpawnParticlesAction : public Action
 	{
 	SPK_IMPLEMENT_OBJECT(SpawnParticlesAction)
 

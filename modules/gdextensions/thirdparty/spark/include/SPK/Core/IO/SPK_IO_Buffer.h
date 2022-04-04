@@ -143,8 +143,8 @@ namespace IO
 	template<> inline Color IOBuffer::get() const	{ int32 i = get32(); return *reinterpret_cast<Color*>(&i); }
 	template<> inline bool IOBuffer::get() const	{ return get<char>() != 0; }
 
-	template<> SPK_PREFIX std::string IOBuffer::get<std::string>() const;
-	template<> SPK_PREFIX Vector3D IOBuffer::get<Vector3D>() const;
+	template<>std::string IOBuffer::get<std::string>() const;
+	template<>Vector3D IOBuffer::get<Vector3D>() const;
 }}
 
 #endif

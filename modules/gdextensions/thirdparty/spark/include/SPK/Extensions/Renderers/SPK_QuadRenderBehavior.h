@@ -39,7 +39,7 @@ namespace SPK
 
 
 	/** @brief Base Interface for rendering particles with quads */
-	class SPK_PREFIX QuadRenderBehavior
+	class QuadRenderBehavior
 	{
 	public :
 

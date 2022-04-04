@@ -48,7 +48,7 @@ namespace SPK
 	* Note that this modifier does not update particle's velocity. Therefore particles modified by a vortex does not have any inertia.<br>
 	* This is because defining an accurate vortex in a discrete environment cannot be performed by using the derivatives of the position and velocity.
 	*/
-	class SPK_PREFIX Vortex : public Modifier
+	class Vortex : public Modifier
 	{
 	SPK_IMPLEMENT_OBJECT(Vortex)
 

@@ -40,7 +40,7 @@ namespace SPK
 	* <br>
 	* Note that the normal does not have to be normalized as it is normalized internally when set.
 	*/
-	class SPK_PREFIX Plane : public Zone
+	class Plane : public Zone
 	{
 	SPK_IMPLEMENT_OBJECT(Plane)
 

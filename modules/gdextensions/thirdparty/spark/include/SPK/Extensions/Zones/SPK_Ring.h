@@ -39,7 +39,7 @@ namespace SPK
 	* Note that by having the minimum radius equal to 0, the ring becomes a disk in the universe.<br>
 	* Note that the normal does not have to be normalized as it is normalized internally when set.
 	*/
-	class SPK_PREFIX Ring : public Zone
+	class Ring : public Zone
 	{
 	SPK_IMPLEMENT_OBJECT(Ring)
 

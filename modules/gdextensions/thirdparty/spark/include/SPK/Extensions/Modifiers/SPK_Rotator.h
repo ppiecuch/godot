@@ -36,7 +36,7 @@ namespace SPK
 	* For this modifier to work, the PARAM_ANGLE must be enabled (and can be random in addition but not mutable or interpolated)
 	* and the PARAM_ROTATION_SPEED must be at least enabled in the model of the group of particles that are modified.
 	*/
-	class SPK_PREFIX Rotator : public Modifier
+	class Rotator : public Modifier
 	{
 	SPK_IMPLEMENT_OBJECT(Rotator)
 

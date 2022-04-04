@@ -30,7 +30,7 @@ namespace SPK
 	* @class StraightEmitter
 	* @brief An Emitter that emits in a given direction
 	*/
-	class SPK_PREFIX StraightEmitter : public Emitter
+	class StraightEmitter : public Emitter
 	{
 	SPK_IMPLEMENT_OBJECT(StraightEmitter)
 

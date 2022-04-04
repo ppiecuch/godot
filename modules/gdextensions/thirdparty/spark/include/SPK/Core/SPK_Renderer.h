@@ -51,7 +51,7 @@ namespace SPK
 		SHADER_HINT_GEOMETRY,	/**< Use geometry shader for computation when possible (else fallback to vertex shader if possible) */
 	};
 
-	class SPK_PREFIX Renderer :	public SPKObject,
+	class Renderer :	public SPKObject,
 								public DataHandler
 	{
 	friend class Group;

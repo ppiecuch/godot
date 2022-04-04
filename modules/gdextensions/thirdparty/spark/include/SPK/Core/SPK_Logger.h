@@ -133,7 +133,7 @@ namespace SPK
 	* <br>
 	* 
 	*/
-	class SPK_PREFIX Logger
+	class Logger
 	{
 	public :
 

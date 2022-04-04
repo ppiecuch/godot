@@ -29,7 +29,7 @@ namespace SPK
 namespace IO
 {
 	/** @brief A class to serialize a System in a spk format stream */
-	class SPK_PREFIX SPKSaver : public Saver
+	class SPKSaver : public Saver
 	{
 	private :
 

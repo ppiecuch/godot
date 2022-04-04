@@ -26,7 +26,7 @@
 
 namespace SPK
 {
-	class SPK_PREFIX Obstacle : public ZonedModifier
+	class Obstacle : public ZonedModifier
 	{
 	SPK_IMPLEMENT_OBJECT(Obstacle)
 

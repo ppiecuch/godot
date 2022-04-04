@@ -45,7 +45,7 @@ namespace SPK
 	* <li>...</li>
 	* </ul>
 	*/
-	class SPK_PREFIX SphericEmitter : public Emitter
+	class SphericEmitter : public Emitter
 	{
 	SPK_IMPLEMENT_OBJECT(SphericEmitter)
 

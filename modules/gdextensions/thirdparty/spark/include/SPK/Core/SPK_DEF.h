@@ -30,23 +30,12 @@
 // for windows platform only
 #if defined(WIN32) || defined(_WIN32)
 
-#ifdef SPK_CORE_EXPORT
-#define SPK_PREFIX __declspec(dllexport)
-#elif defined(SPK_IMPORT) || defined(SPK_CORE_IMPORT)
-#define SPK_PREFIX __declspec(dllimport)
-#else
-#define SPK_PREFIX
-#endif // SPK_CORE_EXPORT
-
 #ifdef _MSC_VER
 #pragma warning(disable : 4251) // disables the warning about exporting STL classes in DLLs
 #pragma warning(disable : 4996) // disables the deprecation of some functions
 #pragma warning(disable : 4275) // disables the warning about exporting DLL classes children of non DLL classes
 #endif
 
-// other platforms than windows
-#else
-#define SPK_PREFIX
 #endif
 
 #include "SPK_MemoryTracer.h"
@@ -159,7 +148,7 @@ namespace SPK
 	SPK_DECLARE_ENUM(InterpolationType,SPK_ENUM_INTERPOLATION_TYPE)
 
 	/** A singleton class that holds some static objects needed by SPARK */
-	class SPK_PREFIX SPKContext
+	class SPKContext
 	{
 	public :
 

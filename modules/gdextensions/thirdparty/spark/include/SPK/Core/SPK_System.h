@@ -59,7 +59,7 @@ namespace SPK
 	/**
 	* @brief A class defining a complete system of particles
 	*/
-	class SPK_PREFIX System : public Transformable
+	class System : public Transformable
 	{
 	SPK_IMPLEMENT_OBJECT(System)
 

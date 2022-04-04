@@ -31,7 +31,7 @@ namespace SPK
 namespace IO
 {
 	/** @brief An abstract class to save an entire particle system in a resource */
-	class SPK_PREFIX Saver
+	class Saver
 	{
 	public :
 

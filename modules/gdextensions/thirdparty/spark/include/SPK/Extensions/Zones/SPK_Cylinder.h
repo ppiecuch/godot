@@ -26,7 +26,7 @@
 
 namespace SPK
 {
-	class SPK_PREFIX Cylinder : public Zone
+	class Cylinder : public Zone
 	{
 	SPK_IMPLEMENT_OBJECT(Cylinder)
 

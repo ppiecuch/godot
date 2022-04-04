@@ -28,7 +28,7 @@
 
 namespace SPK
 {
-	class SPK_PREFIX ActionSet : public Action
+	class ActionSet : public Action
 	{
 	SPK_IMPLEMENT_OBJECT(ActionSet)
 

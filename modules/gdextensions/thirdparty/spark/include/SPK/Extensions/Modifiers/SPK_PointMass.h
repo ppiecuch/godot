@@ -34,7 +34,7 @@ namespace SPK
 	* <br>
 	* A positive mass will attract particles while a negative mass whill repel them.
 	*/
-	class SPK_PREFIX PointMass : public Modifier
+	class PointMass : public Modifier
 	{
 	SPK_IMPLEMENT_OBJECT(PointMass)
 

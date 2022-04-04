@@ -48,7 +48,7 @@ namespace SPK
 	* The accuracy of the collisions is better with small update steps.
 	* Therefore try to keep the update time small by for instance multiplying the number of updates per frame.
 	*/
-	class SPK_PREFIX Collider : public Modifier
+	class Collider : public Modifier
 	{
 	SPK_IMPLEMENT_OBJECT(Collider)
 

@@ -50,7 +50,7 @@ namespace SPK
 	* <br>
 	* Note that transforms are not designed to be scale. By using some scales in the transform, the behaviour may be unexpected.
 	*/
-	class SPK_PREFIX Transform
+	class Transform
 	{
 	friend class Transformable;
 

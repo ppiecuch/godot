@@ -33,7 +33,7 @@ namespace SPK
 namespace IO
 {
 	/** @brief An abstract class to load an entire particle system from a resource */
-	class SPK_PREFIX Loader
+	class Loader
 	{
 	public :
 

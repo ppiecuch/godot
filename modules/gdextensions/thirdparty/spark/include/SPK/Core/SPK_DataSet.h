@@ -86,7 +86,7 @@ namespace SPK
 	* datasets are handled by groups and passed to internal datahandlers (typically modifiers and interpolators) when needed.<br> 
 	* datasets life cycles (creation and destruction) are handled by groups.
 	*/
-	class SPK_PREFIX DataSet
+	class DataSet
 	{
 	friend class Group;
 	friend class DataHandler;

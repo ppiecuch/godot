@@ -72,7 +72,7 @@ namespace IO
 	};
 
 	/** @brief A class to serialize a System in an XML format */
-	class SPK_PREFIX XMLSaver : public Saver
+	class XMLSaver : public Saver
 	{
 	public :
 

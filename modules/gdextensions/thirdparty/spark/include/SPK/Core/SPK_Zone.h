@@ -51,7 +51,7 @@ namespace SPK
 
 	SPK_DECLARE_ENUM(ZoneTest,SPK_ENUM_ZONE_TEST)
 
-	class SPK_PREFIX Zone : public Transformable
+	class Zone : public Transformable
 	{
 
 	SPK_START_DESCRIPTION
