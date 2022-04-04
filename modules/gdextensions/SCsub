@@ -178,7 +178,7 @@ if is_enabled("opensteer"):
     env_module.Append(CPPPATH=["thirdparty/opensteer/include"])
 
 if is_enabled("sparkparticles"):
-    thirdparty_sources += Glob("thirdparty/spark/src/**/*.cpp")
+    thirdparty_sources += Glob("thirdparty/spark/src/**/*.cpp") + Glob("thirdparty/spark/demo/*.c")
     env_module.Append(CPPPATH=["thirdparty/spark/include", "thirdparty/spark/include/SPK", "thirdparty/spark/src"])
 
 if is_enabled("flashdb"):
