@@ -45,8 +45,8 @@
 
 /// Rotation ball
 
-enum { xcv_rotate_stacks = 16 }; // 32
 enum {
+	xcv_rotate_stacks = 16, // 32
 	xcv_rotate_speed = 2,
 	xcv_transl_speed1 = 10,
 	xcv_transl_speed2 = 50,
