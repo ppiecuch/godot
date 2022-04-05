@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  touch_button.h                                                       */
+/*  thumb_wheel.h                                                        */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -66,7 +66,6 @@ public:
 	ThumbWheelH();
 	~ThumbWheelH() {}
 };
-
 
 class ThumbWheelV : public Control {
 	GDCLASS(ThumbWheelV, Control);
