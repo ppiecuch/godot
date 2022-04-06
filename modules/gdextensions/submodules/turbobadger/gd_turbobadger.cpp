@@ -483,10 +483,12 @@ void GdTurboBadgerCore::release() {
 	}
 }
 
+#include "turbobadger/resources/default_theme.inc"
+
 GdTurboBadgerCore::GdTurboBadgerCore() {
 	_ref = 0;
 	// register default theme files
-#include "turbobadger/resources/default_theme.inc"
+	_register_theme_files();
 }
 
 GdTurboBadgerCore::~GdTurboBadgerCore() {

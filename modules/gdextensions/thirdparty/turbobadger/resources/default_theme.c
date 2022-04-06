@@ -3,7 +3,7 @@
 #define INCBIN_STYLE INCBIN_STYLE_SNAKE
 #define INCBIN_SILENCE_BITCODE_WARNING
 
-#include "common/incbin.h"
+#include "misc/incbin.h"
 
 #define RES_ROOT "thirdparty/turbobadger/resources/"
 

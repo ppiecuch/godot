@@ -1,3 +1,9 @@
+#ifndef SPARK_DEMO_H
+#define SPARK_DEMO_H
+
+extern "C" const unsigned char **_spark_demo_xml[];
+extern "C" const unsigned int *_spark_demo_xml_size[];
+
 enum {
 	DEMO_LAVA_SPLASH_PICKUPAMMO,
 	DEMO_PLAYERBOT_HIT_WARNING,
@@ -161,3 +167,8 @@ enum {
 	DEMO_ROCKET_SINKING,
 	DEMO_KAMIKAZE_HIT,
 };
+
+#define SPK_DEMO_XML(ID) *_spark_demo_xml[ID]
+#define SPK_DEMO_XML_SIZE(ID) *_spark_demo_xml_size[ID]
+
+#endif // SPARK_DEMO_H

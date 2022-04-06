@@ -1,314 +1,651 @@
-#undef INCBIN_PREFIX
-#define INCBIN_PREFIX
-#define INCBIN_STYLE INCBIN_STYLE_SNAKE
-#define INCBIN_SILENCE_BITCODE_WARNING
+extern const unsigned char *lava_splash_pickupammo_data;
+extern const unsigned char *playerbot_hit_warning_data;
+extern const unsigned char *steam_stream_data;
+extern const unsigned char *flame_death_data;
+extern const unsigned char *emp_grenade_data;
+extern const unsigned char *collecteffect_health_data;
+extern const unsigned char *generator_circle_data;
+extern const unsigned char *zerogravityfield_circle_range_data;
+extern const unsigned char *grenade_hit_data;
+extern const unsigned char *thruster_sparktrail_data;
+extern const unsigned char *rocket_underwater_data;
+extern const unsigned char *dust_foreground_data;
+extern const unsigned char *flamethrower_pilotlight_data;
+extern const unsigned char *playerbot_explosion_underwater_data;
+extern const unsigned char *pickup_zerogravity_data;
+extern const unsigned char *pickup_data;
+extern const unsigned char *emp_disappear_data;
+extern const unsigned char *shotgun_bullet_data;
+extern const unsigned char *forcefield_wind_data;
+extern const unsigned char *no_ammo_data;
+extern const unsigned char *destructible_explosion_tllight_data;
+extern const unsigned char *pickup_health_collected_data;
+extern const unsigned char *destructible_trafficcone_zerog_data;
+extern const unsigned char *enemy_explosion_base_zerog_data;
+extern const unsigned char *bullet_casing_zerogravity_data;
+extern const unsigned char *hit_sparks_data;
+extern const unsigned char *destructible_explosion_tllight_zerog_data;
+extern const unsigned char *water_splash_bullet_data;
+extern const unsigned char *thruster_boosttrail_data;
+extern const unsigned char *thruster_flickering_data;
+extern const unsigned char *turret_flying_hit_data;
+extern const unsigned char *enemy_explosion_base_data;
+extern const unsigned char *missile_homing_exhaust_data;
+extern const unsigned char *virusuploader_failed_data;
+extern const unsigned char *dll_booster_happy_data;
+extern const unsigned char *flamethrower_embers_data;
+extern const unsigned char *bullet_enemy_hit_entity_data;
+extern const unsigned char *kamikaze_active_data;
+extern const unsigned char *enemy_explosion_kamikazebot_data;
+extern const unsigned char *logo_rive_electricity_loading_data;
+extern const unsigned char *bullet_casing_data;
+extern const unsigned char *nutsnbolts_collecttrail_data;
+extern const unsigned char *turret_engine_blast_data;
+extern const unsigned char *water_splash_exit_data;
+extern const unsigned char *virusuploader_success_data;
+extern const unsigned char *pickup_health_data;
+extern const unsigned char *sightbeam_end_data;
+extern const unsigned char *muzzleflash_data;
+extern const unsigned char *enemy_explosion_kamikazebot_zerog_data;
+extern const unsigned char *playerbot_hit_data;
+extern const unsigned char *asteroids_data;
+extern const unsigned char *enemy_explosion_turret_hackable_data;
+extern const unsigned char *emp_explosion_data;
+extern const unsigned char *destructible_explosion_crateright_zerog_data;
+extern const unsigned char *bullet_hit_entity_data;
+extern const unsigned char *healeffect_data;
+extern const unsigned char *water_splash_enter_data;
+extern const unsigned char *dll_booster_normal_data;
+extern const unsigned char *hit_warning_data;
+extern const unsigned char *enemy_explosion_turret_data;
+extern const unsigned char *collecteffect_data;
+extern const unsigned char *dust_data;
+extern const unsigned char *thruster_airboost_data;
+extern const unsigned char *bullet_underwater_data;
+extern const unsigned char *asteroid_debris_data;
+extern const unsigned char *enemy_explosion_turret_zerog_data;
+extern const unsigned char *smoke_rewind_data;
+extern const unsigned char *destructible_camerawall_hit_data;
+extern const unsigned char *grenade_trail_data;
+extern const unsigned char *submerged_bubbles_data;
+extern const unsigned char *turret_hit_data;
+extern const unsigned char *asteroid_hit_data;
+extern const unsigned char *lava_splash_flame_data;
+extern const unsigned char *hit_electricity_data;
+extern const unsigned char *bullet_hit_shield_indestructible_data;
+extern const unsigned char *destructible_explosion_camera_data;
+extern const unsigned char *destructible_tllight_hit_data;
+extern const unsigned char *enemy_explosion_dll_data;
+extern const unsigned char *destructible_explosion_base_data;
+extern const unsigned char *missile_smoketrail_data;
+extern const unsigned char *pickup_collected_data;
+extern const unsigned char *playerbot_land_data;
+extern const unsigned char *pickup_health_zerogravity_data;
+extern const unsigned char *destructible_crate_smoke_data;
+extern const unsigned char *water_underfall_data;
+extern const unsigned char *shotgun_underwater_data;
+extern const unsigned char *muzzleflash_player_data;
+extern const unsigned char *playerbot_hit_electricity_data;
+extern const unsigned char *cockroach_crush_data;
+extern const unsigned char *playerbot_explosion_data;
+extern const unsigned char *playerbot_lavahit_data;
+extern const unsigned char *enemy_explosion_turret_hackable_zerog_data;
+extern const unsigned char *nutsnbolts_effect_data;
+extern const unsigned char *dll_enableing_data;
+extern const unsigned char *destructible_trafficcone_data;
+extern const unsigned char *asteroid_belt_front_data;
+extern const unsigned char *muzzleflash_player_homingmissile_data;
+extern const unsigned char *thruster_boost_data;
+extern const unsigned char *grenade_land_data;
+extern const unsigned char *playerbot_hit_chunks_data;
+extern const unsigned char *water_flow_expand_left_data;
+extern const unsigned char *bullet_hit_asteroid_data;
+extern const unsigned char *destructible_crate_hit_data;
+extern const unsigned char *thruster_smoketrail_data;
+extern const unsigned char *asteroid_cooldown_data;
+extern const unsigned char *playerbot_explosion_zerog_data;
+extern const unsigned char *generator_coil_data;
+extern const unsigned char *water_splash_missile_data;
+extern const unsigned char *purple_laserbeam_end_data;
+extern const unsigned char *dust_background_data;
+extern const unsigned char *dll_hit_data;
+extern const unsigned char *purple_laserbeam_start_data;
+extern const unsigned char *nutsnbolts_collected_data;
+extern const unsigned char *zerogravityfield_enter_data;
+extern const unsigned char *bullet_casing_underwater_data;
+extern const unsigned char *grenade_explosion_data;
+extern const unsigned char *bullet_sparktrail_data;
+extern const unsigned char *grenade_warning_data;
+extern const unsigned char *virusupload_binary_data;
+extern const unsigned char *missile_exhaust_data;
+extern const unsigned char *dll_booster_angry_data;
+extern const unsigned char *thruster_data;
+extern const unsigned char *purple_laserbeam_endonwater_data;
+extern const unsigned char *dll_working_result_data;
+extern const unsigned char *destructible_cablesnap_data;
+extern const unsigned char *destructible_explosion_crateleft_zerog_data;
+extern const unsigned char *flame_enemy_hit_wall_data;
+extern const unsigned char *playerbot_hit_smoke_data;
+extern const unsigned char *jet_engine_data;
+extern const unsigned char *bullet_hit_wall_data;
+extern const unsigned char *water_surface_data;
+extern const unsigned char *forcefield_water_data;
+extern const unsigned char *energy_malfunction_data;
+extern const unsigned char *lava_splash_pickuphealth_data;
+extern const unsigned char *asteroid_belt_data;
+extern const unsigned char *destructible_explosion_base_zerog_data;
+extern const unsigned char *destructible_explosion_crateleft_data;
+extern const unsigned char *water_double_fall_data;
+extern const unsigned char *destructible_explosion_camera_zerog_data;
+extern const unsigned char *dll_booster_sad_data;
+extern const unsigned char *thruster_underwater_data;
+extern const unsigned char *steam_rewind_gray_data;
+extern const unsigned char *destructible_controlpanel_hit_data;
+extern const unsigned char *zerogravityfield_circle_center_data;
+extern const unsigned char *thruster_zerogravity_data;
+extern const unsigned char *grenade_defused_data;
+extern const unsigned char *explosion_data;
+extern const unsigned char *kamikaze_spot_playerbot_data;
+extern const unsigned char *asteroid_explosion_data;
+extern const unsigned char *destructible_explosion_crateright_data;
+extern const unsigned char *water_surface_idle_data;
+extern const unsigned char *dazed_data;
+extern const unsigned char *bullet_enemy_hit_wall_data;
+extern const unsigned char *lava_splash_bullet_data;
+extern const unsigned char *bullet_sinking_data;
+extern const unsigned char *playerbot_walk_data;
+extern const unsigned char *dust_loading_data;
+extern const unsigned char *grenade_glow_data;
+extern const unsigned char *aircompressor_steam_data;
+extern const unsigned char *rocket_sinking_data;
+extern const unsigned char *kamikaze_hit_data;
 
-#include "common/incbin.h"
+const unsigned char **_spark_demo_xml[] = {
+	&lava_splash_pickupammo_data,
+	&playerbot_hit_warning_data,
+	&steam_stream_data,
+	&flame_death_data,
+	&emp_grenade_data,
+	&collecteffect_health_data,
+	&generator_circle_data,
+	&zerogravityfield_circle_range_data,
+	&grenade_hit_data,
+	&thruster_sparktrail_data,
+	&rocket_underwater_data,
+	&dust_foreground_data,
+	&flamethrower_pilotlight_data,
+	&playerbot_explosion_underwater_data,
+	&pickup_zerogravity_data,
+	&pickup_data,
+	&emp_disappear_data,
+	&shotgun_bullet_data,
+	&forcefield_wind_data,
+	&no_ammo_data,
+	&destructible_explosion_tllight_data,
+	&pickup_health_collected_data,
+	&destructible_trafficcone_zerog_data,
+	&enemy_explosion_base_zerog_data,
+	&bullet_casing_zerogravity_data,
+	&hit_sparks_data,
+	&destructible_explosion_tllight_zerog_data,
+	&water_splash_bullet_data,
+	&thruster_boosttrail_data,
+	&thruster_flickering_data,
+	&turret_flying_hit_data,
+	&enemy_explosion_base_data,
+	&missile_homing_exhaust_data,
+	&virusuploader_failed_data,
+	&dll_booster_happy_data,
+	&flamethrower_embers_data,
+	&bullet_enemy_hit_entity_data,
+	&kamikaze_active_data,
+	&enemy_explosion_kamikazebot_data,
+	&logo_rive_electricity_loading_data,
+	&bullet_casing_data,
+	&nutsnbolts_collecttrail_data,
+	&turret_engine_blast_data,
+	&water_splash_exit_data,
+	&virusuploader_success_data,
+	&pickup_health_data,
+	&sightbeam_end_data,
+	&muzzleflash_data,
+	&enemy_explosion_kamikazebot_zerog_data,
+	&playerbot_hit_data,
+	&asteroids_data,
+	&enemy_explosion_turret_hackable_data,
+	&emp_explosion_data,
+	&destructible_explosion_crateright_zerog_data,
+	&bullet_hit_entity_data,
+	&healeffect_data,
+	&water_splash_enter_data,
+	&dll_booster_normal_data,
+	&hit_warning_data,
+	&enemy_explosion_turret_data,
+	&collecteffect_data,
+	&dust_data,
+	&thruster_airboost_data,
+	&bullet_underwater_data,
+	&asteroid_debris_data,
+	&enemy_explosion_turret_zerog_data,
+	&smoke_rewind_data,
+	&destructible_camerawall_hit_data,
+	&grenade_trail_data,
+	&submerged_bubbles_data,
+	&turret_hit_data,
+	&asteroid_hit_data,
+	&lava_splash_flame_data,
+	&hit_electricity_data,
+	&bullet_hit_shield_indestructible_data,
+	&destructible_explosion_camera_data,
+	&destructible_tllight_hit_data,
+	&enemy_explosion_dll_data,
+	&destructible_explosion_base_data,
+	&missile_smoketrail_data,
+	&pickup_collected_data,
+	&playerbot_land_data,
+	&pickup_health_zerogravity_data,
+	&destructible_crate_smoke_data,
+	&water_underfall_data,
+	&shotgun_underwater_data,
+	&muzzleflash_player_data,
+	&playerbot_hit_electricity_data,
+	&cockroach_crush_data,
+	&playerbot_explosion_data,
+	&playerbot_lavahit_data,
+	&enemy_explosion_turret_hackable_zerog_data,
+	&nutsnbolts_effect_data,
+	&dll_enableing_data,
+	&destructible_trafficcone_data,
+	&asteroid_belt_front_data,
+	&muzzleflash_player_homingmissile_data,
+	&thruster_boost_data,
+	&grenade_land_data,
+	&playerbot_hit_chunks_data,
+	&water_flow_expand_left_data,
+	&bullet_hit_asteroid_data,
+	&destructible_crate_hit_data,
+	&thruster_smoketrail_data,
+	&asteroid_cooldown_data,
+	&playerbot_explosion_zerog_data,
+	&generator_coil_data,
+	&water_splash_missile_data,
+	&purple_laserbeam_end_data,
+	&dust_background_data,
+	&dll_hit_data,
+	&purple_laserbeam_start_data,
+	&nutsnbolts_collected_data,
+	&zerogravityfield_enter_data,
+	&bullet_casing_underwater_data,
+	&grenade_explosion_data,
+	&bullet_sparktrail_data,
+	&grenade_warning_data,
+	&virusupload_binary_data,
+	&missile_exhaust_data,
+	&dll_booster_angry_data,
+	&thruster_data,
+	&purple_laserbeam_endonwater_data,
+	&dll_working_result_data,
+	&destructible_cablesnap_data,
+	&destructible_explosion_crateleft_zerog_data,
+	&flame_enemy_hit_wall_data,
+	&playerbot_hit_smoke_data,
+	&jet_engine_data,
+	&bullet_hit_wall_data,
+	&water_surface_data,
+	&forcefield_water_data,
+	&energy_malfunction_data,
+	&lava_splash_pickuphealth_data,
+	&asteroid_belt_data,
+	&destructible_explosion_base_zerog_data,
+	&destructible_explosion_crateleft_data,
+	&water_double_fall_data,
+	&destructible_explosion_camera_zerog_data,
+	&dll_booster_sad_data,
+	&thruster_underwater_data,
+	&steam_rewind_gray_data,
+	&destructible_controlpanel_hit_data,
+	&zerogravityfield_circle_center_data,
+	&thruster_zerogravity_data,
+	&grenade_defused_data,
+	&explosion_data,
+	&kamikaze_spot_playerbot_data,
+	&asteroid_explosion_data,
+	&destructible_explosion_crateright_data,
+	&water_surface_idle_data,
+	&dazed_data,
+	&bullet_enemy_hit_wall_data,
+	&lava_splash_bullet_data,
+	&bullet_sinking_data,
+	&playerbot_walk_data,
+	&dust_loading_data,
+	&grenade_glow_data,
+	&aircompressor_steam_data,
+	&rocket_sinking_data,
+	&kamikaze_hit_data,
+};
 
-#define RES_ROOT "thirdparty/spark/demo"
+extern const unsigned int lava_splash_pickupammo_size;
+extern const unsigned int playerbot_hit_warning_size;
+extern const unsigned int steam_stream_size;
+extern const unsigned int flame_death_size;
+extern const unsigned int emp_grenade_size;
+extern const unsigned int collecteffect_health_size;
+extern const unsigned int generator_circle_size;
+extern const unsigned int zerogravityfield_circle_range_size;
+extern const unsigned int grenade_hit_size;
+extern const unsigned int thruster_sparktrail_size;
+extern const unsigned int rocket_underwater_size;
+extern const unsigned int dust_foreground_size;
+extern const unsigned int flamethrower_pilotlight_size;
+extern const unsigned int playerbot_explosion_underwater_size;
+extern const unsigned int pickup_zerogravity_size;
+extern const unsigned int pickup_size;
+extern const unsigned int emp_disappear_size;
+extern const unsigned int shotgun_bullet_size;
+extern const unsigned int forcefield_wind_size;
+extern const unsigned int no_ammo_size;
+extern const unsigned int destructible_explosion_tllight_size;
+extern const unsigned int pickup_health_collected_size;
+extern const unsigned int destructible_trafficcone_zerog_size;
+extern const unsigned int enemy_explosion_base_zerog_size;
+extern const unsigned int bullet_casing_zerogravity_size;
+extern const unsigned int hit_sparks_size;
+extern const unsigned int destructible_explosion_tllight_zerog_size;
+extern const unsigned int water_splash_bullet_size;
+extern const unsigned int thruster_boosttrail_size;
+extern const unsigned int thruster_flickering_size;
+extern const unsigned int turret_flying_hit_size;
+extern const unsigned int enemy_explosion_base_size;
+extern const unsigned int missile_homing_exhaust_size;
+extern const unsigned int virusuploader_failed_size;
+extern const unsigned int dll_booster_happy_size;
+extern const unsigned int flamethrower_embers_size;
+extern const unsigned int bullet_enemy_hit_entity_size;
+extern const unsigned int kamikaze_active_size;
+extern const unsigned int enemy_explosion_kamikazebot_size;
+extern const unsigned int logo_rive_electricity_loading_size;
+extern const unsigned int bullet_casing_size;
+extern const unsigned int nutsnbolts_collecttrail_size;
+extern const unsigned int turret_engine_blast_size;
+extern const unsigned int water_splash_exit_size;
+extern const unsigned int virusuploader_success_size;
+extern const unsigned int pickup_health_size;
+extern const unsigned int sightbeam_end_size;
+extern const unsigned int muzzleflash_size;
+extern const unsigned int enemy_explosion_kamikazebot_zerog_size;
+extern const unsigned int playerbot_hit_size;
+extern const unsigned int asteroids_size;
+extern const unsigned int enemy_explosion_turret_hackable_size;
+extern const unsigned int emp_explosion_size;
+extern const unsigned int destructible_explosion_crateright_zerog_size;
+extern const unsigned int bullet_hit_entity_size;
+extern const unsigned int healeffect_size;
+extern const unsigned int water_splash_enter_size;
+extern const unsigned int dll_booster_normal_size;
+extern const unsigned int hit_warning_size;
+extern const unsigned int enemy_explosion_turret_size;
+extern const unsigned int collecteffect_size;
+extern const unsigned int dust_size;
+extern const unsigned int thruster_airboost_size;
+extern const unsigned int bullet_underwater_size;
+extern const unsigned int asteroid_debris_size;
+extern const unsigned int enemy_explosion_turret_zerog_size;
+extern const unsigned int smoke_rewind_size;
+extern const unsigned int destructible_camerawall_hit_size;
+extern const unsigned int grenade_trail_size;
+extern const unsigned int submerged_bubbles_size;
+extern const unsigned int turret_hit_size;
+extern const unsigned int asteroid_hit_size;
+extern const unsigned int lava_splash_flame_size;
+extern const unsigned int hit_electricity_size;
+extern const unsigned int bullet_hit_shield_indestructible_size;
+extern const unsigned int destructible_explosion_camera_size;
+extern const unsigned int destructible_tllight_hit_size;
+extern const unsigned int enemy_explosion_dll_size;
+extern const unsigned int destructible_explosion_base_size;
+extern const unsigned int missile_smoketrail_size;
+extern const unsigned int pickup_collected_size;
+extern const unsigned int playerbot_land_size;
+extern const unsigned int pickup_health_zerogravity_size;
+extern const unsigned int destructible_crate_smoke_size;
+extern const unsigned int water_underfall_size;
+extern const unsigned int shotgun_underwater_size;
+extern const unsigned int muzzleflash_player_size;
+extern const unsigned int playerbot_hit_electricity_size;
+extern const unsigned int cockroach_crush_size;
+extern const unsigned int playerbot_explosion_size;
+extern const unsigned int playerbot_lavahit_size;
+extern const unsigned int enemy_explosion_turret_hackable_zerog_size;
+extern const unsigned int nutsnbolts_effect_size;
+extern const unsigned int dll_enableing_size;
+extern const unsigned int destructible_trafficcone_size;
+extern const unsigned int asteroid_belt_front_size;
+extern const unsigned int muzzleflash_player_homingmissile_size;
+extern const unsigned int thruster_boost_size;
+extern const unsigned int grenade_land_size;
+extern const unsigned int playerbot_hit_chunks_size;
+extern const unsigned int water_flow_expand_left_size;
+extern const unsigned int bullet_hit_asteroid_size;
+extern const unsigned int destructible_crate_hit_size;
+extern const unsigned int thruster_smoketrail_size;
+extern const unsigned int asteroid_cooldown_size;
+extern const unsigned int playerbot_explosion_zerog_size;
+extern const unsigned int generator_coil_size;
+extern const unsigned int water_splash_missile_size;
+extern const unsigned int purple_laserbeam_end_size;
+extern const unsigned int dust_background_size;
+extern const unsigned int dll_hit_size;
+extern const unsigned int purple_laserbeam_start_size;
+extern const unsigned int nutsnbolts_collected_size;
+extern const unsigned int zerogravityfield_enter_size;
+extern const unsigned int bullet_casing_underwater_size;
+extern const unsigned int grenade_explosion_size;
+extern const unsigned int bullet_sparktrail_size;
+extern const unsigned int grenade_warning_size;
+extern const unsigned int virusupload_binary_size;
+extern const unsigned int missile_exhaust_size;
+extern const unsigned int dll_booster_angry_size;
+extern const unsigned int thruster_size;
+extern const unsigned int purple_laserbeam_endonwater_size;
+extern const unsigned int dll_working_result_size;
+extern const unsigned int destructible_cablesnap_size;
+extern const unsigned int destructible_explosion_crateleft_zerog_size;
+extern const unsigned int flame_enemy_hit_wall_size;
+extern const unsigned int playerbot_hit_smoke_size;
+extern const unsigned int jet_engine_size;
+extern const unsigned int bullet_hit_wall_size;
+extern const unsigned int water_surface_size;
+extern const unsigned int forcefield_water_size;
+extern const unsigned int energy_malfunction_size;
+extern const unsigned int lava_splash_pickuphealth_size;
+extern const unsigned int asteroid_belt_size;
+extern const unsigned int destructible_explosion_base_zerog_size;
+extern const unsigned int destructible_explosion_crateleft_size;
+extern const unsigned int water_double_fall_size;
+extern const unsigned int destructible_explosion_camera_zerog_size;
+extern const unsigned int dll_booster_sad_size;
+extern const unsigned int thruster_underwater_size;
+extern const unsigned int steam_rewind_gray_size;
+extern const unsigned int destructible_controlpanel_hit_size;
+extern const unsigned int zerogravityfield_circle_center_size;
+extern const unsigned int thruster_zerogravity_size;
+extern const unsigned int grenade_defused_size;
+extern const unsigned int explosion_size;
+extern const unsigned int kamikaze_spot_playerbot_size;
+extern const unsigned int asteroid_explosion_size;
+extern const unsigned int destructible_explosion_crateright_size;
+extern const unsigned int water_surface_idle_size;
+extern const unsigned int dazed_size;
+extern const unsigned int bullet_enemy_hit_wall_size;
+extern const unsigned int lava_splash_bullet_size;
+extern const unsigned int bullet_sinking_size;
+extern const unsigned int playerbot_walk_size;
+extern const unsigned int dust_loading_size;
+extern const unsigned int grenade_glow_size;
+extern const unsigned int aircompressor_steam_size;
+extern const unsigned int rocket_sinking_size;
+extern const unsigned int kamikaze_hit_size;
 
-INCBIN(lava_splash_pickupammo, RES_ROOT "/particles/lava_splash_pickupammo.xml");
-INCBIN(playerbot_hit_warning, RES_ROOT "/particles/playerbot_hit_warning.xml");
-INCBIN(steam_stream, RES_ROOT "/particles/steam_stream.xml");
-INCBIN(flame_death, RES_ROOT "/particles/flame_death.xml");
-INCBIN(emp_grenade, RES_ROOT "/particles/emp_grenade.xml");
-INCBIN(collecteffect_health, RES_ROOT "/particles/collecteffect_health.xml");
-INCBIN(generator_circle, RES_ROOT "/particles/generator_circle.xml");
-INCBIN(zerogravityfield_circle_range, RES_ROOT "/particles/zerogravityfield_circle_range.xml");
-INCBIN(grenade_hit, RES_ROOT "/particles/grenade_hit.xml");
-INCBIN(thruster_sparktrail, RES_ROOT "/particles/thruster_sparktrail.xml");
-INCBIN(rocket_underwater, RES_ROOT "/particles/rocket_underwater.xml");
-INCBIN(dust_foreground, RES_ROOT "/particles/dust_foreground.xml");
-INCBIN(flamethrower_pilotlight, RES_ROOT "/particles/flamethrower_pilotlight.xml");
-INCBIN(playerbot_explosion_underwater, RES_ROOT "/particles/playerbot_explosion_underwater.xml");
-INCBIN(pickup_zerogravity, RES_ROOT "/particles/pickup_zerogravity.xml");
-INCBIN(pickup, RES_ROOT "/particles/pickup.xml");
-INCBIN(emp_disappear, RES_ROOT "/particles/emp_disappear.xml");
-INCBIN(shotgun_bullet, RES_ROOT "/particles/shotgun_bullet.xml");
-INCBIN(forcefield_wind, RES_ROOT "/particles/forcefield_wind.xml");
-INCBIN(no_ammo, RES_ROOT "/particles/no_ammo.xml");
-INCBIN(destructible_explosion_tllight, RES_ROOT "/particles/destructible_explosion_tllight.xml");
-INCBIN(pickup_health_collected, RES_ROOT "/particles/pickup_health_collected.xml");
-INCBIN(destructible_trafficcone_zerog, RES_ROOT "/particles/destructible_trafficcone_zerog.xml");
-INCBIN(enemy_explosion_base_zerog, RES_ROOT "/particles/enemy_explosion_base_zerog.xml");
-INCBIN(bullet_casing_zerogravity, RES_ROOT "/particles/bullet_casing_zerogravity.xml");
-INCBIN(hit_sparks, RES_ROOT "/particles/hit_sparks.xml");
-INCBIN(destructible_explosion_tllight_zerog, RES_ROOT "/particles/destructible_explosion_tllight_zerog.xml");
-INCBIN(water_splash_bullet, RES_ROOT "/particles/water_splash_bullet.xml");
-INCBIN(thruster_boosttrail, RES_ROOT "/particles/thruster_boosttrail.xml");
-INCBIN(thruster_flickering, RES_ROOT "/particles/thruster_flickering.xml");
-INCBIN(turret_flying_hit, RES_ROOT "/particles/turret_flying_hit.xml");
-INCBIN(enemy_explosion_base, RES_ROOT "/particles/enemy_explosion_base.xml");
-INCBIN(missile_homing_exhaust, RES_ROOT "/particles/missile_homing_exhaust.xml");
-INCBIN(virusuploader_failed, RES_ROOT "/particles/virusuploader_failed.xml");
-INCBIN(dll_booster_happy, RES_ROOT "/particles/dll_booster_happy.xml");
-INCBIN(flamethrower_embers, RES_ROOT "/particles/flamethrower_embers.xml");
-INCBIN(bullet_enemy_hit_entity, RES_ROOT "/particles/bullet_enemy_hit_entity.xml");
-INCBIN(kamikaze_active, RES_ROOT "/particles/kamikaze_active.xml");
-INCBIN(enemy_explosion_kamikazebot, RES_ROOT "/particles/enemy_explosion_kamikazebot.xml");
-INCBIN(logo_rive_electricity_loading, RES_ROOT "/particles/logo_rive_electricity_loading.xml");
-INCBIN(bullet_casing, RES_ROOT "/particles/bullet_casing.xml");
-INCBIN(nutsnbolts_collecttrail, RES_ROOT "/particles/nutsnbolts_collecttrail.xml");
-INCBIN(turret_engine_blast, RES_ROOT "/particles/turret_engine_blast.xml");
-INCBIN(water_splash_exit, RES_ROOT "/particles/water_splash_exit.xml");
-INCBIN(virusuploader_success, RES_ROOT "/particles/virusuploader_success.xml");
-INCBIN(pickup_health, RES_ROOT "/particles/pickup_health.xml");
-INCBIN(sightbeam_end, RES_ROOT "/particles/sightbeam_end.xml");
-INCBIN(muzzleflash, RES_ROOT "/particles/muzzleflash.xml");
-INCBIN(enemy_explosion_kamikazebot_zerog, RES_ROOT "/particles/enemy_explosion_kamikazebot_zerog.xml");
-INCBIN(playerbot_hit, RES_ROOT "/particles/playerbot_hit.xml");
-INCBIN(asteroids, RES_ROOT "/particles/asteroids.xml");
-INCBIN(enemy_explosion_turret_hackable, RES_ROOT "/particles/enemy_explosion_turret_hackable.xml");
-INCBIN(emp_explosion, RES_ROOT "/particles/emp_explosion.xml");
-INCBIN(destructible_explosion_crateright_zerog, RES_ROOT "/particles/destructible_explosion_crateright_zerog.xml");
-INCBIN(bullet_hit_entity, RES_ROOT "/particles/bullet_hit_entity.xml");
-INCBIN(healeffect, RES_ROOT "/particles/healeffect.xml");
-INCBIN(water_splash_enter, RES_ROOT "/particles/water_splash_enter.xml");
-INCBIN(dll_booster_normal, RES_ROOT "/particles/dll_booster_normal.xml");
-INCBIN(hit_warning, RES_ROOT "/particles/hit_warning.xml");
-INCBIN(enemy_explosion_turret, RES_ROOT "/particles/enemy_explosion_turret.xml");
-INCBIN(collecteffect, RES_ROOT "/particles/collecteffect.xml");
-INCBIN(dust, RES_ROOT "/particles/dust.xml");
-INCBIN(thruster_airboost, RES_ROOT "/particles/thruster_airboost.xml");
-INCBIN(bullet_underwater, RES_ROOT "/particles/bullet_underwater.xml");
-INCBIN(asteroid_debris, RES_ROOT "/particles/asteroid_debris.xml");
-INCBIN(enemy_explosion_turret_zerog, RES_ROOT "/particles/enemy_explosion_turret_zerog.xml");
-INCBIN(smoke_rewind, RES_ROOT "/particles/smoke_rewind.xml");
-INCBIN(destructible_camerawall_hit, RES_ROOT "/particles/destructible_camerawall_hit.xml");
-INCBIN(grenade_trail, RES_ROOT "/particles/grenade_trail.xml");
-INCBIN(submerged_bubbles, RES_ROOT "/particles/submerged_bubbles.xml");
-INCBIN(turret_hit, RES_ROOT "/particles/turret_hit.xml");
-INCBIN(asteroid_hit, RES_ROOT "/particles/asteroid_hit.xml");
-INCBIN(lava_splash_flame, RES_ROOT "/particles/lava_splash_flame.xml");
-INCBIN(hit_electricity, RES_ROOT "/particles/hit_electricity.xml");
-INCBIN(bullet_hit_shield_indestructible, RES_ROOT "/particles/bullet_hit_shield_indestructible.xml");
-INCBIN(destructible_explosion_camera, RES_ROOT "/particles/destructible_explosion_camera.xml");
-INCBIN(destructible_tllight_hit, RES_ROOT "/particles/destructible_tllight_hit.xml");
-INCBIN(enemy_explosion_dll, RES_ROOT "/particles/enemy_explosion_dll.xml");
-INCBIN(destructible_explosion_base, RES_ROOT "/particles/destructible_explosion_base.xml");
-INCBIN(missile_smoketrail, RES_ROOT "/particles/missile_smoketrail.xml");
-INCBIN(pickup_collected, RES_ROOT "/particles/pickup_collected.xml");
-INCBIN(playerbot_land, RES_ROOT "/particles/playerbot_land.xml");
-INCBIN(pickup_health_zerogravity, RES_ROOT "/particles/pickup_health_zerogravity.xml");
-INCBIN(destructible_crate_smoke, RES_ROOT "/particles/destructible_crate_smoke.xml");
-INCBIN(water_underfall, RES_ROOT "/particles/water_underfall.xml");
-INCBIN(shotgun_underwater, RES_ROOT "/particles/shotgun_underwater.xml");
-INCBIN(muzzleflash_player, RES_ROOT "/particles/muzzleflash_player.xml");
-INCBIN(playerbot_hit_electricity, RES_ROOT "/particles/playerbot_hit_electricity.xml");
-INCBIN(cockroach_crush, RES_ROOT "/particles/cockroach_crush.xml");
-INCBIN(playerbot_explosion, RES_ROOT "/particles/playerbot_explosion.xml");
-INCBIN(playerbot_lavahit, RES_ROOT "/particles/playerbot_lavahit.xml");
-INCBIN(enemy_explosion_turret_hackable_zerog, RES_ROOT "/particles/enemy_explosion_turret_hackable_zerog.xml");
-INCBIN(nutsnbolts_effect, RES_ROOT "/particles/nutsnbolts_effect.xml");
-INCBIN(dll_enableing, RES_ROOT "/particles/dll_enableing.xml");
-INCBIN(destructible_trafficcone, RES_ROOT "/particles/destructible_trafficcone.xml");
-INCBIN(asteroid_belt_front, RES_ROOT "/particles/asteroid_belt_front.xml");
-INCBIN(muzzleflash_player_homingmissile, RES_ROOT "/particles/muzzleflash_player_homingmissile.xml");
-INCBIN(thruster_boost, RES_ROOT "/particles/thruster_boost.xml");
-INCBIN(grenade_land, RES_ROOT "/particles/grenade_land.xml");
-INCBIN(playerbot_hit_chunks, RES_ROOT "/particles/playerbot_hit_chunks.xml");
-INCBIN(water_flow_expand_left, RES_ROOT "/particles/water_flow_expand_left.xml");
-INCBIN(bullet_hit_asteroid, RES_ROOT "/particles/bullet_hit_asteroid.xml");
-INCBIN(destructible_crate_hit, RES_ROOT "/particles/destructible_crate_hit.xml");
-INCBIN(thruster_smoketrail, RES_ROOT "/particles/thruster_smoketrail.xml");
-INCBIN(asteroid_cooldown, RES_ROOT "/particles/asteroid_cooldown.xml");
-INCBIN(playerbot_explosion_zerog, RES_ROOT "/particles/playerbot_explosion_zerog.xml");
-INCBIN(generator_coil, RES_ROOT "/particles/generator_coil.xml");
-INCBIN(water_splash_missile, RES_ROOT "/particles/water_splash_missile.xml");
-INCBIN(purple_laserbeam_end, RES_ROOT "/particles/purple_laserbeam_end.xml");
-INCBIN(dust_background, RES_ROOT "/particles/dust_background.xml");
-INCBIN(dll_hit, RES_ROOT "/particles/dll_hit.xml");
-INCBIN(purple_laserbeam_start, RES_ROOT "/particles/purple_laserbeam_start.xml");
-INCBIN(nutsnbolts_collected, RES_ROOT "/particles/nutsnbolts_collected.xml");
-INCBIN(zerogravityfield_enter, RES_ROOT "/particles/zerogravityfield_enter.xml");
-INCBIN(bullet_casing_underwater, RES_ROOT "/particles/bullet_casing_underwater.xml");
-INCBIN(grenade_explosion, RES_ROOT "/particles/grenade_explosion.xml");
-INCBIN(bullet_sparktrail, RES_ROOT "/particles/bullet_sparktrail.xml");
-INCBIN(grenade_warning, RES_ROOT "/particles/grenade_warning.xml");
-INCBIN(virusupload_binary, RES_ROOT "/particles/virusupload_binary.xml");
-INCBIN(missile_exhaust, RES_ROOT "/particles/missile_exhaust.xml");
-INCBIN(dll_booster_angry, RES_ROOT "/particles/dll_booster_angry.xml");
-INCBIN(thruster, RES_ROOT "/particles/thruster.xml");
-INCBIN(purple_laserbeam_endonwater, RES_ROOT "/particles/purple_laserbeam_endonwater.xml");
-INCBIN(dll_working_result, RES_ROOT "/particles/dll_working_result.xml");
-INCBIN(destructible_cablesnap, RES_ROOT "/particles/destructible_cablesnap.xml");
-INCBIN(destructible_explosion_crateleft_zerog, RES_ROOT "/particles/destructible_explosion_crateleft_zerog.xml");
-INCBIN(flame_enemy_hit_wall, RES_ROOT "/particles/flame_enemy_hit_wall.xml");
-INCBIN(playerbot_hit_smoke, RES_ROOT "/particles/playerbot_hit_smoke.xml");
-INCBIN(jet_engine, RES_ROOT "/particles/jet_engine.xml");
-INCBIN(bullet_hit_wall, RES_ROOT "/particles/bullet_hit_wall.xml");
-INCBIN(water_surface, RES_ROOT "/particles/water_surface.xml");
-INCBIN(forcefield_water, RES_ROOT "/particles/forcefield_water.xml");
-INCBIN(energy_malfunction, RES_ROOT "/particles/energy_malfunction.xml");
-INCBIN(lava_splash_pickuphealth, RES_ROOT "/particles/lava_splash_pickuphealth.xml");
-INCBIN(asteroid_belt, RES_ROOT "/particles/asteroid_belt.xml");
-INCBIN(destructible_explosion_base_zerog, RES_ROOT "/particles/destructible_explosion_base_zerog.xml");
-INCBIN(destructible_explosion_crateleft, RES_ROOT "/particles/destructible_explosion_crateleft.xml");
-INCBIN(water_double_fall, RES_ROOT "/particles/water_double_fall.xml");
-INCBIN(destructible_explosion_camera_zerog, RES_ROOT "/particles/destructible_explosion_camera_zerog.xml");
-INCBIN(dll_booster_sad, RES_ROOT "/particles/dll_booster_sad.xml");
-INCBIN(thruster_underwater, RES_ROOT "/particles/thruster_underwater.xml");
-INCBIN(steam_rewind_gray, RES_ROOT "/particles/steam_rewind_gray.xml");
-INCBIN(destructible_controlpanel_hit, RES_ROOT "/particles/destructible_controlpanel_hit.xml");
-INCBIN(zerogravityfield_circle_center, RES_ROOT "/particles/zerogravityfield_circle_center.xml");
-INCBIN(thruster_zerogravity, RES_ROOT "/particles/thruster_zerogravity.xml");
-INCBIN(grenade_defused, RES_ROOT "/particles/grenade_defused.xml");
-INCBIN(explosion, RES_ROOT "/particles/explosion.xml");
-INCBIN(kamikaze_spot_playerbot, RES_ROOT "/particles/kamikaze_spot_playerbot.xml");
-INCBIN(asteroid_explosion, RES_ROOT "/particles/asteroid_explosion.xml");
-INCBIN(destructible_explosion_crateright, RES_ROOT "/particles/destructible_explosion_crateright.xml");
-INCBIN(water_surface_idle, RES_ROOT "/particles/water_surface_idle.xml");
-INCBIN(dazed, RES_ROOT "/particles/dazed.xml");
-INCBIN(bullet_enemy_hit_wall, RES_ROOT "/particles/bullet_enemy_hit_wall.xml");
-INCBIN(lava_splash_bullet, RES_ROOT "/particles/lava_splash_bullet.xml");
-INCBIN(bullet_sinking, RES_ROOT "/particles/bullet_sinking.xml");
-INCBIN(playerbot_walk, RES_ROOT "/particles/playerbot_walk.xml");
-INCBIN(dust_loading, RES_ROOT "/particles/dust_loading.xml");
-INCBIN(grenade_glow, RES_ROOT "/particles/grenade_glow.xml");
-INCBIN(aircompressor_steam, RES_ROOT "/particles/aircompressor_steam.xml");
-INCBIN(rocket_sinking, RES_ROOT "/particles/rocket_sinking.xml");
-INCBIN(kamikaze_hit, RES_ROOT "/particles/kamikaze_hit.xml");
-
-INCBIN(lava_splash_1_png, RES_ROOT "/textures/lava_splash_1.png");
-INCBIN(generic_spark_motion_png, RES_ROOT "/textures/generic_spark_motion.png");
-INCBIN(dust_cloud_balls_narrow_png, RES_ROOT "/textures/dust_cloud_balls_narrow.png");
-INCBIN(debris_small_3_png, RES_ROOT "/textures/debris_small_3.png");
-INCBIN(magnet_ring_png, RES_ROOT "/textures/magnet_ring.png");
-INCBIN(debris_small_2_png, RES_ROOT "/textures/debris_small_2.png");
-INCBIN(lava_ball_png, RES_ROOT "/textures/lava_ball.png");
-INCBIN(plus_png, RES_ROOT "/textures/plus.png");
-INCBIN(explosion_shockwave_png, RES_ROOT "/textures/explosion_shockwave.png");
-INCBIN(player_center_png, RES_ROOT "/textures/player_center.png");
-INCBIN(lava_splash_2_png, RES_ROOT "/textures/lava_splash_2.png");
-INCBIN(white_ring_png, RES_ROOT "/textures/white_ring.png");
-INCBIN(ring_perspective_png, RES_ROOT "/textures/ring_perspective.png");
-INCBIN(turret_body_png, RES_ROOT "/textures/turret_body.png");
-INCBIN(plug_png, RES_ROOT "/textures/plug.png");
-INCBIN(debris_small_1_png, RES_ROOT "/textures/debris_small_1.png");
-INCBIN(asteroids_small_png, RES_ROOT "/textures/asteroids_small.png");
-INCBIN(lava_splash_3_png, RES_ROOT "/textures/lava_splash_3.png");
-INCBIN(debris_000_png, RES_ROOT "/textures/debris_000.png");
-INCBIN(asteroid_medium_03_png, RES_ROOT "/textures/asteroid_medium_03.png");
-INCBIN(destructible_controlpanel_hiteffect_png, RES_ROOT "/textures/destructible_controlpanel_hiteffect.png");
-INCBIN(dazed_pop_png, RES_ROOT "/textures/dazed_pop.png");
-INCBIN(turret_flying_hit_png, RES_ROOT "/textures/turret_flying_hit.png");
-INCBIN(debris_small_4_png, RES_ROOT "/textures/debris_small_4.png");
-INCBIN(generic_circle_gradient_hard_png, RES_ROOT "/textures/generic_circle_gradient_hard.png");
-INCBIN(asteroid_medium_02_png, RES_ROOT "/textures/asteroid_medium_02.png");
-INCBIN(tl_shard_0002_png, RES_ROOT "/textures/tl_shard_0002.png");
-INCBIN(lava_splash_4_png, RES_ROOT "/textures/lava_splash_4.png");
-INCBIN(tl_shard_0000_png, RES_ROOT "/textures/tl_shard_0000.png");
-INCBIN(asteroid_hit_inner_png, RES_ROOT "/textures/asteroid_hit_inner.png");
-INCBIN(bullet_casing_png, RES_ROOT "/textures/bullet_casing.png");
-INCBIN(turret_gun_hackable_png, RES_ROOT "/textures/turret_gun_hackable.png");
-INCBIN(generic_circle_gradient_star_png, RES_ROOT "/textures/generic_circle_gradient_star.png");
-INCBIN(emp_bubble_png, RES_ROOT "/textures/emp_bubble.png");
-INCBIN(explosionring_back_png, RES_ROOT "/textures/explosionring_back.png");
-INCBIN(tl_shard_0001_png, RES_ROOT "/textures/tl_shard_0001.png");
-INCBIN(asteroid_medium_01_png, RES_ROOT "/textures/asteroid_medium_01.png");
-INCBIN(electricity_bolt_origin_png, RES_ROOT "/textures/electricity_bolt_origin.png");
-INCBIN(bubble_png, RES_ROOT "/textures/bubble.png");
-INCBIN(destructible_crate_hiteffect_png, RES_ROOT "/textures/destructible_crate_hiteffect.png");
-INCBIN(asteroid_big_04_png, RES_ROOT "/textures/asteroid_big_04.png");
-INCBIN(dll_debris01_png, RES_ROOT "/textures/dll_debris01.png");
-INCBIN(sightbeam_end_png, RES_ROOT "/textures/sightbeam_end.png");
-INCBIN(dll_debris00_png, RES_ROOT "/textures/dll_debris00.png");
-INCBIN(white_spark_smaller_png, RES_ROOT "/textures/white_spark_smaller.png");
-INCBIN(generic_softedge_drip_png, RES_ROOT "/textures/generic_softedge_drip.png");
-INCBIN(generic_dust_wind_png, RES_ROOT "/textures/generic_dust_wind.png");
-INCBIN(dirt_dust_png, RES_ROOT "/textures/dirt_dust.png");
-INCBIN(asteroid_glow_png, RES_ROOT "/textures/asteroid_glow.png");
-INCBIN(playerbot_hit_png, RES_ROOT "/textures/playerbot_hit.png");
-INCBIN(ring_perspective2_png, RES_ROOT "/textures/ring_perspective2.png");
-INCBIN(crate_left_png, RES_ROOT "/textures/crate_left.png");
-INCBIN(lightning_bolt_png, RES_ROOT "/textures/lightning_bolt.png");
-INCBIN(dll_debris02_png, RES_ROOT "/textures/dll_debris02.png");
-INCBIN(chunks_79px_png, RES_ROOT "/textures/chunks_79px.png");
-INCBIN(impact_spark_glowy_png, RES_ROOT "/textures/impact_spark_glowy.png");
-INCBIN(dll_debris03_png, RES_ROOT "/textures/dll_debris03.png");
-INCBIN(destructible_tllight_hiteffect_png, RES_ROOT "/textures/destructible_tllight_hiteffect.png");
-INCBIN(warp_centerglow_png, RES_ROOT "/textures/warp_centerglow.png");
-INCBIN(dll_outline_png, RES_ROOT "/textures/dll_outline.png");
-INCBIN(explosion_burst_png, RES_ROOT "/textures/explosion_burst.png");
-INCBIN(generic_circle_outline_png, RES_ROOT "/textures/generic_circle_outline.png");
-INCBIN(generic_hardedge_drip_png, RES_ROOT "/textures/generic_hardedge_drip.png");
-INCBIN(crate_middle_png, RES_ROOT "/textures/crate_middle.png");
-INCBIN(asteroid_big_02_png, RES_ROOT "/textures/asteroid_big_02.png");
-INCBIN(thruster_centerglow_png, RES_ROOT "/textures/thruster_centerglow.png");
-INCBIN(generic_dust_puff_png, RES_ROOT "/textures/generic_dust_puff.png");
-INCBIN(colorsplosion_png, RES_ROOT "/textures/colorsplosion.png");
-INCBIN(grenade_trail_png, RES_ROOT "/textures/grenade_trail.png");
-INCBIN(asteroid_big_03_png, RES_ROOT "/textures/asteroid_big_03.png");
-INCBIN(turret_hit_png, RES_ROOT "/textures/turret_hit.png");
-INCBIN(electricity_bolt_png, RES_ROOT "/textures/electricity_bolt.png");
-INCBIN(cog_png, RES_ROOT "/textures/cog.png");
-INCBIN(explosion_lightmask_png, RES_ROOT "/textures/explosion_lightmask.png");
-INCBIN(asteroid_big_01_png, RES_ROOT "/textures/asteroid_big_01.png");
-INCBIN(lava_blobs_png, RES_ROOT "/textures/lava_blobs.png");
-INCBIN(wind_png, RES_ROOT "/textures/wind.png");
-INCBIN(generic_dust_random_png, RES_ROOT "/textures/generic_dust_random.png");
-INCBIN(generic_line_png, RES_ROOT "/textures/generic_line.png");
-INCBIN(turret_body_hackable_01_png, RES_ROOT "/textures/turret_body_hackable_01.png");
-INCBIN(destructible_camerawall_hiteffect_png, RES_ROOT "/textures/destructible_camerawall_hiteffect.png");
-INCBIN(crate_04_png, RES_ROOT "/textures/crate_04.png");
-INCBIN(turret_body_hackable_png, RES_ROOT "/textures/turret_body_hackable.png");
-INCBIN(camera_0000_png, RES_ROOT "/textures/camera_0000.png");
-INCBIN(camera_0001_png, RES_ROOT "/textures/camera_0001.png");
-INCBIN(collectible_halo_glow_png, RES_ROOT "/textures/collectible_halo_glow.png");
-INCBIN(splash_png, RES_ROOT "/textures/splash.png");
-INCBIN(generic_dust_random2_png, RES_ROOT "/textures/generic_dust_random2.png");
-INCBIN(generic_circle_halo_png, RES_ROOT "/textures/generic_circle_halo.png");
-INCBIN(smoke_swirl_png, RES_ROOT "/textures/smoke_swirl.png");
-INCBIN(camera_0002_png, RES_ROOT "/textures/camera_0002.png");
-INCBIN(impact_spark_glowy_vertical_png, RES_ROOT "/textures/impact_spark_glowy_vertical.png");
-INCBIN(generic_dust_random3_png, RES_ROOT "/textures/generic_dust_random3.png");
-INCBIN(turret_gun_png, RES_ROOT "/textures/turret_gun.png");
-INCBIN(trafficcones_png, RES_ROOT "/textures/trafficcones.png");
-INCBIN(kamikaze_bottom_png, RES_ROOT "/textures/kamikaze_bottom.png");
-INCBIN(logo_rive_electricity_png, RES_ROOT "/textures/logo_rive_electricity.png");
-INCBIN(turret_body_01_png, RES_ROOT "/textures/turret_body_01.png");
-INCBIN(crate_02_png, RES_ROOT "/textures/crate_02.png");
-INCBIN(generator_coil_png, RES_ROOT "/textures/generator_coil.png");
-INCBIN(generic_spark_motion_slim_png, RES_ROOT "/textures/generic_spark_motion_slim.png");
-INCBIN(crate_03_png, RES_ROOT "/textures/crate_03.png");
-INCBIN(playerbot_console_png, RES_ROOT "/textures/playerbot_console.png");
-INCBIN(dll_hit_png, RES_ROOT "/textures/dll_hit.png");
-INCBIN(warp_beam_spark_png, RES_ROOT "/textures/warp_beam_spark.png");
-INCBIN(white_spark_png, RES_ROOT "/textures/white_spark.png");
-INCBIN(generic_circle_outline_blurred_png, RES_ROOT "/textures/generic_circle_outline_blurred.png");
-INCBIN(crate_01_png, RES_ROOT "/textures/crate_01.png");
-INCBIN(nutsandbolts_png, RES_ROOT "/textures/nutsandbolts.png");
-INCBIN(generic_dust_random4_png, RES_ROOT "/textures/generic_dust_random4.png");
-INCBIN(core_burst_CA_png, RES_ROOT "/textures/core_burst_CA.png");
-INCBIN(virusupload_binary_png, RES_ROOT "/textures/virusupload_binary.png");
-INCBIN(crate_00_png, RES_ROOT "/textures/crate_00.png");
-INCBIN(crate_right_png, RES_ROOT "/textures/crate_right.png");
-INCBIN(player_leg_3_png, RES_ROOT "/textures/player_leg_3.png");
-INCBIN(supernova_alpha_png, RES_ROOT "/textures/supernova_alpha.png");
-INCBIN(generic_circle_gradient_png, RES_ROOT "/textures/generic_circle_gradient.png");
-INCBIN(dirt_dust_white_png, RES_ROOT "/textures/dirt_dust_white.png");
-INCBIN(dust_cloud_balls_png, RES_ROOT "/textures/dust_cloud_balls.png");
-INCBIN(bubble_cloud_png, RES_ROOT "/textures/bubble_cloud.png");
-INCBIN(shieldsegment_enemy_png, RES_ROOT "/textures/shieldsegment_enemy.png");
-INCBIN(player_leg_2_png, RES_ROOT "/textures/player_leg_2.png");
-INCBIN(explosionring_front_png, RES_ROOT "/textures/explosionring_front.png");
-INCBIN(water_drop_png, RES_ROOT "/textures/water_drop.png");
-INCBIN(animated_jump_explosion_png, RES_ROOT "/textures/animated_jump_explosion.png");
-INCBIN(player_leg_1_png, RES_ROOT "/textures/player_leg_1.png");
-INCBIN(event_vibration_ring_png, RES_ROOT "/textures/event_vibration_ring.png");
-INCBIN(kamikaze_top_png, RES_ROOT "/textures/kamikaze_top.png");
-INCBIN(asteroidbelt_png, RES_ROOT "/textures/asteroidbelt.png");
-INCBIN(crate_lid_png, RES_ROOT "/textures/crate_lid.png");
-INCBIN(anim_slash_png, RES_ROOT "/textures/anim_slash.png");
-INCBIN(dust_cloud_swirl_png, RES_ROOT "/textures/dust_cloud_swirl.png");
-INCBIN(health_02_png, RES_ROOT "/textures/health_02.png");
-INCBIN(asteroid_explosion_png, RES_ROOT "/textures/asteroid_explosion.png");
-INCBIN(debris_small_png, RES_ROOT "/textures/debris_small.png");
-INCBIN(zerogravityfield_particle_group_png, RES_ROOT "/textures/zerogravityfield_particle_group.png");
-INCBIN(health_01_png, RES_ROOT "/textures/health_01.png");
-INCBIN(health_00_png, RES_ROOT "/textures/health_00.png");
-INCBIN(explosion_circle_png, RES_ROOT "/textures/explosion_circle.png");
-INCBIN(water_bubble_png, RES_ROOT "/textures/water_bubble.png");
-INCBIN(rewind_core_ring_png, RES_ROOT "/textures/rewind_core_ring.png");
-INCBIN(kamikaze_hit_png, RES_ROOT "/textures/kamikaze_hit.png");
-INCBIN(collectible_halo_png, RES_ROOT "/textures/collectible_halo.png");
+const unsigned int *_spark_demo_size[] = {
+	&lava_splash_pickupammo_size,
+	&playerbot_hit_warning_size,
+	&steam_stream_size,
+	&flame_death_size,
+	&emp_grenade_size,
+	&collecteffect_health_size,
+	&generator_circle_size,
+	&zerogravityfield_circle_range_size,
+	&grenade_hit_size,
+	&thruster_sparktrail_size,
+	&rocket_underwater_size,
+	&dust_foreground_size,
+	&flamethrower_pilotlight_size,
+	&playerbot_explosion_underwater_size,
+	&pickup_zerogravity_size,
+	&pickup_size,
+	&emp_disappear_size,
+	&shotgun_bullet_size,
+	&forcefield_wind_size,
+	&no_ammo_size,
+	&destructible_explosion_tllight_size,
+	&pickup_health_collected_size,
+	&destructible_trafficcone_zerog_size,
+	&enemy_explosion_base_zerog_size,
+	&bullet_casing_zerogravity_size,
+	&hit_sparks_size,
+	&destructible_explosion_tllight_zerog_size,
+	&water_splash_bullet_size,
+	&thruster_boosttrail_size,
+	&thruster_flickering_size,
+	&turret_flying_hit_size,
+	&enemy_explosion_base_size,
+	&missile_homing_exhaust_size,
+	&virusuploader_failed_size,
+	&dll_booster_happy_size,
+	&flamethrower_embers_size,
+	&bullet_enemy_hit_entity_size,
+	&kamikaze_active_size,
+	&enemy_explosion_kamikazebot_size,
+	&logo_rive_electricity_loading_size,
+	&bullet_casing_size,
+	&nutsnbolts_collecttrail_size,
+	&turret_engine_blast_size,
+	&water_splash_exit_size,
+	&virusuploader_success_size,
+	&pickup_health_size,
+	&sightbeam_end_size,
+	&muzzleflash_size,
+	&enemy_explosion_kamikazebot_zerog_size,
+	&playerbot_hit_size,
+	&asteroids_size,
+	&enemy_explosion_turret_hackable_size,
+	&emp_explosion_size,
+	&destructible_explosion_crateright_zerog_size,
+	&bullet_hit_entity_size,
+	&healeffect_size,
+	&water_splash_enter_size,
+	&dll_booster_normal_size,
+	&hit_warning_size,
+	&enemy_explosion_turret_size,
+	&collecteffect_size,
+	&dust_size,
+	&thruster_airboost_size,
+	&bullet_underwater_size,
+	&asteroid_debris_size,
+	&enemy_explosion_turret_zerog_size,
+	&smoke_rewind_size,
+	&destructible_camerawall_hit_size,
+	&grenade_trail_size,
+	&submerged_bubbles_size,
+	&turret_hit_size,
+	&asteroid_hit_size,
+	&lava_splash_flame_size,
+	&hit_electricity_size,
+	&bullet_hit_shield_indestructible_size,
+	&destructible_explosion_camera_size,
+	&destructible_tllight_hit_size,
+	&enemy_explosion_dll_size,
+	&destructible_explosion_base_size,
+	&missile_smoketrail_size,
+	&pickup_collected_size,
+	&playerbot_land_size,
+	&pickup_health_zerogravity_size,
+	&destructible_crate_smoke_size,
+	&water_underfall_size,
+	&shotgun_underwater_size,
+	&muzzleflash_player_size,
+	&playerbot_hit_electricity_size,
+	&cockroach_crush_size,
+	&playerbot_explosion_size,
+	&playerbot_lavahit_size,
+	&enemy_explosion_turret_hackable_zerog_size,
+	&nutsnbolts_effect_size,
+	&dll_enableing_size,
+	&destructible_trafficcone_size,
+	&asteroid_belt_front_size,
+	&muzzleflash_player_homingmissile_size,
+	&thruster_boost_size,
+	&grenade_land_size,
+	&playerbot_hit_chunks_size,
+	&water_flow_expand_left_size,
+	&bullet_hit_asteroid_size,
+	&destructible_crate_hit_size,
+	&thruster_smoketrail_size,
+	&asteroid_cooldown_size,
+	&playerbot_explosion_zerog_size,
+	&generator_coil_size,
+	&water_splash_missile_size,
+	&purple_laserbeam_end_size,
+	&dust_background_size,
+	&dll_hit_size,
+	&purple_laserbeam_start_size,
+	&nutsnbolts_collected_size,
+	&zerogravityfield_enter_size,
+	&bullet_casing_underwater_size,
+	&grenade_explosion_size,
+	&bullet_sparktrail_size,
+	&grenade_warning_size,
+	&virusupload_binary_size,
+	&missile_exhaust_size,
+	&dll_booster_angry_size,
+	&thruster_size,
+	&purple_laserbeam_endonwater_size,
+	&dll_working_result_size,
+	&destructible_cablesnap_size,
+	&destructible_explosion_crateleft_zerog_size,
+	&flame_enemy_hit_wall_size,
+	&playerbot_hit_smoke_size,
+	&jet_engine_size,
+	&bullet_hit_wall_size,
+	&water_surface_size,
+	&forcefield_water_size,
+	&energy_malfunction_size,
+	&lava_splash_pickuphealth_size,
+	&asteroid_belt_size,
+	&destructible_explosion_base_zerog_size,
+	&destructible_explosion_crateleft_size,
+	&water_double_fall_size,
+	&destructible_explosion_camera_zerog_size,
+	&dll_booster_sad_size,
+	&thruster_underwater_size,
+	&steam_rewind_gray_size,
+	&destructible_controlpanel_hit_size,
+	&zerogravityfield_circle_center_size,
+	&thruster_zerogravity_size,
+	&grenade_defused_size,
+	&explosion_size,
+	&kamikaze_spot_playerbot_size,
+	&asteroid_explosion_size,
+	&destructible_explosion_crateright_size,
+	&water_surface_idle_size,
+	&dazed_size,
+	&bullet_enemy_hit_wall_size,
+	&lava_splash_bullet_size,
+	&bullet_sinking_size,
+	&playerbot_walk_size,
+	&dust_loading_size,
+	&grenade_glow_size,
+	&aircompressor_steam_size,
+	&rocket_sinking_size,
+	&kamikaze_hit_size,
+};
