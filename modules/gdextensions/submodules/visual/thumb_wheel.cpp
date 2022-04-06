@@ -33,7 +33,7 @@
 #include "core/math/math_funcs.h"
 #include "core/os/input_event.h"
 
-static void _draw_wheel(CanvasItem *c, Rect2 r, int offset, bool disabled, int orientation) {
+static void _draw_wheel(CanvasItem *c, Rect2 r, int offset, bool disabled, int orientation, bool frame_type = true) {
 	static uint8_t GRAY00 = 32;
 	static uint8_t GRAY33 = 39;
 	static uint8_t GRAY60 = 45;
@@ -125,9 +125,14 @@ static void _draw_wheel(CanvasItem *c, Rect2 r, int offset, bool disabled, int o
 			}
 	};
 
-#define _G(I) { (_gray_ramp[I - GRAY00]), (_gray_ramp[I - GRAY00]), (_gray_ramp[I - GRAY00]) }
+#define _G(I) \
+	{ (_gray_ramp[I - GRAY00]), (_gray_ramp[I - GRAY00]), (_gray_ramp[I - GRAY00]) }
 
-	draw_frame("NNTUJJWWAAAA", r, 1);
+	if (frame_type) {
+		draw_frame("NNTUJJWWAAAA", r, 1);
+	} else {
+		draw_frame2("NNTUJJWWAAAA", r, 1);
+	}
 	r.grow_by(-2);
 
 	if (orientation == OrientationHorizontal) {
@@ -266,7 +271,7 @@ void ThumbWheelH::_gui_input(Ref<InputEvent> p_event) {
 	if (const InputEventMouseMotion *e = Object::cast_to<InputEventMouseMotion>(*p_event)) {
 		if (_state.active) {
 			const Point2 p = _to_local(e->get_position());
-			const Point2 pf = p - _state.click_pos;
+			Point2 pf = p - _state.click_pos;
 			if (pf.x) {
 				if (e->get_control()) {
 					pf *= 2;
@@ -376,7 +381,7 @@ void ThumbWheelV::_gui_input(Ref<InputEvent> p_event) {
 	if (const InputEventMouseMotion *e = Object::cast_to<InputEventMouseMotion>(*p_event)) {
 		if (_state.active) {
 			const Point2 p = _to_local(e->get_position());
-			const Point2 pf = _state.click_pos - p;
+			Point2 pf = _state.click_pos - p;
 			if (pf.y) {
 				if (e->get_control()) {
 					pf *= 2;
