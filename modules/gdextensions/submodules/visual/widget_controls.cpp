@@ -693,12 +693,9 @@ void ControlWidget::_input(const Ref<InputEvent> &p_event) {
 						Vector3 axis = from.cross(to).normalized();
 						real_t angle = Math::acos(MIN(from.dot(to), 1));
 						if (angle && !axis.is_zero()) {
-							print_line(vformat("%f, %s (f:%s, t:%s))", angle, axis, from, to));
 							_state.rotate(axis, (e->get_shift() ? xcv_rotate_speed : 1) * angle);
 							update();
 							emit_signal("transformation_changed", _state.tr);
-						} else {
-							print_line(vformat("!! %f, %s (f:%s, t:%s))", angle, axis, from, to));
 						}
 						_state.swap();
 					}
