@@ -29,6 +29,7 @@
 /*************************************************************************/
 
 #include "core/engine.h"
+#include "core/os/file_access.h"
 
 #include "godot_spark.h"
 
@@ -57,10 +58,19 @@ void GdSparkParticles::_notification(int p_what) {
 				renderer->flushRender();
 			}
 		} break;
+		case NOTIFICATION_PROCESS: {
+		} break;
 	}
 }
 
+Error GdSparkParticles::load_from_file(const String &p_path) {
+	ERR_FAIL_COND_V(!FileAccess::exists(p_path), ERR_FILE_NOT_FOUND);
+	SPK::Ref<SPK::System> system2 = SPK::IO::IOManager::get().load(p_path.utf8().c_str());
+	return OK;
+}
+
 void GdSparkParticles::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("load_from_file"), &GdSparkParticles::load_from_file);
 }
 
 GdSparkParticles::GdSparkParticles() {
