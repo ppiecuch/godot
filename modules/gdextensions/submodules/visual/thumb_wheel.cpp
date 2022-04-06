@@ -31,7 +31,6 @@
 #include "thumb_wheel.h"
 
 #include "core/math/math_funcs.h"
-#include "core/os/input.h"
 #include "core/os/input_event.h"
 
 static void _draw_wheel(CanvasItem *c, Rect2 r, int offset, bool disabled, int orientation) {
@@ -250,13 +249,15 @@ void ThumbWheelH::_gui_input(Ref<InputEvent> p_event) {
 					_state.active = true;
 					_state.click_pos = _to_local(e->get_position());
 					_state.base_value = value;
-					Input::get_singleton()->set_default_cursor_shape(Input::CURSOR_HSIZE);
+					set_default_cursor_shape(CURSOR_HSIZE);
+					update();
 				}
 				get_tree()->set_input_as_handled();
 			} else if (!e->is_pressed()) {
 				if (_state.active) {
 					_state.active = false;
-					Input::get_singleton()->set_default_cursor_shape(Input::CURSOR_ARROW);
+					set_default_cursor_shape(CURSOR_ARROW);
+					update();
 				}
 			}
 		}
@@ -267,10 +268,17 @@ void ThumbWheelH::_gui_input(Ref<InputEvent> p_event) {
 			const Point2 p = _to_local(e->get_position());
 			const Point2 pf = p - _state.click_pos;
 			if (pf.x) {
+				if (e->get_control()) {
+					pf *= 2;
+				}
+				if (e->get_shift()) {
+					pf *= 0.5;
+				}
 				value = _state.base_value + pf.x;
 				emit_signal("changed", pf.x, value);
 				update();
 			}
+			get_tree()->set_input_as_handled();
 		}
 	}
 }
@@ -351,13 +359,15 @@ void ThumbWheelV::_gui_input(Ref<InputEvent> p_event) {
 					_state.active = true;
 					_state.click_pos = _to_local(e->get_position());
 					_state.base_value = value;
-					Input::get_singleton()->set_default_cursor_shape(Input::CURSOR_VSIZE);
+					set_default_cursor_shape(CURSOR_VSIZE);
+					update();
 				}
 				get_tree()->set_input_as_handled();
 			} else if (!e->is_pressed()) {
 				if (_state.active) {
 					_state.active = false;
-					Input::get_singleton()->set_default_cursor_shape(Input::CURSOR_ARROW);
+					set_default_cursor_shape(CURSOR_ARROW);
+					update();
 				}
 			}
 		}
@@ -368,10 +378,17 @@ void ThumbWheelV::_gui_input(Ref<InputEvent> p_event) {
 			const Point2 p = _to_local(e->get_position());
 			const Point2 pf = _state.click_pos - p;
 			if (pf.y) {
+				if (e->get_control()) {
+					pf *= 2;
+				}
+				if (e->get_shift()) {
+					pf *= 0.5;
+				}
 				value = _state.base_value + pf.y;
 				emit_signal("changed", pf.y, value);
 				update();
 			}
+			get_tree()->set_input_as_handled();
 		}
 	}
 }
