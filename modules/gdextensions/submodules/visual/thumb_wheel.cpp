@@ -268,7 +268,7 @@ void ThumbWheelH::_gui_input(Ref<InputEvent> p_event) {
 			const Point2 pf = p - _state.click_pos;
 			if (pf.x) {
 				value = _state.base_value + pf.x;
-				emit_signal("changed", pf.y, value);
+				emit_signal("changed", pf.x, value);
 				update();
 			}
 		}
