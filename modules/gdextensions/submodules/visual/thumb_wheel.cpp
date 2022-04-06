@@ -31,8 +31,10 @@
 #include "thumb_wheel.h"
 
 #include "core/math/math_funcs.h"
+#include "core/os/input.h"
+#include "core/os/input_event.h"
 
-static void _draw_wheel(CanvasItem *c, const Rect2 &r, int offset, bool disabled, int orientation) {
+static void _draw_wheel(CanvasItem *c, Rect2 r, int offset, bool disabled, int orientation) {
 	static uint8_t GRAY00 = 32;
 	static uint8_t GRAY33 = 39;
 	static uint8_t GRAY60 = 45;
@@ -70,8 +72,64 @@ static void _draw_wheel(CanvasItem *c, const Rect2 &r, int offset, bool disabled
 	const real_t ARC = 1.5; // 1/2 the number of radians visible
 	const real_t delta = .2; // radians per knurl
 
+	// Draws a series of line segments around the given box.
+	// The string `s` must contain groups of 4 letters which specify one of 24
+	// standard grayscale values, where 'A' is black and 'X' is white.
+	// The order of each set of 4 characters is: bottom, right, top, left.
+	auto draw_frame = [&](const char *s, const Rect2 &rc, real_t width = 1.0) {
+		const real_t *g = _gray_ramp - 'A';
+		real_t x = rc.position.x;
+		real_t y = rc.position.y;
+		real_t w = rc.size.width;
+		real_t h = rc.size.height;
+		if (h > 0 && w > 0)
+			for (; *s;) {
+				c->draw_line(Point2(x, y), Point2(x + w - 1, y), Color::solid(g[(int)*s++]), width); // draw top line
+				y++;
+				if (--h <= 0)
+					break;
+				c->draw_line(Point2(x, y + h - 1), Point2(x, y), Color::solid(g[(int)*s++]), width); // draw left line
+				x++;
+				if (--w <= 0)
+					break;
+				c->draw_line(Point2(x, y + h - 1), Point2(x + w - 1, y + h - 1), Color::solid(g[(int)*s++]), width); // draw bottom line
+				if (--h <= 0)
+					break;
+				c->draw_line(Point2(x + w - 1, y + h - 1), Point2(x + w - 1, y), Color::solid(g[(int)*s++]), width); // draw right line
+				if (--w <= 0)
+					break;
+			}
+	};
 
-#define _G(I) { (_gray_ramp[I-GRAY00]), (_gray_ramp[I-GRAY00]), (_gray_ramp[I-GRAY00]) }
+	auto draw_frame2 = [&](const char *s, const Rect2 &rc, real_t width = 1.0) {
+		const real_t *g = _gray_ramp - 'A';
+		real_t x = rc.position.x;
+		real_t y = rc.position.y;
+		real_t w = rc.size.width;
+		real_t h = rc.size.height;
+		if (h > 0 && w > 0)
+			for (; *s;) {
+				c->draw_line(Point2(x, y + h - 1), Point2(x + w - 1, y + h - 1), Color::solid(g[(int)*s++]), width); // draw bottom line
+				if (--h <= 0)
+					break;
+				c->draw_line(Point2(x + w - 1, y + h - 1), Point2(x + w - 1, y), Color::solid(g[(int)*s++]), width); // draw right line
+				if (--w <= 0)
+					break;
+				c->draw_line(Point2(x, y), Point2(x + w - 1, y), Color::solid(g[(int)*s++]), width); // draw top line
+				y++;
+				if (--h <= 0)
+					break;
+				c->draw_line(Point2(x, y + h - 1), Point2(x, y), Color::solid(g[(int)*s++]), width); // draw left line
+				x++;
+				if (--w <= 0)
+					break;
+			}
+	};
+
+#define _G(I) { (_gray_ramp[I - GRAY00]), (_gray_ramp[I - GRAY00]), (_gray_ramp[I - GRAY00]) }
+
+	draw_frame("NNTUJJWWAAAA", r, 1);
+	r.grow_by(-2);
 
 	if (orientation == OrientationHorizontal) {
 		// draw shaded ends of wheel:
@@ -79,7 +137,7 @@ static void _draw_wheel(CanvasItem *c, const Rect2 &r, int offset, bool disabled
 		c->draw_rect(Rect2(r.left() + h1, r.top(), r.size.width - 2 * h1, r.size.height), _G(GRAY75), true);
 		for (int i = 0; h1; i++) {
 			const int shade = GRAY75 - i - 1;
-			const int h2 = shade > GRAY33 ? 2*h1/3 + 1 : 0;
+			const int h2 = shade > GRAY33 ? 2 * h1 / 3 + 1 : 0;
 			c->draw_rect(Rect2(r.left() + h2, r.top(), h1 - h2, r.size.height), _G(shade), true);
 			c->draw_rect(Rect2(r.right() - h1, r.top(), h1 - h2, r.size.height), _G(shade), true);
 			h1 = h2;
@@ -118,7 +176,7 @@ static void _draw_wheel(CanvasItem *c, const Rect2 &r, int offset, bool disabled
 		c->draw_rect(Rect2(r.left(), r.top() + h1, r.size.width, r.size.height - 2 * h1), _G(GRAY75), true);
 		for (int i = 0; h1; i++) {
 			const int shade = GRAY75 - i - 1;
-			const int h2 = shade > GRAY33 ? 2*h1/3 + 1 : 0;
+			const int h2 = shade > GRAY33 ? 2 * h1 / 3 + 1 : 0;
 			c->draw_rect(Rect2(r.left(), r.top() + h2, r.size.width, h1 - h2), _G(shade), true);
 			c->draw_rect(Rect2(r.left(), r.bottom() - h1, r.size.width, h1 - h2), _G(shade), true);
 			h1 = h2;
@@ -157,23 +215,64 @@ static void _draw_wheel(CanvasItem *c, const Rect2 &r, int offset, bool disabled
 
 // ThumbWheelH
 
+bool ThumbWheelH::_is_point_inside(const Point2 &point) const {
+	return get_global_rect().has_point(point);
+}
+
+Point2 ThumbWheelH::_to_local(Point2 global) const {
+	return get_global_transform().affine_inverse().xform(global);
+}
+
 void ThumbWheelH::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_DRAW: {
 			const Rect2 r = Rect2(Point2(), get_size());
 			const int offset = int(value / resolution);
-			_draw_wheel(this, r, offset, disabled, _orientation);
+			_draw_wheel(this, r, offset, disabled, OrientationHorizontal);
 		}
 	}
 }
 
-void ThumbWheelH::_input(Ref<InputEvent> p_event) {
-}
-
 void ThumbWheelH::_gui_input(Ref<InputEvent> p_event) {
-}
+	if (!p_event.is_valid()) {
+		return;
+	}
+	if (!get_tree()) {
+		return;
+	}
 
-void ThumbWheelH::_unhandled_input(Ref<InputEvent> p_event) {
+	ERR_FAIL_COND(!is_visible_in_tree());
+
+	if (const InputEventMouseButton *e = Object::cast_to<InputEventMouseButton>(*p_event)) {
+		if (e->get_button_index() == BUTTON_LEFT) {
+			if (e->is_pressed() && _is_point_inside(e->get_global_position())) {
+				if (!_state.active) {
+					_state.active = true;
+					_state.click_pos = _to_local(e->get_position());
+					_state.base_value = value;
+					Input::get_singleton()->set_default_cursor_shape(Input::CURSOR_HSIZE);
+				}
+				get_tree()->set_input_as_handled();
+			} else if (!e->is_pressed()) {
+				if (_state.active) {
+					_state.active = false;
+					Input::get_singleton()->set_default_cursor_shape(Input::CURSOR_ARROW);
+				}
+			}
+		}
+	}
+
+	if (const InputEventMouseMotion *e = Object::cast_to<InputEventMouseMotion>(*p_event)) {
+		if (_state.active) {
+			const Point2 p = _to_local(e->get_position());
+			const Point2 pf = p - _state.click_pos;
+			if (pf.x) {
+				value = _state.base_value + pf.x;
+				emit_signal("changed", pf.y, value);
+				update();
+			}
+		}
+	}
 }
 
 void ThumbWheelH::set_disabled(bool p_disabled) {
@@ -185,43 +284,96 @@ bool ThumbWheelH::is_disabled() const {
 	return disabled;
 }
 
+void ThumbWheelH::set_resolution(real_t p_res) {
+	resolution = p_res;
+}
+
+real_t ThumbWheelH::get_resolution() const {
+	return resolution;
+}
+
 void ThumbWheelH::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_disabled"), &ThumbWheelH::set_disabled);
 	ClassDB::bind_method(D_METHOD("is_disabled"), &ThumbWheelH::is_disabled);
+	ClassDB::bind_method(D_METHOD("set_resolution"), &ThumbWheelH::set_resolution);
+	ClassDB::bind_method(D_METHOD("get_resolution"), &ThumbWheelH::get_resolution);
 
-	ClassDB::bind_method(D_METHOD("_input"), &ThumbWheelH::_input);
 	ClassDB::bind_method(D_METHOD("_gui_input"), &ThumbWheelH::_gui_input);
-	ClassDB::bind_method(D_METHOD("_unhandled_input"), &ThumbWheelH::_unhandled_input);
 
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "enabled"), "set_disabled", "is_disabled");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "resolution"), "set_resolution", "get_resolution");
 
-	ADD_SIGNAL(MethodInfo("transformation_changed", PropertyInfo(Variant::TRANSFORM, "tr")));
+	ADD_SIGNAL(MethodInfo("changed", PropertyInfo(Variant::REAL, "delta")));
 }
 
 ThumbWheelH::ThumbWheelH() {
-	set_size({100, 20});
+	set_size({ 100, 15 });
+	value = 0;
+	resolution = 1;
 	disabled = false;
+	_state = { false };
 }
 
 // ThumbWheelV
+
+bool ThumbWheelV::_is_point_inside(const Point2 &point) const {
+	return get_global_rect().has_point(point);
+}
+
+Point2 ThumbWheelV::_to_local(Point2 global) const {
+	return get_global_transform().affine_inverse().xform(global);
+}
 
 void ThumbWheelV::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_DRAW: {
 			const Rect2 r = Rect2(Point2(), get_size());
 			const int offset = int(value / resolution);
-			_draw_wheel(this, r, offset, disabled, _orientation);
+			_draw_wheel(this, r, offset, disabled, OrientationVerical);
 		}
 	}
 }
 
-void ThumbWheelV::_input(Ref<InputEvent> p_event) {
-}
-
 void ThumbWheelV::_gui_input(Ref<InputEvent> p_event) {
-}
+	if (!p_event.is_valid()) {
+		return;
+	}
+	if (!get_tree()) {
+		return;
+	}
 
-void ThumbWheelV::_unhandled_input(Ref<InputEvent> p_event) {
+	ERR_FAIL_COND(!is_visible_in_tree());
+
+	if (const InputEventMouseButton *e = Object::cast_to<InputEventMouseButton>(*p_event)) {
+		if (e->get_button_index() == BUTTON_LEFT) {
+			if (e->is_pressed() && _is_point_inside(e->get_global_position())) {
+				if (!_state.active) {
+					_state.active = true;
+					_state.click_pos = _to_local(e->get_position());
+					_state.base_value = value;
+					Input::get_singleton()->set_default_cursor_shape(Input::CURSOR_VSIZE);
+				}
+				get_tree()->set_input_as_handled();
+			} else if (!e->is_pressed()) {
+				if (_state.active) {
+					_state.active = false;
+					Input::get_singleton()->set_default_cursor_shape(Input::CURSOR_ARROW);
+				}
+			}
+		}
+	}
+
+	if (const InputEventMouseMotion *e = Object::cast_to<InputEventMouseMotion>(*p_event)) {
+		if (_state.active) {
+			const Point2 p = _to_local(e->get_position());
+			const Point2 pf = _state.click_pos - p;
+			if (pf.y) {
+				value = _state.base_value + pf.y;
+				emit_signal("changed", pf.y, value);
+				update();
+			}
+		}
+	}
 }
 
 void ThumbWheelV::set_disabled(bool p_disabled) {
@@ -233,20 +385,32 @@ bool ThumbWheelV::is_disabled() const {
 	return disabled;
 }
 
+void ThumbWheelV::set_resolution(real_t p_res) {
+	resolution = p_res;
+}
+
+real_t ThumbWheelV::get_resolution() const {
+	return resolution;
+}
+
 void ThumbWheelV::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_disabled"), &ThumbWheelV::set_disabled);
 	ClassDB::bind_method(D_METHOD("is_disabled"), &ThumbWheelV::is_disabled);
+	ClassDB::bind_method(D_METHOD("set_resolution"), &ThumbWheelV::set_resolution);
+	ClassDB::bind_method(D_METHOD("get_resolution"), &ThumbWheelV::get_resolution);
 
-	ClassDB::bind_method(D_METHOD("_input"), &ThumbWheelV::_input);
 	ClassDB::bind_method(D_METHOD("_gui_input"), &ThumbWheelV::_gui_input);
-	ClassDB::bind_method(D_METHOD("_unhandled_input"), &ThumbWheelV::_unhandled_input);
 
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "enabled"), "set_disabled", "is_disabled");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "resolution"), "set_resolution", "get_resolution");
 
-	ADD_SIGNAL(MethodInfo("transformation_changed", PropertyInfo(Variant::TRANSFORM, "tr")));
+	ADD_SIGNAL(MethodInfo("changed", PropertyInfo(Variant::REAL, "delta"), PropertyInfo(Variant::REAL, "value")));
 }
 
 ThumbWheelV::ThumbWheelV() {
-	set_size({20, 100});
+	set_size({ 15, 100 });
+	value = 0;
+	resolution = 1;
 	disabled = false;
+	_state = { false };
 }

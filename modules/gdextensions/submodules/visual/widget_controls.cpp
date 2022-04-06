@@ -531,7 +531,7 @@ Rect2 ControlWidget::_get_global_rect() const {
 	return Rect2(get_global_position() + control_rect.position, control_rect.size);
 }
 
-bool ControlWidget::_is_point_inside(const Point2 &point) {
+bool ControlWidget::_is_point_inside(const Point2 &point) const {
 	return _get_global_rect().has_point(point);
 }
 

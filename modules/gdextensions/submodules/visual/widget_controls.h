@@ -76,7 +76,7 @@ class ControlWidget : public Node2D {
 	} _state;
 
 	Rect2 _get_global_rect() const;
-	bool _is_point_inside(const Vector2 &vec);
+	bool _is_point_inside(const Vector2 &vec) const;
 
 protected:
 	static void _bind_methods();

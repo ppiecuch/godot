@@ -41,27 +41,34 @@ enum {
 	OrientationVerical,
 };
 
+struct ThumbWheelState {
+	bool active;
+	Vector2 click_pos;
+	real_t base_value;
+};
+
 class ThumbWheelH : public Control {
 	GDCLASS(ThumbWheelH, Control);
-
-	bool _is_point_inside(const Point2 &p_point);
 
 	real_t value;
 	real_t resolution;
 	bool disabled;
 
-	constexpr static int _orientation = OrientationHorizontal;
+	ThumbWheelState _state;
+
+	bool _is_point_inside(const Point2 &point) const;
+	Point2 _to_local(Point2 global) const;
 
 protected:
 	static void _bind_methods();
 	void _notification(int p_what);
-	void _input(Ref<InputEvent> p_event);
 	virtual void _gui_input(Ref<InputEvent> p_event);
-	virtual void _unhandled_input(Ref<InputEvent> p_event);
 
 public:
 	void set_disabled(bool p_enabled);
 	bool is_disabled() const;
+	void set_resolution(real_t p_res);
+	real_t get_resolution() const;
 
 	ThumbWheelH();
 	~ThumbWheelH() {}
@@ -70,24 +77,25 @@ public:
 class ThumbWheelV : public Control {
 	GDCLASS(ThumbWheelV, Control);
 
-	bool _is_point_inside(const Point2 &p_point);
-
 	real_t value;
 	real_t resolution;
 	bool disabled;
 
-	constexpr static int _orientation = OrientationVerical;
+	ThumbWheelState _state;
+
+	bool _is_point_inside(const Point2 &point) const;
+	Point2 _to_local(Point2 global) const;
 
 protected:
 	static void _bind_methods();
 	void _notification(int p_what);
-	void _input(Ref<InputEvent> p_event);
 	virtual void _gui_input(Ref<InputEvent> p_event);
-	virtual void _unhandled_input(Ref<InputEvent> p_event);
 
 public:
 	void set_disabled(bool p_enabled);
 	bool is_disabled() const;
+	void set_resolution(real_t p_res);
+	real_t get_resolution() const;
 
 	ThumbWheelV();
 	~ThumbWheelV() {}
