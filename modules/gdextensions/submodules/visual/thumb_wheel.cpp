@@ -277,10 +277,11 @@ void ThumbWheelH::_gui_input(Ref<InputEvent> p_event) {
 					pf *= 2;
 				}
 				if (e->get_shift()) {
-					pf *= 0.5;
+					pf *= 0.1;
 				}
+				const real_t _value = value;
 				value = _state.base_value + pf.x;
-				emit_signal("changed", pf.x, value);
+				emit_signal("changed", _value - value, value);
 				update();
 			}
 			get_tree()->set_input_as_handled();
@@ -316,7 +317,7 @@ void ThumbWheelH::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "enabled"), "set_disabled", "is_disabled");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "resolution"), "set_resolution", "get_resolution");
 
-	ADD_SIGNAL(MethodInfo("changed", PropertyInfo(Variant::REAL, "delta")));
+	ADD_SIGNAL(MethodInfo("changed", PropertyInfo(Variant::REAL, "delta"), PropertyInfo(Variant::REAL, "value")));
 }
 
 ThumbWheelH::ThumbWheelH() {
@@ -387,10 +388,11 @@ void ThumbWheelV::_gui_input(Ref<InputEvent> p_event) {
 					pf *= 2;
 				}
 				if (e->get_shift()) {
-					pf *= 0.5;
+					pf *= 0.1;
 				}
+				const real_t _value = value;
 				value = _state.base_value + pf.y;
-				emit_signal("changed", pf.y, value);
+				emit_signal("changed", _value - value, value);
 				update();
 			}
 			get_tree()->set_input_as_handled();

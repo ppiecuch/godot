@@ -484,7 +484,6 @@ static void draw_2d_arrows(Ref<ArrayMesh> mesh, int trans_type, int radius, bool
 
 void _mouse_on_sphere(const Point2 &point, const Size2 &window_size, Vector3 *result_vector) {
 	Vector3 p(point.x / window_size.width, point.y / window_size.height, 0);
-	print_line(vformat("p=%s (%s)", p, point));
 	const real_t op_squared = p.length_squared();
 	if (op_squared < 1) {
 		p.z = Math::sqrt(1 - op_squared);
@@ -691,7 +690,7 @@ void ControlWidget::_input(const Ref<InputEvent> &p_event) {
 						}
 						// the axis to rotate around in view space
 						Vector3 axis = from.cross(to).normalized();
-						real_t angle = Math::acos(MIN(from.dot(to), 1));
+						const real_t angle = Math::acos(MIN(from.dot(to), 1));
 						if (angle && !axis.is_zero()) {
 							_state.rotate(axis, (e->get_shift() ? xcv_rotate_speed : 1) * angle);
 							update();
