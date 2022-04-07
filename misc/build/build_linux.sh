@@ -47,9 +47,16 @@ PATH=/usr/bin:/bin:/sbin:/usr/local/bin
 mkdir -p bin/templates
 
 echo_header "*** Building server/release engine for Linux ..."
-scons -j${CPU} p=server target=release tools=no
+
+scons="scons"
+if ! command -v scons &> /dev/null; then
+	scons="scons-3"
+fi
+command -v "$scons" >/dev/null 2>&1 || { echo >&2 "'scons' or 'scons-3' is required, but it's not installed.  Aborting."; exit 1; }
+
+$scons -j${CPU} p=server target=release tools=no
 mv -v bin/godot_server.x11.opt.64 bin/templates/
 
 echo_header "*** Building template/release engine for Linux ..."
-scons -j${CPU} p=linux target=release tools=no
+$scons -j${CPU} p=linux target=release tools=no
 mv -v bin/godot.x11.opt.64 bin/templates/
