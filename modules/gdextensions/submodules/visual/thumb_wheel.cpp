@@ -238,9 +238,8 @@ void ThumbWheelH::_notification(int p_what) {
 				const Size2 lbl_size = default_font->get_string_size(label);
 				const int separation = 4;
 				Point2 label_pos = Point2(
-					r.position.x - lbl_size.width - separation,
-					r.position.y + r.size.height*1.5 - lbl_size.height*0.5 - default_font->get_descent()
-				);
+						r.position.x - lbl_size.width - separation,
+						r.position.y + r.size.height * 1.5 - lbl_size.height * 0.5 - default_font->get_descent());
 				draw_string(default_font, label_pos, label);
 			}
 		}
@@ -371,9 +370,8 @@ void ThumbWheelV::_notification(int p_what) {
 				const Size2 lbl_size = default_font->get_string_size(label);
 				const int separation = 2;
 				Point2 label_pos = Point2(
-					r.position.x + (r.size.width - lbl_size.width)*0.5,
-					r.position.y + r.size.height + lbl_size.height + separation
-				);
+						r.position.x + (r.size.width - lbl_size.width) * 0.5,
+						r.position.y + r.size.height + lbl_size.height + separation);
 				draw_string(default_font, label_pos, label);
 			}
 		}
