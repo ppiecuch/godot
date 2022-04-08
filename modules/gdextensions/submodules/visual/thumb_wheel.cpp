@@ -233,6 +233,16 @@ void ThumbWheelH::_notification(int p_what) {
 			const Rect2 r = Rect2(Point2(), get_size());
 			const int offset = int(value / resolution);
 			_draw_wheel(this, r, offset, disabled, OrientationHorizontal);
+			if (!label.empty()) {
+				Ref<Font> default_font = Theme::get_default()->get_font("_", "_");
+				const Size2 lbl_size = default_font->get_string_size(label);
+				const int separation = 4;
+				Point2 label_pos = Point2(
+					r.position.x - lbl_size.width - separation,
+					r.position.y + r.size.height*1.5 - lbl_size.height*0.5 - default_font->get_descent()
+				);
+				draw_string(default_font, label_pos, label);
+			}
 		}
 	}
 }
@@ -306,16 +316,28 @@ real_t ThumbWheelH::get_resolution() const {
 	return resolution;
 }
 
+void ThumbWheelH::set_label(String p_label) {
+	label = p_label;
+	update();
+}
+
+String ThumbWheelH::get_label() const {
+	return label;
+}
+
 void ThumbWheelH::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_disabled"), &ThumbWheelH::set_disabled);
 	ClassDB::bind_method(D_METHOD("is_disabled"), &ThumbWheelH::is_disabled);
 	ClassDB::bind_method(D_METHOD("set_resolution"), &ThumbWheelH::set_resolution);
 	ClassDB::bind_method(D_METHOD("get_resolution"), &ThumbWheelH::get_resolution);
+	ClassDB::bind_method(D_METHOD("set_label"), &ThumbWheelH::set_label);
+	ClassDB::bind_method(D_METHOD("get_label"), &ThumbWheelH::get_label);
 
 	ClassDB::bind_method(D_METHOD("_gui_input"), &ThumbWheelH::_gui_input);
 
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "enabled"), "set_disabled", "is_disabled");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "resolution"), "set_resolution", "get_resolution");
+	ADD_PROPERTY(PropertyInfo(Variant::STRING, "label"), "set_label", "get_label");
 
 	ADD_SIGNAL(MethodInfo("changed", PropertyInfo(Variant::REAL, "delta"), PropertyInfo(Variant::REAL, "value")));
 }
@@ -344,11 +366,24 @@ void ThumbWheelV::_notification(int p_what) {
 			const Rect2 r = Rect2(Point2(), get_size());
 			const int offset = int(value / resolution);
 			_draw_wheel(this, r, offset, disabled, OrientationVerical);
+			if (!label.empty()) {
+				Ref<Font> default_font = Theme::get_default()->get_font("_", "_");
+				const Size2 lbl_size = default_font->get_string_size(label);
+				const int separation = 2;
+				Point2 label_pos = Point2(
+					r.position.x + (r.size.width - lbl_size.width)*0.5,
+					r.position.y + r.size.height + lbl_size.height + separation
+				);
+				draw_string(default_font, label_pos, label);
+			}
 		}
 	}
 }
 
 void ThumbWheelV::_gui_input(Ref<InputEvent> p_event) {
+	if (disabled) {
+		return;
+	}
 	if (!p_event.is_valid()) {
 		return;
 	}
@@ -417,16 +452,28 @@ real_t ThumbWheelV::get_resolution() const {
 	return resolution;
 }
 
+void ThumbWheelV::set_label(String p_label) {
+	label = p_label;
+	update();
+}
+
+String ThumbWheelV::get_label() const {
+	return label;
+}
+
 void ThumbWheelV::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_disabled"), &ThumbWheelV::set_disabled);
 	ClassDB::bind_method(D_METHOD("is_disabled"), &ThumbWheelV::is_disabled);
 	ClassDB::bind_method(D_METHOD("set_resolution"), &ThumbWheelV::set_resolution);
 	ClassDB::bind_method(D_METHOD("get_resolution"), &ThumbWheelV::get_resolution);
+	ClassDB::bind_method(D_METHOD("set_label"), &ThumbWheelV::set_label);
+	ClassDB::bind_method(D_METHOD("get_label"), &ThumbWheelV::get_label);
 
 	ClassDB::bind_method(D_METHOD("_gui_input"), &ThumbWheelV::_gui_input);
 
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "enabled"), "set_disabled", "is_disabled");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "resolution"), "set_resolution", "get_resolution");
+	ADD_PROPERTY(PropertyInfo(Variant::STRING, "label"), "set_label", "get_label");
 
 	ADD_SIGNAL(MethodInfo("changed", PropertyInfo(Variant::REAL, "delta"), PropertyInfo(Variant::REAL, "value")));
 }

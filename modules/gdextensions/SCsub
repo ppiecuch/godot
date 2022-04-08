@@ -37,6 +37,7 @@ modules = [
     "environment/water_splash",
     "environment/starfield",
     "environment/spider_anim",
+    "environment/waterfall",
     "fastnoise",
     "smooth",
     "debugdraw",
@@ -138,6 +139,10 @@ if env["platform"] == "psvita" and is_enabled("blitter"):
 
 if is_enabled("behaviortree"):
     env_module.Append(CPPDEFINES=["BEHAVIOR_TREE_AS_GODOT_MODULE"])
+
+if is_enabled("environment/waterfall"):
+    if env["tools"]:
+        env_module.Append(CPPDEFINES=["HAVE_PARTICLES_SIZE_S", "HAVE_PARTICLES_SIZE_M", "HAVE_PARTICLES_SIZE_L"])
 
 ignore = []
 if env["platform"] == "3ds" or env["platform"] == "psp":

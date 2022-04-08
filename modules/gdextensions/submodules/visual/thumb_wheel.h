@@ -53,6 +53,7 @@ class ThumbWheelH : public Control {
 	real_t value;
 	real_t resolution;
 	bool disabled;
+	String label;
 
 	ThumbWheelState _state;
 
@@ -69,6 +70,8 @@ public:
 	bool is_disabled() const;
 	void set_resolution(real_t p_res);
 	real_t get_resolution() const;
+	void set_label(String p_label);
+	String get_label() const;
 
 	ThumbWheelH();
 	~ThumbWheelH() {}
@@ -80,6 +83,7 @@ class ThumbWheelV : public Control {
 	real_t value;
 	real_t resolution;
 	bool disabled;
+	String label;
 
 	ThumbWheelState _state;
 
@@ -96,6 +100,8 @@ public:
 	bool is_disabled() const;
 	void set_resolution(real_t p_res);
 	real_t get_resolution() const;
+	void set_label(String p_label);
+	String get_label() const;
 
 	ThumbWheelV();
 	~ThumbWheelV() {}
