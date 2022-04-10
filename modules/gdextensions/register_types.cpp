@@ -378,8 +378,8 @@ void register_gdextensions_types() {
 
 #ifdef GDEXT_ENVIRONMENT_ENABLED
 	ClassDB::register_class<Tree2D>();
-	ClassDB::register_class<GDWaterSplash>();
-	ClassDB::register_virtual_class<GDWaterSplashColumn>();
+	ClassDB::register_class<GdWaterSplash>();
+	ClassDB::register_virtual_class<GdWaterSplashColumn>();
 #ifndef _3D_DISABLED
 	ClassDB::register_class<VegetationInstance>();
 #endif

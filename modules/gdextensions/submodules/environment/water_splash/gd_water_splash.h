@@ -31,8 +31,8 @@
 // -*- C++ -*-
 //
 
-#ifndef _GD_WATER_SPLASH_H_
-#define _GD_WATER_SPLASH_H_
+#ifndef GD_WATER_SPLASH_H
+#define GD_WATER_SPLASH_H
 
 #include "scene/2d/area_2d.h"
 #include "scene/2d/canvas_modulate.h"
@@ -41,28 +41,46 @@
 #include "scene/resources/shape_2d.h"
 #include "scene/resources/texture.h"
 
-class GDWaterSplashColumn : public Area2D {
-	GDCLASS(GDWaterSplashColumn, Area2D);
-
-public:
-	GDWaterSplashColumn(const Vector2 &, const Vector2 &delta, const Vector2 &drag);
-	void update(float &tension, float &damping);
-	void body_enter_shape(int body_id, Object *body, int body_shape, int area_shape);
-	float target_height_;
-	float height_;
-	float speed_;
-	Vector2 drag_;
+class GdWaterSplashColumn : public Area2D {
+	GDCLASS(GdWaterSplashColumn, Area2D);
 
 protected:
 	static void _bind_methods();
-};
-
-class GDWaterSplash : public Node2D {
-	GDCLASS(GDWaterSplash, Node2D);
 
 public:
-	GDWaterSplash();
+	real_t target_height_;
+	real_t height_;
+	real_t speed_;
+	Vector2 drag_;
 
+	void update(real_t &tension, real_t &damping);
+	void body_enter_shape(int body_id, Object *body, int body_shape, int area_shape);
+
+	GdWaterSplashColumn(const Vector2 &, const Vector2 &delta, const Vector2 &drag);
+};
+
+class GdWaterSplash : public Node2D {
+	GDCLASS(GdWaterSplash, Node2D);
+
+	Vector<GdWaterSplashColumn *> columns_;
+
+	Rect2 rect_;
+	uint32_t ncols_;
+	uint32_t resolution_;
+	Color color_;
+	real_t damping_;
+	real_t tension_;
+	real_t spread_;
+	Vector2 drag_;
+	Ref<Texture> texture;
+
+	bool size_changed_;
+	void _update();
+
+protected:
+	static void _bind_methods();
+
+public:
 	void _notification(int p_what);
 
 	// Size in x must be a multiple of resolution
@@ -76,17 +94,15 @@ public:
 	void set_color(const Color &value);
 	Color get_color() const;
 
-	/**
-	 * Physical Parameters
-	 */
-	void set_tension(const float &value);
-	float get_tension() const;
+	// Physical parameters
+	void set_tension(const real_t &value);
+	real_t get_tension() const;
 
-	void set_damping(const float &value);
-	float get_damping() const;
+	void set_damping(const real_t &value);
+	real_t get_damping() const;
 
-	void set_spread(const float &value);
-	float get_spread() const;
+	void set_spread(const real_t &value);
+	real_t get_spread() const;
 
 	void set_drag(const Vector2 &value);
 	Vector2 get_drag() const;
@@ -94,23 +110,7 @@ public:
 	void set_texture(const Ref<Texture> &p_texture);
 	Ref<Texture> get_texture() const;
 
-protected:
-	static void _bind_methods();
-
-	Vector<GDWaterSplashColumn *> columns_;
-
-	Rect2 rect_;
-	uint32_t ncols_;
-	uint32_t resolution_;
-	Color color_;
-	float damping_;
-	float tension_;
-	float spread_;
-	Vector2 drag_;
-	Ref<Texture> texture;
-
-	bool size_changed_;
-	void _update();
+	GdWaterSplash();
 };
 
-#endif // _GD_WATER_SPLASH_H_
+#endif // GD_WATER_SPLASH_H
