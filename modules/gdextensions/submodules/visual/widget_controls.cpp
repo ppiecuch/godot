@@ -31,6 +31,8 @@
 // Reference:
 // ----------
 //  - https://stackoverflow.com/questions/7687148/
+//  - https://github.com/companje/ofxArcBall/blob/master/ofxArcBall.cpp
+
 
 #include "common/gd_core.h"
 #include "core/color.h"
@@ -678,8 +680,8 @@ void ControlWidget::_input(const Ref<InputEvent> &p_event) {
 	}
 
 	if (const InputEventMouseMotion *e = cast_to<InputEventMouseMotion>(*p_event)) {
-		if (control_type == WIDGET_ROTATION_SPHERE) {
-			if (_is_point_inside(e->get_position())) {
+		if (_state.active) {
+			if (control_type == WIDGET_ROTATION_SPHERE) {
 				if (_state.active) {
 					_mouse_on_sphere(to_local(e->get_position()), control_rect.size, &_state.to_vector);
 					if (_state.to_vector != _state.from_vector) {
@@ -699,9 +701,7 @@ void ControlWidget::_input(const Ref<InputEvent> &p_event) {
 						_state.swap();
 					}
 				}
-			}
-		} else {
-			if (_state.active) {
+			} else {
 				const Point2 p = to_local(e->get_position());
 				Point2 pf = resolution * (_state.initial_pos - p);
 
