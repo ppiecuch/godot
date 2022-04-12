@@ -34,13 +34,25 @@
 #include "scene/2d/physics_body_2d.h"
 #include <iostream>
 
-void GDWaterSplashColumn::update(float &tension, float &damping) {
-	float dh = target_height_ - height_;
+void GdWaterSplashColumn::update(real_t &tension, real_t &damping) {
+	const real_t dh = target_height_ - height_;
 	speed_ += tension * dh - damping * speed_;
 	height_ += speed_;
 }
 
-GDWaterSplashColumn::GDWaterSplashColumn(const Vector2 &pos, const Vector2 &delta, const Vector2 &drag) :
+void GdWaterSplashColumn::body_enter_shape(int body_id, Object *body, int body_shape, int area_shape) {
+	RigidBody2D *obj = cast_to<RigidBody2D>(body);
+	if (obj) {
+		Vector2 v = obj->get_linear_velocity();
+		speed_ = drag_.x * Math::abs(v.x) + drag_.y * Math::abs(v.y);
+	}
+}
+
+void GdWaterSplashColumn::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("body_enter_shape", "bodyshape"), &GdWaterSplashColumn::body_enter_shape);
+}
+
+GdWaterSplashColumn::GdWaterSplashColumn(const Vector2 &pos, const Vector2 &delta, const Vector2 &drag) :
 		target_height_(delta.y), height_(delta.y), speed_(0.0), drag_(drag) {
 	Ref<RectangleShape2D> shape = memnew(RectangleShape2D);
 	shape->set_extents(delta);
@@ -54,47 +66,21 @@ GDWaterSplashColumn::GDWaterSplashColumn(const Vector2 &pos, const Vector2 &delt
 	connect("body_shape_entered", this, "body_enter_shape");
 }
 
-void GDWaterSplashColumn::body_enter_shape(int body_id, Object *body, int body_shape, int area_shape) {
-	RigidBody2D *obj = cast_to<RigidBody2D>(body);
-	if (obj) {
-		Vector2 v = obj->get_linear_velocity();
-		speed_ = drag_.x * Math::abs(v.x) + drag_.y * Math::abs(v.y);
-	}
-}
-
-void GDWaterSplashColumn::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("body_enter_shape", "bodyshape"), &GDWaterSplashColumn::body_enter_shape);
-}
-
-GDWaterSplash::GDWaterSplash() {
-	set_size(Rect2(0., 0., 100., 20.));
-	resolution_ = 5;
-	color_ = Color(1, 1, 1, 1);
-	damping_ = 0.025;
-	tension_ = 0.025;
-	spread_ = 0.25;
-	drag_ = Vector2(0.01, 0.03);
-	size_changed_ = true;
-	_update();
-
-	set_physics_process(true);
-}
-
-void GDWaterSplash::_update() {
+void GdWaterSplash::_update() {
 	// Is size changed,
 	if (size_changed_) {
-		float dx = rect_.size.x;
-		float dy = rect_.size.y;
+		real_t dx = rect_.size.x;
+		real_t dy = rect_.size.y;
 		size_changed_ = false;
 		ncols_ = uint32_t(dx / resolution_);
 		for (int i = 0; i < columns_.size(); ++i) {
 			memdelete(columns_[i]);
 		}
 		columns_.clear();
-		float x = rect_.position.x;
-		float y = rect_.position.y;
+		real_t x = rect_.position.x;
+		real_t y = rect_.position.y;
 		for (uint32_t i = 0; i < ncols_; ++i) {
-			GDWaterSplashColumn *col = memnew(GDWaterSplashColumn(Vector2(x, y), Vector2(resolution_, dy), drag_));
+			GdWaterSplashColumn *col = memnew(GdWaterSplashColumn(Vector2(x, y), Vector2(resolution_, dy), drag_));
 			columns_.push_back(col);
 			add_child(col);
 			x += resolution_;
@@ -103,21 +89,21 @@ void GDWaterSplash::_update() {
 	update();
 }
 
-void GDWaterSplash::_notification(int p_what) {
+void GdWaterSplash::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_ENTER_TREE: {
 			update();
 		} break;
 
 		case NOTIFICATION_LOCAL_TRANSFORM_CHANGED: {
-			if (!is_inside_tree())
+			if (!is_inside_tree()) {
 				break;
+			}
 		} break;
 
 		case NOTIFICATION_PHYSICS_PROCESS: {
-			int n = columns_.size();
-			double *l = new double[n];
-			double *r = new double[n];
+			const int n = columns_.size();
+			real_t l[n], r[n];
 			for (int i = 0; i < n; ++i) {
 				columns_[i]->update(tension_, damping_);
 			}
@@ -141,11 +127,7 @@ void GDWaterSplash::_notification(int p_what) {
 					}
 				}
 			}
-
-			delete[] l;
-			delete[] r;
 			update();
-
 		} break;
 
 		case NOTIFICATION_DRAW: {
@@ -181,110 +163,124 @@ void GDWaterSplash::_notification(int p_what) {
 	}
 }
 
-void GDWaterSplash::set_size(const Rect2 &rect) {
+void GdWaterSplash::set_size(const Rect2 &rect) {
 	rect_ = rect;
 	size_changed_ = true;
 	_update();
 }
 
-Rect2 GDWaterSplash::get_size() const {
+Rect2 GdWaterSplash::get_size() const {
 	return rect_;
 }
 
-void GDWaterSplash::set_resolution(const uint32_t &resolution) {
+void GdWaterSplash::set_resolution(const uint32_t &resolution) {
 	resolution_ = resolution;
 	size_changed_ = true;
 	_update();
 }
 
-uint32_t GDWaterSplash::get_resolution() const {
+uint32_t GdWaterSplash::get_resolution() const {
 	return resolution_;
 }
 
-void GDWaterSplash::set_color(const Color &color) {
+void GdWaterSplash::set_color(const Color &color) {
 	color_ = color;
 	size_changed_ = false;
 	_update();
 }
 
-Color GDWaterSplash::get_color() const {
+Color GdWaterSplash::get_color() const {
 	return color_;
 }
 
-void GDWaterSplash::set_damping(const float &val) {
+void GdWaterSplash::set_damping(const real_t &val) {
 	damping_ = val;
 }
 
-float GDWaterSplash::get_damping() const {
+real_t GdWaterSplash::get_damping() const {
 	return damping_;
 }
 
-void GDWaterSplash::set_tension(const float &val) {
+void GdWaterSplash::set_tension(const real_t &val) {
 	tension_ = val;
 }
 
-float GDWaterSplash::get_tension() const {
+real_t GdWaterSplash::get_tension() const {
 	return tension_;
 }
 
-void GDWaterSplash::set_spread(const float &val) {
+void GdWaterSplash::set_spread(const real_t &val) {
 	spread_ = val;
 }
 
-float GDWaterSplash::get_spread() const {
+real_t GdWaterSplash::get_spread() const {
 	return spread_;
 }
 
-Vector2 GDWaterSplash::get_drag() const {
+Vector2 GdWaterSplash::get_drag() const {
 	return drag_;
 }
 
-void GDWaterSplash::set_drag(const Vector2 &val) {
+void GdWaterSplash::set_drag(const Vector2 &val) {
 	drag_ = val;
 	for (int i = 0; i < columns_.size(); ++i) {
 		columns_[i]->drag_ = drag_;
 	}
 }
 
-void GDWaterSplash::set_texture(const Ref<Texture> &p_texture) {
+void GdWaterSplash::set_texture(const Ref<Texture> &p_texture) {
 	texture = p_texture;
 }
 
-Ref<Texture> GDWaterSplash::get_texture() const {
+Ref<Texture> GdWaterSplash::get_texture() const {
 	return texture;
 }
 
-void GDWaterSplash::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("set_size", "size"), &GDWaterSplash::set_size);
-	ClassDB::bind_method(D_METHOD("get_size"), &GDWaterSplash::get_size);
+void GdWaterSplash::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("set_size", "size"), &GdWaterSplash::set_size);
+	ClassDB::bind_method(D_METHOD("get_size"), &GdWaterSplash::get_size);
 	ADD_PROPERTY(PropertyInfo(Variant::RECT2, "size"), "set_size", "get_size");
 
-	ClassDB::bind_method(D_METHOD("set_resolution", "resolution"), &GDWaterSplash::set_resolution);
-	ClassDB::bind_method(D_METHOD("get_resolution"), &GDWaterSplash::get_resolution);
+	ClassDB::bind_method(D_METHOD("set_resolution", "resolution"), &GdWaterSplash::set_resolution);
+	ClassDB::bind_method(D_METHOD("get_resolution"), &GdWaterSplash::get_resolution);
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "resolution"), "set_resolution", "get_resolution");
 
-	ClassDB::bind_method(D_METHOD("set_color", "color"), &GDWaterSplash::set_color);
-	ClassDB::bind_method(D_METHOD("get_color"), &GDWaterSplash::get_color);
+	ClassDB::bind_method(D_METHOD("set_color", "color"), &GdWaterSplash::set_color);
+	ClassDB::bind_method(D_METHOD("get_color"), &GdWaterSplash::get_color);
 	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "color"), "set_color", "get_color");
 
-	ClassDB::bind_method(D_METHOD("set_damping", "damping"), &GDWaterSplash::set_damping);
-	ClassDB::bind_method(D_METHOD("get_damping"), &GDWaterSplash::get_damping);
+	ClassDB::bind_method(D_METHOD("set_damping", "damping"), &GdWaterSplash::set_damping);
+	ClassDB::bind_method(D_METHOD("get_damping"), &GdWaterSplash::get_damping);
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "damping"), "set_damping", "get_damping");
 
-	ClassDB::bind_method(D_METHOD("set_tension", "tension"), &GDWaterSplash::set_tension);
-	ClassDB::bind_method(D_METHOD("get_tension"), &GDWaterSplash::get_tension);
+	ClassDB::bind_method(D_METHOD("set_tension", "tension"), &GdWaterSplash::set_tension);
+	ClassDB::bind_method(D_METHOD("get_tension"), &GdWaterSplash::get_tension);
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "tension"), "set_tension", "get_tension");
 
-	ClassDB::bind_method(D_METHOD("set_spread", "spread"), &GDWaterSplash::set_spread);
-	ClassDB::bind_method(D_METHOD("get_spread"), &GDWaterSplash::get_spread);
+	ClassDB::bind_method(D_METHOD("set_spread", "spread"), &GdWaterSplash::set_spread);
+	ClassDB::bind_method(D_METHOD("get_spread"), &GdWaterSplash::get_spread);
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "spread"), "set_spread", "get_spread");
 
-	ClassDB::bind_method(D_METHOD("set_drag", "drag"), &GDWaterSplash::set_drag);
-	ClassDB::bind_method(D_METHOD("get_drag"), &GDWaterSplash::get_drag);
+	ClassDB::bind_method(D_METHOD("set_drag", "drag"), &GdWaterSplash::set_drag);
+	ClassDB::bind_method(D_METHOD("get_drag"), &GdWaterSplash::get_drag);
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "drag"), "set_drag", "get_drag");
 
-	ClassDB::bind_method(D_METHOD("set_texture", "texture"), &GDWaterSplash::set_texture);
-	ClassDB::bind_method(D_METHOD("get_texture"), &GDWaterSplash::get_texture);
+	ClassDB::bind_method(D_METHOD("set_texture", "texture"), &GdWaterSplash::set_texture);
+	ClassDB::bind_method(D_METHOD("get_texture"), &GdWaterSplash::get_texture);
 
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "config/texture", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_texture", "get_texture");
+}
+
+GdWaterSplash::GdWaterSplash() {
+	set_size(Rect2(0., 0., 100., 20.));
+	resolution_ = 5;
+	color_ = Color(1, 1, 1, 1);
+	damping_ = 0.025;
+	tension_ = 0.025;
+	spread_ = 0.25;
+	drag_ = Vector2(0.01, 0.03);
+	size_changed_ = true;
+	_update();
+
+	set_physics_process(true);
 }

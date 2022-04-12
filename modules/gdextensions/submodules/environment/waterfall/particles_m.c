@@ -30,7 +30,7 @@
 
 #ifndef HAVE_PARTICLES_SIZE_M
 
-const unsigned char *particles_size_m = 0;
+const unsigned char *particles_size_m[] = { 0 };
 
 #else
 

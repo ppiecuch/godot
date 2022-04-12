@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  particles.h                                                          */
+/*  gd_waterfall.h                                                       */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,28 +28,33 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-extern "C" const unsigned char *particles_size_s[];
-extern "C" const unsigned char *particles_size_m[];
-extern "C" const unsigned char *particles_size_l[];
+#ifndef GD_WATERFALL_H
+#define GD_WATERFALL_H
 
-enum {
-	WATERFALL_PARTICLE_DROP1,
-	WATERFALL_PARTICLE_DROP2,
-	WATERFALL_PARTICLE_DROP3,
-	WATERFALL_PARTICLE_DROP4,
-	WATERFALL_PARTICLE_CLOUD1,
-	WATERFALL_PARTICLE_CLOUD2,
-	WATERFALL_PARTICLE_COUNT,
+#include "scene/2d/node_2d.h"
+#include "scene/resources/texture.h"
+
+#include "flex_particles_system.h"
+#include "particles.h"
+
+enum WaterfallParticlesSize {
+	ParticlesLow,
+	ParticlesMedium,
+	ParticlesHigh,
 };
 
-enum {
-	WATERFALL_PARTICLE_SIZE_S,
-	WATERFALL_PARTICLE_SIZE_M,
-	WATERFALL_PARTICLE_SIZE_L,
+class GdWaterfall : public Node2D {
+	GDCLASS(GdWaterfall, Node2D);
+
+	real_t speed;
+	real_t density;
+	WaterfallParticlesSize particles_size;
+	Size2 view_size;
+
+	Ref<Texture> _particles[WATERFALL_PARTICLE_COUNT];
+
+public:
+	GdWaterfall();
 };
 
-const bool _available_particles[] = {
-	particles_size_s[0] != nullptr,
-	particles_size_m[0] != nullptr,
-	particles_size_l[0] != nullptr,
-};
+#endif // GD_WATERFALL_H

@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Packages (or yum group install "Development Tools"):
+# ----------------------------------------------------
+#  - build-essential pkg-config yasm
+#  - libx11-dev libxcursor-dev libxinerama-dev  libxi-dev libxrandr-dev
+#  - libasound2-dev libpulse-dev libdbus-1-dev libudev-dev
+
 set -e
 
 CPU=2

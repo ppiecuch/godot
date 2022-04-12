@@ -28,8 +28,6 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-/* vegetation_instance.h */
-
 #ifndef VEGETATIONINSTANCE_H
 #define VEGETATIONINSTANCE_H
 
