@@ -86,7 +86,6 @@ struct flex_quad {
 		return ((br.x - bl.x) * (test.y - bl.y) - (br.y - bl.y) * (test.x - bl.x)) > 0;
 	}
 
-	// sign( (Bx-Ax)*(Y-Ay) - (By-Ay)*(X-Ax) )
 	void draw(Array &array_mesh) {
 		((PoolVector2Array)array_mesh[Mesh::ARRAY_VERTEX]).append_array(parray(tl, tr, bl, br));
 		((PoolIntArray)array_mesh[Mesh::ARRAY_INDEX]).append_array(parray(0, 1, 2, 1, 2, 3));
@@ -138,7 +137,7 @@ public:
 	void set_age(int p_age) { age = p_age; }
 	int get_age() const { return age; }
 
-	// A void pointer can be associated with this particle.  This allows extra
+	// A void pointer can be associated with this particle. This allows extra
 	// information to be assigned to a particle, for whatever reason
 	void set_data(void *p_data) { data = p_data; }
 	void *get_data() const { return data; }
@@ -198,14 +197,14 @@ public:
 
 	// Set up the vector field.
 	//
-	// @param externalWidth     The width of the world size this vector field will be
+	// @param external_width    The width of the world size this vector field will be
 	//                          applied to (ie a window size)
-	// @param externalHeight    The height of the world size this vector field will be
+	// @param external_height   The height of the world size this vector field will be
 	//                          applied to (ie a window size)
-	// @param fieldWidth        The width of the internal representation.  Ie how many
+	// @param field_width       The width of the internal representation.  Ie how many
 	//                          force points internally?  Leave blank to default to a field based
 	//                          on the DEFAULT_SCALE
-	// @param fieldHeight       The height of the internal representation. Ie how many
+	// @param field_height      The height of the internal representation. Ie how many
 	//                          force points internally?  Leave blank to default to a field based
 	//                          on the DEFAULT_SCALE
 	void setup_field(int external_width, int external_height, int field_width = 0, int field_height = 0);
@@ -217,7 +216,7 @@ public:
 	// This will let you lower the field values over time.  All field forces will
 	// be set to oldForce * fadeAmount.  ie pass in .99 or so
 	//
-	// @param fadeAmount    The percentage of the force to be LEFT.  NewForce = oldForce * fadeAmount
+	// @param fadeAmount    The percentage of the force to be LEFT.  NewForce = OldForce * fadeAmount
 	void fade_field(real_t fade_amount);
 
 	// Randomly sets all field values to a range between -range and range
@@ -280,24 +279,20 @@ public:
 	// @param force     The value this section of the vector field will be applied to
 	void set_uniform_force(const Rect2 &area, const Vector2 &force);
 
-	// Consider you are modeling a whirlpool inside of a larger lake.  You want to
-	// have this whirlpool move around the lake, so you have two options.  You either
+	// Consider you are modeling a whirlpool inside of a larger lake. You want to
+	// have this whirlpool move around the lake, so you have two options. You either
 	// clear out the vector field and re-generate the whirlpool each time it moves,
-	// or you call this and you can shift the entire vector field.  Currently this
+	// or you call this and you can shift the entire vector field. Currently this
 	// only works on the horizontal (can't do horizontal and vertical shifts) but the
 	// vertical could be extended relatively easily.
 	//
 	// Internall this keeps all values of the vector field the same, it just calculates
 	// values given a certain perfentage of shift.
-	//
-	// @param shift_pct     Horizontal shifts value
 	void set_horizontal_shift(real_t shift_pct);
 
 	// Scale the vector field, without actually affecting internal values.  You can
 	// set this to 0 to temporarily make all forces equal (0,0), then set it to 1
 	// later on to get all those forces back to the way they were.
-	//
-	// @param scale     The scale to set the vector field to
 	void set_scale(real_t scale) { _scale = scale; }
 
 	// You have a large screen, and you have 4 different force areas.  You can either
@@ -321,8 +316,8 @@ public:
 	// @param yRepeat        repeat the sin wave X times on vertical field
 	// @param xPhase         offset the x phase
 	// @param yPhase         offset the y phase
-	// @param sinPowerValue  pow(sin(), sinPowerValu) lets you adjust the sin wav
-	//                       sinPowerValue will be ignored if < 1 and we are working with a negative value
+	// @param sinPowerValue  pow(sin(), sin_power_value) lets you adjust the sin wav
+	//                       sin_power_value will be ignored if < 1 and we are working with a negative value
 	// @param positiveClamp  lets you force the use of only positive values
 	void apply_sin_map(real_t x_repeat, real_t y_repeat, real_t x_phase, real_t y_phase, real_t sin_power_value = 1, bool positive_clamp = false);
 
@@ -418,44 +413,30 @@ public:
 	// This sets the particle system to the OPEN type so no parameters are needed
 	void setup_open();
 
-	// Configure the particle system.  You should only call this once.
-	// This sets the particle system to the SQUARE type
-	//
-	// @param worldBox      For bound worlds this box defines the size.
+	// Configure the particle system. You should only call this once.
+	// This sets the particle system to the SQUARE type with given world box.
 	void setup_square(const Vector2 &world_box);
 
 	// Configure the particle system.  You should only call this once.
-	// Configure the particle system as a QUAD type.  Provide the corners of the quad
-	//
-	// @param topLeft corner of Quad
-	// @param bottomLeft corner of Quad
-	// @param topRight corner of Quad
-	// @param bottomRight corner of Quad
+	// Configure the particle system as a QUAD type.  Provide the corners of the quad.
 	void setup_quad(const Vector2 &top_left, const Vector2 &bottom_left, const Vector2 &top_right, const Vector2 &bottom_right);
 
 	// Updates all particles in the system, applies vector fields if option is enabled
 	// calls callbacks that are eneabled, etc.
 	virtual void update();
 
-	// Draws the particles inside the windowStencil
-	//
-	// @param windowStencil     visual square you want drawn
-	// @param rotate            what degree the windowStencil should be rotated
+	// Draws the particles inside the given window_stencil that
+	// might be rotated of `rotate` degree.
 	void draw(CanvasItem *canvas, const Rect2 &window_stencil, real_t rotate = 0.0);
 
 	// Inserts an flex_particle into the system.
 	// NOTE: no memory management is done by this system
-	//
-	// @param particle      pointer to the flex_particle you want added
 	void add_particle(flex_particle *particle);
 
 	// Remove a given particle from the system.  Note that you CANNOT
-	// remove a particle while the system is updating.  The system locks
-	// to prevent this.
+	// remove a particle while the system is updating. The system locks
+	// to prevent this. Return true if the particle was removed, false otherwise
 	// NOTE: no memory management is done by this system
-	//
-	// @param unique_id     internal ID of the particle
-	// @return              true if the particle was removed, false otherwise
 	bool remove_particle(unsigned long unique_id);
 
 	// Clears all particles and resets unique_id counter
@@ -463,18 +444,12 @@ public:
 	void clear();
 
 	// Multiply the velocity of all particled by this force
-	//
-	// @param force     velocity multiplication force
 	void mult_force(const Vector2 &force);
 
 	// Add to the acceleration of all particled by this force
-	//
-	// @param force     acceleration addition force
 	void add_force(const Vector2 &force);
 
 	// Return the number of particles currently in the system
-	//
-	// @return     the number of particles currently in system
 	int get_num_particles() const { return _particles.size(); }
 
 	// Set one of the given wall callbacks.  This callback will be called
@@ -491,45 +466,32 @@ public:
 	//                  do internal logic and then call the callback
 	void set_wall_callback(std::function<void(flex_particle *)> func, WallCallbackType type, bool override);
 
-	// Enable or diable a given option.  See Options enum
-	//
-	// @param option        option in question
-	// @param enabled       should we enable or disable the option
-	// @param param         optional parameter, depending on option
+	// Enable or diable a given option. See Options enum
+	// (optional `param` parameter is depending on option)
 	void set_option(Options option, bool enabled, real_t param = 0.0);
 
 	// Get the internal container that holds our particles.  Be careful
 	// as there is no lock associated with this container so you could easily
 	// break things.
-	//
-	// @return              The immutable particle container
 	Container const *get_particles() { return &_particles; }
 
 	// Get an individual particle out of the system based on the uniqueID.
 	// Be careful not to touch this particle while the system is updating.
-	//
-	// @return              The particle pointer or NULL
 	flex_particle *get_particle(unsigned long unique_id);
 
 	// Return a pointer to the internal vector field that the particle
-	// system is using.  This allows the user to configure the vector field
-	// as they need.  This is good for any force type you want applied to all particles
-	//
-	// @return              flex_vector_field pointer
+	// system is using. This allows the user to configure the vector field
+	// as they need. This is good for any force type you want applied to all particles
 	flex_vector_field *get_vector_field() { return &_vector_field; }
 
 	// Apply a given flex_vector_field to the particles.  This is useful for advanced
 	// functionality where multiple vector fields are needed.  Note that the particle
 	// x,y will be plugged in directly to the vectorField.getForce(x,y), no translation
 	// occurs.
-	//
-	// @param vectorField      flex_vector_field that will be applied
 	void apply_vector_field(const flex_vector_field &vector_field);
 
 	// Sets the maxinum number of particles that the system will hold.  Once we reach the limit
-	// the addition of a new particle will result in the deletion of oldest particle (lowest uniqueID)
-	//
-	// @param max_particles      maxinum particle number
+	// the addition of a new particle will result in the deletion of oldest particle (lowest unique_id)
 	void set_max_particles(unsigned int max_particles) { _max_particles = max_particles; }
 
 	// Checks to see if the particle falls within our cropping range
