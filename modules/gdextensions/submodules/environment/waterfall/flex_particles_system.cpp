@@ -354,7 +354,8 @@ const float flex_particle_system::MIN_PARTICLE_MASS = .1;
 // the forces within the field to make it managable.
 const float flex_particle_system::VEC_FIELD_FORCE_DIVIDER = 100;
 
-flex_particle_system::flex_particle_system() {
+flex_particle_system::flex_particle_system(CanvasItem *canvas) {
+	_canvas = canvas;
 	_options = 0;
 	_next_id = 0;
 
@@ -666,12 +667,12 @@ bool flex_particle_system::should_draw(flex_particle *p, const Rect2 &ws, real_t
 	return false;
 }
 
-void flex_particle_system::draw(CanvasItem *canvas, const Rect2 &ws, real_t rotation) {
+void flex_particle_system::draw(const Rect2 &ws, real_t rotation) {
 	real_t tempf;
 	for (Iterator it = _particles.begin(); it != _particles.end(); ++it) {
 		flex_particle *p = it->second;
 		if (should_draw(p, ws, rotation)) {
-			p->draw(canvas);
+			p->draw(_canvas);
 		}
 		// need to check if the particle wrap is inside
 		if (_world_type == SQUARE) {
@@ -681,7 +682,7 @@ void flex_particle_system::draw(CanvasItem *canvas, const Rect2 &ws, real_t rota
 					tempf = p->position.x;
 					p->position.x -= _world_box.x;
 					if (should_draw(p, ws, rotation)) {
-						p->draw(canvas);
+						p->draw(_canvas);
 					}
 					p->position.x = tempf;
 				} else if (p->position.x - p->radius < 0) {
@@ -689,7 +690,7 @@ void flex_particle_system::draw(CanvasItem *canvas, const Rect2 &ws, real_t rota
 					tempf = p->position.x;
 					p->position.x += _world_box.x;
 					if (should_draw(p, ws, rotation)) {
-						p->draw(canvas);
+						p->draw(_canvas);
 					}
 					p->position.x = tempf;
 				}
@@ -700,7 +701,7 @@ void flex_particle_system::draw(CanvasItem *canvas, const Rect2 &ws, real_t rota
 					tempf = p->position.y;
 					p->position.y -= _world_box.y;
 					if (should_draw(p, ws, rotation)) {
-						p->draw(canvas);
+						p->draw(_canvas);
 					}
 					p->position.y = tempf;
 				} else if (p->position.y - p->radius < 0) {
@@ -708,7 +709,7 @@ void flex_particle_system::draw(CanvasItem *canvas, const Rect2 &ws, real_t rota
 					tempf = p->position.y;
 					p->position.y += _world_box.y;
 					if (should_draw(p, ws, rotation)) {
-						p->draw(canvas);
+						p->draw(_canvas);
 					}
 					p->position.y = tempf;
 				}
@@ -716,6 +717,6 @@ void flex_particle_system::draw(CanvasItem *canvas, const Rect2 &ws, real_t rota
 		}
 	}
 	if ((_options & VECTOR_FIELD) && (_options & VECTOR_FIELD_DRAW)) {
-		_vector_field.draw(canvas, ws);
+		_vector_field.draw(_canvas, ws);
 	}
 }

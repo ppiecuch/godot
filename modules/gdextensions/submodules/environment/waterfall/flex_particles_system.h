@@ -376,6 +376,7 @@ class flex_particle_system {
 	flex_vector_field _vector_field; // our vector field
 	unsigned long _next_id; // for unique_ids
 	unsigned int _max_particles; // optional max particles
+	CanvasItem *_canvas; // drawing canvas
 
 public:
 	// min mass for the particle, to prevent particles from having a
@@ -427,7 +428,7 @@ public:
 
 	// Draws the particles inside the given window_stencil that
 	// might be rotated of `rotate` degree.
-	void draw(CanvasItem *canvas, const Rect2 &window_stencil, real_t rotate = 0.0);
+	void draw(const Rect2 &window_stencil, real_t rotate = 0.0);
 
 	// Inserts an flex_particle into the system.
 	// NOTE: no memory management is done by this system
@@ -504,7 +505,7 @@ public:
 
 	flex_quad get_world_quad() const { return _world_quad; }
 
-	flex_particle_system();
+	flex_particle_system(CanvasItem *canvas);
 };
 
 #endif // FLEX_PARTICLES_SYSTEM_H
