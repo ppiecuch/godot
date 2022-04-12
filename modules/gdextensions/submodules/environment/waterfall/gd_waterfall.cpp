@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  particles.h                                                          */
+/*  gd_waterfall.cpp                                                     */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,28 +28,11 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-extern "C" const unsigned char *particles_size_s[];
-extern "C" const unsigned char *particles_size_m[];
-extern "C" const unsigned char *particles_size_l[];
+#include "gd_waterfall.h"
 
-enum {
-	WATERFALL_PARTICLE_DROP1,
-	WATERFALL_PARTICLE_DROP2,
-	WATERFALL_PARTICLE_DROP3,
-	WATERFALL_PARTICLE_DROP4,
-	WATERFALL_PARTICLE_CLOUD1,
-	WATERFALL_PARTICLE_CLOUD2,
-	WATERFALL_PARTICLE_COUNT,
-};
-
-enum {
-	WATERFALL_PARTICLE_SIZE_S,
-	WATERFALL_PARTICLE_SIZE_M,
-	WATERFALL_PARTICLE_SIZE_L,
-};
-
-const bool _available_particles[] = {
-	particles_size_s[0] != nullptr,
-	particles_size_m[0] != nullptr,
-	particles_size_l[0] != nullptr,
-};
+GdWaterfall::GdWaterfall() {
+	speed = 1.0;
+	density = 10;
+	particles_size = ParticlesMedium;
+	view_size = Size2(50, 150);
+}

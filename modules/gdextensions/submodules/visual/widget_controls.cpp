@@ -33,7 +33,6 @@
 //  - https://stackoverflow.com/questions/7687148/
 //  - https://github.com/companje/ofxArcBall/blob/master/ofxArcBall.cpp
 
-
 #include "common/gd_core.h"
 #include "core/color.h"
 #include "core/math/math_funcs.h"

@@ -66,7 +66,6 @@ GdWaterSplashColumn::GdWaterSplashColumn(const Vector2 &pos, const Vector2 &delt
 	connect("body_shape_entered", this, "body_enter_shape");
 }
 
-
 void GdWaterSplash::_update() {
 	// Is size changed,
 	if (size_changed_) {
