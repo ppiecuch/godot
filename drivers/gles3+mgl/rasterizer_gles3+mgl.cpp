@@ -29,6 +29,9 @@
 /*************************************************************************/
 
 #ifdef METAL_ENABLED
+// clang-format off
+#include "_rename_end.h"
 #include "../gles3/rasterizer_gles3.cpp"
 #include "_rename_begin.h"
+// clang-format on
 #endif
