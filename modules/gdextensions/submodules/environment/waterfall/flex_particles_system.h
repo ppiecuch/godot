@@ -36,7 +36,6 @@
 #include "core/math/rect2.h"
 #include "core/math/vector2.h"
 #include "core/os/mutex.h"
-#include "core/reference.h"
 #include "scene/2d/canvas_item.h"
 #include "scene/resources/mesh.h"
 
@@ -48,9 +47,9 @@ struct flex_particle_options {
 	// @param pos               The starting position of the particle in the world
 	// @param velocity          The starting velocity of the particle in the world
 	// @param rotation          The starting rotation of the particle in the world
-	// @param rotateVelocity    The starting rotation velocity of the particle in the world
+	// @param rotate_velocity   The starting rotation velocity of the particle in the world
 	// @param radius            The starting radius
-	// @param damping           The damping.  Damping causes a particle to lose forces over time
+	// @param damping           The damping. Damping causes a particle to lose forces over time
 	//                          it can be thought of as 'air friction', etc
 	flex_particle_options(Vector2 &pos, Vector2 &velocity, Vector2 &rotation, Vector2 &rotate_velocity, real_t radius, real_t damping) :
 			pos(pos), velocity(velocity), rotation(rotation), rotate_velocity(rotate_velocity), radius(radius), damping(damping) {}
@@ -92,14 +91,12 @@ struct flex_quad {
 	}
 };
 
-class flex_particle : public Reference {
+class flex_particle {
 	int age;
 	real_t start_second;
-	void *data;
-
 	unsigned long unique_id;
 
-	virtual void set_defaults();
+	void set_defaults();
 
 public:
 	// left public for easy changing
@@ -113,6 +110,8 @@ public:
 	real_t radius;
 	real_t damping;
 	real_t mass;
+
+	Ref<Texture> texture;
 
 	flex_particle &operator=(const flex_particle &p);
 
@@ -136,11 +135,6 @@ public:
 	// been around.  The system curently doesn't do anything with particle age
 	void set_age(int p_age) { age = p_age; }
 	int get_age() const { return age; }
-
-	// A void pointer can be associated with this particle. This allows extra
-	// information to be assigned to a particle, for whatever reason
-	void set_data(void *p_data) { data = p_data; }
-	void *get_data() const { return data; }
 
 	real_t get_start_seconds() const { return start_second; }
 
@@ -363,9 +357,10 @@ class flex_particle_system {
 
 	Container _particles; // holds the actual particles
 	WorldType _world_type; // is it a bordered world, infinite world ?
-	Vector2 _world_box; // if square world, this is the boundaries
-	flex_quad _world_quad; // if quad world, this is the bounds
-
+	union {
+		Size2 _world_box; // if square world, this is the boundaries
+		flex_quad _world_quad; // if quad world, this is the bounds
+	}
 	// call back is for special interactions when particles hit wall boundaries
 	// the override tells us whether or not we do standard functionality FIRST
 	// before the callback or if we let the callback handle everything
@@ -416,11 +411,11 @@ public:
 
 	// Configure the particle system. You should only call this once.
 	// This sets the particle system to the SQUARE type with given world box.
-	void setup_square(const Vector2 &world_box);
+	void setup_square(const Size2 &world_box);
 
 	// Configure the particle system.  You should only call this once.
 	// Configure the particle system as a QUAD type.  Provide the corners of the quad.
-	void setup_quad(const Vector2 &top_left, const Vector2 &bottom_left, const Vector2 &top_right, const Vector2 &bottom_right);
+	void setup_quad(const Point2 &top_left, const Point2 &bottom_left, const Point2 &top_right, const Point2 &bottom_right);
 
 	// Updates all particles in the system, applies vector fields if option is enabled
 	// calls callbacks that are eneabled, etc.
