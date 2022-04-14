@@ -61,7 +61,6 @@ void flex_particle::set_defaults() {
 	age = 0;
 	start_second = OS::get_singleton()->get_ticks_msec() * 1000;
 	unique_id = 0;
-	data = nullptr;
 }
 
 void flex_particle::update() {
@@ -371,12 +370,12 @@ void flex_particle_system::setup_open() {
 	_world_type = OPEN;
 }
 
-void flex_particle_system::setup_square(const Vector2 &world_box) {
+void flex_particle_system::setup_square(const Size2 &world_box) {
 	_world_type = SQUARE;
 	_world_box = world_box;
 }
 
-void flex_particle_system::setup_quad(const Vector2 &top_left, const Vector2 &bottom_left, const Vector2 &top_right, const Vector2 &bottom_right) {
+void flex_particle_system::setup_quad(const Point2 &top_left, const Point2 &bottom_left, const Point2 &top_right, const Point2 &bottom_right) {
 	_world_type = QUAD;
 	_world_quad.tl = top_left;
 	_world_quad.tr = top_right;
@@ -668,7 +667,6 @@ bool flex_particle_system::should_draw(flex_particle *p, const Rect2 &ws, real_t
 }
 
 void flex_particle_system::draw(const Rect2 &ws, real_t rotation) {
-	real_t tempf;
 	for (Iterator it = _particles.begin(); it != _particles.end(); ++it) {
 		flex_particle *p = it->second;
 		if (should_draw(p, ws, rotation)) {
@@ -679,7 +677,7 @@ void flex_particle_system::draw(const Rect2 &ws, real_t rotation) {
 			if (_options & HORIZONTAL_WRAP) {
 				if (p->position.x + p->radius > _world_box.x) {
 					// check right side of screen and wrap back to left if needed
-					tempf = p->position.x;
+					const real_t tempf = p->position.x;
 					p->position.x -= _world_box.x;
 					if (should_draw(p, ws, rotation)) {
 						p->draw(_canvas);
@@ -687,7 +685,7 @@ void flex_particle_system::draw(const Rect2 &ws, real_t rotation) {
 					p->position.x = tempf;
 				} else if (p->position.x - p->radius < 0) {
 					// check right side of screen and wrap back to right if needed
-					tempf = p->position.x;
+					const real_t tempf = p->position.x;
 					p->position.x += _world_box.x;
 					if (should_draw(p, ws, rotation)) {
 						p->draw(_canvas);
@@ -698,7 +696,7 @@ void flex_particle_system::draw(const Rect2 &ws, real_t rotation) {
 			if (_options & VERTICAL_WRAP) {
 				if (p->position.y + p->radius > _world_box.y) {
 					// check bottom side of screen and wrap back to top if needed
-					tempf = p->position.y;
+					const real_t tempf = p->position.y;
 					p->position.y -= _world_box.y;
 					if (should_draw(p, ws, rotation)) {
 						p->draw(_canvas);
@@ -706,7 +704,7 @@ void flex_particle_system::draw(const Rect2 &ws, real_t rotation) {
 					p->position.y = tempf;
 				} else if (p->position.y - p->radius < 0) {
 					// check top side of screen and wrap back to bottom if needed
-					tempf = p->position.y;
+					const real_t tempf = p->position.y;
 					p->position.y += _world_box.y;
 					if (should_draw(p, ws, rotation)) {
 						p->draw(_canvas);

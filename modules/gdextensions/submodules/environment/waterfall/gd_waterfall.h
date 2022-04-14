@@ -37,23 +37,48 @@
 #include "flex_particles_system.h"
 #include "particles.h"
 
-enum WaterfallParticlesSize {
+enum WaterfallParticlesQuality {
 	ParticlesLow,
 	ParticlesMedium,
 	ParticlesHigh,
+	ParticlesQualityCount,
 };
 
 class GdWaterfall : public Node2D {
 	GDCLASS(GdWaterfall, Node2D);
 
+	bool active;
 	real_t speed;
 	real_t density;
-	WaterfallParticlesSize particles_size;
-	Size2 view_size;
+	WaterfallParticlesQuality textures_quality;
+	Rect2 view_rect;
 
-	Ref<Texture> _particles[WATERFALL_PARTICLE_COUNT];
+	bool _dirty;
+	Ref<Texture> _textures[WATERFALL_PARTICLE_COUNT];
+	flex_particle_system _p;
+
+protected:
+	static void _bind_methods();
+	void _notification(int p_what);
 
 public:
+#ifdef TOOLS_ENABLED
+	virtual bool _edit_is_selected_on_click(const Point2 &p_point, double p_tolerance) const;
+
+	virtual Rect2 _edit_get_rect() const;
+	virtual bool _edit_use_rect() const;
+#endif
+	void set_active(bool p_state);
+	bool is_active() const;
+	void set_view_rect(const Rect2 &p_rect);
+	Rect2 get_view_rect() const;
+	void set_density(real_t p_density);
+	real_t get_density() const;
+	void set_speed(real_t p_speed);
+	real_t get_speed() const;
+	void set_textures_quality(int p_quality);
+	int get_textures_quality() const;
+
 	GdWaterfall();
 };
 
