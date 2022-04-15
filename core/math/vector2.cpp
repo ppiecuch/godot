@@ -106,7 +106,7 @@ Vector2 Vector2::round() const {
 	return Vector2(Math::round(x), Math::round(y));
 }
 
-Vector2 Vector2::rotated_around(const Vector2 &p_origin, real_t p_radians) {
+Vector2 Vector2::rotated_around(const Vector2 &p_origin, real_t p_radians) const {
 	const real_t _x = x - p_origin.x;
 	const real_t _y = y - p_origin.y;
 	const real_t _sin = Math::sin(p_radians);

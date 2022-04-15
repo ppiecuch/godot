@@ -167,7 +167,7 @@ struct _NO_DISCARD_CLASS_ Vector2 {
 		return Vector2(Math::abs(x), Math::abs(y));
 	}
 
-	Vector2 rotated_around(const Vector2 &p_origin, real_t p_radians);
+	Vector2 rotated_around(const Vector2 &p_origin, real_t p_radians) const;
 	Vector2 rotated(real_t p_by) const;
 	Vector2 tangent() const {
 		return Vector2(y, -x);
