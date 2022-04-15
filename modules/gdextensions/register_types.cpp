@@ -122,6 +122,7 @@
 #include "environment/tree_2d/tree_2d.h"
 #include "environment/vegetation_instance/vegetation_instance.h"
 #include "environment/water_splash/gd_water_splash.h"
+#include "environment/waterfall/gd_waterfall.h"
 
 #include "settings/settings.h"
 
@@ -377,6 +378,7 @@ void register_gdextensions_types() {
 #endif
 
 #ifdef GDEXT_ENVIRONMENT_ENABLED
+	ClassDB::register_class<GdWaterfall>();
 	ClassDB::register_class<Tree2D>();
 	ClassDB::register_class<GdWaterSplash>();
 	ClassDB::register_virtual_class<GdWaterSplashColumn>();
