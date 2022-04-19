@@ -32,7 +32,9 @@ extern "C" const unsigned char *particles_size_s[];
 extern "C" const unsigned char *particles_size_m[];
 extern "C" const unsigned char *particles_size_l[];
 
-enum {
+#include "common/enum_string.h"
+
+enum WaterfallParticles {
 	WATERFALL_PARTICLE_DROP1,
 	WATERFALL_PARTICLE_DROP2,
 	WATERFALL_PARTICLE_DROP3,
@@ -42,7 +44,17 @@ enum {
 	WATERFALL_PARTICLE_COUNT,
 };
 
-enum {
+BeginEnumString(WaterfallParticles) {
+	EnumString( WATERFALL_PARTICLE_DROP1 );
+	EnumString( WATERFALL_PARTICLE_DROP2 );
+	EnumString( WATERFALL_PARTICLE_DROP3 );
+	EnumString( WATERFALL_PARTICLE_DROP4 );
+	EnumString( WATERFALL_PARTICLE_CLOUD1 );
+	EnumString( WATERFALL_PARTICLE_CLOUD2 );
+}
+EndEnumString;
+
+enum WaterfallParticlesSize {
 	WATERFALL_PARTICLE_SIZE_S,
 	WATERFALL_PARTICLE_SIZE_M,
 	WATERFALL_PARTICLE_SIZE_L,

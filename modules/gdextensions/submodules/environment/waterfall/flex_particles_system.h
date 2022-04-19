@@ -28,6 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
+// https://github.com/labatrockwell/ofxLabFlexParticleSystem
+
 #pragma once
 
 #ifndef FLEX_PARTICLES_SYSTEM_H
@@ -76,7 +78,7 @@ public:
 	// left public for easy changing
 	Vector2 position;
 	Vector2 velocity;
-	Vector2 acceleration, acceleration_change;
+	Vector2 acceleration;
 
 	Vector2 rotation;
 	Vector2 rotate_velocity;
@@ -415,7 +417,7 @@ public:
 	// @param override  if true the particle system will not use internal logic
 	//                  and call the callback instead.  If false the system will
 	//                  do internal logic and then call the callback
-	void set_wall_callback(std::function<void(flex_particle *)> func, WallCallbackType type, bool override);
+	void set_wall_callback(std::function<void(flex_particle *)> func, WallCallbackType type, bool override = false);
 
 	// Enable or diable a given option. See Options enum
 	// (optional `param` parameter is depending on option)

@@ -69,7 +69,7 @@ void flex_particle::update(const Vector2 &global_velocity, const Vector2 &global
 	age++;
 
 	// update position and rotation
-	velocity += acceleration;
+	velocity += acceleration + global_acceleration;
 	acceleration *= 0;
 
 	rotation += rotate_velocity;
@@ -77,19 +77,19 @@ void flex_particle::update(const Vector2 &global_velocity, const Vector2 &global
 		velocity *= damping;
 		rotate_velocity *= damping;
 	}
-	position += velocity + global_velocity + acceleration_change;
+	position += velocity + global_velocity;
 	if (alpha_damping != 1) {
 		alpha *= alpha_damping;
 	}
-	acceleration_change += global_acceleration;
 }
 
 void flex_particle::draw(CanvasItem *canvas, real_t progress, const Vector2 &offset) {
 	if (texture.is_valid()) {
 		Size2 texture_size = texture->get_size();
-		texture_size *= (2 * radius) / MAX(texture_size.width, texture_size.height);
+		const real_t aspect = texture_size.height / texture_size.width;
+		texture_size = Size2(2 * radius, 2 * radius * aspect);
 		// scale texture size to radius
-		Rect2 dest_rect = Rect2(-texture_size / 2 + offset, texture_size);
+		Rect2 dest_rect = Rect2(position + -texture_size / 2 + offset, texture_size);
 		canvas->draw_texture_rect(texture, dest_rect);
 	} else {
 		canvas->draw_circle(position + offset, radius, Color(0.9, 0.9, 0.9, alpha));
@@ -514,11 +514,10 @@ void flex_particle_system::update(const Vector2 &global_velocity, const Vector2 
 			} else {
 				// otherwise do our internal logic, and hit the callback if one exists
 				if (_options & VERTICAL_WRAP) {
-					p->position.y += p->velocity.y + _world_box.height;
+					p->position.y = _world_box.height;
 				} else {
 					// put it in the right direction
 					p->velocity.y = (p->velocity.y < 0 ? p->velocity.y * -1 : p->velocity.y);
-					p->position.y += p->velocity.y;
 				}
 				if (_wall_callbacks[TOP_WALL]) {
 					_wall_callbacks[TOP_WALL](it->second);
@@ -526,7 +525,7 @@ void flex_particle_system::update(const Vector2 &global_velocity, const Vector2 
 			}
 		}
 		// right wall
-		if (p->position.x - p->radius >= _world_box.x) {
+		if (p->position.x - p->radius >= _world_box.width) {
 			if (_wall_callbacks[RIGHT_WALL] && _wall_callback_override[RIGHT_WALL]) {
 				_wall_callbacks[RIGHT_WALL](it->second);
 			} else {
@@ -534,7 +533,6 @@ void flex_particle_system::update(const Vector2 &global_velocity, const Vector2 
 					p->position.x = 0;
 				} else {
 					p->velocity.x = (p->velocity.x > 0 ? p->velocity.x * -1 : p->velocity.x);
-					p->position.x += p->velocity.x;
 				}
 				if (_wall_callbacks[RIGHT_WALL]) {
 					_wall_callbacks[RIGHT_WALL](it->second);
@@ -542,15 +540,14 @@ void flex_particle_system::update(const Vector2 &global_velocity, const Vector2 
 			}
 		}
 		// bottom wall
-		if (p->position.y >= _world_box.y) {
+		if (p->position.y >= _world_box.height) {
 			if (_wall_callbacks[BOTTOM_WALL] && _wall_callback_override[BOTTOM_WALL]) {
 				_wall_callbacks[BOTTOM_WALL](it->second);
 			} else {
 				if (_options & VERTICAL_WRAP) {
-					p->position.y += p->velocity.y - _world_box.height;
+					p->position.y = 0;
 				} else {
 					p->velocity.y = (p->velocity.y > 0 ? p->velocity.y * -1 : p->velocity.y);
-					p->position.y += p->velocity.y;
 				}
 				if (_wall_callbacks[BOTTOM_WALL]) {
 					_wall_callbacks[BOTTOM_WALL](it->second);
@@ -566,7 +563,6 @@ void flex_particle_system::update(const Vector2 &global_velocity, const Vector2 
 					p->position.x = _world_box.width;
 				} else {
 					p->velocity.x = (p->velocity.x < 0 ? p->velocity.x * -1 : p->velocity.x);
-					p->position.x += p->velocity.x;
 				}
 				if (_wall_callbacks[LEFT_WALL]) {
 					_wall_callbacks[LEFT_WALL](it->second);

@@ -63,10 +63,12 @@ class GdWaterfall : public Node2D {
 	Rect2 view_rect;
 
 	bool _update, _rebuild;
-	Ref<Texture> _textures[ParticlesQualityCount][WATERFALL_PARTICLE_COUNT];
 	flex_particle_system _p;
 	std::vector<flex_particle> _particles;
 
+	Vector<Ref<Texture>> _cache[ParticlesQualityCount];
+
+	void _cache_textures(const unsigned char *particles_images[], WaterfallParticlesQuality quality);
 	void _build_particles();
 	void _update_particles();
 
@@ -104,5 +106,7 @@ public:
 
 	GdWaterfall();
 };
+
+VARIANT_ENUM_CAST(WaterfallParticlesQuality);
 
 #endif // GD_WATERFALL_H

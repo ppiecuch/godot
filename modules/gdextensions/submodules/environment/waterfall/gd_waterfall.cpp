@@ -30,8 +30,11 @@
 
 #include "gd_waterfall.h"
 
+#include "scene/resources/texture.h"
+#include "common/gd_pack.h"
+#include "common/gd_core.h"
+
 #include <vector>
-#include <array>
 
 #ifdef TOOLS_ENABLED
 bool GdWaterfall::_edit_is_selected_on_click(const Point2 &p_point, double p_tolerance) const {
@@ -47,14 +50,14 @@ bool GdWaterfall::_edit_use_rect() const {
 }
 #endif
 
-static const real_t _density_factor[] = {0.5, 0.75, 1, 1.5, 1.75, 2};
-static const real_t _stretch_factor[] = {0, 0.1, 0.15, 0.2};
-static const real_t _accel_factor[] = {0, 0.05, 0.1, 0.15, 0.2, 0.25};
-static const real_t _fade_amount_factor[] = {0, 0.1, 0.25, 0.5};
-static const real_t _fade_from_factor[] = {0, 0.5, 0.75, 0.9};
+static const real_t _density_factor[] = { 0.5, 0.75, 1, 1.5, 1.75, 2 };
+static const real_t _stretch_factor[] = { 0, 0.1, 0.15, 0.2 };
+static const real_t _accel_factor[] = { 0, 0.05, 0.1, 0.15, 0.2, 0.25 };
+static const real_t _fade_amount_factor[] = { 0, 0.1, 0.25, 0.5 };
+static const real_t _fade_from_factor[] = { 0, 0.5, 0.75, 0.9 };
 
 // https://blog.demofox.org/2017/05/29/when-random-numbers-are-too-random-low-discrepancy-sequences/
-std::vector<Point2> _get_samples (int num, size_t basex, size_t basey, Rect2 view, real_t pad) {
+std::vector<Point2> _get_samples(int num, size_t basex, size_t basey, Rect2 view, real_t pad) {
 	// calculate the sample points
 	std::vector<Point2> samples;
 	samples.resize(num);
@@ -72,7 +75,8 @@ std::vector<Point2> _get_samples (int num, size_t basex, size_t basey, Rect2 vie
 			}
 		}
 		// y axis
-		samples[i].y = 0; {
+		samples[i].y = 0;
+		{
 			real_t denominator = basey;
 			size_t n = i;
 			while (n > 0) {
@@ -90,6 +94,8 @@ std::vector<Point2> _get_samples (int num, size_t basex, size_t basey, Rect2 vie
 	return samples;
 }
 
+#define _default_velocity Math::random(0.5, 1.0)
+
 void GdWaterfall::_build_particles() {
 	// make all particles
 	_p.clear();
@@ -100,7 +106,7 @@ void GdWaterfall::_build_particles() {
 	auto points = _get_samples(num, 2, 3, view_rect, particle_radius);
 	for (const Point2 &p : points) {
 		const Vector2 pos(p.x, p.y);
-		const Vector2 velocity(0, Math::random(0.5, 1.0));
+		const Vector2 velocity(0, _default_velocity);
 		const Vector2 rotation(0, 0);
 		const Vector2 rotation_velocity(0, 0);
 		const real_t damping = 1;
@@ -111,7 +117,54 @@ void GdWaterfall::_build_particles() {
 		// add particles
 		_p.add_particle(&_particles.back());
 	}
-	print_verbose("Rebuiling waterfall with "+String::num(num)+" particles.");
+	print_verbose("Rebuiling waterfall with " + String::num(num) + " particles.");
+}
+
+void GdWaterfall::_cache_textures(const unsigned char *particles_images[], WaterfallParticlesQuality quality) {
+	// build texture atlas from resources
+	Vector<Ref<Image>> images;
+	Vector<String> names;
+	for (int p = 0; p < WATERFALL_PARTICLE_COUNT; p++) {
+		Ref<Image> image = memnew(Image(particles_images[p]));
+		images.push_back(image);
+		names.push_back(EnumString<WaterfallParticles>::From(WaterfallParticles(p)).c_str());
+	}
+	Dictionary atlas_info = merge_images(images, names);
+
+	ERR_FAIL_COND(atlas_info.empty());
+
+	Array pages = atlas_info["_generated_images"];
+	if (pages.size() > 1) {
+		WARN_PRINT("Too many texture pages - using only first one for Waterfall.");
+	}
+	Ref<Image> atlas_image = pages[0];
+
+	Vector2 atlas_size(1, 1);
+	if (atlas_image.is_valid()) {
+		Ref<ImageTexture> texture = newref(ImageTexture);
+		texture->create_from_image(atlas_image);
+		atlas_size = texture->get_size();
+
+		_cache[quality].clear();
+
+		Dictionary atlas_rects = atlas_info["_rects"];
+		for (int j = 0; j < names.size(); ++j) {
+			String name = names[j];
+			Dictionary entry = atlas_rects[name];
+
+			ERR_CONTINUE_MSG(entry.empty(), "Empty atlas entry, Skipping!");
+
+			Ref<AtlasTexture> at = newref(AtlasTexture);
+			at->set_atlas(texture);
+			at->set_region(entry["rect"]);
+	#ifdef DEBUG_ENABLED
+			at->set_name(name);
+	#endif
+			_cache[quality].push_back(at);
+		}
+	} else {
+		WARN_PRINT("Atlas image is not valid, Skipping!");
+	}
 }
 
 void GdWaterfall::_update_particles() {
@@ -138,7 +191,7 @@ Rect2 GdWaterfall::get_view_rect() const {
 }
 
 void GdWaterfall::set_waterfall_density(int p_density) {
-	ERR_FAIL_INDEX(p_density, sizeof(_density_factor)/sizeof(real_t));
+	ERR_FAIL_INDEX(p_density, sizeof(_density_factor) / sizeof(real_t));
 	waterfall_density = p_density;
 	_rebuild = true;
 	update();
@@ -167,7 +220,7 @@ real_t GdWaterfall::get_waterfall_speed() const {
 }
 
 void GdWaterfall::set_particle_acceleration(int p_accel) {
-	ERR_FAIL_INDEX(p_accel, sizeof(_accel_factor)/sizeof(real_t));
+	ERR_FAIL_INDEX(p_accel, sizeof(_accel_factor) / sizeof(real_t));
 	particle_accel = p_accel;
 }
 
@@ -176,7 +229,7 @@ int GdWaterfall::get_particle_acceleration() const {
 }
 
 void GdWaterfall::set_particle_stretch(int p_stretch) {
-	ERR_FAIL_INDEX(p_stretch, sizeof(_stretch_factor)/sizeof(real_t));
+	ERR_FAIL_INDEX(p_stretch, sizeof(_stretch_factor) / sizeof(real_t));
 	particle_stretch = p_stretch;
 }
 
@@ -185,7 +238,7 @@ int GdWaterfall::get_particle_stretch() const {
 }
 
 void GdWaterfall::set_particle_fade_from(int p_fade_from) {
-	ERR_FAIL_INDEX(p_fade_from, sizeof(_fade_from_factor)/sizeof(real_t));
+	ERR_FAIL_INDEX(p_fade_from, sizeof(_fade_from_factor) / sizeof(real_t));
 	particle_fade_from = p_fade_from;
 }
 
@@ -194,7 +247,7 @@ int GdWaterfall::get_particle_fade_from() const {
 }
 
 void GdWaterfall::set_particle_fade_amount(int p_fade_amount) {
-	ERR_FAIL_INDEX(p_fade_amount, sizeof(_fade_amount_factor)/sizeof(real_t));
+	ERR_FAIL_INDEX(p_fade_amount, sizeof(_fade_amount_factor) / sizeof(real_t));
 	particle_fade_amount = p_fade_amount;
 }
 
@@ -204,6 +257,23 @@ int GdWaterfall::get_particle_fade_amount() const {
 
 void GdWaterfall::set_textures_quality(int p_quality) {
 	ERR_FAIL_INDEX(p_quality, ParticlesQualityCount);
+	switch (p_quality) {
+		case None: {
+			for (auto &p : _particles) {
+				p.texture = Ref<Texture>();
+			}
+		}; break;
+		case ParticlesMedium: {
+			ERR_FAIL_COND_MSG(!_available_particles[WATERFALL_PARTICLE_SIZE_M], "Medium size is not available");
+			if (_cache[ParticlesMedium].empty()) {
+				_cache_textures(particles_size_m, ParticlesMedium);
+			}
+			ERR_FAIL_COND_MSG(_cache[ParticlesMedium].empty(), "Missing texture cache");
+			for (auto &p : _particles) {
+				p.texture = _cache[ParticlesMedium][Math::random(0, 3)]; // drops
+			}
+		}; break;
+	};
 	textures_quality = (WaterfallParticlesQuality)p_quality;
 	update();
 }
@@ -279,10 +349,13 @@ GdWaterfall::GdWaterfall() :
 	waterfall_speed = 0.05;
 	particle_accel = 1;
 	waterfall_density = 2;
-	textures_quality = ParticlesMedium;
+	textures_quality = None;
 	view_rect = Rect2(0, 0, 50, 150);
 
 	_p.set_option(flex_particle_system::VERTICAL_WRAP, true);
+    _p.set_wall_callback([](flex_particle *p) {
+		p->velocity = Vector2(0, _default_velocity);
+	}, flex_particle_system::BOTTOM_WALL);
 	set_process(active);
 
 	_build_particles();
