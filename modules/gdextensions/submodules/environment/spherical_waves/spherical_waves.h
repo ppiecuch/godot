@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  spherical_waves.h                                                    */
+/* spherical_waves.h                                                     */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -43,21 +43,23 @@
 class SphericalWaves : public Reference {
 	GDCLASS(SphericalWaves, Reference);
 
-	real_t *currentAmplitudes;
-	real_t *nextAmplitudes;
+	real_t *current_amplitudes;
+	real_t *next_amplitudes;
 	real_t *velocities;
 
 	int x_size, y_size;
-	real_t springConstant, friction, twoSquareHalf;
+	real_t spring_constant, friction;
+
+	static const real_t TwoSquareHalf;
 
 protected:
 	static void _bind_methods();
 
 public:
-	void init(int x_size, int y_size, real_t springConstant, real_t friction);
+	void init(int p_x_size, int p_y_size, real_t p_spring_constant, real_t p_friction);
 	real_t get_amplitude(int x, int y);
 	void set_amplitude(int x, int y, real_t value);
-	void update(real_t deltaT);
+	void update(real_t delta);
 	void set_nodes(Vector<Variant> voxels, int index);
 	void set_mesh(const Ref<Mesh> &mesh);
 

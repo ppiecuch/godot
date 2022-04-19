@@ -31,69 +31,71 @@
 #include "spherical_waves.h"
 
 #include "core/math/vector3.h"
+#include "core/math/math_funcs.h"
 
 #include <stdlib.h>
-#include <cmath>
 
-SphericalWaves::SphericalWaves() {
-	twoSquareHalf = sqrt(2) / 2;
-	x_size = 0;
-	y_size = 0;
-}
+const real_t TwoSquareHalf = Math::sqrt(2.0) / 2;
 
-void SphericalWaves::init(int x_size, int y_size, real_t springConstant, real_t friction) {
-	this->x_size = x_size;
-	this->y_size = y_size;
-	this->springConstant = springConstant;
-	this->friction = friction;
-	nextAmplitudes = new real_t[x_size * y_size];
-	currentAmplitudes = new real_t[x_size * y_size];
+void SphericalWaves::init(int p_x_size, int p_y_size, real_t p_spring_constant, real_t p_friction) {
+	x_size = p_x_size;
+	y_size = p_y_size;
+	spring_constant = p_spring_constant;
+	friction = p_friction;
+	next_amplitudes = new real_t[x_size * y_size];
+	current_amplitudes = new real_t[x_size * y_size];
 	velocities = new real_t[x_size * y_size];
 	for (int i = 0; i < x_size * y_size; ++i) {
-		currentAmplitudes[i] = 0.0;
-		nextAmplitudes[i] = 0.0;
-		velocities[i] = 0.0;
+		current_amplitudes[i] = 0;
+		next_amplitudes[i] = 0;
+		velocities[i] = 0;
 	}
 }
 
 SphericalWaves::~SphericalWaves() {
-	delete[] nextAmplitudes;
-	delete[] currentAmplitudes;
-	delete[] velocities;
+	if (next_amplitudes) {
+		delete[] next_amplitudes;
+	}
+	if (current_amplitudes) {
+		delete[] current_amplitudes;
+	}
+	if (velocities) {
+		delete[] velocities;
+	}
 }
 
 real_t SphericalWaves::get_amplitude(int x, int y) {
-	return nextAmplitudes[x * y_size + y];
+	return next_amplitudes[x * y_size + y];
 }
 
 void SphericalWaves::set_amplitude(int x, int y, real_t value) {
-	currentAmplitudes[x * y_size + y] = value;
+	current_amplitudes[x * y_size + y] = value;
 }
 
-void SphericalWaves::update(real_t deltaT) {
+void SphericalWaves::update(real_t delta) {
 	for (int x = 1; x < x_size - 1; ++x) {
 		for (int y = 1; y < y_size - 1; ++y) {
 			real_t force = 0;
 			for (int a = -1; a < 2; ++a) {
 				for (int b = -1; b < 2; ++b) {
-					real_t difference = currentAmplitudes[(x + a) * y_size + y + b] - currentAmplitudes[x * y_size + y];
-					if (abs(x) + abs(y) == 2) {
-						force += twoSquareHalf * difference;
+					real_t difference = current_amplitudes[(x + a) * y_size + y + b] - current_amplitudes[x * y_size + y];
+					if (Math::abs(x) + Math::abs(y) == 2) {
+						force += TwoSquareHalf * difference;
 					} else {
 						force += difference;
 					}
 				}
 			}
 			real_t velocity = velocities[x * y_size + y];
-			force = force * springConstant - velocity * friction;
-			velocity += deltaT * force;
+			force = force * spring_constant - velocity * friction;
+			velocity += delta * force;
 
-			nextAmplitudes[x * y_size + y] = currentAmplitudes[x * y_size + y] + velocity * deltaT;
+			next_amplitudes[x * y_size + y] = current_amplitudes[x * y_size + y] + velocity * delta;
 			velocities[x * y_size + y] = velocity;
 		}
 	}
 	for (int i = 0; i < x_size * y_size; ++i) {
-		currentAmplitudes[i] = nextAmplitudes[i];
+		current_amplitudes[i] = next_amplitudes[i];
 	}
 }
 
@@ -102,7 +104,7 @@ void SphericalWaves::set_nodes(Vector<Variant> voxels, int index) {
 		for (int y = 1; y < y_size - 1; ++y) {
 			Spatial *node = (Spatial *)((Node *)voxels[x * y_size + y]);
 			Vector3 translation = node->get_translation();
-			translation[index] = currentAmplitudes[x * y_size + y];
+			translation[index] = current_amplitudes[x * y_size + y];
 			node->set_translation(translation);
 		}
 	}
@@ -113,7 +115,7 @@ void SphericalWaves::set_mesh(const Ref<Mesh> &mesh) {
 	dataTool->create_from_surface(mesh, 0);
 	for (int i = 0; i < dataTool->get_vertex_count(); ++i) {
 		Vector3 vertex = dataTool->get_vertex(i);
-		vertex.y = currentAmplitudes[(int)((vertex.x - x_size / 2.0) * y_size + vertex.z - y_size / 2.0)];
+		vertex.y = current_amplitudes[(int)((vertex.x - x_size / 2) * y_size + vertex.z - y_size / 2)];
 		dataTool->set_vertex(i, vertex);
 	}
 	dataTool->commit_to_surface(mesh);
@@ -128,8 +130,18 @@ void SphericalWaves::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_mesh", "mesh"), &SphericalWaves::set_mesh);
 }
 
-// Example
-#if 0
+SphericalWaves::SphericalWaves() {
+	x_size = 2;
+	y_size = 2;
+	spring_constant = 5;
+	friction = 0.7;
+	next_amplitudes = nullptr;
+	current_amplitudes = nullptr;
+	velocities = nullptr;
+}
+
+
+#if 0 // Example
 
 extends Spatial
 
@@ -204,11 +216,11 @@ func _process(deltaT):
 		print(1/deltaT)
 	waves.update(deltaT)
 
-#I will build a wall to make games great again
-#for x in range(0, sizeX / 2):
-#waves.set_amplitude(x, 10, 0)
-#waves.set_amplitude(x, 11, 0)
-#waves.set_amplitude(x, 13, 0)
+	# I will build a wall to make games great again
+	# for x in range(0, sizeX / 2):
+	# waves.set_amplitude(x, 10, 0)
+	# waves.set_amplitude(x, 11, 0)
+	# waves.set_amplitude(x, 13, 0)
 
 	for stonePos in stones:
 		waves.set_amplitude(stonePos.x, stonePos.y, 0)
