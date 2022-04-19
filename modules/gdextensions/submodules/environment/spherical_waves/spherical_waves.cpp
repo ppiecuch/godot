@@ -30,8 +30,8 @@
 
 #include "spherical_waves.h"
 
-#include "core/math/vector3.h"
 #include "core/math/math_funcs.h"
+#include "core/math/vector3.h"
 
 #include <stdlib.h>
 
@@ -140,7 +140,6 @@ SphericalWaves::SphericalWaves() {
 	velocities = nullptr;
 }
 
-
 #if 0 // Example
 
 extends Spatial
@@ -216,11 +215,11 @@ func _process(deltaT):
 		print(1/deltaT)
 	waves.update(deltaT)
 
-	# I will build a wall to make games great again
-	# for x in range(0, sizeX / 2):
-	# waves.set_amplitude(x, 10, 0)
-	# waves.set_amplitude(x, 11, 0)
-	# waves.set_amplitude(x, 13, 0)
+#I will build a wall to make games great again
+#for x in range(0, sizeX / 2):
+#waves.set_amplitude(x, 10, 0)
+#waves.set_amplitude(x, 11, 0)
+#waves.set_amplitude(x, 13, 0)
 
 	for stonePos in stones:
 		waves.set_amplitude(stonePos.x, stonePos.y, 0)
