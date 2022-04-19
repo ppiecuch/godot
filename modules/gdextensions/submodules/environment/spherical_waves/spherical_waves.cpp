@@ -35,7 +35,7 @@
 
 #include <stdlib.h>
 
-const real_t TwoSquareHalf = Math::sqrt(2.0) / 2;
+const real_t SphericalWaves::TwoSquareHalf = Math::sqrt(2.0) / 2;
 
 void SphericalWaves::init(int p_x_size, int p_y_size, real_t p_spring_constant, real_t p_friction) {
 	x_size = p_x_size;
