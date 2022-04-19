@@ -51,5 +51,5 @@ float RandomPCG::random(float p_from, float p_to) {
 }
 
 int RandomPCG::random(int p_from, int p_to) {
-	return rand() * (p_to - p_from) + p_from;
+	return randf() * (p_to - p_from) + p_from;
 }
