@@ -56,33 +56,49 @@ flex_particle::flex_particle(const flex_particle_options &opts) {
 
 void flex_particle::set_defaults() {
 	radius = 2;
-	damping = 1.0;
+	alpha = 1;
+	alpha_damping = 1;
+	damping = 1;
 	mass = 1;
 	age = 0;
 	start_second = OS::get_singleton()->get_ticks_msec() * 1000;
 	unique_id = 0;
 }
 
-void flex_particle::update() {
+void flex_particle::update(const Vector2 &global_velocity, const Vector2 &global_acceleration) {
 	age++;
 
 	// update position and rotation
 	velocity += acceleration;
 	acceleration *= 0;
-	velocity *= damping;
+
 	rotation += rotate_velocity;
-	rotate_velocity *= damping;
-	position += velocity;
+	if (damping != 1) {
+		velocity *= damping;
+		rotate_velocity *= damping;
+	}
+	position += velocity + global_velocity + acceleration_change;
+	if (alpha_damping != 1) {
+		alpha *= alpha_damping;
+	}
+	acceleration_change += global_acceleration;
 }
 
-void flex_particle::draw(CanvasItem *canvas) {
-	canvas->draw_circle(position, radius, Color(0, 0, 0));
-	canvas->draw_circle(position, radius * .5, Color(1, 1, 1));
+void flex_particle::draw(CanvasItem *canvas, real_t progress, const Vector2 &offset) {
+	if (texture.is_valid()) {
+		Size2 texture_size = texture->get_size();
+		texture_size *= (2 * radius) / MAX(texture_size.width, texture_size.height);
+		// scale texture size to radius
+		Rect2 dest_rect = Rect2(-texture_size / 2 + offset, texture_size);
+		canvas->draw_texture_rect(texture, dest_rect);
+	} else {
+		canvas->draw_circle(position + offset, radius, Color(0.9, 0.9, 0.9, alpha));
+		canvas->draw_circle(position + offset, radius * .6, Color(0.25, 0.25, 0.25, alpha));
+	}
 }
 
 void flex_particle::repel(const flex_particle &b) {
 	// TODO this should be explored, right now it's pretty straight forward
-	// and probably doesn't even work that great
 
 	real_t distance = position.distance_to(b.position);
 
@@ -264,7 +280,7 @@ void flex_vector_field::apply_sin_map(real_t x_repeat, real_t y_repeat, real_t x
 	_sin_power_value = sin_power_value;
 }
 
-void flex_vector_field::draw(CanvasItem *canvas, const Rect2 &crop_section) {
+void flex_vector_field::draw(CanvasItem *canvas, const Rect2 &crop_section, const Vector2 &offset) {
 	const real_t scaled_x = _external_width / _field_width;
 	const real_t scaled_y = _external_height / _field_height;
 
@@ -301,8 +317,8 @@ void flex_vector_field::draw(CanvasItem *canvas, const Rect2 &crop_section) {
 			const int vec_pos = yy * (end_xx - start_xx) + shift_xx;
 
 			// get our main force line
-			Point2 force_origin(xx * scaled_x - _external_offset.x, yy * scaled_y - _external_offset.y);
-			Point2 force_end(force_origin);
+			Point2 force_origin{ xx * scaled_x - _external_offset.x + offset.x, yy * scaled_y - _external_offset.y + offset.y };
+			Point2 force_end{ force_origin };
 
 			if (_use_sin_map) {
 				real_t sin_x = sin(xx / _sin_x_repeat + _sin_x_phase);
@@ -366,21 +382,8 @@ flex_particle_system::flex_particle_system(CanvasItem *canvas) {
 	_max_particles = 0;
 }
 
-void flex_particle_system::setup_open() {
-	_world_type = OPEN;
-}
-
-void flex_particle_system::setup_square(const Size2 &world_box) {
-	_world_type = SQUARE;
+void flex_particle_system::setup_world(const Size2 &world_box) {
 	_world_box = world_box;
-}
-
-void flex_particle_system::setup_quad(const Point2 &top_left, const Point2 &bottom_left, const Point2 &top_right, const Point2 &bottom_right) {
-	_world_type = QUAD;
-	_world_quad.tl = top_left;
-	_world_quad.tr = top_right;
-	_world_quad.bl = bottom_left;
-	_world_quad.br = bottom_right;
 }
 
 void flex_particle_system::set_wall_callback(std::function<void(flex_particle *)> func, WallCallbackType type, bool override) {
@@ -465,13 +468,12 @@ void flex_particle_system::add_force(const Vector2 &force) {
 	}
 }
 
-void flex_particle_system::update() {
-	// create a scoped lock
+void flex_particle_system::update(const Vector2 &global_velocity, const Vector2 &global_acceleration) {
 	MutexLock lock(_update_lock);
 
 	for (Iterator it = _particles.begin(); it != _particles.end(); ++it) {
 		flex_particle *p = it->second;
-		p->update();
+		p->update(global_velocity, global_acceleration);
 		if (_options & DETECT_COLLISIONS) {
 			// check collision
 			Iterator inner_it = it;
@@ -484,10 +486,6 @@ void flex_particle_system::update() {
 		if (_options & VECTOR_FIELD) {
 			const Vector2 vec_field_force = _vector_field.get_force_from_pos(p->position.x, p->position.y);
 			p->acceleration += vec_field_force / MIN(p->mass, MIN_PARTICLE_MASS) / VEC_FIELD_FORCE_DIVIDER;
-		}
-		// if we are an open world don't do any edge detection
-		if (_world_type == OPEN) {
-			continue;
 		}
 		// NOTE
 		//  These wall routines are repeatative, but since we want to hit each wall one by one
@@ -508,149 +506,77 @@ void flex_particle_system::update() {
 		//      - if we have a callback
 		//        * call the callback
 
-		if (_world_type == SQUARE) {
-			// top wall
-			if (p->position.y <= 0) {
-				// if callback and override, only call callback
-				if (_wall_callbacks[TOP_WALL] && _wall_callback_override[TOP_WALL]) {
+		// top wall
+		if (p->position.y <= 0) {
+			// if callback and override, only call callback
+			if (_wall_callbacks[TOP_WALL] && _wall_callback_override[TOP_WALL]) {
+				_wall_callbacks[TOP_WALL](it->second);
+			} else {
+				// otherwise do our internal logic, and hit the callback if one exists
+				if (_options & VERTICAL_WRAP) {
+					p->position.y += p->velocity.y + _world_box.height;
+				} else {
+					// put it in the right direction
+					p->velocity.y = (p->velocity.y < 0 ? p->velocity.y * -1 : p->velocity.y);
+					p->position.y += p->velocity.y;
+				}
+				if (_wall_callbacks[TOP_WALL]) {
 					_wall_callbacks[TOP_WALL](it->second);
-				} else {
-					// otherwise do our internal logic, and hit the callback if one exists
-					if (_options & VERTICAL_WRAP) {
-						p->position.y += p->velocity.y + _world_box.y;
-					} else {
-						// put it in the right direction
-						p->velocity.y = (p->velocity.y < 0 ? p->velocity.y * -1 : p->velocity.y);
-						p->position.y += p->velocity.y;
-					}
-					if (_wall_callbacks[TOP_WALL]) {
-						_wall_callbacks[TOP_WALL](it->second);
-					}
 				}
 			}
-			// right wall
-			if (p->position.x - p->radius >= _world_box.x) {
-				if (_wall_callbacks[RIGHT_WALL] && _wall_callback_override[RIGHT_WALL]) {
+		}
+		// right wall
+		if (p->position.x - p->radius >= _world_box.x) {
+			if (_wall_callbacks[RIGHT_WALL] && _wall_callback_override[RIGHT_WALL]) {
+				_wall_callbacks[RIGHT_WALL](it->second);
+			} else {
+				if (_options & HORIZONTAL_WRAP) {
+					p->position.x = 0;
+				} else {
+					p->velocity.x = (p->velocity.x > 0 ? p->velocity.x * -1 : p->velocity.x);
+					p->position.x += p->velocity.x;
+				}
+				if (_wall_callbacks[RIGHT_WALL]) {
 					_wall_callbacks[RIGHT_WALL](it->second);
-				} else {
-					if (_options & HORIZONTAL_WRAP) {
-						p->position.x += p->velocity.x - _world_box.x;
-						p->position.x = 0;
-					} else {
-						p->velocity.x = (p->velocity.x > 0 ? p->velocity.x * -1 : p->velocity.x);
-						p->position.x += p->velocity.x;
-					}
-					if (_wall_callbacks[RIGHT_WALL]) {
-						_wall_callbacks[RIGHT_WALL](it->second);
-					}
 				}
 			}
-			// bottom wall
-			if (p->position.y >= _world_box.y) {
-				if (_wall_callbacks[BOTTOM_WALL] && _wall_callback_override[BOTTOM_WALL]) {
+		}
+		// bottom wall
+		if (p->position.y >= _world_box.y) {
+			if (_wall_callbacks[BOTTOM_WALL] && _wall_callback_override[BOTTOM_WALL]) {
+				_wall_callbacks[BOTTOM_WALL](it->second);
+			} else {
+				if (_options & VERTICAL_WRAP) {
+					p->position.y += p->velocity.y - _world_box.height;
+				} else {
+					p->velocity.y = (p->velocity.y > 0 ? p->velocity.y * -1 : p->velocity.y);
+					p->position.y += p->velocity.y;
+				}
+				if (_wall_callbacks[BOTTOM_WALL]) {
 					_wall_callbacks[BOTTOM_WALL](it->second);
-				} else {
-					if (_options & VERTICAL_WRAP) {
-						p->position.y += p->velocity.y - _world_box.y;
-					} else {
-						p->velocity.y = (p->velocity.y > 0 ? p->velocity.y * -1 : p->velocity.y);
-						p->position.y += p->velocity.y;
-					}
-					if (_wall_callbacks[BOTTOM_WALL]) {
-						_wall_callbacks[BOTTOM_WALL](it->second);
-					}
 				}
 			}
-			// left wall
-			if (p->position.x + p->radius <= 0) {
-				if (_wall_callbacks[LEFT_WALL] && _wall_callback_override[LEFT_WALL]) {
+		}
+		// left wall
+		if (p->position.x + p->radius <= 0) {
+			if (_wall_callbacks[LEFT_WALL] && _wall_callback_override[LEFT_WALL]) {
+				_wall_callbacks[LEFT_WALL](it->second);
+			} else {
+				if (_options & HORIZONTAL_WRAP) {
+					p->position.x = _world_box.width;
+				} else {
+					p->velocity.x = (p->velocity.x < 0 ? p->velocity.x * -1 : p->velocity.x);
+					p->position.x += p->velocity.x;
+				}
+				if (_wall_callbacks[LEFT_WALL]) {
 					_wall_callbacks[LEFT_WALL](it->second);
-				} else {
-					if (_options & HORIZONTAL_WRAP) {
-						p->position.x += p->velocity.x + _world_box.x;
-						p->position.x = _world_box.x;
-					} else {
-						p->velocity.x = (p->velocity.x < 0 ? p->velocity.x * -1 : p->velocity.x);
-						p->position.x += p->velocity.x;
-					}
-					if (_wall_callbacks[LEFT_WALL]) {
-						_wall_callbacks[LEFT_WALL](it->second);
-					}
-				}
-			}
-		} else if (_world_type == QUAD) {
-			// top wall
-			if (_world_quad.check_top_bounds(p->position)) {
-				// if callback and override, only call callback
-				if (_wall_callbacks[TOP_WALL] && _wall_callback_override[TOP_WALL]) {
-					_wall_callbacks[TOP_WALL](it->second);
-				} else {
-					// otherwise do our internal logic, and hit the callback if one exists
-					if (_options & VERTICAL_WRAP) {
-						p->position.y += p->velocity.y + _world_box.y;
-					} else {
-						// put it in the right direction
-						p->velocity.y = (p->velocity.y < 0 ? p->velocity.y * -1 : p->velocity.y);
-						p->position.y += p->velocity.y;
-					}
-					if (_wall_callbacks[TOP_WALL]) {
-						_wall_callbacks[TOP_WALL](it->second);
-					}
-				}
-			}
-			// right wall
-			if (_world_quad.check_right_bounds(Vector2(p->position.x - p->radius, p->position.y)) && p->velocity.x > 0) {
-				if (_wall_callbacks[RIGHT_WALL] && _wall_callback_override[RIGHT_WALL]) {
-					_wall_callbacks[RIGHT_WALL](it->second);
-				} else {
-					if (_options & HORIZONTAL_WRAP) {
-						p->position.x = Math::lerp(_world_quad.tl.x, _world_quad.bl.x, p->position.y / (_world_quad.tl.y - _world_quad.bl.y)) - p->radius;
-					} else {
-						p->velocity.x = (p->velocity.x > 0 ? p->velocity.x * -1 : p->velocity.x);
-						p->position.x += p->velocity.x;
-					}
-					if (_wall_callbacks[RIGHT_WALL]) {
-						_wall_callbacks[RIGHT_WALL](it->second);
-					}
-				}
-			}
-			// bottom wall
-			if (_world_quad.check_bottom_bounds(p->position)) {
-				if (_wall_callbacks[BOTTOM_WALL] && _wall_callback_override[BOTTOM_WALL]) {
-					_wall_callbacks[BOTTOM_WALL](it->second);
-				} else {
-					if (_options & VERTICAL_WRAP) {
-						p->position.y += p->velocity.y - _world_box.y;
-					} else {
-						p->velocity.y = (p->velocity.y > 0 ? p->velocity.y * -1 : p->velocity.y);
-						p->position.y += p->velocity.y;
-					}
-					if (_wall_callbacks[BOTTOM_WALL]) {
-						_wall_callbacks[BOTTOM_WALL](it->second);
-					}
-				}
-			}
-			// left wall
-			if (_world_quad.check_left_bounds(Vector2(p->position.x + p->radius, p->position.y)) && p->velocity.x < 0) {
-				if (_wall_callbacks[LEFT_WALL] && _wall_callback_override[LEFT_WALL]) {
-					_wall_callbacks[LEFT_WALL](it->second);
-				} else {
-					if (_options & HORIZONTAL_WRAP) {
-						p->position.x = p->radius + Math::lerp(_world_quad.tr.x, _world_quad.br.x, Math::abs(p->position.y / (_world_quad.tl.y - _world_quad.bl.y)));
-					} else {
-						p->velocity.x = (p->velocity.x < 0 ? p->velocity.x * -1 : p->velocity.x);
-						p->position.x += p->velocity.x;
-					}
-					if (_wall_callbacks[LEFT_WALL]) {
-						_wall_callbacks[LEFT_WALL](it->second);
-					}
 				}
 			}
 		}
 	}
 }
 
-bool flex_particle_system::should_draw(flex_particle *p, const Rect2 &ws, real_t rotation) {
+bool flex_particle_system::should_draw(const flex_particle *p, const Rect2 &ws, real_t rotation) {
 	Vector2 pr = rotation ? p->position.rotated_around(ws.get_center(), Math::deg2rad(-rotation)) : p->position;
 
 	// TODO figure out how to not increase this buffer by 2x and still not lose corners
@@ -666,55 +592,54 @@ bool flex_particle_system::should_draw(flex_particle *p, const Rect2 &ws, real_t
 	return false;
 }
 
-void flex_particle_system::draw(const Rect2 &ws, real_t rotation) {
+void flex_particle_system::draw(const Rect2 &ws, const Vector2 &offset, real_t rotation) {
 	for (Iterator it = _particles.begin(); it != _particles.end(); ++it) {
 		flex_particle *p = it->second;
+		const real_t progress = p->position.y / _world_box.height;
 		if (should_draw(p, ws, rotation)) {
-			p->draw(_canvas);
+			p->draw(_canvas, progress, offset);
 		}
 		// need to check if the particle wrap is inside
-		if (_world_type == SQUARE) {
-			if (_options & HORIZONTAL_WRAP) {
-				if (p->position.x + p->radius > _world_box.x) {
-					// check right side of screen and wrap back to left if needed
-					const real_t tempf = p->position.x;
-					p->position.x -= _world_box.x;
-					if (should_draw(p, ws, rotation)) {
-						p->draw(_canvas);
-					}
-					p->position.x = tempf;
-				} else if (p->position.x - p->radius < 0) {
-					// check right side of screen and wrap back to right if needed
-					const real_t tempf = p->position.x;
-					p->position.x += _world_box.x;
-					if (should_draw(p, ws, rotation)) {
-						p->draw(_canvas);
-					}
-					p->position.x = tempf;
+		if (_options & HORIZONTAL_WRAP) {
+			if (p->position.x + p->radius > _world_box.width) {
+				// check right side of screen and wrap back to left if needed
+				const real_t tempf = p->position.x;
+				p->position.x -= _world_box.width;
+				if (should_draw(p, ws, rotation)) {
+					p->draw(_canvas, progress, offset);
 				}
+				p->position.x = tempf;
+			} else if (p->position.x - p->radius < 0) {
+				// check right side of screen and wrap back to right if needed
+				const real_t tempf = p->position.x;
+				p->position.x += _world_box.width;
+				if (should_draw(p, ws, rotation)) {
+					p->draw(_canvas, progress, offset);
+				}
+				p->position.x = tempf;
 			}
-			if (_options & VERTICAL_WRAP) {
-				if (p->position.y + p->radius > _world_box.y) {
-					// check bottom side of screen and wrap back to top if needed
-					const real_t tempf = p->position.y;
-					p->position.y -= _world_box.y;
-					if (should_draw(p, ws, rotation)) {
-						p->draw(_canvas);
-					}
-					p->position.y = tempf;
-				} else if (p->position.y - p->radius < 0) {
-					// check top side of screen and wrap back to bottom if needed
-					const real_t tempf = p->position.y;
-					p->position.y += _world_box.y;
-					if (should_draw(p, ws, rotation)) {
-						p->draw(_canvas);
-					}
-					p->position.y = tempf;
+		}
+		if (_options & VERTICAL_WRAP) {
+			if (p->position.y + p->radius > _world_box.height) {
+				// check bottom side of screen and wrap back to top if needed
+				const real_t tempf = p->position.y;
+				p->position.y -= _world_box.height;
+				if (should_draw(p, ws, rotation)) {
+					p->draw(_canvas, progress, offset);
 				}
+				p->position.y = tempf;
+			} else if (p->position.y - p->radius < 0) {
+				// check top side of screen and wrap back to bottom if needed
+				const real_t tempf = p->position.y;
+				p->position.y += _world_box.height;
+				if (should_draw(p, ws, rotation)) {
+					p->draw(_canvas, progress, offset);
+				}
+				p->position.y = tempf;
 			}
 		}
 	}
 	if ((_options & VECTOR_FIELD) && (_options & VECTOR_FIELD_DRAW)) {
-		_vector_field.draw(_canvas, ws);
+		_vector_field.draw(_canvas, ws, offset);
 	}
 }

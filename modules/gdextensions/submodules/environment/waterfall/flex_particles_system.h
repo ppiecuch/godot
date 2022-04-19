@@ -51,7 +51,8 @@ struct flex_particle_options {
 	// @param radius            The starting radius
 	// @param damping           The damping. Damping causes a particle to lose forces over time
 	//                          it can be thought of as 'air friction', etc
-	flex_particle_options(Vector2 &pos, Vector2 &velocity, Vector2 &rotation, Vector2 &rotate_velocity, real_t radius, real_t damping) :
+	// @param alpha             Transparency of particle
+	flex_particle_options(const Vector2 &pos, const Vector2 &velocity, const Vector2 &rotation, const Vector2 &rotate_velocity, real_t radius, real_t damping) :
 			pos(pos), velocity(velocity), rotation(rotation), rotate_velocity(rotate_velocity), radius(radius), damping(damping) {}
 
 	// these are all left public since this is simply a helper class
@@ -62,33 +63,6 @@ struct flex_particle_options {
 
 	real_t radius;
 	real_t damping;
-};
-
-struct flex_quad {
-	Vector2 tl, tr, bl, br;
-
-	// bounds checks return true if triggered; e.g. if point is left of quad checkLeft returns true
-
-	bool check_left_bounds(const Vector2 &test) {
-		return ((bl.x - tl.x) * (test.y - tl.y) - (bl.y - tl.y) * (test.x - tl.x)) > 0;
-	}
-
-	bool check_right_bounds(const Vector2 &test) {
-		return ((br.x - tr.x) * (test.y - tr.y) - (br.y - tr.y) * (test.x - tr.x)) < 0;
-	}
-
-	bool check_top_bounds(const Vector2 &test) {
-		return ((tr.x - tl.x) * (test.y - tl.y) - (tr.y - tl.y) * (test.x - tl.x)) < 0;
-	}
-
-	bool check_bottom_bounds(const Vector2 &test) {
-		return ((br.x - bl.x) * (test.y - bl.y) - (br.y - bl.y) * (test.x - bl.x)) > 0;
-	}
-
-	void draw(Array &array_mesh) {
-		((PoolVector2Array)array_mesh[Mesh::ARRAY_VERTEX]).append_array(parray(tl, tr, bl, br));
-		((PoolIntArray)array_mesh[Mesh::ARRAY_INDEX]).append_array(parray(0, 1, 2, 1, 2, 3));
-	}
 };
 
 class flex_particle {
@@ -102,7 +76,7 @@ public:
 	// left public for easy changing
 	Vector2 position;
 	Vector2 velocity;
-	Vector2 acceleration;
+	Vector2 acceleration, acceleration_change;
 
 	Vector2 rotation;
 	Vector2 rotate_velocity;
@@ -110,6 +84,7 @@ public:
 	real_t radius;
 	real_t damping;
 	real_t mass;
+	real_t alpha, alpha_damping;
 
 	Ref<Texture> texture;
 
@@ -122,11 +97,12 @@ public:
 
 	// Update this particle through space. Ie move this particle given it's
 	// given acceleration, etc.
-	void update();
+	void update(const Vector2 &global_velocity = Vector2(), const Vector2 &global_acceleration = Vector2());
 
-	// Draw this particle. This will only show a black circle with an inner
-	// white circle of size radius.
-	void draw(CanvasItem *canvas);
+	// Draw this particle and offset its position with `offset`.
+	// This will only show a black circle with an inner white
+	// circle of size radius.
+	void draw(CanvasItem *canvas, real_t progress, const Vector2 &offset);
 
 	void set_unique_id(unsigned long id) { unique_id = id; }
 	unsigned long get_unique_id() const { return unique_id; }
@@ -223,7 +199,8 @@ public:
 	// Field is drawn starting at 0,0
 	//
 	// @param crop_section   If passed only this section of the vector field will be drawn
-	void draw(CanvasItem *canvas, const Rect2 &crop_section = Rect2(0, 0, 0, 0));
+	// @param offset         Offset each drawing by adding value
+	void draw(CanvasItem *canvas, const Rect2 &crop_section = Rect2(), const Vector2 &offset = Vector2());
 
 	// Pulls the value of the closest point in the vector field.
 	// This takes into account the fieldOffset, fieldShift, and scale if any of them are set
@@ -334,17 +311,6 @@ public:
 };
 
 class flex_particle_system {
-	// three world types are allowed so far, open and square.
-	// Open is as you guess boundless
-	// Square has 4 walls and by default the particles bounce off the walls
-	// Quad is a quadrilateral, ie a lopsided square
-	// this can be
-	enum WorldType {
-		OPEN = 0,
-		SQUARE,
-		QUAD
-	};
-
 	// should always be equal to the number of enums above
 	static const int SUPPORTED_WALL_CALLBACKS = 4;
 
@@ -356,11 +322,7 @@ class flex_particle_system {
 	typedef std::map<unsigned long, flex_particle *>::const_reverse_iterator const_RIterator;
 
 	Container _particles; // holds the actual particles
-	WorldType _world_type; // is it a bordered world, infinite world ?
-	union {
-		Size2 _world_box; // if square world, this is the boundaries
-		flex_quad _world_quad; // if quad world, this is the bounds
-	}
+	Size2 _world_box; // if square world, this is the boundaries
 	// call back is for special interactions when particles hit wall boundaries
 	// the override tells us whether or not we do standard functionality FIRST
 	// before the callback or if we let the callback handle everything
@@ -405,25 +367,18 @@ public:
 		DETECT_COLLISIONS = (1u << 4)
 	};
 
-	// Configure the particle system.  You should only call this once.
-	// This sets the particle system to the OPEN type so no parameters are needed
-	void setup_open();
+	// Configure the particle system with given world box.
+	void setup_world(const Size2 &world_box);
 
-	// Configure the particle system. You should only call this once.
-	// This sets the particle system to the SQUARE type with given world box.
-	void setup_square(const Size2 &world_box);
-
-	// Configure the particle system.  You should only call this once.
-	// Configure the particle system as a QUAD type.  Provide the corners of the quad.
-	void setup_quad(const Point2 &top_left, const Point2 &bottom_left, const Point2 &top_right, const Point2 &bottom_right);
-
-	// Updates all particles in the system, applies vector fields if option is enabled
-	// calls callbacks that are eneabled, etc.
-	virtual void update();
+	// Updates all particles in the system (using `global_velocity` for all particles
+	// velocity alteration), applies vector fields if option is enabled calls callbacks
+	// that are eneabled, etc.
+	void update(const Vector2 &global_velocity = Vector2(), const Vector2 &global_acceleration = Vector2());
 
 	// Draws the particles inside the given window_stencil that
-	// might be rotated of `rotate` degree.
-	void draw(const Rect2 &window_stencil, real_t rotate = 0.0);
+	// might be rotated of `rotate` degree. Offset each particle by
+	// adding `offset`.
+	void draw(const Rect2 &window_stencil, const Vector2 &offset = Vector2(), real_t rotate = 0.0);
 
 	// Inserts an flex_particle into the system.
 	// NOTE: no memory management is done by this system
@@ -496,9 +451,7 @@ public:
 	// @param ws            the cropping rectangle
 	// @param rotation      rotation of the cropping rectangle
 	// @return              true if the particle should be drawn, false otherwise
-	bool should_draw(flex_particle *particle, const Rect2 &ws, real_t rotation);
-
-	flex_quad get_world_quad() const { return _world_quad; }
+	bool should_draw(const flex_particle *particle, const Rect2 &ws, real_t rotation);
 
 	flex_particle_system(CanvasItem *canvas);
 };

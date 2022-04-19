@@ -37,7 +37,10 @@
 #include "flex_particles_system.h"
 #include "particles.h"
 
+#include <vector>
+
 enum WaterfallParticlesQuality {
+	None,
 	ParticlesLow,
 	ParticlesMedium,
 	ParticlesHigh,
@@ -48,14 +51,24 @@ class GdWaterfall : public Node2D {
 	GDCLASS(GdWaterfall, Node2D);
 
 	bool active;
-	real_t speed;
-	real_t density;
+	real_t particle_radius;
+	int particle_accel;
+	int particle_stretch;
+	int particle_fade_;
+	int particle_fade_from;
+	int particle_fade_amount;
+	int waterfall_density;
+	real_t waterfall_speed;
 	WaterfallParticlesQuality textures_quality;
 	Rect2 view_rect;
 
-	bool _dirty;
-	Ref<Texture> _textures[WATERFALL_PARTICLE_COUNT];
+	bool _update, _rebuild;
+	Ref<Texture> _textures[ParticlesQualityCount][WATERFALL_PARTICLE_COUNT];
 	flex_particle_system _p;
+	std::vector<flex_particle> _particles;
+
+	void _build_particles();
+	void _update_particles();
 
 protected:
 	static void _bind_methods();
@@ -72,10 +85,20 @@ public:
 	bool is_active() const;
 	void set_view_rect(const Rect2 &p_rect);
 	Rect2 get_view_rect() const;
-	void set_density(real_t p_density);
-	real_t get_density() const;
-	void set_speed(real_t p_speed);
-	real_t get_speed() const;
+	void set_waterfall_density(int p_density);
+	int get_waterfall_density() const;
+	void set_waterfall_speed(real_t p_speed);
+	real_t get_waterfall_speed() const;
+	void set_particle_radius(real_t p_radius);
+	real_t get_particle_radius() const;
+	void set_particle_acceleration(int p_accel);
+	int get_particle_acceleration() const;
+	void set_particle_stretch(int p_stretch);
+	int get_particle_stretch() const;
+	void set_particle_fade_from(int p_fade_from);
+	int get_particle_fade_from() const;
+	void set_particle_fade_amount(int p_fade_amount);
+	int get_particle_fade_amount() const;
 	void set_textures_quality(int p_quality);
 	int get_textures_quality() const;
 
