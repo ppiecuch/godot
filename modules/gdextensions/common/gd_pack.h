@@ -176,6 +176,16 @@ struct TextureMergeOptions {
 			max_atlas_size(max_atlas_size) {}
 };
 
+// Merge images from 'images' array using `names` as unique
+// identifier for each image.
+// --------------------------------------------------------
+// Return dictionary:
+//    "_generated_images" -> array of generated atlas images
+//    "_rects" -> dictionary of atlas rects, eg:
+//       "_rects[<image name>]:
+//          "rect" -> Rect2 of image rect on atlas
+//          "atlas_page" -> atlas page index (of '_generated_images')
+//          "atlas" -> atlas image reference
 Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, const TextureMergeOptions &options = TextureMergeOptions());
 
 #endif // GD_PACK_H

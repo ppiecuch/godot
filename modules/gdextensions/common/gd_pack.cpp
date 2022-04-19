@@ -298,6 +298,7 @@ static int _get_offset_for_format(Image::Format format) {
 		case Image::FORMAT_LA8:
 			return 2;
 		case Image::FORMAT_L8:
+			return 1;
 		case Image::FORMAT_R8:
 		case Image::FORMAT_RG8:
 		case Image::FORMAT_RGBA4444:
@@ -429,7 +430,9 @@ Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, const T
 		data.write[i].w = image->get_size().x;
 		data.write[i].h = image->get_size().y;
 		rects.write[i] = &data.write[i];
-		if (image->get_format() == Image::FORMAT_RGBA8 || image->get_format() == Image::FORMAT_LA8) {
+		if (image->get_format() == Image::FORMAT_L8) {
+			atlas_channels = 4;
+		} else if (image->get_format() == Image::FORMAT_RGBA8 || image->get_format() == Image::FORMAT_LA8) {
 			// only if we have a real alpha values in the channel
 			if (image->detect_alpha() == Image::ALPHA_BLEND) {
 				atlas_channels = 4;
@@ -503,12 +506,28 @@ Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, const T
 							case 2: {
 								// grey + alpha
 								for (int sx = 0; sx < 4; ++sx) {
-									if (sx == 3 && atlas_channels == 4)
+									if (sx == 3 && atlas_channels == 4) {
 										atlas_data.set(start_indx + (x * atlas_channels) + sx, image_data[orig_img_indx + 1 + (x * input_format_offset)]);
-									else
+									} else {
 										atlas_data.set(start_indx + (x * atlas_channels) + sx, image_data[orig_img_indx + 0 + (x * input_format_offset)]);
+									}
 								}
 							} break;
+							case 1: {
+								// alpha
+								uint8_t a = image_data[orig_img_indx + (x * input_format_offset)];
+								for (int sx = 0; sx < 4; ++sx) {
+									if (sx == 3 && atlas_channels == 4) {
+										atlas_data.set(start_indx + (x * atlas_channels) + sx, a);
+									} else {
+										if (atlas_channels == 4) {
+											atlas_data.set(start_indx + (x * atlas_channels) + sx, 255);
+										} else if (atlas_channels == 3) {
+											atlas_data.set(start_indx + (x * atlas_channels) + sx, a);
+										}
+									}
+								}
+							}
 						}
 					}
 				}
