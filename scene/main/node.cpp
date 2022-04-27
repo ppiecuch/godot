@@ -252,7 +252,7 @@ void Node::_propagate_enter_tree() {
 	// enter groups
 }
 
-void Node::_propagate_after_exit_tree() {
+void Node::_propagate_after_exit_branch(bool p_exiting_tree) {
 	// Clear owner if it was not part of the pruned branch
 	if (data.owner) {
 		bool found = false;
@@ -275,11 +275,13 @@ void Node::_propagate_after_exit_tree() {
 
 	data.blocked++;
 	for (int i = 0; i < data.children.size(); i++) {
-		data.children[i]->_propagate_after_exit_tree();
+		data.children[i]->_propagate_after_exit_branch(p_exiting_tree);
 	}
 	data.blocked--;
 
-	emit_signal(SceneStringNames::get_singleton()->tree_exited);
+	if (p_exiting_tree) {
+		emit_signal(SceneStringNames::get_singleton()->tree_exited);
+	}
 }
 
 void Node::_propagate_exit_tree() {
@@ -1265,9 +1267,7 @@ void Node::remove_child(Node *p_child) {
 	p_child->data.parent = nullptr;
 	p_child->data.pos = -1;
 
-	if (data.inside_tree) {
-		p_child->_propagate_after_exit_tree();
-	}
+	p_child->_propagate_after_exit_branch(data.inside_tree);
 }
 
 void Node::remove_all_child() {
@@ -2739,7 +2739,7 @@ NodePath Node::get_import_path() const {
 
 static void _add_nodes_to_options(const Node *p_base, const Node *p_node, List<String> *r_options) {
 #ifdef TOOLS_ENABLED
-	const String quote_style = EDITOR_DEF("text_editor/completion/use_single_quotes", 0) ? "'" : "\"";
+	const String quote_style = EDITOR_GET("text_editor/completion/use_single_quotes") ? "'" : "\"";
 #else
 	const String quote_style = "\"";
 #endif

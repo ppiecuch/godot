@@ -317,11 +317,11 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 	hints["interface/editor/font_hinting"] = PropertyInfo(Variant::INT, "interface/editor/font_hinting", PROPERTY_HINT_ENUM, "Auto (Light),None,Light,Normal", PROPERTY_USAGE_DEFAULT);
 #endif
 	_initial_set("interface/editor/main_font", "");
-	hints["interface/editor/main_font"] = PropertyInfo(Variant::STRING, "interface/editor/main_font", PROPERTY_HINT_GLOBAL_FILE, "*.ttf,*.otf,*.woff", PROPERTY_USAGE_DEFAULT);
+	hints["interface/editor/main_font"] = PropertyInfo(Variant::STRING, "interface/editor/main_font", PROPERTY_HINT_GLOBAL_FILE, "*.ttf,*.otf,*.woff,*.woff2", PROPERTY_USAGE_DEFAULT);
 	_initial_set("interface/editor/main_font_bold", "");
-	hints["interface/editor/main_font_bold"] = PropertyInfo(Variant::STRING, "interface/editor/main_font_bold", PROPERTY_HINT_GLOBAL_FILE, "*.ttf,*.otf,*.woff", PROPERTY_USAGE_DEFAULT);
+	hints["interface/editor/main_font_bold"] = PropertyInfo(Variant::STRING, "interface/editor/main_font_bold", PROPERTY_HINT_GLOBAL_FILE, "*.ttf,*.otf,*.woff,*.woff2", PROPERTY_USAGE_DEFAULT);
 	_initial_set("interface/editor/code_font", "");
-	hints["interface/editor/code_font"] = PropertyInfo(Variant::STRING, "interface/editor/code_font", PROPERTY_HINT_GLOBAL_FILE, "*.ttf,*.otf,*.woff", PROPERTY_USAGE_DEFAULT);
+	hints["interface/editor/code_font"] = PropertyInfo(Variant::STRING, "interface/editor/code_font", PROPERTY_HINT_GLOBAL_FILE, "*.ttf,*.otf,*.woff,*.woff2", PROPERTY_USAGE_DEFAULT);
 	_initial_set("interface/editor/dim_editor_on_dialog_popup", true);
 	_initial_set("interface/editor/low_processor_mode_sleep_usec", 6900); // ~144 FPS
 	hints["interface/editor/low_processor_mode_sleep_usec"] = PropertyInfo(Variant::REAL, "interface/editor/low_processor_mode_sleep_usec", PROPERTY_HINT_RANGE, "1,100000,1", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_RESTART_IF_CHANGED);
@@ -460,6 +460,8 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 	_initial_set("text_editor/files/trim_trailing_whitespace_on_save", false);
 	_initial_set("text_editor/files/autosave_interval_secs", 0);
 	_initial_set("text_editor/files/restore_scripts_on_load", true);
+	_initial_set("text_editor/files/auto_reload_and_parse_scripts_on_save", true);
+	_initial_set("text_editor/files/auto_reload_scripts_on_external_change", false);
 
 	// Tools
 	_initial_set("text_editor/tools/create_signal_callbacks", true);
@@ -498,6 +500,7 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 
 	// GridMap
 	_initial_set("editors/grid_map/pick_distance", 5000.0);
+	_initial_set("editors/grid_map/preview_size", 64);
 
 	// 3D
 	_initial_set("editors/3d/primary_grid_color", Color(0.56, 0.56, 0.56, 0.5));
@@ -506,6 +509,9 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 	// Use a similar color to the 2D editor selection.
 	_initial_set("editors/3d/selection_box_color", Color(1.0, 0.5, 0));
 	hints["editors/3d/selection_box_color"] = PropertyInfo(Variant::COLOR, "editors/3d/selection_box_color", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_RESTART_IF_CHANGED);
+	_initial_set("editors/3d_gizmos/gizmo_colors/instanced", Color(0.7, 0.7, 0.7, 0.6));
+	_initial_set("editors/3d_gizmos/gizmo_colors/joint", Color(0.5, 0.8, 1));
+	_initial_set("editors/3d_gizmos/gizmo_colors/shape", Color(0.5, 0.7, 1));
 
 	// If a line is a multiple of this, it uses the primary grid color.
 	// Use a power of 2 value by default as it's more common to use powers of 2 in level design.
@@ -649,7 +655,12 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 
 	// SSL
 	_initial_set("network/ssl/editor_ssl_certificates", _SYSTEM_CERTS_PATH);
-	hints["network/ssl/editor_ssl_certificates"] = PropertyInfo(Variant::STRING, "network/ssl/editor_ssl_certificates", PROPERTY_HINT_GLOBAL_FILE, "*.crt,*.pem");
+	hints["network/ssl/editor_ssl_certificates"] = PropertyInfo(Variant::STRING, "network/ssl/editor_ssl_certificates", PROPERTY_HINT_GLOBAL_FILE, "*.crt,*.pem", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_RESTART_IF_CHANGED);
+
+	// HTTP Proxy
+	_initial_set("network/http_proxy/host", "");
+	_initial_set("network/http_proxy/port", 8080);
+	hints["network/http_proxy/port"] = PropertyInfo(Variant::INT, "network/http_proxy/port", PROPERTY_HINT_RANGE, "1,65535,1");
 
 	/* Extra config */
 
@@ -1457,7 +1468,7 @@ String EditorSettings::get_editor_layouts_config() const {
 }
 
 float EditorSettings::get_auto_display_scale() const {
-#ifdef OSX_ENABLED
+#if defined(OSX_ENABLED) || defined(ANDROID_ENABLED)
 	return OS::get_singleton()->get_screen_max_scale();
 #else
 	const int screen = OS::get_singleton()->get_current_screen();

@@ -377,17 +377,11 @@ public:
 		resize(s - 1);
 	}
 
-	void fill(const T &p_elem) {
-		Write w = write();
-		for (int i = 0; i < size(); i++) {
-			w[i] = p_elem;
-		}
-	}
-
 	inline int size() const;
 	inline bool empty() const;
 	T get(int p_index) const;
 	void set(int p_index, const T &p_val);
+	void fill(const T &p_val);
 	void push_back(const T &p_val);
 	void push_multi(int p_num, const T &p_val);
 	void insert_multi(int p_pos, int p_num, const T &p_val);
@@ -507,6 +501,14 @@ void PoolVector<T>::set(int p_index, const T &p_val) {
 
 	Write w = write();
 	w[p_index] = p_val;
+}
+
+template <class T>
+void PoolVector<T>::fill(const T &p_val) {
+	Write w = write();
+	for (int i = 0; i < size(); i++) {
+		w[i] = p_val;
+	}
 }
 
 template <class T>

@@ -959,6 +959,7 @@ void AudioServer::init_channels_and_buffers() {
 		for (int j = 0; j < channel_count; j++) {
 			buses.write[i]->channels.write[j].buffer.resize(buffer_size);
 		}
+		_update_bus_effects(i);
 	}
 
 	if (Engine::get_singleton()->is_editor_hint() && playing_sources_count == 0 && last_playback_time_msec < OS::get_singleton()->get_ticks_msec() - driver_sleep_time) {

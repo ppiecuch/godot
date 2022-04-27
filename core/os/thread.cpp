@@ -28,11 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "thread.h"
+#include "platform_config.h"
 
 #ifndef PLATFORM_THREAD_H // // See details in thread.h
 #ifndef NO_THREADS
 
+#include "thread.h"
 #include "core/script_language.h"
 
 #ifdef PTHREAD_ENABLED

@@ -54,6 +54,8 @@ GodotIOJavaWrapper::GodotIOJavaWrapper(JNIEnv *p_env, jobject p_godot_io_instanc
 		_get_model = p_env->GetMethodID(cls, "getModel", "()Ljava/lang/String;");
 		_get_custom_name = p_env->GetMethodID(cls, "getCustomName", "()Ljava/lang/String;");
 		_get_screen_DPI = p_env->GetMethodID(cls, "getScreenDPI", "()I");
+		_get_scaled_density = p_env->GetMethodID(cls, "getScaledDensity", "()F");
+		_get_screen_refresh_rate = p_env->GetMethodID(cls, "getScreenRefreshRate", "(D)D");
 		_get_window_safe_area = p_env->GetMethodID(cls, "getWindowSafeArea", "()[I"),
 		_get_unique_id = p_env->GetMethodID(cls, "getUniqueID", "()Ljava/lang/String;");
 		_show_keyboard = p_env->GetMethodID(cls, "showKeyboard", "(Ljava/lang/String;ZIII)V");
@@ -146,6 +148,29 @@ int GodotIOJavaWrapper::get_screen_dpi() {
 	} else {
 		return 160;
 	}
+}
+
+float GodotIOJavaWrapper::get_scaled_density() {
+	if (_get_scaled_density) {
+		JNIEnv *env = get_jni_env();
+		ERR_FAIL_COND_V(env == nullptr, 1.0f);
+		return env->CallFloatMethod(godot_io_instance, _get_scaled_density);
+	} else {
+		return 1.0f;
+	}
+}
+
+float GodotIOJavaWrapper::get_screen_refresh_rate(float p_fallback) {
+	if (_get_screen_refresh_rate) {
+		JNIEnv *env = get_jni_env();
+		if (env == nullptr) {
+			ERR_PRINT("An error occurred while trying to get screen refresh rate.");
+			return p_fallback;
+		}
+		return (float)env->CallDoubleMethod(godot_io_instance, _get_screen_refresh_rate, (double)p_fallback);
+	}
+	ERR_PRINT("An error occurred while trying to get the screen refresh rate.");
+	return p_fallback;
 }
 
 void GodotIOJavaWrapper::get_window_safe_area(int (&p_rect_xywh)[4]) {

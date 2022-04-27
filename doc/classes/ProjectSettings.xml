@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="ProjectSettings" inherits="Object" version="3.5">
+<class name="ProjectSettings" inherits="Object" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Contains global variables accessible from everywhere.
 	</brief_description>
@@ -321,6 +321,9 @@
 		<member name="debug/gdscript/warnings/exclude_addons" type="bool" setter="" getter="" default="true">
 			If [code]true[/code], scripts in the [code]res://addons[/code] folder will not generate warnings.
 		</member>
+		<member name="debug/gdscript/warnings/export_hint_type_mistmatch" type="bool" setter="" getter="" default="true">
+			If [code]true[/code], enables warnings when the type of the default value set to an exported variable is different than the specified export type.
+		</member>
 		<member name="debug/gdscript/warnings/function_conflicts_constant" type="bool" setter="" getter="" default="true">
 			If [code]true[/code], enables warnings when a function is declared with the same name as a constant.
 		</member>
@@ -491,7 +494,7 @@
 		</member>
 		<member name="display/window/size/resizable" type="bool" setter="" getter="" default="true">
 			Allows the window to be resizable by default.
-			[b]Note:[/b] This setting is ignored on iOS and Android.
+			[b]Note:[/b] This setting is ignored on iOS.
 		</member>
 		<member name="display/window/size/test_height" type="int" setter="" getter="" default="0">
 			If greater than zero, overrides the window height when running the game. Useful for testing stretch modes.
@@ -534,6 +537,12 @@
 		</member>
 		<member name="gui/common/default_scroll_deadzone" type="int" setter="" getter="" default="0">
 			Default value for [member ScrollContainer.scroll_deadzone], which will be used for all [ScrollContainer]s unless overridden.
+		</member>
+		<member name="gui/common/drop_mouse_on_gui_input_disabled" type="bool" setter="" getter="" default="false">
+			If enabled, the moment [member Viewport.gui_disable_input] is set to [code]false[/code] to disable GUI input in a viewport, current mouse over and mouse focus will be dropped.
+			That behavior helps to keep a robust GUI state, with no surprises when input is resumed regardless what has happened in the meantime.
+			If disabled, the legacy behavior is used, which consists in just not doing anything besides the GUI input disable itself.
+			[b]Note:[/b] This is set to [code]true[/code] by default for new projects and is the recommended setting.
 		</member>
 		<member name="gui/common/swap_ok_cancel" type="bool" setter="" getter="">
 			If [code]true[/code], swaps OK and Cancel buttons in dialogs on Windows and UWP to follow interface conventions.
@@ -893,7 +902,7 @@
 			Optional name for the 3D render layer 13.
 		</member>
 		<member name="layer_names/3d_render/layer_14" type="String" setter="" getter="" default="&quot;&quot;">
-			Optional name for the 3D render layer 14
+			Optional name for the 3D render layer 14.
 		</member>
 		<member name="layer_names/3d_render/layer_15" type="String" setter="" getter="" default="&quot;&quot;">
 			Optional name for the 3D render layer 15.
@@ -1138,6 +1147,10 @@
 			Sets which physics engine to use for 3D physics.
 			"DEFAULT" is currently the [url=https://bulletphysics.org]Bullet[/url] physics engine. The "GodotPhysics" engine is still supported as an alternative.
 		</member>
+		<member name="physics/3d/smooth_trimesh_collision" type="bool" setter="" getter="" default="false">
+			If [code]true[/code], smooths out collision with trimesh shapes ([ConcavePolygonShape]) by telling the Bullet physics engine to generate internal edge information for every trimesh shape created.
+			[b]Note:[/b] Only effective if [member physics/3d/physics_engine] is set to [code]DEFAULT[/code] or [code]Bullet[/code], [i]not[/i] [code]GodotPhysics[/code].
+		</member>
 		<member name="physics/common/enable_object_picking" type="bool" setter="" getter="" default="true">
 			Enables [member Viewport.physics_object_picking] on the root viewport.
 		</member>
@@ -1298,6 +1311,10 @@
 			An ubershader is a very complex shader, slow but suited to any rendering situation, that the engine generates internally so it can be used from the beginning while the traditional conditioned, optimized version of it is being compiled.
 			To reduce loading times after the project has been launched at least once, you can use [code]Asynchronous + Cache[/code]. This also causes the ubershaders to be cached into storage so they can be ready faster next time they are used (provided the platform provides support for it).
 			[b]Note:[/b] Asynchronous compilation is currently only supported for spatial (3D) and particle materials/shaders. CanvasItem (2D) shaders will not use asynchronous compilation even if this setting is set to [code]Asynchronous[/code] or [code]Asynchronous + Cache[/code].
+		</member>
+		<member name="rendering/gles3/shaders/shader_compilation_mode.mobile" type="int" setter="" getter="" default="0">
+			An override for [code]rendering/gles3/shaders/shader_compilation_mode[/code], so asynchronous compilation can be disabled for mobile.
+			You may want to do that since mobile GPUs generally won't support ubershaders due to their complexity.
 		</member>
 		<member name="rendering/limits/buffers/blend_shape_max_buffer_size_kb" type="int" setter="" getter="" default="4096">
 			Max buffer size for blend shapes. Any blend shape bigger than this will not work.
@@ -1469,10 +1486,12 @@
 			Lower-end override for [member rendering/quality/shading/force_lambert_over_burley] on mobile devices, due to performance concerns or driver support.
 		</member>
 		<member name="rendering/quality/shading/force_vertex_shading" type="bool" setter="" getter="" default="false">
-			If [code]true[/code], forces vertex shading for all rendering. This can increase performance a lot, but also reduces quality immensely. Can be used to optimize performance on low-end mobile devices.
+			If [code]true[/code], forces vertex shading for all 3D [SpatialMaterial] and [ShaderMaterial] rendering. This can be used to improve performance on low-end mobile devices. The downside is that shading becomes much less accurate, with visible linear interpolation between vertices that are joined together. This can be compensated by ensuring meshes have a sufficient level of subdivision (but not too much, to avoid reducing performance). Some material features are also not supported when vertex shading is enabled.
+			See also [member SpatialMaterial.flags_vertex_lighting] which can be used to enable vertex shading on specific materials only.
+			[b]Note:[/b] This setting does not affect unshaded materials.
 		</member>
 		<member name="rendering/quality/shading/force_vertex_shading.mobile" type="bool" setter="" getter="" default="true">
-			Lower-end override for [member rendering/quality/shading/force_vertex_shading] on mobile devices, due to performance concerns or driver support.
+			Lower-end override for [member rendering/quality/shading/force_vertex_shading] on mobile devices, due to performance concerns or driver support. If lighting looks broken after exporting the project to a mobile platform, try disabling this setting.
 		</member>
 		<member name="rendering/quality/shading/use_physical_light_attenuation" type="bool" setter="" getter="" default="false">
 			If [code]true[/code], enables new physical light attenuation for [OmniLight]s and [SpotLight]s. This results in more realistic lighting appearance with a very small performance cost. When physical light attenuation is enabled, lights will appear to be darker as a result of the new attenuation formula. This can be compensated by adjusting the lights' energy or attenuation values.

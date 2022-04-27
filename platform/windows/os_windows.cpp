@@ -73,6 +73,12 @@ __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 typedef struct {
 	int count;
 	int screen;
+	HMONITOR monitor;
+} EnumScreenData;
+
+typedef struct {
+	int count;
+	int screen;
 	Size2 size;
 } EnumSizeData;
 
@@ -81,6 +87,16 @@ typedef struct {
 	int screen;
 	Point2 pos;
 } EnumPosData;
+
+static BOOL CALLBACK _MonitorEnumProcScreen(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) {
+	EnumScreenData *data = (EnumScreenData *)dwData;
+	if (data->monitor == hMonitor) {
+		data->screen = data->count;
+	}
+
+	data->count++;
+	return TRUE;
+}
 
 static BOOL CALLBACK _MonitorEnumProcSize(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) {
 	EnumSizeData *data = (EnumSizeData *)dwData;
@@ -1362,7 +1378,13 @@ Error OS_Windows::initialize(const VideoMode &p_desired, int p_video_driver, int
 
 		*/
 
-		EnumSizeData data = { 0, 0, Size2() };
+		// Get the primary monitor without providing hwnd
+		// Solution from https://devblogs.microsoft.com/oldnewthing/20070809-00/?p=25643
+		const POINT ptZero = { 0, 0 };
+		EnumScreenData primary_data = { 0, 0, MonitorFromPoint(ptZero, MONITOR_DEFAULTTOPRIMARY) };
+		EnumDisplayMonitors(NULL, NULL, _MonitorEnumProcScreen, (LPARAM)&primary_data);
+
+		EnumSizeData data = { 0, primary_data.screen, Size2() };
 		EnumDisplayMonitors(NULL, NULL, _MonitorEnumProcSize, (LPARAM)&data);
 
 		WindowRect.right = data.size.width;
@@ -1613,8 +1635,11 @@ Error OS_Windows::initialize(const VideoMode &p_desired, int p_video_driver, int
 
 	set_ime_active(false);
 
-	if (!OS::get_singleton()->is_in_low_processor_usage_mode()) {
-		//SetPriorityClass(GetCurrentProcess(), ABOVE_NORMAL_PRIORITY_CLASS);
+	if (!Engine::get_singleton()->is_editor_hint() && !OS::get_singleton()->is_in_low_processor_usage_mode()) {
+		// Increase priority for projects that are not in low-processor mode (typically games)
+		// to reduce the risk of frame stuttering.
+		// This is not done for the editor to prevent importers or resource bakers
+		// from making the system unresponsive.
 		SetPriorityClass(GetCurrentProcess(), ABOVE_NORMAL_PRIORITY_CLASS);
 		DWORD index = 0;
 		HANDLE handle = AvSetMmThreadCharacteristics("Games", &index);
@@ -1908,22 +1933,6 @@ int OS_Windows::get_screen_count() const {
 	return data;
 }
 
-typedef struct {
-	int count;
-	int screen;
-	HMONITOR monitor;
-} EnumScreenData;
-
-static BOOL CALLBACK _MonitorEnumProcScreen(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) {
-	EnumScreenData *data = (EnumScreenData *)dwData;
-	if (data->monitor == hMonitor) {
-		data->screen = data->count;
-	}
-
-	data->count++;
-	return TRUE;
-}
-
 int OS_Windows::get_current_screen() const {
 	EnumScreenData data = { 0, 0, MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST) };
 	EnumDisplayMonitors(NULL, NULL, _MonitorEnumProcScreen, (LPARAM)&data);
@@ -1964,6 +1973,12 @@ typedef struct {
 	int dpi;
 } EnumDpiData;
 
+typedef struct {
+	int count;
+	int screen;
+	float rate;
+} EnumRefreshRateData;
+
 static BOOL CALLBACK _MonitorEnumProcDpi(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) {
 	EnumDpiData *data = (EnumDpiData *)dwData;
 	if (data->count == data->screen) {
@@ -1974,10 +1989,44 @@ static BOOL CALLBACK _MonitorEnumProcDpi(HMONITOR hMonitor, HDC hdcMonitor, LPRE
 	return TRUE;
 }
 
+static BOOL CALLBACK _MonitorEnumProcRefreshRate(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) {
+	EnumRefreshRateData *data = (EnumRefreshRateData *)dwData;
+	if (data->count == data->screen) {
+		MONITORINFOEXW minfo;
+		memset(&minfo, 0, sizeof(minfo));
+		minfo.cbSize = sizeof(minfo);
+		GetMonitorInfoW(hMonitor, &minfo);
+
+		DEVMODEW dm;
+		memset(&dm, 0, sizeof(dm));
+		dm.dmSize = sizeof(dm);
+		EnumDisplaySettingsW(minfo.szDevice, ENUM_CURRENT_SETTINGS, &dm);
+
+		data->rate = dm.dmDisplayFrequency;
+	}
+
+	data->count++;
+	return TRUE;
+}
+
 int OS_Windows::get_screen_dpi(int p_screen) const {
-	EnumDpiData data = { 0, p_screen == -1 ? get_current_screen() : p_screen, 72 };
+	EnumDpiData data = {
+		0,
+		p_screen == -1 ? get_current_screen() : p_screen,
+		72,
+	};
 	EnumDisplayMonitors(NULL, NULL, _MonitorEnumProcDpi, (LPARAM)&data);
 	return data.dpi;
+}
+
+float OS_Windows::get_screen_refresh_rate(int p_screen) const {
+	EnumRefreshRateData data = {
+		0,
+		p_screen == -1 ? get_current_screen() : p_screen,
+		OS::get_singleton()->SCREEN_REFRESH_RATE_FALLBACK,
+	};
+	EnumDisplayMonitors(nullptr, nullptr, _MonitorEnumProcRefreshRate, (LPARAM)&data);
+	return data.rate;
 }
 
 Point2 OS_Windows::get_window_position() const {
@@ -2370,12 +2419,19 @@ OS::Date OS_Windows::get_date(bool utc) const {
 	else
 		GetLocalTime(&systemtime);
 
+	// Get DST information from Windows, but only if utc is false.
+	TIME_ZONE_INFORMATION info;
+	bool daylight = false;
+	if (!utc && GetTimeZoneInformation(&info) == TIME_ZONE_ID_DAYLIGHT) {
+		daylight = true;
+	}
+
 	Date date;
 	date.day = systemtime.wDay;
 	date.month = Month(systemtime.wMonth);
 	date.weekday = Weekday(systemtime.wDayOfWeek);
 	date.year = systemtime.wYear;
-	date.dst = false;
+	date.dst = daylight;
 	return date;
 }
 OS::Time OS_Windows::get_time(bool utc) const {
@@ -2398,16 +2454,19 @@ OS::TimeZoneInfo OS_Windows::get_time_zone_info() const {
 	if (GetTimeZoneInformation(&info) == TIME_ZONE_ID_DAYLIGHT)
 		daylight = true;
 
+	// Daylight Bias needs to be added to the bias if DST is in effect, or else it will not properly update.
 	TimeZoneInfo ret;
 	if (daylight) {
 		ret.name = info.DaylightName;
+		ret.bias = info.Bias + info.DaylightBias;
 	} else {
 		ret.name = info.StandardName;
+		ret.bias = info.Bias + info.StandardBias;
 	}
 
 	// Bias value returned by GetTimeZoneInformation is inverted of what we expect
-	// For example on GMT-3 GetTimeZoneInformation return a Bias of 180, so invert the value to get -180
-	ret.bias = -info.Bias;
+	// For example, on GMT-3 GetTimeZoneInformation return a Bias of 180, so invert the value to get -180
+	ret.bias = -ret.bias;
 	return ret;
 }
 

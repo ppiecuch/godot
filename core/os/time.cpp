@@ -95,16 +95,16 @@ VARIANT_ENUM_CAST(Time::Weekday);
 		day = day_number_copy + 1;                                                          \
 	}
 
-#define VALIDATE_YMDHMS                                                                                                                                                 \
-	ERR_FAIL_COND_V_MSG(month == 0, 0, "Invalid month value of: " + itos(month) + ", months are 1-indexed and cannot be 0. See the Time.Month enum for valid values."); \
-	ERR_FAIL_COND_V_MSG(month > 12, 0, "Invalid month value of: " + itos(month) + ". See the Time.Month enum for valid values.");                                       \
-	ERR_FAIL_COND_V_MSG(hour > 23, 0, "Invalid hour value of: " + itos(hour) + ".");                                                                                    \
-	ERR_FAIL_COND_V_MSG(minute > 59, 0, "Invalid minute value of: " + itos(minute) + ".");                                                                              \
-	ERR_FAIL_COND_V_MSG(second > 59, 0, "Invalid second value of: " + itos(second) + " (leap seconds are not supported).");                                             \
-	/* Do this check after month is tested as valid. */                                                                                                                 \
-	ERR_FAIL_COND_V_MSG(day == 0, 0, "Invalid day value of: " + itos(month) + ", days are 1-indexed and cannot be 0.");                                                 \
-	uint8_t days_in_this_month = MONTH_DAYS_TABLE[IS_LEAP_YEAR(year)][month - 1];                                                                                       \
-	ERR_FAIL_COND_V_MSG(day > days_in_this_month, 0, "Invalid day value of: " + itos(day) + " which is larger than the maximum for this month, " + itos(days_in_this_month) + ".");
+#define VALIDATE_YMDHMS(ret)                                                                                                                                              \
+	ERR_FAIL_COND_V_MSG(month == 0, ret, "Invalid month value of: " + itos(month) + ", months are 1-indexed and cannot be 0. See the Time.Month enum for valid values."); \
+	ERR_FAIL_COND_V_MSG(month > 12, ret, "Invalid month value of: " + itos(month) + ". See the Time.Month enum for valid values.");                                       \
+	ERR_FAIL_COND_V_MSG(hour > 23, ret, "Invalid hour value of: " + itos(hour) + ".");                                                                                    \
+	ERR_FAIL_COND_V_MSG(minute > 59, ret, "Invalid minute value of: " + itos(minute) + ".");                                                                              \
+	ERR_FAIL_COND_V_MSG(second > 59, ret, "Invalid second value of: " + itos(second) + " (leap seconds are not supported).");                                             \
+	/* Do this check after month is tested as valid. */                                                                                                                   \
+	ERR_FAIL_COND_V_MSG(day == 0, ret, "Invalid day value of: " + itos(month) + ", days are 1-indexed and cannot be 0.");                                                 \
+	uint8_t days_in_this_month = MONTH_DAYS_TABLE[IS_LEAP_YEAR(year)][month - 1];                                                                                         \
+	ERR_FAIL_COND_V_MSG(day > days_in_this_month, ret, "Invalid day value of: " + itos(day) + " which is larger than the maximum for this month, " + itos(days_in_this_month) + ".");
 
 #define YMD_TO_DAY_NUMBER                                                           \
 	/* The day number since Unix epoch (0-index). Days before 1970 are negative. */ \
@@ -270,9 +270,10 @@ Dictionary Time::get_datetime_dict_from_string(String p_datetime, bool p_weekday
 	return dict;
 }
 
-String Time::get_datetime_string_from_dict(Dictionary p_datetime, bool p_use_space) const {
+String Time::get_datetime_string_from_dict(const Dictionary p_datetime, bool p_use_space) const {
 	ERR_FAIL_COND_V_MSG(p_datetime.empty(), "", "Invalid datetime Dictionary: Dictionary is empty.");
 	EXTRACT_FROM_DICTIONARY
+	VALIDATE_YMDHMS("")
 	// vformat only supports up to 6 arguments, so we need to split this up into 2 parts.
 	String timestamp = vformat("%04d-%02d-%02d", year, (uint8_t)month, day);
 	if (p_use_space) {
@@ -283,19 +284,34 @@ String Time::get_datetime_string_from_dict(Dictionary p_datetime, bool p_use_spa
 	return timestamp;
 }
 
-int64_t Time::get_unix_time_from_datetime_dict(Dictionary p_datetime) const {
+int64_t Time::get_unix_time_from_datetime_dict(const Dictionary p_datetime) const {
 	ERR_FAIL_COND_V_MSG(p_datetime.empty(), 0, "Invalid datetime Dictionary: Dictionary is empty");
 	EXTRACT_FROM_DICTIONARY
-	VALIDATE_YMDHMS
+	VALIDATE_YMDHMS(0)
 	YMD_TO_DAY_NUMBER
 	return day_number * SECONDS_PER_DAY + hour * 3600 + minute * 60 + second;
 }
 
 int64_t Time::get_unix_time_from_datetime_string(String p_datetime) const {
 	PARSE_ISO8601_STRING
-	VALIDATE_YMDHMS
+	VALIDATE_YMDHMS(0)
 	YMD_TO_DAY_NUMBER
 	return day_number * SECONDS_PER_DAY + hour * 3600 + minute * 60 + second;
+}
+
+String Time::get_offset_string_from_offset_minutes(int64_t p_offset_minutes) const {
+	String sign;
+	if (p_offset_minutes < 0) {
+		sign = "-";
+		p_offset_minutes = -p_offset_minutes;
+	} else {
+		sign = "+";
+	}
+	// These two lines can be optimized to one instruction on x86 and others.
+	// Note that % is acceptable here only because we ensure it's positive.
+	int64_t offset_hours = p_offset_minutes / 60;
+	int64_t offset_minutes = p_offset_minutes % 60;
+	return vformat("%s%02d:%02d", sign, offset_hours, offset_minutes);
 }
 
 Dictionary Time::get_datetime_dict_from_system(bool p_utc) const {
@@ -389,6 +405,7 @@ void Time::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_datetime_string_from_dict", "datetime", "use_space"), &Time::get_datetime_string_from_dict);
 	ClassDB::bind_method(D_METHOD("get_unix_time_from_datetime_dict", "datetime"), &Time::get_unix_time_from_datetime_dict);
 	ClassDB::bind_method(D_METHOD("get_unix_time_from_datetime_string", "datetime"), &Time::get_unix_time_from_datetime_string);
+	ClassDB::bind_method(D_METHOD("get_offset_string_from_offset_minutes", "offset_minutes"), &Time::get_offset_string_from_offset_minutes);
 
 	ClassDB::bind_method(D_METHOD("get_datetime_dict_from_system", "utc"), &Time::get_datetime_dict_from_system, DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("get_date_dict_from_system", "utc"), &Time::get_date_dict_from_system, DEFVAL(false));

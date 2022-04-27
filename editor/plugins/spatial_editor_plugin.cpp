@@ -2678,10 +2678,13 @@ void SpatialEditorViewport::_notification(int p_what) {
 		fps_label->set_visible(show_fps);
 
 		if (show_fps) {
-			String text;
-			const float temp_fps = Engine::get_singleton()->get_frames_per_second();
-			text += vformat(TTR("FPS: %d (%s ms)"), temp_fps, rtos(1000.0f / temp_fps).pad_decimals(2));
-			fps_label->set_text(text);
+			const float fps = Engine::get_singleton()->get_frames_per_second();
+			fps_label->set_text(vformat(TTR("FPS: %d (%s ms)"), fps, rtos(1000.0f / fps).pad_decimals(2)));
+			// Middle point is at 60 FPS.
+			fps_label->add_color_override(
+					"font_color",
+					frame_time_gradient->get_color_at_offset(
+							Math::range_lerp(fps, 110, 10, 0, 1)));
 		}
 
 		bool show_cinema = view_menu->get_popup()->is_item_checked(view_menu->get_popup()->get_item_index(VIEW_CINEMATIC_PREVIEW));
@@ -2739,30 +2742,36 @@ void SpatialEditorViewport::_notification(int p_what) {
 		fps_label->add_style_override("normal", editor->get_gui_base()->get_stylebox("Information3dViewport", "EditorStyles"));
 		cinema_label->add_style_override("normal", editor->get_gui_base()->get_stylebox("Information3dViewport", "EditorStyles"));
 		locked_label->add_style_override("normal", editor->get_gui_base()->get_stylebox("Information3dViewport", "EditorStyles"));
+
+		frame_time_gradient->set_color(0, get_color("success_color", "Editor"));
+		frame_time_gradient->set_color(1, get_color("warning_color", "Editor"));
+		frame_time_gradient->set_color(2, get_color("error_color", "Editor"));
 	}
 }
 
-static void draw_indicator_bar(Control &surface, real_t fill, const Ref<Texture> icon, const Ref<Font> font, const String &text) {
+static void draw_indicator_bar(Control &p_surface, real_t p_fill, const Ref<Texture> p_icon, const Ref<Font> p_font, const String &p_text, const Color &p_color) {
 	// Adjust bar size from control height
-	const Vector2 surface_size = surface.get_size();
+	const Vector2 surface_size = p_surface.get_size();
 	const real_t h = surface_size.y / 2.0;
 	const real_t y = (surface_size.y - h) / 2.0;
 
 	const Rect2 r(10 * EDSCALE, y, 6 * EDSCALE, h);
-	const real_t sy = r.size.y * fill;
+	const real_t sy = r.size.y * p_fill;
 
 	// Note: because this bar appears over the viewport, it has to stay readable for any background color
 	// Draw both neutral dark and bright colors to account this
-	surface.draw_rect(r, Color(1, 1, 1, 0.2));
-	surface.draw_rect(Rect2(r.position.x, r.position.y + r.size.y - sy, r.size.x, sy), Color(1, 1, 1, 0.6));
-	surface.draw_rect(r.grow(1), Color(0, 0, 0, 0.7), false, Math::round(EDSCALE));
+	p_surface.draw_rect(r, p_color * Color(1, 1, 1, 0.2));
+	p_surface.draw_rect(Rect2(r.position.x, r.position.y + r.size.y - sy, r.size.x, sy), p_color * Color(1, 1, 1, 0.6));
+	p_surface.draw_rect(r.grow(1), Color(0, 0, 0, 0.7), false, Math::round(EDSCALE));
 
-	const Vector2 icon_size = icon->get_size();
+	const Vector2 icon_size = p_icon->get_size();
 	const Vector2 icon_pos = Vector2(r.position.x - (icon_size.x - r.size.x) / 2, r.position.y + r.size.y + 2 * EDSCALE);
-	surface.draw_texture(icon, icon_pos);
+	p_surface.draw_texture(p_icon, icon_pos, p_color);
 
+	// Draw a shadow for the text to make it easier to read.
+	p_surface.draw_string(p_font, Vector2(icon_pos.x + EDSCALE, icon_pos.y + icon_size.y + 17 * EDSCALE), p_text, Color(0, 0, 0));
 	// Draw text below the bar (for speed/zoom information).
-	surface.draw_string(font, Vector2(icon_pos.x, icon_pos.y + icon_size.y + 16 * EDSCALE), text);
+	p_surface.draw_string(p_font, Vector2(icon_pos.x, icon_pos.y + icon_size.y + 16 * EDSCALE), p_text, p_color);
 }
 
 void SpatialEditorViewport::_draw() {
@@ -2879,7 +2888,8 @@ void SpatialEditorViewport::_draw() {
 							1.0 - logscale_t,
 							get_icon("ViewportSpeed", "EditorIcons"),
 							get_font("font", "Label"),
-							vformat("%s u/s", String::num(freelook_speed).pad_decimals(precision)));
+							vformat("%s u/s", String::num(freelook_speed).pad_decimals(precision)),
+							Color(1.0, 0.95, 0.7));
 				}
 
 			} else {
@@ -2900,7 +2910,8 @@ void SpatialEditorViewport::_draw() {
 							logscale_t,
 							get_icon("ViewportZoom", "EditorIcons"),
 							get_font("font", "Label"),
-							vformat("%s u", String::num(cursor.distance).pad_decimals(precision)));
+							vformat("%s u", String::num(cursor.distance).pad_decimals(precision)),
+							Color(0.7, 0.95, 1.0));
 				}
 			}
 		}
@@ -4184,6 +4195,10 @@ SpatialEditorViewport::SpatialEditorViewport(SpatialEditor *p_spatial_editor, Ed
 	rotation_control->set_viewport(this);
 	top_right_vbox->add_child(rotation_control);
 
+	frame_time_gradient = memnew(Gradient);
+	// The color is set when the theme changes.
+	frame_time_gradient->add_point(0.5, Color());
+
 	fps_label = memnew(Label);
 	fps_label->set_anchor_and_margin(MARGIN_LEFT, ANCHOR_END, -90 * EDSCALE);
 	fps_label->set_anchor_and_margin(MARGIN_TOP, ANCHOR_BEGIN, 10 * EDSCALE);
@@ -4216,6 +4231,10 @@ SpatialEditorViewport::SpatialEditorViewport(SpatialEditor *p_spatial_editor, Ed
 	_update_name();
 
 	EditorSettings::get_singleton()->connect("settings_changed", this, "update_transform_gizmo_view");
+}
+
+SpatialEditorViewport::~SpatialEditorViewport() {
+	memdelete(frame_time_gradient);
 }
 
 //////////////////////////////////////////////////////////////
@@ -6502,9 +6521,9 @@ void SpatialEditor::_bind_methods() {
 }
 
 void SpatialEditor::clear() {
-	settings_fov->set_value(EDITOR_DEF("editors/3d/default_fov", 70.0));
-	settings_znear->set_value(EDITOR_DEF("editors/3d/default_z_near", 0.05));
-	settings_zfar->set_value(EDITOR_DEF("editors/3d/default_z_far", 1500.0));
+	settings_fov->set_value(EDITOR_GET("editors/3d/default_fov"));
+	settings_znear->set_value(EDITOR_GET("editors/3d/default_z_near"));
+	settings_zfar->set_value(EDITOR_GET("editors/3d/default_z_far"));
 
 	for (uint32_t i = 0; i < VIEWPORTS_COUNT; i++) {
 		viewports[i]->reset();
@@ -6825,21 +6844,21 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 	settings_fov->set_max(MAX_FOV);
 	settings_fov->set_min(MIN_FOV);
 	settings_fov->set_step(0.01);
-	settings_fov->set_value(EDITOR_DEF("editors/3d/default_fov", 70.0));
+	settings_fov->set_value(EDITOR_GET("editors/3d/default_fov"));
 	settings_vbc->add_margin_child(TTR("Perspective FOV (deg.):"), settings_fov);
 
 	settings_znear = memnew(SpinBox);
 	settings_znear->set_max(MAX_Z);
 	settings_znear->set_min(MIN_Z);
 	settings_znear->set_step(0.01);
-	settings_znear->set_value(EDITOR_DEF("editors/3d/default_z_near", 0.05));
+	settings_znear->set_value(EDITOR_GET("editors/3d/default_z_near"));
 	settings_vbc->add_margin_child(TTR("View Z-Near:"), settings_znear);
 
 	settings_zfar = memnew(SpinBox);
 	settings_zfar->set_max(MAX_Z);
 	settings_zfar->set_min(MIN_Z);
 	settings_zfar->set_step(0.01);
-	settings_zfar->set_value(EDITOR_DEF("editors/3d/default_z_far", 1500));
+	settings_zfar->set_value(EDITOR_GET("editors/3d/default_z_far"));
 	settings_vbc->add_margin_child(TTR("View Z-Far:"), settings_zfar);
 
 	for (uint32_t i = 0; i < VIEWPORTS_COUNT; ++i) {
@@ -7058,7 +7077,7 @@ SpatialEditorPlugin::~SpatialEditorPlugin() {
 }
 
 void EditorSpatialGizmoPlugin::create_material(const String &p_name, const Color &p_color, bool p_billboard, bool p_on_top, bool p_use_vertex_color) {
-	Color instanced_color = EDITOR_DEF("editors/3d_gizmos/gizmo_colors/instanced", Color(0.7, 0.7, 0.7, 0.6));
+	Color instanced_color = EDITOR_GET("editors/3d_gizmos/gizmo_colors/instanced");
 
 	Vector<Ref<SpatialMaterial>> mats;
 
@@ -7099,7 +7118,7 @@ void EditorSpatialGizmoPlugin::create_material(const String &p_name, const Color
 }
 
 void EditorSpatialGizmoPlugin::create_icon_material(const String &p_name, const Ref<Texture> &p_texture, bool p_on_top, const Color &p_albedo) {
-	Color instanced_color = EDITOR_DEF("editors/3d_gizmos/gizmo_colors/instanced", Color(0.7, 0.7, 0.7, 0.6));
+	Color instanced_color = EDITOR_GET("editors/3d_gizmos/gizmo_colors/instanced");
 
 	Vector<Ref<SpatialMaterial>> icons;
 

@@ -848,6 +848,7 @@ Error VisualServer::_surface_set_data(Array p_arrays, uint32_t p_format, uint32_
 }
 
 uint32_t VisualServer::mesh_surface_get_format_offset(uint32_t p_format, int p_vertex_len, int p_index_len, int p_array_index) const {
+	ERR_FAIL_INDEX_V(p_array_index, ARRAY_MAX, 0);
 	uint32_t offsets[ARRAY_MAX];
 	uint32_t strides[ARRAY_MAX];
 	mesh_surface_make_offsets_from_format(p_format, p_vertex_len, p_index_len, offsets, strides);
@@ -855,6 +856,7 @@ uint32_t VisualServer::mesh_surface_get_format_offset(uint32_t p_format, int p_v
 }
 
 uint32_t VisualServer::mesh_surface_get_format_stride(uint32_t p_format, int p_vertex_len, int p_index_len, int p_array_index) const {
+	ERR_FAIL_INDEX_V(p_array_index, ARRAY_MAX, 0);
 	uint32_t offsets[ARRAY_MAX];
 	uint32_t strides[ARRAY_MAX];
 	mesh_surface_make_offsets_from_format(p_format, p_vertex_len, p_index_len, offsets, strides);
@@ -2735,6 +2737,7 @@ VisualServer::VisualServer() {
 #endif
 	GLOBAL_DEF("rendering/gles3/shaders/shader_compilation_mode", 0);
 	ProjectSettings::get_singleton()->set_custom_property_info("rendering/gles3/shaders/shader_compilation_mode", PropertyInfo(Variant::INT, "rendering/gles3/shaders/shader_compilation_mode", PROPERTY_HINT_ENUM, "Synchronous,Asynchronous,Asynchronous + Cache"));
+	GLOBAL_DEF("rendering/gles3/shaders/shader_compilation_mode.mobile", 0);
 	GLOBAL_DEF("rendering/gles3/shaders/max_simultaneous_compiles", 2);
 	ProjectSettings::get_singleton()->set_custom_property_info("rendering/gles3/shaders/max_simultaneous_compiles", PropertyInfo(Variant::INT, "rendering/gles3/shaders/max_simultaneous_compiles", PROPERTY_HINT_RANGE, "1,8,1"));
 	GLOBAL_DEF("rendering/gles3/shaders/max_simultaneous_compiles.mobile", 1);

@@ -323,6 +323,7 @@ private:
 		List<Control *> roots;
 		int canvas_sort_index; //for sorting items with canvas as root
 		bool dragging;
+		bool drag_successful;
 
 		GUI();
 	} gui;
@@ -340,6 +341,7 @@ private:
 	Control *_gui_find_control_at_pos(CanvasItem *p_node, const Point2 &p_global, const Transform2D &p_xform, Transform2D &r_inv_xform);
 
 	void _gui_input_event(Ref<InputEvent> p_event);
+	void _gui_cleanup_internal_state(Ref<InputEvent> p_event);
 
 	void update_worlds();
 
@@ -417,6 +419,7 @@ private:
 	void _canvas_layer_remove(CanvasLayer *p_canvas_layer);
 
 	void _drop_mouse_focus();
+	void _drop_mouse_over();
 	void _drop_physics_mouseover(bool p_paused_only = false);
 
 	void _update_canvas_items(Node *p_node);
@@ -586,6 +589,7 @@ public:
 	bool is_handling_input_locally() const;
 
 	bool gui_is_dragging() const;
+	bool gui_is_drag_successful() const;
 
 	Viewport();
 	~Viewport();

@@ -3330,8 +3330,12 @@ msgstr ""
 #: doc/classes/@GlobalScope.xml
 msgid ""
 "Hints that an integer, float or string property is an enumerated value to "
-"pick in a list specified via a hint string such as [code]\"Hello,Something,"
-"Else\"[/code]."
+"pick in a list specified via a hint string.\n"
+"The hint string is a comma separated list of names such as [code]\"Hello,"
+"Something,Else\"[/code]. For integer and float properties, the first name in "
+"the list has value 0, the next 1, and so on. Explicit values can also be "
+"specified by appending [code]:integer[/code] to the name, e.g. [code]\"Zero,"
+"One,Three:3,Four,Six:6\"[/code]."
 msgstr ""
 
 #: doc/classes/@GlobalScope.xml
@@ -3472,7 +3476,7 @@ msgid "The property is a translatable string."
 msgstr ""
 
 #: doc/classes/@GlobalScope.xml
-msgid "Used to group properties together in the editor."
+msgid "Used to group properties together in the editor. See [EditorInspector]."
 msgstr ""
 
 #: doc/classes/@GlobalScope.xml
@@ -5245,8 +5249,11 @@ msgstr ""
 
 #: doc/classes/AnimationNodeBlendTree.xml
 msgid ""
-"This node may contain a sub-tree of any other blend type nodes, such as mix, "
-"blend2, blend3, one shot, etc. This is one of the most commonly used roots."
+"This node may contain a sub-tree of any other blend type nodes, such as "
+"[AnimationNodeTransition], [AnimationNodeBlend2], [AnimationNodeBlend3], "
+"[AnimationNodeOneShot], etc. This is one of the most commonly used roots.\n"
+"An [AnimationNodeOutput] node named [code]output[/code] is created by "
+"default."
 msgstr ""
 
 #: doc/classes/AnimationNodeBlendTree.xml
@@ -6988,8 +6995,9 @@ msgstr ""
 
 #: doc/classes/Array.xml
 msgid ""
-"Removes the first occurrence of a value from the array. To remove an element "
-"by index, use [method remove] instead.\n"
+"Removes the first occurrence of a value from the array. If the value does "
+"not exist in the array, nothing happens. To remove an element by index, use "
+"[method remove] instead.\n"
 "[b]Note:[/b] This method acts in-place and doesn't return a value.\n"
 "[b]Note:[/b] On large arrays, this method will be slower if the removed "
 "element is close to the beginning of the array (index 0). This is because "
@@ -10366,8 +10374,15 @@ msgstr ""
 
 #: doc/classes/BakedLightmap.xml
 msgid ""
-"When enabled, the lightmapper will merge the textures for all meshes into a "
-"single large layered texture. Not supported in GLES2."
+"If [code]true[/code], the lightmapper will merge the textures for all meshes "
+"into one or several large layered textures. If [code]false[/code], every "
+"mesh will get its own lightmap texture, which is less efficient.\n"
+"[b]Note:[/b] Atlas lightmap rendering is only supported in GLES3, [i]not[/i] "
+"GLES2. Non-atlas lightmap rendering is supported by both GLES3 and GLES2. If "
+"[member ProjectSettings.rendering/quality/driver/fallback_to_gles2] is "
+"[code]true[/code], consider baking lightmaps with [member atlas_generate] "
+"set to [code]false[/code] so that the resulting lightmap is visible in both "
+"GLES3 and GLES2."
 msgstr ""
 
 #: doc/classes/BakedLightmap.xml
@@ -11712,8 +11727,8 @@ msgstr ""
 #: doc/classes/Camera.xml
 msgid ""
 "The camera's size measured as 1/2 the width or height. Only applicable in "
-"orthogonal mode. Since [member keep_aspect] locks on axis, [code]size[/code] "
-"sets the other axis' size length."
+"orthogonal and frustum modes. Since [member keep_aspect] locks on axis, "
+"[code]size[/code] sets the other axis' size length."
 msgstr ""
 
 #: doc/classes/Camera.xml
@@ -12515,20 +12530,24 @@ msgstr ""
 
 #: doc/classes/CanvasItem.xml
 msgid ""
-"If [code]enable[/code] is [code]true[/code], the node won't inherit its "
-"transform from parent canvas items."
+"If [code]enable[/code] is [code]true[/code], this [CanvasItem] will [i]not[/"
+"i] inherit its transform from parent [CanvasItem]s. Its draw order will also "
+"be changed to make it draw on top of other [CanvasItem]s that are not set as "
+"top-level. The [CanvasItem] will effectively act as if it was placed as a "
+"child of a bare [Node]. See also [method is_set_as_toplevel]."
 msgstr ""
 
 #: doc/classes/CanvasItem.xml
 msgid ""
-"If [code]enable[/code] is [code]true[/code], children will be updated with "
-"local transform data."
+"If [code]enable[/code] is [code]true[/code], this node will receive "
+"[constant NOTIFICATION_LOCAL_TRANSFORM_CHANGED] when its local transform "
+"changes."
 msgstr ""
 
 #: doc/classes/CanvasItem.xml
 msgid ""
-"If [code]enable[/code] is [code]true[/code], children will be updated with "
-"global transform data."
+"If [code]enable[/code] is [code]true[/code], this node will receive "
+"[constant NOTIFICATION_TRANSFORM_CHANGED] when its global transform changes."
 msgstr ""
 
 #: doc/classes/CanvasItem.xml
@@ -12642,9 +12661,14 @@ msgstr ""
 
 #: doc/classes/CanvasItem.xml
 msgid ""
-"The [CanvasItem]'s transform has changed. This notification is only received "
-"if enabled by [method set_notify_transform] or [method "
-"set_notify_local_transform]."
+"The [CanvasItem]'s global transform has changed. This notification is only "
+"received if enabled by [method set_notify_transform]."
+msgstr ""
+
+#: doc/classes/CanvasItem.xml
+msgid ""
+"The [CanvasItem]'s local transform has changed. This notification is only "
+"received if enabled by [method set_notify_local_transform]."
 msgstr ""
 
 #: doc/classes/CanvasItem.xml
@@ -13599,7 +13623,10 @@ msgid ""
 "number of 2D collision [Shape2D]s. Each shape must be assigned to a [i]shape "
 "owner[/i]. The CollisionObject2D can have any number of shape owners. Shape "
 "owners are not nodes and do not appear in the editor, but are accessible "
-"through code using the [code]shape_owner_*[/code] methods."
+"through code using the [code]shape_owner_*[/code] methods.\n"
+"[b]Note:[/b] Only collisions between objects within the same canvas "
+"([Viewport] canvas or [CanvasLayer]) are supported. The behavior of "
+"collisions between objects in different canvases is undefined."
 msgstr ""
 
 #: doc/classes/CollisionObject2D.xml
@@ -15865,6 +15892,11 @@ msgid ""
 msgstr ""
 
 #: doc/classes/Control.xml
+#, fuzzy
+msgid "Returns [code]true[/code] if drag operation is successful."
+msgstr "Επιστρέφει το συνημίτονο της παραμέτρου."
+
+#: doc/classes/Control.xml
 msgid ""
 "Invalidates the size cache in this node and in parent nodes up to toplevel. "
 "Intended to be used with [method get_minimum_size] when the return value is "
@@ -16291,8 +16323,9 @@ msgstr ""
 #: doc/classes/Control.xml
 msgid ""
 "By default, the node's pivot is its top-left corner. When you change its "
-"[member rect_scale], it will scale around this pivot. Set this property to "
-"[member rect_size] / 2 to center the pivot in the node's rectangle."
+"[member rect_rotation] or [member rect_scale], it will rotate or scale "
+"around this pivot. Set this property to [member rect_size] / 2 to pivot "
+"around the Control's center."
 msgstr ""
 
 #: doc/classes/Control.xml
@@ -18636,10 +18669,10 @@ msgid ""
 "further calculations."
 msgstr ""
 
-#: doc/classes/Curve2D.xml doc/classes/Curve3D.xml
+#: doc/classes/Curve2D.xml
 msgid ""
-"Adds a point to a curve at [code]position[/code], with control points "
-"[code]in[/code] and [code]out[/code].\n"
+"Adds a point to a curve at [code]position[/code] relative to the [Curve2D]'s "
+"position, with control points [code]in[/code] and [code]out[/code].\n"
 "If [code]at_position[/code] is given, the point is inserted before the point "
 "number [code]at_position[/code], moving that point (and every point after) "
 "after the inserted point. If [code]at_position[/code] is not given, or is an "
@@ -18788,6 +18821,18 @@ msgid ""
 "shape to a [Path], but can be manually sampled for other purposes.\n"
 "It keeps a cache of precalculated points along the curve, to speed up "
 "further calculations."
+msgstr ""
+
+#: doc/classes/Curve3D.xml
+msgid ""
+"Adds a point to a curve at [code]position[/code] relative to the [Curve3D]'s "
+"position, with control points [code]in[/code] and [code]out[/code].\n"
+"If [code]at_position[/code] is given, the point is inserted before the point "
+"number [code]at_position[/code], moving that point (and every point after) "
+"after the inserted point. If [code]at_position[/code] is not given, or is an "
+"illegal value ([code]at_position <0[/code] or [code]at_position >= [method "
+"get_point_count][/code]), the point will be appended at the end of the point "
+"list."
 msgstr ""
 
 #: doc/classes/Curve3D.xml
@@ -19599,9 +19644,8 @@ msgid ""
 "main font.\n"
 "DynamicFont uses the [url=https://www.freetype.org/]FreeType[/url] library "
 "for rasterization. Supported formats are TrueType ([code].ttf[/code]), "
-"OpenType ([code].otf[/code]) and Web Open Font Format 1 ([code].woff[/"
-"code]). Web Open Font Format 2 ([code].woff2[/code]) is [i]not[/i] "
-"supported.\n"
+"OpenType ([code].otf[/code]), Web Open Font Format 1 ([code].woff[/code]), "
+"and  Web Open Font Format 2 ([code].woff2[/code]).\n"
 "[codeblock]\n"
 "var dynamic_font = DynamicFont.new()\n"
 "dynamic_font.font_data = load(\"res://BarlowCondensed-Bold.ttf\")\n"
@@ -20468,18 +20512,34 @@ msgid ""
 msgstr ""
 
 #: doc/classes/EditorInspector.xml
-msgid "A tab used to edit properties of the selected node."
+msgid "A control used to edit properties of an object."
 msgstr ""
 
 #: doc/classes/EditorInspector.xml
 msgid ""
-"The editor inspector is by default located on the right-hand side of the "
-"editor. It's used to edit the properties of the selected node. For example, "
-"you can select a node such as [Sprite] then edit its transform through the "
-"inspector tool. The editor inspector is an essential tool in the game "
-"development workflow.\n"
-"[b]Note:[/b] This class shouldn't be instantiated directly. Instead, access "
-"the singleton using [method EditorInterface.get_inspector]."
+"This is the control that implements property editing in the editor's "
+"Settings dialogs, the Inspector dock, etc. To get the [EditorInspector] used "
+"in the editor's Inspector dock, use [method EditorInterface.get_inspector].\n"
+"[EditorInspector] will show properties in the same order as the array "
+"returned by [method Object.get_property_list].\n"
+"If a property's name is path-like (i.e. if it contains forward slashes), "
+"[EditorInspector] will create nested sections for \"directories\" along the "
+"path. For example, if a property is named [code]highlighting/gdscript/"
+"node_path_color[/code], it will be shown as \"Node Path Color\" inside the "
+"\"GDScript\" section nested inside the \"Highlighting\" section.\n"
+"If a property has [constant @GlobalScope.PROPERTY_USAGE_GROUP] usage, it "
+"will group subsequent properties whose name starts with the property's hint "
+"string. The group ends when a property does not start with that hint string "
+"or when a new group starts. An empty group name effectively ends the current "
+"group. [EditorInspector] will create a top-level section for each group. For "
+"example, if a property with group usage is named [code]Collide With[/code] "
+"and its hint string is [code]collide_with_[/code], a subsequent "
+"[code]collide_with_area[/code] property will be shown as \"Area\" inside the "
+"\"Collide With\" section.\n"
+"[b]Note:[/b] Unlike sections created from path-like property names, "
+"[EditorInspector] won't capitalize the name for sections created from "
+"groups. So properties with group usage usually use capitalized names instead "
+"of snake_cased names."
 msgstr ""
 
 #: doc/classes/EditorInspector.xml
@@ -21654,6 +21714,14 @@ msgid ""
 "[/codeblock]"
 msgstr ""
 
+#: modules/gltf/doc_classes/EditorSceneImporterGLTF.xml
+msgid ""
+"[b]Note:[/b] This class is only compiled in editor builds. Run-time glTF "
+"loading and saving is [i]not[/i] available in exported projects. References "
+"to [EditorSceneImporterGLTF] within a script will cause an error in an "
+"exported project."
+msgstr ""
+
 #: doc/classes/EditorScenePostImport.xml
 msgid "Post-processes scenes after import."
 msgstr ""
@@ -22392,12 +22460,13 @@ msgstr ""
 #: doc/classes/EditorVCSInterface.xml
 msgid ""
 "Helper function to create a commit [Dictionary] item. [code]msg[/code] is "
-"the commit message of the commit. [code]author[/code] is a human-readable "
-"string containing the author's details, e.g. the email and name configured "
-"in the VCS. [code]id[/code] is the identifier of the commit, in whichever "
-"format your VCS may provide an identifier to commits. [code]date[/code] is "
-"directly added to the commit item and displayed in the editor, and hence, it "
-"shall be a well-formatted, human-readable date string."
+"the commit message of the commit. [code]author[/code] is a single human-"
+"readable string containing all the author's details, e.g. the email and name "
+"configured in the VCS. [code]id[/code] is the identifier of the commit, in "
+"whichever format your VCS may provide an identifier to commits. "
+"[code]unix_timestamp[/code] is the UTC Unix timestamp of when the commit was "
+"created. [code]offset_minutes[/code] is the timezone offset in minutes, "
+"recorded from the system timezone where the commit was created."
 msgstr ""
 
 #: doc/classes/EditorVCSInterface.xml
@@ -23278,10 +23347,13 @@ msgstr ""
 
 #: doc/classes/Environment.xml
 msgid ""
-"Keeps on screen every pixel drawn in the background. This is the fastest "
-"background mode, but it can only be safely used in fully-interior scenes (no "
-"visible sky or sky reflections). If enabled in a scene where the background "
-"is visible, \"ghost trail\" artifacts will be visible when moving the camera."
+"Keeps on screen every pixel drawn in the background. Only select this mode "
+"if you really need to keep the old data. On modern GPUs it will generally "
+"not be faster than clearing the background, and can be significantly slower, "
+"particularly on mobile.\n"
+"It can only be safely used in fully-interior scenes (no visible sky or sky "
+"reflections). If enabled in a scene where the background is visible, \"ghost "
+"trail\" artifacts will be visible when moving the camera."
 msgstr ""
 
 #: doc/classes/Environment.xml
@@ -25550,6 +25622,50 @@ msgstr ""
 msgid "Represents the size of the [enum Subdiv] enum."
 msgstr ""
 
+#: modules/gltf/doc_classes/GLTFAccessor.xml
+msgid ""
+"[b]Note:[/b] This class is only compiled in editor builds. Run-time glTF "
+"loading and saving is [i]not[/i] available in exported projects. References "
+"to [GLTFAccessor] within a script will cause an error in an exported project."
+msgstr ""
+
+#: modules/gltf/doc_classes/GLTFAnimation.xml
+msgid ""
+"[b]Note:[/b] This class is only compiled in editor builds. Run-time glTF "
+"loading and saving is [i]not[/i] available in exported projects. References "
+"to [GLTFAnimation] within a script will cause an error in an exported "
+"project."
+msgstr ""
+
+#: modules/gltf/doc_classes/GLTFBufferView.xml
+msgid ""
+"[b]Note:[/b] This class is only compiled in editor builds. Run-time glTF "
+"loading and saving is [i]not[/i] available in exported projects. References "
+"to [GLTFBufferView] within a script will cause an error in an exported "
+"project."
+msgstr ""
+
+#: modules/gltf/doc_classes/GLTFCamera.xml
+msgid ""
+"[b]Note:[/b] This class is only compiled in editor builds. Run-time glTF "
+"loading and saving is [i]not[/i] available in exported projects. References "
+"to [GLTFCamera] within a script will cause an error in an exported project."
+msgstr ""
+
+#: modules/gltf/doc_classes/GLTFDocument.xml
+msgid ""
+"[b]Note:[/b] This class is only compiled in editor builds. Run-time glTF "
+"loading and saving is [i]not[/i] available in exported projects. References "
+"to [GLTFDocument] within a script will cause an error in an exported project."
+msgstr ""
+
+#: modules/gltf/doc_classes/GLTFLight.xml
+msgid ""
+"[b]Note:[/b] This class is only compiled in editor builds. Run-time glTF "
+"loading and saving is [i]not[/i] available in exported projects. References "
+"to [GLTFLight] within a script will cause an error in an exported project."
+msgstr ""
+
 #: modules/gltf/doc_classes/GLTFLight.xml
 msgid ""
 "The [Color] of the light. Defaults to white. A black color causes the light "
@@ -25597,6 +25713,49 @@ msgid ""
 "The type of the light. The values accepted by Godot are \"point\", \"spot\", "
 "and \"directional\", which correspond to Godot's [OmniLight], [SpotLight], "
 "and [DirectionalLight] respectively."
+msgstr ""
+
+#: modules/gltf/doc_classes/GLTFMesh.xml
+msgid ""
+"[b]Note:[/b] This class is only compiled in editor builds. Run-time glTF "
+"loading and saving is [i]not[/i] available in exported projects. References "
+"to [GLTFMesh] within a script will cause an error in an exported project."
+msgstr ""
+
+#: modules/gltf/doc_classes/GLTFNode.xml
+msgid ""
+"[b]Note:[/b] This class is only compiled in editor builds. Run-time glTF "
+"loading and saving is [i]not[/i] available in exported projects. References "
+"to [GLTFNode] within a script will cause an error in an exported project."
+msgstr ""
+
+#: modules/gltf/doc_classes/GLTFSkeleton.xml
+msgid ""
+"[b]Note:[/b] This class is only compiled in editor builds. Run-time glTF "
+"loading and saving is [i]not[/i] available in exported projects. References "
+"to [GLTFSkeleton] within a script will cause an error in an exported project."
+msgstr ""
+
+#: modules/gltf/doc_classes/GLTFSpecGloss.xml
+msgid ""
+"[b]Note:[/b] This class is only compiled in editor builds. Run-time glTF "
+"loading and saving is [i]not[/i] available in exported projects. References "
+"to [GLTFSpecGloss] within a script will cause an error in an exported "
+"project."
+msgstr ""
+
+#: modules/gltf/doc_classes/GLTFState.xml
+msgid ""
+"[b]Note:[/b] This class is only compiled in editor builds. Run-time glTF "
+"loading and saving is [i]not[/i] available in exported projects. References "
+"to [GLTFState] within a script will cause an error in an exported project."
+msgstr ""
+
+#: modules/gltf/doc_classes/GLTFTexture.xml
+msgid ""
+"[b]Note:[/b] This class is only compiled in editor builds. Run-time glTF "
+"loading and saving is [i]not[/i] available in exported projects. References "
+"to [GLTFTexture] within a script will cause an error in an exported project."
 msgstr ""
 
 #: modules/mono/doc_classes/GodotSharp.xml
@@ -26736,14 +26895,14 @@ msgstr ""
 
 #: doc/classes/HeightMapShape.xml
 msgid ""
-"Depth of the height map data. Changing this will resize the [member "
-"map_data]."
+"Number of vertices in the depth of the height map. Changing this will resize "
+"the [member map_data]."
 msgstr ""
 
 #: doc/classes/HeightMapShape.xml
 msgid ""
-"Width of the height map data. Changing this will resize the [member "
-"map_data]."
+"Number of vertices in the width of the height map. Changing this will resize "
+"the [member map_data]."
 msgstr ""
 
 #: doc/classes/HFlowContainer.xml
@@ -28987,9 +29146,9 @@ msgid ""
 "Returns a value between 0 and 1 representing the raw intensity of the given "
 "action, ignoring the action's deadzone. In most cases, you should use "
 "[method get_action_strength] instead.\n"
-"If [code]exact[/code] is [code]false[/code], it ignores the input modifiers "
-"for [InputEventKey] and [InputEventMouseButton] events, and the direction "
-"for [InputEventJoypadMotion] events."
+"If [code]exact[/code] is [code]false[/code], it ignores additional input "
+"modifiers for [InputEventKey] and [InputEventMouseButton] events, and the "
+"direction for [InputEventJoypadMotion] events."
 msgstr ""
 
 #: doc/classes/Input.xml
@@ -28999,9 +29158,9 @@ msgid ""
 "or L2, R2 triggers) is from the dead zone, the closer the value will be to "
 "1. If the action is mapped to a control that has no axis as the keyboard, "
 "the value returned will be 0 or 1.\n"
-"If [code]exact[/code] is [code]false[/code], it ignores the input modifiers "
-"for [InputEventKey] and [InputEventMouseButton] events, and the direction "
-"for [InputEventJoypadMotion] events."
+"If [code]exact[/code] is [code]false[/code], it ignores additional input "
+"modifiers for [InputEventKey] and [InputEventMouseButton] events, and the "
+"direction for [InputEventJoypadMotion] events."
 msgstr ""
 
 #: doc/classes/Input.xml
@@ -29134,9 +29293,9 @@ msgid ""
 "the button.\n"
 "This is useful for code that needs to run only once when an action is "
 "pressed, instead of every frame while it's pressed.\n"
-"If [code]exact[/code] is [code]false[/code], it ignores the input modifiers "
-"for [InputEventKey] and [InputEventMouseButton] events, and the direction "
-"for [InputEventJoypadMotion] events.\n"
+"If [code]exact[/code] is [code]false[/code], it ignores additional input "
+"modifiers for [InputEventKey] and [InputEventMouseButton] events, and the "
+"direction for [InputEventJoypadMotion] events.\n"
 "[b]Note:[/b] Due to keyboard ghosting, [method is_action_just_pressed] may "
 "return [code]false[/code] even if one of the action's keys is pressed. See "
 "[url=$DOCS_URL/tutorials/inputs/input_examples.html#keyboard-events]Input "
@@ -29148,9 +29307,9 @@ msgid ""
 "Returns [code]true[/code] when the user stops pressing the action event, "
 "meaning it's [code]true[/code] only on the frame that the user released the "
 "button.\n"
-"If [code]exact[/code] is [code]false[/code], it ignores the input modifiers "
-"for [InputEventKey] and [InputEventMouseButton] events, and the direction "
-"for [InputEventJoypadMotion] events."
+"If [code]exact[/code] is [code]false[/code], it ignores additional input "
+"modifiers for [InputEventKey] and [InputEventMouseButton] events, and the "
+"direction for [InputEventJoypadMotion] events."
 msgstr ""
 
 #: doc/classes/Input.xml
@@ -29159,9 +29318,9 @@ msgid ""
 "an action has multiple buttons assigned and more than one of them is "
 "pressed, releasing one button will release the action, even if some other "
 "button assigned to this action is still pressed.\n"
-"If [code]exact[/code] is [code]false[/code], it ignores the input modifiers "
-"for [InputEventKey] and [InputEventMouseButton] events, and the direction "
-"for [InputEventJoypadMotion] events.\n"
+"If [code]exact[/code] is [code]false[/code], it ignores additional input "
+"modifiers for [InputEventKey] and [InputEventMouseButton] events, and the "
+"direction for [InputEventJoypadMotion] events.\n"
 "[b]Note:[/b] Due to keyboard ghosting, [method is_action_pressed] may return "
 "[code]false[/code] even if one of the action's keys is pressed. See "
 "[url=$DOCS_URL/tutorials/inputs/input_examples.html#keyboard-events]Input "
@@ -29511,18 +29670,18 @@ msgstr ""
 msgid ""
 "Returns a value between 0.0 and 1.0 depending on the given actions' state. "
 "Useful for getting the value of events of type [InputEventJoypadMotion].\n"
-"If [code]exact_match[/code] is [code]false[/code], it ignores the input "
-"modifiers for [InputEventKey] and [InputEventMouseButton] events, and the "
-"direction for [InputEventJoypadMotion] events."
+"If [code]exact_match[/code] is [code]false[/code], it ignores additional "
+"input modifiers for [InputEventKey] and [InputEventMouseButton] events, and "
+"the direction for [InputEventJoypadMotion] events."
 msgstr ""
 
 #: doc/classes/InputEvent.xml
 msgid ""
 "Returns [code]true[/code] if this input event matches a pre-defined action "
 "of any type.\n"
-"If [code]exact_match[/code] is [code]false[/code], it ignores the input "
-"modifiers for [InputEventKey] and [InputEventMouseButton] events, and the "
-"direction for [InputEventJoypadMotion] events."
+"If [code]exact_match[/code] is [code]false[/code], it ignores additional "
+"input modifiers for [InputEventKey] and [InputEventMouseButton] events, and "
+"the direction for [InputEventJoypadMotion] events."
 msgstr ""
 
 #: doc/classes/InputEvent.xml
@@ -29531,9 +29690,9 @@ msgid ""
 "an echo event for [InputEventKey] events, unless [code]allow_echo[/code] is "
 "[code]true[/code]). Not relevant for events of type [InputEventMouseMotion] "
 "or [InputEventScreenDrag].\n"
-"If [code]exact_match[/code] is [code]false[/code], it ignores the input "
-"modifiers for [InputEventKey] and [InputEventMouseButton] events, and the "
-"direction for [InputEventJoypadMotion] events.\n"
+"If [code]exact_match[/code] is [code]false[/code], it ignores additional "
+"input modifiers for [InputEventKey] and [InputEventMouseButton] events, and "
+"the direction for [InputEventJoypadMotion] events.\n"
 "[b]Note:[/b] Due to keyboard ghosting, [method is_action_pressed] may return "
 "[code]false[/code] even if one of the action's keys is pressed. See "
 "[url=$DOCS_URL/tutorials/inputs/input_examples.html#keyboard-events]Input "
@@ -29545,9 +29704,9 @@ msgid ""
 "Returns [code]true[/code] if the given action is released (i.e. not "
 "pressed). Not relevant for events of type [InputEventMouseMotion] or "
 "[InputEventScreenDrag].\n"
-"If [code]exact_match[/code] is [code]false[/code], it ignores the input "
-"modifiers for [InputEventKey] and [InputEventMouseButton] events, and the "
-"direction for [InputEventJoypadMotion] events."
+"If [code]exact_match[/code] is [code]false[/code], it ignores additional "
+"input modifiers for [InputEventKey] and [InputEventMouseButton] events, and "
+"the direction for [InputEventJoypadMotion] events."
 msgstr ""
 
 #: doc/classes/InputEvent.xml
@@ -29578,9 +29737,9 @@ msgid ""
 "event. Only valid for action events i.e key ([InputEventKey]), button "
 "([InputEventMouseButton] or [InputEventJoypadButton]), axis "
 "[InputEventJoypadMotion] or action ([InputEventAction]) events.\n"
-"If [code]exact_match[/code] is [code]false[/code], it ignores the input "
-"modifiers for [InputEventKey] and [InputEventMouseButton] events, and the "
-"direction for [InputEventJoypadMotion] events."
+"If [code]exact_match[/code] is [code]false[/code], it ignores additional "
+"input modifiers for [InputEventKey] and [InputEventMouseButton] events, and "
+"the direction for [InputEventJoypadMotion] events."
 msgstr ""
 
 #: doc/classes/InputEvent.xml
@@ -30111,9 +30270,9 @@ msgid ""
 "This method ignores keyboard modifiers if the given [InputEvent] is not "
 "pressed (for proper release detection). See [method action_has_event] if you "
 "don't want this behavior.\n"
-"If [code]exact_match[/code] is [code]false[/code], it ignores the input "
-"modifiers for [InputEventKey] and [InputEventMouseButton] events, and the "
-"direction for [InputEventJoypadMotion] events."
+"If [code]exact_match[/code] is [code]false[/code], it ignores additional "
+"input modifiers for [InputEventKey] and [InputEventMouseButton] events, and "
+"the direction for [InputEventJoypadMotion] events."
 msgstr ""
 
 #: doc/classes/InputMap.xml
@@ -32518,7 +32677,7 @@ msgid ""
 "be within the text's length."
 msgstr ""
 
-#: doc/classes/LineEdit.xml
+#: doc/classes/LineEdit.xml doc/classes/RichTextLabel.xml
 msgid "Clears the current selection."
 msgstr ""
 
@@ -32536,6 +32695,19 @@ msgid ""
 "Returns the scroll offset due to [member caret_position], as a number of "
 "characters."
 msgstr ""
+
+#: doc/classes/LineEdit.xml doc/classes/TextEdit.xml
+msgid "Returns the selection begin column."
+msgstr ""
+
+#: doc/classes/LineEdit.xml doc/classes/TextEdit.xml
+msgid "Returns the selection end column."
+msgstr ""
+
+#: doc/classes/LineEdit.xml
+#, fuzzy
+msgid "Returns [code]true[/code] if the user has selected text."
+msgstr "Επιστρέφει το συνημίτονο της παραμέτρου."
 
 #: doc/classes/LineEdit.xml
 msgid "Executes a given action as defined in the [enum MenuItems] enum."
@@ -32586,6 +32758,13 @@ msgstr ""
 msgid "If [code]true[/code], the context menu will appear when right-clicked."
 msgstr ""
 
+#: doc/classes/LineEdit.xml doc/classes/RichTextLabel.xml
+#: doc/classes/TextEdit.xml
+msgid ""
+"If [code]true[/code], the selected text will be deselected when focus is "
+"lost."
+msgstr ""
+
 #: doc/classes/LineEdit.xml
 msgid ""
 "If [code]false[/code], existing text cannot be modified and new text cannot "
@@ -32619,6 +32798,13 @@ msgid ""
 "# `text` becomes \"Hello good\".\n"
 "# `text_change_rejected` is emitted with \"bye\" as parameter.\n"
 "[/codeblock]"
+msgstr ""
+
+#: doc/classes/LineEdit.xml doc/classes/TextEdit.xml
+msgid ""
+"If [code]false[/code], using middle mouse button to paste clipboard will be "
+"disabled.\n"
+"[b]Note:[/b] This method is only implemented on Linux."
 msgstr ""
 
 #: doc/classes/LineEdit.xml
@@ -33933,6 +34119,39 @@ msgstr ""
 
 #: doc/classes/MeshInstance.xml
 msgid "Returns the number of surface materials."
+msgstr ""
+
+#: doc/classes/MeshInstance.xml
+msgid ""
+"Returns [code]true[/code] if this [MeshInstance] can be merged with the "
+"specified [code]other_mesh_instance[/code], using the [method MeshInstance."
+"merge_meshes] function.\n"
+"In order to be mergeable, properties of the [MeshInstance] must match, and "
+"each surface must match, in terms of material, attributes and vertex format."
+msgstr ""
+
+#: doc/classes/MeshInstance.xml
+msgid ""
+"This function can merge together the data from several source "
+"[MeshInstance]s into a single destination [MeshInstance] (the MeshInstance "
+"the function is called from). This is primarily useful for improving "
+"performance by reducing the number of drawcalls and [Node]s.\n"
+"Merging should only be attempted for simple meshes that do not contain "
+"animation.\n"
+"The final vertices can either be returned in global space, or in local space "
+"relative to the destination [MeshInstance] global transform (the destination "
+"Node must be inside the [SceneTree] for local space to work).\n"
+"The function will make a final check for compatibility between the "
+"[MeshInstance]s by default, this should always be used unless you have "
+"previously checked for compatibility using [method MeshInstance."
+"is_mergeable_with]. If the compatibility check is omitted and the meshes are "
+"merged, you may see rendering errors.\n"
+"[b]Note:[/b] The requirements for similarity between meshes are quite "
+"stringent. They can be checked using the [method MeshInstance."
+"is_mergeable_with] function prior to calling [method MeshInstance."
+"merge_meshes].\n"
+"Also note that any initial data in the destination [MeshInstance] data will "
+"be discarded."
 msgstr ""
 
 #: doc/classes/MeshInstance.xml
@@ -36408,12 +36627,12 @@ msgid ""
 "[/codeblock]\n"
 "[b]Note:[/b] If you want a child to be persisted to a [PackedScene], you "
 "must set [member owner] in addition to calling [method add_child]. This is "
-"typically relevant for [url=https://godot.readthedocs.io/en/3.2/tutorials/"
-"misc/running_code_in_the_editor.html]tool scripts[/url] and [url=https://"
-"godot.readthedocs.io/en/latest/tutorials/plugins/editor/index.html]editor "
-"plugins[/url]. If [method add_child] is called without setting [member "
-"owner], the newly added [Node] will not be visible in the scene tree, though "
-"it will be visible in the 2D/3D view."
+"typically relevant for [url=$DOCS_URL/tutorials/misc/"
+"running_code_in_the_editor.html]tool scripts[/url] and [url=$DOCS_URL/"
+"tutorials/plugins/editor/index.html]editor plugins[/url]. If [method "
+"add_child] is called without setting [member owner], the newly added [Node] "
+"will not be visible in the scene tree, though it will be visible in the "
+"2D/3D view."
 msgstr ""
 
 #: doc/classes/Node.xml
@@ -37120,7 +37339,15 @@ msgid ""
 "valid parent, grandparent, etc. ascending in the tree). When saving a node "
 "(using [PackedScene]), all the nodes it owns will be saved with it. This "
 "allows for the creation of complex [SceneTree]s, with instancing and "
-"subinstancing."
+"subinstancing.\n"
+"[b]Note:[/b] If you want a child to be persisted to a [PackedScene], you "
+"must set [member owner] in addition to calling [method add_child]. This is "
+"typically relevant for [url=$DOCS_URL/tutorials/misc/"
+"running_code_in_the_editor.html]tool scripts[/url] and [url=$DOCS_URL/"
+"tutorials/plugins/editor/index.html]editor plugins[/url]. If [method "
+"add_child] is called without setting [member owner], the newly added [Node] "
+"will not be visible in the scene tree, though it will be visible in the "
+"2D/3D view."
 msgstr ""
 
 #: doc/classes/Node.xml
@@ -37716,7 +37943,13 @@ msgid ""
 msgstr ""
 
 #: doc/classes/Object.xml
-msgid "Called when the object is initialized."
+msgid ""
+"Called when the object is initialized in memory. Can be defined to take in "
+"parameters, that are passed in when constructing.\n"
+"[b]Note:[/b] If [method _init] is defined with required parameters, then "
+"explicit construction is the only valid means of creating an Object of the "
+"class. If any other means (such as [method PackedScene.instance]) is used, "
+"then initialization will fail."
 msgstr ""
 
 #: doc/classes/Object.xml
@@ -37912,7 +38145,10 @@ msgid ""
 msgstr ""
 
 #: doc/classes/Object.xml
-msgid "Returns the object's metadata entry for the given [code]name[/code]."
+msgid ""
+"Returns the object's metadata entry for the given [code]name[/code].\n"
+"Throws error if the entry does not exist, unless [code]default[/code] is not "
+"[code]null[/code] (in which case the default value will be returned)."
 msgstr ""
 
 #: doc/classes/Object.xml
@@ -38500,6 +38736,11 @@ msgid "Returns the text of the item at index [code]idx[/code]."
 msgstr ""
 
 #: doc/classes/OptionButton.xml
+#, fuzzy
+msgid "Returns the tooltip of the item at index [code]idx[/code]."
+msgstr "Επιστρέφει το ημίτονο της παραμέτρου."
+
+#: doc/classes/OptionButton.xml
 msgid ""
 "Returns the ID of the selected item, or [code]0[/code] if no item is "
 "selected."
@@ -38551,6 +38792,11 @@ msgstr ""
 #: doc/classes/OptionButton.xml doc/classes/PopupMenu.xml
 msgid "Sets the text of the item at index [code]idx[/code]."
 msgstr ""
+
+#: doc/classes/OptionButton.xml
+#, fuzzy
+msgid "Sets the tooltip of the item at index [code]idx[/code]."
+msgstr "Επιστρέφει το ημίτονο της παραμέτρου."
 
 #: doc/classes/OptionButton.xml
 msgid ""
@@ -39108,6 +39354,23 @@ msgid ""
 "Returns the position of the specified screen by index. If [code]screen[/"
 "code] is [code]-1[/code] (the default value), the current screen will be "
 "used."
+msgstr ""
+
+#: doc/classes/OS.xml
+msgid ""
+"Returns the current refresh rate of the specified screen. If [code]screen[/"
+"code] is [code]-1[/code] (the default value), the current screen will be "
+"used.\n"
+"[b]Note:[/b] Returns [code]-1.0[/code] if Godot fails to find the refresh "
+"rate for the specified screen. On HTML5, [method get_screen_refresh_rate] "
+"will always return [code]-1.0[/code] as there is no way to retrieve the "
+"refresh rate on that platform.\n"
+"To fallback to a default refresh rate if the method fails, try:\n"
+"[codeblock]\n"
+"var refresh_rate = OS.get_screen_refresh_rate()\n"
+"if refresh_rate < 0:\n"
+"    refresh_rate = 60.0\n"
+"[/codeblock]"
 msgstr ""
 
 #: doc/classes/OS.xml
@@ -40099,6 +40362,14 @@ msgid ""
 "It's similar to [constant GEN_EDIT_STATE_MAIN], but for the case where the "
 "scene is being instantiated to be the base of another one.\n"
 "[b]Note:[/b] Only available in editor builds."
+msgstr ""
+
+#: modules/gltf/doc_classes/PackedSceneGLTF.xml
+msgid ""
+"[b]Note:[/b] This class is only compiled in editor builds. Run-time glTF "
+"loading and saving is [i]not[/i] available in exported projects. References "
+"to [PackedSceneGLTF] within a script will cause an error in an exported "
+"project."
 msgstr ""
 
 #: doc/classes/PacketPeer.xml
@@ -42944,7 +43215,10 @@ msgid ""
 msgstr ""
 
 #: doc/classes/PhysicsServer.xml
-msgid "Returns an Info defined by the [enum ProcessInfo] input given."
+msgid ""
+"Returns information about the current state of the 3D physics engine. See "
+"[enum ProcessInfo] for a list of available states. Only implemented for "
+"Godot Physics."
 msgstr ""
 
 #: doc/classes/PhysicsServer.xml
@@ -45479,6 +45753,12 @@ msgstr ""
 
 #: doc/classes/ProjectSettings.xml
 msgid ""
+"If [code]true[/code], enables warnings when the type of the default value "
+"set to an exported variable is different than the specified export type."
+msgstr ""
+
+#: doc/classes/ProjectSettings.xml
+msgid ""
 "If [code]true[/code], enables warnings when a function is declared with the "
 "same name as a constant."
 msgstr ""
@@ -45803,7 +46083,7 @@ msgstr ""
 #: doc/classes/ProjectSettings.xml
 msgid ""
 "Allows the window to be resizable by default.\n"
-"[b]Note:[/b] This setting is ignored on iOS and Android."
+"[b]Note:[/b] This setting is ignored on iOS."
 msgstr ""
 
 #: doc/classes/ProjectSettings.xml
@@ -45898,6 +46178,19 @@ msgstr ""
 msgid ""
 "Default value for [member ScrollContainer.scroll_deadzone], which will be "
 "used for all [ScrollContainer]s unless overridden."
+msgstr ""
+
+#: doc/classes/ProjectSettings.xml
+msgid ""
+"If enabled, the moment [member Viewport.gui_disable_input] is set to "
+"[code]false[/code] to disable GUI input in a viewport, current mouse over "
+"and mouse focus will be dropped.\n"
+"That behavior helps to keep a robust GUI state, with no surprises when input "
+"is resumed regardless what has happened in the meantime.\n"
+"If disabled, the legacy behavior is used, which consists in just not doing "
+"anything besides the GUI input disable itself.\n"
+"[b]Note:[/b] This is set to [code]true[/code] by default for new projects "
+"and is the recommended setting."
 msgstr ""
 
 #: doc/classes/ProjectSettings.xml
@@ -46437,7 +46730,7 @@ msgid "Optional name for the 3D render layer 13."
 msgstr ""
 
 #: doc/classes/ProjectSettings.xml
-msgid "Optional name for the 3D render layer 14"
+msgid "Optional name for the 3D render layer 14."
 msgstr ""
 
 #: doc/classes/ProjectSettings.xml
@@ -46871,6 +47164,16 @@ msgid ""
 msgstr ""
 
 #: doc/classes/ProjectSettings.xml
+msgid ""
+"If [code]true[/code], smooths out collision with trimesh shapes "
+"([ConcavePolygonShape]) by telling the Bullet physics engine to generate "
+"internal edge information for every trimesh shape created.\n"
+"[b]Note:[/b] Only effective if [member physics/3d/physics_engine] is set to "
+"[code]DEFAULT[/code] or [code]Bullet[/code], [i]not[/i] [code]GodotPhysics[/"
+"code]."
+msgstr ""
+
+#: doc/classes/ProjectSettings.xml
 msgid "Enables [member Viewport.physics_object_picking] on the root viewport."
 msgstr ""
 
@@ -47284,6 +47587,14 @@ msgstr ""
 
 #: doc/classes/ProjectSettings.xml
 msgid ""
+"An override for [code]rendering/gles3/shaders/shader_compilation_mode[/"
+"code], so asynchronous compilation can be disabled for mobile.\n"
+"You may want to do that since mobile GPUs generally won't support "
+"ubershaders due to their complexity."
+msgstr ""
+
+#: doc/classes/ProjectSettings.xml
+msgid ""
 "Max buffer size for blend shapes. Any blend shape bigger than this will not "
 "work."
 msgstr ""
@@ -47689,16 +48000,24 @@ msgstr ""
 
 #: doc/classes/ProjectSettings.xml
 msgid ""
-"If [code]true[/code], forces vertex shading for all rendering. This can "
-"increase performance a lot, but also reduces quality immensely. Can be used "
-"to optimize performance on low-end mobile devices."
+"If [code]true[/code], forces vertex shading for all 3D [SpatialMaterial] and "
+"[ShaderMaterial] rendering. This can be used to improve performance on low-"
+"end mobile devices. The downside is that shading becomes much less accurate, "
+"with visible linear interpolation between vertices that are joined together. "
+"This can be compensated by ensuring meshes have a sufficient level of "
+"subdivision (but not too much, to avoid reducing performance). Some material "
+"features are also not supported when vertex shading is enabled.\n"
+"See also [member SpatialMaterial.flags_vertex_lighting] which can be used to "
+"enable vertex shading on specific materials only.\n"
+"[b]Note:[/b] This setting does not affect unshaded materials."
 msgstr ""
 
 #: doc/classes/ProjectSettings.xml
 msgid ""
 "Lower-end override for [member rendering/quality/shading/"
 "force_vertex_shading] on mobile devices, due to performance concerns or "
-"driver support."
+"driver support. If lighting looks broken after exporting the project to a "
+"mobile platform, try disabling this setting."
 msgstr ""
 
 #: doc/classes/ProjectSettings.xml
@@ -48216,13 +48535,13 @@ msgstr ""
 
 #: doc/classes/Range.xml
 msgid ""
-"Binds two ranges together along with any ranges previously grouped with "
+"Binds two [Range]s together along with any ranges previously grouped with "
 "either of them. When any of range's member variables change, it will share "
 "the new value with all other ranges in its group."
 msgstr ""
 
 #: doc/classes/Range.xml
-msgid "Stops range from sharing its member variables with any other."
+msgid "Stops the [Range] from sharing its member variables with any other."
 msgstr ""
 
 #: doc/classes/Range.xml
@@ -48289,7 +48608,14 @@ msgid ""
 msgstr ""
 
 #: doc/classes/Range.xml
-msgid "Emitted when [member value] changes."
+msgid ""
+"Emitted when [member value] changes. When used on a [Slider], this is called "
+"continuously while dragging (potentially every frame). If you are performing "
+"an expensive operation in a function connected to [signal value_changed], "
+"consider using a [i]debouncing[/i] [Timer] to call the function less often.\n"
+"[b]Note:[/b] Unlike signals such as [signal LineEdit.text_changed], [signal "
+"value_changed] is also emitted when [code]value[/code] is set directly via "
+"code."
 msgstr ""
 
 #: doc/classes/RayCast.xml doc/classes/RayCast2D.xml
@@ -49725,6 +50051,11 @@ msgid ""
 "Returns the total number of newlines in the tag stack's text tags. Considers "
 "wrapped text as one line."
 msgstr ""
+
+#: doc/classes/RichTextLabel.xml
+#, fuzzy
+msgid "Returns the current selection text. Does not include BBCodes."
+msgstr "Επιστρέφει την εφαπτομένη της παραμέτρου."
 
 #: doc/classes/RichTextLabel.xml
 msgid ""
@@ -52018,14 +52349,23 @@ msgstr ""
 
 #: doc/classes/Semaphore.xml
 msgid ""
-"Lowers the [Semaphore], allowing one more thread in. Returns [constant OK] "
-"on success, [constant ERR_BUSY] otherwise."
+"Lowers the [Semaphore], allowing one more thread in.\n"
+"[b]Note:[/b] This method internals' can't possibly fail, but an error code "
+"is returned for backwards compatibility, which will always be [constant OK]."
 msgstr ""
 
 #: doc/classes/Semaphore.xml
 msgid ""
-"Tries to wait for the [Semaphore], if its value is zero, blocks until non-"
-"zero. Returns [constant OK] on success, [constant ERR_BUSY] otherwise."
+"Like [method wait], but won't block, so if the value is zero, fails "
+"immediately and returns [constant ERR_BUSY]. If non-zero, it returns "
+"[constant OK] to report success."
+msgstr ""
+
+#: doc/classes/Semaphore.xml
+msgid ""
+"Waits for the [Semaphore], if its value is zero, blocks until non-zero.\n"
+"[b]Note:[/b] This method internals' can't possibly fail, but an error code "
+"is returned for backwards compatibility, which will always be [constant OK]."
 msgstr ""
 
 #: doc/classes/Separator.xml
@@ -53471,7 +53811,21 @@ msgstr ""
 #: doc/classes/SpatialMaterial.xml
 msgid ""
 "If [code]true[/code], lighting is calculated per vertex rather than per "
-"pixel. This may increase performance on low-end devices."
+"pixel. This may increase performance on low-end devices, especially for "
+"meshes with a lower polygon count. The downside is that shading becomes much "
+"less accurate, with visible linear interpolation between vertices that are "
+"joined together. This can be compensated by ensuring meshes have a "
+"sufficient level of subdivision (but not too much, to avoid reducing "
+"performance). Some material features are also not supported when vertex "
+"shading is enabled.\n"
+"See also [member ProjectSettings.rendering/quality/shading/"
+"force_vertex_shading] which can globally enable vertex shading on all "
+"materials.\n"
+"[b]Note:[/b] By default, vertex shading is enforced on mobile platforms by "
+"[member ProjectSettings.rendering/quality/shading/force_vertex_shading]'s "
+"[code]mobile[/code] override.\n"
+"[b]Note:[/b] [member flags_vertex_lighting] has no effect if [member "
+"flags_unshaded] is [code]true[/code]."
 msgstr ""
 
 #: doc/classes/SpatialMaterial.xml
@@ -54275,7 +54629,10 @@ msgid ""
 "the text alignment to right.\n"
 "See [Range] class for more options over the [SpinBox].\n"
 "[b]Note:[/b] [SpinBox] relies on an underlying [LineEdit] node. To theme a "
-"[SpinBox]'s background, add theme items for [LineEdit] and customize them."
+"[SpinBox]'s background, add theme items for [LineEdit] and customize them.\n"
+"[b]Note:[/b] If you want to implement drag and drop for the underlying "
+"[LineEdit], you can use [method Control.set_drag_forwarding] on the node "
+"returned by [method get_line_edit]."
 msgstr ""
 
 #: doc/classes/SpinBox.xml
@@ -55592,11 +55949,10 @@ msgid ""
 "Returns [code]true[/code] if this string contains a valid float. This is "
 "inclusive of integers, and also supports exponents:\n"
 "[codeblock]\n"
-"print(\"1.7\".is_valid_float()) # Prints \"true\"\n"
-"print(\"24\".is_valid_float()) # Prints \"true\"\n"
-"print(\"7e3\".is_valid_float()) # Prints \"true\"\n"
-"print(\"24\".is_valid_float()) # Prints \"true\"\n"
-"print(\"Hello\".is_valid_float()) # Prints \"false\"\n"
+"print(\"1.7\".is_valid_float()) # Prints \"True\"\n"
+"print(\"24\".is_valid_float()) # Prints \"True\"\n"
+"print(\"7e3\".is_valid_float()) # Prints \"True\"\n"
+"print(\"Hello\".is_valid_float()) # Prints \"False\"\n"
 "[/codeblock]"
 msgstr ""
 
@@ -55622,9 +55978,9 @@ msgid ""
 "identifier may contain only letters, digits and underscores ([code]_[/code]) "
 "and the first character may not be a digit.\n"
 "[codeblock]\n"
-"print(\"good_ident_1\".is_valid_identifier()) # Prints \"true\"\n"
-"print(\"1st_bad_ident\".is_valid_identifier()) # Prints \"false\"\n"
-"print(\"bad_ident_#2\".is_valid_identifier()) # Prints \"false\"\n"
+"print(\"good_ident_1\".is_valid_identifier()) # Prints \"True\"\n"
+"print(\"1st_bad_ident\".is_valid_identifier()) # Prints \"False\"\n"
+"print(\"bad_ident_#2\".is_valid_identifier()) # Prints \"False\"\n"
 "[/codeblock]"
 msgstr ""
 
@@ -55632,11 +55988,11 @@ msgstr ""
 msgid ""
 "Returns [code]true[/code] if this string contains a valid integer.\n"
 "[codeblock]\n"
-"print(\"7\".is_valid_int()) # Prints \"true\"\n"
-"print(\"14.6\".is_valid_int()) # Prints \"false\"\n"
-"print(\"L\".is_valid_int()) # Prints \"false\"\n"
-"print(\"+3\".is_valid_int()) # Prints \"true\"\n"
-"print(\"-12\".is_valid_int()) # Prints \"true\"\n"
+"print(\"7\".is_valid_int()) # Prints \"True\"\n"
+"print(\"14.6\".is_valid_int()) # Prints \"False\"\n"
+"print(\"L\".is_valid_int()) # Prints \"False\"\n"
+"print(\"+3\".is_valid_int()) # Prints \"True\"\n"
+"print(\"-12\".is_valid_int()) # Prints \"True\"\n"
 "[/codeblock]"
 msgstr ""
 
@@ -55832,8 +56188,8 @@ msgid ""
 "var some_string = \"One,Two,Three,Four\"\n"
 "var some_array = some_string.rsplit(\",\", true, 1)\n"
 "print(some_array.size()) # Prints 2\n"
-"print(some_array[0]) # Prints \"Four\"\n"
-"print(some_array[1]) # Prints \"Three,Two,One\"\n"
+"print(some_array[0]) # Prints \"One,Two,Three\"\n"
+"print(some_array[1]) # Prints \"Four\"\n"
 "[/codeblock]"
 msgstr ""
 
@@ -55866,9 +56222,9 @@ msgstr ""
 #: doc/classes/String.xml
 msgid ""
 "Returns the similarity index ([url=https://en.wikipedia.org/wiki/"
-"S%C3%B8rensen%E2%80%93Dice_coefficient]Sorensen-Dice coefficient[/url]) this "
-"string compared to another. 1.0 means totally similar and 0.0 means totally "
-"dissimilar.\n"
+"S%C3%B8rensen%E2%80%93Dice_coefficient]Sorensen-Dice coefficient[/url]) of "
+"this string compared to another. A result of 1.0 means totally similar, "
+"while 0.0 means totally dissimilar.\n"
 "[codeblock]\n"
 "print(\"ABC123\".similarity(\"ABC123\")) # Prints \"1\"\n"
 "print(\"ABC123\".similarity(\"XYZ456\")) # Prints \"0\"\n"
@@ -57343,19 +57699,11 @@ msgid ""
 msgstr ""
 
 #: doc/classes/TextEdit.xml
-msgid "Returns the selection begin column."
-msgstr ""
-
-#: doc/classes/TextEdit.xml
 msgid "Returns the selection begin line."
 msgstr ""
 
 #: doc/classes/TextEdit.xml
 msgid "Returns the text inside the selection."
-msgstr ""
-
-#: doc/classes/TextEdit.xml
-msgid "Returns the selection end column."
 msgstr ""
 
 #: doc/classes/TextEdit.xml
@@ -57429,6 +57777,12 @@ msgstr ""
 #, fuzzy
 msgid "Returns if the given line is wrapped."
 msgstr "Επιστρέφει την εφαπτομένη της παραμέτρου."
+
+#: doc/classes/TextEdit.xml
+msgid ""
+"Returns whether the mouse is over selection. If [code]edges[/code] is "
+"[code]true[/code], the edges are considered part of the selection."
+msgstr ""
 
 #: doc/classes/TextEdit.xml
 msgid "Returns [code]true[/code] if the selection is active."
@@ -58377,6 +58731,14 @@ msgid ""
 msgstr ""
 
 #: doc/classes/Theme.xml
+msgid ""
+"Adds an empty theme type for every valid data type.\n"
+"[b]Note:[/b] Empty types are not saved with the theme. This method only "
+"exists to perform in-memory changes to the resource. Use available "
+"[code]set_*[/code] methods to add theme items."
+msgstr ""
+
+#: doc/classes/Theme.xml
 msgid "Clears all values on the theme."
 msgstr ""
 
@@ -58633,6 +58995,13 @@ msgid ""
 "[b]Note:[/b] This modifies the current theme. If you want to merge two "
 "themes together without modifying either one, create a new empty theme and "
 "merge the other two into it one after another."
+msgstr ""
+
+#: doc/classes/Theme.xml
+msgid ""
+"Removes the theme type, gracefully discarding defined theme items. If the "
+"type is a variation, this information is also erased. If the type is a base "
+"for type variations, those variations lose their base."
 msgstr ""
 
 #: doc/classes/Theme.xml
@@ -59643,6 +60012,13 @@ msgid ""
 "MM-DDTHH:MM:SS).\n"
 "If [code]use_space[/code] is true, use a space instead of the letter T in "
 "the middle."
+msgstr ""
+
+#: doc/classes/Time.xml
+msgid ""
+"Converts the given timezone offset in minutes to a timezone offset string. "
+"For example, -480 returns \"-08:00\", 345 returns \"+05:45\", and 0 returns "
+"\"+00:00\"."
 msgstr ""
 
 #: doc/classes/Time.xml
@@ -63310,6 +63686,11 @@ msgstr ""
 #: doc/classes/Viewport.xml
 msgid "Returns [code]true[/code] if there are visible modals on-screen."
 msgstr ""
+
+#: doc/classes/Viewport.xml
+#, fuzzy
+msgid "Returns [code]true[/code] if the drag operation is successful."
+msgstr "Επιστρέφει το συνημίτονο της παραμέτρου."
 
 #: doc/classes/Viewport.xml
 msgid ""
@@ -71350,6 +71731,11 @@ msgid ""
 msgstr ""
 
 #: modules/websocket/doc_classes/WebSocketServer.xml
+msgid ""
+"Sets additional headers to be sent to clients during the HTTP handshake."
+msgstr ""
+
+#: modules/websocket/doc_classes/WebSocketServer.xml
 msgid "Stops the server and clear its state."
 msgstr ""
 
@@ -71445,6 +71831,9 @@ msgid ""
 "\n"
 "    webxr_interface = ARVRServer.find_interface(\"WebXR\")\n"
 "    if webxr_interface:\n"
+"        # Map to the standard button/axis ids when possible.\n"
+"        webxr_interface.xr_standard_mapping = true\n"
+"\n"
 "        # WebXR uses a lot of asynchronous callbacks, so we connect to "
 "various\n"
 "        # signals in order to receive them.\n"
@@ -71666,6 +72055,13 @@ msgid ""
 "API/XRVisibilityState]WebXR's XRVisibilityState[/url], including "
 "[code]\"hidden\"[/code], [code]\"visible\"[/code], and [code]\"visible-"
 "blurred\"[/code]."
+msgstr ""
+
+#: modules/webxr/doc_classes/WebXRInterface.xml
+msgid ""
+"If set to true, the button and axes ids will be converted to match the "
+"standard ids used by other AR/VR interfaces, when possible.\n"
+"Otherwise, the ids will be passed through unaltered from WebXR."
 msgstr ""
 
 #: modules/webxr/doc_classes/WebXRInterface.xml

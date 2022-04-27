@@ -476,6 +476,7 @@ private:
 					initial_settings["application/config/icon"] = "res://icon.png";
 					initial_settings["rendering/environment/default_environment"] = "res://default_env.tres";
 					initial_settings["physics/common/enable_pause_aware_picking"] = true;
+					initial_settings["gui/common/drop_mouse_on_gui_input_disabled"] = true;
 
 					if (ProjectSettings::get_singleton()->save_custom(dir.plus_file("project.godot"), initial_settings, Vector<String>(), false) != OK) {
 						set_message(TTR("Couldn't create project.godot in project path."), MESSAGE_ERROR);
@@ -487,7 +488,9 @@ private:
 							set_message(TTR("Couldn't create project.godot in project path."), MESSAGE_ERROR);
 						} else {
 							f->store_line("[gd_resource type=\"Environment\" load_steps=2 format=2]");
+							f->store_line("");
 							f->store_line("[sub_resource type=\"ProceduralSky\" id=1]");
+							f->store_line("");
 							f->store_line("[resource]");
 							f->store_line("background_mode = 2");
 							f->store_line("background_sky = SubResource( 1 )");
@@ -2580,7 +2583,6 @@ ProjectManager::ProjectManager() {
 
 	{
 		int display_scale = EditorSettings::get_singleton()->get("interface/editor/display_scale");
-		float custom_display_scale = EditorSettings::get_singleton()->get("interface/editor/custom_display_scale");
 
 		switch (display_scale) {
 			case 0:
@@ -2606,15 +2608,9 @@ ProjectManager::ProjectManager() {
 				editor_set_scale(2.0);
 				break;
 			default:
-				editor_set_scale(custom_display_scale);
+				editor_set_scale(EditorSettings::get_singleton()->get("interface/editor/custom_display_scale"));
 				break;
 		}
-
-		// Define a minimum window size to prevent UI elements from overlapping or being cut off
-		OS::get_singleton()->set_min_window_size(Size2(750, 420) * EDSCALE);
-
-		// TODO: Resize windows on hiDPI displays on Windows and Linux and remove the line below
-		OS::get_singleton()->set_window_size(OS::get_singleton()->get_window_size() * MAX(1, EDSCALE));
 	}
 
 	FileDialog::set_default_show_hidden_files(EditorSettings::get_singleton()->get("filesystem/file_dialog/show_hidden_files"));
@@ -2638,7 +2634,7 @@ ProjectManager::ProjectManager() {
 	String cp;
 	cp += 0xA9;
 	// TRANSLATORS: This refers to the application where users manage their Godot projects.
-	OS::get_singleton()->set_window_title(VERSION_NAME + String(" - ") + TTR("Project Manager"));
+	OS::get_singleton()->set_window_title(VERSION_NAME + String(" - ") + TTR("Project Manager", "Application"));
 
 	Control *center_box = memnew(Control);
 	center_box->set_v_size_flags(SIZE_EXPAND_FILL);
@@ -2920,6 +2916,20 @@ ProjectManager::ProjectManager() {
 	clear_project_data_ask->get_ok()->set_text(TTR("Clear"));
 	clear_project_data_ask->get_ok()->connect("pressed", this, "_clear_project_data_confirm");
 	gui_base->add_child(clear_project_data_ask);
+
+	// Define a minimum window size to prevent UI elements from overlapping or being cut off.
+	OS::get_singleton()->set_min_window_size(Size2(750, 420) * EDSCALE);
+
+	// Resize the bootsplash window based on editor display scale.
+	const float scale_factor = MAX(1, EDSCALE);
+	if (scale_factor > 1.0 + CMP_EPSILON) {
+		const Vector2 window_size = OS::get_singleton()->get_window_size() * scale_factor;
+		const Vector2 screen_size = OS::get_singleton()->get_screen_size();
+		const Vector2 window_position = Vector2(screen_size.x - window_size.x, screen_size.y - window_size.y) * 0.5;
+		// Handle multi-monitor setups correctly by moving the window relative to the current screen.
+		OS::get_singleton()->set_window_position(OS::get_singleton()->get_screen_position() + window_position);
+		OS::get_singleton()->set_window_size(window_size);
+	}
 
 	OS::get_singleton()->set_low_processor_usage_mode(true);
 

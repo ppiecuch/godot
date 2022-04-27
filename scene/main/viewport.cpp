@@ -186,6 +186,7 @@ public:
 
 Viewport::GUI::GUI() {
 	dragging = false;
+	drag_successful = false;
 	mouse_focus = nullptr;
 	mouse_click_grabber = nullptr;
 	mouse_focus_mask = 0;
@@ -1398,6 +1399,9 @@ Vector2 Viewport::_get_window_offset() const {
 }
 
 Ref<InputEvent> Viewport::_make_input_local(const Ref<InputEvent> &ev) {
+	if (ev.is_null()) {
+		return ev;
+	}
 	Vector2 vp_ofs = _get_window_offset();
 	Transform2D ai = get_final_transform().affine_inverse() * _get_input_pre_xform();
 
@@ -1989,8 +1993,9 @@ void Viewport::_gui_input_event(Ref<InputEvent> p_event) {
 
 			if (gui.drag_data.get_type() != Variant::NIL && mb->get_button_index() == BUTTON_LEFT) {
 				//alternate drop use (when using force_drag(), as proposed by #5342
+				gui.drag_successful = false;
 				if (gui.mouse_focus) {
-					_gui_drop(gui.mouse_focus, pos, false);
+					gui.drag_successful = _gui_drop(gui.mouse_focus, pos, false);
 				}
 
 				gui.drag_data = Variant();
@@ -2008,11 +2013,12 @@ void Viewport::_gui_input_event(Ref<InputEvent> p_event) {
 			_gui_cancel_tooltip();
 		} else {
 			if (gui.drag_data.get_type() != Variant::NIL && mb->get_button_index() == BUTTON_LEFT) {
+				gui.drag_successful = false;
 				if (gui.mouse_over) {
 					Size2 pos = mpos;
 					pos = gui.focus_inv_xform.xform(pos);
 
-					_gui_drop(gui.mouse_over, pos, false);
+					gui.drag_successful = _gui_drop(gui.mouse_over, pos, false);
 				}
 
 				Control *drag_preview = _gui_get_drag_preview();
@@ -2069,9 +2075,7 @@ void Viewport::_gui_input_event(Ref<InputEvent> p_event) {
 			}
 
 			if (gui.mouse_focus_mask == 0 && over != gui.mouse_over) {
-				if (gui.mouse_over) {
-					_gui_call_notification(gui.mouse_over, Control::NOTIFICATION_MOUSE_EXIT);
-				}
+				_drop_mouse_over();
 
 				_gui_cancel_tooltip();
 
@@ -2188,9 +2192,7 @@ void Viewport::_gui_input_event(Ref<InputEvent> p_event) {
 		}
 
 		if (over != gui.mouse_over) {
-			if (gui.mouse_over) {
-				_gui_call_notification(gui.mouse_over, Control::NOTIFICATION_MOUSE_EXIT);
-			}
+			_drop_mouse_over();
 
 			_gui_cancel_tooltip();
 
@@ -2508,6 +2510,17 @@ void Viewport::_gui_input_event(Ref<InputEvent> p_event) {
 	}
 }
 
+void Viewport::_gui_cleanup_internal_state(Ref<InputEvent> p_event) {
+	ERR_FAIL_COND(p_event.is_null());
+
+	Ref<InputEventMouseButton> mb = p_event;
+	if (mb.is_valid()) {
+		if (!mb->is_pressed()) {
+			gui.mouse_focus_mask &= ~(1 << (mb->get_button_index() - 1)); // Remove from mask.
+		}
+	}
+}
+
 List<Control *>::Element *Viewport::_gui_add_root_control(Control *p_control) {
 	gui.roots_order_dirty = true;
 	return gui.roots.push_back(p_control);
@@ -2726,6 +2739,13 @@ void Viewport::_drop_mouse_focus() {
 	}
 }
 
+void Viewport::_drop_mouse_over() {
+	if (gui.mouse_over) {
+		_gui_call_notification(gui.mouse_over, Control::NOTIFICATION_MOUSE_EXIT);
+		gui.mouse_over = nullptr;
+	}
+}
+
 void Viewport::_drop_physics_mouseover(bool p_paused_only) {
 	physics_has_last_mousepos = false;
 
@@ -2856,6 +2876,8 @@ void Viewport::input(const Ref<InputEvent> &p_event) {
 
 	if (!is_input_handled()) {
 		_gui_input_event(p_event);
+	} else {
+		_gui_cleanup_internal_state(p_event);
 	}
 	//get_tree()->call_group(SceneTree::GROUP_CALL_REVERSE|SceneTree::GROUP_CALL_REALTIME|SceneTree::GROUP_CALL_MULIILEVEL,gui_input_group,"_gui_input",p_event); //special one for GUI, as controls use their own process check
 }
@@ -2969,6 +2991,14 @@ bool Viewport::gui_has_modal_stack() const {
 }
 
 void Viewport::set_disable_input(bool p_disable) {
+	if (p_disable == disable_input) {
+		return;
+	}
+	if (p_disable && GLOBAL_GET("gui/common/drop_mouse_on_gui_input_disabled")) {
+		_drop_mouse_focus();
+		_drop_mouse_over();
+		_gui_cancel_tooltip();
+	}
 	disable_input = p_disable;
 }
 
@@ -3135,6 +3165,10 @@ bool Viewport::gui_is_dragging() const {
 	return gui.dragging;
 }
 
+bool Viewport::gui_is_drag_successful() const {
+	return gui.drag_successful;
+}
+
 void Viewport::set_input_as_handled() {
 	_drop_physics_mouseover();
 	if (handle_input_locally) {
@@ -3163,7 +3197,13 @@ bool Viewport::is_handling_input_locally() const {
 }
 
 void Viewport::_validate_property(PropertyInfo &property) const {
-	if (VisualServer::get_singleton()->is_low_end() && (property.name == "hdr" || property.name == "use_32_bpc_depth")) {
+	if (VisualServer::get_singleton()->is_low_end() && (property.name == "hdr" || property.name == "use_32_bpc_depth" || property.name == "debanding" || property.name == "sharpen_intensity" || property.name == "debug_draw")) {
+		// Only available in GLES3.
+		property.usage = PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL;
+	}
+
+	if (!VisualServer::get_singleton()->is_low_end() && (property.name == "render_direct_to_screen")) {
+		// Only available in GLES2.
 		property.usage = PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL;
 	}
 }
@@ -3269,6 +3309,7 @@ void Viewport::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("gui_has_modal_stack"), &Viewport::gui_has_modal_stack);
 	ClassDB::bind_method(D_METHOD("gui_get_drag_data"), &Viewport::gui_get_drag_data);
 	ClassDB::bind_method(D_METHOD("gui_is_dragging"), &Viewport::gui_is_dragging);
+	ClassDB::bind_method(D_METHOD("gui_is_drag_successful"), &Viewport::gui_is_drag_successful);
 
 	ClassDB::bind_method(D_METHOD("get_modal_stack_top"), &Viewport::get_modal_stack_top);
 
@@ -3319,7 +3360,7 @@ void Viewport::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "msaa", PROPERTY_HINT_ENUM, "Disabled,2x,4x,8x,16x,AndroidVR 2x,AndroidVR 4x"), "set_msaa", "get_msaa");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "fxaa"), "set_use_fxaa", "get_use_fxaa");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "debanding"), "set_use_debanding", "get_use_debanding");
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "sharpen_intensity"), "set_sharpen_intensity", "get_sharpen_intensity");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "sharpen_intensity", PROPERTY_HINT_RANGE, "0,1"), "set_sharpen_intensity", "get_sharpen_intensity");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "hdr"), "set_hdr", "get_hdr");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "use_32_bpc_depth"), "set_use_32_bpc_depth", "get_use_32_bpc_depth");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "disable_3d"), "set_disable_3d", "is_3d_disabled");

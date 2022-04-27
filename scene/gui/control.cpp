@@ -324,7 +324,7 @@ bool Control::_get(const StringName &p_name, Variant &r_ret) const {
 void Control::_get_property_list(List<PropertyInfo> *p_list) const {
 	Ref<Theme> theme = Theme::get_default();
 
-	p_list->push_back(PropertyInfo(Variant::NIL, "Theme Overrides", PROPERTY_HINT_NONE, "custom_", PROPERTY_USAGE_GROUP));
+	p_list->push_back(PropertyInfo(Variant::NIL, TTRC("Theme Overrides"), PROPERTY_HINT_NONE, "custom_", PROPERTY_USAGE_GROUP));
 
 	{
 		List<StringName> names;
@@ -767,6 +767,10 @@ void Control::set_drag_preview(Control *p_control) {
 	ERR_FAIL_COND(!is_inside_tree());
 	ERR_FAIL_COND(!get_viewport()->gui_is_dragging());
 	get_viewport()->_gui_set_drag_preview(this, p_control);
+}
+
+bool Control::is_drag_successful() const {
+	return is_inside_tree() && get_viewport()->gui_is_drag_successful();
 }
 
 bool Control::is_window_modal_on_top() const {
@@ -2542,7 +2546,7 @@ bool Control::is_visibility_clip_disabled() const {
 
 void Control::get_argument_options(const StringName &p_function, int p_idx, List<String> *r_options) const {
 #ifdef TOOLS_ENABLED
-	const String quote_style = EDITOR_DEF("text_editor/completion/use_single_quotes", 0) ? "'" : "\"";
+	const String quote_style = EDITOR_GET("text_editor/completion/use_single_quotes") ? "'" : "\"";
 #else
 	const String quote_style = "\"";
 #endif
@@ -2756,6 +2760,7 @@ void Control::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_drag_forwarding", "target"), &Control::set_drag_forwarding);
 	ClassDB::bind_method(D_METHOD("set_drag_preview", "control"), &Control::set_drag_preview);
+	ClassDB::bind_method(D_METHOD("is_drag_successful"), &Control::is_drag_successful);
 
 	ClassDB::bind_method(D_METHOD("warp_mouse", "to_position"), &Control::warp_mouse);
 

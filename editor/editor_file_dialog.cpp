@@ -39,6 +39,7 @@
 #include "editor_resource_preview.h"
 #include "editor_scale.h"
 #include "editor_settings.h"
+#include "main/main.h"
 #include "scene/gui/center_container.h"
 #include "scene/gui/label.h"
 #include "scene/gui/margin_container.h"
@@ -378,7 +379,8 @@ void EditorFileDialog::_action_pressed() {
 		return;
 	}
 
-	String f = dir_access->get_current_dir().plus_file(file->get_text());
+	String file_text = file->get_text();
+	String f = file_text.is_abs_path() ? file_text : dir_access->get_current_dir().plus_file(file_text);
 
 	if ((mode == MODE_OPEN_ANY || mode == MODE_OPEN_FILE) && dir_access->file_exists(f)) {
 		_save_to_recent();
@@ -759,11 +761,18 @@ void EditorFileDialog::update_file_list() {
 			continue;
 		}
 
-		if (show_hidden_files || !dir_access->current_is_hidden()) {
+		if (show_hidden_files) {
 			if (!dir_access->current_is_dir()) {
 				files.push_back(item);
 			} else {
 				dirs.push_back(item);
+			}
+		} else if (!dir_access->current_is_hidden()) {
+			String full_path = cdir == "res://" ? item : dir_access->get_current_dir() + "/" + item;
+			if (dir_access->current_is_dir() && (!EditorFileSystem::_should_skip_directory(full_path) || Main::is_project_manager())) {
+				dirs.push_back(item);
+			} else {
+				files.push_back(item);
 			}
 		}
 	}
@@ -1198,6 +1207,18 @@ void EditorFileDialog::_update_favorites() {
 	favorite->set_pressed(false);
 
 	Vector<String> favorited = EditorSettings::get_singleton()->get_favorites();
+
+	bool fav_changed = false;
+	for (int i = favorited.size() - 1; i >= 0; i--) {
+		if (!dir_access->dir_exists(favorited[i])) {
+			favorited.remove(i);
+			fav_changed = true;
+		}
+	}
+	if (fav_changed) {
+		EditorSettings::get_singleton()->set_favorites(favorited);
+	}
+
 	for (int i = 0; i < favorited.size(); i++) {
 		bool cres = favorited[i].begins_with("res://");
 		if (cres != res) {
@@ -1401,9 +1422,9 @@ void EditorFileDialog::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "access", PROPERTY_HINT_ENUM, "Resources,User data,File system"), "set_access", "get_access");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "display_mode", PROPERTY_HINT_ENUM, "Thumbnails,List"), "set_display_mode", "get_display_mode");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "mode", PROPERTY_HINT_ENUM, "Open one,Open many,Open folder,Open any,Save"), "set_mode", "get_mode");
-	ADD_PROPERTY(PropertyInfo(Variant::STRING, "current_dir", PROPERTY_HINT_DIR), "set_current_dir", "get_current_dir");
-	ADD_PROPERTY(PropertyInfo(Variant::STRING, "current_file", PROPERTY_HINT_FILE, "*"), "set_current_file", "get_current_file");
-	ADD_PROPERTY(PropertyInfo(Variant::STRING, "current_path"), "set_current_path", "get_current_path");
+	ADD_PROPERTY(PropertyInfo(Variant::STRING, "current_dir", PROPERTY_HINT_DIR, "", 0), "set_current_dir", "get_current_dir");
+	ADD_PROPERTY(PropertyInfo(Variant::STRING, "current_file", PROPERTY_HINT_FILE, "*", 0), "set_current_file", "get_current_file");
+	ADD_PROPERTY(PropertyInfo(Variant::STRING, "current_path", PROPERTY_HINT_NONE, "", 0), "set_current_path", "get_current_path");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "show_hidden_files"), "set_show_hidden_files", "is_showing_hidden_files");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "disable_overwrite_warning"), "set_disable_overwrite_warning", "is_overwrite_warning_disabled");
 

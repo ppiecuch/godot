@@ -36,6 +36,7 @@
 #include "core/project_settings.h"
 #include "editor/editor_feature_profile.h"
 #include "editor/editor_node.h"
+#include "editor/editor_property_name_processor.h"
 #include "editor/editor_scale.h"
 #include "editor/editor_settings.h"
 #include "editor/multi_node_edit.h"
@@ -2591,11 +2592,11 @@ void SceneTreeDock::_files_dropped(Vector<String> p_files, NodePath p_to, int p_
 			property_drop_node = node;
 			resource_drop_path = res_path;
 
-			bool capitalize = bool(EDITOR_GET("interface/inspector/capitalize_properties"));
+			const EditorPropertyNameProcessor::Style style = EditorNode::get_singleton()->get_inspector_dock()->get_property_name_style();
 			menu_properties->clear();
 			for (List<String>::Element *E = valid_properties.front(); E; E = E->next()) {
 				String &p = E->get();
-				menu_properties->add_item(capitalize ? p.capitalize() : p);
+				menu_properties->add_item(EditorPropertyNameProcessor::get_singleton()->process_name(p, style));
 				menu_properties->set_item_metadata(menu_properties->get_item_count() - 1, p);
 			}
 
@@ -2776,7 +2777,10 @@ void SceneTreeDock::_tree_rmb(const Vector2 &p_menu_pos) {
 	}
 
 	if (profile_allow_editing) {
+		bool add_separator = false;
+
 		if (full_selection.size() == 1) {
+			add_separator = true;
 			menu->add_icon_shortcut(get_icon("Rename", "EditorIcons"), ED_GET_SHORTCUT("scene_tree/rename"), TOOL_RENAME);
 		}
 
@@ -2789,11 +2793,14 @@ void SceneTreeDock::_tree_rmb(const Vector2 &p_menu_pos) {
 		}
 
 		if (can_replace) {
+			add_separator = true;
 			menu->add_icon_shortcut(get_icon("Reload", "EditorIcons"), ED_GET_SHORTCUT("scene_tree/change_node_type"), TOOL_REPLACE);
 		}
 
 		if (scene_tree->get_selected() != edited_scene) {
-			menu->add_separator();
+			if (add_separator) {
+				menu->add_separator();
+			}
 			menu->add_icon_shortcut(get_icon("MoveUp", "EditorIcons"), ED_GET_SHORTCUT("scene_tree/move_up"), TOOL_MOVE_UP);
 			menu->add_icon_shortcut(get_icon("MoveDown", "EditorIcons"), ED_GET_SHORTCUT("scene_tree/move_down"), TOOL_MOVE_DOWN);
 			menu->add_icon_shortcut(get_icon("Duplicate", "EditorIcons"), ED_GET_SHORTCUT("scene_tree/duplicate"), TOOL_DUPLICATE);

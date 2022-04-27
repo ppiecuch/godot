@@ -1548,8 +1548,9 @@ void EditorExportPlatformPC::get_preset_features(const Ref<EditorExportPreset> &
 }
 
 void EditorExportPlatformPC::get_export_options(List<ExportOption> *r_options) {
-	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "custom_template/debug", PROPERTY_HINT_GLOBAL_FILE), ""));
-	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "custom_template/release", PROPERTY_HINT_GLOBAL_FILE), ""));
+	String ext_filter = (get_os_name() == "Windows") ? "*.exe" : "";
+	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "custom_template/debug", PROPERTY_HINT_GLOBAL_FILE, ext_filter), ""));
+	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "custom_template/release", PROPERTY_HINT_GLOBAL_FILE, ext_filter), ""));
 
 	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "binary_format/64_bits"), true));
 	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "binary_format/embed_pck"), false));
@@ -1624,10 +1625,6 @@ List<String> EditorExportPlatformPC::get_binary_extensions(const Ref<EditorExpor
 Error EditorExportPlatformPC::export_project(const Ref<EditorExportPreset> &p_preset, bool p_debug, const String &p_path, int p_flags) {
 	ExportNotifier notifier(*this, p_preset, p_debug, p_path, p_flags);
 
-	if (!DirAccess::exists(p_path.get_base_dir())) {
-		return ERR_FILE_BAD_PATH;
-	}
-
 	String custom_debug = p_preset->get("custom_template/debug");
 	String custom_release = p_preset->get("custom_template/release");
 
@@ -1656,9 +1653,9 @@ Error EditorExportPlatformPC::export_project(const Ref<EditorExportPreset> &p_pr
 		return ERR_FILE_NOT_FOUND;
 	}
 
-	DirAccess *da = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
+	DirAccessRef da = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
+	da->make_dir_recursive(p_path.get_base_dir());
 	Error err = da->copy(template_path, p_path, get_chmod_flags());
-	memdelete(da);
 
 	if (err == OK) {
 		String pck_path;
@@ -1686,15 +1683,13 @@ Error EditorExportPlatformPC::export_project(const Ref<EditorExportPreset> &p_pr
 		}
 
 		if (err == OK && !so_files.empty()) {
-			//if shared object files, copy them
-			da = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
+			// If shared object files, copy them.
 			for (int i = 0; i < so_files.size() && err == OK; i++) {
 				err = da->copy(so_files[i].path, p_path.get_base_dir().plus_file(so_files[i].path.get_file()));
 				if (err == OK) {
 					err = sign_shared_object(p_preset, p_debug, p_path.get_base_dir().plus_file(so_files[i].path.get_file()));
 				}
 			}
-			memdelete(da);
 		}
 	}
 

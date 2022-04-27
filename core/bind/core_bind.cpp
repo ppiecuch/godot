@@ -311,6 +311,10 @@ float _OS::get_screen_max_scale() const {
 	return OS::get_singleton()->get_screen_max_scale();
 }
 
+float _OS::get_screen_refresh_rate(int p_screen) const {
+	return OS::get_singleton()->get_screen_refresh_rate();
+}
+
 Point2 _OS::get_window_position() const {
 	return OS::get_singleton()->get_window_position();
 }
@@ -1267,6 +1271,7 @@ void _OS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_screen_dpi", "screen"), &_OS::get_screen_dpi, DEFVAL(-1));
 	ClassDB::bind_method(D_METHOD("get_screen_scale", "screen"), &_OS::get_screen_scale, DEFVAL(-1));
 	ClassDB::bind_method(D_METHOD("get_screen_max_scale"), &_OS::get_screen_max_scale);
+	ClassDB::bind_method(D_METHOD("get_screen_refresh_rate", "screen"), &_OS::get_screen_refresh_rate, DEFVAL(-1));
 	ClassDB::bind_method(D_METHOD("get_window_position"), &_OS::get_window_position);
 	ClassDB::bind_method(D_METHOD("set_window_position", "position"), &_OS::set_window_position);
 	ClassDB::bind_method(D_METHOD("get_window_size"), &_OS::get_window_size);
@@ -2608,6 +2613,10 @@ Error _Semaphore::wait() {
 	return OK; // Can't fail anymore; keep compat
 }
 
+Error _Semaphore::try_wait() {
+	return semaphore.try_wait() ? OK : ERR_BUSY;
+}
+
 Error _Semaphore::post() {
 	semaphore.post();
 	return OK; // Can't fail anymore; keep compat
@@ -2616,6 +2625,7 @@ Error _Semaphore::post() {
 void _Semaphore::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("wait"), &_Semaphore::wait);
 	ClassDB::bind_method(D_METHOD("post"), &_Semaphore::post);
+	ClassDB::bind_method(D_METHOD("try_wait"), &_Semaphore::try_wait);
 }
 
 ///////////////

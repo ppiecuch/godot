@@ -30,7 +30,6 @@
 
 #include "nav_map.h"
 
-#include "core/os/threaded_array_processor.h"
 #include "nav_region.h"
 #include "rvo_agent.h"
 #include <algorithm>
@@ -51,6 +50,10 @@ NavMap::NavMap() :
 		agents_dirty(false),
 		deltatime(0.0),
 		map_update_id(0) {}
+
+NavMap::~NavMap() {
+	step_work_pool.finish();
+}
 
 void NavMap::set_up(Vector3 p_up) {
 	up = p_up;
@@ -241,6 +244,7 @@ Vector<Vector3> NavMap::get_path(Vector3 p_origin, Vector3 p_destination, bool p
 			navigation_polys.push_back(np);
 			open_list.clear();
 			open_list.push_back(0);
+			least_cost_id = 0;
 
 			reachable_end = NULL;
 
@@ -265,6 +269,8 @@ Vector<Vector3> NavMap::get_path(Vector3 p_origin, Vector3 p_destination, bool p
 			}
 		}
 
+		ERR_BREAK(least_cost_id == -1);
+
 		// Stores the further reachable end polygon, in case our goal is not reachable.
 		if (is_reachable) {
 			float d = navigation_polys[least_cost_id].entry.distance_to(p_destination);
@@ -273,8 +279,6 @@ Vector<Vector3> NavMap::get_path(Vector3 p_origin, Vector3 p_destination, bool p
 				reachable_end = navigation_polys[least_cost_id].poly;
 			}
 		}
-
-		ERR_BREAK(least_cost_id == -1);
 
 		// Check if we reached the end
 		if (navigation_polys[least_cost_id].poly == end_poly) {
@@ -376,18 +380,15 @@ Vector<Vector3> NavMap::get_path(Vector3 p_origin, Vector3 p_destination, bool p
 
 			// Add mid points
 			int np_id = least_cost_id;
-			while (np_id != -1) {
-#ifdef USE_ENTRY_POINT
-				Vector3 point = navigation_polys[np_id].entry;
-#else
+			while (np_id != -1 && navigation_polys[np_id].prev_navigation_poly_id != -1) {
 				int prev = navigation_polys[np_id].back_navigation_edge;
 				int prev_n = (navigation_polys[np_id].back_navigation_edge + 1) % navigation_polys[np_id].poly->points.size();
 				Vector3 point = (navigation_polys[np_id].poly->points[prev].pos + navigation_polys[np_id].poly->points[prev_n].pos) * 0.5;
-#endif
-
 				path.push_back(point);
 				np_id = navigation_polys[np_id].prev_navigation_poly_id;
 			}
+
+			path.push_back(begin_point);
 
 			path.invert();
 		}
@@ -704,7 +705,10 @@ void NavMap::compute_single_step(uint32_t index, RvoAgent **agent) {
 void NavMap::step(real_t p_deltatime) {
 	deltatime = p_deltatime;
 	if (controlled_agents.size() > 0) {
-		thread_process_array(
+		if (step_work_pool.get_thread_count() == 0) {
+			step_work_pool.init();
+		}
+		step_work_pool.do_work(
 				controlled_agents.size(),
 				this,
 				&NavMap::compute_single_step,

@@ -1248,7 +1248,10 @@ Point2 OS_X11::get_screen_position(int p_screen) const {
 	XineramaScreenInfo *xsi = XineramaQueryScreens(x11_display, &count);
 
 	// Check if screen is valid
-	ERR_FAIL_INDEX_V(p_screen, count, Point2i(0, 0));
+	if (p_screen < 0 || p_screen >= count) {
+		XFree(xsi);
+		ERR_FAIL_V_MSG(Point2i(0, 0), vformat("Index %d is out of bounds (count = %d)", p_screen, count));
+	}
 
 	Point2i position = Point2i(xsi[p_screen].x_org, xsi[p_screen].y_org);
 
@@ -1273,7 +1276,10 @@ Size2 OS_X11::get_screen_size(int p_screen) const {
 	XineramaScreenInfo *xsi = XineramaQueryScreens(x11_display, &count);
 
 	// Check if screen is valid
-	ERR_FAIL_INDEX_V(p_screen, count, Size2i(0, 0));
+	if (p_screen < 0 || p_screen >= count) {
+		XFree(xsi);
+		ERR_FAIL_V_MSG(Size2i(0, 0), vformat("Index %d is out of bounds (count = %d)", p_screen, count));
+	}
 
 	Size2i size = Point2i(xsi[p_screen].width, xsi[p_screen].height);
 	XFree(xsi);
@@ -1321,6 +1327,65 @@ int OS_X11::get_screen_dpi(int p_screen) const {
 
 	//could not get dpi
 	return 96;
+}
+
+float OS_X11::get_screen_refresh_rate(int p_screen) const {
+	if (p_screen == -1) {
+		p_screen = get_current_screen();
+	}
+
+	//invalid screen?
+	ERR_FAIL_INDEX_V(p_screen, get_screen_count(), OS::get_singleton()->SCREEN_REFRESH_RATE_FALLBACK);
+
+	//Use xrandr to get screen refresh rate.
+	if (xrandr_ext_ok) {
+		XRRScreenResources *screen_info = XRRGetScreenResources(x11_display, x11_window);
+		if (screen_info) {
+			RRMode current_mode = 0;
+			xrr_monitor_info *monitors = nullptr;
+
+			if (xrr_get_monitors) {
+				int count = 0;
+				monitors = xrr_get_monitors(x11_display, x11_window, true, &count);
+				ERR_FAIL_INDEX_V(p_screen, count, OS::get_singleton()->SCREEN_REFRESH_RATE_FALLBACK);
+			} else {
+				ERR_PRINT("An error occurred while trying to get the screen refresh rate.");
+				return OS::get_singleton()->SCREEN_REFRESH_RATE_FALLBACK;
+			}
+
+			bool found_active_mode = false;
+			for (int crtc = 0; crtc < screen_info->ncrtc; crtc++) { // Loop through outputs to find which one is currently outputting.
+				XRRCrtcInfo *monitor_info = XRRGetCrtcInfo(x11_display, screen_info, screen_info->crtcs[crtc]);
+				if (monitor_info->x != monitors[p_screen].x || monitor_info->y != monitors[p_screen].y) { // If X and Y aren't the same as the monitor we're looking for, this isn't the right monitor. Continue.
+					continue;
+				}
+
+				if (monitor_info->mode != None) {
+					current_mode = monitor_info->mode;
+					found_active_mode = true;
+					break;
+				}
+			}
+
+			if (found_active_mode) {
+				for (int mode = 0; mode < screen_info->nmode; mode++) {
+					XRRModeInfo m_info = screen_info->modes[mode];
+					if (m_info.id == current_mode) {
+						// Snap to nearest 0.01 to stay consistent with other platforms.
+						return Math::stepify((float)m_info.dotClock / ((float)m_info.hTotal * (float)m_info.vTotal), 0.01);
+					}
+				}
+			}
+
+			ERR_PRINT("An error occurred while trying to get the screen refresh rate."); // We should have returned the refresh rate by now. An error must have occurred.
+			return OS::get_singleton()->SCREEN_REFRESH_RATE_FALLBACK;
+		} else {
+			ERR_PRINT("An error occurred while trying to get the screen refresh rate.");
+			return OS::get_singleton()->SCREEN_REFRESH_RATE_FALLBACK;
+		}
+	}
+	ERR_PRINT("An error occurred while trying to get the screen refresh rate.");
+	return OS::get_singleton()->SCREEN_REFRESH_RATE_FALLBACK;
 }
 
 Point2 OS_X11::get_window_position() const {
@@ -1715,8 +1780,15 @@ bool OS_X11::window_maximize_check(const char *p_atom_name) const {
 
 	if (result == Success) {
 		Atom *atoms = (Atom *)data;
-		Atom wm_act_max_horz = XInternAtom(x11_display, "_NET_WM_ACTION_MAXIMIZE_HORZ", False);
-		Atom wm_act_max_vert = XInternAtom(x11_display, "_NET_WM_ACTION_MAXIMIZE_VERT", False);
+		Atom wm_act_max_horz;
+		Atom wm_act_max_vert;
+		if (strcmp(p_atom_name, "_NET_WM_STATE") == 0) {
+			wm_act_max_horz = XInternAtom(x11_display, "_NET_WM_STATE_MAXIMIZED_HORZ", False);
+			wm_act_max_vert = XInternAtom(x11_display, "_NET_WM_STATE_MAXIMIZED_VERT", False);
+		} else {
+			wm_act_max_horz = XInternAtom(x11_display, "_NET_WM_ACTION_MAXIMIZE_HORZ", False);
+			wm_act_max_vert = XInternAtom(x11_display, "_NET_WM_ACTION_MAXIMIZE_VERT", False);
+		}
 		bool found_wm_act_max_horz = false;
 		bool found_wm_act_max_vert = false;
 
@@ -2118,7 +2190,7 @@ void OS_X11::_handle_key_event(XKeyEvent *p_event, LocalVector<XEvent> &p_events
 	input->parse_input_event(k);
 }
 
-Atom OS_X11::_process_selection_request_target(Atom p_target, Window p_requestor, Atom p_property) const {
+Atom OS_X11::_process_selection_request_target(Atom p_target, Window p_requestor, Atom p_property, Atom p_selection) const {
 	if (p_target == XInternAtom(x11_display, "TARGETS", 0)) {
 		// Request to list all supported targets.
 		Atom data[9];
@@ -2161,7 +2233,13 @@ Atom OS_X11::_process_selection_request_target(Atom p_target, Window p_requestor
 			p_target == XInternAtom(x11_display, "text/plain", 0)) {
 		// Directly using internal clipboard because we know our window
 		// is the owner during a selection request.
-		CharString clip = OS::get_clipboard().utf8();
+		CharString clip;
+		static const char *target_type = "PRIMARY";
+		if (p_selection != None && get_atom_name(x11_display, p_selection) == target_type) {
+			clip = OS::get_clipboard_primary().utf8();
+		} else {
+			clip = OS::get_clipboard().utf8();
+		}
 		XChangeProperty(x11_display,
 				p_requestor,
 				p_property,
@@ -2199,7 +2277,7 @@ void OS_X11::_handle_selection_request_event(XSelectionRequestEvent *p_event) co
 				for (uint64_t i = 0; i < len; i += 2) {
 					Atom target = targets[i];
 					Atom &property = targets[i + 1];
-					property = _process_selection_request_target(target, p_event->requestor, property);
+					property = _process_selection_request_target(target, p_event->requestor, property, p_event->selection);
 				}
 
 				XChangeProperty(x11_display,
@@ -2217,7 +2295,7 @@ void OS_X11::_handle_selection_request_event(XSelectionRequestEvent *p_event) co
 		}
 	} else {
 		// Request for target conversion.
-		respond.xselection.property = _process_selection_request_target(p_event->target, p_event->requestor, p_event->property);
+		respond.xselection.property = _process_selection_request_target(p_event->target, p_event->requestor, p_event->property, p_event->selection);
 	}
 
 	respond.xselection.type = SelectionNotify;
@@ -3053,7 +3131,12 @@ String OS_X11::_get_clipboard_impl(Atom p_source, Window x11_window, Atom target
 
 	Window selection_owner = XGetSelectionOwner(x11_display, p_source);
 	if (selection_owner == x11_window) {
-		return OS::get_clipboard();
+		static const char *target_type = "PRIMARY";
+		if (p_source != None && get_atom_name(x11_display, p_source) == target_type) {
+			return OS::get_clipboard_primary();
+		} else {
+			return OS::get_clipboard();
+		}
 	}
 
 	if (selection_owner != None) {
@@ -3256,6 +3339,30 @@ void OS_X11::_clipboard_transfer_ownership(Atom p_source, Window x11_window) con
 	}
 }
 
+void OS_X11::set_clipboard_primary(const String &p_text) {
+	if (!p_text.empty()) {
+		{
+			// The clipboard content can be accessed while polling for events.
+			MutexLock mutex_lock(events_mutex);
+			OS::set_clipboard_primary(p_text);
+		}
+
+		XSetSelectionOwner(x11_display, XA_PRIMARY, x11_window, CurrentTime);
+		XSetSelectionOwner(x11_display, XInternAtom(x11_display, "PRIMARY", 0), x11_window, CurrentTime);
+	}
+}
+
+String OS_X11::get_clipboard_primary() const {
+	String ret;
+	ret = _get_clipboard(XInternAtom(x11_display, "PRIMARY", 0), x11_window);
+
+	if (ret.empty()) {
+		ret = _get_clipboard(XA_PRIMARY, x11_window);
+	}
+
+	return ret;
+}
+
 String OS_X11::get_name() const {
 	return "X11";
 }
@@ -3298,7 +3405,15 @@ Error OS_X11::shell_open(String p_uri) {
 }
 
 bool OS_X11::_check_internal_feature_support(const String &p_feature) {
-	return p_feature == "pc";
+	if (p_feature == "pc") {
+		return true;
+	}
+
+	if (p_feature == "primary_clipboard") {
+		return true;
+	}
+
+	return false;
 }
 
 String OS_X11::get_config_path() const {
@@ -3848,9 +3963,11 @@ static String get_mountpoint(const String &p_path) {
 }
 
 Error OS_X11::move_to_trash(const String &p_path) {
+	String path = p_path.rstrip("/"); // Strip trailing slash when path points to a directory
+
 	int err_code;
 	List<String> args;
-	args.push_back(p_path);
+	args.push_back(path);
 	args.push_front("trash"); // The command is `gio trash <file_name>` so we need to add it to args.
 	Error result = execute("gio", args, true, nullptr, nullptr, &err_code); // For GNOME based machines.
 	if (result == OK && !err_code) {
@@ -3880,14 +3997,14 @@ Error OS_X11::move_to_trash(const String &p_path) {
 
 	// If the commands `kioclient5`, `gio` or `gvfs-trash` don't exist on the system we do it manually.
 	String trash_path = "";
-	String mnt = get_mountpoint(p_path);
+	String mnt = get_mountpoint(path);
 
 	// If there is a directory "[Mountpoint]/.Trash-[UID], use it as the trash can.
 	if (mnt != "") {
-		String path(mnt + "/.Trash-" + itos(getuid()));
+		String mountpoint_trash_path(mnt + "/.Trash-" + itos(getuid()));
 		struct stat s;
-		if (!stat(path.utf8().get_data(), &s)) {
-			trash_path = path;
+		if (!stat(mountpoint_trash_path.utf8().get_data(), &s)) {
+			trash_path = mountpoint_trash_path;
 		}
 	}
 
@@ -3918,18 +4035,15 @@ Error OS_X11::move_to_trash(const String &p_path) {
 		// Issue an error if trash can is not created properly.
 		ERR_FAIL_COND_V_MSG(err != OK, err, "Could not create the trash path \"" + trash_path + "\"");
 		err = dir_access->make_dir_recursive(trash_path + "/files");
-		ERR_FAIL_COND_V_MSG(err != OK, err, "Could not create the trash path \"" + trash_path + "\"/files");
+		ERR_FAIL_COND_V_MSG(err != OK, err, "Could not create the trash path \"" + trash_path + "/files\"");
 		err = dir_access->make_dir_recursive(trash_path + "/info");
-		ERR_FAIL_COND_V_MSG(err != OK, err, "Could not create the trash path \"" + trash_path + "\"/info");
+		ERR_FAIL_COND_V_MSG(err != OK, err, "Could not create the trash path \"" + trash_path + "/info\"");
 	}
 
 	// The trash can is successfully created, now we check that we don't exceed our file name length limit.
 	// If the file name is too long trim it so we can add the identifying number and ".trashinfo".
 	// Assumes that the file name length limit is 255 characters.
-	String file_name = p_path.get_file();
-	if (file_name.length() == 0) {
-		file_name = p_path.get_base_dir().get_file();
-	}
+	String file_name = path.get_file();
 	if (file_name.length() > 240) {
 		file_name = file_name.substr(0, file_name.length() - 15);
 	}
@@ -3952,29 +4066,31 @@ Error OS_X11::move_to_trash(const String &p_path) {
 	}
 	file_name = fn;
 
+	String renamed_path = path.get_base_dir() + "/" + file_name;
+
 	// Generates the .trashinfo file
 	OS::Date date = OS::get_singleton()->get_date(false);
 	OS::Time time = OS::get_singleton()->get_time(false);
 	String timestamp = vformat("%04d-%02d-%02dT%02d:%02d:", date.year, (int)date.month, date.day, time.hour, time.min);
 	timestamp = vformat("%s%02d", timestamp, time.sec); // vformat only supports up to 6 arguments.
-	String trash_info = "[Trash Info]\nPath=" + p_path.http_escape() + "\nDeletionDate=" + timestamp + "\n";
+	String trash_info = "[Trash Info]\nPath=" + path.http_escape() + "\nDeletionDate=" + timestamp + "\n";
 	{
 		Error err;
 		FileAccessRef file = FileAccess::open(trash_path + "/info/" + file_name + ".trashinfo", FileAccess::WRITE, &err);
-		ERR_FAIL_COND_V_MSG(err != OK, err, "Can't create trashinfo file:" + trash_path + "/info/" + file_name + ".trashinfo");
+		ERR_FAIL_COND_V_MSG(err != OK, err, "Can't create trashinfo file: \"" + trash_path + "/info/" + file_name + ".trashinfo\"");
 		file->store_string(trash_info);
 		file->close();
 
 		// Rename our resource before moving it to the trash can.
 		DirAccessRef dir_access = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
-		err = dir_access->rename(p_path, p_path.get_base_dir() + "/" + file_name);
-		ERR_FAIL_COND_V_MSG(err != OK, err, "Can't rename file \"" + p_path + "\"");
+		err = dir_access->rename(path, renamed_path);
+		ERR_FAIL_COND_V_MSG(err != OK, err, "Can't rename file \"" + path + "\" to \"" + renamed_path + "\"");
 	}
 
 	// Move the given resource to the trash can.
 	// Do not use DirAccess:rename() because it can't move files across multiple mountpoints.
 	List<String> mv_args;
-	mv_args.push_back(p_path.get_base_dir() + "/" + file_name);
+	mv_args.push_back(renamed_path);
 	mv_args.push_back(trash_path + "/files");
 	{
 		int retval;
@@ -3982,11 +4098,11 @@ Error OS_X11::move_to_trash(const String &p_path) {
 
 		// Issue an error if "mv" failed to move the given resource to the trash can.
 		if (err != OK || retval != 0) {
-			ERR_PRINT("move_to_trash: Could not move the resource \"" + p_path + "\" to the trash can \"" + trash_path + "/files\"");
+			ERR_PRINT("move_to_trash: Could not move the resource \"" + path + "\" to the trash can \"" + trash_path + "/files\"");
 			DirAccess *dir_access = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
-			err = dir_access->rename(p_path.get_base_dir() + "/" + file_name, p_path);
+			err = dir_access->rename(renamed_path, path);
 			memdelete(dir_access);
-			ERR_FAIL_COND_V_MSG(err != OK, err, "Could not rename " + p_path.get_base_dir() + "/" + file_name + " back to its original name:" + p_path);
+			ERR_FAIL_COND_V_MSG(err != OK, err, "Could not rename \"" + renamed_path + "\" back to its original name: \"" + path + "\"");
 			return FAILED;
 		}
 	}
@@ -3997,14 +4113,14 @@ OS::LatinKeyboardVariant OS_X11::get_latin_keyboard_variant() const {
 	XkbDescRec *xkbdesc = XkbAllocKeyboard();
 	ERR_FAIL_COND_V(!xkbdesc, LATIN_KEYBOARD_QWERTY);
 
-	XkbGetNames(x11_display, XkbSymbolsNameMask, xkbdesc);
-	ERR_FAIL_COND_V(!xkbdesc->names, LATIN_KEYBOARD_QWERTY);
-	ERR_FAIL_COND_V(!xkbdesc->names->symbols, LATIN_KEYBOARD_QWERTY);
+	if (XkbGetNames(x11_display, XkbSymbolsNameMask, xkbdesc) != Success) {
+		XkbFreeKeyboard(xkbdesc, 0, true);
+		ERR_FAIL_V(LATIN_KEYBOARD_QWERTY);
+	}
 
-	String layout = get_atom_name(x11_display, xkbdesc->names->symbols);
-	ERR_FAIL_COND_V(layout.empty(), LATIN_KEYBOARD_QWERTY);
+	Vector<String> info = get_atom_name(x11_display, xkbdesc->names->symbols).split("+");
+	XkbFreeKeyboard(xkbdesc, 0, true);
 
-	Vector<String> info = layout.split("+");
 	ERR_FAIL_INDEX_V(1, info.size(), LATIN_KEYBOARD_QWERTY);
 
 	if (info[1].find("colemak") != -1) {

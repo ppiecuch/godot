@@ -510,13 +510,7 @@ void SceneTree::set_physics_interpolation_enabled(bool p_enabled) {
 	}
 
 	_physics_interpolation_enabled = p_enabled;
-
-	if (root->get_world().is_valid()) {
-		RID scenario = root->get_world()->get_scenario();
-		if (scenario.is_valid()) {
-			VisualServer::get_singleton()->scenario_set_physics_interpolation_enabled(scenario, p_enabled);
-		}
-	}
+	VisualServer::get_singleton()->set_physics_interpolation_enabled(p_enabled);
 }
 
 bool SceneTree::is_physics_interpolation_enabled() const {
@@ -538,11 +532,8 @@ bool SceneTree::iteration(float p_time) {
 
 	current_frame++;
 
-	if (root->get_world().is_valid()) {
-		RID scenario = root->get_world()->get_scenario();
-		if (scenario.is_valid()) {
-			VisualServer::get_singleton()->scenario_tick(scenario);
-		}
+	if (_physics_interpolation_enabled) {
+		VisualServer::get_singleton()->tick();
 	}
 
 	// Any objects performing client physics interpolation
@@ -689,11 +680,8 @@ bool SceneTree::idle(float p_time) {
 
 #endif
 
-	if (root->get_world().is_valid()) {
-		RID scenario = root->get_world()->get_scenario();
-		if (scenario.is_valid()) {
-			VisualServer::get_singleton()->scenario_pre_draw(scenario, true);
-		}
+	if (_physics_interpolation_enabled) {
+		VisualServer::get_singleton()->pre_draw(true);
 	}
 
 	return _quit;
@@ -710,7 +698,7 @@ void SceneTree::finish() {
 
 	if (root) {
 		root->_set_tree(nullptr);
-		root->_propagate_after_exit_tree();
+		root->_propagate_after_exit_branch(true);
 		memdelete(root); //delete root
 		root = nullptr;
 	}
@@ -2302,7 +2290,7 @@ SceneTree::SceneTree() {
 SceneTree::~SceneTree() {
 	if (root) {
 		root->_set_tree(nullptr);
-		root->_propagate_after_exit_tree();
+		root->_propagate_after_exit_branch(true);
 		memdelete(root);
 	}
 

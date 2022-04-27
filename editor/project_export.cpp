@@ -38,6 +38,7 @@
 #include "core/os/file_access.h"
 #include "core/os/os.h"
 #include "core/project_settings.h"
+#include "core/version_generated.gen.h"
 #include "editor_data.h"
 #include "editor_node.h"
 #include "editor_scale.h"
@@ -55,12 +56,18 @@ void ProjectExportDialog::_notification(int p_what) {
 			connect("confirmed", this, "_export_pck_zip");
 			custom_feature_display->get_parent_control()->add_style_override("panel", get_stylebox("bg", "Tree"));
 		} break;
+
 		case NOTIFICATION_POPUP_HIDE: {
 			EditorSettings::get_singleton()->set_project_metadata("dialog_bounds", "export", get_rect());
 		} break;
+
 		case NOTIFICATION_THEME_CHANGED: {
 			duplicate_preset->set_icon(get_icon("Duplicate", "EditorIcons"));
 			delete_preset->set_icon(get_icon("Remove", "EditorIcons"));
+		} break;
+
+		case EditorSettings::NOTIFICATION_EDITOR_SETTINGS_CHANGED: {
+			parameters->set_property_name_style(EditorPropertyNameProcessor::get_settings_style());
 		} break;
 	}
 }
@@ -426,6 +433,10 @@ void ProjectExportDialog::_export_path_changed(const StringName &p_property, con
 
 	current->set_export_path(p_value);
 	_update_presets();
+}
+
+void ProjectExportDialog::_open_key_help_link() {
+	OS::get_singleton()->shell_open(vformat("%s/development/compiling/compiling_with_script_encryption_key.html", VERSION_DOCS_URL));
 }
 
 void ProjectExportDialog::_script_export_mode_changed(int p_mode) {
@@ -937,6 +948,7 @@ void ProjectExportDialog::_bind_methods() {
 	ClassDB::bind_method("_open_export_template_manager", &ProjectExportDialog::_open_export_template_manager);
 	ClassDB::bind_method("_validate_export_path", &ProjectExportDialog::_validate_export_path);
 	ClassDB::bind_method("_export_path_changed", &ProjectExportDialog::_export_path_changed);
+	ClassDB::bind_method("_open_key_help_link", &ProjectExportDialog::_open_key_help_link);
 	ClassDB::bind_method("_script_export_mode_changed", &ProjectExportDialog::_script_export_mode_changed);
 	ClassDB::bind_method("_script_encryption_key_changed", &ProjectExportDialog::_script_encryption_key_changed);
 	ClassDB::bind_method("_export_project", &ProjectExportDialog::_export_project);
@@ -1029,6 +1041,7 @@ ProjectExportDialog::ProjectExportDialog() {
 	sections->add_child(parameters);
 	parameters->set_name(TTR("Options"));
 	parameters->set_v_size_flags(SIZE_EXPAND_FILL);
+	parameters->set_property_name_style(EditorPropertyNameProcessor::get_settings_style());
 	parameters->connect("property_edited", this, "_update_parameters");
 	EditorExport::get_singleton()->connect("export_presets_updated", this, "_force_update_current_preset_parameters");
 
@@ -1100,6 +1113,15 @@ ProjectExportDialog::ProjectExportDialog() {
 	script_vb->add_margin_child(TTR("GDScript Encryption Key (256-bits as hexadecimal):"), script_key);
 	script_vb->add_child(script_key_error);
 	sections->add_child(script_vb);
+
+	Label *sec_info = memnew(Label);
+	sec_info->set_text(TTR("Note: Encryption key needs to be stored in the binary,\nyou need to build the export templates from source."));
+	script_vb->add_child(sec_info);
+
+	LinkButton *sec_more_info = memnew(LinkButton);
+	sec_more_info->set_text(TTR("More Info..."));
+	sec_more_info->connect("pressed", this, "_open_key_help_link");
+	script_vb->add_child(sec_more_info);
 
 	sections->connect("tab_changed", this, "_tab_changed");
 

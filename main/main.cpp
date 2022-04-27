@@ -1257,6 +1257,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	Engine::get_singleton()->set_target_fps(GLOBAL_DEF("debug/settings/fps/force_fps", 0));
 	ProjectSettings::get_singleton()->set_custom_property_info("debug/settings/fps/force_fps", PropertyInfo(Variant::INT, "debug/settings/fps/force_fps", PROPERTY_HINT_RANGE, "0,1000,1"));
 	GLOBAL_DEF("physics/common/enable_pause_aware_picking", false);
+	GLOBAL_DEF("gui/common/drop_mouse_on_gui_input_disabled", false);
 
 	GLOBAL_DEF("debug/settings/stdout/print_fps", false);
 	GLOBAL_DEF("debug/settings/stdout/verbose_stdout", false);
@@ -1971,7 +1972,7 @@ bool Main::start() {
 						Ref<Script> script_res = res;
 						StringName ibt = script_res->get_instance_base_type();
 						bool valid_type = ClassDB::is_parent_class(ibt, "Node");
-						ERR_CONTINUE_MSG(!valid_type, "Script does not inherit a Node: " + path);
+						ERR_CONTINUE_MSG(!valid_type, "Script does not inherit from Node: " + path);
 
 						Object *obj = ClassDB::instance(ibt);
 
@@ -2495,6 +2496,7 @@ void Main::cleanup(bool p_force) {
 	OS::get_singleton()->_cmdline.clear();
 	OS::get_singleton()->_execpath = "";
 	OS::get_singleton()->_local_clipboard = "";
+	OS::get_singleton()->_primary_clipboard = "";
 
 	ResourceLoader::clear_translation_remaps();
 	ResourceLoader::clear_path_remaps();

@@ -80,6 +80,7 @@
 #include "editor/editor_log.h"
 #include "editor/editor_plugin.h"
 #include "editor/editor_properties.h"
+#include "editor/editor_property_name_processor.h"
 #include "editor/editor_resource_picker.h"
 #include "editor/editor_resource_preview.h"
 #include "editor/editor_run_native.h"
@@ -127,6 +128,7 @@
 #include "editor/plugins/editor_preview_plugins.h"
 #include "editor/plugins/gi_probe_editor_plugin.h"
 #include "editor/plugins/gradient_editor_plugin.h"
+#include "editor/plugins/gradient_texture_2d_editor_plugin.h"
 #include "editor/plugins/item_list_editor_plugin.h"
 #include "editor/plugins/light_occluder_2d_editor_plugin.h"
 #include "editor/plugins/line_2d_editor_plugin.h"
@@ -142,6 +144,7 @@
 #include "editor/plugins/path_editor_plugin.h"
 #include "editor/plugins/physical_bone_plugin.h"
 #include "editor/plugins/polygon_2d_editor_plugin.h"
+#include "editor/plugins/ray_cast_2d_editor_plugin.h"
 #include "editor/plugins/resource_preloader_editor_plugin.h"
 #include "editor/plugins/room_manager_editor_plugin.h"
 #include "editor/plugins/root_motion_editor_plugin.h"
@@ -372,7 +375,7 @@ void EditorNode::_version_control_menu_option(int p_idx) {
 
 void EditorNode::_update_title() {
 	const String appname = ProjectSettings::get_singleton()->get("application/config/name");
-	String title = (appname.empty() ? "Unnamed Project" : appname) + String(" - ") + VERSION_NAME;
+	String title = (appname.empty() ? TTR("Unnamed Project") : appname) + String(" - ") + VERSION_NAME;
 	const String edited = editor_data.get_edited_scene_root() ? editor_data.get_edited_scene_root()->get_filename() : String();
 	if (!edited.empty()) {
 		// Display the edited scene name before the program name so that it can be seen in the OS task bar.
@@ -483,6 +486,9 @@ void EditorNode::_notification(int p_what) {
 			get_tree()->get_root()->set_as_audio_listener(false);
 			get_tree()->get_root()->set_as_audio_listener_2d(false);
 			get_tree()->set_auto_accept_quit(false);
+#ifdef ANDROID_ENABLED
+			get_tree()->set_quit_on_go_back(false);
+#endif
 			get_tree()->connect("files_dropped", this, "_dropped_files");
 			get_tree()->connect("global_menu_action", this, "_global_menu_action");
 
@@ -1709,6 +1715,7 @@ void EditorNode::_dialog_action(String p_file) {
 		case FILE_CLOSE:
 		case FILE_CLOSE_ALL_AND_QUIT:
 		case FILE_CLOSE_ALL_AND_RUN_PROJECT_MANAGER:
+		case FILE_CLOSE_ALL_AND_RELOAD_CURRENT_PROJECT:
 		case SCENE_TAB_CLOSE:
 		case FILE_SAVE_SCENE:
 		case FILE_SAVE_AS_SCENE: {
@@ -2360,17 +2367,23 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 		} break;
 		case FILE_CLOSE_ALL_AND_QUIT:
 		case FILE_CLOSE_ALL_AND_RUN_PROJECT_MANAGER:
+		case FILE_CLOSE_ALL_AND_RELOAD_CURRENT_PROJECT:
 		case FILE_CLOSE: {
 			if (!p_confirmed) {
 				tab_closing = p_option == FILE_CLOSE ? editor_data.get_edited_scene() : _next_unsaved_scene(false);
 				_scene_tab_changed(tab_closing);
 
-				if (unsaved_cache || p_option == FILE_CLOSE_ALL_AND_QUIT || p_option == FILE_CLOSE_ALL_AND_RUN_PROJECT_MANAGER) {
+				if (unsaved_cache || p_option == FILE_CLOSE_ALL_AND_QUIT || p_option == FILE_CLOSE_ALL_AND_RUN_PROJECT_MANAGER || p_option == FILE_CLOSE_ALL_AND_RELOAD_CURRENT_PROJECT) {
 					Node *scene_root = editor_data.get_edited_scene_root(tab_closing);
 					if (scene_root) {
 						String scene_filename = scene_root->get_filename();
-						save_confirmation->get_ok()->set_text(TTR("Save & Close"));
-						save_confirmation->set_text(vformat(TTR("Save changes to '%s' before closing?"), scene_filename != "" ? scene_filename : "unsaved scene"));
+						if (p_option == FILE_CLOSE_ALL_AND_RELOAD_CURRENT_PROJECT) {
+							save_confirmation->get_ok()->set_text(TTR("Save & Reload"));
+							save_confirmation->set_text(vformat(TTR("Save changes to '%s' before reloading?"), scene_filename != "" ? scene_filename : "unsaved scene"));
+						} else {
+							save_confirmation->get_ok()->set_text(TTR("Save & Close"));
+							save_confirmation->set_text(vformat(TTR("Save changes to '%s' before closing?"), scene_filename != "" ? scene_filename : "unsaved scene"));
+						}
 						save_confirmation->popup_centered_minsize();
 						break;
 					}
@@ -2704,11 +2717,9 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 		case FILE_EXPLORE_ANDROID_BUILD_TEMPLATES: {
 			OS::get_singleton()->shell_open("file://" + ProjectSettings::get_singleton()->get_resource_path().plus_file("android"));
 		} break;
-		case RUN_RELOAD_CURRENT_PROJECT: {
-			restart_editor();
-		} break;
 		case FILE_QUIT:
-		case RUN_PROJECT_MANAGER: {
+		case RUN_PROJECT_MANAGER:
+		case RELOAD_CURRENT_PROJECT: {
 			if (!p_confirmed) {
 				bool save_each = EDITOR_GET("interface/editor/save_each_scene_on_quit");
 				if (_next_unsaved_scene(!save_each) == -1) {
@@ -2723,7 +2734,13 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 					}
 				} else {
 					if (save_each) {
-						_menu_option_confirm(p_option == FILE_QUIT ? FILE_CLOSE_ALL_AND_QUIT : FILE_CLOSE_ALL_AND_RUN_PROJECT_MANAGER, false);
+						if (p_option == RELOAD_CURRENT_PROJECT) {
+							_menu_option_confirm(FILE_CLOSE_ALL_AND_RELOAD_CURRENT_PROJECT, false);
+						} else if (p_option == FILE_QUIT) {
+							_menu_option_confirm(FILE_CLOSE_ALL_AND_QUIT, false);
+						} else {
+							_menu_option_confirm(FILE_CLOSE_ALL_AND_RUN_PROJECT_MANAGER, false);
+						}
 					} else {
 						String unsaved_scenes;
 						int i = _next_unsaved_scene(true, 0);
@@ -2731,9 +2748,13 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 							unsaved_scenes += "\n            " + editor_data.get_edited_scene_root(i)->get_filename();
 							i = _next_unsaved_scene(true, ++i);
 						}
-
-						save_confirmation->get_ok()->set_text(TTR("Save & Quit"));
-						save_confirmation->set_text((p_option == FILE_QUIT ? TTR("Save changes to the following scene(s) before quitting?") : TTR("Save changes to the following scene(s) before opening Project Manager?")) + unsaved_scenes);
+						if (p_option == RELOAD_CURRENT_PROJECT) {
+							save_confirmation->get_ok()->set_text(TTR("Save & Reload"));
+							save_confirmation->set_text(TTR("Save changes to the following scene(s) before reloading?") + unsaved_scenes);
+						} else {
+							save_confirmation->get_ok()->set_text(TTR("Save & Quit"));
+							save_confirmation->set_text((p_option == FILE_QUIT ? TTR("Save changes to the following scene(s) before quitting?") : TTR("Save changes to the following scene(s) before opening Project Manager?")) + unsaved_scenes);
+						}
 						save_confirmation->popup_centered_minsize();
 					}
 				}
@@ -2988,6 +3009,7 @@ void EditorNode::_discard_changes(const String &p_str) {
 	switch (current_option) {
 		case FILE_CLOSE_ALL_AND_QUIT:
 		case FILE_CLOSE_ALL_AND_RUN_PROJECT_MANAGER:
+		case FILE_CLOSE_ALL_AND_RELOAD_CURRENT_PROJECT:
 		case FILE_CLOSE:
 		case FILE_CLOSE_OTHERS:
 		case FILE_CLOSE_RIGHT:
@@ -3004,13 +3026,19 @@ void EditorNode::_discard_changes(const String &p_str) {
 			_remove_scene(tab_closing);
 			_update_scene_tabs();
 
-			if (current_option == FILE_CLOSE_ALL_AND_QUIT || current_option == FILE_CLOSE_ALL_AND_RUN_PROJECT_MANAGER) {
+			if (current_option == FILE_CLOSE_ALL_AND_QUIT || current_option == FILE_CLOSE_ALL_AND_RUN_PROJECT_MANAGER || current_option == FILE_CLOSE_ALL_AND_RELOAD_CURRENT_PROJECT) {
 				// If restore tabs is enabled, reopen the scene that has just been closed, so it's remembered properly.
 				if (bool(EDITOR_GET("interface/scene_tabs/restore_scenes_on_load"))) {
 					_menu_option_confirm(FILE_OPEN_PREV, true);
 				}
 				if (_next_unsaved_scene(false) == -1) {
-					current_option = current_option == FILE_CLOSE_ALL_AND_QUIT ? FILE_QUIT : RUN_PROJECT_MANAGER;
+					if (current_option == FILE_CLOSE_ALL_AND_RELOAD_CURRENT_PROJECT) {
+						current_option = RELOAD_CURRENT_PROJECT;
+					} else if (current_option == FILE_CLOSE_ALL_AND_QUIT) {
+						current_option = FILE_QUIT;
+					} else {
+						current_option = RUN_PROJECT_MANAGER;
+					}
 					_discard_changes();
 				} else {
 					_menu_option_confirm(current_option, false);
@@ -3047,6 +3075,9 @@ void EditorNode::_discard_changes(const String &p_str) {
 			OS::ProcessID pid = 0;
 			Error err = OS::get_singleton()->execute(exec, args, false, &pid);
 			ERR_FAIL_COND(err);
+		} break;
+		case RELOAD_CURRENT_PROJECT: {
+			restart_editor();
 		} break;
 	}
 }
@@ -4052,25 +4083,29 @@ Ref<Texture> EditorNode::get_class_icon(const String &p_class, const String &p_f
 	ERR_FAIL_COND_V_MSG(p_class.empty(), nullptr, "Class name cannot be empty.");
 
 	if (ScriptServer::is_global_class(p_class)) {
-		Ref<ImageTexture> icon;
-		Ref<Script> script = EditorNode::get_editor_data().script_class_load_script(p_class);
-		StringName name = p_class;
+		String class_name = p_class;
+		Ref<Script> script = EditorNode::get_editor_data().script_class_load_script(class_name);
 
-		while (script.is_valid()) {
-			name = EditorNode::get_editor_data().script_class_get_name(script->get_path());
-			String current_icon_path = EditorNode::get_editor_data().script_class_get_icon_path(name);
-			icon = _load_custom_class_icon(current_icon_path);
+		while (true) {
+			String icon_path = EditorNode::get_editor_data().script_class_get_icon_path(class_name);
+			Ref<Texture> icon = _load_custom_class_icon(icon_path);
 			if (icon.is_valid()) {
-				return icon;
+				return icon; // Current global class has icon.
 			}
-			script = script->get_base_script();
-		}
 
-		if (icon.is_null()) {
-			icon = gui_base->get_icon(ScriptServer::get_global_class_base(name), "EditorIcons");
+			// Find next global class along the inheritance chain.
+			do {
+				Ref<Script> base_script = script->get_base_script();
+				if (base_script.is_null()) {
+					// We've reached a native class, use its icon.
+					String base_type;
+					script->get_language()->get_global_class_name(script->get_path(), &base_type);
+					return gui_base->get_icon(base_type, "EditorIcons");
+				}
+				script = base_script;
+				class_name = EditorNode::get_editor_data().script_class_get_name(script->get_path());
+			} while (class_name.empty());
 		}
-
-		return icon;
 	}
 
 	const Map<String, Vector<EditorData::CustomType>> &p_map = EditorNode::get_editor_data().get_custom_types();
@@ -5390,7 +5425,7 @@ void EditorNode::_add_dropped_files_recursive(const Vector<String> &p_files, Str
 }
 
 void EditorNode::_file_access_close_error_notify(const String &p_str) {
-	add_io_error("Unable to write to file '" + p_str + "', file in use, locked or lacking permissions.");
+	add_io_error(vformat(TTR("Unable to write to file '%s', file in use, locked or lacking permissions."), p_str));
 }
 
 void EditorNode::reload_scene(const String &p_path) {
@@ -5576,6 +5611,14 @@ void EditorNode::_resource_loaded(RES p_resource, const String &p_path) {
 	singleton->editor_folding.load_resource_folding(p_resource, p_path);
 }
 
+void EditorNode::_project_settings_changed() {
+	SceneTree *tree = get_tree();
+	tree->set_debug_collisions_color(GLOBAL_GET("debug/shapes/collision/shape_color"));
+	tree->set_debug_collision_contact_color(GLOBAL_GET("debug/shapes/collision/contact_color"));
+	tree->set_debug_navigation_color(GLOBAL_GET("debug/shapes/navigation/geometry_color"));
+	tree->set_debug_navigation_disabled_color(GLOBAL_GET("debug/shapes/navigation/disabled_geometry_color"));
+}
+
 void EditorNode::_feature_profile_changed() {
 	Ref<EditorFeatureProfile> profile = feature_profile_manager->get_current_profile();
 	TabContainer *import_tabs = cast_to<TabContainer>(import_dock->get_parent());
@@ -5707,6 +5750,7 @@ void EditorNode::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_reload_modified_scenes"), &EditorNode::_reload_modified_scenes);
 	ClassDB::bind_method(D_METHOD("_reload_project_settings"), &EditorNode::_reload_project_settings);
 	ClassDB::bind_method(D_METHOD("_resave_scenes"), &EditorNode::_resave_scenes);
+	ClassDB::bind_method(D_METHOD("_project_settings_changed"), &EditorNode::_project_settings_changed);
 	ClassDB::bind_method(D_METHOD("_feature_profile_changed"), &EditorNode::_feature_profile_changed);
 
 	ClassDB::bind_method("_screenshot", &EditorNode::_screenshot);
@@ -5792,6 +5836,9 @@ int EditorNode::execute_and_show_output(const String &p_title, const String &p_p
 }
 
 EditorNode::EditorNode() {
+	EditorPropertyNameProcessor *epnp = memnew(EditorPropertyNameProcessor);
+	add_child(epnp);
+
 	Input::get_singleton()->set_use_accumulated_input(true);
 	Resource::_get_local_scene_func = _resource_get_edited_scene;
 
@@ -5984,16 +6031,17 @@ EditorNode::EditorNode() {
 	EDITOR_DEF("run/output/always_clear_output_on_play", true);
 	EDITOR_DEF("run/output/always_open_output_on_play", true);
 	EDITOR_DEF("run/output/always_close_output_on_stop", true);
-	EDITOR_DEF("run/auto_save/save_before_running", true);
 	EDITOR_DEF("interface/editor/save_on_focus_loss", false);
 	EDITOR_DEF_RST("interface/editor/save_each_scene_on_quit", true);
 	EDITOR_DEF("interface/editor/quit_confirmation", true);
 	EDITOR_DEF("interface/editor/show_update_spinner", false);
 	EDITOR_DEF("interface/editor/update_continuously", false);
 	EDITOR_DEF("interface/editor/update_vital_only", false);
+	EDITOR_DEF("interface/editor/localize_settings", true);
 	EDITOR_DEF_RST("interface/scene_tabs/restore_scenes_on_load", false);
 	EDITOR_DEF_RST("interface/scene_tabs/show_thumbnail_on_hover", true);
-	EDITOR_DEF_RST("interface/inspector/capitalize_properties", true);
+	EDITOR_DEF_RST("interface/inspector/default_property_name_style", EditorPropertyNameProcessor::STYLE_CAPITALIZED);
+	EditorSettings::get_singleton()->add_property_hint(PropertyInfo(Variant::INT, "interface/inspector/default_property_name_style", PROPERTY_HINT_ENUM, "Raw,Capitalized,Localized"));
 	EDITOR_DEF_RST("interface/inspector/default_float_step", 0.001);
 	EditorSettings::get_singleton()->add_property_hint(PropertyInfo(Variant::REAL, "interface/inspector/default_float_step", PROPERTY_HINT_RANGE, "0,1,0"));
 	EDITOR_DEF_RST("interface/inspector/disable_folding", false);
@@ -6004,7 +6052,6 @@ EditorNode::EditorNode() {
 	EDITOR_DEF("interface/inspector/resources_to_open_in_new_inspector", "Script,MeshLibrary,TileSet");
 	EDITOR_DEF("interface/inspector/default_color_picker_mode", 0);
 	EditorSettings::get_singleton()->add_property_hint(PropertyInfo(Variant::INT, "interface/inspector/default_color_picker_mode", PROPERTY_HINT_ENUM, "RGB,HSV,RAW", PROPERTY_USAGE_DEFAULT));
-	EDITOR_DEF("run/auto_save/save_before_running", true);
 	EDITOR_DEF("version_control/username", "");
 	EDITOR_DEF("version_control/ssh_public_key_path", "");
 	EditorSettings::get_singleton()->add_property_hint(PropertyInfo(Variant::STRING, "version_control/ssh_public_key_path", PROPERTY_HINT_GLOBAL_FILE));
@@ -6291,6 +6338,7 @@ EditorNode::EditorNode() {
 
 	project_settings = memnew(ProjectSettingsEditor(&editor_data));
 	gui_base->add_child(project_settings);
+	ProjectSettings::get_singleton()->connect("project_settings_changed", this, "_project_settings_changed");
 
 	run_settings_dialog = memnew(RunSettingsDialog);
 	gui_base->add_child(run_settings_dialog);
@@ -6398,7 +6446,7 @@ EditorNode::EditorNode() {
 	tool_menu->add_item(TTR("Orphan Resource Explorer..."), TOOLS_ORPHAN_RESOURCES);
 
 	p->add_separator();
-	p->add_shortcut(ED_SHORTCUT("editor/reload_current_project", TTR("Reload Current Project")), RUN_RELOAD_CURRENT_PROJECT);
+	p->add_shortcut(ED_SHORTCUT("editor/reload_current_project", TTR("Reload Current Project")), RELOAD_CURRENT_PROJECT);
 #ifdef OSX_ENABLED
 	p->add_shortcut(ED_SHORTCUT("editor/quit_to_project_list", TTR("Quit to Project List"), KEY_MASK_SHIFT + KEY_MASK_ALT + KEY_Q), RUN_PROJECT_MANAGER, true);
 #else
@@ -6988,6 +7036,8 @@ EditorNode::EditorNode() {
 	add_editor_plugin(memnew(MeshEditorPlugin(this)));
 	add_editor_plugin(memnew(MaterialEditorPlugin(this)));
 	add_editor_plugin(memnew(ViewportPreviewEditorPlugin(this)));
+	add_editor_plugin(memnew(GradientTexture2DEditorPlugin(this)));
+	add_editor_plugin(memnew(RayCast2DEditorPlugin(this)));
 
 	for (int i = 0; i < EditorPlugins::get_plugin_count(); i++) {
 		add_editor_plugin(EditorPlugins::create(i, this));

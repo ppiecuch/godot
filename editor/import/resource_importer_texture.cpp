@@ -159,6 +159,11 @@ bool ResourceImporterTexture::get_option_visibility(const String &p_option, cons
 		if (compress_mode != COMPRESS_VIDEO_RAM) {
 			return false;
 		}
+	} else if (p_option == "compress/normal_map") {
+		int compress_mode = int(p_options["compress/mode"]);
+		if (compress_mode == COMPRESS_LOSSLESS) {
+			return false;
+		}
 	} else if (p_option == "compress/bptc_ldr") {
 		int compress_mode = int(p_options["compress/mode"]);
 		if (compress_mode != COMPRESS_VIDEO_RAM) {
@@ -177,13 +182,13 @@ int ResourceImporterTexture::get_preset_count() const {
 }
 String ResourceImporterTexture::get_preset_name(int p_idx) const {
 	static const char *preset_names[] = {
-		"2D, Detect 3D",
-		"2D",
-		"2D Pixel",
-		"3D"
+		TTRC("2D, Detect 3D"),
+		TTRC("2D"),
+		TTRC("2D Pixel"),
+		TTRC("3D"),
 	};
 
-	return preset_names[p_idx];
+	return TTRGET(preset_names[p_idx]);
 }
 
 void ResourceImporterTexture::get_import_options(List<ImportOption> *r_options, int p_preset) const {
@@ -560,7 +565,7 @@ Error ResourceImporterTexture::import(const String &p_source_file, const String 
 		}
 
 		if (!ok_on_pc) {
-			EditorNode::add_io_error("Warning, no suitable PC VRAM compression enabled in Project Settings. This texture will not display correctly on PC.");
+			EditorNode::add_io_error(TTR("Warning, no suitable PC VRAM compression enabled in Project Settings. This texture will not display correctly on PC."));
 		}
 	} else {
 		//import normally

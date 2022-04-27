@@ -489,6 +489,7 @@ Label::WordCache Label::calculate_word_cache(const Ref<Font> &font, const String
 	real_t line_width = 0;
 	int space_count = 0;
 	real_t space_width = font->get_char_size(' ').width + horizontal_spacing;
+	bool was_separatable = false;
 
 	WordList *root = nullptr, *last = nullptr;
 
@@ -513,8 +514,11 @@ Label::WordCache Label::calculate_word_cache(const Ref<Font> &font, const String
 		bool insert_newline = false;
 		real_t char_width = 0;
 
-		if (current < 33) {
-			if (current_word_size > 0) {
+		bool separation_changed = i > 0 && was_separatable != separatable;
+		was_separatable = separatable;
+
+		if (current < 33) { // Control characters and space.
+			if (current_word_size > 0) { // These characters always create a word-break.
 				WordList *wc = memnew(WordList);
 				if (root) {
 					last->next = wc;
@@ -532,7 +536,7 @@ Label::WordCache Label::calculate_word_cache(const Ref<Font> &font, const String
 				current_word_size = 0;
 				space_count = 0;
 			} else if ((i == xl_text.length() || current == '\n') && last != nullptr && space_count != 0) {
-				//in case there are trailing white spaces we add a placeholder word cache with just the spaces
+				// In case there are trailing white spaces we add a placeholder word cache with just the spaces.
 				WordList *wc = memnew(WordList);
 				if (root) {
 					last->next = wc;
@@ -555,10 +559,14 @@ Label::WordCache Label::calculate_word_cache(const Ref<Font> &font, const String
 				cache.total_char_cache++;
 			}
 
-			line_pos++;
-
-			if (i < label_text.length() && label_text[i] == ' ') {
-				if (line_width > 0 || last == nullptr || last->char_pos != WordList::CHAR_WRAPLINE) {
+			if (i < xl_text.length() && xl_text[i] == ' ') {
+				if (line_width == 0) {
+					if (current_word_size == 0) {
+						word_pos = i;
+					}
+					current_word_size += space_width;
+					line_width += space_width;
+				} else if (line_width > 0 || last == nullptr || last->char_pos != WordList::CHAR_WRAPLINE) {
 					space_count++;
 					line_width += space_width;
 				} else {
@@ -566,8 +574,24 @@ Label::WordCache Label::calculate_word_cache(const Ref<Font> &font, const String
 				}
 			}
 
-		} else {
-			// latin characters
+		} else { // Characters with graphical representation.
+			// Word-break on CJK & non-CJK edge.
+			if (separation_changed && current_word_size > 0) {
+				WordList *wc = memnew(WordList);
+				if (root) {
+					last->next = wc;
+				} else {
+					root = wc;
+				}
+				last = wc;
+
+				wc->pixel_width = current_word_size;
+				wc->char_pos = word_pos;
+				wc->word_len = i - word_pos;
+				wc->space_count = space_count;
+				current_word_size = 0;
+				space_count = 0;
+			}
 			if (current_word_size == 0) {
 				word_pos = i;
 			}

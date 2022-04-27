@@ -397,8 +397,10 @@ public:
 	void set_custom_shader_code(uint32_t p_code_id, const String &p_vertex, const String &p_vertex_globals, const String &p_fragment, const String &p_light, const String &p_fragment_globals, const String &p_uniforms, const Vector<StringName> &p_texture_uniforms, const Vector<CharString> &p_custom_defines, AsyncMode p_async_mode);
 	void set_custom_shader(uint32_t p_code_id);
 	void free_custom_shader(uint32_t p_code_id);
+	bool is_custom_code_ready_for_render(uint32_t p_code_id);
 
 	uint32_t get_version() const { return new_conditional_version.version; }
+	bool is_version_ubershader() const { return (new_conditional_version.version & VersionKey::UBERSHADER_FLAG); }
 	_FORCE_INLINE_ bool is_version_valid() const { return version && version->compile_status == Version::COMPILE_STATUS_OK; }
 
 	virtual void init() = 0;

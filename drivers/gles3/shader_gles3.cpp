@@ -123,7 +123,7 @@ bool ShaderGLES3::_bind(bool p_binding_fallback) {
 
 #ifdef DEBUG_ENABLED
 	if (ready) {
-		if (VS::get_singleton()->is_force_shader_fallbacks_enabled() && !must_be_ready_now) {
+		if (VS::get_singleton()->is_force_shader_fallbacks_enabled() && !must_be_ready_now && get_ubershader_flags_uniform() != -1) {
 			ready = false;
 		}
 	}
@@ -148,6 +148,34 @@ bool ShaderGLES3::_bind(bool p_binding_fallback) {
 	}
 }
 
+bool ShaderGLES3::is_custom_code_ready_for_render(uint32_t p_code_id) {
+	if (p_code_id == 0) {
+		return true;
+	}
+	if (!is_async_compilation_supported() || get_ubershader_flags_uniform() == -1) {
+		return true;
+	}
+
+	CustomCode *cc = custom_code_map.getptr(p_code_id);
+	ERR_FAIL_COND_V(!cc, false);
+	if (cc->async_mode == ASYNC_MODE_HIDDEN) {
+#ifdef DEBUG_ENABLED
+		if (VS::get_singleton()->is_force_shader_fallbacks_enabled()) {
+			return false;
+		}
+#endif
+		VersionKey effective_version;
+		effective_version.version = new_conditional_version.version;
+		effective_version.code_version = p_code_id;
+		Version *v = version_map.getptr(effective_version);
+		if (!v || cc->version != v->code_version || v->compile_status != Version::COMPILE_STATUS_OK) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
 bool ShaderGLES3::_bind_ubershader() {
 #ifdef DEBUG_ENABLED
 	ERR_FAIL_COND_V(!is_async_compilation_supported(), false);
@@ -160,7 +188,7 @@ bool ShaderGLES3::_bind_ubershader() {
 	ERR_FAIL_COND_V(conditionals_uniform == -1, false);
 #endif
 	new_conditional_version.version &= ~VersionKey::UBERSHADER_FLAG;
-	glUniform1i(conditionals_uniform, new_conditional_version.version);
+	glUniform1ui(conditionals_uniform, new_conditional_version.version);
 	return bound;
 }
 
@@ -454,11 +482,11 @@ static CharString _prepare_ubershader_chunk(const CharString &p_chunk) {
 			} else if (l.begins_with("#ifdef")) {
 				Vector<String> pieces = l.split_spaces();
 				CRASH_COND(pieces.size() != 2);
-				s += "if ((ubershader_flags & FLAG_" + pieces[1] + ") != 0) {\n";
+				s += "if ((ubershader_flags & FLAG_" + pieces[1] + ") != 0u) {\n";
 			} else if (l.begins_with("#ifndef")) {
 				Vector<String> pieces = l.split_spaces();
 				CRASH_COND(pieces.size() != 2);
-				s += "if ((ubershader_flags & FLAG_" + pieces[1] + ") == 0) {\n";
+				s += "if ((ubershader_flags & FLAG_" + pieces[1] + ") == 0u) {\n";
 			} else {
 				CRASH_NOW_MSG("The shader template is using too complex syntax in a line marked with ubershader-runtime.");
 			}
@@ -532,7 +560,7 @@ ShaderGLES3::Version *ShaderGLES3::get_current_version(bool &r_async_forbidden) 
 	if (build_ubershader) {
 		strings_common.push_back("#define IS_UBERSHADER\n");
 		for (int i = 0; i < conditional_count; i++) {
-			String s = vformat("#define FLAG_%s (1 << %d)\n", String(conditional_defines[i]).strip_edges().trim_prefix("#define "), i);
+			String s = vformat("#define FLAG_%s (1u << %du)\n", String(conditional_defines[i]).strip_edges().trim_prefix("#define "), i);
 			CharString cs = s.ascii();
 			flag_macros.push_back(cs);
 			strings_common.push_back(cs.ptr());

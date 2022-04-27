@@ -54,8 +54,6 @@ class VisualServerWrapMT : public VisualServer {
 	SafeNumeric<uint64_t> draw_pending;
 	void thread_draw(bool p_swap_buffers, double frame_step);
 	void thread_flush();
-	void thread_scenario_tick(RID p_scenario);
-	void thread_scenario_pre_draw(RID p_scenario, bool p_will_draw);
 
 	void thread_exit();
 
@@ -376,7 +374,6 @@ public:
 	/* CAMERA API */
 
 	FUNCRID(camera)
-	FUNC2(camera_set_scenario, RID, RID)
 	FUNC4(camera_set_perspective, RID, float, float, float)
 	FUNC4(camera_set_orthogonal, RID, float, float, float)
 	FUNC5(camera_set_frustum, RID, float, Vector2, float, float)
@@ -470,15 +467,21 @@ public:
 	FUNC7(environment_set_fog_depth, RID, bool, float, float, float, bool, float)
 	FUNC5(environment_set_fog_height, RID, bool, float, float, float)
 
+	/* INTERPOLATION API */
+
+	FUNC1(set_physics_interpolation_enabled, bool)
+
+	/* SCENARIO API */
+
 	FUNCRID(scenario)
 
 	FUNC2(scenario_set_debug, RID, ScenarioDebugMode)
 	FUNC2(scenario_set_environment, RID, RID)
 	FUNC3(scenario_set_reflection_atlas_size, RID, int, int)
 	FUNC2(scenario_set_fallback_environment, RID, RID)
-	FUNC2(scenario_set_physics_interpolation_enabled, RID, bool)
 
 	/* INSTANCING API */
+
 	FUNCRID(instance)
 
 	FUNC2(instance_set_base, RID, RID)
@@ -500,7 +503,8 @@ public:
 
 	FUNC2(instance_set_extra_visibility_margin, RID, real_t)
 
-	// Portals
+	/* PORTALS API */
+
 	FUNC2(instance_set_portal_mode, RID, InstancePortalMode)
 
 	FUNCRID(ghost)
@@ -513,13 +517,15 @@ public:
 	FUNC4(portal_link, RID, RID, RID, bool)
 	FUNC2(portal_set_active, RID, bool)
 
-	// Roomgroups
+	/* ROOMGROUPS API */
+
 	FUNCRID(roomgroup)
 	FUNC2(roomgroup_prepare, RID, ObjectID)
 	FUNC2(roomgroup_set_scenario, RID, RID)
 	FUNC2(roomgroup_add_room, RID, RID)
 
-	// Occluders
+	/* OCCLUDERS API */
+
 	FUNCRID(occluder_instance)
 	FUNC2(occluder_instance_set_scenario, RID, RID)
 	FUNC2(occluder_instance_link_resource, RID, RID)
@@ -533,7 +539,8 @@ public:
 	FUNC1(set_use_occlusion_culling, bool)
 	FUNC1RC(Geometry::MeshData, occlusion_debug_get_current_polys, RID)
 
-	// Rooms
+	/* ROOMS API */
+
 	FUNCRID(room)
 	FUNC2(room_set_scenario, RID, RID)
 	FUNC4(room_add_instance, RID, RID, const AABB &, const Vector<Vector3> &)
@@ -676,8 +683,8 @@ public:
 	virtual void finish();
 	virtual void draw(bool p_swap_buffers, double frame_step);
 	virtual void sync();
-	virtual void scenario_tick(RID p_scenario);
-	virtual void scenario_pre_draw(RID p_scenario, bool p_will_draw);
+	FUNC0(tick)
+	FUNC1(pre_draw, bool)
 	FUNC1RC(bool, has_changed, ChangedPriority)
 
 	/* RENDER INFO */
