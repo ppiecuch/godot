@@ -29,6 +29,9 @@
 /*************************************************************************/
 
 #ifdef METAL_ENABLED
-#include "../gles3/shader_gles3.h"
+// clang-format off
 #include "_rename_begin.h"
+#include "../gles3/shader_gles3.h"
+#include "_rename_end.h"
+// clang-format on
 #endif
