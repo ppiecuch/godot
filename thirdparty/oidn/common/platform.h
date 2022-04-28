@@ -24,7 +24,6 @@
   #include <sys/sysctl.h>
 #endif
 
-#include <xmmintrin.h>
 #include <cstdint>
 #include <climits>
 #include <limits>
@@ -36,6 +35,11 @@
 #include <sstream>
 #include <iostream>
 #include <cassert>
+#if defined(__ARM_NEON__) || defined(__ARM_NEON)
+#include "misc/sse2neon.h"
+#else
+#include <xmmintrin.h>
+#endif
 #include "include/OpenImageDenoise/oidn.hpp"
 
 namespace oidn {
