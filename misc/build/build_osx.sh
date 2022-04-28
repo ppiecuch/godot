@@ -55,8 +55,17 @@ if [ -z "$target" ]; then
 	echo_header "*** Error: missing 'taget' info."
 fi
 
-echo_header "*** Building $target editor for macOS ..."
-scons -j$CPU platform=osx $SCONS_FLAGS
+A=$(uname -m)
+
+if [ "${A}" = "x86_64" ]; then
+	if [ "$(sysctl -in sysctl.proc_translated)" = "1" ]; then
+		echo "(Running on Rosetta translation - force building native arm64)"
+		A="arm64"
+	fi
+fi
+
+echo_header "*** Building $target editor for macOS for architecture $A ..."
+scons -j$CPU platform=osx arch=$A $SCONS_FLAGS
 
 if [ -x "$(command -v gcp)" ]; then
 	cp="gcp -u"
@@ -65,20 +74,24 @@ else
 fi
 
 echo_header "*** Packaging app ..."
+rm -rf "$GODOT_DIR/bin/Godot-master.app"
 $cp -rv "$GODOT_DIR/misc/dist/osx_tools.app" "$GODOT_DIR/bin/Godot-master.app"
 mkdir -p "$GODOT_DIR/bin/Godot-master.app/Contents/MacOS"
-$cp -v "$GODOT_DIR/bin/godot.osx.tools.64" "$GODOT_DIR/bin/Godot-master.app/Contents/MacOS/Godot"
+$cp -v "$GODOT_DIR/bin/godot.osx.tools.$A" "$GODOT_DIR/bin/Godot-master.app/Contents/MacOS/Godot"
+$cp -p "$GODOT_DIR/misc/dist/osx/editor.entitlements" "$GODOT_DIR/bin/Godot-master.app/Contents/Resources"
 
 echo_success "*** Finished building editor for macOS."
 
 if [ "$1" == "templates" ]; then
-	echo_header "*** Building 64-bit debug export template for macOS ..."
-	scons -j$CPU platform=osx bits=64 tools=no target=release_debug use_lto=yes $SCONS_FLAGS
 	echo_header "*** Building 64-bit release export template for macOS ..."
-	scons -j$CPU platform=osx bits=64 tools=no target=release use_lto=yes $SCONS_FLAGS
-	strip "$GODOT_DIR/bin/godot.osx.opt.debug.64" "$GODOT_DIR/bin/godot.osx.opt.64"
-	mv "$GODOT_DIR/bin/godot.osx.opt.debug.64" "$TEMPLATES_DIR"
+
+	scons -j$CPU platform=osx arch=x86_64 tools=no target=release use_lto=yes $SCONS_FLAGS
+	scons -j$CPU platform=osx arch=arm64 tools=no target=release use_lto=yes $SCONS_FLAGS
+	strip "$GODOT_DIR/bin/godot.osx.opt.x86_64" "$GODOT_DIR/bin/godot.osx.opt.x86_64.s"
+	strip "$GODOT_DIR/bin/godot.osx.opt.arm64" "$GODOT_DIR/bin/godot.osx.opt.arm64.s"
+	lipo -create bin/godot.osx.tools.x86_64.s bin/godot.osx.tools.arm64.s -output bin/godot.osx.opt.64
 	mv "$GODOT_DIR/bin/godot.osx.opt.64" "$TEMPLATES_DIR"
+	rm "$GODOT_DIR/bin/godot.osx.opt.x86_64" "$GODOT_DIR/bin/godot.osx.opt.arm64" "$GODOT_DIR/bin/godot.osx.opt.x86_64.s" "$GODOT_DIR/bin/godot.osx.opt.arm64.s"
 
 	echo_success "*** Finished building export templates for macOS."
 fi
