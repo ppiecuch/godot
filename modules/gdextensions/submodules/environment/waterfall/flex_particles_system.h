@@ -46,25 +46,32 @@
 #include <vector>
 
 struct flex_particle_options {
+	// @param layer             Layer that particle belongs to
 	// @param pos               The starting position of the particle in the world
 	// @param velocity          The starting velocity of the particle in the world
-	// @param rotation          The starting rotation of the particle in the world
-	// @param rotate_velocity   The starting rotation velocity of the particle in the world
 	// @param radius            The starting radius
 	// @param damping           The damping. Damping causes a particle to lose forces over time
 	//                          it can be thought of as 'air friction', etc
 	// @param alpha             Transparency of particle
-	flex_particle_options(const Vector2 &pos, const Vector2 &velocity, const Vector2 &rotation, const Vector2 &rotate_velocity, real_t radius, real_t damping) :
-			pos(pos), velocity(velocity), rotation(rotation), rotate_velocity(rotate_velocity), radius(radius), damping(damping) {}
+	// @param texture           Drawing texture of the particle
+	flex_particle_options(int layer, const Vector2 &pos, const Vector2 &velocity, real_t radius, real_t damping, real_t alpha, const Vector2 &scale, Ref<Texture> texture = Ref<Texture>()) :
+			layer(layer), pos(pos), velocity(velocity), scale(scale), radius(radius), damping(damping), alpha(alpha), texture(texture) { }
+
+	flex_particle_options(int layer, const Vector2 &pos, const Vector2 &velocity, real_t radius, real_t damping, real_t alpha, Ref<Texture> texture = Ref<Texture>()) :
+			layer(layer), pos(pos), velocity(velocity), scale({1,1}), radius(radius), damping(damping), alpha(alpha), texture(texture) { }
 
 	// these are all left public since this is simply a helper class
+	int layer;
+
 	Vector2 pos;
 	Vector2 velocity;
-	Vector2 rotation;
-	Vector2 rotate_velocity;
+	Vector2 scale;
 
 	real_t radius;
 	real_t damping;
+	real_t alpha;
+
+	Ref<Texture> texture;
 };
 
 class flex_particle {
@@ -76,19 +83,24 @@ class flex_particle {
 
 public:
 	// left public for easy changing
+	int layer;
+
 	Vector2 position;
 	Vector2 velocity;
 	Vector2 acceleration;
-
-	Vector2 rotation;
-	Vector2 rotate_velocity;
+	Vector2 scale;
 
 	real_t radius;
 	real_t damping;
 	real_t mass;
-	real_t alpha, alpha_damping;
+	real_t alpha;
 
 	Ref<Texture> texture;
+
+	// progress changes:
+	Vector2 _progress;
+	real_t _progress_alpha;
+	Vector2 _progress_scale;
 
 	flex_particle &operator=(const flex_particle &p);
 
@@ -104,7 +116,7 @@ public:
 	// Draw this particle and offset its position with `offset`.
 	// This will only show a black circle with an inner white
 	// circle of size radius.
-	void draw(CanvasItem *canvas, real_t progress, const Vector2 &offset);
+	void draw(CanvasItem *canvas, const Vector2 &offset, bool debug = false);
 
 	void set_unique_id(unsigned long id) { unique_id = id; }
 	unsigned long get_unique_id() const { return unique_id; }
@@ -202,7 +214,7 @@ public:
 	//
 	// @param crop_section   If passed only this section of the vector field will be drawn
 	// @param offset         Offset each drawing by adding value
-	void draw(CanvasItem *canvas, const Rect2 &crop_section = Rect2(), const Vector2 &offset = Vector2());
+	void draw(CanvasItem *canvas, const Vector2 &offset = Vector2());
 
 	// Pulls the value of the closest point in the vector field.
 	// This takes into account the fieldOffset, fieldShift, and scale if any of them are set
@@ -336,6 +348,12 @@ class flex_particle_system {
 	unsigned long _next_id; // for unique_ids
 	unsigned int _max_particles; // optional max particles
 	CanvasItem *_canvas; // drawing canvas
+	struct LayerConf {
+		bool visible = true;
+		Vector2 alpha_progress_start{1,1}; real_t alpha_change = 1;
+		Vector2 scale_progress_start{1,1}, scale_change{1,1};
+	};
+	std::vector<LayerConf> layer_conf;
 
 public:
 	// min mass for the particle, to prevent particles from having a
@@ -352,7 +370,7 @@ public:
 		TOP_WALL,
 		RIGHT_WALL,
 		BOTTOM_WALL,
-		LEFT_WALL
+		LEFT_WALL,
 	};
 
 	// sets internal options:
@@ -366,7 +384,7 @@ public:
 		HORIZONTAL_WRAP = (1u << 1),
 		VECTOR_FIELD = (1u << 2),
 		VECTOR_FIELD_DRAW = (1u << 3),
-		DETECT_COLLISIONS = (1u << 4)
+		DETECT_COLLISIONS = (1u << 4),
 	};
 
 	// Configure the particle system with given world box.
@@ -377,10 +395,9 @@ public:
 	// that are eneabled, etc.
 	void update(const Vector2 &global_velocity = Vector2(), const Vector2 &global_acceleration = Vector2());
 
-	// Draws the particles inside the given window_stencil that
-	// might be rotated of `rotate` degree. Offset each particle by
+	// Draws the particles. Offset each particle by
 	// adding `offset`.
-	void draw(const Rect2 &window_stencil, const Vector2 &offset = Vector2(), real_t rotate = 0.0);
+	void draw(const Vector2 &offset = Vector2(), bool debug = false);
 
 	// Inserts an flex_particle into the system.
 	// NOTE: no memory management is done by this system
@@ -447,13 +464,14 @@ public:
 	// the addition of a new particle will result in the deletion of oldest particle (lowest unique_id)
 	void set_max_particles(unsigned int max_particles) { _max_particles = max_particles; }
 
-	// Checks to see if the particle falls within our cropping range
-	//
-	// @param particle      particle to test
-	// @param ws            the cropping rectangle
-	// @param rotation      rotation of the cropping rectangle
-	// @return              true if the particle should be drawn, false otherwise
-	bool should_draw(const flex_particle *particle, const Rect2 &ws, real_t rotation);
+	// Destination alpha after progress_from (in x or y direction) is reached.
+	void set_alpha_change(int layer, const Vector2 &progress_from, real_t alpha_change);
+
+	// Destination particle scale after progress_from (in x or y direction) is reached.
+	void set_scale_change(int layer, const Vector2 &progress_from, const Vector2 &scale_change);
+
+	// Get reference to layer configuration (for direct modifications)
+	LayerConf &get_layer_conf(int layer) { DEV_ASSERT(layer < layer_conf.size()); return layer_conf[layer]; }
 
 	flex_particle_system(CanvasItem *canvas);
 };

@@ -78,7 +78,9 @@ rm -rf "$GODOT_DIR/bin/Godot-master.app"
 $cp -rv "$GODOT_DIR/misc/dist/osx_tools.app" "$GODOT_DIR/bin/Godot-master.app"
 mkdir -p "$GODOT_DIR/bin/Godot-master.app/Contents/MacOS"
 $cp -v "$GODOT_DIR/bin/godot.osx.tools.$A" "$GODOT_DIR/bin/Godot-master.app/Contents/MacOS/Godot"
-$cp -p "$GODOT_DIR/misc/dist/osx/editor.entitlements" "$GODOT_DIR/bin/Godot-master.app/Contents/Resources"
+
+echo_header "*** Signing executable for debugger ..."
+codesign --verbose --sign - --timestamp --entitlements "$GODOT_DIR/misc/dist/osx/editor.entitlements" "$GODOT_DIR/bin/Godot-master.app"
 
 echo_success "*** Finished building editor for macOS."
 

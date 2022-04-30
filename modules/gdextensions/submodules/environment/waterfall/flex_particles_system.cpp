@@ -46,23 +46,30 @@ flex_particle::flex_particle(const Vector2 &pos) {
 
 flex_particle::flex_particle(const flex_particle_options &opts) {
 	set_defaults();
+	layer = opts.layer;
 	position = opts.pos;
-	damping = opts.damping;
-	radius = opts.radius;
-	rotation = opts.rotation;
 	velocity = opts.velocity;
-	rotate_velocity = opts.rotate_velocity;
+	radius = opts.radius;
+	damping = opts.damping;
+	alpha = opts.alpha;
+	scale = opts.scale;
+	texture = opts.texture;
 }
 
 void flex_particle::set_defaults() {
+	layer = 0;
 	radius = 2;
-	alpha = 1;
-	alpha_damping = 1;
 	damping = 1;
 	mass = 1;
+	alpha = 1;
+	scale = Vector2(1, 1);
 	age = 0;
 	start_second = OS::get_singleton()->get_ticks_msec() * 1000;
 	unique_id = 0;
+	texture = Ref<Texture>();
+	_progress = Vector2();
+	_progress_alpha = 1;
+	_progress_scale = Vector2(1, 1);
 }
 
 void flex_particle::update(const Vector2 &global_velocity, const Vector2 &global_acceleration) {
@@ -72,28 +79,47 @@ void flex_particle::update(const Vector2 &global_velocity, const Vector2 &global
 	velocity += acceleration + global_acceleration;
 	acceleration *= 0;
 
-	rotation += rotate_velocity;
 	if (damping != 1) {
 		velocity *= damping;
-		rotate_velocity *= damping;
 	}
 	position += velocity + global_velocity;
-	if (alpha_damping != 1) {
-		alpha *= alpha_damping;
-	}
 }
 
-void flex_particle::draw(CanvasItem *canvas, real_t progress, const Vector2 &offset) {
+void flex_particle::draw(CanvasItem *canvas, const Vector2 &offset, bool debug) {
 	if (texture.is_valid()) {
 		Size2 texture_size = texture->get_size();
 		const real_t aspect = texture_size.height / texture_size.width;
-		texture_size = Size2(2 * radius, 2 * radius * aspect);
+		texture_size = _progress_scale * scale * Size2(2 * radius, 2 * radius * aspect);
 		// scale texture size to radius
-		Rect2 dest_rect = Rect2(position + -texture_size / 2 + offset, texture_size);
-		canvas->draw_texture_rect(texture, dest_rect);
+		const Rect2 dest_rect(position - texture_size / 2 + offset, texture_size);
+		canvas->draw_texture_rect(texture, dest_rect, false, Color(1, 1, 1, alpha * _progress_alpha));
+		if (debug) {
+			canvas->draw_rect(dest_rect, Color(0.9, 0.25, 0.25, 0.7), false);
+		}
 	} else {
-		canvas->draw_circle(position + offset, radius, Color(0.9, 0.9, 0.9, alpha));
-		canvas->draw_circle(position + offset, radius * .6, Color(0.25, 0.25, 0.25, alpha));
+		auto _ellipse = [&](real_t width, real_t height, real_t max_error) {
+			ERR_FAIL_COND_V(width < 0.0, Vector<Point2>());
+			ERR_FAIL_COND_V(height < 0.0, Vector<Point2>());
+			ERR_FAIL_COND_V(max_error < 0.0, Vector<Point2>());
+
+			const real_t f = MAX(width, height);
+			int vertex_count = static_cast<int>(Math::ceil(Math_PI / Math::acos(1.0 - max_error / f)));
+			vertex_count = MAX(vertex_count, 3);
+
+			const Vector2 _offset = position + offset - Size2(width/2, height/2);
+			Vector<Point2> vertices;
+			for (int i = 0; i < vertex_count; ++i) {
+				const real_t t = (Math_TAU / vertex_count) * i;
+				const Vector2 v = Vector2(width * Math::cos(t), height * Math::sin(t));
+				vertices.push_back(_offset + v);
+			}
+			return vertices;
+		};
+
+		Size2 rect_size = _progress_scale * scale * Size2(2 * radius, 2 * radius);
+		Vector<Point2> points = _ellipse(rect_size.width, rect_size.height, 0.25);
+		canvas->draw_polyline(points, Color(0.9, 0.9, 0.9, alpha * _progress_alpha), 1);
+		canvas->draw_circle(position + offset, radius * .4, Color(0.1 * layer, 0.25, 0.25, alpha * _progress_alpha));
 	}
 }
 
@@ -117,12 +143,14 @@ void flex_particle::repel(const flex_particle &b) {
 }
 
 flex_particle &flex_particle::operator=(const flex_particle &p) {
+	layer = p.layer;
 	damping = p.damping;
 	radius = p.radius;
 	position = p.position;
-	rotation = p.rotation;
 	velocity = p.velocity;
-	rotate_velocity = p.rotate_velocity;
+	alpha = p.alpha;
+	scale = p.scale;
+	texture = p.texture;
 
 	return *this;
 }
@@ -280,26 +308,18 @@ void flex_vector_field::apply_sin_map(real_t x_repeat, real_t y_repeat, real_t x
 	_sin_power_value = sin_power_value;
 }
 
-void flex_vector_field::draw(CanvasItem *canvas, const Rect2 &crop_section, const Vector2 &offset) {
+void flex_vector_field::draw(CanvasItem *canvas, const Vector2 &offset) {
 	const real_t scaled_x = _external_width / _field_width;
 	const real_t scaled_y = _external_height / _field_height;
 
 	int start_xx, start_yy;
 	int end_xx, end_yy;
 
-	if (crop_section.size.width == 0 || crop_section.size.height == 0) {
-		start_xx = _external_offset.x / scaled_x;
-		start_yy = _external_offset.y / scaled_y;
+	start_xx = _external_offset.x / scaled_x;
+	start_yy = _external_offset.y / scaled_y;
 
-		end_xx = _field_width / scaled_x;
-		end_yy = _field_height / scaled_y;
-	} else {
-		start_xx = (crop_section.position.x + _external_offset.x) / scaled_x;
-		start_yy = (crop_section.position.y + _external_offset.y) / scaled_y;
-
-		end_xx = start_xx + crop_section.size.width / scaled_x;
-		end_yy = start_yy + crop_section.size.height / scaled_y;
-	}
+	end_xx = _field_width / scaled_x;
+	end_yy = _field_height / scaled_y;
 
 	start_xx = MAX(0, start_xx);
 	start_yy = MAX(0, start_yy);
@@ -374,12 +394,14 @@ flex_particle_system::flex_particle_system(CanvasItem *canvas) {
 	_options = 0;
 	_next_id = 0;
 
+	_max_particles = 0;
+
 	for (int i = 0; i < SUPPORTED_WALL_CALLBACKS; ++i) {
 		_wall_callback_override[i] = false;
 		_wall_callbacks[i] = nullptr;
 	}
 
-	_max_particles = 0;
+	layer_conf.resize(8);
 }
 
 void flex_particle_system::setup_world(const Size2 &world_box) {
@@ -468,12 +490,32 @@ void flex_particle_system::add_force(const Vector2 &force) {
 	}
 }
 
+void flex_particle_system::set_alpha_change(int layer, const Vector2 &progress_from, real_t alpha_change) {
+	ERR_FAIL_COND(progress_from >= 1 || progress_from < 0);
+	if (layer >= layer_conf.size()) {
+		layer_conf.resize(layer);
+	}
+	layer_conf[layer].alpha_progress_start = progress_from;
+	layer_conf[layer].alpha_change = alpha_change;
+}
+
+void flex_particle_system::set_scale_change(int layer, const Vector2 &progress_from, const Vector2 &scale_change) {
+	ERR_FAIL_COND(progress_from >= 1 || progress_from < 0);
+	if (layer >= layer_conf.size()) {
+		layer_conf.resize(layer);
+	}
+	layer_conf[layer].scale_progress_start = progress_from;
+	layer_conf[layer].scale_change = scale_change;
+}
+
+
 void flex_particle_system::update(const Vector2 &global_velocity, const Vector2 &global_acceleration) {
 	MutexLock lock(_update_lock);
 
 	for (Iterator it = _particles.begin(); it != _particles.end(); ++it) {
 		flex_particle *p = it->second;
 		p->update(global_velocity, global_acceleration);
+		const LayerConf &cfg = layer_conf[p->layer];
 		if (_options & DETECT_COLLISIONS) {
 			// check collision
 			Iterator inner_it = it;
@@ -486,6 +528,18 @@ void flex_particle_system::update(const Vector2 &global_velocity, const Vector2 
 		if (_options & VECTOR_FIELD) {
 			const Vector2 vec_field_force = _vector_field.get_force_from_pos(p->position.x, p->position.y);
 			p->acceleration += vec_field_force / MIN(p->mass, MIN_PARTICLE_MASS) / VEC_FIELD_FORCE_DIVIDER;
+		}
+		// progress changes
+		const Vector2 progress(p->position.x / _world_box.width, p->position.y / _world_box.height);
+		if (p->_progress != progress) {
+			p->_progress = progress;
+			p->_progress_alpha =
+				(progress.x >= cfg.alpha_progress_start.x ? Math::map(progress.x, cfg.alpha_progress_start.x, 1, 1, 1 - cfg.alpha_change) : 1) *
+				(progress.y >= cfg.alpha_progress_start.y ? Math::map(progress.y, cfg.alpha_progress_start.y, 1, 1, 1 - cfg.alpha_change) : 1);
+			p->_progress_scale = Vector2(
+				progress.x >= cfg.scale_progress_start.x ? Math::map(progress.x, cfg.alpha_progress_start.x, 1, 1, 1 + cfg.scale_change.x) : 1,
+				progress.y >= cfg.scale_progress_start.y ? Math::map(progress.y, cfg.alpha_progress_start.y, 1, 1, 1 + cfg.scale_change.y) : 1
+			);
 		}
 		// NOTE
 		//  These wall routines are repeatative, but since we want to hit each wall one by one
@@ -572,70 +626,14 @@ void flex_particle_system::update(const Vector2 &global_velocity, const Vector2 
 	}
 }
 
-bool flex_particle_system::should_draw(const flex_particle *p, const Rect2 &ws, real_t rotation) {
-	Vector2 pr = rotation ? p->position.rotated_around(ws.get_center(), Math::deg2rad(-rotation)) : p->position;
-
-	// TODO figure out how to not increase this buffer by 2x and still not lose corners
-	// on hard rotations
-
-	if (pr.x + p->radius >= ws.left() - ws.size.width &&
-			pr.x - p->radius <= ws.right() + ws.size.width &&
-			pr.y + p->radius >= ws.bottom() - ws.size.height &&
-			pr.y - p->radius <= ws.top() + ws.size.height) {
-		return true;
-	}
-
-	return false;
-}
-
-void flex_particle_system::draw(const Rect2 &ws, const Vector2 &offset, real_t rotation) {
+void flex_particle_system::draw(const Vector2 &offset, bool debug) {
 	for (Iterator it = _particles.begin(); it != _particles.end(); ++it) {
 		flex_particle *p = it->second;
-		const real_t progress = p->position.y / _world_box.height;
-		if (should_draw(p, ws, rotation)) {
-			p->draw(_canvas, progress, offset);
-		}
-		// need to check if the particle wrap is inside
-		if (_options & HORIZONTAL_WRAP) {
-			if (p->position.x + p->radius > _world_box.width) {
-				// check right side of screen and wrap back to left if needed
-				const real_t tempf = p->position.x;
-				p->position.x -= _world_box.width;
-				if (should_draw(p, ws, rotation)) {
-					p->draw(_canvas, progress, offset);
-				}
-				p->position.x = tempf;
-			} else if (p->position.x - p->radius < 0) {
-				// check right side of screen and wrap back to right if needed
-				const real_t tempf = p->position.x;
-				p->position.x += _world_box.width;
-				if (should_draw(p, ws, rotation)) {
-					p->draw(_canvas, progress, offset);
-				}
-				p->position.x = tempf;
-			}
-		}
-		if (_options & VERTICAL_WRAP) {
-			if (p->position.y + p->radius > _world_box.height) {
-				// check bottom side of screen and wrap back to top if needed
-				const real_t tempf = p->position.y;
-				p->position.y -= _world_box.height;
-				if (should_draw(p, ws, rotation)) {
-					p->draw(_canvas, progress, offset);
-				}
-				p->position.y = tempf;
-			} else if (p->position.y - p->radius < 0) {
-				// check top side of screen and wrap back to bottom if needed
-				const real_t tempf = p->position.y;
-				p->position.y += _world_box.height;
-				if (should_draw(p, ws, rotation)) {
-					p->draw(_canvas, progress, offset);
-				}
-				p->position.y = tempf;
-			}
+		if (layer_conf[p->layer].visible) {
+			p->draw(_canvas, offset, debug);
 		}
 	}
 	if ((_options & VECTOR_FIELD) && (_options & VECTOR_FIELD_DRAW)) {
-		_vector_field.draw(_canvas, ws, offset);
+		_vector_field.draw(_canvas, offset);
 	}
 }

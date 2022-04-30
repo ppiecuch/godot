@@ -35,42 +35,46 @@
 #include "scene/resources/texture.h"
 
 #include "flex_particles_system.h"
-#include "particles.h"
 
 #include <vector>
 
-enum WaterfallParticlesQuality {
-	None,
-	ParticlesLow,
-	ParticlesMedium,
-	ParticlesHigh,
-	ParticlesQualityCount,
+enum WaterfallTexturesQuality {
+	NO_TEXTURES,
+	TEXTURES_LOW,
+	TEXTURES_MEDIUM,
+	TEXTURES_HIGH,
+	TEXTURES_QUALITY_NUM,
 };
 
 class GdWaterfall : public Node2D {
 	GDCLASS(GdWaterfall, Node2D);
 
 	bool active;
-	real_t particle_radius;
+	int particle_radius;
 	int particle_accel;
-	int particle_stretch;
-	int particle_fade_;
-	int particle_fade_from;
-	int particle_fade_amount;
+	int particle_stretch_from, particle_stretch_amount;
+	int particle_fade_from, particle_fade_amount;
+	int waterfall_splash_spread, waterfall_splash_height;
 	int waterfall_density;
 	real_t waterfall_speed;
-	WaterfallParticlesQuality textures_quality;
+	WaterfallTexturesQuality textures_quality;
 	Rect2 view_rect;
-
-	bool _update, _rebuild;
+	bool clip_view;
+#ifdef TOOLS_ENABLED
+	int layers_preview;
+	bool textures_debug;
+#endif
+	bool _update, _reload, _rebuild;
 	flex_particle_system _p;
 	std::vector<flex_particle> _particles;
 
-	Vector<Ref<Texture>> _cache[ParticlesQualityCount];
+	Vector<Ref<Texture>> _cache[TEXTURES_QUALITY_NUM];
 
-	void _cache_textures(const unsigned char *particles_images[], WaterfallParticlesQuality quality);
+	void _cache_textures(const unsigned char *particles_images[], WaterfallTexturesQuality quality);
 	void _build_particles();
 	void _update_particles();
+	void _check_textures_cache();
+	void _reload_textures();
 
 protected:
 	static void _bind_methods();
@@ -87,26 +91,40 @@ public:
 	bool is_active() const;
 	void set_view_rect(const Rect2 &p_rect);
 	Rect2 get_view_rect() const;
+	void set_clip_view(bool p_state);
+	bool is_clip_view() const;
 	void set_waterfall_density(int p_density);
 	int get_waterfall_density() const;
 	void set_waterfall_speed(real_t p_speed);
 	real_t get_waterfall_speed() const;
-	void set_particle_radius(real_t p_radius);
-	real_t get_particle_radius() const;
+	void set_waterfall_splash_spread(int p_spalsh_spread);
+	int get_waterfall_splash_spread() const;
+	void set_waterfall_splash_height(int p_splash_height);
+	int get_waterfall_splash_height() const;
+	void set_particle_radius(int p_radius);
+	int get_particle_radius() const;
 	void set_particle_acceleration(int p_accel);
 	int get_particle_acceleration() const;
-	void set_particle_stretch(int p_stretch);
-	int get_particle_stretch() const;
+	void set_particle_stretch_from(int p_stretch_from);
+	int get_particle_stretch_from() const;
+	void set_particle_stretch_amount(int p_stretch_amount);
+	int get_particle_stretch_amount() const;
 	void set_particle_fade_from(int p_fade_from);
 	int get_particle_fade_from() const;
 	void set_particle_fade_amount(int p_fade_amount);
 	int get_particle_fade_amount() const;
 	void set_textures_quality(int p_quality);
 	int get_textures_quality() const;
+#ifdef TOOLS_ENABLED
+	void set_layers_preview(int p_layers);
+	int get_layers_preview() const;
+	void set_particle_texture_debug(bool p_debug);
+	bool get_particle_texture_debug() const;
+#endif
 
 	GdWaterfall();
 };
 
-VARIANT_ENUM_CAST(WaterfallParticlesQuality);
+VARIANT_ENUM_CAST(WaterfallTexturesQuality);
 
 #endif // GD_WATERFALL_H
