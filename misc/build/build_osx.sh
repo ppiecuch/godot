@@ -65,7 +65,7 @@ if [ "${A}" = "x86_64" ]; then
 fi
 
 echo_header "*** Building $target editor for macOS for architecture $A ..."
-scons -j$CPU platform=osx arch=$A $SCONS_FLAGS
+scons -j$CPU platform=osx arch=$A target=$target $SCONS_FLAGS
 
 if [ -x "$(command -v gcp)" ]; then
 	cp="gcp -u"
@@ -77,7 +77,7 @@ echo_header "*** Packaging app ..."
 rm -rf "$GODOT_DIR/bin/Godot-master.app"
 $cp -rv "$GODOT_DIR/misc/dist/osx_tools.app" "$GODOT_DIR/bin/Godot-master.app"
 mkdir -p "$GODOT_DIR/bin/Godot-master.app/Contents/MacOS"
-$cp -v "$GODOT_DIR/bin/godot.osx.tools.$A" "$GODOT_DIR/bin/Godot-master.app/Contents/MacOS/Godot"
+$cp -v "$GODOT_DIR/bin/godot.osx.opt.tools.$A" "$GODOT_DIR/bin/Godot-master.app/Contents/MacOS/Godot"
 
 echo_header "*** Signing executable for debugger ..."
 codesign --verbose --sign - --timestamp --entitlements "$GODOT_DIR/misc/dist/osx/editor.entitlements" "$GODOT_DIR/bin/Godot-master.app"
