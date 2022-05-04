@@ -199,6 +199,7 @@ public:
 	virtual Size2 get_window_size() const;
 	virtual Size2 get_real_window_size() const;
 	virtual Rect2 get_window_safe_area() const;
+	virtual Array get_display_cutouts() const;
 	virtual void set_max_window_size(const Size2 &p_size);
 	virtual void set_min_window_size(const Size2 &p_size);
 	virtual void set_window_size(const Size2 &p_size);
@@ -354,6 +355,7 @@ public:
 
 	String get_system_dir(SystemDir p_dir, bool p_shared_storage = true) const;
 
+	Error move_to_trash(const String &p_path) const;
 	String get_user_data_dir() const;
 	String get_config_dir() const;
 	String get_data_dir() const;

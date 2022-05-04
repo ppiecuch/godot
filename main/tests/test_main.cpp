@@ -49,6 +49,7 @@
 #include "test_render.h"
 #include "test_shader_lang.h"
 #include "test_string.h"
+#include "test_theme.h"
 #include "test_transform.h"
 #include "test_xml_parser.h"
 
@@ -73,6 +74,7 @@ const char **tests_get_names() {
 		"ordered_hash_map",
 		"astar",
 		"xml_parser",
+		"theme",
 		nullptr
 	};
 
@@ -160,6 +162,10 @@ MainLoop *test_main(String p_test, const List<String> &p_args) {
 
 	if (p_test == "xml_parser") {
 		return TestXMLParser::test();
+	}
+
+	if (p_test == "theme") {
+		return TestTheme::test();
 	}
 
 	print_line("Unknown test: " + p_test);

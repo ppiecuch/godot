@@ -355,6 +355,10 @@ Rect2 _OS::get_window_safe_area() const {
 	return OS::get_singleton()->get_window_safe_area();
 }
 
+Array _OS::get_display_cutouts() const {
+	return OS::get_singleton()->get_display_cutouts();
+}
+
 void _OS::set_window_fullscreen(bool p_enabled) {
 	OS::get_singleton()->set_window_fullscreen(p_enabled);
 }
@@ -1102,6 +1106,10 @@ void _OS::dump_resources_to_file(const String &p_file) {
 	OS::get_singleton()->dump_resources_to_file(p_file.utf8().get_data());
 }
 
+Error _OS::move_to_trash(const String &p_path) const {
+	return OS::get_singleton()->move_to_trash(p_path);
+}
+
 String _OS::get_user_data_dir() const {
 	return OS::get_singleton()->get_user_data_dir();
 };
@@ -1281,6 +1289,7 @@ void _OS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_min_window_size", "size"), &_OS::set_min_window_size);
 	ClassDB::bind_method(D_METHOD("set_window_size", "size"), &_OS::set_window_size);
 	ClassDB::bind_method(D_METHOD("get_window_safe_area"), &_OS::get_window_safe_area);
+	ClassDB::bind_method(D_METHOD("get_display_cutouts"), &_OS::get_display_cutouts);
 	ClassDB::bind_method(D_METHOD("set_window_fullscreen", "enabled"), &_OS::set_window_fullscreen);
 	ClassDB::bind_method(D_METHOD("is_window_fullscreen"), &_OS::is_window_fullscreen);
 	ClassDB::bind_method(D_METHOD("set_window_resizable", "enabled"), &_OS::set_window_resizable);
@@ -1399,6 +1408,7 @@ void _OS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_static_memory_peak_usage"), &_OS::get_static_memory_peak_usage);
 	ClassDB::bind_method(D_METHOD("get_dynamic_memory_usage"), &_OS::get_dynamic_memory_usage);
 
+	ClassDB::bind_method(D_METHOD("move_to_trash", "path"), &_OS::move_to_trash);
 	ClassDB::bind_method(D_METHOD("get_user_data_dir"), &_OS::get_user_data_dir);
 	ClassDB::bind_method(D_METHOD("get_system_dir", "dir", "shared_storage"), &_OS::get_system_dir, DEFVAL(true));
 	ClassDB::bind_method(D_METHOD("get_config_dir"), &_OS::get_config_dir);

@@ -35,6 +35,7 @@
 #include "core/message_queue.h"
 #include "core/print_string.h"
 #include "instance_placeholder.h"
+#include "scene/animation/scene_tree_tween.h"
 #include "scene/resources/packed_scene.h"
 #include "scene/scene_string_names.h"
 #include "viewport.h"
@@ -268,6 +269,9 @@ void Node::_propagate_after_exit_branch(bool p_exiting_tree) {
 		}
 
 		if (!found) {
+			if (data.unique_name_in_owner) {
+				_release_unique_name_in_owner();
+			}
 			data.owner->data.owned.erase(data.OW);
 			data.owner = nullptr;
 		}
@@ -978,10 +982,18 @@ void Node::set_name(const String &p_name) {
 	String name = p_name.validate_node_name();
 
 	ERR_FAIL_COND(name == "");
+
+	if (data.unique_name_in_owner && data.owner) {
+		_release_unique_name_in_owner();
+	}
 	data.name = name;
 
 	if (data.parent) {
 		data.parent->_validate_child_name(this);
+	}
+
+	if (data.unique_name_in_owner && data.owner) {
+		_acquire_unique_name_in_owner();
 	}
 
 	propagate_notification(NOTIFICATION_PATH_CHANGED);
@@ -1342,6 +1354,24 @@ Node *Node::get_node_or_null(const NodePath &p_path) const {
 				next = root;
 			}
 
+		} else if (name.is_node_unique_name()) {
+			if (current->data.owned_unique_nodes.size()) {
+				// Has unique nodes in ownership
+				Node **unique = current->data.owned_unique_nodes.getptr(name);
+				if (!unique) {
+					return nullptr;
+				}
+				next = *unique;
+			} else if (current->data.owner) {
+				Node **unique = current->data.owner->data.owned_unique_nodes.getptr(name);
+				if (!unique) {
+					return nullptr;
+				}
+				next = *unique;
+			} else {
+				return nullptr;
+			}
+
 		} else {
 			next = nullptr;
 
@@ -1518,8 +1548,54 @@ void Node::_set_owner_nocheck(Node *p_owner) {
 	data.OW = data.owner->data.owned.back();
 }
 
+void Node::_release_unique_name_in_owner() {
+	ERR_FAIL_NULL(data.owner); // Sanity check.
+	StringName key = StringName(UNIQUE_NODE_PREFIX + data.name.operator String());
+	Node **which = data.owner->data.owned_unique_nodes.getptr(key);
+	if (which == nullptr || *which != this) {
+		return; // Ignore.
+	}
+	data.owner->data.owned_unique_nodes.erase(key);
+}
+
+void Node::_acquire_unique_name_in_owner() {
+	ERR_FAIL_NULL(data.owner); // Sanity check.
+	StringName key = StringName(UNIQUE_NODE_PREFIX + data.name.operator String());
+	Node **which = data.owner->data.owned_unique_nodes.getptr(key);
+	if (which != nullptr && *which != this) {
+		WARN_PRINT(vformat(RTR("Setting node name '%s' to be unique within scene for '%s', but it's already claimed by '%s'. This node is no longer set unique."), get_name(), is_inside_tree() ? get_path() : data.owner->get_path_to(this), is_inside_tree() ? (*which)->get_path() : data.owner->get_path_to(*which)));
+		data.unique_name_in_owner = false;
+		return;
+	}
+	data.owner->data.owned_unique_nodes[key] = this;
+}
+
+void Node::set_unique_name_in_owner(bool p_enabled) {
+	if (data.unique_name_in_owner == p_enabled) {
+		return;
+	}
+
+	if (data.unique_name_in_owner && data.owner != nullptr) {
+		_release_unique_name_in_owner();
+	}
+	data.unique_name_in_owner = p_enabled;
+
+	if (data.unique_name_in_owner && data.owner != nullptr) {
+		_acquire_unique_name_in_owner();
+	}
+
+	update_configuration_warning();
+}
+
+bool Node::is_unique_name_in_owner() const {
+	return data.unique_name_in_owner;
+}
+
 void Node::set_owner(Node *p_owner) {
 	if (data.owner) {
+		if (data.unique_name_in_owner) {
+			_release_unique_name_in_owner();
+		}
 		data.owner->data.owned.erase(data.OW);
 		data.OW = nullptr;
 		data.owner = nullptr;
@@ -1546,6 +1622,10 @@ void Node::set_owner(Node *p_owner) {
 	ERR_FAIL_COND(!owner_valid);
 
 	_set_owner_nocheck(p_owner);
+
+	if (data.unique_name_in_owner) {
+		_acquire_unique_name_in_owner();
+	}
 }
 Node *Node::get_owner() const {
 	return data.owner;
@@ -1821,6 +1901,14 @@ void Node::_propagate_replace_owner(Node *p_owner, Node *p_by_owner) {
 int Node::get_index() const {
 	return data.pos;
 }
+
+Ref<SceneTreeTween> Node::create_tween() {
+	ERR_FAIL_COND_V_MSG(!data.tree, nullptr, "Can't create SceneTreeTween when not inside scene tree.");
+	Ref<SceneTreeTween> tween = get_tree()->create_tween();
+	tween->bind_node(this);
+	return tween;
+}
+
 void Node::remove_and_skip() {
 	ERR_FAIL_COND(!data.parent);
 
@@ -2885,6 +2973,7 @@ void Node::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("reset_physics_interpolation"), &Node::reset_physics_interpolation);
 
 	ClassDB::bind_method(D_METHOD("get_tree"), &Node::get_tree);
+	ClassDB::bind_method(D_METHOD("create_tween"), &Node::create_tween);
 
 	ClassDB::bind_method(D_METHOD("duplicate", "flags"), &Node::duplicate, DEFVAL(DUPLICATE_USE_INSTANCING | DUPLICATE_SIGNALS | DUPLICATE_GROUPS | DUPLICATE_SCRIPTS));
 	ClassDB::bind_method(D_METHOD("replace_by", "node", "keep_data"), &Node::replace_by, DEFVAL(false));
@@ -2920,6 +3009,8 @@ void Node::_bind_methods() {
 #ifdef TOOLS_ENABLED
 	ClassDB::bind_method(D_METHOD("_set_property_pinned", "property", "pinned"), &Node::set_property_pinned);
 #endif
+	ClassDB::bind_method(D_METHOD("set_unique_name_in_owner", "enable"), &Node::set_unique_name_in_owner);
+	ClassDB::bind_method(D_METHOD("is_unique_name_in_owner"), &Node::is_unique_name_in_owner);
 
 	{
 		MethodInfo mi;
@@ -3005,6 +3096,7 @@ void Node::_bind_methods() {
 #endif
 
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "name", PROPERTY_HINT_NONE, "", 0), "set_name", "get_name");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "unique_name_in_owner", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "set_unique_name_in_owner", "is_unique_name_in_owner");
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "filename", PROPERTY_HINT_NONE, "", 0), "set_filename", "get_filename");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "owner", PROPERTY_HINT_RESOURCE_TYPE, "Node", 0), "set_owner", "get_owner");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "multiplayer", PROPERTY_HINT_RESOURCE_TYPE, "MultiplayerAPI", 0), "", "get_multiplayer");

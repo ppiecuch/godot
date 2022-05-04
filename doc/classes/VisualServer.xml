@@ -2839,6 +2839,29 @@
 				Sets the texture's path.
 			</description>
 		</method>
+		<method name="texture_set_proxy">
+			<return type="void" />
+			<argument index="0" name="proxy" type="RID" />
+			<argument index="1" name="base" type="RID" />
+			<description>
+				Creates an update link between two textures, similar to how [ViewportTexture]s operate. When the base texture is the texture of a [Viewport], every time the viewport renders a new frame, the proxy texture automatically receives an update.
+				For example, this code links a generic [ImageTexture] to the texture output of the [Viewport] using the VisualServer API:
+				[codeblock]
+				func _ready():
+				    var viewport_rid = get_viewport().get_viewport_rid()
+				    var viewport_texture_rid = VisualServer.viewport_get_texture(viewport_rid)
+
+				    var proxy_texture = ImageTexture.new()
+				    var viewport_texture_image_data = VisualServer.texture_get_data(viewport_texture_rid)
+
+				    proxy_texture.create_from_image(viewport_texture_image_data)
+				    var proxy_texture_rid = proxy_texture.get_rid()
+				    VisualServer.texture_set_proxy(proxy_texture_rid, viewport_texture_rid)
+
+				    $TextureRect.texture = proxy_texture
+				[/codeblock]
+			</description>
+		</method>
 		<method name="texture_set_shrink_all_x2_on_set_data">
 			<return type="void" />
 			<argument index="0" name="shrink" type="bool" />
@@ -3808,19 +3831,20 @@
 			Shows the glow effect by itself without the underlying scene.
 		</constant>
 		<constant name="ENV_TONE_MAPPER_LINEAR" value="0" enum="EnvironmentToneMapper">
-			Output color as they came in.
+			Output color as they came in. This can cause bright lighting to look blown out, with noticeable clipping in the output colors.
 		</constant>
 		<constant name="ENV_TONE_MAPPER_REINHARD" value="1" enum="EnvironmentToneMapper">
-			Use the Reinhard tonemapper.
+			Use the Reinhard tonemapper. Performs a variation on rendered pixels' colors by this formula: [code]color = color / (1 + color)[/code]. This avoids clipping bright highlights, but the resulting image can look a bit dull.
 		</constant>
 		<constant name="ENV_TONE_MAPPER_FILMIC" value="2" enum="EnvironmentToneMapper">
-			Use the filmic tonemapper.
+			Use the filmic tonemapper. This avoids clipping bright highlights, with a resulting image that usually looks more vivid than [constant ENV_TONE_MAPPER_REINHARD].
 		</constant>
 		<constant name="ENV_TONE_MAPPER_ACES" value="3" enum="EnvironmentToneMapper">
-			Use the ACES tonemapper.
+			Use the legacy Godot version of the Academy Color Encoding System tonemapper. Unlike [constant ENV_TONE_MAPPER_ACES_FITTED], this version of ACES does not handle bright lighting in a physically accurate way. ACES typically has a more contrasted output compared to [constant ENV_TONE_MAPPER_REINHARD] and [constant ENV_TONE_MAPPER_FILMIC].
+			[b]Note:[/b] This tonemapping operator will be removed in Godot 4.0 in favor of the more accurate [constant ENV_TONE_MAPPER_ACES_FITTED].
 		</constant>
 		<constant name="ENV_TONE_MAPPER_ACES_FITTED" value="4" enum="EnvironmentToneMapper">
-			Use the ACES Fitted tonemapper.
+			Use the Academy Color Encoding System tonemapper. ACES is slightly more expensive than other options, but it handles bright lighting in a more realistic fashion by desaturating it as it becomes brighter. ACES typically has a more contrasted output compared to [constant ENV_TONE_MAPPER_REINHARD] and [constant ENV_TONE_MAPPER_FILMIC].
 		</constant>
 		<constant name="ENV_SSAO_QUALITY_LOW" value="0" enum="EnvironmentSSAOQuality">
 			Lowest quality of screen space ambient occlusion.

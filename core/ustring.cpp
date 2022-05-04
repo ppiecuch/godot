@@ -39,6 +39,7 @@
 #include "core/math/math_funcs.h"
 #include "core/os/memory.h"
 #include "core/print_string.h"
+#include "core/string_name.h"
 #include "core/translation.h"
 #include "core/ucaps.h"
 #include "core/variant.h"
@@ -4216,7 +4217,8 @@ String String::property_name_encode() const {
 }
 
 // Changes made to the set of invalid characters must also be reflected in the String documentation.
-const String String::invalid_node_name_characters = ". : @ / \"";
+const String String::invalid_node_name_characters = ". : @ / \" " UNIQUE_NODE_PREFIX;
+;
 
 String String::validate_node_name() const {
 	Vector<String> chars = String::invalid_node_name_characters.split(" ");
@@ -4289,7 +4291,7 @@ String String::sprintf(const Array &values, bool *error) const {
 	int min_chars = 0;
 	int min_decimals = 0;
 	bool in_decimals = false;
-	bool pad_with_zeroes = false;
+	bool pad_with_zeros = false;
 	bool left_justified = false;
 	bool show_sign = false;
 
@@ -4341,7 +4343,7 @@ String String::sprintf(const Array &values, bool *error) const {
 
 					// Padding.
 					int pad_chars_count = (value < 0 || show_sign) ? min_chars - 1 : min_chars;
-					String pad_char = pad_with_zeroes ? String("0") : String(" ");
+					String pad_char = pad_with_zeros ? String("0") : String(" ");
 					if (left_justified) {
 						str = str.rpad(pad_chars_count, pad_char);
 					} else {
@@ -4349,10 +4351,13 @@ String String::sprintf(const Array &values, bool *error) const {
 					}
 
 					// Sign.
-					if (show_sign && value >= 0) {
-						str = str.insert(pad_with_zeroes ? 0 : str.length() - number_len, "+");
-					} else if (value < 0) {
-						str = str.insert(pad_with_zeroes ? 0 : str.length() - number_len, "-");
+					if (show_sign || value < 0) {
+						String sign_char = value < 0 ? "-" : "+";
+						if (left_justified) {
+							str = str.insert(0, sign_char);
+						} else {
+							str = str.insert(pad_with_zeros ? 0 : str.length() - number_len, sign_char);
+						}
 					}
 
 					formatted += str;
@@ -4381,13 +4386,9 @@ String String::sprintf(const Array &values, bool *error) const {
 
 					// Padding. Leave room for sign later if required.
 					int pad_chars_count = (is_negative || show_sign) ? min_chars - 1 : min_chars;
-					String pad_char = pad_with_zeroes ? String("0") : String(" ");
+					String pad_char = pad_with_zeros ? String("0") : String(" ");
 					if (left_justified) {
-						if (pad_with_zeroes) {
-							return "left justification cannot be used with zeros as the padding";
-						} else {
-							str = str.rpad(pad_chars_count, pad_char);
-						}
+						str = str.rpad(pad_chars_count, pad_char);
 					} else {
 						str = str.lpad(pad_chars_count, pad_char);
 					}
@@ -4398,7 +4399,7 @@ String String::sprintf(const Array &values, bool *error) const {
 						if (left_justified) {
 							str = str.insert(0, sign_char);
 						} else {
-							str = str.insert(pad_with_zeroes ? 0 : str.length() - initial_len, sign_char);
+							str = str.insert(pad_with_zeros ? 0 : str.length() - initial_len, sign_char);
 						}
 					}
 
@@ -4485,7 +4486,11 @@ String String::sprintf(const Array &values, bool *error) const {
 						min_decimals += n;
 					} else {
 						if (c == '0' && min_chars == 0) {
-							pad_with_zeroes = true;
+							if (left_justified) {
+								WARN_PRINT("'0' flag ignored with '-' flag in string format");
+							} else {
+								pad_with_zeros = true;
+							}
 						} else {
 							min_chars *= 10;
 							min_chars += n;
@@ -4534,7 +4539,7 @@ String String::sprintf(const Array &values, bool *error) const {
 					// Back to defaults:
 					min_chars = 0;
 					min_decimals = 6;
-					pad_with_zeroes = false;
+					pad_with_zeros = false;
 					left_justified = false;
 					show_sign = false;
 					in_decimals = false;
