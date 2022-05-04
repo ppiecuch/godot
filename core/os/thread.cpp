@@ -33,8 +33,8 @@
 #ifndef PLATFORM_THREAD_H // // See details in thread.h
 #ifndef NO_THREADS
 
-#include "thread.h"
 #include "core/script_language.h"
+#include "thread.h"
 
 #ifdef PTHREAD_ENABLED
 #include "drivers/posix/thread_posix.cpp"

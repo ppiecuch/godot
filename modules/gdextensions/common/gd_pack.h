@@ -166,14 +166,14 @@ static inline bool max_height(rect_xywhf *a, rect_xywhf *b) {
 }
 
 struct TextureMergeOptions {
-	int max_atlas_size = 512;
+	int max_atlas_size = 1024;
 	Color background_color = Color(0, 0, 0, 0);
 	int margin = 2;
 	bool power_of_two = false;
 
 	TextureMergeOptions() {}
-	TextureMergeOptions(int max_atlas_size) :
-			max_atlas_size(max_atlas_size) {}
+	TextureMergeOptions(int max_atlas_size, bool power_of_two = true) :
+			max_atlas_size(max_atlas_size), power_of_two(power_of_two) {}
 };
 
 // Merge images from 'images' array using `names` as unique

@@ -30,9 +30,11 @@
 
 #include "gd_waterfall.h"
 
-#include "scene/resources/texture.h"
-#include "common/gd_pack.h"
 #include "common/gd_core.h"
+#include "common/gd_pack.h"
+#include "core/bind/core_bind.h"
+#include "core/variant.h"
+#include "scene/resources/texture.h"
 
 #include "particles.h"
 
@@ -40,7 +42,7 @@
 
 enum WaterfallLayers {
 	LAYER_DROPS = 0,
-	LAYER_STRETCH_CLOUDS = 1,
+	LAYER_SMALL_CLOUDS = 1,
 	LAYER_CLOUDS = 2,
 	LAYER_BOTTOM = 3,
 	LAYERS_COUNT,
@@ -120,11 +122,12 @@ void GdWaterfall::_build_particles() {
 	_p.clear();
 	_particles.clear();
 	_check_textures_cache();
-	int total_num = 0;
+	print_verbose("Rebuilding waterfall:");
 	{ // drops on layer 0
 		const real_t dim = particle_radius;
 		const int num = view_rect.size.width / dim * view_rect.size.height / dim * _density_factor[waterfall_density];
-		total_num += num; _particles.reserve(num * 3);
+		print_verbose("  layer 1: " + String::num(num) + " particles.");
+		_particles.reserve(num * 3);
 		auto points = _get_samples(num, 2, 3, view_rect.grow_individual(-dim, 0, -dim, 0));
 		for (const Point2 &p : points) {
 			const Vector2 pos(p.x, p.y);
@@ -139,8 +142,8 @@ void GdWaterfall::_build_particles() {
 	}
 	{ // stretch clouds on layer 1
 		const real_t dim = particle_radius * 1.5;
- 		const int num = view_rect.size.width / dim * view_rect.size.height / dim;
-		total_num += num;
+		const int num = view_rect.size.width / dim * view_rect.size.height / dim;
+		print_verbose("  layer 2: " + String::num(num) + " particles.");
 		auto points = _get_samples(num, 2, 3, view_rect.grow_individual(-dim, 0, -dim, 0));
 		for (const Point2 &p : points) {
 			const Vector2 pos(p.x, p.y);
@@ -148,15 +151,15 @@ void GdWaterfall::_build_particles() {
 			const real_t damping = 1;
 			const real_t alpha = _default_alpha_1;
 			const Ref<Texture> texture = textures_quality == NO_TEXTURES ? nullptr : _cache[textures_quality][WATERFALL_PARTICLE_CLOUD1];
-			flex_particle_options opts(LAYER_STRETCH_CLOUDS, pos, velocity, dim, damping, alpha, texture);
+			flex_particle_options opts(LAYER_SMALL_CLOUDS, pos, velocity, dim, damping, alpha, texture);
 			_particles.push_back(flex_particle(opts));
 		}
 	}
 	{ // clouds on layer 2
 		const real_t dim = particle_radius * 2;
 		const int num = view_rect.size.width / dim * view_rect.size.height / dim;
-		total_num += num;
-		auto points = _get_samples(num, 2, 3, view_rect);
+		print_verbose("  layer 3: " + String::num(num) + " particles.");
+		auto points = _get_samples(num, 2, 3, view_rect.grow_individual(-dim, 0, -dim, 0));
 		for (const Point2 &p : points) {
 			const Vector2 pos(p.x, p.y);
 			const Vector2 velocity(0, _default_velocity_2);
@@ -164,17 +167,21 @@ void GdWaterfall::_build_particles() {
 			const real_t alpha = _default_alpha_2;
 			const Ref<Texture> texture = textures_quality == NO_TEXTURES ? nullptr : _cache[textures_quality][WATERFALL_PARTICLE_CLOUD2];
 			flex_particle_options opts(LAYER_CLOUDS, pos, velocity, dim, damping, alpha, texture);
+			_particles.push_back(flex_particle(opts));
 		}
 	}
 	{ // bottom on layer 3
 	}
-	for (int p=0; p<_particles.size(); p++) {
+	for (int p = 0; p < _particles.size(); p++) {
 		_p.add_particle(&_particles[p]);
 	}
-	print_verbose("Rebuilding waterfall with " + String::num(total_num) + " particles.");
 }
 
 void GdWaterfall::_cache_textures(const unsigned char *particles_images[], WaterfallTexturesQuality quality) {
+	String fn = vformat("user://__waterfall_q%d", quality); // cached texture
+	if (ResourceLoader::exists(fn + ".tex") && FileAccess::exists(fn + ".dat")) {
+		Ref<Texture> texture = ResourceLoader::load(fn + ".tex", "Texture");
+	}
 	// build texture atlas from resources
 	Vector<Ref<Image>> images;
 	Vector<String> names;
@@ -193,6 +200,8 @@ void GdWaterfall::_cache_textures(const unsigned char *particles_images[], Water
 	}
 	Ref<Image> atlas_image = pages[0];
 
+	print_verbose(vformat("Atlas generated: %s pixels", atlas_image->get_size()));
+
 	Vector2 atlas_size(1, 1);
 	if (atlas_image.is_valid()) {
 		Ref<ImageTexture> texture = newref(ImageTexture);
@@ -201,6 +210,7 @@ void GdWaterfall::_cache_textures(const unsigned char *particles_images[], Water
 
 		_cache[quality].clear();
 
+		Array _rects;
 		Dictionary atlas_rects = atlas_info["_rects"];
 		for (int j = 0; j < names.size(); ++j) {
 			String name = names[j];
@@ -211,10 +221,17 @@ void GdWaterfall::_cache_textures(const unsigned char *particles_images[], Water
 			Ref<AtlasTexture> at = newref(AtlasTexture);
 			at->set_atlas(texture);
 			at->set_region(entry["rect"]);
-	#ifdef DEBUG_ENABLED
+#ifdef DEBUG_ENABLED
 			at->set_name(name);
-	#endif
+#endif
+			_rects.push_back(entry["rect"]);
 			_cache[quality].push_back(at);
+		}
+		// save texture and atlas info
+		ResourceSaver::save(fn + ".tex", texture);
+		Ref<_File> file = memnew(_File);
+		if (file->open(fn + ".dat", _File::WRITE) == OK) {
+			file->store_var(_rects, true);
 		}
 	} else {
 		WARN_PRINT("Atlas image is not valid, Skipping!");
@@ -254,23 +271,29 @@ void GdWaterfall::_check_textures_cache() {
 
 void GdWaterfall::_update_particles() {
 	_p.setup_world(view_rect.size);
-	_p.set_alpha_change(LAYER_DROPS, {1, _fade_from_factor[particle_fade_from]}, _fade_amount_factor[particle_fade_amount]);
-	_p.set_scale_change(LAYER_DROPS, {1, _stretch_from_factor[particle_stretch_from]}, {1, _stretch_amount_factor[particle_fade_amount]});
+	_p.set_alpha_change(LAYER_DROPS, { 1, _fade_from_factor[particle_fade_from] }, _fade_amount_factor[particle_fade_amount]);
+	_p.set_scale_change(LAYER_DROPS, { 1, _stretch_from_factor[particle_stretch_from] }, { 1, _stretch_amount_factor[particle_fade_amount] });
 }
 
 void GdWaterfall::_reload_textures() {
 	if (textures_quality == NO_TEXTURES) {
 		for (auto &p : _particles) {
-			 p.texture = Ref<Texture>();
+			p.texture.set(Ref<Texture>());
 		}
 	} else {
 		_check_textures_cache();
 		for (auto &p : _particles) {
 			switch (p.layer) {
-				case 0: p.texture = _cache[textures_quality][Math::random(0, 4)]; break; // drops
-				case 1: p.texture = _cache[textures_quality][WATERFALL_PARTICLE_CLOUD1]; break; // stretch clouds
+				case 0:
+					p.texture.set(_cache[textures_quality][Math::random(0, 4)]);
+					break; // drops
+				case 1:
+					p.texture.set(_cache[textures_quality][WATERFALL_PARTICLE_CLOUD1]);
+					break; // stretch clouds
 				case 2:
-				case 3: p.texture = _cache[textures_quality][WATERFALL_PARTICLE_CLOUD2]; break; // clouds
+				case 3:
+					p.texture.set(_cache[textures_quality][WATERFALL_PARTICLE_CLOUD2]);
+					break; // clouds
 			}
 		}
 	}
@@ -295,12 +318,12 @@ Rect2 GdWaterfall::get_view_rect() const {
 	return view_rect;
 }
 
-void GdWaterfall::set_clip_view(bool p_state) {
+void GdWaterfall::set_canvas_clipping(bool p_state) {
 	clip_view = p_state;
 	update();
 }
 
-bool GdWaterfall::is_clip_view() const {
+bool GdWaterfall::is_canvas_clipping() const {
 	return clip_view;
 }
 
@@ -344,7 +367,7 @@ real_t GdWaterfall::get_waterfall_speed() const {
 }
 
 void GdWaterfall::set_particle_radius(int p_radius) {
-	ERR_FAIL_COND(p_radius<2);
+	ERR_FAIL_COND(p_radius < 2);
 	particle_radius = p_radius;
 	_rebuild = true;
 	update();
@@ -422,20 +445,23 @@ int GdWaterfall::get_textures_quality() const {
 
 #ifdef TOOLS_ENABLED
 void GdWaterfall::set_layers_preview(int p_layers) {
-	ERR_FAIL_INDEX(p_layers, 6);
-	switch (p_layers) {
-		case 0: {
-			for (int l = 0; l < LAYERS_COUNT; l++) {
-				_p.get_layer_conf(l).visible = true;
-			}
-		} break;
-		default: {
-			for (int l = 0; l < LAYERS_COUNT; l++) {
-				_p.get_layer_conf(l).visible = (l == p_layers - 1);
-			}
-		} break;
-	};
-	layers_preview = p_layers;
+	if (layers_preview != p_layers) {
+		ERR_FAIL_INDEX(p_layers, 6);
+		switch (p_layers) {
+			case 0: {
+				for (int l = 0; l < LAYERS_COUNT; l++) {
+					_p.get_layer_conf(l).visible = true;
+				}
+			} break;
+			default: {
+				for (int l = 0; l < LAYERS_COUNT; l++) {
+					_p.get_layer_conf(l).visible = (l == p_layers - 1);
+				}
+			} break;
+		};
+		layers_preview = p_layers;
+		update();
+	}
 }
 
 int GdWaterfall::get_layers_preview() const {
@@ -476,7 +502,7 @@ void GdWaterfall::_notification(int p_what) {
 				_update_particles();
 				_update = false;
 			}
-			const Rect2 clip_rect = view_rect;
+			const Rect2 clip_rect = view_rect.grow_individual(particle_radius * 2, 0, particle_radius * 2, 0);
 			VisualServer::get_singleton()->canvas_item_set_custom_rect(get_canvas_item(), true, clip_rect);
 			VisualServer::get_singleton()->canvas_item_set_clip(get_canvas_item(), clip_view);
 #ifdef TOOLS_ENABLED
@@ -497,8 +523,8 @@ void GdWaterfall::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_active"), &GdWaterfall::is_active);
 	ClassDB::bind_method(D_METHOD("set_view_rect"), &GdWaterfall::set_view_rect);
 	ClassDB::bind_method(D_METHOD("get_view_rect"), &GdWaterfall::get_view_rect);
-	ClassDB::bind_method(D_METHOD("set_clip_view"), &GdWaterfall::set_clip_view);
-	ClassDB::bind_method(D_METHOD("is_clip_view"), &GdWaterfall::is_clip_view);
+	ClassDB::bind_method(D_METHOD("set_canvas_clipping"), &GdWaterfall::set_canvas_clipping);
+	ClassDB::bind_method(D_METHOD("is_canvas_clipping"), &GdWaterfall::is_canvas_clipping);
 	ClassDB::bind_method(D_METHOD("set_waterfall_density"), &GdWaterfall::set_waterfall_density);
 	ClassDB::bind_method(D_METHOD("get_waterfall_density"), &GdWaterfall::get_waterfall_density);
 	ClassDB::bind_method(D_METHOD("set_waterfall_speed"), &GdWaterfall::set_waterfall_speed);
@@ -535,7 +561,7 @@ void GdWaterfall::_bind_methods() {
 
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "active"), "set_active", "is_active");
 	ADD_PROPERTY(PropertyInfo(Variant::RECT2, "view_rect"), "set_view_rect", "get_view_rect");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "clip_view"), "set_clip_view", "is_clip_view");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "use_canvas_clip"), "set_canvas_clipping", "is_canvas_clipping");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "waterfall_density", PROPERTY_HINT_ENUM, "25%,50%,75%,100%"), "set_waterfall_density", "get_waterfall_density");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "waterfall_speed"), "set_waterfall_speed", "get_waterfall_speed");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "waterfall_splash_spread", PROPERTY_HINT_ENUM, "100%,150%,200%"), "set_waterfall_splash_spread", "get_waterfall_splash_spread");
@@ -574,16 +600,19 @@ GdWaterfall::GdWaterfall() :
 #endif
 
 	_p.set_option(flex_particle_system::VERTICAL_WRAP, true);
-    _p.set_wall_callback([](flex_particle *p) {
+	_p.set_wall_callback([](flex_particle *p) {
 		// restore initial values
 		if (p->layer == LAYER_DROPS) {
 			p->velocity = Vector2(0, _default_velocity_0);
-		} else if (p->layer == LAYER_STRETCH_CLOUDS) {
+		} else if (p->layer == LAYER_SMALL_CLOUDS) {
 			p->velocity = Vector2(0, _default_velocity_1);
 		} else if (p->layer == LAYER_CLOUDS) {
 			p->velocity = Vector2(0, _default_velocity_2);
 		}
-	}, flex_particle_system::BOTTOM_WALL);
+	},
+			flex_particle_system::BOTTOM_WALL);
+	_p.set_layer_option(LAYER_DROPS, flex_particle_system::PROGRESS_ALPHA, true);
+	_p.set_layer_option(LAYER_DROPS, flex_particle_system::PROGRESS_SCALE, true);
 	set_process(active);
 
 	_rebuild = true;

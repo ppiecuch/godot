@@ -91,8 +91,8 @@ public:
 	bool is_active() const;
 	void set_view_rect(const Rect2 &p_rect);
 	Rect2 get_view_rect() const;
-	void set_clip_view(bool p_state);
-	bool is_clip_view() const;
+	void set_canvas_clipping(bool p_state);
+	bool is_canvas_clipping() const;
 	void set_waterfall_density(int p_density);
 	int get_waterfall_density() const;
 	void set_waterfall_speed(real_t p_speed);

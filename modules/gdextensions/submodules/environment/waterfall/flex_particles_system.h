@@ -55,10 +55,10 @@ struct flex_particle_options {
 	// @param alpha             Transparency of particle
 	// @param texture           Drawing texture of the particle
 	flex_particle_options(int layer, const Vector2 &pos, const Vector2 &velocity, real_t radius, real_t damping, real_t alpha, const Vector2 &scale, Ref<Texture> texture = Ref<Texture>()) :
-			layer(layer), pos(pos), velocity(velocity), scale(scale), radius(radius), damping(damping), alpha(alpha), texture(texture) { }
+			layer(layer), pos(pos), velocity(velocity), scale(scale), radius(radius), damping(damping), alpha(alpha), texture(texture) {}
 
 	flex_particle_options(int layer, const Vector2 &pos, const Vector2 &velocity, real_t radius, real_t damping, real_t alpha, Ref<Texture> texture = Ref<Texture>()) :
-			layer(layer), pos(pos), velocity(velocity), scale({1,1}), radius(radius), damping(damping), alpha(alpha), texture(texture) { }
+			layer(layer), pos(pos), velocity(velocity), scale({ 1, 1 }), radius(radius), damping(damping), alpha(alpha), texture(texture) {}
 
 	// these are all left public since this is simply a helper class
 	int layer;
@@ -95,14 +95,30 @@ public:
 	real_t mass;
 	real_t alpha;
 
-	Ref<Texture> texture;
+	struct {
+		flex_particle *owner = nullptr;
+		Ref<Texture> t;
+		Size2 dest_size;
+		void set(const Ref<Texture> &texture) {
+			t = texture;
+			update_size();
+		}
+		void update_size() {
+			if (t.is_valid()) {
+				dest_size = t->get_size();
+				const real_t aspect = dest_size.height / dest_size.width;
+				dest_size = owner->_progress_scale * owner->scale * Size2(2 * owner->radius, 2 * owner->radius * aspect);
+			}
+		}
+		bool is_valid() const { return t.is_valid(); }
+	} texture;
 
 	// progress changes:
 	Vector2 _progress;
 	real_t _progress_alpha;
 	Vector2 _progress_scale;
 
-	flex_particle &operator=(const flex_particle &p);
+	// flex_particle &operator=(const flex_particle &p);
 
 	// Causes this particle to repel AWAY from particle b
 	// The current algorithm is rather general and will probably want to be
@@ -114,8 +130,7 @@ public:
 	void update(const Vector2 &global_velocity = Vector2(), const Vector2 &global_acceleration = Vector2());
 
 	// Draw this particle and offset its position with `offset`.
-	// This will only show a black circle with an inner white
-	// circle of size radius.
+	// Draw a placeholder instead if texture is not set.
 	void draw(CanvasItem *canvas, const Vector2 &offset, bool debug = false);
 
 	void set_unique_id(unsigned long id) { unique_id = id; }
@@ -128,9 +143,13 @@ public:
 
 	real_t get_start_seconds() const { return start_second; }
 
+	// Get actuall particle size
+	Size2 get_bounding_box() const { return texture.is_valid() ? texture.dest_size : Size2(2 * radius, 2 * radius); }
+
 	flex_particle();
 	flex_particle(const Vector2 &pos);
 	flex_particle(const flex_particle_options &opts);
+	flex_particle(const flex_particle &p);
 };
 
 class flex_vector_field {
@@ -350,8 +369,10 @@ class flex_particle_system {
 	CanvasItem *_canvas; // drawing canvas
 	struct LayerConf {
 		bool visible = true;
-		Vector2 alpha_progress_start{1,1}; real_t alpha_change = 1;
-		Vector2 scale_progress_start{1,1}, scale_change{1,1};
+		unsigned int options = 0;
+		Vector2 alpha_progress_start{ 1, 1 };
+		real_t alpha_change = 1;
+		Vector2 scale_progress_start{ 1, 1 }, scale_change{ 1, 1 };
 	};
 	std::vector<LayerConf> layer_conf;
 
@@ -385,6 +406,8 @@ public:
 		VECTOR_FIELD = (1u << 2),
 		VECTOR_FIELD_DRAW = (1u << 3),
 		DETECT_COLLISIONS = (1u << 4),
+		PROGRESS_ALPHA = (1u << 5),
+		PROGRESS_SCALE = (1u << 6),
 	};
 
 	// Configure the particle system with given world box.
@@ -438,7 +461,8 @@ public:
 
 	// Enable or diable a given option. See Options enum
 	// (optional `param` parameter is depending on option)
-	void set_option(Options option, bool enabled, real_t param = 0.0);
+	void set_option(Options option, bool enabled, real_t param = 0);
+	void set_layer_option(int layer, Options option, bool enabled);
 
 	// Get the internal container that holds our particles.  Be careful
 	// as there is no lock associated with this container so you could easily
@@ -465,13 +489,18 @@ public:
 	void set_max_particles(unsigned int max_particles) { _max_particles = max_particles; }
 
 	// Destination alpha after progress_from (in x or y direction) is reached.
+	void set_alpha_change(int layer, bool alpha_change);
 	void set_alpha_change(int layer, const Vector2 &progress_from, real_t alpha_change);
 
 	// Destination particle scale after progress_from (in x or y direction) is reached.
+	void set_scale_change(int layer, bool scale_change);
 	void set_scale_change(int layer, const Vector2 &progress_from, const Vector2 &scale_change);
 
 	// Get reference to layer configuration (for direct modifications)
-	LayerConf &get_layer_conf(int layer) { DEV_ASSERT(layer < layer_conf.size()); return layer_conf[layer]; }
+	LayerConf &get_layer_conf(int layer) {
+		DEV_ASSERT(layer < layer_conf.size());
+		return layer_conf[layer];
+	}
 
 	flex_particle_system(CanvasItem *canvas);
 };
