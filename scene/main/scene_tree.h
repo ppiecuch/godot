@@ -313,11 +313,14 @@ public:
 	virtual void init();
 
 	virtual bool iteration(float p_time);
+	virtual void iteration_end();
 	virtual bool idle(float p_time);
 
 	virtual void finish();
 
+	bool is_auto_accept_quit() const;
 	void set_auto_accept_quit(bool p_enable);
+	bool is_quit_on_go_back() const;
 	void set_quit_on_go_back(bool p_enable);
 
 	void quit(int p_exit_code = -1);

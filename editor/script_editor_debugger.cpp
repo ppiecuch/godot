@@ -1004,7 +1004,7 @@ void ScriptEditorDebugger::_parse_message(const String &p_msg, const Array &p_da
 		metric.valid = true;
 		metric.frame_number = p_data[0];
 		metric.frame_time = p_data[1];
-		metric.idle_time = p_data[2];
+		metric.process_time = p_data[2];
 		metric.physics_time = p_data[3];
 		metric.physics_frame_time = p_data[4];
 		int frame_data_amount = p_data[6];
@@ -1027,10 +1027,10 @@ void ScriptEditorDebugger::_parse_message(const String &p_msg, const Array &p_da
 
 			frame_time.items.push_back(item);
 
-			item.name = "Idle Time";
-			item.total = metric.idle_time;
+			item.name = "Process Time";
+			item.total = metric.process_time;
 			item.self = item.total;
-			item.signature = "idle_time";
+			item.signature = "process_time";
 
 			frame_time.items.push_back(item);
 
@@ -1560,8 +1560,10 @@ void ScriptEditorDebugger::_clear_execution() {
 	stack_script.unref();
 }
 
-void ScriptEditorDebugger::start() {
-	stop();
+void ScriptEditorDebugger::start(int p_port, const IP_Address &p_bind_address) {
+	if (is_inside_tree()) {
+		stop();
+	}
 
 	if (is_visible_in_tree()) {
 		EditorNode::get_singleton()->make_bottom_panel_item_visible(this);
@@ -1573,7 +1575,11 @@ void ScriptEditorDebugger::start() {
 	}
 
 	const int max_tries = 6;
-	remote_port = (int)EditorSettings::get_singleton()->get("network/debug/remote_port");
+	if (p_port < 0) {
+		remote_port = (int)EditorSettings::get_singleton()->get("network/debug/remote_port");
+	} else {
+		remote_port = p_port;
+	}
 	int current_try = 0;
 	// Find first available port.
 	Error err = server->listen(remote_port);
@@ -1582,7 +1588,7 @@ void ScriptEditorDebugger::start() {
 		current_try++;
 		remote_port++;
 		OS::get_singleton()->delay_usec(1000);
-		err = server->listen(remote_port);
+		err = server->listen(remote_port, p_bind_address);
 	}
 	// No suitable port found.
 	if (err != OK) {
@@ -1592,7 +1598,7 @@ void ScriptEditorDebugger::start() {
 	EditorNode::get_singleton()->get_scene_tree_dock()->show_tab_buttons();
 
 	auto_switch_remote_scene_tree = (bool)EditorSettings::get_singleton()->get("debugger/auto_switch_to_remote_scene_tree");
-	if (auto_switch_remote_scene_tree) {
+	if (is_inside_tree() && auto_switch_remote_scene_tree) {
 		EditorNode::get_singleton()->get_scene_tree_dock()->show_remote_tree();
 	}
 
