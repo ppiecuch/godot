@@ -118,7 +118,7 @@ void VisualServerScene::camera_set_transform(RID p_camera, const Transform &p_tr
 				// Effectively a WARN_PRINT_ONCE but after a certain number of occurrences.
 				static int32_t warn_count = -256;
 				if ((warn_count == 0) && GLOBAL_GET("debug/settings/physics_interpolation/enable_warnings")) {
-					WARN_PRINT("Interpolated Camera transform should usually be set during physics process (possibly benign).");
+					WARN_PRINT("[Physics interpolation] Camera interpolation is being triggered from outside physics process, this might lead to issues (possibly benign).");
 				}
 				warn_count++;
 			}
@@ -128,7 +128,7 @@ void VisualServerScene::camera_set_transform(RID p_camera, const Transform &p_tr
 			if (Engine::get_singleton()->is_in_physics_frame()) {
 				static int32_t warn_count = -256;
 				if ((warn_count == 0) && GLOBAL_GET("debug/settings/physics_interpolation/enable_warnings")) {
-					WARN_PRINT("Non-interpolated Camera transform should not usually be set during physics process (possibly benign).");
+					WARN_PRINT("[Physics interpolation] Non-interpolated Camera is being triggered from physics process, this might lead to issues (possibly benign).");
 				}
 				warn_count++;
 			}
@@ -842,15 +842,15 @@ void VisualServerScene::instance_set_transform(RID p_instance, const Transform &
 				if (id != 0) {
 					if (ObjectDB::get_instance(id)) {
 						Node *node = Object::cast_to<Node>(ObjectDB::get_instance(id));
-						if (node) {
-							node_name = "\"" + node->get_name() + "\"";
+						if (node && node->is_inside_tree()) {
+							node_name = "\"" + String(node->get_path()) + "\"";
 						} else {
 							node_name = "\"unknown\"";
 						}
 					}
 				}
 
-				WARN_PRINT("Non-interpolated Instance " + node_name + " transform should usually not be set during physics process (possibly benign).");
+				WARN_PRINT("[Physics interpolation] Non-interpolated Instance is being triggered from physics process, this might lead to issues: " + node_name + " (possibly benign).");
 			}
 		}
 #endif
@@ -887,9 +887,6 @@ void VisualServerScene::instance_set_transform(RID p_instance, const Transform &
 
 	instance->transform_curr = p_transform;
 
-	// decide on the interpolation method .. slerp if possible
-	instance->interpolation_method = TransformInterpolator::find_method(instance->transform_prev.basis, instance->transform_curr.basis);
-
 	// keep checksums up to date
 	instance->transform_checksum_curr = new_checksum;
 
@@ -899,6 +896,17 @@ void VisualServerScene::instance_set_transform(RID p_instance, const Transform &
 	} else {
 		DEV_ASSERT(_interpolation_data.instance_transform_update_list_curr->size());
 	}
+
+	// If the instance is invisible, then we are simply updating the data flow, there is no need to calculate the interpolated
+	// transform or anything else.
+	// Ideally we would not even call the VisualServer::set_transform() when invisible but that would entail having logic
+	// to keep track of the previous transform on the SceneTree side. The "early out" below is less efficient but a lot cleaner codewise.
+	if (!instance->visible) {
+		return;
+	}
+
+	// decide on the interpolation method .. slerp if possible
+	instance->interpolation_method = TransformInterpolator::find_method(instance->transform_prev.basis, instance->transform_curr.basis);
 
 	if (!instance->on_interpolate_list) {
 		_interpolation_data.instance_interpolate_update_list.push_back(p_instance);
@@ -919,15 +927,15 @@ void VisualServerScene::instance_set_transform(RID p_instance, const Transform &
 			if (id != 0) {
 				if (ObjectDB::get_instance(id)) {
 					Node *node = Object::cast_to<Node>(ObjectDB::get_instance(id));
-					if (node) {
-						node_name = "\"" + node->get_name() + "\"";
+					if (node && node->is_inside_tree()) {
+						node_name = "\"" + String(node->get_path()) + "\"";
 					} else {
 						node_name = "\"unknown\"";
 					}
 				}
 			}
 
-			WARN_PRINT("Interpolated Instance " + node_name + " transform should usually be set during physics process (possibly benign).");
+			WARN_PRINT("[Physics interpolation] Instance interpolation is being triggered from outside physics process, this might lead to issues: " + node_name + " (possibly benign).");
 		}
 	}
 #endif
@@ -3742,10 +3750,6 @@ void VisualServerScene::_bake_gi_probe_light(const GIProbeDataHeader *header, co
 
 			float distance_adv = _get_normal_advance(light_axis);
 
-			int success_count = 0;
-
-			// uint64_t us = OS::get_singleton()->get_ticks_usec();
-
 			for (int i = 0; i < p_leaf_count; i++) {
 				uint32_t idx = leaves[i];
 
@@ -3794,18 +3798,11 @@ void VisualServerScene::_bake_gi_probe_light(const GIProbeDataHeader *header, co
 					light->energy[0] += int32_t(light_r * att * ((cell->albedo >> 16) & 0xFF) / 255.0);
 					light->energy[1] += int32_t(light_g * att * ((cell->albedo >> 8) & 0xFF) / 255.0);
 					light->energy[2] += int32_t(light_b * att * ((cell->albedo) & 0xFF) / 255.0);
-					success_count++;
 				}
 			}
-
-			// print_line("BAKE TIME: " + rtos((OS::get_singleton()->get_ticks_usec() - us) / 1000000.0));
-			// print_line("valid cells: " + itos(success_count));
-
 		} break;
 		case VS::LIGHT_OMNI:
 		case VS::LIGHT_SPOT: {
-			// uint64_t us = OS::get_singleton()->get_ticks_usec();
-
 			Vector3 light_pos = light_cache.transform.origin;
 			Vector3 spot_axis = -light_cache.transform.basis.get_axis(2).normalized();
 
@@ -3903,7 +3900,6 @@ void VisualServerScene::_bake_gi_probe_light(const GIProbeDataHeader *header, co
 					light->energy[2] += int32_t(light_b * att * ((cell->albedo) & 0xFF) / 255.0);
 				}
 			}
-			//print_line("BAKE TIME: " + rtos((OS::get_singleton()->get_ticks_usec() - us) / 1000000.0));
 		} break;
 	}
 }

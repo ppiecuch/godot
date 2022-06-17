@@ -580,13 +580,9 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 		netUtils = new GodotNetUtils(activity);
 		mSensorManager = (SensorManager)activity.getSystemService(Context.SENSOR_SERVICE);
 		mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-		mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_GAME);
 		mGravity = mSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
-		mSensorManager.registerListener(this, mGravity, SensorManager.SENSOR_DELAY_GAME);
 		mMagnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-		mSensorManager.registerListener(this, mMagnetometer, SensorManager.SENSOR_DELAY_GAME);
 		mGyroscope = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-		mSensorManager.registerListener(this, mGyroscope, SensorManager.SENSOR_DELAY_GAME);
 
 		GodotLib.initialize(activity, this, activity.getAssets(), use_apk_expansion);
 
@@ -798,14 +794,13 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 	}
 
 	public String getClipboard() {
-		String copiedText = "";
-
-		if (mClipboard.hasPrimaryClip()) {
-			ClipData.Item item = mClipboard.getPrimaryClip().getItemAt(0);
-			copiedText = item.getText().toString();
-		}
-
-		return copiedText;
+		ClipData clipData = mClipboard.getPrimaryClip();
+		if (clipData == null)
+			return "";
+		CharSequence text = clipData.getItemAt(0).getText();
+		if (text == null)
+			return "";
+		return text.toString();
 	}
 
 	public void setClipboard(String p_text) {

@@ -3701,7 +3701,7 @@ void RasterizerSceneGLES3::_post_process(Environment *env, const CameraMatrix &p
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 	}
 
-	if ((!env || storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_TRANSPARENT] || storage->frame.current_rt->width < 4 || storage->frame.current_rt->height < 4) && !storage->frame.current_rt->use_fxaa && !storage->frame.current_rt->use_debanding && storage->frame.current_rt->sharpen_intensity < 0.001) { //no post process on small render targets
+	if ((!env || storage->frame.current_rt->width < 4 || storage->frame.current_rt->height < 4) && !storage->frame.current_rt->use_fxaa && !storage->frame.current_rt->use_debanding && storage->frame.current_rt->sharpen_intensity < 0.001) { //no post process on small render targets
 		//no environment or transparent render, simply return and convert to SRGB
 		if (storage->frame.current_rt->external.fbo != 0) {
 			glBindFramebuffer(GL_FRAMEBUFFER, storage->frame.current_rt->external.fbo);
@@ -3850,7 +3850,8 @@ void RasterizerSceneGLES3::_post_process(Environment *env, const CameraMatrix &p
 		if (composite_from != storage->frame.current_rt->buffers.diffuse) {
 			glEnable(GL_BLEND);
 			glBlendEquation(GL_FUNC_ADD);
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			// Alpha was used by the horizontal pass, it should not carry over.
+			glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ZERO, GL_ONE);
 
 		} else {
 			glActiveTexture(GL_TEXTURE2);
