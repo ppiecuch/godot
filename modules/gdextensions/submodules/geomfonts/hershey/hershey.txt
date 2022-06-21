@@ -47,7 +47,7 @@ you feel bad about it, take a smaller deduction for something on your taxes
 next week...)
 
 The Hershey Fonts:
-	- are a set of more than 2000 glyph (symbol) descriptions in vector 
+	- are a set of more than 2000 glyph (symbol) descriptions in vector
 		( <x,y> point-to-point ) format
 	- can be grouped as almost 20 'occidental' (english, greek,
 		cyrillic) fonts, 3 or more 'oriental' (Kanji, Hiragana,
@@ -87,7 +87,7 @@ This distribution:
 			on a graphic device (we recommend that if you
 			wish to write programs using the fonts, you should
 			hack up one of these until it works on your system)
-			
+
 	- consists of the following files...
 		hershey.doc - details of the font data format, typestyles and
 				symbols included, etc.
