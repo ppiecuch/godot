@@ -1,0 +1,552 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		3A6FD45E1A1131B20070EEC5 /* MPKAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3A6FD4541A1131B20070EEC5 /* MPKAppDelegate.m */; };
+		3A6FD45F1A1131B20070EEC5 /* MPKViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 3A6FD4561A1131B20070EEC5 /* MPKViewController.m */; };
+		3A6FD4601A1131B20070EEC5 /* UIStoryboardSegue+Utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 3A6FD45A1A1131B20070EEC5 /* UIStoryboardSegue+Utils.m */; };
+		3A6FD4611A1131B20070EEC5 /* MPKConnectionsTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 3A6FD45D1A1131B20070EEC5 /* MPKConnectionsTableViewController.m */; };
+		3A6FD4641A11357A0070EEC5 /* MPKPeerInfoViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 3A6FD4631A11357A0070EEC5 /* MPKPeerInfoViewController.m */; };
+		3A6FD46B1A115C240070EEC5 /* UIColor+Utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 3A6FD46A1A115C240070EEC5 /* UIColor+Utils.m */; };
+		3ACE21FE1A0C0ED800828800 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 3ACE21FD1A0C0ED800828800 /* main.m */; };
+		3ACE22071A0C0ED800828800 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3ACE22051A0C0ED800828800 /* Main.storyboard */; };
+		3ACE22091A0C0ED800828800 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3ACE22081A0C0ED800828800 /* Images.xcassets */; };
+		3ACE220C1A0C0ED800828800 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 3ACE220A1A0C0ED800828800 /* LaunchScreen.xib */; };
+		3ACE22181A0C0ED800828800 /* MultipeerKit_iOS_ExampleTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 3ACE22171A0C0ED800828800 /* MultipeerKit_iOS_ExampleTests.m */; };
+		4541226A1AD314FA0077600E /* MultipeerKit_iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 454122691AD314FA0077600E /* MultipeerKit_iOS.framework */; };
+		4541226B1AD314FA0077600E /* MultipeerKit_iOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 454122691AD314FA0077600E /* MultipeerKit_iOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		3ACE22121A0C0ED800828800 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3ACE21F01A0C0ED800828800 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3ACE21F71A0C0ED800828800;
+			remoteInfo = MultipeerKit_iOS_Example;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		4541226C1AD314FA0077600E /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				4541226B1AD314FA0077600E /* MultipeerKit_iOS.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		3A6FD4531A1131B20070EEC5 /* MPKAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MPKAppDelegate.h; sourceTree = "<group>"; };
+		3A6FD4541A1131B20070EEC5 /* MPKAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPKAppDelegate.m; sourceTree = "<group>"; };
+		3A6FD4551A1131B20070EEC5 /* MPKViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MPKViewController.h; sourceTree = "<group>"; };
+		3A6FD4561A1131B20070EEC5 /* MPKViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPKViewController.m; sourceTree = "<group>"; };
+		3A6FD4591A1131B20070EEC5 /* UIStoryboardSegue+Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIStoryboardSegue+Utils.h"; sourceTree = "<group>"; };
+		3A6FD45A1A1131B20070EEC5 /* UIStoryboardSegue+Utils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIStoryboardSegue+Utils.m"; sourceTree = "<group>"; };
+		3A6FD45C1A1131B20070EEC5 /* MPKConnectionsTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MPKConnectionsTableViewController.h; sourceTree = "<group>"; };
+		3A6FD45D1A1131B20070EEC5 /* MPKConnectionsTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPKConnectionsTableViewController.m; sourceTree = "<group>"; };
+		3A6FD4621A11357A0070EEC5 /* MPKPeerInfoViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MPKPeerInfoViewController.h; path = MultipeerKit_iOS_Example/Source/Controllers/MPKPeerInfoViewController.h; sourceTree = SOURCE_ROOT; };
+		3A6FD4631A11357A0070EEC5 /* MPKPeerInfoViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MPKPeerInfoViewController.m; path = MultipeerKit_iOS_Example/Source/Controllers/MPKPeerInfoViewController.m; sourceTree = SOURCE_ROOT; };
+		3A6FD4691A115C240070EEC5 /* UIColor+Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIColor+Utils.h"; sourceTree = "<group>"; };
+		3A6FD46A1A115C240070EEC5 /* UIColor+Utils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIColor+Utils.m"; sourceTree = "<group>"; };
+		3ACE21F81A0C0ED800828800 /* MultipeerKit_iOS_Example.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MultipeerKit_iOS_Example.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3ACE21FC1A0C0ED800828800 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		3ACE21FD1A0C0ED800828800 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		3ACE22061A0C0ED800828800 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		3ACE22081A0C0ED800828800 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
+		3ACE220B1A0C0ED800828800 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LaunchScreen.xib; sourceTree = "<group>"; };
+		3ACE22111A0C0ED800828800 /* MultipeerKit_iOS_ExampleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MultipeerKit_iOS_ExampleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		3ACE22161A0C0ED800828800 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		3ACE22171A0C0ED800828800 /* MultipeerKit_iOS_ExampleTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MultipeerKit_iOS_ExampleTests.m; sourceTree = "<group>"; };
+		454122691AD314FA0077600E /* MultipeerKit_iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; name = MultipeerKit_iOS.framework; path = "/Users/johnosullivan/Library/Developer/Xcode/DerivedData/MultipeerKit-cqyrhhbwevkpbccndarajnulzdcu/Build/Products/Debug-iphoneos/MultipeerKit_iOS.framework"; sourceTree = "<absolute>"; };
+		8A3B749A1A23C767004EF3E0 /* MultipeerKit_iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; name = MultipeerKit_iOS.framework; path = "/Users/KE/Library/Developer/Xcode/DerivedData/MultipeerKit-djnsiijdfpejulhehjphrmnacicn/Build/Products/Debug-iphoneos/MultipeerKit_iOS.framework"; sourceTree = "<absolute>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		3ACE21F51A0C0ED800828800 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4541226A1AD314FA0077600E /* MultipeerKit_iOS.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3ACE220E1A0C0ED800828800 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		3A26F7E21A0D1BC4000A9D90 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				8A3B749A1A23C767004EF3E0 /* MultipeerKit_iOS.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		3A6FD4511A1131B20070EEC5 /* Source */ = {
+			isa = PBXGroup;
+			children = (
+				3A6FD4521A1131B20070EEC5 /* App */,
+				3A6FD4571A1131B20070EEC5 /* Common */,
+				3A6FD45B1A1131B20070EEC5 /* Controllers */,
+			);
+			path = Source;
+			sourceTree = "<group>";
+		};
+		3A6FD4521A1131B20070EEC5 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				3A6FD4531A1131B20070EEC5 /* MPKAppDelegate.h */,
+				3A6FD4541A1131B20070EEC5 /* MPKAppDelegate.m */,
+				3A6FD4551A1131B20070EEC5 /* MPKViewController.h */,
+				3A6FD4561A1131B20070EEC5 /* MPKViewController.m */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		3A6FD4571A1131B20070EEC5 /* Common */ = {
+			isa = PBXGroup;
+			children = (
+				3A6FD4581A1131B20070EEC5 /* Categories */,
+			);
+			path = Common;
+			sourceTree = "<group>";
+		};
+		3A6FD4581A1131B20070EEC5 /* Categories */ = {
+			isa = PBXGroup;
+			children = (
+				3A6FD4691A115C240070EEC5 /* UIColor+Utils.h */,
+				3A6FD46A1A115C240070EEC5 /* UIColor+Utils.m */,
+				3A6FD4591A1131B20070EEC5 /* UIStoryboardSegue+Utils.h */,
+				3A6FD45A1A1131B20070EEC5 /* UIStoryboardSegue+Utils.m */,
+			);
+			path = Categories;
+			sourceTree = "<group>";
+		};
+		3A6FD45B1A1131B20070EEC5 /* Controllers */ = {
+			isa = PBXGroup;
+			children = (
+				3A6FD45C1A1131B20070EEC5 /* MPKConnectionsTableViewController.h */,
+				3A6FD45D1A1131B20070EEC5 /* MPKConnectionsTableViewController.m */,
+				3A6FD4621A11357A0070EEC5 /* MPKPeerInfoViewController.h */,
+				3A6FD4631A11357A0070EEC5 /* MPKPeerInfoViewController.m */,
+			);
+			path = Controllers;
+			sourceTree = "<group>";
+		};
+		3ACE21EF1A0C0ED800828800 = {
+			isa = PBXGroup;
+			children = (
+				454122691AD314FA0077600E /* MultipeerKit_iOS.framework */,
+				3ACE21FA1A0C0ED800828800 /* MultipeerKit_iOS_Example */,
+				3ACE22141A0C0ED800828800 /* MultipeerKit_iOS_ExampleTests */,
+				3A26F7E21A0D1BC4000A9D90 /* Frameworks */,
+				3ACE21F91A0C0ED800828800 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		3ACE21F91A0C0ED800828800 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				3ACE21F81A0C0ED800828800 /* MultipeerKit_iOS_Example.app */,
+				3ACE22111A0C0ED800828800 /* MultipeerKit_iOS_ExampleTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		3ACE21FA1A0C0ED800828800 /* MultipeerKit_iOS_Example */ = {
+			isa = PBXGroup;
+			children = (
+				3A6FD4511A1131B20070EEC5 /* Source */,
+				3ACE22211A0C0EE300828800 /* UX */,
+				3ACE21FB1A0C0ED800828800 /* Supporting Files */,
+			);
+			path = MultipeerKit_iOS_Example;
+			sourceTree = "<group>";
+		};
+		3ACE21FB1A0C0ED800828800 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				3ACE21FC1A0C0ED800828800 /* Info.plist */,
+				3ACE21FD1A0C0ED800828800 /* main.m */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		3ACE22141A0C0ED800828800 /* MultipeerKit_iOS_ExampleTests */ = {
+			isa = PBXGroup;
+			children = (
+				3ACE22171A0C0ED800828800 /* MultipeerKit_iOS_ExampleTests.m */,
+				3ACE22151A0C0ED800828800 /* Supporting Files */,
+			);
+			path = MultipeerKit_iOS_ExampleTests;
+			sourceTree = "<group>";
+		};
+		3ACE22151A0C0ED800828800 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				3ACE22161A0C0ED800828800 /* Info.plist */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		3ACE22211A0C0EE300828800 /* UX */ = {
+			isa = PBXGroup;
+			children = (
+				3ACE22051A0C0ED800828800 /* Main.storyboard */,
+				3ACE220A1A0C0ED800828800 /* LaunchScreen.xib */,
+				3ACE22081A0C0ED800828800 /* Images.xcassets */,
+			);
+			name = UX;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		3ACE21F71A0C0ED800828800 /* MultipeerKit_iOS_Example */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3ACE221B1A0C0ED800828800 /* Build configuration list for PBXNativeTarget "MultipeerKit_iOS_Example" */;
+			buildPhases = (
+				3ACE21F41A0C0ED800828800 /* Sources */,
+				3ACE21F51A0C0ED800828800 /* Frameworks */,
+				3ACE21F61A0C0ED800828800 /* Resources */,
+				4541226C1AD314FA0077600E /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MultipeerKit_iOS_Example;
+			productName = MultipeerKit_iOS_Example;
+			productReference = 3ACE21F81A0C0ED800828800 /* MultipeerKit_iOS_Example.app */;
+			productType = "com.apple.product-type.application";
+		};
+		3ACE22101A0C0ED800828800 /* MultipeerKit_iOS_ExampleTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3ACE221E1A0C0ED800828800 /* Build configuration list for PBXNativeTarget "MultipeerKit_iOS_ExampleTests" */;
+			buildPhases = (
+				3ACE220D1A0C0ED800828800 /* Sources */,
+				3ACE220E1A0C0ED800828800 /* Frameworks */,
+				3ACE220F1A0C0ED800828800 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				3ACE22131A0C0ED800828800 /* PBXTargetDependency */,
+			);
+			name = MultipeerKit_iOS_ExampleTests;
+			productName = MultipeerKit_iOS_ExampleTests;
+			productReference = 3ACE22111A0C0ED800828800 /* MultipeerKit_iOS_ExampleTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		3ACE21F01A0C0ED800828800 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0610;
+				ORGANIZATIONNAME = Microsoft;
+				TargetAttributes = {
+					3ACE21F71A0C0ED800828800 = {
+						CreatedOnToolsVersion = 6.1;
+						SystemCapabilities = {
+							com.apple.BackgroundModes = {
+								enabled = 1;
+							};
+						};
+					};
+					3ACE22101A0C0ED800828800 = {
+						CreatedOnToolsVersion = 6.1;
+						TestTargetID = 3ACE21F71A0C0ED800828800;
+					};
+				};
+			};
+			buildConfigurationList = 3ACE21F31A0C0ED800828800 /* Build configuration list for PBXProject "MultipeerKit_iOS_Example" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 3ACE21EF1A0C0ED800828800;
+			productRefGroup = 3ACE21F91A0C0ED800828800 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				3ACE21F71A0C0ED800828800 /* MultipeerKit_iOS_Example */,
+				3ACE22101A0C0ED800828800 /* MultipeerKit_iOS_ExampleTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		3ACE21F61A0C0ED800828800 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3ACE22071A0C0ED800828800 /* Main.storyboard in Resources */,
+				3ACE220C1A0C0ED800828800 /* LaunchScreen.xib in Resources */,
+				3ACE22091A0C0ED800828800 /* Images.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3ACE220F1A0C0ED800828800 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		3ACE21F41A0C0ED800828800 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3A6FD46B1A115C240070EEC5 /* UIColor+Utils.m in Sources */,
+				3A6FD4601A1131B20070EEC5 /* UIStoryboardSegue+Utils.m in Sources */,
+				3A6FD45F1A1131B20070EEC5 /* MPKViewController.m in Sources */,
+				3ACE21FE1A0C0ED800828800 /* main.m in Sources */,
+				3A6FD45E1A1131B20070EEC5 /* MPKAppDelegate.m in Sources */,
+				3A6FD4611A1131B20070EEC5 /* MPKConnectionsTableViewController.m in Sources */,
+				3A6FD4641A11357A0070EEC5 /* MPKPeerInfoViewController.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3ACE220D1A0C0ED800828800 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3ACE22181A0C0ED800828800 /* MultipeerKit_iOS_ExampleTests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		3ACE22131A0C0ED800828800 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3ACE21F71A0C0ED800828800 /* MultipeerKit_iOS_Example */;
+			targetProxy = 3ACE22121A0C0ED800828800 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		3ACE22051A0C0ED800828800 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				3ACE22061A0C0ED800828800 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		3ACE220A1A0C0ED800828800 /* LaunchScreen.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				3ACE220B1A0C0ED800828800 /* Base */,
+			);
+			name = LaunchScreen.xib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		3ACE22191A0C0ED800828800 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.1;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		3ACE221A1A0C0ED800828800 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.1;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		3ACE221C1A0C0ED800828800 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(USER_LIBRARY_DIR)/Developer/Xcode/DerivedData/MultipeerKit-absfwtjbbnnbamcjvggwvrcegnwi/Build/Products/Debug-iphoneos",
+					"$(USER_LIBRARY_DIR)/Developer/Xcode/DerivedData/MultipeerKit-djnsiijdfpejulhehjphrmnacicn/Build/Products/Debug-iphoneos",
+					"$(USER_LIBRARY_DIR)/Developer/Xcode/DerivedData/MultipeerKit-cqyrhhbwevkpbccndarajnulzdcu/Build/Products/Debug-iphoneos",
+				);
+				INFOPLIST_FILE = MultipeerKit_iOS_Example/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		3ACE221D1A0C0ED800828800 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(USER_LIBRARY_DIR)/Developer/Xcode/DerivedData/MultipeerKit-absfwtjbbnnbamcjvggwvrcegnwi/Build/Products/Debug-iphoneos",
+					"$(USER_LIBRARY_DIR)/Developer/Xcode/DerivedData/MultipeerKit-djnsiijdfpejulhehjphrmnacicn/Build/Products/Debug-iphoneos",
+					"$(USER_LIBRARY_DIR)/Developer/Xcode/DerivedData/MultipeerKit-cqyrhhbwevkpbccndarajnulzdcu/Build/Products/Debug-iphoneos",
+				);
+				INFOPLIST_FILE = MultipeerKit_iOS_Example/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		3ACE221F1A0C0ED800828800 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(SDKROOT)/Developer/Library/Frameworks",
+					"$(inherited)",
+				);
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = MultipeerKit_iOS_ExampleTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MultipeerKit_iOS_Example.app/MultipeerKit_iOS_Example";
+			};
+			name = Debug;
+		};
+		3ACE22201A0C0ED800828800 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(SDKROOT)/Developer/Library/Frameworks",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = MultipeerKit_iOS_ExampleTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MultipeerKit_iOS_Example.app/MultipeerKit_iOS_Example";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		3ACE21F31A0C0ED800828800 /* Build configuration list for PBXProject "MultipeerKit_iOS_Example" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3ACE22191A0C0ED800828800 /* Debug */,
+				3ACE221A1A0C0ED800828800 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3ACE221B1A0C0ED800828800 /* Build configuration list for PBXNativeTarget "MultipeerKit_iOS_Example" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3ACE221C1A0C0ED800828800 /* Debug */,
+				3ACE221D1A0C0ED800828800 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3ACE221E1A0C0ED800828800 /* Build configuration list for PBXNativeTarget "MultipeerKit_iOS_ExampleTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3ACE221F1A0C0ED800828800 /* Debug */,
+				3ACE22201A0C0ED800828800 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 3ACE21F01A0C0ED800828800 /* Project object */;
+}
