@@ -341,7 +341,7 @@ void SimulationControllerDebugInstance2D::_notification(int p_what) {
 					}
 				}
 			}
-		}
+		} break;
 	}
 }
 
