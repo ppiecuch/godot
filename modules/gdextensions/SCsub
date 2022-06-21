@@ -122,6 +122,12 @@ if env["os_family"] in ["os_windows", "os_unix"]:
     modules += ["unqlite"]
     thirdparty_sources += Glob("thirdparty/unqlite/*.c")
 
+if is_enabled("ldrloader"):
+    sources += \
+        Glob("submodules/ldrloader/ldrawlib/*.c") + \
+        Glob("submodules/ldrloader/libldr/*.cpp") + \
+        Glob("submodules/ldrloader/libldr/*.c")
+
 if is_enabled("sqlite"):
     thirdparty_sources += Glob("thirdparty/sqlite/*.c")
 
