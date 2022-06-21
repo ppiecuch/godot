@@ -36,13 +36,16 @@
 
 #include "core/os/os.h"
 #include "scene/3d/mesh_instance.h"
+#include "scene/2d/canvas_item.h"
 #include "scene/animation/animation_player.h"
 #include "scene/resources/curve.h"
 
 #include "earcut/earcut.h"
 #include "resource_importer_swf.h"
 
-#define POLYVECTOR_DEBUG
+#ifdef DEBUG_ENABLED
+# define POLYVECTOR_DEBUG
+#endif
 
 using Coord = float;
 using Point = Vector2;
@@ -60,6 +63,7 @@ struct nth<1, Vector2> {
 } //namespace util
 } //namespace mapbox
 
+#ifndef _3D_DISABLED
 class PolyVector : public VisualInstance {
 	GDCLASS(PolyVector, VisualInstance)
 
@@ -83,17 +87,15 @@ class PolyVector : public VisualInstance {
 	Ref<SpatialMaterial> materialDebug;
 	double dTriangulationTime;
 	double dMeshUpdateTime;
-	uint32_t vertex_count;
+	uint32_t iVertexCount;
 #endif
 
 protected:
 	static void _bind_methods();
 
 public:
-	PolyVector();
-	~PolyVector();
-
 	void draw_current_frame();
+
 	void clear_mesh_data();
 	void clear_mesh_instances();
 
@@ -126,6 +128,33 @@ public:
 	double get_mesh_update_time();
 	uint32_t get_vertex_count();
 #endif
+
+	PolyVector();
+	~PolyVector();
+};
+#endif // _3D_DISABLED
+
+class PolyVector2D : public CanvasItem {
+	GDCLASS(PolyVector2D, CanvasItem)
+
+	Ref<JSONVector> dataVectorFile;
+	Size2 viewSize;
+
+protected:
+	static void _bind_methods();
+	void _notification(int p_what);
+
+public:
+#ifdef TOOLS_ENABLED
+	void _edit_set_position(const Point2 &p_position);
+	Point2 _edit_get_position() const;
+	void _edit_set_scale(const Size2 &p_scale);
+	Size2 _edit_get_scale() const;
+#endif
+
+	Transform2D get_transform() const;
+
+	PolyVector2D();
 };
 
 #endif // POLYVECTOR_H

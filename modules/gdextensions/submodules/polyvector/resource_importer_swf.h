@@ -31,41 +31,41 @@
 #ifndef RESOURCE_IMPORTER_SWF_H
 #define RESOURCE_IMPORTER_SWF_H
 
-using N = uint32_t;
-
-#include "json/json.h"
-using json = nlohmann::json;
-
 #include "core/io/resource_importer.h"
 #include "core/io/resource_loader.h"
 #include "core/io/resource_saver.h"
 #include "scene/3d/mesh_instance.h"
 #include "scene/resources/curve.h"
+
 #include <map>
 #include <set>
 #include <vector>
 
 #include "libshockwave/swfparser.h"
 
+using N = uint32_t;
+#include "json/json.h"
+using json = nlohmann::json;
+
 #define RISWF_SHAPE_AREA_THRESHOLD 0.1
 
 struct PolyVectorMatrix {
-	float TranslateX = 0.0f;
-	float TranslateY = 0.0f;
-	float ScaleX = 1.0f;
-	float ScaleY = 1.0f;
-	float Skew0 = 0.0f;
-	float Skew1 = 0.0f;
+	float TranslateX = 0;
+	float TranslateY = 0;
+	float ScaleX = 1;
+	float ScaleY = 1;
+	float Skew0 = 0;
+	float Skew1 = 0;
 };
 struct PolyVectorColourTransform {
-	float RedAdd = 0.0f;
-	float GreenAdd = 0.0f;
-	float BlueAdd = 0.0f;
-	float AlphaAdd = 0.0f;
-	float RedMultiplier = 1.0f;
-	float GreenMultiplier = 1.0f;
-	float BlueMultiplier = 1.0f;
-	float AlphaMultiplier = 1.0f;
+	float RedAdd = 0;
+	float GreenAdd = 0;
+	float BlueAdd = 0;
+	float AlphaAdd = 0;
+	float RedMultiplier = 1;
+	float GreenMultiplier = 1;
+	float BlueMultiplier = 1;
+	float AlphaMultiplier = 1;
 };
 struct PolyVectorPath {
 	bool closed;
@@ -114,6 +114,8 @@ typedef Map<uint16_t, Ref<ArrayMesh>> MeshQualityMap;
 typedef Map<uint16_t, MeshQualityMap> MeshDictionaryMap;
 typedef Map<uint16_t, MeshInstance *> MeshInstanceMap;
 
+static const char *swf_imp_ext = "vec.json";
+
 #ifdef TOOLS_ENABLED
 class ResourceImporterSWF : public ResourceImporter {
 	GDCLASS(ResourceImporterSWF, ResourceImporter)
@@ -122,7 +124,7 @@ class ResourceImporterSWF : public ResourceImporter {
 	typedef std::vector<SWFPolygon> SWFPolygonList;
 	struct SWFPolygon {
 		SWF::Shape polygon;
-		real_t area = 0.0;
+		real_t area = 0;
 		uint16_t fill;
 		uint16_t stroke;
 		bool has_parent = false;
@@ -130,7 +132,6 @@ class ResourceImporterSWF : public ResourceImporter {
 	};
 	SWFPolygonList shape_builder(SWF::ShapeList);
 	bool shape_contains_point(SWF::Point, SWF::Shape);
-	void find_connected_shapes(SWF::Shape *, SWF::ShapeList::iterator, bool, std::set<SWF::ShapeList::iterator> *, std::set<SWF::ShapeList::iterator> *, std::list<SWF::ShapeList::iterator> *);
 	_FORCE_INLINE_ bool points_equal(SWF::Vertex &, SWF::Vertex &);
 	_FORCE_INLINE_ void points_reverse(SWF::Shape *);
 	_FORCE_INLINE_ bool shape_area_too_small(real_t a) { return (abs(a) < RISWF_SHAPE_AREA_THRESHOLD); }
@@ -141,7 +142,7 @@ public:
 	virtual String get_importer_name() const { return "JSONVector"; }
 	virtual String get_visible_name() const { return "PolyVector"; }
 	virtual void get_recognized_extensions(List<String> *p_extensions) const { p_extensions->push_back("swf"); }
-	virtual String get_save_extension() const { return "vec.json"; }
+	virtual String get_save_extension() const { return swf_imp_ext; }
 	virtual String get_resource_type() const { return "JSONVector"; }
 	virtual bool get_option_visibility(const String &, const Map<StringName, Variant> &) const { return true; }
 	virtual int get_preset_count() const { return 0; }
@@ -199,24 +200,24 @@ public:
 	JSONVector() {}
 };
 
-#define PV_JSON_NAME_FPS "FPS"
-#define PV_JSON_NAME_DIMS "Dimensions"
-#define PV_JSON_NAME_LIBRARY "Library"
-#define PV_JSON_NAME_CHARACTERS "Characters"
-#define PV_JSON_NAME_LAYER "Layer"
-#define PV_JSON_NAME_FILL "Fill"
-#define PV_JSON_NAME_STROKE "Stroke"
-#define PV_JSON_NAME_CLOSED "Closed"
-#define PV_JSON_NAME_VERTICES "Vertices"
-#define PV_JSON_NAME_HOLES "Holes"
-#define PV_JSON_NAME_FILLSTYLES "Fill Styles"
-#define PV_JSON_NAME_COLOUR "Colour"
-#define PV_JSON_NAME_LINESTYLES "Line Styles"
-#define PV_JSON_NAME_LINEWIDTH "Line Width"
-#define PV_JSON_NAME_FRAMES "Frames"
-#define PV_JSON_NAME_ID "ID"
-#define PV_JSON_NAME_DEPTH "Depth"
-#define PV_JSON_NAME_TRANSFORM "Transform"
-#define PV_JSON_NAME_CXFORM "CXform"
+#define PV_JSON_NAME_FPS "fps"
+#define PV_JSON_NAME_DIMS "dim"
+#define PV_JSON_NAME_LIBRARY "lib"
+#define PV_JSON_NAME_CHARACTERS "chr"
+#define PV_JSON_NAME_LAYER "lyr"
+#define PV_JSON_NAME_FILL "fil"
+#define PV_JSON_NAME_STROKE "stk"
+#define PV_JSON_NAME_CLOSED "clo"
+#define PV_JSON_NAME_VERTICES "ver"
+#define PV_JSON_NAME_HOLES "hol"
+#define PV_JSON_NAME_FILLSTYLES "fis"
+#define PV_JSON_NAME_COLOUR "col"
+#define PV_JSON_NAME_LINESTYLES "lis"
+#define PV_JSON_NAME_LINEWIDTH "liw"
+#define PV_JSON_NAME_FRAMES "frm"
+#define PV_JSON_NAME_ID "id"
+#define PV_JSON_NAME_DEPTH "dep"
+#define PV_JSON_NAME_TRANSFORM "xf"
+#define PV_JSON_NAME_CXFORM "cx"
 
 #endif // RESOURCE_IMPORTER_SWF_H
