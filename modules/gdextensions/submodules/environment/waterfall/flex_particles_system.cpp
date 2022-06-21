@@ -554,7 +554,6 @@ void flex_particle_system::update(const Vector2 &global_velocity, const Vector2 
 			}
 		}
 		p->update(global_velocity, global_acceleration);
-		const Size2 hbox = p->get_bounding_box() / 2;
 		if (_options & DETECT_COLLISIONS) {
 			// check collision
 			Iterator inner_it = it;
@@ -568,7 +567,9 @@ void flex_particle_system::update(const Vector2 &global_velocity, const Vector2 
 			const Vector2 vec_field_force = _vector_field.get_force_from_pos(p->position.x, p->position.y);
 			p->acceleration += vec_field_force / MIN(p->mass, MIN_PARTICLE_MASS) / VEC_FIELD_FORCE_DIVIDER;
 		}
+
 		// NOTE
+		// ----
 		//  These wall routines are repeatative, but since we want to hit each wall one by one
 		//  we have all 4.
 		//
@@ -585,6 +586,8 @@ void flex_particle_system::update(const Vector2 &global_velocity, const Vector2 
 		//        * bounce the particle
 		//      - if we have a callback
 		//        * call the callback
+
+		const Size2 hbox = p->get_bounding_box() / 2; // particle half size
 
 		// top wall
 		if (p->position.y <= -hbox.height) {

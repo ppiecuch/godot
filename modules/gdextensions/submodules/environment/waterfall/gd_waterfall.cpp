@@ -41,10 +41,10 @@
 #include <vector>
 
 enum WaterfallLayers {
-	LAYER_DROPS = 0,
-	LAYER_SMALL_CLOUDS = 1,
-	LAYER_CLOUDS = 2,
-	LAYER_BOTTOM = 3,
+	LAYER0_DROPS = 0,
+	LAYER1_SMALL_CLOUDS = 1,
+	LAYER2_CLOUDS = 2,
+	LAYER3_BOTTOM = 3,
 	LAYERS_COUNT,
 };
 
@@ -68,6 +68,8 @@ static const real_t _stretch_from_factor[] = { 0, 0.25, 0.5, 0.75 };
 static const real_t _accel_factor[] = { 0, 0.05, 0.1, 0.15, 0.2, 0.25 };
 static const real_t _fade_amount_factor[] = { 0, 0.1, 0.25, 0.5 };
 static const real_t _fade_from_factor[] = { 0, 0.5, 0.75, 0.9 };
+static const real_t _splash_spread_factor[] = { 1, 1.5, 2 };
+static const real_t _splash_height_factor[] = { 0.1, 0.2, 0.3, 0.4 };
 
 // https://blog.demofox.org/2017/05/29/when-random-numbers-are-too-random-low-discrepancy-sequences/
 static std::vector<Point2> _get_samples(int num, size_t basex, size_t basey, Rect2 view) {
@@ -118,7 +120,6 @@ static std::vector<Point2> _get_samples(int num, size_t basex, size_t basey, Rec
 #define _default_velocity_2 (_default_velocity_0 * 0.1)
 
 void GdWaterfall::_build_particles() {
-	// make all particles
 	_p.clear();
 	_particles.clear();
 	_check_textures_cache();
@@ -126,7 +127,7 @@ void GdWaterfall::_build_particles() {
 	{ // drops on layer 0
 		const real_t dim = particle_radius;
 		const int num = view_rect.size.width / dim * view_rect.size.height / dim * _density_factor[waterfall_density];
-		print_verbose("  layer 1: " + String::num(num) + " particles.");
+		print_verbose("  layer 0: " + String::num(num) + " particles.");
 		_particles.reserve(num * 3);
 		auto points = _get_samples(num, 2, 3, view_rect.grow_individual(-dim, 0, -dim, 0));
 		for (const Point2 &p : points) {
@@ -136,41 +137,47 @@ void GdWaterfall::_build_particles() {
 			const real_t damping = 1;
 			const real_t alpha = _default_alpha_0;
 			const Ref<Texture> texture = textures_quality == NO_TEXTURES ? nullptr : _cache[textures_quality][Math::random(0, 4)];
-			flex_particle_options opts(LAYER_DROPS, pos, velocity, dim, damping, alpha, stretch, texture);
+			flex_particle_options opts(LAYER0_DROPS, pos, velocity, dim, damping, alpha, stretch, texture);
 			_particles.push_back(flex_particle(opts));
 		}
 	}
 	{ // stretch clouds on layer 1
 		const real_t dim = particle_radius * 1.5;
 		const int num = view_rect.size.width / dim * view_rect.size.height / dim;
-		print_verbose("  layer 2: " + String::num(num) + " particles.");
-		auto points = _get_samples(num, 2, 3, view_rect.grow_individual(-dim, 0, -dim, 0));
+		print_verbose("  layer 1: " + String::num(num) + " particles.");
+		auto points = _get_samples(num, 2, 3, view_rect.grow_individual(-dim/2, 0, -dim/2, 0));
 		for (const Point2 &p : points) {
 			const Vector2 pos(p.x, p.y);
 			const Vector2 velocity(0, _default_velocity_1);
 			const real_t damping = 1;
 			const real_t alpha = _default_alpha_1;
 			const Ref<Texture> texture = textures_quality == NO_TEXTURES ? nullptr : _cache[textures_quality][WATERFALL_PARTICLE_CLOUD1];
-			flex_particle_options opts(LAYER_SMALL_CLOUDS, pos, velocity, dim, damping, alpha, texture);
+			flex_particle_options opts(LAYER1_SMALL_CLOUDS, pos, velocity, dim, damping, alpha, texture);
 			_particles.push_back(flex_particle(opts));
 		}
 	}
 	{ // clouds on layer 2
 		const real_t dim = particle_radius * 2;
 		const int num = view_rect.size.width / dim * view_rect.size.height / dim;
-		print_verbose("  layer 3: " + String::num(num) + " particles.");
-		auto points = _get_samples(num, 2, 3, view_rect.grow_individual(-dim, 0, -dim, 0));
+		print_verbose("  layer 2: " + String::num(num) + " particles.");
+		auto points = _get_samples(num, 2, 3, view_rect.grow_individual(-dim/2, 0, -dim/2, 0));
 		for (const Point2 &p : points) {
 			const Vector2 pos(p.x, p.y);
 			const Vector2 velocity(0, _default_velocity_2);
 			const real_t damping = 1;
 			const real_t alpha = _default_alpha_2;
 			const Ref<Texture> texture = textures_quality == NO_TEXTURES ? nullptr : _cache[textures_quality][WATERFALL_PARTICLE_CLOUD2];
-			flex_particle_options opts(LAYER_CLOUDS, pos, velocity, dim, damping, alpha, texture);
+			flex_particle_options opts(LAYER2_CLOUDS, pos, velocity, dim, damping, alpha, texture);
 			_particles.push_back(flex_particle(opts));
 		}
 	}
-	{ // bottom on layer 3
+	{ // bottom splash on layer 3
+		const real_t dim = particle_radius * 2;
+		const int num = _splash_spread_factor[waterfall_splash_spread] * view_rect.size.width / dim * _splash_height_factor[waterfall_splash_height] * view_rect.size.height / dim;
+		print_verbose("  layer 3: " + String::num(num) + " particles.");
+		auto points = _get_samples(num, 2, 3, view_rect.grow_individual(-dim/2, 0, -dim/2, 0));
+		for (const Point2 &p : points) {
+		}
 	}
 	for (int p = 0; p < _particles.size(); p++) {
 		_p.add_particle(&_particles[p]);
@@ -271,8 +278,8 @@ void GdWaterfall::_check_textures_cache() {
 
 void GdWaterfall::_update_particles() {
 	_p.setup_world(view_rect.size);
-	_p.set_alpha_change(LAYER_DROPS, { 1, _fade_from_factor[particle_fade_from] }, _fade_amount_factor[particle_fade_amount]);
-	_p.set_scale_change(LAYER_DROPS, { 1, _stretch_from_factor[particle_stretch_from] }, { 1, _stretch_amount_factor[particle_fade_amount] });
+	_p.set_alpha_change(LAYER0_DROPS, { 1, _fade_from_factor[particle_fade_from] }, _fade_amount_factor[particle_fade_amount]);
+	_p.set_scale_change(LAYER0_DROPS, { 1, _stretch_from_factor[particle_stretch_from] }, { 1, _stretch_amount_factor[particle_fade_amount] });
 }
 
 void GdWaterfall::_reload_textures() {
@@ -602,17 +609,16 @@ GdWaterfall::GdWaterfall() :
 	_p.set_option(flex_particle_system::VERTICAL_WRAP, true);
 	_p.set_wall_callback([](flex_particle *p) {
 		// restore initial values
-		if (p->layer == LAYER_DROPS) {
+		if (p->layer == LAYER0_DROPS) {
 			p->velocity = Vector2(0, _default_velocity_0);
-		} else if (p->layer == LAYER_SMALL_CLOUDS) {
+		} else if (p->layer == LAYER1_SMALL_CLOUDS) {
 			p->velocity = Vector2(0, _default_velocity_1);
-		} else if (p->layer == LAYER_CLOUDS) {
+		} else if (p->layer == LAYER2_CLOUDS) {
 			p->velocity = Vector2(0, _default_velocity_2);
 		}
-	},
-			flex_particle_system::BOTTOM_WALL);
-	_p.set_layer_option(LAYER_DROPS, flex_particle_system::PROGRESS_ALPHA, true);
-	_p.set_layer_option(LAYER_DROPS, flex_particle_system::PROGRESS_SCALE, true);
+	}, flex_particle_system::BOTTOM_WALL);
+	_p.set_layer_option(LAYER0_DROPS, flex_particle_system::PROGRESS_ALPHA, true);
+	_p.set_layer_option(LAYER0_DROPS, flex_particle_system::PROGRESS_SCALE, true);
 	set_process(active);
 
 	_rebuild = true;
