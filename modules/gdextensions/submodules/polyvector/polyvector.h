@@ -67,27 +67,27 @@ struct nth<1, Vector2> {
 class PolyVector : public VisualInstance {
 	GDCLASS(PolyVector, VisualInstance)
 
-	Ref<JSONVector> dataVectorFile;
-	Ref<SpatialMaterial> materialDefault;
-	MeshInstanceMap mapMeshDisplay;
+	Ref<JSONVector> data_vec_file;
+	Ref<SpatialMaterial> material_default;
+	MeshInstanceMap mesh_display;
 
-	real_t fTime;
-	int8_t iCurveQuality;
-	Vector2 v2Offset;
-	real_t fLayerDepth;
-	real_t fMaxTessellationAngle;
+	real_t frame_time;
+	int8_t curve_quality;
+	Vector2 position_offset;
+	real_t layer_depth;
+	real_t max_tessellation_angle;
 
-	List<PolyVectorFrame> lFrameData;
-	List<PolyVectorCharacter> lDictionaryData;
-	real_t fFps;
+	List<PolyVectorFrame> frame_data;
+	List<PolyVectorCharacter> dictionary_data;
+	real_t fps;
 
 #ifdef POLYVECTOR_DEBUG
 	OS *os;
-	bool bDebugWireframe;
-	Ref<SpatialMaterial> materialDebug;
-	double dTriangulationTime;
-	double dMeshUpdateTime;
-	uint32_t iVertexCount;
+	bool debug_wireframe;
+	Ref<SpatialMaterial> material_debug;
+	double triangulation_time;
+	double mesh_update_time;
+	uint32_t vertex_count;
 #endif
 
 protected:
@@ -99,15 +99,15 @@ public:
 	void clear_mesh_data();
 	void clear_mesh_instances();
 
-	void set_vector_image(const Ref<JSONVector> &);
+	void set_vector_image(const Ref<JSONVector> &p_vector);
 	Ref<JSONVector> get_vector_image() const;
-	void set_time(real_t);
+	void set_time(real_t p_time);
 	real_t get_time();
-	void set_curve_quality(int8_t);
+	void set_curve_quality(int8_t p_quality);
 	int8_t get_curve_quality();
-	void set_offset(Vector2);
+	void set_offset(const Vector2 &p_offset);
 	Vector2 get_offset();
-	void set_layer_separation(real_t);
+	void set_layer_separation(real_t p_separation);
 	real_t get_layer_separation();
 	void set_albedo_colour(Color);
 	Color get_albedo_colour();
@@ -137,8 +137,14 @@ public:
 class PolyVector2D : public CanvasItem {
 	GDCLASS(PolyVector2D, CanvasItem)
 
-	Ref<JSONVector> dataVectorFile;
+	Ref<JSONVector> data_vec_file;
 	Size2 viewSize;
+
+	real_t frame_time;
+
+	List<PolyVectorFrame> frame_data;
+	List<PolyVectorCharacter> dictionary_data;
+	real_t fps;
 
 protected:
 	static void _bind_methods();
@@ -153,6 +159,11 @@ public:
 #endif
 
 	Transform2D get_transform() const;
+
+	void set_vector_image(const Ref<JSONVector> &p_vector);
+	Ref<JSONVector> get_vector_image() const;
+	void set_time(real_t p_time);
+	real_t get_time();
 
 	PolyVector2D();
 };

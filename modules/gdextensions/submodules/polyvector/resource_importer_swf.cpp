@@ -220,7 +220,7 @@ Error ResourceImporterSWF::import(const String &p_source_file, const String &p_s
 		root[PV_JSON_NAME_DIMS].push_back(int(swfparser->get_properties()->dimensions.xmax));
 		root[PV_JSON_NAME_DIMS].push_back(int(swfparser->get_properties()->dimensions.ymax));
 
-		FileAccess *pvimport = FileAccess::open(p_save_path + "." + swf_imp_ext, FileAccess::WRITE);
+		FileAccess *pvimport = FileAccess::open(p_save_path + "." + JSONVEC_EXT, FileAccess::WRITE);
 		ERR_FAIL_COND_V(!pvimport, ERR_FILE_CANT_WRITE);
 		if (bool(p_options["binary"])) {
 			std::vector<uint8_t> jsonout = json::to_msgpack(root);
@@ -354,6 +354,9 @@ RES ResourceLoaderJSONVector::load(const String &p_path, const String &p_origina
 			jsondata = json::parse(jsonstring, jsonstring + jsonlength);
 		} catch (const json::parse_error &e) {
 			OS::get_singleton()->alert(String("JSON error: ") + e.what(), "JSON Error");
+			if (r_error)
+				*r_error = ERR_PARSE_ERROR;
+			return RES();
 		}
 	}
 	delete[] jsonstring;
@@ -384,8 +387,9 @@ RES ResourceLoaderJSONVector::load(const String &p_path, const String &p_origina
 			if(jshapestroke>0) {
 				json jcolour = jsondata[PV_JSON_NAME_LIBRARY][PV_JSON_NAME_LINESTYLES][characterid][jshapestroke-1][PV_JSON_NAME_COLOUR];
 				pvshape.strokecolour = new Color(int(jcolour[0])/255.0, int(jcolour[1])/255.0, int(jcolour[2])/255.0);
-				if(jcolour.size() > 3)
+				if(jcolour.size() > 3) {
 					pvshape.strokecolour->a = int(jcolour[3])/255.0;
+				}
 			}
 			PolyVectorPath pvpath = verts_to_curve(jshape[PV_JSON_NAME_VERTICES]);
 			pvpath.closed = jshape[PV_JSON_NAME_CLOSED];

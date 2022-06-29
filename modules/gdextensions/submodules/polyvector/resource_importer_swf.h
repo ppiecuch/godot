@@ -114,7 +114,7 @@ typedef Map<uint16_t, Ref<ArrayMesh>> MeshQualityMap;
 typedef Map<uint16_t, MeshQualityMap> MeshDictionaryMap;
 typedef Map<uint16_t, MeshInstance *> MeshInstanceMap;
 
-static const char *swf_imp_ext = "vec.json";
+#define JSONVEC_EXT "vec.json"
 
 #ifdef TOOLS_ENABLED
 class ResourceImporterSWF : public ResourceImporter {
@@ -142,7 +142,7 @@ public:
 	virtual String get_importer_name() const { return "JSONVector"; }
 	virtual String get_visible_name() const { return "PolyVector"; }
 	virtual void get_recognized_extensions(List<String> *p_extensions) const { p_extensions->push_back("swf"); }
-	virtual String get_save_extension() const { return swf_imp_ext; }
+	virtual String get_save_extension() const { return JSONVEC_EXT; }
 	virtual String get_resource_type() const { return "JSONVector"; }
 	virtual bool get_option_visibility(const String &, const Map<StringName, Variant> &) const { return true; }
 	virtual int get_preset_count() const { return 0; }
@@ -160,9 +160,9 @@ class ResourceLoaderJSONVector : public ResourceFormatLoader {
 
 public:
 	virtual RES load(const String &p_path, const String &p_original_path = "", Error *r_error = NULL);
-	virtual void get_recognized_extensions(List<String> *p_extensions) const { p_extensions->push_back("vec.json"); }
+	virtual void get_recognized_extensions(List<String> *p_extensions) const { p_extensions->push_back(JSONVEC_EXT); }
 	virtual String get_resource_type(const String &p_path) const {
-		if (p_path.get_extension().to_lower() == "vec.json")
+		if (p_path.get_extension().to_lower() == JSONVEC_EXT)
 			return "JSONVector";
 		return "";
 	}
@@ -172,30 +172,30 @@ public:
 class JSONVector : public Resource {
 	GDCLASS(JSONVector, Resource);
 	OBJ_SAVE_TYPE(JSONVector);
-	RES_BASE_EXTENSION("vec.json");
+	RES_BASE_EXTENSION(JSONVEC_EXT);
 
 	real_t fps;
 	Vector2 dimensions;
 	List<PolyVectorCharacter> dictionary;
 	List<PolyVectorFrame> frames;
 
-	MeshDictionaryMap mapMeshDictionary;
+	MeshDictionaryMap mesh_dictionary;
 
 public:
-	void add_character(PolyVectorCharacter p_data) { this->dictionary.push_back(p_data); }
-	PolyVectorCharacter get_character(uint16_t i) { return this->dictionary[i]; }
-	List<PolyVectorCharacter> get_dictionary() { return this->dictionary; }
+	void add_character(PolyVectorCharacter p_data) { dictionary.push_back(p_data); }
+	PolyVectorCharacter get_character(uint16_t i) { return dictionary[i]; }
+	List<PolyVectorCharacter> get_dictionary() { return dictionary; }
 
-	void add_frame(PolyVectorFrame p_data) { this->frames.push_back(p_data); }
-	PolyVectorFrame get_frame(uint16_t i) { return this->frames[i]; }
-	List<PolyVectorFrame> get_frames() { return this->frames; }
+	void add_frame(PolyVectorFrame p_data) { frames.push_back(p_data); }
+	PolyVectorFrame get_frame(uint16_t i) { return frames[i]; }
+	List<PolyVectorFrame> get_frames() { return frames; }
 
-	void set_fps(real_t f) { this->fps = f; }
-	real_t get_fps() { return this->fps; }
-	void set_dimensions(Vector2 d) { this->dimensions = d; }
-	Vector2 get_dimensions() { return this->dimensions; }
+	void set_fps(real_t f) { fps = f; }
+	real_t get_fps() { return fps; }
+	void set_dimensions(const Vector2 &dim) { dimensions = dim; }
+	Vector2 get_dimensions() { return dimensions; }
 
-	MeshDictionaryMap &get_mesh_dictionary() { return this->mapMeshDictionary; }
+	MeshDictionaryMap &get_mesh_dictionary() { return mesh_dictionary; }
 
 	JSONVector() {}
 };
