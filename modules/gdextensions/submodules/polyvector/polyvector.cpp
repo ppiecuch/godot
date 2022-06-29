@@ -69,7 +69,7 @@ void PolyVector::draw_current_frame() {
 					continue;
 				std::vector<std::vector<Vector2>> polygons;
 				std::vector<Vector2> tessverts;
-				PoolVector<Vector2> tess = shape.path.curve.tessellate(curve_quality, fMaxTessellationAngle);
+				PoolVector<Vector2> tess = shape.path.curve.tessellate(curve_quality, max_tessellation_angle);
 				if (!shape.path.closed) { // TODO: If shape is not a closed loop, store as a stroke
 					shape.strokes[curve_quality].push_back(tess);
 				} else { // Otherwise, triangulate
@@ -79,7 +79,7 @@ void PolyVector::draw_current_frame() {
 					for (uint32_t i = 1; i < tess_size; i++) {
 						poly.push_back(tessreader[i]);
 #ifdef POLYVECTOR_DEBUG
-						if (bDebugWireframe) {
+						if (debug_wireframe) {
 							wireframevertices.push_back(tessreader[i - 1]);
 							wireframevertices.push_back(tessreader[i]);
 						}
@@ -88,7 +88,7 @@ void PolyVector::draw_current_frame() {
 					polygons.push_back(poly);
 					tessverts.insert(tessverts.end(), poly.begin(), poly.end());
 					for (List<uint16_t>::Element *hole = shape.holes.front(); hole; hole = hole->next()) {
-						PoolVector<Vector2> holetess = (*pvchar)[hole->get()].path.curve.tessellate(curve_quality, fMaxTessellationAngle);
+						PoolVector<Vector2> holetess = (*pvchar)[hole->get()].path.curve.tessellate(curve_quality, max_tessellation_angle);
 						uint32_t holetess_size = holetess.size();
 						std::vector<Vector2> holepoly;
 						PoolVector<Vector2>::Read holetessreader = holetess.read();
@@ -120,7 +120,7 @@ void PolyVector::draw_current_frame() {
 			newmesh->surface_set_material(0, material_default);
 
 #ifdef POLYVECTOR_DEBUG
-			if (bDebugWireframe) {
+			if (debug_wireframe) {
 				wireframearr[Mesh::ARRAY_VERTEX] = wireframevertices;
 				newmesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, wireframearr);
 				newmesh->surface_set_material(newmesh->get_surface_count() - 1, material_debug);
@@ -210,7 +210,7 @@ int8_t PolyVector::get_curve_quality() {
 	return curve_quality;
 }
 
-void PolyVector::set_offset(Vector2 p_offset) {
+void PolyVector::set_offset(const Vector2 &p_offset) {
 	position_offset = p_offset;
 	draw_current_frame();
 }
@@ -241,10 +241,10 @@ bool PolyVector::get_material_unshaded() {
 }
 
 void PolyVector::set_max_tessellation_angle(real_t f) {
-	fMaxTessellationAngle = f;
+	max_tessellation_angle = f;
 }
 real_t PolyVector::get_max_tessellation_angle() {
-	return fMaxTessellationAngle;
+	return max_tessellation_angle;
 }
 
 AABB PolyVector::get_aabb() const {
@@ -339,9 +339,9 @@ void PolyVector::_bind_methods() {
 
 PolyVector::PolyVector() {
 	frame_time = 0;
-	offset = Vector2(0, 0);
+	position_offset = Vector2(0, 0);
 	curve_quality = 2;
-	fLayer_depth = 0;
+	layer_depth = 0;
 	max_tessellation_angle = 4;
 
 	material_default.instance();
