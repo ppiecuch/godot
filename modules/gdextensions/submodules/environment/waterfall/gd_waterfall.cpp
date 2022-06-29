@@ -145,7 +145,7 @@ void GdWaterfall::_build_particles() {
 		const real_t dim = particle_radius * 1.5;
 		const int num = view_rect.size.width / dim * view_rect.size.height / dim;
 		print_verbose("  layer 1: " + String::num(num) + " particles.");
-		auto points = _get_samples(num, 2, 3, view_rect.grow_individual(-dim/2, 0, -dim/2, 0));
+		auto points = _get_samples(num, 2, 3, view_rect.grow_individual(-dim / 2, 0, -dim / 2, 0));
 		for (const Point2 &p : points) {
 			const Vector2 pos(p.x, p.y);
 			const Vector2 velocity(0, _default_velocity_1);
@@ -160,7 +160,7 @@ void GdWaterfall::_build_particles() {
 		const real_t dim = particle_radius * 2;
 		const int num = view_rect.size.width / dim * view_rect.size.height / dim;
 		print_verbose("  layer 2: " + String::num(num) + " particles.");
-		auto points = _get_samples(num, 2, 3, view_rect.grow_individual(-dim/2, 0, -dim/2, 0));
+		auto points = _get_samples(num, 2, 3, view_rect.grow_individual(-dim / 2, 0, -dim / 2, 0));
 		for (const Point2 &p : points) {
 			const Vector2 pos(p.x, p.y);
 			const Vector2 velocity(0, _default_velocity_2);
@@ -175,7 +175,7 @@ void GdWaterfall::_build_particles() {
 		const real_t dim = particle_radius * 2;
 		const int num = _splash_spread_factor[waterfall_splash_spread] * view_rect.size.width / dim * _splash_height_factor[waterfall_splash_height] * view_rect.size.height / dim;
 		print_verbose("  layer 3: " + String::num(num) + " particles.");
-		auto points = _get_samples(num, 2, 3, view_rect.grow_individual(-dim/2, 0, -dim/2, 0));
+		auto points = _get_samples(num, 2, 3, view_rect.grow_individual(-dim / 2, 0, -dim / 2, 0));
 		for (const Point2 &p : points) {
 		}
 	}
@@ -616,7 +616,8 @@ GdWaterfall::GdWaterfall() :
 		} else if (p->layer == LAYER2_CLOUDS) {
 			p->velocity = Vector2(0, _default_velocity_2);
 		}
-	}, flex_particle_system::BOTTOM_WALL);
+	},
+			flex_particle_system::BOTTOM_WALL);
 	_p.set_layer_option(LAYER0_DROPS, flex_particle_system::PROGRESS_ALPHA, true);
 	_p.set_layer_option(LAYER0_DROPS, flex_particle_system::PROGRESS_SCALE, true);
 	set_process(active);
