@@ -568,7 +568,7 @@ void GdWaterfall::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "waterfall_splash_height", PROPERTY_HINT_ENUM, "10%,20%,30%,40%"), "set_waterfall_splash_height", "get_waterfall_splash_height");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "particle_radius", PROPERTY_HINT_RANGE, "2,100,1"), "set_particle_radius", "get_particle_radius");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "particle_stretch_from", PROPERTY_HINT_ENUM, "None,25%,50%,75%"), "set_particle_stretch_from", "get_particle_stretch_from");
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "particle_stretch_amout", PROPERTY_HINT_ENUM, "None,10%,15%,20%"), "set_particle_stretch_amount", "get_particle_stretch_amount");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "particle_stretch_amount", PROPERTY_HINT_ENUM, "None,10%,15%,20%"), "set_particle_stretch_amount", "get_particle_stretch_amount");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "particle_acceleration", PROPERTY_HINT_ENUM, "None,5%,10%,15%,20%,25%"), "set_particle_acceleration", "get_particle_acceleration");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "particle_fade_from", PROPERTY_HINT_ENUM, "None,50%,75%,90%"), "set_particle_fade_from", "get_particle_fade_from");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "particle_fade_amount", PROPERTY_HINT_ENUM, "None,10%,25%,50%"), "set_particle_fade_amount", "get_particle_fade_amount");
