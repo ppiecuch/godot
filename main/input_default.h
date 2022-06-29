@@ -301,6 +301,7 @@ public:
 	virtual void flush_buffered_events() G_OVERRIDE;
 	virtual bool is_using_input_buffering() G_OVERRIDE;
 	virtual void set_use_input_buffering(bool p_enable) G_OVERRIDE;
+	virtual bool is_using_accumulated_input() G_OVERRIDE;
 	virtual void set_use_accumulated_input(bool p_enable) G_OVERRIDE;
 
 	virtual void release_pressed_events();

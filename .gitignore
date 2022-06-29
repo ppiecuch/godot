@@ -93,6 +93,7 @@ platform/android/java/*/libs/
 
 # Javascript
 *.bc
+platform/javascript/node_modules/
 
 # Misc
 *.debug

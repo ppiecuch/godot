@@ -2465,6 +2465,7 @@ void VisualServer::_bind_methods() {
 	BIND_ENUM_CONSTANT(INFO_VERTICES_IN_FRAME);
 	BIND_ENUM_CONSTANT(INFO_MATERIAL_CHANGES_IN_FRAME);
 	BIND_ENUM_CONSTANT(INFO_SHADER_CHANGES_IN_FRAME);
+	BIND_ENUM_CONSTANT(INFO_SHADER_COMPILES_IN_FRAME);
 	BIND_ENUM_CONSTANT(INFO_SURFACE_CHANGES_IN_FRAME);
 	BIND_ENUM_CONSTANT(INFO_DRAW_CALLS_IN_FRAME);
 	BIND_ENUM_CONSTANT(INFO_2D_ITEMS_IN_FRAME);
@@ -2739,13 +2740,16 @@ VisualServer::VisualServer() {
 	GLOBAL_DEF("rendering/gles3/shaders/shader_compilation_mode", 0);
 	ProjectSettings::get_singleton()->set_custom_property_info("rendering/gles3/shaders/shader_compilation_mode", PropertyInfo(Variant::INT, "rendering/gles3/shaders/shader_compilation_mode", PROPERTY_HINT_ENUM, "Synchronous,Asynchronous,Asynchronous + Cache"));
 	GLOBAL_DEF("rendering/gles3/shaders/shader_compilation_mode.mobile", 0);
+	GLOBAL_DEF("rendering/gles3/shaders/shader_compilation_mode.web", 0);
 	GLOBAL_DEF("rendering/gles3/shaders/max_simultaneous_compiles", 2);
 	ProjectSettings::get_singleton()->set_custom_property_info("rendering/gles3/shaders/max_simultaneous_compiles", PropertyInfo(Variant::INT, "rendering/gles3/shaders/max_simultaneous_compiles", PROPERTY_HINT_RANGE, "1,8,1"));
 	GLOBAL_DEF("rendering/gles3/shaders/max_simultaneous_compiles.mobile", 1);
+	GLOBAL_DEF("rendering/gles3/shaders/max_simultaneous_compiles.web", 1);
 	GLOBAL_DEF("rendering/gles3/shaders/log_active_async_compiles_count", false);
 	GLOBAL_DEF("rendering/gles3/shaders/shader_cache_size_mb", 512);
 	ProjectSettings::get_singleton()->set_custom_property_info("rendering/gles3/shaders/shader_cache_size_mb", PropertyInfo(Variant::INT, "rendering/gles3/shaders/shader_cache_size_mb", PROPERTY_HINT_RANGE, "128,4096,128"));
 	GLOBAL_DEF("rendering/gles3/shaders/shader_cache_size_mb.mobile", 128);
+	GLOBAL_DEF("rendering/gles3/shaders/shader_cache_size_mb.web", 128);
 }
 
 VisualServer::~VisualServer() {

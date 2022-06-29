@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  GodotProjectManager.java                                             */
+/*  GodotGame.kt                                                         */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,14 +28,11 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-package org.godotengine.editor;
+package org.godotengine.editor
 
 /**
- * Launcher activity for the Godot Android Editor.
- *
- * It presents the user with the project manager interface.
- * Upon selection of a project, this activity (via its parent logic) starts the
- * {@link GodotEditor} activity.
+ * Drives the 'run project' window of the Godot Editor.
  */
-public class GodotProjectManager extends GodotEditor {
+class GodotGame : GodotEditor() {
+	override fun overrideOrientationRequest() = false
 }

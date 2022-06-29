@@ -1151,6 +1151,25 @@ void VisualServerScene::instance_set_visible(RID p_instance, bool p_visible) {
 
 	instance->visible = p_visible;
 
+	// Special case for physics interpolation, we want to ensure the interpolated data is up to date
+	if (_interpolation_data.interpolation_enabled && p_visible && instance->interpolated && instance->scenario && !instance->on_interpolate_list) {
+		// Do all the extra work we normally do on instance_set_transform(), because this is optimized out for hidden instances.
+		// This prevents a glitch of stale interpolation transform data when unhiding before the next physics tick.
+		instance->interpolation_method = TransformInterpolator::find_method(instance->transform_prev.basis, instance->transform_curr.basis);
+		_interpolation_data.instance_interpolate_update_list.push_back(p_instance);
+		instance->on_interpolate_list = true;
+		_instance_queue_update(instance, true);
+
+		// We must also place on the transform update list for a tick, so the system
+		// can auto-detect if the instance is no longer moving, and remove from the interpolate lists again.
+		// If this step is ignored, an unmoving instance could remain on the interpolate lists indefinitely
+		// (or rather until the object is deleted) and cause unnecessary updates and drawcalls.
+		if (!instance->on_interpolate_transform_list) {
+			_interpolation_data.instance_transform_update_list_curr->push_back(p_instance);
+			instance->on_interpolate_transform_list = true;
+		}
+	}
+
 	// give the opportunity for the spatial partitioning scene to use a special implementation of visibility
 	// for efficiency (supported in BVH but not octree)
 
@@ -3298,7 +3317,7 @@ bool VisualServerScene::_render_reflection_probe_step(Instance *p_instance, int 
 	Scenario *scenario = p_instance->scenario;
 	ERR_FAIL_COND_V(!scenario, true);
 
-	VisualServerRaster::redraw_request(); //update, so it updates in editor
+	VisualServerRaster::redraw_request(false); //update, so it updates in editor
 
 	if (p_step == 0) {
 		if (!VSG::scene_render->reflection_probe_instance_begin_render(reflection_probe->instance, scenario->reflection_atlas)) {

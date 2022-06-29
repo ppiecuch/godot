@@ -1826,29 +1826,34 @@ void ProjectManager::_notification(int p_what) {
 			Engine::get_singleton()->set_editor_hint(false);
 		} break;
 		case NOTIFICATION_RESIZED: {
-			if (open_templates->is_visible()) {
+			if (open_templates && open_templates->is_visible()) {
 				open_templates->popup_centered_minsize();
 			}
-			real_t size = get_size().x / EDSCALE;
-			asset_library->set_columns(size < 1000 ? 1 : 2);
-			// Adjust names of tabs to fit the new size.
-			if (size < 650) {
-				local_projects_hb->set_name(TTR("Local"));
-				asset_library->set_name(TTR("Asset Library"));
-			} else {
-				local_projects_hb->set_name(TTR("Local Projects"));
-				asset_library->set_name(TTR("Asset Library Projects"));
+			if (asset_library) {
+				real_t size = get_size().x / EDSCALE;
+				asset_library->set_columns(size < 1000 ? 1 : 2);
+				// Adjust names of tabs to fit the new size.
+				if (size < 650) {
+					local_projects_hb->set_name(TTR("Local"));
+					asset_library->set_name(TTR("Asset Library"));
+				} else {
+					local_projects_hb->set_name(TTR("Local Projects"));
+					asset_library->set_name(TTR("Asset Library Projects"));
+				}
 			}
 		} break;
 		case NOTIFICATION_READY: {
-			if (_project_list->get_project_count() == 0 && StreamPeerSSL::is_available()) {
-				open_templates->popup_centered_minsize();
-			}
-
 			if (_project_list->get_project_count() >= 1) {
 				// Focus on the search box immediately to allow the user
 				// to search without having to reach for their mouse
 				project_filter->search_box->grab_focus();
+			}
+
+			if (asset_library) {
+				// Suggest browsing asset library to get templates/demos.
+				if (open_templates && _project_list->get_project_count() == 0) {
+					open_templates->popup_centered_minsize();
+				}
 			}
 		} break;
 		case NOTIFICATION_VISIBILITY_CHANGED: {
@@ -2682,10 +2687,9 @@ ProjectManager::ProjectManager() {
 	project_order_filter = memnew(ProjectListFilter);
 	project_order_filter->add_filter_option();
 	project_order_filter->_setup_filters(sort_filter_titles);
-	project_order_filter->set_filter_size(150);
+	project_order_filter->set_filter_size(180);
 	sort_filters->add_child(project_order_filter);
 	project_order_filter->connect("filter_changed", this, "_on_order_option_changed");
-	project_order_filter->set_custom_minimum_size(Size2(180, 10) * EDSCALE);
 	const int projects_sorting_order = (int)EditorSettings::get_singleton()->get("project_manager/sorting_order");
 	project_order_filter->set_filter_option((ProjectListFilter::FilterOption)projects_sorting_order);
 
@@ -2793,6 +2797,9 @@ ProjectManager::ProjectManager() {
 	about_btn->connect("pressed", this, "_show_about");
 	tree_vb->add_child(about_btn);
 
+	// Asset Library can't work on Web editor for now as most assets are sourced
+	// directly from GitHub which does not set CORS.
+#ifndef JAVASCRIPT_ENABLED
 	if (StreamPeerSSL::is_available()) {
 		asset_library = memnew(EditorAssetLibrary(true));
 		asset_library->set_name(TTR("Asset Library Projects"));
@@ -2801,6 +2808,7 @@ ProjectManager::ProjectManager() {
 	} else {
 		WARN_PRINT("Asset Library not available, as it requires SSL to work.");
 	}
+#endif
 
 	HBoxContainer *settings_hb = memnew(HBoxContainer);
 	settings_hb->set_alignment(BoxContainer::ALIGN_END);
@@ -2986,11 +2994,13 @@ ProjectManager::ProjectManager() {
 	dialog_error = memnew(AcceptDialog);
 	gui_base->add_child(dialog_error);
 
-	open_templates = memnew(ConfirmationDialog);
-	open_templates->set_text(TTR("You currently don't have any projects.\nWould you like to explore official example projects in the Asset Library?"));
-	open_templates->get_ok()->set_text(TTR("Open Asset Library"));
-	open_templates->connect("confirmed", this, "_open_asset_library");
-	add_child(open_templates);
+	if (asset_library) {
+		open_templates = memnew(ConfirmationDialog);
+		open_templates->set_text(TTR("You currently don't have any projects.\nWould you like to explore official example projects in the Asset Library?"));
+		open_templates->get_ok()->set_text(TTR("Open Asset Library"));
+		open_templates->connect("confirmed", this, "_open_asset_library");
+		add_child(open_templates);
+	}
 
 	about = memnew(EditorAbout);
 	add_child(about);

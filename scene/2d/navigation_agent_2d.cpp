@@ -40,6 +40,9 @@ void NavigationAgent2D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_avoidance_enabled", "enabled"), &NavigationAgent2D::set_avoidance_enabled);
 	ClassDB::bind_method(D_METHOD("get_avoidance_enabled"), &NavigationAgent2D::get_avoidance_enabled);
 
+	ClassDB::bind_method(D_METHOD("set_path_desired_distance", "desired_distance"), &NavigationAgent2D::set_path_desired_distance);
+	ClassDB::bind_method(D_METHOD("get_path_desired_distance"), &NavigationAgent2D::get_path_desired_distance);
+
 	ClassDB::bind_method(D_METHOD("set_target_desired_distance", "desired_distance"), &NavigationAgent2D::set_target_desired_distance);
 	ClassDB::bind_method(D_METHOD("get_target_desired_distance"), &NavigationAgent2D::get_target_desired_distance);
 
@@ -64,6 +67,12 @@ void NavigationAgent2D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_path_max_distance", "max_speed"), &NavigationAgent2D::set_path_max_distance);
 	ClassDB::bind_method(D_METHOD("get_path_max_distance"), &NavigationAgent2D::get_path_max_distance);
 
+	ClassDB::bind_method(D_METHOD("set_navigation_layers", "navigation_layers"), &NavigationAgent2D::set_navigation_layers);
+	ClassDB::bind_method(D_METHOD("get_navigation_layers"), &NavigationAgent2D::get_navigation_layers);
+
+	ClassDB::bind_method(D_METHOD("set_navigation_map", "navigation_map"), &NavigationAgent2D::set_navigation_map);
+	ClassDB::bind_method(D_METHOD("get_navigation_map"), &NavigationAgent2D::get_navigation_map);
+
 	ClassDB::bind_method(D_METHOD("set_target_location", "location"), &NavigationAgent2D::set_target_location);
 	ClassDB::bind_method(D_METHOD("get_target_location"), &NavigationAgent2D::get_target_location);
 	ClassDB::bind_method(D_METHOD("get_next_location"), &NavigationAgent2D::get_next_location);
@@ -78,6 +87,7 @@ void NavigationAgent2D::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("_avoidance_done", "new_velocity"), &NavigationAgent2D::_avoidance_done);
 
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "path_desired_distance", PROPERTY_HINT_RANGE, "0.1,100,0.01"), "set_path_desired_distance", "get_path_desired_distance");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "target_desired_distance", PROPERTY_HINT_RANGE, "0.1,100,0.01"), "set_target_desired_distance", "get_target_desired_distance");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "radius", PROPERTY_HINT_RANGE, "0.1,500,0.01"), "set_radius", "get_radius");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "neighbor_dist", PROPERTY_HINT_RANGE, "0.1,100000,0.01"), "set_neighbor_dist", "get_neighbor_dist");
@@ -86,6 +96,7 @@ void NavigationAgent2D::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "max_speed", PROPERTY_HINT_RANGE, "0.1,100000,0.01"), "set_max_speed", "get_max_speed");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "path_max_distance", PROPERTY_HINT_RANGE, "10,100,1"), "set_path_max_distance", "get_path_max_distance");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "avoidance_enabled"), "set_avoidance_enabled", "get_avoidance_enabled");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "navigation_layers", PROPERTY_HINT_LAYERS_2D_NAVIGATION), "set_navigation_layers", "get_navigation_layers");
 
 	ADD_SIGNAL(MethodInfo("path_changed"));
 	ADD_SIGNAL(MethodInfo("target_reached"));
@@ -95,11 +106,7 @@ void NavigationAgent2D::_bind_methods() {
 
 void NavigationAgent2D::_notification(int p_what) {
 	switch (p_what) {
-		case NOTIFICATION_READY: {
-			agent_parent = Object::cast_to<Node2D>(get_parent());
-
-			set_avoidance_enabled(avoidance_enabled);
-
+		case NOTIFICATION_POST_ENTER_TREE: {
 			// Search the navigation node and set it
 			{
 				Navigation2D *nav = nullptr;
@@ -112,12 +119,31 @@ void NavigationAgent2D::_notification(int p_what) {
 						p = p->get_parent();
 					}
 				}
-
 				set_navigation(nav);
 			}
-
+			// need to use POST_ENTER_TREE cause with normal ENTER_TREE not all required Nodes are ready.
+			// cannot use READY as ready does not get called if Node is readded to SceneTree
+			set_agent_parent(get_parent());
 			set_physics_process_internal(true);
 		} break;
+
+		case NOTIFICATION_PARENTED: {
+			if (is_inside_tree() && (get_parent() != agent_parent)) {
+				// only react to PARENTED notifications when already inside_tree and parent changed, e.g. users switch nodes around
+				// PARENTED notification fires also when Node is added in scripts to a parent
+				// this would spam transforms fails and world fails while Node is outside SceneTree
+				// when node gets reparented when joining the tree POST_ENTER_TREE takes care of this
+				set_agent_parent(get_parent());
+				set_physics_process_internal(true);
+			}
+		} break;
+
+		case NOTIFICATION_UNPARENTED: {
+			// if agent has no parent no point in processing it until reparented
+			set_agent_parent(nullptr);
+			set_physics_process_internal(false);
+		} break;
+
 		case NOTIFICATION_PAUSED: {
 			if (agent_parent && !agent_parent->can_process()) {
 				map_before_pause = Navigation2DServer::get_singleton()->agent_get_map(get_rid());
@@ -137,16 +163,17 @@ void NavigationAgent2D::_notification(int p_what) {
 			}
 		} break;
 		case NOTIFICATION_EXIT_TREE: {
-			agent_parent = nullptr;
+			set_agent_parent(nullptr);
 			set_navigation(nullptr);
 			set_physics_process_internal(false);
-			// Want to call ready again when the node enters the tree again. We're not using enter_tree notification because
-			// the navigation map may not be ready at that time. This fixes issues with taking the agent out of the scene tree.
-			request_ready();
 		} break;
 		case NOTIFICATION_INTERNAL_PHYSICS_PROCESS: {
 			if (agent_parent) {
-				Navigation2DServer::get_singleton()->agent_set_position(agent, agent_parent->get_global_transform().get_origin());
+				if (avoidance_enabled) {
+					// agent_position on NavigationServer is avoidance only and has nothing to do with pathfinding
+					// no point in flooding NavigationServer queue with agent position updates that get send to the void if avoidance is not used
+					Navigation2DServer::get_singleton()->agent_set_position(agent, agent_parent->get_global_position());
+				}
 				_check_distance_to_target();
 			}
 		} break;
@@ -189,6 +216,28 @@ bool NavigationAgent2D::get_avoidance_enabled() const {
 	return avoidance_enabled;
 }
 
+void NavigationAgent2D::set_agent_parent(Node *p_agent_parent) {
+	// remove agent from any avoidance map before changing parent or there will be leftovers on the RVO map
+	Navigation2DServer::get_singleton()->agent_set_callback(agent, nullptr, "_avoidance_done");
+	if (Object::cast_to<Node2D>(p_agent_parent) != nullptr) {
+		// place agent on navigation map first or else the RVO agent callback creation fails silently later
+		agent_parent = Object::cast_to<Node2D>(p_agent_parent);
+		if (map_override.is_valid()) {
+			Navigation2DServer::get_singleton()->agent_set_map(get_rid(), map_override);
+		} else if (navigation != nullptr) {
+			Navigation2DServer::get_singleton()->agent_set_map(get_rid(), navigation->get_rid());
+		} else {
+			// no navigation node found in parent nodes, use default navigation map from world resource
+			Navigation2DServer::get_singleton()->agent_set_map(get_rid(), agent_parent->get_world_2d()->get_navigation_map());
+		}
+		// create new avoidance callback if enabled
+		set_avoidance_enabled(avoidance_enabled);
+	} else {
+		agent_parent = nullptr;
+		Navigation2DServer::get_singleton()->agent_set_map(get_rid(), RID());
+	}
+}
+
 void NavigationAgent2D::set_navigation(Navigation2D *p_nav) {
 	if (navigation == p_nav) {
 		return; // Pointless
@@ -206,6 +255,39 @@ void NavigationAgent2D::set_navigation_node(Node *p_nav) {
 
 Node *NavigationAgent2D::get_navigation_node() const {
 	return Object::cast_to<Node>(navigation);
+}
+
+void NavigationAgent2D::set_navigation_layers(uint32_t p_navigation_layers) {
+	bool _navigation_layers_changed = navigation_layers != p_navigation_layers;
+	navigation_layers = p_navigation_layers;
+	if (_navigation_layers_changed) {
+		_request_repath();
+	}
+}
+
+uint32_t NavigationAgent2D::get_navigation_layers() const {
+	return navigation_layers;
+}
+
+void NavigationAgent2D::set_navigation_map(RID p_navigation_map) {
+	map_override = p_navigation_map;
+	Navigation2DServer::get_singleton()->agent_set_map(agent, map_override);
+	_request_repath();
+}
+
+RID NavigationAgent2D::get_navigation_map() const {
+	if (map_override.is_valid()) {
+		return map_override;
+	} else if (navigation != nullptr) {
+		return navigation->get_rid();
+	} else if (agent_parent != nullptr) {
+		return agent_parent->get_world_2d()->get_navigation_map();
+	}
+	return RID();
+}
+
+void NavigationAgent2D::set_path_desired_distance(real_t p_dd) {
+	path_desired_distance = p_dd;
 }
 
 void NavigationAgent2D::set_target_desired_distance(real_t p_dd) {
@@ -247,10 +329,7 @@ real_t NavigationAgent2D::get_path_max_distance() {
 
 void NavigationAgent2D::set_target_location(Vector2 p_location) {
 	target_location = p_location;
-	navigation_path.clear();
-	target_reached = false;
-	navigation_finished = false;
-	update_frame_id = 0;
+	_request_repath();
 }
 
 Vector2 NavigationAgent2D::get_target_location() const {
@@ -325,7 +404,7 @@ void NavigationAgent2D::update_navigation() {
 	if (agent_parent == nullptr) {
 		return;
 	}
-	if (navigation == nullptr) {
+	if (!agent_parent->is_inside_tree()) {
 		return;
 	}
 	if (update_frame_id == Engine::get_singleton()->get_physics_frames()) {
@@ -357,7 +436,13 @@ void NavigationAgent2D::update_navigation() {
 	}
 
 	if (reload_path) {
-		navigation_path = Navigation2DServer::get_singleton()->map_get_path(navigation->get_rid(), o, target_location, true);
+		if (map_override.is_valid()) {
+			navigation_path = Navigation2DServer::get_singleton()->map_get_path(map_override, o, target_location, true, navigation_layers);
+		} else if (navigation != nullptr) {
+			navigation_path = Navigation2DServer::get_singleton()->map_get_path(navigation->get_rid(), o, target_location, true, navigation_layers);
+		} else {
+			navigation_path = Navigation2DServer::get_singleton()->map_get_path(agent_parent->get_world_2d()->get_navigation_map(), o, target_location, true, navigation_layers);
+		}
 		navigation_finished = false;
 		nav_path_index = 0;
 		emit_signal("path_changed");
@@ -370,7 +455,7 @@ void NavigationAgent2D::update_navigation() {
 	// Check if we can advance the navigation path
 	if (navigation_finished == false) {
 		// Advances to the next far away location.
-		while (o.distance_to(navigation_path[nav_path_index]) < target_desired_distance) {
+		while (o.distance_to(navigation_path[nav_path_index]) < path_desired_distance) {
 			nav_path_index += 1;
 			if (nav_path_index == navigation_path.size()) {
 				_check_distance_to_target();
@@ -381,6 +466,13 @@ void NavigationAgent2D::update_navigation() {
 			}
 		}
 	}
+}
+
+void NavigationAgent2D::_request_repath() {
+	navigation_path.clear();
+	target_reached = false;
+	navigation_finished = false;
+	update_frame_id = 0;
 }
 
 void NavigationAgent2D::_check_distance_to_target() {

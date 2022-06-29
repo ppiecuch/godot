@@ -327,6 +327,7 @@ void AnimationPlayerEditor::_animation_new() {
 	}
 
 	name->set_text(base);
+	name_dialog->set_title(TTR("Create New Animation"));
 	name_dialog->popup_centered(Size2(300, 90));
 	name->select_all();
 	name->grab_focus();
@@ -341,6 +342,7 @@ void AnimationPlayerEditor::_animation_rename() {
 	name_title->set_text(TTR("Change Animation Name:"));
 	name->set_text(selected_name);
 	name_dialog_op = TOOL_RENAME_ANIM;
+	name_dialog->set_title(TTR("Rename Animation"));
 	name_dialog->popup_centered(Size2(300, 90));
 	name->select_all();
 	name->grab_focus();
@@ -1005,6 +1007,7 @@ void AnimationPlayerEditor::_animation_duplicate() {
 	name_title->set_text(TTR("New Animation Name:"));
 	name->set_text(new_name);
 	name_dialog_op = TOOL_DUPLICATE_ANIM;
+	name_dialog->set_title(TTR("Duplicate Animation"));
 	name_dialog->popup_centered(Size2(300, 90));
 	name->select_all();
 	name->grab_focus();
@@ -1597,7 +1600,7 @@ AnimationPlayerEditor::AnimationPlayerEditor(EditorNode *p_editor, AnimationPlay
 
 	frame = memnew(SpinBox);
 	hb->add_child(frame);
-	frame->set_custom_minimum_size(Size2(60, 0));
+	frame->set_custom_minimum_size(Size2(80, 0) * EDSCALE);
 	frame->set_stretch_ratio(2);
 	frame->set_step(0.0001);
 	frame->set_tooltip(TTR("Animation position (in seconds)."));
@@ -1669,8 +1672,10 @@ AnimationPlayerEditor::AnimationPlayerEditor(EditorNode *p_editor, AnimationPlay
 	onion_skinning = memnew(MenuButton);
 	onion_skinning->set_tooltip(TTR("Onion Skinning Options"));
 	onion_skinning->get_popup()->add_separator(TTR("Directions"));
+	// TRANSLATORS: Opposite of "Future", refers to a direction in animation onion skinning.
 	onion_skinning->get_popup()->add_check_item(TTR("Past"), ONION_SKINNING_PAST);
 	onion_skinning->get_popup()->set_item_checked(onion_skinning->get_popup()->get_item_count() - 1, true);
+	// TRANSLATORS: Opposite of "Past", refers to a direction in animation onion skinning.
 	onion_skinning->get_popup()->add_check_item(TTR("Future"), ONION_SKINNING_FUTURE);
 	onion_skinning->get_popup()->add_separator(TTR("Depth"));
 	onion_skinning->get_popup()->add_radio_check_item(TTR("1 step"), ONION_SKINNING_1_STEP);
@@ -1695,7 +1700,6 @@ AnimationPlayerEditor::AnimationPlayerEditor(EditorNode *p_editor, AnimationPlay
 	add_child(file);
 
 	name_dialog = memnew(ConfirmationDialog);
-	name_dialog->set_title(TTR("Create New Animation"));
 	name_dialog->set_hide_on_ok(false);
 	add_child(name_dialog);
 	VBoxContainer *vb = memnew(VBoxContainer);

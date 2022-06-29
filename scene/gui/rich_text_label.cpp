@@ -257,7 +257,7 @@ int RichTextLabel::_process_line(ItemFrame *p_frame, const Vector2 &p_ofs, int &
 			line_descent = line < l.descent_caches.size() ? l.descent_caches[line] : 1;                                                                                     \
 			if (align != ALIGN_FILL) {                                                                                                                                      \
 				if (line < l.offset_caches.size()) {                                                                                                                        \
-					wofs = l.offset_caches[line];                                                                                                                           \
+					wofs = margin + l.offset_caches[line];                                                                                                                  \
 				}                                                                                                                                                           \
 			}                                                                                                                                                               \
 		}                                                                                                                                                                   \
@@ -272,7 +272,8 @@ int RichTextLabel::_process_line(ItemFrame *p_frame, const Vector2 &p_ofs, int &
 
 #define ENSURE_WIDTH(m_width)                                                                                                                      \
 	if (p_mode == PROCESS_CACHE) {                                                                                                                 \
-		l.maximum_width = MAX(l.maximum_width, MIN(p_width, Math::ceil(wofs + m_width)));                                                          \
+		non_wrapped_w += m_width;                                                                                                                  \
+		l.maximum_width = MAX(l.maximum_width, Math::ceil(wofs + non_wrapped_w));                                                                  \
 		l.minimum_width = MAX(l.minimum_width, Math::ceil(m_width));                                                                               \
 	}                                                                                                                                              \
 	if (wofs - backtrack + m_width > p_width) {                                                                                                    \
@@ -326,6 +327,7 @@ int RichTextLabel::_process_line(ItemFrame *p_frame, const Vector2 &p_ofs, int &
 	bool line_is_blank = true;
 	bool line_wrapped = false;
 	int fh = 0;
+	int non_wrapped_w = 0;
 
 	while (it) {
 		switch (it->type) {
@@ -686,7 +688,20 @@ int RichTextLabel::_process_line(ItemFrame *p_frame, const Vector2 &p_ofs, int &
 				}
 
 				if (p_mode == PROCESS_DRAW && visible) {
-					img->image->draw_rect(ci, Rect2(p_ofs + Point2(align_ofs + wofs, y + lh - font->get_descent() - img->size.height), img->size));
+					switch (img->align) {
+						case INLINE_ALIGN_TOP: {
+							img->image->draw_rect(ci, Rect2(p_ofs + Point2(align_ofs + wofs, y + lh - (font->get_descent() + font->get_ascent())), img->size));
+						} break;
+						case INLINE_ALIGN_CENTER: {
+							img->image->draw_rect(ci, Rect2(p_ofs + Point2(align_ofs + wofs, y + lh - (font->get_descent() + font->get_ascent() + img->size.height) / 2), img->size));
+						} break;
+						case INLINE_ALIGN_BASELINE: {
+							img->image->draw_rect(ci, Rect2(p_ofs + Point2(align_ofs + wofs, y + lh - (font->get_descent() + img->size.height)), img->size));
+						} break;
+						case INLINE_ALIGN_BOTTOM: {
+							img->image->draw_rect(ci, Rect2(p_ofs + Point2(align_ofs + wofs, y + lh - img->size.height), img->size));
+						} break;
+					}
 				}
 				p_char_count++;
 
@@ -734,7 +749,8 @@ int RichTextLabel::_process_line(ItemFrame *p_frame, const Vector2 &p_ofs, int &
 						int ly = 0;
 
 						for (int i = 0; i < frame->lines.size(); i++) {
-							_process_line(frame, Point2(), ly, available_width, i, PROCESS_CACHE, cfont, Color(), font_color_shadow, use_outline, shadow_ofs2);
+							int w = _find_margin(frame->lines[i].from, p_base_font) + 1;
+							_process_line(frame, Point2(), ly, w, i, PROCESS_CACHE, cfont, Color(), font_color_shadow, use_outline, shadow_ofs2);
 							table->columns.write[column].min_width = MAX(table->columns[column].min_width, frame->lines[i].minimum_width);
 							table->columns.write[column].max_width = MAX(table->columns[column].max_width, frame->lines[i].maximum_width);
 						}
@@ -760,7 +776,7 @@ int RichTextLabel::_process_line(ItemFrame *p_frame, const Vector2 &p_ofs, int &
 					//assign actual widths
 					for (int i = 0; i < table->columns.size(); i++) {
 						table->columns.write[i].width = table->columns[i].min_width;
-						if (table->columns[i].expand && total_ratio > 0) {
+						if (table->columns[i].expand && total_ratio > 0 && remaining_width > 0) {
 							table->columns.write[i].width += table->columns[i].expand_ratio * remaining_width / total_ratio;
 						}
 						table->total_width += table->columns[i].width + hseparation;
@@ -1720,7 +1736,7 @@ void RichTextLabel::_remove_item(Item *p_item, const int p_line, const int p_sub
 	memdelete(p_item);
 }
 
-void RichTextLabel::add_image(const Ref<Texture> &p_image, const int p_width, const int p_height) {
+void RichTextLabel::add_image(const Ref<Texture> &p_image, const int p_width, const int p_height, RichTextLabel::InlineAlign p_align) {
 	if (current->type == ITEM_TABLE) {
 		return;
 	}
@@ -1731,6 +1747,7 @@ void RichTextLabel::add_image(const Ref<Texture> &p_image, const int p_width, co
 	ItemImage *item = memnew(ItemImage);
 
 	item->image = p_image;
+	item->align = p_align;
 
 	if (p_width > 0) {
 		// custom width
@@ -2801,7 +2818,7 @@ void RichTextLabel::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_text"), &RichTextLabel::get_text);
 	ClassDB::bind_method(D_METHOD("add_text", "text"), &RichTextLabel::add_text);
 	ClassDB::bind_method(D_METHOD("set_text", "text"), &RichTextLabel::set_text);
-	ClassDB::bind_method(D_METHOD("add_image", "image", "width", "height"), &RichTextLabel::add_image, DEFVAL(0), DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("add_image", "image", "width", "height", "align"), &RichTextLabel::add_image, DEFVAL(0), DEFVAL(0), DEFVAL(INLINE_ALIGN_BASELINE));
 	ClassDB::bind_method(D_METHOD("newline"), &RichTextLabel::add_newline);
 	ClassDB::bind_method(D_METHOD("remove_line", "line"), &RichTextLabel::remove_line);
 	ClassDB::bind_method(D_METHOD("push_font", "font"), &RichTextLabel::push_font);
@@ -2913,6 +2930,11 @@ void RichTextLabel::_bind_methods() {
 	BIND_ENUM_CONSTANT(ALIGN_CENTER);
 	BIND_ENUM_CONSTANT(ALIGN_RIGHT);
 	BIND_ENUM_CONSTANT(ALIGN_FILL);
+
+	BIND_ENUM_CONSTANT(INLINE_ALIGN_TOP);
+	BIND_ENUM_CONSTANT(INLINE_ALIGN_CENTER);
+	BIND_ENUM_CONSTANT(INLINE_ALIGN_BASELINE);
+	BIND_ENUM_CONSTANT(INLINE_ALIGN_BOTTOM);
 
 	BIND_ENUM_CONSTANT(LIST_NUMBERS);
 	BIND_ENUM_CONSTANT(LIST_LETTERS);
