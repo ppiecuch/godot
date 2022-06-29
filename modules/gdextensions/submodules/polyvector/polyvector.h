@@ -35,8 +35,8 @@
 #include <vector>
 
 #include "core/os/os.h"
-#include "scene/3d/mesh_instance.h"
 #include "scene/2d/canvas_item.h"
+#include "scene/3d/mesh_instance.h"
 #include "scene/animation/animation_player.h"
 #include "scene/resources/curve.h"
 
@@ -44,7 +44,7 @@
 #include "resource_importer_swf.h"
 
 #ifdef DEBUG_ENABLED
-# define POLYVECTOR_DEBUG
+#define POLYVECTOR_DEBUG
 #endif
 
 using Coord = float;

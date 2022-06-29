@@ -37,7 +37,7 @@
 #ifdef TOOLS_ENABLED
 static String _dump(const SWF::ShapeList &data) {
 	String ret;
-	for(const auto &s : data) {
+	for (const auto &s : data) {
 		ret += vformat("(%s,%d", s.closed ? "c" : "o", uint64_t(s.vertices.size()));
 		for (auto v : s.vertices) {
 			ret += vformat(",{%f,%f}", v.anchor.x, v.anchor.y);
@@ -48,13 +48,10 @@ static String _dump(const SWF::ShapeList &data) {
 }
 
 static String _dump(const SWF::Character &data) {
-	return "[Character:"
-		+ vformat(" bounds {%f,%f,%f,%f}", data.bounds.xmin, data.bounds.ymin, data.bounds.xmax, data.bounds.ymax)
-		+ vformat(" shapes {%s}", _dump(data.shapes))
-		+ "]";
+	return "[Character:" + vformat(" bounds {%f,%f,%f,%f}", data.bounds.xmin, data.bounds.ymin, data.bounds.xmax, data.bounds.ymax) + vformat(" shapes {%s}", _dump(data.shapes)) + "]";
 }
 
-#define JV(V) (bool(p_options["binary"]) ? (V) : (Math::round((V) * 100) / 100.0))
+#define JV(V) (bool(p_options["binary"]) ? (V) : (Math::round((V)*100) / 100.0))
 
 Error ResourceImporterSWF::import(const String &p_source_file, const String &p_save_path, const Map<StringName, Variant> &p_options, List<String> *r_platform_variants, List<String> *r_gen_files, Variant *r_metadata) {
 	FileAccessRef swf = FileAccess::open(p_source_file, FileAccess::READ);
@@ -89,7 +86,7 @@ Error ResourceImporterSWF::import(const String &p_source_file, const String &p_s
 		}
 
 		print_verbose(">> " + p_source_file.get_basename() + " properties:");
-		print_verbose(vformat("  dimensions: %dx%d", swfparser->get_properties()->dimensions.xmax,swfparser->get_properties()->dimensions.ymax));
+		print_verbose(vformat("  dimensions: %dx%d", swfparser->get_properties()->dimensions.xmax, swfparser->get_properties()->dimensions.ymax));
 		print_verbose(vformat("  framerate: %d", swfparser->get_properties()->framerate));
 		print_verbose(vformat("  framecount: %d", swfparser->get_properties()->framecount));
 
@@ -124,18 +121,18 @@ Error ResourceImporterSWF::import(const String &p_source_file, const String &p_s
 				}
 				root[PV_JSON_NAME_LIBRARY][PV_JSON_NAME_FILLSTYLES] += fillstylearray;
 			}
-			for(auto lsm=dict->LineStyles.begin(); lsm!=dict->LineStyles.end(); lsm++) {
+			for (auto lsm = dict->LineStyles.begin(); lsm != dict->LineStyles.end(); lsm++) {
 				json linestylearray;
-				for(SWF::LineStyleArray::iterator ls=lsm->second.begin(); ls!=lsm->second.end(); ls++) {
+				for (SWF::LineStyleArray::iterator ls = lsm->second.begin(); ls != lsm->second.end(); ls++) {
 					SWF::LineStyle linestyle = *ls;
-					if(linestyle.Width > 0) {
-						linestylemap[ls-lsm->second.begin()+1] = linestylemap.size()+1;
+					if (linestyle.Width > 0) {
+						linestylemap[ls - lsm->second.begin() + 1] = linestylemap.size() + 1;
 						json linestyledef;
 						linestyledef[PV_JSON_NAME_LINEWIDTH] = JV(linestyle.Width * sc);
 						linestyledef[PV_JSON_NAME_COLOUR] += linestyle.Color.r;
 						linestyledef[PV_JSON_NAME_COLOUR] += linestyle.Color.g;
 						linestyledef[PV_JSON_NAME_COLOUR] += linestyle.Color.b;
-						if(linestyle.Color.a < 255)
+						if (linestyle.Color.a < 255)
 							linestyledef[PV_JSON_NAME_COLOUR] += linestyle.Color.a;
 						linestylearray += linestyledef;
 					}
@@ -269,14 +266,14 @@ ResourceImporterSWF::SWFPolygonList ResourceImporterSWF::shape_builder(SWF::Shap
 	}
 
 	std::sort(shapeparts.begin(), shapeparts.end(), // Sort from smallest to largest
-		[](const SWFPolygon &a, const SWFPolygon &b) { return Math::abs(a.area) < Math::abs(b.area); });
+			[](const SWFPolygon &a, const SWFPolygon &b) { return Math::abs(a.area) < Math::abs(b.area); });
 
 	std::set<SWFPolygonList::iterator> discardedpolygons;
 	for (auto outer = shapeparts.begin(); outer != shapeparts.end(); outer++) { // For every closed polygon...
 		for (auto inner = shapeparts.begin(); inner != shapeparts.end(); inner++) { // ...find the child polygons (i.e. holes)...
 			if (outer == inner || !inner->polygon.closed ||
-				discardedpolygons.find(inner) != discardedpolygons.end() ||
-				!shape_contains_point(inner->polygon.vertices.front().anchor, outer->polygon))
+					discardedpolygons.find(inner) != discardedpolygons.end() ||
+					!shape_contains_point(inner->polygon.vertices.front().anchor, outer->polygon))
 				continue;
 			outer->children.push_back(inner - shapeparts.begin());
 			inner->has_parent = true;
@@ -301,9 +298,8 @@ bool ResourceImporterSWF::shape_contains_point(SWF::Point innervertex, SWF::Shap
 
 inline bool ResourceImporterSWF::points_equal(SWF::Vertex &a, SWF::Vertex &b) {
 	return (
-		int32_t(Math::round(a.anchor.x * 20)) == int32_t(Math::round(b.anchor.x * 20)) &&
-		int32_t(Math::round(a.anchor.y * 20)) == int32_t(Math::round(b.anchor.y * 20))
-	);
+			int32_t(Math::round(a.anchor.x * 20)) == int32_t(Math::round(b.anchor.x * 20)) &&
+			int32_t(Math::round(a.anchor.y * 20)) == int32_t(Math::round(b.anchor.y * 20)));
 }
 
 inline void ResourceImporterSWF::points_reverse(SWF::Shape *s) {
@@ -384,11 +380,11 @@ RES ResourceLoaderJSONVector::load(const String &p_path, const String &p_origina
 				}
 			}
 			uint16_t jshapestroke = jshape[PV_JSON_NAME_STROKE];
-			if(jshapestroke>0) {
-				json jcolour = jsondata[PV_JSON_NAME_LIBRARY][PV_JSON_NAME_LINESTYLES][characterid][jshapestroke-1][PV_JSON_NAME_COLOUR];
-				pvshape.strokecolour = new Color(int(jcolour[0])/255.0, int(jcolour[1])/255.0, int(jcolour[2])/255.0);
-				if(jcolour.size() > 3) {
-					pvshape.strokecolour->a = int(jcolour[3])/255.0;
+			if (jshapestroke > 0) {
+				json jcolour = jsondata[PV_JSON_NAME_LIBRARY][PV_JSON_NAME_LINESTYLES][characterid][jshapestroke - 1][PV_JSON_NAME_COLOUR];
+				pvshape.strokecolour = new Color(int(jcolour[0]) / 255.0, int(jcolour[1]) / 255.0, int(jcolour[2]) / 255.0);
+				if (jcolour.size() > 3) {
+					pvshape.strokecolour->a = int(jcolour[3]) / 255.0;
 				}
 			}
 			PolyVectorPath pvpath = verts_to_curve(jshape[PV_JSON_NAME_VERTICES]);

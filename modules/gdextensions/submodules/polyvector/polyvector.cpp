@@ -30,7 +30,6 @@
 
 #include "polyvector.h"
 
-
 /// PolyVector
 
 void PolyVector::draw_current_frame() {
@@ -140,10 +139,10 @@ void PolyVector::draw_current_frame() {
 		mi->set_mesh(meshdict[symbol.id][curve_quality]);
 		Transform transform;
 		transform.set(
-			symbol.matrix.ScaleX, symbol.matrix.Skew1, 0,
-			symbol.matrix.Skew0, symbol.matrix.ScaleY, 0,
-			0, 0, 1,
-			position_offset.x + symbol.matrix.TranslateX, position_offset.y - symbol.matrix.TranslateY, layer_separation);
+				symbol.matrix.ScaleX, symbol.matrix.Skew1, 0,
+				symbol.matrix.Skew0, symbol.matrix.ScaleY, 0,
+				0, 0, 1,
+				position_offset.x + symbol.matrix.TranslateX, position_offset.y - symbol.matrix.TranslateY, layer_separation);
 		mi->set_transform(transform);
 		mi->set_visible(true);
 		layer_separation += layer_depth;
@@ -364,7 +363,6 @@ PolyVector::~PolyVector() {
 		material_default.unref();
 	data_vec_file.unref();
 }
-
 
 /// PolyVector2D
 
