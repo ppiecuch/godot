@@ -37,10 +37,10 @@ namespace SWF
 
 	struct Rect
 	{
-		float xmin = 0.0f;
-		float xmax = 0.0f;
-		float ymin = 0.0f;
-		float ymax = 0.0f;
+		float xmin = 0;
+		float xmax = 0;
+		float ymin = 0;
+		float ymax = 0;
 	};
 
 	struct RGBA
@@ -53,27 +53,27 @@ namespace SWF
 
 	struct Matrix
 	{
-		float ScaleX = 1.0f;
-		float ScaleY = 1.0f;
-		float RotateSkew0 = 0.0f;
-		float RotateSkew1 = 0.0f;
-		float TranslateX = 0.0f;
-		float TranslateY = 0.0f;
+		float ScaleX = 1;
+		float ScaleY = 1;
+		float RotateSkew0 = 0;
+		float RotateSkew1 = 0;
+		float TranslateX = 0;
+		float TranslateY = 0;
 	};
 
 	struct CXForm
 	{
-		float RedMultTerm = 1.0f;
-		float GreenMultTerm = 1.0f;
-		float BlueMultTerm = 1.0f;
-		float AlphaMultTerm = 1.0f;
+		float RedMultTerm = 1;
+		float GreenMultTerm = 1;
+		float BlueMultTerm = 1;
+		float AlphaMultTerm = 1;
 		int16_t RedAddTerm = 0;
 		int16_t GreenAddTerm = 0;
 		int16_t BlueAddTerm = 0;
 		int16_t AlphaAddTerm = 0;
 		bool IsModified() { return !(
 			(this->RedAddTerm==0 && this->GreenAddTerm==0 && this->BlueAddTerm==0 && this->AlphaAddTerm==0) &&
-			(this->RedMultTerm==1.0f && this->GreenMultTerm==1.0f && this->BlueMultTerm==1.0f && this->AlphaMultTerm==1.0f)
+			(this->RedMultTerm==1 && this->GreenMultTerm==1 && this->BlueMultTerm==1.0f && this->AlphaMultTerm==1)
 			); }
 	};
 
@@ -91,7 +91,7 @@ namespace SWF
 	};
 	struct FocalGradient : public Gradient
 	{
-		float FocalPoint = 0.0f;
+		float FocalPoint = 0;
 	};
 
 
@@ -113,14 +113,14 @@ namespace SWF
 		enum class Type { LINESTYLE, LINESTYLE2 } StyleType;
 		enum class Cap  { ROUND, NONE, SQUARE } StartCapStyle, EndCapStyle;
 		enum class Join { ROUND, BEVEL, MITER } JoinStyle;
-		float Width = 1.0f;
+		float Width = 1;
 		RGBA Color;
 		bool HasFillFlag : 1;
 		bool NoHScaleFlag : 1;
 		bool NoVScaleFlag : 1;
 		bool PixelHintingFlag : 1;
 		bool NoClose : 1;
-		float MiterLimitFactor = 1.0f;
+		float MiterLimitFactor = 1;
 		FillStyle FillType;
 	};
 	typedef std::vector<LineStyle> LineStyleArray;
@@ -146,8 +146,8 @@ namespace SWF
 
 	struct Point
 	{
-		float x = 0.0f;
-		float y = 0.0f;
+		float x = 0;
+		float y = 0;
 		void transform(Matrix m)
 		{
 			x = ( x*m.ScaleX ) + ( y*m.RotateSkew1 ) + m.TranslateX;

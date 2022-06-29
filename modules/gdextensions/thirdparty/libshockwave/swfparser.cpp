@@ -427,8 +427,8 @@ void inline Stream::readSHAPEWITHSTYLE(uint16_t characterid, Rect bounds, uint16
 			StyleChangeRecord change = readSHAPERECORDstylechange(characterid, tag, stateflags);
 			if(shape.vertices.size()>1) {
 				shape.closed = (
-					int32_t(round(shape.vertices.front().anchor.x*20.0f))==int32_t(round(shape.vertices.back().anchor.x*20.0f)) &&
-					int32_t(round(shape.vertices.front().anchor.y*20.0f))==int32_t(round(shape.vertices.back().anchor.y*20.0f))
+					int32_t(round(shape.vertices.front().anchor.x*20.0)) == int32_t(round(shape.vertices.back().anchor.x*20.0)) &&
+					int32_t(round(shape.vertices.front().anchor.y*20.0)) == int32_t(round(shape.vertices.back().anchor.y*20.0))
 					);
 				character.shapes.push_back(shape);
 			}
@@ -457,8 +457,8 @@ void inline Stream::readSHAPEWITHSTYLE(uint16_t characterid, Rect bounds, uint16
 	}
 	if(shape.vertices.size()>1) {
 		shape.closed = (
-			int32_t(round(shape.vertices.front().anchor.x*20.0f))==int32_t(round(shape.vertices.back().anchor.x*20.0f)) &&
-			int32_t(round(shape.vertices.front().anchor.y*20.0f))==int32_t(round(shape.vertices.back().anchor.y*20.0f))
+			int32_t(round(shape.vertices.front().anchor.x*20.0)) == int32_t(round(shape.vertices.back().anchor.x*20.0)) &&
+			int32_t(round(shape.vertices.front().anchor.y*20.0)) == int32_t(round(shape.vertices.back().anchor.y*20.0))
 			);
 		character.shapes.push_back(shape);
 	}

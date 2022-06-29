@@ -30,53 +30,29 @@
 
 #include "polyvector.h"
 
-PolyVector::PolyVector() {
-	this->fTime = 0.0f;
-	this->v2Offset = Vector2(0.0f, 0.0f);
-	this->iCurveQuality = 2;
-	this->fLayerDepth = 0.0f;
-	this->fMaxTessellationAngle = 4.0f;
 
-	this->materialDefault.instance();
-	this->materialDefault->set_flag(SpatialMaterial::FLAG_ALBEDO_FROM_VERTEX_COLOR, true);
-	this->materialDefault->set_cull_mode(SpatialMaterial::CULL_DISABLED);
-
-#ifdef POLYVECTOR_DEBUG
-	this->bDebugWireframe = false;
-	this->materialDebug.instance();
-	this->os = OS::get_singleton();
-	this->dTriangulationTime = 0.0L;
-	this->dMeshUpdateTime = 0.0L;
-#endif
-}
-
-PolyVector::~PolyVector() {
-	this->clear_mesh_data();
-	if (!this->materialDefault.is_null())
-		this->materialDefault.unref();
-	this->dataVectorFile.unref();
-}
+/// PolyVector
 
 void PolyVector::draw_current_frame() {
-	if (this->dataVectorFile.is_null())
+	if (data_vec_file.is_null())
 		return;
-	uint16_t frameno = CLAMP((this->fFps * this->fTime), 0, this->lFrameData.size() - 1);
+	uint16_t frameno = CLAMP((fps * frame_time), 0, frame_data.size() - 1);
 #ifdef POLYVECTOR_DEBUG
-	uint64_t debugtimer = this->os->get_ticks_usec();
+	uint64_t debugtimer = os->get_ticks_usec();
 #endif
-	MeshDictionaryMap &meshdict = this->dataVectorFile->get_mesh_dictionary();
-	for (MeshInstanceMap::Element *m = this->mapMeshDisplay.front(); m; m = m->next())
+	MeshDictionaryMap &meshdict = data_vec_file->get_mesh_dictionary();
+	for (MeshInstanceMap::Element *m = mesh_display.front(); m; m = m->next())
 		m->get()->set_visible(false);
-	float layer_separation = 0.0f;
-	PolyVectorFrame *framedata = &this->lFrameData[frameno];
+	float layer_separation = 0;
+	PolyVectorFrame *framedata = &frame_data[frameno];
 	for (PolyVectorFrame::Element *c = framedata->front(); c; c = c->next()) {
 		PolyVectorSymbol symbol = c->get();
 		if (!meshdict.has(symbol.id)) {
 			MeshQualityMap mqm;
 			meshdict[symbol.id] = mqm;
 		}
-		if (!meshdict[symbol.id].has(this->iCurveQuality)) {
-			PolyVectorCharacter *pvchar = &this->lDictionaryData[symbol.id];
+		if (!meshdict[symbol.id].has(curve_quality)) {
+			PolyVectorCharacter *pvchar = &dictionary_data[symbol.id];
 			Array arr;
 			arr.resize(Mesh::ARRAY_MAX);
 			PoolVector<Vector3> vertices;
@@ -90,47 +66,47 @@ void PolyVector::draw_current_frame() {
 
 			for (PolyVectorCharacter::Element *s = pvchar->front(); s; s = s->next()) {
 				PolyVectorShape &shape = s->get();
-				if (shape.fillcolour == NULL)
+				if (shape.fillcolour == nullptr)
 					continue;
 				std::vector<std::vector<Vector2>> polygons;
 				std::vector<Vector2> tessverts;
-				PoolVector<Vector2> tess = shape.path.curve.tessellate(this->iCurveQuality, this->fMaxTessellationAngle);
-				//if(!shape.path.closed) {	// If shape is not a closed loop, store as a stroke
-				//	shape.strokes[this->iCurveQuality].push_back(tess);
-				//} else {					// Otherwise, triangulate
-				uint32_t tess_size = tess.size();
-				std::vector<Vector2> poly;
-				PoolVector<Vector2>::Read tessreader = tess.read();
-				for (uint32_t i = 1; i < tess_size; i++) {
-					poly.push_back(tessreader[i]);
+				PoolVector<Vector2> tess = shape.path.curve.tessellate(curve_quality, fMaxTessellationAngle);
+				if (!shape.path.closed) { // TODO: If shape is not a closed loop, store as a stroke
+					shape.strokes[curve_quality].push_back(tess);
+				} else { // Otherwise, triangulate
+					uint32_t tess_size = tess.size();
+					std::vector<Vector2> poly;
+					PoolVector<Vector2>::Read tessreader = tess.read();
+					for (uint32_t i = 1; i < tess_size; i++) {
+						poly.push_back(tessreader[i]);
 #ifdef POLYVECTOR_DEBUG
-					if (this->bDebugWireframe) {
-						wireframevertices.push_back(tessreader[i - 1]);
-						wireframevertices.push_back(tessreader[i]);
-					}
+						if (bDebugWireframe) {
+							wireframevertices.push_back(tessreader[i - 1]);
+							wireframevertices.push_back(tessreader[i]);
+						}
 #endif
+					}
+					polygons.push_back(poly);
+					tessverts.insert(tessverts.end(), poly.begin(), poly.end());
+					for (List<uint16_t>::Element *hole = shape.holes.front(); hole; hole = hole->next()) {
+						PoolVector<Vector2> holetess = (*pvchar)[hole->get()].path.curve.tessellate(curve_quality, fMaxTessellationAngle);
+						uint32_t holetess_size = holetess.size();
+						std::vector<Vector2> holepoly;
+						PoolVector<Vector2>::Read holetessreader = holetess.read();
+						for (uint32_t j = 0; j < holetess_size; j++)
+							holepoly.push_back(holetessreader[j]);
+						polygons.push_back(holepoly);
+						tessverts.insert(tessverts.end(), holepoly.begin(), holepoly.end());
+					}
 				}
-				polygons.push_back(poly);
-				tessverts.insert(tessverts.end(), poly.begin(), poly.end());
-				for (List<uint16_t>::Element *hole = shape.holes.front(); hole; hole = hole->next()) {
-					PoolVector<Vector2> holetess = (*pvchar)[hole->get()].path.curve.tessellate(this->iCurveQuality, this->fMaxTessellationAngle);
-					uint32_t holetess_size = holetess.size();
-					std::vector<Vector2> holepoly;
-					PoolVector<Vector2>::Read holetessreader = holetess.read();
-					for (uint32_t j = 0; j < holetess_size; j++)
-						holepoly.push_back(holetessreader[j]);
-					polygons.push_back(holepoly);
-					tessverts.insert(tessverts.end(), holepoly.begin(), holepoly.end());
-				}
-				//}
 				if (!polygons.empty()) {
 					std::vector<N> indices = mapbox::earcut<N>(polygons);
 					for (std::vector<N>::reverse_iterator tris = indices.rbegin(); tris != indices.rend(); tris++) { // Work through the vector in reverse to make sure the triangles' normals are facing forward
 						colours.push_back(shape.fillcolour->to_linear());
 						normals.push_back(Vector3(0.0f, 0.0f, 1.0f));
-						vertices.push_back(Vector3(tessverts[*tris].x, tessverts[*tris].y, 0.0f));
+						vertices.push_back(Vector3(tessverts[*tris].x, tessverts[*tris].y, 0));
 #ifdef POLYVECTOR_DEBUG
-						this->vertex_count++;
+						vertex_count++;
 #endif
 					}
 				}
@@ -142,45 +118,44 @@ void PolyVector::draw_current_frame() {
 			Ref<ArrayMesh> newmesh;
 			newmesh.instance();
 			newmesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arr);
-			newmesh->surface_set_material(0, this->materialDefault);
+			newmesh->surface_set_material(0, material_default);
 
 #ifdef POLYVECTOR_DEBUG
-			if (this->bDebugWireframe) {
+			if (bDebugWireframe) {
 				wireframearr[Mesh::ARRAY_VERTEX] = wireframevertices;
 				newmesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, wireframearr);
-				newmesh->surface_set_material(newmesh->get_surface_count() - 1, this->materialDebug);
+				newmesh->surface_set_material(newmesh->get_surface_count() - 1, material_debug);
 			}
 #endif
 
-			meshdict[symbol.id][this->iCurveQuality] = newmesh;
+			meshdict[symbol.id][curve_quality] = newmesh;
 		}
-		if (!this->mapMeshDisplay.has(symbol.depth)) {
+		if (!mesh_display.has(symbol.depth)) {
 			MeshInstance *mi = memnew(MeshInstance);
-			this->add_child(mi);
+			add_child(mi);
 			mi->set_owner(this);
-			this->mapMeshDisplay[symbol.depth] = mi;
+			mesh_display[symbol.depth] = mi;
 		}
-		MeshInstance *mi = this->mapMeshDisplay[symbol.depth];
-		mi->set_mesh(meshdict[symbol.id][this->iCurveQuality]);
+		MeshInstance *mi = mesh_display[symbol.depth];
+		mi->set_mesh(meshdict[symbol.id][curve_quality]);
 		Transform transform;
-		Vector2 offset = this->v2Offset;
 		transform.set(
-				symbol.matrix.ScaleX, symbol.matrix.Skew1, 0.0f,
-				symbol.matrix.Skew0, symbol.matrix.ScaleY, 0.0f,
-				0.0f, 0.0f, 1.0f,
-				offset.x + symbol.matrix.TranslateX, offset.y - symbol.matrix.TranslateY, layer_separation);
+			symbol.matrix.ScaleX, symbol.matrix.Skew1, 0,
+			symbol.matrix.Skew0, symbol.matrix.ScaleY, 0,
+			0, 0, 1,
+			position_offset.x + symbol.matrix.TranslateX, position_offset.y - symbol.matrix.TranslateY, layer_separation);
 		mi->set_transform(transform);
 		mi->set_visible(true);
-		layer_separation += this->fLayerDepth;
+		layer_separation += layer_depth;
 	}
 #ifdef POLYVECTOR_DEBUG
-	this->dTriangulationTime = ((this->os->get_ticks_usec() - debugtimer) / 1000000.0L);
+	triangulation_time = ((os->get_ticks_usec() - debugtimer) / 1000000.0);
 #endif
 }
 
 void PolyVector::clear_mesh_data() {
-	if (this->dataVectorFile.is_valid()) {
-		MeshDictionaryMap &meshdict = this->dataVectorFile->get_mesh_dictionary();
+	if (data_vec_file.is_valid()) {
+		MeshDictionaryMap &meshdict = data_vec_file->get_mesh_dictionary();
 		for (MeshDictionaryMap::Element *d = meshdict.front(); d; d = d->next()) {
 			for (MeshQualityMap::Element *m = d->get().front(); m; m = m->next())
 				m->get().unref();
@@ -190,102 +165,94 @@ void PolyVector::clear_mesh_data() {
 }
 
 void PolyVector::clear_mesh_instances() {
-	int32_t childcount = this->get_child_count();
+	int32_t childcount = get_child_count();
 	for (int32_t i = childcount - 1; i >= 0; i--) {
-		MeshInstance *mi = Node::cast_to<MeshInstance>(this->get_child(i));
+		MeshInstance *mi = Node::cast_to<MeshInstance>(get_child(i));
 		if (mi)
-			this->remove_child(mi);
+			remove_child(mi);
 	}
-	for (MeshInstanceMap::Element *mim = this->mapMeshDisplay.front(); mim; mim = mim->next())
+	for (MeshInstanceMap::Element *mim = mesh_display.front(); mim; mim = mim->next())
 		memdelete<MeshInstance>(mim->get());
-	this->mapMeshDisplay.clear();
+	mesh_display.clear();
 }
 
 void PolyVector::set_vector_image(const Ref<JSONVector> &p_vector) {
-	if (this->dataVectorFile.is_valid())
-		this->dataVectorFile.unref();
-	this->dataVectorFile = p_vector;
-	if (this->dataVectorFile.is_null())
+	if (data_vec_file.is_valid())
+		data_vec_file.unref();
+	data_vec_file = p_vector;
+	if (data_vec_file.is_null())
 		return;
-	this->fFps = this->dataVectorFile->get_fps();
-	this->lFrameData = this->dataVectorFile->get_frames();
-	this->lDictionaryData = this->dataVectorFile->get_dictionary();
+	fps = data_vec_file->get_fps();
+	frame_data = data_vec_file->get_frames();
+	dictionary_data = data_vec_file->get_dictionary();
 
-	this->clear_mesh_instances();
-	this->clear_mesh_data();
+	clear_mesh_instances();
+	clear_mesh_data();
 
-	AnimationPlayer *animplayer = NULL;
-	int32_t childcount = this->get_child_count();
-	for (int32_t i = 0; i < childcount; i++) {
-		animplayer = Node::cast_to<AnimationPlayer>(this->get_child(i));
-		if (animplayer)
-			break;
-	}
-
-	this->set_time(0.0f);
+	set_time(0);
 }
 Ref<JSONVector> PolyVector::get_vector_image() const {
-	return this->dataVectorFile;
+	return data_vec_file;
 }
 
-void PolyVector::set_time(real_t f) {
-	this->fTime = f;
-	this->draw_current_frame();
+void PolyVector::set_time(real_t p_time) {
+	frame_time = p_time;
+	draw_current_frame();
 }
 real_t PolyVector::get_time() {
-	return this->fTime;
+	return frame_time;
 }
 
-void PolyVector::set_curve_quality(int8_t t) {
-	this->iCurveQuality = t;
-	this->draw_current_frame();
+void PolyVector::set_curve_quality(int8_t p_quality) {
+	curve_quality = p_quality;
+	draw_current_frame();
 }
 int8_t PolyVector::get_curve_quality() {
-	return this->iCurveQuality;
+	return curve_quality;
 }
 
-void PolyVector::set_offset(Vector2 s) {
-	this->v2Offset = s;
-	this->draw_current_frame();
+void PolyVector::set_offset(Vector2 p_offset) {
+	position_offset = p_offset;
+	draw_current_frame();
 }
 Vector2 PolyVector::get_offset() {
-	return this->v2Offset;
+	return position_offset;
 }
 
-void PolyVector::set_layer_separation(real_t d) {
-	this->fLayerDepth = d;
-	this->draw_current_frame();
+void PolyVector::set_layer_separation(real_t p_separation) {
+	layer_depth = p_separation;
+	draw_current_frame();
 }
 real_t PolyVector::get_layer_separation() {
-	return this->fLayerDepth;
+	return layer_depth;
 }
 
 void PolyVector::set_albedo_colour(Color c) {
-	this->materialDefault->set_albedo(c);
+	material_default->set_albedo(c);
 }
 Color PolyVector::get_albedo_colour() {
-	return this->materialDefault->get_albedo();
+	return material_default->get_albedo();
 }
 
 void PolyVector::set_material_unshaded(bool t) {
-	this->materialDefault->set_flag(SpatialMaterial::FLAG_UNSHADED, t);
+	material_default->set_flag(SpatialMaterial::FLAG_UNSHADED, t);
 }
 bool PolyVector::get_material_unshaded() {
-	return this->materialDefault->get_flag(SpatialMaterial::FLAG_UNSHADED);
+	return material_default->get_flag(SpatialMaterial::FLAG_UNSHADED);
 }
 
 void PolyVector::set_max_tessellation_angle(real_t f) {
-	this->fMaxTessellationAngle = f;
+	fMaxTessellationAngle = f;
 }
 real_t PolyVector::get_max_tessellation_angle() {
-	return this->fMaxTessellationAngle;
+	return fMaxTessellationAngle;
 }
 
 AABB PolyVector::get_aabb() const {
 	AABB aabbfull;
-	aabbfull.set_position(Vector3(-0.5f, -0.5f, -0.5f));
-	aabbfull.set_size(Vector3(1.0f, 1.0f, 1.0f));
-	//for(MeshInstanceMap::Element *mi=this->mapMeshDisplay.front(); mi; mi=mi->next()) {
+	aabbfull.set_position(Vector3(-0.5, -0.5, -0.5));
+	aabbfull.set_size(Vector3(1, 1, 1));
+	//for(MeshInstanceMap::Element *mi=mesh_display.front(); mi; mi=mi->next()) {
 	//	MeshInstance *meshinstance = mi->get();
 	//	aabbfull.expand_to(meshinstance->get_translation());
 	//	aabbfull.expand_to(meshinstance->get_aabb().get_size()*meshinstance->get_scale());
@@ -295,32 +262,33 @@ AABB PolyVector::get_aabb() const {
 
 PoolVector<Face3> PolyVector::get_faces(uint32_t p_usage_flags) const {
 	PoolVector<Face3> allfaces;
-	for (MeshInstanceMap::Element *mi = this->mapMeshDisplay.front(); mi; mi = mi->next())
+	for (MeshInstanceMap::Element *mi = mesh_display.front(); mi; mi = mi->next()) {
 		allfaces.append_array(mi->get()->get_mesh()->get_faces());
+	}
 	return allfaces;
 }
 
 #ifdef POLYVECTOR_DEBUG
 void PolyVector::set_debug_wireframe(bool b) {
-	this->bDebugWireframe = b;
-	this->clear_mesh_instances();
-	this->clear_mesh_data();
-	this->draw_current_frame();
+	debug_wireframe = b;
+	clear_mesh_instances();
+	clear_mesh_data();
+	draw_current_frame();
 }
 bool PolyVector::get_debug_wireframe() {
-	return this->bDebugWireframe;
+	return debug_wireframe;
 }
 
 double PolyVector::get_triangulation_time() {
-	return this->dTriangulationTime;
+	return triangulation_time;
 }
 double PolyVector::get_mesh_update_time() {
-	return this->dMeshUpdateTime;
+	return mesh_update_time;
 }
 uint32_t PolyVector::get_vertex_count() {
-	return this->vertex_count;
+	return vertex_count;
 }
-#endif
+#endif // POLYVECTOR_DEBUG
 
 void PolyVector::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_vector_image"), &PolyVector::set_vector_image);
@@ -368,4 +336,96 @@ void PolyVector::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_mesh_update_time"), &PolyVector::get_mesh_update_time);
 	ClassDB::bind_method(D_METHOD("get_vertex_count"), &PolyVector::get_vertex_count);
 #endif
+}
+
+PolyVector::PolyVector() {
+	frame_time = 0;
+	offset = Vector2(0, 0);
+	curve_quality = 2;
+	fLayer_depth = 0;
+	max_tessellation_angle = 4;
+
+	material_default.instance();
+	material_default->set_flag(SpatialMaterial::FLAG_ALBEDO_FROM_VERTEX_COLOR, true);
+	material_default->set_cull_mode(SpatialMaterial::CULL_DISABLED);
+
+#ifdef POLYVECTOR_DEBUG
+	os = OS::get_singleton();
+	material_debug.instance();
+	debug_wireframe = false;
+	triangulation_time = 0;
+	mesh_update_time = 0;
+#endif
+}
+
+PolyVector::~PolyVector() {
+	clear_mesh_data();
+	if (!material_default.is_null())
+		material_default.unref();
+	data_vec_file.unref();
+}
+
+
+/// PolyVector2D
+
+#ifdef TOOLS_ENABLED
+void PolyVector2D::_edit_set_position(const Point2 &p_position) {}
+Point2 PolyVector2D::_edit_get_position() const {
+	return Point2();
+}
+void PolyVector2D::_edit_set_scale(const Size2 &p_scale) {}
+Size2 PolyVector2D::_edit_get_scale() const {
+	return viewSize;
+}
+#endif
+
+Transform2D PolyVector2D::get_transform() const {
+	return Transform2D();
+}
+
+void PolyVector2D::set_vector_image(const Ref<JSONVector> &p_vector) {
+	if (data_vec_file.is_valid())
+		data_vec_file.unref();
+	data_vec_file = p_vector;
+	if (data_vec_file.is_null())
+		return;
+	fps = data_vec_file->get_fps();
+	frame_data = data_vec_file->get_frames();
+	dictionary_data = data_vec_file->get_dictionary();
+
+	set_time(0);
+}
+Ref<JSONVector> PolyVector2D::get_vector_image() const {
+	return data_vec_file;
+}
+
+void PolyVector2D::set_time(real_t p_time) {
+	frame_time = p_time;
+	// draw_current_frame();
+}
+real_t PolyVector2D::get_time() {
+	return frame_time;
+}
+
+void PolyVector2D::_notification(int p_what) {
+	switch (p_what) {
+		case NOTIFICATION_PARENTED:
+		case NOTIFICATION_ENTER_TREE: {
+		} break;
+		case NOTIFICATION_PROCESS: {
+			update();
+		} break;
+		case NOTIFICATION_DRAW: {
+		} break;
+	}
+}
+
+void PolyVector2D::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("set_vector_image"), &PolyVector::set_vector_image);
+	ClassDB::bind_method(D_METHOD("get_vector_image"), &PolyVector::get_vector_image);
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "vector", PROPERTY_HINT_RESOURCE_TYPE, "JSONVector"), "set_vector_image", "get_vector_image");
+}
+
+PolyVector2D::PolyVector2D() {
+	viewSize = Size2(100, 100);
 }
