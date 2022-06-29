@@ -30,7 +30,7 @@ def get_opts():
 
 # Return the ANDROID_SDK_ROOT environment variable.
 def get_env_android_sdk_root():
-    return os.environ.get("ANDROID_SDK_ROOT", -1)
+    return os.environ.get("ANDROID_SDK_ROOT", "")
 
 
 def get_min_sdk_version(platform):
