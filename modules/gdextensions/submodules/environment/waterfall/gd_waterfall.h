@@ -46,6 +46,19 @@ enum WaterfallTexturesQuality {
 	TEXTURES_QUALITY_NUM,
 };
 
+//
+//              +----------+
+//              |          |
+//              |  - - -   |
+//              |    -     | ---- stretch_from
+//              |   -  -   |  |   . -+
+//       ---    |          |  |      |
+// splash /\    |  *   *   | \/   * -+ stretch_amount
+// height |     |    *     |
+//        | \___+___ __ ___+___/
+//
+//              <-- splash spread -->
+
 class GdWaterfall : public Node2D {
 	GDCLASS(GdWaterfall, Node2D);
 
