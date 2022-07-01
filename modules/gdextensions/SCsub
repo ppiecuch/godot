@@ -16,10 +16,12 @@ def is_enabled(m):
     if "enable_gdextensions_submodules" in env:
         if "none" in env["enable_gdextensions_submodules"]:
             return False
-        if not mod in env["enable_gdextensions_submodules"]:
-            return False
+        if mod in env["enable_gdextensions_submodules"]:
+            return True
+        # check for group name only
+        el = [x for x in env["enable_gdextensions_submodules"] if x.startswith(m)]
+        return len(el) > 0
     return True
-
 
 env_module = env_modules.Clone()
 
@@ -64,6 +66,11 @@ modules = [
     "tileengine",
     "sparkparticles",
     "turbobadger",
+    "spacemouse",
+    "media/ffmpeg",
+    "media/flac",
+    "media/gifexporter",
+    "media/smackvideo",
 ]
 
 thirdparty_sources = [
@@ -204,6 +211,18 @@ if is_enabled("turbobadger"):
     else:
         env_module.Append(CPPDEFINES=["TB_FONT_RENDERER_STB"])
     thirdparty_sources += Glob("thirdparty/turbobadger/src/**/*.cpp") + Glob("thirdparty/turbobadger/resources/*.c")
+
+if is_enabled("spacemouse"):
+    if env["tools"]:
+        if env["platform"] == "windows":
+            thirdparty_sources += Glob("thirdparty/hidapi/windows/**/*.c")
+        elif env["platform"] == "x11":
+            thirdparty_sources += Glob("thirdparty/hidapi/linux/**/*.c")
+        elif env["platform"] == "osx":
+            thirdparty_sources += Glob("thirdparty/hidapi/mac/**/*.c")
+
+if is_enabled("media/"):
+    env_module.Append(CPPPATH=["thirdparty/media"])
 
 sub_building = []
 for m in modules:
