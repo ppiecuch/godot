@@ -223,6 +223,41 @@ if is_enabled("spacemouse"):
 
 if is_enabled("media/"):
     env_module.Append(CPPPATH=["thirdparty/media"])
+    if is_enabled("media/gifexporter"):
+        thirdparty_sources += Glob("thirdparty/media/gifanimcplusplus/*.cpp")
+    if is_enabled("media/smackvideo"):
+        env_module.Append(CPPPATH=[os.path.dirname(os.path.realpath(os.curdir)) + "/gdnative/include"])
+        thirdparty_sources += Glob("thirdparty/media/libsmacker/*.c")
+    if is_enabled("media/ffmpeg"):
+        arch = env["arch"] if "arch" in env and env["arch"] else platform.machine()
+        if arch == "x64":
+            arch = "x86_64"
+        elif arch == "mips":
+            arch = "mips32"
+        if env["platform"] == "windows":
+            env_module.Append(CPPPATH=["thirdparty/media/ffmpeg/windows/%s/include" % arch])
+            env.Append(LIBPATH=[os.path.realpath(os.curdir) + "/thirdparty/media/ffmpeg/windows/%s/lib" % arch])
+        elif env["platform"] == "x11" or env["platform"] == "frt":
+            env_module.Append(CPPPATH=["thirdparty/media/ffmpeg/linux/%s/include" % arch])
+            env.Append(LIBPATH=[os.path.realpath(os.curdir) + "/thirdparty/media/ffmpeg/linux/%s/lib" % arch])
+            env.Append(LIBS=["iconv"])
+        elif env["platform"] == "android":
+            env_module.Append(CPPPATH=["thirdparty/media/ffmpeg/android/%s/include" % arch])
+            env.Append(LIBPATH=[os.path.realpath(os.curdir) + "/thirdparty/media/ffmpeg/android/%s/lib" % arch])
+        elif env["platform"] == "iphone":
+            env_module.Append(CPPPATH=["thirdparty/media/ffmpeg/ios/universal/include" % arch])
+            env.Append(LIBPATH=[os.path.realpath(os.curdir) + "thirdparty/media/ffmpeg/ios/universal/lib" % arch])
+        elif env["platform"] == "osx":
+            env_module.Append(CPPPATH=["thirdparty/media/ffmpeg/macosx/universal/include"])
+            env.Append(LIBPATH=[os.path.realpath(os.curdir) + "/thirdparty/media/ffmpeg/macosx/universal/lib"])
+        elif env["platform"] == "psvita":
+            env_module.Append(CPPPATH=["thirdparty/media/ffmpeg/vita/%s/include" % arch])
+            env.Append(LIBPATH=[os.path.realpath(os.curdir) + "/thirdparty/media/ffmpeg/vita/%s/lib" % arch])
+        else:
+            print("(GDextensions) FFmpeg is not supported on platform '%s'." % env["platform"])
+            env["enable_gdextensions_submodules"].remove("media/ffmpeg")
+        if is_enabled("media/ffmpeg"):
+            env_module.Append(CPPPATH=[os.path.dirname(os.path.realpath(os.curdir)) + "/gdnative/include"])
 
 sub_building = []
 for m in modules:
@@ -248,10 +283,10 @@ if env["builtin_freetype"]:
     env_module.Prepend(CPPPATH=["#thirdparty/freetype/include"])
 env_module.Append(CPPDEFINES=["GD_CQUEUE", "GD_GODOT_ENET"])
 
-# Compile as a static library
-lib = env_module.Library("gdextensions", thirdparty_sources + sources)
-# Add the library as a dependency of the final executable
-env.Prepend(LIBS=[lib])
+lib = env_module.Library("gdextensions", thirdparty_sources + sources) # Compile as a static library
+env.Prepend(LIBS=[lib]) # Add the library as a dependency of the final executable
+if is_enabled("media/ffmpeg"):
+    env.Prepend(LIBS=[lib, "avformat", "avcodec", "avutil", "swresample", "swscale"])
 
 if modules:
     sub_enabled = []
@@ -264,5 +299,8 @@ if modules:
                 sub_enabled.append(mod + ": " + os.path.basename(m))
             else:
                 sub_enabled.append(m)
-            env_module.Append(CPPDEFINES=["GDEXT_%s_ENABLED" % mod.upper()])
+            if m == mod:
+                env_module.Append(CPPDEFINES=["GDEXT_%s_ENABLED" % mod.upper()])
+            else:
+                env_module.Append(CPPDEFINES=["GDEXT_%s_ENABLED" % (m.replace('/', '_').upper())])
     print("(GDextensions) Building submodules: %s" % sorted(sub_enabled))

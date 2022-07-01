@@ -50,6 +50,7 @@ def configure(env):
         "tileengine",
         "sparkparticles",
         "turbobadger",
+        "media",
     ]
     opts = Variables()
     opts.Add(

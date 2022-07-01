@@ -124,6 +124,22 @@
 #include "environment/water_splash/gd_water_splash.h"
 #include "environment/waterfall/gd_waterfall.h"
 
+#ifdef GDEXT_MEDIA_FLAC_ENABLED
+#include "media/flac/audio_stream_flac.h"
+#ifdef TOOLS_ENABLED
+# include "media/flac/resource_importer_flac.h"
+#endif
+#endif
+#ifdef GDEXT_MEDIA_GIFEXPORTER_ENABLED
+#include "media/gifexporter/gifexporter.h"
+#endif
+#ifdef GDEXT_MEDIA_SMACKVIDEO_ENABLED
+#include "media/smackvideo/gd_smackvideo.h"
+#endif
+#ifdef GDEXT_MEDIA_FFMPEG_ENABLED
+#include "media/ffmpeg/gd_videodecoder.h"
+#endif
+
 #include "settings/settings.h"
 
 #ifdef GDEXT_SQLITE_ENABLED
@@ -360,7 +376,6 @@ void register_gdextensions_types() {
 	ClassDB::register_class<SimulationControllerInstance2D>();
 	ClassDB::register_class<SphericalWaves>();
 	ClassDB::register_class<SpriteMesh>();
-	ClassDB::register_class<Starfield2D>();
 	ClassDB::register_class<TouchButton>();
 	ClassDB::register_class<TexturePanning>();
 	ClassDB::register_class<ThumbWheelH>();
@@ -377,18 +392,49 @@ void register_gdextensions_types() {
 	ClassDB::register_class<AudioStreamPreviewGenerator>();
 #endif
 
-#ifdef GDEXT_ENVIRONMENT_ENABLED
+#ifdef GDEXT_ENVIRONMENT_WATERFALL_ENABLED
 	ClassDB::register_class<GdWaterfall>();
+#endif
+#ifdef GDEXT_ENVIRONMENT_TREE_2D_ENABLED
 	ClassDB::register_class<Tree2D>();
+#endif
+#ifdef GDEXT_ENVIRONMENT_WATER_SPLASH_ENABLED
 	ClassDB::register_class<GdWaterSplash>();
 	ClassDB::register_virtual_class<GdWaterSplashColumn>();
-#ifndef _3D_DISABLED
-	ClassDB::register_class<VegetationInstance>();
 #endif
+#ifndef _3D_DISABLED
+# ifdef GDEXT_ENVIRONMENT_VEGETATION_INSTANCE_ENABLED
+	ClassDB::register_class<VegetationInstance>();
+# endif
+#endif
+#ifdef GDEXT_ENVIRONMENT_SPIDER_ANIM_ENABLED
 	ClassDB::register_class<Spider>();
 	ClassDB::register_class<SpiderStage>();
 	ClassDB::register_class<SpiderStageInstance>();
-#endif // GDEXT_ENVIRONMENT_ENABLED
+#endif
+#ifdef GDEXT_ENVIRONMENT_STARFIELD_ENABLED
+	ClassDB::register_class<Starfield2D>();
+#endif
+
+#ifdef TOOLS_ENABLED
+#ifdef GDEXT_MEDIA_FLAC_ENABLED
+	if (Engine::get_singleton()->is_editor_hint()) {
+		Ref<ResourceImporterFLAC> flac_import;
+		flac_import.instance();
+		ResourceFormatImporter::get_singleton()->add_importer(flac_import);
+	}
+#endif
+#ifdef GDEXT_MEDIA_GIFEXPORTER_ENABLED
+	ClassDB::register_class<GifExporter>();
+#endif
+#endif // TOOLS_ENABLED
+
+#ifdef GDEXT_MEDIA_FLAC_ENABLED
+	ClassDB::register_class<AudioStreamFLAC>();
+#endif
+#ifdef GDEXT_MEDIA_SMACKVIDEO_ENABLED
+	gdsmackvideo_init();
+#endif
 
 #ifdef GDEXT_BENET_ENABLED
 #ifdef MODULE_ENET_ENABLED
@@ -530,6 +576,15 @@ void unregister_gdextensions_types() {
 	if (GdMultiPeer *instance = GdMultiPeer::get_singleton()) {
 		memdelete(instance);
 	}
+#endif
+#ifdef GDEXT_MEDIA_SMACKVIDEO_ENABLED
+	gdsmackvideo_terminate();
+#endif
+#ifdef GDEXT_MEDIA_FFMPEG_ENABLED
+	gdffmpeg_terminate();
+#endif
+#ifdef GDEXT_MEDIA_FFMPEG_ENABLED
+	gdffmpeg_init();
 #endif
 #ifdef GDEXT_IAP_ENABLED
 #if defined(OSX_ENABLED) || defined(UWP_ENABLED) || defined(IPHONE_ENABLED)
