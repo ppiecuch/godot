@@ -435,6 +435,9 @@ void register_gdextensions_types() {
 #ifdef GDEXT_MEDIA_SMACKVIDEO_ENABLED
 	gdsmackvideo_init();
 #endif
+#ifdef GDEXT_MEDIA_FFMPEG_ENABLED
+	gdffmpeg_init();
+#endif
 
 #ifdef GDEXT_BENET_ENABLED
 #ifdef MODULE_ENET_ENABLED
