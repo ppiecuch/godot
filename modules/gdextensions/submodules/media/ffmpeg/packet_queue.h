@@ -28,13 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef _PACKET_QUEUE_H
-#define _PACKET_QUEUE_H
+#ifndef PACKET_QUEUE_H
+#define PACKET_QUEUE_H
 
-#include <gdnative_api_struct.gen.h>
+#include "core/os/memory.h"
+
 #include <libavformat/avformat.h>
-
-extern const godot_gdnative_core_api_struct *api;
 
 typedef struct PacketQueue {
 	AVPacketList *first_pkt, *last_pkt;
@@ -42,12 +41,10 @@ typedef struct PacketQueue {
 	int size;
 } PacketQueue;
 
-int quit = 0;
-
 PacketQueue *packet_queue_init() {
 	PacketQueue *q;
-	q = (PacketQueue *)api->godot_alloc(sizeof(PacketQueue));
-	if (q != NULL) {
+	q = (PacketQueue *)memalloc(sizeof(PacketQueue));
+	if (q != nullptr) {
 		memset(q, 0, sizeof(PacketQueue));
 	}
 	return q;
@@ -59,21 +56,21 @@ void packet_queue_flush(PacketQueue *q) {
 	for (pkt = q->first_pkt; pkt; pkt = pkt1) {
 		pkt1 = pkt->next;
 		av_packet_unref(&pkt->pkt);
-		api->godot_free(pkt);
+		memfree(pkt);
 	}
-	q->last_pkt = NULL;
-	q->first_pkt = NULL;
+	q->last_pkt = nullptr;
+	q->first_pkt = nullptr;
 	q->nb_packets = 0;
 	q->size = 0;
 }
 
 int packet_queue_put(PacketQueue *q, AVPacket *pkt) {
 	AVPacketList *pkt1;
-	pkt1 = (AVPacketList *)api->godot_alloc(sizeof(AVPacketList));
+	pkt1 = (AVPacketList *)memalloc(sizeof(AVPacketList));
 	if (!pkt1)
 		return -1;
-	pkt1->pkt = *pkt;
-	pkt1->next = NULL;
+	memcpy(&pkt1->pkt, pkt, sizeof(AVPacket)); // pkt1->pkt = *pkt;
+	pkt1->next = nullptr;
 
 	if (!q->last_pkt)
 		q->first_pkt = pkt1;
@@ -87,17 +84,16 @@ int packet_queue_put(PacketQueue *q, AVPacket *pkt) {
 
 int packet_queue_get(PacketQueue *q, AVPacket *pkt) {
 	AVPacketList *pkt1;
-	int ret;
 
 	pkt1 = q->first_pkt;
 	if (pkt1) {
 		q->first_pkt = pkt1->next;
 		if (!q->first_pkt)
-			q->last_pkt = NULL;
+			q->last_pkt = nullptr;
 		q->nb_packets--;
 		q->size -= pkt1->pkt.size;
-		*pkt = pkt1->pkt;
-		api->godot_free(pkt1);
+		memcpy(pkt, &pkt1->pkt, sizeof(AVPacket)); // *pkt = pkt1->pkt;
+		memfree(pkt1);
 		return 1;
 	} else {
 		return 0;
@@ -109,7 +105,7 @@ void packet_queue_deinit(PacketQueue *q) {
 	while (packet_queue_get(q, &pt)) {
 		av_packet_unref(&pt);
 	}
-	api->godot_free(q);
+	memfree(q);
 }
 
-#endif /* _PACKET_QUEUE_H */
+#endif /* PACKET_QUEUE_H */

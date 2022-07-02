@@ -28,17 +28,16 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef _STRING_SET_H
-#define _STRING_SET_H
+#ifndef STRING_SET_H
+#define STRING_SET_H
 
-#include <gdnative_api_struct.gen.h>
+#include "core/os/memory.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "linked_list.h"
-
-extern const godot_gdnative_core_api_struct *api;
 
 typedef struct set_bst_node_t {
 	char *value;
@@ -48,12 +47,12 @@ typedef struct set_bst_node_t {
 } set_t;
 
 set_t *set_create_node(const char *root_val) {
-	set_t *root = (set_t *)api->godot_alloc(sizeof(set_t));
-	root->value = (char *)api->godot_alloc(strlen(root_val) + 1);
+	set_t *root = (set_t *)memalloc(sizeof(set_t));
+	root->value = (char *)memalloc(strlen(root_val) + 1);
 	root->priority = rand();
 	strcpy(root->value, root_val);
-	root->left = NULL;
-	root->right = NULL;
+	root->left = nullptr;
+	root->right = nullptr;
 	return root;
 }
 
@@ -72,7 +71,7 @@ set_t *ccw_rot(set_t *root) {
 }
 
 set_t *set_insert(set_t *root, const char *val) {
-	if (root == NULL) {
+	if (root == nullptr) {
 		return set_create_node(val);
 	}
 	int cmp_val = strcmp(val, root->value);
@@ -94,17 +93,17 @@ set_t *set_insert(set_t *root, const char *val) {
 }
 
 void set_free(set_t *root) {
-	if (root == NULL) {
+	if (root == nullptr) {
 		return;
 	}
 	set_free(root->right);
 	set_free(root->left);
-	api->godot_free(root->value);
-	api->godot_free(root);
+	memfree(root->value);
+	memfree(root);
 }
 
 void set_print(set_t *root, int depth) {
-	if (root == NULL)
+	if (root == nullptr)
 		return;
 	for (int i = 0; i < depth; i++) {
 		printf(".");
@@ -115,10 +114,10 @@ void set_print(set_t *root, int depth) {
 }
 
 list_t set_create_list(set_t *root) {
-	if (root == NULL) {
+	if (root == nullptr) {
 		list_t l;
-		l.start = NULL;
-		l.end = NULL;
+		l.start = nullptr;
+		l.end = nullptr;
 		return l;
 	}
 	list_t left = set_create_list(root->left);
@@ -128,4 +127,4 @@ list_t set_create_list(set_t *root) {
 	return left;
 }
 
-#endif /* _STRING_SET_H */
+#endif /* STRING_SET_H */

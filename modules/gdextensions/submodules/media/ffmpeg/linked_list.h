@@ -28,15 +28,14 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef _LINKED_LIST_H
-#define _LINKED_LIST_H
+#ifndef LINKED_LIST_H
+#define LINKED_LIST_H
 
-#include <gdnative_api_struct.gen.h>
+#include "core/os/memory.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-extern const godot_gdnative_core_api_struct *api;
 
 typedef struct linked_list_node_t {
 	char *value;
@@ -49,15 +48,15 @@ typedef struct linked_list_t {
 } list_t;
 
 list_node_t *list_create_node(const char *str) {
-	list_node_t *node = (list_node_t *)api->godot_alloc(sizeof(list_node_t));
-	node->value = (char *)api->godot_alloc(strlen(str) + 1);
+	list_node_t *node = (list_node_t *)memalloc(sizeof(list_node_t));
+	node->value = (char *)memalloc(strlen(str) + 1);
 	strcpy(node->value, str);
-	node->next = NULL;
+	node->next = nullptr;
 	return node;
 }
 
 void list_append(list_t *list, const char *str) {
-	if (list->end == NULL) {
+	if (list->end == nullptr) {
 		list->start = list_create_node(str);
 		list->end = list->start;
 		return;
@@ -67,39 +66,39 @@ void list_append(list_t *list, const char *str) {
 }
 
 void list_join(list_t *first, list_t *second) {
-	if (second->start == NULL)
+	if (second->start == nullptr)
 		return;
 	first->end->next = second->start;
 	first->end = second->end;
-	second->start = NULL;
-	second->end = NULL;
+	second->start = nullptr;
+	second->end = nullptr;
 }
 
 void list_free_r(list_node_t *head) {
-	if (head == NULL) {
+	if (head == nullptr) {
 		return;
 	}
 	list_free_r(head->next);
-	if (head->value != NULL) {
-		api->godot_free(head->value);
+	if (head->value != nullptr) {
+		memfree(head->value);
 	}
-	api->godot_free(head);
+	memfree(head);
 }
 
 void list_free(list_t *head) {
 	list_free_r(head->start);
-	head->end = NULL;
-	head->start = NULL;
+	head->end = nullptr;
+	head->start = nullptr;
 }
 
 int list_size(list_t *head) {
 	list_node_t *l = head->start;
 	int i = 0;
-	while (l != NULL) {
+	while (l != nullptr) {
 		i++;
 		l = l->next;
 	}
 	return i;
 }
 
-#endif /* _LINKED_LIST_H */
+#endif /* LINKED_LIST_H */

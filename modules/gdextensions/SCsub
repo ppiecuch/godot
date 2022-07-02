@@ -286,7 +286,7 @@ env_module.Append(CPPDEFINES=["GD_CQUEUE", "GD_GODOT_ENET"])
 lib = env_module.Library("gdextensions", thirdparty_sources + sources) # Compile as a static library
 env.Prepend(LIBS=[lib]) # Add the library as a dependency of the final executable
 if is_enabled("media/ffmpeg"):
-    env.Prepend(LIBS=[lib, "avformat", "avcodec", "avutil", "swresample", "swscale"])
+    env.Prepend(LIBS=["avformat", "avcodec", "avutil", "swresample", "swscale"])
 
 if modules:
     sub_enabled = []
