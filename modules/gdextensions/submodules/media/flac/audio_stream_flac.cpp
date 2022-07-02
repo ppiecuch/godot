@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  audio_stream_flac.cpp                                                */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #define DR_FLAC_IMPLEMENTATION
 #define DR_FLAC_NO_STDIO
 #define DR_FLAC_NO_OGG
@@ -12,13 +42,13 @@ void AudioStreamPlaybackFLAC::_mix_internal(AudioFrame *p_buffer, int p_frames) 
 	int start_buffer = 0;
 
 	while (todo && active) {
-		float* p_samples = (float*)AudioServer::get_singleton()->audio_data_alloc(todo * p_flac->channels * sizeof(float));
+		float *p_samples = (float *)AudioServer::get_singleton()->audio_data_alloc(todo * p_flac->channels * sizeof(float));
 		float *buffer = (float *)p_buffer;
 		if (start_buffer > 0) {
 			buffer = (buffer + start_buffer * 2);
 		}
 		int mixed = drflac_read_pcm_frames_f32(p_flac, todo, p_samples);
-		for(int i = 0; i<mixed; i++){
+		for (int i = 0; i < mixed; i++) {
 			buffer[i * 2] = p_samples[i * flac_stream->channels];
 			buffer[i * 2 + 1] = p_samples[i * flac_stream->channels + flac_stream->channels - 1];
 		}
@@ -103,7 +133,6 @@ Ref<AudioStreamPlayback> AudioStreamFLAC::instance_playback() {
 	flacs->loops = 0;
 
 	if (!flacs->p_flac) {
-
 		ERR_FAIL_COND_V(!flacs->p_flac, Ref<AudioStreamPlaybackFLAC>());
 	}
 

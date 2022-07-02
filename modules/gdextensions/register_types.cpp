@@ -127,7 +127,7 @@
 #ifdef GDEXT_MEDIA_FLAC_ENABLED
 #include "media/flac/audio_stream_flac.h"
 #ifdef TOOLS_ENABLED
-# include "media/flac/resource_importer_flac.h"
+#include "media/flac/resource_importer_flac.h"
 #endif
 #endif
 #ifdef GDEXT_MEDIA_GIFEXPORTER_ENABLED
@@ -403,9 +403,9 @@ void register_gdextensions_types() {
 	ClassDB::register_virtual_class<GdWaterSplashColumn>();
 #endif
 #ifndef _3D_DISABLED
-# ifdef GDEXT_ENVIRONMENT_VEGETATION_INSTANCE_ENABLED
+#ifdef GDEXT_ENVIRONMENT_VEGETATION_INSTANCE_ENABLED
 	ClassDB::register_class<VegetationInstance>();
-# endif
+#endif
 #endif
 #ifdef GDEXT_ENVIRONMENT_SPIDER_ANIM_ENABLED
 	ClassDB::register_class<Spider>();

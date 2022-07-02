@@ -1,7 +1,37 @@
-#include <unistd.h>
-#include <time.h>
+/*************************************************************************/
+/*  gd_videodecoder.c                                                    */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
+#include <unistd.h>
 
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
@@ -31,9 +61,10 @@
 // TODO: is this sample rate defined somewhere in the godot api etc?
 #define AUDIO_MIX_RATE 22050
 
-enum POSITION_TYPE {POS_V_PTS, POS_TIME, POS_A_TIME};
+enum POSITION_TYPE { POS_V_PTS,
+	POS_TIME,
+	POS_A_TIME };
 typedef struct videodecoder_data_struct {
-
 	godot_object *instance; // Don't clean
 	AVIOContext *io_ctx;
 	AVFormatContext *format_ctx;
@@ -108,7 +139,7 @@ static void _setup_clock() {
 static uint64_t _tick_freq = 0;
 static void _setup_clock() {
 	_tick_freq = 1000000L / sceRtcGetTickResolution();
-	if (!sceRtcGetCurrentTick((SceRtcTick*)&_clock_start))
+	if (!sceRtcGetCurrentTick((SceRtcTick *)&_clock_start))
 		_clock_start *= _tick_freq;
 }
 #else
@@ -125,17 +156,17 @@ static void _setup_clock() {
 #endif
 
 static uint64_t get_ticks_usec() {
-	#if defined(__APPLE__)
+#if defined(__APPLE__)
 	uint64_t longtime = mach_absolute_time() * _clock_scale;
-	#elif defined(__psp2__)
+#elif defined(__psp2__)
 	uint64_t longtime = 0;
 	if (!sceRtcGetCurrentTick(&longtime))
 		longtime *= _tick_freq;
-	#else
+#else
 	struct timespec tv_now = { 0, 0 };
 	clock_gettime(GODOT_CLOCK, &tv_now);
 	uint64_t longtime = ((uint64_t)tv_now.tv_nsec / 1000L) + (uint64_t)tv_now.tv_sec * 1000000L;
-	#endif
+#endif
 	longtime -= _clock_start;
 
 	return longtime;
@@ -146,17 +177,16 @@ static uint64_t get_ticks_msec() {
 }
 
 #define STRINGIFY(x) #x
-#define PROFILE_START(sig, line) \
+#define PROFILE_START(sig, line)                                                         \
 	const char __profile_sig__[] = "gdnative_videodecoder.c::" STRINGIFY(line) "::" sig; \
 	uint64_t __profile_ticks_start__ = get_ticks_usec()
-#define PROFILE_END() if (nativescript_api_1_1) \
+#define PROFILE_END()                                            \
+	if (nativescript_api_1_1)                                    \
 	nativescript_api_1_1->godot_nativescript_profiling_add_data( \
-	__profile_sig__, get_ticks_usec() - __profile_ticks_start__ \
-)
+			__profile_sig__, get_ticks_usec() - __profile_ticks_start__)
 
 // Cleanup should empty the struct to the point where you can open a new file from.
 static void _cleanup(videodecoder_data_struct *data) {
-
 	if (data->audio_packet_queue != NULL) {
 		packet_queue_deinit(data->audio_packet_queue);
 		data->audio_packet_queue = NULL;
@@ -278,7 +308,8 @@ static int _interleave_audio_frame(float *dest, AVFrame *audio_frame) {
 }
 
 static void _update_extensions() {
-	if (num_supported_ext > 0) return;
+	if (num_supported_ext > 0)
+		return;
 
 	const AVInputFormat *current_fmt = NULL;
 	set_t *sup_ext_set = NULL;
@@ -286,7 +317,7 @@ static void _update_extensions() {
 	void *iterator_opaque = NULL;
 	while ((current_fmt = av_demuxer_iterate(&iterator_opaque)) != NULL)
 #else
-    for (current_fmt = av_iformat_next(NULL); current_fmt; current_fmt = av_iformat_next(current_fmt))
+	for (current_fmt = av_iformat_next(NULL); current_fmt; current_fmt = av_iformat_next(current_fmt))
 #endif
 	{
 		if (current_fmt->extensions != NULL) {
@@ -334,30 +365,27 @@ static inline godot_real _avtime_to_sec(int64_t avtime) {
 }
 
 static void _godot_print(char *msg) {
-	godot_string g_msg = { {0} };
+	godot_string g_msg = { { 0 } };
 	g_msg = api->godot_string_chars_to_utf8(msg);
 	api->godot_print(&g_msg);
 	api->godot_string_destroy(&g_msg);
 }
 
 static void print_codecs() {
-
 	const AVCodecDescriptor *desc = NULL;
-	char msg[512] = {0};
+	char msg[512] = { 0 };
 	snprintf(msg, sizeof(msg) - 1, "%s: Supported video codecs:", plugin_name);
 	_godot_print(msg);
 	while ((desc = avcodec_descriptor_next(desc))) {
-		const AVCodec* codec = NULL;
+		const AVCodec *codec = NULL;
 		bool found = false;
 		while ((codec = av_codec_next(codec))) {
 			if (codec->id == desc->id && av_codec_is_decoder(codec)) {
 				if (!found && avcodec_find_decoder(desc->id) || avcodec_find_encoder(desc->id)) {
-
 					snprintf(msg, sizeof(msg) - 1, "\t%s%s%s",
-						avcodec_find_decoder(desc->id) ? "decode " : "",
-						avcodec_find_encoder(desc->id) ? "encode " : "",
-						desc->name
-					);
+							avcodec_find_decoder(desc->id) ? "decode " : "",
+							avcodec_find_encoder(desc->id) ? "encode " : "",
+							desc->name);
 					found = true;
 					_godot_print(msg);
 				}
@@ -399,7 +427,8 @@ void gdffmpeg_init() {
 					ext_next = ext_next->next;
 				}
 				break;
-			default: break;
+			default:
+				break;
 		}
 	}
 	print_codecs();
@@ -522,7 +551,7 @@ godot_bool godot_videodecoder_open_file(void *p_data, void *file) {
 	input_format = av_probe_input_format(&probe_data, 1);
 	if (input_format == NULL) {
 		_cleanup(data);
-		char msg[512] = {0};
+		char msg[512] = { 0 };
 		snprintf(msg, sizeof(msg) - 1, "Format not recognized: %s (%s)", input_format->name, input_format->long_name);
 		api->godot_print_error(msg, "godot_videodecoder_open_file()", __FILE__, __LINE__);
 		return GODOT_FALSE;
@@ -585,7 +614,7 @@ godot_bool godot_videodecoder_open_file(void *p_data, void *file) {
 	if (vcodec == NULL) {
 		const AVCodecDescriptor *desc = avcodec_descriptor_get(vcodec_ctx->codec_id);
 		if (desc) {
-			char msg[512] = {0};
+			char msg[512] = { 0 };
 			snprintf(msg, sizeof(msg) - 1, "Videodecoder %s (%s) not found.", desc->name, desc->long_name);
 			api->godot_print_warning(msg, "godot_videodecoder_open_file()", __FILE__, __LINE__);
 		}
@@ -610,7 +639,6 @@ godot_bool godot_videodecoder_open_file(void *p_data, void *file) {
 	}
 	data->vcodec_open = GODOT_TRUE;
 
-
 	AVCodecContext *acodec_ctx = NULL;
 	AVCodec *acodec = NULL;
 	if (data->audiostream_idx >= 0) {
@@ -620,8 +648,8 @@ godot_bool godot_videodecoder_open_file(void *p_data, void *file) {
 		if (acodec == NULL) {
 			const AVCodecDescriptor *desc = avcodec_descriptor_get(acodec_ctx->codec_id);
 			if (desc) {
-				char msg[512] = {0};
-				snprintf(msg, sizeof(msg) - 1, "Audiodecoder %s (%s) not found.", desc-> name, desc->long_name);
+				char msg[512] = { 0 };
+				snprintf(msg, sizeof(msg) - 1, "Audiodecoder %s (%s) not found.", desc->name, desc->long_name);
 				api->godot_print_warning(msg, "godot_videodecoder_open_file()", __FILE__, __LINE__);
 			}
 			_cleanup(data);
@@ -731,7 +759,7 @@ godot_real godot_videodecoder_get_length(const void *p_data) {
 }
 
 static bool read_frame(videodecoder_data_struct *data) {
-	while (data->video_packet_queue->nb_packets < 8)  {
+	while (data->video_packet_queue->nb_packets < 8) {
 		AVPacket pkt;
 		int ret = av_read_frame(data->format_ctx, &pkt);
 		if (ret >= 0) {
@@ -773,7 +801,7 @@ void godot_videodecoder_update(void *p_data, godot_real p_delta) {
 godot_pool_byte_array *godot_videodecoder_get_videoframe(void *p_data) {
 	PROFILE_START("get_videoframe", __LINE__);
 	videodecoder_data_struct *data = (videodecoder_data_struct *)p_data;
-	AVPacket pkt = {0};
+	AVPacket pkt = { 0 };
 	int ret, frame_finished;
 	size_t drop_count = 0;
 	// to maintain a decent game frame rate
@@ -797,7 +825,7 @@ retry:
 		}
 		ret = avcodec_send_packet(data->vcodec_ctx, &pkt);
 		if (ret < 0) {
-			char err[512] = {0}, msg[768] = {0};
+			char err[512] = { 0 }, msg[768] = { 0 };
 			av_strerror(ret, err, sizeof(err) - 1);
 			snprintf(msg, sizeof(msg) - 1, "avcodec_send_packet returns %d (%s)", ret, err);
 			api->godot_print_error(msg, "godot_videodecoder_get_videoframe()", __FILE__, __LINE__);
@@ -808,7 +836,7 @@ retry:
 		av_packet_unref(&pkt);
 		goto retry;
 	} else if (ret < 0) {
-		char msg[512] = {0};
+		char msg[512] = { 0 };
 		snprintf(msg, sizeof(msg) - 1, "avcodec_receive_frame returns %d", ret);
 		api->godot_print_error(msg, "godot_videodecoder_get_videoframe()", __FILE__, __LINE__);
 		PROFILE_END();
@@ -824,18 +852,18 @@ retry:
 	}
 	ret = avcodec_decode_video2(data->vcodec_ctx, data->frame_yuv, &frame_finished, &pkt);
 	if (ret < 0) {
-		char msg[512] = {0};
+		char msg[512] = { 0 };
 		snprintf(msg, sizeof(msg) - 1, "avcodec_decode_video2 returns %d", ret);
 		api->godot_print_error(msg, "godot_videodecoder_get_videoframe()", __FILE__, __LINE__);
 		av_packet_unref(&pkt);
 		PROFILE_END();
 		return NULL;
-    }
-    if (!frame_finished) {
+	}
+	if (!frame_finished) {
 		av_packet_unref(&pkt);
 		PROFILE_END();
 		return NULL;
-    }
+	}
 #endif
 	bool pts_correct = data->frame_yuv->pts == AV_NOPTS_VALUE;
 	int64_t pts = pts_correct ? data->frame_yuv->pkt_dts : data->frame_yuv->pts;
@@ -852,13 +880,13 @@ retry:
 		// only discard frames for max_frame_drop_time ms or we'll slow down the game's main thread!
 		if (fabs(data->seek_time - data->time) > data->diff_tolerance * 10) {
 			char msg[512];
-			snprintf(msg, sizeof(msg) -1, "Slow CPU? Dropped  %d frames for %ldms frame dropped: %ld/%ld (%.1f%%) pts=%.1f t=%.1f",
-				(int)drop_count,
-				drop_duration,
-				data->drop_frame,
-				data->total_frame,
-				100.0 * data->drop_frame / data->total_frame,
-				ts, (double)data->time);
+			snprintf(msg, sizeof(msg) - 1, "Slow CPU? Dropped  %d frames for %ldms frame dropped: %ld/%ld (%.1f%%) pts=%.1f t=%.1f",
+					(int)drop_count,
+					drop_duration,
+					data->drop_frame,
+					data->total_frame,
+					100.0 * data->drop_frame / data->total_frame,
+					ts, (double)data->time);
 			api->godot_print_warning(msg, "godot_videodecoder_get_videoframe()", __FILE__, __LINE__);
 		}
 	} else if (drop) {
@@ -963,7 +991,7 @@ godot_int godot_videodecoder_get_audio(void *p_data, float *pcm, int pcm_remaini
 			AVPacket pkt;
 
 			int ret, frame_finished;
-retry_audio:
+		retry_audio:
 #if (LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(57, 106, 102))
 			ret = avcodec_receive_frame(data->acodec_ctx, data->audio_frame);
 			if (ret == AVERROR(EAGAIN)) {
@@ -979,7 +1007,7 @@ retry_audio:
 				ret = avcodec_send_packet(data->acodec_ctx, &pkt);
 				if (ret < 0) {
 					char msg[512];
-					snprintf(msg, sizeof(msg) -1, "avcodec_send_packet returns %d", ret);
+					snprintf(msg, sizeof(msg) - 1, "avcodec_send_packet returns %d", ret);
 					api->godot_print_error(msg, "godot_videodecoder_get_audio()", __FILE__, __LINE__);
 					av_packet_unref(&pkt);
 					PROFILE_END();
@@ -1004,7 +1032,7 @@ retry_audio:
 			}
 			ret = avcodec_decode_video2(data->acodec_ctx, data->audio_frame, &frame_finished, &pkt);
 			if (ret < 0) {
-				char msg[512] = {0};
+				char msg[512] = { 0 };
 				snprintf(msg, sizeof(msg) - 1, "avcodec_decode_video2 returns %d", ret);
 				api->godot_print_error(msg, "godot_videodecoder_get_videoframe()", __FILE__, __LINE__);
 				av_packet_unref(&pkt);
@@ -1075,25 +1103,28 @@ godot_real godot_videodecoder_get_playback_position(const void *p_data) {
 	return (godot_real)0;
 }
 
-static void flush_frames(AVCodecContext* ctx) {
+static void flush_frames(AVCodecContext *ctx) {
 	PROFILE_START("flush_frames", __LINE__);
 	/**
-	* from https://www.ffmpeg.org/doxygen/4.1/group__lavc__encdec.html
-	* End of stream situations. These require "flushing" (aka draining) the codec, as the codec might buffer multiple frames or packets internally for performance or out of necessity (consider B-frames). This is handled as follows:
-	* Instead of valid input, send NULL to the avcodec_send_packet() (decoding) or avcodec_send_frame() (encoding) functions. This will enter draining mode.
-	* Call avcodec_receive_frame() (decoding) or avcodec_receive_packet() (encoding) in a loop until AVERROR_EOF is returned. The functions will not return AVERROR(EAGAIN), unless you forgot to enter draining mode.
-	* Before decoding can be resumed again, the codec has to be reset with avcodec_flush_buffers().
-	*/
-	AVFrame frame = {0};
+	 * from https://www.ffmpeg.org/doxygen/4.1/group__lavc__encdec.html
+	 * End of stream situations. These require "flushing" (aka draining) the codec, as the codec might buffer multiple frames or packets internally for performance or out of necessity (consider B-frames). This is handled as follows:
+	 * Instead of valid input, send NULL to the avcodec_send_packet() (decoding) or avcodec_send_frame() (encoding) functions. This will enter draining mode.
+	 * Call avcodec_receive_frame() (decoding) or avcodec_receive_packet() (encoding) in a loop until AVERROR_EOF is returned. The functions will not return AVERROR(EAGAIN), unless you forgot to enter draining mode.
+	 * Before decoding can be resumed again, the codec has to be reset with avcodec_flush_buffers().
+	 */
+	AVFrame frame = { 0 };
 	int finished = 0;
 #if (LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(57, 106, 102))
 	if (avcodec_send_packet(ctx, NULL) <= 0) {
-		do { } while (avcodec_receive_frame(ctx, &frame) != AVERROR_EOF);
+		do {
+		} while (avcodec_receive_frame(ctx, &frame) != AVERROR_EOF);
 	}
 #elif (LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(52, 23, 0))
-	do { } while (avcodec_decode_video2(ctx, &frame, &finished, NULL) > 0);
+	do {
+	} while (avcodec_decode_video2(ctx, &frame, &finished, NULL) > 0);
 #else
-    do { } while (avcodec_decode_video(ctx, &frame, &finished, NULL, 0) > 0);
+	do {
+	} while (avcodec_decode_video(ctx, &frame, &finished, NULL, 0) > 0);
 #endif
 	PROFILE_END();
 }
