@@ -10,7 +10,7 @@ void AudioStreamPlaybackFLAC::_mix_internal(AudioFrame *p_buffer, int p_frames) 
 
 	int todo = p_frames;
 	int start_buffer = 0;
-	
+
 	while (todo && active) {
 		float* p_samples = (float*)AudioServer::get_singleton()->audio_data_alloc(todo * p_flac->channels * sizeof(float));
 		float *buffer = (float *)p_buffer;
@@ -101,7 +101,7 @@ Ref<AudioStreamPlayback> AudioStreamFLAC::instance_playback() {
 	flacs->frames_mixed = 0;
 	flacs->active = false;
 	flacs->loops = 0;
-	
+
 	if (!flacs->p_flac) {
 
 		ERR_FAIL_COND_V(!flacs->p_flac, Ref<AudioStreamPlaybackFLAC>());
