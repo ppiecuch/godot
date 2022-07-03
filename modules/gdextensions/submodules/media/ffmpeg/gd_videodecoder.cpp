@@ -188,7 +188,7 @@ static uint64_t get_ticks_msec() {
 
 #define STRINGIFY(x) #x
 #define PROFILE_START(sig, line)                                                         \
-	const char __profile_sig__[] = "gdnative_videodecoder.c::" STRINGIFY(line) "::" sig; \
+	const char __profile_sig__[] = __FILE__ "::" STRINGIFY(line) "::" sig; \
 	uint64_t __profile_ticks_start__ = get_ticks_usec()
 #define PROFILE_END()                                            \
 	if (nativescript_api_1_1)                                    \
@@ -559,7 +559,7 @@ godot_bool godot_videodecoder_open_file(void *p_data, void *file) {
 	input_format->flags |= AVFMT_SEEK_TO_PTS;
 
 	data->io_ctx = avio_alloc_context(data->io_buffer, IO_BUFFER_SIZE, 0, file,
-			videodecoder_api->godot_videodecoder_file_read, NULL,
+			videodecoder_api->godot_videodecoder_file_read, nullptr,
 			videodecoder_api->godot_videodecoder_file_seek);
 	if (data->io_ctx == nullptr) {
 		_cleanup(data);
@@ -820,7 +820,7 @@ retry:
 			// WARN_PRINT("video packet queue empty");
 			if (!read_frame(data)) {
 				PROFILE_END();
-				return NULL;
+				return nullptr;
 			}
 		}
 		ret = avcodec_send_packet(data->vcodec_ctx, &pkt);
@@ -831,7 +831,7 @@ retry:
 			ERR_PRINT(msg);
 			av_packet_unref(&pkt);
 			PROFILE_END();
-			return NULL;
+			return nullptr;
 		}
 		av_packet_unref(&pkt);
 		goto retry;
@@ -840,14 +840,14 @@ retry:
 		snprintf(msg, sizeof(msg) - 1, "avcodec_receive_frame returns %d", ret);
 		ERR_PRINT(msg);
 		PROFILE_END();
-		return NULL;
+		return nullptr;
 	}
 #else
 	while (!packet_queue_get(data->video_packet_queue, &pkt)) {
 		//WARN_PRINT("video packet queue empty", "godot_videodecoder_get_videoframe()", __FILE__, __LINE__);
 		if (!read_frame(data)) {
 			PROFILE_END();
-			return NULL;
+			return nullptr;
 		}
 	}
 	ret = avcodec_decode_video2(data->vcodec_ctx, data->frame_yuv, &frame_finished, &pkt);
@@ -857,12 +857,12 @@ retry:
 		ERR_PRINT(msg);
 		av_packet_unref(&pkt);
 		PROFILE_END();
-		return NULL;
+		return nullptr;
 	}
 	if (!frame_finished) {
 		av_packet_unref(&pkt);
 		PROFILE_END();
-		return NULL;
+		return nullptr;
 	}
 #endif
 	bool pts_correct = data->frame_yuv->pts == AV_NOPTS_VALUE;
