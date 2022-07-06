@@ -195,6 +195,21 @@ if is_enabled("opensteer"):
     thirdparty_sources += Glob("thirdparty/opensteer/src/*.c") + Glob("thirdparty/opensteer/src/*.cpp") + Glob("thirdparty/opensteer/plugins/*.cpp")
     env_module.Append(CPPPATH=["thirdparty/opensteer/include"])
 
+if is_enabled("detournav"):
+    env_module.Append(CPPPATH=[
+        "thirparty/recastnavigation/DebugUtils/Include",
+        "thirparty/recastnavigation/Detour/Include",
+        "thirparty/recastnavigation/DetourCrowd/Include",
+        "thirparty/recastnavigation/DetourTileCache/Include",
+        "thirparty/recastnavigation/Recast/Include"
+    ])
+    sources += Glob('submodules/detournav/src/util/*.cpp') + Glob('submodules/detournav/src/util/*.c')
+    thirdparty_sources += Glob('thirparty/recastnavigation/DebugUtils/Source/*.cpp')
+    thirdparty_sources += Glob('thirparty/recastnavigation/Detour/Source/*.cpp')
+    thirdparty_sources += Glob('thirparty/recastnavigation/DetourCrowd/Source/*.cpp')
+    thirdparty_sources += Glob('thirparty/recastnavigation/DetourTileCache/Source/*.cpp')
+    thirdparty_sources += Glob('thirparty/recastnavigation/Recast/Source/*.cpp')
+
 if is_enabled("sparkparticles"):
     thirdparty_sources += Glob("thirdparty/spark/src/**/*.cpp")
     if env["tools"]:

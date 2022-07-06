@@ -187,7 +187,7 @@ static uint64_t get_ticks_msec() {
 }
 
 #define STRINGIFY(x) #x
-#define PROFILE_START(sig, line)                                                         \
+#define PROFILE_START(sig, line)                                           \
 	const char __profile_sig__[] = __FILE__ "::" STRINGIFY(line) "::" sig; \
 	uint64_t __profile_ticks_start__ = get_ticks_usec()
 #define PROFILE_END()                                            \
