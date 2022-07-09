@@ -66,7 +66,6 @@ modules = [
     "tileengine",
     "sparkparticles",
     "turbobadger",
-    "spacemouse",
     "media/ffmpeg",
     "media/flac",
     "media/gifexporter",
@@ -106,9 +105,23 @@ if env["platform"] == "iphone" or env["platform"] == "osx":
     )
 
 if not env["disable_3d"]:
-    modules += ["environment/vegetation_instance", "ccd"]
+    modules += ["environment/vegetation_instance", "ccd", "detournav"]
     if is_enabled("ccd"):
         thirdparty_sources += Glob("thirdparty/libccd/src/*.c") + Glob("thirdparty/libccd/src/testsuites/*.c")
+    if is_enabled("detournav"):
+        env_module.Append(CPPPATH=[
+            "#thirdparty/recastnavigation/DebugUtils/Include",
+            "#thirdparty/recastnavigation/Detour/Include",
+            "#thirdparty/recastnavigation/DetourCrowd/Include",
+            "#thirdparty/recastnavigation/DetourTileCache/Include",
+            "#thirdparty/recastnavigation/Recast/Include"
+        ])
+        sources += Glob('submodules/detournav/src/util/*.cpp') + Glob('submodules/detournav/src/util/*.c')
+        thirdparty_sources += Glob('thirparty/recastnavigation/DebugUtils/Source/*.cpp') \
+            + Glob('thirdparty/recastnavigation/Detour/Source/*.cpp') \
+            + Glob('thirdparty/recastnavigation/DetourCrowd/Source/*.cpp') \
+            + Glob('thirdparty/recastnavigation/DetourTileCache/Source/*.cpp') \
+            + Glob('thirdparty/recastnavigation/Recast/Source/*.cpp')
     if env["tools"]:
         if is_enabled("generator"):
             modules += ["generator"]
@@ -122,8 +135,6 @@ if not env["disable_3d"]:
         if is_enabled("meshslicer"):
             modules += ["meshslicer"]
             sources += Glob("submodules/meshslicer/utils/*.cpp")
-
-    modules += ["threadpool"]
 
 if env["os_family"] in ["os_windows", "os_unix"]:
     modules += ["unqlite"]
@@ -195,21 +206,6 @@ if is_enabled("opensteer"):
     thirdparty_sources += Glob("thirdparty/opensteer/src/*.c") + Glob("thirdparty/opensteer/src/*.cpp") + Glob("thirdparty/opensteer/plugins/*.cpp")
     env_module.Append(CPPPATH=["thirdparty/opensteer/include"])
 
-if is_enabled("detournav"):
-    env_module.Append(CPPPATH=[
-        "thirparty/recastnavigation/DebugUtils/Include",
-        "thirparty/recastnavigation/Detour/Include",
-        "thirparty/recastnavigation/DetourCrowd/Include",
-        "thirparty/recastnavigation/DetourTileCache/Include",
-        "thirparty/recastnavigation/Recast/Include"
-    ])
-    sources += Glob('submodules/detournav/src/util/*.cpp') + Glob('submodules/detournav/src/util/*.c')
-    thirdparty_sources += Glob('thirparty/recastnavigation/DebugUtils/Source/*.cpp')
-    thirdparty_sources += Glob('thirparty/recastnavigation/Detour/Source/*.cpp')
-    thirdparty_sources += Glob('thirparty/recastnavigation/DetourCrowd/Source/*.cpp')
-    thirdparty_sources += Glob('thirparty/recastnavigation/DetourTileCache/Source/*.cpp')
-    thirdparty_sources += Glob('thirparty/recastnavigation/Recast/Source/*.cpp')
-
 if is_enabled("sparkparticles"):
     thirdparty_sources += Glob("thirdparty/spark/src/**/*.cpp")
     if env["tools"]:
@@ -230,11 +226,17 @@ if is_enabled("turbobadger"):
 if is_enabled("spacemouse"):
     if env["tools"]:
         if env["platform"] == "windows":
-            thirdparty_sources += Glob("thirdparty/hidapi/windows/**/*.c")
+            thirdparty_sources += Glob("thirdparty/hidapi/windows/*.c")
         elif env["platform"] == "x11":
-            thirdparty_sources += Glob("thirdparty/hidapi/linux/**/*.c")
+            thirdparty_sources += Glob("thirdparty/hidapi/linux/*.c")
         elif env["platform"] == "osx":
-            thirdparty_sources += Glob("thirdparty/hidapi/mac/**/*.c")
+            thirdparty_sources += Glob("thirdparty/hidapi/mac/*.c")
+        else:
+            print("(GDextensions) Spacemouse is not supported on platform '%s'." % env["platform"])
+            env["enable_gdextensions_submodules"].remove("spacemouse")
+        if is_enabled("spacemouse"):
+            env_module.Append(CPPPATH=["thirdparty/hidapi", "thirdparty/hidapi/hidapi"])
+            modules += ["spacemouse"]
 
 if is_enabled("media/"):
     env_module.Append(CPPPATH=["thirdparty/media"])
@@ -274,12 +276,12 @@ if is_enabled("media/"):
         if is_enabled("media/ffmpeg"):
             env_module.Append(CPPPATH=[os.path.dirname(os.path.realpath(os.curdir)) + "/gdnative/include"])
 
-sub_building = []
+active_modules = []
 for m in modules:
     if is_enabled(m):
         files = Glob("submodules/%s/*.cpp" % m) + Glob("submodules/%s/*.c" % m)
         sources += [f for f in files if str(f) not in ignore]
-        sub_building.append(m)
+        active_modules.append(m)
 
 env_module.Append(
     CPPPATH=[
@@ -305,7 +307,7 @@ if is_enabled("media/ffmpeg"):
 
 if modules:
     sub_enabled = []
-    for m in sorted(sub_building):
+    for m in sorted(active_modules):
         mod = os.path.dirname(m) if os.path.dirname(m) else m
         if mod not in sub_enabled:
             if sub_enabled and sub_enabled[-1].startswith(mod):

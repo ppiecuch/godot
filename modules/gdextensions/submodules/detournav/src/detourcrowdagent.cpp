@@ -30,12 +30,12 @@
 
 #include "detourcrowdagent.h"
 #include "util/detourinputgeometry.h"
+
+#include "core/os/os.h"
+#include "scene/main/node.h"
+
 #include <DetourCrowd.h>
 #include <DetourNavMeshQuery.h>
-#include <Node.hpp>
-#include <OS.hpp>
-
-using namespace godot;
 
 #define AGENT_SAVE_VERSION 1
 

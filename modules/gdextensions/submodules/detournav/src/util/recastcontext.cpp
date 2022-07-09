@@ -29,9 +29,8 @@
 /*************************************************************************/
 
 #include "recastcontext.h"
-#include <OS.hpp>
 
-using namespace godot;
+#include "core/os/os.h"
 
 RecastContext::RecastContext() {
 	doResetTimers();
@@ -49,7 +48,6 @@ void RecastContext::doLog(const rcLogCategory category, const char *msg, const i
 	}
 
 	// Assemble the message
-	String message = "recast: {0}: {1}";
 	String catMsg = "";
 	switch (category) {
 		case RC_LOG_PROGRESS:
@@ -68,10 +66,8 @@ void RecastContext::doLog(const rcLogCategory category, const char *msg, const i
 			catMsg = "unknown";
 			break;
 	}
-	message = message.format(Array::make(catMsg, String(msg)));
 
-	// Print
-	Godot::print(message);
+	print_verbose(vformat("recast: %s: %s", catMsg, msg));
 }
 
 void RecastContext::doResetTimers() {

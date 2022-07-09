@@ -14,6 +14,7 @@ def configure(env):
         "bulletkit",
         "blitter",
         "benchmark",
+        "detournav",
         "environment",
         "fastnoise",
         "smooth",
@@ -50,6 +51,7 @@ def configure(env):
         "tileengine",
         "sparkparticles",
         "turbobadger",
+        "spacemouse",
         "media",
     ]
     opts = Variables()

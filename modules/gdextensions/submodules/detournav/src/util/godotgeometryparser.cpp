@@ -29,37 +29,29 @@
 /*************************************************************************/
 
 #include "godotgeometryparser.h"
-#include <ArrayMesh.hpp>
-#include <BoxShape.hpp>
-#include <CSGShape.hpp>
-#include <CapsuleMesh.hpp>
-#include <CapsuleShape.hpp>
-#include <CollisionShape.hpp>
-#include <ConcavePolygonShape.hpp>
-#include <ConvexPolygonShape.hpp>
-#include <CubeMesh.hpp>
-#include <CylinderMesh.hpp>
-#include <CylinderShape.hpp>
-#include <Geometry.hpp>
-#include <Godot.hpp>
-#include <GridMap.hpp>
-#include <Mesh.hpp>
-#include <MeshInstance.hpp>
-#include <PrimitiveMesh.hpp>
-#include <Spatial.hpp>
-#include <SphereMesh.hpp>
-#include <SphereShape.hpp>
-#include <StaticBody.hpp>
 
-using namespace godot;
+#include "core/math/geometry.h"
+#include "scene/resources/mesh.h"
+#include "scene/resources/box_shape.h"
+#include "scene/resources/cylinder_shape.h"
+#include "scene/resources/primitive_meshes.h"
+#include "scene/resources/capsule_shape.h"
+#include "scene/resources/concave_polygon_shape.h"
+#include "scene/resources/convex_polygon_shape.h"
+#include "scene/resources/sphere_shape.h"
+#include "scene/3d/collision_shape.h"
+#include "scene/3d/physics_body.h"
+#include "scene/3d/mesh_instance.h"
+#include "common/gd_core.h"
+#include "modules/gridmap/grid_map.h"
 
-GodotGeometryParser::GodotGeometryParser() {
-}
+#include <vector>
 
-GodotGeometryParser::~GodotGeometryParser() {
-}
+GodotGeometryParser::GodotGeometryParser() { }
 
-void GodotGeometryParser::getNodeVerticesAndIndices(godot::MeshInstance *meshInstance, std::vector<float> &outVertices, std::vector<int> &outIndices) {
+GodotGeometryParser::~GodotGeometryParser() { }
+
+void GodotGeometryParser::getNodeVerticesAndIndices(MeshInstance *meshInstance, std::vector<float> &outVertices, std::vector<int> &outIndices) {
 	parseGeometry(meshInstance, outVertices, outIndices);
 }
 
@@ -71,7 +63,7 @@ void GodotGeometryParser::addMesh(const Ref<ArrayMesh> &p_mesh, const Transform 
 	size_t faceCount = 0;
 	for (int i = 0; i < p_mesh->get_surface_count(); i++) {
 		if (p_mesh->surface_get_primitive_type(i) != Mesh::PRIMITIVE_TRIANGLES) {
-			WARN_PRINT(String("Surface {0} not of type PRIMITIVE_TRIANGLES. Ignored.").format(Array::make(i)));
+			WARN_PRINT(vformat("Surface %d not of type PRIMITIVE_TRIANGLES. Ignored.", i));
 			continue;
 		}
 
@@ -99,7 +91,7 @@ void GodotGeometryParser::addMesh(const Ref<ArrayMesh> &p_mesh, const Transform 
 		current_vertex_count = p_vertices.size() / 3;
 
 		if (p_mesh->surface_get_primitive_type(i) != Mesh::PRIMITIVE_TRIANGLES) {
-			WARN_PRINT(String("Surface {0} not of type PRIMITIVE_TRIANGLES. Ignored.").format(Array::make(i)));
+			WARN_PRINT(vformat("Surface %d not of type PRIMITIVE_TRIANGLES. Ignored.", i));
 			continue;
 		}
 
@@ -148,7 +140,7 @@ void GodotGeometryParser::addMesh(const Ref<ArrayMesh> &p_mesh, const Transform 
 	}
 }
 
-void GodotGeometryParser::parseGeometry(godot::MeshInstance *meshInstance, std::vector<float> &p_vertices, std::vector<int> &p_indices) {
+void GodotGeometryParser::parseGeometry(MeshInstance *meshInstance, std::vector<float> &p_vertices, std::vector<int> &p_indices) {
 	Ref<ArrayMesh> mesh = meshInstance->get_mesh();
 	if (mesh.is_valid()) {
 		addMesh(mesh, meshInstance->get_transform(), p_vertices, p_indices);
@@ -156,7 +148,7 @@ void GodotGeometryParser::parseGeometry(godot::MeshInstance *meshInstance, std::
 		// Not an array mesh, check if we have a primitive mesh to convert
 		Ref<PrimitiveMesh> primitive_mesh = meshInstance->get_mesh();
 		if (primitive_mesh.is_valid()) {
-			Ref<ArrayMesh> arr_mesh = ArrayMesh::_new();
+			Ref<ArrayMesh> arr_mesh = newref(ArrayMesh);
 			arr_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, primitive_mesh->get_mesh_arrays());
 			addMesh(arr_mesh, meshInstance->get_transform(), p_vertices, p_indices);
 		} else {

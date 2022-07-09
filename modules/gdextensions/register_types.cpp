@@ -205,6 +205,10 @@ static Ref<ResourceLoaderJSONVector> resource_loader_jsonvector;
 #include "flexbuffers/resource_importer_flexbuffer.h"
 #endif
 
+#ifdef GDEXT_SPACEMOUSE_ENABLED
+#include "spacemouse/spacemouse.h"
+#endif
+
 static Vector<Object *> _global_resources;
 void _register_global_resources(Object *ref) {
 	_global_resources.push_back(ref);
@@ -509,6 +513,10 @@ void register_gdextensions_types() {
 	ClassDB::register_class<SlicedMesh>();
 #endif
 
+#ifdef GDEXT_SPACEMOUSE_ENABLED
+	Engine::get_singleton()->add_singleton(Engine::Singleton("SpaceMouse", memnew(SpaceMouse)));
+#endif
+
 #ifdef TOOLS_ENABLED
 	EditorNode::add_init_callback(editor_init_callback);
 #endif
@@ -577,6 +585,11 @@ void unregister_gdextensions_types() {
 #endif
 #ifdef GDEXT_MULTIPEER_ENABLED
 	if (GdMultiPeer *instance = GdMultiPeer::get_singleton()) {
+		memdelete(instance);
+	}
+#endif
+#ifdef GDEXT_SPACEMOUSE_ENABLED
+	if (SpaceMouse *instance = SpaceMouse::get_singleton()) {
 		memdelete(instance);
 	}
 #endif

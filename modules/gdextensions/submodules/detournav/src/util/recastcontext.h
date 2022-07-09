@@ -32,12 +32,10 @@
 #define RECASTCONTEXT_H
 
 #include <Recast.h>
-#include <Godot.hpp>
+
 #include <map>
 
-/**
- * @brief Provides recast an interface for logging, performance timers, etc.
- */
+/// Provides recast an interface for logging, performance timers, etc.
 class RecastContext : public rcContext {
 public:
 	RecastContext();

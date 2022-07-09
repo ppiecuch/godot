@@ -28,10 +28,9 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-/**
- * This code is mostly taken from recastnavigation's demo project. Just slightly adjusted to fit within godotdetour.
- * Most thanks go to Mikko Mononen and maintainers for this.
- */
+// This code is mostly taken from recastnavigation's demo project. Just slightly adjusted to fit within godotdetour.
+// Most thanks go to Mikko Mononen and maintainers for this.
+
 //
 // Copyright (c) 2009-2010 Mikko Mononen memon@inside.org
 //
@@ -52,30 +51,29 @@
 
 #define _USE_MATH_DEFINES
 #include "detourinputgeometry.h"
+
+#include "core/os/file_access.h"
+#include "core/math/math_funcs.h"
+#include "scene/resources/mesh.h"
+#include "scene/resources/mesh_data_tool.h"
+
+#include <ctype.h>
+#include <stdio.h>
+#include <string.h>
+#include <algorithm>
+
 #include "DebugDraw.h"
 #include "DetourNavMesh.h"
 #include "Recast.h"
 #include "RecastDebugDraw.h"
+
 #include "chunkytrimesh.h"
 #include "meshdataaccumulator.h"
-#include <ctype.h>
-#include <math.h>
-#include <stdio.h>
-#include <string.h>
-#include <ArrayMesh.hpp>
-#include <File.hpp>
-#include <MeshDataTool.hpp>
-#include <algorithm>
-// #include "Sample.h"
-
-using namespace godot;
 
 #define GEOM_SAVE_DATA_VERSION 1
 
-static bool
-intersectSegmentTriangle(const float *sp, const float *sq,
-		const float *a, const float *b, const float *c,
-		float &t) {
+static bool intersectSegmentTriangle(const float *sp, const float *sq,
+		const float *a, const float *b, const float *c, float &t) {
 	float v, w;
 	float ab[3], ac[3], qp[3], ap[3], norm[3], e[3];
 	rcVsub(ab, b, a);
@@ -89,9 +87,9 @@ intersectSegmentTriangle(const float *sp, const float *sq,
 	// Compute denominator d. If d <= 0, segment is parallel to or points
 	// away from triangle, so exit early
 	float d = rcVdot(qp, norm);
-	if (d <= 0.0f)
+	if (d <= 0) {
 		return false;
-
+	}
 	// Compute intersection t value of pq with plane of triangle. A ray
 	// intersects iff 0 <= t. Segment intersects iff 0 <= t <= 1. Delay
 	// dividing by d until intersection has been found to pierce triangle
@@ -105,10 +103,10 @@ intersectSegmentTriangle(const float *sp, const float *sq,
 	// Compute barycentric coordinate components and test if within bounds
 	rcVcross(e, qp, ap);
 	v = rcVdot(ac, e);
-	if (v < 0.0f || v > d)
+	if (v < 0 || v > d)
 		return false;
 	w = -rcVdot(ab, e);
-	if (w < 0.0f || v + w > d)
+	if (w < 0 || v + w > d)
 		return false;
 
 	// Segment/ray intersects triangle. Perform delayed division
@@ -117,8 +115,7 @@ intersectSegmentTriangle(const float *sp, const float *sq,
 	return true;
 }
 
-static char *
-parseRow(char *buf, char *bufEnd, char *row, int len) {
+static char *parseRow(char *buf, char *bufEnd, char *row, int len) {
 	bool start = true;
 	bool done = false;
 	int n = 0;
@@ -165,7 +162,7 @@ DetourInputGeometry::~DetourInputGeometry() {
 		delete m_mesh;
 }
 
-bool DetourInputGeometry::loadMesh(rcContext *ctx, godot::MeshInstance *inputMesh) {
+bool DetourInputGeometry::loadMesh(rcContext *ctx, MeshInstance *inputMesh) {
 	if (m_mesh) {
 		delete m_chunkyMesh;
 		m_chunkyMesh = 0;
@@ -198,7 +195,7 @@ void DetourInputGeometry::clearData() {
 	}
 }
 
-bool DetourInputGeometry::save(Ref<File> targetFile) {
+bool DetourInputGeometry::save(FileAccessRef targetFile) {
 	if (m_chunkyMesh == nullptr || m_mesh == nullptr) {
 		ERR_PRINT("DetourInputGeometry: Unable to save. No mesh or chunky mesh.");
 		return false;
@@ -295,7 +292,7 @@ bool DetourInputGeometry::save(Ref<File> targetFile) {
 	return true;
 }
 
-bool DetourInputGeometry::load(Ref<File> sourceFile) {
+bool DetourInputGeometry::load(FileAccessRef sourceFile) {
 	// Load version
 	int version = sourceFile->get_16();
 
@@ -399,7 +396,7 @@ bool DetourInputGeometry::load(Ref<File> sourceFile) {
 			}
 		}
 	} else {
-		ERR_PRINT(String("DetourInputGeometry: Unknown save data version: {0}").format(Array::make(version)));
+		ERR_PRINT(vformat("DetourInputGeometry: Unknown save data version: %d", version));
 		return false;
 	}
 
@@ -416,15 +413,15 @@ isectSegAABB(const float *sp, const float *sq,
 	d[0] = sq[0] - sp[0];
 	d[1] = sq[1] - sp[1];
 	d[2] = sq[2] - sp[2];
-	tmin = 0.0;
-	tmax = 1.0f;
+	tmin = 0;
+	tmax = 1;
 
 	for (int i = 0; i < 3; i++) {
-		if (fabsf(d[i]) < EPS) {
+		if (Math::absf(d[i]) < EPS) {
 			if (sp[i] < amin[i] || sp[i] > amax[i])
 				return false;
 		} else {
-			const float ood = 1.0f / d[i];
+			const float ood = 1.0 / d[i];
 			float t1 = (amin[i] - sp[i]) * ood;
 			float t2 = (amax[i] - sp[i]) * ood;
 			if (t1 > t2) {
@@ -450,8 +447,9 @@ bool DetourInputGeometry::raycastMesh(float *src, float *dst, float &tmin) {
 
 	// Prune hit ray.
 	float btmin, btmax;
-	if (!isectSegAABB(src, dst, m_meshBMin, m_meshBMax, btmin, btmax))
+	if (!isectSegAABB(src, dst, m_meshBMin, m_meshBMax, btmin, btmax)) {
 		return false;
+	}
 	float p[2], q[2];
 	p[0] = src[0] + (dst[0] - src[0]) * btmin;
 	p[1] = src[2] + (dst[2] - src[2]) * btmin;
@@ -460,10 +458,10 @@ bool DetourInputGeometry::raycastMesh(float *src, float *dst, float &tmin) {
 
 	int cid[512];
 	const int ncid = rcGetChunksOverlappingSegment(m_chunkyMesh, p, q, cid, 512);
-	if (!ncid)
+	if (!ncid) {
 		return false;
-
-	tmin = 1.0f;
+	}
+	tmin = 1;
 	bool hit = false;
 	const float *verts = m_mesh->getVerts();
 
@@ -490,8 +488,9 @@ bool DetourInputGeometry::raycastMesh(float *src, float *dst, float &tmin) {
 
 void DetourInputGeometry::addOffMeshConnection(const float *spos, const float *epos, const float rad,
 		unsigned char bidir, unsigned char area, unsigned short flags) {
-	if (m_offMeshConCount >= MAX_OFFMESH_CONNECTIONS)
+	if (m_offMeshConCount >= MAX_OFFMESH_CONNECTIONS) {
 		return;
+	}
 	float *v = &m_offMeshConVerts[m_offMeshConCount * 3 * 2];
 	m_offMeshConRads[m_offMeshConCount] = rad;
 	m_offMeshConDirs[m_offMeshConCount] = bidir;
@@ -521,7 +520,7 @@ void DetourInputGeometry::drawOffMeshConnections(duDebugDraw *dd, bool hilight) 
 	unsigned int baseColor = duRGBA(0, 0, 0, 64);
 	dd->depthMask(false);
 
-	dd->begin(DU_DRAW_LINES, 2.0f);
+	dd->begin(DU_DRAW_LINES, 2.0);
 	for (int i = 0; i < m_offMeshConCount; ++i) {
 		float *v = &m_offMeshConVerts[i * 3 * 2];
 
@@ -535,8 +534,8 @@ void DetourInputGeometry::drawOffMeshConnections(duDebugDraw *dd, bool hilight) 
 		duAppendCircle(dd, v[3], v[4] + 0.1f, v[5], m_offMeshConRads[i], baseColor);
 
 		if (hilight) {
-			duAppendArc(dd, v[0], v[1], v[2], v[3], v[4], v[5], 0.25f,
-					(m_offMeshConDirs[i] & 1) ? 0.6f : 0.0f, 0.6f, conColor);
+			duAppendArc(dd, v[0], v[1], v[2], v[3], v[4], v[5], 0.25,
+					(m_offMeshConDirs[i] & 1) ? 0.6 : 0.0, 0.6, conColor);
 		}
 	}
 	dd->end();
@@ -546,8 +545,9 @@ void DetourInputGeometry::drawOffMeshConnections(duDebugDraw *dd, bool hilight) 
 
 void DetourInputGeometry::addConvexVolume(const float *verts, const int nverts,
 		const float minh, const float maxh, unsigned char area) {
-	if (m_volumeCount >= MAX_VOLUMES)
+	if (m_volumeCount >= MAX_VOLUMES) {
 		return;
+	}
 	ConvexVolume *vol = &m_volumes[m_volumeCount++];
 	memset(vol, 0, sizeof(ConvexVolume));
 	memcpy(vol->verts, verts, sizeof(float) * 3 * nverts);
@@ -557,10 +557,10 @@ void DetourInputGeometry::addConvexVolume(const float *verts, const int nverts,
 	vol->area = area;
 
 	// Create top/bottom/left/right of this convex volume
-	vol->left = 1000000.0f;
-	vol->right = -1000000.0f;
-	vol->front = 1000000.0f;
-	vol->back = -1000000.0f;
+	vol->left = 1000000;
+	vol->right = -1000000;
+	vol->front = 1000000;
+	vol->back = -1000000;
 	for (int i = 0; i < nverts; ++i) {
 		float x = verts[i * 3 + 0];
 		float z = verts[i * 3 + 2];
@@ -609,7 +609,7 @@ void DetourInputGeometry::drawConvexVolumes(struct duDebugDraw *dd, bool /*hilig
 
 	dd->end();
 
-	dd->begin(DU_DRAW_LINES, 2.0f);
+	dd->begin(DU_DRAW_LINES, 2.0);
 	for (int i = 0; i < m_volumeCount; ++i) {
 		const ConvexVolume *vol = &m_volumes[i];
 		unsigned int col = duTransCol(dd->areaToCol(vol->area), 220);
@@ -626,7 +626,7 @@ void DetourInputGeometry::drawConvexVolumes(struct duDebugDraw *dd, bool /*hilig
 	}
 	dd->end();
 
-	dd->begin(DU_DRAW_POINTS, 3.0f);
+	dd->begin(DU_DRAW_POINTS, 3.0);
 	for (int i = 0; i < m_volumeCount; ++i) {
 		const ConvexVolume *vol = &m_volumes[i];
 		unsigned int col = duDarkenCol(duTransCol(dd->areaToCol(vol->area), 220));

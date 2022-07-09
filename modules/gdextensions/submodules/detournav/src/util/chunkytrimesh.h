@@ -50,10 +50,8 @@
 #define CHUNKYTRIMESH_H
 
 struct rcChunkyTriMeshNode {
-	float bmin[2];
-	float bmax[2];
-	int i;
-	int n;
+	float bmin[3], bmax[3];
+	int i, n;
 };
 
 struct rcChunkyTriMesh {
@@ -78,8 +76,7 @@ private:
 
 /// Creates partitioned triangle mesh (AABB tree),
 /// where each node contains at max trisPerChunk triangles.
-bool rcCreateChunkyTriMesh(const float *verts, const int *tris, int ntris,
-		int trisPerChunk, rcChunkyTriMesh *cm);
+bool rcCreateChunkyTriMesh(const float *verts, const int *tris, int ntris, int trisPerChunk, rcChunkyTriMesh *cm);
 
 /// Returns the chunk indices which overlap the input rectable.
 int rcGetChunksOverlappingRect(const rcChunkyTriMesh *cm, float bmin[2], float bmax[2], int *ids, const int maxIds);
