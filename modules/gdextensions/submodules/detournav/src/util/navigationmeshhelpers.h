@@ -48,14 +48,13 @@ struct LinearAllocator : public dtTileCacheAlloc {
 	size_t top;
 	size_t high;
 
-	LinearAllocator(const size_t cap);
-
-	~LinearAllocator();
-
 	void resize(const size_t cap);
 	virtual void reset();
 	virtual void *alloc(const size_t size);
 	virtual void free(void * /*ptr*/);
+
+	LinearAllocator(const size_t cap);
+	~LinearAllocator();
 };
 
 // Helper struct for compression
@@ -126,4 +125,5 @@ struct RasterizationContext {
 };
 
 int calcLayerBufferSize(const int gridWidth, const int gridHeight);
+
 #endif // NAVIGATIONMESHHELPERS_H

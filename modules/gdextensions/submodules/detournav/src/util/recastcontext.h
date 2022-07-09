@@ -31,16 +31,14 @@
 #ifndef RECASTCONTEXT_H
 #define RECASTCONTEXT_H
 
-#include <Recast.h>
-#include <Godot.hpp>
 #include <map>
 
-/**
- * @brief Provides recast an interface for logging, performance timers, etc.
- */
+#include <Recast.h>
+
+// Provides recast an interface for logging, performance timers, etc.
 class RecastContext : public rcContext {
-public:
-	RecastContext();
+	std::map<rcTimerLabel, int64_t> _timers;
+	std::map<rcTimerLabel, int64_t> _accumulatedTime;
 
 protected:
 	virtual void doResetLog();
@@ -50,9 +48,8 @@ protected:
 	virtual void doStopTimer(const rcTimerLabel label);
 	virtual int doGetAccumulatedTime(const rcTimerLabel label) const;
 
-private:
-	std::map<rcTimerLabel, int64_t> _timers;
-	std::map<rcTimerLabel, int64_t> _accumulatedTime;
+public:
+	RecastContext();
 };
 
 #endif // RECASTCONTEXT_H

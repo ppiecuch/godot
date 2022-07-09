@@ -31,98 +31,47 @@
 #ifndef MESHDATAACCUMULATOR_H
 #define MESHDATAACCUMULATOR_H
 
-#include <ArrayMesh.hpp>
-#include <Godot.hpp>
-#include <MeshInstance.hpp>
-#include <Transform.hpp>
+#include "core/math/transform.h"
+#include "core/os/file_access.h"
+#include "scene/resources/mesh.h"
+#include "scene/3d/mesh_instance.h"
+
 #include <vector>
 
-namespace godot {
-class File;
-}
-
-/**
- * @brief Gets all the vertices, faces, etc. from an ArrayMesh and combines it into a single set of data (vertices, indices, ...).
- */
+// Gets all the vertices, faces, etc. from an ArrayMesh and combines it into a single set of data (vertices, indices, ...).
 class MeshDataAccumulator {
-public:
-	/**
-	 * @brief Constructor.
-	 */
-	MeshDataAccumulator(godot::MeshInstance *meshInstance);
-	MeshDataAccumulator();
-
-	/**
-	 * @brief Destructor.
-	 */
-	~MeshDataAccumulator();
-
-	/**
-	 * @brief Returns a pointer to all the vertices' floats.
-	 */
-	const float *getVerts() const;
-
-	/**
-	 * @brief Returns the number of vertices.
-	 */
-	int getVertCount() const;
-
-	/**
-	 * @brief Returns a pointer to all the triangles' indices.
-	 */
-	const int *getTris();
-
-	/**
-	 * @brief Returns the number of triangles.
-	 */
-	int getTriCount();
-
-	/**
-	 * @brief Returns a pointer to all the triangles' normals.
-	 */
-	const float *getNormals();
-
-	/**
-	 * @brief Store the mesh to the target file.
-	 */
-	void save(godot::Ref<godot::File> targetFile);
-
-	/**
-	 * @brief Load the mesh from the source file.
-	 */
-	bool load(godot::Ref<godot::File> sourceFile);
-
-private:
 	std::vector<float> _vertices;
 	std::vector<int> _triangles;
 	std::vector<float> _normals;
+
+public:
+	const float *getVerts() const; // Returns a pointer to all the vertices' floats.
+
+	int getVertCount() const; // Returns the number of vertices.
+
+	const int *getTris(); // Returns a pointer to all the triangles' indices.
+
+	int getTriCount(); // Returns the number of triangles.
+
+	const float *getNormals(); // Returns a pointer to all the triangles' normals.
+
+	void save(FileAccessRef targetFile); // Store the mesh to the target file.
+	bool load(FileAccessRef sourceFile); // Load the mesh from the source file.
+
+	MeshDataAccumulator(MeshInstance *meshInstance);
+	MeshDataAccumulator();
+	~MeshDataAccumulator();
 };
 
 // ------------------------------------------------------------
-// Inlines
-inline const float *
-MeshDataAccumulator::getVerts() const {
-	return _vertices.data();
-}
+inline const float *MeshDataAccumulator::getVerts() const { return _vertices.data(); }
 
-inline int
-MeshDataAccumulator::getVertCount() const {
-	return _vertices.size() / 3;
-}
+inline int MeshDataAccumulator::getVertCount() const { return _vertices.size() / 3; }
 
-inline const int *
-MeshDataAccumulator::getTris() {
-	return _triangles.data();
-}
+inline const int *MeshDataAccumulator::getTris() { return _triangles.data(); }
 
-inline int
-MeshDataAccumulator::getTriCount() {
-	return _triangles.size() / 3;
-}
+inline int MeshDataAccumulator::getTriCount() { return _triangles.size() / 3; }
 
-inline const float *
-MeshDataAccumulator::getNormals() {
-	return _normals.data();
-}
+inline const float *MeshDataAccumulator::getNormals() { return _normals.data(); }
 
 #endif // MESHDATAACCUMULATOR_H
