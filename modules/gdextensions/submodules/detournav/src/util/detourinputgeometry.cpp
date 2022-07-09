@@ -52,8 +52,8 @@
 #define _USE_MATH_DEFINES
 #include "detourinputgeometry.h"
 
-#include "core/os/file_access.h"
 #include "core/math/math_funcs.h"
+#include "core/os/file_access.h"
 #include "scene/resources/mesh.h"
 #include "scene/resources/mesh_data_tool.h"
 

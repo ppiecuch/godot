@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  spacemouse.cpp                                                       */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 /*
 Copyright (c) 2022 Andres Hernandez
 
@@ -20,11 +50,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "core/variant.h"
 #include "spacemouse/spacemouse.h"
+#include "core/variant.h"
 
-#include <string.h>
 #include <hidapi.h>
+#include <string.h>
 
 #ifndef HID_API_MAKE_VERSION
 #define HID_API_MAKE_VERSION(mj, mn, p) (((mj) << 24) | ((mn) << 8) | (p))
@@ -63,7 +93,7 @@ enum Format {
 	Current = 1
 };
 
-inline static int to_int(unsigned char* buffer) {
+inline static int to_int(unsigned char *buffer) {
 	int val = (buffer[1] << 8) + buffer[0];
 	if (val >= 32768) {
 		val = -(65536 - val);
@@ -80,7 +110,9 @@ void SpaceMouse::_bind_methods() {
 
 static SpaceMouse *instance = nullptr;
 
-SpaceMouse *SpaceMouse::get_singleton() { return instance; }
+SpaceMouse *SpaceMouse::get_singleton() {
+	return instance;
+}
 
 SpaceMouse::SpaceMouse() {
 	instance = this;
@@ -157,10 +189,10 @@ bool SpaceMouse::poll() {
 	space_data.ry = 0;
 	space_data.rz = 0;
 
-	while(space_connected && poll_count-- > 0) {
+	while (space_connected && poll_count-- > 0) {
 		int read_len = hid_read(space_device, space_buffer, sizeof(space_buffer));
 		if (read_len > 0) {
-			switch(model_ids[current_model][2]) {
+			switch (model_ids[current_model][2]) {
 				case Original:
 					if (space_buffer[0] == 1) {
 						space_data.px += to_int(&space_buffer[1]);
@@ -195,7 +227,6 @@ bool SpaceMouse::poll() {
 
 	return false;
 }
-
 
 /// SpaceMouseNode
 

@@ -33,8 +33,8 @@
 
 #include "core/math/transform.h"
 #include "core/os/file_access.h"
-#include "scene/resources/mesh.h"
 #include "scene/3d/mesh_instance.h"
+#include "scene/resources/mesh.h"
 
 #include <vector>
 

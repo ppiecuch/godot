@@ -28,10 +28,10 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "scene/resources/mesh.h"
-#include "scene/resources/material.h"
-#include "scene/resources/mesh_data_tool.h"
 #include "common/gd_core.h"
+#include "scene/resources/material.h"
+#include "scene/resources/mesh.h"
+#include "scene/resources/mesh_data_tool.h"
 
 #include "godotdetourdebugdraw.h"
 #include "navigationmeshhelpers.h"
@@ -39,7 +39,7 @@
 Color godotColorFromDetourColor(unsigned int input) {
 	float colorf[3];
 	duIntToCol(input, colorf);
-	const float r = (input) & 0xff;
+	const float r = (input)&0xff;
 	const float g = (input >> 8) & 0xff;
 	const float b = (input >> 16) & 0xff;
 	const float a = (input >> 24) & 0xff;
@@ -99,12 +99,18 @@ void GodotDetourDebugDraw::debugDrawBox(float minx, float miny, float minz, floa
 
 	const unsigned char *in = inds;
 	for (int i = 0; i < 6; ++i) {
-		vertex(&verts[*in * 3], fcol[i]); in++;
-		vertex(&verts[*in * 3], fcol[i]); in++;
-		vertex(&verts[*in * 3], fcol[i]); in++;
-		vertex(&verts[*in * 3], fcol[i]); in++;
-		vertex(&verts[*in * 3], fcol[i]); in++;
-		vertex(&verts[*in * 3], fcol[i]); in++;
+		vertex(&verts[*in * 3], fcol[i]);
+		in++;
+		vertex(&verts[*in * 3], fcol[i]);
+		in++;
+		vertex(&verts[*in * 3], fcol[i]);
+		in++;
+		vertex(&verts[*in * 3], fcol[i]);
+		in++;
+		vertex(&verts[*in * 3], fcol[i]);
+		in++;
+		vertex(&verts[*in * 3], fcol[i]);
+		in++;
 	}
 
 	end();

@@ -31,8 +31,8 @@
 #ifndef GODOTDETOURDEBUGDRAW_H
 #define GODOTDETOURDEBUGDRAW_H
 
-#include "scene/resources/mesh.h"
 #include "scene/resources/material.h"
+#include "scene/resources/mesh.h"
 #include "scene/resources/surface_tool.h"
 
 #include "DebugDraw.h"

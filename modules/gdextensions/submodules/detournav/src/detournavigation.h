@@ -157,6 +157,8 @@ public:
 	~DetourNavigation();
 };
 
-inline bool DetourNavigation::isInitialized() { return _initialized; }
+inline bool DetourNavigation::isInitialized() {
+	return _initialized;
+}
 
 #endif // GODOTDETOURNAVIGATION_H

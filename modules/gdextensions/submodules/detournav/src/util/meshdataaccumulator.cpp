@@ -32,9 +32,9 @@
 
 #include "godotgeometryparser.h"
 
-#include "core/variant.h"
-#include "core/print_string.h"
 #include "core/os/file_access.h"
+#include "core/print_string.h"
+#include "core/variant.h"
 #include "scene/resources/material.h"
 #include "scene/resources/mesh.h"
 #include "scene/resources/mesh_data_tool.h"
@@ -75,9 +75,9 @@ MeshDataAccumulator::MeshDataAccumulator(MeshInstance *meshInstance) {
 	print_verbose("Got normals...");
 }
 
-MeshDataAccumulator::MeshDataAccumulator() { }
+MeshDataAccumulator::MeshDataAccumulator() {}
 
-MeshDataAccumulator::~MeshDataAccumulator() { }
+MeshDataAccumulator::~MeshDataAccumulator() {}
 
 void MeshDataAccumulator::save(FileAccessRef &targetFile) {
 	// Store version

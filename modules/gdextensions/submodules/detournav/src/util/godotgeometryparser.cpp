@@ -30,26 +30,26 @@
 
 #include "godotgeometryparser.h"
 
+#include "common/gd_core.h"
 #include "core/math/geometry.h"
-#include "scene/resources/mesh.h"
+#include "modules/gridmap/grid_map.h"
+#include "scene/3d/collision_shape.h"
+#include "scene/3d/mesh_instance.h"
+#include "scene/3d/physics_body.h"
 #include "scene/resources/box_shape.h"
-#include "scene/resources/cylinder_shape.h"
-#include "scene/resources/primitive_meshes.h"
 #include "scene/resources/capsule_shape.h"
 #include "scene/resources/concave_polygon_shape.h"
 #include "scene/resources/convex_polygon_shape.h"
+#include "scene/resources/cylinder_shape.h"
+#include "scene/resources/mesh.h"
+#include "scene/resources/primitive_meshes.h"
 #include "scene/resources/sphere_shape.h"
-#include "scene/3d/collision_shape.h"
-#include "scene/3d/physics_body.h"
-#include "scene/3d/mesh_instance.h"
-#include "common/gd_core.h"
-#include "modules/gridmap/grid_map.h"
 
 #include <vector>
 
-GodotGeometryParser::GodotGeometryParser() { }
+GodotGeometryParser::GodotGeometryParser() {}
 
-GodotGeometryParser::~GodotGeometryParser() { }
+GodotGeometryParser::~GodotGeometryParser() {}
 
 void GodotGeometryParser::getNodeVerticesAndIndices(MeshInstance *meshInstance, std::vector<float> &outVertices, std::vector<int> &outIndices) {
 	parseGeometry(meshInstance, outVertices, outIndices);
