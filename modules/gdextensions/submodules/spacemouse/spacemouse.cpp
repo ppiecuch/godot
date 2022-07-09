@@ -111,7 +111,7 @@ bool SpaceMouse::connect() {
 	hid_devices = hid_enumerate(0x0, 0x0);
 	current_hid = hid_devices;
 	int not_found = 1;
-	
+
 	while (current_hid && not_found) {
 		for (int model = 0; model < MODELS; model++) {
 			if (model_ids[model][0] == current_hid->vendor_id &&
@@ -122,11 +122,11 @@ bool SpaceMouse::connect() {
 		}
 		current_hid = current_hid->next;
 	}
-	
+
 	hid_free_enumeration(hid_devices);
 
 	space_device = hid_open(model_ids[current_model][0], model_ids[current_model][1], nullptr);
-	
+
 	if (!space_device) {
 		space_connected = false;
 		return false;
@@ -137,9 +137,9 @@ bool SpaceMouse::connect() {
 	memset(space_buffer, 0x00, sizeof(space_buffer));
 	space_buffer[0] = 0x01;
 	space_buffer[1] = 0x81;
-	
+
 	space_connected = true;
-	
+
 	return true;
 }
 
