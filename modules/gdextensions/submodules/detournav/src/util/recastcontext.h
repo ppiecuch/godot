@@ -31,11 +31,11 @@
 #ifndef RECASTCONTEXT_H
 #define RECASTCONTEXT_H
 
-#include <map>
-
 #include <Recast.h>
 
-// Provides recast an interface for logging, performance timers, etc.
+#include <map>
+
+/// Provides recast an interface for logging, performance timers, etc.
 class RecastContext : public rcContext {
 	std::map<rcTimerLabel, int64_t> _timers;
 	std::map<rcTimerLabel, int64_t> _accumulatedTime;

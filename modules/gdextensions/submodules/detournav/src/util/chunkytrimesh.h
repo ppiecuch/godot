@@ -50,10 +50,8 @@
 #define CHUNKYTRIMESH_H
 
 struct rcChunkyTriMeshNode {
-	float bmin[2];
-	float bmax[2];
-	int i;
-	int n;
+	float bmin[3], bmax[3];
+	int i, n;
 };
 
 struct rcChunkyTriMesh {

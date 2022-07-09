@@ -31,13 +31,13 @@
 #include "meshdataaccumulator.h"
 
 #include "godotgeometryparser.h"
-#include <File.hpp>
-#include <Material.hpp>
-#include <Mesh.hpp>
-#include <MeshDataTool.hpp>
-#include <PoolArrays.hpp>
 
-using namespace godot;
+#include "core/variant.h"
+#include "core/print_string.h"
+#include "core/os/file_access.h"
+#include "scene/resources/material.h"
+#include "scene/resources/mesh.h"
+#include "scene/resources/mesh_data_tool.h"
 
 #define MDA_SAVE_VERSION 1
 
@@ -45,7 +45,7 @@ MeshDataAccumulator::MeshDataAccumulator(MeshInstance *meshInstance) {
 	GodotGeometryParser parser;
 	parser.getNodeVerticesAndIndices(meshInstance, _vertices, _triangles);
 
-	Godot::print("Got vertices and triangles...");
+	print_verbose("Got vertices and triangles...");
 
 	// Copy normals (we can't just copy them from the MeshDataTool since we operate on transformed values)
 	// Code below mostly taken from recastnavigation sample
@@ -64,39 +64,34 @@ MeshDataAccumulator::MeshDataAccumulator(MeshInstance *meshInstance) {
 		n[0] = e0[1] * e1[2] - e0[2] * e1[1];
 		n[1] = e0[2] * e1[0] - e0[0] * e1[2];
 		n[2] = e0[0] * e1[1] - e0[1] * e1[0];
-		float d = sqrtf(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+		float d = Math::sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
 		if (d > 0) {
-			d = 1.0f / d;
+			d = 1.0 / d;
 			n[0] *= d;
 			n[1] *= d;
 			n[2] *= d;
 		}
 	}
-	Godot::print("Got normals...");
+	print_verbose("Got normals...");
 }
 
-MeshDataAccumulator::MeshDataAccumulator() {
-}
+MeshDataAccumulator::MeshDataAccumulator() { }
 
-MeshDataAccumulator::~MeshDataAccumulator() {
-}
+MeshDataAccumulator::~MeshDataAccumulator() { }
 
-void MeshDataAccumulator::save(Ref<File> targetFile) {
+void MeshDataAccumulator::save(FileAccessRef &targetFile) {
 	// Store version
 	targetFile->store_16(MDA_SAVE_VERSION);
-
 	// Store vertices
 	targetFile->store_32(_vertices.size());
 	for (int i = 0; i < _vertices.size(); ++i) {
 		targetFile->store_float(_vertices[i]);
 	}
-
 	// Store triangles
 	targetFile->store_32(_triangles.size());
 	for (int i = 0; i < _triangles.size(); ++i) {
 		targetFile->store_32(_triangles[i]);
 	}
-
 	// Store normals
 	targetFile->store_32(_normals.size());
 	for (int i = 0; i < _normals.size(); ++i) {
@@ -104,7 +99,7 @@ void MeshDataAccumulator::save(Ref<File> targetFile) {
 	}
 }
 
-bool MeshDataAccumulator::load(Ref<File> sourceFile) {
+bool MeshDataAccumulator::load(FileAccessRef &sourceFile) {
 	// Load version
 	int version = sourceFile->get_16();
 
@@ -131,7 +126,7 @@ bool MeshDataAccumulator::load(Ref<File> sourceFile) {
 			_normals[i] = sourceFile->get_float();
 		}
 	} else {
-		ERR_PRINT(String("MeshDataAccumulator: Unknown save version: {0}").format(Array::make(version)));
+		ERR_PRINT(vformat("MeshDataAccumulator: Unknown save version: %d", version));
 		return false;
 	}
 

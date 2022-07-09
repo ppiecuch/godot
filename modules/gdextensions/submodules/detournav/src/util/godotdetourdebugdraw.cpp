@@ -28,33 +28,29 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
+#include "scene/resources/mesh.h"
+#include "scene/resources/material.h"
+#include "scene/resources/mesh_data_tool.h"
+#include "common/gd_core.h"
+
 #include "godotdetourdebugdraw.h"
 #include "navigationmeshhelpers.h"
-#include <Mesh.hpp>
-#include <SpatialMaterial.hpp>
-#include <SurfaceTool.hpp>
-
-using namespace godot;
 
 Color godotColorFromDetourColor(unsigned int input) {
 	float colorf[3];
 	duIntToCol(input, colorf);
-	unsigned int alpha = (input >> 24) & 0xff;
-	float r = (input)&0xff;
-	float g = (input >> 8) & 0xff;
-	float b = (input >> 16) & 0xff;
-	float a = (input >> 24) & 0xff;
-	//    Godot::print("Input color: {0}", input);
-	//    Godot::print("Got color a: {0} {1} {2} {3}", r, g, b, a);
-	//    Godot::print("Got color b: {0} {1} {2} {3}", colorf[0], colorf[1], colorf[2], alpha / 255.0f);
-	return Color(r / 255.0f, g / 255.0f, b / 255.0f, alpha / 255.0f);
+	const float r = (input) & 0xff;
+	const float g = (input >> 8) & 0xff;
+	const float b = (input >> 16) & 0xff;
+	const float a = (input >> 24) & 0xff;
+	return Color(r / 255, g / 255, b / 255, a / 255);
 }
 
 GodotDetourDebugDraw::GodotDetourDebugDraw() {
 	_surfaceTool.instance();
 
 	// Create the material
-	Ref<SpatialMaterial> mat = SpatialMaterial::_new();
+	Ref<SpatialMaterial> mat = newref(SpatialMaterial);
 	mat->set_flag(SpatialMaterial::FLAG_UNSHADED, true);
 	mat->set_flag(SpatialMaterial::FLAG_ALBEDO_FROM_VERTEX_COLOR, true);
 	mat->set_flag(SpatialMaterial::FLAG_USE_POINT_SIZE, true);
@@ -90,44 +86,31 @@ void GodotDetourDebugDraw::debugDrawBox(float minx, float miny, float minz, floa
 		minx, maxy, minz, // tbl
 		maxx, maxy, minz, // tbr
 		maxx, maxy, maxz, // tfr
-		minx, maxy, maxz // tfl
+		minx, maxy, maxz, // tfl
 	};
 	static const unsigned char inds[6 * 6] = {
-		// back
-		5, 4, 0, 5, 0, 1,
-		// front
-		6, 2, 3, 6, 3, 7,
-		// bottom
-		3, 2, 1, 3, 1, 0,
-		// top
-		7, 4, 5, 7, 5, 6,
-		// right
-		6, 5, 2, 6, 2, 1,
-		// left
-		7, 3, 0, 7, 0, 4
+		5, 4, 0, 5, 0, 1, // back
+		6, 2, 3, 6, 3, 7, // front
+		3, 2, 1, 3, 1, 0, // bottom
+		7, 4, 5, 7, 5, 6, // top
+		6, 5, 2, 6, 2, 1, // right
+		7, 3, 0, 7, 0, 4, // left
 	};
 
 	const unsigned char *in = inds;
 	for (int i = 0; i < 6; ++i) {
-		vertex(&verts[*in * 3], fcol[i]);
-		in++;
-		vertex(&verts[*in * 3], fcol[i]);
-		in++;
-		vertex(&verts[*in * 3], fcol[i]);
-		in++;
-		vertex(&verts[*in * 3], fcol[i]);
-		in++;
-		vertex(&verts[*in * 3], fcol[i]);
-		in++;
-		vertex(&verts[*in * 3], fcol[i]);
-		in++;
+		vertex(&verts[*in * 3], fcol[i]); in++;
+		vertex(&verts[*in * 3], fcol[i]); in++;
+		vertex(&verts[*in * 3], fcol[i]); in++;
+		vertex(&verts[*in * 3], fcol[i]); in++;
+		vertex(&verts[*in * 3], fcol[i]); in++;
+		vertex(&verts[*in * 3], fcol[i]); in++;
 	}
 
 	end();
 }
 
-unsigned int
-GodotDetourDebugDraw::areaToCol(unsigned int area) {
+unsigned int GodotDetourDebugDraw::areaToCol(unsigned int area) {
 	switch (area) {
 		// Ground (0) : light blue
 		case POLY_AREA_GROUND:
@@ -164,21 +147,21 @@ void GodotDetourDebugDraw::texture(bool state) {
 void GodotDetourDebugDraw::begin(duDebugDrawPrimitives prim, float size) {
 	// Begin & set size if applicable
 	switch (prim) {
-		case DU_DRAW_POINTS:
+		case DU_DRAW_POINTS: {
 			_surfaceTool->begin(Mesh::PRIMITIVE_POINTS);
-			_material->set_point_size(size * 1.5f);
-			break;
-		case DU_DRAW_LINES:
+			_material->set_point_size(size * 1.5);
+		} break;
+		case DU_DRAW_LINES: {
 			_surfaceTool->begin(Mesh::PRIMITIVE_LINES);
-			_material->set_line_width(size * 1.5f);
-			break;
-		case DU_DRAW_TRIS:
+			_material->set_line_width(size * 1.5);
+		} break;
+		case DU_DRAW_TRIS: {
 			_surfaceTool->begin(Mesh::PRIMITIVE_TRIANGLES);
-			break;
-		case DU_DRAW_QUADS:
+		} break;
+		case DU_DRAW_QUADS: {
 			WARN_PRINT("Trying to use primitive type quad. Not supported by Godot. Use triangle_strip instead - will look messy!");
 			_surfaceTool->begin(Mesh::PRIMITIVE_TRIANGLE_STRIP);
-			break;
+		} break;
 	};
 
 	// Set the material

@@ -67,6 +67,8 @@ public:
 	~GodotDetourDebugDraw();
 };
 
-inline Ref<ArrayMesh> GodotDetourDebugDraw::getArrayMesh() { return _arrayMesh; }
+inline Ref<ArrayMesh> GodotDetourDebugDraw::getArrayMesh() {
+	return _arrayMesh;
+}
 
 #endif // GODOTDETOURDEBUGDRAW_H

@@ -46,6 +46,7 @@
 class MeshDataAccumulator;
 
 static const int MAX_CONVEXVOL_PTS = 12;
+
 struct ConvexVolume {
 	float verts[MAX_CONVEXVOL_PTS * 3];
 	float hmin, hmax;
@@ -62,7 +63,6 @@ struct ConvexVolume {
 };
 
 class DetourInputGeometry {
-public:
 	static const int MAX_OFFMESH_CONNECTIONS = 256;
 	static const int MAX_VOLUMES = 256;
 
@@ -86,11 +86,11 @@ private:
 	int m_volumeCount;
 
 public:
-	bool loadMesh(class rcContext *ctx, godot::MeshInstance *inputMesh);
+	bool loadMesh(class rcContext *ctx, MeshInstance *inputMesh);
 	void clearData();
 
-	bool save(FileAccessRef targetFile); // Save the input geometry data to the file.
-	bool load(FileAccessRef sourceFile); // Load the input geometry data from the byte array.
+	bool save(FileAccessRef &targetFile); // Save the input geometry data to the file.
+	bool load(FileAccessRef &sourceFile); // Load the input geometry data from the byte array.
 
 	// Method to return static mesh data.
 	const MeshDataAccumulator *getMesh() const { return m_mesh; }
@@ -117,8 +117,7 @@ public:
 	// Box Volumes.
 	int getConvexVolumeCount() const { return m_volumeCount; }
 	ConvexVolume *getConvexVolumes() { return m_volumes; }
-	void addConvexVolume(const float *verts, const int nverts,
-			const float minh, const float maxh, unsigned char area);
+	void addConvexVolume(const float *verts, const int nverts, const float minh, const float maxh, unsigned char area);
 	void deleteConvexVolume(int i);
 	void drawConvexVolumes(struct duDebugDraw *dd, bool hilight = false);
 

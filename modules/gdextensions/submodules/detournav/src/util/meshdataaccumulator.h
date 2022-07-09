@@ -55,23 +55,32 @@ public:
 
 	const float *getNormals(); // Returns a pointer to all the triangles' normals.
 
-	void save(FileAccessRef targetFile); // Store the mesh to the target file.
-	bool load(FileAccessRef sourceFile); // Load the mesh from the source file.
+	void save(FileAccessRef &targetFile); // Store the mesh to the target file.
+	bool load(FileAccessRef &sourceFile); // Load the mesh from the source file.
 
 	MeshDataAccumulator(MeshInstance *meshInstance);
 	MeshDataAccumulator();
 	~MeshDataAccumulator();
 };
 
-// ------------------------------------------------------------
-inline const float *MeshDataAccumulator::getVerts() const { return _vertices.data(); }
+inline const float *MeshDataAccumulator::getVerts() const {
+	return _vertices.data();
+}
 
-inline int MeshDataAccumulator::getVertCount() const { return _vertices.size() / 3; }
+inline int MeshDataAccumulator::getVertCount() const {
+	return _vertices.size() / 3;
+}
 
-inline const int *MeshDataAccumulator::getTris() { return _triangles.data(); }
+inline const int *MeshDataAccumulator::getTris() {
+	return _triangles.data();
+}
 
-inline int MeshDataAccumulator::getTriCount() { return _triangles.size() / 3; }
+inline int MeshDataAccumulator::getTriCount() {
+	return _triangles.size() / 3;
+}
 
-inline const float *MeshDataAccumulator::getNormals() { return _normals.data(); }
+inline const float *MeshDataAccumulator::getNormals() {
+	return _normals.data();
+}
 
 #endif // MESHDATAACCUMULATOR_H
