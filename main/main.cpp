@@ -1722,7 +1722,7 @@ bool Main::start() {
 		} else if (args[i] == "--doctest") {
 			const char *argv[] = {
 				"godot",
-				NULL
+				nullptr
 			};
 			printf("\n");
 			return doctest::Context(1, argv).run();
