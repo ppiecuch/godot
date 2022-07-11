@@ -62,19 +62,19 @@ protected:
 public:
 	static SpaceMouse *get_singleton();
 
-	bool connect();
-	bool poll();
-	Vector3 translation();
-	Vector3 rotation();
+	bool connect_device();
+	bool poll_device();
+	Vector3 device_translation();
+	Vector3 device_rotation();
 
 	SpaceMouse();
 	~SpaceMouse();
 };
 
-inline Vector3 SpaceMouse::translation() {
+inline Vector3 SpaceMouse::device_translation() {
 	return motion_data.translation;
 }
-inline Vector3 SpaceMouse::rotation() {
+inline Vector3 SpaceMouse::device_rotation() {
 	return motion_data.rotation;
 }
 

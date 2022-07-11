@@ -102,10 +102,10 @@ inline static int to_int(unsigned char *buffer) {
 }
 
 void SpaceMouse::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("connect"), &SpaceMouse::connect);
-	ClassDB::bind_method(D_METHOD("poll"), &SpaceMouse::poll);
-	ClassDB::bind_method(D_METHOD("translation"), &SpaceMouse::translation);
-	ClassDB::bind_method(D_METHOD("rotation"), &SpaceMouse::rotation);
+	ClassDB::bind_method(D_METHOD("connect_device"), &SpaceMouse::connect_device);
+	ClassDB::bind_method(D_METHOD("poll_device"), &SpaceMouse::poll_device);
+	ClassDB::bind_method(D_METHOD("device_translation"), &SpaceMouse::device_translation);
+	ClassDB::bind_method(D_METHOD("device_rotation"), &SpaceMouse::device_rotation);
 }
 
 static SpaceMouse *instance = nullptr;
@@ -125,7 +125,7 @@ SpaceMouse::~SpaceMouse() {
 	instance = nullptr;
 }
 
-bool SpaceMouse::connect() {
+bool SpaceMouse::connect_device() {
 	if (space_connected) {
 		return true;
 	}
@@ -175,7 +175,7 @@ bool SpaceMouse::connect() {
 	return true;
 }
 
-bool SpaceMouse::poll() {
+bool SpaceMouse::poll_device() {
 	int poll_count = 2;
 
 	if (model_ids[current_model][2] == 0) {
@@ -239,7 +239,7 @@ void SpaceMouseNode::_notification(int p_what) {
 		case NOTIFICATION_EXIT_TREE: {
 		} break;
 		case NOTIFICATION_PROCESS: {
-			space_mouse->poll();
+			space_mouse->poll_device();
 		} break;
 	}
 }
