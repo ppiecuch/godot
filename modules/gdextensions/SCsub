@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 import version
+import platform
 
 Import("env")
 Import("env_modules")
@@ -275,6 +276,10 @@ if is_enabled("media/"):
             env["enable_gdextensions_submodules"].remove("media/ffmpeg")
         if is_enabled("media/ffmpeg"):
             env_module.Append(CPPPATH=[os.path.dirname(os.path.realpath(os.curdir)) + "/gdnative/include"])
+
+if is_enabled("tileengine"):
+    if env["builtin_libpng"]:
+        env_module.Append(CPPPATH=["#thirdparty/libpng/"])
 
 active_modules = []
 for m in modules:

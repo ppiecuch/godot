@@ -165,6 +165,8 @@ public:
 
 	virtual String get_system_dir(SystemDir p_dir, bool p_shared_storage = true) const;
 
+	virtual Error move_to_trash(const String &p_path);
+
 	String get_custom_name() const;
 
 	void process_accelerometer(const Vector3 &p_accelerometer);

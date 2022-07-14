@@ -53,7 +53,7 @@ void GdWaterSplashColumn::_bind_methods() {
 }
 
 GdWaterSplashColumn::GdWaterSplashColumn(const Vector2 &pos, const Vector2 &delta, const Vector2 &drag) :
-		target_height_(delta.y), height_(delta.y), speed_(0.0), drag_(drag) {
+		target_height_(delta.y), height_(delta.y), speed_(0), drag_(drag) {
 	Ref<RectangleShape2D> shape = memnew(RectangleShape2D);
 	shape->set_extents(delta);
 
@@ -174,6 +174,7 @@ Rect2 GdWaterSplash::get_size() const {
 }
 
 void GdWaterSplash::set_resolution(const uint32_t &resolution) {
+	ERR_FAIL_COND(resolution <= 0);
 	resolution_ = resolution;
 	size_changed_ = true;
 	_update();
@@ -272,7 +273,6 @@ void GdWaterSplash::_bind_methods() {
 }
 
 GdWaterSplash::GdWaterSplash() {
-	set_size(Rect2(0., 0., 100., 20.));
 	resolution_ = 5;
 	color_ = Color(1, 1, 1, 1);
 	damping_ = 0.025;
@@ -280,7 +280,6 @@ GdWaterSplash::GdWaterSplash() {
 	spread_ = 0.25;
 	drag_ = Vector2(0.01, 0.03);
 	size_changed_ = true;
-	_update();
-
+	set_size(Rect2(0, 0, 100, 20));
 	set_physics_process(true);
 }

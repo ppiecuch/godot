@@ -144,6 +144,7 @@ public:
 		GLuint normal_tex;
 		GLuint mask_tex;
 		GLuint aniso_tex;
+		GLuint depth_tex;
 
 		GLuint white_tex_3d;
 		GLuint white_tex_array;

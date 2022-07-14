@@ -199,6 +199,7 @@ JNIEXPORT void JNICALL Java_org_godotengine_godot_GodotLib_setup(JNIEnv *env, jc
 		memfree(cmdline);
 	}
 
+	// Note: --help and --version return ERR_HELP, but this should be translated to 0 if exit codes are propagated.
 	if (err != OK) {
 		ERR_PRINT("GodotLib.setup() failed to finish initialization.");
 		return; // should exit instead and print the error

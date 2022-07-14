@@ -521,6 +521,7 @@ public:
 	void reset() { resize(0); }
 
 	void invert();
+	void sort();
 
 	void operator=(const PoolVector &p_pool_vector) { _reference(p_pool_vector); }
 	PoolVector() { alloc = nullptr; }
@@ -733,6 +734,18 @@ void PoolVector<T>::invert() {
 		w[i] = w[s - i - 1];
 		w[s - i - 1] = temp;
 	}
+}
+
+template <class T>
+void PoolVector<T>::sort() {
+	int len = size();
+	if (len == 0) {
+		return;
+	}
+
+	Write w = write();
+	SortArray<T> sorter;
+	sorter.sort(w.ptr(), len);
 }
 
 template <class T>
