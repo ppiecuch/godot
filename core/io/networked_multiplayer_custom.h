@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  string_name.cpp                                                      */
+/*  networked_multiplayer_custom.h                                       */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,64 +28,60 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "gdnative/string_name.h"
+#ifndef NETWORKED_MULTIPLAYER_CUSTOM_H
+#define NETWORKED_MULTIPLAYER_CUSTOM_H
 
-#include "core/string_name.h"
-#include "core/ustring.h"
+#include "core/io/networked_multiplayer_peer.h"
 
-#include <string.h>
+class NetworkedMultiplayerCustom : public NetworkedMultiplayerPeer {
+	GDCLASS(NetworkedMultiplayerCustom, NetworkedMultiplayerPeer);
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+protected:
+	int self_id;
+	TransferMode transfer_mode;
+	ConnectionStatus connection_status;
+	bool refusing_new_connections;
+	int target_id;
+	int max_packet_size;
 
-static_assert(sizeof(godot_string_name) == sizeof(StringName), "StringName size mismatch");
+	struct Packet {
+		PoolVector<uint8_t> data;
+		int from;
+	};
 
-void GDAPI godot_string_name_new(godot_string_name *r_dest, const godot_string *p_name) {
-	StringName *dest = (StringName *)r_dest;
-	const String *name = (const String *)p_name;
-	memnew_placement(dest, StringName(*name));
-}
+	List<Packet> incoming_packets;
 
-void GDAPI godot_string_name_new_data(godot_string_name *r_dest, const char *p_name) {
-	StringName *dest = (StringName *)r_dest;
-	memnew_placement(dest, StringName(p_name));
-}
+	Packet current_packet;
 
-godot_string GDAPI godot_string_name_get_name(const godot_string_name *p_self) {
-	godot_string ret;
-	const StringName *self = (const StringName *)p_self;
-	memnew_placement(&ret, String(*self));
-	return ret;
-}
+	static void _bind_methods();
 
-uint32_t GDAPI godot_string_name_get_hash(const godot_string_name *p_self) {
-	const StringName *self = (const StringName *)p_self;
-	return self->hash();
-}
+public:
+	NetworkedMultiplayerCustom();
+	~NetworkedMultiplayerCustom();
 
-const void GDAPI *godot_string_name_get_data_unique_pointer(const godot_string_name *p_self) {
-	const StringName *self = (const StringName *)p_self;
-	return self->data_unique_pointer();
-}
+	// PacketPeer.
+	Error get_packet(const uint8_t **r_buffer, int &r_buffer_size);
+	Error put_packet(const uint8_t *p_buffer, int p_buffer_size);
+	int get_available_packet_count() const;
+	int get_max_packet_size() const;
 
-godot_bool GDAPI godot_string_name_operator_equal(const godot_string_name *p_self, const godot_string_name *p_other) {
-	const StringName *self = (const StringName *)p_self;
-	const StringName *other = (const StringName *)p_other;
-	return *self == *other;
-}
+	// NetworkedMultiplayerPeer.
+	void set_transfer_mode(TransferMode p_mode);
+	TransferMode get_transfer_mode() const;
+	void set_target_peer(int p_peer);
+	int get_packet_peer() const;
+	bool is_server() const;
+	void poll();
+	int get_unique_id() const;
+	void set_refuse_new_connections(bool p_enable);
+	bool is_refusing_new_connections() const;
+	ConnectionStatus get_connection_status() const;
 
-godot_bool GDAPI godot_string_name_operator_less(const godot_string_name *p_self, const godot_string_name *p_other) {
-	const StringName *self = (const StringName *)p_self;
-	const StringName *other = (const StringName *)p_other;
-	return *self < *other;
-}
+	// Custom methods.
+	void initialize(int p_self_id);
+	void set_max_packet_size(int p_max_packet_size);
+	void set_connection_status(ConnectionStatus p_connection_status);
+	void deliver_packet(const PoolByteArray &p_data, int p_from_peer_id);
+};
 
-void GDAPI godot_string_name_destroy(godot_string_name *p_self) {
-	StringName *self = (StringName *)p_self;
-	self->~StringName();
-}
-
-#ifdef __cplusplus
-}
 #endif

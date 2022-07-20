@@ -145,7 +145,9 @@ struct addrinfo {
 
 #include <stdio.h>
 
+#if defined(MBEDTLS_HAVE_TIME)
 #include <time.h>
+#endif
 
 #include <stdint.h>
 

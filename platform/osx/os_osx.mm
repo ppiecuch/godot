@@ -859,9 +859,15 @@ static void _mouseDownEvent(NSEvent *event, int index, int mask, bool pressed) {
 	const Vector2 pos = get_mouse_pos(mpos);
 	mm->set_position(pos);
 	mm->set_pressure([event pressure]);
-	if ([event subtype] == NSEventSubtypeTabletPoint) {
+	NSEventSubtype subtype = [event subtype];
+	if (subtype == NSEventSubtypeTabletPoint) {
 		const NSPoint p = [event tilt];
 		mm->set_tilt(Vector2(p.x, p.y));
+		mm->set_pen_inverted(OS_OSX::singleton->last_pen_inverted);
+	} else if (subtype == NSEventSubtypeTabletProximity) {
+		// Check if using the eraser end of pen only on proximity event.
+		OS_OSX::singleton->last_pen_inverted = [event pointingDeviceType] == NSPointingDeviceTypeEraser;
+		mm->set_pen_inverted(OS_OSX::singleton->last_pen_inverted);
 	}
 	mm->set_global_position(pos);
 	mm->set_speed(OS_OSX::singleton->input->get_last_mouse_speed());
@@ -2752,8 +2758,24 @@ void OS_OSX::set_current_screen(int p_screen) {
 		return;
 	}
 
+	if (get_current_screen() == p_screen) {
+		return;
+	}
+
+	bool was_fullscreen = false;
+	if (zoomed) {
+		// Temporary exit fullscreen mode to move window.
+		[window_object toggleFullScreen:nil];
+		was_fullscreen = true;
+	}
+
 	Vector2 wpos = get_window_position() - get_screen_position(get_current_screen());
 	set_window_position(wpos + get_screen_position(p_screen));
+
+	if (was_fullscreen) {
+		// Re-enter fullscreen mode.
+		[window_object toggleFullScreen:nil];
+	}
 };
 
 Point2 OS_OSX::get_native_screen_position(int p_screen) const {

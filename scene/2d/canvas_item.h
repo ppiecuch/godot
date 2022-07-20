@@ -192,7 +192,7 @@ private:
 	mutable SelfList<Node> xform_change;
 
 	RID canvas_item;
-	String group;
+	String canvas_group;
 
 	CanvasLayer *canvas_layer;
 
