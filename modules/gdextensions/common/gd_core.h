@@ -167,6 +167,24 @@ static inline void _trace(int line, const char *file, const String &text) {
 #define call_method_r(range, func) \
 	std::for_each(std::begin(range), std::end(range), [&](decltype(range)::value_type &e) { e->func; })
 
+namespace gd {
+	template<bool B> struct isEnabled {
+		static constexpr bool value = B; // Template for avoiding MSVC: C4127: conditional expression is constant
+	};
+
+	inline constexpr bool ignoreC4127(bool _x) {
+		return _x;
+	}
+}
+
+#if _MSC_VER
+# define BX_IGNORE_C4127(_x) gd::ignoreC4127(!!(_x) )
+#else
+# define BX_IGNORE_C4127(_x) (!!(_x) )
+#endif
+
+#define GD_ENABLED(_x) GD_IGNORE_C4127(gd::isEnabled<!!(_x)>::value)
+
 template <typename T>
 List<T> array_to_list(const Array &p_array) {
 	List<T> ret;

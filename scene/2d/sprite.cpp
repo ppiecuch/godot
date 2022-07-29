@@ -122,11 +122,6 @@ void Sprite::_notification(int p_what) {
 
 			RID ci = get_canvas_item();
 
-			/*
-			texture->draw(ci,Point2());
-			break;
-			*/
-
 			Rect2 src_rect, dst_rect;
 			bool filter_clip;
 			_get_rects(src_rect, dst_rect, filter_clip);

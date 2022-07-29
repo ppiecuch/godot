@@ -93,11 +93,7 @@ void Position2D::_notification(int p_what) {
 			if (!is_inside_tree()) {
 				break;
 			}
-			if (Engine::get_singleton()->is_editor_hint()
-#ifdef DEBUG_ENABLED
-					|| show_in_debug_build
-#endif
-			) {
+			if (Engine::get_singleton()->is_editor_hint() || !editor_only) {
 				_draw_cross();
 			}
 
@@ -123,29 +119,22 @@ float Position2D::get_gizmo_extents() const {
 	}
 }
 
-void Position2D::set_show_in_debug_build(bool p_show) {
-	show_in_debug_build = p_show;
+void Position2D::set_editor_only(const bool &p_enabled) {
+	editor_only = p_enabled;
 	update();
 }
 
-bool Position2D::is_show_in_debug_build() const {
-	return show_in_debug_build;
+bool Position2D::get_editor_only() const {
+	return editor_only;
 }
 
 void Position2D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_set_gizmo_extents", "extents"), &Position2D::set_gizmo_extents);
 	ClassDB::bind_method(D_METHOD("_get_gizmo_extents"), &Position2D::get_gizmo_extents);
-	ClassDB::bind_method(D_METHOD("set_show_in_debug_build", "extents"), &Position2D::set_show_in_debug_build);
-	ClassDB::bind_method(D_METHOD("is_show_in_debug_build"), &Position2D::is_show_in_debug_build);
+
+	ClassDB::bind_method(D_METHOD("get_editor_only"), &Position2D::get_editor_only);
+	ClassDB::bind_method(D_METHOD("set_editor_only", "enabled"), &Position2D::set_editor_only);
 
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "gizmo_extents", PROPERTY_HINT_RANGE, "0,1000,0.1,or_greater", PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_INTERNAL), "_set_gizmo_extents", "_get_gizmo_extents");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "show_in_debug_build"), "set_show_in_debug_build", "is_show_in_debug_build");
-}
-
-Position2D::Position2D() {
-#ifdef DEBUG_ENABLED
-	show_in_debug_build = true;
-#else
-	show_in_debug_build = false;
-#endif
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "editor_only"), "set_editor_only", "get_editor_only");
 }
