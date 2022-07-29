@@ -253,6 +253,7 @@ private:
 	int _call_size;
 	int _initial_line;
 	bool _static;
+	bool _lambda;
 	MultiplayerAPI::RPCMode rpc_mode;
 
 	GDScript *_script;
@@ -266,12 +267,14 @@ private:
 	Vector<int> default_arguments;
 	Vector<int> code;
 	Vector<GDScriptDataType> argument_types;
+	Vector<int> lambda_variants;
 	GDScriptDataType return_type;
 
 #ifdef TOOLS_ENABLED
 	Vector<StringName> arg_names;
 #endif
 
+	mutable Vector<Variant> cache;
 	List<StackDebug> stack_debug;
 
 	_FORCE_INLINE_ Variant *_get_variant(int p_address, GDScriptInstance *p_instance, GDScript *p_script, Variant &self, Variant &static_ref, Variant *p_stack, String &r_error) const;
@@ -352,7 +355,7 @@ public:
 		return default_arguments[p_idx];
 	}
 
-	Variant call(GDScriptInstance *p_instance, const Variant **p_args, int p_argcount, Variant::CallError &r_err, CallState *p_state = nullptr);
+	Variant call(GDScriptInstance *p_instance, const Variant **p_args, int p_argcount, Variant::CallError &r_err, CallState *p_state = nullptr, const Variant **p_requires_args = nullptr);
 
 	_FORCE_INLINE_ MultiplayerAPI::RPCMode get_rpc_mode() const { return rpc_mode; }
 	GDScriptFunction();
@@ -386,13 +389,15 @@ public:
 class GDScriptFunctionObject : public Reference {
 	GDCLASS(GDScriptFunctionObject, Reference);
 
-protected:
-	GDScriptFunction *function;
-	GDScriptInstance *instance;
 	friend class GDScriptInstance;
 	friend class GDScriptFunction;
 	friend class GDScriptSignalObject;
+
+protected:
 	static void _bind_methods();
+
+	GDScriptFunction *function;
+	GDScriptInstance *instance;
 
 public:
 	_FORCE_INLINE_ virtual bool is_valid() const { return instance && function; }
@@ -404,8 +409,8 @@ public:
 	virtual Variant apply(const Variant **p_args, int p_argcount, Variant::CallError &r_error);
 	Variant apply(VARIANT_ARG_LIST);
 	virtual Variant apply_with(Object *p_target, const Array p_args);
-	GDScriptFunctionObject() { instance = NULL, function = NULL; }
-	//	~GDScriptFunctoionObject();
+
+	GDScriptFunctionObject() { instance = nullptr, function = nullptr; }
 };
 
 class GDScriptNativeFunctionObject : public GDScriptFunctionObject {
@@ -413,22 +418,26 @@ class GDScriptNativeFunctionObject : public GDScriptFunctionObject {
 
 	friend class GDScriptFunction;
 	friend class GDScriptInstance;
+
 	ObjectID target_id;
 	StringName method_name;
 
 public:
-	virtual Object *get_owner() const { return (target_id == 0 ? NULL : ObjectDB::get_instance(target_id)); }
+	virtual Object *get_owner() const { return (target_id == 0 ? nullptr : ObjectDB::get_instance(target_id)); }
 	_FORCE_INLINE_ virtual bool is_valid() const { return target_id != 0 && ObjectDB::get_instance(target_id); }
 
 	_FORCE_INLINE_ virtual StringName get_name() const { return method_name; }
 	virtual Variant apply(const Variant **p_args, int p_argcount, Variant::CallError &r_error);
 	virtual Variant apply_with(Object *p_target, const Array p_args);
+
 	GDScriptNativeFunctionObject() { target_id = 0; }
 };
 
 class GDScriptLambdaFunctionObject : public GDScriptFunctionObject {
 	GDCLASS(GDScriptLambdaFunctionObject, GDScriptFunctionObject);
+
 	friend class GDScriptInstance;
+
 	Vector<Variant> variants;
 
 public:

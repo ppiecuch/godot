@@ -109,6 +109,7 @@ public:
 		enum Type {
 			TYPE_CLASS,
 			TYPE_FUNCTION,
+			TYPE_LAMBDA_FUNCTION,
 			TYPE_BUILT_IN_FUNCTION,
 			TYPE_BLOCK,
 			TYPE_IDENTIFIER,
@@ -231,9 +232,30 @@ public:
 		}
 	};
 
+	struct LambdaFunctionNode : public FunctionNode {
+		FunctionNode *parent;
+		Vector<StringName> require_keys;
+
+		void insert_require(StringName p_key) {
+			if (!body->variables.has(p_key) && !body->arguments.has(p_key)) {
+				if (!require_keys.has(p_key)) {
+					require_keys.push_back(p_key);
+				} else if (LambdaFunctionNode *func = dynamic_cast<LambdaFunctionNode*>(parent)) {
+					func->insert_require(p_key);
+				}
+			}
+		}
+
+		LambdaFunctionNode() {
+			type = TYPE_LAMBDA_FUNCTION;
+			_static = false;
+		}
+	};
+
 	struct BlockNode : public Node {
 		ClassNode *parent_class;
 		BlockNode *parent_block;
+		Vector<StringName> arguments;
 		Vector<Node *> statements;
 		Map<StringName, LocalVarNode *> variables;
 		bool has_return = false;
@@ -245,6 +267,19 @@ public:
 		//the following is useful for code completion
 		List<BlockNode *> sub_blocks;
 		int end_line;
+
+		_FORCE_INLINE_ bool has_identifier(const StringName &identifier) const {
+			return variables.has(identifier) ? true : (parent_block ? parent_block->has_identifier(identifier) : false);
+		}
+
+		_FORCE_INLINE_ bool is_stack_argument(const StringName &identifier) const {
+			return arguments.has(identifier) ? true : parent_block ? parent_block->is_stack_argument(identifier) : false;
+		}
+
+		_FORCE_INLINE_ bool outer_stack(const StringName &identifier) const {
+			return arguments.has(identifier) || variables.has(identifier) ? false : (parent_block ? parent_block->has_identifier(identifier) || parent_block->is_stack_argument(identifier) : false);
+		}
+
 		BlockNode() {
 			if_condition = nullptr;
 			type = TYPE_BLOCK;

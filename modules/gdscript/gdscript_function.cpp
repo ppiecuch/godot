@@ -61,6 +61,22 @@ Variant *GDScriptFunction::_get_variant(int p_address, GDScriptInstance *p_insta
 			//member indexing is O(1)
 			return &p_instance->members.write[address];
 		} break;
+		case ADDR_TYPE_LAMBDA_FUNCTION: {
+#ifdef DEBUG_ENABLED
+			if (unlikely(!p_instance)) {
+				r_error = "Cannot access member without instance.";
+				return nullptr;
+			}
+#endif
+			ERR_FAIL_INDEX_V(address, p_script->function_indices.size(), nullptr);
+			Ref<GDScriptLambdaFunctionObject> func = p_instance->get_lambda_function(p_script->function_indices[address], p_stack, _stack_size);
+			if (func == nullptr) {
+				r_error = "Lambda function not found.";
+				return nullptr;
+			}
+			cache.push_back(Variant(func));
+			return &cache.write[cache.size()-1];
+		} break;
 		case ADDR_TYPE_CLASS_CONSTANT: {
 			//todo change to index!
 			GDScript *s = p_script;
@@ -253,7 +269,7 @@ String GDScriptFunction::_get_call_error(const Variant::CallError &p_err, const 
 #define OPCODE_OUT break
 #endif
 
-Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_args, int p_argcount, Variant::CallError &r_err, CallState *p_state) {
+Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_args, int p_argcount, Variant::CallError &r_err, CallState *p_state, const Variant **p_requires_args) {
 	OPCODES_TABLE;
 
 	if (!_code_ptr) {
@@ -340,8 +356,14 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 						memnew_placement(&stack[i], Variant(*p_args[i]));
 					}
 				}
-				for (int i = p_argcount; i < _stack_size; i++) {
-					memnew_placement(&stack[i], Variant);
+				if (p_requires_args) {
+					for (int i = 0, t = lambda_variants.size(); i < t; i++) {
+						memnew_placement(&stack[p_argcount + i], Variant(*p_requires_args[i]));
+					}
+				} else {
+					for (int i = 0, t = lambda_variants.size(); i < t; i++) {
+						memnew_placement(&stack[p_argcount + i], Variant);
+					}
 				}
 			} else {
 				stack = nullptr;
@@ -1893,4 +1915,103 @@ GDScriptFunctionState::~GDScriptFunctionState() {
 	scripts_list.remove_from_list();
 	instances_list.remove_from_list();
 	GDScriptLanguage::singleton->lock.unlock();
+}
+
+
+///////////// GDScript extensions /////////////
+
+Object *GDScriptFunctionObject::get_owner() const {
+	if (!is_valid()) {
+		return nullptr;
+	}
+	return instance->owner;
+}
+
+Variant GDScriptFunctionObject::apply(VARIANT_ARG_DECLARE) {
+	VARIANT_ARGPTRS;
+	int argc = 0;
+	for(int i = 0; i < VARIANT_ARG_MAX; i++) {
+		if (argptr[i]->get_type() == Variant::NIL) {
+			break;
+		}
+		argc++;
+	}
+	Variant::CallError error;
+	Variant ret = apply(argptr,argc,error);
+	return ret;
+}
+
+Variant GDScriptFunctionObject::_apply(const Variant **p_args, int p_argcount, Variant::CallError &r_error) {
+	return apply(p_args, p_argcount, r_error);
+}
+
+Variant GDScriptFunctionObject::apply(const Variant **p_args, int p_argcount, Variant::CallError &r_error) {
+	if (!is_valid()) {
+		r_error.error = Variant::CallError::CALL_ERROR_INSTANCE_IS_NULL;
+		return Variant();
+	}
+	return function->call(instance, p_args, p_argcount, r_error);
+}
+
+Variant GDScriptFunctionObject::applyv(const Array p_args) {
+	int s = p_args.size();
+	const Variant ** args = s ? (const Variant **)memalloc(sizeof(Variant*)*p_args.size()) : nullptr;
+	for (int i = 0, t = s; i < t; ++i) {
+		args[i] = &p_args[i];
+	}
+	Variant::CallError err;
+	Variant ret = apply((const Variant **)args, p_args.size(), err);
+	if (args) {
+		memfree(args);
+	}
+	return ret;
+}
+
+Variant GDScriptFunctionObject::apply_with(Object *p_target, const Array p_args) {
+	ERR_FAIL_COND_V(!p_target, Variant());
+	ERR_FAIL_COND_V(!function, Variant());
+
+	Variant::CallError error;
+	Array args(p_args);
+	args.resize(5);
+	Variant ret = p_target->call(get_name(), VARIANT_ARGS_FROM_ARRAY(args));
+	ERR_FAIL_COND_V(error.error != Variant::CallError::CALL_OK, Variant());
+	return ret;
+}
+
+void GDScriptFunctionObject::_bind_methods() {
+	ClassDB::bind_vararg_method(METHOD_FLAGS_DEFAULT, "apply", &GDScriptFunctionObject::_apply, MethodInfo("apply"));
+	ClassDB::bind_method(D_METHOD("applyv", "args"), &GDScriptFunctionObject::applyv, DEFVAL(Array()));
+	ClassDB::bind_method(D_METHOD("apply_with", "target", "args"), &GDScriptFunctionObject::apply_with, DEFVAL(Array()));
+	ClassDB::bind_method(D_METHOD("is_valid"), &GDScriptFunctionObject::is_valid);
+	ClassDB::bind_method(D_METHOD("get_name"), &GDScriptFunctionObject::get_name);
+	ClassDB::bind_method(D_METHOD("get_owner"), &GDScriptFunctionObject::get_owner);
+}
+
+Variant GDScriptLambdaFunctionObject::apply(const Variant **p_args, int p_argcount, Variant::CallError &r_error) {
+	if (!is_valid()) {
+		r_error.error = Variant::CallError::CALL_ERROR_INSTANCE_IS_NULL;
+		return Variant();
+	}
+	const int t = variants.size();
+	const int s = function->lambda_variants.size();
+	Variant **v_vars = s ? (Variant **)memalloc(sizeof(Variant*)*function->lambda_variants.size()) : nullptr;
+	for (int i = 0; i < t && i < s; ++i) {
+		v_vars[i] = const_cast<Variant*>(&variants[i]);
+	}
+	Variant ret = function->call(instance, p_args, p_argcount, r_error, nullptr, (const Variant**)v_vars);
+	if (v_vars) {
+		memfree(v_vars);
+	}
+	return ret;
+}
+
+Variant GDScriptLambdaFunctionObject::apply_with(Object *p_target, const Array p_args) {
+	ERR_FAIL_V_MSG(Variant(), "Lambda function don't support calling with target.");
+}
+
+GDScriptLambdaFunctionObject::~GDScriptLambdaFunctionObject() {
+	if (instance) {
+		instance->remove_lambda_function(this);
+	}
 }
