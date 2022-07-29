@@ -10,6 +10,7 @@ def configure(env):
 
     modules = [
         "core",
+        "breakpad",
         "visual",
         "bulletkit",
         "blitter",

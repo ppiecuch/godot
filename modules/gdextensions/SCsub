@@ -83,6 +83,19 @@ thirdparty_sources = [
 if env["tools"] and is_enabled("qrcodetexture"):
     modules += ["qrcodetexture"]
 
+if is_enabled("breakpad"):
+    arch = env["arch"] if "arch" in env and env["arch"] else platform.machine()
+    if arch == "x64":
+        arch = "x86_64"
+    elif arch == "mips":
+        arch = "mips32"
+    if env["platform"] == "x11" and arch in ["aarch64", "x86_64"]:
+        env_module.Append(CPPPATH=["thirdparty/breakpad_client/linux/include"])
+        env.Append(LIBPATH=[os.path.realpath(os.curdir) + "/thirdparty/breakpad_client/linux/%s" % arch])
+    else:
+        print("(GDextensions) Breakpad crash reporter is not supported on platform '%s/%s'." % (env["platform"], arch))
+        env["enable_gdextensions_submodules"].remove("breakpad")
+
 if env["platform"] == "iphone" or env["platform"] == "osx":
     modules += ["multipeer"]
     thirdparty_sources += Glob("thirdparty/MultiPeerKit/Sources/Common/*.m")
@@ -309,6 +322,8 @@ lib = env_module.Library("gdextensions", thirdparty_sources + sources) # Compile
 env.Prepend(LIBS=[lib]) # Add the library as a dependency of the final executable
 if is_enabled("media/ffmpeg"):
     env.Prepend(LIBS=["avformat", "avcodec", "avutil", "swresample", "swscale"])
+if is_enabled("breakpad"):
+    env.Prepend(LIBS=["breakpad_client"])
 
 if modules:
     sub_enabled = []
