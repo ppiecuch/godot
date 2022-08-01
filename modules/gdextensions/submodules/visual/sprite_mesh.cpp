@@ -586,6 +586,3 @@ SpriteMesh::SpriteMesh() {
 	_mesh_active_surface = 0;
 	_mesh_debug = false;
 }
-
-SpriteMesh::~SpriteMesh() {
-}

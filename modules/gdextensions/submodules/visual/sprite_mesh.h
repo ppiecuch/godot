@@ -155,7 +155,6 @@ public:
 	virtual Rect2 get_anchorable_rect() const;
 
 	SpriteMesh();
-	~SpriteMesh();
 };
 
 #endif // GD_SPRITE_MESH_H
