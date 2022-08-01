@@ -168,19 +168,20 @@ static inline void _trace(int line, const char *file, const String &text) {
 	std::for_each(std::begin(range), std::end(range), [&](decltype(range)::value_type &e) { e->func; })
 
 namespace gd {
-	template<bool B> struct isEnabled {
-		static constexpr bool value = B; // Template for avoiding MSVC: C4127: conditional expression is constant
-	};
+template <bool B>
+struct isEnabled {
+	static constexpr bool value = B; // Template for avoiding MSVC: C4127: conditional expression is constant
+};
 
-	inline constexpr bool ignoreC4127(bool _x) {
-		return _x;
-	}
+inline constexpr bool ignoreC4127(bool _x) {
+	return _x;
 }
+} //namespace gd
 
 #if _MSC_VER
-# define BX_IGNORE_C4127(_x) gd::ignoreC4127(!!(_x) )
+#define BX_IGNORE_C4127(_x) gd::ignoreC4127(!!(_x))
 #else
-# define BX_IGNORE_C4127(_x) (!!(_x) )
+#define BX_IGNORE_C4127(_x) (!!(_x))
 #endif
 
 #define GD_ENABLED(_x) GD_IGNORE_C4127(gd::isEnabled<!!(_x)>::value)

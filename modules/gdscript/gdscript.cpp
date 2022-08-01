@@ -1215,16 +1215,17 @@ void GDScriptInstance::call_multilevel(const StringName &p_method, const Variant
 }
 
 Ref<GDScriptFunctionObject> GDScriptInstance::get_function(StringName p_name) {
-	const GDScript *sptr=script.ptr();
+	const GDScript *sptr = script.ptr();
 	while (sptr) {
-		const Map<StringName, Ref<GDScriptFunctionObject> >::Element *E = functions.find(p_name);
+		const Map<StringName, Ref<GDScriptFunctionObject>>::Element *E = functions.find(p_name);
 		if (E) {
 			return E->get();
 		} else {
 			const Map<StringName, GDScriptFunction *>::Element *E_ = sptr->member_functions.find(p_name);
 			if (E_) {
 				const GDScriptFunction *gdfunc = E_->get();
-				if (gdfunc->_lambda) return nullptr;
+				if (gdfunc->_lambda)
+					return nullptr;
 				Ref<GDScriptFunctionObject> func = memnew(GDScriptFunctionObject);
 				func->instance = const_cast<GDScriptInstance *>(this);
 				func->function = const_cast<GDScriptFunction *>(gdfunc);
@@ -1237,19 +1238,20 @@ Ref<GDScriptFunctionObject> GDScriptInstance::get_function(StringName p_name) {
 	return nullptr;
 }
 
-Ref<GDScriptLambdaFunctionObject>  GDScriptInstance::get_lambda_function(StringName p_name, Variant *p_stack, int p_stack_size) {
+Ref<GDScriptLambdaFunctionObject> GDScriptInstance::get_lambda_function(StringName p_name, Variant *p_stack, int p_stack_size) {
 	const GDScript *sptr = script.ptr();
 	while (sptr) {
 		const Map<StringName, GDScriptFunction *>::Element *E_ = sptr->member_functions.find(p_name);
 		if (E_) {
 			Ref<GDScriptLambdaFunctionObject> func = memnew(GDScriptLambdaFunctionObject);
-			func->instance = const_cast<GDScriptInstance*>(this);
+			func->instance = const_cast<GDScriptInstance *>(this);
 			const GDScriptFunction *gdfunc = E_->get();
-			func->function = const_cast<GDScriptFunction*>(gdfunc);
+			func->function = const_cast<GDScriptFunction *>(gdfunc);
 
 			for (int i = 0; i < gdfunc->lambda_variants.size(); ++i) {
 				int idx = gdfunc->lambda_variants[i];
-				if (p_stack_size <= idx) return nullptr;
+				if (p_stack_size <= idx)
+					return nullptr;
 				func->variants.push_back(Variant(p_stack[idx]));
 			}
 			lambda_functions.push_back(func.ptr());

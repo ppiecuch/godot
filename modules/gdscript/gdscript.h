@@ -240,15 +240,15 @@ class GDScriptInstance : public ScriptInstance {
 	Map<StringName, int> member_indices_cache; //used only for hot script reloading
 #endif
 	Vector<Variant> members;
-	Map<StringName, Ref<GDScriptFunctionObject> > functions;
-	Vector< GDScriptLambdaFunctionObject* > lambda_functions;
+	Map<StringName, Ref<GDScriptFunctionObject>> functions;
+	Vector<GDScriptLambdaFunctionObject *> lambda_functions;
 	bool base_ref;
 
 	SelfList<GDScriptFunctionState>::List pending_func_states;
 
 	Ref<GDScriptFunctionObject> get_function(StringName p_name);
 	Ref<GDScriptLambdaFunctionObject> get_lambda_function(StringName p_name, Variant *p_stack, int p_stack_size);
-	_FORCE_INLINE_ void remove_lambda_function( GDScriptLambdaFunctionObject *func) {lambda_functions.erase(func);}
+	_FORCE_INLINE_ void remove_lambda_function(GDScriptLambdaFunctionObject *func) { lambda_functions.erase(func); }
 
 	void _ml_call_reversed(GDScript *sptr, const StringName &p_method, const Variant **p_args, int p_argcount);
 

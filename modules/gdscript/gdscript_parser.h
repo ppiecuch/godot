@@ -240,7 +240,7 @@ public:
 			if (!body->variables.has(p_key) && !body->arguments.has(p_key)) {
 				if (!require_keys.has(p_key)) {
 					require_keys.push_back(p_key);
-				} else if (LambdaFunctionNode *func = dynamic_cast<LambdaFunctionNode*>(parent)) {
+				} else if (LambdaFunctionNode *func = dynamic_cast<LambdaFunctionNode *>(parent)) {
 					func->insert_require(p_key);
 				}
 			}
@@ -273,7 +273,8 @@ public:
 		}
 
 		_FORCE_INLINE_ bool is_stack_argument(const StringName &identifier) const {
-			return arguments.has(identifier) ? true : parent_block ? parent_block->is_stack_argument(identifier) : false;
+			return arguments.has(identifier) ? true : parent_block ? parent_block->is_stack_argument(identifier)
+																   : false;
 		}
 
 		_FORCE_INLINE_ bool outer_stack(const StringName &identifier) const {

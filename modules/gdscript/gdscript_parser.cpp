@@ -715,7 +715,7 @@ GDScriptParser::Node *GDScriptParser::_parse_expression(Node *p_parent, bool p_s
 				}
 
 				if (current_block && current_block->outer_stack(identifier) && current_function) {
-					if (LambdaFunctionNode *in = dynamic_cast<LambdaFunctionNode*>(current_function)) {
+					if (LambdaFunctionNode *in = dynamic_cast<LambdaFunctionNode *>(current_function)) {
 						in->insert_require(identifier);
 					}
 				}
