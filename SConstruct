@@ -239,6 +239,16 @@ else:
     if selected_platform != "":
         print("Automatically detected platform: " + selected_platform)
 
+if selected_platform == "macos":
+    # Alias for forward compatibility.
+    print('Platform "macos" is still called "osx" in Godot 3.x. Building for platform "osx".')
+    selected_platform = "osx"
+
+if selected_platform == "ios":
+    # Alias for forward compatibility.
+    print('Platform "ios" is still called "iphone" in Godot 3.x. Building for platform "iphone".')
+    selected_platform = "iphone"
+
 if selected_platform in ["linux", "bsd", "linuxbsd"]:
     if selected_platform == "linuxbsd":
         # Alias for forward compatibility.
@@ -759,6 +769,9 @@ if selected_platform in platform_list:
 
     # Microsoft Visual Studio Project Generation
     if env["vsproj"]:
+        if os.name != "nt":
+            print("Error: The `vsproj` option is only usable on Windows with Visual Studio.")
+            Exit(255)
         env["CPPPATH"] = [Dir(path) for path in env["CPPPATH"]]
         methods.generate_vs_project(env, GetOption("num_jobs"))
         methods.generate_cpp_hint_file("cpp.hint")

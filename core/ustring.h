@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef USTRING_H
-#define USTRING_H
+#ifndef USTRING_GODOT_H
+#define USTRING_GODOT_H
 
 #include "core/array.h"
 #include "core/cowdata.h"
@@ -310,7 +310,7 @@ public:
 
 	CharString ascii(bool p_allow_extended = false) const;
 	CharString utf8() const;
-	bool parse_utf8(const char *p_utf8, int p_len = -1); //return true on error
+	bool parse_utf8(const char *p_utf8, int p_len = -1, bool p_skip_cr = false); //return true on error
 	static String utf8(const char *p_utf8, int p_len = -1);
 	static String utf8(const CharString &p_utf8);
 
@@ -467,4 +467,4 @@ String RTR(const String &);
 bool is_symbol(CharType c);
 bool select_word(const String &p_s, int p_col, int &r_beg, int &r_end);
 
-#endif // USTRING_H
+#endif // USTRING_GODOT_H

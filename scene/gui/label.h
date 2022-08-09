@@ -263,4 +263,4 @@ VARIANT_ENUM_CAST(Label::VAlign);
 VARIANT_ENUM_CAST(Label::TransitionEase);
 VARIANT_ENUM_CAST(Label::TransitionEffect);
 
-#endif
+#endif // LABEL_H

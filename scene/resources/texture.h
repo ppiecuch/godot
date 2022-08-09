@@ -928,4 +928,4 @@ public:
 	~ExternalTexture();
 };
 
-#endif
+#endif // TEXTURE_H

@@ -397,4 +397,4 @@ VARIANT_ENUM_CAST(Image::CompressMode)
 VARIANT_ENUM_CAST(Image::CompressSource)
 VARIANT_ENUM_CAST(Image::AlphaMode)
 
-#endif
+#endif // IMAGE_H

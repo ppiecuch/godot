@@ -81,6 +81,7 @@
 #include "editor/editor_plugin.h"
 #include "editor/editor_properties.h"
 #include "editor/editor_property_name_processor.h"
+#include "editor/editor_quick_open.h"
 #include "editor/editor_resource_picker.h"
 #include "editor/editor_resource_preview.h"
 #include "editor/editor_run_native.h"
@@ -171,7 +172,6 @@
 #include "editor/progress_dialog.h"
 #include "editor/project_export.h"
 #include "editor/project_settings_editor.h"
-#include "editor/quick_open.h"
 #include "editor/register_exporters.h"
 #include "editor/run_settings_dialog.h"
 #include "editor/script_editor_debugger.h"
@@ -760,6 +760,7 @@ void EditorNode::_fs_changed() {
 
 	// FIXME: Move this to a cleaner location, it's hacky to do this is _fs_changed.
 	String export_error;
+	Error err = OK;
 	if (export_defer.preset != "" && !EditorFileSystem::get_singleton()->is_scanning()) {
 		String preset_name = export_defer.preset;
 		// Ensures export_project does not loop infinitely, because notifications may
@@ -777,6 +778,7 @@ void EditorNode::_fs_changed() {
 		if (preset.is_null()) {
 			DirAccessRef da = DirAccess::create(DirAccess::ACCESS_RESOURCES);
 			if (da->file_exists("res://export_presets.cfg")) {
+				err = FAILED;
 				export_error = vformat(
 						"Invalid export preset name: %s.\nThe following presets were detected in this project's `export_presets.cfg`:\n\n",
 						preset_name);
@@ -785,17 +787,19 @@ void EditorNode::_fs_changed() {
 					export_error += vformat("        \"%s\"\n", EditorExport::get_singleton()->get_export_preset(i)->get_name());
 				}
 			} else {
+				err = FAILED;
 				export_error = "This project doesn't have an `export_presets.cfg` file at its root.\nCreate an export preset from the \"Project > Export\" dialog and try again.";
 			}
 		} else {
 			Ref<EditorExportPlatform> platform = preset->get_platform();
 			const String export_path = export_defer.path.empty() ? preset->get_export_path() : export_defer.path;
 			if (export_path.empty()) {
+				err = FAILED;
 				export_error = vformat("Export preset \"%s\" doesn't have a default export path, and none was specified.", preset_name);
 			} else if (platform.is_null()) {
+				err = FAILED;
 				export_error = vformat("Export preset \"%s\" doesn't have a matching platform.", preset_name);
 			} else {
-				Error err = OK;
 				if (export_defer.pack_only) { // Only export .pck or .zip data pack.
 					if (export_path.ends_with(".zip")) {
 						err = platform->export_zip(preset, export_defer.debug, export_path);
@@ -816,14 +820,16 @@ void EditorNode::_fs_changed() {
 				if (err != OK) {
 					export_error = vformat("Project export for preset \"%s\" failed.", preset_name);
 				} else if (platform->get_worst_message_type() >= EditorExportPlatform::EXPORT_MESSAGE_WARNING) {
-					export_error = vformat("Project export for preset \"%s\" completed with errors.", preset_name);
+					export_error = vformat("Project export for preset \"%s\" completed with warnings.", preset_name);
 				}
 			}
 		}
 
-		if (!export_error.empty()) {
+		if (err != OK) {
 			ERR_PRINT(export_error);
 			OS::get_singleton()->set_exit_code(EXIT_FAILURE);
+		} else if (!export_error.empty()) {
+			WARN_PRINT(export_error);
 		}
 		_exit_editor();
 	}
@@ -1630,9 +1636,16 @@ void EditorNode::restart_editor() {
 	_exit_editor();
 
 	List<String> args;
+
 	args.push_back("--path");
 	args.push_back(ProjectSettings::get_singleton()->get_resource_path());
+
 	args.push_back("-e");
+
+	if (OS::get_singleton()->is_disable_crash_handler()) {
+		args.push_back("--disable-crash-handler");
+	}
+
 	if (to_reopen != String()) {
 		args.push_back(to_reopen);
 	}
@@ -2035,6 +2048,8 @@ void EditorNode::_edit_current(bool p_skip_foreign) {
 	bool disable_folding = bool(EDITOR_GET("interface/inspector/disable_folding"));
 	bool is_resource = current_obj->is_class("Resource");
 	bool is_node = current_obj->is_class("Node");
+	bool stay_in_script_editor_on_node_selected = bool(EDITOR_GET("text_editor/navigation/stay_in_script_editor_on_node_selected"));
+	bool skip_main_plugin = false;
 
 	String editable_warning; //none by default
 
@@ -2071,6 +2086,9 @@ void EditorNode::_edit_current(bool p_skip_foreign) {
 			node_dock->set_node(current_node);
 			scene_tree_dock->set_selected(current_node);
 			inspector_dock->update(current_node);
+			if (!inspector_only && !skip_main_plugin) {
+				skip_main_plugin = stay_in_script_editor_on_node_selected && ScriptEditor::get_singleton()->is_visible_in_tree();
+			}
 		} else {
 			node_dock->set_node(nullptr);
 			scene_tree_dock->set_selected(nullptr);
@@ -2145,7 +2163,7 @@ void EditorNode::_edit_current(bool p_skip_foreign) {
 			}
 		}
 
-		if (main_plugin) {
+		if (main_plugin && !skip_main_plugin) {
 			// special case if use of external editor is true
 			Resource *current_res = Object::cast_to<Resource>(current_obj);
 			if (main_plugin->get_name() == "Script" && current_obj->get_class_name() != StringName("VisualScript") && current_res && !current_res->get_path().empty() && current_res->get_path().find("::") == -1 && (bool(EditorSettings::get_singleton()->get("text_editor/external/use_external_editor")) || overrides_external_editor(current_obj))) {

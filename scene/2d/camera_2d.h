@@ -85,7 +85,7 @@ protected:
 	void _update_scroll();
 	void _setup_viewport();
 
-	void set_current(bool p_current);
+	void _set_current(bool p_current);
 	void _make_current(Object *p_which);
 
 	bool screen_drawing_enabled;
