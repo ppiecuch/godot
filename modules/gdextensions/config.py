@@ -40,6 +40,7 @@ def configure(env):
         "nakama1",
         "discord",
         "parseplatform",
+        "playfab",
         "qrcodetexture",
         "landiscovery",
         "multipeer",

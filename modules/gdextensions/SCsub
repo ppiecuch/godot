@@ -150,15 +150,15 @@ if not env["disable_3d"]:
             modules += ["meshslicer"]
             sources += Glob("submodules/meshslicer/utils/*.cpp")
 
-if env["os_family"] in ["os_windows", "os_unix"]:
-    modules += ["unqlite"]
-    thirdparty_sources += Glob("thirdparty/unqlite/*.c")
-
 if is_enabled("ldrloader"):
     sources += \
         Glob("submodules/ldrloader/ldrawlib/*.c") + \
         Glob("submodules/ldrloader/libldr/*.cpp") + \
         Glob("submodules/ldrloader/libldr/*.c")
+
+if env["os_family"] in ["os_windows", "os_unix"]:
+    modules += ["unqlite"]
+    thirdparty_sources += Glob("thirdparty/unqlite/*.c")
 
 if is_enabled("sqlite"):
     thirdparty_sources += Glob("thirdparty/sqlite/*.c")
@@ -171,6 +171,12 @@ if os.path.isdir("iap") and is_enabled("iap"):
         env.Append(LINKFLAGS=["-framework", "StoreKit"])
     elif env["platform"] == "android":
         sources += Glob("iap/android/*.cpp")
+
+if is_enabled("playfab"):
+    modules += ["playfab"]
+    env_module.Prepend(CPPPATH=["thirdparty/xplatcppsdk/code/include"])
+    env_module.Append(CPPDEFINES=["PLAYFAB_PLATFORM_GODOT"])
+    thirdparty_sources += Glob("thirdparty/xplatcppsdk/source/playfab/*.cpp")
 
 if env["platform"] == "psvita" and is_enabled("blitter"):
     sources += Glob("submodules/blitter/arm/*.S")
