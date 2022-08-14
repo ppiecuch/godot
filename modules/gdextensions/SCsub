@@ -174,9 +174,9 @@ if os.path.isdir("iap") and is_enabled("iap"):
 
 if is_enabled("playfab"):
     modules += ["playfab"]
-    env_module.Prepend(CPPPATH=["thirdparty/xplatcppsdk/code/include"])
+    env_module.Prepend(CPPPATH=["thirdparty/xplatcppsdk/code/include", "thirdparty/xplatcppsdk/code", "thirdparty/xplatcppsdk/external/jsoncpp/include"])
     env_module.Append(CPPDEFINES=["PLAYFAB_PLATFORM_GODOT"])
-    thirdparty_sources += Glob("thirdparty/xplatcppsdk/source/playfab/*.cpp")
+    thirdparty_sources += Glob("thirdparty/xplatcppsdk/code/source/playfab/*.cpp")
 
 if env["platform"] == "psvita" and is_enabled("blitter"):
     sources += Glob("submodules/blitter/arm/*.S")

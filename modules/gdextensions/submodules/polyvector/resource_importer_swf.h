@@ -44,7 +44,7 @@
 #include "libshockwave/swfparser.h"
 
 using N = uint32_t;
-#include "json/json.h"
+#include "nljson/json.h"
 using json = nlohmann::json;
 
 #define RISWF_SHAPE_AREA_THRESHOLD 0.1
