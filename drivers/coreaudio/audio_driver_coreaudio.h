@@ -124,4 +124,4 @@ public:
 
 #endif
 
-#endif
+#endif // AUDIO_DRIVER_COREAUDIO_H

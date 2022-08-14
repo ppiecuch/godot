@@ -225,4 +225,4 @@ public:
 
 #endif // not handles
 
-#endif
+#endif // RID_H

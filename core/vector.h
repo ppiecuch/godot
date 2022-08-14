@@ -343,4 +343,4 @@ Vector<T> vector(const T &p_arg1, const T &p_arg2, const T &p_arg3, const T &p_a
 }
 } // namespace helper
 
-#endif
+#endif // VECTOR_H

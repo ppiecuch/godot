@@ -100,7 +100,7 @@
 			<argument index="2" name="z_near" type="float" />
 			<argument index="3" name="z_far" type="float" />
 			<description>
-				Sets the camera projection to frustum mode (see [constant PROJECTION_FRUSTUM]), by specifying a [code]size[/code], an [code]offset[/code], and the [code]z_near[/code] and [code]z_far[/code] clip planes in world space units.
+				Sets the camera projection to frustum mode (see [constant PROJECTION_FRUSTUM]), by specifying a [code]size[/code], an [code]offset[/code], and the [code]z_near[/code] and [code]z_far[/code] clip planes in world space units. See also [member frustum_offset].
 			</description>
 		</method>
 		<method name="set_orthogonal">
@@ -142,6 +142,7 @@
 		</member>
 		<member name="current" type="bool" setter="set_current" getter="is_current" default="false">
 			If [code]true[/code], the ancestor [Viewport] is currently using this camera.
+			If multiple cameras are in the scene, one will always be made current. For example, if two [Camera] nodes are present in the scene and only one is current, setting one camera's [member current] to [code]false[/code] will cause the other camera to be made current.
 		</member>
 		<member name="doppler_tracking" type="int" setter="set_doppler_tracking" getter="get_doppler_tracking" enum="Camera.DopplerTracking" default="0">
 			If not [constant DOPPLER_TRACKING_DISABLED], this camera will simulate the [url=https://en.wikipedia.org/wiki/Doppler_effect]Doppler effect[/url] for objects changed in particular [code]_process[/code] methods. The Doppler effect is only simulated for [AudioStreamPlayer3D] nodes that have [member AudioStreamPlayer3D.doppler_tracking] set to a value other than [constant AudioStreamPlayer3D.DOPPLER_TRACKING_DISABLED].
@@ -163,6 +164,7 @@
 		</member>
 		<member name="frustum_offset" type="Vector2" setter="set_frustum_offset" getter="get_frustum_offset" default="Vector2( 0, 0 )">
 			The camera's frustum offset. This can be changed from the default to create "tilted frustum" effects such as [url=https://zdoom.org/wiki/Y-shearing]Y-shearing[/url].
+			[b]Note:[/b] Only effective if [member projection] is [constant PROJECTION_FRUSTUM].
 		</member>
 		<member name="h_offset" type="float" setter="set_h_offset" getter="get_h_offset" default="0.0">
 			The horizontal (X) offset of the camera viewport.

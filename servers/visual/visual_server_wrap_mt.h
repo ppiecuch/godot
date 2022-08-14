@@ -734,4 +734,4 @@ public:
 #endif
 #undef SYNC_DEBUG
 
-#endif
+#endif // VISUAL_SERVER_WRAP_MT_H

@@ -603,4 +603,4 @@ VARIANT_ENUM_CAST(Viewport::DebugDraw);
 VARIANT_ENUM_CAST(Viewport::ClearMode);
 VARIANT_ENUM_CAST(Viewport::RenderInfo);
 
-#endif
+#endif // VIEWPORT_H

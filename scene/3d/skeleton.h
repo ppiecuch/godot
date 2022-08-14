@@ -248,4 +248,4 @@ public:
 	~Skeleton();
 };
 
-#endif
+#endif // SKELETON_H

@@ -109,9 +109,21 @@ def update_version(module_version_string=""):
     if os.path.isfile(os.path.join(gitfolder, "HEAD")):
         head = open_utf8(os.path.join(gitfolder, "HEAD"), "r").readline().strip()
         if head.startswith("ref: "):
-            head = os.path.join(gitfolder, head[5:])
+            ref = head[5:]
+            head = os.path.join(gitfolder, ref)
+            packedrefs = os.path.join(gitfolder, "packed-refs")
             if os.path.isfile(head):
                 githash = open(head, "r").readline().strip()
+            elif os.path.isfile(packedrefs):
+                # Git may pack refs into a single file. This code searches .git/packed-refs file for the current ref's hash.
+                # https://mirrors.edge.kernel.org/pub/software/scm/git/docs/git-pack-refs.html
+                for line in open(packedrefs, "r").read().splitlines():
+                    if line.startswith("#"):
+                        continue
+                    (line_hash, line_ref) = line.split(" ")
+                    if ref == line_ref:
+                        githash = line_hash
+                        break
         else:
             githash = head
 
@@ -680,8 +692,18 @@ def find_visual_c_batch_file(env):
         find_batch_file,
     )
 
+    # Syntax changed in SCons 4.4.0.
+    from SCons import __version__ as scons_raw_version
+
+    scons_ver = env._get_major_minor_revision(scons_raw_version)
+
     version = get_default_version(env)
-    (host_platform, target_platform, _) = get_host_target(env)
+
+    if scons_ver >= (4, 4, 0):
+        (host_platform, target_platform, _) = get_host_target(env, version)
+    else:
+        (host_platform, target_platform, _) = get_host_target(env)
+
     return find_batch_file(env, version, host_platform, target_platform)[0]
 
 

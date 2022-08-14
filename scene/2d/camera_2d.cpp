@@ -259,9 +259,8 @@ void Camera2D::_notification(int p_what) {
 			// if a camera enters the tree that is set to current,
 			// it should take over as the current camera, and mark
 			// all other cameras as non current
-			set_current(current);
-
 			first = true;
+			_set_current(current);
 
 		} break;
 		case NOTIFICATION_EXIT_TREE: {
@@ -421,7 +420,7 @@ void Camera2D::_make_current(Object *p_which) {
 	}
 }
 
-void Camera2D::set_current(bool p_current) {
+void Camera2D::_set_current(bool p_current) {
 	if (p_current) {
 		make_current();
 	} else {
@@ -455,7 +454,9 @@ void Camera2D::clear_current() {
 void Camera2D::set_limit(Margin p_margin, int p_limit) {
 	ERR_FAIL_INDEX((int)p_margin, 4);
 	limit[p_margin] = p_limit;
+	Point2 old_smoothed_camera_pos = smoothed_camera_pos;
 	_update_scroll();
+	smoothed_camera_pos = old_smoothed_camera_pos;
 }
 
 int Camera2D::get_limit(Margin p_margin) const {
@@ -670,7 +671,7 @@ void Camera2D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_process_mode", "mode"), &Camera2D::set_process_mode);
 	ClassDB::bind_method(D_METHOD("get_process_mode"), &Camera2D::get_process_mode);
 
-	ClassDB::bind_method(D_METHOD("set_current", "current"), &Camera2D::set_current);
+	ClassDB::bind_method(D_METHOD("set_current", "current"), &Camera2D::_set_current);
 	ClassDB::bind_method(D_METHOD("is_current"), &Camera2D::is_current);
 	ClassDB::bind_method(D_METHOD("_make_current"), &Camera2D::_make_current);
 
