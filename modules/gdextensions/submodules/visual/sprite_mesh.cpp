@@ -195,7 +195,7 @@ void SpriteMesh::_notification(int p_what) {
 			draw_mesh(mesh, texture, normal_map, mask, xform);
 			if (_mesh_debug) {
 				draw_rect(Rect2(ofs, s), Color::named("yellow"), false);
-				if (mesh_outline.size()) {
+				if (mesh_outline§1.size()) {
 					draw_polyline(mesh_outline, Color::named("magenta"));
 				}
 			}
