@@ -218,7 +218,10 @@ void _register_global_resources(Object *ref) {
 static void editor_init_callback() {
 	Engine::get_singleton()->add_singleton(Engine::Singleton("GodotErrorHandler", memnew(GodotErrorHandler)));
 
+#ifdef GDEXT_VISUAL_ENABLED
 	EditorNode::get_singleton()->add_editor_plugin(memnew(Cable2DEditorPlugin(EditorNode::get_singleton()))); /* Cable2D */
+	EditorNode::get_singleton()->add_editor_plugin(memnew(SpriteMeshEditorPlugin(EditorNode::get_singleton()))); /* SpriteMesh */
+#endif
 
 	EditorPlugins::add_by_type<ProceduralAnimationEditorPlugin>(); /* ProceduralAnimation */
 }

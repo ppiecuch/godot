@@ -49,7 +49,7 @@ class SpaceMouse : public Object {
 		Vector3 rotation;
 	} SpaceMotion;
 
-	hid_device *space_device;
+	hid_device *space_device = nullptr;
 	unsigned char space_buffer[256];
 	SpaceMotion motion_data;
 	SpaceData space_data = { 0, 0, 0, 0, 0, 0 };

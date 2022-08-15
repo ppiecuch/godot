@@ -206,18 +206,18 @@ void Starfield::move(real_t p_delta, Vector2 p_movement) {
 				}
 			}
 			const Vector2 delta = p_movement * (layer.movement_scale_with_alpha ? alpha : 1) * layer.movement_scale;
-			// move
-			position += delta;
-			// wrap
-			bool wrapx = false, wrapy = false;
-			if ((wrapx = position.x < 0))
-				position = { layer.layer_size.x, random_value(0, layer.layer_size.y) };
-			else if ((wrapx = position.x > layer.layer_size.x))
-				position = { 0, random_value(0, layer.layer_size.y) };
-			if ((wrapy = position.y < 0))
+			position += delta; // move
+			bool wrapx = false, wrapy = false; // wrap
+			if ((wrapx = position.x < -layer.star_size)) {
+				position = { layer.layer_size.x + layer.star_size, random_value(0, layer.layer_size.y) };
+			} else if ((wrapx = position.x > layer.layer_size.x + layer.star_size)) {
+				position = { 0, random_value(-layer.star_size, layer.layer_size.y) };
+			}
+			if ((wrapy = position.y < 0)) {
 				position = { random_value(0, layer.layer_size.x), layer.layer_size.y };
-			else if ((wrapy = position.y > layer.layer_size.y))
+			} else if ((wrapy = position.y > layer.layer_size.y)) {
 				position = { random_value(0, layer.layer_size.x), 0 };
+			}
 			// regenerate rest of the quad if necessery
 			if (layer.star_size > 0 || layer.texture_id != STAR_POINT) {
 				int quad_origin = p;
@@ -237,7 +237,7 @@ void Starfield::move(real_t p_delta, Vector2 p_movement) {
 					w[++p] += delta;
 				}
 				// different pulsation phase for texture animation
-				//const real_t anim_speed = 1/MAX(layer.star_pulsation, 0.2);
+				// const real_t anim_speed = 1/MAX(layer.star_pulsation, 0.2);
 				StarTexture new_texture_id = layer.texture_id;
 				switch (layer.texture_id) {
 					case STAR12_TEXTURE_FRAME1:
@@ -262,7 +262,9 @@ void Starfield::move(real_t p_delta, Vector2 p_movement) {
 						// not an animated texture
 						continue;
 				}
+
 #define ANIM_FRAMES 120
+
 				if (new_texture_id != layer.texture_id) {
 					const int next_frame = _counter % int(ANIM_FRAMES * (layer.star_pulsation == 0 ? 1 : 1 / layer.star_pulsation));
 					if (next_frame == 0) {
@@ -324,8 +326,9 @@ void Starfield::regenerate(layerid_t p_layer) {
 
 	auto &layer = _layers[p_layer];
 
-	if (!layer._dirty)
+	if (!layer._dirty) {
 		return;
+	}
 
 	PoolPoint2Array positions;
 	PoolColorArray colors;
