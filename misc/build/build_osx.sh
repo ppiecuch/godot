@@ -91,7 +91,7 @@ if [ "$1" == "templates" ]; then
 	scons -j$CPU platform=osx arch=arm64 tools=no target=release use_lto=yes $SCONS_FLAGS
 	strip "$GODOT_DIR/bin/godot.osx.opt.x86_64" "$GODOT_DIR/bin/godot.osx.opt.x86_64.s"
 	strip "$GODOT_DIR/bin/godot.osx.opt.arm64" "$GODOT_DIR/bin/godot.osx.opt.arm64.s"
-	lipo -create bin/godot.osx.tools.x86_64.s bin/godot.osx.tools.arm64.s -output bin/godot.osx.opt.64
+	lipo -create bin/godot.osx.opt.x86_64.s bin/godot.osx.opt.arm64.s -output bin/godot.osx.opt.64
 	mv "$GODOT_DIR/bin/godot.osx.opt.64" "$TEMPLATES_DIR"
 	rm "$GODOT_DIR/bin/godot.osx.opt.x86_64" "$GODOT_DIR/bin/godot.osx.opt.arm64" "$GODOT_DIR/bin/godot.osx.opt.x86_64.s" "$GODOT_DIR/bin/godot.osx.opt.arm64.s"
 

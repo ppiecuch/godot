@@ -33,6 +33,7 @@
 
 #include "core/math/vector3.h"
 #include "scene/2d/sprite.h"
+#include "scene/gui/box_container.h"
 #include "scene/resources/mesh.h"
 #include "scene/resources/texture.h"
 
@@ -40,7 +41,7 @@ class SpriteMesh : public Node2D {
 	GDCLASS(SpriteMesh, Node2D);
 
 private:
-	Ref<Mesh> mesh;
+	Ref<ArrayMesh> mesh;
 	Ref<Texture> texture;
 	Ref<Texture> normal_map;
 	Ref<Texture> mask;
@@ -77,7 +78,7 @@ private:
 	};
 	Vector<_FrameInfo> _frames;
 
-	Array _mesh_data;
+	Ref<Mesh> _mesh_ref;
 	Basis _mesh_xform;
 	bool _mesh_dirty;
 	bool _mesh_xform_dirty;
@@ -156,5 +157,63 @@ public:
 
 	SpriteMesh();
 };
+
+#ifdef TOOLS_ENABLED
+
+// Reference:
+// ----------
+// 1. https://github.com/ChaosWitchNikol/godot-plugin-rect-extents-2d
+
+#include "editor/editor_plugin.h"
+
+class SpriteMeshEditor : public VBoxContainer {
+	GDCLASS(SpriteMeshEditor, VBoxContainer);
+
+	EditorNode *editor;
+	SpriteMesh *node;
+	EditorSelection *editor_selection;
+
+	Ref<ArrayMesh> rotate_gizmo[4], scale_gizmo[3], scale_plane_gizmo[3];
+	Ref<SpatialMaterial> gizmo_color[3];
+	Ref<SpatialMaterial> plane_gizmo_color[3];
+	Ref<ShaderMaterial> rotate_gizmo_color[3];
+	Ref<SpatialMaterial> gizmo_color_hl[3];
+	Ref<SpatialMaterial> plane_gizmo_color_hl[3];
+	Ref<ShaderMaterial> rotate_gizmo_color_hl[3];
+
+	Ref<ArrayMesh> selection_box_xray;
+	Ref<ArrayMesh> selection_box;
+
+	void _init_indicators();
+	void _generate_selection_boxes();
+	Color _get_color(const StringName &p_name, const StringName &p_theme_type = StringName()) const;
+
+public:
+	SpriteMeshEditor(EditorNode *p_node);
+	~SpriteMeshEditor();
+};
+
+class SpriteMeshEditorPlugin : public EditorPlugin {
+	GDCLASS(SpriteMeshEditorPlugin, EditorPlugin);
+
+	EditorNode *editor;
+	SpriteMesh *node;
+	SpriteMeshEditor *sprite_mesh_editor;
+
+public:
+	virtual String get_name() const { return "SpriteMesh"; }
+	bool has_main_screen() const { return false; }
+	virtual void make_visible(bool p_visible);
+	virtual bool handles(Object *p_object) const { return Object::cast_to<SpriteMesh>(p_object) != nullptr; }
+	virtual void edit(Object *p_object);
+
+	virtual bool forward_canvas_gui_input(const Ref<InputEvent> &p_event);
+	virtual void forward_canvas_draw_over_viewport(Control *p_overlay);
+
+	SpriteMeshEditorPlugin(EditorNode *p_node);
+	~SpriteMeshEditorPlugin();
+};
+
+#endif // TOOLS_ENABLED
 
 #endif // GD_SPRITE_MESH_H

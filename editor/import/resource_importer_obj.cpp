@@ -410,7 +410,7 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 					mesh->surface_set_name(mesh->get_surface_count() - 1, current_group);
 				}
 
-				print_verbose("OBJ: Added surface :" + mesh->surface_get_name(mesh->get_surface_count() - 1));
+				print_verbose("OBJ: Added surface: " + mesh->surface_get_name(mesh->get_surface_count() - 1));
 				surf_tool->clear();
 				surf_tool->begin(Mesh::PRIMITIVE_TRIANGLES);
 			}

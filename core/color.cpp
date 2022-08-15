@@ -222,6 +222,13 @@ void Color::contrast() {
 	b = Math::fmod(b + 0.5, 1.0);
 }
 
+Color Color::contrast_bw() const {
+	const float gamma = 2.2;
+	const float L = 0.2126 * Math::pow(r, gamma) + 0.7152 * Math::pow(g, gamma) + 0.0722 * Math::pow(b, gamma);
+	const bool use_black = (L > Math::pow(0.5f, gamma));
+	return use_black ? Color(0, 0, 0) : Color(1, 1, 1);
+}
+
 Color Color::hex(uint32_t p_hex) {
 	float a = (p_hex & 0xFF) / 255.0;
 	p_hex >>= 8;

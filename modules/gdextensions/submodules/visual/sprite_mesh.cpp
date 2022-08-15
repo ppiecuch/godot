@@ -35,11 +35,15 @@
 #include "core/io/json.h"
 #include "core/math/math_funcs.h"
 #include "core/math/vector2.h"
+#include "core/variant.h"
+#include "editor/editor_node.h"
 #include "scene/3d/mesh_instance.h"
 #include "scene/resources/mesh.h"
 #include "scene/resources/mesh_data_tool.h"
+#include "scene/resources/surface_tool.h"
 
 #include "sprite_mesh.h"
+#include "thumb_wheel.h"
 #include "tinyexpr.h"
 
 // References:
@@ -52,6 +56,15 @@
 // https://github.com/Huangtingting93/Trace_outline/blob/main/trace_outline.py
 // * https://www.h3xed.com/programming/create-2d-mesh-outline-in-unity-silhouette
 // https://stackoverflow.com/questions/62748136/how-to-get-outer-edges-of-a-mesh-edges-which-are-part-of-only-one-triangle
+
+#define GIZMO_ARROW_SIZE 0.35
+#define GIZMO_RING_HALF_WIDTH 0.1
+#define GIZMO_SCALE_DEFAULT 0.15
+#define GIZMO_PLANE_SIZE 0.2
+#define GIZMO_PLANE_DST 0.3
+#define GIZMO_CIRCLE_SIZE 1.1
+#define GIZMO_SCALE_OFFSET (GIZMO_CIRCLE_SIZE + 0.3)
+#define GIZMO_ARROW_OFFSET (GIZMO_CIRCLE_SIZE + 0.3)
 
 #define get_mesh_surf_info(mesh) \
 	((Dictionary)(mesh->has_meta("_mesh_surf_info") ? (Dictionary)mesh->get_meta("_mesh_surf_info") : Dictionary()))
@@ -146,9 +159,15 @@ void SpriteMesh::_update_mesh_outline(const PoolVector3Array &p_vertices, const 
 }
 
 void SpriteMesh::_update_mesh_xform() {
-	if (mesh.is_valid() && !_mesh_data.empty()) {
-		if (ArrayMesh *array_mesh = cast_to<ArrayMesh>(*mesh)) {
-			PoolVector3Array vertexes = _mesh_data[VS::ARRAY_VERTEX];
+	if (_mesh_ref.is_valid()) {
+		if (!mesh.is_valid()) {
+			mesh.instance();
+		}
+		mesh->clear_mesh();
+		for (int s = 0; s < _mesh_ref->get_surface_count(); s++) {
+			Array mesh_array = _mesh_ref->surface_get_arrays(s);
+
+			PoolVector3Array vertexes = mesh_array[VS::ARRAY_VERTEX];
 			PoolVector3Array xform_vertexes;
 			ERR_FAIL_COND(xform_vertexes.resize(vertexes.size()) != OK);
 
@@ -157,22 +176,25 @@ void SpriteMesh::_update_mesh_xform() {
 				w[v] = _mesh_xform.xform(vertexes[v]);
 			}
 			// build transformed mesh
-			Array mesh_array = _mesh_data.duplicate();
 			mesh_array[VS::ARRAY_VERTEX] = xform_vertexes;
-			array_mesh->clear_mesh();
-			// array_mesh->surface_remove(active_frame);
-			// int surf_id = array_mesh->get_surface_count();
-			array_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array, Array(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
-
-			item_rect_changed();
+			if (((PoolColorArray)mesh_array[VS::ARRAY_COLOR]).size() == 0) {
+				// extract albedo color from material, since they are ignored in 2D
+				PoolColorArray colors;
+				Ref<SpatialMaterial> mat = _mesh_ref->surface_get_material(s);
+				if (mat.is_valid()) {
+					Color alb = mat->get_albedo();
+					colors.push_multi(xform_vertexes.size(), alb);
+				}
+				mesh_array[VS::ARRAY_COLOR] = colors;
+			}
+			mesh->add_surface_from_arrays(_mesh_ref->surface_get_primitive_type(s), mesh_array, Array());
 
 			// update outline shape
 			if (auto_collision_shape) {
-				_update_mesh_outline(xform_vertexes, _mesh_data[VS::ARRAY_INDEX]);
+				_update_mesh_outline(xform_vertexes, mesh_array[VS::ARRAY_INDEX]);
 			}
-		} else {
-			WARN_PRINT("Cannot transform non ArrayMesh object.");
 		}
+		item_rect_changed();
 	}
 }
 
@@ -204,20 +226,16 @@ void SpriteMesh::_notification(int p_what) {
 }
 
 void SpriteMesh::set_mesh(const Ref<Mesh> &p_mesh) {
-	if (mesh == p_mesh)
+	if (_mesh_ref == p_mesh) {
 		return;
+	}
 
 	if (*p_mesh && cast_to<ArrayMesh>(*p_mesh) == nullptr) {
 		WARN_PRINT("Not an ArrayMesh object: do not know how to transform this.");
 		return;
 	}
 
-	mesh = p_mesh;
-
-	_mesh_data.clear();
-	if (ArrayMesh *array_mesh = cast_to<ArrayMesh>(*mesh))
-		_mesh_data = array_mesh->surface_get_arrays(0);
-
+	_mesh_ref = p_mesh;
 	_mesh_dirty = true;
 	_update_transform();
 	item_rect_changed();
@@ -227,7 +245,7 @@ void SpriteMesh::set_mesh(const Ref<Mesh> &p_mesh) {
 }
 
 Ref<Mesh> SpriteMesh::get_mesh() const {
-	return mesh;
+	return _mesh_ref;
 }
 
 void SpriteMesh::_update_xform_values() {
@@ -481,9 +499,9 @@ Point2 SpriteMesh::get_offset() const {
 }
 
 Rect2 SpriteMesh::get_rect() const {
-	if (mesh.is_null())
+	if (mesh.is_null()) {
 		return Rect2(0, 0, 1, 1);
-
+	}
 	const AABB &aabb = mesh->get_aabb();
 
 	Size2 s(aabb.size.x, aabb.size.y);
@@ -570,6 +588,7 @@ void SpriteMesh::_bind_methods() {
 
 	ADD_SIGNAL(MethodInfo("texture_changed"));
 	ADD_SIGNAL(MethodInfo("mesh_changed"));
+	ADD_SIGNAL(MethodInfo("transform_changed"));
 }
 
 SpriteMesh::SpriteMesh() {
@@ -585,4 +604,353 @@ SpriteMesh::SpriteMesh() {
 	_mesh_xform_dirty = false;
 	_mesh_active_surface = 0;
 	_mesh_debug = false;
+}
+
+/// SpriteMeshEditorPlugin
+
+Color SpriteMeshEditor::_get_color(const StringName &p_name, const StringName &p_theme_type) const {
+	return EditorNode::get_singleton()->get_gui_base()->get_color(p_name, p_theme_type);
+}
+
+void SpriteMeshEditor::_init_indicators() {
+	{
+		for (int i = 0; i < 3; i++) {
+			Color col;
+			switch (i) {
+				case 0:
+					col = _get_color("axis_x_color", "Editor");
+					break;
+				case 1:
+					col = _get_color("axis_y_color", "Editor");
+					break;
+				case 2:
+					col = _get_color("axis_z_color", "Editor");
+					break;
+				default:
+					col = Color();
+					break;
+			}
+
+			col.a = EditorSettings::get_singleton()->get("editors/3d/manipulator_gizmo_opacity");
+
+			rotate_gizmo[i] = Ref<ArrayMesh>(memnew(ArrayMesh));
+			scale_gizmo[i] = Ref<ArrayMesh>(memnew(ArrayMesh));
+			scale_plane_gizmo[i] = Ref<ArrayMesh>(memnew(ArrayMesh));
+
+			Ref<SpatialMaterial> mat = memnew(SpatialMaterial);
+			mat->set_flag(SpatialMaterial::FLAG_UNSHADED, true);
+			mat->set_on_top_of_alpha();
+			mat->set_feature(SpatialMaterial::FEATURE_TRANSPARENT, true);
+			mat->set_albedo(col);
+			gizmo_color[i] = mat;
+
+			Ref<SpatialMaterial> mat_hl = mat->duplicate();
+			const Color albedo = col.from_hsv(col.get_h(), 0.25, 1.0, 1);
+			mat_hl->set_albedo(albedo);
+			gizmo_color_hl[i] = mat_hl;
+
+			Vector3 ivec;
+			ivec[i] = 1;
+			Vector3 nivec;
+			nivec[(i + 1) % 3] = 1;
+			nivec[(i + 2) % 3] = 1;
+			Vector3 ivec2;
+			ivec2[(i + 1) % 3] = 1;
+			Vector3 ivec3;
+			ivec3[(i + 2) % 3] = 1;
+
+			// Rotate
+			{
+				Ref<SurfaceTool> surftool = memnew(SurfaceTool);
+				surftool->begin(Mesh::PRIMITIVE_TRIANGLES);
+
+				int n = 128; // number of circle segments
+				int m = 3; // number of thickness segments
+
+				for (int j = 0; j < n; ++j) {
+					Basis basis = Basis(ivec, (Math_PI * 2.0f * j) / n);
+					Vector3 vertex = basis.xform(ivec2 * GIZMO_CIRCLE_SIZE);
+					for (int k = 0; k < m; ++k) {
+						Vector2 ofs = Vector2(Math::cos((Math_PI * 2.0 * k) / m), Math::sin((Math_PI * 2.0 * k) / m));
+						Vector3 normal = ivec * ofs.x + ivec2 * ofs.y;
+						surftool->add_normal(basis.xform(normal));
+						surftool->add_vertex(vertex);
+					}
+				}
+
+				for (int j = 0; j < n; ++j) {
+					for (int k = 0; k < m; ++k) {
+						int current_ring = j * m;
+						int next_ring = ((j + 1) % n) * m;
+						int current_segment = k;
+						int next_segment = (k + 1) % m;
+
+						surftool->add_index(current_ring + next_segment);
+						surftool->add_index(current_ring + current_segment);
+						surftool->add_index(next_ring + current_segment);
+
+						surftool->add_index(next_ring + current_segment);
+						surftool->add_index(next_ring + next_segment);
+						surftool->add_index(current_ring + next_segment);
+					}
+				}
+
+				Ref<Shader> rotate_shader = memnew(Shader);
+
+				rotate_shader->set_code(
+						"\n"
+						"shader_type spatial; \n"
+						"render_mode unshaded, depth_test_disable; \n"
+						"uniform vec4 albedo; \n"
+						"\n"
+						"mat3 orthonormalize(mat3 m) { \n"
+						"	vec3 x = normalize(m[0]); \n"
+						"	vec3 y = normalize(m[1] - x * dot(x, m[1])); \n"
+						"	vec3 z = m[2] - x * dot(x, m[2]); \n"
+						"	z = normalize(z - y * (dot(y,m[2]))); \n"
+						"	return mat3(x,y,z); \n"
+						"} \n"
+						"\n"
+						"void vertex() { \n"
+						"	mat3 mv = orthonormalize(mat3(MODELVIEW_MATRIX)); \n"
+						"	vec3 n = mv * VERTEX; \n"
+						"	float orientation = dot(vec3(0,0,-1),n); \n"
+						"	if (orientation <= 0.005) { \n"
+						"		VERTEX += NORMAL*0.02; \n"
+						"	} \n"
+						"} \n"
+						"\n"
+						"void fragment() { \n"
+						"	ALBEDO = albedo.rgb; \n"
+						"	ALPHA = albedo.a; \n"
+						"}");
+
+				Ref<ShaderMaterial> rotate_mat = memnew(ShaderMaterial);
+				rotate_mat->set_render_priority(Material::RENDER_PRIORITY_MAX);
+				rotate_mat->set_shader(rotate_shader);
+				rotate_mat->set_shader_param("albedo", col);
+				rotate_gizmo_color[i] = rotate_mat;
+
+				Array arrays = surftool->commit_to_arrays();
+				rotate_gizmo[i]->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays);
+				rotate_gizmo[i]->surface_set_material(0, rotate_mat);
+
+				Ref<ShaderMaterial> rotate_mat_hl = rotate_mat->duplicate();
+				rotate_mat_hl->set_shader_param("albedo", albedo);
+				rotate_gizmo_color_hl[i] = rotate_mat_hl;
+
+				if (i == 2) { // Rotation white outline
+					Ref<ShaderMaterial> border_mat = rotate_mat->duplicate();
+
+					Ref<Shader> border_shader = memnew(Shader);
+					border_shader->set_code(
+							"\n"
+							"shader_type spatial; \n"
+							"render_mode unshaded, depth_test_disable; \n"
+							"uniform vec4 albedo; \n"
+							"\n"
+							"mat3 orthonormalize(mat3 m) { \n"
+							"	vec3 x = normalize(m[0]); \n"
+							"	vec3 y = normalize(m[1] - x * dot(x, m[1])); \n"
+							"	vec3 z = m[2] - x * dot(x, m[2]); \n"
+							"	z = normalize(z - y * (dot(y,m[2]))); \n"
+							"	return mat3(x,y,z); \n"
+							"} \n"
+							"\n"
+							"void vertex() { \n"
+							"	mat3 mv = orthonormalize(mat3(MODELVIEW_MATRIX)); \n"
+							"	mv = inverse(mv); \n"
+							"	VERTEX += NORMAL*0.008; \n"
+							"	vec3 camera_dir_local = mv * vec3(0,0,1); \n"
+							"	vec3 camera_up_local = mv * vec3(0,1,0); \n"
+							"	mat3 rotation_matrix = mat3(cross(camera_dir_local, camera_up_local), camera_up_local, camera_dir_local); \n"
+							"	VERTEX = rotation_matrix * VERTEX; \n"
+							"} \n"
+							"\n"
+							"void fragment() { \n"
+							"	ALBEDO = albedo.rgb; \n"
+							"	ALPHA = albedo.a; \n"
+							"}");
+
+					border_mat->set_shader(border_shader);
+					border_mat->set_shader_param("albedo", Color(0.75, 0.75, 0.75, col.a / 3.0));
+
+					rotate_gizmo[3] = Ref<ArrayMesh>(memnew(ArrayMesh));
+					rotate_gizmo[3]->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays);
+					rotate_gizmo[3]->surface_set_material(0, border_mat);
+				}
+			}
+
+			// Scale
+			{
+				Ref<SurfaceTool> surftool = memnew(SurfaceTool);
+				surftool->begin(Mesh::PRIMITIVE_TRIANGLES);
+
+				// Cube arrow profile
+				const int arrow_points = 6;
+				Vector3 arrow[6] = {
+					nivec * 0.0 + ivec * 0.0,
+					nivec * 0.01 + ivec * 0.0,
+					nivec * 0.01 + ivec * 1.0 * GIZMO_SCALE_OFFSET,
+					nivec * 0.07 + ivec * 1.0 * GIZMO_SCALE_OFFSET,
+					nivec * 0.07 + ivec * 1.11 * GIZMO_SCALE_OFFSET,
+					nivec * 0.0 + ivec * 1.11 * GIZMO_SCALE_OFFSET,
+				};
+
+				int arrow_sides = 4;
+
+				for (int k = 0; k < 4; k++) {
+					Basis ma(ivec, Math_PI * 2 * float(k) / arrow_sides);
+					Basis mb(ivec, Math_PI * 2 * float(k + 1) / arrow_sides);
+
+					for (int j = 0; j < arrow_points - 1; j++) {
+						Vector3 points[4] = {
+							ma.xform(arrow[j]),
+							mb.xform(arrow[j]),
+							mb.xform(arrow[j + 1]),
+							ma.xform(arrow[j + 1]),
+						};
+						surftool->add_vertex(points[0]);
+						surftool->add_vertex(points[1]);
+						surftool->add_vertex(points[2]);
+
+						surftool->add_vertex(points[0]);
+						surftool->add_vertex(points[2]);
+						surftool->add_vertex(points[3]);
+					}
+				}
+
+				surftool->set_material(mat);
+				surftool->commit(scale_gizmo[i]);
+			}
+
+			// Plane Scale
+			{
+				Ref<SurfaceTool> surftool = memnew(SurfaceTool);
+				surftool->begin(Mesh::PRIMITIVE_TRIANGLES);
+
+				Vector3 vec = ivec2 - ivec3;
+				Vector3 plane[4] = {
+					vec * GIZMO_PLANE_DST,
+					vec * GIZMO_PLANE_DST + ivec2 * GIZMO_PLANE_SIZE,
+					vec * (GIZMO_PLANE_DST + GIZMO_PLANE_SIZE),
+					vec * GIZMO_PLANE_DST - ivec3 * GIZMO_PLANE_SIZE
+				};
+
+				Basis ma(ivec, Math_PI / 2);
+
+				Vector3 points[4] = {
+					ma.xform(plane[0]),
+					ma.xform(plane[1]),
+					ma.xform(plane[2]),
+					ma.xform(plane[3]),
+				};
+				surftool->add_vertex(points[0]);
+				surftool->add_vertex(points[1]);
+				surftool->add_vertex(points[2]);
+
+				surftool->add_vertex(points[0]);
+				surftool->add_vertex(points[2]);
+				surftool->add_vertex(points[3]);
+
+				Ref<SpatialMaterial> plane_mat = memnew(SpatialMaterial);
+				plane_mat->set_flag(SpatialMaterial::FLAG_UNSHADED, true);
+				plane_mat->set_on_top_of_alpha();
+				plane_mat->set_feature(SpatialMaterial::FEATURE_TRANSPARENT, true);
+				plane_mat->set_cull_mode(SpatialMaterial::CULL_DISABLED);
+				plane_mat->set_albedo(col);
+				plane_gizmo_color[i] = plane_mat; // needed, so we can draw planes from both sides
+				surftool->set_material(plane_mat);
+				surftool->commit(scale_plane_gizmo[i]);
+
+				Ref<SpatialMaterial> plane_mat_hl = plane_mat->duplicate();
+				plane_mat_hl->set_albedo(col.from_hsv(col.get_h(), 0.25, 1.0, 1));
+				plane_gizmo_color_hl[i] = plane_mat_hl; // needed, so we can draw planes from both sides
+			}
+		}
+	}
+
+	_generate_selection_boxes();
+}
+
+void SpriteMeshEditor::_generate_selection_boxes() {
+	// Use two AABBs to create the illusion of a slightly thicker line.
+	AABB aabb(Vector3(), Vector3(1, 1, 1));
+
+	// Create a x-ray (visible through solid surfaces) and standard version of the selection box.
+	// Both will be drawn at the same position, but with different opacity.
+	// This lets the user see where the selection is while still having a sense of depth.
+	Ref<SurfaceTool> st = memnew(SurfaceTool);
+	Ref<SurfaceTool> st_xray = memnew(SurfaceTool);
+
+	st->begin(Mesh::PRIMITIVE_LINES);
+	st_xray->begin(Mesh::PRIMITIVE_LINES);
+	for (int i = 0; i < 12; i++) {
+		Vector3 a, b;
+		aabb.get_edge(i, a, b);
+
+		st->add_vertex(a);
+		st->add_vertex(b);
+		st_xray->add_vertex(a);
+		st_xray->add_vertex(b);
+	}
+
+	Ref<SpatialMaterial> mat = memnew(SpatialMaterial);
+	mat->set_flag(SpatialMaterial::FLAG_UNSHADED, true);
+	const Color selection_box_color = EDITOR_GET("editors/3d/selection_box_color");
+	mat->set_albedo(selection_box_color);
+	mat->set_feature(SpatialMaterial::FEATURE_TRANSPARENT, true);
+	st->set_material(mat);
+	selection_box = st->commit();
+
+	Ref<SpatialMaterial> mat_xray = memnew(SpatialMaterial);
+	mat_xray->set_flag(SpatialMaterial::FLAG_UNSHADED, true);
+	mat_xray->set_flag(SpatialMaterial::FLAG_DISABLE_DEPTH_TEST, true);
+	mat_xray->set_albedo(selection_box_color * Color(1, 1, 1, 0.15));
+	mat_xray->set_feature(SpatialMaterial::FEATURE_TRANSPARENT, true);
+	st_xray->set_material(mat_xray);
+	selection_box_xray = st_xray->commit();
+}
+
+SpriteMeshEditor::SpriteMeshEditor(EditorNode *p_node) {
+	editor = p_node;
+}
+
+SpriteMeshEditor::~SpriteMeshEditor() {
+}
+
+void SpriteMeshEditorPlugin::make_visible(bool p_visible) {
+	if (p_visible) {
+		sprite_mesh_editor->show();
+		sprite_mesh_editor->set_process(true);
+
+	} else {
+		sprite_mesh_editor->hide();
+		sprite_mesh_editor->set_process(false);
+	}
+}
+
+void SpriteMeshEditorPlugin::edit(Object *p_object) {
+	node = cast_to<SpriteMesh>(p_object);
+}
+
+bool SpriteMeshEditorPlugin::forward_canvas_gui_input(const Ref<InputEvent> &p_event) {
+	return false;
+}
+
+void SpriteMeshEditorPlugin::forward_canvas_draw_over_viewport(Control *p_overlay) {
+	if (!node || !node->is_visible_in_tree()) {
+		return;
+	}
+}
+
+SpriteMeshEditorPlugin::SpriteMeshEditorPlugin(EditorNode *p_node) {
+	editor = p_node;
+	sprite_mesh_editor = memnew(SpriteMeshEditor(p_node));
+	editor->get_viewport()->add_child(sprite_mesh_editor);
+
+	sprite_mesh_editor->hide();
+}
+
+SpriteMeshEditorPlugin::~SpriteMeshEditorPlugin() {
 }

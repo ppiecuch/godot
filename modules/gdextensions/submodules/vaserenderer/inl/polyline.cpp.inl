@@ -55,14 +55,14 @@ void determine_t_r (real_t w, real_t& t, real_t& R) {
 		t = 2.5 + ff * 0.50; R = 1.08;
 	}
 
-	/* //PPI correction
+	/* // PPI correction
 	real_t PPI_correction = vaser_standard_PPI / vaser_actual_PPI;
 	const real_t up_bound = 1.6; //max value of w to receive correction
 	const real_t start_falloff = 1.0;
 	if ( w>0.0 && w<up_bound)
-	{	//here we gracefully apply the correction
+	{	// here we gracefully apply the correction
 		// so that the effect of correction diminishes starting from w=start_falloff
-		//   and completely disappears when w=up_bound
+		// and completely disappears when w=up_bound
 		real_t correction = 1.0 + (PPI_correction-1.0)*(up_bound-w)/(up_bound-start_falloff);
 		t *= PPI_correction;
 		R *= PPI_correction;
@@ -136,32 +136,32 @@ void same_side_of_line( Point& V, const Point& ref, const Point& a, const Point&
 //the struct to hold info for anchor_late() to perform triangluation
 struct st_polyline {
 
-	//for all joints (all vP,vR are outward)
-	Point vP; //vector to intersection point
-	Point vR; //fading vector at sharp end
+	// for all joints (all vP,vR are outward)
+	Point vP; // vector to intersection point
+	Point vR; // fading vector at sharp end
 
-	//for djoint == PLJ_bevel (all T,R,T1,R1 are outward)
-	Point T; //core thickness of a line
-	Point R; //fading edge of a line
-	Point bR; //out stepping vector, same direction as cap
-	Point T1,R1; //alternate vectors, same direction as T21
+	// for djoint == PLJ_bevel (all T,R,T1,R1 are outward)
+	Point T; // core thickness of a line
+	Point R; // fading edge of a line
+	Point bR; // out stepping vector, same direction as cap
+	Point T1,R1; // alternate vectors, same direction as T21
 
-	//for djoint == PLJ_round
+	// for djoint == PLJ_round
 	real_t t, r;
 
-	//for degeneration case
-	bool degenT; //core degenerated
-	bool degenR; //fade degenerated
-	bool pre_full; //draw the preceding segment in full
+	// for degeneration case
+	bool degenT; // core degenerated
+	bool degenR; // fade degenerated
+	bool pre_full; // draw the preceding segment in full
 	Point PT, PR;
-	real_t pt; //parameter at intersection
+	real_t pt; // parameter at intersection
 	bool R_full_degen;
 
-	char djoint; //determined joint
+	char djoint; // determined joint
 	// e.g. originally a joint is PLJ_miter. but it is smaller than critical angle, should then set djoint to PLJ_bevel
 };
 
-//the struct to hold memory for the working of anchor()
+// the struct to hold memory for the working of anchor()
 struct st_anchor {
 
 	Point P[3]; // point
@@ -173,7 +173,7 @@ struct st_anchor {
 	vertex_array_holder vah;
 };
 
-//draw the inner arc between angle1 and angle2 with dangle at each step.
+// draw the inner arc between angle1 and angle2 with dangle at each step.
 // -the arc has thickness, r is the outer radius and r2 is the inner radius,
 //    with color C and C2 respectively.
 //    in case when inner radius r2=0.0f, it gives a pie.
@@ -1183,11 +1183,11 @@ int anchor(st_anchor &SA, const polyline_opt* options, bool cap_first, bool cap_
 				(opt.joint != PLJ_bevel && opt.cap == PLC_round) ||
 				(opt.joint == PLJ_round))
 			{
-				//when greater than 90 degrees
+				// when greater than 90 degrees
 				SL[i-1].bR *= 0.01;
 				SL[i]  .bR *= 0.01;
 				SL[i+1].bR *= 0.01;
-				//to solve an overdraw in bevel and round joint
+				// to solve an overdraw in bevel and round joint
 			}
 
 			Point::anchor_outward( T1, P_cur,P_nxt);
@@ -1306,7 +1306,7 @@ int anchor(st_anchor &SA, const polyline_opt* options, bool cap_first, bool cap_
 			}
 
 			if (is_result1t | is_result2t) {
-				//core degeneration
+				// core degeneration
 				SL[i].degenT=true;
 				SL[i].pre_full=is_result1t;
 				SL[i].PT = is_result1t? PT1:PT2;
@@ -1320,8 +1320,8 @@ int anchor(st_anchor &SA, const polyline_opt* options, bool cap_first, bool cap_
 					SL[i].djoint=PLJ_bevel;
 
 			if (d180_degree | !result3) {
-				//to solve visual bugs 3 and 1.1
-				//efficiency: if color and weight is same as previous and next point
+				// to solve visual bugs 3 and 1.1
+				// efficiency: if color and weight is same as previous and next point
 				// ,do not generate vertices
 				same_side_of_line( SL[i].R, SL[i-1].R, P_cur,P_las);
 				SL[i].T.follow_signs(SL[i].R);
@@ -1331,7 +1331,7 @@ int anchor(st_anchor &SA, const polyline_opt* options, bool cap_first, bool cap_
 				SL[i].vR = SL[i].R;
 				SL[i].djoint=PLJ_miter;
 			}
-		} //2nd to 2nd last point
+		} // 2nd to 2nd last point
 	}
 
 	{
@@ -1355,7 +1355,7 @@ int anchor(st_anchor &SA, const polyline_opt* options, bool cap_first, bool cap_
 		anchor_cap(SA.P, SA.C, SA.SL, SA.vah, SA.cap_start, SA.cap_end);
 	anchor_late(SA.P, SA.C, SA.SL, SA.vah, SA.cap_start, SA.cap_end);
 	return 1;
-} //anchor
+} // anchor
 
 #ifdef VASE_RENDERER_EXPER
 template <typename T>

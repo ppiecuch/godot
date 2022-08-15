@@ -94,6 +94,7 @@ struct _NO_DISCARD_CLASS_ Color {
 	void contrast();
 	Color inverted() const;
 	Color contrasted() const;
+	Color contrast_bw() const;
 
 	_FORCE_INLINE_ float get_luminance() const {
 		return 0.2126 * r + 0.7152 * g + 0.0722 * b;

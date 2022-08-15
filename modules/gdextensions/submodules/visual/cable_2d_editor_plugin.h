@@ -37,7 +37,7 @@
 class Cable2DEditor : public AbstractPolygon2DEditor {
 	GDCLASS(Cable2DEditor, AbstractPolygon2DEditor);
 
-	Cable2D *node;
+	Cable2D *node = nullptr;
 
 protected:
 	virtual Node2D *_get_node() const;
