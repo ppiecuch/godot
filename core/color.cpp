@@ -222,7 +222,7 @@ void Color::contrast() {
 	b = Math::fmod(b + 0.5, 1.0);
 }
 
-Color Color::contrast_bw() const {
+Color Color::contrasted_mono() const {
 	const float gamma = 2.2;
 	const float L = 0.2126 * Math::pow(r, gamma) + 0.7152 * Math::pow(g, gamma) + 0.0722 * Math::pow(b, gamma);
 	const bool use_black = (L > Math::pow(0.5f, gamma));
