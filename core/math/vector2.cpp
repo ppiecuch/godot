@@ -78,7 +78,7 @@ real_t Vector2::angle_to_point(const Vector2 &p_vector2) const {
 	return Math::atan2(y - p_vector2.y, x - p_vector2.x);
 }
 
-real_t Vector2::angle_between(const Vector2 &p_left, const Vector2 &p_right) {
+real_t Vector2::angle_between(const Vector2 &p_left, const Vector2 &p_right) const {
 	return (p_left - *this).angle_to(p_right - *this);
 }
 

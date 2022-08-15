@@ -91,7 +91,7 @@ struct _NO_DISCARD_CLASS_ Vector2 {
 	real_t distance_squared_to(const Vector2 &p_vector2) const;
 	real_t angle_to(const Vector2 &p_vector2) const;
 	real_t angle_to_point(const Vector2 &p_vector2) const;
-	real_t angle_between(const Vector2 &p_left, const Vector2 &p_right);
+	_FORCE_INLINE_ real_t angle_between(const Vector2 &p_left, const Vector2 &p_right) const;
 	_FORCE_INLINE_ Vector2 direction_to(const Vector2 &p_to) const;
 
 	real_t dot(const Vector2 &p_other) const;
