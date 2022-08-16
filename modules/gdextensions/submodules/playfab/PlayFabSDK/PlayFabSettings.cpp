@@ -28,11 +28,15 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "PlayFabSettings.h"
+/* Auto-generated with SDKGenerator (don't manually edit) */
+
+#include "core/variant.h"
 
 namespace PlayFab {
 
+#include "PlayFabSettings.h"
+
 static PlayFabConfiguration _settings;
-PlayFabConfiguration &PlayFabSettings() { return &_settings; }
+PlayFabConfiguration &PlayFabSettings() { return _settings; }
 
 } // namespace PlayFab

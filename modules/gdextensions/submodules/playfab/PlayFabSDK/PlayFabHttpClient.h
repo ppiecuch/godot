@@ -28,6 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
+/* Auto-generated with SDKGenerator (don't manually edit) */
+
 class PlayFabHTTPClient;
 
 typedef void (*UserCallback)(int h_request, int response_code, Dictionary dict_header, Dictionary parse_data);
