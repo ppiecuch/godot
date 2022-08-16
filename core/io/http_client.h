@@ -198,9 +198,9 @@ private:
 #include "platform/javascript/http_client.h.inc"
 #endif
 
+protected:
 	PoolStringArray _get_response_headers();
 	Dictionary _get_response_headers_as_dictionary();
-
 	static void _bind_methods();
 
 public:

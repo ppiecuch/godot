@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  gdplayfab.h                                                          */
+/*  PlayFabSettings.h                                                    */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,37 +28,61 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GDPLAYFAB_H
-#define GDPLAYFAB_H
+/* Auto-generated at Tue Aug 16 2022 20:53:57 GMT+0000 (Coordinated Universal Time) */
 
-#include "core/reference.h"
-#include "core/variant.h"
+#ifndef PLAYFABSETTINGS_H
+#define PLAYFABSETTINGS_H
 
-/// GdPlayFab singleton wrapper
+struct PlayFabConfiguration {
+	const String ProductionEnvironmentURL = ".playfabapi.com";
+	const String AD_TYPE_IDFA = "Idfa";
+	const String AD_TYPE_ANDROID_ID = "Adid";
 
-class GdPlayFab : public Object {
-	GDCLASS(GdPlayFab, Object);
+	// The name of a customer vertical. This is only for customers running a private cluster. Generally you shouldn't touch this
+	String VerticalName;
 
-public:
-	GdPlayFab *get_instance();
+	// You must set this value for PlayFabSdk to work properly (Found in the Game
+	// Manager for your title, at the PlayFab Website)
+	String TitleId;
 
-	// https://docs.microsoft.com/en-us/rest/api/playfab/admin/?view=playfab-rest
+	// You must set this value for Admin/Server/Matchmaker to work properly (Found in the Game
+	// Manager for your title, at the PlayFab Website)
+	String DeveloperSecretKey;
 
-	// Account Management
-	// Authentication
-	// Characters
-	// Content
-	// Custom Server Management
-	// Matchmaking
-	// Play Stream
-	// Player Data Management
-	// Player Item Management
-	// Scheduled Task
-	// Server-Side Cloud Script
-	// Shared Group Data
-	// Title-Wide Data Management
+	/// Client specifics
 
-	GdPlayFab();
+	// Set this to the appropriate AD_TYPE_X constant below
+	String AdvertisingIdType;
+
+	// Set this to corresponding device value
+	String AdvertisingIdValue;
+
+	// DisableAdvertising is provided for completeness, but changing it is not suggested
+	// Disabling this may prevent your advertising-related PlayFab marketplace partners
+	// from working correctly
+	bool DisableAdvertising = false;
+
+	struct InternalSettings {
+		// This is automatically populated by the PlayFabAuthenticationApi.GetEntityToken method.
+		Dictionary EntityToken;
+
+		// This is automatically populated by any PlayFabClientApi.Login method.
+		String ClientSessionTicket;
+		String SdkVersionString = "GodotSdk-08.2022";
+		Dictionary RequestGetParams;
+
+		InternalSettings() {
+			RequestGetParams = helper::dict("sdk", SdkVersionString);
+		}
+	};
+
+	InternalSettings _internalSettings;
+
+	void reset() {
+		_internalSettings = InternalSettings();
+	}
 };
 
-#endif // GDPLAYFAB_H
+PlayFabConfiguration &PlayFabSettings();
+
+#endif // PLAYFABSETTINGS_H

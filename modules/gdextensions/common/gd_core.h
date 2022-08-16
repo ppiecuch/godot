@@ -106,7 +106,7 @@
 #endif
 
 #define safe_delete(pPtr) (memdelete(pPtr), pPtr = nullptr)
-#define newref(pClass) Ref<pClass>(memnew(pClass))
+#define newref(pClass, ...) Ref<pClass>(memnew(pClass(__VA_ARGS__)))
 #define nullref(pClass) Ref<pClass>()
 
 #ifdef DEBUG_ENABLED

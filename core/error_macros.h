@@ -532,8 +532,16 @@ void _err_flush_stdout();
 		GENERATE_TRAP                                                                                                   \
 	} else                                                                                                              \
 		((void)0)
+#define DEV_ASSERT_MSG(m_cond, m_msg)                                                                                          \
+	if (unlikely(!(m_cond))) {                                                                                                 \
+		_err_print_error(FUNCTION_STR, __FILE__, __LINE__, "FATAL: DEV_ASSERT failed  \"" _STR(m_cond) "\" is false:", m_msg); \
+		_err_flush_stdout();                                                                                                   \
+		GENERATE_TRAP                                                                                                          \
+	} else                                                                                                                     \
+		((void)0)
 #else
 #define DEV_ASSERT(m_cond)
+#define DEV_ASSERT_MSG(m_cond, m_msg)
 #endif
 
 /**

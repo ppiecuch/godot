@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  gdplayfab.h                                                          */
+/*  PlayFabSettings.cpp                                                  */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,37 +28,11 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GDPLAYFAB_H
-#define GDPLAYFAB_H
+#include "PlayFabSettings.h"
 
-#include "core/reference.h"
-#include "core/variant.h"
+namespace PlayFab {
 
-/// GdPlayFab singleton wrapper
+static PlayFabConfiguration _settings;
+PlayFabConfiguration &PlayFabSettings() { return &_settings; }
 
-class GdPlayFab : public Object {
-	GDCLASS(GdPlayFab, Object);
-
-public:
-	GdPlayFab *get_instance();
-
-	// https://docs.microsoft.com/en-us/rest/api/playfab/admin/?view=playfab-rest
-
-	// Account Management
-	// Authentication
-	// Characters
-	// Content
-	// Custom Server Management
-	// Matchmaking
-	// Play Stream
-	// Player Data Management
-	// Player Item Management
-	// Scheduled Task
-	// Server-Side Cloud Script
-	// Shared Group Data
-	// Title-Wide Data Management
-
-	GdPlayFab();
-};
-
-#endif // GDPLAYFAB_H
+} // namespace PlayFab

@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  gdplayfab.h                                                          */
+/*  PlayFabAPI_Localization.h                                            */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,37 +28,25 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GDPLAYFAB_H
-#define GDPLAYFAB_H
+/* Auto-generated at Tue Aug 16 2022 20:53:56 GMT+0000 (Coordinated Universal Time) */
 
-#include "core/reference.h"
-#include "core/variant.h"
+namespace Localization {
 
-/// GdPlayFab singleton wrapper
 
-class GdPlayFab : public Object {
-	GDCLASS(GdPlayFab, Object);
+int GetLanguageList(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
+	
+	// Retrieves the list of allowed languages, only accessible by title entities
+	// https://docs.microsoft.com/rest/api/playfab/localization/localization/getlanguagelist
+	
 
-public:
-	GdPlayFab *get_instance();
+	return _http_cli->request_append(
+		"/Locale/GetLanguageList",
+		dict_request,
+		user_callback,
+		dict_header_extra,
+		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+		Array()
+	);
+}
 
-	// https://docs.microsoft.com/en-us/rest/api/playfab/admin/?view=playfab-rest
-
-	// Account Management
-	// Authentication
-	// Characters
-	// Content
-	// Custom Server Management
-	// Matchmaking
-	// Play Stream
-	// Player Data Management
-	// Player Item Management
-	// Scheduled Task
-	// Server-Side Cloud Script
-	// Shared Group Data
-	// Title-Wide Data Management
-
-	GdPlayFab();
-};
-
-#endif // GDPLAYFAB_H
+} // namespace Localization

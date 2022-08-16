@@ -33,3 +33,5 @@
 // 1. https://github.com/PlayFab/XPlatCppSdk
 
 #include "gdplayfab.h"
+
+#include "PlayFabSDK/PlayFab.h"
