@@ -32,198 +32,161 @@
 
 namespace Profiles {
 
-
 int DeleteMasterPlayerAccount(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Removes a master player account entirely from all titles and deletes all associated data
 	// https://docs.microsoft.com/rest/api/playfab/profiles/account-management/deletemasterplayeraccount
-	
 
 	return _http_cli->request_append(
-		"/MasterPlayer/DeleteMasterPlayerAccount",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		Array(),
-		Array()
-	);
+			"/MasterPlayer/DeleteMasterPlayerAccount",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			Array(),
+			Array());
 }
 
 int ExportMasterPlayerAccountData(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Exports all associated data of a master player account
 	// https://docs.microsoft.com/rest/api/playfab/profiles/account-management/exportmasterplayeraccountdata
-	
 
 	return _http_cli->request_append(
-		"/MasterPlayer/ExportMasterPlayerAccountData",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		Array(),
-		Array()
-	);
+			"/MasterPlayer/ExportMasterPlayerAccountData",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			Array(),
+			Array());
 }
 
 int GetGlobalPolicy(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Gets the global title access policy
 	// https://docs.microsoft.com/rest/api/playfab/profiles/account-management/getglobalpolicy
-	
 
 	return _http_cli->request_append(
-		"/Profile/GetGlobalPolicy",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Profile/GetGlobalPolicy",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int GetMasterPlayerTitleList(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Get the list of titles that the player has played
 	// https://docs.microsoft.com/rest/api/playfab/profiles/account-management/getmasterplayertitlelist
-	
 
 	return _http_cli->request_append(
-		"/MasterPlayer/GetMasterPlayerTitleList",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/MasterPlayer/GetMasterPlayerTitleList",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int GetProfile(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Retrieves the entity's profile.
 	// https://docs.microsoft.com/rest/api/playfab/profiles/account-management/getprofile
-	
 
 	return _http_cli->request_append(
-		"/Profile/GetProfile",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Profile/GetProfile",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int GetProfiles(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Retrieves the entity's profile.
 	// https://docs.microsoft.com/rest/api/playfab/profiles/account-management/getprofiles
-	
 
 	return _http_cli->request_append(
-		"/Profile/GetProfiles",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Profile/GetProfiles",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int GetTitlePlayersFromMasterPlayerAccountIds(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Retrieves the title player accounts associated with the given master player account.
 	// https://docs.microsoft.com/rest/api/playfab/profiles/account-management/gettitleplayersfrommasterplayeraccountids
-	
 
 	return _http_cli->request_append(
-		"/Profile/GetTitlePlayersFromMasterPlayerAccountIds",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Profile/GetTitlePlayersFromMasterPlayerAccountIds",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int SetAvatarUrl(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Update the avatar url of the entity
 	// https://docs.microsoft.com/rest/api/playfab/profiles/account-management/setavatarurl
-	
 
 	return _http_cli->request_append(
-		"/Profile/SetAvatarUrl",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Profile/SetAvatarUrl",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int SetDisplayName(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Update the display name of the entity
 	// https://docs.microsoft.com/rest/api/playfab/profiles/account-management/setdisplayname
-	
 
 	return _http_cli->request_append(
-		"/Profile/SetDisplayName",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Profile/SetDisplayName",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int SetGlobalPolicy(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Sets the global title access policy
 	// https://docs.microsoft.com/rest/api/playfab/profiles/account-management/setglobalpolicy
-	
 
 	return _http_cli->request_append(
-		"/Profile/SetGlobalPolicy",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Profile/SetGlobalPolicy",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int SetProfileLanguage(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Updates the entity's language. The precedence hierarchy for communication to the player is Title Player Account
 	// language, Master Player Account language, and then title default language if the first two aren't set or supported.
 	// https://docs.microsoft.com/rest/api/playfab/profiles/account-management/setprofilelanguage
-	
 
 	return _http_cli->request_append(
-		"/Profile/SetProfileLanguage",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Profile/SetProfileLanguage",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int SetProfilePolicy(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Sets the profiles access policy
 	// https://docs.microsoft.com/rest/api/playfab/profiles/account-management/setprofilepolicy
-	
 
 	return _http_cli->request_append(
-		"/Profile/SetProfilePolicy",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Profile/SetProfilePolicy",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 } // namespace Profiles

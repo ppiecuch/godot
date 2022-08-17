@@ -32,70 +32,57 @@
 
 namespace Matchmaker {
 
-
 int AuthUser(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Validates a user with the PlayFab service
 	// https://docs.microsoft.com/rest/api/playfab/matchmaker/matchmaking/authuser
-	
 
 	return _http_cli->request_append(
-		"/Matchmaker/AuthUser",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_SECRET_KEY, USE_AUTH_SECRET_KEY),
-		Array()
-	);
+			"/Matchmaker/AuthUser",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_SECRET_KEY, USE_AUTH_SECRET_KEY),
+			Array());
 }
 
 int PlayerJoined(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Informs the PlayFab game server hosting service that the indicated user has joined the Game Server Instance specified
 	// https://docs.microsoft.com/rest/api/playfab/matchmaker/matchmaking/playerjoined
-	
 
 	return _http_cli->request_append(
-		"/Matchmaker/PlayerJoined",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_SECRET_KEY, USE_AUTH_SECRET_KEY),
-		Array()
-	);
+			"/Matchmaker/PlayerJoined",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_SECRET_KEY, USE_AUTH_SECRET_KEY),
+			Array());
 }
 
 int PlayerLeft(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Informs the PlayFab game server hosting service that the indicated user has left the Game Server Instance specified
 	// https://docs.microsoft.com/rest/api/playfab/matchmaker/matchmaking/playerleft
-	
 
 	return _http_cli->request_append(
-		"/Matchmaker/PlayerLeft",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_SECRET_KEY, USE_AUTH_SECRET_KEY),
-		Array()
-	);
+			"/Matchmaker/PlayerLeft",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_SECRET_KEY, USE_AUTH_SECRET_KEY),
+			Array());
 }
 
 int UserInfo(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Retrieves the relevant details for a specified user, which the external match-making service can then use to compute
 	// effective matches
 	// https://docs.microsoft.com/rest/api/playfab/matchmaker/matchmaking/userinfo
-	
 
 	return _http_cli->request_append(
-		"/Matchmaker/UserInfo",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_SECRET_KEY, USE_AUTH_SECRET_KEY),
-		Array()
-	);
+			"/Matchmaker/UserInfo",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_SECRET_KEY, USE_AUTH_SECRET_KEY),
+			Array());
 }
 
 } // namespace Matchmaker

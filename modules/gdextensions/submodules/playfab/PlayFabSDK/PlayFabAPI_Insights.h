@@ -32,103 +32,84 @@
 
 namespace Insights {
 
-
 int GetDetails(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Gets the current values for the Insights performance and data storage retention, list of pending operations, and the
 	// performance and data storage retention limits.
 	// https://docs.microsoft.com/rest/api/playfab/insights/analytics/getdetails
-	
 
 	return _http_cli->request_append(
-		"/Insights/GetDetails",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Insights/GetDetails",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int GetLimits(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Retrieves the range of allowed values for performance and data storage retention values as well as the submeter details
 	// for each performance level.
 	// https://docs.microsoft.com/rest/api/playfab/insights/analytics/getlimits
-	
 
 	return _http_cli->request_append(
-		"/Insights/GetLimits",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Insights/GetLimits",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int GetOperationStatus(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Gets the status of a SetPerformance or SetStorageRetention operation.
 	// https://docs.microsoft.com/rest/api/playfab/insights/analytics/getoperationstatus
-	
 
 	return _http_cli->request_append(
-		"/Insights/GetOperationStatus",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Insights/GetOperationStatus",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int GetPendingOperations(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Gets a list of pending SetPerformance and/or SetStorageRetention operations for the title.
 	// https://docs.microsoft.com/rest/api/playfab/insights/analytics/getpendingoperations
-	
 
 	return _http_cli->request_append(
-		"/Insights/GetPendingOperations",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Insights/GetPendingOperations",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int SetPerformance(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Sets the Insights performance level value for the title.
 	// https://docs.microsoft.com/rest/api/playfab/insights/analytics/setperformance
-	
 
 	return _http_cli->request_append(
-		"/Insights/SetPerformance",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Insights/SetPerformance",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int SetStorageRetention(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Sets the Insights data storage retention days value for the title.
 	// https://docs.microsoft.com/rest/api/playfab/insights/analytics/setstorageretention
-	
 
 	return _http_cli->request_append(
-		"/Insights/SetStorageRetention",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Insights/SetStorageRetention",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 } // namespace Insights

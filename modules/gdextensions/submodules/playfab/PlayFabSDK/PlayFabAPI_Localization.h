@@ -32,21 +32,17 @@
 
 namespace Localization {
 
-
 int GetLanguageList(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Retrieves the list of allowed languages, only accessible by title entities
 	// https://docs.microsoft.com/rest/api/playfab/localization/localization/getlanguagelist
-	
 
 	return _http_cli->request_append(
-		"/Locale/GetLanguageList",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Locale/GetLanguageList",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 } // namespace Localization

@@ -58,9 +58,9 @@ struct CRequest : public Reference {
 	Array list_epilogue_work;
 	Ref<CResult> o_result = nullptr;
 
-	CRequest(int h_request) : h_request(h_request) { }
+	CRequest(int h_request) :
+			h_request(h_request) {}
 };
-
 
 class PlayFabHTTPClient : public HTTPClient {
 	GDCLASS(PlayFabHTTPClient, HTTPClient);
@@ -77,23 +77,20 @@ class PlayFabHTTPClient : public HTTPClient {
 protected:
 	void pro_chk_entity_token() {
 		DEV_ASSERT_MSG(
-			!PlayFabSettings()._internalSettings.EntityToken.empty(),
-			"Must call EntityToken before calling this method"
-		);
+				!PlayFabSettings()._internalSettings.EntityToken.empty(),
+				"Must call EntityToken before calling this method");
 	}
 
 	void pro_chk_secret_key() {
 		DEV_ASSERT_MSG(
-			!PlayFabSettings()._internalSettings.DeveloperSecretKey.empty(),
-			"Must have DeveloperSecretKey set to call this method"
-		);
+				!PlayFabSettings()._internalSettings.DeveloperSecretKey.empty(),
+				"Must have DeveloperSecretKey set to call this method");
 	}
 
 	void pro_chk_session_ticket() {
 		DEV_ASSERT_MSG(
-			!PlayFabSettings()._internalSettings.ClientSessionTicket.empty(),
-			"Must be logged in to call this method"
-		);
+				!PlayFabSettings()._internalSettings.ClientSessionTicket.empty(),
+				"Must be logged in to call this method");
 	}
 
 	String pro_use_auth_authorization() {
@@ -105,7 +102,7 @@ protected:
 	}
 
 	String pro_use_auth_secret_key() {
-		return vformat("%s: %s",  "X-SecretKey", PlayFabSettings().DeveloperSecretKey);
+		return vformat("%s: %s", "X-SecretKey", PlayFabSettings().DeveloperSecretKey);
 	}
 
 	void pro_use_title_id(Dictionary &dict_request) {
@@ -118,9 +115,8 @@ protected:
 		}
 
 		DEV_ASSERT_MSG(
-			dict_request.has(K),
-			"Must be have TitleId set to call this method"
-		);
+				dict_request.has(K),
+				"Must be have TitleId set to call this method");
 	}
 
 	// -- epi --
@@ -148,7 +144,6 @@ protected:
 	}
 
 	void epi_req_multi_step_client_login(const Dictionary &json_result) {
-
 		extern int ClientAttributeInstall(Dictionary dict_request);
 
 		const String K = "SettingsForUser";
@@ -193,12 +188,11 @@ public:
 	}
 
 	int request_append(String url_path,
-		Dictionary dict_request,
-		UserCallback user_callback = nullptr,
-		Dictionary dict_header_extra = Dictionary(),
-		Array list_prologue_work = Array(),
-		Array list_epilogue_work = Array()) {
-
+			Dictionary dict_request,
+			UserCallback user_callback = nullptr,
+			Dictionary dict_header_extra = Dictionary(),
+			Array list_prologue_work = Array(),
+			Array list_epilogue_work = Array()) {
 		Vector<String> list_header;
 
 		list_header.push_back("Content-Type: application/json");
@@ -251,7 +245,7 @@ public:
 		}
 
 		_request_counter++;
-		Ref<CRequest> o = newref(CRequest,_request_counter);
+		Ref<CRequest> o = newref(CRequest, _request_counter);
 		Array list_host = build_host();
 
 		o->host = list_host[0];
@@ -270,7 +264,6 @@ public:
 	}
 
 	Ref<CRequest> dispatch(Ref<CRequest> o_request) {
-
 		String raw_text = o_request->o_result->get_string_from_utf8();
 		int err_line;
 		String err_message;
@@ -302,11 +295,10 @@ public:
 		}
 		if (o_request->user_callback) {
 			o_request->user_callback(
-				o_request->h_request,
-				o_request->o_result->response_code,
-				o_request->o_result->dict_header,
-				parse_data
-			);
+					o_request->h_request,
+					o_request->o_result->response_code,
+					o_request->o_result->dict_header,
+					parse_data);
 		}
 
 		return nullptr;
@@ -355,7 +347,7 @@ public:
 		} else {
 			if (status_curr == STATUS_DISCONNECTED) {
 				if (!connecting) {
-					if (connect_to_host( _current_request->host, _current_request->port, _current_request->is_ssl)) {
+					if (connect_to_host(_current_request->host, _current_request->port, _current_request->is_ssl)) {
 						connecting = true;
 					} else {
 						WARN_PRINT("Connection failed.");
@@ -366,11 +358,10 @@ public:
 
 				if (!_current_request->o_result) {
 					request(
-						HTTPClient::METHOD_POST,
-						_current_request->url,
-						_current_request->list_header,
-						JSON::print(_current_request->dict_request)
-					);
+							HTTPClient::METHOD_POST,
+							_current_request->url,
+							_current_request->list_header,
+							JSON::print(_current_request->dict_request));
 					_current_request->o_result = newref(CResult);
 				}
 			} else if (status_curr == STATUS_BODY) {

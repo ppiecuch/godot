@@ -33,13 +33,13 @@
 #ifndef PLAYFAB_H
 #define PLAYFAB_H
 
-#include "core/variant.h"
-#include "core/reference.h"
-#include "core/error_macros.h"
-#include "core/bind/core_bind.h"
-#include "core/io/json.h"
-#include "core/io/http_client.h"
 #include "common/gd_core.h"
+#include "core/bind/core_bind.h"
+#include "core/error_macros.h"
+#include "core/io/http_client.h"
+#include "core/io/json.h"
+#include "core/reference.h"
+#include "core/variant.h"
 
 namespace PlayFab {
 
@@ -62,28 +62,27 @@ enum E_EPI {
 	REQ_MULTI_STEP_CLIENT_LOGIN,
 };
 
-#include "PlayFabSettings.h"
 #include "PlayFabHttpClient.h"
+#include "PlayFabSettings.h"
 
 Ref<PlayFabHTTPClient> _http_cli;
 
-
 #include "PlayFabAPI_Admin.h"
-#include "PlayFabAPI_Client.h"
-#include "PlayFabAPI_Matchmaker.h"
-#include "PlayFabAPI_Server.h"
 #include "PlayFabAPI_Authentication.h"
+#include "PlayFabAPI_Client.h"
 #include "PlayFabAPI_CloudScript.h"
 #include "PlayFabAPI_Data.h"
 #include "PlayFabAPI_Economy.h"
 #include "PlayFabAPI_Events.h"
 #include "PlayFabAPI_Experimentation.h"
-#include "PlayFabAPI_Insights.h"
 #include "PlayFabAPI_Groups.h"
+#include "PlayFabAPI_Insights.h"
 #include "PlayFabAPI_Leaderboards.h"
 #include "PlayFabAPI_Localization.h"
+#include "PlayFabAPI_Matchmaker.h"
 #include "PlayFabAPI_Multiplayer.h"
 #include "PlayFabAPI_Profiles.h"
+#include "PlayFabAPI_Server.h"
 
 _FORCE_INLINE_ int ClientAttributeInstall(Dictionary dict_request) {
 	return Client::AttributeInstall(dict_request);
@@ -91,17 +90,28 @@ _FORCE_INLINE_ int ClientAttributeInstall(Dictionary dict_request) {
 
 String status_ntoa(int n) {
 	switch (n) {
-		case HTTPClient::STATUS_DISCONNECTED: return "STATUS_DISCONNECTED";
-		case HTTPClient::STATUS_RESOLVING: return "STATUS_RESOLVING";
-		case HTTPClient::STATUS_CANT_RESOLVE: return "STATUS_CANT_RESOLVE";
-		case HTTPClient::STATUS_CONNECTING: return "STATUS_CONNECTING";
-		case HTTPClient::STATUS_CANT_CONNECT: return "STATUS_CANT_CONNECT";
-		case HTTPClient::STATUS_CONNECTED: return "STATUS_CONNECTED";
-		case HTTPClient::STATUS_REQUESTING: return "STATUS_REQUESTING";
-		case HTTPClient::STATUS_BODY: return "STATUS_BODY";
-		case HTTPClient::STATUS_CONNECTION_ERROR: return "STATUS_CONNECTION_ERROR";
-		case HTTPClient::STATUS_SSL_HANDSHAKE_ERROR: return "STATUS_SSL_HANDSHAKE_ERROR";
-		default: return vformat("STATUS_[UNKNOWN %d]", n);
+		case HTTPClient::STATUS_DISCONNECTED:
+			return "STATUS_DISCONNECTED";
+		case HTTPClient::STATUS_RESOLVING:
+			return "STATUS_RESOLVING";
+		case HTTPClient::STATUS_CANT_RESOLVE:
+			return "STATUS_CANT_RESOLVE";
+		case HTTPClient::STATUS_CONNECTING:
+			return "STATUS_CONNECTING";
+		case HTTPClient::STATUS_CANT_CONNECT:
+			return "STATUS_CANT_CONNECT";
+		case HTTPClient::STATUS_CONNECTED:
+			return "STATUS_CONNECTED";
+		case HTTPClient::STATUS_REQUESTING:
+			return "STATUS_REQUESTING";
+		case HTTPClient::STATUS_BODY:
+			return "STATUS_BODY";
+		case HTTPClient::STATUS_CONNECTION_ERROR:
+			return "STATUS_CONNECTION_ERROR";
+		case HTTPClient::STATUS_SSL_HANDSHAKE_ERROR:
+			return "STATUS_SSL_HANDSHAKE_ERROR";
+		default:
+			return vformat("STATUS_[UNKNOWN %d]", n);
 	}
 }
 

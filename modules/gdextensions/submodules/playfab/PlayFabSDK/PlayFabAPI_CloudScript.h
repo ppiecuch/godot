@@ -32,215 +32,175 @@
 
 namespace CloudScript {
 
-
 int ExecuteEntityCloudScript(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Cloud Script is one of PlayFab's most versatile features. It allows client code to request execution of any kind of
 	// custom server-side functionality you can implement, and it can be used in conjunction with virtually anything.
 	// https://docs.microsoft.com/rest/api/playfab/cloudscript/server-side-cloud-script/executeentitycloudscript
-	
 
 	return _http_cli->request_append(
-		"/CloudScript/ExecuteEntityCloudScript",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/CloudScript/ExecuteEntityCloudScript",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int ExecuteFunction(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Cloud Script is one of PlayFab's most versatile features. It allows client code to request execution of any kind of
 	// custom server-side functionality you can implement, and it can be used in conjunction with virtually anything.
 	// https://docs.microsoft.com/rest/api/playfab/cloudscript/server-side-cloud-script/executefunction
-	
 
 	return _http_cli->request_append(
-		"/CloudScript/ExecuteFunction",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/CloudScript/ExecuteFunction",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int GetFunction(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Gets registered Azure Functions for a given title id and function name.
 	// https://docs.microsoft.com/rest/api/playfab/cloudscript/server-side-cloud-script/getfunction
-	
 
 	return _http_cli->request_append(
-		"/CloudScript/GetFunction",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/CloudScript/GetFunction",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int ListFunctions(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Lists all currently registered Azure Functions for a given title.
 	// https://docs.microsoft.com/rest/api/playfab/cloudscript/server-side-cloud-script/listfunctions
-	
 
 	return _http_cli->request_append(
-		"/CloudScript/ListFunctions",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/CloudScript/ListFunctions",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int ListHttpFunctions(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Lists all currently registered HTTP triggered Azure Functions for a given title.
 	// https://docs.microsoft.com/rest/api/playfab/cloudscript/server-side-cloud-script/listhttpfunctions
-	
 
 	return _http_cli->request_append(
-		"/CloudScript/ListHttpFunctions",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/CloudScript/ListHttpFunctions",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int ListQueuedFunctions(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Lists all currently registered Queue triggered Azure Functions for a given title.
 	// https://docs.microsoft.com/rest/api/playfab/cloudscript/server-side-cloud-script/listqueuedfunctions
-	
 
 	return _http_cli->request_append(
-		"/CloudScript/ListQueuedFunctions",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/CloudScript/ListQueuedFunctions",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int PostFunctionResultForEntityTriggeredAction(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Generate an entity PlayStream event for the provided function result.
 	// https://docs.microsoft.com/rest/api/playfab/cloudscript/server-side-cloud-script/postfunctionresultforentitytriggeredaction
-	
 
 	return _http_cli->request_append(
-		"/CloudScript/PostFunctionResultForEntityTriggeredAction",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/CloudScript/PostFunctionResultForEntityTriggeredAction",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int PostFunctionResultForFunctionExecution(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Generate an entity PlayStream event for the provided function result.
 	// https://docs.microsoft.com/rest/api/playfab/cloudscript/server-side-cloud-script/postfunctionresultforfunctionexecution
-	
 
 	return _http_cli->request_append(
-		"/CloudScript/PostFunctionResultForFunctionExecution",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/CloudScript/PostFunctionResultForFunctionExecution",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int PostFunctionResultForPlayerTriggeredAction(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Generate a player PlayStream event for the provided function result.
 	// https://docs.microsoft.com/rest/api/playfab/cloudscript/server-side-cloud-script/postfunctionresultforplayertriggeredaction
-	
 
 	return _http_cli->request_append(
-		"/CloudScript/PostFunctionResultForPlayerTriggeredAction",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/CloudScript/PostFunctionResultForPlayerTriggeredAction",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int PostFunctionResultForScheduledTask(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Generate a PlayStream event for the provided function result.
 	// https://docs.microsoft.com/rest/api/playfab/cloudscript/server-side-cloud-script/postfunctionresultforscheduledtask
-	
 
 	return _http_cli->request_append(
-		"/CloudScript/PostFunctionResultForScheduledTask",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/CloudScript/PostFunctionResultForScheduledTask",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int RegisterHttpFunction(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Registers an HTTP triggered Azure function with a title.
 	// https://docs.microsoft.com/rest/api/playfab/cloudscript/server-side-cloud-script/registerhttpfunction
-	
 
 	return _http_cli->request_append(
-		"/CloudScript/RegisterHttpFunction",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/CloudScript/RegisterHttpFunction",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int RegisterQueuedFunction(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Registers a queue triggered Azure Function with a title.
 	// https://docs.microsoft.com/rest/api/playfab/cloudscript/server-side-cloud-script/registerqueuedfunction
-	
 
 	return _http_cli->request_append(
-		"/CloudScript/RegisterQueuedFunction",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/CloudScript/RegisterQueuedFunction",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int UnregisterFunction(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Unregisters an Azure Function with a title.
 	// https://docs.microsoft.com/rest/api/playfab/cloudscript/server-side-cloud-script/unregisterfunction
-	
 
 	return _http_cli->request_append(
-		"/CloudScript/UnregisterFunction",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/CloudScript/UnregisterFunction",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 } // namespace CloudScript

@@ -32,102 +32,83 @@
 
 namespace Events {
 
-
 int DeleteEventSamplingRatio(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Deletes the sampling ratio for an event.
 	// https://docs.microsoft.com/rest/api/playfab/events/playstream/deleteeventsamplingratio
-	
 
 	return _http_cli->request_append(
-		"/Event/DeleteEventSamplingRatio",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Event/DeleteEventSamplingRatio",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int GetEventSamplingRatio(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Gets the sampling ratio for an event.
 	// https://docs.microsoft.com/rest/api/playfab/events/playstream/geteventsamplingratio
-	
 
 	return _http_cli->request_append(
-		"/Event/GetEventSamplingRatio",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Event/GetEventSamplingRatio",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int GetEventSamplingRatios(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Gets the event sampling ratios for a title.
 	// https://docs.microsoft.com/rest/api/playfab/events/playstream/geteventsamplingratios
-	
 
 	return _http_cli->request_append(
-		"/Event/GetEventSamplingRatios",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Event/GetEventSamplingRatios",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int SetEventSamplingRatio(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Sets the sampling ratio for an event.
 	// https://docs.microsoft.com/rest/api/playfab/events/playstream/seteventsamplingratio
-	
 
 	return _http_cli->request_append(
-		"/Event/SetEventSamplingRatio",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Event/SetEventSamplingRatio",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int WriteEvents(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Write batches of entity based events to PlayStream. The namespace of the Event must be 'custom' or start with 'custom.'.
 	// https://docs.microsoft.com/rest/api/playfab/events/playstream-events/writeevents
-	
 
 	return _http_cli->request_append(
-		"/Event/WriteEvents",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Event/WriteEvents",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int WriteTelemetryEvents(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Write batches of entity based events to as Telemetry events (bypass PlayStream). The namespace must be 'custom' or start
 	// with 'custom.'
 	// https://docs.microsoft.com/rest/api/playfab/events/playstream-events/writetelemetryevents
-	
 
 	return _http_cli->request_append(
-		"/Event/WriteTelemetryEvents",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Event/WriteTelemetryEvents",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 } // namespace Events

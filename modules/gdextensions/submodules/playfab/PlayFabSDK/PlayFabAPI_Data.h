@@ -32,117 +32,95 @@
 
 namespace Data {
 
-
 int AbortFileUploads(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Abort pending file uploads to an entity's profile.
 	// https://docs.microsoft.com/rest/api/playfab/data/file/abortfileuploads
-	
 
 	return _http_cli->request_append(
-		"/File/AbortFileUploads",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/File/AbortFileUploads",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int DeleteFiles(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Delete files on an entity's profile.
 	// https://docs.microsoft.com/rest/api/playfab/data/file/deletefiles
-	
 
 	return _http_cli->request_append(
-		"/File/DeleteFiles",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/File/DeleteFiles",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int FinalizeFileUploads(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Finalize file uploads to an entity's profile.
 	// https://docs.microsoft.com/rest/api/playfab/data/file/finalizefileuploads
-	
 
 	return _http_cli->request_append(
-		"/File/FinalizeFileUploads",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/File/FinalizeFileUploads",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int GetFiles(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Retrieves file metadata from an entity's profile.
 	// https://docs.microsoft.com/rest/api/playfab/data/file/getfiles
-	
 
 	return _http_cli->request_append(
-		"/File/GetFiles",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/File/GetFiles",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int GetObjects(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Retrieves objects from an entity's profile.
 	// https://docs.microsoft.com/rest/api/playfab/data/object/getobjects
-	
 
 	return _http_cli->request_append(
-		"/Object/GetObjects",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Object/GetObjects",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int InitiateFileUploads(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Initiates file uploads to an entity's profile.
 	// https://docs.microsoft.com/rest/api/playfab/data/file/initiatefileuploads
-	
 
 	return _http_cli->request_append(
-		"/File/InitiateFileUploads",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/File/InitiateFileUploads",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int SetObjects(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Sets objects on an entity's profile.
 	// https://docs.microsoft.com/rest/api/playfab/data/object/setobjects
-	
 
 	return _http_cli->request_append(
-		"/Object/SetObjects",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Object/SetObjects",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 } // namespace Data

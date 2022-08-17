@@ -32,166 +32,135 @@
 
 namespace Leaderboards {
 
-
 int CreateStatisticDefinition(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Create a new entity statistic definition.
 	// https://docs.microsoft.com/rest/api/playfab/leaderboards/statistics-and-leaderboards/createstatisticdefinition
-	
 
 	return _http_cli->request_append(
-		"/Statistic/CreateStatisticDefinition",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Statistic/CreateStatisticDefinition",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int DeleteStatisticDefinition(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Delete an entity statistic definition. Will delete all statistics on entity profiles and leaderboards.
 	// https://docs.microsoft.com/rest/api/playfab/leaderboards/statistics-and-leaderboards/deletestatisticdefinition
-	
 
 	return _http_cli->request_append(
-		"/Statistic/DeleteStatisticDefinition",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Statistic/DeleteStatisticDefinition",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int DeleteStatistics(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Delete statistics on an entity profile, will remove all rankings from associated leaderboards.
 	// https://docs.microsoft.com/rest/api/playfab/leaderboards/statistics-and-leaderboards/deletestatistics
-	
 
 	return _http_cli->request_append(
-		"/Statistic/DeleteStatistics",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Statistic/DeleteStatistics",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int GetLeaderboard(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Get the leaderboard for a specific entity type and statistic.
 	// https://docs.microsoft.com/rest/api/playfab/leaderboards/statistics-and-leaderboards/getleaderboard
-	
 
 	return _http_cli->request_append(
-		"/Leaderboard/GetLeaderboard",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Leaderboard/GetLeaderboard",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int GetLeaderboardAroundEntity(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Get the leaderboard around a specific entity.
 	// https://docs.microsoft.com/rest/api/playfab/leaderboards/statistics-and-leaderboards/getleaderboardaroundentity
-	
 
 	return _http_cli->request_append(
-		"/Leaderboard/GetLeaderboardAroundEntity",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Leaderboard/GetLeaderboardAroundEntity",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int GetLeaderboardForEntities(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Get the leaderboard limited to a set of entities.
 	// https://docs.microsoft.com/rest/api/playfab/leaderboards/statistics-and-leaderboards/getleaderboardforentities
-	
 
 	return _http_cli->request_append(
-		"/Leaderboard/GetLeaderboardForEntities",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Leaderboard/GetLeaderboardForEntities",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int GetStatisticDefinition(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Get current statistic definition information
 	// https://docs.microsoft.com/rest/api/playfab/leaderboards/statistics-and-leaderboards/getstatisticdefinition
-	
 
 	return _http_cli->request_append(
-		"/Statistic/GetStatisticDefinition",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Statistic/GetStatisticDefinition",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int GetStatisticDefinitions(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Get all current statistic definitions information
 	// https://docs.microsoft.com/rest/api/playfab/leaderboards/statistics-and-leaderboards/getstatisticdefinitions
-	
 
 	return _http_cli->request_append(
-		"/Statistic/GetStatisticDefinitions",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Statistic/GetStatisticDefinitions",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int IncrementStatisticVersion(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Increment an entity statistic definition version.
 	// https://docs.microsoft.com/rest/api/playfab/leaderboards/statistics-and-leaderboards/incrementstatisticversion
-	
 
 	return _http_cli->request_append(
-		"/Statistic/IncrementStatisticVersion",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Statistic/IncrementStatisticVersion",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 int UpdateStatistics(Dictionary dict_request, UserCallback user_callback = nullptr, Dictionary dict_header_extra = Dictionary()) {
-	
 	// Update statistics on an entity profile, depending on the statistic definition may cause entity to be ranked on various
 	// leaderboards.
 	// https://docs.microsoft.com/rest/api/playfab/leaderboards/statistics-and-leaderboards/updatestatistics
-	
 
 	return _http_cli->request_append(
-		"/Statistic/UpdateStatistics",
-		dict_request,
-		user_callback,
-		dict_header_extra,
-		array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
-		Array()
-	);
+			"/Statistic/UpdateStatistics",
+			dict_request,
+			user_callback,
+			dict_header_extra,
+			array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN),
+			Array());
 }
 
 } // namespace Leaderboards
