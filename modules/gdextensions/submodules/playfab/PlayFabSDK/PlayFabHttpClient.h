@@ -30,6 +30,8 @@
 
 /* Auto-generated with SDKGenerator (don't manually edit) */
 
+#include "PlayFabSettings.h"
+
 class PlayFabHTTPClient;
 
 typedef void (*UserCallback)(int h_request, int response_code, Dictionary dict_header, Dictionary parse_data);

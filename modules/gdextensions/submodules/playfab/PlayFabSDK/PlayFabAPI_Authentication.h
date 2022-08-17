@@ -106,17 +106,11 @@ int GetEntityToken(Dictionary dict_request, UserCallback user_callback = nullptr
 	Array list_prologue_work;
 
 	if (!PlayFabSettings()._internalSettings.EntityToken.empty()) {
-		list_prologue_work = array(
-				CHK_ENTITY_TOKEN,
-				USE_AUTH_ENTITY_TOKEN);
+		list_prologue_work = array(CHK_ENTITY_TOKEN, USE_AUTH_ENTITY_TOKEN);
 	} else if (!PlayFabSettings().DeveloperSecretKey.empty()) {
-		list_prologue_work = array(
-				CHK_SECRET_KEY,
-				USE_AUTH_SECRET_KEY);
+		list_prologue_work = array(CHK_SECRET_KEY, USE_AUTH_SECRET_KEY);
 	} else if (!PlayFabSettings()._internalSettings.ClientSessionTicket.empty()) {
-		list_prologue_work = array(
-				CHK_SESSION_TICKET,
-				USE_AUTH_AUTHORIZATION);
+		list_prologue_work = array(CHK_SESSION_TICKET, USE_AUTH_AUTHORIZATION);
 	}
 
 	return _http_cli->request_append(
