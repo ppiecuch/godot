@@ -1,5 +1,35 @@
-#include "core/math/vector2.h"
+/*************************************************************************/
+/*  poly_geometry.cpp                                                    */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #include "core/math/math_funcs.h"
+#include "core/math/vector2.h"
 
 #include "poly_geometry.h"
 
@@ -52,8 +82,8 @@ struct LineSegment {
 	}
 
 	LineSegment(const Point2 &a, const Point2 &b) :
-			a(a), b(b) { }
-	LineSegment() { }
+			a(a), b(b) {}
+	LineSegment() {}
 };
 
 struct PolySegment {
@@ -61,13 +91,12 @@ struct PolySegment {
 	PolySegment(const LineSegment &center, real_t thickness) :
 			center(center),
 			edge1(center + (center.normal() * thickness)),
-			edge2(center - (center.normal() * thickness)) { }
-	PolySegment() { }
+			edge2(center - (center.normal() * thickness)) {}
+	PolySegment() {}
 };
 
-
-static PoolVector2Array create_triangle_fan(Point2 connect_to, Point2 origin, Point2 start, Point2 end, bool clockwise) {
-	PoolVector2Array vertices;
+static Vector<Point2> create_triangle_fan(const Point2 &connect_to, const Point2 &origin, const Point2 &start, const Point2 &end, bool clockwise) {
+	Vector<Point2> vertices;
 	const auto point1 = start - origin;
 	const auto point2 = end - origin;
 
@@ -90,7 +119,7 @@ static PoolVector2Array create_triangle_fan(Point2 connect_to, Point2 origin, Po
 	const auto num_triangles = MAX(1, (int)Math::floor(Math::abs(joint_angle) / roundMinAngle)); // calculate the amount of triangles to use for the joint
 	const auto tri_angle = joint_angle / num_triangles; // calculate the angle of each triangle
 
-	Vector2 start_point = start, end_point;
+	Point2 start_point = start, end_point;
 	for (int t = 0; t < num_triangles; t++) {
 		if (t + 1 == num_triangles) {
 			// it's the last triangle - ensure it perfectly
@@ -118,8 +147,8 @@ static PoolVector2Array create_triangle_fan(Point2 connect_to, Point2 origin, Po
 	return vertices;
 }
 
-static PoolVector2Array create_joint(const PolySegment &segment1, const PolySegment &segment2, int joint_style, Point2 &end1, Point2 &end2, Point2 &next_start1, Point2 &next_start2, bool allow_overlap) {
-	PoolVector2Array vertices;
+static Vector<Point2> create_joint(const PolySegment &segment1, const PolySegment &segment2, int joint_style, Point2 &end1, Point2 &end2, Point2 &next_start1, Point2 &next_start2, bool allow_overlap) {
+	Vector<Point2> vertices;
 	// calculate the angle between the two line segments
 	auto dir1 = segment1.center.direction();
 	auto dir2 = segment2.center.direction();
@@ -133,11 +162,11 @@ static PoolVector2Array create_joint(const PolySegment &segment1, const PolySegm
 		wrapped_angle = Math_PI - wrapped_angle;
 	}
 
-	if (joint_style == VS::LINE_JOIN_MITTER && wrapped_angle < miterMinAngle) {
-		joint_style = VS::LINE_JOIN_BEVEL;
+	if (joint_style == PolyGeometry::LINE_JOIN_MITTER && wrapped_angle < miterMinAngle) {
+		joint_style = PolyGeometry::LINE_JOIN_BEVEL;
 	}
 
-	if (joint_style == VS::LINE_JOIN_MITTER) {
+	if (joint_style == PolyGeometry::LINE_JOIN_MITTER) {
 		// calculate each edge's intersection point
 		// with the next segment's central line
 		auto sec1 = LineSegment::intersection(segment1.edge1, segment2.edge1, true);
@@ -214,13 +243,13 @@ static PoolVector2Array create_joint(const PolySegment &segment1, const PolySegm
 
 		// connect the intersection points according to the joint style
 
-		if (joint_style == VS::LINE_JOIN_BEVEL) {
+		if (joint_style == PolyGeometry::LINE_JOIN_BEVEL) {
 			// simply connect the intersection points
 			vertices.push_back(outer1->b);
 			vertices.push_back(outer2->a);
 			vertices.push_back(inner_sec);
 
-		} else if (joint_style == VS::LINE_JOIN_ROUND) {
+		} else if (joint_style == PolyGeometry::LINE_JOIN_ROUND) {
 			// draw a circle between the ends of the outer edges, centered at
 			// the actual point with half the line thickness as the radius
 			vertices.append_array(create_triangle_fan(inner_sec, segment1.center.b, outer1->b, outer2->a, clockwise));
@@ -230,8 +259,8 @@ static PoolVector2Array create_joint(const PolySegment &segment1, const PolySegm
 	return vertices;
 }
 
-PoolVector2Array strokify(const PoolVector2Array &contour, real_t w, VS::LineDrawMode cap, VS::LineDrawMode join, bool loop, bool allow_overlap = false) {
-	PoolVector2Array data;
+Vector<Point2> PolyGeometry::strokify(const Vector<Point2> &contour, real_t w, LineDrawMode cap, LineDrawMode join, bool loop, bool p_antialiased, bool allow_overlap) {
+	Vector<Point2> data;
 	w /= 2; // operate on half the thickness to make our lives easier
 
 	// create poly segments from the points
@@ -243,7 +272,7 @@ PoolVector2Array strokify(const PoolVector2Array &contour, real_t w, VS::LineDra
 		// to avoid division-by-zero errors,
 		// only create a line segment for non-identical points
 		if (!p1.is_equal_approx(p2)) {
-			segments.push_back({ {p1, p2}, w });
+			segments.push_back({ { p1, p2 }, w });
 		}
 	}
 
@@ -271,12 +300,12 @@ PoolVector2Array strokify(const PoolVector2Array &contour, real_t w, VS::LineDra
 	if (loop) {
 		data.append_array(create_joint(last_segment, first_segment, join, path_end1, path_end2, path_start1, path_start2, allow_overlap));
 	} else {
-		if (cap == VS::LINE_CAP_SQUARE) {
+		if (cap == LINE_CAP_SQUARE) {
 			path_start1 = path_start1 - (first_segment.edge1.direction() * w);
 			path_start2 = path_start2 - (first_segment.edge2.direction() * w);
-			path_end1   = path_end1 + (last_segment.edge1.direction() * w);
-			path_end2   = path_end2 + (last_segment.edge2.direction() * w);
-		} else if (cap == VS::LINE_CAP_ROUND) {
+			path_end1 = path_end1 + (last_segment.edge1.direction() * w);
+			path_end2 = path_end2 + (last_segment.edge2.direction() * w);
+		} else if (cap == LINE_CAP_ROUND) {
 			data.append_array(create_triangle_fan(first_segment.center.a, first_segment.center.a, first_segment.edge1.a, first_segment.edge2.a, false));
 			data.append_array(create_triangle_fan(last_segment.center.b, last_segment.center.b, last_segment.edge1.b, last_segment.edge2.b, true));
 		}
@@ -302,15 +331,20 @@ PoolVector2Array strokify(const PoolVector2Array &contour, real_t w, VS::LineDra
 		// emit vertices
 		data.push_back(start1);
 		data.push_back(start2);
-		data.push_back(end1  );
+		data.push_back(end1);
 
-		data.push_back(end1  );
+		data.push_back(end1);
 		data.push_back(start2);
-		data.push_back(end2  );
+		data.push_back(end2);
 
 		start1 = next_start1;
 		start2 = next_start2;
 	}
 
+	return data;
+}
+
+Vector<Point2> PolyGeometry::strokify(const Vector<Point2> &p_contour, LineDrawMode p_line_join, bool p_allow_overlap) {
+	Vector<Point2> data;
 	return data;
 }

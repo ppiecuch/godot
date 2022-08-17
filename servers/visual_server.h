@@ -1026,8 +1026,17 @@ public:
 		NINE_PATCH_TILE_FIT,
 	};
 
+	enum LineDrawMode {
+		LINE_JOIN_MITTER,
+		LINE_JOIN_BEVEL,
+		LINE_JOIN_ROUND,
+		LINE_CAP_SQUARE,
+		LINE_CAP_PROJECT,
+		LINE_CAP_ROUND,
+	};
+
 	virtual void canvas_item_add_line(RID p_item, const Point2 &p_from, const Point2 &p_to, const Color &p_color, float p_width = 1.0, bool p_antialiased = false) = 0;
-	virtual void canvas_item_add_polyline(RID p_item, const Vector<Point2> &p_points, const Vector<Color> &p_colors, float p_width = 1.0, bool p_antialiased = false) = 0;
+	virtual void canvas_item_add_polyline(RID p_item, const Vector<Point2> &p_points, const Vector<Color> &p_colors, float p_width = 1.0, bool p_antialiased = false, LineDrawMode p_line_join = LINE_JOIN_BEVEL, LineDrawMode p_line_cap = LINE_CAP_SQUARE) = 0;
 	virtual void canvas_item_add_multiline(RID p_item, const Vector<Point2> &p_points, const Vector<Color> &p_colors, float p_width = 1.0, bool p_antialiased = false) = 0;
 	virtual void canvas_item_add_rect(RID p_item, const Rect2 &p_rect, const Color &p_color) = 0;
 	virtual void canvas_item_add_circle(RID p_item, const Point2 &p_pos, float p_radius, const Color &p_color) = 0;
@@ -1229,6 +1238,7 @@ VARIANT_ENUM_CAST(VisualServer::ScenarioDebugMode);
 VARIANT_ENUM_CAST(VisualServer::InstanceType);
 VARIANT_ENUM_CAST(VisualServer::InstancePortalMode);
 VARIANT_ENUM_CAST(VisualServer::NinePatchAxisMode);
+VARIANT_ENUM_CAST(VisualServer::LineDrawMode);
 VARIANT_ENUM_CAST(VisualServer::CanvasLightMode);
 VARIANT_ENUM_CAST(VisualServer::CanvasLightShadowFilter);
 VARIANT_ENUM_CAST(VisualServer::CanvasOccluderPolygonCullMode);

@@ -29,6 +29,7 @@
 /*************************************************************************/
 
 #include "visual_server_canvas.h"
+#include "core/math/poly_geometry.h"
 #include "visual_server_globals.h"
 #include "visual_server_raster.h"
 #include "visual_server_viewport.h"
@@ -506,7 +507,7 @@ void VisualServerCanvas::canvas_item_add_line(RID p_item, const Point2 &p_from, 
 	canvas_item->commands.push_back(line);
 }
 
-void VisualServerCanvas::canvas_item_add_polyline(RID p_item, const Vector<Point2> &p_points, const Vector<Color> &p_colors, float p_width, bool p_antialiased) {
+void VisualServerCanvas::canvas_item_add_polyline(RID p_item, const Vector<Point2> &p_points, const Vector<Color> &p_colors, float p_width, bool p_antialiased, VS::LineDrawMode p_line_join, VS::LineDrawMode p_line_cap) {
 	ERR_FAIL_COND(p_points.size() < 2);
 	Item *canvas_item = canvas_item_owner.getornull(p_item);
 	ERR_FAIL_COND(!canvas_item);
@@ -517,8 +518,14 @@ void VisualServerCanvas::canvas_item_add_polyline(RID p_item, const Vector<Point
 	pline->antialiased = p_antialiased;
 	pline->multiline = false;
 
+	const bool loop = p_points[0].is_equal_approx(p_points.last());
+
 	if (p_width <= 1) {
-		pline->lines = p_points;
+		if (p_line_join != VS::LINE_JOIN_BEVEL) {
+			pline->lines = PolyGeometry::strokify(p_points, (PolyGeometry::LineDrawMode)p_line_join);
+		} else {
+			pline->lines = p_points;
+		}
 		pline->line_colors = p_colors;
 		if (pline->line_colors.size() == 0) {
 			pline->line_colors.push_back(Color(1, 1, 1, 1));
@@ -526,7 +533,7 @@ void VisualServerCanvas::canvas_item_add_polyline(RID p_item, const Vector<Point
 			pline->line_colors.resize(1);
 		}
 	} else {
-		//make a trianglestrip for drawing the line...
+		// make a trianglestrip for drawing the line...
 		Vector2 prev_t;
 		pline->triangles.resize(p_points.size() * 2);
 		if (p_antialiased) {

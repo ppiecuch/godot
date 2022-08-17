@@ -29,9 +29,11 @@
 /*************************************************************************/
 
 #include "canvas_item.h"
+#include "core/math/math_defs.h"
 #include "core/message_queue.h"
 #include "core/method_bind_ext.gen.inc"
 #include "core/os/input.h"
+#include "core/variant.h"
 #include "core/version.h"
 #include "scene/main/canvas_layer.h"
 #include "scene/main/viewport.h"
@@ -737,18 +739,18 @@ void CanvasItem::draw_line(const Point2 &p_from, const Point2 &p_to, const Color
 	VisualServer::get_singleton()->canvas_item_add_line(canvas_item, p_from, p_to, p_color, p_width, p_antialiased);
 }
 
-void CanvasItem::draw_polyline(const Vector<Point2> &p_points, const Color &p_color, float p_width, bool p_antialiased) {
+void CanvasItem::draw_polyline(const Vector<Point2> &p_points, const Color &p_color, float p_width, bool p_antialiased, LineDrawMode p_line_join, LineDrawMode p_line_cap) {
 	ERR_FAIL_COND_MSG(!drawing, "Drawing is only allowed inside NOTIFICATION_DRAW, _draw() function or 'draw' signal.");
 
 	Vector<Color> colors;
 	colors.push_back(p_color);
-	VisualServer::get_singleton()->canvas_item_add_polyline(canvas_item, p_points, colors, p_width, p_antialiased);
+	VisualServer::get_singleton()->canvas_item_add_polyline(canvas_item, p_points, colors, p_width, p_antialiased, (VS::LineDrawMode)p_line_join, (VS::LineDrawMode)p_line_cap);
 }
 
-void CanvasItem::draw_polyline_colors(const Vector<Point2> &p_points, const Vector<Color> &p_colors, float p_width, bool p_antialiased) {
+void CanvasItem::draw_polyline_colors(const Vector<Point2> &p_points, const Vector<Color> &p_colors, float p_width, bool p_antialiased, LineDrawMode p_line_join, LineDrawMode p_line_cap) {
 	ERR_FAIL_COND_MSG(!drawing, "Drawing is only allowed inside NOTIFICATION_DRAW, _draw() function or 'draw' signal.");
 
-	VisualServer::get_singleton()->canvas_item_add_polyline(canvas_item, p_points, p_colors, p_width, p_antialiased);
+	VisualServer::get_singleton()->canvas_item_add_polyline(canvas_item, p_points, p_colors, p_width, p_antialiased, (VS::LineDrawMode)p_line_join, (VS::LineDrawMode)p_line_cap);
 }
 
 void CanvasItem::draw_arc(const Vector2 &p_center, float p_radius, float p_start_angle, float p_end_angle, int p_point_count, const Color &p_color, float p_width, bool p_antialiased) {
@@ -1235,6 +1237,13 @@ void CanvasItem::_bind_methods() {
 	BIND_ENUM_CONSTANT(BLEND_MODE_MUL);
 	BIND_ENUM_CONSTANT(BLEND_MODE_PREMULT_ALPHA);
 	BIND_ENUM_CONSTANT(BLEND_MODE_DISABLED);
+
+	BIND_ENUM_CONSTANT(LINE_JOIN_BEVEL);
+	BIND_ENUM_CONSTANT(LINE_JOIN_MITTER);
+	BIND_ENUM_CONSTANT(LINE_JOIN_ROUND);
+	BIND_ENUM_CONSTANT(LINE_CAP_SQUARE);
+	BIND_ENUM_CONSTANT(LINE_CAP_PROJECT);
+	BIND_ENUM_CONSTANT(LINE_CAP_ROUND);
 
 	BIND_CONSTANT(NOTIFICATION_TRANSFORM_CHANGED);
 	BIND_CONSTANT(NOTIFICATION_LOCAL_TRANSFORM_CHANGED);

@@ -180,12 +180,22 @@ class CanvasItem : public Node {
 public:
 	enum BlendMode {
 
-		BLEND_MODE_MIX, //default
+		BLEND_MODE_MIX, // default
 		BLEND_MODE_ADD,
 		BLEND_MODE_SUB,
 		BLEND_MODE_MUL,
 		BLEND_MODE_PREMULT_ALPHA,
-		BLEND_MODE_DISABLED
+		BLEND_MODE_DISABLED,
+	};
+
+	enum LineDrawMode {
+
+		LINE_JOIN_MITTER,
+		LINE_JOIN_BEVEL,
+		LINE_JOIN_ROUND,
+		LINE_CAP_SQUARE,
+		LINE_CAP_PROJECT,
+		LINE_CAP_ROUND,
 	};
 
 private:
@@ -323,8 +333,8 @@ public:
 	/* DRAWING API */
 
 	void draw_line(const Point2 &p_from, const Point2 &p_to, const Color &p_color, float p_width = 1.0, bool p_antialiased = false);
-	void draw_polyline(const Vector<Point2> &p_points, const Color &p_color, float p_width = 1.0, bool p_antialiased = false);
-	void draw_polyline_colors(const Vector<Point2> &p_points, const Vector<Color> &p_colors, float p_width = 1.0, bool p_antialiased = false);
+	void draw_polyline(const Vector<Point2> &p_points, const Color &p_color, float p_width = 1.0, bool p_antialiased = false, LineDrawMode p_line_join = LINE_JOIN_BEVEL, LineDrawMode p_line_cap = LINE_CAP_SQUARE);
+	void draw_polyline_colors(const Vector<Point2> &p_points, const Vector<Color> &p_colors, float p_width = 1.0, bool p_antialiased = false, LineDrawMode p_line_join = LINE_JOIN_BEVEL, LineDrawMode p_line_cap = LINE_CAP_SQUARE);
 	void draw_arc(const Vector2 &p_center, float p_radius, float p_start_angle, float p_end_angle, int p_point_count, const Color &p_color, float p_width = 1.0, bool p_antialiased = false);
 	void draw_multiline(const Vector<Point2> &p_points, const Color &p_color, float p_width = 1.0, bool p_antialiased = false);
 	void draw_multiline_colors(const Vector<Point2> &p_points, const Vector<Color> &p_colors, float p_width = 1.0, bool p_antialiased = false);
@@ -412,5 +422,6 @@ public:
 };
 
 VARIANT_ENUM_CAST(CanvasItem::BlendMode);
+VARIANT_ENUM_CAST(CanvasItem::LineDrawMode);
 
 #endif // CANVAS_ITEM_H
