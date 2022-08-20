@@ -507,12 +507,12 @@ Rect2 SpriteMesh::get_rect() const {
 	Size2 s(aabb.size.x, aabb.size.y);
 
 	Point2 ofs = offset;
-	if (centered)
+	if (centered) {
 		ofs -= Size2(s) / 2;
-
-	if (s == Size2(0, 0))
+	}
+	if (s == Size2(0, 0)) {
 		s = Size2(1, 1);
-
+	}
 	return Rect2(ofs, s);
 }
 
