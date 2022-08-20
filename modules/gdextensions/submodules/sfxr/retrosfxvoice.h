@@ -52,38 +52,39 @@
 //////////////////////////////////////////////////////////////////////////
 
 typedef struct _FXParams103 {
-	int fOvertones;
-	float fOvertoneRamp;
+	int fOvertones;           // Harmonics: overlays copies of the waveform with copies and multiples of its frequency. Good for bulking
+	                          // out or otherwise enriching the texture of the sounds (warning: this is the number 1 cause of usfxr slowdown!) (0 to 1)
+	float fOvertoneRamp;      // Harmonics falloff: the rate at which higher overtones should decay (0 to 1)
 
-	float fBaseFreq;
-	float fFreqLimit;
+	float fBaseFreq;          // Base note of the sound (0 to 1)
+	float fFreqLimit;         // If sliding, the sound will stop at this frequency, to prevent really low notes (0 to 1)
 	float fFreqRamp;
 	float fFreqDRamp;
-	float fDuty;
-	float fDutyRamp;
+	float fDuty;              // Controls the ratio between the up and down states of the square wave, changing the tibre (0 to 1)
+	float fDutyRamp;          // Sweeps the duty up or down (-1 to 1)
 
-	float fVibStrength;
-	float fVibSpeed;
+	float fVibStrength;       // Strength of the vibrato effect (0 to 1)
+	float fVibSpeed;          // Speed of the vibrato effect (i.e. frequency) (0 to 1)
 	float fVibDelay;
 
-	float fEnvAttack;
-	float fEnvSustain;
-	float fEnvDecay;
-	float fEnvPunch;
+	float fEnvAttack;         // Length of the volume envelope attack (0 to 1)
+	float fEnvSustain;        // Length of the volume envelope sustain (0 to 1)
+	float fEnvDecay;          // Length of the volume envelope decay (yes, I know it's called release) (0 to 1)
+	float fEnvPunch;          // Tilts the sustain envelope for more 'pop' (0 to 1)
 
 	float fLPFResonance;
 	float fLPFFreq;
 	float fLPFRamp;
 	float fHPFFreq;
 	float fHPFRamp;
-	float fBitCrush;
-	float fBitCrushSweep;
+	float fBitCrush;          // Bit crush: resamples the audio at a lower frequency (0 to 1)
+	float fBitCrushSweep;     // Bit crush sweep: sweeps the Bit Crush filter up or down (-1 to 1)
 	float fCompressionAmount;
 
 	float fFlangerOffset;
 	float fFlangerRamp;
 
-	float fRepeatSpeed;
+	float fRepeatSpeed;       // Speed of the note repeating - certain variables are reset each time (0 to 1)
 
 	float fArmRepeat;
 	float fArmSpeed;
@@ -122,7 +123,7 @@ public:
 	bool SaveSettings(const char *pFilename);
 	bool CompareSettings(RetroSFXVoice *pOther);
 	void Reset(bool restart);
-	void Play(void *pData = 0);
+	void Play(void *pData = nullptr);
 	void Play(bool bCalculateLength);
 	int GetVoiceLengthInSamples() const;
 	int Render(int nSamples, BufferCallback *pCallback);
@@ -138,8 +139,6 @@ public:
 	//////////////////////////////////////////////////////////////////////////
 
 	bool IsActive();
-
-	// Technically all of these should be private but the editor pokes these directly so we shall ignore this aside for now.
 
 	RetroVoice103 m_Voice;
 	FXParams103 m_FXWorkParams;

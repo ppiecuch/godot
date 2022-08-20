@@ -66,7 +66,9 @@ void AudioStreamSfxr::_update_voice() {
 	SampleBuffer buffer;
 	sfx_voice.Play();
 	while (sfx_voice.IsActive()) {
-		sfx_voice.Render(256, &buffer);
+		printf(" ... render\n");
+		int ss = sfx_voice.Render(256, &buffer);
+		printf(" ... samples %d\n",ss);
 	}
 
 	_cache = buffer.data;
@@ -74,7 +76,7 @@ void AudioStreamSfxr::_update_voice() {
 }
 
 void AudioStreamSfxr::from_file(const String p_file) {
-	if (!sfx_voice.LoadSettings(p_file.utf8().get_data())) {
+	if (!sfx_voice.LoadSettings(p_file.utf8().c_str())) {
 		ERR_PRINT("Failed to load sfx settings from " + p_file);
 	}
 }
@@ -209,7 +211,7 @@ AudioStreamPlaybackSfxr::AudioStreamPlaybackSfxr() {
 	sample_position = 0;
 }
 
-/// Sfx resource importer
+/// Sfx (.rsfx) resource importer
 
 String ResourceImporterSfxr::get_preset_name(int p_idx) const {
 	return String();
@@ -233,7 +235,7 @@ String ResourceImporterSfxr::get_visible_name() const {
 }
 
 void ResourceImporterSfxr::get_recognized_extensions(List<String> *p_extensions) const {
-	p_extensions->push_back("sfx");
+	p_extensions->push_back("rsfx");
 }
 
 String ResourceImporterSfxr::get_save_extension() const {
