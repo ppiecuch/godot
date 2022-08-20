@@ -40,20 +40,23 @@
 static const real_t miterMinAngle = 0.349066;
 static const real_t roundMinAngle = 0.174533;
 
+//
+// (a)--- line ---(b)
+//
 struct LineSegment {
 	Point2 a, b;
 
-	LineSegment operator+(const Point2 &to_add) const {
+	_FORCE_INLINE_ LineSegment operator+(const Point2 &to_add) const {
 		return { a + to_add, b + to_add };
 	}
-	LineSegment operator-(const Point2 &to_remove) const {
+	_FORCE_INLINE_ LineSegment operator-(const Point2 &to_remove) const {
 		return { a - to_remove, b - to_remove };
 	}
-	Vector2 normal() const {
+	_FORCE_INLINE_ Vector2 normal() const {
 		auto dir = direction();
 		return { -dir.y, dir.x };
 	}
-	Vector2 direction(bool normalized = true) const {
+	_FORCE_INLINE_ Vector2 direction(bool normalized = true) const {
 		auto vec = b - a;
 		return normalized ? vec.normalized() : vec;
 	}
@@ -81,11 +84,26 @@ struct LineSegment {
 		return a.a + (r * t); // calculate the intersection point
 	}
 
+	static Point2 intersection(const LineSegment &a, const LineSegment &b, const Point2 &def, bool infinite_lines) {
+		if (const Variant sec = intersection(a, b, infinite_lines)) {
+			return sec;
+		} else {
+			return def;
+		}
+	}
+
 	LineSegment(const Point2 &a, const Point2 &b) :
 			a(a), b(b) {}
 	LineSegment() {}
 };
 
+//
+// +----edge1----+
+// |             | thickness
+// +--- center --+
+// |             | thickness
+// +----edge2----+
+//
 struct PolySegment {
 	LineSegment center, edge1, edge2;
 	PolySegment(const LineSegment &center, real_t thickness) :
@@ -95,8 +113,7 @@ struct PolySegment {
 	PolySegment() {}
 };
 
-static Vector<Point2> create_triangle_fan(const Point2 &connect_to, const Point2 &origin, const Point2 &start, const Point2 &end, bool clockwise) {
-	Vector<Point2> vertices;
+static void create_triangle_fan(PolyGeometry::Results &state, const Point2 &connect_to, const Point2 &origin, const Point2 &start, const Point2 &end, bool antialiased, bool clockwise) {
 	const auto point1 = start - origin;
 	const auto point2 = end - origin;
 
@@ -132,23 +149,17 @@ static Vector<Point2> create_triangle_fan(const Point2 &connect_to, const Point2
 			end_point.x = Math::cos(rot) * point1.x - Math::sin(rot) * point1.y;
 			end_point.y = Math::sin(rot) * point1.x + Math::cos(rot) * point1.y;
 
-			// re-add the rotation origin to the target point
-			end_point = end_point + origin;
+			end_point = end_point + origin; // re-add the rotation origin to the target point
 		}
-
-		// emit the triangle
-		vertices.push_back(start_point);
-		vertices.push_back(end_point);
-		vertices.push_back(connect_to);
-
+		state.tris.push_back(start_point, end_point, connect_to); // emit the triangle
+		if (antialiased) {
+			state.lines.push_back(start_point, end_point);
+		}
 		start_point = end_point;
 	}
-
-	return vertices;
 }
 
-static Vector<Point2> create_joint(const PolySegment &segment1, const PolySegment &segment2, int joint_style, Point2 &end1, Point2 &end2, Point2 &next_start1, Point2 &next_start2, bool allow_overlap) {
-	Vector<Point2> vertices;
+static void create_joint(PolyGeometry::Results &state, const PolySegment &segment1, const PolySegment &segment2, int joint_style, Point2 &end1, Point2 &end2, Point2 &next_start1, Point2 &next_start2, bool antialiased, bool allow_overlap) {
 	// calculate the angle between the two line segments
 	auto dir1 = segment1.center.direction();
 	auto dir2 = segment2.center.direction();
@@ -232,7 +243,6 @@ static Vector<Point2> create_joint(const PolySegment &segment1, const PolySegmen
 
 			next_start1 = outer2->a;
 			next_start2 = inner_start;
-
 		} else {
 			end1 = inner_sec;
 			end2 = outer1->b;
@@ -244,30 +254,127 @@ static Vector<Point2> create_joint(const PolySegment &segment1, const PolySegmen
 		// connect the intersection points according to the joint style
 
 		if (joint_style == PolyGeometry::LINE_JOIN_BEVEL) {
-			// simply connect the intersection points
-			vertices.push_back(outer1->b);
-			vertices.push_back(outer2->a);
-			vertices.push_back(inner_sec);
-
+			state.tris.push_back(outer1->b, outer2->a, inner_sec); // simply connect the intersection points
+			if (antialiased) {
+				state.lines.push_back(outer1->b, outer2->a);
+			}
 		} else if (joint_style == PolyGeometry::LINE_JOIN_ROUND) {
 			// draw a circle between the ends of the outer edges, centered at
 			// the actual point with half the line thickness as the radius
-			vertices.append_array(create_triangle_fan(inner_sec, segment1.center.b, outer1->b, outer2->a, clockwise));
+			create_triangle_fan(state, inner_sec, segment1.center.b, outer1->b, outer2->a, antialiased, clockwise);
 		}
 	}
-
-	return vertices;
 }
 
-Vector<Point2> PolyGeometry::strokify(const Vector<Point2> &contour, real_t w, LineDrawMode cap, LineDrawMode join, bool loop, bool p_antialiased, bool allow_overlap) {
-	Vector<Point2> data;
-	w /= 2; // operate on half the thickness to make our lives easier
+PolyGeometry::Results PolyGeometry::strokify_polyline(const Vector<Point2> &p_contour, const Vector<Color> &p_colors, real_t p_width, LineDrawMode p_line_join, LineDrawMode p_line_cap, bool p_loop, bool p_antialiased, bool p_allow_overlap) {
+	const real_t w = p_width / 2; // operate on half the thickness to make our lives easier
 
 	// create poly segments from the points
 	Vector<PolySegment> segments;
-	for (size_t i = 0; i + 1 < contour.size(); i++) {
-		const auto p1 = contour[i];
-		const auto p2 = contour[i + 1];
+	for (size_t i = 0; i + 1 < p_contour.size(); i++) {
+		const auto p1 = p_contour[i];
+		const auto p2 = p_contour[i + 1];
+
+		// to avoid division-by-zero errors,
+		// only create a line segment for non-identical points
+		if (!p1.is_equal_approx(p2)) {
+			segments.push_back({ { p1, p2 }, p_width });
+		}
+	}
+
+	if (segments.empty()) {
+		return Results(); // handle the case of insufficient input points
+	}
+
+	Results r;
+
+	if (p_colors.size() == 0) {
+		r.tri_colors.push_back(Color(1, 1, 1, 1));
+		if (p_antialiased) {
+			r.line_colors.push_back(Color(1, 1, 1, 1));
+		}
+	} else if (p_colors.size() == 1) {
+		r.tri_colors.push_back(Color(0.2, 0.2, 0.2));
+		r.line_colors.push_back(Color(1, 0, 0));
+	} else {
+		if (p_colors.size() != p_contour.size()) {
+			r.tri_colors.push_back(p_colors[0]);
+			r.line_colors.push_back(p_colors[0]);
+		}
+	}
+
+	Point2 next_start1, next_start2;
+	Point2 start1, start2;
+	Point2 end1, end2;
+
+	// calculate the path's global start and end points
+	const auto &first_segment = segments[0];
+	const auto &last_segment = segments[segments.size() - 1];
+
+	auto path_start1 = first_segment.edge1.a;
+	auto path_start2 = first_segment.edge2.a;
+	auto path_end1 = last_segment.edge1.b;
+	auto path_end2 = last_segment.edge2.b;
+
+	if (p_loop) {
+		create_joint(r, last_segment, first_segment, p_line_join, path_end1, path_end2, path_start1, path_start2, p_antialiased, p_allow_overlap);
+	} else {
+		if (p_line_cap == LINE_CAP_SQUARE) {
+			path_start1 = path_start1 - (first_segment.edge1.direction() * w);
+			path_start2 = path_start2 - (first_segment.edge2.direction() * w);
+			path_end1 = path_end1 + (last_segment.edge1.direction() * w);
+			path_end2 = path_end2 + (last_segment.edge2.direction() * w);
+			if (p_antialiased) {
+				r.lines.push_back(path_start1, path_start2);
+				r.lines.push_back(path_end1, path_end2);
+			}
+		} else if (p_line_cap == LINE_CAP_ROUND) {
+			create_triangle_fan(r, first_segment.center.a, first_segment.center.a, first_segment.edge1.a, first_segment.edge2.a, p_antialiased, false);
+			create_triangle_fan(r, last_segment.center.b, last_segment.center.b, last_segment.edge1.b, last_segment.edge2.b, p_antialiased, true);
+		}
+	}
+
+	// generate mesh data for path segments
+	for (size_t i = 0; i < segments.size(); i++) {
+		const auto &segment = segments[i];
+		// calculate start
+		if (i == 0) {
+			// this is the first segment
+			start1 = path_start1;
+			start2 = path_start2;
+		}
+		if (i + 1 == segments.size()) { // this is the last segment
+			end1 = path_end1;
+			end2 = path_end2;
+		} else {
+			create_joint(r, segment, segments[i + 1], p_line_join, end1, end2, next_start1, next_start2, p_antialiased, p_allow_overlap);
+		}
+
+		// emit triangles
+		r.tris.push_back(start1, start2, end1);
+		r.tris.push_back(end1, start2, end2);
+
+		// emit outlines
+		if (p_antialiased) {
+			r.lines.push_back(start1, end1);
+			r.lines.push_back(start2, end2);
+		}
+
+		start1 = next_start1;
+		start2 = next_start2;
+	}
+
+	return r;
+}
+
+PolyGeometry::Results PolyGeometry::strokify_multiline(const Vector<Point2> &p_lines, const Vector<Color> &p_colors, real_t p_width, LineDrawMode p_line_cap, bool p_antialiased, bool p_allow_overlap) {
+	const real_t w = p_width / 2; // operate on half the thickness to make our lives easier
+
+	// create poly segments from the points
+	Vector<PolySegment> segments;
+	for (size_t i = 0; i + 1 < p_lines.size(); i += 2) {
+		const auto p1 = p_lines[i];
+		const auto p2 = p_lines[i + 1];
 
 		// to avoid division-by-zero errors,
 		// only create a line segment for non-identical points
@@ -277,74 +384,62 @@ Vector<Point2> PolyGeometry::strokify(const Vector<Point2> &contour, real_t w, L
 	}
 
 	if (segments.empty()) {
-		// handle the case of insufficient input points
-		return contour;
+		return Results(); // handle the case of insufficient input points
 	}
 
-	Vector2 next_start1;
-	Vector2 next_start2;
-	Vector2 start1;
-	Vector2 start2;
-	Vector2 end1;
-	Vector2 end2;
+	Results r;
 
-	// calculate the path's global start and end points
-	auto &first_segment = segments[0];
-	auto &last_segment = segments[segments.size() - 1];
-
-	auto path_start1 = first_segment.edge1.a;
-	auto path_start2 = first_segment.edge2.a;
-	auto path_end1 = last_segment.edge1.b;
-	auto path_end2 = last_segment.edge2.b;
-
-	if (loop) {
-		data.append_array(create_joint(last_segment, first_segment, join, path_end1, path_end2, path_start1, path_start2, allow_overlap));
+	if (p_colors.size() == 0) {
+		r.tri_colors.push_back(Color(1, 1, 1, 1));
+		if (p_antialiased) {
+			r.line_colors.push_back(Color(1, 1, 1, 1));
+		}
+	} else if (p_colors.size() == 1) {
+		r.tri_colors = p_colors;
+		r.line_colors.push_back(Color(1, 0, 0, 1));
 	} else {
-		if (cap == LINE_CAP_SQUARE) {
-			path_start1 = path_start1 - (first_segment.edge1.direction() * w);
-			path_start2 = path_start2 - (first_segment.edge2.direction() * w);
-			path_end1 = path_end1 + (last_segment.edge1.direction() * w);
-			path_end2 = path_end2 + (last_segment.edge2.direction() * w);
-		} else if (cap == LINE_CAP_ROUND) {
-			data.append_array(create_triangle_fan(first_segment.center.a, first_segment.center.a, first_segment.edge1.a, first_segment.edge2.a, false));
-			data.append_array(create_triangle_fan(last_segment.center.b, last_segment.center.b, last_segment.edge1.b, last_segment.edge2.b, true));
+		if (p_colors.size() != p_lines.size()) {
+			r.tri_colors.push_back(p_colors[0]);
+			r.line_colors.push_back(p_colors[0]);
 		}
 	}
+
+	Point2 next_start1, next_start2;
+	Point2 start1, start2;
+	Point2 end1, end2;
 
 	// generate mesh data for path segments
 	for (size_t i = 0; i < segments.size(); i++) {
-		auto &segment = segments[i];
-		// calculate start
-		if (i == 0) {
-			// this is the first segment
-			start1 = path_start1;
-			start2 = path_start2;
-		}
-		if (i + 1 == segments.size()) {
-			// this is the last segment
-			end1 = path_end1;
-			end2 = path_end2;
-		} else {
-			data.append_array(create_joint(segment, segments[i + 1], join, end1, end2, next_start1, next_start2, allow_overlap));
+		const auto &segment = segments[i];
+
+		auto path_start1 = segment.edge1.a;
+		auto path_start2 = segment.edge2.a;
+		auto path_end1 = segment.edge1.b;
+		auto path_end2 = segment.edge2.b;
+
+		if (p_line_cap == LINE_CAP_SQUARE) {
+			path_start1 = path_start1 - (segment.edge1.direction() * w);
+			path_start2 = path_start2 - (segment.edge2.direction() * w);
+			path_end1 = path_end1 + (segment.edge1.direction() * w);
+			path_end2 = path_end2 + (segment.edge2.direction() * w);
+		} else if (p_line_cap == LINE_CAP_ROUND) {
+			create_triangle_fan(r, segment.center.a, segment.center.a, segment.edge1.a, segment.edge2.a, p_antialiased, false);
+			create_triangle_fan(r, segment.center.b, segment.center.b, segment.edge1.b, segment.edge2.b, p_antialiased, true);
 		}
 
-		// emit vertices
-		data.push_back(start1);
-		data.push_back(start2);
-		data.push_back(end1);
+		// emit triangles
+		r.tris.push_back(start1, start2, end1);
+		r.tris.push_back(end1, start2, end2);
 
-		data.push_back(end1);
-		data.push_back(start2);
-		data.push_back(end2);
+		// emit outlines
+		if (p_antialiased) {
+			r.lines.push_back(start1, end1);
+			r.lines.push_back(start2, end2);
+		}
 
 		start1 = next_start1;
 		start2 = next_start2;
 	}
 
-	return data;
-}
-
-Vector<Point2> PolyGeometry::strokify(const Vector<Point2> &p_contour, LineDrawMode p_line_join, bool p_allow_overlap) {
-	Vector<Point2> data;
-	return data;
+	return r;
 }

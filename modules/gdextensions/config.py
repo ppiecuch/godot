@@ -8,6 +8,7 @@ def can_build(env, platform):
 def configure(env):
     from SCons.Script import Variables, ListVariable, Help, Exit
 
+    # all submodules available in the extensions
     modules = [
         "core",
         "breakpad",

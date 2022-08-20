@@ -579,14 +579,10 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 									RAST_DEV_DEBUG_ASSERT(pline->triangle_colors.size() == pline->triangles.size());
 								}
 #endif
-								_draw_generic(GL_TRIANGLE_STRIP, pline->triangles.size(), pline->triangles.ptr(), nullptr, pline->triangle_colors.ptr(), pline->triangle_colors.size() == 1);
+								_draw_generic(GL_TRIANGLES, pline->triangles.size(), pline->triangles.ptr(), nullptr, pline->triangle_colors.ptr(), pline->triangle_colors.size() == 1);
 #ifdef GLES_OVER_GL
 								glEnable(GL_LINE_SMOOTH);
-								if (pline->multiline) {
-									//needs to be different
-								} else {
-									_draw_generic(GL_LINE_LOOP, pline->lines.size(), pline->lines.ptr(), nullptr, pline->line_colors.ptr(), pline->line_colors.size() == 1);
-								}
+								_draw_generic(GL_LINES, pline->lines.size(), pline->lines.ptr(), nullptr, pline->line_colors.ptr(), pline->line_colors.size() == 1);
 								glDisable(GL_LINE_SMOOTH);
 #endif
 							} else {
@@ -816,6 +812,21 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 
 							RasterizerStorageGLES3::Mesh *mesh_data = storage->mesh_owner.getornull(mesh->mesh);
 							if (mesh_data) {
+								bool need_depth = false;
+								for (int j = 0; j < mesh_data->surfaces.size(); j++) {
+									RasterizerStorageGLES3::Surface *s = mesh_data->surfaces[j];
+									if (s->active) {
+										if ((need_depth = !(s->format & VisualServer::ARRAY_FLAG_USE_2D_VERTICES))) {
+											break;
+										}
+									}
+								}
+								// enabled depth + vec3 if there is at least one surface with vec3 vertex type (PP)
+								if (need_depth) {
+									state.canvas_shader.set_conditional(CanvasShaderGLES3::USE_CANVAS_VEC3, true);
+									glEnable(GL_DEPTH_TEST);
+									glDepthMask(GL_TRUE);
+								}
 								for (int j = 0; j < mesh_data->surfaces.size(); j++) {
 									RasterizerStorageGLES3::Surface *s = mesh_data->surfaces[j];
 									if (s->active) {
@@ -824,26 +835,21 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 
 										glVertexAttrib4f(VS::ARRAY_COLOR, mesh->modulate.r, mesh->modulate.g, mesh->modulate.b, mesh->modulate.a);
 
-										const bool need_depth = !(s->format & VisualServer::ARRAY_FLAG_USE_2D_VERTICES);
-
-										if (need_depth) {
-											glEnable(GL_DEPTH_TEST);
-											glDepthMask(GL_TRUE);
-										}
 										if (s->index_array_len) {
 											glDrawElements(gl_primitive[s->primitive], s->index_array_len, (s->array_len >= (1 << 16)) ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, nullptr);
 										} else {
 											glDrawArrays(gl_primitive[s->primitive], 0, s->array_len);
 										}
-										if (need_depth) {
-											glDisable(GL_DEPTH_TEST);
-											glDepthMask(GL_FALSE);
-										}
-
 										storage->info.render._2d_draw_call_count++;
 
 										glBindVertexArray(0);
 									}
+								}
+								if (need_depth) {
+									// restore default state
+									state.canvas_shader.set_conditional(CanvasShaderGLES3::USE_CANVAS_VEC3, GLOBAL_DEF("rendering/quality/2d/use_vertex_vector3", true));
+									glDisable(GL_DEPTH_TEST);
+									glDepthMask(GL_FALSE);
 								}
 							}
 							state.canvas_shader.set_uniform(CanvasShaderGLES3::MODELVIEW_MATRIX, state.final_transform);

@@ -448,63 +448,24 @@ void VisualServerCanvas::canvas_item_set_update_when_visible(RID p_item, bool p_
 	canvas_item->update_when_visible = p_update;
 }
 
-void VisualServerCanvas::canvas_item_add_line(RID p_item, const Point2 &p_from, const Point2 &p_to, const Color &p_color, float p_width, bool p_antialiased) {
-	// Try drawing as a poly, because polys are batched and thus should run faster than thick lines,
-	// which run extremely slowly.
-	if (!p_antialiased && (p_width > 1.0)) {
-		// use poly drawing, as it is faster as it can use batching
-		static Vector<Point2> points;
-		static Vector<Color> colors;
-		static Vector<Point2> uvs;
-		if (points.size() != 4) {
-			// this should only be done once at runtime due to use of a static
-			points.resize(4);
-			colors.resize(4);
-			uvs.resize(4);
-		}
+void VisualServerCanvas::canvas_item_add_line(RID p_item, const Point2 &p_from, const Point2 &p_to, const Color &p_color, float p_width, bool p_antialiased, VS::LineDrawMode p_line_cap) {
+	if (p_width > 1.0) {
+		canvas_item_add_multiline(p_item, helper::vector(p_from, p_to), helper::vector(p_color), p_width, p_antialiased, p_line_cap);
+	} else {
+		Item *canvas_item = canvas_item_owner.getornull(p_item);
+		ERR_FAIL_COND(!canvas_item);
 
-		Vector2 side = p_to - p_from;
-		real_t length = side.length();
-		if (length == 0.0) {
-			// Not sure yet whether zero length is a noop operation later on,
-			// watch for visual errors. If there are visual errors, pass through
-			// to the line drawing routine below.
-			return;
-		}
+		Item::CommandLine *line = memnew(Item::CommandLine);
+		ERR_FAIL_COND(!line);
+		line->color = p_color;
+		line->from = p_from;
+		line->to = p_to;
+		line->width = p_width;
+		line->antialiased = p_antialiased;
+		canvas_item->rect_dirty = true;
 
-		// normalize
-		side /= length;
-
-		// 90 degrees
-		side = Vector2(-side.y, side.x);
-		side *= p_width * 0.5;
-
-		points.set(0, p_from + side);
-		points.set(1, p_from - side);
-		points.set(2, p_to - side);
-		points.set(3, p_to + side);
-
-		for (int n = 0; n < 4; n++) {
-			colors.set(n, p_color);
-		}
-
-		canvas_item_add_polygon(p_item, points, colors, uvs, RID(), RID(), RID(), false);
-		return;
+		canvas_item->commands.push_back(line);
 	}
-
-	Item *canvas_item = canvas_item_owner.getornull(p_item);
-	ERR_FAIL_COND(!canvas_item);
-
-	Item::CommandLine *line = memnew(Item::CommandLine);
-	ERR_FAIL_COND(!line);
-	line->color = p_color;
-	line->from = p_from;
-	line->to = p_to;
-	line->width = p_width;
-	line->antialiased = p_antialiased;
-	canvas_item->rect_dirty = true;
-
-	canvas_item->commands.push_back(line);
 }
 
 void VisualServerCanvas::canvas_item_add_polyline(RID p_item, const Vector<Point2> &p_points, const Vector<Color> &p_colors, float p_width, bool p_antialiased, VS::LineDrawMode p_line_join, VS::LineDrawMode p_line_cap) {
@@ -518,14 +479,8 @@ void VisualServerCanvas::canvas_item_add_polyline(RID p_item, const Vector<Point
 	pline->antialiased = p_antialiased;
 	pline->multiline = false;
 
-	const bool loop = p_points[0].is_equal_approx(p_points.last());
-
 	if (p_width <= 1) {
-		if (p_line_join != VS::LINE_JOIN_BEVEL) {
-			pline->lines = PolyGeometry::strokify(p_points, (PolyGeometry::LineDrawMode)p_line_join);
-		} else {
-			pline->lines = p_points;
-		}
+		pline->lines = p_points;
 		pline->line_colors = p_colors;
 		if (pline->line_colors.size() == 0) {
 			pline->line_colors.push_back(Color(1, 1, 1, 1));
@@ -534,68 +489,59 @@ void VisualServerCanvas::canvas_item_add_polyline(RID p_item, const Vector<Point
 		}
 	} else {
 		// make a trianglestrip for drawing the line...
-		Vector2 prev_t;
-		pline->triangles.resize(p_points.size() * 2);
-		if (p_antialiased) {
-			pline->lines.resize(p_points.size() * 2);
-		}
 
-		if (p_colors.size() == 0) {
-			pline->triangle_colors.push_back(Color(1, 1, 1, 1));
-			if (p_antialiased) {
-				pline->line_colors.push_back(Color(1, 1, 1, 1));
-			}
-		} else if (p_colors.size() == 1) {
-			pline->triangle_colors = p_colors;
-			pline->line_colors = p_colors;
-		} else {
-			if (p_colors.size() != p_points.size()) {
-				pline->triangle_colors.push_back(p_colors[0]);
-				pline->line_colors.push_back(p_colors[0]);
-			} else {
-				pline->triangle_colors.resize(pline->triangles.size());
-				pline->line_colors.resize(pline->lines.size());
-			}
-		}
+		const bool loop = p_points[0].is_equal_approx(p_points.last());
+		PolyGeometry::Results geom = PolyGeometry::strokify_polyline(p_points, p_colors, p_width, (PolyGeometry::LineDrawMode)p_line_join, (PolyGeometry::LineDrawMode)p_line_cap, loop, p_antialiased);
 
-		for (int i = 0; i < p_points.size(); i++) {
-			Vector2 t;
-			if (i == p_points.size() - 1) {
-				t = prev_t;
-			} else {
-				t = (p_points[i + 1] - p_points[i]).normalized().tangent();
-				if (i == 0) {
-					prev_t = t;
-				}
-			}
+		pline->triangles = geom.tris;
+		pline->triangle_colors = geom.tri_colors;
+		pline->lines = geom.lines;
+		pline->line_colors = geom.line_colors;
 
-			Vector2 tangent = ((t + prev_t).normalized()) * p_width * 0.5;
-
-			if (p_antialiased) {
-				pline->lines.write[i] = p_points[i] + tangent;
-				pline->lines.write[p_points.size() * 2 - i - 1] = p_points[i] - tangent;
-				if (pline->line_colors.size() > 1) {
-					pline->line_colors.write[i] = p_colors[i];
-					pline->line_colors.write[p_points.size() * 2 - i - 1] = p_colors[i];
-				}
-			}
-
-			pline->triangles.write[i * 2 + 0] = p_points[i] + tangent;
-			pline->triangles.write[i * 2 + 1] = p_points[i] - tangent;
-
-			if (pline->triangle_colors.size() > 1) {
-				pline->triangle_colors.write[i * 2 + 0] = p_colors[i];
-				pline->triangle_colors.write[i * 2 + 1] = p_colors[i];
-			}
-
-			prev_t = t;
-		}
+		// Vector2 prev_t;
+		// pline->triangles.resize(p_points.size() * 2);
+		// if (p_antialiased) {
+		// 	pline->lines.resize(p_points.size() * 2);
+		// }
+		//
+		// for (int i = 0; i < p_points.size(); i++) {
+		// 	Vector2 t;
+		// 	if (i == p_points.size() - 1) {
+		// 		t = prev_t;
+		// 	} else {
+		// 		t = (p_points[i + 1] - p_points[i]).normalized().tangent();
+		// 		if (i == 0) {
+		// 			prev_t = t;
+		// 		}
+		// 	}
+		//
+		// 	Vector2 tangent = ((t + prev_t).normalized()) * p_width * 0.5;
+		//
+		// 	if (p_antialiased) {
+		// 		pline->lines.write[i] = p_points[i] + tangent;
+		// 		pline->lines.write[p_points.size() * 2 - i - 1] = p_points[i] - tangent;
+		// 		if (pline->line_colors.size() > 1) {
+		// 			pline->line_colors.write[i] = p_colors[i];
+		// 			pline->line_colors.write[p_points.size() * 2 - i - 1] = p_colors[i];
+		// 		}
+		// 	}
+		//
+		// 	pline->triangles.write[i * 2 + 0] = p_points[i] + tangent;
+		// 	pline->triangles.write[i * 2 + 1] = p_points[i] - tangent;
+		//
+		// 	if (pline->triangle_colors.size() > 1) {
+		// 		pline->triangle_colors.write[i * 2 + 0] = p_colors[i];
+		// 		pline->triangle_colors.write[i * 2 + 1] = p_colors[i];
+		// 	}
+		//
+		// 	prev_t = t;
+		// }
 	}
 	canvas_item->rect_dirty = true;
 	canvas_item->commands.push_back(pline);
 }
 
-void VisualServerCanvas::canvas_item_add_multiline(RID p_item, const Vector<Point2> &p_points, const Vector<Color> &p_colors, float p_width, bool p_antialiased) {
+void VisualServerCanvas::canvas_item_add_multiline(RID p_item, const Vector<Point2> &p_points, const Vector<Color> &p_colors, float p_width, bool p_antialiased, VS::LineDrawMode p_line_cap) {
 	ERR_FAIL_COND(p_points.size() < 2);
 	Item *canvas_item = canvas_item_owner.getornull(p_item);
 	ERR_FAIL_COND(!canvas_item);
@@ -603,15 +549,24 @@ void VisualServerCanvas::canvas_item_add_multiline(RID p_item, const Vector<Poin
 	Item::CommandPolyLine *pline = memnew(Item::CommandPolyLine);
 	ERR_FAIL_COND(!pline);
 
-	pline->antialiased = false; //todo
+	pline->antialiased = p_antialiased;
 	pline->multiline = true;
 
-	pline->lines = p_points;
-	pline->line_colors = p_colors;
-	if (pline->line_colors.size() == 0) {
-		pline->line_colors.push_back(Color(1, 1, 1, 1));
-	} else if (pline->line_colors.size() > 1 && pline->line_colors.size() != pline->lines.size()) {
-		pline->line_colors.resize(1);
+	if (p_width <= 1) {
+		pline->lines = p_points;
+		pline->line_colors = p_colors;
+		if (pline->line_colors.size() == 0) {
+			pline->line_colors.push_back(Color(1, 1, 1, 1));
+		} else if (pline->line_colors.size() > 1 && pline->line_colors.size() != pline->lines.size()) {
+			pline->line_colors.resize(1);
+		}
+	} else {
+		PolyGeometry::Results geom = PolyGeometry::strokify_multiline(p_points, p_colors, p_width, (PolyGeometry::LineDrawMode)p_line_cap, p_antialiased);
+
+		pline->triangles = geom.tris;
+		pline->triangle_colors = geom.tri_colors;
+		pline->lines = geom.lines;
+		pline->line_colors = geom.line_colors;
 	}
 
 	canvas_item->rect_dirty = true;

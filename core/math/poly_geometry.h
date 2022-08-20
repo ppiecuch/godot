@@ -31,6 +31,7 @@
 #ifndef POLY_GEOMETRY_H
 #define POLY_GEOMETRY_H
 
+#include "core/math/math_defs.h"
 #include "core/variant.h"
 
 class PolyGeometry {
@@ -45,11 +46,20 @@ public:
 		LINE_CAP_ROUND,
 	};
 
-	/// build polygon stroke for line width 'p_width'
-	static Vector<Point2> strokify(const Vector<Point2> &p_contour, real_t p_width, LineDrawMode p_line_cap, LineDrawMode p_line_join, bool p_loop, bool p_antialiased = false, bool p_allow_overlap = false);
+	typedef real_t (*LineThickness)(const Point2 &point, int index, const Vector<Point2> &contour);
 
-	/// extend contour with line joints only
-	static Vector<Point2> strokify(const Vector<Point2> &p_contour, LineDrawMode p_line_join, bool p_allow_overlap = false);
+	struct Results {
+		Vector<Point2> tris, lines;
+		Vector<Color> tri_colors, line_colors;
+	};
+
+	/// Build polygon stroke for a given line thickness
+	static Results strokify_polyline(const Vector<Point2> &p_contour, const Vector<Color> &p_colors, real_t p_width, LineDrawMode p_line_join, LineDrawMode p_line_cap, bool p_loop, bool p_antialiased = false, bool p_allow_overlap = false);
+	static Results strokify_polyline(const Vector<Point2> &p_contour, real_t p_width, LineDrawMode p_line_join, LineDrawMode p_line_cap, bool p_loop, bool p_antialiased = false, bool p_allow_overlap = false);
+	static Results strokify_polyline(const Vector<Point2> &p_contour, const Vector<Color> &p_colors, LineThickness p_thickness, LineDrawMode p_line_join, LineDrawMode p_line_cap, bool p_loop, bool p_antialiased = false, bool p_allow_overlap = false);
+	static Results strokify_polyline(const Vector<Point2> &p_contour, LineThickness p_thickness, LineDrawMode p_line_join, LineDrawMode p_line_cap, bool p_loop, bool p_antialiased = false, bool p_allow_overlap = false);
+
+	static Results strokify_multiline(const Vector<Point2> &p_lines, const Vector<Color> &p_colors, real_t p_width, LineDrawMode p_line_cap, bool p_antialiased = false, bool p_allow_overlap = false);
 };
 
 #endif // POLY_GEOMETRY_H
