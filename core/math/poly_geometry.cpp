@@ -294,8 +294,8 @@ PolyGeometry::Results PolyGeometry::strokify_polyline(const Vector<Point2> &p_co
 			r.line_colors.push_back(Color(1, 1, 1, 1));
 		}
 	} else if (p_colors.size() == 1) {
-		r.tri_colors.push_back(Color(0.2, 0.2, 0.2));
-		r.line_colors.push_back(Color(1, 0, 0));
+		r.tri_colors = p_colors;
+		r.line_colors = p_colors;
 	} else {
 		if (p_colors.size() != p_contour.size()) {
 			r.tri_colors.push_back(p_colors[0]);
@@ -320,6 +320,11 @@ PolyGeometry::Results PolyGeometry::strokify_polyline(const Vector<Point2> &p_co
 		create_joint(r, last_segment, first_segment, p_line_join, path_end1, path_end2, path_start1, path_start2, p_antialiased, p_allow_overlap);
 	} else {
 		if (p_line_cap == LINE_CAP_SQUARE) {
+			if (p_antialiased) {
+				r.lines.push_back(path_start1, path_start2);
+				r.lines.push_back(path_end1, path_end2);
+			}
+		} else if (p_line_cap == LINE_CAP_PROJECT) {
 			path_start1 = path_start1 - (first_segment.edge1.direction() * w);
 			path_start2 = path_start2 - (first_segment.edge2.direction() * w);
 			path_end1 = path_end1 + (last_segment.edge1.direction() * w);
