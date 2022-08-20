@@ -33,6 +33,7 @@
 #include "bluntfont/blutfont.cpp"
 #include "bob3d/bob_font.cpp"
 #include "easyfont/stb_easy_font.h"
+#include "fbdigitalfont/fb.h"
 #include "hershey/hershey_render.h"
 #include "leonsans/leonsans.h"
 #include "polyfonts/polygodot.cpp"
