@@ -229,7 +229,7 @@ void TweenAction::add_callback(const Variant &target, const StringName &method_n
 }
 
 bool TweenAction::step(float delta) {
-	if (status == TWEEN_STATUS_CANCEL || target == NULL) {
+	if (status == TWEEN_STATUS_CANCEL || target == nullptr) {
 		return true;
 	}
 	delta_time += delta;
@@ -289,7 +289,7 @@ void TweenAction::_on_target_exit() {
 	if (target && target->is_connected("exit_tree", this, "_on_target_exit")) {
 		target->disconnect("exit_tree", this, "_on_target_exit");
 	}
-	target = NULL;
+	target = nullptr;
 }
 
 TweenAction::~TweenAction() {
@@ -326,6 +326,7 @@ void TweenAction::end() {
 //==================Tween2
 
 Tween2::Tween2() {
+	ERR_FAIL_COND_MSG(singleton != nullptr, "Singleton already exists");
 	singleton = this;
 }
 
@@ -333,10 +334,10 @@ Tween2::~Tween2() {
 	if (tween_node) {
 		memdelete(tween_node);
 	}
-	singleton = NULL;
+	singleton = nullptr;
 }
 
-Tween2 *Tween2::singleton = NULL;
+Tween2 *Tween2::singleton = nullptr;
 Tween2 *Tween2::get_singleton() {
 	return singleton;
 }
@@ -345,11 +346,11 @@ Ref<TweenAction> Tween2::to(Object *target, float during) {
 	const String tween_key = "new_tween";
 	MainLoop *main_loop = OS::get_singleton()->get_main_loop();
 	SceneTree *tree = cast_to<SceneTree>(main_loop);
-	ERR_FAIL_COND_V(tree == NULL, NULL);
+	ERR_FAIL_COND_V(tree == nullptr, nullptr);
 
 	Viewport *viewport = tree->get_root();
-	ERR_FAIL_COND_V(viewport == NULL, NULL);
-	if (tween_node == NULL) {
+	ERR_FAIL_COND_V(viewport == nullptr, nullptr);
+	if (tween_node == nullptr) {
 		tween_node = memnew(TweenNode);
 		tween_node->set_name(tween_key);
 
@@ -368,7 +369,7 @@ Ref<TweenAction> Tween2::to(Object *target, float during) {
 }
 
 void Tween2::cancel(Object *target) {
-	if (tween_node != NULL) {
+	if (tween_node != nullptr) {
 		for (int i = 0, t = tween_node->actions.size(); i < t; ++i) {
 			Ref<TweenAction> action = tween_node->actions[i];
 			if (target == action->target) {
@@ -381,7 +382,7 @@ void Tween2::cancel(Object *target) {
 void Tween2::_add_node(Object *node) {
 	MainLoop *main_loop = OS::get_singleton()->get_main_loop();
 	SceneTree *tree = cast_to<SceneTree>(main_loop);
-	ERR_FAIL_COND(tree == NULL);
+	ERR_FAIL_COND(tree == nullptr);
 
 	tree->disconnect("idle_frame", this, "_add_node");
 	tree->get_root()->add_child(cast_to<TweenNode>(node));

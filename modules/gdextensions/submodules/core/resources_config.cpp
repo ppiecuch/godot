@@ -203,6 +203,7 @@ Resources *Resources::get_singleton() {
 }
 
 Resources::Resources() {
+	ERR_FAIL_COND_MSG(instance != nullptr, "Singleton already exists");
 	loaded = false;
 	instance = this;
 }

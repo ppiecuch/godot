@@ -183,6 +183,7 @@ GdNakama1 *GdNakama1::get_singleton() {
 }
 
 GdNakama1::GdNakama1() {
+	ERR_FAIL_COND_MSG(singleton != nullptr, "Singleton already exists");
 	singleton = this;
 }
 

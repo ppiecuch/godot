@@ -1109,6 +1109,7 @@ void GdParseBackend::_bind_methods() {
 }
 
 GdParseBackend::GdParseBackend() {
+	ERR_FAIL_COND_MSG(instance != nullptr, "Singleton already exists");
 	if (not(_queue = queue_open(ProjectSettings::get_singleton()->globalize_path(REQUESTS_QUEUE).utf8().c_str()))) {
 		WARN_PRINT("Failed to open requests queue at: " + ProjectSettings::get_singleton()->globalize_path(REQUESTS_QUEUE));
 	}

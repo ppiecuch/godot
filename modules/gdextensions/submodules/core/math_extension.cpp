@@ -158,5 +158,6 @@ void spatial_set_rotation_quat_keep_scale(Node *spatial, const Quat &rotation) {
 }
 
 _GodotMathExtension::_GodotMathExtension() {
+	ERR_FAIL_COND_MSG(singleton != nullptr, "Singleton already exists");
 	singleton = this;
 }

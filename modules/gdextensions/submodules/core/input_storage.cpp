@@ -35,7 +35,7 @@
 #include "core/os/os.h"
 #include "scene/main/viewport.h"
 
-InputStorage *InputStorage::singleton = NULL;
+InputStorage *InputStorage::singleton = nullptr;
 
 InputStorage *InputStorage::get_singleton() {
 	return singleton;
@@ -87,12 +87,14 @@ int InputNode::queue_down(const PoolStringArray &actions, int offset) const {
 }
 
 InputStorage::InputStorage() {
+	ERR_FAIL_COND_MSG(singleton != nullptr, "Singleton already exists");
+
 	singleton = this;
 
 	_this_frame = nullptr;
 
 	storage_size = 30;
-	storage_node = NULL;
+	storage_node = nullptr;
 	storage_events.alloc(storage_size);
 }
 

@@ -95,6 +95,7 @@ SpaceMouse *SpaceMouse::get_singleton() {
 }
 
 SpaceMouse::SpaceMouse() {
+	ERR_FAIL_COND_MSG(instance != nullptr, "Singleton already exists");
 	instance = this;
 }
 

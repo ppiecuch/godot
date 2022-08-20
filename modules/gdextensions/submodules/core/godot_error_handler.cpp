@@ -30,9 +30,11 @@
 
 #include "godot_error_handler.h"
 
-GodotErrorHandler *GodotErrorHandler::singleton = NULL;
+GodotErrorHandler *GodotErrorHandler::singleton = nullptr;
 
 GodotErrorHandler::GodotErrorHandler() {
+	ERR_FAIL_COND_MSG(singleton != nullptr, "Singleton already exists");
+
 	eh.errfunc = _err_handler;
 	eh.userdata = this;
 	add_error_handler(&eh);
@@ -42,7 +44,7 @@ GodotErrorHandler::GodotErrorHandler() {
 
 GodotErrorHandler::~GodotErrorHandler() {
 	remove_error_handler(&eh);
-	singleton = NULL;
+	singleton = nullptr;
 }
 
 GodotErrorHandler *GodotErrorHandler::get_singleton() {

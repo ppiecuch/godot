@@ -54,6 +54,7 @@
 #include "core/raw_packer.h"
 #include "core/resource_importer_json.h"
 #include "core/resources_config.h"
+#include "core/stopwatch.h"
 #include "core/tags.h"
 #include "core/timer2.h"
 #include "core/trail_2d.h"
@@ -104,6 +105,7 @@
 #include "visual/destructible_sprite.h"
 #include "visual/explosion_particles.h"
 #include "visual/figure_2d.h"
+#include "visual/grid_rect.h"
 #include "visual/nixie_font.h"
 #include "visual/pixel_spaceships.h"
 #include "visual/round_progress.h"
@@ -288,6 +290,7 @@ void register_gdextensions_types() {
 	ClassDB::register_virtual_class<RawPacker>();
 	ClassDB::register_class<RealNormal>();
 	ClassDB::register_class<RoundProgress>();
+	ClassDB::register_class<GridRect>();
 	ClassDB::register_class<Timer2>();
 	ClassDB::register_class<TimerObject>();
 	ClassDB::register_class<Tween2>();
@@ -295,6 +298,7 @@ void register_gdextensions_types() {
 	ClassDB::register_class<TrailPoint2D>();
 	ClassDB::register_class<TrailLine2D>();
 	ClassDB::register_class<ProceduralAnimation>();
+	ClassDB::register_class<GridRect>();
 	ClassDB::register_class<Voronoi>();
 	ClassDB::register_class<VoronoiDiagram>();
 	ClassDB::register_class<VoronoiSite>();

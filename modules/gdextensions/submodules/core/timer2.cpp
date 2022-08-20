@@ -89,6 +89,7 @@ void TimerNode::_notification(int p_notification) {
 }
 
 Timer2::Timer2() {
+	ERR_FAIL_COND_MSG(singleton != nullptr, "Singleton already exists");
 	singleton = this;
 }
 
@@ -96,18 +97,18 @@ Timer2::~Timer2() {
 	if (timer_node) {
 		memdelete(timer_node);
 	}
-	singleton = NULL;
+	singleton = nullptr;
 }
 
 Ref<TimerObject> Timer2::wait(float p_time) {
 	const String timer_key = "new_timer";
 	MainLoop *main_loop = OS::get_singleton()->get_main_loop();
 	SceneTree *tree = cast_to<SceneTree>(main_loop);
-	ERR_FAIL_COND_V(tree == NULL, NULL);
+	ERR_FAIL_COND_V(tree == nullptr, nullptr);
 
 	Viewport *viewport = tree->get_root();
-	ERR_FAIL_COND_V(viewport == NULL, NULL);
-	if (timer_node == NULL) {
+	ERR_FAIL_COND_V(viewport == nullptr, nullptr);
+	if (timer_node == nullptr) {
 		timer_node = memnew(TimerNode);
 		timer_node->set_name(timer_key);
 
@@ -128,12 +129,12 @@ Ref<TimerObject> Timer2::wait_trigger(float p_time, Object *p_target, String p_m
 	const String timer_key = "new_timer";
 	MainLoop *main_loop = OS::get_singleton()->get_main_loop();
 	SceneTree *tree = cast_to<SceneTree>(main_loop);
-	ERR_FAIL_COND_V(tree == NULL, NULL);
+	ERR_FAIL_COND_V(tree == nullptr, nullptr);
 
 	Viewport *viewport = tree->get_root();
-	ERR_FAIL_COND_V(viewport == NULL, NULL);
-	TimerNode *timer_node = NULL;
-	if (timer_node == NULL) {
+	ERR_FAIL_COND_V(viewport == nullptr, nullptr);
+	TimerNode *timer_node = nullptr;
+	if (timer_node == nullptr) {
 		timer_node = memnew(TimerNode);
 		timer_node->set_name(timer_key);
 
@@ -155,7 +156,7 @@ Ref<TimerObject> Timer2::wait_trigger(float p_time, Object *p_target, String p_m
 	return obj;
 }
 
-Timer2 *Timer2::singleton = NULL;
+Timer2 *Timer2::singleton = nullptr;
 Timer2 *Timer2::get_singleton() {
 	return singleton;
 }
@@ -163,7 +164,7 @@ Timer2 *Timer2::get_singleton() {
 void Timer2::_add_node(Object *node) {
 	MainLoop *main_loop = OS::get_singleton()->get_main_loop();
 	SceneTree *tree = cast_to<SceneTree>(main_loop);
-	ERR_FAIL_COND(tree == NULL);
+	ERR_FAIL_COND(tree == nullptr);
 
 	tree->disconnect("idle_frame", this, "_add_node");
 	tree->get_root()->add_child(cast_to<TimerNode>(node));

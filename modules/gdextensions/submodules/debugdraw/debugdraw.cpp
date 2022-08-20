@@ -229,7 +229,7 @@ void DebugDraw::_bind_methods() {
 
 DebugDraw::DebugDraw() :
 		ready(false) {
-	ERR_FAIL_COND(singleton);
+	ERR_FAIL_COND_MSG(singleton != nullptr, "Singleton already exists");
 	skip_canvas_transform = false;
 	singleton = this;
 }
