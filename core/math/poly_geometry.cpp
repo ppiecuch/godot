@@ -423,10 +423,19 @@ PolyGeometry::Results PolyGeometry::strokify_multiline(const Vector<Point2> &p_l
 		auto path_end2 = segment.edge2.b;
 
 		if (p_line_cap == LINE_CAP_SQUARE) {
+			if (p_antialiased) {
+				r.lines.push_back(path_start1, path_start2);
+				r.lines.push_back(path_end1, path_end2);
+			}
+		} else if (p_line_cap == LINE_CAP_PROJECT) {
 			path_start1 = path_start1 - (segment.edge1.direction() * w);
 			path_start2 = path_start2 - (segment.edge2.direction() * w);
 			path_end1 = path_end1 + (segment.edge1.direction() * w);
 			path_end2 = path_end2 + (segment.edge2.direction() * w);
+			if (p_antialiased) {
+				r.lines.push_back(path_start1, path_start2);
+				r.lines.push_back(path_end1, path_end2);
+			}
 		} else if (p_line_cap == LINE_CAP_ROUND) {
 			create_triangle_fan(r, segment.center.a, segment.center.a, segment.edge1.a, segment.edge2.a, p_antialiased, false);
 			create_triangle_fan(r, segment.center.b, segment.center.b, segment.edge1.b, segment.edge2.b, p_antialiased, true);
