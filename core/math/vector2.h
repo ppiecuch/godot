@@ -39,6 +39,15 @@ struct Vector2i;
 struct _NO_DISCARD_CLASS_ Vector2 {
 	static const int AXIS_COUNT = 2;
 
+	static const Vector2 ZERO;
+	static const Vector2 ONE;
+	static const Vector2 INF;
+
+	static const Vector2 LEFT;
+	static const Vector2 RIGHT;
+	static const Vector2 UP;
+	static const Vector2 DOWN;
+
 	enum Axis {
 		AXIS_X,
 		AXIS_Y,
