@@ -34,9 +34,12 @@
 #include "scene/resources/mesh.h"
 #include "servers/visual_server.h"
 
+#include <memory>
+
 #define BOBS_X 7
 #define BOBS_Y 7
 
+namespace {
 char char_32[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }; // space
 char char_33[] = { 0x08, 0x08, 0x08, 0x08, 0x08, 0x00, 0x08 }; // !
 char char_34[] = { 0x14, 0x28, 0x00, 0x00, 0x00, 0x00, 0x00 }; // "
@@ -105,14 +108,15 @@ char *chars[] = {
 	char_72, char_73, char_74, char_75, char_76, char_77, char_78, char_79, char_80, char_81,
 	char_82, char_83, char_84, char_85, char_86, char_87, char_88, char_89, char_90, nullptr
 };
+} // namespace
 
-struct bob_mesh {
+struct bob_font_mesh {
 	PoolVector3Array verts;
 	PoolColorArray verts_color;
 	PoolIntArray faces_index;
 	bool wire;
 
-	bob_mesh(int bnum, bool wire) :
+	bob_font_mesh(int bnum, bool wire) :
 			wire(wire) {
 		faces_index.resize(bnum * (wire ? 24 : 36));
 		verts_color.resize(bnum * 24);
@@ -120,7 +124,7 @@ struct bob_mesh {
 	}
 };
 
-static void draw_block(bob_mesh &mesh_info, int array_offset, real_t x1, real_t y1, real_t x2, real_t y2, real_t z1, real_t z2) {
+static void bob_font_draw_block(bob_font_mesh &mesh_info, int array_offset, real_t x1, real_t y1, real_t x2, real_t y2, real_t z1, real_t z2) {
 #define aa 0.7, 0.5, 0.2, 1.0
 #define bb 0.9, 0.5, 0.0, 1.0
 #define cc 1.0, 0.7, 0.0, 1.0
@@ -232,11 +236,11 @@ static void draw_block(bob_mesh &mesh_info, int array_offset, real_t x1, real_t 
 	}
 }
 
-static void draw_bob(bob_mesh &mesh_info, int array_offset, real_t x, real_t y, real_t z, real_t size) {
-	draw_block(mesh_info, array_offset, x, y, x + size * 0.8, y + size * 0.8, z, z + size * 0.8);
+static void bob_font_draw(bob_font_mesh &mesh_info, int array_offset, real_t x, real_t y, real_t z, real_t size) {
+	bob_font_draw_block(mesh_info, array_offset, x, y, x + size * 0.8, y + size * 0.8, z, z + size * 0.8);
 }
 
-static bool draw_bob_char(bob_mesh &mesh_info, int &array_offset, char ch, const Point3 &pos, real_t size) {
+static bool bob_font_draw_char(bob_font_mesh &mesh_info, int &array_offset, char ch, const Point3 &pos, real_t size) {
 	real_t yp = pos.y;
 
 	if (ch < 32 || ch > 90) {
@@ -249,7 +253,7 @@ static bool draw_bob_char(bob_mesh &mesh_info, int &array_offset, char ch, const
 		char shft = 0x40;
 		for (int j = 0; j < BOBS_X; j++) {
 			if (*ptr & shft) {
-				draw_bob(mesh_info, array_offset, xp, yp, pos.z, size);
+				bob_font_draw(mesh_info, array_offset, xp, yp, pos.z, size);
 				array_offset++;
 			}
 			shft = shft >> 1;
@@ -283,16 +287,16 @@ static int num_of_draw_bobs(const char *str) {
 	return bobs;
 }
 
-real_t DrawBobString(Ref<ArrayMesh> &mesh, const char *str, const Point3 &pos, real_t size, bool wire) {
+real_t bob_font_draw_string(Ref<ArrayMesh> &mesh, const char *str, const Point3 &pos, real_t size, bool wire) {
 	const int bnum = num_of_draw_bobs(str);
 
-	bob_mesh mesh_info(bnum, wire);
+	bob_font_mesh mesh_info(bnum, wire);
 
 	char ch = *str;
 	int array_offset = 0;
 	Point3 xp(pos.x, 0, 0);
 	while ((ch = *str) != 0) {
-		if (draw_bob_char(mesh_info, array_offset, ch, pos + xp, size)) {
+		if (bob_font_draw_char(mesh_info, array_offset, ch, pos + xp, size)) {
 			xp.x += size * (BOBS_X + 1);
 		}
 		str++;
@@ -312,16 +316,16 @@ real_t DrawBobString(Ref<ArrayMesh> &mesh, const char *str, const Point3 &pos, r
 	return xp.x;
 }
 
-real_t DrawBobString(Ref<ArrayMesh> &mesh, const char *str, const Transform &pretransform, const Point3 &pos, real_t size, bool wire) {
+real_t bob_font_draw_string(Ref<ArrayMesh> &mesh, const char *str, const Transform &pretransform, const Point3 &pos, real_t size, bool wire) {
 	const int bnum = num_of_draw_bobs(str);
 
-	bob_mesh mesh_info(bnum, wire);
+	bob_font_mesh mesh_info(bnum, wire);
 
 	char ch = *str;
 	int array_offset = 0;
 	Point3 xp(pos.x, 0, 0);
 	while ((ch = *str) != 0) {
-		if (draw_bob_char(mesh_info, array_offset, ch, pos + xp, size)) {
+		if (bob_font_draw_char(mesh_info, array_offset, ch, pos + xp, size)) {
 			xp.x += size * (BOBS_X + 1);
 		}
 		str++;
