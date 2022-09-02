@@ -69,10 +69,10 @@ using TTFCore::vec4t;
 using TTFCore::TriangulatorFlags;
 
 using TTFCore::CodePoint;
-using TTFCore::Font;
 using TTFCore::FontMetrics;
 using TTFCore::GlyphMetrics;
 using TTFCore::MapFromData;
+using TTFCore::TFont;
 using TTFCore::VFontMetrics;
 using TTFCore::VGlyphMetrics;
 

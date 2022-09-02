@@ -65,7 +65,7 @@ CodePoint::CodePoint(uint32_t code_) :
 CodePoint::CodePoint(uint32_t code_, uint16_t platform_, uint16_t encoding_, uint16_t language_) :
 		code(code_), platform(platform_), encoding(encoding_), language(language_) {}
 
-Font::Font(std::string file_name) {
+TFont::TFont(std::string file_name) {
 	Error err;
 	FileAccessRef f = FileAccess::open(file_name.c_str(), FileAccess::READ, &err);
 	if (err != OK)
@@ -78,10 +78,8 @@ Font::Font(std::string file_name) {
 		if (r != length)
 			ERR_THROW(FileFailure(file_name));
 	}
-
 	// intialize variables
 	buffer = &buffer_cache.front();
-
 	// parse font
 	CreateTableMap();
 	VerifyTableCheckSums();
@@ -89,10 +87,9 @@ Font::Font(std::string file_name) {
 	VerifyTrueTypeTables();
 }
 
-Font::Font(const void *raw_data, MapFromData) {
+TFont::TFont(const void *raw_data, MapFromData) {
 	// intialize variables
 	buffer = reinterpret_cast<const char *>(raw_data);
-
 	// parse font
 	CreateTableMap();
 	VerifyTableCheckSums();
@@ -100,15 +97,14 @@ Font::Font(const void *raw_data, MapFromData) {
 	VerifyTrueTypeTables();
 }
 
-Font::Font(const void *raw_data, size_t length) {
+TFont::TFont(const void *raw_data, size_t length) {
 	// sanity check
-	if (length == 0)
+	if (length == 0) {
 		ERR_THROW(FileLengthError());
-
+	}
 	// 'load' font data
 	buffer_cache.assign(reinterpret_cast<const char *>(raw_data), reinterpret_cast<const char *>(raw_data) + length);
 	buffer = &buffer_cache.front();
-
 	// parse font
 	CreateTableMap();
 	VerifyTableCheckSums();
@@ -116,19 +112,19 @@ Font::Font(const void *raw_data, size_t length) {
 	VerifyTrueTypeTables();
 }
 
-Font::Font(const Font &f) :
+TFont::TFont(const TFont &f) :
 		buffer_cache(f.buffer_cache),
 		buffer(buffer_cache.empty() ? f.buffer : buffer_cache.data()) {
 	CreateTableMap(); // recreate the table map
 }
 
-Font::Font(Font &&f) :
+TFont::TFont(TFont &&f) :
 		table_map(std::move(f.table_map)),
 		buffer_cache(std::move(f.buffer_cache)),
 		buffer(buffer_cache.empty() ? f.buffer : buffer_cache.data()) {
 }
 
-Font &Font::operator=(const Font &f) {
+TFont &TFont::operator=(const TFont &f) {
 	if (this != &f) {
 		buffer_cache = f.buffer_cache;
 		buffer = buffer_cache.empty() ? f.buffer : buffer_cache.data();
@@ -137,7 +133,7 @@ Font &Font::operator=(const Font &f) {
 	return *this;
 }
 
-Font &Font::operator=(Font &&f) {
+TFont &TFont::operator=(TFont &&f) {
 	if (this != &f) {
 		table_map = std::move(f.table_map);
 		buffer_cache = std::move(f.buffer_cache);
@@ -146,29 +142,29 @@ Font &Font::operator=(Font &&f) {
 	return *this;
 }
 
-Font::~Font() {}
+TFont::~TFont() {}
 
 // ----- read helpers -----
-uint8_t Font::ReadBYTE(FItr &itr) const {
+uint8_t TFont::ReadBYTE(FItr &itr) const {
 	uint8_t r = *reinterpret_cast<const uint8_t *>(itr);
 	itr += 1;
 	return r;
 }
 
-int8_t Font::ReadCHAR(FItr &itr) const {
+int8_t TFont::ReadCHAR(FItr &itr) const {
 	int8_t r = *reinterpret_cast<const int8_t *>(itr);
 	itr += 1;
 	return r;
 }
 
-uint16_t Font::ReadUSHORT(FItr &itr) const {
+uint16_t TFont::ReadUSHORT(FItr &itr) const {
 	uint16_t r = ReadBYTE(itr);
 	r <<= 8;
 	r += ReadBYTE(itr);
 	return r;
 }
 
-int16_t Font::ReadSHORT(FItr &itr) const {
+int16_t TFont::ReadSHORT(FItr &itr) const {
 	int16_t r = 0;
 	uint8_t i = ReadBYTE(itr);
 	if (i & 128)
@@ -180,7 +176,7 @@ int16_t Font::ReadSHORT(FItr &itr) const {
 	return r;
 }
 
-uint32_t Font::ReadUINT24(FItr &itr) const {
+uint32_t TFont::ReadUINT24(FItr &itr) const {
 	uint32_t r = ReadBYTE(itr);
 	r <<= 8;
 	r += ReadBYTE(itr);
@@ -189,7 +185,7 @@ uint32_t Font::ReadUINT24(FItr &itr) const {
 	return r;
 }
 
-uint32_t Font::ReadULONG(FItr &itr) const {
+uint32_t TFont::ReadULONG(FItr &itr) const {
 	uint32_t r = ReadBYTE(itr);
 	r <<= 8;
 	r += ReadBYTE(itr);
@@ -200,7 +196,7 @@ uint32_t Font::ReadULONG(FItr &itr) const {
 	return r;
 }
 
-int32_t Font::ReadLONG(FItr &itr) const {
+int32_t TFont::ReadLONG(FItr &itr) const {
 	int32_t r = 0;
 	uint8_t i = ReadBYTE(itr);
 	if (i & 128)
@@ -216,11 +212,11 @@ int32_t Font::ReadLONG(FItr &itr) const {
 	return r;
 }
 
-int32_t Font::ReadFIXED32(FItr &itr) const {
+int32_t TFont::ReadFIXED32(FItr &itr) const {
 	return ReadLONG(itr);
 }
 
-int64_t Font::ReadLONGDATETIME(FItr &itr) const {
+int64_t TFont::ReadLONGDATETIME(FItr &itr) const {
 	int64_t r = 0;
 	uint8_t i = ReadBYTE(itr);
 	if (i & 128)
@@ -244,60 +240,60 @@ int64_t Font::ReadLONGDATETIME(FItr &itr) const {
 	return r;
 }
 
-int32_t Font::ReadFIXED16(FItr &itr) const {
+int32_t TFont::ReadFIXED16(FItr &itr) const {
 	return static_cast<int32_t>(ReadSHORT(itr) << 2); // convert from 2.14 to 16.16
 }
 
-uint8_t Font::ReadBYTE(FItr &&itr) const {
+uint8_t TFont::ReadBYTE(FItr &&itr) const {
 	return *reinterpret_cast<const uint8_t *>(itr);
 }
 
-int8_t Font::ReadCHAR(FItr &&itr) const {
+int8_t TFont::ReadCHAR(FItr &&itr) const {
 	return *reinterpret_cast<const int8_t *>(itr);
 }
 
-uint16_t Font::ReadUSHORT(FItr &&itr_) const {
+uint16_t TFont::ReadUSHORT(FItr &&itr_) const {
 	FItr itr = itr_;
 	return ReadUSHORT(itr);
 }
 
-int16_t Font::ReadSHORT(FItr &&itr_) const {
+int16_t TFont::ReadSHORT(FItr &&itr_) const {
 	FItr itr = itr_;
 	return ReadSHORT(itr);
 }
 
-uint32_t Font::ReadUINT24(FItr &&itr_) const {
+uint32_t TFont::ReadUINT24(FItr &&itr_) const {
 	FItr itr = itr_;
 	return ReadUINT24(itr);
 }
 
-uint32_t Font::ReadULONG(FItr &&itr_) const {
+uint32_t TFont::ReadULONG(FItr &&itr_) const {
 	FItr itr = itr_;
 	return ReadULONG(itr);
 }
 
-int32_t Font::ReadLONG(FItr &&itr_) const {
+int32_t TFont::ReadLONG(FItr &&itr_) const {
 	FItr itr = itr_;
 	return ReadLONG(itr);
 }
 
-int32_t Font::ReadFIXED32(FItr &&itr_) const {
+int32_t TFont::ReadFIXED32(FItr &&itr_) const {
 	FItr itr = itr_;
 	return ReadLONG(itr);
 }
 
-int64_t Font::ReadLONGDATETIME(FItr &&itr_) const {
+int64_t TFont::ReadLONGDATETIME(FItr &&itr_) const {
 	FItr itr = itr_;
 	return ReadLONGDATETIME(itr);
 }
 
-int32_t Font::ReadFIXED16(FItr &&itr_) const {
+int32_t TFont::ReadFIXED16(FItr &&itr_) const {
 	FItr itr = itr_;
 	return ReadSHORT(itr);
 }
 
 // ----- more read helpers -----
-TTFHeader Font::ReadTTFHeader(FItr &itr) const {
+TTFHeader TFont::ReadTTFHeader(FItr &itr) const {
 	TTFHeader header;
 	header.version = ReadFIXED32(itr);
 	header.num_tables = ReadUSHORT(itr);
@@ -308,7 +304,7 @@ TTFHeader Font::ReadTTFHeader(FItr &itr) const {
 	return header;
 }
 
-TableEntry Font::ReadTableEntry(FItr &itr) const {
+TableEntry TFont::ReadTableEntry(FItr &itr) const {
 	TableEntry te;
 	te.tag = ReadULONG(itr);
 	DecomposeTag(te.tag, te.tagstr);
@@ -319,7 +315,7 @@ TableEntry Font::ReadTableEntry(FItr &itr) const {
 	return te;
 }
 
-HeadTable Font::ReadHeadTable() const {
+HeadTable TFont::ReadHeadTable() const {
 	FItr itr = GetTableEntry(CreateTag('h', 'e', 'a', 'd')).begin;
 
 	HeadTable ht;
@@ -344,7 +340,7 @@ HeadTable Font::ReadHeadTable() const {
 	return ht;
 }
 
-GlyphProfile Font::ReadMAXPTable() const {
+GlyphProfile TFont::ReadMAXPTable() const {
 	FItr itr = GetTableEntry(CreateTag('m', 'a', 'x', 'p')).begin;
 
 	GlyphProfile gp;
@@ -370,18 +366,18 @@ GlyphProfile Font::ReadMAXPTable() const {
 	return gp;
 }
 
-int16_t Font::GetIndexToLocFormat() const {
+int16_t TFont::GetIndexToLocFormat() const {
 	FItr itr = GetTableEntry(CreateTag('h', 'e', 'a', 'd')).begin;
 	return ReadSHORT(itr + 50);
 }
 
-uint16_t Font::GetNumGlyphs() const {
+uint16_t TFont::GetNumGlyphs() const {
 	FItr itr = GetTableEntry(CreateTag('m', 'a', 'x', 'p')).begin;
 	return ReadUSHORT(itr + 4);
 }
 
 // ----- table helpers -----
-uint32_t Font::CreateTag(char c0, char c1, char c2, char c3) const {
+uint32_t TFont::CreateTag(char c0, char c1, char c2, char c3) const {
 	uint32_t r;
 	r = static_cast<uint32_t>(c0);
 	r <<= 8;
@@ -394,7 +390,7 @@ uint32_t Font::CreateTag(char c0, char c1, char c2, char c3) const {
 	return r;
 }
 
-uint32_t Font::CreateTag(const char *s) const {
+uint32_t TFont::CreateTag(const char *s) const {
 	uint32_t r;
 	r = static_cast<uint32_t>(s[0]);
 	r <<= 8;
@@ -407,7 +403,7 @@ uint32_t Font::CreateTag(const char *s) const {
 	return r;
 }
 
-void Font::DecomposeTag(uint32_t tag, char *s) const {
+void TFont::DecomposeTag(uint32_t tag, char *s) const {
 	s[0] = static_cast<char>((tag >> 24) & 0xff);
 	s[1] = static_cast<char>((tag >> 16) & 0xff);
 	s[2] = static_cast<char>((tag >> 8) & 0xff);
@@ -415,27 +411,27 @@ void Font::DecomposeTag(uint32_t tag, char *s) const {
 	s[4] = 0;
 }
 
-std::string Font::DecomposeTag(uint32_t tag) const {
+std::string TFont::DecomposeTag(uint32_t tag) const {
 	char str[5];
 	DecomposeTag(tag, str);
 	return str;
 }
 
-TableEntry Font::GetTableEntry(uint32_t tag) const {
+TableEntry TFont::GetTableEntry(uint32_t tag) const {
 	auto i = table_map.find(tag);
 	if (i == table_map.end())
 		throw TableDoesNotExist(DecomposeTag(tag));
 	return i->second;
 }
 
-bool Font::VerifyTableCheckSum(const TableEntry &te) const {
+bool TFont::VerifyTableCheckSum(const TableEntry &te) const {
 	if (te.tag == CreateTag('h', 'e', 'a', 'd'))
 		return VerifyHeadCheckSum(te);
 	else
 		return VerifyNormalCheckSum(te);
 }
 
-bool Font::VerifyNormalCheckSum(const TableEntry &te) const {
+bool TFont::VerifyNormalCheckSum(const TableEntry &te) const {
 	uint32_t check_sum = 0;
 	FItr i = te.begin;
 	while (i < te.end)
@@ -443,7 +439,7 @@ bool Font::VerifyNormalCheckSum(const TableEntry &te) const {
 	return check_sum == te.check_sum;
 }
 
-bool Font::VerifyHeadCheckSum(const TableEntry &te) const {
+bool TFont::VerifyHeadCheckSum(const TableEntry &te) const {
 	uint32_t check_sum = 0;
 	FItr i = te.begin;
 	check_sum += ReadULONG(i);
@@ -455,7 +451,7 @@ bool Font::VerifyHeadCheckSum(const TableEntry &te) const {
 }
 
 // ----- intial loading functions -----
-void Font::CreateTableMap() {
+void TFont::CreateTableMap() {
 	// intialize
 	FItr itr = buffer;
 	table_map.clear();
@@ -468,14 +464,14 @@ void Font::CreateTableMap() {
 	}
 }
 
-void Font::VerifyTableCheckSums() const {
+void TFont::VerifyTableCheckSums() const {
 	for (auto i = table_map.begin(); i != table_map.end(); ++i) {
 		if (VerifyTableCheckSum(i->second) == false)
 			ERR_THROW(ChecksumException(i->second.tagstr));
 	}
 }
 
-void Font::VerifyRequiredTables() const {
+void TFont::VerifyRequiredTables() const {
 	uint32_t required_tables[] = {
 		CreateTag('c', 'm', 'a', 'p'),
 		CreateTag('h', 'e', 'a', 'd'),
@@ -496,7 +492,7 @@ void Font::VerifyRequiredTables() const {
 	}
 }
 
-void Font::VerifyTrueTypeTables() const {
+void TFont::VerifyTrueTypeTables() const {
 	uint32_t required_tables[] = {
 		// in theory required, but I don't use it
 		//CreateTag('c','v','t',' '),
@@ -515,7 +511,7 @@ void Font::VerifyTrueTypeTables() const {
 }
 
 // ----- CodePoint to glyph index mappings -----
-uint16_t Font::GetGlyphIndexF0(FItr itr, uint16_t langid, uint32_t code) const {
+uint16_t TFont::GetGlyphIndexF0(FItr itr, uint16_t langid, uint32_t code) const {
 	// load header
 	uint16_t format = ReadUSHORT(itr);
 	_unused uint16_t length = ReadUSHORT(itr);
@@ -531,7 +527,7 @@ uint16_t Font::GetGlyphIndexF0(FItr itr, uint16_t langid, uint32_t code) const {
 	return 0;
 }
 
-uint16_t Font::GetGlyphIndexF2(FItr itr, uint16_t langid, uint32_t code) const {
+uint16_t TFont::GetGlyphIndexF2(FItr itr, uint16_t langid, uint32_t code) const {
 	// variable sized 1 or 2 byte character encoding
 	// the docs are are very unclear on how to decode this
 	// on top of that I have no easy way to indicate how many bytes were consumed
@@ -565,7 +561,7 @@ uint16_t Font::GetGlyphIndexF2(FItr itr, uint16_t langid, uint32_t code) const {
 	return 0;
 }
 
-uint16_t Font::GetGlyphIndexF4(FItr itr, uint16_t langid, uint32_t code) const {
+uint16_t TFont::GetGlyphIndexF4(FItr itr, uint16_t langid, uint32_t code) const {
 	// I have code for both linear and binary search
 	// tbh, I don't think either choice really matters given how fast it executes
 
@@ -642,7 +638,7 @@ uint16_t Font::GetGlyphIndexF4(FItr itr, uint16_t langid, uint32_t code) const {
 	return glyph_index;
 }
 
-uint16_t Font::GetGlyphIndexF6(FItr itr, uint16_t langid, uint32_t code) const {
+uint16_t TFont::GetGlyphIndexF6(FItr itr, uint16_t langid, uint32_t code) const {
 	// load header
 	uint16_t format = ReadUSHORT(itr);
 	_unused uint16_t length = ReadUSHORT(itr);
@@ -664,12 +660,12 @@ uint16_t Font::GetGlyphIndexF6(FItr itr, uint16_t langid, uint32_t code) const {
 	return 0;
 }
 
-uint16_t Font::GetGlyphIndexF8(FItr itr, uint16_t langid, uint32_t code) const {
+uint16_t TFont::GetGlyphIndexF8(FItr itr, uint16_t langid, uint32_t code) const {
 	// variable sized format not supported
 	return 0;
 }
 
-uint16_t Font::GetGlyphIndexF10(FItr itr, uint16_t langid, uint32_t code) const {
+uint16_t TFont::GetGlyphIndexF10(FItr itr, uint16_t langid, uint32_t code) const {
 	// 32 bit dense format, same as format 6 with just a few changes to the types
 
 	int32_t format = ReadFIXED32(itr); // 10.0 (unlike the other formats, this is in FIXED32 format)
@@ -693,7 +689,7 @@ uint16_t Font::GetGlyphIndexF10(FItr itr, uint16_t langid, uint32_t code) const 
 	return 0;
 }
 
-uint16_t Font::GetGlyphIndexF12(FItr itr, uint16_t langid, uint32_t code) const {
+uint16_t TFont::GetGlyphIndexF12(FItr itr, uint16_t langid, uint32_t code) const {
 	// 32 bit sparse format, similar to format 4 (actually much simpler and makes more sense)
 
 	uint16_t format = ReadUSHORT(itr);
@@ -729,7 +725,7 @@ uint16_t Font::GetGlyphIndexF12(FItr itr, uint16_t langid, uint32_t code) const 
 	return 0;
 }
 
-uint16_t Font::GetGlyphIndexF13(FItr itr, uint16_t langid, uint32_t code) const {
+uint16_t TFont::GetGlyphIndexF13(FItr itr, uint16_t langid, uint32_t code) const {
 	// 32 bit 'many to one' format, similar to format 12
 
 	uint16_t format = ReadUSHORT(itr);
@@ -765,14 +761,14 @@ uint16_t Font::GetGlyphIndexF13(FItr itr, uint16_t langid, uint32_t code) const 
 	return 0;
 }
 
-uint16_t Font::GetGlyphIndexF14(FItr itr, uint16_t langid, uint32_t code) const {
+uint16_t TFont::GetGlyphIndexF14(FItr itr, uint16_t langid, uint32_t code) const {
 	// unicode variation sequences
 	// not supported
 	return 0;
 }
 
 // ----- data range mappings -----
-Font::FRange Font::GetGlyphRange(uint16_t glyph_index) const {
+TFont::FRange TFont::GetGlyphRange(uint16_t glyph_index) const {
 	// intialize variables
 	int16_t ilf = GetIndexToLocFormat();
 	uint16_t num_glyps = GetNumGlyphs();
@@ -803,7 +799,7 @@ Font::FRange Font::GetGlyphRange(uint16_t glyph_index) const {
 }
 
 // ----- metrics helpers -----
-vec2t Font::GetKerning(uint16_t g0, uint16_t g1, bool hk) const {
+vec2t TFont::GetKerning(uint16_t g0, uint16_t g1, bool hk) const {
 	// intialize variables
 	vec2t kv = vec2t(static_cast<int16_t>(GetGlyphMetrics(g0).advance_width), 0); // get default advance width
 
@@ -830,7 +826,7 @@ vec2t Font::GetKerning(uint16_t g0, uint16_t g1, bool hk) const {
 	return kv;
 }
 
-int16_t Font::ParseKernTableF0(FItr itr, uint16_t g0, uint16_t g1) const {
+int16_t TFont::ParseKernTableF0(FItr itr, uint16_t g0, uint16_t g1) const {
 	// read header
 	uint16_t npairs = ReadUSHORT(itr);
 	_unused uint16_t search_range = ReadUSHORT(itr); // The largest power of two less than or equal to the value of nPairs, multiplied by the size in bytes of an entry in the table.
@@ -859,7 +855,7 @@ int16_t Font::ParseKernTableF0(FItr itr, uint16_t g0, uint16_t g1) const {
 		return 0;
 }
 
-int16_t Font::ParseKernTableF2(FItr itr, uint16_t g0, uint16_t g1) const {
+int16_t TFont::ParseKernTableF2(FItr itr, uint16_t g0, uint16_t g1) const {
 	uint16_t left_class_offset = 0;
 	uint16_t right_class_offset = 0;
 
@@ -891,7 +887,7 @@ int16_t Font::ParseKernTableF2(FItr itr, uint16_t g0, uint16_t g1) const {
 	return ReadSHORT(itr + left_class_offset + right_class_offset);
 }
 
-uint16_t Font::ParseMSKernTable(FItr itr, uint16_t g0, uint16_t g1, bool hk, vec2t &kv) const {
+uint16_t TFont::ParseMSKernTable(FItr itr, uint16_t g0, uint16_t g1, bool hk, vec2t &kv) const {
 	// read table header
 	_unused uint16_t version = ReadUSHORT(itr);
 	uint16_t length = ReadUSHORT(itr);
@@ -938,7 +934,7 @@ uint16_t Font::ParseMSKernTable(FItr itr, uint16_t g0, uint16_t g1, bool hk, vec
 	return length;
 }
 
-uint32_t Font::ParseAppleKernTable(FItr itr, uint16_t g0, uint16_t g1, bool hk, vec2t &kv) const {
+uint32_t TFont::ParseAppleKernTable(FItr itr, uint16_t g0, uint16_t g1, bool hk, vec2t &kv) const {
 	// read table header
 	uint32_t length = ReadULONG(itr);
 	uint16_t coverage = ReadUSHORT(itr);
@@ -978,7 +974,7 @@ uint32_t Font::ParseAppleKernTable(FItr itr, uint16_t g0, uint16_t g1, bool hk, 
 }
 
 // ----- triangulation functions -----
-void Font::FillContours(FItr itr, ContourData &contours) const {
+void TFont::FillContours(FItr itr, ContourData &contours) const {
 	using namespace std;
 
 	// read header
@@ -1061,7 +1057,7 @@ void Font::FillContours(FItr itr, ContourData &contours) const {
 	}
 }
 
-bool Font::ReadGlyphFlags(FItr &itr, matrix3x2t &matrix, uint16_t &glyph_index) const {
+bool TFont::ReadGlyphFlags(FItr &itr, matrix3x2t &matrix, uint16_t &glyph_index) const {
 	using std::abs;
 	using std::max;
 
@@ -1133,13 +1129,13 @@ bool Font::ReadGlyphFlags(FItr &itr, matrix3x2t &matrix, uint16_t &glyph_index) 
 }
 
 // ----- font info -----
-vec4t Font::GetMasterRect() const {
+vec4t TFont::GetMasterRect() const {
 	FItr itr = GetTableEntry(CreateTag('h', 'e', 'a', 'd')).begin;
 	itr += 36;
 	return vec4t(ReadSHORT(itr), ReadSHORT(itr), ReadSHORT(itr), ReadSHORT(itr));
 }
 
-FontMetrics Font::GetFontMetrics() const {
+FontMetrics TFont::GetFontMetrics() const {
 	// read hhea data
 	FItr itr = GetTableEntry(CreateTag('h', 'h', 'e', 'a')).begin;
 	uint32_t version = ReadULONG(itr);
@@ -1180,7 +1176,7 @@ FontMetrics Font::GetFontMetrics() const {
 	return fm;
 }
 
-VFontMetrics Font::GetVFontMetrics() const {
+VFontMetrics TFont::GetVFontMetrics() const {
 	// get vhea table data
 	VFontMetrics vfm;
 	auto i = table_map.find(CreateTag('v', 'h', 'e', 'a'));
@@ -1229,18 +1225,18 @@ VFontMetrics Font::GetVFontMetrics() const {
 	return vfm;
 }
 
-uint16_t Font::GlyphCount() const {
+uint16_t TFont::GlyphCount() const {
 	return GetNumGlyphs();
 }
 
-uint16_t Font::UnitsPerEM() const {
+uint16_t TFont::UnitsPerEM() const {
 	FItr itr = GetTableEntry(CreateTag('h', 'e', 'a', 'd')).begin;
 	itr += 18;
 	return ReadUSHORT(itr);
 }
 
 // ----- glyph info -----
-uint16_t Font::GetGlyphIndex(CodePoint code_point) const {
+uint16_t TFont::GetGlyphIndex(CodePoint code_point) const {
 	// convenience variables
 	uint32_t code = code_point.code;
 	uint16_t rpid = code_point.platform;
@@ -1332,7 +1328,7 @@ uint16_t Font::GetGlyphIndex(CodePoint code_point) const {
 	return 0; // the 0 glyph is always the 'cannot find' glyph
 }
 
-vec4t Font::GetGlyphRect(uint16_t glyph_index) const {
+vec4t TFont::GetGlyphRect(uint16_t glyph_index) const {
 	// get glyph data
 	FRange glyph_data = GetGlyphRange(glyph_index);
 	FItr itr = glyph_data.first;
@@ -1345,11 +1341,11 @@ vec4t Font::GetGlyphRect(uint16_t glyph_index) const {
 	return r; // return vec4t(r.z, r.w, r.x, r.y); // reorder coordinates
 }
 
-vec4t Font::GetGlyphRect(CodePoint code_point) const {
+vec4t TFont::GetGlyphRect(CodePoint code_point) const {
 	return GetGlyphRect(GetGlyphIndex(code_point));
 }
 
-GlyphMetrics Font::GetGlyphMetrics(uint16_t glyph_index) const {
+GlyphMetrics TFont::GetGlyphMetrics(uint16_t glyph_index) const {
 	// read hhea data
 	FItr itr = GetTableEntry(CreateTag('h', 'h', 'e', 'a')).begin;
 	uint32_t version = ReadULONG(itr);
@@ -1390,11 +1386,11 @@ GlyphMetrics Font::GetGlyphMetrics(uint16_t glyph_index) const {
 	return gm;
 }
 
-GlyphMetrics Font::GetGlyphMetrics(CodePoint code_point) const {
+GlyphMetrics TFont::GetGlyphMetrics(CodePoint code_point) const {
 	return GetGlyphMetrics(GetGlyphIndex(code_point));
 }
 
-VGlyphMetrics Font::GetVGlyphMetrics(uint16_t glyph_index) const {
+VGlyphMetrics TFont::GetVGlyphMetrics(uint16_t glyph_index) const {
 	VGlyphMetrics vgm;
 	vgm.has_vertical_font_metrics = false;
 
@@ -1448,23 +1444,23 @@ VGlyphMetrics Font::GetVGlyphMetrics(uint16_t glyph_index) const {
 	return vgm;
 }
 
-VGlyphMetrics Font::GetVGlyphMetrics(CodePoint code_point) const {
+VGlyphMetrics TFont::GetVGlyphMetrics(CodePoint code_point) const {
 	return GetVGlyphMetrics(GetGlyphIndex(code_point));
 }
 
 // ----- kerning info -----
-vec2t Font::GetKerning(uint16_t g0, uint16_t g1) const {
+vec2t TFont::GetKerning(uint16_t g0, uint16_t g1) const {
 	return GetKerning(g0, g1, true);
 }
 
-vec2t Font::GetKerning(CodePoint cp0, CodePoint cp1) const {
+vec2t TFont::GetKerning(CodePoint cp0, CodePoint cp1) const {
 	return GetKerning(GetGlyphIndex(cp0), GetGlyphIndex(cp1), true);
 }
 
-vec2t Font::GetVKerning(uint16_t g0, uint16_t g1) const {
+vec2t TFont::GetVKerning(uint16_t g0, uint16_t g1) const {
 	return GetKerning(g0, g1, false);
 }
 
-vec2t Font::GetVKerning(CodePoint cp0, CodePoint cp1) const {
+vec2t TFont::GetVKerning(CodePoint cp0, CodePoint cp1) const {
 	return GetKerning(GetGlyphIndex(cp0), GetGlyphIndex(cp1), false);
 }

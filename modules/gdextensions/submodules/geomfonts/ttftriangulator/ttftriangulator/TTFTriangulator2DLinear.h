@@ -44,7 +44,7 @@ namespace TTFCore {
 
 template <typename TVert, typename TTri>
 class Triangulator2DLinear : public Triangulator2D<TVert, TTri> {
-	friend class Font;
+	friend class TFont;
 
 protected:
 	// Triangulator2DLinear specific functions

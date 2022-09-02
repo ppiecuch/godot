@@ -143,7 +143,7 @@ struct CodePoint {
 
 struct MapFromData {};
 
-class Font {
+class TFont {
 private:
 	// internal types
 	typedef std::map<uint32_t, TableEntry> TableMap; // table mapping type
@@ -237,14 +237,14 @@ private:
 	void AppendGlyph(uint16_t glyph_index, TTriangulator &, matrix3x2t) const; // entry point for triangulation
 
 public:
-	explicit Font(std::string file_name); // construct from file
-	Font(const void *raw_data, MapFromData); // map from raw data (no copy made, data must exist for the duration of the Font object)
-	Font(const void *raw_data, size_t length); // copy from raw data
-	Font(const Font &);
-	Font(Font &&);
-	Font &operator=(const Font &);
-	Font &operator=(Font &&);
-	~Font();
+	explicit TFont(std::string file_name); // construct from file
+	TFont(const void *raw_data, MapFromData); // map from raw data (no copy made, data must exist for the duration of the Font object)
+	TFont(const void *raw_data, size_t length); // copy from raw data
+	TFont(const TFont &);
+	TFont(TFont &&);
+	TFont &operator=(const TFont &);
+	TFont &operator=(TFont &&);
+	~TFont();
 
 	// font info
 	vec4t GetMasterRect() const; // returns a vec4f in font units that encloses every glyph, format is (xMin,yMin,xMax,yMax)
@@ -276,7 +276,7 @@ public:
 };
 
 template <typename TTriangulator>
-void Font::AppendSimple(FItr itr, TTriangulator &triangulator, matrix3x2t transform) const {
+void TFont::AppendSimple(FItr itr, TTriangulator &triangulator, matrix3x2t transform) const {
 	ContourData &contours = triangulator.GetContours();
 	FillContours(itr, contours);
 	for (ContourPoint &p : contours) {
@@ -286,7 +286,7 @@ void Font::AppendSimple(FItr itr, TTriangulator &triangulator, matrix3x2t transf
 }
 
 template <typename TTriangulator>
-void Font::AppendComplex(FItr itr, TTriangulator &triangulator, matrix3x2t transform) const {
+void TFont::AppendComplex(FItr itr, TTriangulator &triangulator, matrix3x2t transform) const {
 	// skip header
 	itr += 10;
 
@@ -301,7 +301,7 @@ void Font::AppendComplex(FItr itr, TTriangulator &triangulator, matrix3x2t trans
 }
 
 template <typename TTriangulator>
-void Font::AppendGlyph(uint16_t glyph_index, TTriangulator &triangulator, matrix3x2t transform) const {
+void TFont::AppendGlyph(uint16_t glyph_index, TTriangulator &triangulator, matrix3x2t transform) const {
 	// get glyph data
 	auto range = GetGlyphRange(glyph_index);
 	if (range.first == range.second)
@@ -319,13 +319,13 @@ void Font::AppendGlyph(uint16_t glyph_index, TTriangulator &triangulator, matrix
 }
 
 template <typename TTriangulator>
-void Font::TriangulateGlyph(uint16_t glyph_index, TTriangulator &triangulator) const {
+void TFont::TriangulateGlyph(uint16_t glyph_index, TTriangulator &triangulator) const {
 	triangulator.Clear();
 	AppendGlyph(glyph_index, triangulator, matrix3x2t());
 }
 
 template <typename TTriangulator>
-void Font::TriangulateGlyph(CodePoint cp, TTriangulator &triangulator) const {
+void TFont::TriangulateGlyph(CodePoint cp, TTriangulator &triangulator) const {
 	triangulator.Clear();
 	AppendGlyph(GetGlyphIndex(cp), triangulator, matrix3x2t());
 }

@@ -51,7 +51,7 @@ namespace TTFCore {
 
 template <typename TVert, typename TTri>
 class Triangulator3DBezel : public Triangulator2DLinear<TVert, TTri> {
-	friend class Font;
+	friend class TFont;
 
 protected:
 	using TCoord = typename Triangulator2DLinear<TVert, TTri>::TCoord;

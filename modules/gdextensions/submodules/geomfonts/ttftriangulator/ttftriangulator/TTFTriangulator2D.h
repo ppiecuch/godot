@@ -86,7 +86,7 @@ static_assert(sizeof(TriLarge) == 8, "TriLarge bitfield is incorrect.  Perhaps a
 
 template <typename TVert, typename TTri>
 class Triangulator2D {
-	friend class Font;
+	friend class TFont;
 
 protected:
 	// internal types

@@ -36,8 +36,6 @@
 #include "ttftriangulator/TTFTriangulator2D.cpp"
 #include "ttftriangulator/TTFTypes.cpp"
 
-using namespace TTF;
-
 #include "core/vector.h"
 
 const char *fragCodeSimple = "                                  \n\
@@ -53,7 +51,7 @@ void main()                                                     \n\
 }                                                               \n\
 ";
 
-const char *fragCode = "                                         \n\
+const char *fragCode = "                                        \n\
 varying vec3 tpos;                                              \n\
 void main()                                                     \n\
 {                                                               \n\
@@ -94,65 +92,63 @@ void main(void)                                                 \n\
 
 #if 0
 void render_msg(const Font &f, const char *msg) {
-    TTF::FontMetrics font_metrics = f.GetFontMetrics(); // will tell you about the font
-    // Triangulator2DI, Triangulator2DII, Triangulator2DLinearI, Triangulator2DLinearII
-    TTF::Triangulator2DI triangulator;
-    for (int i = 0; i < strlen(msg); i++) {
-	    CodePoint cp(msg[i]);
-        f.TriangulateGlyph(cp, triangulator);
-
-	    if (i > 0) {
-	        TTFCore::vec2t kerning = f.GetKerning(CodePoint(msg[i-1]), cp);
-	        glTranslatef(0.9*kerning.x*0.001, kerning.y*0.001, 0);
-	    }
-
-        struct vertex_t {
-            vec2f pos;
-            signed char texCoord; // 0 = (0,0), 1 = (0.5,0), 2 = (1,1)
-            signed char coef;     // -1 = CW edge, 0 = inner segment, +1 = CCW segment
-        };
-	    Vector<vertex_t> verts;
-
-        for (auto tri : triangulator) {
-            TTF::vec2t v0 = triangulator[tri.i0];
-            TTF::vec2t v1 = triangulator[tri.i1];
-            TTF::vec2t v2 = triangulator[tri.i2];
-            // store in a buffer, or do something with it from here... up to you really
-            verts.push_back((vertex_t){{0.001f*v0.x, 0.001f*v0.y}, 0, static_cast<signed char>(tri.coef)});
-            verts.push_back((vertex_t){{0.001f*v1.x, 0.001f*v1.y}, 1, static_cast<signed char>(tri.coef)});
-            verts.push_back((vertex_t){{0.001f*v2.x, 0.001f*v2.y}, 2, static_cast<signed char>(tri.coef)});
-        }
-
-        if (verts.size()) {
-	        GLint loc = m_shader.attributeLocation("t");
-	        glEnableVertexAttribArray(loc);
-	        glVertexAttribPointer(loc, 1, GL_BYTE, GL_FALSE, sizeof(vertex_t), &verts[0].texCoord);
-	        loc = m_shader.attributeLocation("c");
-	        glEnableVertexAttribArray(loc);
-	        glVertexAttribPointer(loc, 1, GL_BYTE, GL_FALSE, sizeof(vertex_t), &verts[0].coef);
-	        loc = m_shader.attributeLocation("pos");
-	        glEnableVertexAttribArray(loc);
-	        glVertexAttribPointer(loc, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t), &verts[0].pos);
-
-	        glDrawArrays(GL_TRIANGLES, 0, verts.size());
-	    }
-
-	    printf("%c: %d verts\n", msg[i], verts.size());
-	    for (int j = 0; j < verts.size(); j++)
-	    {
-	        const vertex_t &mv = verts[j];
-	        printf("%c %d %d, %d: (%f, %f), %d, %d\n", msg[i], j, j/3, j%3, mv.pos.x, mv.pos.y, mv.texCoord, mv.coef);
-	    }
-	}
-}
-#endif
-
-void render_msg(const Font &f, const char *msg) {
-	// TTF::FontMetrics font_metrics = f.GetFontMetrics(); // will tell you about the font
+	TTF::FontMetrics font_metrics = f.GetFontMetrics(); // will tell you about the font
 	// Triangulator2DI, Triangulator2DII, Triangulator2DLinearI, Triangulator2DLinearII
 	TTF::Triangulator2DI triangulator;
 	for (int i = 0; i < strlen(msg); i++) {
 		CodePoint cp(msg[i]);
+		f.TriangulateGlyph(cp, triangulator);
+
+		if (i > 0) {
+			TTFCore::vec2t kerning = f.GetKerning(CodePoint(msg[i-1]), cp);
+			glTranslatef(0.9*kerning.x*0.001, kerning.y*0.001, 0);
+		}
+
+		struct vertex_t {
+			vec2f pos;
+			signed char texCoord; // 0 = (0,0), 1 = (0.5,0), 2 = (1,1)
+			signed char coef;     // -1 = CW edge, 0 = inner segment, +1 = CCW segment
+		};
+		Vector<vertex_t> verts;
+
+		for (auto tri : triangulator) {
+			TTF::vec2t v0 = triangulator[tri.i0];
+			TTF::vec2t v1 = triangulator[tri.i1];
+			TTF::vec2t v2 = triangulator[tri.i2];
+			// store in a buffer, or do something with it from here... up to you really
+			verts.push_back((vertex_t){{0.001f*v0.x, 0.001f*v0.y}, 0, static_cast<signed char>(tri.coef)});
+			verts.push_back((vertex_t){{0.001f*v1.x, 0.001f*v1.y}, 1, static_cast<signed char>(tri.coef)});
+			verts.push_back((vertex_t){{0.001f*v2.x, 0.001f*v2.y}, 2, static_cast<signed char>(tri.coef)});
+		}
+
+		if (verts.size()) {
+			GLint loc = m_shader.attributeLocation("t");
+			glEnableVertexAttribArray(loc);
+			glVertexAttribPointer(loc, 1, GL_BYTE, GL_FALSE, sizeof(vertex_t), &verts[0].texCoord);
+			loc = m_shader.attributeLocation("c");
+			glEnableVertexAttribArray(loc);
+			glVertexAttribPointer(loc, 1, GL_BYTE, GL_FALSE, sizeof(vertex_t), &verts[0].coef);
+			loc = m_shader.attributeLocation("pos");
+			glEnableVertexAttribArray(loc);
+			glVertexAttribPointer(loc, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t), &verts[0].pos);
+
+			glDrawArrays(GL_TRIANGLES, 0, verts.size());
+		}
+
+		printf("%c: %d verts\n", msg[i], verts.size());
+		for (int j = 0; j < verts.size(); j++)
+		{
+			const vertex_t &mv = verts[j];
+			printf("%c %d %d, %d: (%f, %f), %d, %d\n", msg[i], j, j/3, j%3, mv.pos.x, mv.pos.y, mv.texCoord, mv.coef);
+		}
+	}
+}
+#endif
+
+void render_msg(const TTFCore::TFont &f, const String &msg) {
+	TTF::Triangulator2DI triangulator;
+	for (int i = 0; i < msg.length(); i++) {
+		CodePoint cp(msg.ord_at(i));
 		f.TriangulateGlyph(cp, triangulator);
 
 		TTFCore::vec2t kerning;
