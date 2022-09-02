@@ -149,10 +149,10 @@ private:
 	GlobalBlendModeType _globalBlend;
 
 	void reset() {
-		verts.reset();
-		uvs.reset();
-		colors.reset();
-		indexes.reset();
+		verts.clear();
+		uvs.clear();
+		colors.clear();
+		indexes.clear();
 		_mesh->clear_mesh();
 	}
 
