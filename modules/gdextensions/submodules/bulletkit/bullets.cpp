@@ -136,6 +136,7 @@ void Bullets::mount(Node *bullets_environment) {
 
 	Array bullet_kits = bullets_environment->get("bullet_kits");
 	Array pools_sizes = bullets_environment->get("pools_sizes");
+	Array parents_paths = bullets_environment->get("parents_hints");
 	Array z_indices = bullets_environment->get("z_indices");
 
 	pool_sets.clear();
@@ -148,6 +149,9 @@ void Bullets::mount(Node *bullets_environment) {
 	active_bullets = 0;
 
 	Dictionary collision_layers_masks_to_kits;
+
+	Viewport* default_viewport = bullets_environment->get_viewport();
+	RID default_parent_canvas = default_viewport->find_world_2d()->get_canvas();
 
 	for (int32_t i = 0; i < bullet_kits.size(); i++) {
 		Ref<BulletKit> kit = bullet_kits[i];
@@ -201,12 +205,26 @@ void Bullets::mount(Node *bullets_environment) {
 			int32_t kit_index_in_node = bullet_kits.find(kit);
 			int32_t pool_size = pools_sizes[kit_index_in_node];
 
+			Node* parent_node_hint = nullptr;
+			//RID actual_parent_canvas = default_parent_canvas;
+
+			NodePath parent_path = parents_paths[0];//[kit_index_in_node];
+			print_verbose(vformat("Parent hint path is %s", parent_path));
+			if (!parent_path.is_empty()) {
+				print_verbose("Parent hint path is not empty");
+				parent_node_hint = bullets_environment->get_node(parent_path);
+				print_verbose(vformat("Viewport node is %s", parent_node_hint));
+			}
+			if (parent_node_hint == nullptr) {
+				parent_node_hint = bullets_environment;
+			}
+
 			pool_sets[i].pools[j].pool = kit->_create_pool();
 			pool_sets[i].pools[j].bullet_kit = kit;
 			pool_sets[i].pools[j].size = pool_size;
 			pool_sets[i].pools[j].z_index = z_indices[kit_index_in_node];
 
-			pool_sets[i].pools[j].pool->_init(this, shared_area, pool_set_available_bullets,
+			pool_sets[i].pools[j].pool->_init(/*actual_parent_canvas, */parent_node_hint, shared_area, pool_set_available_bullets,
 					i, kit, pool_size, z_indices[kit_index_in_node]);
 
 			pool_set_available_bullets += pool_size;
