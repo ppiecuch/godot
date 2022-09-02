@@ -48,8 +48,8 @@ protected:
 	int32_t bullets_to_handle = 0;
 	bool collisions_enabled;
 
-	CanvasLayer* canvas_layer;
-	Viewport* viewport;
+	CanvasLayer *canvas_layer;
+	Viewport *viewport;
 	RID canvas_parent;
 	RID canvas_item;
 	RID shared_area;
@@ -71,7 +71,7 @@ public:
 	BulletsPool();
 	virtual ~BulletsPool();
 
-	virtual void _init(Node* parent_hint, RID shared_area, int32_t starting_shape_index,
+	virtual void _init(Node *parent_hint, RID shared_area, int32_t starting_shape_index,
 			int32_t set_index, Ref<BulletKit> kit, int32_t pool_size, int32_t z_index) = 0;
 
 	int32_t get_available_bullets();
@@ -108,7 +108,7 @@ public:
 	AbstractBulletsPool() {}
 	virtual ~AbstractBulletsPool();
 
-	virtual void _init(Node* parent_hint, RID shared_area, int32_t starting_shape_index,
+	virtual void _init(Node *parent_hint, RID shared_area, int32_t starting_shape_index,
 			int32_t set_index, Ref<BulletKit> kit, int32_t pool_size, int32_t z_index) override;
 
 	virtual int32_t _process(float delta) override;

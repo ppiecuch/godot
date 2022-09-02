@@ -30,8 +30,8 @@
 
 #include "menu_bar.h"
 
-#include "core/os/os.h"
 #include "core/os/keyboard.h"
+#include "core/os/os.h"
 #include "menu_bar_mgr_osx.h"
 #include "scene/main/viewport.h"
 
