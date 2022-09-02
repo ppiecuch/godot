@@ -1880,7 +1880,7 @@ void TextEdit::_notification(int p_what) {
 					cursor_end = cursor_start + post_text.length();
 				}
 
-				OS::get_singleton()->show_virtual_keyboard(get_text(), get_global_rect(), true, -1, cursor_start, cursor_end);
+				OS::get_singleton()->show_virtual_keyboard(get_text(), get_global_rect(), OS::KEYBOARD_TYPE_MULTILINE, -1, cursor_start, cursor_end);
 			}
 		} break;
 		case NOTIFICATION_FOCUS_EXIT: {
@@ -6338,7 +6338,8 @@ void TextEdit::fold_line(int p_line) {
 	int last_line = start_indent;
 	for (int i = p_line + 1; i < text.size(); i++) {
 		if (text[i].strip_edges().size() != 0) {
-			if (is_line_comment(i)) {
+			if (is_line_comment(i) && get_indent_level(i) <= start_indent) {
+				// Checked indent to make sure indented comments that finish a code block are folded.
 				continue;
 			} else if (get_indent_level(i) > start_indent) {
 				last_line = i;

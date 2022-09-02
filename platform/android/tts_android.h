@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  emws_server.cpp                                                      */
+/*  tts_android.h                                                        */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,65 +28,42 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifdef JAVASCRIPT_ENABLED
+#ifndef TTS_ANDROID_H
+#define TTS_ANDROID_H
 
-#include "emws_server.h"
+#include "core/array.h"
 #include "core/os/os.h"
+#include "core/ustring.h"
 
-void EMWSServer::set_extra_headers(const Vector<String> &p_headers) {
-}
+#include <jni.h>
 
-Error EMWSServer::listen(int p_port, Vector<String> p_protocols, bool gd_mp_api) {
-	return FAILED;
-}
+class TTS_Android {
+	static jobject tts;
+	static jclass cls;
 
-bool EMWSServer::is_listening() const {
-	return false;
-}
+	static jmethodID _is_speaking;
+	static jmethodID _is_paused;
+	static jmethodID _get_voices;
+	static jmethodID _speak;
+	static jmethodID _pause_speaking;
+	static jmethodID _resume_speaking;
+	static jmethodID _stop_speaking;
 
-void EMWSServer::stop() {
-}
+	static HashMap<int, Vector<char16_t>> ids;
 
-bool EMWSServer::has_peer(int p_id) const {
-	return false;
-}
+	static Vector<char16_t> str_to_utf16(const String &p_string);
 
-Ref<WebSocketPeer> EMWSServer::get_peer(int p_id) const {
-	return NULL;
-}
+public:
+	static void setup(jobject p_tts);
+	static void _java_utterance_callback(int p_event, int p_id, int p_pos);
 
-PoolVector<String> EMWSServer::get_protocols() const {
-	PoolVector<String> out;
+	static bool is_speaking();
+	static bool is_paused();
+	static Array get_voices();
+	static void speak(const String &p_text, const String &p_voice, int p_volume, float p_pitch, float p_rate, int p_utterance_id, bool p_interrupt);
+	static void pause();
+	static void resume();
+	static void stop();
+};
 
-	return out;
-}
-
-IP_Address EMWSServer::get_peer_address(int p_peer_id) const {
-	return IP_Address();
-}
-
-int EMWSServer::get_peer_port(int p_peer_id) const {
-	return 0;
-}
-
-void EMWSServer::disconnect_peer(int p_peer_id, int p_code, String p_reason) {
-}
-
-void EMWSServer::poll() {
-}
-
-int EMWSServer::get_max_packet_size() const {
-	return 0;
-}
-
-Error EMWSServer::set_buffers(int p_in_buffer, int p_in_packets, int p_out_buffer, int p_out_packets) {
-	return OK;
-}
-
-EMWSServer::EMWSServer() {
-}
-
-EMWSServer::~EMWSServer() {
-}
-
-#endif // JAVASCRIPT_ENABLED
+#endif // TTS_ANDROID_H

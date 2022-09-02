@@ -75,6 +75,7 @@ def get_opts():
         BoolVariable("use_tsan", "Use LLVM/GCC compiler thread sanitizer (TSAN))", False),
         BoolVariable("use_msan", "Use LLVM/GCC compiler memory sanitizer (MSAN))", False),
         BoolVariable("pulseaudio", "Detect and use PulseAudio", True),
+        BoolVariable("speechd", "Detect and use Speech Dispatcher for Text-to-Speech support", True),
         BoolVariable("udev", "Use udev for gamepad connection callbacks", True),
         BoolVariable("debug_symbols", "Add debugging symbols to release/release_debug builds", True),
         BoolVariable("separate_debug_symbols", "Create a separate file containing debugging symbols", False),
@@ -368,7 +369,16 @@ def configure(env):
             env.Append(CPPDEFINES=["PULSEAUDIO_ENABLED"])
             env.ParseConfig("pkg-config libpulse --cflags")  # Only cflags, we dlopen the library.
         else:
+            env["pulseaudio"] = False
             print("Warning: PulseAudio development libraries not found. Disabling the PulseAudio audio driver.")
+
+    if env["speechd"]:
+        if os.system("pkg-config --exists speech-dispatcher") == 0:  # 0 means found
+            env.Append(CPPDEFINES=["SPEECHD_ENABLED"])
+            env.ParseConfig("pkg-config speech-dispatcher --cflags")  # Only cflags, we dlopen the library.
+        else:
+            env["speechd"] = False
+            print("Warning: Speech Dispatcher development libraries not found. Disabling Text-to-Speech support.")
 
     if platform.system() == "Linux":
         env.Append(CPPDEFINES=["JOYDEV_ENABLED"])
@@ -377,6 +387,7 @@ def configure(env):
                 env.Append(CPPDEFINES=["UDEV_ENABLED"])
                 env.ParseConfig("pkg-config libudev --cflags")  # Only cflags, we dlopen the library.
             else:
+                env["udev"] = False
                 print("Warning: libudev development libraries not found. Disabling controller hotplugging support.")
     else:
         env["udev"] = False  # Linux specific
@@ -405,7 +416,9 @@ def configure(env):
         import subprocess
         import re
 
-        linker_version_str = subprocess.check_output([env.subst(env["LINK"]), "-Wl,--version"]).decode("utf-8")
+        linker_version_str = subprocess.check_output(
+            [env.subst(env["LINK"]), "-Wl,--version"] + env.subst(env["LINKFLAGS"])
+        ).decode("utf-8")
         gnu_ld_version = re.search("^GNU ld [^$]*(\d+\.\d+)$", linker_version_str, re.MULTILINE)
         if not gnu_ld_version:
             print(

@@ -4,6 +4,7 @@ on: [push, pull_request]
 # Global Settings
 # SCONS_CACHE for windows must be set in the build environment
 env:
+  # Only used for the cache key. Increment version to force clean build.
   GODOT_BASE_BRANCH: master
   SCONSFLAGS: verbose=yes warnings=all werror=yes debug_symbols=no
   SCONS_CACHE_MSVC_CONFIG: true
@@ -16,6 +17,7 @@ jobs:
   build-windows:
     runs-on: "windows-latest"
     if: "contains(github.event.head_commit.message, '[ci]')"
+
     name: ${{ matrix.name }}
     strategy:
       fail-fast: false
@@ -33,7 +35,7 @@ jobs:
             tools: false
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Setup Godot build cache
         uses: ./.github/actions/godot-cache
@@ -51,7 +53,10 @@ jobs:
           platform: windows
           target: ${{ matrix.target }}
           tools: ${{ matrix.tools }}
-          scons-cache-limit: 3072
+
+      - name: Prepare artifact
+        run: |
+          Remove-Item bin/* -Include *.exp,*.lib,*.pdb -Force
 
       - name: Upload artifact
         uses: ./.github/actions/upload-artifact

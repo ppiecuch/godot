@@ -239,7 +239,7 @@ public:
 	virtual Vector3 get_gyroscope() const G_OVERRIDE;
 
 	virtual Point2 get_mouse_position() const G_OVERRIDE;
-	virtual Point2 get_last_mouse_speed() const G_OVERRIDE;
+	virtual Point2 get_last_mouse_speed() G_OVERRIDE;
 	virtual int get_mouse_button_mask() const G_OVERRIDE;
 
 	virtual void warp_mouse_position(const Vector2 &p_to) G_OVERRIDE;
