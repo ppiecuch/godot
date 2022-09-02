@@ -43,6 +43,7 @@ class GdGeomFonts : public Reference {
 	Transform2D xform;
 	Color modulate;
 
+	Dictionary _cache;
 	Ref<ArrayMesh> _mesh;
 
 	bool _is_ready();
@@ -65,6 +66,10 @@ private:
 	void easy_font_add_text(const String &p_text, const Point2 &p_pos = Point2(), real_t p_spacing = 0);
 	void easy_font_add_text_xform(const String &p_text, const Transform &p_xform, const Point2 &p_pos = Point2(), real_t p_spacing = 0);
 	Size2 easy_font_text_size(const String &p_text);
+
+	void bitmap_font_draw_text(const String &p_text, const Point2 &p_pos = Point2());
+	void lcd_font_draw_text(const String &p_text, const Point2 &p_pos = Point2());
+	void square_font_draw_text(const String &p_text, const Point2 &p_pos = Point2());
 
 	GdGeomFonts();
 	~GdGeomFonts();

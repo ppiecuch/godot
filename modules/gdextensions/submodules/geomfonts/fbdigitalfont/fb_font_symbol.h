@@ -82,6 +82,6 @@ enum FBFontSymbolType {
 	FBFontSymbolColon,
 };
 
-const Vector<FBFontSymbolType> &symbolsForString(const char *str);
+Vector<FBFontSymbolType> symbolsForString(const String &str);
 
 #endif // FBFONTSYMBOL_H

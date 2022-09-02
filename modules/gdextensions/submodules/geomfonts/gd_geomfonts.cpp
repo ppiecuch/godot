@@ -33,7 +33,7 @@
 #include "bluntfont/blutfont.cpp"
 #include "bob3d/bob_font.cpp"
 #include "easyfont/stb_easy_font.h"
-#include "fbdigitalfont/fb.h"
+#include "fbdigitalfont/fb.cpp"
 #include "hershey/hershey_render.h"
 #include "leonsans/leonsans.h"
 #include "polyfonts/polygodot.cpp"
@@ -62,13 +62,13 @@ bool GdGeomFonts::_is_ready() {
 
 void GdGeomFonts::bob_font_add_text(const String &p_text, const Point3 &p_pos, real_t p_size, bool p_wire) {
 	if (_is_ready()) {
-		DrawBobString(_mesh, p_text.ascii().c_str(), p_pos, p_size, p_wire);
+		bob_font_draw_string(_mesh, p_text.ascii().c_str(), p_pos, p_size, p_wire);
 	}
 }
 
 void GdGeomFonts::bob_font_add_text_xform(const String &p_text, const Transform &p_xform, const Point3 &p_pos, real_t p_size, bool p_wire) {
 	if (_is_ready()) {
-		DrawBobString(_mesh, p_text.ascii().c_str(), p_xform, p_pos, p_size, p_wire);
+		bob_font_draw_string(_mesh, p_text.ascii().c_str(), p_xform, p_pos, p_size, p_wire);
 	}
 }
 
@@ -89,6 +89,14 @@ void GdGeomFonts::easy_font_add_text_xform(const String &p_text, const Transform
 Size2 GdGeomFonts::easy_font_text_size(const String &p_text) {
 	const char *ptr = p_text.ascii().c_str();
 	return Size2(stb_easy_font_width(ptr), stb_easy_font_height(ptr));
+}
+
+void GdGeomFonts::bitmap_font_draw_text(const String &p_text, const Point2 &p_pos) {
+	if (_is_ready()) {
+		FBBitmapFontView fnt(_cache);
+		fnt.set_text(p_text);
+		fnt.draw(canvas_item);
+	}
 }
 
 void GdGeomFonts::set_transform(const Transform2D &p_xform) {
@@ -143,6 +151,8 @@ void GdGeomFonts::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("easy_font_add_text", "text", "pos", "spacing"), &GdGeomFonts::easy_font_add_text, DEFVAL(Point2()), DEFVAL(0));
 	ClassDB::bind_method(D_METHOD("easy_font_add_text_xform", "text", "xform", "pos", "spacing"), &GdGeomFonts::easy_font_add_text_xform, DEFVAL(Point2()), DEFVAL(0));
 	ClassDB::bind_method(D_METHOD("easy_font_text_size", "text"), &GdGeomFonts::easy_font_text_size);
+
+	ClassDB::bind_method(D_METHOD("bitmap_font_draw_text", "text", "pos"), &GdGeomFonts::bitmap_font_draw_text, DEFVAL(Point2()));
 
 	ADD_PROPERTY(PropertyInfo(Variant::TRANSFORM2D, "transform"), "set_transform", "get_transform");
 	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "modulate_color"), "set_modulate_color", "get_modulate_color");

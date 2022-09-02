@@ -37,6 +37,7 @@
 #include "fb_font_symbol.h"
 
 #include "core/color.h"
+#include "core/dictionary.h"
 #include "core/vector.h"
 
 class FBBitmapFontView {
@@ -57,9 +58,20 @@ class FBBitmapFontView {
 	Color inner_glow_color;
 	String text;
 
+	int number_of_horizontal_dot() const;
+	int number_of_vertical_dot() const;
+
+	Dictionary &cache;
+
 public:
-	Size2 size_of_contents();
-	void reset_size();
+	void draw(RID canvas);
+	Size2 size_of_contents() const;
+
+	void set_text(const String &p_text);
+	void set_edge_length(real_t p_edge_length) { edge_length = p_edge_length; }
+	void set_margin(real_t p_margin) { margin = p_margin; }
+
+	FBBitmapFontView(Dictionary &cache);
 };
 
 class FBLCDFontView {
@@ -78,8 +90,9 @@ class FBLCDFontView {
 	String text;
 
 public:
-	void resetSize();
-	Size2 sizeOfContents() const;
+	Size2 size_of_contents() const;
+
+	void set_text(const String &p_text);
 
 	FBLCDFontView();
 };
@@ -101,8 +114,9 @@ class FBSquareFontView {
 	String text;
 
 public:
-	void reset_size();
 	Size2 size_of_contents();
+
+	void set_text(const String &p_text);
 
 	FBSquareFontView();
 };

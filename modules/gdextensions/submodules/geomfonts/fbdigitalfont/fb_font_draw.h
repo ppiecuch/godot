@@ -36,7 +36,9 @@
 #include "fb_font_symbol.h"
 
 #include "core/color.h"
+#include "core/dictionary.h"
 #include "core/math/vector2.h"
+#include "core/rid.h"
 
 typedef enum {
 } FBLineJoin;
@@ -52,6 +54,8 @@ typedef enum {
 } FBFontDotType;
 
 void draw_background_with_dot_type(
+		RID ctx,
+		Dictionary &cache,
 		FBFontDotType dot_type,
 		const Color &color,
 		real_t edge_length,
@@ -60,18 +64,25 @@ void draw_background_with_dot_type(
 		real_t vertical_amount);
 
 void draw_bitmap_symbol(
+		RID ctx,
+		Dictionary &cache,
 		FBFontSymbolType symbol,
 		FBFontDotType dot_type,
-		Color color,
+		const Color &color,
 		real_t edge_length,
 		real_t margin,
-		Point2 start_point);
+		const Color &glow_color,
+		real_t glow_size,
+		const Color &inner_glow_color,
+		real_t inner_glow_size,
+		const Point2 &start_point);
 
 int number_of_dots_wide_for_symbol(FBFontSymbolType symbol);
 
 /// LCD Font
 
 void draw_lcd_symbol(
+		RID ctx,
 		FBFontSymbolType symbol,
 		real_t edge_length,
 		real_t line_width,
@@ -80,6 +91,7 @@ void draw_lcd_symbol(
 /// Square Font
 
 void draw_square_symbol(
+		RID ctx,
 		FBFontSymbolType symbol,
 		real_t horizontal_edge_length,
 		real_t vertical_edge_length,
