@@ -101,6 +101,7 @@
 #include "scene/gui/line_edit.h"
 #include "scene/gui/link_button.h"
 #include "scene/gui/margin_container.h"
+#include "scene/gui/menu_bar.h"
 #include "scene/gui/menu_button.h"
 #include "scene/gui/nine_patch_rect.h"
 #include "scene/gui/option_button.h"
@@ -310,6 +311,7 @@ void register_scene_types() {
 	ClassDB::register_class<VSlider>();
 	ClassDB::register_class<Popup>();
 	ClassDB::register_class<PopupPanel>();
+	ClassDB::register_class<MenuBar>();
 	ClassDB::register_class<MenuButton>();
 	ClassDB::register_class<CheckBox>();
 	ClassDB::register_class<CheckButton>();

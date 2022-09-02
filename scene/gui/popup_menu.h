@@ -57,6 +57,7 @@ class PopupMenu : public Popup {
 		uint32_t accel;
 		int _ofs_cache;
 		int h_ofs;
+		int indent;
 		Ref<ShortCut> shortcut;
 		bool shortcut_is_global;
 		bool shortcut_is_disabled;
@@ -71,6 +72,7 @@ class PopupMenu : public Popup {
 			disabled = false;
 			_ofs_cache = 0;
 			h_ofs = 0;
+			indent = 0;
 			shortcut_is_global = false;
 			shortcut_is_disabled = false;
 		}
@@ -173,6 +175,8 @@ public:
 	bool is_item_shortcut_disabled(int p_idx) const;
 	String get_item_tooltip(int p_idx) const;
 	Ref<ShortCut> get_item_shortcut(int p_idx) const;
+	int get_item_indent(int p_idx) const;
+	int get_item_max_states(int p_idx) const;
 	int get_item_state(int p_idx) const;
 
 	void set_current_index(int p_idx);

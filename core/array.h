@@ -48,24 +48,27 @@ class Array {
 public:
 	// trivial c++11 iterator
 	template <typename A, typename V>
-	struct iteratorT {
+	struct IteratorT {
 		A *_array;
 		int _index;
-		iteratorT(A *_array, int _index) :
+		IteratorT(A *_array, int _index) :
 				_array(_array), _index(_index) {}
-		bool operator!=(const iteratorT<A, V> &other) const { return (_array != other._array) || (_index != other._index); }
+		IteratorT(const A *_array, int _index) :
+				_array(const_cast<A *>(_array)), _index(_index) {}
+		bool operator!=(const IteratorT<A, V> &other) const { return (_array != other._array) || (_index != other._index); }
 		V &operator*() { return (*_array)[_index]; }
-		iteratorT<A, V> operator++() {
+		const V &operator*() const { return _array->get(_index); }
+		IteratorT<A, V> operator++() {
 			_index++;
 			return *this;
 		}
 	};
-	typedef iteratorT<Array, Variant> iterator;
-	typedef iteratorT<const Array, const Variant> const_iterator;
-	iterator begin() { return iterator(this, 0); }
-	iterator end() { return iterator(this, size()); }
-	const_iterator begin() const { return const_iterator(this, 0); }
-	const_iterator end() const { return const_iterator(this, size()); }
+	typedef IteratorT<Array, Variant> Iterator;
+	typedef const Iterator ConstIterator;
+	Iterator begin() { return Iterator(this, 0); }
+	Iterator end() { return Iterator(this, size()); }
+	ConstIterator begin() const { return ConstIterator(this, 0); }
+	ConstIterator end() const { return ConstIterator(this, size()); }
 
 	Variant &operator[](int p_idx);
 	const Variant &operator[](int p_idx) const;

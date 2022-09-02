@@ -1678,6 +1678,20 @@ void OS_OSX::_update_global_menu() {
 	}
 }
 
+void OS_OSX::_extend_to_title(bool p_state) {
+	NSRect rect = [window_object frame];
+	if (p_state) {
+		[window_object setTitlebarAppearsTransparent:YES];
+		[window_object setTitleVisibility:NSWindowTitleHidden];
+		[window_object setStyleMask:[window_object styleMask] | NSWindowStyleMaskFullSizeContentView];
+	} else {
+		[window_object setTitlebarAppearsTransparent:NO];
+		[window_object setTitleVisibility:NSWindowTitleVisible];
+		[window_object setStyleMask:[window_object styleMask] & ~NSWindowStyleMaskFullSizeContentView];
+	}
+	[window_object setFrame:rect display:YES];
+}
+
 void OS_OSX::global_menu_add_item(const String &p_menu, const String &p_label, const Variant &p_signal, const Variant &p_meta) {
 	if (!global_menus.has(p_menu) && (p_menu != "_dock")) {
 		global_menus_order.push_back(p_menu);

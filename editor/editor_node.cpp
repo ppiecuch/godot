@@ -54,6 +54,7 @@
 #include "scene/gui/dialogs.h"
 #include "scene/gui/file_dialog.h"
 #include "scene/gui/link_button.h"
+#include "scene/gui/menu_bar.h"
 #include "scene/gui/menu_button.h"
 #include "scene/gui/panel.h"
 #include "scene/gui/panel_container.h"
@@ -6324,6 +6325,8 @@ EditorNode::EditorNode() {
 
 	HBoxContainer *left_menu_hb = memnew(HBoxContainer);
 	menu_hb->add_child(left_menu_hb);
+
+	main_menu = memnew(MenuBar);
 
 	file_menu = memnew(MenuButton);
 	file_menu->set_flat(false);

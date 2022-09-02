@@ -66,26 +66,26 @@ private:
 
 public:
 	// basic c++11 iterator
-	struct iterator {
+	struct Iterator {
 		Vector<T> *_array;
 		int _index;
-		iterator(Vector<T> *_array, int _index) :
+		Iterator(Vector<T> *_array, int _index) :
 				_array(_array), _index(_index) {}
-		iterator(const Vector<T> *_array, int _index) :
+		Iterator(const Vector<T> *_array, int _index) :
 				_array(const_cast<Vector<T> *>(_array)), _index(_index) {}
-		_FORCE_INLINE_ bool operator!=(const iterator &other) const { return (_array != other._array) || (_index != other._index); }
+		_FORCE_INLINE_ bool operator!=(const Iterator &other) const { return (_array != other._array) || (_index != other._index); }
 		_FORCE_INLINE_ T &operator*() { return _array->write[_index]; }
 		_FORCE_INLINE_ const T &operator*() const { return _array->get(_index); }
-		iterator operator++() {
+		Iterator operator++() {
 			_index++;
 			return *this;
 		}
 	};
-	typedef const iterator const_iterator;
-	iterator begin() { return iterator(this, 0); }
-	iterator end() { return iterator(this, size()); }
-	const_iterator begin() const { return const_iterator(this, 0); }
-	const_iterator end() const { return const_iterator(this, size()); }
+	typedef const Iterator ConstIterator;
+	Iterator begin() { return Iterator(this, 0); }
+	Iterator end() { return Iterator(this, size()); }
+	ConstIterator begin() const { return ConstIterator(this, 0); }
+	ConstIterator end() const { return ConstIterator(this, size()); }
 
 	bool push_back(T p_elem);
 	/// some convinient push functions (pair/triangle/quad)

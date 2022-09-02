@@ -758,9 +758,9 @@ void OS::center_window() {
 		return;
 	}
 
-	Point2 sp = get_screen_position(get_current_screen());
-	Size2 scr = get_screen_size(get_current_screen());
-	Size2 wnd = get_real_window_size();
+	const Point2 sp = get_screen_position(get_current_screen());
+	const Size2 scr = get_screen_size(get_current_screen());
+	const Size2 wnd = get_real_window_size();
 
 	int x = sp.width + (scr.width - wnd.width) / 2;
 	int y = sp.height + (scr.height - wnd.height) / 2;

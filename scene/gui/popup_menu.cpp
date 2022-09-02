@@ -951,6 +951,16 @@ Ref<ShortCut> PopupMenu::get_item_shortcut(int p_idx) const {
 	return items[p_idx].shortcut;
 }
 
+int PopupMenu::get_item_indent(int p_idx) const {
+	ERR_FAIL_INDEX_V(p_idx, items.size(), 0);
+	return items[p_idx].indent;
+}
+
+int PopupMenu::get_item_max_states(int p_idx) const {
+	ERR_FAIL_INDEX_V(p_idx, items.size(), -1);
+	return items[p_idx].max_states;
+}
+
 int PopupMenu::get_item_state(int p_idx) const {
 	ERR_FAIL_INDEX_V(p_idx, items.size(), -1);
 	return items[p_idx].state;

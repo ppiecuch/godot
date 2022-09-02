@@ -69,6 +69,7 @@ class ExportTemplateManager;
 class FileSystemDock;
 class HSplitContainer;
 class ImportDock;
+class MenuBar;
 class MenuButton;
 class NodeDock;
 class OrphanResourcesDialog;
@@ -276,6 +277,7 @@ private:
 
 	HBoxContainer *menu_hb;
 	Control *viewport;
+	MenuBar *main_menu;
 	MenuButton *file_menu;
 	MenuButton *project_menu;
 	MenuButton *debug_menu;

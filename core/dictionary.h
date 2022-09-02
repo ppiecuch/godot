@@ -33,6 +33,7 @@
 
 #include "core/array.h"
 #include "core/list.h"
+#include "core/pair.h"
 #include "core/ustring.h"
 
 class Variant;
@@ -46,6 +47,30 @@ class Dictionary {
 	void _unref() const;
 
 public:
+	// basic c++11 iterator
+	template <typename TDict, typename TValue>
+	struct IteratorT {
+		TDict *_map;
+		TValue *_index;
+		IteratorT(TDict *_map, const TValue *_index) :
+				_map(_map), _index(const_cast<TValue *>(_index)) {}
+		IteratorT(const TDict *_map, const TValue *_index) :
+				_map(const_cast<TDict *>(_map)), _index(const_cast<TValue *>(_index)) {}
+		_FORCE_INLINE_ bool operator!=(const IteratorT &other) const { return (_map != other._map) || (_index != other._index); }
+		_FORCE_INLINE_ KeyValue<TValue, TValue> &operator*() { return KeyValue<TValue, TValue>(*_index, _map->get(_index)); }
+		_FORCE_INLINE_ const KeyValue<TValue, TValue> &operator*() const { return KeyValue<TValue, TValue>(*_index, _map->get(_index)); }
+		IteratorT operator++() {
+			_index = _map->next(_index);
+			return *this;
+		}
+	};
+	typedef IteratorT<Dictionary, Variant> Iterator;
+	typedef const Iterator ConstIterator;
+	Iterator begin() { return Iterator(this, next()); }
+	Iterator end() { return Iterator(this, nullptr); }
+	ConstIterator begin() const { return ConstIterator(this, next()); }
+	ConstIterator end() const { return ConstIterator(this, nullptr); }
+
 	void get_key_list(List<Variant> *p_keys) const;
 	Variant get_key_at_index(int p_index) const;
 	Variant get_value_at_index(int p_index) const;

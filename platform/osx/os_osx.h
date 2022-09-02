@@ -178,6 +178,7 @@ public:
 	List<String> global_menus_order;
 
 	void _update_global_menu();
+	void _extend_to_title(bool p_state);
 
 	static void pre_wait_observer_cb(CFRunLoopObserverRef p_observer, CFRunLoopActivity p_activiy, void *p_context);
 

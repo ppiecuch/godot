@@ -36,6 +36,7 @@
 #include "core/list.h"
 #include "core/math/math_funcs.h"
 #include "core/os/memory.h"
+#include "core/pair.h"
 #include "core/ustring.h"
 
 /**
@@ -46,7 +47,7 @@
  * The implementation provides hashers for the default types, if you need a special kind of hasher, provide
  * your own.
  * @param TKey  Key, search is based on it, needs to be hasheable. It is unique in this container.
- * @param TData Data, data associated with the key
+ * @param TValue Data, data associated with the key
  * @param Hasher Hasher object, needs to provide a valid static hash function for TKey
  * @param Comparator comparator object, needs to be able to safely compare two TKey values. It needs to ensure that x == x for any items inserted in the map. Bear in mind that nan != nan when implementing an equality check.
  * @param MIN_HASH_TABLE_POWER Miminum size of the hash table, as a power of two. You rarely need to change this parameter.
@@ -55,22 +56,9 @@
  *
  */
 
-template <class TKey, class TData, class Hasher = HashMapHasherDefault, class Comparator = HashMapComparatorDefault<TKey>, uint8_t MIN_HASH_TABLE_POWER = 3, uint8_t RELATIONSHIP = 8>
+template <class TKey, class TValue, class Hasher = HashMapHasherDefault, class Comparator = HashMapComparatorDefault<TKey>, uint8_t MIN_HASH_TABLE_POWER = 3, uint8_t RELATIONSHIP = 8>
 class HashMap {
 public:
-	struct Pair {
-		TKey key;
-		TData data;
-
-		Pair(const TKey &p_key) :
-				key(p_key),
-				data() {}
-		Pair(const TKey &p_key, const TData &p_data) :
-				key(p_key),
-				data(p_data) {
-		}
-	};
-
 	struct Element {
 	private:
 		friend class HashMap;
@@ -78,27 +66,50 @@ public:
 		uint32_t hash;
 		Element *next;
 		Element() { next = nullptr; }
-		Pair pair;
+		KeyValue<TKey, TValue> data;
 
 	public:
 		const TKey &key() const {
-			return pair.key;
+			return data.key;
 		}
 
-		TData &value() {
-			return pair.data;
+		TValue &value() {
+			return data.value;
 		}
 
-		const TData &value() const {
-			return pair.value();
+		const TValue &value() const {
+			return data.value();
 		}
 
 		Element(const TKey &p_key) :
-				pair(p_key) {}
+				data(p_key) {}
 		Element(const Element &p_other) :
 				hash(p_other.hash),
-				pair(p_other.pair.key, p_other.pair.data) {}
+				data(p_other.data.key, p_other.data.value) {}
 	};
+
+	// basic c++11 iterator
+	struct Iterator {
+		typedef HashMap<TKey, TValue, Hasher, Comparator, MIN_HASH_TABLE_POWER, RELATIONSHIP> HashMapType;
+		HashMapType *_map;
+		TKey *_index;
+		Iterator(HashMapType *_map, const TKey *_index) :
+				_map(_map), _index(const_cast<TKey *>(_index)) {}
+		Iterator(const HashMapType *_map, const TKey *_index) :
+				_map(const_cast<HashMapType *>(_map)), _index(const_cast<TKey *>(_index)) {}
+		_FORCE_INLINE_ bool operator!=(const Iterator &other) const { return (_map != other._map) || (_index != other._index); }
+		_FORCE_INLINE_ KeyValue<TKey, TValue> operator*() { return KeyValue<TKey, TValue>(*_index, _map->get(*_index)); }
+		_FORCE_INLINE_ const KeyValue<TKey, TValue> &operator*() const { return KeyValue<TKey, TValue>(*_index, _map->get(*_index)); }
+		Iterator operator++() {
+			_index = const_cast<TKey *>(_map->next(_index));
+			return *this;
+		}
+	};
+	typedef const Iterator ConstIterator;
+	Iterator begin() { return Iterator(this, next(nullptr)); }
+	Iterator end() { return Iterator(this, nullptr); }
+	ConstIterator begin() const { return ConstIterator(this, next(nullptr)); }
+	ConstIterator end() const { return ConstIterator(this, nullptr); }
 
 private:
 	Element **hash_table;
@@ -187,7 +198,7 @@ private:
 
 		while (e) {
 			/* checking hash first avoids comparing key, which may take longer */
-			if (e->hash == hash && Comparator::compare(e->pair.key, p_key)) {
+			if (e->hash == hash && Comparator::compare(e->data.key, p_key)) {
 				/* the pair exists in this hashtable, so just update data */
 				return e;
 			}
@@ -246,11 +257,11 @@ private:
 	}
 
 public:
-	Element *set(const TKey &p_key, const TData &p_data) {
-		return set(Pair(p_key, p_data));
+	Element *set(const TKey &p_key, const TValue &p_data) {
+		return set(KeyValue<TKey, TValue>(p_key, p_data));
 	}
 
-	Element *set(const Pair &p_pair) {
+	Element *set(const KeyValue<TKey, TValue> &p_pair) {
 		Element *e = nullptr;
 		if (!hash_table) {
 			make_hash_table(); // if no table, make one
@@ -268,7 +279,7 @@ public:
 			check_hash_table(); // perform mantenience routine
 		}
 
-		e->pair.data = p_pair.data;
+		e->data.value = p_pair.value;
 		return e;
 	}
 
@@ -282,14 +293,14 @@ public:
 	 * first with has(key)
 	 */
 
-	const TData &get(const TKey &p_key) const {
-		const TData *res = getptr(p_key);
+	const TValue &get(const TKey &p_key) const {
+		const TValue *res = getptr(p_key);
 		CRASH_COND_MSG(!res, "Map key not found.");
 		return *res;
 	}
 
-	TData &get(const TKey &p_key) {
-		TData *res = getptr(p_key);
+	TValue &get(const TKey &p_key) {
+		TValue *res = getptr(p_key);
 		CRASH_COND_MSG(!res, "Map key not found.");
 		return *res;
 	}
@@ -299,7 +310,7 @@ public:
 	 * This is mainly used for speed purposes.
 	 */
 
-	_FORCE_INLINE_ TData *getptr(const TKey &p_key) {
+	_FORCE_INLINE_ TValue *getptr(const TKey &p_key) {
 		if (unlikely(!hash_table)) {
 			return nullptr;
 		}
@@ -307,13 +318,13 @@ public:
 		Element *e = const_cast<Element *>(get_element(p_key));
 
 		if (e) {
-			return &e->pair.data;
+			return &e->data.value;
 		}
 
 		return nullptr;
 	}
 
-	_FORCE_INLINE_ const TData *getptr(const TKey &p_key) const {
+	_FORCE_INLINE_ const TValue *getptr(const TKey &p_key) const {
 		if (unlikely(!hash_table)) {
 			return nullptr;
 		}
@@ -321,7 +332,7 @@ public:
 		const Element *e = const_cast<Element *>(get_element(p_key));
 
 		if (e) {
-			return &e->pair.data;
+			return &e->data.value;
 		}
 
 		return nullptr;
@@ -333,7 +344,7 @@ public:
 	 */
 
 	template <class C>
-	_FORCE_INLINE_ TData *custom_getptr(C p_custom_key, uint32_t p_custom_hash) {
+	_FORCE_INLINE_ TValue *custom_getptr(C p_custom_key, uint32_t p_custom_hash) {
 		if (unlikely(!hash_table)) {
 			return nullptr;
 		}
@@ -345,9 +356,9 @@ public:
 
 		while (e) {
 			/* checking hash first avoids comparing key, which may take longer */
-			if (e->hash == hash && Comparator::compare(e->pair.key, p_custom_key)) {
+			if (e->hash == hash && Comparator::compare(e->data.key, p_custom_key)) {
 				/* the pair exists in this hashtable, so just update data */
-				return &e->pair.data;
+				return &e->data.value;
 			}
 
 			e = e->next;
@@ -357,9 +368,9 @@ public:
 	}
 
 	template <class C>
-	_FORCE_INLINE_ const TData *custom_getptr(C p_custom_key, uint32_t p_custom_hash) const {
+	_FORCE_INLINE_ const TValue *custom_getptr(C p_custom_key, uint32_t p_custom_hash) const {
 		if (unlikely(!hash_table)) {
-			return NULL;
+			return nullptr;
 		}
 
 		uint32_t hash = p_custom_hash;
@@ -396,7 +407,7 @@ public:
 		Element *p = nullptr;
 		while (e) {
 			/* checking hash first avoids comparing key, which may take longer */
-			if (e->hash == hash && Comparator::compare(e->pair.key, p_key)) {
+			if (e->hash == hash && Comparator::compare(e->data.key, p_key)) {
 				if (p) {
 					p->next = e->next;
 				} else {
@@ -422,11 +433,11 @@ public:
 		return false;
 	}
 
-	inline const TData &operator[](const TKey &p_key) const { //constref
+	inline const TValue &operator[](const TKey &p_key) const { //constref
 
 		return get(p_key);
 	}
-	inline TData &operator[](const TKey &p_key) { //assignment
+	inline TValue &operator[](const TKey &p_key) { //assignment
 
 		Element *e = nullptr;
 		if (!hash_table) {
@@ -442,7 +453,7 @@ public:
 			check_hash_table(); // perform mantenience routine
 		}
 
-		return e->pair.data;
+		return e->data.value;
 	}
 
 	/**
@@ -469,7 +480,7 @@ public:
 
 			for (int i = 0; i < (1 << hash_table_power); i++) {
 				if (hash_table[i]) {
-					return &hash_table[i]->pair.key;
+					return &hash_table[i]->data.key;
 				}
 			}
 
@@ -479,14 +490,14 @@ public:
 			ERR_FAIL_COND_V_MSG(!e, nullptr, "Invalid key supplied.");
 			if (e->next) {
 				/* if there is a "next" in the list, return that */
-				return &e->next->pair.key;
+				return &e->next->data.key;
 			} else {
 				/* go to next elements */
 				uint32_t index = e->hash & ((1 << hash_table_power) - 1);
 				index++;
 				for (int i = index; i < (1 << hash_table_power); i++) {
 					if (hash_table[i]) {
-						return &hash_table[i]->pair.key;
+						return &hash_table[i]->data.key;
 					}
 				}
 			}
@@ -534,14 +545,14 @@ public:
 		hash_table_power = 0;
 	}
 
-	void get_key_value_ptr_array(const Pair **p_pairs) const {
+	void get_key_value_ptr_array(const Pair<TKey, TValue> **p_pairs) const {
 		if (unlikely(!hash_table)) {
 			return;
 		}
 		for (int i = 0; i < (1 << hash_table_power); i++) {
 			Element *e = hash_table[i];
 			while (e) {
-				*p_pairs = &e->pair;
+				*p_pairs = &e->data;
 				p_pairs++;
 				e = e->next;
 			}
@@ -555,7 +566,7 @@ public:
 		for (int i = 0; i < (1 << hash_table_power); i++) {
 			Element *e = hash_table[i];
 			while (e) {
-				p_keys->push_back(e->pair.key);
+				p_keys->push_back(e->data.key);
 				e = e->next;
 			}
 		}
