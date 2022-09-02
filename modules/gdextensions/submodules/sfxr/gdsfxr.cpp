@@ -66,7 +66,9 @@ void AudioStreamSfxr::_update_voice() {
 	SampleBuffer buffer;
 	sfx_voice.Play();
 	while (sfx_voice.IsActive()) {
-		int ss = sfx_voice.Render(256, &buffer);
+		if (!sfx_voice.Render(256, &buffer)) {
+			WARN_PRINT("No samples generated");
+		}
 	}
 
 	_cache = buffer.data;
