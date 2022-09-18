@@ -227,7 +227,7 @@ static void editor_init_callback() {
 
 	EditorPlugins::add_by_type<ProceduralAnimationEditorPlugin>(); /* ProceduralAnimation */
 }
-#endif
+#endif // TOOLS_ENABLED
 
 static ThreadPool *thread_pool = nullptr;
 
