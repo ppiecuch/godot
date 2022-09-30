@@ -142,6 +142,10 @@
 #include "media/ffmpeg/gd_videodecoder.h"
 #endif
 
+#ifdef GDEXT_RUNTIMEPROFILER_ENABLED
+#include "runtimeprofiler/runtime_profiler.h"
+#endif
+
 #include "settings/settings.h"
 
 #ifdef GDEXT_SQLITE_ENABLED
@@ -448,6 +452,10 @@ void register_gdextensions_types() {
 #endif
 #ifdef GDEXT_MEDIA_FFMPEG_ENABLED
 	gdffmpeg_init();
+#endif
+
+#ifdef GDEXT_RUNTIMEPROFILER_ENABLED
+	ClassDB::register_class<RuntimeProfiler>();
 #endif
 
 #ifdef GDEXT_BENET_ENABLED

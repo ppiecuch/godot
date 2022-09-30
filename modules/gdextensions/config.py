@@ -56,6 +56,7 @@ def configure(env):
         "turbobadger",
         "spacemouse",
         "media",
+        "runtimeprofiler"
     ]
     opts = Variables()
     opts.Add(
