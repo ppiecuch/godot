@@ -37,6 +37,8 @@
 #include "hershey/hershey_render.h"
 #include "leonsans/leonsans.h"
 #include "polyfonts/polygodot.cpp"
+#include "simplevector/asteroids.c"
+#include "simplevector/hp1345.c"
 #include "ttftriangulator/ttftriangulator.cpp"
 
 #include "common/gd_core.h"
