@@ -15,7 +15,7 @@ attribute vec2 texCoord0;
 varying vec2 vTexCoord;
 
 void fragment()
-{    
+{
     gl_FragColor = vec4(1, 1, 1, texture2D(texture0, vTexCoord).a);
 }
 

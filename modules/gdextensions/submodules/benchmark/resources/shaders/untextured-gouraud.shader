@@ -11,5 +11,5 @@ varying vec4 lightTotal;
 
 void fragment()
 {
-    gl_FragColor =  lightTotal; 
+    gl_FragColor =  lightTotal;
 }

@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  benchmark.cpp                                                        */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 // Reference:
 // ----------
 // https://github.com/raysan5/raylib/issues/65
@@ -52,8 +82,8 @@ void Benchmark::_notification(int p_notification) {
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <sys/types.h>
+#include <time.h>
 
 #ifdef PLATFORM_ANDROID
     typedef unsigned short ushort;
@@ -65,13 +95,13 @@ void Benchmark::_notification(int p_notification) {
 #include "models/robot_model.h"
 #include "models/trex_model.h"
 
-#include <raymath.h>
 #include <raylib.h>
+#include <raymath.h>
 #include <rlgl.h>
 
 #define RAYGUI_IMPLEMENTATION
 #ifndef RAYGUI_SUPPORT_ICONS
-# define RAYGUI_SUPPORT_ICONS
+#define RAYGUI_SUPPORT_ICONS
 #endif
 #include <extraygui.h>
 
@@ -192,7 +222,7 @@ typedef enum {
     KID_MODEL,
     TREX_MODEL,
     ROBOT_MODEL,
-    NUM_MODEL_TYPES  
+    NUM_MODEL_TYPES
 } ModelType;
 
 typedef struct _ModelInfo
@@ -206,7 +236,7 @@ typedef struct _RenderState
 {
     uint32_t fbWidth;
     uint32_t fbHeight;
-    
+
     uint32_t numObjects;
     float yaw;
 
@@ -222,7 +252,7 @@ typedef struct _RenderState
     bool multisampling;
 
     RenderTexture2D target;
-    
+
     uint8_t shaderType;
     ShaderInfo shaderInfo[NUM_SHADER_TYPES];
     uint8_t postType;
@@ -298,9 +328,10 @@ void InitModel()
     GenMesh(&rs.modelInfo[ROBOT_MODEL], robot_verts, sizeof(robot_verts)/(sizeof(float)), robot_indices, sizeof(robot_indices)/sizeof(ushort));
 
 #ifdef PLATFORM_DESKTOP
-# define LOADTEX(m,t) \
-   rs.modelInfo[m].material.maps[0].texture = LoadTextureFromMemory(rlFindEmbeddedData(t)); \
-   if (rs.modelInfo[m].material.maps[0].texture.id) rlGenerateMipmaps(&rs.modelInfo[m].material.maps[0].texture)
+#define LOADTEX(m, t)                                                                        \
+	rs.modelInfo[m].material.maps[0].texture = LoadTextureFromMemory(rlFindEmbeddedData(t)); \
+	if (rs.modelInfo[m].material.maps[0].texture.id)                                         \
+	rlGenerateMipmaps(&rs.modelInfo[m].material.maps[0].texture)
     LOADTEX(CUBE_MODEL, "textures/cube.ktx");
     LOADTEX(CUBE_MODEL, "textures/cube.png");
     LOADTEX(FROG_MODEL, "textures/frog.png");
@@ -308,8 +339,8 @@ void InitModel()
     LOADTEX(TREX_MODEL, "textures/trex.png");
     LOADTEX(ROBOT_MODEL, "textures/robot.png");
 #else
-# define LOADTEX(m,t) \
-   rs.modelInfo[m].material.maps[0].texture = LoadTextureFromMemory(rlFindEmbeddedData(t))
+#define LOADTEX(m, t) \
+	rs.modelInfo[m].material.maps[0].texture = LoadTextureFromMemory(rlFindEmbeddedData(t))
     LOADTEX(CUBE_MODEL, "textures/cube.ktx");
     LOADTEX(FROG_MODEL, "textures/frog.ktx");
     LOADTEX(KID_MODEL, "textures/kid.ktx");
@@ -602,7 +633,7 @@ int main(int argc, char *argv[])
             //----------------------------------------------------------------------------------
             float deltaTimeMs = GetFrameTime() * 1000;
 
-            #define EXTKEYNAV(row, key) (textRowSel==row && (IsKeyPressed(key) || IsKeyPressed(KEY_ENTER)))
+#define EXTKEYNAV(row, key) (textRowSel == row && (IsKeyPressed(key) || IsKeyPressed(KEY_ENTER)))
 
             if (IsKeyPressed(KEY_ESCAPE))
                 break;
@@ -753,14 +784,19 @@ int main(int argc, char *argv[])
                 }
 
                 ResetRenderStats();
-                # define _LineStart 2
-                # define _FontSize 20
-                # define _LineHeight (_FontSize+3)
-                # define _AddTextLine(text, x, row) { \
-                    const int curr=row, y=_LineHeight*curr; const int tw = MeasureText(text, _FontSize); \
-                    if (curr==textRowSel) { \
-                        DrawRectangle(0, y-1, tw+_LineStart*2, _FontSize+1, WHITE); DrawText(text, x, y, _FontSize, BLACK); } \
-                    else DrawText(text, x, y, _FontSize, curr < 2 ? SKYBLUE:WHITE); }
+#define _LineStart 2
+#define _FontSize 20
+#define _LineHeight (_FontSize + 3)
+#define _AddTextLine(text, x, row)                                              \
+	{                                                                           \
+		const int curr = row, y = _LineHeight * curr;                           \
+		const int tw = MeasureText(text, _FontSize);                            \
+		if (curr == textRowSel) {                                               \
+			DrawRectangle(0, y - 1, tw + _LineStart * 2, _FontSize + 1, WHITE); \
+			DrawText(text, x, y, _FontSize, BLACK);                             \
+		} else                                                                  \
+			DrawText(text, x, y, _FontSize, curr < 2 ? SKYBLUE : WHITE);        \
+	}
 
                 uint textRow = 0;
                 _AddTextLine(FormatText("%d FPS %.1fM TRIS/SEC %.1fK TRIS/FRAME", fps, (float)trisPerSec/1000000, (float)tris/1000), _LineStart, textRow++);

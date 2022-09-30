@@ -23,10 +23,10 @@ void fragment()
 
     // eye vector: points from the surface towards the camera
     // we are already in viewspace, so camera position is (0,0,0)
-    vec3 E = normalize(-position_viewspace);   
+    vec3 E = normalize(-position_viewspace);
 
     // reflection vector: reflects the light around the normal vector
-    vec3 R = -reflect(L,N); 
+    vec3 R = -reflect(L,N);
 
     // ambient lighting: a better shader would pass this as an input rather than hard-coding it
     float ambient = 0.1;
@@ -36,7 +36,7 @@ void fragment()
     float diffuse = max(0.0, dot(N,L));
 
     // specular lighting: a better shader would pass the shininess as an input - here we assume
-    // the shininess is 10. clamp the dot product to 0, so it doesn't go negative when the 
+    // the shininess is 10. clamp the dot product to 0, so it doesn't go negative when the
     // reflection points away from the camera.
     float specular = 0.0;
     if (diffuse > 0.0)
@@ -46,5 +46,5 @@ void fragment()
     // the light is bright white.
     vec3 lightColor = vec3(1.0, 1.0, 1.0);
     vec4 lightTotal = vec4((ambient + diffuse + specular) * lightColor, 1.0);
-    gl_FragColor =  lightTotal; 
+    gl_FragColor =  lightTotal;
 }
