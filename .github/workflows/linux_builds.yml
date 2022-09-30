@@ -3,6 +3,7 @@ on: [push, pull_request]
 
 # Global Settings
 env:
+  # Only used for the cache key. Increment version to force clean build.
   GODOT_BASE_BRANCH: master
   SCONSFLAGS: verbose=yes warnings=all werror=yes
 
@@ -14,6 +15,7 @@ jobs:
   build-linux:
     runs-on: "ubuntu-20.04"
     if: "contains(github.event.head_commit.message, '[ci]')"
+
     name: ${{ matrix.name }}
     strategy:
       fail-fast: false
@@ -48,7 +50,7 @@ jobs:
             artifact: true
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Linux dependencies
         shell: bash
@@ -60,7 +62,8 @@ jobs:
           # The actual dependencies
           sudo apt-get install build-essential pkg-config libx11-dev libxcursor-dev \
               libxinerama-dev libgl1-mesa-dev libglu-dev libasound2-dev libpulse-dev \
-              libdbus-1-dev libudev-dev libxi-dev libxrandr-dev yasm xvfb wget unzip
+              libdbus-1-dev libudev-dev libxi-dev libxrandr-dev yasm xvfb wget unzip \
+              libspeechd-dev speech-dispatcher
 
       - name: Setup Godot build cache
         uses: ./.github/actions/godot-cache
@@ -130,6 +133,7 @@ jobs:
         if: ${{ matrix.artifact }}
         run: |
           strip bin/godot.*
+          chmod +x bin/godot.*
 
       - name: Upload artifact
         uses: ./.github/actions/upload-artifact

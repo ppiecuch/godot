@@ -140,12 +140,17 @@ NavigationObstacle::~NavigationObstacle() {
 }
 
 void NavigationObstacle::set_navigation(Navigation *p_nav) {
-	if (navigation == p_nav) {
+	if (navigation == p_nav && navigation != nullptr) {
 		return; // Pointless
 	}
 
 	navigation = p_nav;
-	NavigationServer::get_singleton()->agent_set_map(agent, navigation == nullptr ? RID() : navigation->get_rid());
+
+	if (navigation != nullptr) {
+		NavigationServer::get_singleton()->agent_set_map(agent, navigation->get_rid());
+	} else if (parent_spatial && parent_spatial->is_inside_tree()) {
+		NavigationServer::get_singleton()->agent_set_map(agent, parent_spatial->get_world()->get_navigation_map());
+	}
 }
 
 void NavigationObstacle::set_navigation_node(Node *p_nav) {

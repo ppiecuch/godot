@@ -550,7 +550,7 @@ float DynamicFontAtSize::draw_char(RID p_canvas_item, const CharTransform &p_cha
 				valign = (rotation_base - rc.get_center().y) * t * t * t * t * t; // t^5
 			}
 			Color modulate = p_modulate;
-			if (FT_HAS_COLOR(font->face)) {
+			if (font->textures[ch->texture_idx].texture->get_format() == Image::FORMAT_RGBA8) {
 				modulate.r = modulate.g = modulate.b = 1.0;
 			}
 			RID texture = font->textures[ch->texture_idx].texture->get_rid();
@@ -1485,7 +1485,7 @@ void DynamicFont::update_oversampling() {
 
 /////////////////////////
 
-RES ResourceFormatLoaderDynamicFont::load(const String &p_path, const String &p_original_path, Error *r_error) {
+RES ResourceFormatLoaderDynamicFont::load(const String &p_path, const String &p_original_path, Error *r_error, bool p_no_subresource_cache) {
 	if (r_error) {
 		*r_error = ERR_FILE_CANT_OPEN;
 	}

@@ -3,6 +3,7 @@ on: [push, pull_request]
 
 # Global Settings
 env:
+  # Only used for the cache key. Increment version to force clean build.
   GODOT_BASE_BRANCH: master
   SCONSFLAGS: verbose=yes warnings=all werror=yes debug_symbols=no module_mono_enabled=yes mono_static=yes mono_glue=no
 
@@ -14,6 +15,7 @@ jobs:
   build-server:
     runs-on: "ubuntu-20.04"
     if: "contains(github.event.head_commit.message, '[ci]')"
+
     name: ${{ matrix.name }}
     strategy:
       fail-fast: false
@@ -30,7 +32,7 @@ jobs:
             tools: false
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Linux dependencies
         shell: bash

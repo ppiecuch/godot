@@ -134,12 +134,17 @@ NavigationObstacle2D::~NavigationObstacle2D() {
 }
 
 void NavigationObstacle2D::set_navigation(Navigation2D *p_nav) {
-	if (navigation == p_nav) {
+	if (navigation == p_nav && navigation != nullptr) {
 		return; // Pointless
 	}
 
 	navigation = p_nav;
-	Navigation2DServer::get_singleton()->agent_set_map(agent, navigation == nullptr ? RID() : navigation->get_rid());
+
+	if (navigation != nullptr) {
+		Navigation2DServer::get_singleton()->agent_set_map(agent, navigation->get_rid());
+	} else if (parent_node2d && parent_node2d->is_inside_tree()) {
+		Navigation2DServer::get_singleton()->agent_set_map(agent, parent_node2d->get_world_2d()->get_navigation_map());
+	}
 }
 
 void NavigationObstacle2D::set_navigation_node(Node *p_nav) {

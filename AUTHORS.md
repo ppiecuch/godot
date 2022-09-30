@@ -35,6 +35,7 @@ name is available.
     Andrea Catania (AndreaCatania)
     Andreas Haas (Hinsbart)
     Andrii Doroshenko (Xrayez)
+    Andy Maloney (asmaloney)
     Andy Moss (MillionOstrich)
     Angad Kambli (angad-k)
     Anilforextra (AnilBK)
@@ -165,9 +166,12 @@ name is available.
     Max Hilbrunner (mhilbrunner)
     merumelu
     Meru Patel (Janglee123)
+    MewPurPur
     Michael Alexsander (YeldhamDev)
     Michał Iwańczuk (iwek7)
     MichiRecRoom (LikeLakers2)
+    Micky (Mickeon)
+    MinusKube
     Morris "Tabor" Arroad (mortarroad)
     mrezai
     Muhammad Huri (CakHuri)
@@ -200,6 +204,7 @@ name is available.
     Raphael2048
     Raul Santos (raulsntos)
     Ray Koopa (RayKoopa)
+    RedMser
     Rémi Verschelde (akien-mga)
     Rhody Lugo (rraallvv)
     Ricardo Buring (rburing)

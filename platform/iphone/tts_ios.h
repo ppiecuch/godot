@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  GodotGestureHandler.java                                             */
+/*  tts_ios.h                                                            */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,60 +28,36 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-package org.godotengine.godot.input;
+#ifndef TTS_IOS_H
+#define TTS_IOS_H
 
-import org.godotengine.godot.GodotLib;
-import org.godotengine.godot.GodotView;
+#if __has_include(<AVFAudio/AVSpeechSynthesis.h>)
+#import <AVFAudio/AVSpeechSynthesis.h>
+#else
+#import <AVFoundation/AVFoundation.h>
+#endif
 
-import android.view.GestureDetector;
-import android.view.MotionEvent;
+#include "core/array.h"
+#include "core/list.h"
+#include "core/map.h"
+#include "core/os/os.h"
+#include "core/ustring.h"
 
-/**
- * Handles gesture input related events for the {@link GodotView} view.
- * https://developer.android.com/reference/android/view/GestureDetector.SimpleOnGestureListener
- */
-public class GodotGestureHandler extends GestureDetector.SimpleOnGestureListener {
-	private final GodotView godotView;
+@interface TTS_IOS : NSObject <AVSpeechSynthesizerDelegate> {
+	bool speaking;
+	Map<id, int> ids;
 
-	public GodotGestureHandler(GodotView godotView) {
-		this.godotView = godotView;
-	}
-
-	private void queueEvent(Runnable task) {
-		godotView.queueEvent(task);
-	}
-
-	@Override
-	public boolean onDown(MotionEvent event) {
-		super.onDown(event);
-		//Log.i("GodotGesture", "onDown");
-		return true;
-	}
-
-	@Override
-	public boolean onSingleTapConfirmed(MotionEvent event) {
-		super.onSingleTapConfirmed(event);
-		return true;
-	}
-
-	@Override
-	public void onLongPress(MotionEvent event) {
-		//Log.i("GodotGesture", "onLongPress");
-	}
-
-	@Override
-	public boolean onDoubleTap(MotionEvent event) {
-		//Log.i("GodotGesture", "onDoubleTap");
-		final int x = Math.round(event.getX());
-		final int y = Math.round(event.getY());
-		final int buttonMask = event.getButtonState();
-		GodotLib.doubleTap(buttonMask, x, y);
-		return true;
-	}
-
-	@Override
-	public boolean onFling(MotionEvent event1, MotionEvent event2, float velocityX, float velocityY) {
-		//Log.i("GodotGesture", "onFling");
-		return true;
-	}
+	AVSpeechSynthesizer *av_synth;
+	List<OS::TTSUtterance> queue;
 }
+
+- (void)pauseSpeaking;
+- (void)resumeSpeaking;
+- (void)stopSpeaking;
+- (bool)isSpeaking;
+- (bool)isPaused;
+- (void)speak:(const String &)text voice:(const String &)voice volume:(int)volume pitch:(float)pitch rate:(float)rate utterance_id:(int)utterance_id interrupt:(bool)interrupt;
+- (Array)getVoices;
+@end
+
+#endif // TTS_IOS_H

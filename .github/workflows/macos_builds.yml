@@ -3,6 +3,7 @@ on: [push, pull_request]
 
 # Global Settings
 env:
+  # Only used for the cache key. Increment version to force clean build.
   GODOT_BASE_BRANCH: master
   SCONSFLAGS: verbose=yes warnings=all werror=yes debug_symbols=no
 
@@ -14,6 +15,7 @@ jobs:
   build-macos:
     runs-on: "macos-latest"
     if: "contains(github.event.head_commit.message, '[ci]')"
+
     name: ${{ matrix.name }}
     strategy:
       fail-fast: false
@@ -31,7 +33,7 @@ jobs:
             tools: false
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Setup Godot build cache
         uses: ./.github/actions/godot-cache
@@ -49,6 +51,11 @@ jobs:
           platform: osx
           target: ${{ matrix.target }}
           tools: ${{ matrix.tools }}
+
+      - name: Prepare artifact
+        run: |
+          strip bin/godot.*
+          chmod +x bin/godot.*
 
       - name: Upload artifact
         uses: ./.github/actions/upload-artifact
