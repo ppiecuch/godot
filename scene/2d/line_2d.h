@@ -112,6 +112,11 @@ public:
 	void set_antialiased(bool p_antialiased);
 	bool get_antialiased() const;
 
+#ifdef TOOLS_ENABLED
+	void set_debug_mode(bool p_debug);
+	bool get_debug_mode() const;
+#endif
+
 protected:
 	void _notification(int p_what);
 	void _draw();
@@ -121,6 +126,7 @@ protected:
 private:
 	void _gradient_changed();
 	void _curve_changed();
+	void _texture_changed();
 
 private:
 	PoolVector<Vector2> _points;
@@ -136,6 +142,9 @@ private:
 	float _sharp_limit;
 	int _round_precision;
 	bool _antialiased;
+#ifdef TOOLS_ENABLED
+	bool _debug_mode = false;
+#endif
 };
 
 #endif // LINE_2D_H

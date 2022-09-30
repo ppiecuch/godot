@@ -191,7 +191,18 @@ Ref<Gradient> Line2D::get_gradient() const {
 }
 
 void Line2D::set_texture(const Ref<Texture> &p_texture) {
+	// Cleanup previous connection if any
+	if (_texture.is_valid()) {
+		_texture->disconnect(CoreStringNames::get_singleton()->changed, this, "_texture_changed");
+	}
+
 	_texture = p_texture;
+
+	// Connect to the gradient so the line will update when the ColorRamp is changed
+	if (_texture.is_valid()) {
+		_texture->connect(CoreStringNames::get_singleton()->changed, this, "_texture_changed");
+	}
+
 	update();
 }
 
@@ -273,6 +284,15 @@ bool Line2D::get_antialiased() const {
 	return _antialiased;
 }
 
+void Line2D::set_debug_mode(bool p_debug) {
+	_debug_mode = p_debug;
+	update();
+}
+
+bool Line2D::get_debug_mode() const {
+	return _debug_mode;
+}
+
 void Line2D::_draw() {
 	if (_points.size() <= 1 || _width == 0.f) {
 		return;
@@ -331,9 +351,9 @@ void Line2D::_draw() {
 			texture_rid, -1, RID(), RID(),
 			_antialiased, true);
 
-// Draw wireframe inside editor
 #ifdef TOOLS_ENABLED
-	if (Engine::get_singleton()->is_editor_hint()) {
+	// Draw wireframe inside editor
+	if (_debug_mode) {
 		if (lb.indices.size() % 3 == 0) {
 			Color col(1, 1, 0);
 			Color debug(1, 1, 0, 0.5);
@@ -359,6 +379,10 @@ void Line2D::_gradient_changed() {
 }
 
 void Line2D::_curve_changed() {
+	update();
+}
+
+void Line2D::_texture_changed() {
 	update();
 }
 
@@ -412,7 +436,10 @@ void Line2D::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_antialiased", "antialiased"), &Line2D::set_antialiased);
 	ClassDB::bind_method(D_METHOD("get_antialiased"), &Line2D::get_antialiased);
-
+#ifdef TOOLS_ENABLED
+	ClassDB::bind_method(D_METHOD("set_debug_mode"), &Line2D::set_debug_mode);
+	ClassDB::bind_method(D_METHOD("get_debug_mode"), &Line2D::get_debug_mode);
+#endif
 	ADD_PROPERTY(PropertyInfo(Variant::POOL_VECTOR2_ARRAY, "points"), "set_points", "get_points");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "width"), "set_width", "get_width");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "width_curve", PROPERTY_HINT_RESOURCE_TYPE, "Curve"), "set_curve", "get_curve");
@@ -429,7 +456,10 @@ void Line2D::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "sharp_limit"), "set_sharp_limit", "get_sharp_limit");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "round_precision", PROPERTY_HINT_RANGE, "1,32,1"), "set_round_precision", "get_round_precision");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "antialiased"), "set_antialiased", "get_antialiased");
-
+#ifdef TOOLS_ENABLED
+	ADD_GROUP("", "");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "debug_mode", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_EDITOR), "set_debug_mode", "get_debug_mode");
+#endif
 	BIND_ENUM_CONSTANT(LINE_JOINT_SHARP);
 	BIND_ENUM_CONSTANT(LINE_JOINT_BEVEL);
 	BIND_ENUM_CONSTANT(LINE_JOINT_ROUND);
