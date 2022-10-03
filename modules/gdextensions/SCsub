@@ -71,6 +71,7 @@ modules = [
     "media/flac",
     "media/gifexporter",
     "media/smackvideo",
+    "runtimeprofiler",
 ]
 
 thirdparty_sources = [

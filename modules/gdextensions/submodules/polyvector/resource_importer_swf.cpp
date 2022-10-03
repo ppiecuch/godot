@@ -330,7 +330,7 @@ inline real_t ResourceImporterSWF::shape_area(SWF::Shape s) {
 }
 #endif // TOOLS_ENABLED
 
-RES ResourceLoaderJSONVector::load(const String &p_path, const String &p_original_path, Error *r_error) {
+RES ResourceLoaderJSONVector::load(const String &p_path, const String &p_original_path, Error *r_error, bool p_no_subresource_cache) {
 	if (r_error)
 		*r_error = ERR_FILE_CANT_OPEN;
 	FileAccess *polyvector = FileAccess::open(p_path, FileAccess::READ);

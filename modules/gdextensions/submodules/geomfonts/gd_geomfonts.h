@@ -32,33 +32,41 @@
 #define GD_GEOMFONTS_H
 
 #include "core/color.h"
+#include "core/pair.h"
 #include "core/math/transform_2d.h"
 #include "core/reference.h"
+#include "scene/2d/canvas_item.h"
 #include "scene/resources/mesh.h"
 
 class GdGeomFonts : public Reference {
 	GDCLASS(GdGeomFonts, Reference);
 
-	RID canvas, canvas_item;
-	Transform2D xform;
-	Color modulate;
+	struct DrawItems {
+		RID r1, r2;
+		void clear();
+		bool set_transform(const Transform2D &p_xform);
+		bool set_modulate_color(const Color &p_color);
+		DrawItems() { }
+		DrawItems(RID r1) : r1(r1) { }
+		DrawItems(RID r1, RID r2) : r1(r1), r2(r2) { }
+	};
+
+	RID canvas;
+	Vector<DrawItems> items;
 
 	Dictionary _cache;
 	Ref<ArrayMesh> _mesh;
+	Ref<CanvasItemMaterial> _mat_trnsp;
 
 	bool _is_ready();
+	RID _new_item();
 
 protected:
 	static void _bind_methods();
 
 private:
-	void set_transform(const Transform2D &p_xform);
-	Transform2D get_transform() const;
-	void set_modulate_color(const Color &p_color);
-	Color get_modulate_color() const;
-
-	void clear();
-	void finish();
+	void set_transform(int p_index, const Transform2D &p_xform);
+	void set_modulate_color(int p_index, const Color &p_color);
 
 	void bob_font_add_text(const String &p_text, const Point3 &p_pos = Point3(), real_t p_size = 1, bool p_wire = true);
 	void bob_font_add_text_xform(const String &p_text, const Transform &p_xform, const Point3 &p_pos = Point3(), real_t p_size = 1, bool p_wire = true);
@@ -67,9 +75,12 @@ private:
 	void easy_font_add_text_xform(const String &p_text, const Transform &p_xform, const Point2 &p_pos = Point2(), real_t p_spacing = 0);
 	Size2 easy_font_text_size(const String &p_text);
 
-	void bitmap_font_draw_text(const String &p_text, const Point2 &p_pos = Point2());
-	void lcd_font_draw_text(const String &p_text, const Point2 &p_pos = Point2());
-	void square_font_draw_text(const String &p_text, const Point2 &p_pos = Point2());
+	int font_add_finish();
+	void clear();
+
+	int bitmap_font_draw_text(const String &p_text, const Point2 &p_pos = Point2());
+	int lcd_font_draw_text(const String &p_text, const Point2 &p_pos = Point2());
+	int square_font_draw_text(const String &p_text, const Point2 &p_pos = Point2());
 
 	GdGeomFonts();
 	~GdGeomFonts();

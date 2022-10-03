@@ -83,16 +83,16 @@ struct PolyVectorPath {
 };
 struct PolyVectorShape {
 	~PolyVectorShape() {
-		if (fillcolour == NULL)
+		if (fillcolour == nullptr)
 			delete fillcolour;
-		if (strokecolour == NULL)
+		if (strokecolour == nullptr)
 			delete strokecolour;
 	}
 	uint8_t layer;
 	PolyVectorPath path;
 	List<uint16_t> holes;
-	Color *fillcolour = NULL;
-	Color *strokecolour = NULL;
+	Color *fillcolour = nullptr;
+	Color *strokecolour = nullptr;
 
 	Map<uint16_t, List<PoolVector2Array>> strokes;
 };
@@ -100,13 +100,13 @@ typedef List<PolyVectorShape> PolyVectorCharacter;
 
 struct PolyVectorSymbol {
 	~PolyVectorSymbol() {
-		if (tint == NULL)
+		if (tint == nullptr)
 			delete tint;
 	}
 	uint16_t id = 0;
 	uint16_t depth = 0;
 	PolyVectorMatrix matrix;
-	PolyVectorColourTransform *tint = NULL;
+	PolyVectorColourTransform *tint = nullptr;
 };
 typedef List<PolyVectorSymbol> PolyVectorFrame;
 
@@ -149,7 +149,7 @@ public:
 	virtual String get_preset_name(int p_idx) const { return String(); }
 	virtual void get_import_options(List<ImportOption> *r_options, int p_preset = 0) const;
 
-	virtual Error import(const String &p_source_file, const String &p_save_path, const Map<StringName, Variant> &p_options, List<String> *r_platform_variants, List<String> *r_gen_files = NULL, Variant *r_metadata = NULL);
+	virtual Error import(const String &p_source_file, const String &p_save_path, const Map<StringName, Variant> &p_options, List<String> *r_platform_variants, List<String> *r_gen_files = nullptr, Variant *r_metadata = nullptr);
 
 	ResourceImporterSWF() {}
 };
@@ -159,7 +159,7 @@ class ResourceLoaderJSONVector : public ResourceFormatLoader {
 	PolyVectorPath verts_to_curve(json);
 
 public:
-	virtual RES load(const String &p_path, const String &p_original_path = "", Error *r_error = NULL);
+	virtual RES load(const String &p_path, const String &p_original_path = "", Error *r_error = nullptr, bool p_no_subresource_cache = false);
 	virtual void get_recognized_extensions(List<String> *p_extensions) const { p_extensions->push_back(JSONVEC_EXT); }
 	virtual String get_resource_type(const String &p_path) const {
 		if (p_path.get_extension().to_lower() == JSONVEC_EXT)
