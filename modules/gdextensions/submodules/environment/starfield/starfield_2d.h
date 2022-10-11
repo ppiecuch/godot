@@ -53,7 +53,6 @@ private:
 
 protected:
 	static void _bind_methods();
-
 	void _notification(int p_what);
 
 public:
