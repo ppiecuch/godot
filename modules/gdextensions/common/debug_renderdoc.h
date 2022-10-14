@@ -31,8 +31,9 @@
 #ifndef GD_DEBUG_RENDERDOC_H
 #define GD_DEBUG_RENDERDOC_H
 
-void *GdLoadRenderDoc();
-void GdLnloadRenderDoc(void *);
-void GdRenderDocTriggerCapture();
+bool gdIsRenderDocModuleCompiled();
+void *gdLoadRenderDoc();
+void gdUnloadRenderDoc(void *);
+void gdRenderDocTriggerCapture();
 
 #endif // GD_DEBUG_RENDERDOC_H
