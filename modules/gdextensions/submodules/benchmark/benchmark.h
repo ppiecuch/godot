@@ -31,23 +31,133 @@
 #ifndef BENCHMARK_H
 #define BENCHMARK_H
 
+#include "core/map.h"
+#include "core/method_bind.h"
+#include "main/performance.h"
 #include "scene/main/node.h"
 #include "scene/resources/font.h"
+#include "scene/resources/mesh.h"
+
+class Label;
+class GdHistoryPlot;
 
 class Benchmark : public Node {
 	GDCLASS(Benchmark, Node);
 
 	Ref<BitmapFont> screen_font;
+	Ref<SpatialMaterial> model_mat;
 	int num_objects;
-	real_t yaw;
+	int curr_model;
+	real_t glob_yaw;
+
+public:
+	typedef enum {
+		FIRST_MODEL_TYPE = 0,
+		CUBE_MODEL = 0,
+		FROG_MODEL,
+		KID_MODEL,
+		TREX_MODEL,
+		ROBOT_MODEL,
+		NUM_MODEL_TYPES
+	} ModelType;
+
+private:
+	// Postprocess effects
+	typedef enum {
+		FX_GRAYSCALE = 0,
+		FX_POSTERIZATION,
+		FX_DREAM_VISION,
+		FX_PIXELIZER,
+		FX_CROSS_HATCHING,
+		FX_CROSS_STITCHING,
+		FX_PREDATOR_VIEW,
+		FX_SCANLINES,
+		FX_FISHEYE,
+		FX_SOBEL,
+		FX_BLOOM,
+		FX_BLUR,
+		FX_FXAA,
+		NUM_FX_TYPES,
+		FX_NONE = NUM_FX_TYPES,
+	} PostproShader;
+
+	// Shaders info.
+	typedef enum {
+		FIRST_SHADER_TYPE = 0,
+		PHONG = 0,
+		GOURAUD,
+		UNTEXTURED_PHONG,
+		UNTEXTURED_GOURAUD,
+		FLAT,
+		NUM_SHADER_TYPES,
+	} ShaderType;
+
+	// Render and display options
+	typedef enum {
+		OPTION_UNSHADED,
+		OPTION_WIREFRAME,
+		OPTION_CULLING,
+		OPTION_DEPTHTEST,
+		OPTION_MULTISAMPLING,
+		OPTION_LINEAR_FILTERING,
+		OPTION_MIPMAPING,
+		OPTION_CAMERA_LOOKAWAY,
+		OPTION_STATS,
+		NUM_OPTIONS,
+	} RenderOptions;
+
+	bool opts[NUM_OPTIONS] = { false };
+	real_t camera_distance, camera_yaw;
+
+	// Models info
+	struct ModelInfo {
+		Ref<Mesh> mesh;
+		Ref<Texture> tex;
+		uint32_t tris;
+	};
+
+	ModelInfo models[NUM_MODEL_TYPES];
+
+	// instane & model assign
+	Vector<std::pair<RID, int>> instances;
+
+	RID _create_instance_from_model(const ModelInfo &info);
+	ModelInfo _make_model_from_data(const uint8_t *p_data, const uint8_t *p_tex_img, size_t p_tex_img_size, const String &p_name);
+	String _get_stats();
+	void _load_resources();
+	void _check_instances();
+	void _update(float p_delta);
+	void _finalize();
+
+	Label *_stats_label;
+	Size2 _stats_text_size;
+
+	Map<Performance::Monitor, GdHistoryPlot*> _monitors;
+	int plot_buf_index, plot_hist_size;
+	bool _dirty;
 
 protected:
 	void _notification(int p_notification);
+	void _input(const Ref<InputEvent> &p_event);
 	static void _bind_methods();
 
 public:
+	void set_active(bool p_state);
+	bool is_active() const;
+
+	void set_num_objects(int p_num);
+	int get_num_objects() const;
+
+	void set_display_model(int p_model);
+	int get_display_model() const;
+
+	void set_option(int p_opts, bool p_state);
+	bool get_option(int p_opts) const;
+
 	Benchmark();
 	~Benchmark();
 };
+
+VARIANT_ENUM_CAST(Benchmark::ModelType);
 
 #endif // BENCHMARK_H

@@ -33,19 +33,73 @@
 // https://github.com/raysan5/raylib/issues/65
 // http://www.codinghorror.com/blog/2011/12/fast-approximate-anti-aliasing-fxaa.html
 
+#include "common/gd_core.h"
+#include "common/gd_history_plot.h"
+#include "core/error_macros.h"
 #include "core/image.h"
+#include "core/io/resource_saver.h"
+#include "core/math/math_funcs.h"
+#include "core/math/transform.h"
+#include "core/os/keyboard.h"
+#include "scene/gui/label.h"
+#include "scene/main/viewport.h"
 #include "scene/resources/font.h"
 #include "scene/resources/texture.h"
+#include "main/performance.h"
 
 #include "benchmark.h"
 
-static Ref<BitmapFont> make_font_from_grid(const String &p_characters, int p_grid_width, int p_grid_height, const String &p_img) {
-	Ref<BitmapFont> font(memnew(BitmapFont));
+const static char *postproShaderText[] = {
+	"GRAYSCALE",
+	"POSTERIZATION",
+	"DREAM_VISION",
+	"PIXELIZER",
+	"CROSS_HATCHING",
+	"CROSS_STITCHING",
+	"PREDATOR_VIEW",
+	"SCANLINES",
+	"FISHEYE",
+	"SOBEL",
+	"BLOOM",
+	"BLUR",
+	"FXAA",
+	"NONE"
+};
 
-	Ref<Image> image = memnew(Image);
-	if (image->load(p_img) == OK) {
+const static char *shaderNames[] = {
+	"PER-PIXEL LIGHTING",
+	"PER-VERTEX LIGHTING",
+	"PER-PIXEL UNTEXTURED",
+	"PER-VERTEX UNTEXTURED",
+	"FLAT COLORED"
+};
+
+const String _BULLET1 = String::chr(96);
+const String _BULLET2 = String::chr(126);
+const String _BULLET3 = String::chr(127);
+const String _BULLET4 = String::chr(148);
+const String _BULLET5 = String::chr(123);
+const String _BULLET6 = String::chr(159);
+const String _LT = String::chr(145);
+const String _RT = String::chr(133);
+const String _LB = String::chr(154);
+const String _RB = String::chr(131);
+const String _VL = String::chr(124);
+const String _HL = String::chr(146);
+
+_FORCE_INLINE_ static PoolByteArray create_poolarray(uint8_t *buf_ptr, int buf_size) {
+	PoolByteArray data;
+	data.resize(buf_size);
+	memcpy(data.write().ptr(), buf_ptr, buf_size);
+	return data;
+}
+
+static Ref<BitmapFont> make_font_from_grid(const String &p_characters, int p_grid_width, int p_grid_height, const uint8_t *p_img, size_t p_img_size) {
+	Ref<BitmapFont> font(memnew(BitmapFont));
+	Ref<Image> image = memnew(Image(p_img, p_img_size));
+	if (!image->empty()) {
 		Ref<ImageTexture> tex = memnew(ImageTexture);
-		tex->create_from_image(image);
+		tex->create_from_image(image, 0);
 
 		font->add_texture(tex);
 
@@ -67,807 +121,460 @@ static Ref<BitmapFont> make_font_from_grid(const String &p_characters, int p_gri
 	return font;
 }
 
+static Ref<Texture> make_texture_from_data(const uint8_t *p_data, size_t p_data_len, const String &p_name) {
+	String fn = "user://__benchmark_" + p_name; // cached texture
+	if (ResourceLoader::exists(fn + ".tex")) {
+		Ref<Texture> texture = ResourceLoader::load(fn + ".tex", "Texture");
+		return texture;
+	} else {
+		// build texture atlas from resources
+		Vector<Ref<Image>> images;
+		Vector<String> names;
+
+		Ref<Image> image = memnew(Image(p_data, p_data_len));
+		Ref<ImageTexture> texture = memnew(ImageTexture);
+		texture->create_from_image(image);
+
+		ResourceSaver::save(fn + ".tex", texture);
+
+		return texture;
+	}
+}
+
+extern "C" const uint8_t model_cube_dat_data[];
+extern "C" const uint8_t texture_cube_png_data[];
+extern "C" const size_t texture_cube_png_size;
+
+extern "C" const uint8_t model_frog_dat_data[];
+extern "C" const uint8_t texture_frog_png_data[];
+extern "C" const size_t texture_frog_png_size;
+
+extern "C" const uint8_t model_kid_dat_data[];
+extern "C" const uint8_t texture_kid_png_data[];
+extern "C" const size_t texture_kid_png_size;
+
+extern "C" const uint8_t model_trex_dat_data[];
+extern "C" const uint8_t texture_trex_png_data[];
+extern "C" const size_t texture_trex_png_size;
+
+extern "C" const uint8_t model_robot_dat_data[];
+extern "C" const uint8_t texture_robot_png_data[];
+extern "C" const size_t texture_robot_png_size;
+
+extern "C" const uint8_t bitmap_font_png_data[];
+extern "C" const size_t bitmap_font_png_size;
+
+String Benchmark::_get_stats() {
+	Vector<String> out;
+	int max_line = 0;
+
+	auto add_line = [&out, &max_line](const String &line) {
+		out.push_back(line);
+		max_line = MAX(line.size(), max_line);
+	};
+	add_line(vformat("%d VERTS/FRAME", 3 * num_objects * models[curr_model].tris));
+	add_line(vformat("+/-: OBJECT COUNT [%d]", num_objects));
+	add_line(vformat("X: OBJECT COMPLEXITY [%d TRIS]", models[curr_model].tris));
+	add_line(vformat("F: VIEWPORT [%d X %d]", int(get_viewport()->get_size().width), int(get_viewport()->get_size().height)));
+	add_line(vformat(" " + _BULLET3 + " WINDOW [%d X %d]", int(OS::get_singleton()->get_window_size().width), int(OS::get_singleton()->get_window_size().height)));
+	add_line(vformat(" " + _BULLET3 + " PROJECT [%d X %d]", int(ProjectSettings::get_singleton()->get("display/window/size/width")), int(ProjectSettings::get_singleton()->get("display/window/size/height"))));
+	add_line(vformat("P: MULTISAMPLING [%s]", opts[OPTION_MULTISAMPLING] ? "ON" : "OFF"));
+	add_line(vformat("H: LIGHT MODEL [%s]", "?"));
+	add_line(vformat("I: TEXTURE FILTER [%s]", opts[OPTION_LINEAR_FILTERING] ? "LINEAR" : "NEAREST"));
+	add_line(vformat("M: MIPMAPS [%s]", opts[OPTION_MIPMAPING] ? "ON" : "OFF"));
+	add_line(vformat("C: BACKFACE CULLING [%s]", opts[OPTION_CULLING] ? "ON" : "OFF"));
+	add_line(vformat("D: DEPTH TEST [%s]", opts[OPTION_DEPTHTEST] ? "ON" : "OFF"));
+	add_line(vformat("W: WIREFRAME [%s]", opts[OPTION_WIREFRAME] ? "ON" : "OFF"));
+	add_line(vformat("Z: CAMERA DISTANCE [%d]", int(camera_distance)));
+	add_line(vformat("Y: CAMERA YAW [%d]", int(camera_yaw)));
+	add_line(vformat("L: CAMERA LOOK [%s]", opts[OPTION_CAMERA_LOOKAWAY] ? "AWAY" : "TOWARDS"));
+	add_line(vformat("A: POSTPROCESS [%s]", "?"));
+	add_line("S: STATS DISPLAY [ON]");
+
+	String ret = _LT + _HL.repeat(max_line) + _RT + "\n";
+	for (const String &s : out) {
+		ret += _VL + s.rpad(max_line) + _VL + "\n";
+	}
+	ret += _LB + _HL.repeat(max_line) + _RB;
+
+	_stats_text_size = Size2(max_line + 2, ret.size());
+
+	return ret;
+}
+
+RID Benchmark::_create_instance_from_model(const ModelInfo &p_model) {
+	const int MESH_BASE_LAYER = 16;
+	const uint32_t layer = 1 << MESH_BASE_LAYER;
+	RID mesh_instance = RID_PRIME(VS::get_singleton()->instance_create());
+	VS::get_singleton()->instance_set_base(mesh_instance, p_model.mesh->get_rid());
+	VS::get_singleton()->instance_set_surface_material(mesh_instance, 0, model_mat->get_rid());
+	VS::get_singleton()->instance_set_scenario(mesh_instance, get_tree()->get_root()->get_world()->get_scenario());
+	VS::get_singleton()->instance_set_visible(mesh_instance, true);
+	VS::get_singleton()->instance_geometry_set_cast_shadows_setting(mesh_instance, VS::SHADOW_CASTING_SETTING_OFF);
+	VS::get_singleton()->instance_set_layer_mask(mesh_instance, layer);
+	VS::get_singleton()->instance_set_portal_mode(mesh_instance, VisualServer::INSTANCE_PORTAL_MODE_GLOBAL);
+
+	return mesh_instance;
+}
+
+Benchmark::ModelInfo Benchmark::_make_model_from_data(const uint8_t *p_data, const uint8_t *p_tex_img, size_t p_tex_img_size, const String &p_name) {
+	const uint32_t verts_num = *(uint32_t *)p_data;
+	struct _vert_t {
+		struct {
+			float x, y, z;
+		} pos;
+		struct {
+			float x, y, z;
+		} norm;
+		struct {
+			float u, v;
+		} uv;
+	} *geom = (_vert_t *)(p_data + 4);
+	const uint32_t verts_size = verts_num * sizeof(_vert_t);
+	const uint32_t indexes_num = *(uint32_t *)(p_data + 4 + verts_size);
+	const uint16_t *indexes = (uint16_t *)(p_data + 4 + verts_size + 4);
+
+	PoolVector3Array verts, norm;
+	PoolVector2Array uv;
+
+	verts.resize(verts_num);
+	norm.resize(verts_num);
+	uv.resize(verts_num);
+
+	auto _verts = verts.write();
+	auto _norm = norm.write();
+	auto _uv = uv.write();
+
+	for (int n = 0; n < verts_num; n++) {
+		_verts[n] = Vector3(geom[n].pos.x, geom[n].pos.y, geom[n].pos.z);
+		_norm[n] = Vector3(geom[n].norm.x, geom[n].norm.y, geom[n].norm.z);
+		_uv[n] = Vector2(geom[n].uv.u, geom[n].uv.v);
+	}
+
+	_uv.release();
+	_norm.release();
+	_verts.release();
+
+	print_verbose(vformat("Loading model data: %d vertexes, %d indexes, %d bytes of data.", verts_num, indexes_num, verts_size));
+
+	PoolIntArray index;
+	index.resize(indexes_num);
+
+	auto _index = index.write();
+
+	for (int i = 0; i < indexes_num; i++) {
+		_index[i] = indexes[i];
+	}
+
+	_index.release();
+
+	Array d;
+	d.resize(VS::ARRAY_MAX);
+	d[VisualServer::ARRAY_VERTEX] = verts;
+	d[VisualServer::ARRAY_NORMAL] = norm;
+	d[VisualServer::ARRAY_TEX_UV] = uv;
+	d[VisualServer::ARRAY_INDEX] = index;
+
+	Ref<ArrayMesh> mesh = newref(ArrayMesh);
+	mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, d);
+
+	String fn = "user://__benchmark_" + p_name; // cache mesh
+	ResourceSaver::save(fn + ".mesh", mesh);
+
+	return ModelInfo{ mesh, make_texture_from_data(p_tex_img, p_tex_img_size, p_name), indexes_num / 3 };
+}
+
+void Benchmark::_load_resources() {
+	static wchar_t _chars[] = {
+		' ', '!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/',
+		'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '<', '=', '>', '?',
+		'@', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+		'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '[', '\\', ']', '^', '_',
+		96, 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+		'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 123, 124, 125, 126, 127,
+		128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143,
+		144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159
+	};
+	screen_font = make_font_from_grid(_chars, 16, 8, bitmap_font_png_data, bitmap_font_png_size);
+	models[CUBE_MODEL] = _make_model_from_data(model_cube_dat_data, texture_cube_png_data, texture_cube_png_size, "cube");
+	models[FROG_MODEL] = _make_model_from_data(model_frog_dat_data, texture_frog_png_data, texture_frog_png_size, "frog");
+	models[KID_MODEL] = _make_model_from_data(model_kid_dat_data, texture_kid_png_data, texture_kid_png_size, "kid");
+	models[TREX_MODEL] = _make_model_from_data(model_trex_dat_data, texture_trex_png_data, texture_trex_png_size, "trex");
+	models[ROBOT_MODEL] = _make_model_from_data(model_robot_dat_data, texture_robot_png_data, texture_robot_png_size, "robot");
+	if (_stats_label) {
+		_stats_label->set("custom_fonts/font", screen_font);
+	}
+}
+
+void Benchmark::_finalize() {
+	// remove all objects
+	for (auto &instance : instances) {
+		if (instance.first.is_valid()) {
+			VS::get_singleton()->free(instance.first);
+		}
+	}
+	instances.clear();
+}
+
+void Benchmark::_check_instances() {
+	// check and update instances
+	while (num_objects > instances.size()) {
+		instances.push_back({ _create_instance_from_model(models[curr_model]), curr_model });
+	}
+	int objects = 0;
+	for (auto &instance : instances) {
+		if (instance.second != curr_model && objects < num_objects) {
+			VS::get_singleton()->instance_set_base(instance.first, models[curr_model].mesh->get_rid());
+			VS::get_singleton()->instance_set_surface_material(instance.first, 0, model_mat->get_rid());
+			instance.second = curr_model;
+		}
+		VS::get_singleton()->instance_set_visible(instance.first, objects < num_objects);
+		objects++;
+	}
+}
+
+void Benchmark::_update(float p_delta) {
+	ERR_FAIL_COND(num_objects > instances.size());
+
+	// calculate how many objects to draw per row
+	int row_size = 1;
+	while (row_size * row_size < num_objects) {
+		row_size++;
+	}
+	const real_t row_scale = 25;
+	const real_t row_step = num_objects == 1 ? row_scale : row_scale / (row_size - 1);
+	// draw the objects in a grid layout
+	int num_objects_drawn = 0;
+	for (int x = 0; x < row_size && num_objects_drawn < num_objects; x++) {
+		const float obj_x = (num_objects == 1) ? 0 : (1.5 * (-row_scale / 2.0 + x * row_step));
+
+		for (int y = 0; y < row_size && num_objects_drawn < num_objects; y++) {
+			const float obj_xs = obj_x + (y % 2) * row_step / 2.0;
+			const float obj_y = (num_objects == 1) ? 0 : (-row_scale / 2.0 + y * row_step);
+
+			// construct a yaw for this object, by combining the global yaw with the grid position
+			// calculate the model matrix from the yaw
+			const float yaw = glob_yaw + x * 40 + y * 50;
+			Transform xform = Transform(Basis(Vector3(0, 1, 0), yaw), Vector3(obj_xs, obj_y, 0));
+			// update
+			VisualServer::get_singleton()->instance_set_transform(instances[num_objects_drawn].first, xform);
+			num_objects_drawn++;
+		}
+	}
+}
+
+void Benchmark::_input(const Ref<InputEvent> &p_event) {
+	ERR_FAIL_COND(p_event.is_null());
+
+	if (Engine::get_singleton()->is_editor_hint()) {
+		return;
+	}
+
+	if (!get_tree()) {
+		return;
+	}
+
+	ERR_FAIL_COND(!is_inside_tree());
+
+	if (const InputEventKey *kb = cast_to<InputEventKey>(*p_event)) {
+		if ((kb->get_scancode() == KEY_PLUS || kb->get_scancode() == KEY_EQUAL) and kb->is_pressed()) {
+			set_num_objects(num_objects + 1);
+			return;
+		}
+		if (kb->get_scancode() == KEY_MINUS and kb->is_pressed() && num_objects > 0) {
+			set_num_objects(num_objects - 1);
+			return;
+		}
+		if (kb->get_scancode() == KEY_S and kb->is_pressed()) {
+			set_option(OPTION_STATS, !opts[OPTION_STATS]);
+			return;
+		}
+		if (kb->get_scancode() == KEY_X and kb->is_pressed()) {
+			if (curr_model + 1 == NUM_MODEL_TYPES) {
+				set_display_model(FIRST_MODEL_TYPE);
+			} else {
+				set_display_model(curr_model + 1);
+			}
+			return;
+		}
+	}
+}
+
 void Benchmark::_notification(int p_notification) {
 	switch (p_notification) {
 		case NOTIFICATION_READY: {
+			_load_resources();
 		} break;
-		case NOTIFICATION_PROCESS: {
-			float delta = get_process_delta_time();
+		case NOTIFICATION_ENTER_TREE: {
+			if (!_stats_label) {
+				_stats_label = memnew(Label);
+				_stats_label->set_vertical_spacing(-3);
+				add_child(_stats_label);
+			}
+			for (const Performance::Monitor &mon: helper::vector(Performance::TIME_FPS, Performance::MEMORY_STATIC)) {
+				if (!_monitors[mon]) {
+					_monitors[mon] = memnew(GdHistoryPlot);
+					_monitors[mon]->set_title_label(Performance::get_singleton()->get_monitor_name(mon));
+					add_child(_monitors[mon]);
+				}
+			}
+			_monitors[Performance::MEMORY_STATIC]->set_humanize_value(true);
+			if (!Engine::get_singleton()->is_editor_hint()) {
+				set_process_input(true);
+			}
+		} break;
+		case NOTIFICATION_EXIT_TREE: {
+			_finalize();
+			_stats_label = nullptr;
+			_monitors[Performance::TIME_FPS] = nullptr;
+			_monitors.clear();
+			set_process_input(false);
+		} break;
+		case NOTIFICATION_INTERNAL_PROCESS: {
+			static float _plot_update = 0;
+			const float delta = get_process_delta_time();
+			if (_dirty) {
+				_check_instances();
+				//model_mat->set_flag(SpatialMaterial::FLAG_UNSHADED, flag_unshaded);
+				model_mat->set_texture(SpatialMaterial::TEXTURE_ALBEDO, models[curr_model].tex);
+				if (_stats_label) {
+					_stats_label->set_visible(opts[OPTION_STATS]);
+				}
+				_dirty = false;
+			}
+			glob_yaw += delta;
+			_update(delta);
+			if (_stats_label) {
+				_stats_label->set_text(_get_stats());
+			}
+			const Size2 stats_size = _stats_text_size * Size2(16, 16);
+			const int _monitor_height = 50, _monitor_space = 4;
+			const Size2 _monitor_size = Size2(
+				(Engine::get_singleton()->is_editor_hint() ? real_t(ProjectSettings::get_singleton()->get("display/window/size/width")) : get_viewport()->get_size().width) - stats_size.width - 2
+				, _monitor_height
+			);
+			_plot_update += delta;
+			if (_monitors[Performance::TIME_FPS]) {
+				static float _accum = 0;
+				static int _accum_count = 0;
+				_monitors[Performance::TIME_FPS]->set_size(_monitor_size);
+				_monitors[Performance::TIME_FPS]->set_position(Point2(stats_size.width, _monitor_space));
+				_accum +=  Performance::get_singleton()->get_monitor(Performance::TIME_FPS);
+				_accum_count++;
+				if (_plot_update > 0.5) {
+					_monitors[Performance::TIME_FPS]->add_sample(_accum / _accum_count);
+					_accum = _accum_count = 0;
+				}
+			}
+			if (_monitors[Performance::MEMORY_STATIC]) {
+				static float _accum = 0;
+				static int _accum_count = 0;
+				_monitors[Performance::MEMORY_STATIC]->set_size(_monitor_size);
+				_monitors[Performance::MEMORY_STATIC]->set_position(Point2(stats_size.width, _monitor_height + 2 * _monitor_space));
+				_accum +=  Performance::get_singleton()->get_monitor(Performance::MEMORY_STATIC);
+				_accum_count++;
+				if (_plot_update > 0.5) {
+					_monitors[Performance::MEMORY_STATIC]->add_sample(_accum / _accum_count);
+					_accum = _accum_count = 0;
+				}
+			}
+			if (_plot_update > 0.5) {
+				_plot_update = 0;
+			}
 		} break;
 	}
 }
 
-#if 0
-
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <time.h>
-
-#ifdef PLATFORM_ANDROID
-    typedef unsigned short ushort;
-#endif
-
-#include "models/cube_model.h"
-#include "models/frog_model.h"
-#include "models/kid_model.h"
-#include "models/robot_model.h"
-#include "models/trex_model.h"
-
-#include <raylib.h>
-#include <raymath.h>
-#include <rlgl.h>
-
-#define RAYGUI_IMPLEMENTATION
-#ifndef RAYGUI_SUPPORT_ICONS
-#define RAYGUI_SUPPORT_ICONS
-#endif
-#include <extraygui.h>
-
-#define RL_IMPLEMENTATION_RGRAPH
-#include <rgraph.h>
-
-// Postprocess effects
-typedef enum {
-    FX_GRAYSCALE = 0,
-    FX_POSTERIZATION,
-    FX_DREAM_VISION,
-    FX_PIXELIZER,
-    FX_CROSS_HATCHING,
-    FX_CROSS_STITCHING,
-    FX_PREDATOR_VIEW,
-    FX_SCANLINES,
-    FX_FISHEYE,
-    FX_SOBEL,
-    FX_BLOOM,
-    FX_BLUR,
-    FX_FXAA,
-    NUM_FX_TYPES,
-    FX_NONE = NUM_FX_TYPES,
-} PostproShader;
-
-static const char *postproShaderText[] = {
-    "GRAYSCALE",
-    "POSTERIZATION",
-    "DREAM_VISION",
-    "PIXELIZER",
-    "CROSS_HATCHING",
-    "CROSS_STITCHING",
-    "PREDATOR_VIEW",
-    "SCANLINES",
-    "FISHEYE",
-    "SOBEL",
-    "BLOOM",
-    "BLUR",
-    "FXAA",
-    "NONE"
-};
-
-// Statistics info.
-// ----------------
-typedef struct _RenderStats
-{
-    uint drawCalls;
-    uint vertices;
-    uint triangles;
-} RenderStats;
-
-static RenderStats stats;
-
-void ResetRenderStats()
-{
-    stats.vertices = 0;
-    stats.triangles = 0;
-    stats.drawCalls = 0;
+void Benchmark::set_active(bool p_state) {
+	set_process_internal(p_state);
 }
 
-void LogDrawCall(uint vertices, uint triangles)
-{
-    stats.vertices += vertices;
-    stats.triangles += triangles;
-    stats.drawCalls++;
+bool Benchmark::is_active() const {
+	return is_processing_internal();
 }
 
-static uint GetVertexCount() { return stats.vertices; }
-static uint GetTriangleCount() { return stats.triangles; }
-static uint GetDrawCallCount() { return stats.drawCalls; }
-
-// Shaders info.
-// -------------
-typedef enum {
-    FIRST_SHADER_TYPE = 0,
-    PHONG = 0,
-    GOURAUD,
-    UNTEXTURED_PHONG,
-    UNTEXTURED_GOURAUD,
-    FLAT,
-    NUM_SHADER_TYPES
-} ShaderType;
-
-typedef struct _ShaderInfo
-{
-    Shader shaderProgram;
-    int lightLoc;
-} ShaderInfo;
-
-const char* shaderNames[NUM_SHADER_TYPES] = {
-    "PER-PIXEL LIGHTING",
-    "PER-VERTEX LIGHTING",
-    "PER-PIXEL UNTEXTURED",
-    "PER-VERTEX UNTEXTURED",
-    "FLAT COLORED"
-};
-
-const char* shaderFilenames[NUM_SHADER_TYPES][2] = {
-    { "shaders/phong.vertexShader", "shaders/phong.fragmentShader" },
-    { "shaders/gouraud.vertexShader", "shaders/gouraud.fragmentShader" },
-    { "shaders/phong.vertexShader", "shaders/untextured-phong.fragmentShader" },
-    { "shaders/gouraud.vertexShader", "shaders/untextured-gouraud.fragmentShader" },
-    { "shaders/flat.vertexShader", "shaders/flat.fragmentShader" }
-};
-
-
-static const char* GetShaderNameByType(ShaderType shaderType)
-{
-    return shaderNames[shaderType];
+void Benchmark::set_num_objects(int p_num) {
+	ERR_FAIL_COND(p_num < 1);
+	num_objects = p_num;
+	_dirty = true;
 }
 
-// Models info.
-// ------------
-typedef enum {
-    FIRST_MODEL_TYPE = 0,
-    CUBE_MODEL = 0,
-    FROG_MODEL,
-    KID_MODEL,
-    TREX_MODEL,
-    ROBOT_MODEL,
-    NUM_MODEL_TYPES
-} ModelType;
-
-typedef struct _ModelInfo
-{
-    Mesh mesh;
-    Material material;
-    int numVerts, numIndices;
-} ModelInfo;
-
-typedef struct _RenderState
-{
-    uint32_t fbWidth;
-    uint32_t fbHeight;
-
-    uint32_t numObjects;
-    float yaw;
-
-    bool showStats;
-    bool backFaceCull;
-    bool depthTest;
-    bool renderLines;
-    bool linearFiltering;
-    bool mipmapping;
-    float cameraDistance;
-    float cameraYaw;
-    bool cameraLookAway;
-    bool multisampling;
-
-    RenderTexture2D target;
-
-    uint8_t shaderType;
-    ShaderInfo shaderInfo[NUM_SHADER_TYPES];
-    uint8_t postType;
-    Shader postShader[NUM_FX_TYPES];
-
-    uint8_t modelType;
-    ModelInfo modelInfo[NUM_MODEL_TYPES];
-} RenderState;
-
-static RenderState rs;
-
-void FreeModel();
-void DestroyAll();
-
-
-void DestroyAll() {
-    FreeModel();
+int Benchmark::get_num_objects() const {
+	return num_objects;
 }
 
-enum {
-    VBO_VERTS = 0,
-    VBO_TEXCOORDS01 = 1,
-    VBO_NORMALS = 2,
-    VBO_COLORS = 3,
-    VBO_TANGENTS = 4,
-    VBO_TEXCOORDS02 = 5,
-    VBO_INDICIES = 6,
-    MAX_MESH_VBO = 7 // Maximum number of vbo per mesh
-};
-
-Mesh GenMesh(ModelInfo *modelInfo, const float *verts, int num_verts, const unsigned short *indices, int num_indicies)
-{
-    Mesh mesh = { 0 };
-
-    mesh.memmap = true;
-    mesh.vboId = (unsigned int *)RL_CALLOC(MAX_MESH_VBO, sizeof(unsigned int));
-
-    // set vertex data pointers
-    const uint posSize = 3;
-    const uint normSize = 3;
-    const uint uvSize = 2;
-    const uint vertBytes = sizeof(float) * (posSize + normSize + uvSize);
-
-    // update buffer interleaves:
-    mesh.vboStride = vertBytes;
-    mesh.vboOffsets = (intptr_t *)RL_CALLOC(SHADER_NUM_LOC_MAP, sizeof(intptr_t));
-    mesh.vboOffsets[SHADER_LOC_VERTEX_POSITION] = 0;
-    mesh.vboOffsets[SHADER_LOC_VERTEX_NORMAL] = posSize * sizeof(float);
-    mesh.vboOffsets[SHADER_LOC_VERTEX_TEXCOORD01] = (posSize + normSize) * sizeof(float);
-
-    mesh.vertices = (float *)verts;
-    mesh.indices = (unsigned short *)indices;
-    mesh.vertexCount = num_verts/8;
-    mesh.triangleCount = num_indicies/3;
-
-    // Upload vertex data to GPU (static mesh)
-    rlLoadMesh(&mesh, false);
-
-    modelInfo->numVerts = num_verts;
-    modelInfo->numIndices = num_indicies;
-    modelInfo->mesh = mesh;
-    modelInfo->material = LoadMaterialDefault();
-
-    return mesh;
+void Benchmark::set_display_model(int p_model) {
+	ERR_FAIL_INDEX(p_model, NUM_MODEL_TYPES);
+	curr_model = p_model;
+	_dirty = true;
 }
 
-void InitModel()
-{
-    GenMesh(&rs.modelInfo[CUBE_MODEL], cube_verts, sizeof(cube_verts)/(sizeof(float)), cube_indices, sizeof(cube_indices)/sizeof(ushort));
-    GenMesh(&rs.modelInfo[FROG_MODEL], frog_verts, sizeof(frog_verts)/(sizeof(float)), frog_indices, sizeof(frog_indices)/sizeof(ushort));
-    GenMesh(&rs.modelInfo[KID_MODEL], kid_verts, sizeof(kid_verts)/(sizeof(float)), kid_indices, sizeof(kid_indices)/sizeof(ushort));
-    GenMesh(&rs.modelInfo[TREX_MODEL], trex_verts, sizeof(trex_verts)/(sizeof(float)), trex_indices, sizeof(trex_indices)/sizeof(ushort));
-    GenMesh(&rs.modelInfo[ROBOT_MODEL], robot_verts, sizeof(robot_verts)/(sizeof(float)), robot_indices, sizeof(robot_indices)/sizeof(ushort));
-
-#ifdef PLATFORM_DESKTOP
-#define LOADTEX(m, t)                                                                        \
-	rs.modelInfo[m].material.maps[0].texture = LoadTextureFromMemory(rlFindEmbeddedData(t)); \
-	if (rs.modelInfo[m].material.maps[0].texture.id)                                         \
-	rlGenerateMipmaps(&rs.modelInfo[m].material.maps[0].texture)
-    LOADTEX(CUBE_MODEL, "textures/cube.ktx");
-    LOADTEX(CUBE_MODEL, "textures/cube.png");
-    LOADTEX(FROG_MODEL, "textures/frog.png");
-    LOADTEX(KID_MODEL, "textures/kid.png");
-    LOADTEX(TREX_MODEL, "textures/trex.png");
-    LOADTEX(ROBOT_MODEL, "textures/robot.png");
-#else
-#define LOADTEX(m, t) \
-	rs.modelInfo[m].material.maps[0].texture = LoadTextureFromMemory(rlFindEmbeddedData(t))
-    LOADTEX(CUBE_MODEL, "textures/cube.ktx");
-    LOADTEX(FROG_MODEL, "textures/frog.ktx");
-    LOADTEX(KID_MODEL, "textures/kid.ktx");
-    LOADTEX(TREX_MODEL, "textures/trex.ktx");
-    LOADTEX(ROBOT_MODEL, "textures/robot.ktx");
-#endif
-    if (!rs.modelInfo[CUBE_MODEL].material.maps[0].texture.id ||
-        !rs.modelInfo[FROG_MODEL].material.maps[0].texture.id ||
-        !rs.modelInfo[KID_MODEL].material.maps[0].texture.id ||
-        !rs.modelInfo[TREX_MODEL].material.maps[0].texture.id ||
-        !rs.modelInfo[ROBOT_MODEL].material.maps[0].texture.id)
-    {
-        fprintf(stderr, "*** Failed to load the model textures.\n");
-    }
-
-    for (uint t = FIRST_SHADER_TYPE; t < NUM_SHADER_TYPES; t++)
-    {
-        const ShaderType shaderType = (ShaderType)t;
-        Shader po = LoadShader(rlFindEmbeddedFile(shaderFilenames[shaderType][0]), rlFindEmbeddedFile(shaderFilenames[shaderType][1]));
-
-        ShaderInfo *shaderInfo = &rs.shaderInfo[t];
-        shaderInfo->shaderProgram = po;
-        // save the locations of the program inputs
-        shaderInfo->lightLoc = GetShaderLocation( po, "lightPosition" );
-    }
-
-    // Load postprocess shaders
-    // NOTE: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader
-    rs.postShader[FX_GRAYSCALE] = LoadShader(0, rlFindEmbeddedFile("postprocess/grayscale.fs"));
-    rs.postShader[FX_POSTERIZATION] = LoadShader(0, rlFindEmbeddedFile("postprocess/posterization.fs"));
-    rs.postShader[FX_DREAM_VISION] = LoadShader(0, rlFindEmbeddedFile("postprocess/dream_vision.fs"));
-    rs.postShader[FX_PIXELIZER] = LoadShader(0, rlFindEmbeddedFile("postprocess/pixelizer.fs"));
-    rs.postShader[FX_CROSS_HATCHING] = LoadShader(0, rlFindEmbeddedFile("postprocess/cross_hatching.fs"));
-    rs.postShader[FX_CROSS_STITCHING] = LoadShader(0, rlFindEmbeddedFile("postprocess/cross_stitching.fs"));
-    rs.postShader[FX_PREDATOR_VIEW] = LoadShader(0, rlFindEmbeddedFile("postprocess/predator.fs"));
-    rs.postShader[FX_SCANLINES] = LoadShader(0, rlFindEmbeddedFile("postprocess/scanlines.fs"));
-    rs.postShader[FX_FISHEYE] = LoadShader(0, rlFindEmbeddedFile("postprocess/fisheye.fs"));
-    rs.postShader[FX_SOBEL] = LoadShader(0, rlFindEmbeddedFile("postprocess/sobel.fs"));
-    rs.postShader[FX_BLOOM] = LoadShader(0, rlFindEmbeddedFile("postprocess/bloom.fs"));
-    rs.postShader[FX_BLUR] = LoadShader(0, rlFindEmbeddedFile("postprocess/blur.fs"));
-    rs.postShader[FX_FXAA] = LoadShader(rlFindEmbeddedFile("postprocess/fxaa.vert.fs"), rlFindEmbeddedFile("postprocess/fxaa.frag.fs"));
+int Benchmark::get_display_model() const {
+	return curr_model;
 }
 
-void FreeModel()
-{
-    for (uint t = FIRST_SHADER_TYPE; t < NUM_SHADER_TYPES; t++)
-    {
-        UnloadShader(rs.shaderInfo[t].shaderProgram);
-    }
-
-    for (uint t = FIRST_MODEL_TYPE; t < NUM_MODEL_TYPES; t++)
-    {
-        rlUnloadMesh(&rs.modelInfo[t].mesh);
-        rlUnloadTexture(rs.modelInfo[t].material.maps[0].texture.id);
-    }
-}
-
-void Render()
-{
-    Matrix projM = rlGetMatrixProjection();
-    Matrix modelViewM = rlGetMatrixModelview();
-
-    Matrix proj = MatrixPerspective(45*DEG2RAD, ((float) rs.fbWidth)/rs.fbHeight, RL_CULL_DISTANCE_NEAR, RL_CULL_DISTANCE_FAR);
-
-    // calculate the view matrix
-    Vector3 lookPos = {0,2.3f,rs.cameraLookAway ? 100 : 0};
-    Vector3 eye = Vector3Transform((Vector3){0,0,rs.cameraDistance}, MatrixRotateY(rs.cameraYaw));
-    Matrix view = MatrixLookAt(eye, (Vector3){0,2.3f,rs.cameraLookAway ? 100 : 0}, (Vector3){0,1,0});
-
-    // bind the shader program and set the uniform shader parameters
-    ShaderInfo currentShader = rs.shaderInfo[rs.shaderType];
-
-    // light position is fixed in world space
-    Vector3 lightPosition_worldspace = {-30,10,20};
-    Vector3 lightPosition_viewspace = Vector3Transform(lightPosition_worldspace, view);
-    SetShaderValue(currentShader.shaderProgram, currentShader.lightLoc, Vector3ToFloat(lightPosition_viewspace), SHADER_UNIFORM_VEC3);
-
-    // setup shader for current model
-    ModelInfo currentModel = rs.modelInfo[rs.modelType];
-    currentModel.material.shader = currentShader.shaderProgram;
-
-    // set OpenGL states
-    if (rs.backFaceCull)
-        rlEnableBackfaceCulling();
-    else
-        rlDisableBackfaceCulling();
-
-    if (rs.depthTest)
-        rlEnableDepthTest();
-    else
-        rlDisableDepthTest();
-
-    rlSetMatrixProjection(proj);
-
-    // calculate how many objects to draw per row
-    uint rowSize = 1;
-    while (rowSize * rowSize < rs.numObjects)
-        rowSize++;
-    const float rowScale = 25.0f;
-    float rowStep = rs.numObjects == 1 ? rowScale : rowScale / (rowSize - 1);
-
-    // draw the objects in a grid layout
-    uint numObjectsDrawn = 0;
-    for (int x=0; x<rowSize && numObjectsDrawn < rs.numObjects; x++)
-    {
-        float objX = (rs.numObjects == 1) ? 0 : (1.5f * (-rowScale/2.0f + x*rowStep));
-
-        for (int y=0; y<rowSize && numObjectsDrawn < rs.numObjects; y++)
-        {
-            float objXs = objX + (y%2)*rowStep/2.0f;
-            float objY = (rs.numObjects == 1) ? 0 : (-rowScale/2.0f + y*rowStep);
-
-            // construct a yaw for this object, by combining the global yaw with the grid position
-            // calculate the model matrix from the yaw
-            float yaw = rs.yaw + x*40 + y*50;
-            Matrix modelRotate = MatrixRotateY(yaw);
-            Matrix modelTranslate = MatrixTranslate(objXs, objY, 0);
-            Matrix model = MatrixMultiply(modelRotate, modelTranslate);
-
-            // calculate the matrices
-            rlSetMatrixModelview(MatrixMultiply(model, view));
-
-            // draw!
-            if (rs.renderLines)
-                rlDrawMeshWireframe(currentModel.mesh, currentModel.material, MatrixIdentity());
-            else
-                rlDrawMesh(currentModel.mesh, currentModel.material, MatrixIdentity());
-
-            LogDrawCall(currentModel.numVerts, currentModel.numIndices/3);
-
-            numObjectsDrawn++;
-        }
-    }
-
-    rlSetMatrixProjection(projM);
-    rlSetMatrixModelview(modelViewM);
-}
-
-void ApplyTextureFilter()
-{
-    int minFilter, magFilter;
-    if (rs.linearFiltering)
-    {
-        magFilter = RL_TEXTURE_FILTER_LINEAR;
-        if (rs.mipmapping)
-            minFilter = RL_TEXTURE_FILTER_LINEAR_MIP_NEAREST;
-        else
-            minFilter = RL_TEXTURE_FILTER_LINEAR;
-    }
-    else
-    {
-        magFilter = RL_TEXTURE_FILTER_NEAREST;
-        if (rs.mipmapping)
-            minFilter = RL_TEXTURE_FILTER_MIP_NEAREST;
-        else
-            minFilter = RL_TEXTURE_FILTER_NEAREST;
-    }
-
-    rlTextureParameters(rs.modelInfo[rs.modelType].material.maps[0].texture.id, RL_TEXTURE_MIN_FILTER, minFilter);
-    rlTextureParameters(rs.modelInfo[rs.modelType].material.maps[0].texture.id, RL_TEXTURE_MAG_FILTER, magFilter);
-}
-
-void ResetFramebuffer()
-{
-    rs.target = LoadRenderTexture(rs.fbWidth, rs.fbHeight);
-    SetTextureFilter(rs.target.texture, FILTER_BILINEAR);  // Texture scale filter to use (FILTER_POINT | FILTER_BILINEAR)
-}
-
-void SetNextFramebufferResolution()
-{
-    // shrink the framebuffer to 2/3 its previous size
-    if (rs.fbHeight <= 320)
-    {
-        rs.fbWidth = 0;
-        rs.fbHeight = 0;
-    }
-    else
-    {
-        rs.fbWidth = rs.fbWidth * 2 / 3;
-        rs.fbHeight = rs.fbHeight * 2 / 3;
-    }
-
-    ResetFramebuffer();
-}
-
-
-
-int main(int argc, char *argv[])
-{
-    // Stats view order
-    enum {
-        OBJECT_COUNT = 2,
-        OBJECT_COMPLEXITY,
-        FRAMEBUFFER,
-        MULTISAMPLING,
-        SHADER,
-        TEXTURE_FILTERING,
-        MIPMAPS,
-        BACKFACE_CULLING,
-        DEPTH_TEST,
-        WIREFRAME,
-        CAMERA_DISTANCE,
-        CAMERA_YAW,
-        CAMERA_LOOK,
-        STATS_DISPLAY
-    };
-
-    struct PlotterData {
-        unsigned int gid, cid;
-        size_t bufSize;
-        float width, height;
-        cvector_vector_type(float) xs;
-        cvector_vector_type(float) fps;
-    } plotter = { 0 };
-
-    // Initialization
-    //--------------------------------------------------------------------------------------
-    const Color bg = (Color){ 25, 50, 75, 255 };
-    const int defaultLogLevel = GetTraceLogLevel();
-
-    // default settings
-    rs.numObjects = 81;
-    rs.showStats = true;
-    rs.backFaceCull = true;
-    rs.depthTest = true;
-    rs.renderLines = false;
-    rs.linearFiltering = true;
-    rs.mipmapping = true;
-    rs.cameraDistance = 40.0f;
-    rs.cameraYaw = 0.0f;
-    rs.shaderType = FIRST_SHADER_TYPE;
-    rs.cameraLookAway = false;
-    rs.modelType = FIRST_MODEL_TYPE;
-    rs.postType = FX_NONE;
-    rs.multisampling = false;
-
-    bool restart = false;
-
-    while(!restart)
-    {
-        if (rs.multisampling)
-            SetConfigFlags(FLAG_MSAA_4X_HINT);
-
-#ifdef PLATFORM_DESKTOP
-        InitWindow(800, 600, "raylib benchmark");
-#else
-        InitWindow(0, 0, "raylib benchmark");
-#endif
-        SetTargetFPS(60);
-        //--------------------------------------------------------------------------------------
-        // Add some transparency:
-        Color c1 = Fade(GetColor(GuiGetStyle(BUTTON, BASE_COLOR_NORMAL)), 0.2);
-        GuiSetStyle(DEFAULT, BASE_COLOR_NORMAL, ColorToInt(c1));
-        Color c2 = Fade(GetColor(GuiGetStyle(BUTTON, BASE_COLOR_FOCUSED)), 0.5);
-        GuiSetStyle(DEFAULT, BASE_COLOR_FOCUSED, ColorToInt(c2));
-        GuiSetStyle(DEFAULT, TEXT_COLOR_NORMAL, ColorToInt(RAYWHITE));
-        GuiSetStyle(DEFAULT, TEXT_COLOR_FOCUSED, ColorToInt(WHITE));
-        GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
-
-        // create a native frambuffer with dimensions equal to the display screen
-        rs.fbWidth = GetScreenWidth();
-        rs.fbHeight = GetScreenHeight();
-
-        // load the model, texture, and shader
-        InitModel();
-        ApplyTextureFilter();
-
-        // Graph setup
-        plotter.width = 1.0;
-        plotter.height = 0.067;
-        plotter.bufSize = 250;
-        for(int i = 0; i < plotter.bufSize; ++i){
-            cvector_push_back(plotter.xs, i/(float)plotter.bufSize);
-        }
-        cbuffer_resize(plotter.fps, plotter.bufSize);
-        const float margins[4] = { 1.0f - plotter.width, 0.0, 1.0f - plotter.height, 0.0};
-        const float ratio = GetScreenWidth()/GetScreenHeight();
-        plotter.gid = rg_setup(0.0f, 1.0f, 0.0f, 100.0f, ratio, margins, 0.1f, 0.1f, 0.1f);
-        rg_add_grid(plotter.gid, 0.02f, 20.0f, 0.0015f, 0.03f, 0.5f, 0.06f, false);
-        plotter.cid = rg_add_curve(plotter.gid, plotter.xs, plotter.fps, 0.0018f, 0.18f, 0.39f, 0.99f);
-        //rg_add_hist(plotter.id, 25, ys2, 0.0015f, 0.35f, 0.95f, 0.48f);
-
-        int osk_key = -1;
-        uint textRowSel = 2; // text row selected
-
-        // Main game loop
-        while (!WindowShouldClose() && !restart)
-        {
-            // Update
-            //----------------------------------------------------------------------------------
-            float deltaTimeMs = GetFrameTime() * 1000;
-
-#define EXTKEYNAV(row, key) (textRowSel == row && (IsKeyPressed(key) || IsKeyPressed(KEY_ENTER)))
-
-            if (IsKeyPressed(KEY_ESCAPE))
-                break;
-            // +/- changes the number of objects displayed
-            else if (IsKeyPressed(KEY_MINUS) || osk_key=='-' || EXTKEYNAV(OBJECT_COUNT, KEY_DPAD_X))
-                rs.numObjects = (rs.numObjects > 0) ? (rs.numObjects - 1) : 0;
-            else if (IsKeyPressed(KEY_EQUAL) || osk_key=='+' || EXTKEYNAV(OBJECT_COUNT, KEY_DPAD_Y))
-                rs.numObjects++;
-            // S shows/hides the render statistics
-            else if (IsKeyPressed(KEY_S) || IsKeyPressed(KEY_DPAD_A) || EXTKEYNAV(STATS_DISPLAY, KEY_DPAD_Y)|| EXTKEYNAV(STATS_DISPLAY, KEY_DPAD_X))
-                rs.showStats = !rs.showStats;
-            // C turns backface culling on/off
-            else if (IsKeyPressed(KEY_C) || EXTKEYNAV(BACKFACE_CULLING, KEY_DPAD_Y)|| EXTKEYNAV(BACKFACE_CULLING, KEY_DPAD_X))
-                rs.backFaceCull = !rs.backFaceCull;
-            // D turns depth testing on/off
-            else if (IsKeyPressed(KEY_D) || EXTKEYNAV(DEPTH_TEST, KEY_DPAD_Y)|| EXTKEYNAV(DEPTH_TEST, KEY_DPAD_X))
-                rs.depthTest = !rs.depthTest;
-            // W turns wireframe rendering on/off
-            else if (IsKeyPressed(KEY_W) || EXTKEYNAV(WIREFRAME, KEY_DPAD_Y)|| EXTKEYNAV(WIREFRAME, KEY_DPAD_X))
-                rs.renderLines = !rs.renderLines;
-            // F changes the framebuffer size
-            else if (IsKeyPressed(KEY_F))
-                SetNextFramebufferResolution();
-            // I changes the texture filtering mode
-            else if (IsKeyPressed(KEY_I) || EXTKEYNAV(TEXTURE_FILTERING, KEY_DPAD_Y)|| EXTKEYNAV(TEXTURE_FILTERING, KEY_DPAD_X))
-            {
-                rs.linearFiltering = !rs.linearFiltering;
-                ApplyTextureFilter();
-            }
-            // M toggles mipmaps on and off
-            else if (IsKeyPressed(KEY_M) || EXTKEYNAV(MIPMAPS, KEY_DPAD_Y)|| EXTKEYNAV(MIPMAPS, KEY_DPAD_X))
-            {
-                rs.mipmapping = !rs.mipmapping;
-                ApplyTextureFilter();
-            }
-            // Z changes the camera distance
-            else if (IsKeyPressed(KEY_Z))
-            {
-                rs.cameraDistance -= 5.0f;
-                if (rs.cameraDistance < 5.0f)
-                    rs.cameraDistance = 60.0f;
-            }
-            // Y changes the camera rotation
-            else if (IsKeyPressed(KEY_Y))
-            {
-                rs.cameraYaw += 30.0f;
-                if (rs.cameraYaw > 90.0f)
-                    rs.cameraYaw = -90.0f;
-            }
-            // H changes the shader type
-            else if (IsKeyPressed(KEY_H) || EXTKEYNAV(SHADER, KEY_DPAD_Y))
-            {
-                rs.shaderType++;
-                if (rs.shaderType == NUM_SHADER_TYPES)
-                    rs.shaderType = FIRST_SHADER_TYPE;
-            }
-            else if (EXTKEYNAV(SHADER, KEY_DPAD_X))
-            {
-                if (rs.shaderType == FIRST_SHADER_TYPE)
-                    rs.shaderType = NUM_SHADER_TYPES - 1;
-                else
-                    rs.shaderType--;
-            }
-            // L makes the camera look towards/away from the scene
-            else if (IsKeyPressed(KEY_L))
-                rs.cameraLookAway = !rs.cameraLookAway;
-            // X changes the model type
-            else if (IsKeyPressed(KEY_X) || EXTKEYNAV(OBJECT_COMPLEXITY, KEY_DPAD_Y))
-            {
-                rs.modelType++;
-                if (rs.modelType == NUM_MODEL_TYPES)
-                    rs.modelType = FIRST_MODEL_TYPE;
-            }
-            else if (EXTKEYNAV(OBJECT_COMPLEXITY, KEY_DPAD_X))
-            {
-                if (rs.modelType == FIRST_MODEL_TYPE)
-                    rs.modelType = NUM_MODEL_TYPES - 1;
-                else
-                    rs.modelType--;
-            }
-            // P turns 4x multisampling on/off
-            else if (IsKeyPressed(KEY_P))
-            {
-                rs.multisampling = !rs.multisampling;
-                restart = true;
-            }
-            // R saves a screenshot to screenshot.png
-            else if (IsKeyPressed(KEY_R))
-            {
-                TakeScreenshot("screenshot.png");
-            }
-            // V toggles log level
-            else if (IsKeyPressed(KEY_V))
-            {
-                if (defaultLogLevel == GetTraceLogLevel())
-                    SetTraceLogLevel(LOG_DEBUG);
-                else
-                    SetTraceLogLevel(defaultLogLevel);
-            }
-            osk_key = -1;
-
-            // Draw
-            //----------------------------------------------------------------------------------
-            BeginDrawing();
-            {
-                ClearBackground(bg);
-
-                // update object transforms using the frame time - this ensures animation won't appear
-                // to slow down when the frame rate drops
-                rs.yaw += 0.0001f * deltaTimeMs;
-
-                if(rs.fbWidth == GetScreenWidth() && rs.fbHeight == GetScreenHeight()) {
-                    Render(); // just draw
-                } else {
-                    // draw with separate lower-res framebuffer:
-                    BeginTextureMode(rs.target);
-                    {
-                        ClearBackground(BLANK);
-                        Render();
-                    }
-                    EndTextureMode();
-                    // Draw RenderTexture2D to window
-                    DrawTexturePro(rs.target.texture,
-                                (Rectangle){ 0.0f, 0.0f, (float)rs.target.texture.width, (float)-rs.target.texture.height },
-                                (Rectangle){ 0.0f, 0.0f, (float)GetScreenWidth(), (float)GetScreenHeight() },
-                                (Vector2){ 0, 0 }, 0.0f, WHITE);
-                }
-
-                if (rs.postType != FX_NONE) {
-                    // Postproces shader
-                    BeginShaderMode(rs.postShader[rs.postType]);
-                    EndShaderMode();
-                }
-
-                // update and display statistics
-                int fps = GetFPS();
-                uint draws = GetDrawCallCount(), tris = GetTriangleCount(), verts = GetVertexCount();
-                uint trisPerSec = tris * fps;
-
-                const int AvgNumFrames = 5;
-                static float avg = 0;
-                static int indx = 0;
-                avg += GetFrameTime()/AvgNumFrames;
-                if (indx++%AvgNumFrames==0 && deltaTimeMs){
-                    cbuffer_push_back(plotter.fps, 1/avg);
-                    rg_update_curve(plotter.gid, plotter.cid, plotter.xs, plotter.fps);
-                    avg = 0;
-                }
-
-                ResetRenderStats();
-#define _LineStart 2
-#define _FontSize 20
-#define _LineHeight (_FontSize + 3)
-#define _AddTextLine(text, x, row)                                              \
-	{                                                                           \
-		const int curr = row, y = _LineHeight * curr;                           \
-		const int tw = MeasureText(text, _FontSize);                            \
-		if (curr == textRowSel) {                                               \
-			DrawRectangle(0, y - 1, tw + _LineStart * 2, _FontSize + 1, WHITE); \
-			DrawText(text, x, y, _FontSize, BLACK);                             \
-		} else                                                                  \
-			DrawText(text, x, y, _FontSize, curr < 2 ? SKYBLUE : WHITE);        \
+void Benchmark::set_option(int p_opt, bool p_state) {
+	ERR_FAIL_INDEX(p_opt, NUM_OPTIONS);
+	if (opts[p_opt] != p_state) {
+		opts[p_opt] = p_state;
+		_dirty = true;
 	}
-
-                uint textRow = 0;
-                _AddTextLine(FormatText("%d FPS %.1fM TRIS/SEC %.1fK TRIS/FRAME", fps, (float)trisPerSec/1000000, (float)tris/1000), _LineStart, textRow++);
-
-                if (rs.showStats)
-                {
-                    const float ratio = GetScreenWidth()/GetScreenHeight();
-                    rg_draw(plotter.gid, ratio);
-
-                    _AddTextLine(FormatText("%d VERTS/FRAME", verts), _LineStart, textRow++);
-                    _AddTextLine(FormatText("+/-: OBJECT COUNT [%d]", rs.numObjects), _LineStart, textRow++);
-                    _AddTextLine(FormatText("X: OBJECT COMPLEXITY [%s]",
-                        rs.modelType == CUBE_MODEL ? "12 TRIS" :
-                        rs.modelType == FROG_MODEL ? "496 TRIS" :
-                        rs.modelType == KID_MODEL ? "5682 TRIS" :
-                        rs.modelType == TREX_MODEL ? "18940 TRIS" :
-                        "55593 TRIS"), _LineStart, textRow++);
-                    _AddTextLine(FormatText("F: FRAMEBUFFER [%d X %d]", rs.fbWidth, rs.fbHeight), _LineStart, textRow++);
-                    _AddTextLine(FormatText("P: MULTISAMPLING [%s]", rs.multisampling ? "ON" : "OFF"), _LineStart, textRow++);
-                    _AddTextLine(FormatText("H: SHADER [%s]", GetShaderNameByType((ShaderType)rs.shaderType)), _LineStart, textRow++);
-                    _AddTextLine(FormatText("I: TEXTURE FILTER [%s]", rs.linearFiltering ? "LINEAR" : "NEAREST"), _LineStart, textRow++);
-                    _AddTextLine(FormatText("M: MIPMAPS [%s]", rs.mipmapping ? "ON" : "OFF"), _LineStart, textRow++);
-                    _AddTextLine(FormatText("C: BACKFACE CULLING [%s]", rs.backFaceCull ? "ON" : "OFF"), _LineStart, textRow++);
-                    _AddTextLine(FormatText("D: DEPTH TEST [%s]", rs.depthTest ? "ON" : "OFF"), _LineStart, textRow++);
-                    _AddTextLine(FormatText("W: WIREFRAME [%s]", rs.renderLines ? "ON" : "OFF"), _LineStart, textRow++);
-                    _AddTextLine(FormatText("Z: CAMERA DISTANCE [%d]", (int)rs.cameraDistance), _LineStart, textRow++);
-                    _AddTextLine(FormatText("Y: CAMERA YAW [%d]", (int)rs.cameraYaw), _LineStart, textRow++);
-                    _AddTextLine(FormatText("L: CAMERA LOOK [%s]", rs.cameraLookAway ? "AWAY" : "TOWARDS"), _LineStart, textRow++);
-                    _AddTextLine(FormatText("A: POSTPROCESS [%s]", postproShaderText[rs.postType]), _LineStart, textRow++);
-                    _AddTextLine("S: STATS DISPLAY [ON]", _LineStart, textRow++);
-
-                    DrawText("ESC: EXIT", _LineStart, _LineHeight*textRow, _FontSize, BLUE);
-
-                    const char *osk = "+-XFPHIMCDWZYLAS";
-                    const size_t osk_sz = strlen(osk);
-                    const int bmarg = 2;
-                    const float bsize = (GetScreenWidth()-2.0f*_LineStart-osk_sz*bmarg-10)/(osk_sz+1);
-                    const int bheight = bsize>80 ? 80 : bsize;
-                    for (int k=0; k<osk_sz; ++k) {
-                        const char lbl[2] = { osk[k], 0 };
-                        if (GuiButton((Rectangle){ _LineStart+k*(bsize+bmarg), GetScreenHeight()-bheight-bmarg, bsize, bheight }, lbl)) { osk_key = osk[k]; }
-                    }
-                    if (GuiButton((Rectangle){ _LineStart+osk_sz*(bsize+bmarg), GetScreenHeight()-bheight-bmarg, bsize+10, bheight }, "ESC")) { break; }
-
-                    // up/down moves selection after we calculated all rows (skip first and last rows)
-                    if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_DPAD_UP))
-                    {
-                        if (textRowSel > 2) textRowSel--;
-                    }
-                    else if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_DPAD_DOWN))
-                    {
-                        if (textRowSel < textRow-1) textRowSel++;
-                    }
-                }
-            }
-            EndDrawing();
-            //----------------------------------------------------------------------------------
-        }
-
-        // De-Initialization
-        //--------------------------------------------------------------------------------------
-        FreeModel();          // Unload all resources
-        CloseWindow();        // Close window and OpenGL context
-        //--------------------------------------------------------------------------------------
-
-        // Restart&continue application
-        if (restart)
-            restart = false;
-        else break;
-    } // restart
-
-    return 0;
 }
-#endif
+
+bool Benchmark::get_option(int p_opt) const {
+	ERR_FAIL_INDEX_V(p_opt, NUM_OPTIONS, false);
+	return opts[p_opt];
+}
+
+void Benchmark::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("set_active"), &Benchmark::set_active);
+	ClassDB::bind_method(D_METHOD("is_active"), &Benchmark::is_active);
+	ClassDB::bind_method(D_METHOD("set_num_objects"), &Benchmark::set_num_objects);
+	ClassDB::bind_method(D_METHOD("get_num_objects"), &Benchmark::get_num_objects);
+	ClassDB::bind_method(D_METHOD("set_display_model"), &Benchmark::set_display_model);
+	ClassDB::bind_method(D_METHOD("get_display_model"), &Benchmark::get_display_model);
+	ClassDB::bind_method(D_METHOD("get_option"), &Benchmark::get_option);
+	ClassDB::bind_method(D_METHOD("set_option"), &Benchmark::set_option);
+
+	ClassDB::bind_method(D_METHOD("_input"), &Benchmark::_input);
+
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "active"), "set_active", "is_active");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "num_objects"), "set_num_objects", "get_num_objects");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "current_model", PROPERTY_HINT_ENUM, "Cube,Frog,Kid,TRex,Robot"), "set_display_model", "get_display_model");
+	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "option_unshaded"), "set_option", "get_option", OPTION_UNSHADED);
+	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "option_depthtest"), "set_option", "get_option", OPTION_DEPTHTEST);
+	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "option_culling"), "set_option", "get_option", OPTION_CULLING);
+	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "option_stats"), "set_option", "get_option", OPTION_STATS);
+
+	BIND_ENUM_CONSTANT(CUBE_MODEL);
+	BIND_ENUM_CONSTANT(FROG_MODEL);
+	BIND_ENUM_CONSTANT(KID_MODEL);
+	BIND_ENUM_CONSTANT(TREX_MODEL);
+	BIND_ENUM_CONSTANT(ROBOT_MODEL);
+}
+
+Benchmark::Benchmark() {
+	_dirty = true;
+	_stats_label = nullptr;
+	_monitors[Performance::TIME_FPS] = nullptr;
+	_stats_text_size = Size2(0, 0);
+	plot_hist_size = 100;
+	plot_buf_index = 0;
+	num_objects = 20;
+	curr_model = 0;
+	glob_yaw = 0;
+
+	camera_distance = 0, camera_yaw = 0;
+
+	opts[OPTION_STATS] = true;
+
+	model_mat = newref(SpatialMaterial);
+	model_mat->set_cull_mode(SpatialMaterial::CULL_DISABLED);
+
+	set_process_internal(true);
+}
+
+Benchmark::~Benchmark() {
+	_finalize(); // should not be needed
+}
+

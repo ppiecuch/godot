@@ -35,7 +35,7 @@
 
 #include "misc/incbin.h"
 
-INCBIN(bitmap_font, "benchmark/resources/atari-font.bmp");
+INCBIN(bitmap_font_png, "benchmark/resources/textures/atari-font.png");
 
 INCBIN(texture_cube_ktx, "benchmark/resources/textures/cube.ktx");
 INCBIN(texture_cube_png, "benchmark/resources/textures/cube.png");
@@ -49,7 +49,7 @@ INCBIN(texture_trex_ktx, "benchmark/resources/textures/trex.ktx");
 INCBIN(texture_trex_png, "benchmark/resources/textures/trex.png");
 
 INCBIN(model_cube_dat, "benchmark/resources/models/cube.dat");
-INCBIN(model_from_dat, "benchmark/resources/models/frog.dat");
+INCBIN(model_frog_dat, "benchmark/resources/models/frog.dat");
 INCBIN(model_kid_dat, "benchmark/resources/models/kid.dat");
 INCBIN(model_robot_dat, "benchmark/resources/models/robot.dat");
 INCBIN(model_trex_dat, "benchmark/resources/models/trex.dat");

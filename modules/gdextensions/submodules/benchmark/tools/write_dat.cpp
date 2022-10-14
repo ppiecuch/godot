@@ -32,7 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-const int VERTEX_SIZE = sizeof(float)*8;
+const int VERTEX_SIZE = sizeof(float) * 8;
 
 void save_dat(const char *app, const char *name, const float verts[], uint32_t verts_num, const uint16_t indexes[], uint32_t indexes_num) {
 	FILE *file = fopen(name, "w");
