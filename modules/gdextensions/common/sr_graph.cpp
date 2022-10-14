@@ -41,12 +41,12 @@
 #include "common/gd_core.h"
 #include "core/error_macros.h"
 #include "core/int_types.h"
-#include "core/os/memory.h"
-#include "core/variant.h"
-#include "core/vector.h"
 #include "core/math/math_defs.h"
 #include "core/math/math_funcs.h"
 #include "core/math/transform_2d.h"
+#include "core/os/memory.h"
+#include "core/variant.h"
+#include "core/vector.h"
 #include "scene/2d/canvas_item.h"
 #include "scene/resources/material.h"
 
@@ -116,10 +116,10 @@ typedef enum {
 
 /// Forward declarations.
 
-static handle_map<_sr_graph*> _handles(1, 32);
+static handle_map<_sr_graph *> _handles(1, 32);
 
-static _FORCE_INLINE_ _sr_graph* _from_handle(sr_graph_t hgraph) {
-	const Id_T t =  make_handle(hgraph);
+static _FORCE_INLINE_ _sr_graph *_from_handle(sr_graph_t hgraph) {
+	const Id_T t = make_handle(hgraph);
 	if (_handles.is_valid(t)) {
 		return _handles[t];
 	} else {
@@ -243,7 +243,7 @@ int sr_add_curve(sr_graph_t hgraph, const Vector<real_t> &xs, const Vector<real_
 	_sr_curve curvepoints;
 	curvepoints.color = color;
 	_sr_generate_points(graph, xs, ys, &curvepoints);
-	const int cid = graph->curves.size() ;
+	const int cid = graph->curves.size();
 	graph->curvespoints.push_back(curvepoints);
 	graph->_dirty = true;
 	return cid;
@@ -500,7 +500,7 @@ static void _sr_draw(CanvasItem *canvas, _sr_graph *graph, Size2 frame) {
 		if (buffer.size()) {
 			Array mesh_array;
 			mesh_array.resize(VS::ARRAY_MAX);
-			mesh_array[VS::ARRAY_VERTEX] =  buffer;
+			mesh_array[VS::ARRAY_VERTEX] = buffer;
 			PoolColorArray colors;
 			colors.resize(buffer.size());
 			colors.fill(color);
@@ -578,7 +578,7 @@ unsigned *sr_palette(int pal, int num_colors) {
 		{ 0xffcbae, 0xfba6a2, 0xf68294, 0xf25e89, 0xd64a87, 0xad3e8c, 0x853491, 0x632c8c, 0x512472, 0x3f1b59, 0x2d133f },
 		{ 0xffcbae, 0xfbaaa3, 0xf78997, 0xf3688c, 0xe54f85, 0xbf4489, 0x9c398d, 0x753193, 0x5e2985, 0x4d226d, 0x3d1a57, 0x2d133f }
 	};
-	switch(pal) {
+	switch (pal) {
 		case pal_warm: {
 			switch (num_colors) {
 				case 1:
@@ -649,7 +649,6 @@ int SRGraph::get_plot_history_size() const {
 void SRGraph::set_plot_history_size(int p_size) {
 	plot_history_size = p_size;
 }
-
 
 void SRGraph::set_grid(bool p_visible) {
 	show_grid = p_visible;

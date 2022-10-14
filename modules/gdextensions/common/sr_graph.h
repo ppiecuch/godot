@@ -74,4 +74,3 @@ public:
 };
 
 #endif // SR_GRAPH_H
-

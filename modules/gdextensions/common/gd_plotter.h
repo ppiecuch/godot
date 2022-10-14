@@ -29,17 +29,18 @@
 /*************************************************************************/
 
 #include "core/int_types.h"
-#include "core/math/vector2.h"
 #include "core/math/math_funcs.h"
+#include "core/math/vector2.h"
 
 enum PlotType {
 	PlotType_Lines,
 	PlotType_Histogram,
 };
 
-static inline Vector2 LERP(const Vector2& a, const Vector2& b, real_t t)         { return Vector2(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t); }
-static inline Vector2 LERP(const Vector2& a, const Vector2& b, const Vector2& t) { return Vector2(a.x + (b.x - a.x) * t.x, a.y + (b.y - a.y) * t.y); }
-static inline real_t  SATURATE(real_t f)                                         { return (f < 0) ? 0 : (f > 1) ? 1 : f; }
+static inline Vector2 LERP(const Vector2 &a, const Vector2 &b, real_t t) { return Vector2(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t); }
+static inline Vector2 LERP(const Vector2 &a, const Vector2 &b, const Vector2 &t) { return Vector2(a.x + (b.x - a.x) * t.x, a.y + (b.y - a.y) * t.y); }
+static inline real_t SATURATE(real_t f) { return (f < 0) ? 0 : (f > 1) ? 1
+																	   : f; }
 
 void PlotFlame(const char *label, void (*values_getter)(real_t *start, real_t *end, uint8_t *level, const char **caption, const void *data, int idx), const void *data, int values_count, int values_offset, const char *overlay_text, real_t scale_min, real_t scale_max, Size2 graph_size) {
 	// Find the maximum depth

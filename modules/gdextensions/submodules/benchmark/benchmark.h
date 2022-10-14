@@ -132,7 +132,7 @@ private:
 	Label *_stats_label;
 	Size2 _stats_text_size;
 
-	Map<Performance::Monitor, GdHistoryPlot*> _monitors;
+	Map<Performance::Monitor, GdHistoryPlot *> _monitors;
 	int plot_buf_index, plot_hist_size;
 	bool _dirty;
 

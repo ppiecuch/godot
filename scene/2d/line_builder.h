@@ -37,6 +37,24 @@
 #include "scene/resources/gradient.h"
 
 class LineBuilder {
+	enum Orientation {
+		UP = 0,
+		DOWN = 1
+	};
+
+	// Triangle-strip methods
+	void strip_begin(Vector2 up, Vector2 down, Color color, float uvx);
+	void strip_new_quad(Vector2 up, Vector2 down, Color color, float uvx);
+	void strip_add_quad(Vector2 up, Vector2 down, Color color, float uvx);
+	void strip_add_tri(Vector2 up, Orientation orientation);
+	void strip_add_arc(Vector2 center, float angle_delta, Orientation orientation);
+	void new_arc(Vector2 center, Vector2 vbegin, float angle_delta, Color color, Rect2 uv_rect);
+
+	bool _interpolate_color;
+	bool _repeat_segment; // segment will be sliced for repeat pattern
+	float _last_uvx; // last unmodified uvs
+	int _last_index[2]; // index of last up and down vertices of the strip
+
 public:
 	// TODO Move in a struct and reference it
 	// Input
@@ -66,30 +84,6 @@ public:
 
 	void build();
 	void clear_output();
-
-private:
-	enum Orientation {
-		UP = 0,
-		DOWN = 1
-	};
-
-	// Triangle-strip methods
-	void strip_begin(Vector2 up, Vector2 down, Color color, float uvx);
-	void strip_new_quad(Vector2 up, Vector2 down, Color color, float uvx);
-	void strip_add_quad(Vector2 up, Vector2 down, Color color, float uvx);
-	void strip_add_tri(Vector2 up, Orientation orientation);
-	void strip_add_arc(Vector2 center, float angle_delta, Orientation orientation);
-
-	void new_arc(Vector2 center, Vector2 vbegin, float angle_delta, Color color, Rect2 uv_rect);
-
-private:
-	bool _interpolate_color;
-	bool _repeat_segment; // segment will be sliced for repeat pattern
-	float _last_uvx; // last unmodified uvs
-	int _last_index[2]; // Index of last up and down vertices of the strip
-
-	void new_arc_tiled_geometry(Vector2 center, Vector2 vbegin, float angle_delta, Color color, Rect2 uv_rect);
-	void new_arc_tiled_texture(Vector2 center, Vector2 vbegin, float angle_delta, Color color, Rect2 uv_rect);
 };
 
 #endif // LINE_BUILDER_H

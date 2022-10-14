@@ -41,11 +41,11 @@
 #include "core/math/math_funcs.h"
 #include "core/math/transform.h"
 #include "core/os/keyboard.h"
+#include "main/performance.h"
 #include "scene/gui/label.h"
 #include "scene/main/viewport.h"
 #include "scene/resources/font.h"
 #include "scene/resources/texture.h"
-#include "main/performance.h"
 
 #include "benchmark.h"
 
@@ -411,7 +411,7 @@ void Benchmark::_notification(int p_notification) {
 				_stats_label->set_vertical_spacing(-3);
 				add_child(_stats_label);
 			}
-			for (const Performance::Monitor &mon: helper::vector(Performance::TIME_FPS, Performance::MEMORY_STATIC)) {
+			for (const Performance::Monitor &mon : helper::vector(Performance::TIME_FPS, Performance::MEMORY_STATIC)) {
 				if (!_monitors[mon]) {
 					_monitors[mon] = memnew(GdHistoryPlot);
 					_monitors[mon]->set_title_label(Performance::get_singleton()->get_monitor_name(mon));
@@ -450,16 +450,14 @@ void Benchmark::_notification(int p_notification) {
 			const Size2 stats_size = _stats_text_size * Size2(16, 16);
 			const int _monitor_height = 50, _monitor_space = 4;
 			const Size2 _monitor_size = Size2(
-				(Engine::get_singleton()->is_editor_hint() ? real_t(ProjectSettings::get_singleton()->get("display/window/size/width")) : get_viewport()->get_size().width) - stats_size.width - 2
-				, _monitor_height
-			);
+					(Engine::get_singleton()->is_editor_hint() ? real_t(ProjectSettings::get_singleton()->get("display/window/size/width")) : get_viewport()->get_size().width) - stats_size.width - 2, _monitor_height);
 			_plot_update += delta;
 			if (_monitors[Performance::TIME_FPS]) {
 				static float _accum = 0;
 				static int _accum_count = 0;
 				_monitors[Performance::TIME_FPS]->set_size(_monitor_size);
 				_monitors[Performance::TIME_FPS]->set_position(Point2(stats_size.width, _monitor_space));
-				_accum +=  Performance::get_singleton()->get_monitor(Performance::TIME_FPS);
+				_accum += Performance::get_singleton()->get_monitor(Performance::TIME_FPS);
 				_accum_count++;
 				if (_plot_update > 0.5) {
 					_monitors[Performance::TIME_FPS]->add_sample(_accum / _accum_count);
@@ -471,7 +469,7 @@ void Benchmark::_notification(int p_notification) {
 				static int _accum_count = 0;
 				_monitors[Performance::MEMORY_STATIC]->set_size(_monitor_size);
 				_monitors[Performance::MEMORY_STATIC]->set_position(Point2(stats_size.width, _monitor_height + 2 * _monitor_space));
-				_accum +=  Performance::get_singleton()->get_monitor(Performance::MEMORY_STATIC);
+				_accum += Performance::get_singleton()->get_monitor(Performance::MEMORY_STATIC);
 				_accum_count++;
 				if (_plot_update > 0.5) {
 					_monitors[Performance::MEMORY_STATIC]->add_sample(_accum / _accum_count);
@@ -577,4 +575,3 @@ Benchmark::Benchmark() {
 Benchmark::~Benchmark() {
 	_finalize(); // should not be needed
 }
-

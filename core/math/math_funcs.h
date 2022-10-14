@@ -521,7 +521,7 @@ public:
 			real_t out_val = ((value - p_input_min) / (p_input_max - p_input_min) * (p_output_max - p_output_min) + p_output_min);
 			if (p_clamp) {
 				if (p_output_max < p_output_min) {
-					if (out_val < p_output_max ) {
+					if (out_val < p_output_max) {
 						out_val = p_output_max;
 					} else if (out_val > p_output_min) {
 						out_val = p_output_min;

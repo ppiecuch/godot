@@ -57,15 +57,16 @@ char (&CountOfRequireArrayArgumentT(const Ty (&)[Num]))[Num];
 #define UNUSED(x) (void)(x)
 
 #ifndef CONFIG_RENDERDOC_CAPTURE_KEYS
-#define CONFIG_RENDERDOC_CAPTURE_KEYS { eRENDERDOC_Key_F11 }
+#define CONFIG_RENDERDOC_CAPTURE_KEYS \
+	{ eRENDERDOC_Key_F11 }
 #endif // CONFIG_RENDERDOC_CAPTURE_KEYS
 
-void* _dlopen(const char *p_file_path) {
+void *_dlopen(const char *p_file_path) {
 #if WINDOWS_ENABLED
-	return (void*)::LoadLibraryA(p_file_path);
-#elif  X11_ENABLED
-	void* so = ::dlopen(p_file_path, RTLD_LOCAL|RTLD_LAZY);
-	WARN_PRINT(nullptr != so, "dlopen failed: \"%s\".", ::dlerror() );
+	return (void *)::LoadLibraryA(p_file_path);
+#elif X11_ENABLED
+	void *so = ::dlopen(p_file_path, RTLD_LOCAL | RTLD_LAZY);
+	WARN_PRINT(nullptr != so, "dlopen failed: \"%s\".", ::dlerror());
 	return so;
 #else
 	UNUSED(p_file_path);
@@ -73,34 +74,33 @@ void* _dlopen(const char *p_file_path) {
 #endif
 }
 
-void _dlclose(void* p_handle) {
+void _dlclose(void *p_handle) {
 	if (nullptr == p_handle) {
 		return;
 	}
 #if WINDOWS_ENABLED
-	::FreeLibrary( (HMODULE)p_handle);
-#elif  X11_ENABLED
+	::FreeLibrary((HMODULE)p_handle);
+#elif X11_ENABLED
 	::dlclose(p_handle);
 #else
 	UNUSED(p_handle);
 #endif
 }
 
-void* _dlsym(void* p_handle, const const *p_symbol) {
+void *_dlsym(void *p_handle, const const *p_symbol) {
 	const int32_t symbol_max = strlen(p_symbol) + 1;
-	char* symbol = (char*)alloca(symbol_max);
+	char *symbol = (char *)alloca(symbol_max);
 	strncpy(symbol, symbol_max, p_symbol);
 
 #if WINDOWS_ENABLED
-	return (void*)::GetProcAddress( (HMODULE)p_handle, symbol);
-#elif  X11_ENABLED
+	return (void *)::GetProcAddress((HMODULE)p_handle, symbol);
+#elif X11_ENABLED
 	return ::dlsym(p_handle, symbol);
 #else
 	UNUSED(p_handle, symbol);
 	return nullptr;
 #endif
 }
-
 
 static void *_gdFindModule(const char *p_name) {
 #if WINDOWS_ENABLED
