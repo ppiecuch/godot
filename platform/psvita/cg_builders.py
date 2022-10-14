@@ -368,7 +368,7 @@ def build_legacycg_header(filename, include, class_suffix, output_attribs):
             x = header_data.enums[xv]
             bits = 1
             amt = len(x)
-            while 2 ** bits < amt:
+            while 2**bits < amt:
                 bits += 1
             strs = "{"
             for i in range(amt):

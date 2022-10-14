@@ -93,7 +93,7 @@ def make_translations_header(target, source, env, category):
 
     sorted_paths = sorted(source, key=lambda path: os.path.splitext(os.path.basename(path))[0])
 
-    msgfmt_available = hasattr(shutil,"msgfmt")
+    msgfmt_available = hasattr(shutil, "msgfmt")
 
     if not msgfmt_available:
         print("WARNING: msgfmt is not found, using .po files instead of .mo")

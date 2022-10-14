@@ -124,19 +124,23 @@ if not env["disable_3d"]:
     if is_enabled("ccd"):
         thirdparty_sources += Glob("thirdparty/libccd/src/*.c") + Glob("thirdparty/libccd/src/testsuites/*.c")
     if is_enabled("detournav"):
-        env_module.Append(CPPPATH=[
-            "#thirdparty/recastnavigation/DebugUtils/Include",
-            "#thirdparty/recastnavigation/Detour/Include",
-            "#thirdparty/recastnavigation/DetourCrowd/Include",
-            "#thirdparty/recastnavigation/DetourTileCache/Include",
-            "#thirdparty/recastnavigation/Recast/Include"
-        ])
-        sources += Glob('submodules/detournav/src/util/*.cpp') + Glob('submodules/detournav/src/util/*.c')
-        thirdparty_sources += Glob('thirparty/recastnavigation/DebugUtils/Source/*.cpp') \
-            + Glob('thirdparty/recastnavigation/Detour/Source/*.cpp') \
-            + Glob('thirdparty/recastnavigation/DetourCrowd/Source/*.cpp') \
-            + Glob('thirdparty/recastnavigation/DetourTileCache/Source/*.cpp') \
-            + Glob('thirdparty/recastnavigation/Recast/Source/*.cpp')
+        env_module.Append(
+            CPPPATH=[
+                "#thirdparty/recastnavigation/DebugUtils/Include",
+                "#thirdparty/recastnavigation/Detour/Include",
+                "#thirdparty/recastnavigation/DetourCrowd/Include",
+                "#thirdparty/recastnavigation/DetourTileCache/Include",
+                "#thirdparty/recastnavigation/Recast/Include",
+            ]
+        )
+        sources += Glob("submodules/detournav/src/util/*.cpp") + Glob("submodules/detournav/src/util/*.c")
+        thirdparty_sources += (
+            Glob("thirparty/recastnavigation/DebugUtils/Source/*.cpp")
+            + Glob("thirdparty/recastnavigation/Detour/Source/*.cpp")
+            + Glob("thirdparty/recastnavigation/DetourCrowd/Source/*.cpp")
+            + Glob("thirdparty/recastnavigation/DetourTileCache/Source/*.cpp")
+            + Glob("thirdparty/recastnavigation/Recast/Source/*.cpp")
+        )
     if env["tools"]:
         if is_enabled("generator"):
             modules += ["generator"]
@@ -152,11 +156,11 @@ if not env["disable_3d"]:
             sources += Glob("submodules/meshslicer/utils/*.cpp")
 
 if is_enabled("ldrloader"):
-    sources += \
-        Glob("submodules/ldrloader/ldrawlib/*.c") + \
-        Glob("submodules/ldrloader/libldr/*.cpp") + \
-        Glob("submodules/ldrloader/libldr/*.c")
-
+    sources += (
+        Glob("submodules/ldrloader/ldrawlib/*.c")
+        + Glob("submodules/ldrloader/libldr/*.cpp")
+        + Glob("submodules/ldrloader/libldr/*.c")
+    )
 if env["os_family"] in ["os_windows", "os_unix"]:
     modules += ["unqlite"]
     thirdparty_sources += Glob("thirdparty/unqlite/*.c")
@@ -175,7 +179,13 @@ if os.path.isdir("iap") and is_enabled("iap"):
 
 if is_enabled("playfab"):
     modules += ["playfab"]
-    env_module.Prepend(CPPPATH=["thirdparty/xplatcppsdk/code/include", "thirdparty/xplatcppsdk/code", "thirdparty/xplatcppsdk/external/jsoncpp/include"])
+    env_module.Prepend(
+        CPPPATH=[
+            "thirdparty/xplatcppsdk/code/include",
+            "thirdparty/xplatcppsdk/code",
+            "thirdparty/xplatcppsdk/external/jsoncpp/include"
+        ]
+    )
     env_module.Append(CPPDEFINES=["PLAYFAB_PLATFORM_GODOT"])
     sources += Glob("submodules/playfab/PlayFabSDK/*.cpp")
     thirdparty_sources += Glob("thirdparty/xplatcppsdk/code/source/playfab/*.cpp")
@@ -225,7 +235,11 @@ if is_enabled("tileengine"):
     thirdparty_sources += Glob("thirdparty/Tilengine/src/*.c")
 
 if is_enabled("opensteer"):
-    thirdparty_sources += Glob("thirdparty/opensteer/src/*.c") + Glob("thirdparty/opensteer/src/*.cpp") + Glob("thirdparty/opensteer/plugins/*.cpp")
+    thirdparty_sources += (
+        Glob("thirdparty/opensteer/src/*.c")
+        + Glob("thirdparty/opensteer/src/*.cpp")
+        + Glob("thirdparty/opensteer/plugins/*.cpp")
+    )
     env_module.Append(CPPPATH=["thirdparty/opensteer/include"])
 
 if is_enabled("sparkparticles"):
@@ -326,8 +340,8 @@ if env["builtin_freetype"]:
     env_module.Prepend(CPPPATH=["#thirdparty/freetype/include"])
 env_module.Append(CPPDEFINES=["GD_CQUEUE", "GD_GODOT_ENET"])
 
-lib = env_module.Library("gdextensions", thirdparty_sources + sources) # Compile as a static library
-env.Prepend(LIBS=[lib]) # Add the library as a dependency of the final executable
+lib = env_module.Library("gdextensions", thirdparty_sources + sources)  # Compile as a static library
+env.Prepend(LIBS=[lib])  # Add the library as a dependency of the final executable
 if is_enabled("media/ffmpeg"):
     env.Prepend(LIBS=["avformat", "avcodec", "avutil", "swresample", "swscale"])
 if is_enabled("breakpad"):
@@ -347,5 +361,5 @@ if modules:
             if m == mod:
                 env_module.Append(CPPDEFINES=["GDEXT_%s_ENABLED" % mod.upper()])
             else:
-                env_module.Append(CPPDEFINES=["GDEXT_%s_ENABLED" % (m.replace('/', '_').upper())])
+                env_module.Append(CPPDEFINES=["GDEXT_%s_ENABLED" % (m.replace("/", "_").upper())])
     print("(GDextensions) Building submodules: %s" % sorted(sub_enabled))
