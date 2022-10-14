@@ -342,7 +342,7 @@ Help(opts.GenerateHelpText(env_base))
 
 # add default include paths
 
-env_base.Prepend(CPPPATH=["#"])
+env_base.Prepend(CPPPATH=["#", "#thirdparty"])
 
 # configure ENV for platform
 env_base.platform_exporters = platform_exporters

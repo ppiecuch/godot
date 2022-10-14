@@ -121,7 +121,7 @@ static void _draw_hp1345_text(Ref<ArrayMesh> &p_mesh, const String &p_text, cons
 	p_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, mesh_array);
 }
 
-static void _draw_hp1345_text(const String &p_text, const Point2 &p_pos, const Size2 &p_scale) {
+static void _draw_hp1345_text(Ref<ArrayMesh> &p_mesh, const String &p_text, const Point2 &p_pos, const Size2 &p_scale) {
 	if (p_text.empty()) {
 		return;
 	}
@@ -137,7 +137,7 @@ static void _draw_hp1345_text(const String &p_text, const Point2 &p_pos, const S
 	Array mesh_array;
 	mesh_array.resize(VS::ARRAY_MAX);
 	mesh_array[VS::ARRAY_VERTEX] = data;
-	text_mesh.m->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, mesh_array);
+	p_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, mesh_array);
 }
 
 static Size2 _size_vec_text(const String &p_text, const Size2 &p_scale) {
