@@ -746,7 +746,7 @@ SRGraph::SRGraph() {
 	grid_color = Color(0.8, 0.8, 0.8, 0.25);
 	show_axes = false;
 	axes_color = Color(1, 0, 0, 0.8);
-	set_size(Size2(200, 50));
+	set_size(Size2(150, 150));
 }
 
 SRGraph::~SRGraph() {}
