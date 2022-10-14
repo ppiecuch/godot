@@ -35,6 +35,8 @@
 #include "editor/audio_stream_preview.h"
 #include "editor/editor_node.h"
 
+#include "common/sr_graph.h"
+
 #include "core/area_prober.h"
 #include "core/blitter.h"
 #include "core/bs_input_event_key.h"
@@ -146,6 +148,10 @@
 #include "runtimeprofiler/runtime_profiler.h"
 #endif
 
+#ifdef GDEXT_BENCHMARK_ENABLED
+#include "benchmark/benchmark.h"
+#endif
+
 #include "settings/settings.h"
 
 #ifdef GDEXT_SQLITE_ENABLED
@@ -236,6 +242,7 @@ static void editor_init_callback() {
 static ThreadPool *thread_pool = nullptr;
 
 void register_gdextensions_types() {
+	ClassDB::register_class<SRGraph>();
 #ifdef GDEXT_BULLETKIT_ENABLED
 	register_bullet_kit();
 #endif
@@ -456,6 +463,10 @@ void register_gdextensions_types() {
 
 #ifdef GDEXT_RUNTIMEPROFILER_ENABLED
 	ClassDB::register_class<RuntimeProfiler>();
+#endif
+
+#ifdef GDEXT_BENCHMARK_ENABLED
+	ClassDB::register_class<Benchmark>();
 #endif
 
 #ifdef GDEXT_BENET_ENABLED
