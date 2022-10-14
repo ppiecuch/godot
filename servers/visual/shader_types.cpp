@@ -215,6 +215,7 @@ ShaderTypes::ShaderTypes() {
 	shader_modes[VS::SHADER_CANVAS_ITEM].functions["global"].built_ins["TIME"] = constt(ShaderLanguage::TYPE_FLOAT);
 
 	shader_modes[VS::SHADER_CANVAS_ITEM].functions["vertex"].built_ins["VERTEX"] = ShaderLanguage::TYPE_VEC2;
+	shader_modes[VS::SHADER_CANVAS_ITEM].functions["vertex"].built_ins["VERT"] = ShaderLanguage::TYPE_VEC3;
 	shader_modes[VS::SHADER_CANVAS_ITEM].functions["vertex"].built_ins["UV"] = ShaderLanguage::TYPE_VEC2;
 	shader_modes[VS::SHADER_CANVAS_ITEM].functions["vertex"].built_ins["COLOR"] = ShaderLanguage::TYPE_VEC4;
 	shader_modes[VS::SHADER_CANVAS_ITEM].functions["vertex"].built_ins["MODULATE"] = ShaderLanguage::TYPE_VEC4;

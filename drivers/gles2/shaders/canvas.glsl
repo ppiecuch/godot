@@ -21,6 +21,7 @@ uniform highp mat4 inv_world_matrix;
 uniform highp mat4 extra_matrix;
 #ifdef USE_CANVAS_VEC3
 attribute highp vec3 vertex; // attrib:0
+attribute vec3 normal_attrib; // attrib:1
 #else
 attribute highp vec2 vertex; // attrib:0
 #endif
@@ -170,7 +171,7 @@ void main() {
 	if (dst_rect.z < 0.0) { // Transpose is encoded as negative dst_rect.z
 		uv = src_rect.xy + abs(src_rect.zw) * vertex.yx;
 	} else {
-		uv = src_rect.xy + abs(src_rect.zw) * vertex;
+		uv = src_rect.xy + abs(src_rect.zw) * vertex.xy;
 	}
 
 	vec4 outvec = vec4(0.0, 0.0, 0.0, 1.0);
@@ -181,7 +182,7 @@ void main() {
 	// But it doesn't.
 	// I don't know why, will need to investigate further.
 
-	outvec.xy = dst_rect.xy + abs(dst_rect.zw) * select(vertex, vec2(1.0, 1.0) - vertex, lessThan(src_rect.zw, vec2(0.0, 0.0)));
+	outvec.xy = dst_rect.xy + abs(dst_rect.zw) * select(vertex.xy, vec2(1.0, 1.0) - vertex.xy, lessThan(src_rect.zw, vec2(0.0, 0.0)));
 
 	// outvec.xy = dst_rect.xy + abs(dst_rect.zw) * vertex;
 #else
@@ -458,7 +459,7 @@ void main() {
 	vec2 uv = uv_interp;
 
 	if (use_default_mask) {
-		float mask = dot(texture(mask_texture, uv).xyz, mask_channels_mixer);
+		float mask = dot(texture2D(mask_texture, uv).xyz, mask_channels_mixer);
 		if (mask <= mask_cut_off) {
 			discard;
 		}

@@ -811,11 +811,17 @@ void RasterizerStorageGLES3::texture_set_data(RID p_texture, const Ref<Image> &p
 #ifdef GLES_OVER_GL
 	switch (texture->format) {
 		case Image::FORMAT_L8: {
-			glTexParameteri(texture->target, GL_TEXTURE_SWIZZLE_R, GL_RED);
-			glTexParameteri(texture->target, GL_TEXTURE_SWIZZLE_G, GL_RED);
-			glTexParameteri(texture->target, GL_TEXTURE_SWIZZLE_B, GL_RED);
-			glTexParameteri(texture->target, GL_TEXTURE_SWIZZLE_A, GL_ONE);
+			// Original Godot code:
+			// glTexParameteri(texture->target, GL_TEXTURE_SWIZZLE_R, GL_RED);
+			// glTexParameteri(texture->target, GL_TEXTURE_SWIZZLE_G, GL_RED);
+			// glTexParameteri(texture->target, GL_TEXTURE_SWIZZLE_B, GL_RED);
+			// glTexParameteri(texture->target, GL_TEXTURE_SWIZZLE_A, GL_ONE);
 
+			// Make L8 a transparent texture:
+			glTexParameteri(texture->target, GL_TEXTURE_SWIZZLE_R, GL_ONE);
+			glTexParameteri(texture->target, GL_TEXTURE_SWIZZLE_G, GL_ONE);
+			glTexParameteri(texture->target, GL_TEXTURE_SWIZZLE_B, GL_ONE);
+			glTexParameteri(texture->target, GL_TEXTURE_SWIZZLE_A, GL_RED);
 		} break;
 		case Image::FORMAT_LA8: {
 			glTexParameteri(texture->target, GL_TEXTURE_SWIZZLE_R, GL_RED);

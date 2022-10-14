@@ -1082,7 +1082,7 @@ Error ShaderCompilerGLES3::compile(VS::ShaderMode p_mode, const String &p_code, 
 			}
 		}
 
-		_err_print_error(nullptr, p_path.utf8().get_data(), parser.get_error_line(), parser.get_error_text().utf8().get_data(), ERR_HANDLER_SHADER);
+		_err_print_error("<shader>", p_path.empty() ? "<data>" : p_path.utf8().get_data(), parser.get_error_line(), parser.get_error_text().utf8().get_data(), ERR_HANDLER_SHADER);
 		return err;
 	}
 
@@ -1119,6 +1119,7 @@ ShaderCompilerGLES3::ShaderCompilerGLES3() {
 	/** CANVAS ITEM SHADER **/
 
 	actions[VS::SHADER_CANVAS_ITEM].renames["VERTEX"] = "outvec.xy";
+	actions[VS::SHADER_CANVAS_ITEM].renames["VERT"] = "outvec.xyz";
 	actions[VS::SHADER_CANVAS_ITEM].renames["UV"] = "uv";
 	actions[VS::SHADER_CANVAS_ITEM].renames["POINT_SIZE"] = "point_size";
 

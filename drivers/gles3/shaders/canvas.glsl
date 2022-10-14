@@ -3,6 +3,9 @@
 
 #ifdef USE_CANVAS_VEC3
 layout(location = 0) in highp vec3 vertex;
+#ifdef USE_ATTRIB_NORMAL
+layout(location = 1) in vec3 normal_attrib;
+#endif
 #else
 layout(location = 0) in highp vec2 vertex;
 #endif
