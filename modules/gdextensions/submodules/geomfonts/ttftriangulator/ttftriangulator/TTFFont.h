@@ -127,7 +127,7 @@ struct GlyphProfile {
 	uint16_t max_instruction_defs; // Number of IDEFs.
 	uint16_t max_stack_elements; // Maximum stack depth2.
 	uint16_t max_size_of_instructions; // Maximum byte count for glyph instructions.
-	uint16_t max_component_elements; // Maximum number of components referenced at “top level” for any composite glyph.
+	uint16_t max_component_elements; // Maximum number of components referenced at "top level" for any composite glyph.
 	uint16_t max_component_depth; // Maximum levels of recursion; 1 for simple components.
 };
 
