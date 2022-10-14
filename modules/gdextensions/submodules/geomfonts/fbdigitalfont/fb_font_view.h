@@ -61,17 +61,18 @@ class FBBitmapFontView {
 	int number_of_horizontal_dot() const;
 	int number_of_vertical_dot() const;
 
+	const RID &canvas_item_opaq, &canvas_item_trnsp;
 	Dictionary &cache;
 
 public:
-	void draw(RID canvas);
+	void draw();
 	Size2 size_of_contents() const;
 
 	void set_text(const String &p_text);
 	void set_edge_length(real_t p_edge_length) { edge_length = p_edge_length; }
 	void set_margin(real_t p_margin) { margin = p_margin; }
 
-	FBBitmapFontView(Dictionary &cache);
+	FBBitmapFontView(const RID &canvas_item_opaq, const RID &canvas_item_trnsp, Dictionary &cache);
 };
 
 class FBLCDFontView {

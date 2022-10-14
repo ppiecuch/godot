@@ -275,9 +275,9 @@ static void stb_easy_font_print_string(Ref<ArrayMesh> &mesh, Point2 pos, const c
 	mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array, Array(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
 }
 
-static void stb_easy_font_print_string_xform(Ref<ArrayMesh> &mesh, const Transform &pretransform, Point2 pos, const char *text) {
+static void stb_easy_font_print_string_xform(Ref<ArrayMesh> &mesh, const Transform &pretransform, const char *text) {
 	PoolVector3Array verts;
-	const int nquads = stb_easy_font_print(pos.x, pos.y, text, verts);
+	const int nquads = stb_easy_font_print(0, 0, text, verts);
 	PoolIntArray indexes;
 	for (int q = 0; q < nquads; q++) {
 		const int v = q * 4;

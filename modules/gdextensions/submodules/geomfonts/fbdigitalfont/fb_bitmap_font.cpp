@@ -126,7 +126,7 @@ static Ref<Texture> generate_aa_buffer(real_t fall_off) {
 }
 
 void draw_background_with_dot_type(
-		RID canvas,
+		const RID &canvas_item,
 		Dictionary &cache,
 		FBFontDotType dot_type,
 		const Color &color,
@@ -139,16 +139,17 @@ void draw_background_with_dot_type(
 	for (int i = 0; i < vertical_amount; i++) {
 		for (int j = 0; j < horizontal_amount; j++) {
 			if (dot_type == FBFontDotTypeSquare) {
-				VisualServer::get_singleton()->canvas_item_add_rect(canvas, { j * l, i * l, edge_length, edge_length }, color);
+				VisualServer::get_singleton()->canvas_item_add_rect(canvas_item, { j * l, i * l, edge_length, edge_length }, color);
 			} else {
-				VisualServer::get_singleton()->canvas_item_add_circle(canvas, { j * l, i * l }, edge_length, color);
+				VisualServer::get_singleton()->canvas_item_add_circle(canvas_item, { j * l, i * l }, edge_length, color);
 			}
 		}
 	}
 }
 
 void draw_bitmap_symbol(
-		RID canvas,
+		const RID &canvas_item_opaq,
+		const RID &canvas_item_trnsp,
 		Dictionary &cache,
 		FBFontSymbolType symbol,
 		FBFontDotType dot_type,
@@ -170,9 +171,9 @@ void draw_bitmap_symbol(
 				const real_t y = start_point.y + r * l;
 				const real_t x = start_point.x + c * l;
 				if (dot_type == FBFontDotTypeSquare) {
-					VisualServer::get_singleton()->canvas_item_add_rect(canvas, { x, y, edge_length, edge_length }, color);
+					VisualServer::get_singleton()->canvas_item_add_rect(canvas_item_opaq, { x, y, edge_length, edge_length }, color);
 				} else {
-					VisualServer::get_singleton()->canvas_item_add_circle(canvas, { x, y }, edge_length, color);
+					VisualServer::get_singleton()->canvas_item_add_circle(canvas_item_opaq, { x, y }, edge_length, color);
 				}
 			}
 		}
@@ -181,7 +182,7 @@ void draw_bitmap_symbol(
 		cache["aa32"] = generate_aa_buffer(0.5);
 	}
 	Ref<Texture> texture = cache["aa32"];
-	VisualServer::get_singleton()->canvas_item_add_texture_rect(canvas, { 0, 0, 256, 256 }, texture->get_rid(), false, inner_glow_color);
+	VisualServer::get_singleton()->canvas_item_add_texture_rect(canvas_item_trnsp, { 0, 0, 256, 256 }, texture->get_rid(), false, inner_glow_color);
 }
 
 int number_of_dots_wide_for_symbol(FBFontSymbolType symbol) {

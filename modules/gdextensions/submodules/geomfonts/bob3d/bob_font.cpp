@@ -316,16 +316,16 @@ real_t bob_font_draw_string(Ref<ArrayMesh> &mesh, const char *str, const Point3 
 	return xp.x;
 }
 
-real_t bob_font_draw_string(Ref<ArrayMesh> &mesh, const char *str, const Transform &pretransform, const Point3 &pos, real_t size, bool wire) {
+real_t bob_font_draw_string(Ref<ArrayMesh> &mesh, const char *str, const Transform &pretransform, real_t size, bool wire) {
 	const int bnum = num_of_draw_bobs(str);
 
 	bob_font_mesh mesh_info(bnum, wire);
 
 	char ch = *str;
 	int array_offset = 0;
-	Point3 xp(pos.x, 0, 0);
+	Point3 xp(0, 0, 0);
 	while ((ch = *str) != 0) {
-		if (bob_font_draw_char(mesh_info, array_offset, ch, pos + xp, size)) {
+		if (bob_font_draw_char(mesh_info, array_offset, ch, xp, size)) {
 			xp.x += size * (BOBS_X + 1);
 		}
 		str++;
@@ -343,9 +343,9 @@ real_t bob_font_draw_string(Ref<ArrayMesh> &mesh, const char *str, const Transfo
 	mesh_array[VS::ARRAY_INDEX] = mesh_info.faces_index;
 
 	if (wire) {
-		mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, mesh_array, Array());
+		mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, mesh_array);
 	} else {
-		mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array, Array());
+		mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array);
 	}
 	return xp.x;
 }

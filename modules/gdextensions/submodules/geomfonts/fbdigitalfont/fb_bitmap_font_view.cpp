@@ -38,8 +38,8 @@
 
 #define color_from_rgb(rgb) Color::hex(0xff | ((rgb) << 8))
 
-FBBitmapFontView::FBBitmapFontView(Dictionary &cache) :
-		cache(cache) {
+FBBitmapFontView::FBBitmapFontView(const RID &canvas_item_opaq, const RID &canvas_item_trnsp, Dictionary &cache) :
+		canvas_item_opaq(canvas_item_opaq), canvas_item_trnsp(canvas_item_trnsp), cache(cache) {
 	dot_type = FBFontDotTypeSquare;
 	edge_length = 10;
 	margin = 2;
@@ -55,6 +55,9 @@ FBBitmapFontView::FBBitmapFontView(Dictionary &cache) :
 	number_of_right_padding_dot = 1;
 	number_of_bottom_padding_dot = 0;
 	number_of_padding_dots_between_digits = 1;
+
+	ERR_FAIL_COND(!canvas_item_opaq.is_valid());
+	ERR_FAIL_COND(!canvas_item_trnsp.is_valid());
 }
 
 void FBBitmapFontView::set_text(const String &p_text) {
@@ -83,14 +86,14 @@ int FBBitmapFontView::number_of_vertical_dot() const {
 	return 7 + number_of_top_padding_dot + number_of_bottom_padding_dot;
 }
 
-void FBBitmapFontView::draw(RID canvas) {
+void FBBitmapFontView::draw() {
 	// draw base dots:
-	draw_background_with_dot_type(canvas, cache, dot_type, off_color, edge_length, margin, number_of_horizontal_dot(), number_of_vertical_dot());
+	draw_background_with_dot_type(canvas_item_opaq, cache, dot_type, off_color, edge_length, margin, number_of_horizontal_dot(), number_of_vertical_dot());
 	// draw shaded digits:
 	real_t y = number_of_top_padding_dot * (edge_length + margin);
 	real_t x = number_of_left_padding_dot * (edge_length + margin);
 	for (int i = 0; i < symbols.size(); i++) {
-		draw_bitmap_symbol(canvas, cache, symbols[i], dot_type, on_color, edge_length, margin, glow_color, glow_size, inner_glow_color, inner_glow_size, { x, y });
+		draw_bitmap_symbol(canvas_item_opaq, canvas_item_trnsp, cache, symbols[i], dot_type, on_color, edge_length, margin, glow_color, glow_size, inner_glow_color, inner_glow_size, { x, y });
 		const real_t number_wide = number_of_dots_wide_for_symbol(symbols[i]);
 		x += (edge_length + margin) * (number_wide + number_of_padding_dots_between_digits);
 	}

@@ -54,7 +54,7 @@ typedef enum {
 } FBFontDotType;
 
 void draw_background_with_dot_type(
-		RID ctx,
+		const RID &canvas_item,
 		Dictionary &cache,
 		FBFontDotType dot_type,
 		const Color &color,
@@ -64,7 +64,8 @@ void draw_background_with_dot_type(
 		real_t vertical_amount);
 
 void draw_bitmap_symbol(
-		RID ctx,
+		const RID &canvas_item_opaq,
+		const RID &canvas_item_trnsp,
 		Dictionary &cache,
 		FBFontSymbolType symbol,
 		FBFontDotType dot_type,
@@ -82,7 +83,7 @@ int number_of_dots_wide_for_symbol(FBFontSymbolType symbol);
 /// LCD Font
 
 void draw_lcd_symbol(
-		RID ctx,
+		const RID &canvas_item,
 		FBFontSymbolType symbol,
 		real_t edge_length,
 		real_t line_width,
@@ -91,7 +92,7 @@ void draw_lcd_symbol(
 /// Square Font
 
 void draw_square_symbol(
-		RID ctx,
+		const RID &canvas_item,
 		FBFontSymbolType symbol,
 		real_t horizontal_edge_length,
 		real_t vertical_edge_length,
