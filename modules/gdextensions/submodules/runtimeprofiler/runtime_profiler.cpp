@@ -31,9 +31,9 @@
 #include "runtime_profiler.h"
 
 #include "core/os/os.h"
+#include "editor/editor_property_name_processor.h"
 #include "editor/editor_scale.h"
 #include "editor/editor_settings.h"
-#include "editor/editor_property_name_processor.h"
 
 void RuntimeProfiler::_send_profiling_data(bool p_for_frame) {
 	int ofs = 0;
@@ -922,12 +922,12 @@ RuntimeProfiler::RuntimeProfiler() {
 	h_split->add_child(graph);
 	graph->set_h_size_flags(SIZE_EXPAND_FILL);
 
-	int metric_size = CLAMP(int(EDITOR_DEF("debugger/profiler_frame_history_size", 1800)), 60, 10000);
+	const int metric_size = CLAMP(int(GLOBAL_DEF("runtime_profiler/profiler_frame_history_size", 1800)), 60, 10000);
 	frame_metrics.resize(metric_size);
 	last_metric = -1;
 	hover_metric = -1;
 
-	EDITOR_DEF("debugger/profiler_frame_max_functions", 512);
+	GLOBAL_DEF("runtime_profiler/profiler_frame_max_functions", 512);
 
 	frame_delay = memnew(Timer);
 	frame_delay->set_wait_time(0.1);
