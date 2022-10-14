@@ -96,12 +96,21 @@ public:
 
 	void fill(T p_elem);
 	void remove(int p_index) { _cowdata.remove(p_index); }
-	void erase(const T &p_val) {
+	_FORCE_INLINE_ void erase(const T &p_val) {
 		int idx = find(p_val);
 		if (idx >= 0) {
 			remove(idx);
 		}
 	};
+	_FORCE_INLINE_ void shift() {
+		if (size() == 0) {
+			return;
+		} else if (size() == 1) {
+			clear();
+		} else {
+			_cowdata.remove(0);
+		}
+	}
 	void invert();
 
 	_FORCE_INLINE_ T *ptrw() { return _cowdata.ptrw(); }

@@ -513,6 +513,30 @@ public:
 	static _ALWAYS_INLINE_ real_t map(real_t p_value, real_t p_istart, real_t p_istop, real_t p_ostart, real_t p_ostop) {
 		return p_ostart + (p_ostop - p_ostart) * ((p_value - p_istart) / (p_istop - p_istart));
 	}
+
+	static _ALWAYS_INLINE_ real_t map2(real_t value, real_t p_input_min, real_t p_input_max, real_t p_output_min, real_t p_output_max, bool p_clamp) {
+		if (Math::abs(p_input_min - p_input_max) < FLT_EPSILON) {
+			return p_output_min;
+		} else {
+			real_t out_val = ((value - p_input_min) / (p_input_max - p_input_min) * (p_output_max - p_output_min) + p_output_min);
+			if (p_clamp) {
+				if (p_output_max < p_output_min) {
+					if (out_val < p_output_max ) {
+						out_val = p_output_max;
+					} else if (out_val > p_output_min) {
+						out_val = p_output_min;
+					}
+				} else {
+					if (out_val > p_output_max) {
+						out_val = p_output_max;
+					} else if (out_val < p_output_min) {
+						out_val = p_output_min;
+					}
+				}
+			}
+			return out_val;
+		}
+	}
 };
 
 #endif // MATH_FUNCS_H
