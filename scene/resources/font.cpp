@@ -84,6 +84,30 @@ void Font::draw(RID p_canvas_item, const Point2 &p_pos, const String &p_text, co
 	}
 }
 
+void Font::draw_xform(RID p_canvas_item, const CharTransform &p_char_xform, const Point2 &p_pos, const String &p_text, const Color &p_modulate, int p_clip_w, const Color &p_outline_modulate) const {
+	Vector2 ofs;
+
+	int chars_drawn = 0;
+	bool with_outline = has_outline();
+	for (int i = 0; i < p_text.length(); i++) {
+		int width = get_char_size(p_text[i]).width;
+
+		if (p_clip_w >= 0 && (ofs.x + width) > p_clip_w) {
+			break; //clip
+		}
+
+		ofs.x += draw_char_xform(p_canvas_item, p_char_xform, p_pos + ofs, p_text[i], p_text[i + 1], with_outline ? p_outline_modulate : p_modulate, with_outline);
+		++chars_drawn;
+	}
+
+	if (has_outline()) {
+		ofs = Vector2(0, 0);
+		for (int i = 0; i < chars_drawn; i++) {
+			ofs.x += draw_char_xform(p_canvas_item, p_char_xform, p_pos + ofs, p_text[i], p_text[i + 1], p_modulate, false);
+		}
+	}
+}
+
 void Font::update_changes() {
 	emit_changed();
 }

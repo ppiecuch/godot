@@ -38,7 +38,7 @@
 struct CharTransform {
 	// NOTE: tex_clip and dest_rect are normalized coordinates rect: (0,0),[1,1]
 	// an related to the size of the glyph, since we donot know the size
-	// of the characters
+	// of the characters upfront
 	//
 	// +-------+
 	// | ↘︎     |
@@ -105,6 +105,7 @@ public:
 	virtual bool is_distance_field_hint() const = 0;
 
 	void draw(RID p_canvas_item, const Point2 &p_pos, const String &p_text, const Color &p_modulate = Color(1, 1, 1), int p_clip_w = -1, const Color &p_outline_modulate = Color(1, 1, 1)) const;
+	void draw_xform(RID p_canvas_item, const CharTransform &p_char_xform, const Point2 &p_pos, const String &p_text, const Color &p_modulate = Color(1, 1, 1), int p_clip_w = -1, const Color &p_outline_modulate = Color(1, 1, 1)) const;
 	void draw_halign(RID p_canvas_item, const Point2 &p_pos, HAlign p_align, float p_width, const String &p_text, const Color &p_modulate = Color(1, 1, 1), const Color &p_outline_modulate = Color(1, 1, 1)) const;
 
 	virtual bool has_outline() const { return false; }
