@@ -30,7 +30,7 @@
 
 #include "menu_bar_mgr.h"
 
-#if OSX_ENABLED
+#ifdef OSX_ENABLED
 #include "platform/osx/menu_bar_mgr_osx.h"
 
 MenuBarDisplayMgr *MenuBarDisplayMgr::get_instance() {
@@ -40,8 +40,8 @@ MenuBarDisplayMgr *MenuBarDisplayMgr::get_instance() {
 
 #else // OSX_ENABLED
 
-static MenuBarDisplayMgr *MenuBarDisplayMgr::get_instance() {
+MenuBarDisplayMgr *MenuBarDisplayMgr::get_instance() {
 	static MenuBarDisplayMgr _instance;
 	return &_instance;
 }
-#endif
+#endif // OSX_ENABLED
