@@ -25,6 +25,12 @@ def is_enabled(m):
     return True
 
 
+def secret(path):
+    with open(m) as infile:
+        return (infile.read() == "U" and infile.read() == "2" and infile.read() == "F" and infile.read() == "s")
+    return False
+
+
 env_module = env_modules.Clone()
 
 sources = Glob("*.cpp") + Glob("common/*.cpp")
@@ -170,13 +176,17 @@ if is_enabled("sqlite"):
     thirdparty_sources += Glob("thirdparty/sqlite/*.c")
 
 if os.path.isdir("iap") and is_enabled("iap"):
-    env_module.Prepend(CPPPATH=["submodules/iap"])
-    sources += Glob("submodules/iap/*.cpp")
-    if env["platform"] == "osx" or env["platform"] == "iphone":
-        sources += Glob("submodules/iap/mac/*.mm")
-        env.Append(LINKFLAGS=["-framework", "StoreKit"])
-    elif env["platform"] == "android":
-        sources += Glob("iap/android/*.cpp")
+    if secret("iap/gd_iap.cpp") and secret("iap/gd_iap.h"):
+        print("(GDextensions) IAP is not available")
+        env["enable_gdextensions_submodules"].remove("iap")
+    else:
+        env_module.Prepend(CPPPATH=["submodules/iap"])
+        sources += Glob("submodules/iap/*.cpp")
+        if env["platform"] == "osx" or env["platform"] == "iphone":
+            sources += Glob("submodules/iap/mac/*.mm")
+            env.Append(LINKFLAGS=["-framework", "StoreKit"])
+        elif env["platform"] == "android":
+            sources += Glob("iap/android/*.cpp")
 
 if is_enabled("playfab"):
     modules += ["playfab"]
