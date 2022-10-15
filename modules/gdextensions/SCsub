@@ -26,7 +26,7 @@ def is_enabled(m):
 
 
 def secret(path):
-    with open(m, "r") as infile:
+    with open(path, "r") as infile:
         return infile.read(4) == "U2Fs"
     return False
 
@@ -175,8 +175,8 @@ if env["os_family"] in ["os_windows", "os_unix"]:
 if is_enabled("sqlite"):
     thirdparty_sources += Glob("thirdparty/sqlite/*.c")
 
-if os.path.isdir("iap") and is_enabled("iap"):
-    if secret("iap/gd_iap.cpp") and secret("iap/gd_iap.h"):
+if os.path.isdir("submodules/iap") and is_enabled("iap"):
+    if secret("submodules/iap/gd_iap.cpp") and secret("submodules/iap/gd_iap.h"):
         print("(GDextensions) IAP is not available")
         env["enable_gdextensions_submodules"].remove("iap")
     else:
