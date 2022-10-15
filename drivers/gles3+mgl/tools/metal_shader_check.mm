@@ -297,6 +297,26 @@ static std::string mtlDataTypeToString(MTLDataType mtlType) {
 		case MTLDataTypeInstanceAccelerationStructure:
 			return "InstanceAccelerationStructure";
 #endif
+
+#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 110000
+		case MTLDataTypeLong:
+			return "Long";
+		case MTLDataTypeLong2:
+			return "Long2";
+		case MTLDataTypeLong3:
+			return "Long3";
+		case MTLDataTypeLong4:
+			return "Long4";
+		case MTLDataTypeULong:
+			return "ULong";
+		case MTLDataTypeULong2:
+			return "ULong2";
+		case MTLDataTypeULong3:
+			return "ULong3";
+		case MTLDataTypeULong4:
+			return "ULong4";
+#endif
+
 		case MTLDataTypeIndirectCommandBuffer:
 			return "IndirectCommandBuffer";
 		case MTLDataTypeRenderPipeline:

@@ -284,6 +284,7 @@ bool Line2D::get_antialiased() const {
 	return _antialiased;
 }
 
+#ifdef TOOLS_ENABLED
 void Line2D::set_debug_mode(bool p_debug) {
 	_debug_mode = p_debug;
 	update();
@@ -292,6 +293,7 @@ void Line2D::set_debug_mode(bool p_debug) {
 bool Line2D::get_debug_mode() const {
 	return _debug_mode;
 }
+#endif
 
 void Line2D::_draw() {
 	if (_points.size() <= 1 || _width == 0.f) {

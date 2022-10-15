@@ -11,7 +11,7 @@ fi
 # `START_DIR` contains the directory where the script is located
 START_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GODOT_DIR=$PWD
-TEMPLATES_DIR="$HOME/Library/ApplicationSupport/Godot/templates/"
+TEMPLATES_DIR="$HOME/Library/Application Support/Godot/templates/"
 
 if ! command -v scons &> /dev/null
 then
@@ -45,10 +45,16 @@ export -f echo_success
 
 export SCONS_FLAGS="$SCONS_FLAGS no_editor_splash=yes CCFLAGS=-D__MACPORTS__"
 
+if [ "$1" == "templates" ]; then
+	build_templates="yes"
+	shift
+fi
+
 if [ -z "$1" ]; then
 	target="release_debug"
 else
 	target=$1
+	shift
 fi
 
 if [ -z "$target" ]; then
@@ -84,16 +90,16 @@ codesign --verbose --sign - --timestamp --entitlements "$GODOT_DIR/misc/dist/osx
 
 echo_success "*** Finished building editor for macOS."
 
-if [ "$1" == "templates" ]; then
+if [ "$1" == "templates" ] || [ ! -z "$build_templates" ]; then
 	echo_header "*** Building 64-bit release export template for macOS ..."
 
-	scons -j$CPU platform=osx arch=x86_64 tools=no target=release use_lto=yes $SCONS_FLAGS
-	scons -j$CPU platform=osx arch=arm64 tools=no target=release use_lto=yes $SCONS_FLAGS
-	strip "$GODOT_DIR/bin/godot.osx.opt.x86_64" "$GODOT_DIR/bin/godot.osx.opt.x86_64.s"
-	strip "$GODOT_DIR/bin/godot.osx.opt.arm64" "$GODOT_DIR/bin/godot.osx.opt.arm64.s"
-	lipo -create bin/godot.osx.opt.x86_64.s bin/godot.osx.opt.arm64.s -output bin/godot.osx.opt.64
+	scons -j$CPU platform=osx arch=x86_64 tools=no target=release lto=full $SCONS_FLAGS
+	scons -j$CPU platform=osx arch=arm64 tools=no target=release lto=full $SCONS_FLAGS
+	strip "$GODOT_DIR/bin/godot.osx.opt.x86_64"
+	strip "$GODOT_DIR/bin/godot.osx.opt.arm64"
+	lipo -create bin/godot.osx.opt.x86_64 bin/godot.osx.opt.arm64 -output bin/godot.osx.opt.64
 	mv "$GODOT_DIR/bin/godot.osx.opt.64" "$TEMPLATES_DIR"
-	rm "$GODOT_DIR/bin/godot.osx.opt.x86_64" "$GODOT_DIR/bin/godot.osx.opt.arm64" "$GODOT_DIR/bin/godot.osx.opt.x86_64.s" "$GODOT_DIR/bin/godot.osx.opt.arm64.s"
+	rm "$GODOT_DIR/bin/godot.osx.opt.x86_64" "$GODOT_DIR/bin/godot.osx.opt.arm64"
 
 	echo_success "*** Finished building export templates for macOS."
 fi
