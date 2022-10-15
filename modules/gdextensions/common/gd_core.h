@@ -179,12 +179,12 @@ inline constexpr bool ignoreC4127(bool _x) {
 } //namespace gd
 
 #if _MSC_VER
-#define BX_IGNORE_C4127(_x) gd::ignoreC4127(!!(_x))
+#define _GD_IGNORE_C4127(_x) gd::ignoreC4127(!!(_x))
 #else
-#define BX_IGNORE_C4127(_x) (!!(_x))
+#define _GD_IGNORE_C4127(_x) (!!(_x))
 #endif
 
-#define GD_ENABLED(_x) GD_IGNORE_C4127(gd::isEnabled<!!(_x)>::value)
+#define GD_ENABLED(_x) _GD_IGNORE_C4127(gd::isEnabled<!!(_x)>::value)
 
 template <typename T>
 List<T> array_to_list(const Array &p_array) {

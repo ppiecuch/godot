@@ -76,6 +76,11 @@ static SegmentIntersectionResult segment_intersection(
 
 static Vector2 Failed(Math_NAN, Math_NAN);
 
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+
 static Vector2 find_intersection(const Vector2 &p0, const Vector2 &p1, const Vector2 &p2, const Vector2 &p3) {
 	const real_t s10_x = p1.x - p0.x;
 	const real_t s10_y = p1.y - p0.y;
@@ -113,6 +118,10 @@ static Vector2 find_intersection(const Vector2 &p0, const Vector2 &p1, const Vec
 	const real_t t = t_numer / denom;
 	return Vector2(p0.x + (t * s10_x), p0.y + (t * s10_y));
 }
+
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 
 // TODO I'm pretty sure there is an even faster way to swap things
 template <typename T>
