@@ -26,8 +26,8 @@ def is_enabled(m):
 
 
 def secret(path):
-    with open(m) as infile:
-        return (infile.read() == "U" and infile.read() == "2" and infile.read() == "F" and infile.read() == "s")
+    with open(m, "r") as infile:
+        return infile.read(4) == "U2Fs"
     return False
 
 
