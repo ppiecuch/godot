@@ -362,18 +362,6 @@ GdTLFXParticleManager::GdTLFXParticleManager(int particles, int layers) :
 		TLFX::ParticleManager(particles, layers), _lastTexture(0), _lastAdditive(true), _globalBlend(FromEffectBlendMode) {
 }
 
-static void _build_tiles(Size2 grid_size, unsigned int total_frames, Point2 tex_origin = Point2(0, 0), Size2 tex_size = Size2(1, 1)) {
-	Vector<Rect2> frames;
-	for (int fr = 0; fr < grid_size.height /* rows */; fr++)
-		for (int fc = 0; fc < grid_size.width /* cols */; fc++) {
-			const real_t cw = tex_size.width / grid_size.width, ch = tex_size.height / grid_size.height;
-			frames.push_back(Rect2(tex_origin.x + fc * cw, tex_origin.y + fr * ch, cw, ch));
-			if (frames.size() == total_frames) {
-				break;
-			}
-		}
-}
-
 #define gFF(C) (C * (255.999f))
 
 void GdTLFXParticleManager::DrawSprite(TLFX::Particle *p, TLFX::AnimImage *sprite, float px, float py, float frame, float x, float y, float rotation, float scaleX, float scaleY, unsigned char r, unsigned char g, unsigned char b, float a, bool additive) {
@@ -690,6 +678,23 @@ void AreaAllocator::mergeNodeWithNeighbors(AreaAllocatorNode *node) {
 
 // Image utilities:
 
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+
+static void _build_tiles(Size2 grid_size, unsigned int total_frames, Point2 tex_origin = Point2(0, 0), Size2 tex_size = Size2(1, 1)) {
+	Vector<Rect2> frames;
+	for (int fr = 0; fr < grid_size.height /* rows */; fr++)
+		for (int fc = 0; fc < grid_size.width /* cols */; fc++) {
+			const real_t cw = tex_size.width / grid_size.width, ch = tex_size.height / grid_size.height;
+			frames.push_back(Rect2(tex_origin.x + fc * cw, tex_origin.y + fr * ch, cw, ch));
+			if (frames.size() == total_frames) {
+				break;
+			}
+		}
+}
+
 static void _image_to_greyscale(Ref<Image> p_image, float p_fact) {
 	if (p_fact == 0.0)
 		return;
@@ -710,6 +715,10 @@ static void _image_to_greyscale(Ref<Image> p_image, float p_fact) {
 	}
 	p_image->unlock();
 }
+
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 
 // For Local loc:Int = 0 Until pixmapcopy.capacity Step 4
 //    p = pixmapcopy.pixels + loc

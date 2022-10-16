@@ -151,7 +151,7 @@ void Bullets::mount(Node *bullets_environment) {
 	Dictionary collision_layers_masks_to_kits;
 
 	Viewport *default_viewport = bullets_environment->get_viewport();
-	RID default_parent_canvas = default_viewport->find_world_2d()->get_canvas();
+	// RID default_parent_canvas = default_viewport->find_world_2d()->get_canvas();
 
 	for (int32_t i = 0; i < bullet_kits.size(); i++) {
 		Ref<BulletKit> kit = bullet_kits[i];

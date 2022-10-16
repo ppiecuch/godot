@@ -115,6 +115,11 @@ static bool intersectSegmentTriangle(const float *sp, const float *sq,
 	return true;
 }
 
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+
 static char *parseRow(char *buf, char *bufEnd, char *row, int len) {
 	bool start = true;
 	bool done = false;
@@ -147,6 +152,10 @@ static char *parseRow(char *buf, char *bufEnd, char *row, int len) {
 	row[n] = '\0';
 	return buf;
 }
+
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 
 DetourInputGeometry::DetourInputGeometry() :
 		m_chunkyMesh(0),

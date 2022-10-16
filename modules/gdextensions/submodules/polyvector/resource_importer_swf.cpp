@@ -47,9 +47,18 @@ static String _dump(const SWF::ShapeList &data) {
 	return ret;
 }
 
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+
 static String _dump(const SWF::Character &data) {
 	return "[Character:" + vformat(" bounds {%f,%f,%f,%f}", data.bounds.xmin, data.bounds.ymin, data.bounds.xmax, data.bounds.ymax) + vformat(" shapes {%s}", _dump(data.shapes)) + "]";
 }
+
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 
 #define JV(V) (bool(p_options["binary"]) ? (V) : (Math::round((V)*100) / 100.0))
 

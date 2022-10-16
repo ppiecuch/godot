@@ -134,7 +134,7 @@ struct DistanceConstraint {
 	DistanceConstraint(simid_t sim_id, Particle &point1, Particle &point2, real_t factor = 0.0) :
 			sim_id(sim_id), point1(point1), point2(point2) {
 		target = point1.position.distance_to(point2.position);
-		stiffness = Math::map(factor, 0, 1, MinDistStiffnessFactor, MaxDistStiffnessFactor);
+		stiffness = Math::map1(factor, 0, 1, MinDistStiffnessFactor, MaxDistStiffnessFactor);
 	}
 
 	void resolve() {
@@ -581,7 +581,7 @@ ElasticSimulation::Constraint ElasticSimulation::get_sim_constraint_at(simid_t p
 	return ElasticSimulation::Constraint{
 		c.point1.position,
 		c.point2.position,
-		Math::map(c.point1.position.distance_to(c.point2.position) / c.target, 0.8, 1.2, -1, 1)
+		Math::map1(c.point1.position.distance_to(c.point2.position) / c.target, 0.8, 1.2, -1, 1)
 	};
 }
 

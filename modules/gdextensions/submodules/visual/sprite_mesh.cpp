@@ -37,6 +37,7 @@
 #include "core/math/vector2.h"
 #include "core/variant.h"
 #include "editor/editor_node.h"
+#include "editor/editor_scale.h"
 #include "scene/3d/mesh_instance.h"
 #include "scene/resources/mesh.h"
 #include "scene/resources/mesh_data_tool.h"
@@ -187,7 +188,7 @@ void SpriteMesh::_update_mesh_xform() {
 				}
 				mesh_array[VS::ARRAY_COLOR] = colors;
 			}
-			mesh->add_surface_from_arrays(_mesh_ref->surface_get_primitive_type(s), mesh_array, Array());
+			mesh->add_surface_from_arrays(_mesh_ref->surface_get_primitive_type(s), mesh_array);
 
 			// update outline shape
 			if (auto_collision_shape) {
@@ -608,96 +609,273 @@ SpriteMesh::SpriteMesh() {
 
 /// SpriteMeshEditorPlugin
 
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+
+static void draw_indicator_bar(Control &p_surface, real_t p_fill, const Ref<Texture> p_icon, const Ref<Font> p_font, const String &p_text, const Color &p_color) {
+	// Adjust bar size from control height
+	const Vector2 surface_size = p_surface.get_size();
+	const real_t h = surface_size.y / 2.0;
+	const real_t y = (surface_size.y - h) / 2.0;
+
+	const Rect2 r(10 * EDSCALE, y, 6 * EDSCALE, h);
+	const real_t sy = r.size.y * p_fill;
+
+	// Note: because this bar appears over the viewport, it has to stay readable for any background color
+	// Draw both neutral dark and bright colors to account this
+	p_surface.draw_rect(r, p_color * Color(1, 1, 1, 0.2));
+	p_surface.draw_rect(Rect2(r.position.x, r.position.y + r.size.y - sy, r.size.x, sy), p_color * Color(1, 1, 1, 0.6));
+	p_surface.draw_rect(r.grow(1), Color(0, 0, 0, 0.7), false, Math::round(EDSCALE));
+
+	const Vector2 icon_size = p_icon->get_size();
+	const Vector2 icon_pos = Vector2(r.position.x - (icon_size.x - r.size.x) / 2, r.position.y + r.size.y + 2 * EDSCALE);
+	p_surface.draw_texture(p_icon, icon_pos, p_color);
+
+	// Draw a shadow for the text to make it easier to read.
+	p_surface.draw_string(p_font, Vector2(icon_pos.x + EDSCALE, icon_pos.y + icon_size.y + 17 * EDSCALE), p_text, Color(0, 0, 0));
+	// Draw text below the bar (for speed/zoom information).
+	p_surface.draw_string(p_font, Vector2(icon_pos.x, icon_pos.y + icon_size.y + 16 * EDSCALE), p_text, p_color);
+}
+
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
+
 Color SpriteMeshEditor::_get_color(const StringName &p_name, const StringName &p_theme_type) const {
 	return EditorNode::get_singleton()->get_gui_base()->get_color(p_name, p_theme_type);
 }
 
+void SpriteMeshEditor::_notification(int p_what) {
+	if (p_what == NOTIFICATION_READY) {
+		get_tree()->connect("node_removed", this, "_node_removed");
+	} else if (p_what == NOTIFICATION_VISIBILITY_CHANGED) {
+		const bool visible = is_visible_in_tree();
+
+		set_process(visible);
+
+		call_deferred("update_transform_gizmo_view");
+	} else if (p_what == NOTIFICATION_ENTER_TREE) {
+		// Ensure we are up to date with project settings
+		_project_settings_changed();
+
+		// Any further changes to project settings get a signal
+		ProjectSettings::get_singleton()->connect("project_settings_changed", this, "_project_settings_changed");
+
+		_init_indicators();
+		_init_gizmo_instance();
+	} else if (p_what == NOTIFICATION_EXIT_TREE) {
+		ProjectSettings::get_singleton()->disconnect("project_settings_changed", this, "_project_settings_changed");
+		_finish_gizmo_instances();
+		_finish_indicators();
+	} else if (p_what == NOTIFICATION_PROCESS) {
+		if (_project_settings_change_pending) {
+			_project_settings_changed();
+		}
+	}
+}
+
+void SpriteMeshEditor::_node_removed(Node *p_node) {
+	if (p_node == node) {
+		node = nullptr;
+	}
+}
+
+void SpriteMeshEditor::_init_gizmo_instance() {
+	const uint32_t layer = 1 << GIZMO_BASE_LAYER;
+
+	for (int i = 0; i < 3; i++) {
+		rotate_gizmo_instance[i] = RID_PRIME(VS::get_singleton()->instance_create());
+		VS::get_singleton()->instance_set_base(rotate_gizmo_instance[i], get_rotate_gizmo(i)->get_rid());
+		VS::get_singleton()->instance_set_scenario(rotate_gizmo_instance[i], get_tree()->get_root()->get_world()->get_scenario());
+		VS::get_singleton()->instance_set_visible(rotate_gizmo_instance[i], false);
+		VS::get_singleton()->instance_geometry_set_cast_shadows_setting(rotate_gizmo_instance[i], VS::SHADOW_CASTING_SETTING_OFF);
+		VS::get_singleton()->instance_set_layer_mask(rotate_gizmo_instance[i], layer);
+		VS::get_singleton()->instance_set_portal_mode(rotate_gizmo_instance[i], VisualServer::INSTANCE_PORTAL_MODE_GLOBAL);
+
+		scale_gizmo_instance[i] = RID_PRIME(VS::get_singleton()->instance_create());
+		VS::get_singleton()->instance_set_base(scale_gizmo_instance[i], get_scale_gizmo(i)->get_rid());
+		VS::get_singleton()->instance_set_scenario(scale_gizmo_instance[i], get_tree()->get_root()->get_world()->get_scenario());
+		VS::get_singleton()->instance_set_visible(scale_gizmo_instance[i], false);
+		VS::get_singleton()->instance_geometry_set_cast_shadows_setting(scale_gizmo_instance[i], VS::SHADOW_CASTING_SETTING_OFF);
+		VS::get_singleton()->instance_set_layer_mask(scale_gizmo_instance[i], layer);
+		VS::get_singleton()->instance_set_portal_mode(scale_gizmo_instance[i], VisualServer::INSTANCE_PORTAL_MODE_GLOBAL);
+
+		scale_plane_gizmo_instance[i] = RID_PRIME(VS::get_singleton()->instance_create());
+		VS::get_singleton()->instance_set_base(scale_plane_gizmo_instance[i], get_scale_plane_gizmo(i)->get_rid());
+		VS::get_singleton()->instance_set_scenario(scale_plane_gizmo_instance[i], get_tree()->get_root()->get_world()->get_scenario());
+		VS::get_singleton()->instance_set_visible(scale_plane_gizmo_instance[i], false);
+		VS::get_singleton()->instance_geometry_set_cast_shadows_setting(scale_plane_gizmo_instance[i], VS::SHADOW_CASTING_SETTING_OFF);
+		VS::get_singleton()->instance_set_layer_mask(scale_plane_gizmo_instance[i], layer);
+		VS::get_singleton()->instance_set_portal_mode(scale_plane_gizmo_instance[i], VisualServer::INSTANCE_PORTAL_MODE_GLOBAL);
+	}
+
+	// Rotation white outline
+	rotate_gizmo_instance[3] = RID_PRIME(VS::get_singleton()->instance_create());
+	VS::get_singleton()->instance_set_base(rotate_gizmo_instance[3], get_rotate_gizmo(3)->get_rid());
+	VS::get_singleton()->instance_set_scenario(rotate_gizmo_instance[3], get_tree()->get_root()->get_world()->get_scenario());
+	VS::get_singleton()->instance_set_visible(rotate_gizmo_instance[3], false);
+	VS::get_singleton()->instance_geometry_set_cast_shadows_setting(rotate_gizmo_instance[3], VS::SHADOW_CASTING_SETTING_OFF);
+	VS::get_singleton()->instance_set_layer_mask(rotate_gizmo_instance[3], layer);
+}
+
+void SpriteMeshEditor::_finish_gizmo_instances() {
+	for (int i = 0; i < 3; i++) {
+		if (rotate_gizmo_instance[i].is_valid()) {
+			VS::get_singleton()->free(rotate_gizmo_instance[i]);
+			rotate_gizmo_instance[i] = RID();
+		}
+
+		if (scale_gizmo_instance[i].is_valid()) {
+			VS::get_singleton()->free(scale_gizmo_instance[i]);
+			scale_gizmo_instance[i] = RID();
+		}
+
+		if (scale_plane_gizmo_instance[i].is_valid()) {
+			VS::get_singleton()->free(scale_plane_gizmo_instance[i]);
+			scale_plane_gizmo_instance[i] = RID();
+		}
+	}
+
+	// Rotation white outline. All of the arrays above have 3 elements, this has 4.
+	if (rotate_gizmo_instance[3].is_valid()) {
+		VS::get_singleton()->free(rotate_gizmo_instance[3]);
+		rotate_gizmo_instance[3] = RID();
+	}
+}
+
 void SpriteMeshEditor::_init_indicators() {
-	{
-		for (int i = 0; i < 3; i++) {
-			Color col;
-			switch (i) {
-				case 0:
-					col = _get_color("axis_x_color", "Editor");
-					break;
-				case 1:
-					col = _get_color("axis_y_color", "Editor");
-					break;
-				case 2:
-					col = _get_color("axis_z_color", "Editor");
-					break;
-				default:
-					col = Color();
-					break;
+	for (int i = 0; i < 3; i++) {
+		Color col;
+		switch (i) {
+			case 0:
+				col = _get_color("axis_x_color", "Editor");
+				break;
+			case 1:
+				col = _get_color("axis_y_color", "Editor");
+				break;
+			case 2:
+				col = _get_color("axis_z_color", "Editor");
+				break;
+			default:
+				col = Color();
+				break;
+		}
+
+		col.a = EditorSettings::get_singleton()->get("editors/3d/manipulator_gizmo_opacity");
+
+		rotate_gizmo[i] = Ref<ArrayMesh>(memnew(ArrayMesh));
+		scale_gizmo[i] = Ref<ArrayMesh>(memnew(ArrayMesh));
+		scale_plane_gizmo[i] = Ref<ArrayMesh>(memnew(ArrayMesh));
+
+		Ref<SpatialMaterial> mat = memnew(SpatialMaterial);
+		mat->set_flag(SpatialMaterial::FLAG_UNSHADED, true);
+		mat->set_on_top_of_alpha();
+		mat->set_feature(SpatialMaterial::FEATURE_TRANSPARENT, true);
+		mat->set_albedo(col);
+		gizmo_color[i] = mat;
+
+		Ref<SpatialMaterial> mat_hl = mat->duplicate();
+		const Color albedo = col.from_hsv(col.get_h(), 0.25, 1.0, 1);
+		mat_hl->set_albedo(albedo);
+		gizmo_color_hl[i] = mat_hl;
+
+		Vector3 ivec;
+		ivec[i] = 1;
+		Vector3 nivec;
+		nivec[(i + 1) % 3] = 1;
+		nivec[(i + 2) % 3] = 1;
+		Vector3 ivec2;
+		ivec2[(i + 1) % 3] = 1;
+		Vector3 ivec3;
+		ivec3[(i + 2) % 3] = 1;
+
+		// Rotate
+		{
+			Ref<SurfaceTool> surftool = memnew(SurfaceTool);
+			surftool->begin(Mesh::PRIMITIVE_TRIANGLES);
+
+			int n = 128; // number of circle segments
+			int m = 3; // number of thickness segments
+
+			for (int j = 0; j < n; ++j) {
+				Basis basis = Basis(ivec, (Math_PI * 2.0f * j) / n);
+				Vector3 vertex = basis.xform(ivec2 * GIZMO_CIRCLE_SIZE);
+				for (int k = 0; k < m; ++k) {
+					Vector2 ofs = Vector2(Math::cos((Math_PI * 2.0 * k) / m), Math::sin((Math_PI * 2.0 * k) / m));
+					Vector3 normal = ivec * ofs.x + ivec2 * ofs.y;
+					surftool->add_normal(basis.xform(normal));
+					surftool->add_vertex(vertex);
+				}
 			}
 
-			col.a = EditorSettings::get_singleton()->get("editors/3d/manipulator_gizmo_opacity");
+			for (int j = 0; j < n; ++j) {
+				for (int k = 0; k < m; ++k) {
+					int current_ring = j * m;
+					int next_ring = ((j + 1) % n) * m;
+					int current_segment = k;
+					int next_segment = (k + 1) % m;
 
-			rotate_gizmo[i] = Ref<ArrayMesh>(memnew(ArrayMesh));
-			scale_gizmo[i] = Ref<ArrayMesh>(memnew(ArrayMesh));
-			scale_plane_gizmo[i] = Ref<ArrayMesh>(memnew(ArrayMesh));
+					surftool->add_index(current_ring + next_segment);
+					surftool->add_index(current_ring + current_segment);
+					surftool->add_index(next_ring + current_segment);
 
-			Ref<SpatialMaterial> mat = memnew(SpatialMaterial);
-			mat->set_flag(SpatialMaterial::FLAG_UNSHADED, true);
-			mat->set_on_top_of_alpha();
-			mat->set_feature(SpatialMaterial::FEATURE_TRANSPARENT, true);
-			mat->set_albedo(col);
-			gizmo_color[i] = mat;
-
-			Ref<SpatialMaterial> mat_hl = mat->duplicate();
-			const Color albedo = col.from_hsv(col.get_h(), 0.25, 1.0, 1);
-			mat_hl->set_albedo(albedo);
-			gizmo_color_hl[i] = mat_hl;
-
-			Vector3 ivec;
-			ivec[i] = 1;
-			Vector3 nivec;
-			nivec[(i + 1) % 3] = 1;
-			nivec[(i + 2) % 3] = 1;
-			Vector3 ivec2;
-			ivec2[(i + 1) % 3] = 1;
-			Vector3 ivec3;
-			ivec3[(i + 2) % 3] = 1;
-
-			// Rotate
-			{
-				Ref<SurfaceTool> surftool = memnew(SurfaceTool);
-				surftool->begin(Mesh::PRIMITIVE_TRIANGLES);
-
-				int n = 128; // number of circle segments
-				int m = 3; // number of thickness segments
-
-				for (int j = 0; j < n; ++j) {
-					Basis basis = Basis(ivec, (Math_PI * 2.0f * j) / n);
-					Vector3 vertex = basis.xform(ivec2 * GIZMO_CIRCLE_SIZE);
-					for (int k = 0; k < m; ++k) {
-						Vector2 ofs = Vector2(Math::cos((Math_PI * 2.0 * k) / m), Math::sin((Math_PI * 2.0 * k) / m));
-						Vector3 normal = ivec * ofs.x + ivec2 * ofs.y;
-						surftool->add_normal(basis.xform(normal));
-						surftool->add_vertex(vertex);
-					}
+					surftool->add_index(next_ring + current_segment);
+					surftool->add_index(next_ring + next_segment);
+					surftool->add_index(current_ring + next_segment);
 				}
+			}
 
-				for (int j = 0; j < n; ++j) {
-					for (int k = 0; k < m; ++k) {
-						int current_ring = j * m;
-						int next_ring = ((j + 1) % n) * m;
-						int current_segment = k;
-						int next_segment = (k + 1) % m;
+			Ref<Shader> rotate_shader = memnew(Shader);
 
-						surftool->add_index(current_ring + next_segment);
-						surftool->add_index(current_ring + current_segment);
-						surftool->add_index(next_ring + current_segment);
+			rotate_shader->set_code(
+					"\n"
+					"shader_type spatial; \n"
+					"render_mode unshaded, depth_test_disable; \n"
+					"uniform vec4 albedo; \n"
+					"\n"
+					"mat3 orthonormalize(mat3 m) { \n"
+					"	vec3 x = normalize(m[0]); \n"
+					"	vec3 y = normalize(m[1] - x * dot(x, m[1])); \n"
+					"	vec3 z = m[2] - x * dot(x, m[2]); \n"
+					"	z = normalize(z - y * (dot(y,m[2]))); \n"
+					"	return mat3(x,y,z); \n"
+					"} \n"
+					"\n"
+					"void vertex() { \n"
+					"	mat3 mv = orthonormalize(mat3(MODELVIEW_MATRIX)); \n"
+					"	vec3 n = mv * VERTEX; \n"
+					"	float orientation = dot(vec3(0,0,-1),n); \n"
+					"	if (orientation <= 0.005) { \n"
+					"		VERTEX += NORMAL*0.02; \n"
+					"	} \n"
+					"} \n"
+					"\n"
+					"void fragment() { \n"
+					"	ALBEDO = albedo.rgb; \n"
+					"	ALPHA = albedo.a; \n"
+					"}");
 
-						surftool->add_index(next_ring + current_segment);
-						surftool->add_index(next_ring + next_segment);
-						surftool->add_index(current_ring + next_segment);
-					}
-				}
+			Ref<ShaderMaterial> rotate_mat = memnew(ShaderMaterial);
+			rotate_mat->set_render_priority(Material::RENDER_PRIORITY_MAX);
+			rotate_mat->set_shader(rotate_shader);
+			rotate_mat->set_shader_param("albedo", col);
+			rotate_gizmo_color[i] = rotate_mat;
 
-				Ref<Shader> rotate_shader = memnew(Shader);
+			Array arrays = surftool->commit_to_arrays();
+			rotate_gizmo[i]->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays);
+			rotate_gizmo[i]->surface_set_material(0, rotate_mat);
 
-				rotate_shader->set_code(
+			Ref<ShaderMaterial> rotate_mat_hl = rotate_mat->duplicate();
+			rotate_mat_hl->set_shader_param("albedo", albedo);
+			rotate_gizmo_color_hl[i] = rotate_mat_hl;
+
+			if (i == 2) { // Rotation white outline
+				Ref<ShaderMaterial> border_mat = rotate_mat->duplicate();
+
+				Ref<Shader> border_shader = memnew(Shader);
+				border_shader->set_code(
 						"\n"
 						"shader_type spatial; \n"
 						"render_mode unshaded, depth_test_disable; \n"
@@ -713,11 +891,12 @@ void SpriteMeshEditor::_init_indicators() {
 						"\n"
 						"void vertex() { \n"
 						"	mat3 mv = orthonormalize(mat3(MODELVIEW_MATRIX)); \n"
-						"	vec3 n = mv * VERTEX; \n"
-						"	float orientation = dot(vec3(0,0,-1),n); \n"
-						"	if (orientation <= 0.005) { \n"
-						"		VERTEX += NORMAL*0.02; \n"
-						"	} \n"
+						"	mv = inverse(mv); \n"
+						"	VERTEX += NORMAL*0.008; \n"
+						"	vec3 camera_dir_local = mv * vec3(0,0,1); \n"
+						"	vec3 camera_up_local = mv * vec3(0,1,0); \n"
+						"	mat3 rotation_matrix = mat3(cross(camera_dir_local, camera_up_local), camera_up_local, camera_dir_local); \n"
+						"	VERTEX = rotation_matrix * VERTEX; \n"
 						"} \n"
 						"\n"
 						"void fragment() { \n"
@@ -725,195 +904,193 @@ void SpriteMeshEditor::_init_indicators() {
 						"	ALPHA = albedo.a; \n"
 						"}");
 
-				Ref<ShaderMaterial> rotate_mat = memnew(ShaderMaterial);
-				rotate_mat->set_render_priority(Material::RENDER_PRIORITY_MAX);
-				rotate_mat->set_shader(rotate_shader);
-				rotate_mat->set_shader_param("albedo", col);
-				rotate_gizmo_color[i] = rotate_mat;
+				border_mat->set_shader(border_shader);
+				border_mat->set_shader_param("albedo", Color(0.75, 0.75, 0.75, col.a / 3.0));
 
-				Array arrays = surftool->commit_to_arrays();
-				rotate_gizmo[i]->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays);
-				rotate_gizmo[i]->surface_set_material(0, rotate_mat);
+				rotate_gizmo[3] = Ref<ArrayMesh>(memnew(ArrayMesh));
+				rotate_gizmo[3]->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays);
+				rotate_gizmo[3]->surface_set_material(0, border_mat);
+			}
+		}
 
-				Ref<ShaderMaterial> rotate_mat_hl = rotate_mat->duplicate();
-				rotate_mat_hl->set_shader_param("albedo", albedo);
-				rotate_gizmo_color_hl[i] = rotate_mat_hl;
+		// Scale
+		{
+			Ref<SurfaceTool> surftool = memnew(SurfaceTool);
+			surftool->begin(Mesh::PRIMITIVE_TRIANGLES);
 
-				if (i == 2) { // Rotation white outline
-					Ref<ShaderMaterial> border_mat = rotate_mat->duplicate();
+			// Cube arrow profile
+			const int arrow_points = 6;
+			Vector3 arrow[6] = {
+				nivec * 0.0 + ivec * 0.0,
+				nivec * 0.01 + ivec * 0.0,
+				nivec * 0.01 + ivec * 1.0 * GIZMO_SCALE_OFFSET,
+				nivec * 0.07 + ivec * 1.0 * GIZMO_SCALE_OFFSET,
+				nivec * 0.07 + ivec * 1.11 * GIZMO_SCALE_OFFSET,
+				nivec * 0.0 + ivec * 1.11 * GIZMO_SCALE_OFFSET,
+			};
 
-					Ref<Shader> border_shader = memnew(Shader);
-					border_shader->set_code(
-							"\n"
-							"shader_type spatial; \n"
-							"render_mode unshaded, depth_test_disable; \n"
-							"uniform vec4 albedo; \n"
-							"\n"
-							"mat3 orthonormalize(mat3 m) { \n"
-							"	vec3 x = normalize(m[0]); \n"
-							"	vec3 y = normalize(m[1] - x * dot(x, m[1])); \n"
-							"	vec3 z = m[2] - x * dot(x, m[2]); \n"
-							"	z = normalize(z - y * (dot(y,m[2]))); \n"
-							"	return mat3(x,y,z); \n"
-							"} \n"
-							"\n"
-							"void vertex() { \n"
-							"	mat3 mv = orthonormalize(mat3(MODELVIEW_MATRIX)); \n"
-							"	mv = inverse(mv); \n"
-							"	VERTEX += NORMAL*0.008; \n"
-							"	vec3 camera_dir_local = mv * vec3(0,0,1); \n"
-							"	vec3 camera_up_local = mv * vec3(0,1,0); \n"
-							"	mat3 rotation_matrix = mat3(cross(camera_dir_local, camera_up_local), camera_up_local, camera_dir_local); \n"
-							"	VERTEX = rotation_matrix * VERTEX; \n"
-							"} \n"
-							"\n"
-							"void fragment() { \n"
-							"	ALBEDO = albedo.rgb; \n"
-							"	ALPHA = albedo.a; \n"
-							"}");
+			int arrow_sides = 4;
 
-					border_mat->set_shader(border_shader);
-					border_mat->set_shader_param("albedo", Color(0.75, 0.75, 0.75, col.a / 3.0));
+			for (int k = 0; k < 4; k++) {
+				Basis ma(ivec, Math_PI * 2 * float(k) / arrow_sides);
+				Basis mb(ivec, Math_PI * 2 * float(k + 1) / arrow_sides);
 
-					rotate_gizmo[3] = Ref<ArrayMesh>(memnew(ArrayMesh));
-					rotate_gizmo[3]->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays);
-					rotate_gizmo[3]->surface_set_material(0, border_mat);
+				for (int j = 0; j < arrow_points - 1; j++) {
+					Vector3 points[4] = {
+						ma.xform(arrow[j]),
+						mb.xform(arrow[j]),
+						mb.xform(arrow[j + 1]),
+						ma.xform(arrow[j + 1]),
+					};
+					surftool->add_vertex(points[0]);
+					surftool->add_vertex(points[1]);
+					surftool->add_vertex(points[2]);
+
+					surftool->add_vertex(points[0]);
+					surftool->add_vertex(points[2]);
+					surftool->add_vertex(points[3]);
 				}
 			}
 
-			// Scale
-			{
-				Ref<SurfaceTool> surftool = memnew(SurfaceTool);
-				surftool->begin(Mesh::PRIMITIVE_TRIANGLES);
+			surftool->set_material(mat);
+			surftool->commit(scale_gizmo[i]);
+		}
 
-				// Cube arrow profile
-				const int arrow_points = 6;
-				Vector3 arrow[6] = {
-					nivec * 0.0 + ivec * 0.0,
-					nivec * 0.01 + ivec * 0.0,
-					nivec * 0.01 + ivec * 1.0 * GIZMO_SCALE_OFFSET,
-					nivec * 0.07 + ivec * 1.0 * GIZMO_SCALE_OFFSET,
-					nivec * 0.07 + ivec * 1.11 * GIZMO_SCALE_OFFSET,
-					nivec * 0.0 + ivec * 1.11 * GIZMO_SCALE_OFFSET,
-				};
+		// Plane Scale
+		{
+			Ref<SurfaceTool> surftool = memnew(SurfaceTool);
+			surftool->begin(Mesh::PRIMITIVE_TRIANGLES);
 
-				int arrow_sides = 4;
+			Vector3 vec = ivec2 - ivec3;
+			Vector3 plane[4] = {
+				vec * GIZMO_PLANE_DST,
+				vec * GIZMO_PLANE_DST + ivec2 * GIZMO_PLANE_SIZE,
+				vec * (GIZMO_PLANE_DST + GIZMO_PLANE_SIZE),
+				vec * GIZMO_PLANE_DST - ivec3 * GIZMO_PLANE_SIZE
+			};
 
-				for (int k = 0; k < 4; k++) {
-					Basis ma(ivec, Math_PI * 2 * float(k) / arrow_sides);
-					Basis mb(ivec, Math_PI * 2 * float(k + 1) / arrow_sides);
+			Basis ma(ivec, Math_PI / 2);
 
-					for (int j = 0; j < arrow_points - 1; j++) {
-						Vector3 points[4] = {
-							ma.xform(arrow[j]),
-							mb.xform(arrow[j]),
-							mb.xform(arrow[j + 1]),
-							ma.xform(arrow[j + 1]),
-						};
-						surftool->add_vertex(points[0]);
-						surftool->add_vertex(points[1]);
-						surftool->add_vertex(points[2]);
+			Vector3 points[4] = {
+				ma.xform(plane[0]),
+				ma.xform(plane[1]),
+				ma.xform(plane[2]),
+				ma.xform(plane[3]),
+			};
+			surftool->add_vertex(points[0]);
+			surftool->add_vertex(points[1]);
+			surftool->add_vertex(points[2]);
 
-						surftool->add_vertex(points[0]);
-						surftool->add_vertex(points[2]);
-						surftool->add_vertex(points[3]);
-					}
-				}
+			surftool->add_vertex(points[0]);
+			surftool->add_vertex(points[2]);
+			surftool->add_vertex(points[3]);
 
-				surftool->set_material(mat);
-				surftool->commit(scale_gizmo[i]);
-			}
+			Ref<SpatialMaterial> plane_mat = memnew(SpatialMaterial);
+			plane_mat->set_flag(SpatialMaterial::FLAG_UNSHADED, true);
+			plane_mat->set_on_top_of_alpha();
+			plane_mat->set_feature(SpatialMaterial::FEATURE_TRANSPARENT, true);
+			plane_mat->set_cull_mode(SpatialMaterial::CULL_DISABLED);
+			plane_mat->set_albedo(col);
+			plane_gizmo_color[i] = plane_mat; // needed, so we can draw planes from both sides
+			surftool->set_material(plane_mat);
+			surftool->commit(scale_plane_gizmo[i]);
 
-			// Plane Scale
-			{
-				Ref<SurfaceTool> surftool = memnew(SurfaceTool);
-				surftool->begin(Mesh::PRIMITIVE_TRIANGLES);
-
-				Vector3 vec = ivec2 - ivec3;
-				Vector3 plane[4] = {
-					vec * GIZMO_PLANE_DST,
-					vec * GIZMO_PLANE_DST + ivec2 * GIZMO_PLANE_SIZE,
-					vec * (GIZMO_PLANE_DST + GIZMO_PLANE_SIZE),
-					vec * GIZMO_PLANE_DST - ivec3 * GIZMO_PLANE_SIZE
-				};
-
-				Basis ma(ivec, Math_PI / 2);
-
-				Vector3 points[4] = {
-					ma.xform(plane[0]),
-					ma.xform(plane[1]),
-					ma.xform(plane[2]),
-					ma.xform(plane[3]),
-				};
-				surftool->add_vertex(points[0]);
-				surftool->add_vertex(points[1]);
-				surftool->add_vertex(points[2]);
-
-				surftool->add_vertex(points[0]);
-				surftool->add_vertex(points[2]);
-				surftool->add_vertex(points[3]);
-
-				Ref<SpatialMaterial> plane_mat = memnew(SpatialMaterial);
-				plane_mat->set_flag(SpatialMaterial::FLAG_UNSHADED, true);
-				plane_mat->set_on_top_of_alpha();
-				plane_mat->set_feature(SpatialMaterial::FEATURE_TRANSPARENT, true);
-				plane_mat->set_cull_mode(SpatialMaterial::CULL_DISABLED);
-				plane_mat->set_albedo(col);
-				plane_gizmo_color[i] = plane_mat; // needed, so we can draw planes from both sides
-				surftool->set_material(plane_mat);
-				surftool->commit(scale_plane_gizmo[i]);
-
-				Ref<SpatialMaterial> plane_mat_hl = plane_mat->duplicate();
-				plane_mat_hl->set_albedo(col.from_hsv(col.get_h(), 0.25, 1.0, 1));
-				plane_gizmo_color_hl[i] = plane_mat_hl; // needed, so we can draw planes from both sides
-			}
+			Ref<SpatialMaterial> plane_mat_hl = plane_mat->duplicate();
+			plane_mat_hl->set_albedo(col.from_hsv(col.get_h(), 0.25, 1.0, 1));
+			plane_gizmo_color_hl[i] = plane_mat_hl; // needed, so we can draw planes from both sides
 		}
 	}
 
-	_generate_selection_boxes();
-}
+	// origin indicator
+	Vector<Color> origin_colors;
+	Vector<Vector3> origin_points;
 
-void SpriteMeshEditor::_generate_selection_boxes() {
-	// Use two AABBs to create the illusion of a slightly thicker line.
-	AABB aabb(Vector3(), Vector3(1, 1, 1));
+	indicator_mat.instance();
+	indicator_mat->set_flag(SpatialMaterial::FLAG_UNSHADED, true);
+	indicator_mat->set_flag(SpatialMaterial::FLAG_ALBEDO_FROM_VERTEX_COLOR, true);
+	indicator_mat->set_flag(SpatialMaterial::FLAG_SRGB_VERTEX_COLOR, true);
+	indicator_mat->set_feature(SpatialMaterial::FEATURE_TRANSPARENT, true);
 
-	// Create a x-ray (visible through solid surfaces) and standard version of the selection box.
-	// Both will be drawn at the same position, but with different opacity.
-	// This lets the user see where the selection is while still having a sense of depth.
-	Ref<SurfaceTool> st = memnew(SurfaceTool);
-	Ref<SurfaceTool> st_xray = memnew(SurfaceTool);
+	for (int i = 0; i < 3; i++) {
+		Vector3 axis;
+		axis[i] = 1;
+		Color origin_color;
+		switch (i) {
+			case 0:
+				origin_color = get_color("axis_x_color", "Editor");
+				break;
+			case 1:
+				origin_color = get_color("axis_y_color", "Editor");
+				break;
+			case 2:
+				origin_color = get_color("axis_z_color", "Editor");
+				break;
+			default:
+				origin_color = Color();
+				break;
+		}
 
-	st->begin(Mesh::PRIMITIVE_LINES);
-	st_xray->begin(Mesh::PRIMITIVE_LINES);
-	for (int i = 0; i < 12; i++) {
-		Vector3 a, b;
-		aabb.get_edge(i, a, b);
-
-		st->add_vertex(a);
-		st->add_vertex(b);
-		st_xray->add_vertex(a);
-		st_xray->add_vertex(b);
+		origin_colors.push_back(origin_color);
+		origin_colors.push_back(origin_color);
+		origin_colors.push_back(origin_color);
+		origin_colors.push_back(origin_color);
+		origin_colors.push_back(origin_color);
+		origin_colors.push_back(origin_color);
+		// To both allow having a large origin size and avoid jitter
+		// at small scales, we should segment the line into pieces.
+		// 3 pieces seems to do the trick, and let's use powers of 2.
+		origin_points.push_back(axis * 1048576);
+		origin_points.push_back(axis * 1024);
+		origin_points.push_back(axis * 1024);
+		origin_points.push_back(axis * -1024);
+		origin_points.push_back(axis * -1024);
+		origin_points.push_back(axis * -1048576);
 	}
 
-	Ref<SpatialMaterial> mat = memnew(SpatialMaterial);
-	mat->set_flag(SpatialMaterial::FLAG_UNSHADED, true);
-	const Color selection_box_color = EDITOR_GET("editors/3d/selection_box_color");
-	mat->set_albedo(selection_box_color);
-	mat->set_feature(SpatialMaterial::FEATURE_TRANSPARENT, true);
-	st->set_material(mat);
-	selection_box = st->commit();
+	origin = RID_PRIME(VisualServer::get_singleton()->mesh_create());
+	Array d;
+	d.resize(VS::ARRAY_MAX);
+	d[VisualServer::ARRAY_VERTEX] = origin_points;
+	d[VisualServer::ARRAY_COLOR] = origin_colors;
 
-	Ref<SpatialMaterial> mat_xray = memnew(SpatialMaterial);
-	mat_xray->set_flag(SpatialMaterial::FLAG_UNSHADED, true);
-	mat_xray->set_flag(SpatialMaterial::FLAG_DISABLE_DEPTH_TEST, true);
-	mat_xray->set_albedo(selection_box_color * Color(1, 1, 1, 0.15));
-	mat_xray->set_feature(SpatialMaterial::FEATURE_TRANSPARENT, true);
-	st_xray->set_material(mat_xray);
-	selection_box_xray = st_xray->commit();
+	VisualServer::get_singleton()->mesh_add_surface_from_arrays(origin, VisualServer::PRIMITIVE_LINES, d);
+	VisualServer::get_singleton()->mesh_surface_set_material(origin, 0, indicator_mat->get_rid());
+
+	origin_instance = VisualServer::get_singleton()->instance_create2(origin, get_tree()->get_root()->get_world()->get_scenario());
+	VS::get_singleton()->instance_set_layer_mask(origin_instance, 1 << GIZMO_ORIGIN_LAYER);
+
+	VisualServer::get_singleton()->instance_geometry_set_cast_shadows_setting(origin_instance, VS::SHADOW_CASTING_SETTING_OFF);
+}
+
+void SpriteMeshEditor::_finish_indicators() {
+	if (origin_instance.is_valid()) {
+		VisualServer::get_singleton()->free(origin_instance);
+		origin_instance = RID();
+	}
+
+	if (origin.is_valid()) {
+		VisualServer::get_singleton()->free(origin);
+		origin = RID();
+	}
+}
+
+void SpriteMeshEditor::_project_settings_changed() {
+	if (get_viewport()) {
+		_project_settings_change_pending = false;
+	} else {
+		// Could not update immediately, set a pending update. This may never happen, but is included for safety
+		_project_settings_change_pending = true;
+	}
+}
+
+void SpriteMeshEditor::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("_project_settings_changed"), &SpriteMeshEditor::_project_settings_changed);
+	ClassDB::bind_method(D_METHOD("_node_removed", "node"), &SpriteMeshEditor::_node_removed);
 }
 
 SpriteMeshEditor::SpriteMeshEditor(EditorNode *p_node) {
 	editor = p_node;
+	_project_settings_change_pending = false;
 }
 
 SpriteMeshEditor::~SpriteMeshEditor() {

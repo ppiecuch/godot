@@ -127,6 +127,11 @@ static bool InvokeKey(AppRootWidget *root, unsigned int key, SPECIAL_KEY special
 	return true;
 }
 
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+
 static void key_callback(AppRootWidget *root, Ref<InputEventKey> event) {
 	MODIFIER_KEYS modifier = GetModifierKeys(event);
 	bool down = event->is_pressed() || event->is_echo();
@@ -282,6 +287,27 @@ static void scroll_callback(AppRootWidget *root, Ref<InputEventMouseButton> even
 	}
 }
 
+static void drop_callback(tb::TBWidget *root, int count, const char **files_utf8) {
+	TBWidget *target = TBWidget::hovered_widget;
+	if (!target) {
+		target = TBWidget::focused_widget;
+	}
+	if (!target) {
+		target = root;
+	}
+	if (target) {
+		TBWidgetEventFileDrop ev;
+		for (int i = 0; i < count; i++) {
+			ev.files.Add(new TBStr(files_utf8[i]));
+		}
+		target->InvokeEvent(ev);
+	}
+}
+
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
+
 // Reschedule the platform timer, or cancel it if fire_time is TB_NOT_SOON.
 // If fire_time is 0, it should be fired ASAP.
 // If force is true, it will ask the platform to schedule it again, even if
@@ -311,24 +337,8 @@ void TBSystem::RescheduleTimer(double fire_time) {
 	ReschedulePlatformTimer(fire_time, false);
 }
 
-static void drop_callback(tb::TBWidget *root, int count, const char **files_utf8) {
-	TBWidget *target = TBWidget::hovered_widget;
-	if (!target) {
-		target = TBWidget::focused_widget;
-	}
-	if (!target) {
-		target = root;
-	}
-	if (target) {
-		TBWidgetEventFileDrop ev;
-		for (int i = 0; i < count; i++) {
-			ev.files.Add(new TBStr(files_utf8[i]));
-		}
-		target->InvokeEvent(ev);
-	}
-}
 
-// Godot node
+/// Godot node
 
 void TBRootWidget::notifications(int p_what) {
 	switch (p_what) {

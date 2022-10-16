@@ -63,7 +63,7 @@ static bool _get_node_noise_modulation_value(Object *node, Ref<OpenSimplexNoise>
 			if (Node2D *node2d = Object::cast_to<Node2D>(node)) {
 				const Vector2 noise_scale = node->call("get_noise_scale");
 				const Vector2i pos = node2d->get_global_position();
-				force = noise_scale * Vector2::from_rotation(Math::map(noise->get_multi_noise_3d(pos.x / resolution, pos.y / resolution, progress), -1, 1, 0, Math_Two_PI));
+				force = noise_scale * Vector2::from_rotation(Math::map1(noise->get_multi_noise_3d(pos.x / resolution, pos.y / resolution, progress), -1, 1, 0, Math_Two_PI));
 				return true;
 			}
 		}
@@ -78,7 +78,7 @@ static bool _add_node_noise_modulation_value(Object *node, Ref<OpenSimplexNoise>
 			if (Node2D *node2d = Object::cast_to<Node2D>(node)) {
 				const Vector2 noise_scale = node2d->call("get_noise_scale");
 				const Vector2i pos = node2d->get_global_position();
-				const Vector2 force = Vector2::from_rotation(Math::map(noise->get_multi_noise_3d(pos.x / resolution, pos.y / resolution, progress), -1, 1, 0, Math_Two_PI));
+				const Vector2 force = Vector2::from_rotation(Math::map1(noise->get_multi_noise_3d(pos.x / resolution, pos.y / resolution, progress), -1, 1, 0, Math_Two_PI));
 				forces[sim_id] = noise_scale * force;
 				return true;
 			}
@@ -192,8 +192,8 @@ int SimulationController2D::get_noise_pixel_resolution() const {
 
 Vector2 SimulationController2D::get_current_noise_modulation(const Vector2 &pos) const {
 	return Vector2(
-			Math::map(_noise->get_multi_noise_3d(pos.x / noise_pixel_resolution, pos.y / noise_pixel_resolution, _time_progress), -1, 1, 0, Math_Two_PI),
-			Math::map(_noise->get_multi_noise_3d(10000 + pos.x / (2 * noise_pixel_resolution), 10000 + pos.y / (2 * noise_pixel_resolution), _time_progress), -1, 1, 0, 1));
+			Math::map1(_noise->get_multi_noise_3d(pos.x / noise_pixel_resolution, pos.y / noise_pixel_resolution, _time_progress), -1, 1, 0, Math_Two_PI),
+			Math::map1(_noise->get_multi_noise_3d(10000 + pos.x / (2 * noise_pixel_resolution), 10000 + pos.y / (2 * noise_pixel_resolution), _time_progress), -1, 1, 0, 1));
 }
 
 void SimulationController2D::simulation_progress(real_t p_delta) {

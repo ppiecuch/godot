@@ -314,14 +314,30 @@ void GDScriptFunctions::call(Function p_func, const Variant **p_args, int p_arg_
 			VALIDATE_ARG_NUM(0);
 			r_ret = Math::exp((double)*p_args[0]);
 		} break;
-		case MATH_MAP: {
+		case MATH_MAP1: {
 			VALIDATE_ARG_COUNT(5);
 			VALIDATE_ARG_NUM(0);
 			VALIDATE_ARG_NUM(1);
 			VALIDATE_ARG_NUM(2);
 			VALIDATE_ARG_NUM(3);
 			VALIDATE_ARG_NUM(4);
-			r_ret = Math::map((double)*p_args[0], (double)*p_args[1], (double)*p_args[2], (double)*p_args[3], (double)*p_args[4]);
+			r_ret = Math::map1((double)*p_args[0], (double)*p_args[1], (double)*p_args[2], (double)*p_args[3], (double)*p_args[4]);
+		} break;
+		case MATH_MAP2: {
+			VALIDATE_ARG_COUNT(6);
+			VALIDATE_ARG_NUM(0);
+			VALIDATE_ARG_NUM(1);
+			VALIDATE_ARG_NUM(2);
+			VALIDATE_ARG_NUM(3);
+			VALIDATE_ARG_NUM(4);
+			if (p_args[5]->get_type() != Variant::BOOL) {
+				r_error.error = Variant::CallError::CALL_ERROR_INVALID_ARGUMENT;
+				r_error.argument = 5;
+				r_error.expected = Variant::BOOL;
+				r_ret = Variant();
+				return;
+			}
+			r_ret = Math::map2((double)*p_args[0], (double)*p_args[1], (double)*p_args[2], (double)*p_args[3], (double)*p_args[4], (bool)*p_args[5]);
 		} break;
 		case MATH_ISNAN: {
 			VALIDATE_ARG_COUNT(1);
@@ -1448,7 +1464,8 @@ bool GDScriptFunctions::is_deterministic(Function p_func) {
 		case MATH_POW:
 		case MATH_LOG:
 		case MATH_EXP:
-		case MATH_MAP:
+		case MATH_MAP1:
+		case MATH_MAP2:
 		case MATH_ISNAN:
 		case MATH_ISINF:
 		case MATH_EASE:
@@ -1609,8 +1626,13 @@ MethodInfo GDScriptFunctions::get_info(Function p_func) {
 			mi.return_val.type = Variant::REAL;
 			return mi;
 		} break;
-		case MATH_MAP: {
-			MethodInfo mi("map", PropertyInfo(Variant::REAL, "value"), PropertyInfo(Variant::REAL, "istart"), PropertyInfo(Variant::REAL, "istop"), PropertyInfo(Variant::REAL, "ostart"), PropertyInfo(Variant::REAL, "ostop"));
+		case MATH_MAP1: {
+			MethodInfo mi("map1", PropertyInfo(Variant::REAL, "value"), PropertyInfo(Variant::REAL, "istart"), PropertyInfo(Variant::REAL, "istop"), PropertyInfo(Variant::REAL, "ostart"), PropertyInfo(Variant::REAL, "ostop"));
+			mi.return_val.type = Variant::REAL;
+			return mi;
+		} break;
+		case MATH_MAP2: {
+			MethodInfo mi("map2", PropertyInfo(Variant::REAL, "value"), PropertyInfo(Variant::REAL, "istart"), PropertyInfo(Variant::REAL, "istop"), PropertyInfo(Variant::REAL, "ostart"), PropertyInfo(Variant::REAL, "ostop"), PropertyInfo(Variant::BOOL, "clamp"));
 			mi.return_val.type = Variant::REAL;
 			return mi;
 		} break;

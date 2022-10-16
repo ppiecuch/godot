@@ -166,12 +166,18 @@ public:
 
 #include "editor/editor_plugin.h"
 
-class SpriteMeshEditor : public VBoxContainer {
-	GDCLASS(SpriteMeshEditor, VBoxContainer);
+class SpriteMeshEditor : public Control {
+	GDCLASS(SpriteMeshEditor, Control);
 
 	EditorNode *editor;
 	SpriteMesh *node;
 	EditorSelection *editor_selection;
+
+	RID origin;
+	RID origin_instance;
+	bool origin_enabled;
+
+	RID rotate_gizmo_instance[4], scale_gizmo_instance[3], scale_plane_gizmo_instance[3];
 
 	Ref<ArrayMesh> rotate_gizmo[4], scale_gizmo[3], scale_plane_gizmo[3];
 	Ref<SpatialMaterial> gizmo_color[3];
@@ -180,15 +186,33 @@ class SpriteMeshEditor : public VBoxContainer {
 	Ref<SpatialMaterial> gizmo_color_hl[3];
 	Ref<SpatialMaterial> plane_gizmo_color_hl[3];
 	Ref<ShaderMaterial> rotate_gizmo_color_hl[3];
-
-	Ref<ArrayMesh> selection_box_xray;
-	Ref<ArrayMesh> selection_box;
+	Ref<SpatialMaterial> indicator_mat;
 
 	void _init_indicators();
-	void _generate_selection_boxes();
+	void _finish_indicators();
+	void _init_gizmo_instance();
+	void _finish_gizmo_instances();
 	Color _get_color(const StringName &p_name, const StringName &p_theme_type = StringName()) const;
 
+	enum {
+		GIZMO_BASE_LAYER = 27,
+		GIZMO_ORIGIN_LAYER = 25,
+	};
+
+	bool _project_settings_change_pending;
+
+protected:
+	static void _bind_methods();
+	void _notification(int p_what);
+
+	void _project_settings_changed();
+	void _node_removed(Node *p_node);
+
 public:
+	Ref<ArrayMesh> get_rotate_gizmo(int idx) const { return rotate_gizmo[idx]; }
+	Ref<ArrayMesh> get_scale_gizmo(int idx) const { return scale_gizmo[idx]; }
+	Ref<ArrayMesh> get_scale_plane_gizmo(int idx) const { return scale_plane_gizmo[idx]; }
+
 	SpriteMeshEditor(EditorNode *p_node);
 	~SpriteMeshEditor();
 };

@@ -543,13 +543,13 @@ void flex_particle_system::update(const Vector2 &global_velocity, const Vector2 
 			p->_progress = progress;
 			if (cfg.options & PROGRESS_ALPHA) {
 				p->_progress_alpha =
-						(progress.x >= cfg.alpha_progress_start.x ? Math::map(progress.x, cfg.alpha_progress_start.x, 1, 1, 1 - cfg.alpha_change) : 1) *
-						(progress.y >= cfg.alpha_progress_start.y ? Math::map(progress.y, cfg.alpha_progress_start.y, 1, 1, 1 - cfg.alpha_change) : 1);
+						(progress.x >= cfg.alpha_progress_start.x ? Math::map1(progress.x, cfg.alpha_progress_start.x, 1, 1, 1 - cfg.alpha_change) : 1) *
+						(progress.y >= cfg.alpha_progress_start.y ? Math::map1(progress.y, cfg.alpha_progress_start.y, 1, 1, 1 - cfg.alpha_change) : 1);
 			}
 			if (cfg.options & PROGRESS_SCALE) {
 				p->_progress_scale = Vector2(
-						progress.x >= cfg.scale_progress_start.x ? Math::map(progress.x, cfg.alpha_progress_start.x, 1, 1, 1 + cfg.scale_change.x) : 1,
-						progress.y >= cfg.scale_progress_start.y ? Math::map(progress.y, cfg.alpha_progress_start.y, 1, 1, 1 + cfg.scale_change.y) : 1);
+						progress.x >= cfg.scale_progress_start.x ? Math::map1(progress.x, cfg.alpha_progress_start.x, 1, 1, 1 + cfg.scale_change.x) : 1,
+						progress.y >= cfg.scale_progress_start.y ? Math::map1(progress.y, cfg.alpha_progress_start.y, 1, 1, 1 + cfg.scale_change.y) : 1);
 				p->texture.update_size(); // update texture size
 			}
 		}
