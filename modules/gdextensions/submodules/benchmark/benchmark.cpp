@@ -49,31 +49,6 @@
 
 #include "benchmark.h"
 
-const static char *postproShaderText[] = {
-	"GRAYSCALE",
-	"POSTERIZATION",
-	"DREAM_VISION",
-	"PIXELIZER",
-	"CROSS_HATCHING",
-	"CROSS_STITCHING",
-	"PREDATOR_VIEW",
-	"SCANLINES",
-	"FISHEYE",
-	"SOBEL",
-	"BLOOM",
-	"BLUR",
-	"FXAA",
-	"NONE"
-};
-
-const static char *shaderNames[] = {
-	"PER-PIXEL LIGHTING",
-	"PER-VERTEX LIGHTING",
-	"PER-PIXEL UNTEXTURED",
-	"PER-VERTEX UNTEXTURED",
-	"FLAT COLORED"
-};
-
 const String _BULLET1 = String::chr(96);
 const String _BULLET2 = String::chr(126);
 const String _BULLET3 = String::chr(127);
@@ -87,12 +62,21 @@ const String _RB = String::chr(131);
 const String _VL = String::chr(124);
 const String _HL = String::chr(146);
 
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+
 _FORCE_INLINE_ static PoolByteArray create_poolarray(uint8_t *buf_ptr, int buf_size) {
 	PoolByteArray data;
 	data.resize(buf_size);
 	memcpy(data.write().ptr(), buf_ptr, buf_size);
 	return data;
 }
+
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 
 static Ref<BitmapFont> make_font_from_grid(const String &p_characters, int p_grid_width, int p_grid_height, const uint8_t *p_img, size_t p_img_size) {
 	Ref<BitmapFont> font(memnew(BitmapFont));
@@ -292,7 +276,7 @@ Benchmark::ModelInfo Benchmark::_make_model_from_data(const uint8_t *p_data, con
 	String fn = "user://__benchmark_" + p_name; // cache mesh
 	ResourceSaver::save(fn + ".mesh", mesh);
 
-	return ModelInfo{ p_name, mesh, {p_tex_img, p_tex_img_size}, make_texture_from_data(p_tex_img, p_tex_img_size, _get_texture_flags(), p_name), indexes_num / 3 };
+	return ModelInfo{ p_name, mesh, { p_tex_img, p_tex_img_size }, make_texture_from_data(p_tex_img, p_tex_img_size, _get_texture_flags(), p_name), indexes_num / 3 };
 }
 
 void Benchmark::_load_resources() {
