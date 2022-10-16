@@ -178,7 +178,7 @@
 
 #include "geomfonts//gd_geomfonts.h"
 
-#if defined(OSX_ENABLED) || defined(UWP_ENABLED) || defined(IPHONE_ENABLED) || defined(ANDROID_ENABLED)
+#ifdef GDEXT_IAP_ENABLED
 #include "iap/gd_iap.h"
 #endif
 
@@ -348,9 +348,7 @@ void register_gdextensions_types() {
 	Engine::get_singleton()->add_singleton(Engine::Singleton("DebugDraw", memnew(DebugDraw)));
 #endif
 #ifdef GDEXT_IAP_ENABLED
-#if defined(OSX_ENABLED) || defined(UWP_ENABLED) || defined(IPHONE_ENABLED) || defined(ANDROID_ENABLED)
 	register_iap_platform();
-#endif
 #endif // GDEXT_IAP_ENABLED
 #ifdef GDEXT_SFXR_ENABLED
 	ClassDB::register_class<AudioStreamSfxr>();
