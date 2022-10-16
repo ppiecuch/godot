@@ -205,11 +205,12 @@ git_merge() {
 	# Look up name of the incoming "theirs" branch/ref being merged in.
 	# TODO There must be a better way of doing this than relying on this reflog
 	#      action environment variable, but I don't know what it is
+	THEIRS_LABEL="theirs"
 	if [[ "$GIT_REFLOG_ACTION" = "merge "* ]]; then
 		THEIRS_LABEL=$(echo "$GIT_REFLOG_ACTION" | awk '{print $2}')
-	fi
-	if [[ ! "$THEIRS_LABEL" ]]; then
-		THEIRS_LABEL="theirs"
+		if [[ ! "$THEIRS_LABEL" ]]; then
+			THEIRS_LABEL="theirs"
+		fi
 	fi
 	# Decrypt BASE $1, LOCAL $2, and REMOTE $3 versions of file being merged
 	echo "$(cat "$1" | "${TRANSCRYPT_PATH}" smudge)" >"$1"

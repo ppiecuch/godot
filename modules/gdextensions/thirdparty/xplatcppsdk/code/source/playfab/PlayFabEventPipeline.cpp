@@ -213,8 +213,6 @@ namespace PlayFab
 
     void PlayFabEventPipeline::WorkerThread()
     {
-        using clock = std::chrono::steady_clock;
-
         while (this->isWorkerThreadRunning)
         {
             bool hasMoreWorkToProcess = DoWork();
