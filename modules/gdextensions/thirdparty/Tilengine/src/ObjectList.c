@@ -146,11 +146,18 @@ static void* handler(SimpleXmlParser parser, SimpleXmlEvent evt,
 	return handler;
 }
 
-#ifndef GD_NO_UNUSED_FUNCTIONS
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+
 static bool intersetcs(rect_t* rect1, rect_t* rect2)
 {
 	return !(rect1->x2 < rect2->x1 || rect1->x1 > rect2->x2 || rect1->y2 < rect2->y1 || rect1->y1 > rect2->y2);
 }
+
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
 #endif
 
 /*!

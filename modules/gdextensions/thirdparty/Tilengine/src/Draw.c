@@ -744,7 +744,12 @@ static bool DrawScalingSpriteScanline (int nsprite, int nscan)
 }
 
 /* Experimental WIP: blit pre-rotated sprite */
-#ifndef GD_NO_UNUSED_FUNCTIONS
+
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+
 static bool DrawSpriteScanlineRotation(int nsprite, int nscan)
 {
 	int w;
@@ -800,7 +805,9 @@ static bool DrawSpriteScanlineRotation(int nsprite, int nscan)
 	}
 	return true;
 }
-#endif // GD_NO_UNUSED_FUNCTIONS
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 
 /* updates per-pixel sprite collision buffer */
 static void DrawSpriteCollision (int nsprite, uint8_t *srcpixel, uint16_t *dstpixel, int width, int dx)
