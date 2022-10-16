@@ -216,6 +216,11 @@ if is_enabled("environment/waterfall"):
     if env["tools"]:
         env_module.Append(CPPDEFINES=["HAVE_PARTICLES_SIZE_S", "HAVE_PARTICLES_SIZE_M", "HAVE_PARTICLES_SIZE_L"])
 
+if is_enabled("environment/spider_anim"):
+    if secret("submodules/environment/spider_anim/spider.cpp"):
+        print("(GDextensions) Spider animation is not available")
+        env["enable_gdextensions_submodules"].remove("environment/spider_anim")
+
 ignore = []
 if env["platform"] == "3ds" or env["platform"] == "psp":
     ignore += ["submodules/visual/heatmap.cpp"]
