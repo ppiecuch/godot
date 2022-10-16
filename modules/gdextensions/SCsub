@@ -330,7 +330,7 @@ if is_enabled("media/"):
         else:
             print("(GDextensions) FFmpeg is not supported on platform '%s'." % env["platform"])
             modules.remove("media/ffmpeg")
-        if is_enabled("media/ffmpeg") && "media/ffmpeg" in modules:
+        if is_enabled("media/ffmpeg") and "media/ffmpeg" in modules:
             env_module.Append(CPPPATH=[os.path.dirname(os.path.realpath(os.curdir)) + "/gdnative/include"])
 
 if is_enabled("tileengine"):
