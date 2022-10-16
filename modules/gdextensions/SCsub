@@ -219,7 +219,7 @@ if is_enabled("environment/waterfall"):
 if is_enabled("environment/spider_anim"):
     if secret("submodules/environment/spider_anim/spider.cpp"):
         print("(GDextensions) Spider animation is not available")
-        env["enable_gdextensions_submodules"].remove("environment/spider_anim")
+        modules.remove("environment/spider_anim")
 
 ignore = []
 if env["platform"] == "3ds" or env["platform"] == "psp":
@@ -329,8 +329,8 @@ if is_enabled("media/"):
             env.Append(LIBPATH=[os.path.realpath(os.curdir) + "/thirdparty/media/ffmpeg/vita/%s/lib" % arch])
         else:
             print("(GDextensions) FFmpeg is not supported on platform '%s'." % env["platform"])
-            env["enable_gdextensions_submodules"].remove("media/ffmpeg")
-        if is_enabled("media/ffmpeg"):
+            modules.remove("media/ffmpeg")
+        if is_enabled("media/ffmpeg") and "media/ffmpeg" in modules:
             env_module.Append(CPPPATH=[os.path.dirname(os.path.realpath(os.curdir)) + "/gdnative/include"])
 
 if is_enabled("tileengine"):

@@ -121,8 +121,8 @@ static Ref<BitmapFont> make_font_from_grid(const String &p_characters, int p_gri
 	return font;
 }
 
-static Ref<Texture> make_texture_from_data(const uint8_t *p_data, size_t p_data_len, const String &p_name) {
-	String fn = "user://__benchmark_" + p_name; // cached texture
+static Ref<Texture> make_texture_from_data(const uint8_t *p_data, size_t p_data_len, int p_flags, const String &p_name) {
+	String fn = "user://__benchmark_" + String::num(p_flags) + "_" + p_name; // cached texture
 	if (ResourceLoader::exists(fn + ".tex")) {
 		Ref<Texture> texture = ResourceLoader::load(fn + ".tex", "Texture");
 		return texture;
@@ -133,7 +133,7 @@ static Ref<Texture> make_texture_from_data(const uint8_t *p_data, size_t p_data_
 
 		Ref<Image> image = memnew(Image(p_data, p_data_len));
 		Ref<ImageTexture> texture = memnew(ImageTexture);
-		texture->create_from_image(image);
+		texture->create_from_image(image, p_flags);
 
 		ResourceSaver::save(fn + ".tex", texture);
 
@@ -217,6 +217,17 @@ RID Benchmark::_create_instance_from_model(const ModelInfo &p_model) {
 	return mesh_instance;
 }
 
+int Benchmark::_get_texture_flags() {
+	int texture_opts = 0;
+	if (opts[OPTION_MIPMAPING]) {
+		texture_opts += Texture::FLAG_MIPMAPS;
+	}
+	if (opts[OPTION_LINEAR_FILTERING]) {
+		texture_opts += Texture::FLAG_FILTER;
+	}
+	return texture_opts;
+}
+
 Benchmark::ModelInfo Benchmark::_make_model_from_data(const uint8_t *p_data, const uint8_t *p_tex_img, size_t p_tex_img_size, const String &p_name) {
 	const uint32_t verts_num = *(uint32_t *)p_data;
 	struct _vert_t {
@@ -281,7 +292,7 @@ Benchmark::ModelInfo Benchmark::_make_model_from_data(const uint8_t *p_data, con
 	String fn = "user://__benchmark_" + p_name; // cache mesh
 	ResourceSaver::save(fn + ".mesh", mesh);
 
-	return ModelInfo{ mesh, make_texture_from_data(p_tex_img, p_tex_img_size, p_name), indexes_num / 3 };
+	return ModelInfo{ p_name, mesh, {p_tex_img, p_tex_img_size}, make_texture_from_data(p_tex_img, p_tex_img_size, _get_texture_flags(), p_name), indexes_num / 3 };
 }
 
 void Benchmark::_load_resources() {
@@ -434,8 +445,13 @@ void Benchmark::_notification(int p_notification) {
 			static float _plot_update = 0;
 			const float delta = get_process_delta_time();
 			if (_dirty) {
+				if (!models[curr_model].tex) { // rebuild texture
+					make_texture_from_data(models[curr_model].tex_data.data, models[curr_model].tex_data.size, _get_texture_flags(), models[curr_model].name);
+				}
 				_check_instances();
-				//model_mat->set_flag(SpatialMaterial::FLAG_UNSHADED, flag_unshaded);
+				model_mat->set_cull_mode(opts[OPTION_CULLING] ? SpatialMaterial::CULL_BACK : SpatialMaterial::CULL_DISABLED);
+				model_mat->set_flag(SpatialMaterial::FLAG_UNSHADED, opts[OPTION_UNSHADED]);
+				model_mat->set_flag(SpatialMaterial::FLAG_DISABLE_DEPTH_TEST, !opts[OPTION_DEPTHTEST]);
 				model_mat->set_texture(SpatialMaterial::TEXTURE_ALBEDO, models[curr_model].tex);
 				if (_stats_label) {
 					_stats_label->set_visible(opts[OPTION_STATS]);
@@ -515,6 +531,12 @@ void Benchmark::set_option(int p_opt, bool p_state) {
 	ERR_FAIL_INDEX(p_opt, NUM_OPTIONS);
 	if (opts[p_opt] != p_state) {
 		opts[p_opt] = p_state;
+		if (p_opt == OPTION_LINEAR_FILTERING || p_opt == OPTION_MIPMAPING) {
+			// rebuild texture for models
+			for (int m = 0; m < NUM_MODEL_TYPES; m++) {
+				models[m].tex = Ref<Texture>();
+			}
+		}
 		_dirty = true;
 	}
 }
@@ -554,7 +576,7 @@ void Benchmark::_bind_methods() {
 Benchmark::Benchmark() {
 	_dirty = true;
 	_stats_label = nullptr;
-	_monitors[Performance::TIME_FPS] = nullptr;
+	_monitors[Performance::TIME_FPS] = _monitors[Performance::MEMORY_STATIC] = nullptr;
 	_stats_text_size = Size2(0, 0);
 	plot_hist_size = 100;
 	plot_buf_index = 0;
@@ -565,9 +587,10 @@ Benchmark::Benchmark() {
 	camera_distance = 0, camera_yaw = 0;
 
 	opts[OPTION_STATS] = true;
+	opts[OPTION_LINEAR_FILTERING] = true;
+	opts[OPTION_DEPTHTEST] = true;
 
 	model_mat = newref(SpatialMaterial);
-	model_mat->set_cull_mode(SpatialMaterial::CULL_DISABLED);
 
 	set_process_internal(true);
 }

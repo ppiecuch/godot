@@ -111,7 +111,12 @@ private:
 
 	// Models info
 	struct ModelInfo {
+		String name;
 		Ref<Mesh> mesh;
+		struct {
+			const uint8_t *data;
+			size_t size;
+		} tex_data; // for texture rebuilding
 		Ref<Texture> tex;
 		uint32_t tris;
 	};
@@ -122,6 +127,7 @@ private:
 	Vector<std::pair<RID, int>> instances;
 
 	RID _create_instance_from_model(const ModelInfo &info);
+	int _get_texture_flags();
 	ModelInfo _make_model_from_data(const uint8_t *p_data, const uint8_t *p_tex_img, size_t p_tex_img_size, const String &p_name);
 	String _get_stats();
 	void _load_resources();
