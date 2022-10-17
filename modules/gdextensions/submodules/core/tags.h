@@ -33,7 +33,8 @@
 
 // https://github.com/WindyDarian/godot_module_w/blob/master/w.lib.cpp
 
-#pragma once
+#ifndef COMMON_TAGS_H
+#define COMMON_TAGS_H
 
 #include "core/math/quat.h"
 #include "core/object.h"
@@ -44,28 +45,24 @@ class Tags : public Object {
 	GDCLASS(Tags, Object);
 
 	static Tags *singleton;
+	tags_impl_t *impl;
 
 protected:
 	static void _bind_methods();
 
 public:
-	/** Register a new tag. */
-	void define_tag(const String &tag_name);
-	/** Get tag as int from name. */
-	int get_tag(const String &tag_name);
-	/**
-	** Test if tag a match tag b.
-	** returns true if a is same or derived from b
-	** a "foo.bar" matches b "foo"
-	** a "foo" does NOT match b "foo.bar"
-	*/
+	void define_tag(const String &tag_name); // Register a new tag.
+	int get_tag(const String &tag_name); // Get tag as int from name.
+	// Test if tag a match tag b.
+	// returns true if a is same or derived from b
+	// a "foo.bar" matches b "foo"
+	// a "foo" does NOT match b "foo.bar"
 	bool match_tag(int a, int b);
 
 	static Tags *get_singleton() { return singleton; };
 
 	Tags();
 	virtual ~Tags();
-
-private:
-	tags_impl_t *impl;
 };
+
+#endif // COMMON_TAGS_H

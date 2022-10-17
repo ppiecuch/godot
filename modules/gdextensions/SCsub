@@ -33,7 +33,7 @@ def secret(path):
 
 env_module = env_modules.Clone()
 
-sources = Glob("*.cpp") + Glob("common/*.cpp")
+sources = Glob("*.cpp") + Glob("common/*.cpp")  # Always build common
 
 modules = [
     "core",

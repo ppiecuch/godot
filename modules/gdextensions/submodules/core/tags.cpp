@@ -39,14 +39,11 @@ const int k_tag_segment_bits = 8;
 const int k_tag_max_segments = 4;
 
 class tags_impl_t {
-	/* Internal data of module. Currently mainly used for a tag system (inspired from Unreal's gameplay tag system). */
+	// Internal data of module. Currently mainly used for a tag system (inspired from Unreal's gameplay tag system).
 public:
 	Dictionary tag_dictionary; // String to array [int tag_id, int next available segment sub id from 1]
 	int next_root_tag_id = 1; // Initialize to 1 so 0 is a "null" option
-	/*
-	** Tag ID: a.b.c.d has ddccbbaa order! children always take most significant bits.
-	*/
-
+	// Tag ID: a.b.c.d has ddccbbaa order! children always take most significant bits.
 	void define_tag(const String &tag_name);
 	tag_t get_tag(const String &tag_name);
 	bool match_tag(tag_t a, tag_t b);

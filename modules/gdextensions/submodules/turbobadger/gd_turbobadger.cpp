@@ -337,7 +337,6 @@ void TBSystem::RescheduleTimer(double fire_time) {
 	ReschedulePlatformTimer(fire_time, false);
 }
 
-
 /// Godot node
 
 void TBRootWidget::notifications(int p_what) {

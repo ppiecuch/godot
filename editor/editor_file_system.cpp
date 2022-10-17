@@ -2005,6 +2005,7 @@ bool EditorFileSystem::_should_skip_directory(const String &p_path) {
 	}
 
 	if (FileAccess::exists(p_path.plus_file(".gdignore"))) { // skip if a `.gdignore` file is inside this
+		print_verbose("Skip " + p_path + " because of .gdignore exists");
 		return true;
 	}
 
