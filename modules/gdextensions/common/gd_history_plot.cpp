@@ -167,7 +167,6 @@ void GdHistoryPlot::refill_grid_mesh(const Rect2 &p_frame) {
 void GdHistoryPlot::refill_plot_mesh(MeshInfo &mesh, std::deque<real_t> &vals) {
 	mesh.clear();
 	PoolVector2Array data;
-	data.resize(max_history * 2);
 	for (size_t i = 0; i < vals.size(); i += draw_skip) {
 		data.push_back(Vector2(i, vals[i]));
 	}
@@ -206,18 +205,18 @@ void GdHistoryPlot::draw(const Rect2 &p_frame) {
 	real_t plot_low = 0, plot_high = 0;
 
 	switch (range_mode) {
-		case RANGE_MANUAL:
+		case RANGE_MANUAL: {
 			plot_low = manual_lowest;
 			plot_high = manual_highest;
-			break;
-		case RANGE_LOWER_FIXED:
+		} break;
+		case RANGE_LOWER_FIXED: {
 			plot_low = manual_lowest;
 			plot_high = highest;
-			break;
-		case RANGE_AUTOMATIC:
+		} break;
+		case RANGE_AUTOMATIC: {
 			plot_low = lowest;
 			plot_high = highest;
-			break;
+		} break;
 	}
 
 	const bool needs_grid = (rc != prev_rect);
@@ -239,7 +238,7 @@ void GdHistoryPlot::draw(const Rect2 &p_frame) {
 		}
 		if (draw_numerical_info) {
 			const real_t cval = have_data ? *values.rbegin() : 0;
-			String text = have_data ? vformat("%s \x12%s \x14%s", humanize_string ? String::humanize_size(cval) : String::num(cval, precision), humanize_string ? String::humanize_size(plot_high) : String::num(plot_high, precision), String::num(plot_low, precision))
+			String text = have_data ? vformat("%s \x12%s \x14%s", humanize_string ? String::humanize_size(cval) : String::num(cval, precision), humanize_string ? String::humanize_size(plot_high) : String::num(plot_high, precision), humanize_string ? String::humanize_size(plot_low) : String::num(plot_low, precision))
 									: vformat("\x12%s \x14%s", humanize_string ? String::humanize_size(plot_high) : String::num(plot_high, precision), humanize_string ? String::humanize_size(plot_low) : String::num(plot_low, precision));
 			Size2 text_size = _size_vec_text(text, text_scale);
 			_draw_vec_text(text, Point2(rc.position.x + rc.size.width - text_size.width, VECFONT_HEIGHT * text_scale.y), text_scale);
@@ -275,12 +274,13 @@ void GdHistoryPlot::draw(const Rect2 &p_frame) {
 		Transform2D draw_xform;
 		const real_t plot_values_range = plot_high - plot_low;
 		const real_t yscale = (rc.size.height - 1) / plot_values_range;
+		const real_t xscale = rc.size.width / max_history;
 		if (draw_from_right) {
 			draw_xform.translate(rc.size.width, 0);
 			draw_xform.scale(Vector2(-1, 1));
 		}
-		draw_xform.scale(Vector2(rc.size.width / max_history, -yscale));
-		draw_xform.translate(rc.position.x, rc.position.y - (rc.size.height + (respect_borders ? (VECFONT_HEIGHT * text_scale.y) : 0) - 1) / yscale); // bottom-left origin
+		draw_xform.scale(Vector2(xscale, -yscale));
+		draw_xform.translate(rc.position.x / xscale, (rc.position.y - (rc.size.height + (respect_borders ? (VECFONT_HEIGHT * text_scale.y) : 0))) / yscale); // bottom-left origin
 		draw_xform.translate(0, -plot_low);
 		if (show_smoothed_plot) {
 			draw_mesh(plot_mesh.m, Ref<Texture>(), Ref<Texture>(), Ref<Texture>(), draw_xform, Color(line_color.r * 0.25, line_color.g * 0.25, line_color.b * 0.25, line_color.a));

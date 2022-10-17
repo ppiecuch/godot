@@ -453,27 +453,27 @@ void Benchmark::_notification(int p_notification) {
 					(Engine::get_singleton()->is_editor_hint() ? real_t(ProjectSettings::get_singleton()->get("display/window/size/width")) : get_viewport()->get_size().width) - stats_size.width - 2, _monitor_height);
 			_plot_update += delta;
 			if (_monitors[Performance::TIME_FPS]) {
-				static float _accum = 0;
-				static int _accum_count = 0;
+				static real_t _accum0 = 0;
+				static int _accum_count0 = 0;
 				_monitors[Performance::TIME_FPS]->set_size(_monitor_size);
 				_monitors[Performance::TIME_FPS]->set_position(Point2(stats_size.width, _monitor_space));
-				_accum += Performance::get_singleton()->get_monitor(Performance::TIME_FPS);
-				_accum_count++;
+				_accum0 += Performance::get_singleton()->get_monitor(Performance::TIME_FPS);
+				_accum_count0++;
 				if (_plot_update > 0.5) {
-					_monitors[Performance::TIME_FPS]->add_sample(_accum / _accum_count);
-					_accum = _accum_count = 0;
+					_monitors[Performance::TIME_FPS]->add_sample(_accum0 / _accum_count0);
+					_accum0 = _accum_count0 = 0;
 				}
 			}
 			if (_monitors[Performance::MEMORY_STATIC]) {
-				static float _accum = 0;
-				static int _accum_count = 0;
+				static real_t _accum1 = 0;
+				static int _accum_count1 = 0;
 				_monitors[Performance::MEMORY_STATIC]->set_size(_monitor_size);
 				_monitors[Performance::MEMORY_STATIC]->set_position(Point2(stats_size.width, _monitor_height + 2 * _monitor_space));
-				_accum += Performance::get_singleton()->get_monitor(Performance::MEMORY_STATIC);
-				_accum_count++;
+				_accum1 += Performance::get_singleton()->get_monitor(Performance::MEMORY_STATIC);
+				_accum_count1++;
 				if (_plot_update > 0.5) {
-					_monitors[Performance::MEMORY_STATIC]->add_sample(_accum / _accum_count);
-					_accum = _accum_count = 0;
+					_monitors[Performance::MEMORY_STATIC]->add_sample(_accum1 / _accum_count1);
+					_accum1 = _accum_count1 = 0;
 				}
 			}
 			if (_plot_update > 0.5) {
