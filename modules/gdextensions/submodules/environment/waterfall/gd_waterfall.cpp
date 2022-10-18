@@ -171,12 +171,19 @@ void GdWaterfall::_build_particles() {
 			_particles.push_back(flex_particle(opts));
 		}
 	}
-	{ // bottom splash on layer 3
+	{ // TODO: bottom splash on layer 3
 		const real_t dim = particle_radius * 2;
 		const int num = _splash_spread_factor[waterfall_splash_spread] * view_rect.size.width / dim * _splash_height_factor[waterfall_splash_height] * view_rect.size.height / dim;
 		print_verbose("  layer 3: " + String::num(num) + " particles.");
 		auto points = _get_samples(num, 2, 3, view_rect.grow_individual(-dim / 2, 0, -dim / 2, 0));
 		for (const Point2 &p : points) {
+			const Vector2 pos(p.x, p.y);
+			const Vector2 velocity(0, _default_velocity_2);
+			const real_t damping = -1;
+			const real_t alpha = _default_alpha_2;
+			const Ref<Texture> texture = textures_quality == NO_TEXTURES ? nullptr : _cache[textures_quality][WATERFALL_PARTICLE_CLOUD2];
+			flex_particle_options opts(LAYER3_BOTTOM, pos, velocity, dim, damping, alpha, texture);
+			_particles.push_back(flex_particle(opts));
 		}
 	}
 	for (int p = 0; p < _particles.size(); p++) {
