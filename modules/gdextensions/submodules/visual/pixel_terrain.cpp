@@ -38,7 +38,8 @@
 #define ftrunc(a) ((a) >> 16)
 #define height(h, d) ((((h)-128) * (32) / (d)) + 100)
 
-template<class T> void _ignore_( const T& ) { }
+template <class T>
+void _ignore_(const T &) {}
 
 // 60 degree vision, or pi/3-- (pi/3)/320 (320 v.lines on screen)
 // this is set for 1280x200 rendering view.

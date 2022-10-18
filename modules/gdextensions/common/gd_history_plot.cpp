@@ -561,9 +561,12 @@ PoolColorArray GdHistoryPlot::get_color_from_palette(int pal, int num_colors) {
 		case 11:
 		case 12: {
 			switch (pal) {
-				case PAL_WARM: return pool_from_data(warm[num_colors - 1], num_colors);
-				case PAL_COOL: return pool_from_data(cool[num_colors - 1], num_colors);
-				case PAL_NEON: return pool_from_data(neon[num_colors - 1], num_colors);
+				case PAL_WARM:
+					return pool_from_data(warm[num_colors - 1], num_colors);
+				case PAL_COOL:
+					return pool_from_data(cool[num_colors - 1], num_colors);
+				case PAL_NEON:
+					return pool_from_data(neon[num_colors - 1], num_colors);
 				default: {
 					WARN_PRINT("Undefined palette");
 					return PoolColorArray();

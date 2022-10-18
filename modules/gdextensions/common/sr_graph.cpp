@@ -592,9 +592,12 @@ unsigned *sr_palette(int pal, int num_colors) {
 		case 11:
 		case 12: {
 			switch (pal) {
-				case pal_warm: return warm[num_colors - 1];
-				case pal_cool: return cool[num_colors - 1];
-				case pal_neon: return neon[num_colors - 1];
+				case pal_warm:
+					return warm[num_colors - 1];
+				case pal_cool:
+					return cool[num_colors - 1];
+				case pal_neon:
+					return neon[num_colors - 1];
 				default: {
 					WARN_PRINT("Undefined palette");
 					return nullptr;
