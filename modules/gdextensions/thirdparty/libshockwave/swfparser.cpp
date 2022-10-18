@@ -11,6 +11,8 @@ using namespace SWF;
 # include "lzma/LzmaLib.h"
 #endif
 
+template<class T> void _ignore_( const T& ) { }
+
 SWF::Error Parser::parse_swf_data(const uint8_t *data, uint32_t bytes, const char *password)
 {
 	if(!data)
@@ -164,8 +166,8 @@ SWF::Error Parser::tag_loop(Stream *swfstream, Sprite *sprite)
 				bool placeflaghasmatrix = swfstream->readUB(1);
 				bool placeflaghascharacter = swfstream->readUB(1);
 				/* bool placeflagmove = */ swfstream->readUB(1);
-				bool placeflagopaquebackground = false,	placeflaghasvisible = false,	placeflaghasimage = false,
-					placeflaghasclassname = false,	placeflaghascacheasbitmap = false,	placeflaghasblendmode = false,
+				bool placeflagopaquebackground = false, placeflaghasvisible = false, placeflaghasimage = false,
+					placeflaghasclassname = false, placeflaghascacheasbitmap = false, placeflaghasblendmode = false,
 					placeflaghasfilterlist = false;
 				if (rh.tag==TagType::PlaceObject3) {
 					placeflagopaquebackground = swfstream->readUB(1);
@@ -176,39 +178,42 @@ SWF::Error Parser::tag_loop(Stream *swfstream, Sprite *sprite)
 					placeflaghasblendmode = swfstream->readUB(1);
 					placeflaghasfilterlist = swfstream->readUB(1);
 				}
+				_ignore_(placeflagopaquebackground);
 
 				uint16_t depth = swfstream->readUI16();
-				const char *name = NULL;
-				if(rh.tag==TagType::PlaceObject3 && (placeflaghasclassname || (placeflaghasimage && placeflaghascharacter)))
+				const char *name = nullptr;
+				if (rh.tag==TagType::PlaceObject3 && (placeflaghasclassname || (placeflaghasimage && placeflaghascharacter)))
 					name = swfstream->readSTRING();
+				_ignore_(name);
 				uint16_t characterid = 0;
 				Matrix matrix;
 				CXForm colourxform;
-				if(placeflaghascharacter)		characterid = swfstream->readUI16();
-				if(placeflaghasmatrix)			matrix = swfstream->readMATRIX();
-				if(placeflaghascolourtransform)	colourxform = swfstream->readCXFORMWITHALPHA();
-				if(placeflaghasratio)			swfstream->readUI16();
-				if(placeflaghasname)			swfstream->readSTRING();
-				if(placeflaghasclipdepth)		swfstream->readUI16();
-				if(rh.tag==TagType::PlaceObject3) {
-					if(placeflaghasfilterlist)		swfstream->readFILTERLIST();
-					if(placeflaghasblendmode)		swfstream->readUI8();
-					if(placeflaghascacheasbitmap)	swfstream->readUI8();
-					if(placeflaghasvisible)			swfstream->readUI8();
-					if(placeflaghasvisible)			swfstream->readRGBA();
+				if (placeflaghascharacter) characterid = swfstream->readUI16();
+				if (placeflaghasmatrix) matrix = swfstream->readMATRIX();
+				if (placeflaghascolourtransform) colourxform = swfstream->readCXFORMWITHALPHA();
+				if (placeflaghasratio) swfstream->readUI16();
+				if (placeflaghasname) swfstream->readSTRING();
+				if (placeflaghasclipdepth) swfstream->readUI16();
+				if (rh.tag==TagType::PlaceObject3) {
+					if (placeflaghasfilterlist) swfstream->readFILTERLIST();
+					if (placeflaghasblendmode) swfstream->readUI8();
+					if (placeflaghascacheasbitmap) swfstream->readUI8();
+					if (placeflaghasvisible) swfstream->readUI8();
+					if (placeflaghasvisible) swfstream->readRGBA();
 				}
-				//if(placeflaghasclipactions)		swfstream->readCLIPACTIONS();
+				// if(placeflaghasclipactions) swfstream->readCLIPACTIONS();
+				_ignore_(characterid);
 
 				if (placeflaghascharacter) {
 					DisplayChar character;
 					character.id = characterid;
 					currentdisplaystack[depth] = character;
 				}
-				if(placeflaghasmatrix)			currentdisplaystack[depth].transform = matrix;
-				if(placeflaghascolourtransform)	currentdisplaystack[depth].colourtransform = colourxform;
+				if (placeflaghasmatrix) currentdisplaystack[depth].transform = matrix;
+				if (placeflaghascolourtransform) currentdisplaystack[depth].colourtransform = colourxform;
 
 				readlength = (swfstream->get_pos()-readlength);
-				if ((rh.length-readlength)>0)	swfstream->skipBytes(rh.length-readlength);
+				if ((rh.length-readlength)>0) swfstream->skipBytes(rh.length-readlength);
 				break;
 			}
 			case TagType::RemoveObject:
@@ -218,6 +223,7 @@ SWF::Error Parser::tag_loop(Stream *swfstream, Sprite *sprite)
 				if (rh.tag==TagType::RemoveObject)	characterid = swfstream->readUI16();
 				uint16_t depth = swfstream->readUI16();
 				currentdisplaystack.erase(depth);
+				_ignore_(characterid);
 				break;
 			}
 			case TagType::DefineSceneAndFrameLabelData:
@@ -259,6 +265,7 @@ SWF::Error Parser::tag_loop(Stream *swfstream, Sprite *sprite)
 				getbits = swfstream->readBits(1);			// UseNetwork
 				for(int i=1; i<rh.length; i++)				// Reserved bytes
 					getbits = swfstream->readUI8();
+				_ignore_(getbits);
 				break;
 			}
 			case TagType::Protect:

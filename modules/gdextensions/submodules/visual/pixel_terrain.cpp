@@ -38,6 +38,8 @@
 #define ftrunc(a) ((a) >> 16)
 #define height(h, d) ((((h)-128) * (32) / (d)) + 100)
 
+template<class T> void _ignore_( const T& ) { }
+
 // 60 degree vision, or pi/3-- (pi/3)/320 (320 v.lines on screen)
 // this is set for 1280x200 rendering view.
 // 320*4 = 1280 width
@@ -85,8 +87,8 @@ void renderframe(Ref<Image> dbl, Ref<Image> map, Ref<Image> cm, int px, int py, 
 			// This used to have ray acceleration to speed it up, but it flickered and I think
 			// modern computers can handle this no problem (it will run on a 486 this way still).
 
-			rx += rcos;
-			ry += rsin;
+			rx += rcos * rspeed;
+			ry += rsin * rspeed;
 			rdist++;
 
 			const int frx = ftrunc(rx);
@@ -108,6 +110,8 @@ void renderframe(Ref<Image> dbl, Ref<Image> map, Ref<Image> cm, int px, int py, 
 			}
 		}
 	}
+	_ignore_(ldist);
+	_ignore_(cz);
 }
 
 void PixelTerrain::_notification(int p_what) {
