@@ -299,8 +299,10 @@ if is_enabled("slugfont"):
     if secret("submodules/slugfont/ts_slug.cpp") and secret("submodules/slugfont/ts_slug.h"):
         print("(GDextensions) SlugFont is not available")
         env["enable_gdextensions_submodules"].remove("slugfont")
-    elif is_gcc:
-        env_module.Append(CPPFLAGS=["-Wno-multichar", "-Wno-array-bounds"])
+    else:
+        env_module.Append(CPPPATH=["thirdparty/slugfont"])
+        if is_gcc:
+            env_module.Append(CPPFLAGS=["-Wno-multichar", "-Wno-array-bounds"])
 
 if is_enabled("media/"):
     env_module.Append(CPPPATH=["thirdparty/media"])

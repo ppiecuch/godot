@@ -18,4 +18,4 @@ thirdparty/* linguist-vendored
 
 modules/gdextensions/submodules/environment/spider_anim/spider.cpp filter=crypt diff=crypt merge=crypt
 modules/gdextensions/submodules/iap/** filter=crypt diff=crypt merge=crypt
-modules/gdextensions/submodules/slugfont/** filter=crypt diff=crypt merge=crypt
+modules/gdextensions/thirdparty/slugfont/** filter=crypt diff=crypt merge=crypt
