@@ -534,7 +534,7 @@ static void _sr_draw(CanvasItem *canvas, _sr_graph *graph, Size2 frame) {
 	canvas->draw_mesh(graph->_mesh, Ref<Texture>(), Ref<Texture>(), Ref<Texture>(), Transform2D().translated(Vector2(1, 1)).scaled(frame)); // draw everything
 }
 
-// get color from palette: warm, cool or neon.
+// get rgb color from palette: warm, cool or neon.
 unsigned *sr_palette(int pal, int num_colors) {
 	static unsigned warm[][12] = {
 		{ 0xfdb25f },
@@ -578,66 +578,34 @@ unsigned *sr_palette(int pal, int num_colors) {
 		{ 0xffcbae, 0xfba6a2, 0xf68294, 0xf25e89, 0xd64a87, 0xad3e8c, 0x853491, 0x632c8c, 0x512472, 0x3f1b59, 0x2d133f },
 		{ 0xffcbae, 0xfbaaa3, 0xf78997, 0xf3688c, 0xe54f85, 0xbf4489, 0x9c398d, 0x753193, 0x5e2985, 0x4d226d, 0x3d1a57, 0x2d133f }
 	};
-	switch (pal) {
-		case pal_warm: {
-			switch (num_colors) {
-				case 1:
-				case 2:
-				case 3:
-				case 4:
-				case 5:
-				case 6:
-				case 7:
-				case 8:
-				case 9:
-				case 10:
-				case 11:
-				case 12:
-					return warm[num_colors];
-				default:
-					return 0;
+	switch (num_colors) {
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+		case 6:
+		case 7:
+		case 8:
+		case 9:
+		case 10:
+		case 11:
+		case 12: {
+			switch (pal) {
+				case pal_warm: return warm[num_colors - 1];
+				case pal_cool: return cool[num_colors - 1];
+				case pal_neon: return neon[num_colors - 1];
+				default: {
+					WARN_PRINT("Undefined palette");
+					return nullptr;
+				}
 			}
 		} break;
-		case pal_cool: {
-			switch (num_colors) {
-				case 1:
-				case 2:
-				case 3:
-				case 4:
-				case 5:
-				case 6:
-				case 7:
-				case 8:
-				case 9:
-				case 10:
-				case 11:
-				case 12:
-					return cool[num_colors];
-				default:
-					return 0;
-			}
-		} break;
-		case pal_neon: {
-			switch (num_colors) {
-				case 1:
-				case 2:
-				case 3:
-				case 4:
-				case 5:
-				case 6:
-				case 7:
-				case 8:
-				case 9:
-				case 10:
-				case 11:
-				case 12:
-					return neon[num_colors];
-				default:
-					return 0;
-			}
-		} break;
+		default: {
+			WARN_PRINT("Undefined palette");
+			return nullptr;
+		}
 	}
-	return 0;
 }
 
 /// Godot Control

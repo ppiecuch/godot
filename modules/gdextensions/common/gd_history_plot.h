@@ -45,10 +45,11 @@
 class GdHistoryPlot : public Control {
 	GDCLASS(GdHistoryPlot, Control);
 
+public:
 	enum RangeMode {
 		RANGE_MANUAL,
 		RANGE_LOWER_FIXED,
-		RANGE_AUTOMATIC
+		RANGE_AUTOMATIC,
 	};
 
 	enum PaletteColor {
@@ -57,6 +58,7 @@ class GdHistoryPlot : public Control {
 		PAL_NEON,
 	};
 
+private:
 	typedef struct _MeshInfo {
 		Ref<ArrayMesh> m;
 		bool _dirty;
@@ -145,13 +147,15 @@ public:
 	void set_title_label(String p_label);
 	String get_title_label() const;
 
-	void set_range(real_t low, real_t high); // plot range is manually set
-	void set_lower_range(real_t low); // low is fixed, high is auto
+	void set_range(real_t p_low, real_t p_high); // plot range is manually set
+	void set_lower_range(real_t p_low); // low is fixed, high is auto
 	void set_range_auto(); // low and high range of the plot is auto-calculated
 	real_t get_lower_range() const;
 	real_t get_higer_range() const;
-	void set_auto_range_shrinks_back(bool shrink); // is the range allowed to shrink?
-	int get_range_mode() const;
+	void set_auto_range_shrinks_back(bool p_shrink); // is the range allowed to shrink?
+	RangeMode get_range_mode() const;
+	void set_auto_recalc_interval(int p_interval);
+	int get_auto_recalc_interval() const;
 
 	void add_horizontal_guide(real_t p_yval, const Color &p_color);
 	void clear_horizontal_guides();
@@ -196,11 +200,14 @@ public:
 	void set_show_smoothed_curve(bool p_show);
 	void set_smooth_filter(real_t p_filter);
 
-	uint32_t *get_color_from_palette(int pal, int num_colors);
+	PoolColorArray get_color_from_palette(int pal, int num_colors);
 
 	std::deque<real_t> &get_values();
 
 	GdHistoryPlot();
 };
+
+VARIANT_ENUM_CAST(GdHistoryPlot::RangeMode);
+VARIANT_ENUM_CAST(GdHistoryPlot::PaletteColor);
 
 #endif // GD_HISTORY_PLOT_H

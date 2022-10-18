@@ -310,6 +310,15 @@ void GdHistoryPlot::set_range(real_t p_low, real_t p_high) {
 	manual_highest = p_high;
 }
 
+void GdHistoryPlot::set_auto_recalc_interval(int p_interval) {
+	ERR_FAIL_COND(p_interval <= 1);
+	auto_recalc_interval = p_interval;
+}
+
+int GdHistoryPlot::get_auto_recalc_interval() const {
+	return auto_recalc_interval;
+}
+
 void GdHistoryPlot::set_draw_from_right(bool p_val) {
 	draw_from_right = p_val;
 	update();
@@ -360,7 +369,7 @@ void GdHistoryPlot::set_auto_range_shrinks_back(bool p_shrink) {
 	shrink_back_in_auto_range = p_shrink;
 };
 
-int GdHistoryPlot::get_range_mode() const {
+GdHistoryPlot::RangeMode GdHistoryPlot::get_range_mode() const {
 	return range_mode;
 }
 
@@ -486,110 +495,86 @@ std::deque<real_t> &GdHistoryPlot::get_values() {
 	return values;
 }
 
+#define _rgb(C) Color(((C & 0xff0000) >> 16) / 255., ((C & 0xff00) >> 8) / 255., (C & 0xff) / 255.)
+
 // get color from palette: warm, cool or neon.
-uint32_t *GdHistoryPlot::get_color_from_palette(int pal, int num_colors) {
-	static uint32_t warm[][12] = {
-		{ 0xfdb25f },
-		{ 0xffc96b, 0xf47942 },
-		{ 0xffc96b, 0xf47942, 0xab412c },
-		{ 0xffd773, 0xf99851, 0xef5833, 0x923e2d },
-		{ 0xffe67a, 0xfcaf5e, 0xf47942, 0xda492d, 0x773a2d },
-		{ 0xffe77e, 0xfebd65, 0xf78f4d, 0xf16137, 0xc1452c, 0x6f382e },
-		{ 0xffe782, 0xffc76a, 0xfaa055, 0xf47942, 0xef512f, 0xae422c, 0x67382e },
-		{ 0xffe886, 0xffd06f, 0xfbad5d, 0xf68a4b, 0xf16739, 0xde4a2d, 0xa0402c, 0x5f362f },
-		{ 0xffe98b, 0xffd873, 0xfeb862, 0xf99851, 0xf47942, 0xef5833, 0xca462d, 0x913d2d, 0x573530 },
-		{ 0xffe98e, 0xffdf76, 0xffc267, 0xfaa458, 0xf68749, 0xf26a3a, 0xee4c2d, 0xb9442c, 0x843c2d, 0x4f3330 },
-		{ 0xffe98e, 0xffe278, 0xffc76a, 0xfbad5d, 0xf8934f, 0xf47942, 0xf05d35, 0xde4a2d, 0xae422c, 0x7f3b2d, 0x4f3330 },
-		{ 0xffe98e, 0xffe479, 0xffe479, 0xfeb460, 0xfa9c53, 0xf58547, 0xf58547, 0xee5531, 0xd1492d, 0xa5402c, 0x7a3a2d, 0x4f3330 }
+PoolColorArray GdHistoryPlot::get_color_from_palette(int pal, int num_colors) {
+	static Color warm[][12] = {
+		{ _rgb(0xfdb25f) },
+		{ _rgb(0xffc96b), _rgb(0xf47942) },
+		{ _rgb(0xffc96b), _rgb(0xf47942), _rgb(0xab412c) },
+		{ _rgb(0xffd773), _rgb(0xf99851), _rgb(0xef5833), _rgb(0x923e2d) },
+		{ _rgb(0xffe67a), _rgb(0xfcaf5e), _rgb(0xf47942), _rgb(0xda492d), _rgb(0x773a2d) },
+		{ _rgb(0xffe77e), _rgb(0xfebd65), _rgb(0xf78f4d), _rgb(0xf16137), _rgb(0xc1452c), _rgb(0x6f382e) },
+		{ _rgb(0xffe782), _rgb(0xffc76a), _rgb(0xfaa055), _rgb(0xf47942), _rgb(0xef512f), _rgb(0xae422c), _rgb(0x67382e) },
+		{ _rgb(0xffe886), _rgb(0xffd06f), _rgb(0xfbad5d), _rgb(0xf68a4b), _rgb(0xf16739), _rgb(0xde4a2d), _rgb(0xa0402c), _rgb(0x5f362f) },
+		{ _rgb(0xffe98b), _rgb(0xffd873), _rgb(0xfeb862), _rgb(0xf99851), _rgb(0xf47942), _rgb(0xef5833), _rgb(0xca462d), _rgb(0x913d2d), _rgb(0x573530) },
+		{ _rgb(0xffe98e), _rgb(0xffdf76), _rgb(0xffc267), _rgb(0xfaa458), _rgb(0xf68749), _rgb(0xf26a3a), _rgb(0xee4c2d), _rgb(0xb9442c), _rgb(0x843c2d), _rgb(0x4f3330) },
+		{ _rgb(0xffe98e), _rgb(0xffe278), _rgb(0xffc76a), _rgb(0xfbad5d), _rgb(0xf8934f), _rgb(0xf47942), _rgb(0xf05d35), _rgb(0xde4a2d), _rgb(0xae422c), _rgb(0x7f3b2d), _rgb(0x4f3330) },
+		{ _rgb(0xffe98e), _rgb(0xffe479), _rgb(0xffe479), _rgb(0xfeb460), _rgb(0xfa9c53), _rgb(0xf58547), _rgb(0xf58547), _rgb(0xee5531), _rgb(0xd1492d), _rgb(0xa5402c), _rgb(0x7a3a2d), _rgb(0x4f3330) },
 	};
-	static uint32_t cool[][12] = {
-		{ 0x41bed1 },
-		{ 0x78cccf, 0x0b88b4 },
-		{ 0x78cccf, 0x0b88b4, 0x00357e },
-		{ 0x96d5cd, 0x0caac9, 0x07669e, 0x002c71 },
-		{ 0xb2dfcc, 0x3bbcd0, 0x0b88b4, 0x044f8f, 0x042561 },
-		{ 0xbae0cd, 0x5cc5cf, 0x0da0c3, 0x096fa4, 0x044186, 0x05255c },
-		{ 0xc3e2cc, 0x75cbcf, 0x10b1ce, 0x0b88b4, 0x0b88b4, 0x01377f, 0x052257 },
-		{ 0xcce5cc, 0x86d1ce, 0x33bbd1, 0x0c9ac0, 0x0a75a7, 0x065090, 0x002f79, 0x051f53 },
-		{ 0xd4e8cc, 0x96d5cd, 0x52c2d0, 0x0caac9, 0x0b88b4, 0x07669e, 0x034589, 0x012b70, 0x061d4e },
-		{ 0xdcebcb, 0xa3dacd, 0x67c7cf, 0x0db6d1, 0x0b97be, 0x0b78a9, 0x065a96, 0x023d83, 0x042868, 0x061c49 },
-		{ 0xdcebcb, 0xa9dccd, 0x75cbcf, 0x33bbd1, 0x33bbd1, 0x33bbd1, 0x096ba2, 0x065090, 0x01377f, 0x032766, 0x032766 },
-		{ 0xdcebcb, 0xaeddcd, 0x7ecece, 0x48c0d1, 0x10adcc, 0x0b94bc, 0x0b7bab, 0x09639b, 0x034a8b, 0x00337c, 0x032663, 0x061c49 }
+	static Color cool[][12] = {
+		{ _rgb(0x41bed1) },
+		{ _rgb(0x78cccf), _rgb(0x0b88b4) },
+		{ _rgb(0x78cccf), _rgb(0x0b88b4), _rgb(0x00357e) },
+		{ _rgb(0x96d5cd), _rgb(0x0caac9), _rgb(0x07669e), _rgb(0x002c71) },
+		{ _rgb(0xb2dfcc), _rgb(0x3bbcd0), _rgb(0x0b88b4), _rgb(0x044f8f), _rgb(0x042561) },
+		{ _rgb(0xbae0cd), _rgb(0x5cc5cf), _rgb(0x0da0c3), _rgb(0x096fa4), _rgb(0x044186), _rgb(0x05255c) },
+		{ _rgb(0xc3e2cc), _rgb(0x75cbcf), _rgb(0x10b1ce), _rgb(0x0b88b4), _rgb(0x0b88b4), _rgb(0x01377f), _rgb(0x052257) },
+		{ _rgb(0xcce5cc), _rgb(0x86d1ce), _rgb(0x33bbd1), _rgb(0x0c9ac0), _rgb(0x0a75a7), _rgb(0x065090), _rgb(0x002f79), _rgb(0x051f53) },
+		{ _rgb(0xd4e8cc), _rgb(0x96d5cd), _rgb(0x52c2d0), _rgb(0x0caac9), _rgb(0x0b88b4), _rgb(0x07669e), _rgb(0x034589), _rgb(0x012b70), _rgb(0x061d4e) },
+		{ _rgb(0xdcebcb), _rgb(0xa3dacd), _rgb(0x67c7cf), _rgb(0x0db6d1), _rgb(0x0b97be), _rgb(0x0b78a9), _rgb(0x065a96), _rgb(0x023d83), _rgb(0x042868), _rgb(0x061c49) },
+		{ _rgb(0xdcebcb), _rgb(0xa9dccd), _rgb(0x75cbcf), _rgb(0x33bbd1), _rgb(0x33bbd1), _rgb(0x33bbd1), _rgb(0x096ba2), _rgb(0x065090), _rgb(0x01377f), _rgb(0x032766), _rgb(0x032766) },
+		{ _rgb(0xdcebcb), _rgb(0xaeddcd), _rgb(0x7ecece), _rgb(0x48c0d1), _rgb(0x10adcc), _rgb(0x0b94bc), _rgb(0x0b7bab), _rgb(0x09639b), _rgb(0x034a8b), _rgb(0x00337c), _rgb(0x032663), _rgb(0x061c49) },
 	};
-	static uint32_t neon[][12] = {
-		{ 0xf3648b },
-		{ 0xf78495, 0xad3e8c },
-		{ 0xf78495, 0xad3e8c, 0x502370 },
-		{ 0xf9989b, 0xde4c86, 0x7d3392, 0x461e63 },
-		{ 0xfcaca4, 0xf2618a, 0xad3e8c, 0x612b8a, 0x3c1955 },
-		{ 0xfdb3a5, 0xf5738f, 0xd04888, 0x8a3590, 0x58277c, 0x3a1951 },
-		{ 0xfeb9a7, 0xf68294, 0xea5084, 0xad3e8c, 0x703093, 0x512472, 0x37164c },
-		{ 0xffbfaa, 0xf88f98, 0xf25e89, 0xc84688, 0x93378f, 0x632c8c, 0x4b2069, 0x331548 },
-		{ 0xffc5ac, 0xf9999c, 0xf46e8d, 0xde4c86, 0xad3e8c, 0x7c3292, 0x5b2981, 0x451e62, 0x301443 },
-		{ 0xffcbae, 0xfaa2a0, 0xf57a91, 0xf05384, 0xc44488, 0x97388e, 0x692f94, 0x552578, 0x411c5c, 0x2d133f },
-		{ 0xffcbae, 0xfba6a2, 0xf68294, 0xf25e89, 0xd64a87, 0xad3e8c, 0x853491, 0x632c8c, 0x512472, 0x3f1b59, 0x2d133f },
-		{ 0xffcbae, 0xfbaaa3, 0xf78997, 0xf3688c, 0xe54f85, 0xbf4489, 0x9c398d, 0x753193, 0x5e2985, 0x4d226d, 0x3d1a57, 0x2d133f }
+	static Color neon[][12] = {
+		{ _rgb(0xf3648b) },
+		{ _rgb(0xf78495), _rgb(0xad3e8c) },
+		{ _rgb(0xf78495), _rgb(0xad3e8c), _rgb(0x502370) },
+		{ _rgb(0xf9989b), _rgb(0xde4c86), _rgb(0x7d3392), _rgb(0x461e63) },
+		{ _rgb(0xfcaca4), _rgb(0xf2618a), _rgb(0xad3e8c), _rgb(0x612b8a), _rgb(0x3c1955) },
+		{ _rgb(0xfdb3a5), _rgb(0xf5738f), _rgb(0xd04888), _rgb(0x8a3590), _rgb(0x58277c), _rgb(0x3a1951) },
+		{ _rgb(0xfeb9a7), _rgb(0xf68294), _rgb(0xea5084), _rgb(0xad3e8c), _rgb(0x703093), _rgb(0x512472), _rgb(0x37164c) },
+		{ _rgb(0xffbfaa), _rgb(0xf88f98), _rgb(0xf25e89), _rgb(0xc84688), _rgb(0x93378f), _rgb(0x632c8c), _rgb(0x4b2069), _rgb(0x331548) },
+		{ _rgb(0xffc5ac), _rgb(0xf9999c), _rgb(0xf46e8d), _rgb(0xde4c86), _rgb(0xad3e8c), _rgb(0x7c3292), _rgb(0x5b2981), _rgb(0x451e62), _rgb(0x301443) },
+		{ _rgb(0xffcbae), _rgb(0xfaa2a0), _rgb(0xf57a91), _rgb(0xf05384), _rgb(0xc44488), _rgb(0x97388e), _rgb(0x692f94), _rgb(0x552578), _rgb(0x411c5c), _rgb(0x2d133f) },
+		{ _rgb(0xffcbae), _rgb(0xfba6a2), _rgb(0xf68294), _rgb(0xf25e89), _rgb(0xd64a87), _rgb(0xad3e8c), _rgb(0x853491), _rgb(0x632c8c), _rgb(0x512472), _rgb(0x3f1b59), _rgb(0x2d133f) },
+		{ _rgb(0xffcbae), _rgb(0xfbaaa3), _rgb(0xf78997), _rgb(0xf3688c), _rgb(0xe54f85), _rgb(0xbf4489), _rgb(0x9c398d), _rgb(0x753193), _rgb(0x5e2985), _rgb(0x4d226d), _rgb(0x3d1a57), _rgb(0x2d133f) },
 	};
-	switch (pal) {
-		case PAL_WARM: {
-			switch (num_colors) {
-				case 1:
-				case 2:
-				case 3:
-				case 4:
-				case 5:
-				case 6:
-				case 7:
-				case 8:
-				case 9:
-				case 10:
-				case 11:
-				case 12:
-					return warm[num_colors];
-				default:
-					return 0;
+	auto pool_from_data = [](Color *buf_ptr, size_t buf_size) {
+		PoolColorArray data;
+		data.resize(buf_size);
+		memcpy(data.write().ptr(), buf_ptr, buf_size * sizeof(Color));
+		return data;
+	};
+	switch (num_colors) {
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+		case 6:
+		case 7:
+		case 8:
+		case 9:
+		case 10:
+		case 11:
+		case 12: {
+			switch (pal) {
+				case PAL_WARM: return pool_from_data(warm[num_colors - 1], num_colors);
+				case PAL_COOL: return pool_from_data(cool[num_colors - 1], num_colors);
+				case PAL_NEON: return pool_from_data(neon[num_colors - 1], num_colors);
+				default: {
+					WARN_PRINT("Undefined palette");
+					return PoolColorArray();
+				}
 			}
 		} break;
-		case PAL_COOL: {
-			switch (num_colors) {
-				case 1:
-				case 2:
-				case 3:
-				case 4:
-				case 5:
-				case 6:
-				case 7:
-				case 8:
-				case 9:
-				case 10:
-				case 11:
-				case 12:
-					return cool[num_colors];
-				default:
-					return 0;
-			}
-		} break;
-		case PAL_NEON: {
-			switch (num_colors) {
-				case 1:
-				case 2:
-				case 3:
-				case 4:
-				case 5:
-				case 6:
-				case 7:
-				case 8:
-				case 9:
-				case 10:
-				case 11:
-				case 12:
-					return neon[num_colors];
-				default:
-					return 0;
-			}
-		} break;
+		default: {
+			WARN_PRINT("Undefined palette");
+			return PoolColorArray();
+		}
 	}
-	return 0;
 }
 
 void GdHistoryPlot::_notification(int p_what) {
@@ -615,6 +600,8 @@ void GdHistoryPlot::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_max_history"), &GdHistoryPlot::get_max_history);
 	ClassDB::bind_method(D_METHOD("set_precision", "prec"), &GdHistoryPlot::set_precision);
 	ClassDB::bind_method(D_METHOD("get_precision"), &GdHistoryPlot::get_precision);
+	ClassDB::bind_method(D_METHOD("set_humanize_value", "humanize"), &GdHistoryPlot::set_humanize_value);
+	ClassDB::bind_method(D_METHOD("is_humanize_value"), &GdHistoryPlot::is_humanize_value);
 	ClassDB::bind_method(D_METHOD("set_background_color", "prec"), &GdHistoryPlot::set_background_color);
 	ClassDB::bind_method(D_METHOD("get_background_color"), &GdHistoryPlot::get_background_color);
 	ClassDB::bind_method(D_METHOD("set_text_color", "prec"), &GdHistoryPlot::set_line_color);
@@ -631,17 +618,34 @@ void GdHistoryPlot::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_text_header"), &GdHistoryPlot::is_text_header);
 	ClassDB::bind_method(D_METHOD("show_background", "prec"), &GdHistoryPlot::show_background);
 	ClassDB::bind_method(D_METHOD("is_background"), &GdHistoryPlot::is_background);
+	ClassDB::bind_method(D_METHOD("set_range", "low", "high"), &GdHistoryPlot::set_range);
+	ClassDB::bind_method(D_METHOD("set_lower_range", "lower"), &GdHistoryPlot::set_lower_range);
+	ClassDB::bind_method(D_METHOD("set_range_auto"), &GdHistoryPlot::set_range_auto);
+	ClassDB::bind_method(D_METHOD("get_lower_range"), &GdHistoryPlot::get_lower_range);
+	ClassDB::bind_method(D_METHOD("get_higer_range"), &GdHistoryPlot::get_higer_range);
+	ClassDB::bind_method(D_METHOD("set_auto_range_shrinks_back", "shrink"), &GdHistoryPlot::set_auto_range_shrinks_back);
+	ClassDB::bind_method(D_METHOD("get_range_mode"), &GdHistoryPlot::get_range_mode);
+	ClassDB::bind_method(D_METHOD("get_color_from_palette", "palette", "color"), &GdHistoryPlot::get_color_from_palette);
 
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "text_header"), "show_text_header", "is_text_header");
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "title_label"), "set_title_label", "get_title_label");
 	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "text_color"), "set_text_color", "get_text_color");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "history_size"), "set_max_history", "get_max_history");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "display_precision"), "set_precision", "get_precision");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "humanize_value"), "set_humanize_value", "is_humanize_value");
 	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "line_color"), "set_line_color", "get_line_color");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "grid"), "show_grid", "is_grid");
 	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "grid_color"), "set_grid_color", "get_grid_color");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "background"), "show_background", "is_background");
 	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "background_color"), "set_background_color", "get_background_color");
+
+	BIND_ENUM_CONSTANT(PAL_WARM);
+	BIND_ENUM_CONSTANT(PAL_COOL);
+	BIND_ENUM_CONSTANT(PAL_NEON);
+
+	BIND_ENUM_CONSTANT(RANGE_AUTOMATIC);
+	BIND_ENUM_CONSTANT(RANGE_MANUAL);
+	BIND_ENUM_CONSTANT(RANGE_LOWER_FIXED);
 }
 
 GdHistoryPlot::GdHistoryPlot() {
