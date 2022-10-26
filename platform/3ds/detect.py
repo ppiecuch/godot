@@ -9,21 +9,18 @@ else:
 
 
 def is_active():
-
     return True
 
 
 def get_name():
-
     return "3ds"
 
 
 def checkexe(exe):
-
     try:
         output = subprocess.check_output(exe).strip().splitlines()
         for ln in output:
-            print("> " + ln)
+            print("> " + str(ln))
     except OSError as e:
         if e.errno == errno.ENOENT:
             return False
@@ -31,7 +28,6 @@ def checkexe(exe):
 
 
 def can_build():
-
     if not "DEVKITPRO" in os.environ:
         return False
     if not "DEVKITARM" in os.environ:
@@ -50,12 +46,10 @@ def can_build():
 
 
 def get_opts():
-
     return [("debug_release", "Add debug symbols to release version", "no")]
 
 
 def get_flags():
-
     return [
         ("tools", False),
         ("module_bullet_enabled", False),
@@ -76,12 +70,10 @@ def get_flags():
 
 
 def build_shader_gen(target, source, env, for_signature):
-
     return "picasso -o {} {}".format(target[0], source[0])
 
 
 def build_shader_header(target, source, env):
-
     import os
 
     data = source[0].get_contents()
@@ -94,7 +86,6 @@ def build_shader_header(target, source, env):
 
 
 def check(env, key):
-
     if not (key in env):
         return False
     if version.major > 2:
@@ -104,7 +95,6 @@ def check(env, key):
 
 
 def configure(env):
-
     env.Append(BUILDERS={"PICA": env.Builder(generator=build_shader_gen, suffix=".shbin", src_suffix=".pica")})
     env.Append(BUILDERS={"PICA_HEADER": env.Builder(action=build_shader_header, suffix=".h", src_suffix=".shbin")})
 

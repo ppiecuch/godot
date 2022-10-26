@@ -11,17 +11,14 @@ else:
 
 
 def is_active():
-
     return True
 
 
 def get_name():
-
     return "psvita"
 
 
 def checkexe(exe):
-
     try:
         output = subprocess.check_output(exe).strip().splitlines()
         for ln in output:
@@ -33,7 +30,6 @@ def checkexe(exe):
 
 
 def can_build():
-
     if not "VITASDK" in os.environ:
         return False
     for exe in ["arm-vita-eabi-pkg-config"]:
@@ -54,7 +50,6 @@ def get_opts():
 
 
 def get_flags():
-
     return [
         ("tools", False),
         ("module_squish_enabled", False),
@@ -69,7 +64,6 @@ def get_flags():
 
 
 def check(env, key):
-
     if not (key in env):
         return False
     if version.major > 2:
@@ -79,7 +73,6 @@ def check(env, key):
 
 
 def configure(env):
-
     env["bits"] = "32"
     env["arch"] = "arm"
 

@@ -13,17 +13,14 @@ else:
 
 
 def is_active():
-
     return True
 
 
 def get_name():
-
     return "psp"
 
 
 def can_build():
-
     if not "PSPSDK" in os.environ:
         return False
 
@@ -31,12 +28,10 @@ def can_build():
 
 
 def get_opts():
-
     return [("debug_release", "Add debug symbols to release version", "no")]
 
 
 def get_flags():
-
     return [
         ("tools", False),
         ("module_squish_enabled", False),
@@ -54,7 +49,6 @@ def get_flags():
 
 
 def check(env, key):
-
     if not (key in env):
         return False
     if version.major > 2:
@@ -64,11 +58,10 @@ def check(env, key):
 
 
 def checkexe(exe):
-
     try:
         output = subprocess.check_output(exe).strip().splitlines()
         for ln in output:
-            print("> " + ln)
+            print("> " + str(ln))
     except OSError as e:
         if e.errno == errno.ENOENT:
             return False
@@ -76,7 +69,6 @@ def checkexe(exe):
 
 
 def configure(env):
-
     env["bits"] = "32"
     env["arch"] = "arm"
 
