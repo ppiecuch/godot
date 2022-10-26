@@ -56,6 +56,7 @@
 #include "main/splash.gen.h"
 #include "main/tests/test_main.h"
 #include "modules/register_module_types.h"
+#include "modules/modules_enabled.gen.h"
 #include "platform/register_platform_apis.h"
 #include "scene/debugger/script_debugger_remote.h"
 #include "scene/main/scene_tree.h"
@@ -238,14 +239,15 @@ void finalize_physics() {
 
 void initialize_navigation_server() {
 	ERR_FAIL_COND(navigation_server != nullptr);
-	navigation_server = NavigationServerManager::new_default_server();
-	navigation_2d_server = memnew(Navigation2DServer);
+	if ((navigation_server = NavigationServerManager::new_default_server())) {
+		navigation_2d_server = memnew(Navigation2DServer);
+	}
 }
 
 void finalize_navigation_server() {
-	memdelete(navigation_server);
+	memdelete_notnull(navigation_server);
 	navigation_server = nullptr;
-	memdelete(navigation_2d_server);
+	memdelete_notnull(navigation_2d_server);
 	navigation_2d_server = nullptr;
 }
 
@@ -2388,7 +2390,9 @@ bool Main::iteration() {
 			break;
 		}
 
+#ifdef MODULE_NAVIGATION_ENABLED
 		NavigationServer::get_singleton_mut()->process(frame_slice * time_scale);
+#endif
 		message_queue->flush();
 
 		PhysicsServer::get_singleton()->step(frame_slice * time_scale);

@@ -34,6 +34,7 @@
 #include "scene/2d/camera_2d.h"
 #include "scene/2d/visibility_notifier_2d.h"
 #include "scene/main/viewport.h"
+#include "modules/modules_enabled.gen.h"
 #include "servers/navigation_2d_server.h"
 #include "servers/physics_2d_server.h"
 #include "servers/visual_server.h"
@@ -368,11 +369,13 @@ World2D::World2D() {
 	ProjectSettings::get_singleton()->set_custom_property_info("physics/2d/default_angular_damp", PropertyInfo(Variant::REAL, "physics/2d/default_angular_damp", PROPERTY_HINT_RANGE, "-1,100,0.001,or_greater"));
 
 	// Create default navigation map
+#ifdef MODULE_NAVIGATION_ENABLED
 	navigation_map = Navigation2DServer::get_singleton()->map_create();
 	Navigation2DServer::get_singleton()->map_set_active(navigation_map, true);
 	Navigation2DServer::get_singleton()->map_set_cell_size(navigation_map, GLOBAL_DEF("navigation/2d/default_cell_size", 1.0));
 	Navigation2DServer::get_singleton()->map_set_cell_height(navigation_map, GLOBAL_DEF("navigation/2d/default_cell_height", 1.0));
 	Navigation2DServer::get_singleton()->map_set_edge_connection_margin(navigation_map, GLOBAL_DEF("navigation/2d/default_edge_connection_margin", 1.0));
+#endif
 
 	indexer = memnew(SpatialIndexer2D);
 }
@@ -380,6 +383,8 @@ World2D::World2D() {
 World2D::~World2D() {
 	VisualServer::get_singleton()->free(canvas);
 	Physics2DServer::get_singleton()->free(space);
+#ifdef MODULE_NAVIGATION_ENABLED
 	Navigation2DServer::get_singleton()->free(navigation_map);
+#endif
 	memdelete(indexer);
 }

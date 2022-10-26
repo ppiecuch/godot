@@ -178,6 +178,8 @@
 #include "editor/script_editor_debugger.h"
 #include "editor/settings_config_dialog.h"
 
+#include "modules/modules_enabled.gen.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -5865,7 +5867,9 @@ EditorNode::EditorNode() {
 	VisualServer::get_singleton()->textures_keep_original(true);
 	VisualServer::get_singleton()->set_debug_generate_wireframes(true);
 
+#ifdef MODULE_NAVIGATION_ENABLED
 	NavigationServer::get_singleton()->set_active(false); // no nav by default if editor
+#endif
 
 	PhysicsServer::get_singleton()->set_active(false); // no physics by default if editor
 	Physics2DServer::get_singleton()->set_active(false); // no physics by default if editor

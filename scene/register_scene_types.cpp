@@ -459,9 +459,6 @@ void register_scene_types() {
 	ClassDB::register_class<Particles>();
 	ClassDB::register_class<CPUParticles>();
 	ClassDB::register_class<Position3D>();
-	ClassDB::register_class<NavigationMeshInstance>();
-	ClassDB::register_class<NavigationMesh>();
-	ClassDB::register_class<Navigation>();
 	ClassDB::register_class<Room>();
 	ClassDB::register_class<RoomGroup>();
 	ClassDB::register_class<RoomManager>();
@@ -512,10 +509,12 @@ void register_scene_types() {
 	ClassDB::register_class<ConeTwistJoint>();
 	ClassDB::register_class<Generic6DOFJoint>();
 
+#ifdef MODULE_NAVIGATION_ENABLED
 	ClassDB::register_class<Navigation>();
 	ClassDB::register_class<NavigationMeshInstance>();
 	ClassDB::register_class<NavigationAgent>();
 	ClassDB::register_class<NavigationObstacle>();
+#endif
 
 	OS::get_singleton()->yield(); //may take time to init
 
@@ -772,11 +771,13 @@ void register_scene_types() {
 	ClassDB::register_class<Path2D>();
 	ClassDB::register_class<PathFollow2D>();
 
+#ifdef MODULE_NAVIGATION_ENABLED
 	ClassDB::register_class<Navigation2D>();
 	ClassDB::register_class<NavigationPolygon>();
 	ClassDB::register_class<NavigationPolygonInstance>();
 	ClassDB::register_class<NavigationAgent2D>();
 	ClassDB::register_class<NavigationObstacle2D>();
+#endif
 
 	OS::get_singleton()->yield(); //may take time to init
 

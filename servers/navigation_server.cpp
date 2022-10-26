@@ -30,6 +30,8 @@
 
 #include "navigation_server.h"
 
+#include "modules/modules_enabled.gen.h"
+
 NavigationServer *NavigationServer::singleton = nullptr;
 
 void NavigationServer::_bind_methods() {
@@ -121,6 +123,10 @@ void NavigationServerManager::set_default_server(NavigationServerCallback p_call
 }
 
 NavigationServer *NavigationServerManager::new_default_server() {
+#ifdef MODULE_NAVIGATION_ENABLED
 	ERR_FAIL_COND_V(create_callback == nullptr, nullptr);
 	return create_callback();
+#else
+	return nullptr;
+#endif
 }
