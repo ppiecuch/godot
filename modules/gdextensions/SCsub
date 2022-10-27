@@ -48,6 +48,7 @@ modules = [
     "environment/starfield",
     "environment/spider_anim",
     "environment/waterfall",
+    "environment/water_2d",
     "fastnoise",
     "smooth",
     "debugdraw",

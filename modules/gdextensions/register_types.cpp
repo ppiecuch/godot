@@ -127,6 +127,7 @@
 #include "environment/vegetation_instance/vegetation_instance.h"
 #include "environment/water_splash/gd_water_splash.h"
 #include "environment/waterfall/gd_waterfall.h"
+#include "environment/water_2d/gd_water_2d.h"
 
 #ifdef GDEXT_MEDIA_FLAC_ENABLED
 #include "media/flac/audio_stream_flac.h"
@@ -421,6 +422,9 @@ void register_gdextensions_types() {
 #ifdef GDEXT_ENVIRONMENT_WATER_SPLASH_ENABLED
 	ClassDB::register_class<GdWaterSplash>();
 	ClassDB::register_virtual_class<GdWaterSplashColumn>();
+#endif
+#ifdef GDEXT_ENVIRONMENT_WATER_2D_ENABLED
+	ClassDB::register_class<Water2D>();
 #endif
 #ifndef _3D_DISABLED
 #ifdef GDEXT_ENVIRONMENT_VEGETATION_INSTANCE_ENABLED
