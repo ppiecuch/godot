@@ -235,7 +235,7 @@ elif env["platform"] != "windows":  # Disable for Windows, yasm SIMD optimizatio
     is_android_x86 = env["platform"] == "android" and env["android_arch"].startswith("x86")
     if is_android_x86:
         cpu_bits = "32" if env["android_arch"] == "x86" else "64"
-    is_frt_arm = env["platform"] == "frt" and ("arch" in env and env["arch"] in ["arm", "aarch64"])
+    is_frt_arm = env["platform"] == "frt" and ("frt_arch" in env and env["frt_arch"] in ["arm", "arm64v8", "aarch64"])
     webm_cpu_x86 = (
         not is_x11_or_server_arm
         and (cpu_bits == "32" or cpu_bits == "64")

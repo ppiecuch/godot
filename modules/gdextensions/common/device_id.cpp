@@ -70,11 +70,15 @@ static String get_custom_name() {
 	}
 	return nm;
 }
-#elif OSX_ENABLED || LINUX_ENABLED
+#elif OSX_ENABLED || LINUX_ENABLED || FRT_ENABLED
 #include <unistd.h>
+#include <limits.h>
+#ifndef HOST_NAME_MAX
+# define HOST_NAME_MAX _POSIX_HOST_NAME_MAX
+#endif
 static String get_custom_name() {
 	String nm;
-	char buffer[_POSIX_HOST_NAME_MAX + 1];
+	char buffer[HOST_NAME_MAX + 1];
 	if (gethostname(buffer, sizeof(buffer)) == 0) {
 		// remove the .local or .lan from the computer name as reported by osx
 		nm = String(buffer).trim_suffix(".lan").trim_suffix(".local");

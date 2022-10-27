@@ -32,7 +32,7 @@
 
 #include "core/os/keyboard.h"
 #include "core/os/os.h"
-#include "menu_bar_mgr_osx.h"
+#include "menu_bar_mgr.h"
 #include "scene/main/viewport.h"
 
 Point2 MenuBar::_get_screen_position() const {
@@ -154,10 +154,8 @@ void MenuBar::_popup_visibility_changed(bool p_visible) {
 	}
 
 	if (switch_on_hover) {
-		if (Viewport *viewport = get_viewport()) {
-			mouse_pos_adjusted = OS::get_singleton()->get_window_position();
-			set_process_internal(true);
-		}
+		mouse_pos_adjusted = OS::get_singleton()->get_window_position();
+		set_process_internal(true);
 	}
 }
 

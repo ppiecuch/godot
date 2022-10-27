@@ -2,12 +2,15 @@
 
 set -e
 
-DOCKER_IMAGE="351elec/351elec-build:latest"
-
-# update platform repository
-(cd platform/frt; git pull)
+DOCKER_IMAGE="amberelec-build-godot:2022-10-20"
 
 if [ ! -d "/app" ]; then
+	if [[ ! -d platform/frt ]]; then
+		(cd platform && git clone --depth=1 https://github.com/ppiecuch/frt)
+	else
+		(cd platform/frt && git pull) # update platform repository
+	fi
+
 	# toolchain not found - run docker image
 	if ! command -v docker &> /dev/null
 	then
@@ -24,14 +27,23 @@ if [ ! -d "/app" ]; then
 	SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 	NAME="$(basename "${BASH_SOURCE[0]}")"
 
-	echo "*** Running docker toolchain $DOCKER_IMAGE (with script $NAME).."
-	docker run --rm -t -v "$APPDIR:/app" $DOCKER_IMAGE "./${SCRIPTDIR/$APPDIR/}/$NAME"
+	echo "*** Running docker toolchain $DOCKER_IMAGE"
+	echo "    with script: $NAME"
+	echo "    with appdir $APPDIR"
+	docker run --rm -t -v "$APPDIR:/app" $DOCKER_IMAGE "/app/${SCRIPTDIR/$APPDIR/}/$NAME" "$@"
 
 	exit
 fi
 
-PATH=/usr/bin:/bin:/sbin:/usr/local/bin
-scons -j2 platform=frt frt_arch=rg351 target=release disable_3d=true
+CPU=2
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+	CPU=$(sysctl -n hw.physicalcpu)
+elif [[ "$OSTYPE" == "linux"* ]]; then
+	CPU=$(nproc)
+fi
+
+scons -j${CPU} "$@" platform=frt frt_arch=arm64v8 frt_cross=aarch64-libreelec-linux-gnueabi target=release disable_3d=true
 
 mkdir -p bin/templates/frt
-mv -v bin/godot.frt.opt.aarch64.rg351 bin/templates/frt/
+mv -v bin/godot.frt.opt.arm64v8 bin/templates/frt/

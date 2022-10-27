@@ -268,11 +268,11 @@ public:
 		List<BlockNode *> sub_blocks;
 		int end_line;
 
-		_FORCE_INLINE_ bool has_identifier(const StringName &identifier) const {
+		bool has_identifier(const StringName &identifier) const {
 			return variables.has(identifier) ? true : (parent_block ? parent_block->has_identifier(identifier) : false);
 		}
 
-		_FORCE_INLINE_ bool is_stack_argument(const StringName &identifier) const {
+		bool is_stack_argument(const StringName &identifier) const {
 			return arguments.has(identifier) ? true : parent_block ? parent_block->is_stack_argument(identifier)
 																   : false;
 		}
