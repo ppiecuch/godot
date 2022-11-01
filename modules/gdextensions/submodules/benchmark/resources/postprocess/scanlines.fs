@@ -1,3 +1,5 @@
+shader_type canvas_item;
+
 #ifdef GL_ES
 #ifdef GL_FRAGMENT_PRECISION_HIGH
  precision highp float;
@@ -7,7 +9,6 @@
 #endif
 
 // Input vertex attributes (from vertex shader)
-varying vec2 fragTexCoord;
 varying vec4 fragColor;
 
 // Input uniform values
@@ -21,14 +22,14 @@ float frequency = 450.0/3.0;
 
 uniform float time;
 
-void main()
+void fragment()
 {
 /*
     // Scanlines method 1
     float tval = 0; //time
-    vec2 uv = 0.5 + (fragTexCoord - 0.5)*(0.9 + 0.01*sin(0.5*tval));
+    vec2 uv = 0.5 + (UV - 0.5)*(0.9 + 0.01*sin(0.5*tval));
 
-    vec4 color = texture2D(texture0, fragTexCoord);
+    vec4 color = texture(TEXTURE, UV);
 
     color = clamp(color*0.5 + 0.5*color*color*1.2, 0.0, 1.0);
     color *= 0.5 + 0.5*16.0*uv.x*uv.y*(1.0 - uv.x)*(1.0 - uv.y);
@@ -39,10 +40,10 @@ void main()
     fragColor = color;
 */
     // Scanlines method 2
-    float globalPos = (fragTexCoord.y + offset) * frequency;
+    float globalPos = (UV.y + offset) * frequency;
     float wavePos = cos((fract(globalPos) - 0.5)*3.14);
 
-    vec4 color = texture2D(texture0, fragTexCoord);
+    vec4 color = texture(TEXTURE, UV);
 
-    gl_FragColor = mix(vec4(0.0, 0.3, 0.0, 0.0), color, wavePos);
+    COLOR = mix(vec4(0.0, 0.3, 0.0, 0.0), color, wavePos);
 }

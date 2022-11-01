@@ -1,3 +1,5 @@
+shader_type canvas_item;
+
 #ifdef GL_ES
 #ifdef GL_FRAGMENT_PRECISION_HIGH
  precision highp float;
@@ -7,7 +9,6 @@
 #endif
 
 // Input vertex attributes (from vertex shader)
-varying vec2 fragTexCoord;
 varying vec4 fragColor;
 
 // Input uniform values
@@ -19,9 +20,9 @@ uniform vec4 colDiffuse;
 float gamma = 0.6;
 float numColors = 8.0;
 
-void main()
+void fragment()
 {
-    vec3 color = texture2D(texture0, fragTexCoord.xy).rgb;
+    vec3 color = texture(TEXTURE, UV).rgb;
 
     color = pow(color, vec3(gamma, gamma, gamma));
     color = color*numColors;
@@ -29,5 +30,5 @@ void main()
     color = color/numColors;
     color = pow(color, vec3(1.0/gamma));
 
-    gl_FragColor = vec4(color, 1.0);
+    COLOR = vec4(color, 1.0);
 }

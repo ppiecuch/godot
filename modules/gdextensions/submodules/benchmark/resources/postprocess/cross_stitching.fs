@@ -1,3 +1,5 @@
+shader_type canvas_item;
+
 #ifdef GL_ES
 #ifdef GL_FRAGMENT_PRECISION_HIGH
  precision highp float;
@@ -7,11 +9,9 @@
 #endif
 
 // Input vertex attributes (from vertex shader)
-varying vec2 fragTexCoord;
 varying vec4 fragColor;
 
 // Input uniform values
-uniform sampler2D texture0;
 uniform vec4 colDiffuse;
 
 // NOTE: Add here your custom variables
@@ -42,20 +42,20 @@ vec4 PostFX(sampler2D tex, vec2 uv)
     if ((remX == remY) || (((int(cPos.x) - int(blPos.x)) == (int(blPos.y) - int(cPos.y)))))
     {
         if (invert == 1) c = vec4(0.2, 0.15, 0.05, 1.0);
-        else c = texture2D(tex, tlPos * vec2(1.0/renderWidth, 1.0/renderHeight)) * 1.4;
+        else c = texture(tex, tlPos * vec2(1.0/renderWidth, 1.0/renderHeight)) * 1.4;
     }
     else
     {
-        if (invert == 1) c = texture2D(tex, tlPos * vec2(1.0/renderWidth, 1.0/renderHeight)) * 1.4;
+        if (invert == 1) c = texture(tex, tlPos * vec2(1.0/renderWidth, 1.0/renderHeight)) * 1.4;
         else c = vec4(0.0, 0.0, 0.0, 1.0);
     }
 
     return c;
 }
 
-void main()
+void fragment()
 {
-    vec3 tc = PostFX(texture0, fragTexCoord).rgb;
+    vec3 tc = PostFX(TEXTURE, UV).rgb;
 
-    gl_FragColor = vec4(tc, 1.0);
+    COLOR = vec4(tc, 1.0);
 }

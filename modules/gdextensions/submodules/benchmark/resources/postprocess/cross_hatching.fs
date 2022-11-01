@@ -1,3 +1,5 @@
+shader_type canvas_item;
+
 #ifdef GL_ES
 #ifdef GL_FRAGMENT_PRECISION_HIGH
  precision highp float;
@@ -7,11 +9,9 @@
 #endif
 
 // Input vertex attributes (from vertex shader)
-varying vec2 fragTexCoord;
 varying vec4 fragColor;
 
 // Input uniform values
-uniform sampler2D texture0;
 uniform vec4 colDiffuse;
 
 // NOTE: Add here your custom variables
@@ -22,10 +22,10 @@ float lumThreshold02 = 0.7;
 float lumThreshold03 = 0.5;
 float lumThreshold04 = 0.3;
 
-void main()
+void fragment()
 {
     vec3 tc = vec3(1.0, 1.0, 1.0);
-    float lum = length(texture2D(texture0, fragTexCoord).rgb);
+    float lum = length(texture(TEXTURE, UV).rgb);
 
     if (lum < lumThreshold01)
     {
@@ -47,5 +47,5 @@ void main()
         if (mod(gl_FragCoord .x - gl_FragCoord .y - hatchOffsetY, 10.0) == 0.0) tc = vec3(0.0, 0.0, 0.0);
     }
 
-    gl_FragColor = vec4(tc, 1.0);
+    COLOR = vec4(tc, 1.0);
 }
