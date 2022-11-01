@@ -35,6 +35,7 @@ def configure(env):
         "sqlite",
         "unqlite",
         "threadpool",
+        "openclwrapper",
         "sfxr",
         "vgamepad",
         "iap",

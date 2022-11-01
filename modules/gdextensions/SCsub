@@ -296,6 +296,19 @@ if is_enabled("spacemouse"):
             env_module.Append(CPPPATH=["thirdparty/hidapi", "thirdparty/hidapi/hidapi"])
             modules += ["spacemouse"]
 
+if is_enabled("openclwrapper"):
+    if env["tools"]:
+        if env["platform"] == "windows" or env["platform"] == "x11" or env["platform"] == "osx":
+            thirdparty_sources += Glob("thirdparty/opencl-wrapper/src/kernel.cpp")
+            if env["platform"] == "osx":
+                env.Append(LINKFLAGS=["-framework", "OpenCL"])
+        else:
+            print("(GDextensions) OpenCLWrapper is not supported on platform '%s'." % env["platform"])
+            env["enable_gdextensions_submodules"].remove("openclwrapper")
+        if is_enabled("spacemouse"):
+            env_module.Append(CPPPATH=["thirdparty/opencl-wrapper/src/", "thirdparty/opencl-wrapper/src/OpenCL/include"])
+            modules += ["openclwrapper"]
+
 if is_enabled("slugfont"):
     if secret("submodules/slugfont/ts_slug.cpp") and secret("submodules/slugfont/ts_slug.h"):
         print("(GDextensions) SlugFont is not available")
@@ -377,6 +390,8 @@ if is_enabled("media/ffmpeg"):
     env.Prepend(LIBS=["avformat", "avcodec", "avutil", "swresample", "swscale"])
 if is_enabled("breakpad"):
     env.Prepend(LIBS=["breakpad_client"])
+if is_enabled("openclwrapper") and env["platform"] != "osx":
+    env.Prepend(LIBS=["opencl"])
 
 if modules:
     sub_enabled = []

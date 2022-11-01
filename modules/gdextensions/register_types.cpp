@@ -125,9 +125,9 @@
 #include "environment/starfield/starfield_2d.h"
 #include "environment/tree_2d/tree_2d.h"
 #include "environment/vegetation_instance/vegetation_instance.h"
+#include "environment/water_2d/gd_water_2d.h"
 #include "environment/water_splash/gd_water_splash.h"
 #include "environment/waterfall/gd_waterfall.h"
-#include "environment/water_2d/gd_water_2d.h"
 
 #ifdef GDEXT_MEDIA_FLAC_ENABLED
 #include "media/flac/audio_stream_flac.h"
