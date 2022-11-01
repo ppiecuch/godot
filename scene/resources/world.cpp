@@ -32,11 +32,11 @@
 
 #include "core/math/camera_matrix.h"
 #include "core/math/octree.h"
+#include "modules/modules_enabled.gen.h"
 #include "scene/3d/camera.h"
 #include "scene/3d/visibility_notifier.h"
 #include "scene/scene_string_names.h"
 #include "servers/navigation_server.h"
-#include "modules/modules_enabled.gen.h"
 
 struct SpatialIndexer {
 	Octree<VisibilityNotifier> octree;
