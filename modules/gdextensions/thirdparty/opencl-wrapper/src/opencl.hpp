@@ -128,11 +128,12 @@ inline Device_Info select_device_with_id(const uint id, const vector<Device_Info
 		if(print_info) print_device_info(devices[id], id);
 		return devices[id];
 	} else {
-		print_error("Your selected Device ID ("+to_string(id)+") is wrong.");
+		cl::print_error("Your selected Device ID ("+to_string(id)+") is wrong.");
 		return devices[0]; // is never executed, just to avoid compiler warnings
 	}
 }
 
+namespace CL {
 class Device {
 private:
 	cl::Context cl_context;
@@ -163,15 +164,15 @@ public:
 		cl_program = cl::Program(cl_context, cl_source);
 #ifndef LOG
 		int error = cl_program.build("-cl-fast-relaxed-math -w"); // compile OpenCL C code, disable warnings
-		if(error) print_warning(cl_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(info.cl_device)); // print build log
+		if(error) cl::print_warning(cl_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(info.cl_device)); // print build log
 #else // LOG, generate logfile for OpenCL code compilation
 		int error = cl_program.build("-cl-fast-relaxed-math"); // compile OpenCL C code
 		const string log = cl_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(info.cl_device);
 		write_file("bin/kernel.log", log); // save build log
 		if((uint)log.length()>2u) print_warning(log); // print build log
 #endif // LOG
-		if(error) print_error("OpenCL C code compilation failed with error code "+to_string(error)+". Make sure there are no errors in kernel.cpp (\"#define LOG\" might help). If your GPU is old, try uncommenting \"#define USE_OPENCL_1_1\".");
-		else print_info("OpenCL C code successfully compiled.");
+		if(error) cl::print_error("OpenCL C code compilation failed with error code "+to_string(error)+". Make sure there are no errors in kernel.cpp (\"#define LOG\" might help). If your GPU is old, try uncommenting \"#define USE_OPENCL_1_1\".");
+		else cl::print_info("OpenCL C code successfully compiled.");
 #ifdef PTX // generate assembly (ptx) file for OpenCL code
 		write_file("bin/kernel.ptx", cl_program.getInfo<CL_PROGRAM_BINARIES>()[0]); // save binary (ptx file)
 #endif // PTX
@@ -229,11 +230,11 @@ private:
 		this->cl_queue = device.get_cl_queue();
 		if(allocate_device) {
 			device.info.memory_used += (uint)(capacity()/1048576ull); // track device memory usage
-			if(device.info.memory_used>device.info.memory) print_error("Device \""+device.info.name+"\" does not have enough memory. Allocating another "+to_string((uint)(capacity()/1048576ull))+" MB would use a total of "+to_string(device.info.memory_used)+" MB / "+to_string(device.info.memory)+" MB.");
+			if(device.info.memory_used>device.info.memory) cl::print_error("Device \""+device.info.name+"\" does not have enough memory. Allocating another "+to_string((uint)(capacity()/1048576ull))+" MB would use a total of "+to_string(device.info.memory_used)+" MB / "+to_string(device.info.memory)+" MB.");
 			int error = 0;
 			device_buffer = cl::Buffer(device.get_cl_context(), CL_MEM_READ_WRITE, capacity(), nullptr, &error);
-			if(error==-61) print_error("Memory size is too large at "+to_string((uint)(capacity()/1048576ull))+" MB. Device \""+device.info.name+"\" accepts a maximum buffer size of "+to_string(device.info.max_global_buffer)+" MB.");
-			else if(error) print_error("Device buffer allocation failed with error code "+to_string(error)+".");
+			if(error==-61) cl::print_error("Memory size is too large at "+to_string((uint)(capacity()/1048576ull))+" MB. Device \""+device.info.name+"\" accepts a maximum buffer size of "+to_string(device.info.max_global_buffer)+" MB.");
+			else if(error) cl::print_error("Device buffer allocation failed with error code "+to_string(error)+".");
 			device_buffer_exists = true;
 		}
 	}
@@ -555,3 +556,4 @@ public:
 		return run(t);
 	}
 };
+} // namespace CL

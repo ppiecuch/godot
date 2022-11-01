@@ -578,6 +578,7 @@ inline string replace_regex(const string& s, const string& from, const string& t
 inline bool is_number(const string& s) {
 	return equals_regex(s, "\\d+(u|l|ul|ll|ull)?")||equals_regex(s, "0x(\\d|[a-fA-F])+(u|l|ul|ll|ull)?")||equals_regex(s, "0b[01]+(u|l|ul|ll|ull)?")||equals_regex(s, "(((\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+[fF]?)?)|(\\d+\\.\\d*|\\.\\d+)[fF]?)");
 }
+namespace cl {
 inline void print_message(const string& message, const string& keyword="") { // print formatted message
 	const uint k=length(keyword), w=CONSOLE_WIDTH-4u-k;
 	uint l = 0u;
@@ -619,9 +620,9 @@ inline void print_warning(const string& s) { // print formatted warning message
 inline void print_info(const string& s) { // print formatted info message
 	print_message(s, "Info: ");
 }
-
+} // namespace cl
 inline void parse_sanity_check_error(const string& s, const string& regex, const string& type) {
-	if(!equals_regex(s, regex)) print_error("\""+s+"\" cannot be parsed to "+type+".");
+	if(!equals_regex(s, regex)) cl::print_error("\""+s+"\" cannot be parsed to "+type+".");
 }
 inline int to_int(const string& s) {
 	const string t = trim(s);
