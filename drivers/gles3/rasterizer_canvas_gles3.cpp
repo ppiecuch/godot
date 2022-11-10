@@ -174,6 +174,7 @@ void RasterizerCanvasGLES3::_legacy_canvas_render_item(Item *p_ci, RenderItemSta
 				}
 
 				state.canvas_shader.set_custom_shader(shader_ptr->custom_code_id);
+				state.canvas_shader.set_conditional(CanvasShaderGLES3::USE_ATTRIB_UV2, shader_ptr->canvas_item.uses_uv2); // enable second uv map for meshes (PP)
 				state.canvas_shader.bind();
 			}
 
@@ -186,7 +187,7 @@ void RasterizerCanvasGLES3::_legacy_canvas_render_item(Item *p_ci, RenderItemSta
 			ShaderLanguage::ShaderNode::Uniform::Hint *texture_hints = shader_ptr->texture_hints.ptrw();
 
 			for (int i = 0; i < tc; i++) {
-				glActiveTexture(GL_TEXTURE2 + i);
+				glActiveTexture(GL_TEXTURE3 + i); // 0,1,2 already reserved for color/normal/mask (PP)
 
 				RasterizerStorageGLES3::Texture *t = storage->texture_owner.getornull(textures[i]);
 				if (!t) {
@@ -802,10 +803,26 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 						} break;
 						case Item::Command::TYPE_MESH: {
 							Item::CommandMesh *mesh = static_cast<Item::CommandMesh *>(c);
+							RasterizerStorageGLES3::Mesh *mesh_data = storage->mesh_owner.getornull(mesh->mesh);
+							if (!mesh_data) {
+								break;
+							}
+
+							bool need_depth = false;
+							for (int j = 0; j < mesh_data->surfaces.size(); j++) {
+								RasterizerStorageGLES3::Surface *s = mesh_data->surfaces[j];
+								if (s->active) {
+									if ((need_depth = s->format & VisualServer::ARRAY_FLAG_USE_2D_DEPTH_TEST)) {
+										// enabled vec3 if there is at least one surface with depth enabled vertex type (PP)
+										state.canvas_shader.set_conditional(CanvasShaderGLES3::VERTEX_VEC3_USED, true);
+										break;
+									}
+								}
+							}
+
 							_set_texture_rect_mode(false);
 
 							RasterizerStorageGLES3::Texture *texture = _bind_canvas_texture(mesh->texture, mesh->normal_map, mesh->mask);
-
 							if (texture) {
 								Size2 texpixel_size(1.0 / texture->width, 1.0 / texture->height);
 								state.canvas_shader.set_uniform(CanvasShaderGLES3::COLOR_TEXPIXEL_SIZE, texpixel_size);
@@ -813,48 +830,42 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 
 							state.canvas_shader.set_uniform(CanvasShaderGLES3::MODELVIEW_MATRIX, state.final_transform * mesh->transform);
 
-							RasterizerStorageGLES3::Mesh *mesh_data = storage->mesh_owner.getornull(mesh->mesh);
-							if (mesh_data) {
-								bool need_depth = false;
-								for (int j = 0; j < mesh_data->surfaces.size(); j++) {
-									RasterizerStorageGLES3::Surface *s = mesh_data->surfaces[j];
-									if (s->active) {
-										if ((need_depth = !(s->format & VisualServer::ARRAY_FLAG_USE_2D_VERTICES))) {
-											break;
+							bool current_depth = false;
+							for (int j = 0; j < mesh_data->surfaces.size(); j++) {
+								RasterizerStorageGLES3::Surface *s = mesh_data->surfaces[j];
+								if (s->active) {
+									// materials are ignored in 2D meshes, could be added but many things (ie, lighting mode, reading from screen, etc) would break as they are not meant be set up at this point of drawing
+									glBindVertexArray(s->array_id);
+
+									glVertexAttrib4f(VS::ARRAY_COLOR, mesh->modulate.r, mesh->modulate.g, mesh->modulate.b, mesh->modulate.a);
+
+									if (s->format & VisualServer::ARRAY_FLAG_USE_2D_DEPTH_TEST) {
+										if (!current_depth) {
+											glEnable(GL_DEPTH_TEST);
+											current_depth = true;
 										}
+									} else if (current_depth) {
+										glDisable(GL_DEPTH_TEST);
+										current_depth = false;
 									}
-								}
-								// enabled depth + vec3 if there is at least one surface with vec3 vertex type (PP)
-								if (need_depth) {
-									state.canvas_shader.set_conditional(CanvasShaderGLES3::USE_CANVAS_VEC3, true);
-									glEnable(GL_DEPTH_TEST);
-									glDepthMask(GL_TRUE);
-								}
-								for (int j = 0; j < mesh_data->surfaces.size(); j++) {
-									RasterizerStorageGLES3::Surface *s = mesh_data->surfaces[j];
-									if (s->active) {
-										// materials are ignored in 2D meshes, could be added but many things (ie, lighting mode, reading from screen, etc) would break as they are not meant be set up at this point of drawing
-										glBindVertexArray(s->array_id);
 
-										glVertexAttrib4f(VS::ARRAY_COLOR, mesh->modulate.r, mesh->modulate.g, mesh->modulate.b, mesh->modulate.a);
-
-										if (s->index_array_len) {
-											glDrawElements(gl_primitive[s->primitive], s->index_array_len, (s->array_len >= (1 << 16)) ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, nullptr);
-										} else {
-											glDrawArrays(gl_primitive[s->primitive], 0, s->array_len);
-										}
-										storage->info.render._2d_draw_call_count++;
-
-										glBindVertexArray(0);
+									if (s->index_array_len) {
+										glDrawElements(gl_primitive[s->primitive], s->index_array_len, (s->array_len >= (1 << 16)) ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, nullptr);
+									} else {
+										glDrawArrays(gl_primitive[s->primitive], 0, s->array_len);
 									}
-								}
-								if (need_depth) {
-									// restore default state
-									state.canvas_shader.set_conditional(CanvasShaderGLES3::USE_CANVAS_VEC3, GLOBAL_DEF("rendering/quality/2d/use_vertex_vector3", true));
-									glDisable(GL_DEPTH_TEST);
-									glDepthMask(GL_FALSE);
+									storage->info.render._2d_draw_call_count++;
+
+									glBindVertexArray(0);
 								}
 							}
+							if (need_depth) {
+								// restore default state
+								glDisable(GL_DEPTH_TEST);
+								state.canvas_shader.set_conditional(CanvasShaderGLES3::VERTEX_VEC3_USED, GLOBAL_DEF("rendering/quality/2d/use_vertex_vector3", true));
+								state.canvas_shader.bind();
+							}
+
 							state.canvas_shader.set_uniform(CanvasShaderGLES3::MODELVIEW_MATRIX, state.final_transform);
 
 						} break;
@@ -1285,6 +1296,7 @@ void RasterizerCanvasGLES3::render_joined_item(const BItemJoined &p_bij, RenderI
 				}
 
 				state.canvas_shader.set_custom_shader(shader_ptr->custom_code_id);
+				state.canvas_shader.set_conditional(CanvasShaderGLES3::USE_ATTRIB_UV2, shader_ptr->canvas_item.uses_uv2); // enable second uv map for meshes (PP)
 				state.canvas_shader.bind();
 			}
 
@@ -1297,7 +1309,7 @@ void RasterizerCanvasGLES3::render_joined_item(const BItemJoined &p_bij, RenderI
 			ShaderLanguage::ShaderNode::Uniform::Hint *texture_hints = shader_ptr->texture_hints.ptrw();
 
 			for (int i = 0; i < tc; i++) {
-				glActiveTexture(GL_TEXTURE2 + i);
+				glActiveTexture(GL_TEXTURE3 + i); // 0,1,2 already reserved for color/normal/mask (PP)
 
 				RasterizerStorageGLES3::Texture *t = storage->texture_owner.getornull(textures[i]);
 				if (!t) {
@@ -1348,6 +1360,7 @@ void RasterizerCanvasGLES3::render_joined_item(const BItemJoined &p_bij, RenderI
 		r_ris.shader_cache = shader_ptr;
 
 		r_ris.canvas_last_material = material;
+
 		r_ris.rebind_shader = false;
 	}
 
@@ -1769,6 +1782,22 @@ bool RasterizerCanvasGLES3::try_join_item(Item *p_ci, RenderItemState &r_ris, bo
 		r_ris.rebind_shader = false;
 	}
 
+	bool uses_stencil = r_ris.shader_cache ? r_ris.shader_cache->uses_stencil : false;
+	if (uses_stencil && r_ris.shader_cache) {
+		int fstencil = r_ris.shader_cache->front_stencil._compute_key().key,
+			bstencil = r_ris.shader_cache->back_stencil._compute_key().key;
+
+		if (r_ris.last_fstencil != fstencil || r_ris.last_bstencil != bstencil) {
+			join = false;
+		}
+
+		r_ris.last_fstencil = fstencil;
+		r_ris.last_bstencil = bstencil;
+	} else { //no stencil bufer
+		r_ris.last_fstencil = -1;
+		r_ris.last_bstencil = -1;
+	}
+
 	int blend_mode = r_ris.shader_cache ? r_ris.shader_cache->canvas_item.blend_mode : RasterizerStorageGLES3::Shader::CanvasItem::BLEND_MODE_MIX;
 	bool unshaded = r_ris.shader_cache && (r_ris.shader_cache->canvas_item.light_mode == RasterizerStorageGLES3::Shader::CanvasItem::LIGHT_MODE_UNSHADED || (blend_mode != RasterizerStorageGLES3::Shader::CanvasItem::BLEND_MODE_MIX && blend_mode != RasterizerStorageGLES3::Shader::CanvasItem::BLEND_MODE_PMALPHA));
 	bool reclip = false;
@@ -1950,6 +1979,7 @@ void RasterizerCanvasGLES3::canvas_render_items_implementation(Item *p_item_list
 	state.current_tex = RID();
 	state.current_tex_ptr = nullptr;
 	state.current_normal = RID();
+	state.current_mask = RID();
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, storage->resources.white_tex);
 

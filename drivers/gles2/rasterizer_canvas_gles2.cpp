@@ -859,6 +859,26 @@ void RasterizerCanvasGLES2::render_batches(Item *p_current_clip, bool &r_reclip,
 						} break;
 						case Item::Command::TYPE_MESH: {
 							Item::CommandMesh *mesh = static_cast<Item::CommandMesh *>(command);
+							RasterizerStorageGLES2::Mesh *mesh_data = storage->mesh_owner.getornull(mesh->mesh);
+							if (!mesh_data) {
+								break;
+							}
+
+							bool need_depth = false;
+							for (int j = 0; j < mesh_data->surfaces.size(); j++) {
+								RasterizerStorageGLES2::Surface *s = mesh_data->surfaces[j];
+								if (s->active) {
+									if ((need_depth = !(s->format & VisualServer::ARRAY_FLAG_USE_2D_VERTICES))) {
+										break;
+									}
+								}
+							}
+
+							if (need_depth) { // enabled depth + vec3 if there is at least one surface with vec3 vertex type (PP)
+								glEnable(GL_DEPTH_TEST);
+								glDepthMask(GL_TRUE);
+								state.canvas_shader.set_conditional(CanvasShaderGLES2::VERTEX_VEC3_USED, true);
+							}
 
 							_set_texture_rect_mode(false);
 
@@ -874,60 +894,54 @@ void RasterizerCanvasGLES2::render_batches(Item *p_current_clip, bool &r_reclip,
 								state.canvas_shader.set_uniform(CanvasShaderGLES2::COLOR_TEXPIXEL_SIZE, texpixel_size);
 							}
 
-							RasterizerStorageGLES2::Mesh *mesh_data = storage->mesh_owner.getornull(mesh->mesh);
-							if (mesh_data) {
-								for (int j = 0; j < mesh_data->surfaces.size(); j++) {
-									RasterizerStorageGLES2::Surface *s = mesh_data->surfaces[j];
-									if (s->active) {
-										// materials are ignored in 2D meshes, could be added but many things (ie, lighting mode, reading from screen, etc) would break as they are not meant be set up at this point of drawing
+							for (int j = 0; j < mesh_data->surfaces.size(); j++) {
+								RasterizerStorageGLES2::Surface *s = mesh_data->surfaces[j];
+								if (s->active) {
+									// materials are ignored in 2D meshes, could be added but many things (ie, lighting mode, reading from screen, etc) would break as they are not meant be set up at this point of drawing
 
-										glBindBuffer(GL_ARRAY_BUFFER, s->vertex_id);
+									glBindBuffer(GL_ARRAY_BUFFER, s->vertex_id);
 
-										if (s->index_array_len > 0) {
-											glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, s->index_id);
-										}
+									if (s->index_array_len > 0) {
+										glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, s->index_id);
+									}
 
-										for (int k = 0; k < VS::ARRAY_MAX - 1; k++) {
-											if (s->attribs[k].enabled) {
-												glEnableVertexAttribArray(k);
-												glVertexAttribPointer(s->attribs[k].index, s->attribs[k].size, s->attribs[k].type, s->attribs[k].normalized, s->attribs[k].stride, CAST_INT_TO_UCHAR_PTR(s->attribs[k].offset));
-											} else {
-												glDisableVertexAttribArray(k);
-												switch (k) {
-													case VS::ARRAY_NORMAL: {
-														glVertexAttrib4f(VS::ARRAY_NORMAL, 0.0, 0.0, 1, 1);
-													} break;
-													case VS::ARRAY_COLOR: {
-														glVertexAttrib4f(VS::ARRAY_COLOR, 1, 1, 1, 1);
+									for (int k = 0; k < VS::ARRAY_MAX - 1; k++) {
+										if (s->attribs[k].enabled) {
+											glEnableVertexAttribArray(k);
+											glVertexAttribPointer(s->attribs[k].index, s->attribs[k].size, s->attribs[k].type, s->attribs[k].normalized, s->attribs[k].stride, CAST_INT_TO_UCHAR_PTR(s->attribs[k].offset));
+										} else {
+											glDisableVertexAttribArray(k);
+											switch (k) {
+												case VS::ARRAY_NORMAL: {
+													glVertexAttrib4f(VS::ARRAY_NORMAL, 0.0, 0.0, 1, 1);
+												} break;
+												case VS::ARRAY_COLOR: {
+													glVertexAttrib4f(VS::ARRAY_COLOR, 1, 1, 1, 1);
 
-													} break;
-													default: {
-													}
+												} break;
+												default: {
 												}
 											}
 										}
+									}
 
-										const bool need_depth = !(s->format & VisualServer::ARRAY_FLAG_USE_2D_VERTICES);
-
-										if (need_depth) {
-											glEnable(GL_DEPTH_TEST);
-											glDepthMask(GL_TRUE);
-										}
-										if (s->index_array_len > 0) {
-											glDrawElements(gl_primitive[s->primitive], s->index_array_len, (s->array_len >= (1 << 16)) ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, nullptr);
-										} else {
-											glDrawArrays(gl_primitive[s->primitive], 0, s->array_len);
-										}
-										if (need_depth) {
-											glDisable(GL_DEPTH_TEST);
-											glDepthMask(GL_FALSE);
-										}
+									if (s->index_array_len > 0) {
+										glDrawElements(gl_primitive[s->primitive], s->index_array_len, (s->array_len >= (1 << 16)) ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, nullptr);
+									} else {
+										glDrawArrays(gl_primitive[s->primitive], 0, s->array_len);
 									}
 								}
+							}
 
-								for (int j = 1; j < VS::ARRAY_MAX - 1; j++) {
-									glDisableVertexAttribArray(j);
-								}
+							for (int j = 1; j < VS::ARRAY_MAX - 1; j++) {
+								glDisableVertexAttribArray(j);
+							}
+
+							if (need_depth) { // restore default state
+								glDisable(GL_DEPTH_TEST);
+								glDepthMask(GL_FALSE);
+								state.canvas_shader.set_conditional(CanvasShaderGLES2::VERTEX_VEC3_USED, GLOBAL_DEF("rendering/quality/2d/use_vertex_vector3", true));
+								state.canvas_shader.bind();
 							}
 
 							storage->info.render._2d_draw_call_count++;
@@ -1388,14 +1402,13 @@ bool RasterizerCanvasGLES2::try_join_item(Item *p_ci, RenderItemState &r_ris, bo
 		int fstencil = r_ris.shader_cache->front_stencil._compute_key().key,
 			bstencil = r_ris.shader_cache->back_stencil._compute_key().key;
 		if (r_ris.last_fstencil != fstencil || r_ris.last_bstencil != bstencil) {
-			_set_stencil(r_ris.shader_cache->uses_stencil, r_ris.shader_cache->front_stencil, r_ris.shader_cache->back_stencil);
+			join = false;
 		}
 		r_ris.last_fstencil = fstencil;
 		r_ris.last_bstencil = bstencil;
 	} else {
 		r_ris.last_fstencil = -1;
 		r_ris.last_bstencil = -1;
-		_set_stencil(false, ShaderLanguage::StencilTest(), ShaderLanguage::StencilTest()); //no stencil bufer
 	}
 
 	int blend_mode = r_ris.shader_cache ? r_ris.shader_cache->canvas_item.blend_mode : RasterizerStorageGLES2::Shader::CanvasItem::BLEND_MODE_MIX;
@@ -1755,6 +1768,21 @@ void RasterizerCanvasGLES2::_legacy_canvas_render_item(Item *p_ci, RenderItemSta
 		r_ris.canvas_last_material = material;
 
 		r_ris.rebind_shader = false;
+	}
+
+	bool uses_stencil = r_ris.shader_cache ? r_ris.shader_cache->uses_stencil : false;
+	if (uses_stencil && r_ris.shader_cache) {
+		int fstencil = r_ris.shader_cache->front_stencil._compute_key().key,
+			bstencil = r_ris.shader_cache->back_stencil._compute_key().key;
+		if (r_ris.last_fstencil != fstencil || r_ris.last_bstencil != bstencil) {
+			_set_stencil(r_ris.shader_cache->uses_stencil, r_ris.shader_cache->front_stencil, r_ris.shader_cache->back_stencil);
+		}
+		r_ris.last_fstencil = fstencil;
+		r_ris.last_bstencil = bstencil;
+	} else {
+		r_ris.last_fstencil = -1;
+		r_ris.last_bstencil = -1;
+		_set_stencil(false, ShaderLanguage::StencilTest(), ShaderLanguage::StencilTest()); //no stencil bufer
 	}
 
 	int blend_mode = r_ris.shader_cache ? r_ris.shader_cache->canvas_item.blend_mode : RasterizerStorageGLES2::Shader::CanvasItem::BLEND_MODE_MIX;
@@ -2122,6 +2150,21 @@ void RasterizerCanvasGLES2::render_joined_item(const BItemJoined &p_bij, RenderI
 		r_ris.canvas_last_material = material;
 
 		r_ris.rebind_shader = false;
+	}
+
+	bool uses_stencil = r_ris.shader_cache ? r_ris.shader_cache->uses_stencil : false;
+	if (uses_stencil && r_ris.shader_cache) {
+		int fstencil = r_ris.shader_cache->front_stencil._compute_key().key,
+			bstencil = r_ris.shader_cache->back_stencil._compute_key().key;
+		if (r_ris.last_fstencil != fstencil || r_ris.last_bstencil != bstencil) {
+			_set_stencil(r_ris.shader_cache->uses_stencil, r_ris.shader_cache->front_stencil, r_ris.shader_cache->back_stencil);
+		}
+		r_ris.last_fstencil = fstencil;
+		r_ris.last_bstencil = bstencil;
+	} else {
+		r_ris.last_fstencil = -1;
+		r_ris.last_bstencil = -1;
+		_set_stencil(false, ShaderLanguage::StencilTest(), ShaderLanguage::StencilTest()); //no stencil bufer
 	}
 
 	int blend_mode = r_ris.shader_cache ? r_ris.shader_cache->canvas_item.blend_mode : RasterizerStorageGLES2::Shader::CanvasItem::BLEND_MODE_MIX;

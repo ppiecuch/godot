@@ -19,7 +19,7 @@ uniform highp mat4 modelview_matrix;
 uniform highp mat4 world_matrix;
 uniform highp mat4 inv_world_matrix;
 uniform highp mat4 extra_matrix;
-#ifdef USE_CANVAS_VEC3
+#ifdef VERTEX_VEC3_USED
 attribute highp vec3 vertex; // attrib:0
 attribute vec3 normal_attrib; // attrib:1
 #else
@@ -33,6 +33,9 @@ attribute highp float light_angle; // attrib:2
 
 attribute vec4 color_attrib; // attrib:3
 attribute vec2 uv_attrib; // attrib:4
+#ifdef USE_ATTRIB_UV2
+attribute vec2 uv2_attrib; // attrib:5
+#endif
 
 #ifdef USE_ATTRIB_MODULATE
 attribute highp vec4 modulate_attrib; // attrib:5
@@ -81,6 +84,9 @@ uniform highp mat4 skeleton_transform_inverse;
 #endif
 
 varying vec2 uv_interp;
+#ifdef USE_ATTRIB_UV2
+varying vec2 uv2_interp;
+#endif
 varying vec4 color_interp;
 
 #ifdef USE_ATTRIB_MODULATE
@@ -151,6 +157,12 @@ void main() {
 	vec4 color = color_attrib;
 	vec2 uv;
 
+#ifdef VERTEX_VEC3_USED
+#define vertex_z vertex.z
+#else
+#define vertex_z 0.0
+#endif
+
 #ifdef USE_INSTANCING
 	mat4 extra_matrix_instance = extra_matrix * transpose(mat4(instance_xform0, instance_xform1, instance_xform2, vec4(0.0, 0.0, 0.0, 1.0)));
 	color *= instance_color;
@@ -174,7 +186,7 @@ void main() {
 		uv = src_rect.xy + abs(src_rect.zw) * vertex.xy;
 	}
 
-	vec4 outvec = vec4(0.0, 0.0, 0.0, 1.0);
+	vec4 outvec = vec4(0.0, 0.0, vertex_z, 1.0);
 
 	// This is what is done in the GLES 3 bindings and should
 	// take care of flipped rects.
@@ -186,9 +198,12 @@ void main() {
 
 	// outvec.xy = dst_rect.xy + abs(dst_rect.zw) * vertex;
 #else
-	vec4 outvec = vec4(vertex.xy, 0.0, 1.0);
+	vec4 outvec = vec4(vertex.xy, vertex_z, 1.0);
 
 	uv = uv_attrib;
+#ifdef USE_ATTRIB_UV2
+	uv2 = uv2_attrib;
+#endif
 #endif
 
 #if !defined(SKIP_TRANSFORM_USED) && defined(VERTEX_WORLD_COORDS_USED)
@@ -277,6 +292,9 @@ VERTEX_SHADER_CODE
 #endif
 
 	uv_interp = uv;
+#ifdef USE_ATTRIB_UV2
+	uv2_interp = uv2;
+#endif
 	gl_Position = projection_matrix * outvec;
 
 #ifdef USE_LIGHTING
@@ -369,6 +387,9 @@ uniform lowp float mask_cut_off;
 uniform lowp vec3 mask_channels_mixer;
 
 varying mediump vec2 uv_interp;
+#ifdef USE_ATTRIB_UV2
+varying mediump vec2 uv2_interp;
+#endif
 varying mediump vec4 color_interp;
 
 #ifdef USE_ATTRIB_MODULATE
@@ -468,6 +489,10 @@ void main() {
 #ifdef USE_FORCE_REPEAT
 	//needs to use this to workaround GLES2/WebGL1 forcing tiling that textures that don't support it
 	uv = mod(uv, vec2(1.0, 1.0));
+#endif
+
+#ifdef USE_ATTRIB_UV2
+	vec2 uv2 = uv2_interp;
 #endif
 
 #ifndef COLOR_USED

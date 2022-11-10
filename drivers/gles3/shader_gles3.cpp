@@ -37,7 +37,8 @@
 #include "drivers/gles3/shader_cache_gles3.h"
 #include "servers/visual_server.h"
 
-//#define DEBUG_OPENGL
+// #define DEBUG_OPENGL
+// #define DEBUG_SHADER
 
 #ifdef DEBUG_OPENGL
 
@@ -73,8 +74,6 @@ bool ShaderGLES3::log_active_async_compiles_count;
 #endif
 
 uint64_t ShaderGLES3::current_frame;
-
-//#define DEBUG_SHADER
 
 #ifdef DEBUG_SHADER
 #define DEBUG_PRINT(m_text) print_line(m_text);
@@ -712,7 +711,7 @@ ShaderGLES3::Version *ShaderGLES3::get_current_version(bool &r_async_forbidden) 
 	}
 
 #ifdef DEBUG_SHADER
-	DEBUG_PRINT("\nVertex Code:\n\n" + String(code_string.get_data()));
+	DEBUG_PRINT("\nVertex Code:\n\n" + String(vert.code_string.get_data()));
 	for (int i = 0; i < strings_vertex.size(); i++) {
 		DEBUG_PRINT("// vert strings " + itos(i) + ":\n" + String(strings_vertex[i]));
 	}
@@ -792,8 +791,8 @@ ShaderGLES3::Version *ShaderGLES3::get_current_version(bool &r_async_forbidden) 
 	}
 
 #ifdef DEBUG_SHADER
-	DEBUG_PRINT("\nFragment Globals:\n\n" + String(code_globals.get_data()));
-	DEBUG_PRINT("\nFragment Code:\n\n" + String(code_string2.get_data()));
+	DEBUG_PRINT("\nFragment Globals:\n\n" + String(frag.code_globals.get_data()));
+	DEBUG_PRINT("\nFragment Code:\n\n" + String(frag.code_string2.get_data()));
 	for (int i = 0; i < strings_fragment.size(); i++) {
 		DEBUG_PRINT("// frag strings " + itos(i) + ":\n" + String(strings_fragment[i]));
 	}
@@ -1051,10 +1050,8 @@ bool ShaderGLES3::_complete_link(Version::Ids p_ids, GLenum *r_program_format, P
 }
 
 void ShaderGLES3::_setup_uniforms(CustomCode *p_cc) const {
-	//print_line("uniforms:  ");
 	for (int j = 0; j < uniform_count; j++) {
 		version->uniform_location[j] = glGetUniformLocation(version->ids.main, uniform_names[j]);
-		//print_line("uniform "+String(uniform_names[j])+" location "+itos(version->uniform_location[j]));
 	}
 
 	// set texture uniforms

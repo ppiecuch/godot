@@ -477,6 +477,7 @@ public:
 			bool uses_modulate;
 			bool uses_color;
 			bool uses_vertex;
+			bool uses_uv2;
 
 			// all these should disable item joining if used in a custom shader
 			bool uses_world_matrix;

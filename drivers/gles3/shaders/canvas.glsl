@@ -1,7 +1,7 @@
 /* clang-format off */
 [vertex]
 
-#ifdef USE_CANVAS_VEC3
+#ifdef VERTEX_VEC3_USED
 layout(location = 0) in highp vec3 vertex;
 #ifdef USE_ATTRIB_NORMAL
 layout(location = 1) in vec3 normal_attrib;
@@ -64,6 +64,9 @@ layout(location = 12) in highp vec4 instance_custom_data;
 #endif
 
 layout(location = 4) in highp vec2 uv_attrib;
+#ifdef USE_ATTRIB_UV2
+layout(location = 5) in highp vec2 uv2_attrib;
+#endif
 
 // skeleton
 #endif
@@ -82,6 +85,9 @@ uniform highp mat4 world_matrix;
 uniform highp mat4 inv_world_matrix;
 
 out highp vec2 uv_interp;
+#ifdef USE_ATTRIB_UV2
+out highp vec2 uv2_interp;
+#endif
 out mediump vec4 color_interp;
 
 #ifdef USE_ATTRIB_MODULATE
@@ -156,7 +162,7 @@ VERTEX_SHADER_GLOBALS
 
 void main() {
 	vec4 color = color_attrib;
-#ifdef USE_CANVAS_VEC3
+#ifdef VERTEX_VEC3_USED
 #define vertex_z vertex.z
 #else
 #define vertex_z 0.0
@@ -188,6 +194,9 @@ void main() {
 
 #else
 	uv_interp = uv_attrib;
+#ifdef USE_ATTRIB_UV2
+	uv2_interp = uv2_attrib;
+#endif
 	highp vec4 outvec = vec4(vertex.xy, vertex_z, 1.0);
 
 #endif
@@ -206,6 +215,9 @@ void main() {
 	float point_size = 1.0;
 	//for compatibility with the fragment shader we need to use uv here
 	vec2 uv = uv_interp;
+#ifdef USE_ATTRIB_UV2
+	vec2 uv2 = uv2_interp;
+#endif
 	{
 		/* clang-format off */
 
@@ -216,6 +228,9 @@ VERTEX_SHADER_CODE
 
 	gl_PointSize = point_size;
 	uv_interp = uv;
+#ifdef USE_ATTRIB_UV2
+	uv2_interp = uv2;
+#endif
 
 #ifdef USE_NINEPATCH
 
@@ -365,6 +380,9 @@ uniform lowp float mask_cut_off;
 uniform lowp vec3 mask_channels_mixer;
 
 in highp vec2 uv_interp;
+#ifdef USE_ATTRIB_UV2
+in highp vec2 uv2_interp;
+#endif
 in mediump vec4 color_interp;
 
 #ifdef USE_ATTRIB_MODULATE
@@ -578,6 +596,9 @@ void main() {
 			discard;
 		}
 	}
+#ifdef USE_ATTRIB_UV2
+	vec2 uv2 = uv2_interp;
+#endif
 
 #ifdef USE_TEXTURE_RECT
 

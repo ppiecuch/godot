@@ -1121,6 +1121,7 @@ ShaderCompilerGLES3::ShaderCompilerGLES3() {
 	actions[VS::SHADER_CANVAS_ITEM].renames["VERTEX"] = "outvec.xy";
 	actions[VS::SHADER_CANVAS_ITEM].renames["VERT"] = "outvec.xyz";
 	actions[VS::SHADER_CANVAS_ITEM].renames["UV"] = "uv";
+	actions[VS::SHADER_CANVAS_ITEM].renames["UV2"] = "uv2";
 	actions[VS::SHADER_CANVAS_ITEM].renames["POINT_SIZE"] = "point_size";
 
 	actions[VS::SHADER_CANVAS_ITEM].renames["WORLD_MATRIX"] = "modelview_matrix";

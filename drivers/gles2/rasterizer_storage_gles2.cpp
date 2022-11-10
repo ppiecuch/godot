@@ -1419,6 +1419,7 @@ void RasterizerStorageGLES2::_update_shader(Shader *p_shader) const {
 			shaders.actions_canvas.usage_flag_pointers["COLOR"] = &p_shader->canvas_item.uses_color;
 
 			shaders.actions_canvas.usage_flag_pointers["VERTEX"] = &p_shader->canvas_item.uses_vertex;
+			shaders.actions_canvas.usage_flag_pointers["UV2"] = &p_shader->canvas_item.uses_uv2;
 
 			shaders.actions_canvas.usage_flag_pointers["WORLD_MATRIX"] = &p_shader->canvas_item.uses_world_matrix;
 			shaders.actions_canvas.usage_flag_pointers["EXTRA_MATRIX"] = &p_shader->canvas_item.uses_extra_matrix;
@@ -2260,6 +2261,10 @@ void RasterizerStorageGLES2::mesh_add_surface(RID p_mesh, uint32_t p_format, VS:
 	{
 		uint32_t bones_weight = VS::ARRAY_FORMAT_BONES | VS::ARRAY_FORMAT_WEIGHTS;
 		ERR_FAIL_COND_MSG((p_format & bones_weight) && (p_format & bones_weight) != bones_weight, "Array must have both bones and weights in format or none.");
+	}
+
+	if ((p_format & VS::ARRAY_FLAG_USE_2D_VERTICES) && (p_format & VS::ARRAY_FLAG_USE_2D_DEPTH_TEST)) {
+		WARN_PRINT("Enabling depth test for 2d only vertices might not be effective.");
 	}
 
 	//bool has_morph = p_blend_shapes.size();
@@ -6510,6 +6515,20 @@ void RasterizerStorageGLES2::initialize() {
 		glGenerateMipmap(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, 0);
 
+		// Sample checker mask.
+		glGenTextures(1, &resources.mask_tex);
+		unsigned char masktexdata[8 * 8 * 3];
+		for (int i = 0; i < 8 * 8 * 3; i += 3) {
+			masktexdata[i + 0] =
+			masktexdata[i + 1] =
+			masktexdata[i + 2] = (i % 2) * 255;
+		}
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, resources.mask_tex);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 8, 8, 0, GL_RGB, GL_UNSIGNED_BYTE, masktexdata);
+		glGenerateMipmap(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
 		// Opaque "flat" normal map color.
 		glGenTextures(1, &resources.normal_tex);
 		unsigned char normaltexdata[8 * 8 * 3];
@@ -6621,6 +6640,12 @@ void RasterizerStorageGLES2::initialize() {
 }
 
 void RasterizerStorageGLES2::finalize() {
+	// remove default textures (PP)
+	glDeleteTextures(1, &resources.white_tex);
+	glDeleteTextures(1, &resources.black_tex);
+	glDeleteTextures(1, &resources.transparent_tex);
+	glDeleteTextures(1, &resources.normal_tex);
+	glDeleteTextures(1, &resources.mask_tex);
 }
 
 void RasterizerStorageGLES2::_copy_screen() {

@@ -2,7 +2,7 @@
 #include "_godot_common.h"
 
 
-#ifdef USE_CANVAS_VEC3
+#ifdef VERTEX_VEC3_USED
 #else
 #endif
 

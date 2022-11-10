@@ -1400,7 +1400,7 @@ void RasterizerCanvasBaseGLES3::initialize() {
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	state.canvas_shader.init();
-	state.canvas_shader.set_base_material_tex_index(2);
+	state.canvas_shader.set_base_material_tex_index(3); // color/normal/mask (PP)
 	state.canvas_shadow_shader.init();
 	state.lens_shader.init();
 
@@ -1408,7 +1408,7 @@ void RasterizerCanvasBaseGLES3::initialize() {
 	state.canvas_shadow_shader.set_conditional(CanvasShadowShaderGLES3::USE_RGBA_SHADOWS, storage->config.use_rgba_2d_shadows);
 
 	state.canvas_shader.set_conditional(CanvasShaderGLES3::USE_PIXEL_SNAP, GLOBAL_DEF("rendering/2d/snapping/use_gpu_pixel_snap", false));
-	state.canvas_shader.set_conditional(CanvasShaderGLES3::USE_CANVAS_VEC3, GLOBAL_DEF("rendering/quality/2d/use_vertex_vector3", true));
+	state.canvas_shader.set_conditional(CanvasShaderGLES3::VERTEX_VEC3_USED, GLOBAL_DEF("rendering/quality/2d/use_vertex_vector3", true));
 }
 
 void RasterizerCanvasBaseGLES3::finalize() {

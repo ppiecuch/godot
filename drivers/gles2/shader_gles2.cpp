@@ -38,6 +38,7 @@
 #include "rasterizer_storage_gles2.h"
 
 // #define DEBUG_OPENGL
+// #define DEBUG_SHADER
 
 // #include "shaders/copy.glsl.gen.h"
 
@@ -57,8 +58,6 @@
 #endif
 
 ShaderGLES2 *ShaderGLES2::active = nullptr;
-
-//#define DEBUG_SHADER
 
 #ifdef DEBUG_SHADER
 
