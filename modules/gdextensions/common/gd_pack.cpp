@@ -30,6 +30,8 @@
 
 #include "gd_pack.h"
 
+// #define DEBUG_ATLAS_PACK
+
 // just add another comparing function name to cmpf to perform another packing attempt
 // more functions == slower but probably more efficient cases covered and hence less area wasted
 
@@ -47,21 +49,15 @@ static bool (*cmpf[])(rect_xywhf *, rect_xywhf *) = {
 
 static const int discard_step = 128;
 
-/*
-
-For every sorting function, algorithm will perform packing attempts beginning with a bin with width and height equal to max_side,
-and decreasing its dimensions if it finds out that rectangles did actually fit, increasing otherwise.
-Although, it's doing that in sort of binary search manner, so for every comparing function it will perform at most log2(max_side) packing attempts looking for the smallest possible bin size.
-discard_step = 128 means that the algorithm will break of the searching loop if the rectangles fit but "it may be possible to fit them in a bin smaller by 128"
-the bigger the value, the sooner the algorithm will finish but the rectangles will be packed less tightly.
-use discard_step = 1 for maximum tightness.
-
-the algorithm was based on http://www.blackpawn.com/texts/lightmaps/default.html
-the algorithm reuses the node tree so it doesn't reallocate them between searching attempts
-
-*/
-
-/*************************************************************************** CHAOS BEGINS HERE */
+// For every sorting function, algorithm will perform packing attempts beginning with a bin with width and height equal to max_side,
+// and decreasing its dimensions if it finds out that rectangles did actually fit, increasing otherwise.
+// Although, it's doing that in sort of binary search manner, so for every comparing function it will perform at most log2(max_side) packing attempts looking for the smallest possible bin size.
+// discard_step = 128 means that the algorithm will break of the searching loop if the rectangles fit but "it may be possible to fit them in a bin smaller by 128"
+// the bigger the value, the sooner the algorithm will finish but the rectangles will be packed less tightly.
+// use discard_step = 1 for maximum tightness.
+//
+// the algorithm was based on http://www.blackpawn.com/texts/lightmaps/default.html
+// the algorithm reuses the node tree so it doesn't reallocate them between searching attempts
 
 struct node {
 	struct pnode {
@@ -91,26 +87,28 @@ struct node {
 		delcheck();
 	}
 
-	node *insert(rect_xywhf &img, bool allowFlip) {
+	node *insert(rect_xywhf &img, bool allow_flip) {
 		if (c[0].pn && c[0].fill) {
-			if (auto newn = c[0].pn->insert(img, allowFlip))
+			if (auto newn = c[0].pn->insert(img, allow_flip)) {
 				return newn;
-			return c[1].pn->insert(img, allowFlip);
+			}
+			return c[1].pn->insert(img, allow_flip);
 		}
 
-		if (id)
+		if (id) {
 			return 0;
-		int f = img.fits(rect_xywh(rc), allowFlip);
+		}
+		const int f = img.fits(rect_xywh(rc), allow_flip);
 
 		switch (f) {
 			case 0:
 				return 0;
-			case 1:
+			case 1: {
 				img.flipped = false;
-				break;
-			case 2:
+			} break;
+			case 2: {
 				img.flipped = true;
-				break;
+			} break;
 			case 3:
 				id = true;
 				img.flipped = false;
@@ -131,7 +129,7 @@ struct node {
 			c[1].set(rc.l, rc.t + ih, rc.r, rc.b);
 		}
 
-		return c[0].pn->insert(img, allowFlip);
+		return c[0].pn->insert(img, allow_flip);
 	}
 
 	void delcheck() {
@@ -155,14 +153,14 @@ struct node {
 	}
 };
 
-static rect_wh _rect2D(rect_xywhf *const *v, int n, int max_s, bool allowFlip, std::vector<rect_xywhf *> &succ, std::vector<rect_xywhf *> &unsucc) {
+static rect_wh _rect_2d(rect_xywhf *const *v, int n, int max_s, bool allow_flip, std::vector<rect_xywhf *> &succ, std::vector<rect_xywhf *> &unsucc) {
 	node root;
 
 	const int funcs = (sizeof(cmpf) / sizeof(bool (*)(rect_xywhf *, rect_xywhf *)));
 
 	rect_xywhf **order[funcs];
 
-	for (int f = 0; f < funcs; ++f) {
+	for (int f = 0; f < funcs; f++) {
 		order[f] = new rect_xywhf *[n];
 		std::memcpy(order[f], v, sizeof(rect_xywhf *) * n);
 		std::sort(order[f], order[f] + n, cmpf[f]);
@@ -187,7 +185,7 @@ static rect_wh _rect2D(rect_xywhf *const *v, int n, int max_s, bool allowFlip, s
 
 				root.reset(min_bin);
 				for (i = 0; i < n; ++i) {
-					if (root.insert(*v[i], allowFlip)) {
+					if (root.insert(*v[i], allow_flip)) {
 						_area += v[i]->area();
 					}
 				}
@@ -198,20 +196,22 @@ static rect_wh _rect2D(rect_xywhf *const *v, int n, int max_s, bool allowFlip, s
 			fit = -1;
 
 			for (i = 0; i < n; ++i) {
-				if (!root.insert(*v[i], allowFlip)) {
+				if (!root.insert(*v[i], allow_flip)) {
 					fit = 1;
 					break;
 				}
 			}
 
-			if (fit == -1 && step <= discard_step)
+			if (fit == -1 && step <= discard_step) {
 				break;
+			}
 
 			root.reset(rect_wh(root.rc.w() + fit * step, root.rc.h() + fit * step));
 
 			step /= 2;
-			if (!step)
+			if (!step) {
 				step = 1;
+			}
 		}
 
 		if (!fail && (min_bin.area() >= root.rc.area())) {
@@ -231,7 +231,7 @@ static rect_wh _rect2D(rect_xywhf *const *v, int n, int max_s, bool allowFlip, s
 	root.reset(min_bin);
 
 	for (i = 0; i < n; ++i) {
-		if (auto ret = root.insert(*v[i], allowFlip)) {
+		if (auto ret = root.insert(*v[i], allow_flip)) {
 			v[i]->x = ret->rc.l;
 			v[i]->y = ret->rc.t;
 
@@ -258,36 +258,76 @@ static rect_wh _rect2D(rect_xywhf *const *v, int n, int max_s, bool allowFlip, s
 	return rect_wh(clip_x, clip_y);
 }
 
-static bool _pack_rects(rect_xywhf *const *v, int n, int max_s, bool allowFlip, std::vector<bin> &bins) {
+static std::pair<rect_wh, int> _try_rects_2d(rect_xywhf *const *v, int n, bool allow_flip) {
+	int max_s = 128;
+
+	while (true) {
+		rect_wh _rect(max_s, max_s);
+
+		for (int i = 0; i < n; i++) {
+			if (!v[i]->fits(_rect, allow_flip)) {
+				goto next_size;
+			}
+		}
+
+		{
+			std::vector<rect_xywhf *> vec[2], *p[2] = { vec, vec + 1 }, rects;
+			vec[0].resize(n);
+			vec[1].clear();
+			std::memcpy(&vec[0][0], v, sizeof(rect_xywhf *) * n);
+
+			rect_wh size = _rect_2d(&((*p[0])[0]), static_cast<int>(p[0]->size()), max_s, allow_flip, rects, *p[1]);
+			if (!p[1]->size()) { // no unfitted items - finish
+				print_verbose(vformat("Autofit packing success: %d (%dx%d)", max_s, size.w, size.h));
+				return { size, max_s };
+			}
+		}
+
+	next_size:
+		max_s *= 2;
+	}
+
+	return { 0, 0 };
+}
+
+static bool _pack_rects(rect_xywhf *const *v, int n, int max_s, bool allow_flip, std::vector<bin> &bins) {
+	if (max_s <= 0) {
+		max_s = _try_rects_2d(v, n, allow_flip).second;
+		if (max_s <= 0) {
+			return false;
+		}
+	}
+
 	rect_wh _rect(max_s, max_s);
 
-	for (int i = 0; i < n; ++i)
-		if (!v[i]->fits(_rect, allowFlip))
+	for (int i = 0; i < n; i++) {
+		if (!v[i]->fits(_rect, allow_flip)) {
 			return false;
+		}
+	}
 
 	std::vector<rect_xywhf *> vec[2], *p[2] = { vec, vec + 1 };
 	vec[0].resize(n);
 	vec[1].clear();
 	std::memcpy(&vec[0][0], v, sizeof(rect_xywhf *) * n);
 
-	bin *b = 0;
-
 	while (true) {
 		bins.push_back(bin());
-		b = &bins[bins.size() - 1];
+		bin *b = &bins[bins.size() - 1];
 
-		b->size = _rect2D(&((*p[0])[0]), static_cast<int>(p[0]->size()), max_s, allowFlip, b->rects, *p[1]);
+		b->size = _rect_2d(&((*p[0])[0]), static_cast<int>(p[0]->size()), max_s, allow_flip, b->rects, *p[1]);
 		p[0]->clear();
 
-		if (!p[1]->size()) {
+		if (!p[1]->size()) { // no unfitted items - finish
 			break;
 		}
 
-		std::swap(p[0], p[1]);
+		std::swap(p[0], p[1]); // continue with new bin
 	}
 
 	return true;
 }
+
 
 static int _get_offset_for_format(Image::Format format) {
 	switch (format) {
@@ -378,14 +418,18 @@ static Ref<Image> _mirror_borders(Ref<Image> image, int x_border, int y_border) 
 	form->blit_rect(image, get_rect(image), Point2(x_border, y_border));
 
 	// duplicate borders around the image:
-	for (int k = 0; k < by; k++)
+	for (int k = 0; k < by; k++) {
 		form->blit_rect(topb, get_rect(topb), Point2(x_border, y_border - k - 1)); // top
-	for (int k = 0; k < by; k++)
+	}
+	for (int k = 0; k < by; k++) {
 		form->blit_rect(botb, get_rect(botb), Point2(x_border, rc.height - y_border + k)); // bottom
-	for (int k = 0; k < bx; k++)
+	}
+	for (int k = 0; k < bx; k++) {
 		form->blit_rect(leftb, get_rect(leftb), Point2(x_border - k - 1, y_border)); // left
-	for (int k = 0; k < bx; k++)
+	}
+	for (int k = 0; k < bx; k++) {
 		form->blit_rect(rightb, get_rect(rightb), Point2(rc.width - x_border + k, y_border)); // right
+	}
 
 	form->lock();
 	// fill up corners:
@@ -408,17 +452,16 @@ Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, const T
 	const int margin = options.margin;
 	const Color background_color = options.background_color;
 
-	Array generated_images;
-	std::vector<bin> bins;
-
-	// NOTICE: atlas texture can be 3 or 4 channels only
-	int atlas_channels = 3;
+	// NOTICE: atlas texture can be 1, 3 or 4 channels only
+	int atlas_channels = 1;
 
 	const int n = images.size();
+
 	Vector<rect_xywhf> data;
 	data.resize(n);
 	Vector<rect_xywhf *> rects;
 	rects.resize(n);
+
 	for (int i = 0; i < images.size(); ++i) {
 		Ref<Image> image = images[i];
 		if (margin > 0) {
@@ -431,7 +474,7 @@ Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, const T
 		data.write[i].h = image->get_size().y;
 		rects.write[i] = &data.write[i];
 		if (image->get_format() == Image::FORMAT_L8) {
-			atlas_channels = 4;
+			atlas_channels = MAX(1, atlas_channels);
 		} else if (image->get_format() == Image::FORMAT_RGBA8 || image->get_format() == Image::FORMAT_LA8) {
 			// only if we have a real alpha values in the channel
 			if (image->detect_alpha() == Image::ALPHA_BLEND) {
@@ -440,9 +483,16 @@ Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, const T
 		}
 	}
 
-	ERR_FAIL_COND_V(atlas_channels < 3, Dictionary());
+	if (options.force_atlas_channels > 0) {
+		atlas_channels = options.force_atlas_channels;
+	}
 
+	ERR_FAIL_COND_V(atlas_channels < 1 || atlas_channels > 4, Dictionary());
+
+	Array generated_images;
+	std::vector<bin> bins;
 	Dictionary ret;
+
 	if (_pack_rects(rects.ptr(), rects.size(), options.max_atlas_size, false, bins)) {
 		generated_images.clear();
 		generated_images.resize(bins.size());
@@ -460,11 +510,17 @@ Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, const T
 			const uint8_t ca = background_color.a * 255.0;
 
 			for (int j = 0; j < atlas_data.size(); j += atlas_channels) {
-				atlas_data.set(j, cr);
-				atlas_data.set(j + 1, cg);
-				atlas_data.set(j + 2, cb);
-				if (atlas_channels == 4)
-					atlas_data.set(j + 3, ca);
+				if (atlas_channels == 1) {
+					static uint8_t c = (cr + cg + cb) / 3;
+					atlas_data.set(j, c);
+				} else {
+					atlas_data.set(j, cr);
+					atlas_data.set(j + 1, cg);
+					atlas_data.set(j + 2, cb);
+					if (atlas_channels == 4) {
+						atlas_data.set(j + 3, ca);
+					}
+				}
 			}
 
 			Ref<Image> atlas;
@@ -489,7 +545,7 @@ Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, const T
 
 				int input_format_offset = _get_offset_for_format(img->get_format());
 
-				ERR_CONTINUE_MSG(input_format_offset == 0, "Image format is not supported, Skipping!");
+				ERR_CONTINUE_MSG(input_format_offset == 0, "Image format is not supported, skipping.");
 
 				for (int y = 0; y < r->h; ++y) {
 					const int orig_img_indx = (rect_pos_y + y) * img_width * input_format_offset + rect_pos_x * input_format_offset;
@@ -515,15 +571,19 @@ Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, const T
 							} break;
 							case 1: {
 								// alpha
-								uint8_t a = image_data[orig_img_indx + (x * input_format_offset)];
-								for (int sx = 0; sx < 4; ++sx) {
-									if (sx == 3 && atlas_channels == 4) {
-										atlas_data.set(start_indx + (x * atlas_channels) + sx, a);
-									} else {
-										if (atlas_channels == 4) {
-											atlas_data.set(start_indx + (x * atlas_channels) + sx, 255);
-										} else if (atlas_channels == 3) {
+								const uint8_t a = image_data[orig_img_indx + (x * input_format_offset)];
+								if (atlas_channels == 1) {
+									atlas_data.set(start_indx + x, a);
+								} else {
+									for (int sx = 0; sx < 4; ++sx) {
+										if (sx == 3 && atlas_channels == 4) {
 											atlas_data.set(start_indx + (x * atlas_channels) + sx, a);
+										} else {
+											if (atlas_channels == 4) {
+												atlas_data.set(start_indx + (x * atlas_channels) + sx, 255);
+											} else if (atlas_channels == 3) {
+												atlas_data.set(start_indx + (x * atlas_channels) + sx, a);
+											}
 										}
 									}
 								}
@@ -533,11 +593,11 @@ Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, const T
 				}
 			}
 
-			atlas->create(b.size.w, b.size.h, false, atlas_channels == 4 ? Image::FORMAT_RGBA8 : Image::FORMAT_RGB8, atlas_data);
+			atlas->create(b.size.w, b.size.h, false, atlas_channels == 1 ? Image::FORMAT_L8 : atlas_channels == 3 ? Image::FORMAT_RGB8 : Image::FORMAT_RGBA8, atlas_data);
 
-			// dump generated atlas:
-			// atlas->save_png(vformat("atlas_%d.png", i));
-
+#ifdef DEBUG_ATLAS_PACK
+			atlas->save_png(vformat("atlas_%d.png", i)); // dump generated atlas:
+#endif
 			generated_images.set(i, atlas);
 		}
 
@@ -546,6 +606,7 @@ Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, const T
 			const rect_xywhf &rc = data[r];
 			Dictionary entry;
 			entry["rect"] = Rect2(rc.x + margin, rc.y + margin, rc.w - 2 * margin, rc.h - 2 * margin);
+			entry["rrect"] = Rect2(Point2(rc.x + margin, rc.y + margin)/rc.atlas_image->get_size(), Size2(rc.w - 2 * margin, rc.h - 2 * margin)/rc.atlas_image->get_size());
 			entry["atlas_page"] = rc.bin;
 			entry["atlas"] = rc.atlas_image;
 			atlas_rects[names[r]] = entry;
@@ -553,6 +614,8 @@ Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, const T
 
 		ret["_rects"] = atlas_rects;
 		ret["_generated_images"] = generated_images;
+	} else {
+		WARN_PRINT("Packing of " + String::num(images.size()) + " images failed.");
 	}
 
 	return ret;

@@ -37,35 +37,35 @@
 
 #include "core/image.h"
 
-/* Of your interest:
-
-1. rect_xywhf - structure representing your rectangle object members:
-	int x, y, w, h;
-	bool flipped;
-
-2. bin - structure representing resultant bin object
-3. bool pack(rect_xywhf* const * v, int n, int max_side, std::vector<bin>& bins) - actual packing function
-   Arguments:
-	input/output: v - pointer to array of pointers to your rectangles (const here means that the pointers will point to the same rectangles after the call)
-	input: n - rectangles count
-
-	input: max_side - maximum bins' side - algorithm works with square bins (in the end it may trim them to rectangular form).
-	for the algorithm to finish faster, pass a reasonable value (unreasonable would be passing 1 000 000 000 for packing 4 50x50 rectangles).
-	output: bins - vector to which the function will push_back() created bins, each of them containing vector to pointers of rectangles from "v" belonging to that particular bin.
-	Every bin also keeps information about its width and height of course, none of the dimensions is bigger than max_side.
-
-	returns true on success, false if one of the rectangles' dimension was bigger than max_side
-
-You want to your rectangles representing your textures/glyph objects with GL_MAX_TEXTURE_SIZE as max_side,
-then for each bin iterate through its rectangles, typecast each one to your own structure (or manually add userdata) and then memcpy its pixel contents (rotated by 90 degrees if "flipped" rect_xywhf's member is true)
-to the array representing your texture atlas to the place specified by the rectangle, then finally upload it with glTexImage2D.
-
-Algorithm doesn't create any new rectangles.
-You just pass an array of pointers - rectangles' x/y/w/h/flipped are modified in place.
-There is a vector of pointers for every resultant bin to let you know which ones belong to the particular bin.
-The algorithm may swap the w and h fields for the sake of better fitting, the flag "flipped" will be set to true whenever this occurs.
-
-For description how to tune the algorithm and how it actually works see the .cpp file. */
+// Of your interest:
+// -----------------
+// 1. rect_xywhf - structure representing your rectangle object members:
+//   int x, y, w, h;
+//   bool flipped;
+//
+// 2. bin - structure representing resultant bin object
+// 3. bool pack(rect_xywhf* const * v, int n, int max_side, std::vector<bin>& bins) - actual packing function
+//    Arguments:
+//     input/output: v - pointer to array of pointers to your rectangles (const here means that the pointers will point to the same rectangles after the call)
+//     input: n - rectangles count
+//
+//   input: max_side - maximum bins' side - algorithm works with square bins (in the end it may trim them to rectangular form).
+//   for the algorithm to finish faster, pass a reasonable value (unreasonable would be passing 1 000 000 000 for packing 4 50x50 rectangles).
+//   output: bins - vector to which the function will push_back() created bins, each of them containing vector to pointers of rectangles from "v" belonging to that particular bin.
+//   Every bin also keeps information about its width and height of course, none of the dimensions is bigger than max_side.
+//
+//   returns true on success, false if one of the rectangles' dimension was bigger than max_side
+//
+// You want to your rectangles representing your textures/glyph objects with GL_MAX_TEXTURE_SIZE as max_side,
+// then for each bin iterate through its rectangles, typecast each one to your own structure (or manually add userdata) and then memcpy its pixel contents (rotated by 90 degrees if "flipped" rect_xywhf's member is true)
+// to the array representing your texture atlas to the place specified by the rectangle, then finally upload it with glTexImage2D.
+//
+// Algorithm doesn't create any new rectangles.
+// You just pass an array of pointers - rectangles' x/y/w/h/flipped are modified in place.
+// There is a vector of pointers for every resultant bin to let you know which ones belong to the particular bin.
+// The algorithm may swap the w and h fields for the sake of better fitting, the flag "flipped" will be set to true whenever this occurs.
+//
+// For description how to tune the algorithm and how it actually works see the .cpp file.
 
 struct rect_ltrb {
 	rect_ltrb() :
@@ -89,16 +89,19 @@ struct rect_wh {
 	int w, h;
 	int area() const { return w * h; }
 	int perimeter() const { return 2 * w + 2 * h; }
-	int fits(const rect_wh &bigger, bool allowFlip) const // 0 - no, 1 - yes, 2 - flipped, 3 - perfectly, 4 perfectly flipped
-	{
-		if (w == bigger.w && h == bigger.h)
+	int fits(const rect_wh &bigger, bool allow_flip) const { // 0 - no, 1 - yes, 2 - flipped, 3 - perfectly, 4 perfectly flipped
+		if (w == bigger.w && h == bigger.h) {
 			return 3;
-		if (allowFlip && h == bigger.w && w == bigger.h)
+		}
+		if (allow_flip && h == bigger.w && w == bigger.h) {
 			return 4;
-		if (w <= bigger.w && h <= bigger.h)
+		}
+		if (w <= bigger.w && h <= bigger.h) {
 			return 1;
-		if (allowFlip && h <= bigger.w && w <= bigger.h)
+		}
+		if (allow_flip && h <= bigger.w && w <= bigger.h) {
 			return 2;
+		}
 		return 0;
 	}
 	Size2i size() const { return Size2i(w, h); }
@@ -166,14 +169,16 @@ static inline bool max_height(rect_xywhf *a, rect_xywhf *b) {
 }
 
 struct TextureMergeOptions {
-	int max_atlas_size = 1024;
-	Color background_color = Color(0, 0, 0, 0);
+	int max_atlas_size = 0; // default: autofit
 	int margin = 2;
 	bool power_of_two = false;
+	int force_atlas_channels = 0; // default: autodetect
+
+	Color background_color = Color(0, 0, 0, 0);
 
 	TextureMergeOptions() {}
-	TextureMergeOptions(int max_atlas_size, bool power_of_two = true) :
-			max_atlas_size(max_atlas_size), power_of_two(power_of_two) {}
+	TextureMergeOptions(int max_atlas_size, int margin, bool power_of_two, int force_atlas_channels) :
+			max_atlas_size(max_atlas_size), margin(margin), power_of_two(power_of_two), force_atlas_channels(force_atlas_channels) {}
 };
 
 // Merge images from 'images' array using `names` as unique
@@ -184,6 +189,7 @@ struct TextureMergeOptions {
 //    "_rects" -> dictionary of atlas rects, eg:
 //       "_rects[<image name>]:
 //          "rect" -> Rect2 of image rect on atlas
+//          "rrect" -> Rect2 of texture rect on atlas
 //          "atlas_page" -> atlas page index (of '_generated_images')
 //          "atlas" -> atlas image reference
 Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, const TextureMergeOptions &options = TextureMergeOptions());
