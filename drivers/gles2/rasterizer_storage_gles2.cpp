@@ -6520,8 +6520,8 @@ void RasterizerStorageGLES2::initialize() {
 		unsigned char masktexdata[8 * 8 * 3];
 		for (int i = 0; i < 8 * 8 * 3; i += 3) {
 			masktexdata[i + 0] =
-			masktexdata[i + 1] =
-			masktexdata[i + 2] = (i % 2) * 255;
+					masktexdata[i + 1] =
+							masktexdata[i + 2] = (i % 2) * 255;
 		}
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, resources.mask_tex);
