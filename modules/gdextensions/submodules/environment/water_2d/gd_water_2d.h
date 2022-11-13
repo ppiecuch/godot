@@ -56,7 +56,7 @@
 #define NUM_CAUSTICS 32
 #define NUM_NORMALS 60
 
-template<int WaterSize>
+template <int WaterSize>
 class WaterRipples : public Reference {
 	// grid of N x N fluid cells
 	static constexpr int WaterMild = WaterSize / 2;

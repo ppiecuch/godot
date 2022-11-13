@@ -140,19 +140,19 @@ static Ref<Texture> make_texture_from_data(const uint8_t *p_data, size_t p_data_
 #define TS() OS::get_singleton()->get_ticks_msec()
 
 namespace {
-	enum {
-		ARRAY_MESH_VERTEX,
-		ARRAY_MESH_SKIN_UV,
-		ARRAY_MESH_ENVMAP_UV,
-		ARRAY_MESH_INDEX,
-		ARRAY_MESH_WIREFRAME_COLOR,
-		ARRAY_MESH_WIREFRAME_INDEX,
-		ARRAY_MESH_MAX,
-	};
+enum {
+	ARRAY_MESH_VERTEX,
+	ARRAY_MESH_SKIN_UV,
+	ARRAY_MESH_ENVMAP_UV,
+	ARRAY_MESH_INDEX,
+	ARRAY_MESH_WIREFRAME_COLOR,
+	ARRAY_MESH_WIREFRAME_INDEX,
+	ARRAY_MESH_MAX,
+};
 }
 
 // initial conditions: every heights at zero
-template<int WaterSize>
+template <int WaterSize>
 void WaterRipples<WaterSize>::init() {
 	memset(*p1, 0, BufferSpace);
 	memset(*p2, 0, BufferSpace);
@@ -163,7 +163,7 @@ void WaterRipples<WaterSize>::init() {
 }
 
 // trace a hole at normalized [0..1] coordinates
-template<int WaterSize>
+template <int WaterSize>
 void WaterRipples<WaterSize>::set_wave(real_t p_x, real_t p_y, int p_amp) {
 	const int x = Math::fposmod(p_x, 1) * WaterSize;
 	const int y = Math::fposmod(p_y, 1) * WaterSize;
@@ -174,7 +174,7 @@ void WaterRipples<WaterSize>::set_wave(real_t p_x, real_t p_y, int p_amp) {
 }
 
 // trace a hole following parametric curves
-template<int WaterSize>
+template <int WaterSize>
 void WaterRipples<WaterSize>::run_wave(real_t p_phase, real_t p_cos, real_t p_sin, int p_amp) {
 	const real_t r = (angle * M_PI) / 1024;
 
@@ -190,7 +190,7 @@ void WaterRipples<WaterSize>::run_wave(real_t p_phase, real_t p_cos, real_t p_si
 }
 
 // trace a random hole
-template<int WaterSize>
+template <int WaterSize>
 void WaterRipples<WaterSize>::random_wave() {
 	const int x = IRAND() % WaterSize + 1;
 	const int y = IRAND() % WaterSize + 1;
@@ -200,7 +200,7 @@ void WaterRipples<WaterSize>::random_wave() {
 }
 
 // update to next state of fluid model
-template<int WaterSize>
+template <int WaterSize>
 void WaterRipples<WaterSize>::update() {
 	angle = (angle + 2) & 1023; // new angle for parametric curves
 
@@ -209,7 +209,7 @@ void WaterRipples<WaterSize>::update() {
 }
 
 // physical calculus for fluid model
-template<int WaterSize>
+template <int WaterSize>
 void WaterRipples<WaterSize>::new_water() {
 	// discretized differential equation
 	for (int x = 1; x <= WaterSize; x++) {
@@ -233,7 +233,7 @@ void WaterRipples<WaterSize>::new_water() {
 }
 
 // filter and smooth producted values
-template<int WaterSize>
+template <int WaterSize>
 void WaterRipples<WaterSize>::smooth_water() {
 	for (int x = 1; x < WaterSize + 1; x++) {
 		for (int y = 1; y < WaterSize + 1; y++) {
@@ -250,7 +250,7 @@ void WaterRipples<WaterSize>::smooth_water() {
 }
 
 // pre-building of a geometric model
-template<int WaterSize>
+template <int WaterSize>
 void WaterRipples<WaterSize>::prebuild_water(void) {
 	print_verbose("(WaterRipples) prebuilding water geometry ..");
 
@@ -294,7 +294,7 @@ void WaterRipples<WaterSize>::prebuild_water(void) {
 }
 
 // construction of a geometric model
-template<int WaterSize>
+template <int WaterSize>
 void WaterRipples<WaterSize>::build_water() {
 	// calculate vertices: z component
 	for (int x = 0; x < WaterSize; x++) {
@@ -380,7 +380,7 @@ void WaterRipples<WaterSize>::build_water() {
 }
 
 // build strip index for vertex arrays
-template<int WaterSize>
+template <int WaterSize>
 void WaterRipples<WaterSize>::build_strip_index() {
 	// array is (WaterSize * 2) x (WaterSize * 2)
 	const int strip_width = GridSize - 2; // n points define n-2 triangles in a strip
@@ -398,7 +398,7 @@ void WaterRipples<WaterSize>::build_strip_index() {
 }
 
 // build triangles index for vertex arrays
-template<int WaterSize>
+template <int WaterSize>
 void WaterRipples<WaterSize>::build_tri_index() {
 	int *sindex_ptr = &sindex[0];
 
@@ -437,7 +437,7 @@ void WaterRipples<WaterSize>::build_tri_index() {
 }
 
 // build and display geometric model
-template<int WaterSize>
+template <int WaterSize>
 Array WaterRipples<WaterSize>::build_mesh_data(const Rect2 *p_skin_region, const Rect2 *p_envmap_region, bool p_with_wireframe) {
 	build_water();
 	build_tri_index();
@@ -512,23 +512,23 @@ Array WaterRipples<WaterSize>::build_mesh_data(const Rect2 *p_skin_region, const
 	return mesh_data;
 }
 
-template<int WaterSize>
+template <int WaterSize>
 int WaterRipples<WaterSize>::get_grid_size() const {
 	return GridSize;
 }
 
-template<int WaterSize>
+template <int WaterSize>
 void WaterRipples<WaterSize>::set_size_factor(int p_factor) {
 	size_factor = p_factor;
 }
 
-template<int WaterSize>
+template <int WaterSize>
 int WaterRipples<WaterSize>::get_size_factor() const {
 	return size_factor;
 }
 
 // define GridSize x GridSize columns of fluid
-template<int WaterSize>
+template <int WaterSize>
 WaterRipples<WaterSize>::WaterRipples() {
 	size_factor = 100;
 	angle = 0;
@@ -549,7 +549,7 @@ WaterRipples<WaterSize>::WaterRipples() {
 	sindex = new int[(GridSize - 1) * (GridSize - 1) * 6]; // vertex array index
 }
 
-template<int WaterSize>
+template <int WaterSize>
 WaterRipples<WaterSize>::~WaterRipples(void) {
 	delete[] sommet; // vertices vector
 	delete[] normal; // quads normals
@@ -593,20 +593,29 @@ bool Water2D::_edit_use_rect() const {
 }
 #endif
 
-#define run_water(cmd) \
-	switch(level_quality) { \
-		case 0: water0->cmd; break; \
-		case 1: water1->cmd; break; \
-		default: \
-		case 2: water2->cmd; break; \
+#define run_water(cmd)       \
+	switch (level_quality) { \
+		case 0:              \
+			water0->cmd;     \
+			break;           \
+		case 1:              \
+			water1->cmd;     \
+			break;           \
+		default:             \
+		case 2:              \
+			water2->cmd;     \
+			break;           \
 	}
 
-#define run_water_r(cmd) \
-	switch(level_quality) { \
-		case 0: return water0->cmd; \
-		case 1: return water1->cmd; \
-		default: \
-		case 2: return water2->cmd; \
+#define run_water_r(cmd)        \
+	switch (level_quality) {    \
+		case 0:                 \
+			return water0->cmd; \
+		case 1:                 \
+			return water1->cmd; \
+		default:                \
+		case 2:                 \
+			return water2->cmd; \
 	}
 
 void Water2D::set_active(bool p_state) {
