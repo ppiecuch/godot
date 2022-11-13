@@ -328,7 +328,6 @@ static bool _pack_rects(rect_xywhf *const *v, int n, int max_s, bool allow_flip,
 	return true;
 }
 
-
 static int _get_offset_for_format(Image::Format format) {
 	switch (format) {
 		case Image::FORMAT_RGB8:
@@ -593,7 +592,9 @@ Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, const T
 				}
 			}
 
-			atlas->create(b.size.w, b.size.h, false, atlas_channels == 1 ? Image::FORMAT_L8 : atlas_channels == 3 ? Image::FORMAT_RGB8 : Image::FORMAT_RGBA8, atlas_data);
+			atlas->create(b.size.w, b.size.h, false, atlas_channels == 1 ? Image::FORMAT_L8 : atlas_channels == 3 ? Image::FORMAT_RGB8
+																												  : Image::FORMAT_RGBA8,
+					atlas_data);
 
 #ifdef DEBUG_ATLAS_PACK
 			atlas->save_png(vformat("atlas_%d.png", i)); // dump generated atlas:
@@ -606,7 +607,7 @@ Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, const T
 			const rect_xywhf &rc = data[r];
 			Dictionary entry;
 			entry["rect"] = Rect2(rc.x + margin, rc.y + margin, rc.w - 2 * margin, rc.h - 2 * margin);
-			entry["rrect"] = Rect2(Point2(rc.x + margin, rc.y + margin)/rc.atlas_image->get_size(), Size2(rc.w - 2 * margin, rc.h - 2 * margin)/rc.atlas_image->get_size());
+			entry["rrect"] = Rect2(Point2(rc.x + margin, rc.y + margin) / rc.atlas_image->get_size(), Size2(rc.w - 2 * margin, rc.h - 2 * margin) / rc.atlas_image->get_size());
 			entry["atlas_page"] = rc.bin;
 			entry["atlas"] = rc.atlas_image;
 			atlas_rects[names[r]] = entry;
