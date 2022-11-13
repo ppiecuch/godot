@@ -1,65 +1,115 @@
+/*************************************************************************/
+/*  gd_water_2d.h                                                        */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #ifndef GD_WATER_2D_H
 #define GD_WATER_2D_H
 
 #include "core/int_types.h"
-#include "core/vector.h"
-#include "core/variant.h"
-#include "core/os/os.h"
-#include "core/math/rect2.h"
 #include "core/math/random_pcg.h"
+#include "core/math/rect2.h"
+#include "core/variant.h"
+#include "core/vector.h"
 #include "scene/2d/node_2d.h"
+#include "scene/resources/material.h"
 #include "scene/resources/texture.h"
 
-//////////////////////////////////////////////////
-// Water object ...
-//////////////////////////////////////////////////
+/// Water object ...
 
-class WaterRipples
-{
-private:
-	/* grid of 50 x 50 fluid cells */
-	static const int WaterSize  = 50;
-	static const int WaterGrid = WaterSize << 1;
-	static const int WaterMilX = (WaterSize >> 1) + 1;
-	static const int WaterMilY = (WaterSize >> 1) + 1;
-	static const int WaterLarg = WaterSize >> 1;
+//     0  .. 2  .. 4
+//   0 +--|--+--|--+ ..
+//     |    /|    /|
+//     -  /  -  /  -
+//     |/    |/    |
+// n*2 +--|--+--|--+ ..
+//     |    /|    /|
+//     -  /  -  /  -
+//     |/    |/    |
+//     +--|--+--|--+ ..
 
-	static const int WaterBufferSize  = (WaterSize + 2) * (WaterSize + 2);
+#define NUM_CAUSTICS 32
+#define NUM_NORMALS 60
 
-	real_t last_ms_time;
-	real_t cur_ms_time;
+template<int WaterSize>
+class WaterRipples : public Reference {
+	// grid of N x N fluid cells
+	static constexpr int WaterMild = WaterSize / 2;
+	static constexpr int GridSize = WaterSize * 2;
+	static constexpr int GridLast = GridSize - 1;
+	static constexpr int GridArea = GridSize * GridSize;
+	static constexpr size_t GridRowSpace = sizeof(Vector3) * GridSize;
+	static constexpr int BufferSize = WaterSize + 2;
+	static constexpr int BufferSpace = sizeof(int) * BufferSize * BufferSize;
+	static constexpr size_t BufferRowSpace = sizeof(int) * BufferSize;
+	static constexpr real_t CellSize = 1.0 / GridSize;
 
-	bool textured;
-	int angle;                                        // angle for wave generator
+	int size_factor; // size of the wave
+	int angle; // angle for wave generator
 
-	int water1[WaterSize + 2][WaterSize + 2];
-	int water2[WaterSize + 2][WaterSize + 2];
+	int water1[BufferSize][BufferSize];
+	int water2[BufferSize][BufferSize];
 
-	int smooth[WaterSize + 2][WaterSize + 2];         // buffer used for smoothing operation
+	int smooth[BufferSize][BufferSize]; // buffer used for smoothing operation
 
-	int (*p1)[WaterSize + 2][WaterSize + 2];          // pointer FRONT
-	int (*p2)[WaterSize + 2][WaterSize + 2];          // pointer BACK
+	int (*p1)[BufferSize][BufferSize]; // pointer FRONT
+	int (*p2)[BufferSize][BufferSize]; // pointer BACK
 
 	// geometric construction (static number of vertices)
-	Vector3 (*sommet)[WaterGrid];                     // vertices vector
-	Vector3 (*normal)[WaterGrid];                     // quads normals
-	Vector3 (*snormal)[WaterGrid];                    // vertices normals (average)
-	Vector3 (*snormaln)[WaterGrid];                   // normalized vertices normals
-	Vector2 (*uvmap)[WaterGrid];                      // background texture coordinates
-	Vector2 (*newuvmap)[WaterGrid];                   // perturbated background coordinates -> refraction
-	Vector2 (*envmap)[WaterGrid];                     // envmap coordinates...
-	PoolIntArray water_index;                         // vertex array index
+	Vector3 (*sommet)[GridSize]; // vertices vector
+	Vector3 (*normal)[GridSize]; // quads normals
+	Vector3 (*snormal)[GridSize]; // vertices normals (average)
+	Vector3 (*snormaln)[GridSize]; // normalized vertices normals
+	Vector2 (*uvmap)[GridSize]; // background texture coordinates
+	Vector2 (*newuvmap)[GridSize]; // perturbated background coordinates -> refraction
+	Vector2 (*envmap)[GridSize]; // envmap coordinates
+	int(*sindex); // vertex array index
 
-	Ref<Texture> tex_skin, tex_mask;                   // skin/bg and mask texture
-	Ref<Texture> tex_envmap;                           // texture coordinates
-	Vector<Ref<Texture>> tex_anim_frames;              // subwater animation layer textures
-	Vector<Ref<Texture>> tex_caust_frames;             // water causts textures
-	Vector<Ref<Texture>> tex_bumpmap_frames;           // water bumpmap textures
-	int anim_frame;                                    // current animation frame
-	int caustic_frame;                                 // current caustic animation frame
-	int bumpmap_frame;                                 // current bumpmap frame
+	struct _debug_grid {
+		char array[GridSize][GridSize];
 
-	bool water_index_built;
+		void set(int x, int y, char c) { array[x][y] = c; }
+		void clear() { memset(&array, ' ', sizeof(char) * GridSize * GridSize); }
+		void dump(int subsize = GridSize) {
+			printf("   ");
+			for (int x = 0; x < subsize; x++) {
+				printf(" %1d  ", x % 10);
+			}
+			printf("\n");
+			for (int y = 0; y < subsize; y++) {
+				printf("%2d ", y);
+				for (int x = 0; x < subsize; x++) {
+					printf("[%c] ", array[x][y]);
+				}
+				printf("\n");
+			}
+		}
+	} dbg;
 
 	void new_water(); // fluid calculus
 	void smooth_water(); // smooth filter
@@ -72,28 +122,18 @@ private:
 public:
 	void init();
 
-	_FORCE_INLINE_ void set_textured(bool p_textured) { textured = p_textured; }
-	_FORCE_INLINE_ bool is_textured() const { return textured; }
+	int get_grid_size() const;
 
-	void set_skin_texture(Ref<Texture> tex);
-	void set_mask_texture(Ref<Texture> tex);
+	void set_size_factor(int p_factor);
+	int get_size_factor() const;
 
-	void set_wave (real_t p_x, real_t p_y, int p_amp); // trace a hole in the fluid cells at normalized coords
-	void run_wave (real_t p_phase, real_t p_cos, real_t p_sin, int p_amp); // some waves using parametric curves
-	void random_wave ();  // random hole
+	void set_wave(real_t p_x, real_t p_y, int p_amp); // trace a hole in the fluid cells at normalized [0..1] coords
+	void run_wave(real_t p_phase, real_t p_cos, real_t p_sin, int p_amp); // some waves using parametric curves
+	void random_wave(); // random hole
 
-	void update (); // next step in fluid model
-	void build (); // build geometric model
-	void build_mesh(Ref<ArrayMesh> &p_mesh, const Transform *p_anim_matrix = nullptr); // display resulting geometry (using animation matrix for animation texture)
+	void update(); // next step in fluid model: true if model updated
 
-	bool bench(real_t a_rate); // measure elapsed time ...
-	_FORCE_INLINE_ void next_time() { last_ms_time = cur_ms_time; }
-	_FORCE_INLINE_ void next_anim() { // next animation frame
-		anim_frame = (++anim_frame) % tex_anim_frames.size();
-		caustic_frame = (++caustic_frame) % tex_caust_frames.size();
-	}
-
-	_FORCE_INLINE_ int curr_anim() { return anim_frame; }
+	Array build_mesh_data(const Rect2 *p_skin_region, const Rect2 *p_envmap_region, bool p_with_wireframe); // build geometric model
 
 	WaterRipples();
 	~WaterRipples();
@@ -102,216 +142,119 @@ public:
 class Water2D : public Node2D {
 	GDCLASS(Water2D, Node2D);
 
+	Ref<WaterRipples<25>> water0;
+	Ref<WaterRipples<30>> water1;
+	Ref<WaterRipples<50>> water2;
+
+	Ref<ShaderMaterial> material;
+	RID mesh_item, caustics_item;
+	Ref<ArrayMesh> mesh, mesh_caustics, mesh_wireframe;
+	Ref<CanvasItemMaterial> material_caustics;
+	bool active;
+	bool wireframe;
+	bool details_map;
+	bool caustics;
+	real_t caustics_speed_rate;
+	real_t caustics_alpha;
+	real_t wave_speed_rate;
+	real_t details_speed_rate;
+	int level_quality;
+
+	Ref<Texture> texture_skin, texture_mask, texture_envmap; // main skin/bg, mask and environment map texture
+
+	struct SequenceInfo {
+		Vector<Ref<Texture>> frames;
+		int current_frame = 0;
+		real_t speed_alteration = 0;
+		real_t progress = 0;
+		bool next(real_t delta, real_t speed_rate) {
+			progress += delta;
+			if (progress > speed_rate) {
+				current_frame = (++current_frame) % frames.size();
+				progress = 0;
+				return true;
+			}
+			return false;
+		}
+		_FORCE_INLINE_ Ref<Texture> texture() const { return frames[current_frame]; }
+		_FORCE_INLINE_ bool is_valid() const { return frames.size() > 0 && texture().is_valid(); }
+	} animation_details, animation_caustics; // additional animation layers
+
+	enum {
+		UPDATE_WATER = 1,
+		UPDATE_DETAILS = 2,
+		UPDATE_CAUSTICS = 4,
+		UPDATE_ALL = UPDATE_WATER | UPDATE_DETAILS | UPDATE_CAUSTICS,
+	};
+	int _update_material;
+
 protected:
-	void _notification(int p_notification);
 	static void _bind_methods();
+	void _notification(int p_notification);
+	void _get_property_list(List<PropertyInfo> *p_list) const {
+		if (p_list) {
+			for (List<PropertyInfo>::Element *E = p_list->front(); E; E = E->next()) {
+				PropertyInfo &prop = E->get();
+				if (prop.name.to_lower() == "material" || prop.name.to_lower() == "use_parent_material") {
+					prop.usage &= ~PROPERTY_USAGE_EDITOR;
+					prop.usage |= PROPERTY_USAGE_NOEDITOR;
+				}
+			}
+		}
+	}
+	void _changed_callback(Object *p_changed, const char *p_prop);
 
 public:
+#ifdef TOOLS_ENABLED
+	Dictionary _edit_get_state() const;
+	void _edit_set_state(const Dictionary &p_state);
+	bool _edit_is_selected_on_click(const Point2 &p_point, double p_tolerance) const;
+	Rect2 _edit_get_rect() const;
+	void _edit_set_rect(const Rect2 &p_rect);
+	bool _edit_use_rect() const;
+
+	Size2 get_view_size() const {
+		return get_scale() * 5;
+	}
+	void set_view_size(const Size2 &p_size) {
+		set_scale(p_size / 5);
+	}
+#endif
+
+	void set_active(bool p_state);
+	bool is_active() const;
+
+	void set_skin_texture(const Ref<Texture> &p_texture);
+	Ref<Texture> get_skin_texture() const;
+	void set_mask_texture(const Ref<Texture> &p_texture);
+	Ref<Texture> get_mask_texture() const;
+
+	void set_wireframe(bool p_state);
+	bool is_wireframe() const;
+	void set_details_map(bool p_state);
+	bool is_details_map() const;
+	void set_caustics(bool p_state);
+	bool is_caustics() const;
+
+	void set_wave_speed_rate(real_t p_rate);
+	real_t get_wave_speed_rate() const;
+	void set_wave_size_factor(int p_factor);
+	int get_wave_size_factor() const;
+
+	void set_caustics_grid_size(int p_num);
+	int get_caustics_grid_size() const;
+	void set_caustics_active_rate(real_t p_rate);
+	real_t get_caustics_active_rate() const;
+	void set_caustics_speed_rate(real_t p_rate);
+	real_t get_caustics_speed_rate() const;
+	void set_caustics_alpha(real_t p_alpha);
+	real_t get_caustics_alpha() const;
+
+	void set_wave(real_t p_x, real_t p_y, int p_amp);
+	void run_wave(real_t p_phase, real_t p_cos, real_t p_sin, int p_amp);
+	void random_wave();
+
 	Water2D();
 };
 
 #endif /* GD_WATER_2D_H */
-
-// https://www.codeproject.com/Articles/1073/Interactive-water-effect
-//
-// Introduction
-// ------------
-// This application demonstrates multitexturing effects and clever math optimizations to produce an interactive water effect.
-//
-// In the calculations used in the code, we work with the following assumptions:
-//
-// * Incompressible liquid: a given mass of the liquid occupies the same volume all the time whatever the shape it takes. There is conservation of volume.
-// * The surface of the liquid can be represented by grid heights, i.e. we can see the surface of the liquid as being made up
-//   of a series of vertical columns of liquid. We will be able to implement that by an N x M matrix giving the height of each point
-//   of surface (N being the number of points in ordinate and M the number of points in x-coordinates). This approximation is valid only for not very
-//   deep containers and is tolerable as long as the forces applied to the liquid are not too significant.
-//   The liquid cannot splash and a wave cannot break (not bearings).
-// * The vertical component of the speed of the particles of the liquid can be ignored. The model is not valid any more for stiff slopes or chasms.
-// * The horizontal component of the speed of the liquid in a vertical column is roughly constant. The movement is uniform within
-//   a vertical column. This model is not valid anymore when there are turbulences.
-//
-// These assumptions enable us to use a simplified form of the equations of the mechanics of fluids.
-//
-// To simplify the reasoning, we first of all will work in 2 dimensions (the height h depends on x-coordinate x and time t):
-//
-// [1] du(x,t)/dt + u(x,t).du(x,t)/dx + g*dh(x,t)/dx = 0
-// [2] dp(x,t)/dt + d(u(x,t)p(x,t))/dx = d(h(x,t)-b(x))/dt + p(x,t).du(x,t)/dx + u(x,t)*dp(x,t)/dx = 0
-//
-// where g is gravitational acceleration, h(x, t) is the height of the surface of the liquid, b(x) is the height of the bottom of the container
-// (we suppose that it does not vary according to time t), p(x, t) = h(x, t)-b(x) is the depth of the liquid, and u(x, t) is the horizontal
-// speed of a vertical column of liquid. The equation (1) represents the law of Newton (F=ma) which gives the movement according
-// to the forces applied, and the equation (2) expresses the conservation of volume.
-//
-// These two equations are nonlinear (nonconstant coefficients) but if the speed of the liquid is small and if the depth varies slowly,
-// we can take the following approximation (we are unaware of the terms multiplied by u(x, t) and p does not depend any more of time t):
-//
-// [3] du(x,t)/dt + g*dh(x,t)/dx = 0
-// [4] dh(x,t)/dt + p(x)*du(x,t)/dx = 0
-//
-// By differentiating the first equation with respect to x and the second equation with respect to t, we obtain:
-//
-// [5] d^2u(x,t)/dxdt + g*d^2h(x,t)/dx^2 = 0
-// [6] d^2h(x,t)/dt^2 + p(x)*d^2u(x,t)/dtdx = 0
-//
-// As u is a "suitable" function (its second derivatives are continuous), its second partial derivatives are equals and we can deduce
-// the following single equation where u is not present:
-//
-// [7] d^2h(x,t)/dt^2 = g*p(x)*d2h(x,t)/dx^2
-//
-// The differential equation of the second member (7) is an equation of wave and expresses the heights' variation as a function of time and the x-coordinate.
-//
-// In 3 dimensions, the equation (7) has the following form:
-//
-// [8] d^2h(x,y,t)/dt^2 = g*p(x,y)*(d^2h(x,y,t)/dx^2+d^2h(x,y,t)/dy^2)
-//
-// To be able to work with our heights' grid, we must have a discrete formula, but this one is continuous.
-// Moreover this equation is always nonlinear by the presence of p(x, y). To simplify, we will
-// consider p constant, i.e. a speed of constant wave whatever the depth (we will consider a bottom of flat container,
-// which will limit the "variability" of the depth). We obtain the equation then (9) to discretize:
-//
-// [9] d^2h(x,y,t)/dt^2 = g*p(d^2h(x,y,t)/dx^2 + d^2h(x,y,t)/dy^2)
-//
-// We can discretize the terms of this equation in the following way (using the method of central-differences):
-//
-// [10] d^2h(x,y,t)/dt^2 => (Dh(x,y,t+1) - Dh(x,y,t))/Dt^2 = (h(x,y,t+1) - h(x,y,t) - h(x,y,t) + h(x,y,t-1)) / Dt^2
-//
-// [11] d^2h(x,y,t)/dx2 => (Dh(x+1,y,t) - Dh(x,y,t))/Dx2 = (h(x+1,y,t) - 2h(x,y,t) + h(x-1,y,t))/Dx^2
-//
-// [12] d^2h(x,y,t)/dy2 => (Dh(x,y+1,t) - Dh(x,y,t))/Dy2 = (h(x,y+1,t) - 2h(x,y,t) + h(x,y-1,t))/Dy^2
-//
-// By posing Dr = Dx = Dy = resolution of the grid, we obtain the discrete analogue of the equation (9):
-//
-// [13] (h(x,y,t+1) + h(x,y,t-1) - 2h(x,y,t))/Dt^2 = g*p/Dr^2 * (h(x+1,y,t)+h(x-1,y,t)+h(x,y+1,t)+h(x,y-1,t)-4h(x,y,t))
-//
-// where Dt is the variation of time. We can use a more compact notation for this relation of recurrence:
-//
-// [14] 1/Dt^2 * [1  -2  1] h(x,y) = g*p/Dr^2 * h(t)
-//
-// We can then have h(x, y, t+1):
-//
-// [15] h(x,y,t+1) = g*p*Dt^2/Dr^2 * h(t) -h(x,y,t-1) + 2h(x,y,t)
-//
-// [16] h(x,y,t+1) = g*p*Dt^2/Dr^2 * h(t) -h(x,y,t-1) + 2h(x,y,t)
-//
-// [17] h(x,y,t+1) = g*p*Dt^2/Dr^2 * h(t) -h(x,y,t-1) + 2h(x,y,t) - 4gpDt^2/Dr^2 * h(x,y,t)
-//
-// [18] h(x,y,t+1) = g*p*Dt^2/Dr^2 * h(t) -h(x,y,t-1) + (2 - 4gpDt^2/Dr^2) * h(x,y,t)
-//
-// While setting g*p*Dt^2/Dr^2 = 1/2, we eliminate the last term, and the relation is simplified while giving us:
-//
-// [19] h(x,y,t+1) = 1/2 * ( h(x+1,y,t) + h(x-1,y,t) + h(x,y+1,t) + h(x,y-1,t) - h(x,y,t-1) )
-//
-// This relation of recurrence has a step of 2: the height in t+1 is related to heights in T and in T-1.
-// We can implement that using 2 heights' matrices H1 and H2: H2[x, y] = 1/2(H1[x+1, y] + H1[x-1, y] + H1[x, y+1] + H1[x, y-1]) - H2[x, y]
-//
-// We can then swap the 2 matrices with each step.
-//
-// To calculate the new height of a point of surface costs only 4 additions, 1 subtraction and a shift-right of 1 (for division by 2).
-//
-// From the result obtained, we subtract 1/2n of the result (i.e. this same result right shifted of N) to have a certain damping
-// (n=4 gives a rather aesthetic result, n < 4 gives more viscosity, n > 4 gives more fluidity).
-//
-// Let us notice that the heights of these points are signed, 0 being the neutral level of rest.
-//
-// From the heights' matrix, we can easily build a polygonal representation by considering each box of the grid as a quadrilateral
-// (or 2 triangles) of which the heights of the 4 vertices are given by the heights of 4 adjacent boxes of the matrix.
-//
-// In our example, we tessellate our model with GL_TRIANGLE_STRIP and we use some multipass effects to get it realistic.
-//
-// First we perturb a first set of texture coordinates proportionally to vertices normals (the logo's texture coordinates).
-// It looks like refraction.
-//
-// Code:
-// ---------------------------------------------------------------------------
-// -- calculate ourself normalization
-//
-// for(x=0; x < FLOTSIZE*2; x++)
-// {
-//    for(y=0; y < FLOTSIZE*2; y++)
-//    {
-//       sqroot = sqrt(_snormal[x][y][0]*_snormal[x][y][0] + _snormal[x][y][1]*_snormal[x][y][1] + 0.0016);
-//
-//       _snormaln[x][y][0] = _snormal[x][y][0]/sqroot;
-//       _snormaln[x][y][1] = _snormal[x][y][1]/sqroot;
-//       _snormaln[x][y][2] = 0.04 / sqroot;
-//
-//       -- perturbate coordinates of background
-//       -- mapping with the components X,Y of normals...
-//       -- simulate refraction
-//
-//       _newuvmap[x][y][0] = _uvmap[x][y][0] + 0.05 * _snormaln[x][y][0];
-//       _newuvmap[x][y][1] = _uvmap[x][y][1] + 0.05 * _snormaln[x][y][1];
-//
-//    }
-// }
-//
-// Then we calculate a second set of texture coordinates using a fake environment mapping formula
-// (invariant with observer eye's position, just project normals to the xy plane)
-// (the sky's texture coordinates).
-//
-// Code
-// ---------------------------------------------------------------------------
-// really simple version of a fake envmap generator
-// for(x=0; x < FLOTSIZE; x++)
-// {
-//     for(y=0; y < FLOTSIZE; y++)
-//     {
-//         -- trick : xy projection of normals  ->
-//         -- assume reflection in direction of the normals
-//         -- looks ok for non-plane surfaces
-//         _envmap[x][y][0] = 0.5 + _snormaln[x][y][0] * 0.45;
-//         _envmap[x][y][1] = 0.5 + _snormaln[x][y][1] * 0.45;
-//
-//     }
-// }
-// Then mix the textures together using multitexturing and blending.
-//
-// Code:
-// ---------------------------------------------------------------------------
-// glEnable(GL_BLEND);
-//
-// use texture alpha-channel for blending
-//
-// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//
-// glActiveTextureARB(GL_TEXTURE0_ARB);
-// glBindTexture(GL_TEXTURE_2D, 2); -- 2nd texture -> background ..
-//
-// glActiveTextureARB(GL_TEXTURE1_ARB);
-// glBindTexture(GL_TEXTURE_2D, 1); -- 2nd texture -> envmap
-// glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-//
-// -- enable texture mapping and specify ourself texcoords
-//
-// glDisable(GL_TEXTURE_GEN_S);
-// glDisable(GL_TEXTURE_GEN_T);
-// And to finish the stuff, tessellate using TRIANGLE_STRIPs per matrix scanline.
-//
-// Code:
-// ---------------------------------------------------------------------------
-//  for(x=0; x < strip_width; x++)
-//  {
-//      glBegin(GL_TRIANGLE_STRIP);
-//
-//      -- WARNING: glTexCoord2fv BEFORE glVertex !!!
-//      glMultiTexCoord2fvARB(GL_TEXTURE0_ARB, _newuvmap[x+1][1]);
-//      glMultiTexCoord2fvARB(GL_TEXTURE1_ARB, _envmap[x+1][1]);
-//      glVertex3fv(_sommet[x+1][1]); // otherwise everything is scrolled !!!
-//
-//      for(y=1; y < strip_width; y++)
-//      {
-//          glMultiTexCoord2fvARB(GL_TEXTURE0_ARB, _newuvmap[x][y]);
-//          glMultiTexCoord2fvARB(GL_TEXTURE1_ARB, _envmap[x][y]);
-//          glVertex3fv(_sommet[x][y]);
-//
-//          glMultiTexCoord2fvARB(GL_TEXTURE0_ARB, _newuvmap[x+1][y+1]);
-//          glMultiTexCoord2fvARB(GL_TEXTURE1_ARB, _envmap[x+1][y+1]);
-//          glVertex3fv(_sommet[x+1][y+1]);
-//      }
-//
-//      glMultiTexCoord2fvARB(GL_TEXTURE0_ARB, _newuvmap[x][y]);
-//      glMultiTexCoord2fvARB(GL_TEXTURE1_ARB, _envmap[x][y]);
-//      glVertex3fv(_sommet[x][y]);
-//
-//      glEnd();
-// }

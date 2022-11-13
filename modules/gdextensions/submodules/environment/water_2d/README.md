@@ -11,3 +11,4 @@ Water rendering plane with wave ripples (based on https://www.codeproject.com/Ar
  * https://github.com/dionyziz/wave-experiment
  * https://github.com/radif/Flotte-Sprite
  * https://github.com/lphpc/Mobile3D/blob/master/android/androidgldemos/project/jni/flotte.h
+ * https://www.gamedev.net/tutorials/programming/graphics/creating-a-glsl-library-r2428/
