@@ -71,10 +71,10 @@ static String get_custom_name() {
 	return nm;
 }
 #elif OSX_ENABLED || LINUX_ENABLED || FRT_ENABLED
-#include <unistd.h>
 #include <limits.h>
+#include <unistd.h>
 #ifndef HOST_NAME_MAX
-# define HOST_NAME_MAX _POSIX_HOST_NAME_MAX
+#define HOST_NAME_MAX _POSIX_HOST_NAME_MAX
 #endif
 static String get_custom_name() {
 	String nm;

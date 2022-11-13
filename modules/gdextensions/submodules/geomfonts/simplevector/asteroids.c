@@ -123,3 +123,33 @@ const asteroids_char_t asteroids_font[] = {
 	['Y' - 0x20] = { P(0, 12), P(4, 6), P(8, 12), FONT_UP, P(4, 6), P(4, 0), FONT_LAST },
 	['Z' - 0x20] = { P(0, 12), P(8, 12), P(0, 0), P(8, 0), FONT_UP, P(2, 6), P(6, 6), FONT_LAST },
 };
+
+static Size2 _draw_asteroid_glyph(PoolVector2Array &data, char c, const Point2 &pos, const Vector2 &size) {
+	if ('a' <= c && c <= 'z') {
+		c -= 'a' - 'A'; // Asteroids font only has upper case
+	}
+	const uint8_t *const pts = asteroids_font[c - ' '].points;
+	bool next_moveto = true;
+	Point2 cursor;
+
+	for (int i = 0; i < 8; i++) {
+		const uint8_t op = pts[i];
+		switch (op) {
+			case FONT_LAST:
+				break;
+			case FONT_UP:
+				next_moveto = true;
+				continue;
+		}
+		const Vector2 delta = { ((op >> 4) & 0xF) * size.x, ((op >> 0) & 0xF) * size.y };
+
+		if (!next_moveto) {
+			data.push_back(cursor);
+			data.push_back(pos + delta);
+		}
+		cursor = pos + delta;
+		next_moveto = false;
+	}
+
+	return 12 * size;
+}

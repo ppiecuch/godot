@@ -601,6 +601,8 @@ void GdHistoryPlot::_notification(int p_what) {
 void GdHistoryPlot::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_max_history", "size"), &GdHistoryPlot::set_max_history);
 	ClassDB::bind_method(D_METHOD("get_max_history"), &GdHistoryPlot::get_max_history);
+	ClassDB::bind_method(D_METHOD("set_auto_recalc_interval", "interval"), &GdHistoryPlot::set_auto_recalc_interval);
+	ClassDB::bind_method(D_METHOD("get_auto_recalc_interval"), &GdHistoryPlot::get_auto_recalc_interval);
 	ClassDB::bind_method(D_METHOD("set_precision", "prec"), &GdHistoryPlot::set_precision);
 	ClassDB::bind_method(D_METHOD("get_precision"), &GdHistoryPlot::get_precision);
 	ClassDB::bind_method(D_METHOD("set_humanize_value", "humanize"), &GdHistoryPlot::set_humanize_value);
@@ -634,6 +636,7 @@ void GdHistoryPlot::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "title_label"), "set_title_label", "get_title_label");
 	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "text_color"), "set_text_color", "get_text_color");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "history_size"), "set_max_history", "get_max_history");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "auto_recalc_interval", PROPERTY_HINT_RANGE, "2,100"), "set_auto_recalc_interval", "get_auto_recalc_interval");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "display_precision"), "set_precision", "get_precision");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "humanize_value"), "set_humanize_value", "is_humanize_value");
 	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "line_color"), "set_line_color", "get_line_color");

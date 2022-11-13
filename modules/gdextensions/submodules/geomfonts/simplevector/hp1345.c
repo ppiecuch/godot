@@ -140,7 +140,7 @@ void _draw_hp1345_text(Ref<ArrayMesh> &p_mesh, const String &p_text, const Point
 	p_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, mesh_array);
 }
 
-Size2 _size_vec_text(const String &p_text, const Size2 &p_scale) {
+Size2 _size_hp1345_text(const String &p_text, const Size2 &p_scale) {
 	if (p_text.empty()) {
 		return Size2();
 	}

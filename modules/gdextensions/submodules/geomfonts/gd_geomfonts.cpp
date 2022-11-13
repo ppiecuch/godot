@@ -47,158 +47,188 @@
 #include "scene/resources/mesh.h"
 #include "servers/visual_server.h"
 
-void GdGeomFonts::DrawItems::clear() {
-	if (auto *vs = VS::get_singleton()) {
-		for (RID &rid : res) {
-			if (rid.is_valid()) {
-				vs->free(rid);
-			}
-		}
+std::pair<RID, int> GdGeomFonts::_next_item(RID canvas) {
+	RID rid = RID_PRIME(VS::get_singleton()->canvas_item_create());
+	const int handle = items.insert(rid).value;
+	if (rid.is_valid()) {
+		ERR_FAIL_COND_V(!canvas.is_valid(), std::make_pair(RID(), -1));
+		VS::get_singleton()->canvas_item_set_parent(rid, canvas);
 	}
-	res.clear();
+	return std::make_pair(rid, handle);
 }
 
-void GdGeomFonts::DrawItems::set_transform(const Transform2D &p_xform) {
-	for (RID &rid : res) {
-		if (rid.is_valid()) {
-			VisualServer::get_singleton()->canvas_item_set_transform(rid, p_xform);
-		}
-	}
-}
-
-void GdGeomFonts::DrawItems::set_modulate_color(const Color &p_color) {
-	for (RID &rid : res) {
-		if (rid.is_valid()) {
-			VisualServer::get_singleton()->canvas_item_set_modulate(rid, p_color);
-		}
+RID GdGeomFonts::_from_handle(int hrid) const {
+	const Id_T t = make_handle(hrid);
+	if (items.is_valid(t)) {
+		return items[t];
+	} else {
+		return RID();
 	}
 }
 
-GdGeomFonts::DrawItems::DrawItems(RID p_canvas, int p_num_res) {
-	ERR_FAIL_COND(!p_canvas.is_valid());
-	auto *vs = VS::get_singleton();
-	for (int r = 0; r < p_num_res; r++) {
-		RID rid = vs->canvas_item_create();
-		if (rid.is_valid()) {
-			vs->canvas_item_set_parent(rid, p_canvas);
-		}
-		res.push_back(rid);
-	}
+bool GdGeomFonts::_valid_handle(int hrid) const {
+	const Id_T t = make_handle(hrid);
+	return items.is_valid(t);
 }
 
-GdGeomFonts::DrawItems::DrawItems() {
-}
-
-void GdGeomFonts::group_add_bob_font_text(Ref<ArrayMesh> p_mesh, const String &p_text, const Point3 &p_pos, real_t p_size, bool p_wire) {
+void GdGeomFonts::mesh_add_bob_font_text(Ref<ArrayMesh> p_mesh, const String &p_text, const Point3 &p_pos, real_t p_size, bool p_wire) {
+	ERR_FAIL_NULL(p_mesh);
 	bob_font_draw_string(p_mesh, p_text.ascii().c_str(), p_pos, p_size, p_wire);
 }
 
-void GdGeomFonts::group_add_bob_font_text_xform(Ref<ArrayMesh> p_mesh, const String &p_text, const Transform &p_xform, real_t p_size, bool p_wire) {
+void GdGeomFonts::mesh_add_bob_font_text_xform(Ref<ArrayMesh> p_mesh, const String &p_text, const Transform &p_xform, real_t p_size, bool p_wire) {
+	ERR_FAIL_NULL(p_mesh);
 	bob_font_draw_string(p_mesh, p_text.ascii().c_str(), p_xform, p_size, p_wire);
 }
 
-void GdGeomFonts::group_add_easy_font_text(Ref<ArrayMesh> p_mesh, const String &p_text, const Point2 &p_pos, real_t p_spacing) {
+void GdGeomFonts::mesh_add_easy_font_text(Ref<ArrayMesh> p_mesh, const String &p_text, const Point2 &p_pos, real_t p_spacing) {
+	ERR_FAIL_NULL(p_mesh);
 	stb_easy_font_spacing(p_spacing);
 	stb_easy_font_print_string(p_mesh, p_pos, p_text.ascii().c_str());
 }
 
-void GdGeomFonts::group_add_easy_font_text_xform(Ref<ArrayMesh> p_mesh, const String &p_text, const Transform &p_xform, real_t p_spacing) {
+void GdGeomFonts::mesh_add_easy_font_text_xform(Ref<ArrayMesh> p_mesh, const String &p_text, const Transform &p_xform, real_t p_spacing) {
+	ERR_FAIL_NULL(p_mesh);
 	stb_easy_font_spacing(p_spacing);
 	stb_easy_font_print_string_xform(p_mesh, p_xform, p_text.ascii().c_str());
 }
 
-int GdGeomFonts::group_add_finish(Ref<ArrayMesh> p_mesh) {
-	int id = items.size();
-	items.push_back({ canvas, 1 });
-	VisualServer::get_singleton()->canvas_item_add_mesh(items.last().get_res(0), p_mesh->get_rid());
+void GdGeomFonts::mesh_add_hp_font_text(Ref<ArrayMesh> p_mesh, const String &p_text, const Point2 &p_pos, const Size2 &p_scale) {
+	ERR_FAIL_NULL(p_mesh);
+	_draw_hp1345_text(p_mesh, p_text, p_pos, p_scale);
+}
+
+void GdGeomFonts::mesh_add_hp_font_text_xform(Ref<ArrayMesh> p_mesh, const String &p_text, const Transform &p_xform) {
+}
+
+int GdGeomFonts::mesh_add_finish(RID p_canvas, Ref<ArrayMesh> p_mesh) {
+	ERR_FAIL_COND_V(!p_canvas.is_valid(), -1);
+	ERR_FAIL_NULL_V(p_mesh, -1);
+	const auto item = _next_item(p_canvas);
+	VisualServer::get_singleton()->canvas_item_add_mesh(item.first, p_mesh->get_rid());
+	return item.second;
+}
+
+int GdGeomFonts::easy_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos, real_t p_spacing) {
+	ERR_FAIL_COND_V(!p_canvas.is_valid(), -1);
+	const auto item = _next_item(p_canvas);
+	Ref<ArrayMesh> mesh = newref(ArrayMesh);
+	stb_easy_font_spacing(p_spacing);
+	stb_easy_font_print_string(mesh, p_pos, p_text.ascii().c_str());
+	VisualServer::get_singleton()->canvas_item_add_mesh(item.first, mesh->get_rid());
+	return item.second;
+}
+
+int GdGeomFonts::easy_font_text_xform(RID p_canvas, const String &p_text, const Transform &p_xform, real_t p_spacing) {
+	const int id = items.size();
 	return id;
 }
 
-int GdGeomFonts::easy_font_draw_text(const String &p_text, const Point2 &p_pos, real_t p_spacing) {
-	int id = items.size();
-	return id;
-}
-
-int GdGeomFonts::easy_font_draw_text_xform(const String &p_text, const Transform &p_xform, real_t p_spacing) {
-	int id = items.size();
-	return id;
-}
-
-Size2 GdGeomFonts::easy_font_text_size(const String &p_text) {
+Size2 GdGeomFonts::easy_font_text_size(const String &p_text) const {
 	const char *ptr = p_text.ascii().c_str();
 	return Size2(stb_easy_font_width(ptr), stb_easy_font_height(ptr));
 }
 
-int GdGeomFonts::bitmap_font_draw_text(const String &p_text, const Point2 &p_pos) {
-	int id = items.size();
-	items.push_back({ canvas, 2 });
-	FBBitmapFontView fnt(items.last().get_res(0), items.last().get_res(1), _cache);
-	fnt.set_text(p_text);
-	fnt.draw();
+int GdGeomFonts::bob_font_text(RID p_canvas, const String &p_text, const Transform &p_xform, real_t p_size, bool p_wire) {
+	const int id = items.size();
 	return id;
 }
 
+int GdGeomFonts::bob_font_text_xform(RID p_canvas, const String &p_text, const Transform &p_xform, real_t p_size, bool p_wire) {
+	const int id = items.size();
+	return id;
+}
+
+Size2 GdGeomFonts::bob_font_text_size(const String &p_text) const {
+	return Size2();
+}
+
+int GdGeomFonts::hp_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos, const Size2 &p_scale) {
+	ERR_FAIL_COND_V(!p_canvas.is_valid(), -1);
+	const auto item = _next_item(p_canvas);
+	Ref<ArrayMesh> mesh = newref(ArrayMesh);
+	_draw_hp1345_text(mesh, p_text, p_pos, p_scale);
+	VisualServer::get_singleton()->canvas_item_add_mesh(item.first, mesh->get_rid());
+	return item.second;
+}
+
+int GdGeomFonts::hp_font_text_xform(RID p_canvas, const String &p_text, const Transform &p_xform) {
+	const int id = items.size();
+	return id;
+}
+
+Size2 GdGeomFonts::hp_font_text_size(const String &p_text, const Size2 &p_scale) const {
+	return _size_hp1345_text(p_text, p_scale);
+}
+
+int GdGeomFonts::bitmap_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos) {
+	ERR_FAIL_COND_V(!p_canvas.is_valid(), -1);
+	const auto item = _next_item(p_canvas);
+	FBBitmapFontView fnt(item.first, _cache);
+	fnt.set_text(p_text);
+	fnt.draw();
+	return item.second;
+}
+
 void GdGeomFonts::set_transform(int p_index, const Transform2D &p_xform) {
-	ERR_FAIL_INDEX(p_index, items.size());
-	items.get(p_index).set_transform(p_xform);
+	ERR_FAIL_COND(!_valid_handle(p_index));
+	VS::get_singleton()->canvas_item_set_transform(_from_handle(p_index), p_xform);
 	emit_signal("changed", array(p_index));
 }
 
 void GdGeomFonts::set_modulate_color(int p_index, const Color &p_color) {
-	ERR_FAIL_INDEX(p_index, items.size());
-	items.get(p_index).set_modulate_color(p_color);
+	ERR_FAIL_COND(!_valid_handle(p_index));
+	VS::get_singleton()->canvas_item_set_modulate(_from_handle(p_index), p_color);
 	emit_signal("changed", array(p_index));
 }
 
-void GdGeomFonts::clear_all() {
-	for (DrawItems &rid : items) {
-		rid.clear();
+void GdGeomFonts::clear_item(int p_index) {
+	ERR_FAIL_COND(!_valid_handle(p_index));
+	VS::get_singleton()->free(_from_handle(p_index));
+}
+
+void GdGeomFonts::clear_all_items() {
+	for (const RID &rid : items) {
+		VS::get_singleton()->free(rid);
 	}
-	items.clear();
+	items.reset();
 }
 
 void GdGeomFonts::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("group_add_bob_font_text", "mesh", "text", "pos", "size", "wire"), &GdGeomFonts::group_add_bob_font_text, DEFVAL(Point2()), DEFVAL(1), DEFVAL(true));
-	ClassDB::bind_method(D_METHOD("group_add_bob_font_xform", "mesh", "text", "xform", "size", "wire"), &GdGeomFonts::group_add_bob_font_text_xform, DEFVAL(1), DEFVAL(true));
+	ClassDB::bind_method(D_METHOD("mesh_add_bob_font_text", "mesh", "text", "pos", "size", "wire"), &GdGeomFonts::mesh_add_bob_font_text, DEFVAL(Point2()), DEFVAL(1), DEFVAL(true));
+	ClassDB::bind_method(D_METHOD("mesh_add_bob_font_text_xform", "mesh", "text", "xform", "size", "wire"), &GdGeomFonts::mesh_add_bob_font_text_xform, DEFVAL(1), DEFVAL(true));
+	ClassDB::bind_method(D_METHOD("mesh_add_easy_font_text", "mesh", "text", "pos", "spacing"), &GdGeomFonts::mesh_add_easy_font_text, DEFVAL(Point2()), DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("mesh_add_easy_font_text_xform", "mesh", "text", "xform", "spacing"), &GdGeomFonts::mesh_add_easy_font_text_xform, DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("mesh_add_hp_font_text", "mesh", "text", "pos", "scale"), &GdGeomFonts::mesh_add_hp_font_text, DEFVAL(Point2()), DEFVAL(Size2(10, 10)));
+	ClassDB::bind_method(D_METHOD("mesh_add_hp_font_text_xform", "mesh", "text", "xform"), &GdGeomFonts::mesh_add_hp_font_text_xform);
+	ClassDB::bind_method(D_METHOD("mesh_add_finish", "canvas", "mesh"), &GdGeomFonts::mesh_add_finish);
 
-	ClassDB::bind_method(D_METHOD("group_add_easy_font_text", "mesh", "text", "pos", "spacing"), &GdGeomFonts::group_add_easy_font_text, DEFVAL(Point2()), DEFVAL(0));
-	ClassDB::bind_method(D_METHOD("group_add_easy_font_text_xform", "mesh", "text", "xform", "spacing"), &GdGeomFonts::group_add_easy_font_text_xform, DEFVAL(0));
-	ClassDB::bind_method(D_METHOD("group_add_finish", "mesh"), &GdGeomFonts::group_add_finish);
-
-	ClassDB::bind_method(D_METHOD("easy_font_draw_text", "text", "pos", "spacing"), &GdGeomFonts::easy_font_draw_text, DEFVAL(Point2()), DEFVAL(0));
-	ClassDB::bind_method(D_METHOD("easy_font_draw_text_xform", "text", "xform", "spacing"), &GdGeomFonts::easy_font_draw_text_xform, DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("easy_font_text", "canvas", "text", "pos", "spacing"), &GdGeomFonts::easy_font_text, DEFVAL(Point2()), DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("easy_font_text_xform", "canvas", "text", "xform", "spacing"), &GdGeomFonts::easy_font_text_xform, DEFVAL(0));
 	ClassDB::bind_method(D_METHOD("easy_font_text_size", "text"), &GdGeomFonts::easy_font_text_size);
+	ClassDB::bind_method(D_METHOD("bob_font_text", "canvas", "text", "pos", "spacing"), &GdGeomFonts::bob_font_text, DEFVAL(Point2()), DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("bob_font_text_xform", "canvas", "text", "xform", "spacing"), &GdGeomFonts::bob_font_text_xform, DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("bob_font_text_size", "text"), &GdGeomFonts::bob_font_text_size);
+	ClassDB::bind_method(D_METHOD("hp_font_text", "canvas", "text", "pos", "scale"), &GdGeomFonts::hp_font_text, DEFVAL(Point2()), DEFVAL(Size2(10, 10)));
+	ClassDB::bind_method(D_METHOD("hp_font_text_xform", "canvas", "text", "xform"), &GdGeomFonts::hp_font_text_xform);
+	ClassDB::bind_method(D_METHOD("hp_font_text_size", "text", "scale"), &GdGeomFonts::hp_font_text_size, DEFVAL(Size2(10, 10)));
 
-	ClassDB::bind_method(D_METHOD("bitmap_font_draw_text", "text", "pos"), &GdGeomFonts::bitmap_font_draw_text, DEFVAL(Point2()));
+	ClassDB::bind_method(D_METHOD("bitmap_font_text", "canvas", "text", "pos"), &GdGeomFonts::bitmap_font_text, DEFVAL(Point2()));
 
 	ClassDB::bind_method(D_METHOD("set_transform", "index", "xform"), &GdGeomFonts::set_transform);
 	ClassDB::bind_method(D_METHOD("set_modulate_color", "index", "color"), &GdGeomFonts::set_modulate_color);
-	ClassDB::bind_method(D_METHOD("clear_all"), &GdGeomFonts::clear_all);
+	ClassDB::bind_method(D_METHOD("clear_item", "index"), &GdGeomFonts::clear_item);
+	ClassDB::bind_method(D_METHOD("clear_all_items"), &GdGeomFonts::clear_all_items);
 
 	ADD_SIGNAL(MethodInfo("changed"));
 }
 
-GdGeomFonts::GdGeomFonts() {
-	_mat_trnsp = newref(CanvasItemMaterial);
-	_mat_trnsp->set_blend_mode(CanvasItemMaterial::BLEND_MODE_MIX);
-	_cache["mat_trnsp"] = _mat_trnsp;
-
-	auto *st = SceneTree::get_singleton();
-	ERR_FAIL_NULL(st);
-	auto *viewport = st->get_root()->get_viewport();
-	ERR_FAIL_NULL(viewport);
-	auto *vs = VS::get_singleton();
-	canvas = vs->canvas_create();
-	ERR_FAIL_COND(!canvas.is_valid());
-	vs->viewport_attach_canvas(viewport->get_viewport_rid(), canvas);
-	vs->viewport_set_canvas_stacking(viewport->get_viewport_rid(), canvas, (~0U) >> 1, (~0U) >> 1);
-}
+GdGeomFonts::GdGeomFonts() :
+		items(1, 32) {}
 
 GdGeomFonts::~GdGeomFonts() {
-	if (auto *vs = VS::get_singleton()) {
-		if (canvas.is_valid()) {
-			vs->free(canvas);
-		}
-		items.clear();
+	for (const RID &rid : items) {
+		VS::get_singleton()->free(rid);
 	}
+	items.reset();
 }

@@ -305,8 +305,10 @@ if is_enabled("openclwrapper"):
         else:
             print("(GDextensions) OpenCLWrapper is not supported on platform '%s'." % env["platform"])
             env["enable_gdextensions_submodules"].remove("openclwrapper")
-        if is_enabled("spacemouse"):
-            env_module.Append(CPPPATH=["thirdparty/opencl-wrapper/src/", "thirdparty/opencl-wrapper/src/OpenCL/include"])
+        if is_enabled("openclwrapper"):
+            env_module.Append(
+                CPPPATH=["thirdparty/opencl-wrapper/src/", "thirdparty/opencl-wrapper/src/OpenCL/include"]
+            )
             modules += ["openclwrapper"]
 
 if is_enabled("slugfont"):

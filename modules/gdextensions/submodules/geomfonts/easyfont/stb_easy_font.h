@@ -272,7 +272,7 @@ static void stb_easy_font_print_string(Ref<ArrayMesh> &mesh, Point2 pos, const c
 	mesh_array.resize(VS::ARRAY_MAX);
 	mesh_array[VS::ARRAY_VERTEX] = verts;
 	mesh_array[VS::ARRAY_INDEX] = indexes;
-	mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array, Array(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
+	mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array);
 }
 
 static void stb_easy_font_print_string_xform(Ref<ArrayMesh> &mesh, const Transform &pretransform, const char *text) {
@@ -291,7 +291,7 @@ static void stb_easy_font_print_string_xform(Ref<ArrayMesh> &mesh, const Transfo
 	mesh_array.resize(VS::ARRAY_MAX);
 	mesh_array[VS::ARRAY_VERTEX] = verts;
 	mesh_array[VS::ARRAY_INDEX] = indexes;
-	mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array, Array());
+	mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_array);
 }
 #endif // STB_EASY_FONT_H
 

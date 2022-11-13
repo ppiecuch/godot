@@ -72,7 +72,7 @@ static const real_t _splash_spread_factor[] = { 1, 1.5, 2 };
 static const real_t _splash_height_factor[] = { 0.1, 0.2, 0.3, 0.4 };
 
 // https://blog.demofox.org/2017/05/29/when-random-numbers-are-too-random-low-discrepancy-sequences/
-static std::vector<Point2> _get_samples(int num, size_t basex, size_t basey, Rect2 view) {
+static std::vector<Point2> _get_samples(int num, size_t basex, size_t basey, const Rect2 &view) {
 	// calculate the sample points
 	std::vector<Point2> samples;
 	samples.resize(num);
@@ -83,7 +83,7 @@ static std::vector<Point2> _get_samples(int num, size_t basex, size_t basey, Rec
 			real_t denominator = basex;
 			size_t n = i;
 			while (n > 0) {
-				size_t multiplier = n % basex;
+				const size_t multiplier = n % basex;
 				samples[i].x += multiplier / denominator;
 				n = n / basex;
 				denominator *= basex;
@@ -95,7 +95,7 @@ static std::vector<Point2> _get_samples(int num, size_t basex, size_t basey, Rec
 			real_t denominator = basey;
 			size_t n = i;
 			while (n > 0) {
-				size_t multiplier = n % basey;
+				const size_t multiplier = n % basey;
 				samples[i].y += multiplier / denominator;
 				n = n / basey;
 				denominator *= basey;
