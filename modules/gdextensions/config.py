@@ -11,8 +11,10 @@ def configure(env):
     # all submodules available in the extensions
     modules = [
         "core",
-        "breakpad",
         "visual",
+        "cpufeatures",
+        "breakpad",
+        "benchmark",
         "bulletkit",
         "blitter",
         "benchmark",
