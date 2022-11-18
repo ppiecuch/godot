@@ -57,6 +57,7 @@ def configure(env):
         "tileengine",
         "sparkparticles",
         "turbobadger",
+        "spinners",
         "spacemouse",
         "media",
         "runtimeprofiler",

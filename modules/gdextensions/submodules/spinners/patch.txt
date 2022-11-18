@@ -1,0 +1,202 @@
+--- imspinner.orig.h	2022-11-18 11:17:44.000000000 +0100
++++ imspinner.h	2022-11-18 11:17:54.000000000 +0100
+@@ -31,7 +31,7 @@
+ 
+ namespace ImSpinner
+ {
+-#define DECLPROP(name,type,def) struct name { type value = def; operator type() { return value; } };
++#define DECLPROP(name,type,def) struct name { type value = def; operator type() { return value; } name(type v) : value(v) {} };
+     enum SpinnerTypeT {
+       e_st_rainbow = 0,
+       e_st_angle,
+@@ -59,8 +59,9 @@
+     DECLPROP (MinThickness, float, 0.f)
+ #undef DECLPROP
+ 
+-    namespace detail {
+-      bool SpinnerBegin(const char *label, float radius, ImVec2 &pos, ImVec2 &size, ImVec2 &centre, int &num_segments) {
++    namespace detail
++    {
++      static bool SpinnerBegin(const char *label, float radius, ImVec2 &pos, ImVec2 &size, ImVec2 &centre, int &num_segments) {
+         ImGuiWindow *window = ImGui::GetCurrentWindow();
+         if (window->SkipItems)
+           return false;
+@@ -110,10 +111,13 @@
+         IMPLRPOP(float, MinThickness)
+       };
+ #undef IMPLRPOP
+-    }
++    }; // details
+ 
+ #define SPINNER_HEADER(pos, size, centre, num_segments) ImVec2 pos, size, centre; int num_segments; if (!detail::SpinnerBegin(label, radius, pos, size, centre, num_segments)) { return; }; ImGuiWindow *window = ImGui::GetCurrentWindow();
+ 
++    typedef std::function<float(int)> grad_f;
++    typedef std::function<ImColor(int)> color_f;
++
+     void SpinnerRainbow(const char *label, float radius, float thickness, const ImColor &color, float speed)
+     {
+         SPINNER_HEADER(pos, size, centre, num_segments);
+@@ -1259,7 +1263,7 @@
+ 
+       window->DrawList->AddCircleFilled(centre, radius, bg, num_segments);
+ 
+-      auto draw_gradient = [&] (auto b, auto e, auto th) {
++      auto draw_gradient = [&] (grad_f b, grad_f e, grad_f th) {
+         for (int i = 0; i < num_segments; i++)
+         {
+           window->DrawList->AddLine(ImVec2(centre.x + ImCos(start + b(i)) * radius, centre.y + ImSin(start + b(i)) * radius),
+@@ -1270,22 +1274,22 @@
+ 
+       };
+ 
+-      draw_gradient([&] (auto i) { return (num_segments + i) * angle_offset; },
+-                    [&] (auto i) { return (num_segments + i + 1) * angle_offset; },
+-                    [&] (auto i) { return thickness - th * i; });
+-
+-      draw_gradient([&] (auto i) { return (i) * angle_offset; },
+-                    [&] (auto i) { return (i + 1) * angle_offset; },
+-                    [&] (auto i) { return th * i; });
+-
+-      draw_gradient([&] (auto i) { return (num_segments + i) * angle_offset; },
+-                    [&] (auto i) { return (num_segments + i + 1) * angle_offset; },
+-                    [&] (auto i) { return thickness - th * i; });
++      draw_gradient([&] (int i) { return (num_segments + i) * angle_offset; },
++                    [&] (int i) { return (num_segments + i + 1) * angle_offset; },
++                    [&] (int i) { return thickness - th * i; });
++
++      draw_gradient([&] (int i) { return (i) * angle_offset; },
++                    [&] (int i) { return (i + 1) * angle_offset; },
++                    [&] (int i) { return th * i; });
++
++      draw_gradient([&] (int i) { return (num_segments + i) * angle_offset; },
++                    [&] (int i) { return (num_segments + i + 1) * angle_offset; },
++                    [&] (int i) { return thickness - th * i; });
+ 
+       const float b_angle_offset = (2.f * IM_PI - angle) / num_segments; 
+-      draw_gradient([&] (auto i) { return num_segments * angle_offset * 2.f + (i * b_angle_offset); },
+-                    [&] (auto i) { return num_segments * angle_offset * 2.f + ((i + 1) * b_angle_offset); },
+-                    [] (auto) { return 1.f; });
++      draw_gradient([&] (int i) { return num_segments * angle_offset * 2.f + (i * b_angle_offset); },
++                    [&] (int i) { return num_segments * angle_offset * 2.f + ((i + 1) * b_angle_offset); },
++                    [] (int) { return 1.f; });
+     }
+ 
+     void SpinnerCircleDrop(const char *label, float radius, float thickness, float thickness_drop, const ImColor &color = 0xffffffff, const ImColor &bg = 0xffffff80, float speed = 2.8f, float angle = IM_PI) 
+@@ -1374,7 +1378,7 @@
+       bars = ImMin<size_t>(bars, 32);
+ 
+       const float rmin = radius - thickness;
+-      auto get_points = [&] (auto left, auto right) -> std::array<ImVec2, 4> {
++      auto get_points = [&] (float left, float right) -> std::array<ImVec2, 4> {
+         return {
+           ImVec2(centre.x + ImCos(left) * rmin, centre.y + ImSin(left) * rmin),
+           ImVec2(centre.x + ImCos(left) * radius, centre.y + ImSin(left) * radius),
+@@ -1383,7 +1387,7 @@
+         };
+       };
+ 
+-      auto draw_sectors = [&] (auto s, auto color_func) {
++      auto draw_sectors = [&] (float s, color_f color_func) {
+         for (size_t i = 0; i <= bars; i++) {
+           float left = s + (i * angle_offset) - angle_offset_t;
+           float right = s + (i * angle_offset) + angle_offset_t;
+@@ -1392,8 +1396,8 @@
+         }
+       };
+ 
+-      draw_sectors(0, [&] (auto) { ImColor rc = bg; rc.Value.w = 0.1f; return rc; });
+-      draw_sectors(start, [&] (auto i) { ImColor rc = bg; rc.Value.w = (i / (float)bars) - 0.5f; return rc; });
++      draw_sectors(0, [&] (int) { ImColor rc = bg; rc.Value.w = 0.1f; return rc; });
++      draw_sectors(start, [&] (int i) { ImColor rc = bg; rc.Value.w = (i / (float)bars) - 0.5f; return rc; });
+     }
+ 
+     using LeafColor = ImColor (int);
+@@ -1411,7 +1415,7 @@
+       bars = ImMin<size_t>(bars, 32);
+ 
+       const float rmin = radius - thickness - 1;
+-      auto get_points = [&] (auto left, auto right) -> std::array<ImVec2, 4> {
++      auto get_points = [&] (float left, float right) -> std::array<ImVec2, 4> {
+         return {
+           ImVec2(centre.x + ImCos(left - 0.1f) * radius, centre.y + ImSin(left - 0.1f) * radius),
+           ImVec2(centre.x + ImCos(right + 0.15f) * radius, centre.y + ImSin(right + 0.15f) * radius),
+@@ -1419,7 +1423,7 @@
+         };
+       };
+ 
+-      auto draw_sectors = [&] (auto s, auto color_func) {
++      auto draw_sectors = [&] (float s, color_f color_func) {
+         for (size_t i = 0; i <= bars; i++) {
+           float left = s + (i * angle_offset) - angle_offset_t;
+           float right = s + (i * angle_offset) + angle_offset_t;
+@@ -1434,16 +1438,16 @@
+     template<SpinnerTypeT Type, typename... Args>
+     void Spinner(const char *label, const Args&... args)
+     {
+-      struct SpinnerDraw { SpinnerTypeT type; void (*func)(const char *, const detail::SpinnerConfig &); }
++      struct SpinnerDraw { SpinnerTypeT type; std::function<void(const char *, const detail::SpinnerConfig &)> func; }
+ 
+       spinner_draw_funcs[e_st_count] = {
+-        { e_st_rainbow, [] (const char *label, const detail::SpinnerConfig &c) { SpinnerRainbow(label, c.m_Radius, c.m_Thickness, c.m_Color, c.m_Speed); } },
+-        { e_st_angle,   [] (const char *label, const detail::SpinnerConfig &c) { SpinnerAng(label, c.m_Radius, c.m_Thickness, c.m_Color, c.m_BgColor, c.m_Speed, c.m_Angle); } },
+-        { e_st_dots,    [] (const char *label, const detail::SpinnerConfig &c) { SpinnerDots(label, c.m_FloatPtr, c.m_Radius, c.m_Thickness, c.m_Color, c.m_Speed, c.m_Dots, c.m_MiddleDots, c.m_MinThickness); } },
+-        { e_st_ang,     [] (const char *label, const detail::SpinnerConfig &c) { SpinnerAng(label, c.m_Radius, c.m_Thickness, c.m_Color, c.m_BgColor, c.m_Speed, c.m_Angle); } },
+-        { e_st_vdots,   [] (const char *label, const detail::SpinnerConfig &c) { SpinnerVDots(label, c.m_Radius, c.m_Thickness, c.m_Color, c.m_BgColor, c.m_Speed, c.m_Dots); } },
+-        { e_st_bounce_ball, [](const char *label,const detail::SpinnerConfig &c) { SpinnerBounceBall(label, c.m_Radius, c.m_Thickness, c.m_Color, c.m_Speed); } },
+-        { e_st_eclipse, [] (const char *label, const detail::SpinnerConfig &c) { SpinnerAngEclipse(label , c.m_Radius, c.m_Thickness, c.m_Color, c.m_Speed); } }
++        { e_st_rainbow, [this] (const char *label, const detail::SpinnerConfig &c) { SpinnerRainbow(label, c.m_Radius, c.m_Thickness, c.m_Color, c.m_Speed); } },
++        { e_st_angle,   [this] (const char *label, const detail::SpinnerConfig &c) { SpinnerAng(label, c.m_Radius, c.m_Thickness, c.m_Color, c.m_BgColor, c.m_Speed, c.m_Angle); } },
++        { e_st_dots,    [this] (const char *label, const detail::SpinnerConfig &c) { SpinnerDots(label, c.m_FloatPtr, c.m_Radius, c.m_Thickness, c.m_Color, c.m_Speed, c.m_Dots, c.m_MiddleDots, c.m_MinThickness); } },
++        { e_st_ang,     [this] (const char *label, const detail::SpinnerConfig &c) { SpinnerAng(label, c.m_Radius, c.m_Thickness, c.m_Color, c.m_BgColor, c.m_Speed, c.m_Angle); } },
++        { e_st_vdots,   [this] (const char *label, const detail::SpinnerConfig &c) { SpinnerVDots(label, c.m_Radius, c.m_Thickness, c.m_Color, c.m_BgColor, c.m_Speed, c.m_Dots); } },
++        { e_st_bounce_ball, [this](const char *label,const detail::SpinnerConfig &c) { SpinnerBounceBall(label, c.m_Radius, c.m_Thickness, c.m_Color, c.m_Speed); } },
++        { e_st_eclipse, [this] (const char *label, const detail::SpinnerConfig &c) { SpinnerAngEclipse(label , c.m_Radius, c.m_Thickness, c.m_Color, c.m_Speed); } }
+       };
+ 
+       detail::SpinnerConfig config(SpinnerType{Type}, args...);
+@@ -1471,7 +1475,7 @@
+       }
+       window->DrawList->PathStroke(bg, false, thickness);
+ 
+-      auto draw_gradient = [&] (auto b, auto e, auto c) {
++      auto draw_gradient = [&] (grad_f b, grad_f e, grad_f c) {
+         for (size_t i = 0; i < num_segments; i++)
+         {
+           window->DrawList->AddLine(ImVec2(centre.x + ImCos(start + b(i)) * radius, centre.y + ImSin(start + b(i)) * radius),
+@@ -1481,13 +1485,13 @@
+         }
+       };
+ 
+-      draw_gradient([&] (auto i) { return (i) * angle_offset; },
+-                    [&] (auto i) { return (i + 1) * angle_offset; },
+-                    [&] (auto i) { ImColor rc = color; rc.Value.w = (i / (float)num_segments); return rc; });
+-
+-      draw_gradient([&] (auto i) { return (num_segments + i) * angle_offset; },
+-                    [&] (auto i) { return (num_segments + i + 1) * angle_offset; },
+-                    [&] (auto i) { ImColor rc = color; rc.Value.w = 1.f - (i / (float)num_segments); return rc; });
++      draw_gradient([&] (int i) { return (i) * angle_offset; },
++                    [&] (int i) { return (i + 1) * angle_offset; },
++                    [&] (int i) { ImColor rc = color; rc.Value.w = (i / (float)num_segments); return rc; });
++
++      draw_gradient([&] (int i) { return (num_segments + i) * angle_offset; },
++                    [&] (int i) { return (num_segments + i + 1) * angle_offset; },
++                    [&] (int i) { ImColor rc = color; rc.Value.w = 1.f - (i / (float)num_segments); return rc; });
+     }
+ 
+     void SpinnerRotateSegments(const char *label, float radius, float thickness, const ImColor &color = 0xffffffff, float speed = 2.8f, size_t arcs = 4, size_t layers = 1)
+@@ -1534,7 +1538,7 @@
+           x = a cos(t) / 1 + sin²(t)
+           y = a sin(t) . cos(t) / 1 + sin²(t)
+       */
+-      const auto get_coord = [&](float const& a, float const& t) -> auto {
++      const auto get_coord = [&](float const& a, float const& t) -> std::pair<float, float> {
+           return std::make_pair((a * ImCos(t)) / (1 + (powf(ImSin(t), 2.0f))), (a * ImSin(t) * ImCos(t)) / (1 + (powf(ImSin(t), 2.0f))));
+       };
+ 
+@@ -2068,4 +2072,4 @@
+ #endif // IMSPINNER_DEMO
+ }
+ 
+-#endif // _IMSPINNER_H_
+\ No newline at end of file
++#endif // _IMSPINNER_H_

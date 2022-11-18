@@ -76,6 +76,7 @@ modules = [
     "tileengine",
     "sparkparticles",
     "turbobadger",
+    "spinners",
     "media/ffmpeg",
     "media/flac",
     "media/gifexporter",
