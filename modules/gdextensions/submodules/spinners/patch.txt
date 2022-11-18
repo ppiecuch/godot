@@ -1,6 +1,11 @@
 --- imspinner.orig.h	2022-11-18 11:17:44.000000000 +0100
-+++ imspinner.h	2022-11-18 11:17:54.000000000 +0100
-@@ -31,7 +31,7 @@
++++ imspinner.h	2022-11-18 11:46:56.000000000 +0100
+@@ -1,3 +1,4 @@
++/* clang-format off */
+ #ifndef _IMSPINNER_H_
+ #define _IMSPINNER_H_
+ 
+@@ -31,7 +32,7 @@
  
  namespace ImSpinner
  {
@@ -9,7 +14,7 @@
      enum SpinnerTypeT {
        e_st_rainbow = 0,
        e_st_angle,
-@@ -59,8 +59,9 @@
+@@ -59,8 +60,9 @@
      DECLPROP (MinThickness, float, 0.f)
  #undef DECLPROP
  
@@ -21,7 +26,7 @@
          ImGuiWindow *window = ImGui::GetCurrentWindow();
          if (window->SkipItems)
            return false;
-@@ -110,10 +111,13 @@
+@@ -110,10 +112,13 @@
          IMPLRPOP(float, MinThickness)
        };
  #undef IMPLRPOP
@@ -36,7 +41,7 @@
      void SpinnerRainbow(const char *label, float radius, float thickness, const ImColor &color, float speed)
      {
          SPINNER_HEADER(pos, size, centre, num_segments);
-@@ -1259,7 +1263,7 @@
+@@ -1259,7 +1264,7 @@
  
        window->DrawList->AddCircleFilled(centre, radius, bg, num_segments);
  
@@ -45,7 +50,7 @@
          for (int i = 0; i < num_segments; i++)
          {
            window->DrawList->AddLine(ImVec2(centre.x + ImCos(start + b(i)) * radius, centre.y + ImSin(start + b(i)) * radius),
-@@ -1270,22 +1274,22 @@
+@@ -1270,22 +1275,22 @@
  
        };
  
@@ -82,7 +87,7 @@
      }
  
      void SpinnerCircleDrop(const char *label, float radius, float thickness, float thickness_drop, const ImColor &color = 0xffffffff, const ImColor &bg = 0xffffff80, float speed = 2.8f, float angle = IM_PI) 
-@@ -1374,7 +1378,7 @@
+@@ -1374,7 +1379,7 @@
        bars = ImMin<size_t>(bars, 32);
  
        const float rmin = radius - thickness;
@@ -91,7 +96,7 @@
          return {
            ImVec2(centre.x + ImCos(left) * rmin, centre.y + ImSin(left) * rmin),
            ImVec2(centre.x + ImCos(left) * radius, centre.y + ImSin(left) * radius),
-@@ -1383,7 +1387,7 @@
+@@ -1383,7 +1388,7 @@
          };
        };
  
@@ -100,7 +105,7 @@
          for (size_t i = 0; i <= bars; i++) {
            float left = s + (i * angle_offset) - angle_offset_t;
            float right = s + (i * angle_offset) + angle_offset_t;
-@@ -1392,8 +1396,8 @@
+@@ -1392,8 +1397,8 @@
          }
        };
  
@@ -111,7 +116,7 @@
      }
  
      using LeafColor = ImColor (int);
-@@ -1411,7 +1415,7 @@
+@@ -1411,7 +1416,7 @@
        bars = ImMin<size_t>(bars, 32);
  
        const float rmin = radius - thickness - 1;
@@ -120,7 +125,7 @@
          return {
            ImVec2(centre.x + ImCos(left - 0.1f) * radius, centre.y + ImSin(left - 0.1f) * radius),
            ImVec2(centre.x + ImCos(right + 0.15f) * radius, centre.y + ImSin(right + 0.15f) * radius),
-@@ -1419,7 +1423,7 @@
+@@ -1419,7 +1424,7 @@
          };
        };
  
@@ -129,7 +134,7 @@
          for (size_t i = 0; i <= bars; i++) {
            float left = s + (i * angle_offset) - angle_offset_t;
            float right = s + (i * angle_offset) + angle_offset_t;
-@@ -1434,16 +1438,16 @@
+@@ -1434,16 +1439,16 @@
      template<SpinnerTypeT Type, typename... Args>
      void Spinner(const char *label, const Args&... args)
      {
@@ -154,7 +159,7 @@
        };
  
        detail::SpinnerConfig config(SpinnerType{Type}, args...);
-@@ -1471,7 +1475,7 @@
+@@ -1471,7 +1476,7 @@
        }
        window->DrawList->PathStroke(bg, false, thickness);
  
@@ -163,7 +168,7 @@
          for (size_t i = 0; i < num_segments; i++)
          {
            window->DrawList->AddLine(ImVec2(centre.x + ImCos(start + b(i)) * radius, centre.y + ImSin(start + b(i)) * radius),
-@@ -1481,13 +1485,13 @@
+@@ -1481,13 +1486,13 @@
          }
        };
  
@@ -184,7 +189,7 @@
      }
  
      void SpinnerRotateSegments(const char *label, float radius, float thickness, const ImColor &color = 0xffffffff, float speed = 2.8f, size_t arcs = 4, size_t layers = 1)
-@@ -1534,7 +1538,7 @@
+@@ -1534,7 +1539,7 @@
            x = a cos(t) / 1 + sin²(t)
            y = a sin(t) . cos(t) / 1 + sin²(t)
        */
@@ -193,10 +198,11 @@
            return std::make_pair((a * ImCos(t)) / (1 + (powf(ImSin(t), 2.0f))), (a * ImSin(t) * ImCos(t)) / (1 + (powf(ImSin(t), 2.0f))));
        };
  
-@@ -2068,4 +2072,4 @@
+@@ -2068,4 +2073,5 @@
  #endif // IMSPINNER_DEMO
  }
  
 -#endif // _IMSPINNER_H_
 \ No newline at end of file
 +#endif // _IMSPINNER_H_
++/* clang-format on */

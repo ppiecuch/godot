@@ -1,3 +1,4 @@
+/* clang-format off */
 #ifndef _IMSPINNER_H_
 #define _IMSPINNER_H_
 
@@ -2073,3 +2074,4 @@ namespace ImSpinner
 }
 
 #endif // _IMSPINNER_H_
+/* clang-format on */
