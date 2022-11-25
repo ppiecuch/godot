@@ -191,6 +191,14 @@
 #include "ccd/gd_ccd.h"
 #endif
 
+#ifdef GDEXT_SPINNERS_ENABLED
+#include "spinners/gdimspinner.h"
+#endif
+
+#ifdef GDEXT_CYBERELEMENTS_ENABLED
+#include "cyberelements/cyberelements.h"
+#endif
+
 #ifdef GDEXT_POLYVECTOR_ENABLED
 #include "polyvector/polyvector.h"
 #include "polyvector/resource_importer_swf.h"
@@ -405,6 +413,12 @@ void register_gdextensions_types() {
 	ClassDB::register_class<ControlWidget>();
 #endif
 #endif // GDEXT_VISUAL_ENABLED
+#ifdef GDEXT_SPINNERS_ENABLED
+	ClassDB::register_class<Spinner>();
+#endif
+#ifdef GDEXT_CYBERELEMENTS_ENABLED
+	ClassDB::register_class<CyberElement>();
+#endif
 #ifdef GDEXT_VGAMEPAD_ENABLED
 	ClassDB::register_class<VGamePad>();
 #endif // GDEXT_VGAMEPAD_ENABLED

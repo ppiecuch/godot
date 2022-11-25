@@ -23,6 +23,7 @@ def configure(env):
         "fastnoise",
         "smooth",
         "debugdraw",
+        "cyberelements"
         "geomfonts",
         "generator",
         "statemachine",

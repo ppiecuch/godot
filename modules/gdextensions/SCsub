@@ -53,6 +53,7 @@ modules = [
     "fastnoise",
     "smooth",
     "debugdraw",
+    "cyberelements",
     "geomfonts",
     "statemachine",
     "benet",
