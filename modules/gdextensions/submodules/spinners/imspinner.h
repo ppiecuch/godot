@@ -1,22 +1,52 @@
+/*************************************************************************/
+/*  imspinner.h                                                          */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 /* clang-format off */
 #ifndef _IMSPINNER_H_
 #define _IMSPINNER_H_
 
 /*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2021-2022 Dalerank
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,7 +54,7 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- * 
+ *
  */
 
 #include <functional>
@@ -215,13 +245,13 @@ namespace ImSpinner
       {
         radius_b -= (0.005f * speed);
         radius_b = ImMax(radius_k, ImMax(0.8f, radius_b));
-      } 
-      else 
+      }
+      else
       {
         radius_b = (1 - radius_k);
       }
       storage->SetFloat(radiusbId, radius_b);
-      
+
       float radius_tb = sequence ? ImMax(radius_k, radius_b) * radius : (radius_b * radius);
       window->DrawList->PathClear();
       for (size_t i = 0; i <= num_segments; i++)
@@ -527,7 +557,7 @@ namespace ImSpinner
         }
         if (offset > size.x - thickness)
           th = size.x - offset;
-        
+
         window->DrawList->AddCircleFilled(ImVec2(pos.x + style.FramePadding.x + offset, centre.y), th, color, 8);
       }
     }
@@ -543,7 +573,7 @@ namespace ImSpinner
 
       float velocity = storage->GetFloat(velocityId, 0.f);
       float vtime = storage->GetFloat(vtimeId, 0.f);
-     
+
       float dtime = ImFmod((float)vtime, IM_PI);
       float start = (vtime += velocity);
       if (dtime > 0.f && dtime < IM_PI / 2.f)
@@ -959,7 +989,7 @@ namespace ImSpinner
           }
           c.Value.w = ImMax(0.05f, c.Value.w);
         }
-       
+
         window->DrawList->PathStroke(c, false, thickness);
       }
     }
@@ -1045,7 +1075,7 @@ namespace ImSpinner
           c.Value.w = 1.f;
         }
         c.Value.w = ImMax(0.f, 1.f - c.Value.w);
-        
+
         window->DrawList->PathClear();
         window->DrawList->PathLineTo(centre);
         for (size_t i = 0; i < num_segments + 1; i++)
@@ -1287,13 +1317,13 @@ namespace ImSpinner
                     [&] (int i) { return (num_segments + i + 1) * angle_offset; },
                     [&] (int i) { return thickness - th * i; });
 
-      const float b_angle_offset = (2.f * IM_PI - angle) / num_segments; 
+      const float b_angle_offset = (2.f * IM_PI - angle) / num_segments;
       draw_gradient([&] (int i) { return num_segments * angle_offset * 2.f + (i * b_angle_offset); },
                     [&] (int i) { return num_segments * angle_offset * 2.f + ((i + 1) * b_angle_offset); },
                     [] (int) { return 1.f; });
     }
 
-    void SpinnerCircleDrop(const char *label, float radius, float thickness, float thickness_drop, const ImColor &color = 0xffffffff, const ImColor &bg = 0xffffff80, float speed = 2.8f, float angle = IM_PI) 
+    void SpinnerCircleDrop(const char *label, float radius, float thickness, float thickness_drop, const ImColor &color = 0xffffffff, const ImColor &bg = 0xffffff80, float speed = 2.8f, float angle = IM_PI)
     {
       SPINNER_HEADER(pos, size, centre, num_segments);
 
@@ -1328,7 +1358,7 @@ namespace ImSpinner
       window->DrawList->PathStroke(bg, false, thickness);
     }
 
-    void SpinnerSurroundedIndicator(const char *label, float radius, float thickness, const ImColor &color = 0xffffffff, const ImColor &bg = 0xffffff80, float speed = 2.8f) 
+    void SpinnerSurroundedIndicator(const char *label, float radius, float thickness, const ImColor &color = 0xffffffff, const ImColor &bg = 0xffffff80, float speed = 2.8f)
     {
       SPINNER_HEADER(pos, size, centre, num_segments);
 
@@ -1356,7 +1386,7 @@ namespace ImSpinner
       window->DrawList->PathStroke(c, false, thickness);
     }
 
-    void SpinnerTrianglesSeletor(const char *label, float radius, float thickness, const ImColor &color = 0xffffffff, const ImColor &bg = 0xffffff80, float speed = 2.8f, size_t bars = 8) 
+    void SpinnerTrianglesSeletor(const char *label, float radius, float thickness, const ImColor &color = 0xffffffff, const ImColor &bg = 0xffffff80, float speed = 2.8f, size_t bars = 8)
     {
       SPINNER_HEADER(pos, size, centre, num_segments);
 
@@ -1402,7 +1432,7 @@ namespace ImSpinner
     }
 
     using LeafColor = ImColor (int);
-    void SpinnerCamera(const char *label, float radius, float thickness, LeafColor *leaf_color, float speed = 2.8f, size_t bars = 8) 
+    void SpinnerCamera(const char *label, float radius, float thickness, LeafColor *leaf_color, float speed = 2.8f, size_t bars = 8)
     {
       SPINNER_HEADER(pos, size, centre, num_segments);
 
@@ -1547,7 +1577,7 @@ namespace ImSpinner
       {
           const auto xy0 = get_coord(a, start + (i * step));
           const auto xy1 = get_coord(a, start + ((i + 1) * step));
-      
+
           window->DrawList->AddLine(ImVec2(centre.x + xy0.first, centre.y + xy0.second),
               ImVec2(centre.x + xy1.first, centre.y + xy1.second),
               color,
@@ -1593,7 +1623,7 @@ namespace ImSpinner
 
         alpha = ImFmod(alpha, IM_PI);
         float a = radius;
-        float b = radius / 2.f; 
+        float b = radius / 2.f;
 
         const float bg_angle_offset = IM_PI * 2.f / num_segments;
         for (int i = 0; i < num_segments; ++i) {
@@ -1635,7 +1665,7 @@ namespace ImSpinner
 
         alpha = ImFmod(alpha, IM_PI);
         float a = radius;
-        float b = radius / 2.f; 
+        float b = radius / 2.f;
 
         const float bg_angle_offset = IM_PI * 2.f / num_segments;
         for (size_t i = 0; i < num_segments; ++i) {
@@ -1846,7 +1876,7 @@ namespace ImSpinner
 
       static int hue = 0;
       static float nextdot = 0, nextdot2;
-      
+
       nextdot -= 0.07f;
 
       static float velocity = 1.f;
@@ -1950,7 +1980,7 @@ namespace ImSpinner
       ImGui::SameLine();
       ImSpinner::SpinnerAngTwin("SpinnerAngTwin4", 16, 13, 2, ImColor(255, 0, 0), ImColor(255, 255, 255), 6 * velocity, IM_PI / 2.f, 2);
 
-      ImGui::SameLine(); 
+      ImGui::SameLine();
       ImSpinner::SpinnerTwinPulsar("SpinnerTwinPulsar", 16, 2, ImColor(255, 255, 255), 0.5f * velocity, 2);
 
       ImGui::SameLine();

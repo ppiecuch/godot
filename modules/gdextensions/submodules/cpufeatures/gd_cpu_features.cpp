@@ -1,13 +1,43 @@
+/*************************************************************************/
+/*  gd_cpu_features.cpp                                                  */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #include "gd_cpu_features.h"
 
 #include "cpu_features/cpu_features_types.h"
 
-#include "cpu_features/cpuinfo_x86.h"
 #include "cpu_features/cpuinfo_aarch64.h"
+#include "cpu_features/cpuinfo_x86.h"
 
 #define MAXCPUNAME 49
 
-static char* trim_string(char* in_string);
+static char *trim_string(char *in_string);
 
 struct CpuInfo : public Reference {
 	char name[512];
@@ -20,7 +50,7 @@ struct CpuInfo : public Reference {
 };
 
 #if defined(ANDROID)
-bool CpuFeatures::init_cpu_info(CpuInfo *out_cpu_info, JNIEnv* pJavaEnv)
+bool CpuFeatures::init_cpu_info(CpuInfo *out_cpu_info, JNIEnv *pJavaEnv)
 #else
 bool CpuFeatures::init_cpu_info(CpuInfo *out_cpu_info)
 #endif
@@ -31,7 +61,7 @@ bool CpuFeatures::init_cpu_info(CpuInfo *out_cpu_info)
 #if defined(CPU_FEATURES_ARCH_X86) && !defined(TARGET_IOS_SIMULATOR)
 	X86Info info = {};
 
-	const char* simd_name = "Unknown";
+	const char *simd_name = "Unknown";
 
 	//get cpu data
 	result = GetX86Info(&info);
@@ -45,7 +75,7 @@ bool CpuFeatures::init_cpu_info(CpuInfo *out_cpu_info)
 #else
 		char cpu_name[MAXCPUNAME] = "";
 		FillX86BrandString(cpu_name);
-		char* trimmed_name = trim_string(cpu_name);
+		char *trimmed_name = trim_string(cpu_name);
 		snprintf(info.name, sizeof(info.name), "%s", trimmed_name);
 #endif
 
@@ -74,7 +104,7 @@ bool CpuFeatures::init_cpu_info(CpuInfo *out_cpu_info)
 #if defined(CPU_FEATURES_ARCH_AARCH64) || defined(TARGET_IOS_SIMULATOR)
 	Aarch64Info info = {};
 
-	const char* simd_name = "SIMD: NEON";
+	const char *simd_name = "SIMD: NEON";
 	out_cpu_info->simd = SIMD_NEON;
 
 	//ARM64 supported platforms by cpu_features
@@ -87,7 +117,7 @@ bool CpuFeatures::init_cpu_info(CpuInfo *out_cpu_info)
 
 	jfieldID field;
 	jstring jHardwareString, jBrandString, jBoardString, jModelString;
-	const char* hardwareString, *brandStrirng, *boardString, *modelString;
+	const char *hardwareString, *brandStrirng, *boardString, *modelString;
 
 	field = pJavaEnv->GetStaticFieldID(classBuild, "HARDWARE", "Ljava/lang/String;");
 	jHardwareString = (jstring)pJavaEnv->GetStaticObjectField(classBuild, field);
@@ -122,9 +152,9 @@ bool CpuFeatures::init_cpu_info(CpuInfo *out_cpu_info)
 	return result;
 }
 
-static char* trim_string(char* in_string) {
+static char *trim_string(char *in_string) {
 	//trim end
-	char* trimmed_string = in_string + (MAXCPUNAME - 1);
+	char *trimmed_string = in_string + (MAXCPUNAME - 1);
 	while (*trimmed_string == ' ' || *trimmed_string == '\0') {
 		trimmed_string--;
 	}

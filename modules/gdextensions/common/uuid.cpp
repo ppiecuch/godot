@@ -132,11 +132,12 @@ Uuid::Uuid(uint32_t time_low, uint16_t time_mid, uint16_t time_hi_version, uint8
 
 String Uuid::hex() {
 	// 2 bytes per character in upper_ and lower_, plus '\0'.
-	char buff[sizeof(upper_) * 4];
+	const size_t buff_size = sizeof(upper_) * 4;
+	char buff[buff_size];
 #ifdef __linux__
-	sprintf(buff, "%lx%lx", upper_, lower_);
+	snprintf(buff, buff_size, "%lx%lx", upper_, lower_);
 #else
-	sprintf(buff, "%llx%llx", upper_, lower_);
+	snprintf(buff, buff_size, "%llx%llx", upper_, lower_);
 #endif
 	return String(buff);
 }
