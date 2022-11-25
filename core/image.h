@@ -68,6 +68,7 @@ public:
 	enum Format {
 
 		FORMAT_L8, //luminance
+		FORMAT_A8, //alpha
 		FORMAT_LA8, //luminance-alpha
 		FORMAT_R8,
 		FORMAT_RG8,
@@ -356,6 +357,7 @@ public:
 	//this is used for compression
 	enum DetectChannels {
 		DETECTED_L,
+		DETECTED_A,
 		DETECTED_LA,
 		DETECTED_R,
 		DETECTED_RG,
