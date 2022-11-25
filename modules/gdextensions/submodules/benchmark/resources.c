@@ -68,8 +68,6 @@ INCBIN(postprocess_cross_hatching_fs, ROOT "benchmark/resources/postprocess/cros
 INCBIN(postprocess_cross_stitching_fs, ROOT "benchmark/resources/postprocess/cross_stitching.fs");
 INCBIN(postprocess_dream_vision_fs, ROOT "benchmark/resources/postprocess/dream_vision.fs");
 INCBIN(postprocess_fisheye_fs, ROOT "benchmark/resources/postprocess/fisheye.fs");
-INCBIN(postprocess_fxaa_frag_fs, ROOT "benchmark/resources/postprocess/fxaa.frag.fs");
-INCBIN(postprocess_fxaa_vert_fs, ROOT "benchmark/resources/postprocess/fxaa.vert.fs");
 INCBIN(postprocess_grayscale_fs, ROOT "benchmark/resources/postprocess/grayscale.fs");
 INCBIN(postprocess_pixelizer_fs, ROOT "benchmark/resources/postprocess/pixelizer.fs");
 INCBIN(postprocess_posterization_fs, ROOT "benchmark/resources/postprocess/posterization.fs");
