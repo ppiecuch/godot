@@ -47,7 +47,7 @@ class SphericalWaves : public Reference {
 	real_t *next_amplitudes;
 	real_t *velocities;
 
-	int x_size, y_size;
+	Size2i grid_size;
 	real_t spring_constant, friction;
 
 	static const real_t TwoSquareHalf;
@@ -56,12 +56,13 @@ protected:
 	static void _bind_methods();
 
 public:
-	void init(int p_x_size, int p_y_size, real_t p_spring_constant, real_t p_friction);
-	real_t get_amplitude(int x, int y);
-	void set_amplitude(int x, int y, real_t value);
-	void update(real_t delta);
-	void set_nodes(Vector<Variant> voxels, int index);
-	void set_mesh(const Ref<Mesh> &mesh);
+	void init(const Size2 &p_grid_size, real_t p_spring_constant, real_t p_friction);
+	void update(real_t p_delta);
+
+	real_t get_amplitude(int p_pos_x, int p_pos_y);
+	void set_amplitude(int p_pos_x, int p_pos_y, real_t p_value);
+	void set_nodes(const Array &p_voxels, int p_index);
+	void set_mesh(const Ref<Mesh> &p_mesh);
 
 	SphericalWaves();
 	~SphericalWaves();

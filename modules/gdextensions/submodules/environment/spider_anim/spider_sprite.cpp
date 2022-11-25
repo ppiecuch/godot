@@ -89,7 +89,7 @@ void SpiderThemeInfo::_cache_themes() {
 		names.push_back(String(r.image).get_basename());
 	}
 
-	Dictionary atlas_info = merge_images(images, names, 2048);
+	Dictionary atlas_info = merge_images(images, names);
 
 	ERR_FAIL_COND(atlas_info.empty());
 

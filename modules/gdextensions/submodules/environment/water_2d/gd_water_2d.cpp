@@ -65,21 +65,85 @@ PoolVector<T> create_poolarray(T *buf_ptr, size_t buf_size) {
 	return data;
 }
 
-const char _material_shader[] = R"(
+// https://www.khronos.org/opengl/wiki/Texture_Combiners
+// https://www.gamedev.net/tutorials/programming/graphics/creating-a-glsl-library-r2428
+// GL_DECAL: C = Cf * (1 – At) + Ct * At ; A = Af
+
+// clang-format off
+const char *_material_shaders[] = { R"(
 	shader_type canvas_item;
 
 	uniform sampler2D envmap;
+
+	float map(float value, float min1, float max1, float min2, float max2) {
+		return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
+	}
 
 	void fragment() {
 		vec4 skin = texture(TEXTURE, UV);
 		vec4 env = texture(envmap, UV2);
 
-		// GL_DECAL: C = Cf * (1 – At) + Ct * At  |  A = Af
-
-		vec3 color = mix(skin.rgb, env.rgb, env.a);
-		COLOR = vec4(color, skin.a);
+		vec3 color = mix(skin.rgb, env.rgb, map(env.a, 0.5, 1.0, 0.1, 1));
+		COLOR *= vec4(color, skin.a);
 	}
-)";
+)", R"(
+	shader_type canvas_item;
+
+	uniform sampler2D envmap;
+
+	float map(float value, float min1, float max1, float min2, float max2) {
+		return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
+	}
+
+	void fragment() {
+		vec4 skin = texture(TEXTURE, UV);
+		vec4 env = texture(envmap, UV2);
+
+		vec3 color = mix(skin.rgb, env.rgb, map(env.a, 0.5, 1.0, 0.1, 1));
+		COLOR *= vec4(color, skin.a);
+	}
+)", R"(
+	shader_type canvas_item;
+
+	uniform sampler2D envmap;
+
+	float map(float value, float min1, float max1, float min2, float max2) {
+		return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
+	}
+
+	void fragment() {
+		vec4 skin = texture(TEXTURE, UV);
+		vec4 env = texture(envmap, UV2);
+
+		vec3 color = mix(skin.rgb, env.rgb, map(env.a, 0.5, 1.0, 0.1, 1));
+		COLOR *= vec4(color, skin.a);
+	}
+)", R"(
+	shader_type canvas_item;
+
+	uniform sampler2D envmap;
+
+	float map(float value, float min1, float max1, float min2, float max2) {
+		return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
+	}
+
+	void fragment() {
+		vec4 skin = texture(TEXTURE, UV);
+		vec4 env = texture(envmap, UV2);
+
+		if (UV.x > 0.66) {
+			vec3 color = mix(skin.rgb, env.rgb, map(env.a, 0.5, 1.0, 0.1, 1));
+			COLOR *= vec4(color, skin.a);
+		} else if (UV.x > 0.33) {
+			vec3 modulate = skin.rgb * env.rgb;
+			COLOR *= vec4(mix(modulate.rgb, skin.rgb, env.a), skin.a);
+		} else {
+			vec3 color = mix(skin.rgb, env.rgb, env.a);
+			COLOR *= vec4(color, skin.a);
+		}
+	}
+)" };
+// clang-format on
 
 /// Private methods
 
@@ -266,20 +330,18 @@ void WaterRipples<WaterSize>::prebuild_water(void) {
 	}
 
 	// normals to faces calculus: z component is constant
-	// -> simplified cross product and optimized knowing that we have
-	//    a distance of 1.0 between each fluid cells.
 	for (int x = 0; x < GridSize; x++) {
 		for (int y = 0; y < GridSize; y++) {
-			normal[x][y].z = 0.01;
+			normal[x][y].z = NormZ;
 		}
 	}
 
 	// calculate normals to vertices (z component only)
 	for (int x = 1; x < GridLast; x++) {
 		for (int y = 1; y < GridLast; y++) {
-			// the following calculus is useless because each cell of: snormal[x][y].z = 0.01 + 0.01 + 0.01 + 0.01 = 0.04
 			// snormal[x][y].z = normal[x - 1][y].z + normal[x + 1][y].z + normal[x][y -1].z + normal[x][y + 1].z;
-			snormal[x][y].z = 0.04;
+			// snormal[x][y].z = 0.01 + 0.01 + 0.01 + 0.01 = 0.04;
+			snormal[x][y].z = NormZ * 4;
 		}
 	}
 
@@ -296,10 +358,11 @@ void WaterRipples<WaterSize>::prebuild_water(void) {
 // construction of a geometric model
 template <int WaterSize>
 void WaterRipples<WaterSize>::build_water() {
+	const real_t zf = size_factor;
 	// calculate vertices: z component
 	for (int x = 0; x < WaterSize; x++) {
 		for (int y = 0; y < WaterSize; y++) {
-			const real_t h1 = smooth[x + 1][y + 1] / real_t(size_factor);
+			const real_t h1 = smooth[x + 1][y + 1] / zf;
 			sommet[x * 2][y * 2].z = (h1 < 0) ? 0 : h1;
 		}
 	}
@@ -354,13 +417,15 @@ void WaterRipples<WaterSize>::build_water() {
 	memcpy((void *)&snormal[0][0], (const void *)&normal[0][0], GridRowSpace);
 	memcpy((void *)&snormal[GridLast][0], (const void *)&normal[GridLast][0], GridRowSpace);
 
+	constexpr real_t SNormZ = NormZ * 4;
+
 	// calculate ourself normalization
 	for (int x = 0; x < GridSize; x++) {
 		for (int y = 0; y < GridSize; y++) {
-			const real_t sqroot = Math::sqrt(snormal[x][y].x * snormal[x][y].x + snormal[x][y].y * snormal[x][y].y + 0.0016);
+			const real_t sqroot = Math::sqrt(snormal[x][y].x * snormal[x][y].x + snormal[x][y].y * snormal[x][y].y + SNormZ * SNormZ);
 			snormaln[x][y].x = snormal[x][y].x / sqroot;
 			snormaln[x][y].y = snormal[x][y].y / sqroot;
-			snormaln[x][y].z = 0.04 / sqroot; // snormal[x][y].z = 0.04
+			snormaln[x][y].z = SNormZ / sqroot;
 		}
 	}
 
@@ -629,6 +694,15 @@ bool Water2D::is_active() const {
 	return active;
 }
 
+void Water2D::set_quality_level(int p_quality) {
+	level_quality = p_quality;
+	update();
+}
+
+int Water2D::get_quality_level() const {
+	return level_quality;
+}
+
 void Water2D::set_skin_texture(const Ref<Texture> &p_texture) {
 	if (texture_skin != p_texture) {
 		texture_skin = p_texture;
@@ -682,6 +756,16 @@ void Water2D::set_wireframe(bool p_state) {
 
 bool Water2D::is_wireframe() const {
 	return wireframe;
+}
+
+void Water2D::set_blend_mode(int p_mode) {
+	ERR_FAIL_INDEX(p_mode, BLEND_MODES_VALID_NUM);
+	blend_variant = p_mode;
+	_update_material = UPDATE_WATER;
+}
+
+int Water2D::get_blend_mode() const {
+	return blend_variant;
 }
 
 void Water2D::set_wave_speed_rate(real_t p_rate) {
@@ -814,13 +898,13 @@ void Water2D::_notification(int p_notification) {
 				mesh->clear_mesh();
 				mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, d);
 				if (_update_material & UPDATE_WATER || _update_material & UPDATE_DETAILS) {
-					material->set_shader_param("envmap", texture_envmap);
+					materials[blend_variant]->set_shader_param("envmap", texture_envmap);
 					VS::get_singleton()->canvas_item_clear(mesh_item);
-					VS::get_singleton()->canvas_item_set_material(mesh_item, material->get_rid());
+					VS::get_singleton()->canvas_item_set_material(mesh_item, materials[blend_variant]->get_rid());
 					RID _skin = texture_skin ? texture_skin->get_rid() : RID();
 					RID _mask = texture_mask ? texture_mask->get_rid() : RID();
 					RID _details = animation_details.is_valid() ? animation_details.texture()->get_rid() : RID();
-					VS::get_singleton()->canvas_item_add_mesh(mesh_item, mesh->get_rid(), Transform2D(), Color(1, 1, 1), _skin, _details, _mask);
+					VS::get_singleton()->canvas_item_add_mesh(mesh_item, mesh->get_rid(), Transform2D(), Color(1, 1, 1, 1), _skin, _details, _mask);
 				}
 			}
 			if (caustics) { // caustics
@@ -864,6 +948,9 @@ void Water2D::_notification(int p_notification) {
 			}
 			_update_material = 0;
 		} break;
+		case NOTIFICATION_VISIBILITY_CHANGED: {
+			set_process_internal(active && is_visible());
+		} break;
 		case NOTIFICATION_TRANSFORM_CHANGED: {
 		} break;
 		case NOTIFICATION_INTERNAL_PROCESS: {
@@ -887,9 +974,20 @@ void Water2D::_notification(int p_notification) {
 	}
 }
 
+#ifdef TOOLS_ENABLED
+void Water2D::toogle_demo_mode() {
+	if (blend_variant != BLEND_MODE_DEMO) {
+		blend_variant = BLEND_MODE_DEMO;
+		_update_material |= UPDATE_WATER;
+	}
+}
+#endif
+
 void Water2D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_active"), &Water2D::set_active);
 	ClassDB::bind_method(D_METHOD("is_active"), &Water2D::is_active);
+	ClassDB::bind_method(D_METHOD("set_quality_level"), &Water2D::set_quality_level);
+	ClassDB::bind_method(D_METHOD("get_quality_level"), &Water2D::get_quality_level);
 	ClassDB::bind_method(D_METHOD("set_skin_texture"), &Water2D::set_skin_texture);
 	ClassDB::bind_method(D_METHOD("get_skin_texture"), &Water2D::get_skin_texture);
 	ClassDB::bind_method(D_METHOD("set_mask_texture"), &Water2D::set_mask_texture);
@@ -913,6 +1011,10 @@ void Water2D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("run_wave", "phase", "cos", "sin", "amp"), &Water2D::run_wave);
 	ClassDB::bind_method(D_METHOD("random_wave"), &Water2D::random_wave);
 
+#ifdef TOOLS_ENABLED
+	ClassDB::bind_method(D_METHOD("toogle_demo_mode"), &Water2D::toogle_demo_mode);
+#endif
+
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "active"), "set_active", "is_active");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "wireframe"), "set_wireframe", "is_wireframe");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "details"), "set_details_map", "is_details_map");
@@ -923,6 +1025,10 @@ void Water2D::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "wave_size_factor"), "set_wave_size_factor", "get_wave_size_factor");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "skin_texture", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_skin_texture", "get_skin_texture");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "mask_texture", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_mask_texture", "get_mask_texture");
+
+	BIND_ENUM_CONSTANT_CUSTOM(BLEND_MODE1, "WATER_BLEND_MODE1");
+	BIND_ENUM_CONSTANT_CUSTOM(BLEND_MODE2, "WATER_BLEND_MODE2");
+	BIND_ENUM_CONSTANT_CUSTOM(BLEND_MODE3, "WATER_BLEND_MODE3");
 }
 
 Water2D::Water2D() {
@@ -936,13 +1042,17 @@ Water2D::Water2D() {
 	wave_speed_rate = 0.1;
 	details_speed_rate = 0.5;
 	level_quality = 2;
+	blend_variant = 0;
 
 	water2 = newref(WaterRipples<50>);
 
-	material = newref(ShaderMaterial);
-	Ref<Shader> shader = memnew(Shader);
-	shader->set_code(_material_shader);
-	material->set_shader(shader);
+	// water materials
+	for (int m = 0; m < BLEND_MODES_NUM; m++) {
+		materials[m] = newref(ShaderMaterial);
+		Ref<Shader> shader = memnew(Shader);
+		shader->set_code(_material_shaders[m]);
+		materials[m]->set_shader(shader);
+	}
 
 	mesh = newref(ArrayMesh);
 }

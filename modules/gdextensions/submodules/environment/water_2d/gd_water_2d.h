@@ -68,6 +68,9 @@ class WaterRipples : public Reference {
 	static constexpr int BufferSpace = sizeof(int) * BufferSize * BufferSize;
 	static constexpr size_t BufferRowSpace = sizeof(int) * BufferSize;
 	static constexpr real_t CellSize = 1.0 / GridSize;
+	// normals to faces calculus: z component is constant
+	// (simplified cross product and optimized knowing that we have a distance of 1.0 between each fluid cells).
+	static constexpr real_t NormZ = 0.01;
 
 	int size_factor; // size of the wave
 	int angle; // angle for wave generator
@@ -142,11 +145,27 @@ public:
 class Water2D : public Node2D {
 	GDCLASS(Water2D, Node2D);
 
+public:
+	enum WaterBlendModes {
+		BLEND_MODE1,
+		BLEND_MODE2,
+		BLEND_MODE3,
+#ifdef TOOLS_ENABLED
+		BLEND_MODE_DEMO,
+		BLEND_MODES_VALID_NUM = BLEND_MODE_DEMO,
+		BLEND_MODES_NUM,
+#else
+		BLEND_MODES_VALID_NUM,
+		BLEND_MODES_NUM = BLEND_MODES_VALID_NUM,
+#endif
+	};
+
+private:
 	Ref<WaterRipples<25>> water0;
 	Ref<WaterRipples<30>> water1;
 	Ref<WaterRipples<50>> water2;
 
-	Ref<ShaderMaterial> material;
+	Ref<ShaderMaterial> materials[BLEND_MODES_NUM];
 	RID mesh_item, caustics_item;
 	Ref<ArrayMesh> mesh, mesh_caustics, mesh_wireframe;
 	Ref<CanvasItemMaterial> material_caustics;
@@ -159,6 +178,7 @@ class Water2D : public Node2D {
 	real_t wave_speed_rate;
 	real_t details_speed_rate;
 	int level_quality;
+	int blend_variant;
 
 	Ref<Texture> texture_skin, texture_mask, texture_envmap; // main skin/bg, mask and environment map texture
 
@@ -224,6 +244,9 @@ public:
 	void set_active(bool p_state);
 	bool is_active() const;
 
+	void set_quality_level(int p_quality);
+	int get_quality_level() const;
+
 	void set_skin_texture(const Ref<Texture> &p_texture);
 	Ref<Texture> get_skin_texture() const;
 	void set_mask_texture(const Ref<Texture> &p_texture);
@@ -235,6 +258,8 @@ public:
 	bool is_details_map() const;
 	void set_caustics(bool p_state);
 	bool is_caustics() const;
+	void set_blend_mode(int p_mode);
+	int get_blend_mode() const;
 
 	void set_wave_speed_rate(real_t p_rate);
 	real_t get_wave_speed_rate() const;
@@ -250,11 +275,17 @@ public:
 	void set_caustics_alpha(real_t p_alpha);
 	real_t get_caustics_alpha() const;
 
+#ifdef TOOLS_ENABLED
+	void toogle_demo_mode();
+#endif
+
 	void set_wave(real_t p_x, real_t p_y, int p_amp);
 	void run_wave(real_t p_phase, real_t p_cos, real_t p_sin, int p_amp);
 	void random_wave();
 
 	Water2D();
 };
+
+VARIANT_ENUM_CAST(Water2D::WaterBlendModes);
 
 #endif /* GD_WATER_2D_H */
