@@ -435,7 +435,7 @@ Ref<Image> Image::converted(Format p_new_format) {
 	const uint8_t *rptr = r.ptr();
 	uint8_t *wptr = w.ptr();
 
-	int conversion_type = format | p_new_format << 8;
+	const int conversion_type = format | p_new_format << 8;
 
 	switch (conversion_type) {
 		case FORMAT_L8 | (FORMAT_LA8 << 8):
@@ -455,6 +455,9 @@ Ref<Image> Image::converted(Format p_new_format) {
 			break;
 		case FORMAT_A8 | (FORMAT_LA8 << 8):
 			_convert<0, true, 1, true, false, false>(width, height, rptr, wptr);
+			break;
+		case FORMAT_A8 | (FORMAT_RGBA8 << 8):
+			_convert<0, true, 3, true, false, false>(width, height, rptr, wptr);
 			break;
 		case FORMAT_LA8 | (FORMAT_L8 << 8):
 			_convert<1, true, 1, false, true, true>(width, height, rptr, wptr);
@@ -505,7 +508,7 @@ Ref<Image> Image::converted(Format p_new_format) {
 			_convert<3, false, 1, false, false, true>(width, height, rptr, wptr);
 			break;
 		case FORMAT_RGB8 | (FORMAT_A8 << 8):
-			_convert<3, false, 1, false, false, true>(width, height, rptr, wptr);
+			_convert<3, false, 0, true, false, true>(width, height, rptr, wptr);
 			break;
 		case FORMAT_RGB8 | (FORMAT_LA8 << 8):
 			_convert<3, false, 1, true, false, true>(width, height, rptr, wptr);
@@ -521,6 +524,9 @@ Ref<Image> Image::converted(Format p_new_format) {
 			break;
 		case FORMAT_RGBA8 | (FORMAT_L8 << 8):
 			_convert<3, true, 1, false, false, true>(width, height, rptr, wptr);
+			break;
+		case FORMAT_RGBA8 | (FORMAT_A8 << 8):
+			_convert<3, true, 0, true, false, false>(width, height, rptr, wptr);
 			break;
 		case FORMAT_RGBA8 | (FORMAT_LA8 << 8):
 			_convert<3, true, 1, true, false, true>(width, height, rptr, wptr);
@@ -2043,6 +2049,12 @@ Image::AlphaMode Image::detect_alpha() const {
 	bool detected = false;
 
 	switch (format) {
+		case FORMAT_A8: {
+			for (int i = 0; i < len; i++) {
+				DETECT_ALPHA(data_ptr[i]);
+			}
+
+		} break;
 		case FORMAT_LA8: {
 			for (int i = 0; i < (len >> 1); i++) {
 				DETECT_ALPHA(data_ptr[(i << 1) + 1]);
@@ -2211,7 +2223,9 @@ Image::Image(int p_width, int p_height, bool p_mipmaps, Format p_format, const P
 }
 
 Rect2 Image::get_used_rect() const {
-	if (format != FORMAT_LA8 && format != FORMAT_RGBA8 && format != FORMAT_RGBAF && format != FORMAT_RGBAH && format != FORMAT_RGBA4444 && format != FORMAT_RGBA5551) {
+	if (format == FORMAT_A8) {
+		return Rect2(); // only alpha
+	} else if (format != FORMAT_LA8 && format != FORMAT_RGBA8 && format != FORMAT_RGBAF && format != FORMAT_RGBAH && format != FORMAT_RGBA4444 && format != FORMAT_RGBA5551) {
 		return Rect2(Point2(), Size2(width, height));
 	}
 
