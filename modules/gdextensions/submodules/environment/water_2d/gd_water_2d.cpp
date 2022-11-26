@@ -91,31 +91,23 @@ const char *_material_shaders[] = { R"(
 
 	uniform sampler2D envmap;
 
-	float map(float value, float min1, float max1, float min2, float max2) {
-		return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
-	}
-
 	void fragment() {
 		vec4 skin = texture(TEXTURE, UV);
 		vec4 env = texture(envmap, UV2);
 
-		vec3 color = mix(skin.rgb, env.rgb, map(env.a, 0.5, 1.0, 0.1, 1));
-		COLOR *= vec4(color, skin.a);
+		vec3 modulate = skin.rgb * env.rgb;
+		COLOR *= vec4(mix(modulate.rgb, skin.rgb, env.a), skin.a);
 	}
 )", R"(
 	shader_type canvas_item;
 
 	uniform sampler2D envmap;
 
-	float map(float value, float min1, float max1, float min2, float max2) {
-		return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
-	}
-
 	void fragment() {
 		vec4 skin = texture(TEXTURE, UV);
 		vec4 env = texture(envmap, UV2);
 
-		vec3 color = mix(skin.rgb, env.rgb, map(env.a, 0.5, 1.0, 0.1, 1));
+		vec3 color = mix(skin.rgb, env.rgb, env.a);
 		COLOR *= vec4(color, skin.a);
 	}
 )", R"(
@@ -759,9 +751,11 @@ bool Water2D::is_wireframe() const {
 }
 
 void Water2D::set_blend_mode(int p_mode) {
-	ERR_FAIL_INDEX(p_mode, BLEND_MODES_VALID_NUM);
-	blend_variant = p_mode;
-	_update_material = UPDATE_WATER;
+	ERR_FAIL_INDEX(p_mode, BLEND_MODES_NUM);
+	if (blend_variant != p_mode) {
+		blend_variant = p_mode;
+		_update_material |= UPDATE_WATER;
+	}
 }
 
 int Water2D::get_blend_mode() const {
@@ -903,7 +897,7 @@ void Water2D::_notification(int p_notification) {
 					VS::get_singleton()->canvas_item_set_material(mesh_item, materials[blend_variant]->get_rid());
 					RID _skin = texture_skin ? texture_skin->get_rid() : RID();
 					RID _mask = texture_mask ? texture_mask->get_rid() : RID();
-					RID _details = animation_details.is_valid() ? animation_details.texture()->get_rid() : RID();
+					RID _details = (details_map && animation_details.is_valid()) ? animation_details.texture()->get_rid() : RID();
 					VS::get_singleton()->canvas_item_add_mesh(mesh_item, mesh->get_rid(), Transform2D(), Color(1, 1, 1, 1), _skin, _details, _mask);
 				}
 			}
@@ -976,10 +970,7 @@ void Water2D::_notification(int p_notification) {
 
 #ifdef TOOLS_ENABLED
 void Water2D::toogle_demo_mode() {
-	if (blend_variant != BLEND_MODE_DEMO) {
-		blend_variant = BLEND_MODE_DEMO;
-		_update_material |= UPDATE_WATER;
-	}
+	set_blend_mode(BLEND_MODE_DEMO);
 }
 #endif
 
@@ -994,6 +985,8 @@ void Water2D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_mask_texture"), &Water2D::get_mask_texture);
 	ClassDB::bind_method(D_METHOD("set_wireframe"), &Water2D::set_wireframe);
 	ClassDB::bind_method(D_METHOD("is_wireframe"), &Water2D::is_wireframe);
+	ClassDB::bind_method(D_METHOD("set_blend_mode"), &Water2D::set_blend_mode);
+	ClassDB::bind_method(D_METHOD("get_blend_mode"), &Water2D::get_blend_mode);
 	ClassDB::bind_method(D_METHOD("set_details_map"), &Water2D::set_details_map);
 	ClassDB::bind_method(D_METHOD("is_details_map"), &Water2D::is_details_map);
 	ClassDB::bind_method(D_METHOD("set_wave_speed_rate"), &Water2D::set_wave_speed_rate);
@@ -1023,6 +1016,7 @@ void Water2D::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "caustics_alpha", PROPERTY_HINT_RANGE, "0,1,0.05,or_greater"), "set_caustics_alpha", "get_caustics_alpha");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "wave_speed_rate"), "set_wave_speed_rate", "get_wave_speed_rate");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "wave_size_factor"), "set_wave_size_factor", "get_wave_size_factor");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "wave_blend_mode", PROPERTY_HINT_ENUM, "Mode1,Mode2,Mode3"), "set_blend_mode", "get_blend_mode");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "skin_texture", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_skin_texture", "get_skin_texture");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "mask_texture", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_mask_texture", "get_mask_texture");
 
