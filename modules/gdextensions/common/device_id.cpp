@@ -70,7 +70,7 @@ static String get_custom_name() {
 	}
 	return nm;
 }
-#elif OSX_ENABLED || LINUX_ENABLED || X11_ENABLED || FRT_ENABLED
+#elif OSX_ENABLED || UNIX_ENABLED || FRT_ENABLED
 #include <limits.h>
 #include <unistd.h>
 #ifndef HOST_NAME_MAX
