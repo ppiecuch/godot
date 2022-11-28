@@ -271,7 +271,7 @@ PolyGeometry::Results PolyGeometry::strokify_polyline(const Vector<Point2> &p_co
 
 	// create poly segments from the points
 	Vector<PolySegment> segments;
-	for (size_t i = 0; i + 1 < p_contour.size(); i++) {
+	for (int i = 0; i + 1 < p_contour.size(); i++) {
 		const auto p1 = p_contour[i];
 		const auto p2 = p_contour[i + 1];
 
@@ -340,7 +340,7 @@ PolyGeometry::Results PolyGeometry::strokify_polyline(const Vector<Point2> &p_co
 	}
 
 	// generate mesh data for path segments
-	for (size_t i = 0; i < segments.size(); i++) {
+	for (int i = 0; i < segments.size(); i++) {
 		const auto &segment = segments[i];
 		// calculate start
 		if (i == 0) {
@@ -377,7 +377,7 @@ PolyGeometry::Results PolyGeometry::strokify_multiline(const Vector<Point2> &p_l
 
 	// create poly segments from the points
 	Vector<PolySegment> segments;
-	for (size_t i = 0; i + 1 < p_lines.size(); i += 2) {
+	for (int i = 0; i + 1 < p_lines.size(); i += 2) {
 		const auto p1 = p_lines[i];
 		const auto p2 = p_lines[i + 1];
 
@@ -414,7 +414,7 @@ PolyGeometry::Results PolyGeometry::strokify_multiline(const Vector<Point2> &p_l
 	Point2 end1, end2;
 
 	// generate mesh data for path segments
-	for (size_t i = 0; i < segments.size(); i++) {
+	for (int i = 0; i < segments.size(); i++) {
 		const auto &segment = segments[i];
 
 		auto path_start1 = segment.edge1.a;

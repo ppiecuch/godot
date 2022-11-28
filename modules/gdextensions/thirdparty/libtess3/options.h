@@ -104,7 +104,7 @@ namespace Tess
 
 		// Retrieves an allocator memory pool that is shared by all the tesselators. Doesn't have any by default.
 		template <typename _AllocatorPool>
-		constexpr _AllocatorPool* getAllocatorPool() { return nullptr; }
+		const _AllocatorPool* getAllocatorPool() { return nullptr; }
 	};
 
 	// This is what you usually wish to have dynamically set up.

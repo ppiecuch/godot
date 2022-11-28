@@ -228,8 +228,9 @@ namespace Tess
 	template <typename Options, typename Allocators>
 	void Tesselator<Options, Allocators>::meshSetWindingNumber( int value, bool keepOnlyBoundary )
 	{
+		HalfEdge *eNext;
 		for( HalfEdge *edge = mesh->eBegin(); edge != mesh->eEnd(); edge = eNext ) {
-			HalfEdge *eNext = edge->next();
+			eNext = edge->next();
 			if( edge->Rface()->inside != edge->Lface()->inside ) {
 				
 				// This is a boundary edge (one side is interior, one is exterior).
