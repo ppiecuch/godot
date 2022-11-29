@@ -421,6 +421,13 @@ bool SceneTreeEditor::_add_nodes(Node *p_node, TreeItem *p_parent, bool p_scroll
 			if (is_pinned) {
 				item->add_button(0, get_icon("Pin", "EditorIcons"), BUTTON_PIN, false, TTR("AnimationPlayer is pinned.\nClick to unpin."));
 			}
+		} else if (p_node->has_method("is_visible") && p_node->has_method("set_visible")) {
+			bool v = p_node->call("is_visible");
+			if (v) {
+				item->add_button(0, get_icon("GuiVisibilityVisible", "EditorIcons"), BUTTON_VISIBILITY, false, TTR("Toggle Visibility"));
+			} else {
+				item->add_button(0, get_icon("GuiVisibilityHidden", "EditorIcons"), BUTTON_VISIBILITY, false, TTR("Toggle Visibility"));
+			}
 		}
 	}
 
@@ -498,14 +505,14 @@ void SceneTreeEditor::_node_visibility_changed(Node *p_node) {
 
 	bool visible = false;
 
-	if (p_node->is_class("CanvasItem")) {
+	if (p_node->has_method("is_visible")) {
 		visible = p_node->call("is_visible");
+	}
+
+	if (p_node->is_class("CanvasItem")) {
 		CanvasItemEditor::get_singleton()->get_viewport_control()->update();
 	} else if (p_node->is_class("CanvasLayer")) {
-		visible = p_node->call("is_visible");
 		CanvasItemEditor::get_singleton()->get_viewport_control()->update();
-	} else if (p_node->is_class("Spatial")) {
-		visible = p_node->call("is_visible");
 	}
 
 	if (visible) {
