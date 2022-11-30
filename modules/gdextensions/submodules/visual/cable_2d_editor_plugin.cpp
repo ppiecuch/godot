@@ -57,9 +57,9 @@ void Cable2DEditor::_action_set_polygon(int p_idx, const Variant &p_previous, co
 }
 
 Cable2DEditor::Cable2DEditor(EditorNode *p_editor) :
-		AbstractPolygon2DEditor(p_editor) {
+	AbstractPolygon2DEditor(p_editor) {
 }
 
 Cable2DEditorPlugin::Cable2DEditorPlugin(EditorNode *p_node) :
-		AbstractPolygon2DEditorPlugin(p_node, memnew(Cable2DEditor(p_node)), "Cable2D") {
+	AbstractPolygon2DEditorPlugin(p_node, memnew(Cable2DEditor(p_node)), "Cable2D") {
 }
