@@ -519,7 +519,6 @@ void Mesh::_bind_methods() {
 	BIND_ENUM_CONSTANT(ARRAY_FLAG_USE_2D_VERTICES);
 	BIND_ENUM_CONSTANT(ARRAY_FLAG_USE_16_BIT_BONES);
 	BIND_ENUM_CONSTANT(ARRAY_FLAG_USE_OCTAHEDRAL_COMPRESSION);
-	BIND_ENUM_CONSTANT(ARRAY_FLAG_USE_2D_DEPTH_TEST);
 
 	BIND_ENUM_CONSTANT(ARRAY_COMPRESS_DEFAULT);
 
@@ -939,6 +938,11 @@ void ArrayMesh::surface_set_active(int p_idx, bool p_active) {
 	_recompute_aabb();
 	_change_notify();
 	emit_changed();
+}
+
+bool ArrayMesh::surface_is_active(int p_idx) {
+	ERR_FAIL_INDEX_V(p_idx, surfaces.size(), false);
+	return surfaces[p_idx].is_active;
 }
 
 void ArrayMesh::surface_remove(int p_idx) {
@@ -1439,6 +1443,8 @@ void ArrayMesh::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("clear_surfaces"), &ArrayMesh::clear_surfaces);
 	ClassDB::bind_method(D_METHOD("surface_remove", "surf_idx"), &ArrayMesh::surface_remove);
 	ClassDB::bind_method(D_METHOD("surface_update_region", "surf_idx", "offset", "data"), &ArrayMesh::surface_update_region);
+	ClassDB::bind_method(D_METHOD("surface_set_active", "surf_idx", "state"), &ArrayMesh::surface_set_active);
+	ClassDB::bind_method(D_METHOD("surface_is_active", "surf_idx"), &ArrayMesh::surface_is_active);
 	ClassDB::bind_method(D_METHOD("surface_get_array_len", "surf_idx"), &ArrayMesh::surface_get_array_len);
 	ClassDB::bind_method(D_METHOD("surface_get_array_index_len", "surf_idx"), &ArrayMesh::surface_get_array_index_len);
 	ClassDB::bind_method(D_METHOD("surface_get_format", "surf_idx"), &ArrayMesh::surface_get_format);

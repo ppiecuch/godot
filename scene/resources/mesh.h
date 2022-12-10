@@ -97,7 +97,6 @@ public:
 		ARRAY_FLAG_USE_16_BIT_BONES = ARRAY_COMPRESS_INDEX << 2,
 		ARRAY_FLAG_USE_DYNAMIC_UPDATE = ARRAY_COMPRESS_INDEX << 3,
 		ARRAY_FLAG_USE_OCTAHEDRAL_COMPRESSION = ARRAY_COMPRESS_INDEX << 4,
-		ARRAY_FLAG_USE_2D_DEPTH_TEST = ARRAY_COMPRESS_INDEX << 5,
 
 		ARRAY_COMPRESS_DEFAULT = ARRAY_COMPRESS_NORMAL | ARRAY_COMPRESS_TANGENT | ARRAY_COMPRESS_COLOR | ARRAY_COMPRESS_TEX_UV | ARRAY_COMPRESS_TEX_UV2 | ARRAY_COMPRESS_WEIGHTS | ARRAY_FLAG_USE_OCTAHEDRAL_COMPRESSION
 
@@ -211,6 +210,7 @@ public:
 	void clear_surfaces();
 
 	void surface_set_active(int p_idx, bool p_active);
+	bool surface_is_active(int p_idx);
 	void surface_set_custom_aabb(int p_idx, const AABB &p_aabb); //only recognized by driver
 
 	int surface_get_array_len(int p_idx) const G_OVERRIDE;
