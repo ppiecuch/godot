@@ -2,9 +2,9 @@
 
 set -e
 
-trap \
- "{ rm -rf set1 ; exit 255; }" \
- SIGINT SIGTERM ERR EXIT
+#trap \
+# "{ rm -rf set1 ; exit 255; }" \
+# SIGINT SIGTERM ERR EXIT
 
 #~/Private/Projekty/0.shared/common-dev-tools/res_tools/c-embed/c-embed \
 #    starfield_res \
@@ -21,6 +21,7 @@ mogrify -resize 256\> set1/Joystick_Back.png
 mogrify -resize 256\> set1/DPad_*.png
 cp controls/DPad_Decor.png set1
 ~/Private/Projekty/0.shared/common-dev-tools/texture_tools/texpack/bin/texpack -s set1 -o set1
-../../../../misc/tools/qoiconv set1_0.png set1_0.qoi
-
-rm -rf set1
+echo "" >> set1_0.cat
+if [ -e ../../../../misc/tools/qoiconv ]; then
+	../../../../misc/tools/qoiconv set1_0.png set1_0.qoi
+fi
