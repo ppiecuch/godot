@@ -61,15 +61,14 @@ layout(location = 11) in lowp vec4 instance_color;
 layout(location = 12) in highp vec4 instance_custom_data;
 #endif
 
-#endif
+#endif // USE_INSTANCING
 
 layout(location = 4) in highp vec2 uv_attrib;
 #ifdef USE_ATTRIB_UV2
 layout(location = 5) in highp vec2 uv2_attrib;
 #endif
 
-// skeleton
-#endif
+#endif // USE_TEXTURE_RECT
 
 uniform highp vec2 color_texpixel_size;
 
@@ -198,7 +197,6 @@ void main() {
 	uv2_interp = uv2_attrib;
 #endif
 	highp vec4 outvec = vec4(vertex.xy, vertex_z, 1.0);
-
 #endif
 
 #ifdef USE_PARTICLES

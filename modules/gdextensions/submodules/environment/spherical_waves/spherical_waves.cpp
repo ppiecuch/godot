@@ -37,15 +37,15 @@
 
 const real_t SphericalWaves::TwoSquareHalf = Math::sqrt(2.0) / 2;
 
-void SphericalWaves::init(int p_x_size, int p_y_size, real_t p_spring_constant, real_t p_friction) {
-	x_size = p_x_size;
-	y_size = p_y_size;
+void SphericalWaves::init(const Size2 &p_grid_size, real_t p_spring_constant, real_t p_friction) {
+	grid_size = p_grid_size;
 	spring_constant = p_spring_constant;
 	friction = p_friction;
-	next_amplitudes = new real_t[x_size * y_size];
-	current_amplitudes = new real_t[x_size * y_size];
-	velocities = new real_t[x_size * y_size];
-	for (int i = 0; i < x_size * y_size; ++i) {
+	int cells = grid_size.x * grid_size.y;
+	next_amplitudes = new real_t[cells];
+	current_amplitudes = new real_t[cells];
+	velocities = new real_t[cells];
+	for (int i = 0; i < cells; ++i) {
 		current_amplitudes[i] = 0;
 		next_amplitudes[i] = 0;
 		velocities[i] = 0;
@@ -64,21 +64,21 @@ SphericalWaves::~SphericalWaves() {
 	}
 }
 
-real_t SphericalWaves::get_amplitude(int x, int y) {
-	return next_amplitudes[x * y_size + y];
+real_t SphericalWaves::get_amplitude(int p_pos_x, int p_pos_y) {
+	return next_amplitudes[p_pos_x * grid_size.y + p_pos_y];
 }
 
-void SphericalWaves::set_amplitude(int x, int y, real_t value) {
-	current_amplitudes[x * y_size + y] = value;
+void SphericalWaves::set_amplitude(int p_pos_x, int p_pos_y, real_t p_value) {
+	current_amplitudes[p_pos_x * grid_size.y + p_pos_y] = p_value;
 }
 
-void SphericalWaves::update(real_t delta) {
-	for (int x = 1; x < x_size - 1; ++x) {
-		for (int y = 1; y < y_size - 1; ++y) {
+void SphericalWaves::update(real_t p_delta) {
+	for (int x = 1; x < grid_size.x - 1; ++x) {
+		for (int y = 1; y < grid_size.y - 1; ++y) {
 			real_t force = 0;
 			for (int a = -1; a < 2; ++a) {
 				for (int b = -1; b < 2; ++b) {
-					real_t difference = current_amplitudes[(x + a) * y_size + y + b] - current_amplitudes[x * y_size + y];
+					real_t difference = current_amplitudes[(x + a) * grid_size.y + y + b] - current_amplitudes[x * grid_size.y + y];
 					if (Math::abs(x) + Math::abs(y) == 2) {
 						force += TwoSquareHalf * difference;
 					} else {
@@ -86,53 +86,52 @@ void SphericalWaves::update(real_t delta) {
 					}
 				}
 			}
-			real_t velocity = velocities[x * y_size + y];
+			real_t velocity = velocities[x * grid_size.y + y];
 			force = force * spring_constant - velocity * friction;
-			velocity += delta * force;
+			velocity += p_delta * force;
 
-			next_amplitudes[x * y_size + y] = current_amplitudes[x * y_size + y] + velocity * delta;
-			velocities[x * y_size + y] = velocity;
+			next_amplitudes[x * grid_size.y + y] = current_amplitudes[x * grid_size.y + y] + velocity * p_delta;
+			velocities[x * grid_size.y + y] = velocity;
 		}
 	}
-	for (int i = 0; i < x_size * y_size; ++i) {
+	for (int i = 0; i < grid_size.x * grid_size.y; ++i) {
 		current_amplitudes[i] = next_amplitudes[i];
 	}
 }
 
-void SphericalWaves::set_nodes(Vector<Variant> voxels, int index) {
-	for (int x = 1; x < x_size - 1; ++x) {
-		for (int y = 1; y < y_size - 1; ++y) {
-			Spatial *node = (Spatial *)((Node *)voxels[x * y_size + y]);
+void SphericalWaves::set_nodes(const Array &p_voxels, int p_index) {
+	for (int x = 1; x < grid_size.x - 1; ++x) {
+		for (int y = 1; y < grid_size.y - 1; ++y) {
+			Spatial *node = cast_to<Spatial>(p_voxels[x * grid_size.y + y]);
 			Vector3 translation = node->get_translation();
-			translation[index] = current_amplitudes[x * y_size + y];
+			translation[p_index] = current_amplitudes[x * grid_size.y + y];
 			node->set_translation(translation);
 		}
 	}
 }
 
-void SphericalWaves::set_mesh(const Ref<Mesh> &mesh) {
-	MeshDataTool *dataTool = memnew(MeshDataTool);
-	dataTool->create_from_surface(mesh, 0);
-	for (int i = 0; i < dataTool->get_vertex_count(); ++i) {
-		Vector3 vertex = dataTool->get_vertex(i);
-		vertex.y = current_amplitudes[(int)((vertex.x - x_size / 2) * y_size + vertex.z - y_size / 2)];
-		dataTool->set_vertex(i, vertex);
+void SphericalWaves::set_mesh(const Ref<Mesh> &p_mesh) {
+	MeshDataTool *data_tool = memnew(MeshDataTool);
+	data_tool->create_from_surface(p_mesh, 0);
+	for (int i = 0; i < data_tool->get_vertex_count(); ++i) {
+		Vector3 vertex = data_tool->get_vertex(i);
+		vertex.y = current_amplitudes[int((vertex.x - grid_size.x / 2) * grid_size.y + vertex.z - grid_size.y / 2)];
+		data_tool->set_vertex(i, vertex);
 	}
-	dataTool->commit_to_surface(mesh);
+	data_tool->commit_to_surface(p_mesh);
 }
 
 void SphericalWaves::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("init"), &SphericalWaves::init);
-	ClassDB::bind_method(D_METHOD("update"), &SphericalWaves::update);
-	ClassDB::bind_method(D_METHOD("get_amplitude"), &SphericalWaves::get_amplitude);
-	ClassDB::bind_method(D_METHOD("set_amplitude"), &SphericalWaves::set_amplitude);
-	ClassDB::bind_method(D_METHOD("set_nodes"), &SphericalWaves::set_nodes);
+	ClassDB::bind_method(D_METHOD("init", "grid_size", "spring_constant", "friction"), &SphericalWaves::init);
+	ClassDB::bind_method(D_METHOD("_process", "delta"), &SphericalWaves::update);
+	ClassDB::bind_method(D_METHOD("get_amplitude", "pos"), &SphericalWaves::get_amplitude);
+	ClassDB::bind_method(D_METHOD("set_amplitude", "pos", "value"), &SphericalWaves::set_amplitude);
+	ClassDB::bind_method(D_METHOD("set_nodes", "voxels", "index"), &SphericalWaves::set_nodes);
 	ClassDB::bind_method(D_METHOD("set_mesh", "mesh"), &SphericalWaves::set_mesh);
 }
 
 SphericalWaves::SphericalWaves() {
-	x_size = 2;
-	y_size = 2;
+	grid_size = Size2(2, 2);
 	spring_constant = 5;
 	friction = 0.7;
 	next_amplitudes = nullptr;

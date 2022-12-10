@@ -11,8 +11,10 @@ def configure(env):
     # all submodules available in the extensions
     modules = [
         "core",
-        "breakpad",
         "visual",
+        "cpufeatures",
+        "breakpad",
+        "benchmark",
         "bulletkit",
         "blitter",
         "benchmark",
@@ -21,6 +23,7 @@ def configure(env):
         "fastnoise",
         "smooth",
         "debugdraw",
+        "cyberelements",
         "geomfonts",
         "generator",
         "statemachine",
@@ -55,6 +58,7 @@ def configure(env):
         "tileengine",
         "sparkparticles",
         "turbobadger",
+        "spinners",
         "spacemouse",
         "media",
         "runtimeprofiler",

@@ -148,7 +148,39 @@ extern "C" const size_t texture_robot_png_size;
 extern "C" const uint8_t bitmap_font_png_data[];
 extern "C" const size_t bitmap_font_png_size;
 
+void Benchmark::_update_viewport() {
+	if (!Engine::get_singleton()->is_editor_hint()) {
+		// copy from main.cpp
+		String stretch_mode = GLOBAL_DEF("display/window/stretch/mode", "disabled");
+		String stretch_aspect = GLOBAL_DEF("display/window/stretch/aspect", "ignore");
+		Size2i stretch_size = Size2(GLOBAL_DEF("display/window/size/width", 0), GLOBAL_DEF("display/window/size/height", 0));
+
+		SceneTree::StretchMode sml_sm = SceneTree::STRETCH_MODE_DISABLED;
+		if (stretch_mode == "2d") {
+			sml_sm = SceneTree::STRETCH_MODE_2D;
+		} else if (stretch_mode == "viewport") {
+			sml_sm = SceneTree::STRETCH_MODE_VIEWPORT;
+		}
+
+		SceneTree::StretchAspect sml_aspect = SceneTree::STRETCH_ASPECT_IGNORE;
+		if (stretch_aspect == "keep") {
+			sml_aspect = SceneTree::STRETCH_ASPECT_KEEP;
+		} else if (stretch_aspect == "keep_width") {
+			sml_aspect = SceneTree::STRETCH_ASPECT_KEEP_WIDTH;
+		} else if (stretch_aspect == "keep_height") {
+			sml_aspect = SceneTree::STRETCH_ASPECT_KEEP_HEIGHT;
+		} else if (stretch_aspect == "expand") {
+			sml_aspect = SceneTree::STRETCH_ASPECT_EXPAND;
+		}
+
+		get_tree()->set_screen_stretch(sml_sm, sml_aspect, stretch_size, viewport_scale);
+	}
+}
+
 String Benchmark::_get_stats() {
+	static const char *_msaa[] = { "NONE", "2x", "4x", "8x", "16x" };
+	static const char *_draw[] = { "NORMAL", "UNSHADED", "OVERDRAW", "WIREFRAME" };
+
 	Vector<String> out;
 	int max_line = 0;
 
@@ -162,13 +194,13 @@ String Benchmark::_get_stats() {
 	add_line(vformat("F: VIEWPORT [%d X %d]", int(get_viewport()->get_size().width), int(get_viewport()->get_size().height)));
 	add_line(vformat(" " + _BULLET3 + " WINDOW [%d X %d]", int(OS::get_singleton()->get_window_size().width), int(OS::get_singleton()->get_window_size().height)));
 	add_line(vformat(" " + _BULLET3 + " PROJECT [%d X %d]", int(ProjectSettings::get_singleton()->get("display/window/size/width")), int(ProjectSettings::get_singleton()->get("display/window/size/height"))));
-	add_line(vformat("P: MULTISAMPLING [%s]", opts[OPTION_MULTISAMPLING] ? "ON" : "OFF"));
+	add_line(vformat("P: MULTISAMPLING [%s]", _msaa[get_viewport()->get_msaa()]));
 	add_line(vformat("H: LIGHT MODEL [%s]", "?"));
 	add_line(vformat("I: TEXTURE FILTER [%s]", opts[OPTION_LINEAR_FILTERING] ? "LINEAR" : "NEAREST"));
 	add_line(vformat("M: MIPMAPS [%s]", opts[OPTION_MIPMAPING] ? "ON" : "OFF"));
 	add_line(vformat("C: BACKFACE CULLING [%s]", opts[OPTION_CULLING] ? "ON" : "OFF"));
 	add_line(vformat("D: DEPTH TEST [%s]", opts[OPTION_DEPTHTEST] ? "ON" : "OFF"));
-	add_line(vformat("W: WIREFRAME [%s]", opts[OPTION_WIREFRAME] ? "ON" : "OFF"));
+	add_line(vformat("D: DRAW [%s]", _draw[get_viewport()->get_debug_draw()]));
 	add_line(vformat("Z: CAMERA DISTANCE [%d]", int(camera_distance)));
 	add_line(vformat("Y: CAMERA YAW [%d]", int(camera_yaw)));
 	add_line(vformat("L: CAMERA LOOK [%s]", opts[OPTION_CAMERA_LOOKAWAY] ? "AWAY" : "TOWARDS"));
@@ -252,26 +284,50 @@ Benchmark::ModelInfo Benchmark::_make_model_from_data(const uint8_t *p_data, con
 
 	print_verbose(vformat("Loading model data: %d vertexes, %d indexes, %d bytes of data.", verts_num, indexes_num, verts_size));
 
-	PoolIntArray index;
-	index.resize(indexes_num);
+	Ref<ArrayMesh> mesh = newref(ArrayMesh);
 
-	auto _index = index.write();
+	{
+		PoolIntArray index;
+		index.resize(indexes_num);
 
-	for (int i = 0; i < indexes_num; i++) {
-		_index[i] = indexes[i];
+		auto _index = index.write();
+		for (int i = 0; i < indexes_num; i++) {
+			_index[i] = indexes[i];
+		}
+		_index.release();
+
+		Array d;
+		d.resize(VS::ARRAY_MAX);
+		d[VisualServer::ARRAY_VERTEX] = verts;
+		d[VisualServer::ARRAY_NORMAL] = norm;
+		d[VisualServer::ARRAY_TEX_UV] = uv;
+		d[VisualServer::ARRAY_INDEX] = index;
+
+		mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, d);
 	}
 
-	_index.release();
+#if MODEL_WIREFRAME_SURFACE
+	// wireframe:
+	{
+		PoolIntArray index;
+		index.resize(indexes_num * 2);
 
-	Array d;
-	d.resize(VS::ARRAY_MAX);
-	d[VisualServer::ARRAY_VERTEX] = verts;
-	d[VisualServer::ARRAY_NORMAL] = norm;
-	d[VisualServer::ARRAY_TEX_UV] = uv;
-	d[VisualServer::ARRAY_INDEX] = index;
+		auto _index = index.write();
+		_index[0] = indexes[0];
+		for (int i = 0; i < indexes_num - 1; i++) {
+			_index[i * 2 + 1] = _index[i * 2 + 2] = indexes[i + 1];
+		}
+		_index[indexes_num * 2 - 1] = indexes[indexes_num - 1];
+		_index.release();
 
-	Ref<ArrayMesh> mesh = newref(ArrayMesh);
-	mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, d);
+		Array d;
+		d.resize(VS::ARRAY_MAX);
+		d[VisualServer::ARRAY_VERTEX] = verts;
+		d[VisualServer::ARRAY_INDEX] = index;
+
+		mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, d); // wireframe
+	}
+#endif
 
 	String fn = "user://__benchmark_" + p_name; // cache mesh
 	ResourceSaver::save(fn + ".mesh", mesh);
@@ -372,23 +428,23 @@ void Benchmark::_input(const Ref<InputEvent> &p_event) {
 	ERR_FAIL_COND(!is_inside_tree());
 
 	if (const InputEventKey *kb = cast_to<InputEventKey>(*p_event)) {
-		if ((kb->get_scancode() == KEY_PLUS || kb->get_scancode() == KEY_EQUAL) and kb->is_pressed()) {
+		if ((kb->get_scancode() == KEY_PLUS || kb->get_scancode() == KEY_EQUAL) && kb->is_pressed()) {
 			set_num_objects(num_objects + 1);
 			return;
 		}
-		if (kb->get_scancode() == KEY_MINUS and kb->is_pressed() && num_objects > 0) {
+		if (kb->get_scancode() == KEY_MINUS && kb->is_pressed() && num_objects > 0) {
 			set_num_objects(num_objects - 1);
 			return;
 		}
-		if (kb->get_scancode() == KEY_S and kb->is_pressed()) {
-			set_option(OPTION_STATS, !opts[OPTION_STATS]);
+		if (kb->get_scancode() == KEY_S && kb->is_pressed()) {
+			set_display_option(OPTION_STATS, !opts[OPTION_STATS]);
 			return;
 		}
-		if (kb->get_scancode() == KEY_X and kb->is_pressed()) {
+		if (kb->get_scancode() == KEY_X && kb->is_pressed()) {
 			if (curr_model + 1 == NUM_MODEL_TYPES) {
 				set_display_model(FIRST_MODEL_TYPE);
 			} else {
-				set_display_model(curr_model + 1);
+				set_display_model(ModelType(curr_model + 1));
 			}
 			return;
 		}
@@ -401,6 +457,7 @@ void Benchmark::_notification(int p_notification) {
 			_load_resources();
 		} break;
 		case NOTIFICATION_ENTER_TREE: {
+			_sky = get_tree()->get_root()->get_world()->get_fallback_environment();
 			if (!_stats_label) {
 				_stats_label = memnew(Label);
 				_stats_label->set_vertical_spacing(-3);
@@ -414,8 +471,9 @@ void Benchmark::_notification(int p_notification) {
 				}
 			}
 			_monitors[Performance::MEMORY_STATIC]->set_humanize_value(true);
-			if (!Engine::get_singleton()->is_editor_hint()) {
+			if (active) {
 				set_process_input(true);
+				set_process_internal(true);
 			}
 		} break;
 		case NOTIFICATION_EXIT_TREE: {
@@ -424,19 +482,21 @@ void Benchmark::_notification(int p_notification) {
 			_monitors[Performance::TIME_FPS] = nullptr;
 			_monitors.clear();
 			set_process_input(false);
+			set_process_internal(true);
 		} break;
 		case NOTIFICATION_INTERNAL_PROCESS: {
 			static float _plot_update = 0;
 			const float delta = get_process_delta_time();
 			if (_dirty) {
+				_update_viewport();
 				if (!models[curr_model].tex) { // rebuild texture
 					make_texture_from_data(models[curr_model].tex_data.data, models[curr_model].tex_data.size, _get_texture_flags(), models[curr_model].name);
 				}
 				_check_instances();
+				get_tree()->get_root()->get_world()->set_fallback_environment(opts[OPTION_SKY] ? _sky : Ref<Environment>());
 				model_mat->set_cull_mode(opts[OPTION_CULLING] ? SpatialMaterial::CULL_BACK : SpatialMaterial::CULL_DISABLED);
-				model_mat->set_flag(SpatialMaterial::FLAG_UNSHADED, opts[OPTION_UNSHADED]);
 				model_mat->set_flag(SpatialMaterial::FLAG_DISABLE_DEPTH_TEST, !opts[OPTION_DEPTHTEST]);
-				model_mat->set_texture(SpatialMaterial::TEXTURE_ALBEDO, models[curr_model].tex);
+				model_mat->set_texture(SpatialMaterial::TEXTURE_ALBEDO, opts[OPTION_TEXTURING] ? models[curr_model].tex : Ref<Texture>());
 				if (_stats_label) {
 					_stats_label->set_visible(opts[OPTION_STATS]);
 				}
@@ -484,11 +544,15 @@ void Benchmark::_notification(int p_notification) {
 }
 
 void Benchmark::set_active(bool p_state) {
-	set_process_internal(p_state);
+	active = p_state;
+	if (is_inside_tree()) {
+		set_process_internal(active);
+		set_process_input(active);
+	}
 }
 
 bool Benchmark::is_active() const {
-	return is_processing_internal();
+	return active;
 }
 
 void Benchmark::set_num_objects(int p_num) {
@@ -511,12 +575,12 @@ int Benchmark::get_display_model() const {
 	return curr_model;
 }
 
-void Benchmark::set_option(int p_opt, bool p_state) {
+void Benchmark::set_display_option(int p_opt, bool p_state) {
 	ERR_FAIL_INDEX(p_opt, NUM_OPTIONS);
 	if (opts[p_opt] != p_state) {
 		opts[p_opt] = p_state;
 		if (p_opt == OPTION_LINEAR_FILTERING || p_opt == OPTION_MIPMAPING) {
-			// rebuild texture for models
+			// invalidate texture for models
 			for (int m = 0; m < NUM_MODEL_TYPES; m++) {
 				models[m].tex = Ref<Texture>();
 			}
@@ -525,7 +589,7 @@ void Benchmark::set_option(int p_opt, bool p_state) {
 	}
 }
 
-bool Benchmark::get_option(int p_opt) const {
+bool Benchmark::get_display_option(int p_opt) const {
 	ERR_FAIL_INDEX_V(p_opt, NUM_OPTIONS, false);
 	return opts[p_opt];
 }
@@ -537,24 +601,38 @@ void Benchmark::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_num_objects"), &Benchmark::get_num_objects);
 	ClassDB::bind_method(D_METHOD("set_display_model"), &Benchmark::set_display_model);
 	ClassDB::bind_method(D_METHOD("get_display_model"), &Benchmark::get_display_model);
-	ClassDB::bind_method(D_METHOD("get_option"), &Benchmark::get_option);
-	ClassDB::bind_method(D_METHOD("set_option"), &Benchmark::set_option);
+	ClassDB::bind_method(D_METHOD("get_display_option"), &Benchmark::get_display_option);
+	ClassDB::bind_method(D_METHOD("set_display_option"), &Benchmark::set_display_option);
 
 	ClassDB::bind_method(D_METHOD("_input"), &Benchmark::_input);
 
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "active"), "set_active", "is_active");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "num_objects"), "set_num_objects", "get_num_objects");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "current_model", PROPERTY_HINT_ENUM, "Cube,Frog,Kid,TRex,Robot"), "set_display_model", "get_display_model");
-	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "option_unshaded"), "set_option", "get_option", OPTION_UNSHADED);
-	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "option_depthtest"), "set_option", "get_option", OPTION_DEPTHTEST);
-	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "option_culling"), "set_option", "get_option", OPTION_CULLING);
-	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "option_stats"), "set_option", "get_option", OPTION_STATS);
+	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "option_depthtest"), "set_display_option", "get_display_option", OPTION_DEPTHTEST);
+	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "option_fxaa"), "set_display_option", "get_display_option", OPTION_FXAA);
+	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "option_culling"), "set_display_option", "get_display_option", OPTION_CULLING);
+	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "option_mipmaping"), "set_display_option", "get_display_option", OPTION_MIPMAPING);
+	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "option_linear_filtering"), "set_display_option", "get_display_option", OPTION_LINEAR_FILTERING);
+	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "option_texturing"), "set_display_option", "get_display_option", OPTION_TEXTURING);
+	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "option_sky"), "set_display_option", "get_display_option", OPTION_SKY);
+	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "option_stats"), "set_display_option", "get_display_option", OPTION_STATS);
 
 	BIND_ENUM_CONSTANT(CUBE_MODEL);
 	BIND_ENUM_CONSTANT(FROG_MODEL);
 	BIND_ENUM_CONSTANT(KID_MODEL);
 	BIND_ENUM_CONSTANT(TREX_MODEL);
 	BIND_ENUM_CONSTANT(ROBOT_MODEL);
+
+	BIND_ENUM_CONSTANT(OPTION_CULLING);
+	BIND_ENUM_CONSTANT(OPTION_DEPTHTEST);
+	BIND_ENUM_CONSTANT(OPTION_FXAA);
+	BIND_ENUM_CONSTANT(OPTION_TEXTURING);
+	BIND_ENUM_CONSTANT(OPTION_LINEAR_FILTERING);
+	BIND_ENUM_CONSTANT(OPTION_MIPMAPING);
+	BIND_ENUM_CONSTANT(OPTION_CAMERA_LOOKAWAY);
+	BIND_ENUM_CONSTANT(OPTION_STATS);
+	BIND_ENUM_CONSTANT(OPTION_SKY);
 }
 
 Benchmark::Benchmark() {
@@ -562,21 +640,23 @@ Benchmark::Benchmark() {
 	_stats_label = nullptr;
 	_monitors[Performance::TIME_FPS] = _monitors[Performance::MEMORY_STATIC] = nullptr;
 	_stats_text_size = Size2(0, 0);
+	active = false;
 	plot_hist_size = 100;
 	plot_buf_index = 0;
 	num_objects = 20;
 	curr_model = 0;
 	glob_yaw = 0;
+	viewport_scale = GLOBAL_DEF("display/window/stretch/shrink", 1.0);
 
 	camera_distance = 0, camera_yaw = 0;
 
 	opts[OPTION_STATS] = true;
 	opts[OPTION_LINEAR_FILTERING] = true;
 	opts[OPTION_DEPTHTEST] = true;
+	opts[OPTION_TEXTURING] = true;
+	opts[OPTION_SKY] = true;
 
 	model_mat = newref(SpatialMaterial);
-
-	set_process_internal(true);
 }
 
 Benchmark::~Benchmark() {

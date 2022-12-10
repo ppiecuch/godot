@@ -44,13 +44,16 @@ class GdHistoryPlot;
 class Benchmark : public Node {
 	GDCLASS(Benchmark, Node);
 
+	bool active;
 	Ref<BitmapFont> screen_font;
 	Ref<SpatialMaterial> model_mat;
 	int num_objects;
 	int curr_model;
 	real_t glob_yaw;
+	real_t viewport_scale;
 
 public:
+	// Available models
 	typedef enum {
 		FIRST_MODEL_TYPE = 0,
 		CUBE_MODEL = 0,
@@ -60,6 +63,20 @@ public:
 		ROBOT_MODEL,
 		NUM_MODEL_TYPES
 	} ModelType;
+
+	// Render and display options
+	typedef enum {
+		OPTION_CULLING,
+		OPTION_DEPTHTEST,
+		OPTION_FXAA,
+		OPTION_TEXTURING,
+		OPTION_LINEAR_FILTERING,
+		OPTION_MIPMAPING,
+		OPTION_CAMERA_LOOKAWAY,
+		OPTION_SKY,
+		OPTION_STATS,
+		NUM_OPTIONS,
+	} RenderOptions;
 
 private:
 	// Postprocess effects
@@ -76,7 +93,6 @@ private:
 		FX_SOBEL,
 		FX_BLOOM,
 		FX_BLUR,
-		FX_FXAA,
 		NUM_FX_TYPES,
 		FX_NONE = NUM_FX_TYPES,
 	} PostproShader;
@@ -91,20 +107,6 @@ private:
 		FLAT,
 		NUM_SHADER_TYPES,
 	} ShaderType;
-
-	// Render and display options
-	typedef enum {
-		OPTION_UNSHADED,
-		OPTION_WIREFRAME,
-		OPTION_CULLING,
-		OPTION_DEPTHTEST,
-		OPTION_MULTISAMPLING,
-		OPTION_LINEAR_FILTERING,
-		OPTION_MIPMAPING,
-		OPTION_CAMERA_LOOKAWAY,
-		OPTION_STATS,
-		NUM_OPTIONS,
-	} RenderOptions;
 
 	bool opts[NUM_OPTIONS] = { false };
 	real_t camera_distance, camera_yaw;
@@ -131,10 +133,12 @@ private:
 	ModelInfo _make_model_from_data(const uint8_t *p_data, const uint8_t *p_tex_img, size_t p_tex_img_size, const String &p_name);
 	String _get_stats();
 	void _load_resources();
+	void _update_viewport();
 	void _check_instances();
 	void _update(float p_delta);
 	void _finalize();
 
+	Ref<Environment> _sky;
 	Label *_stats_label;
 	Size2 _stats_text_size;
 
@@ -150,6 +154,8 @@ protected:
 public:
 	void set_active(bool p_state);
 	bool is_active() const;
+	void set_autostart(bool p_state);
+	bool is_autostart() const;
 
 	void set_num_objects(int p_num);
 	int get_num_objects() const;
@@ -157,13 +163,14 @@ public:
 	void set_display_model(int p_model);
 	int get_display_model() const;
 
-	void set_option(int p_opts, bool p_state);
-	bool get_option(int p_opts) const;
+	void set_display_option(int p_opt, bool p_state);
+	bool get_display_option(int p_opt) const;
 
 	Benchmark();
 	~Benchmark();
 };
 
 VARIANT_ENUM_CAST(Benchmark::ModelType);
+VARIANT_ENUM_CAST(Benchmark::RenderOptions);
 
 #endif // BENCHMARK_H

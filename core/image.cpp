@@ -43,6 +43,7 @@
 
 const char *Image::format_names[Image::FORMAT_MAX] = {
 	"Lum8", //luminance
+	"Alpha8", //alpha
 	"LumAlpha8", //luminance-alpha
 	"Red8",
 	"RedGreen",
@@ -101,6 +102,8 @@ int Image::get_format_pixel_size(Format p_format) {
 	switch (p_format) {
 		case FORMAT_L8:
 			return 1; //luminance
+		case FORMAT_A8:
+			return 1; //alpha
 		case FORMAT_LA8:
 			return 2; //luminance-alpha
 		case FORMAT_R8:
@@ -432,7 +435,7 @@ Ref<Image> Image::converted(Format p_new_format) {
 	const uint8_t *rptr = r.ptr();
 	uint8_t *wptr = w.ptr();
 
-	int conversion_type = format | p_new_format << 8;
+	const int conversion_type = format | p_new_format << 8;
 
 	switch (conversion_type) {
 		case FORMAT_L8 | (FORMAT_LA8 << 8):
@@ -449,6 +452,12 @@ Ref<Image> Image::converted(Format p_new_format) {
 			break;
 		case FORMAT_L8 | (FORMAT_RGBA8 << 8):
 			_convert<1, false, 3, true, true, false>(width, height, rptr, wptr);
+			break;
+		case FORMAT_A8 | (FORMAT_LA8 << 8):
+			_convert<0, true, 1, true, false, false>(width, height, rptr, wptr);
+			break;
+		case FORMAT_A8 | (FORMAT_RGBA8 << 8):
+			_convert<0, true, 3, true, false, false>(width, height, rptr, wptr);
 			break;
 		case FORMAT_LA8 | (FORMAT_L8 << 8):
 			_convert<1, true, 1, false, true, true>(width, height, rptr, wptr);
@@ -498,6 +507,9 @@ Ref<Image> Image::converted(Format p_new_format) {
 		case FORMAT_RGB8 | (FORMAT_L8 << 8):
 			_convert<3, false, 1, false, false, true>(width, height, rptr, wptr);
 			break;
+		case FORMAT_RGB8 | (FORMAT_A8 << 8):
+			_convert<3, false, 0, true, false, true>(width, height, rptr, wptr);
+			break;
 		case FORMAT_RGB8 | (FORMAT_LA8 << 8):
 			_convert<3, false, 1, true, false, true>(width, height, rptr, wptr);
 			break;
@@ -512,6 +524,9 @@ Ref<Image> Image::converted(Format p_new_format) {
 			break;
 		case FORMAT_RGBA8 | (FORMAT_L8 << 8):
 			_convert<3, true, 1, false, false, true>(width, height, rptr, wptr);
+			break;
+		case FORMAT_RGBA8 | (FORMAT_A8 << 8):
+			_convert<3, true, 0, true, false, false>(width, height, rptr, wptr);
 			break;
 		case FORMAT_RGBA8 | (FORMAT_LA8 << 8):
 			_convert<3, true, 1, true, false, true>(width, height, rptr, wptr);
@@ -1510,6 +1525,7 @@ void Image::shrink_x2() {
 
 			switch (format) {
 				case FORMAT_L8:
+				case FORMAT_A8:
 				case FORMAT_R8:
 					_generate_po2_mipmap<uint8_t, 1, false, Image::average_4_uint8, Image::renormalize_uint8>(r.ptr(), w.ptr(), width, height);
 					break;
@@ -1620,6 +1636,7 @@ Error Image::generate_mipmaps(bool p_renormalize) {
 
 		switch (format) {
 			case FORMAT_L8:
+			case FORMAT_A8:
 			case FORMAT_R8:
 				_generate_po2_mipmap<uint8_t, 1, false, Image::average_4_uint8, Image::renormalize_uint8>(&wp[prev_ofs], &wp[ofs], prev_w, prev_h);
 				break;
@@ -1983,6 +2000,12 @@ bool Image::is_invisible() const {
 	bool detected = false;
 
 	switch (format) {
+		case FORMAT_A8: {
+			for (int i = 0; i < len; i++) {
+				DETECT_NON_ALPHA(data_ptr[i]);
+			}
+
+		} break;
 		case FORMAT_LA8: {
 			for (int i = 0; i < (len >> 1); i++) {
 				DETECT_NON_ALPHA(data_ptr[(i << 1) + 1]);
@@ -2026,6 +2049,12 @@ Image::AlphaMode Image::detect_alpha() const {
 	bool detected = false;
 
 	switch (format) {
+		case FORMAT_A8: {
+			for (int i = 0; i < len; i++) {
+				DETECT_ALPHA(data_ptr[i]);
+			}
+
+		} break;
 		case FORMAT_LA8: {
 			for (int i = 0; i < (len >> 1); i++) {
 				DETECT_ALPHA(data_ptr[(i << 1) + 1]);
@@ -2194,7 +2223,9 @@ Image::Image(int p_width, int p_height, bool p_mipmaps, Format p_format, const P
 }
 
 Rect2 Image::get_used_rect() const {
-	if (format != FORMAT_LA8 && format != FORMAT_RGBA8 && format != FORMAT_RGBAF && format != FORMAT_RGBAH && format != FORMAT_RGBA4444 && format != FORMAT_RGBA5551) {
+	if (format == FORMAT_A8) {
+		return Rect2(); // only alpha
+	} else if (format != FORMAT_LA8 && format != FORMAT_RGBA8 && format != FORMAT_RGBAF && format != FORMAT_RGBAH && format != FORMAT_RGBA4444 && format != FORMAT_RGBA5551) {
 		return Rect2(Point2(), Size2(width, height));
 	}
 
@@ -2615,6 +2646,10 @@ Color Image::get_pixel(int p_x, int p_y) const {
 			float l = ptr[ofs] / 255.0;
 			return Color(l, l, l, 1);
 		}
+		case FORMAT_A8: {
+			float a = ptr[ofs] / 255.0;
+			return Color(0, 0, 0, a);
+		}
 		case FORMAT_LA8: {
 			float l = ptr[ofs * 2 + 0] / 255.0;
 			float a = ptr[ofs * 2 + 1] / 255.0;
@@ -2730,6 +2765,9 @@ void Image::set_pixel(int p_x, int p_y, const Color &p_color) {
 	switch (format) {
 		case FORMAT_L8: {
 			ptr[ofs] = uint8_t(CLAMP(p_color.get_v() * 255.0, 0, 255));
+		} break;
+		case FORMAT_A8: {
+			ptr[ofs] = uint8_t(CLAMP(p_color.a * 255.0, 0, 255));
 		} break;
 		case FORMAT_LA8: {
 			ptr[ofs * 2 + 0] = uint8_t(CLAMP(p_color.get_v() * 255.0, 0, 255));
@@ -2855,6 +2893,9 @@ Image::DetectChannels Image::get_detected_channels() {
 	if (!c && !a) {
 		return DETECTED_L;
 	}
+	if (a && !r && !g && !b) {
+		return DETECTED_A;
+	}
 	if (!c && a) {
 		return DETECTED_LA;
 	}
@@ -2878,6 +2919,9 @@ void Image::optimize_channels() {
 	switch (get_detected_channels()) {
 		case DETECTED_L:
 			convert(FORMAT_L8);
+			break;
+		case DETECTED_A:
+			convert(FORMAT_A8);
 			break;
 		case DETECTED_LA:
 			convert(FORMAT_LA8);
@@ -2978,6 +3022,7 @@ void Image::_bind_methods() {
 	BIND_CONSTANT(MAX_HEIGHT);
 
 	BIND_ENUM_CONSTANT(FORMAT_L8); //luminance
+	BIND_ENUM_CONSTANT(FORMAT_A8); //alpha
 	BIND_ENUM_CONSTANT(FORMAT_LA8); //luminance-alpha
 	BIND_ENUM_CONSTANT(FORMAT_R8);
 	BIND_ENUM_CONSTANT(FORMAT_RG8);

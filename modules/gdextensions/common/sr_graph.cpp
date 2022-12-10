@@ -388,12 +388,12 @@ static void _sr_generate_axis(_sr_orientation orientation, real_t ratio, real_t 
 	const real_t sn = reverse ? -1 : 1;
 
 	if (orientation == orient_vert) {
-		// |     |   \
-		// |     |    \
-		// |     |  +--+
-		// +--+  |  |
-		//   /   |  |
-		//  /    |  |
+		//   \    |  |
+		//    \   |  |
+		//  +--+  |  |
+		//  |     |  +--+
+		//  |     |    /
+		//  |     |   /
 		_sr_get_line(hy, hx0, hy, hx1, ratio, axis_data);
 		_sr_get_line(hy, ord, hy + ld, ord, ratio, axis_data);
 		_sr_get_line(hy + ld, ord, hy, sn, ratio, axis_data);

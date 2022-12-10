@@ -157,6 +157,17 @@ Ref<Image> RasterizerStorageGLES3::_get_gl_image_and_format(const Ref<Image> &p_
 			r_gl_type = GL_UNSIGNED_BYTE;
 #endif
 		} break;
+		case Image::FORMAT_A8: {
+#ifdef GLES_OVER_GL
+			r_gl_internal_format = GL_R8;
+			r_gl_format = GL_RED;
+			r_gl_type = GL_UNSIGNED_BYTE;
+#else
+			r_gl_internal_format = GL_ALPHA;
+			r_gl_format = GL_ALPHA;
+			r_gl_type = GL_UNSIGNED_BYTE;
+#endif
+		} break;
 		case Image::FORMAT_LA8: {
 #ifdef GLES_OVER_GL
 			r_gl_internal_format = GL_RG8;
@@ -810,18 +821,17 @@ void RasterizerStorageGLES3::texture_set_data(RID p_texture, const Ref<Image> &p
 //set swizle for older format compatibility
 #ifdef GLES_OVER_GL
 	switch (texture->format) {
-		case Image::FORMAT_L8: {
-			// Original Godot code:
-			// glTexParameteri(texture->target, GL_TEXTURE_SWIZZLE_R, GL_RED);
-			// glTexParameteri(texture->target, GL_TEXTURE_SWIZZLE_G, GL_RED);
-			// glTexParameteri(texture->target, GL_TEXTURE_SWIZZLE_B, GL_RED);
-			// glTexParameteri(texture->target, GL_TEXTURE_SWIZZLE_A, GL_ONE);
-
-			// Make L8 a transparent texture:
+		case Image::FORMAT_A8: {
 			glTexParameteri(texture->target, GL_TEXTURE_SWIZZLE_R, GL_ONE);
 			glTexParameteri(texture->target, GL_TEXTURE_SWIZZLE_G, GL_ONE);
 			glTexParameteri(texture->target, GL_TEXTURE_SWIZZLE_B, GL_ONE);
 			glTexParameteri(texture->target, GL_TEXTURE_SWIZZLE_A, GL_RED);
+		} break;
+		case Image::FORMAT_L8: {
+			glTexParameteri(texture->target, GL_TEXTURE_SWIZZLE_R, GL_RED);
+			glTexParameteri(texture->target, GL_TEXTURE_SWIZZLE_G, GL_RED);
+			glTexParameteri(texture->target, GL_TEXTURE_SWIZZLE_B, GL_RED);
+			glTexParameteri(texture->target, GL_TEXTURE_SWIZZLE_A, GL_ONE);
 		} break;
 		case Image::FORMAT_LA8: {
 			glTexParameteri(texture->target, GL_TEXTURE_SWIZZLE_R, GL_RED);
@@ -3377,7 +3387,7 @@ void RasterizerStorageGLES3::mesh_add_surface(RID p_mesh, uint32_t p_format, VS:
 	}
 
 	if ((p_format & VS::ARRAY_FLAG_USE_2D_VERTICES) && (p_format & VS::ARRAY_FLAG_USE_2D_DEPTH_TEST)) {
-		WARN_PRINT("Enabling depth test for 2d only vertices might not be effective.");
+		WARN_PRINT("Enabling depth test for 2d only vertices.");
 	}
 
 	//bool has_morph = p_blend_shapes.size();

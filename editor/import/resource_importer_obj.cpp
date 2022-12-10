@@ -323,7 +323,7 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 						}
 						ERR_FAIL_INDEX_V(norm, normals.size(), ERR_FILE_CORRUPT);
 						surf_tool->add_normal(normals[norm]);
-					} else if (normals.size() == vertices.size()) {
+					} else if (normals.size() && normals.size() == vertices.size()) {
 						// Assume one normal per vertex
 						int norm = face[idx][0].to_int() - 1;
 						if (norm < 0) {
@@ -339,12 +339,13 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 						}
 						ERR_FAIL_INDEX_V(uv, uvs.size(), ERR_FILE_CORRUPT);
 						surf_tool->add_uv(uvs[uv]);
-					} else if (normals.size() == uvs.size()) {
+					} else if (uvs.size() && uvs.size() == normals.size()) {
 						// Assume one uv per vertex
 						int uv = face[idx][0].to_int() - 1;
 						if (uv < 0) {
 							uv += uvs.size() + 1;
 						}
+						ERR_FAIL_INDEX_V(uv, uvs.size(), ERR_FILE_CORRUPT);
 						surf_tool->add_uv(uvs[uv]);
 					}
 
@@ -383,8 +384,10 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 
 				surf_tool->index();
 
-				print_verbose("OBJ: Current material library " + current_material_library + " has " + itos(material_map.has(current_material_library)));
-				print_verbose("OBJ: Current material " + current_material + " has " + itos(material_map.has(current_material_library) && material_map[current_material_library].has(current_material)));
+				if (!current_material_library.empty()) {
+					print_verbose("OBJ: Current material library " + current_material_library + " has " + itos(material_map.has(current_material_library)));
+					print_verbose("OBJ: Current material " + current_material + " has " + itos(material_map.has(current_material_library) && material_map[current_material_library].has(current_material)));
+				}
 
 				if (material_map.has(current_material_library) && material_map[current_material_library].has(current_material)) {
 					if (p_to_shadermaterial) {
@@ -410,7 +413,7 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 					mesh->surface_set_name(mesh->get_surface_count() - 1, current_group);
 				}
 
-				print_verbose("OBJ: Added surface: " + mesh->surface_get_name(mesh->get_surface_count() - 1));
+				print_verbose("OBJ: Added surface: '" + mesh->surface_get_name(mesh->get_surface_count() - 1) + "'");
 				surf_tool->clear();
 				surf_tool->begin(Mesh::PRIMITIVE_TRIANGLES);
 			}
