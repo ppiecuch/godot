@@ -242,6 +242,7 @@ static void editor_init_callback() {
 #ifdef GDEXT_VISUAL_ENABLED
 	EditorNode::get_singleton()->add_editor_plugin(memnew(Cable2DEditorPlugin(EditorNode::get_singleton()))); /* Cable2D */
 	EditorNode::get_singleton()->add_editor_plugin(memnew(SpriteMeshEditorPlugin(EditorNode::get_singleton()))); /* SpriteMesh */
+	EditorNode::get_singleton()->add_editor_plugin(memnew(SpriteMeshLightEditorPlugin(EditorNode::get_singleton()))); /* SpriteMeshLight */
 #endif
 
 	EditorPlugins::add_by_type<ProceduralAnimationEditorPlugin>(); /* ProceduralAnimation */
@@ -405,6 +406,7 @@ void register_gdextensions_types() {
 	ClassDB::register_class<SimulationControllerInstance2D>();
 	ClassDB::register_class<SphericalWaves>();
 	ClassDB::register_class<SpriteMesh>();
+	ClassDB::register_class<SpriteMeshLight>();
 	ClassDB::register_class<TouchButton>();
 	ClassDB::register_class<TexturePanning>();
 	ClassDB::register_class<ThumbWheelH>();

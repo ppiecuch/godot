@@ -95,6 +95,9 @@ thirdparty_sources = [
 if env["tools"] and is_enabled("qrcodetexture"):
     modules += ["qrcodetexture"]
 
+if is_enabled("cyberelements"):
+    thirdparty_sources += ["thirdparty/libtess3/libtess3.cpp"]
+
 if is_enabled("cpufeatures"):
     env_module.Append(CPPPATH=["thirdparty/cpu_features/include"])
     thirdparty_sources += [fn for fn in Glob("thirdparty/cpu_features/*.c") if os.path.basename(fn.path) != "hwcaps.c"]
@@ -289,6 +292,9 @@ if is_enabled("turbobadger"):
     else:
         env_module.Append(CPPDEFINES=["TB_FONT_RENDERER_STB"])
     thirdparty_sources += Glob("thirdparty/turbobadger/src/**/*.cpp") + Glob("thirdparty/turbobadger/resources/*.c")
+
+if is_enabled("vgamepad"):
+    sources += Glob("submodules/vgamepad/res/*.c")
 
 if is_enabled("spacemouse"):
     if env["tools"]:
