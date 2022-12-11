@@ -149,6 +149,7 @@ void RasterizerCanvasBaseGLES3::canvas_begin() {
 		glClearStencil(0);
 		glEnable(GL_DEPTH_TEST);
 		glDepthMask(GL_TRUE);
+		glClearDepth(1.0f);
 		glEnable(GL_STENCIL_TEST);
 		glClearStencil(0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1114,9 +1115,8 @@ void RasterizerCanvasBaseGLES3::reset_canvas() {
 	Transform canvas_transform;
 	const float depth_size_near = GLOBAL_DEF("rendering/quality/2d/mesh_depth_near", -1000);
 	const float depth_size_far = GLOBAL_DEF("rendering/quality/2d/mesh_depth_far", 1000);
-	const float depth_size = depth_size_far - depth_size_near == 0 ? 1 : depth_size_far - depth_size_near;
-	const float depth_mid_z = depth_size_far - depth_size_near == 0 ? 0 : -(depth_size_far + depth_size_near) / (depth_size_far - depth_size_near);
-
+	const float depth_size = (depth_size_far - depth_size_near == 0) ? 1 : depth_size_far - depth_size_near;
+	const float depth_mid_z = (depth_size_far - depth_size_near == 0) ? 2 : -(depth_size_far + depth_size_near) / (depth_size_far - depth_size_near);
 	if (storage->frame.current_rt) {
 		float csy = 1.0;
 		if (storage->frame.current_rt && storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_VFLIP]) {

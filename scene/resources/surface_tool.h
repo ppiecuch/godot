@@ -128,6 +128,7 @@ public:
 
 	void clear();
 
+	int get_array_format() const { return format; }
 	List<Vertex> &get_vertex_array() { return vertex_array; }
 
 	void create_from_triangle_arrays(const Array &p_arrays);

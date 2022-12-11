@@ -864,17 +864,7 @@ void RasterizerCanvasGLES2::render_batches(Item *p_current_clip, bool &r_reclip,
 								break;
 							}
 
-							bool need_depth = false;
-							for (int j = 0; j < mesh_data->surfaces.size(); j++) {
-								RasterizerStorageGLES2::Surface *s = mesh_data->surfaces[j];
-								if (s->active) {
-									if ((need_depth = !(s->format & VisualServer::ARRAY_FLAG_USE_2D_VERTICES))) {
-										break;
-									}
-								}
-							}
-
-							if (need_depth) { // enabled depth + vec3 if there is at least one surface with vec3 vertex type (PP)
+							if (mesh->depth) {
 								glEnable(GL_DEPTH_TEST);
 								glDepthMask(GL_TRUE);
 								state.canvas_shader.set_conditional(CanvasShaderGLES2::VERTEX_VEC3_USED, true);
@@ -937,7 +927,7 @@ void RasterizerCanvasGLES2::render_batches(Item *p_current_clip, bool &r_reclip,
 								glDisableVertexAttribArray(j);
 							}
 
-							if (need_depth) { // restore default state
+							if (mesh->depth) { // restore default state
 								glDisable(GL_DEPTH_TEST);
 								glDepthMask(GL_FALSE);
 								state.canvas_shader.set_conditional(CanvasShaderGLES2::VERTEX_VEC3_USED, GLOBAL_DEF("rendering/quality/2d/use_vertex_vector3", true));

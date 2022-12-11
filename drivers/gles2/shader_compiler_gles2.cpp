@@ -1041,7 +1041,7 @@ ShaderCompilerGLES2::ShaderCompilerGLES2() {
 	/** CANVAS ITEM SHADER **/
 
 	actions[VS::SHADER_CANVAS_ITEM].renames["VERTEX"] = "outvec.xy";
-	actions[VS::SHADER_CANVAS_ITEM].renames["VERT"] = "outvec.xyz";
+	actions[VS::SHADER_CANVAS_ITEM].renames["POSITION"] = "outvec.xyz";
 	actions[VS::SHADER_CANVAS_ITEM].renames["UV"] = "uv";
 	actions[VS::SHADER_CANVAS_ITEM].renames["UV2"] = "uv2";
 	actions[VS::SHADER_CANVAS_ITEM].renames["POINT_SIZE"] = "point_size";
@@ -1056,8 +1056,8 @@ ShaderCompilerGLES2::ShaderCompilerGLES2() {
 	actions[VS::SHADER_CANVAS_ITEM].renames["INSTANCE_CUSTOM"] = "instance_custom";
 
 	actions[VS::SHADER_CANVAS_ITEM].renames["COLOR"] = "color";
-	actions[VS::SHADER_CANVAS_ITEM].renames["MODULATE"] = "final_modulate_alias";
 	actions[VS::SHADER_CANVAS_ITEM].renames["NORMAL"] = "normal";
+	actions[VS::SHADER_CANVAS_ITEM].renames["MODULATE"] = "final_modulate_alias";
 	actions[VS::SHADER_CANVAS_ITEM].renames["NORMALMAP"] = "normal_map";
 	actions[VS::SHADER_CANVAS_ITEM].renames["NORMALMAP_DEPTH"] = "normal_depth";
 	actions[VS::SHADER_CANVAS_ITEM].renames["TEXTURE"] = "color_texture";
@@ -1080,12 +1080,13 @@ ShaderCompilerGLES2::ShaderCompilerGLES2() {
 	actions[VS::SHADER_CANVAS_ITEM].renames["SHADOW_COLOR"] = "shadow_color";
 	actions[VS::SHADER_CANVAS_ITEM].renames["SHADOW_VEC"] = "shadow_vec";
 
+	actions[VS::SHADER_CANVAS_ITEM].usage_defines["POSITION"] = "#define VERTEX_VEC3_USED\n";
 	actions[VS::SHADER_CANVAS_ITEM].usage_defines["COLOR"] = "#define COLOR_USED\n";
 	actions[VS::SHADER_CANVAS_ITEM].usage_defines["MODULATE"] = "#define MODULATE_USED\n";
 	actions[VS::SHADER_CANVAS_ITEM].usage_defines["SCREEN_TEXTURE"] = "#define SCREEN_TEXTURE_USED\n";
 	actions[VS::SHADER_CANVAS_ITEM].usage_defines["SCREEN_UV"] = "#define SCREEN_UV_USED\n";
 	actions[VS::SHADER_CANVAS_ITEM].usage_defines["SCREEN_PIXEL_SIZE"] = "@SCREEN_UV";
-	actions[VS::SHADER_CANVAS_ITEM].usage_defines["NORMAL"] = "#define NORMAL_USED\n";
+	actions[VS::SHADER_CANVAS_ITEM].usage_defines["NORMAL"] = "#define USE_ATTRIB_NORMAL\n";
 	actions[VS::SHADER_CANVAS_ITEM].usage_defines["NORMALMAP"] = "#define NORMALMAP_USED\n";
 	actions[VS::SHADER_CANVAS_ITEM].usage_defines["LIGHT"] = "#define USE_LIGHT_SHADER_CODE\n";
 	actions[VS::SHADER_CANVAS_ITEM].usage_defines["SHADOW_VEC"] = "#define SHADOW_VEC_USED\n";

@@ -105,6 +105,18 @@ public:
 	m_r m_name() { return BINDBASE->m_name(); }
 #define BIND1R(m_r, m_name, m_type1) \
 	m_r m_name(m_type1 arg1) { return BINDBASE->m_name(arg1); }
+#define BIND2R(m_r, m_name, m_type1, m_type2) \
+	m_r m_name(m_type1 arg1, m_type2 arg2) { return BINDBASE->m_name(arg1, arg2); }
+#define BIND3R(m_r, m_name, m_type1, m_type2, m_type3) \
+	m_r m_name(m_type1 arg1, m_type2 arg2, m_type3 arg3) { return BINDBASE->m_name(arg1, arg2, arg3); }
+#define BIND4R(m_r, m_name, m_type1, m_type2, m_type3, m_type4) \
+	m_r m_name(m_type1 arg1, m_type2 arg2, m_type3 arg3, m_type4 arg4) { return BINDBASE->m_name(arg1, arg2, arg3, arg4); }
+#define BIND5R(m_r, m_name, m_type1, m_type2, m_type3, m_type4, m_type5) \
+	m_r m_name(m_type1 arg1, m_type2 arg2, m_type3 arg3, m_type4 arg4, m_type5 arg5) { return BINDBASE->m_name(arg1, arg2, arg3, arg4, arg5); }
+#define BIND6R(m_r, m_name, m_type1, m_type2, m_type3, m_type4, m_type5, m_type6) \
+	m_r m_name(m_type1 arg1, m_type2 arg2, m_type3 arg3, m_type4 arg4, m_type5 arg5, m_type6 arg6) { return BINDBASE->m_name(arg1, arg2, arg3, arg4, arg5, arg6); }
+#define BIND7R(m_r, m_name, m_type1, m_type2, m_type3, m_type4, m_type5, m_type6, m_type7) \
+	m_r m_name(m_type1 arg1, m_type2 arg2, m_type3 arg3, m_type4 arg4, m_type5 arg5, m_type6 arg6, m_type7 arg7) { return BINDBASE->m_name(arg1, arg2, arg3, arg4, arg5, arg6, arg7); }
 #define BIND1RC(m_r, m_name, m_type1) \
 	m_r m_name(m_type1 arg1) const { return BINDBASE->m_name(arg1); }
 #define BIND2R(m_r, m_name, m_type1, m_type2) \
@@ -115,6 +127,12 @@ public:
 	m_r m_name(m_type1 arg1, m_type2 arg2, m_type3 arg3) const { return BINDBASE->m_name(arg1, arg2, arg3); }
 #define BIND4RC(m_r, m_name, m_type1, m_type2, m_type3, m_type4) \
 	m_r m_name(m_type1 arg1, m_type2 arg2, m_type3 arg3, m_type4 arg4) const { return BINDBASE->m_name(arg1, arg2, arg3, arg4); }
+#define BIND5RC(m_r, m_name, m_type1, m_type2, m_type3, m_type4, m_type5) \
+	m_r m_name(m_type1 arg1, m_type2 arg2, m_type3 arg3, m_type4 arg4, m_type5 arg5) const { return BINDBASE->m_name(arg1, arg2, arg3, arg4, arg5); }
+#define BIND6RC(m_r, m_name, m_type1, m_type2, m_type3, m_type4, m_type5, m_type6) \
+	m_r m_name(m_type1 arg1, m_type2 arg2, m_type3 arg3, m_type4 arg4, m_type5 arg5, m_type6 arg6) const { return BINDBASE->m_name(arg1, arg2, arg3, arg4, arg5, arg6); }
+#define BIND7RC(m_r, m_name, m_type1, m_type2, m_type3, m_type4, m_type5, m_type6, m_type7) \
+	m_r m_name(m_type1 arg1, m_type2 arg2, m_type3 arg3, m_type4 arg4, m_type5 arg5, m_type6 arg6, m_type7 arg7) const { return BINDBASE->m_name(arg1, arg2, arg3, arg4, arg5, arg6, arg7); }
 
 #define BIND0N(m_name) \
 	void m_name() { BINDBASE->m_name(); }
@@ -711,6 +729,8 @@ public:
 	BIND8(canvas_item_add_polygon, RID, const Vector<Point2> &, const Vector<Color> &, const Vector<Point2> &, RID, RID, RID, bool)
 	BIND13(canvas_item_add_triangle_array, RID, const Vector<int> &, const Vector<Point2> &, const Vector<Color> &, const Vector<Point2> &, const Vector<int> &, const Vector<float> &, RID, int, RID, RID, bool, bool)
 	BIND7(canvas_item_add_mesh, RID, const RID &, const Transform2D &, const Color &, RID, RID, RID)
+	BIND7R(uint64_t, canvas_item_add_mesh_3d, RID, const RID &, const Transform &, const Color &, RID, RID, RID)
+	BIND7(canvas_item_update_mesh_3d, RID, uint64_t, const Transform &, const Color &, RID, RID, RID)
 	BIND5(canvas_item_add_multimesh, RID, RID, RID, RID, RID)
 	BIND5(canvas_item_add_particles, RID, RID, RID, RID, RID)
 	BIND2(canvas_item_add_set_transform, RID, const Transform2D &)
