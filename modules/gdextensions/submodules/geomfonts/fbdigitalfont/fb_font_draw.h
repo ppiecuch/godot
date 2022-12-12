@@ -64,8 +64,7 @@ void draw_background_with_dot_type(
 		real_t vertical_amount);
 
 void draw_bitmap_symbol(
-		const RID &canvas_item_opaq,
-		const RID &canvas_item_trnsp,
+		const RID &canvas_item,
 		Dictionary &cache,
 		FBFontSymbolType symbol,
 		FBFontDotType dot_type,

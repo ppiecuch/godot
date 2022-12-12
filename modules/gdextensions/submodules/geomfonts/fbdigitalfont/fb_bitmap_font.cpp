@@ -119,7 +119,7 @@ static Ref<Texture> generate_aa_buffer(real_t fall_off) {
 	}
 	buffer.release();
 	Ref<Image> image = newref(Image);
-	image->create(psz, psz, false, Image::FORMAT_L8, data);
+	image->create(psz, psz, false, Image::FORMAT_A8, data);
 	Ref<ImageTexture> texture = newref(ImageTexture);
 	texture->create_from_image(image);
 	return texture;
@@ -148,8 +148,7 @@ void draw_background_with_dot_type(
 }
 
 void draw_bitmap_symbol(
-		const RID &canvas_item_opaq,
-		const RID &canvas_item_trnsp,
+		const RID &canvas_item,
 		Dictionary &cache,
 		FBFontSymbolType symbol,
 		FBFontDotType dot_type,
@@ -171,9 +170,9 @@ void draw_bitmap_symbol(
 				const real_t y = start_point.y + r * l;
 				const real_t x = start_point.x + c * l;
 				if (dot_type == FBFontDotTypeSquare) {
-					VisualServer::get_singleton()->canvas_item_add_rect(canvas_item_opaq, { x, y, edge_length, edge_length }, color);
+					VisualServer::get_singleton()->canvas_item_add_rect(canvas_item, { x, y, edge_length, edge_length }, color);
 				} else {
-					VisualServer::get_singleton()->canvas_item_add_circle(canvas_item_opaq, { x, y }, edge_length, color);
+					VisualServer::get_singleton()->canvas_item_add_circle(canvas_item, { x, y }, edge_length, color);
 				}
 			}
 		}
@@ -182,7 +181,7 @@ void draw_bitmap_symbol(
 		cache["aa32"] = generate_aa_buffer(0.5);
 	}
 	Ref<Texture> texture = cache["aa32"];
-	VisualServer::get_singleton()->canvas_item_add_texture_rect(canvas_item_trnsp, { 0, 0, 256, 256 }, texture->get_rid(), false, inner_glow_color);
+	VisualServer::get_singleton()->canvas_item_add_texture_rect(canvas_item, { 0, 0, 256, 256 }, texture->get_rid(), false, inner_glow_color);
 }
 
 int number_of_dots_wide_for_symbol(FBFontSymbolType symbol) {
