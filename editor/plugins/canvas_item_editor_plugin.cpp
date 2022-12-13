@@ -584,7 +584,7 @@ Rect2 CanvasItemEditor::_get_encompassing_rect(const Node *p_node) {
 	return rect;
 }
 
-void CanvasItemEditor::_find_canvas_items_at_pos(const Point2 &p_pos, Node *p_node, Vector<_SelectResult> &r_items, const Transform2D &p_parent_xform, const Transform2D &p_canvas_xform) {
+void CanvasItemEditor::_find_canvas_items_at_pos(const Point2 &p_pos, Node *p_node, Vector<_SelectResult> &r_items, Vector<Node *> *p_others, const Transform2D &p_parent_xform, const Transform2D &p_canvas_xform) {
 	if (!p_node) {
 		return;
 	}
@@ -598,13 +598,13 @@ void CanvasItemEditor::_find_canvas_items_at_pos(const Point2 &p_pos, Node *p_no
 	for (int i = p_node->get_child_count() - 1; i >= 0; i--) {
 		if (canvas_item) {
 			if (!canvas_item->is_set_as_toplevel()) {
-				_find_canvas_items_at_pos(p_pos, p_node->get_child(i), r_items, p_parent_xform * canvas_item->get_transform(), p_canvas_xform);
+				_find_canvas_items_at_pos(p_pos, p_node->get_child(i), r_items, p_others, p_parent_xform * canvas_item->get_transform(), p_canvas_xform);
 			} else {
-				_find_canvas_items_at_pos(p_pos, p_node->get_child(i), r_items, canvas_item->get_transform(), p_canvas_xform);
+				_find_canvas_items_at_pos(p_pos, p_node->get_child(i), r_items, p_others, canvas_item->get_transform(), p_canvas_xform);
 			}
 		} else {
 			CanvasLayer *cl = Object::cast_to<CanvasLayer>(p_node);
-			_find_canvas_items_at_pos(p_pos, p_node->get_child(i), r_items, Transform2D(), cl ? cl->get_transform() : p_canvas_xform);
+			_find_canvas_items_at_pos(p_pos, p_node->get_child(i), r_items, p_others, Transform2D(), cl ? cl->get_transform() : p_canvas_xform);
 		}
 	}
 
@@ -620,13 +620,22 @@ void CanvasItemEditor::_find_canvas_items_at_pos(const Point2 &p_pos, Node *p_no
 			res.has_z = node;
 			r_items.push_back(res);
 		}
+	} else if (p_others && p_node->has_method("_edit_is_selected_on_click")) {
+		Transform2D node_xform;
+		if (p_node->has_method("_edit_get_transform")) {
+			node_xform = p_node->call("_edit_get_transform");
+		}
+		Transform2D xform = (p_parent_xform * p_canvas_xform * node_xform).affine_inverse();
+		if (p_node->call("_edit_is_selected_on_click", xform.xform(p_pos))) {
+			p_others->push_back(p_node);
+		}
 	}
 }
 
-void CanvasItemEditor::_get_canvas_items_at_pos(const Point2 &p_pos, Vector<_SelectResult> &r_items, bool p_allow_locked) {
+void CanvasItemEditor::_get_canvas_items_at_pos(const Point2 &p_pos, Vector<_SelectResult> &r_items, Vector<Node *> *p_others, bool p_allow_locked) {
 	Node *scene = editor->get_edited_scene();
 
-	_find_canvas_items_at_pos(p_pos, scene, r_items);
+	_find_canvas_items_at_pos(p_pos, scene, r_items, p_others);
 
 	//Remove invalid results
 	for (int i = 0; i < r_items.size(); i++) {
@@ -2493,7 +2502,7 @@ bool CanvasItemEditor::_gui_input_select(const Ref<InputEvent> &p_event) {
 			// Popup the selection menu list
 			Point2 click = transform.affine_inverse().xform(b->get_position());
 
-			_get_canvas_items_at_pos(click, selection_results, b->get_alt() && tool != TOOL_LIST_SELECT);
+			_get_canvas_items_at_pos(click, selection_results, nullptr, b->get_alt() && tool != TOOL_LIST_SELECT);
 
 			if (selection_results.size() == 1) {
 				CanvasItem *item = selection_results[0].item;
@@ -2578,7 +2587,20 @@ bool CanvasItemEditor::_gui_input_select(const Ref<InputEvent> &p_event) {
 			} else {
 				// Retrieve the canvas items
 				selection = Vector<_SelectResult>();
-				_get_canvas_items_at_pos(click, selection);
+				Vector<Node *> others;
+				_get_canvas_items_at_pos(click, selection, &others);
+				if (others.size()) {
+					Node *item = others[0];
+					// Reselect node object
+					if (Engine::get_singleton()->is_editor_hint()) {
+						editor_selection->clear();
+						editor_selection->add_node(item);
+						editor->call("edit_node", item);
+						viewport->update();
+						selected_from_canvas = true;
+						return true;
+					}
+				}
 				if (!selection.empty()) {
 					canvas_item = selection[0].item;
 				}
@@ -4049,11 +4071,11 @@ void CanvasItemEditor::_draw_viewport() {
 	VisualServer::get_singleton()->canvas_item_add_set_transform(ci, Transform2D());
 
 	EditorPluginList *over_plugin_list = editor->get_editor_plugins_over();
-	if (!over_plugin_list->empty()) {
+	if (over_plugin_list && !over_plugin_list->empty()) {
 		over_plugin_list->forward_canvas_draw_over_viewport(viewport);
 	}
 	EditorPluginList *force_over_plugin_list = editor->get_editor_plugins_force_over();
-	if (!force_over_plugin_list->empty()) {
+	if (force_over_plugin_list && !force_over_plugin_list->empty()) {
 		force_over_plugin_list->forward_canvas_force_draw_over_viewport(viewport);
 	}
 
@@ -4721,6 +4743,7 @@ void CanvasItemEditor::_zoom_on_position(float p_zoom, Point2 p_position) {
 
 	_update_zoom_label();
 	update_viewport();
+	emit_signal("canvas_viewport_changed");
 }
 
 void CanvasItemEditor::_update_zoom_label() {
@@ -5529,6 +5552,7 @@ void CanvasItemEditor::_bind_methods() {
 
 	ADD_SIGNAL(MethodInfo("item_lock_status_changed"));
 	ADD_SIGNAL(MethodInfo("item_group_status_changed"));
+	ADD_SIGNAL(MethodInfo("canvas_viewport_changed"));
 }
 
 Dictionary CanvasItemEditor::get_state() const {
