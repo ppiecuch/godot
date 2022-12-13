@@ -4743,7 +4743,6 @@ void CanvasItemEditor::_zoom_on_position(float p_zoom, Point2 p_position) {
 
 	_update_zoom_label();
 	update_viewport();
-	emit_signal("canvas_viewport_changed");
 }
 
 void CanvasItemEditor::_update_zoom_label() {
@@ -4760,6 +4759,7 @@ void CanvasItemEditor::_update_zoom_label() {
 	}
 
 	zoom_reset->set_text(zoom_text);
+	emit_signal("canvas_viewport_changed");
 }
 
 void CanvasItemEditor::_button_zoom_minus() {
@@ -5843,7 +5843,7 @@ CanvasItemEditor::CanvasItemEditor(EditorNode *p_editor) {
 	show_rulers = true;
 	show_guides = true;
 	show_edit_locks = true;
-	zoom = 1.0 / MAX(1, EDSCALE);
+	zoom = 1.0;
 	view_offset = Point2(-150 - RULER_WIDTH, -95 - RULER_WIDTH);
 	previous_update_view_offset = view_offset; // Moves the view a little bit to the left so that (0,0) is visible. The values a relative to a 16/10 screen
 	grid_offset = Point2();
