@@ -178,22 +178,22 @@ public:
 	/**
 	 * basic c++11 iterator
 	 */
-    template<bool Const>
+	template <bool Const>
 	struct _Iterator {
 		using ELEMENT = typename std::conditional<Const, const Element, Element>;
 		struct {
 			ELEMENT *e = nullptr;
-			Element *operator->() { return reinterpret_cast<Element*>(e); }
-			Element *operator->() const { return reinterpret_cast<const Element*>(e); }
+			Element *operator->() { return reinterpret_cast<Element *>(e); }
+			Element *operator->() const { return reinterpret_cast<const Element *>(e); }
 		} _index;
-		_Iterator() { }
-		_Iterator(Element *e) { _index.e = reinterpret_cast<ELEMENT*>(e); }
-		_Iterator(const Element *e) { _index.e = reinterpret_cast<ELEMENT*>(const_cast<Element*>(e)); }
+		_Iterator() {}
+		_Iterator(Element *e) { _index.e = reinterpret_cast<ELEMENT *>(e); }
+		_Iterator(const Element *e) { _index.e = reinterpret_cast<ELEMENT *>(const_cast<Element *>(e)); }
 		_FORCE_INLINE_ bool operator!=(const _Iterator &other) const { return (_index.e != other._index.e); }
 		_FORCE_INLINE_ T &operator*() { return _index->get(); }
 		_FORCE_INLINE_ const T &operator*() const { return _index->get(); }
 		_Iterator operator++() {
-			_index.e = reinterpret_cast<ELEMENT*>(_index->next());
+			_index.e = reinterpret_cast<ELEMENT *>(_index->next());
 			return *this;
 		}
 	};

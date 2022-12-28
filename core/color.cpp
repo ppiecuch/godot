@@ -35,6 +35,14 @@
 #include "core/math/math_funcs.h"
 #include "core/print_string.h"
 
+const Color Color::WHITE(1, 1, 1);
+const Color Color::BLACK(0, 0, 0);
+const Color Color::GRAY(0.66, 0.66, 0.66);
+const Color Color::RED(1, 0, 0);
+const Color Color::GREEN(0, 1, 0);
+const Color Color::BLUE(0, 0, 1);
+const Color Color::YELLOW(1, 1, 0);
+
 uint32_t Color::to_argb32() const {
 	uint32_t c = (uint8_t)Math::round(a * 255);
 	c <<= 8;
