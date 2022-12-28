@@ -1,11 +1,16 @@
-// itlib-memory-view v1.00
+// itlib-memory-view v1.02
+//
+// DEPRECATED!
+// Use itlib::span instead:
+// https://github.com/iboB/itlib/blob/master/include/itlib/span.hpp
 //
 // A view of a chunk of memory which makes it look as a std::vector sans
 // the size modifying functions
 //
+// SPDX-License-Identifier: MIT
 // MIT License:
 // Copyright(c) 2016-2017 Chobolabs Inc.
-// Copyright(c) 2020 Borislav Stanimirov
+// Copyright(c) 2020-2022 Borislav Stanimirov
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files(the
@@ -29,6 +34,9 @@
 //
 //                  VERSION HISTORY
 //
+//  xxxx (2022-05-14) Deprecated in favor of span
+//  1.02 (2022-04-14) Noxcept move construct and assign
+//  1.01 (2021-10-07) Added slicing functionalities
 //  1.00 (2020-10-14) Rebranded release from chobo-memory-view
 //
 //
@@ -77,6 +85,11 @@
 // void reset(size_t size) - change the size, without changing the pointer
 // operator bool() const - returns whether the internal pointer is valid
 // T* get() noexcept - return the internal pointer (same as data())
+// slice(size_t offset, size_t count = ~0) - returns a new memory view which is a slice
+//   from this [offset, offset+count). If the slice would go beyond the end of the view
+//   the end of the view is used
+// remove_prefix(size_t n) - moves the start by n elements. UB if n > size
+// remove_suffix(size_t n) - moves the end by n elements towards start. UB if n > size
 //
 //
 //                  Configuration
@@ -109,11 +122,23 @@
 #   define I_ITLIB_MEMORY_VIEW_BOUNDS_CHECK(i) assert((i) < this->size())
 #endif
 
+#if !defined(ITLIB_DEPRECATED)
+#   if __cplusplus >= 201400
+#       define ITLIB_DEPRECATED(x) [[deprecated(x)]]
+#   elif defined(_MSC_VER)
+#       define ITLIB_DEPRECATED(x) __declspec(deprecated(x))
+#   elif defined(__GNUC__)
+#       define ITLIB_DEPRECATED(x) __attribute__((deprecated(x)))
+#   else
+#       define ITLIB_DEPRECATED(...)
+#   endif
+#endif
+
 namespace itlib
 {
 
 template <typename T>
-class memory_view
+class ITLIB_DEPRECATED("Use itlib::span instead") memory_view
 {
 public:
 
@@ -137,10 +162,10 @@ public:
     {}
 
     memory_view(const memory_view&) = default;
-    memory_view(memory_view&&) = default;
-
     memory_view& operator=(const memory_view&) = default;
-    memory_view& operator=(memory_view&&) = default;
+
+    memory_view(memory_view&&) noexcept = default;
+    memory_view& operator=(memory_view&&) noexcept = default;
 
     void reset(T* ptr = nullptr, size_t size = 0)
     {
@@ -285,6 +310,26 @@ public:
         return m_size;
     }
 
+    // slicing
+    memory_view slice(size_t off, size_t count = size_t(-1)) const
+    {
+        if (off > m_size) return memory_view(m_ptr + m_size, 0);
+        auto newSize = m_size - off;
+        if (count > newSize) count = newSize;
+        return memory_view(m_ptr + off, count);
+    }
+
+    void remove_prefix(size_t n)
+    {
+        m_ptr += n;
+        m_size -= n;
+    }
+
+    void remove_suffix(size_t n)
+    {
+        m_size -= n;
+    }
+
 private:
     T* m_ptr = nullptr;
     size_t m_size = 0;
@@ -293,7 +338,7 @@ private:
 ///////////////////////////////////////////////////////////////////////////////
 
 template <typename T>
-class const_memory_view
+class ITLIB_DEPRECATED("Use itlib::span instead") const_memory_view
 {
 public:
 
@@ -423,6 +468,26 @@ public:
     size_t size() const noexcept
     {
         return m_size;
+    }
+
+    // slicing
+    const_memory_view slice(size_t off, size_t count = size_t(-1)) const
+    {
+        if (off > m_size) return const_memory_view(m_ptr + m_size, 0);
+        auto newSize = m_size - off;
+        if (count > newSize) count = newSize;
+        return const_memory_view(m_ptr + off, count);
+    }
+
+    void remove_prefix(size_t n)
+    {
+        m_ptr += n;
+        m_size -= n;
+    }
+
+    void remove_suffix(size_t n)
+    {
+        m_size -= n;
     }
 
 private:

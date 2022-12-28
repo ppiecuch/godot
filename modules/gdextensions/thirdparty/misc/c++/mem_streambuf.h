@@ -1,10 +1,10 @@
-// itlib-mem-streambuf v1.00
+// itlib-mem-streambuf v1.02
 //
-// Unique Function
-// Non-copyable and noexcept move-constructible replacement for std::function
+// std::streambuf implementations for working with contiguous memory
 //
+// SPDX-License-Identifier: MIT
 // MIT License:
-// Copyright(c) 2020 Borislav Stanimirov
+// Copyright(c) 2020-2022 Borislav Stanimirov
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files(the
@@ -28,6 +28,9 @@
 //
 //                  VERSION HISTORY
 //
+//  1.02 (2022-02-01) Switched static assert from is_pod to is_trivial
+//  1.01 (2021-11-18) Fixed mem_ostreambuf bug when used with containers whose
+//                    data() returns non-null when empty
 //  1.00 (2020-10-16) Initial release
 //
 //
@@ -96,7 +99,7 @@ class mem_ostreambuf final : public std::basic_streambuf<typename Container::val
 {
 private:
     Container m_data;
-    static_assert(std::is_pod<typename Container::value_type>::value, "mem ostream must be of pod type");
+    static_assert(std::is_trivial<typename Container::value_type>::value, "mem ostream must be of pod type");
     using super = std::basic_streambuf<typename Container::value_type>;
 public:
     using int_type = typename super::int_type;
@@ -106,6 +109,7 @@ public:
 
     mem_ostreambuf(size_t reserve = 0)
     {
+        this->setp(m_data.data(), m_data.data());
         cap_resize_by(reserve);
     }
 
@@ -195,7 +199,7 @@ template <typename CharT>
 class mem_istreambuf final : public std::basic_streambuf<CharT>
 {
 private:
-    static_assert(std::is_pod<CharT>::value, "mem ostream must be of pod type");
+    static_assert(std::is_trivial<CharT>::value, "mem istream must be of pod type");
     using super = std::basic_streambuf<CharT>;
 public:
     using int_type = typename super::int_type;
