@@ -58,6 +58,27 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Spati
 		}
 	};
 
+	auto validate_texture_path = [&](const String &p) {
+		String path = p;
+		if (!ResourceLoader::exists(path)) {
+			if (ResourceLoader::exists(base_path.plus_file(path))) {
+				return base_path.plus_file(path);
+			} else if (ResourceLoader::exists(path.get_file())) {
+				return path.get_file();
+			} else if (path.get_extension() == "bmp") {
+				path = path.trim_suffix(path.get_extension()) + "png";
+				if (ResourceLoader::exists(path)) {
+					return path;
+				} else if (ResourceLoader::exists(base_path.plus_file(path))) {
+					return base_path.plus_file(path);
+				} else if (ResourceLoader::exists(path.get_file())) {
+					return path.get_file();
+				}
+			}
+		}
+		return p;
+	};
+
 	while (true) {
 		String l = f->get_line().strip_edges();
 
@@ -145,12 +166,7 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Spati
 			ERR_FAIL_COND_V(current.is_null(), ERR_FILE_CORRUPT);
 
 			String p = l.replace("map_Kd", "").replace("\\", "/").strip_edges();
-			String path;
-			if (p.is_abs_path()) {
-				path = p;
-			} else {
-				path = base_path.plus_file(p);
-			}
+			String path = validate_texture_path(p);
 
 			Ref<Texture> texture = ResourceLoader::load(path);
 
@@ -165,12 +181,7 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Spati
 			ERR_FAIL_COND_V(current.is_null(), ERR_FILE_CORRUPT);
 
 			String p = l.replace("map_Ks", "").replace("\\", "/").strip_edges();
-			String path;
-			if (p.is_abs_path()) {
-				path = p;
-			} else {
-				path = base_path.plus_file(p);
-			}
+			String path = validate_texture_path(p);
 
 			Ref<Texture> texture = ResourceLoader::load(path);
 
@@ -185,12 +196,7 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Spati
 			ERR_FAIL_COND_V(current.is_null(), ERR_FILE_CORRUPT);
 
 			String p = l.replace("map_Ns", "").replace("\\", "/").strip_edges();
-			String path;
-			if (p.is_abs_path()) {
-				path = p;
-			} else {
-				path = base_path.plus_file(p);
-			}
+			String path = validate_texture_path(p);
 
 			Ref<Texture> texture = ResourceLoader::load(path);
 
@@ -204,7 +210,7 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Spati
 			ERR_FAIL_COND_V(current.is_null(), ERR_FILE_CORRUPT);
 
 			String p = l.replace("map_bump", "").replace("\\", "/").strip_edges();
-			String path = base_path.plus_file(p);
+			String path = validate_texture_path(p);
 
 			Ref<Texture> texture = ResourceLoader::load(path);
 
@@ -380,6 +386,29 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 
 				if (generate_tangents && uvs.size()) {
 					surf_tool->generate_tangents();
+				}
+
+				if (p_compress_flags & VS::ARRAY_FLAG_USE_OCTAHEDRAL_COMPRESSION) {
+					print_verbose("OBJ: validating compression flags");
+					const List<SurfaceTool::Vertex> &verts = surf_tool->get_vertex_array();
+					if (surf_tool->get_array_format() & Mesh::ARRAY_FORMAT_NORMAL) {
+						for (const SurfaceTool::Vertex &v : verts) {
+							const float L1Norm = Math::absf(v.normal.x) + Math::absf(v.normal.y) + Math::absf(v.normal.z);
+							if (Math::is_zero_approx(L1Norm)) {
+								WARN_PRINT_ONCE("OBJ: Octahedral compression cannot be used to compress a zero-length normal vector");
+								break;
+							}
+						}
+					}
+					if (surf_tool->get_array_format() & Mesh::ARRAY_FORMAT_TANGENT) {
+						for (const SurfaceTool::Vertex &v : verts) {
+							const float L1Norm = Math::absf(v.tangent.x) + Math::absf(v.tangent.y) + Math::absf(v.tangent.z);
+							if (Math::is_zero_approx(L1Norm)) {
+								WARN_PRINT_ONCE("OBJ: Octahedral compression cannot be used to compress a zero-length tangent vector");
+								break;
+							}
+						}
+					}
 				}
 
 				surf_tool->index();
