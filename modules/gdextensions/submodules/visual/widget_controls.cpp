@@ -695,7 +695,7 @@ void ControlWidget::_input(const Ref<InputEvent> &p_event) {
 						if (angle && !axis.is_zero()) {
 							_state.rotate(axis, (e->get_shift() ? xcv_rotate_speed : 1) * angle);
 							update();
-							emit_signal("transformation_changed", _state.tr);
+							emit_signal("transform_changed", _state.tr);
 						}
 						_state.swap();
 					}
@@ -762,7 +762,7 @@ void ControlWidget::_input(const Ref<InputEvent> &p_event) {
 					}
 				}
 				if (pf.x || pf.y) {
-					emit_signal("transformation_changed", _state.tr);
+					emit_signal("transform_changed", _state.tr);
 				}
 			}
 		}
@@ -825,7 +825,7 @@ void ControlWidget::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "flat"), "set_control_flat", "is_control_flat");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "resolution"), "set_control_resolution", "get_control_resolution");
 
-	ADD_SIGNAL(MethodInfo("transformation_changed", PropertyInfo(Variant::TRANSFORM, "tr")));
+	ADD_SIGNAL(MethodInfo("transform_changed", PropertyInfo(Variant::TRANSFORM, "tr")));
 }
 
 ControlWidget::ControlWidget() {
