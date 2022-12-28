@@ -109,6 +109,8 @@
 #define newref(pClass, ...) Ref<pClass>(memnew(pClass(__VA_ARGS__)))
 #define nullref(pClass) Ref<pClass>()
 
+String string_format(const char *p_format, ...);
+
 #ifdef DEBUG_ENABLED
 #define DEBUG_PRINT(pText) print_line(pText)
 #define DEBUG_VAR(pVar) print_line(vformat("%s: %s", #pVar, pVar))
@@ -116,6 +118,8 @@
 #define DEBUG_PRINT(pText)
 #define DEBUG_VAR(pVar)
 #endif
+
+#define print_debug(pFormat, ...) DEBUG_PRINT(string_format(pFormat, ##__VA_ARGS__))
 
 #ifndef _DEPRECATED
 #if (__GNUC__ >= 4) /* technically, this arrived in gcc 3.1, but oh well. */
