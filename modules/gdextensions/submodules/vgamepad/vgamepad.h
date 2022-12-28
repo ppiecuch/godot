@@ -31,6 +31,7 @@
 #ifndef GD_VGAMEPAD_H
 #define GD_VGAMEPAD_H
 
+#include "core/math/vector2.h"
 #include "scene/2d/node_2d.h"
 
 class VGamePad : public Node2D {
@@ -57,6 +58,15 @@ public:
 private:
 	bool _dirty;
 	VGamePadControls controls;
+	int device;
+
+	void _debug_draw(CanvasItem *canvas);
+	void _debug_draw_option_button(CanvasItem *canvas, const Point2 &position, bool is_pressed);
+	void _debug_draw_dpad_arrow(CanvasItem *canvas, const Point2 &position, real_t angle, bool is_pressed);
+	void _debug_draw_face_button(CanvasItem *canvas, const Point2 &position, bool is_pressed);
+	void _debug_draw_bumper(CanvasItem *canvas, const Point2 &position, bool is_pressed);
+	void _debug_draw_trigger(CanvasItem *canvas, const Point2 &position, real_t axis);
+	void _debug_draw_joystick(CanvasItem *canvas, const Point2 &position, real_t axis_x, real_t axis_y, bool is_pressed);
 
 protected:
 	static void _bind_methods();
