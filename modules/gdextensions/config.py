@@ -28,6 +28,7 @@ def configure(env):
         "generator",
         "statemachine",
         "benet",
+        "httpserver",
         "behaviornode",
         "behaviortree",
         "simpleai",
