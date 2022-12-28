@@ -336,6 +336,8 @@ static int _get_offset_for_format(Image::Format format) {
 			return 4;
 		case Image::FORMAT_LA8:
 			return 2;
+		case Image::FORMAT_A8:
+			return 1;
 		case Image::FORMAT_L8:
 			return 1;
 		case Image::FORMAT_R8:
