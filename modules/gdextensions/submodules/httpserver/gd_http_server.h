@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  gdhttpserver.h                                                       */
+/*  gd_http_server.h                                                     */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -48,15 +48,15 @@ class GdHttpServer : public Object {
 
 	Ref<TCP_Server> server;
 
-	Mutex wait_mutex;
 	Thread thread;
 	static void _thread_start(void *);
 	bool quit;
+	Command cmd;
 
 	int port;
 	bool active;
 
-	void _process_connection(Ref<StreamPeerTCP> connection);
+	static bool _process_connection(Ref<StreamPeerTCP> connection);
 
 public:
 	void start();
