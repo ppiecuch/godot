@@ -24,28 +24,25 @@
 //   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 //   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/*
- * ptr_vector - A Container For Pointers
- *              Convenient STL-compliant vector for pointers
- * ptr_vector<T> is a wrapper for Standard vector<T*> that cuts one level of
- * indirection. In essence ptr_vector lets you treat a vector of pointers as if
- * it were a vector of values.
- *
- *     for a detailed description see
- *     http://www.codeproject.com/vcpp/stl/ptr_vecto.asp
- *
- * @email rpbg123@yahoo.com
- *
- * $Log: $
- *
- * @version
- * @date     31-May-2004 - first version
- * @date     16-Dec-2004 - add: wrapper function templates for std::algorithms
- * @date     12-Mar-2005 - chg: iterators contain ptr_vec_iter_imp instead of deriving private(ly)
- * @date     21-Oct-2006 - chg: operator== (const ptr_vector<T>& x, const ptr_vector<T>& y) because of 'depricated' warings in VC++8.0
- * @date     25-Oct-2006 - chg: ptr_vec_iter_imp: assert in op_pp() and op_mm() corrected
- */
-
+// ptr_vector - A Container For Pointers
+//              Convenient STL-compliant vector for pointers
+// ptr_vector<T> is a wrapper for Standard vector<T*> that cuts one level of
+// indirection. In essence ptr_vector lets you treat a vector of pointers as if
+// it were a vector of values.
+//
+//     for a detailed description see
+//     http://www.codeproject.com/vcpp/stl/ptr_vecto.asp
+//
+// Email: rpbg123@yahoo.com
+//
+// Log:
+//
+// Version:
+//  31-May-2004 - first version
+//  16-Dec-2004 - add: wrapper function templates for std::algorithms
+//  12-Mar-2005 - chg: iterators contain ptr_vec_iter_imp instead of deriving private(ly)
+//  21-Oct-2006 - chg: operator== (const ptr_vector<T>& x, const ptr_vector<T>& y) because of 'depricated' warings in VC++8.0
+//  25-Oct-2006 - chg: ptr_vec_iter_imp: assert in op_pp() and op_mm() corrected
 
 #if defined(_MSC_VER) && _MSC_VER <= 1200 // MSVC++ 6.0
 // disable warning C4786: identifier longer than 255 characters (identifier was truncated to '255' characters)
@@ -73,9 +70,7 @@
 #define PTV_KW_CLASS class
 #endif
 
-/**
- * stdx: namespace for classes, functions, and templates related to the C++ Standard library
- */
+// stdx: namespace for classes, functions, and templates related to the C++ Standard library
 namespace stdx {
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS // see Doxygen FAQ 4
@@ -1527,6 +1522,6 @@ private:
 #if defined(_MSC_VER) && _MSC_VER <= 1200 // MSVC++ 6.0
 #pragma message("hint for VC++ 6.0: put 'using namespace stdx;' after your #include directive(s)")
 #endif
-} //namespace stdx
+} // namespace stdx
 
 #endif // PTR_VECTOR_H

@@ -1,6 +1,8 @@
+// iterable_queue v1.00
+// allows to iterate over std. queue
+//
+// The MIT License (MIT)
 #pragma once
-
-/* allows to iterate over std. queue */
 
 #include <queue>
 
