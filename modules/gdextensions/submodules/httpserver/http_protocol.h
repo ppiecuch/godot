@@ -58,31 +58,31 @@ enum class MessageMethod {
 };
 
 // Available http headers.
-#define HTTP_HEADER_USER_AGENT                       "User-Agent:"
-#define HTTP_HEADER_ACCEPT                           "Accept:"
-#define HTTP_HEADER_ACCEPT_LANGUAGE                  "Accept-Language:"
-#define HTTP_HEADER_ACCEPT_ENCODING                  "Accept-Encoding:"
-#define HTTP_HEADER_ACCEPT_CHARSET                   "Accept-Charset:"
-#define HTTP_HEADER_PROXY_CONNECTION                 "Proxy-Connection:"
-#define HTTP_HEADER_CONNECTION                       "Connection:"
-#define HTTP_HEADER_COOKIE                           "Cookie:"
-#define HTTP_HEADER_HOST                             "Host:"
-#define HTTP_HEADER_CACHE_CONTROL                    "Cache-Control:"
-#define HTTP_HEADER_CONTENT_TYPE                     "Content-Type:"
-#define HTTP_HEADER_CONTENT_LENGTH                   "Content-Length:"
-#define HTTP_HEADER_CONTENT_ENCODING                 "Content-Encoding:"
-#define HTTP_HEADER_SERVER                           "Server:"
-#define HTTP_HEADER_DATE                             "Date:"
-#define HTTP_HEADER_RANGE                            "Range:"
-#define HTTP_HEADER_ETAG                             "Etag:"
-#define HTTP_HEADER_EXPIRES                          "Expires:"
-#define HTTP_HEADER_REFERER                          "Referer:"
-#define HTTP_HEADER_LAST_MODIFIED                    "Last-Modified:"
-#define HTTP_HEADER_IF_MOD_SINCE                     "If-Modified-Since:"
-#define HTTP_HEADER_IF_NONE_MATCH                    "If-None-Match:"
-#define HTTP_HEADER_ACCEPT_RANGES                    "Accept-Ranges:"
-#define HTTP_HEADER_TRANSFER_ENCODING                "Transfer-Encoding:"
-#define HTTP_HEADER_AUTHORIZATION                    "Authorization:"
+#define HTTP_HEADER_USER_AGENT                      "User-Agent:"
+#define HTTP_HEADER_ACCEPT                          "Accept:"
+#define HTTP_HEADER_ACCEPT_LANGUAGE                 "Accept-Language:"
+#define HTTP_HEADER_ACCEPT_ENCODING                 "Accept-Encoding:"
+#define HTTP_HEADER_ACCEPT_CHARSET                  "Accept-Charset:"
+#define HTTP_HEADER_PROXY_CONNECTION                "Proxy-Connection:"
+#define HTTP_HEADER_CONNECTION                      "Connection:"
+#define HTTP_HEADER_COOKIE                          "Cookie:"
+#define HTTP_HEADER_HOST                            "Host:"
+#define HTTP_HEADER_CACHE_CONTROL                   "Cache-Control:"
+#define HTTP_HEADER_CONTENT_TYPE                    "Content-Type:"
+#define HTTP_HEADER_CONTENT_LENGTH                  "Content-Length:"
+#define HTTP_HEADER_CONTENT_ENCODING                "Content-Encoding:"
+#define HTTP_HEADER_SERVER                          "Server:"
+#define HTTP_HEADER_DATE                            "Date:"
+#define HTTP_HEADER_RANGE                           "Range:"
+#define HTTP_HEADER_ETAG                            "Etag:"
+#define HTTP_HEADER_EXPIRES                         "Expires:"
+#define HTTP_HEADER_REFERER                         "Referer:"
+#define HTTP_HEADER_LAST_MODIFIED                   "Last-Modified:"
+#define HTTP_HEADER_IF_MOD_SINCE                    "If-Modified-Since:"
+#define HTTP_HEADER_IF_NONE_MATCH                   "If-None-Match:"
+#define HTTP_HEADER_ACCEPT_RANGES                   "Accept-Ranges:"
+#define HTTP_HEADER_TRANSFER_ENCODING               "Transfer-Encoding:"
+#define HTTP_HEADER_AUTHORIZATION                   "Authorization:"
 
 // Available http response status codes.
 #define HTTP_STATUS_CONTINUE                        100
@@ -340,6 +340,125 @@ _FORCE_INLINE_ std::string status_text_from_status_code(const uint16_t statusCod
 	}
 }
 
+_FORCE_INLINE_ static bool case_insensitive_equal(const std::string &str1, const std::string &str2) noexcept {
+	return str1.size() == str2.size() && std::equal(str1.begin(), str1.end(), str2.begin(), [](char a, char b) {
+		return tolower(a) == tolower(b);
+	});
+}
+
+struct CaseInsensitiveEqual {
+	bool operator()(const std::string &str1, const std::string &str2) const noexcept {
+		return case_insensitive_equal(str1, str2);
+	}
+};
+
+// Based on https://stackoverflow.com/questions/2590677/how-do-i-combine-hash-values-in-c0x/2595226#2595226
+struct CaseInsensitiveHash {
+	std::size_t operator()(const std::string &str) const noexcept {
+		std::size_t h = 0;
+		std::hash<int> hash;
+		for (auto c : str) {
+			h ^= hash(tolower(c)) + 0x9e3779b9 + (h << 6) + (h >> 2);
+		}
+		return h;
+	}
+};
+
+using CaseInsensitiveMultimap = std::unordered_map<std::string, std::string, CaseInsensitiveHash, CaseInsensitiveEqual>;
+
+/// Percent encoding and decoding
+
+// Returns percent-encoded string
+static std::string percent_encode(const std::string &value) noexcept {
+	static auto hex_chars = "0123456789ABCDEF";
+
+	std::string result;
+	result.reserve(value.size()); // Minimum size of result
+
+	for(auto &chr : value) {
+		if (!((chr >= '0' && chr <= '9') || (chr >= 'A' && chr <= 'Z') || (chr >= 'a' && chr <= 'z') || chr == '-' || chr == '.' || chr == '_' || chr == '~')) {
+			result += std::string("%") + hex_chars[static_cast<unsigned char>(chr) >> 4] + hex_chars[static_cast<unsigned char>(chr) & 15];
+		} else {
+			result += chr;
+		}
+	}
+
+	return result;
+}
+
+// Returns percent-decoded string
+static std::string percent_decode(const std::string &value) noexcept {
+	std::string result;
+	result.reserve(value.size() / 3 + (value.size() % 3)); // Minimum size of result
+
+	for (std::size_t i = 0; i < value.size(); ++i) {
+		auto &chr = value[i];
+		if (chr == '%' && i + 2 < value.size()) {
+			auto hex = value.substr(i + 1, 2);
+			auto decoded_chr = static_cast<char>(std::strtol(hex.c_str(), nullptr, 16));
+			result += decoded_chr;
+			i += 2;
+		} else if (chr == '+') {
+			result += ' ';
+		} else {
+			result += chr;
+		}
+	}
+
+	return result;
+}
+
+/// Query string creation and parsing
+
+// Returns query string created from given field names and values
+static std::string query_create(const CaseInsensitiveMultimap &fields) noexcept {
+	std::string result;
+
+	bool first = true;
+	for(auto &field : fields) {
+		result += (!first ? "&" : "") + field.first + '=' + percent_encode(field.second);
+		first = false;
+	}
+
+	return result;
+}
+
+// Returns query keys with percent-decoded values.
+static CaseInsensitiveMultimap query_parse(const std::string &query_string) noexcept {
+	CaseInsensitiveMultimap result;
+
+	if(query_string.empty()) {
+		return result;
+	}
+	std::size_t name_pos = 0;
+	auto name_end_pos = std::string::npos;
+	auto value_pos = std::string::npos;
+	for (std::size_t c = 0; c < query_string.size(); ++c) {
+		if (query_string[c] == '&') {
+			auto name = query_string.substr(name_pos, (name_end_pos == std::string::npos ? c : name_end_pos) - name_pos);
+			if (!name.empty()) {
+				auto value = value_pos == std::string::npos ? std::string() : query_string.substr(value_pos, c - value_pos);
+				result.emplace(std::move(name), percent_decode(value));
+			}
+			name_pos = c + 1;
+			name_end_pos = std::string::npos;
+			value_pos = std::string::npos;
+		} else if (query_string[c] == '=') {
+			name_end_pos = c;
+			value_pos = c + 1;
+		}
+	}
+	if (name_pos < query_string.size()) {
+		auto name = query_string.substr(name_pos, name_end_pos - name_pos);
+		if (!name.empty()) {
+			auto value = value_pos >= query_string.size() ? std::string() : query_string.substr(value_pos);
+			result.emplace(std::move(name), percent_decode(value));
+		}
+	}
+
+	return result;
+}
+
 // The basic class to represent both HTTP requests and responses.
 //
 // Contains a method for grabbing the message as a string formatted for
@@ -364,7 +483,7 @@ public:
 	}
 
 	// Set a number of headers based on a generic map of keys and values.
-	HTTPMessage &set_headers(const std::unordered_map<std::string, std::string> &p_headers) {
+	HTTPMessage &set_headers(const CaseInsensitiveMultimap &p_headers) {
 		headers.insert(p_headers.begin(), p_headers.end());
 		return *this;
 	}
@@ -523,9 +642,10 @@ private:
 	// The version used for this HTTP message as a string.
 	// Defaults to "HTTP/1.1"
 	std::string version = HTTPVersion11;
-	// An `unordered_map` of headers using a `std::string` for both the key and the
-	// value.
-	std::unordered_map<std::string, std::string> headers;
+	// A map of headers using a `std::string` for both the key and the value.
+	CaseInsensitiveMultimap headers;
+	// A map of query params.
+	CaseInsensitiveMultimap params;
 	// A vector of unsigned 8-bit integers used to store message bodies.
 	std::vector<uint8_t> body;
 };

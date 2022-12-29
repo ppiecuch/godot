@@ -639,6 +639,11 @@ void unregister_gdextensions_types() {
 		memdelete(instance);
 	}
 #endif
+#ifdef GDEXT_HTTPSERVER_ENABLED
+	if (GdHttpServer *instance = GdHttpServer::get_singleton()) {
+		memdelete(instance);
+	}
+#endif
 #ifdef GDEXT_SPACEMOUSE_ENABLED
 	if (SpaceMouse *instance = SpaceMouse::get_singleton()) {
 		memdelete(instance);

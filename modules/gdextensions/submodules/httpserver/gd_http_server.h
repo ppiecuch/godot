@@ -37,6 +37,13 @@
 #include "core/object.h"
 #include "core/os/thread.h"
 
+#include "http_protocol.h"
+
+#include <vector>
+#include <functional>
+
+typedef bool (*RouteHandler)(const http::HTTPMessage *message, http::HTTPMessage *response);
+
 class GdHttpServer : public Object {
 	GDCLASS(GdHttpServer, Object);
 
@@ -56,13 +63,21 @@ class GdHttpServer : public Object {
 	int port;
 	bool active;
 
-	static bool _process_connection(Ref<StreamPeerTCP> connection);
+	bool _process_connection(Ref<StreamPeerTCP> connection);
+
+	typedef std::function<bool(const http::HTTPMessage *message, http::HTTPMessage *response)> Handler;
+	std::vector<Handler> routes;
 
 public:
+	static GdHttpServer *get_singleton();
+
 	void start();
 	void stop();
 
 	bool is_active() const;
+
+	void register_handler(RouteHandler p_handler);
+	void register_handler(Handler p_handler);
 
 	GdHttpServer();
 	~GdHttpServer();

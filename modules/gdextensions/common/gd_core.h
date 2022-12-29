@@ -110,6 +110,7 @@
 #define nullref(pClass) Ref<pClass>()
 
 String string_format(const char *p_format, ...);
+String string_format(const Array &p_args);
 
 #ifdef DEBUG_ENABLED
 #define DEBUG_PRINT(pText) print_line(pText)
@@ -118,8 +119,6 @@ String string_format(const char *p_format, ...);
 #define DEBUG_PRINT(pText)
 #define DEBUG_VAR(pVar)
 #endif
-
-#define print_debug(pFormat, ...) DEBUG_PRINT(string_format(pFormat, ##__VA_ARGS__))
 
 #ifndef _DEPRECATED
 #if (__GNUC__ >= 4) /* technically, this arrived in gcc 3.1, but oh well. */

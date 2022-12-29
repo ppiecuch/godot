@@ -31,19 +31,25 @@
 // Reference:
 // ----------
 // 1. https://github.com/xaltaq/GDHTTPServer/blob/master/httpserver.gd
-// 2. https://github.com/Faless/netgame-godot
-// 3. https://github.com/deep-entertainment/godottpd/blob/main/addons/godottpd/http_server.gd
-// 4. https://github.com/sayotte/martin/blob/master/route.c
-// 5. https://github.com/Accessory/FlowHttp/blob/main/routes/Router.h
-// 6. https://github.com/malpower/evhttp-sample/blob/master/src/router.cc
+// 2. https://github.com/deep-entertainment/godottpd/blob/main/addons/godottpd/http_server.gd
+// 3. https://github.com/sayotte/martin/blob/master/route.c
+// 4. https://github.com/Accessory/FlowHttp/blob/main/routes/Router.h
+// 5. https://github.com/malpower/evhttp-sample/blob/master/src/router.cc
+// 6. https://github.com/Faless/netgame-godot
 
 #include "gd_http_server.h"
-#include "http_protocol.h"
 
-#include "editor/editor_settings.h"
+#include "core/project_settings.h"
 #include "common/gd_core.h"
 
-#define _print_debug(fmt, ...) print_debug("[Http] " fmt, ##__VA_ARGS__)
+#include <map>
+
+static bool _remote_monitor_handler(const http::HTTPMessage *message, http::HTTPMessage *response);
+
+#define _print_debug(...) DEBUG_PRINT(string_format(array("[Http] ", __VA_ARGS__)))
+#define _print_fmt_debug(fmt, ...) DEBUG_PRINT(String("[Http] " fmt).sprintf(array(__VA_ARGS__)))
+
+static GdHttpServer *instance = nullptr;
 
 bool GdHttpServer::_process_connection(Ref<StreamPeerTCP> connection) {
 	_print_debug("Got peer: ", connection->get_connected_host(), ":", connection->get_connected_port());
@@ -60,6 +66,20 @@ bool GdHttpServer::_process_connection(Ref<StreamPeerTCP> connection) {
 				http::HTTPMessage http_message;
 				http::HTTPMessageParser http_parser;
 				http_parser.parse(&http_message, data);
+				for (Handler &h : routes) {
+					http::HTTPMessage response;
+					if (h(&http_message, &response)) {
+						const std::string out = response.to_string();
+						connection->put_data(reinterpret_cast<const uint8_t*>(out.c_str()), out.size());
+						return true;
+					}
+				}
+				// 404
+				http::HTTPMessage response;
+				response.set_status_code(404);
+				response.set_status_message("Handler not found");
+				const std::string out = response.to_string();
+				connection->put_data(reinterpret_cast<const uint8_t*>(out.c_str()), out.size());
 			} else {
 				_print_debug("Receiving data failed");
 				return false;
@@ -83,7 +103,7 @@ void GdHttpServer::_thread_start(void *s) {
 
 		if (self->active) {
 			if (self->server->is_connection_available()) {
-				_process_connection(self->server->take_connection());
+				self->_process_connection(self->server->take_connection());
 			}
 		}
 
@@ -93,7 +113,7 @@ void GdHttpServer::_thread_start(void *s) {
 
 void GdHttpServer::start() {
 	stop();
-	port = EDITOR_GET("network/http_server/port");
+	port = GLOBAL_GET("network/http_server/port");
 	cmd = CMD_ACTIVATE;
 }
 
@@ -105,17 +125,90 @@ void GdHttpServer::stop() {
 	cmd = CMD_STOP;
 }
 
+void GdHttpServer::register_handler(RouteHandler p_handler) {
+	routes.push_back([p_handler](const http::HTTPMessage *message, http::HTTPMessage *response) {
+		return p_handler(message, response);
+	});
+}
+
+void GdHttpServer::register_handler(Handler p_handler) {
+	routes.push_back(p_handler);
+}
+
+GdHttpServer *GdHttpServer::get_singleton() { return instance; }
+
 GdHttpServer::GdHttpServer() {
 	server.instance();
 	quit = false;
 	active = false;
 	cmd = CMD_NONE;
+	register_handler(_remote_monitor_handler);
 	thread.start(_thread_start, this);
 
-	EDITOR_DEF("network/http_server/port", 8081);
+	GLOBAL_DEF("network/http_server/port", 8081);
+
+	if (instance) {
+		WARN_PRINT("Http server instance is already create.");
+	}
+	instance = this;
+
+#if defined(DEBUG_ENABLED) || defined(TOOLS_ENABLED)
+	print_verbose("Auto-start http server on default port " + itos(GLOBAL_GET("network/http_server/port")));
+	start();
+#endif
 }
 
 GdHttpServer::~GdHttpServer() {
 	quit = true;
 	thread.wait_to_finish();
+	instance = nullptr;
+}
+
+
+/// Default monitor handler
+
+#include "main/performance.h"
+
+std::map<std::string, Performance::Monitor> _monitors {
+	{ "TIME_FPS", Performance::TIME_FPS },
+	{ "TIME_PROCESS", Performance::TIME_PROCESS },
+	{ "TIME_PHYSICS_PROCESS", Performance::TIME_PHYSICS_PROCESS },
+	{ "MEMORY_STATIC", Performance::MEMORY_STATIC },
+	{ "MEMORY_DYNAMIC", Performance::MEMORY_DYNAMIC },
+	{ "MEMORY_STATIC_MAX", Performance::MEMORY_STATIC_MAX },
+	{ "MEMORY_DYNAMIC_MAX", Performance::MEMORY_DYNAMIC_MAX },
+	{ "MEMORY_MESSAGE_BUFFER_MAX", Performance::MEMORY_MESSAGE_BUFFER_MAX },
+	{ "OBJECT_COUNT", Performance::OBJECT_COUNT },
+	{ "OBJECT_RESOURCE_COUNT", Performance::OBJECT_RESOURCE_COUNT },
+	{ "OBJECT_NODE_COUNT", Performance::OBJECT_NODE_COUNT },
+	{ "OBJECT_ORPHAN_NODE_COUNT", Performance::OBJECT_ORPHAN_NODE_COUNT },
+	{ "RENDER_OBJECTS_IN_FRAME", Performance::RENDER_OBJECTS_IN_FRAME },
+	{ "RENDER_VERTICES_IN_FRAME", Performance::RENDER_VERTICES_IN_FRAME },
+	{ "RENDER_MATERIAL_CHANGES_IN_FRAME", Performance::RENDER_MATERIAL_CHANGES_IN_FRAME },
+	{ "RENDER_SHADER_CHANGES_IN_FRAME", Performance::RENDER_SHADER_CHANGES_IN_FRAME },
+	{ "RENDER_SURFACE_CHANGES_IN_FRAME", Performance::RENDER_SURFACE_CHANGES_IN_FRAME },
+	{ "RENDER_DRAW_CALLS_IN_FRAME", Performance::RENDER_DRAW_CALLS_IN_FRAME },
+	{ "RENDER_2D_ITEMS_IN_FRAME", Performance::RENDER_2D_ITEMS_IN_FRAME },
+	{ "RENDER_2D_DRAW_CALLS_IN_FRAME", Performance::RENDER_2D_DRAW_CALLS_IN_FRAME },
+	{ "RENDER_VIDEO_MEM_USED", Performance::RENDER_VIDEO_MEM_USED },
+	{ "RENDER_TEXTURE_MEM_USED", Performance::RENDER_TEXTURE_MEM_USED },
+	{ "RENDER_VERTEX_MEM_USED", Performance::RENDER_VERTEX_MEM_USED },
+	{ "RENDER_USAGE_VIDEO_MEM_TOTAL", Performance::RENDER_USAGE_VIDEO_MEM_TOTAL },
+	{ "PHYSICS_2D_ACTIVE_OBJECTS", Performance::PHYSICS_2D_ACTIVE_OBJECTS },
+	{ "PHYSICS_2D_COLLISION_PAIRS", Performance::PHYSICS_2D_COLLISION_PAIRS },
+	{ "PHYSICS_2D_ISLAND_COUNT", Performance::PHYSICS_2D_ISLAND_COUNT },
+	{ "PHYSICS_3D_ACTIVE_OBJECTS", Performance::PHYSICS_3D_ACTIVE_OBJECTS },
+	{ "PHYSICS_3D_COLLISION_PAIRS", Performance::PHYSICS_3D_COLLISION_PAIRS },
+	{ "PHYSICS_3D_ISLAND_COUNT", Performance::PHYSICS_3D_ISLAND_COUNT },
+	{ "AUDIO_OUTPUT_LATENCY", Performance::AUDIO_OUTPUT_LATENCY },
+};
+
+static bool _remote_monitor_handler(const http::HTTPMessage *message, http::HTTPMessage *response) {
+	ERR_FAIL_NULL_V(message, false);
+	ERR_FAIL_NULL_V(response, false);
+	if (message->get_path() == "/gmon") {
+		response->set_message_body(rtos(Performance::get_singleton()->get_monitor(Performance::TIME_FPS)).utf8().c_str());
+		return true;
+	}
+	return false;
 }

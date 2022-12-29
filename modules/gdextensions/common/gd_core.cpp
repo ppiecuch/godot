@@ -28,7 +28,7 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "core/ustring.h"
+#include "core/variant.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -79,6 +79,7 @@ static String _str_format(const char *p_format, va_list p_list) {
 	return res;
 }
 
+
 String string_format(const char *p_format, ...) {
 	va_list list;
 
@@ -87,4 +88,12 @@ String string_format(const char *p_format, ...) {
 	va_end(list);
 
 	return res;
+}
+
+String string_format(const Array &p_args) {
+	String str;
+	for (int i = 0; i < p_args.size(); i++) {
+		str += p_args[i].operator String();
+	}
+	return str;
 }
