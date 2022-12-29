@@ -86,7 +86,7 @@ mkdir -p "$GODOT_DIR/bin/Godot-master.app/Contents/MacOS"
 $cp -v "$GODOT_DIR/bin/godot.osx.opt.tools.$A" "$GODOT_DIR/bin/Godot-master.app/Contents/MacOS/Godot"
 
 echo_header "*** Signing executable for debugger ..."
-codesign --verbose --sign - --timestamp --entitlements "$GODOT_DIR/misc/dist/osx/editor.entitlements" "$GODOT_DIR/bin/Godot-master.app"
+codesign --verbose --deep --sign - --timestamp --entitlements "$GODOT_DIR/misc/dist/osx/editor.entitlements" "$GODOT_DIR/bin/Godot-master.app"
 
 echo_success "*** Finished building editor for macOS."
 

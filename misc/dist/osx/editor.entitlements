@@ -18,5 +18,7 @@
  <true/>
  <key>com.apple.security.get-task-allow</key>
  <true/>
+ <key>com.apple.security.network.server</key>
+ <true/>
 </dict>
 </plist>
