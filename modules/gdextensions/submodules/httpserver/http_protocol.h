@@ -340,6 +340,8 @@ _FORCE_INLINE_ std::string status_text_from_status_code(const uint16_t statusCod
 	}
 }
 
+/// Case insensitive map-container
+
 _FORCE_INLINE_ static bool case_insensitive_equal(const std::string &str1, const std::string &str2) noexcept {
 	return str1.size() == str2.size() && std::equal(str1.begin(), str1.end(), str2.begin(), [](char a, char b) {
 		return tolower(a) == tolower(b);
@@ -416,7 +418,11 @@ static std::string query_create(const CaseInsensitiveMultimap &fields) noexcept 
 
 	bool first = true;
 	for(auto &field : fields) {
-		result += (!first ? "&" : "") + field.first + '=' + percent_encode(field.second);
+		if (field.second.empty()) {
+			result += (!first ? "&" : "") + field.first;
+		} else {
+			result += (!first ? "&" : "") + field.first + '=' + percent_encode(field.second);
+		}
 		first = false;
 	}
 
@@ -477,13 +483,13 @@ static CaseInsensitiveMultimap query_parse(const std::string &query_string) noex
 class HTTPMessage {
 public:
 	// Set a header in the map to the value provided.
-	HTTPMessage &set_header(const std::string &name, const std::string &p_value) {
+	_FORCE_INLINE_ HTTPMessage &set_header(const std::string &name, const std::string &p_value) {
 		headers[name] = p_value;
 		return *this;
 	}
 
 	// Set a number of headers based on a generic map of keys and values.
-	HTTPMessage &set_headers(const CaseInsensitiveMultimap &p_headers) {
+	_FORCE_INLINE_ HTTPMessage &set_headers(const CaseInsensitiveMultimap &p_headers) {
 		headers.insert(p_headers.begin(), p_headers.end());
 		return *this;
 	}
@@ -500,7 +506,7 @@ public:
 
 	// Set the associated message method for this message.
 	// Use `NONE` to switch this into a response.
-	HTTPMessage &set_method(const MessageMethod &p_method) {
+	_FORCE_INLINE_ HTTPMessage &set_method(const MessageMethod &p_method) {
 		method = p_method;
 		return *this;
 	}
@@ -512,7 +518,7 @@ public:
 	}
 
 	// Set the path of this message, which will be used if it is a request.
-	HTTPMessage &set_path(const std::string &p_path) {
+	_FORCE_INLINE_ HTTPMessage &set_path(const std::string &p_path) {
 		path = p_path;
 		return *this;
 	}
@@ -520,6 +526,22 @@ public:
 	// Grab the current associated path of this message.
 	_FORCE_INLINE_ std::string get_path() const {
 		return path;
+	}
+
+	// Set the path's query values of this message, which will be used if it is a request.
+	_FORCE_INLINE_ HTTPMessage &set_query(const CaseInsensitiveMultimap &p_params) {
+		params = p_params;
+		return *this;
+	}
+
+	// Grab the path's query of this message.
+	_FORCE_INLINE_ const CaseInsensitiveMultimap &get_query() const {
+		return params;
+	}
+
+	// Grab the path's query of this message as a string.
+	_FORCE_INLINE_ std::string get_query_string() const {
+		return query_create(params);
 	}
 
 	// Set the version of this HTTP message to the string specified.
@@ -644,7 +666,7 @@ private:
 	std::string version = HTTPVersion11;
 	// A map of headers using a `std::string` for both the key and the value.
 	CaseInsensitiveMultimap headers;
-	// A map of query params.
+	// A map of query params using a `std::string` for both the key and the value.
 	CaseInsensitiveMultimap params;
 	// A vector of unsigned 8-bit integers used to store message bodies.
 	std::vector<uint8_t> body;
@@ -699,6 +721,7 @@ public:
 		bool skip_next = false; // whether to skip the next character (for a carriage return)
 		std::string header_key = ""; // the current key for a header
 		bool has_message_body = false; // whether or not a message body is present
+		size_t query_start_index = -1; // the index at which the request's query part begins
 		size_t body_start_index = 0; // the index at which the message body begins
 
 		for (size_t index = 0; index < p_buffer.size(); index++) {
@@ -744,9 +767,18 @@ public:
 			else if (state == MessageParserState::START_LINE_REQUEST) {
 				// once a space is hit, add the path to the message
 				if (character == ' ') {
-					http_message->set_path(temp);
+					if (query_start_index < 0) {
+						http_message->set_path(temp);
+					} else {
+						http_message->set_path(temp.substr(0, query_start_index));
+						http_message->set_query(query_parse(temp.substr(query_start_index + 1)));
+					}
 					temp = "";
 					continue;
+				}
+				// remember where query part is starting
+				else if (character == '?') {
+					query_start_index = temp.size();
 				}
 				// when the beginning of a carriage return is hit, add the version string
 				// to the message and then skip the following new line character, setting

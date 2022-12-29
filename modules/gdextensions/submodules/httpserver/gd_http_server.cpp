@@ -80,6 +80,7 @@ bool GdHttpServer::_process_connection(Ref<StreamPeerTCP> connection) {
 				response.set_status_message("Handler not found");
 				const std::string out = response.to_string();
 				connection->put_data(reinterpret_cast<const uint8_t*>(out.c_str()), out.size());
+				return false;
 			} else {
 				_print_debug("Receiving data failed");
 				return false;
@@ -207,8 +208,13 @@ static bool _remote_monitor_handler(const http::HTTPMessage *message, http::HTTP
 	ERR_FAIL_NULL_V(message, false);
 	ERR_FAIL_NULL_V(response, false);
 	if (message->get_path() == "/gmon") {
-		response->set_message_body(rtos(Performance::get_singleton()->get_monitor(Performance::TIME_FPS)).utf8().c_str());
-		return true;
+		std::string query = message->get_query_string();
+		if (!query.empty()) {
+			if (_monitors.count(query)) {
+				response->set_message_body(rtos(Performance::get_singleton()->get_monitor(_monitors[query])).utf8().c_str());
+				return true;
+			}
+		}
 	}
 	return false;
 }
