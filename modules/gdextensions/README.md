@@ -18,6 +18,7 @@ and many more - they are groupped in subdirectories and can be individually enab
  - https://github.com/danboo/godot-RigidBodyParticles2D/blob/master/examples/sparks/Particle.gd
  - https://github.com/dbsGen/my_godot_modules.git
  - https://montemagno.com/ios-android-subscription-implemenation-strategies/
+ - https://graphicdesign.stackexchange.com/questions/11016/kerning-on-the-fly
 
 #### Elastic simulation orignal code (js)
 
