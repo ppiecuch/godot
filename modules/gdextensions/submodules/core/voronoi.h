@@ -43,7 +43,8 @@
 #include <core/variant.h>
 #include <core/vector.h>
 
-#include "voronoi_jc.h"
+#include "voronoi/jc_voronoi.h"
+#include "voronoi/jc_voronoi_clip.h"
 
 namespace voronoi_detail {
 

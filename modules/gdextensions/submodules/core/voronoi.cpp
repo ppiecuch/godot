@@ -32,6 +32,7 @@
 #include <type_traits>
 
 #define JC_VORONOI_IMPLEMENTATION
+#define JC_VORONOI_CLIP_IMPLEMENTATION
 #include "voronoi.h"
 
 Vector<Variant> VoronoiEdge::sites() const {
@@ -186,8 +187,9 @@ void Voronoi::relax_points(int iterations = 1) {
 		jcv_diagram_generate_useralloc(
 				_points.size(),
 				_points.data(),
-				_has_boundaries ? &_boundaries : NULL,
-				NULL,
+				_has_boundaries ? &_boundaries : nullptr,
+				nullptr,
+				nullptr,
 				&useralloc,
 				&userfree,
 				&diagram);
@@ -219,8 +221,9 @@ Ref<VoronoiDiagram> Voronoi::generate_diagram() const {
 	jcv_diagram_generate_useralloc(
 			_points.size(),
 			_points.data(),
-			_has_boundaries ? &_boundaries : NULL,
-			NULL,
+			_has_boundaries ? &_boundaries : nullptr,
+			nullptr,
+			nullptr,
 			&useralloc,
 			&userfree,
 			&(result->_diagram));
