@@ -35,6 +35,8 @@
 #define JC_VORONOI_CLIP_IMPLEMENTATION
 #include "voronoi.h"
 
+/// VoronoiEdge
+
 Vector<Variant> VoronoiEdge::sites() const {
 	Vector<Variant> result;
 	result.push_back(_diagram->_sites_by_index.at(_edge->sites[0]->index));
@@ -56,6 +58,8 @@ void VoronoiEdge::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("start"), &VoronoiEdge::start);
 	ClassDB::bind_method(D_METHOD("end"), &VoronoiEdge::end);
 }
+
+/// VoronoiSite
 
 int VoronoiSite::index() const {
 	return _site->index;
@@ -93,6 +97,8 @@ void VoronoiSite::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("edges"), &VoronoiSite::edges);
 	ClassDB::bind_method(D_METHOD("neighbors"), &VoronoiSite::neighbors);
 }
+
+/// VoronoiDiagram
 
 VoronoiDiagram::VoronoiDiagram() :
 		_diagram() {
@@ -152,6 +158,8 @@ void VoronoiDiagram::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("sites"), &VoronoiDiagram::sites);
 }
 
+/// Voronoi
+
 void Voronoi::set_points(Vector<Vector2> points) {
 	assert(points.size());
 
@@ -171,11 +179,11 @@ void Voronoi::set_boundaries(Rect2 boundaries) {
 	_has_boundaries = true;
 }
 
-void *useralloc(void *ctx, size_t size) {
+static void *useralloc(void *ctx, size_t size) {
 	return memalloc(size);
 }
 
-void userfree(void *ctx, void *ptr) {
+static void userfree(void *ctx, void *ptr) {
 	return memfree(ptr);
 }
 
@@ -218,6 +226,20 @@ void Voronoi::relax_points(int iterations = 1) {
 
 Ref<VoronoiDiagram> Voronoi::generate_diagram() const {
 	Ref<VoronoiDiagram> result{ memnew(VoronoiDiagram) };
+
+	// setup clippping:
+	// jcv_clipping_polygon polygon;
+	// polygon.num_points = 3;
+	// polygon.points = (jcv_point*)malloc(sizeof(jcv_point)*(size_t)polygon.num_points);
+	// polygon.points[0] = .. ;
+	// polygon.points[1] = .. ;
+	// polygon.points[2] = .. ;
+	// jcv_clipper polygonclipper;
+	// polygonclipper.test_fn = jcv_clip_polygon_test_point;
+	// polygonclipper.clip_fn = jcv_clip_polygon_clip_edge;
+	// polygonclipper.fill_fn = jcv_clip_polygon_fill_gaps;
+	// polygonclipper.ctx = &polygon;
+
 	jcv_diagram_generate_useralloc(
 			_points.size(),
 			_points.data(),
