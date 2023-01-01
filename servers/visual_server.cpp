@@ -347,12 +347,12 @@ Vector2 VisualServer::norm_to_oct(const Vector3 v) {
 		return Vector2(0, 0);
 	}
 
-	const float invL1Norm = 1.0f / L1Norm;
+	const float invL1Norm = 1 / L1Norm;
 
 	Vector2 res;
-	if (v.z < 0.0f) {
-		res.x = (1.0f - Math::absf(v.y * invL1Norm)) * SGN(v.x);
-		res.y = (1.0f - Math::absf(v.x * invL1Norm)) * SGN(v.y);
+	if (v.z < 0) {
+		res.x = (1 - Math::absf(v.y * invL1Norm)) * SGN(v.x);
+		res.y = (1 - Math::absf(v.x * invL1Norm)) * SGN(v.y);
 	} else {
 		res.x = v.x * invL1Norm;
 		res.y = v.y * invL1Norm;
@@ -2190,6 +2190,8 @@ void VisualServer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("canvas_item_add_polygon", "item", "points", "colors", "uvs", "texture", "normal_map", "mask", "antialiased"), &VisualServer::canvas_item_add_polygon, DEFVAL(Vector<Point2>()), DEFVAL(RID()), DEFVAL(RID()), DEFVAL(RID()), DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("canvas_item_add_triangle_array", "item", "indices", "points", "colors", "uvs", "bones", "weights", "texture", "count", "normal_map", "mask", "antialiased", "antialiasing_use_indices"), &VisualServer::canvas_item_add_triangle_array, DEFVAL(Vector<Point2>()), DEFVAL(Vector<int>()), DEFVAL(Vector<float>()), DEFVAL(RID()), DEFVAL(-1), DEFVAL(RID()), DEFVAL(RID()), DEFVAL(false), DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("canvas_item_add_mesh", "item", "mesh", "transform", "modulate", "texture", "normal_map", "mask"), &VisualServer::canvas_item_add_mesh, DEFVAL(Transform2D()), DEFVAL(Color(1, 1, 1)), DEFVAL(RID()), DEFVAL(RID()), DEFVAL(RID()));
+	ClassDB::bind_method(D_METHOD("canvas_item_add_mesh_3d", "item", "mesh", "transform", "modulate", "texture", "normal_map", "mask"), &VisualServer::canvas_item_add_mesh, DEFVAL(Transform()), DEFVAL(Color(1, 1, 1)), DEFVAL(RID()), DEFVAL(RID()), DEFVAL(RID()));
+	ClassDB::bind_method(D_METHOD("canvas_item_update_mesh_3d", "item", "entry", "transform", "modulate", "texture", "normal_map", "mask"), &VisualServer::canvas_item_add_mesh, DEFVAL(Transform()), DEFVAL(Color(1, 1, 1)), DEFVAL(RID()), DEFVAL(RID()), DEFVAL(RID()));
 	ClassDB::bind_method(D_METHOD("canvas_item_add_multimesh", "item", "mesh", "texture", "normal_map", "mask"), &VisualServer::canvas_item_add_multimesh, DEFVAL(RID()), DEFVAL(RID()));
 	ClassDB::bind_method(D_METHOD("canvas_item_add_particles", "item", "particles", "texture", "normal_map", "mask"), &VisualServer::canvas_item_add_particles, DEFVAL(RID()), DEFVAL(RID()));
 	ClassDB::bind_method(D_METHOD("canvas_item_add_set_transform", "item", "transform"), &VisualServer::canvas_item_add_set_transform);
@@ -2336,7 +2338,6 @@ void VisualServer::_bind_methods() {
 	BIND_ENUM_CONSTANT(ARRAY_FLAG_USE_2D_VERTICES);
 	BIND_ENUM_CONSTANT(ARRAY_FLAG_USE_16_BIT_BONES);
 	BIND_ENUM_CONSTANT(ARRAY_FLAG_USE_OCTAHEDRAL_COMPRESSION);
-	BIND_ENUM_CONSTANT(ARRAY_FLAG_USE_2D_DEPTH_TEST);
 	BIND_ENUM_CONSTANT(ARRAY_COMPRESS_DEFAULT);
 
 	BIND_ENUM_CONSTANT(PRIMITIVE_POINTS);

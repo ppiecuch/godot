@@ -2223,6 +2223,7 @@ void RasterizerStorageGLES3::_update_shader(Shader *p_shader) const {
 			shaders.actions_canvas.usage_flag_pointers["MODULATE"] = &p_shader->canvas_item.uses_modulate;
 			shaders.actions_canvas.usage_flag_pointers["COLOR"] = &p_shader->canvas_item.uses_color;
 			shaders.actions_canvas.usage_flag_pointers["VERTEX"] = &p_shader->canvas_item.uses_vertex;
+			shaders.actions_canvas.usage_flag_pointers["POSITION"] = &p_shader->canvas_item.uses_vertex;
 			shaders.actions_canvas.usage_flag_pointers["UV2"] = &p_shader->canvas_item.uses_uv2;
 
 			shaders.actions_canvas.usage_flag_pointers["WORLD_MATRIX"] = &p_shader->canvas_item.uses_world_matrix;
@@ -3386,10 +3387,6 @@ void RasterizerStorageGLES3::mesh_add_surface(RID p_mesh, uint32_t p_format, VS:
 	{
 		uint32_t bones_weight = VS::ARRAY_FORMAT_BONES | VS::ARRAY_FORMAT_WEIGHTS;
 		ERR_FAIL_COND_MSG((p_format & bones_weight) && (p_format & bones_weight) != bones_weight, "Array must have both bones and weights in format or none.");
-	}
-
-	if ((p_format & VS::ARRAY_FLAG_USE_2D_VERTICES) && (p_format & VS::ARRAY_FLAG_USE_2D_DEPTH_TEST)) {
-		WARN_PRINT("Enabling depth test for 2d only vertices.");
 	}
 
 	//bool has_morph = p_blend_shapes.size();

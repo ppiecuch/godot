@@ -351,21 +351,21 @@ real_t bob_font_draw_string(Ref<ArrayMesh> &mesh, const char *str, const Transfo
 }
 
 // ---
-// gluPerspective(45.0f,(real_t)w/(real_t)h,0.1f,100.0f);
-// glTranslatef(0,0,-25);
+// gluPerspective(45, w/h, 0.1, 100);
+// glTranslatef(0, 0, -25);
 // ---
 // glEnable(GL_DEPTH_TEST);
 // ---
 // glPushMatrix();
-//   glTranslatef(-3.2f,2,18);
-//   glRotatef(rotation+45,1,0,0);
-//   DrawBobString("GALACTIC",0,0.3f,0,0.1f);
+//   glTranslatef(-3.2, 2, 18);
+//   glRotatef(rotation+45, 1, 0, 0);
+//   DrawBobString("GALACTIC", 0, 0.3, 0, 0.1);
 // glPopMatrix();
 // ---
 // glPushMatrix();
-//   glTranslatef(-3.2f,-2,18);
-//   glRotatef(-rotation-45,1,0,0);
-//   DrawBobString("FORTRESS",0,0.3f,0,0.1f);
+//   glTranslatef(-3.2, -2, 18);
+//   glRotatef(-rotation-45, 1, 0, 0);
+//   DrawBobString("FORTRESS", 0, 0.3, 0, 0.1);
 // glPopMatrix();
 // ---
 // glDisable(GL_DEPTH_TEST);

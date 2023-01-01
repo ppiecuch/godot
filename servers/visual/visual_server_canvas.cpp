@@ -402,6 +402,7 @@ void VisualServerCanvas::canvas_item_set_transform(RID p_item, const Transform2D
 
 	canvas_item->xform = p_transform;
 }
+
 void VisualServerCanvas::canvas_item_set_clip(RID p_item, bool p_clip) {
 	Item *canvas_item = canvas_item_owner.getornull(p_item);
 	ERR_FAIL_COND(!canvas_item);
@@ -537,6 +538,7 @@ void VisualServerCanvas::canvas_item_add_polyline(RID p_item, const Vector<Point
 		// 	prev_t = t;
 		// }
 	}
+
 	canvas_item->rect_dirty = true;
 	canvas_item->commands.push_back(pline);
 }
@@ -817,11 +819,47 @@ void VisualServerCanvas::canvas_item_add_mesh(RID p_item, const RID &p_mesh, con
 	m->texture = p_texture;
 	m->normal_map = p_normal_map;
 	m->mask = p_mask;
-	m->transform = p_transform;
+	m->transform = _from_transform_2d(p_transform);
 	m->modulate = p_modulate;
 
 	canvas_item->commands.push_back(m);
 }
+
+uint64_t VisualServerCanvas::canvas_item_add_mesh_3d(RID p_item, const RID &p_mesh, const Transform &p_transform, const Color &p_modulate, RID p_texture, RID p_normal_map, RID p_mask) {
+	Item *canvas_item = canvas_item_owner.getornull(p_item);
+	ERR_FAIL_COND_V(!canvas_item, 0);
+
+	Item::CommandMesh *m = memnew(Item::CommandMesh);
+	ERR_FAIL_COND_V(!m, 0);
+	m->mesh = p_mesh;
+	m->texture = p_texture;
+	m->normal_map = p_normal_map;
+	m->mask = p_mask;
+	m->transform = p_transform;
+	m->modulate = p_modulate;
+	m->depth = true;
+
+	canvas_item->commands.push_back(m);
+
+	return int64_t(m);
+}
+
+void VisualServerCanvas::canvas_item_update_mesh_3d(RID p_item, uint64_t p_entry, const Transform &p_transform, const Color &p_modulate, RID p_texture, RID p_normal_map, RID p_mask) {
+	Item *canvas_item = canvas_item_owner.getornull(p_item);
+	ERR_FAIL_COND(!canvas_item);
+	ERR_FAIL_COND(canvas_item->commands.find((Item::Command *)p_entry) < 0);
+
+	Item::CommandMesh *m = (Item::CommandMesh *)p_entry;
+	ERR_FAIL_COND(m->type != Item::Command::TYPE_MESH);
+	m->texture = p_texture;
+	m->normal_map = p_normal_map;
+	m->mask = p_mask;
+	m->transform = p_transform;
+	m->modulate = p_modulate;
+
+	return;
+}
+
 void VisualServerCanvas::canvas_item_add_particles(RID p_item, RID p_particles, RID p_texture, RID p_normal, RID p_mask) {
 	Item *canvas_item = canvas_item_owner.getornull(p_item);
 	ERR_FAIL_COND(!canvas_item);

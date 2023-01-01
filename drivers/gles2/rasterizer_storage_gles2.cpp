@@ -2271,10 +2271,6 @@ void RasterizerStorageGLES2::mesh_add_surface(RID p_mesh, uint32_t p_format, VS:
 		ERR_FAIL_COND_MSG((p_format & bones_weight) && (p_format & bones_weight) != bones_weight, "Array must have both bones and weights in format or none.");
 	}
 
-	if ((p_format & VS::ARRAY_FLAG_USE_2D_VERTICES) && (p_format & VS::ARRAY_FLAG_USE_2D_DEPTH_TEST)) {
-		WARN_PRINT("Enabling depth test for 2d only vertices.");
-	}
-
 	//bool has_morph = p_blend_shapes.size();
 	bool use_split_stream = GLOBAL_GET("rendering/misc/mesh_storage/split_stream") && !(p_format & VS::ARRAY_FLAG_USE_DYNAMIC_UPDATE);
 

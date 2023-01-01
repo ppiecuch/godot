@@ -21,9 +21,12 @@ uniform highp mat4 inv_world_matrix;
 uniform highp mat4 extra_matrix;
 #ifdef VERTEX_VEC3_USED
 attribute highp vec3 vertex; // attrib:0
-attribute vec3 normal_attrib; // attrib:1
 #else
 attribute highp vec2 vertex; // attrib:0
+#endif
+
+#ifdef USE_ATTRIB_NORMAL
+attribute vec3 normal_attrib; // attrib:1
 #endif
 
 #ifdef USE_ATTRIB_LIGHT_ANGLE
@@ -161,6 +164,10 @@ void main() {
 #define vertex_z vertex.z
 #else
 #define vertex_z 0.0
+#endif
+
+#ifdef USE_ATTRIB_NORMAL
+	vec3 normal = normal_attrib;
 #endif
 
 #ifdef USE_INSTANCING

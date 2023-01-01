@@ -3,11 +3,12 @@
 
 #ifdef VERTEX_VEC3_USED
 layout(location = 0) in highp vec3 vertex;
-#ifdef USE_ATTRIB_NORMAL
-layout(location = 1) in vec3 normal_attrib;
-#endif
 #else
 layout(location = 0) in highp vec2 vertex;
+#endif
+
+#ifdef USE_ATTRIB_NORMAL
+layout(location = 1) in vec3 normal_attrib;
 #endif
 
 #ifdef USE_ATTRIB_LIGHT_ANGLE
@@ -165,6 +166,10 @@ void main() {
 #define vertex_z vertex.z
 #else
 #define vertex_z 0.0
+#endif
+
+#ifdef USE_ATTRIB_NORMAL
+	vec3 normal = normal_attrib;
 #endif
 
 #ifdef USE_INSTANCING

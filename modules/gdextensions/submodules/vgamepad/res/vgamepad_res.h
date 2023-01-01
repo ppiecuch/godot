@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  fb_font_draw.h                                                       */
+/*  vgamepad_res.h                                                       */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,73 +28,27 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#pragma once
-
-#ifndef FBFONTDRAW_H
-#define FBFONTDRAW_H
-
-#include "fb_font_symbol.h"
-
-#include "core/color.h"
-#include "core/dictionary.h"
-#include "core/math/vector2.h"
-#include "core/rid.h"
-
-typedef enum {
-} FBLineJoin;
-
-typedef enum {
-} FBLineCap;
-
-/// Bitmap Font
-
-typedef enum {
-	FBFontDotTypeSquare,
-	FBFontDotTypeCircle
-} FBFontDotType;
-
-void draw_background_with_dot_type(
-		const RID &canvas_item,
-		Dictionary &cache,
-		FBFontDotType dot_type,
-		const Color &color,
-		real_t edge_length,
-		real_t margin,
-		real_t horizontal_amount,
-		real_t vertical_amount);
-
-void draw_bitmap_symbol(
-		const RID &canvas_item,
-		Dictionary &cache,
-		FBFontSymbolType symbol,
-		FBFontDotType dot_type,
-		const Color &color,
-		real_t edge_length,
-		real_t margin,
-		const Color &glow_color,
-		real_t glow_size,
-		const Color &inner_glow_color,
-		real_t inner_glow_size,
-		const Point2 &start_point);
-
-int number_of_dots_wide_for_symbol(FBFontSymbolType symbol);
-
-/// LCD Font
-
-void draw_lcd_symbol(
-		const RID &canvas_item,
-		FBFontSymbolType symbol,
-		real_t edge_length,
-		real_t line_width,
-		Point2 start_point);
-
-/// Square Font
-
-void draw_square_symbol(
-		const RID &canvas_item,
-		FBFontSymbolType symbol,
-		real_t horizontal_edge_length,
-		real_t vertical_edge_length,
-		Point2 start_point);
-
-#endif // FBFONTDRAW_H
+extern const char *set1_Button_B_Press_png;
+extern const char *set1_Button_A_NotPress_png;
+extern const char *set1_Button_A_Press_png;
+extern const char *set1_Button_B_NotPress_png;
+extern const char *set1_Button_RL_NotPress_png;
+extern const char *set1_Button_RL_Press_png;
+extern const char *set1_Button_RR_NotPress_png;
+extern const char *set1_Button_RR_Press_png;
+extern const char *set1_Button_X_NotPress_png;
+extern const char *set1_Button_X_Press_png;
+extern const char *set1_Button_Y_NotPress_png;
+extern const char *set1_Button_Y_Press_png;
+extern const char *set1_DPad_D_png;
+extern const char *set1_DPad_Decor_png;
+extern const char *set1_DPad_DL_png;
+extern const char *set1_DPad_DR_png;
+extern const char *set1_DPad_L_png;
+extern const char *set1_DPad_NotPressed_png;
+extern const char *set1_DPad_R_png;
+extern const char *set1_DPad_U_png;
+extern const char *set1_DPad_UL_png;
+extern const char *set1_DPad_UR_png;
+extern const char *set1_Joystick_Back_png;
+extern const char *set1_Joystick_Knob_png;
