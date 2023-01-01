@@ -171,7 +171,7 @@ class Voronoi : public Reference {
 
 	jcv_rect _boundaries;
 	bool _has_boundaries;
-	voronoi_detail::vector<jcv_point> _points;
+	voronoi_detail::vector<jcv_point> _points, _cpoints;
 
 protected:
 	static void _bind_methods();
@@ -179,6 +179,7 @@ protected:
 public:
 	void set_points(Vector<Vector2> points);
 	void set_boundaries(Rect2 boundaries);
+	void set_clip_points(Vector<Vector2> points);
 	void relax_points(int iterations);
 	Ref<VoronoiDiagram> generate_diagram() const;
 

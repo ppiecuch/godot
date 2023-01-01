@@ -179,6 +179,17 @@ void Voronoi::set_boundaries(Rect2 boundaries) {
 	_has_boundaries = true;
 }
 
+void Voronoi::set_clip_points(Vector<Vector2> points) {
+	assert(points.size());
+
+	// translate Godot Vector2 points into jcv_points
+	voronoi_detail::vector<jcv_point> new_points;
+	for (int i = 0; i < points.size(); i++)
+		new_points.push_back({ points[i].x, points[i].y });
+
+	_cpoints.swap(new_points);
+}
+
 static void *useralloc(void *ctx, size_t size) {
 	return memalloc(size);
 }
@@ -228,27 +239,27 @@ Ref<VoronoiDiagram> Voronoi::generate_diagram() const {
 	Ref<VoronoiDiagram> result{ memnew(VoronoiDiagram) };
 
 	// setup clippping:
-	// jcv_clipping_polygon polygon;
-	// polygon.num_points = 3;
-	// polygon.points = (jcv_point*)malloc(sizeof(jcv_point)*(size_t)polygon.num_points);
-	// polygon.points[0] = .. ;
-	// polygon.points[1] = .. ;
-	// polygon.points[2] = .. ;
-	// jcv_clipper polygonclipper;
-	// polygonclipper.test_fn = jcv_clip_polygon_test_point;
-	// polygonclipper.clip_fn = jcv_clip_polygon_clip_edge;
-	// polygonclipper.fill_fn = jcv_clip_polygon_fill_gaps;
-	// polygonclipper.ctx = &polygon;
-
+	jcv_clipper *clipper = nullptr;
+	if (_cpoints.size()) {
+		jcv_clipping_polygon polygon;
+		polygon.num_points = _cpoints.size();
+		polygon.points = const_cast<jcv_point*>(_cpoints.data());
+		jcv_clipper polygonclipper;
+		polygonclipper.test_fn = jcv_clip_polygon_test_point;
+		polygonclipper.clip_fn = jcv_clip_polygon_clip_edge;
+		polygonclipper.fill_fn = jcv_clip_polygon_fill_gaps;
+		polygonclipper.ctx = &polygon;
+		clipper = &polygonclipper;
+	}
 	jcv_diagram_generate_useralloc(
-			_points.size(),
-			_points.data(),
-			_has_boundaries ? &_boundaries : nullptr,
-			nullptr,
-			nullptr,
-			&useralloc,
-			&userfree,
-			&(result->_diagram));
+		_points.size(),
+		_points.data(),
+		_has_boundaries ? &_boundaries : nullptr,
+		clipper,
+		nullptr,
+		&useralloc,
+		&userfree,
+		&(result->_diagram));
 	result->build_objects();
 	return result;
 }
@@ -256,6 +267,7 @@ Ref<VoronoiDiagram> Voronoi::generate_diagram() const {
 void Voronoi::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_points", "points"), &Voronoi::set_points);
 	ClassDB::bind_method(D_METHOD("set_boundaries", "boundaries"), &Voronoi::set_boundaries);
+	ClassDB::bind_method(D_METHOD("set_clip_points", "points"), &Voronoi::set_clip_points);
 	ClassDB::bind_method(D_METHOD("relax_points", "iterations"), &Voronoi::relax_points);
 	ClassDB::bind_method(D_METHOD("generate_diagram"), &Voronoi::generate_diagram);
 }
