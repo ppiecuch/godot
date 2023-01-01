@@ -29,8 +29,10 @@ name is available.
 
     Aaron Franke (aaronfranke)
     Aaron Record (LightningAA)
+    Adam Scott (adamscott)
     Alexander Holland (AlexHolly)
     Alexey Khoroshavin (allkhor)
+    Alfred Reinold Baudisch (alfredbaudisch)
     Alket Rexhepi (alketii)
     Andrea Catania (AndreaCatania)
     Andreas Haas (Hinsbart)
@@ -65,6 +67,7 @@ name is available.
     Dana Olson (adolson)
     Daniel J. Ramirez (djrm)
     Daniel Rakos (aqnuep)
+    Daniel Zilberleyb (dzil123)
     Danil Alexeev (dalexeev)
     dankan1890
     David Cambré (Gallilus)
@@ -73,6 +76,7 @@ name is available.
     Dharkael (lupoDharkael)
     Dmitry Koteroff (Krakean)
     Dominik Jasiński (dreamsComeTrue)
+    Douglas Leão (DeeJayLSP)
     DualMatrix
     Ellen Poe (ellenhp)
     Emmanuel Barroga (codecustard)
@@ -119,13 +123,16 @@ name is available.
     Jake Young (Duroxxigar)
     Jakub Grzesik (kubecz3k)
     James Buck (jbuck3)
+    Jason Knight (jasonwinterpixel)
     Jean-Michel Bernard (jmb462)
     Jérôme Gully (Nutriz)
     Jia Jun Chai (SkyLucilfer)
     Joan Fons Sanchez (JFonS)
     Johan Manuel (29jm)
     Johannes Witt (HaSa1002)
+    Jonathan Nicholl (jtnicholl)
     Jordan Schidlowsky (winterpixelgames)
+    Josh Jones (DarkKilauea)
     Joshua Grams (JoshuaGrams)
     Juan Linietsky (reduz)
     Julian Murgia (StraToN)
@@ -180,6 +187,7 @@ name is available.
     Nathan Lovato (NathanLovato)
     Nathan Warden (NathanWarden)
     Nicholas Huelin (SirQuartz)
+    Nikita Lita (nikitalita)
     Nils André-Chang (NilsIrl)
     Nuno Donato (nunodonato)
     Omar El Sheikh (The-O-King)
@@ -209,9 +217,11 @@ name is available.
     Rhody Lugo (rraallvv)
     Ricardo Buring (rburing)
     Ricardo Subtil (Ev1lbl0w)
+    Riteo Siuga (Riteo)
     Roberto F. Arroyo (robfram)
     Robin Hübner (profan)
     romulox-x
+    Rune Smith (rune-scape)
     Ruslan Mustakov (endragor)
     Saniko (sanikoyes)
     santouits
@@ -224,6 +234,7 @@ name is available.
     Stijn Hinlopen (hinlopen)
     Swarnim Arun (minraws)
     TC (floppyhammer)
+    TechnoPorg
     Thakee Nathees (ThakeeNathees)
     thebestnom
     Theo Hallenius (TheoXD)

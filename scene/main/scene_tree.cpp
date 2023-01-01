@@ -780,6 +780,12 @@ void SceneTree::finish() {
 		E->get()->release_connections();
 	}
 	timers.clear();
+
+	// Cleanup tweens.
+	for (List<Ref<SceneTreeTween>>::Element *E = tweens.front(); E; E = E->next()) {
+		E->get()->clear();
+	}
+	tweens.clear();
 }
 
 void SceneTree::quit(int p_exit_code) {
@@ -2307,6 +2313,9 @@ SceneTree::SceneTree() {
 
 	const bool use_fxaa = GLOBAL_DEF("rendering/quality/filters/use_fxaa", false);
 	root->set_use_fxaa(use_fxaa);
+
+	const bool transparent_background = GLOBAL_DEF("rendering/viewport/transparent_background", false);
+	root->set_transparent_background(transparent_background);
 
 	const bool use_debanding = GLOBAL_DEF("rendering/quality/filters/use_debanding", false);
 	root->set_use_debanding(use_debanding);

@@ -39,6 +39,7 @@
 #include "servers/audio_server.h"
 
 #include <stdarg.h>
+#include <thread>
 
 OS *OS::singleton = nullptr;
 uint64_t OS::target_ticks = 0;
@@ -89,10 +90,6 @@ uint64_t OS::get_system_time_msecs() const {
 double OS::get_subsecond_unix_time() const {
 	return 0.0;
 }
-void OS::debug_break(){
-
-	// something
-};
 
 void OS::_set_logger(CompositeLogger *p_logger) {
 	if (_logger) {
@@ -188,10 +185,6 @@ String OS::get_executable_path() const {
 int OS::get_process_id() const {
 	return -1;
 };
-
-void OS::vibrate_handheld(int p_duration_ms) {
-	WARN_PRINT("vibrate_handheld() only works with Android, iOS and HTML5");
-}
 
 bool OS::is_stdout_verbose() const {
 	return _verbose_stdout;
@@ -525,7 +518,7 @@ String OS::get_unique_id() const {
 }
 
 int OS::get_processor_count() const {
-	return 1;
+	return std::thread::hardware_concurrency();
 }
 
 String OS::get_processor_name() const {

@@ -55,7 +55,7 @@ void CanvasLayer::set_visible(bool p_visible) {
 	// For CanvasItems that is explicitly top level or has non-CanvasItem parents.
 	if (is_inside_tree()) {
 		const String group = "root_canvas" + itos(canvas.get_id());
-		get_tree()->call_group_flags(SceneTree::GROUP_CALL_UNIQUE, group, "_toplevel_visibility_changed", p_visible);
+		get_tree()->call_group(group, "_toplevel_visibility_changed", p_visible);
 	}
 }
 
@@ -80,6 +80,18 @@ void CanvasLayer::set_transform(const Transform2D &p_xform) {
 }
 
 Transform2D CanvasLayer::get_transform() const {
+	return transform;
+}
+
+Transform2D CanvasLayer::get_final_transform() const {
+	if (is_following_viewport()) {
+		Transform2D follow;
+		follow.scale(Vector2(get_follow_viewport_scale(), get_follow_viewport_scale()));
+		if (vp) {
+			follow = vp->get_canvas_transform() * follow;
+		}
+		return follow * transform;
+	}
 	return transform;
 }
 
@@ -301,6 +313,7 @@ void CanvasLayer::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_transform", "transform"), &CanvasLayer::set_transform);
 	ClassDB::bind_method(D_METHOD("get_transform"), &CanvasLayer::get_transform);
+	ClassDB::bind_method(D_METHOD("get_final_transform"), &CanvasLayer::get_final_transform);
 
 	ClassDB::bind_method(D_METHOD("set_offset", "offset"), &CanvasLayer::set_offset);
 	ClassDB::bind_method(D_METHOD("get_offset"), &CanvasLayer::get_offset);
@@ -332,7 +345,7 @@ void CanvasLayer::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "offset"), "set_offset", "get_offset");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "rotation_degrees", PROPERTY_HINT_RANGE, "-1080,1080,0.1,or_lesser,or_greater", PROPERTY_USAGE_EDITOR), "set_rotation_degrees", "get_rotation_degrees");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "rotation", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "set_rotation", "get_rotation");
-	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "scale"), "set_scale", "get_scale");
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "scale", PROPERTY_HINT_LINK), "set_scale", "get_scale");
 	ADD_PROPERTY(PropertyInfo(Variant::TRANSFORM2D, "transform"), "set_transform", "get_transform");
 	ADD_GROUP("", "");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "custom_viewport", PROPERTY_HINT_RESOURCE_TYPE, "Viewport", 0), "set_custom_viewport", "get_custom_viewport");

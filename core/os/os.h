@@ -368,7 +368,7 @@ public:
 	virtual Error kill(const ProcessID &p_pid) = 0;
 	virtual int get_process_id() const;
 	virtual bool is_process_running(const ProcessID &p_pid) const = 0;
-	virtual void vibrate_handheld(int p_duration_ms = 500);
+	virtual void vibrate_handheld(int p_duration_ms = 500) {}
 
 	virtual Error shell_open(String p_uri);
 	virtual Error set_cwd(const String &p_cwd);
@@ -571,8 +571,6 @@ public:
 
 	virtual void enable_for_stealing_focus(ProcessID pid) {}
 	virtual void move_window_to_foreground() {}
-
-	virtual void debug_break();
 
 	virtual void release_rendering_thread();
 	virtual void make_rendering_thread();

@@ -494,13 +494,15 @@
 			[b]Note:[/b] This setting has no effect on the home indicator if [code]hide_home_indicator[/code] is [code]true[/code].
 		</member>
 		<member name="display/window/per_pixel_transparency/allowed" type="bool" setter="" getter="" default="false">
-			If [code]true[/code], allows per-pixel transparency for the window background. This affects performance, so leave it on [code]false[/code] unless you need it.
+			If [code]true[/code], allows per-pixel transparency for the window background. This affects performance, so leave it on [code]false[/code] unless you need it. See also [member display/window/per_pixel_transparency/enabled] and [member rendering/viewport/transparent_background].
+			[b]Note:[/b] Enabling [member display/window/per_pixel_transparency/allowed] does not make the background actually transparent. For the background to be transparent, the root viewport must also be made transparent by enabling [member rendering/viewport/transparent_background]. [member display/window/per_pixel_transparency/enabled] must also be enabled.
 			See [member OS.window_per_pixel_transparency_enabled] for more details.
 			[b]Note:[/b] This feature is implemented on HTML5, Linux, macOS, Windows, and Android.
 		</member>
 		<member name="display/window/per_pixel_transparency/enabled" type="bool" setter="" getter="" default="false">
 			Sets the window background to transparent when it starts.
 			See [member OS.window_per_pixel_transparency_enabled] for more details.
+			[b]Note:[/b] Enabling [member display/window/per_pixel_transparency/enabled] does not make the background actually transparent. For the background to be transparent, the root viewport must also be made transparent by enabling [member rendering/viewport/transparent_background]. [member display/window/per_pixel_transparency/allowed] must also be enabled.
 			[b]Note:[/b] This feature is implemented on HTML5, Linux, macOS, Windows, and Android.
 		</member>
 		<member name="display/window/size/always_on_top" type="bool" setter="" getter="" default="false">
@@ -1692,9 +1694,11 @@
 			If set to a value greater than [code]0.0[/code], contrast-adaptive sharpening will be applied to the 3D viewport. This has a low performance cost and can be used to recover some of the sharpness lost from using FXAA. Values around [code]0.5[/code] generally give the best results. See also [member rendering/quality/filters/use_fxaa].
 		</member>
 		<member name="rendering/quality/filters/use_debanding" type="bool" setter="" getter="" default="false">
-			If [code]true[/code], uses a fast post-processing filter to make banding significantly less visible. In some cases, debanding may introduce a slightly noticeable dithering pattern. It's recommended to enable debanding only when actually needed since the dithering pattern will make lossless-compressed screenshots larger.
+			If [code]true[/code], uses a fast post-processing filter to make banding significantly less visible in 3D. 2D rendering is [i]not[/i] affected by debanding unless the [member Environment.background_mode] is [constant Environment.BG_CANVAS]. In this case, [member rendering/quality/intended_usage/framebuffer_allocation] must also be set to [b]3D[/b].
+			In some cases, debanding may introduce a slightly noticeable dithering pattern. It's recommended to enable debanding only when actually needed since the dithering pattern will make lossless-compressed screenshots larger.
 			[b]Note:[/b] Only available on the GLES3 backend. [member rendering/quality/depth/hdr] must also be [code]true[/code] for debanding to be effective.
 			[b]Note:[/b] There are known issues with debanding breaking rendering on mobile platforms. Due to this, it is recommended to leave this option disabled when targeting mobile platforms.
+			[b]Note:[/b] This property is only read when the project starts. To set debanding at run-time, set [member Viewport.debanding] on the root [Viewport] instead.
 		</member>
 		<member name="rendering/quality/filters/use_fxaa" type="bool" setter="" getter="" default="false">
 			Enables FXAA in the root Viewport. FXAA is a popular screen-space antialiasing method, which is fast but will make the image look blurry, especially at lower resolutions. It can still work relatively well at large resolutions such as 1440p and 4K. Some of the lost sharpness can be recovered by enabling contrast-adaptive sharpening (see [member rendering/quality/filters/sharpen_intensity]).
@@ -1832,6 +1836,9 @@
 		<member name="rendering/threads/thread_safe_bvh" type="bool" setter="" getter="" default="false">
 			If [code]true[/code], a thread safe version of BVH (bounding volume hierarchy) will be used in rendering and Godot physics.
 			Try enabling this option if you see any visual anomalies in 3D (such as incorrect object visibility).
+		</member>
+		<member name="rendering/viewport/transparent_background" type="bool" setter="" getter="" default="false">
+			If [code]true[/code], enables [member Viewport.transparent_bg] on the root viewport. This allows per-pixel transparency to be effective after also enabling [member display/window/per_pixel_transparency/allowed] and [member display/window/per_pixel_transparency/enabled].
 		</member>
 		<member name="rendering/vram_compression/import_bptc" type="bool" setter="" getter="" default="false">
 			If [code]true[/code], the texture importer will import VRAM-compressed textures using the BPTC algorithm. This texture compression algorithm is only supported on desktop platforms, and only when using the GLES3 renderer.
