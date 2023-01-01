@@ -997,6 +997,8 @@ String ShaderLanguage::get_datatype_name(DataType p_type) {
 			return "samplerExternalOES";
 		case TYPE_STRUCT:
 			return "struct";
+		default: {
+		}
 	}
 
 	return "";
@@ -2840,6 +2842,8 @@ Variant ShaderLanguage::constant_value_to_variant(const Vector<ShaderLanguage::C
 				break;
 			case ShaderLanguage::TYPE_VOID:
 				break;
+			default: {
+			}
 		}
 		return value;
 	}
@@ -2932,7 +2936,17 @@ ShaderLanguage::DataType ShaderLanguage::get_scalar_type(DataType p_type) {
 		TYPE_INT,
 		TYPE_UINT,
 		TYPE_FLOAT,
+		TYPE_INT,
+		TYPE_UINT,
+		TYPE_FLOAT,
+		TYPE_INT,
+		TYPE_UINT,
+		TYPE_FLOAT,
+		TYPE_FLOAT,
+		TYPE_VOID,
 	};
+
+	static_assert(sizeof(scalar_types) / sizeof(*scalar_types) == TYPE_MAX, "get_scalar_type must be updated if DataType is updated");
 
 	return scalar_types[p_type];
 }
@@ -2963,7 +2977,17 @@ int ShaderLanguage::get_cardinality(DataType p_type) {
 		1,
 		1,
 		1,
+		1,
+		1,
+		1,
+		1,
+		1,
+		1,
+		1,
+		1,
 	};
+
+	static_assert(sizeof(cardinality_table) / sizeof(*cardinality_table) == TYPE_MAX, "get_cardinality must be updated if DataType is updated");
 
 	return cardinality_table[p_type];
 }

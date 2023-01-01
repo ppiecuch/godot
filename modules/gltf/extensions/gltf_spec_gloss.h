@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  gltf_texture.h                                                       */
+/*  gltf_spec_gloss.h                                                    */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,25 +28,42 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GLTF_TEXTURE_H
-#define GLTF_TEXTURE_H
+#ifndef GLTF_SPEC_GLOSS_H
+#define GLTF_SPEC_GLOSS_H
 
+#include "../gltf_defines.h"
+#include "core/image.h"
 #include "core/resource.h"
 
-#include "gltf_document.h"
-
-class GLTFTexture : public Resource {
-	GDCLASS(GLTFTexture, Resource);
+class GLTFSpecGloss : public Resource {
+	GDCLASS(GLTFSpecGloss, Resource);
+	friend class GLTFDocument;
 
 private:
-	GLTFImageIndex src_image = 0;
+	Ref<Image> diffuse_img = nullptr;
+	Color diffuse_factor = Color(1.0f, 1.0f, 1.0f);
+	float gloss_factor = 1.0f;
+	Color specular_factor = Color(1.0f, 1.0f, 1.0f);
+	Ref<Image> spec_gloss_img = nullptr;
 
 protected:
 	static void _bind_methods();
 
 public:
-	GLTFImageIndex get_src_image() const;
-	void set_src_image(GLTFImageIndex val);
+	Ref<Image> get_diffuse_img();
+	void set_diffuse_img(Ref<Image> p_diffuse_img);
+
+	Color get_diffuse_factor();
+	void set_diffuse_factor(Color p_diffuse_factor);
+
+	float get_gloss_factor();
+	void set_gloss_factor(float p_gloss_factor);
+
+	Color get_specular_factor();
+	void set_specular_factor(Color p_specular_factor);
+
+	Ref<Image> get_spec_gloss_img();
+	void set_spec_gloss_img(Ref<Image> p_spec_gloss_img);
 };
 
-#endif // GLTF_TEXTURE_H
+#endif // GLTF_SPEC_GLOSS_H

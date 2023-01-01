@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  gltf_light.h                                                         */
+/*  gltf_texture_sampler.cpp                                             */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,44 +28,20 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GLTF_LIGHT_H
-#define GLTF_LIGHT_H
+#include "gltf_texture_sampler.h"
 
-#include "core/resource.h"
+void GLTFTextureSampler::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("get_mag_filter"), &GLTFTextureSampler::get_mag_filter);
+	ClassDB::bind_method(D_METHOD("set_mag_filter", "filter_mode"), &GLTFTextureSampler::set_mag_filter);
+	ClassDB::bind_method(D_METHOD("get_min_filter"), &GLTFTextureSampler::get_min_filter);
+	ClassDB::bind_method(D_METHOD("set_min_filter", "filter_mode"), &GLTFTextureSampler::set_min_filter);
+	ClassDB::bind_method(D_METHOD("get_wrap_s"), &GLTFTextureSampler::get_wrap_s);
+	ClassDB::bind_method(D_METHOD("set_wrap_s", "wrap_mode"), &GLTFTextureSampler::set_wrap_s);
+	ClassDB::bind_method(D_METHOD("get_wrap_t"), &GLTFTextureSampler::get_wrap_t);
+	ClassDB::bind_method(D_METHOD("set_wrap_t", "wrap_mode"), &GLTFTextureSampler::set_wrap_t);
 
-class GLTFLight : public Resource {
-	GDCLASS(GLTFLight, Resource)
-	friend class GLTFDocument;
-
-protected:
-	static void _bind_methods();
-
-private:
-	Color color = Color(1.0f, 1.0f, 1.0f);
-	float intensity = 1.0f;
-	String type;
-	float range = INFINITY;
-	float inner_cone_angle = 0.0f;
-	float outer_cone_angle = Math_TAU / 8.0f;
-
-public:
-	Color get_color();
-	void set_color(Color p_color);
-
-	float get_intensity();
-	void set_intensity(float p_intensity);
-
-	String get_type();
-	void set_type(String p_type);
-
-	float get_range();
-	void set_range(float p_range);
-
-	float get_inner_cone_angle();
-	void set_inner_cone_angle(float p_inner_cone_angle);
-
-	float get_outer_cone_angle();
-	void set_outer_cone_angle(float p_outer_cone_angle);
-};
-
-#endif // GLTF_LIGHT_H
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "mag_filter"), "set_mag_filter", "get_mag_filter");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "min_filter"), "set_min_filter", "get_min_filter");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "wrap_s"), "set_wrap_s", "get_wrap_s");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "wrap_t"), "set_wrap_t", "get_wrap_t");
+}

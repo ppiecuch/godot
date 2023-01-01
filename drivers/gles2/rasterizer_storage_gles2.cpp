@@ -1695,6 +1695,9 @@ void RasterizerStorageGLES2::shader_get_param_list(RID p_shader, List<PropertyIn
 			case ShaderLanguage::TYPE_USAMPLER3D: {
 				// Not implemented in GLES2
 			} break;
+
+			default: {
+			}
 		}
 
 		p_param_list->push_back(pi);

@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  gltf_texture.cpp                                                     */
+/*  gltf_texture.h                                                       */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,19 +28,27 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "gltf_texture.h"
+#ifndef GLTF_TEXTURE_H
+#define GLTF_TEXTURE_H
 
-void GLTFTexture::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("get_src_image"), &GLTFTexture::get_src_image);
-	ClassDB::bind_method(D_METHOD("set_src_image", "src_image"), &GLTFTexture::set_src_image);
+#include "../gltf_defines.h"
+#include "core/resource.h"
 
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "src_image"), "set_src_image", "get_src_image"); // int
-}
+class GLTFTexture : public Resource {
+	GDCLASS(GLTFTexture, Resource);
 
-GLTFImageIndex GLTFTexture::get_src_image() const {
-	return src_image;
-}
+private:
+	GLTFImageIndex src_image = 0;
+	GLTFTextureSamplerIndex sampler = -1;
 
-void GLTFTexture::set_src_image(GLTFImageIndex val) {
-	src_image = val;
-}
+protected:
+	static void _bind_methods();
+
+public:
+	GLTFImageIndex get_src_image() const;
+	void set_src_image(GLTFImageIndex val);
+	GLTFTextureSamplerIndex get_sampler() const;
+	void set_sampler(GLTFTextureSamplerIndex val);
+};
+
+#endif // GLTF_TEXTURE_H

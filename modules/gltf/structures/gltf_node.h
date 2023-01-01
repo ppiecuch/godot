@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  gltf_buffer_view.h                                                   */
+/*  gltf_node.h                                                          */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,43 +28,75 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GLTF_BUFFER_VIEW_H
-#define GLTF_BUFFER_VIEW_H
+#ifndef GLTF_NODE_H
+#define GLTF_NODE_H
 
+#include "../gltf_defines.h"
 #include "core/resource.h"
 
-#include "gltf_document.h"
-
-class GLTFBufferView : public Resource {
-	GDCLASS(GLTFBufferView, Resource);
+class GLTFNode : public Resource {
+	GDCLASS(GLTFNode, Resource);
 	friend class GLTFDocument;
+	friend class PackedSceneGLTF;
 
 private:
-	GLTFBufferIndex buffer = -1;
-	int byte_offset = 0;
-	int byte_length = 0;
-	int byte_stride = -1;
-	bool indices = false;
+	// matrices need to be transformed to this
+	GLTFNodeIndex parent = -1;
+	int height = -1;
+	Transform xform;
+	GLTFMeshIndex mesh = -1;
+	GLTFCameraIndex camera = -1;
+	GLTFSkinIndex skin = -1;
+	GLTFSkeletonIndex skeleton = -1;
+	bool joint = false;
+	Vector3 translation;
+	Quat rotation;
+	Vector3 scale = Vector3(1, 1, 1);
+	Vector<int> children;
+	GLTFLightIndex light = -1;
 
 protected:
 	static void _bind_methods();
 
 public:
-	GLTFBufferIndex get_buffer();
-	void set_buffer(GLTFBufferIndex p_buffer);
+	GLTFNodeIndex get_parent();
+	void set_parent(GLTFNodeIndex p_parent);
 
-	int get_byte_offset();
-	void set_byte_offset(int p_byte_offset);
+	int get_height();
+	void set_height(int p_height);
 
-	int get_byte_length();
-	void set_byte_length(int p_byte_length);
+	Transform get_xform();
+	void set_xform(Transform p_xform);
 
-	int get_byte_stride();
-	void set_byte_stride(int p_byte_stride);
+	GLTFMeshIndex get_mesh();
+	void set_mesh(GLTFMeshIndex p_mesh);
 
-	bool get_indices();
-	void set_indices(bool p_indices);
-	// matrices need to be transformed to this
+	GLTFCameraIndex get_camera();
+	void set_camera(GLTFCameraIndex p_camera);
+
+	GLTFSkinIndex get_skin();
+	void set_skin(GLTFSkinIndex p_skin);
+
+	GLTFSkeletonIndex get_skeleton();
+	void set_skeleton(GLTFSkeletonIndex p_skeleton);
+
+	bool get_joint();
+	void set_joint(bool p_joint);
+
+	Vector3 get_translation();
+	void set_translation(Vector3 p_translation);
+
+	Quat get_rotation();
+	void set_rotation(Quat p_rotation);
+
+	Vector3 get_scale();
+	void set_scale(Vector3 p_scale);
+
+	Vector<int> get_children();
+	void set_children(Vector<int> p_children);
+
+	GLTFLightIndex get_light();
+	void set_light(GLTFLightIndex p_light);
 };
 
-#endif // GLTF_BUFFER_VIEW_H
+#endif // GLTF_NODE_H

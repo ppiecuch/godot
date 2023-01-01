@@ -1345,7 +1345,6 @@ float AnimationPlayer::get_current_animation_length() const {
 
 void AnimationPlayer::_animation_changed() {
 	clear_caches();
-	emit_signal("caches_cleared");
 	if (is_playing()) {
 		playback.seeked = true; //need to restart stuff, like audio
 	}
@@ -1384,6 +1383,8 @@ void AnimationPlayer::clear_caches() {
 	cache_update_size = 0;
 	cache_update_prop_size = 0;
 	cache_update_bezier_size = 0;
+
+	emit_signal("caches_cleared");
 }
 
 void AnimationPlayer::set_active(bool p_active) {

@@ -31,9 +31,8 @@
 #ifndef GLTF_SKIN_H
 #define GLTF_SKIN_H
 
+#include "../gltf_defines.h"
 #include "core/resource.h"
-
-#include "gltf_document.h"
 
 class GLTFSkin : public Resource {
 	GDCLASS(GLTFSkin, Resource);
@@ -71,7 +70,7 @@ private:
 
 	// The Actual Skin that will be created as a mapping between the IBM's of
 	// this skin to the generated skeleton for the mesh instances.
-	Ref<Skin> godot_skin;
+	Ref<GLTFSkin> godot_skin;
 
 protected:
 	static void _bind_methods();

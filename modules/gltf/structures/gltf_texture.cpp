@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  gltf_spec_gloss.h                                                    */
+/*  gltf_texture.cpp                                                     */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,41 +28,30 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GLTF_SPEC_GLOSS_H
-#define GLTF_SPEC_GLOSS_H
+#include "gltf_texture.h"
 
-#include "core/image.h"
-#include "core/resource.h"
+void GLTFTexture::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("get_src_image"), &GLTFTexture::get_src_image);
+	ClassDB::bind_method(D_METHOD("set_src_image", "src_image"), &GLTFTexture::set_src_image);
+	ClassDB::bind_method(D_METHOD("get_sampler"), &GLTFTexture::get_sampler);
+	ClassDB::bind_method(D_METHOD("set_sampler", "sampler"), &GLTFTexture::set_sampler);
 
-class GLTFSpecGloss : public Resource {
-	GDCLASS(GLTFSpecGloss, Resource);
-	friend class GLTFDocument;
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "src_image"), "set_src_image", "get_src_image"); // int
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "sampler"), "set_sampler", "get_sampler"); // int
+}
 
-private:
-	Ref<Image> diffuse_img = nullptr;
-	Color diffuse_factor = Color(1.0f, 1.0f, 1.0f);
-	float gloss_factor = 1.0f;
-	Color specular_factor = Color(1.0f, 1.0f, 1.0f);
-	Ref<Image> spec_gloss_img = nullptr;
+GLTFImageIndex GLTFTexture::get_src_image() const {
+	return src_image;
+}
 
-protected:
-	static void _bind_methods();
+void GLTFTexture::set_src_image(GLTFImageIndex val) {
+	src_image = val;
+}
 
-public:
-	Ref<Image> get_diffuse_img();
-	void set_diffuse_img(Ref<Image> p_diffuse_img);
+GLTFTextureSamplerIndex GLTFTexture::get_sampler() const {
+	return sampler;
+}
 
-	Color get_diffuse_factor();
-	void set_diffuse_factor(Color p_diffuse_factor);
-
-	float get_gloss_factor();
-	void set_gloss_factor(float p_gloss_factor);
-
-	Color get_specular_factor();
-	void set_specular_factor(Color p_specular_factor);
-
-	Ref<Image> get_spec_gloss_img();
-	void set_spec_gloss_img(Ref<Image> p_spec_gloss_img);
-};
-
-#endif // GLTF_SPEC_GLOSS_H
+void GLTFTexture::set_sampler(GLTFTextureSamplerIndex val) {
+	sampler = val;
+}
