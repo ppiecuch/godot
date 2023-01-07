@@ -94,8 +94,13 @@ if [ ! -z "$EDITOR_BUNDLE_ID" ]; then
 	/usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $EDITOR_BUNDLE_ID" "$GODOT_DIR/bin/Godot-master.app/Contents/Info.plist"
 fi
 
+codesign_args=""
+if [ ! -z "$EDITOR_CODESIGN_IDENTITY" ]; then
+	echo "Codesign identity: $EDITOR_CODESIGN_IDENTITY"
+	codesign_args="$codesign_args -s "$EDITOR_CODESIGN_IDENTITY""
+fi
 echo_header "*** Signing executable for debugger ..."
-codesign --verbose --deep --sign - --timestamp --entitlements "$GODOT_DIR/misc/dist/osx/editor.entitlements" "$GODOT_DIR/bin/Godot-master.app"
+codesign --verbose --deep --sign - --timestamp --entitlements "$GODOT_DIR/misc/dist/osx/editor.entitlements" $codesign_args "$GODOT_DIR/bin/Godot-master.app"
 
 echo_success "*** Finished building editor for macOS."
 
