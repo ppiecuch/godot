@@ -177,7 +177,6 @@ class SpriteMesh : public Node2D {
 	Basis mesh_xform;
 	Vector3 _mesh_angle;
 	Vector3 _mesh_scale;
-	bool _mesh_xform_dirty;
 
 	mutable SafeFlag snapshot_done;
 	Size2 snapshot_size;
@@ -277,7 +276,8 @@ class SpriteMeshEditor : public Control {
 	enum {
 		NONE,
 		DRAG_RESIZE,
-		DRAG_ROTATE_XY,
+		DRAG_ROTATE_X,
+		DRAG_ROTATE_Y,
 		DRAG_ROTATE_Z,
 		DRAG_SCALE_X,
 		DRAG_SCALE_Y,
@@ -289,8 +289,10 @@ class SpriteMeshEditor : public Control {
 	int dragging;
 	Point2 mouse_dragging_start;
 	Vector2 mouse_dragging_dist;
+	real_t _dragging_change;
 
 	CanvasItemEditor *canvas_item_editor;
+	EditorPlugin *plugin;
 	EditorNode *editor;
 	SpriteMesh *node;
 
@@ -339,7 +341,7 @@ public:
 	void update_transform_gizmo_view();
 	void edit(SpriteMesh *p_node);
 
-	SpriteMeshEditor(EditorNode *p_node);
+	SpriteMeshEditor(EditorPlugin *p_plugin, EditorNode *p_node);
 	~SpriteMeshEditor();
 };
 

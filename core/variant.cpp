@@ -3208,3 +3208,64 @@ String vformat(const String &p_text, const Variant &p1, const Variant &p2, const
 
 	return fmt;
 }
+
+namespace helper {
+#define Arg(N) const String &p_key##N, const Variant &p_arg##N
+#define SaveArg(D, N) D[p_key##N] = p_arg##N
+Dictionary dict() {
+	return Dictionary();
+}
+
+Dictionary dict(Arg(1)) {
+	Dictionary dict;
+	SaveArg(dict, 1);
+	return dict;
+}
+
+Dictionary dict(Arg(1), Arg(2)) {
+	Dictionary dict;
+	SaveArg(dict, 1);
+	SaveArg(dict, 2);
+	return dict;
+}
+
+Dictionary dict(Arg(1), Arg(2), Arg(3)) {
+	Dictionary dict;
+	SaveArg(dict, 1);
+	SaveArg(dict, 2);
+	SaveArg(dict, 3);
+	return dict;
+}
+
+Dictionary dict(Arg(1), Arg(2), Arg(3), Arg(4)) {
+	Dictionary dict;
+	SaveArg(dict, 1);
+	SaveArg(dict, 2);
+	SaveArg(dict, 3);
+	SaveArg(dict, 4);
+	return dict;
+}
+
+Dictionary dict(Arg(1), Arg(2), Arg(3), Arg(4), Arg(5)) {
+	Dictionary dict;
+	SaveArg(dict, 1);
+	SaveArg(dict, 2);
+	SaveArg(dict, 3);
+	SaveArg(dict, 4);
+	SaveArg(dict, 5);
+	return dict;
+}
+
+Dictionary dict(Arg(1), Arg(2), Arg(3), Arg(4), Arg(5), Arg(6)) {
+	Dictionary dict;
+	SaveArg(dict, 1);
+	SaveArg(dict, 2);
+	SaveArg(dict, 3);
+	SaveArg(dict, 4);
+	SaveArg(dict, 5);
+	SaveArg(dict, 6);
+	return dict;
+}
+#undef Arg
+#undef SaveArg
+} // namespace helper

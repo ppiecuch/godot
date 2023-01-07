@@ -79,7 +79,6 @@ static String _str_format(const char *p_format, va_list p_list) {
 	return res;
 }
 
-
 String string_format(const char *p_format, ...) {
 	va_list list;
 

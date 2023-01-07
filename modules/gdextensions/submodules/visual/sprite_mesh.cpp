@@ -69,10 +69,10 @@
 #define GIZMO_SCALE_OFFSET (GIZMO_CIRCLE_SIZE + 0.3)
 #define GIZMO_ARROW_OFFSET (GIZMO_CIRCLE_SIZE + 0.3)
 
-#define GIZMO_Z_SCROLLER_SEGS 32.0 // number of vetical ticks
-#define GIZMO_XY_RING_WIDTH 0.025 // width of the ring
-#define GIZMO_XY_RING_SEGS 128 // number of circle segments
-#define GIZMO_XY_RING_TICKS 64 // number of ring ticks
+#define GIZMO_SCROLLER_SEGS 32.0 // number of vert/horiz ticks
+#define GIZMO_RING_WIDTH 0.025 // width of the ring
+#define GIZMO_RING_SEGS 128 // number of circle segments
+#define GIZMO_RING_TICKS 64 // number of ring ticks
 
 #define get_mesh_surf_info(mesh) \
 	((Dictionary)(mesh->has_meta("_mesh_surf_info") ? (Dictionary)mesh->get_meta("_mesh_surf_info") : Dictionary()))
@@ -330,7 +330,6 @@ Ref<Mesh> SpriteMesh::get_mesh() const {
 void SpriteMesh::_update_xform_values() {
 	_mesh_angle = mesh_xform.get_euler();
 	_mesh_scale = mesh_xform.get_scale();
-	_mesh_xform_dirty = false;
 }
 
 void SpriteMesh::_update_transform() {
@@ -346,17 +345,11 @@ void SpriteMesh::_update_transform() {
 }
 
 void SpriteMesh::set_mesh_rotation(const Vector3 &p_radians) {
-	if (_mesh_xform_dirty) {
-		_update_xform_values();
-	}
 	_mesh_angle = p_radians;
 	_update_transform();
 }
 
 Vector3 SpriteMesh::get_mesh_rotation() const {
-	if (_mesh_xform_dirty) {
-		((SpriteMesh *)this)->_update_xform_values();
-	}
 	return _mesh_angle;
 }
 
@@ -388,16 +381,19 @@ float SpriteMesh::get_mesh_rotation_z_degrees() const {
 }
 
 void SpriteMesh::set_mesh_orientation(const Basis &p_basis) {
-	mesh_xform = p_basis;
-	_mesh_xform_dirty = true;
+	if (mesh_xform != p_basis) {
+		mesh_xform = p_basis;
+		_update_xform_values();
 
-	if (!is_inside_tree()) {
-		return;
+		if (!is_inside_tree()) {
+			return;
+		}
+
+		_mesh_dirty = true;
+		_notify_transform();
+		property_list_changed_notify();
+		update();
 	}
-
-	_mesh_dirty = true;
-	_notify_transform();
-	update();
 }
 
 Basis SpriteMesh::get_mesh_orientation() const {
@@ -405,9 +401,6 @@ Basis SpriteMesh::get_mesh_orientation() const {
 }
 
 void SpriteMesh::set_mesh_scale(const Vector3 &p_scale) {
-	if (_mesh_xform_dirty) {
-		_update_xform_values();
-	}
 	_mesh_scale = p_scale;
 	// Avoid having 0 scale values, can lead to errors in physics and rendering.
 	if (_mesh_scale.x == 0)
@@ -420,15 +413,13 @@ void SpriteMesh::set_mesh_scale(const Vector3 &p_scale) {
 }
 
 Vector3 SpriteMesh::get_mesh_scale() const {
-	if (_mesh_xform_dirty)
-		((SpriteMesh *)this)->_update_xform_values();
-
 	return _mesh_scale;
 }
 
 void SpriteMesh::set_mesh_texture(const Ref<Texture> &p_texture) {
-	if (texture == p_texture)
+	if (texture == p_texture) {
 		return;
+	}
 	texture = p_texture;
 	update();
 	emit_signal("texture_changed");
@@ -689,7 +680,6 @@ SpriteMesh::SpriteMesh() {
 	_mesh_angle = Vector3(0, 0, 0);
 	_mesh_scale = Vector3(1, 1, 1);
 	_mesh_dirty = false;
-	_mesh_xform_dirty = false;
 	snapshot_size = Size2(128, 128);
 	centered = true;
 	offset = Vector2(0, 0);
@@ -709,7 +699,7 @@ static void draw_indicator_bar(Control &p_surface, const Rect2 &p_rc, real_t p_f
 	const real_t h = surface_size.y / 1.5;
 	const real_t y = (surface_size.y - (h + icon_size.y + p_font->get_string_size(p_text).y)) / 2.0;
 
-	const Rect2 r(p_rc.get_position().x + 10 * EDSCALE, p_rc.get_position().y + y, 6 * EDSCALE, h);
+	const Rect2 r(p_rc.get_position().x - 10 * EDSCALE, p_rc.get_position().y + y, 6 * EDSCALE, h);
 	const real_t sy = r.size.y * p_fill;
 
 	// Note: because this bar appears over the viewport, it has to stay readable for any background color
@@ -723,7 +713,7 @@ static void draw_indicator_bar(Control &p_surface, const Rect2 &p_rc, real_t p_f
 
 	// Draw a shadow for the text to make it easier to read.
 	p_surface.draw_string(p_font, Vector2(icon_pos.x + EDSCALE, icon_pos.y + icon_size.y + 17 * EDSCALE), p_text, Color(0, 0, 0));
-	// Draw text below the bar (for speed/zoom information).
+	// Draw text below the bar.
 	p_surface.draw_string(p_font, Vector2(icon_pos.x, icon_pos.y + icon_size.y + 16 * EDSCALE), p_text, p_color);
 }
 
@@ -735,17 +725,24 @@ int SpriteMeshEditor::_update_dragging_info(const Point2 &spoint) {
 			const real_t dist = (pt.x - center.x) * (pt.x - center.x) + (pt.y - center.y) * (pt.y - center.y);
 			return dist <= r * r;
 		};
-		const bool ring_active = is_inside_circle(Point2(), GIZMO_CIRCLE_SIZE + GIZMO_XY_RING_WIDTH, spoint) && !is_inside_circle(Point2(), GIZMO_CIRCLE_SIZE - GIZMO_XY_RING_WIDTH * 2, spoint);
+		const bool ring_active = is_inside_circle(Point2(), GIZMO_CIRCLE_SIZE + GIZMO_RING_WIDTH * 2, spoint) && !is_inside_circle(Point2(), GIZMO_CIRCLE_SIZE - GIZMO_RING_WIDTH * 2, spoint);
 		if (ring_active) {
-			return DRAG_ROTATE_XY;
+			return DRAG_ROTATE_Z;
 		}
-		// Hover over z scroller
 		if (is_inside_circle(Point2(), GIZMO_CIRCLE_SIZE, spoint)) {
+			// Hover over x scroller
 			const real_t y = spoint.y + GIZMO_CIRCLE_SIZE;
-			const real_t ofs = Math::sin((Math_PI * y) / (2 * GIZMO_CIRCLE_SIZE));
-			const bool scroller_active = (spoint.x > -0.05 - 0.1 * ofs) && (spoint.x < 0.05 + 0.1 * ofs);
-			if (scroller_active) {
-				return DRAG_ROTATE_Z;
+			const real_t ofs1 = Math::sin((Math_PI * y) / (2 * GIZMO_CIRCLE_SIZE));
+			const bool scroller_x_active = (spoint.x > -0.05 - 0.1 * ofs1) && (spoint.x < 0.05 + 0.1 * ofs1);
+			if (scroller_x_active) {
+				return DRAG_ROTATE_X;
+			}
+			// Hover over y scroller
+			const real_t x = spoint.x + GIZMO_CIRCLE_SIZE;
+			const real_t ofs2 = Math::sin((Math_PI * x) / (2 * GIZMO_CIRCLE_SIZE));
+			const bool scroller_y_active = (spoint.y > -0.05 - 0.1 * ofs2) && (spoint.y < 0.05 + 0.1 * ofs2);
+			if (scroller_y_active) {
+				return DRAG_ROTATE_Y;
 			}
 		}
 	}
@@ -786,25 +783,58 @@ bool SpriteMeshEditor::forward_gui_input(const Ref<InputEvent> &p_event) {
 					// decide what has been selected
 					const int _dragging = _update_dragging_info(spoint);
 					if (rotate_gizmo[0].mesh.is_valid()) {
-						rotate_gizmo[0].mesh->surface_set_active(3, _dragging == DRAG_ROTATE_XY);
+						rotate_gizmo[0].mesh->surface_set_active(2, _dragging == DRAG_ROTATE_Z);
 					}
 					if (rotate_gizmo[1].mesh.is_valid()) {
-						rotate_gizmo[1].mesh->surface_set_active(0, _dragging != DRAG_ROTATE_Z);
-						rotate_gizmo[1].mesh->surface_set_active(1, _dragging != DRAG_ROTATE_Z);
-						rotate_gizmo[1].mesh->surface_set_active(2, _dragging == DRAG_ROTATE_Z);
+						rotate_gizmo[1].mesh->surface_set_active(0, _dragging != DRAG_ROTATE_X);
+						rotate_gizmo[1].mesh->surface_set_active(1, _dragging != DRAG_ROTATE_X);
+						rotate_gizmo[1].mesh->surface_set_active(2, _dragging == DRAG_ROTATE_X);
+					}
+					if (rotate_gizmo[2].mesh.is_valid()) {
+						rotate_gizmo[2].mesh->surface_set_active(0, _dragging != DRAG_ROTATE_Y);
+						rotate_gizmo[2].mesh->surface_set_active(1, _dragging != DRAG_ROTATE_Y);
+						rotate_gizmo[2].mesh->surface_set_active(2, _dragging == DRAG_ROTATE_Y);
 					}
 					if (_dragging != NONE) {
 						undo_redo_state = node->_edit_get_state(); // save state in case we may need it
 						dragging = _dragging;
 						mouse_dragging_start = gpoint;
+						_dragging_change = 0;
 						return true;
 					}
 				} break;
-				case BUTTON_WHEEL_UP: {
-					// offset += mb->get_factor();
-				} break;
+				case BUTTON_WHEEL_UP:
 				case BUTTON_WHEEL_DOWN: {
-					// offset -= mb->get_factor();
+					if (dragging == NONE) {
+						const int _dragging = _update_dragging_info(spoint);
+						if (_dragging != NONE) {
+							const Basis node_orientation = node->get_mesh_orientation();
+							const real_t mult = (mb->get_button_index() == BUTTON_WHEEL_UP ? 1 : -1) * MAX(1, 2 * mb->get_shift()) * MAX(1, 10 * mb->get_alt());
+							real_t r = Math::deg2rad(mult * mb->get_factor());
+							if (mb->get_control()) { // snap
+								r = Math::stepify(r, Math::deg2rad(10.));
+							}
+							print_line(rtos(mb->get_factor()) + "->" + rtos(r));
+							switch (_dragging) {
+								case DRAG_ROTATE_Z: {
+									VS::get_singleton()->canvas_item_mul_mesh_3d(rotate_gizmo[0].item, rotate_gizmo[0].entry, Transform().rotated(Vector3(0, 0, 1), r));
+									node->set_mesh_orientation(Basis(Vector3(0, 0, 1), r) * node_orientation);
+								} break;
+								case DRAG_ROTATE_X: {
+									const real_t sr = Math_PI / GIZMO_SCROLLER_SEGS; // segment rotation
+									VS::get_singleton()->canvas_item_set_mesh_3d(rotate_gizmo[1].item, rotate_gizmo[1].entry, Transform().rotated(Vector3(1, 0, 0), Math::fmod(r, sr)));
+									node->set_mesh_orientation(Basis(Vector3(1, 0, 0), r) * node_orientation);
+								} break;
+								case DRAG_ROTATE_Y: {
+									const real_t sr = Math_PI / GIZMO_SCROLLER_SEGS; // segment rotation
+									VS::get_singleton()->canvas_item_set_mesh_3d(rotate_gizmo[2].item, rotate_gizmo[2].entry, Transform().rotated(Vector3(0, 1, 0), Math::fmod(r, sr)));
+									node->set_mesh_orientation(Basis(Vector3(0, 1, 0), r) * node_orientation);
+								} break;
+							};
+							property_list_changed_notify();
+							return true;
+						}
+					}
 				} break;
 			}
 		} else {
@@ -812,17 +842,30 @@ bool SpriteMeshEditor::forward_gui_input(const Ref<InputEvent> &p_event) {
 			if (dragging != NONE) {
 				if (node->_edit_state_changed(undo_redo_state)) {
 					switch (dragging) {
-						case DRAG_ROTATE_XY: {
-							undo_redo->create_action(TTR("XY-Rotate SpriteMesh"));
-						} break;
+						case DRAG_ROTATE_X:
+						case DRAG_ROTATE_Y:
 						case DRAG_ROTATE_Z: {
-							undo_redo->create_action(TTR("Z-Rotate SpriteMesh"));
+							const String label[] = { TTR("X-Rotate SpriteMesh"), TTR("Y-Rotate SpriteMesh"), TTR("Z-Rotate SpriteMesh") };
+							undo_redo->create_action(label[dragging - DRAG_ROTATE_X]);
+						} break;
+						case DRAG_SCALE_X:
+						case DRAG_SCALE_Y:
+						case DRAG_SCALE_Z: {
+							const String label[] = { TTR("X-Scale SpriteMesh"), TTR("Y-Scale SpriteMesh"), TTR("Z-Scale SpriteMesh") };
+							undo_redo->create_action(label[dragging - DRAG_SCALE_X]);
+						} break;
+						case DRAG_SCALE_XY:
+						case DRAG_SCALE_YZ:
+						case DRAG_SCALE_XZ: {
+							const String label[] = { TTR("XY-Scale SpriteMesh"), TTR("YZ-Scale SpriteMesh"), TTR("XZ-Scale SpriteMesh") };
+							undo_redo->create_action(label[dragging - DRAG_SCALE_XY]);
 						} break;
 					};
 					undo_redo->add_do_method(node, "_edit_set_state", node->_edit_get_state());
 					undo_redo->add_undo_method(node, "_edit_set_state", undo_redo_state);
 				}
 				dragging = NONE;
+				plugin->update_overlays();
 				return true;
 			}
 		}
@@ -836,33 +879,51 @@ bool SpriteMeshEditor::forward_gui_input(const Ref<InputEvent> &p_event) {
 		if (dragging != NONE) {
 			mouse_dragging_dist = mouse_dragging_start - gpoint;
 			switch (dragging) {
-				case DRAG_ROTATE_XY: {
-					const real_t r = -Math_PI * (mouse_dragging_dist.y / gizmo_scale) / GIZMO_CIRCLE_SIZE; // rotation
-					VS::get_singleton()->canvas_item_update_mesh_3d(rotate_gizmo[0].item, rotate_gizmo[0].entry, Transform().rotated(Vector3(0,0,1), r));
-					const Basis node_orientation = undo_redo_state["mesh_xform"];
-					node->set_mesh_orientation(Basis(Vector3(0,0,1), r) * node_orientation);
-				} break;
 				case DRAG_ROTATE_Z: {
-					if (rotate_gizmo[1].item.is_valid()) {
-						const real_t r = Math_PI / GIZMO_Z_SCROLLER_SEGS; // rotation
-						const real_t s = 2 * GIZMO_CIRCLE_SIZE / GIZMO_Z_SCROLLER_SEGS; // dist
-						const real_t scroller_rotation = r * Math::fmod(mouse_dragging_dist.y / gizmo_scale, s) / s;
-						VS::get_singleton()->canvas_item_update_mesh_3d(rotate_gizmo[1].item, rotate_gizmo[1].entry, Transform().rotated(Vector3(1,0,0), scroller_rotation));
+					const real_t r = _dragging_change = -Math_PI * (mouse_dragging_dist.y / gizmo_scale) / GIZMO_CIRCLE_SIZE; // rotation
+					VS::get_singleton()->canvas_item_mul_mesh_3d(rotate_gizmo[0].item, rotate_gizmo[0].entry, Transform().rotated(Vector3(0, 0, 1), r));
+					const Basis node_orientation = undo_redo_state["mesh_xform"];
+					node->set_mesh_orientation(Basis(Vector3(0, 0, 1), r) * node_orientation);
+				} break;
+				case DRAG_ROTATE_Y: {
+					if (rotate_gizmo[2].item.is_valid()) {
+						const real_t sr = Math_PI / GIZMO_SCROLLER_SEGS; // segment rotation
+						const real_t sd = 2 * GIZMO_CIRCLE_SIZE / GIZMO_SCROLLER_SEGS; // dist
+						const real_t scroller_rotation = sr * Math::fmod(mouse_dragging_dist.x / gizmo_scale, sd) / sd;
+						VS::get_singleton()->canvas_item_mul_mesh_3d(rotate_gizmo[2].item, rotate_gizmo[2].entry, Transform().rotated(Vector3(0, 1, 0), scroller_rotation));
 						const Basis node_orientation = undo_redo_state["mesh_xform"];
-						node->set_mesh_orientation(Basis(Vector3(1,0,0), Math_PI * (mouse_dragging_dist.y / gizmo_scale) / GIZMO_CIRCLE_SIZE) * node_orientation);
+						_dragging_change = Math_PI * (mouse_dragging_dist.x / gizmo_scale) / GIZMO_CIRCLE_SIZE;
+						node->set_mesh_orientation(Basis(Vector3(0, 1, 0), _dragging_change) * node_orientation);
+					}
+				} break;
+				case DRAG_ROTATE_X: {
+					if (rotate_gizmo[1].item.is_valid()) {
+						const real_t sr = Math_PI / GIZMO_SCROLLER_SEGS; // segment rotation
+						const real_t sd = 2 * GIZMO_CIRCLE_SIZE / GIZMO_SCROLLER_SEGS; // dist
+						const real_t scroller_rotation = sr * Math::fmod(mouse_dragging_dist.y / gizmo_scale, sd) / sd;
+						VS::get_singleton()->canvas_item_mul_mesh_3d(rotate_gizmo[1].item, rotate_gizmo[1].entry, Transform().rotated(Vector3(1, 0, 0), scroller_rotation));
+						const Basis node_orientation = undo_redo_state["mesh_xform"];
+						_dragging_change = Math_PI * (mouse_dragging_dist.y / gizmo_scale) / GIZMO_CIRCLE_SIZE;
+						node->set_mesh_orientation(Basis(Vector3(1, 0, 0), _dragging_change) * node_orientation);
 					}
 				} break;
 			}
+			property_list_changed_notify();
 			return true;
 		} else {
 			const int _dragging = _update_dragging_info(spoint);
 			if (rotate_gizmo[0].mesh.is_valid()) {
-				rotate_gizmo[0].mesh->surface_set_active(3, _dragging == DRAG_ROTATE_XY);
+				rotate_gizmo[0].mesh->surface_set_active(2, _dragging == DRAG_ROTATE_Z);
 			}
 			if (rotate_gizmo[1].mesh.is_valid()) {
-				rotate_gizmo[1].mesh->surface_set_active(0, _dragging != DRAG_ROTATE_Z);
-				rotate_gizmo[1].mesh->surface_set_active(1, _dragging != DRAG_ROTATE_Z);
-				rotate_gizmo[1].mesh->surface_set_active(2, _dragging == DRAG_ROTATE_Z);
+				rotate_gizmo[1].mesh->surface_set_active(0, _dragging != DRAG_ROTATE_X);
+				rotate_gizmo[1].mesh->surface_set_active(1, _dragging != DRAG_ROTATE_X);
+				rotate_gizmo[1].mesh->surface_set_active(2, _dragging == DRAG_ROTATE_X);
+			}
+			if (rotate_gizmo[2].mesh.is_valid()) {
+				rotate_gizmo[2].mesh->surface_set_active(0, _dragging != DRAG_ROTATE_Y);
+				rotate_gizmo[2].mesh->surface_set_active(1, _dragging != DRAG_ROTATE_Y);
+				rotate_gizmo[2].mesh->surface_set_active(2, _dragging == DRAG_ROTATE_Y);
 			}
 		}
 	}
@@ -879,16 +940,50 @@ void SpriteMeshEditor::forward_canvas_draw_over_viewport(Control *p_overlay) {
 		return;
 	}
 
-	Transform2D xform = canvas_item_editor->get_canvas_transform() * node->get_global_transform();
-	draw_indicator_bar(
-			*p_overlay,
-			xform.xform(node->get_rect()),
-			0.5,
-			get_icon("ViewportZoom", "EditorIcons"),
-			get_font("font", "Label"),
-			"n/a",
-			Color(0.7, 0.95, 1.0));
 	update_transform_gizmo_view();
+
+	if (dragging != NONE) {
+		const Color text_color = Color(0.7, 0.95, 1.0);
+		const Ref<Font> text_font = get_font("font", "Label");
+
+		const CanvasItemEditor::Tool tool = canvas_item_editor->get_current_tool();
+		const Transform2D xform = canvas_item_editor->get_canvas_transform() * node->get_global_transform();
+		Rect2 rc;
+		Ref<Texture> icon;
+		String label;
+		real_t bar = 0;
+		if (tool == CanvasItemEditor::TOOL_ROTATE) {
+			const real_t gizmo_scale = _get_gizmo_scale();
+			const Transform2D gizmo_xform = Transform2D(0, Size2(gizmo_scale, gizmo_scale), xform.elements[2]);
+			rc = gizmo_xform.xform(Rect2(Point2(-GIZMO_CIRCLE_SIZE, -GIZMO_CIRCLE_SIZE), Size2(2 * GIZMO_CIRCLE_SIZE, 2 * GIZMO_CIRCLE_SIZE)));
+			icon = get_icon("ToolRotate", "EditorIcons");
+			real_t dragging_change = Math::fmod(_dragging_change, real_t(Math_TAU));
+			label = itos(int(Math::rad2deg(dragging_change)));
+			if (dragging_change < 0) {
+				bar = Math::map1(dragging_change, -Math_TAU, 0, 0, 1);
+			} else {
+				bar = Math::map1(dragging_change, 0, Math_TAU, 0, 1);
+			}
+			const String info = itos(int(Math::rad2deg(node->get_mesh_rotation()[dragging - DRAG_ROTATE_X]))); // ROTATE_.. are in sequence
+			if (!info.empty()) {
+				p_overlay->draw_string(text_font, gizmo_xform.xform(Point2(0, -GIZMO_CIRCLE_SIZE)) + Point2(EDSCALE, EDSCALE) - text_font->get_string_size(label) / 2, info, Color(0, 0, 0));
+				p_overlay->draw_string(text_font, gizmo_xform.xform(Point2(0, -GIZMO_CIRCLE_SIZE)) - text_font->get_string_size(label) / 2, info, text_color);
+			}
+		} else if (tool == CanvasItemEditor::TOOL_SCALE) {
+			icon = get_icon("ToolScale", "EditorIcons");
+			label = itos(int(Math::rad2deg(_dragging_change)));
+		} else {
+			return;
+		}
+		draw_indicator_bar(
+				*p_overlay,
+				rc,
+				bar,
+				icon,
+				text_font,
+				label,
+				text_color);
+	}
 }
 
 void SpriteMeshEditor::_notification(int p_what) {
@@ -928,6 +1023,8 @@ void SpriteMeshEditor::_notification(int p_what) {
 		if (_project_settings_change_pending) {
 			_project_settings_changed();
 		}
+	} else if (p_what == NOTIFICATION_DRAW) {
+		forward_canvas_draw_over_viewport(editor->get_viewport());
 	}
 }
 
@@ -963,18 +1060,23 @@ void SpriteMeshEditor::update_transform_gizmo_view() {
 	const Transform2D xform = canvas_item_editor->get_canvas_transform() * node->get_global_transform();
 	const Transform2D gizmo_xform = Transform2D(0, Size2(gizmo_scale, gizmo_scale), xform.elements[2]);
 	const Transform origin_transform = Transform(Basis(node->get_mesh_rotation(), { gizmo_scale, gizmo_scale, gizmo_scale }), { xform.elements[2].x, xform.elements[2].y, 0 });
-	// Rect2 node_rect = xform.xform(node->get_rect());
 
 	switch (dragging) {
-		case DRAG_ROTATE_XY: {
-			const real_t r = -Math_PI * (mouse_dragging_dist.y / gizmo_scale) / GIZMO_CIRCLE_SIZE; // rotation
-			VS::get_singleton()->canvas_item_update_mesh_3d(rotate_gizmo[0].item, rotate_gizmo[0].entry, Transform().rotated(Vector3(0,0,1), r));
-		} break;
 		case DRAG_ROTATE_Z: {
-			const real_t r = Math_PI / GIZMO_Z_SCROLLER_SEGS; // rotation
-			const real_t s = 2 * GIZMO_CIRCLE_SIZE / GIZMO_Z_SCROLLER_SEGS; // dist
-			const real_t scroller_rotation = r * Math::fmod(mouse_dragging_dist.y / gizmo_scale, s) / s;
-			VS::get_singleton()->canvas_item_update_mesh_3d(rotate_gizmo[1].item, rotate_gizmo[1].entry, Transform().rotated(Vector3(1,0,0), scroller_rotation));
+			const real_t r = -Math_PI * (mouse_dragging_dist.y / gizmo_scale) / GIZMO_CIRCLE_SIZE; // rotation
+			VS::get_singleton()->canvas_item_set_mesh_3d(rotate_gizmo[0].item, rotate_gizmo[0].entry, Transform().rotated(Vector3(0, 0, 1), r));
+		} break;
+		case DRAG_ROTATE_Y: {
+			const real_t sr = Math_PI / GIZMO_SCROLLER_SEGS; // segment rotation
+			const real_t sd = 2 * GIZMO_CIRCLE_SIZE / GIZMO_SCROLLER_SEGS; // segment dist
+			const real_t scroller_rotation = sr * Math::fmod(mouse_dragging_dist.x / gizmo_scale, sd) / sd;
+			VS::get_singleton()->canvas_item_set_mesh_3d(rotate_gizmo[2].item, rotate_gizmo[2].entry, Transform().rotated(Vector3(0, 1, 0), scroller_rotation));
+		} break;
+		case DRAG_ROTATE_X: {
+			const real_t sr = Math_PI / GIZMO_SCROLLER_SEGS; // segment rotation
+			const real_t sd = 2 * GIZMO_CIRCLE_SIZE / GIZMO_SCROLLER_SEGS; // segment dist
+			const real_t scroller_rotation = sr * Math::fmod(mouse_dragging_dist.y / gizmo_scale, sd) / sd;
+			VS::get_singleton()->canvas_item_set_mesh_3d(rotate_gizmo[1].item, rotate_gizmo[1].entry, Transform().rotated(Vector3(1, 0, 0), scroller_rotation));
 		} break;
 	}
 
@@ -982,13 +1084,13 @@ void SpriteMeshEditor::update_transform_gizmo_view() {
 	for (int i = 0; i < 3; i++) {
 		VS::get_singleton()->canvas_item_set_transform(rotate_gizmo[i].item, gizmo_xform);
 		VS::get_singleton()->canvas_item_set_visible(rotate_gizmo[i].item, tool == CanvasItemEditor::TOOL_ROTATE);
-		VS::get_singleton()->canvas_item_update_mesh_3d(scale_gizmo[i].item, scale_gizmo[i].entry, origin_transform);
+		VS::get_singleton()->canvas_item_set_mesh_3d(scale_gizmo[i].item, scale_gizmo[i].entry, origin_transform);
 		VS::get_singleton()->canvas_item_set_visible(scale_gizmo[i].item, tool == CanvasItemEditor::TOOL_SCALE);
-		VS::get_singleton()->canvas_item_update_mesh_3d(scale_plane_gizmo[i].item, scale_plane_gizmo[i].entry, origin_transform);
+		VS::get_singleton()->canvas_item_set_mesh_3d(scale_plane_gizmo[i].item, scale_plane_gizmo[i].entry, origin_transform);
 		VS::get_singleton()->canvas_item_set_visible(scale_plane_gizmo[i].item, tool == CanvasItemEditor::TOOL_SCALE);
 	}
 	// Origin marker
-	VS::get_singleton()->canvas_item_update_mesh_3d(origin_indicator.item, origin_indicator.entry, origin_transform);
+	VS::get_singleton()->canvas_item_set_mesh_3d(origin_indicator.item, origin_indicator.entry, origin_transform);
 	VS::get_singleton()->canvas_item_set_visible(origin_indicator.item, tool != CanvasItemEditor::TOOL_SCALE); // indicator or scale gizmo
 }
 
@@ -1080,13 +1182,12 @@ void SpriteMeshEditor::_init_indicators() {
 
 		// Rotate
 		{
-
 			const int n = 128; // number of circle segments
 			const real_t coef = Math_TAU / n;
 
 			Ref<SurfaceTool> surftool = memnew(SurfaceTool);
 
-			if (i == 0) {
+			if (i == 0) { // z scroller
 				Point3 pt0, pt1;
 				// Ring
 				surftool->begin(Mesh::PRIMITIVE_TRIANGLES);
@@ -1095,7 +1196,7 @@ void SpriteMeshEditor::_init_indicators() {
 					const real_t rads = i * coef;
 					const Vector3 norm(Math::sin(rads), Math::cos(rads), 0);
 					const Point3 pt2 = GIZMO_CIRCLE_SIZE * norm;
-					const Point3 pt3 = (GIZMO_CIRCLE_SIZE - GIZMO_XY_RING_WIDTH) * norm;
+					const Point3 pt3 = (GIZMO_CIRCLE_SIZE - GIZMO_RING_WIDTH) * norm;
 					if (i) {
 						surftool->add_triangle(pt0, pt2, pt1);
 						surftool->add_triangle(pt1, pt2, pt3);
@@ -1105,21 +1206,7 @@ void SpriteMeshEditor::_init_indicators() {
 				}
 				surftool->commit(rotate_gizmo[i].mesh); // surf 0
 
-				// Ticks
-				surftool->begin(Mesh::PRIMITIVE_LINES);
-				surftool->add_color(col);
-				const int segs = 64;
-				for (int r = 0; r < segs; r++) {
-					const real_t ang = (Math_TAU / segs) * r;
-					const Vector3 norm(Math::cos(ang), Math::sin(ang), 0);
-					const real_t div = r & 3 ? 0.05 : 0.1;
-					const Vector3 pt1 = (GIZMO_CIRCLE_SIZE - GIZMO_XY_RING_WIDTH - div) * norm;
-					const Vector3 pt2 = (GIZMO_CIRCLE_SIZE - GIZMO_XY_RING_WIDTH) * norm;
-					surftool->add_line(pt1, pt2);
-				}
-				surftool->commit(rotate_gizmo[i].mesh); // surf 1
-
-				// Rotation white outline
+				// White outline
 				surftool->begin(Mesh::PRIMITIVE_LINES);
 				surftool->add_color(col_hl);
 				for (int i = 0; i <= n; i++) {
@@ -1130,7 +1217,7 @@ void SpriteMeshEditor::_init_indicators() {
 					}
 					pt1 = pt2;
 				}
-				surftool->commit(rotate_gizmo[i].mesh); // surf 2
+				surftool->commit(rotate_gizmo[i].mesh); // surf 1
 
 				// Highlighted ring
 				surftool->begin(Mesh::PRIMITIVE_TRIANGLES);
@@ -1139,7 +1226,7 @@ void SpriteMeshEditor::_init_indicators() {
 					const real_t rads = i * coef;
 					const Vector3 norm(Math::sin(rads), Math::cos(rads), 1);
 					const Point3 pt2 = GIZMO_CIRCLE_SIZE * norm;
-					const Point3 pt3 = (GIZMO_CIRCLE_SIZE - GIZMO_XY_RING_WIDTH) * norm;
+					const Point3 pt3 = (GIZMO_CIRCLE_SIZE - GIZMO_RING_WIDTH) * norm;
 					if (i) {
 						surftool->add_triangle(pt0, pt2, pt1);
 						surftool->add_triangle(pt1, pt2, pt3);
@@ -1147,15 +1234,47 @@ void SpriteMeshEditor::_init_indicators() {
 					pt0 = pt2;
 					pt1 = pt3;
 				}
-				surftool->commit(rotate_gizmo[i].mesh, false); // surf 3
-			} else if (i == 1) {
+				surftool->commit(rotate_gizmo[i].mesh, false); // surf 2
+
+				// Ticks
+				surftool->begin(Mesh::PRIMITIVE_LINES);
+				surftool->add_color(col);
+				for (int r = 0; r < GIZMO_RING_TICKS; r++) {
+					const real_t ang = (Math_TAU / GIZMO_RING_TICKS) * r;
+					const Vector3 norm(Math::cos(ang), Math::sin(ang), 0);
+					const real_t div = r & 3 ? 0.05 : 0.1;
+					const Vector3 pt1 = (GIZMO_CIRCLE_SIZE - GIZMO_RING_WIDTH - div) * norm;
+					const Vector3 pt2 = (GIZMO_CIRCLE_SIZE - GIZMO_RING_WIDTH) * norm;
+					surftool->add_line(pt1, pt2);
+				}
+				surftool->commit(rotate_gizmo[i].mesh); // surf 3
+
+				// Highlighted ticks
+				surftool->begin(Mesh::PRIMITIVE_LINES);
+				surftool->add_color(col_hl);
+				for (int r = 0; r < GIZMO_RING_TICKS; r++) {
+					const real_t ang = (Math_TAU / GIZMO_RING_TICKS) * r;
+					const Vector3 norm(Math::cos(ang), Math::sin(ang), 0);
+					const real_t div = (r & 3) ? 0.05 : 0.1;
+					const Vector3 pt1 = GIZMO_CIRCLE_SIZE * norm;
+					const Vector3 pt2 = (GIZMO_CIRCLE_SIZE + div) * norm;
+					surftool->add_line(pt1, pt2);
+					const bool quad = (r == 0 || r == GIZMO_RING_TICKS * 0.25 || r == GIZMO_RING_TICKS * 0.5 || r == GIZMO_RING_TICKS * 0.75);
+					if (quad) {
+						const Vector3 orig = (GIZMO_CIRCLE_SIZE + 0.1) * norm;
+						const Vector3 perp = 0.05 * Vector3(norm.y, -norm.x, 0);
+						surftool->add_line(orig + perp, orig - perp);
+					}
+				}
+				surftool->commit(rotate_gizmo[i].mesh); // surf 4
+			} else if (i == 1) { // x scroller
 				for (int p = 0; p < 2; p++) {
 					surftool->begin(Mesh::PRIMITIVE_LINES);
 					surftool->add_color(p ? col_hl : col);
-					for (int r = 1; r < GIZMO_Z_SCROLLER_SEGS; r++) {
-						const real_t y = 2 * r * (GIZMO_CIRCLE_SIZE / GIZMO_Z_SCROLLER_SEGS) - GIZMO_CIRCLE_SIZE;
-						const real_t z = Math::sin((Math_PI * r) / GIZMO_Z_SCROLLER_SEGS) * GIZMO_CIRCLE_SIZE;
-						const real_t ofs = Math::sin((Math_PI * r) / GIZMO_Z_SCROLLER_SEGS);
+					for (int r = 1; r < GIZMO_SCROLLER_SEGS; r++) {
+						const real_t y = 2 * r * (GIZMO_CIRCLE_SIZE / GIZMO_SCROLLER_SEGS) - GIZMO_CIRCLE_SIZE;
+						const real_t z = Math::sin((Math_PI * r) / GIZMO_SCROLLER_SEGS) * GIZMO_CIRCLE_SIZE;
+						const real_t ofs = Math::sin((Math_PI * r) / GIZMO_SCROLLER_SEGS);
 						if (p) {
 							surftool->add_line(Point3(-0.01 - 0.05 * ofs, y, z + 0.25), Point3(0.01 + 0.05 * ofs, y, z + 0.25));
 						} else {
@@ -1167,11 +1286,40 @@ void SpriteMeshEditor::_init_indicators() {
 				// Hightlight
 				surftool->begin(Mesh::PRIMITIVE_LINES);
 				surftool->add_color(col_hl);
-				for (int r = 1; r < GIZMO_Z_SCROLLER_SEGS - 1; r++) {
-					const real_t y = 2 * r * (GIZMO_CIRCLE_SIZE / GIZMO_Z_SCROLLER_SEGS) - GIZMO_CIRCLE_SIZE;
-					const real_t z = Math::sin((Math_PI * r) / GIZMO_Z_SCROLLER_SEGS) * GIZMO_CIRCLE_SIZE;
-					const real_t ofs = Math::sin((Math_PI * r) / GIZMO_Z_SCROLLER_SEGS);
+				for (int r = 1; r < GIZMO_SCROLLER_SEGS - 1; r++) {
+					const real_t y = 2 * r * (GIZMO_CIRCLE_SIZE / GIZMO_SCROLLER_SEGS) - GIZMO_CIRCLE_SIZE;
+					const real_t z = Math::sin((Math_PI * r) / GIZMO_SCROLLER_SEGS) * GIZMO_CIRCLE_SIZE;
+					const real_t ofs = Math::sin((Math_PI * r) / GIZMO_SCROLLER_SEGS);
 					surftool->add_line(Point3(-0.05 - 0.1 * ofs, y, z), Point3(0.05 + 0.1 * ofs, y, z));
+				}
+				surftool->commit(rotate_gizmo[i].mesh, false); // surf 2
+			} else if (i == 2) { // y scroller
+				for (int p = 0; p < 2; p++) {
+					surftool->begin(Mesh::PRIMITIVE_LINES);
+					surftool->add_color(p ? col_hl : col);
+					for (int r = 1; r < GIZMO_SCROLLER_SEGS; r++) {
+						if (r > (GIZMO_SCROLLER_SEGS / 2) - 2 && r < (GIZMO_SCROLLER_SEGS / 2) + 2) {
+							continue; // skip some central,overlapped bars
+						}
+						const real_t x = 2 * r * (GIZMO_CIRCLE_SIZE / GIZMO_SCROLLER_SEGS) - GIZMO_CIRCLE_SIZE;
+						const real_t z = Math::sin((Math_PI * r) / GIZMO_SCROLLER_SEGS) * GIZMO_CIRCLE_SIZE;
+						const real_t ofs = Math::sin((Math_PI * r) / GIZMO_SCROLLER_SEGS);
+						if (p) {
+							surftool->add_line(Point3(x, -0.01 - 0.05 * ofs, z + 0.25), Point3(x, 0.01 + 0.05 * ofs, z + 0.25));
+						} else {
+							surftool->add_line(Point3(x, -0.05 - 0.1 * ofs, z), Point3(x, 0.05 + 0.1 * ofs, z));
+						}
+					}
+					surftool->commit(rotate_gizmo[i].mesh); // surf 0,1
+				}
+				// Hightlight
+				surftool->begin(Mesh::PRIMITIVE_LINES);
+				surftool->add_color(col_hl);
+				for (int r = 1; r < GIZMO_SCROLLER_SEGS - 1; r++) {
+					const real_t x = 2 * r * (GIZMO_CIRCLE_SIZE / GIZMO_SCROLLER_SEGS) - GIZMO_CIRCLE_SIZE;
+					const real_t z = Math::sin((Math_PI * r) / GIZMO_SCROLLER_SEGS) * GIZMO_CIRCLE_SIZE;
+					const real_t ofs = Math::sin((Math_PI * r) / GIZMO_SCROLLER_SEGS);
+					surftool->add_line(Point3(x, -0.05 - 0.1 * ofs, z), Point3(x, 0.05 + 0.1 * ofs, z));
 				}
 				surftool->commit(rotate_gizmo[i].mesh, false); // surf 2
 			}
@@ -1235,7 +1383,6 @@ void SpriteMeshEditor::_init_indicators() {
 				}
 				surftool->commit(scale_gizmo[i].mesh);
 			}
-
 		}
 
 		// Plane Scale
@@ -1395,7 +1542,8 @@ void SpriteMeshEditor::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_node_removed", "node"), &SpriteMeshEditor::_node_removed);
 }
 
-SpriteMeshEditor::SpriteMeshEditor(EditorNode *p_node) {
+SpriteMeshEditor::SpriteMeshEditor(EditorPlugin *p_plugin, EditorNode *p_node) {
+	plugin = p_plugin;
 	editor = p_node;
 	node = nullptr;
 	canvas_item_editor = nullptr;
@@ -1407,6 +1555,7 @@ SpriteMeshEditor::SpriteMeshEditor(EditorNode *p_node) {
 }
 
 SpriteMeshEditor::~SpriteMeshEditor() {
+	EditorSettings::get_singleton()->disconnect("settings_changed", this, "update_transform_gizmo_view");
 }
 
 void SpriteMeshEditorPlugin::make_visible(bool p_visible) {
@@ -1434,7 +1583,7 @@ void SpriteMeshEditorPlugin::forward_canvas_draw_over_viewport(Control *p_overla
 }
 
 SpriteMeshEditorPlugin::SpriteMeshEditorPlugin(EditorNode *p_node) {
-	sprite_mesh_editor = memnew(SpriteMeshEditor(p_node));
+	sprite_mesh_editor = memnew(SpriteMeshEditor(this, p_node));
 	p_node->get_viewport()->add_child(sprite_mesh_editor);
 	sprite_mesh_editor->hide();
 }
@@ -1700,7 +1849,7 @@ void SpriteMeshLight::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("_update"), &SpriteMeshLight::_update);
 
-	#ifdef TOOLS_ENABLED
+#ifdef TOOLS_ENABLED
 	ClassDB::bind_method(D_METHOD("_edit_is_selected_on_click"), &SpriteMeshLight::_edit_is_selected_on_click);
 	ClassDB::bind_method(D_METHOD("_edit_get_state"), &SpriteMeshLight::_edit_get_state);
 	ClassDB::bind_method(D_METHOD("_edit_set_state"), &SpriteMeshLight::_edit_set_state);
