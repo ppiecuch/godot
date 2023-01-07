@@ -36,11 +36,12 @@
 // 4. https://github.com/Accessory/FlowHttp/blob/main/routes/Router.h
 // 5. https://github.com/malpower/evhttp-sample/blob/master/src/router.cc
 // 6. https://github.com/Faless/netgame-godot
+// 7. https://github.com/yhirose/cpp-httplib/blob/master/httplib.h
 
 #include "gd_http_server.h"
 
-#include "core/project_settings.h"
 #include "common/gd_core.h"
+#include "core/project_settings.h"
 
 #include <map>
 
@@ -70,7 +71,17 @@ bool GdHttpServer::_process_connection(Ref<StreamPeerTCP> connection) {
 					http::HTTPMessage response;
 					if (h(&http_message, &response)) {
 						const std::string out = response.to_string();
-						connection->put_data(reinterpret_cast<const uint8_t*>(out.c_str()), out.size());
+						connection->put_data(reinterpret_cast<const uint8_t *>(out.c_str()), out.size());
+						return true;
+					}
+				}
+				if (get_script_instance() && get_script_instance()->has_method("_http_handler")) {
+					Dictionary resp = get_script_instance()->call("_http_handler", helper::dict("path", http_message.get_path().c_str(), "query", http_message.get_query_string().c_str()));
+					if (!resp.empty()) {
+						http::HTTPMessage response;
+						response.set_message_body(String(resp["body"]).utf8().c_str());
+						const std::string out = response.to_string();
+						connection->put_data(reinterpret_cast<const uint8_t *>(out.c_str()), out.size());
 						return true;
 					}
 				}
@@ -79,7 +90,7 @@ bool GdHttpServer::_process_connection(Ref<StreamPeerTCP> connection) {
 				response.set_status_code(404);
 				response.set_status_message("Handler not found");
 				const std::string out = response.to_string();
-				connection->put_data(reinterpret_cast<const uint8_t*>(out.c_str()), out.size());
+				connection->put_data(reinterpret_cast<const uint8_t *>(out.c_str()), out.size());
 				return false;
 			} else {
 				_print_debug("Receiving data failed");
@@ -93,8 +104,12 @@ void GdHttpServer::_thread_start(void *s) {
 	GdHttpServer *self = (GdHttpServer *)s;
 	while (!self->quit) {
 		if (self->cmd == CMD_ACTIVATE) {
-			self->server->listen(self->port);
-			self->active = true;
+			if (self->server->listen(self->port) == OK) {
+				self->active = true;
+			} else {
+				self->active = false;
+				self->quit = true; // finish thread if we cannot bind server
+			}
 			self->cmd = CMD_NONE;
 		} else if (self->cmd == CMD_STOP) {
 			self->server->stop();
@@ -147,16 +162,21 @@ GdHttpServer::GdHttpServer() {
 	thread.start(_thread_start, this);
 
 	GLOBAL_DEF("network/http_server/port", 8081);
+#if defined(DEBUG_ENABLED) || defined(TOOLS_ENABLED)
+	GLOBAL_DEF("network/http_server/autostart", true);
+#else
+	GLOBAL_DEF("network/http_server/autostart", false);
+#endif
 
 	if (instance) {
 		WARN_PRINT("Http server instance is already create.");
 	}
 	instance = this;
 
-#if defined(DEBUG_ENABLED) || defined(TOOLS_ENABLED)
-	print_verbose("Auto-start http server on default port " + itos(GLOBAL_GET("network/http_server/port")));
-	start();
-#endif
+	if (GLOBAL_GET("network/http_server/autostart")) {
+		print_verbose("Auto-start http server on default port " + itos(GLOBAL_GET("network/http_server/port")));
+		start();
+	}
 }
 
 GdHttpServer::~GdHttpServer() {
@@ -165,12 +185,11 @@ GdHttpServer::~GdHttpServer() {
 	instance = nullptr;
 }
 
-
 /// Default monitor handler
 
 #include "main/performance.h"
 
-std::map<std::string, Performance::Monitor> _monitors {
+std::map<std::string, Performance::Monitor> _monitors{
 	{ "TIME_FPS", Performance::TIME_FPS },
 	{ "TIME_PROCESS", Performance::TIME_PROCESS },
 	{ "TIME_PHYSICS_PROCESS", Performance::TIME_PHYSICS_PROCESS },
@@ -207,7 +226,7 @@ std::map<std::string, Performance::Monitor> _monitors {
 static bool _remote_monitor_handler(const http::HTTPMessage *message, http::HTTPMessage *response) {
 	ERR_FAIL_NULL_V(message, false);
 	ERR_FAIL_NULL_V(response, false);
-	if (message->get_path() == "/gmon") {
+	if (message->get_path() == "/gdmon") {
 		std::string query = message->get_query_string();
 		if (!query.empty()) {
 			if (_monitors.count(query)) {

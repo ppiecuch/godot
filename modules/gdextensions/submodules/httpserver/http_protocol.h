@@ -58,123 +58,123 @@ enum class MessageMethod {
 };
 
 // Available http headers.
-#define HTTP_HEADER_USER_AGENT                      "User-Agent:"
-#define HTTP_HEADER_ACCEPT                          "Accept:"
-#define HTTP_HEADER_ACCEPT_LANGUAGE                 "Accept-Language:"
-#define HTTP_HEADER_ACCEPT_ENCODING                 "Accept-Encoding:"
-#define HTTP_HEADER_ACCEPT_CHARSET                  "Accept-Charset:"
-#define HTTP_HEADER_PROXY_CONNECTION                "Proxy-Connection:"
-#define HTTP_HEADER_CONNECTION                      "Connection:"
-#define HTTP_HEADER_COOKIE                          "Cookie:"
-#define HTTP_HEADER_HOST                            "Host:"
-#define HTTP_HEADER_CACHE_CONTROL                   "Cache-Control:"
-#define HTTP_HEADER_CONTENT_TYPE                    "Content-Type:"
-#define HTTP_HEADER_CONTENT_LENGTH                  "Content-Length:"
-#define HTTP_HEADER_CONTENT_ENCODING                "Content-Encoding:"
-#define HTTP_HEADER_SERVER                          "Server:"
-#define HTTP_HEADER_DATE                            "Date:"
-#define HTTP_HEADER_RANGE                           "Range:"
-#define HTTP_HEADER_ETAG                            "Etag:"
-#define HTTP_HEADER_EXPIRES                         "Expires:"
-#define HTTP_HEADER_REFERER                         "Referer:"
-#define HTTP_HEADER_LAST_MODIFIED                   "Last-Modified:"
-#define HTTP_HEADER_IF_MOD_SINCE                    "If-Modified-Since:"
-#define HTTP_HEADER_IF_NONE_MATCH                   "If-None-Match:"
-#define HTTP_HEADER_ACCEPT_RANGES                   "Accept-Ranges:"
-#define HTTP_HEADER_TRANSFER_ENCODING               "Transfer-Encoding:"
-#define HTTP_HEADER_AUTHORIZATION                   "Authorization:"
+#define HTTP_HEADER_USER_AGENT "User-Agent:"
+#define HTTP_HEADER_ACCEPT "Accept:"
+#define HTTP_HEADER_ACCEPT_LANGUAGE "Accept-Language:"
+#define HTTP_HEADER_ACCEPT_ENCODING "Accept-Encoding:"
+#define HTTP_HEADER_ACCEPT_CHARSET "Accept-Charset:"
+#define HTTP_HEADER_PROXY_CONNECTION "Proxy-Connection:"
+#define HTTP_HEADER_CONNECTION "Connection:"
+#define HTTP_HEADER_COOKIE "Cookie:"
+#define HTTP_HEADER_HOST "Host:"
+#define HTTP_HEADER_CACHE_CONTROL "Cache-Control:"
+#define HTTP_HEADER_CONTENT_TYPE "Content-Type:"
+#define HTTP_HEADER_CONTENT_LENGTH "Content-Length:"
+#define HTTP_HEADER_CONTENT_ENCODING "Content-Encoding:"
+#define HTTP_HEADER_SERVER "Server:"
+#define HTTP_HEADER_DATE "Date:"
+#define HTTP_HEADER_RANGE "Range:"
+#define HTTP_HEADER_ETAG "Etag:"
+#define HTTP_HEADER_EXPIRES "Expires:"
+#define HTTP_HEADER_REFERER "Referer:"
+#define HTTP_HEADER_LAST_MODIFIED "Last-Modified:"
+#define HTTP_HEADER_IF_MOD_SINCE "If-Modified-Since:"
+#define HTTP_HEADER_IF_NONE_MATCH "If-None-Match:"
+#define HTTP_HEADER_ACCEPT_RANGES "Accept-Ranges:"
+#define HTTP_HEADER_TRANSFER_ENCODING "Transfer-Encoding:"
+#define HTTP_HEADER_AUTHORIZATION "Authorization:"
 
 // Available http response status codes.
-#define HTTP_STATUS_CONTINUE                        100
-#define HTTP_STATUS_SWITCHING_PROTOCOLS             101
+#define HTTP_STATUS_CONTINUE 100
+#define HTTP_STATUS_SWITCHING_PROTOCOLS 101
 
-#define HTTP_STATUS_OK                              200
-#define HTTP_STATUS_CREATED                         201
-#define HTTP_STATUS_ACCEPTED                        202
-#define HTTP_STATUS_NON_AUTHORITATIVE_INFORMATION   203
-#define HTTP_STATUS_NO_CONTENT                      204
-#define HTTP_STATUS_RESET_CONTENT                   205
-#define HTTP_STATUS_PARTIAL_CONTENT                 206
+#define HTTP_STATUS_OK 200
+#define HTTP_STATUS_CREATED 201
+#define HTTP_STATUS_ACCEPTED 202
+#define HTTP_STATUS_NON_AUTHORITATIVE_INFORMATION 203
+#define HTTP_STATUS_NO_CONTENT 204
+#define HTTP_STATUS_RESET_CONTENT 205
+#define HTTP_STATUS_PARTIAL_CONTENT 206
 
-#define HTTP_STATUS_MULTIPLE_CHOICES                300
-#define HTTP_STATUS_MOVED_PERMANENTLY               301
-#define HTTP_STATUS_FOUND                           302
-#define HTTP_STATUS_SEE_OTHER                       303
-#define HTTP_STATUS_NOT_MODIFIED                    304
-#define HTTP_STATUS_USE_PROXY                       305
-#define HTTP_STATUS_TEMPORARY_REDIRECT              307
+#define HTTP_STATUS_MULTIPLE_CHOICES 300
+#define HTTP_STATUS_MOVED_PERMANENTLY 301
+#define HTTP_STATUS_FOUND 302
+#define HTTP_STATUS_SEE_OTHER 303
+#define HTTP_STATUS_NOT_MODIFIED 304
+#define HTTP_STATUS_USE_PROXY 305
+#define HTTP_STATUS_TEMPORARY_REDIRECT 307
 
-#define HTTP_STATUS_BAD_REQUEST                     400
-#define HTTP_STATUS_UNAUTHORIZED                    401
-#define HTTP_STATUS_PAYMENT_REQUIRED                402
-#define HTTP_STATUS_FORBIDDEN                       403
-#define HTTP_STATUS_NOT_FOUND                       404
-#define HTTP_STATUS_METHOD_NOT_ALLOWED              405
-#define HTTP_STATUS_NOT_ACCEPTABLE                  406
-#define HTTP_STATUS_PROXY_AUTHENICATION_REQUIRED    407
-#define HTTP_STATUS_REQUEST_TIME_OUT                408
-#define HTTP_STATUS_CONFLICT                        409
-#define HTTP_STATUS_GONE                            410
-#define HTTP_STATUS_LENGTH_REQUIRED                 411
-#define HTTP_STATUS_PRECONDITION_FAILED             412
-#define HTTP_STATUS_REQUEST_ENTITY_TOO_LARGE        413
-#define HTTP_STATUS_REQUEST_URI_TOO_LARGE           414
-#define HTTP_STATUS_UNSUPPORTED_MEDIA_TYPE          415
-#define HTTP_STATUS_REQUEST_RANGE_NOT_SATISFIABLE   416
-#define HTTP_STATUS_EXPECTATION_FAILED              417
+#define HTTP_STATUS_BAD_REQUEST 400
+#define HTTP_STATUS_UNAUTHORIZED 401
+#define HTTP_STATUS_PAYMENT_REQUIRED 402
+#define HTTP_STATUS_FORBIDDEN 403
+#define HTTP_STATUS_NOT_FOUND 404
+#define HTTP_STATUS_METHOD_NOT_ALLOWED 405
+#define HTTP_STATUS_NOT_ACCEPTABLE 406
+#define HTTP_STATUS_PROXY_AUTHENICATION_REQUIRED 407
+#define HTTP_STATUS_REQUEST_TIME_OUT 408
+#define HTTP_STATUS_CONFLICT 409
+#define HTTP_STATUS_GONE 410
+#define HTTP_STATUS_LENGTH_REQUIRED 411
+#define HTTP_STATUS_PRECONDITION_FAILED 412
+#define HTTP_STATUS_REQUEST_ENTITY_TOO_LARGE 413
+#define HTTP_STATUS_REQUEST_URI_TOO_LARGE 414
+#define HTTP_STATUS_UNSUPPORTED_MEDIA_TYPE 415
+#define HTTP_STATUS_REQUEST_RANGE_NOT_SATISFIABLE 416
+#define HTTP_STATUS_EXPECTATION_FAILED 417
 
-#define HTTP_STATUS_INTERNAL_SERVER_ERROR           500
-#define HTTP_STATUS_NOT_IMPLEMENTED                 501
-#define HTTP_STATUS_BAD_GATEWAY                     502
-#define HTTP_STATUS_SERVICE_UNAVAILABLE             503
-#define HTTP_STATUS_GATEWAY_TIME_OUT                504
-#define HTTP_STATUS_HTTP_VERSION_NOT_SUPPORTED      505
+#define HTTP_STATUS_INTERNAL_SERVER_ERROR 500
+#define HTTP_STATUS_NOT_IMPLEMENTED 501
+#define HTTP_STATUS_BAD_GATEWAY 502
+#define HTTP_STATUS_SERVICE_UNAVAILABLE 503
+#define HTTP_STATUS_GATEWAY_TIME_OUT 504
+#define HTTP_STATUS_HTTP_VERSION_NOT_SUPPORTED 505
 
 // Available http response status.
-#define HTTP_STATUS_CONTINUE_S                      "100 Continue"
-#define HTTP_STATUS_SWITCHING_PROTOCOLS_S           "101 Switching Protocols"
+#define HTTP_STATUS_CONTINUE_S "100 Continue"
+#define HTTP_STATUS_SWITCHING_PROTOCOLS_S "101 Switching Protocols"
 
-#define HTTP_STATUS_OK_S                            "200 OK"
-#define HTTP_STATUS_CREATED_S                       "201 Created"
-#define HTTP_STATUS_ACCEPTED_S                      "202 Accepted"
+#define HTTP_STATUS_OK_S "200 OK"
+#define HTTP_STATUS_CREATED_S "201 Created"
+#define HTTP_STATUS_ACCEPTED_S "202 Accepted"
 #define HTTP_STATUS_NON_AUTHORITATIVE_INFORMATION_S "203 Non-Authoritative Information"
-#define HTTP_STATUS_NO_CONTENT_S                    "204 No Content"
-#define HTTP_STATUS_RESET_CONTENT_S                 "205 Reset Content"
-#define HTTP_STATUS_PARTIAL_CONTENT_S               "206 Partial Content"
+#define HTTP_STATUS_NO_CONTENT_S "204 No Content"
+#define HTTP_STATUS_RESET_CONTENT_S "205 Reset Content"
+#define HTTP_STATUS_PARTIAL_CONTENT_S "206 Partial Content"
 
-#define HTTP_STATUS_MULTIPLE_CHOICES_S              "300 Multiple Choices"
-#define HTTP_STATUS_MOVED_PERMANENTLY_S             "301 Moved Permanently"
-#define HTTP_STATUS_FOUND_S                         "302 Found"
-#define HTTP_STATUS_SEE_OTHER_S                     "303 See Other"
-#define HTTP_STATUS_NOT_MODIFIED_S                  "304 Not Modified"
-#define HTTP_STATUS_USE_PROXY_S                     "305 Use Proxy"
-#define HTTP_STATUS_TEMPORARY_REDIRECT_S            "307 Temporary Redirect"
+#define HTTP_STATUS_MULTIPLE_CHOICES_S "300 Multiple Choices"
+#define HTTP_STATUS_MOVED_PERMANENTLY_S "301 Moved Permanently"
+#define HTTP_STATUS_FOUND_S "302 Found"
+#define HTTP_STATUS_SEE_OTHER_S "303 See Other"
+#define HTTP_STATUS_NOT_MODIFIED_S "304 Not Modified"
+#define HTTP_STATUS_USE_PROXY_S "305 Use Proxy"
+#define HTTP_STATUS_TEMPORARY_REDIRECT_S "307 Temporary Redirect"
 
-#define HTTP_STATUS_BAD_REQUEST_S                   "400 Bad Request"
-#define HTTP_STATUS_UNAUTHORIZED_S                  "401 Unauthorized"
-#define HTTP_STATUS_PAYMENT_REQUIRED_S              "402 Payment Required"
-#define HTTP_STATUS_FORBIDDEN_S                     "403 Forbidden"
-#define HTTP_STATUS_NOT_FOUND_S                     "404 Not Found"
-#define HTTP_STATUS_METHOD_NOT_ALLOWED_S            "405 Not Allowed"
-#define HTTP_STATUS_NOT_ACCEPTABLE_S                "406 Not Acceptable"
-#define HTTP_STATUS_PROXY_AUTHENICATION_REQUIRED_S  "407 Authenication Required"
-#define HTTP_STATUS_REQUEST_TIME_OUT_S              "408 Request Time-out"
-#define HTTP_STATUS_CONFLICT_S                      "409 Conflict"
-#define HTTP_STATUS_GONE_S                          "410 Gone"
-#define HTTP_STATUS_LENGTH_REQUIRED_S               "411 Length Required"
-#define HTTP_STATUS_PRECONDITION_FAILED_S           "412 Precondition Required"
-#define HTTP_STATUS_REQUEST_ENTITY_TOO_LARGE_S      "413 Request Enity Too Large"
-#define HTTP_STATUS_REQUEST_URI_TOO_LARGE_S         "414 Request-URI Too Large"
-#define HTTP_STATUS_UNSUPPORTED_MEDIA_TYPE_S        "415 Unsupported Media Type"
+#define HTTP_STATUS_BAD_REQUEST_S "400 Bad Request"
+#define HTTP_STATUS_UNAUTHORIZED_S "401 Unauthorized"
+#define HTTP_STATUS_PAYMENT_REQUIRED_S "402 Payment Required"
+#define HTTP_STATUS_FORBIDDEN_S "403 Forbidden"
+#define HTTP_STATUS_NOT_FOUND_S "404 Not Found"
+#define HTTP_STATUS_METHOD_NOT_ALLOWED_S "405 Not Allowed"
+#define HTTP_STATUS_NOT_ACCEPTABLE_S "406 Not Acceptable"
+#define HTTP_STATUS_PROXY_AUTHENICATION_REQUIRED_S "407 Authenication Required"
+#define HTTP_STATUS_REQUEST_TIME_OUT_S "408 Request Time-out"
+#define HTTP_STATUS_CONFLICT_S "409 Conflict"
+#define HTTP_STATUS_GONE_S "410 Gone"
+#define HTTP_STATUS_LENGTH_REQUIRED_S "411 Length Required"
+#define HTTP_STATUS_PRECONDITION_FAILED_S "412 Precondition Required"
+#define HTTP_STATUS_REQUEST_ENTITY_TOO_LARGE_S "413 Request Enity Too Large"
+#define HTTP_STATUS_REQUEST_URI_TOO_LARGE_S "414 Request-URI Too Large"
+#define HTTP_STATUS_UNSUPPORTED_MEDIA_TYPE_S "415 Unsupported Media Type"
 #define HTTP_STATUS_REQUEST_RANGE_NOT_SATISFIABLE_S "416 Requested range not satisfiable"
-#define HTTP_STATUS_EXPECTATION_FAILED_S            "417 Expectation Failed"
+#define HTTP_STATUS_EXPECTATION_FAILED_S "417 Expectation Failed"
 
-#define HTTP_STATUS_INTERNAL_SERVER_ERROR_S         "500 Internal Server Error"
-#define HTTP_STATUS_NOT_IMPLEMENTED_S               "501 Not Implemented"
-#define HTTP_STATUS_BAD_GATEWAY_S                   "502 Bad Gateway"
-#define HTTP_STATUS_SERVICE_UNAVAILABLE_S           "503 Service Unavailable"
-#define HTTP_STATUS_GATEWAY_TIME_OUT_S              "504 Gateway Time-out"
-#define HTTP_STATUS_HTTP_VERSION_NOT_SUPPORTED_S    "505 HTTP Version not supported"
+#define HTTP_STATUS_INTERNAL_SERVER_ERROR_S "500 Internal Server Error"
+#define HTTP_STATUS_NOT_IMPLEMENTED_S "501 Not Implemented"
+#define HTTP_STATUS_BAD_GATEWAY_S "502 Bad Gateway"
+#define HTTP_STATUS_SERVICE_UNAVAILABLE_S "503 Service Unavailable"
+#define HTTP_STATUS_GATEWAY_TIME_OUT_S "504 Gateway Time-out"
+#define HTTP_STATUS_HTTP_VERSION_NOT_SUPPORTED_S "505 HTTP Version not supported"
 
 _FORCE_INLINE_ std::string message_method_to_string(const MessageMethod &method) {
 	switch (method) {
@@ -377,7 +377,7 @@ static std::string percent_encode(const std::string &value) noexcept {
 	std::string result;
 	result.reserve(value.size()); // Minimum size of result
 
-	for(auto &chr : value) {
+	for (auto &chr : value) {
 		if (!((chr >= '0' && chr <= '9') || (chr >= 'A' && chr <= 'Z') || (chr >= 'a' && chr <= 'z') || chr == '-' || chr == '.' || chr == '_' || chr == '~')) {
 			result += std::string("%") + hex_chars[static_cast<unsigned char>(chr) >> 4] + hex_chars[static_cast<unsigned char>(chr) & 15];
 		} else {
@@ -417,7 +417,7 @@ static std::string query_create(const CaseInsensitiveMultimap &fields) noexcept 
 	std::string result;
 
 	bool first = true;
-	for(auto &field : fields) {
+	for (auto &field : fields) {
 		if (field.second.empty()) {
 			result += (!first ? "&" : "") + field.first;
 		} else {
@@ -433,7 +433,7 @@ static std::string query_create(const CaseInsensitiveMultimap &fields) noexcept 
 static CaseInsensitiveMultimap query_parse(const std::string &query_string) noexcept {
 	CaseInsensitiveMultimap result;
 
-	if(query_string.empty()) {
+	if (query_string.empty()) {
 		return result;
 	}
 	std::size_t name_pos = 0;

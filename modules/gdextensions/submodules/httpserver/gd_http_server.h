@@ -39,8 +39,8 @@
 
 #include "http_protocol.h"
 
-#include <vector>
 #include <functional>
+#include <vector>
 
 typedef bool (*RouteHandler)(const http::HTTPMessage *message, http::HTTPMessage *response);
 
