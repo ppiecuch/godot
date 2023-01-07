@@ -5,8 +5,8 @@
 #include <stdbool.h>
 #include "Tileset.h"
 
-#define TMX_MAX_LAYER		64
-#define TMX_MAX_TILESET		64
+#define TMX_MAX_LAYER		32
+#define TMX_MAX_TILESET		32
 
 typedef struct
 {
@@ -53,7 +53,7 @@ typedef struct
 TMXInfo;
 
 bool TMXLoad(const char* filename, TMXInfo* info);
-TMXTileset* TMXGetSuitableTileset(TMXInfo* info, int gid);
+int TMXGetSuitableTileset(TMXInfo* info, int gid, TMXTileset* tmxtilesets);
 TMXLayer* TMXGetFirstLayer(TMXInfo* info, TLN_LayerType type);
 TMXLayer* TMXGetLayer(TMXInfo* info, const char* name);
 

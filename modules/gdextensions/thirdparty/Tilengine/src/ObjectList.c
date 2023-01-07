@@ -207,6 +207,9 @@ static bool CloneObjectToList(TLN_ObjectList list, TLN_Object* data)
 		return false;
 
 	object = (struct _Object*)calloc(1, sizeof(struct _Object));
+	if (object == NULL)
+		return false;
+
 	memcpy(object, data, sizeof(struct _Object));
 	add_to_list(list, object);
 	return true;
@@ -230,6 +233,9 @@ bool TLN_AddTileObjectToList(TLN_ObjectList list, uint16_t id, uint16_t gid, uin
 		return false;
 
 	object = (struct _Object*)calloc(1, sizeof(struct _Object));
+	if (object == NULL)
+		return false;
+
 	object->gid = gid;
 	object->x = x;
 	object->y = y;
@@ -305,7 +311,7 @@ TLN_ObjectList TLN_LoadObjectList(const char* filename, const char* layername)
 				gid = item->gid;
 			item = item->next;
 		}
-		tmxtileset = TMXGetSuitableTileset(&tmxinfo, gid);
+		tmxtileset = &tmxinfo.tilesets[TMXGetSuitableTileset(&tmxinfo, gid, NULL)];
 		tileset = TLN_LoadTileset(tmxtileset->source);
 
 		/* correct with firstgid */

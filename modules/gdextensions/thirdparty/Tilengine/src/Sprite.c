@@ -23,7 +23,7 @@
 #define inline __inline
 #endif
 
-static void SelectBlitter (Sprite* sprite);
+static void SelectSpriteBlitter (Sprite* sprite);
 
 /*!
  * \deprecated use \ref TLN_SetSpriteSet and \ref TLN_EnableSpriteFlag
@@ -276,6 +276,42 @@ TLN_Palette TLN_GetSpritePalette (int nsprite)
 	return engine->sprites[nsprite].palette;
 }
 
+/* 
+* \brief returns sprite's horizontal position 
+* \param nsprite Sprite index to query
+* \returns x position
+* \see TLN_SetSpritePosition()
+*/
+int TLN_GetSpriteX(int nsprite)
+{
+	if (nsprite >= engine->numsprites)
+	{
+		TLN_SetLastError(TLN_ERR_IDX_SPRITE);
+		return 0;
+	}
+
+	TLN_SetLastError(TLN_ERR_OK);
+	return engine->sprites[nsprite].x;
+}
+
+/*
+* \brief returns sprite's vertical position
+* \param nsprite Sprite index to query
+* \returns y position
+* \see TLN_SetSpritePosition()
+*/
+int TLN_GetSpriteY(int nsprite)
+{
+	if (nsprite >= engine->numsprites)
+	{
+		TLN_SetLastError(TLN_ERR_IDX_SPRITE);
+		return 0;
+	}
+
+	TLN_SetLastError(TLN_ERR_OK);
+	return engine->sprites[nsprite].y;
+}
+
 /*!
  * \brief
  * Sets the blending mode (transparency effect)
@@ -303,7 +339,7 @@ bool TLN_SetSpriteBlendMode (int nsprite, TLN_Blend mode, uint8_t factor)
 
 	sprite = &engine->sprites[nsprite];
 	sprite->blend = SelectBlendTable (mode);
-	SelectBlitter (sprite);
+	SelectSpriteBlitter (sprite);
 
 	TLN_SetLastError (TLN_ERR_OK);
 	return true;
@@ -347,7 +383,7 @@ bool TLN_SetSpriteScaling (int nsprite, float sx, float sy)
 	sprite->mode = MODE_SCALING;
 	sprite->draw = GetSpriteDraw (sprite->mode);
 	UpdateSprite (sprite);
-	SelectBlitter (sprite);
+	SelectSpriteBlitter (sprite);
 	return true;
 }
 
@@ -377,7 +413,7 @@ bool TLN_ResetSpriteScaling (int nsprite)
 	UpdateSprite (sprite);
 	
 	TLN_SetLastError (TLN_ERR_OK);
-	SelectBlitter (sprite);
+	SelectSpriteBlitter (sprite);
 	return true;
 }
 
@@ -861,7 +897,7 @@ void TLN_SetSpritesMaskRegion(int top_line, int bottom_line)
 	engine->sprite_mask_bottom = bottom_line;
 }
 
-/* actualiza datos internos */
+/* updates clipping rect cache */
 void UpdateSprite (Sprite* sprite)
 {
 	int w,h;
@@ -872,10 +908,10 @@ void UpdateSprite (Sprite* sprite)
 	if (sprite->sx > 1.0)
 		w = 0;
 
-	/* rectangulo origen (sprite) */
+	/* sprite source rectangle */
 	MakeRect(&sprite->srcrect, 0, 0, sprite->info->w, sprite->info->h);
 
-	/* clipping normal */
+	/* standard clipping */
 	if (sprite->mode == MODE_NORMAL)
 	{
 		w = sprite->info->w;
@@ -884,10 +920,10 @@ void UpdateSprite (Sprite* sprite)
 		int x = sprite->x - (int)(w * sprite->ptx);
 		int y = sprite->y - (int)(h * sprite->pty);
 
-		/* rectangulo destino (pantalla) */
+		/* screen target rectangle */
 		MakeRect(&sprite->dstrect, x, y, w, h);
 
-		/* clipping vertical */
+		/* vertical clipping */
 		if (sprite->dstrect.y1 < 0)
 		{
 			sprite->srcrect.y1 -= sprite->dstrect.y1;
@@ -899,7 +935,7 @@ void UpdateSprite (Sprite* sprite)
 			sprite->dstrect.y2 = engine->framebuffer.height;
 		}
 
-		/* clipping horizontal */
+		/* horizontal clipping */
 		if (sprite->dstrect.x1 < 0)
 		{
 			sprite->srcrect.x1 -= sprite->dstrect.x1;
@@ -918,13 +954,13 @@ void UpdateSprite (Sprite* sprite)
 		w = (int)(sprite->info->w * sprite->sx);
 		h = (int)(sprite->info->h * sprite->sy);
 
-		/* rectangulo destino (pantalla) */
+		/* screen target rectangle */
 		sprite->dstrect.x1 = sprite->x - (int)(w * sprite->ptx);
 		sprite->dstrect.y1 = sprite->y - (int)(h * sprite->pty);
 		sprite->dstrect.x2 = sprite->dstrect.x1 + w;
 		sprite->dstrect.y2 = sprite->dstrect.y1 + h;
 
-		/* coordenadas origen son fix */
+		/* source coords are 16.16 fixed point */
 		sprite->srcrect.x1 = int2fix (sprite->srcrect.x1);
 		sprite->srcrect.y1 = int2fix (sprite->srcrect.y1);
 		sprite->srcrect.x2 = int2fix (sprite->srcrect.x2);
@@ -973,12 +1009,12 @@ void UpdateSprite (Sprite* sprite)
 	*/
 }
 
-static void SelectBlitter (Sprite* sprite)
+static void SelectSpriteBlitter (Sprite* sprite)
 {
 	const bool scaling = sprite->mode == MODE_SCALING;
 	const bool blend = sprite->blend != NULL;
 
-	sprite->blitter = GetBlitter (32, true, scaling, blend);
+	sprite->blitter = SelectBlitter (true, scaling, blend);
 }
 
 void MakeRect(rect_t* rect, int x, int y, int w, int h)

@@ -11,6 +11,8 @@
 #ifndef _ENGINE_H
 #define _ENGINE_H
 
+#define NUM_PALETTES	8
+
 #include "Tilengine.h"
 #include "Sprite.h"
 #include "Layer.h"
@@ -23,9 +25,9 @@
 typedef struct Engine
 {
 	uint32_t	header;			/* object signature to identify as engine context */
-	uint8_t*	priority;		/* buffer receiving tiles with priority */
+	uint32_t*	priority;		/* buffer receiving tiles with priority */
 	uint16_t*	collision;		/* buffer with sprite coverage IDs for per-pixel collision */
-	uint8_t*	tmpindex;		/* buffer for intermediate scanline output  */
+	uint32_t*	linebuffer;		/* buffer for intermediate scanline output  */
 	int			numsprites;		/* number of sprites */
 	Sprite*		sprites;		/* pointer to sprite buffer */
 	int			numlayers;		/* number of layers */
@@ -39,6 +41,7 @@ typedef struct Engine
 	uint32_t	bgcolor;		/* background color */
 	TLN_Bitmap	bgbitmap;		/* background bitmap */
 	TLN_Palette	bgpalette;		/* background bitmap palette */
+	TLN_Palette palettes[NUM_PALETTES];	/* optional global palettes */
 	ScanBlitPtr	blit_fast;		/* blitter for background bitmap */
 	uint8_t*	blend_table;	/* current blending table */
 	void		(*cb_raster)(int);	/* raster callback */
@@ -69,6 +72,6 @@ extern Engine* engine;
 extern void tln_trace(TLN_LogLevel log_level, const char* format, ...);
 
 #define GetFramebufferLine(line) \
-	(engine->framebuffer.data + (line*engine->framebuffer.pitch))
+	(uint32_t*)(engine->framebuffer.data + (line*engine->framebuffer.pitch))
 
 #endif

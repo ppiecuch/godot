@@ -19,7 +19,7 @@
 #include "ObjectList.h"
 #include "Bitmap.h"
 
-static void SelectBlitter (Layer* layer);
+static void SetBlitter (Layer* layer);
 
 /*!
  * \deprecated Use \ref TLN_SetLayerTilemap instead
@@ -58,55 +58,58 @@ bool TLN_SetLayer(int nlayer, TLN_Tileset tileset, TLN_Tilemap tilemap)
 
 	/* select tilemsp's own tileset */
 	if (tileset == NULL)
-		tileset = tilemap->tileset;
+		tileset = tilemap->tilesets[0];
 
 	if (!CheckBaseObject(tileset, OT_TILESET))
 		return false;
 
-	if (tilemap->maxindex <= tileset->numtiles)
-	{
-		layer->tileset = tileset;
-		layer->tilemap = tilemap;
-		layer->width = tilemap->cols*tileset->width;
-		layer->height = tilemap->rows*tileset->height;
-		if (tileset->palette)
-			TLN_SetLayerPalette(nlayer, tileset->palette);
-	}
+	layer->tilemap = tilemap;
+	layer->width = tilemap->cols*tileset->width;
+	layer->height = tilemap->rows*tileset->height;
 	layer->bitmap = NULL;
 	layer->objects = NULL;
 	layer->type = LAYER_TILE;
 
-	/* apply priority attribute */
-	if (tileset->attributes != NULL)
+	/* common operations per tileset */
+	int ts;
+	for (ts = 0; ts < MAX_TILESETS; ts += 1)
 	{
-		const int num_tiles = tilemap->rows * tilemap->cols;
-		int c;
-		Tile* tile = tilemap->tiles;
-		for (c = 0; c < num_tiles; c++, tile++)
+		tileset = tilemap->tilesets[ts];
+		if (tileset == NULL)
+			break;
+
+		/* apply priority attribute */
+		if (tileset->attributes != NULL)
 		{
-			if (tile->index != 0)
+			const int num_tiles = tilemap->rows * tilemap->cols;
+			int c;
+			Tile* tile = tilemap->tiles;
+			for (c = 0; c < num_tiles; c++, tile++)
 			{
-				if (tileset->attributes[tile->index - 1].priority == true)
-					tile->flags |= FLAG_PRIORITY;
-				else
-					tile->flags &= ~FLAG_PRIORITY;
+				if (tile->index != 0 && tile->index < tileset->numtiles)
+				{
+					if (tileset->attributes[tile->index - 1].priority == true)
+						tile->flags |= FLAG_PRIORITY;
+					else
+						tile->flags &= ~FLAG_PRIORITY;
+				}
 			}
 		}
-	}
 
-	/* start animations */
-	if (tileset->sp != NULL)
-	{
-		int c;
-		TLN_Sequence sequence;
-
-		c = 0;
-		sequence = tileset->sp->sequences;
-		while (sequence != NULL)
+		/* start animations */
+		if (tileset->sp != NULL)
 		{
-			SetTilesetAnimation(tileset, c, sequence);
-			sequence = sequence->next;
-			c += 1;
+			int c;
+			TLN_Sequence sequence;
+
+			c = 0;
+			sequence = tileset->sp->sequences;
+			while (sequence != NULL)
+			{
+				SetTilesetAnimation(tileset, c, sequence);
+				sequence = sequence->next;
+				c += 1;
+			}
 		}
 	}
 
@@ -114,7 +117,7 @@ bool TLN_SetLayer(int nlayer, TLN_Tileset tileset, TLN_Tilemap tilemap)
 	{
 		layer->ok = true;
 		layer->draw = GetLayerDraw(layer);
-		SelectBlitter(layer);
+		SetBlitter(layer);
 	}
 
 	TLN_SetLastError (TLN_ERR_OK);
@@ -164,22 +167,19 @@ bool TLN_SetLayerBitmap(int nlayer, TLN_Bitmap bitmap)
 	if (!CheckBaseObject(bitmap, OT_BITMAP))
 		return false;
 
-	layer->tileset = NULL;
 	layer->tilemap = NULL;
 	layer->bitmap = bitmap;
 	layer->objects = NULL;
 	layer->width = bitmap->width;
 	layer->height = bitmap->height;
-	if (bitmap->palette)
-		TLN_SetLayerPalette(nlayer, bitmap->palette);
 
 	/* require palette */
-	if (layer->palette)
+	if (bitmap->palette != NULL)
 	{
 		layer->type = LAYER_BITMAP;
 		layer->ok = true;
 		layer->draw = GetLayerDraw(layer);
-		SelectBlitter(layer);
+		SetBlitter(layer);
 		TLN_SetLastError(TLN_ERR_OK);
 		return true;
 	}
@@ -226,7 +226,6 @@ bool TLN_SetLayerObjects(int nlayer, TLN_ObjectList objects, TLN_Tileset tileset
 		return false;
 	}
 
-	layer->tileset = tileset;
 	layer->tilemap = NULL;
 	layer->bitmap = NULL;
 	layer->objects = objects;
@@ -254,7 +253,7 @@ bool TLN_SetLayerObjects(int nlayer, TLN_ObjectList objects, TLN_Tileset tileset
 	{
 		layer->ok = true;
 		layer->draw = GetLayerDraw(layer);
-		SelectBlitter(layer);
+		SetBlitter(layer);
 	}
 	TLN_SetLastError(TLN_ERR_OK);
 	return true;
@@ -361,7 +360,7 @@ bool TLN_SetLayerBlendMode (int nlayer, TLN_Blend mode, uint8_t factor)
 
 	layer = &engine->layers[nlayer];
 	layer->blend = SelectBlendTable (mode);
-	SelectBlitter (layer);
+	SetBlitter (layer);
 	TLN_SetLastError (TLN_ERR_OK);
 	return true;
 }
@@ -376,9 +375,7 @@ bool TLN_SetLayerBlendMode (int nlayer, TLN_Blend mode, uint8_t factor)
  * \param palette
  * Reference to the  palette to assign to the layer
  *
- * When a layer is assigned with a tileset with the function TLN_SetLayer(), it
- * automatically sets the palette of the assigned tileset to the layer. 
- * Use this function to override it and set another palette
+ * Overrides the palette of the current tileset or bitmap
  * 
  * \remarks
  * Call this function inside a raster callback to change the palette in the middle
@@ -403,13 +400,12 @@ bool TLN_SetLayerPalette (int nlayer, TLN_Palette palette)
 	}
 
 	layer->palette = palette;
-
 	TLN_SetLastError (TLN_ERR_OK);
 	return true;
 }
 
 /*!
- * \brief Returns the active palette of a layer
+ * \brief Returns the active palette of a layer if set with \ref TLN_SetLayerPalette(), or the palette of the first tileset, or palette of bitmap
  * \param nlayer Layer index [0, num_layers - 1]
  * \returns Reference of the palette assigned to the layer
  * \see TLN_SetLayerPalette()
@@ -418,8 +414,18 @@ TLN_Palette TLN_GetLayerPalette (int nlayer)
 {
 	if (nlayer < engine->numlayers)
 	{
+		Layer* layer = &engine->layers[nlayer];
 		TLN_SetLastError(TLN_ERR_OK);
-		return engine->layers[nlayer].palette;
+
+		if (layer->palette != NULL)
+			return layer->palette;
+		else if (layer->bitmap != NULL && layer->bitmap->palette != NULL)
+			return layer->bitmap->palette;
+		else if (layer->tilemap != NULL && layer->tilemap->tilesets[0] != NULL && layer->tilemap->tilesets[0]->palette != NULL)
+			return layer->tilemap->tilesets[0]->palette;
+
+		TLN_SetLastError(TLN_ERR_REF_PALETTE);
+		return NULL;
 	}
 
 	TLN_SetLastError(TLN_ERR_IDX_LAYER);
@@ -445,17 +451,14 @@ TLN_LayerType TLN_GetLayerType(int nlayer)
 }
 
 /*!
- * \brief Returns the active tileset on a \ref LAYER_TILE or \ref LAYER_OBJECT layer type
- * \param nlayer Layer index [0, num_layers - 1]
- * \returns Reference to the active tileset
- * \see TLN_SetLayerTilemap(), TLN_SetLayerObjects()
+ * \deprecated Returns the first tilesetof the attached layer's tilemap
  */
 TLN_Tileset TLN_GetLayerTileset(int nlayer)
 {
-	if (nlayer < engine->numlayers)
+	if (nlayer < engine->numlayers && engine->layers[nlayer].tilemap != NULL)
 	{
 		TLN_SetLastError(TLN_ERR_OK);
-		return engine->layers[nlayer].tileset;
+		return engine->layers[nlayer].tilemap->tilesets[0];
 	}
 
 	TLN_SetLastError(TLN_ERR_IDX_LAYER);
@@ -571,6 +574,42 @@ bool TLN_SetLayerPosition (int nlayer, int hstart, int vstart)
 	return true;
 }
 
+/*
+* \brief returns layer's horizontal position
+* \param nlayer Layer index to query
+* \returns x position
+* \see TLN_SetLayerPosition()
+*/
+int TLN_GetLayerX(int nlayer)
+{
+	if (nlayer >= engine->numlayers)
+	{
+		TLN_SetLastError(TLN_ERR_IDX_LAYER);
+		return 0;
+	}
+
+	TLN_SetLastError(TLN_ERR_OK);
+	return engine->layers[nlayer].hstart;
+}
+
+/*
+* \brief returns layer's vertical position
+* \param nlayer Layer index to query
+* \returns y position
+* \see TLN_SetLayerPosition()
+*/
+int TLN_GetLayerY(int nlayer)
+{
+	if (nlayer >= engine->numlayers)
+	{
+		TLN_SetLastError(TLN_ERR_IDX_LAYER);
+		return 0;
+	}
+
+	TLN_SetLastError(TLN_ERR_OK);
+	return engine->layers[nlayer].vstart;
+}
+
 /*!
  * \brief
  * Gets info about the tile located in tilemap space
@@ -620,11 +659,11 @@ bool TLN_GetLayerTile (int nlayer, int x, int y, TLN_TileInfo* info)
 	}
 
 	layer = &engine->layers[nlayer];
-	if (!CheckBaseObject (layer->tileset, OT_TILESET) || !CheckBaseObject (layer->tilemap, OT_TILEMAP))
+	if (!CheckBaseObject(layer->tilemap, OT_TILEMAP) || !CheckBaseObject (layer->tilemap->tilesets[0], OT_TILESET))
 		return false;
 
-	tileset = layer->tileset;
 	tilemap = layer->tilemap;
+	tileset = tilemap->tilesets[0];
 
 	xpos = x % layer->width;
 	if (xpos < 0)
@@ -717,7 +756,7 @@ bool TLN_EnableLayer(int nlayer)
 	layer = &engine->layers[nlayer];
 
 	/* check proper config */
-	if (layer->palette && ((layer->tilemap && layer->tileset) || (layer->objects && layer->tileset) || layer->bitmap))
+	if ((layer->type == LAYER_TILE && layer->tilemap != NULL) || (layer->type == LAYER_BITMAP && layer->bitmap != NULL) || (layer->type == LAYER_OBJECT && layer->objects != NULL))
 	{
 		layer->ok = true;
 		TLN_SetLastError(TLN_ERR_IDX_LAYER);
@@ -807,7 +846,7 @@ bool TLN_SetLayerAffineTransform (int nlayer, TLN_Affine *affine)
 
 		layer->mode = MODE_TRANSFORM;
 		layer->draw = GetLayerDraw (layer);
-		SelectBlitter (layer);
+		SetBlitter (layer);
 
 		/*printf ("TLN_SetLayerAffineTransform (ptr=%08Xh, a=%.02f, d=%.02f,%.02f, s=%.02f,%.02f)\n",
 			affine, affine->angle, affine->dx, affine->dy, affine->sx, affine->sy);*/
@@ -897,7 +936,7 @@ bool TLN_SetLayerScaling (int nlayer, float sx, float sy)
 	layer->dy = float2fix((1.0f/sy));
 	layer->mode = MODE_SCALING;
 	layer->draw = GetLayerDraw (layer);
-	SelectBlitter (layer);
+	SetBlitter (layer);
 	TLN_SetLastError (TLN_ERR_OK);
 	return true;
 }
@@ -957,7 +996,7 @@ bool TLN_ResetLayerMode (int nlayer)
 	layer = &engine->layers[nlayer];
 	layer->mode = MODE_NORMAL;
 	layer->draw = GetLayerDraw (layer);
-	SelectBlitter (layer);
+	SetBlitter (layer);
 	TLN_SetLastError (TLN_ERR_OK);
 	return true;
 }
@@ -1058,7 +1097,7 @@ bool TLN_SetLayerMosaic (int nlayer, int width, int height)
 	layer = &engine->layers[nlayer];
 	layer->mosaic.w = width;
 	layer->mosaic.h = height;
-	SelectBlitter (layer);
+	SetBlitter (layer);
 	TLN_SetLastError (TLN_ERR_OK);
 	return true;
 }
@@ -1102,25 +1141,11 @@ void UpdateLayer(int nlayer)
 	TLN_SetLayerPosition(nlayer, lx, ly);
 }
 
-static void SelectBlitter (Layer* layer)
+static void SetBlitter (Layer* layer)
 {
 	bool scaling = layer->mode == MODE_SCALING;
-	bool blend;
-	int bpp;
+	bool blend = layer->blend != NULL && layer->mosaic.h == 0;
 
-	/* without mosaic effect */
-	if (layer->mosaic.h == 0)
-	{
-		blend = layer->blend != NULL;
-		bpp = 32;
-	}
-	/* with mosaic effect */
-	else
-	{
-		blend = false;
-		bpp = 8;
-	}
-
-	layer->blitters[0] = GetBlitter (bpp, false, scaling, blend);
-	layer->blitters[1] = GetBlitter (bpp, true, scaling, blend);
+	layer->blitters[0] = SelectBlitter (false, scaling, blend);
+	layer->blitters[1] = SelectBlitter(true, scaling, blend);
 }
