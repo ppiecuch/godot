@@ -1,3 +1,5 @@
+#if defined(PLAYFAB_PLATFORM_LINUX)
+
 #include <stdafx.h>
 
 #include <playfab/PlayFabCurlHttpPlugin.h>
@@ -342,3 +344,5 @@ namespace PlayFab
         return list;
     }
 }
+
+#endif // PLAYFAB_PLATFORM_LINUX
