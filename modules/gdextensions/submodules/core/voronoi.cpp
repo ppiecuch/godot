@@ -243,7 +243,7 @@ Ref<VoronoiDiagram> Voronoi::generate_diagram() const {
 	if (_cpoints.size()) {
 		jcv_clipping_polygon polygon;
 		polygon.num_points = _cpoints.size();
-		polygon.points = const_cast<jcv_point*>(_cpoints.data());
+		polygon.points = const_cast<jcv_point *>(_cpoints.data());
 		jcv_clipper polygonclipper;
 		polygonclipper.test_fn = jcv_clip_polygon_test_point;
 		polygonclipper.clip_fn = jcv_clip_polygon_clip_edge;
@@ -252,14 +252,14 @@ Ref<VoronoiDiagram> Voronoi::generate_diagram() const {
 		clipper = &polygonclipper;
 	}
 	jcv_diagram_generate_useralloc(
-		_points.size(),
-		_points.data(),
-		_has_boundaries ? &_boundaries : nullptr,
-		clipper,
-		nullptr,
-		&useralloc,
-		&userfree,
-		&(result->_diagram));
+			_points.size(),
+			_points.data(),
+			_has_boundaries ? &_boundaries : nullptr,
+			clipper,
+			nullptr,
+			&useralloc,
+			&userfree,
+			&(result->_diagram));
 	result->build_objects();
 	return result;
 }
