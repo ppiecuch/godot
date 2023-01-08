@@ -38,6 +38,10 @@
 
 #include "vdata.h" // the font data.
 
+#ifdef _MSC_VER
+#define __restrict__
+#endif
+
 // Convert an ascii string to a stream of vertex data.
 // Returns the number of triangles(x,y,x,y,x,y) written to the buffer.
 int dblunt_string_to_vertices(

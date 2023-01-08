@@ -28,6 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
+#define _USE_MATH_DEFINES
+
 #include "TLFXEntity.h"
 #include "TLFXAnimImage.h"
 #include "TLFXAttributeNode.h"

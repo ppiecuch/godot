@@ -361,7 +361,7 @@ void PolyFont::setPosition(float x, float y) {
 }
 
 pfpoint PolyFont::getPosition() const {
-	return (pfpoint){ pfTextX, pfTextY };
+	return { pfTextX, pfTextY };
 }
 
 void PolyFont::setSkew(float s) {
@@ -802,7 +802,7 @@ int PolyFont::drawWideChar(wchar_t c) {
 				tmp = gx;
 				gx = (pfTextX - ox) + ((pfTextCos * tmp) - (pfTextSin * gy));
 				gy = (pfTextY + oy) - ((pfTextSin * tmp) + (pfTextCos * gy));
-				vertices.push_back((pfpoint){ gx, gy });
+				vertices.push_back({ gx, gy });
 			}
 			polyDrawElements(prim, vertices);
 		}

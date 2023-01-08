@@ -344,8 +344,8 @@ if is_enabled("media/"):
         env_module.Append(CPPPATH=[os.path.dirname(os.path.realpath(os.curdir)) + "/gdnative/include"])
         thirdparty_sources += Glob("thirdparty/media/libsmacker/*.c")
     if is_enabled("media/ffmpeg"):
-        arch = env["arch"] if "arch" in env and env["arch"] else platform.machine()
-        if arch == "x64":
+        arch = (env["arch"] if "arch" in env and env["arch"] else platform.machine()).lower()
+        if arch == "x64" or arch == "amd64":
             arch = "x86_64"
         elif arch == "mips":
             arch = "mips32"

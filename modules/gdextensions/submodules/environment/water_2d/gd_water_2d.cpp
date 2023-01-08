@@ -47,7 +47,7 @@
 
 // define some constants
 #ifndef M_PI
-#define M_PI Math_Pi
+#define M_PI Math_PI
 #endif
 
 template <typename T>

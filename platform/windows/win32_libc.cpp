@@ -32,6 +32,7 @@
 
 #include <core/error_macros.h>
 
+#include <ctype.h>
 #include <errno.h>
 #include <io.h>
 #include <stdarg.h>
@@ -188,4 +189,90 @@ extern "C" int scandir(const char *dirname, struct dirent ***namelist,
 
 	*namelist = dir;
 	return nDir;
+}
+
+static LARGE_INTEGER get_FILETIME_offset() {
+	SYSTEMTIME s;
+	FILETIME f;
+	LARGE_INTEGER t;
+
+	s.wYear = 1970;
+	s.wMonth = 1;
+	s.wDay = 1;
+	s.wHour = 0;
+	s.wMinute = 0;
+	s.wSecond = 0;
+	s.wMilliseconds = 0;
+	SystemTimeToFileTime(&s, &f);
+	t.QuadPart = f.dwHighDateTime;
+	t.QuadPart <<= 32;
+	t.QuadPart |= f.dwLowDateTime;
+	return (t);
+}
+
+extern "C" int clock_gettime(int /* cid */, struct timeval *tv) {
+	LARGE_INTEGER t;
+	FILETIME f;
+	double microseconds;
+	static LARGE_INTEGER offset;
+	static double frequency_to_microseconds;
+	static int initialized = 0;
+	static BOOL use_performance_counter = 0;
+
+	if (!initialized) {
+		LARGE_INTEGER performance_frequency;
+		initialized = 1;
+		use_performance_counter = QueryPerformanceFrequency(&performance_frequency);
+		if (use_performance_counter) {
+			QueryPerformanceCounter(&offset);
+			frequency_to_microseconds = (double)performance_frequency.QuadPart / 1000000.;
+		} else {
+			offset = get_FILETIME_offset();
+			frequency_to_microseconds = 10.;
+		}
+	}
+	if (use_performance_counter) {
+		QueryPerformanceCounter(&t);
+	} else {
+		GetSystemTimeAsFileTime(&f);
+		t.QuadPart = f.dwHighDateTime;
+		t.QuadPart <<= 32;
+		t.QuadPart |= f.dwLowDateTime;
+	}
+
+	t.QuadPart -= offset.QuadPart;
+	microseconds = (double)t.QuadPart / frequency_to_microseconds;
+	t.QuadPart = microseconds;
+	tv->tv_sec = t.QuadPart / 1000000;
+	tv->tv_usec = t.QuadPart % 1000000;
+	return (0);
+}
+
+char* stristr(const char *str1, const char *str2) {
+	const char *p1 = str1;
+	const char *p2 = str2;
+	const char *r = *p2 == 0 ? str1 : 0;
+
+	while (*p1 != 0 && *p2 != 0) {
+		if (tolower( (unsigned char)*p1 ) == tolower( (unsigned char)*p2 )) {
+			if (r == 0) {
+				r = p1;
+			}
+			p2++ ;
+		} else {
+			p2 = str2 ;
+			if (r != 0) {
+				p1 = r + 1;
+			}
+			if (tolower( (unsigned char)*p1 ) == tolower( (unsigned char)*p2)) {
+				r = p1;
+				p2++;
+			} else {
+				r = 0;
+			}
+		}
+		p1++;
+	}
+
+	return *p2 == 0 ? (char*)r : 0;
 }

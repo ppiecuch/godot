@@ -32,6 +32,8 @@
 
 #include "core/array.h"
 
+#include <vector>
+
 GifExporter::GifExporter() {
 }
 
@@ -75,7 +77,7 @@ void GifExporter::write_frame(const Ref<Image> frame, const Color &background_co
 	// get raw bytes from frame
 	PoolByteArray pool = frame->get_data();
 
-	uint8_t data[pool.size()];
+	std::vector<uint8_t> data(pool.size());
 	for (int i = 0; i < pool.size(); i += 4) {
 		// blend color with the background color because gif doesn't support alpha channel
 		uint8_t red = pool[i];
@@ -89,5 +91,5 @@ void GifExporter::write_frame(const Ref<Image> frame, const Color &background_co
 		data[i + 1] = (green * alpha + get_g8(background_color) * 255 * (255 - alpha)) / data[i + 3];
 		data[i + 2] = (blue * alpha + get_b8(background_color) * 255 * (255 - alpha)) / data[i + 3];
 	}
-	ganim.GifWriteFrame(&gwriter, data, frame->get_width(), frame->get_height(), frame_delay, bit_depth, dither);
+	ganim.GifWriteFrame(&gwriter, &data[0], frame->get_width(), frame->get_height(), frame_delay, bit_depth, dither);
 }

@@ -28,10 +28,14 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <stdint.h>
 #include <string.h>
 #include <time.h>
+#ifndef _MSC_VER
 #include <unistd.h>
+#endif
 
 extern "C" {
 #include <libavcodec/avcodec.h>

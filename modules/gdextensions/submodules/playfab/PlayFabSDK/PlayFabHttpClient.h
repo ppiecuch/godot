@@ -85,7 +85,7 @@ protected:
 
 	void pro_chk_secret_key() {
 		DEV_ASSERT_MSG(
-				!PlayFabSettings()._internalSettings.DeveloperSecretKey.empty(),
+				!PlayFabSettings().DeveloperSecretKey.empty(),
 				"Must have DeveloperSecretKey set to call this method");
 	}
 

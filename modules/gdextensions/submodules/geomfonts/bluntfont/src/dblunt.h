@@ -31,6 +31,10 @@
 // Dutch-Blunt low poly font system.
 // (c)2015 Abraham Stolk
 
+#ifdef _MSC_VER
+#define __restrict__
+#endif
+
 extern int dblunt_string_to_vertices(
 		const char *str, // characters to render.
 		float *destbuf, // output buffer to hold vertices.

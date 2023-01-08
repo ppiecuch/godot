@@ -1971,7 +1971,7 @@ Variant GDScriptFunctionObject::apply_with(Object *p_target, const Array p_args)
 	ERR_FAIL_COND_V(!p_target, Variant());
 	ERR_FAIL_COND_V(!function, Variant());
 
-	Variant::CallError error;
+	Variant::CallError error = { Variant::CallError::CALL_OK };
 	Array args(p_args);
 	args.resize(5);
 	Variant ret = p_target->call(get_name(), VARIANT_ARGS_FROM_ARRAY(args));

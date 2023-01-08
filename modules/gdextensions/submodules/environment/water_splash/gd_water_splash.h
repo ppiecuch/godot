@@ -48,33 +48,34 @@ protected:
 	static void _bind_methods();
 
 public:
-	real_t target_height_;
-	real_t height_;
-	real_t speed_;
-	Vector2 drag_;
+	real_t _target_height;
+	real_t _height;
+	real_t _speed;
+	Vector2 _drag;
 
-	void update(real_t &tension, real_t &damping);
-	void body_enter_shape(int body_id, Object *body, int body_shape, int area_shape);
+	void update(const real_t &p_tension, const real_t &p_damping);
+	void body_enter_shape(int p_body_id, Object *p_body, int p_body_shape, int p_area_shape);
 
-	GdWaterSplashColumn(const Vector2 &, const Vector2 &delta, const Vector2 &drag);
+	GdWaterSplashColumn(const Vector2 &p_pos, const Vector2 &p_delta, const Vector2 &p_drag);
+	~GdWaterSplashColumn();
 };
 
 class GdWaterSplash : public Node2D {
 	GDCLASS(GdWaterSplash, Node2D);
 
-	Vector<GdWaterSplashColumn *> columns_;
+	Vector<GdWaterSplashColumn *> _columns;
 
-	Rect2 rect_;
-	uint32_t ncols_;
-	uint32_t resolution_;
-	Color color_;
-	real_t damping_;
-	real_t tension_;
-	real_t spread_;
-	Vector2 drag_;
+	Rect2 _rect;
+	uint32_t _ncols;
+	uint32_t _resolution;
+	Color _color;
+	real_t _damping;
+	real_t _tension;
+	real_t _spread;
+	Vector2 _drag;
 	Ref<Texture> texture;
 
-	bool size_changed_;
+	bool _size_changed;
 	void _update();
 
 protected:
@@ -84,27 +85,27 @@ public:
 	void _notification(int p_what);
 
 	// Size in x must be a multiple of resolution
-	void set_size(const Rect2 &value);
+	void set_size(const Rect2 &p_value);
 	Rect2 get_size() const;
 
 	// Size of the simulation grid
-	void set_resolution(const uint32_t &value);
+	void set_resolution(const uint32_t &p_value);
 	uint32_t get_resolution() const;
 
-	void set_color(const Color &value);
+	void set_color(const Color &p_value);
 	Color get_color() const;
 
 	// Physical parameters
-	void set_tension(const real_t &value);
+	void set_tension(const real_t &p_value);
 	real_t get_tension() const;
 
-	void set_damping(const real_t &value);
+	void set_damping(const real_t &p_value);
 	real_t get_damping() const;
 
-	void set_spread(const real_t &value);
+	void set_spread(const real_t &p_value);
 	real_t get_spread() const;
 
-	void set_drag(const Vector2 &value);
+	void set_drag(const Vector2 &p_value);
 	Vector2 get_drag() const;
 
 	void set_texture(const Ref<Texture> &p_texture);
