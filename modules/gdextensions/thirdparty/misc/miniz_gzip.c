@@ -18,6 +18,7 @@
 #include <stdio.h>
 #endif
 
+#define MINIZ_HEADER_FILE_ONLY
 #include "miniz.h"
 #include "miniz_gzip.h"
 

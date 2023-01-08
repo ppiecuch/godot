@@ -34,6 +34,7 @@
 
 #include "common/gd_pack.h"
 #include "core/engine.h"
+#define MINIZ_HEADER_FILE_ONLY
 #include "misc/miniz.h"
 
 struct AreaAllocatorNode;
