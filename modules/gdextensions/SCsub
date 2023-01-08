@@ -114,6 +114,7 @@ if is_enabled("breakpad"):
     if env["platform"] == "x11" and arch in ["aarch64", "x86_64"]:
         env_module.Append(CPPPATH=["thirdparty/breakpad_client/linux/include"])
         env.Append(LIBPATH=[os.path.realpath(os.curdir) + "/thirdparty/breakpad_client/linux/%s" % arch])
+        env.Prepend(LIBS=["breakpad_client"])
     else:
         print("(GDextensions) Breakpad crash reporter is not supported on platform '%s/%s'." % (env["platform"], arch))
         env["enable_gdextensions_submodules"].remove("breakpad")
@@ -316,16 +317,19 @@ if is_enabled("openclwrapper"):
     if env["tools"]:
         if env["platform"] == "windows" or env["platform"] == "x11" or env["platform"] == "osx":
             thirdparty_sources += Glob("thirdparty/opencl-wrapper/src/kernel.cpp")
-            if env["platform"] == "osx":
-                env.Append(LINKFLAGS=["-framework", "OpenCL"])
-        else:
-            print("(GDextensions) OpenCLWrapper is not supported on platform '%s'." % env["platform"])
-            env["enable_gdextensions_submodules"].remove("openclwrapper")
-        if is_enabled("openclwrapper"):
             env_module.Append(
                 CPPPATH=["thirdparty/opencl-wrapper/src/", "thirdparty/opencl-wrapper/src/OpenCL/include"]
             )
+            print(os.path.realpath(os.curdir) + "/thirdparty/opencl-wrapper/src/OpenCL/lib")
+            env.Append(LIBPATH=[os.path.realpath(os.curdir) + "/thirdparty/opencl-wrapper/src/OpenCL/lib"])
+            if env["platform"] == "osx":
+                env.Append(LINKFLAGS=["-framework", "OpenCL"])
+            else:
+                env.Append(LINKFLAGS=["opencl" +  env["LIBSUFFIXES"][1]])
             modules += ["openclwrapper"]
+        else:
+            print("(GDextensions) OpenCLWrapper is not supported on platform '%s'." % env["platform"])
+            env["enable_gdextensions_submodules"].remove("openclwrapper")
 
 if is_enabled("slugfont"):
     if secret("submodules/slugfont/ts_slug.cpp") and secret("submodules/slugfont/ts_slug.h"):
@@ -373,6 +377,7 @@ if is_enabled("media/"):
             modules.remove("media/ffmpeg")
         if is_enabled("media/ffmpeg") and "media/ffmpeg" in modules:
             env_module.Append(CPPPATH=[os.path.dirname(os.path.realpath(os.curdir)) + "/gdnative/include"])
+            env.Prepend(LINKFLAGS=[p + env["LIBSUFFIXES"][1] for p in ["avformat", "avcodec", "avutil", "swresample", "swscale"]])
 
 if is_enabled("tileengine"):
     if env["builtin_libpng"]:
@@ -404,12 +409,6 @@ env_module.Append(CPPDEFINES=["GD_CQUEUE", "GD_GODOT_ENET"])
 
 lib = env_module.Library("gdextensions", thirdparty_sources + sources)  # Compile as a static library
 env.Prepend(LIBS=[lib])  # Add the library as a dependency of the final executable
-if is_enabled("media/ffmpeg"):
-    env.Prepend(LIBS=["avformat", "avcodec", "avutil", "swresample", "swscale"])
-if is_enabled("breakpad"):
-    env.Prepend(LIBS=["breakpad_client"])
-if is_enabled("openclwrapper") and env["platform"] != "osx":
-    env.Prepend(LIBS=["opencl"])
 
 if modules:
     sub_enabled = []
