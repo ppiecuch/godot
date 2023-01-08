@@ -224,7 +224,6 @@ public:
 #ifdef TOOLS_ENABLED
 	Dictionary _edit_get_state() const;
 	void _edit_set_state(const Dictionary &p_state);
-	bool _edit_is_selected_on_click(const Point2 &p_point, double p_tolerance) const;
 	Rect2 _edit_get_rect() const;
 	void _edit_set_rect(const Rect2 &p_rect);
 	bool _edit_use_rect() const;
