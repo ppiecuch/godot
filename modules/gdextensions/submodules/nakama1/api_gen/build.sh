@@ -31,6 +31,7 @@ gsed -i 's/Anonymous2/EnvelopeContent/g' api_generated.h
 gsed -i 's/Anonymous9/TopicType/g' api_generated.h
 gsed -i 's/AuthenticateResult5/ScoreOperator/g' api_generated.h
 
+gsed -i 's/namespace server {/#undef _timezone\n\nnamespace server {/g' api_generated.h
 gsed -i 's/assert/assertion/g' api_generated.h
 
 echo "#include \"flatbuffers/flatbuffers.h\"" > api_generated.cpp
