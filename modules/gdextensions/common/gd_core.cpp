@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  vgamepad.h                                                           */
+/*  gd_core.cpp                                                          */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,55 +28,72 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GD_VGAMEPAD_H
-#define GD_VGAMEPAD_H
+#include "core/variant.h"
 
-#include "core/math/vector2.h"
-#include "scene/2d/node_2d.h"
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-class VGamePad : public Node2D {
-	GDCLASS(VGamePad, Node2D);
+// va_copy was defined in the C99, but not in C++ standards before C++11.
+// When you compile C++ without --std=c++<XX> option, compilers still define
+// va_copy, otherwise you have to use the internal version (__va_copy).
+#if !defined(va_copy)
+#if defined(__GNUC__)
+#define va_copy(d, s) __va_copy((d), (s))
+#else
+#define va_copy(d, s) ((d) = (s))
+#endif
+#endif
 
-public:
-	enum VGamePadDesignHint {
-		VGAMEPAD_RED_ACCENT,
-	};
+#if defined(MINGW_ENABLED)
+#define gd_vsnprintf(m_buffer, m_count, m_format, m_args_copy) vsnprintf_s(m_buffer, m_count, _TRUNCATE, m_format, m_args_copy)
+#define gd_vscprintf(m_format, m_args_copy) _vscprintf(m_format, m_args_copy)
+#else
+#define gd_vsnprintf(m_buffer, m_count, m_format, m_args_copy) vsnprintf(m_buffer, m_count, m_format, m_args_copy)
+#define gd_vscprintf(m_format, m_args_copy) vsnprintf(NULL, 0, p_format, m_args_copy)
+#endif
 
-	enum VGamePadControls {
-		VGAMEPAD_BUTTON_ROTATE_RIGHT,
-		VGAMEPAD_BUTTON_ROTATE_LEFT,
-		VGAMEPAD_BUTTON_ROTATE_A,
-		VGAMEPAD_BUTTON_ROTATE_B,
-		VGAMEPAD_BUTTON_ROTATE_X,
-		VGAMEPAD_BUTTON_ROTATE_Y,
-		VGAMEPAD_KEYPAD,
-		VGAMEPAD_DPAD,
-		VGAMEPAD_DPAD_DECOR,
-		VGAMEPAD_ANALOG,
-	};
+static char *_str_format_new(const char *p_format, va_list p_list) {
+	va_list list;
 
-private:
-	bool _dirty;
-	VGamePadControls controls;
-	int device;
+	va_copy(list, p_list);
+	int len = gd_vscprintf(p_format, list);
+	va_end(list);
 
-	void _debug_draw(CanvasItem *canvas);
-	void _debug_draw_option_button(CanvasItem *canvas, const Point2 &position, bool is_pressed);
-	void _debug_draw_dpad_arrow(CanvasItem *canvas, const Point2 &position, real_t angle, bool is_pressed);
-	void _debug_draw_face_button(CanvasItem *canvas, const Point2 &position, bool is_pressed);
-	void _debug_draw_bumper(CanvasItem *canvas, const Point2 &position, bool is_pressed);
-	void _debug_draw_trigger(CanvasItem *canvas, const Point2 &position, real_t axis);
-	void _debug_draw_joystick(CanvasItem *canvas, const Point2 &position, real_t axis_x, real_t axis_y, bool is_pressed);
+	len += 1; // for the trailing '/0'
 
-protected:
-	static void _bind_methods();
+	char *buffer(memnew_arr(char, len));
 
-	void _notification(int p_what);
-	void _input(const Ref<InputEvent> &p_event);
+	va_copy(list, p_list);
+	gd_vsnprintf(buffer, len, p_format, list);
+	va_end(list);
 
-public:
-	VGamePad();
-	~VGamePad();
-};
+	return buffer;
+}
 
-#endif // GD_VGAMEPAD_H
+static String _str_format(const char *p_format, va_list p_list) {
+	char *buffer = _str_format_new(p_format, p_list);
+
+	String res(buffer);
+	memdelete_arr(buffer);
+
+	return res;
+}
+
+String string_format(const char *p_format, ...) {
+	va_list list;
+
+	va_start(list, p_format);
+	String res = _str_format(p_format, list);
+	va_end(list);
+
+	return res;
+}
+
+String string_format(const Array &p_args) {
+	String str;
+	for (int i = 0; i < p_args.size(); i++) {
+		str += p_args[i].operator String();
+	}
+	return str;
+}

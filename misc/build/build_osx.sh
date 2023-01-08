@@ -8,6 +8,11 @@ if [ -z "$CPU" ]; then
 	CPU=2
 fi
 
+if [ -f build_info.config ]; then
+	echo "Loading build_info.config"
+	. build_info.config
+fi
+
 # `START_DIR` contains the directory where the script is located
 START_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GODOT_DIR=$PWD
@@ -84,9 +89,18 @@ rm -rf "$GODOT_DIR/bin/Godot-master.app"
 $cp -rv "$GODOT_DIR/misc/dist/osx_tools.app" "$GODOT_DIR/bin/Godot-master.app"
 mkdir -p "$GODOT_DIR/bin/Godot-master.app/Contents/MacOS"
 $cp -v "$GODOT_DIR/bin/godot.osx.opt.tools.$A" "$GODOT_DIR/bin/Godot-master.app/Contents/MacOS/Godot"
+if [ ! -z "$EDITOR_BUNDLE_ID" ]; then
+	echo "New bundle identifier: $EDITOR_BUNDLE_ID"
+	/usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $EDITOR_BUNDLE_ID" "$GODOT_DIR/bin/Godot-master.app/Contents/Info.plist"
+fi
 
+codesign_args=""
+if [ ! -z "$EDITOR_CODESIGN_IDENTITY" ]; then
+	echo "Codesign identity: $EDITOR_CODESIGN_IDENTITY"
+	codesign_args="$codesign_args -s "$EDITOR_CODESIGN_IDENTITY""
+fi
 echo_header "*** Signing executable for debugger ..."
-codesign --verbose --sign - --timestamp --entitlements "$GODOT_DIR/misc/dist/osx/editor.entitlements" "$GODOT_DIR/bin/Godot-master.app"
+codesign --verbose --deep --sign - --timestamp --entitlements "$GODOT_DIR/misc/dist/osx/editor.entitlements" $codesign_args "$GODOT_DIR/bin/Godot-master.app"
 
 echo_success "*** Finished building editor for macOS."
 

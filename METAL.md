@@ -2,7 +2,7 @@
 
 Metal renderer for OSX and iOS.
 
-Metal shader reflectin tool: ```drivers/metal/tools/metal_reflecting.mm```
+Metal shader reflection tool: ```drivers/metal/tools/metal_reflecting.mm```
 
 ### References:
 1. https://github.com/spurious/SDL-mirror/blob/master/src/render/metal/SDL_render_metal.m

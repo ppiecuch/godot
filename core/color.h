@@ -202,6 +202,14 @@ struct _NO_DISCARD_CLASS_ Color {
 	_FORCE_INLINE_ bool operator<(const Color &p_color) const; //used in set keys
 	operator String() const;
 
+	const static Color WHITE;
+	const static Color BLACK;
+	const static Color GRAY;
+	const static Color RED;
+	const static Color GREEN;
+	const static Color BLUE;
+	const static Color YELLOW;
+
 	/**
 	 * No construct parameters, r=0, g=0, b=0. a=255
 	 */

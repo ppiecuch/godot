@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  vgamepad.h                                                           */
+/*  gd_http_server.h                                                     */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,55 +28,59 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GD_VGAMEPAD_H
-#define GD_VGAMEPAD_H
+#ifndef GD_HTTP_SERVER_H
+#define GD_HTTP_SERVER_H
 
-#include "core/math/vector2.h"
-#include "scene/2d/node_2d.h"
+#include "core/io/file_access_network.h"
+#include "core/io/packet_peer.h"
+#include "core/io/tcp_server.h"
+#include "core/object.h"
+#include "core/os/thread.h"
 
-class VGamePad : public Node2D {
-	GDCLASS(VGamePad, Node2D);
+#include "http_protocol.h"
 
-public:
-	enum VGamePadDesignHint {
-		VGAMEPAD_RED_ACCENT,
+#include <functional>
+#include <vector>
+
+typedef bool (*RouteHandler)(const http::HTTPMessage *message, http::HTTPMessage *response);
+
+class GdHttpServer : public Object {
+	GDCLASS(GdHttpServer, Object);
+
+	enum Command {
+		CMD_NONE,
+		CMD_ACTIVATE,
+		CMD_STOP,
 	};
 
-	enum VGamePadControls {
-		VGAMEPAD_BUTTON_ROTATE_RIGHT,
-		VGAMEPAD_BUTTON_ROTATE_LEFT,
-		VGAMEPAD_BUTTON_ROTATE_A,
-		VGAMEPAD_BUTTON_ROTATE_B,
-		VGAMEPAD_BUTTON_ROTATE_X,
-		VGAMEPAD_BUTTON_ROTATE_Y,
-		VGAMEPAD_KEYPAD,
-		VGAMEPAD_DPAD,
-		VGAMEPAD_DPAD_DECOR,
-		VGAMEPAD_ANALOG,
-	};
+	Ref<TCP_Server> server;
 
-private:
-	bool _dirty;
-	VGamePadControls controls;
-	int device;
+	Thread thread;
+	static void _thread_start(void *);
+	bool quit;
+	Command cmd;
 
-	void _debug_draw(CanvasItem *canvas);
-	void _debug_draw_option_button(CanvasItem *canvas, const Point2 &position, bool is_pressed);
-	void _debug_draw_dpad_arrow(CanvasItem *canvas, const Point2 &position, real_t angle, bool is_pressed);
-	void _debug_draw_face_button(CanvasItem *canvas, const Point2 &position, bool is_pressed);
-	void _debug_draw_bumper(CanvasItem *canvas, const Point2 &position, bool is_pressed);
-	void _debug_draw_trigger(CanvasItem *canvas, const Point2 &position, real_t axis);
-	void _debug_draw_joystick(CanvasItem *canvas, const Point2 &position, real_t axis_x, real_t axis_y, bool is_pressed);
+	int port;
+	bool active;
 
-protected:
-	static void _bind_methods();
+	bool _process_connection(Ref<StreamPeerTCP> connection);
 
-	void _notification(int p_what);
-	void _input(const Ref<InputEvent> &p_event);
+	typedef std::function<bool(const http::HTTPMessage *message, http::HTTPMessage *response)> Handler;
+	std::vector<Handler> routes;
 
 public:
-	VGamePad();
-	~VGamePad();
+	static GdHttpServer *get_singleton();
+
+	void start();
+	void stop();
+
+	bool is_active() const;
+
+	void register_handler(RouteHandler p_handler);
+	void register_handler(Handler p_handler);
+
+	GdHttpServer();
+	~GdHttpServer();
 };
 
-#endif // GD_VGAMEPAD_H
+#endif // GD_HTTP_SERVER_H

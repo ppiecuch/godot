@@ -20,7 +20,6 @@
 typedef struct Layer
 {
 	TLN_LayerType	type;		/* layer type */
-	TLN_Tileset		tileset;	/* pointer to tileset */
 	TLN_Tilemap		tilemap;	/* pointer to tilemap */
 	TLN_Palette		palette;	/* pointer to current color alette */
 	TLN_Bitmap		bitmap;		/* pointer to bitmap (bitmap layer mode) */
@@ -51,8 +50,8 @@ typedef struct Layer
 	bool dirty;					/* requires UpdateLayer() before draw */
 	
 	/* */
-	int				hstart;		/* offset de inicio horizontal */
-	int				vstart;		/* offset de inicio vertical */
+	int				hstart;		/* horizontal start offset */
+	int				vstart;		/* vertical start offset*/
 
 	/* clip */
 	struct
@@ -64,8 +63,8 @@ typedef struct Layer
 	/* mosaic */
 	struct
 	{
-		int w,h;			/* tamaño del pixel */
-		uint8_t* buffer;	/* linea temporal */
+		int w, h;			/* virtual pixel size */
+		uint32_t* buffer;	/* line buffer */
 	}
 	mosaic;
 }

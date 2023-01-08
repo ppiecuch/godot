@@ -45,6 +45,8 @@ Some of the things you may found usefull in this repository (look here for all m
   * _BMF_ XML bitmap fonts reader [scene/resources/font.cpp](https://github.com/ppiecuch/godot/blob/master/scene/resources/font.cpp#L211)
   * _SFXR_ Retro Sound FX Generator [modules/gdextensions/submodules/sfxr/gdsfxr.cpp](modules/gdextensions/submodules/sfxr/gdsfxr.cpp)
   * Simple _vector fonts_ (stb_easy_font, leonsans etc) [modules/gdextensions/submodules/geomfonts](modules/gdextensions/submodules/geomfonts)
+  * _Fluid_/water simulation [modules/gdextensions/submodules/environment/water_2d](modules/gdextensions/submodules/environment/water_2d)
+  * _Benchmarking_ module [modules/gdextensions/submodules/benchmark](modules/gdextensions/submodules/benchmark)
 
 Some of the modules I am also developing or maintaining every now and then:
 

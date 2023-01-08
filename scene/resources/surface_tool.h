@@ -115,6 +115,17 @@ public:
 	void add_weights(const Vector<float> &p_weights);
 	void add_smooth_group(bool p_smooth);
 
+	_FORCE_INLINE_ void add_triangle(const Vector3 &p_vertex1, const Vector3 &p_vertex2, const Vector3 &p_vertex3) {
+		add_vertex(p_vertex1);
+		add_vertex(p_vertex2);
+		add_vertex(p_vertex3);
+	}
+
+	_FORCE_INLINE_ void add_line(const Vector3 &p_vertex1, const Vector3 &p_vertex2) {
+		add_vertex(p_vertex1);
+		add_vertex(p_vertex2);
+	}
+
 	void add_triangle_fan(const Vector<Vector3> &p_vertices, const Vector<Vector2> &p_uvs = Vector<Vector2>(), const Vector<Color> &p_colors = Vector<Color>(), const Vector<Vector2> &p_uv2s = Vector<Vector2>(), const Vector<Vector3> &p_normals = Vector<Vector3>(), const Vector<Plane> &p_tangents = Vector<Plane>());
 
 	void add_index(int p_index);
@@ -137,7 +148,7 @@ public:
 	void create_from(const Ref<Mesh> &p_existing, int p_surface);
 	void create_from_blend_shape(const Ref<Mesh> &p_existing, int p_surface, const String &p_blend_shape_name);
 	void append_from(const Ref<Mesh> &p_existing, int p_surface, const Transform &p_xform);
-	Ref<ArrayMesh> commit(const Ref<ArrayMesh> &p_existing = Ref<ArrayMesh>(), uint32_t p_flags = Mesh::ARRAY_COMPRESS_DEFAULT);
+	Ref<ArrayMesh> commit(const Ref<ArrayMesh> &p_existing = Ref<ArrayMesh>(), bool p_active = true, uint32_t p_flags = Mesh::ARRAY_COMPRESS_DEFAULT);
 
 	SurfaceTool();
 };

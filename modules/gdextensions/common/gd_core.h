@@ -109,6 +109,9 @@
 #define newref(pClass, ...) Ref<pClass>(memnew(pClass(__VA_ARGS__)))
 #define nullref(pClass) Ref<pClass>()
 
+String string_format(const char *p_format, ...);
+String string_format(const Array &p_args);
+
 #ifdef DEBUG_ENABLED
 #define DEBUG_PRINT(pText) print_line(pText)
 #define DEBUG_VAR(pVar) print_line(vformat("%s: %s", #pVar, pVar))

@@ -1,11 +1,10 @@
-/**
-* @file handle_map.h
-* @author Jeff Kiah
-* @copyright The MIT License (MIT), Copyright (c) 2015 Jeff Kiah
-*/
-#pragma once
-#ifndef HANDLE_MAP_H_
-#define HANDLE_MAP_H_
+// handle_map v1.00
+//
+// Jeff Kiah
+// The MIT License (MIT), Copyright (c) 2015 Jeff Kiah
+
+#ifndef HANDLE_MAP_H
+#define HANDLE_MAP_H
 
 #include <cstdint>
 #include <cassert>
@@ -30,24 +29,20 @@
 #define IS_TRIVIALLY_COPYABLE(T) std::is_trivially_copyable<T>::value
 #endif
 
-/**
-* @struct Id_T
-* @var	free		0 if active, 1 if slot is part of freelist, only applicable to inner ids
-* @var	type_id		relates to m_item_type_id parameter of handle_map
-* @var	generation	incrementing generation of data at the index, for tracking accesses to old data
-* @var	index		When used as a handle (outer id, given to the client):
-*						free==0, index of id in the sparseIds array
-*					When used as an inner id (stored in sparseIds array):
-*						free==0, index of the item in the dense items array
-*						free==1, index of next free slot, forming an embedded linked list
-* @var	value		unioned with the above four vars, used for direct comparison of ids
-*/
+// struct Id_T
+// - free : 0 if active, 1 if slot is part of freelist, only applicable to inner ids
+// - type_id : relates to m_item_type_id parameter of handle_map
+// - generation : incrementing generation of data at the index, for tracking accesses to old data
+// - index : When used as a handle (outer id, given to the client):
+//             free==0, index of id in the sparseIds array
+//           When used as an inner id (stored in sparseIds array):
+//             free==0, index of the item in the dense items array
+//             free==1, index of next free slot, forming an embedded linked list
+// - value : unioned with the above four vars, used for direct comparison of ids
 struct Id_T {
 	union {
-		/**
-		* the order of this bitfield is important for sorting prioritized by free, then type_id,
-		* then generation, then index
-		*/
+		// the order of this bitfield is important for sorting prioritized by free, then type_id,
+		// then generation, then index
 		struct {
 			uint32_t index : 16;
 			uint32_t generation : 14;
@@ -61,24 +56,19 @@ typedef std::vector<Id_T> IdSet_T;
 #define NullId_T Id_T{}
 inline static Id_T make_handle(uint32_t v) { Id_T Id; Id.value = v; return Id; }
 
-/**
-* @class handle_map
-*	Stores objects using a dense inner array and sparse outer array scheme for good cache coherence
-*	of the inner items. The sparse array contains handles (outer ids) used to identify the item,
-*	and provides an extra indirection allowing the inner array to move items in memory to keep them
-*	tightly packed. The sparse array contains an embedded FIFO freelist, where removed ids push to
-*	the back while new ids pop from the front.
-*
-* @tparam	T	type of item to be stored
-*/
+// class handle_map
+// Stores objects using a dense inner array and sparse outer array scheme for good cache coherence
+// of the inner items. The sparse array contains handles (outer ids) used to identify the item,
+// and provides an extra indirection allowing the inner array to move items in memory to keep them
+// tightly packed. The sparse array contains an embedded FIFO freelist, where removed ids push to
+// the back while new ids pop from the front.
+//
+// - T : type of item to be stored
 template <typename T>
 class handle_map {
 public:
-	/**
-	* @struct Meta_T
-	*/
 	struct Meta_T {
-		uint32_t	dense_to_sparse;	//!< index into m_sparse_ids array stored in m_meta
+		uint32_t	dense_to_sparse; //!< index into m_sparse_ids array stored in m_meta
 	};
 
 	typedef std::vector<T>      DenseSet_T;
@@ -86,158 +76,123 @@ public:
 
 	// Functions
 
-	/**
-	* Get a direct reference to a stored item by handle
-	* @param[in]	handle		id of the item
-	* @returns reference to the item
-	*/
-	T&			at(Id_T handle);
-	const T&	at(Id_T handle) const;
-	T&			operator[](Id_T handle)			{ return at(handle); }
-	const T&	operator[](Id_T handle) const	{ return at(handle); }
+	// Get a direct reference to a stored item by handle
+	// - handle : id of the item
+	// - returns reference to the item
+	T& at(Id_T handle);
+	const T& at(Id_T handle) const;
+	T& operator[](Id_T handle) { return at(handle); }
+	const T& operator[](Id_T handle) const { return at(handle); }
 
-	/**
-	* Look for an object and return handle
-	* @param[in]	i		object
-	* @param[out]	idT		handle of the object
-	* @returns true if object has been found
-	*/
-	bool		find(const T &i, Id_T &id) const;
+	// Look for an object and return handle
+	// - i : object
+	// - idT : handle of the object
+	// - returns true if object has been found
+	bool find(const T &i, Id_T &id) const;
 
-	/**
-	* create one item with default initialization
-	* @tparam		Params	initialization arguments passed to constructor of item
-	* @returns the id
-	*/
+	// Create one item with default initialization
+	// - Params : initialization arguments passed to constructor of item
+	// - returns the id
 	template <typename... Params>
 	Id_T emplace(Params... args) { return insert(T{ args... }); }
 
-	/**
-	* create n items with initialization args specified by Params, return vector of ids
-	* @param[in]	n		number of items to create
-	* @tparam		Params	initialization arguments passed to constructor of each item created
-	* @returns a collection of ids
-	*/
+	// Create n items with initialization args specified by Params, return vector of ids
+	// - n : number of items to create
+	// - Params : initialization arguments passed to constructor of each item created
+	// - returns a collection of ids
 	template <typename... Params>
 	IdSet_T emplace_items(int n, Params... args);
 
-	/**
-	* iterators over the dense set, they are invalidated by inserting and removing
-	*/
-	typename DenseSet_T::iterator		begin()			{ return m_items.begin(); }
+	// Iterators over the dense set, they are invalidated by inserting and removing
+	typename DenseSet_T::iterator begin() { return m_items.begin(); }
 	typename DenseSet_T::const_iterator	cbegin() const	{ return m_items.cbegin(); }
-	typename DenseSet_T::iterator		end()			{ return m_items.end(); }
-	typename DenseSet_T::const_iterator	cend() const	{ return m_items.cend(); }
+	typename DenseSet_T::iterator end() { return m_items.end(); }
+	typename DenseSet_T::const_iterator	cend() const { return m_items.cend(); }
 
-	/**
-	* remove the item identified by the provided handle
-	* @param[in]	handle		id of the item
-	* @returns count of items removed (0 or 1)
-	*/
+	// Remove the item identified by the provided handle
+	// - handle : id of the item
+	// - returns count of items removed (0 or 1)
 	size_t erase(Id_T handle);
 
-	/**
-	* remove the items identified in the set of handles
-	* @param[in]	handles		set of ids
-	* @returns count of items removed
-	*/
+	// Remove the items identified in the set of handles
+	// - handles : set of ids
+	// - returns count of items removed
 	size_t erase_items(const IdSet_T& handles);
 
-	/**
-	* add one item, forwarding the provided i into the store, return id
-	* @param[in]	i	rvalue ref of of the object to move into inner storage
-	* @returns the id
-	*/
+	// Add one item, forwarding the provided i into the store, return id
+	// - i : rvalue ref of of the object to move into inner storage
+	// - returns the id
 	Id_T insert(T&& i);
 
-	/**
-	* add one item, copying the provided i into the store, return id
-	* @param[in]	i	const ref of of the object to copy into inner storage
-	* @returns the id
-	*/
+	// Add one item, copying the provided i into the store, return id
+	// - i : const ref of of the object to copy into inner storage
+	// - returns the id
 	Id_T insert(const T& i);
 
-	/**
-	* Removes all items, leaving the m_sparse_ids set intact by adding each entry to the free-
-	* list and incrementing its generation. This operation is slower than @c reset, but safer
-	* for the detection of stale handle lookups later (in debug builds). Prefer to use @c reset
-	* if safety is not a concern.
-	* Complexity is linear.
-	*/
+	// Removes all items, leaving the m_sparse_ids set intact by adding each entry to the free-
+	// list and incrementing its generation. This operation is slower than @c reset, but safer
+	// for the detection of stale handle lookups later (in debug builds). Prefer to use @c reset
+	// if safety is not a concern.
+	// Complexity is linear.
 	void clear() _NOEXCEPT;
 
-	/**
-	* Removes all items, destroying the m_sparse_ids set. Leaves the container's capacity, but
-	* otherwise equivalent to a default-constructed container. This is faster than @c clear,
-	* but cannot safely detect lookups by stale handles obtained before the reset. Use @c clear
-	* if safety is a concern, at least until it's proven not to be a problem.
-	* Complexity is constant.
-	*/
+	// Removes all items, destroying the m_sparse_ids set. Leaves the container's capacity, but
+	// otherwise equivalent to a default-constructed container. This is faster than @c clear,
+	// but cannot safely detect lookups by stale handles obtained before the reset. Use @c clear
+	// if safety is a concern, at least until it's proven not to be a problem.
+	// Complexity is constant.
 	void reset() _NOEXCEPT;
 
-	/**
-	* @returns true if handle handle refers to a valid item
-	*/
+	// Returns true if handle handle refers to a valid item
 	bool is_valid(Id_T handle) const;
 
-	/**
-	* @returns size of the dense items array
-	*/
+	// Returns size of the dense items array
 	size_t size() const _NOEXCEPT { return m_items.size(); }
 
-	/**
-	* @returns capacity of the dense items array
-	*/
+	// Returns capacity of the dense items array
 	size_t capacity() const _NOEXCEPT { return m_items.capacity(); }
 
-	/**
-	* defragment uses the comparison function @c comp to establish an ideal order for the dense
-	*	set in order to maximum cache locality for traversals. The dense set can become
-	*	fragmented over time due to removal operations. This can be an expensive operation, so
-	*	the sort operation is reentrant. Use the @c maxSwaps parameter to limit the number of
-	*	swaps that will occur before the function returns.
-	* @param[in]	comp	comparison function object, function pointer, or lambda
-	* @param[in]	maxSwaps	maximum number of items to reorder in the insertion sort
-	*	before the function returns. Pass 0 (default) to run until completion.
-	* @tparam	Compare	comparison function object which returns ?true if the first argument is
-	*	greater than (i.e. is ordered after) the second. The signature of the comparison
-	*	function should be equivalent to the following:
-	*	@code bool cmp(const T& a, const T& b); @endcode
-	*	The signature does not need to have const &, but the function object must not modify
-	*	the objects passed to it.
-	* @returns the number of swaps that occurred, keeping in mind that this value could
-	*	overflow on very large data sets
-	*/
+	// Defragment uses the comparison function @c comp to establish an ideal order for the dense
+	// set in order to maximum cache locality for traversals. The dense set can become
+	// fragmented over time due to removal operations. This can be an expensive operation, so
+	// the sort operation is reentrant. Use the @c maxSwaps parameter to limit the number of
+	// swaps that will occur before the function returns.
+	// - comp : comparison function object, function pointer, or lambda
+	// - maxSwaps : maximum number of items to reorder in the insertion sort
+	//   before the function returns. Pass 0 (default) to run until completion.
+	// - Compare : comparison function object which returns ?true if the first argument is
+	//   greater than (i.e. is ordered after) the second. The signature of the comparison
+	// function should be equivalent to the following:
+	//
+	//   bool cmp(const T& a, const T& b);
+	//
+	//  The signature does not need to have const &, but the function object must not modify
+	//  the objects passed to it.
+	// - returns the number of swaps that occurred, keeping in mind that this value could
+	//   overflow on very large data sets
 	template <typename Compare>
 	size_t	defragment(Compare comp, size_t maxSwaps = 0);
 
+	// These functions provide direct access to inner arrays, don't add or remove items, just
+	// use them for lookups and iterating over the items
+	DenseSet_T& get_items() { return m_items; }
+	const DenseSet_T& get_items() const { return m_items; }
+	MetaSet_T& get_meta() { return m_meta; }
+	const MetaSet_T& get_meta() const { return m_meta; }
+	IdSet_T& get_ids() { return m_sparse_ids; }
+	const IdSet_T& get_ids() const { return m_sparse_ids; }
 
-	/**
-	* these functions provide direct access to inner arrays, don't add or remove items, just
-	* use them for lookups and iterating over the items
-	*/
-	DenseSet_T&			get_items()					{ return m_items; }
-	const DenseSet_T&	get_items() const			{ return m_items; }
-	MetaSet_T&			get_meta()					{ return m_meta; }
-	const MetaSet_T&	get_meta() const			{ return m_meta; }
-	IdSet_T&			get_ids()					{ return m_sparse_ids; }
-	const IdSet_T&		get_ids() const				{ return m_sparse_ids; }
+	uint32_t get_free_list_front() const { return m_free_list_front; }
+	uint32_t get_free_list_back() const { return m_free_list_back; }
 
-	uint32_t			get_free_list_front() const	{ return m_free_list_front; }
-	uint32_t			get_free_list_back() const	{ return m_free_list_back; }
+	uint16_t get_item_type_id() const { return m_item_type_id; }
 
-	uint16_t			get_item_type_id() const	{ return m_item_type_id; }
+	// Returns index into the inner DenseSet for a given outer id
+	uint32_t get_inner_index(Id_T handle) const;
 
-	/**
-	* @returns index into the inner DenseSet for a given outer id
-	*/
-	uint32_t			get_inner_index(Id_T handle) const;
-
-	/**
-	* Constructor
-	* @param	item_type_id		type_id used by the Id_T::type_id variable for this container
-	* @param	reserve_count	reserve space for inner storage
-	*/
+	// Constructor
+	// - item_type_id : type_id used by the Id_T::type_id variable for this container
+	// - reserve_count : reserve space for inner storage
 	explicit handle_map(uint16_t item_type_id, size_t reserve_count)
 		: m_item_type_id(item_type_id)
 	{
@@ -248,24 +203,22 @@ public:
 
 private:
 
-	/**
-	* free_list is empty when the front is set to 32 bit max value (the back will match)
-	* @returns true if empty
-	*/
+	// free_list is empty when the front is set to 32 bit max value (the back will match)
+	// returns true if empty
 	bool free_list_empty() const { return (m_free_list_front == 0xFFFFFFFF); }
 
 	// Variables
 
-	uint32_t	m_free_list_front = 0xFFFFFFFF; //!< start index in the embedded ComponentId freelist
-	uint32_t	m_free_list_back  = 0xFFFFFFFF; //!< last index in the freelist
+	uint32_t m_free_list_front = 0xFFFFFFFF; //!< start index in the embedded ComponentId freelist
+	uint32_t m_free_list_back  = 0xFFFFFFFF; //!< last index in the freelist
 
-	uint16_t	m_item_type_id;	//!< the Id_T::type_id to use for ids produced by this handle_map<T>
+	uint16_t m_item_type_id; //!< the Id_T::type_id to use for ids produced by this handle_map<T>
 
-	uint8_t		m_fragmented = 0; //<! set to 1 if modified by insert or erase since last complete defragment
+	uint8_t m_fragmented = 0; //<! set to 1 if modified by insert or erase since last complete defragment
 
-	IdSet_T		m_sparse_ids;	//!< stores a set of Id_Ts, these are "inner" ids indexing into m_items
-	DenseSet_T	m_items;		//!< stores items of type T
-	MetaSet_T	m_meta;			//!< stores Meta_T type for each item
+	IdSet_T m_sparse_ids; //!< stores a set of Id_Ts, these are "inner" ids indexing into m_items
+	DenseSet_T m_items; //!< stores items of type T
+	MetaSet_T m_meta; //!< stores Meta_T type for each item
 };
 
 // inline details
@@ -569,4 +522,4 @@ size_t handle_map<T>::defragment(Compare comp, size_t maxSwaps)
 	return swaps;
 }
 
-#endif // HANDLE_MAP_H_
+#endif // HANDLE_MAP_H

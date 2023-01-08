@@ -95,6 +95,10 @@
 #include "multipeer/gd_multipeer.h"
 #endif
 
+#ifdef GDEXT_HTTPSERVER_ENABLED
+#include "httpserver/gd_http_server.h"
+#endif
+
 #ifdef GDEXT_GENERATOR_ENABLED
 #include "generator/gd_procedural_mesh.h"
 #endif
@@ -336,6 +340,9 @@ void register_gdextensions_types() {
 #endif
 #ifdef GDEXT_MULTIPEER_ENABLED
 	Engine::get_singleton()->add_singleton(Engine::Singleton("GdMultiPeer", memnew(GdMultiPeer)));
+#endif
+#ifdef GDEXT_HTTPSERVER_ENABLED
+	Engine::get_singleton()->add_singleton(Engine::Singleton("GdHttpServer", memnew(GdHttpServer)));
 #endif
 #ifdef GDEXT_CORE_ENABLED
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Resources", memnew(Resources)));
@@ -629,6 +636,11 @@ void unregister_gdextensions_types() {
 #endif
 #ifdef GDEXT_MULTIPEER_ENABLED
 	if (GdMultiPeer *instance = GdMultiPeer::get_singleton()) {
+		memdelete(instance);
+	}
+#endif
+#ifdef GDEXT_HTTPSERVER_ENABLED
+	if (GdHttpServer *instance = GdHttpServer::get_singleton()) {
 		memdelete(instance);
 	}
 #endif

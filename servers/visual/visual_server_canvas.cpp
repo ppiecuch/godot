@@ -844,7 +844,7 @@ uint64_t VisualServerCanvas::canvas_item_add_mesh_3d(RID p_item, const RID &p_me
 	return int64_t(m);
 }
 
-void VisualServerCanvas::canvas_item_update_mesh_3d(RID p_item, uint64_t p_entry, const Transform &p_transform, const Color &p_modulate, RID p_texture, RID p_normal_map, RID p_mask) {
+void VisualServerCanvas::canvas_item_set_mesh_3d(RID p_item, uint64_t p_entry, const Transform &p_transform, const Color &p_modulate, RID p_texture, RID p_normal_map, RID p_mask) {
 	Item *canvas_item = canvas_item_owner.getornull(p_item);
 	ERR_FAIL_COND(!canvas_item);
 	ERR_FAIL_COND(canvas_item->commands.find((Item::Command *)p_entry) < 0);
@@ -856,8 +856,22 @@ void VisualServerCanvas::canvas_item_update_mesh_3d(RID p_item, uint64_t p_entry
 	m->mask = p_mask;
 	m->transform = p_transform;
 	m->modulate = p_modulate;
+}
 
-	return;
+void VisualServerCanvas::canvas_item_mul_mesh_3d(RID p_item, uint64_t p_entry, const Variant &p_prop) {
+	ERR_FAIL_COND(p_prop.is_nil());
+
+	Item *canvas_item = canvas_item_owner.getornull(p_item);
+	ERR_FAIL_COND(!canvas_item);
+	ERR_FAIL_COND(canvas_item->commands.find((Item::Command *)p_entry) < 0);
+
+	Item::CommandMesh *m = (Item::CommandMesh *)p_entry;
+	ERR_FAIL_COND(m->type != Item::Command::TYPE_MESH);
+	if (p_prop.get_type() == Variant::COLOR) {
+		m->modulate *= p_prop.operator Color();
+	} else if (p_prop.get_type() == Variant::TRANSFORM) {
+		m->transform *= p_prop.operator Transform();
+	}
 }
 
 void VisualServerCanvas::canvas_item_add_particles(RID p_item, RID p_particles, RID p_texture, RID p_normal, RID p_mask) {

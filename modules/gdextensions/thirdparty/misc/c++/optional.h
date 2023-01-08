@@ -1,5 +1,3 @@
-
-///
 // optional - An implementation of std::optional with extensions
 // Written in 2017 by Sy Brand (tartanllama@gmail.com, @TartanLlama)
 //
@@ -12,10 +10,9 @@
 // You should have received a copy of the CC0 Public Domain Dedication
 // along with this software. If not, see
 // <http://creativecommons.org/publicdomain/zero/1.0/>.
-///
 
-#ifndef STDX_OPTIONAL_HPP
-#define STDX_OPTIONAL_HPP
+#ifndef STDX_OPTIONAL_H
+#define STDX_OPTIONAL_H
 
 #define STDX_OPTIONAL_VERSION_MAJOR 1
 #define STDX_OPTIONAL_VERSION_MINOR 0
@@ -2060,4 +2057,4 @@ template <class T> struct hash<stdx::optional<T>> {
 };
 } // namespace std
 
-#endif
+#endif // STDX_OPTIONAL_H

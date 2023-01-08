@@ -57,6 +57,7 @@ modules = [
     "geomfonts",
     "statemachine",
     "benet",
+    "httpserver",
     "behaviornode",
     "behaviortree",
     "simpleai",
@@ -264,7 +265,7 @@ if is_enabled("timelinefx"):
     sources += Glob("submodules/timelinefx/runtime/*.cpp")
 
 if is_enabled("tileengine"):
-    env_module.Append(CPPDEFINES=["TLN_EXCLUDE_WINDOW"])
+    env_module.Append(CPPDEFINES=["TLN_EXCLUDE_WINDOW", "TLN_STATIC_BUILD"])
     env_module.Append(CPPPATH=["thirdparty/Tilengine/include"])
     thirdparty_sources += Glob("thirdparty/Tilengine/src/*.c")
 

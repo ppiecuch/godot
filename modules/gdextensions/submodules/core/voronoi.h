@@ -43,7 +43,8 @@
 #include <core/variant.h>
 #include <core/vector.h>
 
-#include "voronoi_jc.h"
+#include "voronoi/jc_voronoi.h"
+#include "voronoi/jc_voronoi_clip.h"
 
 namespace voronoi_detail {
 
@@ -95,9 +96,16 @@ class VoronoiDiagram;
 class VoronoiEdge : public Object {
 	GDCLASS(VoronoiEdge, Object)
 
-public:
 	const jcv_edge *_edge;
 	const VoronoiDiagram *_diagram;
+
+protected:
+	static void _bind_methods();
+
+public:
+	Vector<Variant> sites() const;
+	Vector2 start() const;
+	Vector2 end() const;
 
 	VoronoiEdge() = default;
 	inline VoronoiEdge(const jcv_edge *edge, const VoronoiDiagram *diagram) :
@@ -105,21 +113,22 @@ public:
 	}
 
 	~VoronoiEdge() = default;
-
-	Vector<Variant> sites() const;
-	Vector2 start() const;
-	Vector2 end() const;
-
-protected:
-	static void _bind_methods();
 };
 
 class VoronoiSite : public Object {
 	GDCLASS(VoronoiSite, Object)
 
-public:
 	const jcv_site *_site;
 	const VoronoiDiagram *_diagram;
+
+protected:
+	static void _bind_methods();
+
+public:
+	int index() const;
+	Vector2 center() const;
+	Vector<Variant> edges() const;
+	Vector<Variant> neighbors() const;
 
 	VoronoiSite() = default;
 	inline VoronoiSite(const jcv_site *site, const VoronoiDiagram *diagram) :
@@ -127,20 +136,15 @@ public:
 	}
 
 	~VoronoiSite() = default;
-
-	int index() const;
-	Vector2 center() const;
-	Vector<Variant> edges() const;
-	Vector<Variant> neighbors() const;
-
-protected:
-	static void _bind_methods();
 };
 
 class VoronoiDiagram : public Reference {
 	GDCLASS(VoronoiDiagram, Reference)
 
-public:
+	friend class VoronoiEdge;
+	friend class VoronoiSite;
+	friend class Voronoi;
+
 	jcv_diagram _diagram;
 
 	voronoi_detail::vector<Variant> _edges;
@@ -149,16 +153,17 @@ public:
 	voronoi_detail::map<std::uintptr_t, VoronoiEdge *> _edges_by_address;
 	voronoi_detail::map<int, VoronoiSite *> _sites_by_index;
 
-	VoronoiDiagram();
-	~VoronoiDiagram();
+protected:
+	static void _bind_methods();
 
+public:
 	void build_objects();
 
 	Vector<Variant> edges() const;
 	Vector<Variant> sites() const;
 
-protected:
-	static void _bind_methods();
+	VoronoiDiagram();
+	~VoronoiDiagram();
 };
 
 class Voronoi : public Reference {
@@ -166,19 +171,20 @@ class Voronoi : public Reference {
 
 	jcv_rect _boundaries;
 	bool _has_boundaries;
-	voronoi_detail::vector<jcv_point> _points;
-
-public:
-	Voronoi() = default;
-	~Voronoi() = default;
-
-	void set_points(Vector<Vector2> points);
-	void set_boundaries(Rect2 boundaries);
-	void relax_points(int iterations);
-	Ref<VoronoiDiagram> generate_diagram() const;
+	voronoi_detail::vector<jcv_point> _points, _cpoints;
 
 protected:
 	static void _bind_methods();
+
+public:
+	void set_points(Vector<Vector2> points);
+	void set_boundaries(Rect2 boundaries);
+	void set_clip_points(Vector<Vector2> points);
+	void relax_points(int iterations);
+	Ref<VoronoiDiagram> generate_diagram() const;
+
+	Voronoi() = default;
+	~Voronoi() = default;
 };
 
 #endif // VORONOI_H
@@ -197,23 +203,23 @@ protected:
 // `git clone https://github.com/rakai93/godot_voronoi.git voronoi`
 //
 // Example usage
-// -----------------
+// -------------
 //
-// #Create voronoi generator
+// # Create voronoi generator
 // var generator = Voronoi.new()
 // generator.set_points(list_of_vector2)
-// #optional : set boundaries for diagram, otherwise boundaries are computed based on points
+// # optional : set boundaries for diagram, otherwise boundaries are computed based on points
 // generator.set_boundaries(rect2_bounds)
-// #optional : relax points N times, resulting in more equal sites
+// # optional : relax points N times, resulting in more equal sites
 // generator.relax_points(2)
 //
 // #Generate diagram
 // var diagram = generator.generate_diagram()
 //
-// #Iterate over sites
+// # Iterate over sites
 // for site in diagram.sites():
 //   draw_circle(site.center())
 //
-// #Iterate over edges
+// # Iterate over edges
 // for edge in diagram.edges():
 //   draw_line(edge.start(), edge.end())

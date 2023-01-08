@@ -11,13 +11,16 @@ My own, found or ported to **Godot3** modules.
  * timer2.cpp
  * tween2.cpp
 
-and many more - they are groupped in subdirectories and can be individually enabled/disabled using ```enable_gdextensions_submodules``` cli parameters (see: ```config.py```). Some code might be private (and encrypted) - just remove them or exclude from building.
+and many more (see ```submodules``` folder) - they are groupped in subdirectories and can be individually enabled/disabled using ```enable_gdextensions_submodules``` cli parameters (see: ```config.py```). Some code might be private (and encrypted) - just remove them or exclude from building.
+
+**Notice** that for files that are encrypted using ```transcrypt``` it might be helpful to set ```openssl-path = /opt/local/bin/openssl``` and ```cipher = pbkdf2```  in ```[transcrypt]``` section of ```.git/config```. See: https://github.com/elasticdog/transcrypt/issues/55.
 
 ### Reference
  - https://github.com/mjholtzem/Unity-2D-Destruction.git
  - https://github.com/danboo/godot-RigidBodyParticles2D/blob/master/examples/sparks/Particle.gd
  - https://github.com/dbsGen/my_godot_modules.git
  - https://montemagno.com/ios-android-subscription-implemenation-strategies/
+ - https://graphicdesign.stackexchange.com/questions/11016/kerning-on-the-fly
 
 #### Elastic simulation orignal code (js)
 

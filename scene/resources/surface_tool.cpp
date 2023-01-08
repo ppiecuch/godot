@@ -427,7 +427,7 @@ Array SurfaceTool::commit_to_arrays() {
 	return a;
 }
 
-Ref<ArrayMesh> SurfaceTool::commit(const Ref<ArrayMesh> &p_existing, uint32_t p_flags) {
+Ref<ArrayMesh> SurfaceTool::commit(const Ref<ArrayMesh> &p_existing, bool p_active, uint32_t p_flags) {
 	Ref<ArrayMesh> mesh;
 	if (p_existing.is_valid()) {
 		mesh = p_existing;
@@ -450,6 +450,8 @@ Ref<ArrayMesh> SurfaceTool::commit(const Ref<ArrayMesh> &p_existing, uint32_t p_
 	if (material.is_valid()) {
 		mesh->surface_set_material(surface, material);
 	}
+
+	mesh->surface_set_active(surface, p_active);
 
 	return mesh;
 }
@@ -1042,6 +1044,9 @@ void SurfaceTool::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("add_weights", "weights"), &SurfaceTool::add_weights);
 	ClassDB::bind_method(D_METHOD("add_smooth_group", "smooth"), &SurfaceTool::add_smooth_group);
 
+	ClassDB::bind_method(D_METHOD("add_triangle", "vertex1", "vertex2", "vertex3"), &SurfaceTool::add_triangle);
+	ClassDB::bind_method(D_METHOD("add_line", "vertex1", "vertex2"), &SurfaceTool::add_line);
+
 	ClassDB::bind_method(D_METHOD("add_triangle_fan", "vertices", "uvs", "colors", "uv2s", "normals", "tangents"), &SurfaceTool::add_triangle_fan, DEFVAL(Vector<Vector2>()), DEFVAL(Vector<Color>()), DEFVAL(Vector<Vector2>()), DEFVAL(Vector<Vector3>()), DEFVAL(Vector<Plane>()));
 
 	ClassDB::bind_method(D_METHOD("add_index", "index"), &SurfaceTool::add_index);
@@ -1058,7 +1063,7 @@ void SurfaceTool::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("create_from", "existing", "surface"), &SurfaceTool::create_from);
 	ClassDB::bind_method(D_METHOD("create_from_blend_shape", "existing", "surface", "blend_shape"), &SurfaceTool::create_from_blend_shape);
 	ClassDB::bind_method(D_METHOD("append_from", "existing", "surface", "transform"), &SurfaceTool::append_from);
-	ClassDB::bind_method(D_METHOD("commit", "existing", "flags"), &SurfaceTool::commit, DEFVAL(Variant()), DEFVAL(Mesh::ARRAY_COMPRESS_DEFAULT));
+	ClassDB::bind_method(D_METHOD("commit", "existing", "active", "flags"), &SurfaceTool::commit, DEFVAL(Variant()), DEFVAL(true), DEFVAL(Mesh::ARRAY_COMPRESS_DEFAULT));
 	ClassDB::bind_method(D_METHOD("commit_to_arrays"), &SurfaceTool::commit_to_arrays);
 }
 

@@ -383,6 +383,54 @@ bool TLN_DisablePaletteAnimation (int index)
 }
 
 /*!
+ * \brief Pauses animation for the given sprite
+ *
+ * \param index Id of the sprite to pause animation (0 <= id < num_sprites)
+ * \see Animations TLN_ResumeSpriteAnimation
+ */
+bool TLN_PauseSpriteAnimation(int index)
+{
+	Sprite* sprite;
+	Animation* animation;
+
+	if (index >= engine->numsprites)
+	{
+		TLN_SetLastError(TLN_ERR_IDX_SPRITE);
+		return false;
+	}
+
+	sprite = &engine->sprites[index];
+	animation = &sprite->animation;
+	animation->paused = true;
+	TLN_SetLastError(TLN_ERR_OK);
+	return true;
+}
+
+/*!
+ * \brief Restores animation for the given sprite
+ *
+ * \param index Id of the sprite to resume animation (0 <= id < num_sprites)
+ * \see Animations TLN_PauseSpriteAnimation
+ */
+bool TLN_ResumeSpriteAnimation(int index)
+{
+	Sprite* sprite;
+	Animation* animation;
+
+	if (index >= engine->numsprites)
+	{
+		TLN_SetLastError(TLN_ERR_IDX_SPRITE);
+		return false;
+	}
+
+	sprite = &engine->sprites[index];
+	animation = &sprite->animation;
+	animation->paused = false;
+	TLN_SetLastError(TLN_ERR_OK);
+	return true;
+}
+
+/*!
  * \brief
  * Disables animation for the given sprite
  *
@@ -412,6 +460,11 @@ bool TLN_DisableSpriteAnimation(int index)
 	return true;
 }
 
+/* \deprecated */
+bool TLN_DisableAnimation(int index)
+{
+	return TLN_DisableSpriteAnimation(index);
+}
 
 /* animation commons */
 static void SetAnimation (Animation* animation, TLN_Sequence sequence, animation_t type)
@@ -474,9 +527,9 @@ static void ColorCycleBlend (TLN_Palette srcpalette, TLN_Palette dstpalette, str
 			idx1 = (c + steps + 1) % count;
 		}
 
-		srcptr0 = GetPaletteData (srcpalette, strip->first + idx0);
-		srcptr1 = GetPaletteData (srcpalette, strip->first + idx1);
-		dstptr  = GetPaletteData (dstpalette, strip->first + c);
+		srcptr0 = (uint8_t*)GetPaletteData (srcpalette, strip->first + idx0);
+		srcptr1 = (uint8_t*)GetPaletteData (srcpalette, strip->first + idx1);
+		dstptr  = (uint8_t*)GetPaletteData (dstpalette, strip->first + c);
 		blendColors (srcptr0, srcptr1, dstptr, f0, f1);
 	}
 }
