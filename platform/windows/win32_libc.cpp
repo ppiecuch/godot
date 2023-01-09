@@ -210,10 +210,9 @@ static LARGE_INTEGER get_FILETIME_offset() {
 	return (t);
 }
 
-extern "C" int clock_gettime(int /* clock_id */, struct timeval *tv) {
+extern "C" int clock_gettime(int /* clock_id */, struct timespec *tp) {
 	LARGE_INTEGER t;
 	FILETIME f;
-	double microseconds;
 	static LARGE_INTEGER offset;
 	static double frequency_to_microseconds;
 	static int initialized = 0;
@@ -241,11 +240,12 @@ extern "C" int clock_gettime(int /* clock_id */, struct timeval *tv) {
 	}
 
 	t.QuadPart -= offset.QuadPart;
-	microseconds = (double)t.QuadPart / frequency_to_microseconds;
+	double microseconds = (double)t.QuadPart / frequency_to_microseconds;
 	t.QuadPart = microseconds;
-	tv->tv_sec = t.QuadPart / 1000000;
-	tv->tv_usec = t.QuadPart % 1000000;
-	return (0);
+	tp->sec = t.QuadPart / 1000000;
+	tp->tv_usec = t.QuadPart % 1000000;
+
+	return R_OK;
 }
 
 extern "C" char *stristr(const char *str1, const char *str2) {
