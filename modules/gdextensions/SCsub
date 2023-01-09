@@ -31,6 +31,12 @@ def secret(path):
     return False
 
 
+def add_external_libs(env, libs):
+    if env["platform"] == "windows":
+        env.Append(LINKFLAGS=[p + ".lib" for p in libs])
+    else:
+        env.Append(LIBS=libs)
+
 env_module = env_modules.Clone()
 
 sources = Glob("*.cpp") + Glob("common/*.cpp")  # Always build common
@@ -114,7 +120,7 @@ if is_enabled("breakpad"):
     if env["platform"] == "x11" and arch in ["aarch64", "x86_64"]:
         env_module.Append(CPPPATH=["thirdparty/breakpad_client/linux/include"])
         env.Append(LIBPATH=[os.path.realpath(os.curdir) + "/thirdparty/breakpad_client/linux/%s" % arch])
-        env.Prepend(LIBS=["breakpad_client"])
+        add_external_libs(env, ["breakpad_client"])
     else:
         print("(GDextensions) Breakpad crash reporter is not supported on platform '%s/%s'." % (env["platform"], arch))
         env["enable_gdextensions_submodules"].remove("breakpad")
@@ -325,7 +331,7 @@ if is_enabled("openclwrapper"):
             if env["platform"] == "osx":
                 env.Append(LINKFLAGS=["-framework", "OpenCL"])
             else:
-                env.Append(LINKFLAGS=["opencl" +  env["LIBSUFFIXES"][1]])
+                add_external_libs(env, ["opencl"])
             modules += ["openclwrapper"]
         else:
             print("(GDextensions) OpenCLWrapper is not supported on platform '%s'." % env["platform"])
@@ -377,7 +383,7 @@ if is_enabled("media/"):
             modules.remove("media/ffmpeg")
         if is_enabled("media/ffmpeg") and "media/ffmpeg" in modules:
             env_module.Append(CPPPATH=[os.path.dirname(os.path.realpath(os.curdir)) + "/gdnative/include"])
-            env.Prepend(LINKFLAGS=[p + env["LIBSUFFIXES"][1] for p in ["avformat", "avcodec", "avutil", "swresample", "swscale"]])
+            add_external_libs(env, ["avformat", "avcodec", "avutil", "swresample", "swscale"])
 
 if is_enabled("tileengine"):
     if env["builtin_libpng"]:
