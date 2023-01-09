@@ -210,7 +210,7 @@ static LARGE_INTEGER get_FILETIME_offset() {
 	return (t);
 }
 
-extern "C" int clock_gettime(int /* cid */, struct timeval *tv) {
+extern "C" int clock_gettime(int /* clock_id */, struct timeval *tv) {
 	LARGE_INTEGER t;
 	FILETIME f;
 	double microseconds;
@@ -248,7 +248,7 @@ extern "C" int clock_gettime(int /* cid */, struct timeval *tv) {
 	return (0);
 }
 
-char *stristr(const char *str1, const char *str2) {
+extern "C" char *stristr(const char *str1, const char *str2) {
 	const char *p1 = str1;
 	const char *p2 = str2;
 	const char *r = *p2 == 0 ? str1 : 0;

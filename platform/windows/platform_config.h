@@ -43,7 +43,7 @@
 #endif
 
 // clock_id is not supported
-extern "C" int clock_gettime(int clock_id, struct timespec *tp);
+extern "C" int clock_gettime(int clock_id, struct timeval *tv);
 extern "C" char *stristr(const char *str1, const char *str2);
 
 #define _CRT_SECURE_NO_WARNINGS
