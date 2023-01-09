@@ -242,8 +242,8 @@ extern "C" int clock_gettime(int /* clock_id */, struct timespec *tp) {
 	t.QuadPart -= offset.QuadPart;
 	double microseconds = (double)t.QuadPart / frequency_to_microseconds;
 	t.QuadPart = microseconds;
-	tp->sec = t.QuadPart / 1000000;
-	tp->tv_usec = t.QuadPart % 1000000;
+	tp->tv_sec = t.QuadPart / 1000000;
+	tp->tv_nsec = t.QuadPart % 1000000;
 
 	return R_OK;
 }
