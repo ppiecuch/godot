@@ -247,7 +247,7 @@ Vector2 GdWaterSplash::get_drag() const {
 }
 
 void GdWaterSplash::set_drag(const Vector2 &p_value) {
-	if (_drag != p_value)  {
+	if (_drag != p_value) {
 		_drag = p_value;
 		for (int i = 0; i < _columns.size(); ++i) {
 			_columns[i]->_drag = _drag;

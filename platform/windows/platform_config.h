@@ -44,6 +44,6 @@
 
 // clock_id is not supported
 int clock_gettime(int clock_id, struct timespec *tp);
-char* stristr(const char *str1, const char *str2);
+char *stristr(const char *str1, const char *str2);
 
 #define _CRT_SECURE_NO_WARNINGS
