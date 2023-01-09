@@ -102,8 +102,8 @@ class SpinnerCanvas : public Reference {
 	};
 
 	struct ImGuiStorage : public Reference {
-		real_t GetFloat(ImGuiID id, real_t def_value);
-		void SetFloat(ImGuiID id, real_t value);
+		real_t GetFloat(ImGuiID id, real_t def_value) const { return get_meta(itos(id)); }
+		void SetFloat(ImGuiID id, real_t value) { set_meta(itos(id), value); }
 	};
 
 	struct ImGuiWindow {
@@ -121,14 +121,17 @@ class SpinnerCanvas : public Reference {
 			}
 			_FORCE_INLINE_ void PathClear() { _Path.clear(); }
 			void AddLine(const ImVec2 &p1, const ImVec2 &p2, ImU32 col, real_t thickness = 1.0) {
-				if ((col & IM_COL32_A_MASK) == 0)
+				if ((col & IM_COL32_A_MASK) == 0) {
 					return;
+				}
 				PathLineTo(p1 + ImVec2(0.5, 0.5));
 				PathLineTo(p2 + ImVec2(0.5, 0.5));
 				PathStroke(col, 0, thickness);
 			}
-			void AddCircleFilled(const ImVec2 &center, real_t radius, ImU32 col, int num_segments = 0);
-			void AddRectFilled(const ImVec2 &p_min, const ImVec2 &p_max, ImU32 col, real_t rounding = 0.0); // a: upper-left, b: lower-right (== upper-left + size)
+			void AddCircleFilled(const ImVec2 &center, real_t radius, ImU32 col, int num_segments = 0) {
+			}
+			void AddRectFilled(const ImVec2 &p_min, const ImVec2 &p_max, ImU32 col, real_t rounding = 0.0) { // a: upper-left, b: lower-right (== upper-left + size)
+			}
 			void AddConvexPolyFilled(const ImVec2 *points, int num_points, ImU32 col) {
 			}
 			_FORCE_INLINE_ void PathLineTo(const ImVec2 &pos) { _Path.push_back(pos); }

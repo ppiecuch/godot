@@ -37,6 +37,7 @@ def add_external_libs(env, libs):
     else:
         env.Append(LIBS=libs)
 
+
 env_module = env_modules.Clone()
 
 sources = Glob("*.cpp") + Glob("common/*.cpp")  # Always build common
