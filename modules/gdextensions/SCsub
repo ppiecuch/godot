@@ -100,7 +100,7 @@ def finalize_for_incbin(filepaths, prefix = "", style = "snake"):
 
             code = """
                 /* INCBIN({name}, {file}); */
-                INCBIN_CONST INCBIN_ALIGN unsigned char {prefix}{name}{kData}[] = {{chars},0};
+                INCBIN_CONST INCBIN_ALIGN unsigned char {prefix}{name}{kData}[] = {{chars},0x00};
                 INCBIN_CONST INCBIN_ALIGN unsigned char *const {prefix}{name}{kEnd} = {prefix}{name}{kData} + {n_bytes};
                 INCBIN_CONST unsigned int {prefix}{name}{kSize} = {n_bytes};
 
