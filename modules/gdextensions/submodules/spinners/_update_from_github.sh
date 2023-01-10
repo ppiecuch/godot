@@ -11,7 +11,8 @@ if echo "$out" | grep "FAILED" -q; then
 	exit
 fi
 # prepare a new patch, if all ok so far
-diff -Nur imspinner_last.h imspinner_patch.h > patch.txt || true
+echo "/* clang-format off */" > patch.txt
+diff -Nur imspinner_last.h imspinner_patch.h >> patch.txt || true
 cp imspinner_patch.h imspinner.h
 # cleanup
 rm imspinner_last.h imspinner_patch.h
