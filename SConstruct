@@ -7,7 +7,7 @@ import atexit
 import glob
 import os
 import pickle
-import sys
+import sys, platform
 import time
 from collections import OrderedDict
 
@@ -273,6 +273,7 @@ elif selected_platform in ["frt", "psvita", "3ds", "nx"]:
 else:
     env_base["hw_class"] = "hw_other"
 
+print("INFO: building with python '%s'" % platform.python_version())
 print("INFO: building for platform '%s'" % selected_platform)
 print("INFO: detected OS family '%s'" % env_base["os_family"])
 print("INFO: detected HW class '%s'" % env_base["hw_class"])

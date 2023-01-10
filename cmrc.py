@@ -6,7 +6,7 @@ import hashlib
 from SCons import Node
 
 def initialize_cmrc(self):
-    cmrc_code_h = """
+    self.cmrc_code_h = """
         #ifndef CMRC_H_INCLUDED
         #define CMRC_H_INCLUDED
 
@@ -338,9 +338,11 @@ def initialize_cmrc(self):
         #endif // CMRC_H_INCLUDED
     """
 
-def cmrc_add_resource_library(self, library):
+def cmrc_add_resource_library(self, library, sym = ""):
+    self.sym = sym
+    self.library = library
     # Generate a library with the compiled in character arrays.
-    cmrc_code_cpp = """
+    self.cmrc_code_cpp = """
         #include <map>
         #include <utility>
 
@@ -386,33 +388,36 @@ def cmrc_add_resource_library(self, library):
 
 def cmrc_add_resources(self, library, filepaths):
     if isinstance(filepaths, list):
-        files = filespaths
+        files = filepaths
     else:
         files = [filepaths]
     for input in files:
         with open(input, 'rb') as f:
             content = f.read()
         n_bytes = len(content)
+        # python2 compatible
         chars = binascii.hexlify(content)
+        chars = [chars[i:i+2] for i in range(0, len(chars), 2)]
+        chars = ",0x".join(chars)
         code = """
-            namespace { const char file_array[] = { {chars} 0 }; }
+            namespace { const char file_array[] = { {chars}, 0 }; }
             namespace cmrc { namespace {Namespace} { namespace res_chars {
             extern const char* const {sym}_begin = file_array;
             extern const char* const {sym}_end = file_array + {n_bytes};
             }}}
         """
-        cmrc_code_cpp += code.replace("{chars}", chars)
-        cmrc_code_cpp += code.replace("{n_bytes}", n_bytes)
-        cmrc_code_cpp += code.replace("{sym}", sym)
-        cmrc_code_cpp += code.replace("{Namespace}", lib.namespace)
+        self.cmrc_code_cpp += code.replace("{chars}", chars)
+        self.cmrc_code_cpp += code.replace("{n_bytes}", str(n_bytes))
+        self.cmrc_code_cpp += code.replace("{sym}", self.sym)
+        self.cmrc_code_cpp += code.replace("{Namespace}", self.library)
 
-        cmrc_extern += """
+        self.cmrc_extern += """
             "// Pointers to {input}"
             "extern const char* const {sym}_begin;\n"
             "extern const char* const {sym}_end;\n"
         """.replace("{input}", input).replace("{sym}", sym)
 
-        cmrc_code_cpp += """
+        self.cmrc_code_cpp += """
             "root_index.emplace("
             "    \"{ArgPrefix}{relpath}\","
             "    {parent_sym}_dir.directory.add_file("
@@ -426,11 +431,11 @@ def cmrc_add_resources(self, library, filepaths):
 
 def finalize_cmrc(self, library):
     with open("build/cmrc_extern.h", "wb") as f:
-        f.write(cmrc_extern)
+        f.write(self.cmrc_extern)
     with open("build/cmrc.h", "wb") as f:
-        f.write(cmrc_code_h)
+        f.write(self.cmrc_code_h)
     with open("build/cmrc.cpp", "wb") as f:
-        f.write(cmrc_code_cpp)
+        f.write(self.cmrc_code_cpp)
 
 
 # Make a C identifier from a string in the same way CMake does.

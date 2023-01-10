@@ -1,3 +1,33 @@
+/*************************************************************************/
+/*  imspinner.cpp                                                        */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #include "gdimspinner.h"
 
 #include "common/gd_core.h"
@@ -115,19 +145,19 @@ struct ImGuiContext {
 };
 
 namespace ImGui {
-	ImGuiWindow *GetCurrentWindow() { return nullptr; }
-	ImVec2 ItemSize() { return Size2(); }
-	real_t GetTime() { return OS::get_singleton()->get_ticks_msec() / 1000.0; }
-	bool ItemAdd(const ImRect &bb, ImGuiID id) { return false; }
-	void ItemSize(const ImVec2 &size, real_t text_baseline_y = -1.0) {}
-	_FORCE_INLINE_ void ItemSize(const ImRect &bb, real_t text_baseline_y = -1.0) { ItemSize(bb.get_size(), text_baseline_y); }
-	_FORCE_INLINE_ void ColorConvertRGBtoHSV(float r, float g, float b, float &out_h, float &out_s, float &out_v) {
-		Color c(r, g, b);
-		out_h = c.get_h();
-		out_s = c.get_s();
-		out_v = c.get_v();
-	}
+ImGuiWindow *GetCurrentWindow() { return nullptr; }
+ImVec2 ItemSize() { return Size2(); }
+real_t GetTime() { return OS::get_singleton()->get_ticks_msec() / 1000.0; }
+bool ItemAdd(const ImRect &bb, ImGuiID id) { return false; }
+void ItemSize(const ImVec2 &size, real_t text_baseline_y = -1.0) {}
+_FORCE_INLINE_ void ItemSize(const ImRect &bb, real_t text_baseline_y = -1.0) { ItemSize(bb.get_size(), text_baseline_y); }
+_FORCE_INLINE_ void ColorConvertRGBtoHSV(float r, float g, float b, float &out_h, float &out_s, float &out_v) {
+	Color c(r, g, b);
+	out_h = c.get_h();
+	out_s = c.get_s();
+	out_v = c.get_v();
 }
+} //namespace ImGui
 
 static ImGuiContext *GImGui;
 
@@ -156,7 +186,6 @@ typedef std::function<ImVec2(int)> point_f;
 #pragma GCC diagnostic pop
 #endif
 // -----
-
 
 void SpinnerCanvas::draw_spinners(int p_spinner) {
 	static real_t nextdot1 = 0, nextdot2;
