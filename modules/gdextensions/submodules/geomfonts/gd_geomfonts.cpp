@@ -28,6 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "gd_geomfonts.h"
 
 #include "bluntfont/blutfont.cpp"

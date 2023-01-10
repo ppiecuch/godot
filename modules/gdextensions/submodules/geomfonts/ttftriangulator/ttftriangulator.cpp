@@ -168,9 +168,9 @@ void render_msg(const TTFCore::TFont &f, const String &msg) {
 			TTF::vec2t v1 = triangulator[tri.i1];
 			TTF::vec2t v2 = triangulator[tri.i2];
 
-			verts.push_back((vertex_t){ { 0.001f * v0.x + kerning.x, 0.001f * v0.y + kerning.y }, 0, static_cast<int8_t>(tri.coef) });
-			verts.push_back((vertex_t){ { 0.001f * v1.x + kerning.x, 0.001f * v1.y + kerning.y }, 1, static_cast<int8_t>(tri.coef) });
-			verts.push_back((vertex_t){ { 0.001f * v2.x + kerning.x, 0.001f * v2.y + kerning.y }, 2, static_cast<int8_t>(tri.coef) });
+			verts.push_back({ { 0.001f * v0.x + kerning.x, 0.001f * v0.y + kerning.y }, 0, static_cast<int8_t>(tri.coef) });
+			verts.push_back({ { 0.001f * v1.x + kerning.x, 0.001f * v1.y + kerning.y }, 1, static_cast<int8_t>(tri.coef) });
+			verts.push_back({ { 0.001f * v2.x + kerning.x, 0.001f * v2.y + kerning.y }, 2, static_cast<int8_t>(tri.coef) });
 		}
 
 		if (verts.size()) {

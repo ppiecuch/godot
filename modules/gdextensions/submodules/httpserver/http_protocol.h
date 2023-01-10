@@ -197,6 +197,7 @@ _FORCE_INLINE_ std::string message_method_to_string(const MessageMethod &method)
 		case MessageMethod::PATCH:
 			return "PATCH";
 	}
+	return "INVALID";
 }
 
 _FORCE_INLINE_ MessageMethod string_to_message_method(const std::string &method) {

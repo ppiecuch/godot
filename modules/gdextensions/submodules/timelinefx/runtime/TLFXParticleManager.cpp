@@ -28,6 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
+#define _USE_MATH_DEFINES
+
 #include "TLFXParticleManager.h"
 #include "TLFXAnimImage.h"
 #include "TLFXEffect.h"

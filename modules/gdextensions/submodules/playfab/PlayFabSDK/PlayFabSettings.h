@@ -33,6 +33,8 @@
 #ifndef PLAYFABSETTINGS_H
 #define PLAYFABSETTINGS_H
 
+#include "core/variant.h"
+
 struct PlayFabConfiguration {
 	const String ProductionEnvironmentURL = ".playfabapi.com";
 	const String AD_TYPE_IDFA = "Idfa";

@@ -171,10 +171,10 @@ void DefaultClient::_ws_data_received() {
 #define MakeString(str) \
 	(str ? CharString(str->c_str(), str->size()) : CharString())
 
-#define _newumsg(T...) \
+#define _newumsg(T, ...) \
 	Ref<NkUncollatedMessage>(memnew(T))
 
-#define _newmsg(T...) \
+#define _newmsg(T, ...) \
 	Ref<UncollatedMessage>(memnew(T))
 
 #define _fbloop(T, array) \

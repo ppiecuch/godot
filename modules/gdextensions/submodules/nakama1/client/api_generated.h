@@ -35,6 +35,8 @@
 
 #include "flatbuffers/flatbuffers.h"
 
+#undef _timezone
+
 namespace server {
 
 struct Heartbeat;

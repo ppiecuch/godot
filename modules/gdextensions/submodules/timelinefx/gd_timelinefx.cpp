@@ -34,7 +34,16 @@
 
 #include "common/gd_pack.h"
 #include "core/engine.h"
+#define MINIZ_HEADER_FILE_ONLY
 #include "misc/miniz.h"
+
+#ifdef _MSC_VER
+#define strcasestr stristr
+#endif
+
+#ifndef M_PI
+#define M_PI Math_PI
+#endif
 
 struct AreaAllocatorNode;
 

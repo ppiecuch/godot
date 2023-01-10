@@ -112,6 +112,16 @@ enum {
 	SPINNERARCPOLARRADIUS,
 };
 
+class SpinnerCanvas : public Reference {
+	real_t velocity;
+	int hue;
+
+public:
+	void draw_spinners(int p_spinner);
+
+	SpinnerCanvas();
+};
+
 class Spinner : public Node2D {
 	GDCLASS(Spinner, Node2D);
 

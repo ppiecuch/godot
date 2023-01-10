@@ -192,7 +192,7 @@ void GdParseQuery::find_objects() {
 	Variant data(constraints());
 
 	Ref<GdParseError> error;
-	if (not data.is_nil()) {
+	if (!data.is_nil()) {
 		error = GdParseBackend::get_singleton()
 						->request(HTTPClient::METHOD_GET, "classes/" + class_name, data, this, "_find_objects_finished");
 	}
@@ -1003,7 +1003,7 @@ String GdParseBackend::get_parse_server_url() const {
 
 void GdParseBackend::set_parse_server_url(const String &p_parse_server_url) {
 	parse_server_url = p_parse_server_url;
-	if (not parse_server_url.ends_with("/")) {
+	if (!parse_server_url.ends_with("/")) {
 		parse_server_url += "/"; // make sure server url is ending with /
 	}
 }
@@ -1110,7 +1110,7 @@ void GdParseBackend::_bind_methods() {
 
 GdParseBackend::GdParseBackend() {
 	ERR_FAIL_COND_MSG(instance != nullptr, "Singleton already exists");
-	if (not(_queue = queue_open(ProjectSettings::get_singleton()->globalize_path(REQUESTS_QUEUE).utf8().c_str()))) {
+	if (!(_queue = queue_open(ProjectSettings::get_singleton()->globalize_path(REQUESTS_QUEUE).utf8().c_str()))) {
 		WARN_PRINT("Failed to open requests queue at: " + ProjectSettings::get_singleton()->globalize_path(REQUESTS_QUEUE));
 	}
 	_query = Ref<GdParseQuery>(memnew(GdParseQuery));

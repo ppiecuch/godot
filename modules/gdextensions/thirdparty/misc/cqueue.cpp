@@ -17,9 +17,9 @@
  *
  * */
 
-#include "cqueue.h"
-
 #define _CRT_SECURE_NO_WARNINGS
+
+#include "cqueue.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -240,7 +240,7 @@ static int chopOffIncompleteWrite(FILE *fd) {
 
 static int checkLastEntry(FILE *fd, size_t filesize) WARN_UNUSED_RETURN;
 static int checkLastEntry(FILE *fd, size_t filesize) {
-	fseek(fd, - sizeof(struct Footer), SEEK_END);
+	fseek(fd, long(0 - sizeof(struct Footer)), SEEK_END);
 	struct Footer foot;
 	int rtn = fread(&foot, sizeof(foot), 1, fd);
 	if (rtn != 0 && rtn != 1) {

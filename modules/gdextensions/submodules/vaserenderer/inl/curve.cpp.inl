@@ -145,10 +145,10 @@ void polybezier(const Vector2 *P, const gradient *grad, int length, const polybe
 
 void polybezier(const Vector2 *P, Color cc, real_t ww, int length, const polybezier_opt *options) {
 	gradient grad = {0};
-	gradient_stop stop[2] = {{0}};
-	grad.stops = stop;
+	gradient_stop grad_stop[2] = {{0}, {0}};
+	grad.stops = grad_stop;
 	grad.length = 2;
-	stop[0].type = GS_rgba; stop[0].color = cc;
-	stop[1].type = GS_weight; stop[1].weight = ww;
+	grad_stop[0].type = GS_rgba; grad_stop[0].color = cc;
+	grad_stop[1].type = GS_weight; grad_stop[1].weight = ww;
 	VASErin::polybezier(P, &grad, length, options, 0);
 }

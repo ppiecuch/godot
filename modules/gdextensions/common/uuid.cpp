@@ -30,11 +30,17 @@
 
 #include "core/math/math_funcs.h"
 
+#ifdef __linux__
 #include <netinet/in.h>
+#endif
 #include <stdio.h>
 #include <time.h>
 
 #include "uuid.h"
+
+#ifdef WINDOWS_ENABLED
+#include <winsock.h> // htol, htos
+#endif
 
 namespace {
 

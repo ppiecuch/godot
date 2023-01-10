@@ -1054,7 +1054,7 @@ int anchor(st_anchor &SA, const polyline_opt* options, bool cap_first, bool cap_
 	// it is _similar_ to cairo_set_miter_limit () but cairo works with ratio while VASEr works with included angle
 	const real_t cos_cri_angle = 0.979386; // cos(critical_angle)
 
-	bool varying_weight = !(weight[0]==weight[1] & weight[1]==weight[2]);
+	bool varying_weight = !(weight[0]==weight[1] && weight[1]==weight[2]);
 
 	real_t combined_weight = weight[1] + (opt.feather ? opt.feathering : 0);
 	if (combined_weight < cri_segment_approx) {

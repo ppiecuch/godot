@@ -36,6 +36,7 @@
 #include <sys/types.h>
 #include <cassert>
 
+#define MINIZ_HEADER_FILE_ONLY
 #include "misc/miniz.h"
 
 namespace TLFX {

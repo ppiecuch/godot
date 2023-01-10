@@ -41,14 +41,12 @@ const unsigned char *particles_size_m[] = { 0 };
 
 #include "misc/incbin.h"
 
-#define RES_ROOT "submodules/environment/waterfall"
-
-INCBIN(w1_m, RES_ROOT "/particles/M/w1.png");
-INCBIN(w2_m, RES_ROOT "/particles/M/w2.png");
-INCBIN(w3_m, RES_ROOT "/particles/M/w3.png");
-INCBIN(w4_m, RES_ROOT "/particles/M/w4.png");
-INCBIN(c1_m, RES_ROOT "/particles/M/c1.png");
-INCBIN(c2_m, RES_ROOT "/particles/M/c2.png");
+INCBIN(w1_m, "submodules/environment/waterfall/particles/M/w1.png");
+INCBIN(w2_m, "submodules/environment/waterfall/particles/M/w2.png");
+INCBIN(w3_m, "submodules/environment/waterfall/particles/M/w3.png");
+INCBIN(w4_m, "submodules/environment/waterfall/particles/M/w4.png");
+INCBIN(c1_m, "submodules/environment/waterfall/particles/M/c1.png");
+INCBIN(c2_m, "submodules/environment/waterfall/particles/M/c2.png");
 
 const unsigned char *particles_size_m[] = {
 	w1_m_data,

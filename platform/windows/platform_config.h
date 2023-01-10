@@ -29,8 +29,21 @@
 /*************************************************************************/
 
 #include <malloc.h>
-//#else
-//#include <alloca.h>
-//#endif
+#include <time.h>
+
 #define GLES3_INCLUDE_H "thirdparty/glad/glad/glad.h"
 #define GLES2_INCLUDE_H "thirdparty/glad/glad/glad.h"
+
+#ifndef CLOCK_REALTIME
+#define CLOCK_REALTIME 0
+#endif
+
+#ifndef CLOCK_MONOTONIC
+#define CLOCK_MONOTONIC 1
+#endif
+
+// clock_id is not supported
+extern "C" int clock_gettime(int clock_id, struct timespec *tp);
+extern "C" char *stristr(const char *str1, const char *str2);
+
+#define _CRT_SECURE_NO_WARNINGS

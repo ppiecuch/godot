@@ -47,7 +47,7 @@
 
 // define some constants
 #ifndef M_PI
-#define M_PI Math_Pi
+#define M_PI Math_PI
 #endif
 
 template <typename T>
@@ -632,10 +632,6 @@ void Water2D::_edit_set_state(const Dictionary &p_state) {
 	set_view_size(p_state["view_size"]);
 }
 
-bool Water2D::_edit_is_selected_on_click(const Point2 &p_point, double p_tolerance) const {
-	return _edit_get_rect().has_point(p_point);
-};
-
 Rect2 Water2D::_edit_get_rect() const {
 	return Rect2(Point2(), get_view_size());
 }
@@ -944,8 +940,6 @@ void Water2D::_notification(int p_notification) {
 		} break;
 		case NOTIFICATION_VISIBILITY_CHANGED: {
 			set_process_internal(active && is_visible());
-		} break;
-		case NOTIFICATION_TRANSFORM_CHANGED: {
 		} break;
 		case NOTIFICATION_INTERNAL_PROCESS: {
 			static float water_progress = 0;

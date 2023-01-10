@@ -35,9 +35,9 @@
 #ifndef UUID_H
 #define UUID_H
 
+#include "core/int_types.h"
 #include "core/variant.h"
 
-#include <inttypes.h>
 #include <map>
 #include <utility>
 

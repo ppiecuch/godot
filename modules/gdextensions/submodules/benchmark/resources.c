@@ -35,42 +35,40 @@
 
 #include "misc/incbin.h"
 
-#define ROOT "modules/gdextensions/submodules/"
+INCBIN(bitmap_font_png, "submodules/benchmark/resources/textures/atari-font.png");
 
-INCBIN(bitmap_font_png, ROOT "benchmark/resources/textures/atari-font.png");
+INCBIN(texture_cube_ktx, "submodules/benchmark/resources/textures/cube.ktx");
+INCBIN(texture_cube_png, "submodules/benchmark/resources/textures/cube.png");
+INCBIN(texture_frog_ktx, "submodules/benchmark/resources/textures/frog.ktx");
+INCBIN(texture_frog_png, "submodules/benchmark/resources/textures/frog.png");
+INCBIN(texture_kid_ktx, "submodules/benchmark/resources/textures/kid.ktx");
+INCBIN(texture_kid_png, "submodules/benchmark/resources/textures/kid.png");
+INCBIN(texture_robot_ktx, "submodules/benchmark/resources/textures/robot.ktx");
+INCBIN(texture_robot_png, "submodules/benchmark/resources/textures/robot.png");
+INCBIN(texture_trex_ktx, "submodules/benchmark/resources/textures/trex.ktx");
+INCBIN(texture_trex_png, "submodules/benchmark/resources/textures/trex.png");
 
-INCBIN(texture_cube_ktx, ROOT "benchmark/resources/textures/cube.ktx");
-INCBIN(texture_cube_png, ROOT "benchmark/resources/textures/cube.png");
-INCBIN(texture_frog_ktx, ROOT "benchmark/resources/textures/frog.ktx");
-INCBIN(texture_frog_png, ROOT "benchmark/resources/textures/frog.png");
-INCBIN(texture_kid_ktx, ROOT "benchmark/resources/textures/kid.ktx");
-INCBIN(texture_kid_png, ROOT "benchmark/resources/textures/kid.png");
-INCBIN(texture_robot_ktx, ROOT "benchmark/resources/textures/robot.ktx");
-INCBIN(texture_robot_png, ROOT "benchmark/resources/textures/robot.png");
-INCBIN(texture_trex_ktx, ROOT "benchmark/resources/textures/trex.ktx");
-INCBIN(texture_trex_png, ROOT "benchmark/resources/textures/trex.png");
+INCBIN(model_cube_dat, "submodules/benchmark/resources/models/cube.dat");
+INCBIN(model_frog_dat, "submodules/benchmark/resources/models/frog.dat");
+INCBIN(model_kid_dat, "submodules/benchmark/resources/models/kid.dat");
+INCBIN(model_robot_dat, "submodules/benchmark/resources/models/robot.dat");
+INCBIN(model_trex_dat, "submodules/benchmark/resources/models/trex.dat");
 
-INCBIN(model_cube_dat, ROOT "benchmark/resources/models/cube.dat");
-INCBIN(model_frog_dat, ROOT "benchmark/resources/models/frog.dat");
-INCBIN(model_kid_dat, ROOT "benchmark/resources/models/kid.dat");
-INCBIN(model_robot_dat, ROOT "benchmark/resources/models/robot.dat");
-INCBIN(model_trex_dat, ROOT "benchmark/resources/models/trex.dat");
+INCBIN(shader_flat_frag, "submodules/benchmark/resources/shaders/flat.shader");
+INCBIN(shader_gouraud_frag, "submodules/benchmark/resources/shaders/gouraud.shader");
+INCBIN(shader_phong_frag, "submodules/benchmark/resources/shaders/phong.shader");
+INCBIN(shader_text_frag, "submodules/benchmark/resources/shaders/text.shader");
+INCBIN(shader_untextured_gouraud_frag, "submodules/benchmark/resources/shaders/untextured-gouraud.shader");
 
-INCBIN(shader_flat_frag, ROOT "benchmark/resources/shaders/flat.shader");
-INCBIN(shader_gouraud_frag, ROOT "benchmark/resources/shaders/gouraud.shader");
-INCBIN(shader_phong_frag, ROOT "benchmark/resources/shaders/phong.shader");
-INCBIN(shader_text_frag, ROOT "benchmark/resources/shaders/text.shader");
-INCBIN(shader_untextured_gouraud_frag, ROOT "benchmark/resources/shaders/untextured-gouraud.shader");
-
-INCBIN(postprocess_bloom_fs, ROOT "benchmark/resources/postprocess/bloom.fs");
-INCBIN(postprocess_blur_fs, ROOT "benchmark/resources/postprocess/blur.fs");
-INCBIN(postprocess_cross_hatching_fs, ROOT "benchmark/resources/postprocess/cross_hatching.fs");
-INCBIN(postprocess_cross_stitching_fs, ROOT "benchmark/resources/postprocess/cross_stitching.fs");
-INCBIN(postprocess_dream_vision_fs, ROOT "benchmark/resources/postprocess/dream_vision.fs");
-INCBIN(postprocess_fisheye_fs, ROOT "benchmark/resources/postprocess/fisheye.fs");
-INCBIN(postprocess_grayscale_fs, ROOT "benchmark/resources/postprocess/grayscale.fs");
-INCBIN(postprocess_pixelizer_fs, ROOT "benchmark/resources/postprocess/pixelizer.fs");
-INCBIN(postprocess_posterization_fs, ROOT "benchmark/resources/postprocess/posterization.fs");
-INCBIN(postprocess_predator_fs, ROOT "benchmark/resources/postprocess/predator.fs");
-INCBIN(postprocess_scanlines_fs, ROOT "benchmark/resources/postprocess/scanlines.fs");
-INCBIN(postprocess_sobel_fs, ROOT "benchmark/resources/postprocess/sobel.fs");
+INCBIN(postprocess_bloom_fs, "submodules/benchmark/resources/postprocess/bloom.fs");
+INCBIN(postprocess_blur_fs, "submodules/benchmark/resources/postprocess/blur.fs");
+INCBIN(postprocess_cross_hatching_fs, "submodules/benchmark/resources/postprocess/cross_hatching.fs");
+INCBIN(postprocess_cross_stitching_fs, "submodules/benchmark/resources/postprocess/cross_stitching.fs");
+INCBIN(postprocess_dream_vision_fs, "submodules/benchmark/resources/postprocess/dream_vision.fs");
+INCBIN(postprocess_fisheye_fs, "submodules/benchmark/resources/postprocess/fisheye.fs");
+INCBIN(postprocess_grayscale_fs, "submodules/benchmark/resources/postprocess/grayscale.fs");
+INCBIN(postprocess_pixelizer_fs, "submodules/benchmark/resources/postprocess/pixelizer.fs");
+INCBIN(postprocess_posterization_fs, "submodules/benchmark/resources/postprocess/posterization.fs");
+INCBIN(postprocess_predator_fs, "submodules/benchmark/resources/postprocess/predator.fs");
+INCBIN(postprocess_scanlines_fs, "submodules/benchmark/resources/postprocess/scanlines.fs");
+INCBIN(postprocess_sobel_fs, "submodules/benchmark/resources/postprocess/sobel.fs");

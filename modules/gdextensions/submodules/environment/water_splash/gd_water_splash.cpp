@@ -32,19 +32,21 @@
 
 #include "core/math/math_funcs.h"
 #include "scene/2d/physics_body_2d.h"
-#include <iostream>
 
-void GdWaterSplashColumn::update(real_t &tension, real_t &damping) {
-	const real_t dh = target_height_ - height_;
-	speed_ += tension * dh - damping * speed_;
-	height_ += speed_;
+#include <iostream>
+#include <vector>
+
+void GdWaterSplashColumn::update(const real_t &p_tension, const real_t &p_damping) {
+	const real_t dh = _target_height - _height;
+	_speed += p_tension * dh - p_damping * _speed;
+	_height += _speed;
 }
 
-void GdWaterSplashColumn::body_enter_shape(int body_id, Object *body, int body_shape, int area_shape) {
-	RigidBody2D *obj = cast_to<RigidBody2D>(body);
+void GdWaterSplashColumn::body_enter_shape(int p_body_id, Object *p_body, int p_body_shape, int p_area_shape) {
+	RigidBody2D *obj = cast_to<RigidBody2D>(p_body);
 	if (obj) {
 		Vector2 v = obj->get_linear_velocity();
-		speed_ = drag_.x * Math::abs(v.x) + drag_.y * Math::abs(v.y);
+		_speed = _drag.x * Math::abs(v.x) + _drag.y * Math::abs(v.y);
 	}
 }
 
@@ -52,13 +54,13 @@ void GdWaterSplashColumn::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("body_enter_shape", "bodyshape"), &GdWaterSplashColumn::body_enter_shape);
 }
 
-GdWaterSplashColumn::GdWaterSplashColumn(const Vector2 &pos, const Vector2 &delta, const Vector2 &drag) :
-		target_height_(delta.y), height_(delta.y), speed_(0), drag_(drag) {
+GdWaterSplashColumn::GdWaterSplashColumn(const Vector2 &p_pos, const Vector2 &p_delta, const Vector2 &p_drag) :
+		_target_height(p_delta.y), _height(p_delta.y), _speed(0), _drag(p_drag) {
 	Ref<RectangleShape2D> shape = memnew(RectangleShape2D);
-	shape->set_extents(delta);
+	shape->set_extents(p_delta);
 
 	Transform2D m;
-	m[2] = pos; // set matrix origin
+	m[2] = p_pos; // set matrix origin
 
 	int owner_id = create_shape_owner(this);
 	shape_owner_add_shape(owner_id, shape);
@@ -66,32 +68,48 @@ GdWaterSplashColumn::GdWaterSplashColumn(const Vector2 &pos, const Vector2 &delt
 	connect("body_shape_entered", this, "body_enter_shape");
 }
 
+GdWaterSplashColumn::~GdWaterSplashColumn() {
+	disconnect("body_shape_entered", this, "body_enter_shape");
+}
+
 void GdWaterSplash::_update() {
 	// Is size changed,
-	if (size_changed_) {
-		real_t dx = rect_.size.x;
-		real_t dy = rect_.size.y;
-		size_changed_ = false;
-		ncols_ = uint32_t(dx / resolution_);
-		for (int i = 0; i < columns_.size(); ++i) {
-			memdelete(columns_[i]);
+	if (_size_changed) {
+		const real_t dx = _rect.size.x;
+		const real_t dy = _rect.size.y;
+		_size_changed = false;
+		_ncols = uint32_t(dx / _resolution);
+		for (int i = 0; i < _columns.size(); ++i) {
+			memdelete(_columns[i]);
 		}
-		columns_.clear();
-		real_t x = rect_.position.x;
-		real_t y = rect_.position.y;
-		for (uint32_t i = 0; i < ncols_; ++i) {
-			GdWaterSplashColumn *col = memnew(GdWaterSplashColumn(Vector2(x, y), Vector2(resolution_, dy), drag_));
-			columns_.push_back(col);
+		_columns.clear();
+		real_t x = _rect.position.x;
+		real_t y = _rect.position.y;
+		for (uint32_t i = 0; i < _ncols; ++i) {
+			GdWaterSplashColumn *col = memnew(GdWaterSplashColumn(Vector2(x, y), Vector2(_resolution, dy), _drag));
+			_columns.push_back(col);
 			add_child(col);
-			x += resolution_;
+			x += _resolution;
 		}
 	}
 	update();
 }
 
 void GdWaterSplash::_notification(int p_what) {
+	static std::vector<real_t> l, r;
 	switch (p_what) {
+		case NOTIFICATION_READY: {
+			l.resize(128);
+			r.resize(128);
+		} break;
+
 		case NOTIFICATION_ENTER_TREE: {
+			set_physics_process(true);
+			update();
+		} break;
+
+		case NOTIFICATION_EXIT_TREE: {
+			set_physics_process(false);
 			update();
 		} break;
 
@@ -102,28 +120,28 @@ void GdWaterSplash::_notification(int p_what) {
 		} break;
 
 		case NOTIFICATION_PHYSICS_PROCESS: {
-			const int n = columns_.size();
-			real_t l[n], r[n];
+			const int n = _columns.size();
+			l.resize(n), r.resize(n);
 			for (int i = 0; i < n; ++i) {
-				columns_[i]->update(tension_, damping_);
+				_columns[i]->update(_tension, _damping);
 			}
 			for (int iter = 0; iter < 8; ++iter) {
 				for (int i = 0; i < n; ++i) {
 					if (i > 0) {
-						l[i] = spread_ * (columns_[i]->height_ - columns_[i - 1]->height_);
-						columns_[i - 1]->speed_ += l[i];
+						l[i] = _spread * (_columns[i]->_height - _columns[i - 1]->_height);
+						_columns[i - 1]->_speed += l[i];
 					}
 					if (i < n - 1) {
-						r[i] = spread_ * (columns_[i]->height_ - columns_[i + 1]->height_);
-						columns_[i + 1]->speed_ += r[i];
+						r[i] = _spread * (_columns[i]->_height - _columns[i + 1]->_height);
+						_columns[i + 1]->_speed += r[i];
 					}
 				}
 				for (int i = 0; i < n; ++i) {
 					if (i > 0) {
-						columns_[i - 1]->height_ += l[i];
+						_columns[i - 1]->_height += l[i];
 					}
 					if (i < n - 1) {
-						columns_[i + 1]->height_ += r[i];
+						_columns[i + 1]->_height += r[i];
 					}
 				}
 			}
@@ -131,23 +149,23 @@ void GdWaterSplash::_notification(int p_what) {
 		} break;
 
 		case NOTIFICATION_DRAW: {
-			if (texture.is_null())
+			if (texture.is_null()) {
 				return;
+			}
 
-			Vector2 pos = rect_.position;
-
+			Vector2 pos = _rect.position;
 			Vector<Color> colors;
-			colors.push_back(color_);
-			colors.push_back(color_);
-			colors.push_back(color_);
-			colors.push_back(color_);
+			colors.push_back(_color);
+			colors.push_back(_color);
+			colors.push_back(_color);
+			colors.push_back(_color);
 
-			for (uint32_t i = 0; i < ncols_ - 1; ++i) {
+			for (uint32_t i = 0; i < _ncols - 1; ++i) {
 				Vector<Vector2> pts;
 				pts.push_back(pos);
-				pts.push_back(Vector2(pos.x + resolution_, pos.y));
-				pts.push_back(Vector2(pos.x + resolution_, pos.y - columns_[i + 1]->height_));
-				pts.push_back(Vector2(pos.x, pos.y - columns_[i]->height_));
+				pts.push_back(Vector2(pos.x + _resolution, pos.y));
+				pts.push_back(Vector2(pos.x + _resolution, pos.y - _columns[i + 1]->_height));
+				pts.push_back(Vector2(pos.x, pos.y - _columns[i]->_height));
 
 				Vector<Vector2> uvs;
 				uvs.push_back(Vector2(1, 1));
@@ -156,76 +174,84 @@ void GdWaterSplash::_notification(int p_what) {
 				uvs.push_back(Vector2(1, 0));
 
 				draw_polygon(pts, colors, uvs, texture);
-				pos.x += resolution_;
+				pos.x += _resolution;
 			}
 
 		} break;
 	}
 }
 
-void GdWaterSplash::set_size(const Rect2 &rect) {
-	rect_ = rect;
-	size_changed_ = true;
-	_update();
+void GdWaterSplash::set_size(const Rect2 &p_rect) {
+	if (_rect != p_rect) {
+		_rect = p_rect;
+		_size_changed = true;
+		_update();
+	}
 }
 
 Rect2 GdWaterSplash::get_size() const {
-	return rect_;
+	return _rect;
 }
 
-void GdWaterSplash::set_resolution(const uint32_t &resolution) {
-	ERR_FAIL_COND(resolution <= 0);
-	resolution_ = resolution;
-	size_changed_ = true;
-	_update();
+void GdWaterSplash::set_resolution(const uint32_t &p_resolution) {
+	ERR_FAIL_COND(p_resolution <= 0);
+	if (_resolution != p_resolution) {
+		_resolution = p_resolution;
+		_size_changed = true;
+		_update();
+	}
 }
 
 uint32_t GdWaterSplash::get_resolution() const {
-	return resolution_;
+	return _resolution;
 }
 
-void GdWaterSplash::set_color(const Color &color) {
-	color_ = color;
-	size_changed_ = false;
-	_update();
+void GdWaterSplash::set_color(const Color &p_color) {
+	if (_color != p_color) {
+		_color = p_color;
+		_size_changed = false;
+		_update();
+	}
 }
 
 Color GdWaterSplash::get_color() const {
-	return color_;
+	return _color;
 }
 
-void GdWaterSplash::set_damping(const real_t &val) {
-	damping_ = val;
+void GdWaterSplash::set_damping(const real_t &p_value) {
+	_damping = p_value;
 }
 
 real_t GdWaterSplash::get_damping() const {
-	return damping_;
+	return _damping;
 }
 
-void GdWaterSplash::set_tension(const real_t &val) {
-	tension_ = val;
+void GdWaterSplash::set_tension(const real_t &p_value) {
+	_tension = p_value;
 }
 
 real_t GdWaterSplash::get_tension() const {
-	return tension_;
+	return _tension;
 }
 
-void GdWaterSplash::set_spread(const real_t &val) {
-	spread_ = val;
+void GdWaterSplash::set_spread(const real_t &p_value) {
+	_spread = p_value;
 }
 
 real_t GdWaterSplash::get_spread() const {
-	return spread_;
+	return _spread;
 }
 
 Vector2 GdWaterSplash::get_drag() const {
-	return drag_;
+	return _drag;
 }
 
-void GdWaterSplash::set_drag(const Vector2 &val) {
-	drag_ = val;
-	for (int i = 0; i < columns_.size(); ++i) {
-		columns_[i]->drag_ = drag_;
+void GdWaterSplash::set_drag(const Vector2 &p_value) {
+	if (_drag != p_value) {
+		_drag = p_value;
+		for (int i = 0; i < _columns.size(); ++i) {
+			_columns[i]->_drag = _drag;
+		}
 	}
 }
 
@@ -273,13 +299,12 @@ void GdWaterSplash::_bind_methods() {
 }
 
 GdWaterSplash::GdWaterSplash() {
-	resolution_ = 5;
-	color_ = Color(1, 1, 1, 1);
-	damping_ = 0.025;
-	tension_ = 0.025;
-	spread_ = 0.25;
-	drag_ = Vector2(0.01, 0.03);
-	size_changed_ = true;
+	_resolution = 5;
+	_color = Color(1, 1, 1, 1);
+	_damping = 0.025;
+	_tension = 0.025;
+	_spread = 0.25;
+	_drag = Vector2(0.01, 0.03);
+	_size_changed = true;
 	set_size(Rect2(0, 0, 100, 20));
-	set_physics_process(true);
 }

@@ -40,6 +40,7 @@ std::vector<FontPath> getLatin1(real_t x, real_t y) {
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wc++11-narrowing"
+#endif
   return {{
   /* d */ -1, /* v */ {{'m',-40+tx,350+ty,{
         { 'x', 0 },
@@ -48,6 +49,7 @@ std::vector<FontPath> getLatin1(real_t x, real_t y) {
         { 'x', 0 },
         { 'y', 0 },
         { 'f', 1 }}}}}};
+#ifdef __clang__
 #pragma clang diagnostic pop
 #endif
 }
@@ -58,6 +60,7 @@ std::vector<FontPath> getLatin2(real_t x, real_t y) {
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wc++11-narrowing"
+#endif
   return {{
   /* d */ -1, /* v */ {{'m',40+tx,350+ty,{
         { 'x', 0 },
@@ -66,6 +69,7 @@ std::vector<FontPath> getLatin2(real_t x, real_t y) {
         { 'x', 0 },
         { 'y', 0 },
         { 'f', 1 }}}}}};
+#ifdef __clang__
 #pragma clang diagnostic pop
 #endif
 }
@@ -76,6 +80,7 @@ std::vector<FontPath> getLatin3(real_t x, real_t y) {
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wc++11-narrowing"
+#endif
   return {{
   /* d */ -1, /* v */ {{'m',0+tx,50+ty,{
         { 'r', getR(0+tx,50+ty,68-VERTEX_GAP2+tx,0+ty) },
@@ -93,6 +98,7 @@ std::vector<FontPath> getLatin3(real_t x, real_t y) {
         { 'y', 0 },
         { 'x', 0 },
         { 'f', 1 }}}}}};
+#ifdef __clang__
 #pragma clang diagnostic pop
 #endif
 }
@@ -104,6 +110,7 @@ std::vector<FontPath> getLatin4(real_t x, real_t y) {
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wc++11-narrowing"
+#endif
   return {{
   /* d */ 1, /* v */ {{'m',199.4*scale+tx,20.7*scale+ty,{
         { 'x', -1 },
@@ -120,6 +127,7 @@ std::vector<FontPath> getLatin4(real_t x, real_t y) {
         { 'r', ROTATE_VERTICAL }}},{'b',22.3*scale+tx,0*scale+ty,10.9*scale+tx,8.9*scale+ty,0*scale+tx,20*scale+ty,{
         { 'x', -1 },
         { 'y', -0.2 }}}}}};
+#ifdef __clang__
 #pragma clang diagnostic pop
 #endif
 }
@@ -128,6 +136,7 @@ std::vector<FontPath> getLatin5(real_t x, real_t y) {
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wc++11-narrowing"
+#endif
   return {{
   /* d */ 1, /* v */ {{'a',145-50+x,-78+y,{
         { 'x', 0 },
@@ -135,6 +144,7 @@ std::vector<FontPath> getLatin5(real_t x, real_t y) {
   /* d */ 1, /* v */ {{'a',145+50+x,-78+y,{
         { 'x', 0 },
         { 'y', 0 }}}}}};
+#ifdef __clang__
 #pragma clang diagnostic pop
 #endif
 }
@@ -145,6 +155,7 @@ std::vector<FontPath> getLatin6(real_t x, real_t y) {
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wc++11-narrowing"
+#endif
   return {{
   /* d */ 1, /* v */ {{'m',112.7+tx,0.0+ty,{
         { 'r', getCurveR(112.7+tx,0.0+ty+tx,10.1+ty,110.1+tx,19.3+ty,105.0+tx,27.7+ty,0) },
@@ -163,6 +174,7 @@ std::vector<FontPath> getLatin6(real_t x, real_t y) {
         { 'y', 0 }}},{'b',3.2+tx,19.3+ty,0.5+tx,10.1+ty,0.5+tx,0.0+ty,{
         { 'x', 0 },
         { 'y', 0 }}}}}};
+#ifdef __clang__
 #pragma clang diagnostic pop
 #endif
 }
@@ -174,6 +186,7 @@ std::vector<FontPath> getLatin7(real_t x, real_t y) {
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wc++11-narrowing"
+#endif
   return {{
   /* d */ 1, /* v */ {{'m',232*scale+tx,116*scale+ty,{
         { 'r', ROTATE_HORIZONTAL },
@@ -184,6 +197,7 @@ std::vector<FontPath> getLatin7(real_t x, real_t y) {
         { 'r', ROTATE_VERTICAL }}},{'b',180.1*scale+tx,0*scale+ty,232*scale+tx,51.9*scale+ty,232*scale+tx,116*scale+ty,{
         { 'r', ROTATE_HORIZONTAL },
         { 'c', 1 }}}}}};
+#ifdef __clang__
 #pragma clang diagnostic pop
 #endif
 }

@@ -32,6 +32,7 @@
 #define _util_h_
 
 #include "core/dictionary.h"
+#include "core/int_types.h"
 #include "core/math/math_funcs.h"
 
 #include <map>
@@ -43,7 +44,7 @@ constexpr real_t ROTATE_NONE = -100;
 constexpr real_t VERTEX_GAP = 3;
 constexpr real_t VERTEX_GAP2 = VERTEX_GAP / 2;
 constexpr real_t FONT_HEIGHT = 824;
-const char TOFU = 0x80;
+constexpr uint8_t TOFU = 0x80;
 
 union InfoValue {
 	real_t f;
@@ -69,9 +70,9 @@ struct FontPathSeg {
 	std::map<char, InfoValue> info;
 	real_t &operator[](int index) { return d[index]; }
 
-	FontPathSeg(char op, real_t p1, real_t p2, const std::map<char, InfoValue> &info = std::map<char, InfoValue>()) :
+	FontPathSeg(char op, double p1, double p2, const std::map<char, InfoValue> &info = std::map<char, InfoValue>()) :
 			op(op), _1(p1), _2(p2), info(info) {}
-	FontPathSeg(char op, real_t p1, real_t p2, real_t p3, real_t p4, real_t p5, real_t p6, const std::map<char, InfoValue> &info = std::map<char, InfoValue>()) :
+	FontPathSeg(char op, double p1, double p2, double p3, double p4, double p5, double p6, const std::map<char, InfoValue> &info = std::map<char, InfoValue>()) :
 			op(op), _1(p1), _2(p2), _3(p3), _4(p4), _5(p5), _6(p6), info(info) {}
 };
 
