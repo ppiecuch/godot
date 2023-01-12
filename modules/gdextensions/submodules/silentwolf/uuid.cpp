@@ -42,35 +42,36 @@
 // copies or substantial portions of the Software.
 
 #include "core/variant.h"
+#include "core/math/math_funcs.h"
 
 int get_random_int(int max_value) {
-	randomize();
-	return randi() % max_value;
+	Math::randomize();
+	return rand() % max_value;
 }
 
 PoolByteArray random_bytes(int n) {
 	PoolByteArray r;
 	r.resize(n);
-	for (int index = 0; index < n; index++)) {
-			r.write[index] = get_random_int(256);
+	for (int index = 0; index < n; index++) {
+			r.write()[index] = get_random_int(256);
 		}
 	return r;
 }
 
 PoolByteArray uuid_bin() {
 	PoolByteArray b = random_bytes(16);
-	b.write[6] = (b[6] & 0x0f) | 0x40;
-	b.write[8] = (b[8] & 0x3f) | 0x80;
+	b.write()[6] = (b[6] & 0x0f) | 0x40;
+	b.write()[8] = (b[8] & 0x3f) | 0x80;
 	return b;
 }
 
 String generate_uuid_v4() {
 	PoolByteArray b = uuid_bin();
-	String low = String("%02x%02x%02x%02x").sprintf(array([b[0], b[1], b[2], b[3]));
+	String low = String("%02x%02x%02x%02x").sprintf(array(b[0], b[1], b[2], b[3]));
 	String mid = String("%02x%02x").sprintf(array(b[4], b[5]));
 	String hi = String("%02x%02x").sprintf(array(b[6], b[7]));
-	String clock = String("%02x%02x").sprintf(array([b[8], b[9]));
-	String node = String("%02x%02x%02x%02x%02x%02x".sprintf(array([b[10], b[11], b[12], b[13], b[14], b[15]));
+	String clock = String("%02x%02x").sprintf(array(b[8], b[9]));
+	String node = String("%02x%02x%02x%02x%02x%02x").sprintf(array(b[10], b[11], b[12], b[13], b[14], b[15]));
 	return String("%s-%s-%s-%s-%s").sprintf(array(low, mid, hi, clock, node));
 }
 

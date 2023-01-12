@@ -28,16 +28,18 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-bool check_status_code(status_code) {
-	SWLogger.debug("status_code: " + str(status_code));
-	var check_ok = true;
+#include "silent_wolf.h"
+
+bool sw_check_status_code(int status_code) {
+	sw_debug("status_code: ", status_code);
+	bool check_ok = true;
 	if (status_code == 0) {
-		no_connection_error();
+		sw_no_connection_error();
 		check_ok = false;
 	}
 	return check_ok;
 }
 
-void no_connection_error() {
-	SWLogger.error("Godot couldn't connect to the SilentWolf backend. There are several reasons why this might happen. See https://silentwolf.com/troubleshooting for more details. If the problem persists you can reach out to us at support@silentwolf.com")
+void sw_no_connection_error() {
+	sw_error("Godot couldn't connect to the SilentWolf backend. There are several reasons why this might happen. See https://silentwolf.com/troubleshooting for more details. If the problem persists you can reach out to us at support@silentwolf.com");
 }

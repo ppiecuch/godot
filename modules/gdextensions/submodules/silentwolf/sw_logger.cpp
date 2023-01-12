@@ -33,9 +33,9 @@
 #include "core/print_string.h"
 
 int sw_get_log_level() {
-	int log_level = SW_LOG_INFO;
-	if (SilentWolf::get_config().has("log_level")) {
-		log_level = SilentWolf.config.log_level;
+	int log_level = 1;
+	if (SilentWolf::config.has("log_level")) {
+		log_level = SilentWolf::config["log_level"];
 	} else {
 		sw_error("Couldn't find SilentWolf.config.log_level, defaulting to 1");
 	}
@@ -43,11 +43,11 @@ int sw_get_log_level() {
 }
 
 void sw_print(int log_level, const String &text) {
-	if (log_level >= SW_LOG_ERROR) {
+	if (log_level == SW_LOG_ERROR) {
 		ERR_PRINT(text);
-	} else if (log_level >= SW_LOG_WARNING) {
+	} else if (log_level == SW_LOG_WARNING) {
 		WARN_PRINT(text);
-	} else if (get_log_level() > log_level) {
+	} else if (sw_get_log_level() > log_level) {
 		print_line(text);
 	}
 }

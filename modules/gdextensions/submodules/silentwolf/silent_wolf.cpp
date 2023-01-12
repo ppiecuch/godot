@@ -30,8 +30,8 @@
 
 #include "silent_wolf.h"
 
-#include "core/json.h"
 #include "core/variant.h"
+#include "core/io/json.h"
 
 const String SilentWolf::version = "0.6.19";
 
@@ -45,6 +45,8 @@ const Dictionary SilentWolf::config = help::dict(
 		"log_level", 2,
 #endif
 );
+
+SilentWolf *instance = nullptr;
 
 // SILENTWOLF CONFIG: THE CONFIG VARIABLES BELOW WILL BE OVERRIDED THE
 // NEXT TIME YOU UPDATE YOUR PLUGIN!
@@ -87,8 +89,9 @@ void SilentWolf::configure_game_version(game_version) {
 
 // Log levels:
 // 0 - error (only log errors)
-// 1 - info (log errors and the main actions taken by the SilentWolf plugin) - default setting
-// 2 - debug (detailed logs, including the above and much more, to be used when investigating a problem). This shouldn't be the default setting in production.
+// 1 - warning (log errors and warnings)
+// 2 - info (log above and the main actions taken by the SilentWolf plugin) - default setting
+// 3 - debug (detailed logs, including the above and much more, to be used when investigating a problem). This shouldn't be the default setting in production.
 void SilentWolf::configure_log_level(log_level) {
 	config.log_level = log_level;
 }
@@ -97,7 +100,7 @@ void SilentWolf::configure_auth_session_duration(int duration) {
 	session_duration = duration;
 }
 
-void SilentWolf::send_get_request(Ref<HTTPRequest> http_node, const String &request_url) {
+void SilentWolf::send_get_request(Ref<SWHTTPRequest> http_node, const String &request_url) {
 	Vector<String> headers = helper::varray(
 			"x-api-key: " + config["api_key"],
 			"x-sw-game-id: " + config["game_id"],
@@ -106,7 +109,7 @@ void SilentWolf::send_get_request(Ref<HTTPRequest> http_node, const String &requ
 	request(http_node, request_url, headers);
 }
 
-void SilentWolf::send_post_request(Ref<HTTPRequest> http_node, const String &request_url, const Dictionary &payload) {
+void SilentWolf::send_post_request(Ref<SWHTTPRequest> http_node, const String &request_url, const Dictionary &payload) {
 	Vector<String> headers = helper::varray(
 			"Content-Type: application/json",
 			"x-api-key: " + config["api_key"],
@@ -131,41 +134,22 @@ void SilentWolf::send_post_request(Ref<HTTPRequest> http_node, const String &req
 	request(http_node, request_url, headers, use_ssl, METHOD_POST, payload);
 }
 
-bool SilentWolf::request(Ref<HTTPRequest> http_node, const String &request_url, const Vector<String> &headers, bool use_ssl, HTTPClient::Method method, const Dictionary &payload) {
-	auto send_request[](Ref<HTTPRequest> http_node, const String &request_url, const Vector<String> &headers, bool use_ssl, HTTPClient::Method method, const Dictionary &payload) {
+void SilentWolf::queue_request(Ref<SWHTTPRequest> http_node, const String &request_url, const Vector<String> &headers, bool use_ssl, HTTPClient::Method method, const Dictionary &payload) {
+	send_queue.append({ http_node, request_url, headers, use_ssl, method, payload });
+}
+
+void SilentWolf::queue_send() {
+	Element *e = send_queue.front();
+	while (e) {
+		SendRequest &p = e->get();
 		String query = JSON::print(payload);
 		sw_info("Method: " + (method == METHOD_POST ? "POST" : (method == METHOD_GET ? "GET" : "??")));
 		sw_info("request_url: ", request_url);
 		sw_info("headers: ", headers);
 		sw_info("query: ", query);
 		http_node->request(request_url, headers, use_ssl, method, query);
-	};
-
-	if (!http_node->is_inside_tree()) {
-		send_queue.append({ http_node, request_url, headers, use_ssl, method, payload });
-		return false;
-	} else {
-		if (send_queue.empty()) { // send now
-			send_request(http_node, request_url, headers, use_ssl, method, payload);
-			return true;
-		} else {
-			send_queue.append({ http_node, request_url, headers, use_ssl, method, payload });
-			// resend in order
-			Element *e = send_queue.front();
-			while (e) {
-				SendRequest &p = e->get();
-				if (http_node->is_inside_tree()) {
-					send_request(p->http_node, p->request_url, p->headers, p->use_ssl, p->method, p->payload
-				});
-				e = send_queue.erase_and_next(e);
-			}
-			else {
-				e = e->next();
-			}
-		}
-		return true;
+		e = send_queue.erase_and_next(e);
 	}
-}
 }
 
 bool SilentWolf::check_auth_ready() {

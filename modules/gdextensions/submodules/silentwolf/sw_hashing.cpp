@@ -32,10 +32,10 @@
 
 String sw_hash_values(const Array &values) {
 	String to_be_hashed = "";
-	for (const Variant &value : values) {
-		to_be_hashed = to_be_hashed + str(value);
+	for (const String value : values) {
+		to_be_hashed = to_be_hashed + value;
 	}
 	String hashed = to_be_hashed.md5_text();
-	// print_line("Computed hashed: " + hashed)
+	// sw_debug("Computed hashed: " + hashed);
 	return hashed;
 }

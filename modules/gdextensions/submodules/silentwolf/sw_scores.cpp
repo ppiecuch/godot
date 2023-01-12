@@ -39,7 +39,7 @@ SW_Scores &SW_Scores::get_score_position(const String &score, const String &ldbo
 	} else {
 		score_value = score;
 	}
-	ScorePosition = newref(HTTPRequest);
+	ScorePosition = newref(HTTPRequestBasic);
 	if (OS.get_name() != "HTML5") {
 		ScorePosition.set_use_threads(true);
 	}
@@ -63,8 +63,8 @@ SW_Scores &SW_Scores::get_score_position(const String &score, const String &ldbo
 SW_Scores &SW_Scores::get_scores_around(const String &score, int scores_to_fetch, const String &ldboard_name) {
 	String score_id;
 	String score_value;
-	print("score: " + str(score));
-	if (UUID.is_uuid(str(score))) {
+	print("score: ", score);
+	if (UUID.is_uuid(score)) {
 		score_id = score;
 	} else {
 		score_value = score;
@@ -120,7 +120,7 @@ SW_Scores &SW_Scores::get_scores_by_player(player_name, maximum = 10, ldboard_na
 	return *this;
 }
 
-void SW_Scores::add_to_local_scores(game_result, ld_name) {
+void SW_Scores::add_to_local_scores(game_result, const String &ld_name) {
 	Dictionary local_score = { "score_id" : game_result.score_id, "game_id_version" : game_result.game_id + ";" + game_result.game_version, "player_name" : game_result.player_name, "score" : game_result.score };
 	local_scores.append(local_score);
 	// if ld_name == "main":

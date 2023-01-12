@@ -30,6 +30,10 @@
 
 #include "silent_wolf.h"
 
+#include "common/gd_core.h"
+#include "core/io/json.h"
+#include <_types/_uint8_t.h>
+
 void SW_WSClient::_ready() {
 	sw_debug("Entering MPClient _ready function");
 	// Connect base signals to get notified of connection open, close, and errors.
@@ -38,14 +42,12 @@ void SW_WSClient::_ready() {
 	_client->connect("connection_established", this, "_connected");
 	// This signal is emitted when not using the Multiplayer API every time
 	// a full packet is received.
-	// Alternatively, you could check get_peer(1).get_available_packets() in a loop.
 	_client->connect("data_received", this, "_on_data");
 
 	// Initiate connection to the given URL.
 	Error err = _client->connect_to_url(websocket_url);
 	if (err != OK) {
 		ERR_PRINT("Unable to connect to WS server");
-		set_process(false);
 	}
 	emit_signal("ws_client_ready");
 }
@@ -54,14 +56,13 @@ void SW_WSClient::_closed(bool p_was_clean) {
 	// was_clean will tell you if the disconnection was correctly notified
 	// by the remote peer before closing the socket.
 	sw_debug("WS connection closed, clean: ", p_was_clean);
-	set_process(false);
 }
 
 void SW_WSClient::_connected(const String &p_proto) {
 	// This is called on connection, "proto" will be the selected WebSocket
 	// sub-protocol (which is optional)
 	//sw_debug("Connected with protocol: ", proto);
-	print_debug("Connected with protocol: ", proto);
+	sw_debug("Connected with protocol: ", p_proto);
 	// You MUST always use get_peer(1).put_packet to send data to server,
 	// and not put_packet directly when not using the MultiplayerAPI.
 	//Dictionary test_packet = helper::dict( "data", "Test packet" );
@@ -70,10 +71,31 @@ void SW_WSClient::_connected(const String &p_proto) {
 }
 
 void SW_WSClient::_on_data() {
-	// Print the received packet, you MUST always use get_peer(1)->get_packet()
-	// to receive data from server, and not get_packet directly when not
-	// using the MultiplayerAPI.
-	print_debug("Got data from WS server: ", _client->get_peer(1)->get_packet()->get_string_from_utf8());
+	Ref<WebSocketPeer> peer = _client->get_peer(1);
+
+	if (!peer.is_valid() || !peer->is_connected_to_host()) {
+		return;
+	}
+
+	String data;
+	while (peer->get_available_packet_count()) {
+		const uint8_t *packet;
+		int len;
+		Error err = peer->get_packet(&packet, len);
+		if (err != OK) {
+			ERR_PRINT("Error getting packet!");
+			break;
+		}
+		String s;
+		if (len > 0) {
+			s.parse_utf8(reinterpret_cast<const char*>(packet), len);
+		}
+		if (!s.empty()) {
+			data += s;
+		}
+	}
+
+	sw_debug("Got data from WS server: ", data);
 }
 
 void SW_WSClient::_process(float p_delta) {
@@ -83,41 +105,30 @@ void SW_WSClient::_process(float p_delta) {
 }
 
 // send arbitrary data to backend
-void SW_WSClient::send_to_server(int p_message_type, Dictionary p_data) {
-	data["message_type"] = p_message_type;
-	print_debug("Sending data to server: ", p_ data);
-	_client->get_peer(1)->put_packet(JSON.print(data).to_utf8());
+void SW_WSClient::send_to_server(const String &p_message_type, Dictionary &p_data) {
+	Ref<WebSocketPeer> peer = _client->get_peer(1);
+
+	if (!peer.is_valid() || !peer->is_connected_to_host()) {
+		ERR_PRINT("Connection lost");
+		return;
+	}
+
+	p_data["message_type"] = p_message_type;
+	sw_debug("Sending data to server: ", p_data);
+	const CharString msg = JSON::print(p_data).utf8();
+	peer->put_packet(reinterpret_cast<const uint8_t*>(msg.c_str()), msg.length());
 }
 
 void SW_WSClient::init_mp_session(const String &p_player_name) {
-	print_debug("WSClient init_mp_session, sending initialisation packet to server");
-	Dictionary init_packet = helper::dict(
-			"player_name", p_player_name, );
+	sw_debug("WSClient init_mp_session, sending initialisation packet to server");
+	Dictionary init_packet = helper::dict("player_name", p_player_name);
 	return send_to_server("init", init_packet);
 }
 
-void SW_WSClient::create_room() {
-}
-
-void SW_WSClient::_notification(int p_what) {
-	switch (p_what) {
-		case NOTIFICATION_READY: {
-			_ready();
-		} break;
-		case NOTIFICATION_PROCESS: {
-			float delta = get_process_delta_time();
-			_process(delta);
-		} break;
-	}
-}
-
 void SW_WSClient::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("_close"), &SW_WSClient::_close);
-	ClassDB::bind_method(D_METHOD("_connected"), &SW_WSClient::_connected);
-
-	ADD_SIGNAL(ws_client_ready);
+	ADD_SIGNAL(MethodInfo("ws_client_ready"));
 }
 
-void SW_WSClient::SW_WSClient() {
-	_client = newref(WebSocketClient);
+SW_WSClient::SW_WSClient() {
+	_client = WebSocketClient::_create();
 }
