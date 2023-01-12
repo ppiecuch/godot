@@ -143,8 +143,9 @@ void DefaultClient::_ws_server_close_request() {
 void DefaultClient::_ws_data_received() {
 	Ref<WebSocketPeer> peer = ws->get_peer(1);
 
-	if (!peer.is_valid() || !peer->is_connected_to_host())
+	if (!peer.is_valid() || !peer->is_connected_to_host()) {
 		return;
+	}
 
 	while (peer->get_available_packet_count()) {
 		const uint8_t *packet;
