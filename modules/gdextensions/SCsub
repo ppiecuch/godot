@@ -152,6 +152,7 @@ modules = [
     "nakama1",
     "parseplatform",
     "discord",
+    "silentwolf",
     "settings",
     "sfxr",
     "flashdb",

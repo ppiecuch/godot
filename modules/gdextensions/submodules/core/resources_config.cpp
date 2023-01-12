@@ -130,9 +130,11 @@ ObjectNode ObjectConfig::load_config_file(const String &p_file, String &error_st
 
 Variant ObjectConfig::load_json_file(const String &p_file) {
 	FileAccessRef file = FileAccess::create_for_path(p_file);
+	ERR_FAIL_COND_V_MSG(!file, "Failed to open file: " + p_file, Variant());
+
 	Error err;
 	String json_string = file->get_file_as_string(p_file, &err);
-	ERR_FAIL_COND_V_MSG(err != OK, FAILED, "Can not open json file.");
+	ERR_FAIL_COND_V_MSG(err != OK, FAILED, "Can not read json file.");
 
 	String error_string;
 	int error_line;

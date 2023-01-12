@@ -47,6 +47,7 @@ def configure(env):
         "discord",
         "parseplatform",
         "playfab",
+        "silentwolf",
         "qrcodetexture",
         "landiscovery",
         "multipeer",

@@ -396,6 +396,25 @@ public:
 	};
 
 	/**
+	 * erase an element in the list, by iterator pointing to it. Return next element or null if it was not found.
+	 */
+	Element *erase_and_next(const Element *p_I) {
+		if (_data) {
+			Element *n = _data->next();
+			bool ret = _data->erase(p_I);
+
+			if (_data->size_cache == 0) {
+				memdelete_allocator<_Data, A>(_data);
+				_data = nullptr;
+			}
+
+			return ret ? n : nullptr;
+		}
+
+		return nullptr;
+	};
+
+	/**
 	 * erase the first element in the list, that contains value
 	 */
 	bool erase(const T &value) {
