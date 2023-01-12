@@ -105,7 +105,7 @@ void SW_WSClient::_process(float p_delta) {
 }
 
 // send arbitrary data to backend
-void SW_WSClient::send_to_server(const String &p_message_type, Dictionary &p_data) {
+void SW_WSClient::send_to_server(const String &p_message_type, const Dictionary &p_data) {
 	Ref<WebSocketPeer> peer = _client->get_peer(1);
 
 	if (!peer.is_valid() || !peer->is_connected_to_host()) {
@@ -113,9 +113,10 @@ void SW_WSClient::send_to_server(const String &p_message_type, Dictionary &p_dat
 		return;
 	}
 
-	p_data["message_type"] = p_message_type;
-	sw_debug("Sending data to server: ", p_data);
-	const CharString msg = JSON::print(p_data).utf8();
+	Dictionary data = p_data;
+	data["message_type"] = p_message_type;
+	sw_debug("Sending data to server: ", data);
+	const CharString msg = JSON::print(data).utf8();
 	peer->put_packet(reinterpret_cast<const uint8_t*>(msg.c_str()), msg.length());
 }
 

@@ -84,14 +84,12 @@ class SW_WSClient : public Reference {
 	void _connected(const String &p_proto = "");
 	void _on_data();
 
-	void send_to_server(const String &p_message_type, Dictionary &p_data); // send arbitrary data to backend
-	void init_mp_session(const String &p_player_name);
-
 protected:
 	static void _bind_methods();
 
 public:
-	void create_room();
+	void send_to_server(const String &p_message_type, const Dictionary &p_data); // send arbitrary data to backend
+	void init_mp_session(const String &p_player_name);
 
 	SW_WSClient();
 };

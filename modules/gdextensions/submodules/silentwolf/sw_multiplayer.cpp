@@ -35,7 +35,6 @@
 void SW_Multiplayer::_ready() {
 	mp_ws_ready = false;
 	mp_session_started = false;
-	add_child(WSClient);
 }
 
 void SW_Multiplayer::init_mp_session(const String &player_name) {
@@ -53,18 +52,8 @@ void SW_Multiplayer::_send_init_message() {
 }
 
 void SW_Multiplayer::send(const Dictionary &data) {
-	sw_debug("Attempting to send data to web socket server");
-	if (WSClient->is_inside_tree()) { // First check that WSClient is in tree
-		// TODO: check if data is properly formatted (should be dictionary?)
-		sw_debug("Sending data to web socket server...");
-		WSClient->send_to_server("update", data);
-	}
-}
-
-void SW_Multiplayer::_notification(int p_what) {
-	if (p_what == NOTIFICATION_READY) {
-		_ready();
-	}
+	sw_debug("Sending data to web socket server...");
+	WSClient->send_to_server("update", data);
 }
 
 void SW_Multiplayer::_bind_methods() {
