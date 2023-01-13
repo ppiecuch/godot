@@ -30,8 +30,8 @@
 
 #include "silent_wolf.h"
 
-#include "core/variant.h"
 #include "core/io/json.h"
+#include "core/variant.h"
 
 const String SilentWolf::version = "0.6.19";
 
@@ -48,8 +48,7 @@ const Dictionary SilentWolf::config = helper::dict(
 
 const Dictionary SilentWolf::auth_config = helper::dict(
 		"session_duration_seconds", 0,
-		"saved_session_expiration_days", 30
-);
+		"saved_session_expiration_days", 30);
 
 SilentWolf *instance = nullptr;
 
@@ -73,7 +72,7 @@ void SilentWolf::_ready() {
 }
 
 void SilentWolf::config_set(const Dictionary &dict, const Variant &key, const Variant &value) {
-	const_cast<Dictionary*>(&dict)->set(key, value);
+	const_cast<Dictionary *>(&dict)->set(key, value);
 }
 
 void SilentWolf::configure(const Dictionary &config) {
@@ -215,7 +214,7 @@ SilentWolf::SilentWolf() {
 	Multiplayer = newref(SW_Multiplayer);
 
 	if (godot_version.empty()) {
-		const_cast<String*>(&godot_version)->operator=(vconcat(Engine::get_singleton()->get_version_info()));
+		const_cast<String *>(&godot_version)->operator=(vconcat(Engine::get_singleton()->get_version_info()));
 	}
 	use_ssl = true;
 }

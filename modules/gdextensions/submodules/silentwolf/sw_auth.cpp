@@ -28,11 +28,10 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-
 #include "silent_wolf.h"
 
 SW_Auth &SW_Auth::set_player_logged_in(const String &player_name) {
-	logged_in_player  = player_name;
+	logged_in_player = player_name;
 	sw_info("SilentWolf - player logged in as ", player_name);
 	if (SilentWolf::auth_config.has("session_duration_seconds")) {
 		login_timeout = SilentWolf::auth_config["session_duration_seconds"];
@@ -74,12 +73,11 @@ SW_Auth &SW_Auth::register_player_anon(const String &player_name) {
 	Dictionary payload = helper::dict("game_id", game_id, "anon", true, "player_name", player_name, "user_local_id", user_local_id);
 	String query = JSON::print(payload);
 	Vector<String> headers = helper::vector(
-		String(application_json),
-		"x-api-key: " + api_key,
-		"x-sw-plugin-version: " + SilentWolf::version,
-		"x-sw-game-id: " + game_id,
-		"x-sw-godot-version: " + SilentWolf::godot_version
-	);
+			String(application_json),
+			"x-api-key: " + api_key,
+			"x-sw-plugin-version: " + SilentWolf::version,
+			"x-sw-game-id: " + game_id,
+			"x-sw-godot-version: " + SilentWolf::godot_version);
 	//sw_debug("register_player headers: ", headers);
 	RegisterPlayer->request("https://api.silentwolf.com/create_new_player", headers, true, HTTPClient::METHOD_POST, query);
 	return *this;
@@ -93,15 +91,14 @@ SW_Auth &SW_Auth::register_player(const String &player_name, const String &email
 	String game_id = SilentWolf::config["game_id"];
 	String game_version = SilentWolf::config["game_version"];
 	String api_key = SilentWolf::config["api_key"];
-	Dictionary payload = helper::dict("game_id", game_id, "anon", false, "player_name", player_name, "email",  email, "password", password, "confirm_password", confirm_password);
+	Dictionary payload = helper::dict("game_id", game_id, "anon", false, "player_name", player_name, "email", email, "password", password, "confirm_password", confirm_password);
 	String query = JSON::print(payload);
 	Vector<String> headers = helper::vector(
-		application_json,
-		"x-api-key: " + api_key,
-		"x-sw-plugin-version: " + SilentWolf::version,
-		"x-sw-game-id: " + game_id,
-		"x-sw-godot-version: " + SilentWolf::godot_version
-	);
+			application_json,
+			"x-api-key: " + api_key,
+			"x-sw-plugin-version: " + SilentWolf::version,
+			"x-sw-game-id: " + game_id,
+			"x-sw-godot-version: " + SilentWolf::godot_version);
 	//sw_debug("register_player headers: ", headers);
 	RegisterPlayer->request("https://api.silentwolf.com/create_new_player", headers, true, HTTPClient::METHOD_POST, query);
 	return *this;
@@ -118,12 +115,11 @@ SW_Auth &SW_Auth::register_player_user_password(const String &player_name, const
 	Dictionary payload = helper::dict("game_id", game_id, "player_name", player_name, "password", password, "confirm_password", confirm_password);
 	String query = JSON::print(payload);
 	Vector<String> headers = helper::vector(
-		application_json,
-		"x-api-key: " + api_key,
-		"x-sw-plugin-version: " + SilentWolf::version,
-		"x-sw-game-id: " + game_id,
-		"x-sw-godot-version: " + SilentWolf::godot_version
-	);
+			application_json,
+			"x-api-key: " + api_key,
+			"x-sw-plugin-version: " + SilentWolf::version,
+			"x-sw-game-id: " + game_id,
+			"x-sw-godot-version: " + SilentWolf::godot_version);
 	//sw_debug("register_player headers: ", headers);
 	RegisterPlayer->request("https://api.silentwolf.com/create_new_player", headers, true, HTTPClient::METHOD_POST, query);
 	return *this;
@@ -137,15 +133,14 @@ SW_Auth &SW_Auth::verify_email(const String &player_name, const String &code) {
 	String game_id = SilentWolf::config["game_id"];
 	String game_version = SilentWolf::config["game_version"];
 	String api_key = SilentWolf::config["api_key"];
-	Dictionary payload = helper::dict("game_id", game_id, "username",  player_name, "code", code);
+	Dictionary payload = helper::dict("game_id", game_id, "username", player_name, "code", code);
 	String query = JSON::print(payload);
 	Vector<String> headers = helper::vector(
-		application_json,
-		"x-api-key: " + api_key,
-		"x-sw-plugin-version: " + SilentWolf::version,
-		"x-sw-game-id: " + game_id,
-		"x-sw-godot-version: " + SilentWolf::godot_version
-	);
+			application_json,
+			"x-api-key: " + api_key,
+			"x-sw-plugin-version: " + SilentWolf::version,
+			"x-sw-game-id: " + game_id,
+			"x-sw-godot-version: " + SilentWolf::godot_version);
 	//sw_debug("register_player headers: ", headers);
 	VerifyEmail->request("https://api.silentwolf.com/confirm_verif_code", headers, true, HTTPClient::METHOD_POST, query);
 	return *this;
@@ -158,15 +153,14 @@ SW_Auth &SW_Auth::resend_conf_code(const String &player_name) {
 	String game_id = SilentWolf::config["game_id"];
 	String game_version = SilentWolf::config["game_version"];
 	String api_key = SilentWolf::config["api_key"];
-	Dictionary payload = helper::dict( "game_id", game_id, "username", player_name );
+	Dictionary payload = helper::dict("game_id", game_id, "username", player_name);
 	String query = JSON::print(payload);
 	Vector<String> headers = helper::vector(
-		application_json,
-		"x-api-key: " + api_key,
-		"x-sw-plugin-version: " + SilentWolf::version,
-		"x-sw-game-id: " + game_id,
-		"x-sw-godot-version: " + SilentWolf::godot_version
-									 );
+			application_json,
+			"x-api-key: " + api_key,
+			"x-sw-plugin-version: " + SilentWolf::version,
+			"x-sw-game-id: " + game_id,
+			"x-sw-godot-version: " + SilentWolf::godot_version);
 	//sw_debug("register_player headers: ", headers);
 	ResendConfCode->request("https://api.silentwolf.com/resend_conf_code", headers, true, HTTPClient::METHOD_POST, query);
 	return *this;
@@ -187,12 +181,11 @@ SW_Auth &SW_Auth::login_player(const String &username, const String &password, b
 	sw_debug("SilentWolf login player payload: ", payload);
 	String query = JSON::print(payload);
 	Vector<String> headers = helper::vector(
-		application_json,
-		"x-api-key: " + api_key,
-		"x-sw-plugin-version: " + SilentWolf::version,
-		"x-sw-game-id: " + game_id,
-		"x-sw-godot-version: " + SilentWolf::godot_version
-	);
+			application_json,
+			"x-api-key: " + api_key,
+			"x-sw-plugin-version: " + SilentWolf::version,
+			"x-sw-game-id: " + game_id,
+			"x-sw-godot-version: " + SilentWolf::godot_version);
 	//sw_info("login_player headers: ", headers);
 	LoginPlayer->request("https://api.silentwolf.com/login_player", headers, true, HTTPClient::METHOD_POST, query);
 	return *this;
@@ -209,12 +202,11 @@ SW_Auth &SW_Auth::request_player_password_reset(const String &player_name) {
 	sw_debug("SilentWolf request player password reset payload: ", payload);
 	String query = JSON::print(payload);
 	Vector<String> headers = helper::vector(
-		application_json,
-		"x-api-key: " + api_key,
-		"x-sw-plugin-version: " + SilentWolf::version,
-		"x-sw-game-id: " + game_id,
-		"x-sw-godot-version: " + SilentWolf::godot_version
-	);
+			application_json,
+			"x-api-key: " + api_key,
+			"x-sw-plugin-version: " + SilentWolf::version,
+			"x-sw-game-id: " + game_id,
+			"x-sw-godot-version: " + SilentWolf::godot_version);
 	RequestPasswordReset->request("https://api.silentwolf.com/request_player_password_reset", headers, true, HTTPClient::METHOD_POST, query);
 	return *this;
 }
@@ -229,12 +221,11 @@ SW_Auth &SW_Auth::reset_player_password(const String &player_name, const String 
 	sw_debug("SilentWolf request player password reset payload: ", payload);
 	String query = JSON::print(payload);
 	Vector<String> headers = helper::vector(
-		application_json,
-		"x-api-key: " + api_key,
-		"x-sw-plugin-version: " + SilentWolf::version,
-		"x-sw-game-id: " + game_id,
-		"x-sw-godot-version: " + SilentWolf::godot_version
-	);
+			application_json,
+			"x-api-key: " + api_key,
+			"x-sw-plugin-version: " + SilentWolf::version,
+			"x-sw-game-id: " + game_id,
+			"x-sw-godot-version: " + SilentWolf::godot_version);
 	ResetPassword->request("https://api.silentwolf.com/reset_player_password", headers, true, HTTPClient::METHOD_POST, query);
 	return *this;
 }
@@ -249,12 +240,11 @@ SW_Auth &SW_Auth::get_player_details(const String &player_name) {
 	Dictionary payload = helper::dict("game_id", game_id, "player_name", player_name);
 	String query = JSON::print(payload);
 	Vector<String> headers = helper::vector(
-		application_json,
-		"x-api-key: " + api_key,
-		"x-sw-plugin-version: " + SilentWolf::version,
-		"x-sw-game-id: " + game_id,
-		"x-sw-godot-version: " + SilentWolf::godot_version
-	);
+			application_json,
+			"x-api-key: " + api_key,
+			"x-sw-plugin-version: " + SilentWolf::version,
+			"x-sw-game-id: " + game_id,
+			"x-sw-godot-version: " + SilentWolf::godot_version);
 	//sw_info("register_player headers: ", headers);
 	RegisterPlayer->request("https://api.silentwolf.com/get_player_details", headers, true, HTTPClient::METHOD_POST, query);
 	return *this;
@@ -275,15 +265,14 @@ void SW_Auth::on_login_timeout_complete() {
 void SW_Auth::save_session(const Dictionary &lookup, const Dictionary &validator) {
 	String path = "user://swsession.save";
 	Dictionary session_data = helper::dict(
-		"lookup", lookup,
-		"validator", validator
-	);
+			"lookup", lookup,
+			"validator", validator);
 	sw_save_data("user://swsession.save", session_data, "Saving SilentWolf session: ");
 }
 
 void SW_Auth::remove_stored_session() {
 	String path = "user://swsession.save";
-	sw_remove_data(path, "Removing SilentWolf session if any: " );
+	sw_remove_data(path, "Removing SilentWolf session if any: ");
 }
 
 // reload lookup and validator and send them back to the server to auto-login user
@@ -320,7 +309,7 @@ SW_Auth &SW_Auth::validate_player_session(const Dictionary &lookup, const Dictio
 	sw_info("Calling SilentWolf to validate an existing player session");
 	String game_id = SilentWolf::config["game_id"];
 	String api_key = SilentWolf::config["api_key"];
-	Dictionary payload = helper::dict( "game_id", game_id, "lookup", lookup, "validator", validator );
+	Dictionary payload = helper::dict("game_id", game_id, "lookup", lookup, "validator", validator);
 	sw_debug("Validate session payload: ", payload);
 	String query = JSON::print(payload);
 	Vector<String> headers = helper::vector(application_json, "x-api-key: " + api_key, "x-sw-plugin-version: " + SilentWolf::version);
@@ -465,7 +454,7 @@ void SW_Auth::_on_VerifyEmail_request_completed(int result, int response_code, c
 			// also get a JWT token here
 			// send a different signal depending on registration success or failure
 			if (response["success"]) {
-				logged_in_player  = tmp_username;
+				logged_in_player = tmp_username;
 				emit_signal("sw_email_verif_succeeded");
 			} else {
 				emit_signal("sw_email_verif_failed", response["error"]);

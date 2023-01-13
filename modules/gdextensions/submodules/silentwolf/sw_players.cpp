@@ -49,8 +49,7 @@ Dictionary SW_Player::get_stats() {
 				"speed", player_data["speed"],
 				"reflexes", player_data["reflexes"],
 				"max_health", player_data["max_health"],
-				"career", player_data["career"]
-		);
+				"career", player_data["career"]);
 	}
 	return stats;
 }
@@ -60,8 +59,7 @@ Dictionary SW_Player::get_inventory() {
 	if (!player_data.empty()) {
 		inventory = helper::dict(
 				"weapons", player_data["weapons"],
-				"gold", player_data["gold"]
-		);
+				"gold", player_data["gold"]);
 	}
 	return inventory;
 }
@@ -74,11 +72,10 @@ SW_Player &SW_Player::get_player_data(const String &player_name) {
 	String game_version = SilentWolf::config["game_version"];
 	String api_key = SilentWolf::config["api_key"];
 	Vector<String> headers = helper::vector(
-		"x-api-key: " + api_key,
-		"x-sw-plugin-version: " + SilentWolf::version,
-		"x-sw-game-id: " + SilentWolf::cfg_str("game_id"),
-		"x-sw-godot-version: " + SilentWolf::godot_version
-	);
+			"x-api-key: " + api_key,
+			"x-sw-plugin-version: " + SilentWolf::version,
+			"x-sw-game-id: " + SilentWolf::cfg_str("game_id"),
+			"x-sw-godot-version: " + SilentWolf::godot_version);
 	GetPlayerData->request("https://api.silentwolf.com/get_player_data/" + game_id + "/" + player_name, headers, true, HTTPClient::METHOD_GET);
 	return *this;
 }
@@ -91,12 +88,11 @@ SW_Player &SW_Player::post_player_data(const String &player_name, const Dictiona
 	String game_version = SilentWolf::config["game_version"];
 	String api_key = SilentWolf::config["api_key"];
 	Vector<String> headers = helper::vector(
-		application_json,
-		"x-api-key: " + api_key,
-		"x-sw-plugin-version: " + SilentWolf::version,
-		"x-sw-game-id: " + SilentWolf::cfg_str("game_id"),
-		"x-sw-godot-version: " + SilentWolf::godot_version
-	);
+			application_json,
+			"x-api-key: " + api_key,
+			"x-sw-plugin-version: " + SilentWolf::version,
+			"x-sw-game-id: " + SilentWolf::cfg_str("game_id"),
+			"x-sw-godot-version: " + SilentWolf::godot_version);
 	Dictionary payload = helper::dict("game_id", game_id, "game_version", game_version, "player_name", player_name, "player_data", player_data, "overwrite", overwrite);
 	String query = JSON::print(payload);
 	PushPlayerData->request("https://api.silentwolf.com/push_player_data", headers, true, HTTPClient::METHOD_POST, query);
@@ -104,7 +100,7 @@ SW_Player &SW_Player::post_player_data(const String &player_name, const Dictiona
 }
 
 void SW_Player::delete_player_items(const String &player_name, const String &item_name) {
-	Dictionary item = helper::dict(item_name,  "");
+	Dictionary item = helper::dict(item_name, "");
 	delete_player_data(player_name, item);
 }
 
@@ -119,12 +115,11 @@ SW_Player &SW_Player::delete_player_data(const String &player_name, const Dictio
 	String game_id = SilentWolf::config["game_id"];
 	String api_key = SilentWolf::config["api_key"];
 	Vector<String> headers = helper::vector(
-		application_json,
-		"x-api-key: " + api_key,
-		"x-sw-plugin-version: " + SilentWolf::version,
-		"x-sw-game-id: " + SilentWolf::cfg_str("game_id"),
-		"x-sw-godot-version: " + SilentWolf::godot_version
-	);
+			application_json,
+			"x-api-key: " + api_key,
+			"x-sw-plugin-version: " + SilentWolf::version,
+			"x-sw-game-id: " + SilentWolf::cfg_str("game_id"),
+			"x-sw-godot-version: " + SilentWolf::godot_version);
 	Dictionary payload = helper::dict("game_id", game_id, "player_name", player_name, "player_data", player_data);
 	String query = JSON::print(payload);
 	RemovePlayerData->request("https://api.silentwolf.com/remove_player_data", headers, true, HTTPClient::METHOD_POST, query);

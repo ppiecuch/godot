@@ -94,7 +94,7 @@ void SW_WSClient::_on_data() {
 		}
 		String s;
 		if (len > 0) {
-			s.parse_utf8(reinterpret_cast<const char*>(packet), len);
+			s.parse_utf8(reinterpret_cast<const char *>(packet), len);
 		}
 		if (!s.empty()) {
 			data += s;
@@ -117,7 +117,7 @@ void SW_WSClient::send_to_server(const String &p_message_type, const Dictionary 
 	data["message_type"] = p_message_type;
 	sw_debug("Sending data to server: ", data);
 	const CharString msg = JSON::print(data).utf8();
-	peer->put_packet(reinterpret_cast<const uint8_t*>(msg.c_str()), msg.length());
+	peer->put_packet(reinterpret_cast<const uint8_t *>(msg.c_str()), msg.length());
 }
 
 void SW_WSClient::init_mp_session(const String &p_player_name) {

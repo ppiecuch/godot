@@ -33,11 +33,11 @@
 
 #include "common/gd_core.h"
 #include "common/http_request_basic.h"
+#include "core/io/json.h"
 #include "core/list.h"
+#include "core/os/file_access.h"
 #include "core/reference.h"
 #include "core/variant.h"
-#include "core/io/json.h"
-#include "core/os/file_access.h"
 #include "modules/websocket/websocket_client.h"
 
 #define _print_debug(...) DEBUG_PRINT(vconcat("[SilentWolf] ", __VA_ARGS__))

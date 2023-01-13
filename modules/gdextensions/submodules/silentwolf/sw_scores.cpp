@@ -106,10 +106,10 @@ SW_Scores &SW_Scores::get_scores_by_player(const String &player_name, int maximu
 
 void SW_Scores::add_to_local_scores(const Dictionary &game_result, const String &ld_name) {
 	Dictionary local_score = helper::dict(
-		"score_id", game_result["score_id"],
-		"game_id_version", vconcat(game_result["game_id"], ";", game_result["game_version"]),
-		"player_name", game_result["player_name"],
-		"score", game_result["score"]);
+			"score_id", game_result["score_id"],
+			"game_id_version", vconcat(game_result["game_id"], ";", game_result["game_version"]),
+			"player_name", game_result["player_name"],
+			"score", game_result["score"]);
 	local_scores.push_back(local_score);
 	// if ld_name == "main":
 	// 	TODO: even here, since the main leader board can be customized, we can't just blindly write to the local_scores variable and pull up the scores later
@@ -370,20 +370,19 @@ void SW_Scores::_on_WipeLeaderboard_request_completed(int result, int response_c
 
 void SW_Scores::send_get_request(Ref<HTTPRequestBasic> http_node, const String &request_url) {
 	Vector<String> headers = helper::vector(
-		"x-api-key: " + SilentWolf::cfg_str("api_key"),
-		"x-sw-plugin-version: " + SilentWolf::version);
+			"x-api-key: " + SilentWolf::cfg_str("api_key"),
+			"x-sw-plugin-version: " + SilentWolf::version);
 	sw_debug("Method: GET");
 	sw_debug("request_url: ", request_url);
 	sw_debug("headers: ", headers);
 	http_node->request(request_url, headers);
 }
 
-void SW_Scores::send_post_request(Ref<HTTPRequestBasic>http_node, const String &request_url, const Dictionary &payload) {
+void SW_Scores::send_post_request(Ref<HTTPRequestBasic> http_node, const String &request_url, const Dictionary &payload) {
 	Vector<String> headers = helper::vector(
-		application_json,
-		"x-api-key: " + SilentWolf::cfg_str("api_key"),
-		"x-sw-plugin-version: " + SilentWolf::version
-	);
+			application_json,
+			"x-api-key: " + SilentWolf::cfg_str("api_key"),
+			"x-sw-plugin-version: " + SilentWolf::version);
 	if (request_url.has("post_new_score")) {
 		sw_info("We're doing a post score");
 		String player_name = payload["player_name"];
