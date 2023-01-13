@@ -611,7 +611,7 @@ void SW_Auth::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("sw_resend_conf_code_failed"));
 	ADD_SIGNAL(MethodInfo("sw_session_check_complete"));
 	ADD_SIGNAL(MethodInfo("sw_request_password_reset_succeeded"));
-	ADD_SIGNAL(MethodInfo("sw_request_password_reset_failed"));
+	ADD_SIGNAL(MethodInfo("sw_request_password_reset_failed", "error"));
 	ADD_SIGNAL(MethodInfo("sw_reset_password_succeeded"));
 	ADD_SIGNAL(MethodInfo("sw_reset_password_failed"));
 	ADD_SIGNAL(MethodInfo("sw_get_player_details_succeeded"));

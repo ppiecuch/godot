@@ -121,8 +121,8 @@ void SilentWolf::configure_session_expiration_days(int expiration) {
 
 void SilentWolf::send_get_request(Ref<HTTPRequestBasic> http_node, const String &request_url) {
 	Vector<String> headers = helper::vector(
-			"x-api-key: " + (String)config["api_key"],
-			"x-sw-game-id: " + (String)config["game_id"],
+			"x-api-key: " + cfg_str("api_key"),
+			"x-sw-game-id: " + cfg_str("game_id"),
 			"x-sw-plugin-version: " + version,
 			"x-sw-godot-version: " + godot_version);
 	sw_debug("Method: GET");
