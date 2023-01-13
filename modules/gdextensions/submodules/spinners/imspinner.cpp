@@ -123,6 +123,8 @@ struct ImGuiWindow {
 			PathLineTo(p2 + ImVec2(0.5, 0.5));
 			PathStroke(col, 0, thickness);
 		}
+		void AddCircle(const ImVec2 &center, real_t radius, ImU32 col, int num_segments = 0, real_t thickness = 1) {
+		}
 		void AddCircleFilled(const ImVec2 &center, real_t radius, ImU32 col, int num_segments = 0) {
 		}
 		void AddRectFilled(const ImVec2 &p_min, const ImVec2 &p_max, ImU32 col, real_t rounding = 0.0) { // a: upper-left, b: lower-right (== upper-left + size)
@@ -180,7 +182,7 @@ typedef std::function<ImVec2(int)> point_f;
 #pragma GCC diagnostic ignored "-Wunused-variable"
 #endif
 
-#include "imspinner.h"
+#include "imspinner/imspinner.h"
 
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
