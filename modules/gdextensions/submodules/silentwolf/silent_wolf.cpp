@@ -205,6 +205,7 @@ bool SilentWolf::check_sw_ready() {
 }
 
 void SilentWolf::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("queue_send"), &SilentWolf::queue_send);
 }
 
 SilentWolf::SilentWolf() {
