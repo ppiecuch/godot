@@ -57,6 +57,7 @@ void SW_Multiplayer::send(const Dictionary &data) {
 }
 
 void SW_Multiplayer::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("send", "data"), &SW_Multiplayer::send);
 }
 
 SW_Multiplayer::SW_Multiplayer() {

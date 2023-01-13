@@ -73,6 +73,10 @@ Variant Dictionary::get_value_at_index(int p_index) const {
 	return Variant();
 }
 
+void Dictionary::set(const Variant &p_key, const Variant &p_value) {
+	_p->variant_map[p_key] = p_value;
+}
+
 Variant &Dictionary::operator[](const Variant &p_key) {
 	return _p->variant_map[p_key];
 }

@@ -36,10 +36,11 @@
 #include "core/list.h"
 #include "core/reference.h"
 #include "core/variant.h"
+#include "core/io/json.h"
 #include "core/os/file_access.h"
 #include "modules/websocket/websocket_client.h"
 
-#define _print_debug(...) DEBUG_PRINT(string_format(array("[SilentWolf] ", __VA_ARGS__)))
+#define _print_debug(...) DEBUG_PRINT(vconcat("[SilentWolf] ", __VA_ARGS__))
 #define _print_fmt_debug(fmt, ...) DEBUG_PRINT(String("[SilentWolf] " fmt).sprintf(array(__VA_ARGS__)))
 
 int sw_get_log_level();
@@ -48,10 +49,10 @@ int sw_get_log_level();
 #define SW_LOG_INFO 2
 #define SW_LOG_DEBUG 3
 void sw_print(int log_level, const String &text);
-#define sw_error(...) sw_print(SW_LOG_ERROR, string_format(array("[SilentWolf] ", __VA_ARGS__)))
-#define sw_info(...) sw_print(SW_LOG_INFO, string_format(array("[SilentWolf] ", __VA_ARGS__)))
-#define sw_warn(...) sw_print(SW_LOG_WARNING, string_format(array("[SilentWolf] ", __VA_ARGS__)))
-#define sw_debug(...) sw_print(SW_LOG_DEBUG, string_format(array("[SilentWolf] ", __VA_ARGS__)))
+#define sw_error(...) sw_print(SW_LOG_ERROR, vconcat("[SilentWolf] ", __VA_ARGS__))
+#define sw_info(...) sw_print(SW_LOG_INFO, vconcat("[SilentWolf] ", __VA_ARGS__))
+#define sw_warn(...) sw_print(SW_LOG_WARNING, vconcat("[SilentWolf] ", __VA_ARGS__))
+#define sw_debug(...) sw_print(SW_LOG_DEBUG, vconcat("[SilentWolf] ", __VA_ARGS__))
 
 int get_random_int(int max_value);
 PoolByteArray random_bytes(int n);
@@ -68,6 +69,28 @@ void sw_save_data(const String &path, const Dictionary &data, const String &debu
 void sw_remove_data(const String &path, const String &debug_message = "Removing data from file in local storage: ");
 bool sw_does_file_exist(const String &path);
 Dictionary sw_get_data(const String &path);
+
+const static String application_json = "Content-Type: application/json";
+
+static _FORCE_INLINE_ String get_string_from_utf8(const PoolByteArray &data) {
+	String s;
+	if (data.size() > 0) {
+		PoolByteArray::Read r = data.read();
+		if (!s.parse_utf8((const char *)r.ptr(), data.size())) {
+			ERR_PRINT("Failed to parse utf8 data");
+		}
+	}
+	return s;
+}
+
+static _FORCE_INLINE_ Dictionary parse_json_from_string(const String &json_data) {
+	Variant data;
+	String error_string;
+	int error_line = 0;
+	int err = JSON::parse(json_data, data, error_string, error_line);
+	ERR_FAIL_COND_V_MSG(err != OK, Dictionary(), "Can not parse JSON: " + error_string + " on line " + rtos(error_line));
+	return data;
+}
 
 class SW_WSClient : public Reference {
 	GDCLASS(SW_WSClient, Reference)
@@ -102,14 +125,14 @@ class SW_Scores : public Reference {
 	Dictionary ldboard_config; // leaderboard configurations by leaderboard name
 
 	// contains only the scores from one leaderboard at a time
-	Vector<Dictionary> scores;
-	Vector<Dictionary> player_scores;
-	Vector<Dictionary> local_scores;
+	Array scores;
+	Array player_scores;
+	Array local_scores;
 	// Vector<Dictionary> custom_local_scores;
 	String score_id;
 	int position;
-	Vector<Dictionary> scores_above;
-	Vector<Dictionary> scores_below;
+	Array scores_above;
+	Array scores_below;
 
 	// int request_timeout = 3;
 	// Timer *request_timer = nullptr;
@@ -136,15 +159,18 @@ class SW_Scores : public Reference {
 	void send_get_request(Ref<HTTPRequestBasic> http_node, const String &request_url);
 	void send_post_request(Ref<HTTPRequestBasic> http_node, const String &request_url, const Dictionary &payload);
 
+protected:
+	static void _bind_methods();
+
 public:
 	SW_Scores &get_score_position(const String &score, const String &ldboard_name = "main");
 	SW_Scores &get_scores_around(const String &score, int scores_to_fetch = 3, const String &ldboard_name = "main");
 	SW_Scores &get_high_scores(int maximum = 10, const String &ldboard_name = "main", int period_offset = 0);
 	SW_Scores &get_scores_by_player(const String &player_name, int maximum = 10, const String &ldboard_name = "main", int period_offset = 0);
 	SW_Scores &wipe_leaderboard(const String &ldboard_name = "main");
+	SW_Scores &persist_score(const String &player_name, const String &score, const String &ldboard_name = "main", const Dictionary &metadata = Dictionary());
+	SW_Scores &delete_score(const String &score_id);
 	void add_to_local_scores(const Dictionary &game_result, const String &ld_name = "main");
-	void persist_score(const String &player_name, const String &score, const String &ldboard_name = "main", const Dictionary &metadata = Dictionary());
-	void delete_score(const String &score_id);
 
 	SW_Scores();
 };
@@ -173,11 +199,9 @@ public:
 	Dictionary get_inventory();
 	SW_Player &get_player_data(const String &player_name);
 	SW_Player &post_player_data(const String &player_name, const Dictionary &player_data, bool overwrite = true);
-	void delete_player_weapons(const Dictionary &player_name);
-	void remove_player_money(const Dictionary &player_name);
-	void delete_player_items(const Dictionary &player_name, const Dictionary &item_name);
-	void delete_all_player_data(const Dictionary &player_name);
-	void delete_player_data(const Dictionary &player_name, const Dictionary &player_data);
+	void delete_player_items(const String &player_name, const String &item_name);
+	void delete_all_player_data(const String &player_name);
+	SW_Player &delete_player_data(const String &player_name, const Dictionary &player_data);
 
 	SW_Player();
 };
@@ -237,17 +261,17 @@ class SW_Auth : public Reference {
 	SW_Auth &verify_email(const String &player_name, const String &code);
 	SW_Auth &resend_conf_code(const String &player_name);
 	SW_Auth &login_player(const String &username, const String &password, bool remember_me);
-	void request_player_password_reset(const String &player_name);
-	void reset_player_password(const String &player_name, const String &conf_code, const String &new_password, bool confirm_password);
+	SW_Auth &request_player_password_reset(const String &player_name);
+	SW_Auth &reset_player_password(const String &player_name, const String &conf_code, const String &new_password, bool confirm_password);
 	SW_Auth &get_player_details(const String &player_name);
+	Dictionary load_session();
+	SW_Auth &auto_login_player();
+	SW_Auth &validate_player_session(const Dictionary &lookup, const Dictionary &validator);
 	void setup_login_timer();
 	void on_login_timeout_complete();
 	void save_session(const Dictionary &lookup, const Dictionary &validator);
 	void remove_stored_session();
-	Dictionary load_session();
-	void auto_login_player();
-	void validate_player_session(const Dictionary &lookup, const Dictionary &validator);
-	void complete_session_check(const String &return_value);
+	void complete_session_check(const Variant &return_value);
 	void setup_complete_session_check_wait_timer();
 
 	void _on_LoginPlayer_request_completed(int result, int response_code, const PoolStringArray &headers, const PoolByteArray &body);
@@ -261,7 +285,6 @@ class SW_Auth : public Reference {
 	void _on_GetPlayerDetails_request_completed(int result, int response_code, const PoolStringArray &headers, const PoolByteArray &body);
 
 protected:
-	void _notification(int p_what);
 	static void _bind_methods();
 
 public:
@@ -271,12 +294,10 @@ public:
 class SilentWolf : public Object {
 	GDCLASS(SilentWolf, Object)
 
-	SW_Auth *Auth;
-	SW_Scores *Scores;
-	SW_Player *Players;
-	SW_Multiplayer *Multiplayer;
-
-	String godot_version;
+	Ref<SW_Auth> Auth;
+	Ref<SW_Scores> Scores;
+	Ref<SW_Player> Players;
+	Ref<SW_Multiplayer> Multiplayer;
 
 	int session_duration_seconds;
 	int saved_session_expiration_days;
@@ -287,12 +308,17 @@ class SilentWolf : public Object {
 		Ref<HTTPRequestBasic> http;
 		String request_url;
 		Vector<String> headers;
-		Dictionary payload;
 		bool use_ssl;
 		HTTPClient::Method method;
+		Dictionary payload;
 	};
 
 	List<SendRequest> send_queue;
+
+	void config_set(const Dictionary &dict, const Variant &key, const Variant &value);
+
+	void _init();
+	void _ready();
 
 protected:
 	static void _bind_methods();
@@ -301,13 +327,28 @@ public:
 	static SilentWolf *get_instance();
 
 	static const Dictionary config;
+	static const Dictionary auth_config;
 	static const String version;
+	static const String godot_version;
+
+	static String cfg_str(const String &key);
+	static int cfg_int(const String &key);
+
+	void configure(const Dictionary &config);
+	void configure_api_key(const String &api_key);
+	void configure_game_id(const String &game_id);
+	void configure_game_version(const String &game_version);
+	void configure_log_level(int log_level);
+	void configure_auth_session_duration(int duration);
+	void configure_session_expiration_days(int expiration);
 
 	bool check_auth_ready();
 	bool check_scores_ready();
 	bool check_players_ready();
 	bool check_multiplayer_ready();
 	bool check_sw_ready();
+
+	void clear_player_data();
 
 	void send_get_request(Ref<HTTPRequestBasic> http_node, const String &request_url);
 	void send_post_request(Ref<HTTPRequestBasic> http_node, const String &request_url, const Dictionary &payload);

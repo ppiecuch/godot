@@ -35,15 +35,20 @@
 
 const String SilentWolf::version = "0.6.19";
 
-const Dictionary SilentWolf::config = help::dict(
+const Dictionary SilentWolf::config = helper::dict(
 		"api_key", "ySX34qsKaT7RH1j6795tQ8lPqKlRmQlx55yxkwGy",
 		"game_id", "sdktest",
 		"game_version", "0.6.19",
 #ifdef DEBUG_ENABLED
-		"log_level", 0,
+		"log_level", 0
 #else
-		"log_level", 2,
+		"log_level", 2
 #endif
+);
+
+const Dictionary SilentWolf::auth_config = helper::dict(
+		"session_duration_seconds", 0,
+		"saved_session_expiration_days", 30
 );
 
 SilentWolf *instance = nullptr;
@@ -57,63 +62,81 @@ SilentWolf *instance = nullptr;
 // See https://silentwolf.com for more details
 
 void SilentWolf::_init() {
-	sw_info("SW Init timestamp: ", OS::get_singleton()->get_time());
+	sw_info("SW Init timestamp: ", OS::get_singleton()->get_iso_date_time());
 }
 
 void SilentWolf::_ready() {
 	// The following line would keep SilentWolf working even if the game tree is paused.
 	//pause_mode = Node.PAUSE_MODE_PROCESS
-	sw_info("SW ready start timestamp: ", OS::get_singleton()->get_time());
-	add_child(SWAuth);
-	add_child(SWScores);
-	add_child(SWPlayers);
-	add_child(Multiplayer);
-	sw_info("SW ready end timestamp: ", OS::get_singleton()->get_time());
+	sw_info("SW ready start timestamp: ", OS::get_singleton()->get_iso_date_time());
+	sw_info("SW ready end timestamp: ", OS::get_singleton()->get_iso_date_time());
 }
 
-void SilentWolf::configure(json_config) {
-	config = json_config;
+void SilentWolf::config_set(const Dictionary &dict, const Variant &key, const Variant &value) {
+	const_cast<Dictionary*>(&dict)->set(key, value);
 }
 
-void SilentWolf::configure_api_key(api_key) {
-	config.apiKey = api_key;
+void SilentWolf::configure(const Dictionary &config) {
+	for (const auto &entry : config) {
+		config_set(config, entry.key, entry.value);
+	}
 }
 
-void SilentWolf::configure_game_id(game_id) {
-	config.game_id = game_id;
+void SilentWolf::configure_api_key(const String &api_key) {
+	config_set(config, "apiKey", api_key);
 }
 
-void SilentWolf::configure_game_version(game_version) {
-	config.game_version = game_version;
+void SilentWolf::configure_game_id(const String &game_id) {
+	config_set(config, "game_id", game_id);
+}
+
+void SilentWolf::configure_game_version(const String &game_version) {
+	config_set(config, "game_version", game_version);
+}
+
+String SilentWolf::cfg_str(const String &key) {
+	return config[key];
+}
+
+int SilentWolf::cfg_int(const String &key) {
+	return config[key];
 }
 
 // Log levels:
+// -----------
 // 0 - error (only log errors)
 // 1 - warning (log errors and warnings)
 // 2 - info (log above and the main actions taken by the SilentWolf plugin) - default setting
 // 3 - debug (detailed logs, including the above and much more, to be used when investigating a problem). This shouldn't be the default setting in production.
-void SilentWolf::configure_log_level(log_level) {
-	config.log_level = log_level;
+void SilentWolf::configure_log_level(int log_level) {
+	config_set(config, "log_level", log_level);
 }
 
 void SilentWolf::configure_auth_session_duration(int duration) {
-	session_duration = duration;
+	config_set(auth_config, "session_duration_seconds", duration);
 }
 
-void SilentWolf::send_get_request(Ref<SWHTTPRequest> http_node, const String &request_url) {
-	Vector<String> headers = helper::varray(
-			"x-api-key: " + config["api_key"],
-			"x-sw-game-id: " + config["game_id"],
+void SilentWolf::configure_session_expiration_days(int expiration) {
+	config_set(auth_config, "saved_session_expiration_days", expiration);
+}
+
+void SilentWolf::send_get_request(Ref<HTTPRequestBasic> http_node, const String &request_url) {
+	Vector<String> headers = helper::vector(
+			"x-api-key: " + (String)config["api_key"],
+			"x-sw-game-id: " + (String)config["game_id"],
 			"x-sw-plugin-version: " + version,
-			"x-sw-godot-version: " + godot_version, );
-	request(http_node, request_url, headers);
+			"x-sw-godot-version: " + godot_version);
+	sw_debug("Method: GET");
+	sw_debug("request_url: ", request_url);
+	sw_debug("headers: ", headers);
+	http_node->request(request_url, headers);
 }
 
-void SilentWolf::send_post_request(Ref<SWHTTPRequest> http_node, const String &request_url, const Dictionary &payload) {
-	Vector<String> headers = helper::varray(
-			"Content-Type: application/json",
-			"x-api-key: " + config["api_key"],
-			"x-sw-game-id: " + config["game_id"],
+void SilentWolf::send_post_request(Ref<HTTPRequestBasic> http_node, const String &request_url, const Dictionary &payload) {
+	Vector<String> headers = helper::vector(
+			String("Content-Type: application/json"),
+			"x-api-key: " + (String)config["api_key"],
+			"x-sw-game-id: " + (String)config["game_id"],
 			"x-sw-plugin-version: " + version,
 			"x-sw-godot-version: " + godot_version);
 	// TODO: this os specific to post_new_score - should be made generic
@@ -122,84 +145,77 @@ void SilentWolf::send_post_request(Ref<SWHTTPRequest> http_node, const String &r
 	if (request_url.has("post_new_score")) {
 		sw_info("We're doing a post score");
 		String player_name = payload["player_name"];
-		var player_score = payload["score"];
-		var timestamp = OS::get_singleton()->get_system_time_msecs();
+		String player_score = payload["score"];
+		uint64_t timestamp = OS::get_singleton()->get_system_time_msecs();
 		Array to_be_hashed = array(player_name, player_score, timestamp);
 		sw_debug("send_post_request to_be_hashed: ", to_be_hashed);
-		var hashed = sw_hash_values(to_be_hashed);
+		String hashed = sw_hash_values(to_be_hashed);
 		sw_debug("send_post_request hashed: ", hashed);
-		headers.append("x-sw-act-tmst: " + timestamp);
-		headers.append("x-sw-act-dig: " + hashed);
+		headers.push_back("x-sw-act-tmst: " + itos(timestamp));
+		headers.push_back("x-sw-act-dig: " + hashed);
 	}
-	request(http_node, request_url, headers, use_ssl, METHOD_POST, payload);
+	String query = JSON::print(payload);
+	sw_info("Method: POST");
+	sw_info("request_url: ", request_url);
+	sw_info("headers: ", headers);
+	sw_info("query: ", query);
+	http_node->request(request_url, headers, use_ssl, HTTPClient::METHOD_POST, query);
 }
 
-void SilentWolf::queue_request(Ref<SWHTTPRequest> http_node, const String &request_url, const Vector<String> &headers, bool use_ssl, HTTPClient::Method method, const Dictionary &payload) {
-	send_queue.append({ http_node, request_url, headers, use_ssl, method, payload });
+void SilentWolf::clear_player_data() {
+	ERR_FAIL_COND(Players.is_null());
+	SilentWolf::get_instance()->Players->clear_player_data();
+}
+
+void SilentWolf::queue_request(Ref<HTTPRequestBasic> http_node, const String &request_url, const Vector<String> &headers, bool use_ssl, HTTPClient::Method method, const Dictionary &payload) {
+	send_queue.push_back({ http_node, request_url, headers, use_ssl, method, payload });
 }
 
 void SilentWolf::queue_send() {
-	Element *e = send_queue.front();
+	List<SendRequest>::Element *e = send_queue.front();
 	while (e) {
 		SendRequest &p = e->get();
-		String query = JSON::print(payload);
-		sw_info("Method: " + (method == METHOD_POST ? "POST" : (method == METHOD_GET ? "GET" : "??")));
-		sw_info("request_url: ", request_url);
-		sw_info("headers: ", headers);
+		String query = JSON::print(p.payload);
+		sw_info("Method: ", (p.method == HTTPClient::METHOD_POST ? "POST" : (p.method == HTTPClient::METHOD_GET ? "GET" : itos(p.method))));
+		sw_info("request_url: ", p.request_url);
+		sw_info("headers: ", p.headers);
 		sw_info("query: ", query);
-		http_node->request(request_url, headers, use_ssl, method, query);
+		p.http->request(p.request_url, p.headers, p.use_ssl, p.method, query);
 		e = send_queue.erase_and_next(e);
 	}
 }
 
 bool SilentWolf::check_auth_ready() {
-	if (!Auth) {
-		yield(get_tree().create_timer(0.01), "timeout");
-	}
+	return (!Auth);
 }
 
 bool SilentWolf::check_scores_ready() {
-	if (!Scores) {
-		yield(get_tree().create_timer(0.01), "timeout");
-	}
+	return (!Scores);
 }
 
 bool SilentWolf::check_players_ready() {
-	if (!Players) {
-		yield(get_tree().create_timer(0.01), "timeout");
-	}
+	return (!Players);
 }
 
 bool SilentWolf::check_multiplayer_ready() {
-	if (!Multiplayer) {
-		yield(get_tree().create_timer(0.01), "timeout");
-	}
+	return (!Multiplayer);
 }
 
 bool SilentWolf::check_sw_ready() {
-	if (!Auth || !Scores || !Players || !Multiplayer) {
-		yield(get_tree().create_timer(0.01), "timeout");
-	}
-}
-
-void SilentWolf::_notification(int p_what) {
-	if (p_what == NOTIFICATION_READY) {
-		_ready();
-	}
+	return (!Auth || !Scores || !Players || !Multiplayer);
 }
 
 void SilentWolf::_bind_methods() {
 }
 
 SilentWolf::SilentWolf() {
-	Auth = memnew(SW_Auth);
-	Scores = memnew(SW_Scores);
-	Players = memnew(SW_Players);
-	Multiplayer = memnew(SW_Multiplayer);
+	Auth = newref(SW_Auth);
+	Scores = newref(SW_Scores);
+	Players = newref(SW_Player);
+	Multiplayer = newref(SW_Multiplayer);
 
-	godot_version = Engine::get_singleton()->get_version_info();
-
+	if (godot_version.empty()) {
+		const_cast<String*>(&godot_version)->operator=(vconcat(Engine::get_singleton()->get_version_info()));
+	}
 	use_ssl = true;
-	session_duration_seconds = 0;
-	saved_session_expiration_days = 30;
 }

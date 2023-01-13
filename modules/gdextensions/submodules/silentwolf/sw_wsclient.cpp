@@ -52,6 +52,12 @@ void SW_WSClient::_ready() {
 	emit_signal("ws_client_ready");
 }
 
+void SW_WSClient::_process(float p_delta) {
+	// Call this in _process or _physics_process. Data transfer, and signals
+	// emission will only happen when calling this function.
+	_client->poll();
+}
+
 void SW_WSClient::_closed(bool p_was_clean) {
 	// was_clean will tell you if the disconnection was correctly notified
 	// by the remote peer before closing the socket.
@@ -98,12 +104,6 @@ void SW_WSClient::_on_data() {
 	sw_debug("Got data from WS server: ", data);
 }
 
-void SW_WSClient::_process(float p_delta) {
-	// Call this in _process or _physics_process. Data transfer, and signals
-	// emission will only happen when calling this function.
-	_client->poll();
-}
-
 // send arbitrary data to backend
 void SW_WSClient::send_to_server(const String &p_message_type, const Dictionary &p_data) {
 	Ref<WebSocketPeer> peer = _client->get_peer(1);
@@ -127,6 +127,11 @@ void SW_WSClient::init_mp_session(const String &p_player_name) {
 }
 
 void SW_WSClient::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("_on_data"), &SW_WSClient::_on_data);
+	ClassDB::bind_method(D_METHOD("_closed", "clean"), &SW_WSClient::_closed);
+	ClassDB::bind_method(D_METHOD("_connected", "proto"), &SW_WSClient::_connected);
+	ClassDB::bind_method(D_METHOD("send_to_server", "message_type", "data"), &SW_WSClient::send_to_server);
+
 	ADD_SIGNAL(MethodInfo("ws_client_ready"));
 }
 

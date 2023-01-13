@@ -110,7 +110,8 @@
 #define nullref(pClass) Ref<pClass>()
 
 String string_format(const char *p_format, ...);
-String string_format(const Array &p_args);
+String array_concat(const Array &p_args);
+#define vconcat(...) array_concat(array(__VA_ARGS__))
 
 #ifdef DEBUG_ENABLED
 #define DEBUG_PRINT(pText) print_line(pText)
