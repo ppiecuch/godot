@@ -248,7 +248,7 @@ void SpinnerCanvas::draw_spinners(int p_spinner) {
 	typedef ImSpinner::FloatPtr FloatPtr;
 
 	switch (p_spinner) {
-		/* 0 */ case SPINNER: {
+		/* 0 */ case SPINNER : {
 			ImSpinner::Spinner<ImSpinner::e_st_rainbow>("Spinner", Radius{ 16 }, Thickness{ 2 }, Color{ ImColor::HSV(++hue * 0.005, 0.8, 0.8) }, Speed{ 8 * velocity });
 		} break;
 		case SPINNERANG: {
@@ -263,7 +263,7 @@ void SpinnerCanvas::draw_spinners(int p_spinner) {
 		case SPINNERANG270: {
 			ImSpinner::Spinner<ImSpinner::e_st_ang>("SpinnerAng270", Radius{ 16 }, Thickness{ 2 }, Color{ ImColor(255, 255, 255) }, BgColor{ ImColor(255, 255, 255, 128) }, Speed{ 6 * velocity }, Angle{ 270 / 360 * 2 * IM_PI });
 		} break;
-		/* 5 */ case SPINNERANG270NOBG: {
+		/* 5 */ case SPINNERANG270NOBG : {
 			ImSpinner::Spinner<ImSpinner::e_st_ang>("SpinnerAng270NoBg", Radius{ 16 }, Thickness{ 2 }, Color{ ImColor(255, 255, 255) }, BgColor{ ImColor(255, 255, 255, 0) }, Speed{ 6 * velocity }, Angle{ 270 / 360 * 2 * IM_PI });
 		} break;
 		case SPINNERVDOTS: {
@@ -278,7 +278,7 @@ void SpinnerCanvas::draw_spinners(int p_spinner) {
 		case SPINNERINGYANG: {
 			ImSpinner::SpinnerIngYang("SpinnerIngYang", 16, 5, false, 0, ImColor(255, 255, 255), ImColor(255, 0, 0), 4 * velocity, IM_PI * 0.8);
 		} break;
-		/* 10 */ case SPINNERBARCHARTSINE: {
+		/* 10 */ case SPINNERBARCHARTSINE : {
 			ImSpinner::SpinnerBarChartSine("SpinnerBarChartSine", 16, 4, ImColor(255, 255, 255), 6.8 * velocity, 4, 0);
 		} break;
 		case SPINNERBOUNCEDOTS: {
@@ -293,7 +293,7 @@ void SpinnerCanvas::draw_spinners(int p_spinner) {
 		case SPINNERMOVINGDOTS: {
 			ImSpinner::SpinnerMovingDots("SpinnerMovingDots", 6, ImColor(255, 255, 255), 30 * velocity, 3);
 		} break;
-		/* 15 */ case SPINNERROTATEDOTS: {
+		/* 15 */ case SPINNERROTATEDOTS : {
 			ImSpinner::SpinnerRotateDots("SpinnerRotateDots", 16, 6, ImColor(255, 255, 255), 4 * velocity, 2);
 		} break;
 		case SPINNERTWINANG: {
@@ -308,7 +308,7 @@ void SpinnerCanvas::draw_spinners(int p_spinner) {
 		case SPINNERBARCHARTSINE2: {
 			ImSpinner::SpinnerBarChartSine("SpinnerBarChartSine2", 16, 4, ImColor::HSV(hue * 0.005f, 0.8, 0.8), 4.8 * velocity, 4, 1);
 		} break;
-		/* 20 */ case SPINNERTWINANG180: {
+		/* 20 */ case SPINNERTWINANG180 : {
 			ImSpinner::SpinnerTwinAng180("SpinnerTwinAng180", 16, 12, 4, ImColor(255, 255, 255), ImColor(255, 0, 0), 4 * velocity);
 		} break;
 		case SPINNERTWINANG360: {
@@ -323,7 +323,7 @@ void SpinnerCanvas::draw_spinners(int p_spinner) {
 		case SPINNERINCSCALEDOTS: {
 			ImSpinner::SpinnerIncScaleDots("SpinnerIncScaleDots", 16, 4, ImColor(255, 255, 255), 6.6, 6);
 		} break;
-		/* 25 */ case SPINNERANG90BG: {
+		/* 25 */ case SPINNERANG90BG : {
 			ImSpinner::SpinnerAng("SpinnerAng90Bg", 16, 6, ImColor(255, 255, 255), ImColor(255, 255, 255, 128), 8 * velocity, IM_PI / 2);
 		} break;
 		case SPINNERANG90: {
@@ -338,7 +338,7 @@ void SpinnerCanvas::draw_spinners(int p_spinner) {
 		case SPINNERINGYANGR2: {
 			ImSpinner::SpinnerIngYang("SpinnerIngYangR2", 16, 5, true, 3, ImColor(255, 255, 255), ImColor(255, 0, 0), 4 * velocity, IM_PI * 0.8);
 		} break;
-		/* 30 */ case SPINNERBARCHARTRAINBOW: {
+		/* 30 */ case SPINNERBARCHARTRAINBOW : {
 			ImSpinner::SpinnerBarChartRainbow("SpinnerBarChartRainbow", 16, 4, ImColor::HSV(hue * 0.005, 0.8, 0.8), 6.8 * velocity, 4);
 		} break;
 		case SPINNERBARSROTATEFADE: {
@@ -353,7 +353,7 @@ void SpinnerCanvas::draw_spinners(int p_spinner) {
 		case SPINNERANGTWIN1: {
 			ImSpinner::SpinnerAngTwin("SpinnerAngTwin1", 16, 13, 2, ImColor(255, 0, 0), ImColor(255, 255, 255), 6 * velocity, IM_PI / 2);
 		} break;
-		/* 35 */ case SPINNERANGTWIN2: {
+		/* 35 */ case SPINNERANGTWIN2 : {
 			ImSpinner::SpinnerAngTwin("SpinnerAngTwin2", 13, 16, 2, ImColor(255, 0, 0), ImColor(255, 255, 255), 6 * velocity, IM_PI / 2);
 		} break;
 		case SPINNERANGTWIN3: {
@@ -368,7 +368,7 @@ void SpinnerCanvas::draw_spinners(int p_spinner) {
 		case SPINNERANGTWIN5: {
 			ImSpinner::SpinnerAngTwin("SpinnerAngTwin4", 14, 13, 3, ImColor(255, 0, 0), ImColor(0, 0, 0, 0), 5 * velocity, IM_PI / 1.5, 2);
 		} break;
-		/* 40 */ case SPINNERBLOCKS: {
+		/* 40 */ case SPINNERBLOCKS : {
 			ImSpinner::SpinnerBlocks("SpinnerBlocks", 16, 7, ImColor(255, 255, 255, 30), ImColor::HSV(hue * 0.005, 0.8, 0.8), 5 * velocity);
 		} break;
 		case SPINNERTWINBALL: {
@@ -383,7 +383,7 @@ void SpinnerCanvas::draw_spinners(int p_spinner) {
 		case SPINNERANGTRIPLE: {
 			ImSpinner::SpinnerAngTriple("SpinnerAngTriple", 16, 13, 10, 1.3, ImColor(255, 255, 255), ImColor(255, 0, 0), ImColor(255, 255, 255), 5 * velocity, 1.5 * IM_PI);
 		} break;
-		/* 45 */ case SPINNERINCFULLDOTS: {
+		/* 45 */ case SPINNERINCFULLDOTS : {
 			ImSpinner::SpinnerIncFullDots("SpinnerIncFullDots", 16, 4, ImColor(255, 255, 255), 5.6, 4);
 		} break;
 		case SPINNERGOOEYBALLS: {
@@ -398,7 +398,7 @@ void SpinnerCanvas::draw_spinners(int p_spinner) {
 		case SPINNERMOONLINE: {
 			ImSpinner::SpinnerMoonLine("SpinnerMoonLine", 16, 3, ImColor(200, 80, 0), ImColor(80, 80, 80), 5 * velocity);
 		} break;
-		/* 50 */ case SPINNERARCROTATION: {
+		/* 50 */ case SPINNERARCROTATION : {
 			ImSpinner::SpinnerArcRotation("SpinnerArcRotation", 13, 5, ImColor(255, 255, 255), 3 * velocity, 4);
 		} break;
 		case SPINNERFLUID: {
@@ -413,7 +413,7 @@ void SpinnerCanvas::draw_spinners(int p_spinner) {
 		case SPINNERTOPUP: {
 			ImSpinner::SpinnerTopup("SpinnerTopup", 16, 12, ImColor(255, 0, 0), ImColor(80, 80, 80), ImColor(255, 255, 255), 1 * velocity);
 		} break;
-		/* 55 */ case SPINNERFADEPULSAR: {
+		/* 55 */ case SPINNERFADEPULSAR : {
 			ImSpinner::SpinnerFadePulsar("SpinnerFadePulsar", 16, ImColor(255, 255, 255), 1.5 * velocity, 1);
 		} break;
 		case SPINNERFADEPULSAR2: {
@@ -428,7 +428,7 @@ void SpinnerCanvas::draw_spinners(int p_spinner) {
 		case SPINNERFILLEDARCFADE: {
 			ImSpinner::SpinnerFilledArcFade("SpinnerFilledArcFade", 16, ImColor(255, 255, 255), 4 * velocity, 4);
 		} break;
-		/* 60 */ case SPINNERFILLEDARCFADE6: {
+		/* 60 */ case SPINNERFILLEDARCFADE6 : {
 			ImSpinner::SpinnerFilledArcFade("SpinnerFilledArcFade6", 16, ImColor(255, 255, 255), 6 * velocity, 6);
 		} break;
 		case SPINNERFILLEDARCFADE8: {
@@ -443,7 +443,7 @@ void SpinnerCanvas::draw_spinners(int p_spinner) {
 		case SPINNERSURROUNDEDINDICATOR: {
 			ImSpinner::SpinnerSurroundedIndicator("SpinnerSurroundedIndicator", 16, 5, ImColor(0, 0, 0), ImColor(255, 255, 255), 7.8 * velocity);
 		} break;
-		/* 65 */ case SPINNERTRIANGLESSELETOR: {
+		/* 65 */ case SPINNERTRIANGLESSELETOR : {
 			ImSpinner::SpinnerTrianglesSelector("SpinnerTrianglesSeletor", 16, 8, ImColor(0, 0, 0), ImColor(255, 255, 255), 4.8 * velocity, 8);
 		} break;
 		case SPINNERFLOWINGFRADIENT: {
@@ -458,7 +458,7 @@ void SpinnerCanvas::draw_spinners(int p_spinner) {
 		case SPINNERROTATESEGMENTS3: {
 			ImSpinner::SpinnerRotateSegments("SpinnerRotateSegments3", 16, 2, ImColor(255, 255, 255), 2.1 * velocity, 4, 3);
 		} break;
-		/* 70 */ case SPINNERLEMNISCATE: {
+		/* 70 */ case SPINNERLEMNISCATE : {
 			ImSpinner::SpinnerLemniscate("SpinnerLemniscate", 20, 3, ImColor(255, 255, 255), 2.1 * velocity, 3);
 		} break;
 		case SPINNERROTATEGEAR: {
@@ -473,7 +473,7 @@ void SpinnerCanvas::draw_spinners(int p_spinner) {
 		case SPINNERRAINBOWBALLS: {
 			ImSpinner::SpinnerRainbowBalls("SpinnerRainbowBalls", 16, 4, ImColor(0, 0, 0, 0), 1.5 * velocity, 5);
 		} break;
-		/* 75 */ case SPINNERCAMERA: {
+		/* 75 */ case SPINNERCAMERA : {
 			ImSpinner::SpinnerCamera(
 					"SpinnerCamera", 16, 8, [](int i) { return ImColor::HSV(i * 0.25, 0.8, 0.8); }, 4.8 * velocity, 8);
 		} break;
