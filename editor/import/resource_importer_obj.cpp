@@ -280,17 +280,17 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 			vtx.z = v[3].to_float() * scale_mesh.z + offset_mesh.z;
 			vertices.push_back(vtx);
 			if (v.size() == 7) {
- 				while (colors.size() < vertices.size() - 1) {
- 					colors.push_back(Color(1.0, 1.0, 1.0));
- 				}
- 				Color c;
- 				c.r = v[4].to_float();
- 				c.g = v[5].to_float();
- 				c.b = v[6].to_float();
- 				colors.push_back(c);
- 			} else if (!colors.empty()) {
- 				colors.push_back(Color(1.0, 1.0, 1.0));
- 			}
+				while (colors.size() < vertices.size() - 1) {
+					colors.push_back(Color(1.0, 1.0, 1.0));
+				}
+				Color c;
+				c.r = v[4].to_float();
+				c.g = v[5].to_float();
+				c.b = v[6].to_float();
+				colors.push_back(c);
+			} else if (!colors.empty()) {
+				colors.push_back(Color(1.0, 1.0, 1.0));
+			}
 		} else if (l.begins_with("vt ")) {
 			//uv
 			Vector<String> v = l.split(" ", false);
@@ -377,8 +377,8 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 					Vector3 vertex = vertices[vtx];
 					if (!colors.empty()) {
 						surf_tool->add_color(colors[vtx]);
- 					}
- 					//if (weld_vertices)
+					}
+					//if (weld_vertices)
 					//	vertex.snap(Vector3(weld_tolerance, weld_tolerance, weld_tolerance));
 					surf_tool->add_vertex(vertex);
 				}

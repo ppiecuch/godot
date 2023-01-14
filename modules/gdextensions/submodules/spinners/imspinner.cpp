@@ -126,7 +126,7 @@ struct ImGuiWindow {
 			}
 			const int last = _Path.size() - 1;
 			if (last > 0) {
-				if (closed && !_Path[last].is_equal_approx(_Path[0]) ) {
+				if (closed && !_Path[last].is_equal_approx(_Path[0])) {
 					_Path.push_back(_Path[0]);
 				}
 				_Canvas->draw_polyline(_Path, ImColor(col), thickness);
