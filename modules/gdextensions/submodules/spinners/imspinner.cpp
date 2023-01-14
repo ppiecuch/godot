@@ -110,33 +110,49 @@ struct ImGuiWindow {
 		ImGuiStorage *StateStorage = nullptr;
 	} DC;
 	struct _DrawList : public Reference {
-		PoolVector2Array _Path;
+		CanvasItem *_Canvas;
+		Vector<Vector2> _Path;
 		int _CalcCircleAutoSegmentCount(real_t radius) {
 			return IM_DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(radius, IM_DRAWLIST_CIRCLE_SEGMENT_MAX_ERROR);
 		}
-		_FORCE_INLINE_ void PathClear() { _Path.clear(); }
-		void AddLine(const ImVec2 &p1, const ImVec2 &p2, ImU32 col, real_t thickness = 1.0) {
-			if ((col & IM_COL32_A_MASK) == 0) {
-				return;
-			}
-			PathLineTo(p1 + ImVec2(0.5, 0.5));
-			PathLineTo(p2 + ImVec2(0.5, 0.5));
-			PathStroke(col, 0, thickness);
-		}
-		void AddCircle(const ImVec2 &center, real_t radius, ImU32 col, int num_segments = 0, real_t thickness = 1) {
-		}
-		void AddCircleFilled(const ImVec2 &center, real_t radius, ImU32 col, int num_segments = 0) {
-		}
-		void AddRectFilled(const ImVec2 &p_min, const ImVec2 &p_max, ImU32 col, real_t rounding = 0.0) { // a: upper-left, b: lower-right (== upper-left + size)
-		}
-		void AddConvexPolyFilled(const ImVec2 *points, int num_points, ImU32 col) {
-		}
-		_FORCE_INLINE_ void PathLineTo(const ImVec2 &pos) { _Path.push_back(pos); }
+		// Path drawing
 		void PathArcTo(const ImVec2 &center, real_t radius, real_t a_min, real_t a_max, int num_segments = 0) {
 		}
 		void PathFillConvex(ImU32 col) {
 		}
 		void PathStroke(ImU32 col, bool closed = false, real_t thickness = 1.0) {
+			if ((col & IM_COL32_A_MASK) == 0) {
+				return;
+			}
+			const int last = _Path.size() - 1;
+			if (last > 0) {
+				if (closed && !_Path[last].is_equal_approx(_Path[0]) ) {
+					_Path.push_back(_Path[0]);
+				}
+				_Canvas->draw_polyline(_Path, ImColor(col), thickness);
+			}
+		}
+		_FORCE_INLINE_ void PathLineTo(const ImVec2 &pos) { _Path.push_back(pos); }
+		_FORCE_INLINE_ void PathClear() { _Path.clear(); }
+
+		// Shape drawing
+		void AddLine(const ImVec2 &p1, const ImVec2 &p2, ImU32 col, real_t thickness = 1.0) {
+			if ((col & IM_COL32_A_MASK) == 0) {
+				return;
+			}
+			_Canvas->draw_line(p1 + ImVec2(0.5, 0.5), p2 + ImVec2(0.5, 0.5), ImColor(col), thickness);
+		}
+		void AddCircle(const ImVec2 &center, real_t radius, ImU32 col, int num_segments = 0, real_t thickness = 1) {
+			_Canvas->draw_circle(center, radius, ImColor(col));
+		}
+		void AddCircleFilled(const ImVec2 &center, real_t radius, ImU32 col, int num_segments = 0) {
+		}
+		void AddRectFilled(const ImVec2 &p_min, const ImVec2 &p_max, ImU32 col, real_t rounding = 0.0) { // a: upper-left, b: lower-right (== upper-left + size)
+			if ((col & IM_COL32_A_MASK) == 0) {
+				return;
+			}
+		}
+		void AddConvexPolyFilled(const ImVec2 *points, int num_points, ImU32 col) {
 		}
 	};
 	Ref<_DrawList> DrawList = memnew(_DrawList);

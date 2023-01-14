@@ -218,6 +218,10 @@ static Ref<ResourceLoaderJSONVector> resource_loader_jsonvector;
 #include "meshslicer/slicer.h"
 #endif
 
+#ifdef GDEXT_SILVERWOLF_ENABLED
+#include "silverwolf/silver_wolf.h"
+#endif
+
 #ifdef GDEXT_NAKAMA1_ENABLED
 #include "nakama1/gd_nakama1.h"
 #endif
@@ -506,6 +510,11 @@ void register_gdextensions_types() {
 	Ref<ResourceImporterFlexbuffers> flexbuffers_data;
 	flexbuffers_data.instance();
 	ResourceFormatImporter::get_singleton()->add_importer(flexbuffers_data);
+#endif
+
+#ifdef GDEXT_SILVERWOLF_ENABLED
+	Engine::get_singleton()->add_singleton(Engine::Singleton("SilverWolf", memnew(SilverWolf)));
+	ClassDB::register_virtual_class<SilverWolfInstance>();
 #endif
 
 #ifdef GDEXT_NAKAMA1_ENABLED

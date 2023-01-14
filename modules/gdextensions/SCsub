@@ -41,7 +41,7 @@ def add_external_libs(env, libs):
         env.Append(LIBS=libs)
 
 
-def finalize_for_incbin(filepaths, prefix = "", style = "snake"):
+def finalize_for_incbin(filepaths, prefix="", style="snake"):
     styled = {"camel": ["Data", "End", "Size"], "snake": ["_data", "_end", "_size"]}
     (kData, kEnd, kSize) = (0, 1, 2)
     if style != "snake" and style != "camel":
@@ -87,7 +87,7 @@ def finalize_for_incbin(filepaths, prefix = "", style = "snake"):
 
             processed += [incbin_file]
 
-            with open(incbin_file, 'rb') as f:
+            with open(incbin_file, "rb") as f:
                 binary = f.read()
             n_bytes = len(binary)
             # python2 compatible
