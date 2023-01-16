@@ -30,7 +30,17 @@
 
 #include "silent_wolf.h"
 
-SW_Auth &SW_Auth::set_player_logged_in(const String &player_name) {
+void SW_Auth::sw_notification(int what) {
+	if (what == SW_NOTIFICATION_PROCESS) {
+		for (auto &http : helper::vector(RegisterPlayer, VerifyEmail, ResendConfCode, LoginPlayer, RequestPasswordReset, ResetPassword, GetPlayerDetails, ValidateSession)) {
+			if (http) {
+				http->poll();
+			}
+		}
+	}
+}
+
+void SW_Auth::set_player_logged_in(const String &player_name) {
 	logged_in_player = player_name;
 	sw_info("SilentWolf - player logged in as ", player_name);
 	if (SilentWolf::auth_config.has("session_duration_seconds")) {
@@ -42,7 +52,6 @@ SW_Auth &SW_Auth::set_player_logged_in(const String &player_name) {
 	if (login_timeout != 0) {
 		setup_login_timer();
 	}
-	return *this;
 }
 
 String SW_Auth::get_anon_user_id() {
@@ -54,17 +63,16 @@ String SW_Auth::get_anon_user_id() {
 	return anon_user_id;
 }
 
-SW_Auth &SW_Auth::logout_player() {
+void SW_Auth::logout_player() {
 	logged_in_player = "";
 	SilentWolf::get_instance()->clear_player_data(); // remove any player data if present
 	remove_stored_session(); // remove stored session if any
 	emit_signal("sw_logout_succeeded");
-	return *this;
 }
 
-SW_Auth &SW_Auth::register_player_anon(const String &player_name) {
+void SW_Auth::register_player_anon(const String &player_name) {
 	String user_local_id = get_anon_user_id();
-	RegisterPlayer = newref(HTTPRequestBasic);
+	RegisterPlayer = newref(BasicHTTPRequest);
 	RegisterPlayer->connect("request_completed", this, "_on_RegisterPlayer_request_completed");
 	sw_info("Calling SilentWolf to register an anonymous player");
 	String game_id = SilentWolf::config["game_id"];
@@ -80,12 +88,11 @@ SW_Auth &SW_Auth::register_player_anon(const String &player_name) {
 			"x-sw-godot-version: " + SilentWolf::godot_version);
 	//sw_debug("register_player headers: ", headers);
 	RegisterPlayer->request("https://api.silentwolf.com/create_new_player", headers, true, HTTPClient::METHOD_POST, query);
-	return *this;
 }
 
-SW_Auth &SW_Auth::register_player(const String &player_name, const String &email, const String &password, bool confirm_password) {
+void SW_Auth::register_player(const String &player_name, const String &email, const String &password, bool confirm_password) {
 	tmp_username = player_name;
-	RegisterPlayer = newref(HTTPRequestBasic);
+	RegisterPlayer = newref(BasicHTTPRequest);
 	RegisterPlayer->connect("request_completed", this, "_on_RegisterPlayer_request_completed");
 	sw_info("Calling SilentWolf to register a player");
 	String game_id = SilentWolf::config["game_id"];
@@ -101,12 +108,11 @@ SW_Auth &SW_Auth::register_player(const String &player_name, const String &email
 			"x-sw-godot-version: " + SilentWolf::godot_version);
 	//sw_debug("register_player headers: ", headers);
 	RegisterPlayer->request("https://api.silentwolf.com/create_new_player", headers, true, HTTPClient::METHOD_POST, query);
-	return *this;
 }
 
-SW_Auth &SW_Auth::register_player_user_password(const String &player_name, const String &password, bool confirm_password) {
+void SW_Auth::register_player_user_password(const String &player_name, const String &password, bool confirm_password) {
 	tmp_username = player_name;
-	RegisterPlayer = newref(HTTPRequestBasic);
+	RegisterPlayer = newref(BasicHTTPRequest);
 	RegisterPlayer->connect("request_completed", this, "_on_RegisterPlayerUserPassword_request_completed");
 	sw_info("Calling SilentWolf to register a player");
 	String game_id = SilentWolf::config["game_id"];
@@ -122,12 +128,11 @@ SW_Auth &SW_Auth::register_player_user_password(const String &player_name, const
 			"x-sw-godot-version: " + SilentWolf::godot_version);
 	//sw_debug("register_player headers: ", headers);
 	RegisterPlayer->request("https://api.silentwolf.com/create_new_player", headers, true, HTTPClient::METHOD_POST, query);
-	return *this;
 }
 
-SW_Auth &SW_Auth::verify_email(const String &player_name, const String &code) {
+void SW_Auth::verify_email(const String &player_name, const String &code) {
 	tmp_username = player_name;
-	VerifyEmail = newref(HTTPRequestBasic);
+	VerifyEmail = newref(BasicHTTPRequest);
 	VerifyEmail->connect("request_completed", this, "_on_VerifyEmail_request_completed");
 	sw_info("Calling SilentWolf to verify email address for: ", player_name);
 	String game_id = SilentWolf::config["game_id"];
@@ -143,11 +148,10 @@ SW_Auth &SW_Auth::verify_email(const String &player_name, const String &code) {
 			"x-sw-godot-version: " + SilentWolf::godot_version);
 	//sw_debug("register_player headers: ", headers);
 	VerifyEmail->request("https://api.silentwolf.com/confirm_verif_code", headers, true, HTTPClient::METHOD_POST, query);
-	return *this;
 }
 
-SW_Auth &SW_Auth::resend_conf_code(const String &player_name) {
-	ResendConfCode = newref(HTTPRequestBasic);
+void SW_Auth::resend_conf_code(const String &player_name) {
+	ResendConfCode = newref(BasicHTTPRequest);
 	ResendConfCode->connect("request_completed", this, "_on_ResendConfCode_request_completed");
 	sw_info("Calling SilentWolf to resend confirmation code for: ", player_name);
 	String game_id = SilentWolf::config["game_id"];
@@ -163,12 +167,11 @@ SW_Auth &SW_Auth::resend_conf_code(const String &player_name) {
 			"x-sw-godot-version: " + SilentWolf::godot_version);
 	//sw_debug("register_player headers: ", headers);
 	ResendConfCode->request("https://api.silentwolf.com/resend_conf_code", headers, true, HTTPClient::METHOD_POST, query);
-	return *this;
 }
 
-SW_Auth &SW_Auth::login_player(const String &username, const String &password, bool remember_me) {
+void SW_Auth::login_player(const String &username, const String &password, bool remember_me) {
 	tmp_username = username;
-	LoginPlayer = newref(HTTPRequestBasic);
+	LoginPlayer = newref(BasicHTTPRequest);
 	sw_info("OS name: ", OS::get_singleton()->get_name());
 	LoginPlayer->connect("request_completed", this, "_on_LoginPlayer_request_completed");
 	sw_info("Calling SilentWolf to log in a player");
@@ -188,11 +191,10 @@ SW_Auth &SW_Auth::login_player(const String &username, const String &password, b
 			"x-sw-godot-version: " + SilentWolf::godot_version);
 	//sw_info("login_player headers: ", headers);
 	LoginPlayer->request("https://api.silentwolf.com/login_player", headers, true, HTTPClient::METHOD_POST, query);
-	return *this;
 }
 
-SW_Auth &SW_Auth::request_player_password_reset(const String &player_name) {
-	RequestPasswordReset = newref(HTTPRequestBasic);
+void SW_Auth::request_player_password_reset(const String &player_name) {
+	RequestPasswordReset = newref(BasicHTTPRequest);
 	sw_info("OS name: ", OS::get_singleton()->get_name());
 	RequestPasswordReset->connect("request_completed", this, "_on_RequestPasswordReset_request_completed");
 	sw_info("Calling SilentWolf to request a password reset for: ", player_name);
@@ -208,11 +210,10 @@ SW_Auth &SW_Auth::request_player_password_reset(const String &player_name) {
 			"x-sw-game-id: " + game_id,
 			"x-sw-godot-version: " + SilentWolf::godot_version);
 	RequestPasswordReset->request("https://api.silentwolf.com/request_player_password_reset", headers, true, HTTPClient::METHOD_POST, query);
-	return *this;
 }
 
-SW_Auth &SW_Auth::reset_player_password(const String &player_name, const String &conf_code, const String &new_password, bool confirm_password) {
-	ResetPassword = newref(HTTPRequestBasic);
+void SW_Auth::reset_player_password(const String &player_name, const String &conf_code, const String &new_password, bool confirm_password) {
+	ResetPassword = newref(BasicHTTPRequest);
 	ResetPassword->connect("request_completed", this, "_on_ResetPassword_request_completed");
 	sw_info("Calling SilentWolf to reset password for: ", player_name);
 	String game_id = SilentWolf::config["game_id"];
@@ -227,11 +228,10 @@ SW_Auth &SW_Auth::reset_player_password(const String &player_name, const String 
 			"x-sw-game-id: " + game_id,
 			"x-sw-godot-version: " + SilentWolf::godot_version);
 	ResetPassword->request("https://api.silentwolf.com/reset_player_password", headers, true, HTTPClient::METHOD_POST, query);
-	return *this;
 }
 
-SW_Auth &SW_Auth::get_player_details(const String &player_name) {
-	GetPlayerDetails = newref(HTTPRequestBasic);
+void SW_Auth::get_player_details(const String &player_name) {
+	GetPlayerDetails = newref(BasicHTTPRequest);
 	RegisterPlayer->connect("request_completed", this, "_on_GetPlayerDetails_request_completed");
 	sw_info("Calling SilentWolf to get player details");
 	String game_id = SilentWolf::config["game_id"];
@@ -247,7 +247,6 @@ SW_Auth &SW_Auth::get_player_details(const String &player_name) {
 			"x-sw-godot-version: " + SilentWolf::godot_version);
 	//sw_info("register_player headers: ", headers);
 	RegisterPlayer->request("https://api.silentwolf.com/get_player_details", headers, true, HTTPClient::METHOD_POST, query);
-	return *this;
 }
 
 void SW_Auth::setup_login_timer() {
@@ -286,7 +285,7 @@ Dictionary SW_Auth::load_session() {
 	return sw_session_data;
 }
 
-SW_Auth &SW_Auth::auto_login_player() {
+void SW_Auth::auto_login_player() {
 	Dictionary sw_session_data = load_session();
 	if (!sw_session_data.empty()) {
 		sw_debug("Found saved SilentWolf session data, attempting autologin...");
@@ -300,11 +299,10 @@ SW_Auth &SW_Auth::auto_login_player() {
 		setup_complete_session_check_wait_timer();
 		complete_session_check_wait_timer->start();
 	}
-	return *this;
 }
 
-SW_Auth &SW_Auth::validate_player_session(const Dictionary &lookup, const Dictionary &validator) {
-	ValidateSession = newref(HTTPRequestBasic);
+void SW_Auth::validate_player_session(const Dictionary &lookup, const Dictionary &validator) {
+	ValidateSession = newref(BasicHTTPRequest);
 	ValidateSession->connect("request_completed", this, "_on_ValidateSession_request_completed");
 	sw_info("Calling SilentWolf to validate an existing player session");
 	String game_id = SilentWolf::config["game_id"];
@@ -314,7 +312,6 @@ SW_Auth &SW_Auth::validate_player_session(const Dictionary &lookup, const Dictio
 	String query = JSON::print(payload);
 	Vector<String> headers = helper::vector(application_json, "x-api-key: " + api_key, "x-sw-plugin-version: " + SilentWolf::version);
 	ValidateSession->request("https://api.silentwolf.com/validate_remember_me", headers, true, HTTPClient::METHOD_POST, query);
-	return *this;
 }
 
 // Signal can't be emitted directly from auto_login_player() function
@@ -599,8 +596,9 @@ void SW_Auth::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_on_ValidateSession_request_completed", "result", "response_code", "headers", "body"), &SW_Auth::_on_ValidateSession_request_completed);
 	ClassDB::bind_method(D_METHOD("_on_GetPlayerDetails_request_completed", "result", "response_code", "headers", "body"), &SW_Auth::_on_GetPlayerDetails_request_completed);
 
+	ADD_SIGNAL(MethodInfo("sw_data_requested"));
 	ADD_SIGNAL(MethodInfo("sw_login_succeeded"));
-	ADD_SIGNAL(MethodInfo("sw_login_failed"));
+	ADD_SIGNAL(MethodInfo("sw_login_failed", PropertyInfo(Variant::STRING, "error")));
 	ADD_SIGNAL(MethodInfo("sw_logout_succeeded"));
 	ADD_SIGNAL(MethodInfo("sw_registration_succeeded"));
 	ADD_SIGNAL(MethodInfo("sw_registration_user_pwd_succeeded"));

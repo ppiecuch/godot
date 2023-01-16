@@ -28,16 +28,16 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "http_request_basic.h"
+#include "basic_http_request.h"
 
-void HTTPRequestBasic::_redirect_request(const String &p_new_url) {
+void BasicHTTPRequest::_redirect_request(const String &p_new_url) {
 }
 
-Error HTTPRequestBasic::_request() {
+Error BasicHTTPRequest::_request() {
 	return client->connect_to_host(url, port, use_ssl, validate_ssl);
 }
 
-Error HTTPRequestBasic::_parse_url(const String &p_url) {
+Error BasicHTTPRequest::_parse_url(const String &p_url) {
 	use_ssl = false;
 	request_string = "";
 	port = 80;
@@ -65,7 +65,15 @@ Error HTTPRequestBasic::_parse_url(const String &p_url) {
 	return OK;
 }
 
-Error HTTPRequestBasic::request(const String &p_url, const Vector<String> &p_custom_headers, bool p_ssl_validate_domain, HTTPClient::Method p_method, const String &p_request_data) {
+bool BasicHTTPRequest::poll() {
+	if (requesting) {
+		return _update_connection();
+	} else {
+		return false;
+	}
+}
+
+Error BasicHTTPRequest::request(const String &p_url, const Vector<String> &p_custom_headers, bool p_ssl_validate_domain, HTTPClient::Method p_method, const String &p_request_data) {
 	// Copy the string into a raw buffer
 	PoolVector<uint8_t> raw_data;
 
@@ -77,8 +85,8 @@ Error HTTPRequestBasic::request(const String &p_url, const Vector<String> &p_cus
 	return request_raw(p_url, p_custom_headers, p_ssl_validate_domain, p_method, raw_data);
 }
 
-Error HTTPRequestBasic::request_raw(const String &p_url, const Vector<String> &p_custom_headers, bool p_ssl_validate_domain, HTTPClient::Method p_method, const PoolVector<uint8_t> &p_request_data_raw) {
-	ERR_FAIL_COND_V_MSG(requesting, ERR_BUSY, "HTTPRequestBasic is processing a request. Wait for completion or cancel it before attempting a new one.");
+Error BasicHTTPRequest::request_raw(const String &p_url, const Vector<String> &p_custom_headers, bool p_ssl_validate_domain, HTTPClient::Method p_method, const PoolVector<uint8_t> &p_request_data_raw) {
+	ERR_FAIL_COND_V_MSG(requesting, ERR_BUSY, "BasicHTTPRequest is processing a request. Wait for completion or cancel it before attempting a new one.");
 
 	if (timeout > 0.0) {
 		timer->stop();
@@ -110,18 +118,7 @@ Error HTTPRequestBasic::request_raw(const String &p_url, const Vector<String> &p
 	return OK;
 }
 
-bool HTTPRequestBasic::_process() {
-	Error err = _request();
-
-	if (err != OK) {
-		call_deferred("_request_done", RESULT_CANT_CONNECT, 0, PoolStringArray(), PoolByteArray());
-	} else {
-		return _update_connection();
-	}
-	return false;
-}
-
-void HTTPRequestBasic::cancel_request() {
+void BasicHTTPRequest::cancel_request() {
 	timer->stop();
 
 	if (!requesting) {
@@ -140,7 +137,7 @@ void HTTPRequestBasic::cancel_request() {
 	requesting = false;
 }
 
-bool HTTPRequestBasic::_handle_response(bool *ret_value) {
+bool BasicHTTPRequest::_handle_response(bool *ret_value) {
 	if (!client->has_response()) {
 		call_deferred("_request_done", RESULT_NO_RESPONSE, 0, PoolStringArray(), PoolByteArray());
 		*ret_value = true;
@@ -203,7 +200,7 @@ bool HTTPRequestBasic::_handle_response(bool *ret_value) {
 	return false;
 }
 
-bool HTTPRequestBasic::_update_connection() {
+bool BasicHTTPRequest::_update_connection() {
 	switch (client->get_status()) {
 		case HTTPClient::STATUS_DISCONNECTED: {
 			call_deferred("_request_done", RESULT_CANT_CONNECT, 0, PoolStringArray(), PoolByteArray());
@@ -355,69 +352,69 @@ bool HTTPRequestBasic::_update_connection() {
 	ERR_FAIL_V(false);
 }
 
-void HTTPRequestBasic::_request_done(int p_status, int p_code, const PoolStringArray &p_headers, const PoolByteArray &p_data) {
+void BasicHTTPRequest::_request_done(int p_status, int p_code, const PoolStringArray &p_headers, const PoolByteArray &p_data) {
 	cancel_request();
 	emit_signal("request_completed", p_status, p_code, p_headers, p_data);
 }
 
-void HTTPRequestBasic::set_body_size_limit(int p_bytes) {
+void BasicHTTPRequest::set_body_size_limit(int p_bytes) {
 	ERR_FAIL_COND(get_http_client_status() != HTTPClient::STATUS_DISCONNECTED);
 
 	body_size_limit = p_bytes;
 }
 
-int HTTPRequestBasic::get_body_size_limit() const {
+int BasicHTTPRequest::get_body_size_limit() const {
 	return body_size_limit;
 }
 
-void HTTPRequestBasic::set_download_file(const String &p_file) {
+void BasicHTTPRequest::set_download_file(const String &p_file) {
 	ERR_FAIL_COND(get_http_client_status() != HTTPClient::STATUS_DISCONNECTED);
 
 	download_to_file = p_file;
 }
 
-String HTTPRequestBasic::get_download_file() const {
+String BasicHTTPRequest::get_download_file() const {
 	return download_to_file;
 }
 
-void HTTPRequestBasic::set_download_chunk_size(int p_chunk_size) {
+void BasicHTTPRequest::set_download_chunk_size(int p_chunk_size) {
 	ERR_FAIL_COND(get_http_client_status() != HTTPClient::STATUS_DISCONNECTED);
 
 	client->set_read_chunk_size(p_chunk_size);
 }
 
-int HTTPRequestBasic::get_download_chunk_size() const {
+int BasicHTTPRequest::get_download_chunk_size() const {
 	return client->get_read_chunk_size();
 }
 
-HTTPClient::Status HTTPRequestBasic::get_http_client_status() const {
+HTTPClient::Status BasicHTTPRequest::get_http_client_status() const {
 	return client->get_status();
 }
 
-void HTTPRequestBasic::set_max_redirects(int p_max) {
+void BasicHTTPRequest::set_max_redirects(int p_max) {
 	max_redirects = p_max;
 }
 
-int HTTPRequestBasic::get_max_redirects() const {
+int BasicHTTPRequest::get_max_redirects() const {
 	return max_redirects;
 }
 
-int HTTPRequestBasic::get_downloaded_bytes() const {
+int BasicHTTPRequest::get_downloaded_bytes() const {
 	return downloaded.get();
 }
-int HTTPRequestBasic::get_body_size() const {
+int BasicHTTPRequest::get_body_size() const {
 	return body_len;
 }
 
-void HTTPRequestBasic::set_http_proxy(const String &p_host, int p_port) {
+void BasicHTTPRequest::set_http_proxy(const String &p_host, int p_port) {
 	client->set_http_proxy(p_host, p_port);
 }
 
-void HTTPRequestBasic::set_https_proxy(const String &p_host, int p_port) {
+void BasicHTTPRequest::set_https_proxy(const String &p_host, int p_port) {
 	client->set_https_proxy(p_host, p_port);
 }
 
-void HTTPRequestBasic::set_timeout(double p_timeout) {
+void BasicHTTPRequest::set_timeout(double p_timeout) {
 	if (Math::is_zero_approx(p_timeout)) {
 		timeout = 0.0;
 	} else {
@@ -426,47 +423,49 @@ void HTTPRequestBasic::set_timeout(double p_timeout) {
 	}
 }
 
-double HTTPRequestBasic::get_timeout() {
+double BasicHTTPRequest::get_timeout() {
 	return timeout;
 }
 
-void HTTPRequestBasic::_timeout() {
+void BasicHTTPRequest::_timeout() {
 	cancel_request();
 	call_deferred("_request_done", RESULT_TIMEOUT, 0, PoolStringArray(), PoolByteArray());
 }
 
-void HTTPRequestBasic::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("request_raw", "url", "custom_headers", "ssl_validate_domain", "method", "request_data_raw"), &HTTPRequestBasic::request_raw, DEFVAL(PoolStringArray()), DEFVAL(true), DEFVAL(HTTPClient::METHOD_GET), DEFVAL(PoolVector<uint8_t>()));
-	ClassDB::bind_method(D_METHOD("request", "url", "custom_headers", "ssl_validate_domain", "method", "request_data"), &HTTPRequestBasic::request, DEFVAL(PoolStringArray()), DEFVAL(true), DEFVAL(HTTPClient::METHOD_GET), DEFVAL(String()));
-	ClassDB::bind_method(D_METHOD("cancel_request"), &HTTPRequestBasic::cancel_request);
+void BasicHTTPRequest::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("request_raw", "url", "custom_headers", "ssl_validate_domain", "method", "request_data_raw"), &BasicHTTPRequest::request_raw, DEFVAL(PoolStringArray()), DEFVAL(true), DEFVAL(HTTPClient::METHOD_GET), DEFVAL(PoolVector<uint8_t>()));
+	ClassDB::bind_method(D_METHOD("request", "url", "custom_headers", "ssl_validate_domain", "method", "request_data"), &BasicHTTPRequest::request, DEFVAL(PoolStringArray()), DEFVAL(true), DEFVAL(HTTPClient::METHOD_GET), DEFVAL(String()));
+	ClassDB::bind_method(D_METHOD("cancel_request"), &BasicHTTPRequest::cancel_request);
+	ClassDB::bind_method(D_METHOD("is_active_request"), &BasicHTTPRequest::is_active_request);
 
-	ClassDB::bind_method(D_METHOD("get_http_client_status"), &HTTPRequestBasic::get_http_client_status);
+	ClassDB::bind_method(D_METHOD("get_http_client_status"), &BasicHTTPRequest::get_http_client_status);
 
-	ClassDB::bind_method(D_METHOD("set_body_size_limit", "bytes"), &HTTPRequestBasic::set_body_size_limit);
-	ClassDB::bind_method(D_METHOD("get_body_size_limit"), &HTTPRequestBasic::get_body_size_limit);
+	ClassDB::bind_method(D_METHOD("set_body_size_limit", "bytes"), &BasicHTTPRequest::set_body_size_limit);
+	ClassDB::bind_method(D_METHOD("get_body_size_limit"), &BasicHTTPRequest::get_body_size_limit);
 
-	ClassDB::bind_method(D_METHOD("set_max_redirects", "amount"), &HTTPRequestBasic::set_max_redirects);
-	ClassDB::bind_method(D_METHOD("get_max_redirects"), &HTTPRequestBasic::get_max_redirects);
+	ClassDB::bind_method(D_METHOD("set_max_redirects", "amount"), &BasicHTTPRequest::set_max_redirects);
+	ClassDB::bind_method(D_METHOD("get_max_redirects"), &BasicHTTPRequest::get_max_redirects);
 
-	ClassDB::bind_method(D_METHOD("set_download_file", "path"), &HTTPRequestBasic::set_download_file);
-	ClassDB::bind_method(D_METHOD("get_download_file"), &HTTPRequestBasic::get_download_file);
+	ClassDB::bind_method(D_METHOD("set_download_file", "path"), &BasicHTTPRequest::set_download_file);
+	ClassDB::bind_method(D_METHOD("get_download_file"), &BasicHTTPRequest::get_download_file);
 
-	ClassDB::bind_method(D_METHOD("get_downloaded_bytes"), &HTTPRequestBasic::get_downloaded_bytes);
-	ClassDB::bind_method(D_METHOD("get_body_size"), &HTTPRequestBasic::get_body_size);
+	ClassDB::bind_method(D_METHOD("get_downloaded_bytes"), &BasicHTTPRequest::get_downloaded_bytes);
+	ClassDB::bind_method(D_METHOD("get_body_size"), &BasicHTTPRequest::get_body_size);
 
-	ClassDB::bind_method(D_METHOD("_redirect_request"), &HTTPRequestBasic::_redirect_request);
-	ClassDB::bind_method(D_METHOD("_request_done"), &HTTPRequestBasic::_request_done);
+	ClassDB::bind_method(D_METHOD("_redirect_request"), &BasicHTTPRequest::_redirect_request);
+	ClassDB::bind_method(D_METHOD("_request_done"), &BasicHTTPRequest::_request_done);
 
-	ClassDB::bind_method(D_METHOD("set_timeout", "timeout"), &HTTPRequestBasic::set_timeout);
-	ClassDB::bind_method(D_METHOD("get_timeout"), &HTTPRequestBasic::get_timeout);
+	ClassDB::bind_method(D_METHOD("set_timeout", "timeout"), &BasicHTTPRequest::set_timeout);
+	ClassDB::bind_method(D_METHOD("get_timeout"), &BasicHTTPRequest::get_timeout);
 
-	ClassDB::bind_method(D_METHOD("set_download_chunk_size", "chunk_size"), &HTTPRequestBasic::set_download_chunk_size);
-	ClassDB::bind_method(D_METHOD("get_download_chunk_size"), &HTTPRequestBasic::get_download_chunk_size);
+	ClassDB::bind_method(D_METHOD("set_download_chunk_size", "chunk_size"), &BasicHTTPRequest::set_download_chunk_size);
+	ClassDB::bind_method(D_METHOD("get_download_chunk_size"), &BasicHTTPRequest::get_download_chunk_size);
 
-	ClassDB::bind_method(D_METHOD("set_http_proxy", "host", "port"), &HTTPRequestBasic::set_http_proxy);
-	ClassDB::bind_method(D_METHOD("set_https_proxy", "host", "port"), &HTTPRequestBasic::set_https_proxy);
+	ClassDB::bind_method(D_METHOD("set_http_proxy", "host", "port"), &BasicHTTPRequest::set_http_proxy);
+	ClassDB::bind_method(D_METHOD("set_https_proxy", "host", "port"), &BasicHTTPRequest::set_https_proxy);
 
-	ClassDB::bind_method(D_METHOD("_timeout"), &HTTPRequestBasic::_timeout);
+	ClassDB::bind_method(D_METHOD("poll"), &BasicHTTPRequest::poll);
+	ClassDB::bind_method(D_METHOD("_timeout"), &BasicHTTPRequest::_timeout);
 
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "download_file", PROPERTY_HINT_FILE), "set_download_file", "get_download_file");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "download_chunk_size", PROPERTY_HINT_RANGE, "256,16777216"), "set_download_chunk_size", "get_download_chunk_size");
@@ -492,7 +491,7 @@ void HTTPRequestBasic::_bind_methods() {
 	BIND_ENUM_CONSTANT(RESULT_TIMEOUT);
 }
 
-HTTPRequestBasic::HTTPRequestBasic() {
+BasicHTTPRequest::BasicHTTPRequest() {
 	port = 80;
 	redirections = 0;
 	max_redirects = 8;
@@ -513,7 +512,7 @@ HTTPRequestBasic::HTTPRequestBasic() {
 	timeout = 0.0;
 }
 
-HTTPRequestBasic::~HTTPRequestBasic() {
+BasicHTTPRequest::~BasicHTTPRequest() {
 	if (requesting) {
 		cancel_request();
 	}

@@ -32,6 +32,16 @@
 
 #include "core/io/json.h"
 
+void SW_Player::sw_notification(int what) {
+	if (what == SW_NOTIFICATION_PROCESS) {
+		for (auto &http : helper::vector(GetPlayerData, PushPlayerData, RemovePlayerData)) {
+			if (http) {
+				http->poll();
+			}
+		}
+	}
+}
+
 void SW_Player::set_player_data(const Dictionary &new_player_data) {
 	player_data = new_player_data;
 }
@@ -64,8 +74,8 @@ Dictionary SW_Player::get_inventory() {
 	return inventory;
 }
 
-SW_Player &SW_Player::get_player_data(const String &player_name) {
-	GetPlayerData = newref(HTTPRequestBasic);
+void SW_Player::get_player_data(const String &player_name) {
+	GetPlayerData = newref(BasicHTTPRequest);
 	GetPlayerData->connect("request_completed", this, "_on_GetPlayerData_request_completed");
 	sw_info("Calling SilentWolf to get player data");
 	String game_id = SilentWolf::config["game_id"];
@@ -74,14 +84,13 @@ SW_Player &SW_Player::get_player_data(const String &player_name) {
 	Vector<String> headers = helper::vector(
 			"x-api-key: " + api_key,
 			"x-sw-plugin-version: " + SilentWolf::version,
-			"x-sw-game-id: " + SilentWolf::cfg_str("game_id"),
+			"x-sw-game-id: " + game_id,
 			"x-sw-godot-version: " + SilentWolf::godot_version);
 	GetPlayerData->request("https://api.silentwolf.com/get_player_data/" + game_id + "/" + player_name, headers, true, HTTPClient::METHOD_GET);
-	return *this;
 }
 
-SW_Player &SW_Player::post_player_data(const String &player_name, const Dictionary &player_data, bool overwrite) {
-	PushPlayerData = newref(HTTPRequestBasic);
+void SW_Player::post_player_data(const String &player_name, const Dictionary &player_data, bool overwrite) {
+	PushPlayerData = newref(BasicHTTPRequest);
 	PushPlayerData->connect("request_completed", this, "_on_PushPlayerData_request_completed");
 	sw_info("Calling SilentWolf to post player data");
 	String game_id = SilentWolf::config["game_id"];
@@ -91,12 +100,11 @@ SW_Player &SW_Player::post_player_data(const String &player_name, const Dictiona
 			application_json,
 			"x-api-key: " + api_key,
 			"x-sw-plugin-version: " + SilentWolf::version,
-			"x-sw-game-id: " + SilentWolf::cfg_str("game_id"),
+			"x-sw-game-id: " + game_id,
 			"x-sw-godot-version: " + SilentWolf::godot_version);
 	Dictionary payload = helper::dict("game_id", game_id, "game_version", game_version, "player_name", player_name, "player_data", player_data, "overwrite", overwrite);
 	String query = JSON::print(payload);
 	PushPlayerData->request("https://api.silentwolf.com/push_player_data", headers, true, HTTPClient::METHOD_POST, query);
-	return *this;
 }
 
 void SW_Player::delete_player_items(const String &player_name, const String &item_name) {
@@ -108,8 +116,8 @@ void SW_Player::delete_all_player_data(const String &player_name) {
 	delete_player_data(player_name, Dictionary());
 }
 
-SW_Player &SW_Player::delete_player_data(const String &player_name, const Dictionary &player_data) {
-	RemovePlayerData = newref(HTTPRequestBasic);
+void SW_Player::delete_player_data(const String &player_name, const Dictionary &player_data) {
+	RemovePlayerData = newref(BasicHTTPRequest);
 	RemovePlayerData->connect("request_completed", this, "_on_RemovePlayerData_request_completed");
 	sw_info("Calling SilentWolf to remove player data");
 	String game_id = SilentWolf::config["game_id"];
@@ -118,12 +126,11 @@ SW_Player &SW_Player::delete_player_data(const String &player_name, const Dictio
 			application_json,
 			"x-api-key: " + api_key,
 			"x-sw-plugin-version: " + SilentWolf::version,
-			"x-sw-game-id: " + SilentWolf::cfg_str("game_id"),
+			"x-sw-game-id: " + game_id,
 			"x-sw-godot-version: " + SilentWolf::godot_version);
 	Dictionary payload = helper::dict("game_id", game_id, "player_name", player_name, "player_data", player_data);
 	String query = JSON::print(payload);
 	RemovePlayerData->request("https://api.silentwolf.com/remove_player_data", headers, true, HTTPClient::METHOD_POST, query);
-	return *this;
 }
 
 void SW_Player::_on_GetPlayerData_request_completed(int result, int response_code, const PoolStringArray &headers, const PoolByteArray &body) {
@@ -193,9 +200,10 @@ void SW_Player::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_on_PushPlayerData_request_completed"), &SW_Player::_on_PushPlayerData_request_completed);
 	ClassDB::bind_method(D_METHOD("_on_RemovePlayerData_request_completed"), &SW_Player::_on_RemovePlayerData_request_completed);
 
-	ADD_SIGNAL(MethodInfo("sw_player_data_received"));
-	ADD_SIGNAL(MethodInfo("sw_player_data_posted"));
-	ADD_SIGNAL(MethodInfo("sw_player_data_removed"));
+	ADD_SIGNAL(MethodInfo("sw_data_requested"));
+	ADD_SIGNAL(MethodInfo("sw_player_data_received", PropertyInfo(Variant::STRING, "player_name"), PropertyInfo(Variant::DICTIONARY, "player_data")));
+	ADD_SIGNAL(MethodInfo("sw_player_data_posted", PropertyInfo(Variant::STRING, "player_name")));
+	ADD_SIGNAL(MethodInfo("sw_player_data_removed", PropertyInfo(Variant::STRING, "player_name"), PropertyInfo(Variant::DICTIONARY, "player_data")));
 }
 
 SW_Player::SW_Player() {

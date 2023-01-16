@@ -32,17 +32,18 @@
 
 #include "common/gd_core.h"
 
-void SW_Multiplayer::_ready() {
-	mp_ws_ready = false;
-	mp_session_started = false;
+void SW_Multiplayer::sw_notification(int what) {
+	if (what == SW_NOTIFICATION_READY) {
+		mp_ws_ready = false;
+		mp_session_started = false;
+		WSClient->_ready();
+	} else if (what == SW_NOTIFICATION_PROCESS) {
+		WSClient->_process();
+	}
 }
 
 void SW_Multiplayer::init_mp_session(const String &player_name) {
-	//mp_player_name = player_name
 	WSClient->init_mp_session(player_name);
-	// TODO: instead of waiting an arbitrary amount of time, yield on
-	// a function that guarantees that child ready() function has run
-	//yield(get_tree().create_timer(0.3), "timeout")
 }
 
 void SW_Multiplayer::_send_init_message() {
@@ -58,6 +59,8 @@ void SW_Multiplayer::send(const Dictionary &data) {
 
 void SW_Multiplayer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("send", "data"), &SW_Multiplayer::send);
+
+	ADD_SIGNAL(MethodInfo("sw_data_requested"));
 }
 
 SW_Multiplayer::SW_Multiplayer() {

@@ -32,7 +32,37 @@
 
 #include "core/os/os.h"
 
-SW_Scores &SW_Scores::get_score_position(const String &score, const String &ldboard_name) {
+void SW_Scores::sw_notification(int what) {
+	if (what == SW_NOTIFICATION_PROCESS) {
+		if (requesting) {
+			bool check = true;
+			for (auto &http : helper::vector(ScorePosition, ScoresAround, HighScores, ScoresByPlayer, WipeLeaderboard, DeleteScore)) {
+				if (http) {
+					check = check && http->poll();
+				}
+			}
+			requesting = !check;
+		}
+	}
+}
+
+Array SW_Scores::get_scores(int what) {
+	switch (what) {
+		case SW_SCORES:
+			return scores;
+		case SW_LOCAL_SCORES:
+			return local_scores;
+		case SW_PLAYER_SCORES:
+			return player_scores;
+		case SW_SCORES_ABOVE:
+			return scores_above;
+		case SW_SCORES_BELOW:
+			return scores_below;
+	};
+	return Array();
+}
+
+SW_Scores *SW_Scores::get_score_position(const String &score, const String &ldboard_name) {
 	String score_id, score_value;
 	sw_debug("score: ", score);
 	if (is_uuid(score)) {
@@ -40,7 +70,7 @@ SW_Scores &SW_Scores::get_score_position(const String &score, const String &ldbo
 	} else {
 		score_value = score;
 	}
-	ScorePosition = newref(HTTPRequestBasic);
+	ScorePosition = newref(BasicHTTPRequest);
 	ScorePosition->connect("request_completed", this, "_on_GetScorePosition_request_completed");
 	sw_info("Calling SilentWolf to get score position");
 	String game_id = SilentWolf::config["game_id"];
@@ -54,10 +84,10 @@ SW_Scores &SW_Scores::get_score_position(const String &score, const String &ldbo
 	}
 	String request_url = "https://api.silentwolf.com/get_score_position";
 	send_post_request(ScorePosition, request_url, payload);
-	return *this;
+	return this;
 }
 
-SW_Scores &SW_Scores::get_scores_around(const String &score, int scores_to_fetch, const String &ldboard_name) {
+void SW_Scores::get_scores_around(const String &score, int scores_to_fetch, const String &ldboard_name) {
 	String score_id, score_value;
 	sw_debug("score: ", score);
 	if (is_uuid(score)) {
@@ -65,7 +95,7 @@ SW_Scores &SW_Scores::get_scores_around(const String &score, int scores_to_fetch
 	} else {
 		score_value = score;
 	}
-	ScoresAround = newref(HTTPRequestBasic);
+	ScoresAround = newref(BasicHTTPRequest);
 	ScoresAround->connect("request_completed", this, "_on_ScoresAround_request_completed");
 	sw_info("Calling SilentWolf backend to scores above and below a certain score...");
 	// resetting the latest_number value in case the first requests times out, we need to request the same amount of top scores in the retry
@@ -74,12 +104,14 @@ SW_Scores &SW_Scores::get_scores_around(const String &score, int scores_to_fetch
 	String game_version = SilentWolf::config["game_version"];
 	String request_url = "https://api.silentwolf.com/get_scores_around/" + game_id + "?version=" + game_version + "&scores_to_fetch=" + itos(scores_to_fetch) + "&ldboard_name=" + ldboard_name + "&score_id=" + score_id + "&score_value=" + score_value;
 	send_get_request(ScoresAround, request_url);
-	return *this;
 }
 
-SW_Scores &SW_Scores::get_high_scores(int maximum, const String &ldboard_name, int period_offset) {
-	HighScores = newref(HTTPRequestBasic);
-	HighScores->connect("request_completed", this, "_on_GetHighScores_request_completed");
+SW_Scores *SW_Scores::get_high_scores(int maximum, const String &ldboard_name, int period_offset) {
+	if (!HighScores) {
+		HighScores = newref(BasicHTTPRequest);
+		HighScores->connect("request_completed", this, "_on_GetHighScores_request_completed");
+	}
+	ERR_FAIL_COND_V(HighScores->is_active_request(), this);
 	sw_info("Calling SilentWolf backend to get scores...");
 	// resetting the latest_number value in case the first requests times out, we need to request the same amount of top scores in the retry
 	latest_max = maximum;
@@ -87,12 +119,12 @@ SW_Scores &SW_Scores::get_high_scores(int maximum, const String &ldboard_name, i
 	String game_version = SilentWolf::config["game_version"];
 	String request_url = "https://api.silentwolf.com/get_top_scores/" + game_id + "?version=" + game_version + "&max=" + itos(maximum) + "&ldboard_name=" + ldboard_name + "&period_offset=" + itos(period_offset);
 	send_get_request(HighScores, request_url);
-	return *this;
+	return this;
 }
 
-SW_Scores &SW_Scores::get_scores_by_player(const String &player_name, int maximum, const String &ldboard_name, int period_offset) {
+void SW_Scores::get_scores_by_player(const String &player_name, int maximum, const String &ldboard_name, int period_offset) {
 	sw_info("get_scores_by_player, player_name = ", player_name);
-	ScoresByPlayer = newref(HTTPRequestBasic);
+	ScoresByPlayer = newref(BasicHTTPRequest);
 	ScoresByPlayer->connect("request_completed", this, "_on_GetScoresByPlayer_request_completed");
 	sw_info("Calling SilentWolf backend to get scores for player: ", player_name);
 	// resetting the latest_number value in case the first requests times out, we need to request the same amount of top scores in the retry
@@ -101,7 +133,6 @@ SW_Scores &SW_Scores::get_scores_by_player(const String &player_name, int maximu
 	String game_version = SilentWolf::config["game_version"];
 	String request_url = "https://api.silentwolf.com/get_scores_by_player/" + game_id + "?version=" + game_version + "&max=" + itos(maximum) + "&ldboard_name=" + ldboard_name.percent_encode() + "&player_name=" + player_name.percent_encode() + "&period_offset=" + itos(period_offset);
 	send_get_request(ScoresByPlayer, request_url);
-	return *this;
 }
 
 void SW_Scores::add_to_local_scores(const Dictionary &game_result, const String &ld_name) {
@@ -126,12 +157,12 @@ void SW_Scores::add_to_local_scores(const Dictionary &game_result, const String 
 }
 
 // metadata, if included should be a dictionary
-SW_Scores &SW_Scores::persist_score(const String &player_name, const String &score, const String &ldboard_name, const Dictionary &metadata) {
+void SW_Scores::persist_score(const String &player_name, const String &score, const String &ldboard_name, const Dictionary &metadata) {
 	// player_name must be present
 	if (player_name.empty()) {
 		sw_error("ERROR in SilentWolf.Scores.persist_score - please enter a valid player name");
 	} else {
-		PostScore = newref(HTTPRequestBasic);
+		PostScore = newref(BasicHTTPRequest);
 		PostScore->connect("request_completed", this, "_on_PostNewScore_request_completed");
 		sw_info("Calling SilentWolf backend to post new score...");
 		String game_id = SilentWolf::config["game_id"];
@@ -157,13 +188,12 @@ SW_Scores &SW_Scores::persist_score(const String &player_name, const String &sco
 		String request_url = "https://api.silentwolf.com/post_new_score";
 		send_post_request(PostScore, request_url, payload);
 	}
-	return *this;
 }
 
 // Deletes all your scores for your game and version
 // Scores are permanently deleted, no going back!
-SW_Scores &SW_Scores::wipe_leaderboard(const String &ldboard_name) {
-	WipeLeaderboard = newref(HTTPRequestBasic);
+void SW_Scores::wipe_leaderboard(const String &ldboard_name) {
+	WipeLeaderboard = newref(BasicHTTPRequest);
 	WipeLeaderboard->connect("request_completed", this, "_on_WipeLeaderboard_request_completed");
 	sw_info("Calling SilentWolf backend to wipe leaderboard...");
 	String game_id = SilentWolf::config["game_id"];
@@ -171,18 +201,16 @@ SW_Scores &SW_Scores::wipe_leaderboard(const String &ldboard_name) {
 	Dictionary payload = helper::dict("game_id", game_id, "game_version", game_version, "ldboard_name", ldboard_name);
 	String request_url = "https://api.silentwolf.com/wipe_leaderboard";
 	send_post_request(WipeLeaderboard, request_url, payload);
-	return *this;
 }
 
-SW_Scores &SW_Scores::delete_score(const String &score_id) {
-	DeleteScore = newref(HTTPRequestBasic);
+void SW_Scores::delete_score(const String &score_id) {
+	DeleteScore = newref(BasicHTTPRequest);
 	DeleteScore->connect("request_completed", this, "_on_DeleteScore_request_completed");
 	sw_info("Calling SilentWolf to delete a score");
 	String game_id = SilentWolf::config["game_id"];
 	String game_version = SilentWolf::config["game_version"];
 	String request_url = "https://api.silentwolf.com/delete_score?game_id=" + game_id + "&game_version=" + game_version + "&score_id=" + score_id;
 	send_get_request(DeleteScore, request_url);
-	return *this;
 }
 
 void SW_Scores::_on_GetScoresByPlayer_request_completed(int result, int response_code, const PoolStringArray &headers, const PoolByteArray &body) {
@@ -240,7 +268,7 @@ void SW_Scores::_on_GetHighScores_request_completed(int result, int response_cod
 				sw_debug("scores: ", scores);
 				String ld_name = response["ld_name"];
 				//sw_debug("ld_name: ", ld_name);
-				String ld_config = response["ld_config"];
+				Dictionary ld_config = response["ld_config"];
 				//sw_debug("ld_config: ", ld_config);
 				if (response["period_offset"]) {
 					String period_offset = response["period_offset"];
@@ -338,7 +366,7 @@ void SW_Scores::_on_ScoresAround_request_completed(int result, int response_code
 				scores_below = response["scores_below"];
 				String ld_name = response["ld_name"];
 				//sw_debug("ld_name: ", ld_name);
-				String ld_config = response["ld_config"];
+				Dictionary ld_config = response["ld_config"];
 				//sw_debug("ld_config: ", ld_config);
 				ldboard_config[ld_name] = ld_config;
 				if (response.has("score_position")) {
@@ -368,7 +396,7 @@ void SW_Scores::_on_WipeLeaderboard_request_completed(int result, int response_c
 	}
 }
 
-void SW_Scores::send_get_request(Ref<HTTPRequestBasic> http_node, const String &request_url) {
+void SW_Scores::send_get_request(Ref<BasicHTTPRequest> http_node, const String &request_url) {
 	Vector<String> headers = helper::vector(
 			"x-api-key: " + SilentWolf::cfg_str("api_key"),
 			"x-sw-plugin-version: " + SilentWolf::version);
@@ -376,9 +404,11 @@ void SW_Scores::send_get_request(Ref<HTTPRequestBasic> http_node, const String &
 	sw_debug("request_url: ", request_url);
 	sw_debug("headers: ", headers);
 	http_node->request(request_url, headers);
+	requesting = true;
+	emit_signal("sw_data_requested");
 }
 
-void SW_Scores::send_post_request(Ref<HTTPRequestBasic> http_node, const String &request_url, const Dictionary &payload) {
+void SW_Scores::send_post_request(Ref<BasicHTTPRequest> http_node, const String &request_url, const Dictionary &payload) {
 	Vector<String> headers = helper::vector(
 			application_json,
 			"x-api-key: " + SilentWolf::cfg_str("api_key"),
@@ -395,13 +425,14 @@ void SW_Scores::send_post_request(Ref<HTTPRequestBasic> http_node, const String 
 		headers.push_back("x-sw-act-tmst: " + itos(timestamp));
 		headers.push_back("x-sw-act-dig: " + hashed);
 	}
-	bool use_ssl = true;
 	String query = JSON::print(payload);
 	sw_info("Method: POST");
 	sw_info("request_url: ", request_url);
 	sw_info("headers: ", headers);
 	sw_info("query: ", query);
-	http_node->request(request_url, headers, use_ssl, HTTPClient::METHOD_POST, query);
+	http_node->request(request_url, headers, SilentWolf::config["use_ssl"], HTTPClient::METHOD_POST, query);
+	requesting = true;
+	emit_signal("sw_data_requested");
 }
 
 void SW_Scores::_bind_methods() {
@@ -413,16 +444,45 @@ void SW_Scores::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_on_ScoresAround_request_completed"), &SW_Scores::_on_ScoresAround_request_completed);
 	ClassDB::bind_method(D_METHOD("_on_WipeLeaderboard_request_completed"), &SW_Scores::_on_WipeLeaderboard_request_completed);
 
+	ClassDB::bind_method(D_METHOD("get_score_position", "score", "ldboard_name"), &SW_Scores::get_score_position, DEFVAL("main"));
+	ClassDB::bind_method(D_METHOD("get_scores_around", "score", "scores_to_fetch", "ldboard_name"), &SW_Scores::get_scores_around, DEFVAL(3), DEFVAL("main"));
+	ClassDB::bind_method(D_METHOD("get_high_scores", "maximum", "ldboard_name", "period_offset"), &SW_Scores::get_high_scores, DEFVAL(10), DEFVAL("main"), DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("get_scores_by_player", "player_name", "maximum", "ldboard_name", "period_offset"), &SW_Scores::get_scores_by_player, DEFVAL(10), DEFVAL("main"), DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("wipe_leaderboard", "ldboard_name"), &SW_Scores::wipe_leaderboard, DEFVAL("main"));
+	ClassDB::bind_method(D_METHOD("persist_score", "player_name", "score", "ldboard_name", "metadata"), &SW_Scores::persist_score, DEFVAL("main"), DEFVAL(Dictionary()));
+	ClassDB::bind_method(D_METHOD("delete_score", "score_id"), &SW_Scores::delete_score);
+	ClassDB::bind_method(D_METHOD("add_to_local_scores", "game_result", "ld_name"), &SW_Scores::add_to_local_scores, DEFVAL("main"));
+
+	ClassDB::bind_method(D_METHOD("get_leaderboards"), &SW_Scores::get_leaderboards);
+	ClassDB::bind_method(D_METHOD("get_ldboard_config"), &SW_Scores::get_ldboard_config);
+	ClassDB::bind_method(D_METHOD("get_scores", "score_array"), &SW_Scores::get_scores);
+
+	ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "leaderboards"), "", "get_leaderboards");
+	ADD_PROPERTY(PropertyInfo(Variant::DICTIONARY, "ldboard_config"), "", "get_ldboard_config");
+	ADD_PROPERTYI(PropertyInfo(Variant::ARRAY, "scores"), "", "get_scores", SW_SCORES);
+	ADD_PROPERTYI(PropertyInfo(Variant::ARRAY, "local_scores"), "", "get_scores", SW_LOCAL_SCORES);
+	ADD_PROPERTYI(PropertyInfo(Variant::ARRAY, "player_scores"), "", "get_scores", SW_PLAYER_SCORES);
+	ADD_PROPERTYI(PropertyInfo(Variant::ARRAY, "scores_above"), "", "get_scores", SW_SCORES_ABOVE);
+	ADD_PROPERTYI(PropertyInfo(Variant::ARRAY, "scores_below"), "", "get_scores", SW_SCORES_BELOW);
+
+	BIND_ENUM_CONSTANT(SW_SCORES);
+	BIND_ENUM_CONSTANT(SW_LOCAL_SCORES);
+	BIND_ENUM_CONSTANT(SW_PLAYER_SCORES);
+	BIND_ENUM_CONSTANT(SW_SCORES_ABOVE);
+	BIND_ENUM_CONSTANT(SW_SCORES_BELOW);
+
+	ADD_SIGNAL(MethodInfo("sw_data_requested"));
 	ADD_SIGNAL(MethodInfo("sw_scores_received"));
 	ADD_SIGNAL(MethodInfo("sw_player_scores_received"));
 	ADD_SIGNAL(MethodInfo("sw_position_received"));
-	ADD_SIGNAL(MethodInfo("sw_scores_around_received"));
+	ADD_SIGNAL(MethodInfo("sw_scores_around_received", PropertyInfo(Variant::ARRAY, "scores_above"), PropertyInfo(Variant::ARRAY, "scores_below"), PropertyInfo(Variant::INT, "position")));
 	ADD_SIGNAL(MethodInfo("sw_score_posted"));
 	ADD_SIGNAL(MethodInfo("sw_leaderboard_wiped"));
 	ADD_SIGNAL(MethodInfo("sw_score_deleted"));
 }
 
 SW_Scores::SW_Scores() {
+	requesting = false;
 	position = 0;
 	latest_max = 10;
 }

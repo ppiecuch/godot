@@ -37,7 +37,7 @@ int sw_get_log_level() {
 	if (SilentWolf::config.has("log_level")) {
 		log_level = SilentWolf::config["log_level"];
 	} else {
-		sw_error("Couldn't find SilentWolf.config.log_level, defaulting to 1");
+		WARN_PRINT_ONCE("[SilentWolf] Couldn't find config[\"log_level\"], defaulting to 1");
 	}
 	return log_level;
 }
@@ -47,7 +47,7 @@ void sw_print(int log_level, const String &text) {
 		ERR_PRINT(text);
 	} else if (log_level == SW_LOG_WARNING) {
 		WARN_PRINT(text);
-	} else if (sw_get_log_level() > log_level) {
+	} else if (sw_get_log_level() >= log_level) {
 		print_line(text);
 	}
 }

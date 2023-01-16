@@ -32,17 +32,20 @@
 
 #include "core/io/json.h"
 #include "core/variant.h"
+#include "editor/editor_node.h"
 
 const String SilentWolf::version = "0.6.19";
+const String SilentWolf::godot_version;
 
 const Dictionary SilentWolf::config = helper::dict(
 		"api_key", "ySX34qsKaT7RH1j6795tQ8lPqKlRmQlx55yxkwGy",
 		"game_id", "sdktest",
 		"game_version", "0.6.19",
+		"use_ssl", true,
 #ifdef DEBUG_ENABLED
-		"log_level", 0
+		"log_level", 3
 #else
-		"log_level", 2
+		"log_level", 0
 #endif
 );
 
@@ -50,7 +53,8 @@ const Dictionary SilentWolf::auth_config = helper::dict(
 		"session_duration_seconds", 0,
 		"saved_session_expiration_days", 30);
 
-SilentWolf *instance = nullptr;
+static SilentWolf *instance = nullptr;
+SilentWolf *SilentWolf::get_instance() { return instance; }
 
 // SILENTWOLF CONFIG: THE CONFIG VARIABLES BELOW WILL BE OVERRIDED THE
 // NEXT TIME YOU UPDATE YOUR PLUGIN!
@@ -61,14 +65,55 @@ SilentWolf *instance = nullptr;
 // See https://silentwolf.com for more details
 
 void SilentWolf::_init() {
-	sw_info("SW Init timestamp: ", OS::get_singleton()->get_iso_date_time());
+	sw_info("SW/v", version, " Init timestamp: ", OS::get_singleton()->get_iso_date_time());
+
+	Auth->connect("sw_data_requested", this, "_on_data_requested");
+	Scores->connect("sw_data_requested", this, "_on_data_requested");
+	Players->connect("sw_data_requested", this, "_on_data_requested");
+	Multiplayer->connect("sw_data_requested", this, "_on_data_requested");
 }
 
-void SilentWolf::_ready() {
-	// The following line would keep SilentWolf working even if the game tree is paused.
-	//pause_mode = Node.PAUSE_MODE_PROCESS
+void SilentWolf::_on_data_requested() {
+	emit_signal("sw_status_change", SW_STATUS_REQUESTING);
+}
+
+#define SEND_NOTIFICATION(N)             \
+	{                                    \
+		Auth->sw_notification(N);        \
+		Scores->sw_notification(N);      \
+		Players->sw_notification(N);     \
+		Multiplayer->sw_notification(N); \
+	}
+
+void SilentWolf::sw_ready() {
 	sw_info("SW ready start timestamp: ", OS::get_singleton()->get_iso_date_time());
 	sw_info("SW ready end timestamp: ", OS::get_singleton()->get_iso_date_time());
+
+	SEND_NOTIFICATION(SW_NOTIFICATION_READY);
+}
+
+void SilentWolf::sw_process() {
+	SEND_NOTIFICATION(SW_NOTIFICATION_PROCESS);
+}
+
+void SilentWolf::sw_print_line(int log_level, const String &msg) {
+	sw_print(log_level, msg);
+}
+
+void SilentWolf::sw_debug_line(const String &msg) {
+	sw_debug(msg);
+}
+
+void SilentWolf::sw_info_line(const String &msg) {
+	sw_info(msg);
+}
+
+void SilentWolf::sw_warn_line(const String &msg) {
+	sw_warn(msg);
+}
+
+void SilentWolf::sw_error_line(const String &msg) {
+	sw_error(msg);
 }
 
 void SilentWolf::config_set(const Dictionary &dict, const Variant &key, const Variant &value) {
@@ -119,7 +164,7 @@ void SilentWolf::configure_session_expiration_days(int expiration) {
 	config_set(auth_config, "saved_session_expiration_days", expiration);
 }
 
-void SilentWolf::send_get_request(Ref<HTTPRequestBasic> http_node, const String &request_url) {
+void SilentWolf::send_get_request(Ref<BasicHTTPRequest> http_node, const String &request_url) {
 	Vector<String> headers = helper::vector(
 			"x-api-key: " + cfg_str("api_key"),
 			"x-sw-game-id: " + cfg_str("game_id"),
@@ -131,7 +176,7 @@ void SilentWolf::send_get_request(Ref<HTTPRequestBasic> http_node, const String 
 	http_node->request(request_url, headers);
 }
 
-void SilentWolf::send_post_request(Ref<HTTPRequestBasic> http_node, const String &request_url, const Dictionary &payload) {
+void SilentWolf::send_post_request(Ref<BasicHTTPRequest> http_node, const String &request_url, const Dictionary &payload) {
 	Vector<String> headers = helper::vector(
 			String("Content-Type: application/json"),
 			"x-api-key: " + (String)config["api_key"],
@@ -158,7 +203,7 @@ void SilentWolf::send_post_request(Ref<HTTPRequestBasic> http_node, const String
 	sw_info("request_url: ", request_url);
 	sw_info("headers: ", headers);
 	sw_info("query: ", query);
-	http_node->request(request_url, headers, use_ssl, HTTPClient::METHOD_POST, query);
+	http_node->request(request_url, headers, config["use_ssl"], HTTPClient::METHOD_POST, query);
 }
 
 void SilentWolf::clear_player_data() {
@@ -166,7 +211,7 @@ void SilentWolf::clear_player_data() {
 	SilentWolf::get_instance()->Players->clear_player_data();
 }
 
-void SilentWolf::queue_request(Ref<HTTPRequestBasic> http_node, const String &request_url, const Vector<String> &headers, bool use_ssl, HTTPClient::Method method, const Dictionary &payload) {
+void SilentWolf::queue_request(Ref<BasicHTTPRequest> http_node, const String &request_url, const Vector<String> &headers, bool use_ssl, HTTPClient::Method method, const Dictionary &payload) {
 	send_queue.push_back({ http_node, request_url, headers, use_ssl, method, payload });
 }
 
@@ -204,11 +249,41 @@ bool SilentWolf::check_sw_ready() {
 	return (!Auth || !Scores || !Players || !Multiplayer);
 }
 
+bool SilentWolf::check_sw_requesting() {
+	return (Scores->sw_requesting());
+}
+
 void SilentWolf::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("queue_send"), &SilentWolf::queue_send);
+	ClassDB::bind_method(D_METHOD("sw_print", "log_level", "text"), &SilentWolf::sw_print_line);
+	ClassDB::bind_method(D_METHOD("sw_debug", "text"), &SilentWolf::sw_debug_line);
+	ClassDB::bind_method(D_METHOD("sw_info", "text"), &SilentWolf::sw_info_line);
+	ClassDB::bind_method(D_METHOD("sw_warn", "text"), &SilentWolf::sw_warn_line);
+	ClassDB::bind_method(D_METHOD("sw_error", "text"), &SilentWolf::sw_error_line);
+
+	ClassDB::bind_method(D_METHOD("_get_auth"), &SilentWolf::_get_auth);
+	ClassDB::bind_method(D_METHOD("_get_scores"), &SilentWolf::_get_scores);
+	ClassDB::bind_method(D_METHOD("_get_players"), &SilentWolf::_get_players);
+	ClassDB::bind_method(D_METHOD("_get_multiplayer"), &SilentWolf::_get_multiplayer);
+
+	ClassDB::bind_method(D_METHOD("_on_data_requested"), &SilentWolf::_on_data_requested);
+
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "Auth"), "", "_get_auth");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "Scores"), "", "_get_scores");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "Players"), "", "_get_players");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "Multiplayer"), "", "_get_multiplayer");
+
+	ADD_SIGNAL(MethodInfo("sw_status_change", PropertyInfo(Variant::INT, "status")));
+
+	BIND_ENUM_CONSTANT(SW_LOG_DEBUG);
+	BIND_ENUM_CONSTANT(SW_LOG_INFO);
+	BIND_ENUM_CONSTANT(SW_LOG_WARNING);
+	BIND_ENUM_CONSTANT(SW_LOG_ERROR);
 }
 
 SilentWolf::SilentWolf() {
+	instance = this;
+
 	Auth = newref(SW_Auth);
 	Scores = newref(SW_Scores);
 	Players = newref(SW_Player);
@@ -217,5 +292,114 @@ SilentWolf::SilentWolf() {
 	if (godot_version.empty()) {
 		const_cast<String *>(&godot_version)->operator=(vconcat(Engine::get_singleton()->get_version_info()));
 	}
-	use_ssl = true;
+
+	_init();
+}
+
+void SilentWolfInstance::set_server_active(bool p_active) {
+	if (server_active != p_active) {
+		server_active = p_active;
+		set_process_internal(p_active);
+	}
+}
+
+bool SilentWolfInstance::get_server_active() const {
+	return server_active;
+}
+
+void SilentWolfInstance::set_silentwolf_game_id(String p_game_id) {
+	if (instance->config["game_id"] != p_game_id) {
+		instance->configure_game_id(p_game_id);
+	}
+}
+
+String SilentWolfInstance::get_silentwolf_game_id() const {
+	return instance->config["game_id"];
+}
+
+void SilentWolfInstance::set_silentwolf_api_key(String p_api_key) {
+	if (instance->config["api_key"] != p_api_key) {
+		instance->configure_api_key(p_api_key);
+	}
+}
+
+String SilentWolfInstance::get_silentwolf_api_key() const {
+	return instance->config["api_key"];
+}
+
+void SilentWolfInstance::sw_debug_line(const String &msg) {
+	instance->sw_debug_line(msg);
+}
+
+void SilentWolfInstance::sw_info_line(const String &msg) {
+	instance->sw_info_line(msg);
+}
+
+void SilentWolfInstance::sw_warn_line(const String &msg) {
+	instance->sw_warn_line(msg);
+}
+
+void SilentWolfInstance::sw_error_line(const String &msg) {
+	instance->sw_error_line(msg);
+}
+
+void SilentWolfInstance::_notification(int what) {
+	if (what == NOTIFICATION_READY) {
+		instance->sw_ready();
+	} else if (what == NOTIFICATION_ENTER_TREE) {
+		instance->connect("sw_status_change", this, "_on_sw_status_changed");
+		set_process_internal(server_active && instance->check_sw_requesting());
+	} else if (what == NOTIFICATION_EXIT_TREE) {
+		instance->disconnect("sw_status_change", this, "_on_sw_status_changed");
+		set_process_internal(false);
+	} else if (what == NOTIFICATION_INTERNAL_PROCESS) {
+		instance->sw_process();
+		if (!instance->check_sw_requesting()) {
+			set_process_internal(false);
+		}
+#ifdef TOOLS_ENABLED
+		update();
+#endif
+	} else if (what == NOTIFICATION_DRAW) {
+#ifdef TOOLS_ENABLED
+		static real_t _progress = 0;
+		if (EditorNode *editor = EditorNode::get_singleton()) {
+			_progress += get_process_delta_time();
+			const Ref<Texture> ic = editor->get_gui_base()->get_icon("Progress" + itos(1 + int(_progress) % 8), "EditorIcons"); // progress icon
+			draw_texture(ic, (_edit_get_rect().size - ic->get_size()) / 2);
+		}
+#endif
+	}
+}
+
+void SilentWolfInstance::_on_sw_status_changed(int p_status) {
+	if (is_inside_tree()) {
+		if (p_status == SW_STATUS_REQUESTING) {
+			set_process_internal(server_active);
+		}
+	}
+}
+
+void SilentWolfInstance::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("set_server_active"), &SilentWolfInstance::set_server_active);
+	ClassDB::bind_method(D_METHOD("get_server_active"), &SilentWolfInstance::get_server_active);
+	ClassDB::bind_method(D_METHOD("set_silentwolf_game_id"), &SilentWolfInstance::set_silentwolf_game_id);
+	ClassDB::bind_method(D_METHOD("get_silentwolf_game_id"), &SilentWolfInstance::get_silentwolf_game_id);
+	ClassDB::bind_method(D_METHOD("set_silentwolf_api_key"), &SilentWolfInstance::set_silentwolf_api_key);
+	ClassDB::bind_method(D_METHOD("get_silentwolf_api_key"), &SilentWolfInstance::get_silentwolf_api_key);
+	ClassDB::bind_method(D_METHOD("sw_debug", "text"), &SilentWolfInstance::sw_debug_line);
+	ClassDB::bind_method(D_METHOD("sw_info", "text"), &SilentWolfInstance::sw_info_line);
+	ClassDB::bind_method(D_METHOD("sw_warn", "text"), &SilentWolfInstance::sw_warn_line);
+	ClassDB::bind_method(D_METHOD("sw_error", "text"), &SilentWolfInstance::sw_error_line);
+
+	ClassDB::bind_method(D_METHOD("_on_sw_status_changed", "status"), &SilentWolfInstance::_on_sw_status_changed);
+
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "active"), "set_server_active", "get_server_active");
+	ADD_PROPERTY(PropertyInfo(Variant::STRING, "game_id"), "set_silentwolf_game_id", "get_silentwolf_game_id");
+	ADD_PROPERTY(PropertyInfo(Variant::STRING, "api_key"), "set_silentwolf_api_key", "get_silentwolf_api_key");
+}
+
+SilentWolfInstance::SilentWolfInstance() {
+	server_active = false;
+	instance = SilentWolf::get_instance();
 }
