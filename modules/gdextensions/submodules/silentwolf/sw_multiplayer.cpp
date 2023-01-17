@@ -32,6 +32,17 @@
 
 #include "common/gd_core.h"
 
+void SW_Multiplayer::_send_init_message() {
+	WSClient->init_mp_session(mp_player_name);
+	mp_ws_ready = true;
+	mp_session_started = true;
+}
+
+void SW_Multiplayer::_on_ws_data(const String &data) {
+	Dictionary msg;
+	emit_signal("sw_data_received", msg);
+}
+
 void SW_Multiplayer::sw_notification(int what) {
 	if (what == SW_NOTIFICATION_READY) {
 		mp_ws_ready = false;
@@ -42,25 +53,27 @@ void SW_Multiplayer::sw_notification(int what) {
 	}
 }
 
+bool SW_Multiplayer::sw_requesting() const {
+	return OS::get_singleton()->get_system_time_secs() - _last_send < 10; // 10 sec after last send
+}
+
 void SW_Multiplayer::init_mp_session(const String &player_name) {
 	WSClient->init_mp_session(player_name);
 }
 
-void SW_Multiplayer::_send_init_message() {
-	WSClient->init_mp_session(mp_player_name);
-	mp_ws_ready = true;
-	mp_session_started = true;
-}
-
 void SW_Multiplayer::send(const Dictionary &data) {
-	sw_debug("Sending data to web socket server...");
+	sw_debug("Sending data to WS server...");
 	WSClient->send_to_server("update", data);
+	_last_send = OS::get_singleton()->get_system_time_secs();
+	emit_signal("sw_data_requested");
 }
 
 void SW_Multiplayer::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("init_mp_session", "player_name"), &SW_Multiplayer::init_mp_session);
 	ClassDB::bind_method(D_METHOD("send", "data"), &SW_Multiplayer::send);
 
 	ADD_SIGNAL(MethodInfo("sw_data_requested"));
+	ADD_SIGNAL(MethodInfo("sw_data_received", PropertyInfo(Variant::DICTIONARY, "msg")));
 }
 
 SW_Multiplayer::SW_Multiplayer() {
@@ -68,4 +81,6 @@ SW_Multiplayer::SW_Multiplayer() {
 	mp_ws_ready = false;
 	mp_session_started = false;
 	mp_player_name = "";
+	poll_timer = nullptr;
+	_last_send = 0;
 }

@@ -56,6 +56,24 @@ const Dictionary SilentWolf::auth_config = helper::dict(
 static SilentWolf *instance = nullptr;
 SilentWolf *SilentWolf::get_instance() { return instance; }
 
+void SWSendQueue::queue_request(Ref<BasicHTTPRequest> http_node, const String &request_url, const Vector<String> &headers, bool use_ssl, HTTPClient::Method method, const Dictionary &payload) {
+	send_queue.push_back({ http_node, request_url, headers, use_ssl, method, payload });
+}
+
+void SWSendQueue::queue_send() {
+	List<SendRequest>::Element *e = send_queue.front();
+	while (e) {
+		SendRequest &p = e->get();
+		String query = JSON::print(p.payload);
+		sw_info("Method: ", (p.method == HTTPClient::METHOD_POST ? "POST" : (p.method == HTTPClient::METHOD_GET ? "GET" : itos(p.method))));
+		sw_info("request_url: ", p.request_url);
+		sw_info("headers: ", p.headers);
+		sw_info("query: ", query);
+		p.http->request(p.request_url, p.headers, p.use_ssl, p.method, query);
+		e = send_queue.erase_and_next(e);
+	}
+}
+
 // SILENTWOLF CONFIG: THE CONFIG VARIABLES BELOW WILL BE OVERRIDED THE
 // NEXT TIME YOU UPDATE YOUR PLUGIN!
 //
@@ -75,6 +93,17 @@ void SilentWolf::_init() {
 
 void SilentWolf::_on_data_requested() {
 	emit_signal("sw_status_change", SW_STATUS_REQUESTING);
+	if (use_threads) {
+		_setup_thread();
+	}
+}
+
+void SilentWolf::_setup_thread() {
+	if (thread_done.is_set()) { // restart thread if not running
+		thread_done.clear();
+		thread_request_quit.clear();
+		thread.start(_thread_func, this);
+	}
 }
 
 #define SEND_NOTIFICATION(N)             \
@@ -211,24 +240,6 @@ void SilentWolf::clear_player_data() {
 	SilentWolf::get_instance()->Players->clear_player_data();
 }
 
-void SilentWolf::queue_request(Ref<BasicHTTPRequest> http_node, const String &request_url, const Vector<String> &headers, bool use_ssl, HTTPClient::Method method, const Dictionary &payload) {
-	send_queue.push_back({ http_node, request_url, headers, use_ssl, method, payload });
-}
-
-void SilentWolf::queue_send() {
-	List<SendRequest>::Element *e = send_queue.front();
-	while (e) {
-		SendRequest &p = e->get();
-		String query = JSON::print(p.payload);
-		sw_info("Method: ", (p.method == HTTPClient::METHOD_POST ? "POST" : (p.method == HTTPClient::METHOD_GET ? "GET" : itos(p.method))));
-		sw_info("request_url: ", p.request_url);
-		sw_info("headers: ", p.headers);
-		sw_info("query: ", query);
-		p.http->request(p.request_url, p.headers, p.use_ssl, p.method, query);
-		e = send_queue.erase_and_next(e);
-	}
-}
-
 bool SilentWolf::check_auth_ready() {
 	return (!Auth);
 }
@@ -250,11 +261,40 @@ bool SilentWolf::check_sw_ready() {
 }
 
 bool SilentWolf::check_sw_requesting() {
-	return (Scores->sw_requesting());
+	return (Scores->sw_requesting() || Players->sw_requesting() || Auth->sw_requesting());
+}
+
+void SilentWolf::set_use_threads(bool use) {
+	ERR_FAIL_COND(check_sw_requesting());
+	if (use_threads != use) {
+		use_threads = use;
+		// no need to do anything - no connections
+		emit_signal("sw_status_change", SW_STATUS_THREADING);
+	}
+}
+
+bool SilentWolf::is_using_threads() const {
+	return use_threads;
+}
+
+void SilentWolf::_thread_func(void *userdata) {
+	SilentWolf *sw = (SilentWolf *)userdata;
+
+	while (!sw->thread_request_quit.is_set()) {
+		sw->sw_process();
+		if (!sw->check_sw_requesting()) {
+			break;
+		}
+		OS::get_singleton()->delay_usec(1);
+	}
+
+	sw->thread_done.set();
 }
 
 void SilentWolf::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("queue_send"), &SilentWolf::queue_send);
+	ClassDB::bind_method(D_METHOD("set_use_threads", "use"), &SilentWolf::set_use_threads);
+	ClassDB::bind_method(D_METHOD("is_using_threads"), &SilentWolf::is_using_threads);
+
 	ClassDB::bind_method(D_METHOD("sw_print", "log_level", "text"), &SilentWolf::sw_print_line);
 	ClassDB::bind_method(D_METHOD("sw_debug", "text"), &SilentWolf::sw_debug_line);
 	ClassDB::bind_method(D_METHOD("sw_info", "text"), &SilentWolf::sw_info_line);
@@ -266,7 +306,10 @@ void SilentWolf::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_get_players"), &SilentWolf::_get_players);
 	ClassDB::bind_method(D_METHOD("_get_multiplayer"), &SilentWolf::_get_multiplayer);
 
+	ClassDB::bind_method(D_METHOD("clear_player_data"), &SilentWolf::clear_player_data);
 	ClassDB::bind_method(D_METHOD("_on_data_requested"), &SilentWolf::_on_data_requested);
+
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "use_thread"), "set_use_threads", "is_using_threads");
 
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "Auth"), "", "_get_auth");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "Scores"), "", "_get_scores");
@@ -283,6 +326,7 @@ void SilentWolf::_bind_methods() {
 
 SilentWolf::SilentWolf() {
 	instance = this;
+	use_threads = false;
 
 	Auth = newref(SW_Auth);
 	Scores = newref(SW_Scores);
@@ -294,6 +338,13 @@ SilentWolf::SilentWolf() {
 	}
 
 	_init();
+}
+
+SilentWolf::~SilentWolf() {
+	if (!thread_done.is_set()) {
+		thread_request_quit.set();
+		thread.wait_to_finish();
+	}
 }
 
 void SilentWolfInstance::set_server_active(bool p_active) {
@@ -353,19 +404,24 @@ void SilentWolfInstance::_notification(int what) {
 		instance->disconnect("sw_status_change", this, "_on_sw_status_changed");
 		set_process_internal(false);
 	} else if (what == NOTIFICATION_INTERNAL_PROCESS) {
-		instance->sw_process();
-		if (!instance->check_sw_requesting()) {
-			set_process_internal(false);
+		if (!instance->is_using_threads()) {
+			instance->sw_process();
+			if (!instance->check_sw_requesting()) {
+				set_process_internal(false);
+			}
 		}
-#ifdef TOOLS_ENABLED
+#ifndef TOOLS_ENABLED
+		else {
+			set_process_internal(false); // not needed for threads
+		}
+#else
 		update();
-#endif
 	} else if (what == NOTIFICATION_DRAW) {
-#ifdef TOOLS_ENABLED
 		static real_t _progress = 0;
 		if (EditorNode *editor = EditorNode::get_singleton()) {
-			_progress += get_process_delta_time();
-			const Ref<Texture> ic = editor->get_gui_base()->get_icon("Progress" + itos(1 + int(_progress) % 8), "EditorIcons"); // progress icon
+			_progress += get_process_delta_time() * instance->check_sw_requesting();
+			const String icon = instance->check_sw_requesting() ? "Progress" + itos(1 + int(_progress) % 8) : "Environment";
+			const Ref<Texture> ic = editor->get_gui_base()->get_icon(icon, "EditorIcons"); // progress icon
 			draw_texture(ic, (_edit_get_rect().size - ic->get_size()) / 2);
 		}
 #endif
@@ -375,7 +431,12 @@ void SilentWolfInstance::_notification(int what) {
 void SilentWolfInstance::_on_sw_status_changed(int p_status) {
 	if (is_inside_tree()) {
 		if (p_status == SW_STATUS_REQUESTING) {
-			set_process_internal(server_active);
+			if (!instance->is_using_threads()) {
+				set_process_internal(server_active);
+			}
+#ifdef TOOLS_ENABLED
+			update();
+#endif
 		}
 	}
 }

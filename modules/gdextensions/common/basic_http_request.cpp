@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  http_request_basic.cpp                                               */
+/*  basic_http_request.cpp                                               */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -65,11 +65,14 @@ Error BasicHTTPRequest::_parse_url(const String &p_url) {
 	return OK;
 }
 
+#define REQ_DONE (true)
+#define REQ_IN_PROGRESS (false)
+
 bool BasicHTTPRequest::poll() {
 	if (requesting) {
 		return _update_connection();
 	} else {
-		return false;
+		return REQ_DONE;
 	}
 }
 

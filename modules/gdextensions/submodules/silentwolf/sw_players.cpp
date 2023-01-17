@@ -32,12 +32,23 @@
 
 #include "core/io/json.h"
 
+#define NOTIFY_REQUEST()                  \
+	{                                     \
+		requesting = true;                \
+		emit_signal("sw_data_requested"); \
+		return this;                      \
+	}
+
 void SW_Player::sw_notification(int what) {
 	if (what == SW_NOTIFICATION_PROCESS) {
-		for (auto &http : helper::vector(GetPlayerData, PushPlayerData, RemovePlayerData)) {
-			if (http) {
-				http->poll();
+		if (requesting) {
+			int check = 0; // any active request
+			for (auto &http_req : helper::vector(GetPlayerData, PushPlayerData, RemovePlayerData)) {
+				if (http_req) {
+					check += !http_req->poll();
+				}
 			}
+			requesting = check > 0;
 		}
 	}
 }
@@ -74,9 +85,12 @@ Dictionary SW_Player::get_inventory() {
 	return inventory;
 }
 
-void SW_Player::get_player_data(const String &player_name) {
-	GetPlayerData = newref(BasicHTTPRequest);
-	GetPlayerData->connect("request_completed", this, "_on_GetPlayerData_request_completed");
+SW_Player *SW_Player::get_player_data(const String &player_name) {
+	if (!GetPlayerData) {
+		GetPlayerData = newref(BasicHTTPRequest);
+		GetPlayerData->connect("request_completed", this, "_on_GetPlayerData_request_completed");
+	}
+	ERR_FAIL_COND_V(GetPlayerData->is_active_request(), this);
 	sw_info("Calling SilentWolf to get player data");
 	String game_id = SilentWolf::config["game_id"];
 	String game_version = SilentWolf::config["game_version"];
@@ -87,11 +101,15 @@ void SW_Player::get_player_data(const String &player_name) {
 			"x-sw-game-id: " + game_id,
 			"x-sw-godot-version: " + SilentWolf::godot_version);
 	GetPlayerData->request("https://api.silentwolf.com/get_player_data/" + game_id + "/" + player_name, headers, true, HTTPClient::METHOD_GET);
+	NOTIFY_REQUEST();
 }
 
-void SW_Player::post_player_data(const String &player_name, const Dictionary &player_data, bool overwrite) {
-	PushPlayerData = newref(BasicHTTPRequest);
-	PushPlayerData->connect("request_completed", this, "_on_PushPlayerData_request_completed");
+SW_Player *SW_Player::post_player_data(const String &player_name, const Dictionary &player_data, bool overwrite) {
+	if (!PushPlayerData) {
+		PushPlayerData = newref(BasicHTTPRequest);
+		PushPlayerData->connect("request_completed", this, "_on_PushPlayerData_request_completed");
+	}
+	ERR_FAIL_COND_V(PushPlayerData->is_active_request(), this);
 	sw_info("Calling SilentWolf to post player data");
 	String game_id = SilentWolf::config["game_id"];
 	String game_version = SilentWolf::config["game_version"];
@@ -105,20 +123,24 @@ void SW_Player::post_player_data(const String &player_name, const Dictionary &pl
 	Dictionary payload = helper::dict("game_id", game_id, "game_version", game_version, "player_name", player_name, "player_data", player_data, "overwrite", overwrite);
 	String query = JSON::print(payload);
 	PushPlayerData->request("https://api.silentwolf.com/push_player_data", headers, true, HTTPClient::METHOD_POST, query);
+	NOTIFY_REQUEST();
 }
 
-void SW_Player::delete_player_items(const String &player_name, const String &item_name) {
+SW_Player *SW_Player::delete_player_items(const String &player_name, const String &item_name) {
 	Dictionary item = helper::dict(item_name, "");
-	delete_player_data(player_name, item);
+	return delete_player_data(player_name, item);
 }
 
-void SW_Player::delete_all_player_data(const String &player_name) {
-	delete_player_data(player_name, Dictionary());
+SW_Player *SW_Player::delete_all_player_data(const String &player_name) {
+	return delete_player_data(player_name, Dictionary());
 }
 
-void SW_Player::delete_player_data(const String &player_name, const Dictionary &player_data) {
-	RemovePlayerData = newref(BasicHTTPRequest);
-	RemovePlayerData->connect("request_completed", this, "_on_RemovePlayerData_request_completed");
+SW_Player *SW_Player::delete_player_data(const String &player_name, const Dictionary &player_data) {
+	if (!RemovePlayerData) {
+		RemovePlayerData = newref(BasicHTTPRequest);
+		RemovePlayerData->connect("request_completed", this, "_on_RemovePlayerData_request_completed");
+	}
+	ERR_FAIL_COND_V(RemovePlayerData->is_active_request(), this);
 	sw_info("Calling SilentWolf to remove player data");
 	String game_id = SilentWolf::config["game_id"];
 	String api_key = SilentWolf::config["api_key"];
@@ -131,6 +153,7 @@ void SW_Player::delete_player_data(const String &player_name, const Dictionary &
 	Dictionary payload = helper::dict("game_id", game_id, "player_name", player_name, "player_data", player_data);
 	String query = JSON::print(payload);
 	RemovePlayerData->request("https://api.silentwolf.com/remove_player_data", headers, true, HTTPClient::METHOD_POST, query);
+	NOTIFY_REQUEST();
 }
 
 void SW_Player::_on_GetPlayerData_request_completed(int result, int response_code, const PoolStringArray &headers, const PoolByteArray &body) {
@@ -200,6 +223,16 @@ void SW_Player::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_on_PushPlayerData_request_completed"), &SW_Player::_on_PushPlayerData_request_completed);
 	ClassDB::bind_method(D_METHOD("_on_RemovePlayerData_request_completed"), &SW_Player::_on_RemovePlayerData_request_completed);
 
+	ClassDB::bind_method(D_METHOD("get_stats"), &SW_Player::get_stats);
+	ClassDB::bind_method(D_METHOD("get_inventory"), &SW_Player::get_inventory);
+	ClassDB::bind_method(D_METHOD("clear_player_data"), &SW_Player::clear_player_data);
+	ClassDB::bind_method(D_METHOD("set_player_data", "new_player_data"), &SW_Player::set_player_data);
+	ClassDB::bind_method(D_METHOD("get_player_data", "player_name"), &SW_Player::get_player_data);
+	ClassDB::bind_method(D_METHOD("post_player_data", "player_name", "player_data", "overwrite"), &SW_Player::post_player_data, DEFVAL(true));
+	ClassDB::bind_method(D_METHOD("delete_player_items", "player_name", "item_name"), &SW_Player::delete_player_items);
+	ClassDB::bind_method(D_METHOD("delete_player_data", "player_name", "player_data"), &SW_Player::delete_player_data);
+	ClassDB::bind_method(D_METHOD("delete_all_player_data", "player_name"), &SW_Player::delete_all_player_data);
+
 	ADD_SIGNAL(MethodInfo("sw_data_requested"));
 	ADD_SIGNAL(MethodInfo("sw_player_data_received", PropertyInfo(Variant::STRING, "player_name"), PropertyInfo(Variant::DICTIONARY, "player_data")));
 	ADD_SIGNAL(MethodInfo("sw_player_data_posted", PropertyInfo(Variant::STRING, "player_name")));
@@ -207,4 +240,5 @@ void SW_Player::_bind_methods() {
 }
 
 SW_Player::SW_Player() {
+	requesting = false;
 }

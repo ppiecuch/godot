@@ -35,13 +35,13 @@
 void SW_Scores::sw_notification(int what) {
 	if (what == SW_NOTIFICATION_PROCESS) {
 		if (requesting) {
-			bool check = true;
-			for (auto &http : helper::vector(ScorePosition, ScoresAround, HighScores, ScoresByPlayer, WipeLeaderboard, DeleteScore)) {
-				if (http) {
-					check = check && http->poll();
+			int check = 0;
+			for (auto &http_req : helper::vector(ScorePosition, ScoresAround, HighScores, ScoresByPlayer, WipeLeaderboard, PostScore, DeleteScore)) {
+				if (http_req) {
+					check += !http_req->poll();
 				}
 			}
-			requesting = !check;
+			requesting = check > 0;
 		}
 	}
 }
@@ -87,7 +87,7 @@ SW_Scores *SW_Scores::get_score_position(const String &score, const String &ldbo
 	return this;
 }
 
-void SW_Scores::get_scores_around(const String &score, int scores_to_fetch, const String &ldboard_name) {
+SW_Scores *SW_Scores::get_scores_around(const String &score, int scores_to_fetch, const String &ldboard_name) {
 	String score_id, score_value;
 	sw_debug("score: ", score);
 	if (is_uuid(score)) {
@@ -95,8 +95,11 @@ void SW_Scores::get_scores_around(const String &score, int scores_to_fetch, cons
 	} else {
 		score_value = score;
 	}
-	ScoresAround = newref(BasicHTTPRequest);
-	ScoresAround->connect("request_completed", this, "_on_ScoresAround_request_completed");
+	if (!ScoresAround) {
+		ScoresAround = newref(BasicHTTPRequest);
+		ScoresAround->connect("request_completed", this, "_on_ScoresAround_request_completed");
+	}
+	ERR_FAIL_COND_V(ScoresAround->is_active_request(), this);
 	sw_info("Calling SilentWolf backend to scores above and below a certain score...");
 	// resetting the latest_number value in case the first requests times out, we need to request the same amount of top scores in the retry
 	//latest_max = maximum
@@ -104,6 +107,7 @@ void SW_Scores::get_scores_around(const String &score, int scores_to_fetch, cons
 	String game_version = SilentWolf::config["game_version"];
 	String request_url = "https://api.silentwolf.com/get_scores_around/" + game_id + "?version=" + game_version + "&scores_to_fetch=" + itos(scores_to_fetch) + "&ldboard_name=" + ldboard_name + "&score_id=" + score_id + "&score_value=" + score_value;
 	send_get_request(ScoresAround, request_url);
+	return this;
 }
 
 SW_Scores *SW_Scores::get_high_scores(int maximum, const String &ldboard_name, int period_offset) {
@@ -122,7 +126,7 @@ SW_Scores *SW_Scores::get_high_scores(int maximum, const String &ldboard_name, i
 	return this;
 }
 
-void SW_Scores::get_scores_by_player(const String &player_name, int maximum, const String &ldboard_name, int period_offset) {
+SW_Scores *SW_Scores::get_scores_by_player(const String &player_name, int maximum, const String &ldboard_name, int period_offset) {
 	sw_info("get_scores_by_player, player_name = ", player_name);
 	ScoresByPlayer = newref(BasicHTTPRequest);
 	ScoresByPlayer->connect("request_completed", this, "_on_GetScoresByPlayer_request_completed");
@@ -133,6 +137,7 @@ void SW_Scores::get_scores_by_player(const String &player_name, int maximum, con
 	String game_version = SilentWolf::config["game_version"];
 	String request_url = "https://api.silentwolf.com/get_scores_by_player/" + game_id + "?version=" + game_version + "&max=" + itos(maximum) + "&ldboard_name=" + ldboard_name.percent_encode() + "&player_name=" + player_name.percent_encode() + "&period_offset=" + itos(period_offset);
 	send_get_request(ScoresByPlayer, request_url);
+	return this;
 }
 
 void SW_Scores::add_to_local_scores(const Dictionary &game_result, const String &ld_name) {
@@ -157,13 +162,16 @@ void SW_Scores::add_to_local_scores(const Dictionary &game_result, const String 
 }
 
 // metadata, if included should be a dictionary
-void SW_Scores::persist_score(const String &player_name, const String &score, const String &ldboard_name, const Dictionary &metadata) {
+SW_Scores *SW_Scores::persist_score(const String &player_name, const String &score, const String &ldboard_name, const Dictionary &metadata) {
 	// player_name must be present
 	if (player_name.empty()) {
 		sw_error("ERROR in SilentWolf.Scores.persist_score - please enter a valid player name");
 	} else {
-		PostScore = newref(BasicHTTPRequest);
-		PostScore->connect("request_completed", this, "_on_PostNewScore_request_completed");
+		if (!PostScore) {
+			PostScore = newref(BasicHTTPRequest);
+			PostScore->connect("request_completed", this, "_on_PostNewScore_request_completed");
+		}
+		ERR_FAIL_COND_V(PostScore->is_active_request(), this);
 		sw_info("Calling SilentWolf backend to post new score...");
 		String game_id = SilentWolf::config["game_id"];
 		String game_version = SilentWolf::config["game_version"];
@@ -188,40 +196,48 @@ void SW_Scores::persist_score(const String &player_name, const String &score, co
 		String request_url = "https://api.silentwolf.com/post_new_score";
 		send_post_request(PostScore, request_url, payload);
 	}
+	return this;
 }
 
 // Deletes all your scores for your game and version
 // Scores are permanently deleted, no going back!
-void SW_Scores::wipe_leaderboard(const String &ldboard_name) {
-	WipeLeaderboard = newref(BasicHTTPRequest);
-	WipeLeaderboard->connect("request_completed", this, "_on_WipeLeaderboard_request_completed");
+SW_Scores *SW_Scores::wipe_leaderboard(const String &ldboard_name) {
+	if (!WipeLeaderboard) {
+		WipeLeaderboard = newref(BasicHTTPRequest);
+		WipeLeaderboard->connect("request_completed", this, "_on_WipeLeaderboard_request_completed");
+	}
+	ERR_FAIL_COND_V(WipeLeaderboard->is_active_request(), this);
 	sw_info("Calling SilentWolf backend to wipe leaderboard...");
 	String game_id = SilentWolf::config["game_id"];
 	String game_version = SilentWolf::config["game_version"];
 	Dictionary payload = helper::dict("game_id", game_id, "game_version", game_version, "ldboard_name", ldboard_name);
 	String request_url = "https://api.silentwolf.com/wipe_leaderboard";
 	send_post_request(WipeLeaderboard, request_url, payload);
+	return this;
 }
 
-void SW_Scores::delete_score(const String &score_id) {
-	DeleteScore = newref(BasicHTTPRequest);
-	DeleteScore->connect("request_completed", this, "_on_DeleteScore_request_completed");
+SW_Scores *SW_Scores::delete_score(const String &score_id) {
+	if (!DeleteScore) {
+		DeleteScore = newref(BasicHTTPRequest);
+		DeleteScore->connect("request_completed", this, "_on_DeleteScore_request_completed");
+	}
+	ERR_FAIL_COND_V(HighScores->is_active_request(), this);
 	sw_info("Calling SilentWolf to delete a score");
 	String game_id = SilentWolf::config["game_id"];
 	String game_version = SilentWolf::config["game_version"];
 	String request_url = "https://api.silentwolf.com/delete_score?game_id=" + game_id + "&game_version=" + game_version + "&score_id=" + score_id;
 	send_get_request(DeleteScore, request_url);
+	return this;
 }
 
 void SW_Scores::_on_GetScoresByPlayer_request_completed(int result, int response_code, const PoolStringArray &headers, const PoolByteArray &body) {
 	sw_info("GetScoresByPlayer request completed");
-	bool status_check = sw_check_status_code(response_code);
 	//sw_debug("client status: ", HighScores->get_http_client_status());
 	sw_debug("response code: ", response_code);
 	sw_debug("response headers: ", headers);
 	sw_debug("response body: ", get_string_from_utf8(body));
 
-	if (status_check) {
+	if (sw_check_status_code(response_code)) {
 		Dictionary response = parse_json_from_string(get_string_from_utf8(body));
 		sw_debug("json: ", response);
 		if (response.empty()) {
@@ -247,13 +263,12 @@ void SW_Scores::_on_GetScoresByPlayer_request_completed(int result, int response
 
 void SW_Scores::_on_GetHighScores_request_completed(int result, int response_code, const PoolStringArray &headers, const PoolByteArray &body) {
 	sw_info("GetHighScores request completed");
-	bool status_check = sw_check_status_code(response_code);
 	//sw_debug("client status: ", HighScores->get_http_client_status());
 	sw_debug("response code: ", response_code);
 	sw_debug("response headers: ", headers);
 	sw_debug("response body: ", get_string_from_utf8(body));
 
-	if (status_check) {
+	if (sw_check_status_code(response_code)) {
 		Dictionary response = parse_json_from_string(get_string_from_utf8(body));
 		if (response.empty()) {
 			sw_error("No data returned in GetHighScores response. Leaderboard may be empty");
@@ -289,12 +304,11 @@ void SW_Scores::_on_GetHighScores_request_completed(int result, int response_cod
 
 void SW_Scores::_on_DeleteScore_request_completed(int result, int response_code, const PoolStringArray &headers, const PoolByteArray &body) {
 	sw_info("DeleteScore request completed");
-	bool status_check = sw_check_status_code(response_code);
 	sw_debug("response headers: ", response_code);
 	sw_debug("response headers: ", headers);
 	sw_debug("response body: ", get_string_from_utf8(body));
 
-	if (status_check) {
+	if (sw_check_status_code(response_code)) {
 		Dictionary response = parse_json_from_string(get_string_from_utf8(body));
 		if (response.has("message") && response["message"] == "Forbidden") {
 			sw_error("You are not authorized to call the SilentWolf API - check your API key configuration: https://silentwolf.com/leaderboard");
@@ -307,12 +321,11 @@ void SW_Scores::_on_DeleteScore_request_completed(int result, int response_code,
 
 void SW_Scores::_on_PostNewScore_request_completed(int result, int response_code, const PoolStringArray &headers, const PoolByteArray &body) {
 	sw_info("PostNewScore request completed");
-	bool status_check = sw_check_status_code(response_code);
 	sw_debug("response headers: ", response_code);
 	sw_debug("response headers: ", headers);
 	sw_debug("response body: ", get_string_from_utf8(body));
 
-	if (status_check) {
+	if (sw_check_status_code(response_code)) {
 		Dictionary response = parse_json_from_string(get_string_from_utf8(body));
 		if (response.has("message") && response["message"] == "Forbidden") {
 			sw_error("You are not authorized to call the SilentWolf API - check your API key configuration: https://silentwolf.com/leaderboard");
@@ -322,7 +335,6 @@ void SW_Scores::_on_PostNewScore_request_completed(int result, int response_code
 				emit_signal("sw_score_posted", response["score_id"]);
 			} else {
 				emit_signal("sw_score_posted");
-				emit_signal("score_posted");
 			}
 		}
 	}
@@ -330,12 +342,11 @@ void SW_Scores::_on_PostNewScore_request_completed(int result, int response_code
 
 void SW_Scores::_on_GetScorePosition_request_completed(int result, int response_code, const PoolStringArray &headers, const PoolByteArray &body) {
 	sw_info("GetScorePosition request completed");
-	bool status_check = sw_check_status_code(response_code);
 	sw_debug("response headers: ", response_code);
 	sw_debug("response headers: ", headers);
 	sw_debug("response body: ", get_string_from_utf8(body));
 
-	if (status_check) {
+	if (sw_check_status_code(response_code)) {
 		Dictionary response = parse_json_from_string(get_string_from_utf8(body));
 		if (response.has("message") && response["message"] == "Forbidden") {
 			sw_error("You are not authorized to call the SilentWolf API - check your API key configuration: https://silentwolf.com/leaderboard");
@@ -350,12 +361,11 @@ void SW_Scores::_on_GetScorePosition_request_completed(int result, int response_
 
 void SW_Scores::_on_ScoresAround_request_completed(int result, int response_code, const PoolStringArray &headers, const PoolByteArray &body) {
 	sw_info("ScoresAround request completed");
-	bool status_check = sw_check_status_code(response_code);
 	sw_debug("response headers: ", response_code);
 	sw_debug("response headers: ", headers);
 	sw_debug("response body: ", get_string_from_utf8(body));
 
-	if (status_check) {
+	if (sw_check_status_code(response_code)) {
 		Dictionary response = parse_json_from_string(get_string_from_utf8(body));
 		if (response.has("message") && response["message"] == "Forbidden") {
 			sw_error("You are not authorized to call the SilentWolf API - check your API key configuration: https://silentwolf.com/leaderboard");
@@ -380,12 +390,11 @@ void SW_Scores::_on_ScoresAround_request_completed(int result, int response_code
 
 void SW_Scores::_on_WipeLeaderboard_request_completed(int result, int response_code, const PoolStringArray &headers, const PoolByteArray &body) {
 	sw_info("WipeLeaderboard request completed");
-	bool status_check = sw_check_status_code(response_code);
 	sw_debug("response headers: ", response_code);
 	sw_debug("response headers: ", headers);
 	sw_debug("response body: ", get_string_from_utf8(body));
 
-	if (status_check) {
+	if (sw_check_status_code(response_code)) {
 		Dictionary response = parse_json_from_string(get_string_from_utf8(body));
 		if (response.has("message") && response["message"] == "Forbidden") {
 			sw_error("You are not authorized to call the SilentWolf API - check your API key configuration: https://silentwolf.com/leaderboard");
@@ -396,19 +405,22 @@ void SW_Scores::_on_WipeLeaderboard_request_completed(int result, int response_c
 	}
 }
 
-void SW_Scores::send_get_request(Ref<BasicHTTPRequest> http_node, const String &request_url) {
+void SW_Scores::send_get_request(Ref<BasicHTTPRequest> http_req, const String &request_url) {
 	Vector<String> headers = helper::vector(
 			"x-api-key: " + SilentWolf::cfg_str("api_key"),
 			"x-sw-plugin-version: " + SilentWolf::version);
 	sw_debug("Method: GET");
 	sw_debug("request_url: ", request_url);
 	sw_debug("headers: ", headers);
-	http_node->request(request_url, headers);
-	requesting = true;
-	emit_signal("sw_data_requested");
+	if (OK == http_req->request(request_url, headers)) {
+		requesting = true;
+		emit_signal("sw_data_requested");
+	} else {
+		WARN_PRINT("Failed to start GET request.");
+	}
 }
 
-void SW_Scores::send_post_request(Ref<BasicHTTPRequest> http_node, const String &request_url, const Dictionary &payload) {
+void SW_Scores::send_post_request(Ref<BasicHTTPRequest> http_req, const String &request_url, const Dictionary &payload) {
 	Vector<String> headers = helper::vector(
 			application_json,
 			"x-api-key: " + SilentWolf::cfg_str("api_key"),
@@ -430,9 +442,12 @@ void SW_Scores::send_post_request(Ref<BasicHTTPRequest> http_node, const String 
 	sw_info("request_url: ", request_url);
 	sw_info("headers: ", headers);
 	sw_info("query: ", query);
-	http_node->request(request_url, headers, SilentWolf::config["use_ssl"], HTTPClient::METHOD_POST, query);
-	requesting = true;
-	emit_signal("sw_data_requested");
+	if (OK == http_req->request(request_url, headers, SilentWolf::config["use_ssl"], HTTPClient::METHOD_POST, query)) {
+		requesting = true;
+		emit_signal("sw_data_requested");
+	} else {
+		WARN_PRINT("Failed to start POST request.");
+	}
 }
 
 void SW_Scores::_bind_methods() {

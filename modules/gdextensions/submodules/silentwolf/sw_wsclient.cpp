@@ -35,7 +35,7 @@
 #include <_types/_uint8_t.h>
 
 void SW_WSClient::_ready() {
-	sw_debug("Entering MPClient _ready function");
+	sw_debug("Entering SW_WSClient _ready function");
 	_client = WebSocketClient::_create();
 	// Connect base signals to get notified of connection open, close, and errors.
 	_client->connect("connection_closed", this, "_on_closed");
@@ -78,7 +78,11 @@ void SW_WSClient::_on_closed(bool p_was_clean) {
 void SW_WSClient::_on_connected(const String &p_proto) {
 	// This is called on connection, "proto" will be the selected WebSocket
 	// sub-protocol (which is optional)
-	sw_debug("Connected with protocol: ", p_proto);
+	if (p_proto.empty()) {
+		sw_debug("WS connected");
+	} else {
+		sw_debug("WS connected with protocol: ", p_proto);
+	}
 	// You MUST always use get_peer(1)->put_packet to send data to server,
 	// and not put_packet directly when not using the MultiplayerAPI.
 	//Dictionary test_packet = helper::dict("data", "Test packet");
@@ -115,7 +119,7 @@ void SW_WSClient::_on_data() {
 }
 
 // send arbitrary data to backend
-void SW_WSClient::send_to_server(const String &p_message_type, const Dictionary &p_data) {
+void SW_WSClient::send_to_server(const String &p_category, const Dictionary &p_data) {
 	Ref<WebSocketPeer> peer = _client->get_peer(1);
 
 	if (!peer.is_valid() || !peer->is_connected_to_host()) {
@@ -124,7 +128,7 @@ void SW_WSClient::send_to_server(const String &p_message_type, const Dictionary 
 	}
 
 	Dictionary data = p_data;
-	data["message_type"] = p_message_type;
+	data["message_type"] = p_category;
 	sw_debug("Sending data to server: ", data);
 	const CharString msg = JSON::print(data).utf8();
 	peer->put_packet(reinterpret_cast<const uint8_t *>(msg.c_str()), msg.length());

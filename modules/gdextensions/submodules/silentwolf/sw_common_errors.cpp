@@ -32,12 +32,11 @@
 
 bool sw_check_status_code(int status_code) {
 	sw_debug("status_code: ", status_code);
-	bool check_ok = true;
 	if (status_code == 0) {
 		sw_no_connection_error();
-		check_ok = false;
+		return false;
 	}
-	return check_ok;
+	return true;
 }
 
 void sw_no_connection_error() {
