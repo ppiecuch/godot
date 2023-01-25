@@ -90,7 +90,7 @@ String string_format(const char *p_format, ...) {
 	return res;
 }
 
-String string_format(const Array &p_args) {
+String array_concat(const Array &p_args) {
 	String str;
 	for (int i = 0; i < p_args.size(); i++) {
 		str += p_args[i].operator String();

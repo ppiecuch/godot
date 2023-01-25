@@ -39,7 +39,8 @@
 #include "common/gd_core.h"
 #include "common/gd_pack.h"
 
-void _draw_circle(CanvasItem *canvas, const Vector2 &center, real_t r, Color c, int segs) {
+#ifdef DEBUG_ENABLED
+static void _draw_circle(CanvasItem *canvas, const Vector2 &center, real_t r, const Color &c, int segs) {
 	const real_t coef = Math_TAU / segs;
 	Vector<Point2> vertices;
 	real_t rads = 0;
@@ -49,6 +50,7 @@ void _draw_circle(CanvasItem *canvas, const Vector2 &center, real_t r, Color c, 
 	}
 	canvas->draw_polyline(vertices, c);
 }
+#endif
 
 static Ref<SpiderThemeInfo> &get_theme_mgr_instance() {
 	static Ref<SpiderThemeInfo> instance;

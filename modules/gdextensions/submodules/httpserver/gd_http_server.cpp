@@ -47,7 +47,7 @@
 
 static bool _remote_monitor_handler(const http::HTTPMessage *message, http::HTTPMessage *response);
 
-#define _print_debug(...) DEBUG_PRINT(string_format(array("[Http] ", __VA_ARGS__)))
+#define _print_debug(...) DEBUG_PRINT(vconcat("[Http] ", __VA_ARGS__))
 #define _print_fmt_debug(fmt, ...) DEBUG_PRINT(String("[Http] " fmt).sprintf(array(__VA_ARGS__)))
 
 static GdHttpServer *instance = nullptr;

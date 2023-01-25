@@ -398,9 +398,9 @@ public:
 	/**
 	 * erase an element in the list, by iterator pointing to it. Return next element or null if it was not found.
 	 */
-	Element *erase_and_next(const Element *p_I) {
+	Element *erase_and_next(Element *p_I) {
 		if (_data) {
-			Element *n = _data->next();
+			Element *n = p_I->next();
 			bool ret = _data->erase(p_I);
 
 			if (_data->size_cache == 0) {

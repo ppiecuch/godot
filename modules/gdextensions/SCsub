@@ -41,11 +41,8 @@ def add_external_libs(env, libs):
         env.Append(LIBS=libs)
 
 
-def finalize_for_incbin(filepaths, prefix = "", style = "snake"):
-    styled = {
-        "camel" : ["Data", "End", "Size"],
-        "snake" : ["_data", "_end", "_size"]
-    }
+def finalize_for_incbin(filepaths, prefix="", style="snake"):
+    styled = {"camel": ["Data", "End", "Size"], "snake": ["_data", "_end", "_size"]}
     (kData, kEnd, kSize) = (0, 1, 2)
     if style != "snake" and style != "camel":
         print("(GDExtensions) incbin unknown style '%s'. Default to 'snake'" % style)
@@ -68,8 +65,8 @@ def finalize_for_incbin(filepaths, prefix = "", style = "snake"):
             input = input.path
         root = "modules" + os.sep + os.path.basename(os.getcwd()) + os.sep
         if input.startswith(root):
-            input = input[len(root):]
-        with open(input, 'rb') as f:
+            input = input[len(root) :]
+        with open(input, "rb") as f:
             content = f.read()
 
         incbin_index = 0
@@ -86,16 +83,16 @@ def finalize_for_incbin(filepaths, prefix = "", style = "snake"):
                 break
 
             incbin_name = content[beg_index + 1 : sep_index].strip()
-            incbin_file = content[sep_index + 1 : end_index - 1].strip(" \t\"")
+            incbin_file = content[sep_index + 1 : end_index - 1].strip(' \t"')
 
             processed += [incbin_file]
 
-            with open(incbin_file, 'rb') as f:
+            with open(incbin_file, "rb") as f:
                 binary = f.read()
             n_bytes = len(binary)
             # python2 compatible
             chars = binascii.hexlify(binary)
-            chars = [chars[i:i+2] for i in range(0, len(chars), 2)]
+            chars = [chars[i : i + 2] for i in range(0, len(chars), 2)]
             chars = "0x" + ",0x".join(chars)
 
             code = """
@@ -105,8 +102,16 @@ def finalize_for_incbin(filepaths, prefix = "", style = "snake"):
                 INCBIN_CONST unsigned int {prefix}{name}{kSize} = {n_bytes};
 
             """
-            incbin_code += code.replace("{chars}", chars).replace("{n_bytes}", str(n_bytes)).replace("{prefix}", prefix).replace("{name}", incbin_name).replace("{file}", incbin_file) \
-                .replace("{kData}", styled[style][kData]).replace("{kEnd}", styled[style][kEnd]).replace("{kSize}", styled[style][kSize])
+            incbin_code += (
+                code.replace("{chars}", chars)
+                .replace("{n_bytes}", str(n_bytes))
+                .replace("{prefix}", prefix)
+                .replace("{name}", incbin_name)
+                .replace("{file}", incbin_file)
+                .replace("{kData}", styled[style][kData])
+                .replace("{kEnd}", styled[style][kEnd])
+                .replace("{kSize}", styled[style][kSize])
+            )
 
     incbin_code += """
         #ifdef __cplusplus
@@ -115,7 +120,7 @@ def finalize_for_incbin(filepaths, prefix = "", style = "snake"):
     """
 
     print("(GDExtensions) incbin processed for %d resources" % len(processed))
-    return (incbin_code if len(processed) else "")
+    return incbin_code if len(processed) else ""
 
 
 env_module = env_modules.Clone()
@@ -480,7 +485,7 @@ for m in modules:
 if env.msvc:
     incbin_code = finalize_for_incbin(sources)
     if incbin_code:
-        with open("_incbin_msvc_data.c", 'w') as f:
+        with open("_incbin_msvc_data.c", "w") as f:
             f.write(incbin_code)
         sources += ["_incbin_msvc_data.c"]
 

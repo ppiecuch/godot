@@ -75,6 +75,8 @@ public:
 	Variant get_key_at_index(int p_index) const;
 	Variant get_value_at_index(int p_index) const;
 
+	void set(const Variant &p_key, const Variant &p_value);
+
 	Variant &operator[](const Variant &p_key);
 	const Variant &operator[](const Variant &p_key) const;
 

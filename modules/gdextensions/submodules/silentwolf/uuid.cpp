@@ -41,8 +41,8 @@
 // The above copyright notice and this permission notice shall be included in all
 // copies or substantial portions of the Software.
 
-#include "core/variant.h"
 #include "core/math/math_funcs.h"
+#include "core/variant.h"
 
 int get_random_int(int max_value) {
 	Math::randomize();
@@ -53,8 +53,8 @@ PoolByteArray random_bytes(int n) {
 	PoolByteArray r;
 	r.resize(n);
 	for (int index = 0; index < n; index++) {
-			r.write()[index] = get_random_int(256);
-		}
+		r.write()[index] = get_random_int(256);
+	}
 	return r;
 }
 

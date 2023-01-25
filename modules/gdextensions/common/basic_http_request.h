@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  http_request.h                                                       */
+/*  basic_http_request.h                                                 */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,16 +28,16 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef HTTP_REQUEST_BASIC_H
-#define HTTP_REQUEST_BASIC_H
+#ifndef BASIC_HTTP_REQUEST_H
+#define BASIC_HTTP_REQUEST_H
 
 #include "core/io/http_client.h"
 #include "core/os/file_access.h"
 #include "core/safe_refcount.h"
 #include "scene/main/timer.h"
 
-class HTTPRequestBasic : public Reference {
-	GDCLASS(HTTPRequestBasic, Reference);
+class BasicHTTPRequest : public Reference {
+	GDCLASS(BasicHTTPRequest, Reference);
 
 public:
 	enum Result {
@@ -101,15 +101,17 @@ private:
 	Error _request();
 
 	void _request_done(int p_status, int p_code, const PoolStringArray &p_headers, const PoolByteArray &p_data);
-	bool _process();
 
 protected:
 	static void _bind_methods();
 
 public:
+	bool poll(); // return true if request is done
+
 	Error request(const String &p_url, const Vector<String> &p_custom_headers = Vector<String>(), bool p_ssl_validate_domain = true, HTTPClient::Method p_method = HTTPClient::METHOD_GET, const String &p_request_data = ""); //connects to a full url and perform request
 	Error request_raw(const String &p_url, const Vector<String> &p_custom_headers = Vector<String>(), bool p_ssl_validate_domain = true, HTTPClient::Method p_method = HTTPClient::METHOD_GET, const PoolVector<uint8_t> &p_request_data_raw = PoolVector<uint8_t>()); //connects to a full url and perform request
 	void cancel_request();
+	_FORCE_INLINE_ bool is_active_request() const { return requesting; }
 	HTTPClient::Status get_http_client_status() const;
 
 	void set_download_file(const String &p_file);
@@ -138,10 +140,10 @@ public:
 	void set_http_proxy(const String &p_host, int p_port);
 	void set_https_proxy(const String &p_host, int p_port);
 
-	HTTPRequestBasic();
-	~HTTPRequestBasic();
+	BasicHTTPRequest();
+	~BasicHTTPRequest();
 };
 
-VARIANT_ENUM_CAST(HTTPRequestBasic::Result);
+VARIANT_ENUM_CAST(BasicHTTPRequest::Result);
 
-#endif // HTTP_REQUEST_BASIC_H
+#endif // BASIC_HTTP_REQUEST_H

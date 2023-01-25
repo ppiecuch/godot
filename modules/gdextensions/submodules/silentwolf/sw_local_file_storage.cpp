@@ -30,9 +30,9 @@
 
 #include "silent_wolf.h"
 
-#include "core/variant.h"
 #include "core/io/json.h"
 #include "core/os/file_access.h"
+#include "core/variant.h"
 
 // Retrieves data stored as JSON in local storage
 // example path: "user://swsession.save"
