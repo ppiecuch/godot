@@ -770,7 +770,7 @@ unique_ptr<Scene> svgSceneBuild(SvgNode* node, float &vx, float &vy, float &vw, 
 
     auto docNode = _sceneBuildHelper(node, {vx, vy, vw, vh}, svgPath, false, 0);
 
-    // If viewbox is missing restore if from bounds
+    // If viewbox is missing restore it from bounds
     // (otherwise no picture is displayed)
     if (!_has(geometry, GeometryValid::Viewbox)) {
         docNode->bounds(&vx, &vy, &vw, &vh);
