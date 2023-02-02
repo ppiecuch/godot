@@ -117,7 +117,7 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Spati
 			float r = v[1].to_float();
 			float g = v[2].to_float();
 			float b = v[3].to_float();
-			float metalness = MAX(r, MAX(g, b));
+			const float metalness = MAX(r, MAX(g, b));
 			current->set_metallic(metalness);
 			meta["Ks"] = metalness;
 		} else if (l.begins_with("Ns ")) {
