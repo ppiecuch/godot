@@ -30,10 +30,10 @@
 
 #define VULKAN_SHADER_OUT
 
-#define ShaderGLES3 ShaderVKGL
-#define ShaderCacheGLES3 ShaderCacheVKGL
-#define RasterizerGLES3 RasterizerVKGL
-#define RasterizerCanvasBaseGLES3 RasterizerCanvasBaseVKGL
-#define RasterizerCanvasGLES3 RasterizerCanvasVKGL
-#define RasterizerStorageGLES3 RasterizerStorageVKGL
-#define RasterizerSceneGLES3 RasterizerSceneVKGL
+#define ShaderGLES2 ShaderVKGL
+#define ShaderCacheGLES2 ShaderCacheVKGL
+#define RasterizerGLES2 RasterizerVKGL
+#define RasterizerCanvasBaseGLES2 RasterizerCanvasBaseVKGL
+#define RasterizerCanvasGLES2 RasterizerCanvasVKGL
+#define RasterizerStorageGLES2 RasterizerStorageVKGL
+#define RasterizerSceneGLES2 RasterizerSceneVKGL

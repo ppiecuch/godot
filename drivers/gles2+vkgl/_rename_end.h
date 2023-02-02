@@ -28,10 +28,10 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#undef ShaderGLES3
-#undef ShaderCacheGLES3
-#undef RasterizerGLES3
-#undef RasterizerCanvasBaseGLES3
-#undef RasterizerCanvasGLES3
-#undef RasterizerSceneGLES3
-#undef RasterizerStorageGLES3
+#undef ShaderGLES2
+#undef ShaderCacheGLES2
+#undef RasterizerGLES2
+#undef RasterizerCanvasBaseGLES2
+#undef RasterizerCanvasGLES2
+#undef RasterizerSceneGLES2
+#undef RasterizerStorageGLES2
