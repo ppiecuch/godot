@@ -34,7 +34,7 @@
 #include "core/variant.h"
 #include "editor/editor_node.h"
 
-const String SilentWolf::version = "0.6.19";
+const String SilentWolf::version = "0.6.20";
 const String SilentWolf::godot_version;
 
 const Dictionary SilentWolf::config = helper::dict(

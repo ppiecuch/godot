@@ -127,16 +127,38 @@ SW_Scores *SW_Scores::get_high_scores(int maximum, const String &ldboard_name, i
 }
 
 SW_Scores *SW_Scores::get_scores_by_player(const String &player_name, int maximum, const String &ldboard_name, int period_offset) {
-	sw_info("get_scores_by_player, player_name = ", player_name);
-	ScoresByPlayer = newref(BasicHTTPRequest);
-	ScoresByPlayer->connect("request_completed", this, "_on_GetScoresByPlayer_request_completed");
-	sw_info("Calling SilentWolf backend to get scores for player: ", player_name);
-	// resetting the latest_number value in case the first requests times out, we need to request the same amount of top scores in the retry
-	latest_max = maximum;
-	String game_id = SilentWolf::config["game_id"];
-	String game_version = SilentWolf::config["game_version"];
-	String request_url = "https://api.silentwolf.com/get_scores_by_player/" + game_id + "?version=" + game_version + "&max=" + itos(maximum) + "&ldboard_name=" + ldboard_name.percent_encode() + "&player_name=" + player_name.percent_encode() + "&period_offset=" + itos(period_offset);
-	send_get_request(ScoresByPlayer, request_url);
+	if (player_name.empty()) {
+		sw_error("Error in get_scores_by_player: provided player_name is empty");
+	} else {
+		sw_info("get_scores_by_player, player_name = ", player_name);
+		ScoresByPlayer = newref(BasicHTTPRequest);
+		ScoresByPlayer->connect("request_completed", this, "_on_GetScoresByPlayer_request_completed");
+		sw_info("Calling SilentWolf backend to get scores for player: ", player_name);
+		// resetting the latest_number value in case the first requests times out, we need to request the same amount of top scores in the retry
+		latest_max = maximum;
+		String game_id = SilentWolf::config["game_id"];
+		String game_version = SilentWolf::config["game_version"];
+		String request_url = "https://api.silentwolf.com/get_scores_by_player/" + game_id + "?version=" + game_version + "&max=" + itos(maximum) + "&ldboard_name=" + ldboard_name.percent_encode() + "&player_name=" + player_name.percent_encode() + "&period_offset=" + itos(period_offset);
+		send_get_request(ScoresByPlayer, request_url);
+	}
+	return this;
+}
+
+SW_Scores *SW_Scores::get_top_score_by_player(const String &player_name, int maximum, const String &ldboard_name, int period_offset) {
+	sw_info("get_top_score_by_player, player_name = ", player_name);
+	if (player_name.empty()) {
+		sw_error("Error in get_top_score_by_player: provided player_name is empty");
+	} else {
+		TopScoreByPlayer = newref(BasicHTTPRequest);
+		TopScoreByPlayer->connect("request_completed", this, "_on_GetTopScoreByPlayer_request_completed");
+		sw_info("Calling SilentWolf backend to get scores for player: ", player_name);
+		// resetting the latest_number value in case the first requests times out, we need to request the same amount of top scores in the retry
+		latest_max = maximum;
+		const String &game_id = SilentWolf::config["game_id"];
+		const String &game_version = SilentWolf::config["game_version"];
+		const String &request_url = "https://api.silentwolf.com/get_top_score_by_player/" + game_id + "?version=" + game_version + "&max=" + itos(maximum) + "&ldboard_name=" + ldboard_name.percent_encode() + "&player_name=" + player_name.percent_encode() + "&period_offset=" + itos(period_offset);
+		send_get_request(TopScoreByPlayer, request_url);
+	}
 	return this;
 }
 
@@ -250,12 +272,48 @@ void SW_Scores::_on_GetScoresByPlayer_request_completed(int result, int response
 			if (response.has("top_scores")) {
 				player_scores = response["top_scores"];
 				sw_debug("scores: ", scores);
-				String ld_name = response["ld_name"];
+				const String &ld_name = response["ld_name"];
 				//sw_debug("ld_name: ", ld_name);
-				Dictionary ld_config = response["ld_config"];
-				String player_name = response["player_name"];
+				const Dictionary &ld_config = response["ld_config"];
+				const String &player_name = response["player_name"];
 				//sw_debug("latest_scores: ", leaderboards);
 				emit_signal("sw_player_scores_received", player_scores);
+			}
+		}
+	}
+}
+
+void SW_Scores::_on_GetTopScoreByPlayer_request_completed(int result, int response_code, const PoolStringArray &headers, const PoolByteArray &body) {
+	sw_info("GetTopScoreByPlayer request completed");
+	sw_debug("response code: ", response_code);
+	sw_debug("response headers: ", headers);
+	sw_debug("response body: ", get_string_from_utf8(body));
+
+	if (sw_check_status_code(response_code)) {
+		Dictionary response = parse_json_from_string(get_string_from_utf8(body));
+		sw_debug("json: ", response);
+		if (response.empty()) {
+			sw_error("No data returned in GetTopScoreByPlayer response. There was a problem getting the response from the backend.");
+			emit_signal("sw_player_scores_received", "No Leaderboard found", scores);
+		} else if (response.has("message") && response["message"] == "Forbidden") {
+			sw_error("You are not authorized to call the SilentWolf API - check your API key configuration: https://silentwolf.com/leaderboard");
+		} else {
+			sw_info("SilentWolf get top score by player success");
+			if (response.has("top_score")) {
+				Dictionary top_score = response["top_scores"];
+				sw_debug("top score from response: ", top_score);
+				if (top_score.empty()) {
+					player_top_score = Dictionary();
+				} else {
+					player_top_score = top_score;
+				}
+				sw_debug("top score: ", player_top_score);
+				const String &ld_name = response["ld_name"];
+				//sw_debug("ld_name: ", ld_name);
+				Dictionary ld_config = response["ld_config"];
+				const String &player_name = response["player_name"];
+				//sw_debug("latest_scores: ", leaderboards);
+				emit_signal("sw_top_player_score_received", player_top_score);
 			}
 		}
 	}
@@ -281,7 +339,7 @@ void SW_Scores::_on_GetHighScores_request_completed(int result, int response_cod
 			if (response.has("top_scores")) {
 				scores = response["top_scores"];
 				sw_debug("scores: ", scores);
-				String ld_name = response["ld_name"];
+				const String &ld_name = response["ld_name"];
 				//sw_debug("ld_name: ", ld_name);
 				Dictionary ld_config = response["ld_config"];
 				//sw_debug("ld_config: ", ld_config);
@@ -489,6 +547,7 @@ void SW_Scores::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("sw_data_requested"));
 	ADD_SIGNAL(MethodInfo("sw_scores_received"));
 	ADD_SIGNAL(MethodInfo("sw_player_scores_received"));
+	ADD_SIGNAL(MethodInfo("sw_top_player_score_received"));
 	ADD_SIGNAL(MethodInfo("sw_position_received"));
 	ADD_SIGNAL(MethodInfo("sw_scores_around_received", PropertyInfo(Variant::ARRAY, "scores_above"), PropertyInfo(Variant::ARRAY, "scores_below"), PropertyInfo(Variant::INT, "position")));
 	ADD_SIGNAL(MethodInfo("sw_score_posted"));

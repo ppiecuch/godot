@@ -168,6 +168,7 @@ class SW_Scores : public Reference {
 	// contains only the scores from one leaderboard at a time
 	Array scores;
 	Array player_scores;
+	Dictionary player_top_score;
 	Array local_scores;
 	String score_id;
 	int position;
@@ -184,12 +185,14 @@ class SW_Scores : public Reference {
 	Ref<BasicHTTPRequest> ScoresAround;
 	Ref<BasicHTTPRequest> HighScores;
 	Ref<BasicHTTPRequest> ScoresByPlayer;
+	Ref<BasicHTTPRequest> TopScoreByPlayer;
 	Ref<BasicHTTPRequest> PostScore;
 	Ref<BasicHTTPRequest> WipeLeaderboard;
 	Ref<BasicHTTPRequest> DeleteScore;
 
 	void _on_GetScoresByPlayer_request_completed(int result, int response_code, const PoolStringArray &headers, const PoolByteArray &body);
 	void _on_GetHighScores_request_completed(int result, int response_code, const PoolStringArray &headers, const PoolByteArray &body);
+	void _on_GetTopScoreByPlayer_request_completed(int result, int response_code, const PoolStringArray &headers, const PoolByteArray &body);
 	void _on_DeleteScore_request_completed(int result, int response_code, const PoolStringArray &headers, const PoolByteArray &body);
 	void _on_PostNewScore_request_completed(int result, int response_code, const PoolStringArray &headers, const PoolByteArray &body);
 	void _on_GetScorePosition_request_completed(int result, int response_code, const PoolStringArray &headers, const PoolByteArray &body);
@@ -214,6 +217,7 @@ public:
 	SW_Scores *get_scores_around(const String &score, int scores_to_fetch = 3, const String &ldboard_name = "main");
 	SW_Scores *get_high_scores(int maximum = 10, const String &ldboard_name = "main", int period_offset = 0);
 	SW_Scores *get_scores_by_player(const String &player_name, int maximum = 10, const String &ldboard_name = "main", int period_offset = 0);
+	SW_Scores *get_top_score_by_player(const String &player_name, int maximum = 10, const String &ldboard_name = "main", int period_offset = 0);
 
 	SW_Scores *wipe_leaderboard(const String &ldboard_name = "main");
 	SW_Scores *persist_score(const String &player_name, const String &score, const String &ldboard_name = "main", const Dictionary &metadata = Dictionary());
