@@ -671,7 +671,7 @@ void Camera2D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_process_mode", "mode"), &Camera2D::set_process_mode);
 	ClassDB::bind_method(D_METHOD("get_process_mode"), &Camera2D::get_process_mode);
 
-	ClassDB::bind_method(D_METHOD("set_current", "current"), &Camera2D::_set_current);
+	ClassDB::bind_method(D_METHOD("_set_current", "current"), &Camera2D::_set_current);
 	ClassDB::bind_method(D_METHOD("is_current"), &Camera2D::is_current);
 	ClassDB::bind_method(D_METHOD("_make_current"), &Camera2D::_make_current);
 
