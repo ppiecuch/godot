@@ -28,7 +28,6 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-/* cable2d.h */
 #ifndef CABLE2D_H
 #define CABLE2D_H
 
@@ -37,8 +36,34 @@
 class Cable2D : public Node2D {
 	GDCLASS(Cable2D, Node2D);
 
+	bool _active;
+	PoolVector<Vector2> _points; // Pinned points
+	PoolVector<Vector2> _rendered_points;
+	PoolVector<Vector2> _old_points;
+	PoolVector<float> _rest_lengths;
+	PoolVector<Vector2> _point_forces; // Allows for scripts to sway the cables per segment.
+	int _segments; // Number of points inbetween the pinned points.
+	float _width;
+	float _restlength_scale;
+	float _force_damping;
+	int _iterations;
+	Color _color;
+
+	void rebuild_points();
+	void update_rest_length();
+
+	void update_cable(float delta);
+	void update_constraints();
+
+protected:
+	void _notification(int p_what);
+	void _draw();
+
+	static void _bind_methods();
+
 public:
-	Cable2D();
+	void set_active(bool status);
+	bool is_active() const;
 
 	void set_points(const PoolVector<Vector2> &p_points);
 	PoolVector<Vector2> get_points() const;
@@ -64,31 +89,8 @@ public:
 	void set_iterations(int iterations);
 	int get_iterations() const;
 
-private:
-	void rebuild_points();
-	void update_rest_length();
-
-	void update_cable(float delta);
-	void update_constraints();
-
-protected:
-	void _notification(int p_what);
-	void _draw();
-
-	static void _bind_methods();
-
 public:
-	PoolVector<Vector2> _points; // Pinned points
-	PoolVector<Vector2> _rendered_points;
-	PoolVector<Vector2> _old_points;
-	PoolVector<float> _rest_lengths;
-	PoolVector<Vector2> _point_forces; // Allows for scripts to sway the cables per segment.
-	int _segments; // Number of points inbetween the pinned points.
-	float _width;
-	float _restlength_scale;
-	float _force_damping;
-	int _iterations;
-	Color _color;
+	Cable2D();
 };
 
 #endif
