@@ -278,6 +278,10 @@ void RID_Database::handle_free(const RID &p_rid) {
 		if (revision_correct) {
 			pe.data->_owner = nullptr;
 			pe.data = nullptr;
+			if (p_rid._props) {
+				memdelete(p_rid._props);
+				p_rid._props = nullptr;
+			}
 			_pool.free(p_rid._id);
 		}
 	}
