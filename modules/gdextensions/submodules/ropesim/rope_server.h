@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  cable_2d.h                                                           */
+/*  rope_server.h                                                        */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,68 +28,50 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef CABLE2D_H
-#define CABLE2D_H
+#ifndef ROPE_SERVER_H
+#define ROPE_SERVER_H
+
+// Build from 20 commits
 
 #include "scene/2d/node_2d.h"
+#include "scene/2d/sprite.h"
+#include "scene/main/node.h"
 
-class Cable2D : public Node2D {
-	GDCLASS(Cable2D, Node2D);
+#include <vector>
 
-	bool _active;
-	PoolVector<Vector2> _points; // Pinned points
-	PoolVector<Vector2> _rendered_points;
-	PoolVector<Vector2> _old_points;
-	PoolVector<float> _rest_lengths;
-	PoolVector<Vector2> _point_forces; // Allows for scripts to sway the cables per segment.
-	int _segments; // Number of points inbetween the pinned points.
-	float _width;
-	float _restlength_scale;
-	float _force_damping;
-	int _iterations;
-	Color _color;
+class RopeServer : public Node {
+	GDCLASS(RopeServer, Node)
 
-	void rebuild_points();
-	void update_rest_length();
+	std::vector<Node2D *> _ropes;
+	float _last_time;
+	bool _update_in_editor;
 
-	void update_cable(float delta);
-	void update_constraints();
+	void _init();
+	void _enter_tree();
+	void _physics_process(float delta);
+
+	void _start_stop_process();
+	void _simulate(Node2D *rope, float delta);
 
 protected:
-	void _notification(int p_what);
-	void _draw();
+	void _notification(int what);
 
 	static void _bind_methods();
 
 public:
-	void set_active(bool status);
-	bool is_active() const;
+	static RopeServer *get_singleton();
 
-	void set_points(const PoolVector<Vector2> &p_points);
-	PoolVector<Vector2> get_points() const;
+	void set_update_in_editor(bool value);
+	bool get_update_in_editor() const;
 
-	void set_points_forces(const PoolVector<Vector2> &p_forces);
-	PoolVector<Vector2> get_points_forces() const;
+	int get_num_ropes() const;
+	float get_computation_time() const;
 
-	void set_point_force(int index, Vector2 force);
-	Vector2 get_point_force(int index) const;
+	void register_rope(Node *rope);
+	void unregister_rope(Node *rope);
 
-	void set_color(Color color);
-	Color get_color() const;
-
-	void set_width(float width);
-	float get_width() const;
-
-	void set_segments(int segments);
-	int get_segments() const;
-
-	void set_restlength_scale(float scale);
-	float get_restlength_scale() const;
-
-	void set_iterations(int iterations);
-	int get_iterations() const;
-
-	Cable2D();
+	RopeServer();
+	~RopeServer();
 };
 
-#endif
+#endif // ROPE_SERVER_H

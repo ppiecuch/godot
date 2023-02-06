@@ -121,6 +121,8 @@
 #include "visual/touch_button.h"
 #include "visual/widget_controls.h"
 
+#include "ropesim/rope_server.h"
+
 #include "vgamepad/vgamepad.h"
 
 #include "environment/spherical_waves/spherical_waves.h"
@@ -208,6 +210,13 @@
 #include "polyvector/resource_importer_swf.h"
 
 static Ref<ResourceLoaderJSONVector> resource_loader_jsonvector;
+#endif
+
+#ifdef GDEXT_THORVG_ENABLED
+#include <thorvg.h>
+#include "thorvg/image_loader_thor_svg.h"
+
+static Ref<ImageLoaderThorSVG> image_loader_tsvg;
 #endif
 
 #ifdef GDEXT_MESHLOD_ENABLED
@@ -426,6 +435,9 @@ void register_gdextensions_types() {
 	ClassDB::register_class<ControlWidget>();
 #endif
 #endif // GDEXT_VISUAL_ENABLED
+#ifdef GDEXT_ROPESIM_ENABLED
+		Engine::get_singleton()->add_singleton(Engine::Singleton("RopeServer", RopeServer::get_singleton()));
+#endif
 #ifdef GDEXT_SPINNERS_ENABLED
 	ClassDB::register_class<Spinner>();
 #endif
@@ -567,6 +579,17 @@ void register_gdextensions_types() {
 #endif
 #endif
 
+#ifdef GDEXT_THORVG_ENABLED
+#ifdef TOOLS_ENABLED
+	tvg::CanvasEngine tvgEngine = tvg::CanvasEngine::Sw;
+	if (tvg::Initializer::init(tvgEngine, 1) != tvg::Result::Success) {
+		return;
+	}
+	image_loader_thor_svg.instantiate();
+	ImageLoader::add_image_format_loader(image_loader_thor_svg);
+#endif
+#endif
+
 #ifdef GDEXT_MESHLOD_ENABLED
 	ClassDB::register_class<MeshOptimize>();
 	EditorPlugins::add_by_type<MeshOptimizePlugin>();
@@ -631,6 +654,14 @@ void unregister_gdextensions_types() {
 #ifdef GDEXT_POLYVECTOR_ENABLED
 	ResourceLoader::remove_resource_format_loader(resource_loader_jsonvector);
 	resource_loader_jsonvector.unref();
+#endif
+#ifdef GDEXT_THORVG_ENABLED
+	if (image_loader_thor_svg.is_null()) {
+		return; // It failed to initialize so it was not added.
+	}
+	ImageLoader::remove_image_format_loader(image_loader_thor_svg);
+	image_loader_thor_svg.unref();
+	tvg::Initializer::term(tvg::CanvasEngine::Sw);
 #endif
 #ifdef GDEXT_SETTINGS_ENABLED
 	if (Settings *instance = Settings::get_singleton()) {
