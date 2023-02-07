@@ -859,12 +859,24 @@ void RasterizerCanvasGLES2::render_batches(Item *p_current_clip, bool &r_reclip,
 						} break;
 						case Item::Command::TYPE_MESH: {
 							Item::CommandMesh *mesh = static_cast<Item::CommandMesh *>(command);
+
+							Transform transform = mesh->transform;
+							Color modulate = mesh->modulate;
+							bool depth = false;
+							if (mesh->mesh3d.is_valid()) {
+								if (mesh->mesh3d.get_props_count() == 3) {
+									transform = mesh->mesh3d.get_prop(0).transform_value;
+									modulate = mesh->mesh3d.get_prop(1).color_value;
+									depth = mesh->mesh3d.get_prop(2).bool_value;
+								}
+							}
+
 							RasterizerStorageGLES2::Mesh *mesh_data = storage->mesh_owner.getornull(mesh->mesh);
 							if (!mesh_data) {
 								break;
 							}
 
-							if (mesh->depth) {
+							if (depth) {
 								glEnable(GL_DEPTH_TEST);
 								glDepthMask(GL_TRUE);
 								state.canvas_shader.set_conditional(CanvasShaderGLES2::VERTEX_VEC3_USED, true);
@@ -882,6 +894,12 @@ void RasterizerCanvasGLES2::render_batches(Item *p_current_clip, bool &r_reclip,
 							if (texture) {
 								Size2 texpixel_size(1.0 / texture->width, 1.0 / texture->height);
 								state.canvas_shader.set_uniform(CanvasShaderGLES2::COLOR_TEXPIXEL_SIZE, texpixel_size);
+							}
+
+							if (transform == Transform()) {
+								state.canvas_shader.set_uniform(CanvasShaderGLES2::MODELVIEW_MATRIX, state.uniforms.modelview_matrix);
+							} else {
+								state.canvas_shader.set_uniform(CanvasShaderGLES2::MODELVIEW_MATRIX, _from_transform_2d(state.uniforms.modelview_matrix) * transform);
 							}
 
 							for (int j = 0; j < mesh_data->surfaces.size(); j++) {
@@ -906,7 +924,17 @@ void RasterizerCanvasGLES2::render_batches(Item *p_current_clip, bool &r_reclip,
 													glVertexAttrib4f(VS::ARRAY_NORMAL, 0.0, 0.0, 1, 1);
 												} break;
 												case VS::ARRAY_COLOR: {
-													glVertexAttrib4f(VS::ARRAY_COLOR, 1, 1, 1, 1);
+													// use albedo and metalness color from material
+													// http://paulbourke.net/dataformats/mtl/
+													Color c = modulate;
+													if (RasterizerStorageGLES2::Material *m = storage->material_owner.getornull(s->material)) {
+														if (m->params.has("albedo")) {
+															c *= m->params["albedo"].operator Color();
+														}
+														if (m->params.has("metalness")) {
+														}
+													}
+													glVertexAttrib4f(VS::ARRAY_COLOR, c.r, c.g, c.b, c.a);
 
 												} break;
 												default: {
@@ -927,7 +955,7 @@ void RasterizerCanvasGLES2::render_batches(Item *p_current_clip, bool &r_reclip,
 								glDisableVertexAttribArray(j);
 							}
 
-							if (mesh->depth) { // restore default state
+							if (depth) { // restore default state
 								glDisable(GL_DEPTH_TEST);
 								glDepthMask(GL_FALSE);
 								state.canvas_shader.set_conditional(CanvasShaderGLES2::VERTEX_VEC3_USED, GLOBAL_DEF("rendering/quality/2d/use_vertex_vector3", true));
@@ -1941,7 +1969,7 @@ void RasterizerCanvasGLES2::_legacy_canvas_render_item(Item *p_ci, RenderItemSta
 						ci->final_modulate.a * p_modulate.a );
 
 
-			state.canvas_shader.set_uniform(CanvasShaderGLES2::MODELVIEW_MATRIX,state.final_transform);
+			state.canvas_shader.set_uniform(CanvasShaderGLES2::MODELVIEW_MATRIX,state.modelview_matrix);
 			state.canvas_shader.set_uniform(CanvasShaderGLES2::EXTRA_MATRIX,Transform2D());
 			state.canvas_shader.set_uniform(CanvasShaderGLES2::FINAL_MODULATE,state.canvas_item_modulate);
 
@@ -2354,7 +2382,7 @@ void RasterizerCanvasGLES2::render_joined_item(const BItemJoined &p_bij, RenderI
 						ci->final_modulate.a * p_modulate.a );
 
 
-			state.canvas_shader.set_uniform(CanvasShaderGLES2::MODELVIEW_MATRIX,state.final_transform);
+			state.canvas_shader.set_uniform(CanvasShaderGLES2::MODELVIEW_MATRIX,state.modelview_matrix);
 			state.canvas_shader.set_uniform(CanvasShaderGLES2::EXTRA_MATRIX,Transform2D());
 			state.canvas_shader.set_uniform(CanvasShaderGLES2::FINAL_MODULATE,state.canvas_item_modulate);
 

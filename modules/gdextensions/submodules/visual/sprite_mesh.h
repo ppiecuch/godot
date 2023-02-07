@@ -299,13 +299,13 @@ class SpriteMeshEditor : public Control {
 	struct {
 		bool enabled;
 		RID item;
-		uint64_t entry;
-		RID mesh;
+		RID mesh3d;
+		Ref<ArrayMesh> mesh;
 	} origin_indicator;
 
 	struct {
 		RID item;
-		uint64_t entry;
+		RID mesh3d;
 		Ref<ArrayMesh> mesh;
 	} rotate_gizmo[3], scale_gizmo[3], scale_plane_gizmo[3];
 
@@ -366,4 +366,17 @@ public:
 
 #endif // TOOLS_ENABLED
 
+class SpriteMeshManager : public Node {
+	GDCLASS(SpriteMeshManager, Node);
+
+protected:
+	static void _bind_methods();
+	void _notification(int p_notification);
+
+public:
+	virtual String get_configuration_warning() const;
+
+	SpriteMeshManager();
+	~SpriteMeshManager();
+};
 #endif // GD_SPRITE_MESH_H

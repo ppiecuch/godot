@@ -1052,10 +1052,7 @@ public:
 	virtual void canvas_item_add_primitive(RID p_item, const Vector<Point2> &p_points, const Vector<Color> &p_colors, const Vector<Point2> &p_uvs, RID p_texture, float p_width = 1.0, RID p_normal_map = RID(), RID p_mask = RID()) = 0;
 	virtual void canvas_item_add_polygon(RID p_item, const Vector<Point2> &p_points, const Vector<Color> &p_colors, const Vector<Point2> &p_uvs = Vector<Point2>(), RID p_texture = RID(), RID p_normal_map = RID(), RID p_mask = RID(), bool p_antialiased = false) = 0;
 	virtual void canvas_item_add_triangle_array(RID p_item, const Vector<int> &p_indices, const Vector<Point2> &p_points, const Vector<Color> &p_colors, const Vector<Point2> &p_uvs = Vector<Point2>(), const Vector<int> &p_bones = Vector<int>(), const Vector<float> &p_weights = Vector<float>(), RID p_texture = RID(), int p_count = -1, RID p_normal_map = RID(), RID p_mask = RID(), bool p_antialiased = false, bool p_antialiasing_use_indices = false) = 0;
-	virtual void canvas_item_add_mesh(RID p_item, const RID &p_mesh, const Transform2D &p_transform = Transform2D(), const Color &p_modulate = Color(1, 1, 1), RID p_texture = RID(), RID p_normal_map = RID(), RID p_mask = RID()) = 0;
-	virtual uint64_t canvas_item_add_mesh_3d(RID p_item, const RID &p_mesh, const Transform &p_transform = Transform(), const Color &p_modulate = Color(1, 1, 1), RID p_texture = RID(), RID p_normal_map = RID(), RID p_mask = RID()) = 0;
-	virtual void canvas_item_set_mesh_3d(RID p_item, uint64_t p_entry, const Transform &p_transform = Transform(), const Color &p_modulate = Color(1, 1, 1), RID p_texture = RID(), RID p_normal_map = RID(), RID p_mask = RID()) = 0;
-	virtual void canvas_item_mul_mesh_3d(RID p_item, uint64_t p_entry, const Variant &p_prop) = 0;
+	virtual void canvas_item_add_mesh(RID p_item, RID p_mesh, const Transform2D &p_transform = Transform2D(), const Color &p_modulate = Color(1, 1, 1), RID p_texture = RID(), RID p_normal_map = RID(), RID p_mask = RID()) = 0;
 	virtual void canvas_item_add_multimesh(RID p_item, RID p_mesh, RID p_texture = RID(), RID p_normal_map = RID(), RID p_mask = RID()) = 0;
 	virtual void canvas_item_add_particles(RID p_item, RID p_particles, RID p_texture, RID p_normal_map = RID(), RID p_mask = RID()) = 0;
 	virtual void canvas_item_add_set_transform(RID p_item, const Transform2D &p_transform) = 0;
@@ -1064,6 +1061,16 @@ public:
 	virtual void canvas_item_set_z_index(RID p_item, int p_z) = 0;
 	virtual void canvas_item_set_z_as_relative_to_parent(RID p_item, bool p_enable) = 0;
 	virtual void canvas_item_set_copy_to_backbuffer(RID p_item, bool p_enable, const Rect2 &p_rect) = 0;
+
+	// 3d mesh and lighting
+	enum Mesh3dOp {
+		OP_SET,
+		OP_MUL,
+		OP_ADD,
+	};
+	virtual RID canvas_item_create_mesh_3d(RID p_mesh) = 0;
+	virtual void canvas_item_add_mesh_3d(RID p_item, RID p_mesh3d, const Transform &p_transform = Transform(), const Color &p_modulate = Color(1, 1, 1), RID p_texture = RID(), RID p_normal_map = RID(), RID p_mask = RID()) = 0;
+	virtual void canvas_item_update_mesh_3d(RID p_mesh3d, const Variant &p_value, int p_op = OP_SET) = 0;
 
 	virtual void canvas_item_attach_skeleton(RID p_item, RID p_skeleton) = 0;
 
@@ -1248,6 +1255,7 @@ VARIANT_ENUM_CAST(VisualServer::InstanceType);
 VARIANT_ENUM_CAST(VisualServer::InstancePortalMode);
 VARIANT_ENUM_CAST(VisualServer::NinePatchAxisMode);
 VARIANT_ENUM_CAST(VisualServer::LineDrawMode);
+VARIANT_ENUM_CAST(VisualServer::Mesh3dOp);
 VARIANT_ENUM_CAST(VisualServer::CanvasLightMode);
 VARIANT_ENUM_CAST(VisualServer::CanvasLightShadowFilter);
 VARIANT_ENUM_CAST(VisualServer::CanvasOccluderPolygonCullMode);

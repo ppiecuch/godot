@@ -809,7 +809,7 @@ void VisualServerCanvas::canvas_item_add_set_transform(RID p_item, const Transfo
 	canvas_item->commands.push_back(tr);
 }
 
-void VisualServerCanvas::canvas_item_add_mesh(RID p_item, const RID &p_mesh, const Transform2D &p_transform, const Color &p_modulate, RID p_texture, RID p_normal_map, RID p_mask) {
+void VisualServerCanvas::canvas_item_add_mesh(RID p_item, RID p_mesh, const Transform2D &p_transform, const Color &p_modulate, RID p_texture, RID p_normal_map, RID p_mask) {
 	Item *canvas_item = canvas_item_owner.getornull(p_item);
 	ERR_FAIL_COND(!canvas_item);
 
@@ -821,17 +821,43 @@ void VisualServerCanvas::canvas_item_add_mesh(RID p_item, const RID &p_mesh, con
 	m->mask = p_mask;
 	m->transform = _from_transform_2d(p_transform);
 	m->modulate = p_modulate;
+	m->depth = false;
 
 	canvas_item->commands.push_back(m);
 }
 
-uint64_t VisualServerCanvas::canvas_item_add_mesh_3d(RID p_item, const RID &p_mesh, const Transform &p_transform, const Color &p_modulate, RID p_texture, RID p_normal_map, RID p_mask) {
-	Item *canvas_item = canvas_item_owner.getornull(p_item);
-	ERR_FAIL_COND_V(!canvas_item, 0);
+RID VisualServerCanvas::canvas_item_create_mesh_3d(RID p_mesh) {
+	MeshData *mesh_data = memnew(MeshData(p_mesh));
+	ERR_FAIL_COND_V(!mesh_data, RID());
+	RID rid = canvas_mesh_owner.make_rid(mesh_data);
+	rid.set_props(Transform(), Color(1, 1, 1, 1), true);
+	return rid;
+}
 
-	Item::CommandMesh *m = memnew(Item::CommandMesh);
-	ERR_FAIL_COND_V(!m, 0);
-	m->mesh = p_mesh;
+void VisualServerCanvas::canvas_item_add_mesh_3d(RID p_item, RID p_mesh3d, const Transform &p_transform, const Color &p_modulate, RID p_texture, RID p_normal_map, RID p_mask) {
+	Item *canvas_item = canvas_item_owner.getornull(p_item);
+	ERR_FAIL_COND(!canvas_item);
+
+	Item::CommandMesh *m;
+
+	if (canvas_mesh_owner.owns(p_mesh3d)) {
+		ERR_FAIL_COND(p_mesh3d.get_props_count() != 3);
+		MeshData *mesh_data = canvas_mesh_owner.getornull(p_mesh3d);
+		ERR_FAIL_COND(!mesh_data);
+
+		m = memnew(Item::CommandMesh);
+		ERR_FAIL_COND(!m);
+		m->mesh = mesh_data->mesh;
+		m->mesh3d = p_mesh3d;
+
+		p_mesh3d.get_prop(0) = p_transform;
+		p_mesh3d.get_prop(1) = p_modulate;
+	} else {
+		m = memnew(Item::CommandMesh);
+		ERR_FAIL_COND(!m);
+		m->mesh = p_mesh3d;
+	}
+
 	m->texture = p_texture;
 	m->normal_map = p_normal_map;
 	m->mask = p_mask;
@@ -840,37 +866,46 @@ uint64_t VisualServerCanvas::canvas_item_add_mesh_3d(RID p_item, const RID &p_me
 	m->depth = true;
 
 	canvas_item->commands.push_back(m);
-
-	return int64_t(m);
 }
 
-void VisualServerCanvas::canvas_item_set_mesh_3d(RID p_item, uint64_t p_entry, const Transform &p_transform, const Color &p_modulate, RID p_texture, RID p_normal_map, RID p_mask) {
-	Item *canvas_item = canvas_item_owner.getornull(p_item);
-	ERR_FAIL_COND(!canvas_item);
-	ERR_FAIL_COND(canvas_item->commands.find((Item::Command *)p_entry) < 0);
+void VisualServerCanvas::canvas_item_update_mesh_3d(RID p_mesh3d, const Variant &p_value, int p_op) {
+	ERR_FAIL_COND(p_mesh3d.get_props_count() != 3);
 
-	Item::CommandMesh *m = (Item::CommandMesh *)p_entry;
-	ERR_FAIL_COND(m->type != Item::Command::TYPE_MESH);
-	m->texture = p_texture;
-	m->normal_map = p_normal_map;
-	m->mask = p_mask;
-	m->transform = p_transform;
-	m->modulate = p_modulate;
-}
-
-void VisualServerCanvas::canvas_item_mul_mesh_3d(RID p_item, uint64_t p_entry, const Variant &p_prop) {
-	ERR_FAIL_COND(p_prop.is_nil());
-
-	Item *canvas_item = canvas_item_owner.getornull(p_item);
-	ERR_FAIL_COND(!canvas_item);
-	ERR_FAIL_COND(canvas_item->commands.find((Item::Command *)p_entry) < 0);
-
-	Item::CommandMesh *m = (Item::CommandMesh *)p_entry;
-	ERR_FAIL_COND(m->type != Item::Command::TYPE_MESH);
-	if (p_prop.get_type() == Variant::COLOR) {
-		m->modulate *= p_prop.operator Color();
-	} else if (p_prop.get_type() == Variant::TRANSFORM) {
-		m->transform *= p_prop.operator Transform();
+	if (p_value.get_type() == Variant::BOOL) { // depth
+		switch (p_op) {
+			case VS::OP_SET: {
+				p_mesh3d.get_prop(2).bool_value = p_value.operator bool();
+			} break;
+			default:
+				WARN_PRINT("Unknown or unsupported operator");
+		}
+	} else if (p_value.get_type() == Variant::COLOR) { // modulate
+		switch (p_op) {
+			case VS::OP_SET: {
+				p_mesh3d.get_prop(1).color_value = p_value.operator Color();
+			} break;
+			case VS::OP_MUL: {
+				p_mesh3d.get_prop(1).color_value *= p_value.operator Color();
+			} break;
+			case VS::OP_ADD: {
+				p_mesh3d.get_prop(1).color_value += p_value.operator Color();
+			} break;
+			default:
+				WARN_PRINT("Unknown or unsupported operator");
+		}
+	} else if (p_value.get_type() == Variant::TRANSFORM) { // transform
+		switch (p_op) {
+			case VS::OP_SET: {
+				p_mesh3d.get_prop(0).transform_value = p_value.operator Transform();
+			} break;
+			case VS::OP_MUL: {
+				p_mesh3d.get_prop(0).transform_value *= p_value.operator Transform();
+			} break;
+			default:
+				WARN_PRINT("Unknown or unsupported operator");
+		}
+	} else {
+		WARN_PRINT("Unknown or unsupported attribute");
 	}
 }
 
@@ -1423,6 +1458,11 @@ bool VisualServerCanvas::free(RID p_rid) {
 
 		canvas_light_occluder_polygon_owner.free(p_rid);
 		memdelete(occluder_poly);
+	} else if (canvas_mesh_owner.owns(p_rid)) {
+		MeshData *mesh_data = canvas_mesh_owner.get(p_rid);
+		ERR_FAIL_COND_V(!mesh_data, true);
+		canvas_mesh_owner.free(p_rid);
+		memdelete(mesh_data);
 	} else {
 		return false;
 	}

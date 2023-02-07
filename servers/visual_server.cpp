@@ -2190,9 +2190,9 @@ void VisualServer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("canvas_item_add_polygon", "item", "points", "colors", "uvs", "texture", "normal_map", "mask", "antialiased"), &VisualServer::canvas_item_add_polygon, DEFVAL(Vector<Point2>()), DEFVAL(RID()), DEFVAL(RID()), DEFVAL(RID()), DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("canvas_item_add_triangle_array", "item", "indices", "points", "colors", "uvs", "bones", "weights", "texture", "count", "normal_map", "mask", "antialiased", "antialiasing_use_indices"), &VisualServer::canvas_item_add_triangle_array, DEFVAL(Vector<Point2>()), DEFVAL(Vector<int>()), DEFVAL(Vector<float>()), DEFVAL(RID()), DEFVAL(-1), DEFVAL(RID()), DEFVAL(RID()), DEFVAL(false), DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("canvas_item_add_mesh", "item", "mesh", "transform", "modulate", "texture", "normal_map", "mask"), &VisualServer::canvas_item_add_mesh, DEFVAL(Transform2D()), DEFVAL(Color(1, 1, 1)), DEFVAL(RID()), DEFVAL(RID()), DEFVAL(RID()));
-	ClassDB::bind_method(D_METHOD("canvas_item_add_mesh_3d", "item", "mesh", "transform", "modulate", "texture", "normal_map", "mask"), &VisualServer::canvas_item_add_mesh_3d, DEFVAL(Transform()), DEFVAL(Color(1, 1, 1)), DEFVAL(RID()), DEFVAL(RID()), DEFVAL(RID()));
-	ClassDB::bind_method(D_METHOD("canvas_item_set_mesh_3d", "item", "entry", "transform", "modulate", "texture", "normal_map", "mask"), &VisualServer::canvas_item_set_mesh_3d, DEFVAL(Transform()), DEFVAL(Color(1, 1, 1)), DEFVAL(RID()), DEFVAL(RID()), DEFVAL(RID()));
-	ClassDB::bind_method(D_METHOD("canvas_item_mul_mesh_3d", "item", "entry", "property"), &VisualServer::canvas_item_mul_mesh_3d);
+	ClassDB::bind_method(D_METHOD("canvas_item_create_mesh_3d", "mesh"), &VisualServer::canvas_item_create_mesh_3d);
+	ClassDB::bind_method(D_METHOD("canvas_item_add_mesh_3d", "item", "mesh3d", "transform", "modulate", "texture", "normal_map", "mask"), &VisualServer::canvas_item_add_mesh_3d, DEFVAL(Transform()), DEFVAL(Color(1, 1, 1)), DEFVAL(RID()), DEFVAL(RID()), DEFVAL(RID()));
+	ClassDB::bind_method(D_METHOD("canvas_item_update_mesh_3d", "mesh3d", "property", "op"), &VisualServer::canvas_item_update_mesh_3d, DEFVAL(VS::OP_SET));
 	ClassDB::bind_method(D_METHOD("canvas_item_add_multimesh", "item", "mesh", "texture", "normal_map", "mask"), &VisualServer::canvas_item_add_multimesh, DEFVAL(RID()), DEFVAL(RID()));
 	ClassDB::bind_method(D_METHOD("canvas_item_add_particles", "item", "particles", "texture", "normal_map", "mask"), &VisualServer::canvas_item_add_particles, DEFVAL(RID()), DEFVAL(RID()));
 	ClassDB::bind_method(D_METHOD("canvas_item_add_set_transform", "item", "transform"), &VisualServer::canvas_item_add_set_transform);
@@ -2456,6 +2456,17 @@ void VisualServer::_bind_methods() {
 	BIND_ENUM_CONSTANT(NINE_PATCH_STRETCH);
 	BIND_ENUM_CONSTANT(NINE_PATCH_TILE);
 	BIND_ENUM_CONSTANT(NINE_PATCH_TILE_FIT);
+
+	BIND_ENUM_CONSTANT(LINE_JOIN_MITTER);
+	BIND_ENUM_CONSTANT(LINE_JOIN_BEVEL);
+	BIND_ENUM_CONSTANT(LINE_JOIN_ROUND);
+	BIND_ENUM_CONSTANT(LINE_CAP_SQUARE);
+	BIND_ENUM_CONSTANT(LINE_CAP_PROJECT);
+	BIND_ENUM_CONSTANT(LINE_CAP_ROUND);
+
+	BIND_ENUM_CONSTANT(OP_SET);
+	BIND_ENUM_CONSTANT(OP_MUL);
+	BIND_ENUM_CONSTANT(OP_ADD);
 
 	BIND_ENUM_CONSTANT(CANVAS_LIGHT_MODE_ADD);
 	BIND_ENUM_CONSTANT(CANVAS_LIGHT_MODE_SUB);

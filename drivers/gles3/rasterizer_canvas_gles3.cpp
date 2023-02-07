@@ -803,12 +803,24 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 						} break;
 						case Item::Command::TYPE_MESH: {
 							Item::CommandMesh *mesh = static_cast<Item::CommandMesh *>(c);
+
+							Transform transform = mesh->transform;
+							Color modulate = mesh->modulate;
+							bool depth = false;
+							if (mesh->mesh3d.is_valid()) {
+								if (mesh->mesh3d.get_props_count() == 3) {
+									transform = mesh->mesh3d.get_prop(0).transform_value;
+									modulate = mesh->mesh3d.get_prop(1).color_value;
+									depth = mesh->mesh3d.get_prop(2).bool_value;
+								}
+							}
+
 							RasterizerStorageGLES3::Mesh *mesh_data = storage->mesh_owner.getornull(mesh->mesh);
 							if (!mesh_data) {
 								break;
 							}
 
-							if (mesh->depth) {
+							if (depth) {
 								state.canvas_shader.set_conditional(CanvasShaderGLES3::VERTEX_VEC3_USED, true);
 								glEnable(GL_DEPTH_TEST);
 								glDepthMask(GL_TRUE);
@@ -822,19 +834,30 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 								state.canvas_shader.set_uniform(CanvasShaderGLES3::COLOR_TEXPIXEL_SIZE, texpixel_size);
 							}
 
-							if (mesh->transform == Transform()) {
+							if (transform == Transform()) {
 								state.canvas_shader.set_uniform(CanvasShaderGLES3::MODELVIEW_MATRIX, state.final_transform);
 							} else {
-								state.canvas_shader.set_uniform(CanvasShaderGLES3::MODELVIEW_MATRIX, _from_transform_2d(state.final_transform) * mesh->transform);
+								state.canvas_shader.set_uniform(CanvasShaderGLES3::MODELVIEW_MATRIX, _from_transform_2d(state.final_transform) * transform);
 							}
 
 							for (int j = 0; j < mesh_data->surfaces.size(); j++) {
 								RasterizerStorageGLES3::Surface *s = mesh_data->surfaces[j];
 								if (s->active) {
-									// materials are ignored in 2D meshes, could be added but many things (ie, lighting mode, reading from screen, etc) would break as they are not meant be set up at this point of drawing
+									// materials are mostly ignored in 2D meshes, could be added but many things (ie, lighting mode, reading from screen, etc) would break as they are not meant be set up at this point of drawing
 									glBindVertexArray(s->array_id);
 
-									glVertexAttrib4f(VS::ARRAY_COLOR, mesh->modulate.r, mesh->modulate.g, mesh->modulate.b, mesh->modulate.a);
+									// use albedo and metalness color from material
+									// http://paulbourke.net/dataformats/mtl/
+									Color c = modulate;
+									if (RasterizerStorageGLES3::Material *m = storage->material_owner.getornull(s->material)) {
+										if (m->params.has("albedo")) {
+											c *= m->params["albedo"].operator Color();
+										}
+										if (m->params.has("metalness")) {
+										}
+									}
+
+									glVertexAttrib4f(VS::ARRAY_COLOR, c.r, c.g, c.b, c.a);
 
 									if (s->index_array_len) {
 										glDrawElements(gl_primitive[s->primitive], s->index_array_len, (s->array_len >= (1 << 16)) ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, nullptr);
@@ -846,7 +869,7 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 									glBindVertexArray(0);
 								}
 							}
-							if (mesh->depth) {
+							if (depth) {
 								// restore default state
 								glDisable(GL_DEPTH_TEST);
 								state.canvas_shader.set_conditional(CanvasShaderGLES3::VERTEX_VEC3_USED, GLOBAL_DEF("rendering/quality/2d/use_vertex_vector3", true));
