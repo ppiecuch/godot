@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Reference:
+# ----------
+# 1. https://stackoverflow.com/questions/32925844/codesign-and-ambiguos-identity-matches-mac-developer-and-iphone-developer
+
 set -e
 
 CPU=$(sysctl -n hw.physicalcpu)
@@ -9,8 +13,9 @@ if [ -z "$CPU" ]; then
 fi
 
 if [ -f build_info.config ]; then
-	echo "Loading build_info.config"
+	echo "Loading build_info.config:"
 	. build_info.config
+	sed -e 's/^/ > /' build_info.config
 fi
 
 # `START_DIR` contains the directory where the script is located
