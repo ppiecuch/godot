@@ -1,32 +1,32 @@
-/*************************************************************************/
-/*  sprite_mesh.cpp                                                      */
-/*************************************************************************/
-/*                       This file is part of:                           */
-/*                           GODOT ENGINE                                */
-/*                      https://godotengine.org                          */
-/*************************************************************************/
-/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
-/*                                                                       */
-/* Permission is hereby granted, free of charge, to any person obtaining */
-/* a copy of this software and associated documentation files (the       */
-/* "Software"), to deal in the Software without restriction, including   */
-/* without limitation the rights to use, copy, modify, merge, publish,   */
-/* distribute, sublicense, and/or sell copies of the Software, and to    */
-/* permit persons to whom the Software is furnished to do so, subject to */
-/* the following conditions:                                             */
-/*                                                                       */
-/* The above copyright notice and this permission notice shall be        */
-/* included in all copies or substantial portions of the Software.       */
-/*                                                                       */
-/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
-/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
-/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
-/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
-/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
-/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
-/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
-/*************************************************************************/
+/**************************************************************************/
+/*  sprite_mesh.cpp                                                       */
+/**************************************************************************/
+/*                         This file is part of:                          */
+/*                             GODOT ENGINE                               */
+/*                        https://godotengine.org                         */
+/**************************************************************************/
+/* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
+/* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
+/*                                                                        */
+/* Permission is hereby granted, free of charge, to any person obtaining  */
+/* a copy of this software and associated documentation files (the        */
+/* "Software"), to deal in the Software without restriction, including    */
+/* without limitation the rights to use, copy, modify, merge, publish,    */
+/* distribute, sublicense, and/or sell copies of the Software, and to     */
+/* permit persons to whom the Software is furnished to do so, subject to  */
+/* the following conditions:                                              */
+/*                                                                        */
+/* The above copyright notice and this permission notice shall be         */
+/* included in all copies or substantial portions of the Software.        */
+/*                                                                        */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. */
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY   */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,   */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE      */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
+/**************************************************************************/
 
 #include <map>
 #include <string>
@@ -153,6 +153,106 @@ bool SpriteMesh::_edit_use_rect() const {
 }
 #endif
 
+void SpriteMeshSnapshot::_create() {
+	scenario = RID_PRIME(VS::get_singleton()->scenario_create());
+
+	viewport = RID_PRIME(VS::get_singleton()->viewport_create());
+	VS::get_singleton()->viewport_set_update_mode(viewport, VS::VIEWPORT_UPDATE_DISABLED);
+	VS::get_singleton()->viewport_set_vflip(viewport, true);
+	VS::get_singleton()->viewport_set_scenario(viewport, scenario);
+	VS::get_singleton()->viewport_set_size(viewport, snapshot_size.x, snapshot_size.y);
+	VS::get_singleton()->viewport_set_transparent_background(viewport, true);
+	VS::get_singleton()->viewport_set_active(viewport, false);
+
+	viewport_texture = VS::get_singleton()->viewport_get_texture(viewport);
+
+	canvas = RID_PRIME(VS::get_singleton()->canvas_create());
+	canvas_item = RID_PRIME(VS::get_singleton()->canvas_item_create());
+
+	VS::get_singleton()->canvas_item_add_mesh_3d(canvas_item, owner->get_mesh()->get_rid());
+
+	VS::get_singleton()->viewport_attach_canvas(viewport, canvas);
+	VS::get_singleton()->canvas_item_set_parent(canvas_item, canvas);
+
+	VS::get_singleton()->viewport_set_update_mode(viewport, VS::VIEWPORT_UPDATE_DISABLED);
+	VS::get_singleton()->request_frame_drawn_callback(owner, "_snapshot_done", Variant());
+}
+
+void SpriteMeshSnapshot::_trigger() {
+	if (!viewport.is_valid()) {
+		_create();
+	}
+	ERR_FAIL_COND(!viewport.is_valid());
+	ERR_FAIL_COND(!owner->get_mesh().is_valid());
+	// setup mesh
+	const AABB &aabb = owner->get_mesh_aabb();
+	const Size2 s(aabb.size.x, aabb.size.y);
+	Point2 ofs = owner->get_offset();
+	if (owner->is_centered()) {
+		ofs -= Size2(s) / 2;
+	}
+	const Point2 origin = ofs - Point2(aabb.position.x, aabb.position.y);
+	const Transform xform(owner->get_mesh_orientation(), { origin.x + snapshot_size.x / 2, origin.y + snapshot_size.y / 2, 0 });
+	RID texture_rid = owner->get_mesh_texture().is_valid() ? owner->get_mesh_texture()->get_rid() : RID();
+	RID normal_map_rid = owner->get_mesh_normal_map().is_valid() ? owner->get_mesh_normal_map()->get_rid() : RID();
+	RID mask_rid = owner->get_mesh_mask().is_valid() ? owner->get_mesh_mask()->get_rid() : RID();
+	VS::get_singleton()->canvas_item_set_mesh_3d(canvas_item, owner->get_mesh()->get_rid(), xform, owner->get_modulate(), texture_rid, normal_map_rid, mask_rid);
+	// setup viewport
+	VS::get_singleton()->viewport_set_active(viewport, true);
+	VS::get_singleton()->viewport_set_update_mode(viewport, VS::VIEWPORT_UPDATE_ONCE); // once used for capture
+}
+
+#define _FREE_RID(var)                  \
+	if (var.is_valid()) {               \
+		VS::get_singleton()->free(var); \
+		var = RID();                    \
+	}
+
+void SpriteMeshSnapshot::_destroy() {
+	_FREE_RID(canvas_item);
+	_FREE_RID(canvas);
+	_FREE_RID(viewport_texture);
+	_FREE_RID(viewport);
+	_FREE_RID(scenario);
+}
+
+Ref<Image> SpriteMeshSnapshot::_get_image() {
+	ERR_FAIL_COND_V(!viewport_texture.is_valid(), Ref<Image>());
+	Ref<Image> img = VS::get_singleton()->texture_get_data(viewport_texture);
+	ERR_FAIL_COND_V(img.is_null(), Ref<Image>());
+	img->convert(Image::FORMAT_RGBA8);
+	return img;
+}
+
+void SpriteMesh::_refresh_properties() {
+	property_list_changed_notify();
+}
+
+SpriteMeshLight *SpriteMesh::_get_light_node(int p_index) {
+	ERR_FAIL_INDEX_V(p_index, LIGHTS_NUM, nullptr);
+	return lights.get_light(p_index).is_empty() ? nullptr : cast_to<SpriteMeshLight>(get_node(lights.get_light(p_index)));
+}
+
+void SpriteMesh::_update_lights() {
+	if (!lights.is_empty()) {
+		// check for global and local lights ..
+		Vector<SpriteMeshLight *> all_lights;
+		if (Node *rt = get_tree()->get_current_scene()) {
+			for (int i = 0; i < rt->get_child_count(); i++) {
+				if (SpriteMeshLight *lt = cast_to<SpriteMeshLight>(rt->get_child(i))) {
+					all_lights.push_back(lt);
+				}
+			}
+		}
+		for (int i = 0; i < get_child_count(); i++) {
+			if (SpriteMeshLight *lt = cast_to<SpriteMeshLight>(get_child(i))) {
+				all_lights.push_back(lt);
+			}
+		}
+		property_list_changed_notify();
+	}
+}
+
 void SpriteMesh::_update_mesh_outline(const PoolVector3Array &p_vertices, const Transform &p_xform, const PoolIntArray &p_triangles) {
 	ERR_FAIL_COND_MSG(p_triangles.size() == 0, "Automtic outline only works for indexed meshes");
 	// Get just the outer edges from the mesh's triangles (ignore or remove any shared edges)
@@ -205,51 +305,16 @@ void SpriteMesh::_update_mesh_outline(const PoolVector3Array &p_vertices, const 
 }
 
 void SpriteMesh::_snapshot_done(const Variant &p_udata) {
-	snapshot_done.set();
-}
-
-Ref<Image> SpriteMesh::_save_mesh_snapshot(const Size2 &p_snapshot_size) {
-	RID scenario = RID_PRIME(VS::get_singleton()->scenario_create());
-
-	RID viewport = RID_PRIME(VS::get_singleton()->viewport_create());
-	VS::get_singleton()->viewport_set_update_mode(viewport, VS::VIEWPORT_UPDATE_DISABLED);
-	VS::get_singleton()->viewport_set_vflip(viewport, true);
-	VS::get_singleton()->viewport_set_scenario(viewport, scenario);
-	VS::get_singleton()->viewport_set_size(viewport, p_snapshot_size.x, p_snapshot_size.y);
-	VS::get_singleton()->viewport_set_transparent_background(viewport, true);
-	VS::get_singleton()->viewport_set_active(viewport, true);
-
-	RID camera = VS::get_singleton()->camera_create();
-	VS::get_singleton()->viewport_attach_camera(viewport, camera);
-	VS::get_singleton()->camera_set_transform(camera, Transform(Basis(), Vector3(0, 0, 3)));
-	VS::get_singleton()->camera_set_orthogonal(camera, 1.0, 0.01, 1000.0);
-
-	RID mesh = RID_PRIME(VS::get_singleton()->instance_create());
-	VS::get_singleton()->instance_set_scenario(mesh, scenario);
-
-	RID viewport_texture = VS::get_singleton()->viewport_get_texture(viewport);
-
-	RID canvas = RID_PRIME(VS::get_singleton()->canvas_create());
-	RID canvas_item = RID_PRIME(VS::get_singleton()->canvas_item_create());
-
-	VS::get_singleton()->viewport_attach_canvas(viewport, canvas);
-	VS::get_singleton()->canvas_item_set_parent(canvas_item, canvas);
-
-	snapshot_done.clear();
-	VS::get_singleton()->viewport_set_update_mode(viewport, VS::VIEWPORT_UPDATE_ONCE); //once used for capture
-	VS::get_singleton()->request_frame_drawn_callback(const_cast<SpriteMesh *>(this), "_snapshot_done", Variant());
-
-	while (!snapshot_done.is_set()) {
-		OS::get_singleton()->delay_usec(10);
+	static int snapshot_count = 0;
+	if (Ref<Image> img = snapshot._get_image()) {
+		if (img.is_valid()) {
+			const String file("snapshot" + itos(snapshot_count) + ".png");
+			img->save_png(file);
+			emit_signal("snapshot_ready", img);
+			print_verbose("Snapshot saved to file: " + file);
+			snapshot_count++;
+		}
 	}
-
-	Ref<Image> img = VS::get_singleton()->texture_get_data(viewport_texture);
-	ERR_FAIL_COND_V(img.is_null(), Ref<ImageTexture>());
-
-	img->convert(Image::FORMAT_RGBA8);
-	img->save_png("snap1.png");
-
-	return img;
 }
 
 void SpriteMesh::_save_mesh_xform(Ref<ArrayMesh> &p_mesh) {
@@ -301,40 +366,6 @@ void SpriteMesh::_update_mesh_xform() {
 	}
 }
 
-void SpriteMesh::_notification(int p_what) {
-	if (p_what == NOTIFICATION_READY) {
-#ifdef TOOLS_ENABLED
-		set_notify_transform(true);
-#endif
-	} else if (p_what == NOTIFICATION_TRANSFORM_CHANGED) {
-		emit_signal("transform_changed");
-	} else if (p_what == NOTIFICATION_DRAW) {
-		if (_mesh_dirty) {
-			_update_mesh_xform();
-			_mesh_dirty = false;
-		}
-		if (mesh.is_valid()) {
-			const AABB &aabb = get_mesh_aabb();
-
-			Size2 s(aabb.size.x, aabb.size.y);
-
-			Point2 ofs = offset;
-			if (centered) {
-				ofs -= Size2(s) / 2;
-			}
-			Point2 origin = ofs - Point2(aabb.position.x, aabb.position.y);
-			Transform xform(mesh_xform, { origin.x, origin.y, 0 });
-			draw_mesh_3d(mesh, texture, normal_map, mask, xform);
-			if (mesh_debug) {
-				draw_rect(Rect2(ofs, s), Color::named("yellow"), false);
-				if (mesh_outline.size()) {
-					draw_polyline(mesh_outline, Color::named("magenta"));
-				}
-			}
-		}
-	}
-}
-
 void SpriteMesh::set_mesh(const Ref<Mesh> &p_mesh) {
 	if (mesh == p_mesh) {
 		return;
@@ -349,8 +380,8 @@ void SpriteMesh::set_mesh(const Ref<Mesh> &p_mesh) {
 	_change_notify("mesh");
 }
 
-Ref<Image> SpriteMesh::save_snapshot() {
-	return _save_mesh_snapshot(snapshot_size);
+void SpriteMesh::save_snapshot() {
+	snapshot._trigger();
 }
 
 Ref<Mesh> SpriteMesh::get_mesh() const {
@@ -433,12 +464,15 @@ Basis SpriteMesh::get_mesh_orientation() const {
 void SpriteMesh::set_mesh_scale(const Vector3 &p_scale) {
 	_mesh_scale = p_scale;
 	// Avoid having 0 scale values, can lead to errors in physics and rendering.
-	if (_mesh_scale.x == 0)
+	if (_mesh_scale.x == 0) {
 		_mesh_scale.x = CMP_EPSILON;
-	if (_mesh_scale.y == 0)
+	}
+	if (_mesh_scale.y == 0) {
 		_mesh_scale.y = CMP_EPSILON;
-	if (_mesh_scale.z == 0)
+	}
+	if (_mesh_scale.z == 0) {
 		_mesh_scale.z = CMP_EPSILON;
+	}
 	_update_transform();
 }
 
@@ -480,6 +514,17 @@ void SpriteMesh::set_mesh_mask(const Ref<Texture> &p_texture) {
 
 Ref<Texture> SpriteMesh::get_mesh_mask() const {
 	return mask;
+}
+
+void SpriteMesh::set_mesh_light(int p_index, const NodePath &p_path) {
+	ERR_FAIL_INDEX(p_index, LIGHTS_NUM);
+	lights.set_light(p_index, p_path);
+	property_list_changed_notify();
+}
+
+NodePath SpriteMesh::get_mesh_light(int p_index) const {
+	ERR_FAIL_INDEX_V(p_index, LIGHTS_NUM, NodePath());
+	return lights.get_light(p_index);
 }
 
 void SpriteMesh::set_selected_frame(int p_frame) {
@@ -630,15 +675,154 @@ AABB SpriteMesh::get_mesh_aabb() const {
 	return Transform(mesh_xform, Vector3()).xform(mesh->get_aabb());
 }
 
-void SpriteMesh::_validate_property(PropertyInfo &property) const {
-}
-
 void SpriteMesh::_mesh_changed() {
 	// Changes to the mesh need to trigger an update to make
 	// the editor redraw the sprite with the updated mesh.
 	if (mesh.is_valid()) {
 		update();
 		item_rect_changed();
+	}
+}
+
+bool SpriteMesh::_get(const StringName &p_path, Variant &r_ret) const {
+	String path = p_path;
+
+	if (!path.begins_with("mesh_lights/")) {
+		return false;
+	}
+
+	int which = path.get_slicec('/', 1).to_int();
+	String what = path.get_slicec('/', 2);
+
+	ERR_FAIL_INDEX_V(which, LIGHTS_NUM, false);
+
+	if (what == "node") {
+		r_ret = lights.get_light(which);
+		return true;
+	} else {
+		const NodePath path = lights.get_light(which);
+		if (!path.is_empty()) {
+			SpriteMeshLight *lt = cast_to<SpriteMeshLight>(get_node(path));
+			ERR_FAIL_NULL_V(lt, false);
+
+			if (what == "position") {
+				r_ret = lt->get_light_position();
+			} else if (what == "radius") {
+				r_ret = lt->get_light_radius();
+			} else if (what == "ambient") {
+				r_ret = lt->get_light_ambient();
+			} else if (what == "diffuse") {
+				r_ret = lt->get_light_diffuse();
+			} else if (what == "specular") {
+				r_ret = lt->get_light_specular();
+			}
+			return true;
+		}
+	}
+	return false;
+}
+
+bool SpriteMesh::_set(const StringName &p_path, const Variant &p_value) {
+	String path = p_path;
+
+	if (!path.begins_with("mesh_lights/")) {
+		return false;
+	}
+
+	int which = path.get_slicec('/', 1).to_int();
+	String what = path.get_slicec('/', 2);
+
+	ERR_FAIL_INDEX_V(which, LIGHTS_NUM, false);
+
+	if (what == "node") {
+#ifdef TOOLS_ENABLED
+		SpriteMeshLight *lt = nullptr;
+		NodePath path = p_value;
+		if (!path.is_empty()) {
+			lt = cast_to<SpriteMeshLight>(get_node(path));
+			ERR_FAIL_NULL_V_MSG(lt, false, "Not a SpriteMeshLight type node");
+		}
+		if (Node *curr = _get_light_node(which)) {
+			curr->disconnect("light_config_changed", this, "_refresh_properties");
+		}
+		if (lt) {
+			lt->connect("light_config_changed", this, "_refresh_properties");
+		}
+#endif
+		lights.set_light(which, p_value);
+		property_list_changed_notify();
+		return true;
+	} else {
+		SpriteMeshLight *lt = cast_to<SpriteMeshLight>(get_node(lights.get_light(which)));
+		ERR_FAIL_NULL_V(lt, false);
+
+		if (lights.has_light(which)) {
+			if (what == "position") {
+				lt->set_light_position(p_value);
+			} else if (what == "radius") {
+				lt->set_light_radius(p_value);
+			} else if (what == "ambient") {
+				lt->set_light_ambient(p_value);
+			} else if (what == "diffuse") {
+				lt->set_light_diffuse(p_value);
+			} else if (what == "specular") {
+				lt->set_light_specular(p_value);
+			}
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void SpriteMesh::_get_property_list(List<PropertyInfo> *p_list) const {
+	for (int i = 0; i < LIGHTS_NUM; i++) {
+		const String prep = "mesh_lights/" + itos(i) + "/";
+		p_list->push_back(PropertyInfo(Variant::NODE_PATH, prep + "node"));
+		if (lights.has_light(i)) {
+			p_list->push_back(PropertyInfo(Variant::VECTOR3, prep + "position"));
+			p_list->push_back(PropertyInfo(Variant::REAL, prep + "radius"));
+			p_list->push_back(PropertyInfo(Variant::COLOR, prep + "ambient"));
+			p_list->push_back(PropertyInfo(Variant::COLOR, prep + "diffuse"));
+			p_list->push_back(PropertyInfo(Variant::COLOR, prep + "specular"));
+		}
+	}
+}
+
+void SpriteMesh::_notification(int p_what) {
+	if (p_what == NOTIFICATION_READY) {
+#ifdef TOOLS_ENABLED
+		set_notify_transform(true);
+#endif
+	} else if (p_what == NOTIFICATION_ENTER_TREE) {
+		// look for local and global lights
+		_update_lights();
+	} else if (p_what == NOTIFICATION_TRANSFORM_CHANGED) {
+		emit_signal("transform_changed");
+	} else if (p_what == NOTIFICATION_DRAW) {
+		if (_mesh_dirty) {
+			_update_mesh_xform();
+			_mesh_dirty = false;
+		}
+		if (mesh.is_valid()) {
+			const AABB &aabb = get_mesh_aabb();
+
+			Size2 s(aabb.size.x, aabb.size.y);
+
+			Point2 ofs = offset;
+			if (centered) {
+				ofs -= Size2(s) / 2;
+			}
+			Point2 origin = ofs - Point2(aabb.position.x, aabb.position.y);
+			Transform xform(mesh_xform, { origin.x, origin.y, 0 });
+			draw_mesh_3d(mesh, texture, normal_map, mask, xform);
+			if (mesh_debug) {
+				draw_rect(Rect2(ofs, s), Color::named("yellow"), false);
+				if (mesh_outline.size()) {
+					draw_polyline(mesh_outline, Color::named("magenta"));
+				}
+			}
+		}
 	}
 }
 
@@ -676,6 +860,9 @@ void SpriteMesh::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_mesh_scale", "mesh_scale"), &SpriteMesh::set_mesh_scale);
 	ClassDB::bind_method(D_METHOD("get_mesh_scale"), &SpriteMesh::get_mesh_scale);
 
+	ClassDB::bind_method(D_METHOD("set_mesh_light", "light_index", "light_node"), &SpriteMesh::set_mesh_light);
+	ClassDB::bind_method(D_METHOD("get_mesh_light", "light_index"), &SpriteMesh::get_mesh_light);
+
 	ClassDB::bind_method(D_METHOD("set_centered", "centered"), &SpriteMesh::set_centered);
 	ClassDB::bind_method(D_METHOD("is_centered"), &SpriteMesh::is_centered);
 
@@ -683,6 +870,7 @@ void SpriteMesh::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_offset"), &SpriteMesh::get_offset);
 
 	ClassDB::bind_method(D_METHOD("_snapshot_done"), &SpriteMesh::_snapshot_done);
+	ClassDB::bind_method(D_METHOD("_refresh_properties"), &SpriteMesh::_refresh_properties);
 
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "mesh", PROPERTY_HINT_RESOURCE_TYPE, "Mesh"), "set_mesh", "get_mesh");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "mesh_texture", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_mesh_texture", "get_mesh_texture");
@@ -700,6 +888,7 @@ void SpriteMesh::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "mesh_rotation_y_degrees", PROPERTY_HINT_RANGE, "-360,360,0.1,or_lesser,or_greater", PROPERTY_USAGE_EDITOR), "set_mesh_rotation_y_degrees", "get_mesh_rotation_y_degrees");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "mesh_rotation_z_degrees", PROPERTY_HINT_RANGE, "-360,360,0.1,or_lesser,or_greater", PROPERTY_USAGE_EDITOR), "set_mesh_rotation_z_degrees", "get_mesh_rotation_z_degrees");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "mesh_scale"), "set_mesh_scale", "get_mesh_scale");
+	ADD_GROUP("", "");
 
 	ADD_SIGNAL(MethodInfo("texture_changed"));
 	ADD_SIGNAL(MethodInfo("mesh_changed"));
@@ -710,7 +899,8 @@ SpriteMesh::SpriteMesh() {
 	_mesh_angle = Vector3(0, 0, 0);
 	_mesh_scale = Vector3(1, 1, 1);
 	_mesh_dirty = false;
-	snapshot_size = Size2(128, 128);
+	snapshot.owner = this;
+	snapshot.snapshot_size = Size2(256, 256);
 	centered = true;
 	offset = Vector2(0, 0);
 	auto_collision_shape = false;
@@ -1702,6 +1892,7 @@ void SpriteMeshLight::set_light_position(const Point2 &p_pos) {
 	if (light_position != p_pos) {
 		light_position = p_pos;
 		_update();
+		emit_signal("light_config_changed");
 	}
 }
 
@@ -1714,6 +1905,7 @@ void SpriteMeshLight::set_light_power(real_t p_power) {
 	if (light_power != p_power) {
 		light_power = p_power;
 		_update();
+		emit_signal("light_config_changed");
 	}
 }
 
@@ -1726,11 +1918,48 @@ void SpriteMeshLight::set_light_radius(real_t p_radius) {
 	if (light_radius != p_radius) {
 		light_radius = p_radius;
 		_update();
+		emit_signal("light_config_changed");
 	}
 }
 
 real_t SpriteMeshLight::get_light_radius() const {
 	return light_radius;
+}
+
+void SpriteMeshLight::set_light_ambient(Color p_ambient) {
+	if (ambient != p_ambient) {
+		ambient = p_ambient;
+		_update();
+		emit_signal("light_config_changed");
+	}
+}
+
+Color SpriteMeshLight::get_light_ambient() const {
+	return ambient;
+}
+
+void SpriteMeshLight::set_light_diffuse(Color p_diffuse) {
+	if (diffuse != p_diffuse) {
+		diffuse = p_diffuse;
+		_update();
+		emit_signal("light_config_changed");
+	}
+}
+
+Color SpriteMeshLight::get_light_diffuse() const {
+	return diffuse;
+}
+
+void SpriteMeshLight::set_light_specular(Color p_specular) {
+	if (specular != p_specular) {
+		specular = p_specular;
+		_update();
+		emit_signal("light_config_changed");
+	}
+}
+
+Color SpriteMeshLight::get_light_specular() const {
+	return specular;
 }
 
 void SpriteMeshLight::set_debug_outline(bool p_state) {
@@ -1844,6 +2073,7 @@ void SpriteMeshLight::_notification(int p_notification) {
 				canvas_item_editor->connect("canvas_viewport_changed", this, "_update");
 			}
 			_update();
+			emit_signal("light_node_moved");
 		} break;
 		case NOTIFICATION_EXIT_TREE: {
 			if (CanvasItemEditor *canvas_item_editor = CanvasItemEditor::get_singleton()) {
@@ -1853,6 +2083,13 @@ void SpriteMeshLight::_notification(int p_notification) {
 				VS::get_singleton()->free(canvas_item);
 			}
 			canvas_item = RID();
+			emit_signal("light_node_moved");
+		} break;
+		case NOTIFICATION_UNPARENTED: {
+			emit_signal("light_node_moved");
+		} break;
+		case NOTIFICATION_PARENTED: {
+			emit_signal("light_node_moved");
 		} break;
 #ifdef TOOLS_ENABLED
 		case EditorSettings::NOTIFICATION_EDITOR_SETTINGS_CHANGED: {
@@ -1892,6 +2129,9 @@ void SpriteMeshLight::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "light_power", PROPERTY_HINT_RANGE, "0,1,0,0.01"), "set_light_power", "get_light_power");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "light_radius"), "set_light_radius", "get_light_radius");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "debug_outline"), "set_debug_outline", "is_debug_outline");
+
+	ADD_SIGNAL(MethodInfo("light_node_moved"));
+	ADD_SIGNAL(MethodInfo("light_config_changed"));
 }
 
 SpriteMeshLight::SpriteMeshLight() {
@@ -2004,6 +2244,8 @@ bool SpriteMeshLightEditor::forward_gui_input(const Ref<InputEvent> &p_event) {
 					node->set_light_position(cpoint);
 				} break;
 				case DRAG_RESIZE: {
+					const real_t radius = MAX(1, (cpoint - node->get_light_position()).length());
+					node->set_light_radius(radius);
 				} break;
 			}
 			canvas_item_editor->update_viewport();

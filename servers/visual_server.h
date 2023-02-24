@@ -1070,6 +1070,7 @@ public:
 	};
 	virtual RID canvas_item_create_mesh_3d(RID p_mesh) = 0;
 	virtual void canvas_item_add_mesh_3d(RID p_item, RID p_mesh3d, const Transform &p_transform = Transform(), const Color &p_modulate = Color(1, 1, 1), RID p_texture = RID(), RID p_normal_map = RID(), RID p_mask = RID()) = 0;
+	virtual void canvas_item_set_mesh_3d(RID p_item, RID p_mesh3d, const Transform &p_transform = Transform(), const Color &p_modulate = Color(1, 1, 1), RID p_texture = RID(), RID p_normal_map = RID(), RID p_mask = RID()) = 0;
 	virtual void canvas_item_update_mesh_3d(RID p_mesh3d, const Variant &p_value, int p_op = OP_SET) = 0;
 
 	virtual void canvas_item_attach_skeleton(RID p_item, RID p_skeleton) = 0;

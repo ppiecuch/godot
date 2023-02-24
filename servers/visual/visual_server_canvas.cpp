@@ -868,6 +868,21 @@ void VisualServerCanvas::canvas_item_add_mesh_3d(RID p_item, RID p_mesh3d, const
 	canvas_item->commands.push_back(m);
 }
 
+void VisualServerCanvas::canvas_item_set_mesh_3d(RID p_item, RID p_mesh3d, const Transform &p_transform, const Color &p_modulate, RID p_texture, RID p_normal_map, RID p_mask) {
+	Item *canvas_item = canvas_item_owner.getornull(p_item);
+	ERR_FAIL_COND(!canvas_item);
+	ERR_FAIL_COND(canvas_item->commands.empty());
+
+	Item::CommandMesh *m = (Item::CommandMesh *)canvas_item->commands.back();
+	ERR_FAIL_COND(m->type != RasterizerCanvas::Item::Command::TYPE_MESH);
+
+	m->texture = p_texture;
+	m->normal_map = p_normal_map;
+	m->mask = p_mask;
+	m->transform = p_transform;
+	m->modulate = p_modulate;
+}
+
 void VisualServerCanvas::canvas_item_update_mesh_3d(RID p_mesh3d, const Variant &p_value, int p_op) {
 	ERR_FAIL_COND(p_mesh3d.get_props_count() != 3);
 

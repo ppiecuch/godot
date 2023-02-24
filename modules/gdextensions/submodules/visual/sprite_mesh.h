@@ -1,32 +1,32 @@
-/*************************************************************************/
-/*  sprite_mesh.h                                                        */
-/*************************************************************************/
-/*                       This file is part of:                           */
-/*                           GODOT ENGINE                                */
-/*                      https://godotengine.org                          */
-/*************************************************************************/
-/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
-/*                                                                       */
-/* Permission is hereby granted, free of charge, to any person obtaining */
-/* a copy of this software and associated documentation files (the       */
-/* "Software"), to deal in the Software without restriction, including   */
-/* without limitation the rights to use, copy, modify, merge, publish,   */
-/* distribute, sublicense, and/or sell copies of the Software, and to    */
-/* permit persons to whom the Software is furnished to do so, subject to */
-/* the following conditions:                                             */
-/*                                                                       */
-/* The above copyright notice and this permission notice shall be        */
-/* included in all copies or substantial portions of the Software.       */
-/*                                                                       */
-/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
-/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
-/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
-/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
-/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
-/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
-/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
-/*************************************************************************/
+/**************************************************************************/
+/*  sprite_mesh.h                                                         */
+/**************************************************************************/
+/*                         This file is part of:                          */
+/*                             GODOT ENGINE                               */
+/*                        https://godotengine.org                         */
+/**************************************************************************/
+/* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
+/* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
+/*                                                                        */
+/* Permission is hereby granted, free of charge, to any person obtaining  */
+/* a copy of this software and associated documentation files (the        */
+/* "Software"), to deal in the Software without restriction, including    */
+/* without limitation the rights to use, copy, modify, merge, publish,    */
+/* distribute, sublicense, and/or sell copies of the Software, and to     */
+/* permit persons to whom the Software is furnished to do so, subject to  */
+/* the following conditions:                                              */
+/*                                                                        */
+/* The above copyright notice and this permission notice shall be         */
+/* included in all copies or substantial portions of the Software.        */
+/*                                                                        */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. */
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY   */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,   */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE      */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
+/**************************************************************************/
 
 #ifndef GD_SPRITE_MESH_H
 #define GD_SPRITE_MESH_H
@@ -37,6 +37,8 @@
 #include "scene/resources/mesh.h"
 #include "scene/resources/texture.h"
 
+// BEGIN Mesh-light definition and its editor
+
 class SpriteMeshLight : public Node {
 	GDCLASS(SpriteMeshLight, Node);
 
@@ -46,6 +48,9 @@ class SpriteMeshLight : public Node {
 	Point2 light_position;
 	real_t light_power;
 	real_t light_radius;
+	Color ambient;
+	Color diffuse;
+	Color specular;
 	bool debug_outline;
 
 	void _update();
@@ -78,6 +83,12 @@ public:
 	real_t get_light_radius() const;
 	void set_debug_outline(bool p_state);
 	bool is_debug_outline() const;
+	void set_light_ambient(Color p_ambient);
+	Color get_light_ambient() const;
+	void set_light_diffuse(Color p_diffuse);
+	Color get_light_diffuse() const;
+	void set_light_specular(Color p_specular);
+	Color get_light_specular() const;
 
 	SpriteMeshLight();
 	~SpriteMeshLight();
@@ -132,6 +143,29 @@ public:
 	~SpriteMeshLightEditorPlugin();
 };
 
+// END
+
+// BEGIN 3D Mesh and its editor
+
+class SpriteMesh;
+
+struct SpriteMeshSnapshot {
+	SpriteMesh *owner;
+	Size2 snapshot_size;
+	RID scenario, viewport, viewport_texture, canvas, canvas_item;
+
+	void _create();
+	void _trigger();
+	Ref<Image> _get_image();
+	void _destroy();
+
+	~SpriteMeshSnapshot() {
+		if (viewport.is_valid()) {
+			_destroy();
+		}
+	}
+};
+
 class SpriteMesh : public Node2D {
 	GDCLASS(SpriteMesh, Node2D);
 
@@ -139,6 +173,43 @@ class SpriteMesh : public Node2D {
 	Ref<Texture> texture;
 	Ref<Texture> normal_map;
 	Ref<Texture> mask;
+
+	static const int LIGHTS_NUM = 4;
+	struct {
+		NodePath light_nodes[LIGHTS_NUM];
+		bool is_empty() const {
+			for (int l = 0; l < LIGHTS_NUM; l++) {
+				if (!light_nodes[l].is_empty()) {
+					return false;
+				}
+			}
+			return true;
+		}
+		int get_num_lights() const {
+			int n = 0;
+			for (int l = 0; l < LIGHTS_NUM; l++) {
+				n += !light_nodes[l].is_empty();
+			}
+			return n;
+		}
+		bool has_light(const NodePath &node_path) const {
+			for (int l = 0; l < LIGHTS_NUM; l++) {
+				if (light_nodes[l] == node_path) {
+					return true;
+				}
+			}
+			return false;
+		}
+		_FORCE_INLINE_ bool has_light(int index) const {
+			return !light_nodes[index].is_empty();
+		}
+		_FORCE_INLINE_ void set_light(int index, const NodePath &node_path) {
+			light_nodes[index] = node_path;
+		}
+		_FORCE_INLINE_ NodePath get_light(int index) const {
+			return light_nodes[index];
+		}
+	} lights;
 
 	bool auto_collision_shape;
 	Vector<Vector2> mesh_outline;
@@ -178,19 +249,22 @@ class SpriteMesh : public Node2D {
 	Vector3 _mesh_angle;
 	Vector3 _mesh_scale;
 
-	mutable SafeFlag snapshot_done;
-	Size2 snapshot_size;
+	SpriteMeshSnapshot snapshot;
 	void _snapshot_done(const Variant &p_udata);
-	Ref<Image> _save_mesh_snapshot(const Size2 &p_snapshot_size);
 	void _save_mesh_xform(Ref<ArrayMesh> &p_mesh);
 
 	void _get_rects(Rect2 &r_src_rect, Rect2 &r_dst_rect, bool &r_filter_clip) const;
 	void _mesh_changed();
+	void _update_lights();
+	SpriteMeshLight *_get_light_node(int p_index);
+	void _refresh_properties();
 
 protected:
+	bool _get(const StringName &p_path, Variant &r_ret) const;
+	bool _set(const StringName &p_path, const Variant &p_value);
+	void _get_property_list(List<PropertyInfo> *p_list) const;
 	void _notification(int p_what);
 	static void _bind_methods();
-	virtual void _validate_property(PropertyInfo &property) const;
 
 public:
 #ifdef TOOLS_ENABLED
@@ -212,7 +286,7 @@ public:
 	void _update_mesh_xform();
 	void _update_transform();
 
-	Ref<Image> save_snapshot();
+	void save_snapshot();
 
 	void set_mesh(const Ref<Mesh> &p_mesh);
 	Ref<Mesh> get_mesh() const;
@@ -243,7 +317,10 @@ public:
 	void set_mesh_rotation_z_degrees(float p_degrees);
 	float get_mesh_rotation_z_degrees() const;
 
-	void set_auto_collision_shape(bool state);
+	void set_mesh_light(int p_index, const NodePath &p_path);
+	NodePath get_mesh_light(int p_index) const;
+
+	void set_auto_collision_shape(bool p_state);
 	bool is_auto_collision_shape();
 
 	void set_centered(bool p_center);
@@ -366,17 +443,6 @@ public:
 
 #endif // TOOLS_ENABLED
 
-class SpriteMeshManager : public Node {
-	GDCLASS(SpriteMeshManager, Node);
+// END
 
-protected:
-	static void _bind_methods();
-	void _notification(int p_notification);
-
-public:
-	virtual String get_configuration_warning() const;
-
-	SpriteMeshManager();
-	~SpriteMeshManager();
-};
 #endif // GD_SPRITE_MESH_H

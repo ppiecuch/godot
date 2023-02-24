@@ -731,6 +731,7 @@ public:
 	BIND7(canvas_item_add_mesh, RID, RID, const Transform2D &, const Color &, RID, RID, RID)
 	BIND1R(RID, canvas_item_create_mesh_3d, RID)
 	BIND7(canvas_item_add_mesh_3d, RID, RID, const Transform &, const Color &, RID, RID, RID)
+	BIND7(canvas_item_set_mesh_3d, RID, RID, const Transform &, const Color &, RID, RID, RID)
 	BIND3(canvas_item_update_mesh_3d, RID, const Variant &, int)
 	BIND5(canvas_item_add_multimesh, RID, RID, RID, RID, RID)
 	BIND5(canvas_item_add_particles, RID, RID, RID, RID, RID)

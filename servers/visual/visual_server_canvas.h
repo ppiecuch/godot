@@ -208,6 +208,7 @@ public:
 	void canvas_item_add_mesh(RID p_item, RID p_mesh, const Transform2D &p_transform = Transform2D(), const Color &p_modulate = Color(1, 1, 1), RID p_texture = RID(), RID p_normal_map = RID(), RID p_mask = RID());
 	RID canvas_item_create_mesh_3d(RID p_mesh);
 	void canvas_item_add_mesh_3d(RID p_item, RID p_mesh3d, const Transform &p_transform = Transform(), const Color &p_modulate = Color(1, 1, 1), RID p_texture = RID(), RID p_normal_map = RID(), RID p_mask = RID());
+	void canvas_item_set_mesh_3d(RID p_item, RID p_mesh3d, const Transform &p_transform = Transform(), const Color &p_modulate = Color(1, 1, 1), RID p_texture = RID(), RID p_normal_map = RID(), RID p_mask = RID());
 	void canvas_item_update_mesh_3d(RID p_mesh3d, const Variant &p_value, int op = VS::OP_SET);
 	void canvas_item_add_multimesh(RID p_item, RID p_mesh, RID p_texture = RID(), RID p_normal_map = RID(), RID p_mask = RID());
 	void canvas_item_add_particles(RID p_item, RID p_particles, RID p_texture, RID p_normal = RID(), RID p_mask = RID());

@@ -614,6 +614,7 @@ public:
 	FUNC7(canvas_item_add_mesh, RID, RID, const Transform2D &, const Color &, RID, RID, RID)
 	FUNC1R(RID, canvas_item_create_mesh_3d, RID)
 	FUNC7(canvas_item_add_mesh_3d, RID, RID, const Transform &, const Color &, RID, RID, RID)
+	FUNC7(canvas_item_set_mesh_3d, RID, RID, const Transform &, const Color &, RID, RID, RID)
 	FUNC3(canvas_item_update_mesh_3d, RID, const Variant &, int)
 	FUNC5(canvas_item_add_multimesh, RID, RID, RID, RID, RID)
 	FUNC5(canvas_item_add_particles, RID, RID, RID, RID, RID)
