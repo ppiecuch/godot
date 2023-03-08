@@ -75,6 +75,7 @@ name is available.
     David Snopek (dsnopek)
     Dharkael (lupoDharkael)
     Dmitry Koteroff (Krakean)
+    Dmitry Maganov (vonagam)
     Dominik Jasiński (dreamsComeTrue)
     Douglas Leão (DeeJayLSP)
     DualMatrix
@@ -123,6 +124,7 @@ name is available.
     Jake Young (Duroxxigar)
     Jakub Grzesik (kubecz3k)
     James Buck (jbuck3)
+    Jan Haller (Bromeon)
     Jason Knight (jasonwinterpixel)
     Jean-Michel Bernard (jmb462)
     Jérôme Gully (Nutriz)
@@ -160,6 +162,7 @@ name is available.
     Mariano Javier Suligoy (MarianoGnu)
     Mario Schlack (hurikhan)
     Marios Staikopoulos (marstaik)
+    Marius Hanl (Maran23)
     Mark Riedesel (klowner)
     Markus Sauermann (Sauermann)
     Martin Capitanio (capnm)
@@ -190,6 +193,7 @@ name is available.
     Nikita Lita (nikitalita)
     Nils André-Chang (NilsIrl)
     Nuno Donato (nunodonato)
+    ocean (they/them) (anvilfolk)
     Omar El Sheikh (The-O-King)
     Ovnuniarchos
     Pascal Richter (ShyRed)
@@ -213,6 +217,7 @@ name is available.
     Raul Santos (raulsntos)
     Ray Koopa (RayKoopa)
     RedMser
+    RedworkDE
     Rémi Verschelde (akien-mga)
     Rhody Lugo (rraallvv)
     Ricardo Buring (rburing)
@@ -231,6 +236,7 @@ name is available.
     Silc 'Tokage' Renew (TokageItLab)
     Simon Wenner (swenner)
     smix8
+    snailrhymer
     Stijn Hinlopen (hinlopen)
     Swarnim Arun (minraws)
     TC (floppyhammer)
