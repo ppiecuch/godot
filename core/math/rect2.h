@@ -347,7 +347,7 @@ struct _NO_DISCARD_CLASS_ Rect2i {
 
 		return new_rect;
 	};
-	bool has_point(const Point2 &p_point) const {
+	bool has_point(const Point2i &p_point) const {
 		if (p_point.x < position.x) {
 			return false;
 		}
@@ -436,7 +436,7 @@ struct _NO_DISCARD_CLASS_ Rect2i {
 			position(Point2(p_x, p_y)),
 			size(Size2(p_width, p_height)) {
 	}
-	Rect2i(const Point2 &p_pos, const Size2 &p_size) :
+	Rect2i(const Point2i &p_pos, const Size2i &p_size) :
 			position(p_pos),
 			size(p_size) {
 	}

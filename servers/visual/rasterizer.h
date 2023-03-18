@@ -939,6 +939,7 @@ public:
 		struct CommandCircle : public Command {
 			Point2 pos;
 			float radius;
+			float squared;
 			Color color;
 			CommandCircle() { type = TYPE_CIRCLE; }
 		};

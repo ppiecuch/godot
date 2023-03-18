@@ -41,6 +41,16 @@
 
 #include <utility>
 
+#define DOT_TEXTURE_FALL_OUT 0.3
+
+enum BitmapFontDotStyle {
+	BITMAP_FONT_FLAT_CIRCLE,
+	BITMAP_FONT_FLAT_SQUARE,
+	BITMAP_FONT_TEXTURE_CIRCLE,
+	BITMAP_FONT_TEXTURE_SQUARE,
+	BITMAP_FONT_TEXTURE_3D,
+};
+
 class GdGeomFonts : public Reference {
 	GDCLASS(GdGeomFonts, Reference);
 
@@ -57,6 +67,7 @@ protected:
 
 public:
 	// creating multi-text instance
+	void mesh_add_aster_font_text(Ref<ArrayMesh> p_mesh, const String &p_text, const Point2 &p_pos = Point2(), const Vector2 &p_size = Vector2(1, 1));
 	void mesh_add_bob_font_text(Ref<ArrayMesh> p_mesh, const String &p_text, const Point3 &p_pos = Point3(), real_t p_size = 1, bool p_wire = true);
 	void mesh_add_bob_font_text_xform(Ref<ArrayMesh> p_mesh, const String &p_text, const Transform &p_xform, real_t p_size = 1, bool p_wire = true);
 	void mesh_add_easy_font_text(Ref<ArrayMesh> p_mesh, const String &p_text, const Point2 &p_pos = Point2(), real_t p_spacing = 0);
@@ -82,9 +93,10 @@ public:
 	int aster_font_text_xform(RID p_canvas, const String &p_text, const Transform &p_xform);
 	Size2 aster_font_text_size(const String &p_text, const Size2 &p_scale) const;
 
-	int bitmap_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos = Point2());
-	int lcd_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos = Point2());
-	int square_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos = Point2());
+	int canvas_add_bitmap_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos = Point2(), int p_dot_style = BITMAP_FONT_FLAT_CIRCLE, const Dictionary &p_style = Dictionary());
+	int canvas_add_lcd_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos = Point2());
+	int canvas_add_square_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos = Point2());
+	void init_dot_textures(real_t p_fall_off = DOT_TEXTURE_FALL_OUT);
 
 	// manage text instance
 	void set_transform(int p_index, const Transform2D &p_xform);
@@ -96,5 +108,7 @@ public:
 	GdGeomFonts();
 	~GdGeomFonts();
 };
+
+VARIANT_ENUM_CAST(BitmapFontDotStyle);
 
 #endif // GD_GEOMFONTS_H

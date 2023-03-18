@@ -28,6 +28,7 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#include "fbdigitalfont/fb_font_symbol.h"
 #define _CRT_SECURE_NO_WARNINGS
 
 #include "gd_geomfonts.h"
@@ -71,6 +72,11 @@ RID GdGeomFonts::_from_handle(int hrid) const {
 bool GdGeomFonts::_valid_handle(int hrid) const {
 	const Id_T t = make_handle(hrid);
 	return items.is_valid(t);
+}
+
+void GdGeomFonts::mesh_add_aster_font_text(Ref<ArrayMesh> p_mesh, const String &p_text, const Point2 &p_pos, const Vector2 &p_size) {
+	ERR_FAIL_NULL(p_mesh);
+	_draw_asteroid_text(p_mesh, p_pos, p_size, p_text.ascii().c_str());
 }
 
 void GdGeomFonts::mesh_add_bob_font_text(Ref<ArrayMesh> p_mesh, const String &p_text, const Point3 &p_pos, real_t p_size, bool p_wire) {
@@ -163,12 +169,36 @@ Size2 GdGeomFonts::hp_font_text_size(const String &p_text, const Size2 &p_scale)
 	return _size_hp1345_text(p_text, p_scale);
 }
 
-int GdGeomFonts::bitmap_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos) {
+void GdGeomFonts::init_dot_textures(real_t p_fall_off) {
+	init_bitmap_symbol(_cache, p_fall_off);
+}
+
+#define _set_prop(D, P) \
+	if (D.has(#P)) { \
+		const int val = D[#P]; \
+		if (val >= 0) { \
+			fnt.set_##P(val); \
+		} \
+	}
+
+#define _set_color(D, P) \
+	if (D.has(#P)) { \
+		const Color val = D[#P]; \
+		fnt.set_##P(val); \
+	}
+
+int GdGeomFonts::canvas_add_bitmap_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos, int p_dot_style, const Dictionary &p_style) {
 	ERR_FAIL_COND_V(!p_canvas.is_valid(), -1);
 	const auto item = _next_item(p_canvas);
 	FBBitmapFontView fnt(item.first, _cache);
+	fnt.set_style(FBFontDotStyle(p_dot_style));
 	fnt.set_text(p_text);
-	fnt.draw();
+	_set_prop(p_style, margin);
+	_set_prop(p_style, edge_length);
+	_set_color(p_style, on_color);
+	_set_color(p_style, off_color);
+	fnt.draw(p_pos);
+
 	return item.second;
 }
 
@@ -197,6 +227,7 @@ void GdGeomFonts::clear_all_items() {
 }
 
 void GdGeomFonts::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("mesh_add_aster_font_text", "mesh", "text", "pos", "size"), &GdGeomFonts::mesh_add_bob_font_text, DEFVAL(Point2()), DEFVAL(Vector2(1, 1)));
 	ClassDB::bind_method(D_METHOD("mesh_add_bob_font_text", "mesh", "text", "pos", "size", "wire"), &GdGeomFonts::mesh_add_bob_font_text, DEFVAL(Point2()), DEFVAL(1), DEFVAL(true));
 	ClassDB::bind_method(D_METHOD("mesh_add_bob_font_text_xform", "mesh", "text", "xform", "size", "wire"), &GdGeomFonts::mesh_add_bob_font_text_xform, DEFVAL(1), DEFVAL(true));
 	ClassDB::bind_method(D_METHOD("mesh_add_easy_font_text", "mesh", "text", "pos", "spacing"), &GdGeomFonts::mesh_add_easy_font_text, DEFVAL(Point2()), DEFVAL(0));
@@ -215,18 +246,26 @@ void GdGeomFonts::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("hp_font_text_xform", "canvas", "text", "xform"), &GdGeomFonts::hp_font_text_xform);
 	ClassDB::bind_method(D_METHOD("hp_font_text_size", "text", "scale"), &GdGeomFonts::hp_font_text_size, DEFVAL(Size2(10, 10)));
 
-	ClassDB::bind_method(D_METHOD("bitmap_font_text", "canvas", "text", "pos"), &GdGeomFonts::bitmap_font_text, DEFVAL(Point2()));
+	ClassDB::bind_method(D_METHOD("init_dot_textures", "fall_off"), &GdGeomFonts::init_dot_textures, DEFVAL(0.3));
+	ClassDB::bind_method(D_METHOD("canvas_add_bitmap_font_text", "canvas", "text", "pos", "dot_style", "style"), &GdGeomFonts::canvas_add_bitmap_font_text, DEFVAL(Point2()), DEFVAL(BITMAP_FONT_FLAT_CIRCLE), DEFVAL(Dictionary()));
 
 	ClassDB::bind_method(D_METHOD("set_transform", "index", "xform"), &GdGeomFonts::set_transform);
 	ClassDB::bind_method(D_METHOD("set_modulate_color", "index", "color"), &GdGeomFonts::set_modulate_color);
 	ClassDB::bind_method(D_METHOD("clear_item", "index"), &GdGeomFonts::clear_item);
 	ClassDB::bind_method(D_METHOD("clear_all_items"), &GdGeomFonts::clear_all_items);
 
+	BIND_ENUM_CONSTANT(BITMAP_FONT_FLAT_CIRCLE);
+	BIND_ENUM_CONSTANT(BITMAP_FONT_FLAT_SQUARE);
+	BIND_ENUM_CONSTANT(BITMAP_FONT_TEXTURE_CIRCLE);
+	BIND_ENUM_CONSTANT(BITMAP_FONT_TEXTURE_SQUARE);
+	BIND_ENUM_CONSTANT(BITMAP_FONT_TEXTURE_3D);
+
 	ADD_SIGNAL(MethodInfo("changed"));
 }
 
-GdGeomFonts::GdGeomFonts() :
-		items(1, 32) {}
+GdGeomFonts::GdGeomFonts() : items(1, 32) {
+	init_bitmap_symbol(_cache, DOT_TEXTURE_FALL_OUT);
+}
 
 GdGeomFonts::~GdGeomFonts() {
 	for (const RID &rid : items) {

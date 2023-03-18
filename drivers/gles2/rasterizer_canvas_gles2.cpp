@@ -808,18 +808,51 @@ void RasterizerCanvasGLES2::render_batches(Item *p_current_clip, bool &r_reclip,
 								state.canvas_shader.use_material((void *)p_material);
 							}
 
-							static const int num_points = 32;
+							auto square_to_circle = [](const Point2 &pt) {
+								const real_t u = pt.x, v = pt.y;
+								const real_t u2 = u * u, v2 = v * v;
+								const real_t twosqrt2 = 2.0 * Math::sqrt(2.0);
+								const real_t subtermx = 2.0 + u2 - v2;
+								const real_t subtermy = 2.0 - u2 + v2;
+								const real_t termx1 = subtermx + u * twosqrt2;
+								const real_t termx2 = subtermx - u * twosqrt2;
+								const real_t termy1 = subtermy + v * twosqrt2;
+								const real_t termy2 = subtermy - v * twosqrt2;
+								const real_t x = 0.5 * Math::sqrt(termx1) - 0.5 * Math::sqrt(termx2);
+								const real_t y = 0.5 * Math::sqrt(termy1) - 0.5 * Math::sqrt(termy2);
+								return Point2(x, y);
+							};
+
+							auto circle_to_square = [](const Point2 &pt, real_t squared = 0.5) {
+								const real_t u = pt.x * Math::sqrt(1 - squared * pt.y * pt.y);
+								const real_t v = pt.y * Math::sqrt(1 - squared * pt.x * pt.x);
+								return Point2(u, v);
+							};
+
+							static const int num_points = 32, stride = 32/4;
 
 							Vector2 points[num_points + 1];
 							points[num_points] = circle->pos;
 
 							int indices[num_points * 3];
 
-							for (int j = 0; j < num_points; j++) {
-								points[j] = circle->pos + Vector2(Math::sin(j * Math_PI * 2.0 / num_points), Math::cos(j * Math_PI * 2.0 / num_points)) * circle->radius;
-								indices[j * 3 + 0] = j;
-								indices[j * 3 + 1] = (j + 1) % num_points;
-								indices[j * 3 + 2] = num_points;
+#define putpoint(J, x, y) { \
+	points[(J)] = circle->pos + Point2(x, y) * circle->radius; \
+	indices[(J) * 3 + 0] = (J); \
+	indices[(J) * 3 + 1] = ((J) + 1) % num_points; \
+	indices[(J) * 3 + 2] = num_points; \
+}
+
+							const bool squared = circle->squared > 0;
+							for (int j = 0; j < stride; j++) { // duplicate in 4 quadrants
+								Point2 pt = Vector2(Math::sin(j * Math_PI * 2.0 / num_points), Math::cos(j * Math_PI * 2.0 / num_points));
+								if (squared) {
+									pt = square_to_circle(circle_to_square(pt, circle->squared));
+								}
+								putpoint(j + 0 * stride, pt.x, pt.y);
+								putpoint(j + 1 * stride, pt.y, -pt.x);
+								putpoint(j + 2 * stride, -pt.x, -pt.y);
+								putpoint(j + 3 * stride, -pt.y, pt.x);
 							}
 
 							_bind_canvas_texture(RID(), RID(), RID());

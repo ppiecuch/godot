@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  fb.cpp                                                                */
+/*  fb_lcd_font.cpp                                                       */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,10 +28,69 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "fb_font_symbol.cpp"
+#include "core/image.h"
+#include "core/math/math_defs.h"
+#include "core/math/rect2.h"
+#include "core/variant.h"
+#include "servers/visual_server.h"
 
-#include "fb_bitmap_font.cpp"
-#include "fb_square_font.cpp"
-#include "fb_lcd_font.cpp"
+#include "fb_font_draw.h"
 
-#include "fb_font_view.cpp"
+enum LCDParts {
+	LCDTop = 1,
+	LCDCenter = 2,
+	LCDBottom = 4,
+	LCDLeftTop = 8,
+	LCDLeftButton = 16,
+	LCDRightTop = 32,
+	LCDRightButton = 64,
+};
+
+static uint8_t parts_map_for_lcd_symbol(FBFontSymbolType symbol) {
+	switch (symbol) {
+		case FBFontSymbol0:
+			return LCDTop | LCDBottom | LCDLeftTop | LCDLeftButton | LCDRightTop | LCDRightButton;
+		case FBFontSymbol1:
+			return LCDRightTop | LCDRightButton;
+		case FBFontSymbol2:
+			return LCDTop | LCDBottom | LCDLeftButton | LCDRightTop | LCDCenter;
+		case FBFontSymbol3:
+			return LCDTop | LCDBottom | LCDRightTop | LCDRightButton | LCDCenter;
+		case FBFontSymbol4:
+			return LCDLeftTop | LCDRightTop | LCDRightButton | LCDCenter;
+		case FBFontSymbol5:
+			return LCDTop | LCDBottom | LCDLeftTop | LCDRightButton | LCDCenter;
+		case FBFontSymbol6:
+			return LCDTop | LCDBottom | LCDLeftTop | LCDLeftButton | LCDRightButton | LCDCenter;
+		case FBFontSymbol7:
+			return LCDTop | LCDRightTop | LCDRightButton;
+		case FBFontSymbol8:
+			return LCDTop | LCDBottom | LCDLeftTop | LCDLeftButton | LCDRightTop | LCDRightButton | LCDCenter;
+		case FBFontSymbol9:
+			return LCDTop | LCDBottom | LCDLeftTop | LCDRightTop | LCDRightButton | LCDCenter;
+		case FBFontSymbolDash:
+			return LCDCenter;
+		default:
+			return 0;
+	}
+}
+
+void path_lcd_symbol(
+		Vector<Vector<Point2>> &path,
+		FBFontSymbolType symbol,
+		int edge_length,
+		int line_width,
+		Point2 start_point) {
+
+	const int spacer = 1;
+	const uint8_t parts = parts_map_for_lcd_symbol(symbol);
+
+	if (parts & LCDTop) {
+		Vector<Point2> seg;
+		seg.push_back(start_point + Vector2(spacer, 0));
+		seg.push_back(start_point + Vector2(edge_length - spacer, 0));
+		seg.push_back(start_point + Vector2(edge_length - spacer - line_width, line_width));
+		seg.push_back(start_point + Vector2(spacer + line_width, line_width));
+		path.push_back(seg);
+	}
+}

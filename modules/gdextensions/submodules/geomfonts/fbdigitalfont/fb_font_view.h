@@ -42,16 +42,12 @@
 
 class FBBitmapFontView {
 	Vector<FBFontSymbolType> symbols;
-	FBFontDotType dot_type;
-	real_t edge_length;
-	real_t margin;
+	FBFontDotStyle dot_style;
+	int edge_length;
+	int margin;
 	real_t glow_size;
 	real_t inner_glow_size;
-	int number_of_left_padding_dot;
-	int number_of_top_padding_dot;
-	int number_of_bottom_padding_dot;
-	int number_of_right_padding_dot;
-	int number_of_padding_dots_between_digits;
+	CharPadding padding;
 	Color off_color;
 	Color on_color;
 	Color glow_color;
@@ -65,20 +61,32 @@ class FBBitmapFontView {
 	Dictionary &cache;
 
 public:
-	void draw();
+	void draw(const Point2 &p_pos = Point2());
 	Size2 size_of_contents() const;
+	int get_font_height() const { return 7; }
 
 	void set_text(const String &p_text);
-	void set_edge_length(real_t p_edge_length) { edge_length = p_edge_length; }
-	void set_margin(real_t p_margin) { margin = p_margin; }
+	void set_style(FBFontDotStyle p_style) { dot_style = p_style; }
+	void set_edge_length(int p_edge_length) { edge_length = p_edge_length; }
+	void set_margin(int p_margin) { margin = p_margin; }
+	void set_padding(int p_left, int p_right, int p_top, int p_bottom) {
+		padding.number_of_left_dot = p_left;
+		padding.number_of_right_dot = p_right;
+		padding.number_of_top_dot = p_top;
+		padding.number_of_bottom_dot = p_bottom;
+	}
+	void set_spacing(int p_spacing) { padding.number_of_between_dot = p_spacing; }
+	void set_on_color(const Color &p_color) { on_color = p_color; }
+	void set_off_color(const Color &p_color) { off_color = p_color; }
 
 	FBBitmapFontView(const RID &canvas_item, Dictionary &cache);
 };
 
 class FBLCDFontView {
+	Vector<FBFontSymbolType> symbols;
 	bool draw_off_line;
-	real_t edge_length;
-	real_t margin;
+	int edge_length;
+	int margin;
 	real_t line_width;
 	real_t horizontal_padding;
 	real_t vertical_padding;
@@ -90,36 +98,50 @@ class FBLCDFontView {
 	Color inner_glow_color;
 	String text;
 
+	const RID &canvas_item;
+	Dictionary &cache;
+
 public:
 	Size2 size_of_contents() const;
 
 	void set_text(const String &p_text);
+	void set_edge_length(int p_edge_length) { edge_length = p_edge_length; }
+	void set_margin(int p_margin) { margin = p_margin; }
 
-	FBLCDFontView();
+	void draw(const Point2 &p_pos);
+
+	FBLCDFontView(const RID &canvas_item, Dictionary &cache);
 };
 
 class FBSquareFontView {
-	real_t horizontal_edge_length;
-	real_t vertical_edge_length;
-	real_t margin;
-	real_t line_width;
-	real_t horizontal_padding;
-	real_t vertical_padding;
+	Vector<FBFontSymbolType> symbols;
+	int horizontal_edge_length;
+	int vertical_edge_length;
+	int margin;
+	int line_width;
+	int horizontal_padding;
+	int vertical_padding;
 	real_t glow_size;
 	real_t inner_glow_size;
-	FBLineJoin line_join;
-	FBLineCap line_cap;
+	int line_join;
+	int line_cap;
 	Color line_color;
 	Color glow_color;
 	Color inner_glow_color;
 	String text;
 
+	const RID &canvas_item;
+	Dictionary &cache;
+
 public:
-	Size2 size_of_contents();
+	Size2 size_of_contents() const;
 
 	void set_text(const String &p_text);
+	void set_margin(int p_margin) { margin = p_margin; }
 
-	FBSquareFontView();
+	void draw(const Point2 &p_pos);
+
+	FBSquareFontView(const RID &canvas_item, Dictionary &cache);
 };
 
 #endif // FBFONTVIEW_H

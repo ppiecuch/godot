@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  fb.cpp                                                                */
+/*  fb_bitmap_font.cpp                                                    */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,10 +28,40 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "fb_font_symbol.cpp"
+#include "core/image.h"
+#include "core/math/math_defs.h"
+#include "core/math/rect2.h"
+#include "core/variant.h"
+#include "servers/visual_server.h"
 
-#include "fb_bitmap_font.cpp"
-#include "fb_square_font.cpp"
-#include "fb_lcd_font.cpp"
+#include "fb_font_draw.h"
 
-#include "fb_font_view.cpp"
+
+void path_square_symbol(
+		Vector<Vector<Point2>> &path,
+		FBFontSymbolType symbol,
+		int horizontal_edge_length,
+		int vertical_edge_length,
+		const Point2 &start_point) {
+
+	switch (symbol) {
+		case FBFontSymbolDash: {
+			Vector<Point2> seg;
+			seg.push_back(start_point + Vector2(0, vertical_edge_length));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, vertical_edge_length));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbol0: {
+			Vector<Point2> seg;
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, vertical_edge_length * 2));
+			seg.push_back(start_point, Vector2(0, vertical_edge_length * 2));
+			seg.push_back(seg[0]); // close
+			path.push_back(seg);
+		} break;
+		default: {
+			// Unsupported character
+		} break;
+	}
+}
