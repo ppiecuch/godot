@@ -45,12 +45,12 @@
 static std::vector<std::vector<bool>> coord_for_symbol(FBFontSymbolType symbol);
 
 // some convenience constants for the texture dimensions:
-#define phf 16                      // the point half-width in px. must be a power of two <= 256.
-#define psz (phf << 1)              // point size
-#define psm (psz - 1)               // size minus one
-#define phs (phf * phf)             // half size squared
-#define pdb (psz << 1)              // double size
-#define pct (psz >> 1)              // point center
+#define phf 16 // the point half-width in px. must be a power of two <= 256.
+#define psz (phf << 1) // point size
+#define psm (psz - 1) // size minus one
+#define phs (phf * phf) // half size squared
+#define pdb (psz << 1) // double size
+#define pct (psz >> 1) // point center
 #define prs ((phf - 1) * (phf - 1)) // radius squared
 
 #define frsqrtes(v) (1 / Math::sqrt(v)) // reciprocal square root
@@ -77,9 +77,10 @@ static real_t ifun(real_t x, real_t y, real_t F) { // compute falloff at x,y wit
 	return 1 - S;
 }
 
-template<int dim> Point2i disc_to_square(int x, int y) { // mapping a circular disc to a square region
-	const real_t unit = 2.0/dim;
-	const real_t half = dim/2.0;
+template <int dim>
+Point2i disc_to_square(int x, int y) { // mapping a circular disc to a square region
+	const real_t unit = 2.0 / dim;
+	const real_t half = dim / 2.0;
 	const real_t squared = 0.4; // 0.1 .. 0.5
 	const real_t nx = x * unit, ny = y * unit; // -1 .. 1
 	const real_t u = nx * Math::sqrt(1 - squared * ny * ny);
@@ -90,27 +91,27 @@ template<int dim> Point2i disc_to_square(int x, int y) { // mapping a circular d
 #define default_circle_squared 0.4
 
 // 8-way symmetric macro
-#define putpixel8(x, y, I)                                                       \
-{                                                                                \
-	const uint8_t c = I * 255;                                                   \
-	buffer[(pct + x) + (pct + y) * psz] =                                        \
-		buffer[(pct - 1 - x) + (pct + y) * psz] =                                \
-			buffer[(pct + x) + (pct - 1 - y) * psz] =                            \
-				buffer[(pct - 1 - x) + (pct - 1 - y) * psz] =                    \
-					buffer[(pct + y) + (pct + x) * psz] =                        \
-						buffer[(pct - 1 - y) + (pct + x) * psz] =                \
-							buffer[(pct + y) + (pct - 1 - x) * psz] =            \
-								buffer[(pct - 1 - y) + (pct - 1 - x) * psz] = c; \
-}
+#define putpixel8(x, y, I)                                                                                       \
+	{                                                                                                            \
+		const uint8_t c = I * 255;                                                                               \
+		buffer[(pct + x) + (pct + y) * psz] =                                                                    \
+				buffer[(pct - 1 - x) + (pct + y) * psz] =                                                        \
+						buffer[(pct + x) + (pct - 1 - y) * psz] =                                                \
+								buffer[(pct - 1 - x) + (pct - 1 - y) * psz] =                                    \
+										buffer[(pct + y) + (pct + x) * psz] =                                    \
+												buffer[(pct - 1 - y) + (pct + x) * psz] =                        \
+														buffer[(pct + y) + (pct - 1 - x) * psz] =                \
+																buffer[(pct - 1 - y) + (pct - 1 - x) * psz] = c; \
+	}
 
 // 4-way symmetric macro
-#define putpixel4(x, y, c)                                   \
-{                                                            \
-	buffer[(pct + x) + (pct + y) * psz] =                    \
-		buffer[(pct + x) + (pct - y) * psz] =                \
-			buffer[(pct - x) + (pct + y) * psz] =            \
-					buffer[(pct - x) + (pct - y) * psz] = c; \
-}
+#define putpixel4(x, y, c)                                               \
+	{                                                                    \
+		buffer[(pct + x) + (pct + y) * psz] =                            \
+				buffer[(pct + x) + (pct - y) * psz] =                    \
+						buffer[(pct - x) + (pct + y) * psz] =            \
+								buffer[(pct - x) + (pct - y) * psz] = c; \
+	}
 
 static PoolByteArray generate_circle_aa_data(real_t fall_off) {
 	if (logtbl.empty()) {
@@ -184,7 +185,7 @@ static Ref<Texture> generate_light_texture() {
 	return texture;
 }
 
-void init_bitmap_symbol (Dictionary &cache, real_t fall_off) {
+void init_bitmap_symbol(Dictionary &cache, real_t fall_off) {
 	PoolByteArray data = generate_circle_aa_data(fall_off);
 	if (!cache.has("aa32_square")) {
 		cache["aa32_square"] = generate_squircle_aa_texture(data);
@@ -212,7 +213,6 @@ void init_bitmap_symbol (Dictionary &cache, real_t fall_off) {
 		cache["light_texture_off_scale"] = 0.6;
 	}
 }
-
 
 void draw_padding_with_dot_style(
 		const RID &canvas_item,
@@ -251,7 +251,7 @@ void draw_padding_with_dot_style(
 			const real_t texture_offset = edge_length * (1 - texture_off_scale) / 2;
 			start_point += Vector2(texture_offset, texture_offset);
 			edge_length *= texture_off_scale;
-			color = Color(1,1,1); // ignore color
+			color = Color(1, 1, 1); // ignore color
 		} break;
 		default: {
 			// not a texture style
@@ -259,13 +259,13 @@ void draw_padding_with_dot_style(
 	}
 
 	const Size2 rc = Size2(edge_length, edge_length);
-	const Rect2i character_rc({padding.number_of_left_dot, padding.number_of_top_dot}, character);
+	const Rect2i character_rc({ padding.number_of_left_dot, padding.number_of_top_dot }, character);
 	const int horizontal_amount = character.width + padding.number_of_left_dot + padding.number_of_right_dot + padding.number_of_between_dot;
 	const int vertical_amount = character.height + padding.number_of_top_dot + padding.number_of_bottom_dot;
 
 	for (int i = 0; i < vertical_amount; i++) {
 		for (int j = 0; j < horizontal_amount; j++) {
-			if (!character_rc.has_point({j, i})) {
+			if (!character_rc.has_point({ j, i })) {
 				const Point2 xy = start_point + Point2(j, i) * l;
 				switch (dot_style) {
 					case FBFontDotStyleFlatSquare: {
@@ -322,7 +322,7 @@ void draw_background_with_dot_style(
 			const real_t texture_offset = edge_length * (1 - texture_off_scale) / 2;
 			start_point += Vector2(texture_offset, texture_offset);
 			edge_length *= texture_off_scale;
-			color = Color(1,1,1); // ignore color
+			color = Color(1, 1, 1); // ignore color
 		} break;
 		default: {
 			// not a texture style
@@ -492,14 +492,14 @@ void draw_bitmap_symbol_with_padding(
 		}
 	}
 
-	const Rect2i character_rc({padding.number_of_left_dot, padding.number_of_top_dot}, {int(coord.front().size()), int(coord.size())});
+	const Rect2i character_rc({ padding.number_of_left_dot, padding.number_of_top_dot }, { int(coord.front().size()), int(coord.size()) });
 	const int horizontal_amount = character_rc.size.width + padding.number_of_left_dot + padding.number_of_right_dot + padding.number_of_between_dot;
 	const int vertical_amount = character_rc.size.height + padding.number_of_top_dot + padding.number_of_bottom_dot;
 
 	for (int r = 0; r < vertical_amount; r++) {
 		for (int c = 0; c < horizontal_amount; c++) {
 			const Point2 xy = start_point + Vector2i(c, r) * l;
-			const bool active = character_rc.has_point({c, r}) && coord[r - character_rc.position.y][c - character_rc.position.x];
+			const bool active = character_rc.has_point({ c, r }) && coord[r - character_rc.position.y][c - character_rc.position.x];
 			switch (dot_style) {
 				case FBFontDotStyleFlatSquare: {
 					VS::get_singleton()->canvas_item_add_rect(canvas_item, { xy, rc }, active ? color : off_color);

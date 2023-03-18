@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  fb_bitmap_font.cpp                                                    */
+/*  fb_square_font.cpp                                                    */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -36,14 +36,12 @@
 
 #include "fb_font_draw.h"
 
-
 void path_square_symbol(
 		Vector<Vector<Point2>> &path,
 		FBFontSymbolType symbol,
 		int horizontal_edge_length,
 		int vertical_edge_length,
 		const Point2 &start_point) {
-
 	switch (symbol) {
 		case FBFontSymbolDash: {
 			Vector<Point2> seg;

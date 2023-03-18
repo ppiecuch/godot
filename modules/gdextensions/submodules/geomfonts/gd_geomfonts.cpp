@@ -173,18 +173,18 @@ void GdGeomFonts::init_dot_textures(real_t p_fall_off) {
 	init_bitmap_symbol(_cache, p_fall_off);
 }
 
-#define _set_prop(D, P) \
-	if (D.has(#P)) { \
+#define _set_prop(D, P)        \
+	if (D.has(#P)) {           \
 		const int val = D[#P]; \
-		if (val >= 0) { \
-			fnt.set_##P(val); \
-		} \
+		if (val >= 0) {        \
+			fnt.set_##P(val);  \
+		}                      \
 	}
 
-#define _set_color(D, P) \
-	if (D.has(#P)) { \
+#define _set_color(D, P)         \
+	if (D.has(#P)) {             \
 		const Color val = D[#P]; \
-		fnt.set_##P(val); \
+		fnt.set_##P(val);        \
 	}
 
 int GdGeomFonts::canvas_add_bitmap_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos, int p_dot_style, const Dictionary &p_style) {
@@ -263,7 +263,8 @@ void GdGeomFonts::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("changed"));
 }
 
-GdGeomFonts::GdGeomFonts() : items(1, 32) {
+GdGeomFonts::GdGeomFonts() :
+		items(1, 32) {
 	init_bitmap_symbol(_cache, DOT_TEXTURE_FALL_OUT);
 }
 

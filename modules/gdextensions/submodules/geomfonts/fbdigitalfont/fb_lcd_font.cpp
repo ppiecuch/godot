@@ -81,7 +81,6 @@ void path_lcd_symbol(
 		int edge_length,
 		int line_width,
 		Point2 start_point) {
-
 	const int spacer = 1;
 	const uint8_t parts = parts_map_for_lcd_symbol(symbol);
 

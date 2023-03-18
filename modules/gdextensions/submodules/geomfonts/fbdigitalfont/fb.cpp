@@ -31,7 +31,7 @@
 #include "fb_font_symbol.cpp"
 
 #include "fb_bitmap_font.cpp"
-#include "fb_square_font.cpp"
 #include "fb_lcd_font.cpp"
+#include "fb_square_font.cpp"
 
 #include "fb_font_view.cpp"

@@ -28,9 +28,9 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#include "fb_font_view.h"
 #include "fb_font_draw.h"
 #include "fb_font_symbol.h"
-#include "fb_font_view.h"
 
 // Reference:
 // ----------
@@ -42,12 +42,11 @@
 // 6. https://codepen.io/mxfh/pen/gRLqXX
 // 7. https://stackoverflow.com/questions/13211595/how-can-i-convert-coordinates-on-a-circle-to-coordinates-on-a-square
 
-
 /// FBBitmapFontView
 
 #define color_from_rgb(rgb) Color::hex(0xff | ((rgb) << 8))
 
-static const Color _white = Color(1,1,1);
+static const Color _white = Color(1, 1, 1);
 
 FBBitmapFontView::FBBitmapFontView(const RID &canvas_item, Dictionary &cache) :
 		canvas_item(canvas_item), cache(cache) {
@@ -107,12 +106,10 @@ void FBBitmapFontView::draw(const Point2 &p_pos) {
 	}
 }
 
-
 /// FBSquareFontView
 
 FBSquareFontView::FBSquareFontView(const RID &canvas_item, Dictionary &cache) :
 		canvas_item(canvas_item), cache(cache) {
-
 	horizontal_padding = 5;
 	vertical_padding = 5;
 	horizontal_edge_length = 10;
@@ -140,7 +137,6 @@ void FBSquareFontView::set_text(const String &p_text) {
 }
 
 void FBSquareFontView::draw(const Point2 &p_pos) {
-
 	const real_t x = horizontal_padding;
 	const real_t y = vertical_padding;
 	const real_t l = (horizontal_edge_length * 2) + margin;
@@ -157,12 +153,10 @@ void FBSquareFontView::draw(const Point2 &p_pos) {
 	}
 }
 
-
 // FBLCDFontView
 
 FBLCDFontView::FBLCDFontView(const RID &canvas_item, Dictionary &cache) :
 		canvas_item(canvas_item), cache(cache) {
-
 	horizontal_padding = 5;
 	draw_off_line = false;
 	vertical_padding = 5;
@@ -189,7 +183,6 @@ void FBLCDFontView::set_text(const String &p_text) {
 }
 
 void FBLCDFontView::draw(const Point2 &p_pos) {
-
 	const real_t x = horizontal_padding;
 	const real_t y = vertical_padding;
 	const real_t l = edge_length + margin;

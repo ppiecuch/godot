@@ -1158,17 +1158,18 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 							};
 
 							Item::CommandCircle *circle = static_cast<Item::CommandCircle *>(c);
-							static const int numpoints = 32, stride = 32/4;
+							static const int numpoints = 32, stride = 32 / 4;
 							Vector2 points[numpoints + 1];
 							points[numpoints] = circle->pos;
 							int indices[numpoints * 3];
 
-#define putpoint(J, x, y) { \
-	points[(J)] = circle->pos + Point2(x, y) * circle->radius; \
-	indices[(J) * 3 + 0] = (J); \
-	indices[(J) * 3 + 1] = ((J) + 1) % numpoints; \
-	indices[(J) * 3 + 2] = numpoints; \
-}
+#define putpoint(J, x, y)                                          \
+	{                                                              \
+		points[(J)] = circle->pos + Point2(x, y) * circle->radius; \
+		indices[(J)*3 + 0] = (J);                                  \
+		indices[(J)*3 + 1] = ((J) + 1) % numpoints;                \
+		indices[(J)*3 + 2] = numpoints;                            \
+	}
 
 							const bool squared = circle->squared > 0;
 							for (int j = 0; j < stride; j++) { // duplicate in 4 quadrants
