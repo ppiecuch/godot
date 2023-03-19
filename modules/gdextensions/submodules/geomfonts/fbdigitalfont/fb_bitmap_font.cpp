@@ -88,12 +88,13 @@ Point2i disc_to_square(int x, int y) { // mapping a circular disc to a square re
 	return Point2i(Math::round(u * half), Math::round(v * half));
 }
 
-#define default_circle_squared 0.4
+#define default_circle_squared 0.3
+#define default_glow_transparency 0.2
 
 // 8-way symmetric macro
 #define putpixel8(x, y, I)                                                                                       \
 	{                                                                                                            \
-		const uint8_t c = I * 255;                                                                               \
+		const uint8_t c = map * (inv ? 1 - I : I);                                                               \
 		buffer[(pct + x) + (pct + y) * psz] =                                                                    \
 				buffer[(pct - 1 - x) + (pct + y) * psz] =                                                        \
 						buffer[(pct + x) + (pct - 1 - y) * psz] =                                                \
@@ -113,13 +114,14 @@ Point2i disc_to_square(int x, int y) { // mapping a circular disc to a square re
 								buffer[(pct - x) + (pct - y) * psz] = c; \
 	}
 
-static PoolByteArray generate_circle_aa_data(real_t fall_off) {
+static PoolByteArray generate_circle_aa_data(real_t fall_off, bool inv, real_t scale = 1) {
 	if (logtbl.empty()) {
 		logtbl.resize(pdb);
 		for (int i = 1; i <= pdb; i++) {
 			logtbl[i - 1] = Math::log(real_t(i) / pdb); // lookup table has 4x the bitmap resolution
 		}
 	}
+	const uint8_t map = 255 * scale;
 	int x = phf - 1, y = 0;
 	real_t T = 0;
 	PoolByteArray data;
@@ -186,12 +188,19 @@ static Ref<Texture> generate_light_texture() {
 }
 
 void init_bitmap_symbol(Dictionary &cache, real_t fall_off) {
-	PoolByteArray data = generate_circle_aa_data(fall_off);
+	PoolByteArray data = generate_circle_aa_data(fall_off, false);
+	PoolByteArray glow = generate_circle_aa_data(0.7, true, default_glow_transparency);
 	if (!cache.has("aa32_square")) {
 		cache["aa32_square"] = generate_squircle_aa_texture(data);
 	}
 	if (!cache.has("aa32_circle")) {
 		cache["aa32_circle"] = generate_circle_aa_texture(data);
+	}
+	if (!cache.has("aa32_circle_glow")) {
+		cache["aa32_circle_glow"] = generate_circle_aa_texture(glow);
+	}
+	if (!cache.has("aa32_square_glow")) {
+		cache["aa32_square_glow"] = generate_squircle_aa_texture(glow);
 	}
 	if (!cache.has("light_texture")) {
 		Ref<Texture> lights = generate_light_texture();
@@ -452,13 +461,13 @@ void draw_bitmap_symbol_with_padding(
 	const int l = edge_length + margin;
 	const auto &coord = coord_for_symbol(symbol);
 
-	Ref<Texture> texture;
+	Ref<Texture> texture, texture_glow;
 	struct {
 		Ref<Texture> texture;
 		Size2 rc;
 		Vector2 start;
 	} texture_off;
-	Size2 rc(edge_length, edge_length);
+	Size2 rc(edge_length, edge_length), rc_edge = rc;
 	real_t circle_squared = 0;
 	switch (dot_style) {
 		case FBFontDotStyleFlatSquare: {
@@ -468,16 +477,20 @@ void draw_bitmap_symbol_with_padding(
 				edge_length /= 2;
 				circle_squared = default_circle_squared;
 			}
+			texture_glow = cache["aa32_square_glow"];
 		} break;
 		case FBFontDotStyleFlatCircle: {
 			rc /= 2;
 			edge_length /= 2;
+			texture_glow = cache["aa32_circle_glow"];
 		} break;
 		case FBFontDotStyleTextureSquare: {
 			texture = cache["aa32_square"];
+			texture_glow = cache["aa32_square_glow"];
 		} break;
 		case FBFontDotStyleTextureCircle: {
 			texture = cache["aa32_circle"];
+			texture_glow = cache["aa32_circle_glow"];
 		} break;
 		case FBFontDotStyleTexture3D: {
 			texture = cache["light_texture_on"];
@@ -520,6 +533,9 @@ void draw_bitmap_symbol_with_padding(
 						}
 					}
 				}
+			}
+			if (texture_glow && active) {
+				texture_glow->draw_rect(canvas_item, { xy, rc_edge }, false, inner_glow_color);
 			}
 		}
 	}
