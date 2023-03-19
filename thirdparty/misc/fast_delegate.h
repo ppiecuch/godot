@@ -1194,4 +1194,272 @@ FastDelegate<RetType (Args...)> MakeDelegate(Y* x, RetType (X::*func)(Args...) c
 
 } // namespace fastdelegate
 
+
+////////////////////////////////////////////////////////////////////////////////
+//                      Fast Delegates, part 7:
+//
+//              Method scheduler with delays - FastSchedule
+//
+//        MethodScheduler is simple delay scheduler based on FastDelegate
+//        for class methods, allows you to perform a class methods/function
+//        after the given *frames* (it is not time related).
+//
+//       - _msScheduleUpdate
+//       - _msScheduleMethod
+//
+//         METHOD_SCHEDULER_IMPL_BEGIN(stl::any);
+//           METHOD_SCHEDULER_IMPL_ADD1(int);   - define method (int)
+//           METHOD_SCHEDULER_IMPL_ADD1(float); - define method (float)
+//         METHOD_SCHEDULER_IMPL_END();
+//
+////////////////////////////////////////////////////////////////////////////////
+
+// Generating unique var name in preprocessor:
+//
+// int _UNIQUE_VAR(myVar) = 5;
+// int _UNIQUE_VAR(myVar) = 10;
+
+#define _LINENAME_CONCAT( _name_, _line_ ) _name_##_line_
+#define _LINENAME(_name_, _line_) _LINENAME_CONCAT(_name_,_line_)
+#define _UNIQUE_VAR(_name_) _LINENAME(_name_,__LINE__)
+
+#include <assert.h>
+
+//
+// MethodScheduler
+//
+// MethodScheduler is simple delay scheduler for class methods, allows you to perform
+// a class methods/function after the given *frames* (it is not time related).
+//
+// V : variant class implementation
+// S : size of the methods queue
+
+#define METHOD_SCHEDULER_IMPL_BEGIN(V) \
+    template <class Type> class _sched_fastlist { \
+    protected: \
+        \
+        typedef Type *t_ptr; \
+        typedef struct { \
+            void *pNext; \
+            void *pPrior; \
+            Type  pData; \
+        } t_listitem; \
+        typedef t_listitem *t_listitem_ptr; \
+    public: \
+        class iterator; \
+        friend class iterator; \
+        \
+        class iterator \
+        { \
+            friend class _sched_fastlist<Type>; \
+        protected: \
+            t_listitem *m_pPosition; \
+        public: \
+            iterator() { m_pPosition = 0; } \
+            ~iterator() {} \
+            Type & operator*() { return m_pPosition->pData; } \
+            iterator& operator++() { m_pPosition = (t_listitem*)m_pPosition->pNext; return (*this); } \
+            iterator& operator--() { m_pPosition = (t_listitem*)m_pPosition->pPrior; return (*this); } \
+            iterator& operator=(const iterator& iter) { m_pPosition = iter.m_pPosition; return (*this); } \
+            bool operator != (const iterator& iter) const { return m_pPosition != iter.m_pPosition; } \
+            \
+            bool valid() { return (m_pPosition!=0); } \
+            bool last()  { return (m_pPosition->pNext!=0); } \
+            bool first() { return (m_pPosition->pPrior!=0); } \
+        }; \
+        /* stack implementation for managing cache entries */ \
+        class stack { \
+        public: \
+            stack(int n) : capacity(n) { \
+                body = new t_listitem_ptr[n]; \
+                size = 0; \
+            } \
+            ~stack() { delete body; } \
+            void clear() { size = 0; } \
+            void push(t_listitem_ptr item) { body[size++] = item; } \
+            t_listitem_ptr pop(void) { return body[--size]; } \
+            t_listitem_ptr peek(void) { return body[size]; } \
+            bool is_empty(void) const { return size == 0; } \
+            bool is_full(void) const { return size == capacity; } \
+            int get_size(void) const { return size; } \
+            int get_capacity(void) const { return capacity; } \
+        private: \
+            t_listitem_ptr *    body; \
+            const int capacity; \
+            int size; \
+        }; \
+    protected: \
+        t_listitem *m_pData; \
+        t_listitem *m_pBegin; \
+        t_listitem *m_pEnd; \
+        iterator    m_Iterator; \
+        stack       m_Cache; \
+        int         m_Size; \
+        int         m_Capacity; \
+    public: \
+        _sched_fastlist(int nCapacity) : \
+        m_Cache(stack(nCapacity)) { \
+            m_Size = 0; \
+            m_Capacity = nCapacity; \
+            m_pData = new t_listitem[m_Capacity]; \
+            m_pEnd = m_pBegin = 0; \
+            t_listitem *p = m_pData; int n=m_Capacity; while(n--) m_Cache.push(p++); /* fill up cache */ \
+        } \
+        _sched_fastlist(int nCapacity, stack &nCache) : \
+        m_Cache(nCache) { \
+            m_Size = 0; \
+            m_Capacity = nCapacity; \
+            m_pData = m_pEnd = m_pBegin = 0; \
+            assert(m_Cache.capacity>0); /* be sure cache is fine */ \
+        } \
+        ~_sched_fastlist() { \
+            if (m_pData) delete[] m_pData; \
+        } \
+        Type & add_first() { \
+            t_listitem	*item = m_Cache.pop(); \
+            assert(item!=nullptr); /* cache overrun */ \
+            if(m_pBegin==0) m_pEnd = item; \
+            else m_pBegin->pPrior = (void*)item; \
+            item->pNext = (void*)m_pBegin; \
+            m_pBegin = item; \
+            m_Size++; \
+            m_Capacity--; \
+            return item->pData; \
+        } \
+        Type & add_last(int *return_size = nullptr) { \
+            t_listitem	*item = m_Cache.pop(); \
+            assert(item!=nullptr); /* cache overrun */ \
+            if(m_pEnd==0) m_pBegin = item; \
+            else m_pEnd->pNext = (void*)item; \
+            item->pPrior = (void*)m_pEnd; \
+            item->pNext = 0; \
+            m_pEnd = item; \
+            m_Size++; \
+            m_Capacity--; \
+            if (return_size) *return_size = m_Size; \
+            return item->pData; \
+        } \
+        /* pointer-methods are safer, since they are validating */ \
+        /* capacity and returning nullptr if there are no available items */ \
+        Type * add_last_p(int *return_size = nullptr) { \
+            if (m_Capacity == 0) return nullptr; /* no free items */ \
+            t_listitem	*item = m_Cache.pop(); \
+            assert(item!=nullptr); /* cache overrun */ \
+            if(m_pEnd==0) m_pBegin = item; \
+            else m_pEnd->pNext = (void*)item; \
+            item->pPrior = (void*)m_pEnd; \
+            item->pNext = 0; \
+            m_pEnd = item; \
+            m_Size++; \
+            m_Capacity--; \
+            if (return_size) *return_size = m_Size; \
+            return &item->pData; \
+        } \
+        void clear(int *return_size = nullptr) { \
+            if(m_pBegin!=0) { \
+                m_Capacity += m_Size; \
+                m_Size = 0; \
+                m_pEnd = m_pBegin = 0; \
+                /* reload cache: */ \
+                if (m_pData) { \
+                    m_Cache.clear(); \
+                    t_listitem *p = m_pData; int n=m_Capacity; while(n--) m_Cache.push(p++); \
+                } \
+                if (return_size) *return_size = 0; \
+            } \
+        } \
+        int size() { return m_Size; } \
+        int capacity() { return m_Capacity; } \
+        void remove(const iterator & i, int *return_size = nullptr) { \
+            if(i.m_pPosition->pPrior!=0) \
+                ((t_listitem*)(i.m_pPosition->pPrior))->pNext = i.m_pPosition->pNext; \
+            if(i.m_pPosition->pNext!=0) \
+                ((t_listitem*)(i.m_pPosition->pNext))->pPrior = i.m_pPosition->pPrior; \
+            if(i.m_pPosition==m_pBegin) m_pBegin = (t_listitem*)(i.m_pPosition->pNext); \
+            if(i.m_pPosition==m_pEnd) m_pEnd = (t_listitem*)(i.m_pPosition->pPrior); \
+            /* reclaim item into cache */ \
+            m_Cache.push(i.m_pPosition); \
+            m_Size--; \
+            m_Capacity++; \
+            if (return_size) *return_size = m_Size; \
+        } \
+        iterator & begin() { \
+            m_Iterator.m_pPosition = m_pBegin; \
+            return m_Iterator; \
+        } \
+        iterator & end() { \
+            m_Iterator.m_pPosition = 0; /* nullptr is always end item */ \
+            return m_Iterator; \
+        } \
+    }; \
+    \
+    struct _sched_task; \
+    typedef _sched_fastlist<_sched_task> _sched_list; \
+    struct _sched_task { \
+        int age; \
+        V args[5]; \
+        void (_sched_task::*active)(); \
+        _sched_task() : active(nullptr), age(0) { } \
+        void operator()() { \
+            assert(active!=nullptr); (this->*active)(); \
+        } \
+        /* add default no-parametes handlers */ \
+        fastdelegate::FastDelegate0<> _UNIQUE_VAR(usersel); \
+        _sched_task &operator()(int a, fastdelegate::FastDelegate0<> sel) { \
+            age = a; _UNIQUE_VAR(usersel) = sel; active = &_sched_task::_UNIQUE_VAR(invoke); return *this; \
+        }; \
+        void _UNIQUE_VAR(invoke)() { _UNIQUE_VAR(usersel)(); } \
+        static void schedule(_sched_list &q, int age, fastdelegate::FastDelegate0<> sel) { q.add_last()(age, sel); }
+
+#define METHOD_SCHEDULER_IMPL_ADD1(T1) \
+        fastdelegate::FastDelegate1<T1> _UNIQUE_VAR(usersel); \
+        _sched_task &operator()(int a, fastdelegate::FastDelegate1<T1> sel, T1 a1) { \
+            age = a; args[0] = a1; _UNIQUE_VAR(usersel) = sel; active = &_sched_task::_UNIQUE_VAR(invoke); return *this; \
+        }; \
+        void _UNIQUE_VAR(invoke)() { _UNIQUE_VAR(usersel)( args[0].cast<T1>() ); } \
+        static void schedule(_sched_list &q, int age, fastdelegate::FastDelegate1<T1> sel, T1 a1) { q.add_last()(age, sel, a1); }
+
+#define METHOD_SCHEDULER_IMPL_ADD2(T1, T2) \
+        fastdelegate::FastDelegate2<T1, T2> _UNIQUE_VAR(usersel); \
+        _sched_task &operator()(int a, fastdelegate::FastDelegate2<T1, T2> sel, T1 a1, T2 a2) { \
+            age = a; args[0] = a1; args[1] = a2; _UNIQUE_VAR(usersel) = sel; active = &_sched_task::_UNIQUE_VAR(invoke); return *this; \
+        }; \
+        void _UNIQUE_VAR(invoke)() { _UNIQUE_VAR(usersel)( args[0].cast<T1>(), args[1].cast<T2>() ); } \
+        static void schedule(_sched_list &q, int age, fastdelegate::FastDelegate2<T1, T2> sel, T1 a1, T1 a2) { q.add_last()(age, sel, a1, a2); }
+
+#define METHOD_SCHEDULER_IMPL_ADD3(T1, T2, T3)                          \
+        fastdelegate::FastDelegate3<T1, T2, T3> _UNIQUE_VAR(usersel); \
+        _sched_task &operator()(int a, fastdelegate::FastDelegate3<T1, T2, T3> sel, T1 a1, T2 a2, T3 a3) { \
+            age = a; args[0] = a1; args[1] = a2; args[2] = a3; _UNIQUE_VAR(usersel) = sel; active = &_sched_task::_UNIQUE_VAR(invoke); return *this; \
+        }; \
+        void _UNIQUE_VAR(invoke)() { _UNIQUE_VAR(usersel)( args[0].cast<T1>(), args[1].cast<T2>(), args[2].cast<T3>() ); } \
+        static void schedule(_sched_list &q, int age, fastdelegate::FastDelegate3<T1, T2, T3> sel, T1 a1, T2 a2, T3 a3) { q.add_last()(age, sel, a1, a2, a3); }
+
+#define METHOD_SCHEDULER_IMPL_ADD4(T1, T2, T3, T4) \
+        fastdelegate::FastDelegate4<T1, T2, T3, T4> _UNIQUE_VAR(usersel); \
+        _sched_task &operator()(int a, fastdelegate::FastDelegate4<T1, T2, T3, T4> sel, T1 a1, T2 a2, T4 a4, T4 a4) { \
+            age = a; args[0] = a1; args[1] = a2; args[2] = a3; args[3] = a4; _UNIQUE_VAR(usersel) = sel; active = &_sched_task::_UNIQUE_VAR(invoke); return *this; \
+        }; \
+        void _UNIQUE_VAR(invoke)() { _UNIQUE_VAR(usersel)( args[0].cast<T1>(), args[1].cast<T2>(), args[2].cast<T3>(), args[3].cast<T4>() ); } \
+        static void schedule(_sched_list &q, int age, fastdelegate::FastDelegate4<T1, T2, T3, T4> sel, T1 a1, T2 a2, T3 a3, T4 a4) { q.add_last()(age, sel, a1, a2, a3, a4); }
+
+#define METHOD_SCHEDULER_IMPL_ADD5(T1, T2, T3, T4, T5) \
+        fastdelegate::FastDelegate5<T1, T2, T3, T4, T5> _UNIQUE_VAR(usersel); \
+        _sched_task &operator()(int a, fastdelegate::FastDelegate5<T1, T2, T3, T4, T5> sel, T1 a1, T2 a2, T3 a3, T4 a4, T5 a5) { \
+            age = a; args[0] = a1; args[1] = a2; args[2] = a3; args[3] = a4; args[4] = a5; _UNIQUE_VAR(usersel) = sel; active = &_sched_task::_UNIQUE_VAR(invoke); return *this; \
+        }; \
+        void _UNIQUE_VAR(invoke)() { _UNIQUE_VAR(usersel)( args[0].cast<T1>(), args[1].cast<T2>(), args[2].cast<T3>(), args[3].cast<T4>(), args[4].cast<T5>() ); } \
+        static void schedule(_sched_list &q, int age, fastdelegate::FastDelegate5<T1, T2, T3, T4, T5> sel, T1 a1, T2 a2, T3 a3, T4 a4, T5 a5) { q.add_last()(age, sel, a1, a2, a3, a4, a5); }
+
+#define METHOD_SCHEDULER_IMPL_END() \
+    } _ST; \
+    _sched_list _sched_queue = _sched_list(32); \
+    \
+    void _msScheduleUpdate() { \
+        for(_sched_list::iterator &it=_sched_queue.begin(); it!=_sched_queue.end(); ++it) \
+            if (--(*it).age == 0) { (*it)(); _sched_queue.remove(it); } \
+    }
+
+#define _msScheduleMethod(...) _sched_task::schedule(_sched_queue, __VA_ARGS__)
+
 #endif // FASTDELEGATE_H
