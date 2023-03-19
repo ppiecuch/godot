@@ -59,3 +59,11 @@ So what's the difference between coroutines, fibers, generators, continuations, 
 Tina's coroutines (or fibers, or whatever you want to call them) each have their own stack, and they work by using ABI specific assembly code to save and restore the CPU registers. They can also be used in either a symmetric or asymmetric fashion which is handy. There are other coroutine/fiber libraries that provide a fast assembly implementation of course, ~~but as far as I know Tina is the only one with a simple header only implementation~~ (1). I'm not always a huge fan of header only libs, but avoiding a mess of assembler files in a cross platform project is quite nice! By supporting a few of the most common ABIs, Tina should run on all of the current desktop, mobile, and console platforms available in 2021. \o/
 
 (1) Here's a new library that is very similar to Tina: https://github.com/edubart/minicoro
+
+
+## Reference:
+  * https://stackoverflow.com/questions/121757/how-do-you-implement-coroutines-in-c
+  * https://medium.com/software-development-2/coroutines-and-fibers-why-and-when-5798f08464fd
+  * https://graphitemaster.github.io/fibers/
+  * https://news.ycombinator.com/item?id=24679740
+
