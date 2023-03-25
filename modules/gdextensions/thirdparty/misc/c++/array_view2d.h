@@ -172,7 +172,7 @@ public:
     //
     
     array_view2d()
-    : data_( NULL )
+    : data_( nullptr )
     , size_( 0 )
     , rows_( 0 )
     {}
@@ -209,7 +209,7 @@ public:
 
     template<size_type N>
     /*implicit*/ array_view2d( std::array<T, N> const & a, size_type const rows = 1 )
-    : data_( N > 0 ? a.data() : NULL )
+    : data_( N > 0 ? a.data() : nullptr )
     , size_( N )
     , rows_( rows )
     {
@@ -218,7 +218,7 @@ public:
 
     template< size_type N >
     /*implicit*/ array_view2d( T const (& a)[N], size_type const rows = 1 )
-    : data_( N > 0 ? av_addressof( a[0] ) : NULL )
+    : data_( N > 0 ? av_addressof( a[0] ) : nullptr )
     , size_( N )
     , rows_( rows )
     {
