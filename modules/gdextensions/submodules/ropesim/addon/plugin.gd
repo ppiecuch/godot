@@ -13,19 +13,8 @@ var _RopeHandle
 var _RopeRendererLine2D
 
 func _enter_tree() -> void:
-    add_autoload_singleton("NativeRopeServer", "res://addons/ropesim/NativeRopeServer.gdns")
+    _NativeRopeServer = Engine.get_singleton("RopeServer")
 
-    # It takes a frame until the autoload exists in the tree.
-    # We need to wait because subsequent code requires the NativeRopeServer autoload to exist.
-    # See also here: https://github.com/godotengine/godot/issues/30064
-    yield(get_tree(), "idle_frame")
-
-    # _NativeRopeServer = Engine.get_singleton("NativeRopeServer")  # Doesn't work for some reason
-    _NativeRopeServer = get_node("/root/NativeRopeServer")
-
-    # We can't reference class names directly because of dependencies issues when loading the Plugin.
-    # plugin.gd -> Rope.gd -> NativeRopeServer -> NativeRopeServer hasn't been loaded yet
-    # -> Rope.gd Error -> plugin.gd Error
     _Rope = load("res://addons/ropesim/Rope.gd")
     _RopeAnchor = load("res://addons/ropesim/RopeAnchor.gd")
     _RopeHandle = load("res://addons/ropesim/RopeHandle.gd")
@@ -35,7 +24,6 @@ func _enter_tree() -> void:
 
 
 func _exit_tree() -> void:
-    remove_autoload_singleton("NativeRopeServer")
     _free_gui()
 
 
