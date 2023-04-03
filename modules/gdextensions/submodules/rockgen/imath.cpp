@@ -47,14 +47,11 @@ int BitReverse(int i, int l) {
 		jnz ici
 	}
 #else
-	int j, k;
-
-	k = 0;
-	for (j = 0; j < l; j++) {
+	int k = 0;
+	for (int j = 0; j < l; j++) {
 		k = (k << 1) + (i & 1);
 		i >>= 1;
 	}
-
 	return k;
 #endif
 }
@@ -121,8 +118,7 @@ uint_t pgfc(uint_t a, uint_t b) {
 // a cause d'Euclide. Pas super rapide a cause
 // des conversions de signe.
 void SimplifyFraction(int &a, int &b) {
-	int i;
-	int s = (a < 0) ^ (b < 0);
+	int i, s = (a < 0) ^ (b < 0);
 	a = Abs(a);
 	b = Abs(b);
 	while ((i = pgfc(a, b)) > 1) { // si le pgfc est 1, alors a et b sont relativ. premier.
@@ -358,14 +354,11 @@ unsigned char dpremiers[6541] =
 //
 // Zeta(x) =~= x / ln x
 void Factorise(uint_t i, uint_t facteurs[], int &factptr) {
-	uint_t q, r;
-
 	factptr = 0;
-
 	if (i < 2) {
 		return;
 	}
-	uint_t f = 2, p = 0;
+	uint_t q, r, f = 2, p = 0;
 
 	do {
 		//  q = i / f;
@@ -419,8 +412,7 @@ int RelativementPremier(uint_t a, uint_t b) {
 // est assez faible. Pour un meme a, retourne tou-
 // jours le meme b.
 uint_t RelativementPremierSqrt(uint_t a) {
-	uint_t t = Sqrt(a); // sqrt(a);
-	uint_t i = 0;
+	uint_t t = Sqrt(a), i = 0;
 	int c1, c2;
 	do {
 		i++;
@@ -459,17 +451,15 @@ void FacteursPropres(uint_t i, uint_t **facteursPropres, int &factptr) {
 	int top[32];
 	int regs[32];
 	int primefactors;
-	int k, l, j;
 
 	Factorise(i, facteurs, primefactors);
 
-	k = 0, l = 0;
+	int k = 0, l = 0;
 	while (k < primefactors) {
-		uint_t t;
 		top[l] = 1;
 		puiss[l][0] = 1;
 
-		t = facteurs[k];
+		uint_t t = facteurs[k];
 		while ((k < primefactors) && (t == facteurs[k])) {
 			puiss[l][top[l]] = t;
 			top[l]++;
@@ -480,22 +470,23 @@ void FacteursPropres(uint_t i, uint_t **facteursPropres, int &factptr) {
 	factptr = 1;
 	for (k = 0; k < l; k++) {
 		factptr *= top[k];
-		for (j = 1; j < top[k]; j++) {
+		for (int j = 1; j < top[k]; j++) {
 			puiss[k][j] *= puiss[k][j - 1];
 		}
 	}
-	for (j = 0; j < l; j++) {
+	for (int j = 0; j < l; j++) {
 		regs[j] = 0;
 	}
 	(*facteursPropres) = (uint_t *)memalloc(factptr * sizeof(uint_t));
 	for (k = 0; k < factptr; k++) {
 		uint_t s = 1;
 
-		for (j = 0; j < l; j++) {
+		for (int j = 0; j < l; j++) {
 			s *= puiss[j][regs[j]];
 		}
 		(*facteursPropres)[k] = s;
-		j = 0, regs[0]++;
+		regs[0]++;
+		int j = 0;
 		while ((regs[j] == top[j]) && (j < l)) {
 			regs[j] = 0;
 			j++;
