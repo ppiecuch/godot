@@ -1,32 +1,32 @@
-/*************************************************************************/
-/*  texture_panning.cpp                                                  */
-/*************************************************************************/
-/*                       This file is part of:                           */
-/*                           GODOT ENGINE                                */
-/*                      https://godotengine.org                          */
-/*************************************************************************/
-/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
-/*                                                                       */
-/* Permission is hereby granted, free of charge, to any person obtaining */
-/* a copy of this software and associated documentation files (the       */
-/* "Software"), to deal in the Software without restriction, including   */
-/* without limitation the rights to use, copy, modify, merge, publish,   */
-/* distribute, sublicense, and/or sell copies of the Software, and to    */
-/* permit persons to whom the Software is furnished to do so, subject to */
-/* the following conditions:                                             */
-/*                                                                       */
-/* The above copyright notice and this permission notice shall be        */
-/* included in all copies or substantial portions of the Software.       */
-/*                                                                       */
-/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
-/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
-/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
-/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
-/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
-/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
-/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
-/*************************************************************************/
+/**************************************************************************/
+/*  texture_panning.cpp                                                   */
+/**************************************************************************/
+/*                         This file is part of:                          */
+/*                             GODOT ENGINE                               */
+/*                        https://godotengine.org                         */
+/**************************************************************************/
+/* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
+/* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
+/*                                                                        */
+/* Permission is hereby granted, free of charge, to any person obtaining  */
+/* a copy of this software and associated documentation files (the        */
+/* "Software"), to deal in the Software without restriction, including    */
+/* without limitation the rights to use, copy, modify, merge, publish,    */
+/* distribute, sublicense, and/or sell copies of the Software, and to     */
+/* permit persons to whom the Software is furnished to do so, subject to  */
+/* the following conditions:                                              */
+/*                                                                        */
+/* The above copyright notice and this permission notice shall be         */
+/* included in all copies or substantial portions of the Software.        */
+/*                                                                        */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. */
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY   */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,   */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE      */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
+/**************************************************************************/
 
 #include "texture_panning.h"
 #include "scene/main/viewport.h"
@@ -129,9 +129,9 @@ void TexturePanning::_notification(int p_what) {
 		} break;
 		case NOTIFICATION_DRAW: {
 			if (texture.is_valid()) {
-				RID ci = get_canvas_item();
-				Rect2 dest_rect = Rect2(Point2(0, 0), view_size);
-				Rect2 src_rect = Rect2(_texture_offset, (view_size + texture->get_size() * 2) / texture_scale);
+				const RID ci = get_canvas_item();
+				const Rect2 dest_rect = Rect2(Point2(0, 0), view_size);
+				const Rect2 src_rect = Rect2(_texture_offset, (view_size + texture->get_size() * 2) / texture_scale);
 				texture->draw_rect_region(ci, dest_rect, src_rect, get_modulate(), false, Ref<Texture>(), Ref<Texture>(), true);
 			}
 		} break;
@@ -139,15 +139,15 @@ void TexturePanning::_notification(int p_what) {
 }
 
 void TexturePanning::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("set_texture"), &TexturePanning::set_texture);
+	ClassDB::bind_method(D_METHOD("set_texture", "texture"), &TexturePanning::set_texture);
 	ClassDB::bind_method(D_METHOD("get_texture"), &TexturePanning::get_texture);
-	ClassDB::bind_method(D_METHOD("set_texture_scale"), &TexturePanning::set_texture_scale);
+	ClassDB::bind_method(D_METHOD("set_texture_scale", "scale"), &TexturePanning::set_texture_scale);
 	ClassDB::bind_method(D_METHOD("get_texture_scale"), &TexturePanning::get_texture_scale);
-	ClassDB::bind_method(D_METHOD("set_scrolling_speed"), &TexturePanning::set_scrolling_speed);
+	ClassDB::bind_method(D_METHOD("set_scrolling_speed", "speed"), &TexturePanning::set_scrolling_speed);
 	ClassDB::bind_method(D_METHOD("get_scrolling_speed"), &TexturePanning::get_scrolling_speed);
-	ClassDB::bind_method(D_METHOD("set_scrolling_active"), &TexturePanning::set_scrolling_active);
+	ClassDB::bind_method(D_METHOD("set_scrolling_active", "state"), &TexturePanning::set_scrolling_active);
 	ClassDB::bind_method(D_METHOD("is_scrolling_active"), &TexturePanning::is_scrolling_active);
-	ClassDB::bind_method(D_METHOD("set_view_size"), &TexturePanning::set_view_size);
+	ClassDB::bind_method(D_METHOD("set_view_size", "size"), &TexturePanning::set_view_size);
 	ClassDB::bind_method(D_METHOD("get_view_size"), &TexturePanning::get_view_size);
 
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "scrolling_active"), "set_scrolling_active", "is_scrolling_active");
@@ -161,7 +161,7 @@ void TexturePanning::_bind_methods() {
 }
 
 TexturePanning::TexturePanning() {
-	texture = Ref<Texture>(NULL);
+	texture = Ref<Texture>();
 	texture_scale = Vector2(2, 2);
 	view_size = Vector2(100, 100);
 	scrolling_speed = Vector2(0, 0);

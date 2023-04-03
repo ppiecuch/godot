@@ -160,7 +160,6 @@ void SpriteMeshSnapshot::_create() {
 	VS::get_singleton()->viewport_set_update_mode(viewport, VS::VIEWPORT_UPDATE_DISABLED);
 	VS::get_singleton()->viewport_set_vflip(viewport, true);
 	VS::get_singleton()->viewport_set_scenario(viewport, scenario);
-	VS::get_singleton()->viewport_set_size(viewport, snapshot_size.x, snapshot_size.y);
 	VS::get_singleton()->viewport_set_transparent_background(viewport, true);
 	VS::get_singleton()->viewport_set_active(viewport, false);
 
@@ -175,10 +174,9 @@ void SpriteMeshSnapshot::_create() {
 	VS::get_singleton()->canvas_item_set_parent(canvas_item, canvas);
 
 	VS::get_singleton()->viewport_set_update_mode(viewport, VS::VIEWPORT_UPDATE_DISABLED);
-	VS::get_singleton()->request_frame_drawn_callback(owner, "_snapshot_done", Variant());
 }
 
-void SpriteMeshSnapshot::_trigger() {
+void SpriteMeshSnapshot::_trigger(const String &filepath) {
 	if (!viewport.is_valid()) {
 		_create();
 	}
@@ -189,17 +187,19 @@ void SpriteMeshSnapshot::_trigger() {
 	const Size2 s(aabb.size.x, aabb.size.y);
 	Point2 ofs = owner->get_offset();
 	if (owner->is_centered()) {
-		ofs -= Size2(s) / 2;
+		ofs -= s / 2;
 	}
 	const Point2 origin = ofs - Point2(aabb.position.x, aabb.position.y);
-	const Transform xform(owner->get_mesh_orientation(), { origin.x + snapshot_size.x / 2, origin.y + snapshot_size.y / 2, 0 });
+	const Transform xform(owner->get_mesh_orientation(), { origin.x + s.width / 2, origin.y + s.height / 2, 0 });
 	RID texture_rid = owner->get_mesh_texture().is_valid() ? owner->get_mesh_texture()->get_rid() : RID();
 	RID normal_map_rid = owner->get_mesh_normal_map().is_valid() ? owner->get_mesh_normal_map()->get_rid() : RID();
 	RID mask_rid = owner->get_mesh_mask().is_valid() ? owner->get_mesh_mask()->get_rid() : RID();
 	VS::get_singleton()->canvas_item_set_mesh_3d(canvas_item, owner->get_mesh()->get_rid(), xform, owner->get_modulate(), texture_rid, normal_map_rid, mask_rid);
 	// setup viewport
-	VS::get_singleton()->viewport_set_active(viewport, true);
+	VS::get_singleton()->request_frame_drawn_callback(owner, "_snapshot_done", filepath);
+	VS::get_singleton()->viewport_set_size(viewport, s.width, s.height);
 	VS::get_singleton()->viewport_set_update_mode(viewport, VS::VIEWPORT_UPDATE_ONCE); // once used for capture
+	VS::get_singleton()->viewport_set_active(viewport, true);
 }
 
 #define _FREE_RID(var)                  \
@@ -308,42 +308,14 @@ void SpriteMesh::_snapshot_done(const Variant &p_udata) {
 	static int snapshot_count = 0;
 	if (Ref<Image> img = snapshot._get_image()) {
 		if (img.is_valid()) {
-			const String file("snapshot" + itos(snapshot_count) + ".png");
+			String file = p_udata;
+			if (file.empty()) {
+				file = "snapshot" + itos(snapshot_count) + ".png";
+				snapshot_count++;
+			}
 			img->save_png(file);
-			emit_signal("snapshot_ready", img);
+			emit_signal("snapshot_ready", file);
 			print_verbose("Snapshot saved to file: " + file);
-			snapshot_count++;
-		}
-	}
-}
-
-void SpriteMesh::_save_mesh_xform(Ref<ArrayMesh> &p_mesh) {
-	ERR_FAIL_COND(!p_mesh.is_valid());
-	if (mesh.is_valid()) {
-		for (int s = 0; s < mesh->get_surface_count(); s++) {
-			Array mesh_array = mesh->surface_get_arrays(s);
-
-			PoolVector3Array vertexes = mesh_array[VS::ARRAY_VERTEX];
-			PoolVector3Array xform_vertexes;
-			ERR_FAIL_COND(xform_vertexes.resize(vertexes.size()) != OK);
-
-			auto w = xform_vertexes.write();
-			for (int v = 0; v < vertexes.size(); ++v) {
-				w[v] = mesh_xform.xform(vertexes[v]);
-			}
-			// build transformed mesh
-			mesh_array[VS::ARRAY_VERTEX] = xform_vertexes;
-			if (((PoolColorArray)mesh_array[VS::ARRAY_COLOR]).size() == 0) {
-				// extract albedo color from material, since they are ignored in 2D
-				PoolColorArray colors;
-				Ref<SpatialMaterial> mat = mesh->surface_get_material(s);
-				if (mat.is_valid()) {
-					Color alb = mat->get_albedo();
-					colors.push_multi(xform_vertexes.size(), alb);
-				}
-				mesh_array[VS::ARRAY_COLOR] = colors;
-			}
-			p_mesh->add_surface_from_arrays(mesh->surface_get_primitive_type(s), mesh_array);
 		}
 	}
 }
@@ -380,8 +352,43 @@ void SpriteMesh::set_mesh(const Ref<Mesh> &p_mesh) {
 	_change_notify("mesh");
 }
 
-void SpriteMesh::save_snapshot() {
-	snapshot._trigger();
+void SpriteMesh::save_snapshot(const String &p_filepath) {
+	snapshot._trigger(p_filepath);
+}
+
+void SpriteMesh::save_snapshot_mesh(Ref<Mesh> p_mesh) {
+	ERR_FAIL_COND(!p_mesh.is_valid());
+	if (mesh.is_valid()) {
+		if (ArrayMesh *arraymesh = cast_to<ArrayMesh>(*p_mesh)) {
+			for (int s = 0; s < mesh->get_surface_count(); s++) {
+				Array mesh_array = mesh->surface_get_arrays(s);
+
+				PoolVector3Array vertexes = mesh_array[VS::ARRAY_VERTEX];
+				PoolVector3Array xform_vertexes;
+				ERR_FAIL_COND(xform_vertexes.resize(vertexes.size()) != OK);
+
+				auto w = xform_vertexes.write();
+				for (int v = 0; v < vertexes.size(); ++v) {
+					w[v] = mesh_xform.xform(vertexes[v]);
+				}
+				// build transformed mesh
+				mesh_array[VS::ARRAY_VERTEX] = xform_vertexes;
+				if (((PoolColorArray)mesh_array[VS::ARRAY_COLOR]).size() == 0) {
+					// extract albedo color from material, since they are ignored in 2D
+					PoolColorArray colors;
+					Ref<SpatialMaterial> mat = mesh->surface_get_material(s);
+					if (mat.is_valid()) {
+						Color alb = mat->get_albedo();
+						colors.push_multi(xform_vertexes.size(), alb);
+					}
+					mesh_array[VS::ARRAY_COLOR] = colors;
+				}
+				arraymesh->add_surface_from_arrays(mesh->surface_get_primitive_type(s), mesh_array);
+			}
+		} else {
+			WARN_PRINT("Mesh is not ArrayMesh");
+		}
+	}
 }
 
 Ref<Mesh> SpriteMesh::get_mesh() const {
@@ -658,7 +665,7 @@ Rect2 SpriteMesh::get_rect() const {
 
 	Point2 ofs = offset;
 	if (centered) {
-		ofs -= Size2(s) / 2;
+		ofs -= s / 2;
 	}
 	if (s == Size2(0, 0)) {
 		s = Size2(1, 1);
@@ -827,7 +834,8 @@ void SpriteMesh::_notification(int p_what) {
 }
 
 void SpriteMesh::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("save_snapshot"), &SpriteMesh::save_snapshot);
+	ClassDB::bind_method(D_METHOD("save_snapshot", "filepath"), &SpriteMesh::save_snapshot, DEFVAL(""));
+	ClassDB::bind_method(D_METHOD("save_snapshot_mesh", "mesh"), &SpriteMesh::save_snapshot_mesh);
 
 	ClassDB::bind_method(D_METHOD("set_mesh", "mesh"), &SpriteMesh::set_mesh);
 	ClassDB::bind_method(D_METHOD("get_mesh"), &SpriteMesh::get_mesh);
@@ -900,7 +908,6 @@ SpriteMesh::SpriteMesh() {
 	_mesh_scale = Vector3(1, 1, 1);
 	_mesh_dirty = false;
 	snapshot.owner = this;
-	snapshot.snapshot_size = Size2(256, 256);
 	centered = true;
 	offset = Vector2(0, 0);
 	auto_collision_shape = false;

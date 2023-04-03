@@ -151,11 +151,10 @@ class SpriteMesh;
 
 struct SpriteMeshSnapshot {
 	SpriteMesh *owner;
-	Size2 snapshot_size;
 	RID scenario, viewport, viewport_texture, canvas, canvas_item;
 
 	void _create();
-	void _trigger();
+	void _trigger(const String &filepath);
 	Ref<Image> _get_image();
 	void _destroy();
 
@@ -251,13 +250,16 @@ class SpriteMesh : public Node2D {
 
 	SpriteMeshSnapshot snapshot;
 	void _snapshot_done(const Variant &p_udata);
-	void _save_mesh_xform(Ref<ArrayMesh> &p_mesh);
 
 	void _get_rects(Rect2 &r_src_rect, Rect2 &r_dst_rect, bool &r_filter_clip) const;
 	void _mesh_changed();
 	void _update_lights();
 	SpriteMeshLight *_get_light_node(int p_index);
 	void _refresh_properties();
+	void _update_mesh_outline(const PoolVector3Array &p_vertices, const Transform &p_xform, const PoolIntArray &p_triangles);
+	void _update_xform_values();
+	void _update_mesh_xform();
+	void _update_transform();
 
 protected:
 	bool _get(const StringName &p_path, Variant &r_ret) const;
@@ -281,12 +283,8 @@ public:
 	virtual bool _edit_use_rect() const;
 #endif
 
-	void _update_mesh_outline(const PoolVector3Array &p_vertices, const Transform &p_xform, const PoolIntArray &p_triangles);
-	void _update_xform_values();
-	void _update_mesh_xform();
-	void _update_transform();
-
-	void save_snapshot();
+	void save_snapshot(const String &p_filepath = "");
+	void save_snapshot_mesh(Ref<Mesh> p_mesh);
 
 	void set_mesh(const Ref<Mesh> &p_mesh);
 	Ref<Mesh> get_mesh() const;
@@ -327,9 +325,6 @@ public:
 	bool is_centered() const;
 	void set_offset(const Point2 &p_offset);
 	Point2 get_offset() const;
-
-	void set_snapshot_size(const Size2 &p_snapshot_size);
-	Size2 get_snapshot_size() const;
 
 	Rect2 get_rect() const;
 	virtual Rect2 get_anchorable_rect() const;
