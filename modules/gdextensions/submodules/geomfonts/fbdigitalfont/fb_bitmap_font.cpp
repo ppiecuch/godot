@@ -555,7 +555,6 @@ void draw_bitmap_symbol_with_padding(
 	}
 }
 
-
 void draw_bitmap_map(
 		const RID &canvas_item,
 		std::vector<std::vector<bool>> map,
@@ -572,7 +571,7 @@ void draw_bitmap_map(
 	const int l = edge_length + margin;
 
 	Ref<Texture> texture, texture_off, texture_glow, texture_outer = _CACHE_GET("aa32_outer_glow");
-	Size2 rc(edge_length, edge_length), rc_edge = rc, rc_glow = rc * 2;
+	Size2 rc(edge_length, edge_length), margins(margin, margin), rc_edge = rc, rc_glow = 2 * rc;
 	real_t circle_squared = 0;
 	switch (dot_style) {
 		case FBFontDotStyleFlatSquare: {
@@ -612,6 +611,9 @@ void draw_bitmap_map(
 		}
 	}
 
+	const Size2 md = (rc_glow - rc_edge) / 2, mmd = md - margins / 2;
+	const Size2 mt = (texture_outer ? Size2(1, 1) : texture_outer->get_size()) * (mmd / rc_glow);
+
 	for (int s = 0; s < 3; s++) { // 0.back, 1.glow, 2.front
 		for (int r = 0; r < map.size(); r++) {
 			const bool last_row = r == map.size() - 1;
@@ -619,24 +621,22 @@ void draw_bitmap_map(
 			for (int c = 0; c < column.size(); c++) {
 				const bool last_col = c == column.size() - 1;
 				const bool active = map[r][c];
-				const bool back = (s==0 && !active);
-				const bool glow = (s==1 && active);
-				const bool front = (s==2 && active);
+				const bool back = (s == 0 && !active);
+				const bool glow = (s == 1 && active);
+				const bool front = (s == 2 && active);
 				const Point2 xy = start_point + Vector2i(c, r) * l;
 				if (glow) {
 					if (texture_outer) {
 						const bool nleft = c ? map[r][c - 1] : false,
-							nright = last_col ? false : map[r][c + 1],
-							ntop = r ? map[r - 1][c] : false,
-							nbottom = last_row ? false : map[r + 1][c];
+								   nright = last_col ? false : map[r][c + 1],
+								   ntop = r ? map[r - 1][c] : false,
+								   nbottom = last_row ? false : map[r + 1][c];
 						const Vector2 change_position(nleft, ntop);
 						const Vector2 change_size(nleft + nright, ntop + nbottom);
-						const Size2 mt = texture_outer->get_size() * 0.3;
+						Rect2 dest(xy - md + change_position * mmd, rc_glow - change_size * mmd);
 						Rect2 src(Point2() + change_position * mt, texture_outer->get_size() - change_size * mt);
-						const Size2 md = (rc_glow - rc_edge - Vector2(margin, margin)) / 2;
-						Rect2 dest(xy - md + change_position * md, rc_glow - change_size * md);
-						texture_outer->draw_rect_region(canvas_item, dest, src, glow_color);
 						//VS::get_singleton()->canvas_item_add_rect(canvas_item, dest, (c+r)%2 ? Color::named("red").with_alpha(0.5) : Color::named("green").with_alpha(0.5));
+						texture_outer->draw_rect_region(canvas_item, dest, src, glow_color);
 					}
 				} else {
 					switch (dot_style) {

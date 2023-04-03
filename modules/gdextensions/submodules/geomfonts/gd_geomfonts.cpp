@@ -190,15 +190,15 @@ Ref<Texture> GdGeomFonts::create_dot_squircle_texture(real_t p_fall_off, bool p_
 		}                      \
 	}
 
-#define _set_color(D, P)         \
-	if (D.has(#P)) {             \
-		if (D[#P].get_type() == Variant::COLOR) { \
-			const Color val = D[#P]; \
-			fnt.set_##P(val);        \
+#define _set_color(D, P)                               \
+	if (D.has(#P)) {                                   \
+		if (D[#P].get_type() == Variant::COLOR) {      \
+			const Color val = D[#P];                   \
+			fnt.set_##P(val);                          \
 		} else if (D[#P].get_type() == Variant::INT) { \
-			const int val = D[#P]; \
-			fnt.set_##P(val); \
-		} \
+			const int val = D[#P];                     \
+			fnt.set_##P(val);                          \
+		}                                              \
 	}
 
 int GdGeomFonts::canvas_add_bitmap_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos, int p_dot_style, const Dictionary &p_style) {

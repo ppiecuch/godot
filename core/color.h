@@ -59,9 +59,13 @@ struct _NO_DISCARD_CLASS_ Color {
 	float get_s() const;
 	float get_v() const;
 	void set_hsv(float p_h, float p_s, float p_v, float p_alpha = 1.0);
-	Color &with_alpha(float p_alpha) {
+
+	_FORCE_INLINE_ Color &with_alpha(float p_alpha) {
 		a = p_alpha;
 		return *this;
+	}
+	_FORCE_INLINE_  Color with_alpha(float p_alpha) const {
+		return Color(*this).with_alpha(p_alpha);
 	}
 
 	_FORCE_INLINE_ float &operator[](int idx) {

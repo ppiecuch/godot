@@ -89,7 +89,7 @@ public:
 	void set_glow_color(const Color &p_color) { glow_color = p_color; }
 	void set_glow_color(unsigned p_color) { glow_color = Color::hex(p_color); }
 	void set_inner_glow_color(const Color &p_color) { inner_glow_color = p_color; }
-	void set_inner_glow_color(unsigned p_color)  { inner_glow_color = Color::hex(p_color); }
+	void set_inner_glow_color(unsigned p_color) { inner_glow_color = Color::hex(p_color); }
 
 	FBBitmapFontView(const RID &canvas_item);
 };

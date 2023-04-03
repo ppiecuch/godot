@@ -51,7 +51,7 @@ class ResCache : public Object {
 
 	Map<String, RES> _cache;
 	Map<String, CacheEntry> _catalog;
-	bool _dirty;
+	bool _changed;
 
 	void _dump() const;
 	void load_config();
@@ -65,6 +65,7 @@ public:
 
 	RES get_resource(const String &p_res_name);
 	void set_resource(RES p_res, const String &p_res_name);
+	void del_resource(const String &p_res_name);
 
 	uint64_t get_cache_usage() const;
 	bool is_res_available(const String &p_res_name) const;
@@ -83,6 +84,7 @@ public:
 
 #define _CACHE_GET(N) ResCache::get_singleton()->get_resource(N)
 #define _CACHE_ADD(N, R) ResCache::get_singleton()->set_resource(R, N)
+#define _CACHE_DEL(N) ResCache::get_singleton()->del_resource(N)
 #define _CACHE_HAS(N) ResCache::get_singleton()->is_res_available(N)
 
 #endif // RESOURCES_CACHE_H

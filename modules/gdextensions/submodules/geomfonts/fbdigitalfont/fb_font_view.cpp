@@ -50,7 +50,8 @@ static _FORCE_INLINE_ Color color_from_rgb(uint32_t rgb, uint8_t alpha = 255) {
 
 static const Color _white = Color(1, 1, 1);
 
-template <typename T> std::vector<T> make_vector(size_t reservation) {
+template <typename T>
+std::vector<T> make_vector(size_t reservation) {
 	std::vector<T> vec;
 	vec.reserve(reservation);
 	return vec;
@@ -109,7 +110,7 @@ void FBBitmapFontView::_dump_2d_view(const char dot) {
 	print_line(vformat("Text: '%s'", text));
 	for (const auto &line : _dots) {
 		std::vector<char> ln = make_vector<char>(line.size() + 1);
-		for (auto&& b : line) {
+		for (auto &&b : line) {
 			ln.push_back(b ? dot : ' ');
 		}
 		ln.push_back(0);

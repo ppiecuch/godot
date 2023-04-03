@@ -78,7 +78,7 @@ void ResCache::load_config() {
 }
 
 RES ResCache::get_resource(const String &p_res_name) {
-	_dirty = true;
+	_changed = true;
 	if (_cache.has(p_res_name)) {
 		_catalog[p_res_name].last_access_time = OS::get_singleton()->get_system_time_secs();
 		return _cache.get(p_res_name);
@@ -107,7 +107,24 @@ void ResCache::set_resource(RES p_res, const String &p_res_name) {
 			_catalog[p_res_name].on_disk = false;
 		}
 	}
-	_dirty = true;
+	_changed = true;
+}
+
+void ResCache::del_resource(const String &p_res_name) {
+	ERR_FAIL_COND(!_catalog.has(p_res_name));
+	const String res_path = _catalog[p_res_name].path;
+	if (!res_path.empty()) {
+		DirAccess::remove_file_or_error(res_path); // invalidate
+		if (!FileAccess::exists(res_path)) {
+			_catalog[p_res_name].path = "";
+			_catalog[p_res_name].size = 0;
+			_catalog[p_res_name].on_disk = false;
+		}
+	}
+	if (_cache.has(p_res_name)) {
+		_cache.erase(p_res_name);
+	}
+	_changed = true;
 }
 
 uint64_t ResCache::get_cache_usage() const {
@@ -216,8 +233,8 @@ ResCache *ResCache::get_singleton() {
 
 void ResCache::_notification(int p_what) {
 	if (p_what == NOTIFICATION_PREDELETE) {
-		if (_dirty) {
-			_dirty = sync() != OK;
+		if (_changed) {
+			_changed = sync() != OK;
 		}
 #if DEBUG_ENABLED
 		_dump();
@@ -243,12 +260,12 @@ ResCache::ResCache() {
 	ERR_FAIL_COND_MSG(instance != nullptr, "Singleton already exists");
 	instance = this;
 	max_disk_cache = 100000;
-	_dirty = false;
+	_changed = false;
 	load_config();
 }
 
 ResCache::~ResCache() {
-	if (_dirty) {
+	if (_changed) {
 		sync();
 	}
 	instance = nullptr;
@@ -287,6 +304,15 @@ TEST_CASE("Disk cache") {
 	texture->create_from_image(image);
 
 	ResCache *res_cache = ResCache::get_singleton();
+
+	SUBCASE("check resource access") {
+		res_cache->set_resource(texture, "__t1__");
+		REQUIRE(res_cache->is_res_cached("__t1__"));
+		REQUIRE(res_cache->is_res_available("__t1__"));
+		res_cache->del_resource("__t1__");
+		REQUIRE(!res_cache->is_res_cached("__t1__"));
+		REQUIRE(!res_cache->is_res_available("__t1__"));
+	}
 	SUBCASE("check disk cache purge") {
 		res_cache->purge();
 		REQUIRE(!DirAccess::exists(_cache_location));
