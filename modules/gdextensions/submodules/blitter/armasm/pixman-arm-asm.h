@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  gd_bitblit.cpp                                                        */
+/*  pixman-arm-asm.h                                                      */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,50 +28,43 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "gd_bitblit.h"
-#include "_surface.h"
+/*
+ * Copyright © 2010 Nokia Corporation
+ *
+ * Permission to use, copy, modify, distribute, and sell this software and its
+ * documentation for any purpose is hereby granted without fee, provided that
+ * the above copyright notice appear in all copies and that both that
+ * copyright notice and this permission notice appear in supporting
+ * documentation, and that the name of Mozilla Corporation not be used in
+ * advertising or publicity pertaining to distribution of the software without
+ * specific, written prior permission.  Mozilla Corporation makes no
+ * representations about the suitability of this software for any purpose.  It
+ * is provided "as is" without express or implied warranty.
+ *
+ * THE COPYRIGHT HOLDERS DISCLAIM ALL WARRANTIES WITH REGARD TO THIS
+ * SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS, IN NO EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ * SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
+ * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
+ * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+ * SOFTWARE.
+ *
+ * Author:  Siarhei Siamashka (siarhei.siamashka@nokia.com)
+ *
+ */
 
-BitBlit *BitBlit::singleton = nullptr;
+/* clang-format off */
 
-PoolByteArray BlitSurface::get_data() const {
-	return data;
-}
-
-void BlitSurface::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("get_data"), &BlitSurface::get_data);
-}
-
-BlitSurface::BlitSurface(int p_width, int p_height, int p_depth) :
-		surface(nullptr) {
-	ERR_FAIL_COND(p_width > 0);
-	ERR_FAIL_COND(p_height > 0);
-	ERR_FAIL_COND(p_depth > 0);
-
-	surface = SDL_CreateRGBEmptySurface(p_width, p_height, p_depth,
-#if SDL_BYTEORDER == SDL_LIL_ENDIAN
-			0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000
-#else
-			0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF
+/* Supplementary macro for setting function attributes */
+.macro pixman_asm_function fname
+	.func fname
+	.global fname
+#ifdef __ELF__
+	.hidden fname
+	.type fname, %function
 #endif
-	);
-	data.resize(p_width * p_height * p_depth / 8);
-	surface->pixels = data.write().ptr();
-}
+fname:
+.endm
 
-BlitSurface::~BlitSurface() {}
-
-Ref<BlitSurface> BitBlit::create_surface(int p_width, int p_height, int p_depth) {
-	Ref<BlitSurface> surf = memnew(BlitSurface(p_width, p_height, p_depth));
-	return surf;
-}
-
-void BitBlit::_bind_methods() {
-}
-
-BitBlit::BitBlit() {
-	singleton = this;
-}
-
-BitBlit::~BitBlit() {
-	singleton = nullptr;
-}
+						 /* clang-format on */
