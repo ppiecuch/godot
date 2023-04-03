@@ -318,7 +318,7 @@ if is_enabled("playfab"):
     thirdparty_sources += Glob("thirdparty/xplatcppsdk/code/source/playfab/*.cpp")
 
 if env["platform"] == "psvita" and is_enabled("blitter"):
-    sources += Glob("submodules/blitter/arm/*.S")
+    sources += Glob("submodules/blitter/armasm/*.S")
 
 if is_enabled("behaviortree"):
     env_module.Append(CPPDEFINES=["BEHAVIOR_TREE_AS_GODOT_MODULE"])
