@@ -21,6 +21,8 @@ and many more (see ```submodules``` folder) - they are groupped in subdirectorie
  - https://github.com/dbsGen/my_godot_modules.git
  - https://montemagno.com/ios-android-subscription-implemenation-strategies/
  - https://graphicdesign.stackexchange.com/questions/11016/kerning-on-the-fly
+ - https://community.khronos.org/t/glsl-multiple-lights/54103/3
+ - https://learnopengl.com/Lighting/Multiple-lights
 
 #### Elastic simulation orignal code (js)
 
