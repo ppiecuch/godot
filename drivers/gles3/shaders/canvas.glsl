@@ -142,6 +142,15 @@ const bool at_light_pass = true;
 const bool at_light_pass = false;
 #endif
 
+#ifdef USE_LIGHT3D
+highp mat4 light3d_pos;
+highp mat4 light3d_dir;
+highp mat4 light3d_color;
+
+vec4 process_light3d(int index, vec4 color) {
+}
+#endif
+
 #if defined(USE_MATERIAL)
 
 /* clang-format off */
