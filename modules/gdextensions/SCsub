@@ -419,7 +419,7 @@ if is_enabled("thorvg"):
             ]
         )
         if env["builtin_libpng"]:
-            env_module.Prepend(CPPPATH=["#thirdparty/libpng"]) # Also requires libpng headers
+            env_module.Prepend(CPPPATH=["#thirdparty/libpng"])  # Also requires libpng headers
 
 if is_enabled("timelinefx"):
     sources += Glob("submodules/timelinefx/runtime/*.cpp")
