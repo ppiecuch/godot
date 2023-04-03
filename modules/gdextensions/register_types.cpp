@@ -35,9 +35,9 @@
 #include "editor/audio_stream_preview.h"
 #include "editor/editor_node.h"
 
-#include "common/sr_graph.h"
-#include "common/resources_config.h"
 #include "common/resources_cache.h"
+#include "common/resources_config.h"
+#include "common/sr_graph.h"
 
 #include "core/area_prober.h"
 #include "core/blitter.h"
@@ -606,7 +606,10 @@ void register_gdextensions_types() {
 #endif
 }
 
-#define RemoveSingleton(S) if (S *instance = S::get_singleton()) { memdelete(instance); }
+#define RemoveSingleton(S)                  \
+	if (S *instance = S::get_singleton()) { \
+		memdelete(instance);                \
+	}
 
 void unregister_gdextensions_types() {
 	RemoveSingleton(ResCache);
