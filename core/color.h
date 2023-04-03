@@ -64,7 +64,7 @@ struct _NO_DISCARD_CLASS_ Color {
 		a = p_alpha;
 		return *this;
 	}
-	_FORCE_INLINE_  Color with_alpha(float p_alpha) const {
+	_FORCE_INLINE_ Color with_alpha(float p_alpha) const {
 		return Color(*this).with_alpha(p_alpha);
 	}
 
