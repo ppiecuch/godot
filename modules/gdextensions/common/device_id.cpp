@@ -1,32 +1,32 @@
-/*************************************************************************/
-/*  device_id.cpp                                                        */
-/*************************************************************************/
-/*                       This file is part of:                           */
-/*                           GODOT ENGINE                                */
-/*                      https://godotengine.org                          */
-/*************************************************************************/
-/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
-/*                                                                       */
-/* Permission is hereby granted, free of charge, to any person obtaining */
-/* a copy of this software and associated documentation files (the       */
-/* "Software"), to deal in the Software without restriction, including   */
-/* without limitation the rights to use, copy, modify, merge, publish,   */
-/* distribute, sublicense, and/or sell copies of the Software, and to    */
-/* permit persons to whom the Software is furnished to do so, subject to */
-/* the following conditions:                                             */
-/*                                                                       */
-/* The above copyright notice and this permission notice shall be        */
-/* included in all copies or substantial portions of the Software.       */
-/*                                                                       */
-/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
-/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
-/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
-/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
-/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
-/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
-/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
-/*************************************************************************/
+/**************************************************************************/
+/*  device_id.cpp                                                         */
+/**************************************************************************/
+/*                         This file is part of:                          */
+/*                             GODOT ENGINE                               */
+/*                        https://godotengine.org                         */
+/**************************************************************************/
+/* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
+/* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
+/*                                                                        */
+/* Permission is hereby granted, free of charge, to any person obtaining  */
+/* a copy of this software and associated documentation files (the        */
+/* "Software"), to deal in the Software without restriction, including    */
+/* without limitation the rights to use, copy, modify, merge, publish,    */
+/* distribute, sublicense, and/or sell copies of the Software, and to     */
+/* permit persons to whom the Software is furnished to do so, subject to  */
+/* the following conditions:                                              */
+/*                                                                        */
+/* The above copyright notice and this permission notice shall be         */
+/* included in all copies or substantial portions of the Software.        */
+/*                                                                        */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. */
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY   */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,   */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE      */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
+/**************************************************************************/
 
 #include "device_id.h"
 
@@ -35,12 +35,12 @@
 #include "core/os/os.h"
 
 static String get_rand_id(int length = 4) {
-	static RandomNumberGenerator _rnd;
 	static String _allowed = "ABCDEFGHJKLMNPQRSTWXYZ123456789";
 	ERR_FAIL_COND_V(length <= 0, "??");
+	RandomNumberGenerator rnd;
 	String ret;
 	for (int i = 0; i < length; i++) {
-		ret = ret + _allowed.substr(_rnd.randi() % _allowed.length(), 1);
+		ret = ret + _allowed.substr(rnd.randi() % _allowed.length(), 1);
 	}
 	return ret;
 }
@@ -131,22 +131,40 @@ static String get_custom_name() {
 
 /// return unique but random name for this device/desktop/env.
 
-String get_local_name() {
-	String local_name = "??";
+String get_local_ident() {
+	static String local_name;
 
-	String platform = OS::get_singleton()->get_name().to_upper();
-	String device = OS::get_singleton()->get_model_name().to_upper();
-	String unique_id = OS::get_singleton()->get_unique_id().to_upper();
-	String name = get_custom_name().to_upper();
-	String rand_postfix = get_rand_id().to_upper();
+	if (local_name.empty()) {
+		String platform = OS::get_singleton()->get_name().to_upper();
+		String device = OS::get_singleton()->get_model_name().to_upper();
+		String name = get_custom_name().to_upper();
+		const String unique_id = OS::get_singleton()->get_unique_id().to_upper();
+		const String rand_postfix = get_rand_id().to_upper();
 
-	if (platform == "WINDOWS") {
-		platform = "WIN";
-	} else if (platform == "ANDROID") {
-		platform = "DROID";
-	}
-	if (device == "GENERICDEVICE") {
-		device = "";
+		if (platform == "WINDOWS") {
+			platform = "WIN";
+		} else if (platform == "ANDROID") {
+			platform = "DROID";
+		}
+		if (device == "GENERICDEVICE") {
+			device = "";
+		}
+		if (!platform.empty()) {
+			local_name += platform + "-";
+		}
+		if (!device.empty()) {
+			local_name += device + "-";
+		}
+		if (!name.empty()) {
+			local_name += name + "-";
+		}
+		if (unique_id.empty()) {
+			local_name += rand_postfix;
+		} else {
+			local_name += unique_id;
+		}
+
+		print_verbose("Local name of this instance is: " + local_name);
 	}
 
 	return local_name;

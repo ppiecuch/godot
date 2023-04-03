@@ -31,9 +31,9 @@
 #ifndef RESOURCES_CACHE_H
 #define RESOURCES_CACHE_H
 
+#include "core/map.h"
 #include "core/reference.h"
 #include "core/resource.h"
-#include "core/map.h"
 #include "core/variant.h"
 
 class ResCache : public Object {
@@ -44,12 +44,14 @@ class ResCache : public Object {
 		uint64_t size = 0;
 		uint64_t last_access_time = 0;
 		bool modified = false;
+		bool on_disk = false;
 	};
 
-	unsigned max_size;
+	uint64_t max_disk_cache;
 
 	Map<String, RES> _cache;
 	Map<String, CacheEntry> _catalog;
+	bool _dirty;
 
 	void _dump() const;
 	void load_config();
@@ -64,13 +66,15 @@ public:
 	RES get_resource(const String &p_res_name);
 	void set_resource(RES p_res, const String &p_res_name);
 
-	size_t get_cache_size() const;
-	size_t get_cache_size_limit() const;
+	uint64_t get_cache_usage() const;
 	bool is_res_available(const String &p_res_name) const;
 	bool is_res_cached(const String &p_res_name) const;
 
+	void set_max_disk_cache_size(uint64_t p_size);
+	uint64_t get_max_disk_cache_size() const;
+
 	Error sync();
-	Error save();
+	void clear();
 	void purge();
 
 	ResCache();
