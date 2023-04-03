@@ -101,14 +101,18 @@ public:
 
 	// Meant for editor code when we want to quickly remove a file without custom
 	// handling (e.g. removing a cache file).
-	static void remove_file_or_error(String p_path) {
+	static Error remove_file_or_error(String p_path) {
 		DirAccess *da = create(ACCESS_FILESYSTEM);
+		Error err = OK;
 		if (da->file_exists(p_path)) {
-			if (da->remove(p_path) != OK) {
-				ERR_FAIL_MSG("Cannot remove file or directory: " + p_path);
+			if ((err = da->remove(p_path)) != OK) {
+				ERR_FAIL_V_MSG(err, "Cannot remove file or directory: " + p_path);
 			}
+		} else {
+			err = ERR_FILE_NOT_FOUND;
 		}
 		memdelete(da);
+		return err;
 	}
 
 	virtual String get_filesystem_type() const = 0;
