@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  gdsymfonts.h                                                          */
+/*  resources_cache.h                                                     */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,36 +28,57 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#ifndef GD_SYMFONTS_H
-#define GD_SYMFONTS_H
+#ifndef RESOURCES_CACHE_H
+#define RESOURCES_CACHE_H
 
-class GdSymbolFont : public Object {
-	GDCLASS(GdSymbolFont, Object);
+#include "core/reference.h"
+#include "core/resource.h"
+#include "core/map.h"
+#include "core/variant.h"
 
-public:
-	enum {
-		FONT_AWESOME4,
-		FONT_AWESOME5,
-		FONT_AWESOME5BRANDS,
-		FONT_KENNEY,
-		FONT_AUDIO,
-		FONT_MATERIAL,
+class ResCache : public Object {
+	GDCLASS(ResCache, Object);
+
+	struct CacheEntry {
+		String path;
+		uint64_t size = 0;
+		uint64_t last_access_time = 0;
+		bool modified = false;
 	};
-};
 
-class GdSymbolFontIcon : public Object {
-	GDCLASS(GdSymbolFontIcon, Object);
+	unsigned max_size;
+
+	Map<String, RES> _cache;
+	Map<String, CacheEntry> _catalog;
+
+	void _dump() const;
+	void load_config();
 
 protected:
 	static void _bind_methods();
+	void _notification(int p_what);
 
 public:
-	Image get_image(int glyph);
-	Image get_image(const String &glyph_name);
-	Char get_char(int glyph);
-	Char get_char(const String &glyph_name);
+	static ResCache *get_singleton();
 
-	GdSymbolFontIcon();
+	RES get_resource(const String &p_res_name);
+	void set_resource(RES p_res, const String &p_res_name);
+
+	size_t get_cache_size() const;
+	size_t get_cache_size_limit() const;
+	bool is_res_available(const String &p_res_name) const;
+	bool is_res_cached(const String &p_res_name) const;
+
+	Error sync();
+	Error save();
+	void purge();
+
+	ResCache();
+	~ResCache();
 };
 
-#endif // GD_SYMFONTS_H
+#define _CACHE_GET(N) ResCache::get_singleton()->get_resource(N)
+#define _CACHE_ADD(N, R) ResCache::get_singleton()->set_resource(R, N)
+#define _CACHE_HAS(N) ResCache::get_singleton()->is_res_available(N)
+
+#endif // RESOURCES_CACHE_H

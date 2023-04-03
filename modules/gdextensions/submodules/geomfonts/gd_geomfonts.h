@@ -48,15 +48,14 @@ enum BitmapFontDotStyle {
 	BITMAP_FONT_FLAT_SQUARE,
 	BITMAP_FONT_TEXTURE_CIRCLE,
 	BITMAP_FONT_TEXTURE_SQUARE,
-	BITMAP_FONT_TEXTURE_3D,
+	BITMAP_FONT_TEXTURE_3D_1,
+	BITMAP_FONT_TEXTURE_3D_2,
 };
 
 class GdGeomFonts : public Reference {
 	GDCLASS(GdGeomFonts, Reference);
 
 	handle_map<RID> items;
-
-	Dictionary _cache;
 
 	std::pair<RID, int> _next_item(RID canvas);
 	RID _from_handle(int hrid) const;
@@ -97,6 +96,8 @@ public:
 	int canvas_add_lcd_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos = Point2());
 	int canvas_add_square_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos = Point2());
 	void init_dot_textures(real_t p_fall_off = DOT_TEXTURE_FALL_OUT);
+	Ref<Texture> create_dot_circle_texture(real_t p_fall_off, bool p_invert);
+	Ref<Texture> create_dot_squircle_texture(real_t p_fall_off, bool p_invert);
 
 	// manage text instance
 	void set_transform(int p_index, const Transform2D &p_xform);

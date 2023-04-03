@@ -39,6 +39,7 @@
 #include "core/dictionary.h"
 #include "core/math/vector2.h"
 #include "core/rid.h"
+#include "scene/resources/texture.h"
 
 /// Bitmap Font
 
@@ -47,7 +48,8 @@ typedef enum {
 	FBFontDotStyleFlatSquare,
 	FBFontDotStyleTextureCircle,
 	FBFontDotStyleTextureSquare,
-	FBFontDotStyleTexture3D,
+	FBFontDotStyleTexture3D_1,
+	FBFontDotStyleTexture3D_2,
 } FBFontDotStyle;
 
 struct CharPadding {
@@ -58,11 +60,12 @@ struct CharPadding {
 	int number_of_between_dot;
 };
 
-void init_bitmap_symbol(Dictionary &cache, real_t fall_off);
+void init_bitmap_symbol(real_t fall_off);
+Ref<Texture> create_aa_circle_texture(real_t fall_off, bool invert);
+Ref<Texture> create_aa_squircle_texture(real_t fall_off, bool invert);
 
 void draw_padding_with_dot_style(
 		const RID &canvas_item,
-		Dictionary &cache,
 		FBFontDotStyle dot_style,
 		Point2 start_point,
 		Color color,
@@ -73,7 +76,6 @@ void draw_padding_with_dot_style(
 
 void draw_background_with_dot_style(
 		const RID &canvas_item,
-		Dictionary &cache,
 		FBFontDotStyle dot_style,
 		Point2 start_point,
 		Color color,
@@ -84,7 +86,6 @@ void draw_background_with_dot_style(
 
 void draw_bitmap_symbol(
 		const RID &canvas_item,
-		Dictionary &cache,
 		FBFontSymbolType symbol,
 		FBFontDotStyle dot_style,
 		Color color,
@@ -98,7 +99,6 @@ void draw_bitmap_symbol(
 
 void draw_bitmap_symbol_with_padding(
 		const RID &canvas_item,
-		Dictionary &cache,
 		FBFontSymbolType symbol,
 		FBFontDotStyle dot_style,
 		Color color,
@@ -107,9 +107,20 @@ void draw_bitmap_symbol_with_padding(
 		int margin,
 		const CharPadding &padding,
 		const Color &glow_color,
-		real_t glow_size,
 		const Color &inner_glow_color,
-		real_t inner_glow_size,
+		const Point2 &start_point);
+
+void draw_bitmap_map(
+		const RID &canvas_item,
+		std::vector<std::vector<bool>> map,
+		FBFontDotStyle dot_style,
+		Color color,
+		Color off_color,
+		unsigned edge_length,
+		unsigned margin,
+		const CharPadding &padding,
+		const Color &glow_color,
+		const Color &inner_glow_color,
 		const Point2 &start_point);
 
 int number_of_dots_wide_for_symbol(FBFontSymbolType symbol);

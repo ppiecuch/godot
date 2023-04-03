@@ -44,19 +44,27 @@
 
 /// FBBitmapFontView
 
-#define color_from_rgb(rgb) Color::hex(0xff | ((rgb) << 8))
+static _FORCE_INLINE_ Color color_from_rgb(uint32_t rgb, uint8_t alpha = 255) {
+	return Color::hex(alpha | (rgb << 8));
+}
 
 static const Color _white = Color(1, 1, 1);
 
-FBBitmapFontView::FBBitmapFontView(const RID &canvas_item, Dictionary &cache) :
-		canvas_item(canvas_item), cache(cache) {
+template <typename T> std::vector<T> make_vector(size_t reservation) {
+	std::vector<T> vec;
+	vec.reserve(reservation);
+	return vec;
+}
+
+FBBitmapFontView::FBBitmapFontView(const RID &canvas_item) :
+		canvas_item(canvas_item) {
 	dot_style = FBFontDotStyleFlatSquare;
 	edge_length = 10;
 	margin = 2;
 	glow_size = 0;
 	inner_glow_size = 0;
-	glow_color = color_from_rgb(0xee3300);
-	inner_glow_color = color_from_rgb(0xee3300);
+	glow_color = color_from_rgb(0xee3300, 0x40);
+	inner_glow_color = color_from_rgb(0xee3300, 0x32);
 	on_color = color_from_rgb(0xffdd66);
 	off_color = color_from_rgb(0x222222);
 
@@ -72,6 +80,41 @@ FBBitmapFontView::FBBitmapFontView(const RID &canvas_item, Dictionary &cache) :
 void FBBitmapFontView::set_text(const String &p_text) {
 	text = p_text;
 	symbols = symbols_for_string(text);
+
+	_update_2d_view();
+	// _dump_2d_view();
+}
+
+void FBBitmapFontView::_update_2d_view() {
+	const int vd = number_of_vertical_dot();
+	const int hd = number_of_horizontal_dot();
+	_dots = std::vector<std::vector<bool>>(vd, std::vector<bool>(hd, false));
+	int adv = 0;
+	for (const auto &symbol : symbols) {
+		const auto &coord = coord_for_symbol(symbol);
+		for (int r = 0; r < coord.size(); r++) {
+			for (int p = 0; p < padding.number_of_left_dot; p++) {
+				_dots[r][adv + p] = false;
+			}
+			const auto &column = coord[r];
+			for (int c = 0; c < column.size(); c++) {
+				_dots[r][adv + padding.number_of_left_dot + c] = column[c];
+			}
+		}
+		adv += number_of_dots_wide_for_symbol(symbol) + padding.number_of_between_dot + padding.number_of_right_dot;
+	}
+}
+
+void FBBitmapFontView::_dump_2d_view(const char dot) {
+	print_line(vformat("Text: '%s'", text));
+	for (const auto &line : _dots) {
+		std::vector<char> ln = make_vector<char>(line.size() + 1);
+		for (auto&& b : line) {
+			ln.push_back(b ? dot : ' ');
+		}
+		ln.push_back(0);
+		print_line(&ln[0]);
+	}
 }
 
 Size2 FBBitmapFontView::size_of_contents() const {
@@ -96,20 +139,13 @@ int FBBitmapFontView::number_of_vertical_dot() const {
 }
 
 void FBBitmapFontView::draw(const Point2 &p_pos) {
-	const int c = edge_length + margin;
-	const Point2 orig = Vector2(padding.number_of_left_dot, padding.number_of_top_dot) * c;
-	Point2 xy = p_pos;
-	for (int i = 0; i < symbols.size(); i++) {
-		draw_bitmap_symbol_with_padding(canvas_item, cache, symbols[i], dot_style, on_color, off_color, edge_length, margin, padding, glow_color, glow_size, inner_glow_color, inner_glow_size, xy + orig);
-		const int number_wide = number_of_dots_wide_for_symbol(symbols[i]);
-		xy.x += c * (number_wide + padding.number_of_left_dot + padding.number_of_right_dot + padding.number_of_between_dot);
-	}
+	draw_bitmap_map(canvas_item, _dots, dot_style, on_color, off_color, edge_length, margin, padding, inner_glow_color, glow_color, glow_size, p_pos);
 }
 
 /// FBSquareFontView
 
-FBSquareFontView::FBSquareFontView(const RID &canvas_item, Dictionary &cache) :
-		canvas_item(canvas_item), cache(cache) {
+FBSquareFontView::FBSquareFontView(const RID &canvas_item) :
+		canvas_item(canvas_item) {
 	horizontal_padding = 5;
 	vertical_padding = 5;
 	horizontal_edge_length = 10;
@@ -155,8 +191,8 @@ void FBSquareFontView::draw(const Point2 &p_pos) {
 
 // FBLCDFontView
 
-FBLCDFontView::FBLCDFontView(const RID &canvas_item, Dictionary &cache) :
-		canvas_item(canvas_item), cache(cache) {
+FBLCDFontView::FBLCDFontView(const RID &canvas_item) :
+		canvas_item(canvas_item) {
 	horizontal_padding = 5;
 	draw_off_line = false;
 	vertical_padding = 5;

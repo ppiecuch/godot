@@ -40,6 +40,8 @@
 #include "core/dictionary.h"
 #include "core/vector.h"
 
+#include <vector>
+
 class FBBitmapFontView {
 	Vector<FBFontSymbolType> symbols;
 	FBFontDotStyle dot_style;
@@ -54,11 +56,15 @@ class FBBitmapFontView {
 	Color inner_glow_color;
 	String text;
 
+	std::vector<std::vector<bool>> _dots;
+
 	int number_of_horizontal_dot() const;
 	int number_of_vertical_dot() const;
 
+	void _update_2d_view();
+	void _dump_2d_view(const char dot = '*');
+
 	const RID &canvas_item;
-	Dictionary &cache;
 
 public:
 	void draw(const Point2 &p_pos = Point2());
@@ -77,9 +83,15 @@ public:
 	}
 	void set_spacing(int p_spacing) { padding.number_of_between_dot = p_spacing; }
 	void set_on_color(const Color &p_color) { on_color = p_color; }
+	void set_on_color(unsigned p_color) { on_color = Color::hex(p_color); }
 	void set_off_color(const Color &p_color) { off_color = p_color; }
+	void set_off_color(unsigned p_color) { off_color = Color::hex(p_color); }
+	void set_glow_color(const Color &p_color) { glow_color = p_color; }
+	void set_glow_color(unsigned p_color) { glow_color = Color::hex(p_color); }
+	void set_inner_glow_color(const Color &p_color) { inner_glow_color = p_color; }
+	void set_inner_glow_color(unsigned p_color)  { inner_glow_color = Color::hex(p_color); }
 
-	FBBitmapFontView(const RID &canvas_item, Dictionary &cache);
+	FBBitmapFontView(const RID &canvas_item);
 };
 
 class FBLCDFontView {
@@ -99,7 +111,6 @@ class FBLCDFontView {
 	String text;
 
 	const RID &canvas_item;
-	Dictionary &cache;
 
 public:
 	Size2 size_of_contents() const;
@@ -110,7 +121,7 @@ public:
 
 	void draw(const Point2 &p_pos);
 
-	FBLCDFontView(const RID &canvas_item, Dictionary &cache);
+	FBLCDFontView(const RID &canvas_item);
 };
 
 class FBSquareFontView {
@@ -131,7 +142,6 @@ class FBSquareFontView {
 	String text;
 
 	const RID &canvas_item;
-	Dictionary &cache;
 
 public:
 	Size2 size_of_contents() const;
@@ -141,7 +151,7 @@ public:
 
 	void draw(const Point2 &p_pos);
 
-	FBSquareFontView(const RID &canvas_item, Dictionary &cache);
+	FBSquareFontView(const RID &canvas_item);
 };
 
 #endif // FBFONTVIEW_H

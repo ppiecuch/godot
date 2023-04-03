@@ -1,32 +1,32 @@
-/*************************************************************************/
-/*  register_types.cpp                                                   */
-/*************************************************************************/
-/*                       This file is part of:                           */
-/*                           GODOT ENGINE                                */
-/*                      https://godotengine.org                          */
-/*************************************************************************/
-/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
-/*                                                                       */
-/* Permission is hereby granted, free of charge, to any person obtaining */
-/* a copy of this software and associated documentation files (the       */
-/* "Software"), to deal in the Software without restriction, including   */
-/* without limitation the rights to use, copy, modify, merge, publish,   */
-/* distribute, sublicense, and/or sell copies of the Software, and to    */
-/* permit persons to whom the Software is furnished to do so, subject to */
-/* the following conditions:                                             */
-/*                                                                       */
-/* The above copyright notice and this permission notice shall be        */
-/* included in all copies or substantial portions of the Software.       */
-/*                                                                       */
-/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
-/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
-/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
-/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
-/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
-/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
-/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
-/*************************************************************************/
+/**************************************************************************/
+/*  register_types.cpp                                                    */
+/**************************************************************************/
+/*                         This file is part of:                          */
+/*                             GODOT ENGINE                               */
+/*                        https://godotengine.org                         */
+/**************************************************************************/
+/* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
+/* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
+/*                                                                        */
+/* Permission is hereby granted, free of charge, to any person obtaining  */
+/* a copy of this software and associated documentation files (the        */
+/* "Software"), to deal in the Software without restriction, including    */
+/* without limitation the rights to use, copy, modify, merge, publish,    */
+/* distribute, sublicense, and/or sell copies of the Software, and to     */
+/* permit persons to whom the Software is furnished to do so, subject to  */
+/* the following conditions:                                              */
+/*                                                                        */
+/* The above copyright notice and this permission notice shall be         */
+/* included in all copies or substantial portions of the Software.        */
+/*                                                                        */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. */
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY   */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,   */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE      */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
+/**************************************************************************/
 
 #include "register_types.h"
 
@@ -36,6 +36,8 @@
 #include "editor/editor_node.h"
 
 #include "common/sr_graph.h"
+#include "common/resources_config.h"
+#include "common/resources_cache.h"
 
 #include "core/area_prober.h"
 #include "core/blitter.h"
@@ -55,7 +57,6 @@
 #include "core/procedural_animation_editor_plugin.h"
 #include "core/raw_packer.h"
 #include "core/resource_importer_json.h"
-#include "core/resources_config.h"
 #include "core/stopwatch.h"
 #include "core/tags.h"
 #include "core/timer2.h"
@@ -213,8 +214,8 @@ static Ref<ResourceLoaderJSONVector> resource_loader_jsonvector;
 #endif
 
 #ifdef GDEXT_THORVG_ENABLED
-#include <thorvg.h>
 #include "thorvg/image_loader_thor_svg.h"
+#include <thorvg.h>
 
 static Ref<ImageLoaderThorSVG> image_loader_tsvg;
 #endif
@@ -247,11 +248,6 @@ static Ref<ImageLoaderThorSVG> image_loader_tsvg;
 #include "spacemouse/spacemouse.h"
 #endif
 
-static Vector<Object *> _global_resources;
-void _register_global_resources(Object *ref) {
-	_global_resources.push_back(ref);
-}
-
 #ifdef TOOLS_ENABLED
 static void editor_init_callback() {
 	Engine::get_singleton()->add_singleton(Engine::Singleton("GodotErrorHandler", memnew(GodotErrorHandler)));
@@ -269,6 +265,8 @@ static void editor_init_callback() {
 static ThreadPool *thread_pool = nullptr;
 
 void register_gdextensions_types() {
+	Engine::get_singleton()->add_singleton(Engine::Singleton("ResCache", memnew(ResCache)));
+	Engine::get_singleton()->add_singleton(Engine::Singleton("Resources", memnew(Resources)));
 	ClassDB::register_class<SRGraph>();
 #ifdef GDEXT_BULLETKIT_ENABLED
 	register_bullet_kit();
@@ -358,7 +356,6 @@ void register_gdextensions_types() {
 	Engine::get_singleton()->add_singleton(Engine::Singleton("GdHttpServer", memnew(GdHttpServer)));
 #endif
 #ifdef GDEXT_CORE_ENABLED
-	Engine::get_singleton()->add_singleton(Engine::Singleton("Resources", memnew(Resources)));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Timer2", memnew(Timer2)));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Tween2", memnew(Tween2)));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("InputStorage", memnew(InputStorage)));
@@ -436,7 +433,7 @@ void register_gdextensions_types() {
 #endif
 #endif // GDEXT_VISUAL_ENABLED
 #ifdef GDEXT_ROPESIM_ENABLED
-		Engine::get_singleton()->add_singleton(Engine::Singleton("RopeServer", RopeServer::get_singleton()));
+	ClassDB::register_class<RopeServer>();
 #endif
 #ifdef GDEXT_SPINNERS_ENABLED
 	ClassDB::register_class<Spinner>();
@@ -609,7 +606,11 @@ void register_gdextensions_types() {
 #endif
 }
 
+#define RemoveSingleton(S) if (S *instance = S::get_singleton()) { memdelete(instance); }
+
 void unregister_gdextensions_types() {
+	RemoveSingleton(ResCache);
+	RemoveSingleton(Resources);
 	if (thread_pool) {
 		memdelete(thread_pool);
 	}
@@ -617,81 +618,52 @@ void unregister_gdextensions_types() {
 	BTStringNames::free();
 #endif
 #ifdef GDEXT_BLITTER_ENABLED
-	if (BitBlit *instance = BitBlit::get_singleton()) {
-		memdelete(instance);
-	}
+	RemoveSingleton(BitBlit);
 #endif
 #ifdef GDEXT_CORE_ENABLED
-	if (Resources *instance = Resources::get_singleton()) {
-		memdelete(instance);
-	}
-	if (Timer2 *instance = Timer2::get_singleton()) {
-		memdelete(instance);
-	}
-	if (Tween2 *instance = Tween2::get_singleton()) {
-		memdelete(instance);
-	}
-	if (InputStorage *instance = InputStorage::get_singleton()) {
-		memdelete(instance);
-	}
-	if (Tags *instance = Tags::get_singleton()) {
-		memdelete(instance);
-	}
-	if (Blitter *instance = Blitter::get_singleton()) {
-		memdelete(instance);
-	}
+	RemoveSingleton(Timer2);
+	RemoveSingleton(Tween2);
+	RemoveSingleton(InputStorage);
+	RemoveSingleton(Tags);
+	RemoveSingleton(Blitter);
 #ifdef TOOLS_ENABLED
-	if (GodotErrorHandler *instance = GodotErrorHandler::get_singleton()) {
-		memdelete(instance);
-	}
+	RemoveSingleton(GodotErrorHandler);
 #endif
 #endif // GDEXT_CORE_ENABLED
 #ifdef GDEXT_DEBUGDRAW_ENABLED
-	if (DebugDraw *instance = DebugDraw::get_singleton()) {
-		memdelete(instance);
-	}
+	RemoveSingleton(DebugDraw);
 #endif
 #ifdef GDEXT_POLYVECTOR_ENABLED
 	ResourceLoader::remove_resource_format_loader(resource_loader_jsonvector);
 	resource_loader_jsonvector.unref();
 #endif
 #ifdef GDEXT_THORVG_ENABLED
-	if (image_loader_thor_svg.is_null()) {
-		return; // It failed to initialize so it was not added.
+	if (!image_loader_thor_svg.is_null()) {
+		ImageLoader::remove_image_format_loader(image_loader_thor_svg);
+		image_loader_thor_svg.unref();
+		tvg::Initializer::term(tvg::CanvasEngine::Sw);
 	}
-	ImageLoader::remove_image_format_loader(image_loader_thor_svg);
-	image_loader_thor_svg.unref();
-	tvg::Initializer::term(tvg::CanvasEngine::Sw);
 #endif
 #ifdef GDEXT_SETTINGS_ENABLED
-	if (Settings *instance = Settings::get_singleton()) {
-		memdelete(instance);
-	}
+	RemoveSingleton(Settings);
 #endif
 #ifdef GDEXT_NAKAMA1_ENABLED
-	if (GdNakama1 *instance = GdNakama1::get_singleton()) {
-		memdelete(instance);
-	}
+	RemoveSingleton(GdNakama1);
 #endif
 #ifdef GDEXT_PARSEPLATFORM_ENABLED
-	if (GdParseBackend *instance = GdParseBackend::get_singleton()) {
-		memdelete(instance);
-	}
+	RemoveSingleton(GdParseBackend);
+#endif
+#ifdef GDEXT_SILENTWOLF_ENABLED
+	RemoveSingleton(SilentWolf);
 #endif
 #ifdef GDEXT_MULTIPEER_ENABLED
-	if (GdMultiPeer *instance = GdMultiPeer::get_singleton()) {
-		memdelete(instance);
-	}
+	RemoveSingleton(GdMultiPeer);
 #endif
 #ifdef GDEXT_HTTPSERVER_ENABLED
-	if (GdHttpServer *instance = GdHttpServer::get_singleton()) {
-		memdelete(instance);
-	}
+	RemoveSingleton(GdHttpServer);
 #endif
 #ifdef GDEXT_SPACEMOUSE_ENABLED
-	if (SpaceMouse *instance = SpaceMouse::get_singleton()) {
-		memdelete(instance);
-	}
+	RemoveSingleton(SpaceMouse);
 #endif
 #ifdef GDEXT_MEDIA_SMACKVIDEO_ENABLED
 	gdsmackvideo_terminate();

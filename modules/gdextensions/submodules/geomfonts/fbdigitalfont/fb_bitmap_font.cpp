@@ -29,6 +29,7 @@
 /**************************************************************************/
 
 #include "common/gd_core.h"
+#include "common/resources_cache.h"
 #include "core/image.h"
 #include "core/math/math_defs.h"
 #include "core/math/rect2.h"
@@ -89,12 +90,11 @@ Point2i disc_to_square(int x, int y) { // mapping a circular disc to a square re
 }
 
 #define default_circle_squared 0.3
-#define default_glow_transparency 0.2
 
 // 8-way symmetric macro
 #define putpixel8(x, y, I)                                                                                       \
 	{                                                                                                            \
-		const uint8_t c = map * (inv ? 1 - I : I);                                                               \
+		const uint8_t c = 255 * (inv ? 1 - I : I);                                                               \
 		buffer[(pct + x) + (pct + y) * psz] =                                                                    \
 				buffer[(pct - 1 - x) + (pct + y) * psz] =                                                        \
 						buffer[(pct + x) + (pct - 1 - y) * psz] =                                                \
@@ -114,14 +114,13 @@ Point2i disc_to_square(int x, int y) { // mapping a circular disc to a square re
 								buffer[(pct - x) + (pct - y) * psz] = c; \
 	}
 
-static PoolByteArray generate_circle_aa_data(real_t fall_off, bool inv, real_t scale = 1) {
+static PoolByteArray generate_circle_aa_data(real_t fall_off, bool inv) {
 	if (logtbl.empty()) {
 		logtbl.resize(pdb);
 		for (int i = 1; i <= pdb; i++) {
 			logtbl[i - 1] = Math::log(real_t(i) / pdb); // lookup table has 4x the bitmap resolution
 		}
 	}
-	const uint8_t map = 255 * scale;
 	int x = phf - 1, y = 0;
 	real_t T = 0;
 	PoolByteArray data;
@@ -180,30 +179,35 @@ static Ref<Texture> generate_squircle_aa_texture(const PoolByteArray &data) {
 	return texture;
 }
 
-static Ref<Texture> generate_light_texture() {
-	Ref<Image> image = newref(Image, lights2_png, lights2_png_size);
+static Ref<Texture> generate_atlas_texture(const uint8_t *data, size_t data_size) {
+	Ref<Image> image = newref(Image, data, data_size);
+	image->fix_alpha_edges(); // cleanup alpha borders
 	Ref<ImageTexture> texture = newref(ImageTexture);
-	texture->create_from_image(image);
+	texture->create_from_image(image, Texture::FLAG_FILTER); // only FILTER, no REPEAT, MIPMAPS
 	return texture;
 }
 
-void init_bitmap_symbol(Dictionary &cache, real_t fall_off) {
+void init_bitmap_symbol(real_t fall_off) {
 	PoolByteArray data = generate_circle_aa_data(fall_off, false);
-	PoolByteArray glow = generate_circle_aa_data(0.7, true, default_glow_transparency);
-	if (!cache.has("aa32_square")) {
-		cache["aa32_square"] = generate_squircle_aa_texture(data);
+	PoolByteArray outer = generate_circle_aa_data(1.25, false);
+	PoolByteArray glow = generate_circle_aa_data(0.7, true);
+	if (!_CACHE_HAS("aa32_square")) {
+		_CACHE_ADD("aa32_square", generate_squircle_aa_texture(data));
 	}
-	if (!cache.has("aa32_circle")) {
-		cache["aa32_circle"] = generate_circle_aa_texture(data);
+	if (!_CACHE_HAS("aa32_circle")) {
+		_CACHE_ADD("aa32_circle", generate_circle_aa_texture(data));
 	}
-	if (!cache.has("aa32_circle_glow")) {
-		cache["aa32_circle_glow"] = generate_circle_aa_texture(glow);
+	if (!_CACHE_HAS("aa32_circle_glow")) {
+		_CACHE_ADD("aa32_circle_glow", generate_circle_aa_texture(glow));
 	}
-	if (!cache.has("aa32_square_glow")) {
-		cache["aa32_square_glow"] = generate_squircle_aa_texture(glow);
+	if (!_CACHE_HAS("aa32_square_glow")) {
+		_CACHE_ADD("aa32_square_glow", generate_squircle_aa_texture(glow));
 	}
-	if (!cache.has("light_texture")) {
-		Ref<Texture> lights = generate_light_texture();
+	if (!_CACHE_HAS("aa32_outer_glow")) {
+		_CACHE_ADD("aa32_outer_glow", generate_squircle_aa_texture(outer));
+	}
+	if (!_CACHE_HAS("light_texture")) {
+		Ref<Texture> lights = generate_atlas_texture(lights_png, lights_png_size);
 		Ref<AtlasTexture> light_on = newref(AtlasTexture);
 		light_on->set_atlas(lights);
 		light_on->set_region(light_on_rect);
@@ -214,18 +218,42 @@ void init_bitmap_symbol(Dictionary &cache, real_t fall_off) {
 		light_off->set_atlas(lights);
 		light_off->set_region(light_off_rect);
 #ifdef DEBUG_ENABLED
-		light_off->set_name("light_of");
+		light_off->set_name("light_off");
 #endif
-		cache["light_texture"] = lights;
-		cache["light_texture_on"] = light_on;
-		cache["light_texture_off"] = light_off;
-		cache["light_texture_off_scale"] = 0.6;
+		_CACHE_ADD("light_texture", lights);
+		_CACHE_ADD("light_texture_on", light_on);
+		_CACHE_ADD("light_texture_off", light_off);
 	}
+	if (!_CACHE_HAS("square_texture")) {
+		Ref<Texture> squares = generate_atlas_texture(squares_png, squares_png_size);
+		Ref<AtlasTexture> square_on = newref(AtlasTexture);
+		square_on->set_atlas(squares);
+		square_on->set_region(square_on_rect);
+#ifdef DEBUG_ENABLED
+		square_on->set_name("square_on");
+#endif
+		Ref<AtlasTexture> square_off = newref(AtlasTexture);
+		square_off->set_atlas(squares);
+		square_off->set_region(square_off_rect);
+#ifdef DEBUG_ENABLED
+		square_off->set_name("square_off");
+#endif
+		_CACHE_ADD("square_texture", squares);
+		_CACHE_ADD("square_texture_on", square_on);
+		_CACHE_ADD("square_texture_off", square_off);
+	}
+}
+
+Ref<Texture> create_aa_circle_texture(real_t fall_off, bool invert) {
+	return generate_circle_aa_texture(generate_circle_aa_data(fall_off, invert));
+}
+
+Ref<Texture> create_aa_squircle_texture(real_t fall_off, bool invert) {
+	return generate_squircle_aa_texture(generate_circle_aa_data(fall_off, invert));
 }
 
 void draw_padding_with_dot_style(
 		const RID &canvas_item,
-		Dictionary &cache,
 		FBFontDotStyle dot_style,
 		Point2 start_point,
 		Color color,
@@ -249,18 +277,16 @@ void draw_padding_with_dot_style(
 			edge_length /= 2;
 		} break;
 		case FBFontDotStyleTextureSquare: {
-			texture = cache["aa32_square"];
+			texture = _CACHE_GET("aa32_square");
 		} break;
 		case FBFontDotStyleTextureCircle: {
-			texture = cache["aa32_circle"];
+			texture = _CACHE_GET("aa32_circle");
 		} break;
-		case FBFontDotStyleTexture3D: {
-			texture = cache["light_texture_off"];
-			const real_t texture_off_scale = cache["light_texture_off_scale"];
-			const real_t texture_offset = edge_length * (1 - texture_off_scale) / 2;
-			start_point += Vector2(texture_offset, texture_offset);
-			edge_length *= texture_off_scale;
-			color = Color(1, 1, 1); // ignore color
+		case FBFontDotStyleTexture3D_1: {
+			texture = _CACHE_GET("light_texture_off");
+		} break;
+		case FBFontDotStyleTexture3D_2: {
+			texture = _CACHE_GET("square_texture_off");
 		} break;
 		default: {
 			// not a texture style
@@ -296,7 +322,6 @@ void draw_padding_with_dot_style(
 
 void draw_background_with_dot_style(
 		const RID &canvas_item,
-		Dictionary &cache,
 		FBFontDotStyle dot_style,
 		Point2 start_point,
 		Color color,
@@ -320,18 +345,16 @@ void draw_background_with_dot_style(
 			edge_length /= 2;
 		} break;
 		case FBFontDotStyleTextureSquare: {
-			texture = cache["aa32_square"];
+			texture = _CACHE_GET("aa32_square");
 		} break;
 		case FBFontDotStyleTextureCircle: {
-			texture = cache["aa32_circle"];
+			texture = _CACHE_GET("aa32_circle");
 		} break;
-		case FBFontDotStyleTexture3D: {
-			texture = cache["light_texture_off"];
-			const real_t texture_off_scale = cache["light_texture_off_scale"];
-			const real_t texture_offset = edge_length * (1 - texture_off_scale) / 2;
-			start_point += Vector2(texture_offset, texture_offset);
-			edge_length *= texture_off_scale;
-			color = Color(1, 1, 1); // ignore color
+		case FBFontDotStyleTexture3D_1: {
+			texture = _CACHE_GET("light_texture_off");
+		} break;
+		case FBFontDotStyleTexture3D_2: {
+			texture = _CACHE_GET("square_texture_off");
 		} break;
 		default: {
 			// not a texture style
@@ -362,7 +385,6 @@ void draw_background_with_dot_style(
 
 void draw_bitmap_symbol(
 		const RID &canvas_item,
-		Dictionary &cache,
 		FBFontSymbolType symbol,
 		FBFontDotStyle dot_style,
 		Color color,
@@ -376,12 +398,7 @@ void draw_bitmap_symbol(
 	const int l = edge_length + margin;
 	const auto &coord = coord_for_symbol(symbol);
 
-	Ref<Texture> texture;
-	struct {
-		Ref<Texture> texture;
-		Size2 rc;
-		Vector2 start;
-	} texture_off;
+	Ref<Texture> texture, texture_off;
 	Size2 rc(edge_length, edge_length);
 	real_t circle_squared = 0;
 	switch (dot_style) {
@@ -398,18 +415,18 @@ void draw_bitmap_symbol(
 			edge_length /= 2;
 		} break;
 		case FBFontDotStyleTextureSquare: {
-			texture = cache["aa32_square"];
+			texture = _CACHE_GET("aa32_square");
 		} break;
 		case FBFontDotStyleTextureCircle: {
-			texture = cache["aa32_circle"];
+			texture = _CACHE_GET("aa32_circle");
 		} break;
-		case FBFontDotStyleTexture3D: {
-			texture = cache["light_texture_on"];
-			texture_off.texture = cache["light_texture_off"];
-			const real_t texture_off_scale = cache["light_texture_off_scale"];
-			const real_t texture_offset = edge_length * (1 - texture_off_scale) / 2;
-			texture_off.start = Vector2(texture_offset, texture_offset);
-			texture_off.rc = rc * texture_off_scale;
+		case FBFontDotStyleTexture3D_1: {
+			texture = _CACHE_GET("light_texture_on");
+			texture_off = _CACHE_GET("light_texture_off");
+		} break;
+		case FBFontDotStyleTexture3D_2: {
+			texture = _CACHE_GET("square_texture_on");
+			texture_off = _CACHE_GET("square_texture_off");
 		} break;
 		default: {
 			// not a texture mode
@@ -435,8 +452,8 @@ void draw_bitmap_symbol(
 					}
 				}
 			} else {
-				if (texture_off.texture) {
-					texture_off.texture->draw_rect(canvas_item, { xy + texture_off.start, texture_off.rc }, false, color);
+				if (texture_off) {
+					texture_off->draw_rect(canvas_item, { xy, rc }, false, color);
 				}
 			}
 		}
@@ -445,7 +462,6 @@ void draw_bitmap_symbol(
 
 void draw_bitmap_symbol_with_padding(
 		const RID &canvas_item,
-		Dictionary &cache,
 		FBFontSymbolType symbol,
 		FBFontDotStyle dot_style,
 		Color color,
@@ -453,20 +469,13 @@ void draw_bitmap_symbol_with_padding(
 		int edge_length,
 		int margin,
 		const CharPadding &padding,
-		const Color &glow_color,
-		real_t glow_size,
 		const Color &inner_glow_color,
-		real_t inner_glow_size,
+		const Color &glow_color,
 		const Point2 &start_point) {
 	const int l = edge_length + margin;
 	const auto &coord = coord_for_symbol(symbol);
 
-	Ref<Texture> texture, texture_glow;
-	struct {
-		Ref<Texture> texture;
-		Size2 rc;
-		Vector2 start;
-	} texture_off;
+	Ref<Texture> texture, texture_glow, texture_off;
 	Size2 rc(edge_length, edge_length), rc_edge = rc;
 	real_t circle_squared = 0;
 	switch (dot_style) {
@@ -477,28 +486,30 @@ void draw_bitmap_symbol_with_padding(
 				edge_length /= 2;
 				circle_squared = default_circle_squared;
 			}
-			texture_glow = cache["aa32_square_glow"];
+			texture_glow = _CACHE_GET("aa32_square_glow");
 		} break;
 		case FBFontDotStyleFlatCircle: {
 			rc /= 2;
 			edge_length /= 2;
-			texture_glow = cache["aa32_circle_glow"];
+			texture_glow = _CACHE_GET("aa32_circle_glow");
 		} break;
 		case FBFontDotStyleTextureSquare: {
-			texture = cache["aa32_square"];
-			texture_glow = cache["aa32_square_glow"];
+			texture = _CACHE_GET("aa32_square");
+			texture_glow = _CACHE_GET("aa32_square_glow");
 		} break;
 		case FBFontDotStyleTextureCircle: {
-			texture = cache["aa32_circle"];
-			texture_glow = cache["aa32_circle_glow"];
+			texture = _CACHE_GET("aa32_circle");
+			texture_glow = _CACHE_GET("aa32_circle_glow");
 		} break;
-		case FBFontDotStyleTexture3D: {
-			texture = cache["light_texture_on"];
-			texture_off.texture = cache["light_texture_off"];
-			const real_t texture_off_scale = cache["light_texture_off_scale"];
-			const real_t texture_offset = edge_length * (1 - texture_off_scale) / 2;
-			texture_off.start = Vector2(texture_offset, texture_offset);
-			texture_off.rc = rc * texture_off_scale;
+		case FBFontDotStyleTexture3D_1: {
+			texture = _CACHE_GET("light_texture_on");
+			texture_off = _CACHE_GET("light_texture_off");
+			texture_glow = _CACHE_GET("aa32_square_glow");
+		} break;
+		case FBFontDotStyleTexture3D_2: {
+			texture = _CACHE_GET("square_texture_on");
+			texture_off = _CACHE_GET("square_texture_off");
+			texture_glow = _CACHE_GET("aa32_square_glow");
 		} break;
 		default: {
 			// not a texture mode
@@ -521,14 +532,17 @@ void draw_bitmap_symbol_with_padding(
 					VS::get_singleton()->canvas_item_add_circle(canvas_item, xy + rc, edge_length, active ? color : off_color, circle_squared);
 				} break;
 				default: {
-					if (texture_off.texture) {
+					if (texture_off) {
 						if (active) {
 							texture->draw_rect(canvas_item, { xy, rc }, false, color);
 						} else {
-							texture_off.texture->draw_rect(canvas_item, { xy + texture_off.start, texture_off.rc }, false, off_color);
+							texture_off->draw_rect(canvas_item, { xy, rc }, false, off_color);
 						}
 					} else {
 						if (texture) {
+							if (active) {
+								texture->draw_rect(canvas_item, { xy - rc, rc * 3 }, false, glow_color);
+							}
 							texture->draw_rect(canvas_item, { xy, rc }, false, active ? color : off_color);
 						}
 					}
@@ -536,6 +550,126 @@ void draw_bitmap_symbol_with_padding(
 			}
 			if (texture_glow && active) {
 				texture_glow->draw_rect(canvas_item, { xy, rc_edge }, false, inner_glow_color);
+			}
+		}
+	}
+}
+
+
+void draw_bitmap_map(
+		const RID &canvas_item,
+		std::vector<std::vector<bool>> map,
+		FBFontDotStyle dot_style,
+		Color color,
+		Color off_color,
+		unsigned edge_length,
+		unsigned margin,
+		const CharPadding &padding,
+		const Color &inner_glow_color,
+		const Color &glow_color,
+		real_t glow_size,
+		const Point2 &start_point) {
+	const int l = edge_length + margin;
+
+	Ref<Texture> texture, texture_off, texture_glow, texture_outer = _CACHE_GET("aa32_outer_glow");
+	Size2 rc(edge_length, edge_length), rc_edge = rc, rc_glow = rc * 2;
+	real_t circle_squared = 0;
+	switch (dot_style) {
+		case FBFontDotStyleFlatSquare: {
+			if (edge_length > 5) {
+				dot_style = FBFontDotStyleFlatCircle;
+				rc /= 2;
+				edge_length /= 2;
+				circle_squared = default_circle_squared;
+			}
+			texture_glow = _CACHE_GET("aa32_square_glow");
+		} break;
+		case FBFontDotStyleFlatCircle: {
+			rc /= 2;
+			edge_length /= 2;
+			texture_glow = _CACHE_GET("aa32_circle_glow");
+		} break;
+		case FBFontDotStyleTextureSquare: {
+			texture = _CACHE_GET("aa32_square");
+			texture_glow = _CACHE_GET("aa32_square_glow");
+		} break;
+		case FBFontDotStyleTextureCircle: {
+			texture = _CACHE_GET("aa32_circle");
+			texture_glow = _CACHE_GET("aa32_circle_glow");
+		} break;
+		case FBFontDotStyleTexture3D_1: {
+			texture = _CACHE_GET("light_texture_on");
+			texture_off = _CACHE_GET("light_texture_off");
+			texture_glow = _CACHE_GET("aa32_circle_glow");
+		} break;
+		case FBFontDotStyleTexture3D_2: {
+			texture = _CACHE_GET("square_texture_on");
+			//texture_glow = _CACHE_GET("aa32_square_glow");
+			texture_off = _CACHE_GET("square_texture_off");
+		} break;
+		default: {
+			// not a texture mode
+		}
+	}
+
+	for (int s = 0; s < 3; s++) { // 0.back, 1.glow, 2.front
+		for (int r = 0; r < map.size(); r++) {
+			const bool last_row = r == map.size() - 1;
+			const auto &column = map[r];
+			for (int c = 0; c < column.size(); c++) {
+				const bool last_col = c == column.size() - 1;
+				const bool active = map[r][c];
+				const bool back = (s==0 && !active);
+				const bool glow = (s==1 && active);
+				const bool front = (s==2 && active);
+				const Point2 xy = start_point + Vector2i(c, r) * l;
+				if (glow) {
+					if (texture_outer) {
+						const bool nleft = c ? map[r][c - 1] : false,
+							nright = last_col ? false : map[r][c + 1],
+							ntop = r ? map[r - 1][c] : false,
+							nbottom = last_row ? false : map[r + 1][c];
+						const Vector2 change_position(nleft, ntop);
+						const Vector2 change_size(nleft + nright, ntop + nbottom);
+						const Size2 mt = texture_outer->get_size() * 0.3;
+						Rect2 src(Point2() + change_position * mt, texture_outer->get_size() - change_size * mt);
+						const Size2 md = (rc_glow - rc_edge - Vector2(margin, margin)) / 2;
+						Rect2 dest(xy - md + change_position * md, rc_glow - change_size * md);
+						texture_outer->draw_rect_region(canvas_item, dest, src, glow_color);
+						//VS::get_singleton()->canvas_item_add_rect(canvas_item, dest, (c+r)%2 ? Color::named("red").with_alpha(0.5) : Color::named("green").with_alpha(0.5));
+					}
+				} else {
+					switch (dot_style) {
+						case FBFontDotStyleFlatSquare: {
+							if (back || front) {
+								VS::get_singleton()->canvas_item_add_rect(canvas_item, { xy, rc }, active ? color : off_color);
+							}
+						} break;
+						case FBFontDotStyleFlatCircle: {
+							if (back || front) {
+								VS::get_singleton()->canvas_item_add_circle(canvas_item, xy + rc, edge_length, active ? color : off_color, circle_squared);
+							}
+						} break;
+						default: {
+							if (texture_off) {
+								if (active) {
+									texture->draw_rect(canvas_item, { xy, rc }, false, color);
+								} else {
+									texture_off->draw_rect(canvas_item, { xy, rc }, false, off_color);
+								}
+							} else {
+								if (back || front) {
+									if (texture) {
+										texture->draw_rect(canvas_item, { xy, rc }, false, active ? color : off_color);
+									}
+								}
+							}
+						}
+					}
+					if (texture_glow && front) {
+						texture_glow->draw_rect(canvas_item, { xy, rc_edge }, false, inner_glow_color);
+					}
+				}
 			}
 		}
 	}

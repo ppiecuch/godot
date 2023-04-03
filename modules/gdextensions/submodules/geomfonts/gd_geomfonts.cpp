@@ -29,6 +29,7 @@
 /**************************************************************************/
 
 #include "fbdigitalfont/fb_font_symbol.h"
+#include "fbdigitalfont/fb_font_view.h"
 #define _CRT_SECURE_NO_WARNINGS
 
 #include "gd_geomfonts.h"
@@ -170,7 +171,15 @@ Size2 GdGeomFonts::hp_font_text_size(const String &p_text, const Size2 &p_scale)
 }
 
 void GdGeomFonts::init_dot_textures(real_t p_fall_off) {
-	init_bitmap_symbol(_cache, p_fall_off);
+	init_bitmap_symbol(p_fall_off);
+}
+
+Ref<Texture> GdGeomFonts::create_dot_circle_texture(real_t p_fall_off, bool p_invert) {
+	return create_aa_circle_texture(p_fall_off, p_invert);
+}
+
+Ref<Texture> GdGeomFonts::create_dot_squircle_texture(real_t p_fall_off, bool p_invert) {
+	return create_aa_squircle_texture(p_fall_off, p_invert);
 }
 
 #define _set_prop(D, P)        \
@@ -183,20 +192,47 @@ void GdGeomFonts::init_dot_textures(real_t p_fall_off) {
 
 #define _set_color(D, P)         \
 	if (D.has(#P)) {             \
-		const Color val = D[#P]; \
-		fnt.set_##P(val);        \
+		if (D[#P].get_type() == Variant::COLOR) { \
+			const Color val = D[#P]; \
+			fnt.set_##P(val);        \
+		} else if (D[#P].get_type() == Variant::INT) { \
+			const int val = D[#P]; \
+			fnt.set_##P(val); \
+		} \
 	}
 
 int GdGeomFonts::canvas_add_bitmap_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos, int p_dot_style, const Dictionary &p_style) {
 	ERR_FAIL_COND_V(!p_canvas.is_valid(), -1);
 	const auto item = _next_item(p_canvas);
-	FBBitmapFontView fnt(item.first, _cache);
+
+	FBBitmapFontView fnt(item.first);
 	fnt.set_style(FBFontDotStyle(p_dot_style));
 	fnt.set_text(p_text);
 	_set_prop(p_style, margin);
 	_set_prop(p_style, edge_length);
 	_set_color(p_style, on_color);
 	_set_color(p_style, off_color);
+	_set_color(p_style, glow_color);
+	fnt.draw(p_pos);
+
+	return item.second;
+}
+
+int GdGeomFonts::canvas_add_lcd_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos) {
+	ERR_FAIL_COND_V(!p_canvas.is_valid(), -1);
+	const auto item = _next_item(p_canvas);
+
+	FBLCDFontView fnt(item.first);
+	fnt.draw(p_pos);
+
+	return item.second;
+}
+
+int GdGeomFonts::canvas_add_square_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos) {
+	ERR_FAIL_COND_V(!p_canvas.is_valid(), -1);
+	const auto item = _next_item(p_canvas);
+
+	FBSquareFontView fnt(item.first);
 	fnt.draw(p_pos);
 
 	return item.second;
@@ -247,7 +283,11 @@ void GdGeomFonts::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("hp_font_text_size", "text", "scale"), &GdGeomFonts::hp_font_text_size, DEFVAL(Size2(10, 10)));
 
 	ClassDB::bind_method(D_METHOD("init_dot_textures", "fall_off"), &GdGeomFonts::init_dot_textures, DEFVAL(0.3));
+	ClassDB::bind_method(D_METHOD("create_dot_circle_texture", "fall_off", "invert"), &GdGeomFonts::create_dot_circle_texture);
+	ClassDB::bind_method(D_METHOD("create_dot_squircle_texture", "fall_off", "invert"), &GdGeomFonts::create_dot_squircle_texture);
 	ClassDB::bind_method(D_METHOD("canvas_add_bitmap_font_text", "canvas", "text", "pos", "dot_style", "style"), &GdGeomFonts::canvas_add_bitmap_font_text, DEFVAL(Point2()), DEFVAL(BITMAP_FONT_FLAT_CIRCLE), DEFVAL(Dictionary()));
+	ClassDB::bind_method(D_METHOD("canvas_add_lcd_font_text", "canvas", "text", "pos"), &GdGeomFonts::canvas_add_lcd_font_text);
+	ClassDB::bind_method(D_METHOD("canvas_add_square_font_text", "canvas", "text", "pos"), &GdGeomFonts::canvas_add_square_font_text);
 
 	ClassDB::bind_method(D_METHOD("set_transform", "index", "xform"), &GdGeomFonts::set_transform);
 	ClassDB::bind_method(D_METHOD("set_modulate_color", "index", "color"), &GdGeomFonts::set_modulate_color);
@@ -258,14 +298,15 @@ void GdGeomFonts::_bind_methods() {
 	BIND_ENUM_CONSTANT(BITMAP_FONT_FLAT_SQUARE);
 	BIND_ENUM_CONSTANT(BITMAP_FONT_TEXTURE_CIRCLE);
 	BIND_ENUM_CONSTANT(BITMAP_FONT_TEXTURE_SQUARE);
-	BIND_ENUM_CONSTANT(BITMAP_FONT_TEXTURE_3D);
+	BIND_ENUM_CONSTANT(BITMAP_FONT_TEXTURE_3D_1);
+	BIND_ENUM_CONSTANT(BITMAP_FONT_TEXTURE_3D_2);
 
 	ADD_SIGNAL(MethodInfo("changed"));
 }
 
 GdGeomFonts::GdGeomFonts() :
 		items(1, 32) {
-	init_bitmap_symbol(_cache, DOT_TEXTURE_FALL_OUT);
+	init_bitmap_symbol(DOT_TEXTURE_FALL_OUT);
 }
 
 GdGeomFonts::~GdGeomFonts() {
