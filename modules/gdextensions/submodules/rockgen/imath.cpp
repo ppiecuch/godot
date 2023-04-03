@@ -36,18 +36,17 @@
 int BitReverse(int i, int l) {
 #ifdef _M_IX86
 	__asm {
-        mov edx,i
-        xor eax,eax
-        mov ecx,l
+		mov edx,i
+		xor eax,eax
+		mov ecx,l
 
-       ici:
-        rcr edx,1
-        rcl eax,1
-        dec cx
-       jnz ici
+	ici:
+		rcr edx,1
+		rcl eax,1
+		dec cx
+		jnz ici
 	}
 #else
-
 	int j, k;
 
 	k = 0;
@@ -57,16 +56,15 @@ int BitReverse(int i, int l) {
 	}
 
 	return k;
-
 #endif
 }
 
 int Ror(int i, int p) {
 #ifdef _M_IX86
 	__asm {
-         mov ecx,p
-         mov eax,i
-         ror eax,cl
+		mov ecx,p
+		mov eax,i
+		ror eax,cl
 		// retour dans eax
 	}
 #else
@@ -78,9 +76,9 @@ int Ror(int i, int p) {
 int Rol(int i, int p) {
 #ifdef _M_IX86
 	__asm {
-         mov ecx,p
-         mov eax,i
-         rol eax,cl
+		mov ecx,p
+		mov eax,i
+		rol eax,cl
 		// retour dans eax
 	}
 #else
@@ -120,7 +118,7 @@ uint_t pgfc(uint_t a, uint_t b) {
 // Cette routine simplifie la fraction a/b
 // par exemple 6/-8 ---> -3/4
 // ...en O ( Log2( Max(a,b))^2 ) en pire cas
-// à cause d'Euclide. Pas super rapide à cause
+// a cause d'Euclide. Pas super rapide a cause
 // des conversions de signe.
 void SimplifyFraction(int &a, int &b) {
 	int i;
@@ -154,7 +152,7 @@ uint_t ExpoDiscrete(uint_t a, uint_t p) {
 }
 
 // Exponentiation discrete en O(log(exposant))
-// sauf que les multiplications intermédiaires
+// sauf que les multiplications intermediaires
 // sont faites avec un modulo
 uint_t ModExpoDiscrete(uint_t a, uint_t p, uint_t m) {
 	if (p == 0) {
@@ -189,24 +187,24 @@ uint_t CompactLog2(uint_t i) {
 uint_t Log2(uint_t i) {
 #if _M_IX86 > 200
 	__asm {
-      tester:
+	tester:
 
-       mov ebx,i
-       or  ebx,ebx
-       jnz nonzero
+		mov ebx,i
+		or  ebx,ebx
+		jnz nonzero
 
-      zero:
+	zero:
 
-       xor eax,eax
-       inc eax
-       jmp sortie
+		xor eax,eax
+		inc eax
+		jmp sortie
 
-      nonzero:
+	nonzero:
 
-       bsr eax,ebx
-       inc eax
+		bsr eax,ebx
+		inc eax
 
-      sortie:
+	sortie:
 	}
 #else
 	int n = 32;
@@ -245,9 +243,9 @@ uint_t Log10(uint_t i) {
 
 // En passant, sur certaines machines, le sqrt(float)
 // est BEAUCOUP plus rapide que cette routine (dix
-// fois!!!). Et c'est probablement à cause de la mul-
+// fois!!!). Et c'est probablement Ã  cause de la mul-
 // tiplication. Donc, n'utiliser que sur une machine
-// moins bien montée qu'un SGI ou Pentium II, Pro,
+// moins bien montÃ©e qu'un SGI ou Pentium II, Pro,
 // etc.
 uint_t FloorSqrt(uint_t x) {
 	uint_t y = 0;
@@ -268,13 +266,11 @@ uint_t FloorSqrt(uint_t x) {
 // plancher(Sqrt(i)) mais le round, ce qui en
 // ceraines occasion peut etre un probleme,
 // alors il faudrait alors utiliser FloorSqrt().
-// Cette routine est attribuée à Jamie McCarthy
+// Cette routine est attribuÃ©e a Jamie McCarthy
 // (quoique ce n'est pas certain) d'un groupe Mac
 uint_t Sqrt(uint_t i) {
-	uint_t r, m;
-
-	r = 0;
-	m = 0x40000000;
+	uint_t r = 0;
+	uint_t m = 0x40000000;
 
 	do {
 		uint_t nr = r + m;
@@ -293,16 +289,15 @@ uint_t Sqrt(uint_t i) {
 }
 
 // Je trouve la version de stdlib un peu
-// ennuyante du fait que l'on doit déclarer
-// un struct. Deplus, pour être certain que
-// le code est bien écrit, je le refais moi-même.
+// ennuyante du fait que l'on doit dÃ©clarer
+// un struct. Deplus, pour etre certain que
+// le code est bien Ã©crit, je le refais moi-meme.
 void DivMod(int a, int b, int &q, int &r) {
 #if _M_IX86 > 200
 	// Microsoft C v5.0 ne paire pas un div et un mod qui
 	// se suivent (pour quelle raison? GNU C le fait, et
 	// aussi le compilo d'intel... faque... )
-	__asm
-	{
+	__asm {
 		mov eax,a
 		cdq
 		mov ebx,b
@@ -322,8 +317,7 @@ void DivMod(int a, int b, int &q, int &r) {
 // Version usigned: l'extension est differente
 void UDivMod(uint_t a, uint_t b, uint_t &q, uint_t &r) {
 #if _M_IX86 > 200
-	__asm
-	{
+	__asm {
 		mov eax,a
 		xor edx,edx
 		mov ebx,b
@@ -343,12 +337,12 @@ void UDivMod(uint_t a, uint_t b, uint_t &q, uint_t &r) {
 // Ici, on a toutes les routines pour les fonctions
 // de factorisation, facteurs, premiers, etc.
 
-// Les nombres premiers sont encodés en différentiel dans
-// cette table à cause de :
+// Les nombres premiers sont encodÃ©s en differentiel dans
+// cette table a cause de :
 //
-// 1) Il y en a 6541, à un 32 bit chaque, c'est gros!
-// 2) L'algorithme de factorisation parcourre la table séquentiellement de toutes façons!
-// 3) L'algo change si peu! (en fait, c'est assez subtil comme différence)
+// 1) Il y en a 6541, Ã  un 32 bit chaque, c'est gros!
+// 2) L'algorithme de factorisation parcourre la table sÃ©quentiellement de toutes facons!
+// 3) L'algo change si peu! (en fait, c'est assez subtil comme diffÃ©rence)
 unsigned char dpremiers[6541] =
 #include "dprimes.inl"
 		;
@@ -359,19 +353,19 @@ unsigned char dpremiers[6541] =
 // Un nombre a AU PLUS Log2(N) facteurs, donc le ta-
 // bleau doit pouvoir contenir au moins 32 ints.
 // Le pire temps de l'algorithme est O(Zeta(Sqrt(N)))
-// Ce qui n'est pas trop mal, si on considère N (et
+// Ce qui n'est pas trop mal, si on considÃ¨re N (et
 // non pas log(N), le nombre de bits!)
 //
 // Zeta(x) =~= x / ln x
 void Factorise(uint_t i, uint_t facteurs[], int &factptr) {
-	uint_t p, f, q, r;
+	uint_t q, r;
 
 	factptr = 0;
 
 	if (i < 2) {
 		return;
 	}
-	f = 2, p = 0;
+	uint_t f = 2, p = 0;
 
 	do {
 		//  q = i / f;
@@ -392,9 +386,9 @@ void Factorise(uint_t i, uint_t facteurs[], int &factptr) {
 	}
 }
 
-// Détermine si un nombre est premier avec
+// DÃ©termine si un nombre est premier avec
 // un test court pour environ 83-85 % des nombres
-// et la factorisation à bras pour les nombres
+// et la factorisation Ã  bras pour les nombres
 // vraiment premiers ou composites dans les
 // facteurs 2,3,...,19,23.
 int Premier(uint_t i) {
@@ -411,7 +405,7 @@ int Premier(uint_t i) {
 	}
 }
 
-// Détermine si deux nombres sont relativement premiers
+// DÃ©termine si deux nombres sont relativement premiers
 int RelativementPremier(uint_t a, uint_t b) {
 	return pgfc(a, b) == 1;
 }
@@ -510,7 +504,7 @@ void FacteursPropres(uint_t i, uint_t **facteursPropres, int &factptr) {
 	}
 }
 
-// Calcule un élément primitif / géné-
+// Calcule un Ã©lÃ©ment primitif / gÃ©nÃ©-
 // rateur sur un corps Zq. Comme l'al-
 // go est probabiliste, il ne retourne
 // pas toujours la meme valeur. Il
@@ -518,7 +512,7 @@ void FacteursPropres(uint_t i, uint_t **facteursPropres, int &factptr) {
 uint_t GenerateurStochastique(uint_t q) {
 	uint_t facteurs[32];
 	uint_t m[32]; // 10-12, en pire cas
-	int f, i, j, k, ok;
+	int f, i, j, ok;
 	uint_t l;
 
 	Factorise(q - 1, facteurs, f);
@@ -536,7 +530,7 @@ uint_t GenerateurStochastique(uint_t q) {
 	for (i = 0; i < f; i++) {
 		m[i] = (q - 1) / facteurs[i];
 	}
-	k = 0;
+	int k = 0;
 	do {
 		l = 0;
 		while ((l == 0) && (k < 1000)) {
@@ -557,7 +551,7 @@ uint_t GenerateurStochastique(uint_t q) {
 	}
 }
 
-// Celle-ci génère le plus petit générateur
+// Celle-ci genere le plus petit generateur
 // pour un corps mod q.
 uint_t PlusPetitGenerateur(uint_t q) {
 	uint_t facteurs[32];
@@ -598,8 +592,8 @@ uint_t PlusPetitGenerateur(uint_t q) {
 	}
 }
 
-// Ce programme prend un générateur, puis
-// pond une n-ième racine de l'unité
+// Ce programme prend un generateur, puis
+// pond une n-iÃ¨me racine de l'unite
 uint_t NiemeRacineUniteStochastique(uint_t q, uint_t m) {
 	if ((q - 1) % m) {
 		return 0xffffffff;
