@@ -1,32 +1,32 @@
-/*************************************************************************/
-/*  sw_scores.cpp                                                        */
-/*************************************************************************/
-/*                       This file is part of:                           */
-/*                           GODOT ENGINE                                */
-/*                      https://godotengine.org                          */
-/*************************************************************************/
-/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
-/*                                                                       */
-/* Permission is hereby granted, free of charge, to any person obtaining */
-/* a copy of this software and associated documentation files (the       */
-/* "Software"), to deal in the Software without restriction, including   */
-/* without limitation the rights to use, copy, modify, merge, publish,   */
-/* distribute, sublicense, and/or sell copies of the Software, and to    */
-/* permit persons to whom the Software is furnished to do so, subject to */
-/* the following conditions:                                             */
-/*                                                                       */
-/* The above copyright notice and this permission notice shall be        */
-/* included in all copies or substantial portions of the Software.       */
-/*                                                                       */
-/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
-/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
-/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
-/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
-/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
-/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
-/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
-/*************************************************************************/
+/**************************************************************************/
+/*  sw_scores.cpp                                                         */
+/**************************************************************************/
+/*                         This file is part of:                          */
+/*                             GODOT ENGINE                               */
+/*                        https://godotengine.org                         */
+/**************************************************************************/
+/* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
+/* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
+/*                                                                        */
+/* Permission is hereby granted, free of charge, to any person obtaining  */
+/* a copy of this software and associated documentation files (the        */
+/* "Software"), to deal in the Software without restriction, including    */
+/* without limitation the rights to use, copy, modify, merge, publish,    */
+/* distribute, sublicense, and/or sell copies of the Software, and to     */
+/* permit persons to whom the Software is furnished to do so, subject to  */
+/* the following conditions:                                              */
+/*                                                                        */
+/* The above copyright notice and this permission notice shall be         */
+/* included in all copies or substantial portions of the Software.        */
+/*                                                                        */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. */
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY   */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,   */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE      */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
+/**************************************************************************/
 
 #include "silent_wolf.h"
 
@@ -170,17 +170,18 @@ void SW_Scores::add_to_local_scores(const Dictionary &game_result, const String 
 			"score", game_result["score"]);
 	local_scores.push_back(local_score);
 	// if ld_name == "main":
-	// 	TODO: even here, since the main leader board can be customized, we can't just blindly write to the local_scores variable and pull up the scores later
-	// 	we need to know what type of leader board it is, or local caching is useless
-	// 	local_scores.append(local_score)
+	//   TODO: even here, since the main leader board can be customized, we can't just blindly write to the local_scores variable and pull up the scores later
+	//   we need to know what type of leader board it is, or local caching is useless
+	//   local_scores.append(local_score)
 	// else:
-	// 	if ld_name in custom_local_scores:
-	// 		TODO: problem: can't just append here - what if it's a highest/latest/accumulator/time-based leaderboard?
-	// 		maybe don't use local scores for these special cases? performance?
-	// 		custom_local_scores[ld_name].append(local_score)
-	// 	else:
-	// 		custom_local_scores[ld_name] = [local_score]
+	//   if ld_name in custom_local_scores:
+	//     TODO: problem: can't just append here - what if it's a highest/latest/accumulator/time-based leaderboard?
+	//     maybe don't use local scores for these special cases? performance?
+	//     custom_local_scores[ld_name].append(local_score)
+	//  else:
+	//     custom_local_scores[ld_name] = [local_score]
 	sw_debug("local scores: ", local_scores);
+	emit_signal("sw_local_scores_changed");
 }
 
 // metadata, if included should be a dictionary
@@ -213,8 +214,7 @@ SW_Scores *SW_Scores::persist_score(const String &player_name, const String &sco
 			payload["metadata"] = metadata;
 		}
 		sw_debug("payload: ", payload);
-		// also add to local scores
-		add_to_local_scores(payload);
+		add_to_local_scores(payload); // also add to local scores
 		String request_url = "https://api.silentwolf.com/post_new_score";
 		send_post_request(PostScore, request_url, payload);
 	}
@@ -465,7 +465,7 @@ void SW_Scores::_on_WipeLeaderboard_request_completed(int result, int response_c
 
 void SW_Scores::send_get_request(Ref<BasicHTTPRequest> http_req, const String &request_url) {
 	Vector<String> headers = helper::vector(
-			"x-api-key: " + SilentWolf::cfg_str("api_key"),
+			"x-api-key: " + SilentWolf::get_cfg_str("api_key"),
 			"x-sw-plugin-version: " + SilentWolf::version);
 	sw_debug("Method: GET");
 	sw_debug("request_url: ", request_url);
@@ -481,7 +481,7 @@ void SW_Scores::send_get_request(Ref<BasicHTTPRequest> http_req, const String &r
 void SW_Scores::send_post_request(Ref<BasicHTTPRequest> http_req, const String &request_url, const Dictionary &payload) {
 	Vector<String> headers = helper::vector(
 			application_json,
-			"x-api-key: " + SilentWolf::cfg_str("api_key"),
+			"x-api-key: " + SilentWolf::get_cfg_str("api_key"),
 			"x-sw-plugin-version: " + SilentWolf::version);
 	if (request_url.has("post_new_score")) {
 		sw_info("We're doing a post score");
@@ -551,8 +551,9 @@ void SW_Scores::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("sw_position_received"));
 	ADD_SIGNAL(MethodInfo("sw_scores_around_received", PropertyInfo(Variant::ARRAY, "scores_above"), PropertyInfo(Variant::ARRAY, "scores_below"), PropertyInfo(Variant::INT, "position")));
 	ADD_SIGNAL(MethodInfo("sw_score_posted"));
-	ADD_SIGNAL(MethodInfo("sw_leaderboard_wiped"));
 	ADD_SIGNAL(MethodInfo("sw_score_deleted"));
+	ADD_SIGNAL(MethodInfo("sw_local_scores_changed"));
+	ADD_SIGNAL(MethodInfo("sw_leaderboard_wiped"));
 }
 
 SW_Scores::SW_Scores() {

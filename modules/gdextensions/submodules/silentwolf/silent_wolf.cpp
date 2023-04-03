@@ -1,46 +1,61 @@
-/*************************************************************************/
-/*  silent_wolf.cpp                                                      */
-/*************************************************************************/
-/*                       This file is part of:                           */
-/*                           GODOT ENGINE                                */
-/*                      https://godotengine.org                          */
-/*************************************************************************/
-/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
-/*                                                                       */
-/* Permission is hereby granted, free of charge, to any person obtaining */
-/* a copy of this software and associated documentation files (the       */
-/* "Software"), to deal in the Software without restriction, including   */
-/* without limitation the rights to use, copy, modify, merge, publish,   */
-/* distribute, sublicense, and/or sell copies of the Software, and to    */
-/* permit persons to whom the Software is furnished to do so, subject to */
-/* the following conditions:                                             */
-/*                                                                       */
-/* The above copyright notice and this permission notice shall be        */
-/* included in all copies or substantial portions of the Software.       */
-/*                                                                       */
-/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
-/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
-/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
-/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
-/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
-/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
-/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
-/*************************************************************************/
+/**************************************************************************/
+/*  silent_wolf.cpp                                                       */
+/**************************************************************************/
+/*                         This file is part of:                          */
+/*                             GODOT ENGINE                               */
+/*                        https://godotengine.org                         */
+/**************************************************************************/
+/* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
+/* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
+/*                                                                        */
+/* Permission is hereby granted, free of charge, to any person obtaining  */
+/* a copy of this software and associated documentation files (the        */
+/* "Software"), to deal in the Software without restriction, including    */
+/* without limitation the rights to use, copy, modify, merge, publish,    */
+/* distribute, sublicense, and/or sell copies of the Software, and to     */
+/* permit persons to whom the Software is furnished to do so, subject to  */
+/* the following conditions:                                              */
+/*                                                                        */
+/* The above copyright notice and this permission notice shall be         */
+/* included in all copies or substantial portions of the Software.        */
+/*                                                                        */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. */
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY   */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,   */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE      */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
+/**************************************************************************/
 
 #include "silent_wolf.h"
 
+#include "common/device_id.h"
 #include "core/io/json.h"
 #include "core/variant.h"
 #include "editor/editor_node.h"
 
 const String SilentWolf::version = "0.6.20";
 const String SilentWolf::godot_version;
+const String SilentWolf::local_name;
+
+enum SWKeyIndex {
+	api_key,
+	game_id,
+	game_version,
+	key_index_count,
+};
+static const char *SWKeyNames[] = {
+	"api_key",
+	"game_id",
+	"game_version",
+};
+static_assert(sizeof(SWKeyNames) / sizeof(const char *) == key_index_count, "Check enum values and enum names");
 
 const Dictionary SilentWolf::config = helper::dict(
 		"api_key", "ySX34qsKaT7RH1j6795tQ8lPqKlRmQlx55yxkwGy",
 		"game_id", "sdktest",
-		"game_version", "0.6.19",
+		"game_version", "2.0.0",
 		"use_ssl", true,
 #ifdef DEBUG_ENABLED
 		"log_level", 3
@@ -54,7 +69,7 @@ const Dictionary SilentWolf::auth_config = helper::dict(
 		"saved_session_expiration_days", 30);
 
 static SilentWolf *instance = nullptr;
-SilentWolf *SilentWolf::get_instance() { return instance; }
+SilentWolf *SilentWolf::get_singleton() { return instance; }
 
 void SWSendQueue::queue_request(Ref<BasicHTTPRequest> http_node, const String &request_url, const Vector<String> &headers, bool use_ssl, HTTPClient::Method method, const Dictionary &payload) {
 	send_queue.push_back({ http_node, request_url, headers, use_ssl, method, payload });
@@ -156,7 +171,7 @@ void SilentWolf::configure(const Dictionary &config) {
 }
 
 void SilentWolf::configure_api_key(const String &api_key) {
-	config_set(config, "apiKey", api_key);
+	config_set(config, "api_key", api_key);
 }
 
 void SilentWolf::configure_game_id(const String &game_id) {
@@ -167,12 +182,12 @@ void SilentWolf::configure_game_version(const String &game_version) {
 	config_set(config, "game_version", game_version);
 }
 
-String SilentWolf::cfg_str(const String &key) {
-	return config[key];
+void SilentWolf::_set_cfg(const int index, const Variant &value) {
+	config_set(config, SWKeyNames[index], value);
 }
 
-int SilentWolf::cfg_int(const String &key) {
-	return config[key];
+Variant SilentWolf::_get_cfg(const int index) {
+	return config[SWKeyNames[index]];
 }
 
 // Log levels:
@@ -195,8 +210,8 @@ void SilentWolf::configure_session_expiration_days(int expiration) {
 
 void SilentWolf::send_get_request(Ref<BasicHTTPRequest> http_node, const String &request_url) {
 	Vector<String> headers = helper::vector(
-			"x-api-key: " + cfg_str("api_key"),
-			"x-sw-game-id: " + cfg_str("game_id"),
+			"x-api-key: " + get_cfg_str("api_key"),
+			"x-sw-game-id: " + get_cfg_str("game_id"),
 			"x-sw-plugin-version: " + version,
 			"x-sw-godot-version: " + godot_version);
 	sw_debug("Method: GET");
@@ -208,8 +223,8 @@ void SilentWolf::send_get_request(Ref<BasicHTTPRequest> http_node, const String 
 void SilentWolf::send_post_request(Ref<BasicHTTPRequest> http_node, const String &request_url, const Dictionary &payload) {
 	Vector<String> headers = helper::vector(
 			String("Content-Type: application/json"),
-			"x-api-key: " + (String)config["api_key"],
-			"x-sw-game-id: " + (String)config["game_id"],
+			"x-api-key: " + get_cfg_str("api_key"),
+			"x-sw-game-id: " + get_cfg_str("game_id"),
 			"x-sw-plugin-version: " + version,
 			"x-sw-godot-version: " + godot_version);
 	// TODO: this os specific to post_new_score - should be made generic
@@ -237,7 +252,11 @@ void SilentWolf::send_post_request(Ref<BasicHTTPRequest> http_node, const String
 
 void SilentWolf::clear_player_data() {
 	ERR_FAIL_COND(Players.is_null());
-	SilentWolf::get_instance()->Players->clear_player_data();
+	SilentWolf::get_singleton()->Players->clear_player_data();
+}
+
+String SilentWolf::get_local_name() const {
+	return local_name;
 }
 
 bool SilentWolf::check_auth_ready() {
@@ -268,8 +287,7 @@ void SilentWolf::set_use_threads(bool use) {
 	ERR_FAIL_COND(check_sw_requesting());
 	if (use_threads != use) {
 		use_threads = use;
-		// no need to do anything - no connections
-		emit_signal("sw_status_change", SW_STATUS_THREADING);
+		emit_signal("sw_status_change", SW_STATUS_THREADING); // no need to do anything - no connections
 	}
 }
 
@@ -306,10 +324,20 @@ void SilentWolf::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_get_players"), &SilentWolf::_get_players);
 	ClassDB::bind_method(D_METHOD("_get_multiplayer"), &SilentWolf::_get_multiplayer);
 
+	ClassDB::bind_method(D_METHOD("set_cfg", "key", "value"), &SilentWolf::set_cfg);
+	ClassDB::bind_method(D_METHOD("get_cfg", "key"), &SilentWolf::get_cfg);
+	ClassDB::bind_method(D_METHOD("_set_cfg", "key_index", "value"), &SilentWolf::_set_cfg);
+	ClassDB::bind_method(D_METHOD("_get_cfg", "key_index"), &SilentWolf::_get_cfg);
+
+	ClassDB::bind_method(D_METHOD("get_local_name"), &SilentWolf::get_local_name);
 	ClassDB::bind_method(D_METHOD("clear_player_data"), &SilentWolf::clear_player_data);
 	ClassDB::bind_method(D_METHOD("_on_data_requested"), &SilentWolf::_on_data_requested);
 
+	ADD_PROPERTY(PropertyInfo(Variant::STRING, "local_name"), "", "get_local_name");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "use_thread"), "set_use_threads", "is_using_threads");
+	ADD_PROPERTYI(PropertyInfo(Variant::STRING, "api_key"), "_set_cfg", "_get_cfg", api_key);
+	ADD_PROPERTYI(PropertyInfo(Variant::STRING, "game_id"), "_set_cfg", "_get_cfg", game_id);
+	ADD_PROPERTYI(PropertyInfo(Variant::STRING, "game_version"), "_set_cfg", "_get_cfg", game_version);
 
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "Auth"), "", "_get_auth");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "Scores"), "", "_get_scores");
@@ -337,6 +365,10 @@ SilentWolf::SilentWolf() {
 		const_cast<String *>(&godot_version)->operator=(vconcat(Engine::get_singleton()->get_version_info()));
 	}
 
+	if (local_name.empty()) {
+		const_cast<String *>(&local_name)->operator=(get_local_ident());
+	}
+
 	_init();
 }
 
@@ -354,7 +386,7 @@ void SilentWolfInstance::set_server_active(bool p_active) {
 	}
 }
 
-bool SilentWolfInstance::get_server_active() const {
+bool SilentWolfInstance::is_server_active() const {
 	return server_active;
 }
 
@@ -443,7 +475,7 @@ void SilentWolfInstance::_on_sw_status_changed(int p_status) {
 
 void SilentWolfInstance::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_server_active"), &SilentWolfInstance::set_server_active);
-	ClassDB::bind_method(D_METHOD("get_server_active"), &SilentWolfInstance::get_server_active);
+	ClassDB::bind_method(D_METHOD("is_server_active"), &SilentWolfInstance::is_server_active);
 	ClassDB::bind_method(D_METHOD("set_silentwolf_game_id"), &SilentWolfInstance::set_silentwolf_game_id);
 	ClassDB::bind_method(D_METHOD("get_silentwolf_game_id"), &SilentWolfInstance::get_silentwolf_game_id);
 	ClassDB::bind_method(D_METHOD("set_silentwolf_api_key"), &SilentWolfInstance::set_silentwolf_api_key);
@@ -455,12 +487,12 @@ void SilentWolfInstance::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("_on_sw_status_changed", "status"), &SilentWolfInstance::_on_sw_status_changed);
 
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "active"), "set_server_active", "get_server_active");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "active"), "set_server_active", "is_server_active");
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "game_id"), "set_silentwolf_game_id", "get_silentwolf_game_id");
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "api_key"), "set_silentwolf_api_key", "get_silentwolf_api_key");
 }
 
 SilentWolfInstance::SilentWolfInstance() {
 	server_active = false;
-	instance = SilentWolf::get_instance();
+	instance = SilentWolf::get_singleton();
 }
