@@ -374,11 +374,11 @@ static void CPU_calcCPUIDFeatures(void) {
 					a = (int)_xgetbv(0);
 #elif (defined(_MSC_VER) && defined(_M_IX86)) || defined(__WATCOMC__)
 					__asm
-					{
+							{
                         xor ecx, ecx
                         _asm _emit 0x0f _asm _emit 0x01 _asm _emit 0xd0
                         mov a, eax
-					}
+							}
 #endif
 					CPU_OSSavesYMM = ((a & 6) == 6) ? SDL_TRUE : SDL_FALSE;
 					CPU_OSSavesZMM = (CPU_OSSavesYMM && ((a & 0xe0) == 0xe0)) ? SDL_TRUE : SDL_FALSE;

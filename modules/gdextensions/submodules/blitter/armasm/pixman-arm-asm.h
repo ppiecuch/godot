@@ -67,4 +67,4 @@
 fname:
 .endm
 
-						 /* clang-format on */
+						/* clang-format on */

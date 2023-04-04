@@ -298,7 +298,7 @@ void DivMod(int a, int b, int &q, int &r) {
 		cdq
 		mov ebx,b
 		div ebx
-						// write back
+									  // write back
 		mov ebx,q // puisque q est pointeur
 		mov [ebx],eax
 		mov ebx,r // puisque r est pointeur
@@ -318,7 +318,7 @@ void UDivMod(uint_t a, uint_t b, uint_t &q, uint_t &r) {
 		xor edx,edx
 		mov ebx,b
 		div ebx
-						// write back
+											  // write back
 		mov ebx,q // puisque q est pointeur
 		mov [ebx],eax
 		mov ebx,r // puisque r est pointeur

@@ -39,8 +39,10 @@
 /// GL function pointers helper file
 
 #ifndef GL_FUNC_PTR
-#define GL_FUNC_PTR(f) \
-	{ #f, reinterpret_cast < GLPROC>(f) }
+#define GL_FUNC_PTR(f)                    \
+	{                                     \
+#f, reinterpret_cast < GLPROC>(f) \
+	}
 #endif
 
 #include "GLES2/gl2.h"

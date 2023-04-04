@@ -1065,4 +1065,4 @@ generate_composite_function_common \
 .macro nop_macro x:vararg
 .endm
 
-													   /* clang-format on */
+													/* clang-format on */
