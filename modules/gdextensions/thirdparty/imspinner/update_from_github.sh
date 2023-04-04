@@ -2,12 +2,15 @@
 
 set -e
 
-curl -o imspinner_last.h https://raw.githubusercontent.com/dalerank/imspinner/master/imspinner.h
+echo "Downloading .."
+curl -s -o imspinner_last.h https://raw.githubusercontent.com/dalerank/imspinner/master/imspinner.h
 cp imspinner_last.h imspinner_patch.h
-out=$(patch --verbose imspinner_patch.h patch.txt)
+out=$(patch --verbose imspinner_patch.h patch.txt || true)
 if echo "$out" | grep "FAILED" -q; then
 	echo "$out"
-	echo "Patching failed - check and resolve rejected chunks."
+	echo "**"
+	echo "** Patching failed - check and resolve rejected chunks."
+	echo "**"
 	exit
 else
 	echo "$out"
