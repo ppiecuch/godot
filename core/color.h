@@ -233,6 +233,16 @@ struct _NO_DISCARD_CLASS_ Color {
 		b = p_b;
 		a = p_a;
 	}
+
+	/**
+	 * RGB / RGBA construct from array parameter. Alpha is obligatory.
+	 */
+	_FORCE_INLINE_ Color(const float *p_c) {
+		r = p_c[0];
+		g = p_c[1];
+		b = p_c[2];
+		a = p_c[3];
+	}
 };
 
 bool Color::operator<(const Color &p_color) const {
