@@ -2,11 +2,9 @@
 #include "core/os/file_access.h"
 #include "core/variant.h"
 
-#include <stdio.h>
 #include <ctype.h>
+#include <stdio.h>
 #include <sys/utsname.h>
-
-#include "linux_hw.h"
 
 /* Specifies all possible image filtering
  * methods when using the IPU hardware scaler
@@ -14,10 +12,10 @@
  *   bicubic sharpness factor, since anything
  *   other than the default value looks terrible... */
 enum dingux_ipu_filter_type {
-   DINGUX_IPU_FILTER_BICUBIC = 0,
-   DINGUX_IPU_FILTER_BILINEAR,
-   DINGUX_IPU_FILTER_NEAREST,
-   DINGUX_IPU_FILTER_LAST
+	DINGUX_IPU_FILTER_BICUBIC = 0,
+	DINGUX_IPU_FILTER_BILINEAR,
+	DINGUX_IPU_FILTER_NEAREST,
+	DINGUX_IPU_FILTER_LAST
 };
 
 /* Enables/disables downscaling when using the IPU hardware scaler */
@@ -49,11 +47,10 @@ static bool dingux_ipu_set_filter_type(enum dingux_ipu_filter_type filter_type);
 
 #ifdef OPENDINGUX_BETA
 /* Specifies all video refresh rates supported by OpenDingux Beta */
-enum dingux_refresh_rate
-{
-   DINGUX_REFRESH_RATE_60HZ = 0,
-   DINGUX_REFRESH_RATE_50HZ,
-   DINGUX_REFRESH_RATE_LAST
+enum dingux_refresh_rate {
+	DINGUX_REFRESH_RATE_60HZ = 0,
+	DINGUX_REFRESH_RATE_50HZ,
+	DINGUX_REFRESH_RATE_LAST
 };
 
 /* Sets the refresh rate of the integral LCD panel.
@@ -81,26 +78,26 @@ static int dingux_get_battery_level(void);
 /* Fetches the path of the base directory */
 static void dingux_get_base_path(char *path, size_t len);
 
-#define DINGUX_ALLOW_DOWNSCALING_FILE     "/sys/devices/platform/jz-lcd.0/allow_downscaling"
-#define DINGUX_KEEP_ASPECT_RATIO_FILE     "/sys/devices/platform/jz-lcd.0/keep_aspect_ratio"
-#define DINGUX_INTEGER_SCALING_FILE       "/sys/devices/platform/jz-lcd.0/integer_scaling"
-#define DINGUX_SHARPNESS_UPSCALING_FILE   "/sys/devices/platform/jz-lcd.0/sharpness_upscaling"
+#define DINGUX_ALLOW_DOWNSCALING_FILE "/sys/devices/platform/jz-lcd.0/allow_downscaling"
+#define DINGUX_KEEP_ASPECT_RATIO_FILE "/sys/devices/platform/jz-lcd.0/keep_aspect_ratio"
+#define DINGUX_INTEGER_SCALING_FILE "/sys/devices/platform/jz-lcd.0/integer_scaling"
+#define DINGUX_SHARPNESS_UPSCALING_FILE "/sys/devices/platform/jz-lcd.0/sharpness_upscaling"
 #define DINGUX_SHARPNESS_DOWNSCALING_FILE "/sys/devices/platform/jz-lcd.0/sharpness_downscaling"
-#define DINGUX_BATTERY_CAPACITY_FILE      "/sys/class/power_supply/battery/capacity"
+#define DINGUX_BATTERY_CAPACITY_FILE "/sys/class/power_supply/battery/capacity"
 
 /* Base path defines */
-#define DINGUX_HOME_ENVAR                 "HOME"
-#define DINGUX_MEDIA_PATH                 "/media"
-#define DINGUX_DEFAULT_SD_PATH            "/media/mmcblk0p1"
-#define DINGUX_DATA_PATH                  "/media/data"
+#define DINGUX_HOME_ENVAR "HOME"
+#define DINGUX_MEDIA_PATH "/media"
+#define DINGUX_DEFAULT_SD_PATH "/media/mmcblk0p1"
+#define DINGUX_DATA_PATH "/media/data"
 
 /* OpenDingux Beta defines */
-#define DINGUX_BATTERY_VOLTAGE_MIN        "/sys/class/power_supply/jz-battery/voltage_min_design"
-#define DINGUX_BATTERY_VOLTAGE_MAX        "/sys/class/power_supply/jz-battery/voltage_max_design"
-#define DINGUX_BATTERY_VOLTAGE_NOW        "/sys/class/power_supply/jz-battery/voltage_now"
-#define DINGUX_SCALING_MODE_ENVAR         "VIDEO_KMSDRM_SCALING_MODE"
-#define DINGUX_SCALING_SHARPNESS_ENVAR    "VIDEO_KMSDRM_SCALING_SHARPNESS"
-#define DINGUX_VIDEO_REFRESHRATE_ENVAR    "VIDEO_REFRESHRATE"
+#define DINGUX_BATTERY_VOLTAGE_MIN "/sys/class/power_supply/jz-battery/voltage_min_design"
+#define DINGUX_BATTERY_VOLTAGE_MAX "/sys/class/power_supply/jz-battery/voltage_max_design"
+#define DINGUX_BATTERY_VOLTAGE_NOW "/sys/class/power_supply/jz-battery/voltage_now"
+#define DINGUX_SCALING_MODE_ENVAR "VIDEO_KMSDRM_SCALING_MODE"
+#define DINGUX_SCALING_SHARPNESS_ENVAR "VIDEO_KMSDRM_SCALING_SHARPNESS"
+#define DINGUX_VIDEO_REFRESHRATE_ENVAR "VIDEO_REFRESHRATE"
 
 static bool _write_file(const char *path, const char *data, size_t data_size) {
 	FileAccessRef fa(FileAccess::open(path, FileAccess::READ_WRITE));
@@ -151,7 +148,7 @@ static bool dingux_ipu_set_downscaling_enable(bool enable) {
 #ifdef OPENDINGUX_BETA
 	return true;
 #else
-	const char *path       = DINGUX_ALLOW_DOWNSCALING_FILE;
+	const char *path = DINGUX_ALLOW_DOWNSCALING_FILE;
 	const char *enable_str = enable ? "1" : "0";
 	/* Check whether file exists */
 	if (!FileAccess::exists(path)) {
@@ -171,19 +168,19 @@ static bool dingux_ipu_set_scaling_mode(bool keep_aspect, bool integer_scale) {
 	} else if (keep_aspect) {
 		scaling_str = "1";
 	}
-   return (setenv(DINGUX_SCALING_MODE_ENVAR, scaling_str, 1) == 0);
+	return (setenv(DINGUX_SCALING_MODE_ENVAR, scaling_str, 1) == 0);
 #else
-	const char *keep_aspect_path   = DINGUX_KEEP_ASPECT_RATIO_FILE;
-	const char *keep_aspect_str    = keep_aspect ? "1" : "0";
-	bool keep_aspect_success       = false;
+	const char *keep_aspect_path = DINGUX_KEEP_ASPECT_RATIO_FILE;
+	const char *keep_aspect_str = keep_aspect ? "1" : "0";
+	bool keep_aspect_success = false;
 
 	const char *integer_scale_path = DINGUX_INTEGER_SCALING_FILE;
-	const char *integer_scale_str  = integer_scale ? "1" : "0";
-	bool integer_scale_success     = false;
+	const char *integer_scale_str = integer_scale ? "1" : "0";
+	bool integer_scale_success = false;
 
 	/* Set keep_aspect */
 	if (FileAccess::exists(keep_aspect_path)) {
-      keep_aspect_success = _write_file(keep_aspect_path, keep_aspect_str, 1);
+		keep_aspect_success = _write_file(keep_aspect_path, keep_aspect_str, 1);
 	}
 	/* Set integer_scale */
 	if (FileAccess::exists(integer_scale_path)) {
@@ -194,7 +191,7 @@ static bool dingux_ipu_set_scaling_mode(bool keep_aspect, bool integer_scale) {
 }
 
 static bool dingux_ipu_set_aspect_ratio_enable(bool enable) {
-	const char *path       = DINGUX_KEEP_ASPECT_RATIO_FILE;
+	const char *path = DINGUX_KEEP_ASPECT_RATIO_FILE;
 	const char *enable_str = enable ? "1" : "0";
 	/* Check whether file exists */
 	if (!FileAccess::exists(path)) {
@@ -205,7 +202,7 @@ static bool dingux_ipu_set_aspect_ratio_enable(bool enable) {
 }
 
 static bool dingux_ipu_set_integer_scaling_enable(bool enable) {
-	const char *path       = DINGUX_INTEGER_SCALING_FILE;
+	const char *path = DINGUX_INTEGER_SCALING_FILE;
 	const char *enable_str = enable ? "1" : "0";
 	/* Check whether file exists */
 	if (!FileAccess::exists(path)) {
@@ -224,12 +221,12 @@ static bool dingux_ipu_set_filter_type(enum dingux_ipu_filter_type filter_type) 
 	 * Default bicubic sharpness factor is
 	 * (-0.125 * 8) = -1.0 */
 #ifndef OPENDINGUX_BETA
-	const char *upscaling_path   = DINGUX_SHARPNESS_UPSCALING_FILE;
+	const char *upscaling_path = DINGUX_SHARPNESS_UPSCALING_FILE;
 	const char *downscaling_path = DINGUX_SHARPNESS_DOWNSCALING_FILE;
-	bool upscaling_success       = false;
-	bool downscaling_success     = false;
+	bool upscaling_success = false;
+	bool downscaling_success = false;
 #endif
-   const char *sharpness_str    = "8";
+	const char *sharpness_str = "8";
 
 	/* Check filter type */
 	switch (filter_type) {
@@ -274,7 +271,7 @@ static int _read_battery_sys_file(const char *path) {
 		goto error;
 	}
 	/* Convert to integer */
-	sys_file_value = atoi((const char*)file_buf.ptr());
+	sys_file_value = atoi((const char *)file_buf.ptr());
 	return sys_file_value;
 error:
 	return -1;
@@ -302,7 +299,7 @@ static int dingux_get_battery_level() {
 	if (voltage_now < 0) {
 		return -1;
 	}
-	if ((voltage_max <= voltage_min) || (voltage_now <  voltage_min)) {
+	if ((voltage_max <= voltage_min) || (voltage_now < voltage_min)) {
 		return -1;
 	}
 	return (int)(((voltage_now - voltage_min) * 100) / (voltage_max - voltage_min));
@@ -310,7 +307,6 @@ static int dingux_get_battery_level() {
 	return _read_battery_sys_file(DINGUX_BATTERY_CAPACITY_FILE);
 #endif
 }
-
 
 // Godot access
 

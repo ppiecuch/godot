@@ -4,8 +4,8 @@
 #ifndef LINUX_HW_H
 #define LINUX_HW_H
 
-#include <stddef.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 // Raspberry Pi VideoCore
 
@@ -15,7 +15,6 @@
 #define MAJOR_NUM 100
 #define VCIO_IOC_MAGIC MAJOR_NUM
 #define IOCTL_MBOX_PROPERTY _IOWR(VCIO_IOC_MAGIC, 0, char *)
-
 
 // IPU hardware scaler
 
