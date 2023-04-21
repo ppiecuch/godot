@@ -435,18 +435,3 @@ diff -Nur _orig/src/World.c _patched/src/World.c
  
  		case LAYER_TILE:
  		{
-diff -Nur _orig/src/crt.c _patched/src/crt.c
---- _orig/src/crt.c	2023-04-11 13:31:09.000000000 +0200
-+++ _patched/src/crt.c	2023-01-07 20:40:44.000000000 +0100
-@@ -1,3 +1,5 @@
-+#ifndef TLN_EXCLUDE_WINDOW
-+
- #include <string.h>
- #include <stdlib.h>
- #include <stdio.h>
-@@ -222,3 +224,5 @@
- 	SDL_FreeSurface(surface);
- 	return texture;
- }
-+
-+#endif // TLN_EXCLUDE_WINDOW

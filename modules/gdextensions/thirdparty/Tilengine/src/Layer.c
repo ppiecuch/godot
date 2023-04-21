@@ -694,6 +694,7 @@ bool TLN_GetLayerTile (int nlayer, int x, int y, TLN_TileInfo* info)
 	info->yoffset = srcy;
 	if (tile->index != 0)
 	{
+		tileset = tilemap->tilesets[tile->tileset];
 		info->index = tile->index - 1;
 		info->flags = tile->flags;
 		info->color = GetTilesetPixel (tileset, tile->index, srcx, srcy);
@@ -1002,70 +1003,138 @@ bool TLN_ResetLayerMode (int nlayer)
 }
 
 /*!
- * \brief
- * Enables clipping rectangle on selected layer
+ * \deprecated Use \ref TLN_SetLayerWindow instead
+ * \brief Enables clipping rectangle on selected layer
  * 
- * \param nlayer
- * Layer index [0, num_layers - 1]
- * 
- * \param x1
- * left coordinate
- *
- * \param y1
- * top coordinate
- *
- * \param x2
- * right coordinate
- *
- * \param y2
- * bottom coordinate
- *
- * \see
- * TLN_DisableLayerClip()
+ * \param nlayer Layer index [0, num_layers - 1]
+ * \param x1 left coordinate
+ * \param y1 top coordinate
+ * \param x2 right coordinate
+ * \param y2 bottom coordinate
  */
 bool TLN_SetLayerClip (int nlayer, int x1, int y1, int x2, int y2)
 {
-	Layer *layer;
+	return TLN_SetLayerWindow(nlayer, x1, y1, x2, y2, false);
+}
+
+/*!
+ * \deprecated Use \ref TLN_DisableLayerWindow instead
+ * \brief Disables clipping rectangle on selected layer
+ * 
+ * \param nlayer Layer index [0, num_layers - 1]
+ */
+bool TLN_DisableLayerClip (int nlayer)
+{
 	if (nlayer >= engine->numlayers)
 	{
 		TLN_SetLastError (TLN_ERR_IDX_LAYER);
 		return false;
 	}
 	
-	layer = &engine->layers[nlayer];
-	layer->clip.x1 = x1 >= 0 && x1 <= engine->framebuffer.width? x1 : 0;
-	layer->clip.x2 = x2 >= 0 && x2 <= engine->framebuffer.width? x2 : engine->framebuffer.width;
-	layer->clip.y1 = y1 >= 0 && y1 <= engine->framebuffer.height? y1 : 0;
-	layer->clip.y2 = y2 >= 0 && y2 <= engine->framebuffer.height? y2 : engine->framebuffer.height;
+	LayerWindow* window = &engine->layers[nlayer].window;
+	window->x1 = 0;
+	window->x2 = engine->framebuffer.width;
+	window->y1 = 0;
+	window->y2 = engine->framebuffer.height;
 	TLN_SetLastError (TLN_ERR_OK);
 	return true;
 }
 
 /*!
- * \brief
- * Disables clipping rectangle on selected layer
- * 
- * \param nlayer
- * Layer index [0, num_layers - 1]
- * 
- * \see
- * TLN_SetLayerClip()
+ * \brief Enables clipping window on selected layer
+ *
+ * \param nlayer Layer index [0, num_layers - 1]
+ * \param x1 left coordinate
+ * \param y1 top coordinate
+ * \param x2 right coordinate
+ * \param y2 bottom coordinate
+ * \param invert false=clip outer region, true=clip inner region
+ *
+ * \see TLN_SetLayerWindowColor(), TLN_DisableLayerWindow()
  */
-bool TLN_DisableLayerClip (int nlayer)
+bool TLN_SetLayerWindow(int nlayer, int x1, int y1, int x2, int y2, bool invert)
 {
-	Layer *layer;
 	if (nlayer >= engine->numlayers)
 	{
-		TLN_SetLastError (TLN_ERR_IDX_LAYER);
+		TLN_SetLastError(TLN_ERR_IDX_LAYER);
 		return false;
 	}
-	
-	layer = &engine->layers[nlayer];
-	layer->clip.x1 = 0;
-	layer->clip.x2 = engine->framebuffer.width;
-	layer->clip.y1 = 0;
-	layer->clip.y2 = engine->framebuffer.height;
-	TLN_SetLastError (TLN_ERR_OK);
+
+	LayerWindow* window = &engine->layers[nlayer].window;
+	window->x1 = x1 >= 0 && x1 <= engine->framebuffer.width ? x1 : 0;
+	window->x2 = x2 >= 0 && x2 <= engine->framebuffer.width ? x2 : engine->framebuffer.width;
+	window->y1 = y1 >= 0 && y1 <= engine->framebuffer.height ? y1 : 0;
+	window->y2 = y2 >= 0 && y2 <= engine->framebuffer.height ? y2 : engine->framebuffer.height;
+	window->invert = invert;
+	TLN_SetLastError(TLN_ERR_OK);
+	return true;
+}
+
+/*!
+ * \brief Enables solid color processing on clipped region in window layer
+ * \param nlayer Layer index [0, num_layers - 1]
+ * \param r Red component (0-255)
+ * \param g Green component (0-255)
+ * \param b Blue component (0-255)
+ * \param blend one of possible TLN_Blend modes
+ * When color is enabled on window, the area outside the clipped region gets filled with this color.
+ * If one of blending modes is selected, color math is performed with underlying layer
+ * \see TLN_SetLayerWindow(), TLN_DisableLayerWindowColor()
+*/
+bool TLN_SetLayerWindowColor(int nlayer, uint8_t r, uint8_t g, uint8_t b, TLN_Blend blend)
+{
+	if (nlayer >= engine->numlayers)
+	{
+		TLN_SetLastError(TLN_ERR_IDX_LAYER);
+		return false;
+	}
+
+	LayerWindow* window = &engine->layers[nlayer].window;
+	window->color = PackRGB32(r, g, b);
+	window->blend = SelectBlendTable(blend);
+	TLN_SetLastError(TLN_ERR_OK);
+	return true;
+}
+
+/*!
+ * \brief Disables layer window clipping
+ * \param nlayer Layer index [0, num_layers - 1]
+ * \see TLN_SetLayerWindow()
+*/
+bool TLN_DisableLayerWindow(int nlayer)
+{
+	if (nlayer >= engine->numlayers)
+	{
+		TLN_SetLastError(TLN_ERR_IDX_LAYER);
+		return false;
+	}
+
+	LayerWindow* window = &engine->layers[nlayer].window;
+	window->x1 = 0;
+	window->x2 = engine->framebuffer.width;
+	window->y1 = 0;
+	window->y2 = engine->framebuffer.height;
+	window->invert = false;
+	TLN_SetLastError(TLN_ERR_OK);
+	return true;
+}
+
+/*!
+ * \brief Disables color processing for window on selected layer
+ * \param nlayer Layer index [0, num_layers - 1]
+ * \see TLN_SetLayerWindowColor()
+*/
+bool TLN_DisableLayerWindowColor(int nlayer)
+{
+	if (nlayer >= engine->numlayers)
+	{
+		TLN_SetLastError(TLN_ERR_IDX_LAYER);
+		return false;
+	}
+
+	LayerWindow* window = &engine->layers[nlayer].window;
+	window->color = 0;
+	window->blend = NULL;
 	return true;
 }
 
@@ -1130,15 +1199,6 @@ bool TLN_DisableLayerMosaic (int nlayer)
 Layer* GetLayer(int index)
 {
 	return &engine->layers[index];
-}
-
-/* updates layer from world position, accounting offset and parallax */
-void UpdateLayer(int nlayer)
-{
-	Layer* layer = GetLayer(nlayer);
-	const int lx = (int)(engine->xworld*layer->world.xfactor) - layer->world.offsetx;
-	const int ly = (int)(engine->yworld*layer->world.yfactor) - layer->world.offsety;
-	TLN_SetLayerPosition(nlayer, lx, ly);
 }
 
 static void SetBlitter (Layer* layer)

@@ -24,8 +24,8 @@ extern "C" {
 	/* returns suitable blitter for specified conditions */
 	ScanBlitPtr SelectBlitter(bool key, bool scaling, bool blend);
 
-	/* paints constant color */
-	void BlitColor(void* dstptr, uint32_t color, int width);
+	/* solid color with opcional blend */
+	void BlitColor(void* dstptr, uint32_t color, int width, uint8_t* blend);
 
 	/* perfoms direct 32 -> 32 bpp blit with opcional blend */
 	void Blit32_32(uint32_t *src, uint32_t* dst, int width, uint8_t* blend);

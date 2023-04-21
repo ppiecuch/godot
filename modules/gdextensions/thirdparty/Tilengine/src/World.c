@@ -34,6 +34,11 @@ bool TLN_LoadWorld(const char* filename, int first_layer)
 		const int layerindex = tmxinfo.num_layers - c - 1 + first;
 		switch (tmxlayer->type)
 		{
+		case LAYER_NONE:
+		{
+		}
+		break;
+
 		case LAYER_TILE:
 		{
 			TLN_Tilemap tilemap = TLN_LoadTilemap(filename, tmxlayer->name);
@@ -52,11 +57,6 @@ bool TLN_LoadWorld(const char* filename, int first_layer)
 		{
 			TLN_Bitmap bitmap = TLN_LoadBitmap(tmxlayer->image);
 			TLN_SetLayerBitmap(layerindex, bitmap);
-		}
-		break;
-
-		case LAYER_NONE:
-		{
 		}
 		break;
 		}
@@ -113,6 +113,9 @@ void TLN_ReleaseWorld(void)
 		layer->ok = false;
 		switch (tmxlayer->type)
 		{
+		case LAYER_NONE:
+			break;
+		
 		case LAYER_TILE:
 			TLN_DeleteTilemap(layer->tilemap);
 			break;
@@ -123,9 +126,6 @@ void TLN_ReleaseWorld(void)
 
 		case LAYER_BITMAP:
 			TLN_DeleteBitmap(layer->bitmap);
-			break;
-
-		case LAYER_NONE:
 			break;
 		}
 	}

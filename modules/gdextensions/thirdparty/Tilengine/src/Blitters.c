@@ -181,13 +181,32 @@ ScanBlitPtr SelectBlitter (bool key, bool scaling, bool blend)
 }
 
 /* paints constant color */
-void BlitColor(void* dstptr, uint32_t color, int width)
+void BlitColor(void* dstptr, uint32_t color, int width, uint8_t* blend)
 {
-	uint32_t* dstpixel = (uint32_t*)dstptr;
-	while (width)
+	/* blend */
+	if (blend != NULL)
 	{
-		*dstpixel++ = color;
-		width--;
+		uint8_t* src = (uint8_t*)&color;
+		uint8_t* dst = (uint8_t*)dstptr;
+		while (width)
+		{
+			dst[0] = blendfunc(blend, src[0], dst[0]);
+			dst[1] = blendfunc(blend, src[1], dst[1]);
+			dst[2] = blendfunc(blend, src[2], dst[2]);
+			dst += sizeof(uint32_t);
+			width--;
+		}
+	}
+
+	/* regular*/
+	else
+	{
+		uint32_t* dstpixel = (uint32_t*)dstptr;
+		while (width)
+		{
+			*dstpixel++ = color;
+			width--;
+		}
 	}
 }
 
@@ -228,7 +247,7 @@ void Blit32_32(uint32_t *src, uint32_t* dst, int width, uint8_t* blend)
 	}
 }
 
-/* performs mosaic effect with opcional blend */
+/* performs mosaic effect with optional blend */
 void BlitMosaic(uint32_t *src, uint32_t* dst, int width, int size, uint8_t* blend)
 {
 	Color* srcpixel = (Color*)src;
@@ -244,12 +263,19 @@ void BlitMosaic(uint32_t *src, uint32_t* dst, int width, int size, uint8_t* blen
 
 			if (srcpixel->a != 0)
 			{
-				dstpixel->r = blendfunc(blend, srcpixel->r, dstpixel->r);
-				dstpixel->g = blendfunc(blend, srcpixel->g, dstpixel->g);
-				dstpixel->b = blendfunc(blend, srcpixel->b, dstpixel->b);
+				int block = size;
+				while (block != 0)
+				{
+					dstpixel->r = blendfunc(blend, srcpixel->r, dstpixel->r);
+					dstpixel->g = blendfunc(blend, srcpixel->g, dstpixel->g);
+					dstpixel->b = blendfunc(blend, srcpixel->b, dstpixel->b);
+					dstpixel += 1;
+					block -= 1;
+				}
 			}
-			srcpixel += 1;
-			dstpixel += 1;
+			else
+				dstpixel += size;
+			srcpixel += size;
 			width -= size;
 		}
 	}
@@ -263,10 +289,18 @@ void BlitMosaic(uint32_t *src, uint32_t* dst, int width, int size, uint8_t* blen
 				size = width;
 
 			if (srcpixel->a != 0)
-				dstpixel->value = srcpixel->value;
-
-			srcpixel += 1;
-			dstpixel += 1;
+			{
+				int block = size;
+				while (block != 0)
+				{
+					dstpixel->value = srcpixel->value;
+					dstpixel += 1;
+					block -= 1;
+				}
+			}
+			else
+				dstpixel += size;
+			srcpixel += size;
 			width -= size;
 		}
 	}

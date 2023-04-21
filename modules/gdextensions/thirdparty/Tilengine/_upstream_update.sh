@@ -10,6 +10,7 @@ rm -rf Tilengine.pdf include src
 mv _tileeng/Tilengine.pdf .
 mv _tileeng/include .
 mv _tileeng/src .
+rm src/crt.h src/crt.c
 
 rm -rf _tileeng
 
