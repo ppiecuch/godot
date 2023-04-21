@@ -15,8 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef _rockchip_rga_c_h_
-#define _rockchip_rga_c_h_
+#ifndef _LIBS_RGA_C_H_
+#define _LIBS_RGA_C_H_
 
 #include <stdint.h>
 #include <sys/types.h>
@@ -78,4 +78,4 @@ int c_RkRgaGetBufferFd(bo_t *bo_info, int *fd);
 }
 #endif
 
-#endif /* #ifndef _rockchip_rga_c_h_ */
+#endif /* _LIBS_RGA_C_H_ */

@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef _rockchip_rga_h_
-#define _rockchip_rga_h_
+#ifndef _LIBS_ROCKCHIP_RGA_H_
+#define _LIBS_ROCKCHIP_RGA_H_
 
 #include <stdint.h>
 #include <sys/types.h>
@@ -106,5 +106,5 @@ namespace android {
 }; // namespace android
 #endif
 
-#endif
+#endif // _LIBS_ROCKCHIP_RGA_H_
 

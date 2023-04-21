@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef _rk_graphic_buffer_h_
-#define _rk_graphic_buffer_h_
+#ifndef _rk_grallocops_h_
+#define _rk_grallocops_h_
 
 #ifdef ANDROID
 
@@ -56,4 +56,4 @@ int         RkRgaGetHandleMapAddress(buffer_handle_t handle,
                                      void **buf);
 #endif  //Android
 
-#endif  //_rk_graphic_buffer_h_
+#endif  //_rk_grallocops_h_
