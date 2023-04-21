@@ -39,6 +39,16 @@ class Basis;
 struct _NO_DISCARD_CLASS_ Vector3 {
 	static const int AXIS_COUNT = 3;
 
+	static const Vector3 ZERO;
+	static const Vector3 ONE;
+	static const Vector3 INF;
+	static const Vector3 LEFT;
+	static const Vector3 RIGHT;
+	static const Vector3 UP;
+	static const Vector3 DOWN;
+	static const Vector3 FORWARD;
+	static const Vector3 BACK;
+
 	enum Axis {
 		AXIS_X,
 		AXIS_Y,

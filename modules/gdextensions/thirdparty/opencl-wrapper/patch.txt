@@ -1,0 +1,110 @@
+diff -Nur _clwrapper/src/kernel.hpp src/kernel.hpp
+--- _clwrapper/src/kernel.hpp	2023-04-11 13:13:22.000000000 +0200
++++ src/kernel.hpp	2022-11-01 20:34:42.000000000 +0100
+@@ -287,4 +287,4 @@
+ #define as_ulong3(x)
+ #define as_ulong4(x)
+ #define as_ulong8(x)
+-#define as_ulong16(x)
+\ No newline at end of file
++#define as_ulong16(x)
+diff -Nur _clwrapper/src/opencl.hpp src/opencl.hpp
+--- _clwrapper/src/opencl.hpp	2023-04-11 13:13:22.000000000 +0200
++++ src/opencl.hpp	2023-04-11 13:12:04.000000000 +0200
+@@ -129,11 +129,12 @@
+ 	if(id<(uint)devices.size()) {
+ 		return devices[id];
+ 	} else {
+-		print_error("Your selected Device ID ("+to_string(id)+") is wrong.");
++		cl::print_error("Your selected Device ID ("+to_string(id)+") is wrong.");
+ 		return devices[0]; // is never executed, just to avoid compiler warnings
+ 	}
+ }
+ 
++namespace CL {
+ class Device {
+ private:
+ 	cl::Program cl_program;
+@@ -163,15 +164,15 @@
+ 		this->cl_program = cl::Program(info.cl_context, cl_source);
+ #ifndef LOG
+ 		int error = cl_program.build({ info.cl_device }, "-cl-fast-relaxed-math -w"); // compile OpenCL C code, disable warnings
+-		if(error) print_warning(cl_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(info.cl_device)); // print build log
++		if(error) cl::print_warning(cl_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(info.cl_device)); // print build log
+ #else // LOG, generate logfile for OpenCL code compilation
+ 		int error = cl_program.build({ info.cl_device }, "-cl-fast-relaxed-math"); // compile OpenCL C code
+ 		const string log = cl_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(info.cl_device);
+ 		write_file("bin/kernel.log", log); // save build log
+ 		if((uint)log.length()>2u) print_warning(log); // print build log
+ #endif // LOG
+-		if(error) print_error("OpenCL C code compilation failed with error code "+to_string(error)+". Make sure there are no errors in kernel.cpp.");
+-		else print_info("OpenCL C code successfully compiled.");
++		if(error) cl::print_error("OpenCL C code compilation failed with error code "+to_string(error)+". Make sure there are no errors in kernel.cpp.");
++		else cl::print_info("OpenCL C code successfully compiled.");
+ #ifdef PTX // generate assembly (ptx) file for OpenCL code
+ 		write_file("bin/kernel.ptx", cl_program.getInfo<CL_PROGRAM_BINARIES>()[0]); // save binary (ptx file)
+ #endif // PTX
+@@ -208,11 +209,11 @@
+ 		this->cl_queue = device.get_cl_queue();
+ 		if(allocate_device) {
+ 			device.info.memory_used += (uint)(capacity()/1048576ull); // track device memory usage
+-			if(device.info.memory_used>device.info.memory) print_error("Device \""+device.info.name+"\" does not have enough memory. Allocating another "+to_string((uint)(capacity()/1048576ull))+" MB would use a total of "+to_string(device.info.memory_used)+" MB / "+to_string(device.info.memory)+" MB.");
++			if(device.info.memory_used>device.info.memory) cl::print_error("Device \""+device.info.name+"\" does not have enough memory. Allocating another "+to_string((uint)(capacity()/1048576ull))+" MB would use a total of "+to_string(device.info.memory_used)+" MB / "+to_string(device.info.memory)+" MB.");
+ 			int error = 0;
+ 			device_buffer = cl::Buffer(device.get_cl_context(), CL_MEM_READ_WRITE, capacity(), nullptr, &error);
+-			if(error==-61) print_error("Memory size is too large at "+to_string((uint)(capacity()/1048576ull))+" MB. Device \""+device.info.name+"\" accepts a maximum buffer size of "+to_string(device.info.max_global_buffer)+" MB.");
+-			else if(error) print_error("Device buffer allocation failed with error code "+to_string(error)+".");
++			if(error==-61) cl::print_error("Memory size is too large at "+to_string((uint)(capacity()/1048576ull))+" MB. Device \""+device.info.name+"\" accepts a maximum buffer size of "+to_string(device.info.max_global_buffer)+" MB.");
++			else if(error) cl::print_error("Device buffer allocation failed with error code "+to_string(error)+".");
+ 			device_buffer_exists = true;
+ 		}
+ 	}
+@@ -499,4 +500,5 @@
+ 		cl_queue.finish();
+ 		return *this;
+ 	}
+-};
+\ No newline at end of file
++};
++} // namespace cl
+diff -Nur _clwrapper/src/utilities.hpp src/utilities.hpp
+--- _clwrapper/src/utilities.hpp	2023-04-11 13:13:22.000000000 +0200
++++ src/utilities.hpp	2022-11-01 20:34:36.000000000 +0100
+@@ -5,8 +5,10 @@
+ #define CONSOLE_WIDTH 79
+ #define UTILITIES_NO_CPP17
+ 
++#ifndef __GNUC__
+ #pragma warning(disable:26451)
+ #pragma warning(disable:6386)
++#endif
+ #include <cmath>
+ #include <vector>
+ #ifdef UTILITIES_REGEX
+@@ -576,6 +578,7 @@
+ inline bool is_number(const string& s) {
+ 	return equals_regex(s, "\\d+(u|l|ul|ll|ull)?")||equals_regex(s, "0x(\\d|[a-fA-F])+(u|l|ul|ll|ull)?")||equals_regex(s, "0b[01]+(u|l|ul|ll|ull)?")||equals_regex(s, "(((\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+[fF]?)?)|(\\d+\\.\\d*|\\.\\d+)[fF]?)");
+ }
++namespace cl {
+ inline void print_message(const string& message, const string& keyword="") { // print formatted message
+ 	const uint k=length(keyword), w=CONSOLE_WIDTH-4u-k;
+ 	uint l = 0u;
+@@ -617,9 +620,9 @@
+ inline void print_info(const string& s) { // print formatted info message
+ 	print_message(s, "Info: ");
+ }
+-
++} // namespace cl
+ inline void parse_sanity_check_error(const string& s, const string& regex, const string& type) {
+-	if(!equals_regex(s, regex)) print_error("\""+s+"\" cannot be parsed to "+type+".");
++	if(!equals_regex(s, regex)) cl::print_error("\""+s+"\" cannot be parsed to "+type+".");
+ }
+ inline int to_int(const string& s) {
+ 	const string t = trim(s);
+@@ -719,4 +722,4 @@
+ 	file.write(content.c_str(), content.length());
+ 	file.close();
+ }
+-#endif // UTILITIES_FILE
+\ No newline at end of file
++#endif // UTILITIES_FILE

@@ -108,7 +108,7 @@ public:
 
 	void add_preview_generator(const Ref<EditorResourcePreviewGenerator> &p_generator);
 	void remove_preview_generator(const Ref<EditorResourcePreviewGenerator> &p_generator);
-	void check_for_invalidation(const String &p_path);
+	void check_for_invalidation(const String &p_path, bool p_force = false);
 
 	void start();
 	void stop();

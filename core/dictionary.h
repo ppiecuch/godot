@@ -57,7 +57,7 @@ public:
 		IteratorT(const TDict *_map, const TValue *_index) :
 				_map(const_cast<TDict *>(_map)), _index(const_cast<TValue *>(_index)) {}
 		_FORCE_INLINE_ bool operator!=(const IteratorT &other) const { return (_map != other._map) || (_index != other._index); }
-		_FORCE_INLINE_ KeyValue<TValue, TValue> operator*() { return KeyValue<TValue, TValue>(*_index, _map->get(_index, TValue())); }
+		_FORCE_INLINE_ KeyValue<TValue, TValue> operator*() { return KeyValue<TValue, TValue>(*_index, _map->get(*_index, TValue())); }
 		_FORCE_INLINE_ const KeyValue<TValue, TValue> &operator*() const { return KeyValue<TValue, TValue>(*_index, _map->get(_index, TValue())); }
 		IteratorT operator++() {
 			_index = _map->next(_index);

@@ -53,14 +53,19 @@ class MeshEditor : public ViewportContainer {
 	Camera *camera;
 
 	Ref<Mesh> mesh;
+	int submesh;
 
 	TextureButton *light_1_switch;
 	TextureButton *light_2_switch;
+	TextureButton *next_mesh;
+	TextureButton *prev_mesh;
+	Label *submesh_info;
 
 	void _button_pressed(Node *p_button);
 	bool first_enter;
 
 	void _update_rotation();
+	void _update_from_aabb(const Ref<Mesh> &p_mesh);
 
 protected:
 	void _notification(int p_what);

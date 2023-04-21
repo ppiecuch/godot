@@ -477,6 +477,9 @@ void ImportDock::_reimport() {
 		if (params->importer.is_valid()) {
 			String importer_name = params->importer->get_importer_name();
 
+			// keep prev. importer info
+			config->set_value("remap", "last_importer", config->get_value("remap", "importer"));
+
 			if (params->checking && config->get_value("remap", "importer") == params->importer->get_importer_name()) {
 				//update only what is edited (checkboxes) if the importer is the same
 				for (List<PropertyInfo>::Element *E = params->properties.front(); E; E = E->next()) {

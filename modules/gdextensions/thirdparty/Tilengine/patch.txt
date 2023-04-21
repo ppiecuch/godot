@@ -1,0 +1,452 @@
+diff -Nur _orig/include/Tilengine.h _patched/include/Tilengine.h
+--- _orig/include/Tilengine.h	2023-04-11 13:31:09.000000000 +0200
++++ _patched/include/Tilengine.h	2023-04-11 13:26:12.000000000 +0200
+@@ -18,12 +18,16 @@
+ 
+ /* Tilengine shared */
+ #if defined _MSC_VER
+-	#ifdef LIB_EXPORTS
+-		#define TLNAPI __declspec(dllexport)
++	#ifdef TLN_STATIC_BUILD
++		#define TLNAPI
+ 	#else
+-		#define TLNAPI __declspec(dllimport)
++		#ifdef LIB_EXPORTS
++			#define TLNAPI __declspec(dllexport)
++		#else
++			#define TLNAPI __declspec(dllimport)
++		#endif
+ 	#endif
+-	
++
+ 	#pragma warning(disable : 4200)
+ 
+ 	#if _MSC_VER >= 1600	/* Visual C++ 2010? */
+@@ -46,10 +50,14 @@
+ 	#endif
+ 
+ #else
+-	#ifdef LIB_EXPORTS
+-		#define TLNAPI __attribute__((visibility("default")))
+-	#else
++	#ifdef TLN_STATIC_BUILD
+ 		#define TLNAPI
++	#else
++		#ifdef LIB_EXPORTS
++			#define TLNAPI __attribute__((visibility("default")))
++		#else
++			#define TLNAPI
++		#endif
+ 	#endif
+ 	#include <stdint.h>
+ 	#include <stdbool.h>
+diff -Nur _orig/src/Debug.h _patched/src/Debug.h
+--- _orig/src/Debug.h	2023-04-11 13:31:09.000000000 +0200
++++ _patched/src/Debug.h	2021-03-21 14:16:43.000000000 +0100
+@@ -6,7 +6,7 @@
+ #include <stdio.h>
+ #define debugmsg printf
+ #else
+-static void debugmsg(const char* format, ...) {}
++static inline void debugmsg(const char* format, ...) {}
+ #endif
+ 
+ #endif
+diff -Nur _orig/src/Draw.c _patched/src/Draw.c
+--- _orig/src/Draw.c	2023-04-11 13:31:09.000000000 +0200
++++ _patched/src/Draw.c	2023-04-11 13:44:25.000000000 +0200
+@@ -390,8 +390,8 @@
+ 				priority = true;
+ 			}
+ 
+-			int line = GetTilesetLine(tileset, tile_index, scan.srcy);
+-			bool color_key = *(tileset->color_key + line);
++			// int line = GetTilesetLine(tileset, tile_index, scan.srcy);
++			// bool color_key = *(tileset->color_key + line);
+ 			layer->blitters[1](srcpixel, palette, dst + x, width, scan.dx, 0, layer->blend);
+ 		}
+ 
+@@ -564,7 +564,7 @@
+ 		y1 += dy;
+ 		dstpixel += 1;
+ 	}
+-	return false;
++	return priority;
+ }
+ 
+ /* draw scanline of tiled background with per-pixel mapping */
+@@ -618,7 +618,7 @@
+ 		dstpixel += 1;
+ 		pixel_map += 1;
+ 	}
+-	return false;
++	return priority;
+ }
+ 
+ /* draw sprite scanline */
+@@ -683,6 +683,7 @@
+ 	if (sprite->flags & FLAG_FLIPY)
+ 		srcy = int2fix(sprite->info->h) - srcy;
+ 
++	(void)dstx;
+ 	/* blit scanline */
+ 	uint8_t* srcpixel = sprite->pixels + (fix2int(srcy)*sprite->pitch);
+ 	uint32_t* dstpixel = dstscan + sprite->dstrect.x1;
+@@ -876,7 +877,7 @@
+ 	const int hstart = layer->hstart + layer->width;
+ 	const int vstart = layer->vstart + layer->height;
+ 	const TLN_Bitmap bitmap = layer->bitmap;
+-	const TLN_Palette palette = layer->palette != NULL ? layer->palette : bitmap->palette;
++	// const TLN_Palette palette = layer->palette != NULL ? layer->palette : bitmap->palette;
+ 	const TLN_PixelMap* pixel_map = &layer->pixel_map[nscan*engine->framebuffer.width + x];
+ 	while (x < tx2)
+ 	{
+diff -Nur _orig/src/Layer.c _patched/src/Layer.c
+--- _orig/src/Layer.c	2023-04-11 13:31:09.000000000 +0200
++++ _patched/src/Layer.c	2023-04-11 13:26:12.000000000 +0200
+@@ -757,7 +757,7 @@
+ 	layer = &engine->layers[nlayer];
+ 
+ 	/* check proper config */
+-	if (layer->type == LAYER_TILE && layer->tilemap != NULL || layer->type == LAYER_BITMAP && layer->bitmap != NULL || layer->type == LAYER_OBJECT && layer->objects != NULL)
++	if ((layer->type == LAYER_TILE && layer->tilemap != NULL) || (layer->type == LAYER_BITMAP && layer->bitmap != NULL) || (layer->type == LAYER_OBJECT && layer->objects != NULL))
+ 	{
+ 		layer->ok = true;
+ 		TLN_SetLastError(TLN_ERR_IDX_LAYER);
+diff -Nur _orig/src/LoadFile.c _patched/src/LoadFile.c
+--- _orig/src/LoadFile.c	2023-04-11 13:31:09.000000000 +0200
++++ _patched/src/LoadFile.c	2023-01-07 20:31:14.000000000 +0100
+@@ -26,7 +26,7 @@
+ 	ResAsset asset;
+ 	FILE* pf;
+ }
+-static assets[MAX_ASSETS] = { 0 };
++static assets[MAX_ASSETS] = { { 0 } };
+ 
+ /*!
+  * \brief
+@@ -249,12 +249,12 @@
+ 
+ 		/* ext */
+ 		block2 += 1;
+-		strncpy(fileinfo->ext, block2, 16);
++		strncpy(fileinfo->ext, block2, TE_EXT_MAX);
+ 	}
+ 
+ 	/* name only */
+ 	else
+-		strncpy(fileinfo->name, block1, 200);
++		strncpy(fileinfo->name, block1, TE_NAME_MAX);
+ }
+ 
+ /* builds complete file path */
+diff -Nur _orig/src/LoadFile.h _patched/src/LoadFile.h
+--- _orig/src/LoadFile.h	2023-04-11 13:31:09.000000000 +0200
++++ _patched/src/LoadFile.h	2021-04-02 16:46:48.000000000 +0200
+@@ -26,11 +26,14 @@
+ #endif
+ #endif
+ 
++#define TE_PATH_MAX 200
++#define TE_NAME_MAX 200
++#define TE_EXT_MAX 16
+ typedef struct
+ {
+-	char path[200];
+-	char name[200];
+-	char ext[16];
++	char path[TE_PATH_MAX+1];
++	char name[TE_NAME_MAX+1];
++	char ext[TE_EXT_MAX+1];
+ }
+ FileInfo;
+ 
+diff -Nur _orig/src/LoadSpriteset.c _patched/src/LoadSpriteset.c
+--- _orig/src/LoadSpriteset.c	2023-04-11 13:31:09.000000000 +0200
++++ _patched/src/LoadSpriteset.c	2021-09-02 13:32:46.000000000 +0200
+@@ -120,9 +120,9 @@
+  */
+ TLN_Spriteset TLN_LoadSpriteset (const char* name)
+ {
+-	FileInfo fileinfo = { 0 };
++	FileInfo fileinfo = { { 0 } };
+ 	char filename[200] = { 0 };
+-	char line[64] = { 0 };
++	// char line[64] = { 0 };
+ 	int entries = 0;
+ 	TLN_Bitmap bitmap = NULL;
+ 	TLN_Spriteset spriteset = NULL;
+diff -Nur _orig/src/LoadTMX.c _patched/src/LoadTMX.c
+--- _orig/src/LoadTMX.c	2023-04-11 13:31:09.000000000 +0200
++++ _patched/src/LoadTMX.c	2023-01-07 20:31:14.000000000 +0100
+@@ -1,5 +1,6 @@
+ #include <string.h>
+ #include <stdlib.h>
++#include <inttypes.h>
+ #include "Tilengine.h"
+ #include "LoadTMX.h"
+ #include "LoadFile.h"
+@@ -55,7 +56,7 @@
+ 				tmxinfo.tileheight = intvalue;
+ 			else if (!strcasecmp(szAttribute, "backgroundcolor"))
+ 			{
+-				sscanf(&szValue[1], "%x", &tmxinfo.bgcolor);
++				sscanf(&szValue[1], "%" PRIx32, &tmxinfo.bgcolor);
+ 				tmxinfo.bgcolor += 0xFF000000;
+ 			}
+ 		}
+@@ -93,7 +94,7 @@
+ 			else if (!strcasecmp(szAttribute, "opacity"))
+ 				layer->opacity = floatvalue;
+ 			else if (!strcasecmp(szAttribute, "tintcolor"))
+-				sscanf(&szValue[1], "%x", &layer->tintcolor);
++				sscanf(&szValue[1], "%" PRIx32, &layer->tintcolor);
+ 		}
+ 
+ 		else if (!strcasecmp(szName, "image"))
+@@ -143,7 +144,6 @@
+ 	SimpleXmlParser parser;
+ 	ssize_t size;
+ 	uint8_t *data;
+-	TLN_Tilemap tilemap = NULL;
+ 	bool retval = false;
+ 
+ 	/* already cached: return as is */
+@@ -176,7 +176,7 @@
+ 		}
+ 		else
+ 		{
+-			strncpy(tmxinfo.filename, filename, sizeof(tmxinfo.filename));
++			strncpy(tmxinfo.filename, filename, TE_FILENAME_MAX);
+ 			TLN_SetLastError(TLN_ERR_OK);
+ 			retval = true;
+ 		}
+@@ -232,4 +232,4 @@
+ 			return &info->layers[c];
+ 	}
+ 	return NULL;
+-}
+\ No newline at end of file
++}
+diff -Nur _orig/src/LoadTMX.h _patched/src/LoadTMX.h
+--- _orig/src/LoadTMX.h	2023-04-11 13:31:09.000000000 +0200
++++ _patched/src/LoadTMX.h	2023-01-07 20:31:14.000000000 +0100
+@@ -36,9 +36,10 @@
+ TMXTileset;
+ 
+ /* general TMX info */
++#define TE_FILENAME_MAX 100
+ typedef struct
+ {
+-	char filename[100];		/* cached tmx file */
++	char filename[100+1];	/* cached tmx file */
+ 	int width;				/* map width (tiles) */
+ 	int height;				/* map height (tiles) */
+ 	int tilewidth;			/* */
+diff -Nur _orig/src/LoadTilemap.c _patched/src/LoadTilemap.c
+--- _orig/src/LoadTilemap.c	2023-04-11 13:31:09.000000000 +0200
++++ _patched/src/LoadTilemap.c	2023-01-07 20:35:26.000000000 +0100
+@@ -11,6 +11,7 @@
+ #include <string.h>
+ #include <stdio.h>
+ #include <stdlib.h>
++#include <inttypes.h>
+ #include <assert.h>
+ #include "Tilengine.h"
+ #include "simplexml.h"
+@@ -57,7 +58,6 @@
+ static void* handler (SimpleXmlParser parser, SimpleXmlEvent evt, 
+ 	const char* szName, const char* szAttribute, const char* szValue)
+ {
+-	int intvalue;
+ 	switch (evt)
+ 	{
+ 	case ADD_SUBTAG:
+@@ -65,7 +65,7 @@
+ 
+ 	case ADD_ATTRIBUTE:
+ 
+-		intvalue = atoi(szValue);
++		// int intvalue = atoi(szValue);
+ 		if (!strcasecmp(szName, "layer") && (!strcasecmp(szAttribute, "name")))
+ 		{
+ 			if (!strcasecmp(szValue, loader.layer->name))
+@@ -174,7 +174,7 @@
+ 	ssize_t size;
+ 	uint8_t *data;
+ 	TLN_Tilemap tilemap = NULL;
+-	TMXInfo tmxinfo = { 0 };
++	TMXInfo tmxinfo = { { 0 } };
+ 	
+ 	/* load map info */
+ 	if (!TMXLoad(filename, &tmxinfo))
+@@ -276,7 +276,7 @@
+ 	do
+ 	{
+ 		if (token[0] != 0x0D)
+-			sscanf (token, "%u", &data[c++]);
++			sscanf (token, "%" PRIu32, &data[c++]);
+ 		token = strtok (NULL, ",\n");
+ 	}
+ 	while (c < numtiles);
+diff -Nur _orig/src/LoadTileset.c _patched/src/LoadTileset.c
+--- _orig/src/LoadTileset.c	2023-04-11 13:31:09.000000000 +0200
++++ _patched/src/LoadTileset.c	2023-01-07 20:31:14.000000000 +0100
+@@ -303,8 +303,8 @@
+ 		int x, y, dx, dy;
+ 		int id;
+ 		int pitch;
+-		FileInfo fi = { 0 };
+-		char imagepath[200];
++		FileInfo fi = { { 0 } };
++		char imagepath[265];
+ 
+ 		/* composite bitmap filename with relative path of parent tsx */
+ 		SplitFilename(filename, &fi);
+diff -Nur _orig/src/ObjectList.c _patched/src/ObjectList.c
+--- _orig/src/ObjectList.c	2023-04-11 13:31:09.000000000 +0200
++++ _patched/src/ObjectList.c	2023-01-07 20:31:14.000000000 +0100
+@@ -90,7 +90,7 @@
+ 			else if (!strcasecmp(szAttribute, "visible"))
+ 				loader.object.visible = (bool)intvalue;
+ 			else if (!strcasecmp(szAttribute, "name"))
+-				strncpy(loader.object.name, szValue, sizeof(loader.object.name));
++				strncpy(loader.object.name, szValue, sizeof(loader.object.name)-1);
+ 		}
+ 
+ 		/* <property name="type" type="int" value="12"/> */
+@@ -146,11 +146,20 @@
+ 	return handler;
+ }
+ 
++#ifdef __GNUC__
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wunused-function"
++#endif
++
+ static bool intersetcs(rect_t* rect1, rect_t* rect2)
+ {
+ 	return !(rect1->x2 < rect2->x1 || rect1->x1 > rect2->x2 || rect1->y2 < rect2->y1 || rect1->y1 > rect2->y2);
+ }
+ 
++#ifdef __GNUC__
++#pragma GCC diagnostic pop
++#endif
++
+ /*!
+  * \brief Creates a TLN_ObjectList
+  * The list is created empty, it must be populated with TLN_AddSpriteToList()
+@@ -246,7 +255,7 @@
+ 	SimpleXmlParser parser;
+ 	ssize_t size;
+ 	uint8_t *data;
+-	TMXInfo tmxinfo = { 0 };
++	TMXInfo tmxinfo = { { 0 } };
+ 
+ 	/* load map info */
+ 	if (!TMXLoad(filename, &tmxinfo))
+diff -Nur _orig/src/ResourcePacker.c _patched/src/ResourcePacker.c
+--- _orig/src/ResourcePacker.c	2023-04-11 13:31:09.000000000 +0200
++++ _patched/src/ResourcePacker.c	2023-01-07 20:36:19.000000000 +0100
+@@ -12,6 +12,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <ctype.h>
++#include <inttypes.h>
+ #include "aes.h"
+ #include "crc32.h"
+ #include "md5.h"
+@@ -87,7 +88,6 @@
+ {
+ 	uint32_t id;
+ 	uint32_t c;
+-	ResEntry* entry = NULL;
+ 
+ 	/* validate params */
+ 	if (rp == NULL || filename == NULL)
+@@ -249,7 +249,7 @@
+ 	if (asset == NULL)
+ 		return NULL;
+ 	
+-	sprintf(asset->filename, "_tmp%d", entry->id);
++	sprintf(asset->filename, "_tmp%" PRIu32, entry->id);
+ 	asset->pf = fopen(asset->filename, "wb");
+ 	fwrite(content, entry->data_size, 1, asset->pf);
+ 	fclose(asset->pf);
+@@ -288,6 +288,8 @@
+ 	}
+ }
+ 
++#ifdef RESPACK_LIB
++
+ /* loads file to memory */
+ static void* load_file(const char* filename, uint32_t* data_size)
+ {
+@@ -317,8 +319,6 @@
+ 	return buffer;
+ }
+ 
+-#ifdef RESPACK_LIB
+-
+ /* builds a resource pack, returns number of assets */
+ int ResPack_Build(const char* filelist, const char* passphrase)
+ {
+diff -Nur _orig/src/Spriteset.c _patched/src/Spriteset.c
+--- _orig/src/Spriteset.c	2023-04-11 13:31:09.000000000 +0200
++++ _patched/src/Spriteset.c	2021-10-15 19:20:32.000000000 +0200
+@@ -253,7 +253,6 @@
+ int TLN_FindSpritesetSprite (TLN_Spriteset spriteset, const char* name)
+ {
+ 	uint32_t find;
+-	int entry = -1;
+ 	int c = 0;
+ 
+ 	if (!CheckBaseObject (spriteset, OT_SPRITESET))
+diff -Nur _orig/src/Test.c _patched/src/Test.c
+--- _orig/src/Test.c	2023-04-11 13:31:09.000000000 +0200
++++ _patched/src/Test.c	2021-10-15 19:15:58.000000000 +0200
+@@ -1,5 +1,6 @@
+ /* Compile test without windowing component, not for real execution */
+ #include "Tilengine.h"
++#include <inttypes.h>
+ 
+ #define WIDTH	400
+ #define HEIGHT	240
+@@ -18,7 +19,7 @@
+ 	TLN_SetRenderTarget(framebuffer, WIDTH * 4);
+ 	TLN_SetLoadPath("../assets/sonic");
+ 	TLN_SetLogLevel(TLN_LOG_VERBOSE);
+-	printf("Tilengine version %06X\n", TLN_GetVersion());
++	printf("Tilengine version %06" PRIX32 "\n", TLN_GetVersion());
+ 	
+ 	/* test layer */
+ 	for (c = 0; c < 2; c++)
+diff -Nur _orig/src/World.c _patched/src/World.c
+--- _orig/src/World.c	2023-04-11 13:31:09.000000000 +0200
++++ _patched/src/World.c	2023-04-11 13:42:13.000000000 +0200
+@@ -35,7 +35,9 @@
+ 		switch (tmxlayer->type)
+ 		{
+ 		case LAYER_NONE:
+-			break;
++		{
++		}
++		break;
+ 
+ 		case LAYER_TILE:
+ 		{
+diff -Nur _orig/src/crt.c _patched/src/crt.c
+--- _orig/src/crt.c	2023-04-11 13:31:09.000000000 +0200
++++ _patched/src/crt.c	2023-01-07 20:40:44.000000000 +0100
+@@ -1,3 +1,5 @@
++#ifndef TLN_EXCLUDE_WINDOW
++
+ #include <string.h>
+ #include <stdlib.h>
+ #include <stdio.h>
+@@ -222,3 +224,5 @@
+ 	SDL_FreeSurface(surface);
+ 	return texture;
+ }
++
++#endif // TLN_EXCLUDE_WINDOW

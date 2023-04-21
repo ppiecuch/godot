@@ -15,8 +15,8 @@ for m in \
 	gd_cpython gd_luascript \
 	gd_chipmunk gd_liquidfun \
 	gd_spine gd_dragonbones \
-	gd_vector_graphics gd_bullet_hell gd_texture_packer \
-        gd_raknet gd_enet \
+	gd_svg_mesh gd_bullet_hell gd_texture_packer \
+	gd_raknet gd_enet \
 	gd_goost; do
 	echo "+--"
     echo "| checking module: $m"

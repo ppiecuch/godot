@@ -2982,6 +2982,7 @@ void Image::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_compressed"), &Image::is_compressed);
 
 	ClassDB::bind_method(D_METHOD("fix_alpha_edges"), &Image::fix_alpha_edges);
+	ClassDB::bind_method(D_METHOD("fix_tex_bleed"), &Image::fix_tex_bleed);
 	ClassDB::bind_method(D_METHOD("premultiply_alpha"), &Image::premultiply_alpha);
 	ClassDB::bind_method(D_METHOD("srgb_to_linear"), &Image::srgb_to_linear);
 	ClassDB::bind_method(D_METHOD("normalmap_to_xy"), &Image::normalmap_to_xy);
@@ -3254,7 +3255,7 @@ void Image::fix_alpha_edges() {
 	}
 
 	if (format != FORMAT_RGBA8) {
-		return; //not needed
+		return; // not needed
 	}
 
 	PoolVector<uint8_t> dcopy = data;
@@ -3262,7 +3263,7 @@ void Image::fix_alpha_edges() {
 	const uint8_t *srcptr = rp.ptr();
 
 	PoolVector<uint8_t>::Write wp = data.write();
-	unsigned char *data_ptr = wp.ptr();
+	uint8_t *data_ptr = wp.ptr();
 
 	const int max_radius = 4;
 	const int alpha_threshold = 20;
@@ -3314,6 +3315,118 @@ void Image::fix_alpha_edges() {
 			}
 		}
 	}
+}
+
+void Image::fix_tex_bleed() {
+	ERR_FAIL_COND(!_can_modify(format));
+	ERR_FAIL_COND_MSG(write_lock.ptr(), "Cannot modify image when it is locked.");
+
+	if (data.size() == 0) {
+		return;
+	}
+
+	if (format != FORMAT_RGBA8) {
+		return; // not needed
+	}
+
+	struct point_t {
+		short dx, dy;
+	};
+
+	// Given an RGBA texture, finds all pixels where alpha==0 and fills in a suitable RGB color for it.
+	static auto _bleedcompare = [](point_t *p, int gstride, int offsetx, int offsety) {
+		point_t other = p[offsety * gstride + offsetx];
+		other.dx += offsetx;
+		other.dy += offsety;
+
+		const int odist = other.dx * other.dx + other.dy * other.dy;
+		const int pdist = p->dx * p->dx + p->dy * p->dy;
+		if (odist < pdist) {
+			*p = other;
+		}
+	};
+
+	const int BLEED_THRESHOLD = 20; // We search for pixels with alpha greater than this to bleed outwards from.
+	const int MAX_DIST = 0x7FFF;
+
+	const int pixstride = get_format_pixel_size(format);
+	const int rowstride = width * pixstride;
+	const int gstride = width + 2;
+	const int cellcount = gstride * (height + 2);
+	point_t *storage = (point_t *)memalloc(cellcount * sizeof(point_t));
+	ERR_FAIL_NULL(storage);
+	point_t *grid = storage + gstride + 1;
+
+	// Initialize to empty.
+	for (int n = 0; n < cellcount; n++) {
+		storage[n].dx = storage[n].dy = MAX_DIST;
+	}
+
+	uint8_t *pixels = data.write().ptr();
+	const int ac = 3;
+
+	// Fill in the solid pixels.
+	bool any = false;
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			const uint8_t *pix = pixels + y * rowstride + x * pixstride;
+			if (pix[ac] > BLEED_THRESHOLD) {
+				point_t *p = &grid[y * gstride + x];
+				p->dx = p->dy = 0;
+				any = true;
+			}
+		}
+	}
+	if (any) {
+		// Distance field sweep - Pass 0
+		for (int y = 0; y < height; y++) {
+			for (int x = 0; x < width; x++) {
+				point_t *p = &grid[y * gstride + x];
+				_bleedcompare(p, gstride, -1, 0);
+				_bleedcompare(p, gstride, 0, -1);
+				_bleedcompare(p, gstride, -1, -1);
+				_bleedcompare(p, gstride, 1, -1);
+			}
+			for (int x = width - 1; x >= 0; x--) {
+				point_t *p = &grid[y * gstride + x];
+				_bleedcompare(p, gstride, 1, 0);
+			}
+		}
+
+		// Distance field sweep - Pass 1
+		for (int y = height - 1; y >= 0; y--) {
+			for (int x = width - 1; x >= 0; x--) {
+				point_t *p = &grid[y * gstride + x];
+				_bleedcompare(p, gstride, 1, 0);
+				_bleedcompare(p, gstride, 0, 1);
+				_bleedcompare(p, gstride, -1, 1);
+				_bleedcompare(p, gstride, 1, 1);
+			}
+			for (int x = 0; x < width; x++) {
+				point_t *p = &grid[y * gstride + x];
+				_bleedcompare(p, gstride, -1, 0);
+			}
+		}
+
+		// Read back the nearest pixels.
+		for (int y = 0; y < height; y++) {
+			for (int x = 0; x < width; x++) {
+				point_t *p = &grid[y * gstride + x];
+				const int sx = x + p->dx;
+				const int sy = y + p->dy;
+				// Copy the RGB over.
+				const uint8_t *src = pixels + sy * rowstride + sx * pixstride;
+				uint8_t *dst = pixels + y * rowstride + x * pixstride;
+				if (dst[ac] == 0) {
+					for (int n = 0; n < pixstride; n++) {
+						dst[n] = src[n];
+					}
+					dst[ac] = 0;
+				}
+			}
+		}
+	}
+	memfree(storage);
 }
 
 String Image::get_format_name(Format p_format) {

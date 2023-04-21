@@ -163,6 +163,7 @@ class ArrayMesh : public Mesh {
 
 private:
 	struct Surface {
+		int32_t ref;
 		String name;
 		AABB aabb;
 		Ref<Material> material;
@@ -175,7 +176,17 @@ private:
 	BlendShapeMode blend_shape_mode;
 	Vector<StringName> blend_shapes;
 	AABB custom_aabb;
+	String description;
 
+	struct _submesh_t {
+		String name;
+		int from_surf, surf_cnt;
+	};
+	Vector<_submesh_t> submesh_info;
+	Map<String, uint32_t> submesh_map;
+	Vector<Ref<Mesh>> submesh_cache;
+
+	Ref<Mesh> _copy_surfaces(Ref<ArrayMesh> p_dest, int p_from, int p_idx);
 	void _recompute_aabb();
 
 protected:
@@ -188,6 +199,14 @@ protected:
 	static void _bind_methods();
 
 public:
+	int get_submesh_count() const;
+	void select_submesh_surfaces(int p_idx);
+	Ref<Mesh> get_submesh(int p_idx);
+	Ref<Mesh> get_submesh_with_name(const String &p_name);
+
+	void set_description(const String &p_description);
+	String get_description() const;
+
 	void add_surface_from_arrays(PrimitiveType p_primitive, const Array &p_arrays, const Array &p_blend_shapes = Array(), uint32_t p_flags = ARRAY_COMPRESS_DEFAULT);
 	void add_surface(uint32_t p_format, PrimitiveType p_primitive, const PoolVector<uint8_t> &p_array, int p_vertex_count, const PoolVector<uint8_t> &p_index_array, int p_index_count, const AABB &p_aabb, const Vector<PoolVector<uint8_t>> &p_blend_shapes = Vector<PoolVector<uint8_t>>(), const Vector<AABB> &p_bone_aabbs = Vector<AABB>());
 
@@ -210,7 +229,7 @@ public:
 	void clear_surfaces();
 
 	void surface_set_active(int p_idx, bool p_active);
-	bool surface_is_active(int p_idx);
+	bool surface_is_active(int p_idx) const;
 	void surface_set_custom_aabb(int p_idx, const AABB &p_aabb); //only recognized by driver
 
 	int surface_get_array_len(int p_idx) const G_OVERRIDE;

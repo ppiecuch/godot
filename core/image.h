@@ -320,6 +320,7 @@ public:
 	bool is_compressed() const;
 
 	void fix_alpha_edges();
+	void fix_tex_bleed();
 	void premultiply_alpha();
 	void srgb_to_linear();
 	void normalmap_to_xy();

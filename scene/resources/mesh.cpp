@@ -609,6 +609,8 @@ bool ArrayMesh::_set(const StringName &p_name, const Variant &p_value) {
 			surface_set_material(idx, p_value);
 		} else if (what == "name") {
 			surface_set_name(idx, p_value);
+		} else if (what == "active") {
+			surface_set_active(idx, p_value);
 		}
 		return true;
 	}
@@ -708,6 +710,18 @@ bool ArrayMesh::_get(const StringName &p_name, Variant &r_ret) const {
 	} else if (p_name == "blend_shape/mode") {
 		r_ret = get_blend_shape_mode();
 		return true;
+	} else if (sname.begins_with("submesh_")) {
+		int sl = sname.find("/");
+		if (sl == -1) {
+			return false;
+		}
+		int idx = sname.substr(8, sl - 8).to_int() - 1;
+		String what = sname.get_slicec('/', 1);
+		ERR_FAIL_INDEX_V(idx, submesh_info.size(), false);
+		if (what == "name") {
+			r_ret = submesh_info[idx].name;
+		}
+		return true;
 	} else if (sname.begins_with("surface_")) {
 		int sl = sname.find("/");
 		if (sl == -1) {
@@ -719,6 +733,8 @@ bool ArrayMesh::_get(const StringName &p_name, Variant &r_ret) const {
 			r_ret = surface_get_material(idx);
 		} else if (what == "name") {
 			r_ret = surface_get_name(idx);
+		} else if (what == "active") {
+			r_ret = surface_is_active(idx);
 		}
 		return true;
 	} else if (!sname.begins_with("surfaces")) {
@@ -780,13 +796,19 @@ void ArrayMesh::_get_property_list(List<PropertyInfo> *p_list) const {
 	}
 
 	for (int i = 0; i < surfaces.size(); i++) {
-		p_list->push_back(PropertyInfo(Variant::DICTIONARY, "surfaces/" + itos(i), PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL));
+		p_list->push_back(PropertyInfo(Variant::ARRAY, "surfaces/" + itos(i), PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL));
 		p_list->push_back(PropertyInfo(Variant::STRING, "surface_" + itos(i + 1) + "/name", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_EDITOR));
 		if (surfaces[i].is_2d) {
 			p_list->push_back(PropertyInfo(Variant::OBJECT, "surface_" + itos(i + 1) + "/material", PROPERTY_HINT_RESOURCE_TYPE, "ShaderMaterial,CanvasItemMaterial", PROPERTY_USAGE_EDITOR));
 		} else {
 			p_list->push_back(PropertyInfo(Variant::OBJECT, "surface_" + itos(i + 1) + "/material", PROPERTY_HINT_RESOURCE_TYPE, "ShaderMaterial,SpatialMaterial", PROPERTY_USAGE_EDITOR));
 		}
+		p_list->push_back(PropertyInfo(Variant::BOOL, "surface_" + itos(i + 1) + "/active", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_EDITOR));
+	}
+
+	for (int i = 0; i < submesh_info.size(); i++) {
+		p_list->push_back(PropertyInfo(Variant::DICTIONARY, "submeshes/" + itos(i), PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL));
+		p_list->push_back(PropertyInfo(Variant::STRING, "submesh_" + itos(i + 1) + "/name", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_EDITOR));
 	}
 }
 
@@ -805,6 +827,41 @@ void ArrayMesh::_recompute_aabb() {
 			}
 		}
 	}
+}
+
+Ref<Mesh> ArrayMesh::_copy_surfaces(Ref<ArrayMesh> p_dest, int p_from, int p_num) {
+	ERR_FAIL_NULL_V(p_dest, p_dest);
+	for (int s = 0; s < p_num; s++) {
+		const int idx = p_from + s;
+		ERR_FAIL_INDEX_V(idx, get_surface_count(), p_dest);
+		p_dest->add_surface_from_arrays(surface_get_primitive_type(idx), surface_get_arrays(idx), surface_get_blend_shape_arrays(idx));
+	}
+	return p_dest;
+}
+
+int ArrayMesh::get_submesh_count() const {
+	return submesh_info.size();
+}
+
+void ArrayMesh::select_submesh_surfaces(int p_idx) {
+	ERR_FAIL_INDEX(p_idx, submesh_info.size());
+	for (int s = 0; s < get_surface_count(); s++) {
+		surface_set_active(s, Math::is_inside(s, submesh_info[p_idx].from_surf, submesh_info[p_idx].from_surf + submesh_info[p_idx].surf_cnt));
+	}
+}
+
+Ref<Mesh> ArrayMesh::get_submesh(int p_idx) {
+	ERR_FAIL_INDEX_V(p_idx, submesh_info.size(), Ref<Mesh>());
+	if (!submesh_cache[p_idx].is_valid()) {
+		Ref<ArrayMesh> m = memnew(ArrayMesh);
+		submesh_cache.write[p_idx] = _copy_surfaces(m, submesh_info[p_idx].from_surf, submesh_info[p_idx].surf_cnt);
+	}
+	return submesh_cache[p_idx];
+}
+
+Ref<Mesh> ArrayMesh::get_submesh_with_name(const String &p_name) {
+	ERR_FAIL_COND_V(!submesh_map.has(p_name), Ref<Mesh>());
+	return get_submesh(submesh_map[p_name]);
 }
 
 void ArrayMesh::add_surface(uint32_t p_format, PrimitiveType p_primitive, const PoolVector<uint8_t> &p_array, int p_vertex_count, const PoolVector<uint8_t> &p_index_array, int p_index_count, const AABB &p_aabb, const Vector<PoolVector<uint8_t>> &p_blend_shapes, const Vector<AABB> &p_bone_aabbs) {
@@ -928,8 +985,9 @@ ArrayMesh::BlendShapeMode ArrayMesh::get_blend_shape_mode() const {
 void ArrayMesh::surface_set_active(int p_idx, bool p_active) {
 	ERR_FAIL_INDEX(p_idx, surfaces.size());
 
-	if (surfaces[p_idx].is_active == p_active)
+	if (surfaces[p_idx].is_active == p_active) {
 		return;
+	}
 
 	VisualServer::get_singleton()->mesh_surface_set_active(mesh, p_idx, p_active);
 	surfaces.write[p_idx].is_active = p_active;
@@ -940,7 +998,7 @@ void ArrayMesh::surface_set_active(int p_idx, bool p_active) {
 	emit_changed();
 }
 
-bool ArrayMesh::surface_is_active(int p_idx) {
+bool ArrayMesh::surface_is_active(int p_idx) const {
 	ERR_FAIL_INDEX_V(p_idx, surfaces.size(), false);
 	return surfaces[p_idx].is_active;
 }
@@ -1079,6 +1137,53 @@ void ArrayMesh::set_custom_aabb(const AABB &p_custom) {
 
 AABB ArrayMesh::get_custom_aabb() const {
 	return custom_aabb;
+}
+
+void ArrayMesh::set_description(const String &p_description) {
+	description = p_description;
+	submesh_cache.clear();
+	submesh_info.clear();
+	submesh_map.clear();
+	// check for new submesh description:
+	Vector<String> lines = description.split("\n");
+	Vector<_submesh_t> r;
+	if (lines.size() > 1) {
+		if (lines[0] == "SUBMESH:") {
+			int last_surf_idx = -1;
+			for (int i = 1; i < lines.size(); i++) {
+				Vector<String> info = lines[i].split("=");
+				if (info.size() == 2) {
+					const String name = info[0];
+					const int surf_idx = info[1].to_int();
+					if (!name.empty() && surf_idx > last_surf_idx) {
+						r.push_back({ name, last_surf_idx + 1, surf_idx - last_surf_idx });
+						print_verbose(vformat("Add submesh %s from surf. %d (%d surfs.)", name, last_surf_idx + 1, surf_idx - last_surf_idx));
+						last_surf_idx = surf_idx;
+					} else {
+						WARN_PRINT("Malformed line: " + lines[i]);
+						break; // stop processing
+					}
+				} else {
+					WARN_PRINT("Malformed line: " + lines[i]);
+					break; // stop processing
+				}
+			}
+			if (!r.empty()) {
+				submesh_info = r;
+				submesh_cache.resize(r.size());
+				for (int m = 0; m < submesh_info.size(); m++) {
+					if (submesh_map.has(submesh_info[m].name)) {
+						WARN_PRINT("Duplicate name");
+					}
+					submesh_map[submesh_info[m].name] = m;
+				}
+			}
+		}
+	}
+}
+
+String ArrayMesh::get_description() const {
+	return description;
 }
 
 void ArrayMesh::regen_normalmaps() {
@@ -1431,6 +1536,13 @@ Error ArrayMesh::lightmap_unwrap_cached(int *&r_cache_data, unsigned int &r_cach
 }
 
 void ArrayMesh::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("set_description", "description"), &ArrayMesh::set_description);
+	ClassDB::bind_method(D_METHOD("get_description"), &ArrayMesh::get_description);
+
+	ClassDB::bind_method(D_METHOD("get_submesh_count"), &ArrayMesh::get_submesh_count);
+	ClassDB::bind_method(D_METHOD("get_submesh", "index"), &ArrayMesh::get_submesh);
+	ClassDB::bind_method(D_METHOD("get_submesh_with_name", "name"), &ArrayMesh::get_submesh_with_name);
+
 	ClassDB::bind_method(D_METHOD("add_blend_shape", "name"), &ArrayMesh::add_blend_shape);
 	ClassDB::bind_method(D_METHOD("get_blend_shape_count"), &ArrayMesh::get_blend_shape_count);
 	ClassDB::bind_method(D_METHOD("get_blend_shape_name", "index"), &ArrayMesh::get_blend_shape_name);
@@ -1467,6 +1579,8 @@ void ArrayMesh::_bind_methods() {
 
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "blend_shape_mode", PROPERTY_HINT_ENUM, "Normalized,Relative", PROPERTY_USAGE_NOEDITOR), "set_blend_shape_mode", "get_blend_shape_mode");
 	ADD_PROPERTY(PropertyInfo(Variant::AABB, "custom_aabb", PROPERTY_HINT_NONE, ""), "set_custom_aabb", "get_custom_aabb");
+
+	ADD_PROPERTY(PropertyInfo(Variant::STRING, "description", PROPERTY_HINT_MULTILINE_TEXT, ""), "set_description", "get_description");
 
 	BIND_CONSTANT(NO_INDEX_ARRAY);
 	BIND_CONSTANT(ARRAY_WEIGHTS_SIZE);

@@ -409,13 +409,13 @@ void EditorResourcePreview::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("preview_invalidated", PropertyInfo(Variant::STRING, "path")));
 }
 
-void EditorResourcePreview::check_for_invalidation(const String &p_path) {
+void EditorResourcePreview::check_for_invalidation(const String &p_path, bool p_force) {
 	preview_mutex.lock();
 
 	bool call_invalidated = false;
 	if (cache.has(p_path)) {
 		uint64_t modified_time = FileAccess::get_modified_time(p_path);
-		if (modified_time != cache[p_path].modified_time) {
+		if (modified_time != cache[p_path].modified_time || p_force) {
 			cache.erase(p_path);
 			call_invalidated = true;
 		}

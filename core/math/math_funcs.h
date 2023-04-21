@@ -539,6 +539,10 @@ public:
 			return out_val;
 		}
 	}
+
+	static _ALWAYS_INLINE_ bool is_inside(int p_v, int p_min, int p_max) {
+		return p_v >= p_min && p_v < p_max;
+	};
 };
 
 #endif // MATH_FUNCS_H

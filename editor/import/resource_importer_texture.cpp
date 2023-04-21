@@ -88,12 +88,13 @@ void ResourceImporterTexture::update_imports() {
 
 	Vector<String> to_reimport;
 	for (Map<StringName, int>::Element *E = make_flags.front(); E; E = E->next()) {
-		Ref<ConfigFile> cf;
-		cf.instance();
+		DEV_ASSERT_MSG(String(E->key()).empty(), "Empty resource path.");
+
+		Ref<ConfigFile> cf = memnew(ConfigFile);
 		String src_path = String(E->key()) + ".import";
 
 		Error err = cf->load(src_path);
-		ERR_CONTINUE(err != OK);
+		ERR_CONTINUE_MSG(err != OK, "Failed to load path: " + src_path);
 
 		bool changed = false;
 		if (E->get() & MAKE_SRGB_FLAG && int(cf->get_value("params", "flags/srgb")) == 2) {

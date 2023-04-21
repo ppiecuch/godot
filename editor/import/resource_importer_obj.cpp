@@ -231,16 +231,16 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Spati
 	return OK;
 }
 
-static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_single_mesh, bool p_generate_tangents, int p_compress_flags, bool p_to_shadermaterial, Vector3 p_scale_mesh, Vector3 p_offset_mesh, List<String> *r_missing_deps) {
+static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_single_mesh, bool p_generate_tangents, bool p_to_shadermaterial, int p_compress_flags, Vector3 p_scale_mesh, Vector3 p_offset_mesh, List<String> *r_missing_deps) {
 	FileAccessRef f = FileAccess::open(p_path, FileAccess::READ);
 	ERR_FAIL_COND_V_MSG(!f, ERR_CANT_OPEN, vformat("Couldn't open OBJ file '%s', it may not exist or not be readable.", p_path));
 
-	Ref<ArrayMesh> mesh;
-	mesh.instance();
+	Ref<ArrayMesh> mesh = memnew(ArrayMesh);
 
-	bool generate_tangents = p_generate_tangents;
 	Vector3 scale_mesh = p_scale_mesh;
 	Vector3 offset_mesh = p_offset_mesh;
+
+	Vector<String> instances_info; // name + num. of surfaces
 
 	Vector<Vector3> vertices;
 	Vector<Vector3> normals;
@@ -256,9 +256,12 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 	Ref<SurfaceTool> surf_tool = memnew(SurfaceTool);
 	surf_tool->begin(Mesh::PRIMITIVE_TRIANGLES);
 
+	const static String Found[2] = {"not found", "found"};
+
 	String current_material_library;
 	String current_material;
 	String current_group;
+	int current_object_faces = 0;
 
 	while (true) {
 		String l = f->get_line().strip_edges();
@@ -385,6 +388,8 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 
 				face[1] = face[2];
 			}
+
+			++current_object_faces;
 		} else if (l.begins_with("s ")) { //smoothing
 			String what = l.substr(2, l.length()).strip_edges();
 			if (what == "off") {
@@ -394,18 +399,17 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 			}
 		} else if (/*l.begins_with("g ") ||*/ l.begins_with("usemtl ") || (l.begins_with("o ") || f->eof_reached())) { //commit group to mesh
 			//groups are too annoying
-			if (surf_tool->get_vertex_array().size()) {
-				//another group going on, commit it
+			if (current_object_faces || f->eof_reached()) { //another group going on or end, commit it
 				if (normals.size() == 0) {
 					surf_tool->generate_normals();
 				}
 
-				if (generate_tangents && uvs.size()) {
+				if (p_generate_tangents && uvs.size()) {
 					surf_tool->generate_tangents();
 				}
 
 				if (p_compress_flags & VS::ARRAY_FLAG_USE_OCTAHEDRAL_COMPRESSION) {
-					print_verbose("OBJ: validating compression flags");
+					print_verbose("OBJ: Validating compression flags");
 					const List<SurfaceTool::Vertex> &verts = surf_tool->get_vertex_array();
 					if (surf_tool->get_array_format() & Mesh::ARRAY_FORMAT_NORMAL) {
 						for (const SurfaceTool::Vertex &v : verts) {
@@ -430,8 +434,8 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 				surf_tool->index();
 
 				if (!current_material_library.empty()) {
-					print_verbose("OBJ: Current material library " + current_material_library + " has " + itos(material_map.has(current_material_library)));
-					print_verbose("OBJ: Current material " + current_material + " has " + itos(material_map.has(current_material_library) && material_map[current_material_library].has(current_material)));
+					print_verbose("OBJ: Current material library " + current_material_library + " is " + Found[material_map.has(current_material_library)]);
+					print_verbose("OBJ: Current material " + current_material + " is " + Found[material_map.has(current_material_library) && material_map[current_material_library].has(current_material)]);
 				}
 
 				if (material_map.has(current_material_library) && material_map[current_material_library].has(current_material)) {
@@ -454,35 +458,46 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 					}
 				}
 
+				const int surf_id = mesh->get_surface_count();
 				mesh = surf_tool->commit(mesh, p_compress_flags);
 
 				if (current_material != String()) {
-					mesh->surface_set_name(mesh->get_surface_count() - 1, current_material.get_basename());
+					mesh->surface_set_name(surf_id, current_material.get_basename());
 				} else if (current_group != String()) {
-					mesh->surface_set_name(mesh->get_surface_count() - 1, current_group);
+					mesh->surface_set_name(surf_id, current_group);
 				}
 
-				print_verbose("OBJ: Added surface: '" + mesh->surface_get_name(mesh->get_surface_count() - 1) + "'");
+				if (!name.empty()) {
+					print_verbose("OBJ: Added surface: '" + mesh->surface_get_name(surf_id) + "' with " + itos(current_object_faces) + " faces to object: '" + name + "'");
+				} else {
+					print_verbose("OBJ: Added surface: '" + mesh->surface_get_name(surf_id) + "' with " + itos(current_object_faces) + " faces");
+				}
 				surf_tool->clear();
 				surf_tool->begin(Mesh::PRIMITIVE_TRIANGLES);
-			}
 
-			if (l.begins_with("o ") || f->eof_reached()) {
-				if (!p_single_mesh) {
-					mesh->set_name(name);
-					r_meshes.push_back(mesh);
-					mesh.instance();
-					current_group = "";
-					current_material = "";
+				if (l.begins_with("o ") || f->eof_reached()) {
+					if (!p_single_mesh) {
+						r_meshes.push_back(mesh);
+						mesh.instance();
+						current_group = "";
+						current_material = "";
+					}
 				}
-			}
 
-			if (f->eof_reached()) {
-				break;
+				current_object_faces = 0;
 			}
 
 			if (l.begins_with("o ")) {
 				name = l.substr(2, l.length()).strip_edges();
+				if (name.empty()) { // this should not happen
+					name = "Submesh_" + itos(r_meshes.size());
+				}
+				mesh->set_name(name);
+				instances_info.push_back(vformat("%s=%d",name,mesh->get_surface_count()));
+			}
+
+			if (f->eof_reached()) {
+				break;
 			}
 
 			if (l.begins_with("usemtl ")) {
@@ -512,16 +527,21 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 	}
 
 	if (p_single_mesh) {
-		r_meshes.push_back(mesh);
+		if (instances_info.size() > 1) {
+			mesh->set_name(p_path.get_basename()); // final name
+			mesh->set_description("SUBMESH:\n" + String("\n").join(instances_info));
+			print_verbose("OBJ: Saved description:");
+			print_verbose(" > SUBMESH:\n > " + String("\n > ").join(instances_info));
+		}
+		r_meshes.push_back(mesh); // final mesh
 	}
-
 	return OK;
 }
 
 Node *EditorOBJImporter::import_scene(const String &p_path, uint32_t p_flags, int p_bake_fps, uint32_t p_compress_flags, List<String> *r_missing_deps, Error *r_err) {
 	List<Ref<Mesh>> meshes;
 
-	Error err = _parse_obj(p_path, meshes, false, p_flags & IMPORT_GENERATE_TANGENT_ARRAYS, p_compress_flags, false, Vector3(1, 1, 1), Vector3(0, 0, 0), r_missing_deps);
+	Error err = _parse_obj(p_path, meshes, false, p_flags & IMPORT_GENERATE_TANGENT_ARRAYS, false, p_compress_flags, Vector3(1, 1, 1), Vector3(0, 0, 0), r_missing_deps);
 
 	if (err != OK) {
 		if (r_err) {
@@ -557,6 +577,22 @@ void EditorOBJImporter::get_extensions(List<String> *r_extensions) const {
 EditorOBJImporter::EditorOBJImporter() {
 }
 ////////////////////////////////////////////////////
+
+static List<Ref<Mesh>> _array_to_list(const Array &p_array) {
+	List<Ref<Mesh>> ret;
+	for (int i = 0; i < p_array.size(); i++) {
+		ret.push_back(p_array[i]);
+	}
+	return ret;
+}
+
+static Array _list_to_array(const List<Ref<Mesh>> &p_list) {
+	Array ret;
+	for (const List<Ref<Mesh>>::Element *E = p_list.front(); E; E = E->next()) {
+		ret.append(E->get());
+	}
+	return ret;
+}
 
 String ResourceImporterOBJ::get_importer_name() const {
 	return "wavefront_obj";
@@ -614,7 +650,7 @@ Error ResourceImporterOBJ::import(const String &p_source_file, const String &p_s
 	if (bool(p_options["octahedral_compression"])) {
 		compress_flags |= VS::ARRAY_FLAG_USE_OCTAHEDRAL_COMPRESSION;
 	}
-	Error err = _parse_obj(p_source_file, meshes, true, p_options["generate_tangents"], compress_flags, p_options["convert_to_shadermaterial"], p_options["scale_mesh"], p_options["offset_mesh"], nullptr);
+	Error err = _parse_obj(p_source_file, meshes, true, p_options["generate_tangents"], p_options["convert_to_shadermaterial"], compress_flags, p_options["scale_mesh"], p_options["offset_mesh"], nullptr);
 
 	ERR_FAIL_COND_V(err != OK, err);
 	ERR_FAIL_COND_V(meshes.size() != 1, ERR_BUG);
@@ -645,10 +681,10 @@ Error ResourceImporterOBJ::import(const String &p_source_file, const String &p_s
 		meshes = post_import_script->post_import(meshes);
 	}
 
+	ERR_FAIL_COND_V(meshes.size() != 1, ERR_BUG);
+
 	String save_path = p_save_path + ".mesh";
-
 	err = ResourceSaver::save(save_path, meshes.front()->get());
-
 	ERR_FAIL_COND_V_MSG(err != OK, err, "Cannot save Mesh to file '" + save_path + "'.");
 
 	r_gen_files->push_back(save_path);
@@ -660,22 +696,6 @@ ResourceImporterOBJ::ResourceImporterOBJ() {
 }
 
 /////////////////////////////////
-
-List<Ref<Mesh>> _array_to_list(const Array &p_array) {
-	List<Ref<Mesh>> ret;
-	for (int i = 0; i < p_array.size(); i++) {
-		ret.push_back(p_array[i]);
-	}
-	return ret;
-}
-
-Array _list_to_array(const List<Ref<Mesh>> &p_list) {
-	Array ret;
-	for (const List<Ref<Mesh>>::Element *E = p_list.front(); E; E = E->next()) {
-		ret.append(E->get());
-	}
-	return ret;
-}
 
 void EditorOBJPostImport::_bind_methods() {
 	BIND_VMETHOD(MethodInfo(Variant::ARRAY, "post_import", PropertyInfo(Variant::ARRAY, "meshes")));

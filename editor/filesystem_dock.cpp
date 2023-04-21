@@ -546,9 +546,9 @@ void FileSystemDock::navigate_to_path(const String &p_path) {
 }
 
 void FileSystemDock::_file_list_thumbnail_done(const String &p_path, const Ref<Texture> &p_preview, const Ref<Texture> &p_small_preview, const Variant &p_udata) {
-	if ((file_list_vb->is_visible_in_tree() || path == p_path.get_base_dir()) && p_preview.is_valid()) {
+	if ((file_list_vb->is_visible_in_tree() || path == p_path || path == p_path.get_base_dir()) && p_preview.is_valid()) {
 		Array uarr = p_udata;
-		int idx = uarr[0];
+		const int idx = uarr[0];
 		String file = uarr[1];
 		if (idx < files->get_item_count() && files->get_item_text(idx) == file && files->get_item_metadata(idx) == p_path) {
 			if (file_list_display_mode == FILE_LIST_DISPLAY_LIST) {

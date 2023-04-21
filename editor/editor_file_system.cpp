@@ -1681,6 +1681,7 @@ void EditorFileSystem::_reimport_file(const String &p_file) {
 
 	Map<StringName, Variant> params;
 	String importer_name;
+	bool force_clean_cache = false;
 
 	if (FileAccess::exists(p_file + ".import")) {
 		//use existing
@@ -1697,6 +1698,7 @@ void EditorFileSystem::_reimport_file(const String &p_file) {
 			}
 			if (cf->has_section("remap")) {
 				importer_name = cf->get_value("remap", "importer");
+				force_clean_cache = importer_name != cf->get_value("remap", "last_importer", "");
 			}
 		}
 
@@ -1877,7 +1879,7 @@ void EditorFileSystem::_reimport_file(const String &p_file) {
 		}
 	}
 
-	EditorResourcePreview::get_singleton()->check_for_invalidation(p_file);
+	EditorResourcePreview::get_singleton()->check_for_invalidation(p_file, force_clean_cache);
 }
 
 void EditorFileSystem::_find_group_files(EditorFileSystemDirectory *efd, Map<String, Vector<String>> &group_files, Set<String> &groups_to_reimport) {

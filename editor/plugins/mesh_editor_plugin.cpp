@@ -32,6 +32,8 @@
 
 #include "editor/editor_scale.h"
 
+#define _update_submesh_info() submesh_info->set_text(vformat(TTR("%d of %d"), submesh, am->get_submesh_count()))
+
 void MeshEditor::_gui_input(Ref<InputEvent> p_event) {
 	Ref<InputEventMouseMotion> mm = p_event;
 	if (mm.is_valid() && mm->get_button_mask() & BUTTON_MASK_LEFT) {
@@ -57,6 +59,10 @@ void MeshEditor::_notification(int p_what) {
 			light_1_switch->set_pressed_texture(get_icon("MaterialPreviewLight1Off", "EditorIcons"));
 			light_2_switch->set_normal_texture(get_icon("MaterialPreviewLight2", "EditorIcons"));
 			light_2_switch->set_pressed_texture(get_icon("MaterialPreviewLight2Off", "EditorIcons"));
+			prev_mesh->set_normal_texture(get_icon("ArrowLeft", "EditorIcons"));
+			prev_mesh->set_pressed_texture(get_icon("ArrowLeftOff", "EditorIcons"));
+			next_mesh->set_normal_texture(get_icon("ArrowRight", "EditorIcons"));
+			next_mesh->set_pressed_texture(get_icon("ArrowRightOff", "EditorIcons"));
 			first_enter = false;
 		}
 	}
@@ -69,15 +75,8 @@ void MeshEditor::_update_rotation() {
 	rotation->set_transform(t);
 }
 
-void MeshEditor::edit(Ref<Mesh> p_mesh) {
-	mesh = p_mesh;
-	mesh_instance->set_mesh(mesh);
-
-	rot_x = Math::deg2rad(-15.0);
-	rot_y = Math::deg2rad(30.0);
-	_update_rotation();
-
-	AABB aabb = mesh->get_aabb();
+void MeshEditor::_update_from_aabb(const Ref<Mesh> &p_mesh) {
+	AABB aabb = p_mesh->get_aabb();
 	Vector3 ofs = aabb.position + aabb.size * 0.5;
 	float m = aabb.get_longest_axis_size();
 	if (m != 0) {
@@ -85,10 +84,35 @@ void MeshEditor::edit(Ref<Mesh> p_mesh) {
 		m *= 0.5;
 		Transform xform;
 		xform.basis.scale(Vector3(m, m, m));
-		xform.origin = -xform.basis.xform(ofs); //-ofs*m;
-		//xform.origin.z -= aabb.get_longest_axis_size() * 2;
+		xform.origin = -xform.basis.xform(ofs); // -ofs*m;
+		// xform.origin.z -= aabb.get_longest_axis_size() * 2;
 		mesh_instance->set_transform(xform);
 	}
+}
+
+void MeshEditor::edit(Ref<Mesh> p_mesh) {
+	Ref<Mesh> shown = mesh = p_mesh;
+	submesh = 0;
+	mesh_instance->set_mesh(mesh);
+
+	if (Ref<ArrayMesh> am = mesh) {
+		if (am->get_submesh_count() > 0) {
+			next_mesh->set_visible(true);
+			prev_mesh->set_visible(true);
+			mesh_instance->set_mesh(shown = am->get_submesh(submesh));
+			submesh_info->set_visible(true);
+			_update_submesh_info();
+		}
+	} else {
+		next_mesh->set_visible(false);
+		prev_mesh->set_visible(false);
+		submesh_info->set_visible(false);
+	}
+
+	rot_x = Math::deg2rad(-15.0);
+	rot_y = Math::deg2rad(30.0);
+	_update_rotation();
+	_update_from_aabb(shown);
 }
 
 void MeshEditor::_button_pressed(Node *p_button) {
@@ -98,6 +122,34 @@ void MeshEditor::_button_pressed(Node *p_button) {
 
 	if (p_button == light_2_switch) {
 		light2->set_visible(!light_2_switch->is_pressed());
+	}
+
+	if (p_button == next_mesh) {
+		if (Ref<ArrayMesh> am = mesh) {
+			if (submesh < am->get_submesh_count() - 1) {
+				++submesh;
+				Ref<Mesh> m = am->get_submesh(submesh);
+				mesh_instance->set_mesh(m);
+				_update_from_aabb(m);
+				_update_submesh_info();
+			}
+		} else {
+			WARN_PRINT("Invalid state.");
+		}
+	}
+
+	if (p_button == prev_mesh) {
+		if (Ref<ArrayMesh> am = mesh) {
+			if (submesh) {
+				--submesh;
+				Ref<Mesh> m = am->get_submesh(submesh);
+				mesh_instance->set_mesh(m);
+				_update_from_aabb(m);
+				_update_submesh_info();
+			}
+		} else {
+			WARN_PRINT("Invalid state.");
+		}
 	}
 }
 
@@ -142,19 +194,38 @@ MeshEditor::MeshEditor() {
 
 	hb->add_spacer();
 
-	VBoxContainer *vb_light = memnew(VBoxContainer);
-	hb->add_child(vb_light);
+	VBoxContainer *vb_btns = memnew(VBoxContainer);
+	hb->add_child(vb_btns);
 
 	light_1_switch = memnew(TextureButton);
 	light_1_switch->set_toggle_mode(true);
-	vb_light->add_child(light_1_switch);
+	light_1_switch->set_h_size_flags(Control::SIZE_SHRINK_CENTER);
+	vb_btns->add_child(light_1_switch);
 	light_1_switch->connect("pressed", this, "_button_pressed", varray(light_1_switch));
 
 	light_2_switch = memnew(TextureButton);
 	light_2_switch->set_toggle_mode(true);
-	vb_light->add_child(light_2_switch);
+	light_2_switch->set_h_size_flags(Control::SIZE_SHRINK_CENTER);
+	vb_btns->add_child(light_2_switch);
 	light_2_switch->connect("pressed", this, "_button_pressed", varray(light_2_switch));
 
+	HBoxContainer *hb_group = memnew(HBoxContainer);
+	hb_group->set_h_size_flags(Control::SIZE_SHRINK_CENTER);
+	vb_btns->add_child(hb_group);
+
+	prev_mesh = memnew(TextureButton);
+	prev_mesh->connect("pressed", this, "_button_pressed", varray(prev_mesh));
+	hb_group->add_child(prev_mesh);
+	next_mesh = memnew(TextureButton);
+	next_mesh->connect("pressed", this, "_button_pressed", varray(next_mesh));
+	hb_group->add_child(next_mesh);
+
+	submesh_info = memnew(Label);
+	submesh_info->set_h_size_flags(Control::SIZE_SHRINK_CENTER);
+	submesh_info->set_align(Label::ALIGN_CENTER);
+	vb_btns->add_child(submesh_info);
+
+	submesh = 0;
 	first_enter = true;
 
 	rot_x = 0;
