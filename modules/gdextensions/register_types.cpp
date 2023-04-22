@@ -228,6 +228,10 @@ static Ref<ImageLoaderThorSVG> image_loader_tsvg;
 #include "meshslicer/slicer.h"
 #endif
 
+#ifdef GDEXT_SCENEMERGE_ENABLED
+#include "scenemerge/merge.h"
+#endif
+
 #ifdef GDEXT_SILENTWOLF_ENABLED
 #include "silentwolf/silent_wolf.h"
 #endif
@@ -595,6 +599,13 @@ void register_gdextensions_types() {
 #ifdef GDEXT_MESHSLICER_ENABLED
 	ClassDB::register_class<Slicer>();
 	ClassDB::register_class<SlicedMesh>();
+#endif
+
+#ifdef GDEXT_SCENEMERGE_ENABLED
+#ifdef TOOLS_ENABLED
+	ClassDB::register_class<SceneMerge>();
+	EditorPlugins::add_by_type<SceneMergePlugin>();
+#endif
 #endif
 
 #ifdef GDEXT_SPACEMOUSE_ENABLED
