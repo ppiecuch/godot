@@ -1,24 +1,29 @@
-//
-// Copyright (c) 2020 by SonicMastr <sonicmastr@gmail.com>
-//
-// This file is part of Pigs In A Blanket
-//
-// Pigs in a Blanket is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU Lesser General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
-//  (at your option) any later version.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU Lesser General Public License for more details.
-//
+/*****************************************************************************
+ * 
+ *  Copyright (c) 2020 by SonicMastr <sonicmastr@gmail.com>
+ * 
+ *  This file is part of Pigs In A Blanket
+ * 
+ *  Pigs in a Blanket is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ * 
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ * 
+ *  You should have received a copy of the GNU Lesser General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * 
+ ****************************************************************************/
 
 #ifndef SYSMODEPATCH_H_
 #define SYSMODEPATCH_H_
 
-#include <psp2/appmgr.h>
 #include <psp2/gxm.h>
+#include <psp2/appmgr.h>
 
 SceGxmErrorCode sceGxmInitialize_patch(const SceGxmInitializeParams *params);
 unsigned int pglMemoryAllocAlign_patch(int memoryType, int size, int unused, unsigned int *memory);

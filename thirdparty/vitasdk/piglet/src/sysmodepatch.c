@@ -1,53 +1,55 @@
-//
-// Copyright (c) 2020 by SonicMastr <sonicmastr@gmail.com>
-//
-// This file is part of Pigs In A Blanket
-//
-// Pigs in a Blanket is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU Lesser General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
-//  (at your option) any later version.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU Lesser General Public License for more details.
-//
+/*****************************************************************************
+ * 
+ *  Copyright (c) 2020 by SonicMastr <sonicmastr@gmail.com>
+ * 
+ *  This file is part of Pigs In A Blanket
+ * 
+ *  Pigs in a Blanket is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ * 
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ * 
+ *  You should have received a copy of the GNU Lesser General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * 
+ ****************************************************************************/
 
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
-
 #include <psp2/kernel/threadmgr.h>
-#include <psp2/sharedfb.h>
-
-#include "debug.h"
-#include "hooks.h"
 #include "sysmodepatch.h"
+#include "hooks.h"
+#include "debug.h"
 
+#include <psp2/sharedfb.h>
 // vitasdk lacks prototypes for these right now
 SceGxmErrorCode sceGxmVshSyncObjectOpen(uint32_t key, SceGxmSyncObject **syncObject);
 SceGxmErrorCode sceGxmVshSyncObjectClose(uint32_t key, SceGxmSyncObject *syncObject);
-
-// sceGxmVsh stuff also has different names in vitasdk/dolcesdk
+// sceGxmVsh stuff also has different names in dolcesdk
 #define sceGxmInitializeInternal sceGxmVshInitialize
 #define sceGxmSyncObjectOpenShared sceGxmVshSyncObjectOpen
 #define sceGxmSyncObjectCloseShared sceGxmVshSyncObjectClose
 
 // this struct is already defined in vitasdk; use a unique name here
 typedef struct SceSharedFbInfoPib { // size is 0x58
-	void *base1; // cdram base
+	void* base1;		// cdram base
 	int memsize;
-	void *base2; // cdram base
+	void* base2;		// cdram base
 	int unk_0C;
 	void *unk_10;
 	int unk_14;
 	int unk_18;
 	int unk_1C;
 	int unk_20;
-	int unk_24; // 960
-	int unk_28; // 960
-	int unk_2C; // 544
+	int unk_24;		// 960
+	int unk_28;		// 960
+	int unk_2C;		// 544
 	int unk_30;
 	int curbuf;
 	int unk_38;
@@ -67,12 +69,14 @@ static int isDestroyingSurface, currentContext, framebegun = 0;
 static unsigned int bufferDataIndex;
 int isCreatingSurface;
 
-SceGxmErrorCode sceGxmInitialize_patch(const SceGxmInitializeParams *params) {
+SceGxmErrorCode sceGxmInitialize_patch(const SceGxmInitializeParams *params)
+{
 	SceGxmInitializeParams gxm_init_params_internal;
 	memset(&gxm_init_params_internal, 0, sizeof(SceGxmInitializeParams));
 	gxm_init_params_internal.flags = 0x0A;
 	gxm_init_params_internal.displayQueueMaxPendingCount = 2;
 	gxm_init_params_internal.parameterBufferSize = 0x200000;
+
 
 	SceGxmErrorCode error = sceGxmInitializeInternal(&gxm_init_params_internal);
 	if (error != 0)
@@ -96,28 +100,32 @@ SceGxmErrorCode sceGxmInitialize_patch(const SceGxmInitializeParams *params) {
 	return error;
 }
 
-unsigned int pglMemoryAllocAlign_patch(int memoryType, int size, int unused, unsigned int *memory) {
+unsigned int pglMemoryAllocAlign_patch(int memoryType, int size, int unused, unsigned int *memory)
+{
 	if (systemMode && memoryType == 4 && isCreatingSurface) // ColorSurface/Framebuffer Allocation. We want to skip this and replace with SharedFb Framebuffer
 	{
 		memory[0] = (unsigned int)displayBufferData[bufferDataIndex];
 		return 0;
 	}
-	if (msaaEnabled && memoryType == 5 && isCreatingSurface) {
+	if (msaaEnabled && memoryType == 5 && isCreatingSurface)
+	{
 		size *= 4; // For MSAA
 	}
 	return TAI_CONTINUE(unsigned int, hookRef[8], memoryType, size, unused, memory);
 }
 
-void *pglPlatformSurfaceCreateWindow_detect(int a1, int a2, int a3, int a4, int *a5) {
+void *pglPlatformSurfaceCreateWindow_detect(int a1, int a2, int a3, int a4, int *a5)
+{
 	isCreatingSurface = 1;
 	bufferDataIndex = 0;
-	void *ret = TAI_CONTINUE(void *, hookRef[10], a1, a2, a3, a4, a5);
+	void *ret = TAI_CONTINUE(void*, hookRef[10], a1, a2, a3, a4, a5);
 	isCreatingSurface = 0;
 	return ret;
 }
 
-SceGxmErrorCode sceGxmSyncObjectCreate_patch(SceGxmSyncObject **syncObject) {
-	if (isCreatingSurface) {
+SceGxmErrorCode sceGxmSyncObjectCreate_patch(SceGxmSyncObject **syncObject)
+{
+	if(isCreatingSurface) {
 		bufferDataIndex++;
 		LOG("Patching Sync Object #%d\n", bufferDataIndex);
 		SceGxmErrorCode ret = sceGxmSyncObjectOpenShared(bufferDataIndex, syncObject);
@@ -127,8 +135,9 @@ SceGxmErrorCode sceGxmSyncObjectCreate_patch(SceGxmSyncObject **syncObject) {
 	return 0;
 }
 
-int pglPlatformContextBeginFrame_patch(int context, int framebuffer) {
-	if (!*(int *)(context + 0x12bf0) && !framebegun) { // GL FrameBuffer Object ID
+int pglPlatformContextBeginFrame_patch(int context, int framebuffer)
+{
+	if(!*(int *)(context + 0x12bf0) && !framebegun) { // GL FrameBuffer Object ID
 		sceSharedFbBegin(shfb_id, (SceSharedFbInfo *)&info);
 		info.owner = 1;
 		framebegun = 1;
@@ -153,7 +162,7 @@ int pglPlatformSurfaceSwap_patch(int surface) // Completely rewritten for System
 	bufferIndexNew = bufferIndexOld * 4 + surface;
 	bufferIndexOld = 0;
 	if (*(int *)(surface + 0x128) != 0)
-		bufferIndexOld = surface + 0x124;
+    	bufferIndexOld = surface + 0x124;
 	framebufferAddress = *(int *)(bufferIndexNew + 0x108);
 	*(int *)(surface + 100) = bufferIndexOld;
 	*(int *)(surface + 0x68) = *(int *)(surface + 0x94);
@@ -165,17 +174,19 @@ int pglPlatformSurfaceSwap_patch(int surface) // Completely rewritten for System
 	return 1;
 }
 
-void pglPlatformSurfaceDestroy_detect(int surface) {
+void pglPlatformSurfaceDestroy_detect(int surface)
+{
 	isDestroyingSurface = 1;
 	TAI_CONTINUE(void, hookRef[14], surface);
 	isDestroyingSurface = 0;
 }
 
-SceGxmErrorCode sceGxmSyncObjectDestroy_patch(SceGxmSyncObject *syncObject) {
-	if (isDestroyingSurface) {
+SceGxmErrorCode sceGxmSyncObjectDestroy_patch(SceGxmSyncObject *syncObject)
+{
+	if(isDestroyingSurface) {
 		SceGxmErrorCode ret = sceGxmSyncObjectCloseShared(bufferDataIndex, syncObject);
 		bufferDataIndex--;
 		return ret;
-	}
+	}	
 	return TAI_CONTINUE(SceGxmErrorCode, hookRef[15], syncObject);
 }

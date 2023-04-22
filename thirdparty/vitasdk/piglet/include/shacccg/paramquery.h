@@ -3,14 +3,14 @@
 
 #include <stdint.h>
 
-#ifdef __cplusplus
+#ifdef	__cplusplus
 extern "C" {
-#endif // def __cplusplus
+#endif	// def __cplusplus
 
 ///////////////////////////////////////////////////////////////////////////////
 // Forward declarations
 ///////////////////////////////////////////////////////////////////////////////
-typedef void const *SceShaccCgParameter;
+typedef void const * SceShaccCgParameter;
 typedef struct SceShaccCgCompileOutput SceShaccCgCompileOutput;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -22,14 +22,14 @@ typedef struct SceShaccCgCompileOutput SceShaccCgCompileOutput;
 	@ingroup shacccg
 */
 typedef enum SceShaccCgParameterClass {
-	SCE_SHACCCG_PARAMETERCLASS_INVALID = 0x00, ///< An invalid parameter class.
-	SCE_SHACCCG_PARAMETERCLASS_SCALAR = 0x01, ///< Scalar parameter class.
-	SCE_SHACCCG_PARAMETERCLASS_VECTOR = 0x02, ///< Vector parameter class.
-	SCE_SHACCCG_PARAMETERCLASS_MATRIX = 0x03, ///< Matrix parameter class.
-	SCE_SHACCCG_PARAMETERCLASS_STRUCT = 0x04, ///< Struct parameter class.
-	SCE_SHACCCG_PARAMETERCLASS_ARRAY = 0x05, ///< Array parameter class.
-	SCE_SHACCCG_PARAMETERCLASS_SAMPLER = 0x06, ///< Sampler parameter class.
-	SCE_SHACCCG_PARAMETERCLASS_UNIFORMBLOCK = 0x07 ///< Uniform Block parameter class.
+	SCE_SHACCCG_PARAMETERCLASS_INVALID		= 0x00,	///< An invalid parameter class.
+	SCE_SHACCCG_PARAMETERCLASS_SCALAR		= 0x01,	///< Scalar parameter class.
+	SCE_SHACCCG_PARAMETERCLASS_VECTOR		= 0x02,	///< Vector parameter class.
+	SCE_SHACCCG_PARAMETERCLASS_MATRIX		= 0x03,	///< Matrix parameter class.
+	SCE_SHACCCG_PARAMETERCLASS_STRUCT		= 0x04,	///< Struct parameter class.
+	SCE_SHACCCG_PARAMETERCLASS_ARRAY		= 0x05,	///< Array parameter class.
+	SCE_SHACCCG_PARAMETERCLASS_SAMPLER		= 0x06,	///< Sampler parameter class.
+	SCE_SHACCCG_PARAMETERCLASS_UNIFORMBLOCK	= 0x07	///< Uniform Block parameter class.
 } SceShaccCgParameterClass;
 
 /** @brief	Classifies shader parameter data format
@@ -37,30 +37,31 @@ typedef enum SceShaccCgParameterClass {
 	@ingroup shacccg
 */
 typedef enum SceShaccCgParameterBaseType {
-	SCE_SHACCCG_BASETYPE_INVALID = 0x00, ///< An invalid format.
-	SCE_SHACCCG_BASETYPE_FLOAT = 0x01, ///< Full precision 32-bit floating point.
-	SCE_SHACCCG_BASETYPE_HALF = 0x02, ///< Half precision 16-bit floating point.
-	SCE_SHACCCG_BASETYPE_FIXED = 0x03, ///< 2.8 fixed point precision.
-	SCE_SHACCCG_BASETYPE_BOOL = 0x04, ///< Boolean value.
-	SCE_SHACCCG_BASETYPE_CHAR = 0x05, ///< Signed char (8-bit) value.
-	SCE_SHACCCG_BASETYPE_UCHAR = 0x06, ///< Unsigned char (8-bit) value.
-	SCE_SHACCCG_BASETYPE_SHORT = 0x07, ///< Signed short (16-bit) value.
-	SCE_SHACCCG_BASETYPE_USHORT = 0x08, ///< Unsigned short (16-bit) value.
-	SCE_SHACCCG_BASETYPE_INT = 0x09, ///< Signed int (32-bit) value.
-	SCE_SHACCCG_BASETYPE_UINT = 0x0a, ///< Unsigned int (32-bit) value.
-	SCE_SHACCCG_BASETYPE_SAMPLER1D = 0x0b, ///< 1D sampler
-	SCE_SHACCCG_BASETYPE_ISAMPLER1D = 0x0c, ///< 1D signed integer sampler
-	SCE_SHACCCG_BASETYPE_USAMPLER1D = 0x0d, ///< 1D unsigned integer sampler
-	SCE_SHACCCG_BASETYPE_SAMPLER2D = 0x0e, ///< 2D sampler
-	SCE_SHACCCG_BASETYPE_ISAMPLER2D = 0x0f, ///< 2D signed integer sampler
-	SCE_SHACCCG_BASETYPE_USAMPLER2D = 0x10, ///< 2D unsigned integer sampler
-	SCE_SHACCCG_BASETYPE_SAMPLERCUBE = 0x11, ///< Cube sampler
-	SCE_SHACCCG_BASETYPE_ISAMPLERCUBE = 0x12, ///< Cube signed integer sampler
-	SCE_SHACCCG_BASETYPE_USAMPLERCUBE = 0x13, ///< Cube unsigned integer sampler
-	SCE_SHACCCG_BASETYPE_ARRAY = 0x17, ///< An array
-	SCE_SHACCCG_BASETYPE_STRUCT = 0x18, ///< A structure
-	SCE_SHACCCG_BASETYPE_UNIFORMBLOCK = 0x19 ///< A uniform block
+	SCE_SHACCCG_BASETYPE_INVALID		= 0x00,		///< An invalid format.
+	SCE_SHACCCG_BASETYPE_FLOAT			= 0x01,		///< Full precision 32-bit floating point.
+	SCE_SHACCCG_BASETYPE_HALF			= 0x02,		///< Half precision 16-bit floating point.
+	SCE_SHACCCG_BASETYPE_FIXED			= 0x03,		///< 2.8 fixed point precision.
+	SCE_SHACCCG_BASETYPE_BOOL			= 0x04,		///< Boolean value.
+	SCE_SHACCCG_BASETYPE_CHAR			= 0x05,		///< Signed char (8-bit) value.
+	SCE_SHACCCG_BASETYPE_UCHAR			= 0x06,		///< Unsigned char (8-bit) value.
+	SCE_SHACCCG_BASETYPE_SHORT			= 0x07,		///< Signed short (16-bit) value.
+	SCE_SHACCCG_BASETYPE_USHORT			= 0x08,		///< Unsigned short (16-bit) value.
+	SCE_SHACCCG_BASETYPE_INT			= 0x09,		///< Signed int (32-bit) value.
+	SCE_SHACCCG_BASETYPE_UINT			= 0x0a,		///< Unsigned int (32-bit) value.
+	SCE_SHACCCG_BASETYPE_SAMPLER1D		= 0x0b,		///< 1D sampler
+	SCE_SHACCCG_BASETYPE_ISAMPLER1D		= 0x0c,		///< 1D signed integer sampler
+	SCE_SHACCCG_BASETYPE_USAMPLER1D		= 0x0d,		///< 1D unsigned integer sampler
+	SCE_SHACCCG_BASETYPE_SAMPLER2D		= 0x0e,		///< 2D sampler
+	SCE_SHACCCG_BASETYPE_ISAMPLER2D		= 0x0f,		///< 2D signed integer sampler
+	SCE_SHACCCG_BASETYPE_USAMPLER2D		= 0x10,		///< 2D unsigned integer sampler
+	SCE_SHACCCG_BASETYPE_SAMPLERCUBE	= 0x11,		///< Cube sampler
+	SCE_SHACCCG_BASETYPE_ISAMPLERCUBE	= 0x12,		///< Cube signed integer sampler
+	SCE_SHACCCG_BASETYPE_USAMPLERCUBE	= 0x13,		///< Cube unsigned integer sampler
+	SCE_SHACCCG_BASETYPE_ARRAY			= 0x17,		///< An array
+	SCE_SHACCCG_BASETYPE_STRUCT			= 0x18,		///< A structure
+	SCE_SHACCCG_BASETYPE_UNIFORMBLOCK	= 0x19		///< A uniform block
 } SceShaccCgParameterBaseType;
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Structs
@@ -70,31 +71,35 @@ typedef enum SceShaccCgParameterBaseType {
 
 	@ingroup shacccg
 */
-typedef enum SceShaccCgParameterMemoryLayout {
-	SCE_SHACCCG_MEMORYLAYOUT_INVALID, ///< Invalid memory layout
-	SCE_SHACCCG_MEMORYLAYOUT_COLUMN_MAJOR, ///< Column major memory layout
-	SCE_SHACCCG_MEMORYLAYOUT_ROW_MAJOR ///< Row major memory layout
+typedef enum SceShaccCgParameterMemoryLayout
+{
+	SCE_SHACCCG_MEMORYLAYOUT_INVALID,				///< Invalid memory layout
+	SCE_SHACCCG_MEMORYLAYOUT_COLUMN_MAJOR,			///< Column major memory layout
+	SCE_SHACCCG_MEMORYLAYOUT_ROW_MAJOR				///< Row major memory layout
 } SceShaccCgParameterMemoryLayout;
 
 /** @brief	Classifies shader parameter variability
 
 	@ingroup shacccg
 */
-typedef enum SceShaccCgParameterVariability {
-	SCE_SHACCCG_VARIABILITY_INVALID, ///< Invalid variability
-	SCE_SHACCCG_VARIABILITY_VARYING, ///< Parameter is varying
-	SCE_SHACCCG_VARIABILITY_UNIFORM ///< Parameter is uniform
+typedef enum SceShaccCgParameterVariability
+{
+	SCE_SHACCCG_VARIABILITY_INVALID,				///< Invalid variability
+	SCE_SHACCCG_VARIABILITY_VARYING,				///< Parameter is varying
+	SCE_SHACCCG_VARIABILITY_UNIFORM					///< Parameter is uniform
 } SceShaccCgParameterVariability;
 
 /** @brief	Classifies shader parameter direction
 
 	@ingroup shacccg
 */
-typedef enum SceShaccCgParameterDirection {
-	SCE_SHACCCG_DIRECTION_INVALID, ///< Invalid direction
-	SCE_SHACCCG_DIRECTION_IN, ///< Parameter is input
-	SCE_SHACCCG_DIRECTION_OUT ///< Parameter is output
+typedef enum SceShaccCgParameterDirection
+{
+	SCE_SHACCCG_DIRECTION_INVALID,					///< Invalid direction
+	SCE_SHACCCG_DIRECTION_IN,						///< Parameter is input
+	SCE_SHACCCG_DIRECTION_OUT						///< Parameter is output
 } SceShaccCgParameterDirection;
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Functions
@@ -115,7 +120,7 @@ typedef enum SceShaccCgParameterDirection {
 	@ingroup shacccg
 */
 SceShaccCgParameter sceShaccCgGetFirstParameter(
-		SceShaccCgCompileOutput const *prog);
+	SceShaccCgCompileOutput const* prog);
 
 /**	@brief	Access the next parameter in the global list of shader parameter.
 
@@ -131,7 +136,7 @@ SceShaccCgParameter sceShaccCgGetFirstParameter(
 	@ingroup shacccg
 */
 SceShaccCgParameter sceShaccCgGetNextParameter(
-		SceShaccCgParameter param);
+	SceShaccCgParameter param);
 
 /**	@brief	Find a parameter by its name.
 
@@ -150,8 +155,8 @@ SceShaccCgParameter sceShaccCgGetNextParameter(
 	@ingroup shacccg
 */
 SceShaccCgParameter sceShaccCgGetParameterByName(
-		SceShaccCgCompileOutput const *prog,
-		char const *name);
+	SceShaccCgCompileOutput const* prog,
+	char const *name);
 
 /**	@brief	Returns the name of a parameter.
 
@@ -165,8 +170,8 @@ SceShaccCgParameter sceShaccCgGetParameterByName(
 
 	@ingroup shacccg
 */
-const char *sceShaccCgGetParameterName(
-		SceShaccCgParameter param);
+const char * sceShaccCgGetParameterName(
+	SceShaccCgParameter param);
 
 /**	@brief	Returns the semantic of a parameter.
 
@@ -181,8 +186,8 @@ const char *sceShaccCgGetParameterName(
 
 	@ingroup shacccg
 */
-const char *sceShaccCgGetParameterSemantic(
-		SceShaccCgParameter param);
+const char * sceShaccCgGetParameterSemantic(
+	SceShaccCgParameter param);
 
 /**	@brief	Returns the user declared type of a parameter.
 
@@ -197,8 +202,8 @@ const char *sceShaccCgGetParameterSemantic(
 
 	@ingroup shacccg
 */
-const char *sceShaccCgGetParameterUserType(
-		SceShaccCgParameter param);
+const char * sceShaccCgGetParameterUserType(
+	SceShaccCgParameter param);
 
 /**	@brief	Returns the parameter class.
 
@@ -213,7 +218,7 @@ const char *sceShaccCgGetParameterUserType(
 	@ingroup shacccg
 */
 SceShaccCgParameterClass sceShaccCgGetParameterClass(
-		SceShaccCgParameter param);
+	SceShaccCgParameter param);
 
 /**	@brief	Returns the parameter variability.
 
@@ -228,7 +233,7 @@ SceShaccCgParameterClass sceShaccCgGetParameterClass(
 	@ingroup shacccg
 */
 SceShaccCgParameterVariability sceShaccCgGetParameterVariability(
-		SceShaccCgParameter param);
+	SceShaccCgParameter param);
 
 /**	@brief	Returns the parameter direction.
 
@@ -243,7 +248,7 @@ SceShaccCgParameterVariability sceShaccCgGetParameterVariability(
 	@ingroup shacccg
 */
 SceShaccCgParameterDirection sceShaccCgGetParameterDirection(
-		SceShaccCgParameter param);
+	SceShaccCgParameter param);
 
 /**	@brief	Returns the parameter base type.
 
@@ -258,7 +263,7 @@ SceShaccCgParameterDirection sceShaccCgGetParameterDirection(
 	@ingroup shacccg
 */
 SceShaccCgParameterBaseType sceShaccCgGetParameterBaseType(
-		SceShaccCgParameter param);
+	SceShaccCgParameter param);
 
 /**	@brief	Returns true if the parameter is referenced.
 
@@ -273,7 +278,7 @@ SceShaccCgParameterBaseType sceShaccCgGetParameterBaseType(
 	@ingroup shacccg
 */
 int32_t sceShaccCgIsParameterReferenced(
-		SceShaccCgParameter param);
+	SceShaccCgParameter param);
 
 /**	@brief	Returns the hw resource index of the parameter.
 
@@ -288,7 +293,7 @@ int32_t sceShaccCgIsParameterReferenced(
 	@ingroup shacccg
 */
 uint32_t sceShaccCgGetParameterResourceIndex(
-		SceShaccCgParameter param);
+	SceShaccCgParameter param);
 
 /**	@brief	Returns the buffer index of the parameter.
 
@@ -303,7 +308,7 @@ uint32_t sceShaccCgGetParameterResourceIndex(
 	@ingroup shacccg
 */
 uint32_t sceShaccCgGetParameterBufferIndex(
-		SceShaccCgParameter param);
+	SceShaccCgParameter param);
 
 /**	@brief	Returns true if the parameter is __regformat.
 
@@ -318,7 +323,7 @@ uint32_t sceShaccCgGetParameterBufferIndex(
 	@ingroup shacccg
 */
 int32_t sceShaccCgIsParameterRegFormat(
-		SceShaccCgParameter param);
+	SceShaccCgParameter param);
 
 /**	@brief	Returns the first member for a struct parameter.
 
@@ -334,7 +339,7 @@ int32_t sceShaccCgIsParameterRegFormat(
 	@ingroup shacccg
 */
 SceShaccCgParameter sceShaccCgGetFirstStructParameter(
-		SceShaccCgParameter param);
+	SceShaccCgParameter param);
 
 /**	@brief	Returns the first member for a uniform block parameter.
 
@@ -350,7 +355,7 @@ SceShaccCgParameter sceShaccCgGetFirstStructParameter(
 	@ingroup shacccg
 */
 SceShaccCgParameter sceShaccCgGetFirstUniformBlockParameter(
-		SceShaccCgParameter param);
+	SceShaccCgParameter param);
 
 /**	@brief	Returns the size of an array.
 
@@ -365,7 +370,7 @@ SceShaccCgParameter sceShaccCgGetFirstUniformBlockParameter(
 	@ingroup shacccg
 */
 uint32_t sceShaccCgGetArraySize(
-		SceShaccCgParameter param);
+	SceShaccCgParameter param);
 
 /**	@brief	Returns the parameter for an array element.
 
@@ -383,8 +388,8 @@ uint32_t sceShaccCgGetArraySize(
 	@ingroup shacccg
 */
 SceShaccCgParameter sceShaccCgGetArrayParameter(
-		SceShaccCgParameter aparam,
-		uint32_t index);
+	SceShaccCgParameter aparam,
+	uint32_t index);
 
 /**	@brief	Returns the vector width for a vector parameter.
 
@@ -399,7 +404,7 @@ SceShaccCgParameter sceShaccCgGetArrayParameter(
 	@ingroup shacccg
 */
 uint32_t sceShaccCgGetParameterVectorWidth(
-		SceShaccCgParameter param);
+	SceShaccCgParameter param);
 
 /**	@brief	Returns the number of columns for a matrix parameter.
 
@@ -414,7 +419,7 @@ uint32_t sceShaccCgGetParameterVectorWidth(
 	@ingroup shacccg
 */
 uint32_t sceShaccCgGetParameterColumns(
-		SceShaccCgParameter param);
+	SceShaccCgParameter param);
 
 /**	@brief	Returns the number of rows for a matrix parameter.
 
@@ -429,7 +434,7 @@ uint32_t sceShaccCgGetParameterColumns(
 	@ingroup shacccg
 */
 uint32_t sceShaccCgGetParameterRows(
-		SceShaccCgParameter param);
+	SceShaccCgParameter param);
 
 /**	@brief	Returns the memory layout for a matrix parameter.
 
@@ -444,7 +449,7 @@ uint32_t sceShaccCgGetParameterRows(
 	@ingroup shacccg
 */
 SceShaccCgParameterMemoryLayout sceShaccCgGetParameterMemoryLayout(
-		SceShaccCgParameter param);
+	SceShaccCgParameter param);
 
 /**	@brief	Returns the parameter for a row of a matrix parameter.
 
@@ -462,8 +467,8 @@ SceShaccCgParameterMemoryLayout sceShaccCgGetParameterMemoryLayout(
 	@ingroup shacccg
 */
 SceShaccCgParameter sceShaccCgGetRowParameter(
-		SceShaccCgParameter param,
-		uint32_t index);
+	SceShaccCgParameter param,
+	uint32_t index);
 
 /**	@brief	Returns the query format component count for a sampler parameter.
 
@@ -478,7 +483,7 @@ SceShaccCgParameter sceShaccCgGetRowParameter(
 	@ingroup shacccg
 */
 uint32_t sceShaccCgGetSamplerQueryFormatWidth(
-		SceShaccCgParameter param);
+	SceShaccCgParameter param);
 
 /**	@brief	Returns the number of different precisions used to as query format for sampler parameter.
 
@@ -493,7 +498,7 @@ uint32_t sceShaccCgGetSamplerQueryFormatWidth(
 	@ingroup shacccg
 */
 uint32_t sceShaccCgGetSamplerQueryFormatPrecisionCount(
-		SceShaccCgParameter param);
+	SceShaccCgParameter param);
 
 /**	@brief	Returns query precision format for a sampler parameter.
 
@@ -511,11 +516,12 @@ uint32_t sceShaccCgGetSamplerQueryFormatPrecisionCount(
 	@ingroup shacccg
 */
 SceShaccCgParameterBaseType sceShaccCgGetSamplerQueryFormatPrecision(
-		SceShaccCgParameter param,
-		uint32_t index);
+	SceShaccCgParameter param,
+	uint32_t index);
 
-#ifdef __cplusplus
+
+#ifdef	__cplusplus
 }
-#endif /* __cplusplus */
+#endif	/* __cplusplus */
 
 #endif /* _DOLCESDK_PSP2_SHACCCG_PARAMQUERY_H_ */
