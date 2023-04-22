@@ -65,8 +65,8 @@
 #include <cmath>
 #include <vector>
 
-#include "thirdparty/xatlas/xatlas.h"
 #include "merge.h"
+#include "thirdparty/xatlas/xatlas.h"
 
 #define get_transparency(M) \
 	(M->get_feature(SpatialMaterial::FEATURE_TRANSPARENT) || M->get_flag(SpatialMaterial::FLAG_USE_ALPHA_SCISSOR))

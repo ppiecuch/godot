@@ -35,12 +35,7 @@
 
 #define GME_MATH_TAU 3.14159265358979323846 * 2
 
-class GodotMathExtension : public Object {
-	GDCLASS(GodotMathExtension, Object);
-
-	static GodotMathExtension *singleton;
-
-public:
+struct MathExtension {
 	static _FORCE_INLINE_ Vector3 spherical_to_local_position(real_t p_theta, real_t p_phi) {
 		Vector3 res;
 
@@ -216,7 +211,7 @@ public:
 	// Get local rotation of a spatial node as a quaternion.
 	static Quat spatial_get_rotation_quat(const Node *spatial) {
 		ERR_FAIL_NULL_V(spatial, Quat());
-		if (const Spatial *sp = cast_to<Spatial>(spatial)) {
+		if (const Spatial *sp = Object::cast_to<Spatial>(spatial)) {
 			return sp->get_transform().basis.get_rotation_quat();
 		}
 		return Quat();
@@ -225,7 +220,7 @@ public:
 	// Set local rotation of a spatial node from a quaternion. This will reset local scale to one.
 	static void spatial_set_rotation_quat(Node *spatial, const Quat &rotation) {
 		ERR_FAIL_NULL(spatial);
-		if (Spatial *sp = cast_to<Spatial>(spatial)) {
+		if (Spatial *sp = Object::cast_to<Spatial>(spatial)) {
 			Transform transform = sp->get_transform();
 			transform.set_basis(Basis(rotation));
 			sp->set_transform(transform);
@@ -235,7 +230,7 @@ public:
 	// Set local rotation of a spatial node from a quaternion. This will keep local scale.
 	static void spatial_set_rotation_quat_keep_scale(Node *spatial, const Quat &rotation) {
 		ERR_FAIL_NULL(spatial);
-		if (Spatial *sp = cast_to<Spatial>(spatial)) {
+		if (Spatial *sp = Object::cast_to<Spatial>(spatial)) {
 			Transform transform = sp->get_transform();
 			Vector3 original_scale(transform.basis.get_scale());
 			transform.set_basis(Basis(rotation, original_scale));
@@ -244,16 +239,16 @@ public:
 	}
 };
 
-class _GodotMathExtension : public Object {
-	GDCLASS(_GodotMathExtension, Object);
+class GodotMathExtension : public Object {
+	GDCLASS(GodotMathExtension, Object);
 
-	static _GodotMathExtension *singleton;
+	static GodotMathExtension *singleton;
 
 protected:
 	static void _bind_methods();
 
 public:
-	static _GodotMathExtension *get_singleton();
+	static GodotMathExtension *get_singleton();
 
 	Vector3 spherical_to_local_position(real_t p_theta, real_t p_phi);
 	Quat quat_from_radians(Vector3 p_radians);
@@ -264,9 +259,7 @@ public:
 	real_t smoother_step(real_t t);
 	real_t camera_get_position_distance(const Object *p_camera, const Vector3 &p_pos);
 
-	Vector2 get_2d_position_from_3d_position_with_screen_limits(const Object *p_camera, const Vector3 &p_position_3d,
-			const Vector2 &screen_size, const Vector2 &screen_center,
-			const Vector2 &screen_mins, const Vector2 &screen_max);
+	Vector2 get_2d_position_from_3d_position_with_screen_limits(const Object *p_camera, const Vector3 &p_position_3d, const Dictionary &screen_info);
 
 	Vector2 get_2d_position_from_3d_position(const Object *p_camera, const Vector3 &p_position_3d);
 	real_t clamp_angle(real_t val, real_t ang_min, real_t ang_max);
@@ -280,5 +273,5 @@ public:
 	void spatial_set_rotation_quat(Node *spatial, const Quat &rotation);
 	void spatial_set_rotation_quat_keep_scale(Node *spatial, const Quat &rotation);
 
-	_GodotMathExtension();
+	GodotMathExtension();
 };

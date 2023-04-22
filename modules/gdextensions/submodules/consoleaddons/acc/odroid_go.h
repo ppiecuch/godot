@@ -5,8 +5,8 @@
 
 #include <stdlib.h>
 
-const char* BACKLIGHT_BRIGHTNESS_NAME = "/sys/class/backlight/backlight/brightness";
-const char* BACKLIGHT_BRIGHTNESS_MAX_NAME = "/sys/class/backlight/backlight/max_brightness";
+const char *BACKLIGHT_BRIGHTNESS_NAME = "/sys/class/backlight/backlight/brightness";
+const char *BACKLIGHT_BRIGHTNESS_MAX_NAME = "/sys/class/backlight/backlight/max_brightness";
 #define BACKLIGHT_BUFFER_SIZE (127)
 
 uint32_t odroid_display_backlight_get() {
@@ -23,7 +23,9 @@ uint32_t odroid_display_backlight_get() {
 			max = atoi(buffer);
 		}
 		close(fd);
-		if (max == 0) return 0;
+		if (max == 0) {
+			return 0;
+		}
 	}
 
 	fd = open(BACKLIGHT_BRIGHTNESS_NAME, O_RDONLY);
@@ -44,7 +46,9 @@ void odroid_display_backlight_set(uint32_t value) {
 	int max = 255;
 	char buffer[BACKLIGHT_BUFFER_SIZE + 1];
 
-	if (value > 100) value = 100;
+	if (value > 100) {
+		value = 100;
+	}
 
 	int fd = open(BACKLIGHT_BRIGHTNESS_MAX_NAME, O_RDONLY);
 	if (fd > 0) {
@@ -55,7 +59,9 @@ void odroid_display_backlight_set(uint32_t value) {
 			max = atoi(buffer);
 		}
 		close(fd);
-		if (max == 0) return;
+		if (max == 0) {
+			return;
+		}
 	}
 
 	fd = open(BACKLIGHT_BRIGHTNESS_NAME, O_WRONLY);
@@ -63,14 +69,12 @@ void odroid_display_backlight_set(uint32_t value) {
 		float percent = value / 100.0 * (float)max;
 		sprintf(buffer, "%d\n", (uint32_t)percent);
 
-		//printf("backlight=%d, max=%d\n", (uint32_t)percent, max);
-
 		ssize_t count = write(fd, buffer, strlen(buffer));
 		if (count < 0) {
-			printf("odroid_display_backlight_set write failed.\n");
+			WARN_PRINT("odroid_display_backlight_set write failed.");
 		}
 		close(fd);
 	} else {
-		printf("odroid_display_backlight_set open failed.\n");
+		WARN_PRINT("odroid_display_backlight_set open failed.");
 	}
 }

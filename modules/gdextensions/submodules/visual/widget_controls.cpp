@@ -611,7 +611,11 @@ void ControlWidget::_notification(int p_what) {
 					_draw_ball(_mesh, radius * 0.95, !disabled, _state.tr.basis);
 				} break;
 			}
-			draw_mesh(_mesh, control_type == WIDGET_ROTATION_SPHERE ? _checker : Ref<Texture>());
+			if (control_type == WIDGET_ROTATION_SPHERE) {
+				draw_mesh_3d(_mesh, _checker);
+			} else {
+				draw_mesh(_mesh, Ref<Texture>());
+			}
 		} break;
 	}
 }

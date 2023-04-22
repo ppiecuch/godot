@@ -54,8 +54,8 @@
 #ifndef MESH_MERGE_H
 #define MESH_MERGE_H
 
-#include "core/reference.h"
 #include "core/math/vector2.h"
+#include "core/reference.h"
 #include "scene/3d/mesh_instance.h"
 
 #include "thirdparty/xatlas/xatlas.h"

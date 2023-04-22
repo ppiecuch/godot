@@ -9,14 +9,14 @@
 #include "core/error_macros.h"
 #include "core/print_string.h"
 
+#include <fcntl.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <string.h>
-#include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "RgaApi.h"
 
@@ -28,7 +28,7 @@ typedef enum drmkms_rotation {
 } drmkms_rotation_t;
 
 typedef struct drmkms_surface {
-	drmkms_display_t* display;
+	drmkms_display_t *display;
 	uint32_t gem_handle;
 	uint64_t size;
 	int width;
@@ -37,13 +37,13 @@ typedef struct drmkms_surface {
 	uint32_t format;
 	int prime_fd;
 	bool is_mapped;
-	uint8_t* map;
+	uint8_t *map;
 } drmkms_surface_t;
 
 int drmkms_drm_format_get_bpp(uint32_t drm_format) {
 	int result;
 
-	switch(drm_format) {
+	switch (drm_format) {
 		case DRM_FORMAT_XRGB4444:
 		case DRM_FORMAT_XBGR4444:
 		case DRM_FORMAT_RGBX4444:
@@ -69,12 +69,10 @@ int drmkms_drm_format_get_bpp(uint32_t drm_format) {
 			result = 16;
 			break;
 
-
 		case DRM_FORMAT_RGB888:
 		case DRM_FORMAT_BGR888:
 			result = 24;
 			break;
-
 
 		case DRM_FORMAT_XRGB8888:
 		case DRM_FORMAT_XBGR8888:
@@ -98,7 +96,6 @@ int drmkms_drm_format_get_bpp(uint32_t drm_format) {
 			result = 32;
 			break;
 
-
 		default:
 			printf("unhandled DRM FORMAT.\n");
 			result = 0;
@@ -107,13 +104,13 @@ int drmkms_drm_format_get_bpp(uint32_t drm_format) {
 	return result;
 }
 
-drmkms_surface_t* drmkms_surface_create(drmkms_display_t* display, int width, int height, uint32_t format) {
-	drmkms_surface_t* result = (drmkms_surface_t*)malloc(sizeof(*result));
+drmkms_surface_t *drmkms_surface_create(drmkms_display_t *display, int width, int height, uint32_t format) {
+	drmkms_surface_t *result = (drmkms_surface_t *)malloc(sizeof(*result));
 	ERR_NULL_FAIL_V(result, nullptr);
 
 	memset(result, 0, sizeof(*result));
 
-	struct drm_mode_create_dumb args = {0};
+	struct drm_mode_create_dumb args = { 0 };
 	args.width = width;
 	args.height = height;
 	args.bpp = drmkms_drm_format_get_bpp(format);
@@ -124,7 +121,6 @@ drmkms_surface_t* drmkms_surface_create(drmkms_display_t* display, int width, in
 		printf("DRM_IOCTL_MODE_CREATE_DUMB failed.\n");
 		goto out;
 	}
-
 
 	result->display = display;
 	result->gem_handle = args.handle;
@@ -141,7 +137,7 @@ out:
 	return nullptr;
 }
 
-void drmkms_surface_destroy(drmkms_surface_t* surface) {
+void drmkms_surface_destroy(drmkms_surface_t *surface) {
 	struct drm_mode_destroy_dumb args = { 0 };
 	args.handle = surface->gem_handle;
 
@@ -153,7 +149,7 @@ void drmkms_surface_destroy(drmkms_surface_t* surface) {
 	free(surface);
 }
 
-int drmkms_surface_prime_fd(drmkms_surface_t* surface) {
+int drmkms_surface_prime_fd(drmkms_surface_t *surface) {
 	if (surface->prime_fd <= 0) {
 		int io = drmPrimeHandleToFD(surface->display->fd, surface->gem_handle, DRM_RDWR | DRM_CLOEXEC, &surface->prime_fd);
 		if (io < 0) {
@@ -168,7 +164,7 @@ out:
 	return 0;
 }
 
-void* drmkms_surface_map(drmkms_surface_t* surface) {
+void *drmkms_surface_map(drmkms_surface_t *surface) {
 	if (surface->is_mapped) {
 		return surface->map;
 	}
@@ -181,7 +177,7 @@ void* drmkms_surface_map(drmkms_surface_t* surface) {
 	return surface->map;
 }
 
-void drmkms_surface_unmap(drmkms_surface_t* surface) {
+void drmkms_surface_unmap(drmkms_surface_t *surface) {
 	if (surface->is_mapped) {
 		munmap(surface->map, surface->size);
 
@@ -224,10 +220,9 @@ static uint32_t drmkms_rkformat_get(uint32_t drm_fourcc) {
 	}
 }
 
-void drmkms_surface_blit(drmkms_surface_t* srcSurface, int srcX, int srcY, int srcWidth, int srcHeight,
-					drmkms_surface_t* dstSurface, int dstX, int dstY, int dstWidth, int dstHeight,
-					drmkms_rotation_t rotation)
-{
+void drmkms_surface_blit(drmkms_surface_t *srcSurface, int srcX, int srcY, int srcWidth, int srcHeight,
+		drmkms_surface_t *dstSurface, int dstX, int dstY, int dstWidth, int dstHeight,
+		drmkms_rotation_t rotation) {
 	rga_info_t dst = { 0 };
 	dst.fd = drmkms_surface_prime_fd(dstSurface);
 	dst.mmuFlag = 1;
@@ -284,18 +279,16 @@ void drmkms_surface_blit(drmkms_surface_t* srcSurface, int srcX, int srcY, int s
 #endif
 	src.scale_mode = 2;
 
-
 	int ret = c_RkRgaBlit(&src, &dst, nullptr);
 	if (ret) {
 		printf("c_RkRgaBlit failed.\n");
 	}
 }
 
-int drmkms_surface_save_as_png(drmkms_surface_t* surface, const char* filename) {
+int drmkms_surface_save_as_png(drmkms_surface_t *surface, const char *filename) {
 	png_structp png_ptr = nullptr;
 	png_infop info_ptr = nullptr;
-	png_bytep* row_pointers = nullptr;
-
+	png_bytep *row_pointers = nullptr;
 
 	png_byte color_type = 0;
 	png_byte bit_depth = 0;
@@ -322,7 +315,6 @@ int drmkms_surface_save_as_png(drmkms_surface_t* surface, const char* filename) 
 			printf("The image format is not supported.\n");
 			return -2;
 	}
-
 
 	// based on http://zarb.org/~gc/html/libpng.html
 
@@ -399,7 +391,7 @@ out:
 		png_destroy_info_struct(png_ptr, &info_ptr);
 
 	if (png_ptr)
-		png_destroy_write_struct(&png_ptr, (png_infopp)nullptr);
+		png_destroy_write_struct(&png_ptr, (png_infopp) nullptr);
 
 	if (row_pointers)
 		free(row_pointers);
@@ -409,4 +401,3 @@ out:
 
 	return -1;
 }
-
