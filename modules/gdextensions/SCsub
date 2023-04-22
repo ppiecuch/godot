@@ -361,9 +361,10 @@ if is_enabled("polyvector"):
     env_module.Append(CPPDEFINES=["_7ZIP_ST"])
     thirdparty_sources += Glob("thirdparty/libshockwave/*.cpp") + Glob("thirdparty/libshockwave/lzma/*.c")
 
-if is_enabled("scenemerge"):
-    env_module.Prepend(CPPPATH=['thirdparty/mesh_optimizer'])
-    env_module.add_source_files(env.modules_sources, Glob('thirdparty/meshoptimizer/src/*.cpp'))
+if env["tools"] and is_enabled("scenemerge"):
+    modules += ["scenemerge"]
+    env_module.Prepend(CPPPATH=["thirdparty/mesh_optimizer"])
+    env_module.add_source_files(env.modules_sources, Glob("thirdparty/meshoptimizer/src/*.cpp"))
 
 if is_enabled("thorvg"):
     if env["tools"]:

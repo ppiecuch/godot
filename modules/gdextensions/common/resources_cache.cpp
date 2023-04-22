@@ -56,10 +56,12 @@ static _FORCE_INLINE_ String _get_res_cache_path(const String &p_res_name) {
 }
 
 void ResCache::_dump() const {
-	print_line("Resource cache:");
-	for (auto *E = _cache.front(); E; E = E->next()) {
-		const String &key = E->key();
-		print_line(vformat("  id: %s, catalog: %s, modified: %s, on_disk: %s, size: %d", key, _catalog.has(key), _catalog[key].modified, _catalog[key].on_disk, _catalog[key].size));
+	if (!_cache.empty()) {
+		print_line("Resource cache:");
+		for (auto *E = _cache.front(); E; E = E->next()) {
+			const String &key = E->key();
+			print_line(vformat("  id: %s, catalog: %s, modified: %s, on_disk: %s, size: %d", key, _catalog.has(key), _catalog[key].modified, _catalog[key].on_disk, _catalog[key].size));
+		}
 	}
 }
 
@@ -114,11 +116,11 @@ void ResCache::del_resource(const String &p_res_name) {
 	ERR_FAIL_COND(!_catalog.has(p_res_name));
 	const String res_path = _catalog[p_res_name].path;
 	if (!res_path.empty()) {
-		DirAccess::remove_file_or_error(res_path); // invalidate
+		Error err = DirAccess::remove_file_or_error(res_path); // invalidate
 		if (!FileAccess::exists(res_path)) {
-			_catalog[p_res_name].path = "";
-			_catalog[p_res_name].size = 0;
-			_catalog[p_res_name].on_disk = false;
+			_catalog.erase(p_res_name);
+		} else {
+			WARN_PRINT(vformat("Unable to remove resource %s. %s", p_res_name, err != OK ? ("Error: " + itos(err)) : "(No error detected)"));
 		}
 	}
 	if (_cache.has(p_res_name)) {
@@ -167,22 +169,30 @@ Error ResCache::sync() {
 			}
 		}
 	}
-	unsigned cache_size = 0;
+	unsigned cache_size = 0, cache_clean = 0;
 	Array entries;
 	for (const auto &key : ids) {
 		const CacheEntry &entry = _catalog[key];
 		if (cache_size > max_disk_cache) {
+			cache_clean += _catalog[key].size;
 			const String res_path = _catalog[key].path;
 			if (!res_path.empty()) {
-				DirAccess::remove_file_or_error(res_path); // invalidate
+				Error err = DirAccess::remove_file_or_error(res_path); // invalidate
 				if (!FileAccess::exists(res_path)) {
-					_catalog[key].path = "";
-					_catalog[key].size = 0;
-					_catalog[key].modified = true;
-					_catalog[key].on_disk = false;
+					if (!_cache.has(key)) {
+						_catalog.erase(key); // gone forever
+					} else {
+						// keep the record in case the entry
+						// would fit into cache later
+						_catalog[key].path = "";
+						_catalog[key].size = 0;
+						_catalog[key].modified = true;
+						_catalog[key].on_disk = false;
+					}
 				} else {
 					// keep entry if file still exists
 					entries.append(helper::dict("name", key, "path", entry.path, "last_access_time", entry.last_access_time, "size", entry.size));
+					WARN_PRINT(vformat("Unable to clean resource %s. %s", key, err != OK ? ("Error: " + itos(err)) : "(No error detected)"));
 				}
 			}
 			break;
@@ -208,6 +218,9 @@ Error ResCache::sync() {
 		emit_signal("cache_full");
 	}
 	print_verbose("Synced " + itos(cache_size) + " bytes of cached resources.");
+	if (cache_clean) {
+		print_verbose("Cleaned " + itos(cache_clean) + " bytes of cached resources.");
+	}
 	Dictionary dict;
 	dict["max_disk_cache"] = max_disk_cache;
 	dict["entries"] = entries;

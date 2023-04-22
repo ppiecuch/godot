@@ -304,6 +304,7 @@ public:
 	String get_extension() const;
 	String get_basename() const;
 	String plus_file(const String &p_file) const;
+	_FORCE_INLINE_ String path_join(const String &p_file) const { return plus_file(p_file); }
 	CharType ord_at(int p_idx) const;
 
 	void erase(int p_pos, int p_chars);

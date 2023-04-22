@@ -54,7 +54,11 @@
 #ifndef MESH_MERGE_H
 #define MESH_MERGE_H
 
-#include "core/object/ref_counted.h"
+#include "core/reference.h"
+#include "core/math/vector2.h"
+#include "scene/3d/mesh_instance.h"
+
+#include "thirdparty/xatlas/xatlas.h"
 
 #ifdef TOOLS_ENABLED
 #include "editor/editor_node.h"
@@ -63,12 +67,11 @@
 
 #include "modules/csg/csg_shape.h"
 #include "modules/gridmap/grid_map.h"
-#include "scene/3d/mesh_instance_3d.h"
 #include "scene/gui/check_box.h"
 #include "scene/main/node.h"
 
-class SceneMerge : public RefCounted {
-	GDCLASS(SceneMerge, RefCounted);
+class SceneMerge : public Reference {
+	GDCLASS(SceneMerge, Reference);
 
 	void _dialog_action(String p_file);
 
@@ -83,9 +86,11 @@ public:
 class SceneMergePlugin : public EditorPlugin {
 	GDCLASS(SceneMergePlugin, EditorPlugin);
 
+	EditorNode *editor;
 	CheckBox *file_export_lib_merge = memnew(CheckBox);
 	EditorFileDialog *file_export_lib = memnew(EditorFileDialog);
 	Ref<SceneMerge> scene_optimize;
+
 	void _dialog_action(String p_file);
 	void merge();
 
@@ -94,20 +99,11 @@ protected:
 	static void _bind_methods();
 
 public:
-	SceneMergePlugin();
-	~SceneMergePlugin() {
-		EditorNode::get_singleton()->remove_tool_menu_item("Merge Scene");
-	}
+	SceneMergePlugin(EditorNode *p_node);
 };
 #endif // TOOLS_ENABLED
 
-#include "core/math/vector2.h"
-#include "core/object/ref_counted.h"
-#include "scene/3d/mesh_instance_3d.h"
-
-#include "thirdparty/xatlas/xatlas.h"
-
-class MeshMergeMaterialRepack : public RefCounted {
+class MeshMergeMaterialRepack : public Reference {
 	struct TextureData {
 		uint16_t width;
 		uint16_t height;
@@ -183,7 +179,7 @@ class MeshMergeMaterialRepack : public RefCounted {
 	struct MeshState {
 		Ref<Mesh> mesh;
 		NodePath path;
-		MeshInstance3D *mesh_instance;
+		MeshInstance *mesh_instance;
 		bool operator==(const MeshState &rhs) const;
 	};
 	struct MaterialImageCache {
@@ -197,14 +193,14 @@ class MeshMergeMaterialRepack : public RefCounted {
 		xatlas::Atlas *atlas;
 		Vector<MeshState> &r_mesh_items;
 		Array &vertex_to_material;
-		const Vector<Vector<Vector2> > uvs;
-		const Vector<Vector<ModelVertex> > &model_vertices;
+		const Vector<Vector<Vector2>> uvs;
+		const Vector<Vector<ModelVertex>> &model_vertices;
 		String p_name;
 		String output_path;
 		const xatlas::PackOptions &pack_options;
 		Vector<AtlasLookupTexel> &atlas_lookup;
-		Vector<Ref<Material> > &material_cache;
-		HashMap<String, Ref<Image> > texture_atlas;
+		Vector<Ref<Material>> &material_cache;
+		HashMap<String, Ref<Image>> texture_atlas;
 		HashMap<int32_t, MaterialImageCache> material_image_cache;
 	};
 	struct MeshMerge {
@@ -216,11 +212,11 @@ class MeshMergeMaterialRepack : public RefCounted {
 	void _find_all_animated_meshes(Vector<MeshMerge> &r_items, Node *p_current_node, const Node *p_owner);
 	void _find_all_mesh_instances(Vector<MeshMerge> &r_items, Node *p_current_node, const Node *p_owner);
 	void _generate_texture_atlas(MergeState &state, String texture_type);
-	Ref<Image> _get_source_texture(MergeState &state, Ref<BaseMaterial3D> material, String texture_type);
-	void _generate_atlas(const int32_t p_num_meshes, Vector<Vector<Vector2> > &r_uvs, xatlas::Atlas *atlas, const Vector<MeshState> &r_meshes, const Vector<Ref<Material> > material_cache,
+	Ref<Image> _get_source_texture(MergeState &state, Ref<SpatialMaterial> material, String texture_type);
+	void _generate_atlas(const int32_t p_num_meshes, Vector<Vector<Vector2>> &r_uvs, xatlas::Atlas *atlas, const Vector<MeshState> &r_meshes, const Vector<Ref<Material>> material_cache,
 			xatlas::PackOptions &pack_options);
-	void scale_uvs_by_texture_dimension(const Vector<MeshState> &original_mesh_items, Vector<MeshState> &mesh_items, Vector<Vector<Vector2> > &uv_groups, Array &r_vertex_to_material, Vector<Vector<ModelVertex> > &r_model_vertices);
-	void map_mesh_to_index_to_material(const Vector<MeshState> mesh_items, Array &vertex_to_material, Vector<Ref<Material> > &material_cache);
+	void scale_uvs_by_texture_dimension(const Vector<MeshState> &original_mesh_items, Vector<MeshState> &mesh_items, Vector<Vector<Vector2>> &uv_groups, Array &r_vertex_to_material, Vector<Vector<ModelVertex>> &r_model_vertices);
+	void map_mesh_to_index_to_material(const Vector<MeshState> mesh_items, Array &vertex_to_material, Vector<Ref<Material>> &material_cache);
 	Node *_output(MergeState &state, int p_count);
 	struct MeshMergeState {
 		Vector<MeshMerge> mesh_items;
@@ -231,7 +227,7 @@ class MeshMergeMaterialRepack : public RefCounted {
 	};
 	Node *_merge_list(MeshMergeState p_mesh_merge_state, int p_index);
 	void _mark_nodes(Node *p_current, Node *p_owner, Vector<Node *> &r_nodes);
-	void _remove_empty_Node3Ds(Node *scene);
+	void _remove_empty_nodes(Node *scene);
 	void _clean_animation_player(Node *scene);
 	void _remove_nodes(Node *scene, Vector<Node *> &r_nodes);
 

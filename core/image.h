@@ -266,6 +266,7 @@ public:
 	 * returns true when the image is empty (0,0) in size
 	 */
 	bool empty() const;
+	_FORCE_INLINE_ bool is_empty() const { return empty(); }
 
 	PoolVector<uint8_t> get_data() const;
 

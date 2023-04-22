@@ -387,6 +387,15 @@ void ImageTexture::_set_data(Dictionary p_data) {
 	set_size_override(p_data["size"]);
 };
 
+Ref<ImageTexture> ImageTexture::create_texture_from_image(const Ref<Image> &p_image) {
+	ERR_FAIL_COND_V_MSG(p_image.is_null() || p_image->is_empty(), Ref<ImageTexture>(), "Invalid image");
+
+	Ref<ImageTexture> image_texture;
+	image_texture.instance();
+	image_texture->create_from_image(p_image);
+	return image_texture;
+}
+
 void ImageTexture::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("create", "width", "height", "format", "flags"), &ImageTexture::create, DEFVAL(FLAGS_DEFAULT));
 	ClassDB::bind_method(D_METHOD("create_from_image", "image", "flags"), &ImageTexture::create_from_image, DEFVAL(FLAGS_DEFAULT));

@@ -156,6 +156,8 @@ public:
 
 	virtual void set_path(const String &p_path, bool p_take_over = false) G_OVERRIDE;
 
+	static Ref<ImageTexture> create_texture_from_image(const Ref<Image> &p_image);
+
 	ImageTexture();
 	~ImageTexture();
 };

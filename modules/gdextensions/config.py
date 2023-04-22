@@ -57,6 +57,7 @@ def configure(env):
         "timelinefx",
         "meshlod",
         "meshslicer",
+        "scenemerge",
         "rockgen",
         "opensteer",
         "tileengine",

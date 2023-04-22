@@ -1,0 +1,238 @@
+diff --git a/src/loaders/svg/tvgSvgLoader.cpp b/src/loaders/svg/tvgSvgLoader.cpp
+index 42bfd4de7..7e996a6bf 100644
+--- a/src/loaders/svg/tvgSvgLoader.cpp
++++ b/src/loaders/svg/tvgSvgLoader.cpp
+@@ -787,20 +787,27 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
+ 
+     if (!strcmp(key, "width")) {
+         doc->w = _toFloat(loader->svgParse, value, SvgParserLengthType::Horizontal);
++        doc->bboxFlag |= BBoxFlag::Width;
+     } else if (!strcmp(key, "height")) {
+         doc->h = _toFloat(loader->svgParse, value, SvgParserLengthType::Vertical);
++        doc->bboxFlag |= BBoxFlag::Height;
+     } else if (!strcmp(key, "viewBox")) {
+         if (_parseNumber(&value, &doc->vx)) {
+             if (_parseNumber(&value, &doc->vy)) {
+                 if (_parseNumber(&value, &doc->vw)) {
+-                    _parseNumber(&value, &doc->vh);
+-                    loader->svgParse->global.h = (uint32_t)doc->vh;
++                    if (_parseNumber(&value, &doc->vh)) {
++                        doc->bboxFlag |= BBoxFlag::ViewboxH;
++                        loader->svgParse->global.h = (uint32_t)doc->vh;
++                    }
++                    doc->bboxFlag |= BBoxFlag::ViewboxW;
++                    loader->svgParse->global.w = (uint32_t)doc->vw;
+                 }
+-                loader->svgParse->global.w = (uint32_t)doc->vw;
++                doc->bboxFlag |= BBoxFlag::ViewboxY;
++                loader->svgParse->global.y = (int)doc->vy;
+             }
+-            loader->svgParse->global.y = (int)doc->vy;
++            doc->bboxFlag |= BBoxFlag::ViewboxX;
++            loader->svgParse->global.x = (int)doc->vx;
+         }
+-        loader->svgParse->global.x = (int)doc->vx;
+     } else if (!strcmp(key, "preserveAspectRatio")) {
+         if (!strcmp(value, "none")) doc->preserveAspect = false;
+     } else if (!strcmp(key, "style")) {
+@@ -815,7 +822,6 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
+     return true;
+ }
+ 
+-
+ //https://www.w3.org/TR/SVGTiny12/painting.html#SpecifyingPaint
+ static void _handlePaintAttr(SvgPaint* paint, const char* value)
+ {
+@@ -1249,6 +1255,7 @@ static SvgNode* _createSvgNode(SvgLoaderData* loader, SvgNode* parent, const cha
+     loader->svgParse->global.h = 0;
+ 
+     doc->preserveAspect = true;
++    doc->bboxFlag = BBoxFlag::None;
+     func(buf, bufLength, _attrParseSvgNode, loader);
+ 
+     if (loader->svgParse->global.w == 0) {
+@@ -3127,7 +3134,14 @@ void SvgLoader::run(unsigned tid)
+ 
+         _updateStyle(loaderData.doc, nullptr);
+     }
+-    root = svgSceneBuild(loaderData.doc, vx, vy, vw, vh, w, h, preserveAspect, svgPath);
++    Box vBox = {vx, vy, vw, vh};
++    root = svgSceneBuild(loaderData.doc, vBox, w, h, preserveAspect, svgPath, bboxGiven);
++    if (!bboxGiven) {
++        vx = vBox.x;
++        vy = vBox.y;
++        vw = w = vBox.w;
++        vh = h = vBox.h;
++    }
+ }
+ 
+ 
+@@ -3140,6 +3154,7 @@ bool SvgLoader::header()
+     if (!loaderData.svgParse) return false;
+ 
+     loaderData.svgParse->flags = SvgStopStyleFlags::StopDefault;
++    bboxGiven = false;
+ 
+     simpleXmlParse(content, size, true, _svgLoaderParserForValidCheck, &(loaderData));
+ 
+@@ -3161,6 +3176,14 @@ bool SvgLoader::header()
+         }
+ 
+         preserveAspect = loaderData.doc->node.doc.preserveAspect;
++
++        if ((loaderData.doc->node.doc.bboxFlag & BBoxFlag::All) == BBoxFlag::All ||
++            (loaderData.doc->node.doc.bboxFlag & BBoxFlag::Viewbox) == BBoxFlag::Viewbox ||
++            (loaderData.doc->node.doc.bboxFlag & BBoxFlag::WidthHeight) == BBoxFlag::WidthHeight) {
++            if (vw <= 0 || vh <= 0)
++                return false;
++            bboxGiven = true;
++        }
+     } else {
+         TVGLOG("SVG", "No SVG File. There is no <svg/>");
+         return false;
+diff --git a/src/loaders/svg/tvgSvgLoader.h b/src/loaders/svg/tvgSvgLoader.h
+index 093fb671b..95f1d6ef3 100644
+--- a/src/loaders/svg/tvgSvgLoader.h
++++ b/src/loaders/svg/tvgSvgLoader.h
+@@ -50,6 +50,8 @@ class SvgLoader : public LoadModule, public Task
+     unique_ptr<Paint> paint() override;
+ 
+ private:
++    bool bboxGiven;
++
+     bool header();
+     void clear();
+     void run(unsigned tid) override;
+diff --git a/src/loaders/svg/tvgSvgLoaderCommon.h b/src/loaders/svg/tvgSvgLoaderCommon.h
+index dc9ed558c..0950e684c 100644
+--- a/src/loaders/svg/tvgSvgLoaderCommon.h
++++ b/src/loaders/svg/tvgSvgLoaderCommon.h
+@@ -25,6 +25,11 @@
+ #include "tvgCommon.h"
+ #include "tvgArray.h"
+ 
++struct Box
++{
++    float x, y, w, h;
++};
++
+ struct SvgNode;
+ struct SvgStyleGradient;
+ 
+@@ -145,6 +150,20 @@ enum class SvgParserLengthType
+     Other
+ };
+ 
++enum BBoxFlag
++{
++    None = 0,
++    Width = 1,
++    Height = 2,
++    ViewboxX = 4,
++    ViewboxY = 8,
++    ViewboxW = 16,
++    ViewboxH = 32,
++    Viewbox = ViewboxX | ViewboxY | ViewboxW | ViewboxH,
++    WidthHeight = Width | Height,
++    All = Viewbox | WidthHeight
++};
++
+ struct SvgDocNode
+ {
+     float w;
+@@ -156,6 +175,7 @@ struct SvgDocNode
+     SvgNode* defs;
+     SvgNode* style;
+     bool preserveAspect;
++    uint32_t bboxFlag;
+ };
+ 
+ struct SvgGNode
+diff --git a/src/loaders/svg/tvgSvgSceneBuilder.cpp b/src/loaders/svg/tvgSvgSceneBuilder.cpp
+index a3f34fd46..6adfef6b5 100644
+--- a/src/loaders/svg/tvgSvgSceneBuilder.cpp
++++ b/src/loaders/svg/tvgSvgSceneBuilder.cpp
+@@ -61,12 +61,6 @@
+ /* Internal Class Implementation                                        */
+ /************************************************************************/
+ 
+-struct Box
+-{
+-    float x, y, w, h;
+-};
+-
+-
+ static bool _appendShape(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath);
+ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, bool* isMaskWhite = nullptr);
+ 
+@@ -688,38 +682,45 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox,
+ /* External Class Implementation                                        */
+ /************************************************************************/
+ 
+-unique_ptr<Scene> svgSceneBuild(SvgNode* node, float vx, float vy, float vw, float vh, float w, float h, bool preserveAspect, const string& svgPath)
++unique_ptr<Scene> svgSceneBuild(SvgNode* node, Box& vBox, float w, float h, bool preserveAspect, const string& svgPath, bool bboxGiven)
+ {
+     if (!node || (node->type != SvgNodeType::Doc)) return nullptr;
+ 
+-    Box vBox = {vx, vy, vw, vh};
+     auto docNode = _sceneBuildHelper(node, vBox, svgPath, false);
++    if (!bboxGiven) {
++        //TODO: remove stroke size?
++        docNode->bounds(nullptr, nullptr, &vBox.w, &vBox.h, false);
++        vBox.x = 0.0f;
++        vBox.y = 0.0f;
++        w = vBox.w;
++        h = vBox.h;
++    }
+ 
+-    if (!mathEqual(w, vw) || !mathEqual(h, vh)) {
+-        auto sx = w / vw;
+-        auto sy = h / vh;
++    if (!mathEqual(w, vBox.w) || !mathEqual(h, vBox.h)) {
++        auto sx = w / vBox.w;
++        auto sy = h / vBox.h;
+ 
+         if (preserveAspect) {
+             //Scale
+             auto scale = sx < sy ? sx : sy;
+             docNode->scale(scale);
+             //Align
+-            auto tvx = vx * scale;
+-            auto tvy = vy * scale;
+-            auto tvw = vw * scale;
+-            auto tvh = vh * scale;
++            auto tvx = vBox.x * scale;
++            auto tvy = vBox.y * scale;
++            auto tvw = vBox.w * scale;
++            auto tvh = vBox.h * scale;
+             tvx -= (w - tvw) * 0.5f;
+             tvy -= (h - tvh) * 0.5f;
+             docNode->translate(-tvx, -tvy);
+         } else {
+             //Align
+-            auto tvx = vx * sx;
+-            auto tvy = vy * sy;
++            auto tvx = vBox.x * sx;
++            auto tvy = vBox.y * sy;
+             Matrix m = {sx, 0, -tvx, 0, sy, -tvy, 0, 0, 1};
+             docNode->transform(m);
+         }
+-    } else if (!mathZero(vx) || !mathZero(vy)) {
+-        docNode->translate(-vx, -vy);
++    } else if (!mathZero(vBox.x) || !mathZero(vBox.y)) {
++        docNode->translate(-vBox.x, -vBox.y);
+     }
+ 
+     auto viewBoxClip = Shape::gen();
+diff --git a/src/loaders/svg/tvgSvgSceneBuilder.h b/src/loaders/svg/tvgSvgSceneBuilder.h
+index cecbbf02a..fcbfe64b9 100644
+--- a/src/loaders/svg/tvgSvgSceneBuilder.h
++++ b/src/loaders/svg/tvgSvgSceneBuilder.h
+@@ -25,6 +25,6 @@
+ 
+ #include "tvgCommon.h"
+ 
+-unique_ptr<Scene> svgSceneBuild(SvgNode* node, float vx, float vy, float vw, float vh, float w, float h, bool preserveAspect, const string& svgPath);
++unique_ptr<Scene> svgSceneBuild(SvgNode* node, Box& vBox, float w, float h, bool preserveAspect, const string& svgPath, bool bboxGiven);
+ 
+ #endif //_TVG_SVG_SCENE_BUILDER_H_
