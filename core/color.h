@@ -178,6 +178,15 @@ struct _NO_DISCARD_CLASS_ Color {
 		return res;
 	}
 
+	_FORCE_INLINE_ Color lerp(const Color &p_to, float p_weight) const {
+		Color res = *this;
+		res.r = Math::lerp(res.r, p_to.r, p_weight);
+		res.g = Math::lerp(res.g, p_to.g, p_weight);
+		res.b = Math::lerp(res.b, p_to.b, p_weight);
+		res.a = Math::lerp(res.a, p_to.a, p_weight);
+		return res;
+	}
+
 	_FORCE_INLINE_ Color to_linear() const {
 		return Color(
 				r < 0.04045 ? r * (1.0 / 12.92) : Math::pow((r + 0.055) * (1.0 / (1 + 0.055)), 2.4),
