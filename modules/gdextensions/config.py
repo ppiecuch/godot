@@ -58,6 +58,8 @@ def configure(env):
         "meshlod",
         "meshslicer",
         "scenemerge",
+        "texturepacker",
+        "ldrdraw",
         "rockgen",
         "opensteer",
         "tileengine",

@@ -263,6 +263,12 @@ public:
 	}
 
 	_FORCE_INLINE_ LocalVector() {}
+	_FORCE_INLINE_ LocalVector(U p_size, const T *p_src = nullptr) {
+		resize(p_size);
+		if (p_src) {
+			memcpy(data, p_src, sizeof(T) * p_size);
+		}
+	}
 	_FORCE_INLINE_ LocalVector(const LocalVector &p_from) {
 		resize(p_from.size());
 		for (U i = 0; i < p_from.count; i++) {

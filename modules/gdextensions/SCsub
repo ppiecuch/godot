@@ -171,6 +171,7 @@ modules = [
     "polyvector",
     "vaserenderer",
     "timelinefx",
+    "ldrdraw",
     "opensteer",
     "tileengine",
     "sparkparticles",
@@ -190,8 +191,11 @@ thirdparty_sources = [
     "thirdparty/misc/miniz_zip.c",
 ]
 
-if env["tools"] and is_enabled("qrcodetexture"):
-    modules += ["qrcodetexture"]
+if env["tools"]:
+    if is_enabled("qrcodetexture"):
+        modules += ["qrcodetexture"]
+    if is_enabled("texturepacker"):
+        modules += ["texturepacker"]
 
 if is_enabled("cyberelements"):
     thirdparty_sources += ["thirdparty/libtess3/libtess3.cpp"]
@@ -276,12 +280,9 @@ if not env["disable_3d"]:
         if is_enabled("rockgen"):
             modules += ["rockgen"]
 
-if is_enabled("ldrloader"):
-    sources += (
-        Glob("submodules/ldrloader/ldrawlib/*.c")
-        + Glob("submodules/ldrloader/libldr/*.cpp")
-        + Glob("submodules/ldrloader/libldr/*.c")
-    )
+if is_enabled("ldrdraw"):
+    env_module.Append(CPPPATH=["thirdparty/libldr"])
+    sources += Glob("thirdparty/libldr/*.c") + Glob("thirdparty/libldr/*.cpp") + Glob("thirdparty/libldr/*.c")
 if env["os_family"] in ["os_windows", "os_unix"]:
     modules += ["unqlite"]
     thirdparty_sources += Glob("thirdparty/unqlite/*.c")

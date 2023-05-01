@@ -543,6 +543,9 @@ public:
 	static _ALWAYS_INLINE_ bool is_inside(int p_v, int p_min, int p_max) {
 		return p_v >= p_min && p_v < p_max;
 	};
+
+	static float perlin(float p_x, float p_y);
+	static double perlin(double p_x, double p_y);
 };
 
 #endif // MATH_FUNCS_H

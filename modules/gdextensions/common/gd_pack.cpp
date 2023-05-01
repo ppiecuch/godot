@@ -259,10 +259,10 @@ static rect_wh _rect_2d(rect_xywhf *const *v, int n, int max_s, bool allow_flip,
 }
 
 static std::pair<rect_wh, int> _try_rects_2d(rect_xywhf *const *v, int n, bool allow_flip) {
-	int max_s = 128;
+	int max_side = 128;
 
 	while (true) {
-		rect_wh _rect(max_s, max_s);
+		rect_wh _rect(max_side, max_side);
 
 		for (int i = 0; i < n; i++) {
 			if (!v[i]->fits(_rect, allow_flip)) {
@@ -276,29 +276,29 @@ static std::pair<rect_wh, int> _try_rects_2d(rect_xywhf *const *v, int n, bool a
 			vec[1].clear();
 			std::memcpy(&vec[0][0], v, sizeof(rect_xywhf *) * n);
 
-			rect_wh size = _rect_2d(&((*p[0])[0]), static_cast<int>(p[0]->size()), max_s, allow_flip, rects, *p[1]);
+			rect_wh size = _rect_2d(&((*p[0])[0]), static_cast<int>(p[0]->size()), max_side, allow_flip, rects, *p[1]);
 			if (!p[1]->size()) { // no unfitted items - finish
-				print_verbose(vformat("Autofit packing success: %d (%dx%d)", max_s, size.w, size.h));
-				return { size, max_s };
+				print_verbose(vformat("Autofit packing success: %d (%dx%d)", max_side, size.w, size.h));
+				return { size, max_side };
 			}
 		}
 
 	next_size:
-		max_s *= 2;
+		max_side *= 2;
 	}
 
 	return { 0, 0 };
 }
 
-static bool _pack_rects(rect_xywhf *const *v, int n, int max_s, bool allow_flip, std::vector<bin> &bins) {
-	if (max_s <= 0) {
-		max_s = _try_rects_2d(v, n, allow_flip).second;
-		if (max_s <= 0) {
+static bool _pack_rects(rect_xywhf *const *v, int n, int max_side, bool allow_flip, std::vector<bin> &bins) {
+	if (max_side <= 0) {
+		max_side = _try_rects_2d(v, n, allow_flip).second;
+		if (max_side <= 0) {
 			return false;
 		}
 	}
 
-	rect_wh _rect(max_s, max_s);
+	rect_wh _rect(max_side, max_side);
 
 	for (int i = 0; i < n; i++) {
 		if (!v[i]->fits(_rect, allow_flip)) {
@@ -315,7 +315,7 @@ static bool _pack_rects(rect_xywhf *const *v, int n, int max_s, bool allow_flip,
 		bins.push_back(bin());
 		bin *b = &bins[bins.size() - 1];
 
-		b->size = _rect_2d(&((*p[0])[0]), static_cast<int>(p[0]->size()), max_s, allow_flip, b->rects, *p[1]);
+		b->size = _rect_2d(&((*p[0])[0]), static_cast<int>(p[0]->size()), max_side, allow_flip, b->rects, *p[1]);
 		p[0]->clear();
 
 		if (!p[1]->size()) { // no unfitted items - finish
@@ -447,7 +447,7 @@ static Ref<Image> _mirror_borders(Ref<Image> image, int x_border, int y_border) 
 	return form;
 }
 
-Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, const TextureMergeOptions &options) {
+Dictionary merge_images(const Vector<Ref<Image>> &images, const Vector<String> &names, const ImageMergeOptions &options) {
 	ERR_FAIL_COND_V(images.size() != names.size(), Dictionary());
 
 	const int margin = options.margin;
@@ -599,7 +599,7 @@ Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, const T
 					atlas_data);
 
 #ifdef DEBUG_ATLAS_PACK
-			atlas->save_png(vformat("atlas_%d.png", i)); // dump generated atlas:
+			atlas->save_png(vformat("atlas_%d.png", i)); // dump generated atlas
 #endif
 			generated_images.set(i, atlas);
 		}

@@ -57,7 +57,7 @@ private:
 
     template <typename Ring> Node* linkedList(const Ring& points, const bool clockwise);
     Node* filterPoints(Node* start, Node* end = nullptr);
-    void earcutLinked(Node* ear, int pass = 0);
+    int earcutLinked(Node* ear, int pass = 0);
     bool isEar(Node* ear);
     bool isEarHashed(Node* ear);
     Node* cureLocalIntersections(Node* start);
@@ -244,8 +244,8 @@ Earcut<N>::filterPoints(Node* start, Node* end) {
 
 // main ear slicing loop which triangulates a polygon (given as a linked list)
 template <typename N>
-void Earcut<N>::earcutLinked(Node* ear, int pass) {
-    if (!ear) return;
+int Earcut<N>::earcutLinked(Node* ear, int pass) {
+    if (!ear) return 0;
 
     // interlink polygon nodes in z-order
     if (!pass && hashing) indexCurve(ear);
@@ -295,6 +295,7 @@ void Earcut<N>::earcutLinked(Node* ear, int pass) {
             break;
         }
     }
+    return iterations;
 }
 
 // check whether a polygon node forms a valid ear with adjacent nodes

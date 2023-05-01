@@ -40,6 +40,10 @@
 #include "common/gd_pack.h"
 
 #ifdef DEBUG_ENABLED
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
 static void _draw_circle(CanvasItem *canvas, const Vector2 &center, real_t r, const Color &c, int segs) {
 	const real_t coef = Math_TAU / segs;
 	Vector<Point2> vertices;
@@ -50,7 +54,10 @@ static void _draw_circle(CanvasItem *canvas, const Vector2 &center, real_t r, co
 	}
 	canvas->draw_polyline(vertices, c);
 }
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
 #endif
+#endif // DEBUG_ENABLED
 
 static Ref<SpiderThemeInfo> &get_theme_mgr_instance() {
 	static Ref<SpiderThemeInfo> instance;

@@ -40,24 +40,24 @@
 // Of your interest:
 // -----------------
 // 1. rect_xywhf - structure representing your rectangle object members:
-//   int x, y, w, h;
-//   bool flipped;
-//
+//     int x, y, w, h;
+//     bool flipped;
 // 2. bin - structure representing resultant bin object
-// 3. bool pack(rect_xywhf* const * v, int n, int max_side, std::vector<bin>& bins) - actual packing function
+// 3. bool pack_rects(rect_xywhf* const * v, int n, int max_side, std::vector<bin>& bins) - actual packing function
 //    Arguments:
 //     input/output: v - pointer to array of pointers to your rectangles (const here means that the pointers will point to the same rectangles after the call)
 //     input: n - rectangles count
-//
-//   input: max_side - maximum bins' side - algorithm works with square bins (in the end it may trim them to rectangular form).
-//   for the algorithm to finish faster, pass a reasonable value (unreasonable would be passing 1 000 000 000 for packing 4 50x50 rectangles).
-//   output: bins - vector to which the function will push_back() created bins, each of them containing vector to pointers of rectangles from "v" belonging to that particular bin.
-//   Every bin also keeps information about its width and height of course, none of the dimensions is bigger than max_side.
-//
+//     input: max_side - maximum bins' side - algorithm works with square bins (in the end it may trim them to rectangular form).
+//            for the algorithm to finish faster, pass a reasonable value (unreasonable would be passing 1 000 000 000 for packing 4 50x50 rectangles).
+//     output: bins - vector to which the function will push_back() created bins, each of them containing vector to pointers of rectangles from "v"
+//             belonging to that particular bin. Every bin also keeps information about its width and height of course, none of the dimensions
+//             is bigger than max_side.
 //   returns true on success, false if one of the rectangles' dimension was bigger than max_side
+// 4. Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, const TextureMergeOptions &options = TextureMergeOptions()) - Godot packing function
 //
 // You want to your rectangles representing your textures/glyph objects with GL_MAX_TEXTURE_SIZE as max_side,
-// then for each bin iterate through its rectangles, typecast each one to your own structure (or manually add userdata) and then memcpy its pixel contents (rotated by 90 degrees if "flipped" rect_xywhf's member is true)
+// then for each bin iterate through its rectangles, typecast each one to your own structure (or manually add userdata)
+// and then memcpy its pixel contents (rotated by 90 degrees if "flipped" rect_xywhf's member is true)
 // to the array representing your texture atlas to the place specified by the rectangle, then finally upload it with glTexImage2D.
 //
 // Algorithm doesn't create any new rectangles.
@@ -168,7 +168,7 @@ static inline bool max_height(rect_xywhf *a, rect_xywhf *b) {
 	return a->h > b->h;
 }
 
-struct TextureMergeOptions {
+struct ImageMergeOptions {
 	int max_atlas_size = 0; // default: autofit
 	int margin = 2;
 	bool power_of_two = false;
@@ -176,8 +176,8 @@ struct TextureMergeOptions {
 
 	Color background_color = Color(0, 0, 0, 0);
 
-	TextureMergeOptions() {}
-	TextureMergeOptions(int max_atlas_size, int margin, bool power_of_two, int force_atlas_channels) :
+	ImageMergeOptions() {}
+	ImageMergeOptions(int max_atlas_size, int margin, bool power_of_two, int force_atlas_channels) :
 			max_atlas_size(max_atlas_size), margin(margin), power_of_two(power_of_two), force_atlas_channels(force_atlas_channels) {}
 };
 
@@ -192,6 +192,6 @@ struct TextureMergeOptions {
 //          "rrect" -> Rect2 of texture rect on atlas
 //          "atlas_page" -> atlas page index (of '_generated_images')
 //          "atlas" -> atlas image reference
-Dictionary merge_images(Vector<Ref<Image>> images, Vector<String> names, const TextureMergeOptions &options = TextureMergeOptions());
+Dictionary merge_images(const Vector<Ref<Image>> &images, const Vector<String> &names, const ImageMergeOptions &options = ImageMergeOptions());
 
 #endif // GD_PACK_H

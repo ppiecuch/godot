@@ -32,8 +32,12 @@
 
 #include "core/engine.h"
 #include "core/io/resource_importer.h"
+
+#ifdef TOOLS_ENABLED
 #include "editor/audio_stream_preview.h"
 #include "editor/editor_node.h"
+#include "editor/editor_plugin.h"
+#endif
 
 #include "common/resources_cache.h"
 #include "common/resources_config.h"
@@ -230,6 +234,16 @@ static Ref<ImageLoaderThorSVG> image_loader_tsvg;
 
 #ifdef GDEXT_SCENEMERGE_ENABLED
 #include "scenemerge/merge.h"
+#endif
+
+#ifdef GDEXT_TEXTUREPACKER_ENABLED
+#include "texturepacker/packer_image_resource.h"
+#include "texturepacker/texture_layer_merger.h"
+#include "texturepacker/texture_merger.h"
+#include "texturepacker/texture_packer.h"
+#ifdef TOOLS_ENABLED
+#include "texturepacker/editor_plugin_packer_image_resource.h"
+#endif
 #endif
 
 #ifdef GDEXT_SILENTWOLF_ENABLED
@@ -605,6 +619,16 @@ void register_gdextensions_types() {
 #ifdef TOOLS_ENABLED
 	ClassDB::register_class<SceneMerge>();
 	EditorPlugins::add_by_type<SceneMergePlugin>();
+#endif
+#endif
+
+#ifdef GDEXT_TEXTUREPACKER_ENABLED
+	ClassDB::register_class<TexturePacker>();
+	ClassDB::register_class<TextureMerger>();
+	ClassDB::register_class<PackerImageResource>();
+	ClassDB::register_class<TextureLayerMerger>();
+#ifdef TOOLS_ENABLED
+	EditorPlugins::add_by_type<EditorPluginPackerImageResource>();
 #endif
 #endif
 
