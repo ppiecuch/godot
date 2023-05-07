@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  plant2_example.cpp                                                    */
+/*  lrule.h                                                               */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,17 +28,18 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "src/lsystem.cpp"
+#pragma once
 
-using namespace std;
+#include <string>
 
-vector<string> rules = { "F => F[+F]F[-F][F] (0.5)", "F => F[+F]F (0.3)", "F => F[-F]F (0.2)" };
+class LRule {
+public:
+	std::string variable;
+	std::string rule;
+	float probability;
 
-int main(int argc, char *argv[]) {
-	LSystem plant;
-	plant.set_step(5.0);
-	plant.set_angle(25.0);
-	plant.build("F", rules, 6);
-	plant.loop();
-	return 0;
-}
+	LRule(std::string var, std::string rul) :
+			variable(var), rule(rul) {}
+	LRule(std::string var, std::string rul, float prob) :
+			variable(var), rule(rul), probability(prob) {}
+};

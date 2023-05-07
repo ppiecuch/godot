@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  plant2_example.cpp                                                    */
+/*  lsystem.h                                                             */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,17 +28,27 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "src/lsystem.cpp"
+#pragma once
 
-using namespace std;
+#include "ls/details/standart_grammar.h"
+#include "ls/details/stochastic_grammar.h"
 
-vector<string> rules = { "F => F[+F]F[-F][F] (0.5)", "F => F[+F]F (0.3)", "F => F[-F]F (0.2)" };
+#include <vector>
 
-int main(int argc, char *argv[]) {
-	LSystem plant;
-	plant.set_step(5.0);
-	plant.set_angle(25.0);
-	plant.build("F", rules, 6);
-	plant.loop();
-	return 0;
-}
+class LSystem {
+	std::vector<char> constants;
+	float step;
+	float angle;
+
+public:
+	bool check_grammar(std::vector<std::string>);
+	void add_constant(char constant) { constants.push_back(constant); }
+	std::vector<char> get_constants() const { return constants; }
+	void set_step(float v) { step = v; }
+	float get_step() const { return step; }
+	void set_angle(float v) { angle = v; }
+	float get_angle() const { return angle; }
+	std::string build(std::string, std::vector<std::string>, int);
+
+	LSystem() {}
+};

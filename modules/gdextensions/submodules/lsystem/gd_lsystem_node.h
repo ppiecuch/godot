@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  plant2_example.cpp                                                    */
+/*  gd_lsystem_node.h                                                     */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,17 +28,51 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "src/lsystem.cpp"
+#ifndef GD_LSYSTEM_H
+#define GD_LSYSTEM_H
 
-using namespace std;
+#include "core/variant.h"
+#include "scene/2d/node_2d.h"
 
-vector<string> rules = { "F => F[+F]F[-F][F] (0.5)", "F => F[+F]F (0.3)", "F => F[-F]F (0.2)" };
+class LSystemSolver : public Reference {
+	GDCLASS(LSystemSolver, Reference);
 
-int main(int argc, char *argv[]) {
-	LSystem plant;
-	plant.set_step(5.0);
-	plant.set_angle(25.0);
-	plant.build("F", rules, 6);
-	plant.loop();
-	return 0;
-}
+	String axiom;
+	Vector<String> rules;
+	int iterations;
+
+protected:
+	static void _bind_methods();
+
+public:
+	void set_rules(const String &p_rules);
+	String get_rules() const;
+
+	void set_axiom(const String &p_axiom);
+	String get_axiom() const;
+
+	void set_iterations(int p_iterations);
+	int get_iterations() const;
+
+	PoolVector2Array interpret();
+
+	LSystemSolver();
+};
+
+class LSystemNode : public Node2D {
+	GDCLASS(LSystemNode, Node2D);
+
+	Ref<LSystemSolver> lsystem;
+
+protected:
+	static void _bind_methods();
+	void notification(int p_what);
+
+public:
+	void set_rules(const String &p_rules);
+	String get_rules() const;
+
+	LSystemNode();
+};
+
+#endif // GD_LSYSTEM_H

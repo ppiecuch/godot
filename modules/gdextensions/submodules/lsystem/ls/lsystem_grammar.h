@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  plant2_example.cpp                                                    */
+/*  lsystem_grammar.h                                                     */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,17 +28,35 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "src/lsystem.cpp"
+#pragma once
 
-using namespace std;
+#include "ls/lrule.h"
 
-vector<string> rules = { "F => F[+F]F[-F][F] (0.5)", "F => F[+F]F (0.3)", "F => F[-F]F (0.2)" };
+#include <algorithm>
+#include <string>
+#include <vector>
 
-int main(int argc, char *argv[]) {
-	LSystem plant;
-	plant.set_step(5.0);
-	plant.set_angle(25.0);
-	plant.build("F", rules, 6);
-	plant.loop();
-	return 0;
-}
+class LSystemGrammar {
+protected:
+	std::string condition; // condition of the lsystem
+	std::vector<std::string> rules; // rules of the lsystem
+
+public:
+	void add_rule(const std::string &rule) {
+		rules.push_back(rule);
+	}
+	void set_axiom(const std::string &axiom) {
+		condition = axiom;
+	}
+	std::string get_result() {
+		return condition;
+	}
+
+	LSystemGrammar(std::string axiom, std::vector<std::string> rul) :
+		condition(axiom), rules(rul) {}
+	LSystemGrammar(std::vector<std::string> rul) :
+			rules(rul) {}
+	LSystemGrammar(std::string axiom) :
+			condition(axiom) {}
+	LSystemGrammar() {}
+};

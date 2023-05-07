@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  plant2_example.cpp                                                    */
+/*  standart_grammar.h                                                    */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,17 +28,25 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "src/lsystem.cpp"
+#pragma once
 
-using namespace std;
+#include "ls/lsystem_grammar.h"
 
-vector<string> rules = { "F => F[+F]F[-F][F] (0.5)", "F => F[+F]F (0.3)", "F => F[-F]F (0.2)" };
+#include <string>
+#include <vector>
 
-int main(int argc, char *argv[]) {
-	LSystem plant;
-	plant.set_step(5.0);
-	plant.set_angle(25.0);
-	plant.build("F", rules, 6);
-	plant.loop();
-	return 0;
-}
+class StandartGrammar : public LSystemGrammar {
+	std::vector<LRule> get_rules(std::vector<std::string> &);
+
+public:
+	void iterate(const int = 1);
+
+	StandartGrammar(std::string axiom, std::vector<std::string> rul) :
+			LSystemGrammar(axiom, rul) {}
+	StandartGrammar(std::vector<std::string> rul) :
+			LSystemGrammar(rul) {}
+	StandartGrammar(std::string axiom) :
+			LSystemGrammar(axiom) {}
+	StandartGrammar() :
+			LSystemGrammar() {}
+};

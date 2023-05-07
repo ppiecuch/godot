@@ -1,0 +1,5 @@
+class IteratorFromEdgeToRotatedEdges {
+public:
+	IteratorFromEdgeToRotatedEdges() { }
+};
+
