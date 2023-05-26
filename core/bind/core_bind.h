@@ -536,6 +536,36 @@ VARIANT_ENUM_CAST(_Geometry::PolyBooleanOperation);
 VARIANT_ENUM_CAST(_Geometry::PolyJoinType);
 VARIANT_ENUM_CAST(_Geometry::PolyEndType);
 
+class _ImageTools : public Object {
+	GDCLASS(_ImageTools, Object);
+
+	static _ImageTools *singleton;
+
+protected:
+	static void _bind_methods();
+
+public:
+	static _ImageTools *get_singleton();
+	enum SeamlessAxis {
+		FE_XY,
+		FE_X,
+		FE_Y,
+	};
+	enum SeamlessStampMode {
+		FE_STAMPING,
+		FE_SPLATMODE,
+	};
+
+	Ref<Image> neighbor_tracing(Ref<Image> p_src);
+	Array unpack_region(Ref<Image> p_src, Dictionary p_opts = Dictionary());
+	Ref<Image> make_seamless(Ref<Image> p_src, Dictionary p_opts = Dictionary());
+
+	_ImageTools();
+};
+
+VARIANT_ENUM_CAST(_ImageTools::SeamlessAxis)
+VARIANT_ENUM_CAST(_ImageTools::SeamlessStampMode)
+
 class _File : public Reference {
 	GDCLASS(_File, Reference);
 	FileAccess *f;

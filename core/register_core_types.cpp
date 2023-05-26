@@ -72,6 +72,7 @@
 #include "core/project_settings.h"
 #include "core/translation.h"
 #include "core/undo_redo.h"
+#include "image_tools.h"
 
 static Ref<ResourceFormatSaverBinary> resource_saver_binary;
 static Ref<ResourceFormatLoaderBinary> resource_loader_binary;
@@ -92,6 +93,7 @@ static _JSON *_json = nullptr;
 static IP *ip = nullptr;
 
 static _Geometry *_geometry = nullptr;
+static _ImageTools *_image_tools = nullptr;
 
 extern Mutex _global_mutex;
 
@@ -217,6 +219,7 @@ void register_core_types() {
 	ip = IP::create();
 
 	_geometry = memnew(_Geometry);
+	_image_tools = memnew(_ImageTools);
 
 	_resource_loader = memnew(_ResourceLoader);
 	_resource_saver = memnew(_ResourceSaver);
@@ -242,6 +245,7 @@ void register_core_singletons() {
 	ClassDB::register_class<ProjectSettings>();
 	ClassDB::register_virtual_class<IP>();
 	ClassDB::register_class<_Geometry>();
+	ClassDB::register_class<_ImageTools>();
 	ClassDB::register_class<_ResourceLoader>();
 	ClassDB::register_class<_ResourceSaver>();
 	ClassDB::register_class<_OS>();
@@ -258,6 +262,7 @@ void register_core_singletons() {
 	Engine::get_singleton()->add_singleton(Engine::Singleton("ProjectSettings", ProjectSettings::get_singleton()));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("IP", IP::get_singleton()));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Geometry", _Geometry::get_singleton()));
+	Engine::get_singleton()->add_singleton(Engine::Singleton("ImageTools", _ImageTools::get_singleton()));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("ResourceLoader", _ResourceLoader::get_singleton()));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("ResourceSaver", _ResourceSaver::get_singleton()));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("OS", _OS::get_singleton()));
@@ -281,6 +286,7 @@ void unregister_core_types() {
 	memdelete(_json);
 
 	memdelete(_geometry);
+	memdelete(_image_tools);
 
 	ResourceLoader::remove_resource_format_loader(resource_format_image);
 	resource_format_image.unref();

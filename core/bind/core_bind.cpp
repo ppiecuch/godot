@@ -31,6 +31,7 @@
 #include "core_bind.h"
 
 #include "core/crypto/crypto_core.h"
+#include "core/image_tools.h"
 #include "core/io/file_access_compressed.h"
 #include "core/io/file_access_encrypted.h"
 #include "core/io/json.h"
@@ -2012,6 +2013,70 @@ void _Geometry::_bind_methods() {
 }
 
 _Geometry::_Geometry() {
+	singleton = this;
+}
+
+///////////////////////// IMAGETOOLS
+
+_ImageTools *_ImageTools::singleton = nullptr;
+
+_ImageTools *_ImageTools::get_singleton() {
+	return singleton;
+}
+
+Ref<Image> _ImageTools::neighbor_tracing(Ref<Image> p_src) {
+	return ImageTools::neighbor_tracing(*p_src);
+}
+
+Array _ImageTools::unpack_region(Ref<Image> p_src, Dictionary p_opts) {
+	Array ret;
+#ifdef TOOLS_ENABLED
+	const real_t distance_between_tiles_perc = p_opts.get("distance_between_tiles_perc", 1.0);
+	const real_t minimum_tile_area_to_save_perc = p_opts.get("minimum_tile_area_to_save_perc", 1.0);
+	const real_t alpha_threshold = p_opts.get("alpha_threshold", 0.2);
+	const Ref<Image> debug_image = p_opts.get("distance_between_tiles_perc", 1.0);
+
+	Vector<Rect2> regions = ImageTools::unpack_region(*p_src, distance_between_tiles_perc, minimum_tile_area_to_save_perc, alpha_threshold, debug_image);
+
+	for (const Rect2 &rc : regions) {
+		ret.append(rc);
+	}
+#else
+	WARN_PRINT("Function is not available in this build.");
+#endif
+	return ret;
+}
+
+Ref<Image> _ImageTools::make_seamless(Ref<Image> p_src, Dictionary p_opts) {
+#ifdef TOOLS_ENABLED
+	const ImageTools::SeamlessStampMode stamp_mode = (ImageTools::SeamlessStampMode)(int)p_opts.get("stamp_mode", ImageTools::FE_STAMPING);
+	const real_t stamper_radius = p_opts.get("stamp_mode", 0.45);
+	const real_t stamp_density = p_opts.get("stamp_mode", 0.4);
+	const real_t hardness = p_opts.get("stamp_mode", 0.6);
+	const real_t stamp_noise_mask = p_opts.get("stamp_mode", 1);
+	const real_t randomize = p_opts.get("stamp_mode", 0.25);
+	const int stamp_rotate = p_opts.get("stamp_mode", 1);
+	const ImageTools::SeamlessAxis to_loop = (ImageTools::SeamlessAxis)(int)p_opts.get("to_loop", ImageTools::FE_XY);
+	return ImageTools::make_seamless(*p_src, stamp_mode, stamper_radius, stamp_density, hardness, stamp_noise_mask, randomize, stamp_rotate, to_loop);
+#else
+	WARN_PRINT("Function is not available in this build.");
+	return Ref<Image>();
+#endif
+}
+
+void _ImageTools::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("neighbor_tracing", "image"), &_ImageTools::neighbor_tracing);
+	ClassDB::bind_method(D_METHOD("make_seamless", "image", "options"), &_ImageTools::make_seamless, DEFVAL(Dictionary()));
+	ClassDB::bind_method(D_METHOD("unpack_region", "image", "options"), &_ImageTools::unpack_region, DEFVAL(Dictionary()));
+
+	BIND_ENUM_CONSTANT(FE_XY);
+	BIND_ENUM_CONSTANT(FE_X);
+	BIND_ENUM_CONSTANT(FE_Y);
+	BIND_ENUM_CONSTANT(FE_STAMPING);
+	BIND_ENUM_CONSTANT(FE_SPLATMODE);
+}
+
+_ImageTools::_ImageTools() {
 	singleton = this;
 }
 
