@@ -2030,7 +2030,7 @@ Ref<Image> _ImageTools::neighbor_tracing(Ref<Image> p_src) {
 
 Array _ImageTools::unpack_region(Ref<Image> p_src, Dictionary p_opts) {
 	Array ret;
-#ifdef TOOLS_ENABLED
+#ifdef HAVE_UNPACK_REGION
 	const real_t distance_between_tiles_perc = p_opts.get("distance_between_tiles_perc", 1.0);
 	const real_t minimum_tile_area_to_save_perc = p_opts.get("minimum_tile_area_to_save_perc", 1.0);
 	const real_t alpha_threshold = p_opts.get("alpha_threshold", 0.2);
@@ -2048,7 +2048,7 @@ Array _ImageTools::unpack_region(Ref<Image> p_src, Dictionary p_opts) {
 }
 
 Ref<Image> _ImageTools::make_seamless(Ref<Image> p_src, Dictionary p_opts) {
-#ifdef TOOLS_ENABLED
+#ifdef HAVE_MAKE_SEAMLESS
 	const ImageTools::SeamlessStampMode stamp_mode = (ImageTools::SeamlessStampMode)(int)p_opts.get("stamp_mode", ImageTools::FE_STAMPING);
 	const real_t stamper_radius = p_opts.get("stamp_mode", 0.45);
 	const real_t stamp_density = p_opts.get("stamp_mode", 0.4);

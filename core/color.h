@@ -137,29 +137,27 @@ struct _NO_DISCARD_CLASS_ Color {
 		//const float Emax = 31.0f;
 		const float N = 9.0f;
 
-		float sharedexp = 65408.000f; //(( pow2to9  - 1.0f)/ pow2to9)*powf( 2.0f, 31.0f - 15.0f);
+		const float sharedexp = 65408.000f; //(( pow2to9  - 1.0f)/ pow2to9)*powf( 2.0f, 31.0f - 15.0f);
 
-		float cRed = MAX(0.0f, MIN(sharedexp, r));
-		float cGreen = MAX(0.0f, MIN(sharedexp, g));
-		float cBlue = MAX(0.0f, MIN(sharedexp, b));
+		const float cRed = MAX(0.0f, MIN(sharedexp, r));
+		const float cGreen = MAX(0.0f, MIN(sharedexp, g));
+		const float cBlue = MAX(0.0f, MIN(sharedexp, b));
 
-		float cMax = MAX(cRed, MAX(cGreen, cBlue));
+		const float cMax = MAX(cRed, MAX(cGreen, cBlue));
 
 		// expp = MAX(-B - 1, log2(maxc)) + 1 + B
 
-		float expp = MAX(-B - 1.0f, Math::floor(Math::log(cMax) / Math_LN2)) + 1.0f + B;
-
-		float sMax = (float)floor((cMax / Math::pow(2.0f, expp - B - N)) + 0.5f);
-
+		const float expp = MAX(-B - 1.0f, Math::floor(Math::log(cMax) / Math_LN2)) + 1.0f + B;
+		const float sMax = Math::floor((cMax / Math::pow(2.0f, expp - B - N)) + 0.5f);
 		float exps = expp + 1.0f;
 
 		if (0.0 <= sMax && sMax < pow2to9) {
 			exps = expp;
 		}
 
-		float sRed = Math::floor((cRed / pow(2.0f, exps - B - N)) + 0.5f);
-		float sGreen = Math::floor((cGreen / pow(2.0f, exps - B - N)) + 0.5f);
-		float sBlue = Math::floor((cBlue / pow(2.0f, exps - B - N)) + 0.5f);
+		const float sRed = Math::floor((cRed / pow(2.0f, exps - B - N)) + 0.5f);
+		const float sGreen = Math::floor((cGreen / pow(2.0f, exps - B - N)) + 0.5f);
+		const float sBlue = Math::floor((cBlue / pow(2.0f, exps - B - N)) + 0.5f);
 
 		return (uint32_t(Math::fast_ftoi(sRed)) & 0x1FF) | ((uint32_t(Math::fast_ftoi(sGreen)) & 0x1FF) << 9) | ((uint32_t(Math::fast_ftoi(sBlue)) & 0x1FF) << 18) | ((uint32_t(Math::fast_ftoi(exps)) & 0x1F) << 27);
 	}

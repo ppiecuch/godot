@@ -366,7 +366,7 @@ void ImageTools::bumpmap_to_normalmap(Image *p_src, float bump_scale) {
 	p_src->data = result_image;
 }
 
-#ifdef TOOLS_ENABLED
+// Basic helper classes for unpack and seamless generator
 
 union _byteword {
 	uint8_t b[sizeof(uint32_t)];
@@ -881,5 +881,3 @@ Ref<Image> ImageTools::make_seamless(const Image *p_src, SeamlessStampMode p_sta
 	target->create(width, height, false, Image::FORMAT_RGBA8, new_data);
 	return target;
 }
-
-#endif // TOOLS_ENABLED

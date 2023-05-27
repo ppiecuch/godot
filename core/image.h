@@ -55,6 +55,8 @@ typedef Error (*SaveEXRFunc)(const String &p_path, const Ref<Image> &p_img, bool
 class Image : public Resource {
 	GDCLASS(Image, Resource);
 
+	friend class ImageTools;
+
 public:
 	static SavePNGFunc save_png_func;
 	static SaveEXRFunc save_exr_func;
@@ -174,14 +176,6 @@ private:
 	int width, height;
 	bool mipmaps;
 
-	void _copy_internals_from(const Image &p_image) {
-		format = p_image.format;
-		width = p_image.width;
-		height = p_image.height;
-		mipmaps = p_image.mipmaps;
-		data = p_image.data;
-	}
-
 	_FORCE_INLINE_ void _get_mipmap_offset_and_size(int p_mipmap, int &r_offset, int &r_width, int &r_height) const; //get where the mipmap begins in data
 
 	static int _get_dst_image_size(int p_width, int p_height, Format p_format, int &r_mipmaps, int p_mipmaps = -1);
@@ -192,7 +186,7 @@ private:
 	_FORCE_INLINE_ void _put_pixelb(int p_x, int p_y, uint32_t p_pixel_size, uint8_t *p_data, const uint8_t *p_pixel);
 	_FORCE_INLINE_ void _get_pixelb(int p_x, int p_y, uint32_t p_pixel_size, const uint8_t *p_data, uint8_t *p_pixel);
 
-	_FORCE_INLINE_ void _repeat_pixel_over_subsequent_memory(uint8_t *p_pixel, int p_pixel_size, int p_count);
+	_FORCE_INLINE_ void _repeat_pixel_over_subsequent_memory(uint8_t *p_pixel, int p_pixel_size, int p_count) const;
 
 	void _set_data(const Dictionary &p_data);
 	Dictionary _get_data() const;
@@ -229,6 +223,12 @@ public:
 	int get_mipmap_offset(int p_mipmap) const; //get where the mipmap begins in data
 	void get_mipmap_offset_and_size(int p_mipmap, int &r_ofs, int &r_size) const; //get where the mipmap begins in data
 	void get_mipmap_offset_size_and_dimensions(int p_mipmap, int &r_ofs, int &r_size, int &w, int &h) const; //get where the mipmap begins in data
+
+	/**
+	 * Expand the image and fill with padding color.
+	 */
+	void expand(int p_width, int p_height, Color p_padding_color = Color(0, 0, 0, 0));
+	Ref<Image> expanded(int p_width, int p_height, Color p_padding_color = Color(0, 0, 0, 0)) const;
 
 	/**
 	 * Resize the image, using the preferred interpolation method.
@@ -320,13 +320,17 @@ public:
 	Error decompress();
 	bool is_compressed() const;
 
-	void fix_alpha_edges();
-	void fix_tex_bleed();
 	void premultiply_alpha();
 	void srgb_to_linear();
-	void normalmap_to_xy();
 	Ref<Image> rgbe_to_srgb();
-	void bumpmap_to_normalmap(float bump_scale = 1.0);
+
+	/**
+	 * Image tools
+	 */
+	void fix_alpha_edges();
+	void fix_tex_bleed();
+	void normalmap_to_xy();
+	void bumpmap_to_normalmap(float p_bump_scale = 1.0);
 
 	void blit_rect(const Ref<Image> &p_src, const Rect2 &p_src_rect, const Point2 &p_dest);
 	void blit_rect_mask(const Ref<Image> &p_src, const Ref<Image> &p_mask, const Rect2 &p_src_rect, const Point2 &p_dest);
@@ -334,6 +338,7 @@ public:
 	void blend_rect_mask(const Ref<Image> &p_src, const Ref<Image> &p_mask, const Rect2 &p_src_rect, const Point2 &p_dest);
 	void fill(const Color &p_color);
 	void fill_rect(const Rect2 &p_rect, const Color &p_color);
+	void plot_rect(const Rect2 &p_rect, const Color &p_color);
 
 	Rect2 get_used_rect() const;
 	Ref<Image> get_rect(const Rect2 &p_area) const;
@@ -370,6 +375,10 @@ public:
 	DetectChannels get_detected_channels();
 	void optimize_channels();
 
+	// return color directly in abgr32 format
+	uint32_t _get_pixel32(int p_x, int p_y) const;
+	void _set_pixel32(int p_x, int p_y, uint32_t p_color);
+
 	Color get_pixelv(const Point2 &p_src) const;
 	Color get_pixel(int p_x, int p_y) const;
 	void set_pixelv(const Point2 &p_dst, const Color &p_color);
@@ -381,6 +390,14 @@ public:
 		ERR_FAIL_COND_V_MSG(!ptr, nullptr, "Image must be locked with 'lock()' before using get_raw_data().");
 #endif
 		return ptr;
+	}
+
+	void _copy_internals_from(const Image &p_image) {
+		format = p_image.format;
+		width = p_image.width;
+		height = p_image.height;
+		mipmaps = p_image.mipmaps;
+		data = p_image.data;
 	}
 
 	void copy_internals_from(const Ref<Image> &p_image) {
