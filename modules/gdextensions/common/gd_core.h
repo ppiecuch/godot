@@ -39,6 +39,7 @@
 #include "core/list.h"
 #include "core/math/vector2.h"
 #include "core/os/os.h"
+#include "core/print_string.h"
 #include "core/ustring.h"
 
 #include <algorithm>
@@ -109,10 +110,15 @@
 #define safe_delete(pPtr) (memdelete(pPtr), pPtr = nullptr)
 #define newref(pClass, ...) Ref<pClass>(memnew(pClass(__VA_ARGS__)))
 #define nullref(pClass) Ref<pClass>()
+#define selfref(pClass) Ref<pClass>(this)
 
 String string_format(const char *p_format, ...);
 String array_concat(const Array &p_args);
 #define vconcat(...) array_concat(array(__VA_ARGS__))
+#define printf_line(format, ...) print_line(string_format(format, ##__VA_ARGS__))
+#define printf_verbose(format, ...) print_verbose(string_format(format, ##__VA_ARGS__))
+#define printv_line(...) print_line(array_concat(array(__VA_ARGS__)))
+#define printv_verbose(...) print_verbose(array_concat(array(__VA_ARGS__)))
 
 #ifdef DEBUG_ENABLED
 #define DEBUG_PRINT(pText) print_line(pText)
