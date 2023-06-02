@@ -2126,6 +2126,9 @@ void ObjectDB::cleanup() {
 				if (instances[*K]->is_class("Resource")) {
 					extra_info = " - Resource path: " + String(resource_get_path->call(instances[*K], nullptr, 0, call_error));
 				}
+				if (instances[*K]->is_class("Reference")) {
+					extra_info = " (ref. count: " + itos(Object::cast_to<Reference>(instances[*K])->reference_get_count()) + ")";
+				}
 				print_line("Leaked instance: " + String(instances[*K]->get_class()) + ":" + itos(*K) + extra_info);
 			}
 			print_line("Hint: Leaked instances typically happen when nodes are removed from the scene tree (with `remove_child()`) but not freed (with `free()` or `queue_free()`).");
