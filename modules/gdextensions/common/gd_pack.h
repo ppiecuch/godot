@@ -104,6 +104,7 @@ struct rect_wh {
 		}
 		return 0;
 	}
+	rect_wh scaled(real_t scale) const { return rect_wh(w * scale, h * scale); }
 	Size2i size() const { return Size2i(w, h); }
 };
 
@@ -170,28 +171,35 @@ static inline bool max_height(rect_xywhf *a, rect_xywhf *b) {
 
 struct ImageMergeOptions {
 	int max_atlas_size = 0; // default: autofit
+	bool force_single_page_atlas = true; // default: rescale to fit
 	int margin = 2;
-	bool power_of_two = false;
+	bool power_of_two = true;
 	int force_atlas_channels = 0; // default: autodetect
 
 	Color background_color = Color(0, 0, 0, 0);
 
-	ImageMergeOptions() {}
-	ImageMergeOptions(int max_atlas_size, int margin, bool power_of_two, int force_atlas_channels) :
-			max_atlas_size(max_atlas_size), margin(margin), power_of_two(power_of_two), force_atlas_channels(force_atlas_channels) {}
+	ImageMergeOptions &set_power_of_two(bool v) {
+		power_of_two = v;
+		return *this;
+	}
+	ImageMergeOptions &set_margin(int v) {
+		margin = v;
+		return *this;
+	}
 };
 
-// Merge images from 'images' array using `names` as unique
-// identifier for each image.
-// --------------------------------------------------------
+// Merge images from 'images' and returns dictionary with
+// atlas description and atlas images.
+// ---------------------------------------------------------
 // Return dictionary:
 //    "_generated_images" -> array of generated atlas images
-//    "_rects" -> dictionary of atlas rects, eg:
-//       "_rects[<image name>]:
+//    "_bins_size" -> size of working area of atlas
+//    "_rects" -> array of atlas rects, eg:
+//       "_rects[0..images]:
 //          "rect" -> Rect2 of image rect on atlas
 //          "rrect" -> Rect2 of texture rect on atlas
 //          "atlas_page" -> atlas page index (of '_generated_images')
 //          "atlas" -> atlas image reference
-Dictionary merge_images(const Vector<Ref<Image>> &images, const Vector<String> &names, const ImageMergeOptions &options = ImageMergeOptions());
+Dictionary merge_images(const Vector<Ref<Image>> &images, const ImageMergeOptions &options = ImageMergeOptions());
 
 #endif // GD_PACK_H
