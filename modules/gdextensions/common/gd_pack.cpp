@@ -677,9 +677,13 @@ Dictionary merge_images(const Vector<Ref<Image>> &images, const ImageMergeOption
 
 #ifdef DOCTEST
 
+#include "doctest/doctest_godot.h"
+
 #include <vector>
 
 TEST_CASE("Packing functions") {
+	_doctest_prepare_folder();
+
 	// for s in 32 128 256 512 1024; do
 	//   convert -size ${s}x$s xc:white test$s.png24
 	//   pngcrush  -rem alla test$s.png24 test$s.png
@@ -945,6 +949,7 @@ TEST_CASE("Packing functions") {
 	for (int i = 0; i < 5; i++) {
 		test_set.push_back(memnew(Image(test_data[i].png_data.data(), test_data[i].data_len)));
 	}
+
 	SUBCASE("empty set") {
 		REQUIRE(merge_images(empty_set).empty());
 	}
@@ -969,6 +974,7 @@ TEST_CASE("Packing functions") {
 		Ref<Image> atlas = Array(res["_generated_images"])[0];
 		Size2 area = Array(res["_bins_size"])[0];
 		REQUIRE(atlas->get_size() == area);
+		atlas->save_png(_doctest_get_folder() + "atlas_without_power_of_two.png");
 	}
 }
 #endif
