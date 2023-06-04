@@ -985,22 +985,26 @@ void Image::resize_to_po2(bool p_square, Interpolation p_interpolation) {
 }
 
 void Image::resize(int p_width, int p_height, Interpolation p_interpolation) {
-	ERR_FAIL_COND_MSG(data.size() == 0, "Cannot resize image before creating it, use create() or create_from_data() first.");
-	ERR_FAIL_COND_MSG(!_can_modify(format), "Cannot resize in compressed or custom image formats.");
-	ERR_FAIL_COND_MSG(write_lock.ptr(), "Cannot resize image when it is locked.");
+	copy_internals_from(resized(p_width, p_height));
+}
+
+Ref<Image> Image::resized(int p_width, int p_height, Interpolation p_interpolation) {
+	ERR_FAIL_COND_V_MSG(data.size() == 0, Ref<Image>(), "Cannot resize image before creating it, use create() or create_from_data() first.");
+	ERR_FAIL_COND_V_MSG(!_can_modify(format), Ref<Image>(), "Cannot resize in compressed or custom image formats.");
+	ERR_FAIL_COND_V_MSG(write_lock.ptr(), Ref<Image>(), "Cannot resize image when it is locked.");
 
 	bool mipmap_aware = p_interpolation == INTERPOLATE_TRILINEAR /* || p_interpolation == INTERPOLATE_TRICUBIC */;
 
-	ERR_FAIL_COND_MSG(p_width <= 0, "Image width must be greater than 0.");
-	ERR_FAIL_COND_MSG(p_height <= 0, "Image height must be greater than 0.");
-	ERR_FAIL_COND_MSG(p_width > MAX_WIDTH, "Image width cannot be greater than " + itos(MAX_WIDTH) + ".");
-	ERR_FAIL_COND_MSG(p_height > MAX_HEIGHT, "Image height cannot be greater than " + itos(MAX_HEIGHT) + ".");
+	ERR_FAIL_COND_V_MSG(p_width <= 0, Ref<Image>(), "Image width must be greater than 0.");
+	ERR_FAIL_COND_V_MSG(p_height <= 0, Ref<Image>(), "Image height must be greater than 0.");
+	ERR_FAIL_COND_V_MSG(p_width > MAX_WIDTH, Ref<Image>(), "Image width cannot be greater than " + itos(MAX_WIDTH) + ".");
+	ERR_FAIL_COND_V_MSG(p_height > MAX_HEIGHT, Ref<Image>(), "Image height cannot be greater than " + itos(MAX_HEIGHT) + ".");
 
 	if (p_width == width && p_height == height) {
-		return;
+		return Ref<Image>();
 	}
 
-	Image dst(p_width, p_height, false, format);
+	Ref<Image> dst = memnew(Image(p_width, p_height, false, format));
 
 	// Setup mipmap-aware scaling
 	Image dst2;
@@ -1032,7 +1036,7 @@ void Image::resize(int p_width, int p_height, Interpolation p_interpolation) {
 	PoolVector<uint8_t>::Read r = data.read();
 	const unsigned char *r_ptr = r.ptr();
 
-	PoolVector<uint8_t>::Write w = dst.data.write();
+	PoolVector<uint8_t>::Write w = dst->data.write();
 	unsigned char *w_ptr = w.ptr();
 
 	switch (p_interpolation) {
@@ -1174,7 +1178,7 @@ void Image::resize(int p_width, int p_height, Interpolation p_interpolation) {
 
 			if (interpolate_mipmaps) {
 				// Switch to read again from the first scaled mipmap to overlay it over the second
-				r = dst.data.read();
+				r = dst->data.read();
 				_overlay(r.ptr(), w.ptr(), mip1_weight, p_width, p_height, get_format_pixel_size(format));
 			}
 
@@ -1281,14 +1285,14 @@ void Image::resize(int p_width, int p_height, Interpolation p_interpolation) {
 	w.release();
 
 	if (interpolate_mipmaps) {
-		dst._copy_internals_from(dst2);
+		dst->_copy_internals_from(dst2);
 	}
 
 	if (had_mipmaps) {
-		dst.generate_mipmaps();
+		dst->generate_mipmaps();
 	}
 
-	_copy_internals_from(dst);
+	return dst;
 }
 
 void Image::crop_from_point(int p_x, int p_y, int p_width, int p_height) {

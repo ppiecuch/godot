@@ -235,6 +235,7 @@ public:
 	 */
 	void resize_to_po2(bool p_square = false, Interpolation p_interpolation = INTERPOLATE_BILINEAR);
 	void resize(int p_width, int p_height, Interpolation p_interpolation = INTERPOLATE_BILINEAR);
+	Ref<Image> resized(int p_width, int p_height, Interpolation p_interpolation = INTERPOLATE_BILINEAR);
 	void shrink_x2();
 	void expand_x2_hq2x();
 	bool is_size_po2() const;
