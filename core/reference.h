@@ -36,6 +36,8 @@
 #include "core/ref_ptr.h"
 #include "core/safe_refcount.h"
 
+using nullptr_t = decltype(nullptr); // nullptr_t without including any header
+
 class Reference : public Object {
 	GDCLASS(Reference, Object);
 	friend class RefBase;
@@ -178,6 +180,11 @@ public:
 		r.reference = Object::cast_to<T>(refb);
 		ref(r);
 		r.reference = nullptr;
+	}
+
+	// allow for = nullptr assigment
+	void operator=(nullptr_t) {
+		unref();
 	}
 
 	template <class T_Other>
