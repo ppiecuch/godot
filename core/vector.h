@@ -96,21 +96,26 @@ public:
 
 	void fill(T p_elem);
 	void remove(int p_index) { _cowdata.remove(p_index); }
+	void remove(int p_index, int p_delete_count) { _cowdata.remove(p_index, p_delete_count); }
 	_FORCE_INLINE_ void erase(const T &p_val) {
 		int idx = find(p_val);
 		if (idx >= 0) {
 			remove(idx);
 		}
 	};
-	_FORCE_INLINE_ void shift() {
-		if (size() == 0) {
-			return;
-		} else if (size() == 1) {
-			clear();
-		} else {
-			_cowdata.remove(0);
+	_FORCE_INLINE_ T shift() {
+		T r;
+		if (size() > 0) {
+			r = _cowdata.get(0);
+			if (size() == 1) {
+				clear();
+			} else {
+				_cowdata.remove(0);
+			}
 		}
+		return r;
 	}
+	void splice(int p_index, int p_delete_count, const Vector<T> &p_insert_values);
 	void invert();
 
 	_FORCE_INLINE_ T *ptrw() { return _cowdata.ptrw(); }
@@ -124,18 +129,25 @@ public:
 	_FORCE_INLINE_ int size() const { return _cowdata.size(); }
 	_FORCE_INLINE_ const T &last(int p_index = 0) const { return _cowdata.get(_cowdata.size() - 1 - p_index); }
 	_FORCE_INLINE_ T back(int p_index = 0) { return _cowdata.get(_cowdata.size() - 1 - p_index); }
+	_FORCE_INLINE_ T pop() {
+		const int i = _cowdata.size() - 1;
+		const T t = _cowdata.get(i);
+		_cowdata.resize(i);
+		return t;
+	}
 	Error resize(int p_size) { return _cowdata.resize(p_size); }
 	_FORCE_INLINE_ const T &operator[](int p_index) const { return _cowdata.get(p_index); }
 	Error insert(int p_pos, T p_val) { return _cowdata.insert(p_pos, p_val); }
+	Error insert(T p_val) { return _cowdata.insert(0, p_val); }
 	int find(const T &p_val, int p_from = 0) const { return _cowdata.find(p_val, p_from); }
 	bool has(const T &p_val, int p_from = 0) const { return _cowdata.find(p_val, p_from) >= 0; }
 
-	void append_array(Vector<T> p_other);
-	void append_array(int p_num, const T p_other[]);
+	Vector<T> &append_array(Vector<T> p_other);
+	Vector<T> &append_array(int p_num, const T p_other[]);
 
 	template <class C>
 	void sort_custom() {
-		int len = _cowdata.size();
+		const int len = _cowdata.size();
 		if (len == 0) {
 			return;
 		}
@@ -205,6 +217,14 @@ public:
 };
 
 template <class T>
+void Vector<T>::splice(int p_index, int p_delete_count, const Vector<T> &p_insert_values) {
+	ERR_FAIL_COND(p_delete_count < 1);
+	ERR_FAIL_COND(p_insert_values.empty());
+	_cowdata.remove(p_index, p_delete_count);
+	_cowdata.insert(p_index, p_insert_values.size(), p_insert_values.ptr());
+}
+
+template <class T>
 void Vector<T>::invert() {
 	for (int i = 0; i < size() / 2; i++) {
 		T *p = ptrw();
@@ -213,25 +233,27 @@ void Vector<T>::invert() {
 }
 
 template <class T>
-void Vector<T>::append_array(Vector<T> p_other) {
+Vector<T> &Vector<T>::append_array(Vector<T> p_other) {
 	const int ds = p_other.size();
 	if (ds == 0) {
-		return;
+		return *this;
 	}
 	const int bs = size();
 	resize(bs + ds);
 	for (int i = 0; i < ds; ++i) {
 		ptrw()[bs + i] = p_other[i];
 	}
+	return *this;
 }
 
 template <class T>
-void Vector<T>::append_array(int p_num, const T p_other[]) {
+Vector<T> &Vector<T>::append_array(int p_num, const T p_other[]) {
 	const int bs = size();
 	resize(bs + p_num);
 	for (int i = 0; i < p_num; ++i) {
 		ptrw()[bs + i] = p_other[i];
 	}
+	return *this;
 }
 
 template <class T>
@@ -295,26 +317,27 @@ void Vector<T>::fill(T p_elem) {
 	}
 }
 
-namespace helper {
+// Build vector from arguments
+
 template <class T>
-Vector<T> vector() {
+Vector<T> make_vector() {
 	Vector<T>();
 }
 template <class T>
-Vector<T> vector(const T &p_arg1) {
+Vector<T> make_vector(const T &p_arg1) {
 	Vector<T> p;
 	p.push_back(p_arg1);
 	return p;
 }
 template <class T>
-Vector<T> vector(const T &p_arg1, const T &p_arg2) {
+Vector<T> make_vector(const T &p_arg1, const T &p_arg2) {
 	Vector<T> p;
 	p.push_back(p_arg1);
 	p.push_back(p_arg2);
 	return p;
 }
 template <class T>
-Vector<T> vector(const T &p_arg1, const T &p_arg2, const T &p_arg3) {
+Vector<T> make_vector(const T &p_arg1, const T &p_arg2, const T &p_arg3) {
 	Vector<T> p;
 	p.push_back(p_arg1);
 	p.push_back(p_arg2);
@@ -322,7 +345,7 @@ Vector<T> vector(const T &p_arg1, const T &p_arg2, const T &p_arg3) {
 	return p;
 }
 template <class T>
-Vector<T> vector(const T &p_arg1, const T &p_arg2, const T &p_arg3, const T &p_arg4) {
+Vector<T> make_vector(const T &p_arg1, const T &p_arg2, const T &p_arg3, const T &p_arg4) {
 	Vector<T> p;
 	p.push_back(p_arg1);
 	p.push_back(p_arg2);
@@ -331,7 +354,7 @@ Vector<T> vector(const T &p_arg1, const T &p_arg2, const T &p_arg3, const T &p_a
 	return p;
 }
 template <class T>
-Vector<T> vector(const T &p_arg1, const T &p_arg2, const T &p_arg3, const T &p_arg4, const T &p_arg5) {
+Vector<T> make_vector(const T &p_arg1, const T &p_arg2, const T &p_arg3, const T &p_arg4, const T &p_arg5) {
 	Vector<T> p;
 	p.push_back(p_arg1);
 	p.push_back(p_arg2);
@@ -341,7 +364,7 @@ Vector<T> vector(const T &p_arg1, const T &p_arg2, const T &p_arg3, const T &p_a
 	return p;
 }
 template <class T>
-Vector<T> vector(const T &p_arg1, const T &p_arg2, const T &p_arg3, const T &p_arg4, const T &p_arg5, const T &p_arg6) {
+Vector<T> make_vector(const T &p_arg1, const T &p_arg2, const T &p_arg3, const T &p_arg4, const T &p_arg5, const T &p_arg6) {
 	Vector<T> p;
 	p.push_back(p_arg1);
 	p.push_back(p_arg2);
@@ -352,7 +375,7 @@ Vector<T> vector(const T &p_arg1, const T &p_arg2, const T &p_arg3, const T &p_a
 	return p;
 }
 template <class T>
-Vector<T> vector(const T &p_arg1, const T &p_arg2, const T &p_arg3, const T &p_arg4, const T &p_arg5, const T &p_arg6, const T &p_arg7) {
+Vector<T> make_vector(const T &p_arg1, const T &p_arg2, const T &p_arg3, const T &p_arg4, const T &p_arg5, const T &p_arg6, const T &p_arg7) {
 	Vector<T> p;
 	p.push_back(p_arg1);
 	p.push_back(p_arg2);
@@ -364,7 +387,7 @@ Vector<T> vector(const T &p_arg1, const T &p_arg2, const T &p_arg3, const T &p_a
 	return p;
 }
 template <class T>
-Vector<T> vector(const T &p_arg1, const T &p_arg2, const T &p_arg3, const T &p_arg4, const T &p_arg5, const T &p_arg6, const T &p_arg7, const T &p_arg8) {
+Vector<T> make_vector(const T &p_arg1, const T &p_arg2, const T &p_arg3, const T &p_arg4, const T &p_arg5, const T &p_arg6, const T &p_arg7, const T &p_arg8) {
 	Vector<T> p;
 	p.push_back(p_arg1);
 	p.push_back(p_arg2);
@@ -376,6 +399,5 @@ Vector<T> vector(const T &p_arg1, const T &p_arg2, const T &p_arg3, const T &p_a
 	p.push_back(p_arg8);
 	return p;
 }
-} // namespace helper
 
 #endif // VECTOR_H
