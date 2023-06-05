@@ -444,7 +444,7 @@ public:
 	String get_construct_string() const;
 	static void construct_from_string(const String &p_string, Variant &r_value, ObjectConstruct p_obj_construct = nullptr, void *p_construct_ud = nullptr);
 
-	void operator=(const Variant &p_variant); // only this is enough for all the other types
+	Variant &operator=(const Variant &p_variant); // only this is enough for all the other types (can be chained)
 	Variant(const Variant &p_variant);
 	_FORCE_INLINE_ Variant() { type = NIL; }
 	_FORCE_INLINE_ ~Variant() {
@@ -470,17 +470,15 @@ Array array(const Variant &p_arg1, const Variant &p_arg2, const Variant &p_arg3,
 Array array(const Variant &p_arg1, const Variant &p_arg2, const Variant &p_arg3, const Variant &p_arg4, const Variant &p_arg5);
 Array array(const Variant &p_arg1, const Variant &p_arg2, const Variant &p_arg3, const Variant &p_arg4, const Variant &p_arg5, const Variant &p_arg6);
 
-namespace helper {
 #define Arg(N) const String &p_key##N, const Variant &p_arg##N
-Dictionary dict();
-Dictionary dict(Arg(1));
-Dictionary dict(Arg(1), Arg(2));
-Dictionary dict(Arg(1), Arg(2), Arg(3));
-Dictionary dict(Arg(1), Arg(2), Arg(3), Arg(4));
-Dictionary dict(Arg(1), Arg(2), Arg(3), Arg(4), Arg(5));
-Dictionary dict(Arg(1), Arg(2), Arg(3), Arg(4), Arg(5), Arg(6));
+Dictionary make_dict();
+Dictionary make_dict(Arg(1));
+Dictionary make_dict(Arg(1), Arg(2));
+Dictionary make_dict(Arg(1), Arg(2), Arg(3));
+Dictionary make_dict(Arg(1), Arg(2), Arg(3), Arg(4));
+Dictionary make_dict(Arg(1), Arg(2), Arg(3), Arg(4), Arg(5));
+Dictionary make_dict(Arg(1), Arg(2), Arg(3), Arg(4), Arg(5), Arg(6));
 #undef Arg
-} // namespace helper
 
 struct VariantHasher {
 	static _FORCE_INLINE_ uint32_t hash(const Variant &p_variant) { return p_variant.hash(); }

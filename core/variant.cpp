@@ -2423,14 +2423,14 @@ Variant::Variant(const Vector<Color> &p_array) {
 	*this = v;
 }
 
-void Variant::operator=(const Variant &p_variant) {
+Variant &Variant::operator=(const Variant &p_variant) {
 	if (unlikely(this == &p_variant)) {
-		return;
+		return *this;
 	}
 
 	if (unlikely(type != p_variant.type)) {
 		reference(p_variant);
-		return;
+		return *this;
 	}
 
 	switch (p_variant.type) {
@@ -2535,6 +2535,7 @@ void Variant::operator=(const Variant &p_variant) {
 		default: {
 		}
 	}
+	return *this;
 }
 
 Variant::Variant(const IP_Address &p_address) {
@@ -3209,27 +3210,28 @@ String vformat(const String &p_text, const Variant &p1, const Variant &p2, const
 	return fmt;
 }
 
-namespace helper {
+// Build dictionary from key/value arguments
+
 #define Arg(N) const String &p_key##N, const Variant &p_arg##N
 #define SaveArg(D, N) D[p_key##N] = p_arg##N
-Dictionary dict() {
+Dictionary make_dict() {
 	return Dictionary();
 }
 
-Dictionary dict(Arg(1)) {
+Dictionary make_dict(Arg(1)) {
 	Dictionary dict;
 	SaveArg(dict, 1);
 	return dict;
 }
 
-Dictionary dict(Arg(1), Arg(2)) {
+Dictionary make_dict(Arg(1), Arg(2)) {
 	Dictionary dict;
 	SaveArg(dict, 1);
 	SaveArg(dict, 2);
 	return dict;
 }
 
-Dictionary dict(Arg(1), Arg(2), Arg(3)) {
+Dictionary make_dict(Arg(1), Arg(2), Arg(3)) {
 	Dictionary dict;
 	SaveArg(dict, 1);
 	SaveArg(dict, 2);
@@ -3237,7 +3239,7 @@ Dictionary dict(Arg(1), Arg(2), Arg(3)) {
 	return dict;
 }
 
-Dictionary dict(Arg(1), Arg(2), Arg(3), Arg(4)) {
+Dictionary make_dict(Arg(1), Arg(2), Arg(3), Arg(4)) {
 	Dictionary dict;
 	SaveArg(dict, 1);
 	SaveArg(dict, 2);
@@ -3246,7 +3248,7 @@ Dictionary dict(Arg(1), Arg(2), Arg(3), Arg(4)) {
 	return dict;
 }
 
-Dictionary dict(Arg(1), Arg(2), Arg(3), Arg(4), Arg(5)) {
+Dictionary make_dict(Arg(1), Arg(2), Arg(3), Arg(4), Arg(5)) {
 	Dictionary dict;
 	SaveArg(dict, 1);
 	SaveArg(dict, 2);
@@ -3256,7 +3258,7 @@ Dictionary dict(Arg(1), Arg(2), Arg(3), Arg(4), Arg(5)) {
 	return dict;
 }
 
-Dictionary dict(Arg(1), Arg(2), Arg(3), Arg(4), Arg(5), Arg(6)) {
+Dictionary make_dict(Arg(1), Arg(2), Arg(3), Arg(4), Arg(5), Arg(6)) {
 	Dictionary dict;
 	SaveArg(dict, 1);
 	SaveArg(dict, 2);
@@ -3268,4 +3270,3 @@ Dictionary dict(Arg(1), Arg(2), Arg(3), Arg(4), Arg(5), Arg(6)) {
 }
 #undef Arg
 #undef SaveArg
-} // namespace helper
