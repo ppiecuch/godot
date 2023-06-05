@@ -173,6 +173,14 @@ T *_nullptr() {
 #define CLAMP(m_a, m_min, m_max) (((m_a) < (m_min)) ? (m_min) : (((m_a) > (m_max)) ? m_max : m_a))
 #endif
 
+#ifndef SIGN2
+#define SIGN2(m_v) ((m_v) > 0 ? 1 : -1)
+#endif
+
+#ifndef SIGN3
+#define SIGN3(m_v) ((m_v) == 0 ? 0 : ((m_v) > 0 ? 1 : -1))
+#endif
+
 /** Generic swap template */
 #ifndef SWAP
 
@@ -211,10 +219,15 @@ inline void __swap_tmpl(T &x, T &y) {
 
 /** Fast hash from short string. */
 
-union mstring  {
+union mstring {
 	char chars[8];
 	unsigned long long index;
-	_FORCE_INLINE_ mstring(const char* sz) { int num = 8; char *dst = chars; while (num-- && (*dst++ = *sz++)); }
+	_FORCE_INLINE_ mstring(const char *sz) {
+		int num = 8;
+		char *dst = chars;
+		while (num-- && (*dst++ = *sz++))
+			;
+	}
 };
 
 /** Function to find the next power of 2 to an integer */
