@@ -917,13 +917,31 @@ static void _overlay(const uint8_t *__restrict p_src, uint8_t *__restrict p_dst,
 	}
 }
 
+void Image::expand_to_po2(bool p_square) {
+	ERR_FAIL_COND_MSG(!_can_modify(format), "Cannot expand in compressed or custom image formats.");
+
+	int w = next_power_of_2(width);
+	int h = next_power_of_2(height);
+	if (p_square) {
+		w = h = MAX(w, h);
+	}
+
+	if (w == width && h == height) {
+		if (!p_square || w == h) {
+			return; // nothing to do
+		}
+	}
+
+	expand(w, h);
+}
+
 void Image::expand(int p_width, int p_height, Color p_padding_color) {
 	ERR_FAIL_COND_MSG(write_lock.ptr(), "Cannot modify image when it is locked.");
 	copy_internals_from(expanded(p_width, p_height, p_padding_color));
 }
 
 Ref<Image> Image::expanded(int p_width, int p_height, Color p_padding_color) const {
-	ERR_FAIL_COND_V_MSG(!_can_modify(format), Ref<Image>(), "Cannot crop in compressed or custom image formats.");
+	ERR_FAIL_COND_V_MSG(!_can_modify(format), Ref<Image>(), "Cannot expand in compressed or custom image formats.");
 	ERR_FAIL_COND_V_MSG(p_width <= 0, Ref<Image>(), "Width of image must be greater than 0.");
 	ERR_FAIL_COND_V_MSG(p_height <= 0, Ref<Image>(), "Height of image must be greater than 0.");
 	ERR_FAIL_COND_V_MSG(p_width < width, Ref<Image>(), "New width has be greater than " + itos(width) + ".");
@@ -977,7 +995,7 @@ void Image::resize_to_po2(bool p_square, Interpolation p_interpolation) {
 
 	if (w == width && h == height) {
 		if (!p_square || w == h) {
-			return; //nothing to do
+			return; // nothing to do
 		}
 	}
 

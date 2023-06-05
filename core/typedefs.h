@@ -209,7 +209,19 @@ inline void __swap_tmpl(T &x, T &y) {
 #define _add_overflow __builtin_add_overflow
 #endif
 
+/** Fast hash from short string. */
+
+union mstring  {
+	char chars[8];
+	unsigned long long index;
+	_FORCE_INLINE_ mstring(const char* sz) { int num = 8; char *dst = chars; while (num-- && (*dst++ = *sz++)); }
+};
+
 /** Function to find the next power of 2 to an integer */
+
+static _FORCE_INLINE_ bool is_power_of_2(unsigned long n) {
+	return n == 0 ? true : (n & (n - 1)) == 0;
+}
 
 static _FORCE_INLINE_ unsigned int next_power_of_2(unsigned int x) {
 	if (x == 0) {

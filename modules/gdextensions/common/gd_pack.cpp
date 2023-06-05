@@ -36,8 +36,6 @@
 #define DOCTEST_CONFIG_DISABLE
 #endif
 
-// #define DEBUG_ATLAS_PACK
-
 // just add another comparing function name to cmpf to perform another packing attempt
 // more functions == slower but probably more efficient cases covered and hence less area wasted
 
@@ -89,7 +87,7 @@ struct node {
 
 	void reset(const rect_wh &r) {
 		id = false;
-		rc = rect_ltrb(0, 0, r.w, r.h);
+		rc = rect_ltrb(0, 0, r.w(), r.h());
 		delcheck();
 	}
 
@@ -125,7 +123,7 @@ struct node {
 				return this;
 		}
 
-		int iw = (img.flipped ? img.h : img.w), ih = (img.flipped ? img.w : img.h);
+		int iw = (img.flipped ? img.h() : img.w()), ih = (img.flipped ? img.w() : img.h());
 
 		if (rc.w() - iw > rc.h() - ih) {
 			c[0].set(rc.l, rc.t, rc.l + iw, rc.b);
@@ -173,24 +171,24 @@ static rect_wh _rect_2d(rect_xywhf *const *v, int n, int max_s, bool allow_flip,
 	}
 
 	rect_wh min_bin = rect_wh(max_s, max_s);
-	int min_func = -1, best_func = 0, best_area = 0, _area = 0, step, fit, i;
+	int min_func = -1, best_func = 0, best_area = 0, _area = 0, step, fit;
 
 	bool fail = false;
 
 	for (int f = 0; f < funcs; ++f) {
 		v = order[f];
-		step = min_bin.w / 2;
+		step = min_bin.w() / 2;
 		root.reset(min_bin);
 
 		while (true) {
-			if (root.rc.w() > min_bin.w) {
+			if (root.rc.w() > min_bin.w()) {
 				if (min_func > -1) {
 					break;
 				}
 				_area = 0;
 
 				root.reset(min_bin);
-				for (i = 0; i < n; ++i) {
+				for (int i = 0; i < n; ++i) {
 					if (root.insert(*v[i], allow_flip)) {
 						_area += v[i]->area();
 					}
@@ -201,7 +199,7 @@ static rect_wh _rect_2d(rect_xywhf *const *v, int n, int max_s, bool allow_flip,
 
 			fit = -1;
 
-			for (i = 0; i < n; ++i) {
+			for (int i = 0; i < n; ++i) {
 				if (!root.insert(*v[i], allow_flip)) {
 					fit = 1;
 					break;
@@ -236,7 +234,7 @@ static rect_wh _rect_2d(rect_xywhf *const *v, int n, int max_s, bool allow_flip,
 
 	root.reset(min_bin);
 
-	for (i = 0; i < n; ++i) {
+	for (int i = 0; i < n; ++i) {
 		if (auto ret = root.insert(*v[i], allow_flip)) {
 			v[i]->x = ret->rc.l;
 			v[i]->y = ret->rc.t;
@@ -264,51 +262,59 @@ static rect_wh _rect_2d(rect_xywhf *const *v, int n, int max_s, bool allow_flip,
 	return rect_wh(clip_x, clip_y);
 }
 
-static std::pair<rect_wh, int> _try_rects_2d(rect_xywhf *const *v, int n, bool allow_flip, const real_t *scales = nullptr) {
-	int max_side = 128;
+static rect_wh _try_rects_2d(rect_xywhf *const *v, int n, bool allow_flip) {
+	int max_side = 0, min_side = 32;
+
+	// start from biggest side
+	for (int i = 0; i < n; i++) {
+		if (v[i]->w() > max_side) {
+			max_side = v[i]->w();
+		}
+		if (v[i]->h() > max_side) {
+			max_side = v[i]->h();
+		}
+		if (v[i]->w() > 0 && v[i]->w() < min_side) {
+			min_side = v[i]->w();
+		}
+		if (v[i]->h() > 0 && v[i]->h() < min_side) {
+			min_side = v[i]->h();
+		}
+	}
 
 	while (true) {
 		rect_wh _rect(max_side, max_side);
 
-		for (int i = 0; i < n; i++) {
-			const real_t scale = scales ? scales[i] : 1;
-			if (!v[i]->scaled(scale).fits(_rect, allow_flip)) {
-				goto next_size;
-			}
+		std::vector<rect_xywhf *> vec[2], *p[2] = { vec, vec + 1 }, rects;
+		vec[0].resize(n);
+		vec[1].clear();
+		std::memcpy(&vec[0][0], v, sizeof(rect_xywhf *) * n);
+
+		rect_wh size = _rect_2d(&((*p[0])[0]), static_cast<int>(p[0]->size()), max_side, allow_flip, rects, *p[1]);
+		if (!p[1]->size()) { // no unfitted items - finish
+			return size; // pack size
 		}
 
-		{
-			std::vector<rect_xywhf *> vec[2], *p[2] = { vec, vec + 1 }, rects;
-			vec[0].resize(n);
-			vec[1].clear();
-			std::memcpy(&vec[0][0], v, sizeof(rect_xywhf *) * n);
-
-			rect_wh size = _rect_2d(&((*p[0])[0]), static_cast<int>(p[0]->size()), max_side, allow_flip, rects, *p[1]);
-			if (!p[1]->size()) { // no unfitted items - finish
-				print_verbose(vformat("Autofit packing success: %d (%dx%d)", max_side, size.w, size.h));
-				return { size, max_side }; // pack size + atlas side
-			}
-		}
-
-	next_size:
-		max_side *= 2;
+		max_side += min_side;
 	}
 
 	return { 0, 0 };
 }
 
 static bool _pack_rects(rect_xywhf *const *v, int n, int max_side, bool single_page, bool allow_flip, std::vector<bin> &bins) {
-	const int req_max_side = max_side;
-	if (max_side <= 0) {
-		max_side = _try_rects_2d(v, n, allow_flip).second;
+	real_t req_max_side = max_side;
+	if (max_side <= 0 || single_page) {
+		const rect_wh rc = _try_rects_2d(v, n, allow_flip);
+		max_side = rc.w();
 		if (max_side <= 0) {
 			return false;
 		}
+		print_verbose(vformat("Autofit packing success: %dx%d", rc.w(), rc.h()));
 	}
 
-	rect_wh _rect(max_side, max_side);
+	if (req_max_side <= 0) {
+		req_max_side = max_side;
+	}
 
-	std::vector<real_t> rect_scale;
 	if (single_page && req_max_side > 0 && max_side > req_max_side) {
 		// find scale to fit in max_side
 		int max_area = 0;
@@ -318,27 +324,37 @@ static bool _pack_rects(rect_xywhf *const *v, int n, int max_side, bool single_p
 				max_area = area;
 			}
 		}
-		rect_scale.resize(n);
-		real_t base_scale = 1.0 / (max_side / req_max_side);
+		const real_t step = 0.01;
+		real_t base_scale = 1.5;
+		int last_max_side = 0;
 		do {
 			for (int i = 0; i < n; i++) {
-				const int area = v[i]->area();
-				rect_scale[i] = 1.0 - base_scale * (area / max_area);
-				ERR_FAIL_COND_V(rect_scale[i] <= 0, false);
+				const real_t area = v[i]->_w * v[i]->_h;
+				v[i]->scale = 1.0 - base_scale * (area / max_area);
+				v[i]->scale = base_scale - (area / max_area);
+				ERR_FAIL_COND_V(v[i]->scale <= 0, false);
 			}
-			max_side = _try_rects_2d(v, n, allow_flip, rect_scale.data()).second;
+			max_side = _try_rects_2d(v, n, allow_flip).w();
 			print_verbose(vformat("Autoscaling iteration: scale %0.2f -> side %d", base_scale, max_side));
-			if (max_side <= 0) {
-				return false;
+			if (last_max_side && last_max_side - max_side != 0) {
+				const real_t diff = (last_max_side - max_side) / real_t(req_max_side); // % difference between iterations
+				const real_t need = (req_max_side - max_side) / real_t(req_max_side);
+				const int iters = Math::ceil(need / diff);
+				if (Math::abs(iters) > 2) { // if estimation shows more iterations are needed increase step one-time
+					base_scale += step * iters;
+				} else {
+					base_scale += step * SIGN2(iters);
+				}
+			} else {
+				base_scale -= step;
 			}
-			base_scale += 0.05;
+			last_max_side = max_side;
 		} while (max_side > req_max_side);
-	} else {
-		rect_scale.resize(n, 1);
 	}
 
+	rect_wh _rect(max_side, max_side);
 	for (int i = 0; i < n; i++) {
-		if (!v[i]->scaled(rect_scale[i]).fits(_rect, allow_flip)) {
+		if (!v[i]->fits(_rect, allow_flip)) {
 			return false;
 		}
 	}
@@ -513,8 +529,9 @@ Dictionary merge_images(const Vector<Ref<Image>> &images, const ImageMergeOption
 		data.write[i].original_image = image;
 		data.write[i].x = 0;
 		data.write[i].y = 0;
-		data.write[i].w = image->get_size().width;
-		data.write[i].h = image->get_size().height;
+		data.write[i]._w = image->get_size().width;
+		data.write[i]._h = image->get_size().height;
+		data.write[i].scale = 1;
 		rects.write[i] = &data.write[i];
 		if (image->get_format() == Image::FORMAT_L8) {
 			atlas_channels = MAX(1, atlas_channels);
@@ -546,7 +563,7 @@ Dictionary merge_images(const Vector<Ref<Image>> &images, const ImageMergeOption
 		for (int i = 0; i < bins.size(); ++i) {
 			const bin b = bins[i];
 
-			const Size2 atlas_size(options.power_of_two ? next_power_of_2(b.size.w) : b.size.w, options.power_of_two ? next_power_of_2(b.size.h) : b.size.h);
+			const Size2 atlas_size = b.size.size();
 			PoolByteArray atlas_data;
 			atlas_data.resize(atlas_size.width * atlas_size.height * atlas_channels);
 
@@ -584,6 +601,9 @@ Dictionary merge_images(const Vector<Ref<Image>> &images, const ImageMergeOption
 				int rect_pos_y = 0;
 
 				Ref<Image> img = r->original_image;
+				if (r->scale != 1) {
+					img = img->resized(r->w(), r->h());
+				}
 
 				ERR_CONTINUE(!img.is_valid());
 
@@ -594,11 +614,11 @@ Dictionary merge_images(const Vector<Ref<Image>> &images, const ImageMergeOption
 
 				ERR_CONTINUE_MSG(input_format_offset == 0, "Image format is not supported, skipping.");
 
-				for (int y = 0; y < r->h; ++y) {
+				for (int y = 0; y < r->h(); ++y) {
 					const int orig_img_indx = (rect_pos_y + y) * image_size.width * input_format_offset + rect_pos_x * input_format_offset;
 					const int start_indx = (r->y + y) * atlas_size.width * atlas_channels + r->x * atlas_channels;
 
-					for (int x = 0; x < r->w; ++x) {
+					for (int x = 0; x < r->w(); ++x) {
 						switch (input_format_offset) {
 							case 4:
 							case 3: {
@@ -641,10 +661,6 @@ Dictionary merge_images(const Vector<Ref<Image>> &images, const ImageMergeOption
 			}
 
 			atlas->create(atlas_size.width, atlas_size.height, false, atlas_format, atlas_data);
-
-#ifdef DEBUG_ATLAS_PACK
-			atlas->save_png(vformat("atlas_%d.png", i)); // dump generated atlas
-#endif
 			generated_images.set(i, atlas);
 		}
 
@@ -653,8 +669,8 @@ Dictionary merge_images(const Vector<Ref<Image>> &images, const ImageMergeOption
 		for (int r = 0; r < data.size(); ++r) {
 			const rect_xywhf &rc = data[r];
 			Dictionary entry;
-			entry["rect"] = Rect2(rc.x + margin, rc.y + margin, rc.w - 2 * margin, rc.h - 2 * margin);
-			entry["rrect"] = Rect2(Point2(rc.x + margin, rc.y + margin) / rc.atlas_image->get_size(), Size2(rc.w - 2 * margin, rc.h - 2 * margin) / rc.atlas_image->get_size());
+			entry["rect"] = Rect2(rc.x + margin, rc.y + margin, rc.w() - 2 * margin, rc.h() - 2 * margin);
+			entry["rrect"] = Rect2(Point2(rc.x + margin, rc.y + margin) / rc.atlas_image->get_size(), Size2(rc.w() - 2 * margin, rc.h() - 2 * margin) / rc.atlas_image->get_size());
 			entry["atlas_page"] = rc.bin;
 			entry["atlas"] = rc.atlas_image;
 			atlas_rects[r] = entry;
@@ -665,7 +681,7 @@ Dictionary merge_images(const Vector<Ref<Image>> &images, const ImageMergeOption
 		Array bins_size;
 		ERR_FAIL_COND_V(bins_size.resize(bins.size()) != OK, Dictionary());
 		for (int i = 0; i < bins.size(); ++i) {
-			bins_size[i] = Size2(bins[i].size.w, bins[i].size.h);
+			bins_size[i] = Size2(bins[i].size.w(), bins[i].size.h());
 		}
 		ret["_bins_size"] = bins_size;
 	} else {
@@ -949,32 +965,46 @@ TEST_CASE("Packing functions") {
 	for (int i = 0; i < 5; i++) {
 		test_set.push_back(memnew(Image(test_data[i].png_data.data(), test_data[i].data_len)));
 	}
-
 	SUBCASE("empty set") {
 		REQUIRE(merge_images(empty_set).empty());
 	}
 	SUBCASE("default packing") {
-		Dictionary res = merge_images(test_set);
-		REQUIRE(!res.empty());
-		REQUIRE(Array(res["_generated_images"]).size() == 1);
-	}
-	SUBCASE("default packing with power of two") {
-		const ImageMergeOptions options = ImageMergeOptions().set_power_of_two(true);
-		Dictionary res = merge_images(test_set, options);
-		REQUIRE(!res.empty());
-		REQUIRE(Array(res["_generated_images"]).size() == 1);
-		Ref<Image> atlas = Array(res["_generated_images"])[0];
-		REQUIRE(is_power_of_2(atlas->get_width()));
-	}
-	SUBCASE("default packing without power of two") {
-		const ImageMergeOptions options = ImageMergeOptions().set_power_of_two(false);
+		const ImageMergeOptions options = ImageMergeOptions();
 		Dictionary res = merge_images(test_set, options);
 		REQUIRE(!res.empty());
 		REQUIRE(Array(res["_generated_images"]).size() == 1);
 		Ref<Image> atlas = Array(res["_generated_images"])[0];
 		Size2 area = Array(res["_bins_size"])[0];
 		REQUIRE(atlas->get_size() == area);
-		atlas->save_png(_doctest_get_folder() + "atlas_without_power_of_two.png");
+		atlas->save_png(_doctest_get_folder() + "atlas_default_packing.png");
+	}
+	SUBCASE("packing to max. size 1000 with single page") {
+		const ImageMergeOptions options = ImageMergeOptions().set_max_size(1000).set_single_page(true);
+		Dictionary res = merge_images(test_set, options);
+		REQUIRE(!res.empty());
+		REQUIRE(Array(res["_generated_images"]).size() == 1);
+		Ref<Image> atlas = Array(res["_generated_images"])[0];
+		atlas->save_png(_doctest_get_folder() + "atlas_max1000_with_single_page.png");
+	}
+	SUBCASE("packing big images to max. size 1000 with single page") {
+		const ImageMergeOptions options = ImageMergeOptions().set_max_size(1000).set_single_page(true);
+		Vector<Ref<Image>> test_set_1;
+		test_set_1.push_back(test_set[3], test_set[4], test_set[4]);
+		Dictionary res = merge_images(test_set_1, options);
+		REQUIRE(!res.empty());
+		REQUIRE(Array(res["_generated_images"]).size() == 1);
+		Ref<Image> atlas = Array(res["_generated_images"])[0];
+		atlas->save_png(_doctest_get_folder() + "atlas_big_images_max1000_with_single_page.png");
+	}
+	SUBCASE("packing small images to max. size 1000 with single page") {
+		const ImageMergeOptions options = ImageMergeOptions().set_max_size(1000).set_single_page(true);
+		Vector<Ref<Image>> test_set_1;
+		test_set_1.push_back(test_set[0], test_set[0], test_set[1]);
+		Dictionary res = merge_images(test_set_1, options);
+		REQUIRE(!res.empty());
+		REQUIRE(Array(res["_generated_images"]).size() == 1);
+		Ref<Image> atlas = Array(res["_generated_images"])[0];
+		atlas->save_png(_doctest_get_folder() + "atlas_small_images_max1000_with_single_page.png");
 	}
 }
 #endif

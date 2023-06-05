@@ -227,6 +227,7 @@ public:
 	/**
 	 * Expand the image and fill with padding color.
 	 */
+	void expand_to_po2(bool p_square = false);
 	void expand(int p_width, int p_height, Color p_padding_color = Color(0, 0, 0, 0));
 	Ref<Image> expanded(int p_width, int p_height, Color p_padding_color = Color(0, 0, 0, 0)) const;
 

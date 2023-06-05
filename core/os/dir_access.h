@@ -115,6 +115,21 @@ public:
 		return err;
 	}
 
+	// Quickly manage project files
+	static Error remove_path_or_error(String p_path) {
+		DirAccess *da = create_for_path(p_path);
+		Error err = OK;
+		if (da->file_exists(p_path)) {
+			if ((err = da->remove(p_path)) != OK) {
+				ERR_FAIL_V_MSG(err, "Cannot remove file or directory: " + p_path);
+			}
+		} else {
+			err = ERR_FILE_NOT_FOUND;
+		}
+		memdelete(da);
+		return err;
+	}
+
 	virtual String get_filesystem_type() const = 0;
 	static String get_full_path(const String &p_path, AccessType p_access);
 	static DirAccess *create_for_path(const String &p_path);

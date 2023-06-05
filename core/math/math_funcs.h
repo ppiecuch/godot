@@ -116,6 +116,14 @@ public:
 	static _ALWAYS_INLINE_ double exp(double p_x) { return ::exp(p_x); }
 	static _ALWAYS_INLINE_ float exp(float p_x) { return ::expf(p_x); }
 
+#ifdef __STRICT_ANSI__
+	static _ALWAYS_INLINE_ double hypot(double p_x, double p_y) { return ::sqrt(p_x * p_x + p_y * p_y); }
+	static _ALWAYS_INLINE_ float hypot(float p_x, float p_y) { return ::sqrtf(p_x * p_x + p_y * p_y); }
+#else
+	static _ALWAYS_INLINE_ double hypot(double p_x, double p_y) { return ::hypot(p_x, p_y); }
+	static _ALWAYS_INLINE_ float hypot(float p_x, float p_y) { return ::hypotf(p_x, p_y); }
+#endif
+
 	static _ALWAYS_INLINE_ bool is_nan(double p_val) {
 #ifdef _MSC_VER
 		return _isnan(p_val);
@@ -226,6 +234,15 @@ public:
 
 	static _ALWAYS_INLINE_ double lerp(double p_from, double p_to, double p_weight) { return p_from + (p_to - p_from) * p_weight; }
 	static _ALWAYS_INLINE_ float lerp(float p_from, float p_to, float p_weight) { return p_from + (p_to - p_from) * p_weight; }
+
+	static _ALWAYS_INLINE_ double lerp_clamped(double p_from, double p_to, double p_weight) {
+		const double weight = CLAMP(p_weight, 0, 1);
+		return p_from + (p_to - p_from) * weight;
+	}
+	static _ALWAYS_INLINE_ float lerp_clamped(float p_from, float p_to, float p_weight) {
+		const float weight = CLAMP(p_weight, 0, 1);
+		return p_from + (p_to - p_from) * weight;
+	}
 
 	static _ALWAYS_INLINE_ double lerp_angle(double p_from, double p_to, double p_weight) {
 		double difference = fmod(p_to - p_from, Math_TAU);

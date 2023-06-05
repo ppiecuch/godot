@@ -157,12 +157,24 @@ public:
 	_FORCE_INLINE_ void remove(int p_index) {
 		ERR_FAIL_INDEX(p_index, size());
 		T *p = ptrw();
-		int len = size();
+		const int len = size();
 		for (int i = p_index; i < len - 1; i++) {
 			p[i] = p[i + 1];
 		};
 
 		resize(len - 1);
+	};
+
+	_FORCE_INLINE_ void remove(int p_index, int p_count) {
+		ERR_FAIL_COND(p_count <= 0);
+		ERR_FAIL_INDEX(p_index, size() - p_count + 1);
+		T *p = ptrw();
+		const int len = size();
+		for (int i = p_index; i < len - p_count; i++) {
+			p[i] = p[i + p_count];
+		};
+
+		resize(len - p_count);
 	};
 
 	Error insert(int p_pos, const T &p_val) {
@@ -173,6 +185,18 @@ public:
 		}
 		set(p_pos, p_val);
 
+		return OK;
+	};
+
+	Error insert(int p_pos, int p_count, const T *p_val) {
+		ERR_FAIL_INDEX_V(p_pos, size() + 1, ERR_INVALID_PARAMETER);
+		resize(size() + p_count);
+		for (int i = (size() - p_count); i > p_pos; i--) {
+			set(i, get(i - p_count));
+		}
+		for (int p = 0; p < p_count; p++) {
+			set(p_pos + p, p_val[p]);
+		}
 		return OK;
 	};
 

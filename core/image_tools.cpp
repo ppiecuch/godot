@@ -1,4 +1,5 @@
 #include "core/image_tools.h"
+#include "bind/core_bind.h"
 #include "core/image.h"
 
 /**

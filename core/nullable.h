@@ -1,9 +1,8 @@
 #ifndef NULLABLE_H
 #define NULLABLE_H
 
-
-#include "Poco/Foundation.h"
-#include "Poco/Exception.h"
+#include "core/error_macros.h"
+#include "reference.h"
 
 #include <algorithm>
 #include <iostream>
@@ -20,7 +19,7 @@
 /// A Nullable can be default constructed. In this case,
 /// the Nullable will have a Null value and isNull() will
 /// return true. Calling value() (without default value) on
-/// a Null object will throw a NullValueException.
+/// a Null object will crash in debug mode.
 ///
 /// A Nullable can also be constructed from a value.
 /// It is possible to assign a value to a Nullable, and
@@ -34,114 +33,117 @@ enum NullType {
 	NULL_GENERIC = 0
 };
 
-
 template <typename C>
 class Nullable {
-	C        _value;
-	bool     _isNull;
+	C _value;
+	bool _isNull;
 	NullType _null;
 
 public:
-	Nullable():
-		_value(), _isNull(true), _null() { }
+	Nullable() :
+			_value(), _isNull(true), _null() {}
 
-	Nullable(const NullType&): // Creates an empty Nullable.
-		_value(), _isNull(true), _null() { }
+	Nullable(const NullType &) : // Creates an empty Nullable.
+			_value(), _isNull(true), _null() {}
 
-	Nullable(const C& value): // Creates a Nullable with the given value.
-		_value(value), _isNull(false), _null() { }
+	Nullable(const C &value) : // Creates a Nullable with the given value.
+			_value(value), _isNull(false), _null() {}
 
-	Nullable(C&& value): // Creates a Nullable by moving the given value.
-		_value(std::forward<C>(value)), _isNull(false), _null() { }
+	Nullable(C &&value) : // Creates a Nullable by moving the given value.
+			_value(std::forward<C>(value)), _isNull(false), _null() {}
 
-	Nullable(const Nullable& other): // Creates a Nullable by copying another one.
-		_value(other._value), _isNull(other._isNull), _null() { }
+	Nullable(const Nullable &other) : // Creates a Nullable by copying another one.
+			_value(other._value), _isNull(other._isNull), _null() {}
 
-	Nullable(Nullable&& other) noexcept: // Creates a Nullable by moving another one.
-		_value(std::move(other._value)), _isNull(other._isNull), _null() { other._isNull = true; }
+	Nullable(Nullable &&other) noexcept : // Creates a Nullable by moving another one.
+			_value(std::move(other._value)), _isNull(other._isNull), _null() { other._isNull = true; }
 
-	~Nullable() { }
+	~Nullable() {}
 
-	Nullable& assign(const C& value) {
-		_value  = value;
+	Nullable &assign(const C &value) {
+		_value = value;
 		_isNull = false;
 		return *this;
 	}
 
-	Nullable& assign(C&& value) {
-		_value  = std::move(value);
+	Nullable &assign(C &&value) {
+		_value = std::move(value);
 		_isNull = false;
 		return *this;
 	}
 
-	Nullable& assign(const Nullable& other) {
+	Nullable &assign(const Nullable &other) {
 		Nullable tmp(other);
 		swap(tmp);
 		return *this;
 	}
 
-	Nullable& assign(NullType) { // Sets value to null.
+	Nullable &assign(NullType) { // Sets value to null.
 		_isNull = true;
 		return *this;
 	}
 
-	Nullable& operator = (const C& value) { // Assigns a value to the Nullable.
+	Nullable &operator=(const nullptr_t) { // Assigns a null value to the Nullable.
+		return assign(NULL_GENERIC);
+	}
+
+	Nullable &operator=(const C &value) { // Assigns a value to the Nullable.
 		return assign(value);
 	}
 
-	Nullable& operator = (C&& value) { // Move-assigns a value to the Nullable.
+	Nullable &operator=(C &&value) { // Move-assigns a value to the Nullable.
 		return assign(std::move(value));
 	}
 
-	Nullable& operator = (const Nullable& other) { // Assigns another Nullable.
+	Nullable &operator=(const Nullable &other) { // Assigns another Nullable.
 		return assign(other);
 	}
 
-	Nullable& operator = (Nullable&& other) noexcept { // Moves another Nullable.
+	Nullable &operator=(Nullable &&other) noexcept { // Moves another Nullable.
 		_isNull = other._isNull;
 		_value = std::move(other._value);
 		other._isNull = true;
 		return *this;
 	}
 
-	Nullable& operator = (NullType) { // Assigns another Nullable.
+	Nullable &operator=(NullType) { // Assigns another Nullable.
 		_isNull = true;
 		return *this;
 	}
 
-	void swap(Nullable& other) noexcept { // Swaps this Nullable with other.
+	void swap(Nullable &other) noexcept { // Swaps this Nullable with other.
 		std::swap(_value, other._value);
 		std::swap(_isNull, other._isNull);
 	}
 
-	bool operator == (const Nullable<C>& other) const { // Compares two Nullables for equality
+	bool operator==(const Nullable<C> &other) const { // Compares two Nullables for equality
 		return (_isNull && other._isNull) || (_isNull == other._isNull && _value == other._value);
 	}
 
-	bool operator == (const C& value) const { // Compares Nullable with value for equality
+	bool operator==(const C &value) const { // Compares Nullable with value for equality
 		return (!_isNull && _value == value);
 	}
 
-	bool operator == (const NullType&) const { // Compares Nullable with NullData for equality
+	bool operator==(const NullType &) const { // Compares Nullable with NullData for equality
 		return _isNull;
 	}
 
-	bool operator != (const C& value) const { // Compares Nullable with value for non equality
+	bool operator!=(const C &value) const { // Compares Nullable with value for non equality
 		return !(*this == value);
 	}
 
-	bool operator != (const Nullable<C>& other) const { // Compares two Nullables for non equality
+	bool operator!=(const Nullable<C> &other) const { // Compares two Nullables for non equality
 		return !(*this == other);
 	}
 
-	bool operator != (const NullType&) const { // Compares with NullData for non equality
+	bool operator!=(const NullType &) const { // Compares with NullData for non equality
 		return !_isNull;
 	}
 
 	// Compares two Nullable objects. Return true if this object's
 	// value is smaler than the other object's value.
 	// Null value is smaller than a non-null value.
-	bool operator < (const Nullable<C>& other) const {
+	bool operator<(const Nullable<C> &other) const {
 		if (_isNull && other._isNull) {
 			return false;
 		}
@@ -157,44 +159,47 @@ public:
 	// Compares two Nullable objects. Return true if this object's
 	// value is greater than the other object's value.
 	// A non-null value is greater than a null value.
-	bool operator > (const Nullable<C>& other) const {
+	bool operator>(const Nullable<C> &other) const {
 		return !(*this == other) && !(*this < other);
 	}
 
 	// Returns the Nullable's value.
-	// Throws a NullValueException if the Nullable is empty.
-	C& value() {
-		if (!_isNull)
-			return _value;
-		else
-			throw NullValueException();
+	// Crash if the Nullable is empty.
+	C &value() {
+#ifdef DEBUG_ENABLED
+		if (_isNull) {
+			CRASH_NOW_MSG("Empty Nullable");
+		}
+#endif
+		return _value;
 	}
 
 	// Returns the Nullable's value.
-	// Throws a NullValueException if the Nullable is empty.
-	const C& value() const {
-		if (!_isNull) {
-			return _value;
-		} else {
-			throw NullValueException();
+	// Crash if the Nullable is empty.
+	const C &value() const {
+#ifdef DEBUG_ENABLED
+		if (_isNull) {
+			CRASH_NOW_MSG("Empty Nullable");
 		}
+#endif
+		return _value;
 	}
 
 	// Returns the Nullable's value, or the
 	// given default value if the Nullable is empty.
-	const C& value(const C& deflt) const {
+	const C &value(const C &deflt) const {
 		return _isNull ? deflt : _value;
 	}
 
-	operator C& () { // Get reference to the value
+	operator C &() { // Get reference to the value
 		return value();
 	}
 
-	operator const C& () const { // Get const reference to the value
+	operator const C &() const { // Get const reference to the value
 		return value();
 	}
 
-	operator NullType& () { // Get reference to the value
+	operator NullType &() { // Get reference to the value
 		return _null;
 	}
 
@@ -207,40 +212,35 @@ public:
 	}
 };
 
-
 template <typename C>
-inline void swap(Nullable<C>& n1, Nullable<C>& n2) noexcept {
+inline void swap(Nullable<C> &n1, Nullable<C> &n2) noexcept {
 	n1.swap(n2);
 }
 
-
 template <typename C>
-std::ostream& operator<<(std::ostream& out, const Nullable<C>& obj) {
-	if (!obj.isNull()) out << obj.value();
+std::ostream &operator<<(std::ostream &out, const Nullable<C> &obj) {
+	if (!obj.isNull())
+		out << obj.value();
 	return out;
 }
 
-
 template <typename C>
-bool operator == (const NullType&, const Nullable<C>& n) {
+bool operator==(const NullType &, const Nullable<C> &n) {
 	return n.isNull(); // Returns true if this Nullable is null.
 }
 
-
 template <typename C>
-bool operator != (const C& c, const Nullable<C>& n) {
+bool operator!=(const C &c, const Nullable<C> &n) {
 	return !(n == c); // Compares Nullable with value for non equality
 }
 
-
 template <typename C>
-bool operator == (const C& c, const Nullable<C>& n) {
+bool operator==(const C &c, const Nullable<C> &n) {
 	return (n == c); // Compares Nullable with NullData for equality
 }
 
-
 template <typename C>
-bool operator != (const NullType&, const Nullable<C>& n) {
+bool operator!=(const NullType &, const Nullable<C> &n) {
 	return !n.isNull(); // Returns true if this Nullable is not null.
 }
 

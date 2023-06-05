@@ -83,29 +83,32 @@ struct rect_ltrb {
 
 struct rect_wh {
 	rect_wh(const rect_ltrb &rr) :
-			w(rr.w()), h(rr.h()) {}
-	rect_wh(int w = 0, int h = 0) :
-			w(w), h(h) {}
-	int w, h;
-	int area() const { return w * h; }
-	int perimeter() const { return 2 * w + 2 * h; }
+			_w(rr.w()), _h(rr.h()) {}
+	rect_wh(int w = 0, int h = 0, float scale = 1) :
+			_w(w), _h(h), scale(scale) {}
+	int _w, _h;
+	float scale;
+	int area() const { return w() * h(); }
+	int perimeter() const { return 2 * w() + 2 * h(); }
 	int fits(const rect_wh &bigger, bool allow_flip) const { // 0 - no, 1 - yes, 2 - flipped, 3 - perfectly, 4 perfectly flipped
-		if (w == bigger.w && h == bigger.h) {
+		if (w() == bigger.w() && h() == bigger.h()) {
 			return 3;
 		}
-		if (allow_flip && h == bigger.w && w == bigger.h) {
+		if (allow_flip && h() == bigger.w() && w() == bigger.h()) {
 			return 4;
 		}
-		if (w <= bigger.w && h <= bigger.h) {
+		if (w() <= bigger.w() && h() <= bigger.h()) {
 			return 1;
 		}
-		if (allow_flip && h <= bigger.w && w <= bigger.h) {
+		if (allow_flip && h() <= bigger.w() && w() <= bigger.h()) {
 			return 2;
 		}
 		return 0;
 	}
-	rect_wh scaled(real_t scale) const { return rect_wh(w * scale, h * scale); }
-	Size2i size() const { return Size2i(w, h); }
+	int w() const { return _w * scale; }
+	int h() const { return _h * scale; }
+	rect_wh scaled() const { return rect_wh(w(), h()); }
+	Size2i size() const { return Size2i(w(), h()); }
 };
 
 struct rect_xywh : public rect_wh {
@@ -120,15 +123,15 @@ struct rect_xywh : public rect_wh {
 			rect_wh(w, h), x(x), y(y) {}
 	operator rect_ltrb() {
 		rect_ltrb rr(x, y, 0, 0);
-		rr.w(w);
-		rr.h(h);
+		rr.w(w());
+		rr.h(h());
 		return rr;
 	}
 	int x, y;
-	int r() const { return x + w; }
-	int b() const { return y + h; }
-	void r(int right) { w = right - x; }
-	void b(int bottom) { h = bottom - y; }
+	int r() const { return x + w(); }
+	int b() const { return y + h(); }
+	void r(int right) { _w = right - x; }
+	void b(int bottom) { _h = bottom - y; }
 };
 
 struct rect_xywhf : public rect_xywh {
@@ -140,7 +143,7 @@ struct rect_xywhf : public rect_xywh {
 			flipped(false) {}
 	void flip() {
 		flipped = !flipped;
-		std::swap(w, h);
+		std::swap(_w, _h);
 	}
 	bool flipped;
 	int bin;
@@ -160,26 +163,29 @@ static inline bool perimeter(rect_xywhf *a, rect_xywhf *b) {
 	return a->perimeter() > b->perimeter();
 }
 static inline bool max_side(rect_xywhf *a, rect_xywhf *b) {
-	return std::max(a->w, a->h) > std::max(b->w, b->h);
+	return std::max(a->w(), a->h()) > std::max(b->w(), b->h());
 }
 static inline bool max_width(rect_xywhf *a, rect_xywhf *b) {
-	return a->w > b->w;
+	return a->w() > b->w();
 }
 static inline bool max_height(rect_xywhf *a, rect_xywhf *b) {
-	return a->h > b->h;
+	return a->h() > b->h();
 }
 
 struct ImageMergeOptions {
 	int max_atlas_size = 0; // default: autofit
 	bool force_single_page_atlas = true; // default: rescale to fit
 	int margin = 2;
-	bool power_of_two = true;
 	int force_atlas_channels = 0; // default: autodetect
 
 	Color background_color = Color(0, 0, 0, 0);
 
-	ImageMergeOptions &set_power_of_two(bool v) {
-		power_of_two = v;
+	ImageMergeOptions &set_max_size(int v) {
+		max_atlas_size = v;
+		return *this;
+	}
+	ImageMergeOptions &set_single_page(bool v) {
+		force_single_page_atlas = v;
 		return *this;
 	}
 	ImageMergeOptions &set_margin(int v) {
