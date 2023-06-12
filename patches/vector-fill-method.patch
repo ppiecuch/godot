@@ -1,0 +1,371 @@
+From efd27a63c138ceef89d4ed2586651ea61898f5c7 Mon Sep 17 00:00:00 2001
+From: Matheus Lima Cunha <matheus.limacunha@hotmail.com>
+Date: Thu, 25 Feb 2021 11:10:39 -0300
+Subject: [PATCH] Add fill method to Arrays and PackedArrays
+
+---
+ core/templates/vector.h            |  9 +++++++++
+ core/variant/array.cpp             |  5 +++++
+ core/variant/array.h               |  1 +
+ core/variant/variant_call.cpp      | 10 ++++++++++
+ doc/classes/Array.xml              | 21 +++++++++++++++++++++
+ doc/classes/PackedByteArray.xml    |  9 +++++++++
+ doc/classes/PackedColorArray.xml   |  9 +++++++++
+ doc/classes/PackedFloat32Array.xml |  9 +++++++++
+ doc/classes/PackedFloat64Array.xml |  9 +++++++++
+ doc/classes/PackedInt32Array.xml   |  9 +++++++++
+ doc/classes/PackedInt64Array.xml   |  9 +++++++++
+ doc/classes/PackedStringArray.xml  |  9 +++++++++
+ doc/classes/PackedVector2Array.xml |  9 +++++++++
+ doc/classes/PackedVector3Array.xml |  9 +++++++++
+ 14 files changed, 127 insertions(+)
+
+diff --git a/core/templates/vector.h b/core/templates/vector.h
+index a56a941dbce4..499cc32453ed 100644
+--- a/core/templates/vector.h
++++ b/core/templates/vector.h
+@@ -66,6 +66,7 @@ class Vector {
+ public:
+ 	bool push_back(T p_elem);
+ 	_FORCE_INLINE_ bool append(const T &p_elem) { return push_back(p_elem); } //alias
++	void fill(T p_elem);
+ 
+ 	void remove(int p_index) { _cowdata.remove(p_index); }
+ 	void erase(const T &p_val) {
+@@ -223,4 +224,12 @@ bool Vector<T>::push_back(T p_elem) {
+ 	return false;
+ }
+ 
++template <class T>
++void Vector<T>::fill(T p_elem) {
++	T *p = ptrw();
++	for (int i = 0; i < size(); i++) {
++		p[i] = p_elem;
++	}
++}
++
+ #endif // VECTOR_H
+diff --git a/core/variant/array.cpp b/core/variant/array.cpp
+index 2ad728ec5e89..2fb2dd4a3020 100644
+--- a/core/variant/array.cpp
++++ b/core/variant/array.cpp
+@@ -208,6 +208,11 @@ void Array::insert(int p_pos, const Variant &p_value) {
+ 	_p->array.insert(p_pos, p_value);
+ }
+ 
++void Array::fill(const Variant &p_value) {
++	ERR_FAIL_COND(!_p->typed.validate(p_value, "fill"));
++	_p->array.fill(p_value);
++}
++
+ void Array::erase(const Variant &p_value) {
+ 	ERR_FAIL_COND(!_p->typed.validate(p_value, "erase"));
+ 	_p->array.erase(p_value);
+diff --git a/core/variant/array.h b/core/variant/array.h
+index 6b58ed12cb25..5ce977ee4b27 100644
+--- a/core/variant/array.h
++++ b/core/variant/array.h
+@@ -74,6 +74,7 @@ class Array {
+ 
+ 	void insert(int p_pos, const Variant &p_value);
+ 	void remove(int p_pos);
++	void fill(const Variant &p_value);
+ 
+ 	Variant front() const;
+ 	Variant back() const;
+diff --git a/core/variant/variant_call.cpp b/core/variant/variant_call.cpp
+index 7f83e27dfe1d..a51e14b8ba2a 100644
+--- a/core/variant/variant_call.cpp
++++ b/core/variant/variant_call.cpp
+@@ -1647,6 +1647,7 @@ static void _register_variant_builtin_methods() {
+ 	bind_method(Array, resize, sarray("size"), varray());
+ 	bind_method(Array, insert, sarray("position", "value"), varray());
+ 	bind_method(Array, remove, sarray("position"), varray());
++	bind_method(Array, fill, sarray("value"), varray());
+ 	bind_method(Array, erase, sarray("value"), varray());
+ 	bind_method(Array, front, sarray(), varray());
+ 	bind_method(Array, back, sarray(), varray());
+@@ -1677,6 +1678,7 @@ static void _register_variant_builtin_methods() {
+ 	bind_method(PackedByteArray, append_array, sarray("array"), varray());
+ 	bind_method(PackedByteArray, remove, sarray("index"), varray());
+ 	bind_method(PackedByteArray, insert, sarray("at_index", "value"), varray());
++	bind_method(PackedByteArray, fill, sarray("value"), varray());
+ 	bind_method(PackedByteArray, resize, sarray("new_size"), varray());
+ 	bind_method(PackedByteArray, has, sarray("value"), varray());
+ 	bind_method(PackedByteArray, reverse, sarray(), varray());
+@@ -1731,6 +1733,7 @@ static void _register_variant_builtin_methods() {
+ 	bind_method(PackedInt32Array, append_array, sarray("array"), varray());
+ 	bind_method(PackedInt32Array, remove, sarray("index"), varray());
+ 	bind_method(PackedInt32Array, insert, sarray("at_index", "value"), varray());
++	bind_method(PackedInt32Array, fill, sarray("value"), varray());
+ 	bind_method(PackedInt32Array, resize, sarray("new_size"), varray());
+ 	bind_method(PackedInt32Array, has, sarray("value"), varray());
+ 	bind_method(PackedInt32Array, reverse, sarray(), varray());
+@@ -1749,6 +1752,7 @@ static void _register_variant_builtin_methods() {
+ 	bind_method(PackedInt64Array, append_array, sarray("array"), varray());
+ 	bind_method(PackedInt64Array, remove, sarray("index"), varray());
+ 	bind_method(PackedInt64Array, insert, sarray("at_index", "value"), varray());
++	bind_method(PackedInt64Array, fill, sarray("value"), varray());
+ 	bind_method(PackedInt64Array, resize, sarray("new_size"), varray());
+ 	bind_method(PackedInt64Array, has, sarray("value"), varray());
+ 	bind_method(PackedInt64Array, reverse, sarray(), varray());
+@@ -1767,6 +1771,7 @@ static void _register_variant_builtin_methods() {
+ 	bind_method(PackedFloat32Array, append_array, sarray("array"), varray());
+ 	bind_method(PackedFloat32Array, remove, sarray("index"), varray());
+ 	bind_method(PackedFloat32Array, insert, sarray("at_index", "value"), varray());
++	bind_method(PackedFloat32Array, fill, sarray("value"), varray());
+ 	bind_method(PackedFloat32Array, resize, sarray("new_size"), varray());
+ 	bind_method(PackedFloat32Array, has, sarray("value"), varray());
+ 	bind_method(PackedFloat32Array, reverse, sarray(), varray());
+@@ -1785,6 +1790,7 @@ static void _register_variant_builtin_methods() {
+ 	bind_method(PackedFloat64Array, append_array, sarray("array"), varray());
+ 	bind_method(PackedFloat64Array, remove, sarray("index"), varray());
+ 	bind_method(PackedFloat64Array, insert, sarray("at_index", "value"), varray());
++	bind_method(PackedFloat64Array, fill, sarray("value"), varray());
+ 	bind_method(PackedFloat64Array, resize, sarray("new_size"), varray());
+ 	bind_method(PackedFloat64Array, has, sarray("value"), varray());
+ 	bind_method(PackedFloat64Array, reverse, sarray(), varray());
+@@ -1803,6 +1809,7 @@ static void _register_variant_builtin_methods() {
+ 	bind_method(PackedStringArray, append_array, sarray("array"), varray());
+ 	bind_method(PackedStringArray, remove, sarray("index"), varray());
+ 	bind_method(PackedStringArray, insert, sarray("at_index", "value"), varray());
++	bind_method(PackedStringArray, fill, sarray("value"), varray());
+ 	bind_method(PackedStringArray, resize, sarray("new_size"), varray());
+ 	bind_method(PackedStringArray, has, sarray("value"), varray());
+ 	bind_method(PackedStringArray, reverse, sarray(), varray());
+@@ -1821,6 +1828,7 @@ static void _register_variant_builtin_methods() {
+ 	bind_method(PackedVector2Array, append_array, sarray("array"), varray());
+ 	bind_method(PackedVector2Array, remove, sarray("index"), varray());
+ 	bind_method(PackedVector2Array, insert, sarray("at_index", "value"), varray());
++	bind_method(PackedVector2Array, fill, sarray("value"), varray());
+ 	bind_method(PackedVector2Array, resize, sarray("new_size"), varray());
+ 	bind_method(PackedVector2Array, has, sarray("value"), varray());
+ 	bind_method(PackedVector2Array, reverse, sarray(), varray());
+@@ -1839,6 +1847,7 @@ static void _register_variant_builtin_methods() {
+ 	bind_method(PackedVector3Array, append_array, sarray("array"), varray());
+ 	bind_method(PackedVector3Array, remove, sarray("index"), varray());
+ 	bind_method(PackedVector3Array, insert, sarray("at_index", "value"), varray());
++	bind_method(PackedVector3Array, fill, sarray("value"), varray());
+ 	bind_method(PackedVector3Array, resize, sarray("new_size"), varray());
+ 	bind_method(PackedVector3Array, has, sarray("value"), varray());
+ 	bind_method(PackedVector3Array, reverse, sarray(), varray());
+@@ -1857,6 +1866,7 @@ static void _register_variant_builtin_methods() {
+ 	bind_method(PackedColorArray, append_array, sarray("array"), varray());
+ 	bind_method(PackedColorArray, remove, sarray("index"), varray());
+ 	bind_method(PackedColorArray, insert, sarray("at_index", "value"), varray());
++	bind_method(PackedColorArray, fill, sarray("value"), varray());
+ 	bind_method(PackedColorArray, resize, sarray("new_size"), varray());
+ 	bind_method(PackedColorArray, has, sarray("value"), varray());
+ 	bind_method(PackedColorArray, reverse, sarray(), varray());
+diff --git a/doc/classes/Array.xml b/doc/classes/Array.xml
+index 54bbe7a94b3b..38b74cb43633 100644
+--- a/doc/classes/Array.xml
++++ b/doc/classes/Array.xml
+@@ -237,6 +237,27 @@
+ 				[b]Note:[/b] On large arrays, this method will be slower if the removed element is close to the beginning of the array (index 0). This is because all elements placed after the removed element have to be reindexed.
+ 			</description>
+ 		</method>
++		<method name="fill">
++			<return type="void">
++			</return>
++			<argument index="0" name="value" type="Variant">
++			</argument>
++			<description>
++				Assigns the given value to all elements in the array. This can typically be used together with [method resize] to create an array with a given size and initialized elements:
++				[codeblocks]
++				[gdscript]
++				var array = []
++				array.resize(10)
++				array.fill(0) # Initialize the 10 elements to 0.
++				[/gdscript]
++				[csharp]
++				var array = new Godot.Collections.Array{};
++				array.Resize(10);
++				array.Fill(0); // Initialize the 10 elements to 0.
++				[/csharp]
++				[/codeblocks]
++			</description>
++		</method>
+ 		<method name="find" qualifiers="const">
+ 			<return type="int">
+ 			</return>
+diff --git a/doc/classes/PackedByteArray.xml b/doc/classes/PackedByteArray.xml
+index 24178c3ff654..0652cf0aa1ed 100644
+--- a/doc/classes/PackedByteArray.xml
++++ b/doc/classes/PackedByteArray.xml
+@@ -322,6 +322,15 @@
+ 			<description>
+ 			</description>
+ 		</method>
++		<method name="fill">
++			<return type="void">
++			</return>
++			<argument index="0" name="value" type="int">
++			</argument>
++			<description>
++				Assigns the given value to all elements in the array. This can typically be used together with [method resize] to create an array with a given size and initialized elements.
++			</description>
++		</method>
+ 		<method name="get_string_from_ascii" qualifiers="const">
+ 			<return type="String">
+ 			</return>
+diff --git a/doc/classes/PackedColorArray.xml b/doc/classes/PackedColorArray.xml
+index 38240b3154e9..19cfcd7c8780 100644
+--- a/doc/classes/PackedColorArray.xml
++++ b/doc/classes/PackedColorArray.xml
+@@ -59,6 +59,15 @@
+ 				Creates a copy of the array, and returns it.
+ 			</description>
+ 		</method>
++		<method name="fill">
++			<return type="void">
++			</return>
++			<argument index="0" name="value" type="Color">
++			</argument>
++			<description>
++				Assigns the given value to all elements in the array. This can typically be used together with [method resize] to create an array with a given size and initialized elements.
++			</description>
++		</method>
+ 		<method name="has">
+ 			<return type="bool">
+ 			</return>
+diff --git a/doc/classes/PackedFloat32Array.xml b/doc/classes/PackedFloat32Array.xml
+index 5e0008852cd9..ab97c9a6956c 100644
+--- a/doc/classes/PackedFloat32Array.xml
++++ b/doc/classes/PackedFloat32Array.xml
+@@ -60,6 +60,15 @@
+ 				Creates a copy of the array, and returns it.
+ 			</description>
+ 		</method>
++		<method name="fill">
++			<return type="void">
++			</return>
++			<argument index="0" name="value" type="float">
++			</argument>
++			<description>
++				Assigns the given value to all elements in the array. This can typically be used together with [method resize] to create an array with a given size and initialized elements.
++			</description>
++		</method>
+ 		<method name="has">
+ 			<return type="bool">
+ 			</return>
+diff --git a/doc/classes/PackedFloat64Array.xml b/doc/classes/PackedFloat64Array.xml
+index fb7817cb4164..ad20801b01e0 100644
+--- a/doc/classes/PackedFloat64Array.xml
++++ b/doc/classes/PackedFloat64Array.xml
+@@ -60,6 +60,15 @@
+ 				Creates a copy of the array, and returns it.
+ 			</description>
+ 		</method>
++		<method name="fill">
++			<return type="void">
++			</return>
++			<argument index="0" name="value" type="float">
++			</argument>
++			<description>
++				Assigns the given value to all elements in the array. This can typically be used together with [method resize] to create an array with a given size and initialized elements.
++			</description>
++		</method>
+ 		<method name="has">
+ 			<return type="bool">
+ 			</return>
+diff --git a/doc/classes/PackedInt32Array.xml b/doc/classes/PackedInt32Array.xml
+index 4ee428dfbcbb..ff4729082e86 100644
+--- a/doc/classes/PackedInt32Array.xml
++++ b/doc/classes/PackedInt32Array.xml
+@@ -60,6 +60,15 @@
+ 				Creates a copy of the array, and returns it.
+ 			</description>
+ 		</method>
++		<method name="fill">
++			<return type="void">
++			</return>
++			<argument index="0" name="value" type="int">
++			</argument>
++			<description>
++				Assigns the given value to all elements in the array. This can typically be used together with [method resize] to create an array with a given size and initialized elements.
++			</description>
++		</method>
+ 		<method name="has">
+ 			<return type="bool">
+ 			</return>
+diff --git a/doc/classes/PackedInt64Array.xml b/doc/classes/PackedInt64Array.xml
+index 51948fcbc86f..195b12b129d4 100644
+--- a/doc/classes/PackedInt64Array.xml
++++ b/doc/classes/PackedInt64Array.xml
+@@ -60,6 +60,15 @@
+ 				Creates a copy of the array, and returns it.
+ 			</description>
+ 		</method>
++		<method name="fill">
++			<return type="void">
++			</return>
++			<argument index="0" name="value" type="int">
++			</argument>
++			<description>
++				Assigns the given value to all elements in the array. This can typically be used together with [method resize] to create an array with a given size and initialized elements.
++			</description>
++		</method>
+ 		<method name="has">
+ 			<return type="bool">
+ 			</return>
+diff --git a/doc/classes/PackedStringArray.xml b/doc/classes/PackedStringArray.xml
+index 9748301daead..22458832dad2 100644
+--- a/doc/classes/PackedStringArray.xml
++++ b/doc/classes/PackedStringArray.xml
+@@ -60,6 +60,15 @@
+ 				Creates a copy of the array, and returns it.
+ 			</description>
+ 		</method>
++		<method name="fill">
++			<return type="void">
++			</return>
++			<argument index="0" name="value" type="String">
++			</argument>
++			<description>
++				Assigns the given value to all elements in the array. This can typically be used together with [method resize] to create an array with a given size and initialized elements.
++			</description>
++		</method>
+ 		<method name="has">
+ 			<return type="bool">
+ 			</return>
+diff --git a/doc/classes/PackedVector2Array.xml b/doc/classes/PackedVector2Array.xml
+index 1b3201b07228..6c8791f98845 100644
+--- a/doc/classes/PackedVector2Array.xml
++++ b/doc/classes/PackedVector2Array.xml
+@@ -60,6 +60,15 @@
+ 				Creates a copy of the array, and returns it.
+ 			</description>
+ 		</method>
++		<method name="fill">
++			<return type="void">
++			</return>
++			<argument index="0" name="value" type="Vector2">
++			</argument>
++			<description>
++				Assigns the given value to all elements in the array. This can typically be used together with [method resize] to create an array with a given size and initialized elements.
++			</description>
++		</method>
+ 		<method name="has">
+ 			<return type="bool">
+ 			</return>
+diff --git a/doc/classes/PackedVector3Array.xml b/doc/classes/PackedVector3Array.xml
+index 25d854016aa1..85d41d7519be 100644
+--- a/doc/classes/PackedVector3Array.xml
++++ b/doc/classes/PackedVector3Array.xml
+@@ -59,6 +59,15 @@
+ 				Creates a copy of the array, and returns it.
+ 			</description>
+ 		</method>
++		<method name="fill">
++			<return type="void">
++			</return>
++			<argument index="0" name="value" type="Vector3">
++			</argument>
++			<description>
++				Assigns the given value to all elements in the array. This can typically be used together with [method resize] to create an array with a given size and initialized elements.
++			</description>
++		</method>
+ 		<method name="has">
+ 			<return type="bool">
+ 			</return>

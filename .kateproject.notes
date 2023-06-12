@@ -1,0 +1,30 @@
+1. FBFonts: bitmap/geom fonts
+2. SpriteMesh:
+   - custom gizmo for rotation/scaling
+   - simple lighting inside model
+   - lighing for SpriteMesh (canvas shader)
+3. PlayFab integration
+  - storage
+  - leaderboards
+3. TreeBuilder:
+  - line builder update for texture tiling
+  - R notes on tiling on OneDrive
+4. Cyber-elements:
+  - path styling 
+5. SilentWolf:
+  - c++ conversion
+6. Symbol fonts:
+  - cpp-headers update
+7. core/projectile.h: porting from unity/c# code
+8. common/heuristic_mask.h: porting from Qt code
+9. visual/foliage_2d_animation.h: from Foliage2D c# code
+10 . Keychain submodule (apple/android/win/linux)
+11.BMF font file: visual/bmf_bitmap_font.cpp
+
+UNITY MATH:
+ * https://www.reddit.com/r/godot/comments/p2v6av/quaterionlookrotation_equivalent
+ - LerpUnclamped -> lerp
+ - Lerp -> lerp_clamped
+ - Quaternion.Inverse -> inverse
+ - Quaternion.LookRotation -> Transform().looking_at(forward, upwards).basis.get_quat()
+ - Quatenion * Vector -> xform
