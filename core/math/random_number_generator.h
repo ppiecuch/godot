@@ -62,7 +62,7 @@ public:
 	_FORCE_INLINE_ real_t randfn(real_t mean = 0.0, real_t deviation = 1.0) { return randbase.randfn(mean, deviation); }
 
 	_FORCE_INLINE_ int randi_range(int from, int to) {
-		unsigned int ret = randbase.rand();
+		const unsigned int ret = randbase.rand();
 		if (to < from) {
 			return ret % (from - to + 1) + to;
 		} else {
@@ -71,7 +71,7 @@ public:
 	}
 
 	_FORCE_INLINE_ Vector2 randv_circle() {
-		real_t t = randbase.randf() * Math_TAU;
+		const real_t t = randbase.randf() * Math_TAU;
 		return Vector2(Math::cos(t), Math::sin(t));
 	}
 

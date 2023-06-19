@@ -8,7 +8,7 @@ index a124f630306..660380e1db9 100644
  	ClassDB::bind_method(D_METHOD("randi_range", "from", "to"), &RandomNumberGenerator::randi_range);
 +	ClassDB::bind_method(D_METHOD("randv_circle"), &RandomNumberGenerator::randv_circle);
  	ClassDB::bind_method(D_METHOD("randomize"), &RandomNumberGenerator::randomize);
- 
+
  	ADD_PROPERTY(PropertyInfo(Variant::INT, "seed"), "set_seed", "get_seed");
 diff --git a/core/math/random_number_generator.h b/core/math/random_number_generator.h
 index 2e7941b345b..7907b23bac2 100644
@@ -17,7 +17,7 @@ index 2e7941b345b..7907b23bac2 100644
 @@ -72,6 +72,11 @@ class RandomNumberGenerator : public Reference {
  		return randbase.rand(range) + min;
  	}
- 
+
 +	_FORCE_INLINE_ Vector2 randv_circle() {
 +		real_t t = randbase.randf() * Math_TAU;
 +		return Vector2(Math::cos(t), Math::sin(t));
@@ -25,7 +25,7 @@ index 2e7941b345b..7907b23bac2 100644
 +
  	RandomNumberGenerator() {}
  };
- 
+
 diff --git a/doc/classes/RandomNumberGenerator.xml b/doc/classes/RandomNumberGenerator.xml
 index dcb75dc2756..75112fddd95 100644
 --- a/doc/classes/RandomNumberGenerator.xml
