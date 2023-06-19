@@ -31,24 +31,22 @@
 
 #include "servers/audio/audio_server_sw.h"
 
-#include "core/os/thread.h"
 #include "core/os/mutex.h"
+#include "core/os/thread.h"
 
 #include <pspaudio.h>
 #include <pspaudiolib.h>
-#include <pspthreadman.h>
 #include <pspkerneltypes.h>
+#include <pspthreadman.h>
 
 class AudioDriverPSP : public AudioDriverSW {
-
 	Thread *thread;
 	Mutex *mutex;
-	int32_t* samples_in;
-	int16_t* samples_out;
+	int32_t *samples_in;
+	int16_t *samples_out;
 	int id;
 
 	static void thread_func(void *p_udata);
-
 
 	int buffer_size;
 
@@ -63,8 +61,7 @@ class AudioDriverPSP : public AudioDriverSW {
 	bool pcm_open;
 
 public:
-
-	const char* get_name() const {
+	const char *get_name() const {
 		return "PSP Audio";
 	};
 
