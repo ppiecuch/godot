@@ -85,7 +85,7 @@ foreach (1..$ROWS) {
                 $image->Crop(geometry=>$geometry);
                 # set magenta to transparent
                 #FIXME this should maybe be automatic - pull color from first pixel?
-                #FIXME maybe only if there is no alpha channel already? 
+                #FIXME maybe only if there is no alpha channel already?
                 $image->Set('alpha'=>'set');
                 $image->Transparent($TRANSBG);
                 # repage
@@ -145,7 +145,7 @@ foreach (1..$SPRITECOUNT) {
         $image->Read("$PREFIX$num.png");
         $image->Set(magick=>'RGBA');
         my $geometry = $xmax . "x" . $ymax;
-        # increase canvas size 
+        # increase canvas size
         $image->Extent(geometry=>$geometry,background=>'transparent',gravity=>'NorthWest');
         # repage
         $image->Set('page'=>'0x0+0+0');
