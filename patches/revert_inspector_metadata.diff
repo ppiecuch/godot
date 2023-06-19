@@ -25,14 +25,14 @@ index 0f86a329744..d1ac69c8d85 100644
 @@ -46,7 +46,7 @@ class AnimationTrackKeyEdit : public Object {
  public:
  	bool setting;
- 
+
 -	bool _hide_object_properties_from_inspector() {
 +	bool _hide_script_from_inspector() {
  		return true;
  	}
- 
+
 @@ -58,7 +58,7 @@ class AnimationTrackKeyEdit : public Object {
- 
+
  		ClassDB::bind_method("_update_obj", &AnimationTrackKeyEdit::_update_obj);
  		ClassDB::bind_method("_key_ofs_changed", &AnimationTrackKeyEdit::_key_ofs_changed);
 -		ClassDB::bind_method("_hide_object_properties_from_inspector", &AnimationTrackKeyEdit::_hide_object_properties_from_inspector);
@@ -47,12 +47,12 @@ index 0f76aeb818b..e4ddf44bc45 100644
 @@ -1550,7 +1550,7 @@ void EditorInspector::update_tree() {
  		if (p.usage & PROPERTY_USAGE_HIGH_END_GFX && VS::get_singleton()->is_low_end())
  			continue; //do not show this property in low end gfx
- 
+
 -		if ((hide_object_properties || bool(object->call("_hide_object_properties_from_inspector"))) && (p.name == "script" || p.name == "__meta__")) {
 +		if (p.name == "script" && (hide_script || bool(object->call("_hide_script_from_inspector")))) {
  			continue;
  		}
- 
+
 @@ -1877,8 +1877,8 @@ void EditorInspector::set_use_doc_hints(bool p_enable) {
  	use_doc_hints = p_enable;
  	update_tree();
@@ -66,7 +66,7 @@ index 0f76aeb818b..e4ddf44bc45 100644
  void EditorInspector::set_use_filter(bool p_use) {
 @@ -2318,7 +2318,7 @@ EditorInspector::EditorInspector() {
  	set_enable_v_scroll(true);
- 
+
  	show_categories = false;
 -	hide_object_properties = true;
 +	hide_script = true;
@@ -78,7 +78,7 @@ index 028e1e41112..117a63699e4 100644
 --- a/editor/editor_inspector.h
 +++ b/editor/editor_inspector.h
 @@ -272,7 +272,7 @@ class EditorInspector : public ScrollContainer {
- 
+
  	LineEdit *search_box;
  	bool show_categories;
 -	bool hide_object_properties;
@@ -87,12 +87,12 @@ index 028e1e41112..117a63699e4 100644
  	bool capitalize_paths;
  	bool use_filter;
 @@ -360,7 +360,7 @@ class EditorInspector : public ScrollContainer {
- 
+
  	void set_show_categories(bool p_show);
  	void set_use_doc_hints(bool p_enable);
 -	void set_hide_object_properties(bool p_hide);
 +	void set_hide_script(bool p_hide);
- 
+
  	void set_use_filter(bool p_use);
  	void register_text_enter(Node *p_line_edit);
 diff --git a/editor/inspector_dock.cpp b/editor/inspector_dock.cpp
@@ -113,13 +113,13 @@ index 5e870161718..f135becf5f4 100644
 --- a/editor/plugins/tile_set_editor_plugin.cpp
 +++ b/editor/plugins/tile_set_editor_plugin.cpp
 @@ -3369,7 +3369,7 @@ void TilesetEditorContext::_get_property_list(List<PropertyInfo> *p_list) const
- 
+
  void TilesetEditorContext::_bind_methods() {
- 
+
 -	ClassDB::bind_method("_hide_object_properties_from_inspector", &TilesetEditorContext::_hide_object_properties_from_inspector);
 +	ClassDB::bind_method("_hide_script_from_inspector", &TilesetEditorContext::_hide_script_from_inspector);
  }
- 
+
  TilesetEditorContext::TilesetEditorContext(TileSetEditor *p_tileset_editor) {
 diff --git a/editor/plugins/tile_set_editor_plugin.h b/editor/plugins/tile_set_editor_plugin.h
 index 946c042b027..69ad8205a4f 100644
@@ -127,10 +127,10 @@ index 946c042b027..69ad8205a4f 100644
 +++ b/editor/plugins/tile_set_editor_plugin.h
 @@ -252,7 +252,7 @@ class TilesetEditorContext : public Object {
  	bool snap_options_visible;
- 
+
  public:
 -	bool _hide_object_properties_from_inspector() { return true; }
 +	bool _hide_script_from_inspector() { return true; }
  	void set_tileset(const Ref<TileSet> &p_tileset);
- 
+
  private:
