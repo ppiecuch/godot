@@ -35,7 +35,6 @@
 #include "core/io/resource_loader.h"
 #include "core/os/dir_access.h"
 #include "core/os/file_access.h"
-#include <_types/_uint64_t.h>
 
 #include <vector>
 
@@ -102,7 +101,7 @@ void ResCache::set_resource(RES p_res, const String &p_res_name) {
 	_catalog[p_res_name].last_access_time = OS::get_singleton()->get_system_time_secs();
 	const String res_path = _catalog[p_res_name].path;
 	if (!res_path.empty()) {
-		DirAccess::remove_file_or_error(res_path); // invalidate
+		DirAccess::remove_path_or_error(res_path); // invalidate
 		if (!FileAccess::exists(res_path)) {
 			_catalog[p_res_name].path = "";
 			_catalog[p_res_name].size = 0;
@@ -115,12 +114,14 @@ void ResCache::set_resource(RES p_res, const String &p_res_name) {
 void ResCache::del_resource(const String &p_res_name) {
 	ERR_FAIL_COND(!_catalog.has(p_res_name));
 	const String res_path = _catalog[p_res_name].path;
-	if (!res_path.empty()) {
-		Error err = DirAccess::remove_file_or_error(res_path); // invalidate
+	if (res_path.empty()) {
+		_catalog.erase(p_res_name);
+	} else {
+		Error err = DirAccess::remove_path_or_error(res_path); // invalidate
 		if (!FileAccess::exists(res_path)) {
 			_catalog.erase(p_res_name);
 		} else {
-			WARN_PRINT(vformat("Unable to remove resource %s. %s", p_res_name, err != OK ? ("Error: " + itos(err)) : "(No error detected)"));
+			WARN_PRINT(vformat("Unable to remove resource %s (%s). %s", p_res_name, res_path, err != OK ? ("Error: " + itos(err)) : "(No error detected)"));
 		}
 	}
 	if (_cache.has(p_res_name)) {
@@ -144,7 +145,7 @@ bool ResCache::is_res_cached(const String &p_res_name) const { return _cache.has
 
 uint64_t ResCache::get_max_disk_cache_size() const { return max_disk_cache; }
 void ResCache::set_max_disk_cache_size(uint64_t p_size) {
-	ERR_FAIL_INDEX(p_size, _min_disk_cache_size);
+	ERR_FAIL_COND(p_size < _min_disk_cache_size);
 	max_disk_cache = p_size;
 }
 
@@ -177,7 +178,7 @@ Error ResCache::sync() {
 			cache_clean += _catalog[key].size;
 			const String res_path = _catalog[key].path;
 			if (!res_path.empty()) {
-				Error err = DirAccess::remove_file_or_error(res_path); // invalidate
+				Error err = DirAccess::remove_path_or_error(res_path); // invalidate
 				if (!FileAccess::exists(res_path)) {
 					if (!_cache.has(key)) {
 						_catalog.erase(key); // gone forever
@@ -191,7 +192,7 @@ Error ResCache::sync() {
 					}
 				} else {
 					// keep entry if file still exists
-					entries.append(helper::dict("name", key, "path", entry.path, "last_access_time", entry.last_access_time, "size", entry.size));
+					entries.append(make_dict("name", key, "path", entry.path, "last_access_time", entry.last_access_time, "size", entry.size));
 					WARN_PRINT(vformat("Unable to clean resource %s. %s", key, err != OK ? ("Error: " + itos(err)) : "(No error detected)"));
 				}
 			}
@@ -212,7 +213,7 @@ Error ResCache::sync() {
 		cache_size += _catalog[key].size;
 		ERR_CONTINUE(entry.path.empty()); // res. not saved
 		ERR_CONTINUE(entry.modified); // res. not synchronized
-		entries.append(helper::dict("name", key, "path", entry.path, "last_access_time", entry.last_access_time, "size", entry.size));
+		entries.append(make_dict("name", key, "path", entry.path, "last_access_time", entry.last_access_time, "size", entry.size));
 	}
 	if (cache_size > max_disk_cache) {
 		emit_signal("cache_full");
@@ -236,6 +237,8 @@ void ResCache::purge() {
 		if (DirAccessRef da = DirAccess::open(_cache_location)) {
 			print_verbose("Erase content of " + _cache_location + " ..");
 			da->erase_contents_recursive();
+			da->remove(_cache_location);
+			da->remove(_catalog_location);
 		}
 	}
 }
@@ -290,27 +293,13 @@ ResCache::~ResCache() {
 #include "scene/resources/texture.h"
 
 TEST_CASE("Disk cache") {
-	static const int test_data_size = 293;
-	static const uint8_t test_data[293] = {
+	static const int test_data_size = 80;
+	static const uint8_t test_data[80] = { // png, 32x32
 		0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
-		0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x20, 0x08, 0x02, 0x00, 0x00, 0x00, 0xFC, 0x18, 0xED,
-		0xA3, 0x00, 0x00, 0x00, 0x04, 0x67, 0x41, 0x4D, 0x41, 0x00, 0x00, 0xB1, 0x8F, 0x0B, 0xFC, 0x61,
-		0x05, 0x00, 0x00, 0x00, 0x20, 0x63, 0x48, 0x52, 0x4D, 0x00, 0x00, 0x7A, 0x26, 0x00, 0x00, 0x80,
-		0x84, 0x00, 0x00, 0xFA, 0x00, 0x00, 0x00, 0x80, 0xE8, 0x00, 0x00, 0x75, 0x30, 0x00, 0x00, 0xEA,
-		0x60, 0x00, 0x00, 0x3A, 0x98, 0x00, 0x00, 0x17, 0x70, 0x9C, 0xBA, 0x51, 0x3C, 0x00, 0x00, 0x00,
-		0x06, 0x62, 0x4B, 0x47, 0x44, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0xA0, 0xBD, 0xA7, 0x93, 0x00,
-		0x00, 0x00, 0x07, 0x74, 0x49, 0x4D, 0x45, 0x07, 0xE7, 0x04, 0x03, 0x0B, 0x3B, 0x0D, 0x6E, 0xF6,
-		0xF4, 0xD0, 0x00, 0x00, 0x00, 0x29, 0x49, 0x44, 0x41, 0x54, 0x48, 0xC7, 0xED, 0xCD, 0x31, 0x01,
-		0x00, 0x00, 0x08, 0xC3, 0x30, 0xC0, 0xBF, 0xE7, 0x61, 0x02, 0xBE, 0x54, 0x40, 0xD3, 0x49, 0xEA,
-		0xB3, 0x79, 0xBD, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0xC3, 0x16, 0xC7,
-		0xF1, 0x03, 0x3D, 0x00, 0x5D, 0x7A, 0xB8, 0x00, 0x00, 0x00, 0x25, 0x74, 0x45, 0x58, 0x74, 0x64,
-		0x61, 0x74, 0x65, 0x3A, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x00, 0x32, 0x30, 0x32, 0x33, 0x2D,
-		0x30, 0x34, 0x2D, 0x30, 0x33, 0x54, 0x31, 0x31, 0x3A, 0x35, 0x39, 0x3A, 0x31, 0x33, 0x2B, 0x30,
-		0x30, 0x3A, 0x30, 0x30, 0xC5, 0xDD, 0xD7, 0xDA, 0x00, 0x00, 0x00, 0x25, 0x74, 0x45, 0x58, 0x74,
-		0x64, 0x61, 0x74, 0x65, 0x3A, 0x6D, 0x6F, 0x64, 0x69, 0x66, 0x79, 0x00, 0x32, 0x30, 0x32, 0x33,
-		0x2D, 0x30, 0x34, 0x2D, 0x30, 0x33, 0x54, 0x31, 0x31, 0x3A, 0x35, 0x39, 0x3A, 0x31, 0x33, 0x2B,
-		0x30, 0x30, 0x3A, 0x30, 0x30, 0xB4, 0x80, 0x6F, 0x66, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E,
-		0x44, 0xAE, 0x42, 0x60, 0x82
+		0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x20, 0x08, 0x00, 0x00, 0x00, 0x00, 0x56, 0x11, 0x25,
+		0x28, 0x00, 0x00, 0x00, 0x17, 0x49, 0x44, 0x41, 0x54, 0x38, 0xCB, 0x63, 0xFC, 0xCF, 0x80, 0x1F,
+		0x30, 0x8E, 0x2A, 0x18, 0x55, 0x30, 0xAA, 0x60, 0xA4, 0x2A, 0x00, 0x00, 0xF8, 0x2D, 0x20, 0x01,
+		0x4F, 0x2A, 0xA0, 0xAE, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
 	};
 	Ref<Image> image = memnew(Image(test_data, test_data_size));
 	Ref<ImageTexture> texture = memnew(ImageTexture);
@@ -318,10 +307,19 @@ TEST_CASE("Disk cache") {
 
 	ResCache *res_cache = ResCache::get_singleton();
 
-	SUBCASE("check resource access") {
+	SUBCASE("check resource access before sync") {
 		res_cache->set_resource(texture, "__t1__");
 		REQUIRE(res_cache->is_res_cached("__t1__"));
 		REQUIRE(res_cache->is_res_available("__t1__"));
+		res_cache->del_resource("__t1__");
+		REQUIRE(!res_cache->is_res_cached("__t1__"));
+		REQUIRE(!res_cache->is_res_available("__t1__"));
+	}
+	SUBCASE("check resource access after sync") {
+		res_cache->set_resource(texture, "__t1__");
+		REQUIRE(res_cache->is_res_cached("__t1__"));
+		REQUIRE(res_cache->is_res_available("__t1__"));
+		res_cache->sync();
 		res_cache->del_resource("__t1__");
 		REQUIRE(!res_cache->is_res_cached("__t1__"));
 		REQUIRE(!res_cache->is_res_available("__t1__"));
@@ -333,6 +331,9 @@ TEST_CASE("Disk cache") {
 	SUBCASE("check disk cache limit") {
 		res_cache->set_max_disk_cache_size(112233);
 		REQUIRE(res_cache->get_max_disk_cache_size() == 112233);
+	}
+	SUBCASE("cleanup") {
+		memdelete(res_cache);
 	}
 }
 #endif
