@@ -47,7 +47,7 @@ index 10c9974cdd1..797e2287d82 100644
 @@ -1483,7 +1483,7 @@ void EditorInspector::update_tree() {
  		if (p.usage & PROPERTY_USAGE_HIGH_END_GFX && VS::get_singleton()->is_low_end())
  			continue; //do not show this property in low end gfx
- 
+
 -		if (p.name == "script" && (hide_script || bool(object->call("_hide_script_from_inspector")))) {
 +		if ((hide_object_properties || bool(object->call("_hide_object_properties_from_inspector"))) && (p.name == "script" || p.name == "__meta__")) {
  			continue;
