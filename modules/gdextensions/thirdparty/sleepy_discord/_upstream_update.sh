@@ -12,5 +12,6 @@ mv _sleepydiscord/README.md .
 mv _sleepydiscord/LICENSE.md .
 mv _sleepydiscord/include inc
 mv _sleepydiscord/sleepy_discord src
+rm src/CMakeLists.txt
 
 rm -rf _sleepydiscord

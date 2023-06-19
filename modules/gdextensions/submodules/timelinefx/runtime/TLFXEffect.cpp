@@ -40,10 +40,10 @@
 namespace TLFX {
 
 Effect::Effect() :
-		Entity(), _class(TypePoint), _currentEffectFrame(0), _handleCenter(false), _source(NULL), _lockAspect(true), _particlesCreated(false), _suspendTime(0), _gx(0), _gy(0), _mgx(0), _mgy(0), _emitAtPoints(false), _emissionType(EmInwards), _effectLength(0), _parentEmitter(NULL), _spawnAge(0), _index(0), _particleCount(0), _idleTime(0), _traverseEdge(false), _endBehavior(EndKill), _distanceSetByLife(false), _reverseSpawn(false), _spawnDirection(1), _dying(false), _allowSpawning(true), _ellipseArc(360.0f), _ellipseOffset(0), _effectLayer(0), _doesNotTimeout(false)
+		Entity(), _class(TypePoint), _currentEffectFrame(0), _handleCenter(false), _source(nullptr), _lockAspect(true), _particlesCreated(false), _suspendTime(0), _gx(0), _gy(0), _mgx(0), _mgy(0), _emitAtPoints(false), _emissionType(EmInwards), _effectLength(0), _parentEmitter(nullptr), _spawnAge(0), _index(0), _particleCount(0), _idleTime(0), _traverseEdge(false), _endBehavior(EndKill), _distanceSetByLife(false), _reverseSpawn(false), _spawnDirection(1), _dying(false), _allowSpawning(true), _ellipseArc(360.0f), _ellipseOffset(0), _effectLayer(0), _doesNotTimeout(false)
 
 		,
-		_particleManager(NULL)
+		_particleManager(nullptr)
 
 		,
 		_frames(32),
@@ -810,7 +810,7 @@ Effect *Effect::GetEffect(const char *name) const {
 	if (effect != _directoryEffects.end()) {
 		return effect->second;
 	}
-	return NULL;
+	return nullptr;
 }
 
 Emitter *Effect::GetEmitter(const char *name) const {
@@ -818,7 +818,7 @@ Emitter *Effect::GetEmitter(const char *name) const {
 	if (emitter != _directoryEmitters.end()) {
 		return emitter->second;
 	}
-	return NULL;
+	return nullptr;
 }
 
 void Effect::DoNotTimeout(bool value /*= true*/) {
@@ -984,7 +984,7 @@ void Effect::HardKill() {
 }
 
 void Effect::Destroy(bool releaseChildren) {
-	_parentEmitter = NULL;
+	_parentEmitter = nullptr;
 	_directoryEffects.clear();
 	_directoryEmitters.clear();
 	for (int i = 0; i < 10; ++i) {
@@ -996,6 +996,7 @@ void Effect::Destroy(bool releaseChildren) {
 			RemoveInUse(i, p);
 			++c;
 		}
+		(void)c;
 		_inUse[i].clear(); // should be already clear (RemoveInUse erases the items)
 	}
 	base::Destroy(releaseChildren);

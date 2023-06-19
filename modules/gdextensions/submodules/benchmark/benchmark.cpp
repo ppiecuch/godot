@@ -463,7 +463,7 @@ void Benchmark::_notification(int p_notification) {
 				_stats_label->set_vertical_spacing(-3);
 				add_child(_stats_label);
 			}
-			for (const Performance::Monitor &mon : helper::vector(Performance::TIME_FPS, Performance::MEMORY_STATIC)) {
+			for (const Performance::Monitor &mon : make_vector(Performance::TIME_FPS, Performance::MEMORY_STATIC)) {
 				if (!_monitors[mon]) {
 					_monitors[mon] = memnew(GdHistoryPlot);
 					_monitors[mon]->set_title_label(Performance::get_singleton()->get_monitor_name(mon));

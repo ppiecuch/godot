@@ -211,13 +211,7 @@ extern DECLSPEC size_t SDLCALL SDL_SIMDGetAlignment(void);
 // SDL_AllocSIMD(0) will return a non-NULL pointer, assuming the system isn't
 // out of memory, but you are not allowed to dereference it (because you only
 // own zero bytes of that buffer).
-extern DECLSPEC void *SDLCALL SDL_SIMDAlloc(const size_t len);
-
-// Reallocate memory obtained from SDL_SIMDAlloc
-// It is not valid to use this function on a pointer from anything but
-// SDL_SIMDAlloc(). It can't be used on pointers from malloc, realloc,
-// SDL_malloc, memalign, new[], etc.
-extern DECLSPEC void *SDLCALL SDL_SIMDRealloc(void *mem, const size_t len);
+extern DECLSPEC void *SDLCALL SDL_SIMDAlloc(size_t len);
 
 // Deallocate memory obtained from SDL_SIMDAlloc
 // It is not valid to use this function on a pointer from anything but

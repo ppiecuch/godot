@@ -152,6 +152,11 @@ bool CpuFeatures::init_cpu_info(CpuInfo *out_cpu_info)
 	return result;
 }
 
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+
 static char *trim_string(char *in_string) {
 	//trim end
 	char *trimmed_string = in_string + (MAXCPUNAME - 1);
@@ -168,3 +173,7 @@ static char *trim_string(char *in_string) {
 
 	return trimmed_string;
 }
+
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif

@@ -32,6 +32,7 @@
 // ----------
 // 1. https://godotengine.org/qa/339/does-gdscript-have-method-to-execute-string-code-exec-python
 
+#include "common/gd_core.h"
 #include "core/engine.h"
 #include "core/math/vector2.h"
 #include "core/os/os.h"
@@ -128,7 +129,7 @@ void RopeServer::_simulate(Node2D *rope, float delta) {
 	// Simulate
 	for (size_t i = 1; i < points.size(); ++i) {
 		Vector2 vel = points[i] - oldpoints[i];
-		const float dampmult = damping_curve.is_valid() ? damping_curve->interpolate_baked(get_point_perc(i, points)) : 1;
+		const real_t dampmult = damping_curve.is_valid() ? damping_curve->interpolate_baked(get_point_perc(i, points)) : 1;
 
 		if (stiffness > 0) {
 			///  |  parent_seg_dir     --->  parent_seg_tangent
@@ -138,8 +139,8 @@ void RopeServer::_simulate(Node2D *rope, float delta) {
 			///   \
 			///    V
 			const Vector2 seg_dir = (points[i] - points[i - 1]).normalized();
-			const Vector2 parent_seg_tangent = parent_seg_dir.tangent();
-			const float angle = seg_dir.angle_to(parent_seg_dir);
+			const _UNUSED Vector2 parent_seg_tangent = parent_seg_dir.tangent();
+			const real_t angle = seg_dir.angle_to(parent_seg_dir);
 
 			// The force directs orthogonal to the current segment
 			// TODO: Ask a physicist if this is physically correct.

@@ -113,7 +113,7 @@ void VGamePad::_debug_draw_dpad_arrow(CanvasItem *canvas, const Point2 &position
 	const Color color = is_pressed ? Color::RED : Color::WHITE;
 
 	// Points are for an arrow facing downwards
-	Vector<Vector2> points = helper::vector(
+	Vector<Vector2> points = make_vector(
 			Vector2::ZERO, // Top left corner
 			Vector2::ZERO + Vector2(width, 0), // Top right corner
 			Vector2::ZERO + Vector2(width, height / 2), // Right edge
@@ -137,7 +137,7 @@ void VGamePad::_debug_draw_dpad_arrow(CanvasItem *canvas, const Point2 &position
 		points.write[index] = position + (point - bounds.position);
 	}
 
-	canvas->draw_polygon(points, helper::vector(color));
+	canvas->draw_polygon(points, make_vector(color));
 	canvas->draw_polyline(points, Color::BLACK);
 }
 

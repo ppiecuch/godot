@@ -965,15 +965,18 @@ namespace Tess
 	void Tesselator<Options, Allocators>::doneEdgeDict( )
 	{
 		ActiveRegion *reg;
+#ifndef NDEBUG
 		int fixedEdges = 0;
-		
+#endif
 		while( (reg = (ActiveRegion *)dict->min()->key) != nullptr ) {
 			// At the end of all processing, the dictionary should contain
 			// only the two sentinel edges, plus at most one "fixable" edge
 			// created by ConnectRightVertex().
 			if( ! reg->sentinel ) {
 				assert( reg->fixUpperEdge );
+#ifndef NDEBUG
 				++fixedEdges;
+#endif
 				assert( fixedEdges == 1 );
 			}
 			assert( reg->windingNumber == 0 );

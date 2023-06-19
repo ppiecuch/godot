@@ -37,6 +37,7 @@
 
 #include "common/gd_core.h"
 #include "common/gd_pack.h"
+#include "common/resources_cache.h"
 
 // Reference:
 // ----------
@@ -465,22 +466,22 @@ void Starfield::ready(Node2D *p_owner) {
 		std::vector<EmbedImageItem> embed(embed_starfield_res, embed_starfield_res + embed_starfield_res_count);
 		for (const auto &r : embed) {
 			ERR_CONTINUE_MSG(r.channels < 3, "Format is not supported, Skipping!");
-			Ref<Image> image;
-			image.instance();
+			Ref<Image> image = memnew(Image);
 			PoolByteArray data;
 			data.resize(r.size);
 			memcpy(data.write().ptr(), r.pixels, r.size);
 			image->create(r.width, r.height, false, r.channels == 4 ? Image::FORMAT_RGBA8 : Image::FORMAT_RGB8, data);
+			image->set_name(r.image);
 			images.push_back(image);
 			names.push_back(r.image);
 		}
-		Dictionary atlas_info = merge_images(images, names);
+		Dictionary atlas_info = merge_images(images);
 
 		ERR_FAIL_COND(atlas_info.empty());
 
 		Array pages = atlas_info["_generated_images"];
 		if (pages.size() > 1) {
-			WARN_PRINT("Too many texture pages - using only first one for Starfield.");
+			WARN_PRINT("Too many atlas texture pages generated. First one will be use.");
 		}
 		Ref<Image> atlas_image = pages[0];
 
@@ -494,14 +495,13 @@ void Starfield::ready(Node2D *p_owner) {
 			WARN_PRINT("Atlas image is not valid, Skipping!");
 		}
 
-		Dictionary atlas_rects = atlas_info["_rects"];
-		for (int j = 0; j < names.size(); ++j) {
-			String name = names[j];
-			Dictionary entry = atlas_rects[name];
-			Rect2 rect = entry["rect"];
+		Array atlas_rects = atlas_info["_rects"];
+		for (int j = 0; j < atlas_rects.size(); ++j) {
+			Dictionary entry = atlas_rects[j];
 
 			ERR_CONTINUE_MSG(entry.empty(), "Empty atlas entry, Skipping!");
 
+			Rect2 rect = entry["rect"];
 			const Vector2 uv_origin = rect.position / atlas_size;
 			const Vector2 uv_size = rect.size / atlas_size;
 			static const Vector2 sideu(1, 0);
@@ -518,6 +518,7 @@ void Starfield::ready(Node2D *p_owner) {
 			uv.push_back(uv_origin + uv_size * sideu);
 			uv.push_back(uv_origin);
 
+			const String name = names[j];
 			if (name == "star01.png")
 				cache_info->rects[STAR1_TEXTURE] = uv;
 			else if (name == "star02.png")
@@ -551,6 +552,8 @@ void Starfield::ready(Node2D *p_owner) {
 			} else if (name == "frame2.png") {
 				cache_info->rects[STAR12_TEXTURE_FRAME3] = uv;
 				cache_info->rects[STAR12_TEXTURE_FRAME4] = uv;
+			} else {
+				WARN_PRINT("Unknown texture " + name);
 			}
 		}
 		_texture_cache = cache_info;

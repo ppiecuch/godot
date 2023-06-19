@@ -204,7 +204,7 @@ void GdWaterfall::_cache_textures(const unsigned char *particles_images[], Water
 		images.push_back(image);
 		names.push_back(EnumString<WaterfallParticles>::From(WaterfallParticles(p)).c_str());
 	}
-	Dictionary atlas_info = merge_images(images, names);
+	Dictionary atlas_info = merge_images(images);
 
 	ERR_FAIL_COND(atlas_info.empty());
 
@@ -225,10 +225,9 @@ void GdWaterfall::_cache_textures(const unsigned char *particles_images[], Water
 		_cache[quality].clear();
 
 		Array _rects;
-		Dictionary atlas_rects = atlas_info["_rects"];
-		for (int j = 0; j < names.size(); ++j) {
-			String name = names[j];
-			Dictionary entry = atlas_rects[name];
+		Array atlas_rects = atlas_info["_rects"];
+		for (int j = 0; j < atlas_rects.size(); ++j) {
+			Dictionary entry = atlas_rects[j];
 
 			ERR_CONTINUE_MSG(entry.empty(), "Empty atlas entry, Skipping!");
 
@@ -236,7 +235,7 @@ void GdWaterfall::_cache_textures(const unsigned char *particles_images[], Water
 			at->set_atlas(texture);
 			at->set_region(entry["rect"]);
 #ifdef DEBUG_ENABLED
-			at->set_name(name);
+			at->set_name(names[j]);
 #endif
 			_rects.push_back(entry["rect"]);
 			_cache[quality].push_back(at);

@@ -74,7 +74,7 @@ struct PlayFabConfiguration {
 		Dictionary RequestGetParams;
 
 		InternalSettings() {
-			RequestGetParams = helper::dict("sdk", SdkVersionString);
+			RequestGetParams = make_dict("sdk", SdkVersionString);
 		}
 	};
 

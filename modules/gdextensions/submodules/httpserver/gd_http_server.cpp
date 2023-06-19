@@ -76,7 +76,7 @@ bool GdHttpServer::_process_connection(Ref<StreamPeerTCP> connection) {
 					}
 				}
 				if (get_script_instance() && get_script_instance()->has_method("_http_handler")) {
-					Dictionary resp = get_script_instance()->call("_http_handler", helper::dict("path", http_message.get_path().c_str(), "query", http_message.get_query_string().c_str()));
+					Dictionary resp = get_script_instance()->call("_http_handler", make_dict("path", http_message.get_path().c_str(), "query", http_message.get_query_string().c_str()));
 					if (!resp.empty()) {
 						http::HTTPMessage response;
 						response.set_message_body(String(resp["body"]).utf8().c_str());

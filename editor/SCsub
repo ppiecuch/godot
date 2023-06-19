@@ -111,5 +111,7 @@ if env["tools"]:
     SConscript("import/SCsub")
     SConscript("plugins/SCsub")
 
+    env.Append(CPPPATH=["#modules/gdextensions"])
+
     lib = env.add_library("editor", env.editor_sources)
     env.Prepend(LIBS=[lib])

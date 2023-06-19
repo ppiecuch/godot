@@ -159,8 +159,6 @@ bool GdTLFXEffectsLibrary::ensureTextureSize(int &w, int &h) {
 }
 
 bool GdTLFXEffectsLibrary::UploadTextures() {
-	using helper::vector;
-
 	// try calculate best fit into current atlas texture:
 	int minw = 0, maxw = 0, minh = 0, maxh = 0;
 	for (TLFX::AnimImage *shape : _shapeList) {
@@ -233,7 +231,7 @@ bool GdTLFXEffectsLibrary::UploadTextures() {
 					continue;
 				}
 				// Try to extract all the files to the heap.
-				Vector<String> variants = vector(filename, filename.get_file(), filename.replace("\\", "/").get_file());
+				Vector<String> variants = make_vector(filename, filename.get_file(), filename.replace("\\", "/").get_file());
 				for (String fn : variants) {
 					size_t uncomp_size;
 					void *p = mz_zip_reader_extract_file_to_heap(&zip_archive, fn.utf8().c_str(), &uncomp_size, 0);

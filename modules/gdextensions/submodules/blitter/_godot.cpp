@@ -38,6 +38,21 @@
 
 #define ERR_MAX_STRLEN 128
 
+#ifdef SIZE_MAX
+#define SDL_SIZE_MAX SIZE_MAX
+#else
+#define SDL_SIZE_MAX ((size_t)-1)
+#endif
+
+// Check if the compiler supports a given builtin.
+// Supported by virtually all clang versions and recent gcc. Use this
+// instead of checking the clang version if possible.
+#ifdef __has_builtin
+#define SDL_HAS_BUILTIN(x) __has_builtin(x)
+#else
+#define SDL_HAS_BUILTIN(x) 0
+#endif
+
 // This file defines a structure that carries language-independent error messages
 typedef struct SDL_error {
 	int error; // This is a numeric value corresponding to the current error
@@ -70,7 +85,7 @@ extern "C" int SDL_Error(SDL_errorcode code) {
 
 extern "C" int SDL_SetError(SDL_PRINTF_FORMAT_STRING const char *fmt, ...) {
 	// Ignore call if invalid format pointer was passed
-	if (fmt != NULL) {
+	if (fmt != nullptr) {
 		va_list ap;
 		SDL_error *error = _GetErrBuf();
 		error->error = 1; // mark error as valid
@@ -133,7 +148,7 @@ extern "C" const char *SDL_getenv(const char *name) {
 #define gd_vscprintf(m_format, m_args_copy) _vscprintf(m_format, m_args_copy)
 #else
 #define gd_vsnprintf(m_buffer, m_count, m_format, m_args_copy) vsnprintf(m_buffer, m_count, m_format, m_args_copy)
-#define gd_vscprintf(m_format, m_args_copy) vsnprintf(NULL, 0, m_format, m_args_copy)
+#define gd_vscprintf(m_format, m_args_copy) vsnprintf(nullptr, 0, m_format, m_args_copy)
 #endif
 
 extern "C" int SDL_sscanf(const char *text, SDL_SCANF_FORMAT_STRING const char *fmt, ...) {
@@ -313,13 +328,13 @@ done:
 #elif (defined(_MSC_VER) && defined(_M_IX86)) || defined(__WATCOMC__)
 #define cpuid(func, a, b, c, d) \
 	__asm { \
-        __asm mov eax, func \
-        __asm xor ecx, ecx \
-        __asm cpuid \
-        __asm mov a, eax \
-        __asm mov b, ebx \
-        __asm mov c, ecx \
-        __asm mov d, edx                   \
+	__asm mov eax, func \
+	__asm xor ecx, ecx \
+	__asm cpuid \
+	__asm mov a, eax \
+	__asm mov b, ebx \
+	__asm mov c, ecx \
+	__asm mov d, edx                   \
 	}
 #elif defined(_MSC_VER) && defined(_M_X64)
 #define cpuid(func, a, b, c, d) \
@@ -398,7 +413,7 @@ static int CPU_haveAltiVec(void) {
 #endif
 	int hasVectorUnit = 0;
 	size_t length = sizeof(hasVectorUnit);
-	int error = sysctl(selectors, 2, &hasVectorUnit, &length, NULL, 0);
+	int error = sysctl(selectors, 2, &hasVectorUnit, &length, nullptr, 0);
 	if (0 == error) {
 		altivec = (hasVectorUnit != 0);
 	}
@@ -740,6 +755,24 @@ extern "C" SDL_bool SDL_HasNEON(void) {
 
 // Allocate memory in a SIMD-friendly way.
 
+// If a + b would overflow, return -1. Otherwise store a + b via ret and return 0.
+#if SDL_HAS_BUILTIN(__builtin_add_overflow)
+/* This needs to be wrapped in an inline rather than being a direct #define,
+ * the same as the call to __builtin_mul_overflow() above. */
+_FORCE_INLINE_ int SDL_size_add_overflow_builtin(size_t a, size_t b, size_t *ret) {
+	return __builtin_add_overflow(a, b, ret) == 0 ? 0 : -1;
+}
+#define SDL_size_add_overflow(a, b, ret) (SDL_size_add_overflow_builtin(a, b, ret))
+#else
+_FORCE_INLINE_ int SDL_size_add_overflow(size_t a, size_t b, size_t *ret) {
+	if (b > SDL_SIZE_MAX - a) {
+		return -1;
+	}
+	*ret = a + b;
+	return 0;
+}
+#endif
+
 extern "C" size_t SDL_SIMDGetAlignment(void) {
 	if (SDL_SIMDAlignment == 0xFFFFFFFF) {
 		_GetCPUFeatures(); // make sure this has been calculated
@@ -748,69 +781,36 @@ extern "C" size_t SDL_SIMDGetAlignment(void) {
 	return SDL_SIMDAlignment;
 }
 
-extern "C" void *SDL_SIMDAlloc(const size_t len) {
-	const size_t alignment = SDL_SIMDGetAlignment();
+extern "C" void *SDL_SIMDAlloc(size_t len) {
+	const size_t alignment = MAX(SDL_SIMDGetAlignment(), sizeof(void *));
 	const size_t padding = alignment - (len % alignment);
-	const size_t padded = (padding != alignment) ? (len + padding) : len;
-	Uint8 *retval = NULL;
-	Uint8 *ptr = (Uint8 *)SDL_malloc(padded + alignment + sizeof(void *));
-	if (ptr) {
-		// store the actual allocated pointer right before our aligned pointer.
-		retval = ptr + sizeof(void *);
-		retval += alignment - (((size_t)retval) % alignment);
-		*(((void **)retval) - 1) = ptr;
-	}
-	return retval;
-}
+	Uint8 *retval = nullptr;
 
-extern "C" void *SDL_SIMDRealloc(void *mem, const size_t len) {
-	const size_t alignment = SDL_SIMDGetAlignment();
-	const size_t padding = alignment - (len % alignment);
-	const size_t padded = (padding != alignment) ? (len + padding) : len;
-	Uint8 *retval = (Uint8 *)mem;
-	void *oldmem = mem;
-	size_t memdiff = 0, ptrdiff;
-	Uint8 *ptr;
-
-	if (mem) {
-		void **realptr = (void **)mem;
-		realptr--;
-		mem = *(((void **)mem) - 1);
-		// Check the delta between the real pointer and user pointer
-		memdiff = ((size_t)oldmem) - ((size_t)mem);
-	}
-
-	ptr = (Uint8 *)SDL_realloc(mem, padded + alignment + sizeof(void *));
-
-	if (ptr == NULL) {
-		return NULL; // Out of memory, bail!
-	}
-
-	// Store the actual allocated pointer right before our aligned pointer.
-	retval = ptr + sizeof(void *);
-	retval += alignment - (((size_t)retval) % alignment);
-
-	// Make sure the delta is the same!
-	if (mem) {
-		ptrdiff = ((size_t)retval) - ((size_t)ptr);
-		if (memdiff != ptrdiff) { // Delta has changed, copy to new offset!
-			oldmem = (void *)(((uintptr_t)ptr) + memdiff);
-			// Even though the data past the old `len` is undefined, this is the
-			// only length value we have, and it guarantees that we copy all the
-			// previous memory anyhow.
-			SDL_memmove(retval, oldmem, len);
+#ifdef DEBUG_ENABLED
+	if (SDL_size_add_overflow(len, alignment, &len) == 0 &&
+			SDL_size_add_overflow(len, sizeof(void *), &len) == 0 &&
+			SDL_size_add_overflow(len, padding, &len) == 0)
+#else
+	len += padding + alignment + sizeof(void *));
+#endif
+	{
+		void *original = SDL_malloc(len);
+		if (original) {
+			// Make sure we have enough space to store the original pointer
+			retval = (Uint8 *)original + sizeof(original);
+			// Align the pointer we're going to return
+			retval += alignment - (((size_t)retval) % alignment);
+			// Store the original pointer right before the returned value
+			SDL_memcpy(retval - sizeof(original), &original, sizeof(original));
 		}
 	}
-
-	// Actually store the allocated pointer, finally.
-	*(((void **)retval) - 1) = ptr;
 	return retval;
 }
 
 extern "C" void SDL_SIMDFree(void *ptr) {
 	if (ptr) {
-		void **realptr = (void **)ptr;
-		realptr--;
-		SDL_free(*(((void **)ptr) - 1));
+		void *original;
+		SDL_memcpy(&original, ((Uint8 *)ptr - sizeof(original)), sizeof(original));
+		SDL_free(original);
 	}
 }

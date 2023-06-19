@@ -98,7 +98,7 @@ void SpiderThemeInfo::_cache_themes() {
 		names.push_back(String(r.image).get_basename());
 	}
 
-	Dictionary atlas_info = merge_images(images, names);
+	Dictionary atlas_info = merge_images(images);
 
 	ERR_FAIL_COND(atlas_info.empty());
 
@@ -114,12 +114,13 @@ void SpiderThemeInfo::_cache_themes() {
 		textures.push_back(atlas_page);
 	}
 
-	Dictionary atlas_rects = atlas_info["_rects"];
+	Array atlas_rects = atlas_info["_rects"];
 	for (int j = 0; j < names.size(); ++j) {
-		String name = names[j];
-		Dictionary entry = atlas_rects[name];
+		Dictionary entry = atlas_rects[j];
 
 		ERR_CONTINUE_MSG(entry.empty(), "Empty atlas entry, Skipping!");
+
+		const String name = names[j];
 
 		Ref<AtlasTexture> at = newref(AtlasTexture);
 		at->set_atlas(textures[entry["atlas_page"]]);
