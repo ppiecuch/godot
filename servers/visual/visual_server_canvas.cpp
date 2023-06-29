@@ -450,8 +450,8 @@ void VisualServerCanvas::canvas_item_set_update_when_visible(RID p_item, bool p_
 }
 
 void VisualServerCanvas::canvas_item_add_line(RID p_item, const Point2 &p_from, const Point2 &p_to, const Color &p_color, float p_width, bool p_antialiased, VS::LineDrawMode p_line_cap) {
-	if (p_width > 1.0) {
-		canvas_item_add_multiline(p_item, helper::vector(p_from, p_to), helper::vector(p_color), p_width, p_antialiased, p_line_cap);
+	if (p_width > 1) {
+		canvas_item_add_multiline(p_item, make_vector(p_from, p_to), make_vector(p_color), p_width, p_antialiased, p_line_cap);
 	} else {
 		Item *canvas_item = canvas_item_owner.getornull(p_item);
 		ERR_FAIL_COND(!canvas_item);

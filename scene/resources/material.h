@@ -662,4 +662,29 @@ VARIANT_ENUM_CAST(SpatialMaterial::AsyncMode)
 
 //////////////////////
 
+class SpatialCheckerMaterial : public Material {
+	GDCLASS(SpatialCheckerMaterial, Material);
+
+	Ref<Shader> shader;
+	Ref<Texture> detail_texture;
+
+	void _set_shader_param(const StringName &p_param, const Variant &p_value);
+	Variant _get_shader_param(const StringName &p_param) const;
+
+protected:
+	static void _bind_methods();
+
+public:
+	void set_detail_texture(Ref<Texture> p_texture);
+	Ref<Texture> get_detail_texture() const;
+
+	void set_albedo_color(Color p_color);
+	Color get_albedo_color() const;
+
+	Shader::Mode get_shader_mode() const;
+
+	SpatialCheckerMaterial();
+	virtual ~SpatialCheckerMaterial();
+};
+
 #endif // MATERIAL_H

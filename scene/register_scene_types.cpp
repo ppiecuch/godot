@@ -589,8 +589,10 @@ void register_scene_types() {
 	ClassDB::register_class<VisualShaderNodeCompare>();
 
 	ClassDB::register_class<ShaderMaterial>();
+	ClassDB::register_class<SpatialCheckerMaterial>();
 	ClassDB::register_virtual_class<CanvasItem>();
 	ClassDB::register_class<CanvasItemMaterial>();
+	ClassDB::register_class<CanvasCheckerMaterial>();
 	SceneTree::add_idle_callback(CanvasItemMaterial::flush_changes);
 	CanvasItemMaterial::init_shaders();
 	ClassDB::register_class<Node2D>();

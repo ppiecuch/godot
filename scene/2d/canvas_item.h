@@ -172,6 +172,31 @@ VARIANT_ENUM_CAST(CanvasItemMaterial::BlendMode)
 VARIANT_ENUM_CAST(CanvasItemMaterial::LightMode)
 VARIANT_ENUM_CAST(CanvasItemMaterial::StencilMode)
 
+class CanvasCheckerMaterial : public Material {
+	GDCLASS(CanvasCheckerMaterial, Material);
+
+	Ref<Shader> shader;
+	Ref<Texture> detail_texture;
+
+	void _set_shader_param(const StringName &p_param, const Variant &p_value);
+	Variant _get_shader_param(const StringName &p_param) const;
+
+protected:
+	static void _bind_methods();
+
+public:
+	void set_detail_texture(Ref<Texture> p_texture);
+	Ref<Texture> get_detail_texture() const;
+
+	void set_albedo_color(Color p_color);
+	Color get_albedo_color() const;
+
+	Shader::Mode get_shader_mode() const;
+
+	CanvasCheckerMaterial();
+	virtual ~CanvasCheckerMaterial();
+};
+
 class CanvasItem : public Node {
 	GDCLASS(CanvasItem, Node);
 
