@@ -896,7 +896,7 @@ void RasterizerCanvasGLES2::render_batches(Item *p_current_clip, bool &r_reclip,
 
 							Transform transform = mesh->transform;
 							Color modulate = mesh->modulate;
-							bool depth = false;
+							bool depth = mesh->depth;
 							if (mesh->mesh3d.is_valid()) {
 								if (mesh->mesh3d.get_props_count() == 3) {
 									transform = mesh->mesh3d.get_prop(0).transform_value;
