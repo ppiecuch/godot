@@ -1546,6 +1546,7 @@ void ArrayMesh::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_submesh_count"), &ArrayMesh::get_submesh_count);
 	ClassDB::bind_method(D_METHOD("get_submesh", "index"), &ArrayMesh::get_submesh);
 	ClassDB::bind_method(D_METHOD("get_submesh_with_name", "name"), &ArrayMesh::get_submesh_with_name);
+	ClassDB::bind_method(D_METHOD("select_submesh_surfaces", "index"), &ArrayMesh::select_submesh_surfaces);
 
 	ClassDB::bind_method(D_METHOD("add_blend_shape", "name"), &ArrayMesh::add_blend_shape);
 	ClassDB::bind_method(D_METHOD("get_blend_shape_count"), &ArrayMesh::get_blend_shape_count);

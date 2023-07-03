@@ -183,6 +183,7 @@ modules = [
     "media/flac",
     "media/gifexporter",
     "media/smackvideo",
+    "media/bmfimporter",
     "runtimeprofiler",
 ]
 

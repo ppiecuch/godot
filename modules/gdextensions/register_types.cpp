@@ -155,6 +155,9 @@
 #ifdef GDEXT_MEDIA_FFMPEG_ENABLED
 #include "media/ffmpeg/gd_videodecoder.h"
 #endif
+#ifdef GDEXT_MEDIA_BMFIMPORTER_ENABLED
+#include "media/bmfimporter/bmf_bitmap_font.h"
+#endif
 
 #ifdef GDEXT_RUNTIMEPROFILER_ENABLED
 #include "runtimeprofiler/runtime_profiler.h"
@@ -515,6 +518,12 @@ void register_gdextensions_types() {
 #endif
 #ifdef GDEXT_MEDIA_FFMPEG_ENABLED
 	gdffmpeg_init();
+#endif
+#ifdef TOOLS_ENABLED
+#ifdef GDEXT_MEDIA_BMFIMPORTER_ENABLED
+	Ref<BmfFontImporter> bmf_font = memnew(BmfFontImporter);
+	ResourceFormatImporter::get_singleton()->add_importer(bmf_font);
+#endif
 #endif
 
 #ifdef GDEXT_RUNTIMEPROFILER_ENABLED

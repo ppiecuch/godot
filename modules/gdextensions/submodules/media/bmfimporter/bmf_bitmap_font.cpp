@@ -1,9 +1,38 @@
+/**************************************************************************/
+/*  bmf_bitmap_font.cpp                                                   */
+/**************************************************************************/
+/*                         This file is part of:                          */
+/*                             GODOT ENGINE                               */
+/*                        https://godotengine.org                         */
+/**************************************************************************/
+/* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
+/* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
+/*                                                                        */
+/* Permission is hereby granted, free of charge, to any person obtaining  */
+/* a copy of this software and associated documentation files (the        */
+/* "Software"), to deal in the Software without restriction, including    */
+/* without limitation the rights to use, copy, modify, merge, publish,    */
+/* distribute, sublicense, and/or sell copies of the Software, and to     */
+/* permit persons to whom the Software is furnished to do so, subject to  */
+/* the following conditions:                                              */
+/*                                                                        */
+/* The above copyright notice and this permission notice shall be         */
+/* included in all copies or substantial portions of the Software.        */
+/*                                                                        */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. */
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY   */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,   */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE      */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
+/**************************************************************************/
 
 #include "bmf_bitmap_font.h"
 
-#include "core/os/file_access.h"
 #include "common/gd_core.h"
 #include "common/gd_pack.h"
+#include "core/os/file_access.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,17 +45,18 @@ void BmfFont::print(uint32_t *bmp, uint8_t ch, int x, int y, int bmp_line_width)
 	BmfChar &g = glyphs[ch];
 	for (int j = 0; j < g.h; j++) {
 		for (int i = 0; i < g.w; i++) {
-			bmp[ (y+g.rely+j) * bmp_line_width + (x+g.relx+i) ] = rgb_value(g.d[j * g.w+i]);
+			bmp[(y + g.rely + j) * bmp_line_width + (x + g.relx + i)] = rgb_value(g.d[j * g.w + i]);
 		}
 	}
 }
 
 void BmfFont::print(uint32_t *bmp, const uint8_t *str, int x, int y) {
-	uint8_t *ch = (uint8_t *)str; while (*ch) {
+	uint8_t *ch = (uint8_t *)str;
+	while (*ch) {
 		BmfChar &g = glyphs[*ch];
 		for (int j = 0; j < g.h; j++) {
 			for (int i = 0; i < g.w; i++) {
-				bmp[ (y+g.rely+j) * g.w + (x+g.relx+i) ] = rgb_value(g.d[j*g.w+i]);
+				bmp[(y + g.rely + j) * g.w + (x + g.relx + i)] = rgb_value(g.d[j * g.w + i]);
 			}
 		}
 		//inc(x,(shift+addspace)*zoom);
@@ -35,14 +65,14 @@ void BmfFont::print(uint32_t *bmp, const uint8_t *str, int x, int y) {
 }
 
 uint32_t BmfFont::rgb_value(uint8_t i, uint8_t a) {
-  return (a << 24) | (rgb[i].b << 16) | (rgb[i].g << 8) | (rgb[i].r);
+	return (a << 24) | (rgb[i].b << 16) | (rgb[i].g << 8) | (rgb[i].r);
 }
 
 void BmfFont::bmf_load(const String &fname) {
 	if (FileAccessRef fa = FileAccess::open(fname, FileAccess::READ)) {
 		uint8_t s[256];
 
-		if (fa->get_32() == BMFHEADER ) {
+		if (fa->get_32() == BMFHEADER) {
 			const int ver = fa->get_8();
 			line_height = fa->get_8();
 			size_over = fa->get_8();
@@ -53,13 +83,15 @@ void BmfFont::bmf_load(const String &fname) {
 			highest_color = fa->get_8();
 			fa->get_buffer(s, 4);
 			const int i = fa->get_8(); // num color entries
-			for(int x = 1; x <= i; x++) {
-				fa->get_buffer((uint8_t*)&rgb[x], 3);
+			for (int x = 1; x <= i; x++) {
+				fa->get_buffer((uint8_t *)&rgb[x], 3);
 				rgb[x].r = (rgb[x].r << 2) + 3;
 				rgb[x].g = (rgb[x].g << 2) + 3;
 				rgb[x].b = (rgb[x].b << 2) + 3;
 			}
-			const int j = fa->get_8(); fa->get_buffer(s, j); s[j] = 0;
+			const int j = fa->get_8();
+			fa->get_buffer(s, j);
+			s[j] = 0;
 			printf_verbose("bmf info: %s", s); // info string
 			printf_verbose("  ver: %d", ver);
 			printf_verbose("  line height: %d", line_height);
@@ -73,7 +105,7 @@ void BmfFont::bmf_load(const String &fname) {
 			for (int d = 0; d < num_codes; d++) {
 				const uint8_t c = fa->get_8();
 				BmfChar &g = glyphs[c];
-				fa->get_buffer((uint8_t*)&g, 5); // w, h, relx. rely,shift
+				fa->get_buffer((uint8_t *)&g, 5); // w, h, relx. rely,shift
 				// printf_verbose("char '%c': %dx%d pixels\n", c, g.w, g.h);
 				if (g.w > 0 && g.h > 0) {
 					g.d.resize(g.w * g.h);
@@ -172,5 +204,16 @@ bool BmfFontImporter::get_option_visibility(const String &p_option, const Map<St
 }
 
 Error BmfFontImporter::import(const String &p_source_file, const String &p_save_path, const Map<StringName, Variant> &p_options, List<String> *r_platform_variants, List<String> *r_gen_files, Variant *r_metadata) {
-	return OK;
+	BmfFont bmf(p_source_file);
+	if (bmf.get_num_codes()) {
+		RES fnt = bmf.get_font();
+		String save_path = p_save_path + ".font";
+		Error err = ResourceSaver::save(save_path, fnt);
+		ERR_FAIL_COND_V_MSG(err != OK, err, "Cannot save Font to file '" + save_path + "'.");
+		r_gen_files->push_back(save_path);
+		return OK;
+	} else {
+		WARN_PRINT("Failed to import font file or file is empty.");
+		return ERR_CANT_CREATE;
+	}
 }

@@ -66,7 +66,7 @@ class BmfFont {
 	BmfChar glyphs[256];
 	uint8_t codes[256]; // index to to glyphs
 	uint8_t chars[256]; // map from char code
-	uint16_t num_codes;
+	uint16_t num_codes = 0;
 
 public:
 	uint8_t line_height;

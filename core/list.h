@@ -361,6 +361,14 @@ public:
 		return n;
 	}
 
+	void append_list(const List &p_list) {
+		const Element *it = p_list.front();
+		while (it) {
+			push_back(it->get());
+			it = it->next();
+		}
+	}
+
 	/**
 	 * find an element in the list,
 	 */
