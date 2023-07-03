@@ -801,7 +801,7 @@ void ArrayMesh::_get_property_list(List<PropertyInfo> *p_list) const {
 		if (surfaces[i].is_2d) {
 			p_list->push_back(PropertyInfo(Variant::OBJECT, "surface_" + itos(i + 1) + "/material", PROPERTY_HINT_RESOURCE_TYPE, "ShaderMaterial,CanvasItemMaterial", PROPERTY_USAGE_EDITOR));
 		} else {
-			p_list->push_back(PropertyInfo(Variant::OBJECT, "surface_" + itos(i + 1) + "/material", PROPERTY_HINT_RESOURCE_TYPE, "ShaderMaterial,SpatialMaterial", PROPERTY_USAGE_EDITOR));
+			p_list->push_back(PropertyInfo(Variant::OBJECT, "surface_" + itos(i + 1) + "/material", PROPERTY_HINT_RESOURCE_TYPE, "ShaderMaterial,SpatialMaterial,SpatialCheckerMaterial", PROPERTY_USAGE_EDITOR));
 		}
 		p_list->push_back(PropertyInfo(Variant::BOOL, "surface_" + itos(i + 1) + "/active", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_EDITOR));
 	}
@@ -834,7 +834,11 @@ Ref<Mesh> ArrayMesh::_copy_surfaces(Ref<ArrayMesh> p_dest, int p_from, int p_num
 	for (int s = 0; s < p_num; s++) {
 		const int idx = p_from + s;
 		ERR_FAIL_INDEX_V(idx, get_surface_count(), p_dest);
+		const int surf_id = p_dest->get_surface_count();
 		p_dest->add_surface_from_arrays(surface_get_primitive_type(idx), surface_get_arrays(idx), surface_get_blend_shape_arrays(idx));
+		if (Ref<Material> mat = surface_get_material(idx)) {
+			p_dest->surface_set_material(surf_id, mat);
+		}
 	}
 	return p_dest;
 }
