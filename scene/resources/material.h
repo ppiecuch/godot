@@ -670,6 +670,7 @@ class SpatialCheckerMaterial : public Material {
 
 	void _set_shader_param(const StringName &p_param, const Variant &p_value);
 	Variant _get_shader_param(const StringName &p_param) const;
+	void _texture_changed();
 
 protected:
 	static void _bind_methods();

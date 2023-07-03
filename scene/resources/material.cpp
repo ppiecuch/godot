@@ -30,6 +30,7 @@
 
 #include "material.h"
 
+#include "core/core_string_names.h"
 #include "core/engine.h"
 #include "core/project_settings.h"
 #include "core/version.h"
@@ -2637,13 +2638,29 @@ Variant SpatialCheckerMaterial::_get_shader_param(const StringName &p_param) con
 	return VS::get_singleton()->material_get_param(_get_material(), p_param);
 }
 
+void SpatialCheckerMaterial::_texture_changed() {
+	if (detail_texture) {
+		_set_shader_param("detail_texture_size", detail_texture->get_size());
+	} else {
+		WARN_PRINT("Missing texture");
+	}
+}
+
 void SpatialCheckerMaterial::set_detail_texture(Ref<Texture> p_texture) {
 	if (detail_texture != p_texture) {
+		if (detail_texture) {
+			detail_texture->disconnect(CoreStringNames::get_singleton()->changed, this, "_texture_changed");
+		}
 		detail_texture = p_texture;
+		if (detail_texture) {
+			detail_texture->connect(CoreStringNames::get_singleton()->changed, this, "_texture_changed");
+		}
 		if (detail_texture) {
 			shader->set_code(_checkers_detail_shaders);
 			_set_shader_param("detail_texture", detail_texture);
 			_set_shader_param("detail_texture_size", detail_texture->get_size());
+		} else {
+			shader->set_code(_checkers_shaders);
 		}
 	}
 }
@@ -2653,11 +2670,7 @@ Ref<Texture> SpatialCheckerMaterial::get_detail_texture() const {
 }
 
 Shader::Mode SpatialCheckerMaterial::get_shader_mode() const {
-	if (shader.is_valid()) {
-		return shader->get_mode();
-	} else {
-		return Shader::MODE_SPATIAL;
-	}
+	return Shader::MODE_SPATIAL;
 }
 
 void SpatialCheckerMaterial::set_albedo_color(Color p_color) {
@@ -2673,6 +2686,8 @@ void SpatialCheckerMaterial::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_detail_texture"), &SpatialCheckerMaterial::get_detail_texture);
 	ClassDB::bind_method(D_METHOD("set_albedo_color", "texture"), &SpatialCheckerMaterial::set_albedo_color);
 	ClassDB::bind_method(D_METHOD("get_albedo_color"), &SpatialCheckerMaterial::get_albedo_color);
+
+	ClassDB::bind_method(D_METHOD("_texture_changed"), &SpatialCheckerMaterial::_texture_changed);
 
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "detail_texture", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_detail_texture", "get_detail_texture");
 	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "albedo"), "set_albedo_color", "get_albedo_color");

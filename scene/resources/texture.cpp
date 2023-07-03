@@ -1817,6 +1817,159 @@ CurveTexture::~CurveTexture() {
 }
 //////////////////
 
+// Make a checkerboard image
+static void make_checker_image(Ref<Image> &image, int tile, const Color &c0, const Color &c1, bool details = true, const Color &c2 = Color(1, 1, 1, 1)) {
+	image->lock();
+	for (int j = 0; j < image->get_height(); j++) {
+		for (int i = 0; i < image->get_width(); i++) {
+			const bool c = details && (i % tile == 0 || i == image->get_width() - 1 || j % tile == 0 || j == image->get_height() - 1);
+			if (c) {
+				image->set_pixel(i, j, c2);
+			} else {
+				const bool c = (i / tile + j / tile) % 2 == 0;
+				image->set_pixel(i, j, c ? c0 : c1);
+			}
+		}
+	}
+	image->unlock();
+}
+
+// Make a uv colored grid
+static void make_uvgrid_image(Ref<Image> &image, int tile, float alpha = 1, bool details = true, bool colored = true) {
+	image->lock();
+	for (int j = 0; j < image->get_height(); j++) {
+		for (int i = 0; i < image->get_width(); i++) {
+			uint8_t ph = 32 * (i / (image->get_height() / 8));
+			uint8_t pv = 128;
+			uint8_t ps = 64 + 16 * (7 - j / (image->get_height() / 8));
+			if (!details || (i % (tile / 2) && j % (tile / 2) && j != image->get_height() - 1 && i != image->get_width() - 1)) {
+				if ((i / tile + j / tile) % 2) {
+					pv += 16;
+				} else {
+					pv -= 16;
+				}
+			} else {
+				pv = 196;
+				ps = 32;
+			}
+			image->set_pixel(i, j, colored ? Color().from_hsv(ph / 255.0, ps / 255.0, pv / 255.0, alpha) : Color(pv / 255.0, pv / 255.0, pv / 255.0, alpha));
+		}
+	}
+	image->unlock();
+}
+
+void CheckerTexture::_queue_update() {
+	if (update_pending) {
+		return;
+	}
+	update_pending = true;
+	call_deferred("_update");
+}
+
+void CheckerTexture::_update() {
+	update_pending = false;
+
+	Ref<Image> image = memnew(Image(get_width(), get_height(), false, Image::FORMAT_RGBA8));
+	const float a = use_transparent ? 0.75 : 1;
+	if (use_colored) {
+		make_uvgrid_image(image, cell_size, a, use_details);
+	} else {
+		const float c = 0.6;
+		make_checker_image(image, cell_size, Color::solid(c * 0.3, a), Color::solid(c, a), use_details, Color::solid(c * 1.2, a));
+	}
+	VS::get_singleton()->texture_allocate(texture, get_width(), get_height(), 0, Image::FORMAT_RGBA8, VS::TEXTURE_TYPE_2D, VS::TEXTURE_FLAG_FILTER);
+	VS::get_singleton()->texture_set_data(texture, image);
+	emit_changed();
+}
+
+void CheckerTexture::set_cell_size(int p_size) {
+	ERR_FAIL_COND(p_size < 8 || p_size > 64);
+	cell_size = p_size;
+	_queue_update();
+}
+
+int CheckerTexture::get_cell_size() const {
+	return cell_size;
+}
+
+void CheckerTexture::set_num_cells(int p_num) {
+	num_cells = p_num;
+	_queue_update();
+}
+
+int CheckerTexture::get_num_cells() const {
+	return num_cells;
+}
+
+void CheckerTexture::enable_details(bool p_details) {
+	use_details = p_details;
+	_queue_update();
+}
+
+bool CheckerTexture::is_details() const {
+	return use_details;
+}
+
+void CheckerTexture::enable_colored(bool p_colored) {
+	use_colored = p_colored;
+	_queue_update();
+}
+
+bool CheckerTexture::is_colored() const {
+	return use_colored;
+}
+
+void CheckerTexture::enable_transparent(bool p_transparent) {
+	use_transparent = p_transparent;
+	_queue_update();
+}
+
+bool CheckerTexture::is_transparent() const {
+	return use_transparent;
+}
+
+Ref<Image> CheckerTexture::get_data() const {
+	return VisualServer::get_singleton()->texture_get_data(texture);
+}
+
+void CheckerTexture::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("enable_details", "details"), &CheckerTexture::enable_details);
+	ClassDB::bind_method(D_METHOD("is_details"), &CheckerTexture::is_details);
+	ClassDB::bind_method(D_METHOD("enable_colored", "colored"), &CheckerTexture::enable_colored);
+	ClassDB::bind_method(D_METHOD("is_colored"), &CheckerTexture::is_colored);
+	ClassDB::bind_method(D_METHOD("enable_transparent", "transparent"), &CheckerTexture::enable_transparent);
+	ClassDB::bind_method(D_METHOD("is_transparent"), &CheckerTexture::is_transparent);
+	ClassDB::bind_method(D_METHOD("set_cell_size"), &CheckerTexture::set_cell_size);
+	ClassDB::bind_method(D_METHOD("get_cell_size"), &CheckerTexture::get_cell_size);
+	ClassDB::bind_method(D_METHOD("set_num_cells"), &CheckerTexture::set_num_cells);
+	ClassDB::bind_method(D_METHOD("get_num_cells"), &CheckerTexture::get_num_cells);
+
+	ClassDB::bind_method(D_METHOD("_update"), &CheckerTexture::_update);
+
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "enable_details"), "enable_details", "is_details");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "colored"), "enable_colored", "is_colored");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "transparent"), "enable_transparent", "is_transparent");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "cell_size", PROPERTY_HINT_RANGE, "8,64"), "set_cell_size", "get_cell_size");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "num_cells"), "set_num_cells", "get_num_cells");
+}
+
+CheckerTexture::CheckerTexture() {
+	cell_size = 32;
+	num_cells = 8;
+	use_details = true;
+	use_transparent = false;
+	use_colored = false;
+	update_pending = false;
+	texture = RID_PRIME(VS::get_singleton()->texture_create());
+	_queue_update();
+}
+
+CheckerTexture::~CheckerTexture() {
+	VS::get_singleton()->free(texture);
+}
+
+//////////////////
+
 //setter and getter names for property serialization
 #define COLOR_RAMP_GET_OFFSETS "get_offsets"
 #define COLOR_RAMP_GET_COLORS "get_colors"

@@ -476,4 +476,5 @@ void Line2D::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("_gradient_changed"), &Line2D::_gradient_changed);
 	ClassDB::bind_method(D_METHOD("_curve_changed"), &Line2D::_curve_changed);
+	ClassDB::bind_method(D_METHOD("_texture_changed"), &Line2D::_texture_changed);
 }

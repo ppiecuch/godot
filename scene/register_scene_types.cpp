@@ -592,7 +592,6 @@ void register_scene_types() {
 	ClassDB::register_class<SpatialCheckerMaterial>();
 	ClassDB::register_virtual_class<CanvasItem>();
 	ClassDB::register_class<CanvasItemMaterial>();
-	ClassDB::register_class<CanvasCheckerMaterial>();
 	SceneTree::add_idle_callback(CanvasItemMaterial::flush_changes);
 	CanvasItemMaterial::init_shaders();
 	ClassDB::register_class<Node2D>();
@@ -714,6 +713,7 @@ void register_scene_types() {
 	ClassDB::register_class<MeshTexture>();
 	ClassDB::register_class<LargeTexture>();
 	ClassDB::register_class<CurveTexture>();
+	ClassDB::register_class<CheckerTexture>();
 	ClassDB::register_class<GradientTexture>();
 	ClassDB::register_class<GradientTexture2D>();
 	ClassDB::register_class<ProxyTexture>();

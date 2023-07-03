@@ -640,6 +640,47 @@ public:
 */
 //VARIANT_ENUM_CAST( Texture::CubeMapSide );
 
+class CheckerTexture : public Texture {
+	GDCLASS(CheckerTexture, Texture);
+
+private:
+	bool update_pending;
+	RID texture;
+	int cell_size, num_cells;
+	bool use_details, use_colored, use_transparent;
+
+	void _queue_update();
+	void _update();
+
+protected:
+	static void _bind_methods();
+
+public:
+	void set_cell_size(int p_size);
+	int get_cell_size() const;
+	void set_num_cells(int p_num);
+	int get_num_cells() const;
+	void enable_details(bool p_details);
+	bool is_details() const;
+	void enable_colored(bool p_colored);
+	bool is_colored() const;
+	void enable_transparent(bool p_transparent);
+	bool is_transparent() const;
+
+	virtual RID get_rid() const G_OVERRIDE { return texture; }
+	virtual int get_width() const G_OVERRIDE { return cell_size * num_cells; }
+	virtual int get_height() const G_OVERRIDE { return cell_size * num_cells; }
+	virtual bool has_alpha() const G_OVERRIDE { return true; }
+
+	virtual void set_flags(uint32_t p_flags) G_OVERRIDE {}
+	virtual uint32_t get_flags() const G_OVERRIDE { return FLAG_FILTER; }
+
+	virtual Ref<Image> get_data() const G_OVERRIDE;
+
+	CheckerTexture();
+	virtual ~CheckerTexture();
+};
+
 class GradientTexture : public Texture {
 	GDCLASS(GradientTexture, Texture);
 
