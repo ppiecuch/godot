@@ -6712,6 +6712,7 @@ bool CanvasItemEditorViewport::can_drop_data(const Point2 &p_point, const Varian
 						type == "ImageTexture" ||
 						type == "ViewportTexture" ||
 						type == "CurveTexture" ||
+						type == "CheckerTexture" ||
 						type == "GradientTexture" ||
 						type == "StreamTexture" ||
 						type == "MaskTexture" ||
