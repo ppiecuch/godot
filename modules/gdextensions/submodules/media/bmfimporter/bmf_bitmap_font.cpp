@@ -139,13 +139,18 @@ Ref<Image> BmfFont::get_image(uint8_t code) {
 	return image;
 }
 
-Ref<BitmapFont> BmfFont::get_font() {
+Ref<BitmapFont> BmfFont::get_font(bool add_alpha, uint8_t alpha) {
 	Vector<Ref<Image>> images;
 	for (int c = 0; c < num_codes; c++) {
 		images.push_back(get_image(c));
 	}
 
-	Dictionary atlas_info = merge_images(images);
+	ImageMergeOptions opts;
+	if (add_alpha) {
+		opts.background_color = Color(0, 0, 0, alpha / 255.0);
+		opts.force_atlas_channels = 4;
+	}
+	Dictionary atlas_info = merge_images(images, opts);
 	ERR_FAIL_COND_V(atlas_info.empty(), Ref<BitmapFont>());
 	Array pages = atlas_info["_generated_images"];
 	ERR_FAIL_COND_V(pages.size() > 1, Ref<BitmapFont>());
@@ -206,7 +211,9 @@ bool BmfFontImporter::get_option_visibility(const String &p_option, const Map<St
 Error BmfFontImporter::import(const String &p_source_file, const String &p_save_path, const Map<StringName, Variant> &p_options, List<String> *r_platform_variants, List<String> *r_gen_files, Variant *r_metadata) {
 	BmfFont bmf(p_source_file);
 	if (bmf.get_num_codes()) {
-		RES fnt = bmf.get_font();
+		const bool add_alpha = p_options["add_alpha_channel"];
+		const uint8_t alpha = p_options["alpha"];
+		RES fnt = bmf.get_font(add_alpha, alpha);
 		String save_path = p_save_path + ".font";
 		Error err = ResourceSaver::save(save_path, fnt);
 		ERR_FAIL_COND_V_MSG(err != OK, err, "Cannot save Font to file '" + save_path + "'.");

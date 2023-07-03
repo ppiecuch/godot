@@ -75,9 +75,8 @@ public:
 
 	uint32_t rgb_value(uint8_t i, uint8_t a = 255);
 	void bmf_load(const String &fname);
-	Ref<Image> get_image(uint8_t code, uint8_t a);
 	Ref<Image> get_image(uint8_t code);
-	Ref<BitmapFont> get_font();
+	Ref<BitmapFont> get_font(bool add_alpha = false, uint8_t alpha = 255);
 
 	void print(uint32_t *bmp, uint8_t ch, int x, int y, int bmp_line_width);
 	void print(uint32_t *bmp, const uint8_t *str, int x, int y);
