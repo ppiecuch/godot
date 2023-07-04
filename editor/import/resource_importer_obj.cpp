@@ -38,11 +38,118 @@
 #include "scene/resources/mesh.h"
 #include "scene/resources/surface_tool.h"
 
+#include "common/gd_pack.h"
+
+// Reference:
+// 1. https://github.com/godotengine/godot/issues/57401
+// 2. https://github.com/mattdesl/texture-region
+
 uint32_t EditorOBJImporter::get_import_flags() const {
 	return IMPORT_SCENE;
 }
 
-static Error _parse_material_library(const String &p_path, Map<String, Ref<SpatialMaterial>> &material_map, List<String> *r_missing_deps) {
+static Ref<ArrayMesh> _build_mesh_for_atlas(const Ref<ArrayMesh> &p_mesh, String p_path, int p_max_side, List<String> *r_paths = nullptr) {
+	ERR_FAIL_NULL_V(p_mesh, Ref<Mesh>());
+	ERR_FAIL_COND_V(p_max_side < 0, Ref<Mesh>());
+
+	enum {
+		texture_metallic,
+		texture_albedo,
+		texture_roughness,
+		texture_normal,
+		texture_max,
+	};
+
+	static const struct {
+		const char *prefix;
+		SpatialMaterial::TextureParam texture;
+	} info[] = {
+		{ "M", SpatialMaterial::TEXTURE_METALLIC },
+		{ "C", SpatialMaterial::TEXTURE_ALBEDO },
+		{ "R", SpatialMaterial::TEXTURE_ROUGHNESS },
+		{ "N", SpatialMaterial::TEXTURE_NORMAL },
+	};
+
+	Ref<ArrayMesh> r_mesh = memnew(ArrayMesh);
+	for (int t = 0; t < texture_max; t++) {
+		Vector<Ref<Image>> images;
+		Vector<int> surfs;
+		// collect texture information
+		for (int s = 0; s < p_mesh->get_surface_count(); s++) {
+			if (Ref<SpatialMaterial> mat = p_mesh->surface_get_material(s)) {
+				if (Ref<Texture> texture = mat->get_texture(info[t].texture)) {
+					Ref<Image> img = memnew(Image);
+					if (img->load(texture->get_path().replace_first("res://", "")) == OK) {
+						images.push_back(img);
+						surfs.push_back(s);
+					}
+				}
+			}
+		}
+		if (images.size() > 1) {
+			ImageMergeOptions opts;
+			if (p_max_side > 1) {
+				opts.set_max_size(p_max_side);
+			}
+			Dictionary atlas_info = merge_images(images, opts);
+			ERR_FAIL_COND_V(atlas_info.empty(), Ref<Mesh>());
+
+			Array pages = atlas_info["_generated_images"];
+			ERR_FAIL_COND_V(pages.size() > 1, Ref<Mesh>());
+
+			Ref<Image> atlas_image = pages[0];
+
+			ERR_FAIL_NULL_V(atlas_image, Ref<Mesh>());
+
+			String path = vformat("%s-%s.png", p_path.trim_suffix("." + p_path.get_extension()), info[t].prefix);
+			atlas_image->save_png(path);
+			print_verbose(vformat("OBJ: Save atlas texture: %s", path));
+			if (r_paths) {
+				r_paths->push_back(path);
+			}
+
+			const Size2 atlas_size = atlas_image->get_size();
+
+			Array atlas_rects = atlas_info["_rects"];
+			for (int s = 0; s < atlas_rects.size(); s++) {
+				const int surf_nr = surfs[s];
+				ERR_CONTINUE(surf_nr >= p_mesh->get_surface_count());
+
+				Array mesh_array = p_mesh->surface_get_arrays(surf_nr);
+				Dictionary entry = atlas_rects[s];
+				ERR_CONTINUE_MSG(entry.empty(), "Empty atlas entry, Skipping!");
+
+				PoolVector2Array uvs = mesh_array[VS::ARRAY_TEX_UV];
+				PoolVector2Array xform_uvs;
+				ERR_FAIL_COND_V(xform_uvs.resize(uvs.size()) != OK, Ref<ArrayMesh>());
+
+				auto w = xform_uvs.write();
+				Rect2 rect = entry["rect"];
+				const Vector2 uv_origin = rect.position / atlas_size;
+				const Vector2 uv_size = rect.size / atlas_size;
+
+				// build transformed coords
+				for (int v = 0; v < uvs.size(); ++v) {
+					w[v] = uvs[v] * uv_size + uv_origin;
+				}
+				w.release();
+
+				mesh_array[VS::ARRAY_TEX_UV] = xform_uvs;
+
+				// save new surface:
+				const int surf_id = r_mesh->get_surface_count();
+				r_mesh->add_surface_from_arrays(p_mesh->surface_get_primitive_type(s), mesh_array);
+				if (Ref<Material> mat = p_mesh->surface_get_material(surf_nr)) {
+					r_mesh->surface_set_material(surf_id, mat);
+				}
+			}
+		}
+	}
+
+	return r_mesh;
+}
+
+static Error _parse_material_library(const String &p_path, Map<String, Ref<SpatialMaterial>> &p_material_map, List<String> *r_missing_deps) {
 	FileAccessRef f = FileAccess::open(p_path, FileAccess::READ);
 	ERR_FAIL_COND_V_MSG(!f, ERR_CANT_OPEN, vformat("Couldn't open MTL file '%s', it may not exist or not be readable.", p_path));
 
@@ -90,7 +197,7 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Spati
 			current_name = l.replace("newmtl", "").strip_edges();
 			current.instance();
 			current->set_name(current_name);
-			material_map[current_name] = current;
+			p_material_map[current_name] = current;
 		} else if (l.begins_with("Ka ")) {
 			//ambient
 			WARN_PRINT("OBJ: Ambient light for material '" + current_name + "' is ignored in PBR");
@@ -114,9 +221,9 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Spati
 			ERR_FAIL_COND_V(current.is_null(), ERR_FILE_CORRUPT);
 			Vector<String> v = l.split(" ", false);
 			ERR_FAIL_COND_V(v.size() < 4, ERR_INVALID_DATA);
-			float r = v[1].to_float();
-			float g = v[2].to_float();
-			float b = v[3].to_float();
+			const float r = v[1].to_float();
+			const float g = v[2].to_float();
+			const float b = v[3].to_float();
 			const float metalness = MAX(r, MAX(g, b));
 			current->set_metallic(metalness);
 			meta["Ks"] = metalness;
@@ -125,8 +232,8 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Spati
 			ERR_FAIL_COND_V(current.is_null(), ERR_FILE_CORRUPT);
 			Vector<String> v = l.split(" ", false);
 			ERR_FAIL_COND_V(v.size() != 2, ERR_INVALID_DATA);
-			float s = v[1].to_float();
-			float m = (1000.0 - s) / 1000.0;
+			const float s = v[1].to_float();
+			const float m = (1000.0 - s) / 1000.0;
 			current->set_metallic(m);
 			meta["Ns"] = m;
 		} else if (l.begins_with("d ")) {
@@ -134,7 +241,7 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Spati
 			ERR_FAIL_COND_V(current.is_null(), ERR_FILE_CORRUPT);
 			Vector<String> v = l.split(" ", false);
 			ERR_FAIL_COND_V(v.size() != 2, ERR_INVALID_DATA);
-			float d = v[1].to_float();
+			const float d = v[1].to_float();
 			Color c = current->get_albedo();
 			c.a = d;
 			current->set_albedo(c);
@@ -148,7 +255,7 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Spati
 			ERR_FAIL_COND_V(current.is_null(), ERR_FILE_CORRUPT);
 			Vector<String> v = l.split(" ", false);
 			ERR_FAIL_COND_V(v.size() != 2, ERR_INVALID_DATA);
-			float d = v[1].to_float();
+			const float d = v[1].to_float();
 			Color c = current->get_albedo();
 			c.a = 1.0 - d;
 			current->set_albedo(c);
@@ -231,22 +338,33 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Spati
 	return OK;
 }
 
-static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_single_mesh, bool p_generate_tangents, bool p_to_shadermaterial, int p_compress_flags, Vector3 p_scale_mesh, Vector3 p_offset_mesh, List<String> *r_missing_deps) {
+struct _parse_opt {
+	bool single_mesh;
+	bool generate_tangents;
+	bool to_shadermaterial;
+	bool flip_y;
+	bool build_atlas_texture;
+	int max_atlas_size;
+	uint32_t compress_flags;
+	Vector3 scale_mesh;
+	Vector3 offset_mesh;
+};
+
+static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, const _parse_opt &p_opts, List<String> *r_missing_deps) {
 	FileAccessRef f = FileAccess::open(p_path, FileAccess::READ);
 	ERR_FAIL_COND_V_MSG(!f, ERR_CANT_OPEN, vformat("Couldn't open OBJ file '%s', it may not exist or not be readable.", p_path));
 
 	Ref<ArrayMesh> mesh = memnew(ArrayMesh);
 
-	Vector3 scale_mesh = p_scale_mesh;
-	Vector3 offset_mesh = p_offset_mesh;
+	Vector3 scale_mesh = p_opts.scale_mesh;
+	Vector3 offset_mesh = p_opts.offset_mesh;
 
-	Vector<String> instances_info; // name + num. of surfaces
+	Vector<String> instances_names, instances_info; // name + num. of surfaces
 
 	Vector<Vector3> vertices;
 	Vector<Vector3> normals;
 	Vector<Vector2> uvs;
 	Vector<Color> colors;
-	String name;
 
 	Ref<SpatialMaterialConversionPlugin> spatial_mat_convert = memnew(SpatialMaterialConversionPlugin);
 
@@ -256,12 +374,14 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 	Ref<SurfaceTool> surf_tool = memnew(SurfaceTool);
 	surf_tool->begin(Mesh::PRIMITIVE_TRIANGLES);
 
-	const static String Found[2] = {"not found", "found"};
+	const static String Found[2] = { "not found", "found" };
 
-	String current_material_library;
-	String current_material;
+	String current_material_library, current_material;
 	String current_group;
+	String name;
+	String last_name, last_material;
 	int current_object_faces = 0;
+	String description;
 
 	while (true) {
 		String l = f->get_line().strip_edges();
@@ -273,7 +393,9 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 			}
 		}
 
-		if (l.begins_with("v ")) {
+		if (l.begins_with("#")) {
+			description += l;
+		} else if (l.begins_with("v ")) {
 			//vertex
 			Vector<String> v = l.split(" ", false);
 			ERR_FAIL_COND_V(v.size() < 4, ERR_FILE_CORRUPT);
@@ -318,7 +440,7 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 			Vector<String> v = l.split(" ", false);
 			ERR_FAIL_COND_V(v.size() < 4, ERR_FILE_CORRUPT);
 
-			//not very fast, could be sped up
+			//not very fast, could be speed up
 
 			Vector<String> face[3];
 			face[0] = v[1].split("/");
@@ -404,11 +526,11 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 					surf_tool->generate_normals();
 				}
 
-				if (p_generate_tangents && uvs.size()) {
+				if (p_opts.generate_tangents && uvs.size()) {
 					surf_tool->generate_tangents();
 				}
 
-				if (p_compress_flags & VS::ARRAY_FLAG_USE_OCTAHEDRAL_COMPRESSION) {
+				if (p_opts.compress_flags & VS::ARRAY_FLAG_USE_OCTAHEDRAL_COMPRESSION) {
 					print_verbose("OBJ: Validating compression flags");
 					const List<SurfaceTool::Vertex> &verts = surf_tool->get_vertex_array();
 					if (surf_tool->get_array_format() & Mesh::ARRAY_FORMAT_NORMAL) {
@@ -439,7 +561,7 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 				}
 
 				if (material_map.has(current_material_library) && material_map[current_material_library].has(current_material)) {
-					if (p_to_shadermaterial) {
+					if (p_opts.to_shadermaterial) {
 						String key = current_material_library + ":" + current_material;
 						if (!material_map_conv.has(key)) {
 							material_map[current_material_library][current_material]->flush_changes(); // materialize shader
@@ -459,7 +581,7 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 				}
 
 				const int surf_id = mesh->get_surface_count();
-				mesh = surf_tool->commit(mesh, p_compress_flags);
+				mesh = surf_tool->commit(mesh, p_opts.compress_flags);
 
 				if (current_material != String()) {
 					mesh->surface_set_name(surf_id, current_material.get_basename());
@@ -476,11 +598,50 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 				surf_tool->begin(Mesh::PRIMITIVE_TRIANGLES);
 
 				if (l.begins_with("o ") || f->eof_reached()) {
-					if (!p_single_mesh) {
-						r_meshes.push_back(mesh);
-						mesh.instance();
-						current_group = "";
-						current_material = "";
+					// case 1: assume these are parts of the same mesh:
+					//   - Mesh1
+					//       Mat_1
+					//   - Mesh1
+					//       Mat_2
+					// case 2: assume these are separates meshes (propably name is derived from the material):
+					//   - Mesh1
+					//       Mat_1
+					//   - Mesh1
+					//       Mat_1
+					if (p_opts.single_mesh) {
+						if (last_name == name) {
+							if (last_material == current_material) {
+								// get unique name
+								int cnt = 2;
+								String new_name;
+								do {
+									new_name = vformat("%s (%d)", name, cnt);
+									cnt++;
+								} while (instances_names.has(new_name));
+								instances_names.push_back(new_name);
+								instances_info.push_back(vformat("%s=%d", new_name, mesh->get_surface_count()));
+							}
+						} else {
+							if (instances_names.has(name)) {
+								WARN_PRINT("OBJ: Duplicate mesh instance name.");
+							}
+							instances_names.push_back(name);
+							instances_info.push_back(vformat("%s=%d", name, mesh->get_surface_count()));
+						}
+						last_name = name;
+						last_material = current_material;
+					} else {
+						if (last_name != name || f->eof_reached()) {
+							mesh->set_name(name);
+							mesh->set_description(description);
+							r_meshes.push_back(mesh);
+							mesh.instance();
+							name = "";
+							last_name = name;
+							last_material = current_material;
+							current_group = "";
+							current_material = "";
+						}
 					}
 				}
 
@@ -489,11 +650,9 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 
 			if (l.begins_with("o ")) {
 				name = l.substr(2, l.length()).strip_edges();
-				if (name.empty()) { // this should not happen
-					name = "Submesh_" + itos(r_meshes.size());
+				if (name.empty()) {
+					WARN_PRINT("Instance name is empty in: " + l);
 				}
-				mesh->set_name(name);
-				instances_info.push_back(vformat("%s=%d",name,mesh->get_surface_count()));
 			}
 
 			if (f->eof_reached()) {
@@ -502,10 +661,16 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 
 			if (l.begins_with("usemtl ")) {
 				current_material = l.replace("usemtl", "").strip_edges();
+				if (current_material.empty()) {
+					WARN_PRINT("OBJ: Material name is empty in: " + l);
+				}
 			}
 
 			if (l.begins_with("g ")) {
 				current_group = l.substr(2, l.length()).strip_edges();
+				if (current_group.empty()) {
+					WARN_PRINT("OBJ: Group name is empty in: " + l);
+				}
 			}
 		} else if (l.begins_with("mtllib ")) { //parse material
 			current_material_library = l.replace("mtllib", "").strip_edges();
@@ -526,11 +691,11 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 		}
 	}
 
-	if (p_single_mesh) {
+	if (p_opts.single_mesh) {
 		if (instances_info.size() > 1) {
 			mesh->set_name(p_path.get_basename()); // final name
-			mesh->set_description("SUBMESH:\n" + String("\n").join(instances_info));
-			print_verbose("OBJ: Saved description:");
+			mesh->set_submesh_from_text("SUBMESH:\n" + String("\n").join(instances_info));
+			print_verbose("OBJ: Saved submesh description:");
 			print_verbose(" > SUBMESH:\n > " + String("\n > ").join(instances_info));
 		}
 		r_meshes.push_back(mesh); // final mesh
@@ -541,7 +706,8 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, bool p_
 Node *EditorOBJImporter::import_scene(const String &p_path, uint32_t p_flags, int p_bake_fps, uint32_t p_compress_flags, List<String> *r_missing_deps, Error *r_err) {
 	List<Ref<Mesh>> meshes;
 
-	Error err = _parse_obj(p_path, meshes, false, p_flags & IMPORT_GENERATE_TANGENT_ARRAYS, false, p_compress_flags, Vector3(1, 1, 1), Vector3(0, 0, 0), r_missing_deps);
+	const _parse_opt opts = { false, bool(p_flags & IMPORT_GENERATE_TANGENT_ARRAYS), false, false, false, 0, p_compress_flags, Vector3(1, 1, 1), Vector3(0, 0, 0) };
+	Error err = _parse_obj(p_path, meshes, opts, r_missing_deps);
 
 	if (err != OK) {
 		if (r_err) {
@@ -622,6 +788,9 @@ void ResourceImporterOBJ::get_import_options(List<ImportOption> *r_options, int 
 	r_options->push_back(ImportOption(PropertyInfo(Variant::VECTOR3, "scale_mesh"), Vector3(1, 1, 1)));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::VECTOR3, "offset_mesh"), Vector3(0, 0, 0)));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::BOOL, "octahedral_compression"), true));
+	r_options->push_back(ImportOption(PropertyInfo(Variant::BOOL, "flip_y_axis"), false));
+	r_options->push_back(ImportOption(PropertyInfo(Variant::BOOL, "build_atlas_texture"), false));
+	r_options->push_back(ImportOption(PropertyInfo(Variant::INT, "max_atlas_size"), "2048"));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::INT, "optimize_mesh_flags", PROPERTY_HINT_FLAGS, "Vertex,Normal,Tangent,Color,TexUV,TexUV2,Bones,Weights,Index"), VS::ARRAY_COMPRESS_DEFAULT >> VS::ARRAY_COMPRESS_BASE));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::BOOL, "convert_to_shadermaterial"), false));
 
@@ -650,7 +819,18 @@ Error ResourceImporterOBJ::import(const String &p_source_file, const String &p_s
 	if (bool(p_options["octahedral_compression"])) {
 		compress_flags |= VS::ARRAY_FLAG_USE_OCTAHEDRAL_COMPRESSION;
 	}
-	Error err = _parse_obj(p_source_file, meshes, true, p_options["generate_tangents"], p_options["convert_to_shadermaterial"], compress_flags, p_options["scale_mesh"], p_options["offset_mesh"], nullptr);
+	const _parse_opt opts = {
+		true,
+		p_options["generate_tangents"],
+		p_options["convert_to_shadermaterial"],
+		p_options["flip_y_axis"],
+		p_options["build_atlas_texture"],
+		p_options["max_atlas_size"],
+		compress_flags,
+		p_options["scale_mesh"],
+		p_options["offset_mesh"],
+	};
+	Error err = _parse_obj(p_source_file, meshes, opts, nullptr);
 
 	ERR_FAIL_COND_V(err != OK, err);
 	ERR_FAIL_COND_V(meshes.size() != 1, ERR_BUG);
@@ -663,12 +843,12 @@ Error ResourceImporterOBJ::import(const String &p_source_file, const String &p_s
 
 		Ref<Script> scr = ResourceLoader::load(post_import_script_path);
 		if (!scr.is_valid()) {
-			print_verbose(vformat("Couldn't load post-import script: %s", post_import_script_path));
+			print_verbose(vformat("OBJ: Couldn't load post-import script: %s", post_import_script_path));
 		} else {
 			post_import_script = Ref<EditorOBJPostImport>(memnew(EditorOBJPostImport));
 			post_import_script->set_script(scr.get_ref_ptr());
 			if (!post_import_script->get_script_instance()) {
-				print_verbose(vformat("Invalid/broken script for post-import: %s", post_import_script_path));
+				print_verbose(vformat("OBJ: Invalid/broken script for post-import: %s", post_import_script_path));
 				post_import_script.unref();
 				return ERR_CANT_CREATE;
 			}
@@ -682,6 +862,13 @@ Error ResourceImporterOBJ::import(const String &p_source_file, const String &p_s
 	}
 
 	ERR_FAIL_COND_V(meshes.size() != 1, ERR_BUG);
+
+	Ref<Mesh> mesh = meshes.front()->get();
+	if (opts.build_atlas_texture) {
+		if (Ref<Mesh> _mesh = _build_mesh_for_atlas(meshes.front()->get(), p_source_file, opts.max_atlas_size, r_gen_files)) {
+			mesh = _mesh; // new mesh with atlased texture
+		}
+	}
 
 	String save_path = p_save_path + ".mesh";
 	err = ResourceSaver::save(save_path, meshes.front()->get());

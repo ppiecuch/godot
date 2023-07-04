@@ -107,7 +107,7 @@ fi
 echo_header "*** Signing executable for debugger ..."
 codesign --verbose --deep --sign - --timestamp --entitlements "$GODOT_DIR/misc/dist/osx/editor.entitlements" $codesign_args "$GODOT_DIR/bin/Godot-master.app"
 
-echo_success "*** Finished building editor for macOS."
+echo_success "*** Finished building editor for macOS. ($(date +'%h/%d %H:%M'))"
 
 if [ "$1" == "templates" ] || [ ! -z "$build_templates" ]; then
 	echo_header "*** Building 64-bit release export template for macOS ..."

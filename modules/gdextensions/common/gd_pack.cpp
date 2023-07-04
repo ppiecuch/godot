@@ -508,8 +508,7 @@ Dictionary merge_images(const Vector<Ref<Image>> &images, const ImageMergeOption
 	const int margin = options.margin;
 	const Color background_color = options.background_color;
 
-	// NOTICE: atlas texture can be 1, 3 or 4 channels only
-	int atlas_channels = 1;
+	int atlas_channels = options.force_atlas_channels > 0 ? options.force_atlas_channels : 0;
 
 	const int n = images.size();
 
@@ -533,24 +532,46 @@ Dictionary merge_images(const Vector<Ref<Image>> &images, const ImageMergeOption
 		data.write[i]._h = image->get_size().height;
 		data.write[i].scale = 1;
 		rects.write[i] = &data.write[i];
-		if (image->get_format() == Image::FORMAT_L8) {
-			atlas_channels = MAX(1, atlas_channels);
-		} else if (image->get_format() == Image::FORMAT_RGBA8 || image->get_format() == Image::FORMAT_LA8) {
-			// only if we have a real alpha values in the channel
-			if (image->detect_alpha() == Image::ALPHA_BLEND) {
-				atlas_channels = 4;
+		if (options.force_atlas_channels == 0) {
+			if (image->get_format() == Image::FORMAT_L8) {
+				atlas_channels = MAX(1, atlas_channels);
+			} else if (image->get_format() == Image::FORMAT_RGB8) {
+				atlas_channels = MAX(3, atlas_channels);
+			} else if (image->get_format() == Image::FORMAT_RGBA8 || image->get_format() == Image::FORMAT_LA8) {
+				// only if we have a real alpha values in the channel
+				if (image->detect_alpha() == Image::ALPHA_BLEND) {
+					if (image->get_format() == Image::FORMAT_RGBA8) {
+						atlas_channels = 4;
+					}
+					if (image->get_format() == Image::FORMAT_LA8) {
+						atlas_channels = MAX(2, atlas_channels);
+					}
+				} else {
+					if (image->get_format() == Image::FORMAT_RGBA8) {
+						atlas_channels = MAX(3, atlas_channels);
+					}
+					if (image->get_format() == Image::FORMAT_LA8) {
+						atlas_channels = MAX(2, atlas_channels);
+					}
+				}
 			}
 		}
 	}
 
-	if (options.force_atlas_channels > 0) {
-		atlas_channels = options.force_atlas_channels;
-	}
-
 	ERR_FAIL_COND_V(atlas_channels < 1 || atlas_channels > 4, Dictionary());
 
-	Image::Format atlas_format = atlas_channels == 1 ? Image::FORMAT_L8 : atlas_channels == 3 ? Image::FORMAT_RGB8
-																							  : Image::FORMAT_RGBA8;
+	Image::Format atlas_format = Image::FORMAT_RGBA8;
+	switch (atlas_channels) {
+		case 1: {
+			atlas_format = Image::FORMAT_L8;
+		} break;
+		case 2: {
+			atlas_format = Image::FORMAT_LA8;
+		} break;
+		case 3: {
+			atlas_format = Image::FORMAT_RGB8;
+		} break;
+	}
 
 	Array generated_images;
 	std::vector<bin> bins;

@@ -178,12 +178,8 @@ private:
 	AABB custom_aabb;
 	String description;
 
-	struct _submesh_t {
-		String name;
-		int from_surf, surf_cnt;
-	};
-	Vector<_submesh_t> submesh_info;
-	Map<String, uint32_t> submesh_map;
+	PoolStringArray submesh_names;
+	PoolByteArray submesh_surfs;
 	Vector<Ref<Mesh>> submesh_cache;
 
 	Ref<Mesh> _copy_surfaces(Ref<ArrayMesh> p_dest, int p_from, int p_idx);
@@ -203,6 +199,9 @@ public:
 	void select_submesh_surfaces(int p_idx);
 	Ref<Mesh> get_submesh(int p_idx);
 	Ref<Mesh> get_submesh_with_name(const String &p_name);
+	void set_submesh_data(const Array &p_data);
+	Array get_submesh_data() const;
+	void set_submesh_from_text(const String &p_info);
 
 	void set_description(const String &p_description);
 	String get_description() const;

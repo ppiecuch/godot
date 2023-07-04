@@ -717,9 +717,9 @@ bool ArrayMesh::_get(const StringName &p_name, Variant &r_ret) const {
 		}
 		int idx = sname.substr(8, sl - 8).to_int() - 1;
 		String what = sname.get_slicec('/', 1);
-		ERR_FAIL_INDEX_V(idx, submesh_info.size(), false);
+		ERR_FAIL_INDEX_V(idx, submesh_names.size(), false);
 		if (what == "name") {
-			r_ret = submesh_info[idx].name;
+			r_ret = submesh_names[idx];
 		}
 		return true;
 	} else if (sname.begins_with("surface_")) {
@@ -806,7 +806,7 @@ void ArrayMesh::_get_property_list(List<PropertyInfo> *p_list) const {
 		p_list->push_back(PropertyInfo(Variant::BOOL, "surface_" + itos(i + 1) + "/active", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_EDITOR));
 	}
 
-	for (int i = 0; i < submesh_info.size(); i++) {
+	for (int i = 0; i < submesh_names.size(); i++) {
 		p_list->push_back(PropertyInfo(Variant::DICTIONARY, "submeshes/" + itos(i), PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL));
 		p_list->push_back(PropertyInfo(Variant::STRING, "submesh_" + itos(i + 1) + "/name", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_EDITOR));
 	}
@@ -844,28 +844,87 @@ Ref<Mesh> ArrayMesh::_copy_surfaces(Ref<ArrayMesh> p_dest, int p_from, int p_num
 }
 
 int ArrayMesh::get_submesh_count() const {
-	return submesh_info.size();
+	return submesh_names.size();
 }
 
 void ArrayMesh::select_submesh_surfaces(int p_idx) {
-	ERR_FAIL_INDEX(p_idx, submesh_info.size());
+	ERR_FAIL_INDEX(p_idx, submesh_names.size());
 	for (int s = 0; s < get_surface_count(); s++) {
-		surface_set_active(s, Math::is_inside(s, submesh_info[p_idx].from_surf, submesh_info[p_idx].from_surf + submesh_info[p_idx].surf_cnt));
+		surface_set_active(s, Math::is_inside(s, submesh_surfs[p_idx * 2], submesh_surfs[p_idx * 2] + submesh_surfs[p_idx * 2 + 1]));
 	}
 }
 
 Ref<Mesh> ArrayMesh::get_submesh(int p_idx) {
-	ERR_FAIL_INDEX_V(p_idx, submesh_info.size(), Ref<Mesh>());
+	ERR_FAIL_INDEX_V(p_idx, submesh_names.size(), Ref<Mesh>());
 	if (!submesh_cache[p_idx].is_valid()) {
 		Ref<ArrayMesh> m = memnew(ArrayMesh);
-		submesh_cache.write[p_idx] = _copy_surfaces(m, submesh_info[p_idx].from_surf, submesh_info[p_idx].surf_cnt);
+		submesh_cache.write[p_idx] = _copy_surfaces(m, submesh_surfs[p_idx * 2], submesh_surfs[p_idx * 2 + 1]);
 	}
 	return submesh_cache[p_idx];
 }
 
 Ref<Mesh> ArrayMesh::get_submesh_with_name(const String &p_name) {
-	ERR_FAIL_COND_V(!submesh_map.has(p_name), Ref<Mesh>());
-	return get_submesh(submesh_map[p_name]);
+	const int index = submesh_names.find(p_name);
+	ERR_FAIL_COND_V(index < 0, Ref<Mesh>());
+	return get_submesh(index);
+}
+
+void ArrayMesh::set_submesh_data(const Array &p_data) {
+	ERR_FAIL_COND(p_data.size() != 2);
+
+	PoolStringArray names = p_data[0];
+	PoolByteArray surfs = p_data[1];
+	ERR_FAIL_COND(names.empty());
+	ERR_FAIL_COND(surfs.empty());
+	ERR_FAIL_COND(names.size() * 2 != surfs.size());
+
+	submesh_names = names;
+	submesh_surfs = surfs;
+
+	submesh_cache.clear();
+	submesh_cache.resize(names.size());
+}
+
+Array ArrayMesh::get_submesh_data() const {
+	return array(submesh_names, submesh_surfs);
+}
+
+void ArrayMesh::set_submesh_from_text(const String &p_info) {
+	Vector<String> lines = p_info.split("\n");
+	if (lines.size() > 1) {
+		PoolStringArray names;
+		PoolByteArray surfs;
+		if (lines[0] == "SUBMESH:") {
+			int last_surf_idx = -1;
+			for (int i = 1; i < lines.size(); i++) {
+				Vector<String> info = lines[i].split("=");
+				if (info.size() == 2) {
+					const String name = info[0];
+					const int surf_idx = info[1].to_int();
+					if (!name.empty() && surf_idx > last_surf_idx) {
+						names.push_back(name);
+						surfs.push_back(last_surf_idx + 1);
+						surfs.push_back(surf_idx - last_surf_idx);
+						print_verbose(vformat("Add submesh %s from surf. %d (%d surfs.)", name, last_surf_idx + 1, surf_idx - last_surf_idx));
+						last_surf_idx = surf_idx;
+					} else {
+						WARN_PRINT("Malformed line: " + lines[i]);
+						break; // stop processing
+					}
+				} else {
+					WARN_PRINT("Malformed line: " + lines[i]);
+					break; // stop processing
+				}
+			}
+			ERR_FAIL_COND(names.empty());
+			ERR_FAIL_COND(surfs.empty());
+			ERR_FAIL_COND(names.size() * 2 != surfs.size());
+			submesh_names = names;
+			submesh_surfs = surfs;
+			submesh_cache.clear();
+			submesh_cache.resize(names.size());
+		}
+	}
 }
 
 void ArrayMesh::add_surface(uint32_t p_format, PrimitiveType p_primitive, const PoolVector<uint8_t> &p_array, int p_vertex_count, const PoolVector<uint8_t> &p_index_array, int p_index_count, const AABB &p_aabb, const Vector<PoolVector<uint8_t>> &p_blend_shapes, const Vector<AABB> &p_bone_aabbs) {
@@ -1145,45 +1204,6 @@ AABB ArrayMesh::get_custom_aabb() const {
 
 void ArrayMesh::set_description(const String &p_description) {
 	description = p_description;
-	submesh_cache.clear();
-	submesh_info.clear();
-	submesh_map.clear();
-	// check for new submesh description:
-	Vector<String> lines = description.split("\n");
-	Vector<_submesh_t> r;
-	if (lines.size() > 1) {
-		if (lines[0] == "SUBMESH:") {
-			int last_surf_idx = -1;
-			for (int i = 1; i < lines.size(); i++) {
-				Vector<String> info = lines[i].split("=");
-				if (info.size() == 2) {
-					const String name = info[0];
-					const int surf_idx = info[1].to_int();
-					if (!name.empty() && surf_idx > last_surf_idx) {
-						r.push_back({ name, last_surf_idx + 1, surf_idx - last_surf_idx });
-						print_verbose(vformat("Add submesh %s from surf. %d (%d surfs.)", name, last_surf_idx + 1, surf_idx - last_surf_idx));
-						last_surf_idx = surf_idx;
-					} else {
-						WARN_PRINT("Malformed line: " + lines[i]);
-						break; // stop processing
-					}
-				} else {
-					WARN_PRINT("Malformed line: " + lines[i]);
-					break; // stop processing
-				}
-			}
-			if (!r.empty()) {
-				submesh_info = r;
-				submesh_cache.resize(r.size());
-				for (int m = 0; m < submesh_info.size(); m++) {
-					if (submesh_map.has(submesh_info[m].name)) {
-						WARN_PRINT("Duplicate name");
-					}
-					submesh_map[submesh_info[m].name] = m;
-				}
-			}
-		}
-	}
 }
 
 String ArrayMesh::get_description() const {
@@ -1547,6 +1567,9 @@ void ArrayMesh::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_submesh", "index"), &ArrayMesh::get_submesh);
 	ClassDB::bind_method(D_METHOD("get_submesh_with_name", "name"), &ArrayMesh::get_submesh_with_name);
 	ClassDB::bind_method(D_METHOD("select_submesh_surfaces", "index"), &ArrayMesh::select_submesh_surfaces);
+	ClassDB::bind_method(D_METHOD("set_submesh_data", "data"), &ArrayMesh::set_submesh_data);
+	ClassDB::bind_method(D_METHOD("get_submesh_data"), &ArrayMesh::get_submesh_data);
+	ClassDB::bind_method(D_METHOD("set_submesh_from_text", "info"), &ArrayMesh::set_submesh_from_text);
 
 	ClassDB::bind_method(D_METHOD("add_blend_shape", "name"), &ArrayMesh::add_blend_shape);
 	ClassDB::bind_method(D_METHOD("get_blend_shape_count"), &ArrayMesh::get_blend_shape_count);
@@ -1584,7 +1607,7 @@ void ArrayMesh::_bind_methods() {
 
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "blend_shape_mode", PROPERTY_HINT_ENUM, "Normalized,Relative", PROPERTY_USAGE_NOEDITOR), "set_blend_shape_mode", "get_blend_shape_mode");
 	ADD_PROPERTY(PropertyInfo(Variant::AABB, "custom_aabb", PROPERTY_HINT_NONE, ""), "set_custom_aabb", "get_custom_aabb");
-
+	ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "submesh_data"), "set_submesh_data", "get_submesh_data");
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "description", PROPERTY_HINT_MULTILINE_TEXT, ""), "set_description", "get_description");
 
 	BIND_CONSTANT(NO_INDEX_ARRAY);
