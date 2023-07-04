@@ -874,15 +874,17 @@ void ArrayMesh::set_submesh_data(const Array &p_data) {
 
 	PoolStringArray names = p_data[0];
 	PoolByteArray surfs = p_data[1];
-	ERR_FAIL_COND(names.empty());
-	ERR_FAIL_COND(surfs.empty());
-	ERR_FAIL_COND(names.size() * 2 != surfs.size());
+	if (names.empty() && surfs.empty()) {
+		submesh_names = names;
+		submesh_surfs = surfs;
+	} else {
+		ERR_FAIL_COND(names.size() * 2 != surfs.size());
 
-	submesh_names = names;
-	submesh_surfs = surfs;
-
-	submesh_cache.clear();
-	submesh_cache.resize(names.size());
+		submesh_cache.clear();
+		submesh_cache.resize(names.size());
+	}
+	property_list_changed_notify();
+	_change_notify();
 }
 
 Array ArrayMesh::get_submesh_data() const {
@@ -923,6 +925,8 @@ void ArrayMesh::set_submesh_from_text(const String &p_info) {
 			submesh_surfs = surfs;
 			submesh_cache.clear();
 			submesh_cache.resize(names.size());
+			property_list_changed_notify();
+			_change_notify();
 		}
 	}
 }

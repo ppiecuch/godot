@@ -53,10 +53,10 @@ static Ref<ArrayMesh> _build_mesh_for_atlas(const Ref<ArrayMesh> &p_mesh, String
 	ERR_FAIL_COND_V(p_max_side < 0, Ref<Mesh>());
 
 	enum {
-		texture_metallic,
 		texture_albedo,
-		texture_roughness,
 		texture_normal,
+		texture_metallic,
+		texture_roughness,
 		texture_max,
 	};
 
@@ -64,10 +64,10 @@ static Ref<ArrayMesh> _build_mesh_for_atlas(const Ref<ArrayMesh> &p_mesh, String
 		const char *prefix;
 		SpatialMaterial::TextureParam texture;
 	} info[] = {
-		{ "M", SpatialMaterial::TEXTURE_METALLIC },
 		{ "C", SpatialMaterial::TEXTURE_ALBEDO },
-		{ "R", SpatialMaterial::TEXTURE_ROUGHNESS },
 		{ "N", SpatialMaterial::TEXTURE_NORMAL },
+		{ "M", SpatialMaterial::TEXTURE_METALLIC },
+		{ "R", SpatialMaterial::TEXTURE_ROUGHNESS },
 	};
 
 	Ref<ArrayMesh> r_mesh = memnew(ArrayMesh);
@@ -108,39 +108,36 @@ static Ref<ArrayMesh> _build_mesh_for_atlas(const Ref<ArrayMesh> &p_mesh, String
 				r_paths->push_back(path);
 			}
 
-			const Size2 atlas_size = atlas_image->get_size();
+			if (t == texture_albedo) { // only once
+				Array atlas_rects = atlas_info["_rects"];
+				for (int s = 0; s < atlas_rects.size(); s++) {
+					const int surf_nr = surfs[s];
+					ERR_CONTINUE(surf_nr >= p_mesh->get_surface_count());
 
-			Array atlas_rects = atlas_info["_rects"];
-			for (int s = 0; s < atlas_rects.size(); s++) {
-				const int surf_nr = surfs[s];
-				ERR_CONTINUE(surf_nr >= p_mesh->get_surface_count());
+					Array mesh_array = p_mesh->surface_get_arrays(surf_nr);
+					Dictionary entry = atlas_rects[s];
+					ERR_CONTINUE_MSG(entry.empty(), "Empty atlas entry, Skipping!");
 
-				Array mesh_array = p_mesh->surface_get_arrays(surf_nr);
-				Dictionary entry = atlas_rects[s];
-				ERR_CONTINUE_MSG(entry.empty(), "Empty atlas entry, Skipping!");
+					PoolVector2Array uvs = mesh_array[VS::ARRAY_TEX_UV];
+					PoolVector2Array xform_uvs;
+					ERR_FAIL_COND_V(xform_uvs.resize(uvs.size()) != OK, Ref<ArrayMesh>());
 
-				PoolVector2Array uvs = mesh_array[VS::ARRAY_TEX_UV];
-				PoolVector2Array xform_uvs;
-				ERR_FAIL_COND_V(xform_uvs.resize(uvs.size()) != OK, Ref<ArrayMesh>());
+					auto w = xform_uvs.write();
+					Rect2 rc = entry["rrect"];
+					// build transformed coords
+					for (int v = 0; v < uvs.size(); ++v) {
+						w[v] = uvs[v] * rc.size + rc.position;
+					}
+					w.release();
 
-				auto w = xform_uvs.write();
-				Rect2 rect = entry["rect"];
-				const Vector2 uv_origin = rect.position / atlas_size;
-				const Vector2 uv_size = rect.size / atlas_size;
+					mesh_array[VS::ARRAY_TEX_UV] = xform_uvs;
 
-				// build transformed coords
-				for (int v = 0; v < uvs.size(); ++v) {
-					w[v] = uvs[v] * uv_size + uv_origin;
-				}
-				w.release();
-
-				mesh_array[VS::ARRAY_TEX_UV] = xform_uvs;
-
-				// save new surface:
-				const int surf_id = r_mesh->get_surface_count();
-				r_mesh->add_surface_from_arrays(p_mesh->surface_get_primitive_type(s), mesh_array);
-				if (Ref<Material> mat = p_mesh->surface_get_material(surf_nr)) {
-					r_mesh->surface_set_material(surf_id, mat);
+					// save new surface:
+					const int surf_id = r_mesh->get_surface_count();
+					r_mesh->add_surface_from_arrays(p_mesh->surface_get_primitive_type(s), mesh_array);
+					if (Ref<Material> mat = p_mesh->surface_get_material(surf_nr)) {
+						r_mesh->surface_set_material(surf_id, mat);
+					}
 				}
 			}
 		}
@@ -693,10 +690,10 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, const _
 
 	if (p_opts.single_mesh) {
 		if (instances_info.size() > 1) {
-			mesh->set_name(p_path.get_basename()); // final name
-			mesh->set_submesh_from_text("SUBMESH:\n" + String("\n").join(instances_info));
 			print_verbose("OBJ: Saved submesh description:");
 			print_verbose(" > SUBMESH:\n > " + String("\n > ").join(instances_info));
+			mesh->set_name(p_path.get_basename()); // final name
+			mesh->set_submesh_from_text("SUBMESH:\n" + String("\n").join(instances_info));
 		}
 		r_meshes.push_back(mesh); // final mesh
 	}
@@ -871,7 +868,7 @@ Error ResourceImporterOBJ::import(const String &p_source_file, const String &p_s
 	}
 
 	String save_path = p_save_path + ".mesh";
-	err = ResourceSaver::save(save_path, meshes.front()->get());
+	err = ResourceSaver::save(save_path, mesh);
 	ERR_FAIL_COND_V_MSG(err != OK, err, "Cannot save Mesh to file '" + save_path + "'.");
 
 	r_gen_files->push_back(save_path);
