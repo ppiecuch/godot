@@ -35,6 +35,7 @@
 
 #include "core/os/file_access.h"
 #include "core/os/os.h"
+#include "servers/visual/visual_server_canvas_helper.h"
 
 #include FT_STROKER_H
 
@@ -518,7 +519,7 @@ Rect2 DynamicFontAtSize::get_char_tx_uv_rect(CharType p_char, CharType p_next, c
 	return Rect2();
 }
 
-float DynamicFontAtSize::draw_char(RID p_canvas_item, const CharTransform &p_char_xform, const Point2 &p_pos, CharType p_char, CharType p_next, const Color &p_modulate, const Vector<Ref<DynamicFontAtSize>> &p_fallbacks, bool p_advance_only, bool p_outline) const {
+float DynamicFontAtSize::draw_char(RID p_canvas_item, const Point2 &p_pos, CharType p_char, CharType p_next, const Color &p_modulate, const Vector<Ref<DynamicFontAtSize>> &p_fallbacks, bool p_advance_only, bool p_outline, MultiRect *p_multirect, CharTransform *p_char_xform) const {
 	if (!valid) {
 		return 0;
 	}
@@ -539,9 +540,9 @@ float DynamicFontAtSize::draw_char(RID p_canvas_item, const CharTransform &p_cha
 	const Character *ch = char_pair_with_font.first;
 	DynamicFontAtSize *font = char_pair_with_font.second;
 
-	ERR_FAIL_COND_V(!ch, 0.0);
+	ERR_FAIL_COND_V(!ch, 0);
 
-	float advance = 0.0;
+	float advance = 0;
 
 	// use normal character size if there's no outline character
 	if (p_outline && !ch->found) {
@@ -560,37 +561,51 @@ float DynamicFontAtSize::draw_char(RID p_canvas_item, const CharTransform &p_cha
 	if (ch->found) {
 		ERR_FAIL_COND_V(ch->texture_idx < -1 || ch->texture_idx >= font->textures.size(), 0);
 
-		if (!p_advance_only && ch->texture_idx != -1 && !p_char_xform.hidden) {
-			if (font->textures[ch->texture_idx].dirty) {
-				ShelfPackTexture &tex = font->textures.write[ch->texture_idx];
-				Ref<Image> img = memnew(Image(tex.texture_size, tex.texture_size, 0, tex.format, tex.imgdata));
-				if (tex.texture.is_null()) {
-					tex.texture.instance();
-					tex.texture->create_from_image(img, Texture::FLAG_VIDEO_SURFACE | texture_flags);
-				} else {
-					tex.texture->set_data(img); //update
+		if (!p_advance_only && ch->texture_idx != -1 ) {
+			if (p_char_xform) {
+				if (!p_char_xform->hidden) {
+					if (font->textures[ch->texture_idx].dirty) {
+						ShelfPackTexture &tex = font->textures.write[ch->texture_idx];
+						Ref<Image> img = memnew(Image(tex.texture_size, tex.texture_size, 0, tex.format, tex.imgdata));
+						if (tex.texture.is_null()) {
+							tex.texture.instance();
+							tex.texture->create_from_image(img, Texture::FLAG_VIDEO_SURFACE | texture_flags);
+						} else {
+							tex.texture->set_data(img); //update
+						}
+						tex.dirty = false;
+					}
+					Point2 cpos = p_pos;
+					cpos.x += ch->h_align;
+					cpos.y -= font->get_ascent();
+					cpos.y += ch->v_align;
+					const Rect2 rc = p_char_xform.xform_dest(Rect2(cpos, ch->rect.size));
+					real_t valign = 0;
+					if (p_char_xform.vertical_align) {
+						const real_t rotation_base = p_pos.y - ascent / 2.0;
+						const real_t t = p_char_xform.progress;
+						valign = (rotation_base - rc.get_center().y) * t * t * t * t * t; // t^5
+					}
+					Color modulate = p_modulate;
+					if (font->textures[ch->texture_idx].texture->get_format() == Image::FORMAT_RGBA8) {
+						modulate.r = modulate.g = modulate.b = 1.0;
+					}
+					RID texture = font->textures[ch->texture_idx].texture->get_rid();
+					if (p_multirect) {
+						p_multirect->add_rect(p_canvas_item, rc.move_by(Point2(0, valign)), texture, p_char_xform->xform_tex(ch->rect_uv), modulate, false, RID(), RID(), false);
+					} else {
+						VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item,
+								rc.move_by(Point2(0, valign)),
+								texture, p_char_xform->xform_tex(ch->rect_uv), modulate, false, RID(), RID(), false);
+					}
 				}
-				tex.dirty = false;
+			} else {
+				if (p_multirect) {
+					p_multirect->add_rect(p_canvas_item, Rect2(cpos, ch->rect.size), texture, ch->rect_uv, modulate, false, RID(), RID(), false);
+				} else {
+					VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item, Rect2(cpos, ch->rect.size), texture, ch->rect_uv, modulate, false, RID(), false);
+				}
 			}
-			Point2 cpos = p_pos;
-			cpos.x += ch->h_align;
-			cpos.y -= font->get_ascent();
-			cpos.y += ch->v_align;
-			const Rect2 rc = p_char_xform.xform_dest(Rect2(cpos, ch->rect.size));
-			real_t valign = 0;
-			if (p_char_xform.vertical_align) {
-				const real_t rotation_base = p_pos.y - ascent / 2.0;
-				const real_t t = p_char_xform.progress;
-				valign = (rotation_base - rc.get_center().y) * t * t * t * t * t; // t^5
-			}
-			Color modulate = p_modulate;
-			if (font->textures[ch->texture_idx].texture->get_format() == Image::FORMAT_RGBA8) {
-				modulate.r = modulate.g = modulate.b = 1.0;
-			}
-			RID texture = font->textures[ch->texture_idx].texture->get_rid();
-			VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item,
-					rc.move_by(Point2(0, valign)),
-					texture, p_char_xform.xform_tex(ch->rect_uv), modulate, false, RID(), RID(), false);
 		}
 
 		advance = ch->advance;
@@ -1233,11 +1248,15 @@ Rect2 DynamicFont::get_char_tx_uv_rect(CharType p_char, CharType p_next, bool p_
 	}
 }
 
+<<<<<<< HEAD
 float DynamicFont::draw_char(RID p_canvas_item, const Point2 &p_pos, CharType p_char, CharType p_next, const Color &p_modulate, bool p_outline) const {
 	return draw_char_xform(p_canvas_item, CharTransform(), p_pos, p_char, p_next, p_modulate, p_outline);
 }
 
 float DynamicFont::draw_char_xform(RID p_canvas_item, const CharTransform &p_char_xform, const Point2 &p_pos, CharType p_char, CharType p_next, const Color &p_modulate, bool p_outline) const {
+=======
+float DynamicFont::draw_char_ex(RID p_canvas_item, const Point2 &p_pos, CharType p_char, CharType p_next, const Color &p_modulate, bool p_outline, MultiRect *p_multirect) const {
+>>>>>>> ac5d7dc82187940a5fb2908e276cf8eb0861cac4
 	if (!data_at_size.is_valid()) {
 		return 0;
 	}
@@ -1249,11 +1268,19 @@ float DynamicFont::draw_char_xform(RID p_canvas_item, const CharTransform &p_cha
 
 	if (p_outline) {
 		if (outline_data_at_size.is_valid() && outline_cache_id.outline_size > 0) {
+<<<<<<< HEAD
 			outline_data_at_size->draw_char(p_canvas_item, p_char_xform, p_pos, p_char, p_next, p_modulate * outline_color, fallback_outline_data_at_size, false, true); // Draw glyph outline.
 		}
 		return data_at_size->draw_char(p_canvas_item, p_char_xform, p_pos, p_char, p_next, p_modulate, fallback_data_at_size, true, false) + spacing; // Return advance of the base glyph.
 	} else {
 		return data_at_size->draw_char(p_canvas_item, p_char_xform, p_pos, p_char, p_next, p_modulate, fallback_data_at_size, false, false) + spacing; // Draw base glyph and return advance.
+=======
+			outline_data_at_size->draw_char(p_canvas_item, p_pos, p_char, p_next, p_modulate * outline_color, fallback_outline_data_at_size, false, true, p_multirect); // Draw glyph outline.
+		}
+		return data_at_size->draw_char(p_canvas_item, p_pos, p_char, p_next, p_modulate, fallback_data_at_size, true, false, p_multirect) + spacing; // Return advance of the base glyph.
+	} else {
+		return data_at_size->draw_char(p_canvas_item, p_pos, p_char, p_next, p_modulate, fallback_data_at_size, false, false, p_multirect) + spacing; // Draw base glyph and return advance.
+>>>>>>> ac5d7dc82187940a5fb2908e276cf8eb0861cac4
 	}
 }
 

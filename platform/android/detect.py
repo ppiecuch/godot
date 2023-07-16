@@ -25,6 +25,7 @@ def get_opts():
         EnumVariable("android_arch", "Target architecture", "armv7", ("armv7", "arm64v8", "x86", "x86_64")),
         BoolVariable("android_neon", "Enable NEON support (armv7 only)", True),
         BoolVariable("android_rtti", "Enable rtti/exceptions support", False),
+        BoolVariable("store_release", "Editor build for Google Play Store (for official builds only)", False),
     ]
 
 

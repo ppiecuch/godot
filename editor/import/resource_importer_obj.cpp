@@ -365,6 +365,7 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, const _
 	Vector<Vector3> normals;
 	Vector<Vector2> uvs;
 	Vector<Color> colors;
+	String name;
 
 	Ref<SpatialMaterialConversionPlugin> spatial_mat_convert = memnew(SpatialMaterialConversionPlugin);
 
@@ -404,7 +405,8 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, const _
 			vtx.y = v[2].to_float() * scale_mesh.y + offset_mesh.y;
 			vtx.z = v[3].to_float() * scale_mesh.z + offset_mesh.z;
 			vertices.push_back(vtx);
-			if (v.size() == 7) {
+			//vertex colors
+			if (v.size() >= 7) {
 				while (colors.size() < vertices.size() - 1) {
 					colors.push_back(Color(1.0, 1.0, 1.0));
 				}

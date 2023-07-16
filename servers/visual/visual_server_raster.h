@@ -702,6 +702,7 @@ public:
 
 	BIND0R(RID, canvas_item_create)
 	BIND2(canvas_item_set_parent, RID, RID)
+	BIND2(canvas_item_set_name, RID, String)
 
 	BIND2(canvas_item_set_visible, RID, bool)
 	BIND2(canvas_item_set_light_mask, RID, int)
@@ -724,6 +725,7 @@ public:
 	BIND5(canvas_item_add_circle, RID, const Point2 &, float, const Color &, float)
 	BIND8(canvas_item_add_texture_rect, RID, const Rect2 &, RID, bool, const Color &, bool, RID, RID)
 	BIND9(canvas_item_add_texture_rect_region, RID, const Rect2 &, RID, const Rect2 &, const Color &, bool, RID, RID, bool)
+	BIND8(canvas_item_add_texture_multirect_region, RID, const Vector<Rect2> &, RID, const Vector<Rect2> &, const Color &, uint32_t, RID, RID)
 	BIND12(canvas_item_add_nine_patch, RID, const Rect2 &, const Rect2 &, RID, const Vector2 &, const Vector2 &, NinePatchAxisMode, NinePatchAxisMode, bool, const Color &, RID, RID)
 	BIND8(canvas_item_add_primitive, RID, const Vector<Point2> &, const Vector<Color> &, const Vector<Point2> &, RID, float, RID, RID)
 	BIND8(canvas_item_add_polygon, RID, const Vector<Point2> &, const Vector<Color> &, const Vector<Point2> &, RID, RID, RID, bool)
@@ -742,6 +744,8 @@ public:
 	BIND2(canvas_item_set_z_as_relative_to_parent, RID, bool)
 	BIND3(canvas_item_set_copy_to_backbuffer, RID, bool, const Rect2 &)
 	BIND2(canvas_item_attach_skeleton, RID, RID)
+	BIND2(canvas_item_set_skeleton_relative_xform, RID, Transform2D)
+	BIND1R(Rect2, _debug_canvas_item_get_rect, RID)
 
 	BIND1(canvas_item_clear, RID)
 	BIND2(canvas_item_set_draw_index, RID, int)

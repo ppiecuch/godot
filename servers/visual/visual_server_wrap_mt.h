@@ -585,6 +585,7 @@ public:
 
 	FUNCRID(canvas_item)
 	FUNC2(canvas_item_set_parent, RID, RID)
+	FUNC2(canvas_item_set_name, RID, String)
 
 	FUNC2(canvas_item_set_visible, RID, bool)
 	FUNC2(canvas_item_set_light_mask, RID, int)
@@ -607,6 +608,7 @@ public:
 	FUNC5(canvas_item_add_circle, RID, const Point2 &, float, const Color &, float)
 	FUNC8(canvas_item_add_texture_rect, RID, const Rect2 &, RID, bool, const Color &, bool, RID, RID)
 	FUNC9(canvas_item_add_texture_rect_region, RID, const Rect2 &, RID, const Rect2 &, const Color &, bool, RID, RID, bool)
+	FUNC8(canvas_item_add_texture_multirect_region, RID, const Vector<Rect2> &, RID, const Vector<Rect2> &, const Color &, uint32_t, RID, RID)
 	FUNC12(canvas_item_add_nine_patch, RID, const Rect2 &, const Rect2 &, RID, const Vector2 &, const Vector2 &, NinePatchAxisMode, NinePatchAxisMode, bool, const Color &, RID, RID)
 	FUNC8(canvas_item_add_primitive, RID, const Vector<Point2> &, const Vector<Color> &, const Vector<Point2> &, RID, float, RID, RID)
 	FUNC8(canvas_item_add_polygon, RID, const Vector<Point2> &, const Vector<Color> &, const Vector<Point2> &, RID, RID, RID, bool)
@@ -625,6 +627,8 @@ public:
 	FUNC2(canvas_item_set_z_as_relative_to_parent, RID, bool)
 	FUNC3(canvas_item_set_copy_to_backbuffer, RID, bool, const Rect2 &)
 	FUNC2(canvas_item_attach_skeleton, RID, RID)
+	FUNC2(canvas_item_set_skeleton_relative_xform, RID, Transform2D)
+	FUNC1R(Rect2, _debug_canvas_item_get_rect, RID)
 
 	FUNC1(canvas_item_clear, RID)
 	FUNC2(canvas_item_set_draw_index, RID, int)

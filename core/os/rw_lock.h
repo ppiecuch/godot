@@ -35,6 +35,7 @@
 #include "platform_config.h"
 
 #if !defined(NO_THREADS)
+#include "core/typedefs.h"
 
 #if defined(PLATFORM_RWLOCK_H)
 
@@ -55,33 +56,33 @@ class RWLock {
 	mutable std::shared_timed_mutex mutex;
 
 public:
-	// Lock the rwlock, block if locked by someone else
-	void read_lock() const {
+	// Lock the RWLock, block if locked by someone else.
+	_ALWAYS_INLINE_ void read_lock() const {
 		mutex.lock_shared();
 	}
 
-	// Unlock the rwlock, let other threads continue
-	void read_unlock() const {
+	// Unlock the RWLock, let other threads continue.
+	_ALWAYS_INLINE_ void read_unlock() const {
 		mutex.unlock_shared();
 	}
 
-	// Attempt to lock the rwlock, OK on success, ERR_BUSY means it can't lock.
-	Error read_try_lock() const {
+	// Attempt to lock the RWLock for reading. True on success, false means it can't lock.
+	_ALWAYS_INLINE_ Error read_try_lock() const {
 		return mutex.try_lock_shared() ? OK : ERR_BUSY;
 	}
 
-	// Lock the rwlock, block if locked by someone else
-	void write_lock() {
+	// Lock the RWLock, block if locked by someone else.
+	_ALWAYS_INLINE_ void write_lock() {
 		mutex.lock();
 	}
 
-	// Unlock the rwlock, let other thwrites continue
-	void write_unlock() {
+	// Unlock the RWLock, let other threads continue.
+	_ALWAYS_INLINE_ void write_unlock() {
 		mutex.unlock();
 	}
 
-	// Attempt to lock the rwlock, OK on success, ERR_BUSY means it can't lock.
-	Error write_try_lock() {
+	// Attempt to lock the RWLock for writing. True on success, false means it can't lock.
+	_ALWAYS_INLINE_ Error write_try_lock() {
 		return mutex.try_lock() ? OK : ERR_BUSY;
 	}
 };
@@ -106,11 +107,11 @@ class RWLockRead {
 	const RWLock &lock;
 
 public:
-	RWLockRead(const RWLock &p_lock) :
+	_ALWAYS_INLINE_ RWLockRead(const RWLock &p_lock) :
 			lock(p_lock) {
 		lock.read_lock();
 	}
-	~RWLockRead() {
+	_ALWAYS_INLINE_ ~RWLockRead() {
 		lock.read_unlock();
 	}
 };
@@ -119,11 +120,11 @@ class RWLockWrite {
 	RWLock &lock;
 
 public:
-	RWLockWrite(RWLock &p_lock) :
+	_ALWAYS_INLINE_ RWLockWrite(RWLock &p_lock) :
 			lock(p_lock) {
 		lock.write_lock();
 	}
-	~RWLockWrite() {
+	_ALWAYS_INLINE_ ~RWLockWrite() {
 		lock.write_unlock();
 	}
 };

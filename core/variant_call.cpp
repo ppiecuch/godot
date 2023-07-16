@@ -891,6 +891,7 @@ struct _VariantCall {
 	VCALL_PTR1R(Transform2D, translated);
 	VCALL_PTR2R(Transform2D, interpolate_with);
 	VCALL_PTR1R(Transform2D, is_equal_approx);
+	VCALL_PTR0R(Transform2D, determinant);
 
 	static void _call_Transform2D_xform(Variant &r_ret, Variant &p_self, const Variant **p_args) {
 		switch (p_args[0]->type) {
@@ -1116,11 +1117,8 @@ struct _VariantCall {
 	}
 
 	static void Color_init3(Variant &r_ret, const Variant **p_args) {
-		r_ret = Color::html(*p_args[0]);
-	}
-
-	static void Color_init4(Variant &r_ret, const Variant **p_args) {
-		r_ret = Color::hex(*p_args[0]);
+		Color c = *p_args[0];
+		r_ret = Color(c.r, c.g, c.b, *p_args[1]);
 	}
 
 	static void AABB_init1(Variant &r_ret, const Variant **p_args) {
@@ -2180,6 +2178,7 @@ void register_variant_methods() {
 	ADDFUNC1R(TRANSFORM2D, TRANSFORM2D, Transform2D, translated, VECTOR2, "offset", varray());
 	ADDFUNC1R(TRANSFORM2D, NIL, Transform2D, xform, NIL, "v", varray());
 	ADDFUNC1R(TRANSFORM2D, NIL, Transform2D, xform_inv, NIL, "v", varray());
+	ADDFUNC0R(TRANSFORM2D, REAL, Transform2D, determinant, varray());
 	ADDFUNC1R(TRANSFORM2D, VECTOR2, Transform2D, basis_xform, VECTOR2, "v", varray());
 	ADDFUNC1R(TRANSFORM2D, VECTOR2, Transform2D, basis_xform_inv, VECTOR2, "v", varray());
 	ADDFUNC2R(TRANSFORM2D, TRANSFORM2D, Transform2D, interpolate_with, TRANSFORM2D, "transform", REAL, "weight", varray());
@@ -2252,6 +2251,7 @@ void register_variant_methods() {
 
 	_VariantCall::add_constructor(_VariantCall::Color_init1, Variant::COLOR, "r", Variant::REAL, "g", Variant::REAL, "b", Variant::REAL, "a", Variant::REAL);
 	_VariantCall::add_constructor(_VariantCall::Color_init2, Variant::COLOR, "r", Variant::REAL, "g", Variant::REAL, "b", Variant::REAL);
+	_VariantCall::add_constructor(_VariantCall::Color_init3, Variant::COLOR, "from", Variant::COLOR, "alpha", Variant::REAL);
 
 	_VariantCall::add_constructor(_VariantCall::AABB_init1, Variant::AABB, "position", Variant::VECTOR3, "size", Variant::VECTOR3);
 

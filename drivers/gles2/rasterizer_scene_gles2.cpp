@@ -53,7 +53,7 @@
 #endif
 #endif
 
-static const GLenum _cube_side_enum[6] = {
+const GLenum RasterizerSceneGLES2::_cube_side_enum[6] = {
 
 	GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
 	GL_TEXTURE_CUBE_MAP_POSITIVE_X,
@@ -1332,7 +1332,7 @@ void RasterizerSceneGLES2::_fill_render_list(InstanceBase **p_cull_result, int p
 	}
 }
 
-static const GLenum gl_primitive[] = {
+const GLenum RasterizerSceneGLES2::gl_primitive[] = {
 	GL_POINTS,
 	GL_LINES,
 	GL_LINE_STRIP,
@@ -3811,7 +3811,7 @@ void RasterizerSceneGLES2::render_shadow(RID p_light, RID p_shadow_atlas, int p_
 		} else if (directional_shadow.light_count == 2) {
 			light_instance->directional_rect = Rect2(0, 0, directional_shadow.size, directional_shadow.size / 2);
 			if (light_instance->light_directional_index == 1) {
-				light_instance->directional_rect.position.x += light_instance->directional_rect.size.x;
+				light_instance->directional_rect.position.y += light_instance->directional_rect.size.y;
 			}
 		} else { //3 and 4
 			light_instance->directional_rect = Rect2(0, 0, directional_shadow.size / 2, directional_shadow.size / 2);

@@ -34,6 +34,7 @@
 #include "core/map.h"
 #include "core/resource.h"
 #include "scene/resources/texture.h"
+#include "servers/visual/visual_server_canvas_helper.h"
 
 struct CharTransform {
 	// NOTE: tex_clip and dest_rect are normalized coordinates rect: (0,0),[1,1]
@@ -111,8 +112,8 @@ public:
 	void draw_halign(RID p_canvas_item, const Point2 &p_pos, HAlign p_align, float p_width, const String &p_text, const Color &p_modulate = Color(1, 1, 1), const Color &p_outline_modulate = Color(1, 1, 1)) const;
 
 	virtual bool has_outline() const { return false; }
-	virtual float draw_char_xform(RID p_canvas_item, const CharTransform &p_char_xform, const Point2 &p_pos, CharType p_char, CharType p_next = 0, const Color &p_modulate = Color(1, 1, 1), bool p_outline = false) const = 0;
-	virtual float draw_char(RID p_canvas_item, const Point2 &p_pos, CharType p_char, CharType p_next = 0, const Color &p_modulate = Color(1, 1, 1), bool p_outline = false) const = 0;
+	float draw_char(RID p_canvas_item, const Point2 &p_pos, CharType p_char, CharType p_next = 0, const Color &p_modulate = Color(1, 1, 1), bool p_outline = false) const { return draw_char_ex(p_canvas_item, p_pos, p_char, p_next, p_modulate, p_outline); }
+	virtual float draw_char_ex(RID p_canvas_item, const Point2 &p_pos, CharType p_char, CharType p_next = 0, const Color &p_modulate = Color(1, 1, 1), bool p_outline = false, MultiRect *p_multirect = nullptr, const CharTransform *p_char_xform = nullptr) const = 0;
 
 	virtual RID get_char_texture(CharType p_char, CharType p_next, bool p_outline) const = 0;
 	virtual Size2 get_char_texture_size(CharType p_char, CharType p_next, bool p_outline) const = 0;
@@ -132,6 +133,7 @@ class FontDrawer {
 	const Ref<Font> &font;
 	Color outline_color;
 	bool has_outline;
+	MultiRect multirect;
 
 	struct PendingDraw {
 		RID canvas_item;
@@ -139,25 +141,21 @@ class FontDrawer {
 		CharType chr;
 		CharType next;
 		Color modulate;
-		bool with_xform;
+		bool has_xform;
 		CharTransform xform;
 	};
 
 	Vector<PendingDraw> pending_draws;
 
 public:
-	FontDrawer(const Ref<Font> &p_font, const Color &p_outline_color) :
-			font(p_font),
-			outline_color(p_outline_color) {
-		has_outline = p_font->has_outline();
-	}
+	FontDrawer(const Ref<Font> &p_font, const Color &p_outline_color);
 
 	float draw_char(RID p_canvas_item, const Point2 &p_pos, CharType p_char, CharType p_next = 0, const Color &p_modulate = Color(1, 1, 1)) {
 		if (has_outline) {
 			PendingDraw draw = { p_canvas_item, p_pos, p_char, p_next, p_modulate, false };
 			pending_draws.push_back(draw);
 		}
-		return draw_char(p_canvas_item, CharTransform(), p_pos, p_char, p_next, p_modulate);
+		return font->draw_char_ex(p_canvas_item, p_pos, p_char, p_next, has_outline ? outline_color : p_modulate, has_outline, &multirect);
 	}
 
 	float draw_char(RID p_canvas_item, const CharTransform &p_char_xform, const Point2 &p_pos, CharType p_char, CharType p_next = 0, const Color &p_modulate = Color(1, 1, 1)) {
@@ -165,16 +163,14 @@ public:
 			PendingDraw draw = { p_canvas_item, p_pos, p_char, p_next, p_modulate, true, p_char_xform };
 			pending_draws.push_back(draw);
 		}
-		return font->draw_char_xform(p_canvas_item, p_char_xform, p_pos, p_char, p_next, has_outline ? outline_color : p_modulate, has_outline);
+		return font->draw_char_ex(p_canvas_item, p_pos, p_char, p_next, has_outline ? outline_color : p_modulate, has_outline, &multirect, &p_char_xform);
 	}
+	MultiRect &get_multirect() { return multirect; }
 
 	~FontDrawer() {
 		for (int i = 0; i < pending_draws.size(); ++i) {
 			const PendingDraw &draw = pending_draws[i];
-			if (draw.with_xform)
-				font->draw_char_xform(draw.canvas_item, draw.xform, draw.pos, draw.chr, draw.next, draw.modulate, false);
-			else
-				font->draw_char(draw.canvas_item, draw.pos, draw.chr, draw.next, draw.modulate, false);
+			font->draw_char_ex(draw.canvas_item, draw.pos, draw.chr, draw.next, draw.modulate, false, &multirect, draw.has_xform ? &draw.xform : nullptr);
 		}
 	}
 };
@@ -269,8 +265,7 @@ public:
 	void set_distance_field_hint(bool p_distance_field);
 	bool is_distance_field_hint() const;
 
-	virtual float draw_char_xform(RID p_canvas_item, const CharTransform &p_char_xform, const Point2 &p_pos, CharType p_char, CharType p_next = 0, const Color &p_modulate = Color(1, 1, 1), bool p_outline = false) const;
-	virtual float draw_char(RID p_canvas_item, const Point2 &p_pos, CharType p_char, CharType p_next = 0, const Color &p_modulate = Color(1, 1, 1), bool p_outline = false) const;
+	float draw_char_ex(RID p_canvas_item, const Point2 &p_pos, CharType p_char, CharType p_next = 0, const Color &p_modulate = Color(1, 1, 1), bool p_outline = false, MultiRect *p_multirect = nullptr, const CharTransform *p_char_xform = nullptr) const;
 
 	RID get_char_texture(CharType p_char, CharType p_next, bool p_outline) const;
 	Size2 get_char_texture_size(CharType p_char, CharType p_next, bool p_outline) const;
