@@ -190,7 +190,7 @@ String BmfFontImporter::get_save_extension() const {
 	return "font";
 }
 String BmfFontImporter::get_resource_type() const {
-	return "BmfFont";
+	return "BitmapFont";
 }
 
 int BmfFontImporter::get_preset_count() const {
