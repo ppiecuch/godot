@@ -110,22 +110,23 @@ real_t SynthBenchmarkResults::compute_gpu_perf_index(Vector<real_t> *p_individua
 // NOTE: p_work_scale should be around 10 but can be adjusted for precision
 // NOTE: p_function should run for about 3 ms
 static TimeSample RunBenchmark(uint8_t p_work_scale, real_t (*p_function)()) {
-	uint64_t sum = 0;
+	real_t sum = 0;
 
 	uint32_t run_count = MAX(1, p_work_scale); // this test doesn't support fractional WorkScale
 
 	for (uint32_t i = 0; i < run_count; ++i) {
 		memory_barrier();
-		const uint64_t start_time = OS::get_singleton()->get_system_time_msecs();
+		const uint64_t start_time = OS::get_singleton()->get_ticks_usec();
 		memory_barrier();
 
 		g_global_state_object += p_function();
 
 		memory_barrier();
-		sum += OS::get_singleton()->get_system_time_msecs() - start_time;
+		sum += OS::get_singleton()->get_ticks_usec() - start_time;
 		memory_barrier();
 	}
-	return TimeSample(sum, real_t(sum) / run_count);
+	const real_t secs = sum / 1000000.0;
+	return TimeSample(secs, secs / run_count);
 }
 
 struct TestRender {
@@ -274,7 +275,7 @@ String SynthBenchmark::run_benchmark(bool p_gpu_benchmark, uint8_t p_work_scale)
 		p_work_scale = 1;
 	}
 
-	const real_t start_time = OS::get_singleton()->get_system_time_secs();
+	const uint32_t start_time = OS::get_singleton()->get_ticks_msec();
 
 	report += string_format2("SynthBenchmark (%s)", get_version_string().utf8().c_str());
 	report += string_format2("===============");
@@ -396,7 +397,7 @@ String SynthBenchmark::run_benchmark(bool p_gpu_benchmark, uint8_t p_work_scale)
 
 	report += string_format2("  CPUIndex: %.1f", results.compute_cpu_perf_index());
 	report += string_format2("");
-	report += string_format2("         ... Total Time: %f sec", real_t(OS::get_singleton()->get_system_time_secs() - start_time));
+	report += string_format2("         ... Total Time: %.2f sec", (OS::get_singleton()->get_ticks_msec() - start_time) / 1000.);
 
 	return results.report = report;
 }
