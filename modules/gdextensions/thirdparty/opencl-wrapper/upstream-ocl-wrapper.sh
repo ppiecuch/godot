@@ -9,6 +9,7 @@ git clone --depth=1 --recursive --no-single-branch https://github.com/ProjectPhy
 rm -rf README.md src
 mv _clwrapper/README.md .
 mv _clwrapper/src .
+rm src/main.cpp
 
 rm -rf _clwrapper
 

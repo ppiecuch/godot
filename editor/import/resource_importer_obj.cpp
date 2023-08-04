@@ -71,17 +71,24 @@ static Ref<ArrayMesh> _build_mesh_for_atlas(const Ref<ArrayMesh> &p_mesh, String
 	};
 
 	Ref<ArrayMesh> r_mesh = memnew(ArrayMesh);
+	r_mesh->set_name(p_mesh->get_name());
+	r_mesh->set_comment(p_mesh->get_comment());
+
 	for (int t = 0; t < texture_max; t++) {
 		Vector<Ref<Image>> images;
-		Vector<int> surfs;
+		Vector<String> paths;
 		// collect texture information
 		for (int s = 0; s < p_mesh->get_surface_count(); s++) {
 			if (Ref<SpatialMaterial> mat = p_mesh->surface_get_material(s)) {
 				if (Ref<Texture> texture = mat->get_texture(info[t].texture)) {
-					Ref<Image> img = memnew(Image);
-					if (img->load(texture->get_path().replace_first("res://", "")) == OK) {
-						images.push_back(img);
-						surfs.push_back(s);
+					String image_path = texture->get_path().replace_first("res://", "");
+					int index = paths.find(image_path);
+					if (index < 0) {
+						Ref<Image> img = memnew(Image);
+						if (img->load(image_path) == OK) {
+							paths.push_back(image_path);
+							images.push_back(img);
+						}
 					}
 				}
 			}
@@ -102,41 +109,56 @@ static Ref<ArrayMesh> _build_mesh_for_atlas(const Ref<ArrayMesh> &p_mesh, String
 			ERR_FAIL_NULL_V(atlas_image, Ref<Mesh>());
 
 			String path = vformat("%s-%s.png", p_path.trim_suffix("." + p_path.get_extension()), info[t].prefix);
-			atlas_image->save_png(path);
+			ERR_FAIL_COND_V(atlas_image->save_png(path) != OK, Ref<Mesh>());
 			print_verbose(vformat("OBJ: Save atlas texture: %s", path));
 			if (r_paths) {
 				r_paths->push_back(path);
 			}
 
-			if (t == texture_albedo) { // only once
-				Array atlas_rects = atlas_info["_rects"];
-				for (int s = 0; s < atlas_rects.size(); s++) {
-					const int surf_nr = surfs[s];
-					ERR_CONTINUE(surf_nr >= p_mesh->get_surface_count());
+			Array atlas_rects = atlas_info["_rects"];
+			for (int s = 0; s < p_mesh->get_surface_count(); s++) {
+				if (Ref<SpatialMaterial> mat = p_mesh->surface_get_material(s)) {
+					if (Ref<Texture> texture = mat->get_texture(info[t].texture)) {
+						String image_path = texture->get_path().replace_first("res://", "");
+						int image = paths.find(image_path);
+						if (image < 0) {
+							WARN_PRINT("Missing image " + image_path);
+						} else {
+							if (t == texture_albedo) { // recalculate only once
+								Array mesh_array = p_mesh->surface_get_arrays(s);
+								Dictionary entry = atlas_rects[image];
+								ERR_CONTINUE_MSG(entry.empty(), "Empty atlas entry, Skipping!");
 
-					Array mesh_array = p_mesh->surface_get_arrays(surf_nr);
-					Dictionary entry = atlas_rects[s];
-					ERR_CONTINUE_MSG(entry.empty(), "Empty atlas entry, Skipping!");
+								PoolVector2Array uvs = mesh_array[VS::ARRAY_TEX_UV];
+								PoolVector2Array xform_uvs;
+								ERR_FAIL_COND_V(xform_uvs.resize(uvs.size()) != OK, Ref<ArrayMesh>());
 
-					PoolVector2Array uvs = mesh_array[VS::ARRAY_TEX_UV];
-					PoolVector2Array xform_uvs;
-					ERR_FAIL_COND_V(xform_uvs.resize(uvs.size()) != OK, Ref<ArrayMesh>());
+								auto w = xform_uvs.write();
+								Rect2 rc = entry["rrect"];
+								for (int v = 0; v < uvs.size(); ++v) {
+									w[v] = uvs[v] * rc.size + rc.position; // build atlas transformed coords
+								}
+								w.release();
 
-					auto w = xform_uvs.write();
-					Rect2 rc = entry["rrect"];
-					// build transformed coords
-					for (int v = 0; v < uvs.size(); ++v) {
-						w[v] = uvs[v] * rc.size + rc.position;
+								mesh_array[VS::ARRAY_TEX_UV] = xform_uvs;
+
+								// save new surface:
+								const int surf_id = r_mesh->get_surface_count();
+								r_mesh->add_surface_from_arrays(p_mesh->surface_get_primitive_type(s), mesh_array);
+								if (Ref<Material> mat = p_mesh->surface_get_material(s)) {
+									r_mesh->surface_set_material(surf_id, mat);
+								}
+								r_mesh->surface_set_name(surf_id, p_mesh->surface_get_name(s));
+							}
+						}
 					}
-					w.release();
-
-					mesh_array[VS::ARRAY_TEX_UV] = xform_uvs;
-
-					// save new surface:
-					const int surf_id = r_mesh->get_surface_count();
-					r_mesh->add_surface_from_arrays(p_mesh->surface_get_primitive_type(s), mesh_array);
-					if (Ref<Material> mat = p_mesh->surface_get_material(surf_nr)) {
-						r_mesh->surface_set_material(surf_id, mat);
+				}
+			}
+			// replace original texture with new atlas
+			for (int s = 0; s < p_mesh->get_surface_count(); s++) {
+				if (Ref<SpatialMaterial> mat = p_mesh->surface_get_material(s)) {
+					if (Ref<Texture> texture = mat->get_texture(info[t].texture)) {
+						mat->set_texture(info[t].texture, ResourceLoader::load(path));
 					}
 				}
 			}
@@ -339,7 +361,7 @@ struct _parse_opt {
 	bool single_mesh;
 	bool generate_tangents;
 	bool to_shadermaterial;
-	bool flip_y;
+	bool fix_names;
 	bool build_atlas_texture;
 	int max_atlas_size;
 	uint32_t compress_flags;
@@ -356,7 +378,8 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, const _
 	Vector3 scale_mesh = p_opts.scale_mesh;
 	Vector3 offset_mesh = p_opts.offset_mesh;
 
-	Vector<String> instances_names, instances_info; // name + num. of surfaces
+	LocalVector<String> instances_names;
+	int unique_instances = 0;
 
 	Vector<Vector3> vertices;
 	Vector<Vector3> normals;
@@ -378,7 +401,7 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, const _
 	String name;
 	String last_name, last_material;
 	int current_object_faces = 0;
-	String description;
+	String comment;
 
 	while (true) {
 		String l = f->get_line().strip_edges();
@@ -391,7 +414,7 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, const _
 		}
 
 		if (l.begins_with("#")) {
-			description += l;
+			comment += l.substr(1) + "\n";
 		} else if (l.begins_with("v ")) {
 			//vertex
 			Vector<String> v = l.split(" ", false);
@@ -581,56 +604,30 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, const _
 				mesh = surf_tool->commit(mesh, p_opts.compress_flags);
 
 				if (current_material != String()) {
-					mesh->surface_set_name(surf_id, current_material.get_basename());
+					mesh->surface_set_name(surf_id, current_material);
 				} else if (current_group != String()) {
 					mesh->surface_set_name(surf_id, current_group);
+				} else if (!current_material_library.empty()) {
+					mesh->surface_set_name(surf_id, current_material_library.get_basename());
 				}
 
-				if (!name.empty()) {
-					print_verbose("OBJ: Added surface: '" + mesh->surface_get_name(surf_id) + "' with " + itos(current_object_faces) + " faces to object: '" + name + "'");
-				} else {
-					print_verbose("OBJ: Added surface: '" + mesh->surface_get_name(surf_id) + "' with " + itos(current_object_faces) + " faces");
-				}
+				print_verbose("OBJ: Added surface: '" + mesh->surface_get_name(surf_id) + "' with " + itos(current_object_faces) + " faces to object: '" + name + "'");
+
 				surf_tool->clear();
 				surf_tool->begin(Mesh::PRIMITIVE_TRIANGLES);
 
 				if (l.begins_with("o ") || f->eof_reached()) {
-					// case 1: assume these are parts of the same mesh:
-					//   - Mesh1
-					//       Mat_1
-					//   - Mesh1
-					//       Mat_2
-					// case 2: assume these are separates meshes (propably name is derived from the material):
-					//   - Mesh1
-					//       Mat_1
-					//   - Mesh1
-					//       Mat_1
 					if (p_opts.single_mesh) {
-						if (last_name == name) {
-							if (last_material == current_material) {
-								// get unique name
-								int cnt = 2;
-								String new_name;
-								do {
-									new_name = vformat("%s (%d)", name, cnt);
-									cnt++;
-								} while (instances_names.has(new_name));
-								instances_names.push_back(new_name);
-								instances_info.push_back(vformat("%s=%d", new_name, mesh->get_surface_count()));
-							}
-						} else {
-							if (instances_names.has(name)) {
-								WARN_PRINT("OBJ: Duplicate mesh instance name.");
-							}
-							instances_names.push_back(name);
-							instances_info.push_back(vformat("%s=%d", name, mesh->get_surface_count()));
+						if (instances_names.empty() || !instances_names.has(name)) {
+							unique_instances++;
 						}
+						instances_names.push_back(name);
 						last_name = name;
 						last_material = current_material;
 					} else {
 						if (last_name != name || f->eof_reached()) {
 							mesh->set_name(name);
-							mesh->set_description(description);
+							mesh->set_comment(comment);
 							r_meshes.push_back(mesh);
 							mesh.instance();
 							name = "";
@@ -689,12 +686,44 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, const _
 	}
 
 	if (p_opts.single_mesh) {
-		if (instances_info.size() > 1) {
-			print_verbose("OBJ: Saved submesh description:");
-			print_verbose(" > SUBMESH:\n > " + String("\n > ").join(instances_info));
-			mesh->set_name(p_path.get_basename()); // final name
-			mesh->set_submesh_from_text("SUBMESH:\n" + String("\n").join(instances_info));
+		// final mesh name
+		if (unique_instances == 1) {
+			mesh->set_name(name.empty() ? p_path.get_basename() : name); // use last name value
+		} else {
+			mesh->set_name(p_path.get_basename());
+			ERR_FAIL_COND_V(instances_names.size() != mesh->get_surface_count(), ERR_PARSE_ERROR);
+			if (unique_instances != instances_names.size()) {
+				if (p_opts.fix_names) { // check and rename duplicates per material
+					Map<String, LocalVector<int>> dups;
+					for (int s = 0; s < mesh->get_surface_count(); s++) {
+						dups[instances_names[s] + "@" + mesh->surface_get_name(s)].push_back(s);
+					}
+					for (const auto *E = dups.front(); E; E = E->next()) {
+						if (E->value().size() > 1) {
+							print_verbose("OBJ: Rename surface " + E->key());
+							for (int n = 0; n < E->value().size(); n++) {
+								String new_name = instances_names[E->value()[n]];
+								if (new_name.empty()) {
+									new_name = "Mesh ";
+								} else if (new_name.substr(-1).is_numeric()) {
+									new_name += "_";
+								} else {
+									new_name += " ";
+								}
+								new_name += itos(n);
+								instances_names[E->value()[n]] = new_name;
+							}
+						}
+					}
+				}
+			}
+			print_verbose("OBJ: New names of surfaces:");
+			for (int s = 0; s < mesh->get_surface_count(); s++) { // rename surfaces
+				print_verbose(" - " + instances_names[s]);
+				mesh->surface_set_name(s, instances_names[s]);
+			}
 		}
+		mesh->set_comment(comment);
 		r_meshes.push_back(mesh); // final mesh
 	}
 	return OK;
@@ -703,7 +732,7 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, const _
 Node *EditorOBJImporter::import_scene(const String &p_path, uint32_t p_flags, int p_bake_fps, uint32_t p_compress_flags, List<String> *r_missing_deps, Error *r_err) {
 	List<Ref<Mesh>> meshes;
 
-	const _parse_opt opts = { false, bool(p_flags & IMPORT_GENERATE_TANGENT_ARRAYS), false, false, false, 0, p_compress_flags, Vector3(1, 1, 1), Vector3(0, 0, 0) };
+	const _parse_opt opts = { false, bool(p_flags & IMPORT_GENERATE_TANGENT_ARRAYS), false, false, 0, false, p_compress_flags, Vector3(1, 1, 1), Vector3(0, 0, 0) };
 	Error err = _parse_obj(p_path, meshes, opts, r_missing_deps);
 
 	if (err != OK) {
@@ -785,8 +814,8 @@ void ResourceImporterOBJ::get_import_options(List<ImportOption> *r_options, int 
 	r_options->push_back(ImportOption(PropertyInfo(Variant::VECTOR3, "scale_mesh"), Vector3(1, 1, 1)));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::VECTOR3, "offset_mesh"), Vector3(0, 0, 0)));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::BOOL, "octahedral_compression"), true));
-	r_options->push_back(ImportOption(PropertyInfo(Variant::BOOL, "flip_y_axis"), false));
-	r_options->push_back(ImportOption(PropertyInfo(Variant::BOOL, "build_atlas_texture"), false));
+	r_options->push_back(ImportOption(PropertyInfo(Variant::BOOL, "fix_submesh_names"), false));
+	r_options->push_back(ImportOption(PropertyInfo(Variant::BOOL, "merge_textures"), false));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::INT, "max_atlas_size"), "2048"));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::INT, "optimize_mesh_flags", PROPERTY_HINT_FLAGS, "Vertex,Normal,Tangent,Color,TexUV,TexUV2,Bones,Weights,Index"), VS::ARRAY_COMPRESS_DEFAULT >> VS::ARRAY_COMPRESS_BASE));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::BOOL, "convert_to_shadermaterial"), false));
@@ -820,8 +849,8 @@ Error ResourceImporterOBJ::import(const String &p_source_file, const String &p_s
 		true,
 		p_options["generate_tangents"],
 		p_options["convert_to_shadermaterial"],
-		p_options["flip_y_axis"],
-		p_options["build_atlas_texture"],
+		p_options["merge_textures"],
+		p_options["fix_submesh_names"],
 		p_options["max_atlas_size"],
 		compress_flags,
 		p_options["scale_mesh"],

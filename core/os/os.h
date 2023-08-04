@@ -241,6 +241,15 @@ public:
 	virtual const char *get_video_driver_name(int p_driver) const;
 	virtual int get_current_video_driver() const = 0;
 
+	enum VideoDriverFeature {
+		VIDEO_SYSTEM_CONTEXT_INFO,
+		VIDEO_SYSTEM_TOTAL_MEMORY,
+		VIDEO_SYSTEM_TEXTURE_MEMORY,
+		VIDEO_SYSTEM_AVAILABLE_MEMORY,
+	};
+
+	virtual Variant get_video_system_info(int p_feature) const = 0;
+
 	virtual bool is_offscreen_gl_available() const;
 	virtual void set_offscreen_gl_current(bool p_current);
 

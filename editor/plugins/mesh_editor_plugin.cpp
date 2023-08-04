@@ -100,10 +100,10 @@ void MeshEditor::edit(Ref<Mesh> p_mesh) {
 	submesh_info->hide();
 
 	if (Ref<ArrayMesh> am = mesh) {
-		if (am->get_submesh_count() > 0) {
+		if (am->is_multimesh() && am->get_submesh_count() > 0) {
 			next_mesh->show();
 			prev_mesh->show();
-			mesh_instance->set_mesh(shown = am->get_submesh(submesh));
+			mesh_instance->set_mesh(shown = am->get_submesh_by_index(submesh));
 			submesh_info->show();
 			_update_submesh_info();
 		}
@@ -128,7 +128,8 @@ void MeshEditor::_button_pressed(Node *p_button) {
 		if (Ref<ArrayMesh> am = mesh) {
 			if (submesh < am->get_submesh_count() - 1) {
 				++submesh;
-				Ref<Mesh> m = am->get_submesh(submesh);
+				Ref<Mesh> m = am->get_submesh_by_index(submesh);
+				ERR_FAIL_NULL(m);
 				mesh_instance->set_mesh(m);
 				_update_from_aabb(m);
 				_update_submesh_info();
@@ -142,7 +143,8 @@ void MeshEditor::_button_pressed(Node *p_button) {
 		if (Ref<ArrayMesh> am = mesh) {
 			if (submesh) {
 				--submesh;
-				Ref<Mesh> m = am->get_submesh(submesh);
+				Ref<Mesh> m = am->get_submesh_by_index(submesh);
+				ERR_FAIL_NULL(m);
 				mesh_instance->set_mesh(m);
 				_update_from_aabb(m);
 				_update_submesh_info();

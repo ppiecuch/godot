@@ -30,25 +30,28 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # TODO: Profit :P
 
 
-import os
-import subprocess
-import sys
-import re
-import json
+import os, sys, re, json
+import platform, subprocess
 from tempfile import gettempdir
 from tempfile import NamedTemporaryFile as tempfile
 
-__version__ = 0, 8, 1
+__version__ = 0, 8, 2
 
 VERBOSE1 = False  # gdscript-cli logs
 VERBOSE2 = False  # default godot behavior
 VERBOSE3 = False  # godot verbose mode
 nm = sys.platform
 nm = "osx" if sys.platform == "darwin" else nm
+arch = platform.machine()
 
-default_bin = os.path.dirname(os.path.realpath(__file__)) + "/../../bin/godot.%s.tools.64" % nm
+default_bin = os.path.dirname(os.path.realpath(__file__)) + "/../../bin/godot.%s.tools.%s" % (nm, arch)
+if not os.path.exists(default_bin):
+	default_bin = os.path.dirname(os.path.realpath(__file__)) + "/../../bin/godot.%s.opt.tools.%s" % (nm, arch)
+
 GODOT_BINARY = os.environ.get("GDBIN", default_bin)
 
+if not os.path.exists(GODOT_BINARY):
+	raise "Godot binary not found (%s)." % GODOT_BINARY
 
 def text_indent(text):
     indented = ""
@@ -260,7 +263,7 @@ class ScriptProcess(object):
             error = None
             version_line = ""
             for line in process.stdout.readlines():
-                uline = strip_ansi(line.decode("utf-8")).strip()
+                uline = strip_ansi(line.decode("utf-8")).rstrip()
                 output_list_verbose.append(uline)
                 if not ignore_next or "WARNING: " in uline:
                     ignore_next = False

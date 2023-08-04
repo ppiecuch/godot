@@ -40,6 +40,7 @@ if env["platform"] != "3ds" and env["platform"] != "psp":
 SConscript("png/SCsub")
 
 env.add_source_files(env.drivers_sources, "*.cpp")
+env.add_source_files(env.drivers_sources, "video_common/*.cpp")
 
 lib = env.add_library("drivers", env.drivers_sources)
 env.Prepend(LIBS=[lib])

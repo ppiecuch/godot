@@ -727,7 +727,7 @@ void ElasticSprite::_create_geom() {
 
 Rect2 ElasticSprite::_get_texture_uv_rect() const {
 	Rect2 rc(0, 0, 1, 1);
-	if (AtlasTexture *atlas = cast_to<AtlasTexture>(*get_texture())) {
+	if (Ref<AtlasTexture> atlas = get_texture()) {
 		if (atlas->get_atlas().is_valid()) {
 			const float tw = atlas->get_atlas()->get_width();
 			const float th = atlas->get_atlas()->get_height();

@@ -159,6 +159,7 @@ public:
 
 	int video_driver_index;
 	virtual int get_current_video_driver() const;
+	virtual Variant get_video_system_info(int p_feature) const;
 
 	struct GlobalMenuItem {
 		String label;

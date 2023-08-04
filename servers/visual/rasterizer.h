@@ -1268,6 +1268,14 @@ public:
 	virtual ~RasterizerCanvas() {}
 };
 
+extern const char *VideoContextInfoVideoExtensions;
+extern const char *VideoContextInfoVideoVersion;
+extern const char *VideoContextInfoVideoShadingLanguageVersion;
+extern const char *VideoContextInfoVideoRenderer;
+extern const char *VideoContextInfoVideoVendor;
+extern const char *VideoContextInfoVideoStandard;
+extern const char *VideoContextInfoWebglInfo;
+
 class Rasterizer {
 protected:
 	static Rasterizer *(*_create_func)();
@@ -1278,6 +1286,8 @@ public:
 	virtual RasterizerStorage *get_storage() = 0;
 	virtual RasterizerCanvas *get_canvas() = 0;
 	virtual RasterizerScene *get_scene() = 0;
+
+	virtual Dictionary get_video_context_info() const = 0;
 
 	virtual void set_boot_image(const Ref<Image> &p_image, const Color &p_color, bool p_scale, bool p_use_filter = true) = 0;
 	virtual void set_shader_time_scale(float p_scale) = 0;
