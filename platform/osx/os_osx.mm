@@ -118,7 +118,7 @@ static Vector2 get_mouse_pos(NSPoint locationInWindow) {
 	return Vector2(mouse_x, mouse_y);
 }
 
-static NSCursor *cursorFromSelector(SEL selector, SEL fallback = nil) {
+static NSCursor *cursor_from_selector(SEL selector, SEL fallback = nil) {
 	if ([NSCursor respondsToSelector:selector]) {
 		id object = [NSCursor performSelector:selector];
 		if ([object isKindOfClass:[NSCursor class]]) {
@@ -130,6 +130,50 @@ static NSCursor *cursorFromSelector(SEL selector, SEL fallback = nil) {
 		return [NSCursor performSelector:fallback];
 	}
 	return [NSCursor arrowCursor];
+}
+
+struct mem_info_t {
+	int64_t video_mem;
+	int64_t texture_mem;
+};
+
+static mem_info_t get_dedicated_video_memory_mb() {
+	GLint gl_rend_id = 0;
+	CGLGetParameter(CGLGetCurrentContext(), kCGLCPCurrentRendererID, &gl_rend_id);
+
+	CGLRendererInfoObj rend_obj = nullptr;
+	CGOpenGLDisplayMask disp_mask = CGDisplayIDToOpenGLDisplayMask(kCGDirectMainDisplay);
+	GLint rend_nb = 0;
+	CGLQueryRendererInfo(disp_mask, &rend_obj, &rend_nb);
+	for (GLint r = 0; r < rend_nb; ++r) {
+		GLint rend_id = 0;
+		if (CGLDescribeRenderer(rend_obj, r, kCGLRPRendererID, &rend_id) != kCGLNoError || rend_id != gl_rend_id) {
+			continue;
+		}
+
+		// kCGLRPVideoMemoryMegabytes   = 131;
+		// kCGLRPTextureMemoryMegabytes = 132;
+
+		GLint vmem, tmem = 0;
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1070
+		if (CGLDescribeRenderer(rend_obj, r, kCGLRPVideoMemoryMegabytes, &vmem) == kCGLNoError) {
+			print_verbose("Failed to retrive video memory info for current render device.");
+		}
+		if (CGLDescribeRenderer(rend_obj, r, kCGLRPTextureMemoryMegabytes, &tmem) == kCGLNoError) {
+			print_verbose("Failed to retrive texture memory info for current render device.");
+		}
+#else
+		if (CGLDescribeRenderer(rend_obj, r, kCGLRPVideoMemory, &vmem) == kCGLNoError) {
+			print_verbose("Failed to retrive video memory info for current render device.");
+			vmem /= 1024 * 1024;
+		}
+		if (CGLDescribeRenderer(rend_obj, r, kCGLRPTextureMemory, &tmem) == kCGLNoError) {
+			print_verbose("Failed to retrive texture memory info for current render device.");
+			tmem /= 1024 * 1024;
+		}
+#endif
+		return { vmem, tmem };
+	}
 }
 
 @interface GodotApplication : NSApplication
@@ -1818,6 +1862,18 @@ int OS_OSX::get_current_video_driver() const {
 	return video_driver_index;
 }
 
+Variant OS_OSX::get_video_system_info(int p_feature) const {
+	switch (p_feature) {
+		case VIDEO_SYSTEM_CONTEXT_INFO:
+			return VSG::rasterizer->get_video_context_info();
+		case VIDEO_SYSTEM_TOTAL_MEMORY:
+			return get_dedicated_video_memory_mb().video_mem;
+		case VIDEO_SYSTEM_TEXTURE_MEMORY:
+			return get_dedicated_video_memory_mb().texture_mem;
+	}
+	return Variant();
+}
+
 bool OS_OSX::tts_is_speaking() const {
 	ERR_FAIL_COND_V_MSG(!tts, false, "Enable the \"audio/general/text_to_speech\" project setting to use text-to-speech.");
 	ERR_FAIL_COND_V(!tts, false);
@@ -2288,16 +2344,16 @@ void OS_OSX::set_cursor_shape(CursorShape p_shape) {
 				[[NSCursor operationNotAllowedCursor] set];
 				break;
 			case CURSOR_VSIZE:
-				[cursorFromSelector(@selector(_windowResizeNorthSouthCursor), @selector(resizeUpDownCursor)) set];
+				[cursor_from_selector(@selector(_windowResizeNorthSouthCursor), @selector(resizeUpDownCursor)) set];
 				break;
 			case CURSOR_HSIZE:
-				[cursorFromSelector(@selector(_windowResizeEastWestCursor), @selector(resizeLeftRightCursor)) set];
+				[cursor_from_selector(@selector(_windowResizeEastWestCursor), @selector(resizeLeftRightCursor)) set];
 				break;
 			case CURSOR_BDIAGSIZE:
-				[cursorFromSelector(@selector(_windowResizeNorthEastSouthWestCursor)) set];
+				[cursor_from_selector(@selector(_windowResizeNorthEastSouthWestCursor)) set];
 				break;
 			case CURSOR_FDIAGSIZE:
-				[cursorFromSelector(@selector(_windowResizeNorthWestSouthEastCursor)) set];
+				[cursor_from_selector(@selector(_windowResizeNorthWestSouthEastCursor)) set];
 				break;
 			case CURSOR_MOVE:
 				[[NSCursor arrowCursor] set];
@@ -2309,7 +2365,7 @@ void OS_OSX::set_cursor_shape(CursorShape p_shape) {
 				[[NSCursor resizeLeftRightCursor] set];
 				break;
 			case CURSOR_HELP:
-				[cursorFromSelector(@selector(_helpCursor)) set];
+				[cursor_from_selector(@selector(_helpCursor)) set];
 				break;
 			default: {
 			};

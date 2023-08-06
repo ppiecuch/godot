@@ -287,3 +287,6 @@ var setup3 = function(name){
    }
 }
 ```
+
+### GPU Hardware
+  1. https://github.com/tpaviot/oce/blob/master/src/OpenGl/OpenGl_Context.cxx

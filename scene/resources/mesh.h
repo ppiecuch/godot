@@ -176,14 +176,32 @@ private:
 	BlendShapeMode blend_shape_mode;
 	Vector<StringName> blend_shapes;
 	AABB custom_aabb;
-	String description;
+	String comment;
 
-	PoolStringArray submesh_names;
-	PoolByteArray submesh_surfs;
-	Vector<Ref<Mesh>> submesh_cache;
-
-	Ref<Mesh> _copy_surfaces(Ref<ArrayMesh> p_dest, int p_from, int p_idx);
+	Ref<Mesh> _copy_surfaces(Ref<ArrayMesh> p_dest, int p_from, int p_num = 1);
+	Ref<Mesh> _copy_surfaces(Ref<ArrayMesh> p_dest, LocalVector<int> p_surfs);
 	void _recompute_aabb();
+	void _update_submesh_info();
+
+	bool submeshes_active, _submeshes_dirty;
+	struct {
+		LocalVector<LocalVector<int>> surfs;
+		Map<String, int> names_map;
+		void clear() { surfs.clear(), names_map.clear(); }
+		void update_submesh(const String &p_name, int p_surf) {
+			if (names_map.has(p_name)) {
+				surfs[names_map[p_name]].push_back(p_surf);
+			} else {
+				names_map[p_name] = surfs.size();
+				surfs.push_back(LocalVector<int>(1, &p_surf));
+			}
+		}
+		_FORCE_INLINE_ int size() const { return surfs.size(); }
+		_FORCE_INLINE_ bool has(const String &p_name) const { return names_map.has(p_name); }
+		_FORCE_INLINE_ int get_submesh_index(const String &p_name) const { return names_map[p_name]; }
+		_FORCE_INLINE_ const LocalVector<int> &operator[](int p_index) { return surfs[p_index]; }
+		_FORCE_INLINE_ const LocalVector<int> &operator[](const String &p_name) { return surfs[names_map[p_name]]; }
+	} submeshes;
 
 protected:
 	virtual bool _is_generated() const { return false; }
@@ -195,16 +213,15 @@ protected:
 	static void _bind_methods();
 
 public:
-	int get_submesh_count() const;
-	void select_submesh_surfaces(int p_idx);
-	Ref<Mesh> get_submesh(int p_idx);
+	int get_submesh_count();
+	Ref<Mesh> get_submesh_by_index(int p_idx);
 	Ref<Mesh> get_submesh_with_name(const String &p_name);
-	void set_submesh_data(const Array &p_data);
-	Array get_submesh_data() const;
-	void set_submesh_from_text(const String &p_info);
 
-	void set_description(const String &p_description);
-	String get_description() const;
+	void enable_multimesh(bool p_state);
+	bool is_multimesh() const;
+
+	void set_comment(const String &p_comment);
+	String get_comment() const;
 
 	void add_surface_from_arrays(PrimitiveType p_primitive, const Array &p_arrays, const Array &p_blend_shapes = Array(), uint32_t p_flags = ARRAY_COMPRESS_DEFAULT);
 	void add_surface(uint32_t p_format, PrimitiveType p_primitive, const PoolVector<uint8_t> &p_array, int p_vertex_count, const PoolVector<uint8_t> &p_index_array, int p_index_count, const AABB &p_aabb, const Vector<PoolVector<uint8_t>> &p_blend_shapes = Vector<PoolVector<uint8_t>>(), const Vector<AABB> &p_bone_aabbs = Vector<AABB>());

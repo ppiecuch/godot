@@ -159,6 +159,10 @@
 #include "media/bmfimporter/bmf_bitmap_font.h"
 #endif
 
+#ifdef GDEXT_SYNTHBENCHMARK_ENABLED
+#include "synthbenchmark/synth_benchmark.h"
+#endif
+
 #ifdef GDEXT_RUNTIMEPROFILER_ENABLED
 #include "runtimeprofiler/runtime_profiler.h"
 #endif
@@ -188,7 +192,7 @@
 #include "threadpool/thread_pool_execute_job.h"
 #include "threadpool/thread_pool_job.h"
 
-#include "fastnoise/noise.h"
+#include "fastnoise/fast_noise.h"
 #include "noise/noise.h"
 
 #include "geomfonts//gd_geomfonts.h"
@@ -524,6 +528,10 @@ void register_gdextensions_types() {
 	Ref<BmfFontImporter> bmf_font = memnew(BmfFontImporter);
 	ResourceFormatImporter::get_singleton()->add_importer(bmf_font);
 #endif
+#endif
+
+#ifdef GDEXT_SYNTHBENCHMARK_ENABLED
+	ClassDB::register_class<SynthBenchmark>();
 #endif
 
 #ifdef GDEXT_RUNTIMEPROFILER_ENABLED

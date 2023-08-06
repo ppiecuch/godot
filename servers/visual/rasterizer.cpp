@@ -37,6 +37,16 @@
 #include "core/project_settings.h"
 #endif
 
+const char *VideoContextInfoVideoExtensions = "VIDEO_EXTENSIONS";
+const char *VideoContextInfoVideoVersion = "VIDEO_VERSION";
+const char *VideoContextInfoVideoShadingLanguageVersion = "VIDEO_SHADING_LANGUAGE_VERSION";
+const char *VideoContextInfoVideoRenderer = "VIDEO_RENDERER";
+const char *VideoContextInfoVideoVendor = "VIDEO_VENDOR";
+const char *VideoContextInfoVideoStandard = "VIDEO_STANDARD";
+const char *VideoContextInfoWebglInfo = "WEBGL_INFO";
+const char *VideoContextInfoUnmaskedVendorWebgl = "UNMASKED_VENDOR_WEBGL";
+const char *VideoContextInfoUnmaskedRendererWebgl = "UNMASKED_RENDERER_WEBGL";
+
 Rasterizer *(*Rasterizer::_create_func)() = nullptr;
 
 Rasterizer *Rasterizer::create() {

@@ -386,6 +386,23 @@ public:
 	};
 
 	/**
+	 * count an element in the list,
+	 */
+	template <class T_v>
+	int count(const T_v &p_val) {
+		int ret = 0;
+		Element *it = front();
+		while (it) {
+			if (it->value == p_val) {
+				ret++;
+			}
+			it = it->next();
+		};
+
+		return ret;
+	};
+
+	/**
 	 * erase an element in the list, by iterator pointing to it. Return true if it was found/erased.
 	 */
 	bool erase(const Element *p_I) {

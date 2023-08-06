@@ -325,12 +325,11 @@ static bool _pack_rects(rect_xywhf *const *v, int n, int max_side, bool single_p
 			}
 		}
 		const real_t step = 0.01;
-		real_t base_scale = 1.5;
+		real_t base_scale = 2;
 		int last_max_side = 0;
 		do {
 			for (int i = 0; i < n; i++) {
 				const real_t area = v[i]->_w * v[i]->_h;
-				v[i]->scale = 1.0 - base_scale * (area / max_area);
 				v[i]->scale = base_scale - (area / max_area);
 				ERR_FAIL_COND_V(v[i]->scale <= 0, false);
 			}

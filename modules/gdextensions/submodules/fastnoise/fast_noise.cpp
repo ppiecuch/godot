@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  noise.cpp                                                             */
+/*  fast_noise.cpp                                                        */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,17 +28,13 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "noise.h"
-
-FastNoise::FastNoise() :
-		Reference() {
-}
+#include "fast_noise.h"
 
 void FastNoise::set_cellular_noise_lookup(Ref<FastNoise> other_noise) {
 	_cellular_lookup_ref = other_noise;
 
 	if (_cellular_lookup_ref.is_null())
-		_noise.SetCellularNoiseLookup(NULL);
+		_noise.SetCellularNoiseLookup(nullptr);
 	else
 		_noise.SetCellularNoiseLookup(&_cellular_lookup_ref->_noise);
 }
@@ -54,6 +50,53 @@ PoolIntArray FastNoise::get_cellular_distance_2_indices() const {
 	a.append(i0);
 	a.append(i1);
 	return a;
+}
+
+Ref<Image> FastNoise::get_image(int p_width, int p_height, const Vector2 &p_noise_offset) const {
+	PoolVector<uint8_t> data;
+	data.resize(p_width * p_height);
+
+	PoolVector<uint8_t>::Write wd8 = data.write();
+
+	for (int i = 0; i < p_height; i++) {
+		for (int j = 0; j < p_width; j++) {
+			float v = get_noise_2d(float(j) + p_noise_offset.x, float(i) + p_noise_offset.y);
+			v = v * 0.5 + 0.5; // Normalize [0..1]
+			wd8[(i * p_width + j)] = uint8_t(CLAMP(v * 255.0, 0, 255));
+		}
+	}
+
+	Ref<Image> image = memnew(Image(p_width, p_height, false, Image::FORMAT_L8, data));
+	return image;
+}
+
+Ref<Image> FastNoise::get_seamless_image(int p_size, bool p_white_noise) const {
+	PoolVector<uint8_t> data;
+	data.resize(p_size * p_size);
+
+	PoolVector<uint8_t>::Write wd8 = data.write();
+
+	for (int i = 0; i < p_size; i++) {
+		for (int j = 0; j < p_size; j++) {
+			float ii = (float)i / (float)p_size;
+			float jj = (float)j / (float)p_size;
+
+			ii *= 2 * Math_PI;
+			jj *= 2 * Math_PI;
+
+			float radius = p_size / (2.0 * Math_PI);
+
+			const float x = radius * Math::sin(jj);
+			const float y = radius * Math::cos(jj);
+			const float z = radius * Math::sin(ii);
+			const float w = radius * Math::cos(ii);
+			const float v = (p_white_noise ? get_white_noise_4d(x, y, z, w) : get_simplex_4d(x, y, z, w)) * 0.5 + 0.5; // Normalize [0..1]
+			wd8[(i * p_size + j)] = uint8_t(CLAMP(v * 255.0, 0, 255));
+		}
+	}
+
+	Ref<Image> image = memnew(Image(p_size, p_size, false, Image::FORMAT_L8, data));
+	return image;
 }
 
 void FastNoise::_bind_methods() {
@@ -105,6 +148,10 @@ void FastNoise::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_noise_3dv", "pos"), &FastNoise::get_noise_3dv);
 	ClassDB::bind_method(D_METHOD("get_simplex_4d", "x", "y", "z", "w"), &FastNoise::get_simplex_4d);
 	ClassDB::bind_method(D_METHOD("get_white_noise_4d", "x", "y", "z", "w"), &FastNoise::get_white_noise_4d);
+
+	ClassDB::bind_method(D_METHOD("get_image", "width", "height", "noise_offset"), &FastNoise::get_image, DEFVAL(Vector2()));
+	ClassDB::bind_method(D_METHOD("get_seamless_image", "size", "white_noise"), &FastNoise::get_seamless_image, DEFVAL(false));
+
 	// TODO Bind intermediary functions?
 
 	BIND_ENUM_CONSTANT(TYPE_VALUE);
@@ -138,4 +185,7 @@ void FastNoise::_bind_methods() {
 	BIND_ENUM_CONSTANT(RETURN_DISTANCE_2_SUB);
 	BIND_ENUM_CONSTANT(RETURN_DISTANCE_2_MUL);
 	BIND_ENUM_CONSTANT(RETURN_DISTANCE_2_DIV);
+}
+
+FastNoise::FastNoise() {
 }

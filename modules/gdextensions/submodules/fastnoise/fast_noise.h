@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  noise.h                                                               */
+/*  fast_noise.h                                                          */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -31,13 +31,21 @@
 #ifndef FASTNOISE_NOISE_H
 #define FASTNOISE_NOISE_H
 
-#include "FastNoise.h"
-#include "core/reference.h"
+#include "core/image.h"
+#include "core/resource.h"
+#include "thirdparty/fastnoise/FastNoise.h"
 
 typedef fastnoise::FastNoise _FastNoise;
 
-class FastNoise : public Reference {
-	GDCLASS(FastNoise, Reference)
+class FastNoise : public Resource {
+	GDCLASS(FastNoise, Resource)
+	OBJ_SAVE_TYPE(FastNoise);
+
+	_FastNoise _noise;
+	Ref<FastNoise> _cellular_lookup_ref;
+
+protected:
+	static void _bind_methods();
 
 public:
 	// Enums Godot-style (same values)
@@ -84,8 +92,6 @@ public:
 		RETURN_DISTANCE_2_DIV = _FastNoise::Distance2Div
 	};
 
-	FastNoise();
-
 	int get_seed() const { return _noise.GetSeed(); }
 	void set_seed(int seed) { _noise.SetSeed(seed); }
 
@@ -128,30 +134,20 @@ public:
 	void set_gradient_perturbation_amplitude(real_t amp) { _noise.SetGradientPerturbAmp(amp); }
 	real_t get_gradient_perturbation_amplitude() const { return _noise.GetGradientPerturbAmp(); }
 
-	// 2D
+	float get_noise_2d(float x, float y) const { return _noise.GetNoise(x, y); } // 2D
+	float get_noise_3d(float x, float y, float z) const { return _noise.GetNoise(x, y, z); } // 3D
+	float get_simplex_4d(float x, float y, float z, float w) const { return _noise.GetSimplex(x, y, z, w); } // 4D
+	float get_white_noise_4d(float x, float y, float z, float w) const { return _noise.GetWhiteNoise(x, y, z, w); } // 4D
 
-	float get_noise_2d(float x, float y) { return _noise.GetNoise(x, y); }
-
-	// 3D
-
-	float get_noise_3d(float x, float y, float z) { return _noise.GetNoise(x, y, z); }
-
-	// 4D
-
-	float get_simplex_4d(float x, float y, float z, float w) { return _noise.GetSimplex(x, y, z, w); }
-	float get_white_noise_4d(float x, float y, float z, float w) { return _noise.GetWhiteNoise(x, y, z, w); }
+	Ref<Image> get_image(int p_width, int p_height, const Vector2 &p_noise_offset = Vector2()) const;
+	Ref<Image> get_seamless_image(int p_size, bool p_white_noise = false) const;
 
 	// Convenience
 
 	float get_noise_2dv(Vector2 pos) { return _noise.GetNoise(pos.x, pos.y); }
 	float get_noise_3dv(Vector3 pos) { return _noise.GetNoise(pos.x, pos.y, pos.z); }
 
-protected:
-	static void _bind_methods();
-
-private:
-	_FastNoise _noise;
-	Ref<FastNoise> _cellular_lookup_ref;
+	FastNoise();
 };
 
 // Make Variant happy with custom enums

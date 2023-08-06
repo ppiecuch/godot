@@ -184,6 +184,11 @@ public:
 		return data[p_index];
 	}
 
+	_FORCE_INLINE_ T &back(int p_index = 0) {
+		CRASH_BAD_UNSIGNED_INDEX(count - 1 - p_index, count);
+		return data[count - 1 - p_index];
+	}
+
 	void fill(T p_val) {
 		for (U i = 0; i < count; i++) {
 			data[i] = p_val;
@@ -210,6 +215,15 @@ public:
 			}
 		}
 		return -1;
+	}
+
+	bool has(const T &p_val, U p_from = 0) const {
+		for (U i = p_from; i < count; i++) {
+			if (data[i] == p_val) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	template <class C>

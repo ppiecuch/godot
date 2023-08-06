@@ -1,11 +1,8 @@
 extends Node
 
-# class member variables go here:
 var version = "0.1"
 
 func _ready():
-	# Called when the node is added to the scene for the first time.
-	# Initialization here
 	var pck_file = args(0)
 	var input_folder = args(1)
 	print("***")
@@ -24,7 +21,6 @@ func _ready():
 	else:
 		print("Current folder cannot read")
 	pck_Packager(input_folder, pck_file)
-	pass
 
 func _add_dir_contents(dir:Directory, files:Array, directories:Array):
 	dir.list_dir_begin(true, false)
@@ -62,4 +58,3 @@ func pck_Packager(path, pckfile):
 		packaging.flush(true)
 	else:
 		print("An error occurred when trying to access the path '%s'" % path)
-	pass

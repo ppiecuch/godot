@@ -75,6 +75,22 @@ public:
 		return Vector2(Math::cos(t), Math::sin(t));
 	}
 
+	// https://karthikkaranth.me/blog/generating-random-points-in-a-sphere/
+	_FORCE_INLINE_ Vector3 randv_sphere() {
+		Vector3 R;
+		real_t L;
+		do {
+			// Check random vectors in the unit sphere so result is statistically uniform.
+			R.x = randbase.random(real_t(-1), real_t(1));
+			R.y = randbase.random(real_t(-1), real_t(1));
+			R.z = randbase.random(real_t(-1), real_t(1));
+			L = R.length_squared();
+		} while(L > 1 || L < CMP_EPSILON);
+		// return unsafe normal
+		const real_t scale = Math::inv_sqrt(R.x*R.x + R.y*R.y + R.z*R.z);
+		return R * scale;
+	}
+
 	RandomNumberGenerator();
 };
 

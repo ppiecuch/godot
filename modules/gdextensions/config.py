@@ -70,6 +70,8 @@ def configure(env):
         "spinners",
         "spacemouse",
         "media",
+        "hwinfo",
+        "synthbenchmark",
         "runtimeprofiler",
     ]
     opts = Variables()

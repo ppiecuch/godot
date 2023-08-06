@@ -95,18 +95,18 @@ void MeshEditor::edit(Ref<Mesh> p_mesh) {
 	submesh = 0;
 	mesh_instance->set_mesh(mesh);
 
+	next_mesh->hide();
+	prev_mesh->hide();
+	submesh_info->hide();
+
 	if (Ref<ArrayMesh> am = mesh) {
-		if (am->get_submesh_count() > 0) {
-			next_mesh->set_visible(true);
-			prev_mesh->set_visible(true);
-			mesh_instance->set_mesh(shown = am->get_submesh(submesh));
-			submesh_info->set_visible(true);
+		if (am->is_multimesh() && am->get_submesh_count() > 0) {
+			next_mesh->show();
+			prev_mesh->show();
+			mesh_instance->set_mesh(shown = am->get_submesh_by_index(submesh));
+			submesh_info->show();
 			_update_submesh_info();
 		}
-	} else {
-		next_mesh->set_visible(false);
-		prev_mesh->set_visible(false);
-		submesh_info->set_visible(false);
 	}
 
 	rot_x = Math::deg2rad(-15.0);
@@ -128,7 +128,8 @@ void MeshEditor::_button_pressed(Node *p_button) {
 		if (Ref<ArrayMesh> am = mesh) {
 			if (submesh < am->get_submesh_count() - 1) {
 				++submesh;
-				Ref<Mesh> m = am->get_submesh(submesh);
+				Ref<Mesh> m = am->get_submesh_by_index(submesh);
+				ERR_FAIL_NULL(m);
 				mesh_instance->set_mesh(m);
 				_update_from_aabb(m);
 				_update_submesh_info();
@@ -142,7 +143,8 @@ void MeshEditor::_button_pressed(Node *p_button) {
 		if (Ref<ArrayMesh> am = mesh) {
 			if (submesh) {
 				--submesh;
-				Ref<Mesh> m = am->get_submesh(submesh);
+				Ref<Mesh> m = am->get_submesh_by_index(submesh);
+				ERR_FAIL_NULL(m);
 				mesh_instance->set_mesh(m);
 				_update_from_aabb(m);
 				_update_submesh_info();

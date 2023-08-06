@@ -57,10 +57,10 @@ class OpenSimplexNoise : public Resource {
 
 	static uint8_t _rand_perm[512]; // random table
 
-public:
-	OpenSimplexNoise();
-	~OpenSimplexNoise();
+protected:
+	static void _bind_methods();
 
+public:
 	void _init_seeds();
 
 	void set_seed(int seed);
@@ -106,8 +106,8 @@ public:
 	float get_multi_noise_3d(float x, float y, float z) const;
 	float get_multi_noise_4d(float x, float y, float z, float w) const;
 
-protected:
-	static void _bind_methods();
+	OpenSimplexNoise();
+	~OpenSimplexNoise();
 };
 
 #endif // OPEN_SIMPLEX_NOISE_H

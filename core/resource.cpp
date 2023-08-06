@@ -432,7 +432,7 @@ void ResourceCache::reload_externals() {
 
 bool ResourceCache::has(const String &p_path) {
 	lock.read_lock();
-	bool b = resources.has(p_path);
+	const bool b = resources.has(p_path);
 	lock.read_unlock();
 
 	return b;

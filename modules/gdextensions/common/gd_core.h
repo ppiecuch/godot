@@ -41,6 +41,7 @@
 #include "core/os/os.h"
 #include "core/print_string.h"
 #include "core/ustring.h"
+#include "scene/resources/font.h"
 
 #include <algorithm>
 #include <deque>
@@ -112,6 +113,7 @@
 #define nullref(pClass) Ref<pClass>()
 #define selfref(pClass) Ref<pClass>(this)
 
+String string_ellipsis(const Ref<Font> &p_font, const String &p_text, real_t p_max_width);
 String string_format(const char *p_format, ...);
 String array_concat(const Array &p_args);
 #define vconcat(...) array_concat(array(__VA_ARGS__))
