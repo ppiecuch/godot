@@ -32,8 +32,7 @@
 
 #include "core/variant.h"
 
-// main proc
-extern Array rock_gen(int depth = 3, int randseed = 0, real_t smoothness = 1, bool smoothed = false);
+extern Array rock_gen(int depth = 3, int randseed = 0, real_t smoothness = 1, bool smoothed = false); // main generator
 
 void RockMesh::set_depth(int p_depth) {
 	if (depth != p_depth) {

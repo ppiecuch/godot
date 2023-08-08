@@ -34,6 +34,7 @@
 #include "core/math/math_defs.h"
 
 typedef unsigned int uint_t;
+typedef unsigned char uchar_t;
 
 uint_t CompactLog2(uint_t i);
 uint_t Log2(uint_t i);
@@ -63,8 +64,8 @@ void Factorise(uint_t i, uint_t facteurs[], int &factptr);
 void FacteursPropres(uint_t i, uint_t **facteursPropres, int &factptr);
 int Premier(uint_t i);
 int RelativementPremier(uint_t a, uint_t b);
-uint_t RelativementPremierSqrt(unsigned a);
-uint_t RelativementPremierPhi(unsigned a);
+uint_t RelativementPremierSqrt(uint_t a);
+uint_t RelativementPremierPhi(uint_t a);
 uint_t GenerateurStochastique(uint_t q);
 uint_t PlusPetitGenerateur(uint_t q);
 uint_t NiemeRacineUniteStochastique(uint_t q, uint_t m);

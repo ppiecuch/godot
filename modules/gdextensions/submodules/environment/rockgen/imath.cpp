@@ -154,7 +154,7 @@ uint_t ModExpoDiscrete(uint_t a, uint_t p, uint_t m) {
 	if (p == 0) {
 		return 1;
 	} else {
-		unsigned i = 1, y = a;
+		uint_t i = 1, y = a;
 		while (p) {
 			if (p & 1) {
 				i = (i * y) % m;
@@ -339,7 +339,7 @@ void UDivMod(uint_t a, uint_t b, uint_t &q, uint_t &r) {
 // 1) Il y en a 6541, à un 32 bit chaque, c'est gros!
 // 2) L'algorithme de factorisation parcourre la table séquentiellement de toutes facons!
 // 3) L'algo change si peu! (en fait, c'est assez subtil comme différence)
-unsigned char dpremiers[6541] =
+uchar_t dpremiers[6541] =
 #include "dprimes.inl"
 		;
 
