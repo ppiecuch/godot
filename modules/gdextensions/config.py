@@ -62,7 +62,6 @@ def configure(env):
         "scenemerge",
         "texturepacker",
         "ldrdraw",
-        "rockgen",
         "opensteer",
         "tileengine",
         "sparkparticles",

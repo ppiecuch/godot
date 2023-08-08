@@ -138,21 +138,21 @@ def create_v_template(submodule, class_file):
     with open(os.path.join("submodules", submodule, class_file)) as f:
         lines = [line[2:].strip() for line in f if line.startswith("//")]
     found_info = False
-    descr = { "properties" : [], "methods" : [] }
+    descr = {"properties": [], "methods": []}
     for line in lines:
         if found_info:
             if "END}}" in line:
                 break
             if "- property:" in line:
-                _, property_descr = line.split(':')
+                _, property_descr = line.split(":")
                 descr["properties"] += [property_descr]
                 continue
             if "- method:" in line:
-                _, method_descr = line.split(':')
+                _, method_descr = line.split(":")
                 descr["methods"] += [method_descr]
                 continue
-            if ':' in line:
-                class_name, base_class = line.split(':')
+            if ":" in line:
+                class_name, base_class = line.split(":")
                 descr["class_name"] = class_name
                 if snake_case(class_name) == class_name:
                     print("%s should be %s" % (snake_case(class_name), class_name))
@@ -188,10 +188,13 @@ def create_v_template(submodule, class_file):
     template_h += "};\n"
     template_h += "#endif // %s\n" % descr["class_name"].upper()
     template_cpp = ""
-    template_cpp = "extern \"C\" %s_init(void *p_self);\n" % class_file_name
+    template_cpp = 'extern "C" %s_init(void *p_self);\n' % class_file_name
     template_cpp += "\n"
     template_cpp += "void %s::_bind_methods() { %s_bind_methods(); }\n" % (descr["class_name"], class_file_name)
-    template_cpp += "void %s::_notifcation(int p_what) { %s_notification(this, p_what); }\n" % (descr["class_name"], class_file_name)
+    template_cpp += "void %s::_notifcation(int p_what) { %s_notification(this, p_what); }\n" % (
+        descr["class_name"],
+        class_file_name,
+    )
     template_cpp += "\n"
     for m in descr["methods"]:
         template_cpp += "int %s::%s { }\n" % (descr["class_name"], m)
@@ -267,6 +270,7 @@ modules = [
     "media/gifexporter",
     "media/smackvideo",
     "media/bmfimporter",
+    "hwinfo",
     "synthbenchmark",
     "runtimeprofiler",
 ]
@@ -285,12 +289,38 @@ if env["tools"]:
         modules += ["qrcodetexture"]
     if is_enabled("texturepacker"):
         modules += ["texturepacker"]
-
-if is_enabled("painteditor"):
-    thirdparty_sources += ["thirdparty/mypaint/libmypaint.c", "thirdparty/mypaint/json-c/libjson-c.c"]
+    if is_enabled("painteditor"):
+        thirdparty_sources += ["thirdparty/mypaint/libmypaint.c", "thirdparty/mypaint/json-c/libjson-c.c"]
+        modules += ["painteditor"]
 
 if is_enabled("cyberelements"):
     thirdparty_sources += ["thirdparty/libtess3/libtess3.cpp"]
+
+if is_enabled("fastnoise"):
+    thirdparty_sources += ["thirdparty/fastnoise/FastNoise.cpp"]
+
+if is_enabled("hwinfo"):
+    if env["platform"] == "x11":
+        thirdparty_sources += Glob("thirdparty/hwinfo/src/*.cpp") + Glob("thirdparty/hwinfo/src/platform_linux/*.cpp")
+    elif env["platform"] == "osx":
+        thirdparty_sources += Glob("thirdparty/hwinfo/src/*.cpp") + Glob("thirdparty/hwinfo/src/platform_apple/*.cpp")
+    else:
+        arch = env["arch"] if "arch" in env and env["arch"] else platform.machine()
+        print("(GDextensions) HWInfo is not supported on platform '%s/%s'." % (env["platform"], arch))
+        modules.remove("hwinfo")
+    if is_enabled("hwinfo"):
+        env_module.Append(
+            CPPPATH=[
+                "thirdparty/hwinfo/include",
+                "thirdparty/opencl-wrapper/src/",
+                "thirdparty/opencl-wrapper/src/OpenCL/include",
+            ]
+        )
+        env.Append(LIBPATH=[os.path.realpath(os.curdir) + "/thirdparty/opencl-wrapper/src/OpenCL/lib"])
+        if env["platform"] == "osx":
+            env.Append(LINKFLAGS=["-framework", "OpenCL"])
+        else:
+            add_external_libs(env, ["opencl"])
 
 if is_enabled("cpufeatures"):
     env_module.Append(CPPPATH=["thirdparty/cpu_features/include"])
@@ -369,8 +399,8 @@ if not env["disable_3d"]:
         if is_enabled("meshslicer"):
             modules += ["meshslicer"]
             sources += Glob("submodules/meshslicer/utils/*.cpp")
-        if is_enabled("rockgen"):
-            modules += ["rockgen"]
+        if is_enabled("environment/rockgen"):
+            modules += ["environment/rockgen"]
 
 if is_enabled("ldrdraw"):
     env_module.Append(CPPPATH=["thirdparty/libldr"])

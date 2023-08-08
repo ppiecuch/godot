@@ -8,9 +8,9 @@
 #if defined(HWINFO_X86)
 
 #ifdef _MSC_VER
-#include <Windows.h>
+#include <intrin.h>
 #else
-#include <cpuid.h>
+#include <i386/cpuid.h>
 #endif
 
 #define MAX_INTEL_TOP_LVL 4
