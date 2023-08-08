@@ -1,6 +1,6 @@
 #define GL_SILENCE_DEPRECATION
 
-#if defiend(__APPLE__)
+#if defined(__APPLE__)
 #include <OpenGL/OpenGL.h>
 #include <OpenGL/gl3.h>
 #elif defined(_WIN32)

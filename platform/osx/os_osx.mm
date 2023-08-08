@@ -137,7 +137,7 @@ struct mem_info_t {
 	int64_t texture_mem;
 };
 
-static mem_info_t get_dedicated_video_memory_mb() {
+static mem_info_t get_dedicated_video_memory_mb(bool *err = nullptr) {
 	GLint gl_rend_id = 0;
 	CGLGetParameter(CGLGetCurrentContext(), kCGLCPCurrentRendererID, &gl_rend_id);
 
@@ -156,24 +156,36 @@ static mem_info_t get_dedicated_video_memory_mb() {
 
 		GLint vmem, tmem = 0;
 #if MAC_OS_X_VERSION_MIN_REQUIRED >= 1070
-		if (CGLDescribeRenderer(rend_obj, r, kCGLRPVideoMemoryMegabytes, &vmem) == kCGLNoError) {
+		if (CGLDescribeRenderer(rend_obj, r, kCGLRPVideoMemoryMegabytes, &vmem) != kCGLNoError) {
 			print_verbose("Failed to retrive video memory info for current render device.");
 		}
-		if (CGLDescribeRenderer(rend_obj, r, kCGLRPTextureMemoryMegabytes, &tmem) == kCGLNoError) {
+		if (CGLDescribeRenderer(rend_obj, r, kCGLRPTextureMemoryMegabytes, &tmem) != kCGLNoError) {
 			print_verbose("Failed to retrive texture memory info for current render device.");
 		}
 #else
 		if (CGLDescribeRenderer(rend_obj, r, kCGLRPVideoMemory, &vmem) == kCGLNoError) {
-			print_verbose("Failed to retrive video memory info for current render device.");
 			vmem /= 1024 * 1024;
+		} else {
+			print_verbose("Failed to retrive video memory info for current render device.");
 		}
 		if (CGLDescribeRenderer(rend_obj, r, kCGLRPTextureMemory, &tmem) == kCGLNoError) {
-			print_verbose("Failed to retrive texture memory info for current render device.");
 			tmem /= 1024 * 1024;
+		} else {
+			print_verbose("Failed to retrive texture memory info for current render device.");
 		}
 #endif
+		if (err) {
+			*err = false;
+		}
 		return { vmem, tmem };
 	}
+
+	print_verbose("Current render device not found.");
+
+	if (err) {
+		*err = true;
+	}
+	return { 0, 0 };
 }
 
 @interface GodotApplication : NSApplication
