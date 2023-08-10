@@ -187,6 +187,10 @@ public:
 		return data[count - 1 - p_index];
 	}
 
+	_FORCE_INLINE_ T &top() { return back(); }
+	_FORCE_INLINE_ void push(T p_elem) { push_back(p_elem); }
+	_FORCE_INLINE_ void pop() { remove(count - 1); }
+
 	void fill(T p_val) {
 		for (U i = 0; i < count; i++) {
 			data[i] = p_val;

@@ -2,6 +2,7 @@
 
 #include "common/gd_core.h"
 #include "core/os/os.h"
+#include "core/ustring_preprocessor.h"
 #include "core/version.h"
 #include "drivers/video_common/video_utils.h"
 #include "scene/resources/material.h"
@@ -12,6 +13,19 @@
 #define SYNTH_BENCH_RELEASE "beta"
 
 #define ARRAY_COUNT(x) (sizeof(x) / sizeof(x[0]))
+
+enum {
+	BENCH_BANNER,
+	BENCH_CPU_TEST1,
+	BENCH_CPU_TEST2,
+	BENCH_CPU_RESULTS,
+	BENCH_GPU_BANNER,
+	BENCH_GPU_TEST1,
+	BENCH_GPU_TEST2,
+	BENCH_GPU_TEST3,
+	BENCH_GPU_RESULTS,
+	BENCH_SUMMARY,
+};
 
 real_t RayIntersectBenchmark();
 real_t FractalBenchmark();
@@ -53,6 +67,8 @@ static constexpr _FORCE_INLINE_ T divide_and_round_nearest(T Dividend, T Divisor
 
 #define CSTR(S) S.operator String().utf8().c_str()
 #define INT64(I) I.operator int64_t()
+
+#define string_format2(format, ...) string_format(format "\n", ##__VA_ARGS__)
 
 // 100: avg good CPU, <100:slower, >100:faster
 real_t SynthBenchmarkResults::compute_cpu_perf_index(Vector<real_t> *p_individual_results) const {
@@ -129,8 +145,119 @@ static TimeSample RunBenchmark(uint8_t p_work_scale, real_t (*p_function)()) {
 	return TimeSample(secs, secs / run_count);
 }
 
+static const char *gpu_bench_shader = R"(
+uniform sampler2D input_texture;
+
+// param xy should be a integer position (e.g. pixel position on the screen), repeats each 128x128 pixels
+// similar to a texture lookup but is only ALU
+// ~13 ALU operations (3 frac, 6 *, 4 mad)
+float PseudoRandom(float2 xy) {
+	float2 pos = frac(xy / 128.0f) * 128.0f + float2(-64.340622f, -72.465622f);
+	return frac(dot(pos.xyx * pos.xyy, float3(20.390625f, 60.703125f, 2.4281209f))); // found by experimentation
+}
+
+#if VS_METHOD_0 // Simple Quad Vertex Shader, used for pixel tests
+
+in float4 InPosition : ATTRIBUTE0,
+in float2 UV : ATTRIBUTE1,
+out float2 OutUV : TEXCOORD0,
+out float4 OutPosition : SV_POSITION
+
+void vertex() {
+	// DrawRectangle(InPosition, UV, OutPosition, OutUV);
+	OutPosition = InPosition;
+	OutPosition.xy = -1.0f + 2.0f * (DrawRectangleParameters.PosScaleBias.zw + (InPosition.xy * DrawRectangleParameters.PosScaleBias.xy)) * DrawRectangleParameters.InvTargetSizeAndTextureSize.xy;
+	OutPosition.xy *= float2( 1, -1 );
+	OutTexCoord.xy = (DrawRectangleParameters.UVScaleBias.zw + (InTexCoord.xy * DrawRectangleParameters.UVScaleBias.xy)) * DrawRectangleParameters.InvTargetSizeAndTextureSize.zw;
+}
+
+#elif VS_METHOD_1 // Vertex Throughput Test
+
+in float4 Arg0 : ATTRIBUTE0,
+in float4 Arg1 : ATTRIBUTE1,
+in float4 Arg2 : ATTRIBUTE2,
+in float4 Arg3 : ATTRIBUTE3,
+in float4 Arg4 : ATTRIBUTE4,
+out float2 OutUV : TEXCOORD0,
+out float4 OutPosition : SV_POSITION
+
+void vertex() {
+	OutPosition = Arg0 + Arg1 + Arg2 + Arg3 + Arg4;
+	OutUV = 0.0f;
+}
+
+#elif VS_METHOD_2
+
+in uint VertexID : SV_VertexID,
+out float2 OutUV : TEXCOORD0,
+out float4 OutPosition : SV_POSITION
+
+void vertex() {
+	OutPosition = float4(VertexID, 0, 0, 0);
+	OutUV = 0.0f;
+}
+
+#else
+#error Invalid VS_METHOD
+#endif
+
+float2 InUV : TEXCOORD0, out float4 OutColor : SV_Target0
+
+// pixel shader entry point
+void fragment() {
+	OutColor = 0;
+
+#if PS_METHOD_0 // ALU heavy
+	{
+		// some dependency to the input texture
+		OutColor = Texture2DSample(input_texture, input_textureSampler, InUV) * 0.99f;
+
+		UNROLL for(int i = 0; i < 16; ++i) {
+			// todo: use float4 MAD to get raw GPU performance (should be same for scalar and non scalar)
+			float4 Value = PseudoRandom(InUV + float2(i * 0.001f, 0));
+			OutColor.r += Value.r;
+		}
+	}
+#elif PS_METHOD_1 // TEX heavy
+	{
+		UNROLL for(int i = 0; i < 16; ++i) {
+			float4 Value = Texture2DSample(input_texture, input_textureSampler, InUV + float2(i * 0.0001f, 0));
+			OutColor.r += Value.r;
+		}
+	}
+#elif PS_METHOD_2 // dependent TEX heavy
+	{
+		UNROLL for(int i = 0; i < 16; ++i) {
+			float4 Value = Texture2DSample(input_texture, input_textureSampler, InUV + float2(i * 0.001f, OutColor.r * 0.001f));
+			OutColor.r += Value.r;
+		}
+	}
+#elif PS_METHOD_3
+	OutColor = Texture2DSample(input_texture, input_textureSampler, InUV) * 0.99f; // some dependency to the input texture
+#elif PS_METHOD_4 // Bandwidth heavy
+	{
+		float2 PixelPos = frac(InUV * 512.0f / 16.0f) * 16.0f;
+
+		UNROLL for(int y = 0; y < 4; ++y) {
+			UNROLL for(int x = 0; x < 4; ++x) {
+				// should be bandwidth trashing enough to profile memory bandwidth
+				float4 Value = Texture2DSample(input_texture, input_textureSampler, (PixelPos + float2(x, y)) * 16 / 512.0f);
+				OutColor.r += Value.r;
+			}
+		}
+	}
+#elif PS_METHOD_5
+	// Simple Pixel Shader used when testing vertex throughput.
+	// Do Nothing (OutColor is black).
+#else
+#error Invalid PS_METHOD
+#endif
+
+	// TODO: Framebuffer blending test, clear test, vertex performance, draw call performance, constant buffer upload performance
+})";
+
 struct TestRender {
-	Reference *owner;
+	Object *owner;
 	RID scenario, viewport, viewport_texture, camera, light, light_instance, mesh_instance;
 
 	void _create();
@@ -233,15 +360,17 @@ void TestRender::_destroy() {
 }
 
 template <int NumMethods>
-void print_gpu_stats(SynthBenchmarkStat (&GPUStats)[NumMethods], const String &end_string) {
+String print_gpu_stats(SynthBenchmarkStat (&GPUStats)[NumMethods], const String &end_string) {
+	String report;
 	for (uint32_t MethodId = 0; MethodId < NumMethods; ++MethodId) {
-		printf_verbose("         ... %.3f %s, Confidence=%.0f%% '%s'%s",
-				1.0f / GPUStats[MethodId].get_normalized_time(),
+		report += string_format2("         ... %.3f %s, Confidence=%.0f%% '%s'%s",
+				1.0 / GPUStats[MethodId].get_normalized_time(),
 				GPUStats[MethodId].get_value_type().c_str(),
 				GPUStats[MethodId].get_confidence(),
 				GPUStats[MethodId].get_desc().c_str(),
 				end_string.c_str());
 	}
+	return report;
 }
 
 void SynthBenchmark::_render_done(const Variant &p_udata) {
@@ -254,152 +383,206 @@ void SynthBenchmark::_render_done(const Variant &p_udata) {
 			}
 		}
 	}
-	emit_signal("_render_ready", p_udata);
+	String report;
+	_gpu_time = results.compute_total_gpu_time();
+	if (_gpu_time > 0) {
+		switch (_progress) {
+			case BENCH_GPU_TEST1:
+				report += string_format2("  GPU first test: %.2fs", _gpu_time);
+				break;
+			case BENCH_GPU_TEST2:
+				report += string_format2("  GPU second test: %.2fs", _gpu_time);
+				break;
+			case BENCH_GPU_TEST3:
+				report += string_format2("  GPU third test: %.2fs", _gpu_time);
+				break;
+		}
+		report += print_gpu_stats(results.GPUStats, " (likely to be inaccurate)");
+	}
+	if (!report.empty()) {
+		results.report += report;
+	}
+	call_deferred("_benchmark", ++_progress); // continue
 }
 
 void SynthBenchmark::trigger_gpu_benchmark(uint8_t p_work_scale) {
+	Array mesh_array;
+	mesh_array.resize(VS::ARRAY_MAX);
+	mesh_array[VS::ARRAY_VERTEX] = parray(
+			Vector3(0, 0, 0),
+			Vector3(1, 0, 0),
+			Vector3(0, 0, 0),
+			Vector3(0, 1, 0),
+			Vector3(0, 0, 0),
+			Vector3(0, 0, 1));
+	mesh_array[VS::ARRAY_COLOR] = parray(
+			Color::named("red"),
+			Color::named("red"),
+			Color::named("green"),
+			Color::named("green"),
+			Color::named("blue"),
+			Color::named("blue"));
 	Ref<ArrayMesh> mesh = memnew(ArrayMesh);
+	mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, mesh_array, Array());
+	Ref<ShaderMaterial> material = memnew(ShaderMaterial);
+	Ref<Shader> shader = memnew(Shader);
+	shader->set_code(StringProcessor("VS_METHOD_1,UNROLL").process(gpu_bench_shader));
+	material->set_shader(shader);
+	mesh->surface_set_material(0, material);
 	render->_trigger(mesh);
 }
 
-#define string_format2(format, ...) string_format(format "\n", ##__VA_ARGS__)
+bool SynthBenchmark::progress_benchmark() {
+	uint8_t work_scale = _work_scale;
+	bool gpu_benchmark = _gpu_benchmark;
 
-String SynthBenchmark::run_benchmark(bool p_gpu_benchmark, uint8_t p_work_scale) {
-	ERR_FAIL_COND_V(p_work_scale == 0, String());
-
-	String report;
-
-	if (!p_gpu_benchmark) {
+	if (!gpu_benchmark) {
 		// run a very quick GPU benchmark (less confidence but at least we get some numbers)
 		// it costs little time and we get some stats
-		p_work_scale = 1;
+		work_scale = 1;
 	}
 
-	const uint32_t start_time = OS::get_singleton()->get_ticks_msec();
+	String report;
+	bool next_step = true;
 
-	report += string_format2("SynthBenchmark (%s)", get_version_string().utf8().c_str());
-	report += string_format2("===============");
+	const uint64_t start_time = OS::get_singleton()->get_ticks_usec();
+
+	switch (_progress) {
+		case BENCH_BANNER: {
+			report += string_format2("SynthBenchmark (%s)", get_version_string().utf8().c_str());
+			report += string_format2("===============");
 
 #if DEBUG_ENABLED
-	report += string_format2("  Note: Values are not trustable because this is a DEBUG build!");
+			report += string_format2("  Note: Values are not trustable because this is a DEBUG build!");
 #endif
 
-	report += string_format2("Requested WorkScale: %d", p_work_scale);
-	report += string_format2("Main Processor:");
+			report += string_format2("Requested WorkScale: %d", work_scale);
+			report += string_format2("Main Processor:");
+		} break;
 
-	// developer machine: Intel Xeon E5-2660 2.2GHz
-	// divided by the actual value on a developer machine to normalize the results
-	// index should be around 100 +-4 on developer machine in a development build (should be the same in shipping)
+			// developer machine: Intel Xeon E5-2660 2.2GHz
+			// divided by the actual value on a developer machine to normalize the results
+			// index should be around 100 +-4 on developer machine in a development build (should be the same in shipping)
 
-	results.CPUStats[0] = SynthBenchmarkStat("RayIntersect", 0.02561, "s/Run", 1);
-	results.CPUStats[0].set_measured_time(RunBenchmark(p_work_scale, RayIntersectBenchmark));
+		case BENCH_CPU_TEST1: {
+			results.CPUStats[0] = SynthBenchmarkStat("RayIntersect", 0.02561, "s/Run", 1);
+			results.CPUStats[0].set_measured_time(RunBenchmark(work_scale, RayIntersectBenchmark));
+		} break;
 
-	results.CPUStats[1] = SynthBenchmarkStat("Fractal", 0.0286, "s/Run", 1.5);
-	results.CPUStats[1].set_measured_time(RunBenchmark(p_work_scale, FractalBenchmark));
+		case BENCH_CPU_TEST2: {
+			results.CPUStats[1] = SynthBenchmarkStat("Fractal", 0.0286, "s/Run", 1.5);
+			results.CPUStats[1].set_measured_time(RunBenchmark(work_scale, FractalBenchmark));
+		} break;
 
-	for (uint32_t i = 0; i < ARRAY_COUNT(results.CPUStats); ++i) {
-		report += string_format2("         ... %f %s '%s'", results.CPUStats[i].get_normalized_time(), results.CPUStats[i].get_value_type().utf8().c_str(), results.CPUStats[i].get_desc().utf8().c_str());
-	}
+		case BENCH_CPU_RESULTS: {
+			for (uint32_t i = 0; i < ARRAY_COUNT(results.CPUStats); ++i) {
+				report += string_format2("         ... %f %s '%s'", results.CPUStats[i].get_normalized_time(), results.CPUStats[i].get_value_type().utf8().c_str(), results.CPUStats[i].get_desc().utf8().c_str());
+			}
 
-	report += string_format2("");
+			report += string_format2("");
 
-	const bool app_is64_bit = (sizeof(void *) == 8);
+			const bool app_is64_bit = (sizeof(void *) == 8);
 
-	report += string_format2("  CompiledTarget Bits: %s", app_is64_bit ? "64" : "32");
-	report += string_format2("  BUILD_INFO: %s", get_full_version_string().utf8().c_str());
-	report += string_format2("  BUILD_DEBUG: %d", DEBUG_ENABLED);
-	report += string_format2("  BUILD_VERBOSE: %d", OS::get_singleton()->is_stdout_verbose());
-	report += string_format2("  DATA_DIR: %s", OS::get_singleton()->get_data_path().utf8().c_str());
-	report += string_format2("  USER_DATA_DIR: %s", OS::get_singleton()->get_user_data_dir().utf8().c_str());
+			report += string_format2("  CompiledTarget Bits: %s", app_is64_bit ? "64" : "32");
+			report += string_format2("  BUILD_INFO: %s", get_full_version_string().utf8().c_str());
+			report += string_format2("  BUILD_DEBUG: %d", DEBUG_ENABLED);
+			report += string_format2("  BUILD_VERBOSE: %d", OS::get_singleton()->is_stdout_verbose());
+			report += string_format2("  DATA_DIR: %s", OS::get_singleton()->get_data_path().utf8().c_str());
+			report += string_format2("  USER_DATA_DIR: %s", OS::get_singleton()->get_user_data_dir().utf8().c_str());
 
-	report += string_format2("  CPU Name: %s", OS::get_singleton()->get_processor_name().utf8().c_str());
-	report += string_format2("  NumberOfCores (physical): %d", OS::get_singleton()->get_processor_count());
+			report += string_format2("  CPU Name: %s", OS::get_singleton()->get_processor_name().utf8().c_str());
+			report += string_format2("  NumberOfCores (physical): %d", OS::get_singleton()->get_processor_count());
 
-	for (uint32_t MethodId = 0; MethodId < ARRAY_COUNT(results.CPUStats); ++MethodId) {
-		report += string_format2("  CPU Perf Index %d: %.1f (weight %.2f)", MethodId, results.CPUStats[MethodId].compute_perf_index(), results.CPUStats[MethodId].get_weight());
-	}
+			for (uint32_t MethodId = 0; MethodId < ARRAY_COUNT(results.CPUStats); ++MethodId) {
+				report += string_format2("  CPU Perf Index %d: %.1f (weight %.2f)", MethodId, results.CPUStats[MethodId].compute_perf_index(), results.CPUStats[MethodId].get_weight());
+			}
+		} break;
 
-	report += string_format2(" ");
+		case BENCH_GPU_BANNER: {
+			report += string_format2(" ");
 
-	const Dictionary &ctx = OS::get_singleton()->get_video_system_info(OS::VIDEO_SYSTEM_CONTEXT_INFO);
-	const VideoDriverInfo &info = video_get_driver_info(ctx);
+			const Dictionary &ctx = OS::get_singleton()->get_video_system_info(OS::VIDEO_SYSTEM_CONTEXT_INFO);
+			const VideoDriverInfo &info = video_get_driver_info(ctx);
 
-	report += string_format2("Graphics:");
-	report += string_format2("  Driver Id: %d", OS::get_singleton()->get_current_video_driver());
-	report += string_format2("  Adapter Name: '%s'", CSTR(ctx[VideoContextInfoVideoRenderer]));
-	report += string_format2("  Vendor Id: %d", info.vendor);
-	report += string_format2("  Device Id: %d", info.renderer);
-	report += string_format2("  Device Revision: %s", video_get_video_version_string(info.version).utf8().c_str());
+			report += string_format2("Graphics:");
+			report += string_format2("  Driver Id: %d", OS::get_singleton()->get_current_video_driver());
+			report += string_format2("  Adapter Name: '%s'", CSTR(ctx[VideoContextInfoVideoRenderer]));
+			report += string_format2("  Vendor Id: %d", info.vendor);
+			report += string_format2("  Device Id: %d", info.renderer);
+			report += string_format2("  Device Revision: %s", video_get_video_version_string(info.version).utf8().c_str());
 
-	if (int64_t m = INT64(OS::get_singleton()->get_video_system_info(OS::VIDEO_SYSTEM_TOTAL_MEMORY))) {
-		report += string_format2("  GPU Total Memory: %d MB", m);
-	}
-	if (int64_t m = INT64(OS::get_singleton()->get_video_system_info(OS::VIDEO_SYSTEM_TEXTURE_MEMORY))) {
-		report += string_format2("  GPU Texture Memory: %d MB", m);
-	}
-	if (int64_t m = INT64(OS::get_singleton()->get_video_system_info(OS::VIDEO_SYSTEM_AVAILABLE_MEMORY))) {
-		report += string_format2("  GPU Available Memory: %d MB", m);
-	}
+			if (int64_t m = INT64(OS::get_singleton()->get_video_system_info(OS::VIDEO_SYSTEM_TOTAL_MEMORY))) {
+				report += string_format2("  GPU Total Memory: %d MB", m);
+			}
+			if (int64_t m = INT64(OS::get_singleton()->get_video_system_info(OS::VIDEO_SYSTEM_TEXTURE_MEMORY))) {
+				report += string_format2("  GPU Texture Memory: %d MB", m);
+			}
+			if (int64_t m = INT64(OS::get_singleton()->get_video_system_info(OS::VIDEO_SYSTEM_AVAILABLE_MEMORY))) {
+				report += string_format2("  GPU Available Memory: %d MB", m);
+			}
+		} break;
 
-	real_t gpu_time = 0;
-
-	// not always done - cost some time.
-	if (p_gpu_benchmark) {
+		// Not always done - cost some time.
 		// First we run a quick test. If that shows very bad performance we don't need another test
 		// The hardware is slow, we don't need a long test and risk driver TDR (driver recovery).
 		// We have seen this problem on very low end GPUs.
-		{
-			const real_t first_work_scale = 0.01 * p_work_scale;
-			const real_t second_work_scale = 0.1 * p_work_scale;
-
-			trigger_gpu_benchmark(first_work_scale);
-			gpu_time = results.compute_total_gpu_time();
-			if (gpu_time > 0) {
-				report += string_format2("  GPU first test: %.2fs", gpu_time);
-				print_gpu_stats(results.GPUStats, " (likely to be very inaccurate)");
-			}
-
-			if (gpu_time < 0.15) {
-				trigger_gpu_benchmark(second_work_scale);
-				gpu_time = results.compute_total_gpu_time();
-
-				if (gpu_time > 0) {
-					report += string_format2("  GPU second test: %.2fs", gpu_time);
-					print_gpu_stats(results.GPUStats, " (likely to be inaccurate)");
-				}
-
-				if (gpu_time < 0.15) {
-					trigger_gpu_benchmark(p_work_scale);
-					gpu_time = results.compute_total_gpu_time();
-
-					if (gpu_time > 0) {
-						report += string_format2("  GPU third test: %.2fs", gpu_time);
-						print_gpu_stats(results.GPUStats, "");
-					}
-				}
+		case BENCH_GPU_TEST1: {
+			if (gpu_benchmark) {
+				const real_t first_work_scale = 0.01 * work_scale;
+				trigger_gpu_benchmark(first_work_scale);
+				next_step = false;
 			}
 		}
 
-		if (gpu_time > 0) {
-			report += string_format2("  GPU Final Results:");
-			print_gpu_stats(results.GPUStats, "");
+		case BENCH_GPU_TEST2: {
+			if (gpu_benchmark) {
+				if (_gpu_time < 0.15) {
+					const real_t second_work_scale = 0.1 * work_scale;
+					trigger_gpu_benchmark(second_work_scale);
+					next_step = false;
+				}
+			}
+		} break;
+
+		case BENCH_GPU_TEST3: {
+			if (gpu_benchmark) {
+				if (_gpu_time < 0.15) {
+					trigger_gpu_benchmark(work_scale);
+					next_step = false;
+				}
+			}
+		} break;
+
+		case BENCH_GPU_RESULTS: {
+			if (_gpu_time > 0) {
+				report += string_format2("  GPU Final Results:");
+				print_gpu_stats(results.GPUStats, "");
+				report += string_format2("");
+
+				for (uint32_t MethodId = 0; MethodId < ARRAY_COUNT(results.GPUStats); ++MethodId) {
+					report += string_format2("  GPU Perf Index %d: %.1f (weight %.2f)", MethodId, results.GPUStats[MethodId].compute_perf_index(), results.GPUStats[MethodId].get_weight());
+				}
+
+				report += string_format2("  GPUIndex: %.1f", results.compute_gpu_perf_index());
+			}
+		} break;
+
+		case BENCH_SUMMARY: {
+			report += string_format2("  CPUIndex: %.1f", results.compute_cpu_perf_index());
 			report += string_format2("");
-
-			for (uint32_t MethodId = 0; MethodId < ARRAY_COUNT(results.GPUStats); ++MethodId) {
-				report += string_format2("  GPU Perf Index %d: %.1f (weight %.2f)", MethodId, results.GPUStats[MethodId].compute_perf_index(), results.GPUStats[MethodId].get_weight());
-			}
-		}
+			report += string_format2("         ... Total Time: %.2f sec", results.run_time += (OS::get_singleton()->get_ticks_usec() - start_time) / 1000000.);
+		} break;
 	}
 
-	if (gpu_time > 0) {
-		report += string_format2("  GPUIndex: %.1f", results.compute_gpu_perf_index());
+	if (!report.empty()) {
+		results.report += report;
 	}
 
-	report += string_format2("  CPUIndex: %.1f", results.compute_cpu_perf_index());
-	report += string_format2("");
-	report += string_format2("         ... Total Time: %.2f sec", (OS::get_singleton()->get_ticks_msec() - start_time) / 1000.);
+	if (_progress != BENCH_SUMMARY) {
+		results.run_time += (OS::get_singleton()->get_ticks_usec() - start_time) / 1000000.;
+	}
 
-	return results.report = report;
+	return next_step;
 }
 
 String SynthBenchmark::get_version_string() const {
@@ -412,25 +595,53 @@ String SynthBenchmark::get_version_string() const {
 	return ver;
 }
 
-String SynthBenchmark::benchmark() {
-	run_benchmark();
-	emit_signal("benchmark_ready");
+String SynthBenchmark::get_benchmark_report() const {
 	return results.report;
 }
 
+bool SynthBenchmark::is_benchmark_in_progress() const {
+	return _progress > 0;
+}
+
+void SynthBenchmark::benchmark(bool p_gpu_benchmark, uint8_t p_work_scale) {
+	ERR_FAIL_COND_MSG(_progress > 0, "Benchmark in progress");
+	ERR_FAIL_COND(_work_scale == 0);
+	_gpu_benchmark = p_gpu_benchmark;
+	_work_scale = p_work_scale;
+	call_deferred("_benchmark", 0);
+}
+
+void SynthBenchmark::_benchmark(int p_progress) {
+	ERR_FAIL_COND_MSG(_progress != p_progress, "Wrong benchmark sequence");
+	print_verbose("Running benchmark sequence " + itos(_progress) + " ..");
+	if (progress_benchmark()) {
+		if (_progress == BENCH_SUMMARY) {
+			emit_signal("benchmark_ready");
+		} else {
+			call_deferred("_benchmark", ++_progress); // continue
+		}
+	}
+}
+
 void SynthBenchmark::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("benchmark"), &SynthBenchmark::benchmark);
+	ClassDB::bind_method(D_METHOD("benchmark", "gpu_benchmark", "work_scale"), &SynthBenchmark::benchmark, DEFVAL(true), DEFVAL(10));
+	ClassDB::bind_method(D_METHOD("is_benchmark_in_progress"), &SynthBenchmark::is_benchmark_in_progress);
+	ClassDB::bind_method(D_METHOD("get_benchmark_report"), &SynthBenchmark::get_benchmark_report);
 	ClassDB::bind_method(D_METHOD("get_version_string"), &SynthBenchmark::get_version_string);
 
+	ClassDB::bind_method(D_METHOD("_benchmark", "progress"), &SynthBenchmark::_benchmark);
 	ClassDB::bind_method(D_METHOD("_render_done"), &SynthBenchmark::_render_done);
 
-	ADD_SIGNAL(MethodInfo("_render_ready"));
 	ADD_SIGNAL(MethodInfo("benchmark_ready"));
 }
 
 SynthBenchmark::SynthBenchmark() {
 	render = memnew(TestRender);
 	render->owner = this;
+	_gpu_benchmark = true;
+	_gpu_time = 0;
+	_work_scale = 10;
+	_progress = 0;
 }
 
 SynthBenchmark::~SynthBenchmark() {
