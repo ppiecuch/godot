@@ -133,6 +133,7 @@ def snake_case(name):
 
 
 def create_v_template(submodule, class_file):
+    print("(GDExtensions) create V template for module: %s" % submodule)
     class_file_name = os.path.splitext(class_file)[0]
     # read class description
     with open(os.path.join("submodules", submodule, class_file)) as f:
@@ -273,6 +274,8 @@ modules = [
     "hwinfo",
     "synthbenchmark",
     "runtimeprofiler",
+    "textui",
+    "textwidgets",
 ]
 
 thirdparty_sources = [
@@ -292,6 +295,15 @@ if env["tools"]:
     if is_enabled("painteditor"):
         thirdparty_sources += ["thirdparty/mypaint/libmypaint.c", "thirdparty/mypaint/json-c/libjson-c.c"]
         modules += ["painteditor"]
+    if is_enabled("goxel"):
+        env_module.Append(CPPPATH=[os.path.realpath(os.curdir) + "/submodules/goxel"])
+        modules += ["goxel"]
+    if is_enabled("vcore"):
+        env_module.Append(CPPPATH="thirdparty/gc-8.2.2/include")
+        thirdparty_sources += ["thirdparty/gc-8.2.2/extra/gc.c"]
+
+if is_enabled("textui"):
+    thirdparty_sources += ["thirdparty/textui/textUI.c", "thirdparty/textui/textUI_support.cpp"]
 
 if is_enabled("cyberelements"):
     thirdparty_sources += ["thirdparty/libtess3/libtess3.cpp"]
@@ -304,6 +316,12 @@ if is_enabled("hwinfo"):
         thirdparty_sources += Glob("thirdparty/hwinfo/src/*.cpp") + Glob("thirdparty/hwinfo/src/platform_linux/*.cpp")
     elif env["platform"] == "osx":
         thirdparty_sources += Glob("thirdparty/hwinfo/src/*.cpp") + Glob("thirdparty/hwinfo/src/platform_apple/*.cpp")
+    elif env["platform"] == "iphone":
+        thirdparty_sources += (
+            Glob("thirdparty/hwinfo/src/*.cpp")
+            + Glob("thirdparty/hwinfo/src/platform_apple/*.cpp")
+            + Glob("thirdparty/hwinfo/src/platform_apple/*.m")
+        )
     else:
         arch = env["arch"] if "arch" in env and env["arch"] else platform.machine()
         print("(GDextensions) HWInfo is not supported on platform '%s/%s'." % (env["platform"], arch))

@@ -52,13 +52,22 @@
 
 #include "java_godot_io_wrapper.h"
 #include "java_godot_wrapper.h"
+#include "java_jni_object.h"
 #include "tts_android.h"
 
 const char *OS_Android::ANDROID_EXEC_PATH = "apk";
 static const int DEFAULT_WINDOW_WIDTH = 800;
 static const int DEFAULT_WINDOW_HEIGHT = 600;
 
-String _remove_symlink(const String &dir) {
+static long getNativeHeapAllocatedSize(JNIEnv *env = nullptr) {
+	return JavaJniObject::callStaticMethod<jlong>("android/os/Debug", "getNativeHeapAllocatedSize");
+}
+
+static long getNativeHeapSize(JNIEnv *env = nullptr) {
+	return JavaJniObject::callStaticMethod<jlong>("android/os/Debug", "getNativeHeapSize");
+}
+
+static String _remove_symlink(const String &dir) {
 	// Workaround for Android 6.0+ using a symlink.
 	// Save the current directory.
 	char current_dir_name[2048];

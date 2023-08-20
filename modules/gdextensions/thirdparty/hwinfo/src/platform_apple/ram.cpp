@@ -18,7 +18,7 @@
 namespace hwinfo {
 
 // _____________________________________________________________________________________________________________________
-static int64_t get_total_bytes() {
+static int64_t _get_total_bytes() {
   int64_t memsize = 0;
   size_t size = sizeof(memsize);
   if (sysctlbyname("hw.memsize", &memsize, &size, nullptr, 0) == 0) {
@@ -29,13 +29,7 @@ static int64_t get_total_bytes() {
 
 // _____________________________________________________________________________________________________________________
 RAM::RAM() {
-  _name = "<unknown>";
-  _vendor = "<unknown>";
-  _serialNumber = "<unknown>";
-  _model = "<unknown>";
-  _total_Bytes = get_total_bytes();
-  _free_Bytes = -1;
-  _available_Bytes = -1;
+  _total_Bytes = _get_total_bytes();
 }
 
 }  // namespace hwinfo

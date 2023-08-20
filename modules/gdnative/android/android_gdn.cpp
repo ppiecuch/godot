@@ -28,7 +28,7 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "modules/gdnative/gdnative.h"
+#include "gdnative/godotnative.h"
 
 // Code by Paritosh97 with minor tweaks by Mux213
 // These entry points are only for the android platform and are simple stubs in all others.

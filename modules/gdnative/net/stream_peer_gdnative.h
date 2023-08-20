@@ -32,8 +32,8 @@
 #define STREAM_PEER_GDNATIVE_H
 
 #include "core/io/stream_peer.h"
-#include "modules/gdnative/gdnative.h"
-#include "modules/gdnative/include/net/godot_net.h"
+#include "gdnative/godotnative.h"
+#include "net/godot_net.h"
 
 class StreamPeerGDNative : public StreamPeer {
 	GDCLASS(StreamPeerGDNative, StreamPeer);

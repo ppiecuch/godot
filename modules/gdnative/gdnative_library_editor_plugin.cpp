@@ -30,7 +30,7 @@
 
 #ifdef TOOLS_ENABLED
 #include "gdnative_library_editor_plugin.h"
-#include "gdnative.h"
+#include "godotnative.h"
 
 #include "editor/editor_scale.h"
 

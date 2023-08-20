@@ -32,7 +32,7 @@
 
 #include "gdnative/gdnative.h"
 
-#include "gdnative.h"
+#include "godotnative.h"
 
 #include "arvr/register_types.h"
 #include "nativescript/register_types.h"

@@ -398,6 +398,7 @@ if __name__ == "__main__":
         action="store_true",
         help="call get_tree().quit() manually (if using Timer or _process)",
     )
+    # autoquit will be disabled automatically, if last line of the script contains get_tree().quit()
     parser.add_argument(
         "-t",
         "--timeout",

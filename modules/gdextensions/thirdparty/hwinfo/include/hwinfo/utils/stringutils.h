@@ -7,17 +7,14 @@
 #include <cstdint>
 #include <cstring>
 #include <locale>
+#include <sstream>
 #include <string>
 #include <vector>
 
 namespace hwinfo {
 namespace utils {
 
-/**
- * remove all white spaces (' ', '\t', '\n') from start and end of input
- * inplace!
- * @param input
- */
+// remove all white spaces (' ', '\t', '\n') from start and end of input
 inline void strip(std::string& input) {
   if (input.empty()) {
     return;
@@ -54,12 +51,7 @@ inline void strip(std::string& input) {
   input.assign(input.begin() + start_index, input.begin() + end_index + 1);
 }
 
-/**
- * Count occurrences of a substring in input
- * @param input
- * @param substring
- * @return
- */
+// count occurrences of a substring in input
 inline unsigned count_substring(const std::string& input, const std::string& substring) {
   unsigned occurrences = 0;
   std::string::size_type shift = 0;
@@ -70,12 +62,7 @@ inline unsigned count_substring(const std::string& input, const std::string& sub
   return occurrences;
 }
 
-/**
- * Split input string at delimiter and return result
- * @param input
- * @param delimiter
- * @return
- */
+// split input string at delimiter and return result
 inline std::vector<std::string> split(const std::string& input, const std::string& delimiter) {
   std::vector<std::string> result;
   size_t shift = 0;
@@ -90,12 +77,7 @@ inline std::vector<std::string> split(const std::string& input, const std::strin
   return result;
 }
 
-/**
- * Split input string at delimiter (char) and return result
- * @param input
- * @param delimiter
- * @return
- */
+// split input string at delimiter (char) and return result
 inline std::vector<std::string> split(const std::string& input, const char delimiter) {
   std::vector<std::string> result;
   size_t shift = 0;
@@ -110,14 +92,8 @@ inline std::vector<std::string> split(const std::string& input, const char delim
   return result;
 }
 
-/**
- * split input at delimiter and return substring at position index.
- * index can be negative, where -1 is the last occurrence.
- * @param input
- * @param delimiter
- * @param index
- * @return
- */
+// split input at delimiter and return substring at position index.
+// index can be negative, where -1 is the last occurrence.
 inline std::string split_get_index(const std::string& input, const std::string& delimiter, int index) {
   unsigned occ = count_substring(input, delimiter) + 1;
   index = index < 0 ? static_cast<int>(occ + index) : index;
@@ -140,16 +116,10 @@ inline std::string split_get_index(const std::string& input, const std::string& 
   return {input.begin() + static_cast<int64_t>(start_index), input.begin() + static_cast<int64_t>(end_index)};
 }
 
-/**
- * Convert windows wstring to string
- * @return
- */
+// convert windows wstring to string
 inline std::string wstring_to_string() { return ""; }
 
-/**
- * Convert wstring to string
- * @return
- */
+// convert wstring to string
 inline std::string wstring_to_std_string(const std::wstring& ws) {
   std::string str_locale = setlocale(LC_ALL, "");
   const wchar_t* wch_src = ws.c_str();
@@ -163,12 +133,7 @@ inline std::string wstring_to_std_string(const std::wstring& ws) {
   return result_text;
 }
 
-/**
- * Replace the std::string::starts_with function only available in C++20 and above.
- * @param str
- * @param prefix
- * @return
- */
+// replace the std::string::starts_with function only available in C++20 and above.
 template <typename string_type, typename prefix_type>
 inline bool starts_with(const string_type& str, const prefix_type& prefix) {
 #ifdef __cpp_lib_starts_ends_with
@@ -176,6 +141,13 @@ inline bool starts_with(const string_type& str, const prefix_type& prefix) {
 #else
   return str.rfind(prefix, 0) == 0;
 #endif
+}
+
+// convert to string
+template <typename T> std::string to_string(const T& var) {
+  std::basic_ostringstream<typename std::string::value_type> temp;
+  temp << var;
+  return temp.str();
 }
 
 }  // namespace utils

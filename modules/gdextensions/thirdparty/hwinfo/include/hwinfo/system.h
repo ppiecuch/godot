@@ -6,27 +6,17 @@
 #include <string>
 #include <vector>
 
-#include "hwinfo/cpu.h"
-#include "hwinfo/disk.h"
-#include "hwinfo/gpu.h"
-#include "hwinfo/ram.h"
-
 namespace hwinfo {
 
 class System {
+  std::string _machineUniqueId;
+  std::string _bootUniqueId;
+
  public:
-  System() = default;
+  const std::string& getMachineUniqueId() const { return _machineUniqueId; }
+  const std::string& getBootUniqueId() const { return _bootUniqueId; }
 
-  std::vector<CPU>& CPUs() const;
-  std::vector<GPU>& GPUs() const;
-  std::vector<RAM>& RAMs() const;
-  std::vector<Disk>& Disks() const;
-
- private:
-  std::vector<CPU> _cpuSockets;
-  std::vector<GPU> _gpus;
-  std::vector<RAM> _ramBars;
-  std::vector<Disk> _disks;
+  System();
 };
 
 }  // namespace hwinfo

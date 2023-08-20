@@ -30,7 +30,7 @@
 
 #ifdef TOOLS_ENABLED
 #include "gdnative_library_singleton_editor.h"
-#include "gdnative.h"
+#include "godotnative.h"
 
 #include "editor/editor_node.h"
 

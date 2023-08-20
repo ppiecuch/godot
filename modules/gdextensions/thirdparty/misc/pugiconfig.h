@@ -14,6 +14,8 @@
 #ifndef HEADER_PUGICONFIG_HPP
 #define HEADER_PUGICONFIG_HPP
 
+#include "common/gd_core_defs.h"
+
 // Uncomment this to enable wchar_t mode
 // #define PUGIXML_WCHAR_MODE
 
@@ -23,8 +25,9 @@
 // Uncomment this to disable STL
 // #define PUGIXML_NO_STL
 
-// Uncomment this to disable exceptions
-// #define PUGIXML_NO_EXCEPTIONS
+#ifndef _HAS_EXCEPTIONS
+#define PUGIXML_NO_EXCEPTIONS
+#endif
 
 // Set this to control attributes for public classes/functions, i.e.:
 // #define PUGIXML_API __declspec(dllexport) // to export all public symbols from DLL

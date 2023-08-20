@@ -240,14 +240,15 @@ public:
 			if (!body->variables.has(p_key) && !body->arguments.has(p_key)) {
 				if (!require_keys.has(p_key)) {
 					require_keys.push_back(p_key);
-				} else if (LambdaFunctionNode *func = dynamic_cast<LambdaFunctionNode *>(parent)) {
-					func->insert_require(p_key);
+				} else if (parent && parent->type == Node::TYPE_LAMBDA_FUNCTION) {
+					static_cast<LambdaFunctionNode *>(parent)->insert_require(p_key);
 				}
 			}
 		}
 
 		LambdaFunctionNode() {
 			type = TYPE_LAMBDA_FUNCTION;
+			parent = nullptr;
 			_static = false;
 		}
 	};

@@ -11,6 +11,7 @@ def configure(env):
     # all submodules available in the extensions
     modules = [
         "core",
+        "vcore",
         "visual",
         "cpufeatures",
         "breakpad",
@@ -72,6 +73,9 @@ def configure(env):
         "hwinfo",
         "synthbenchmark",
         "runtimeprofiler",
+        "goxel",
+        "textui",
+        "textwidgets",
     ]
     opts = Variables()
     opts.Add(

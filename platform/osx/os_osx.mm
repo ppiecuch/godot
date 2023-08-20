@@ -132,60 +132,12 @@ static NSCursor *cursor_from_selector(SEL selector, SEL fallback = nil) {
 	return [NSCursor arrowCursor];
 }
 
-struct mem_info_t {
-	int64_t video_mem;
-	int64_t texture_mem;
-};
-
-static mem_info_t get_dedicated_video_memory_mb(bool *err = nullptr) {
-	GLint gl_rend_id = 0;
-	CGLGetParameter(CGLGetCurrentContext(), kCGLCPCurrentRendererID, &gl_rend_id);
-
-	CGLRendererInfoObj rend_obj = nullptr;
-	CGOpenGLDisplayMask disp_mask = CGDisplayIDToOpenGLDisplayMask(kCGDirectMainDisplay);
-	GLint rend_nb = 0;
-	CGLQueryRendererInfo(disp_mask, &rend_obj, &rend_nb);
-	for (GLint r = 0; r < rend_nb; ++r) {
-		GLint rend_id = 0;
-		if (CGLDescribeRenderer(rend_obj, r, kCGLRPRendererID, &rend_id) != kCGLNoError || rend_id != gl_rend_id) {
-			continue;
-		}
-
-		// kCGLRPVideoMemoryMegabytes   = 131;
-		// kCGLRPTextureMemoryMegabytes = 132;
-
-		GLint vmem, tmem = 0;
-#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1070
-		if (CGLDescribeRenderer(rend_obj, r, kCGLRPVideoMemoryMegabytes, &vmem) != kCGLNoError) {
-			print_verbose("Failed to retrive video memory info for current render device.");
-		}
-		if (CGLDescribeRenderer(rend_obj, r, kCGLRPTextureMemoryMegabytes, &tmem) != kCGLNoError) {
-			print_verbose("Failed to retrive texture memory info for current render device.");
-		}
-#else
-		if (CGLDescribeRenderer(rend_obj, r, kCGLRPVideoMemory, &vmem) == kCGLNoError) {
-			vmem /= 1024 * 1024;
-		} else {
-			print_verbose("Failed to retrive video memory info for current render device.");
-		}
-		if (CGLDescribeRenderer(rend_obj, r, kCGLRPTextureMemory, &tmem) == kCGLNoError) {
-			tmem /= 1024 * 1024;
-		} else {
-			print_verbose("Failed to retrive texture memory info for current render device.");
-		}
-#endif
-		if (err) {
-			*err = false;
-		}
-		return { vmem, tmem };
-	}
-
-	print_verbose("Current render device not found.");
-
-	if (err) {
-		*err = true;
-	}
-	return { 0, 0 };
+static bool running_under_rosetta() {
+	int translated = 0;
+	auto size = sizeof(translated);
+	if (sysctlbyname("sysctl.proc_translated", &translated, &size, nullptr, 0) == 0)
+		return translated;
+	return false;
 }
 
 @interface GodotApplication : NSApplication
@@ -1872,18 +1824,6 @@ static void displays_arrangement_changed(CGDirectDisplayID display_id, CGDisplay
 
 int OS_OSX::get_current_video_driver() const {
 	return video_driver_index;
-}
-
-Variant OS_OSX::get_video_system_info(int p_feature) const {
-	switch (p_feature) {
-		case VIDEO_SYSTEM_CONTEXT_INFO:
-			return VSG::rasterizer->get_video_context_info();
-		case VIDEO_SYSTEM_TOTAL_MEMORY:
-			return get_dedicated_video_memory_mb().video_mem;
-		case VIDEO_SYSTEM_TEXTURE_MEMORY:
-			return get_dedicated_video_memory_mb().texture_mem;
-	}
-	return Variant();
 }
 
 bool OS_OSX::tts_is_speaking() const {

@@ -33,6 +33,7 @@ package org.godotengine.godot;
 import org.godotengine.godot.input.GodotEditText;
 
 import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -146,9 +147,9 @@ public class GodotIO {
 	public String getCustomName() {
 		String name = "";
 
-		name = Settings.System.getString(getContentResolver(), “bluetooth_name”);
+		name = Settings.System.getString(activity.getContentResolver(), "bluetooth_name");
 		if (name == null) {
-			name = Settings.Secure.getString(getContentResolver(), “bluetooth_name”);
+			name = Settings.Secure.getString(activity.getContentResolver(), "bluetooth_name");
 		}
 		if (name == null) {
 			try {
@@ -157,10 +158,10 @@ public class GodotIO {
 			}
 		}
 		if (name == null) {
-			name = Settings.System.getString(getContentResolver(), “device_name”);
+			name = Settings.System.getString(activity.getContentResolver(), "device_name");
 		}
 		if (name == null) {
-			name = Settings.Secure.getString(getContentResolver(), “lock_screen_owner_info”);
+			name = Settings.Secure.getString(activity.getContentResolver(), "lock_screen_owner_info");
 		}
 		return name;
 	}

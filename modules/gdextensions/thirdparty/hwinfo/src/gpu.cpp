@@ -13,30 +13,19 @@
 
 namespace hwinfo {
 
-// _____________________________________________________________________________________________________________________
-const std::string& GPU::vendor() const { return _vendor; }
-
-// _____________________________________________________________________________________________________________________
-const std::string& GPU::name() const { return _name; }
-
-// _____________________________________________________________________________________________________________________
-const std::string& GPU::driverVersion() const { return _driverVersion; }
-
-// _____________________________________________________________________________________________________________________
-int GPU::id() const { return _id; }
-
-// _____________________________________________________________________________________________________________________
-int64_t GPU::memory_Bytes() const { return _memory_Bytes; }
-
-// _____________________________________________________________________________________________________________________
-int64_t GPU::frequency_MHz() const { return _frequency_MHz; }
-
-// _____________________________________________________________________________________________________________________
-int GPU::num_cores() const { return _num_cores; }
-
 #ifdef USE_OCL
 
-std::vector<GPU_CL> get_cpu_cl_data() {
+struct GPU_CL {
+  int id;
+  std::string vendor;
+  std::string name;
+  std::string driver_version;
+  int64_t frequency_MHz;
+  int num_cores;
+  int64_t memory_Bytes;
+};
+
+static std::vector<GPU_CL> get_cpu_cl_data() {
   std::vector<GPU_CL> gpus;
   std::vector<cl::Platform> cl_platforms;
   auto res = cl::Platform::get(&cl_platforms);
@@ -61,6 +50,17 @@ std::vector<GPU_CL> get_cpu_cl_data() {
     }
   }
   return gpus;
+}
+
+std::vector<GPU> getAllGPUs() {
+  const std::vector<GPU_CL> &ocl = get_cpu_cl_data();
+  std::vector<GPU> gpu;
+  for(const auto &info : ocl) {
+    GPU g;
+    g.__available_memory_Bytes = info.memory_Bytes;
+    gpu.push_back(g);
+  }
+  return gpu;
 }
 
 #endif

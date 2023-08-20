@@ -42,8 +42,8 @@
 #include "core/self_list.h"
 #include "scene/main/node.h"
 
-#include "modules/gdnative/gdnative.h"
-#include <nativescript/godot_nativescript.h>
+#include "gdnative/godotnative.h"
+#include "nativescript/godot_nativescript.h"
 
 #ifndef NO_THREADS
 #include "core/os/mutex.h"

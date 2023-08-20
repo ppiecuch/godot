@@ -37,8 +37,6 @@
 #include "platform/android/os_android.h"
 #include "platform/android/string_android.h"
 
-#include <string>
-
 static bool isinstanceof(JNIEnv *env, jobject obj, const char *name) {
 	ERR_FAIL_COND_V(name == nullptr, false);
 	ERR_FAIL_COND_V(obj == nullptr, false);
@@ -202,10 +200,10 @@ public:
 	float getFloat(const char *id, float defaultValue = 0) const {
 		return (float)(env->CallFloatMethod(joSharedPreferences, jmGetFloat, env->NewStringUTF(id), (jfloat)defaultValue));
 	}
-	std::string getString(const char *id, const char *defaultValue = "") const {
+	String getString(const char *id, const char *defaultValue = "") const {
 		auto value = (jstring)(env->CallObjectMethod(joSharedPreferences, jmGetString, env->NewStringUTF(id), env->NewStringUTF(defaultValue)));
 		const char *valueP = env->GetStringUTFChars(value, nullptr);
-		const std::string ret = std::string(valueP);
+		const String ret(valueP);
 		env->ReleaseStringUTFChars(value, valueP);
 		return ret;
 	}

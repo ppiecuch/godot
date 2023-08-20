@@ -749,10 +749,8 @@ GDScriptParser::Node *GDScriptParser::_parse_expression(Node *p_parent, bool p_s
 				if (_get_completable_identifier(COMPLETION_FUNCTION, identifier)) {
 				}
 
-				if (current_block && current_block->outer_stack(identifier) && current_function) {
-					if (LambdaFunctionNode *in = dynamic_cast<LambdaFunctionNode *>(current_function)) {
-						in->insert_require(identifier);
-					}
+				if (current_block && current_block->outer_stack(identifier) && current_function && current_function->type == Node::TYPE_LAMBDA_FUNCTION) {
+					static_cast<LambdaFunctionNode *>(current_function)->insert_require(identifier);
 				}
 
 				IdentifierNode *id = alloc_node<IdentifierNode>();

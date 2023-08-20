@@ -31,8 +31,11 @@
 #ifndef GD_SYMFONTS_H
 #define GD_SYMFONTS_H
 
-class GdSymbolFont : public Object {
-	GDCLASS(GdSymbolFont, Object);
+#include "core/reference.h"
+#include "core/variant.h"
+
+class GdSymbolFont : public Reference {
+	GDCLASS(GdSymbolFont, Reference);
 
 public:
 	enum {
@@ -45,15 +48,15 @@ public:
 	};
 };
 
-class GdSymbolFontIcon : public Object {
-	GDCLASS(GdSymbolFontIcon, Object);
+class GdSymbolFontIcon : public Reference {
+	GDCLASS(GdSymbolFontIcon, Reference);
 
 protected:
 	static void _bind_methods();
 
 public:
-	Image get_image(int glyph);
-	Image get_image(const String &glyph_name);
+	Ref<Image> get_image(int glyph);
+	Ref<Image> get_image(const String &glyph_name);
 	Char get_char(int glyph);
 	Char get_char(const String &glyph_name);
 

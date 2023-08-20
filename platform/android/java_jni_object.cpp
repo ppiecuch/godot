@@ -91,30 +91,33 @@ jclass JavaJniEnvironment::findClass(const char *class_name, JNIEnv *env) {
 
 JavaJniEnvironment::JavaJniEnvironment() :
 		jni_env(get_jni_env()) {}
+JavaJniEnvironment::JavaJniEnvironment(JNIEnv *env) :
+		jni_env(env ? env : get_jni_env()) {}
 
 class JavaJniObject::JavaJniObjectPrivate {
 public:
-	jobject m_jobject;
-	jclass m_jclass;
-	bool m_own_jclass;
-	CharString m_className;
+	jobject _jobject;
+	jclass _jclass;
+	bool _own_jclass;
+	const char *_class_name;
+	JavaJniEnvironment _env;
 
 	JavaJniObjectPrivate() :
-			m_jobject(0), m_jclass(0), m_own_jclass(true) {}
+			_jobject(0), _jclass(0), _own_jclass(true) {}
+	JavaJniObjectPrivate(JNIEnv *env) :
+			_jobject(0), _jclass(0), _own_jclass(true), _env(env) {}
 	JavaJniObjectPrivate(jobject o) {
-		JavaJniEnvironment env;
-		m_jobject = env->NewGlobalRef(o);
-		jclass cls = env->GetObjectClass(o);
-		m_jclass = static_cast<jclass>(env->NewGlobalRef(cls));
-		env->DeleteLocalRef(cls);
+		_jobject = _env->NewGlobalRef(o);
+		jclass cls = _env->GetObjectClass(o);
+		_jclass = static_cast<jclass>(_env->NewGlobalRef(cls));
+		_env->DeleteLocalRef(cls);
 	}
 	~JavaJniObjectPrivate() {
-		JavaJniEnvironment env;
-		if (m_jobject) {
-			env->DeleteGlobalRef(m_jobject);
+		if (_jobject) {
+			_env->DeleteGlobalRef(_jobject);
 		}
-		if (m_jclass && m_own_jclass) {
-			env->DeleteGlobalRef(m_jclass);
+		if (_jclass && _own_jclass) {
+			_env->DeleteGlobalRef(_jclass);
 		}
 	}
 };
@@ -171,14 +174,14 @@ static jobject getClassLoader(JNIEnv *env) {
 	return _jClassLoader;
 }
 
-static jclass getCachedClass(const String &class_bin_enc, bool *is_cached) {
+static jclass getCachedClass(const String &class_name, bool *is_cached) {
 #ifdef MULTI_THREAD_ACCESS
 	MutexLock locker(cachedClassesLock);
 #endif
-	auto *it = cachedClasses.find(class_bin_enc);
+	auto *it = cachedClasses.find(class_name);
 	const bool found = (it != nullptr);
 
-	if (is_cached != 0) {
+	if (is_cached) {
 		*is_cached = found;
 	}
 	return found ? it->value() : 0;
@@ -239,23 +242,43 @@ static jclass loadClass(const char *class_name, JNIEnv *env, bool bin_encoded) {
 	return clazz;
 }
 
+#define JNI_CALL_METHOD_V(T, M)                                                                        \
+	template <>                                                                                        \
+	T JavaJniObject::callMethodV<T>(const char *method_name, const char *sig, va_list args) const {    \
+		T res = 0;                                                                                     \
+		jmethodID id = getCachedMethodID(imp->_env, imp->_jclass, imp->_class_name, method_name, sig); \
+		if (id) {                                                                                      \
+			res = imp->_env->M(imp->_jobject, id, args);                                               \
+		}                                                                                              \
+		return res;                                                                                    \
+	}
+
 template <>
 void JavaJniObject::callMethodV<void>(const char *method_name, const char *sig, va_list args) const {
-	JavaJniEnvironment env;
-	jmethodID id = getCachedMethodID(env, imp->m_jclass, imp->m_className, method_name, sig);
+	jmethodID id = getCachedMethodID(imp->_env, imp->_jclass, imp->_class_name, method_name, sig);
 	if (id) {
-		env->CallVoidMethodV(imp->m_jobject, id, args);
+		imp->_env->CallVoidMethodV(imp->_jobject, id, args);
 	}
 }
+
+JNI_CALL_METHOD_V(jboolean, CallBooleanMethodV)
+JNI_CALL_METHOD_V(jbyte, CallByteMethodV)
+JNI_CALL_METHOD_V(jchar, CallCharMethodV)
+JNI_CALL_METHOD_V(jshort, CallShortMethodV)
+JNI_CALL_METHOD_V(jint, CallIntMethodV)
+JNI_CALL_METHOD_V(jlong, CallLongMethodV)
+JNI_CALL_METHOD_V(jfloat, CallFloatMethodV)
+JNI_CALL_METHOD_V(jdouble, CallDoubleMethodV)
 
 JavaJniObject JavaJniObject::callObjectMethodV(const char *method_name, const char *sig, va_list args) const {
 	JavaJniEnvironment env;
 	jobject res = 0;
-	jmethodID id = getCachedMethodID(env, imp->m_jclass, imp->m_className, method_name, sig);
+	jmethodID id = getCachedMethodID(env, imp->_jclass, imp->_class_name, method_name, sig);
 	if (id) {
-		res = env->CallObjectMethodV(imp->m_jobject, id, args);
-		if (res && env->ExceptionCheck())
+		res = env->CallObjectMethodV(imp->_jobject, id, args);
+		if (res && env->ExceptionCheck()) {
 			res = 0;
+		}
 	}
 
 	JavaJniObject obj(res);
@@ -263,11 +286,181 @@ JavaJniObject JavaJniObject::callObjectMethodV(const char *method_name, const ch
 	return obj;
 }
 
+JavaJniObject JavaJniObject::callObjectMethod(const char *method_name, const char *sig, ...) const {
+	va_list args;
+	va_start(args, sig);
+	JavaJniObject res = callObjectMethodV(method_name, sig, args);
+	va_end(args);
+	return res;
+}
+
+#define JNI_CALL_STATIC_METHOD_V(T, M)                                                                                                        \
+	template <>                                                                                                                               \
+	T JavaJniObject::callStaticMethodV<T>(JNIEnv * jni_env, const char *class_name, const char *method_name, const char *sig, va_list args) { \
+		JavaJniEnvironment env(jni_env);                                                                                                      \
+		T res = 0;                                                                                                                            \
+		jclass clazz = loadClass(class_name, env);                                                                                            \
+		if (clazz) {                                                                                                                          \
+			jmethodID id = getCachedMethodID(env, clazz, class_name, method_name, sig, true);                                                 \
+			if (id) {                                                                                                                         \
+				res = env->M(clazz, id, args);                                                                                                \
+			}                                                                                                                                 \
+		}                                                                                                                                     \
+		return res;                                                                                                                           \
+	}                                                                                                                                         \
+                                                                                                                                              \
+	template <>                                                                                                                               \
+	T JavaJniObject::callStaticMethodV<T>(JNIEnv * jni_env, jclass clazz, const char *method_name, const char *sig, va_list args) {           \
+		JavaJniEnvironment env(jni_env);                                                                                                      \
+		T res = 0;                                                                                                                            \
+		jmethodID id = getMethodID(env, clazz, method_name, sig, true);                                                                       \
+		if (id) {                                                                                                                             \
+			res = env->M(clazz, id, args);                                                                                                    \
+		}                                                                                                                                     \
+		return res;                                                                                                                           \
+	}
+
+template <>
+void JavaJniObject::callStaticMethodV<void>(JNIEnv *jni_env, const char *class_name, const char *method_name, const char *sig, va_list args) {
+	JavaJniEnvironment env(jni_env);
+	jclass clazz = loadClass(class_name, env);
+	if (clazz) {
+		jmethodID id = getCachedMethodID(env, clazz, class_name, method_name, sig, true);
+		if (id) {
+			env->CallStaticVoidMethodV(clazz, id, args);
+		}
+	}
+}
+
+template <>
+void JavaJniObject::callStaticMethodV<void>(JNIEnv *jni_env, jclass clazz, const char *method_name, const char *sig, va_list args) {
+	JavaJniEnvironment env(jni_env);
+	jmethodID id = getMethodID(env, clazz, method_name, sig, true);
+	if (id) {
+		env->CallStaticVoidMethodV(clazz, id, args);
+	}
+}
+
+JNI_CALL_STATIC_METHOD_V(jboolean, CallStaticBooleanMethodV)
+JNI_CALL_STATIC_METHOD_V(jbyte, CallStaticByteMethodV)
+JNI_CALL_STATIC_METHOD_V(jchar, CallStaticCharMethodV)
+JNI_CALL_STATIC_METHOD_V(jshort, CallStaticShortMethodV)
+JNI_CALL_STATIC_METHOD_V(jint, CallStaticIntMethodV)
+JNI_CALL_STATIC_METHOD_V(jlong, CallStaticLongMethodV)
+JNI_CALL_STATIC_METHOD_V(jfloat, CallStaticFloatMethodV)
+JNI_CALL_STATIC_METHOD_V(jdouble, CallStaticDoubleMethodV)
+
+#define JNI_CALL_STATIC_METHOD(T)                                                                                               \
+	template <>                                                                                                                 \
+	T JavaJniObject::callStaticMethod<T>(jclass clazz, const char *method_name, const char *sig, ...) {                         \
+		va_list args;                                                                                                           \
+		va_start(args, sig);                                                                                                    \
+		T res = callStaticMethodV<T>(nullptr, clazz, method_name, sig, args);                                                   \
+		va_end(args);                                                                                                           \
+		return res;                                                                                                             \
+	}                                                                                                                           \
+                                                                                                                                \
+	template <>                                                                                                                 \
+	T JavaJniObject::callStaticMethod<T>(JNIEnv * env, jclass clazz, const char *method_name, const char *sig, ...) {           \
+		va_list args;                                                                                                           \
+		va_start(args, sig);                                                                                                    \
+		T res = callStaticMethodV<T>(env, clazz, method_name, sig, args);                                                       \
+		va_end(args);                                                                                                           \
+		return res;                                                                                                             \
+	}                                                                                                                           \
+                                                                                                                                \
+	template <>                                                                                                                 \
+	T JavaJniObject::callStaticMethod<T>(const char *class_name, const char *method_name, const char *sig, ...) {               \
+		va_list args;                                                                                                           \
+		va_start(args, sig);                                                                                                    \
+		T res = callStaticMethodV<T>(nullptr, class_name, method_name, sig, args);                                              \
+		va_end(args);                                                                                                           \
+		return res;                                                                                                             \
+	}                                                                                                                           \
+                                                                                                                                \
+	template <>                                                                                                                 \
+	T JavaJniObject::callStaticMethod<T>(JNIEnv * env, const char *class_name, const char *method_name, const char *sig, ...) { \
+		va_list args;                                                                                                           \
+		va_start(args, sig);                                                                                                    \
+		T res = callStaticMethodV<T>(env, class_name, method_name, sig, args);                                                  \
+		va_end(args);                                                                                                           \
+		return res;                                                                                                             \
+	}
+
+template <>
+void JavaJniObject::callStaticMethod<void>(jclass clazz, const char *method_name, const char *sig, ...) {
+	va_list args;
+	va_start(args, sig);
+	callStaticMethodV<void>(nullptr, clazz, method_name, sig, args);
+	va_end(args);
+}
+
+template <>
+void JavaJniObject::callStaticMethod<void>(JNIEnv *env, jclass clazz, const char *method_name, const char *sig, ...) {
+	va_list args;
+	va_start(args, sig);
+	callStaticMethodV<void>(env, clazz, method_name, sig, args);
+	va_end(args);
+}
+
+template <>
+void JavaJniObject::callStaticMethod<void>(const char *class_name, const char *method_name, const char *sig, ...) {
+	va_list args;
+	va_start(args, sig);
+	callStaticMethodV<void>(nullptr, class_name, method_name, sig, args);
+	va_end(args);
+}
+
+template <>
+void JavaJniObject::callStaticMethod<void>(JNIEnv *env, const char *class_name, const char *method_name, const char *sig, ...) {
+	va_list args;
+	va_start(args, sig);
+	callStaticMethodV<void>(env, class_name, method_name, sig, args);
+	va_end(args);
+}
+
+JNI_CALL_STATIC_METHOD(jboolean)
+JNI_CALL_STATIC_METHOD(jbyte)
+JNI_CALL_STATIC_METHOD(jchar)
+JNI_CALL_STATIC_METHOD(jshort)
+JNI_CALL_STATIC_METHOD(jint)
+JNI_CALL_STATIC_METHOD(jlong)
+JNI_CALL_STATIC_METHOD(jfloat)
+JNI_CALL_STATIC_METHOD(jdouble)
+
+#define JNI_CALL_STATIC_METHOD_SIG(T, S)                                                                                                                                 \
+	template <>                                                                                                                                                          \
+	T JavaJniObject::callStaticMethod<T>(const char *class_name, const char *method_name) { return callStaticMethod<T>(class_name, method_name, S); }                    \
+	template <>                                                                                                                                                          \
+	T JavaJniObject::callStaticMethod<T>(jclass clazz, const char *method_name) { return callStaticMethod<T>(clazz, method_name, S); }                                   \
+	template <>                                                                                                                                                          \
+	T JavaJniObject::callStaticMethod<T>(JNIEnv * env, const char *class_name, const char *method_name) { return callStaticMethod<T>(env, class_name, method_name, S); } \
+	template <>                                                                                                                                                          \
+	T JavaJniObject::callStaticMethod<T>(JNIEnv * env, jclass clazz, const char *method_name) { return callStaticMethod<T>(env, clazz, method_name, S); }
+
+template <>
+void JavaJniObject::callStaticMethod<void>(const char *class_name, const char *method_name) { return callStaticMethod<void>(class_name, method_name, "()V"); }
+template <>
+void JavaJniObject::callStaticMethod<void>(jclass clazz, const char *method_name) { return callStaticMethod<void>(clazz, method_name, "()V"); }
+template <>
+void JavaJniObject::callStaticMethod<void>(JNIEnv *env, const char *class_name, const char *method_name) { return callStaticMethod<void>(env, class_name, method_name, "()V"); }
+template <>
+void JavaJniObject::callStaticMethod<void>(JNIEnv *env, jclass clazz, const char *method_name) { return callStaticMethod<void>(env, clazz, method_name, "()V"); }
+
+JNI_CALL_STATIC_METHOD_SIG(jboolean, "()Z")
+JNI_CALL_STATIC_METHOD_SIG(jbyte, "()B")
+JNI_CALL_STATIC_METHOD_SIG(jchar, "()C")
+JNI_CALL_STATIC_METHOD_SIG(jshort, "()S")
+JNI_CALL_STATIC_METHOD_SIG(jint, "()I")
+JNI_CALL_STATIC_METHOD_SIG(jlong, "()J")
+JNI_CALL_STATIC_METHOD_SIG(jfloat, "()F")
+JNI_CALL_STATIC_METHOD_SIG(jdouble, "()D")
+
 bool JavaJniObject::isValid() const {
-	return imp->m_jobject;
+	return imp->_jobject;
 }
 jobject JavaJniObject::javaObject() const {
-	return imp->m_jobject;
+	return imp->_jobject;
 }
 jobject JavaJniObject::object() const {
 	return javaObject();
@@ -307,42 +500,31 @@ JavaJniObject JavaJniObject::fromLocalRef(jobject lref) {
 
 bool JavaJniObject::isSameObject(jobject obj) const {
 	JavaJniEnvironment env;
-	return env->IsSameObject(imp->m_jobject, obj);
+	return env->IsSameObject(imp->_jobject, obj);
 }
 
 bool JavaJniObject::isSameObject(const JavaJniObject &other) const {
-	return isSameObject(other.imp->m_jobject);
-}
-
-JavaJniObject::JavaJniObject(jobject global_ref) :
-		imp(new JavaJniObjectPrivate()) {
-	if (!global_ref) {
-		return;
-	}
-	JavaJniEnvironment env;
-	imp->m_jobject = env->NewGlobalRef(global_ref);
-	jclass cls = env->GetObjectClass(global_ref);
-	imp->m_jclass = static_cast<jclass>(env->NewGlobalRef(cls));
-	env->DeleteLocalRef(cls);
+	return isSameObject(other.imp->_jobject);
 }
 
 JavaJniObject::JavaJniObject() :
 		imp(new JavaJniObjectPrivate()) {}
 
+JavaJniObject::JavaJniObject(JNIEnv *jni_env) :
+		imp(new JavaJniObjectPrivate(jni_env)) {}
+
 JavaJniObject::JavaJniObject(const char *class_name) :
 		imp(new JavaJniObjectPrivate()) {
-	JavaJniEnvironment env;
-	imp->m_className = class_name;
-	imp->m_jclass = loadClass(imp->m_className, env, true);
-	imp->m_own_jclass = false;
-	if (imp->m_jclass) {
-		// get default constructor
-		jmethodID constructorId = getCachedMethodID(env, imp->m_jclass, imp->m_className, "<init>", "()V");
+	imp->_class_name = class_name;
+	imp->_jclass = loadClass(imp->_class_name, imp->_env);
+	imp->_own_jclass = false;
+	if (imp->_jclass) {
+		jmethodID constructorId = getCachedMethodID(imp->_env, imp->_jclass, imp->_class_name, "<init>", "()V"); // get default constructor
 		if (constructorId) {
-			jobject obj = env->NewObject(imp->m_jclass, constructorId);
+			jobject obj = imp->_env->NewObject(imp->_jclass, constructorId);
 			if (obj) {
-				imp->m_jobject = env->NewGlobalRef(obj);
-				env->DeleteLocalRef(obj);
+				imp->_jobject = imp->_env->NewGlobalRef(obj);
+				imp->_env->DeleteLocalRef(obj);
 			}
 		}
 	}
@@ -351,20 +533,32 @@ JavaJniObject::JavaJniObject(const char *class_name) :
 JavaJniObject::JavaJniObject(const char *class_name, const char *sig, ...) :
 		imp(new JavaJniObjectPrivate()) {
 	JavaJniEnvironment env;
-	imp->m_className = class_name;
-	imp->m_jclass = loadClass(imp->m_className, env, true);
-	imp->m_own_jclass = false;
-	if (imp->m_jclass) {
-		jmethodID constructorId = getCachedMethodID(env, imp->m_jclass, imp->m_className, "<init>", sig);
+	imp->_class_name = class_name;
+	imp->_jclass = loadClass(imp->_class_name, env);
+	imp->_own_jclass = false;
+	if (imp->_jclass) {
+		jmethodID constructorId = getCachedMethodID(env, imp->_jclass, imp->_class_name, "<init>", sig);
 		if (constructorId) {
 			va_list args;
 			va_start(args, sig);
-			jobject obj = env->NewObjectV(imp->m_jclass, constructorId, args);
+			jobject obj = env->NewObjectV(imp->_jclass, constructorId, args);
 			va_end(args);
 			if (obj) {
-				imp->m_jobject = env->NewGlobalRef(obj);
+				imp->_jobject = env->NewGlobalRef(obj);
 				env->DeleteLocalRef(obj);
 			}
 		}
 	}
+}
+
+JavaJniObject::JavaJniObject(jobject global_ref) :
+		imp(new JavaJniObjectPrivate()) {
+	if (!global_ref) {
+		return;
+	}
+	JavaJniEnvironment env;
+	imp->_jobject = env->NewGlobalRef(global_ref);
+	jclass cls = env->GetObjectClass(global_ref);
+	imp->_jclass = static_cast<jclass>(env->NewGlobalRef(cls));
+	env->DeleteLocalRef(cls);
 }

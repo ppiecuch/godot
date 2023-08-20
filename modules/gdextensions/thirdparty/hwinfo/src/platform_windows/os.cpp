@@ -5,7 +5,7 @@
 
 #ifdef HWINFO_WINDOWS
 
-#include <Windows.h>
+#include <windows.h>
 #include <winternl.h>
 
 #include <sstream>
@@ -17,16 +17,10 @@
 namespace hwinfo {
 
 // _____________________________________________________________________________________________________________________
-std::string OS::getFullName() {
-  static NTSTATUS(__stdcall * RtlGetVersion)(OUT PRTL_OSVERSIONINFOEXW lpVersionInformation) =
-      (NTSTATUS(__stdcall*)(PRTL_OSVERSIONINFOEXW))GetProcAddress(GetModuleHandle("ntdll.dll"), "RtlGetVersion");
-  static void(__stdcall * GetNativeSystemInfo)(OUT LPSYSTEM_INFO lpSystemInfo) =
-      (void(__stdcall*)(LPSYSTEM_INFO))GetProcAddress(GetModuleHandle("kernel32.dll"), "GetNativeSystemInfo");
-  static BOOL(__stdcall * GetProductInfo)(IN DWORD dwOSMajorVersion, IN DWORD dwOSMinorVersion,
-                                          IN DWORD dwSpMajorVersion, IN DWORD dwSpMinorVersion,
-                                          OUT PDWORD pdwReturnedProductType) =
-      (BOOL(__stdcall*)(DWORD, DWORD, DWORD, DWORD, PDWORD))GetProcAddress(GetModuleHandle("kernel32.dll"),
-                                                                           "GetProductInfo");
+std::string _get_full_name() {
+  static NTSTATUS(__stdcall * RtlGetVersion)(OUT PRTL_OSVERSIONINFOEXW lpVersionInformation) = (NTSTATUS(__stdcall*)(PRTL_OSVERSIONINFOEXW))GetProcAddress(GetModuleHandle("ntdll.dll"), "RtlGetVersion");
+  static void(__stdcall * GetNativeSystemInfo)(OUT LPSYSTEM_INFO lpSystemInfo) = (void(__stdcall*)(LPSYSTEM_INFO))GetProcAddress(GetModuleHandle("kernel32.dll"), "GetNativeSystemInfo");
+  static BOOL(__stdcall * GetProductInfo)(IN DWORD dwOSMajorVersion, IN DWORD dwOSMinorVersion, IN DWORD dwSpMajorVersion, IN DWORD dwSpMinorVersion, OUT PDWORD pdwReturnedProductType) = (BOOL(__stdcall*)(DWORD, DWORD, DWORD, DWORD, PDWORD))GetProcAddress(GetModuleHandle("kernel32.dll"), "GetProductInfo");
 
   OSVERSIONINFOEXW osvi;
   ZeroMemory(&osvi, sizeof(OSVERSIONINFOEXW));
@@ -242,15 +236,6 @@ std::string OS::getFullName() {
 }
 
 // _____________________________________________________________________________________________________________________
-std::string OS::getName() { return "Windows"; }
-
-// _____________________________________________________________________________________________________________________
-std::string OS::getVersion() { return "<unknown>"; }
-
-// _____________________________________________________________________________________________________________________
-std::string OS::getKernel() { return "<unknown>"; }
-
-// _____________________________________________________________________________________________________________________
 bool OS::getIs64bit() {
   BOOL isWow64 = FALSE;
   IsWow64Process(GetCurrentProcess(), &isWow64);
@@ -259,6 +244,14 @@ bool OS::getIs64bit() {
     return true;
   else
     return false;
+}
+
+// _____________________________________________________________________________________________________________________
+void OS::_updateOSInfo() {
+  _name = "Windows";
+  _version = "<unknown>";
+  _kernel = "<unknown>";
+  _fullName = _get_full_name();
 }
 
 }  // namespace hwinfo

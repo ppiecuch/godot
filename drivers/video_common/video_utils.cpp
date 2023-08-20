@@ -30,10 +30,10 @@
 
 #include "video_utils.h"
 
+#include "common/gd_core.h"
 #include "core/error_macros.h"
 #include "core/set.h"
 #include "core/variant.h"
-#include "common/gd_core.h"
 #include "servers/visual/rasterizer.h"
 
 #ifdef DOCTEST
@@ -720,7 +720,7 @@ VideoDriverInfo video_get_driver_info(const Dictionary &p_context_info) {
 
 	VideoDriverInfo info = _default_none;
 	info.standard = as_enum<VideoStandard>(p_context_info[VideoContextInfoVideoStandard]);
-	info.standard_detected =get_standard_from_string(version);
+	info.standard_detected = get_standard_from_string(version);
 	info.version = get_version_from_string(version);
 	info.shading_lang_version = get_shading_lang_version(shading_version);
 	info.vendor = get_vendor(vendor);
@@ -750,9 +750,14 @@ String video_get_video_version_string(VideoVersion p_version) { return string_fo
 TEST_CASE("Parsing driver informations") {
 	SUBCASE("From Vendor string") {
 		REQUIRE(get_vendor("Apple") == VENDOR_APPLE);
+		REQUIRE(get_vendor("Intel Inc.") == VENDOR_INTEL);
 	}
 	SUBCASE("From Renderer string") {
+		REQUIRE(get_renderer("Apple M1", PoolStringArray()) == RENDERER_APPLE_M);
 		REQUIRE(get_renderer("Apple M1 Pro", PoolStringArray()) == RENDERER_APPLE_M);
+		REQUIRE(get_renderer("Apple M1 Max", PoolStringArray()) == RENDERER_APPLE_M);
+		REQUIRE(get_renderer("Intel(R) Iris(TM) Plus Graphics 655", PoolStringArray()) == RENDERER_INTELCOFFEELAKE);
+		REQUIRE(get_renderer("Intel HD Graphics 4000 OpenGL Engine", PoolStringArray()) == RENDERER_INTELIVYBRIDGE);
 	}
 	SUBCASE("From Version string") {
 		VideoDriver driver;
@@ -761,6 +766,10 @@ TEST_CASE("Parsing driver informations") {
 		REQUIRE(driver == DRIVER_APPLE);
 		REQUIRE(driver_version == 0x5300010000);
 		REQUIRE(driver_version == DRIVER_VER(83, 1, 0));
+		REQUIRE(get_driver_and_version(STANDARD_GL, get_vendor("Intel Inc."), "Intel Inc.", "Intel HD Graphics 4000 OpenGL Engine", "2.1 INTEL-14.7.28", driver, driver_version));
+		REQUIRE(driver == DRIVER_INTEL);
+		REQUIRE(driver_version == 0xE0007001C);
+		REQUIRE(driver_version == DRIVER_VER(14, 7, 28));
 	}
 }
 #endif // DOCTEST

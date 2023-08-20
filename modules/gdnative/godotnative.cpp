@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  gdnative.cpp                                                          */
+/*  godotnative.cpp                                                       */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,7 +28,7 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "gdnative.h"
+#include "godotnative.h"
 
 #include "core/global_constants.h"
 #include "core/io/file_access_encrypted.h"

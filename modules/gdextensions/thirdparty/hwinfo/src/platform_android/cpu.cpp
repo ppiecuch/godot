@@ -58,12 +58,13 @@ int64_t CPU::currentClockSpeed_MHz() const { return get_freq_by_id_and_type(_cor
 std::vector<Socket> getAllSockets() {
   std::vector<Socket> sockets;
 
-  const int ro_product_board_length = cpuinfo_android_property_get("ro.product.board", properties->ro_product_board);
-  const int ro_board_platform_length = cpuinfo_android_property_get("ro.board.platform", properties->ro_board_platform);
-  const int ro_mediatek_platform_length = cpuinfo_android_property_get("ro.mediatek.platform", properties->ro_mediatek_platform);
-  const int ro_arch_length = cpuinfo_android_property_get("ro.arch", properties->ro_arch);
-  const int ro_chipname_length = cpuinfo_android_property_get("ro.chipname", properties->ro_chipname);
-  const int ro_hardware_chipname_length = cpuinfo_android_property_get("ro.hardware.chipname", properties->ro_hardware_chipname);
+  char prop_value[PROP_VALUE_MAX] = { 0 };
+  const int ro_product_board_length = cpuinfo_android_property_get("ro.product.board", prop_value);
+  const int ro_board_platform_length = cpuinfo_android_property_get("ro.board.platform", prop_value);
+  const int ro_mediatek_platform_length = cpuinfo_android_property_get("ro.mediatek.platform", prop_value);
+  const int ro_arch_length = cpuinfo_android_property_get("ro.arch", prop_value);
+  const int ro_chipname_length = cpuinfo_android_property_get("ro.chipname", prop_value);
+  const int ro_hardware_chipname_length = cpuinfo_android_property_get("ro.hardware.chipname", prop_value);
 
   std::ifstream cpuinfo("/proc/cpuinfo");
   if (!cpuinfo.is_open()) {

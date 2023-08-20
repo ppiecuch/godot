@@ -1,3 +1,33 @@
+/**************************************************************************/
+/*  synth_benchmark.cpp                                                   */
+/**************************************************************************/
+/*                         This file is part of:                          */
+/*                             GODOT ENGINE                               */
+/*                        https://godotengine.org                         */
+/**************************************************************************/
+/* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
+/* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
+/*                                                                        */
+/* Permission is hereby granted, free of charge, to any person obtaining  */
+/* a copy of this software and associated documentation files (the        */
+/* "Software"), to deal in the Software without restriction, including    */
+/* without limitation the rights to use, copy, modify, merge, publish,    */
+/* distribute, sublicense, and/or sell copies of the Software, and to     */
+/* permit persons to whom the Software is furnished to do so, subject to  */
+/* the following conditions:                                              */
+/*                                                                        */
+/* The above copyright notice and this permission notice shall be         */
+/* included in all copies or substantial portions of the Software.        */
+/*                                                                        */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. */
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY   */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,   */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE      */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
+/**************************************************************************/
+
 #include "synth_benchmark.h"
 
 #include "common/gd_core.h"
@@ -8,6 +38,11 @@
 #include "scene/resources/material.h"
 #include "scene/resources/mesh.h"
 #include "servers/visual/rasterizer.h"
+#include "servers/visual/visual_server_globals.h"
+
+#ifdef GDEXT_HWINFO_ENABLED
+#include "hwinfo/gpu.h"
+#endif
 
 #define SYNTH_BENCH_VERSION "1.0"
 #define SYNTH_BENCH_RELEASE "beta"
@@ -146,12 +181,14 @@ static TimeSample RunBenchmark(uint8_t p_work_scale, real_t (*p_function)()) {
 }
 
 static const char *gpu_bench_shader = R"(
+shader_type spatial;
+
 uniform sampler2D input_texture;
 
 // param xy should be a integer position (e.g. pixel position on the screen), repeats each 128x128 pixels
 // similar to a texture lookup but is only ALU
 // ~13 ALU operations (3 frac, 6 *, 4 mad)
-float PseudoRandom(float2 xy) {
+float pseudo_random(float2 xy) {
 	float2 pos = frac(xy / 128.0f) * 128.0f + float2(-64.340622f, -72.465622f);
 	return frac(dot(pos.xyx * pos.xyy, float3(20.390625f, 60.703125f, 2.4281209f))); // found by experimentation
 }
@@ -165,10 +202,10 @@ out float4 OutPosition : SV_POSITION
 
 void vertex() {
 	// DrawRectangle(InPosition, UV, OutPosition, OutUV);
-	OutPosition = InPosition;
-	OutPosition.xy = -1.0f + 2.0f * (DrawRectangleParameters.PosScaleBias.zw + (InPosition.xy * DrawRectangleParameters.PosScaleBias.xy)) * DrawRectangleParameters.InvTargetSizeAndTextureSize.xy;
-	OutPosition.xy *= float2( 1, -1 );
-	OutTexCoord.xy = (DrawRectangleParameters.UVScaleBias.zw + (InTexCoord.xy * DrawRectangleParameters.UVScaleBias.xy)) * DrawRectangleParameters.InvTargetSizeAndTextureSize.zw;
+	POSITION = InPosition;
+	POSITION.xy = -1.0f + 2.0f * (DrawRectangleParameters.PosScaleBias.zw + (InPosition.xy * DrawRectangleParameters.PosScaleBias.xy)) * DrawRectangleParameters.InvTargetSizeAndTextureSize.xy;
+	POSITION.xy *= float2( 1, -1 );
+	UV.xy = (DrawRectangleParameters.UVScaleBias.zw + (InTexCoord.xy * DrawRectangleParameters.UVScaleBias.xy)) * DrawRectangleParameters.InvTargetSizeAndTextureSize.zw;
 }
 
 #elif VS_METHOD_1 // Vertex Throughput Test
@@ -182,8 +219,8 @@ out float2 OutUV : TEXCOORD0,
 out float4 OutPosition : SV_POSITION
 
 void vertex() {
-	OutPosition = Arg0 + Arg1 + Arg2 + Arg3 + Arg4;
-	OutUV = 0.0f;
+	POSITION = Arg0 + Arg1 + Arg2 + Arg3 + Arg4;
+	UV = 0.0f;
 }
 
 #elif VS_METHOD_2
@@ -193,8 +230,8 @@ out float2 OutUV : TEXCOORD0,
 out float4 OutPosition : SV_POSITION
 
 void vertex() {
-	OutPosition = float4(VertexID, 0, 0, 0);
-	OutUV = 0.0f;
+	POSITION = float4(VertexID, 0, 0, 0);
+	UV = 0.0f;
 }
 
 #else
@@ -205,7 +242,7 @@ float2 InUV : TEXCOORD0, out float4 OutColor : SV_Target0
 
 // pixel shader entry point
 void fragment() {
-	OutColor = 0;
+	COLOR = 0;
 
 #if PS_METHOD_0 // ALU heavy
 	{
@@ -214,26 +251,26 @@ void fragment() {
 
 		UNROLL for(int i = 0; i < 16; ++i) {
 			// todo: use float4 MAD to get raw GPU performance (should be same for scalar and non scalar)
-			float4 Value = PseudoRandom(InUV + float2(i * 0.001f, 0));
-			OutColor.r += Value.r;
+			float4 value = pseudo_random(InUV + float2(i * 0.001f, 0));
+			COLOR.r += value.r;
 		}
 	}
 #elif PS_METHOD_1 // TEX heavy
 	{
 		UNROLL for(int i = 0; i < 16; ++i) {
-			float4 Value = Texture2DSample(input_texture, input_textureSampler, InUV + float2(i * 0.0001f, 0));
-			OutColor.r += Value.r;
+			float4 value = Texture2DSample(input_texture, input_textureSampler, InUV + float2(i * 0.0001f, 0));
+			COLOR.r += value.r;
 		}
 	}
 #elif PS_METHOD_2 // dependent TEX heavy
 	{
 		UNROLL for(int i = 0; i < 16; ++i) {
-			float4 Value = Texture2DSample(input_texture, input_textureSampler, InUV + float2(i * 0.001f, OutColor.r * 0.001f));
-			OutColor.r += Value.r;
+			float4 value = Texture2DSample(input_texture, input_textureSampler, InUV + float2(i * 0.001f, COLOR.r * 0.001f));
+			COLOR.r += value.r;
 		}
 	}
 #elif PS_METHOD_3
-	OutColor = Texture2DSample(input_texture, input_textureSampler, InUV) * 0.99f; // some dependency to the input texture
+	COLOR = Texture2DSample(input_texture, input_textureSampler, InUV) * 0.99f; // some dependency to the input texture
 #elif PS_METHOD_4 // Bandwidth heavy
 	{
 		float2 PixelPos = frac(InUV * 512.0f / 16.0f) * 16.0f;
@@ -241,14 +278,14 @@ void fragment() {
 		UNROLL for(int y = 0; y < 4; ++y) {
 			UNROLL for(int x = 0; x < 4; ++x) {
 				// should be bandwidth trashing enough to profile memory bandwidth
-				float4 Value = Texture2DSample(input_texture, input_textureSampler, (PixelPos + float2(x, y)) * 16 / 512.0f);
-				OutColor.r += Value.r;
+				float4 value = Texture2DSample(input_texture, input_textureSampler, (PixelPos + float2(x, y)) * 16 / 512.0f);
+				COLOR.r += value.r;
 			}
 		}
 	}
 #elif PS_METHOD_5
 	// Simple Pixel Shader used when testing vertex throughput.
-	// Do Nothing (OutColor is black).
+	// Do Nothing (COLOR is black).
 #else
 #error Invalid PS_METHOD
 #endif
@@ -501,7 +538,7 @@ bool SynthBenchmark::progress_benchmark() {
 		case BENCH_GPU_BANNER: {
 			report += string_format2(" ");
 
-			const Dictionary &ctx = OS::get_singleton()->get_video_system_info(OS::VIDEO_SYSTEM_CONTEXT_INFO);
+			const Dictionary &ctx = VisualServerGlobals::rasterizer->get_video_context_info();
 			const VideoDriverInfo &info = video_get_driver_info(ctx);
 
 			report += string_format2("Graphics:");
@@ -511,15 +548,33 @@ bool SynthBenchmark::progress_benchmark() {
 			report += string_format2("  Device Id: %d", info.renderer);
 			report += string_format2("  Device Revision: %s", video_get_video_version_string(info.version).utf8().c_str());
 
-			if (int64_t m = INT64(OS::get_singleton()->get_video_system_info(OS::VIDEO_SYSTEM_TOTAL_MEMORY))) {
-				report += string_format2("  GPU Total Memory: %d MB", m);
+#ifdef GDEXT_HWINFO_ENABLED
+			const std::vector<hwinfo::GPU> &gpu = hwinfo::getAllGPUs();
+			for (int i = 0; i < gpu.size(); i++) {
+				const auto &g = gpu[i];
+				if (gpu.size() > 1) {
+					report += string_format2(" >Device %d:", i);
+				}
+				int64_t m;
+				String gpu_hw_report;
+				if ((m = g.totalMemory_Bytes()) > 0) {
+					gpu_hw_report += string_format2("  GPU Total Memory: %d MB", m);
+				}
+				if ((m = g.textureMemory_Bytes()) > 0) {
+					gpu_hw_report += string_format2("  GPU Texture Memory: %d MB", m);
+				}
+				if ((m = g.availableMemory_Bytes()) > 0) {
+					gpu_hw_report += string_format2("  GPU Available Memory: %d MB", m);
+				}
+				if (gpu_hw_report.empty()) {
+					report += "  (Hardware details infonot available)";
+				} else {
+					report += gpu_hw_report;
+				}
 			}
-			if (int64_t m = INT64(OS::get_singleton()->get_video_system_info(OS::VIDEO_SYSTEM_TEXTURE_MEMORY))) {
-				report += string_format2("  GPU Texture Memory: %d MB", m);
-			}
-			if (int64_t m = INT64(OS::get_singleton()->get_video_system_info(OS::VIDEO_SYSTEM_AVAILABLE_MEMORY))) {
-				report += string_format2("  GPU Available Memory: %d MB", m);
-			}
+#else
+			report += string_format2("  (GPU hardware details info not available)";
+#endif // GDEXT_HWINFO_ENABLED
 		} break;
 
 		// Not always done - cost some time.

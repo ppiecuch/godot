@@ -28,50 +28,43 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-//  EnumString - A utility to provide stringizing support for C++ enums
-//  Author: Francis Xavier Joseph Pulikotil
-//
-//  This code is free software: you can do whatever you want with it,
-//	although I would appreciate if you gave credit where it's due.
-//
-//  This code is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
 #ifndef ENUM_STRING_H
 #define ENUM_STRING_H
 
-/* Usage example
-   -------------
+#if 0
+	EnumString - A utility to provide stringizing support for C++ enums
+	Author: Francis Xavier Joseph Pulikotil
+
+	Usage example:
+	--------------
 
 	// WeekEnd enumeration
-	enum WeekEnd
-	{
+	enum WeekEnd {
 		Sunday = 1,
 		Saturday = 7
 	};
 
 	// String support for WeekEnd
-	BeginEnumString( WeekEnd )
-	{
+	BeginEnumString( WeekEnd ) {
 		EnumString( Sunday );
 		EnumString( Saturday );
 	}
 	EndEnumString;
 
 	// Convert from WeekEnd to string
-	const string &str = EnumString<WeekEnd>::From( Saturday );
+	const string &str = EnumString<WeekEnd>::From(Saturday);
 	// str should now be "Saturday"
 
 	// Convert from string to WeekEnd
 	WeekEnd w;
-	EnumString<WeekEnd>::To( w, "Sunday" );
+	EnumString<WeekEnd>::To(w, "Sunday");
 	// w should now be Sunday
-*/
+#endif
 
-#include <assert.h>
-#include <map>
-#include <string>
+#include "core/error_macros.h"
+
+#include "core/map.h"
+#include "core/ustring.h"
 
 // Helper macros
 
@@ -79,20 +72,16 @@
 	template <>                                                                                                \
 	struct EnumString<EnumerationName> : public EnumStringBase<EnumString<EnumerationName>, EnumerationName> { \
 		static void RegisterEnumerators()
-//      {
 
-#define EnumString(EnumeratorName) \
-	RegisterEnumerator(EnumeratorName, #EnumeratorName);
-//      }
+#define EnumString(EnumeratorName) RegisterEnumerator(EnumeratorName, #EnumeratorName);
 
-#define EndEnumString \
-	}
+#define EndEnumString }
 
 // The EnumString base class
 template <class DerivedType, class EnumType>
 class EnumStringBase {
 protected:
-	typedef std::map<std::string, EnumType> AssocMap;
+	typedef Map<String, EnumType> AssocMap;
 
 protected:
 	explicit EnumStringBase();
@@ -106,23 +95,23 @@ private:
 	static AssocMap &GetMap();
 
 protected:
-	// Use this helper function to register each enumerator
-	// and its string representation.
-	static void RegisterEnumerator(const EnumType e, const std::string &eStr);
+	// use this helper function to register each enumerator
+	// and its string representation
+	static void RegisterEnumerator(const EnumType e, const String &eStr);
 
 public:
-	// Converts from an enumerator to a string.
-	// Returns an empty string if the enumerator was not registered.
-	static const std::string &From(const EnumType e);
+	// converts from an enumerator to a string
+	// returns an empty string if the enumerator was not registered
+	static const String &From(const EnumType e);
 
-	// Converts from a string to an enumerator.
-	// Returns true if the conversion is successful; false otherwise.
-	static const bool To(EnumType &e, const std::string &str);
+	// converts from a string to an enumerator
+	// returns true if the conversion is successful; false otherwise
+	static const bool To(EnumType &e, const String &str);
 };
 
 // The EnumString class
-// Note: Specialize this class for each enumeration, and implement
-//       the RegisterEnumerators() function.
+// Note: Specialize this class for each enumeration
+// and implement the RegisterEnumerators() function.
 template <class EnumType>
 struct EnumString : public EnumStringBase<EnumString<EnumType>, EnumType> {
 	static void RegisterEnumerators();
@@ -132,73 +121,58 @@ struct EnumString : public EnumStringBase<EnumString<EnumType>, EnumType> {
 
 template <class D, class E>
 typename EnumStringBase<D, E>::AssocMap &EnumStringBase<D, E>::GetMap() {
-	// A static map of associations from strings to enumerators
+	// a static map of associations from strings to enumerators
 	static AssocMap assocMap;
-	static bool bFirstAccess = true;
-
-	// If this is the first time we're accessing the map, then populate it.
-	if (bFirstAccess) {
-		bFirstAccess = false;
+	static bool firstAccess = true;
+	// if this is the first time we're accessing the map, then populate it
+	if (firstAccess) {
+		firstAccess = false;
 		D::RegisterEnumerators();
-		assert(!assocMap.empty());
+		DEV_ASSERT(!assocMap.empty());
 	}
-
 	return assocMap;
 }
 
 template <class D, class E>
-void EnumStringBase<D, E>::RegisterEnumerator(const E e, const std::string &eStr) {
-	const bool bRegistered = GetMap().insert(typename AssocMap::value_type(eStr, e)).second;
-	assert(bRegistered);
-	(void)sizeof(bRegistered); // This is to avoid the pesky 'unused variable' warning in Release Builds.
+void EnumStringBase<D, E>::RegisterEnumerator(const E e, const String &eStr) {
+	DEV_ASSERT(!GetMap().has(eStr));
+	GetMap().insert(eStr, e);
 }
 
 template <class D, class E>
-const std::string &EnumStringBase<D, E>::From(const E e) {
-	for (;;) // Code block
-	{
-		// Search for the enumerator in our map
-		typename AssocMap::const_iterator i;
-		for (i = GetMap().begin(); i != GetMap().end(); ++i) {
-			if ((*i).second == e) {
+const String &EnumStringBase<D, E>::From(const E e) {
+	for (;;) { // code block
+		typename AssocMap::Element *i = nullptr; // search for the enumerator in our map
+		for (i = GetMap().front(); i; i = i->next()) {
+			if (i->value() == e) {
 				break;
 			}
 		}
-		// If we didn't find it, we can't do this conversion
-		if (i == GetMap().end()) {
+		if (i == nullptr) { // if we didn't find it, we can't do this conversion
 			break;
 		}
-		// Keep searching and see if we find another one with the same value
-		typename AssocMap::const_iterator j(i);
-		for (++j; j != GetMap().end(); ++j) {
-			if ((*j).second == e) {
+		typename AssocMap::Element *j = i; // keep searching and see if we find another one with the same value
+		for (j = j->next(); j; j = j->next()) {
+			if (j->value() == e) {
 				break;
 			}
 		}
-		// If we found another one with the same value, we can't do this conversion
-		if (j != GetMap().end()) {
+		if (j != nullptr) { // if we found another one with the same value, we can't do this conversion
 			break;
 		}
-		// We found exactly one string which matches the required enumerator
-		return (*i).first;
+		return i->key(); // we found exactly one string which matches the required enumerator
 	}
 
-	// We couldn't do this conversion; return an empty string.
-	static const std::string dummy;
-	return dummy;
+	static const String _empty;
+	return _empty; // we couldn't do this conversion; return an empty string
 }
 
 template <class D, class E>
-const bool EnumStringBase<D, E>::To(E &e, const std::string &str) {
-	// Search for the string in our map.
-	const typename AssocMap::const_iterator itr(GetMap().find(str));
-
-	// If we have it, then return the associated enumerator.
-	if (itr != GetMap().end()) {
-		e = (*itr).second;
+const bool EnumStringBase<D, E>::To(E &e, const String &str) {
+	if (const typename AssocMap::Element *found = GetMap().find(str)) { // if we have it, then return the associated enumerator
+		e = found->value();
 		return true;
 	}
-	// We don't have it; the conversion failed.
-	return false;
+	return false; // we don't have it; the conversion failed
 }
 #endif // ENUM_STRING_H

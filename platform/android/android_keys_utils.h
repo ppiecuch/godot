@@ -37,8 +37,8 @@
 #define AKEYCODE_MAX 0xFFFF
 
 struct AndroidGodotCodePair {
-	unsigned int android_code = 0;
-	unsigned int godot_code = 0;
+	unsigned int android_code;
+	unsigned int godot_code;
 };
 
 static AndroidGodotCodePair android_godot_code_pairs[] = {

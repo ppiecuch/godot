@@ -8,27 +8,28 @@
 namespace hwinfo {
 
 class RAM {
- public:
-  RAM();
-  ~RAM() = default;
-
-  const std::string& vendor() const;
-  const std::string& name() const;
-  const std::string& model() const;
-  const std::string& serialNumber() const;
-  int64_t total_Bytes() const;
-  int64_t free_Bytes() const;
-  int64_t available_Bytes() const;
-
- private:
-  std::string _vendor{};
-  std::string _name{};
-  std::string _model{};
-  std::string _serialNumber{};
+  std::string _vendor = "<unknown>";
+  std::string _name = "<unknown>";
+  std::string _model = "<unknown>";
+  std::string _serialNumber = "<unknown>";
   int64_t _total_Bytes = -1;
   int64_t _free_Bytes = -1;
   int64_t _available_Bytes = -1;
   int _frequency = -1;
+
+ public:
+  const std::string& vendor() const { return _vendor; }
+  const std::string& name() const { return _name; }
+  const std::string& model() const { return _model; }
+  const std::string& serialNumber() const { return _serialNumber; }
+  int64_t total_Bytes() const { return _total_Bytes; }
+  int64_t free_Bytes() const { return _free_Bytes; }
+  int64_t available_Bytes() const { return _available_Bytes; }
+
+  RAM();
+  ~RAM() = default;
 };
+
+std::vector<RAM> getAllRamBars();
 
 }  // namespace hwinfo
