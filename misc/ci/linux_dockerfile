@@ -2,9 +2,10 @@ FROM fedora:34
 
 WORKDIR /app
 
-RUN dnf -y upgrade --setopt=install_weak_deps=False && \
-    dnf -y install --setopt=install_weak_deps=False \
-    bash bzip2 curl file findutils git make nano patch pkgconfig python3-pip unzip which xz libxcrypt-compat yasm g++ libstdc++-static && \
-    pip install scons==4.1.0
+RUN dnf -y upgrade --setopt=install_weak_deps=False \
+    && dnf -y install --setopt=install_weak_deps=False \
+    bash bzip2 curl file findutils git make nano patch pkgconfig python3-pip unzip which xz libxcrypt-compat yasm g++ zlib-static glibc-static libstdc++-static boost-static \
+    libx11-dev libxcursor-dev libxinerama-dev  libxi-dev libxrandr-dev libasound2-dev libpulse-dev libdbus-1-dev libudev-dev \
+    && pip install scons==4.1.0
 
 CMD /bin/bash

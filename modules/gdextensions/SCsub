@@ -136,7 +136,11 @@ def create_v_template(submodule, class_file):
     print("(GDExtensions) create V template for module: %s" % submodule)
     class_file_name = os.path.splitext(class_file)[0]
     # read class description
-    with open(os.path.join("submodules", submodule, class_file)) as f:
+    in_v_file = os.path.join("submodules", submodule, class_file)
+    if not os.path.exists(in_v_file):
+        print("(GDExtensions) missing v module file")
+        return []
+    with open(in_v_file) as f:
         lines = [line[2:].strip() for line in f if line.startswith("//")]
     found_info = False
     descr = {"properties": [], "methods": []}
@@ -315,12 +319,16 @@ if is_enabled("hwinfo"):
     if env["platform"] == "x11":
         thirdparty_sources += Glob("thirdparty/hwinfo/src/*.cpp") + Glob("thirdparty/hwinfo/src/platform_linux/*.cpp")
     elif env["platform"] == "osx":
-        thirdparty_sources += Glob("thirdparty/hwinfo/src/*.cpp") + Glob("thirdparty/hwinfo/src/platform_apple/*.cpp")
-    elif env["platform"] == "iphone":
         thirdparty_sources += (
             Glob("thirdparty/hwinfo/src/*.cpp")
             + Glob("thirdparty/hwinfo/src/platform_apple/*.cpp")
             + Glob("thirdparty/hwinfo/src/platform_apple/*.m")
+        )
+    elif env["platform"] == "iphone":
+        thirdparty_sources += (
+            Glob("thirdparty/hwinfo/src/*.cpp")
+            + Glob("thirdparty/hwinfo/src/platform_apple/*.cpp")
+            + ["thirdparty/hwinfo/src/platform_apple/utils/apple_info_ios.m"]
         )
     else:
         arch = env["arch"] if "arch" in env and env["arch"] else platform.machine()

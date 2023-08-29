@@ -2745,7 +2745,7 @@ uint32_t Image::_get_pixel32(int p_x, int p_y) const {
 
 	switch (format) {
 		case FORMAT_L8: {
-			r = b = b = ptr[ofs];
+			r = g = b = ptr[ofs];
 		} break;
 		case FORMAT_A8: {
 			a = ptr[ofs];
