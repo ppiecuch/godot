@@ -908,7 +908,7 @@ Ref<Image> ImageTools::make_seamless(const Image *p_src, SeamlessStampMode p_sta
 		}
 	}
 
-	Ref<Image> target;
+	Ref<Image> target = memnew(Image);
 	target->create(width, height, false, Image::FORMAT_RGBA8, new_data);
 	return target;
 }
