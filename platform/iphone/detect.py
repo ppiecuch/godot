@@ -34,7 +34,6 @@ def get_opts():
         ),
         ("IPHONESDK", "Path to the iPhone SDK", ""),
         BoolVariable("ios_simulator", "Build for iOS Simulator", False),
-        BoolVariable("ios_exceptions", "Enable exceptions", False),
         ("ios_triple", "Triple for ios toolchain", ""),
     ]
 

@@ -79,6 +79,7 @@ void JoypadLinux::Joypad::reset() {
 	events.clear();
 }
 
+#ifdef UDEV_ENABLED
 // This function is derived from SDL:
 // https://github.com/libsdl-org/SDL/blob/main/src/core/linux/SDL_sandbox.c#L28-L45
 static bool detect_sandbox() {
@@ -98,6 +99,7 @@ static bool detect_sandbox() {
 
 	return false;
 }
+#endif // UDEV_ENABLED
 
 JoypadLinux::JoypadLinux(InputDefault *in) {
 #ifdef UDEV_ENABLED
@@ -387,6 +389,16 @@ void JoypadLinux::open_joypad(const char *p_path) {
 			return;
 		}
 
+		uint16_t vendor = BSWAP16(inpid.vendor);
+		uint16_t product = BSWAP16(inpid.product);
+		uint16_t version = BSWAP16(inpid.version);
+
+		if (input->should_ignore_device(vendor, product)) {
+			// This can be true in cases where Steam is passing information into the game to ignore
+			// original gamepads when using virtual rebindings (See SteamInput).
+			return;
+		}
+
 		MutexLock lock(joypads_mutex[joy_num]);
 		Joypad &joypad = joypads[joy_num];
 		joypad.reset();
@@ -395,10 +407,6 @@ void JoypadLinux::open_joypad(const char *p_path) {
 		setup_joypad_properties(joypad);
 		sprintf(uid, "%04x%04x", BSWAP16(inpid.bustype), 0);
 		if (inpid.vendor && inpid.product && inpid.version) {
-			uint16_t vendor = BSWAP16(inpid.vendor);
-			uint16_t product = BSWAP16(inpid.product);
-			uint16_t version = BSWAP16(inpid.version);
-
 			sprintf(uid + String(uid).length(), "%04x%04x%04x%04x%04x%04x", vendor, 0, product, 0, version, 0);
 			input->joy_connection_changed(joy_num, true, name, uid);
 		} else {

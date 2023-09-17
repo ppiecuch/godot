@@ -193,6 +193,8 @@ private:
 
 	Vector<JoyDeviceMapping> map_db;
 
+	Set<uint32_t> ignored_device_ids;
+
 	JoyEvent _get_mapped_button_event(const JoyDeviceMapping &mapping, int p_button);
 	JoyEvent _get_mapped_axis_event(const JoyDeviceMapping &mapping, int p_axis, float p_value);
 	void _get_mapped_hat_events(const JoyDeviceMapping &mapping, int p_hat, JoyEvent r_events[HAT_MAX]);
@@ -295,10 +297,12 @@ public:
 	virtual bool is_joy_known(int p_device) G_OVERRIDE;
 	virtual String get_joy_guid(int p_device) const G_OVERRIDE;
 
-	virtual String get_joy_button_string(int p_button) G_OVERRIDE;
-	virtual String get_joy_axis_string(int p_axis) G_OVERRIDE;
-	virtual int get_joy_axis_index_from_string(String p_axis) G_OVERRIDE;
-	virtual int get_joy_button_index_from_string(String p_button) G_OVERRIDE;
+	bool should_ignore_device(int p_vendor_id, int p_product_id) const;
+
+	virtual String get_joy_button_string(int p_button);
+	virtual String get_joy_axis_string(int p_axis);
+	virtual int get_joy_axis_index_from_string(String p_axis);
+	virtual int get_joy_button_index_from_string(String p_button);
 
 	int get_unused_joy_id();
 

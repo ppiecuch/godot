@@ -594,6 +594,10 @@ void CanvasItem::_exit_canvas() {
 	}
 }
 
+void CanvasItem::_physics_interpolated_changed() {
+	VisualServer::get_singleton()->canvas_item_set_interpolated(canvas_item, is_physics_interpolated());
+}
+
 void CanvasItem::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_ENTER_TREE: {
@@ -610,6 +614,19 @@ void CanvasItem::_notification(int p_what) {
 			_enter_canvas();
 			if (!block_transform_notify && !xform_change.in_list()) {
 				get_tree()->xform_change_list.add(&xform_change);
+			}
+
+			// If using physics interpolation, reset for this node only,
+			// as a helper, as in most cases, users will want items reset when
+			// adding to the tree.
+			// In cases where they move immediately after adding,
+			// there will be little cost in having two resets as these are cheap,
+			// and it is worth it for convenience.
+			// Do not propagate to children, as each child of an added branch
+			// receives its own NOTIFICATION_ENTER_TREE, and this would
+			// cause unnecessary duplicate resets.
+			if (is_physics_interpolated_and_enabled()) {
+				notification(NOTIFICATION_RESET_PHYSICS_INTERPOLATION);
 			}
 		} break;
 		case NOTIFICATION_MOVED_IN_PARENT: {
@@ -637,6 +654,12 @@ void CanvasItem::_notification(int p_what) {
 			}
 			global_invalid = true;
 		} break;
+		case NOTIFICATION_RESET_PHYSICS_INTERPOLATION: {
+			if (is_visible_in_tree() && is_physics_interpolated()) {
+				VisualServer::get_singleton()->canvas_item_reset_physics_interpolation(canvas_item);
+			}
+		} break;
+
 		case NOTIFICATION_DRAW:
 		case NOTIFICATION_TRANSFORM_CHANGED: {
 		} break;
@@ -734,6 +757,24 @@ void CanvasItem::set_light_mask(int p_light_mask) {
 
 int CanvasItem::get_light_mask() const {
 	return light_mask;
+}
+
+void CanvasItem::set_canvas_item_use_identity_transform(bool p_enable) {
+	// Prevent sending item transforms to VisualServer when using global coords.
+	_set_use_identity_transform(p_enable);
+
+	// Let VisualServer know not to concatenate the parent transform during the render.
+	VisualServer::get_singleton()->canvas_item_set_ignore_parent_transform(get_canvas_item(), p_enable);
+
+	if (is_inside_tree()) {
+		if (p_enable) {
+			// Make sure item is using identity transform in server.
+			VisualServer::get_singleton()->canvas_item_set_transform(get_canvas_item(), Transform2D());
+		} else {
+			// Make sure item transform is up to date in server if switching identity transform off.
+			VisualServer::get_singleton()->canvas_item_set_transform(get_canvas_item(), get_transform());
+		}
+	}
 }
 
 void CanvasItem::item_rect_changed(bool p_size_changed) {
