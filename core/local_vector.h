@@ -47,6 +47,28 @@ protected:
 	T *data = nullptr;
 
 public:
+	// basic c++11 iterator
+	struct Iterator {
+		T *_array;
+		int _index;
+		Iterator(T *_array, int _index) :
+				_array(_array), _index(_index) {}
+		Iterator(const T *_array, int _index) :
+				_array(const_cast<T *>(_array)), _index(_index) {}
+		_FORCE_INLINE_ bool operator!=(const Iterator &other) const { return (_array != other._array) || (_index != other._index); }
+		_FORCE_INLINE_ T &operator*() { return _array[_index]; }
+		_FORCE_INLINE_ const T &operator*() const { return _array[_index]; }
+		Iterator operator++() {
+			_index++;
+			return *this;
+		}
+	};
+	typedef const Iterator ConstIterator;
+	Iterator begin() { return Iterator(data, 0); }
+	Iterator end() { return Iterator(data, size()); }
+	ConstIterator begin() const { return ConstIterator(data, 0); }
+	ConstIterator end() const { return ConstIterator(data, size()); }
+
 	T *ptr() {
 		return data;
 	}
