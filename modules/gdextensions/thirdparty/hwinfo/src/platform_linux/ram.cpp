@@ -42,8 +42,7 @@ void set_value(std::string& line, int64_t* dst) {
     auto space = value.find(' ');
     if (space != std::string::npos) {
       auto a = std::string(value.begin(), value.begin() + static_cast<int64_t>(space));
-      *dst = (std::stoll(a) * 1024);
-      int i = 0;
+      *dst = std::stoll(a) * 1024;
     }
   }
 }

@@ -1657,6 +1657,12 @@ Variant Variant::get_constant_value(Variant::Type p_type, const StringName &p_va
 	return E->get();
 }
 
+#ifndef __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunknown-pragmas"
+#pragma GCC optimize("-fno-var-tracking-assignments")
+#endif
+
 void register_variant_methods() {
 	_VariantCall::type_funcs = memnew_arr(_VariantCall::TypeFunc, Variant::VARIANT_MAX);
 
@@ -2321,6 +2327,10 @@ void register_variant_methods() {
 
 	_VariantCall::add_variant_constant(Variant::QUAT, "IDENTITY", Quat(0, 0, 0, 1));
 }
+
+#ifndef __clang__
+#pragma GCC diagnostic pop
+#endif
 
 void unregister_variant_methods() {
 	memdelete_arr(_VariantCall::type_funcs);

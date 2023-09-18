@@ -120,7 +120,7 @@ void GdHistoryPlot::add_sample(real_t p_new_val) {
 
 	bool needs_range_recalc = false;
 
-	while (values.size() > max_history) {
+	while (values.size() > size_t(max_history)) {
 		real_t val_to_delete = *values.begin();
 		if (val_to_delete <= lowest || val_to_delete >= highest) { // we are deleting values from plot, were theey max or min?
 			needs_range_recalc = true;
@@ -131,7 +131,7 @@ void GdHistoryPlot::add_sample(real_t p_new_val) {
 		_recalc_low_high();
 	}
 	if (show_smoothed_plot) {
-		while (smooth_values.size() > max_history) {
+		while (smooth_values.size() > size_t(max_history)) {
 			smooth_values.erase(smooth_values.begin());
 		}
 	}

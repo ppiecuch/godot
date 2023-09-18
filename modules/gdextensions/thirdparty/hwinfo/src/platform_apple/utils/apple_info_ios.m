@@ -1,20 +1,18 @@
+// Copyright Leon Freist
+// Author Leon Freist <freist@informatik.uni-freiburg.de>
+
 #include <ifaddrs.h>
 #include <arpa/inet.h>
+#include <TargetConditionals.h>
 #import <mach/mach.h>
 #import <mach-o/arch.h>
 #import <CoreLocation/CoreLocation.h>
 #import <DeviceCheck/DeviceCheck.h>
 
-#if !(TARGET_OS_TV)
+#if !TARGET_OS_TV
 #import <WebKit/WebKit.h>
 #import <LocalAuthentication/LocalAuthentication.h>
 #endif
-
-#include "TargetConditionals.h"
-
-// Reference:
-// ----------
-// 1. https://github.com/react-native-device-info/react-native-device-info/tree/master
 
 // Apple Identifier for Vendor
 

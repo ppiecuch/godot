@@ -61,12 +61,12 @@
 #ifndef _HAS_EXCEPTIONS
 #if defined(__has_feature)
 #if __has_feature(cxx_exceptions)
-#define _HAS_EXCEPTIONS
+#define _HAS_EXCEPTIONS 1
 #endif
 #endif
 #ifndef _HAS_EXCEPTIONS
 #if defined(__cpp_exceptions) || defined(__EXCEPTIONS) || (defined(_MSC_VER) && defined(_CPPUNWIND))
-#define _HAS_EXCEPTIONS
+#define _HAS_EXCEPTIONS 1
 #endif
 #endif
 #endif // _HAS_EXCEPTIONS

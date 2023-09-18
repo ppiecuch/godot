@@ -97,49 +97,64 @@ static size_t lex(CharType *p, CharType *p_end, LexType &type) {
 	} else {
 		bool have_newline_r = false;
 		bool have_newline_n = false;
+		bool have_comment_begin = false;
+		bool have_comment = false;
 
 		while (p < p_end) {
 			CharType c = *p;
-			bool is_whitespace = (c == ' ' || c == '\t');
-			bool is_newline = (c == '\r' || c == '\n');
-			bool is_alpha_num = ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_');
-			bool is_operator = (c == '!' || c == '&' || c == '|' || c == '(' || c == ')');
+			const bool is_whitespace = (c == ' ' || c == '\t');
+			const bool is_newline = (c == '\r' || c == '\n');
+			const bool is_alpha_num = ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_');
+			const bool is_operator = (c == '!' || c == '&' || c == '|' || c == '(' || c == ')');
+			const bool is_comment = (c == '/');
 
-			if (is_newline) {
-				// Only handle 1 newline at a time, which can be any combination of \r and \n
-				if (c == '\r') {
-					if (have_newline_r) {
-						break;
-					}
-					have_newline_r = true;
-				}
-				if (c == '\n') {
-					if (have_newline_n) {
-						break;
-					}
-					have_newline_n = true;
-				}
-			}
-
-			if (type == LexType::None) {
-				if (is_whitespace) {
-					type = LexType::Whitespace;
-				} else if (is_newline) {
-					type = LexType::Newline;
-				} else if (is_alpha_num) {
-					type = LexType::Word;
-				} else if (is_operator) {
-					type = LexType::Operator;
-				}
+			if (is_comment && have_comment_begin) {
+				have_comment = true;
+			} else if (is_comment && !have_comment_begin) {
+				have_comment_begin = true;
 			} else {
-				if (type == LexType::Whitespace && !is_whitespace) {
-					break;
-				} else if (type == LexType::Newline && !is_newline) {
-					break;
-				} else if (type == LexType::Word && !is_alpha_num) {
-					break;
-				} else if (type == LexType::Operator && !is_operator) {
-					break;
+				if (!have_comment && have_comment_begin) {
+					have_comment_begin = false; // reset comment
+				}
+				if (is_newline) {
+					// Only handle 1 newline at a time, which can be any combination of \r and \n
+					if (c == '\r') {
+						if (have_newline_r) {
+							break;
+						}
+						have_newline_r = true;
+					}
+					if (c == '\n') {
+						if (have_newline_n) {
+							break;
+						}
+						have_newline_n = true;
+					}
+				} else if (have_comment) {
+					p++;
+					continue;
+				}
+
+				if (type == LexType::None) {
+					if (is_whitespace) {
+						type = LexType::Whitespace;
+					} else if (is_newline) {
+						type = LexType::Newline;
+					} else if (is_alpha_num) {
+						type = LexType::Word;
+					} else if (is_operator) {
+						type = LexType::Operator;
+					}
+				} else {
+					if (type == LexType::Whitespace && !is_whitespace) {
+						break;
+					} else if (type == LexType::Newline && !is_newline) {
+						break;
+					} else if (type == LexType::Word && !is_alpha_num) {
+						break;
+					} else if (type == LexType::Operator && !is_operator) {
+						break;
+					}
 				}
 			}
 			p++;
@@ -245,7 +260,7 @@ void StringProcessor::process(CharType *buffer, size_t len) {
 
 			CharType *command_start = p++;
 
-			// Expect a command word
+			// expect a command word
 			const size_t len_command = lex_expect(p, p_end, LexType::Word);
 			if (len_command == 0) {
 				continue;
@@ -258,7 +273,7 @@ void StringProcessor::process(CharType *buffer, size_t len) {
 			if (word_command == "define") { // #define <word>
 
 				if (is_erasing) {
-					consume_line(); // Just consume the line if we're erasing
+					consume_line(); // just consume the line if we're erasing
 				} else {
 					const size_t len_command_whitespace = lex_expect(p, p_end, LexType::Whitespace); // Expect some whitespace
 					if (len_command_whitespace == 0) {
@@ -275,20 +290,20 @@ void StringProcessor::process(CharType *buffer, size_t len) {
 
 					p += len_define;
 
-					add_define(word_define); // Add define
-					expect_eol(); // Expect end of line
+					add_define(word_define); // add define
+					expect_eol(); // expect end of line
 				}
 			} else if (word_command == "undef") { // #undef <word>
 				if (is_erasing) {
-					consume_line(); // Just consume the line if we're erasing
+					consume_line(); // just consume the line if we're erasing
 				} else {
-					const size_t len_command_whitespace = lex_expect(p, p_end, LexType::Whitespace); // Expect some whitespace
+					const size_t len_command_whitespace = lex_expect(p, p_end, LexType::Whitespace); // expect some whitespace
 					if (len_command_whitespace == 0) {
 						continue;
 					}
 					p += len_command_whitespace;
 
-					const size_t len_define = lex_expect(p, p_end, LexType::Word); // Expect a define word
+					const size_t len_define = lex_expect(p, p_end, LexType::Word); // expect a define word
 					if (len_define == 0) {
 						continue;
 					}
@@ -298,21 +313,20 @@ void StringProcessor::process(CharType *buffer, size_t len) {
 					p += len_define;
 
 					remove_define(word_define); // Undefine
-					expect_eol(); // Expect end of line
+					expect_eol(); // expect end of line
 				}
 			} else if (word_command == "if") { // #if <condition>
 				if (is_erasing) {
-					// Just consume the line and push erasing at deep level
 					stack.push(Scope_Erasing | Scope_Deep);
-					consume_line();
+					consume_line(); // just consume the line and push erasing at deep level
 				} else {
-					const size_t len_command_whitespace = lex_expect(p, p_end, LexType::Whitespace); // Expect some whitespace
+					const size_t len_command_whitespace = lex_expect(p, p_end, LexType::Whitespace); // expect some whitespace
 					if (len_command_whitespace == 0) {
 						continue;
 					}
 					p += len_command_whitespace;
 
-					const bool condition_passed = test_condition(); // Expect a condition
+					const bool condition_passed = test_condition(); // expect a condition
 
 					// Push to the stack
 					if (condition_passed) {
@@ -323,39 +337,39 @@ void StringProcessor::process(CharType *buffer, size_t len) {
 				}
 			} else if (word_command == "else") { // #else
 				if (is_erasing && is_deep) {
-					consume_line(); // Just consume the line if we're deep
-				} else if (stack.size() == 0) { // If the stack is empty, this is an invalid command
+					consume_line(); // just consume the line if we're deep
+				} else if (stack.size() == 0) { // if the stack is empty, this is an invalid command
 					WARN_PRINT("Unexpected #else on line " + itos(line));
 					consume_line();
 				} else {
-					uint32_t &top = stack.top(); // Get top of stack
+					uint32_t &top = stack.top(); // get top of stack
 
-					if (top & Scope_Else) { // Error out if we're already in an else directive
+					if (top & Scope_Else) { // error out if we're already in an else directive
 						WARN_PRINT("Unexpected #else on line " + itos(line));
 					} else {
 						if (top & Scope_Passing) {
-							top = Scope_Erasing | Scope_Else; // If we're passing, set scope to erasing else
+							top = Scope_Erasing | Scope_Else; // if we're passing, set scope to erasing else
 						} else if (top & Scope_Erasing) {
-							top = Scope_Passing | Scope_Else; // If we're erasing, set scope to passing else
+							top = Scope_Passing | Scope_Else; // if we're erasing, set scope to passing else
 						}
 					}
 
-					expect_eol(); // Expect end of line
+					expect_eol(); // expect end of line
 				}
 			} else if (word_command == "elif") { // #elif <condition>
 				if (is_erasing && is_deep) {
-					consume_line(); // Just consume the line if we're deep
+					consume_line(); // just consume the line if we're deep
 				} else if (stack.size() == 0) { // If the stack is empty, this is an invalid command
 					WARN_PRINT("Unexpected #elif on line " + itos(line));
 					consume_line();
 				} else {
-					uint32_t &top = stack.top(); // Get top of stack
+					uint32_t &top = stack.top(); // get top of stack
 
-					if (top & Scope_Else) { // Error out if we're already in an else directive
+					if (top & Scope_Else) { // error out if we're already in an else directive
 						WARN_PRINT("Unexpected #elif on line " + itos(line));
 						consume_line();
 					} else {
-						if (top & Scope_Passing) { // If we're already passing, we'll erase anything below and set the deep flag to ignore the rest
+						if (top & Scope_Passing) { // if we're already passing, we'll erase anything below and set the deep flag to ignore the rest
 							top = Scope_Erasing | Scope_ElseIf | Scope_Deep;
 							consume_line();
 						} else {
@@ -378,18 +392,18 @@ void StringProcessor::process(CharType *buffer, size_t len) {
 					}
 				}
 			} else if (word_command == "endif") { // #endif
-				if (stack.size() == 0) { // If the stack is empty, this is an invalid command
+				if (stack.size() == 0) { // if the stack is empty, this is an invalid command
 					WARN_PRINT("Unexpected #endif on line " + itos(line));
 					consume_line();
 				} else {
-					expect_eol(); // Expect end of line
-					stack.pop(); // Pop from stack
+					expect_eol(); // expect end of line
+					stack.pop(); // pop from stack
 				}
 			} else if (word_command == "include") { // #include <path>
 				if (is_erasing) {
-					consume_line(); // Just consume the line if we're erasing
+					consume_line(); // just consume the line if we're erasing
 				} else {
-					if (include_callback == nullptr) { // If no callback is set up, just consume the line
+					if (include_callback == nullptr) { // if no callback is set up, just consume the line
 						WARN_PRINT("No include callback set up for #include on line " + itos(line));
 						consume_line();
 					} else {
@@ -399,7 +413,7 @@ void StringProcessor::process(CharType *buffer, size_t len) {
 						}
 						p += len_command_whitespace;
 
-						const size_t len_path = lex_expect(p, p_end, LexType::String); // Expect a string
+						const size_t len_path = lex_expect(p, p_end, LexType::String); // expect a string
 						if (len_path == 0) {
 							continue;
 						}
@@ -408,33 +422,36 @@ void StringProcessor::process(CharType *buffer, size_t len) {
 
 						p += len_path;
 
-						if (!include_callback(path)) { // Run callback
+						if (!include_callback(path)) { // run callback
 							WARN_PRINT("Failed to include \"" + path + "\" on line " + itos(line));
 						}
 
-						expect_eol(); // Expect end of line
+						expect_eol(); // expect end of line
 					}
 				}
-			} else { // Unknown command, it can be handled by the callback, or throw an error
+			} else if (word_command == "error") { // #error <msg>
+				*(command_start - 1) = '.'; // #error -> .error
+				consume_line(); // consume message
+			} else { // unknown command, it can be handled by the callback, or throw an error
 				bool command_found = false;
 				const int command_line = line;
 
 				CharType *command_value_start = p;
 
-				consume_line(); // Consume until end of line
+				consume_line(); // consume until end of line
 
-				if (!is_erasing) { // Handle if not erasing
-					if (command_callback != nullptr) { // See if there is a custom command callback
+				if (!is_erasing) { // handle if not erasing
+					if (command_callback != nullptr) { // see if there is a custom command callback
 						LexType type_command_value;
 						size_t len_command_value = lex(command_value_start, p_end, type_command_value);
 
-						if (type_command_value == LexType::Whitespace) { // Handle potential whitespace
+						if (type_command_value == LexType::Whitespace) { // handle potential whitespace
 							command_value_start += len_command_value;
 							len_command_value = lex(command_value_start, p_end, type_command_value);
 						}
 
 						if (type_command_value == LexType::Newline) {
-							command_found = command_callback(word_command, String()); // If end of line, there's no command value
+							command_found = command_callback(word_command, String()); // if end of line, there's no command value
 						} else { // If not end of line yet, there's some value
 							const String command_value(command_value_start, len_command_value);
 							command_found = command_callback(word_command, command_value);
@@ -451,7 +468,7 @@ void StringProcessor::process(CharType *buffer, size_t len) {
 		}
 	}
 
-	// If there's something left in the stack, there are unclosed commands (missing #endif etc.)
+	// if there's something left in the stack, there are unclosed commands (missing #endif etc.)
 	if (stack.size() > 0) {
 		WARN_PRINT(itos(stack.size()) + " preprocessor scope(s) left unclosed at end of file (did you forget \"#endif\"?)");
 	}
@@ -498,7 +515,7 @@ bool StringProcessor::test_condition() {
 		}
 
 		if (type != LexType::Word) {
-			WARN_PRINT("Unexpected " + lex_type_name(type) + " in condition on line " + itos(line));
+			WARN_PRINT("Unexpected text '" + String(sym_start, sym_length) + "' of type " + lex_type_name(type) + " in condition on line " + itos(line));
 		} else {
 			const String word(sym_start, sym_length);
 			if (has_define(word) == must_equal) {
@@ -509,7 +526,7 @@ bool StringProcessor::test_condition() {
 		conditions.push_back(cond | op_flag);
 	}
 
-	// Perform AND conditions first
+	// perform AND conditions first
 	for (int i = conditions.size() - 1; i >= 1; i--) {
 		uint32_t &rhs = conditions[i];
 		uint32_t &lhs = conditions[i - 1];
@@ -524,7 +541,7 @@ bool StringProcessor::test_condition() {
 		}
 	}
 
-	// Perform OR conditions last
+	// perform OR conditions last
 	for (int i = conditions.size() - 1; i >= 1; i--) {
 		uint32_t &rhs = conditions[i];
 		uint32_t &lhs = conditions[i - 1];
@@ -539,7 +556,7 @@ bool StringProcessor::test_condition() {
 		}
 	}
 
-	DEV_ASSERT(conditions.size() != 1); // Now there should only be 1 condition left
+	DEV_ASSERT(conditions.size() != 1); // now there should only be 1 condition left
 
 	if (conditions.size() != 1) {
 		return false;
@@ -548,7 +565,7 @@ bool StringProcessor::test_condition() {
 }
 
 void StringProcessor::expect_eol() {
-	if (p == p_end) { // Consider the end of the string as end of line too
+	if (p == p_end) { // consider the end of the string as end of line too
 		return;
 	}
 	if (lex_expect(p, p_end, LexType::Newline) == 0) {

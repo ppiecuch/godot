@@ -7,5 +7,7 @@ env.add_source_files(env.drivers_sources, "*.mm")
 env.add_source_files(env.drivers_sources, "MGL/*.c")
 env.add_source_files(env.drivers_sources, "MGL/*.cpp")
 
+env.Append(FRAMEWORKS=["Metal", "Foundation"])
+
 SConscript("shaders/SCsub")
 SConscript("tools/SCsub")

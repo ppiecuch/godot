@@ -53,7 +53,7 @@ class Socket {
   class CPU _cpu;
 
  public:
-  const CPU& CPU() const { return _cpu; }
+  const CPU& cpu() const { return _cpu; }
   int id() const { return _id; }
 
   ~Socket() = default;

@@ -163,7 +163,6 @@ class ArrayMesh : public Mesh {
 
 private:
 	struct Surface {
-		int32_t ref;
 		String name;
 		AABB aabb;
 		Ref<Material> material;

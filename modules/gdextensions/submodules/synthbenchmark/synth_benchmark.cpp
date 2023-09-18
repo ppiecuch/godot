@@ -41,7 +41,8 @@
 #include "servers/visual/visual_server_globals.h"
 
 #ifdef GDEXT_HWINFO_ENABLED
-#include "hwinfo/gpu.h"
+#include "hwinfo/hwinfo.h"
+#include "hwinfo/utils/stringutils.h"
 #endif
 
 #define SYNTH_BENCH_VERSION "1.0"
@@ -69,14 +70,14 @@ real_t FractalBenchmark();
 static real_t g_global_state_object = 0;
 
 _FORCE_INLINE_ static void memory_barrier() {
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__linux__)
 	__sync_synchronize();
 #elif defined(__x86_64__) || defined(_M_X64) || defined(__i386) || defined(_M_IX86)
 	_mm_sfence();
 #elif defined(__arm__) || defined(__aarch64__) || defined(_M_ARM)
 	__dmb(_ARM64_BARRIER_SY);
 #else
-#warning "Missing memory barrier for this platform"
+# warning "Missing memory barrier for this platform"
 #endif
 }
 
@@ -302,6 +303,12 @@ struct TestRender {
 	Ref<Image> _get_image();
 	void _destroy();
 
+	void done() {
+		if (viewport.is_valid()) {
+			VS::get_singleton()->viewport_set_active(viewport, false);
+		}
+	}
+
 	~TestRender() {
 		if (viewport.is_valid()) {
 			_destroy();
@@ -316,6 +323,7 @@ void TestRender::_create() {
 	VS::get_singleton()->viewport_set_update_mode(viewport, VS::VIEWPORT_UPDATE_DISABLED);
 	VS::get_singleton()->viewport_set_vflip(viewport, true);
 	VS::get_singleton()->viewport_set_scenario(viewport, scenario);
+	VS::get_singleton()->viewport_set_size(viewport, 128, 128);
 	VS::get_singleton()->viewport_set_transparent_background(viewport, true);
 	VS::get_singleton()->viewport_set_active(viewport, false);
 
@@ -358,8 +366,7 @@ void TestRender::_trigger(const Ref<Mesh> &p_mesh, const Size2 &p_size, const St
 	if (m == 0) {
 		return;
 	}
-	m = 1.0 / m;
-	m *= 0.5;
+	m = (1.0 / m) * 0.5;
 	xform.basis.scale(Vector3(m, m, m));
 	xform.origin = -xform.basis.xform(ofs); //-ofs*m;
 	xform.origin.z -= rot_aabb.size.z * 2;
@@ -391,7 +398,6 @@ void TestRender::_destroy() {
 	_FREE_RID(light_instance);
 	_FREE_RID(light);
 	_FREE_RID(camera);
-	_FREE_RID(viewport_texture);
 	_FREE_RID(viewport);
 	_FREE_RID(scenario);
 }
@@ -420,6 +426,8 @@ void SynthBenchmark::_render_done(const Variant &p_udata) {
 			}
 		}
 	}
+
+	render->done();
 	String report;
 	_gpu_time = results.compute_total_gpu_time();
 	if (_gpu_time > 0) {
@@ -447,11 +455,11 @@ void SynthBenchmark::trigger_gpu_benchmark(uint8_t p_work_scale) {
 	mesh_array.resize(VS::ARRAY_MAX);
 	mesh_array[VS::ARRAY_VERTEX] = parray(
 			Vector3(0, 0, 0),
-			Vector3(1, 0, 0),
+			Vector3(10, 0, 0),
+			Vector3(1, 20, 0),
+			Vector3(0, 2, 0),
 			Vector3(0, 0, 0),
-			Vector3(0, 1, 0),
-			Vector3(0, 0, 0),
-			Vector3(0, 0, 1));
+			Vector3(50, 100, 1));
 	mesh_array[VS::ARRAY_COLOR] = parray(
 			Color::named("red"),
 			Color::named("red"),
@@ -463,7 +471,7 @@ void SynthBenchmark::trigger_gpu_benchmark(uint8_t p_work_scale) {
 	mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, mesh_array, Array());
 	Ref<ShaderMaterial> material = memnew(ShaderMaterial);
 	Ref<Shader> shader = memnew(Shader);
-	shader->set_code(StringProcessor("VS_METHOD_1,UNROLL").process(gpu_bench_shader));
+	shader->set_code(StringProcessor("VS_METHOD_0,UNROLL").process(gpu_bench_shader));
 	material->set_shader(shader);
 	mesh->surface_set_material(0, material);
 	render->_trigger(mesh);
@@ -522,7 +530,9 @@ bool SynthBenchmark::progress_benchmark() {
 
 			report += string_format2("  CompiledTarget Bits: %s", app_is64_bit ? "64" : "32");
 			report += string_format2("  BUILD_INFO: %s", get_full_version_string().utf8().c_str());
+#ifdef BUILD_DEBUG
 			report += string_format2("  BUILD_DEBUG: %d", DEBUG_ENABLED);
+#endif
 			report += string_format2("  BUILD_VERBOSE: %d", OS::get_singleton()->is_stdout_verbose());
 			report += string_format2("  DATA_DIR: %s", OS::get_singleton()->get_data_path().utf8().c_str());
 			report += string_format2("  USER_DATA_DIR: %s", OS::get_singleton()->get_user_data_dir().utf8().c_str());
@@ -530,9 +540,28 @@ bool SynthBenchmark::progress_benchmark() {
 			report += string_format2("  CPU Name: %s", OS::get_singleton()->get_processor_name().utf8().c_str());
 			report += string_format2("  NumberOfCores (physical): %d", OS::get_singleton()->get_processor_count());
 
+#ifdef GDEXT_HWINFO_ENABLED
+			const hwinfo::System system_info;
+			report += string_format2("  System Uptime: %s", hwinfo::utils::time_duration_string(system_info.getUptimeSeconds()).c_str());
+			std::vector<float> cpu_load = system_info.getCpuUsagePercent();
+			if (cpu_load.size()) {
+				String cpu_load_str = string_format("%2.1f%%", cpu_load[0]);
+				for (size_t c = 1; c < cpu_load.size(); c++) {
+					cpu_load_str += string_format(" | %2.1f%%", cpu_load[c]);
+				}
+				report += string_format2("  CPU Load: %s", cpu_load_str.utf8().c_str());
+			}
 			for (uint32_t MethodId = 0; MethodId < ARRAY_COUNT(results.CPUStats); ++MethodId) {
 				report += string_format2("  CPU Perf Index %d: %.1f (weight %.2f)", MethodId, results.CPUStats[MethodId].compute_perf_index(), results.CPUStats[MethodId].get_weight());
 			}
+			report += string_format2("  Processes: %d", system_info.getNumProcesses());
+			std::string proc_report =  hwinfo::get_string_property(hwinfo::SYS_PROCESS_REPORT);
+			if (!proc_report.empty()) {
+				report += string_format2("%s", proc_report.c_str());
+			}
+#else
+			report += string_format2("  (System hardware details info not available)";
+#endif
 		} break;
 
 		case BENCH_GPU_BANNER: {
@@ -550,27 +579,31 @@ bool SynthBenchmark::progress_benchmark() {
 
 #ifdef GDEXT_HWINFO_ENABLED
 			const std::vector<hwinfo::GPU> &gpu = hwinfo::getAllGPUs();
-			for (int i = 0; i < gpu.size(); i++) {
+			for (size_t i = 0; i < gpu.size(); i++) {
 				const auto &g = gpu[i];
 				if (gpu.size() > 1) {
 					report += string_format2(" >Device %d:", i);
 				}
 				int64_t m;
 				String gpu_hw_report;
-				if ((m = g.totalMemory_Bytes()) > 0) {
+				if ((m = g.totalMemoryMBytes()) > 0) {
 					gpu_hw_report += string_format2("  GPU Total Memory: %d MB", m);
 				}
-				if ((m = g.textureMemory_Bytes()) > 0) {
+				if ((m = hwinfo::get_int_property(hwinfo::GPU_TEXTURE_MEMORY_MB, i)) > 0) {
 					gpu_hw_report += string_format2("  GPU Texture Memory: %d MB", m);
 				}
-				if ((m = g.availableMemory_Bytes()) > 0) {
+				if ((m = hwinfo::get_int_property(hwinfo::GPU_AVAILABLE_MEMORY_MB, i)) > 0) {
 					gpu_hw_report += string_format2("  GPU Available Memory: %d MB", m);
 				}
 				if (gpu_hw_report.empty()) {
-					report += "  (Hardware details infonot available)";
+					report += "  (Hardware details info not available)";
 				} else {
 					report += gpu_hw_report;
 				}
+			}
+			std::string gpu_report =  hwinfo::get_string_property(hwinfo::GPU_SUMMARY_REPORT);
+			if (!gpu_report.empty()) {
+				report += string_format2("%s", gpu_report.c_str());
 			}
 #else
 			report += string_format2("  (GPU hardware details info not available)";
@@ -587,7 +620,7 @@ bool SynthBenchmark::progress_benchmark() {
 				trigger_gpu_benchmark(first_work_scale);
 				next_step = false;
 			}
-		}
+		} break;
 
 		case BENCH_GPU_TEST2: {
 			if (gpu_benchmark) {

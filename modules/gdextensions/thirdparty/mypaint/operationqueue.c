@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include <mypaint-glib-compat.h>
+#include "mypaint-glib-compat.h"
 #include "operationqueue.h"
 #include "fifo.h"
 

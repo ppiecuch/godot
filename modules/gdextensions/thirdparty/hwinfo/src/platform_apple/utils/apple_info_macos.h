@@ -1,8 +1,7 @@
-// Reference:
-// ----------
-// 1. https://github.com/VoluntaryLabs/SystemInfoKit
-// 2. https://github.com/jonathan-beard/SystemInfo
-// 3. https://github.com/D0miH/macos-system-info/blob/master/natives/SystemInfo.cpp
+// Copyright Leon Freist
+// Author Leon Freist <freist@informatik.uni-freiburg.de>
+
+#pragma once
 
 #include <sys/sysctl.h>
 #include <sys/types.h>

@@ -340,7 +340,7 @@ void UDivMod(uint_t a, uint_t b, uint_t &q, uint_t &r) {
 // 2) L'algorithme de factorisation parcourre la table séquentiellement de toutes facons!
 // 3) L'algo change si peu! (en fait, c'est assez subtil comme différence)
 uchar_t dpremiers[6541] =
-#include "dprimes.inl"
+#include "dprimes_table.inl"
 		;
 
 // Produit la factorisation canonique (decomposition

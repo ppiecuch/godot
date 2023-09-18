@@ -74,6 +74,7 @@
 
 String string_ellipsis(const Ref<Font> &p_font, const String &p_text, real_t p_max_width);
 String string_format(const char *p_format, ...);
+String string_format(const char *p_format, va_list p_list);
 String array_concat(const Array &p_args);
 #define vconcat(...) array_concat(array(__VA_ARGS__))
 #define printf_line(format, ...) print_line(string_format(format, ##__VA_ARGS__))

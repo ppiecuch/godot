@@ -21,3 +21,12 @@
 #if defined(HWINFO_X86_64) || defined(HWINFO_X86_32)
 #define HWINFO_X86
 #endif
+
+#if defined(__arm__) || defined(_M_ARM)
+#define HWINFO_ARM32
+#elif defined(__aarch64__)
+#define HWINFO_ARM64
+#endif
+#if defined(HWINFO_ARM32) || defined(HWINFO_ARM64)
+#define HWINFO_ARM
+#endif

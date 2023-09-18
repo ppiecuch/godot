@@ -1,5 +1,6 @@
 ## 2D Environment/Scenery nodes
 
+Modules providing some procedural environment building-blocks.
 
 ### Water splash
 
@@ -129,3 +130,8 @@ const char my_Vertex_Program[] = "
 	END
 ";
 ```
+
+### Simple rocks generators
+  - proc-rock (https://github.com/acfaruk/proc-rock)
+  - rock generation (https://github.com/CarlierAlex/RockGeneration)
+  - rock generator (Pov Rock Gen 1.0)

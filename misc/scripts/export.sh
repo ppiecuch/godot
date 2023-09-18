@@ -17,7 +17,7 @@ if [ -f "$fn" ]; then
 fi
 
 echo "** Creating archive $dt .."
-git archive master | bzip2 > "$fn"
+git ls-files | tar Tczvf - "$fn"
 
 if [ -f .cache/last-export ]; then
 	source .cache/last-export
@@ -35,11 +35,11 @@ fi
 
 if [ ! -z "$rsync" ]; then
 	echo "** Running rsync -av $fn $rsync"
-	rsync -av "$fn" "$rsync"
+	rsync -av --progress "$fn" "$rsync"
 fi
 
 if [ ! -z "$sshcmd" ]; then
-	ssh $sshcmd
+	eval "ssh -t $sshcmd"
 fi
 
 echo "** Cleanup .."

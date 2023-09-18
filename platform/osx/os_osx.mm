@@ -126,8 +126,7 @@ static NSCursor *cursor_from_selector(SEL selector, SEL fallback = nil) {
 		}
 	}
 	if (fallback) {
-		// Fallback should be a reasonable default, no need to check.
-		return [NSCursor performSelector:fallback];
+		return [NSCursor performSelector:fallback]; // fallback should be a reasonable default, no need to check.
 	}
 	return [NSCursor arrowCursor];
 }
@@ -135,8 +134,9 @@ static NSCursor *cursor_from_selector(SEL selector, SEL fallback = nil) {
 static bool running_under_rosetta() {
 	int translated = 0;
 	auto size = sizeof(translated);
-	if (sysctlbyname("sysctl.proc_translated", &translated, &size, nullptr, 0) == 0)
+	if (sysctlbyname("sysctl.proc_translated", &translated, &size, nullptr, 0) == 0) {
 		return translated;
+	}
 	return false;
 }
 
@@ -273,20 +273,21 @@ static bool running_under_rosetta() {
 - (void)applicationDidHide:(NSNotification *)notification {
 	/*
 	_Godotwindow* window;
-	for (window = _Godot.windowListHead;  window;  window = window->next)
+	for (window = _Godot.windowListHead;  window;  window = window->next) {
 		_GodotInputWindowVisibility(window, GL_FALSE);
-*/
+	}
+	*/
 }
 
 - (void)applicationDidUnhide:(NSNotification *)notification {
 	/*
 	_Godotwindow* window;
-
 	for (window = _Godot.windowListHead;  window;  window = window->next) {
-		if ([window_object isVisible])
+		if ([window_object isVisible]) {
 			_GodotInputWindowVisibility(window, GL_TRUE);
+		}
 	}
-*/
+	*/
 }
 
 - (void)applicationDidChangeScreenParameters:(NSNotification *)notification {
@@ -294,8 +295,9 @@ static bool running_under_rosetta() {
 }
 
 - (void)showAbout:(id)sender {
-	if (OS_OSX::singleton->get_main_loop())
+	if (OS_OSX::singleton->get_main_loop()) {
 		OS_OSX::singleton->get_main_loop()->notification(MainLoop::NOTIFICATION_WM_ABOUT);
+	}
 }
 
 @end
@@ -310,9 +312,9 @@ static bool running_under_rosetta() {
 
 - (BOOL)windowShouldClose:(id)sender {
 	//_GodotInputWindowCloseRequest(window);
-	if (OS_OSX::singleton->get_main_loop())
+	if (OS_OSX::singleton->get_main_loop()) {
 		OS_OSX::singleton->get_main_loop()->notification(MainLoop::NOTIFICATION_WM_QUIT_REQUEST);
-
+	}
 	return NO;
 }
 
@@ -321,8 +323,7 @@ static bool running_under_rosetta() {
 
 	[OS_OSX::singleton->window_object setContentMinSize:NSMakeSize(0, 0)];
 	[OS_OSX::singleton->window_object setContentMaxSize:NSMakeSize(FLT_MAX, FLT_MAX)];
-	// Force window resize event.
-	[self windowDidResize:notification];
+	[self windowDidResize:notification]; // force window resize event.
 }
 
 - (void)windowDidExitFullScreen:(NSNotification *)notification {
@@ -336,23 +337,21 @@ static bool running_under_rosetta() {
 		Size2 size = OS_OSX::singleton->max_size / OS_OSX::singleton->get_screen_max_scale();
 		[OS_OSX::singleton->window_object setContentMaxSize:NSMakeSize(size.x, size.y)];
 	}
-
-	if (!OS_OSX::singleton->resizable)
+	if (!OS_OSX::singleton->resizable) {
 		[OS_OSX::singleton->window_object setStyleMask:[OS_OSX::singleton->window_object styleMask] & ~NSWindowStyleMaskResizable];
-
-	if (OS_OSX::singleton->on_top)
+	}
+	if (OS_OSX::singleton->on_top) {
 		[OS_OSX::singleton->window_object setLevel:NSFloatingWindowLevel];
-
+	}
 	[NSApp setPresentationOptions:NSApplicationPresentationDefault];
 
-	// Force window resize event.
-	[self windowDidResize:notification];
+	[self windowDidResize:notification]; // force window resize event.
 }
 
 - (void)windowDidChangeBackingProperties:(NSNotification *)notification {
-	if (!OS_OSX::singleton)
+	if (!OS_OSX::singleton) {
 		return;
-
+	}
 	NSWindow *window = (NSWindow *)[notification object];
 	CGFloat newBackingScaleFactor = [window backingScaleFactor];
 	CGFloat oldBackingScaleFactor = [[[notification userInfo] objectForKey:@"NSBackingPropertyOldScaleFactorKey"] doubleValue];
@@ -380,10 +379,8 @@ static bool running_under_rosetta() {
 			CGLEnable((CGLContextObj)[OS_OSX::singleton->context CGLContextObj], kCGLCESurfaceBackingSize);
 		}
 
-		//Update context
-		if (OS_OSX::singleton->main_loop) {
-			//Force window resize event
-			[self windowDidResize:notification];
+		if (OS_OSX::singleton->main_loop) { // update context
+			[self windowDidResize:notification]; // force window resize event
 		}
 	}
 }
@@ -419,9 +416,10 @@ static bool running_under_rosetta() {
 	_GodotInputWindowSize(window, contentRect.size.width, contentRect.size.height);
 	_GodotInputWindowDamage(window);
 
-	if (window->cursorMode == Godot_CURSOR_DISABLED)
+	if (window->cursorMode == Godot_CURSOR_DISABLED) {
 		centerCursor(window);
-*/
+	}
+	*/
 }
 
 - (void)windowDidMove:(NSNotification *)notification {
@@ -436,9 +434,10 @@ static bool running_under_rosetta() {
 	_GodotPlatformGetWindowPos(window, &x, &y);
 	_GodotInputWindowPos(window, x, y);
 
-	if (window->cursorMode == Godot_CURSOR_DISABLED)
+	if (window->cursorMode == Godot_CURSOR_DISABLED) {
 		centerCursor(window);
-*/
+		}
+	*/
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)notification {
@@ -1484,10 +1483,19 @@ inline void sendPanEvent(double dx, double dy, int modifierFlags) {
 - (void)initDetails {
 	NSNotificationCenter *ntfcenter;
 
-	[self setWantsBestResolutionOpenGLSurface:YES];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
+	if ([self respondsToSelector:@selector(setWantsBestResolutionOpenGLSurface:)]) {
+		[self setWantsBestResolutionOpenGLSurface:YES];
+	}
+#endif
+#pragma clang diagnostic pop
 	[self setPostsFrameChangedNotifications:YES];
 
 	ntfcenter = [NSNotificationCenter defaultCenter];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 	[ntfcenter addObserver:self
 				  selector:@selector(_surfaceNeedsUpdate:)
 					  name:NSViewGlobalFrameDidChangeNotification
@@ -1496,6 +1504,7 @@ inline void sendPanEvent(double dx, double dy, int modifierFlags) {
 				  selector:@selector(_surfaceNeedsUpdate:)
 					  name:NSViewFrameDidChangeNotification
 					object:self];
+#pragma clang diagnostic pop
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect {
@@ -1541,15 +1550,17 @@ inline void sendPanEvent(double dx, double dy, int modifierFlags) {
 		[[self openGLContext] clearDrawable];
 		return;
 	}
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 	[self.openGLContext setView:self];
+#pragma clang diagnostic pop
 }
 
 + (NSOpenGLPixelFormat *)defaultPixelFormat {
 	static NSOpenGLPixelFormat *pixelFormat;
-
-	if (pixelFormat)
+	if (pixelFormat) {
 		return pixelFormat;
-
+	}
 #define PixelFormatAttrib(...) __VA_ARGS__
 	NSOpenGLPixelFormatAttribute attribs[] = {
 		PixelFormatAttrib(NSOpenGLPFADoubleBuffer),
@@ -1582,7 +1593,10 @@ inline void sendPanEvent(double dx, double dy, int modifierFlags) {
 	if (context != openGLContext) {
 		[self clearGLContext];
 		openGLContext = context;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 		[openGLContext setView:self];
+#pragma clang diagnostic pop
 	}
 }
 
@@ -1622,9 +1636,10 @@ inline void sendPanEvent(double dx, double dy, int modifierFlags) {
 		/*
 		NSButtonTouchBarItem *btn = (NSButtonTouchBarItem *)sender;
 		NSNumber *hotkeyIndex = [[touchBarButtonActions objectForKey:btn.identifier] objectAtIndex:0];
-		if (OS_OSX::singleton->get_main_loop())
+		if (OS_OSX::singleton->get_main_loop()) {
 			OS_OSX::singleton->get_main_loop()->notification(hotkeyIndex.intValue);
-*/
+		}
+		*/
 	}
 }
 
@@ -1664,8 +1679,7 @@ inline void sendPanEvent(double dx, double dy, int modifierFlags) {
 @implementation GodotWindow
 
 - (BOOL)canBecomeKeyWindow {
-	// Required for NSBorderlessWindowMask windows
-	return YES;
+	return YES; // required for NSBorderlessWindowMask windows
 }
 
 @end
@@ -1798,6 +1812,10 @@ void OS_OSX::initialize_core() {
 	DirAccess::make_default<DirAccessOSX>(DirAccess::ACCESS_RESOURCES);
 	DirAccess::make_default<DirAccessOSX>(DirAccess::ACCESS_USERDATA);
 	DirAccess::make_default<DirAccessOSX>(DirAccess::ACCESS_FILESYSTEM);
+
+	if (running_under_rosetta()) {
+		print_verbose("INFO: running under rosetta translation layer.");
+	}
 }
 
 struct LayoutInfo {

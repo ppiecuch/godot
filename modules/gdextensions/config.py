@@ -11,8 +11,8 @@ def configure(env):
     # all submodules available in the extensions
     modules = [
         "core",
-        "vcore",
         "visual",
+        "editor",
         "cpufeatures",
         "breakpad",
         "benchmark",

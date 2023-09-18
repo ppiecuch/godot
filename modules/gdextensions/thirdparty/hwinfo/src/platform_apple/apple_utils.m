@@ -17,7 +17,16 @@
 #include <libproc.h>
 #include <stdlib.h>
 
+// defined as external "C":
 extern void hwinfo_error(const char *p_format, ...);
+typedef struct procid_t {
+  uint64_t pid, ppid;
+} procid_t;
+typedef struct treeinfo_t {
+  int index;
+  char label[32];
+} treeinfo_t;
+extern bool get_tree_descr_from_data(const procid_t *data, treeinfo_t *treeinfo, size_t data_num);
 
 char *_get_sysctl_prop(const char *key) {
   size_t size = 512;
@@ -177,6 +186,8 @@ NSArray *get_all_metal_info() {
   NSMutableArray *all_info = [NSMutableArray arrayWithCapacity:metal_devices.count + 1];
 
   NSString *features_report =
+    @"GPU features matrix:\n"
+    @"--------------------\n"
     @"   |                                | L R H U | C            C |\n"
     @"   |                                | o e e n | o    A       aM|\n"
     @"   |                                | w m a i | m    p       te|\n"
@@ -250,31 +261,86 @@ NSArray *get_all_metal_info() {
       [family addObject:@"mac2"];
 
     NSMutableArray *features = [NSMutableArray arrayWithCapacity:8];
-#if TARGET_IOS
-    if ([device supportsFeatureSet: MTLFeatureSet_iOS_GPUFamily1_v1])
-      [features addObject:"1v1"];
-    if ([device supportsFeatureSet: MTLFeatureSet_iOS_GPUFamily1_v2])
-      [features addObject:"1v2"];
-    if ([device supportsFeatureSet: MTLFeatureSet_iOS_GPUFamily1_v3])
-      [features addObject:"1v3"];
-    if ([device supportsFeatureSet: MTLFeatureSet_iOS_GPUFamily1_v4])
-      [features addObject:"1v4"];
-    if ([device supportsFeatureSet: MTLFeatureSet_iOS_GPUFamily2_v1])
-      [features addObject:"2v1"];
-#elif TARGET_OSX
+#if TARGET_OS_IOS
+    if (@available(iOS 12.0, *)) {
+      if ([device supportsFeatureSet: MTLFeatureSet_iOS_GPUFamily5_v1])
+        [features addObject:"a12(ios 12)"];
+      if ([device supportsFeatureSet: MTLFeatureSet_iOS_GPUFamily4_v2])
+        [features addObject:"a11(ios 12)"];
+      if ([device supportsFeatureSet: MTLFeatureSet_iOS_GPUFamily3_v4])
+        [features addObject:"a9(ios 12)"];
+      if ([device supportsFeatureSet: MTLFeatureSet_iOS_GPUFamily2_v5])
+        [features addObject:"a8(ios 12)"];
+      if ([device supportsFeatureSet: MTLFeatureSet_iOS_GPUFamily1_v5])
+        [features addObject:"a7(ios 12)"];
+    }
+    if (@available(iOS 11.0, *)) {
+      if ([device supportsFeatureSet: MTLFeatureSet_iOS_GPUFamily4_v1])
+        [features addObject:"a11(ios 11)"];
+      if ([device supportsFeatureSet: MTLFeatureSet_iOS_GPUFamily3_v3])
+        [features addObject:"a9(iso 11)"];
+      if ([device supportsFeatureSet: MTLFeatureSet_iOS_GPUFamily2_v4])
+        [features addObject:"a8(ios 11)"];
+      if ([device supportsFeatureSet: MTLFeatureSet_iOS_GPUFamily1_v4])
+        [features addObject:"a7(ios 11)"];
+    }
+    if (@available(iOS 10.0, *)) {
+      if ([device supportsFeatureSet: MTLFeatureSet_iOS_GPUFamily3_v2])
+        [features addObject:"a9(iso 10)"];
+      if ([device supportsFeatureSet: MTLFeatureSet_iOS_GPUFamily2_v3])
+        [features addObject:"a8(ios 10)"];
+      if ([device supportsFeatureSet: MTLFeatureSet_iOS_GPUFamily1_v3])
+        [features addObject:"a7(ios 10)"];
+    }
+    if (@available(iOS 9.0, *)) {
+      if ([device supportsFeatureSet: MTLFeatureSet_iOS_GPUFamily3_v1])
+        [features addObject:"a9(iso 9)"];
+      if ([device supportsFeatureSet: MTLFeatureSet_iOS_GPUFamily2_v2])
+        [features addObject:"a8(ios 9)"];
+      if ([device supportsFeatureSet: MTLFeatureSet_iOS_GPUFamily1_v2])
+        [features addObject:"a7(ios 9)"];
+    }
+    if (@available(iOS 8.0, *)) {
+      if ([device supportsFeatureSet: MTLFeatureSet_iOS_GPUFamily1_v1])
+        [features addObject:"a7(ios 8)"];
+      if ([device supportsFeatureSet: MTLFeatureSet_iOS_GPUFamily2_v1])
+        [features addObject:"a8(ios 8)"];
+    }
+#elif TARGET_OS_TV
+    if (@available(iOS 12.0, *)) {
+      if ([device supportsFeatureSet: MTLFeatureSet_tvOS_GPUFamily2_v2])
+        [features addObject:"a10(ios 12)"];
+      if ([device supportsFeatureSet: MTLFeatureSet_tvOS_GPUFamily1_v4])
+        [features addObject:"a8(ios 12)"];
+    }
+    if (@available(iOS 11.0, *)) {
+      if ([device supportsFeatureSet: MTLFeatureSet_tvOS_GPUFamily2_v1])
+        [features addObject:"a10(ios 11)"];
+      if ([device supportsFeatureSet: MTLFeatureSet_tvOS_GPUFamily1_v3])
+        [features addObject:"a8(ios 11)"];
+    }
+    if (@available(iOS 10.0, *))
+      if ([device supportsFeatureSet: MTLFeatureSet_tvOS_GPUFamily1_v2])
+        [features addObject:"a8(ios 10)"];
+    if (@available(iOS 9.0, *))
+      if ([device supportsFeatureSet: MTLFeatureSet_tvOS_GPUFamily1_v1])
+        [features addObject:"a8(ios 9)"];
+#elif TARGET_OS_OSX
+    if ([device supportsFeatureSet: MTLFeatureSet_macOS_ReadWriteTextureTier2])
+      [features addObject:@"rw-texture"];
     if ([device supportsFeatureSet: MTLFeatureSet_macOS_GPUFamily1_v1])
-      [features addObject:@"1v1"];
+      [features addObject:@"metal-family1(macos10.11)"];
     if (@available(macOS 10.12, *))
       if ([device supportsFeatureSet: MTLFeatureSet_macOS_GPUFamily1_v2])
-        [features addObject:@"1v2"];
+        [features addObject:@"metal-family1(macos10.12)"];
     if (@available(macOS 10.13, *))
       if ([device supportsFeatureSet: MTLFeatureSet_macOS_GPUFamily1_v3])
-        [features addObject:@"1v3"];
+        [features addObject:@"metal-family1(macos10.13)"];
     if (@available(macOS 10.14, *)) {
       if ([device supportsFeatureSet: MTLFeatureSet_macOS_GPUFamily1_v4])
-        [features addObject:@"1v4"];
+        [features addObject:@"metal-family1(macos10.14)"];
       if ([device supportsFeatureSet: MTLFeatureSet_macOS_GPUFamily2_v1])
-        [features addObject:@"2v1"];
+        [features addObject:@"metal-family2(macos10.14)"];
     }
 #endif
 
@@ -325,16 +391,18 @@ NSArray *get_all_metal_info() {
 #if __MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_15
       if (@available(macOS 10.15, ios 11, *)) {
         *_device_unified_memory_mark = [device hasUnifiedMemory] ? '+' : '-';
-      } else {
-        *_device_unified_memory_mark = '?';
       }
 #endif
+      char _device_is_removable[2] = "?";
+      if (@available(macOS 10.13, *)) {
+        *_device_is_removable = [device isRemovable] ? '+' : '-';
+      }
     features_report = [features_report stringByAppendingString: [NSString stringWithFormat:
-      @"%2d | %30s | %s %s %s %s |%16s|\n",
+      @"%2u | %30s | %s %s %s %s |%16s|\n",
       (unsigned)[device locationNumber],
       [[device name] UTF8String],
       [device isLowPower] ? "+" : "-",
-      [device isRemovable] ? "+" : "-",
+      _device_is_removable,
       [device isHeadless] ? "+" : "-",
       _device_unified_memory_mark,
       family_str]];
@@ -382,28 +450,66 @@ NSArray *get_all_metal_info() {
   return [all_info copy];
 }
 
-static NSString *_get_storage_size_string(NSNumber *value) {
+static NSString* _get_storage_size_string(double value) {
   const NSArray *TokenArray = @[@"bytes", @"KB", @"MB", @"GB", @"TB", @"PB", @"EB", @"ZB", @"YB"];
-  double converted_value = [value doubleValue];
   int multiply_factor = 0;
-  while (converted_value > 1024) {
-    converted_value /= 1024;
+  while (value > 1024) {
+    value /= 1024;
     multiply_factor++;
   }
-  return [NSString stringWithFormat:@"%4.2f %@", converted_value, TokenArray[multiply_factor]];
+  return [[NSString stringWithFormat:@"%4.1f %@", value, TokenArray[multiply_factor]] stringByReplacingOccurrencesOfString:@".0" withString:@""];
+}
+
+static NSString* _get_size_string(double value) {
+  const NSArray *TokenArray = @[@"", @"k", @"m", @"g", @"t", @"p", @"e", @"z", @"y"];
+  int multiply_factor = 0;
+  while (value > 1000) {
+    value /= 1000;
+    multiply_factor++;
+  }
+  return [[NSString stringWithFormat:@"%4.1f%@", value, TokenArray[multiply_factor]] stringByReplacingOccurrencesOfString:@".0" withString:@""];
+}
+
+static NSString* _get_time_duration_string(double value) {
+  static const struct typelen_t {
+    const char *type;
+    uint64_t length;
+  } TokenArray[] = {
+    { "ags", 1000*365*24*60*60L },
+    { "cen", 100*365*24*60*60L },
+    { "yrs", 365*24*60*60L },
+    { "wks", 7*24*60*60L },
+    { "dys", 24*60*60L },
+    { "hor", 60*60L },
+    { "min", 60L },
+    { "sec", 1L },
+  };
+  if (value < 1) {
+    return [[NSString stringWithFormat:@"%3.1f sec", value] stringByReplacingOccurrencesOfString:@".0" withString:@""];
+  } else {
+    int factor = 0;
+    while (value < TokenArray[factor].length) {
+      factor++;
+    }
+    return [[NSString stringWithFormat:@"%3.1f %s", value / TokenArray[factor].length, TokenArray[factor].type] stringByReplacingOccurrencesOfString:@".0" withString:@""];
+  }
 }
 
 NSString *get_all_metal_report() {
       const NSArray *PropsList = @[@"name", @"location", @"peerGroupID", @"peerCount", @"peerIndex", @"registryID", @"isLowPower", @"isHeadless", @"isRemovable", @"isDeviceUnifiedMemory", @"currentAllocatedMemorySize", @"maxTransferRate", @"maxThreadgroupMemoryLength", @"maxThreadsPerThreadgroup", @"maxTotalThreadsPerThreadgroup", @"recommendedMaxWorkingSetSize", @"sparseTileSizeInBytes", @"threadExecutionWidth",  @"areProgrammableSamplePositionsSupported", @"areRasterOrderGroupsSupported", @"depth24Stencil8PixelFormatSupported", @"supports32BitMSAA", @"supports32BitFloatFiltering", @"supportsShaderBarycentricCoordinates", @"supportsBCTextureCompression", @"supportsFunctionPointers", @"supportsFunctionPointersFromRender", @"supportsPrimitiveMotionBlur", @"supportsRaytracing", @"supportsRaytracingFromRender", @"supportsQueryTextureLOD", @"supportsPullModelInterpolation", @"supportsFamily", @"supportsFeatureSet"];
 
       NSArray *metal_info = get_all_metal_info();
-      NSString *out = @"";
+      NSString *out =
+        @"Extended GPU device details report:\n"
+        @"===================================\n";
       for (id e in metal_info) {
         if ([e isKindOfClass:[NSDictionary class]]) {
           NSDictionary *gpu = e;
           for (NSString *p in PropsList) {
             if ([p isEqualToString:@"currentAllocatedMemorySize"]) {
-              out = [out stringByAppendingFormat:@"%@: %@ (%@)\n", p, _get_storage_size_string(gpu[p]), gpu[p]];
+              out = [out stringByAppendingFormat:@"%@: %@ (%@)\n", p, _get_storage_size_string([gpu[p] doubleValue]), gpu[p]];
+            } else if ([p isEqualToString:@"areProgrammableSamplePositionsSupported"] || [p isEqualToString:@"areRasterOrderGroupsSupported"]) {
+              out = [out stringByAppendingFormat:@"%@: %@\n", p, [gpu[p] boolValue] ? @"yes" : @"no"];
             } else if ([p isEqualToString:@"supportsFamily"] || [p isEqualToString:@"supportsFeatureSet"]) {
               out = [out stringByAppendingFormat:@"%@: %@\n", [p substringFromIndex:[@"supports" length]], [gpu[p] componentsJoinedByString:@","]];
             } else if ([p hasPrefix:@"supports"]) {
@@ -440,7 +546,7 @@ static int _get_bsd_process_list(kinfo_proc **proc_list, size_t *proc_count) {
   int err;
   kinfo_proc *result;
   BOOL done;
-  static const int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0 };
+  static int mib[] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL };
   size_t length;
 
   *proc_count = 0;
@@ -464,20 +570,20 @@ static int _get_bsd_process_list(kinfo_proc **proc_list, size_t *proc_count) {
       break; // err
     }
     length = 0;
-    err = sysctl( (int *) name, (sizeof(name) / sizeof(*name)) - 1, NULL, &length, NULL, 0); // Call sysctl with a NULL buffer.
+    err = sysctl(mib, 3, NULL, &length, NULL, 0); // call sysctl with a NULL buffer.
     if (err == -1) {
       err = errno;
     }
-    if (err == 0) { // Allocate an appropriately sized buffer based on the results from the previous call.
+    if (err == 0) { // allocate an appropriately sized buffer based on the results from the previous call.
       result = malloc(length);
       if (result == NULL) {
         err = ENOMEM;
       }
     }
-    // Call sysctl again with the new buffer.  If we get an ENOMEM
+    // call sysctl again with the new buffer.  If we get an ENOMEM
     // error, toss away our buffer and start again.
     if (err == 0) {
-      err = sysctl( (int *) name, (sizeof(name) / sizeof(*name)) - 1, result, &length, NULL, 0);
+      err = sysctl(mib, 3, result, &length, NULL, 0);
 
       if (err == -1) {
         err = errno;
@@ -492,7 +598,7 @@ static int _get_bsd_process_list(kinfo_proc **proc_list, size_t *proc_count) {
     }
   } while (err == 0 && !done);
 
-  if (lim-- > 0 && err != 0 && result != NULL) { // Clean up and establish post conditions.
+  if (lim-- > 0 && err != 0 && result != NULL) { // clean up and establish post conditions.
     free(result);
     result = NULL;
   }
@@ -519,47 +625,76 @@ NSString* get_processes_report(int *error) {
   }
 
   NSString *report_fmt =
-    @"| %5d | %20s | %7.1f | %7.1f | %6d | %6d | %11d | %7d | %7d | %7d |";
+    @"| %5u | %s%s | %8s | %8s | %8s | %8s | %6s | %7u | %5u | %7s |\n";
+  NSString *report_fmt_basic =
+    @"| %5u | %s%s |          |          |          |          |        |         |       |         |\n";
   NSString *report =
-    @"| Pid   | Name                 | CPU usr | CPU sys | Rss    | Vms    | Page faults | Pageins | Threads | Ctx swi |"
-    @"+-------+----------------+---------+---------+--------+--------+-------------+---------+---------+---------+";
+    @"Extended process details report:\n"
+    @"================================\n"
+    @"| Pid   | Name                     | CPU usr  | CPU sys  | RSS      | VMS      | Faults | Pageins | Thrds | Ctx swi |\n"
+    @"+-------+--------------------------+----------+----------+----------+----------+--------+---------+-------+---------+\n";
 
-  for(int k = 0; k < prc_count; k++) {
-    kinfo_proc *proc = &prc_list[k];
+  if (prc_count) {
+    procid_t *proc_data = (procid_t*)malloc(sizeof(procid_t) * prc_count);
+    treeinfo_t *tree_info = (treeinfo_t*)malloc(sizeof(treeinfo_t) * prc_count);
 
-    struct proc_taskinfo pti;
-    int ret = proc_pidinfo(proc->kp_proc.p_pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti));
-    if (ret <= 0) {
-      continue;
+    for(int k = 0; k < prc_count; k++) {
+      const kinfo_proc *proc = &prc_list[k];
+      proc_data[k] = (procid_t){ proc->kp_proc.p_pid, proc->kp_eproc.e_ppid };
     }
-    if ((unsigned long)ret < sizeof(pti)) {
-      continue;
+    const bool with_tree = get_tree_descr_from_data(proc_data, tree_info, prc_count);
+
+    const int NAME_COL_SIZE = 24;
+
+    for(int k = 0; k < prc_count; k++) {
+      const kinfo_proc *proc = &prc_list[tree_info[k].index];
+
+      const char *label = tree_info[k].label;
+      NSString *proc_comm = [[NSString stringWithCString: proc->kp_proc.p_comm encoding: NSUTF8StringEncoding] stringByPaddingToLength:(NAME_COL_SIZE - strlen(label)) withString:@" " startingAtIndex:0];
+
+      struct proc_taskinfo pti;
+      int ret = proc_pidinfo(proc->kp_proc.p_pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti));
+      if (ret <= 0 || (size_t)ret < sizeof(pti)) {
+        if (with_tree) {
+          report = [report stringByAppendingString: [NSString stringWithFormat:
+            report_fmt_basic,
+            proc->kp_proc.p_pid,
+            label,
+            [proc_comm UTF8String]
+          ]]; // limited report
+        }
+        continue;
+      }
+
+      const uint64_t total_user = (pti.pti_total_user * MACH_TIMEBASE_INFO.numer) / MACH_TIMEBASE_INFO.denom;
+      const uint64_t total_system = (pti.pti_total_system * MACH_TIMEBASE_INFO.numer) / MACH_TIMEBASE_INFO.denom;
+
+      report = [report stringByAppendingString: [NSString stringWithFormat:
+        report_fmt,
+        proc->kp_proc.p_pid,
+        label,
+        [proc_comm UTF8String],
+        [_get_time_duration_string(total_user / 1000000000.0) UTF8String], // (float) cpu user time
+        [_get_time_duration_string(total_system / 1000000000.0) UTF8String], // (float) cpu sys time
+        // Note about memory: determining other mem stats on macOS is a mess:
+        // http://www.opensource.apple.com/source/top/top-67/libtop.c?txt
+        // I just give up.
+        // struct proc_regioninfo pri;
+        // psutil_proc_pidinfo(pid, PROC_PIDREGIONINFO, 0, &pri, sizeof(pri))
+        [_get_storage_size_string(pti.pti_resident_size) UTF8String], // (uns long long) rss
+        [_get_storage_size_string(pti.pti_virtual_size) UTF8String], // (uns long long) vms
+        [_get_size_string(pti.pti_faults) UTF8String], // (uns long) number of page faults (pages)
+        pti.pti_pageins, // (uns long) number of actual pageins (pages)
+        pti.pti_threadnum, // (uns long) num threads
+        // Unvoluntary value seems not to be available;
+        // pti.pti_csw probably refers to the sum of the two;
+        // getrusage() numbers seems to confirm this theory.
+        [_get_size_string(pti.pti_csw) UTF8String] // (uns long) voluntary ctx switches
+      ]];
     }
 
-    const uint64_t total_user = (pti.pti_total_user * MACH_TIMEBASE_INFO.numer) / MACH_TIMEBASE_INFO.denom;
-    const uint64_t total_system = (pti.pti_total_system * MACH_TIMEBASE_INFO.numer) / MACH_TIMEBASE_INFO.denom;
-
-    report = [report stringByAppendingString: [NSString stringWithFormat:
-      report_fmt,
-      proc->kp_proc.p_pid,
-      proc->kp_proc.p_comm,
-      (float)total_user / 1000000000.0,     // (float) cpu user time
-      (float)total_system / 1000000000.0,   // (float) cpu sys time
-      // Note about memory: determining other mem stats on macOS is a mess:
-      // http://www.opensource.apple.com/source/top/top-67/libtop.c?txt
-      // I just give up.
-      // struct proc_regioninfo pri;
-      // psutil_proc_pidinfo(pid, PROC_PIDREGIONINFO, 0, &pri, sizeof(pri))
-      pti.pti_resident_size,  // (uns long long) rss
-      pti.pti_virtual_size,   // (uns long long) vms
-      pti.pti_faults,         // (uns long) number of page faults (pages)
-      pti.pti_pageins,        // (uns long) number of actual pageins (pages)
-      pti.pti_threadnum,      // (uns long) num threads
-      // Unvoluntary value seems not to be available;
-      // pti.pti_csw probably refers to the sum of the two;
-      // getrusage() numbers seems to confirm this theory.
-      pti.pti_csw             // (uns long) voluntary ctx switches
-    ]];
+    free(proc_data);
+    free(tree_info);
   }
 
   free(prc_list);

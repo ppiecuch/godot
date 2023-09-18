@@ -36,6 +36,8 @@
 typedef unsigned int uint_t;
 typedef unsigned char uchar_t;
 
+// Integer math routines
+
 uint_t CompactLog2(uint_t i);
 uint_t Log2(uint_t i);
 uint_t Log10(uint_t i);

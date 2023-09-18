@@ -5,7 +5,7 @@ WORKDIR /app
 RUN dnf -y upgrade --setopt=install_weak_deps=False \
     && dnf -y install --setopt=install_weak_deps=False \
     bash bzip2 curl file findutils git make nano patch pkgconfig python3-pip unzip which xz libxcrypt-compat yasm g++ zlib-static glibc-static libstdc++-static boost-static \
-    libx11-dev libxcursor-dev libxinerama-dev  libxi-dev libxrandr-dev libasound2-dev libpulse-dev libdbus-1-dev libudev-dev \
+    libX11-devel libXcursor-devel libXinerama-devel libXi-devel libXrandr-devel alsa-lib-devel libudev-devel pulseaudio-libs-devel dbus-devel mesa-libGL-devel \
     && pip install scons==4.1.0
 
 CMD /bin/bash

@@ -232,10 +232,10 @@ struct PinkNumber {
 //////////////////////////////////////////////////////////////////////////
 
 RetroSFXVoice::RetroSFXVoice() {
-	m_fMasterVol = 0.05;
-	m_Voice.fSoundVol = 0.8;
-	m_bPlayingSample = false;
-	m_WavSamplesRendered = 0;
+	master_vol = 0.05;
+	voice.sound_vol = 0.8;
+	playing_sample = false;
+	wav_samples_rendered = 0;
 
 	ResetParams();
 }
@@ -243,175 +243,175 @@ RetroSFXVoice::RetroSFXVoice() {
 //////////////////////////////////////////////////////////////////////////
 
 void RetroSFXVoice::ResetParams() {
-	m_Voice.nWaveformType = 0;
+	voice.waveform_shape = 0;
 
-	m_Voice.FXMorphParams.fBaseFreq = m_Voice.FXBaseParams.fBaseFreq = 0.3;
-	m_Voice.FXMorphParams.fFreqLimit = m_Voice.FXBaseParams.fFreqLimit = 0;
-	m_Voice.FXMorphParams.fFreqRamp = m_Voice.FXBaseParams.fFreqRamp = 0;
-	m_Voice.FXMorphParams.fFreqDRamp = m_Voice.FXBaseParams.fFreqDRamp = 0;
-	m_Voice.FXMorphParams.fDuty = m_Voice.FXBaseParams.fDuty = 0;
-	m_Voice.FXMorphParams.fDutyRamp = m_Voice.FXBaseParams.fDutyRamp = 0;
+	voice.fx_morph_params.BaseFreq = voice.fx_base_params.BaseFreq = 0.3;
+	voice.fx_morph_params.FreqLimit = voice.fx_base_params.FreqLimit = 0;
+	voice.fx_morph_params.FreqRamp = voice.fx_base_params.FreqRamp = 0;
+	voice.fx_morph_params.FreqDRamp = voice.fx_base_params.FreqDRamp = 0;
+	voice.fx_morph_params.Duty = voice.fx_base_params.Duty = 0;
+	voice.fx_morph_params.DutyRamp = voice.fx_base_params.DutyRamp = 0;
 
-	m_Voice.FXMorphParams.fVibStrength = m_Voice.FXBaseParams.fVibStrength = 0;
-	m_Voice.FXMorphParams.fVibSpeed = m_Voice.FXBaseParams.fVibSpeed = 0;
-	m_Voice.FXMorphParams.fVibDelay = m_Voice.FXBaseParams.fVibDelay = 0;
+	voice.fx_morph_params.VibStrength = voice.fx_base_params.VibStrength = 0;
+	voice.fx_morph_params.VibSpeed = voice.fx_base_params.VibSpeed = 0;
+	voice.fx_morph_params.VibDelay = voice.fx_base_params.VibDelay = 0;
 
-	m_Voice.FXMorphParams.fEnvAttack = m_Voice.FXBaseParams.fEnvAttack = 0;
-	m_Voice.FXMorphParams.fEnvSustain = m_Voice.FXBaseParams.fEnvSustain = 0.3;
-	m_Voice.FXMorphParams.fEnvDecay = m_Voice.FXBaseParams.fEnvDecay = 0.4;
-	m_Voice.FXMorphParams.fEnvPunch = m_Voice.FXBaseParams.fEnvPunch = 0.0;
+	voice.fx_morph_params.EnvAttack = voice.fx_base_params.EnvAttack = 0;
+	voice.fx_morph_params.EnvSustain = voice.fx_base_params.EnvSustain = 0.3;
+	voice.fx_morph_params.EnvDecay = voice.fx_base_params.EnvDecay = 0.4;
+	voice.fx_morph_params.EnvPunch = voice.fx_base_params.EnvPunch = 0.0;
 
-	m_Voice.FXMorphParams.fLPFResonance = m_Voice.FXBaseParams.fLPFResonance = 0;
-	m_Voice.FXMorphParams.fLPFFreq = m_Voice.FXBaseParams.fLPFFreq = 1;
-	m_Voice.FXMorphParams.fLPFRamp = m_Voice.FXBaseParams.fLPFRamp = 0;
-	m_Voice.FXMorphParams.fHPFFreq = m_Voice.FXBaseParams.fHPFFreq = 0;
-	m_Voice.FXMorphParams.fHPFRamp = m_Voice.FXBaseParams.fHPFRamp = 0;
-	m_Voice.FXMorphParams.fBitCrush = m_Voice.FXBaseParams.fBitCrush = 0;
-	m_Voice.FXMorphParams.fBitCrushSweep = m_Voice.FXBaseParams.fBitCrushSweep = 0;
-	m_Voice.FXMorphParams.fCompressionAmount = m_Voice.FXBaseParams.fCompressionAmount = 0.3;
+	voice.fx_morph_params.LPFResonance = voice.fx_base_params.LPFResonance = 0;
+	voice.fx_morph_params.LPFFreq = voice.fx_base_params.LPFFreq = 1;
+	voice.fx_morph_params.LPFRamp = voice.fx_base_params.LPFRamp = 0;
+	voice.fx_morph_params.HPFFreq = voice.fx_base_params.HPFFreq = 0;
+	voice.fx_morph_params.HPFRamp = voice.fx_base_params.HPFRamp = 0;
+	voice.fx_morph_params.BitCrush = voice.fx_base_params.BitCrush = 0;
+	voice.fx_morph_params.BitCrushSweep = voice.fx_base_params.BitCrushSweep = 0;
+	voice.fx_morph_params.CompressionAmount = voice.fx_base_params.CompressionAmount = 0.3;
 
-	m_Voice.FXMorphParams.fFlangerOffset = m_Voice.FXBaseParams.fFlangerOffset = 0;
-	m_Voice.FXMorphParams.fFlangerRamp = m_Voice.FXBaseParams.fFlangerRamp = 0;
+	voice.fx_morph_params.FlangerOffset = voice.fx_base_params.FlangerOffset = 0;
+	voice.fx_morph_params.FlangerRamp = voice.fx_base_params.FlangerRamp = 0;
 
-	m_Voice.FXMorphParams.fRepeatSpeed = m_Voice.FXBaseParams.fRepeatSpeed = 0;
+	voice.fx_morph_params.RepeatSpeed = voice.fx_base_params.RepeatSpeed = 0;
 
-	m_Voice.FXMorphParams.fArmRepeat = m_Voice.FXBaseParams.fArmRepeat = 0;
-	m_Voice.FXMorphParams.fArmSpeed = m_Voice.FXBaseParams.fArmSpeed = 1;
-	m_Voice.FXMorphParams.fArmMod = m_Voice.FXBaseParams.fArmMod = 0;
-	m_Voice.FXMorphParams.fArmSpeed2 = m_Voice.FXBaseParams.fArmSpeed2 = 1;
-	m_Voice.FXMorphParams.fArmMod2 = m_Voice.FXBaseParams.fArmMod2 = 0;
+	voice.fx_morph_params.ArmRepeat = voice.fx_base_params.ArmRepeat = 0;
+	voice.fx_morph_params.ArmSpeed = voice.fx_base_params.ArmSpeed = 1;
+	voice.fx_morph_params.ArmMod = voice.fx_base_params.ArmMod = 0;
+	voice.fx_morph_params.ArmSpeed2 = voice.fx_base_params.ArmSpeed2 = 1;
+	voice.fx_morph_params.ArmMod2 = voice.fx_base_params.ArmMod2 = 0;
 
-	m_Voice.FXMorphParams.fOvertones = m_Voice.FXBaseParams.fOvertones = 0;
-	m_Voice.FXMorphParams.fOvertoneRamp = m_Voice.FXBaseParams.fOvertoneRamp = 0;
+	voice.fx_morph_params.Overtones = voice.fx_base_params.Overtones = 0;
+	voice.fx_morph_params.OvertoneRamp = voice.fx_base_params.OvertoneRamp = 0;
 
 	//////////////////////////////////////////////////////////////////////////
 
-	m_Voice.fMorphRate = 0;
+	voice.morph_rate = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////
 
-int RetroSFXVoice::ReadData(void *pDest, int nSize, int nUnits, unsigned char *&pData) {
-	int read_size = nSize * nUnits;
-	memcpy(pDest, pData, nSize * nUnits);
-	pData += read_size;
+int RetroSFXVoice::ReadData(void *dest, int size, int units, unsigned char *&data) {
+	const int read_size = size * units;
+	memcpy(dest, data, read_size);
+	data += read_size;
 
 	return read_size;
 }
 
 //////////////////////////////////////////////////////////////////////////
 
-bool RetroSFXVoice::LoadSettings(unsigned char *pData) {
+bool RetroSFXVoice::LoadSettings(unsigned char *data) {
 	int version = 0;
-	ReadData(&version, 1, sizeof(int), pData);
+	ReadData(&version, 1, sizeof(int), data);
 	if (version != SFXR0100 && version != SFXR0140) {
 		WARN_PRINT("Cannot load - unknown version tag.");
 		return false;
 	}
 
-	ReadData(&m_Voice.nWaveformType, 1, sizeof(int), pData);
+	ReadData(&voice.waveform_shape, 1, sizeof(int), data);
 
-	ReadData(&m_Voice.fSoundVol, 1, sizeof(float), pData);
-	ReadData(&m_Voice.fMorphRate, 1, sizeof(float), pData);
-	ReadData(&m_Voice.nLengthInSamples, 1, sizeof(float), pData);
-
-	//////////////////////////////////////////////////////////////////////////
-
-	ReadData(&m_Voice.FXBaseParams.fBaseFreq, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXBaseParams.fFreqLimit, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXBaseParams.fFreqRamp, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXBaseParams.fFreqDRamp, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXBaseParams.fDuty, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXBaseParams.fDutyRamp, 1, sizeof(float), pData);
-
-	ReadData(&m_Voice.FXBaseParams.fVibStrength, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXBaseParams.fVibSpeed, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXBaseParams.fVibDelay, 1, sizeof(float), pData);
-
-	ReadData(&m_Voice.FXBaseParams.fEnvAttack, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXBaseParams.fEnvSustain, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXBaseParams.fEnvDecay, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXBaseParams.fEnvPunch, 1, sizeof(float), pData);
-
-	ReadData(&m_Voice.FXBaseParams.fLPFResonance, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXBaseParams.fLPFFreq, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXBaseParams.fLPFRamp, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXBaseParams.fHPFFreq, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXBaseParams.fHPFRamp, 1, sizeof(float), pData);
-
-	ReadData(&m_Voice.FXBaseParams.fFlangerOffset, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXBaseParams.fFlangerRamp, 1, sizeof(float), pData);
-
-	ReadData(&m_Voice.FXBaseParams.fRepeatSpeed, 1, sizeof(float), pData);
-
-	ReadData(&m_Voice.FXBaseParams.fArmSpeed, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXBaseParams.fArmMod, 1, sizeof(float), pData);
+	ReadData(&voice.sound_vol, 1, sizeof(float), data);
+	ReadData(&voice.morph_rate, 1, sizeof(float), data);
+	ReadData(&voice.length_in_samples, 1, sizeof(float), data);
 
 	//////////////////////////////////////////////////////////////////////////
 
-	ReadData(&m_Voice.FXMorphParams.fBaseFreq, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXMorphParams.fFreqLimit, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXMorphParams.fFreqRamp, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXMorphParams.fFreqDRamp, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXMorphParams.fDuty, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXMorphParams.fDutyRamp, 1, sizeof(float), pData);
+	ReadData(&voice.fx_base_params.BaseFreq, 1, sizeof(float), data);
+	ReadData(&voice.fx_base_params.FreqLimit, 1, sizeof(float), data);
+	ReadData(&voice.fx_base_params.FreqRamp, 1, sizeof(float), data);
+	ReadData(&voice.fx_base_params.FreqDRamp, 1, sizeof(float), data);
+	ReadData(&voice.fx_base_params.Duty, 1, sizeof(float), data);
+	ReadData(&voice.fx_base_params.DutyRamp, 1, sizeof(float), data);
 
-	ReadData(&m_Voice.FXMorphParams.fVibStrength, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXMorphParams.fVibSpeed, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXMorphParams.fVibDelay, 1, sizeof(float), pData);
+	ReadData(&voice.fx_base_params.VibStrength, 1, sizeof(float), data);
+	ReadData(&voice.fx_base_params.VibSpeed, 1, sizeof(float), data);
+	ReadData(&voice.fx_base_params.VibDelay, 1, sizeof(float), data);
 
-	ReadData(&m_Voice.FXMorphParams.fEnvAttack, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXMorphParams.fEnvSustain, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXMorphParams.fEnvDecay, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXMorphParams.fEnvPunch, 1, sizeof(float), pData);
+	ReadData(&voice.fx_base_params.EnvAttack, 1, sizeof(float), data);
+	ReadData(&voice.fx_base_params.EnvSustain, 1, sizeof(float), data);
+	ReadData(&voice.fx_base_params.EnvDecay, 1, sizeof(float), data);
+	ReadData(&voice.fx_base_params.EnvPunch, 1, sizeof(float), data);
 
-	ReadData(&m_Voice.FXMorphParams.fLPFResonance, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXMorphParams.fLPFFreq, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXMorphParams.fLPFRamp, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXMorphParams.fHPFFreq, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXMorphParams.fHPFRamp, 1, sizeof(float), pData);
+	ReadData(&voice.fx_base_params.LPFResonance, 1, sizeof(float), data);
+	ReadData(&voice.fx_base_params.LPFFreq, 1, sizeof(float), data);
+	ReadData(&voice.fx_base_params.LPFRamp, 1, sizeof(float), data);
+	ReadData(&voice.fx_base_params.HPFFreq, 1, sizeof(float), data);
+	ReadData(&voice.fx_base_params.HPFRamp, 1, sizeof(float), data);
 
-	ReadData(&m_Voice.FXMorphParams.fFlangerOffset, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXMorphParams.fFlangerRamp, 1, sizeof(float), pData);
+	ReadData(&voice.fx_base_params.FlangerOffset, 1, sizeof(float), data);
+	ReadData(&voice.fx_base_params.FlangerRamp, 1, sizeof(float), data);
 
-	ReadData(&m_Voice.FXMorphParams.fRepeatSpeed, 1, sizeof(float), pData);
+	ReadData(&voice.fx_base_params.RepeatSpeed, 1, sizeof(float), data);
 
-	ReadData(&m_Voice.FXMorphParams.fArmSpeed, 1, sizeof(float), pData);
-	ReadData(&m_Voice.FXMorphParams.fArmMod, 1, sizeof(float), pData);
+	ReadData(&voice.fx_base_params.ArmSpeed, 1, sizeof(float), data);
+	ReadData(&voice.fx_base_params.ArmMod, 1, sizeof(float), data);
+
+	//////////////////////////////////////////////////////////////////////////
+
+	ReadData(&voice.fx_morph_params.BaseFreq, 1, sizeof(float), data);
+	ReadData(&voice.fx_morph_params.FreqLimit, 1, sizeof(float), data);
+	ReadData(&voice.fx_morph_params.FreqRamp, 1, sizeof(float), data);
+	ReadData(&voice.fx_morph_params.FreqDRamp, 1, sizeof(float), data);
+	ReadData(&voice.fx_morph_params.Duty, 1, sizeof(float), data);
+	ReadData(&voice.fx_morph_params.DutyRamp, 1, sizeof(float), data);
+
+	ReadData(&voice.fx_morph_params.VibStrength, 1, sizeof(float), data);
+	ReadData(&voice.fx_morph_params.VibSpeed, 1, sizeof(float), data);
+	ReadData(&voice.fx_morph_params.VibDelay, 1, sizeof(float), data);
+
+	ReadData(&voice.fx_morph_params.EnvAttack, 1, sizeof(float), data);
+	ReadData(&voice.fx_morph_params.EnvSustain, 1, sizeof(float), data);
+	ReadData(&voice.fx_morph_params.EnvDecay, 1, sizeof(float), data);
+	ReadData(&voice.fx_morph_params.EnvPunch, 1, sizeof(float), data);
+
+	ReadData(&voice.fx_morph_params.LPFResonance, 1, sizeof(float), data);
+	ReadData(&voice.fx_morph_params.LPFFreq, 1, sizeof(float), data);
+	ReadData(&voice.fx_morph_params.LPFRamp, 1, sizeof(float), data);
+	ReadData(&voice.fx_morph_params.HPFFreq, 1, sizeof(float), data);
+	ReadData(&voice.fx_morph_params.HPFRamp, 1, sizeof(float), data);
+
+	ReadData(&voice.fx_morph_params.FlangerOffset, 1, sizeof(float), data);
+	ReadData(&voice.fx_morph_params.FlangerRamp, 1, sizeof(float), data);
+
+	ReadData(&voice.fx_morph_params.RepeatSpeed, 1, sizeof(float), data);
+
+	ReadData(&voice.fx_morph_params.ArmSpeed, 1, sizeof(float), data);
+	ReadData(&voice.fx_morph_params.ArmMod, 1, sizeof(float), data);
 
 	if (version == SFXR0140) {
-		ReadData(&m_Voice.FXBaseParams.fOvertones, 1, sizeof(int), pData);
-		ReadData(&m_Voice.FXBaseParams.fOvertoneRamp, 1, sizeof(float), pData);
+		ReadData(&voice.fx_base_params.Overtones, 1, sizeof(int), data);
+		ReadData(&voice.fx_base_params.OvertoneRamp, 1, sizeof(float), data);
 
-		ReadData(&m_Voice.FXBaseParams.fBitCrush, 1, sizeof(float), pData);
-		ReadData(&m_Voice.FXBaseParams.fBitCrushSweep, 1, sizeof(float), pData);
-		ReadData(&m_Voice.FXBaseParams.fCompressionAmount, 1, sizeof(float), pData);
+		ReadData(&voice.fx_base_params.BitCrush, 1, sizeof(float), data);
+		ReadData(&voice.fx_base_params.BitCrushSweep, 1, sizeof(float), data);
+		ReadData(&voice.fx_base_params.CompressionAmount, 1, sizeof(float), data);
 
-		ReadData(&m_Voice.FXBaseParams.fArmRepeat, 1, sizeof(float), pData);
-		ReadData(&m_Voice.FXBaseParams.fArmSpeed2, 1, sizeof(float), pData);
-		ReadData(&m_Voice.FXBaseParams.fArmMod2, 1, sizeof(float), pData);
+		ReadData(&voice.fx_base_params.ArmRepeat, 1, sizeof(float), data);
+		ReadData(&voice.fx_base_params.ArmSpeed2, 1, sizeof(float), data);
+		ReadData(&voice.fx_base_params.ArmMod2, 1, sizeof(float), data);
 
-		ReadData(&m_Voice.FXMorphParams.fOvertones, 1, sizeof(int), pData);
-		ReadData(&m_Voice.FXMorphParams.fOvertoneRamp, 1, sizeof(float), pData);
+		ReadData(&voice.fx_morph_params.Overtones, 1, sizeof(int), data);
+		ReadData(&voice.fx_morph_params.OvertoneRamp, 1, sizeof(float), data);
 
-		ReadData(&m_Voice.FXMorphParams.fBitCrush, 1, sizeof(float), pData);
-		ReadData(&m_Voice.FXMorphParams.fBitCrushSweep, 1, sizeof(float), pData);
-		ReadData(&m_Voice.FXMorphParams.fCompressionAmount, 1, sizeof(float), pData);
+		ReadData(&voice.fx_morph_params.BitCrush, 1, sizeof(float), data);
+		ReadData(&voice.fx_morph_params.BitCrushSweep, 1, sizeof(float), data);
+		ReadData(&voice.fx_morph_params.CompressionAmount, 1, sizeof(float), data);
 
-		ReadData(&m_Voice.FXMorphParams.fArmRepeat, 1, sizeof(float), pData);
-		ReadData(&m_Voice.FXMorphParams.fArmSpeed2, 1, sizeof(float), pData);
-		ReadData(&m_Voice.FXMorphParams.fArmMod2, 1, sizeof(float), pData);
+		ReadData(&voice.fx_morph_params.ArmRepeat, 1, sizeof(float), data);
+		ReadData(&voice.fx_morph_params.ArmSpeed2, 1, sizeof(float), data);
+		ReadData(&voice.fx_morph_params.ArmMod2, 1, sizeof(float), data);
 	} else {
-		m_Voice.FXBaseParams.fOvertones = m_Voice.FXMorphParams.fOvertones = 0;
-		m_Voice.FXBaseParams.fOvertoneRamp = m_Voice.FXMorphParams.fOvertoneRamp = 0;
+		voice.fx_base_params.Overtones = voice.fx_morph_params.Overtones = 0;
+		voice.fx_base_params.OvertoneRamp = voice.fx_morph_params.OvertoneRamp = 0;
 
-		m_Voice.FXBaseParams.fBitCrush = m_Voice.FXMorphParams.fBitCrush = 0;
-		m_Voice.FXBaseParams.fBitCrushSweep = m_Voice.FXMorphParams.fBitCrushSweep = 0;
-		m_Voice.FXBaseParams.fCompressionAmount = m_Voice.FXMorphParams.fCompressionAmount = 0;
+		voice.fx_base_params.BitCrush = voice.fx_morph_params.BitCrush = 0;
+		voice.fx_base_params.BitCrushSweep = voice.fx_morph_params.BitCrushSweep = 0;
+		voice.fx_base_params.CompressionAmount = voice.fx_morph_params.CompressionAmount = 0;
 
-		m_Voice.FXBaseParams.fArmRepeat = m_Voice.FXMorphParams.fArmRepeat = 0;
-		m_Voice.FXBaseParams.fArmSpeed2 = m_Voice.FXMorphParams.fArmSpeed2 = 0;
-		m_Voice.FXBaseParams.fArmMod2 = m_Voice.FXMorphParams.fArmMod2 = 0;
+		voice.fx_base_params.ArmRepeat = voice.fx_morph_params.ArmRepeat = 0;
+		voice.fx_base_params.ArmSpeed2 = voice.fx_morph_params.ArmSpeed2 = 0;
+		voice.fx_base_params.ArmMod2 = voice.fx_morph_params.ArmMod2 = 0;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -449,98 +449,98 @@ bool RetroSFXVoice::SaveSettings(const char *pFilename) {
 	int version = SFXR0140;
 	g_write(&version, 1, sizeof(int), file);
 
-	g_write(&m_Voice.nWaveformType, 1, sizeof(int), file);
+	g_write(&voice.waveform_shape, 1, sizeof(int), file);
 
-	g_write(&m_Voice.fSoundVol, 1, sizeof(float), file);
-	g_write(&m_Voice.fMorphRate, 1, sizeof(float), file);
+	g_write(&voice.sound_vol, 1, sizeof(float), file);
+	g_write(&voice.morph_rate, 1, sizeof(float), file);
 
-	g_write(&m_Voice.nLengthInSamples, 1, sizeof(float), file);
+	g_write(&voice.length_in_samples, 1, sizeof(float), file);
 
-	g_write(&m_Voice.FXBaseParams.fBaseFreq, 1, sizeof(float), file);
-	g_write(&m_Voice.FXBaseParams.fFreqLimit, 1, sizeof(float), file);
-	g_write(&m_Voice.FXBaseParams.fFreqRamp, 1, sizeof(float), file);
-	g_write(&m_Voice.FXBaseParams.fFreqDRamp, 1, sizeof(float), file);
-	g_write(&m_Voice.FXBaseParams.fDuty, 1, sizeof(float), file);
-	g_write(&m_Voice.FXBaseParams.fDutyRamp, 1, sizeof(float), file);
+	g_write(&voice.fx_base_params.BaseFreq, 1, sizeof(float), file);
+	g_write(&voice.fx_base_params.FreqLimit, 1, sizeof(float), file);
+	g_write(&voice.fx_base_params.FreqRamp, 1, sizeof(float), file);
+	g_write(&voice.fx_base_params.FreqDRamp, 1, sizeof(float), file);
+	g_write(&voice.fx_base_params.Duty, 1, sizeof(float), file);
+	g_write(&voice.fx_base_params.DutyRamp, 1, sizeof(float), file);
 
-	g_write(&m_Voice.FXBaseParams.fVibStrength, 1, sizeof(float), file);
-	g_write(&m_Voice.FXBaseParams.fVibSpeed, 1, sizeof(float), file);
-	g_write(&m_Voice.FXBaseParams.fVibDelay, 1, sizeof(float), file);
+	g_write(&voice.fx_base_params.VibStrength, 1, sizeof(float), file);
+	g_write(&voice.fx_base_params.VibSpeed, 1, sizeof(float), file);
+	g_write(&voice.fx_base_params.VibDelay, 1, sizeof(float), file);
 
-	g_write(&m_Voice.FXBaseParams.fEnvAttack, 1, sizeof(float), file);
-	g_write(&m_Voice.FXBaseParams.fEnvSustain, 1, sizeof(float), file);
-	g_write(&m_Voice.FXBaseParams.fEnvDecay, 1, sizeof(float), file);
-	g_write(&m_Voice.FXBaseParams.fEnvPunch, 1, sizeof(float), file);
+	g_write(&voice.fx_base_params.EnvAttack, 1, sizeof(float), file);
+	g_write(&voice.fx_base_params.EnvSustain, 1, sizeof(float), file);
+	g_write(&voice.fx_base_params.EnvDecay, 1, sizeof(float), file);
+	g_write(&voice.fx_base_params.EnvPunch, 1, sizeof(float), file);
 
-	g_write(&m_Voice.FXBaseParams.fLPFResonance, 1, sizeof(float), file);
-	g_write(&m_Voice.FXBaseParams.fLPFFreq, 1, sizeof(float), file);
-	g_write(&m_Voice.FXBaseParams.fLPFRamp, 1, sizeof(float), file);
-	g_write(&m_Voice.FXBaseParams.fHPFFreq, 1, sizeof(float), file);
-	g_write(&m_Voice.FXBaseParams.fHPFRamp, 1, sizeof(float), file);
+	g_write(&voice.fx_base_params.LPFResonance, 1, sizeof(float), file);
+	g_write(&voice.fx_base_params.LPFFreq, 1, sizeof(float), file);
+	g_write(&voice.fx_base_params.LPFRamp, 1, sizeof(float), file);
+	g_write(&voice.fx_base_params.HPFFreq, 1, sizeof(float), file);
+	g_write(&voice.fx_base_params.HPFRamp, 1, sizeof(float), file);
 
-	g_write(&m_Voice.FXBaseParams.fFlangerOffset, 1, sizeof(float), file);
-	g_write(&m_Voice.FXBaseParams.fFlangerRamp, 1, sizeof(float), file);
+	g_write(&voice.fx_base_params.FlangerOffset, 1, sizeof(float), file);
+	g_write(&voice.fx_base_params.FlangerRamp, 1, sizeof(float), file);
 
-	g_write(&m_Voice.FXBaseParams.fRepeatSpeed, 1, sizeof(float), file);
+	g_write(&voice.fx_base_params.RepeatSpeed, 1, sizeof(float), file);
 
-	g_write(&m_Voice.FXBaseParams.fArmSpeed, 1, sizeof(float), file);
-	g_write(&m_Voice.FXBaseParams.fArmMod, 1, sizeof(float), file);
-
-	//////////////////////////////////////////////////////////////////////////
-
-	g_write(&m_Voice.FXMorphParams.fBaseFreq, 1, sizeof(float), file);
-	g_write(&m_Voice.FXMorphParams.fFreqLimit, 1, sizeof(float), file);
-	g_write(&m_Voice.FXMorphParams.fFreqRamp, 1, sizeof(float), file);
-	g_write(&m_Voice.FXMorphParams.fFreqDRamp, 1, sizeof(float), file);
-	g_write(&m_Voice.FXMorphParams.fDuty, 1, sizeof(float), file);
-	g_write(&m_Voice.FXMorphParams.fDutyRamp, 1, sizeof(float), file);
-
-	g_write(&m_Voice.FXMorphParams.fVibStrength, 1, sizeof(float), file);
-	g_write(&m_Voice.FXMorphParams.fVibSpeed, 1, sizeof(float), file);
-	g_write(&m_Voice.FXMorphParams.fVibDelay, 1, sizeof(float), file);
-
-	g_write(&m_Voice.FXMorphParams.fEnvAttack, 1, sizeof(float), file);
-	g_write(&m_Voice.FXMorphParams.fEnvSustain, 1, sizeof(float), file);
-	g_write(&m_Voice.FXMorphParams.fEnvDecay, 1, sizeof(float), file);
-	g_write(&m_Voice.FXMorphParams.fEnvPunch, 1, sizeof(float), file);
-
-	g_write(&m_Voice.FXMorphParams.fLPFResonance, 1, sizeof(float), file);
-	g_write(&m_Voice.FXMorphParams.fLPFFreq, 1, sizeof(float), file);
-	g_write(&m_Voice.FXMorphParams.fLPFRamp, 1, sizeof(float), file);
-	g_write(&m_Voice.FXMorphParams.fHPFFreq, 1, sizeof(float), file);
-	g_write(&m_Voice.FXMorphParams.fHPFRamp, 1, sizeof(float), file);
-
-	g_write(&m_Voice.FXMorphParams.fFlangerOffset, 1, sizeof(float), file);
-	g_write(&m_Voice.FXMorphParams.fFlangerRamp, 1, sizeof(float), file);
-
-	g_write(&m_Voice.FXMorphParams.fRepeatSpeed, 1, sizeof(float), file);
-
-	g_write(&m_Voice.FXMorphParams.fArmSpeed, 1, sizeof(float), file);
-	g_write(&m_Voice.FXMorphParams.fArmMod, 1, sizeof(float), file);
+	g_write(&voice.fx_base_params.ArmSpeed, 1, sizeof(float), file);
+	g_write(&voice.fx_base_params.ArmMod, 1, sizeof(float), file);
 
 	//////////////////////////////////////////////////////////////////////////
 
-	g_write(&m_Voice.FXBaseParams.fOvertones, 1, sizeof(int), file);
-	g_write(&m_Voice.FXBaseParams.fOvertoneRamp, 1, sizeof(float), file);
+	g_write(&voice.fx_morph_params.BaseFreq, 1, sizeof(float), file);
+	g_write(&voice.fx_morph_params.FreqLimit, 1, sizeof(float), file);
+	g_write(&voice.fx_morph_params.FreqRamp, 1, sizeof(float), file);
+	g_write(&voice.fx_morph_params.FreqDRamp, 1, sizeof(float), file);
+	g_write(&voice.fx_morph_params.Duty, 1, sizeof(float), file);
+	g_write(&voice.fx_morph_params.DutyRamp, 1, sizeof(float), file);
 
-	g_write(&m_Voice.FXBaseParams.fBitCrush, 1, sizeof(float), file);
-	g_write(&m_Voice.FXBaseParams.fBitCrushSweep, 1, sizeof(float), file);
-	g_write(&m_Voice.FXBaseParams.fCompressionAmount, 1, sizeof(float), file);
+	g_write(&voice.fx_morph_params.VibStrength, 1, sizeof(float), file);
+	g_write(&voice.fx_morph_params.VibSpeed, 1, sizeof(float), file);
+	g_write(&voice.fx_morph_params.VibDelay, 1, sizeof(float), file);
 
-	g_write(&m_Voice.FXBaseParams.fArmRepeat, 1, sizeof(float), file);
-	g_write(&m_Voice.FXBaseParams.fArmSpeed2, 1, sizeof(float), file);
-	g_write(&m_Voice.FXBaseParams.fArmMod2, 1, sizeof(float), file);
+	g_write(&voice.fx_morph_params.EnvAttack, 1, sizeof(float), file);
+	g_write(&voice.fx_morph_params.EnvSustain, 1, sizeof(float), file);
+	g_write(&voice.fx_morph_params.EnvDecay, 1, sizeof(float), file);
+	g_write(&voice.fx_morph_params.EnvPunch, 1, sizeof(float), file);
 
-	g_write(&m_Voice.FXMorphParams.fOvertones, 1, sizeof(int), file);
-	g_write(&m_Voice.FXMorphParams.fOvertoneRamp, 1, sizeof(float), file);
+	g_write(&voice.fx_morph_params.LPFResonance, 1, sizeof(float), file);
+	g_write(&voice.fx_morph_params.LPFFreq, 1, sizeof(float), file);
+	g_write(&voice.fx_morph_params.LPFRamp, 1, sizeof(float), file);
+	g_write(&voice.fx_morph_params.HPFFreq, 1, sizeof(float), file);
+	g_write(&voice.fx_morph_params.HPFRamp, 1, sizeof(float), file);
 
-	g_write(&m_Voice.FXMorphParams.fBitCrush, 1, sizeof(float), file);
-	g_write(&m_Voice.FXMorphParams.fBitCrushSweep, 1, sizeof(float), file);
-	g_write(&m_Voice.FXMorphParams.fCompressionAmount, 1, sizeof(float), file);
+	g_write(&voice.fx_morph_params.FlangerOffset, 1, sizeof(float), file);
+	g_write(&voice.fx_morph_params.FlangerRamp, 1, sizeof(float), file);
 
-	g_write(&m_Voice.FXMorphParams.fArmRepeat, 1, sizeof(float), file);
-	g_write(&m_Voice.FXMorphParams.fArmSpeed2, 1, sizeof(float), file);
-	g_write(&m_Voice.FXMorphParams.fArmMod2, 1, sizeof(float), file);
+	g_write(&voice.fx_morph_params.RepeatSpeed, 1, sizeof(float), file);
+
+	g_write(&voice.fx_morph_params.ArmSpeed, 1, sizeof(float), file);
+	g_write(&voice.fx_morph_params.ArmMod, 1, sizeof(float), file);
+
+	//////////////////////////////////////////////////////////////////////////
+
+	g_write(&voice.fx_base_params.Overtones, 1, sizeof(int), file);
+	g_write(&voice.fx_base_params.OvertoneRamp, 1, sizeof(float), file);
+
+	g_write(&voice.fx_base_params.BitCrush, 1, sizeof(float), file);
+	g_write(&voice.fx_base_params.BitCrushSweep, 1, sizeof(float), file);
+	g_write(&voice.fx_base_params.CompressionAmount, 1, sizeof(float), file);
+
+	g_write(&voice.fx_base_params.ArmRepeat, 1, sizeof(float), file);
+	g_write(&voice.fx_base_params.ArmSpeed2, 1, sizeof(float), file);
+	g_write(&voice.fx_base_params.ArmMod2, 1, sizeof(float), file);
+
+	g_write(&voice.fx_morph_params.Overtones, 1, sizeof(int), file);
+	g_write(&voice.fx_morph_params.OvertoneRamp, 1, sizeof(float), file);
+
+	g_write(&voice.fx_morph_params.BitCrush, 1, sizeof(float), file);
+	g_write(&voice.fx_morph_params.BitCrushSweep, 1, sizeof(float), file);
+	g_write(&voice.fx_morph_params.CompressionAmount, 1, sizeof(float), file);
+
+	g_write(&voice.fx_morph_params.ArmRepeat, 1, sizeof(float), file);
+	g_write(&voice.fx_morph_params.ArmSpeed2, 1, sizeof(float), file);
+	g_write(&voice.fx_morph_params.ArmMod2, 1, sizeof(float), file);
 
 	//////////////////////////////////////////////////////////////////////////
 
@@ -551,7 +551,7 @@ bool RetroSFXVoice::SaveSettings(const char *pFilename) {
 //////////////////////////////////////////////////////////////////////////
 
 bool RetroSFXVoice::CompareSettings(RetroSFXVoice *pOther) {
-	if (memcmp(&this->m_Voice, &pOther->m_Voice, sizeof(this->m_Voice)) == 0) {
+	if (memcmp(&this->voice, &pOther->voice, sizeof(this->voice)) == 0) {
 		return true;
 	}
 	return false;
@@ -563,63 +563,63 @@ void RetroSFXVoice::Reset(bool restart) {
 	if (!restart) {
 		phase = 0;
 
-		m_FXWorkParams.fBaseFreq = m_Voice.FXBaseParams.fBaseFreq;
-		m_FXWorkParams.fFreqLimit = m_Voice.FXBaseParams.fFreqLimit;
-		m_FXWorkParams.fFreqRamp = m_Voice.FXBaseParams.fFreqRamp;
-		m_FXWorkParams.fFreqDRamp = m_Voice.FXBaseParams.fFreqDRamp;
-		m_FXWorkParams.fDuty = m_Voice.FXBaseParams.fDuty;
-		m_FXWorkParams.fDutyRamp = m_Voice.FXBaseParams.fDutyRamp;
+		fx_work_params.BaseFreq = voice.fx_base_params.BaseFreq;
+		fx_work_params.FreqLimit = voice.fx_base_params.FreqLimit;
+		fx_work_params.FreqRamp = voice.fx_base_params.FreqRamp;
+		fx_work_params.FreqDRamp = voice.fx_base_params.FreqDRamp;
+		fx_work_params.Duty = voice.fx_base_params.Duty;
+		fx_work_params.DutyRamp = voice.fx_base_params.DutyRamp;
 
-		m_FXWorkParams.fVibStrength = m_Voice.FXBaseParams.fVibStrength;
-		m_FXWorkParams.fVibSpeed = m_Voice.FXBaseParams.fVibSpeed;
-		m_FXWorkParams.fVibDelay = m_Voice.FXBaseParams.fVibDelay;
+		fx_work_params.VibStrength = voice.fx_base_params.VibStrength;
+		fx_work_params.VibSpeed = voice.fx_base_params.VibSpeed;
+		fx_work_params.VibDelay = voice.fx_base_params.VibDelay;
 
-		m_FXWorkParams.fEnvAttack = m_Voice.FXBaseParams.fEnvAttack;
-		m_FXWorkParams.fEnvSustain = m_Voice.FXBaseParams.fEnvSustain;
-		m_FXWorkParams.fEnvDecay = m_Voice.FXBaseParams.fEnvDecay;
-		m_FXWorkParams.fEnvPunch = m_Voice.FXBaseParams.fEnvPunch;
+		fx_work_params.EnvAttack = voice.fx_base_params.EnvAttack;
+		fx_work_params.EnvSustain = voice.fx_base_params.EnvSustain;
+		fx_work_params.EnvDecay = voice.fx_base_params.EnvDecay;
+		fx_work_params.EnvPunch = voice.fx_base_params.EnvPunch;
 
-		m_FXWorkParams.fLPFResonance = m_Voice.FXBaseParams.fLPFResonance;
-		m_FXWorkParams.fLPFFreq = m_Voice.FXBaseParams.fLPFFreq;
-		m_FXWorkParams.fLPFRamp = m_Voice.FXBaseParams.fLPFRamp;
-		m_FXWorkParams.fHPFFreq = m_Voice.FXBaseParams.fHPFFreq;
-		m_FXWorkParams.fHPFRamp = m_Voice.FXBaseParams.fHPFRamp;
+		fx_work_params.LPFResonance = voice.fx_base_params.LPFResonance;
+		fx_work_params.LPFFreq = voice.fx_base_params.LPFFreq;
+		fx_work_params.LPFRamp = voice.fx_base_params.LPFRamp;
+		fx_work_params.HPFFreq = voice.fx_base_params.HPFFreq;
+		fx_work_params.HPFRamp = voice.fx_base_params.HPFRamp;
 
-		m_FXWorkParams.fFlangerOffset = m_Voice.FXBaseParams.fFlangerOffset;
-		m_FXWorkParams.fFlangerRamp = m_Voice.FXBaseParams.fFlangerRamp;
+		fx_work_params.FlangerOffset = voice.fx_base_params.FlangerOffset;
+		fx_work_params.FlangerRamp = voice.fx_base_params.FlangerRamp;
 
-		m_FXWorkParams.fRepeatSpeed = m_Voice.FXBaseParams.fRepeatSpeed;
+		fx_work_params.RepeatSpeed = voice.fx_base_params.RepeatSpeed;
 
-		m_FXWorkParams.fArmSpeed = m_Voice.FXBaseParams.fArmSpeed;
-		m_FXWorkParams.fArmMod = m_Voice.FXBaseParams.fArmMod;
+		fx_work_params.ArmSpeed = voice.fx_base_params.ArmSpeed;
+		fx_work_params.ArmMod = voice.fx_base_params.ArmMod;
 
-		m_FXWorkParams.fOvertones = m_Voice.FXMorphParams.fOvertones;
-		m_FXWorkParams.fOvertoneRamp = m_Voice.FXMorphParams.fOvertoneRamp;
+		fx_work_params.Overtones = voice.fx_morph_params.Overtones;
+		fx_work_params.OvertoneRamp = voice.fx_morph_params.OvertoneRamp;
 
-		m_FXWorkParams.fBitCrush = m_Voice.FXMorphParams.fBitCrush;
-		m_FXWorkParams.fBitCrushSweep = m_Voice.FXMorphParams.fBitCrushSweep;
-		m_FXWorkParams.fCompressionAmount = m_Voice.FXMorphParams.fCompressionAmount;
+		fx_work_params.BitCrush = voice.fx_morph_params.BitCrush;
+		fx_work_params.BitCrushSweep = voice.fx_morph_params.BitCrushSweep;
+		fx_work_params.CompressionAmount = voice.fx_morph_params.CompressionAmount;
 
-		m_FXWorkParams.fArmRepeat = m_Voice.FXMorphParams.fArmRepeat;
-		m_FXWorkParams.fArmSpeed2 = m_Voice.FXMorphParams.fArmSpeed2;
-		m_FXWorkParams.fArmMod2 = m_Voice.FXMorphParams.fArmMod2;
+		fx_work_params.ArmRepeat = voice.fx_morph_params.ArmRepeat;
+		fx_work_params.ArmSpeed2 = voice.fx_morph_params.ArmSpeed2;
+		fx_work_params.ArmMod2 = voice.fx_morph_params.ArmMod2;
 	}
 
-	fperiod = 100.0 / (m_FXWorkParams.fBaseFreq * m_FXWorkParams.fBaseFreq + 0.001);
-	period = fperiod;
-	fmaxperiod = 100.0 / (m_FXWorkParams.fFreqLimit * m_FXWorkParams.fFreqLimit + 0.001);
-	fslide = 1 - Math::pow(m_FXWorkParams.fFreqRamp, 3) * 0.01;
-	fdslide = -Math::pow(m_FXWorkParams.fFreqDRamp, 3) * 0.000001;
-	square_duty = 0.5 - m_FXWorkParams.fDuty * 0.5;
-	square_slide = -m_FXWorkParams.fDutyRamp * 0.00005;
-	if (m_FXWorkParams.fArmMod >= 0) {
-		arm_mod = 1.0 - Math::pow(m_FXWorkParams.fArmMod, 2) * 0.9;
+	period = 100.0 / (fx_work_params.BaseFreq * fx_work_params.BaseFreq + 0.001);
+	iperiod = period;
+	maxperiod = 100.0 / (fx_work_params.FreqLimit * fx_work_params.FreqLimit + 0.001);
+	slide = 1 - Math::pow(fx_work_params.FreqRamp, 3) * 0.01;
+	dslide = -Math::pow(fx_work_params.FreqDRamp, 3) * 0.000001;
+	square_duty = 0.5 - fx_work_params.Duty * 0.5;
+	square_slide = -fx_work_params.DutyRamp * 0.00005;
+	if (fx_work_params.ArmMod >= 0) {
+		arm_mod = 1.0 - Math::pow(fx_work_params.ArmMod, 2) * 0.9;
 	} else {
-		arm_mod = 1.0 + Math::pow(m_FXWorkParams.fArmMod, 2) * 10.0;
+		arm_mod = 1.0 + Math::pow(fx_work_params.ArmMod, 2) * 10.0;
 	}
 	arm_time = 0;
-	arm_limit = (int)(Math::pow(1 - m_FXWorkParams.fArmSpeed, 2) * 20000 + 32);
-	if (m_FXWorkParams.fArmSpeed == 1) {
+	arm_limit = (int)(Math::pow(1 - fx_work_params.ArmSpeed, 2) * 20000 + 32);
+	if (fx_work_params.ArmSpeed == 1) {
 		arm_limit = 0;
 	}
 
@@ -627,33 +627,33 @@ void RetroSFXVoice::Reset(bool restart) {
 		// reset filter
 		fltp = 0;
 		fltdp = 0;
-		fltw = Math::pow(m_FXWorkParams.fLPFFreq, 3) * 0.1;
-		fltw_d = 1 + m_FXWorkParams.fLPFRamp * 0.0001;
-		fltdmp = 5 / (1 + Math::pow(m_FXWorkParams.fLPFResonance, 2) * 20) * (0.01 + fltw);
+		fltw = Math::pow(fx_work_params.LPFFreq, 3) * 0.1;
+		fltw_d = 1 + fx_work_params.LPFRamp * 0.0001;
+		fltdmp = 5 / (1 + Math::pow(fx_work_params.LPFResonance, 2) * 20) * (0.01 + fltw);
 		if (fltdmp > 0.8) {
 			fltdmp = 0.8;
 		}
 		fltphp = 0;
-		flthp = Math::pow(m_FXWorkParams.fHPFFreq, 2) * 0.1;
-		flthm_d = 1 + m_FXWorkParams.fHPFRamp * 0.0003;
+		flthp = Math::pow(fx_work_params.HPFFreq, 2) * 0.1;
+		flthm_d = 1 + fx_work_params.HPFRamp * 0.0003;
 		// reset vibrato
 		vib_phase = 0;
-		vib_speed = Math::pow(m_Voice.FXBaseParams.fVibSpeed, 2) * 0.01;
-		vib_amp = m_FXWorkParams.fVibStrength * 0.5;
+		vib_speed = Math::pow(voice.fx_base_params.VibSpeed, 2) * 0.01;
+		vib_amp = fx_work_params.VibStrength * 0.5;
 		// reset envelope
 		env_vol = 0;
 		env_stage = 0;
 		env_time = 0;
-		env_length[0] = m_FXWorkParams.fEnvAttack * m_FXWorkParams.fEnvAttack * 100000;
-		env_length[1] = m_FXWorkParams.fEnvSustain * m_FXWorkParams.fEnvSustain * 100000;
-		env_length[2] = m_FXWorkParams.fEnvDecay * m_FXWorkParams.fEnvDecay * 100000;
+		env_length[0] = fx_work_params.EnvAttack * fx_work_params.EnvAttack * 100000;
+		env_length[1] = fx_work_params.EnvSustain * fx_work_params.EnvSustain * 100000;
+		env_length[2] = fx_work_params.EnvDecay * fx_work_params.EnvDecay * 100000;
 
-		fphase = Math::pow(m_FXWorkParams.fFlangerOffset, 2) * 1020;
-		if (m_FXWorkParams.fFlangerOffset < 0) {
+		fphase = Math::pow(fx_work_params.FlangerOffset, 2) * 1020;
+		if (fx_work_params.FlangerOffset < 0) {
 			fphase = -fphase;
 		}
-		fdphase = Math::pow(m_FXWorkParams.fFlangerRamp, 2) * 1;
-		if (m_FXWorkParams.fFlangerRamp < 0) {
+		fdphase = Math::pow(fx_work_params.FlangerRamp, 2) * 1;
+		if (fx_work_params.FlangerRamp < 0) {
 			fdphase = -fdphase;
 		}
 		iphase = Math::abs(fphase);
@@ -666,8 +666,8 @@ void RetroSFXVoice::Reset(bool restart) {
 			pink_noise_buffer[i] = GenPinkNoise();
 		}
 		rem_time = 0;
-		rem_limit = Math::pow(1 - m_FXWorkParams.fRepeatSpeed, 2) * 20000 + 32;
-		if (m_FXWorkParams.fRepeatSpeed == 0) {
+		rem_limit = Math::pow(1 - fx_work_params.RepeatSpeed, 2) * 20000 + 32;
+		if (fx_work_params.RepeatSpeed == 0) {
 			rem_limit = 0;
 		}
 	}
@@ -675,42 +675,42 @@ void RetroSFXVoice::Reset(bool restart) {
 
 //////////////////////////////////////////////////////////////////////////
 
-void RetroSFXVoice::Play(void *pData) {
-	if (pData) {
-		RetroVoice103 *pVoice103 = (RetroVoice103 *)pData;
-		if (pVoice103->nVersion == SFXR0100) {
-			memcpy(&m_Voice, pData, sizeof(RetroVoice103));
+void RetroSFXVoice::Play(void *data) {
+	if (data) {
+		RetroVoice103 *pVoice103 = (RetroVoice103 *)data;
+		if (pVoice103->version == SFXR0100) {
+			memcpy(&voice, data, sizeof(RetroVoice103));
 		}
 	}
-	m_WavSamplesRendered = 0;
+	wav_samples_rendered = 0;
 	Reset(false);
-	m_bPlayingSample = true;
+	playing_sample = true;
 }
 
 //////////////////////////////////////////////////////////////////////////
 
-void RetroSFXVoice::Play(bool bCalculateLength) {
-	if (bCalculateLength) {
-		m_Voice.nLengthInSamples = 0;
+void RetroSFXVoice::Play(bool calculate_length) {
+	if (calculate_length) {
+		voice.length_in_samples = 0;
 	}
-	m_WavSamplesRendered = 0;
+	wav_samples_rendered = 0;
 	Reset(false);
-	m_bPlayingSample = true;
+	playing_sample = true;
 }
 
 //////////////////////////////////////////////////////////////////////////
 
 int RetroSFXVoice::GetVoiceLengthInSamples() const {
-	return m_Voice.nLengthInSamples;
+	return voice.length_in_samples;
 }
 
 //////////////////////////////////////////////////////////////////////////
 
-int RetroSFXVoice::Render(int nSamples, BufferCallback *pCallback) {
-	int nSamplesRendered = 0;
+int RetroSFXVoice::Render(int samples, BufferCallback *callback) {
+	int samples_rendered = 0;
 
-	for (int i = 0; i < nSamples; i++) {
-		if (!m_bPlayingSample) {
+	for (int i = 0; i < samples; i++) {
+		if (!playing_sample) {
 			break;
 		}
 		rem_time++;
@@ -718,47 +718,47 @@ int RetroSFXVoice::Render(int nSamples, BufferCallback *pCallback) {
 			rem_time = 0;
 			Reset(true);
 
-			if (m_Voice.fMorphRate != 0) {
-				Morph(m_FXWorkParams.fBaseFreq, m_Voice.FXMorphParams.fBaseFreq);
-				Morph(m_FXWorkParams.fFreqLimit, m_Voice.FXMorphParams.fFreqLimit);
-				Morph(m_FXWorkParams.fFreqRamp, m_Voice.FXMorphParams.fFreqRamp);
-				Morph(m_FXWorkParams.fFreqDRamp, m_Voice.FXMorphParams.fFreqDRamp);
-				Morph(m_FXWorkParams.fDuty, m_Voice.FXMorphParams.fDuty);
-				Morph(m_FXWorkParams.fDutyRamp, m_Voice.FXMorphParams.fDutyRamp);
+			if (voice.morph_rate != 0) {
+				Morph(fx_work_params.BaseFreq, voice.fx_morph_params.BaseFreq);
+				Morph(fx_work_params.FreqLimit, voice.fx_morph_params.FreqLimit);
+				Morph(fx_work_params.FreqRamp, voice.fx_morph_params.FreqRamp);
+				Morph(fx_work_params.FreqDRamp, voice.fx_morph_params.FreqDRamp);
+				Morph(fx_work_params.Duty, voice.fx_morph_params.Duty);
+				Morph(fx_work_params.DutyRamp, voice.fx_morph_params.DutyRamp);
 
-				Morph(m_FXWorkParams.fVibStrength, m_Voice.FXMorphParams.fVibStrength);
-				Morph(m_FXWorkParams.fVibSpeed, m_Voice.FXMorphParams.fVibSpeed);
-				Morph(m_FXWorkParams.fVibDelay, m_Voice.FXMorphParams.fVibDelay);
+				Morph(fx_work_params.VibStrength, voice.fx_morph_params.VibStrength);
+				Morph(fx_work_params.VibSpeed, voice.fx_morph_params.VibSpeed);
+				Morph(fx_work_params.VibDelay, voice.fx_morph_params.VibDelay);
 
-				Morph(m_FXWorkParams.fEnvAttack, m_Voice.FXMorphParams.fEnvAttack);
-				Morph(m_FXWorkParams.fEnvSustain, m_Voice.FXMorphParams.fEnvSustain);
-				Morph(m_FXWorkParams.fEnvDecay, m_Voice.FXMorphParams.fEnvDecay);
-				Morph(m_FXWorkParams.fEnvPunch, m_Voice.FXMorphParams.fEnvPunch);
+				Morph(fx_work_params.EnvAttack, voice.fx_morph_params.EnvAttack);
+				Morph(fx_work_params.EnvSustain, voice.fx_morph_params.EnvSustain);
+				Morph(fx_work_params.EnvDecay, voice.fx_morph_params.EnvDecay);
+				Morph(fx_work_params.EnvPunch, voice.fx_morph_params.EnvPunch);
 
-				Morph(m_FXWorkParams.fLPFResonance, m_Voice.FXMorphParams.fLPFResonance);
-				Morph(m_FXWorkParams.fLPFFreq, m_Voice.FXMorphParams.fLPFFreq);
-				Morph(m_FXWorkParams.fLPFRamp, m_Voice.FXMorphParams.fLPFRamp);
-				Morph(m_FXWorkParams.fHPFFreq, m_Voice.FXMorphParams.fHPFFreq);
-				Morph(m_FXWorkParams.fHPFRamp, m_Voice.FXMorphParams.fHPFRamp);
+				Morph(fx_work_params.LPFResonance, voice.fx_morph_params.LPFResonance);
+				Morph(fx_work_params.LPFFreq, voice.fx_morph_params.LPFFreq);
+				Morph(fx_work_params.LPFRamp, voice.fx_morph_params.LPFRamp);
+				Morph(fx_work_params.HPFFreq, voice.fx_morph_params.HPFFreq);
+				Morph(fx_work_params.HPFRamp, voice.fx_morph_params.HPFRamp);
 
-				Morph(m_FXWorkParams.fFlangerOffset, m_Voice.FXMorphParams.fFlangerOffset);
-				Morph(m_FXWorkParams.fFlangerRamp, m_Voice.FXMorphParams.fFlangerRamp);
+				Morph(fx_work_params.FlangerOffset, voice.fx_morph_params.FlangerOffset);
+				Morph(fx_work_params.FlangerRamp, voice.fx_morph_params.FlangerRamp);
 
-				Morph(m_FXWorkParams.fRepeatSpeed, m_Voice.FXMorphParams.fRepeatSpeed);
+				Morph(fx_work_params.RepeatSpeed, voice.fx_morph_params.RepeatSpeed);
 
-				Morph(m_FXWorkParams.fArmSpeed, m_Voice.FXMorphParams.fArmSpeed);
-				Morph(m_FXWorkParams.fArmMod, m_Voice.FXMorphParams.fArmMod);
+				Morph(fx_work_params.ArmSpeed, voice.fx_morph_params.ArmSpeed);
+				Morph(fx_work_params.ArmMod, voice.fx_morph_params.ArmMod);
 
-				// Morph(m_FXWorkParams.fOvertones, m_Voice.FXMorphParams.fOvertones); // int ?
-				Morph(m_FXWorkParams.fOvertoneRamp, m_Voice.FXMorphParams.fOvertoneRamp);
+				// Morph(fx_work_params.Overtones, voice.fx_morph_params.Overtones); // int ?
+				Morph(fx_work_params.OvertoneRamp, voice.fx_morph_params.OvertoneRamp);
 
-				Morph(m_FXWorkParams.fBitCrush, m_Voice.FXMorphParams.fBitCrush);
-				Morph(m_FXWorkParams.fBitCrushSweep, m_Voice.FXMorphParams.fBitCrushSweep);
-				Morph(m_FXWorkParams.fCompressionAmount, m_Voice.FXMorphParams.fCompressionAmount);
+				Morph(fx_work_params.BitCrush, voice.fx_morph_params.BitCrush);
+				Morph(fx_work_params.BitCrushSweep, voice.fx_morph_params.BitCrushSweep);
+				Morph(fx_work_params.CompressionAmount, voice.fx_morph_params.CompressionAmount);
 
-				Morph(m_FXWorkParams.fArmRepeat, m_Voice.FXMorphParams.fArmRepeat);
-				Morph(m_FXWorkParams.fArmSpeed2, m_Voice.FXMorphParams.fArmSpeed2);
-				Morph(m_FXWorkParams.fArmMod2, m_Voice.FXMorphParams.fArmMod2);
+				Morph(fx_work_params.ArmRepeat, voice.fx_morph_params.ArmRepeat);
+				Morph(fx_work_params.ArmSpeed2, voice.fx_morph_params.ArmSpeed2);
+				Morph(fx_work_params.ArmMod2, voice.fx_morph_params.ArmMod2);
 			}
 		}
 
@@ -766,45 +766,46 @@ int RetroSFXVoice::Render(int nSamples, BufferCallback *pCallback) {
 		arm_time++;
 		if (arm_limit != 0 && arm_time >= arm_limit) {
 			arm_time = 0;
-			fperiod *= arm_mod;
+			period *= arm_mod;
 		}
-		fslide += fdslide;
-		fperiod *= fslide;
-		if (fperiod > fmaxperiod) {
-			fperiod = fmaxperiod;
-			if (m_FXWorkParams.fFreqLimit > 0) {
-				m_bPlayingSample = false;
+		slide += dslide;
+		period *= slide;
+		if (period > maxperiod) {
+			period = maxperiod;
+			if (fx_work_params.FreqLimit > 0) {
+				playing_sample = false;
 			}
 		}
-		float rfperiod = fperiod;
+		float rperiod = period;
 		if (vib_amp > 0) {
 			vib_phase += vib_speed;
-			rfperiod = fperiod * (1 + Math::sin(vib_phase) * vib_amp);
+			rperiod = period * (1 + Math::sin(vib_phase) * vib_amp);
 		}
-		period = rfperiod;
-		if (period < 8)
-			period = 8;
-
+		iperiod = rperiod;
+		if (iperiod < 8) {
+			iperiod = 8;
+		}
 		square_duty += square_slide;
-		if (square_duty < 0)
+		if (square_duty < 0) {
 			square_duty = 0;
-		if (square_duty > 0.5)
+		}
+		if (square_duty > 0.5) {
 			square_duty = 0.5;
-
+		}
 		// volume envelope
 		env_time++;
 		if (env_time > env_length[env_stage]) {
 			env_time = 0;
 			env_stage++;
 			if (env_stage == 3) {
-				m_bPlayingSample = false;
+				playing_sample = false;
 			}
 		}
 		if (env_stage == 0) {
 			env_vol = float(env_time) / env_length[0];
 		}
 		if (env_stage == 1) {
-			env_vol = 1 + Math::pow(1 - float(env_time) / env_length[1], 1) * 2 * m_FXWorkParams.fEnvPunch;
+			env_vol = 1 + Math::pow(1 - float(env_time) / env_length[1], 1) * 2 * fx_work_params.EnvPunch;
 		}
 		if (env_stage == 2) {
 			env_vol = 1 - float(env_time) / env_length[2];
@@ -827,26 +828,26 @@ int RetroSFXVoice::Render(int nSamples, BufferCallback *pCallback) {
 		float ssample = 0;
 		for (int si = 0; si < 8; si++) { // 8x oversampling
 			phase++;
-			if (phase >= period) {
+			if (phase >= iperiod) {
 				// phase = 0;
-				phase %= period;
-				if (m_Voice.nWaveformType == 3) {
+				phase %= iperiod;
+				if (voice.waveform_shape == 3) {
 					for (int n = 0; n < 32; n++) {
 						noise_buffer[n] = GenNoise();
 					}
-				} else if (m_Voice.nWaveformType == 5) {
+				} else if (voice.waveform_shape == 5) {
 					for (int n = 0; n < 32; n++) {
 						pink_noise_buffer[n] = GenPinkNoise();
 					}
 				}
 			}
 			// base waveform
-			float fp = (float)phase / period;
+			float fp = float(phase) / iperiod;
 			float ots = 1; // overtonestrength
 			float sample = 0;
-			for (int k = 0; k <= m_Voice.FXBaseParams.fOvertones; k++) {
+			for (int k = 0; k <= voice.fx_base_params.Overtones; k++) {
 				float _sample = 0;
-				switch (m_Voice.nWaveformType) {
+				switch (voice.waveform_shape) {
 					case 0: { // square
 						_sample = (fp < square_duty) ? 0.5 : -0.5;
 					} break;
@@ -857,13 +858,13 @@ int RetroSFXVoice::Render(int nSamples, BufferCallback *pCallback) {
 						_sample = Math::sin(fp * 2 * PI);
 					} break;
 					case 3: { // noise
-						_sample = noise_buffer[phase * 32 / period];
+						_sample = noise_buffer[phase * 32 / iperiod];
 					} break;
 					case 4: { // triangle
 						_sample = Math::abs(1 - fp * 2) - 1;
 					} break;
 					case 5: { // pink noise
-						_sample = pink_noise_buffer[(phase * 32 / period) % 32];
+						_sample = pink_noise_buffer[(phase * 32 / iperiod) % 32];
 					} break;
 					case 6: { // tan
 						_sample = Math::tan(PI * fp);
@@ -875,7 +876,7 @@ int RetroSFXVoice::Render(int nSamples, BufferCallback *pCallback) {
 						sample = pos < 0 ? 1.27323954 * pos + 0.405284735 * pos * pos : 1.27323954 * pos - 0.405284735 * pos * pos;
 						sample = 0.75 * (sample < 0 ? 0.225 * (sample * -sample - sample) + sample : 0.225 * (sample * sample - sample) + sample);
 						// then whistle (essentially an overtone with frequency x20 and amplitude 0.25
-						pos = ((phase * 20) % period) / period;
+						pos = ((phase * 20) % iperiod) / iperiod;
 						pos = pos > 0.5 ? (pos - 1.0) * 6.28318531 : pos * 6.28318531;
 						const float sample2 = pos < 0 ? 1.27323954 * pos + 0.405284735 * pos * pos : 1.27323954 * pos - 0.405284735 * pos * pos;
 						_sample = 0.25 * (sample2 < 0 ? 0.225 * (sample2 * -sample2 - sample2) + sample2 : 0.225 * (sample2 * sample2 - sample2) + sample2);
@@ -885,10 +886,10 @@ int RetroSFXVoice::Render(int nSamples, BufferCallback *pCallback) {
 					} break;
 				}
 				sample += _sample * ots;
-				ots *= (1 - m_Voice.FXBaseParams.fOvertoneRamp);
+				ots *= (1 - voice.fx_base_params.OvertoneRamp);
 			}
 			// lp filter
-			float pp = fltp;
+			const float pp = fltp;
 			fltw *= fltw_d;
 			if (fltw < 0) {
 				fltw = 0;
@@ -896,7 +897,7 @@ int RetroSFXVoice::Render(int nSamples, BufferCallback *pCallback) {
 			if (fltw > 0.1) {
 				fltw = 0.1;
 			}
-			if (m_FXWorkParams.fLPFFreq != 1) {
+			if (fx_work_params.LPFFreq != 1) {
 				fltdp += (sample - fltp) * fltw;
 				fltdp -= fltdp * fltdmp;
 			} else {
@@ -915,11 +916,11 @@ int RetroSFXVoice::Render(int nSamples, BufferCallback *pCallback) {
 			// final accumulation and envelope application
 			ssample += sample * env_vol;
 		}
-		ssample = ssample / 8 * m_fMasterVol;
+		ssample = ssample / 8 * master_vol;
 
-		ssample *= 2 * m_Voice.fSoundVol;
+		ssample *= 2 * voice.sound_vol;
 
-		if (pCallback != nullptr) {
+		if (callback != nullptr) {
 			// clamp
 			if (ssample > 1) {
 				ssample = 1;
@@ -927,18 +928,18 @@ int RetroSFXVoice::Render(int nSamples, BufferCallback *pCallback) {
 			if (ssample < -1) {
 				ssample = -1;
 			}
-			(*pCallback)(ssample);
-			nSamplesRendered++;
+			(*callback)(ssample);
+			samples_rendered++;
 		}
 	}
 
 	// Calculating length here
-	m_WavSamplesRendered += nSamplesRendered;
-	if (m_bPlayingSample == false) {
-		m_Voice.nLengthInSamples = m_WavSamplesRendered;
+	wav_samples_rendered += samples_rendered;
+	if (playing_sample == false) {
+		voice.length_in_samples = wav_samples_rendered;
 	}
 
-	return nSamplesRendered;
+	return samples_rendered;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -956,11 +957,10 @@ float RetroSFXVoice::GenPinkNoise() const {
 
 //////////////////////////////////////////////////////////////////////////
 
-void RetroSFXVoice::Morph(float &fMorphVar, float fMorphDest) {
-	const float diff = fMorphDest - fMorphVar;
-
+void RetroSFXVoice::Morph(float &morph_var, float morph_dest) {
+	const float diff = morph_dest - morph_var;
 	if (diff != 0) {
-		fMorphVar += diff * m_Voice.fMorphRate;
+		morph_var += diff * voice.morph_rate;
 	}
 }
 
@@ -970,106 +970,106 @@ void RetroSFXVoice::Mutate() {
 }
 
 void RetroSFXVoice::Randomize() {
-	m_Voice.nWaveformType = rnd(8);
+	voice.waveform_shape = rnd(8);
 
-	m_Voice.FXBaseParams.fBaseFreq = Math::pow(frnd(1), 2);
+	voice.fx_base_params.BaseFreq = Math::pow(frnd(1), 2);
 	if (rnd(1)) {
-		m_Voice.FXBaseParams.fBaseFreq = Math::pow(frnd(1), 3) + 0.5;
+		voice.fx_base_params.BaseFreq = Math::pow(frnd(1), 3) + 0.5;
 	}
-	m_Voice.FXBaseParams.fFreqLimit = 0;
-	m_Voice.FXBaseParams.fFreqRamp = pow(frnd(1), 5);
-	if (m_Voice.FXBaseParams.fBaseFreq > 0.7 && m_Voice.FXBaseParams.fFreqRamp > 0.2) {
-		m_Voice.FXBaseParams.fFreqRamp = -m_Voice.FXBaseParams.fFreqRamp;
+	voice.fx_base_params.FreqLimit = 0;
+	voice.fx_base_params.FreqRamp = pow(frnd(1), 5);
+	if (voice.fx_base_params.BaseFreq > 0.7 && voice.fx_base_params.FreqRamp > 0.2) {
+		voice.fx_base_params.FreqRamp = -voice.fx_base_params.FreqRamp;
 	}
-	if (m_Voice.FXBaseParams.fBaseFreq < 0.2 && m_Voice.FXBaseParams.fFreqRamp < -0.05) {
-		m_Voice.FXBaseParams.fFreqRamp = -m_Voice.FXBaseParams.fFreqRamp;
+	if (voice.fx_base_params.BaseFreq < 0.2 && voice.fx_base_params.FreqRamp < -0.05) {
+		voice.fx_base_params.FreqRamp = -voice.fx_base_params.FreqRamp;
 	}
-	m_Voice.FXBaseParams.fFreqDRamp = Math::pow(frnd(1), 3);
-	m_Voice.FXBaseParams.fDuty = frnd(1);
-	m_Voice.FXBaseParams.fDutyRamp = Math::pow(frnd(1), 3);
-	m_Voice.FXBaseParams.fVibStrength = Math::pow(frnd(1), 3);
-	m_Voice.FXBaseParams.fVibSpeed = frnd(1);
-	m_Voice.FXBaseParams.fVibDelay = frnd(1);
-	m_Voice.FXBaseParams.fEnvAttack = Math::pow(frnd(1), 3);
-	m_Voice.FXBaseParams.fEnvSustain = Math::pow(frnd(1), 2);
-	m_Voice.FXBaseParams.fEnvDecay = ((frnd(1)) / 2) + 0.5;
-	m_Voice.FXBaseParams.fEnvPunch = Math::pow(frnd(0.8), 2);
-	if (m_Voice.FXBaseParams.fEnvAttack + m_Voice.FXBaseParams.fEnvSustain + m_Voice.FXBaseParams.fEnvDecay < 0.2) {
-		m_Voice.FXBaseParams.fEnvSustain += 0.2 + frnd(0.3);
-		m_Voice.FXBaseParams.fEnvDecay += 0.2 + frnd(0.3);
+	voice.fx_base_params.FreqDRamp = Math::pow(frnd(1), 3);
+	voice.fx_base_params.Duty = frnd(1);
+	voice.fx_base_params.DutyRamp = Math::pow(frnd(1), 3);
+	voice.fx_base_params.VibStrength = Math::pow(frnd(1), 3);
+	voice.fx_base_params.VibSpeed = frnd(1);
+	voice.fx_base_params.VibDelay = frnd(1);
+	voice.fx_base_params.EnvAttack = Math::pow(frnd(1), 3);
+	voice.fx_base_params.EnvSustain = Math::pow(frnd(1), 2);
+	voice.fx_base_params.EnvDecay = ((frnd(1)) / 2) + 0.5;
+	voice.fx_base_params.EnvPunch = Math::pow(frnd(0.8), 2);
+	if (voice.fx_base_params.EnvAttack + voice.fx_base_params.EnvSustain + voice.fx_base_params.EnvDecay < 0.2) {
+		voice.fx_base_params.EnvSustain += 0.2 + frnd(0.3);
+		voice.fx_base_params.EnvDecay += 0.2 + frnd(0.3);
 	}
-	m_Voice.FXBaseParams.fLPFResonance = frnd(1);
-	m_Voice.FXBaseParams.fLPFFreq = 1.0f - Math::pow(frnd(1.0f), 3);
-	m_Voice.FXBaseParams.fLPFRamp = Math::pow(frnd(1.0f), 3.0f);
-	if (m_Voice.FXBaseParams.fLPFFreq < 0.1f && m_Voice.FXBaseParams.fLPFRamp < -0.05) {
-		m_Voice.FXBaseParams.fLPFRamp = -m_Voice.FXBaseParams.fLPFRamp;
+	voice.fx_base_params.LPFResonance = frnd(1);
+	voice.fx_base_params.LPFFreq = 1.0f - Math::pow(frnd(1.0f), 3);
+	voice.fx_base_params.LPFRamp = Math::pow(frnd(1.0f), 3.0f);
+	if (voice.fx_base_params.LPFFreq < 0.1f && voice.fx_base_params.LPFRamp < -0.05) {
+		voice.fx_base_params.LPFRamp = -voice.fx_base_params.LPFRamp;
 	}
-	m_Voice.FXBaseParams.fHPFFreq = Math::pow(frnd(1), 5);
-	m_Voice.FXBaseParams.fHPFRamp = Math::pow(frnd(1), 5);
-	m_Voice.FXBaseParams.fFlangerOffset = Math::pow(frnd(1), 3);
-	m_Voice.FXBaseParams.fFlangerRamp = Math::pow(frnd(1), 3);
-	m_Voice.FXBaseParams.fRepeatSpeed = frnd(1);
-	m_Voice.FXBaseParams.fArmSpeed = frnd(1);
-	m_Voice.FXBaseParams.fArmMod = frnd(1);
+	voice.fx_base_params.HPFFreq = Math::pow(frnd(1), 5);
+	voice.fx_base_params.HPFRamp = Math::pow(frnd(1), 5);
+	voice.fx_base_params.FlangerOffset = Math::pow(frnd(1), 3);
+	voice.fx_base_params.FlangerRamp = Math::pow(frnd(1), 3);
+	voice.fx_base_params.RepeatSpeed = frnd(1);
+	voice.fx_base_params.ArmSpeed = frnd(1);
+	voice.fx_base_params.ArmMod = frnd(1);
 
 	//////////////////////////////////////////////////////////////////////////
 	// for morph
 
-	if (m_Voice.FXBaseParams.fRepeatSpeed == 0) {
+	if (voice.fx_base_params.RepeatSpeed == 0) {
 		// If we don't have a repeat then we don't need a morph
-		m_Voice.fMorphRate = 0;
+		voice.morph_rate = 0;
 	} else {
-		m_Voice.fMorphRate = frnd(2);
-		m_Voice.fMorphRate -= 1;
-		if (m_Voice.fMorphRate < 0) {
-			m_Voice.fMorphRate = 0; // 50% chance of morph
+		voice.morph_rate = frnd(2);
+		voice.morph_rate -= 1;
+		if (voice.morph_rate < 0) {
+			voice.morph_rate = 0; // 50% chance of morph
 		}
 	}
 
-	m_Voice.FXMorphParams.fBaseFreq = Math::pow(frnd(1), 2);
+	voice.fx_morph_params.BaseFreq = Math::pow(frnd(1), 2);
 	if (rnd(1)) {
-		m_Voice.FXMorphParams.fBaseFreq = Math::pow(frnd(1), 3) + 0.5;
+		voice.fx_morph_params.BaseFreq = Math::pow(frnd(1), 3) + 0.5;
 	}
-	m_Voice.FXMorphParams.fFreqLimit = 0;
-	m_Voice.FXMorphParams.fFreqRamp = Math::pow(frnd(1), 5);
-	if (m_Voice.FXMorphParams.fBaseFreq > 0.7 && m_Voice.FXMorphParams.fFreqRamp > 0.2) {
-		m_Voice.FXMorphParams.fFreqRamp = -m_Voice.FXMorphParams.fFreqRamp;
+	voice.fx_morph_params.FreqLimit = 0;
+	voice.fx_morph_params.FreqRamp = Math::pow(frnd(1), 5);
+	if (voice.fx_morph_params.BaseFreq > 0.7 && voice.fx_morph_params.FreqRamp > 0.2) {
+		voice.fx_morph_params.FreqRamp = -voice.fx_morph_params.FreqRamp;
 	}
-	if (m_Voice.FXMorphParams.fBaseFreq < 0.2 && m_Voice.FXMorphParams.fFreqRamp < -0.05) {
-		m_Voice.FXMorphParams.fFreqRamp = -m_Voice.FXMorphParams.fFreqRamp;
+	if (voice.fx_morph_params.BaseFreq < 0.2 && voice.fx_morph_params.FreqRamp < -0.05) {
+		voice.fx_morph_params.FreqRamp = -voice.fx_morph_params.FreqRamp;
 	}
-	m_Voice.FXMorphParams.fFreqDRamp = Math::pow(frnd(1), 3);
-	m_Voice.FXMorphParams.fDuty = frnd(1);
-	m_Voice.FXMorphParams.fDutyRamp = Math::pow(frnd(1), 3);
-	m_Voice.FXMorphParams.fVibStrength = Math::pow(frnd(1), 3);
-	m_Voice.FXMorphParams.fVibSpeed = frnd(1);
-	m_Voice.FXMorphParams.fVibDelay = frnd(1);
-	m_Voice.FXMorphParams.fEnvAttack = Math::pow(frnd(1), 3);
-	m_Voice.FXMorphParams.fEnvSustain = Math::pow(frnd(1), 2);
-	m_Voice.FXMorphParams.fEnvDecay = frnd(1);
-	m_Voice.FXMorphParams.fEnvPunch = Math::pow(frnd(0.8), 2);
-	if (m_Voice.FXMorphParams.fEnvAttack + m_Voice.FXMorphParams.fEnvSustain + m_Voice.FXMorphParams.fEnvDecay < 0.2) {
-		m_Voice.FXMorphParams.fEnvSustain += 0.2 + frnd(0.3);
-		m_Voice.FXMorphParams.fEnvDecay += 0.2 + frnd(0.3);
+	voice.fx_morph_params.FreqDRamp = Math::pow(frnd(1), 3);
+	voice.fx_morph_params.Duty = frnd(1);
+	voice.fx_morph_params.DutyRamp = Math::pow(frnd(1), 3);
+	voice.fx_morph_params.VibStrength = Math::pow(frnd(1), 3);
+	voice.fx_morph_params.VibSpeed = frnd(1);
+	voice.fx_morph_params.VibDelay = frnd(1);
+	voice.fx_morph_params.EnvAttack = Math::pow(frnd(1), 3);
+	voice.fx_morph_params.EnvSustain = Math::pow(frnd(1), 2);
+	voice.fx_morph_params.EnvDecay = frnd(1);
+	voice.fx_morph_params.EnvPunch = Math::pow(frnd(0.8), 2);
+	if (voice.fx_morph_params.EnvAttack + voice.fx_morph_params.EnvSustain + voice.fx_morph_params.EnvDecay < 0.2) {
+		voice.fx_morph_params.EnvSustain += 0.2 + frnd(0.3);
+		voice.fx_morph_params.EnvDecay += 0.2 + frnd(0.3);
 	}
-	m_Voice.FXMorphParams.fLPFResonance = frnd(1);
-	m_Voice.FXMorphParams.fLPFFreq = 1 - Math::pow(frnd(1), 3);
-	m_Voice.FXMorphParams.fLPFRamp = Math::pow(frnd(1), 3);
-	if (m_Voice.FXMorphParams.fLPFFreq < 0.1 && m_Voice.FXMorphParams.fLPFRamp < -0.05) {
-		m_Voice.FXMorphParams.fLPFRamp = -m_Voice.FXMorphParams.fLPFRamp;
+	voice.fx_morph_params.LPFResonance = frnd(1);
+	voice.fx_morph_params.LPFFreq = 1 - Math::pow(frnd(1), 3);
+	voice.fx_morph_params.LPFRamp = Math::pow(frnd(1), 3);
+	if (voice.fx_morph_params.LPFFreq < 0.1 && voice.fx_morph_params.LPFRamp < -0.05) {
+		voice.fx_morph_params.LPFRamp = -voice.fx_morph_params.LPFRamp;
 	}
-	m_Voice.FXMorphParams.fHPFFreq = Math::pow(frnd(1), 5);
-	m_Voice.FXMorphParams.fHPFRamp = Math::pow(frnd(1), 5);
-	m_Voice.FXMorphParams.fFlangerOffset = Math::pow(frnd(1), 3);
-	m_Voice.FXMorphParams.fFlangerRamp = Math::pow(frnd(1), 3);
-	m_Voice.FXMorphParams.fRepeatSpeed = frnd(1);
-	m_Voice.FXMorphParams.fArmSpeed = frnd(1);
-	m_Voice.FXMorphParams.fArmMod = frnd(1);
+	voice.fx_morph_params.HPFFreq = Math::pow(frnd(1), 5);
+	voice.fx_morph_params.HPFRamp = Math::pow(frnd(1), 5);
+	voice.fx_morph_params.FlangerOffset = Math::pow(frnd(1), 3);
+	voice.fx_morph_params.FlangerRamp = Math::pow(frnd(1), 3);
+	voice.fx_morph_params.RepeatSpeed = frnd(1);
+	voice.fx_morph_params.ArmSpeed = frnd(1);
+	voice.fx_morph_params.ArmMod = frnd(1);
 }
 
 //////////////////////////////////////////////////////////////////////////
 
-bool RetroSFXVoice::ExportWav(const char *pFilename, int pWavBits, int pWavFreq) {
+bool RetroSFXVoice::ExportWav(const char *filename, int wav_bits, int wav_freq) {
 	auto write_little_endian = [](unsigned word, int num_bytes, G_FILE *wav_file) {
 		unsigned buf;
 		while (num_bytes > 0) {
@@ -1085,26 +1085,26 @@ bool RetroSFXVoice::ExportWav(const char *pFilename, int pWavBits, int pWavFreq)
 		float file_sample = 0;
 		int file_acc_key = 0, file_acc = 0;
 		std::vector<uint8_t> data;
-		virtual void append_sample(float ssample) {
-			// quantize depending on format
-			ssample *= 4; // arbitrary gain to get reasonable output volume...
-			if (ssample > 1) {
-				ssample = 1;
+		virtual void append_sample(float s) {
+			s *= 4; // arbitrary gain to get reasonable output volume ...
+			if (s > 1) {
+				s = 1;
 			}
-			if (ssample < -1) {
-				ssample = -1;
+			if (s < -1) {
+				s = -1;
 			}
-			file_sample += ssample;
+			file_sample += s;
 			file_acc++;
+			// quantize depending on format
 			if (wav_freq == 44100 || file_acc == file_acc_key) {
 				file_sample /= file_acc;
 				file_acc = 0;
 				if (wav_bits == 16) {
-					const short isample = file_sample * 32767;
+					const int16_t isample = file_sample * 0x7fff;
 					data.push_back(isample & 0xff);
 					data.push_back((isample >> 8) & 0xff);
 				} else if (wav_bits == 8) {
-					const unsigned char isample = file_sample * 127 + 128;
+					const uint8_t isample = file_sample * 0x7f + 0x80;
 					data.push_back(isample);
 				}
 				file_sample = 0;
@@ -1129,7 +1129,7 @@ bool RetroSFXVoice::ExportWav(const char *pFilename, int pWavBits, int pWavFreq)
 		}
 	};
 
-	SampleBuffer buffer(pWavBits, pWavFreq);
+	SampleBuffer buffer(wav_bits, wav_freq);
 	Play();
 	while (IsActive()) {
 		Render(256, &buffer);
@@ -1137,11 +1137,11 @@ bool RetroSFXVoice::ExportWav(const char *pFilename, int pWavBits, int pWavFreq)
 
 	const int num_channels = 1; // monoaural
 	const int num_samples = GetVoiceLengthInSamples();
-	const int bytes_per_sample = pWavBits / 2;
-	const int sample_rate = pWavFreq;
+	const int bytes_per_sample = wav_bits / 2;
+	const int sample_rate = wav_freq;
 	const int byte_rate = sample_rate * num_channels * bytes_per_sample;
 
-	G_FILE *wav_file = g_open_write(pFilename);
+	G_FILE *wav_file = g_open_write(filename);
 	if (wav_file == 0) {
 		WARN_PRINT("Cannot open wav file to write.");
 		return false;
@@ -1172,5 +1172,5 @@ bool RetroSFXVoice::ExportWav(const char *pFilename, int pWavBits, int pWavFreq)
 //////////////////////////////////////////////////////////////////////////
 
 bool RetroSFXVoice::IsActive() {
-	return m_bPlayingSample;
+	return playing_sample;
 }

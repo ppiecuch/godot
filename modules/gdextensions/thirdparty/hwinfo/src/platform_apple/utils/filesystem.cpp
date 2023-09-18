@@ -1,3 +1,6 @@
+// Copyright Leon Freist
+// Author Leon Freist <freist@informatik.uni-freiburg.de>
+
 #include "hwinfo/platform.h"
 
 #ifdef HWINFO_APPLE

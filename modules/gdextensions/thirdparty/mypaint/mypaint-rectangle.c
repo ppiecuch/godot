@@ -15,9 +15,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <mypaint-rectangle.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "mypaint-rectangle.h"
 
 void *memdup(const void *src, size_t len)
 {

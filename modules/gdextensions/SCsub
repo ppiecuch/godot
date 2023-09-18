@@ -138,7 +138,7 @@ def create_v_template(submodule, class_file):
     # read class description
     in_v_file = os.path.join("submodules", submodule, class_file)
     if not os.path.exists(in_v_file):
-        print("(GDExtensions) missing v module file")
+        print("(GDExtensions) missing V module file")
         return []
     with open(in_v_file) as f:
         lines = [line[2:].strip() for line in f if line.startswith("//")]
@@ -292,19 +292,46 @@ thirdparty_sources = [
 print(create_v_template("vnativemodule", "v_simple_class.v"))
 
 if env["tools"]:
+    if is_enabled("editor"):
+        thirdparty_sources += [
+            "thirdparty/mypaint/libmypaint.c",
+            "thirdparty/mypaint/json-c/libjson-c.c",
+            "thirdparty/gc-8.2.2/extra/gc.c",
+            "thirdparty/libnoise/libnoise.cpp",
+            "thirdparty/procrocklib/procrocklib.cpp",
+        ]
+        env_module.Append(CPPPATH=[
+            "thirdparty/eigenmath",
+            "thirdparty/gc-8.2.2/include",
+            "thirdparty/libnoise",
+            "thirdparty/procrocklib/inc",
+            "thirdparty/procrocklib/src",
+            "thirdparty/procrocklib/ext",
+        ])
+        modules += ["editor"]
     if is_enabled("qrcodetexture"):
         modules += ["qrcodetexture"]
     if is_enabled("texturepacker"):
         modules += ["texturepacker"]
-    if is_enabled("painteditor"):
-        thirdparty_sources += ["thirdparty/mypaint/libmypaint.c", "thirdparty/mypaint/json-c/libjson-c.c"]
-        modules += ["painteditor"]
     if is_enabled("goxel"):
-        env_module.Append(CPPPATH=[os.path.realpath(os.curdir) + "/submodules/goxel"])
         modules += ["goxel"]
-    if is_enabled("vcore"):
-        env_module.Append(CPPPATH="thirdparty/gc-8.2.2/include")
-        thirdparty_sources += ["thirdparty/gc-8.2.2/extra/gc.c"]
+    if is_enabled("spacemouse"):
+        if env["platform"] == "windows":
+            thirdparty_sources += Glob("thirdparty/hidapi/windows/*.c")
+        elif env["platform"] == "x11":
+            thirdparty_sources += Glob("thirdparty/hidapi/linux/*.c")
+        elif env["platform"] == "osx":
+            thirdparty_sources += Glob("thirdparty/hidapi/mac/*.c")
+        else:
+            print("(GDextensions) Spacemouse is not supported on platform '%s'." % env["platform"])
+            env["enable_gdextensions_submodules"].remove("spacemouse")
+        if is_enabled("spacemouse"):
+            env_module.Append(CPPPATH=["thirdparty/hidapi", "thirdparty/hidapi/hidapi"])
+            modules += ["spacemouse"]
+    if is_enabled("scenemerge"):
+        modules += ["scenemerge"]
+        env_module.Prepend(CPPPATH=["thirdparty/mesh_optimizer"])
+        env_module.add_source_files(env.modules_sources, Glob("thirdparty/meshoptimizer/src/*.cpp"))
 
 if is_enabled("textui"):
     thirdparty_sources += ["thirdparty/textui/textUI.c", "thirdparty/textui/textUI_support.cpp"]
@@ -316,8 +343,12 @@ if is_enabled("fastnoise"):
     thirdparty_sources += ["thirdparty/fastnoise/FastNoise.cpp"]
 
 if is_enabled("hwinfo"):
-    if env["platform"] == "x11":
-        thirdparty_sources += Glob("thirdparty/hwinfo/src/*.cpp") + Glob("thirdparty/hwinfo/src/platform_linux/*.cpp")
+    if env["platform"] in ["x11", "server", "frt"]:
+        thirdparty_sources += (
+            Glob("thirdparty/hwinfo/src/*.cpp")
+            + Glob("thirdparty/hwinfo/src/platform_linux/*.cpp")
+            + Glob("thirdparty/hwinfo/src/platform_linux/utils/*.cpp")
+        )
     elif env["platform"] == "osx":
         thirdparty_sources += (
             Glob("thirdparty/hwinfo/src/*.cpp")
@@ -425,6 +456,8 @@ if not env["disable_3d"]:
         if is_enabled("meshslicer"):
             modules += ["meshslicer"]
             sources += Glob("submodules/meshslicer/utils/*.cpp")
+        if is_enabled("environment/rockgeneration"):
+            modules += ["environment/rockgeneration"]
         if is_enabled("environment/rockgen"):
             modules += ["environment/rockgen"]
 
@@ -458,7 +491,7 @@ if os.path.isdir("submodules/iap") and is_enabled("iap"):
 
 if is_enabled("playfab"):
     modules += ["playfab"]
-    env_module.Prepend(
+    env_module.Append(
         CPPPATH=[
             "thirdparty/xplatcppsdk/code/include",
             "thirdparty/xplatcppsdk/code",
@@ -512,11 +545,6 @@ if is_enabled("polyvector"):
     env_module.Append(CPPPATH=["thirdparty/libshockwave/lzma"])
     env_module.Append(CPPDEFINES=["_7ZIP_ST"])
     thirdparty_sources += Glob("thirdparty/libshockwave/*.cpp") + Glob("thirdparty/libshockwave/lzma/*.c")
-
-if env["tools"] and is_enabled("scenemerge"):
-    modules += ["scenemerge"]
-    env_module.Prepend(CPPPATH=["thirdparty/mesh_optimizer"])
-    env_module.add_source_files(env.modules_sources, Glob("thirdparty/meshoptimizer/src/*.cpp"))
 
 if is_enabled("thorvg"):
     if env["tools"]:
@@ -619,21 +647,6 @@ if is_enabled("turbobadger"):
 
 if is_enabled("vgamepad"):
     sources += Glob("submodules/vgamepad/res/*.c")
-
-if is_enabled("spacemouse"):
-    if env["tools"]:
-        if env["platform"] == "windows":
-            thirdparty_sources += Glob("thirdparty/hidapi/windows/*.c")
-        elif env["platform"] == "x11":
-            thirdparty_sources += Glob("thirdparty/hidapi/linux/*.c")
-        elif env["platform"] == "osx":
-            thirdparty_sources += Glob("thirdparty/hidapi/mac/*.c")
-        else:
-            print("(GDextensions) Spacemouse is not supported on platform '%s'." % env["platform"])
-            env["enable_gdextensions_submodules"].remove("spacemouse")
-        if is_enabled("spacemouse"):
-            env_module.Append(CPPPATH=["thirdparty/hidapi", "thirdparty/hidapi/hidapi"])
-            modules += ["spacemouse"]
 
 if is_enabled("openclwrapper"):
     if env["tools"]:

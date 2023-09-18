@@ -14,11 +14,10 @@ class GPU {
   std::string _vendor = "<unknown>";
   std::string _name = "<unknown>";
   std::string _driverVersion  = "<unknown version>";
-  int64_t _total_memory_Bytes = -1;
-  int64_t _texture_memory_Bytes = -1;
-  int64_t _available_memory_Bytes = -1;
-  int64_t _frequency_MHz = 0;
-  int _num_cores = 0;
+  std::string _platformDetails;
+  int64_t _totalMemoryMBytes = -1;
+  int64_t _frequencyMHz = 0;
+  int _numCores = 0;
   int _id = 0;
 
   GPU() = default;
@@ -27,11 +26,10 @@ class GPU {
   const std::string& vendor() const { return _vendor; }
   const std::string& name() const { return _name; }
   const std::string& driverVersion() const { return _driverVersion; }
-  int64_t totalMemory_Bytes() const { return _total_memory_Bytes; }
-  int64_t textureMemory_Bytes() const { return _texture_memory_Bytes; }
-  int64_t availableMemory_Bytes() const { return _available_memory_Bytes; }
-  int64_t frequency_MHz() const { return _frequency_MHz; }
-  int num_cores() const { return _num_cores; }
+  const std::string& platformDetails() const { return _platformDetails; }
+  int64_t totalMemoryMBytes() const { return _totalMemoryMBytes; }
+  int64_t frequencyMHz() const { return _frequencyMHz; }
+  int num_cores() const { return _numCores; }
   int id() const { return _id; }
 
   ~GPU() = default;

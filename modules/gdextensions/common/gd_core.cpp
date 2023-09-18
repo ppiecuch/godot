@@ -73,7 +73,7 @@ static char *_str_format_new(const char *p_format, va_list p_list) {
 	return buffer;
 }
 
-static String _str_format(const char *p_format, va_list p_list) {
+String string_format(const char *p_format, va_list p_list) {
 	char *buffer = _str_format_new(p_format, p_list);
 
 	String res(buffer);
@@ -86,7 +86,7 @@ String string_format(const char *p_format, ...) {
 	va_list list;
 
 	va_start(list, p_format);
-	String res = _str_format(p_format, list);
+	String res = string_format(p_format, list);
 	va_end(list);
 
 	return res;

@@ -10,7 +10,7 @@
 #ifdef _MSC_VER
 #include <intrin.h>
 #else
-#include <i386/cpuid.h>
+#include <cpuid.h>
 #endif
 
 #define MAX_INTEL_TOP_LVL 4

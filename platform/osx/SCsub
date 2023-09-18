@@ -21,9 +21,3 @@ prog = env.add_program("#bin/godot", files)
 
 if env["debug_symbols"] and env["separate_debug_symbols"]:
     env.AddPostAction(prog, run_in_subprocess(platform_osx_builders.make_debug_osx))
-
-try:
-    env.XcodeProject("../../Godot.xcodeproj", products=prog)
-except AttributeError:
-    # No xcode tool builder
-    pass

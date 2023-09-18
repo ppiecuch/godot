@@ -25,7 +25,9 @@ SConscript("fluidsynth/SCsub")
 
 # Graphics drivers
 if env["platform"] != "3ds" and env["platform"] != "psp":
-    if env["platform"] != "server":
+    if env["platform"] == "server":
+        SConscript("dummy/SCsub")
+    else:
         if not env["disable_3d"] and env["platform"] != "psvita":
             SConscript("gles3/SCsub")
         SConscript("gles2/SCsub")
@@ -33,14 +35,12 @@ if env["platform"] != "3ds" and env["platform"] != "psp":
         SConscript("gl_context/SCsub")
         if env["platform"] == "osx" or env["platform"] == "iphone":
             SConscript("gles3+mgl/SCsub")
-    else:
-        SConscript("dummy/SCsub")
+SConscript("video_common/SCsub")
 
 # Core dependencies
 SConscript("png/SCsub")
 
 env.add_source_files(env.drivers_sources, "*.cpp")
-env.add_source_files(env.drivers_sources, "video_common/*.cpp")
 
 lib = env.add_library("drivers", env.drivers_sources)
-env.Prepend(LIBS=[lib])
+env.Append(LIBS=[lib])

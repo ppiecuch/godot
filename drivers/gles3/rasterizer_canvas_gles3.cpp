@@ -848,16 +848,16 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 
 									// use albedo and metalness color from material
 									// http://paulbourke.net/dataformats/mtl/
-									Color c = modulate;
+									Color cm = modulate;
 									if (RasterizerStorageGLES3::Material *m = storage->material_owner.getornull(s->material)) {
 										if (m->params.has("albedo")) {
-											c *= m->params["albedo"].operator Color();
+											cm *= m->params["albedo"].operator Color();
 										}
 										if (m->params.has("metalness")) {
 										}
 									}
 
-									glVertexAttrib4f(VS::ARRAY_COLOR, c.r, c.g, c.b, c.a);
+									glVertexAttrib4f(VS::ARRAY_COLOR, cm.r, cm.g, cm.b, cm.a);
 
 									if (s->index_array_len) {
 										glDrawElements(gl_primitive[s->primitive], s->index_array_len, (s->array_len >= (1 << 16)) ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, nullptr);

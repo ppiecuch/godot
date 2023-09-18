@@ -1,8 +1,8 @@
 
-#include <mypaint-config.h>
+#include "mypaint-config.h"
 
 #ifdef _OPENMP
-#include <omp.h>
+# include <omp.h>
 #endif
 
 void
@@ -20,6 +20,4 @@ void
 mypaint_init(void)
 {
     ensure_max_threads_not_exceeded();
-    //bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
 }
-
