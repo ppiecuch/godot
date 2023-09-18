@@ -92,12 +92,11 @@ public:
 	int aster_font_text_xform(RID p_canvas, const String &p_text, const Transform &p_xform);
 	Size2 aster_font_text_size(const String &p_text, const Size2 &p_scale) const;
 
+	void bitmap_font_init_textures(real_t p_fall_off = DOT_TEXTURE_FALL_OUT);
+	Ref<Texture> bitmap_font_dot_texture(real_t p_fall_off, bool p_invert, bool squcircle);
 	int canvas_add_bitmap_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos = Point2(), int p_dot_style = BITMAP_FONT_FLAT_CIRCLE, const Dictionary &p_style = Dictionary());
-	int canvas_add_lcd_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos = Point2());
-	int canvas_add_square_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos = Point2());
-	void init_dot_textures(real_t p_fall_off = DOT_TEXTURE_FALL_OUT);
-	Ref<Texture> create_dot_circle_texture(real_t p_fall_off, bool p_invert);
-	Ref<Texture> create_dot_squircle_texture(real_t p_fall_off, bool p_invert);
+	int canvas_add_lcd_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos = Point2(), const Dictionary &p_style = Dictionary());
+	int canvas_add_square_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos = Point2(), const Dictionary &p_style = Dictionary());
 
 	// manage text instance
 	void set_transform(int p_index, const Transform2D &p_xform);

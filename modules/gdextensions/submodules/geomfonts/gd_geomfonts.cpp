@@ -170,16 +170,16 @@ Size2 GdGeomFonts::hp_font_text_size(const String &p_text, const Size2 &p_scale)
 	return _size_hp1345_text(p_text, p_scale);
 }
 
-void GdGeomFonts::init_dot_textures(real_t p_fall_off) {
+void GdGeomFonts::bitmap_font_init_textures(real_t p_fall_off) {
 	init_bitmap_symbol(p_fall_off);
 }
 
-Ref<Texture> GdGeomFonts::create_dot_circle_texture(real_t p_fall_off, bool p_invert) {
-	return create_aa_circle_texture(p_fall_off, p_invert);
-}
-
-Ref<Texture> GdGeomFonts::create_dot_squircle_texture(real_t p_fall_off, bool p_invert) {
-	return create_aa_squircle_texture(p_fall_off, p_invert);
+Ref<Texture> GdGeomFonts::bitmap_font_dot_texture(real_t p_fall_off, bool p_invert, bool squircle = false) {
+	if (squircle) {
+		return create_aa_squircle_texture(p_fall_off, p_invert);
+	} else {
+		return create_aa_circle_texture(p_fall_off, p_invert);
+	}
 }
 
 #define _set_prop(D, P)        \
@@ -218,21 +218,23 @@ int GdGeomFonts::canvas_add_bitmap_font_text(RID p_canvas, const String &p_text,
 	return item.second;
 }
 
-int GdGeomFonts::canvas_add_lcd_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos) {
+int GdGeomFonts::canvas_add_lcd_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos, const Dictionary &p_style) {
 	ERR_FAIL_COND_V(!p_canvas.is_valid(), -1);
 	const auto item = _next_item(p_canvas);
 
 	FBLCDFontView fnt(item.first);
+	fnt.set_text(p_text);
 	fnt.draw(p_pos);
 
 	return item.second;
 }
 
-int GdGeomFonts::canvas_add_square_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos) {
+int GdGeomFonts::canvas_add_square_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos, const Dictionary &p_style) {
 	ERR_FAIL_COND_V(!p_canvas.is_valid(), -1);
 	const auto item = _next_item(p_canvas);
 
 	FBSquareFontView fnt(item.first);
+	fnt.set_text(p_text);
 	fnt.draw(p_pos);
 
 	return item.second;
@@ -282,12 +284,11 @@ void GdGeomFonts::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("hp_font_text_xform", "canvas", "text", "xform"), &GdGeomFonts::hp_font_text_xform);
 	ClassDB::bind_method(D_METHOD("hp_font_text_size", "text", "scale"), &GdGeomFonts::hp_font_text_size, DEFVAL(Size2(10, 10)));
 
-	ClassDB::bind_method(D_METHOD("init_dot_textures", "fall_off"), &GdGeomFonts::init_dot_textures, DEFVAL(0.3));
-	ClassDB::bind_method(D_METHOD("create_dot_circle_texture", "fall_off", "invert"), &GdGeomFonts::create_dot_circle_texture);
-	ClassDB::bind_method(D_METHOD("create_dot_squircle_texture", "fall_off", "invert"), &GdGeomFonts::create_dot_squircle_texture);
+	ClassDB::bind_method(D_METHOD("bitmap_font_init_textures", "fall_off"), &GdGeomFonts::bitmap_font_init_textures, DEFVAL(0.3));
+	ClassDB::bind_method(D_METHOD("bitmap_font_dot_texture", "fall_off", "invert", "squircle"), &GdGeomFonts::bitmap_font_dot_texture, DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("canvas_add_bitmap_font_text", "canvas", "text", "pos", "dot_style", "style"), &GdGeomFonts::canvas_add_bitmap_font_text, DEFVAL(Point2()), DEFVAL(BITMAP_FONT_FLAT_CIRCLE), DEFVAL(Dictionary()));
-	ClassDB::bind_method(D_METHOD("canvas_add_lcd_font_text", "canvas", "text", "pos"), &GdGeomFonts::canvas_add_lcd_font_text);
-	ClassDB::bind_method(D_METHOD("canvas_add_square_font_text", "canvas", "text", "pos"), &GdGeomFonts::canvas_add_square_font_text);
+	ClassDB::bind_method(D_METHOD("canvas_add_lcd_font_text", "canvas", "text", "pos", "style"), &GdGeomFonts::canvas_add_lcd_font_text, DEFVAL(Point2()), DEFVAL(BITMAP_FONT_FLAT_CIRCLE), DEFVAL(Dictionary()));
+	ClassDB::bind_method(D_METHOD("canvas_add_square_font_text", "canvas", "text", "pos", "style"), &GdGeomFonts::canvas_add_square_font_text, DEFVAL(Point2()), DEFVAL(Dictionary()));
 
 	ClassDB::bind_method(D_METHOD("set_transform", "index", "xform"), &GdGeomFonts::set_transform);
 	ClassDB::bind_method(D_METHOD("set_modulate_color", "index", "color"), &GdGeomFonts::set_modulate_color);

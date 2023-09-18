@@ -53,7 +53,7 @@ public:
 	}
 
 	LSystemGrammar(std::string axiom, std::vector<std::string> rul) :
-		condition(axiom), rules(rul) {}
+			condition(axiom), rules(rul) {}
 	LSystemGrammar(std::vector<std::string> rul) :
 			rules(rul) {}
 	LSystemGrammar(std::string axiom) :
