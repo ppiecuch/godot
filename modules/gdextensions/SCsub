@@ -300,14 +300,16 @@ if env["tools"]:
             "thirdparty/libnoise/libnoise.cpp",
             "thirdparty/procrocklib/procrocklib.cpp",
         ]
-        env_module.Append(CPPPATH=[
-            "thirdparty/eigenmath",
-            "thirdparty/gc-8.2.2/include",
-            "thirdparty/libnoise",
-            "thirdparty/procrocklib/inc",
-            "thirdparty/procrocklib/src",
-            "thirdparty/procrocklib/ext",
-        ])
+        env_module.Append(
+            CPPPATH=[
+                "thirdparty/eigenmath",
+                "thirdparty/gc-8.2.2/include",
+                "thirdparty/libnoise",
+                "thirdparty/procrocklib/inc",
+                "thirdparty/procrocklib/src",
+                "thirdparty/procrocklib/ext",
+            ]
+        )
         modules += ["editor"]
     if is_enabled("qrcodetexture"):
         modules += ["qrcodetexture"]

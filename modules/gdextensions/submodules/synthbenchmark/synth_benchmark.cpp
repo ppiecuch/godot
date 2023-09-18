@@ -77,7 +77,7 @@ _FORCE_INLINE_ static void memory_barrier() {
 #elif defined(__arm__) || defined(__aarch64__) || defined(_M_ARM)
 	__dmb(_ARM64_BARRIER_SY);
 #else
-# warning "Missing memory barrier for this platform"
+#warning "Missing memory barrier for this platform"
 #endif
 }
 
@@ -555,7 +555,7 @@ bool SynthBenchmark::progress_benchmark() {
 				report += string_format2("  CPU Perf Index %d: %.1f (weight %.2f)", MethodId, results.CPUStats[MethodId].compute_perf_index(), results.CPUStats[MethodId].get_weight());
 			}
 			report += string_format2("  Processes: %d", system_info.getNumProcesses());
-			std::string proc_report =  hwinfo::get_string_property(hwinfo::SYS_PROCESS_REPORT);
+			std::string proc_report = hwinfo::get_string_property(hwinfo::SYS_PROCESS_REPORT);
 			if (!proc_report.empty()) {
 				report += string_format2("%s", proc_report.c_str());
 			}
@@ -601,7 +601,7 @@ bool SynthBenchmark::progress_benchmark() {
 					report += gpu_hw_report;
 				}
 			}
-			std::string gpu_report =  hwinfo::get_string_property(hwinfo::GPU_SUMMARY_REPORT);
+			std::string gpu_report = hwinfo::get_string_property(hwinfo::GPU_SUMMARY_REPORT);
 			if (!gpu_report.empty()) {
 				report += string_format2("%s", gpu_report.c_str());
 			}
