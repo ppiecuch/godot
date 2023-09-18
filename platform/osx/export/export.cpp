@@ -1262,15 +1262,7 @@ Error EditorExportPlatformOSX::export_project(const Ref<EditorExportPreset> &p_p
 	pkg_name = OS::get_singleton()->get_safe_dir_name(pkg_name);
 
 	String export_format;
-<<<<<<< HEAD
-	if (have_osx_tools() && p_path.ends_with("dmg")) {
-		export_format = "dmg";
-	} else if (have_osx_tools() && p_path.ends_with("pkg")) {
-		export_format = "pkg";
-	} else if (p_path.ends_with("zip")) {
-=======
 	if (p_path.ends_with("zip")) {
->>>>>>> db8700e8f80615c3161afa31606e9a5286e65916
 		export_format = "zip";
 	} else if (p_path.ends_with("app")) {
 		export_format = "app";
@@ -1769,21 +1761,12 @@ Error EditorExportPlatformOSX::export_project(const Ref<EditorExportPreset> &p_p
 				err = _code_sign(p_preset, p_path, ent_path);
 			}
 		} else if (export_format == "pkg") {
-<<<<<<< HEAD
-			// Create a PKG.
-			if (err == OK) {
-				if (ep.step(TTR("Making PKG"), 3)) {
-					return ERR_SKIP;
-				}
-				err = _create_pkg(p_path, pkg_name, tmp_app_path_name);
-=======
 			// Create a Installer.
 			if (err == OK) {
 				if (ep.step(TTR("Making PKG installer"), 3)) {
 					return ERR_SKIP;
 				}
 				err = _create_pkg(p_preset, p_path, tmp_app_path_name);
->>>>>>> db8700e8f80615c3161afa31606e9a5286e65916
 			}
 		} else if (export_format == "zip") {
 			// Create ZIP.
