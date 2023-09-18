@@ -87,8 +87,8 @@ struct VertexRock {
 };
 
 const auto UVFromVector3 = [](const Vector3 &position) {
-	Vector3 norm = position;
-	Vector3 normalizedPos = norm.normalized();
+	const auto norm = position;
+	const auto normalizedPos = norm.normalized();
 
 	const real_t angle1 = Math::atan2(normalizedPos.z, normalizedPos.x);
 	const real_t u = (angle1 / Math_PI) * 0.5;
@@ -99,8 +99,8 @@ const auto UVFromVector3 = [](const Vector3 &position) {
 };
 
 const auto DotProduct = [](const Vector3 v1, const Vector3 v2) {
-	const Vector3 vec1 = v1.normalized();
-	const Vector3 vec2 = v2.normalized();
+	const auto vec1 = v1.normalized();
+	const auto vec2 = v2.normalized();
 
 	const real_t t = vec3_dot(vec1, vec2);
 
@@ -108,10 +108,10 @@ const auto DotProduct = [](const Vector3 v1, const Vector3 v2) {
 };
 
 const auto CrossProduct = [](const Vector3 &v1, const Vector3 &v2) {
-	const Vector3 vec1 = v1;
-	const Vector3 vec2 = v2;
+	const auto vec1 = v1;
+	const auto vec2 = v2;
 
-	Vector3 cross = vec3_cross(vec1, vec2);
+	const auto cross = vec3_cross(vec1, vec2);
 
 	return cross;
 };
@@ -222,9 +222,9 @@ const auto CalculateTangent = [](const Vector3 &P1, const Vector3 &P2, const Vec
 };
 
 const auto ComputeNormal = [](const Vector3 &P0, const Vector3 &P1, const Vector3 &P2) {
-	const Vector3 P = P1 - P0;
-	const Vector3 Q = P2 - P0;
-	const Vector3 normal = vec3_cross(Q, P).normalized();
+	const auto P = P1 - P0;
+	const auto Q = P2 - P0;
+	const auto normal = vec3_cross(Q, P).normalized();
 	return normal;
 };
 
