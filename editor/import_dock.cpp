@@ -29,6 +29,7 @@
 /**************************************************************************/
 
 #include "import_dock.h"
+#include "editor/editor_settings.h"
 #include "editor_node.h"
 #include "editor_resource_preview.h"
 #include "editor_scale.h"
@@ -525,6 +526,37 @@ void ImportDock::_reimport() {
 	EditorFileSystem::get_singleton()->emit_signal("filesystem_changed"); //it changed, so force emitting the signal
 
 	_set_dirty(false);
+}
+
+void ImportDock::_replace_resource_in_object(Object *p_object, const Ref<Resource> &old_resource, const Ref<Resource> &new_resource) {
+	ERR_FAIL_NULL(p_object);
+
+	List<PropertyInfo> props;
+	p_object->get_property_list(&props);
+
+	for (const PropertyInfo &p : props) {
+		if (p.type != Variant::OBJECT || p.hint != PROPERTY_HINT_RESOURCE_TYPE) {
+			continue;
+		}
+
+		Ref<Resource> res = p_object->get(p.name);
+		if (res.is_null()) {
+			continue;
+		}
+
+		if (res == old_resource) {
+			p_object->set(p.name, new_resource);
+		} else {
+			_replace_resource_in_object(res.ptr(), old_resource, new_resource);
+		}
+	}
+
+	Node *n = Object::cast_to<Node>(p_object);
+	if (n) {
+		for (int i = 0; i < n->get_child_count(); i++) {
+			_replace_resource_in_object(n->get_child(i), old_resource, new_resource);
+		}
+	}
 }
 
 void ImportDock::_notification(int p_what) {
