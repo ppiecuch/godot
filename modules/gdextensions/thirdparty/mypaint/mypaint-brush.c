@@ -27,10 +27,7 @@
 #include "helpers.h"
 #include "rng-double.h"
 
-#ifdef HAVE_JSON_C
-// Allow the C99 define from json.h
-#include <json.h>
-#endif // HAVE_JSON_C
+#include "json-c/json.h" // Allow the C99 define from json.h
 
 #ifdef _MSC_VER
   #include <float.h>
@@ -39,7 +36,7 @@
 #endif
 
 #ifndef M_PI
-#define M_PI 3.14159265358979323846
+# define M_PI 3.14159265358979323846
 #endif
 
 #define ACTUAL_RADIUS_MIN 0.2
@@ -89,15 +86,11 @@ struct _MyPaintBrush {
     float speed_mapping_q[2];
 
     gboolean reset_requested;
-#ifdef HAVE_JSON_C
     json_object *brush_json;
-#endif
     int refcount;
 };
 
 void settings_base_values_have_changed (MyPaintBrush *self);
-
-#include "glib/mypaint-brush.c"
 
 /**
   * mypaint_brush_new:
@@ -127,9 +120,7 @@ mypaint_brush_new(void)
 
     self->reset_requested = TRUE;
 
-#ifdef HAVE_JSON_C
     self->brush_json = json_object_new_object();
-#endif
 
     return self;
 }
@@ -144,9 +135,7 @@ brush_free(MyPaintBrush *self)
     rng_double_free (self->rng);
     self->rng = NULL;
 
-#ifdef HAVE_JSON_C
     json_object_put(self->brush_json);
-#endif
 
     free(self);
 }
@@ -1077,20 +1066,10 @@ smallest_angular_difference(float a, float b)
     return FALSE;
   }
 
-#ifdef HAVE_JSON_C
-
 // Compat wrapper, for supporting libjson
 static gboolean
 obj_get(json_object *self, const gchar *key, json_object **obj_out) {
-#if JSON_C_MINOR_VERSION >= 10
     return json_object_object_get_ex(self, key, obj_out);
-#else
-    json_object *o = json_object_object_get(self, key);
-    if (obj_out) {
-        *obj_out = o;
-    }
-    return (o != NULL);
-#endif
 }
 
 static gboolean
@@ -1166,21 +1145,16 @@ update_settings_from_json_object(MyPaintBrush *self)
     }
     return TRUE;
 }
-#endif // HAVE_JSON_C
 
 gboolean
 mypaint_brush_from_string(MyPaintBrush *self, const char *string)
 {
-#ifdef HAVE_JSON_C
     if (self->brush_json) {
         // Free
         json_object_put(self->brush_json);
     }
     self->brush_json = json_tokener_parse(string);
     return update_settings_from_json_object(self);
-#else
-    return FALSE;
-#endif
 }
 
 

@@ -348,7 +348,7 @@ Help(opts.GenerateHelpText(env_base))
 
 # add default include paths
 
-env_base.Prepend(CPPPATH=["#", "#thirdparty"])
+env_base.Prepend(CPPPATH=["#", "#thirdparty", "#modules", "#modules/gdextensions"])
 
 # configure ENV for platform
 env_base.platform_exporters = platform_exporters

@@ -31,6 +31,7 @@
 #ifndef GD_CORE_H
 #define GD_CORE_H
 
+#include "common/gd_core_defs.h"
 #include "core/array.h"
 #include "core/bind/core_bind.h"
 #include "core/class_db.h"
@@ -50,42 +51,6 @@
 #include <ostream>
 #include <vector>
 
-// Architecture
-#define GD_ARCH_32BIT 0
-#define GD_ARCH_64BIT 0
-
-#if defined(__x86_64__) || defined(_M_X64) || defined(__aarch64__) || defined(__64BIT__) || defined(__mips64) || defined(__powerpc64__) || defined(__ppc64__) || defined(__LP64__)
-#undef GD_ARCH_64BIT
-#define GD_ARCH_64BIT 64
-#else
-#undef GD_ARCH_32BIT
-#define GD_ARCH_32BIT 32
-#endif //
-
-// C++ variants
-#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) || __cplusplus >= 201703L)
-#define CPP17
-#endif
-#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201402L) || __cplusplus >= 201402L)
-#define CPP14
-#endif
-#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201103L) || __cplusplus >= 201103L)
-#define CPP11
-#endif
-
-#ifndef _HAS_EXCEPTIONS
-#if defined(__has_feature)
-#if __has_feature(cxx_exceptions)
-#define _HAS_EXCEPTIONS
-#endif
-#endif
-#ifndef _HAS_EXCEPTIONS
-#if defined(__cpp_exceptions) || defined(__EXCEPTIONS) || (defined(_MSC_VER) && defined(_CPPUNWIND))
-#define _HAS_EXCEPTIONS
-#endif
-#endif
-#endif // _HAS_EXCEPTIONS
-
 #ifdef _HAS_EXCEPTIONS
 #define ERR_THROW(_E) throw _E
 #define ERR_THROW_V(_E, _V) throw _E
@@ -102,12 +67,6 @@
 	} while (0)
 #endif
 
-#if TOOLS_ENABLED
-#define IN_EDITOR (Engine::get_singleton()->is_editor_hint() || OS::get_singleton()->is_no_window_mode_enabled())
-#else
-#define IN_EDITOR (false)
-#endif
-
 #define safe_delete(pPtr) (memdelete(pPtr), pPtr = nullptr)
 #define newref(pClass, ...) Ref<pClass>(memnew(pClass(__VA_ARGS__)))
 #define nullref(pClass) Ref<pClass>()
@@ -115,6 +74,7 @@
 
 String string_ellipsis(const Ref<Font> &p_font, const String &p_text, real_t p_max_width);
 String string_format(const char *p_format, ...);
+String string_format(const char *p_format, va_list p_list);
 String array_concat(const Array &p_args);
 #define vconcat(...) array_concat(array(__VA_ARGS__))
 #define printf_line(format, ...) print_line(string_format(format, ##__VA_ARGS__))
@@ -128,22 +88,6 @@ String array_concat(const Array &p_args);
 #else
 #define DEBUG_PRINT(pText)
 #define DEBUG_VAR(pVar)
-#endif
-
-#ifndef _DEPRECATED
-#if (__GNUC__ >= 4) /* technically, this arrived in gcc 3.1, but oh well. */
-#define _DEPRECATED __attribute__((deprecated))
-#else
-#define _DEPRECATED
-#endif
-#endif
-
-#ifndef _UNUSED
-#ifdef __GNUC__
-#define _UNUSED __attribute__((unused))
-#else
-#define _UNUSED
-#endif
 #endif
 
 #ifdef DEBUG_ENABLED
@@ -336,5 +280,13 @@ gd_unique_ptr<T> make_gd_unique_ptr(T *p) {
 	return gd_unique_ptr<T>(p, [](T *ptr) { memdelete(ptr); });
 }
 } //namespace std
+
+/// Color support
+_FORCE_INLINE_ static uint8_t g_red(uint32_t rgb) { return ((rgb >> 16) & 0xff); }
+_FORCE_INLINE_ static uint8_t g_green(uint32_t rgb) { return ((rgb >> 8) & 0xff); }
+_FORCE_INLINE_ static uint8_t g_blue(uint32_t rgb) { return (rgb & 0xff); }
+_FORCE_INLINE_ static uint8_t g_alpha(uint32_t rgb) { return rgb >> 24; }
+_FORCE_INLINE_ static uint32_t g_rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a) { return ((a & 0xff) << 24) | ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff); }
+_FORCE_INLINE_ static uint8_t g_gray(uint8_t r, uint8_t g, uint8_t b) { return (r * 11 + g * 16 + b * 5) / 32; } // convert R,G,B to gray 0..255
 
 #endif // GD_CORE_H

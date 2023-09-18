@@ -632,18 +632,18 @@ void get_color (MyPaintSurface *surface, float x, float y,
 {
     MyPaintTiledSurface *self = (MyPaintTiledSurface *)surface;
 
-    if (radius < 1.0f) radius = 1.0f;
+    if (radius < 1) radius = 1;
     const float hardness = 0.5f;
-    const float aspect_ratio = 1.0f;
-    const float angle = 0.0f;
+    const float aspect_ratio = 1;
+    const float angle = 0;
 
     float sum_weight, sum_r, sum_g, sum_b, sum_a;
-    sum_weight = sum_r = sum_g = sum_b = sum_a = 0.0f;
+    sum_weight = sum_r = sum_g = sum_b = sum_a = 0;
 
     // in case we return with an error
-    *color_r = 0.0f;
-    *color_g = 1.0f;
-    *color_b = 0.0f;
+    *color_r = 0;
+    *color_g = 1;
+    *color_b = 0;
 
     // WARNING: some code duplication with draw_dab
 
@@ -656,10 +656,8 @@ void get_color (MyPaintSurface *surface, float x, float y,
     int tiles_n = (tx2 - tx1) * (ty2 - ty1);
 
     #pragma omp parallel for schedule(static) if(self->threadsafe_tile_requests && tiles_n > 3)
-    int ty;
-    for (ty = ty1; ty <= ty2; ty++) {
-      int tx;
-      for (tx = tx1; tx <= tx2; tx++) {
+    for (int ty = ty1; ty <= ty2; ty++) {
+      for (int tx = tx1; tx <= tx2; tx++) {
 
         // Flush queued draw_dab operations
         process_tile(self, tx, ty);
@@ -689,15 +687,14 @@ void get_color (MyPaintSurface *surface, float x, float y,
         // TODO: try atomic operations instead
         #pragma omp critical
         {
-        get_color_pixels_accumulate (mask, rgba_p,
-                                     &sum_weight, &sum_r, &sum_g, &sum_b, &sum_a);
+            get_color_pixels_accumulate (mask, rgba_p, &sum_weight, &sum_r, &sum_g, &sum_b, &sum_a);
         }
 
         mypaint_tiled_surface_tile_request_end(self, &request_data);
       }
     }
 
-    assert(sum_weight > 0.0f);
+    assert(sum_weight > 0);
     sum_a /= sum_weight;
     sum_r /= sum_weight;
     sum_g /= sum_weight;
@@ -705,23 +702,26 @@ void get_color (MyPaintSurface *surface, float x, float y,
 
     *color_a = sum_a;
     // now un-premultiply the alpha
-    if (sum_a > 0.0f) {
+    if (sum_a > 0) {
       *color_r = sum_r / sum_a;
       *color_g = sum_g / sum_a;
       *color_b = sum_b / sum_a;
     } else {
       // it is all transparent, so don't care about the colors
       // (let's make them ugly so bugs will be visible)
-      *color_r = 0.0f;
-      *color_g = 1.0f;
-      *color_b = 0.0f;
+      *color_r = 0;
+      *color_g = 1;
+      *color_b = 0;
     }
 
     // fix rounding problems that do happen due to floating point math
-    *color_r = CLAMP(*color_r, 0.0f, 1.0f);
-    *color_g = CLAMP(*color_g, 0.0f, 1.0f);
-    *color_b = CLAMP(*color_b, 0.0f, 1.0f);
-    *color_a = CLAMP(*color_a, 0.0f, 1.0f);
+    *color_r = CLAMP(*color_r, 0, 1);
+    *color_g = CLAMP(*color_g, 0, 1);
+    *color_b = CLAMP(*color_b, 0, 1);
+    *color_a = CLAMP(*color_a, 0, 1);
+
+    // unused variables
+    (void)tiles_n;
 }
 
 /**

@@ -52,7 +52,6 @@ echo_bold() {
 export -f echo_header
 export -f echo_success
 
-
 # Building
 # --------
 
@@ -67,6 +66,10 @@ rm -rfv \
 	bin/libgodot.android.*.so
 
 echo_header "*** Starting classical build for Android..."
+
+if [ -x /usr/libexec/java_home ]; then
+	echo_bold "JAVA home at: $(/usr/libexec/java_home)"
+fi
 
 $SCONS $* platform=android android_arch=armv7 $OPTIONS tools=no target=release_debug
 $SCONS $* platform=android android_arch=armv7 $OPTIONS tools=no target=release
@@ -86,7 +89,7 @@ fi
 
 template_dir="${TEMPLATE_OUT_DIR}"
 if [ ! -d "$template_dir" ]; then
-	template_dir="bin/templates/android"
+	template_dir="$(pwd)/bin/templates/android"
 fi
 
 mkdir -p "$template_dir"
@@ -101,9 +104,14 @@ if [ "$cmd" != "skip_plugins" ]; then
 		for build in debug release; do
 			echo_header "*** Building platform plugins ($build)"
 			godot_lib="$(pwd)/platform/android/java/app/libs/${build}/godot-lib.${build}.aar"
+			gradle=$(grep distributionUrl "$(pwd)/platform/android/java/gradle/wrapper/gradle-wrapper.properties" | sed 's/.*gradle-\([0-9.]*\)-.*/\1/')
+			if [ -z "$gradle" ]; then
+				echo_header "*** Cannot detect gradle version"
+				exit 1
+			fi
 			install_dir=""
-			if [ ! -z "${TEMPLATE_OUT_DIR}" ]; then
-				install_dir="${TEMPLATE_OUT_DIR}/plugins/${build}"
+			if [ ! -z "${template_dir}" ]; then
+				install_dir="${template_dir}/plugins/${build}"
 				mkdir -p "${install_dir}"
 			fi
 			(pushd "platform_plugins/android"
@@ -114,6 +122,15 @@ if [ "$cmd" != "skip_plugins" ]; then
 					echo_bold "Building  plugin: $plugin"
 					pushd $plugin
 					if [ -e gd_build_plugin.sh ]; then
+						if [ -f "gradle/wrapper/gradle-wrapper.properties" ]; then
+							ver=$(grep distributionUrl "gradle/wrapper/gradle-wrapper.properties" | sed 's/.*gradle-\([0-9.]*\)-.*/\1/')
+						else
+							ver=$(grep distributionUrl $(find . -name gradle-wrapper.properties) | sed 's/.*gradle-\([0-9.]*\)-.*/\1/')
+						fi
+						if [ "$ver" != "$gradle" ]; then
+							echo_bold "*** Plugin gradle differ from main build: $gradle <> $ver. Please update."
+							exit 1
+						fi
 						./gd_build_plugin.sh "$godot_lib" "$build" "$install_dir"
 					else
 						echo_header "*** Cannot find a gd_build_plugin.sh script for the plugin: $plugin"

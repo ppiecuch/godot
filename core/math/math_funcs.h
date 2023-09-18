@@ -91,8 +91,8 @@ public:
 	static _ALWAYS_INLINE_ double sqrt(double p_x) { return ::sqrt(p_x); }
 	static _ALWAYS_INLINE_ float sqrt(float p_x) { return ::sqrtf(p_x); }
 
-	static _ALWAYS_INLINE_ double inv_sqrt( double p_x ) { return 1.0 / ::sqrt( p_x ); }
-	static _ALWAYS_INLINE_ float inv_sqrt( float p_x ) { return 1.0f / ::sqrtf( p_x ); }
+	static _ALWAYS_INLINE_ double inv_sqrt(double p_x) { return 1.0 / ::sqrt(p_x); }
+	static _ALWAYS_INLINE_ float inv_sqrt(float p_x) { return 1.0f / ::sqrtf(p_x); }
 
 	static _ALWAYS_INLINE_ double fmod(double p_x, double p_y) { return ::fmod(p_x, p_y); }
 	static _ALWAYS_INLINE_ float fmod(float p_x, float p_y) { return ::fmodf(p_x, p_y); }

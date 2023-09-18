@@ -1,11 +1,11 @@
 #ifndef MYPAINTFIXEDTILEDSURFACE_H
 #define MYPAINTFIXEDTILEDSURFACE_H
 
-#include <mypaint-glib-compat.h>
+#include "mypaint-glib-compat.h"
 
 G_BEGIN_DECLS
 
-#include <mypaint-tiled-surface.h>
+#include "mypaint-tiled-surface.h"
 
 /**
  * MyPaintFixedTiledSurface:
@@ -16,18 +16,14 @@ G_BEGIN_DECLS
  */
 typedef struct _MyPaintFixedTiledSurface MyPaintFixedTiledSurface;
 
-MyPaintFixedTiledSurface *
-mypaint_fixed_tiled_surface_new(int width, int height);
+MyPaintFixedTiledSurface *mypaint_fixed_tiled_surface_new(int width, int height);
 
-int
-mypaint_fixed_tiled_surface_get_width(MyPaintFixedTiledSurface *self);
+int mypaint_fixed_tiled_surface_get_width(MyPaintFixedTiledSurface *self);
 
-int
-mypaint_fixed_tiled_surface_get_height(MyPaintFixedTiledSurface *self);
+int mypaint_fixed_tiled_surface_get_height(MyPaintFixedTiledSurface *self);
 
 
-MyPaintSurface *
-mypaint_fixed_tiled_surface_interface(MyPaintFixedTiledSurface *self);
+MyPaintSurface *mypaint_fixed_tiled_surface_interface(MyPaintFixedTiledSurface *self);
 
 G_END_DECLS
 

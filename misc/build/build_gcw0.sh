@@ -11,9 +11,6 @@ LD="mipsel-gcw0-linux-uclibc-g++"
 AR="mipsel-gcw0-linux-uclibc-ar"
 STRIP="mipsel-gcw0-linux-uclibc-strip"
 
-# update platform repository
-(cd platform/frt; git pull)
-
 if [ ! -e "$CROSS/$CC" ]; then
 	# toolchain not found - run docker image
 	if ! command -v docker &> /dev/null

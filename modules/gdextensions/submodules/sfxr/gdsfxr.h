@@ -78,7 +78,7 @@ protected:
 			for (List<PropertyInfo>::Element *E = p_list->front(); E; E = E->next()) {
 				PropertyInfo &prop = E->get();
 				if (prop.name.to_lower() == "square_duty" || prop.name.to_lower() == "duty_sweep") {
-					if (sfx_voice.m_Voice.nWaveformType == 0) {
+					if (sfx_voice.voice.waveform_shape == 0) {
 						prop.usage |= PROPERTY_USAGE_EDITOR;
 					} else {
 						prop.usage &= ~PROPERTY_USAGE_EDITOR;
@@ -246,90 +246,90 @@ public:
 		switch (p_value) {
 			case 1: {
 				sfx_voice.ResetParams();
-				sfx_voice.m_Voice.FXBaseParams.fBaseFreq = 0.4 + rnd(0.5);
-				sfx_voice.m_Voice.FXBaseParams.fEnvAttack = 0;
-				sfx_voice.m_Voice.FXBaseParams.fEnvSustain = rnd(0.1);
-				sfx_voice.m_Voice.FXBaseParams.fEnvDecay = 0.1 + rnd(0.4);
-				sfx_voice.m_Voice.FXBaseParams.fEnvPunch = 0.3 + rnd(0.3);
+				sfx_voice.voice.fx_base_params.BaseFreq = 0.4 + rnd(0.5);
+				sfx_voice.voice.fx_base_params.EnvAttack = 0;
+				sfx_voice.voice.fx_base_params.EnvSustain = rnd(0.1);
+				sfx_voice.voice.fx_base_params.EnvDecay = 0.1 + rnd(0.4);
+				sfx_voice.voice.fx_base_params.EnvPunch = 0.3 + rnd(0.3);
 				if (rnd(1)) {
-					sfx_voice.m_Voice.FXBaseParams.fArmSpeed = 0.5 + rnd(0.2);
-					sfx_voice.m_Voice.FXBaseParams.fArmMod = 0.2 + rnd(0.4);
+					sfx_voice.voice.fx_base_params.ArmSpeed = 0.5 + rnd(0.2);
+					sfx_voice.voice.fx_base_params.ArmMod = 0.2 + rnd(0.4);
 				}
 				_dirty = true;
 				property_list_changed_notify();
 			} break;
 			case 2: {
 				sfx_voice.ResetParams();
-				sfx_voice.m_Voice.nWaveformType = rnd(2);
-				if (sfx_voice.m_Voice.nWaveformType == 2 && rnd(1)) {
-					sfx_voice.m_Voice.nWaveformType = rnd(1);
+				sfx_voice.voice.waveform_shape = rnd(2);
+				if (sfx_voice.voice.waveform_shape == 2 && rnd(1)) {
+					sfx_voice.voice.waveform_shape = rnd(1);
 				}
-				sfx_voice.m_Voice.FXBaseParams.fBaseFreq = 0.5 + rnd(0.5);
-				sfx_voice.m_Voice.FXBaseParams.fFreqLimit = sfx_voice.m_Voice.FXBaseParams.fBaseFreq - 0.2 - rnd(0.6);
-				if (sfx_voice.m_Voice.FXBaseParams.fFreqLimit < 0.2) {
-					sfx_voice.m_Voice.FXBaseParams.fFreqLimit = 0.2;
+				sfx_voice.voice.fx_base_params.BaseFreq = 0.5 + rnd(0.5);
+				sfx_voice.voice.fx_base_params.FreqLimit = sfx_voice.voice.fx_base_params.BaseFreq - 0.2 - rnd(0.6);
+				if (sfx_voice.voice.fx_base_params.FreqLimit < 0.2) {
+					sfx_voice.voice.fx_base_params.FreqLimit = 0.2;
 				}
-				sfx_voice.m_Voice.FXBaseParams.fFreqRamp = -0.15 - rnd(0.2);
+				sfx_voice.voice.fx_base_params.FreqRamp = -0.15 - rnd(0.2);
 				if (rnd(2) == 0) {
-					sfx_voice.m_Voice.FXBaseParams.fBaseFreq = 0.3 + rnd(0.6);
-					sfx_voice.m_Voice.FXBaseParams.fFreqLimit = rnd(0.1);
-					sfx_voice.m_Voice.FXBaseParams.fFreqRamp = -0.35 - rnd(0.3);
+					sfx_voice.voice.fx_base_params.BaseFreq = 0.3 + rnd(0.6);
+					sfx_voice.voice.fx_base_params.FreqLimit = rnd(0.1);
+					sfx_voice.voice.fx_base_params.FreqRamp = -0.35 - rnd(0.3);
 				}
 				if (rnd(1)) {
-					sfx_voice.m_Voice.FXBaseParams.fDuty = rnd(0.5);
-					sfx_voice.m_Voice.FXBaseParams.fDutyRamp = rnd(0.2);
+					sfx_voice.voice.fx_base_params.Duty = rnd(0.5);
+					sfx_voice.voice.fx_base_params.DutyRamp = rnd(0.2);
 				} else {
-					sfx_voice.m_Voice.FXBaseParams.fDuty = 0.4 + rnd(0.5);
-					sfx_voice.m_Voice.FXBaseParams.fDutyRamp = -rnd(0.7);
+					sfx_voice.voice.fx_base_params.Duty = 0.4 + rnd(0.5);
+					sfx_voice.voice.fx_base_params.DutyRamp = -rnd(0.7);
 				}
-				sfx_voice.m_Voice.FXBaseParams.fEnvAttack = 0;
-				sfx_voice.m_Voice.FXBaseParams.fEnvSustain = 0.1 + rnd(0.2);
-				sfx_voice.m_Voice.FXBaseParams.fEnvDecay = rnd(0.4);
+				sfx_voice.voice.fx_base_params.EnvAttack = 0;
+				sfx_voice.voice.fx_base_params.EnvSustain = 0.1 + rnd(0.2);
+				sfx_voice.voice.fx_base_params.EnvDecay = rnd(0.4);
 				if (rnd(1)) {
-					sfx_voice.m_Voice.FXBaseParams.fEnvPunch = rnd(0.3);
+					sfx_voice.voice.fx_base_params.EnvPunch = rnd(0.3);
 				}
 				if (rnd(2) == 0) {
-					sfx_voice.m_Voice.FXBaseParams.fFlangerOffset = rnd(0.2);
-					sfx_voice.m_Voice.FXBaseParams.fFlangerRamp = -rnd(0.2);
+					sfx_voice.voice.fx_base_params.FlangerOffset = rnd(0.2);
+					sfx_voice.voice.fx_base_params.FlangerRamp = -rnd(0.2);
 				}
 				if (rnd(1)) {
-					sfx_voice.m_Voice.FXBaseParams.fHPFFreq = rnd(0.3);
+					sfx_voice.voice.fx_base_params.HPFFreq = rnd(0.3);
 				}
 				_dirty = true;
 				property_list_changed_notify();
 			} break;
 			case 3: {
 				sfx_voice.ResetParams();
-				sfx_voice.m_Voice.nWaveformType = 3;
+				sfx_voice.voice.waveform_shape = 3;
 				if (rnd(1)) {
-					sfx_voice.m_Voice.FXBaseParams.fBaseFreq = 0.1 + rnd(0.4);
-					sfx_voice.m_Voice.FXBaseParams.fFreqRamp = -0.1 + rnd(0.4);
+					sfx_voice.voice.fx_base_params.BaseFreq = 0.1 + rnd(0.4);
+					sfx_voice.voice.fx_base_params.FreqRamp = -0.1 + rnd(0.4);
 				} else {
-					sfx_voice.m_Voice.FXBaseParams.fBaseFreq = 0.2 + rnd(0.7);
-					sfx_voice.m_Voice.FXBaseParams.fFreqRamp = -0.2 - rnd(0.2);
+					sfx_voice.voice.fx_base_params.BaseFreq = 0.2 + rnd(0.7);
+					sfx_voice.voice.fx_base_params.FreqRamp = -0.2 - rnd(0.2);
 				}
-				sfx_voice.m_Voice.FXBaseParams.fBaseFreq *= sfx_voice.m_Voice.FXBaseParams.fBaseFreq;
+				sfx_voice.voice.fx_base_params.BaseFreq *= sfx_voice.voice.fx_base_params.BaseFreq;
 				if (rnd(4) == 0) {
-					sfx_voice.m_Voice.FXBaseParams.fFreqRamp = 0;
+					sfx_voice.voice.fx_base_params.FreqRamp = 0;
 				}
 				if (rnd(2) == 0) {
-					sfx_voice.m_Voice.FXBaseParams.fRepeatSpeed = 0.3 + rnd(0.5);
+					sfx_voice.voice.fx_base_params.RepeatSpeed = 0.3 + rnd(0.5);
 				}
-				sfx_voice.m_Voice.FXBaseParams.fEnvAttack = 0;
-				sfx_voice.m_Voice.FXBaseParams.fEnvSustain = 0.1 + rnd(0.3);
-				sfx_voice.m_Voice.FXBaseParams.fEnvDecay = rnd(0.5);
+				sfx_voice.voice.fx_base_params.EnvAttack = 0;
+				sfx_voice.voice.fx_base_params.EnvSustain = 0.1 + rnd(0.3);
+				sfx_voice.voice.fx_base_params.EnvDecay = rnd(0.5);
 				if (rnd(1) == 0) {
-					sfx_voice.m_Voice.FXBaseParams.fFlangerOffset = -0.3 + rnd(0.9);
-					sfx_voice.m_Voice.FXBaseParams.fFlangerRamp = -rnd(0.3);
+					sfx_voice.voice.fx_base_params.FlangerOffset = -0.3 + rnd(0.9);
+					sfx_voice.voice.fx_base_params.FlangerRamp = -rnd(0.3);
 				}
-				sfx_voice.m_Voice.FXBaseParams.fEnvPunch = 0.2 + rnd(0.6);
+				sfx_voice.voice.fx_base_params.EnvPunch = 0.2 + rnd(0.6);
 				if (rnd(1)) {
-					sfx_voice.m_Voice.FXBaseParams.fVibStrength = rnd(0.7);
-					sfx_voice.m_Voice.FXBaseParams.fVibSpeed = rnd(0.6);
+					sfx_voice.voice.fx_base_params.VibStrength = rnd(0.7);
+					sfx_voice.voice.fx_base_params.VibSpeed = rnd(0.6);
 				}
 				if (rnd(2) == 0) {
-					sfx_voice.m_Voice.FXBaseParams.fArmSpeed = 0.6 + rnd(0.3);
-					sfx_voice.m_Voice.FXBaseParams.fArmMod = 0.8 - rnd(1.6);
+					sfx_voice.voice.fx_base_params.ArmSpeed = 0.6 + rnd(0.3);
+					sfx_voice.voice.fx_base_params.ArmMod = 0.8 - rnd(1.6);
 				}
 				_dirty = true;
 				property_list_changed_notify();
@@ -337,93 +337,93 @@ public:
 			case 4: {
 				sfx_voice.ResetParams();
 				if (rnd(1)) {
-					sfx_voice.m_Voice.nWaveformType = 1;
+					sfx_voice.voice.waveform_shape = 1;
 				} else {
-					sfx_voice.m_Voice.FXBaseParams.fDuty = rnd(0.6);
+					sfx_voice.voice.fx_base_params.Duty = rnd(0.6);
 				}
 				if (rnd(1)) {
-					sfx_voice.m_Voice.FXBaseParams.fBaseFreq = 0.2 + rnd(0.3);
-					sfx_voice.m_Voice.FXBaseParams.fFreqRamp = 0.1 + rnd(0.4);
-					sfx_voice.m_Voice.FXBaseParams.fRepeatSpeed = 0.4 + rnd(0.4);
+					sfx_voice.voice.fx_base_params.BaseFreq = 0.2 + rnd(0.3);
+					sfx_voice.voice.fx_base_params.FreqRamp = 0.1 + rnd(0.4);
+					sfx_voice.voice.fx_base_params.RepeatSpeed = 0.4 + rnd(0.4);
 				} else {
-					sfx_voice.m_Voice.FXBaseParams.fBaseFreq = 0.2 + rnd(0.3);
-					sfx_voice.m_Voice.FXBaseParams.fFreqRamp = 0.05 + rnd(0.2);
+					sfx_voice.voice.fx_base_params.BaseFreq = 0.2 + rnd(0.3);
+					sfx_voice.voice.fx_base_params.FreqRamp = 0.05 + rnd(0.2);
 					if (rnd(1)) {
-						sfx_voice.m_Voice.FXBaseParams.fVibStrength = rnd(0.7);
-						sfx_voice.m_Voice.FXBaseParams.fVibSpeed = rnd(0.6);
+						sfx_voice.voice.fx_base_params.VibStrength = rnd(0.7);
+						sfx_voice.voice.fx_base_params.VibSpeed = rnd(0.6);
 					}
 				}
-				sfx_voice.m_Voice.FXBaseParams.fEnvAttack = 0;
-				sfx_voice.m_Voice.FXBaseParams.fEnvSustain = rnd(0.4);
-				sfx_voice.m_Voice.FXBaseParams.fEnvDecay = 0.1 + rnd(0.4);
+				sfx_voice.voice.fx_base_params.EnvAttack = 0;
+				sfx_voice.voice.fx_base_params.EnvSustain = rnd(0.4);
+				sfx_voice.voice.fx_base_params.EnvDecay = 0.1 + rnd(0.4);
 				_dirty = true;
 				property_list_changed_notify();
 			} break;
 			case 5: {
 				sfx_voice.ResetParams();
-				sfx_voice.m_Voice.nWaveformType = rnd(2);
-				if (sfx_voice.m_Voice.nWaveformType == 2) {
-					sfx_voice.m_Voice.nWaveformType = 3;
+				sfx_voice.voice.waveform_shape = rnd(2);
+				if (sfx_voice.voice.waveform_shape == 2) {
+					sfx_voice.voice.waveform_shape = 3;
 				}
-				if (sfx_voice.m_Voice.nWaveformType == 0) {
-					sfx_voice.m_Voice.FXBaseParams.fDuty = rnd(0.6);
+				if (sfx_voice.voice.waveform_shape == 0) {
+					sfx_voice.voice.fx_base_params.Duty = rnd(0.6);
 				}
-				sfx_voice.m_Voice.FXBaseParams.fBaseFreq = 0.2 + rnd(0.6);
-				sfx_voice.m_Voice.FXBaseParams.fFreqRamp = -0.3 - rnd(0.4);
-				sfx_voice.m_Voice.FXBaseParams.fEnvAttack = 0;
-				sfx_voice.m_Voice.FXBaseParams.fEnvSustain = rnd(0.1);
-				sfx_voice.m_Voice.FXBaseParams.fEnvDecay = 0.1 + rnd(0.2);
+				sfx_voice.voice.fx_base_params.BaseFreq = 0.2 + rnd(0.6);
+				sfx_voice.voice.fx_base_params.FreqRamp = -0.3 - rnd(0.4);
+				sfx_voice.voice.fx_base_params.EnvAttack = 0;
+				sfx_voice.voice.fx_base_params.EnvSustain = rnd(0.1);
+				sfx_voice.voice.fx_base_params.EnvDecay = 0.1 + rnd(0.2);
 				if (rnd(1)) {
-					sfx_voice.m_Voice.FXBaseParams.fHPFFreq = rnd(0.3);
+					sfx_voice.voice.fx_base_params.HPFFreq = rnd(0.3);
 				}
 				_dirty = true;
 				property_list_changed_notify();
 			} break;
 			case 6: {
 				sfx_voice.ResetParams();
-				sfx_voice.m_Voice.nWaveformType = 0;
-				sfx_voice.m_Voice.FXBaseParams.fDuty = rnd(0.6);
-				sfx_voice.m_Voice.FXBaseParams.fBaseFreq = 0.3 + rnd(0.3);
-				sfx_voice.m_Voice.FXBaseParams.fFreqRamp = 0.1 + rnd(0.2);
-				sfx_voice.m_Voice.FXBaseParams.fEnvAttack = 0;
-				sfx_voice.m_Voice.FXBaseParams.fEnvSustain = 0.1 + rnd(0.3);
-				sfx_voice.m_Voice.FXBaseParams.fEnvDecay = 0.1 + rnd(0.2);
+				sfx_voice.voice.waveform_shape = 0;
+				sfx_voice.voice.fx_base_params.Duty = rnd(0.6);
+				sfx_voice.voice.fx_base_params.BaseFreq = 0.3 + rnd(0.3);
+				sfx_voice.voice.fx_base_params.FreqRamp = 0.1 + rnd(0.2);
+				sfx_voice.voice.fx_base_params.EnvAttack = 0;
+				sfx_voice.voice.fx_base_params.EnvSustain = 0.1 + rnd(0.3);
+				sfx_voice.voice.fx_base_params.EnvDecay = 0.1 + rnd(0.2);
 				if (rnd(1)) {
-					sfx_voice.m_Voice.FXBaseParams.fHPFFreq = rnd(0.3);
+					sfx_voice.voice.fx_base_params.HPFFreq = rnd(0.3);
 				}
 				if (rnd(1)) {
-					sfx_voice.m_Voice.FXBaseParams.fLPFFreq = 1 - rnd(0.6);
+					sfx_voice.voice.fx_base_params.LPFFreq = 1 - rnd(0.6);
 				}
 				_dirty = true;
 				property_list_changed_notify();
 			} break;
 			case 7: {
 				sfx_voice.ResetParams();
-				sfx_voice.m_Voice.nWaveformType = rnd(1);
-				if (sfx_voice.m_Voice.nWaveformType == 0) {
-					sfx_voice.m_Voice.FXBaseParams.fDuty = rnd(0.6);
+				sfx_voice.voice.waveform_shape = rnd(1);
+				if (sfx_voice.voice.waveform_shape == 0) {
+					sfx_voice.voice.fx_base_params.Duty = rnd(0.6);
 				}
-				sfx_voice.m_Voice.FXBaseParams.fBaseFreq = 0.2 + rnd(0.4);
-				sfx_voice.m_Voice.FXBaseParams.fEnvAttack = 0;
-				sfx_voice.m_Voice.FXBaseParams.fEnvSustain = 0.1 + rnd(0.1);
-				sfx_voice.m_Voice.FXBaseParams.fEnvDecay = rnd(0.2);
-				sfx_voice.m_Voice.FXBaseParams.fHPFFreq = 0.1;
+				sfx_voice.voice.fx_base_params.BaseFreq = 0.2 + rnd(0.4);
+				sfx_voice.voice.fx_base_params.EnvAttack = 0;
+				sfx_voice.voice.fx_base_params.EnvSustain = 0.1 + rnd(0.1);
+				sfx_voice.voice.fx_base_params.EnvDecay = rnd(0.2);
+				sfx_voice.voice.fx_base_params.HPFFreq = 0.1;
 				_dirty = true;
 				property_list_changed_notify();
 			} break;
 			case 8: {
 				sfx_voice.Randomize();
-				if (sfx_voice.m_Voice.fMorphRate < 0.25) {
-					sfx_voice.m_Voice.fMorphRate = 0.25;
+				if (sfx_voice.voice.morph_rate < 0.25) {
+					sfx_voice.voice.morph_rate = 0.25;
 				}
-				if (sfx_voice.m_Voice.FXBaseParams.fEnvSustain < 0.5) {
-					sfx_voice.m_Voice.FXBaseParams.fEnvSustain = 0.5;
+				if (sfx_voice.voice.fx_base_params.EnvSustain < 0.5) {
+					sfx_voice.voice.fx_base_params.EnvSustain = 0.5;
 				}
-				if (sfx_voice.m_Voice.FXBaseParams.fEnvDecay < 0.5) {
-					sfx_voice.m_Voice.FXBaseParams.fEnvDecay = 0.5;
+				if (sfx_voice.voice.fx_base_params.EnvDecay < 0.5) {
+					sfx_voice.voice.fx_base_params.EnvDecay = 0.5;
 				}
-				if (sfx_voice.m_Voice.FXBaseParams.fRepeatSpeed <= 0.5) {
-					sfx_voice.m_Voice.FXBaseParams.fRepeatSpeed = 0.5;
+				if (sfx_voice.voice.fx_base_params.RepeatSpeed <= 0.5) {
+					sfx_voice.voice.fx_base_params.RepeatSpeed = 0.5;
 				}
 				_dirty = true;
 				property_list_changed_notify();
@@ -449,165 +449,165 @@ public:
 	}
 
 	void set_wave_form(int p_value) {
-		sfx_voice.m_Voice.nWaveformType = p_value;
+		sfx_voice.voice.waveform_shape = p_value;
 		_dirty = true;
 	}
-	int get_wave_form() const { return int(sfx_voice.m_Voice.nWaveformType); }
+	int get_wave_form() const { return int(sfx_voice.voice.waveform_shape); }
 	void set_overtones(int p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fOvertones = p_value;
+		sfx_voice.voice.fx_base_params.Overtones = p_value;
 		_dirty = true;
 	}
-	int get_overtones() const { return sfx_voice.m_Voice.FXBaseParams.fOvertones; }
+	int get_overtones() const { return sfx_voice.voice.fx_base_params.Overtones; }
 	void set_overtone_falloff(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fOvertoneRamp = p_value;
+		sfx_voice.voice.fx_base_params.OvertoneRamp = p_value;
 		_dirty = true;
 	}
-	real_t get_overtone_falloff() const { return sfx_voice.m_Voice.FXBaseParams.fOvertoneRamp; }
+	real_t get_overtone_falloff() const { return sfx_voice.voice.fx_base_params.OvertoneRamp; }
 	void set_attack_time(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fEnvAttack = p_value;
+		sfx_voice.voice.fx_base_params.EnvAttack = p_value;
 		_dirty = true;
 	}
-	real_t get_attack_time() const { return sfx_voice.m_Voice.FXBaseParams.fEnvAttack; }
+	real_t get_attack_time() const { return sfx_voice.voice.fx_base_params.EnvAttack; }
 	void set_sustain_time(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fEnvSustain = p_value;
+		sfx_voice.voice.fx_base_params.EnvSustain = p_value;
 		_dirty = true;
 	}
-	real_t get_sustain_time() const { return sfx_voice.m_Voice.FXBaseParams.fEnvSustain; }
+	real_t get_sustain_time() const { return sfx_voice.voice.fx_base_params.EnvSustain; }
 	void set_sustain_punch(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fEnvPunch = p_value;
+		sfx_voice.voice.fx_base_params.EnvPunch = p_value;
 		_dirty = true;
 	}
-	real_t get_sustain_punch() const { return sfx_voice.m_Voice.FXBaseParams.fEnvPunch; }
+	real_t get_sustain_punch() const { return sfx_voice.voice.fx_base_params.EnvPunch; }
 	void set_decay_time(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fEnvDecay = p_value;
+		sfx_voice.voice.fx_base_params.EnvDecay = p_value;
 		_dirty = true;
 	}
-	real_t get_decay_time() const { return sfx_voice.m_Voice.FXBaseParams.fEnvDecay; }
+	real_t get_decay_time() const { return sfx_voice.voice.fx_base_params.EnvDecay; }
 	void set_start_frequency(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fBaseFreq = p_value;
+		sfx_voice.voice.fx_base_params.BaseFreq = p_value;
 		_dirty = true;
 	}
-	real_t get_start_frequency() const { return sfx_voice.m_Voice.FXBaseParams.fBaseFreq; }
+	real_t get_start_frequency() const { return sfx_voice.voice.fx_base_params.BaseFreq; }
 	void set_min_frequency(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fFreqLimit = p_value;
+		sfx_voice.voice.fx_base_params.FreqLimit = p_value;
 		_dirty = true;
 	}
-	real_t get_min_frequency() const { return sfx_voice.m_Voice.FXBaseParams.fFreqLimit; }
+	real_t get_min_frequency() const { return sfx_voice.voice.fx_base_params.FreqLimit; }
 	void set_slide(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fFreqRamp = p_value;
+		sfx_voice.voice.fx_base_params.FreqRamp = p_value;
 		_dirty = true;
 	}
-	real_t get_slide() const { return sfx_voice.m_Voice.FXBaseParams.fFreqRamp; }
+	real_t get_slide() const { return sfx_voice.voice.fx_base_params.FreqRamp; }
 	void set_delta_slide(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fFreqDRamp = p_value;
+		sfx_voice.voice.fx_base_params.FreqDRamp = p_value;
 		_dirty = true;
 	}
-	real_t get_delta_slide() const { return sfx_voice.m_Voice.FXBaseParams.fFreqDRamp; }
+	real_t get_delta_slide() const { return sfx_voice.voice.fx_base_params.FreqDRamp; }
 	void set_vibrato_depth(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fVibStrength = p_value;
+		sfx_voice.voice.fx_base_params.VibStrength = p_value;
 		_dirty = true;
 	}
-	real_t get_vibrato_depth() const { return sfx_voice.m_Voice.FXBaseParams.fVibStrength; }
+	real_t get_vibrato_depth() const { return sfx_voice.voice.fx_base_params.VibStrength; }
 	void set_vibrato_speed(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fVibSpeed = p_value;
+		sfx_voice.voice.fx_base_params.VibSpeed = p_value;
 		_dirty = true;
 	}
-	real_t get_vibrato_speed() const { return sfx_voice.m_Voice.FXBaseParams.fVibSpeed; }
+	real_t get_vibrato_speed() const { return sfx_voice.voice.fx_base_params.VibSpeed; }
 	void set_change_repeat(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fArmRepeat = p_value;
+		sfx_voice.voice.fx_base_params.ArmRepeat = p_value;
 		_dirty = true;
 	}
-	real_t get_change_repeat() const { return sfx_voice.m_Voice.FXBaseParams.fArmRepeat; }
+	real_t get_change_repeat() const { return sfx_voice.voice.fx_base_params.ArmRepeat; }
 	void set_change_amount(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fArmMod = p_value;
+		sfx_voice.voice.fx_base_params.ArmMod = p_value;
 		_dirty = true;
 	}
-	real_t get_change_amount() const { return sfx_voice.m_Voice.FXBaseParams.fArmMod; }
+	real_t get_change_amount() const { return sfx_voice.voice.fx_base_params.ArmMod; }
 	void set_change_speed(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fArmSpeed = p_value;
+		sfx_voice.voice.fx_base_params.ArmSpeed = p_value;
 		_dirty = true;
 	}
-	real_t get_change_speed() const { return sfx_voice.m_Voice.FXBaseParams.fArmSpeed; }
+	real_t get_change_speed() const { return sfx_voice.voice.fx_base_params.ArmSpeed; }
 	void set_change_amount2(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fArmMod2 = p_value;
+		sfx_voice.voice.fx_base_params.ArmMod2 = p_value;
 		_dirty = true;
 	}
-	real_t get_change_amount2() const { return sfx_voice.m_Voice.FXBaseParams.fArmMod2; }
+	real_t get_change_amount2() const { return sfx_voice.voice.fx_base_params.ArmMod2; }
 	void set_change_speed2(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fArmSpeed2 = p_value;
+		sfx_voice.voice.fx_base_params.ArmSpeed2 = p_value;
 		_dirty = true;
 	}
-	real_t get_change_speed2() const { return sfx_voice.m_Voice.FXBaseParams.fArmSpeed2; }
+	real_t get_change_speed2() const { return sfx_voice.voice.fx_base_params.ArmSpeed2; }
 	void set_square_duty(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fDuty = p_value;
+		sfx_voice.voice.fx_base_params.Duty = p_value;
 		_dirty = true;
 	}
-	real_t get_square_duty() const { return sfx_voice.m_Voice.FXBaseParams.fDuty; }
+	real_t get_square_duty() const { return sfx_voice.voice.fx_base_params.Duty; }
 	void set_duty_sweep(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fDutyRamp = p_value;
+		sfx_voice.voice.fx_base_params.DutyRamp = p_value;
 		_dirty = true;
 	}
-	real_t get_duty_sweep() const { return sfx_voice.m_Voice.FXBaseParams.fDutyRamp; }
+	real_t get_duty_sweep() const { return sfx_voice.voice.fx_base_params.DutyRamp; }
 	void set_repeat_speed(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fRepeatSpeed = p_value;
+		sfx_voice.voice.fx_base_params.RepeatSpeed = p_value;
 		_dirty = true;
 	}
-	real_t get_repeat_speed() const { return sfx_voice.m_Voice.FXBaseParams.fRepeatSpeed; }
+	real_t get_repeat_speed() const { return sfx_voice.voice.fx_base_params.RepeatSpeed; }
 	void set_flanger_offset(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fFlangerOffset = p_value;
+		sfx_voice.voice.fx_base_params.FlangerOffset = p_value;
 		_dirty = true;
 	}
-	real_t get_flanger_offset() const { return sfx_voice.m_Voice.FXBaseParams.fFlangerOffset; }
+	real_t get_flanger_offset() const { return sfx_voice.voice.fx_base_params.FlangerOffset; }
 	void set_flanger_sweep(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fFlangerRamp = p_value;
+		sfx_voice.voice.fx_base_params.FlangerRamp = p_value;
 		_dirty = true;
 	}
-	real_t get_flanger_sweep() const { return sfx_voice.m_Voice.FXBaseParams.fFlangerRamp; }
+	real_t get_flanger_sweep() const { return sfx_voice.voice.fx_base_params.FlangerRamp; }
 	void set_lp_filter_cutoff(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fLPFFreq = p_value;
+		sfx_voice.voice.fx_base_params.LPFFreq = p_value;
 		_dirty = true;
 	}
-	real_t get_lp_filter_cutoff() const { return sfx_voice.m_Voice.FXBaseParams.fLPFFreq; }
+	real_t get_lp_filter_cutoff() const { return sfx_voice.voice.fx_base_params.LPFFreq; }
 	void set_lp_filter_cutoff_sweep(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fLPFRamp = p_value;
+		sfx_voice.voice.fx_base_params.LPFRamp = p_value;
 		_dirty = true;
 	}
-	real_t get_lp_filter_cutoff_sweep() const { return sfx_voice.m_Voice.FXBaseParams.fLPFRamp; }
+	real_t get_lp_filter_cutoff_sweep() const { return sfx_voice.voice.fx_base_params.LPFRamp; }
 	void set_lp_filter_resonance(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fLPFResonance = p_value;
+		sfx_voice.voice.fx_base_params.LPFResonance = p_value;
 		_dirty = true;
 	}
-	real_t get_lp_filter_resonance() const { return sfx_voice.m_Voice.FXBaseParams.fLPFResonance; }
+	real_t get_lp_filter_resonance() const { return sfx_voice.voice.fx_base_params.LPFResonance; }
 	void set_hp_filter_cutoff(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fHPFFreq = p_value;
+		sfx_voice.voice.fx_base_params.HPFFreq = p_value;
 		_dirty = true;
 	}
-	real_t get_hp_filter_cutoff() const { return sfx_voice.m_Voice.FXBaseParams.fHPFFreq; }
+	real_t get_hp_filter_cutoff() const { return sfx_voice.voice.fx_base_params.HPFFreq; }
 	void set_hp_filter_cutoff_sweep(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fHPFRamp = p_value;
+		sfx_voice.voice.fx_base_params.HPFRamp = p_value;
 		_dirty = true;
 	}
-	real_t get_hp_filter_cutoff_sweep() const { return sfx_voice.m_Voice.FXBaseParams.fHPFRamp; }
+	real_t get_hp_filter_cutoff_sweep() const { return sfx_voice.voice.fx_base_params.HPFRamp; }
 	void set_bit_crush(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fBitCrush = p_value;
+		sfx_voice.voice.fx_base_params.BitCrush = p_value;
 		_dirty = true;
 	}
-	real_t get_bit_crush() const { return sfx_voice.m_Voice.FXBaseParams.fBitCrush; }
+	real_t get_bit_crush() const { return sfx_voice.voice.fx_base_params.BitCrush; }
 	void set_bit_crush_sweep(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fBitCrushSweep = p_value;
+		sfx_voice.voice.fx_base_params.BitCrushSweep = p_value;
 		_dirty = true;
 	}
-	real_t get_bit_crush_sweep() const { return sfx_voice.m_Voice.FXBaseParams.fBitCrushSweep; }
+	real_t get_bit_crush_sweep() const { return sfx_voice.voice.fx_base_params.BitCrushSweep; }
 	void set_compression_amount(real_t p_value) {
-		sfx_voice.m_Voice.FXBaseParams.fCompressionAmount = p_value;
+		sfx_voice.voice.fx_base_params.CompressionAmount = p_value;
 		_dirty = true;
 	}
-	real_t get_compression_amount() const { return sfx_voice.m_Voice.FXBaseParams.fCompressionAmount; }
+	real_t get_compression_amount() const { return sfx_voice.voice.fx_base_params.CompressionAmount; }
 
-	void set_volume(real_t p_value) { sfx_voice.m_Voice.fSoundVol = p_value; }
-	real_t get_volume() const { return sfx_voice.m_Voice.fSoundVol; }
-	void set_morph_rate(real_t p_value) { sfx_voice.m_Voice.fMorphRate = p_value; }
-	real_t get_morph_rate() const { return sfx_voice.m_Voice.fMorphRate; }
+	void set_volume(real_t p_value) { sfx_voice.voice.sound_vol = p_value; }
+	real_t get_volume() const { return sfx_voice.voice.sound_vol; }
+	void set_morph_rate(real_t p_value) { sfx_voice.voice.morph_rate = p_value; }
+	real_t get_morph_rate() const { return sfx_voice.voice.morph_rate; }
 	void set_loop(bool p_value) { loop = p_value; }
 	bool get_loop() const { return loop; }
 	void set_loop_offset(real_t p_value) { loop_offset = p_value; }

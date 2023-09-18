@@ -33,7 +33,7 @@
 
 #ifdef WEBRTC_GDNATIVE_ENABLED
 
-#include "modules/gdnative/include/net/godot_net.h"
+#include "net/godot_net.h"
 #include "webrtc_data_channel.h"
 
 class WebRTCDataChannelGDNative : public WebRTCDataChannel {

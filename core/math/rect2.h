@@ -44,6 +44,9 @@ struct _NO_DISCARD_CLASS_ Rect2 {
 	_FORCE_INLINE_ real_t top() const { return position.y; }
 	_FORCE_INLINE_ real_t bottom() const { return position.y + size.height; }
 
+	_FORCE_INLINE_ Point2 min() const { return position; }
+	_FORCE_INLINE_ Point2 max() const { return position + size; }
+
 	const Vector2 &get_position() const { return position; }
 	void set_position(const Vector2 &p_pos) { position = p_pos; }
 	const Vector2 &get_size() const { return size; }
@@ -191,6 +194,14 @@ struct _NO_DISCARD_CLASS_ Rect2 {
 
 	bool operator==(const Rect2 &p_rect) const { return position == p_rect.position && size == p_rect.size; }
 	bool operator!=(const Rect2 &p_rect) const { return position != p_rect.position || size != p_rect.size; }
+
+	inline Rect2 shrink(real_t p_by) const {
+		return grow(-p_by);
+	}
+
+	inline void shrink_by(real_t p_by) {
+		grow_by(-p_by);
+	}
 
 	inline Rect2 grow(real_t p_by) const {
 		Rect2 g = *this;

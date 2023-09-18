@@ -17,7 +17,7 @@
 #ifndef TILEMAP_H
 #define TILEMAP_H
 
-#include <mypaint-glib-compat.h>
+#include "mypaint-glib-compat.h"
 
 G_BEGIN_DECLS
 

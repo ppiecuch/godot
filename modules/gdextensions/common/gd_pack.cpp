@@ -580,7 +580,7 @@ Dictionary merge_images(const Vector<Ref<Image>> &images, const ImageMergeOption
 		generated_images.clear();
 		generated_images.resize(bins.size());
 
-		for (int i = 0; i < bins.size(); ++i) {
+		for (size_t i = 0; i < bins.size(); ++i) {
 			const bin b = bins[i];
 
 			const Size2 atlas_size = b.size.size();
@@ -611,7 +611,7 @@ Dictionary merge_images(const Vector<Ref<Image>> &images, const ImageMergeOption
 			atlas.instance();
 
 			// Process rects
-			for (int j = 0; j < b.rects.size(); ++j) {
+			for (size_t j = 0; j < b.rects.size(); ++j) {
 				rect_xywhf *r = b.rects[j];
 
 				r->bin = i;
@@ -700,7 +700,7 @@ Dictionary merge_images(const Vector<Ref<Image>> &images, const ImageMergeOption
 		ret["_generated_images"] = generated_images;
 		Array bins_size;
 		ERR_FAIL_COND_V(bins_size.resize(bins.size()) != OK, Dictionary());
-		for (int i = 0; i < bins.size(); ++i) {
+		for (size_t i = 0; i < bins.size(); ++i) {
 			bins_size[i] = Size2(bins[i].size.w(), bins[i].size.h());
 		}
 		ret["_bins_size"] = bins_size;

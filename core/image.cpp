@@ -1006,7 +1006,7 @@ void Image::resize(int p_width, int p_height, Interpolation p_interpolation) {
 	copy_internals_from(resized(p_width, p_height));
 }
 
-Ref<Image> Image::resized(int p_width, int p_height, Interpolation p_interpolation) {
+Ref<Image> Image::resized(int p_width, int p_height, Interpolation p_interpolation) const {
 	ERR_FAIL_COND_V_MSG(data.size() == 0, Ref<Image>(), "Cannot resize image before creating it, use create() or create_from_data() first.");
 	ERR_FAIL_COND_V_MSG(!_can_modify(format), Ref<Image>(), "Cannot resize in compressed or custom image formats.");
 	ERR_FAIL_COND_V_MSG(write_lock.ptr(), Ref<Image>(), "Cannot resize image when it is locked.");
@@ -1040,15 +1040,12 @@ Ref<Image> Image::resized(int p_width, int p_height, Interpolation p_interpolati
 			mip1_weight = 1.0f - (level - mip1);
 		}
 	}
-	bool interpolate_mipmaps = mipmap_aware && mip1 != mip2;
+	const bool interpolate_mipmaps = mipmap_aware && mip1 != mip2;
 	if (interpolate_mipmaps) {
 		dst2.create(p_width, p_height, false, format);
 	}
+	const bool had_mipmaps = mipmaps;
 
-	bool had_mipmaps = mipmaps;
-	if (interpolate_mipmaps && !had_mipmaps) {
-		generate_mipmaps();
-	}
 	// --
 
 	PoolVector<uint8_t>::Read r = data.read();
@@ -2751,7 +2748,7 @@ uint32_t Image::_get_pixel32(int p_x, int p_y) const {
 
 	switch (format) {
 		case FORMAT_L8: {
-			r = b = b = ptr[ofs];
+			r = g = b = ptr[ofs];
 		} break;
 		case FORMAT_A8: {
 			a = ptr[ofs];

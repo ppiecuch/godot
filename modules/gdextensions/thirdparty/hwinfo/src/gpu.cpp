@@ -1,3 +1,5 @@
+// kate: replace-tabs on; tab-indents on; tab-width 2; indent-width 2; indent-mode cstyle;
+
 // Copyright Leon Freist
 // Author Leon Freist <freist@informatik.uni-freiburg.de>
 
@@ -13,30 +15,19 @@
 
 namespace hwinfo {
 
-// _____________________________________________________________________________________________________________________
-const std::string& GPU::vendor() const { return _vendor; }
-
-// _____________________________________________________________________________________________________________________
-const std::string& GPU::name() const { return _name; }
-
-// _____________________________________________________________________________________________________________________
-const std::string& GPU::driverVersion() const { return _driverVersion; }
-
-// _____________________________________________________________________________________________________________________
-int GPU::id() const { return _id; }
-
-// _____________________________________________________________________________________________________________________
-int64_t GPU::memory_Bytes() const { return _memory_Bytes; }
-
-// _____________________________________________________________________________________________________________________
-int64_t GPU::frequency_MHz() const { return _frequency_MHz; }
-
-// _____________________________________________________________________________________________________________________
-int GPU::num_cores() const { return _num_cores; }
-
 #ifdef USE_OCL
 
-std::vector<GPU_CL> get_cpu_cl_data() {
+struct GPU_CL {
+  int id;
+  std::string vendor;
+  std::string name;
+  std::string driver_version;
+  int64_t frequency_mhz;
+  int num_cores;
+  int64_t memory_bytes;
+};
+
+static std::vector<GPU_CL> get_cpu_cl_data() {
   std::vector<GPU_CL> gpus;
   std::vector<cl::Platform> cl_platforms;
   auto res = cl::Platform::get(&cl_platforms);
@@ -54,13 +45,25 @@ std::vector<GPU_CL> get_cpu_cl_data() {
       gpu.vendor = cld.getInfo<CL_DEVICE_VENDOR>();
       gpu.name = cld.getInfo<CL_DEVICE_NAME>();
       gpu.driver_version = cld.getInfo<CL_DRIVER_VERSION>();
-      gpu.memory_Bytes = cld.getInfo<CL_DEVICE_GLOBAL_MEM_SIZE>();
-      gpu.frequency_MHz = cld.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>();
+      gpu.memory_bytes = cld.getInfo<CL_DEVICE_GLOBAL_MEM_SIZE>();
+      gpu.frequency_mhz = cld.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>();
       gpu.num_cores = cld.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
       gpus.push_back(gpu);
     }
   }
   return gpus;
+}
+
+std::vector<GPU> getAllGPUs() {
+  const std::vector<GPU_CL> &ocl = get_cpu_cl_data();
+  std::vector<GPU> gpu;
+  for(const auto &info : ocl) {
+    GPU g;
+    g.id = info.id;
+    g._totalMemoryMBytes = info.memory_bytes / 1024 / 1024;
+    gpu.push_back(g);
+  }
+  return gpu;
 }
 
 #endif

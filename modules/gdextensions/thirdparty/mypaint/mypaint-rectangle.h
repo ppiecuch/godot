@@ -18,7 +18,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <mypaint-glib-compat.h>
+#include "mypaint-glib-compat.h"
 
 G_BEGIN_DECLS
 

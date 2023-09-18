@@ -31,7 +31,7 @@
 #ifndef ARVR_INTERFACE_GDNATIVE_H
 #define ARVR_INTERFACE_GDNATIVE_H
 
-#include "modules/gdnative/gdnative.h"
+#include "gdnative/godotnative.h"
 #include "servers/arvr/arvr_interface.h"
 
 /**

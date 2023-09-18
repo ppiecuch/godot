@@ -85,9 +85,9 @@ public:
 			R.y = randbase.random(real_t(-1), real_t(1));
 			R.z = randbase.random(real_t(-1), real_t(1));
 			L = R.length_squared();
-		} while(L > 1 || L < CMP_EPSILON);
+		} while (L > 1 || L < CMP_EPSILON);
 		// return unsafe normal
-		const real_t scale = Math::inv_sqrt(R.x*R.x + R.y*R.y + R.z*R.z);
+		const real_t scale = Math::inv_sqrt(R.x * R.x + R.y * R.y + R.z * R.z);
 		return R * scale;
 	}
 

@@ -22,6 +22,8 @@
 #include <math.h>
 
 #include "helpers.h"
+#include "mypaint-tiled-surface.h"
+#include "mypaint-fixed-tiled-surface.h"
 
 float rand_gauss (RngDouble * rng)
 {
@@ -422,7 +424,7 @@ void write_rgba_buffer(MyPaintFixedTiledSurface *fixed_surface, uint8_t **buffer
     WriteBufferUserData data;
     *buffer = data.buffer = malloc(width * height * 4);
 
-   iterate_over_line_chunks((MyPaintTiledSurface *)fixed_surface,
+    iterate_over_line_chunks((MyPaintTiledSurface *)fixed_surface,
                              width, height,
                              write_buffer_chunk, &data);
 }

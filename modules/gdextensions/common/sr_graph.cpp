@@ -54,21 +54,21 @@
 
 /// Graph public interface
 
-sr_graph_t sr_setup_graph(real_t minx, real_t maxx, real_t miny, real_t maxy, real_t ratio, const Color &bg, const String &label = "");
-void sr_cleanup();
-void sr_add_axes(sr_graph_t hgraph, const Color &color, bool axis_on_side);
-void sr_add_grid(sr_graph_t hgraph, real_t stepx, real_t stepy, const Color &color, bool from_zero);
-int sr_add_curve(sr_graph_t hgraph, const Vector<real_t> &xs, const Vector<real_t> &ys, const Color &color);
-void sr_update_curve(sr_graph_t hgraph, int curve_id, const Vector<real_t> &xs, const Vector<real_t> &ys);
-int sr_add_hist(sr_graph_t hgraph, unsigned bins, const Vector<real_t> &ys, real_t spacing, const Color &color);
-void sr_update_hist(sr_graph_t hgraph, int hist_id, const Vector<real_t> &ys);
-int sr_add_points(sr_graph_t hgraph, const Vector<real_t> &xs, const PoolRealArray &ys, real_t size, const Color &color);
-void sr_update_points(sr_graph_t hgraph, int points_id, const Vector<real_t> &xs, const Vector<real_t> &ys);
-int sr_add_stack(sr_graph_t hgraph, real_t weight, const Vector<real_t> &vs, char *pal);
-void sr_update_stack(sr_graph_t hgraph, int stack_id, const Vector<real_t> &vs);
-void sr_draw(CanvasItem *canvas, sr_graph_t hgraph, Size2 frame);
-void sr_draw(CanvasItem *canvas, Size2 frame);
-unsigned *sr_palette(int pal, int num_colors);
+static sr_graph_t sr_setup_graph(real_t minx, real_t maxx, real_t miny, real_t maxy, real_t ratio, const Color &bg, const String &label = "");
+static void sr_cleanup();
+static void sr_add_axes(sr_graph_t hgraph, const Color &color, bool axis_on_side);
+static void sr_add_grid(sr_graph_t hgraph, real_t stepx, real_t stepy, const Color &color, bool from_zero);
+static int sr_add_curve(sr_graph_t hgraph, const Vector<real_t> &xs, const Vector<real_t> &ys, const Color &color);
+static void sr_update_curve(sr_graph_t hgraph, int curve_id, const Vector<real_t> &xs, const Vector<real_t> &ys);
+static int sr_add_hist(sr_graph_t hgraph, unsigned bins, const Vector<real_t> &ys, real_t spacing, const Color &color);
+static void sr_update_hist(sr_graph_t hgraph, int hist_id, const Vector<real_t> &ys);
+static int sr_add_points(sr_graph_t hgraph, const Vector<real_t> &xs, const PoolRealArray &ys, real_t size, const Color &color);
+static void sr_update_points(sr_graph_t hgraph, int points_id, const Vector<real_t> &xs, const Vector<real_t> &ys);
+static int sr_add_stack(sr_graph_t hgraph, real_t weight, const Vector<real_t> &vs, char *pal);
+static void sr_update_stack(sr_graph_t hgraph, int stack_id, const Vector<real_t> &vs);
+static void sr_draw(CanvasItem *canvas, sr_graph_t hgraph, Size2 frame);
+static void sr_draw(CanvasItem *canvas, Size2 frame);
+static unsigned *sr_palette(int pal, int num_colors);
 
 /// Internal structs.
 
@@ -138,7 +138,7 @@ static void _sr_draw(CanvasItem *canvas, _sr_graph *graph, Size2 frame);
 
 /// Exposed functions.
 
-sr_graph_t sr_setup_graph(real_t minx, real_t maxx, real_t miny, real_t maxy, real_t ratio, const Color &bg, const String &label) {
+static sr_graph_t sr_setup_graph(real_t minx, real_t maxx, real_t miny, real_t maxy, real_t ratio, const Color &bg, const String &label) {
 	// create a graph with the given infos
 	_sr_graph *graph = memnew(_sr_graph);
 	graph->label = label;
@@ -162,7 +162,7 @@ void sr_cleanup() {
 	_handles.reset();
 }
 
-void sr_add_axes(sr_graph_t hgraph, const Color &color, bool axis_on_side) {
+static void sr_add_axes(sr_graph_t hgraph, const Color &color, bool axis_on_side) {
 	_sr_graph *graph = _from_handle(hgraph);
 	// generate data for axis
 	PoolVector2Array data;
@@ -173,7 +173,7 @@ void sr_add_axes(sr_graph_t hgraph, const Color &color, bool axis_on_side) {
 	graph->_dirty = true;
 }
 
-void sr_add_grid(sr_graph_t hgraph, real_t stepx, real_t stepy, const Color &color, bool from_zero) {
+static void sr_add_grid(sr_graph_t hgraph, real_t stepx, real_t stepy, const Color &color, bool from_zero) {
 	_sr_graph *graph = _from_handle(hgraph);
 	PoolVector2Array data;
 
@@ -232,7 +232,7 @@ void sr_add_grid(sr_graph_t hgraph, real_t stepx, real_t stepy, const Color &col
 	graph->_dirty = true;
 }
 
-int sr_add_curve(sr_graph_t hgraph, const Vector<real_t> &xs, const Vector<real_t> &ys, const Color &color) {
+static int sr_add_curve(sr_graph_t hgraph, const Vector<real_t> &xs, const Vector<real_t> &ys, const Color &color) {
 	_sr_graph *graph = _from_handle(hgraph);
 	// generate the lines
 	_sr_curve curve;
@@ -249,7 +249,7 @@ int sr_add_curve(sr_graph_t hgraph, const Vector<real_t> &xs, const Vector<real_
 	return cid;
 }
 
-void sr_update_curve(sr_graph_t hgraph, int curve_id, const Vector<real_t> &xs, const Vector<real_t> &ys) {
+static void sr_update_curve(sr_graph_t hgraph, int curve_id, const Vector<real_t> &xs, const Vector<real_t> &ys) {
 	_sr_graph *graph = _from_handle(hgraph);
 	// update the lines
 	_sr_curve *curve = &graph->curves.write[curve_id];
@@ -262,7 +262,7 @@ void sr_update_curve(sr_graph_t hgraph, int curve_id, const Vector<real_t> &xs, 
 	graph->_dirty = true;
 }
 
-int sr_add_points(sr_graph_t hgraph, const Vector<real_t> &xs, const Vector<real_t> &ys, const real_t size, const Color &color) {
+static int sr_add_points(sr_graph_t hgraph, const Vector<real_t> &xs, const Vector<real_t> &ys, const real_t size, const Color &color) {
 	_sr_graph *graph = _from_handle(hgraph);
 	ERR_FAIL_NULL_V_MSG(graph, -1, "Invalid graph handle");
 	_sr_curve curve;
@@ -282,7 +282,7 @@ void sr_update_points(sr_graph_t hgraph, int curve_id, const Vector<real_t> &xs,
 	_sr_generate_points(graph, xs, ys, curve);
 }
 
-int sr_add_hist(sr_graph_t hgraph, unsigned bins, const Vector<real_t> &ys, real_t spacing, const Color &color) {
+static int sr_add_hist(sr_graph_t hgraph, unsigned bins, const Vector<real_t> &ys, real_t spacing, const Color &color) {
 	_sr_graph *graph = _from_handle(hgraph);
 	ERR_FAIL_NULL_V_MSG(graph, -1, "Invalid graph handle");
 	_sr_curve curve;
@@ -294,7 +294,7 @@ int sr_add_hist(sr_graph_t hgraph, unsigned bins, const Vector<real_t> &ys, real
 	return graph->hists.size() - 1;
 }
 
-void sr_update_hist(sr_graph_t hgraph, int curve_id, const Vector<real_t> &ys) {
+static void sr_update_hist(sr_graph_t hgraph, int curve_id, const Vector<real_t> &ys) {
 	_sr_graph *graph = _from_handle(hgraph);
 	ERR_FAIL_NULL_MSG(graph, "Invalid graph handle");
 	ERR_FAIL_INDEX_MSG(curve_id, graph->points.size(), "Invalid curve indec");
@@ -303,12 +303,12 @@ void sr_update_hist(sr_graph_t hgraph, int curve_id, const Vector<real_t> &ys) {
 	_sr_generate_hist(graph, ys, curve);
 }
 
-void sr_draw(CanvasItem *canvas, sr_graph_t hgraph, Size2 frame) {
+static void sr_draw(CanvasItem *canvas, sr_graph_t hgraph, Size2 frame) {
 	_sr_graph *graph = _from_handle(hgraph);
 	_sr_draw(canvas, graph, frame);
 }
 
-void sr_draw(CanvasItem *canvas, Size2 frame) {
+static void sr_draw(CanvasItem *canvas, Size2 frame) {
 	for (_sr_graph *graph : _handles) {
 		_sr_draw(canvas, graph, frame);
 	}

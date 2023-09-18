@@ -1808,7 +1808,7 @@ struct SyMemBackend
 	}\
 	RC = !LEN ? 0 : r1[0] - r2[0];\
 }
-#define	SX_MACRO_FAST_MEMCPY(SRC, DST, SIZ){\
+#define SX_MACRO_FAST_MEMCPY(SRC, DST, SIZ){\
 	register unsigned char *xSrc = (unsigned char *)SRC;\
 	register unsigned char *xDst = (unsigned char *)DST;\
 	register sxu32 xLen = SIZ;\
@@ -28874,7 +28874,7 @@ JX9_PRIVATE sxi32 SyUriEncode(const char *zSrc, sxu32 nLen, ProcConsumer xConsum
 {
 	unsigned char *zIn = (unsigned char *)zSrc;
 	unsigned char zHex[3] = { '%', 0, 0 };
-	unsigned char zOut[2];
+	unsigned char zOut[2] = { 0 };
 	unsigned char *zCur, *zEnd;
 	sxi32 c;
 	sxi32 rc;
@@ -30914,7 +30914,7 @@ JX9_PRIVATE sxi32 SyBinToHexConsumer(const void *pIn, sxu32 nLen, ProcConsumer x
 {
 	static const unsigned char zHexTab[] = "0123456789abcdef";
 	const unsigned char *zIn, *zEnd;
-	unsigned char zOut[3];
+	unsigned char zOut[3] = { 0 };
 	sxi32 rc;
 #if defined(UNTRUST)
 	if( pIn == 0 || xConsumer == 0 ){

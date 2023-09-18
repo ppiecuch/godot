@@ -33,7 +33,7 @@
 
 #ifdef WEBRTC_GDNATIVE_ENABLED
 
-#include "modules/gdnative/include/net/godot_net.h"
+#include "net/godot_net.h"
 #include "webrtc_peer_connection.h"
 
 class WebRTCPeerConnectionGDNative : public WebRTCPeerConnection {

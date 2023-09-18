@@ -8,13 +8,11 @@
 #include "hwinfo/utils/filesystem.h"
 
 bool hwinfo::filesystem::exists(const std::string& path) {
-  // TODO: implement if needed
-  return false;
+  return false; // TODO: implement if needed
 }
 
 std::vector<std::string> hwinfo::filesystem::getDirectoryEntries(const std::string& path) {
-  // TODO: implement if needed
-  return {};
+  return {}; // TODO: implement if needed
 }
 
 #endif  // HWINFO_WINDOWS

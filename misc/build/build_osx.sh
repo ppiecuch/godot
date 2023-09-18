@@ -49,7 +49,6 @@ echo_success() {
 export -f echo_header
 export -f echo_success
 
-
 # Building
 # --------
 

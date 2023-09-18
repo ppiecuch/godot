@@ -5,12 +5,6 @@ set -e
 DOCKER_IMAGE="amberelec-build-godot:2022-10-20"
 
 if [ ! -d "/app" ]; then
-	if [[ ! -d platform/frt ]]; then
-		(cd platform && git clone --depth=1 https://github.com/ppiecuch/frt)
-	else
-		(cd platform/frt && git pull) # update platform repository
-	fi
-
 	# toolchain not found - run docker image
 	if ! command -v docker &> /dev/null
 	then

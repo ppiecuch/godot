@@ -30,6 +30,7 @@
 
 #include "shader_gles2.h"
 
+#include "core/os/dir_access.h"
 #include "core/os/memory.h"
 #include "core/print_string.h"
 #include "core/project_settings.h"
@@ -249,9 +250,13 @@ ShaderGLES2::Version *ShaderGLES2::get_current_version() {
 	strings.push_back(vertex_code2.get_data());
 
 #ifdef DEBUG_SHADER
-
 	DEBUG_PRINT("\nVertex Code:\n\n" + String(code_string.get_data()));
+#endif
 
+#ifdef DEBUG_ENABLED
+	String debug_shader = "\n";
+	debug_shader += "#pragma VERTEX\n";
+	debug_shader += String(code_string.get_data());
 #endif
 
 	v.vert_id = glCreateShader(GL_VERTEX_SHADER);
@@ -323,11 +328,16 @@ ShaderGLES2::Version *ShaderGLES2::get_current_version() {
 	strings.push_back(fragment_code3.get_data());
 
 #ifdef DEBUG_SHADER
-
 	if (cc) {
 		DEBUG_PRINT("\nFragment Code:\n\n" + String(cc->fragment_globals));
 	}
 	DEBUG_PRINT("\nFragment Code:\n\n" + String(code_string.get_data()));
+#endif
+
+#ifdef DEBUG_ENABLED
+	debug_shader += "\n";
+	debug_shader += "#pragma FRAGMENT\n";
+	debug_shader += String(code_string.get_data());
 #endif
 
 	v.frag_id = glCreateShader(GL_FRAGMENT_SHADER);
@@ -463,6 +473,14 @@ ShaderGLES2::Version *ShaderGLES2::get_current_version() {
 	if (cc) {
 		cc->versions.insert(conditional_version.version);
 	}
+
+#ifdef DEBUG_ENABLED
+	if (DirAccess::exists("__shaders__")) {
+		if (FileAccessRef file = FileAccess::open(vformat("__shaders__/%s-%08x.gles2.txt", get_shader_name(), debug_shader.hash64()), FileAccess::WRITE)) {
+			file->store_string(debug_shader);
+		}
+	}
+#endif
 
 	return &v;
 }

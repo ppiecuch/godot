@@ -96,7 +96,7 @@ public:
 
 class FBLCDFontView {
 	Vector<FBFontSymbolType> symbols;
-	bool draw_off_line;
+	bool draw_off_segments;
 	int edge_length;
 	int margin;
 	real_t line_width;

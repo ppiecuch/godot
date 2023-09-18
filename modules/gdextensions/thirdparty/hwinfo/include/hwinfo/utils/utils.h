@@ -1,6 +1,5 @@
-//
-// Created by leon- on 23/06/2023.
-//
+// Copyright Leon Freist
+// Author Leon Freist <freist@informatik.uni-freiburg.de>
 
 #pragma once
 

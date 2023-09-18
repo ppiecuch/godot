@@ -30,11 +30,11 @@
 
 #include "gd_lsystem_node.h"
 
-#include "ls/lsystem.h"
 #include "ls/ls.cpp"
+#include "ls/lsystem.h"
 
-#include <vector>
 #include <stack>
+#include <vector>
 
 class TurtleGraf {
 	real_t step, angle;
@@ -83,11 +83,12 @@ public:
 	}
 
 	void init(real_t init_step, real_t init_angle) {
-		step = init_step ,angle = init_angle;
+		step = init_step, angle = init_angle;
 	}
 	PoolVector2Array interpret(std::string, std::vector<char>);
 
-	TurtleGraf() : direction(Math::deg2rad(-90.0)) {}
+	TurtleGraf() :
+			direction(Math::deg2rad(-90.0)) {}
 };
 
 // LSystemSolver implementation

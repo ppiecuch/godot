@@ -14,19 +14,14 @@
 #define MAX3(a, b, c) ((a)>(b)?MAX((a),(c)):MAX((b),(c)))
 #define MIN3(a, b, c) ((a)<(b)?MIN((a),(c)):MIN((b),(c)))
 
-void
-hsl_to_rgb_float (float *h_, float *s_, float *l_);
-void
-rgb_to_hsl_float (float *r_, float *g_, float *b_);
-
-void
-hsv_to_rgb_float (float *h_, float *s_, float *v_);
-
-void
-rgb_to_hsv_float (float *r_ /*h*/, float *g_ /*s*/, float *b_ /*v*/);
+void hsl_to_rgb_float (float *h_, float *s_, float *l_);
+void rgb_to_hsl_float (float *r_, float *g_, float *b_);
+void hsv_to_rgb_float (float *h_, float *s_, float *v_);
+void rgb_to_hsv_float (float *r_ /*h*/, float *g_ /*s*/, float *b_ /*v*/);
 
 float rand_gauss (RngDouble * rng);
 
+typedef struct _MyPaintFixedTiledSurface MyPaintFixedTiledSurface;
 void write_rgba_buffer(MyPaintFixedTiledSurface *fixed_surface, uint8_t **buffer);
 
 #endif // HELPERS_H

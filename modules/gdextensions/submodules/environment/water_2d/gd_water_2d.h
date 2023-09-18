@@ -91,7 +91,7 @@ class WaterRipples : public Reference {
 	Vector2 (*uvmap)[GridSize]; // background texture coordinates
 	Vector2 (*newuvmap)[GridSize]; // perturbated background coordinates -> refraction
 	Vector2 (*envmap)[GridSize]; // envmap coordinates
-	int(*sindex); // vertex array index
+	int *sindex; // vertex array index
 
 	struct _debug_grid {
 		char array[GridSize][GridSize];
@@ -186,7 +186,7 @@ private:
 		bool next(real_t delta, real_t speed_rate) {
 			progress += delta;
 			if (progress > speed_rate) {
-				current_frame = (++current_frame) % frames.size();
+				current_frame = (current_frame + 1) % frames.size();
 				progress = 0;
 				return true;
 			}

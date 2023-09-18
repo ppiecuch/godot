@@ -1,0 +1,27 @@
+{
+  "name": "Godot",
+  "build": {
+    "directory": "",
+    "default_target": "OSX editor",
+    "files": [ { "git": 1 } ],
+    "clean_target": "clean",
+    "targets": [
+      {
+        "name": "OSX editor",
+        "build_cmd": "./misc/build/build_osx.sh"
+      },
+      {
+        "name": "Android template",
+        "build_cmd": "./misc/build/build_android.sh"
+      },
+      {
+      	"name": "iOS template",
+      	"build_cmd": "./misc/build/build_ios.sh"
+      },
+      {
+      	"name": "clean",
+      	"build_cmd": "scons -c"
+      }
+    ]
+  }
+}

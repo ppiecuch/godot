@@ -828,7 +828,7 @@ Ref<Mesh> ArrayMesh::_copy_surfaces(Ref<ArrayMesh> p_dest, int p_from, int p_num
 
 Ref<Mesh> ArrayMesh::_copy_surfaces(Ref<ArrayMesh> p_dest, LocalVector<int> p_surfs) {
 	ERR_FAIL_NULL_V(p_dest, p_dest);
-	for (int s = 0; s < p_surfs.size(); s++) {
+	for (unsigned s = 0; s < p_surfs.size(); s++) {
 		const int idx = p_surfs[s];
 		ERR_FAIL_INDEX_V(idx, get_surface_count(), p_dest);
 		const int surf_id = p_dest->get_surface_count();

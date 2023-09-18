@@ -1,9 +1,5 @@
-/**
- * Copyright 2023, Leon Freist (https://github.com/lfreist)
- * Author: Leon Freist <freist.leon@gmail.com>
- *
- * This file is part of hwinfo.
- */
+// Copyright Leon Freist
+// Author Leon Freist <freist@informatik.uni-freiburg.de>
 
 #pragma once
 

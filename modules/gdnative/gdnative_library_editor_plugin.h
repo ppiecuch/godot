@@ -33,7 +33,7 @@
 
 #ifdef TOOLS_ENABLED
 #include "editor/editor_node.h"
-#include "gdnative.h"
+#include "godotnative.h"
 
 class GDNativeLibraryEditor : public Control {
 	GDCLASS(GDNativeLibraryEditor, Control);

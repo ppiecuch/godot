@@ -30,7 +30,6 @@
 
 #pragma once
 
-//
 // This code was originally part of a program called SFXR written by Dr Petter Circa 2007.
 // http://www.drpetter.se/project_sfxr.html
 // I took this code and modified it somewhat for Gilderos procedural sound effects. I also added
@@ -42,7 +41,6 @@
 // are also under the same license.
 //
 // Paul Carter 2018
-//
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -52,57 +50,57 @@
 //////////////////////////////////////////////////////////////////////////
 
 typedef struct _FXParams103 {
-	int fOvertones; // Harmonics: overlays copies of the waveform with copies and multiples of its frequency. Good for bulking
-					// out or otherwise enriching the texture of the sounds (warning: this is the number 1 cause of usfxr slowdown!) (0 to 1)
-	float fOvertoneRamp; // Harmonics falloff: the rate at which higher overtones should decay (0 to 1)
+	int Overtones; // harmonics: overlays copies of the waveform with copies and multiples of its frequency. Good for bulking
+				   // out or otherwise enriching the texture of the sounds (warning: this is the number 1 cause of sfxr slowdown!) (0 to 1)
+	float OvertoneRamp; // Harmonics falloff: the rate at which higher overtones should decay (0 to 1)
 
-	float fBaseFreq; // Base note of the sound (0 to 1)
-	float fFreqLimit; // If sliding, the sound will stop at this frequency, to prevent really low notes (0 to 1)
-	float fFreqRamp;
-	float fFreqDRamp;
-	float fDuty; // Controls the ratio between the up and down states of the square wave, changing the tibre (0 to 1)
-	float fDutyRamp; // Sweeps the duty up or down (-1 to 1)
+	float BaseFreq; // base note of the sound (0 to 1)
+	float FreqLimit; // if sliding, the sound will stop at this frequency, to prevent really low notes (0 to 1)
+	float FreqRamp;
+	float FreqDRamp;
+	float Duty; // controls the ratio between the up and down states of the square wave, changing the tibre (0 to 1)
+	float DutyRamp; // sweeps the duty up or down (-1 to 1)
 
-	float fVibStrength; // Strength of the vibrato effect (0 to 1)
-	float fVibSpeed; // Speed of the vibrato effect (i.e. frequency) (0 to 1)
-	float fVibDelay;
+	float VibStrength; // strength of the vibrato effect (0 to 1)
+	float VibSpeed; // speed of the vibrato effect (i.e. frequency) (0 to 1)
+	float VibDelay;
 
-	float fEnvAttack; // Length of the volume envelope attack (0 to 1)
-	float fEnvSustain; // Length of the volume envelope sustain (0 to 1)
-	float fEnvDecay; // Length of the volume envelope decay (yes, I know it's called release) (0 to 1)
-	float fEnvPunch; // Tilts the sustain envelope for more 'pop' (0 to 1)
+	float EnvAttack; // length of the volume envelope attack (0 to 1)
+	float EnvSustain; // length of the volume envelope sustain (0 to 1)
+	float EnvDecay; // length of the volume envelope decay (yes, I know it's called release) (0 to 1)
+	float EnvPunch; // tilts the sustain envelope for more 'pop' (0 to 1)
 
-	float fLPFResonance;
-	float fLPFFreq;
-	float fLPFRamp;
-	float fHPFFreq;
-	float fHPFRamp;
-	float fBitCrush; // Bit crush: resamples the audio at a lower frequency (0 to 1)
-	float fBitCrushSweep; // Bit crush sweep: sweeps the Bit Crush filter up or down (-1 to 1)
-	float fCompressionAmount;
+	float LPFResonance;
+	float LPFFreq;
+	float LPFRamp;
+	float HPFFreq;
+	float HPFRamp;
+	float BitCrush; // bit crush: resamples the audio at a lower frequency (0 to 1)
+	float BitCrushSweep; // bit crush sweep: sweeps the Bit Crush filter up or down (-1 to 1)
+	float CompressionAmount;
 
-	float fFlangerOffset;
-	float fFlangerRamp;
+	float FlangerOffset;
+	float FlangerRamp;
 
-	float fRepeatSpeed; // Speed of the note repeating - certain variables are reset each time (0 to 1)
+	float RepeatSpeed; // speed of the note repeating - certain variables are reset each time (0 to 1)
 
-	float fArmRepeat;
-	float fArmSpeed;
-	float fArmMod;
-	float fArmSpeed2;
-	float fArmMod2;
+	float ArmRepeat;
+	float ArmSpeed;
+	float ArmMod;
+	float ArmSpeed2;
+	float ArmMod2;
 } FXParams103;
 
 //////////////////////////////////////////////////////////////////////////
 
 typedef struct _RetroVoice103 {
-	int nVersion;
-	int nWaveformType;
-	float fSoundVol;
-	float fMorphRate;
-	FXParams103 FXBaseParams;
-	FXParams103 FXMorphParams;
-	int nLengthInSamples;
+	int version;
+	int waveform_shape;
+	float sound_vol;
+	float morph_rate;
+	FXParams103 fx_base_params;
+	FXParams103 fx_morph_params;
+	int length_in_samples;
 } RetroVoice103;
 
 //////////////////////////////////////////////////////////////////////////
@@ -113,49 +111,23 @@ struct BufferCallback {
 };
 
 class RetroSFXVoice {
+	int wav_samples_rendered;
+
 public:
-	RetroSFXVoice();
-
-	void ResetParams();
-	int ReadData(void *pDest, int nSize, int nUnits, unsigned char *&pData);
-	bool LoadSettings(unsigned char *pData);
-	bool LoadSettings(const char *pFilename);
-	bool SaveSettings(const char *pFilename);
-	bool CompareSettings(RetroSFXVoice *pOther);
-	void Reset(bool restart);
-	void Play(void *pData = nullptr);
-	void Play(bool bCalculateLength);
-	int GetVoiceLengthInSamples() const;
-	int Render(int nSamples, BufferCallback *pCallback);
-	float GenNoise() const;
-	float GenPinkNoise() const;
-
-	void Mutate();
-	void Randomize();
-
-	void Morph(float &fMorphVar, float fMorphDest);
-	bool ExportWav(const char *pFilename, int pWavBits = 16, int pWavFreq = 44100);
+	RetroVoice103 voice;
+	FXParams103 fx_work_params;
 
 	//////////////////////////////////////////////////////////////////////////
 
-	bool IsActive();
-
-	RetroVoice103 m_Voice;
-	FXParams103 m_FXWorkParams;
-
-	int m_WavSamplesRendered;
-
-	//////////////////////////////////////////////////////////////////////////
-
-	float m_fMasterVol;
-	bool m_bPlayingSample;
+	float master_vol;
+	bool playing_sample;
 
 	int phase;
-	double fperiod;
-	double fmaxperiod;
-	double fslide;
-	double fdslide;
-	int period;
+	double period;
+	double maxperiod;
+	double slide;
+	double dslide;
+	int iperiod;
 	float square_duty;
 	float square_slide;
 	int env_stage;
@@ -184,6 +156,32 @@ public:
 	int arm_time;
 	int arm_limit;
 	double arm_mod;
+
+	//////////////////////////////////////////////////////////////////////////
+
+	void ResetParams();
+	int ReadData(void *dest, int size, int units, unsigned char *&data);
+	bool LoadSettings(unsigned char *data);
+	bool LoadSettings(const char *filename);
+	bool SaveSettings(const char *filename);
+	bool CompareSettings(RetroSFXVoice *other);
+	void Reset(bool restart);
+	void Play(void *data = nullptr);
+	void Play(bool calculate_length);
+	int GetVoiceLengthInSamples() const;
+	int Render(int nSamples, BufferCallback *callback);
+	float GenNoise() const;
+	float GenPinkNoise() const;
+
+	void Mutate();
+	void Randomize();
+
+	void Morph(float &morph_var, float morph_dest);
+	bool ExportWav(const char *filename, int wav_bits = 16, int wav_freq = 44100);
+
+	bool IsActive();
+
+	RetroSFXVoice();
 };
 
 //////////////////////////////////////////////////////////////////////////

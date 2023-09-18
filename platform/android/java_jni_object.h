@@ -28,34 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-/*  java_jni_object.h                                                    */
-/*************************************************************************/
-/*                       This file is part of:                           */
-/*                           GODOT ENGINE                                */
-/*                      https://godotengine.org                          */
-/*************************************************************************/
-/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
-/*                                                                       */
-/* Permission is hereby granted, free of charge, to any person obtaining */
-/* a copy of this software and associated documentation files (the       */
-/* "Software"), to deal in the Software without restriction, including   */
-/* without limitation the rights to use, copy, modify, merge, publish,   */
-/* distribute, sublicense, and/or sell copies of the Software, and to    */
-/* permit persons to whom the Software is furnished to do so, subject to */
-/* the following conditions:                                             */
-/*                                                                       */
-/* The above copyright notice and this permission notice shall be        */
-/* included in all copies or substantial portions of the Software.       */
-/*                                                                       */
-/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
-/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
-/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
-/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
-/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
-/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
-/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
-/*************************************************************************/
+#ifndef JAVA_JNI_OBJECT_H
+#define JAVA_JNI_OBJECT_H
 
 #include "core/ustring.h"
 #include "core/variant.h"
@@ -67,28 +41,29 @@
 #include <memory>
 
 class JavaJniEnvironment {
-	JNIEnv *jni_env;
+	JNIEnv *jni_env = nullptr;
 
 public:
-	JNIEnv *operator->() { return jni_env; }
+	JNIEnv *operator->() const { return jni_env; }
 	operator JNIEnv *() const { return jni_env; }
-	static jclass findClass(const char *class_name, JNIEnv *env = 0);
+	static jclass findClass(const char *class_name, JNIEnv *env = nullptr);
 	JavaJniEnvironment();
+	JavaJniEnvironment(JNIEnv *env);
 };
 
 class JavaJniObject {
 	G_DECL_PRIVATE_IMP(JavaJniObject);
 
-private:
 	template <typename T>
 	T callMethodV(const char *method_name, const char *sig, va_list args) const;
 	JavaJniObject callObjectMethodV(const char *method_name, const char *sig, va_list args) const;
+
 	template <typename T>
-	static T callStaticMethodV(const char *className, const char *method_name, const char *sig, va_list args);
+	static T callStaticMethodV(JNIEnv *env, const char *class_name, const char *method_name, const char *sig, va_list args);
 	template <typename T>
-	static T callStaticMethodV(jclass clazz, const char *method_name, const char *sig, va_list args);
-	static JavaJniObject callStaticObjectMethodV(const char *className, const char *method_name, const char *sig, va_list args);
-	static JavaJniObject callStaticObjectMethodV(jclass clazz, const char *method_name, const char *sig, va_list args);
+	static T callStaticMethodV(JNIEnv *env, jclass clazz, const char *method_name, const char *sig, va_list args);
+	static JavaJniObject callStaticObjectMethodV(JNIEnv *env, const char *class_name, const char *method_name, const char *sig, va_list args);
+	static JavaJniObject callStaticObjectMethodV(JNIEnv *env, jclass clazz, const char *method_name, const char *sig, va_list args);
 
 	jobject javaObject() const;
 	void assign(jobject obj);
@@ -101,18 +76,27 @@ public:
 	T callMethod(const char *method_name, const char *sig, ...) const;
 	template <typename T>
 	T callMethod(const char *method_name) const;
-	template <typename T>
 	JavaJniObject callObjectMethod(const char *method_name) const;
 	JavaJniObject callObjectMethod(const char *method_name, const char *sig, ...) const;
+
 	template <typename T>
-	static T callStaticMethod(const char *className, const char *method_name, const char *sig, ...);
+	static T callStaticMethod(const char *class_name, const char *method_name, const char *sig, ...);
 	template <typename T>
-	static T callStaticMethod(const char *className, const char *method_name);
+	static T callStaticMethod(const char *class_name, const char *method_name);
 	template <typename T>
 	static T callStaticMethod(jclass clazz, const char *method_name, const char *sig, ...);
 	template <typename T>
 	static T callStaticMethod(jclass clazz, const char *method_name);
-	static JavaJniObject callStaticObjectMethod(const char *className, const char *method_name, const char *sig, ...);
+	template <typename T>
+	static T callStaticMethod(JNIEnv *env, const char *class_name, const char *method_name, const char *sig, ...);
+	template <typename T>
+	static T callStaticMethod(JNIEnv *env, const char *class_name, const char *method_name);
+	template <typename T>
+	static T callStaticMethod(JNIEnv *env, jclass clazz, const char *method_name, const char *sig, ...);
+	template <typename T>
+	static T callStaticMethod(JNIEnv *env, jclass clazz, const char *method_name);
+
+	static JavaJniObject callStaticObjectMethod(const char *class_name, const char *method_name, const char *sig, ...);
 	static JavaJniObject callStaticObjectMethod(jclass clazz, const String &method_name, const char *sig, ...);
 
 	bool isValid() const;
@@ -136,7 +120,10 @@ public:
 	}
 
 	JavaJniObject();
+	JavaJniObject(JNIEnv *jni_env);
 	JavaJniObject(const char *class_name);
 	JavaJniObject(const char *class_name, const char *sig, ...);
 	JavaJniObject(jobject global_ref);
 };
+
+#endif // JAVA_JNI_OBJECT_H

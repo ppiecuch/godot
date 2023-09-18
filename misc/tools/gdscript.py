@@ -46,12 +46,13 @@ arch = platform.machine()
 
 default_bin = os.path.dirname(os.path.realpath(__file__)) + "/../../bin/godot.%s.tools.%s" % (nm, arch)
 if not os.path.exists(default_bin):
-	default_bin = os.path.dirname(os.path.realpath(__file__)) + "/../../bin/godot.%s.opt.tools.%s" % (nm, arch)
+    default_bin = os.path.dirname(os.path.realpath(__file__)) + "/../../bin/godot.%s.opt.tools.%s" % (nm, arch)
 
 GODOT_BINARY = os.environ.get("GDBIN", default_bin)
 
 if not os.path.exists(GODOT_BINARY):
-	raise "Godot binary not found (%s)." % GODOT_BINARY
+    raise "Godot binary not found (%s)." % GODOT_BINARY
+
 
 def text_indent(text):
     indented = ""
@@ -84,7 +85,7 @@ class GodotScript(object):
     CLASS_BODY = """extends SceneTree
 {body}
 func _init():
-    if {verbose}: prints('[gdscript]', '_init')
+    if {verbose}: prints('[gdscript]', '_init begin')
     if {timeout} == 0:
         var instance = {name}.new()
         root.add_child(instance)
@@ -101,7 +102,7 @@ func _init():
         root.add_child(instance)
         yield(timer, 'timeout')
         quit()
-    if {verbose}: prints('[gdscript]', '_init DONE')
+    if {verbose}: prints('[gdscript]', '_init end')
 """
 
     EXTENDS_BODY = """class __GeneratedGodotClass__:
@@ -167,6 +168,8 @@ func _ready({args}):
         with open(path, "r", encoding="utf-8") as gds:
             body = gds.read()
             body = body.replace("\t", "    ")
+        if autoquit and body and "get_tree().quit()" in body.splitlines()[-1]:
+            autoquit = False
         return cls(body, args, mode, timeout=timeout, path=os.path.dirname(os.path.abspath(path)), autoquit=autoquit)
 
     @classmethod
@@ -395,6 +398,7 @@ if __name__ == "__main__":
         action="store_true",
         help="call get_tree().quit() manually (if using Timer or _process)",
     )
+    # autoquit will be disabled automatically, if last line of the script contains get_tree().quit()
     parser.add_argument(
         "-t",
         "--timeout",
@@ -409,8 +413,7 @@ if __name__ == "__main__":
         "-v", "--verbose", action="count", default=0, help="verbose level (wrapper or default Godot behavior)"
     )
     parser.add_argument("--version", action="store_true", help="print version info")
-
-    # parser.add_argument('-m', '--mode', type=str, default='extends', help='Not implemented yet')
+    parser.add_argument("-m", "--mode", type=str, default="extends", help="Force execution mode (Not implemented yet)")
 
     args = parser.parse_args()
     VERBOSE1 = args.verbose > 0
@@ -421,7 +424,7 @@ if __name__ == "__main__":
     INPUTARGS = args.inputargs
     if args.input == "-":
         if VERBOSE1:
-            print("[gdscript] Reading from STDIN")
+            print("[gdscript] Reading from stdin")
         INPUT = "\n".join(sys.stdin.readlines())
     if args.print:
         GD.print(INPUT)

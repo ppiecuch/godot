@@ -31,6 +31,7 @@
 #include "shader_gles3.h"
 
 #include "core/local_vector.h"
+#include "core/os/dir_access.h"
 #include "core/os/os.h"
 #include "core/print_string.h"
 #include "core/threaded_callable_queue.h"
@@ -818,6 +819,26 @@ ShaderGLES3::Version *ShaderGLES3::get_current_version(bool &r_async_forbidden) 
 			v.program_binary.source = Version::ProgramBinary::SOURCE_CACHE;
 			v.compile_status = Version::COMPILE_STATUS_BINARY_READY_FROM_CACHE;
 		}
+#ifdef DEBUG_ENABLED
+		if (DirAccess::exists("__shaders__")) {
+			if (FileAccessRef file = FileAccess::open(vformat("__shaders__/%s-%s.gles3.txt", get_shader_name(), v.program_binary.cache_hash), FileAccess::WRITE)) {
+				for (char **strings = (char **)strings_platform; *strings; strings++) {
+					file->store_string(vformat("#pragma %s\n", *strings));
+				}
+				file->store_string("\n");
+				file->store_string("#pragma FRAGMENT");
+				file->store_string(vformat("#pragma globals:%s\n\n", frag.code_globals.get_data()));
+				for (int i = 0; i < strings_fragment.size(); i++) {
+					file->store_string(vformat("/* %d */%s\n", i, strings_fragment[i]));
+				}
+				file->store_string("\n");
+				file->store_string("#pragma VERTEX");
+				for (int i = 0; i < strings_vertex.size(); i++) {
+					file->store_string(vformat("/* %d */%s\n", i, strings_vertex[i]));
+				}
+			}
+		}
+#endif
 	}
 	if (!in_cache) {
 		if (compile_queue && !r_async_forbidden) {

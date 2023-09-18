@@ -1,10 +1,13 @@
 #!/bin/bash
 
-# Packages (or yum group install "Development Tools"):
-# ----------------------------------------------------
+# Minimal packages prerequisits:
+#  (or yum group install "Development Tools" "Development Libraries"):
+# --------------------------------------------------------------------
 #  - build-essential pkg-config yasm
 #  - libx11-dev libxcursor-dev libxinerama-dev  libxi-dev libxrandr-dev
-#  - libasound2-dev libpulse-dev libdbus-1-dev libudev-dev
+#  - libasound2-dev libpulse-dev libdbus-1-dev libudev-dev libgl1-mesa-dev
+#
+#  (for reference one can also look into misc/ci/linux_dockerfile)
 
 set -e
 
@@ -43,16 +46,16 @@ if [ $(uname) == "Darwin" ]; then
 	VERSION=latest
 
 	echo "*** Running docker toolchain $VERSION (with script $NAME).."
-	docker run --rm -t -v "$APPDIR:/app" linux_dev:$VERSION "./${SCRIPTDIR/$APPDIR/}/$NAME"
+	docker run --rm -it -v "$APPDIR:/app" linux_dev:$VERSION "./${SCRIPTDIR/$APPDIR/}/$NAME" $*
 
 	exit
 fi
 
 PATH=/usr/bin:/bin:/sbin:/usr/local/bin
 
-mkdir -p bin/templates
+mkdir -p logs bin/templates
 
-echo_header "*** Building server/release engine for Linux ..."
+echo_header "*** Building server/release engine for Linux (using $CPU cpus)..."
 
 scons="scons"
 if ! command -v scons &> /dev/null; then
@@ -60,9 +63,13 @@ if ! command -v scons &> /dev/null; then
 fi
 command -v "$scons" >/dev/null 2>&1 || { echo >&2 "'scons' or 'scons-3' is required, but it's not installed.  Aborting."; exit 1; }
 
-$scons -j${CPU} p=server target=release tools=no
+$scons -j${CPU} p=server target=release lto=full tools=no $* | tee logs/build-server-$(date +'%Y%m%d%H%M').txt
 mv -v bin/godot_server.x11.opt.64 bin/templates/
 
 echo_header "*** Building template/release engine for Linux ..."
-$scons -j${CPU} p=linux target=release tools=no
+$scons -j${CPU} p=linux target=release lto=full tools=no $* | tee logs/build-x11-$(date +'%Y%m%d%H%M').txt
 mv -v bin/godot.x11.opt.64 bin/templates/
+
+echo_header "+----"
+echo_header "| Success executing: $0 $* ($(date +'%h/%d %H:%M'))"
+echo_header "+----"

@@ -32,6 +32,7 @@
 
 #include "core/os/os.h"
 #include "core/project_settings.h"
+#include "drivers/video_common/video_utils.h"
 
 #define _EXT_DEBUG_OUTPUT_SYNCHRONOUS_ARB 0x8242
 #define _EXT_DEBUG_NEXT_LOGGED_MESSAGE_LENGTH_ARB 0x8243
@@ -160,6 +161,10 @@ RasterizerScene *RasterizerGLES2::get_scene() {
 	return scene;
 }
 
+Dictionary RasterizerGLES2::get_video_context_info() const {
+	return context_info;
+}
+
 Error RasterizerGLES2::is_viable() {
 #ifdef GLAD_ENABLED
 	if (!gladLoadGL()) {
@@ -238,11 +243,7 @@ void RasterizerGLES2::initialize() {
 		glDebugMessageControlARB(_EXT_DEBUG_SOURCE_API_ARB, _EXT_DEBUG_TYPE_PORTABILITY_ARB, _EXT_DEBUG_SEVERITY_HIGH_ARB, 0, nullptr, GL_TRUE);
 		glDebugMessageControlARB(_EXT_DEBUG_SOURCE_API_ARB, _EXT_DEBUG_TYPE_PERFORMANCE_ARB, _EXT_DEBUG_SEVERITY_HIGH_ARB, 0, nullptr, GL_TRUE);
 		glDebugMessageControlARB(_EXT_DEBUG_SOURCE_API_ARB, _EXT_DEBUG_TYPE_OTHER_ARB, _EXT_DEBUG_SEVERITY_HIGH_ARB, 0, nullptr, GL_TRUE);
-		/* glDebugMessageInsertARB(
-			GL_DEBUG_SOURCE_API_ARB,
-			GL_DEBUG_TYPE_OTHER_ARB, 1,
-			GL_DEBUG_SEVERITY_HIGH_ARB, 5, "hello");
-		*/
+		glDebugMessageInsertARB(GL_DEBUG_SOURCE_API_ARB, GL_DEBUG_TYPE_OTHER_ARB, 1, GL_DEBUG_SEVERITY_HIGH_ARB, 5, "(GODOT DEBUG OUTPUT)");
 	}
 #else
 	if (OS::get_singleton()->is_stdout_verbose()) {
@@ -261,10 +262,41 @@ void RasterizerGLES2::initialize() {
 #endif // GLES_OVER_GL
 #endif // CAN_DEBUG
 
-	print_line("OpenGL ES 2.0 Renderer: " + VisualServer::get_singleton()->get_video_adapter_name());
+	print_line("OpenGL ES 2.0 Renderer: " + VisualServer::get_singleton()->get_video_adapter_name() + " (" + VisualServer::get_singleton()->get_video_adapter_vendor() + ")");
 	storage->initialize();
 	canvas->initialize();
 	scene->initialize();
+
+	// update context info
+#ifdef GLES_OVER_GL
+	context_info[VideoContextInfoVideoStandard] = STANDARD_GL;
+#else
+	context_info[VideoContextInfoVideoStandard] = STANDARD_GLES;
+#endif
+	context_info[VideoContextInfoVideoVendor] = (const char *)glGetString(GL_VENDOR);
+	context_info[VideoContextInfoVideoRenderer] = (const char *)glGetString(GL_RENDERER);
+	context_info[VideoContextInfoVideoVersion] = (const char *)glGetString(GL_VERSION);
+	context_info[VideoContextInfoVideoShadingLanguageVersion] = (const char *)glGetString(GL_SHADING_LANGUAGE_VERSION);
+
+	print_verbose("Video driver reported:");
+	print_verbose("     Vendor: " + String((const char *)glGetString(GL_VENDOR)));
+	print_verbose("   Renderer: " + String((const char *)glGetString(GL_RENDERER)));
+	print_verbose("    Version: " + String((const char *)glGetString(GL_VERSION)));
+	print_verbose("    Shading: " + String((const char *)glGetString(GL_SHADING_LANGUAGE_VERSION)));
+	print_verbose(" Extensions: " + itos(storage->config.extensions.size()) + " extensions");
+
+	PoolStringArray extensions;
+	for (Set<String>::Element *E = storage->config.extensions.front(); E; E = E->next()) {
+		extensions.push_back(E->get());
+	}
+
+	context_info[VideoContextInfoVideoExtensions] = extensions;
+
+	if (storage->config.extensions.has("WEBGL_debug_renderer_info")) {
+		const int GL_UNMASKED_VENDOR_WEBGL = 0x9245;
+		const int GL_UNMASKED_RENDERER_WEBGL = 0x9246;
+		context_info[VideoContextInfoWebglInfo] = array((const char *)glGetString(GL_UNMASKED_VENDOR_WEBGL), (const char *)glGetString(GL_UNMASKED_RENDERER_WEBGL));
+	}
 }
 
 void RasterizerGLES2::begin_frame(double frame_step) {

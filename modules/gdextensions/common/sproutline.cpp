@@ -246,35 +246,38 @@ S2ODEF void s2o_distance_based_path_simplification(s2o_point *outline, int *outl
 				while (i != b) {
 					s2o_point ai;
 					S2O_POINT_SUB(ai, outline[i], outline[a]);
-					float t = (abnx * ai.x + abny * ai.y) * ilab;
-					float distance = -abny * ai.x + abnx * ai.y;
-					if (t < 0.0f || t > 1.0f || distance > distance_threshold || -distance > distance_threshold) {
+					const float t = (abnx * ai.x + abny * ai.y) * ilab;
+					const float distance = -abny * ai.x + abnx * ai.y;
+					if (t < 0 || t > 1 || distance > distance_threshold || -distance > distance_threshold) {
 						found = 0;
 						break;
 					}
-
-					if (++i == length)
+					if (++i == length) {
 						i = 0;
+					}
 				}
 
 				if (found) {
-					int i;
 					if (a < b) {
-						for (i = 0; i < length - b; i++)
-							outline[a + i + 1] = outline[b + i];
+						for (int ii = 0; ii < length - b; ii++) {
+							outline[a + ii + 1] = outline[b + ii];
+						}
 						length -= b - a - 1;
 					} else {
 						length = a - b + 1;
-						for (i = 0; i < length; i++)
-							outline[i] = outline[b + i];
+						for (int ii = 0; ii < length; ii++) {
+							outline[ii] = outline[b + ii];
+						}
 					}
-					if (l >= length)
+					if (l >= length) {
 						l = length - 1;
+					}
 				}
 			}
 
-			if (++b >= length)
+			if (++b >= length) {
 				b = 0;
+			}
 		}
 	}
 	*outline_length = length;

@@ -31,7 +31,7 @@
 #ifndef GODOT_ARVR_H
 #define GODOT_ARVR_H
 
-#include <gdnative/gdnative.h>
+#include "gdnative/gdnative.h"
 
 #ifdef __cplusplus
 extern "C" {

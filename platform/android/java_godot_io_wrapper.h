@@ -74,6 +74,7 @@ public:
 	String get_user_data_dir();
 	String get_locale();
 	String get_model();
+	String get_custom_name();
 	int get_screen_dpi();
 	float get_scaled_density();
 	void get_window_safe_area(int (&p_rect_xywh)[4]);

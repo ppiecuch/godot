@@ -2,8 +2,9 @@
 #define MYPAINTTILEDSURFACE_H
 
 #include <stdint.h>
-#include <mypaint-surface.h>
-#include <mypaint-config.h>
+
+#include "mypaint-surface.h"
+#include "mypaint-config.h"
 
 G_BEGIN_DECLS
 

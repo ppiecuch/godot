@@ -12,6 +12,7 @@ def configure(env):
     modules = [
         "core",
         "visual",
+        "editor",
         "cpufeatures",
         "breakpad",
         "benchmark",
@@ -62,7 +63,6 @@ def configure(env):
         "scenemerge",
         "texturepacker",
         "ldrdraw",
-        "rockgen",
         "opensteer",
         "tileengine",
         "sparkparticles",
@@ -73,6 +73,9 @@ def configure(env):
         "hwinfo",
         "synthbenchmark",
         "runtimeprofiler",
+        "goxel",
+        "textui",
+        "textwidgets",
     ]
     opts = Variables()
     opts.Add(

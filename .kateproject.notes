@@ -20,6 +20,9 @@
 9. visual/foliage_2d_animation.h: from Foliage2D c# code
 10 . Keychain submodule (apple/android/win/linux)
 11.BMF font file: visual/bmf_bitmap_font.cpp
+12. Simple paint editor/texture type, eg. simple masks, polygon selections (mypaint brushes)
+13. Explodomatica module (editor module).
+14. libnoise and procgenlib for additinal rock generator
 
 UNITY MATH:
  * https://www.reddit.com/r/godot/comments/p2v6av/quaterionlookrotation_equivalent

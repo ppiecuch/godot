@@ -1835,8 +1835,7 @@ static void make_checker_image(Ref<Image> &image, int tile, const Color &c0, con
 			if (c) {
 				image->set_pixel(i, j, c2);
 			} else {
-				const bool c = (i / tile + j / tile) % 2 == 0;
-				image->set_pixel(i, j, c ? c0 : c1);
+				image->set_pixel(i, j, ((i / tile + j / tile) % 2 == 0) ? c0 : c1);
 			}
 		}
 	}

@@ -438,6 +438,10 @@ _FORCE_INLINE_ real_t vec3_dot(const Vector3 &p_a, const Vector3 &p_b) {
 	return p_a.dot(p_b);
 }
 
+_FORCE_INLINE_ real_t vec3_angle_to(const Vector3 &p_from, const Vector3 &p_to) {
+	return p_from.angle_to(p_to);
+}
+
 real_t Vector3::length() const {
 	real_t x2 = x * x;
 	real_t y2 = y * y;

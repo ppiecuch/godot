@@ -1,7 +1,7 @@
 #ifndef MYPAINTGLIBCOMPAT_H
 #define MYPAINTGLIBCOMPAT_H
 
-#include <mypaint-config.h>
+#include "mypaint-config.h"
 
 #ifndef __G_LIB_H_
 
@@ -15,8 +15,8 @@
 # define G_END_DECLS
 #endif
 
-#define	FALSE	(0)
-#define	TRUE	(!FALSE)
+#define FALSE (0)
+#define TRUE  (!FALSE)
 
 typedef void * gpointer;
 

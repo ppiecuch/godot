@@ -28,12 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "modules/gdnative/gdnative.h"
-#include "modules/gdnative/include/net/godot_net.h"
+#include "gdnative/godotnative.h"
+#include "net/godot_net.h"
 
 #ifdef WEBRTC_GDNATIVE_ENABLED
-#include "modules/webrtc/webrtc_data_channel_gdnative.h"
-#include "modules/webrtc/webrtc_peer_connection_gdnative.h"
+#include "webrtc/webrtc_data_channel_gdnative.h"
+#include "webrtc/webrtc_peer_connection_gdnative.h"
 #endif
 
 extern "C" {

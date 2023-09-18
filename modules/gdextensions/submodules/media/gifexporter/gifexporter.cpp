@@ -34,46 +34,38 @@
 
 #include <vector>
 
-GifExporter::GifExporter() {
-}
-
-GifExporter::~GifExporter() {
-}
-
-void GifExporter::_bind_methods() {
-	ClassDB::bind_method("set_filename", &GifExporter::set_filename);
-	ClassDB::bind_method("begin_export", &GifExporter::begin_export);
-	ClassDB::bind_method("end_export", &GifExporter::end_export);
-	ClassDB::bind_method("write_frame", &GifExporter::write_frame);
-}
 void GifExporter::set_filename(const String file) {
 	filename = file;
 }
 
-void GifExporter::begin_export(const Size2 &size, float frame_delay, int loop_count, int32_t bit_depth, bool dither) {
-	// opens a new gif file
-	ganim.GifBegin(&gwriter, filename.utf8().get_data(), size.width, size.height, frame_delay, loop_count, bit_depth, dither);
+String GifExporter::get_filename() const {
+	return filename;
 }
 
-void GifExporter::end_export() {
-	// closes the gif file
-	ganim.GifEnd(&gwriter);
+Error GifExporter::begin_export(const Size2 &size, float frame_delay, int loop_count, int32_t bit_depth, bool dither) {
+	if (ganim.GifBegin(&gwriter, filename.utf8().c_str(), size.width, size.height, frame_delay, loop_count, bit_depth, dither)) { // opens a new gif file
+		return OK;
+	} else {
+		return ERR_INVALID_DATA;
+	}
 }
 
-uint8_t get_r8(const Color &c) {
+static _FORCE_INLINE_ uint8_t get_r8(const Color &c) {
 	return (uint8_t)(c.r * 255.0);
 }
-uint8_t get_g8(const Color &c) {
+static _FORCE_INLINE_ uint8_t get_g8(const Color &c) {
 	return (uint8_t)(c.g * 255.0);
 }
-uint8_t get_b8(const Color &c) {
+static _FORCE_INLINE_ uint8_t get_b8(const Color &c) {
 	return (uint8_t)(c.b * 255.0);
 }
-uint8_t get_a8(const Color &c) {
+static _FORCE_INLINE_ uint8_t get_a8(const Color &c) {
 	return (uint8_t)(c.a * 255.0);
 }
 
-void GifExporter::write_frame(const Ref<Image> frame, const Color &background_color, float frame_delay, int32_t bit_depth, bool dither) {
+Error GifExporter::write_frame(const Ref<Image> frame, const Color &background_color, float frame_delay, int32_t bit_depth, bool dither) {
+	ERR_FAIL_NULL_V(gwriter.f, ERR_INVALID_PARAMETER);
+
 	// get raw bytes from frame
 	PoolByteArray pool = frame->get_data();
 
@@ -91,5 +83,30 @@ void GifExporter::write_frame(const Ref<Image> frame, const Color &background_co
 		data[i + 1] = (green * alpha + get_g8(background_color) * 255 * (255 - alpha)) / data[i + 3];
 		data[i + 2] = (blue * alpha + get_b8(background_color) * 255 * (255 - alpha)) / data[i + 3];
 	}
-	ganim.GifWriteFrame(&gwriter, &data[0], frame->get_width(), frame->get_height(), frame_delay, bit_depth, dither);
+	if (ganim.GifWriteFrame(&gwriter, &data[0], frame->get_width(), frame->get_height(), frame_delay, bit_depth, dither)) {
+		return OK;
+	} else {
+		return ERR_INVALID_DATA;
+	}
+}
+
+void GifExporter::end_export() {
+	ganim.GifEnd(&gwriter); // closes the gif file
+}
+
+void GifExporter::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("set_filename", "filename"), &GifExporter::set_filename);
+	ClassDB::bind_method(D_METHOD("get_filename"), &GifExporter::get_filename);
+	ClassDB::bind_method(D_METHOD("begin_export", "size", "frame_delay", "loop_count", "bit_depth", "dither"), &GifExporter::begin_export, DEFVAL(0), DEFVAL(8), DEFVAL(false));
+	ClassDB::bind_method(D_METHOD("write_frame", "frame", "background_color", "frame_delay", "bit_depth", "dither"), &GifExporter::write_frame, DEFVAL(8), DEFVAL(false));
+	ClassDB::bind_method(D_METHOD("end_export"), &GifExporter::end_export);
+
+	ADD_PROPERTY(PropertyInfo(Variant::STRING, "filename"), "set_filename", "get_filename");
+}
+
+GifExporter::GifExporter() {
+}
+
+GifExporter::~GifExporter() {
+	end_export();
 }

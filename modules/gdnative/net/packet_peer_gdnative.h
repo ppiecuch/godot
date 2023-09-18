@@ -32,8 +32,8 @@
 #define PACKET_PEER_GDNATIVE_H
 
 #include "core/io/packet_peer.h"
-#include "modules/gdnative/gdnative.h"
-#include "modules/gdnative/include/net/godot_net.h"
+#include "gdnative/gdnative.h"
+#include "net/godot_net.h"
 
 class PacketPeerGDNative : public PacketPeer {
 	GDCLASS(PacketPeerGDNative, PacketPeer);

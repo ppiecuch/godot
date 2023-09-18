@@ -75,6 +75,8 @@ class ImportDock : public VBoxContainer {
 	void _reimport_and_restart();
 	void _reimport();
 
+	void _replace_resource_in_object(Object *p_object, const Ref<Resource> &old_resource, const Ref<Resource> &new_resource);
+
 	enum {
 		ITEM_SET_AS_DEFAULT = 100,
 		ITEM_LOAD_DEFAULT,

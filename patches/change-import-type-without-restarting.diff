@@ -12,17 +12,17 @@ index 2a7a675f2d0d4..3037f603c4f22 100644
 -				return; // don't save it
 +				return; // Don't save it.
  			}
- 
+
  			if (!res->is_built_in()) {
 @@ -1942,7 +1942,7 @@ void ResourceFormatSaverBinaryInstance::_find_resources(const Variant &p_variant
  		case Variant::OBJECT: {
  			Ref<Resource> res = p_variant;
- 
+
 -			if (res.is_null() || external_resources.has(res)) {
 +			if (res.is_null() || external_resources.has(res) || res->get_meta(SNAME("_skip_save_"), false)) {
  				return;
  			}
- 
+
 diff --git a/editor/import_dock.cpp b/editor/import_dock.cpp
 index 7b8b9cd7a48cd..936aa37783131 100644
 --- a/editor/import_dock.cpp
@@ -32,19 +32,19 @@ index 7b8b9cd7a48cd..936aa37783131 100644
  #include "editor/editor_scale.h"
  #include "editor/editor_settings.h"
 +#include "editor/editor_undo_redo_manager.h"
- 
+
  class ImportDockParameters : public Object {
  	GDCLASS(ImportDockParameters, Object);
 @@ -459,7 +460,6 @@ static bool _find_owners(EditorFileSystemDirectory *efsd, const String &p_path)
  }
- 
+
  void ImportDock::_reimport_attempt() {
 -	bool need_restart = false;
  	bool used_in_resources = false;
- 
+
  	String importer_name;
 @@ -476,14 +476,15 @@ void ImportDock::_reimport_attempt() {
- 
+
  		String imported_with = config->get_value("remap", "importer");
  		if (imported_with != importer_name) {
 -			need_restart = true;
@@ -54,7 +54,7 @@ index 7b8b9cd7a48cd..936aa37783131 100644
  			}
  		}
  	}
- 
+
 -	if (need_restart) {
 +	if (!need_cleanup.is_empty() || used_in_resources) {
 +		cleanup_warning->set_visible(!need_cleanup.is_empty());
@@ -64,7 +64,7 @@ index 7b8b9cd7a48cd..936aa37783131 100644
 @@ -492,11 +493,42 @@ void ImportDock::_reimport_attempt() {
  	_reimport();
  }
- 
+
 -void ImportDock::_reimport_and_restart() {
 -	EditorNode::get_singleton()->save_all_scenes();
 -	EditorResourcePreview::get_singleton()->stop(); //don't try to re-create previews after import
@@ -106,12 +106,12 @@ index 7b8b9cd7a48cd..936aa37783131 100644
 +	}
 +	need_cleanup.clear();
  }
- 
+
  void ImportDock::_advanced_options() {
 @@ -561,6 +593,37 @@ void ImportDock::_reimport() {
  	_set_dirty(false);
  }
- 
+
 +void ImportDock::_replace_resource_in_object(Object *p_object, const Ref<Resource> &old_resource, const Ref<Resource> &new_resource) {
 +	ERR_FAIL_NULL(p_object);
 +
@@ -148,13 +148,13 @@ index 7b8b9cd7a48cd..936aa37783131 100644
  		case EditorSettings::NOTIFICATION_EDITOR_SETTINGS_CHANGED: {
 @@ -673,13 +736,13 @@ ImportDock::ImportDock() {
  	advanced->connect("pressed", callable_mp(this, &ImportDock::_advanced_options));
- 
+
  	reimport_confirm = memnew(ConfirmationDialog);
 -	reimport_confirm->set_ok_button_text(TTR("Save Scenes, Re-Import, and Restart"));
  	content->add_child(reimport_confirm);
 -	reimport_confirm->connect("confirmed", callable_mp(this, &ImportDock::_reimport_and_restart));
 +	reimport_confirm->connect("confirmed", callable_mp(this, &ImportDock::_reimport_and_cleanup));
- 
+
  	VBoxContainer *vbc_confirm = memnew(VBoxContainer());
 -	vbc_confirm->add_child(memnew(Label(TTR("Changing the type of an imported file requires editor restart."))));
 -	label_warning = memnew(Label(TTR("WARNING: Assets exist that use this resource, they may stop loading properly.")));
@@ -163,20 +163,20 @@ index 7b8b9cd7a48cd..936aa37783131 100644
 +	label_warning = memnew(Label(TTR("WARNING: Assets exist that use this resource. They may stop loading properly after changing type.")));
  	vbc_confirm->add_child(label_warning);
  	reimport_confirm->add_child(vbc_confirm);
- 
+
 diff --git a/editor/import_dock.h b/editor/import_dock.h
 index f627cd965d15f..07c54f8beba7e 100644
 --- a/editor/import_dock.h
 +++ b/editor/import_dock.h
 @@ -54,8 +54,10 @@ class ImportDock : public VBoxContainer {
  	HashMap<StringName, Variant> property_values;
- 
+
  	ConfirmationDialog *reimport_confirm = nullptr;
 +	Label *cleanup_warning = nullptr;
  	Label *label_warning = nullptr;
  	Button *import = nullptr;
 +	List<String> need_cleanup;
- 
+
  	Control *advanced_spacer = nullptr;
  	Button *advanced = nullptr;
 @@ -75,9 +77,11 @@ class ImportDock : public VBoxContainer {
@@ -186,7 +186,7 @@ index f627cd965d15f..07c54f8beba7e 100644
 -	void _reimport_and_restart();
 +	void _reimport_and_cleanup();
  	void _reimport();
- 
+
 +	void _replace_resource_in_object(Object *p_object, const Ref<Resource> &old_resource, const Ref<Resource> &new_resource);
 +
  	void _advanced_options();
@@ -198,7 +198,7 @@ index 7719cc28d2784..dc0240859e15e 100644
 +++ b/scene/resources/resource_format_text.cpp
 @@ -1828,6 +1828,10 @@ String ResourceFormatSaverTextInstance::_write_resources(void *ud, const Ref<Res
  }
- 
+
  String ResourceFormatSaverTextInstance::_write_resource(const Ref<Resource> &res) {
 +	if (res->get_meta(SNAME("_skip_save_"), false)) {
 +		return "null";
@@ -210,9 +210,9 @@ index 7719cc28d2784..dc0240859e15e 100644
 @@ -1852,7 +1856,7 @@ void ResourceFormatSaverTextInstance::_find_resources(const Variant &p_variant,
  		case Variant::OBJECT: {
  			Ref<Resource> res = p_variant;
- 
+
 -			if (res.is_null() || external_resources.has(res)) {
 +			if (res.is_null() || external_resources.has(res) || res->get_meta(SNAME("_skip_save_"), false)) {
  				return;
  			}
- 
+

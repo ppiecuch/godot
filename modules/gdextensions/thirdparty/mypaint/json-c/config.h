@@ -27,14 +27,15 @@
    */
 #define HAVE_DECL__ISNAN 0
 
-/* Define to 1 if you have the <dlfcn.h> header file. */
-#define HAVE_DLFCN_H 1
-
 /* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
 /* #undef HAVE_DOPRNT */
 
 /* Define to 1 if you have the <endian.h> header file. */
-#define HAVE_ENDIAN_H 1
+#ifdef __APPLE__
+#define HAVE_ENDIAN_H <machine/endian.h>
+#else
+#define HAVE_ENDIAN_H <endian.h>
+#endif
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #define HAVE_FCNTL_H 1
@@ -124,9 +125,6 @@
 
 /* Define to 1 if you have the `vsyslog' function. */
 #define HAVE_VSYSLOG 1
-
-/* Public define for json_inttypes.h */
-#define JSON_C_HAVE_INTTYPES_H 1
 
 /* Name of package */
 #define PACKAGE "json-c"

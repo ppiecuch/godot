@@ -567,7 +567,7 @@ int main(int argc, const char *argv[]) {
 	std::regex define_expression("^#ifdef\\s+([a-zA-Z_][a-zA-Z0-9_]+).*$");
 
 	std::smatch matches;
-	int line_count = 0;
+	int line_count = 1;
 	for (std::string line; safe_get_line(infile, line);) {
 		if (std::regex_match(line, matches, include_expression)) {
 			if (matches.size() == 2) {
@@ -575,7 +575,7 @@ int main(int argc, const char *argv[]) {
 				if (processed_files.count(include_file) == 0) {
 					processed_files[include_file] = read_all(include_file);
 				}
-				src += "#line 1 \"" + include_file + "\"\n";
+				src += "#line " + std::to_string(line_count) + " \"" + include_file + "\"\n";
 				line_count++;
 				for (const auto &ln : processed_files[include_file]) {
 					src += ln + "\n";
@@ -583,7 +583,7 @@ int main(int argc, const char *argv[]) {
 					shader_lines.push_back(ln + "\n");
 				}
 				line_count++;
-				src += "#line 1 \"" + input_file + "\"\n";
+				src += "#line " + std::to_string(line_count) + " \"" + input_file + "\"\n";
 				continue;
 			}
 		} else if (std::regex_match(line, matches, define_expression)) {
@@ -598,22 +598,25 @@ int main(int argc, const char *argv[]) {
 	if (!device) {
 		NSArray<id<MTLDevice>> *devices = MTLCopyAllDevices();
 		if (devices) {
-			NSLog(@"   |                                |           | C           C|");
-			NSLog(@"   |                                |           | o    A      a|");
-			NSLog(@"   |                                |           | m    p      t|");
-			NSLog(@"Nr | Name                           | Low power | m    p    M a|");
-			NSLog(@"   |                                |           | o    l    a l|");
-			NSLog(@"   |                                |           | n    e    c s|");
-			NSLog(@"   |                                |           |12312345671212|");
-			NSLog(@"---+--------------------------------+-----------+--------------+");
+			NSLog(@"   |                                | L R H U   | C            C |");
+			NSLog(@"   |                                | o e e n   | o    A       aM|");
+			NSLog(@"   |                                | w m a i   | m    p       te|");
+			NSLog(@"Nr | Name                           |   o d     | m    p     M at|");
+			NSLog(@"   |                                | p v l m   | o    l     a la|");
+			NSLog(@"   |                                | w a e e   | n    e     c sl|");
+			NSLog(@"   |                                | r b s m   |1231234567812123|");
+			NSLog(@"---+--------------------------------+-----------+----------------+");
 			for (int i = 0; i < devices.count; ++i) {
 				if (devices[i]) {
-					const int FamilyCapsEnums = 14;
-					char family_str[FamilyCapsEnums + 1] = "______________";
+					const int FamilyCapsEnums = 16;
+					char family_str[FamilyCapsEnums + 1] = "________________";
 					if (@available(macOS 10.15, *)) {
-						static MTLGPUFamily family[FamilyCapsEnums] = { MTLGPUFamilyCommon1, MTLGPUFamilyCommon2, MTLGPUFamilyCommon3, MTLGPUFamilyApple1, MTLGPUFamilyApple2, MTLGPUFamilyApple3, MTLGPUFamilyApple4, MTLGPUFamilyApple5, MTLGPUFamilyApple6, MTLGPUFamilyApple7, MTLGPUFamilyMac1, MTLGPUFamilyMac2, MTLGPUFamilyMacCatalyst1, MTLGPUFamilyMacCatalyst2 };
+						static MTLGPUFamily family[FamilyCapsEnums] = { MTLGPUFamilyCommon1, MTLGPUFamilyCommon2, MTLGPUFamilyCommon3, MTLGPUFamilyApple1, MTLGPUFamilyApple2, MTLGPUFamilyApple3, MTLGPUFamilyApple4, MTLGPUFamilyApple5, MTLGPUFamilyApple6, MTLGPUFamilyApple7, MTLGPUFamilyApple8, MTLGPUFamilyMac1, MTLGPUFamilyMac2, MTLGPUFamilyMacCatalyst1, MTLGPUFamilyMacCatalyst2, MTLGPUFamily(0) };
+						if (@available(macOS 13.0, *)) {
+							family[FamilyCapsEnums - 1] = MTLGPUFamilyMetal3;
+						}
 						for (int f = 0; f < FamilyCapsEnums; ++f) {
-							if (family[f] == -1) {
+							if (family[f] == 0) {
 								family_str[f] = '?';
 							} else if ([devices[i] supportsFamily:family[f]]) {
 								family_str[f] = '.';
@@ -622,10 +625,24 @@ int main(int argc, const char *argv[]) {
 							}
 						}
 					}
-					if (!device || !devices[i].lowPower) {
-						device = devices[i];
+					char _device_unified_memory[2] = "?";
+#if __MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_15
+					if (@available(macOS 10.15, ios 11, *)) {
+						*_device_unified_memory = [devices[i] hasUnifiedMemory] ? '+' : '-';
 					}
-					NSLog(@"%2d | %30s |       %3s |%s|", i, [devices[i].name UTF8String], devices[i].lowPower ? "yes" : "no", family_str);
+#endif
+					char _device_is_removable[2] = "?";
+					if (@available(macOS 10.13, *)) {
+						*_device_is_removable = [devices[i] isRemovable] ? '+' : '-';
+					}
+					NSLog(@"%2d | %30s |       %3s | %s %s %s %s |",
+							i,
+							[devices[i].name UTF8String],
+							devices[i].lowPower ? "+" : "-",
+							_device_is_removable,
+							devices[i].isHeadless ? "+" : "-",
+							_device_unified_memory,
+							family_str);
 				}
 			}
 		}
