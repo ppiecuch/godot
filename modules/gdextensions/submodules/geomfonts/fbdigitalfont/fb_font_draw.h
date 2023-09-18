@@ -132,7 +132,8 @@ void path_lcd_symbol(
 		FBFontSymbolType symbol,
 		int edge_length,
 		int line_width,
-		Point2 start_point);
+		Point2 start_point,
+		bool rev = false);
 
 void draw_lcd_symbol(
 		const RID &canvas_item,

@@ -58,6 +58,410 @@ void path_square_symbol(
 			seg.push_back(seg[0]); // close
 			path.push_back(seg);
 		} break;
+		case FBFontSymbol1: {
+			Vector<Point2> seg;
+			seg.push_back(start_point + Vector2(horizontal_edge_length, 0));
+			seg.push_back(start_point + Vector2(horizontal_edge_length, vertical_edge_length * 2));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbol2: {
+			Vector<Point2> seg;
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, vertical_edge_length));
+			seg.push_back(start_point + Vector2(0, vertical_edge_length));
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbol3: {
+			Vector<Point2> seg;
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			path.push_back(seg);
+
+			seg.clear();
+			seg.push_back(start_point + Vector2(0, vertical_edge_length));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, vertical_edge_length));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbol4: {
+			Vector<Point2> seg;
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(0, vertical_edge_length));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, vertical_edge_length));
+			path.push_back(seg);
+
+			seg.clear();
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbol5: {
+			Vector<Point2> seg;
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(0, vertical_edge_length));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, vertical_edge_length));
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbol6: {
+			Vector<Point2> seg;
+			seg.push_back(start_point + Vector2(0, vertical_edge_length));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, vertical_edge_length));
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbol7: {
+			Vector<Point2> seg;
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbol8: {
+			Vector<Point2> seg;
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			seg.push_back(seg[0]);
+			path.push_back(seg);
+
+			seg.clear();
+			seg.push_back(start_point + Vector2(0, vertical_edge_length));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, vertical_edge_length));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbol9: {
+			Vector<Point2> seg;
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, vertical_edge_length));
+			seg.push_back(start_point + Vector2(0, vertical_edge_length));
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbolA: {
+			Vector<Point2> seg;
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			path.push_back(seg);
+
+			seg.clear();
+			seg.push_back(start_point + Vector2(0, vertical_edge_length));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, vertical_edge_length));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbolB: {
+			Vector<Point2> seg;
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			seg.push_back(seg[0]);
+			path.push_back(seg);
+
+			seg.clear();
+			seg.push_back(start_point + Vector2(0, vertical_edge_length));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, vertical_edge_length));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbolC: {
+			Vector<Point2> seg;
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbolD: {
+			Vector<Point2> seg;
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 3 / 2, vertical_edge_length * 2));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, vertical_edge_length));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 3 / 2, 0));
+			seg.push_back(seg[0]);
+			path.push_back(seg);
+		} break;
+		case FBFontSymbolE: {
+			Vector<Point2> seg;
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			path.push_back(seg);
+
+			seg.clear();
+			seg.push_back(start_point + Vector2(0, vertical_edge_length));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, vertical_edge_length));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbolF: {
+			Vector<Point2> seg;
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			path.push_back(seg);
+
+			seg.clear();
+			seg.push_back(start_point + Vector2(0, vertical_edge_length));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, vertical_edge_length));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbolG: {
+			Vector<Point2> seg;
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, vertical_edge_length));
+			seg.push_back(start_point + Vector2(horizontal_edge_length, vertical_edge_length));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbolH: {
+			Vector<Point2> seg;
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			path.push_back(seg);
+
+			seg.clear();
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			path.push_back(seg);
+
+			seg.clear();
+			seg.push_back(start_point + Vector2(0, vertical_edge_length));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, vertical_edge_length));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbolI: {
+			Vector<Point2> seg;
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			path.push_back(seg);
+
+			seg.clear();
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			path.push_back(seg);
+
+			seg.clear();
+			seg.push_back(start_point + Vector2(horizontal_edge_length, 0));
+			seg.push_back(start_point + Vector2(horizontal_edge_length, vertical_edge_length * 2));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbolJ: {
+			Vector<Point2> seg;
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			path.push_back(seg);
+
+			seg.clear();
+			//Vector<Point2> seg;
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 3 / 2, 0));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 3 / 2, vertical_edge_length * 2));
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbolK: {
+			/*Vector<Point2> seg;
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			path.push_back(seg);*/
+
+			Vector<Point2> seg;
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			seg.push_back(start_point + Vector2(0, vertical_edge_length));
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			path.push_back(seg);
+
+			seg.clear();
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			seg.push_back(start_point + Vector2(0, vertical_edge_length));
+			seg.push_back(start_point);
+			path.push_back(seg);
+		} break;
+		case FBFontSymbolL: {
+			Vector<Point2> seg;
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbolM: {
+			Vector<Point2> seg;
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			path.push_back(seg);
+
+			seg.clear();
+			seg.push_back(start_point + Vector2(horizontal_edge_length, 0));
+			seg.push_back(start_point + Vector2(horizontal_edge_length, vertical_edge_length * 2));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbolN: {
+			Vector<Point2> seg;
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			seg.push_back(start_point);
+
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+
+			/*seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));*/
+			path.push_back(seg);
+		} break;
+		case FBFontSymbolO: {
+			Vector<Point2> seg;
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			seg.push_back(seg[0]);
+			path.push_back(seg);
+		} break;
+		case FBFontSymbolP: {
+			Vector<Point2> seg;
+			seg.push_back(start_point + Vector2(0, vertical_edge_length));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, vertical_edge_length));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			seg.push_back(seg[0]);
+			path.push_back(seg);
+		} break;
+		case FBFontSymbolQ: {
+			Vector<Point2> seg;
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			seg.push_back(seg[0]);
+			path.push_back(seg);
+
+			seg.clear();
+			seg.push_back(start_point + Vector2(horizontal_edge_length, vertical_edge_length));
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbolR: {
+			Vector<Point2> seg;
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, vertical_edge_length));
+			seg.push_back(start_point + Vector2(0, vertical_edge_length));
+			seg.push_back(start_point + Vector2(horizontal_edge_length, vertical_edge_length));
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			path.push_back(seg);
+			/*Vector<Point2> seg;
+			seg.push_back(start_point + Vector2(0, vertical_edge_length));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, vertical_edge_length));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			path.push_back(seg);
+
+			seg.clear();
+			seg.push_back(start_point + Vector2(horizontal_edge_length, vertical_edge_length));
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			path.push_back(seg);*/
+		} break;
+		case FBFontSymbolS: {
+			Vector<Point2> seg;
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(0, vertical_edge_length));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, vertical_edge_length));
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbolT: {
+			Vector<Point2> seg;
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			path.push_back(seg);
+
+			seg.clear();
+			seg.push_back(start_point + Vector2(horizontal_edge_length, 0));
+			seg.push_back(start_point + Vector2(horizontal_edge_length, vertical_edge_length * 2));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbolU: {
+			Vector<Point2> seg;
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbolV: {
+			Vector<Point2> seg;
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(horizontal_edge_length, vertical_edge_length * 2));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbolW: {
+			Vector<Point2> seg;
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			path.push_back(seg);
+
+			seg.clear();
+			seg.push_back(start_point + Vector2(horizontal_edge_length, 0));
+			seg.push_back(start_point + Vector2(horizontal_edge_length, vertical_edge_length * 2));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbolX: {
+			Vector<Point2> seg;
+			seg.push_back(start_point);
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			path.push_back(seg);
+
+			seg.clear();
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbolY: {
+			Vector<Point2> seg;
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(horizontal_edge_length, vertical_edge_length));
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			path.push_back(seg);
+
+			seg.clear();
+			seg.push_back(start_point + Vector2(horizontal_edge_length, vertical_edge_length));
+			seg.push_back(start_point + Vector2(horizontal_edge_length, vertical_edge_length * 2));
+			path.push_back(seg);
+		} break;
+		case FBFontSymbolZ: {
+			Vector<Point2> seg;
+			seg.push_back(start_point);
+			seg.push_back(start_point + Vector2(horizontal_edge_length * 2, 0));
+			seg.push_back(start_point + Vector2(0, vertical_edge_length * 2));
+			seg.push_back(start_point + 2 * Vector2(horizontal_edge_length, vertical_edge_length));
+			path.push_back(seg);
+		}
 		default: {
 			// Unsupported character
 		} break;

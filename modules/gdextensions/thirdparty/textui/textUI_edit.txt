@@ -14,8 +14,8 @@
 ;
 ; Following is the format for a help window:
 ;
-; ÚÄÄ (1st column of each line)
-; 
+; (1st column of each line)
+;
 ; ; anything with a semicolon in the 1st column is a comment
 ; <helptag>                 (names the help window)
 ; [<<]<helptag>             (names the previous window in chain)
@@ -166,7 +166,7 @@ scroll the document.
 [<<]<scrollbar>
 [>>]<minbox>
 Control Box
-The Control Box is indicated by the character (ð) at
+The Control Box is indicated by the character (*) at
 the left end of the window's [..Title Bar]<titlebar>. You can
 click it to select the System Menu or double click
 it to close the window.
@@ -176,7 +176,7 @@ it to close the window.
 [<<]<controlbox>
 [>>]<maxbox>
 Minimize Box
-The Minimize Box is the  token at the right 
+The Minimize Box is the _ token at the right
 end of the window's [..Title Bar]<titlebar>.
 
 When you click on the Minimize Box, the window
@@ -188,7 +188,7 @@ is reduced to an icon at the bottom of the
 [<<]<minbox>
 [>>]<restorebox>
 Maximize Box
-The Maximize Box is the  token at the right 
+The Maximize Box is the ^ token at the right
 end of the window's [..Title Bar]<titlebar>.
 
 When you click on the Maximize Box, the window
@@ -200,8 +200,8 @@ grows to occupy the entire [..Client Area]<client> of the
 [<<]<maxbox>
 [>>]<sizebox>
 Restore Box
-The Restore Box is the  token character at the right
-end of a minimized window's [..Title Bar]<titlebar> and the  token
+The Restore Box is the | token character at the right
+end of a minimized window's [..Title Bar]<titlebar> and the | token
 character at the right end of a maximized window's
 Title Bar. You click the Restore Box to restore the
 window to the position and size it had before it was
@@ -727,7 +727,7 @@ The [..Window]<Window> menu displays a list of open document
 windows. You can select one of them as the current
 active window by selecting its title on the Window
 menu. When the menu first displays, the active
-window has a check mark (û) next to it.
+window has a check mark (ï¿½) next to it.
 <ID_MOREWINDOWS>
 [<<]<ID_WINDOW>
 More Windows
@@ -1324,7 +1324,7 @@ procedures:
 Option Buttons
 Option buttons are in groups of 2 or
 more. One option button in a group
-is on () and the others are off ( ).
+is on ( ) and the others are off ( ).
 Select the option button with one of
 these procedures:
 
@@ -1375,11 +1375,11 @@ The File Open Dialog Box
 
 Opens an existing file or creates a new named file.
 
-   You can use the Files and Directories boxes to select the
+    You can use the Files and Directories boxes to select the
     path name for the file.  Or you can type the path name in
     the File Name box.
 
-   If the file doesn't exist, a new empty file is created with
+    If the file doesn't exist, a new empty file is created with
     the specified path name.
 
 ; -----------------------------------------
@@ -1388,15 +1388,15 @@ The Save As Dialog Box
 
 Saves and names the file you are working on.
 
-   Use this to name a new unnamed file, or to rename an existing
+    Use this to name a new unnamed file, or to rename an existing
     file.  Use the File Save command to save an existing file
     without renaming it.
 
-   Enter the new path name in the File Name box.  Or you can use
+    Enter the new path name in the File Name box.  Or you can use
     the Directories and Existing Files boxes to help you select a
     different filename, directory or drive.
 
-   If there's already an existing file with the same name, then
+    If there's already an existing file with the same name, then
     Edit asks you if you're sure you want to replace it with this
     file.
 
@@ -1406,10 +1406,10 @@ The Print Setup Dialog Box
 
 Prints the selected file you are working on.
 
-   To print only part of the file, select the text you want to
+    To print only part of the file, select the text you want to
     print.  In the Print dialog box, click Selected Text Only.
 
-   To print the whole file, click Complete Document.
+    To print the whole file, click Complete Document.
 
 ; -----------------------------------------
 <SearchTextDB>
@@ -1417,13 +1417,13 @@ The Search Text Dialog Box
 
 Finds text in a file.
 
-   To find text that is an entire word and not part of a longer
+    To find text that is an entire word and not part of a longer
     word, click Match Whole Word Only.
 
-   To find text with the same combination of uppercase and
+    To find text with the same combination of uppercase and
     lowercase letters as the find text, click Match Case.
 
-   You can press ESC at any time to cancel the search.
+    You can press ESC at any time to cancel the search.
 
 ; -----------------------------------------
 <ReplaceTextDB>
@@ -1431,15 +1431,15 @@ The Replace Text Dialog Box
 
 Finds specified text and replaces it with new text.
 
-   To confirm each replacement, click the Replace button.
+    To confirm each replacement, click the Replace button.
 
-   To replace all occurrences of the text at once, click the
+    To replace all occurrences of the text at once, click the
     Replace All button.
 
-   To find text that is an entire word and not part of a longer
+    To find text that is an entire word and not part of a longer
     word, click Match Whole Word Only.
 
-   To find text with the same combination of uppercase and
+    To find text with the same combination of uppercase and
     lowercase letters as the find text, click Match Case.
 
 The first occurrence of the text is selected, and you are
@@ -1571,7 +1571,7 @@ command.
 A toggle command is one that is
 either on or off. When it is on,
 its command on the menu is preceded
-by a check mark (û).
+by a check mark (ï¿½).
 <ID_CALENDAR>
 Calendar
 This command displays a calendar to demonstrate

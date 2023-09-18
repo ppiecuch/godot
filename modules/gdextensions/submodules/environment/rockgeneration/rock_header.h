@@ -1,3 +1,33 @@
+/**************************************************************************/
+/*  rock_header.h                                                         */
+/**************************************************************************/
+/*                         This file is part of:                          */
+/*                             GODOT ENGINE                               */
+/*                        https://godotengine.org                         */
+/**************************************************************************/
+/* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
+/* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
+/*                                                                        */
+/* Permission is hereby granted, free of charge, to any person obtaining  */
+/* a copy of this software and associated documentation files (the        */
+/* "Software"), to deal in the Software without restriction, including    */
+/* without limitation the rights to use, copy, modify, merge, publish,    */
+/* distribute, sublicense, and/or sell copies of the Software, and to     */
+/* permit persons to whom the Software is furnished to do so, subject to  */
+/* the following conditions:                                              */
+/*                                                                        */
+/* The above copyright notice and this permission notice shall be         */
+/* included in all copies or substantial portions of the Software.        */
+/*                                                                        */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. */
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY   */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,   */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE      */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
+/**************************************************************************/
+
 #ifndef ROCK_HEADER_H
 #define ROCK_HEADER_H
 
@@ -182,11 +212,11 @@ const auto MakeIcosphere = [](int subdivisions) {
 };
 
 const auto CalculateTangent = [](const Vector3 &P1, const Vector3 &P2, const Vector3 &P3, const Vector2 &UV1, const Vector2 &UV2, const Vector2 &UV3) {
-	const Vector3 v2v1 = P2 - P1;
-	const Vector3 v3v1 = P3 - P1;
+	const auto v2v1 = P2 - P1;
+	const auto v3v1 = P3 - P1;
 
-	const Vector3 normal = vec3_cross(v2v1, v3v1).normalized();
-	const Vector3 tangent = vec3_cross(normal, Vector3(0, 1, 0)).normalized();
+	const auto normal = vec3_cross(v2v1, v3v1).normalized();
+	const auto tangent = vec3_cross(normal, Vector3(0, 1, 0)).normalized();
 
 	return tangent;
 };
@@ -325,8 +355,8 @@ const auto CheckUVForDistance = [](std::vector<VertexRock *> points) {
 };
 
 const auto SameSide = [](const Vector3 p1, const Vector3 p2, const Vector3 A, const Vector3 B) {
-	const Vector3 cp1 = vec3_cross((A - B), (A - p1));
-	const Vector3 cp2 = vec3_cross((A - B), (A - p1));
+	const auto cp1 = vec3_cross((A - B), (A - p1));
+	const auto cp2 = vec3_cross((A - B), (A - p1));
 	const real_t dot = vec3_dot(cp1, cp2);
 	if (dot >= 0)
 		return true;
@@ -334,13 +364,13 @@ const auto SameSide = [](const Vector3 p1, const Vector3 p2, const Vector3 A, co
 };
 
 const auto PointInTriangle = [](const Vector3 TriangleVectors[3], const Vector3 &P) {
-	const Vector3 A = TriangleVectors[0], B = TriangleVectors[1], C = TriangleVectors[2];
-	const Vector3 vecA = A;
-	const Vector3 vecB = B;
-	const Vector3 vecC = A;
-	const Vector3 vecP = B;
+	const auto A = TriangleVectors[0], B = TriangleVectors[1], C = TriangleVectors[2];
+	const auto vecA = A;
+	const auto vecB = B;
+	const auto vecC = A;
+	const auto vecP = B;
 	if (SameSide(P, A, B, C) && SameSide(P, B, A, C) && SameSide(P, C, A, B)) {
-		const Vector3 vc1 = vec3_cross(vecB - vecA, vecC - vecA);
+		const auto vc1 = vec3_cross(vecB - vecA, vecC - vecA);
 		const real_t dot = vec3_dot((vecP - vecA), vc1);
 		if (Math::abs(dot) <= .01) {
 			return true;

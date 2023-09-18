@@ -174,8 +174,8 @@ void FBSquareFontView::set_text(const String &p_text) {
 }
 
 void FBSquareFontView::draw(const Point2 &p_pos) {
-	const real_t x = horizontal_padding;
-	const real_t y = vertical_padding;
+	const real_t x = p_pos.x + horizontal_padding;
+	const real_t y = p_pos.y + vertical_padding;
 	const real_t l = (horizontal_edge_length * 2) + margin;
 
 	Vector<Vector<Point2>> path;
@@ -183,7 +183,7 @@ void FBSquareFontView::draw(const Point2 &p_pos) {
 		path_square_symbol(path, symbols[i], horizontal_edge_length, vertical_edge_length, { x + i * l, y });
 	}
 	if (path.size()) {
-		const Vector<Color> color = helper::vector(line_color);
+		const Vector<Color> color = make_vector(line_color);
 		for (const auto &seg : path) {
 			VisualServer::get_singleton()->canvas_item_add_polyline(canvas_item, seg, color, line_width, true, VisualServer::LineDrawMode(line_join), VisualServer::LineDrawMode(line_cap));
 		}
@@ -194,8 +194,8 @@ void FBSquareFontView::draw(const Point2 &p_pos) {
 
 FBLCDFontView::FBLCDFontView(const RID &canvas_item) :
 		canvas_item(canvas_item) {
+	draw_off_segments = true;
 	horizontal_padding = 5;
-	draw_off_line = false;
 	vertical_padding = 5;
 	edge_length = 10;
 	line_width = 2;
@@ -220,19 +220,26 @@ void FBLCDFontView::set_text(const String &p_text) {
 }
 
 void FBLCDFontView::draw(const Point2 &p_pos) {
-	const real_t x = horizontal_padding;
-	const real_t y = vertical_padding;
+	const real_t x = p_pos.x + horizontal_padding;
+	const real_t y = p_pos.y + vertical_padding;
 	const real_t l = edge_length + margin;
 
-	Vector<Vector<Point2>> path;
-	if (draw_off_line) {
-		for (int i = 0; i < symbols.size(); i++) {
-			path_lcd_symbol(path, symbols[i], edge_length, line_width, { x + i * l, y });
+	Vector<Vector<Point2>> path, path_off;
+	for (int i = 0; i < symbols.size(); i++) {
+		path_lcd_symbol(path, symbols[i], edge_length, line_width, { x + i * l, y });
+		if (draw_off_segments) {
+			path_lcd_symbol(path_off, symbols[i], edge_length, line_width, { x + i * l, y }, true);
 		}
 	}
 	if (path.size()) {
-		const Vector<Color> color = helper::vector(line_color);
+		const Vector<Color> color = make_vector(line_color);
 		for (const auto &seg : path) {
+			VisualServer::get_singleton()->canvas_item_add_polygon(canvas_item, seg, color);
+		}
+	}
+	if (path_off.size()) {
+		const Vector<Color> color = make_vector(off_color);
+		for (const auto &seg : path_off) {
 			VisualServer::get_singleton()->canvas_item_add_polygon(canvas_item, seg, color);
 		}
 	}

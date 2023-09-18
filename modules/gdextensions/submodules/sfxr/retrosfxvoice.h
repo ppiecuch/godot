@@ -51,7 +51,7 @@
 
 typedef struct _FXParams103 {
 	int Overtones; // harmonics: overlays copies of the waveform with copies and multiples of its frequency. Good for bulking
-	                // out or otherwise enriching the texture of the sounds (warning: this is the number 1 cause of sfxr slowdown!) (0 to 1)
+				   // out or otherwise enriching the texture of the sounds (warning: this is the number 1 cause of sfxr slowdown!) (0 to 1)
 	float OvertoneRamp; // Harmonics falloff: the rate at which higher overtones should decay (0 to 1)
 
 	float BaseFreq; // base note of the sound (0 to 1)
