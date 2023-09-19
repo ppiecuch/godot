@@ -290,15 +290,9 @@ thirdparty_sources = [
     "thirdparty/misc/miniz_zip.c",
 ]
 
-print(create_v_template("vnativemodule", "v_simple_class.v"))
-
 if env["tools"]:
     if is_enabled("editor"):
-        thirdparty_sources += [
-            "thirdparty/mypaint/libmypaint.c",
-            "thirdparty/mypaint/json-c/libjson-c.c",
-            "thirdparty/gc-8.2.2/extra/gc.c",
-        ]
+        thirdparty_sources += ["thirdparty/mypaint/libmypaint.c", "thirdparty/mypaint/json-c/libjson-c.c"]
         env_module.Append(CPPPATH=["thirdparty/gc-8.2.2/include"])
         modules += ["editor"]
     if is_enabled("qrcodetexture"):
@@ -731,12 +725,22 @@ if is_enabled("tileengine"):
     if env["builtin_libpng"]:
         env_module.Append(CPPPATH=["#thirdparty/libpng/"])
 
+if "V_SDK" in os.environ:
+    modules += ["vhelloworld"]
+
 active_modules = []
+v_enabled = False
 for m in modules:
+    if os.path.exists("submodules/%s/%s.v" % (m, m)):
+        create_v_template(m, "%s.v" % m)
     if is_enabled(m):
         files = Glob("submodules/%s/*.cpp" % m) + Glob("submodules/%s/*.c" % m)
         sources += [f for f in files if str(f) not in ignore]
         active_modules.append(m)
+
+if v_enabled:
+    thirdparty_sources += ["thirdparty/vnative/gc-8.2.2/extra/gc.c"]
+    env_module.Append(CPPPATH=["thirdparty/vnative/", "thirdparty/vnative/gc-8.2.2"])
 
 if env.msvc:
     incbin_code = finalize_for_incbin(sources)
