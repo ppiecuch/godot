@@ -38,7 +38,7 @@ Mutex VisualServerCanvasHelper::_tilemap_mutex;
 
 bool VisualServerCanvasHelper::_multirect_enabled = true;
 
-void MultiRect::add_rect(RID p_canvas_item, const Rect2 &p_rect, RID p_texture, const Rect2 &p_src_rect, const Color &p_modulate, bool p_transpose, RID p_normal_map, bool p_clip_uv) {
+void MultiRect::add_rect(RID p_canvas_item, const Rect2 &p_rect, RID p_texture, const Rect2 &p_src_rect, const Color &p_modulate, bool p_transpose, RID p_normal_map, RID mask, bool p_clip_uv) {
 	bool new_common_data = true;
 
 	Rect2 rect = p_rect;
@@ -80,6 +80,7 @@ void MultiRect::add_rect(RID p_canvas_item, const Rect2 &p_rect, RID p_texture, 
 	s.texture = p_texture;
 	s.modulate = p_modulate;
 	s.normal_map = p_normal_map;
+	s.mask = p_mask;
 	s.flags = flags;
 
 	if (!is_empty()) {

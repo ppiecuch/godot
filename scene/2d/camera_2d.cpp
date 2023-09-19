@@ -497,13 +497,10 @@ void Camera2D::_set_current(bool p_current) {
 			clear_current();
 		}
 	}
-<<<<<<< HEAD
-=======
 
 	current = p_current;
 	_update_process_mode();
 	update();
->>>>>>> db8700e8f80615c3161afa31606e9a5286e65916
 }
 
 bool Camera2D::is_current() const {

@@ -305,12 +305,8 @@ unsigned long mbedtls_timing_get_timer(struct mbedtls_timing_hr_time *val, int r
     }
 }
 
-<<<<<<< HEAD
 #ifdef HAVE_ALARM
-static void sighandler( int signum )
-=======
 static void sighandler(int signum)
->>>>>>> db8700e8f80615c3161afa31606e9a5286e65916
 {
     mbedtls_timing_alarmed = 1;
     signal(signum, sighandler);
@@ -428,15 +424,10 @@ int mbedtls_timing_self_test(int verbose)
         mbedtls_printf("  TIMING tests note: will take some time!\n");
     }
 
-<<<<<<< HEAD
-    if( verbose != 0 )
-        mbedtls_printf( "  TIMING test #1 (set_alarm / get_timer): " );
-#ifdef HAVE_ALARM
-=======
     if (verbose != 0) {
         mbedtls_printf("  TIMING test #1 (set_alarm / get_timer): ");
+#ifdef HAVE_ALARM
     }
->>>>>>> db8700e8f80615c3161afa31606e9a5286e65916
 
     {
         secs = 1;
@@ -457,18 +448,12 @@ int mbedtls_timing_self_test(int verbose)
         }
     }
 
-<<<<<<< HEAD
-    if( verbose != 0 )
-        mbedtls_printf( "passed\n" );
-#else
-    if( verbose != 0 )
-        mbedtls_printf( "unavailable\n" );
-#endif /* HAVE_ALARM */
-=======
-    if (verbose != 0) {
+    if(verbose != 0)
         mbedtls_printf("passed\n");
-    }
->>>>>>> db8700e8f80615c3161afa31606e9a5286e65916
+#else
+    if(verbose != 0)
+        mbedtls_printf("unavailable\n");
+#endif /* HAVE_ALARM */
 
     if (verbose != 0) {
         mbedtls_printf("  TIMING test #2 (set/get_delay        ): ");

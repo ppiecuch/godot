@@ -459,18 +459,11 @@ int mbedtls_net_accept(mbedtls_net_context *bind_ctx,
                 return MBEDTLS_ERR_NET_BUFFER_TOO_SMALL;
             }
 
-<<<<<<< HEAD
-            memcpy( client_ip, &addr4->sin_addr.s_addr, *ip_len );
-        }
-        else
-        {
+            memcpy(client_ip, &addr4->sin_addr.s_addr, *ip_len);
+        } else {
 #if defined(IP6_UNAVAILABLE)
             return( MBEDTLS_ERR_UNSUPPORTED );
 #else
-=======
-            memcpy(client_ip, &addr4->sin_addr.s_addr, *ip_len);
-        } else {
->>>>>>> db8700e8f80615c3161afa31606e9a5286e65916
             struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *) &client_addr;
             *ip_len = sizeof(addr6->sin6_addr.s6_addr);
 
@@ -478,12 +471,8 @@ int mbedtls_net_accept(mbedtls_net_context *bind_ctx,
                 return MBEDTLS_ERR_NET_BUFFER_TOO_SMALL;
             }
 
-<<<<<<< HEAD
-            memcpy( client_ip, &addr6->sin6_addr.s6_addr, *ip_len);
-#endif
-=======
             memcpy(client_ip, &addr6->sin6_addr.s6_addr, *ip_len);
->>>>>>> db8700e8f80615c3161afa31606e9a5286e65916
+#endif
         }
     }
 

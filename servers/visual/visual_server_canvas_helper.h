@@ -46,6 +46,7 @@ public:
 		RID texture;
 		Color modulate;
 		RID normal_map;
+		RID mask;
 		uint32_t flags = 0;
 
 		bool operator==(const State &p_state) const {
@@ -97,7 +98,7 @@ private:
 
 public:
 	// Simple API
-	void add_rect(RID p_canvas_item, const Rect2 &p_rect, RID p_texture, const Rect2 &p_src_rect, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, RID p_normal_map = RID(), bool p_clip_uv = false);
+	void add_rect(RID p_canvas_item, const Rect2 &p_rect, RID p_texture, const Rect2 &p_src_rect, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, RID p_normal_map = RID(), RID p_mask = RID(), bool p_clip_uv = false);
 
 	// Efficient API
 	void begin(const VisualServerCanvasHelper::State &p_state);

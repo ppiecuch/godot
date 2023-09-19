@@ -92,6 +92,9 @@ void Font::draw_xform(RID p_canvas_item, const CharTransform &p_char_xform, cons
 
 	int chars_drawn = 0;
 	bool with_outline = has_outline();
+
+	MultiRect multirect;
+
 	for (int i = 0; i < p_text.length(); i++) {
 		int width = get_char_size(p_text[i]).width;
 
@@ -99,14 +102,14 @@ void Font::draw_xform(RID p_canvas_item, const CharTransform &p_char_xform, cons
 			break; //clip
 		}
 
-		ofs.x += draw_char_xform(p_canvas_item, p_char_xform, p_pos + ofs, p_text[i], p_text[i + 1], with_outline ? p_outline_modulate : p_modulate, with_outline);
+		ofs.x += draw_char_ex(p_canvas_item, p_pos + ofs, p_text[i], p_text[i + 1], with_outline ? p_outline_modulate : p_modulate, with_outline, &multirect, &p_char_xform);
 		++chars_drawn;
 	}
 
 	if (has_outline()) {
 		ofs = Vector2(0, 0);
 		for (int i = 0; i < chars_drawn; i++) {
-			ofs.x += draw_char_xform(p_canvas_item, p_char_xform, p_pos + ofs, p_text[i], p_text[i + 1], p_modulate, false);
+			ofs.x += draw_char_ex(p_canvas_item, p_pos + ofs, p_text[i], p_text[i + 1], p_modulate, false, &multirect, &p_char_xform);
 		}
 	}
 }
@@ -756,7 +759,7 @@ FontDrawer::FontDrawer(const Ref<Font> &p_font, const Color &p_outline_color) :
 void FontDrawer::flush() {
 	for (int i = 0; i < pending_draws.size(); ++i) {
 		const PendingDraw &draw = pending_draws[i];
-		font->draw_char_ex(draw.canvas_item, draw.pos, draw.chr, draw.next, draw.modulate, false, &multirect);
+		font->draw_char_ex(draw.canvas_item, draw.pos, draw.chr, draw.next, draw.modulate, false, &multirect, draw.has_xform ? &draw.xform : nullptr);
 	}
 	multirect.flush();
 }
@@ -911,7 +914,7 @@ Rect2 BitmapFont::get_char_tx_uv_rect(CharType p_char, CharType p_next, bool p_o
 	}
 }
 
-float BitmapFont::draw_char_ex(RID p_canvas_item, const Point2 &p_pos, CharType p_char, CharType p_next, const Color &p_modulate, bool p_outline, MultiRect *p_multirect, CharTransform *p_char_xform) const {
+float BitmapFont::draw_char_ex(RID p_canvas_item, const Point2 &p_pos, CharType p_char, CharType p_next, const Color &p_modulate, bool p_outline, MultiRect *p_multirect, const CharTransform *p_char_xform) const {
 	int32_t ch = p_char;
 	if (((p_char & 0xfffffc00) == 0xd800) && (p_next & 0xfffffc00) == 0xdc00) { // decode surrogate pair.
 		ch = (p_char << 10UL) + p_next - ((0xd800 << 10UL) + 0xdc00 - 0x10000);
@@ -931,11 +934,11 @@ float BitmapFont::draw_char_ex(RID p_canvas_item, const Point2 &p_pos, CharType 
 
 	ERR_FAIL_COND_V(c->texture_idx < -1 || c->texture_idx >= textures.size(), false);
 	if (!p_outline && c->texture_idx != -1) {
+		Point2 cpos = p_pos;
+		cpos.x += c->h_align;
+		cpos.y += c->v_align - ascent;
 		if (p_char_xform) {
 			if (!p_char_xform->hidden) {
-				Point2 cpos = p_pos;
-				cpos.x += c->h_align;
-				cpos.y += c->v_align - ascent;
 				const Rect2 rc = p_char_xform->xform_dest(Rect2(cpos, c->rect.size));
 				real_t valign = 0;
 				if (p_char_xform->vertical_align) {
@@ -944,7 +947,7 @@ float BitmapFont::draw_char_ex(RID p_canvas_item, const Point2 &p_pos, CharType 
 					valign = (rotation_base - rc.get_center().y) * t * t * t * t * t; // t^5
 				}
 				if (p_multirect) {
-					p_multirect->add_rect(p_canvas_item, rc.move_by(Point2(0, valign)), textures[c->texture_idx]->get_rid(), p_char_xform->xform_tex(c->rect), p_modulate, false, RID(), false);
+					p_multirect->add_rect(p_canvas_item, rc.move_by(Point2(0, valign)), textures[c->texture_idx]->get_rid(), p_char_xform->xform_tex(c->rect), p_modulate, false, RID(), RID(), false);
 				} else {
 					VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item,
 						rc.move_by(Point2(0, valign)),
@@ -954,12 +957,13 @@ float BitmapFont::draw_char_ex(RID p_canvas_item, const Point2 &p_pos, CharType 
 			}
 		} else {
 			if (p_multirect) {
-				p_multirect->add_rect(p_canvas_item, Rect2(cpos, c->rect.size), textures[c->texture_idx]->get_rid(), c->rect, p_modulate, false, RID(), false);
+				p_multirect->add_rect(p_canvas_item, Rect2(cpos, c->rect.size), textures[c->texture_idx]->get_rid(), c->rect, p_modulate, false, RID(), RID(), false);
 			} else {
 				VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item,
 					Rect2(cpos, c->rect.size),
 					textures[c->texture_idx]->get_rid(),
 					c->rect, p_modulate, false, RID(), RID(), false);
+			}
 		}
 	}
 

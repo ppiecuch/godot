@@ -168,12 +168,7 @@ public:
 	MultiRect &get_multirect() { return multirect; }
 	void flush();
 
-	~FontDrawer() {
-		for (int i = 0; i < pending_draws.size(); ++i) {
-			const PendingDraw &draw = pending_draws[i];
-			font->draw_char_ex(draw.canvas_item, draw.pos, draw.chr, draw.next, draw.modulate, false, &multirect, draw.has_xform ? &draw.xform : nullptr);
-		}
-	}
+	~FontDrawer();
 };
 
 class BitmapFont : public Font {

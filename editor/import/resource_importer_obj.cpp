@@ -385,7 +385,6 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, const _
 	Vector<Vector3> normals;
 	Vector<Vector2> uvs;
 	Vector<Color> colors;
-	String name;
 
 	Ref<SpatialMaterialConversionPlugin> spatial_mat_convert = memnew(SpatialMaterialConversionPlugin);
 
@@ -554,7 +553,7 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, const _
 
 				if (p_opts.compress_flags & VS::ARRAY_FLAG_USE_OCTAHEDRAL_COMPRESSION) {
 					print_verbose("OBJ: Validating compression flags");
-					const List<SurfaceTool::Vertex> &verts = surf_tool->get_vertex_array();
+					const LocalVector<SurfaceTool::Vertex> &verts = surf_tool->get_vertex_array();
 					if (surf_tool->get_array_format() & Mesh::ARRAY_FORMAT_NORMAL) {
 						for (const SurfaceTool::Vertex &v : verts) {
 							const float L1Norm = Math::absf(v.normal.x) + Math::absf(v.normal.y) + Math::absf(v.normal.z);
