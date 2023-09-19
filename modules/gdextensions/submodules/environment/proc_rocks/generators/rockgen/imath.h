@@ -73,4 +73,6 @@ uint_t PlusPetitGenerateur(uint_t q);
 uint_t NiemeRacineUniteStochastique(uint_t q, uint_t m);
 uint_t PlusPetiteNiemeRacineUnite(uint_t q, uint_t m);
 
+#include "imath.inl"
+
 #endif // IMATHS_H

@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  register_types.cpp                                                    */
+/*  proc_rocks.h                                                          */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,13 +28,56 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-/* register_types.cpp */
+#ifndef PROC_ROCK_MESH_H
+#define PROC_ROCK_MESH_H
 
-#include "register_types.h"
+#include "scene/main/timer.h"
+#include "scene/resources/mesh.h"
 
-void register_gdyaml_types() {
-}
+class ProcRockMesh : public ArrayMesh {
+	GDCLASS(ProcRockMesh, ArrayMesh)
 
-void unregister_gdyaml_types() {
-	//nothing to do here
-}
+	struct {
+		int depth;
+		int randseed;
+		real_t smoothness;
+		bool smoothed;
+	} rockgen;
+
+	struct {
+	} rockgeneration;
+
+	struct {
+	} procrock;
+
+	bool auto_refresh;
+
+	bool _dirty;
+	void _rebuild();
+
+protected:
+	static void _bind_methods();
+	bool _is_generated() const { return true; }
+
+public:
+	void set_auto_refresh(bool p_refresh);
+	bool get_auto_refresh() const;
+
+	// Gen. method 1
+	void set_rockgen_depth(int p_depth);
+	int get_rockgen_depth() const;
+	void set_rockgen_randseed(int p_randseed);
+	int get_rockgen_randseed() const;
+	void set_rockgen_smoothness(real_t p_smoothness);
+	real_t get_rockgen_smoothness() const;
+	void set_rockgen_smoothed(bool p_smoothed);
+	bool get_rockgen_smoothed() const;
+
+	// Gen. method 2
+
+	// Gen. method 3
+
+	ProcRockMesh();
+};
+
+#endif // PROC_ROCK_MESH_H

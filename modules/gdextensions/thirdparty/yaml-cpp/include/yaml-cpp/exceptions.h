@@ -14,6 +14,15 @@
 #include <stdexcept>
 #include <string>
 
+#include "core/error_macros.h"
+#include "common/gd_core_defs.h"
+
+#ifdef _HAS_EXCEPTIONS
+#define Throw throw
+#else
+#define Throw (void)
+#endif
+
 namespace YAML {
 // error messages
 namespace ErrorMsg {
@@ -153,7 +162,11 @@ inline const std::string INVALID_NODE_WITH_KEY(const std::string& key) {
 class YAML_CPP_API Exception : public std::runtime_error {
  public:
   Exception(const Mark& mark_, const std::string& msg_)
-      : std::runtime_error(build_what(mark_, msg_)), mark(mark_), msg(msg_) {}
+      : std::runtime_error(build_what(mark_, msg_)), mark(mark_), msg(msg_) {
+#ifndef _HAS_EXCEPTIONS
+    CRASH_NOW_MSG(build_what(mark_, msg_).c_str());
+#endif
+  }
   ~Exception() YAML_CPP_NOEXCEPT override;
 
   Exception(const Exception&) = default;

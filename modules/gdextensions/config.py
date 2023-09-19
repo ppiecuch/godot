@@ -76,6 +76,7 @@ def configure(env):
         "goxel",
         "textui",
         "textwidgets",
+        "yaml",
     ]
     opts = Variables()
     opts.Add(

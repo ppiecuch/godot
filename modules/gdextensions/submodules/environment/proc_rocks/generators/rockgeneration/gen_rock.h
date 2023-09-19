@@ -34,6 +34,7 @@
 #include "rock_header.h"
 
 #include "core/local_vector.h"
+#include "core/set.h"
 #include "scene/resources/mesh.h"
 #include "scene/resources/texture.h"
 
@@ -45,7 +46,7 @@ class GenRock {
 	uint32_t m_MaxPlaneVerts, m_MinPlaneVerts, m_MaxPlanes;
 	uint32_t m_Steps;
 
-	std::set<uint32_t> m_NorthIdx, m_SouthIdx;
+	Set<uint32_t> m_NorthIdx, m_SouthIdx;
 
 	struct {
 		LocalVector<Vector3> Position;
