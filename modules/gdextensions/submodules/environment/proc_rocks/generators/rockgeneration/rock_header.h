@@ -32,7 +32,6 @@
 #define ROCK_HEADER_H
 
 #include <map>
-#include <set>
 #include <vector>
 
 #include "core/math/math_funcs.h"

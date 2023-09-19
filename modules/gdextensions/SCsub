@@ -236,6 +236,7 @@ modules = [
     "environment/spider_anim",
     "environment/waterfall",
     "environment/water_2d",
+    "environment/proc_rocks",
     "fastnoise",
     "smooth",
     "debugdraw",
@@ -297,19 +298,8 @@ if env["tools"]:
             "thirdparty/mypaint/libmypaint.c",
             "thirdparty/mypaint/json-c/libjson-c.c",
             "thirdparty/gc-8.2.2/extra/gc.c",
-            "thirdparty/libnoise/libnoise.cpp",
-            "thirdparty/procrocklib/procrocklib.cpp",
         ]
-        env_module.Append(
-            CPPPATH=[
-                "thirdparty/eigenmath",
-                "thirdparty/gc-8.2.2/include",
-                "thirdparty/libnoise",
-                "thirdparty/procrocklib/inc",
-                "thirdparty/procrocklib/src",
-                "thirdparty/procrocklib/ext",
-            ]
-        )
+        env_module.Append(CPPPATH=["thirdparty/gc-8.2.2/include"])
         modules += ["editor"]
     if is_enabled("qrcodetexture"):
         modules += ["qrcodetexture"]
@@ -334,6 +324,11 @@ if env["tools"]:
         modules += ["scenemerge"]
         env_module.Prepend(CPPPATH=["thirdparty/mesh_optimizer"])
         env_module.add_source_files(env.modules_sources, Glob("thirdparty/meshoptimizer/src/*.cpp"))
+    if is_enabled("yaml"):
+        modules += ["yaml"]
+        thirdparty_sources += Glob("thirdparty/yaml-cpp/src/*.cpp")
+        env_module.Append(CPPDEFINES=["YAML_CPP_STATIC_DEFINE"])
+        env_module.Prepend(CPPPATH=["thirdparty/yaml-cpp/include"])
 
 if is_enabled("textui"):
     thirdparty_sources += ["thirdparty/textui/textUI.c", "thirdparty/textui/textUI_support.cpp"]
@@ -424,7 +419,7 @@ if env["platform"] == "iphone" or env["platform"] == "osx":
     )
 
 if not env["disable_3d"]:
-    modules += ["environment/vegetation_instance", "ccd", "detournav"]
+    modules += ["ccd", "detournav"]
     if is_enabled("ccd"):
         thirdparty_sources += Glob("thirdparty/libccd/src/*.c") + Glob("thirdparty/libccd/src/testsuites/*.c")
     if is_enabled("detournav"):
@@ -458,10 +453,6 @@ if not env["disable_3d"]:
         if is_enabled("meshslicer"):
             modules += ["meshslicer"]
             sources += Glob("submodules/meshslicer/utils/*.cpp")
-        if is_enabled("environment/rockgeneration"):
-            modules += ["environment/rockgeneration"]
-        if is_enabled("environment/rockgen"):
-            modules += ["environment/rockgen"]
 
 if is_enabled("ldrdraw"):
     env_module.Append(CPPPATH=["thirdparty/libldr"])
@@ -521,6 +512,27 @@ if is_enabled("environment/spider_anim"):
     if secret("submodules/environment/spider_anim/spider.cpp"):
         print("(GDextensions) Spider animation is not available")
         modules.remove("environment/spider_anim")
+
+if not env["disable_3d"]:
+    modules += ["environment/vegetation_instance", "environment/proc_rocks"]
+    if is_enabled("environment/proc_rocks"):
+        thirdparty_sources += [
+            "submodules/environment/proc_rocks/generators/rockgeneration/gen_rock.cpp",
+            "submodules/environment/proc_rocks/generators/rockgen/rockgen.cpp",
+        ]
+        env_module.Prepend(CPPPATH=["submodules/environment/proc_rocks/generators"])
+        if env["tools"]:
+            # it is big - keep it for editor usge only
+            thirdparty_sources += ["thirdparty/libnoise/libnoise.cpp", "thirdparty/procrocklib/procrocklib.cpp"]
+            env_module.Prepend(
+                CPPPATH=[
+                    "thirdparty/eigenmath",
+                    "thirdparty/libnoise",
+                    "thirdparty/procrocklib/inc",
+                    "thirdparty/procrocklib/src",
+                    "thirdparty/procrocklib/ext",
+                ]
+            )
 
 ignore = []
 if env["platform"] == "3ds" or env["platform"] == "psp":

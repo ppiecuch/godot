@@ -54,13 +54,13 @@ void GenRock::BuildIco() {
 	auto vertices = lists.first;
 	auto indices = lists.second;
 
-	// SUBDIVIDE TRIANGLES + ADD NEW VERTICES TO BUFFER
+	// Subdivide triangles + add new vertices to buffer
 	for (int i = 0; i < vertices.size(); i++) {
 		auto vertice = vertices[i];
 		auto vertVector = vertice.normalized();
 		auto vert = vertVector;
 
-		real_t r = Math::sqrt(vertice.x * vertice.x + vertice.y * vertice.y + vertice.z * vertice.z);
+		// real_t r = Math::sqrt(vertice.x * vertice.x + vertice.y * vertice.y + vertice.z * vertice.z);
 		// real_t theta = Math::acos(vertice.y / r); // lat
 		// real_t phi = Math::atan(vertice.x / vertice.z); // long
 
@@ -194,7 +194,7 @@ void GenRock::BuildNormals() {
 void GenRock::CorrectUV() {
 	// Find seam vertices
 	uint32_t countExtraVerts = 0;
-	std::set<uint32_t> duplicatesIdx;
+	Set<uint32_t> duplicatesIdx;
 	for (int i = 0; i < m_NumIndices; i += 3) {
 // Data
 #pragma region data
@@ -217,8 +217,8 @@ void GenRock::CorrectUV() {
 		// Sides
 		if (texNormal.z > 0) {
 			if (tex0.x < 0.1) {
-				if (duplicatesIdx.find(idx0) != duplicatesIdx.end()) {
-					m_VecIndices[i % m_NumIndices] = *duplicatesIdx.find(idx0);
+				if (auto e = duplicatesIdx.find(idx0)) {
+					m_VecIndices[i % m_NumIndices] = e->get();
 				} else {
 					auto newV0 = v0;
 					newV0.TexCoord.x += 1;
@@ -231,8 +231,8 @@ void GenRock::CorrectUV() {
 			}
 
 			if (tex1.x < 0.1) {
-				if (duplicatesIdx.find(idx1) != duplicatesIdx.end()) {
-					m_VecIndices[(i + 1) % m_NumIndices] = *duplicatesIdx.find(idx1);
+				if (auto e = duplicatesIdx.find(idx1)) {
+					m_VecIndices[(i + 1) % m_NumIndices] = e->get();
 				} else {
 					auto newV1 = v1;
 					newV1.TexCoord.x += 1;
@@ -245,8 +245,8 @@ void GenRock::CorrectUV() {
 			}
 
 			if (tex2.x < 0.1) {
-				if (duplicatesIdx.find(idx2) != duplicatesIdx.end()) {
-					m_VecIndices[(i + 2) % m_NumIndices] = *duplicatesIdx.find(idx2);
+				if (auto e = duplicatesIdx.find(idx2)) {
+					m_VecIndices[(i + 2) % m_NumIndices] = e->get();
 				} else {
 					auto newV2 = v2;
 					newV2.TexCoord.x += 1;
@@ -260,19 +260,19 @@ void GenRock::CorrectUV() {
 		}
 
 		// Poles
-		if (m_NorthIdx.find(idx0) != m_NorthIdx.end() || m_SouthIdx.find(idx0) != m_SouthIdx.end()) {
+		if (m_NorthIdx.has(idx0) || m_SouthIdx.has(idx0)) {
 			auto newV0 = v0;
 			newV0.TexCoord.x = (v1.TexCoord.x + v2.TexCoord.x) / 2.0;
 			m_VecGeom.push_back(newV0);
 			m_VecIndices[(i) % m_NumIndices] = countExtraVerts + m_NumVertices;
 			countExtraVerts++;
-		} else if (m_NorthIdx.find(idx1) != m_NorthIdx.end() || m_SouthIdx.find(idx1) != m_SouthIdx.end()) {
+		} else if (m_NorthIdx.has(idx1) || m_SouthIdx.has(idx1)) {
 			auto newV1 = v0;
 			newV1.TexCoord.x = (v0.TexCoord.x + v2.TexCoord.x) / 2.0;
 			m_VecGeom.push_back(newV1);
 			m_VecIndices[(i + 1) % m_NumIndices] = countExtraVerts + m_NumVertices;
 			countExtraVerts++;
-		} else if (m_NorthIdx.find(idx2) != m_NorthIdx.end() || m_SouthIdx.find(idx2) != m_SouthIdx.end()) {
+		} else if (m_NorthIdx.has(idx2) || m_SouthIdx.has(idx2)) {
 			auto newV2 = v0;
 			newV2.TexCoord.x = (v0.TexCoord.x + v1.TexCoord.x) / 2.0;
 			m_VecGeom.push_back(newV2);

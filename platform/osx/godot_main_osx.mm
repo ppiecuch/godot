@@ -40,8 +40,9 @@ int main(int argc, char **argv) {
 	const char *dbg_arg = "-NSDocumentRevisionsDebugMode";
 	printf("arguments\n");
 	for (int i = 0; i < argc; i++) {
-		if (strcmp(dbg_arg, argv[i]) == 0)
+		if (strcmp(dbg_arg, argv[i]) == 0) {
 			first_arg = i + 2;
+		}
 		printf("%i: %s\n", i, argv[i]);
 	};
 
