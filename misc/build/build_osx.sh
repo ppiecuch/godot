@@ -18,6 +18,10 @@ if [ -f build_info.config ]; then
 	sed -e 's/^/ > /' build_info.config
 fi
 
+if [ ! -z "$V_SDK" ]; then
+	export V_SDK="$V_SDK"
+fi
+
 # `START_DIR` contains the directory where the script is located
 START_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GODOT_DIR=$PWD

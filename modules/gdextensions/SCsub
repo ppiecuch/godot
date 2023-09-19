@@ -725,15 +725,19 @@ if is_enabled("tileengine"):
     if env["builtin_libpng"]:
         env_module.Append(CPPPATH=["#thirdparty/libpng/"])
 
+if "V_SDK" in os.environ:
+    modules += ["vhelloworld"]
+
 active_modules = []
 v_enabled = False
 for m in modules:
+    if os.path.exists("submodules/%s/%s.v" % (m, m)):
+        create_v_template(m, "%s.v" % m)
     if is_enabled(m):
         files = Glob("submodules/%s/*.cpp" % m) + Glob("submodules/%s/*.c" % m)
         sources += [f for f in files if str(f) not in ignore]
         active_modules.append(m)
 
-# print(create_v_template("vnativemodule", "v_simple_class.v"))
 if v_enabled:
     thirdparty_sources += ["thirdparty/vnative/gc-8.2.2/extra/gc.c"]
     env_module.Append(CPPPATH=["thirdparty/vnative/", "thirdparty/vnative/gc-8.2.2"])
