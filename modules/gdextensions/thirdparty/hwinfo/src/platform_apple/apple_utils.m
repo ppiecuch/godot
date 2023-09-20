@@ -243,23 +243,26 @@ NSArray *get_all_metal_info() {
 
     NSMutableArray *family = [NSMutableArray arrayWithCapacity:8];
 #define _check_family(F) { if ([device supportsFamily: F]) [family addObject:_get_gpu_from_family(F)]; }
-    _check_family(MTLGPUFamilyApple8);
-    _check_family(MTLGPUFamilyApple7);
-    _check_family(MTLGPUFamilyApple6);
-    _check_family(MTLGPUFamilyApple5);
-    _check_family(MTLGPUFamilyApple4);
-    _check_family(MTLGPUFamilyApple3);
-    _check_family(MTLGPUFamilyApple2);
-    _check_family(MTLGPUFamilyApple1);
-    _check_family(MTLGPUFamilyCommon1);
-    _check_family(MTLGPUFamilyCommon2);
-    _check_family(MTLGPUFamilyCommon3);
+    if (@available(macOS 10.15, *)) {
+      _check_family(MTLGPUFamilyApple8);
+      _check_family(MTLGPUFamilyApple7);
+      _check_family(MTLGPUFamilyApple6);
+      _check_family(MTLGPUFamilyApple5);
+      _check_family(MTLGPUFamilyApple4);
+      _check_family(MTLGPUFamilyApple3);
+      _check_family(MTLGPUFamilyApple2);
+      _check_family(MTLGPUFamilyApple1);
+      _check_family(MTLGPUFamilyCommon1);
+      _check_family(MTLGPUFamilyCommon2);
+      _check_family(MTLGPUFamilyCommon3);
+    }
     if (@available(macOS 13.0, *))
       _check_family(MTLGPUFamilyMetal3);
 
-    if ([device supportsFamily: MTLGPUFamilyMacCatalyst1] || [device supportsFamily: MTLGPUFamilyMacCatalyst2] || [device supportsFamily: MTLGPUFamilyMac2] || [device supportsFamily: MTLGPUFamilyMac1])
-      [family addObject:@"mac2"];
-
+    if (@available(macOS 10.15, *)) {
+      if ([device supportsFamily: MTLGPUFamilyMacCatalyst1] || [device supportsFamily: MTLGPUFamilyMacCatalyst2] || [device supportsFamily: MTLGPUFamilyMac2] || [device supportsFamily: MTLGPUFamilyMac1])
+        [family addObject:@"mac2"];
+    }
     NSMutableArray *features = [NSMutableArray arrayWithCapacity:8];
 #if TARGET_OS_IOS
     if (@available(iOS 12.0, *)) {
@@ -388,18 +391,41 @@ NSArray *get_all_metal_info() {
     }
 
     char _device_unified_memory_mark[2] = "?";
-#if __MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_15
-      if (@available(macOS 10.15, ios 11, *)) {
-        *_device_unified_memory_mark = [device hasUnifiedMemory] ? '+' : '-';
-      }
+    if (@available(macOS 10.15, ios 11, *)) {
+      *_device_unified_memory_mark = [device hasUnifiedMemory] ? '+' : '-';
+    }
+    char _device_is_removable[2] = "?";
+#if __MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_13
+    if (@available(macOS 10.13, *)) {
+      *_device_is_removable = [device isRemovable] ? '+' : '-';
+    }
 #endif
-      char _device_is_removable[2] = "?";
-      if (@available(macOS 10.13, *)) {
-        *_device_is_removable = [device isRemovable] ? '+' : '-';
-      }
+#if __MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_15
+# define DefDeviceIntProperty(dev, var) unsigned _##var = -1;
+#else
+# define DefDeviceIntProperty(dev, var) unsigned _##var = -1; \
+    if (@available(macOS 10.15, *)) { \
+      _##var = [dev var]; \
+    }
+#endif
+#if __MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_15
+# define DefDeviceBoolProperty(dev, var) bool _##var = false;
+#else
+# define DefDeviceBoolProperty(dev, var) bool _##var = false; \
+    if (@available(macOS 10.15, *)) { \
+      _##var = [dev var]; \
+    }
+#endif
+    DefDeviceIntProperty(device, locationNumber);
+    DefDeviceIntProperty(device, location);
+    DefDeviceIntProperty(device, peerGroupID);
+    DefDeviceIntProperty(device, peerCount);
+    DefDeviceIntProperty(device, peerIndex);
+    DefDeviceIntProperty(device, maxTransferRate);
+    DefDeviceBoolProperty(device, supportsShaderBarycentricCoordinates);
     features_report = [features_report stringByAppendingString: [NSString stringWithFormat:
       @"%2u | %30s | %s %s %s %s |%16s|\n",
-      (unsigned)[device locationNumber],
+      _locationNumber,
       [[device name] UTF8String],
       [device isLowPower] ? "+" : "-",
       _device_is_removable,
@@ -409,17 +435,17 @@ NSArray *get_all_metal_info() {
 
     [all_info addObject: @{
       @"name": [device name],
-      @"location": @([device location]),
-      @"peerGroupID": @([device peerGroupID]),
-      @"peerCount": @([device peerCount]),
-      @"peerIndex": @([device peerIndex]),
+      @"location": @(_location),
+      @"peerGroupID": @(_peerGroupID),
+      @"peerCount": @(_peerCount),
+      @"peerIndex": @(_peerIndex),
       @"registryID": @([device registryID]),
       @"isLowPower": @([device isLowPower]),
       @"isHeadless": @([device isHeadless]),
       @"isRemovable": @([device isRemovable]),
       @"isDeviceUnifiedMemory": @(_device_unified_memory),
       @"currentAllocatedMemorySize": @([device currentAllocatedSize]),
-      @"maxTransferRate": @([device maxTransferRate]),
+      @"maxTransferRate": @(_maxTransferRate),
       @"maxThreadgroupMemoryLength": @([device maxThreadgroupMemoryLength]),
       @"maxThreadsPerThreadgroup": _max_threads_per_threadgroup,
       @"maxTotalThreadsPerThreadgroup": @(_max_total_threads_per_threadgroup),
@@ -431,7 +457,7 @@ NSArray *get_all_metal_info() {
       @"depth24Stencil8PixelFormatSupported": @([device isDepth24Stencil8PixelFormatSupported]),
       @"supports32BitMSAA": @(_supports_32bit_msaa),
       @"supports32BitFloatFiltering": @(_supports_32bit_float_filtering),
-      @"supportsShaderBarycentricCoordinates": @([device supportsShaderBarycentricCoordinates]),
+      @"supportsShaderBarycentricCoordinates": @(_supportsShaderBarycentricCoordinates),
       @"supportsBCTextureCompression": @(_supports_bc_texture_compression),
       @"supportsFunctionPointers": @(_supports_function_pointers),
       @"supportsFunctionPointersFromRender": @(_supports_function_pointers_from_render),

@@ -184,7 +184,7 @@ void node_data::push_back(node& node,
   }
 
   if (m_type != NodeType::Sequence)
-    throw BadPushback();
+    Throw BadPushback();
 
   m_sequence.push_back(&node);
 }
@@ -200,7 +200,7 @@ void node_data::insert(node& key, node& value,
       convert_to_map(pMemory);
       break;
     case NodeType::Scalar:
-      throw BadSubscript(m_mark, key);
+      Throw BadSubscript(m_mark, key);
   }
 
   insert_map_pair(key, value);
@@ -231,7 +231,7 @@ node& node_data::get(node& key, const shared_memory_holder& pMemory) {
       convert_to_map(pMemory);
       break;
     case NodeType::Scalar:
-      throw BadSubscript(m_mark, key);
+      Throw BadSubscript(m_mark, key);
   }
 
   for (const auto& it : m_map) {

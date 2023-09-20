@@ -215,7 +215,7 @@ inline Node& Node::operator=(const Node& rhs) {
 
 inline void Node::reset(const YAML::Node& rhs) {
   if (!m_isValid || !rhs.m_isValid)
-    throw InvalidNode(m_invalidKey);
+    Throw InvalidNode(m_invalidKey);
   m_pMemory = rhs.m_pMemory;
   m_pNode = rhs.m_pNode;
 }
