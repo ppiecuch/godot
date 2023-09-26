@@ -38,7 +38,7 @@ struct ConfigurationCurve {
   ConfigurationCurve(std::map<float, float> initial = {}) : curvePoints(initial){};
 
   void add(float pos, float value) {
-    if (pos <= 1.0f && pos >= 0.0f && value <= 1.0f && value >= 0.0f) {
+    if (pos <= 1 && pos >= 0 && value <= 1 && value >= 0) {
       curvePoints[pos] = value;
     }
   }
@@ -228,9 +228,7 @@ struct Configuration {
     }
   }
   inline std::vector<ConfigurationGroupsElement>& getConfigGroups() { return configGroups; }
-  inline const std::vector<ConfigurationGroupsElement>& getConfigGroupsConst() const {
-    return configGroups;
-  }
+  inline const std::vector<ConfigurationGroupsElement>& getConfigGroups() const { return configGroups; }
 
   inline ConfigurationGroup getConfigGroup(std::string main, std::string sub) {
     for (int i = 0; i < configGroups.size(); i++) {
@@ -252,7 +250,7 @@ class Configurable {
  public:
   inline void setChanged(bool changed) { this->changed = changed; }
   inline bool isChanged() { return changed; }
-  inline const Configuration& getConfiguration() { return config; }
+  inline const Configuration& getConfiguration() const { return config; }
 
  protected:
   Configuration config;

@@ -16,6 +16,8 @@ void Pipeline::setGenerator(std::unique_ptr<Generator> generator) {
 }
 Generator& Pipeline::getGenerator() const { return *this->generator.get(); }
 
+bool Pipeline::hasGenerator() const { return generator != nullptr; }
+
 int Pipeline::getModifierCount() { return modifiers.size(); }
 
 void Pipeline::addModifier(std::unique_ptr<Modifier> modifier) {

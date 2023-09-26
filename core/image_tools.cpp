@@ -32,6 +32,21 @@
 #include "bind/core_bind.h"
 #include "core/image.h"
 
+void ImageTools::checker_board(Image *p_src, int p_cell, const Color &grid_color0, const Color &grid_color1, bool details, const Color &details_color) {
+	p_src->lock();
+	for (int j = 0; j < p_src->get_height(); j++) {
+		for (int i = 0; i < p_src->get_width(); i++) {
+			const bool c = details && (i % p_cell == 0 || i == p_src->get_width() - 1 || j % p_cell == 0 || j == p_src->get_height() - 1);
+			if (c) {
+				p_src->set_pixel(i, j, details_color);
+			} else {
+				p_src->set_pixel(i, j, ((i / p_cell + j / p_cell) % 2 == 0) ? grid_color0 : grid_color1);
+			}
+		}
+	}
+	p_src->unlock();
+}
+
 /**
  * Moore Neighbor Tracing
  * An explanation of the algorithm can be found here:

@@ -41,12 +41,11 @@
 #define _RES_BASE_EXTENSION(m_ext, ...)                                                                             \
 public:                                                                                                             \
 	static void register_custom_data_to_otdb() { ClassDB::add_resource_base_extension(m_ext, get_class_static()); } \
-	virtual String get_base_extension() const __VA_ARGS__ { return m_ext; }                                         \
+	virtual String get_base_extension() const { return m_ext; }                                         \
                                                                                                                     \
 private:
 
-#define RES_BASE_EXTENSION(m_ext) \
-	_RES_BASE_EXTENSION(m_ext, G_OVERRIDE)
+#define RES_BASE_EXTENSION(m_ext) _RES_BASE_EXTENSION(m_ext, G_OVERRIDE)
 
 class Resource : public Reference {
 	GDCLASS(Resource, Reference);

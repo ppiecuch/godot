@@ -15,6 +15,7 @@ class Pipeline {
  public:
   void setGenerator(std::unique_ptr<Generator> generator);
   Generator& getGenerator() const;
+  bool hasGenerator() const;
 
   int getModifierCount();
   void addModifier(std::unique_ptr<Modifier> modifier);

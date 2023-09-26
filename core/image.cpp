@@ -3545,6 +3545,11 @@ void Image::bumpmap_to_normalmap(float p_bump_scale) {
 	ImageTools::bumpmap_to_normalmap(this, p_bump_scale);
 }
 
+void Image::checker_board(int p_cell) {
+	const float c = 0.6, a = 1;
+	ImageTools::checker_board(this, p_cell, Color::solid(c * 0.3, a), Color::solid(c, a), false, Color::solid(c * 1.2, a));
+}
+
 String Image::get_format_name(Format p_format) {
 	ERR_FAIL_INDEX_V(p_format, FORMAT_MAX, String());
 	return format_names[p_format];
