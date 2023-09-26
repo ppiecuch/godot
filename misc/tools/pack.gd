@@ -5,6 +5,7 @@ var version = "0.1"
 func _ready():
 	var pck_file = args(0)
 	var input_folder = args(1)
+	var wd = args(2)
 	print("***")
 	print("*** Godot PCK v%s packer ready" % version)
 	print("*** ---------------------------")
@@ -14,6 +15,9 @@ func _ready():
 	if input_folder.empty() or pck_file.empty():
 		print("*** Missing input folder or output file.")
 		return
+	if not wd.empty():
+		print("Working folder: %s" % wd)
+
 	print("")
 	var dir = Directory.new()
 	if dir.open(".") == OK:

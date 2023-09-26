@@ -415,6 +415,8 @@ if __name__ == "__main__":
     parser.add_argument("--version", action="store_true", help="print version info")
     parser.add_argument("-m", "--mode", type=str, default="extends", help="Force execution mode (Not implemented yet)")
 
+    print("PWD: " + os.getcwd())
+
     args = parser.parse_args()
     VERBOSE1 = args.verbose > 0
     VERBOSE2 = args.verbose > 1
