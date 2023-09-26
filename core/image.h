@@ -335,6 +335,7 @@ public:
 	void bumpmap_to_normalmap(float p_bump_scale = 1.0);
 	void checker_board(int p_cell = 32);
 
+	void blit_image(const Ref<Image> &p_src, const Point2 &p_dest = Point2());
 	void blit_rect(const Ref<Image> &p_src, const Rect2 &p_src_rect, const Point2 &p_dest);
 	void blit_rect_mask(const Ref<Image> &p_src, const Ref<Image> &p_mask, const Rect2 &p_src_rect, const Point2 &p_dest);
 	void blend_rect(const Ref<Image> &p_src, const Rect2 &p_src_rect, const Point2 &p_dest);
