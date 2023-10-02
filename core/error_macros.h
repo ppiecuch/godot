@@ -538,8 +538,10 @@ void _err_flush_stdout();
 	} else                                                                                                                     \
 		((void)0)
 #else
-#define DEV_ASSERT(m_cond)
-#define DEV_ASSERT_MSG(m_cond, m_msg)
+#define DEV_ASSERT(m_cond) \
+	{ (void)(m_cond) }
+#define DEV_ASSERT_MSG(m_cond, m_msg) \
+	{ (void)(m_cond) }
 #endif
 
 /**

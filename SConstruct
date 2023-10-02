@@ -356,7 +356,7 @@ if env_base["target"] == "release_debug" or env_base["target"] == "debug":
     # to give *users* extra debugging information for their game development.
     env_base.Append(CPPDEFINES=["DEBUG_ENABLED"])
 
-if env_base["target"] == "debug":
+if env_base["target"] == "debug" or (env_base["tools"] and env_base["target"] == "release_debug"):
     # DEV_ENABLED enables *engine developer* code which should only be compiled for those
     # working on the engine itself.
     env_base.Append(CPPDEFINES=["DEV_ENABLED"])

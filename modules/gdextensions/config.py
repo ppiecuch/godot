@@ -26,7 +26,7 @@ def configure(env):
         "debugdraw",
         "cyberelements",
         "geomfonts",
-        "generator",
+        "fontengine3d" "generator",
         "ropesim",
         "statemachine",
         "benet",
@@ -74,9 +74,11 @@ def configure(env):
         "synthbenchmark",
         "runtimeprofiler",
         "goxel",
+        "qmap",
         "textui",
         "textwidgets",
         "yaml",
+        "flowed",
     ]
     opts = Variables()
     opts.Add(
