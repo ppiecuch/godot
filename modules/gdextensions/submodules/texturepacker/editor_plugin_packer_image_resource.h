@@ -41,15 +41,14 @@
 class EditorPluginPackerImageResource : public EditorPlugin {
 	GDCLASS(EditorPluginPackerImageResource, EditorPlugin);
 
-public:
-	EditorPluginPackerImageResource(EditorNode *node);
+	EditorNode *_node;
+	Ref<PackerImageResourceImporter> _importer;
 
 protected:
 	void _notification(int p_what);
 
-private:
-	EditorNode *_node;
-	Ref<PackerImageResourceImporter> _importer;
+public:
+	EditorPluginPackerImageResource(EditorNode *node);
 };
 
 #endif
