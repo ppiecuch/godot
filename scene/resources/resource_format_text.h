@@ -137,6 +137,8 @@ public:
 	virtual void get_dependencies(const String &p_path, List<String> *p_dependencies, bool p_add_types = false);
 	virtual Error rename_dependencies(const String &p_path, const Map<String, String> &p_map);
 
+	Ref<Resource> load_from_data(const String &p_data, const String &p_original_path, Error *r_error = nullptr, bool p_no_subresource_cache = false);
+
 	static Error convert_file_to_binary(const String &p_src_path, const String &p_dst_path);
 
 	ResourceFormatLoaderText() { singleton = this; }
