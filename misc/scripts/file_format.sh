@@ -23,7 +23,9 @@ while IFS= read -rd '' f; do
         continue
     elif [[ "$f" == *".bat" ]]; then
         continue
-    elif [[ "$f" == *"patch" ]]; then
+    elif [[ "$f" == *".patch" ]]; then
+        continue
+    elif [[ "$f" == *".diff" ]]; then
         continue
     elif [[ "$f" == *"pot" ]]; then
         continue
