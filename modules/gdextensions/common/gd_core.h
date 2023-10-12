@@ -289,4 +289,80 @@ _FORCE_INLINE_ static uint8_t g_alpha(uint32_t rgb) { return rgb >> 24; }
 _FORCE_INLINE_ static uint32_t g_rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a) { return ((a & 0xff) << 24) | ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff); }
 _FORCE_INLINE_ static uint8_t g_gray(uint8_t r, uint8_t g, uint8_t b) { return (r * 11 + g * 16 + b * 5) / 32; } // convert R,G,B to gray 0..255
 
+// Passthrough Script for dynamic scripting
+
+class PassthroughScriptInstance : public PlaceHolderScriptInstance {
+public:
+	virtual Variant call(const StringName &p_method, const Variant **p_args, int p_argcount, Variant::CallError &r_error) {
+		return get_owner()->call(p_method, p_args, p_argcount, r_error);
+	}
+};
+
+template <typename InstanceBaseClass, typename Receiver>
+class PassthroughScript : public Script {
+	Receiver *recv;
+
+#ifdef TOOLS_ENABLED
+	Set<PlaceHolderScriptInstance *> placeholders;
+	virtual void _placeholder_erased(PlaceHolderScriptInstance *p_placeholder) {
+		placeholders.erase(p_placeholder);
+	}
+#endif
+
+public:
+	void remove_instance(Object *p_object) {}
+	virtual bool can_instance() const { return false; }
+
+	virtual StringName get_instance_base_type() const { return InstanceBaseClass::get_class_static(); }
+	virtual ScriptInstance *instance_create(Object *p_this) { return nullptr; }
+	virtual bool instance_has(const Object *p_this) const { return false; }
+
+	virtual PlaceHolderScriptInstance *placeholder_instance_create(Object *p_this) {
+#ifdef TOOLS_ENABLED
+		PlaceHolderScriptInstance *sins = memnew(PlaceHolderScriptInstance(nullptr, Ref<Script>(this), recv));
+		placeholders.insert(sins);
+		return sins;
+#else
+		return nullptr;
+#endif
+	}
+
+	virtual bool has_source_code() const { return false; }
+	virtual String get_source_code() const { return ""; }
+	virtual void set_source_code(const String &p_code) {}
+	virtual Error reload(bool p_keep_state = false) { return OK; }
+
+	virtual bool is_tool() const { return false; }
+	virtual bool is_valid() const { return true; }
+
+	virtual bool inherits_script(const Ref<Script> &p_script) const { return false; }
+
+	virtual String get_node_type() const { return ""; }
+	virtual ScriptLanguage *get_language() const { return nullptr; }
+
+	// Be carfull with possible recursion
+
+	virtual Ref<Script> get_base_script() const { return Ref<Script>(); }
+	virtual bool has_method(const StringName &p_method) const { return recv->has_method(p_method); }
+	virtual MethodInfo get_method_info(const StringName &p_method) const {
+		List<MethodInfo> methods;
+		recv->get_method_list(&methods);
+		for (List<MethodInfo>::Element *E = methods.front(); E; E = E->next()) {
+			if (E->get().name == p_method) {
+				return E->get();
+			}
+		}
+		return MethodInfo();
+	}
+	virtual bool has_script_signal(const StringName &p_signal) const { return recv->has_signal(p_signal); }
+	virtual void get_script_signal_list(List<MethodInfo> *r_signals) const { recv->get_signal_list(r_signals); }
+	virtual bool get_property_default_value(const StringName &p_property, Variant &r_value) const { return false; }
+	virtual void get_script_method_list(List<MethodInfo> *p_list) const { recv->get_method_list(p_list); }
+	virtual void get_script_property_list(List<PropertyInfo> *p_list) const { recv->get_property_list(p_list); }
+	virtual void update_exports() {}
+
+	void set_receiver(Receiver *p_recv) { recv = p_recv; }
+	Receiver *get_receiver() const { return recv; }
+};
+
 #endif // GD_CORE_H

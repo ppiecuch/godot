@@ -31,10 +31,10 @@
 #include "audio_stream_preview.h"
 
 #include "core/os/keyboard.h"
-#include "scene/gui/box_container.h"
-#include "editor/editor_settings.h"
-#include "editor/editor_scale.h"
 #include "editor/editor_node.h"
+#include "editor/editor_scale.h"
+#include "editor/editor_settings.h"
+#include "scene/gui/box_container.h"
 
 // BEGIN AudioStreamPreview
 
@@ -105,7 +105,6 @@ AudioStreamPreview::AudioStreamPreview() {
 }
 
 // END AudioStreamPreview
-
 
 // BEGIN AudioStreamPreviewGenerator
 
@@ -256,20 +255,21 @@ AudioStreamPreviewGenerator::AudioStreamPreviewGenerator() {
 
 // END AudioStreamPreviewGenerator
 
-
 // BEGIN AudioStreamPlayerControl
 
 void AudioStreamPlayerControl::_play() {
-	if (_player->is_playing()) {
-		// '_pausing' variable indicates that we want to pause the audio player, not stop it. See '_on_finished()'.
-		_pausing = true;
-		_player->stop();
-		_play_button->set_icon(get_icon("MainPlay", "EditorIcons"));
-		set_process(false);
-	} else {
-		_player->play(_current);
-		_play_button->set_icon(get_icon("Pause", "EditorIcons"));
-		set_process(true);
+	if (!stream.is_null()) {
+		if (_player->is_playing()) {
+			// '_pausing' variable indicates that we want to pause the audio player, not stop it. See '_on_finished()'.
+			_pausing = true;
+			_player->stop();
+			_play_button->set_icon(get_icon("MainPlay", "EditorIcons"));
+			set_process(false);
+		} else {
+			_player->play(_current);
+			_play_button->set_icon(get_icon("Pause", "EditorIcons"));
+			set_process(true);
+		}
 	}
 }
 
@@ -370,7 +370,6 @@ void AudioStreamPlayerControl::_on_input_indicator(Ref<InputEvent> p_event) {
 		}
 	}
 }
-
 
 void AudioStreamPlayerControl::_seek_to(real_t p_x) {
 	_current = p_x / _preview->get_rect().size.x * stream->get_length();

@@ -67,11 +67,11 @@ PSState _ps_defaults = {
 	0,
 };
 
-typedef void PSPercentCallback(float percent, void *userdata);
-
 typedef struct _vector3 {
 	double x, y, z;
 } vector3;
+
+typedef void PSPercentCallback(float percent, void *userdata);
 
 typedef struct _PSMetalObjNode {
 	int anchor;
@@ -114,15 +114,14 @@ PSMetalObj *ps_metal_obj_new_plane(int length, int width, double tension);
 PSMetalObj *ps_metal_obj_new_hypercube(int dimensions, int size, double tension);
 
 static void ps_metal_obj_perturb(PSMetalObj *obj, double speed, double damp);
-
-int save_pres(PSPhysMod *model, const char *fname, char **errmsg);
-int load_pres(PSPhysMod *model, const char *fname, char **errmsg);
-
 static size_t ps_metal_obj_render(int rate, PSMetalObj *obj, int innode, int outnode, double speed, double damp, int compress, double velocity, int len, double *samples, PSPercentCallback *cb, double att, void *userdata);
 
 size_t ps_metal_obj_render_tube(int rate, int height, int circum, double tension, double speed, double damp, int compress, double velocity, int len, double *samples, PSPercentCallback *cb, double att, void *userdata);
 size_t ps_metal_obj_render_rod(int rate, int length, double tension, double speed, double damp, int compress, double velocity, int len, double *samples, PSPercentCallback *cb, double att, void *userdata);
 size_t ps_metal_obj_render_plane(int rate, int length, int width, double tension, double speed, double damp, int compress, double velocity, int len, double *samples, PSPercentCallback *cb, double att, void *userdata);
+
+int save_pres(PSPhysMod *model, const char *fname, char **errmsg);
+int load_pres(PSPhysMod *model, const char *fname, char **errmsg);
 
 // Utility functions.
 
@@ -412,10 +411,98 @@ static void ps_metal_obj_perturb(PSMetalObj *obj, double speed, double damp) {
 	}
 }
 
+// Now len means _maximal_ lenght if the given attenuation will not be reached;
+// for disabling stopping at given attenuation, use attenuation = 0.0.
+// Attenuation is given in dB, att = 60.0 means render will be stopped after
+// the mean amplitude reach the value of -60 dB.
+
+static size_t ps_metal_obj_render(int rate, PSMetalObj *obj, int innode, int outnode, double speed, double damp, int compress, double velocity, int len, double *samples, PSPercentCallback *cb, double att, void *userdata) {
+	double stasis;
+	double sample;
+
+	if (compress) {
+		stasis = obj->nodes[outnode]->pos.z;
+		obj->nodes[innode]->pos.z += velocity;
+	} else {
+		stasis = obj->nodes[outnode]->pos.x;
+		obj->nodes[innode]->pos.x += velocity;
+	}
+
+	damp = Math::pow(0.5, 1.0 / (damp * rate));
+
+	double curr_att = 0, hipass = 0, lowpass = 0, maxamp = 0;
+	double hipass_coeff = Math::pow(0.5, 5.0 / rate);
+	double lowpass_coeff = 1 - 20.0 / rate; // 50 ms integrator
+	double maxvol = 0.001;
+	size_t real_len = 0;
+	for (int i = 0; i < len; i++) {
+		ps_metal_obj_perturb(obj, speed, damp);
+		if (compress) {
+			sample = obj->nodes[outnode]->pos.z - stasis;
+		} else {
+			sample = obj->nodes[outnode]->pos.x - stasis;
+		}
+		hipass = hipass_coeff * hipass + (1 - hipass_coeff) * sample;
+		samples[i] = sample - hipass;
+		if (Math::abs(samples[i]) > maxvol) {
+			maxvol = Math::abs(samples[i]);
+		}
+		lowpass = lowpass_coeff * lowpass + (1 - lowpass_coeff) * Math::abs(samples[i]);
+		if (maxamp < lowpass) {
+			maxamp = lowpass;
+		}
+		if (att < 0) {
+			if (maxamp > 0) {
+				curr_att = 20 * Math::log10(lowpass / maxamp);
+			}
+			if (!(i & 1023)) {
+				if (cb != nullptr) {
+					float p1 = ((float)i) / len;
+					float p2 = curr_att / att;
+					cb(MAX(p1, p2), userdata);
+				}
+			}
+			if (curr_att <= att) {
+				break;
+			}
+		} else {
+			if (!(i & 1023)) {
+				if (cb != nullptr)
+					cb(((float)i) / len, userdata);
+			}
+		}
+		real_len++;
+	}
+
+	maxvol = 1.0 / maxvol;
+	for (int i = 0; i < real_len; i++) {
+		samples[i] *= maxvol;
+	}
+	return real_len;
+}
+
 size_t ps_metal_obj_render_tube(int rate, int height, int circum, double tension, double speed, double damp, int compress, double velocity, int len, double *samples, PSPercentCallback *cb, double att, void *userdata) {
 	PSMetalObj *obj = ps_metal_obj_new_tube(height, circum, tension);
 	int innode = circum + circum / 2;
 	int outnode = (height - 2) * circum;
+	size_t lgth = ps_metal_obj_render(rate, obj, innode, outnode, speed, damp, compress, velocity, len, samples, cb, att, userdata);
+	ps_metal_obj_free(obj);
+	return lgth;
+}
+
+size_t ps_metal_obj_render_rod(int rate, int length, double tension, double speed, double damp, int compress, double velocity, int len, double *samples, PSPercentCallback *cb, double att, void *userdata) {
+	PSMetalObj *obj = ps_metal_obj_new_rod(length, tension);
+	int innode = 1;
+	int outnode = length - 2;
+	size_t lgth = ps_metal_obj_render(rate, obj, innode, outnode, speed, damp, compress, velocity, len, samples, cb, att, userdata);
+	ps_metal_obj_free(obj);
+	return lgth;
+}
+
+size_t ps_metal_obj_render_plane(int rate, int length, int width, double tension, double speed, double damp, int compress, double velocity, int len, double *samples, PSPercentCallback *cb, double att, void *userdata) {
+	PSMetalObj *obj = ps_metal_obj_new_plane(length, width, tension);
+	int innode = 1;
+	int outnode = (length - 1) * width - 1;
 	size_t lgth = ps_metal_obj_render(rate, obj, innode, outnode, speed, damp, compress, velocity, len, samples, cb, att, userdata);
 	ps_metal_obj_free(obj);
 	return lgth;
@@ -431,9 +518,9 @@ static void percent_callback(float p, void *userdata) {
 	s->progress = p;
 }
 
-static void do_render(PSState *ps) {
+static bool do_render(PSState *ps) {
 	LocalVector<double> data(SAMPLE_RATE * ps->sample_length);
-	double decay = ps->decay_is_used ? ps->decay_value : 0;
+	const double decay = ps->decay_is_used ? ps->decay_value : 0;
 
 	size_t size = data.size();
 	switch (ps->obj_type) {
@@ -448,10 +535,12 @@ static void do_render(PSState *ps) {
 		} break;
 	}
 
-	ERR_FAIL_COND(size > data.size());
+	ERR_FAIL_COND_V(size > data.size(), false);
 
 	ps->samples.resize(data.size());
 	for (int i = 0; i < size; i++) {
 		ps->samples[i] = double_to_s16(data[i]);
 	}
+
+	return true;
 }

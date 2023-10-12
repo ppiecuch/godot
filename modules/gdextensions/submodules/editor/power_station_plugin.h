@@ -31,13 +31,13 @@
 // Power Station Glib PhyMod Library
 // Copyright (c) 2000 David A. Bartold
 
-#ifndef __PS_PHYMOD_H_
-#define __PS_PHYMOD_H_
-
-#include <stdio.h>
+#ifndef _POWER_STATION_PLUGIN_H_
+#define _POWER_STATION_PLUGIN_H_
 
 #include "core/int_types.h"
 #include "core/local_vector.h"
+#include "editor/editor_plugin.h"
+#include "scene/gui/dialogs.h"
 
 typedef struct _PSState {
 	int size;
@@ -56,4 +56,26 @@ typedef struct _PSState {
 	float progress;
 } PSState;
 
-#endif
+/// Godot editor plugin
+
+class PowerStationEditorPlugin : public EditorPlugin {
+	GDCLASS(PowerStationEditorPlugin, EditorPlugin)
+
+	EditorNode *editor;
+
+	void add_icons_menu_item(const String &p_name, const String &p_callback);
+	void remove_icons_menu_item(const String &p_name);
+
+	void _on_show_ps_editor_pressed(Variant p_null);
+
+protected:
+	static void _bind_methods();
+	void _notification(int p_what);
+
+public:
+	void generate();
+
+	PowerStationEditorPlugin(EditorNode *p_node);
+};
+
+#endif // _POWER_STATION_PLUGIN_H_
