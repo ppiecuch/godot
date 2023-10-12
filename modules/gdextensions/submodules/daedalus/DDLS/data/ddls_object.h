@@ -1,60 +1,81 @@
+/**************************************************************************/
+/*  ddls_object.h                                                         */
+/**************************************************************************/
+/*                         This file is part of:                          */
+/*                             GODOT ENGINE                               */
+/*                        https://godotengine.org                         */
+/**************************************************************************/
+/* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
+/* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
+/*                                                                        */
+/* Permission is hereby granted, free of charge, to any person obtaining  */
+/* a copy of this software and associated documentation files (the        */
+/* "Software"), to deal in the Software without restriction, including    */
+/* without limitation the rights to use, copy, modify, merge, publish,    */
+/* distribute, sublicense, and/or sell copies of the Software, and to     */
+/* permit persons to whom the Software is furnished to do so, subject to  */
+/* the following conditions:                                              */
+/*                                                                        */
+/* The above copyright notice and this permission notice shall be         */
+/* included in all copies or substantial portions of the Software.        */
+/*                                                                        */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. */
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY   */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,   */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE      */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
+/**************************************************************************/
+
+#pragma once
+
+#include "core/math/transform_2d.h"
 #include "core/reference.h"
 #include "core/vector.h"
-#include "core/math/transform_2d.h"
 
-#include "data.h"
+#include "ddls_fwd.h"
 
 class DDLS_Object : public Reference {
 	unsigned id;
 
 	Transform2D matrix;
-	Vector<real_t> coordinates;
+	Vector<Point2> coordinates;
 	DDLSConstraintShape constraint_shape;
 
-	real_t pivot_x, pivot_y;
+	Point2 pivot;
 
-	real_t scale_x, scale_y;
+	Size2 scale;
 	real_t rotation;
-	real_t x, y;
+	Point2 translate;
 
 	bool has_changed;
 
 public:
 	unsigned get_id() const { return id; }
 
-	void update_values_from_matrix() { }
+	void update_values_from_matrix() {}
 
-	void updatematrix_from_values() {
+	void update_matrix_from_values() {
 		matrix = Transform2D();
-		matrix.translate(-pivot_x, -pivot_y);
-		matrix.scale(Size2(scale_x, scale_y));
+		matrix.translate(-pivot);
+		matrix.scale(scale);
 		matrix.rotate(rotation);
-		matrix.translate(x, y);
+		matrix.translate(translate);
 	}
 
-	real_t get_pivot_x() const { return pivot_x; }
-	void set_pivot_x(real_t p_value) {
-		pivot_x = p_value;
-		has_changed = true;
-	}
-
-	real_t get_pivot_y() const { return pivot_y; }
-	void set_pivot_y(real_t p_value) {
-		pivot_y = p_value;
-		has_changed = true;
-	}
-
-	real_t get_scale_x() const { return scale_x; }
-	void set_scale_x(real_t p_value) {
-		if (scale_x != p_value) {
-			scale_x = p_value;
+	Point2 get_pivot() const { return pivot; }
+	void set_pivot_x(const Point2 p_value) {
+		if (pivot != p_value) {
+			pivot = p_value;
 			has_changed = true;
 		}
 	}
-	real_t get_scale_y() const { return scale_y; }
-	void set_scale_y(real_t p_value) {
-		if (scale_y != p_value) {
-			scale_y = p_value;
+
+	Size2 get_scale() const { return scale; }
+	void set_scale(const Size2 &p_value) {
+		if (scale != p_value) {
+			scale = p_value;
 			has_changed = true;
 		}
 	}
@@ -67,17 +88,10 @@ public:
 		}
 	}
 
-	real_t get_x() const { return x; }
-	void set_x(real_t p_value) {
-		if (x != p_value) {
-			x = p_value;
-			has_changed = true;
-		}
-	}
-	real_t get_y() const { return y; }
-	void set_y(real_t p_value) {
-		if (y != p_value) {
-			y = p_value;
+	Vector2 get_translate() const { return translate; }
+	void set_translate(const Vector2 p_translate) {
+		if (translate != p_translate) {
+			translate = p_translate;
 			has_changed = true;
 		}
 	}
@@ -88,11 +102,13 @@ public:
 		has_changed = true;
 	}
 
-	Vector<real_t> get_coordinates() const { return coordinates; }
-	void set_coordinates(Vector<real_t> p_coordinates) {
+	Vector<Point2> get_coordinates() const { return coordinates; }
+	void set_coordinates(Vector<Point2> p_coordinates) {
 		coordinates = p_coordinates;
 		has_changed = true;
 	}
+	void add_coordinates(const Point2 &p_coord) { coordinates.push_back(p_coord); }
+	void add_coordinates(const Point2 &p_coord1, const Point2 &p_coord2) { coordinates.push_back(p_coord1, p_coord2); }
 
 	DDLSConstraintShape get_constraint_shape() const;
 	void set_constraint_shape(DDLSConstraintShape p_shape);
