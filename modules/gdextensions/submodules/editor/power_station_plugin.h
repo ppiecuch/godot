@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  gdextensions_info.h                                                   */
+/*  power_station_plugin.h                                                */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,13 +28,32 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#define gdx_name "KomSoft: Godot Engine Extension"
-#define gdx_short_name "gdextensions"
-#define gdx_ver_major 0
-#define gdx_ver_minor 19
-#define gdx_ver_patch 0
-#define gdx_ver_branch "gd3"
-#define gdx_ver_status "dev"
-#define gdx_ver_year 2023
-#define gdx_url "https://github.com/ppiecuch/godot/modules/gdextensions"
-#define website "https://komsoft.ath.cx/"
+// Power Station Glib PhyMod Library
+// Copyright (c) 2000 David A. Bartold
+
+#ifndef __PS_PHYMOD_H_
+#define __PS_PHYMOD_H_
+
+#include <stdio.h>
+
+#include "core/int_types.h"
+#include "core/local_vector.h"
+
+typedef struct _PSState {
+	int size;
+	int height, circum, length;
+	int plane_length, plane_width;
+	double tenseness, speed, damping;
+	int actuation;
+	double velocity;
+	double sample_length;
+	LocalVector<int16_t> samples;
+	struct _PSMetalObj *object;
+	int obj_type;
+	float x_angle, y_angle;
+	bool decay_is_used;
+	double decay_value;
+	float progress;
+} PSState;
+
+#endif
