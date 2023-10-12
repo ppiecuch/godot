@@ -311,7 +311,7 @@ void GenRock::_update() {
 
 	mesh->clear_mesh();
 
-	if (m_PostInitialize == true) {
+	if (m_PostInitialize) {
 		m_VecGeom.clear(), m_NumVertices = 0;
 		m_VecIndices.clear(), m_NumIndices = 0;
 

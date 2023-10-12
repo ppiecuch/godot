@@ -36,7 +36,7 @@
 #include "scene/resources/mesh.h"
 
 namespace procrock {
-	class Pipeline;
+class Pipeline;
 }
 
 class ProcRockMesh : public ArrayMesh {

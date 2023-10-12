@@ -1,51 +1,110 @@
-﻿
+/**************************************************************************/
+/*  rock_studio.cpp                                                       */
+/**************************************************************************/
+/*                         This file is part of:                          */
+/*                             GODOT ENGINE                               */
+/*                        https://godotengine.org                         */
+/**************************************************************************/
+/* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
+/* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
+/*                                                                        */
+/* Permission is hereby granted, free of charge, to any person obtaining  */
+/* a copy of this software and associated documentation files (the        */
+/* "Software"), to deal in the Software without restriction, including    */
+/* without limitation the rights to use, copy, modify, merge, publish,    */
+/* distribute, sublicense, and/or sell copies of the Software, and to     */
+/* permit persons to whom the Software is furnished to do so, subject to  */
+/* the following conditions:                                              */
+/*                                                                        */
+/* The above copyright notice and this permission notice shall be         */
+/* included in all copies or substantial portions of the Software.        */
+/*                                                                        */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. */
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY   */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,   */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE      */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
+/**************************************************************************/
+
 class RockStudio : EditorWindow {
 	// Generation Settings
-	private float numberOfVerticesFloat = 25f;
-	private const float maximumResolution = 1000f;
-	public bool generateWithRigidbody;
-	public enum MethodOfSeed
-	{
+private
+	float numberOfVerticesFloat = 25f;
+private
+	const float maximumResolution = 1000f;
+public
+	bool generateWithRigidbody;
+public
+	enum MethodOfSeed {
 		Random,
 		Custom
-	}
-	public static MethodOfSeed SeedMethod;
-	public static int Seed;
-	public static int SeedSize = 5000;
+	} public static MethodOfSeed SeedMethod;
+public
+	static int Seed;
+public
+	static int SeedSize = 5000;
 
-	private bool showGenerationInfo;
+private
+	bool showGenerationInfo;
 
 	// Rock Information
-	private Material rockMaterial;
-	private Material[] rockMaterials = new Material[4];
-	private int materialPickerIndex;
-	private int numberOfVerticesInt = 25;
-	private float rockYPositionOffset;
-	private int rockOrientation; // 0 = X, 1 = Y, 2 = Z
-	private string rockName = "ExampleRock";
-	private GameObject rockGroup;
-	private string rockGroupName = "RockGroup";
-	public List<Vector3> points;
+private
+	Material rockMaterial;
+private
+	Material[] rockMaterials = new Material[4];
+private
+	int materialPickerIndex;
+private
+	int numberOfVerticesInt = 25;
+private
+	float rockYPositionOffset;
+private
+	int rockOrientation; // 0 = X, 1 = Y, 2 = Z
+private
+	string rockName = "ExampleRock";
+private
+	GameObject rockGroup;
+private
+	string rockGroupName = "RockGroup";
+public
+	List<Vector3> points;
 
 	// Placement Tool
-	private RaycastHit mouseHitPoint;
-	private static bool currentlyPlacingRock;
-	private Transform placementToolLocation;
-	private Event currentEvent;
-	private Vector3 currentMousePosition = Vector3.zero;
-	private float placementToolSize = 1f;
-	private Color outerColor = new Color(0.15f, 0.75f, 1f);
-	private Color innerColor = new Color(0.15f, 0.75f, 1f, 0.1f);
+private
+	RaycastHit mouseHitPoint;
+private
+	static bool currentlyPlacingRock;
+private
+	Transform placementToolLocation;
+private
+	Event currentEvent;
+private
+	Vector3 currentMousePosition = Vector3.zero;
+private
+	float placementToolSize = 1f;
+private
+	Color outerColor = new Color(0.15f, 0.75f, 1f);
+private
+	Color innerColor = new Color(0.15f, 0.75f, 1f, 0.1f);
 
 	// GUIStyles and GUIContents
 	GUIStyle helpbox;
-	private GUIStyle centeredLabel;
-	private static Texture2D[] materialPreviews;
-	private GUIStyle[] materialPickers;
-	private GUIContent multipleMaterialsIcon;
-	private GUIContent removeSourceMeshIcon;
-	private GUIContent meshCountIcon;
-	private GUIContent vertexCountIcon;
+private
+	GUIStyle centeredLabel;
+private
+	static Texture2D[] materialPreviews;
+private
+	GUIStyle[] materialPickers;
+private
+	GUIContent multipleMaterialsIcon;
+private
+	GUIContent removeSourceMeshIcon;
+private
+	GUIContent meshCountIcon;
+private
+	GUIContent vertexCountIcon;
 	GUIContent basicMenuHeader;
 	GUIContent composeMenuHeader;
 	GUIContent sculptMenuHeader;
@@ -56,18 +115,24 @@ class RockStudio : EditorWindow {
 	GUIContent orientationX;
 	GUIContent orientationY;
 	GUIContent orientationZ;
-	private GUIStyle smallButton;
-	private GUIStyle toolBarButton;
-	private GUIContent addrigidbody;
+private
+	GUIStyle smallButton;
+private
+	GUIStyle toolBarButton;
+private
+	GUIContent addrigidbody;
 	bool StylesNotLoaded = true;
 
 	// UI Elements
-	public int toolBarIndex = 0;
+public
+	int toolBarIndex = 0;
 	int rowWidth = 76; // row width = (number of columns * 25) + 1
 	int columnHeight = 36; // column height = (6 / number of columns) * 18
-	private Texture[] toolbarIcons;
+private
+	Texture[] toolbarIcons;
 	int heightOffset = 2;
-	public static Color lineDividerColor = new Color(0.6f, 0.6f, 0.6f);
+public
+	static Color lineDividerColor = new Color(0.6f, 0.6f, 0.6f);
 
 	// Basic Settings
 	string[] rockTypes = { "Cubic", "Boulder", "Quartz", "Custom" };
@@ -76,13 +141,20 @@ class RockStudio : EditorWindow {
 	float edgeHeight = 1f;
 	float edgeDepth = 1f;
 	float boulderRadius = 1f;
-	private float tipProtrusion = 2f;
-	private float tipFlatness = 1f;
-	private float baseHeight = 2f;
-	private float baseWidth = 2f;
-	private bool tetragonal;
-	private bool oneSided;
-	private Mesh meshVolume;
+private
+	float tipProtrusion = 2f;
+private
+	float tipFlatness = 1f;
+private
+	float baseHeight = 2f;
+private
+	float baseWidth = 2f;
+private
+	bool tetragonal;
+private
+	bool oneSided;
+private
+	Mesh meshVolume;
 
 	// Sculpt Settings
 	string[] compositionModes = { "Fill", "Outline" };
@@ -93,20 +165,23 @@ class RockStudio : EditorWindow {
 	GameObject ExportObject;
 	string[] exportOptions = { ".fbx" };
 	int exportType;
-	public static string DefaultPath = "Assets/";
+public
+	static string DefaultPath = "Assets/";
 
 	// Combine Settings
 	GameObject parentObject;
-	public bool multipleMaterials;
-	public bool addRigidBody;
-	public bool removeSourceMesh;
-	public string newMeshName;
+public
+	bool multipleMaterials;
+public
+	bool addRigidBody;
+public
+	bool removeSourceMesh;
+public
+	string newMeshName;
 	string[] colliderOptions = { "Box Collider", "Mesh Collider", "None" };
 	int colliderType;
 
-	[MenuItem("Tools/RockStudio/RockStudio")]
-	static void Init()
-	{
+	[MenuItem("Tools/RockStudio/RockStudio")] static void Init() {
 		RockStudio window = (RockStudio)GetWindow(typeof(RockStudio));
 		window.Show();
 
@@ -140,17 +215,17 @@ class RockStudio : EditorWindow {
 			toolbarIcons[5] = EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/settings16.png") as Texture2D;
 
 			basicMenuHeader = new GUIContent("   <b>Basic</b>",
-				EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/" + "basic16" + ".png") as Texture2D);
+					EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/" + "basic16" + ".png") as Texture2D);
 			combineMenuHeader = new GUIContent(" <b>Combine</b>",
-				EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/" + "combine16" + ".png") as Texture2D);
+					EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/" + "combine16" + ".png") as Texture2D);
 			sculptMenuHeader = new GUIContent("  <b>Sculpt</b>",
-				EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/" + "sculpting16" + ".png") as Texture2D);
+					EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/" + "sculpting16" + ".png") as Texture2D);
 			wearMenuHeader = new GUIContent("  <b> Wear</b>",
-				EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/" + "wear16" + ".png") as Texture2D);
+					EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/" + "wear16" + ".png") as Texture2D);
 			settingsMenuHeader = new GUIContent(" <b>Settings</b>",
-				EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/" + "settings16" + ".png") as Texture2D);
+					EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/" + "settings16" + ".png") as Texture2D);
 			exportMenuHeader = new GUIContent("  <b>Save</b>",
-				EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/" + "save16" + ".png") as Texture2D);
+					EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/" + "save16" + ".png") as Texture2D);
 		} else {
 			toolBarIndex = 0;
 			toolbarIcons = new Texture[6];
@@ -175,14 +250,14 @@ class RockStudio : EditorWindow {
 
 		meshCountIcon = new GUIContent("", EditorGUIUtility.ObjectContent(null, typeof(MeshFilter)).image, "The number of meshes that will be combined.");
 		vertexCountIcon = new GUIContent("",
-			EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/vertex_count_small.png") as Texture2D,
-			"The number of vertices that will be combined.");
+				EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/vertex_count_small.png") as Texture2D,
+				"The number of vertices that will be combined.");
 		addrigidbody = new GUIContent("", EditorGUIUtility.IconContent("Rigidbody2D Icon").image,
-			"Add Rigidbody component.");
+				"Add Rigidbody component.");
 		multipleMaterialsIcon = new GUIContent("", EditorGUIUtility.IconContent("PreTextureRGB").image,
-			"Preserve multiple materials.");
+				"Preserve multiple materials.");
 		removeSourceMeshIcon = new GUIContent("", EditorGUIUtility.IconContent("vcs_delete").image,
-		"Remove source mesh.");
+				"Remove source mesh.");
 
 		rockMaterial = AssetDatabase.GetBuiltinExtraResource<Material>("Default-Diffuse.mat");
 
@@ -191,7 +266,8 @@ class RockStudio : EditorWindow {
 		}
 	}
 
-	private void OnFocus() {
+private
+	void OnFocus() {
 		SceneView.onSceneGUIDelegate -= OnSceneGUI;
 		SceneView.onSceneGUIDelegate += OnSceneGUI;
 	}
@@ -209,29 +285,25 @@ class RockStudio : EditorWindow {
 			materialPickers[i].margin = new RectOffset(5, 5, 5, 5);
 		}
 
-		helpbox = new GUIStyle(EditorStyles.helpBox)
-		{
+		helpbox = new GUIStyle(EditorStyles.helpBox){
 			alignment = TextAnchor.MiddleLeft,
 			fontSize = 10,
 			richText = true,
 			contentOffset = new Vector2(5f, 0f),
 		};
 
-		centeredLabel = new GUIStyle(EditorStyles.label)
-		{
+		centeredLabel = new GUIStyle(EditorStyles.label){
 			alignment = TextAnchor.MiddleCenter
 		};
 
-		smallButton = new GUIStyle(GUI.skin.button)
-		{
+		smallButton = new GUIStyle(GUI.skin.button){
 			alignment = TextAnchor.MiddleCenter,
 			margin = new RectOffset(4, 4, 2, 2),
 			richText = true,
 			padding = new RectOffset(1, 1, 1, 1)
 		};
 
-		toolBarButton = new GUIStyle(GUI.skin.button)
-		{
+		toolBarButton = new GUIStyle(GUI.skin.button){
 			alignment = TextAnchor.MiddleCenter,
 			margin = new RectOffset(4, 4, 2, 2),
 			richText = true,
@@ -240,11 +312,12 @@ class RockStudio : EditorWindow {
 	}
 
 	void OnGUI() {
-		if (StylesNotLoaded) LoadStyles();
+		if (StylesNotLoaded)
+			LoadStyles();
 
 		EditorGUILayout.BeginHorizontal(helpbox);
 		toolBarIndex = GUILayout.SelectionGrid(toolBarIndex, toolbarIcons, 3, toolBarButton,
-			GUILayout.Height(columnHeight));
+				GUILayout.Height(columnHeight));
 		EditorGUILayout.EndHorizontal();
 
 		switch (toolBarIndex) {
@@ -302,7 +375,7 @@ class RockStudio : EditorWindow {
 						GUILayout.Label("Mesh");
 						meshVolume = (Mesh)EditorGUILayout.ObjectField(meshVolume, typeof(Mesh), true);
 						EditorGUILayout.Space();
-						GUILayout.Label( "Do not use complex meshes!", helpbox );
+						GUILayout.Label("Do not use complex meshes!", helpbox);
 						break;
 				}
 
@@ -371,26 +444,26 @@ class RockStudio : EditorWindow {
 				EditorGUILayout.BeginHorizontal();
 				if (typeOfrock == 2 || typeOfrock == 3) {
 					colliderType = EditorGUILayout.Popup(colliderType, colliderOptions,
-						GUILayout.Height(columnHeight / 2f));
+							GUILayout.Height(columnHeight / 2f));
 				} else {
 					colliderType = EditorGUILayout.Popup(colliderType, colliderOptions,
-						GUILayout.Height(columnHeight / 2f));
+							GUILayout.Height(columnHeight / 2f));
 				}
 
 				if (rockOrientation == 0 && typeOfrock == 2 || typeOfrock == 3) {
 					smallButton.normal.textColor = new Color(0.8588f, 0.2431f, 0.1137f);
 					if (GUILayout.Button(orientationX, smallButton, GUILayout.Width(rowWidth / 4f),
-						GUILayout.Height(columnHeight / 2 - 3)))
+								GUILayout.Height(columnHeight / 2 - 3)))
 						rockOrientation = (rockOrientation + 1) % 3;
 				} else if (rockOrientation == 1 && typeOfrock == 2 || typeOfrock == 3) {
 					smallButton.normal.textColor = new Color(0.18f, 0.77f, 0.2f);
 					if (GUILayout.Button(orientationY, smallButton, GUILayout.Width(rowWidth / 4f),
-						GUILayout.Height(columnHeight / 2 - 3)))
+								GUILayout.Height(columnHeight / 2 - 3)))
 						rockOrientation = (rockOrientation + 1) % 3;
 				} else if (rockOrientation == 2 && typeOfrock == 2 || typeOfrock == 3) {
 					smallButton.normal.textColor = new Color(0f, 0.04f, 0.97f);
 					if (GUILayout.Button(orientationZ, smallButton, GUILayout.Width(rowWidth / 4f),
-						GUILayout.Height(columnHeight / 2 - 3)))
+								GUILayout.Height(columnHeight / 2 - 3)))
 						rockOrientation = (rockOrientation + 1) % 3;
 				}
 				EditorGUILayout.EndHorizontal();
@@ -401,7 +474,8 @@ class RockStudio : EditorWindow {
 						currentlyPlacingRock = !currentlyPlacingRock;
 					}
 				} else {
-					if (GUILayout.Button("Cancel")) CancelPlacement();
+					if (GUILayout.Button("Cancel"))
+						CancelPlacement();
 				}
 
 				EditorGUILayout.Space();
@@ -451,8 +525,8 @@ class RockStudio : EditorWindow {
 
 						DestroyImmediate(GameObject.Find("Sculpture in progress"));
 						Debug.Log("<color=cyan>[RockStudio] </color>Sculpture was generated. Don't forget to save it.");
-					}
-					else Debug.Log("<color=cyan>[RockStudio] </color>No sculpture was found. Start a new sculpture first.");
+					} else
+						Debug.Log("<color=cyan>[RockStudio] </color>No sculpture was found. Start a new sculpture first.");
 				}
 
 				EditorGUILayout.Space();
@@ -462,33 +536,32 @@ class RockStudio : EditorWindow {
 				EditorGUILayout.Space();
 				GUILayout.Label("Name");
 				sculptureName =
-					EditorGUILayout.TextField("", sculptureName);
+						EditorGUILayout.TextField("", sculptureName);
 				EditorGUILayout.Space();
 				GUILayout.Label("Collider");
 				colliderType = EditorGUILayout.Popup(colliderType, colliderOptions,
-					GUILayout.Height(columnHeight / 2f));
+						GUILayout.Height(columnHeight / 2f));
 
-				if (GUILayout.Button("Save"))
-				{
-					if (GameObject.Find("Sculpture") != null)
-					{
+				if (GUILayout.Button("Save")) {
+					if (GameObject.Find("Sculpture") != null) {
 						GameObject oldStructure = GameObject.Find("Sculpture");
-						if (sculptureName == "") Debug.Log("<color=cyan>[RockStudio] </color>Sculpture name was left empty.");
-						else
-						{
+						if (sculptureName == "")
+							Debug.Log("<color=cyan>[RockStudio] </color>Sculpture name was left empty.");
+						else {
 							GameObject newStructure = MeshCombiner.Combine(sculptureName, oldStructure, true);
 
 							MeshRenderer renderer = newStructure.GetComponent(typeof(MeshRenderer)) as MeshRenderer;
 							renderer.material = rockMaterial;
 
-							if (addRigidBody) newStructure.AddComponent(typeof(Rigidbody));
+							if (addRigidBody)
+								newStructure.AddComponent(typeof(Rigidbody));
 
 							if (colliderType == 0) {
 								newStructure.AddComponent(typeof(BoxCollider));
 							}
 							if (colliderType == 1) {
 								MeshCollider meshcollider =
-									newStructure.AddComponent(typeof(MeshCollider)) as MeshCollider;
+										newStructure.AddComponent(typeof(MeshCollider)) as MeshCollider;
 								meshcollider.convex = true;
 								meshcollider.sharedMesh = newStructure.GetComponent<MeshFilter>().sharedMesh;
 							}
@@ -497,8 +570,7 @@ class RockStudio : EditorWindow {
 							DestroyImmediate(GameObject.Find("Sculpture"));
 							Debug.Log("<color=cyan>[RockStudio] </color>No sculpture was found. Start a new sculpture first.");
 						}
-					}
-					else
+					} else
 						Debug.Log("<color=cyan>[RockStudio] </color>No mesh was found to save. Generate a sculpture mesh first.");
 				}
 
@@ -510,13 +582,12 @@ class RockStudio : EditorWindow {
 			case 2: // Wear
 				CancelPlacement();
 				GUILayout.Label(wearMenuHeader, helpbox,
-					GUILayout.Height(columnHeight - heightOffset));
+						GUILayout.Height(columnHeight - heightOffset));
 				GUI.color = Color.white;
 				EditorGUILayout.Space();
 				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
 				EditorGUILayout.Space();
-				GUILayout.Label("Coming in future updates.", helpbox
-				);
+				GUILayout.Label("Coming in future updates.", helpbox);
 				EditorGUILayout.Space();
 				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
 				break;
@@ -524,14 +595,13 @@ class RockStudio : EditorWindow {
 			case 3: // MESH COMBINING
 				CancelPlacement();
 				GUILayout.Label(combineMenuHeader, helpbox,
-					GUILayout.Height(columnHeight - heightOffset));
+						GUILayout.Height(columnHeight - heightOffset));
 				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
 				GUILayout.Label("Objects", centeredLabel);
 				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
 				EditorGUILayout.Space();
 				GUILayout.Label("Parent Object");
-				parentObject = (GameObject)EditorGUILayout.ObjectField(parentObject, typeof(GameObject), true
-				);
+				parentObject = (GameObject)EditorGUILayout.ObjectField(parentObject, typeof(GameObject), true);
 				EditorGUILayout.Space();
 				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
 				GUILayout.Label("Saving", centeredLabel);
@@ -541,96 +611,90 @@ class RockStudio : EditorWindow {
 				newMeshName = EditorGUILayout.TextField("", newMeshName);
 				EditorGUILayout.Space();
 				GUILayout.Label("Options");
-				colliderType = EditorGUILayout.Popup(colliderType, colliderOptions
-				);
+				colliderType = EditorGUILayout.Popup(colliderType, colliderOptions);
 				EditorGUILayout.BeginHorizontal();
 				multipleMaterials = GUILayout.Toggle(multipleMaterials, multipleMaterialsIcon, toolBarButton,
-					GUILayout.Width(rowWidth / 3f), GUILayout.Height(columnHeight / 2f));
+						GUILayout.Width(rowWidth / 3f), GUILayout.Height(columnHeight / 2f));
 				addRigidBody = GUILayout.Toggle(addRigidBody, addrigidbody, toolBarButton, GUILayout.Width(rowWidth / 3),
-					GUILayout.Height(columnHeight / 2f));
+						GUILayout.Height(columnHeight / 2f));
 				removeSourceMesh = GUILayout.Toggle(removeSourceMesh, removeSourceMeshIcon, toolBarButton,
-					GUILayout.Width(rowWidth / 3f), GUILayout.Height(columnHeight / 2f));
+						GUILayout.Width(rowWidth / 3f), GUILayout.Height(columnHeight / 2f));
 				EditorGUILayout.EndHorizontal();
-				if (GUILayout.Button("Combine"))
-				{
-					if (parentObject != null && MeshUtilities.ChildrenAllGameObjects(parentObject))
-					{
+				if (GUILayout.Button("Combine")) {
+					if (parentObject != null && MeshUtilities.ChildrenAllGameObjects(parentObject)) {
 						GameObject combinedGameObject =
-							MeshCombiner.Combine(newMeshName, parentObject, multipleMaterials);
-						if (removeSourceMesh) Undo.DestroyObjectImmediate(parentObject);
-						if (addRigidBody) combinedGameObject.AddComponent(typeof(Rigidbody));
-						if (colliderType == 0) combinedGameObject.AddComponent(typeof(BoxCollider));
-						if (colliderType == 1)
-						{
+								MeshCombiner.Combine(newMeshName, parentObject, multipleMaterials);
+						if (removeSourceMesh)
+							Undo.DestroyObjectImmediate(parentObject);
+						if (addRigidBody)
+							combinedGameObject.AddComponent(typeof(Rigidbody));
+						if (colliderType == 0)
+							combinedGameObject.AddComponent(typeof(BoxCollider));
+						if (colliderType == 1) {
 							MeshCollider meshcollider =
-								combinedGameObject.AddComponent(typeof(MeshCollider)) as MeshCollider;
+									combinedGameObject.AddComponent(typeof(MeshCollider)) as MeshCollider;
 							meshcollider.convex = true;
 							meshcollider.sharedMesh = combinedGameObject.GetComponent<MeshFilter>().sharedMesh;
 						}
 						Selection.activeGameObject = combinedGameObject;
 					}
 
-					else Debug.Log("<color=cyan>[RockStudio] </color>Parent object field was left empty.");
+					else
+						Debug.Log("<color=cyan>[RockStudio] </color>Parent object field was left empty.");
 				}
 				EditorGUILayout.Space();
 				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-				if (parentObject && MeshUtilities.ChildrenAllGameObjects(parentObject))
-				{
-					if (parentObject.transform.childCount != 0)
-					{
+				if (parentObject && MeshUtilities.ChildrenAllGameObjects(parentObject)) {
+					if (parentObject.transform.childCount != 0) {
 						EditorGUILayout.BeginHorizontal();
 						GUILayout.Label(meshCountIcon, GUILayout.Width(rowWidth / 3),
-							GUILayout.Height(columnHeight / 2));
+								GUILayout.Height(columnHeight / 2));
 						GUILayout.Label(parentObject.transform.childCount.ToString());
 						EditorGUILayout.EndHorizontal();
 
 						EditorGUILayout.BeginHorizontal();
 						GUILayout.Label(vertexCountIcon, GUILayout.Width(rowWidth / 3),
-							GUILayout.Height(columnHeight / 2));
+								GUILayout.Height(columnHeight / 2));
 						GUILayout.Label(MeshUtilities.GetVerts(parentObject).ToString());
 						EditorGUILayout.EndHorizontal();
 						EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
 					}
 
-					else
-					{
+					else {
 						EditorGUILayout.BeginHorizontal();
 						GUILayout.Label(meshCountIcon, GUILayout.Width(rowWidth / 3),
-							GUILayout.Height(columnHeight / 2));
+								GUILayout.Height(columnHeight / 2));
 						GUILayout.Label("1");
 						EditorGUILayout.EndHorizontal();
 
 						EditorGUILayout.BeginHorizontal();
 						GUILayout.Label(vertexCountIcon, GUILayout.Width(rowWidth / 3),
-							GUILayout.Height(columnHeight / 2));
-						GUILayout.Label(parentObject.transform.GetComponent<MeshFilter>().sharedMesh.vertexCount
-							.ToString());
+								GUILayout.Height(columnHeight / 2));
+						GUILayout.Label(parentObject.transform.GetComponent<MeshFilter>().sharedMesh.vertexCount.ToString());
 						EditorGUILayout.EndHorizontal();
 						EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
 					}
 				}
 				EditorGUILayout.Space();
-				GUILayout.Label("Add a parent that contains the objects you want to combine.", helpbox
-				);
+				GUILayout.Label("Add a parent that contains the objects you want to combine.", helpbox);
 				break;
 
 			case 4: // Exporting
 				CancelPlacement();
 				GUILayout.Label(exportMenuHeader, helpbox,
-					GUILayout.Height(columnHeight - heightOffset));
+						GUILayout.Height(columnHeight - heightOffset));
 				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
 				GUILayout.Label("Objects", centeredLabel);
 				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
 				EditorGUILayout.Space();
 				GUILayout.Label("Type");
 				exportType = EditorGUILayout.Popup(exportType, exportOptions,
-					GUILayout.Height(columnHeight / 2f));
+						GUILayout.Height(columnHeight / 2f));
 				EditorGUILayout.Space();
 				GUILayout.Label("Object");
 				ExportObject = (GameObject)EditorGUILayout.ObjectField(ExportObject, typeof(GameObject), true);
 				EditorGUILayout.Space();
-				if (GUILayout.Button("Export"))
-				{
+				if (GUILayout.Button("Export")) {
 					Exporter.ExportGameObject(ExportObject, false, false);
 					Debug.Log("<color=cyan>[RockStudio] </color>Mesh exported.");
 				}
@@ -641,17 +705,16 @@ class RockStudio : EditorWindow {
 			case 5: // Settings
 				CancelPlacement();
 				GUILayout.Label(settingsMenuHeader, helpbox,
-					GUILayout.Height(columnHeight - heightOffset));
+						GUILayout.Height(columnHeight - heightOffset));
 				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
 				GUILayout.Label("Generation", centeredLabel);
 				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
 				GUILayout.Label("Resolution");
-				numberOfVerticesFloat = GUILayout.HorizontalSlider(numberOfVerticesFloat, 10f, maximumResolution
-				);
+				numberOfVerticesFloat = GUILayout.HorizontalSlider(numberOfVerticesFloat, 10f, maximumResolution);
 				numberOfVerticesInt = Mathf.RoundToInt(numberOfVerticesFloat);
 				EditorGUILayout.BeginHorizontal();
 				GUILayout.Label(vertexCountIcon, GUILayout.Width(rowWidth / 3),
-					GUILayout.Height(columnHeight / 2));
+						GUILayout.Height(columnHeight / 2));
 				GUILayout.Label(numberOfVerticesInt.ToString());
 				EditorGUILayout.EndHorizontal();
 				EditorGUILayout.Space();
@@ -660,7 +723,7 @@ class RockStudio : EditorWindow {
 				EditorGUILayout.Space();
 				GUILayout.Label("Group Name");
 				rockGroupName =
-					EditorGUILayout.TextField("", rockGroupName);
+						EditorGUILayout.TextField("", rockGroupName);
 				EditorGUILayout.Space();
 				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
 				GUILayout.Label("Seeds", centeredLabel);
@@ -670,14 +733,12 @@ class RockStudio : EditorWindow {
 				SeedMethod = (MethodOfSeed)EditorGUILayout.EnumPopup("", SeedMethod);
 				EditorGUILayout.Space();
 
-				if (SeedMethod == MethodOfSeed.Custom)
-				{
+				if (SeedMethod == MethodOfSeed.Custom) {
 					GUILayout.Label("Value");
 					Seed = EditorGUILayout.IntField("", Seed);
 				}
 
-				if (SeedMethod == MethodOfSeed.Random)
-				{
+				if (SeedMethod == MethodOfSeed.Random) {
 					GUILayout.Label("Max Value");
 					SeedSize = EditorGUILayout.IntField("", SeedSize);
 				}
@@ -690,52 +751,49 @@ class RockStudio : EditorWindow {
 				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
 				EditorGUILayout.Space();
 				EditorGUILayout.LabelField("Folder:");
-				string[] splitString = DefaultPath.Split(new string[] { "/" }, StringSplitOptions.None);
+				string[] splitString = DefaultPath.Split(new string[]{ "/" }, StringSplitOptions.None);
 				EditorGUILayout.LabelField(splitString[splitString.Length - 1] + "/");
-				if (GUILayout.Button("Change")) DefaultPath = Exporter.ChangePath(DefaultPath);
+				if (GUILayout.Button("Change"))
+					DefaultPath = Exporter.ChangePath(DefaultPath);
 				EditorGUILayout.Space();
 				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
 				break;
 		}
 	}
 
-	void OnSceneGUI(SceneView sceneView)
-	{
+	void OnSceneGUI(SceneView sceneView) {
 		currentEvent = Event.current;
 		sceneInput();
 		updateMousePos(sceneView);
 		drawGizmo();
 
-		if (toolBarIndex != 0) return;
+		if (toolBarIndex != 0)
+			return;
 
 		Event current = Event.current;
 		int controlID = GUIUtility.GetControlID(FocusType.Passive);
 
-		switch (current.type)
-		{
-			case EventType.MouseUp:
-				{
-					if (currentlyPlacingRock && current.button == 0 && !current.alt)
-					{
-						GenerateRock(mouseHitPoint.point, mouseHitPoint.normal);
-						Repaint();
-					}
-					break;
+		switch (current.type) {
+			case EventType.MouseUp: {
+				if (currentlyPlacingRock && current.button == 0 && !current.alt) {
+					GenerateRock(mouseHitPoint.point, mouseHitPoint.normal);
+					Repaint();
 				}
+				break;
+			}
 			case EventType.Layout:
-				if (currentlyPlacingRock) HandleUtility.AddDefaultControl(controlID);
+				if (currentlyPlacingRock)
+					HandleUtility.AddDefaultControl(controlID);
 				break;
 		}
 	}
 
-	void NewSculpture()
-	{
+	void NewSculpture() {
 		GameObject newSculpture = new GameObject("Sculpture in progress");
 		Undo.RegisterCompleteObjectUndo(newSculpture, "Create");
 	}
 
-	void AddShape()
-	{
+	void AddShape() {
 		GameObject NewRockShape = new GameObject("Sculpture point");
 		Undo.RegisterCreatedObjectUndo(NewRockShape, "Create");
 
