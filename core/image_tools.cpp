@@ -927,3 +927,22 @@ Ref<Image> ImageTools::make_seamless(const Image *p_src, SeamlessStampMode p_sta
 	target->create(width, height, false, Image::FORMAT_RGBA8, new_data);
 	return target;
 }
+
+Vector<Ref<Image>> ImageTools::extract_channels(const Image *p_src, bool p_as_grey_rbg) {
+	ERR_FAIL_NULL_V(p_src, Vector<Ref<Image>>());
+	Ref<Image> r, b, g, a;
+	for (int j = 0; j < p_src->get_height(); j++) {
+		for (int i = 0; i < p_src->get_width(); i++) {
+			const uint32_t px = p_src->_get_pixel32(i, j);
+		}
+	}
+	return make_vector(r, g, b, a);
+}
+
+Ref<Image> ImageTools::merge_channels(Image *p_dest, const Ref<Image> &p_r, const Ref<Image> &p_g, const Ref<Image> &p_b, const Ref<Image> &p_a) {
+	ERR_FAIL_NULL_V(p_dest, Ref<Image>());
+	ERR_FAIL_COND_V(!p_dest->_can_modify(p_dest->format), Ref<Image>());
+	ERR_FAIL_COND_V_MSG(p_dest->write_lock.ptr(), Ref<Image>(), "Cannot modify image when it is locked.");
+	Ref<Image> r;
+	return r;
+}
