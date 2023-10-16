@@ -72,6 +72,14 @@
 #define nullref(pClass) Ref<pClass>()
 #define selfref(pClass) Ref<pClass>(this)
 
+#define copyarray(fr, to)                     \
+	{                                         \
+		to.resize(fr.size());                 \
+		for (int i = 0; i < fr.size(); ++i) { \
+			to.set(i, fr[i]);                 \
+		}                                     \
+	}
+
 String string_ellipsis(const Ref<Font> &p_font, const String &p_text, real_t p_max_width);
 String string_format(const char *p_format, ...);
 String string_format(const char *p_format, va_list p_list);

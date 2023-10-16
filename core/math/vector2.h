@@ -117,6 +117,7 @@ struct _NO_DISCARD_CLASS_ Vector2 {
 
 	_FORCE_INLINE_ static Vector2 linear_interpolate(const Vector2 &p_a, const Vector2 &p_b, real_t p_weight);
 	_FORCE_INLINE_ Vector2 linear_interpolate(const Vector2 &p_to, real_t p_weight) const;
+	_FORCE_INLINE_ Vector2 lerp(const Vector2 &p_to, real_t p_weight) const { return linear_interpolate(p_to, p_weight); }
 	_FORCE_INLINE_ Vector2 slerp(const Vector2 &p_to, real_t p_weight) const;
 	Vector2 cubic_interpolate(const Vector2 &p_b, const Vector2 &p_pre_a, const Vector2 &p_post_b, real_t p_weight) const;
 	Vector2 move_toward(const Vector2 &p_to, const real_t p_delta) const;
@@ -178,10 +179,12 @@ struct _NO_DISCARD_CLASS_ Vector2 {
 
 	Vector2 rotated_around(const Vector2 &p_origin, real_t p_radians) const;
 	Vector2 rotated(real_t p_by) const;
-	Vector2 tangent() const {
+	_FORCE_INLINE_ Vector2 orthogonal() const {
 		return Vector2(y, -x);
 	}
-
+	_FORCE_INLINE_ Vector2 tangent() const {
+		return orthogonal();
+	}
 	Vector2 sign() const;
 	Vector2 floor() const;
 	Vector2 ceil() const;

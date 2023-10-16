@@ -76,6 +76,9 @@ public:
 	void add_point(Vector2 pos, int atpos = -1);
 	void remove_point(int i);
 
+	void set_closed(bool p_closed);
+	bool is_closed() const;
+
 	void set_width(float width);
 	float get_width() const;
 
@@ -133,6 +136,7 @@ private:
 	LineJointMode _joint_mode;
 	LineCapMode _begin_cap_mode;
 	LineCapMode _end_cap_mode;
+	bool _closed;
 	float _width;
 	Ref<Curve> _curve;
 	Color _default_color;

@@ -63,16 +63,21 @@
 			[b]Note:[/b] Due to how it works, built-in antialiasing will not look correct for translucent lines and may not work on certain platforms. As a workaround, install the [url=https://github.com/godot-extended-libraries/godot-antialiased-line2d]Antialiased Line2D[/url] add-on then create an AntialiasedLine2D node. That node relies on a texture with custom mipmaps to perform antialiasing. 2D batching is also still supported with those antialiased lines.
 		</member>
 		<member name="begin_cap_mode" type="int" setter="set_begin_cap_mode" getter="get_begin_cap_mode" enum="Line2D.LineCapMode" default="0">
-			Controls the style of the line's first point. Use [enum LineCapMode] constants.
+			The style of the beginning of the polyline, if [member closed] is [code]false[/code]. Use [enum LineCapMode] constants.
+ 		</member>
+ 		<member name="closed" type="bool" setter="set_closed" getter="is_closed" default="false">
+ 			If [code]true[/code] and the polyline has more than 2 points, the last point and the first one will be connected by a segment.
+ 			[b]Note:[/b] The shape of the closing segment is not guaranteed to be seamless if a [member width_curve] is provided.
+ 			[b]Note:[/b] The joint between the closing segment and the first segment is drawn first and it samples the [member gradient] and the [member width_curve] at the beginning.
 		</member>
 		<member name="default_color" type="Color" setter="set_default_color" getter="get_default_color" default="Color( 0.4, 0.5, 1, 1 )">
 			The line's color. Will not be used if a gradient is set.
 		</member>
 		<member name="end_cap_mode" type="int" setter="set_end_cap_mode" getter="get_end_cap_mode" enum="Line2D.LineCapMode" default="0">
-			Controls the style of the line's last point. Use [enum LineCapMode] constants.
+			The style of the end of the polyline, if [member closed] is [code]false[/code]. Use [enum LineCapMode] constants.
 		</member>
 		<member name="gradient" type="Gradient" setter="set_gradient" getter="get_gradient">
-			The gradient is drawn through the whole line from start to finish. The default color will not be used if a gradient is set.
+			The gradient is drawn through the whole line from start to finish. The [member default_color] will not be used if this property is set.
 		</member>
 		<member name="joint_mode" type="int" setter="set_joint_mode" getter="get_joint_mode" enum="Line2D.LineJointMode" default="0">
 			The style for the points between the start and the end.
@@ -94,7 +99,7 @@
 			The style to render the [code]texture[/code] on the line. Use [enum LineTextureMode] constants.
 		</member>
 		<member name="width" type="float" setter="set_width" getter="get_width" default="10.0">
-			The line's width.
+			The polyline's width.
 		</member>
 		<member name="width_curve" type="Curve" setter="set_curve" getter="get_curve">
 			The line's width varies with the curve. The original width is simply multiply by the value of the Curve.

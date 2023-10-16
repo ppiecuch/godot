@@ -43,6 +43,7 @@ Line2D::Line2D() {
 	_joint_mode = LINE_JOINT_SHARP;
 	_begin_cap_mode = LINE_CAP_NONE;
 	_end_cap_mode = LINE_CAP_NONE;
+	_closed = false;
 	_width = 10;
 	_default_color = Color(0.4, 0.5, 1);
 	_texture_mode = LINE_TEXTURE_NONE;
@@ -57,12 +58,12 @@ Rect2 Line2D::_edit_get_rect() const {
 		return Rect2(0, 0, 0, 0);
 	}
 	Vector2 d = Vector2(_width, _width);
-	Rect2 aabb = Rect2(_points[0] - d, 2 * d);
+	Rect2 bounding_rect = Rect2(_points[0] - d, 2 * d);
 	for (int i = 1; i < _points.size(); i++) {
-		aabb.expand_to(_points[i] - d);
-		aabb.expand_to(_points[i] + d);
+		bounding_rect.expand_to(_points[i] - d);
+		bounding_rect.expand_to(_points[i] + d);
 	}
-	return aabb;
+	return bounding_rect;
 }
 
 bool Line2D::_edit_use_rect() const {
@@ -74,26 +75,45 @@ bool Line2D::_edit_is_selected_on_click(const Point2 &p_point, double p_toleranc
 	PoolVector<Vector2>::Read points = _points.read();
 	for (int i = 0; i < _points.size() - 1; i++) {
 		Vector2 p = Geometry::get_closest_point_to_segment_2d(p_point, &points[i]);
-		if (p.distance_to(p_point) <= d) {
+		if (p_point.distance_to(p) <= d) {
 			return true;
 		}
 	}
-
+	if (_closed && _points.size() > 2) {
+		const Vector2 closing_segment[2] = { points[0], points[_points.size() - 1] };
+		Vector2 p = Geometry::get_closest_point_to_segment_2d(p_point, closing_segment);
+		if (p_point.distance_to(p) <= d) {
+			return true;
+		}
+	}
 	return false;
 }
-#endif
+#endif // TOOLS_ENABLED
 
 void Line2D::set_points(const PoolVector<Vector2> &p_points) {
 	_points = p_points;
 	update();
 }
 
-void Line2D::set_width(float p_width) {
-	if (p_width < 0.0) {
-		p_width = 0.0;
+void Line2D::set_closed(bool p_closed) {
+	if (_closed != p_closed) {
+		_closed = p_closed;
+		update();
 	}
-	_width = p_width;
-	update();
+}
+
+bool Line2D::is_closed() const {
+	return _closed;
+}
+
+void Line2D::set_width(float p_width) {
+	if (p_width < 0) {
+		p_width = 0;
+	}
+	if (_width != p_width) {
+		_width = p_width;
+		update();
+	}
 }
 
 float Line2D::get_width() const {
@@ -101,14 +121,12 @@ float Line2D::get_width() const {
 }
 
 void Line2D::set_curve(const Ref<Curve> &p_curve) {
-	// Cleanup previous connection if any
 	if (_curve.is_valid()) {
 		_curve->disconnect(CoreStringNames::get_singleton()->changed, this, "_curve_changed");
 	}
 
 	_curve = p_curve;
 
-	// Connect to the curve so the line will update when it is changed
 	if (_curve.is_valid()) {
 		_curve->connect(CoreStringNames::get_singleton()->changed, this, "_curve_changed");
 	}
@@ -171,14 +189,12 @@ Color Line2D::get_default_color() const {
 }
 
 void Line2D::set_gradient(const Ref<Gradient> &p_gradient) {
-	// Cleanup previous connection if any
 	if (_gradient.is_valid()) {
 		_gradient->disconnect(CoreStringNames::get_singleton()->changed, this, "_gradient_changed");
 	}
 
 	_gradient = p_gradient;
 
-	// Connect to the gradient so the line will update when the ColorRamp is changed
 	if (_gradient.is_valid()) {
 		_gradient->connect(CoreStringNames::get_singleton()->changed, this, "_gradient_changed");
 	}
@@ -191,14 +207,12 @@ Ref<Gradient> Line2D::get_gradient() const {
 }
 
 void Line2D::set_texture(const Ref<Texture> &p_texture) {
-	// Cleanup previous connection if any
 	if (_texture.is_valid()) {
 		_texture->disconnect(CoreStringNames::get_singleton()->changed, this, "_texture_changed");
 	}
 
 	_texture = p_texture;
 
-	// Connect to the gradient so the line will update when the ColorRamp is changed
 	if (_texture.is_valid()) {
 		_texture->connect(CoreStringNames::get_singleton()->changed, this, "_texture_changed");
 	}
@@ -255,8 +269,8 @@ void Line2D::_notification(int p_what) {
 }
 
 void Line2D::set_sharp_limit(float p_limit) {
-	if (p_limit < 0.f) {
-		p_limit = 0.f;
+	if (p_limit < 0) {
+		p_limit = 0;
 	}
 	_sharp_limit = p_limit;
 	update();
@@ -296,25 +310,13 @@ bool Line2D::get_debug_mode() const {
 #endif
 
 void Line2D::_draw() {
-	if (_points.size() <= 1 || _width == 0.f) {
+	if (_points.size() <= 1 || _width == 0) {
 		return;
 	}
 
-	// TODO Is this really needed?
-	// Copy points for faster access
-	Vector<Vector2> points;
-	points.resize(_points.size());
-	int len = points.size();
-	{
-		PoolVector<Vector2>::Read points_read = _points.read();
-		for (int i = 0; i < len; ++i) {
-			points.write[i] = points_read[i];
-		}
-	}
-
-	// TODO Maybe have it as member rather than copying parameters and allocating memory?
-	LineBuilder lb;
-	lb.points = points;
+	LineBuilder lb; // TODO Maybe have it as member rather than copying parameters and allocating memory?
+	lb.points = _points;
+	lb.closed = _closed;
 	lb.default_color = _default_color;
 	lb.gradient = *_gradient;
 	lb.texture_mode = _texture_mode;
@@ -403,6 +405,8 @@ void Line2D::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("clear_points"), &Line2D::clear_points);
 
+	ClassDB::bind_method(D_METHOD("set_closed", "closed"), &Line2D::set_closed);
+	ClassDB::bind_method(D_METHOD("is_closed"), &Line2D::is_closed);
 	ClassDB::bind_method(D_METHOD("set_width", "width"), &Line2D::set_width);
 	ClassDB::bind_method(D_METHOD("get_width"), &Line2D::get_width);
 
@@ -443,6 +447,7 @@ void Line2D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_debug_mode"), &Line2D::get_debug_mode);
 #endif
 	ADD_PROPERTY(PropertyInfo(Variant::POOL_VECTOR2_ARRAY, "points"), "set_points", "get_points");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "closed"), "set_closed", "is_closed");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "width"), "set_width", "get_width");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "width_curve", PROPERTY_HINT_RESOURCE_TYPE, "Curve"), "set_curve", "get_curve");
 	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "default_color"), "set_default_color", "get_default_color");
