@@ -71,9 +71,13 @@
 #include "editor/explodomatica_plugin.h"
 #endif
 
-#include "bulletkit/gdlibrary.h"
+#include "bulletkit/register.h"
 
 #include "blitter/gd_bitblit.h"
+
+#ifdef GDEXT_QUROBULLET_ENABLED
+#include "qurobullet/register.h"
+#endif
 
 #include "statemachine/state.h"
 #include "statemachine/statemachine.h"
@@ -143,6 +147,10 @@
 #include "environment/water_2d/gd_water_2d.h"
 #include "environment/water_splash/gd_water_splash.h"
 #include "environment/waterfall/gd_waterfall.h"
+
+#ifdef GDEXT_HYDRO_ENABLED
+#include "hydro/register.h"
+#endif
 
 #ifdef GDEXT_MEDIA_FLAC_ENABLED
 #include "media/flac/audio_stream_flac.h"
@@ -298,7 +306,10 @@ void register_gdextensions_types() {
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Resources", memnew(Resources)));
 	ClassDB::register_class<SRGraph>();
 #ifdef GDEXT_BULLETKIT_ENABLED
-	register_bullet_kit();
+	register_bulletkit();
+#endif
+#ifdef GDEXT_QUROBULLET_ENABLED
+	register_qurobullet();
 #endif
 #ifdef GDEXT_BLITTER_ENABLED
 	ClassDB::register_virtual_class<BlitSurface>();
@@ -432,6 +443,10 @@ void register_gdextensions_types() {
 	ClassDB::register_class<NoiseTexture>;
 	ClassDB::register_virtual_class<Noise>;
 	ClassDB::register_class<FastNoiseLite>;
+#endif
+
+#ifdef GDEXT_HYDRO_ENABLED
+	register_hydro();
 #endif
 
 #ifdef GDEXT_VISUAL_ENABLED
@@ -680,6 +695,9 @@ void unregister_gdextensions_types() {
 	}
 #ifdef GDEXT_BEHAVIORTREE_ENABLED
 	BTStringNames::free();
+#endif
+#ifdef GDEXT_QUROBULLET_ENABLED
+	unregister_qurobullet();
 #endif
 #ifdef GDEXT_BLITTER_ENABLED
 	RemoveSingleton(BitBlit);

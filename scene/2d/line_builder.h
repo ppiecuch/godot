@@ -32,9 +32,11 @@
 #define LINE_BUILDER_H
 
 #include "core/color.h"
+#include "core/local_vector.h"
 #include "core/math/vector2.h"
-#include "line_2d.h"
 #include "scene/resources/gradient.h"
+
+#include "line_2d.h"
 
 class LineBuilder {
 	enum Orientation {
@@ -55,13 +57,16 @@ class LineBuilder {
 	float _last_uvx; // last unmodified uvs
 	int _last_index[2]; // index of last up and down vertices of the strip
 
-public:
 	// TODO Move in a struct and reference it
+	// TODO offset_joints option (offers alternative implementation of round joints)
+
+public:
 	// Input
-	Vector<Vector2> points;
+	LocalVector<Vector2> points;
 	Line2D::LineJointMode joint_mode;
 	Line2D::LineCapMode begin_cap_mode;
 	Line2D::LineCapMode end_cap_mode;
+	bool closed;
 	float width;
 	Curve *curve;
 	Color default_color;
@@ -71,9 +76,6 @@ public:
 	int round_precision;
 	float tile_aspect; // w/h
 	Rect2 tile_region; // texture region
-	// TODO offset_joints option (offers alternative implementation of round joints)
-
-	// TODO Move in a struct and reference it
 	// Output
 	Vector<Vector2> vertices;
 	Vector<Color> colors;
@@ -83,7 +85,6 @@ public:
 	LineBuilder();
 
 	void build();
-	void clear_output();
 };
 
 #endif // LINE_BUILDER_H

@@ -54,6 +54,8 @@ public:
 		FE_SPLATMODE,
 	};
 	static Ref<Image> make_seamless(const Image *p_src, SeamlessStampMode p_stamp_mode = FE_STAMPING, real_t p_stamper_radius = 0.45, real_t p_stamp_density = 0.4, real_t p_hardness = 0.6, real_t p_stamp_noise_mask = 1, real_t p_randomize = 0.25, int p_stamp_rotate = 1, SeamlessAxis p_to_loop = FE_XY);
+	static Vector<Ref<Image>> extract_channels(const Image *p_src, bool p_as_grey_rbg = false);
+	static Ref<Image> merge_channels(Image *p_dest, const Ref<Image> &p_r, const Ref<Image> &p_g, const Ref<Image> &p_b, const Ref<Image> &p_a = Ref<Image>());
 };
 
 #endif // IMAGE_TOOLS_H

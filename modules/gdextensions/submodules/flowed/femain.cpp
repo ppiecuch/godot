@@ -1,3 +1,33 @@
+/**************************************************************************/
+/*  femain.cpp                                                            */
+/**************************************************************************/
+/*                         This file is part of:                          */
+/*                             GODOT ENGINE                               */
+/*                        https://godotengine.org                         */
+/**************************************************************************/
+/* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
+/* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
+/*                                                                        */
+/* Permission is hereby granted, free of charge, to any person obtaining  */
+/* a copy of this software and associated documentation files (the        */
+/* "Software"), to deal in the Software without restriction, including    */
+/* without limitation the rights to use, copy, modify, merge, publish,    */
+/* distribute, sublicense, and/or sell copies of the Software, and to     */
+/* permit persons to whom the Software is furnished to do so, subject to  */
+/* the following conditions:                                              */
+/*                                                                        */
+/* The above copyright notice and this permission notice shall be         */
+/* included in all copies or substantial portions of the Software.        */
+/*                                                                        */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. */
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY   */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,   */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE      */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
+/**************************************************************************/
+
 /*
  * Copyright (c) 2012-2016, Stanislaw Adaszewski
  * All rights reserved.
@@ -5,8 +35,8 @@
 
 #include "femain.h"
 
-#include "core/error_macros.h"
 #include "common/gd_core.h"
+#include "core/error_macros.h"
 
 #include "flowed/akima/akima.h"
 #include "flowed/nn-c/nn.h"
@@ -14,10 +44,12 @@
 
 #define PREVIEW_SIZE() Size2(100, 75)
 
-template <typename T> struct LocalAutoVector : public LocalVector<T, size_t> {
-	operator T*() { return this->ptr(); }
-	operator T*() const { return this->ptr(); }
-	LocalAutoVector(size_t p_size, const T *p_src = nullptr) : LocalVector<T, size_t>(p_size, p_src) { }
+template <typename T>
+struct LocalAutoVector : public LocalVector<T, size_t> {
+	operator T *() { return this->ptr(); }
+	operator T *() const { return this->ptr(); }
+	LocalAutoVector(size_t p_size, const T *p_src = nullptr) :
+			LocalVector<T, size_t>(p_size, p_src) {}
 };
 
 real_t FEFlowElement::max_radius = 32;
@@ -34,19 +66,19 @@ Ref<Image> FEMain::akima_generate_flow_map() {
 	LocalAutoVector<double> ZD1(NDP);
 	LocalAutoVector<double> ZD2(NDP);
 	LocalAutoVector<double> ZD3(NDP);
-    LocalAutoVector<double> ZD4(NDP);
+	LocalAutoVector<double> ZD4(NDP);
 	int NXI = image->get_width();
 	LocalAutoVector<double> XI(NXI);
 	int NYI = image->get_height();
 	LocalAutoVector<double> YI(NYI);
-	LocalAutoVector<double> ZI1(NXI*NYI); // final output X
-	LocalAutoVector<double> ZI2(NXI*NYI); // final output Y
-	LocalAutoVector<double> ZI3(NXI*NYI); // final output Z
-    LocalAutoVector<double> ZI4(NXI*NYI); // final output A
+	LocalAutoVector<double> ZI1(NXI * NYI); // final output X
+	LocalAutoVector<double> ZI2(NXI * NYI); // final output Y
+	LocalAutoVector<double> ZI3(NXI * NYI); // final output Z
+	LocalAutoVector<double> ZI4(NXI * NYI); // final output A
 	int IER;
 	LocalAutoVector<double> WK(NDP * 17);
 	LocalAutoVector<int> IWK(NDP * 25);
-	LocalAutoVector<bool> EXTRPI(NXI*NYI);
+	LocalAutoVector<bool> EXTRPI(NXI * NYI);
 	LocalAutoVector<int> NEAR(NDP);
 	LocalAutoVector<int> NEXT(NDP);
 	LocalAutoVector<double> DIST(NDP);
@@ -72,7 +104,7 @@ Ref<Image> FEMain::akima_generate_flow_map() {
 		ZD1[i] = color.r;
 		ZD2[i] = color.g;
 		ZD3[i] = color.b;
-        ZD4[i] = color.a;
+		ZD4[i] = color.a;
 	}
 
 	sdsf3p_(&MD, &NDP, XD, YD, ZD1, &NXI, XI, &NYI, YI, ZI1, &IER, WK, IWK, EXTRPI, NEAR, NEXT, DIST);
@@ -94,10 +126,10 @@ Ref<Image> FEMain::akima_generate_flow_map() {
 	// memset(DIST, 0, NDP * sizeof(double));
 
 	sdsf3p_(&MD, &NDP, XD, YD, ZD3, &NXI, XI, &NYI, YI, ZI3, &IER, WK, IWK, EXTRPI, NEAR, NEXT, DIST);
-    sdsf3p_(&MD, &NDP, XD, YD, ZD4, &NXI, XI, &NYI, YI, ZI4, &IER, WK, IWK, EXTRPI, NEAR, NEXT, DIST);
+	sdsf3p_(&MD, &NDP, XD, YD, ZD4, &NXI, XI, &NYI, YI, ZI4, &IER, WK, IWK, EXTRPI, NEAR, NEXT, DIST);
 
 	Ref<Image> im = memnew(Image(NXI, NYI, false, Image::FORMAT_RGBA8));
-    im->fill(0);
+	im->fill(0);
 	for (int x = 0; x < NXI; x++) {
 		for (int y = 0; y < NYI; y++) {
 			const int ofs = y * NXI + x;
@@ -131,11 +163,11 @@ Ref<Image> FEMain::nn_generate_flow_map() {
 	LocalAutoVector<double> red(N);
 	LocalAutoVector<double> green(N);
 	LocalAutoVector<double> blue(N);
-    LocalAutoVector<double> alpha(N);
+	LocalAutoVector<double> alpha(N);
 	for (int yy = 0; yy < h; yy++) {
 		for (int xx = 0; xx < w; xx++) {
-			x[yy*w+xx] = xx;
-			y[yy*w+xx] = yy;
+			x[yy * w + xx] = xx;
+			y[yy * w + xx] = yy;
 		}
 	}
 
@@ -161,18 +193,18 @@ Ref<Image> FEMain::nn_generate_flow_map() {
 	for (size_t i = 0; i < elems.size(); i++) { // alpha
 		zin[i] = elems[i]->get_color().a;
 	}
-    nnai_interpolate(nn, zin, alpha);
+	nnai_interpolate(nn, zin, alpha);
 
 #define CCLAMP(v) ((v) < 0 ? 0 : ((v) > 1 ? 1 : (v)))
 
 	Ref<Image> im = memnew(Image(w, h, false, Image::FORMAT_RGBA8));
-    im->fill(0);
+	im->fill(0);
 	for (int yy = 0; yy < h; yy++) {
 		for (int xx = 0; xx < w; xx++) {
-			const float r = red[yy*w + xx];
-			const float g = green[yy*w + xx];
-			const float b = blue[yy*w + xx];
-			const float a = alpha[yy*w + xx];
+			const float r = red[yy * w + xx];
+			const float g = green[yy * w + xx];
+			const float b = blue[yy * w + xx];
+			const float a = alpha[yy * w + xx];
 			const Color c(CCLAMP(r), CCLAMP(g), CCLAMP(b), CCLAMP(a));
 			im->set_pixel(xx, yy, c);
 		}
@@ -232,8 +264,8 @@ Ref<Image> FEMain::generate_flow_map() {
 	LocalAutoVector<double> A(w * h * 4);
 	A.fill(-1);
 
-	// Voronoi tesselation
-	#pragma omp parallel for
+// Voronoi tesselation
+#pragma omp parallel for
 	for (int i = 0; i < elems.size(); i++) {
 		Point2 pos(elems[i]->get_pos());
 		Color color = elems[i]->get_color();
@@ -253,53 +285,53 @@ Ref<Image> FEMain::generate_flow_map() {
 
 	LocalAutoVector<double> B(w * h * 3);
 
-	// Natural neighbor
-	#pragma omp parallel for
+// Natural neighbor
+#pragma omp parallel for
 	for (int y = 0; y < h; y++) {
 		for (int x = 0; x < w; x++) {
 			int r = 0, count = 0;
 			double red = 0, green = 0, blue = 0;
 			while (true) {
 				int count1 = count;
-				for (int x1 = MAX(0, x - r); x1 <= MIN(w-1, x + r); x1++) {
-					double l = (x1-x)*(x1-x) + r*r;
+				for (int x1 = MAX(0, x - r); x1 <= MIN(w - 1, x + r); x1++) {
+					double l = (x1 - x) * (x1 - x) + r * r;
 					int ofs1 = (MAX(0, y - r) * w + x1) * 4;
-					DEV_ASSERT(ofs1 < w*h*4);
+					DEV_ASSERT(ofs1 < w * h * 4);
 					DEV_ASSERT(A[ofs1] != -1);
 					if (l <= A[ofs1]) {
-						red += A[ofs1+1];
-						green += A[ofs1+2];
-						blue += A[ofs1+3];
+						red += A[ofs1 + 1];
+						green += A[ofs1 + 2];
+						blue += A[ofs1 + 3];
 						count++;
 					}
-					ofs1 = (MIN(h-1, y + r) * w + x1) * 4;
-					DEV_ASSERT(ofs1 < w*h*4);
+					ofs1 = (MIN(h - 1, y + r) * w + x1) * 4;
+					DEV_ASSERT(ofs1 < w * h * 4);
 					DEV_ASSERT(A[ofs1] != -1);
 					if (l <= A[ofs1]) {
-						red += A[ofs1+1];
-						green += A[ofs1+2];
-						blue += A[ofs1+3];
+						red += A[ofs1 + 1];
+						green += A[ofs1 + 2];
+						blue += A[ofs1 + 3];
 						count++;
 					}
 				}
-				for (int y1 = MAX(0, y - r); y1 <= MIN(h-1, y + r); y1++) {
-					double l = (y1-y)*(y1-y) + r*r;
+				for (int y1 = MAX(0, y - r); y1 <= MIN(h - 1, y + r); y1++) {
+					double l = (y1 - y) * (y1 - y) + r * r;
 					int ofs1 = (y1 * w + MAX(0, x - r)) * 4;
-					DEV_ASSERT(ofs1 < w*h*4);
+					DEV_ASSERT(ofs1 < w * h * 4);
 					DEV_ASSERT(A[ofs1] != -1);
 					if (l <= A[ofs1]) {
-						red += A[ofs1+1];
-						green += A[ofs1+2];
-						blue += A[ofs1+3];
+						red += A[ofs1 + 1];
+						green += A[ofs1 + 2];
+						blue += A[ofs1 + 3];
 						count++;
 					}
-					ofs1 = (y1 * w + MIN(w-1, x + r)) * 4;
-					DEV_ASSERT(ofs1 < w*h*4);
+					ofs1 = (y1 * w + MIN(w - 1, x + r)) * 4;
+					DEV_ASSERT(ofs1 < w * h * 4);
 					DEV_ASSERT(A[ofs1] != -1);
 					if (l <= A[ofs1]) {
-						red += A[ofs1+1];
-						green += A[ofs1+2];
-						blue += A[ofs1+3];
+						red += A[ofs1 + 1];
+						green += A[ofs1 + 2];
+						blue += A[ofs1 + 3];
 						count++;
 					}
 				}
@@ -330,10 +362,10 @@ Ref<Image> FEMain::fast_generate_flow_map() {
 
 	qh NOerrexit = False;
 	qh_option("delaunay Qbbound-last", nullptr, nullptr);
-	qh DELAUNAY = True;      /* 'd'   */
-	qh SCALElast = True;     /* 'Qbb' */
-	qh KEEPcoplanar = True;  /* 'Qc', to keep coplanars in 'p' */
-	qh TRIangulate = True;   /* Qt */
+	qh DELAUNAY = True; /* 'd'   */
+	qh SCALElast = True; /* 'Qbb' */
+	qh KEEPcoplanar = True; /* 'Qc', to keep coplanars in 'p' */
+	qh TRIangulate = True; /* Qt */
 	qh_appendprint(qh_PRINTvertices); /* Fv */
 	points = qh_readpoints(&numpoints, &dim, &ismalloc);
 	qh_init_B(points, numpoints, dim, ismalloc);
@@ -353,9 +385,12 @@ Ref<Image> FEMain::fast_generate_flow_map() {
 		Color c1 = e1->get_color();
 		Color c2 = e2->get_color();
 
-		if (e0->get_passive()) c0 = (e1->get_passive() ? c2 : c1);
-		if (e1->get_passive()) c1 = (e0->get_passive() ? c2 : c0);
-		if (e2->get_passive()) c2 = (e0->get_passive() ? c1 : c0);
+		if (e0->get_passive())
+			c0 = (e1->get_passive() ? c2 : c1);
+		if (e1->get_passive())
+			c1 = (e0->get_passive() ? c2 : c0);
+		if (e2->get_passive())
+			c2 = (e0->get_passive() ? c1 : c0);
 
 		draw_gouraud_triangle(im, e0->get_pos(), c0, e1->get_pos(), c1, e2->get_pos(), c2);
 	}
@@ -364,10 +399,10 @@ Ref<Image> FEMain::fast_generate_flow_map() {
 }
 
 void FEMain::generate_preview() {
-    Ref<Image> fm(render_final_image(&FEMain::fast_generate_flow_map));
+	Ref<Image> fm(render_final_image(&FEMain::fast_generate_flow_map));
 }
 
-Ref<Image> FEMain::render_final_image(Ref<Image>(FEMain::*fe_method)(), bool use_checker_board) {
+Ref<Image> FEMain::render_final_image(Ref<Image> (FEMain::*fe_method)(), bool use_checker_board) {
 	Ref<Image> im = use_checker_board ? checker_board() : memnew(Image(image->get_width(), image->get_height(), false, Image::FORMAT_RGBA8));
 	im->blit_image((this->*fe_method)());
 	return im;
@@ -385,7 +420,7 @@ void FEMain::draw_gouraud_triangle(Ref<Image> &dest, const Point2 &p0, const Col
 	ERR_FAIL_NULL(dest);
 
 #define CCLAMP(x) (isfinite((x)) ? (((x) < 0) ? (0) : (((x) > 1) ? 1 : (x))) : 0)
-#define CLAMP2(x,d) (((x) < 0) ? (0) : (((x) >= (d)) ? ((d) - 1) : (x)))
+#define CLAMP2(x, d) (((x) < 0) ? (0) : (((x) >= (d)) ? ((d)-1) : (x)))
 
 	int x0 = p0.x;
 	int y0 = p0.y;
@@ -408,17 +443,26 @@ void FEMain::draw_gouraud_triangle(Ref<Image> &dest, const Point2 &p0, const Col
 	if (y1 < y0) {
 		SWAP(y1, y0);
 		SWAP(x1, x0);
-		SWAP(r1, r0); SWAP(g1, g0); SWAP(b1, b0); SWAP(a1, a0);
+		SWAP(r1, r0);
+		SWAP(g1, g0);
+		SWAP(b1, b0);
+		SWAP(a1, a0);
 	}
 	if (y2 < y0) {
 		SWAP(y2, y0);
 		SWAP(x2, x0);
-		SWAP(r2, r0); SWAP(g2, g0); SWAP(b2, b0); SWAP(a2, a0);
+		SWAP(r2, r0);
+		SWAP(g2, g0);
+		SWAP(b2, b0);
+		SWAP(a2, a0);
 	}
 	if (y1 < y2) {
 		SWAP(y2, y1);
 		SWAP(x2, x1);
-		SWAP(r2, r1); SWAP(g2, g1); SWAP(b2, b1); SWAP(a2, a1);
+		SWAP(r2, r1);
+		SWAP(g2, g1);
+		SWAP(b2, b1);
+		SWAP(a2, a1);
 	}
 
 	float xl_edge = x0; // left edge
@@ -427,18 +471,18 @@ void FEMain::draw_gouraud_triangle(Ref<Image> &dest, const Point2 &p0, const Col
 	float dxldy;
 	float dxrdy;
 
-	float dxdy1 = (float)(x2-x0)/(y2-y0);
-	float dxdy2 = (float)(x1-x0)/(y1-y0);
+	float dxdy1 = (float)(x2 - x0) / (y2 - y0);
+	float dxdy2 = (float)(x1 - x0) / (y1 - y0);
 
-	float dr1 = (float)(r2-r0)/(y2-y0);
-	float dg1 = (float)(g2-g0)/(y2-y0);
-	float db1 = (float)(b2-b0)/(y2-y0);
-	float da1 = (float)(a2-a0)/(y2-y0);
+	float dr1 = (float)(r2 - r0) / (y2 - y0);
+	float dg1 = (float)(g2 - g0) / (y2 - y0);
+	float db1 = (float)(b2 - b0) / (y2 - y0);
+	float da1 = (float)(a2 - a0) / (y2 - y0);
 
-	float dr2 = (float)(r1-r0)/(y1-y0);
-	float dg2 = (float)(g1-g0)/(y1-y0);
-	float db2 = (float)(b1-b0)/(y1-y0);
-	float da2 = (float)(a1-a0)/(y1-y0);
+	float dr2 = (float)(r1 - r0) / (y1 - y0);
+	float dg2 = (float)(g1 - g0) / (y1 - y0);
+	float db2 = (float)(b1 - b0) / (y1 - y0);
+	float da2 = (float)(a1 - a0) / (y1 - y0);
 
 	float drldy, dgldy, dbldy, daldy;
 	float drrdy, dgrdy, dbrdy, dardy;
@@ -446,33 +490,45 @@ void FEMain::draw_gouraud_triangle(Ref<Image> &dest, const Point2 &p0, const Col
 	if (dxdy1 < dxdy2) {
 		dxldy = dxdy1;
 		dxrdy = dxdy2;
-		drldy = dr1; dgldy = dg1; dbldy = db1; daldy = da1; // left  (r,g,b)
-		drrdy = dr2; dgrdy = dg2; dbrdy = db2; dardy = da2; // right (r,g,b)
+		drldy = dr1;
+		dgldy = dg1;
+		dbldy = db1;
+		daldy = da1; // left  (r,g,b)
+		drrdy = dr2;
+		dgrdy = dg2;
+		dbrdy = db2;
+		dardy = da2; // right (r,g,b)
 	} else {
 		dxldy = dxdy2;
 		dxrdy = dxdy1;
-		drldy  = dr2; dgldy = dg2; dbldy = db2; daldy = da2; // left  (r,g,b)
-		drrdy  = dr1; dgrdy = dg1; dbrdy = db1; dardy = da1; // right (r,g,b)
+		drldy = dr2;
+		dgldy = dg2;
+		dbldy = db2;
+		daldy = da2; // left  (r,g,b)
+		drrdy = dr1;
+		dgrdy = dg1;
+		dbrdy = db1;
+		dardy = da1; // right (r,g,b)
 	}
 
-	float r_left  = r0, r_right = r0;
-	float g_left  = g0, g_right = g0;
-	float b_left  = b0, b_right = b0;
-	float a_left  = a0, a_right = a0;
+	float r_left = r0, r_right = r0;
+	float g_left = g0, g_right = g0;
+	float b_left = b0, b_right = b0;
+	float a_left = a0, a_right = a0;
 
 	// Top of the triangle
-	for(int y = y0; y < y2; y++) {
-		float dr = (r_right - r_left)/(xr_edge - xl_edge);
-		float dg = (g_right - g_left)/(xr_edge - xl_edge);
-		float db = (b_right - b_left)/(xr_edge - xl_edge);
-		float da = (a_right - a_left)/(xr_edge - xl_edge);
+	for (int y = y0; y < y2; y++) {
+		float dr = (r_right - r_left) / (xr_edge - xl_edge);
+		float dg = (g_right - g_left) / (xr_edge - xl_edge);
+		float db = (b_right - b_left) / (xr_edge - xl_edge);
+		float da = (a_right - a_left) / (xr_edge - xl_edge);
 
 		float pr = r_left;
 		float pg = g_left;
 		float pb = b_left;
 		float pa = a_left;
 
-		for(int x = xl_edge; x < xr_edge; x++) {
+		for (int x = xl_edge; x < xr_edge; x++) {
 			pr = pr + dr;
 			pg = pg + dg;
 			pb = pb + db;
@@ -486,17 +542,16 @@ void FEMain::draw_gouraud_triangle(Ref<Image> &dest, const Point2 &p0, const Col
 		xl_edge = xl_edge + dxldy;
 		xr_edge = xr_edge + dxrdy;
 
-
-		r_left  += drldy;
+		r_left += drldy;
 		r_right += drrdy;
 
-		g_left  += dgldy;
+		g_left += dgldy;
 		g_right += dgrdy;
 
-		b_left  += dbldy;
+		b_left += dbldy;
 		b_right += dbrdy;
 
-		a_left  += daldy;
+		a_left += daldy;
 		a_right += dardy;
 	} // end for loop y
 
@@ -529,27 +584,27 @@ void FEMain::draw_gouraud_triangle(Ref<Image> &dest, const Point2 &p0, const Col
 		}
 	}
 
-	if( dxdy1 < dxdy2 ) {
-		dxldy = (float)(x2-x1)/(y2-y1);
+	if (dxdy1 < dxdy2) {
+		dxldy = (float)(x2 - x1) / (y2 - y1);
 
-		drldy  = (r2-r1)/(y2-y1);
-		dgldy  = (g2-g1)/(y2-y1);
-		dbldy  = (b2-b1)/(y2-y1);
-		daldy  = (a2-a1)/(y2-y1);
+		drldy = (r2 - r1) / (y2 - y1);
+		dgldy = (g2 - g1) / (y2 - y1);
+		dbldy = (b2 - b1) / (y2 - y1);
+		daldy = (a2 - a1) / (y2 - y1);
 	} else {
-		dxrdy = (float)(x2-x1)/(y2-y1);
+		dxrdy = (float)(x2 - x1) / (y2 - y1);
 
-		drrdy  = (r2-r1)/(y2-y1);
-		dgrdy  = (g2-g1)/(y2-y1);
-		dbrdy  = (b2-b1)/(y2-y1);
-		dardy  = (a2-a1)/(y2-y1);
+		drrdy = (r2 - r1) / (y2 - y1);
+		dgrdy = (g2 - g1) / (y2 - y1);
+		dbrdy = (b2 - b1) / (y2 - y1);
+		dardy = (a2 - a1) / (y2 - y1);
 	}
 
 	for (int y = y2; y < y1; y++) {
-		const float dr = (r_right - r_left)/(xr_edge - xl_edge);
-		const float dg = (g_right - g_left)/(xr_edge - xl_edge);
-		const float db = (b_right - b_left)/(xr_edge - xl_edge);
-		const float da = (a_right - a_left)/(xr_edge - xl_edge);
+		const float dr = (r_right - r_left) / (xr_edge - xl_edge);
+		const float dg = (g_right - g_left) / (xr_edge - xl_edge);
+		const float db = (b_right - b_left) / (xr_edge - xl_edge);
+		const float da = (a_right - a_left) / (xr_edge - xl_edge);
 
 		float pr = r_left;
 		float pg = g_left;
@@ -570,16 +625,16 @@ void FEMain::draw_gouraud_triangle(Ref<Image> &dest, const Point2 &p0, const Col
 		xl_edge = xl_edge + dxldy;
 		xr_edge = xr_edge + dxrdy;
 
-		r_left  += drldy;
+		r_left += drldy;
 		r_right += drrdy;
 
-		g_left  += dgldy;
+		g_left += dgldy;
 		g_right += dgrdy;
 
-		b_left  += dbldy;
+		b_left += dbldy;
 		b_right += dbrdy;
 
-		a_left  += daldy;
+		a_left += daldy;
 		a_right += dardy;
 	} // end for loop y
 #undef CLAMP2
