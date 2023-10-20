@@ -44,21 +44,25 @@
 #define MARK_EDITED
 #endif
 
-#ifdef NO_THREADS
-static _FORCE_INLINE_ int AtomicIncrement(int volatile *pw) {
-	return (*pw)++;
-}
-static _FORCE_INLINE_ int AtomicDecrement(int volatile *pw) {
-	return (*pw)--;
-}
-#elif defined(_MSC_VER) // MSVC
+#if defined(_MSC_VER) // MSVC
 #define AtomicIncrement(pw) _InterlockedIncrement((volatile long *)(pw))
 #define AtomicDecrement(pw) _InterlockedDecrement((volatile long *)(pw))
 #elif defined(__GNUC__) // GCC
-#define AtomicIncrement(pw) __sync_fetch_and_add((volatile long *)(pw), 1)
-#define AtomicDecrement(pw) __sync_fetch_and_sub((volatile long *)(pw), 1)
-#else
-#error Unsupported atomics
+#define AtomicIncrement(pw) __sync_add_and_fetch((volatile long *)(pw), 1)
+#define AtomicDecrement(pw) __sync_sub_and_fetch((volatile long *)(pw), 1)
+#endif
+
+// non atomic implementations
+
+#ifndef AtomicIncrement
+static _FORCE_INLINE_ int AtomicIncrement(int volatile *pw) {
+	return (*pw)++;
+}
+#endif
+#ifndef AtomicDecrement
+static _FORCE_INLINE_ int AtomicDecrement(int volatile *pw) {
+	return (*pw)--;
+}
 #endif
 
 AudioDriver *AudioDriver::singleton = nullptr;

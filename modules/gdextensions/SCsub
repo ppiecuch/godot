@@ -242,6 +242,7 @@ modules = [
     "debugdraw",
     "cyberelements",
     "geomfonts",
+    "fontengine3d",
     "ropesim",
     "statemachine",
     "benet",
@@ -323,6 +324,22 @@ if env["tools"]:
         thirdparty_sources += Glob("thirdparty/yaml-cpp/src/*.cpp")
         env_module.Append(CPPDEFINES=["YAML_CPP_STATIC_DEFINE"])
         env_module.Prepend(CPPPATH=["thirdparty/yaml-cpp/include"])
+    if is_enabled("flowed"):
+        thirdparty_sources += (
+            Glob("thirdparty/flowed/qhull/*.c")
+            + Glob("thirdparty/flowed/nn-c/*.c")
+            + Glob("thirdparty/flowed/akima/akima.cpp")
+        )
+        modules += ["flowed"]
+    if is_enabled("qmap"):
+        env_module.Prepend(CPPPATH=["thirdparty/qmap", "thirdparty/qmap/aa2map"])
+        thirdparty_sources += (
+            Glob("thirdparty/qmap/libmap/*.cpp")
+            + Glob("thirdparty/qmap/aa2map/**/*.c")
+            + Glob("thirdparty/qmap/qbsp3/*.c")
+            + Glob("thirdparty/qmap/qcommon/*.c")
+        )
+        modules += ["qmap"]
 
 if is_enabled("textui"):
     thirdparty_sources += ["thirdparty/textui/textUI.c", "thirdparty/textui/textUI_support.cpp"]
@@ -517,7 +534,11 @@ if not env["disable_3d"]:
         env_module.Prepend(CPPPATH=["submodules/environment/proc_rocks/generators"])
         if env["tools"]:
             # it is big - keep it for editor usge only
-            thirdparty_sources += ["thirdparty/libnoise/libnoise.cpp", "thirdparty/procrocklib/procrocklib.cpp"]
+            thirdparty_sources += [
+                "thirdparty/libnoise/libnoise.cpp",
+                "submodules/environment/proc_rocks/generators/procrockgen/procrockgen.cpp",
+                "thirdparty/procrocklib/procrocklib.cpp",
+            ]
             env_module.Prepend(
                 CPPPATH=[
                     "thirdparty/eigenmath",

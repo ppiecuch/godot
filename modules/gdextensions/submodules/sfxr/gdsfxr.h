@@ -36,6 +36,7 @@
 #include "core/io/resource_importer.h"
 #include "core/io/resource_saver.h"
 #include "core/math/math_funcs.h"
+#include "editor/editor_plugin.h"
 #include "servers/audio/audio_stream.h"
 
 #include "retrosfxvoice.h"
@@ -67,6 +68,8 @@ private:
 	bool _dirty;
 
 	void _update_voice();
+
+	AcceptDialog *dlg;
 
 	_FORCE_INLINE_ static double rnd(double limit) { return Math::random(0.0, limit); }
 	_FORCE_INLINE_ static float rnd(float limit) { return Math::random(0.0f, limit); }
@@ -175,16 +178,20 @@ protected:
 		ClassDB::bind_method(D_METHOD("set_morph_rate", "value"), &AudioStreamSfxr::set_morph_rate);
 		ClassDB::bind_method(D_METHOD("get_morph_rate"), &AudioStreamSfxr::get_morph_rate);
 
-		ClassDB::bind_method(D_METHOD("load_predefine", "value"), &AudioStreamSfxr::load_predefine);
+		ClassDB::bind_method(D_METHOD("load_presets", "value"), &AudioStreamSfxr::load_presets);
 		ClassDB::bind_method(D_METHOD("call_action", "action"), &AudioStreamSfxr::call_action);
 
-		ADD_PROPERTY(PropertyInfo(Variant::INT, "load_predefine", PROPERTY_HINT_ENUM, "Select one:,Pickup/Coin,Laser/Shoot,Explosion,Power Up,Hit/Hurt,Jump,Blip/Select,Robotron"), "load_predefine", "");
+		ADD_PROPERTY(PropertyInfo(Variant::INT, "load_presets", PROPERTY_HINT_ENUM, "Select one:,Pickup/Coin,Laser/Shoot,Explosion,Power Up,Hit/Hurt,Jump,Blip/Select,Robotron"), "load_presets", "");
 		ADD_PROPERTY(PropertyInfo(Variant::INT, "call_action", PROPERTY_HINT_ENUM, "Select one:,Mutate,Randomize,Reset"), "call_action", "");
 
 		// Sound properties
 		ADD_PROPERTY(PropertyInfo(Variant::INT, "wave_form", PROPERTY_HINT_ENUM, "Square,Sawtooth,Sinwave,Noise,Triangle,PinkNoise,Tan,Whistle,Breaker"), "set_wave_form", "get_wave_form");
 		ADD_PROPERTY(PropertyInfo(Variant::INT, "overtones", PROPERTY_HINT_RANGE, "0,10"), "set_overtones", "get_overtones");
 		ADD_PROPERTY(PropertyInfo(Variant::REAL, "overtone_falloff", PROPERTY_HINT_RANGE, "0,1,0.05"), "set_overtone_falloff", "get_overtone_falloff");
+		ADD_PROPERTY(PropertyInfo(Variant::BOOL, "loop"), "set_loop", "get_loop");
+		ADD_PROPERTY(PropertyInfo(Variant::REAL, "loop_offset"), "set_loop_offset", "get_loop_offset");
+		ADD_PROPERTY(PropertyInfo(Variant::REAL, "repeat_speed", PROPERTY_HINT_RANGE, "-1,1,0.1"), "set_repeat_speed", "get_repeat_speed");
+		ADD_PROPERTY(PropertyInfo(Variant::REAL, "morph_rate", PROPERTY_HINT_RANGE, "0,1,0.05"), "set_morph_rate", "get_morph_rate");
 		ADD_PROPERTY(PropertyInfo(Variant::REAL, "volume", PROPERTY_HINT_RANGE, "0,1,0.05"), "set_volume", "get_volume");
 
 		ADD_GROUP("Square", "");
@@ -212,9 +219,6 @@ protected:
 		ADD_PROPERTY(PropertyInfo(Variant::REAL, "change_amount2", PROPERTY_HINT_RANGE, "-1,1,0.1"), "set_change_amount2", "get_change_amount2");
 		ADD_PROPERTY(PropertyInfo(Variant::REAL, "change_speed2", PROPERTY_HINT_RANGE, "-1,1,0.1"), "set_change_speed2", "get_change_speed2");
 
-		ADD_GROUP("Repeat", "repeat_");
-		ADD_PROPERTY(PropertyInfo(Variant::REAL, "repeat_speed", PROPERTY_HINT_RANGE, "-1,1,0.1"), "set_repeat_speed", "get_repeat_speed");
-
 		ADD_GROUP("Flanger", "flanger_");
 		ADD_PROPERTY(PropertyInfo(Variant::REAL, "flanger_offset", PROPERTY_HINT_RANGE, "-1,1,0.1"), "set_flanger_offset", "get_flanger_offset");
 		ADD_PROPERTY(PropertyInfo(Variant::REAL, "flanger_sweep", PROPERTY_HINT_RANGE, "-1,1,0.1"), "set_flanger_sweep", "get_flanger_sweep");
@@ -228,11 +232,6 @@ protected:
 		ADD_PROPERTY(PropertyInfo(Variant::REAL, "bit_crush", PROPERTY_HINT_RANGE, "0,1,0.05"), "set_bit_crush", "get_bit_crush");
 		ADD_PROPERTY(PropertyInfo(Variant::REAL, "bit_crush_sweep", PROPERTY_HINT_RANGE, "-1,1,0.1"), "set_bit_crush_sweep", "get_bit_crush_sweep");
 		ADD_PROPERTY(PropertyInfo(Variant::REAL, "compression_amount", PROPERTY_HINT_RANGE, "0,1,0.05"), "set_compression_amount", "get_compression_amount");
-
-		ADD_GROUP("", "");
-		ADD_PROPERTY(PropertyInfo(Variant::REAL, "morph_rate", PROPERTY_HINT_RANGE, "0,1,0.05"), "set_morph_rate", "get_morph_rate");
-		ADD_PROPERTY(PropertyInfo(Variant::BOOL, "loop"), "set_loop", "get_loop");
-		ADD_PROPERTY(PropertyInfo(Variant::REAL, "loop_offset"), "set_loop_offset", "get_loop_offset");
 	}
 
 public:
@@ -242,7 +241,7 @@ public:
 
 	int fill(AudioFrame *p_buffer, int p_frames, int p_from = 0);
 
-	void load_predefine(int p_value) {
+	void load_presets(int p_value) {
 		switch (p_value) {
 			case 1: {
 				sfx_voice.ResetParams();
@@ -619,6 +618,11 @@ public:
 
 	_FORCE_INLINE_ float get_sample_rate() const { return 44100; }
 
+#ifdef TOOLS_ENABLED
+	AcceptDialog *load_ui();
+	void open_ui();
+#endif
+
 	AudioStreamSfxr();
 };
 VARIANT_ENUM_CAST(AudioStreamSfxr::WaveFormType);
@@ -675,5 +679,31 @@ public:
 	ResourceImporterSfxr() {}
 	~ResourceImporterSfxr() {}
 };
+
+/// Godot editor plugin
+
+#ifdef TOOLS_ENABLED
+class SfxrEditorPlugin : public EditorPlugin {
+	GDCLASS(SfxrEditorPlugin, EditorPlugin)
+
+	EditorNode *editor;
+
+	Ref<AudioStreamSfxr> gen;
+
+	void add_icons_menu_item(const String &p_name, const String &p_callback);
+	void remove_icons_menu_item(const String &p_name);
+
+	void _on_show_sfxr_editor_pressed(Variant p_null);
+
+protected:
+	static void _bind_methods();
+	void _notification(int p_what);
+
+public:
+	void generate();
+
+	SfxrEditorPlugin(EditorNode *p_node);
+};
+#endif //TOOLS_ENABLED
 
 #endif // RESOURCE_IMPORTER_SFXR

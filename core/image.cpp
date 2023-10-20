@@ -2372,10 +2372,15 @@ void Image::_get_clipped_src_and_dest_rects(const Ref<Image> &p_src, const Rect2
 	r_clipped_dest_rect.size.y = r_clipped_src_rect.size.y;
 }
 
+void Image::blit_image(const Ref<Image> &p_src, const Point2 &p_dest) {
+	Rect2 srect(Point2(), p_src ? p_src->get_size() : Size2());
+	blit_rect(p_src, srect, p_dest);
+}
+
 void Image::blit_rect(const Ref<Image> &p_src, const Rect2 &p_src_rect, const Point2 &p_dest) {
 	ERR_FAIL_COND_MSG(p_src.is_null(), "It's not a reference to a valid Image object.");
-	int dsize = data.size();
-	int srcdsize = p_src->data.size();
+	const int dsize = data.size();
+	const int srcdsize = p_src->data.size();
 	ERR_FAIL_COND(dsize == 0);
 	ERR_FAIL_COND(srcdsize == 0);
 	ERR_FAIL_COND(format != p_src->format);
@@ -3345,6 +3350,7 @@ void Image::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("rgbe_to_srgb"), &Image::rgbe_to_srgb);
 	ClassDB::bind_method(D_METHOD("bumpmap_to_normalmap", "bump_scale"), &Image::bumpmap_to_normalmap, DEFVAL(1.0));
 
+	ClassDB::bind_method(D_METHOD("blit_image", "src", "dst"), &Image::blit_image, DEFVAL(Point2()));
 	ClassDB::bind_method(D_METHOD("blit_rect", "src", "src_rect", "dst"), &Image::blit_rect);
 	ClassDB::bind_method(D_METHOD("blit_rect_mask", "src", "mask", "src_rect", "dst"), &Image::blit_rect_mask);
 	ClassDB::bind_method(D_METHOD("blend_rect", "src", "src_rect", "dst"), &Image::blend_rect);
@@ -3551,6 +3557,11 @@ void Image::normalmap_to_xy() {
 
 void Image::bumpmap_to_normalmap(float p_bump_scale) {
 	ImageTools::bumpmap_to_normalmap(this, p_bump_scale);
+}
+
+void Image::checker_board(int p_cell) {
+	const float c = 0.6, a = 1;
+	ImageTools::checker_board(this, p_cell, Color::solid(c * 0.3, a), Color::solid(c, a), false, Color::solid(c * 1.2, a));
 }
 
 String Image::get_format_name(Format p_format) {

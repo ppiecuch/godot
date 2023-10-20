@@ -389,8 +389,13 @@ public:
 
 	virtual void get_method_list(List<MethodInfo> *p_list) const;
 	virtual bool has_method(const StringName &p_method) const;
-	virtual Variant call(const StringName &p_method, VARIANT_ARG_LIST) { return Variant(); }
 	virtual Variant call(const StringName &p_method, const Variant **p_args, int p_argcount, Variant::CallError &r_error) {
+		if (!language && owner) { // use language for indication of call receiver
+			MethodBind *method = ClassDB::get_method(owner->get_class_name(), p_method);
+			if (method) {
+				return method->call(owner, p_args, p_argcount, r_error);
+			}
+		}
 		r_error.error = Variant::CallError::CALL_ERROR_INVALID_METHOD;
 		return Variant();
 	}

@@ -33,6 +33,11 @@
 
 #include "core/os/thread.h"
 #include "core/safe_refcount.h"
+#include "scene/audio/audio_stream_player.h"
+#include "scene/gui/button.h"
+#include "scene/gui/color_rect.h"
+#include "scene/gui/label.h"
+#include "scene/gui/tool_button.h"
 #include "scene/main/node.h"
 #include "servers/audio/audio_stream.h"
 
@@ -96,6 +101,42 @@ public:
 	Ref<AudioStreamPreview> generate_preview(const Ref<AudioStream> &p_stream);
 
 	AudioStreamPreviewGenerator();
+};
+
+class AudioStreamPlayerControl : public Control {
+	GDCLASS(AudioStreamPlayerControl, Control);
+
+	Ref<AudioStream> stream;
+
+	AudioStreamPlayer *_player;
+	Control *_indicator;
+	ColorRect *_preview;
+
+	ToolButton *_play_button, *_stop_button;
+	Label *_current_label, *_duration_label;
+	float _current;
+	bool _pausing;
+	bool _dragging;
+
+	void _play();
+	void _stop();
+	void _draw_indicator();
+	void _draw_preview();
+	void _seek_to(real_t p_x);
+	void _preview_changed(ObjectID p_which);
+	void _on_input_indicator(Ref<InputEvent> p_event);
+	void _on_finished();
+
+	void _changed_callback(Object *p_changed, const char *p_prop);
+
+protected:
+	void _notification(int p_what);
+	static void _bind_methods();
+
+public:
+	void set_stream(Ref<AudioStream> p_stream);
+
+	AudioStreamPlayerControl();
 };
 
 #endif // AUDIO_STREAM_PREVIEW_H

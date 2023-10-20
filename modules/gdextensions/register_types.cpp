@@ -34,7 +34,6 @@
 #include "core/io/resource_importer.h"
 
 #ifdef TOOLS_ENABLED
-#include "editor/audio_stream_preview.h"
 #include "editor/editor_node.h"
 #include "editor/editor_plugin.h"
 #endif
@@ -67,6 +66,10 @@
 #include "core/trail_2d.h"
 #include "core/tween2.h"
 #include "core/voronoi.h"
+
+#ifdef TOOLS_ENABLED
+#include "editor/explodomatica_plugin.h"
+#endif
 
 #include "bulletkit/gdlibrary.h"
 
@@ -130,6 +133,7 @@
 
 #include "vgamepad/vgamepad.h"
 
+#include "environment/proc_rocks/proc_rocks.h"
 #include "environment/spherical_waves/spherical_waves.h"
 #include "environment/spider_anim/spider.h"
 #include "environment/spider_anim/stage.h"
@@ -408,6 +412,7 @@ void register_gdextensions_types() {
 #ifdef TOOLS_ENABLED
 	Ref<ResourceImporterSfxr> sfx_data = memnew(ResourceImporterSfxr);
 	ResourceFormatImporter::get_singleton()->add_importer(sfx_data);
+	EditorPlugins::add_by_type<SfxrEditorPlugin>();
 #endif
 #endif // GDEXT_SFXR_ENABLED
 
@@ -469,10 +474,6 @@ void register_gdextensions_types() {
 #ifdef GDEXT_VGAMEPAD_ENABLED
 	ClassDB::register_class<VGamePad>();
 #endif // GDEXT_VGAMEPAD_ENABLED
-#ifdef TOOLS_ENABLED
-	ClassDB::register_class<AudioStreamPreview>();
-	ClassDB::register_class<AudioStreamPreviewGenerator>();
-#endif
 
 #ifdef GDEXT_ENVIRONMENT_WATERFALL_ENABLED
 	ClassDB::register_class<GdWaterfall>();
@@ -499,6 +500,9 @@ void register_gdextensions_types() {
 #endif
 #ifdef GDEXT_ENVIRONMENT_STARFIELD_ENABLED
 	ClassDB::register_class<Starfield2D>();
+#endif
+#ifdef GDEXT_ENVIRONMENT_PROC_ROCKS_ENABLED
+	ClassDB::register_class<ProcRockMesh>();
 #endif
 
 #ifdef TOOLS_ENABLED
@@ -651,6 +655,11 @@ void register_gdextensions_types() {
 
 #ifdef GDEXT_SPACEMOUSE_ENABLED
 	Engine::get_singleton()->add_singleton(Engine::Singleton("SpaceMouse", memnew(SpaceMouse)));
+#endif
+
+#ifdef TOOLS_ENABLED
+	ClassDB::register_class<ExplodomaticaGenerator>();
+	EditorPlugins::add_by_type<ExplodomaticaEditorPlugin>();
 #endif
 
 #ifdef TOOLS_ENABLED

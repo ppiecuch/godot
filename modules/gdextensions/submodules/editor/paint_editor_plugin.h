@@ -38,6 +38,8 @@ class MPSurface;
 class PaintEditorPlugin : public EditorPlugin {
 	GDCLASS(PaintEditorPlugin, EditorPlugin)
 
+	EditorNode *editor;
+
 	static bool instance_flag;
 
 	MPBrush *brush;
@@ -45,6 +47,7 @@ class PaintEditorPlugin : public EditorPlugin {
 
 protected:
 	static void _bind_methods();
+	void _notification(int p_what);
 
 public:
 	typedef void (*MPOnUpdateFunction)(PaintEditorPlugin *handler, MPSurface *surface, MPTile *tile);
@@ -72,6 +75,6 @@ public:
 	void load_image(const Ref<Image> &image);
 	void load_brush(const String &content);
 
-	PaintEditorPlugin();
+	PaintEditorPlugin(EditorNode *p_node);
 	~PaintEditorPlugin();
 };

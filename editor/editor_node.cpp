@@ -3943,6 +3943,10 @@ void EditorNode::register_editor_types() {
 	ClassDB::register_class<EditorScriptPicker>();
 	ClassDB::register_virtual_class<FileSystemDock>();
 
+	ClassDB::register_class<AudioStreamPreview>();
+	ClassDB::register_class<AudioStreamPreviewGenerator>();
+	ClassDB::register_class<AudioStreamPlayerControl>();
+
 	// FIXME: Is this stuff obsolete, or should it be ported to new APIs?
 	ClassDB::register_class<EditorScenePostImport>();
 	ClassDB::register_class<EditorOBJPostImport>();

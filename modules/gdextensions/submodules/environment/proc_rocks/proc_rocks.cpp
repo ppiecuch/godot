@@ -103,10 +103,37 @@ bool ProcRockMesh::get_auto_refresh() const {
 	return auto_refresh;
 }
 
+void ProcRockMesh::_get_property_list(List<PropertyInfo> *p_list) const {
+#ifdef TOOLS_ENABLED
+	if (method == 3 && procrock.pipeline) {
+		if (procrock.pipeline->hasGenerator()) {
+			const auto gen = &procrock.pipeline->getGenerator();
+			const auto config = gen->getConfiguration();
+		}
+	}
+#endif
+}
+
+bool ProcRockMesh::_set(const StringName &p_path, const Variant &p_value) {
+	return false;
+}
+
+bool ProcRockMesh::_get(const StringName &p_path, Variant &r_ret) const {
+	return false;
+}
+
 void ProcRockMesh::_rebuild() {
 	if (_dirty) {
-		clear_surfaces();
-		Array mesh = rock_gen(rockgen.depth, rockgen.randseed, rockgen.smoothness, rockgen.smoothed);
+		switch (method) {
+			case 0: {
+				clear_surfaces();
+				Array mesh = rock_gen(rockgen.depth, rockgen.randseed, rockgen.smoothness, rockgen.smoothed);
+			} break;
+			case 1: {
+			} break;
+			case 2: {
+			} break;
+		}
 		_dirty = false;
 	}
 }
@@ -142,10 +169,23 @@ void ProcRockMesh::_bind_methods() {
 }
 
 ProcRockMesh::ProcRockMesh() {
-	_dirty = true;
+	method = 0;
+	auto_refresh = false;
+
 	rockgen.depth = 3;
 	rockgen.randseed = 0;
 	rockgen.smoothness = 1;
 	rockgen.smoothed = false;
-	auto_refresh = false;
+
+	rockgeneration.dimensions = Vector3(50, 50, 50);
+	rockgeneration.steps = 10;
+	rockgeneration.rand_angle_range = Vector2(0, 10);
+	rockgeneration.rand_offset_percent = 5;
+	rockgeneration.rand_shift = 2;
+	rockgeneration.plane_verts_range = Vector2i(0, 200);
+	rockgeneration.max_planes = 1;
+
+	procrock.pipeline = nullptr;
+
+	_dirty = true;
 }

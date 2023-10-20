@@ -904,8 +904,8 @@ void Object::call_multilevel(const StringName &p_name, VARIANT_ARG_DECLARE) {
 Variant Object::call(const StringName &p_method, const Variant **p_args, int p_argcount, Variant::CallError &r_error) {
 	r_error.error = Variant::CallError::CALL_OK;
 
+	//free must be here, before anything, always ready
 	if (p_method == CoreStringNames::get_singleton()->_free) {
-//free must be here, before anything, always ready
 #ifdef DEBUG_ENABLED
 		if (p_argcount != 0) {
 			r_error.argument = 0;
@@ -925,7 +925,6 @@ Variant Object::call(const StringName &p_method, const Variant **p_args, int p_a
 		}
 
 #endif
-		//must be here, must be before everything,
 		memdelete(this);
 		r_error.error = Variant::CallError::CALL_OK;
 		return Variant();
@@ -1127,7 +1126,6 @@ Array Object::_get_method_list_bind() const {
 
 	for (List<MethodInfo>::Element *E = ml.front(); E; E = E->next()) {
 		Dictionary d = E->get();
-		//va.push_back(d);
 		ret.push_back(d);
 	}
 
@@ -1270,7 +1268,7 @@ Error Object::emit_signal(const StringName &p_name, const Variant **p_args, int 
 
 			if (ce.error != Variant::CallError::CALL_OK) {
 #ifdef DEBUG_ENABLED
-				if (c.flags & CONNECT_PERSIST && Engine::get_singleton()->is_editor_hint() && (script.is_null() || !Ref<Script>(script)->is_tool())) {
+				if (c.flags & CONNECT_PERSIST && Engine::get_singleton()->is_editor_hint() && (script.is_null() || !Ref<Script>(script) || !Ref<Script>(script)->is_tool())) {
 					continue;
 				}
 #endif

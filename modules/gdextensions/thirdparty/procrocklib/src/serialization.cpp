@@ -299,7 +299,7 @@ void fillConfigGroupFromJson(const nlohmann::json& j, Configuration::Configurati
 }
 
 void to_json(nlohmann::json& j, const Configuration& conf) {
-  for (auto& group : conf.getConfigGroupsConst()) {
+  for (const auto& group : conf.getConfigGroups()) {
     j.update(nlohmann::json{{group.first, group.second}});
   }
 }

@@ -37,6 +37,7 @@
 
 class ImageTools {
 public:
+	static void checker_board(Image *p_src, int p_cell, const Color &grid_color1, const Color &grid_color2, bool details = true, const Color &details_color = Color(1, 1, 1, 1));
 	static Ref<Image> neighbor_tracing(const Image *p_src);
 	static void fix_alpha_edges(Image *p_src);
 	static void fix_tex_bleed(Image *p_src);

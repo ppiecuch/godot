@@ -123,5 +123,5 @@ if [ "$1" == "templates" ] || [ ! -z "$build_templates" ]; then
 	mv "$GODOT_DIR/bin/godot.osx.opt.64" "$TEMPLATES_DIR"
 	rm "$GODOT_DIR/bin/godot.osx.opt.x86_64" "$GODOT_DIR/bin/godot.osx.opt.arm64"
 
-	echo_success "*** Finished building export templates for macOS."
+	echo_success "*** Finished building export templates for macOS.  ($(date +'%h/%d %H:%M'))"
 fi

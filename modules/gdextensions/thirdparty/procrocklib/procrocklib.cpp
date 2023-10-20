@@ -25,3 +25,11 @@
 #include "src/mod/displace_along_normals_modifier.cpp"
 #include "src/par/lscm_parameterizer.cpp"
 #include "src/par/xatlas_parameterizer.cpp"
+#include "src/abstracted_pipeline/abstracted_pipeline.cpp"
+#include "src/abstracted_pipeline/igneous_pipeline.cpp"
+#include "src/abstracted_pipeline/metamorphic_pipeline.cpp"
+#include "src/abstracted_pipeline/sedimentary_pipeline.cpp"
+#include "src/abstracted_pipeline/configurables/form_generator.cpp"
+#include "src/abstracted_pipeline/configurables/texture_extras.cpp"
+#ifdef TOOLS_ENABLED
+#endif

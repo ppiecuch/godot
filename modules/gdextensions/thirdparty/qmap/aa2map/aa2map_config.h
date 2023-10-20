@@ -1,0 +1,8 @@
+#ifndef AA2MAP_CONFIG_H
+#define AA2MAP_CONFIG_H
+
+#define HAVE_DIRENT_H
+#define HAVE_UNISTD_H
+#define HAVE_INTTYPES_H
+
+#endif /* AA2MAP_CONFIG_H */

@@ -30,6 +30,7 @@
 
 #include "resource_format_text.h"
 
+#include "core/io/file_access_memory.h"
 #include "core/io/resource_format_binary.h"
 #include "core/os/dir_access.h"
 #include "core/project_settings.h"
@@ -1192,6 +1193,44 @@ Ref<ResourceInteractiveLoader> ResourceFormatLoaderText::load_interactive(const 
 	ria->open(f);
 
 	return ria;
+}
+
+Ref<Resource> ResourceFormatLoaderText::load_from_data(const String &p_data, const String &p_original_path, Error *r_error, bool p_no_subresource_cache) {
+	// Warning: See previous note about the risk of infinite recursion.
+	FileAccessMemory *memfile = memnew(FileAccessMemory);
+	CharString data = p_data.utf8();
+	Error open_memfile_error = memfile->open_custom((const uint8_t *)data.c_str(), data.size());
+	if (open_memfile_error != OK) {
+		memdelete(memfile);
+		ERR_PRINT("Could not create memfile for data buffer.");
+		return Ref<Resource>();
+	}
+	Ref<ResourceInteractiveLoaderText> ril = memnew(ResourceInteractiveLoaderText);
+	ril->set_no_subresource_cache(p_no_subresource_cache);
+	ril->local_path = ProjectSettings::get_singleton()->localize_path(p_original_path);
+	ril->res_path = ril->local_path;
+	ril->open(memfile);
+	if (!ril.is_valid()) {
+		return Ref<Resource>();
+	}
+	ril->set_local_path(p_original_path);
+
+	while (true) {
+		Error err = ril->poll();
+
+		if (err == ERR_FILE_EOF) {
+			if (r_error) {
+				*r_error = OK;
+			}
+			return ril->get_resource();
+		}
+
+		if (r_error) {
+			*r_error = err;
+		}
+
+		ERR_FAIL_COND_V_MSG(err != OK, Ref<Resource>(), "Failed to load resource from data.");
+	}
 }
 
 void ResourceFormatLoaderText::get_recognized_extensions_for_type(const String &p_type, List<String> *p_extensions) const {
