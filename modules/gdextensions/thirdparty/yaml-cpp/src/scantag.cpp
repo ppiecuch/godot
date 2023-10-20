@@ -26,7 +26,7 @@ const std::string ScanVerbatimTag(Stream& INPUT) {
     tag += INPUT.get(n);
   }
 
-  Throw ParserException(INPUT.mark(), ErrorMsg::END_OF_VERBATIM_TAG);
+  throw ParserException(INPUT.mark(), ErrorMsg::END_OF_VERBATIM_TAG);
   return std::string();
 }
 
@@ -38,7 +38,7 @@ const std::string ScanTagHandle(Stream& INPUT, bool& canBeHandle) {
   while (INPUT) {
     if (INPUT.peek() == Keys::Tag) {
       if (!canBeHandle)
-        Throw ParserException(firstNonWordChar, ErrorMsg::CHAR_IN_TAG_HANDLE);
+        throw ParserException(firstNonWordChar, ErrorMsg::CHAR_IN_TAG_HANDLE);
       break;
     }
 
@@ -75,7 +75,7 @@ const std::string ScanTagSuffix(Stream& INPUT) {
   }
 
   if (tag.empty())
-    Throw ParserException(INPUT.mark(), ErrorMsg::TAG_WITH_NO_SUFFIX);
+    throw ParserException(INPUT.mark(), ErrorMsg::TAG_WITH_NO_SUFFIX);
 
   return tag;
 }

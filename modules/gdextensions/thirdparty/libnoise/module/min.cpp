@@ -32,8 +32,8 @@ Min::Min ():
 
 double Min::GetValue (double x, double y, double z) const
 {
-  assert (m_pSourceModule[0] != NULL);
-  assert (m_pSourceModule[1] != NULL);
+  DEV_ASSERT (m_pSourceModule[0] != nullptr);
+  DEV_ASSERT (m_pSourceModule[1] != nullptr);
 
   double v0 = m_pSourceModule[0]->GetValue (x, y, z);
   double v1 = m_pSourceModule[1]->GetValue (x, y, z);

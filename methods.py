@@ -1158,6 +1158,16 @@ def get_compiler_architecture(env):
         return None
     return next(iter(arch.split("-")), None)
 
+def is_vanilla_clang(env):
+    if not using_clang(env):
+        return False
+    try:
+        version = decode_utf8(subprocess.check_output([env.subst(env["CXX"]), "--version"]).strip())
+    except (subprocess.CalledProcessError, OSError):
+        print("Couldn't parse CXX environment variable to infer compiler version.")
+        return False
+    return not version.startswith("Apple")
+
 
 def using_gcc(env):
     return "gcc" in os.path.basename(env["CC"])

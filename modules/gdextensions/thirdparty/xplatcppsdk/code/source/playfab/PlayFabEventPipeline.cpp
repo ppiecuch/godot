@@ -309,6 +309,8 @@ namespace PlayFab
         }
         catch (const std::exception& ex)
         {
+            __declare_exception(ex);
+
             LOG_PIPELINE("An exception was caught in PlayFabEventPipeline::WorkerThread method");
             this->isWorkerThreadRunning = false;
 

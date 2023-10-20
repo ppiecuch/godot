@@ -23,6 +23,9 @@
 #ifndef NOISE_EXCEPTION_H
 #define NOISE_EXCEPTION_H
 
+#include "core/error_macros.h"
+#include "common/gd_core_defs.h"
+
 namespace noise
 {
 
@@ -32,6 +35,9 @@ namespace noise
   /// Abstract base class for libnoise exceptions
   class Exception
   {
+#ifndef _HAS_EXCEPTIONS
+    public: Exception() { CRASH_NOW_MSG("libnoise exception raised"); }
+#endif
   };
 
   /// Invalid parameter exception

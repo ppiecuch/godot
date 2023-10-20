@@ -47,7 +47,7 @@ int Turbulence::GetSeed () const
 
 double Turbulence::GetValue (double x, double y, double z) const
 {
-  assert (m_pSourceModule[0] != NULL);
+  DEV_ASSERT (m_pSourceModule[0] != nullptr);
 
   // Get the values from the three noise::module::Perlin noise modules and
   // add each value to each coordinate of the input value.  There are also

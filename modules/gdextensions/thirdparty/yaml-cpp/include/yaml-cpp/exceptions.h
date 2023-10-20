@@ -17,12 +17,6 @@
 #include "core/error_macros.h"
 #include "common/gd_core_defs.h"
 
-#ifdef _HAS_EXCEPTIONS
-#define Throw throw
-#else
-#define Throw (void)
-#endif
-
 namespace YAML {
 // error messages
 namespace ErrorMsg {

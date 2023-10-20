@@ -170,7 +170,7 @@ void Scanner::ScanNextToken() {
   }
 
   // don't know what it is!
-  Throw ParserException(INPUT.mark(), ErrorMsg::UNKNOWN_TOKEN);
+  throw ParserException(INPUT.mark(), ErrorMsg::UNKNOWN_TOKEN);
 }
 
 void Scanner::ScanToNextToken() {
@@ -280,7 +280,7 @@ Token::TYPE Scanner::GetStartTokenFor(IndentMarker::INDENT_TYPE type) const {
       break;
   }
   CRASH_NOW();
-  Throw std::runtime_error("yaml-cpp: internal error, invalid indent type");
+  throw std::runtime_error("yaml-cpp: internal error, invalid indent type");
 }
 
 Scanner::IndentMarker* Scanner::PushIndentTo(int column,
@@ -386,6 +386,6 @@ void Scanner::ThrowParserException(const std::string& msg) const {
     const Token& token = m_tokens.front();
     mark = token.mark;
   }
-  Throw ParserException(mark, msg);
+  throw ParserException(mark, msg);
 }
 }  // namespace YAML

@@ -32,7 +32,7 @@ Terrace::Terrace ():
   Module (GetSourceModuleCount ()),
   m_controlPointCount (0),
   m_invertTerraces (false),
-  m_pControlPoints (NULL)
+  m_pControlPoints (nullptr)
 {
 }
 
@@ -53,7 +53,7 @@ void Terrace::AddControlPoint (double value)
 void Terrace::ClearAllControlPoints ()
 {
   delete[] m_pControlPoints;
-  m_pControlPoints = NULL;
+  m_pControlPoints = nullptr;
   m_controlPointCount = 0;
 }
 
@@ -76,8 +76,8 @@ int Terrace::FindInsertionPos (double value)
 
 double Terrace::GetValue (double x, double y, double z) const
 {
-  assert (m_pSourceModule[0] != NULL);
-  assert (m_controlPointCount >= 2);
+  DEV_ASSERT (m_pSourceModule[0] != nullptr);
+  DEV_ASSERT (m_controlPointCount >= 2);
 
   // Get the output value from the source module.
   double sourceModuleValue = m_pSourceModule[0]->GetValue (x, y, z);

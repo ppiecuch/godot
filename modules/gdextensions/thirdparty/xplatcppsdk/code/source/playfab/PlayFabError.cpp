@@ -1,3 +1,4 @@
+#include "core/error_macros.h"
 #include <stdafx.h>
 
 #include <playfab/PlayFabError.h>
@@ -103,5 +104,8 @@ namespace PlayFab
     PlayFabException::PlayFabException(PlayFabExceptionCode code, const char* const message) : std::runtime_error(message)
     {
         this->Code = code;
+#ifndef _HAS_EXCEPTIONS
+        CRASH_NOW_MSG(message);
+#endif
     }
 }

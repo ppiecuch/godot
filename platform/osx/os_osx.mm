@@ -525,7 +525,7 @@ static NSDictionary *touchBarButtonRuntimeActions = @{};
 @implementation GodotContentView
 
 - (void)drawRect:(NSRect)dirtyRect {
-	if (OS_OSX::singleton->get_main_loop() && OS_OSX::singleton->is_resizing) {
+	if (OS_OSX::singleton->get_main_loop() && (OS_OSX::singleton->get_render_thread_mode() != OS::RENDER_SEPARATE_THREAD) && OS_OSX::singleton->is_resizing) {
 		Main::force_redraw();
 		if (!Main::is_iterating()) { // Avoid cyclic loop.
 			Main::iteration();

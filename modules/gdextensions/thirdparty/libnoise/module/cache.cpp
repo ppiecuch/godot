@@ -32,7 +32,7 @@ Cache::Cache ():
 
 double Cache::GetValue (double x, double y, double z) const
 {
-  assert (m_pSourceModule[0] != NULL);
+  DEV_ASSERT (m_pSourceModule[0] != nullptr);
 
   if (!(m_isCached && x == m_xCache && y == m_yCache && z == m_zCache)) {
     m_cachedValue = m_pSourceModule[0]->GetValue (x, y, z);
