@@ -46,8 +46,8 @@ double vec3_sqlen(vec3 v) {
 }
 
 double vec3_length(vec3 v) {
-	double sqlen = vec3_sqlen(v);
-	return (double)sqrt(vec3_sqlen(v));
+	const double sqlen = vec3_sqlen(v);
+	return (double)sqrt(sqlen);
 }
 
 vec3 vec3_normalize(vec3 v) {

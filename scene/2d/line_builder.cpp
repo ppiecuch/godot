@@ -345,7 +345,7 @@ void LineBuilder::build() {
 		// For wrap-around polylines, store some kind of start positions of the first joint for the final connection.
 		if (wrap_around && i == 0) {
 			Vector2 first_pos_center = (pos_up1 + pos_down1) / 2;
-			float lerp_factor = 1.0 / width_factor;
+			const float lerp_factor = 1.0 / width_factor;
 			first_pos_up = first_pos_center.lerp(pos_up1, lerp_factor);
 			first_pos_down = first_pos_center.lerp(pos_down1, lerp_factor);
 			is_first_joint_sharp = current_joint_mode == Line2D::LINE_JOINT_SHARP;
@@ -356,7 +356,7 @@ void LineBuilder::build() {
 			// If the width curve is not seamless, we might need to fetch the line's start points to use them for the final connection.
 			Vector2 first_pos_center = (first_pos_up + first_pos_down) / 2;
 			strip_add_quad(first_pos_center.lerp(first_pos_up, width_factor), first_pos_center.lerp(first_pos_down, width_factor), color1, uvx1);
-			return;
+			break;
 		} else {
 			strip_add_quad(pos_up1, pos_down1, color1, uvx1);
 		}
@@ -455,7 +455,7 @@ void LineBuilder::build() {
 	const real_t sy = tile_region.position.y;
 	const real_t sw = tile_region.size.x;
 	const real_t sh = tile_region.size.y;
-	// rescale uvs values
+	// recalculate uvs values
 	for (int i = 0; i < uvs.size(); i++) {
 		uvs.write[i] = Vector2(sx + uvs[i].x * sw, sy + uvs[i].y * sh);
 	}
@@ -654,6 +654,7 @@ void LineBuilder::new_arc(Vector2 center, Vector2 vbegin, float angle_delta, Col
 	if (_interpolate_color) {
 		colors.push_back(color);
 	}
+
 	// Texture is mapping from the center
 	// of the uv_rect:
 	// +-------+
@@ -662,7 +663,7 @@ void LineBuilder::new_arc(Vector2 center, Vector2 vbegin, float angle_delta, Col
 	// | \--/  |
 	// +-------+
 	// x = (0.5, 0.5)
-	print_line(vformat("uv_rect: %s", uv_rect));
+
 	if (_repeat_segment && texture_mode == Line2D::LINE_TEXTURE_TILE) {
 		// we donot support texture repeat on arcs,
 		// so make sure that texture is not tiling
@@ -675,7 +676,6 @@ void LineBuilder::new_arc(Vector2 center, Vector2 vbegin, float angle_delta, Col
 			uv_rect = Rect2(mid.x - dist, uv_rect.position.y, dist * 2, uv_rect.size.height);
 		}
 	}
-	print_line(vformat("uv_rect: %s", uv_rect));
 	if (texture_mode != Line2D::LINE_TEXTURE_NONE) {
 		uvs.push_back(interpolate(uv_rect, Vector2(0.5, 0.5)));
 	}

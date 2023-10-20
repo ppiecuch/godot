@@ -28,6 +28,10 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+// Reference:
+// ----------
+// * https://github.com/godotengine/godot/pull/79182/files
+
 #include "line_2d.h"
 #include "line_builder.h"
 
