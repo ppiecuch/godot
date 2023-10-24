@@ -794,17 +794,20 @@ env.Prepend(LIBS=[lib])  # Add the library as a dependency of the final executab
 
 if modules:
     sub_enabled = []
-    for m in sorted(active_modules):
-        mod = os.path.dirname(m) if os.path.dirname(m) else m
-        if mod not in sub_enabled:
-            if sub_enabled and sub_enabled[-1].startswith(mod):
-                sub_enabled[-1] = sub_enabled[-1] + " " + os.path.basename(m)
-            elif mod != m:
-                sub_enabled.append(mod + ": " + os.path.basename(m))
-            else:
-                sub_enabled.append(m)
-            if m == mod:
-                env_module.Append(CPPDEFINES=["GDEXT_%s_ENABLED" % mod.upper()])
-            else:
-                env_module.Append(CPPDEFINES=["GDEXT_%s_ENABLED" % (m.replace("/", "_").upper())])
+    with open("gdextensions_enabled.gen.h", "w") as deffile:
+        for m in sorted(active_modules):
+            mod = os.path.dirname(m) if os.path.dirname(m) else m
+            if mod not in sub_enabled:
+                if sub_enabled and sub_enabled[-1].startswith(mod):
+                    sub_enabled[-1] = sub_enabled[-1] + " " + os.path.basename(m)
+                elif mod != m:
+                    sub_enabled.append(mod + ": " + os.path.basename(m))
+                else:
+                    sub_enabled.append(m)
+                if m == mod:
+                    mod_def = "GDEXT_%s_ENABLED" % mod.upper()
+                else:
+                    mod_def = "GDEXT_%s_ENABLED" % m.replace("/", "_").upper()
+                env_module.Append(CPPDEFINES=[mod_def])
+                deffile.write("#define %s\n" % mod_def)
     print("(GDextensions) Building submodules: %s" % sorted(sub_enabled))
