@@ -148,7 +148,9 @@
 #   if __has_feature(has_trivial_assign)
 #     define BOOST_HAS_TRIVIAL_ASSIGN(T) (__has_trivial_assign(T) && !is_volatile<T>::value)
 #   endif
-#   if __has_feature(has_trivial_destructor)
+#   if __has_builtin(__is_trivially_destructible)
+#     define BOOST_HAS_TRIVIAL_DESTRUCTOR(T) (__is_trivially_destructible(T)  && is_destructible<T>::value)
+#   elif __has_feature(has_trivial_destructor)
 #     define BOOST_HAS_TRIVIAL_DESTRUCTOR(T) __has_trivial_destructor(T)
 #   endif
 #   if __has_builtin(__is_nothrow_constructible)
