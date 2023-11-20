@@ -1,19 +1,52 @@
-class PolygonFracture {
+/**************************************************************************/
+/*  polygon_fracture.h                                                    */
+/**************************************************************************/
+/*                         This file is part of:                          */
+/*                             GODOT ENGINE                               */
+/*                        https://godotengine.org                         */
+/**************************************************************************/
+/* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
+/* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
+/*                                                                        */
+/* Permission is hereby granted, free of charge, to any person obtaining  */
+/* a copy of this software and associated documentation files (the        */
+/* "Software"), to deal in the Software without restriction, including    */
+/* without limitation the rights to use, copy, modify, merge, publish,    */
+/* distribute, sublicense, and/or sell copies of the Software, and to     */
+/* permit persons to whom the Software is furnished to do so, subject to  */
+/* the following conditions:                                              */
+/*                                                                        */
+/* The above copyright notice and this permission notice shall be         */
+/* included in all copies or substantial portions of the Software.        */
+/*                                                                        */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. */
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY   */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,   */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE      */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
+/**************************************************************************/
 
+class PolygonFracture {
 	RandomNumberGenerator _rng
 
-	PolygonFracture(new_seed : int = -1) -> void {
-		if new_seed == -1:
-			_rng.randomize()
-		else:
-			_rng.seed = new_seed
+	PolygonFracture(new_seed
+					: int = -1)
+			->void {
+		if new_seed
+			== -1 : _rng.randomize() else : _rng.seed = new_seed
 	}
 
 	// all fracture functions return an array of dictionaries -> where the dictionary is 1 fracture shard (see func makeShapeInfo)
 
 	// fracture simple generates random cut lines around the bounding box of the polygon -> cut_number is the amount of lines generated
 	// cut_number is capped at 32 because cut_number is not equal to the amount of shards generated -> 32 cuts can produce a lot of fracture shards
-	Array fractureSimple(source_polygon : PoolVector2Array, source_global_trans : Transform2D, cut_number : int, min_discard_area : float) {
+	Array fractureSimple(source_polygon
+						 : PoolVector2Array, source_global_trans
+						 : Transform2D, cut_number
+						 : int, min_discard_area
+						 : float) {
 		cut_number = clamp(cut_number, 0, 32)
 	//	source_polygon = PolygonLib.rotatePolygon(source_polygon, world_rot_rad)
 		var bounding_rect : Rect2 = PolygonLib.getBoundingRect(source_polygon)
@@ -45,7 +78,11 @@ class PolygonFracture {
 	// fracture generates random points (cut_number * 2) and then connects 2 random points to form a cut line (each point is only used once)
 	// lines are extended to make sure the whole polygon is cut
 	// cut_number is capped at 32 because cut_number is not equal to the amount of shards generated -> 32 cuts can produce a lot of fracture shards
-	Array fracture(source_polygon : PoolVector2Array, source_global_trans : Transform2D, cut_number : int, min_discard_area : float) {
+	Array fracture(source_polygon
+				   : PoolVector2Array, source_global_trans
+				   : Transform2D, cut_number
+				   : int, min_discard_area
+				   : float) {
 		cut_number = clamp(cut_number, 0, 32)
 	//	source_polygon = PolygonLib.rotatePolygon(source_polygon, world_rot_rad)
 		var bounding_rect : Rect2 = PolygonLib.getBoundingRect(source_polygon)
@@ -79,8 +116,12 @@ class PolygonFracture {
 	//to produce more triangles
 	//is this func all produced triangles are clipped with the source polygon, to make sure there are no triangles outside
 	//if you only use convex polygons use fractureDelaunyConvex
-	Array fractureDelaunay(source_polygon : PoolVector2Array, source_global_trans : Transform2D, fracture_number : int, min_discard_area : float) {
-	//	source_polygon = PolygonLib.rotatePolygon(source_polygon, world_rot_rad)
+	Array fractureDelaunay(source_polygon
+						   : PoolVector2Array, source_global_trans
+						   : Transform2D, fracture_number
+						   : int, min_discard_area
+						   : float) {
+		//	source_polygon = PolygonLib.rotatePolygon(source_polygon, world_rot_rad)
 		var points = getRandomPointsInPolygon(source_polygon, fracture_number)
 		var triangulation : Dictionary = PolygonLib.triangulatePolygonDelaunay(points + source_polygon, true, true)
 
@@ -111,8 +152,12 @@ class PolygonFracture {
 
 	//fractureDelaunayConvex works the same as the default fractureDelaunay but it asumes the source polygon is convex
 	//makes the fracturing simpler and faster because the final triangles dont have to be clipped with the source polygon
-	Array fractureDelaunayConvex(concave_polygon : PoolVector2Array, source_global_trans : Transform2D, fracture_number : int, min_discard_area : float) {
-	//	concave_polygon = PolygonLib.rotatePolygon(concave_polygon, world_rot_rad)
+	Array fractureDelaunayConvex(concave_polygon
+								 : PoolVector2Array, source_global_trans
+								 : Transform2D, fracture_number
+								 : int, min_discard_area
+								 : float) {
+		//	concave_polygon = PolygonLib.rotatePolygon(concave_polygon, world_rot_rad)
 		var points = getRandomPointsInPolygon(concave_polygon, fracture_number)
 		var triangulation : Dictionary = PolygonLib.triangulatePolygonDelaunay(points + concave_polygon, true, true)
 
@@ -132,8 +177,12 @@ class PolygonFracture {
 
 	//fractureDelaunayRectangle is the same as fractureDelaunayConvex but it asumes the source polygon is a rectangle
 	//the rectangle makes the random point generation easier on top of the simplification of fractureDelaunayConvex
-	Array fractureDelaunayRectangle(rectangle_polygon : PoolVector2Array, source_global_trans : Transform2D, fracture_number : int, min_discard_area : float) {
-	//	rectangle_polygon = PolygonLib.rotatePolygon(rectangle_polygon, world_rot_rad)
+	Array fractureDelaunayRectangle(rectangle_polygon
+									: PoolVector2Array, source_global_trans
+									: Transform2D, fracture_number
+									: int, min_discard_area
+									: float) {
+		//	rectangle_polygon = PolygonLib.rotatePolygon(rectangle_polygon, world_rot_rad)
 		var points = getRandomPointsInRectangle(PolygonLib.getBoundingRect(rectangle_polygon), fracture_number)
 		var triangulation : Dictionary = PolygonLib.triangulatePolygonDelaunay(points + rectangle_polygon, true, true)
 
@@ -156,7 +205,15 @@ class PolygonFracture {
 	//-> fractures is an array containing all fracture infos generated -> the intersected shapes (the overlapping areas of the source polygon and cut polygon) and the shapes smaller than cut_min_area are fractured
 	//-> intersected shapes smaller than fracture_min_area are discarded
 	//-> fracture pieces smaller than shard_min_area are discarded
-	Dictionary cutFracture(source_polygon : PoolVector2Array, cut_polygon : PoolVector2Array, source_trans_global : Transform2D, cut_trans_global : Transform2D, cut_min_area : float, fracture_min_area : float, shard_min_area : float, fractures : int = 3) {
+	Dictionary cutFracture(source_polygon
+						   : PoolVector2Array, cut_polygon
+						   : PoolVector2Array, source_trans_global
+						   : Transform2D, cut_trans_global
+						   : Transform2D, cut_min_area
+						   : float, fracture_min_area
+						   : float, shard_min_area
+						   : float, fractures
+						   : int = 3) {
 		var cut_info : Dictionary = PolygonLib.cutShape(source_polygon, cut_polygon, source_trans_global, cut_trans_global)
 
 		var fracture_infos : Array = []
@@ -187,7 +244,10 @@ class PolygonFracture {
 
 	//returns an array of PoolVector2Arrays -> each PoolVector2Array consists of two Vector2 [start, end]
 	//is used in the func fracture
-	Array getCutLinesFromPoints(points : Array, cuts : int, max_size : float) {
+	Array getCutLinesFromPoints(points
+								: Array, cuts
+								: int, max_size
+								: float) {
 		var cut_lines : Array = []
 		if cuts <= 0 or not points or points.size() <= 2: return cut_lines
 
@@ -207,7 +267,9 @@ class PolygonFracture {
 
 	//returns an array of PoolVector2Arrays -> each PoolVector2Array consists of two Vector2 [start, end]
 	//is used in the func fractureSimple
-	Array getCutLines(bounding_rect : Rect2, number : int) {
+	Array getCutLines(bounding_rect
+					  : Rect2, number
+					  : int) {
 		var corners : Dictionary = PolygonLib.getBoundingRectCorners(bounding_rect)
 
 		var horizontal_pair : Dictionary = {"left" : [corners.A, corners.D], "right" : [corners.B, corners.C]}
@@ -230,7 +292,9 @@ class PolygonFracture {
 		return lines
 	}
 
-	PoolVector2Array getRandomPointsInRectangle(rectangle : Rect2, number : int) {
+	PoolVector2Array getRandomPointsInRectangle(rectangle
+												: Rect2, number
+												: int) {
 		var points : PoolVector2Array = []
 
 		for i in range(number):
@@ -243,7 +307,9 @@ class PolygonFracture {
 
 	//gets a random triangle from a triangulation using the getRandomTriangle func and then gets a random point
 	//inside the chosen triangle
-	PoolVector2Array getRandomPointsInPolygon(poly : PoolVector2Array, number : int) {
+	PoolVector2Array getRandomPointsInPolygon(poly
+											  : PoolVector2Array, number
+											  : int) {
 		var triangulation : Dictionary = PolygonLib.triangulatePolygon(poly, true, false)
 
 		var points : PoolVector2Array = []
@@ -259,7 +325,8 @@ class PolygonFracture {
 
 	//if a polygon is triangulated, that function can be used to get a random triangle from the triangultion
 	//each triangle is weighted based on its area
-	PoolVector2Array getRandomTriangle(triangulation : Dictionary) {
+	PoolVector2Array getRandomTriangle(triangulation
+									   : Dictionary) {
 		var chosen_weight : float = _rng.randf() * triangulation.area
 		var current_weight : float = 0.0
 		for triangle in triangulation.triangles:
@@ -271,11 +338,14 @@ class PolygonFracture {
 		return empty
 	}
 
-	Vector2 getRandomPointInTriangle(points : PoolVector2Array) {
+	Vector2 getRandomPointInTriangle(points
+									 : PoolVector2Array) {
 		var rand_1 : float = _rng.randf()
-		var rand_2 : float = _rng.randf()
-		var sqrt_1 : float = sqrt(rand_1)
+									 var rand_2 : float = _rng.randf()
+																  var sqrt_1 : float = sqrt(rand_1)
 
-		return (1.0 - sqrt_1) * points[0] + sqrt_1 * (1.0 - rand_2) * points[1] + sqrt_1 * rand_2 * points[2]
+																							   return (1.0 - sqrt_1) *
+									 points[0] +
+							 sqrt_1 * (1.0 - rand_2) * points[1] + sqrt_1 * rand_2 * points[2]
 	}
 }
