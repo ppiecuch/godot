@@ -785,13 +785,6 @@ env_module.Append(
     ]
 )
 
-if env["builtin_freetype"]:
-    env_module.Prepend(CPPPATH=["#thirdparty/freetype/include"])
-env_module.Append(CPPDEFINES=["GD_CQUEUE", "GD_GODOT_ENET"])
-
-lib = env_module.Library("gdextensions", thirdparty_sources + sources)  # Compile as a static library
-env.Prepend(LIBS=[lib])  # Add the library as a dependency of the final executable
-
 if modules:
     sub_enabled = []
     with open("gdextensions_enabled.gen.h", "w") as deffile:
@@ -811,3 +804,9 @@ if modules:
                 env_module.Append(CPPDEFINES=[mod_def])
                 deffile.write("#define %s\n" % mod_def)
     print("(GDextensions) Building submodules: %s" % sorted(sub_enabled))
+
+if env["builtin_freetype"]:
+    env_module.Prepend(CPPPATH=["#thirdparty/freetype/include"])
+env_module.Append(CPPDEFINES=["GD_CQUEUE", "GD_GODOT_ENET"])
+lib = env_module.Library("gdextensions", thirdparty_sources + sources)  # Compile as a static library
+env.Prepend(LIBS=[lib])  # Add the library as a dependency of the final executable
