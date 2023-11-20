@@ -344,7 +344,7 @@ void LineBuilder::build() {
 
 		// For wrap-around polylines, store some kind of start positions of the first joint for the final connection.
 		if (wrap_around && i == 0) {
-			Vector2 first_pos_center = (pos_up1 + pos_down1) / 2;
+			const Vector2 first_pos_center = (pos_up1 + pos_down1) / 2;
 			const float lerp_factor = 1.0 / width_factor;
 			first_pos_up = first_pos_center.lerp(pos_up1, lerp_factor);
 			first_pos_down = first_pos_center.lerp(pos_down1, lerp_factor);

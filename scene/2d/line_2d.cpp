@@ -38,6 +38,14 @@
 #include "core/core_string_names.h"
 #include "core/engine.h"
 
+#include "modules_enabled.gen.h"
+#ifdef MODULE_GDEXTENSIONS_ENABLED
+#include "gdextensions/gdextensions_enabled.gen.h"
+#ifdef GDEXT_DEBUGDRAW_ENABLED
+#include "gdextensions/submodules/debugdraw/debugdraw.h"
+#endif
+#endif
+
 // Needed so we can bind functions
 VARIANT_ENUM_CAST(Line2D::LineJointMode)
 VARIANT_ENUM_CAST(Line2D::LineCapMode)
@@ -51,7 +59,7 @@ Line2D::Line2D() {
 	_width = 10;
 	_default_color = Color(0.4, 0.5, 1);
 	_texture_mode = LINE_TEXTURE_NONE;
-	_sharp_limit = 2.f;
+	_sharp_limit = 2;
 	_round_precision = 8;
 	_antialiased = false;
 }
@@ -376,6 +384,9 @@ void Line2D::_draw() {
 			for (int i = 0; i < lb.vertices.size(); ++i) {
 				Vector2 p = lb.vertices[i];
 				draw_rect(Rect2(p.x - 1, p.y - 1, 2, 2), debug);
+#ifdef GDEXT_DEBUGDRAW_ENABLED
+				DebugDraw::get_singleton()->print_canvas(this, "1", p);
+#endif
 			}
 		}
 	}

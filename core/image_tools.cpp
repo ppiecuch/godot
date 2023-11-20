@@ -680,6 +680,7 @@ Vector<Rect2> ImageTools::unpack_region(const Image *p_src, real_t p_distance_be
  * Create seamless texture so you can tile them and it will be much less noticeable.
  * You can customize settings to create best fitting set for your texture.
  * Algorithm is supporting making seamless textures also for normal maps.
+ * (v. 1.1.0)
  */
 
 static void _fe_rotate_square(Vector<_byteword> &tex, int width, int height, real_t phi) {
@@ -844,7 +845,7 @@ static Vector<_byteword> _fe_get_stamp(const Image *source, const uint32_t *sour
 	return stamp_pixels;
 }
 
-Ref<Image> ImageTools::make_seamless(const Image *p_src, SeamlessStampMode p_stamp_mode, real_t p_stamper_radius, real_t p_stamp_density, real_t p_hardness, real_t p_stamp_noise_mask, real_t p_randomize, int p_stamp_rotate, SeamlessAxis p_to_loop) {
+Ref<Image> ImageTools::make_seamless(const Image *p_src, SeamlessStampMode p_stamp_mode, real_t p_hardness, real_t p_randomize, real_t p_stamper_radius, real_t p_stamp_density, real_t p_stamp_noise_mask, int p_stamp_rotate, SeamlessAxis p_to_loop) {
 	ERR_FAIL_NULL_V(p_src, Ref<Image>());
 
 	if (p_src->data.size() == 0) {
@@ -863,7 +864,7 @@ Ref<Image> ImageTools::make_seamless(const Image *p_src, SeamlessStampMode p_sta
 		ERR_FAIL_RANGE_V(p_stamp_noise_mask, 0, 2, Ref<Image>());
 		ERR_FAIL_RANGE_V(p_randomize, 0, 0.5, Ref<Image>());
 		ERR_FAIL_RANGE_V(p_stamp_rotate, 0, 360, Ref<Image>());
-	} else {
+	} else if (p_stamp_mode == FE_SPLATMODE) {
 		ERR_FAIL_RANGE_V(p_stamper_radius, 0, 1, Ref<Image>());
 		ERR_FAIL_RANGE_V(p_stamp_density, -1, 1, Ref<Image>());
 		ERR_FAIL_RANGE_V(p_hardness, 0, 2, Ref<Image>());
@@ -874,6 +875,8 @@ Ref<Image> ImageTools::make_seamless(const Image *p_src, SeamlessStampMode p_sta
 			p_to_loop = FE_XY;
 			WARN_PRINT("Resetting p_to_loop to FE_XY");
 		}
+	} else {
+		WARN_PRINT("Unsupported stamp mode");
 	}
 	const int width = p_src->width;
 	const int height = p_src->height;
