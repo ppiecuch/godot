@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="BulletServerRelay" inherits="Object" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../doc/class.xsd">
+	<brief_description>
+		Singleton for automatic communication between [BulletServer] and [BulletSpawner] nodes.
+	</brief_description>
+	<description>
+		Singleton for automatic communication between [BulletServer] and [BulletSpawner] nodes.
+		Consists simply of signals which a [BulletServer] can connect to for receiving bullet spawn requests, and methods a [BulletSpawner] can connect to for reporting them.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="spawn_bullet">
+			<return type="void" />
+			<argument index="0" name="type" type="BulletType" />
+			<argument index="1" name="position" type="Vector2" />
+			<argument index="2" name="direction" type="Vector2" />
+			<description>
+				Emits [code]bullet_spawn_requested[/code] with the given parameters.
+				Connect custom singular bullet spawn request signals here.
+			</description>
+		</method>
+		<method name="spawn_volley">
+			<return type="void" />
+			<argument index="0" name="type" type="BulletType" />
+			<argument index="1" name="origin" type="Vector2" />
+			<argument index="2" name="shots" type="Array" />
+			<description>
+				Emits [code]volley_spawn_requested[/code] with the given parameters.
+				Connect custom bullet volley spawn request signals here.
+			</description>
+		</method>
+	</methods>
+	<signals>
+		<signal name="bullet_spawn_requested">
+			<argument index="0" name="type" type="BulletType" />
+			<argument index="1" name="position" type="Vector2" />
+			<argument index="2" name="direction" type="Vector2" />
+			<description>
+				Emits when the relay has received a bullet spawn request signal.
+				Connect this to custom singular bullet spawning implementations.
+			</description>
+		</signal>
+		<signal name="volley_spawn_requested">
+			<argument index="0" name="type" type="BulletType" />
+			<argument index="1" name="position" type="Vector2" />
+			<argument index="2" name="shots" type="Array" />
+			<description>
+				Emits when the relay has received a bullet spawn request signal.
+				Connect this to custom bullet volley spawning implementations.
+			</description>
+		</signal>
+	</signals>
+	<constants>
+	</constants>
+</class>
