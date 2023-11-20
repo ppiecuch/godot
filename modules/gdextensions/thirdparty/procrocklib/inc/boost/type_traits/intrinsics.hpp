@@ -140,7 +140,9 @@
 #   if __has_feature(has_trivial_constructor)
 #     define BOOST_HAS_TRIVIAL_CONSTRUCTOR(T) __has_trivial_constructor(T)
 #   endif
-#   if __has_feature(has_trivial_copy)
+#   if __has_builtin(__is_trivially_copyable)
+#     define BOOST_HAS_TRIVIAL_COPY(T) (__is_trivially_copyable(T) && !is_reference<T>::value)
+#   elif __has_feature(has_trivial_copy)
 #     define BOOST_HAS_TRIVIAL_COPY(T) (__has_trivial_copy(T) && !is_reference<T>::value && !is_volatile<T>::value)
 #   endif
 #   if __has_feature(has_trivial_assign)
@@ -149,7 +151,9 @@
 #   if __has_feature(has_trivial_destructor)
 #     define BOOST_HAS_TRIVIAL_DESTRUCTOR(T) __has_trivial_destructor(T)
 #   endif
-#   if __has_feature(has_nothrow_constructor)
+#   if __has_builtin(__is_nothrow_constructible)
+#     define BOOST_HAS_NOTHROW_CONSTRUCTOR(T) (__is_nothrow_constructible(T) && is_default_constructible<T>::value)
+#   elif __has_feature(has_nothrow_constructor)
 #     define BOOST_HAS_NOTHROW_CONSTRUCTOR(T) __has_nothrow_constructor(T)
 #   endif
 #   if __has_feature(has_nothrow_copy)
