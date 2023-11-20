@@ -14,6 +14,13 @@
 // first thing Eigen does: stop the compiler from committing suicide
 #include "src/Core/util/DisableStupidWarnings.h"
 
+#include "common/gd_core_defs.h"
+#ifdef _HAS_EXCEPTIONS
+  #define EIGEN_EXCEPTIONS
+#else
+  #undef EIGEN_EXCEPTIONS
+#endif
+
 #if defined(__CUDACC__) && !defined(EIGEN_NO_CUDA)
   #define EIGEN_CUDACC __CUDACC__
 #endif
