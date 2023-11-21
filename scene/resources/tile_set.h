@@ -121,6 +121,7 @@ private:
 		String name;
 		Ref<Texture> texture;
 		Ref<Texture> normal_map;
+		Ref<Texture> mask;
 		Vector2 offset;
 		Rect2i region;
 		Vector<ShapeData> shapes_data;
@@ -172,6 +173,9 @@ public:
 
 	void tile_set_normal_map(int p_id, const Ref<Texture> &p_normal_map);
 	Ref<Texture> tile_get_normal_map(int p_id) const;
+
+	void tile_set_mask(int p_id, const Ref<Texture> &p_normal_map);
+	Ref<Texture> tile_get_mask(int p_id) const;
 
 	void tile_set_texture_offset(int p_id, const Vector2 &p_offset);
 	Vector2 tile_get_texture_offset(int p_id) const;

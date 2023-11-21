@@ -67,7 +67,7 @@ private:
 
 public:
 	static void tilemap_begin();
-	static void tilemap_add_rect(RID p_canvas_item, const Rect2 &p_rect, RID p_texture, const Rect2 &p_src_rect, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, RID p_normal_map = RID(), bool p_clip_uv = false);
+	static void tilemap_add_rect(RID p_canvas_item, const Rect2 &p_rect, RID p_texture, const Rect2 &p_src_rect, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, RID p_normal_map = RID(), RID p_mask = RID(), bool p_clip_uv = false);
 	static void tilemap_end();
 
 	static bool _multirect_enabled;

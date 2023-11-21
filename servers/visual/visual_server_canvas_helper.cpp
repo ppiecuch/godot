@@ -38,7 +38,7 @@ Mutex VisualServerCanvasHelper::_tilemap_mutex;
 
 bool VisualServerCanvasHelper::_multirect_enabled = true;
 
-void MultiRect::add_rect(RID p_canvas_item, const Rect2 &p_rect, RID p_texture, const Rect2 &p_src_rect, const Color &p_modulate, bool p_transpose, RID p_normal_map, RID mask, bool p_clip_uv) {
+void MultiRect::add_rect(RID p_canvas_item, const Rect2 &p_rect, RID p_texture, const Rect2 &p_src_rect, const Color &p_modulate, bool p_transpose, RID p_normal_map, RID p_mask, bool p_clip_uv) {
 	bool new_common_data = true;
 
 	Rect2 rect = p_rect;
@@ -185,7 +185,7 @@ void MultiRect::flush() {
 			bool clip_uv = state.flags & RasterizerCanvas::CANVAS_RECT_CLIP_UV;
 
 			for (uint32_t n = 0; n < rects.size(); n++) {
-				VisualServer::get_singleton()->canvas_item_add_texture_rect_region(state.item, rects[n], state.texture, sources[n], state.modulate, transpose, state.normal_map, clip_uv);
+				VisualServer::get_singleton()->canvas_item_add_texture_rect_region(state.item, rects[n], state.texture, sources[n], state.modulate, transpose, state.normal_map, state.mask, clip_uv);
 			}
 		}
 
@@ -204,9 +204,9 @@ void VisualServerCanvasHelper::tilemap_begin() {
 	}
 }
 
-void VisualServerCanvasHelper::tilemap_add_rect(RID p_canvas_item, const Rect2 &p_rect, RID p_texture, const Rect2 &p_src_rect, const Color &p_modulate, bool p_transpose, RID p_normal_map, bool p_clip_uv) {
+void VisualServerCanvasHelper::tilemap_add_rect(RID p_canvas_item, const Rect2 &p_rect, RID p_texture, const Rect2 &p_src_rect, const Color &p_modulate, bool p_transpose, RID p_normal_map, RID p_mask, bool p_clip_uv) {
 	if (!_multirect_enabled) {
-		VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item, p_rect, p_texture, p_src_rect, p_modulate, p_transpose, p_normal_map, p_clip_uv);
+		VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item, p_rect, p_texture, p_src_rect, p_modulate, p_transpose, p_normal_map, p_mask,  p_clip_uv);
 		return;
 	}
 
@@ -232,6 +232,7 @@ void VisualServerCanvasHelper::tilemap_add_rect(RID p_canvas_item, const Rect2 &
 	state.texture = p_texture;
 	state.modulate = p_modulate;
 	state.normal_map = p_normal_map;
+	state.mask = p_mask;
 	state.flags = flags;
 
 	// attempt to add to existing multirect

@@ -575,6 +575,7 @@ void TileMap::update_dirty_quadrants() {
 			}
 
 			Ref<Texture> normal_map = tile_set->tile_get_normal_map(c.id);
+			Ref<Texture> mask = tile_set->tile_get_mask(c.id);
 			Color modulate = tile_set->tile_get_modulate(c.id) * get_self_modulate();
 
 			if (r == Rect2()) {
@@ -587,7 +588,7 @@ void TileMap::update_dirty_quadrants() {
 							multirect_started = true;
 							VisualServerCanvasHelper::tilemap_begin();
 						}
-						VisualServerCanvasHelper::tilemap_add_rect(canvas_item, rect, tex->get_rid(), r, modulate, c.transpose, normal_map.is_valid() ? normal_map->get_rid() : RID(), clip_uv);
+						VisualServerCanvasHelper::tilemap_add_rect(canvas_item, rect, tex->get_rid(), r, modulate, c.transpose, normal_map.is_valid() ? normal_map->get_rid() : RID(), mask.is_valid() ? mask->get_rid() : RID(), clip_uv);
 					} break;
 					case Texture::REFINE_RECT_RESULT_FALLBACK: {
 						if (multirect_started) {
