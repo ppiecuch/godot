@@ -611,7 +611,7 @@ unsigned *sr_palette(int pal, int num_colors) {
 	}
 }
 
-/// Godot Control
+// BEGIN SRGraph Godot control
 
 int SRGraph::get_plot_history_size() const {
 	return plot_history_size;
@@ -621,40 +621,14 @@ void SRGraph::set_plot_history_size(int p_size) {
 	plot_history_size = p_size;
 }
 
-void SRGraph::set_grid(bool p_visible) {
-	show_grid = p_visible;
+void SRGraph::set_grid(sr_graph_t p_graph, bool p_visible, const Color &p_color) {
+}
+
+void SRGraph::set_axes(sr_graph_t p_graph, bool p_visible, const Color &p_color) {
+	if (p_visible) {
+		sr_add_axes(p_graph, p_color, true);
+	}
 	update();
-}
-
-bool SRGraph::get_grid() const {
-	return show_grid;
-}
-
-void SRGraph::set_grid_color(const Color &p_color) {
-	grid_color = p_color;
-	update();
-}
-
-Color SRGraph::get_grid_color() const {
-	return grid_color;
-}
-
-void SRGraph::set_axes(bool p_visible) {
-	show_axes = p_visible;
-	update();
-}
-
-bool SRGraph::get_axes() const {
-	return show_axes;
-}
-
-void SRGraph::set_axes_color(const Color &p_color) {
-	axes_color = p_color;
-	update();
-}
-
-Color SRGraph::get_axes_color() const {
-	return axes_color;
 }
 
 sr_graph_t SRGraph::add_graph(const Point2 &p_min, const Point2 &p_max, real_t p_ratio, const Color &p_bg, const String &p_label) {
@@ -691,33 +665,21 @@ void SRGraph::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_plot_history_size", "size"), &SRGraph::set_plot_history_size);
 	ClassDB::bind_method(D_METHOD("get_plot_history_size"), &SRGraph::get_plot_history_size);
 
-	ClassDB::bind_method(D_METHOD("set_axes", "visible"), &SRGraph::set_axes);
-	ClassDB::bind_method(D_METHOD("get_axes"), &SRGraph::get_axes);
-	ClassDB::bind_method(D_METHOD("set_axes_color", "color"), &SRGraph::set_axes_color);
-	ClassDB::bind_method(D_METHOD("get_axes_color"), &SRGraph::get_axes_color);
-	ClassDB::bind_method(D_METHOD("set_grid", "visible"), &SRGraph::set_grid);
-	ClassDB::bind_method(D_METHOD("get_grid"), &SRGraph::get_grid);
-	ClassDB::bind_method(D_METHOD("set_grid_color", "color"), &SRGraph::set_grid_color);
-	ClassDB::bind_method(D_METHOD("get_grid_color"), &SRGraph::get_grid_color);
+	ClassDB::bind_method(D_METHOD("set_axes", "graph", "visible", "color"), &SRGraph::set_axes, DEFVAL(Color()));
+	ClassDB::bind_method(D_METHOD("set_grid", "graph", "visible", "color"), &SRGraph::set_grid, DEFVAL(Color()));
 
 	ClassDB::bind_method(D_METHOD("add_graph", "min_xy", "max_xy", "ratio", "bg", "label"), &SRGraph::add_graph, DEFVAL(""));
 	ClassDB::bind_method(D_METHOD("add_curve", "graph_id", "xs", "ys", "color"), &SRGraph::add_curve);
 	ClassDB::bind_method(D_METHOD("update_curve", "graph_id", "curve_id", "xs", "ys"), &SRGraph::update_curve);
 
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "history_size"), "set_plot_history_size", "get_plot_history_size");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "axes"), "set_axes", "get_axes");
-	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "axes_color"), "set_axes_color", "get_axes_color");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "grid"), "set_grid", "get_grid");
-	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "grid_color"), "set_grid_color", "get_grid_color");
 }
 
 SRGraph::SRGraph() {
 	plot_history_size = 100;
-	show_grid = true;
-	grid_color = Color(0.8, 0.8, 0.8, 0.25);
-	show_axes = false;
-	axes_color = Color(1, 0, 0, 0.8);
 	set_size(Size2(150, 150));
 }
 
 SRGraph::~SRGraph() {}
+
+// END

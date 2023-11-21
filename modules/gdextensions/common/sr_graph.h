@@ -41,10 +41,6 @@ class SRGraph : public Control {
 	GDCLASS(SRGraph, Control);
 
 	int plot_history_size;
-	bool show_grid;
-	Color grid_color;
-	bool show_axes;
-	Color axes_color;
 
 protected:
 	void _notification(int p_what);
@@ -54,17 +50,10 @@ public:
 	int get_plot_history_size() const;
 	void set_plot_history_size(int p_size);
 
-	void set_grid(bool p_visible);
-	bool get_grid() const;
-	void set_grid_color(const Color &p_color);
-	Color get_grid_color() const;
-
-	void set_axes(bool p_visible);
-	bool get_axes() const;
-	void set_axes_color(const Color &p_color);
-	Color get_axes_color() const;
-
 	sr_graph_t add_graph(const Point2 &p_min, const Point2 &p_max, real_t p_ratio, const Color &p_bg, const String &p_label = "");
+
+	void set_grid(sr_graph_t p_graph, bool p_visible, const Color &p_color = Color());
+	void set_axes(sr_graph_t p_graph, bool p_visible, const Color &p_color = Color());
 
 	int add_curve(sr_graph_t p_graph, const Vector<real_t> &p_xs, const Vector<real_t> &p_ys, const Color &p_color);
 	void update_curve(sr_graph_t p_graph, int p_curve, const Vector<real_t> &p_xs, const Vector<real_t> &p_ys);
