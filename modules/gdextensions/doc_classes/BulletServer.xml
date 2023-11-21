@@ -30,7 +30,7 @@
 		<method name="get_live_bullets">
 			<return type="Array" />
 			<description>
-				Returns an array containing all currently live [Bullet] objects. 
+				Returns an array containing all currently live [Bullet] objects.
 				Returned array is a copy of the server's internal live bullet array. Modifying this array will have no effect on BulletServer's internal arrays, but modifications made to the [Bullet]s themselves will take effect in the game.
 			</description>
 		</method>
@@ -85,7 +85,7 @@
 			Disable if you're implementing more nuanced bullet behaviour on collision, like reflection.
 		</member>
 		<member name="relay_autoconnect" type="bool" setter="set_relay_autoconnect" getter="get_relay_autoconnect" default="true">
-			If [code]true[/code], this server will automatically connect to the [BulletServerRelay] singleton on ready. Provides effortless connection between spawner and server. 
+			If [code]true[/code], this server will automatically connect to the [BulletServerRelay] singleton on ready. Provides effortless connection between spawner and server.
 			If disabled, you must manually connect spawning signals to this server's [code]spawn_bullet[/code] or [code]spawn_volley[/code] functions via script.
 		</member>
 	</members>
