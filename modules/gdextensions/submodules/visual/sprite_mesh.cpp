@@ -32,6 +32,7 @@
 #include <string>
 #include <vector>
 
+#include "core/core_string_names.h"
 #include "core/io/json.h"
 #include "core/math/math_funcs.h"
 #include "core/math/vector2.h"
@@ -82,6 +83,7 @@
 // - https://community.khronos.org/t/glsl-multiple-lights/54103/3
 // - https://learnopengl.com/Lighting/Multiple-lights
 // - https://en.wikibooks.org/wiki/GLSL_Programming/GLUT/Multiple_Lights
+
 const char *_light_material_shader = R"(
 	shader_type canvas_item;
 
@@ -172,8 +174,6 @@ void SpriteMeshSnapshot::_create() {
 
 	VS::get_singleton()->viewport_attach_canvas(viewport, canvas);
 	VS::get_singleton()->canvas_item_set_parent(canvas_item, canvas);
-
-	VS::get_singleton()->viewport_set_update_mode(viewport, VS::VIEWPORT_UPDATE_DISABLED);
 }
 
 void SpriteMeshSnapshot::_trigger(const String &filepath) {
@@ -211,7 +211,6 @@ void SpriteMeshSnapshot::_trigger(const String &filepath) {
 void SpriteMeshSnapshot::_destroy() {
 	_FREE_RID(canvas_item);
 	_FREE_RID(canvas);
-	_FREE_RID(viewport_texture);
 	_FREE_RID(viewport);
 	_FREE_RID(scenario);
 }
@@ -223,6 +222,25 @@ Ref<Image> SpriteMeshSnapshot::_get_image() {
 	img->convert(Image::FORMAT_RGBA8);
 	return img;
 }
+
+void SpriteMeshSnapshot::done() {
+	if (viewport.is_valid()) {
+		VS::get_singleton()->viewport_set_active(viewport, true);
+	}
+}
+
+static _FORCE_INLINE_ Ref<Mesh> _current_submesh(Ref<ArrayMesh> mesh, int index) {
+	if (mesh) {
+		if (mesh->get_submesh_count()) {
+			return mesh->get_submesh_by_index(index);
+		}
+	}
+	return mesh;
+}
+
+static Basis flip_x_transform = Basis(-1, 0, 0, 0, 1, 0, 0, 0, 1);
+static Basis flip_y_transform = Basis(1, 0, 0, 0, -1, 0, 0, 0, 1);
+static Basis flip_z_transform = Basis(1, 0, 0, 0, 1, 0, 0, 0, -1);
 
 void SpriteMesh::_refresh_properties() {
 	property_list_changed_notify();
@@ -255,7 +273,8 @@ void SpriteMesh::_update_lights() {
 
 void SpriteMesh::_update_mesh_outline(const PoolVector3Array &p_vertices, const Transform &p_xform, const PoolIntArray &p_triangles) {
 	ERR_FAIL_COND_MSG(p_triangles.size() == 0, "Automtic outline only works for indexed meshes");
-	// Get just the outer edges from the mesh's triangles (ignore or remove any shared edges)
+
+	// get just the outer edges from the mesh's triangles (ignore or remove any shared edges)
 	typedef std::pair<int, int> index_pair_t;
 	std::map<index_pair_t, index_pair_t> edges;
 	for (int i = 0; i < p_triangles.size() - 1; i += 3) {
@@ -271,7 +290,7 @@ void SpriteMesh::_update_mesh_outline(const PoolVector3Array &p_vertices, const 
 		}
 	}
 
-	// Create edge lookup Dictionary
+	// create edge lookup dictionary
 	std::map<int, int> lookup;
 	for (const auto &edge : edges) {
 		// const auto &key = edge.first;
@@ -304,6 +323,56 @@ void SpriteMesh::_update_mesh_outline(const PoolVector3Array &p_vertices, const 
 	}
 }
 
+void SpriteMesh::_update_mesh_changes() {
+	if (mesh.is_valid()) {
+		if (auto_collision_shape) {
+			if (Ref<ArrayMesh> m = mesh) {
+				for (int s = 0; s < m->get_surface_count(); s++) {
+					if (m->surface_is_active(s)) {
+						const Array &mesh_array = m->surface_get_arrays(s);
+						const PoolVector3Array &vertexes = mesh_array[VS::ARRAY_VERTEX];
+						_update_mesh_outline(vertexes, mesh_xform, mesh_array[VS::ARRAY_INDEX]); // update outline shape
+					}
+				}
+			}
+		}
+		item_rect_changed();
+	}
+}
+
+void SpriteMesh::_update_mesh() {
+	if (Ref<Mesh> current = _current_submesh(drawer, submesh_selected)) {
+		mesh = current;
+	}
+	_mesh_dirty = true;
+	_update_xform_from_components();
+	item_rect_changed();
+	update();
+	emit_signal("mesh_changed");
+	_change_notify("mesh");
+}
+
+void SpriteMesh::_update_components_from_xform() {
+	_mesh_angle = mesh_xform.get_euler();
+	_mesh_scale = mesh_xform.get_scale();
+}
+
+void SpriteMesh::_update_xform_from_components() {
+	if (flipped) {
+		mesh_xform.set_euler_scale(_mesh_angle, _mesh_scale * Vector3(1, -1, 1));
+	} else {
+		mesh_xform.set_euler_scale(_mesh_angle, _mesh_scale);
+	}
+
+	if (!is_inside_tree()) {
+		return;
+	}
+
+	_mesh_dirty = true;
+	_notify_transform();
+	update();
+}
+
 void SpriteMesh::_snapshot_done(const Variant &p_udata) {
 	static int snapshot_count = 0;
 	if (Ref<Image> img = snapshot._get_image()) {
@@ -318,103 +387,87 @@ void SpriteMesh::_snapshot_done(const Variant &p_udata) {
 			print_verbose("Snapshot saved to file: " + file);
 		}
 	}
-}
-
-void SpriteMesh::_update_mesh_xform() {
-	if (mesh.is_valid()) {
-		if (auto_collision_shape) {
-			ArrayMesh *_mesh = cast_to<ArrayMesh>(*mesh);
-			ERR_FAIL_NULL(_mesh);
-			for (int s = 0; s < _mesh->get_surface_count(); s++) {
-				if (_mesh->surface_is_active(s)) {
-					const Array &mesh_array = _mesh->surface_get_arrays(s);
-					const PoolVector3Array &vertexes = mesh_array[VS::ARRAY_VERTEX];
-					// update outline shape
-					_update_mesh_outline(vertexes, mesh_xform, mesh_array[VS::ARRAY_INDEX]);
-				}
-			}
-		}
-		item_rect_changed();
-	}
+	snapshot.done();
 }
 
 void SpriteMesh::set_mesh(const Ref<Mesh> &p_mesh) {
-	if (mesh == p_mesh) {
+	if (drawer == p_mesh) {
 		return;
 	}
 
-	mesh = p_mesh;
-	_mesh_dirty = true;
-	_update_transform();
-	item_rect_changed();
-	update();
-	emit_signal("mesh_changed");
-	_change_notify("mesh");
+	if (drawer.is_valid()) {
+		drawer->disconnect(CoreStringNames::get_singleton()->changed, this, "_mesh_changed");
+	}
+
+	drawer = mesh = p_mesh;
+	submesh_selected = 0;
+
+	if (drawer.is_valid()) {
+		drawer->connect(CoreStringNames::get_singleton()->changed, this, "_mesh_changed");
+	}
+
+	if (p_mesh) {
+		String mesh_path = p_mesh->get_path();
+		if (!mesh_path.empty()) {
+			String color_texture = vformat("%s-C.png", mesh_path.trim_suffix("." + mesh_path.get_extension())); // color atlas
+			if (ResourceLoader::exists(color_texture)) {
+				set_mesh_texture(ResourceLoader::load(color_texture, "Texture"));
+			}
+			String normal_texture = vformat("%s-N.png", mesh_path.trim_suffix("." + mesh_path.get_extension())); // normal atlas
+			if (ResourceLoader::exists(normal_texture)) {
+				set_mesh_normal_map(ResourceLoader::load(normal_texture, "Texture"));
+			}
+		}
+	}
+
+	_update_mesh();
+}
+
+Ref<Mesh> SpriteMesh::get_mesh() const {
+	return drawer;
 }
 
 void SpriteMesh::save_snapshot(const String &p_filepath) {
 	snapshot._trigger(p_filepath);
 }
 
-void SpriteMesh::save_snapshot_mesh(Ref<Mesh> p_mesh) {
-	ERR_FAIL_COND(!p_mesh.is_valid());
-	if (mesh.is_valid()) {
-		if (ArrayMesh *arraymesh = cast_to<ArrayMesh>(*p_mesh)) {
-			for (int s = 0; s < mesh->get_surface_count(); s++) {
-				Array mesh_array = mesh->surface_get_arrays(s);
+void SpriteMesh::save_snapshot_mesh(Ref<ArrayMesh> p_mesh) {
+	ERR_FAIL_NULL(p_mesh);
+	ERR_FAIL_NULL(mesh);
+	for (int s = 0; s < mesh->get_surface_count(); s++) {
+		Array arrays = mesh->surface_get_arrays(s);
 
-				PoolVector3Array vertexes = mesh_array[VS::ARRAY_VERTEX];
-				PoolVector3Array xform_vertexes;
-				ERR_FAIL_COND(xform_vertexes.resize(vertexes.size()) != OK);
+		PoolVector3Array vertexes = arrays[VS::ARRAY_VERTEX];
+		PoolVector3Array xform_vertexes;
+		ERR_FAIL_COND(xform_vertexes.resize(vertexes.size()) != OK);
 
-				auto w = xform_vertexes.write();
-				for (int v = 0; v < vertexes.size(); ++v) {
-					w[v] = mesh_xform.xform(vertexes[v]);
-				}
-				// build transformed mesh
-				mesh_array[VS::ARRAY_VERTEX] = xform_vertexes;
-				if (((PoolColorArray)mesh_array[VS::ARRAY_COLOR]).size() == 0) {
-					// extract albedo color from material, since they are ignored in 2D
-					PoolColorArray colors;
-					Ref<SpatialMaterial> mat = mesh->surface_get_material(s);
-					if (mat.is_valid()) {
-						Color alb = mat->get_albedo();
-						colors.push_multi(xform_vertexes.size(), alb);
-					}
-					mesh_array[VS::ARRAY_COLOR] = colors;
-				}
-				arraymesh->add_surface_from_arrays(mesh->surface_get_primitive_type(s), mesh_array);
-			}
-		} else {
-			WARN_PRINT("Mesh is not ArrayMesh");
+		auto w = xform_vertexes.write();
+		// build transformed mesh
+		for (int v = 0; v < vertexes.size(); ++v) {
+			w[v] = mesh_xform.xform(vertexes[v]);
+		}
+		arrays[VS::ARRAY_VERTEX] = xform_vertexes;
+		// Albedo is use in modified renderer.
+		//
+		// extract albedo color from material, since they are ignored in 2D
+		// if (((PoolColorArray)arrays[VS::ARRAY_COLOR]).size() == 0) {
+		// 	PoolColorArray colors;
+		// 	if (Ref<SpatialMaterial> mat = mesh->surface_get_material(s)) {
+		// 		colors.push_multi(xform_vertexes.size(), mat->get_albedo());
+		// 	}
+		// 	arrays[VS::ARRAY_COLOR] = colors;
+		// }
+		const int surf_id = p_mesh->get_surface_count();
+		p_mesh->add_surface_from_arrays(mesh->surface_get_primitive_type(s), arrays);
+		if (Ref<Material> mat = mesh->surface_get_material(s)) {
+			p_mesh->surface_set_material(surf_id, mat);
 		}
 	}
 }
 
-Ref<Mesh> SpriteMesh::get_mesh() const {
-	return mesh;
-}
-
-void SpriteMesh::_update_xform_values() {
-	_mesh_angle = mesh_xform.get_euler();
-	_mesh_scale = mesh_xform.get_scale();
-}
-
-void SpriteMesh::_update_transform() {
-	mesh_xform.set_euler_scale(_mesh_angle, _mesh_scale);
-
-	if (!is_inside_tree()) {
-		return;
-	}
-
-	_mesh_dirty = true;
-	_notify_transform();
-	update();
-}
-
 void SpriteMesh::set_mesh_rotation(const Vector3 &p_radians) {
 	_mesh_angle = p_radians;
-	_update_transform();
+	_update_xform_from_components();
 }
 
 Vector3 SpriteMesh::get_mesh_rotation() const {
@@ -423,7 +476,7 @@ Vector3 SpriteMesh::get_mesh_rotation() const {
 
 void SpriteMesh::set_mesh_rotation_x_degrees(float p_degrees) {
 	_mesh_angle.x = Math::deg2rad(p_degrees);
-	_update_transform();
+	_update_xform_from_components();
 }
 
 float SpriteMesh::get_mesh_rotation_x_degrees() const {
@@ -432,7 +485,7 @@ float SpriteMesh::get_mesh_rotation_x_degrees() const {
 
 void SpriteMesh::set_mesh_rotation_y_degrees(float p_degrees) {
 	_mesh_angle.y = Math::deg2rad(p_degrees);
-	_update_transform();
+	_update_xform_from_components();
 }
 
 float SpriteMesh::get_mesh_rotation_y_degrees() const {
@@ -441,7 +494,7 @@ float SpriteMesh::get_mesh_rotation_y_degrees() const {
 
 void SpriteMesh::set_mesh_rotation_z_degrees(float p_degrees) {
 	_mesh_angle.z = Math::deg2rad(p_degrees);
-	_update_transform();
+	_update_xform_from_components();
 }
 
 float SpriteMesh::get_mesh_rotation_z_degrees() const {
@@ -451,7 +504,7 @@ float SpriteMesh::get_mesh_rotation_z_degrees() const {
 void SpriteMesh::set_mesh_orientation(const Basis &p_basis) {
 	if (mesh_xform != p_basis) {
 		mesh_xform = p_basis;
-		_update_xform_values();
+		_update_components_from_xform();
 
 		if (!is_inside_tree()) {
 			return;
@@ -480,7 +533,7 @@ void SpriteMesh::set_mesh_scale(const Vector3 &p_scale) {
 	if (_mesh_scale.z == 0) {
 		_mesh_scale.z = CMP_EPSILON;
 	}
-	_update_transform();
+	_update_xform_from_components();
 }
 
 Vector3 SpriteMesh::get_mesh_scale() const {
@@ -565,6 +618,14 @@ void SpriteMesh::set_frames_builder(const String &p_input) {
 						Dictionary frame = frames[f];
 						int rep = 1;
 						if (frame.has("repeat")) {
+							switch (frame["repeat"].get_type()) {
+								case Variant::REAL: {
+									rep = MAX(rep, int(frame["repeat"]));
+								} break;
+								default: {
+									WARN_PRINT("repeat component can be a number only");
+								}
+							}
 						}
 						real_t rotation[3] = { 0, 0, 0 };
 						real_t scaling[3] = { 0, 0, 0 };
@@ -585,11 +646,11 @@ void SpriteMesh::set_frames_builder(const String &p_input) {
 													rotation[c] = te_eval(expr);
 													te_free(expr);
 												} else {
-													WARN_PRINT(vformat("Rotate expresion parse error at %d", err));
+													WARN_PRINT(vformat("Rotation expresion parse error at %d", err));
 												}
 											} break;
 											default: {
-												WARN_PRINT("rotate component can be float or String only");
+												WARN_PRINT("Rotation component can be number or String only");
 											}
 										}
 									}
@@ -599,6 +660,28 @@ void SpriteMesh::set_frames_builder(const String &p_input) {
 							}
 							if (frame.has("scale")) {
 								if (frame["scale"].get_type() == Variant::ARRAY) {
+									Array scales = frame["scale"];
+									for (int c = 0; c < 3; c++) {
+										switch (scales[c].get_type()) {
+											case Variant::REAL: {
+												scaling[c] = real_t(scales[c]);
+											} break;
+											case Variant::STRING: {
+												String expr_str = scales[c];
+												te_variable vars[] = { { "repcount", &rep }, { "repcounter", &loop } };
+												int err;
+												if (te_expr *expr = te_compile(expr_str.utf8().get_data(), vars, 2, &err)) {
+													scaling[c] = te_eval(expr);
+													te_free(expr);
+												} else {
+													WARN_PRINT(vformat("Scaling expresion parse error at %d", err));
+												}
+											} break;
+											default: {
+												WARN_PRINT("Scaling component can be number or String only");
+											}
+										}
+									}
 								} else {
 									WARN_PRINT("scale needs to be an Array");
 								}
@@ -645,6 +728,16 @@ bool SpriteMesh::is_centered() const {
 	return centered;
 }
 
+void SpriteMesh::set_flipped_vert(bool p_flipped) {
+	flipped = p_flipped;
+	update();
+	item_rect_changed();
+}
+
+bool SpriteMesh::is_flipped_vert() const {
+	return flipped;
+}
+
 void SpriteMesh::set_offset(const Point2 &p_offset) {
 	offset = p_offset;
 	update();
@@ -683,18 +776,18 @@ AABB SpriteMesh::get_mesh_aabb() const {
 }
 
 void SpriteMesh::_mesh_changed() {
-	// Changes to the mesh need to trigger an update to make
-	// the editor redraw the sprite with the updated mesh.
 	if (mesh.is_valid()) {
-		update();
-		item_rect_changed();
+		_update_mesh();
 	}
 }
 
 bool SpriteMesh::_get(const StringName &p_path, Variant &r_ret) const {
 	String path = p_path;
 
-	if (!path.begins_with("mesh_lights/")) {
+	if (path == "submesh_index") {
+		r_ret = submesh_selected;
+		return true;
+	} else if (!path.begins_with("mesh_lights/")) {
 		return false;
 	}
 
@@ -732,7 +825,11 @@ bool SpriteMesh::_get(const StringName &p_path, Variant &r_ret) const {
 bool SpriteMesh::_set(const StringName &p_path, const Variant &p_value) {
 	String path = p_path;
 
-	if (!path.begins_with("mesh_lights/")) {
+	if (path == "submesh_index") {
+		submesh_selected = p_value;
+		_update_mesh();
+		return true;
+	} else if (!path.begins_with("mesh_lights/")) {
 		return false;
 	}
 
@@ -783,6 +880,11 @@ bool SpriteMesh::_set(const StringName &p_path, const Variant &p_value) {
 }
 
 void SpriteMesh::_get_property_list(List<PropertyInfo> *p_list) const {
+	if (Ref<ArrayMesh> mesh = drawer) {
+		if (mesh->get_submesh_count()) {
+			p_list->push_back(PropertyInfo(Variant::INT, "submesh_index", PROPERTY_HINT_RANGE, "0," + itos(mesh->get_submesh_count() - 1) + ",1"));
+		}
+	}
 	for (int i = 0; i < LIGHTS_NUM; i++) {
 		const String prep = "mesh_lights/" + itos(i) + "/";
 		p_list->push_back(PropertyInfo(Variant::NODE_PATH, prep + "node"));
@@ -808,7 +910,7 @@ void SpriteMesh::_notification(int p_what) {
 		emit_signal("transform_changed");
 	} else if (p_what == NOTIFICATION_DRAW) {
 		if (_mesh_dirty) {
-			_update_mesh_xform();
+			_update_mesh_changes();
 			_mesh_dirty = false;
 		}
 		if (mesh.is_valid()) {
@@ -820,9 +922,11 @@ void SpriteMesh::_notification(int p_what) {
 			if (centered) {
 				ofs -= Size2(s) / 2;
 			}
-			Point2 origin = ofs - Point2(aabb.position.x, aabb.position.y);
-			Transform xform(mesh_xform, { origin.x, origin.y, 0 });
+			const Point2 origin = ofs - Point2(aabb.position.x, aabb.position.y);
+			const Transform xform(mesh_xform, { origin.x, origin.y, 0 });
+
 			draw_mesh_3d(mesh, texture, normal_map, mask, xform);
+
 			if (mesh_debug) {
 				draw_rect(Rect2(ofs, s), Color::named("yellow"), false);
 				if (mesh_outline.size()) {
@@ -873,10 +977,13 @@ void SpriteMesh::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_centered", "centered"), &SpriteMesh::set_centered);
 	ClassDB::bind_method(D_METHOD("is_centered"), &SpriteMesh::is_centered);
+	ClassDB::bind_method(D_METHOD("set_flipped_vert", "flipped"), &SpriteMesh::set_flipped_vert);
+	ClassDB::bind_method(D_METHOD("is_flipped_vert"), &SpriteMesh::is_flipped_vert);
 
 	ClassDB::bind_method(D_METHOD("set_offset", "offset"), &SpriteMesh::set_offset);
 	ClassDB::bind_method(D_METHOD("get_offset"), &SpriteMesh::get_offset);
 
+	ClassDB::bind_method(D_METHOD("_mesh_changed"), &SpriteMesh::_mesh_changed);
 	ClassDB::bind_method(D_METHOD("_snapshot_done"), &SpriteMesh::_snapshot_done);
 	ClassDB::bind_method(D_METHOD("_refresh_properties"), &SpriteMesh::_refresh_properties);
 
@@ -890,6 +997,7 @@ void SpriteMesh::_bind_methods() {
 
 	ADD_GROUP("Mesh Transform", "mesh_");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "mesh_centered"), "set_centered", "is_centered");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "mesh_flipped_vert"), "set_flipped_vert", "is_flipped_vert");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "mesh_offset"), "set_offset", "get_offset");
 	ADD_PROPERTY(PropertyInfo(Variant::BASIS, "mesh_rotation", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "set_mesh_rotation", "get_mesh_rotation");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "mesh_rotation_x_degrees", PROPERTY_HINT_RANGE, "-360,360,0.1,or_lesser,or_greater", PROPERTY_USAGE_EDITOR), "set_mesh_rotation_x_degrees", "get_mesh_rotation_x_degrees");
@@ -901,6 +1009,7 @@ void SpriteMesh::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("texture_changed"));
 	ADD_SIGNAL(MethodInfo("mesh_changed"));
 	ADD_SIGNAL(MethodInfo("transform_changed"));
+	ADD_SIGNAL(MethodInfo("snapshot_ready"));
 }
 
 SpriteMesh::SpriteMesh() {
@@ -908,13 +1017,14 @@ SpriteMesh::SpriteMesh() {
 	_mesh_scale = Vector3(1, 1, 1);
 	_mesh_dirty = false;
 	snapshot.owner = this;
-	centered = true;
+	centered = flipped = true;
 	offset = Vector2(0, 0);
 	auto_collision_shape = false;
 	selected_frame = 0;
 	frames_builder = "";
 	mesh_debug = false;
 	mesh_xform = Basis(_mesh_angle, _mesh_scale);
+	submesh_selected = 0;
 }
 
 /// SpriteMeshEditorPlugin
@@ -1041,7 +1151,6 @@ bool SpriteMeshEditor::forward_gui_input(const Ref<InputEvent> &p_event) {
 							if (mb->get_control()) { // snap
 								r = Math::stepify(r, Math::deg2rad(10.));
 							}
-							print_line(rtos(mb->get_factor()) + "->" + rtos(r));
 							switch (_dragging) {
 								case DRAG_ROTATE_Z: {
 									VS::get_singleton()->canvas_item_update_mesh_3d(rotate_gizmo[0].mesh3d, Transform().rotated(Vector3(0, 0, 1), r), VS::OP_MUL);

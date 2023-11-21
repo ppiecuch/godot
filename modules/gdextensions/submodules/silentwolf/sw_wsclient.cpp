@@ -136,7 +136,7 @@ void SW_WSClient::send_to_server(const String &p_category, const Dictionary &p_d
 
 void SW_WSClient::init_mp_session(const String &p_player_name) {
 	sw_debug("WSClient init_mp_session, sending initialisation packet to server");
-	Dictionary init_packet = helper::dict("player_name", p_player_name);
+	Dictionary init_packet = make_dict("player_name", p_player_name);
 	return send_to_server("init", init_packet);
 }
 
