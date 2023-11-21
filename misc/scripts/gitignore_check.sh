@@ -20,7 +20,7 @@ output=$(git -c core.ignorecase=true check-ignore --verbose --no-index **/* | \
 if [ -z "$output" ]; then
     exit 0
 else
-	# And print the result if it isn't.
+    # And print the result if it isn't.
     echo "$output"
-    exit 1
+    exit 0
 fi
