@@ -1077,6 +1077,10 @@ Node *MeshMergeMaterialRepack::_output(MergeState &state, int p_count) {
 }
 
 #ifdef TOOLS_ENABLED
+void SceneMergePlugin::_on_merge(Variant p_null) {
+	merge();
+}
+
 void SceneMergePlugin::merge() {
 	file_export_lib_merge->set_pressed(false);
 	List<String> extensions;
@@ -1115,13 +1119,14 @@ void SceneMergePlugin::_dialog_action(String p_file) {
 	EditorFileSystem::get_singleton()->scan_changes();
 }
 void SceneMergePlugin::_bind_methods() {
-	ClassDB::bind_method("_dialog_action", &SceneMergePlugin::_dialog_action);
+	ClassDB::bind_method(D_METHOD("_dialog_action"), &SceneMergePlugin::_dialog_action);
+	ClassDB::bind_method(D_METHOD("_on_merge"), &SceneMergePlugin::_on_merge, DEFVAL(Variant()));
 	ClassDB::bind_method(D_METHOD("merge"), &SceneMergePlugin::merge);
 }
 
 void SceneMergePlugin::_notification(int notification) {
 	if (notification == NOTIFICATION_ENTER_TREE) {
-		editor->add_tool_menu_item("Merge Scene", this, "merge");
+		editor->add_tool_menu_item("Merge Scene", this, "_on_merge");
 	} else if (notification == NOTIFICATION_EXIT_TREE) {
 		editor->remove_tool_menu_item("Merge Scene");
 	}

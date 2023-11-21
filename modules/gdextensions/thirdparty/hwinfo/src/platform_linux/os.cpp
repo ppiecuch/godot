@@ -31,9 +31,7 @@ static std::string unquote(const char *begin, const char *end) {
   return std::string(begin, end - begin);
 }
 
-static bool read_etc_file(const char *filename,
-                        const std::string &id_key, const std::string &version_key, const std::string &pretty_name_key,
-                        std::string &id_val, std::string &version_val, std::string &pretty_name_val) {
+static bool read_etc_file(const char *filename, const std::string &id_key, const std::string &version_key, const std::string &pretty_name_key, std::string &id_val, std::string &version_val, std::string &pretty_name_val) {
   std::string line;
   std::ifstream stream("/etc/os-release");
   if (!stream) {
@@ -58,7 +56,7 @@ static bool read_etc_file(const char *filename,
 
 // _____________________________________________________________________________________________________________________
 
-static bool readOsRelease(QUnixOSVersion &v) {
+static bool readOsRelease(UnixOSVersionInfo &v) {
   static const std::string ID = "ID=";
   static const std::string VERSIONID = "VERSION_ID=";
   static const std::string PRETTYNAME = "PRETTY_NAME=";
@@ -67,7 +65,7 @@ static bool readOsRelease(QUnixOSVersion &v) {
   // The file /etc/os-release takes precedence over /usr/lib/os-release.
   // Applications should check for the former, and exclusively use its data
   // if it exists, and only fall back to /usr/lib/os-release if it is missing.
-  return read_etc_file(v, "/etc/os-release", id, versionId, prettyName) || readEtcFile(v, "/usr/lib/os-release", id, versionId, prettyName);
+  return read_etc_file(v, "/etc/os-release", id, versionId, prettyName) || read_etc_file(v, "/usr/lib/os-release", id, versionId, prettyName);
 }
 
 static std::string get_full_name() {

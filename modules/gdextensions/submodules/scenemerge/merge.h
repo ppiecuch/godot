@@ -92,6 +92,7 @@ class SceneMergePlugin : public EditorPlugin {
 	Ref<SceneMerge> scene_optimize;
 
 	void _dialog_action(String p_file);
+	void _on_merge(Variant p_null);
 	void merge();
 
 protected:

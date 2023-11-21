@@ -39,6 +39,8 @@
 class LineBuilder2D : public Reference {
 	GDCLASS(LineBuilder2D, Reference);
 
+	LineBuilder lb;
+
 protected:
 	static void _bind_methods();
 
@@ -76,12 +78,8 @@ public:
 	PoolVector2Array get_uvs() const;
 
 	void build() { lb.build(); }
-	void clear_output() { lb.clear_output(); }
 
 	LineBuilder2D();
-
-private:
-	LineBuilder lb;
 };
 
 #endif // LINEBUILDER2D_H

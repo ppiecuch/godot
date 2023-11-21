@@ -61,7 +61,7 @@ bool DebugDraw::init() {
 void DebugDraw::circle(const Vector2 &position, real_t radius, const Color &color, real_t duration) {
 	if (ready || init()) {
 		auto *vs = VS::get_singleton();
-		Drawing d = { vs->canvas_item_create(), duration };
+		const Drawing d = { vs->canvas_item_create(), duration };
 		vs->canvas_item_set_parent(d.canvas_item, canvas);
 		vs->canvas_item_add_circle(d.canvas_item, _viewport_xform(position), radius, color);
 		drawings.push_back(d);
@@ -71,7 +71,7 @@ void DebugDraw::circle(const Vector2 &position, real_t radius, const Color &colo
 void DebugDraw::line(const Vector2 &a, const Vector2 &b, const Color &color, real_t width, real_t duration) {
 	if (ready || init()) {
 		auto *vs = VS::get_singleton();
-		Drawing d = { vs->canvas_item_create(), duration };
+		const Drawing d = { vs->canvas_item_create(), duration };
 		vs->canvas_item_set_parent(d.canvas_item, canvas);
 		vs->canvas_item_add_line(d.canvas_item, _viewport_xform(a), _viewport_xform(b), color, width);
 		drawings.push_back(d);
@@ -86,7 +86,7 @@ void DebugDraw::rect(const Rect2 &rect, const Color &color, real_t width, real_t
 		Vector2 br = _viewport_xform(rect.position + rect.size);
 
 		auto *vs = VS::get_singleton();
-		Drawing d = { vs->canvas_item_create(), duration };
+		const Drawing d = { vs->canvas_item_create(), duration };
 		vs->canvas_item_set_parent(d.canvas_item, canvas);
 		vs->canvas_item_add_line(d.canvas_item, tl, tr, color, width);
 		vs->canvas_item_add_line(d.canvas_item, tr, br, color, width);
@@ -99,7 +99,7 @@ void DebugDraw::rect(const Rect2 &rect, const Color &color, real_t width, real_t
 void DebugDraw::area(const Rect2 &rect, const Color &color, real_t duration) {
 	if (ready || init()) {
 		auto *vs = VS::get_singleton();
-		Drawing d = { vs->canvas_item_create(), duration };
+		const Drawing d = { vs->canvas_item_create(), duration };
 		vs->canvas_item_set_parent(d.canvas_item, canvas);
 		vs->canvas_item_add_rect(d.canvas_item, _viewport_xform(rect), color);
 		drawings.push_back(d);
@@ -109,13 +109,30 @@ void DebugDraw::area(const Rect2 &rect, const Color &color, real_t duration) {
 void DebugDraw::print(const String &text, const Color &color, real_t duration) {
 	if (ready || init()) {
 		auto *vs = VS::get_singleton();
-		Drawing d = { vs->canvas_item_create(), duration };
+		const Drawing d = { vs->canvas_item_create(), duration };
 		vs->canvas_item_set_parent(d.canvas_item, canvas);
 		default_font->draw(d.canvas_item, Vector2(1, 1), text, color.inverted());
 		default_font->draw(d.canvas_item, Vector2(), text, color);
 		auto offset = (prints.size() + 1) * default_font->get_height();
 		vs->canvas_item_set_transform(d.canvas_item, Transform2D(0, _viewport_xform(Vector2(10, 10 + offset))));
 		prints.push_back(d);
+	}
+}
+
+void DebugDraw::print_canvas(Node *parent, const String &text, const Point2 &pos, const Color &color, real_t duration) {
+	if (ready || init()) {
+		if (const Node2D *node = cast_to<Node2D>(parent)) {
+			auto *vs = VS::get_singleton();
+			const Drawing d = { vs->canvas_item_create(), duration };
+			vs->canvas_item_set_parent(d.canvas_item, node->get_canvas());
+			default_font->draw(d.canvas_item, Vector2(1, 1), text, color.inverted());
+			default_font->draw(d.canvas_item, Vector2(), text, color);
+			const Vector2 unscale = Vector2::ONE / node->get_scale();
+			vs->canvas_item_set_transform(d.canvas_item, Transform2D(0, unscale, pos));
+			prints.push_back(d);
+		} else {
+			WARN_PRINT("Parent is not Node2D");
+		}
 	}
 }
 
@@ -211,11 +228,12 @@ DebugDraw *DebugDraw::get_singleton() {
 }
 
 void DebugDraw::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("circle", "position", "radius", "color", "duration"), &DebugDraw::circle, DEFVAL(0));
-	ClassDB::bind_method(D_METHOD("line", "a", "b", "color", "width", "duration"), &DebugDraw::line, DEFVAL(1.f), DEFVAL(0));
-	ClassDB::bind_method(D_METHOD("rect", "rect", "color", "width", "duration"), &DebugDraw::rect, DEFVAL(1.f), DEFVAL(0));
-	ClassDB::bind_method(D_METHOD("area", "rect", "color", "duration"), &DebugDraw::area, DEFVAL(0));
-	ClassDB::bind_method(D_METHOD("print", "text", "color", "duration"), &DebugDraw::print, DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("circle", "position", "radius", "color", "duration"), &DebugDraw::circle, DEFVAL(Color(1, 1, 1, 1)), DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("line", "a", "b", "color", "width", "duration"), &DebugDraw::line, DEFVAL(Color(1, 1, 1, 1)), DEFVAL(1), DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("rect", "rect", "color", "width", "duration"), &DebugDraw::rect, DEFVAL(Color(1, 1, 1, 1)), DEFVAL(1), DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("area", "rect", "color", "duration"), &DebugDraw::area, DEFVAL(Color(1, 1, 1, 1)), DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("print", "text", "color", "duration"), &DebugDraw::print, DEFVAL(Color(1, 1, 1, 1)), DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("print_canvas", "canvas", "pos", "text", "color", "duration"), &DebugDraw::print_canvas, DEFVAL(Color(1, 1, 1, 1)), DEFVAL(0));
 
 	ClassDB::bind_method(D_METHOD("clear"), &DebugDraw::clear);
 
