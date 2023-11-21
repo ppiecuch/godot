@@ -562,48 +562,54 @@ float DynamicFontAtSize::draw_char(RID p_canvas_item, const Point2 &p_pos, CharT
 		ERR_FAIL_COND_V(ch->texture_idx < -1 || ch->texture_idx >= font->textures.size(), 0);
 
 		if (!p_advance_only && ch->texture_idx != -1 ) {
-			Point2 cpos = p_pos;
-			cpos.x += ch->h_align;
-			cpos.y -= font->get_ascent();
-			cpos.y += ch->v_align;
-			Color modulate = p_modulate;
-			RID texture = font->textures[ch->texture_idx].texture->get_rid();
-			if (p_char_xform) {
-				if (!p_char_xform->hidden) {
-					if (font->textures[ch->texture_idx].dirty) {
-						ShelfPackTexture &tex = font->textures.write[ch->texture_idx];
-						Ref<Image> img = memnew(Image(tex.texture_size, tex.texture_size, 0, tex.format, tex.imgdata));
-						if (tex.texture.is_null()) {
-							tex.texture.instance();
-							tex.texture->create_from_image(img, Texture::FLAG_VIDEO_SURFACE | texture_flags);
-						} else {
-							tex.texture->set_data(img); //update
-						}
-						tex.dirty = false;
-					}
-					const Rect2 rc = p_char_xform->xform_dest(Rect2(cpos, ch->rect.size));
-					real_t valign = 0;
-					if (p_char_xform->vertical_align) {
-						const real_t rotation_base = p_pos.y - ascent / 2.0;
-						const real_t t = p_char_xform->progress;
-						valign = (rotation_base - rc.get_center().y) * t * t * t * t * t; // t^5
-					}
-					if (font->textures[ch->texture_idx].texture->get_format() == Image::FORMAT_RGBA8) {
-						modulate.r = modulate.g = modulate.b = 1.0;
-					}
-					if (p_multirect) {
-						p_multirect->add_rect(p_canvas_item, rc.move_by(Point2(0, valign)), texture, p_char_xform->xform_tex(ch->rect_uv), modulate, false, RID(), RID(), false);
+			const bool visible = (!p_char_xform || (p_char_xform && !p_char_xform->hidden));
+
+			if (visible) {
+				Point2 cpos = p_pos;
+				cpos.x += ch->h_align;
+				cpos.y -= font->get_ascent();
+				cpos.y += ch->v_align;
+				Color modulate = p_modulate;
+
+				if (font->textures[ch->texture_idx].dirty) {
+					ShelfPackTexture &tex = font->textures.write[ch->texture_idx];
+					Ref<Image> img = memnew(Image(tex.texture_size, tex.texture_size, 0, tex.format, tex.imgdata));
+					if (tex.texture.is_null()) {
+						tex.texture.instance();
+						tex.texture->create_from_image(img, Texture::FLAG_VIDEO_SURFACE | texture_flags);
 					} else {
-						VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item,
-								rc.move_by(Point2(0, valign)),
-								texture, p_char_xform->xform_tex(ch->rect_uv), modulate, false, RID(), RID(), false);
+						tex.texture->set_data(img); //update
 					}
+					tex.dirty = false;
 				}
-			} else {
-				if (p_multirect) {
-					p_multirect->add_rect(p_canvas_item, Rect2(cpos, ch->rect.size), texture, ch->rect_uv, modulate, false, RID(), RID(), false);
+				if (font->textures[ch->texture_idx].texture->get_format() == Image::FORMAT_RGBA8) {
+					modulate.r = modulate.g = modulate.b = 1;
+				}
+				RID texture = font->textures[ch->texture_idx].texture->get_rid();
+
+				if (p_char_xform) {
+					if (!p_char_xform->hidden) {
+						const Rect2 rc = p_char_xform->xform_dest(Rect2(cpos, ch->rect.size));
+						real_t valign = 0;
+						if (p_char_xform->vertical_align) {
+							const real_t rotation_base = p_pos.y - ascent / 2.0;
+							const real_t t = p_char_xform->progress;
+							valign = (rotation_base - rc.get_center().y) * t * t * t * t * t; // t^5
+						}
+						if (p_multirect) {
+							p_multirect->add_rect(p_canvas_item, rc.move_by(Point2(0, valign)), texture, p_char_xform->xform_tex(ch->rect_uv), modulate, false, RID(), RID(), false);
+						} else {
+							VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item,
+									rc.move_by(Point2(0, valign)),
+									texture, p_char_xform->xform_tex(ch->rect_uv), modulate, false, RID(), RID(), false);
+						}
+					}
 				} else {
-					VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item, Rect2(cpos, ch->rect.size), texture, ch->rect_uv, modulate, false, RID(), RID(), false);
+					if (p_multirect) {
+						p_multirect->add_rect(p_canvas_item, Rect2(cpos, ch->rect.size), texture, ch->rect_uv, modulate, false, RID(), RID(), false);
+					} else {
+						VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item, Rect2(cpos, ch->rect.size), texture, ch->rect_uv, modulate, false, RID(), RID(), false);
+					}
 				}
 			}
 		}
