@@ -52,7 +52,7 @@ static const char *SWKeyNames[] = {
 };
 static_assert(sizeof(SWKeyNames) / sizeof(const char *) == key_index_count, "Check enum values and enum names");
 
-const Dictionary SilentWolf::config = helper::dict(
+const Dictionary SilentWolf::config = make_dict(
 		"api_key", "ySX34qsKaT7RH1j6795tQ8lPqKlRmQlx55yxkwGy",
 		"game_id", "sdktest",
 		"game_version", "2.0.0",
@@ -64,7 +64,7 @@ const Dictionary SilentWolf::config = helper::dict(
 #endif
 );
 
-const Dictionary SilentWolf::auth_config = helper::dict(
+const Dictionary SilentWolf::auth_config = make_dict(
 		"session_duration_seconds", 0,
 		"saved_session_expiration_days", 30);
 
@@ -209,7 +209,7 @@ void SilentWolf::configure_session_expiration_days(int expiration) {
 }
 
 void SilentWolf::send_get_request(Ref<BasicHTTPRequest> http_node, const String &request_url) {
-	Vector<String> headers = helper::vector(
+	Vector<String> headers = make_vector(
 			"x-api-key: " + get_cfg_str("api_key"),
 			"x-sw-game-id: " + get_cfg_str("game_id"),
 			"x-sw-plugin-version: " + version,
@@ -221,7 +221,7 @@ void SilentWolf::send_get_request(Ref<BasicHTTPRequest> http_node, const String 
 }
 
 void SilentWolf::send_post_request(Ref<BasicHTTPRequest> http_node, const String &request_url, const Dictionary &payload) {
-	Vector<String> headers = helper::vector(
+	Vector<String> headers = make_vector(
 			String("Content-Type: application/json"),
 			"x-api-key: " + get_cfg_str("api_key"),
 			"x-sw-game-id: " + get_cfg_str("game_id"),

@@ -158,6 +158,8 @@ struct SpriteMeshSnapshot {
 	Ref<Image> _get_image();
 	void _destroy();
 
+	void done();
+
 	~SpriteMeshSnapshot() {
 		if (viewport.is_valid()) {
 			_destroy();
@@ -168,10 +170,11 @@ struct SpriteMeshSnapshot {
 class SpriteMesh : public Node2D {
 	GDCLASS(SpriteMesh, Node2D);
 
-	Ref<ArrayMesh> mesh;
+	Ref<Mesh> drawer, mesh;
 	Ref<Texture> texture;
 	Ref<Texture> normal_map;
 	Ref<Texture> mask;
+	int submesh_selected;
 
 	static const int LIGHTS_NUM = 4;
 	struct {
@@ -215,7 +218,7 @@ class SpriteMesh : public Node2D {
 	bool mesh_debug;
 	bool _mesh_dirty;
 
-	bool centered;
+	bool centered, flipped;
 	Point2 offset;
 
 	int selected_frame;
@@ -250,16 +253,17 @@ class SpriteMesh : public Node2D {
 
 	SpriteMeshSnapshot snapshot;
 	void _snapshot_done(const Variant &p_udata);
+	void _mesh_changed();
 
 	void _get_rects(Rect2 &r_src_rect, Rect2 &r_dst_rect, bool &r_filter_clip) const;
-	void _mesh_changed();
+	void _refresh_properties();
 	void _update_lights();
 	SpriteMeshLight *_get_light_node(int p_index);
-	void _refresh_properties();
 	void _update_mesh_outline(const PoolVector3Array &p_vertices, const Transform &p_xform, const PoolIntArray &p_triangles);
-	void _update_xform_values();
-	void _update_mesh_xform();
-	void _update_transform();
+	void _update_mesh_changes();
+	void _update_components_from_xform();
+	void _update_xform_from_components();
+	void _update_mesh();
 
 protected:
 	bool _get(const StringName &p_path, Variant &r_ret) const;
@@ -284,7 +288,7 @@ public:
 #endif
 
 	void save_snapshot(const String &p_filepath = "");
-	void save_snapshot_mesh(Ref<Mesh> p_mesh);
+	void save_snapshot_mesh(Ref<ArrayMesh> p_mesh);
 
 	void set_mesh(const Ref<Mesh> &p_mesh);
 	Ref<Mesh> get_mesh() const;
@@ -323,6 +327,8 @@ public:
 
 	void set_centered(bool p_center);
 	bool is_centered() const;
+	void set_flipped_vert(bool p_flipped);
+	bool is_flipped_vert() const;
 	void set_offset(const Point2 &p_offset);
 	Point2 get_offset() const;
 

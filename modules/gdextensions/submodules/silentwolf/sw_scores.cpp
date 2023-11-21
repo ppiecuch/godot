@@ -36,7 +36,7 @@ void SW_Scores::sw_notification(int what) {
 	if (what == SW_NOTIFICATION_PROCESS) {
 		if (requesting) {
 			int check = 0;
-			for (auto &http_req : helper::vector(ScorePosition, ScoresAround, HighScores, ScoresByPlayer, WipeLeaderboard, PostScore, DeleteScore)) {
+			for (auto &http_req : make_vector(ScorePosition, ScoresAround, HighScores, ScoresByPlayer, WipeLeaderboard, PostScore, DeleteScore)) {
 				if (http_req) {
 					check += !http_req->poll();
 				}
@@ -75,7 +75,7 @@ SW_Scores *SW_Scores::get_score_position(const String &score, const String &ldbo
 	sw_info("Calling SilentWolf to get score position");
 	String game_id = SilentWolf::config["game_id"];
 	String game_version = SilentWolf::config["game_version"];
-	Dictionary payload = helper::dict("game_id", game_id, "game_version", game_version, "ldboard_name", ldboard_name);
+	Dictionary payload = make_dict("game_id", game_id, "game_version", game_version, "ldboard_name", ldboard_name);
 	if (!score_id.empty()) {
 		payload["score_id"] = score_id;
 	}
@@ -163,7 +163,7 @@ SW_Scores *SW_Scores::get_top_score_by_player(const String &player_name, int max
 }
 
 void SW_Scores::add_to_local_scores(const Dictionary &game_result, const String &ld_name) {
-	Dictionary local_score = helper::dict(
+	Dictionary local_score = make_dict(
 			"score_id", game_result["score_id"],
 			"game_id_version", vconcat(game_result["game_id"], ";", game_result["game_version"]),
 			"player_name", game_result["player_name"],
@@ -201,7 +201,7 @@ SW_Scores *SW_Scores::persist_score(const String &player_name, const String &sco
 
 		String score_uuid = generate_uuid_v4();
 		score_id = score_uuid;
-		Dictionary payload = helper::dict(
+		Dictionary payload = make_dict(
 				"score_id", score_id,
 				"player_name", player_name,
 				"game_id", game_id,
@@ -232,7 +232,7 @@ SW_Scores *SW_Scores::wipe_leaderboard(const String &ldboard_name) {
 	sw_info("Calling SilentWolf backend to wipe leaderboard...");
 	String game_id = SilentWolf::config["game_id"];
 	String game_version = SilentWolf::config["game_version"];
-	Dictionary payload = helper::dict("game_id", game_id, "game_version", game_version, "ldboard_name", ldboard_name);
+	Dictionary payload = make_dict("game_id", game_id, "game_version", game_version, "ldboard_name", ldboard_name);
 	String request_url = "https://api.silentwolf.com/wipe_leaderboard";
 	send_post_request(WipeLeaderboard, request_url, payload);
 	return this;
@@ -464,7 +464,7 @@ void SW_Scores::_on_WipeLeaderboard_request_completed(int result, int response_c
 }
 
 void SW_Scores::send_get_request(Ref<BasicHTTPRequest> http_req, const String &request_url) {
-	Vector<String> headers = helper::vector(
+	Vector<String> headers = make_vector(
 			"x-api-key: " + SilentWolf::get_cfg_str("api_key"),
 			"x-sw-plugin-version: " + SilentWolf::version);
 	sw_debug("Method: GET");
@@ -479,7 +479,7 @@ void SW_Scores::send_get_request(Ref<BasicHTTPRequest> http_req, const String &r
 }
 
 void SW_Scores::send_post_request(Ref<BasicHTTPRequest> http_req, const String &request_url, const Dictionary &payload) {
-	Vector<String> headers = helper::vector(
+	Vector<String> headers = make_vector(
 			application_json,
 			"x-api-key: " + SilentWolf::get_cfg_str("api_key"),
 			"x-sw-plugin-version: " + SilentWolf::version);

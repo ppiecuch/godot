@@ -41,7 +41,7 @@ void SW_Auth::sw_notification(int what) {
 	if (what == SW_NOTIFICATION_PROCESS) {
 		if (requesting) {
 			int check = 0; // any active request
-			for (auto &http_req : helper::vector(RegisterPlayer, VerifyEmail, ResendConfCode, LoginPlayer, RequestPasswordReset, ResetPassword, GetPlayerDetails, ValidateSession)) {
+			for (auto &http_req : make_vector(RegisterPlayer, VerifyEmail, ResendConfCode, LoginPlayer, RequestPasswordReset, ResetPassword, GetPlayerDetails, ValidateSession)) {
 				if (http_req) {
 					check += http_req->poll();
 				}
@@ -93,9 +93,9 @@ SW_Auth *SW_Auth::register_player_anon(const String &player_name) {
 	String game_id = SilentWolf::config["game_id"];
 	String game_version = SilentWolf::config["game_version"];
 	String api_key = SilentWolf::config["api_key"];
-	Dictionary payload = helper::dict("game_id", game_id, "anon", true, "player_name", player_name, "user_local_id", user_local_id);
+	Dictionary payload = make_dict("game_id", game_id, "anon", true, "player_name", player_name, "user_local_id", user_local_id);
 	String query = JSON::print(payload);
-	Vector<String> headers = helper::vector(
+	Vector<String> headers = make_vector(
 			String(application_json),
 			"x-api-key: " + api_key,
 			"x-sw-plugin-version: " + SilentWolf::version,
@@ -117,9 +117,9 @@ SW_Auth *SW_Auth::register_player(const String &player_name, const String &email
 	String game_id = SilentWolf::config["game_id"];
 	String game_version = SilentWolf::config["game_version"];
 	String api_key = SilentWolf::config["api_key"];
-	Dictionary payload = helper::dict("game_id", game_id, "anon", false, "player_name", player_name, "email", email, "password", password, "confirm_password", confirm_password);
+	Dictionary payload = make_dict("game_id", game_id, "anon", false, "player_name", player_name, "email", email, "password", password, "confirm_password", confirm_password);
 	String query = JSON::print(payload);
-	Vector<String> headers = helper::vector(
+	Vector<String> headers = make_vector(
 			application_json,
 			"x-api-key: " + api_key,
 			"x-sw-plugin-version: " + SilentWolf::version,
@@ -141,9 +141,9 @@ SW_Auth *SW_Auth::register_player_user_password(const String &player_name, const
 	String game_id = SilentWolf::config["game_id"];
 	String game_version = SilentWolf::config["game_version"];
 	String api_key = SilentWolf::config["api_key"];
-	Dictionary payload = helper::dict("game_id", game_id, "player_name", player_name, "password", password, "confirm_password", confirm_password);
+	Dictionary payload = make_dict("game_id", game_id, "player_name", player_name, "password", password, "confirm_password", confirm_password);
 	String query = JSON::print(payload);
-	Vector<String> headers = helper::vector(
+	Vector<String> headers = make_vector(
 			application_json,
 			"x-api-key: " + api_key,
 			"x-sw-plugin-version: " + SilentWolf::version,
@@ -165,9 +165,9 @@ SW_Auth *SW_Auth::verify_email(const String &player_name, const String &code) {
 	String game_id = SilentWolf::config["game_id"];
 	String game_version = SilentWolf::config["game_version"];
 	String api_key = SilentWolf::config["api_key"];
-	Dictionary payload = helper::dict("game_id", game_id, "username", player_name, "code", code);
+	Dictionary payload = make_dict("game_id", game_id, "username", player_name, "code", code);
 	String query = JSON::print(payload);
-	Vector<String> headers = helper::vector(
+	Vector<String> headers = make_vector(
 			application_json,
 			"x-api-key: " + api_key,
 			"x-sw-plugin-version: " + SilentWolf::version,
@@ -188,9 +188,9 @@ SW_Auth *SW_Auth::resend_conf_code(const String &player_name) {
 	String game_id = SilentWolf::config["game_id"];
 	String game_version = SilentWolf::config["game_version"];
 	String api_key = SilentWolf::config["api_key"];
-	Dictionary payload = helper::dict("game_id", game_id, "username", player_name);
+	Dictionary payload = make_dict("game_id", game_id, "username", player_name);
 	String query = JSON::print(payload);
-	Vector<String> headers = helper::vector(
+	Vector<String> headers = make_vector(
 			application_json,
 			"x-api-key: " + api_key,
 			"x-sw-plugin-version: " + SilentWolf::version,
@@ -211,13 +211,13 @@ SW_Auth *SW_Auth::login_player(const String &username, const String &password, b
 	sw_info("Calling SilentWolf to log in a player");
 	String game_id = SilentWolf::config["game_id"];
 	String api_key = SilentWolf::config["api_key"];
-	Dictionary payload = helper::dict("game_id", game_id, "username", username, "password", password, "remember_me", remember_me);
+	Dictionary payload = make_dict("game_id", game_id, "username", username, "password", password, "remember_me", remember_me);
 	if (SilentWolf::auth_config.has("saved_session_expiration_days")) {
 		payload["remember_me_expires_in"] = SilentWolf::auth_config["saved_session_expiration_days"];
 	}
 	sw_debug("SilentWolf login player payload: ", payload);
 	String query = JSON::print(payload);
-	Vector<String> headers = helper::vector(
+	Vector<String> headers = make_vector(
 			application_json,
 			"x-api-key: " + api_key,
 			"x-sw-plugin-version: " + SilentWolf::version,
@@ -237,10 +237,10 @@ SW_Auth *SW_Auth::request_player_password_reset(const String &player_name) {
 	sw_info("Calling SilentWolf to request a password reset for: ", player_name);
 	String game_id = SilentWolf::config["game_id"];
 	String api_key = SilentWolf::config["api_key"];
-	Dictionary payload = helper::dict("game_id", game_id, "player_name", player_name);
+	Dictionary payload = make_dict("game_id", game_id, "player_name", player_name);
 	sw_debug("SilentWolf request player password reset payload: ", payload);
 	String query = JSON::print(payload);
-	Vector<String> headers = helper::vector(
+	Vector<String> headers = make_vector(
 			application_json,
 			"x-api-key: " + api_key,
 			"x-sw-plugin-version: " + SilentWolf::version,
@@ -259,10 +259,10 @@ SW_Auth *SW_Auth::reset_player_password(const String &player_name, const String 
 	sw_info("Calling SilentWolf to reset password for: ", player_name);
 	String game_id = SilentWolf::config["game_id"];
 	String api_key = SilentWolf::config["api_key"];
-	Dictionary payload = helper::dict("game_id", game_id, "player_name", player_name, "conf_code", conf_code, "password", new_password, "confirm_password", confirm_password);
+	Dictionary payload = make_dict("game_id", game_id, "player_name", player_name, "conf_code", conf_code, "password", new_password, "confirm_password", confirm_password);
 	sw_debug("SilentWolf request player password reset payload: ", payload);
 	String query = JSON::print(payload);
-	Vector<String> headers = helper::vector(
+	Vector<String> headers = make_vector(
 			application_json,
 			"x-api-key: " + api_key,
 			"x-sw-plugin-version: " + SilentWolf::version,
@@ -282,9 +282,9 @@ SW_Auth *SW_Auth::get_player_details(const String &player_name) {
 	String game_id = SilentWolf::config["game_id"];
 	String game_version = SilentWolf::config["game_version"];
 	String api_key = SilentWolf::config["api_key"];
-	Dictionary payload = helper::dict("game_id", game_id, "player_name", player_name);
+	Dictionary payload = make_dict("game_id", game_id, "player_name", player_name);
 	String query = JSON::print(payload);
-	Vector<String> headers = helper::vector(
+	Vector<String> headers = make_vector(
 			application_json,
 			"x-api-key: " + api_key,
 			"x-sw-plugin-version: " + SilentWolf::version,
@@ -309,7 +309,7 @@ void SW_Auth::on_login_timeout_complete() {
 // store lookup (not logged in player name) and validator in local file
 void SW_Auth::save_session(const Dictionary &lookup, const Dictionary &validator) {
 	String path = "user://swsession.save";
-	Dictionary session_data = helper::dict(
+	Dictionary session_data = make_dict(
 			"lookup", lookup,
 			"validator", validator);
 	sw_save_data("user://swsession.save", session_data, "Saving SilentWolf session: ");
@@ -356,10 +356,10 @@ SW_Auth *SW_Auth::validate_player_session(const Dictionary &lookup, const Dictio
 	sw_info("Calling SilentWolf to validate an existing player session");
 	String game_id = SilentWolf::config["game_id"];
 	String api_key = SilentWolf::config["api_key"];
-	Dictionary payload = helper::dict("game_id", game_id, "lookup", lookup, "validator", validator);
+	Dictionary payload = make_dict("game_id", game_id, "lookup", lookup, "validator", validator);
 	sw_debug("Validate session payload: ", payload);
 	String query = JSON::print(payload);
-	Vector<String> headers = helper::vector(application_json, "x-api-key: " + api_key, "x-sw-plugin-version: " + SilentWolf::version);
+	Vector<String> headers = make_vector(application_json, "x-api-key: " + api_key, "x-sw-plugin-version: " + SilentWolf::version);
 	ValidateSession->request("https://api.silentwolf.com/validate_remember_me", headers, true, HTTPClient::METHOD_POST, query);
 	NOTIFY_REQUEST();
 }
