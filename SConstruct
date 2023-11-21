@@ -133,7 +133,7 @@ opts.Add(EnumVariable("lto", "Link-time optimization (production builds)", "none
 opts.Add(BoolVariable("deprecated", "Enable deprecated features", True))
 opts.Add(BoolVariable("minizip", "Enable ZIP archive support using minizip", True))
 opts.Add(BoolVariable("xaudio2", "Enable the XAudio2 audio driver", False))
-opts.Add(BoolVariable("disable_exceptions", "Force disabling exception handling code", True))
+opts.Add(BoolVariable("disable_exceptions", "Force disabling exception handling code", False))
 opts.Add("custom_modules", "A list of comma-separated directory paths containing custom modules to build.", "")
 opts.Add(BoolVariable("custom_modules_recursive", "Detect custom modules recursively for each specified path.", True))
 
@@ -346,9 +346,8 @@ opts.Update(env_base)
 env_base["platform"] = selected_platform  # Must always be re-set after calling opts.Update().
 Help(opts.GenerateHelpText(env_base))
 
-# add default include paths
-
-env_base.Prepend(CPPPATH=["#", "#thirdparty", "#modules", "#modules/gdextensions"])
+env_base.Prepend(CPPPATH=["#", "#thirdparty", "#modules", "#modules/gdextensions"]) # add default include paths
+env_base.Append(CPPDEFINES=["_GODOT_"]) # This is GODOT
 
 # configure ENV for platform
 env_base.platform_exporters = platform_exporters
