@@ -33,6 +33,7 @@
 
 #include "core/list.h"
 #include "core/object.h"
+#include "scene/2d/node_2d.h"
 #include "scene/resources/font.h"
 
 class DebugDraw : public Object {
@@ -50,7 +51,7 @@ protected:
 
 	static DebugDraw *singleton;
 
-	/// Current drawings
+	// Current drawings
 	struct Drawing {
 		RID canvas_item;
 		real_t time_left;
@@ -60,20 +61,21 @@ protected:
 	Ref<Font> default_font;
 	RID canvas;
 
-	/// State
+	// State
 	bool init();
 	bool ready;
 
 public:
-	/// Singleton
+	// Singleton
 	static DebugDraw *get_singleton();
 
-	/// Methods
-	void circle(const Vector2 &position, real_t radius, const Color &color, real_t duration = 0);
-	void line(const Vector2 &a, const Vector2 &b, const Color &color, real_t width = 1, real_t duration = 0);
-	void rect(const Rect2 &rect, const Color &color, real_t width = 1, real_t duration = 0);
-	void area(const Rect2 &rect, const Color &color, real_t duration = 0);
-	void print(const String &text, const Color &color, real_t duration = 0);
+	// Methods
+	void circle(const Vector2 &position, real_t radius, const Color &color = Color(1, 1, 1, 1), real_t duration = 0);
+	void line(const Vector2 &a, const Vector2 &b, const Color &color = Color(1, 1, 1, 1), real_t width = 1, real_t duration = 0);
+	void rect(const Rect2 &rect, const Color &color = Color(1, 1, 1, 1), real_t width = 1, real_t duration = 0);
+	void area(const Rect2 &rect, const Color &color = Color(1, 1, 1, 1), real_t duration = 0);
+	void print(const String &text, const Color &color = Color(1, 1, 1, 1), real_t duration = 0);
+	void print_canvas(Node *parent, const String &text, const Point2 &pos = Point2(), const Color &color = Color(1, 1, 1, 1), real_t duration = 0);
 
 	void clear();
 

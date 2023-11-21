@@ -50,7 +50,6 @@ const Color GuiColor_PlotHistogramHovered = Color(1.00, 0.60, 0.00, 1.00);
 const int GuiStyle_FramePadding = 2;
 const int GuiStyle_ItemInnerSpacing = 2;
 
-static _ALWAYS_INLINE_ Vector2 LERP(const Vector2 &a, const Vector2 &b, real_t t) { return Vector2(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t); }
 static _ALWAYS_INLINE_ Vector2 LERP(const Vector2 &a, const Vector2 &b, const Vector2 &t) { return Vector2(a.x + (b.x - a.x) * t.x, a.y + (b.y - a.y) * t.y); }
 static _ALWAYS_INLINE_ real_t SATURATE(real_t f) { return (f < 0 ? 0 : (f > 1 ? 1 : f)); }
 
@@ -72,7 +71,6 @@ static void PlotFlame(CanvasItem *canvas, Ref<Font> &text_font, const String &la
 
 	const Rect2 frame_bb = Rect2(frame_rect.position, frame_rect.size - Size2(0, label_size.y)); // label on the bottom
 	const Rect2 inner_bb(frame_bb.shrink(GuiStyle_FramePadding));
-	const Rect2 total_bb = frame_rect;
 
 	// determine scale from values if not specified
 	if (scale_min == FLT_MAX || scale_max == FLT_MAX) {
@@ -179,7 +177,6 @@ static void PlotGraph(CanvasItem *canvas, Ref<Font> &text_font, PlotType plot_ty
 
 	const Rect2 frame_bb = Rect2(frame_rect.position, frame_rect.size - Size2(0, label_size.y)); // label on the bottom
 	const Rect2 inner_bb(frame_bb.shrink(GuiStyle_FramePadding));
-	const Rect2 total_bb = frame_rect;
 
 	// Determine scale from values if not specified
 	if (scale_min == FLT_MAX || scale_max == FLT_MAX) {
@@ -308,4 +305,11 @@ void PlotHistogram(CanvasItem *canvas, Ref<Font> &text_font, const String &label
 
 void PlotHistogram(CanvasItem *canvas, Ref<Font> &text_font, const String &label, ValuesGetter values_getter, void *data, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect) {
 	PlotGraph(canvas, text_font, PlotType_Histogram, label, values_getter, data, values_count, values_offset, overlay_text, scale_min, scale_max, frame_rect);
+}
+
+void PlotFlame(CanvasItem *canvas, Ref<Font> &text_font, const String &label, const real_t *values, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect, int stride) {
+}
+
+void PlotFlame(CanvasItem *canvas, Ref<Font> &text_font, const String &label, SeriesGetter values_getter, void *data, int values_count, int values_offset, const char *overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect) {
+	PlotFlame(canvas, text_font, label, values_getter, data, values_count, values_offset, overlay_text, scale_min, scale_max, frame_rect, nullptr);
 }

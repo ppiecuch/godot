@@ -4,6 +4,10 @@
 
 #include "abstracted_pipeline.h"
 
+#include "igneous_pipeline.h"
+#include "sedimentary_pipeline.h"
+#include "metamorphic_pipeline.h"
+
 #include "core/error_macros.h"
 #include "common/gd_core.h"
 

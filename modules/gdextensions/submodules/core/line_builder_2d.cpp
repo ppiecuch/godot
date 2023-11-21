@@ -30,26 +30,18 @@
 
 #include "line_builder_2d.h"
 
+#include "common/gd_core.h"
+
 // Needed so we can bind functions
 VARIANT_ENUM_CAST(Line2D::LineJointMode)
 VARIANT_ENUM_CAST(Line2D::LineCapMode)
 VARIANT_ENUM_CAST(Line2D::LineTextureMode)
 
-#define CopyArray(fr, to)                   \
-	{                                       \
-		to.resize(fr.size());               \
-		for (int i = 0; i < fr.size(); ++i) \
-			to.set(i, fr[i]);               \
-	}
-
 void LineBuilder2D::set_points(const PoolVector2Array &p_points) {
-	lb.points.clear();
-	CopyArray(p_points, lb.points);
+	lb.points = p_points;
 }
 PoolVector2Array LineBuilder2D::get_points() const {
-	PoolVector2Array ret;
-	CopyArray(lb.points, ret);
-	return ret;
+	return lb.points;
 }
 void LineBuilder2D::set_default_color(const Color &p_default_color) {
 	lb.default_color = p_default_color;
@@ -126,22 +118,22 @@ Ref<Curve> LineBuilder2D::get_curve() const {
 
 PoolIntArray LineBuilder2D::get_indices() const {
 	PoolIntArray ret;
-	CopyArray(lb.indices, ret);
+	copyarray(lb.indices, ret);
 	return ret;
 }
 PoolVector2Array LineBuilder2D::get_vertices() const {
 	PoolVector2Array ret;
-	CopyArray(lb.vertices, ret);
+	copyarray(lb.vertices, ret);
 	return ret;
 }
 PoolColorArray LineBuilder2D::get_colors() const {
 	PoolColorArray ret;
-	CopyArray(lb.colors, ret);
+	copyarray(lb.colors, ret);
 	return ret;
 }
 PoolVector2Array LineBuilder2D::get_uvs() const {
 	PoolVector2Array ret;
-	CopyArray(lb.uvs, ret);
+	copyarray(lb.uvs, ret);
 	return ret;
 }
 
@@ -152,7 +144,7 @@ LineBuilder2D::LineBuilder2D() {
 	lb.width = 10;
 	lb.default_color = Color(0.4, 0.5, 1);
 	lb.texture_mode = Line2D::LINE_TEXTURE_TILE;
-	lb.sharp_limit = 2.f;
+	lb.sharp_limit = 2;
 	lb.round_precision = 8;
 }
 
@@ -204,5 +196,4 @@ void LineBuilder2D::_bind_methods() {
 	ClassDB::bind_method("get_indices", &LineBuilder2D::get_indices);
 
 	ClassDB::bind_method("build", &LineBuilder2D::build);
-	ClassDB::bind_method("clear_output", &LineBuilder2D::clear_output);
 }
