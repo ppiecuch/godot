@@ -144,9 +144,30 @@ class String {
 	int _count(const String &p_string, int p_from, int p_to, bool p_case_insensitive) const;
 
 public:
-	enum {
+	// basic c++11 iterator
+	struct Iterator {
+		String *_string;
+		int _index;
+		Iterator(String *_string, int _index) :
+				_string(_string), _index(_index) {}
+		Iterator(const String *_string, int _index) :
+				_string(const_cast<String *>(_string)), _index(_index) {}
+		_FORCE_INLINE_ bool operator!=(const Iterator &other) const { return (_string != other._string) || (_index != other._index); }
+		_FORCE_INLINE_ CharProxy<CharType> operator*() { return (*_string)[_index]; }
+		_FORCE_INLINE_ const CharType operator*() const { return (*_string)[_index]; }
+		Iterator operator++() {
+			_index++;
+			return *this;
+		}
+	};
+	typedef const Iterator ConstIterator;
+	Iterator begin() { return Iterator(this, 0); }
+	Iterator end() { return Iterator(this, size()); }
+	ConstIterator begin() const { return ConstIterator(this, 0); }
+	ConstIterator end() const { return ConstIterator(this, size()); }
 
-		npos = -1 ///<for "some" compatibility with std::string (npos is a huge value in std::string)
+	enum {
+		npos = -1 //for "some" compatibility with std::string (npos is a huge value in std::string)
 	};
 
 	_FORCE_INLINE_ CharType *ptrw() { return _cowdata.ptrw(); }

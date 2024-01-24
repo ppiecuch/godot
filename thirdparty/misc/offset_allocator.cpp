@@ -115,25 +115,25 @@ namespace offset_allocator
     }
 
     // Allocator...
-    Allocator::Allocator(uint32 size, uint32 maxAllocs) :
-        size(size),
-        maxAllocs(maxAllocs),
+    Allocator::Allocator(uint32 size, uint32 allocs) :
+        allocSize(size),
+        maxAllocs(allocs),
         nodes(nullptr),
         freeNodes(nullptr)
     {
         if (sizeof(NodeIndex) == 2)
         {
 #ifdef USE_16_BIT_NODE_INDICES
-            DEV_ASSERT(maxAllocs <= 32768);
+            DEV_ASSERT(allocs <= 32768);
 #else
-            DEV_ASSERT(maxAllocs <= 65536);
+            DEV_ASSERT(allocs <= 65536);
 #endif
         }
         reset();
     }
 
     Allocator::Allocator(Allocator &&other) :
-        size(other.size),
+        allocSize(other.allocSize),
         maxAllocs(other.maxAllocs),
         freeStorage(other.freeStorage),
         usedBinsTop(other.usedBinsTop),
@@ -170,17 +170,16 @@ namespace offset_allocator
         freeNodes = new NodeIndex[maxAllocs];
         
         // Freelist is a stack. Nodes in inverse order so that [0] pops first.
-        for (uint32 i = 0; i < maxAllocs; i++) {
+        for (uint32 i = 0; i < maxAllocs; i++)
             freeNodes[i] = maxAllocs - i - 1;
-        }
         
         // Start state: Whole storage as one big node
         // Algorithm will split remainders and push them back as smaller nodes
-        insertNodeIntoBin(size, 0);
+        insertNodeIntoBin(allocSize, 0);
     }
 
     Allocator::~Allocator()
-    {        
+    {
         delete[] nodes;
         delete[] freeNodes;
     }

@@ -66,17 +66,17 @@ namespace offset_allocator
             bool used = false; // TODO: Merge as bit flag
         };
 
-        uint32 m_size;
-        uint32 m_maxAllocs;
-        uint32 m_freeStorage;
+        uint32 allocSize;
+        uint32 maxAllocs;
+        uint32 freeStorage;
 
-        uint32 m_usedBinsTop;
-        uint8 m_usedBins[NUM_TOP_BINS];
-        NodeIndex m_binIndices[NUM_LEAF_BINS];
+        uint32 usedBinsTop;
+        uint8 usedBins[NUM_TOP_BINS];
+        NodeIndex binIndices[NUM_LEAF_BINS];
 
-        Node* m_nodes;
-        NodeIndex* m_freeNodes;
-        uint32 m_freeOffset;
+        Node* nodes;
+        NodeIndex* freeNodes;
+        uint32 freeOffset;
 
     public:
         void reset();

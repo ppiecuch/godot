@@ -144,6 +144,7 @@ public:
 
 	Vector<T> &append_array(Vector<T> p_other);
 	Vector<T> &append_array(int p_num, const T p_other[]);
+	Vector<T> &copy_array(int p_num, const T *p_other);
 
 	template <class C>
 	void sort_custom() {
@@ -173,6 +174,7 @@ public:
 
 	_FORCE_INLINE_ Vector() {}
 	_FORCE_INLINE_ Vector(const Vector &p_from) { _cowdata._ref(p_from._cowdata); }
+	_FORCE_INLINE_ Vector(int p_num, const T *p_other) { copy_array(p_num, p_other); }
 	inline Vector &operator=(const Vector &p_from) {
 		_cowdata._ref(p_from._cowdata);
 		return *this;
@@ -253,6 +255,13 @@ Vector<T> &Vector<T>::append_array(int p_num, const T p_other[]) {
 	for (int i = 0; i < p_num; ++i) {
 		ptrw()[bs + i] = p_other[i];
 	}
+	return *this;
+}
+
+template <class T>
+Vector<T> &Vector<T>::copy_array(int p_num, const T *p_other) {
+	resize(p_num);
+	memcpy(ptrw(), p_other, sizeof(T) * p_num);
 	return *this;
 }
 
@@ -397,6 +406,12 @@ Vector<T> make_vector(const T &p_arg1, const T &p_arg2, const T &p_arg3, const T
 	p.push_back(p_arg6);
 	p.push_back(p_arg7);
 	p.push_back(p_arg8);
+	return p;
+}
+template <class T>
+Vector<T> make_vector(int p_num, const T *p_other) {
+	Vector<T> p;
+	p.copy_array(p_num, p_other);
 	return p;
 }
 
