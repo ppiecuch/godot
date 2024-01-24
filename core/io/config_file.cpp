@@ -175,21 +175,25 @@ Error ConfigFile::save_encrypted_pass(const String &p_path, const String &p_pass
 }
 
 Error ConfigFile::_internal_save(FileAccess *file) {
+	String content;
 	for (OrderedHashMap<String, OrderedHashMap<String, Variant>>::Element E = values.front(); E; E = E.next()) {
 		if (E != values.front()) {
-			file->store_string("\n");
+			content += "\n";
 		}
-		file->store_string("[" + E.key() + "]\n\n");
+		if (!E.key.is_empty()) {
+			content += "[" + E.key.replace("]", "\\]") + "]\n\n";
+		}
 
 		for (OrderedHashMap<String, Variant>::Element F = E.get().front(); F; F = F.next()) {
 			String vstr;
 			VariantWriter::write_to_string(F.get(), vstr);
-			file->store_string(F.key().property_name_encode() + "=" + vstr + "\n");
+			content += F.key.property_name_encode() + "=" + vstr + "\n";
 		}
 	}
 
-	memdelete(file);
+	file->store_string(content);
 
+	memdelete(file);
 	return OK;
 }
 
