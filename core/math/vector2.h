@@ -400,7 +400,7 @@ typedef Vector2i Point2i;
 namespace MathExtension {
 static _ALWAYS_INLINE_ real_t dot(const Vector2 &p_a, const Vector2 &p_b) { return p_a.dot(p_b); }
 static _ALWAYS_INLINE_ real_t distance(const Vector2 &p_a, const Vector2 &p_b) { return p_a.distance_to(p_b); }
-static _ALWAYS_INLINE_ real_t mix(const Vector2 &p_a, const Vector2 &p_b, real_t p_weight) { return Vector2::linear_interpolate(p_a, p_b, p_weight); }
+static _ALWAYS_INLINE_ Vector2 mix(const Vector2 &p_a, const Vector2 &p_b, real_t p_weight) { return Vector2::linear_interpolate(p_a, p_b, p_weight); }
 } //namespace MathExtension
 
 #endif // VECTOR2_H
