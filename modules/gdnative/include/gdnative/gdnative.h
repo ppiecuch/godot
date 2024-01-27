@@ -39,20 +39,24 @@ extern "C" {
 		defined(__GCW0__) || defined(__odroid__) || defined(_rpi_) || \
 		defined(__3DS__) || defined(__psp__) || defined(__psp2__)
 #define GDCALLINGCONV
-#define GDAPI GDCALLINGCONV
+
 #elif defined(__APPLE__)
 #include "TargetConditionals.h"
 #if TARGET_OS_IPHONE
 #define GDCALLINGCONV __attribute__((visibility("default")))
-#define GDAPI GDCALLINGCONV
 #elif TARGET_OS_MAC
 #define GDCALLINGCONV __attribute__((sysv_abi))
-#define GDAPI GDCALLINGCONV
 #endif
-#else // !_WIN32 && !__APPLE__
+
+#else // Linux/BSD/Web
+#if defined(__aarch64__)
+#define GDCALLINGCONV
+#else
 #define GDCALLINGCONV __attribute__((sysv_abi))
-#define GDAPI GDCALLINGCONV
 #endif
+#endif
+
+#define GDAPI GDCALLINGCONV
 
 // This is for libraries *using* the header, NOT GODOT EXPOSING STUFF!!
 #if !defined(GDN_EXPORT)

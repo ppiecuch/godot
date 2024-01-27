@@ -261,6 +261,11 @@ if selected_platform in ["linux", "bsd", "linuxbsd"]:
     # Alias for convenience.
     selected_platform = "x11"
 
+if selected_platform == "web":
+    # Alias for forward compatibility.
+    print('Platform "web" is still called "javascript" in Godot 3.x. Building for platform "javascript".')
+    selected_platform = "javascript"
+
 # Detect platform/hardware family
 if selected_platform in ["x11", "frt", "osx", "iphone", "android", "nx"]:
     env_base["os_family"] = "os_unix"

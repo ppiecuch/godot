@@ -34,6 +34,7 @@ import static android.content.Context.MODE_PRIVATE;
 import static android.content.Context.WINDOW_SERVICE;
 
 import org.godotengine.godot.input.GodotEditText;
+import org.godotengine.godot.input.GodotInputHandler;
 import org.godotengine.godot.io.directory.DirectoryAccessHandler;
 import org.godotengine.godot.io.file.FileAccessHandler;
 import org.godotengine.godot.plugin.GodotPlugin;
@@ -59,7 +60,6 @@ import android.content.pm.ConfigurationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Resources;
-import android.graphics.Point;
 import android.graphics.Rect;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -85,7 +85,6 @@ import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsAnimation;
 import android.view.WindowManager;
-import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
@@ -96,9 +95,6 @@ import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
-import androidx.core.view.OnApplyWindowInsetsListener;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.vending.expansion.downloader.DownloadProgressInfo;
@@ -337,6 +333,21 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 	 */
 	@CallSuper
 	protected void onGodotSetupCompleted() {
+		Log.d(TAG, "OnGodotSetupCompleted");
+
+		// These properties are defined after Godot setup completion, so we retrieve them here.
+		boolean longPressEnabled = Boolean.parseBoolean(GodotLib.getGlobal("input_devices/pointing/android/enable_long_press_as_right_click"));
+		boolean panScaleEnabled = Boolean.parseBoolean(GodotLib.getGlobal("input_devices/pointing/android/enable_pan_and_scale_gestures"));
+
+		runOnUiThread(() -> {
+			GodotView renderView = getRenderView();
+			GodotInputHandler inputHandler = renderView != null ? renderView.getInputHandler() : null;
+			if (inputHandler != null) {
+				inputHandler.enableLongPress(longPressEnabled);
+				inputHandler.enablePanningAndScalingGestures(panScaleEnabled);
+			}
+		});
+
 		for (GodotPlugin plugin : pluginRegistry.getAllPlugins()) {
 			plugin.onGodotSetupCompleted();
 		}
@@ -351,6 +362,8 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 	 */
 	@CallSuper
 	protected void onGodotMainLoopStarted() {
+		Log.d(TAG, "OnGodotMainLoopStarted");
+
 		for (GodotPlugin plugin : pluginRegistry.getAllPlugins()) {
 			plugin.onGodotMainLoopStarted();
 		}
@@ -882,7 +895,7 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 			}
 			return;
 		}
-		mView.onPause();
+		mView.onActivityPaused();
 
 		mSensorManager.unregisterListener(this);
 
@@ -895,6 +908,18 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 				plugin.onMainPause();
 			}
 		});
+	}
+
+	@Override
+	public void onStop() {
+		super.onStop();
+		if (!godot_initialized) {
+			if (null != mDownloaderClientStub) {
+				mDownloaderClientStub.disconnect(getActivity());
+			}
+			return;
+		}
+		mView.onActivityStopped();
 	}
 
 	public boolean hasClipboard() {
@@ -917,6 +942,19 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 	}
 
 	@Override
+	public void onStart() {
+		super.onStart();
+		if (!godot_initialized) {
+			if (null != mDownloaderClientStub) {
+				mDownloaderClientStub.connect(getActivity());
+			}
+			return;
+		}
+
+		mView.onActivityStarted();
+	}
+
+	@Override
 	public void onResume() {
 		super.onResume();
 		activityResumed = true;
@@ -927,7 +965,7 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 			return;
 		}
 
-		mView.onResume();
+		mView.onActivityResumed();
 
 		mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_GAME);
 		mSensorManager.registerListener(this, mGravity, SensorManager.SENSOR_DELAY_GAME);
