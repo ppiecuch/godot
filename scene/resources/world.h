@@ -38,7 +38,9 @@
 
 class Camera;
 class VisibilityNotifier;
+class LOD;
 struct SpatialIndexer;
+class LODManager;
 
 class World : public Resource {
 	GDCLASS(World, Resource);
@@ -50,6 +52,7 @@ private:
 	RID navigation_map;
 
 	SpatialIndexer *indexer;
+	LODManager *lod_manager = nullptr;
 	Ref<Environment> environment;
 	Ref<Environment> fallback_environment;
 
@@ -58,6 +61,7 @@ protected:
 
 	friend class Camera;
 	friend class VisibilityNotifier;
+	friend class LOD;
 
 	void _register_camera(Camera *p_camera);
 	void _update_camera(Camera *p_camera);
@@ -66,6 +70,10 @@ protected:
 	void _register_notifier(VisibilityNotifier *p_notifier, const AABB &p_rect);
 	void _update_notifier(VisibilityNotifier *p_notifier, const AABB &p_rect);
 	void _remove_notifier(VisibilityNotifier *p_notifier);
+
+	void _register_lod(LOD *p_lod, uint32_t p_queue_id);
+	void _unregister_lod(LOD *p_lod, uint32_t p_queue_id);
+
 	friend class Viewport;
 	void _update(uint64_t p_frame);
 
@@ -83,6 +91,8 @@ public:
 	void get_camera_list(List<Camera *> *r_cameras);
 
 	PhysicsDirectSpaceState *get_direct_space_state();
+
+	void notify_saving(bool p_active);
 
 	World();
 	~World();

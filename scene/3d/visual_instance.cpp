@@ -253,7 +253,7 @@ void GeometryInstance::set_generate_lightmap(bool p_enabled) {
 	generate_lightmap = p_enabled;
 }
 
-bool GeometryInstance::get_generate_lightmap() {
+bool GeometryInstance::get_generate_lightmap() const {
 	return generate_lightmap;
 }
 
@@ -264,42 +264,6 @@ void GeometryInstance::set_lightmap_scale(LightmapScale p_scale) {
 
 GeometryInstance::LightmapScale GeometryInstance::get_lightmap_scale() const {
 	return lightmap_scale;
-}
-
-void GeometryInstance::set_lod_min_distance(float p_dist) {
-	lod_min_distance = p_dist;
-	VS::get_singleton()->instance_geometry_set_draw_range(get_instance(), lod_min_distance, lod_max_distance, lod_min_hysteresis, lod_max_hysteresis);
-}
-
-float GeometryInstance::get_lod_min_distance() const {
-	return lod_min_distance;
-}
-
-void GeometryInstance::set_lod_max_distance(float p_dist) {
-	lod_max_distance = p_dist;
-	VS::get_singleton()->instance_geometry_set_draw_range(get_instance(), lod_min_distance, lod_max_distance, lod_min_hysteresis, lod_max_hysteresis);
-}
-
-float GeometryInstance::get_lod_max_distance() const {
-	return lod_max_distance;
-}
-
-void GeometryInstance::set_lod_min_hysteresis(float p_dist) {
-	lod_min_hysteresis = p_dist;
-	VS::get_singleton()->instance_geometry_set_draw_range(get_instance(), lod_min_distance, lod_max_distance, lod_min_hysteresis, lod_max_hysteresis);
-}
-
-float GeometryInstance::get_lod_min_hysteresis() const {
-	return lod_min_hysteresis;
-}
-
-void GeometryInstance::set_lod_max_hysteresis(float p_dist) {
-	lod_max_hysteresis = p_dist;
-	VS::get_singleton()->instance_geometry_set_draw_range(get_instance(), lod_min_distance, lod_max_distance, lod_min_hysteresis, lod_max_hysteresis);
-}
-
-float GeometryInstance::get_lod_max_hysteresis() const {
-	return lod_max_hysteresis;
 }
 
 void GeometryInstance::_notification(int p_what) {
@@ -322,9 +286,10 @@ bool GeometryInstance::get_flag(Flags p_flag) const {
 }
 
 void GeometryInstance::set_cast_shadows_setting(ShadowCastingSetting p_shadow_casting_setting) {
-	shadow_casting_setting = p_shadow_casting_setting;
-
-	VS::get_singleton()->instance_geometry_set_cast_shadows_setting(get_instance(), (VS::ShadowCastingSetting)p_shadow_casting_setting);
+	if (p_shadow_casting_setting != shadow_casting_setting) {
+		shadow_casting_setting = p_shadow_casting_setting;
+		VS::get_singleton()->instance_geometry_set_cast_shadows_setting(get_instance(), (VS::ShadowCastingSetting)p_shadow_casting_setting);
+	}
 }
 
 GeometryInstance::ShadowCastingSetting GeometryInstance::get_cast_shadows_setting() const {
@@ -333,8 +298,10 @@ GeometryInstance::ShadowCastingSetting GeometryInstance::get_cast_shadows_settin
 
 void GeometryInstance::set_extra_cull_margin(float p_margin) {
 	ERR_FAIL_COND(p_margin < 0);
-	extra_cull_margin = p_margin;
-	VS::get_singleton()->instance_set_extra_visibility_margin(get_instance(), extra_cull_margin);
+	if (p_margin != extra_cull_margin) {
+		extra_cull_margin = p_margin;
+		VS::get_singleton()->instance_set_extra_visibility_margin(get_instance(), extra_cull_margin);
+	}
 }
 
 float GeometryInstance::get_extra_cull_margin() const {
@@ -364,18 +331,6 @@ void GeometryInstance::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_lightmap_scale", "scale"), &GeometryInstance::set_lightmap_scale);
 	ClassDB::bind_method(D_METHOD("get_lightmap_scale"), &GeometryInstance::get_lightmap_scale);
 
-	ClassDB::bind_method(D_METHOD("set_lod_max_hysteresis", "mode"), &GeometryInstance::set_lod_max_hysteresis);
-	ClassDB::bind_method(D_METHOD("get_lod_max_hysteresis"), &GeometryInstance::get_lod_max_hysteresis);
-
-	ClassDB::bind_method(D_METHOD("set_lod_max_distance", "mode"), &GeometryInstance::set_lod_max_distance);
-	ClassDB::bind_method(D_METHOD("get_lod_max_distance"), &GeometryInstance::get_lod_max_distance);
-
-	ClassDB::bind_method(D_METHOD("set_lod_min_hysteresis", "mode"), &GeometryInstance::set_lod_min_hysteresis);
-	ClassDB::bind_method(D_METHOD("get_lod_min_hysteresis"), &GeometryInstance::get_lod_min_hysteresis);
-
-	ClassDB::bind_method(D_METHOD("set_lod_min_distance", "mode"), &GeometryInstance::set_lod_min_distance);
-	ClassDB::bind_method(D_METHOD("get_lod_min_distance"), &GeometryInstance::get_lod_min_distance);
-
 	ClassDB::bind_method(D_METHOD("set_extra_cull_margin", "margin"), &GeometryInstance::set_extra_cull_margin);
 	ClassDB::bind_method(D_METHOD("get_extra_cull_margin"), &GeometryInstance::get_extra_cull_margin);
 
@@ -384,8 +339,8 @@ void GeometryInstance::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_aabb"), &GeometryInstance::get_aabb);
 
 	ADD_GROUP("Geometry", "");
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "material_override", PROPERTY_HINT_RESOURCE_TYPE, "ShaderMaterial,SpatialMaterial"), "set_material_override", "get_material_override");
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "material_overlay", PROPERTY_HINT_RESOURCE_TYPE, "ShaderMaterial,SpatialMaterial"), "set_material_overlay", "get_material_overlay");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "material_override", PROPERTY_HINT_RESOURCE_TYPE, "ShaderMaterial,SpatialMaterial,ORMSpatialMaterial"), "set_material_override", "get_material_override");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "material_overlay", PROPERTY_HINT_RESOURCE_TYPE, "ShaderMaterial,SpatialMaterial,ORMSpatialMaterial"), "set_material_overlay", "get_material_overlay");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "cast_shadow", PROPERTY_HINT_ENUM, "Off,On,Double-Sided,Shadows Only"), "set_cast_shadows_setting", "get_cast_shadows_setting");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "extra_cull_margin", PROPERTY_HINT_RANGE, "0,16384,0.01"), "set_extra_cull_margin", "get_extra_cull_margin");
 
@@ -393,12 +348,6 @@ void GeometryInstance::_bind_methods() {
 	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "use_in_baked_light"), "set_flag", "get_flag", FLAG_USE_BAKED_LIGHT);
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "generate_lightmap"), "set_generate_lightmap", "get_generate_lightmap");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "lightmap_scale", PROPERTY_HINT_ENUM, "1x,2x,4x,8x"), "set_lightmap_scale", "get_lightmap_scale");
-
-	ADD_GROUP("LOD", "lod_");
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "lod_min_distance", PROPERTY_HINT_RANGE, "0,32768,0.01"), "set_lod_min_distance", "get_lod_min_distance");
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "lod_min_hysteresis", PROPERTY_HINT_RANGE, "0,32768,0.01"), "set_lod_min_hysteresis", "get_lod_min_hysteresis");
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "lod_max_distance", PROPERTY_HINT_RANGE, "0,32768,0.01"), "set_lod_max_distance", "get_lod_max_distance");
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "lod_max_hysteresis", PROPERTY_HINT_RANGE, "0,32768,0.01"), "set_lod_max_hysteresis", "get_lod_max_hysteresis");
 
 	//ADD_SIGNAL( MethodInfo("visibility_changed"));
 
@@ -419,11 +368,6 @@ void GeometryInstance::_bind_methods() {
 }
 
 GeometryInstance::GeometryInstance() {
-	lod_min_distance = 0;
-	lod_max_distance = 0;
-	lod_min_hysteresis = 0;
-	lod_max_hysteresis = 0;
-
 	for (int i = 0; i < FLAG_MAX; i++) {
 		flags[i] = false;
 	}

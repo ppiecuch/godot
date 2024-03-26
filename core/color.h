@@ -68,11 +68,11 @@ struct _NO_DISCARD_CLASS_ Color {
 		return Color(*this).with_alpha(p_alpha);
 	}
 
-	_FORCE_INLINE_ float &operator[](int idx) {
-		return components[idx];
+	_FORCE_INLINE_ float &operator[](int p_idx) {
+		return components[p_idx];
 	}
-	_FORCE_INLINE_ const float &operator[](int idx) const {
-		return components[idx];
+	_FORCE_INLINE_ const float &operator[](int p_idx) const {
+		return components[p_idx];
 	}
 
 	Color operator+(const Color &p_color) const;
@@ -83,14 +83,14 @@ struct _NO_DISCARD_CLASS_ Color {
 	void operator-=(const Color &p_color);
 
 	Color operator*(const Color &p_color) const;
-	Color operator*(const real_t &rvalue) const;
+	Color operator*(real_t p_scalar) const;
 	void operator*=(const Color &p_color);
-	void operator*=(const real_t &rvalue);
+	void operator*=(real_t p_scalar);
 
 	Color operator/(const Color &p_color) const;
-	Color operator/(const real_t &rvalue) const;
+	Color operator/(real_t p_scalar) const;
 	void operator/=(const Color &p_color);
-	void operator/=(const real_t &rvalue);
+	void operator/=(real_t p_scalar);
 
 	bool is_equal_approx(const Color &p_color) const;
 

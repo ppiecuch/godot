@@ -1462,31 +1462,12 @@
 				Once finished with your RID, you will want to free the RID using the VisualServer's [method free_rid] static method.
 			</description>
 		</method>
-		<method name="instance_geometry_set_as_instance_lod">
-			<return type="void" />
-			<argument index="0" name="instance" type="RID" />
-			<argument index="1" name="as_lod_of_instance" type="RID" />
-			<description>
-				Not implemented in Godot 3.x.
-			</description>
-		</method>
 		<method name="instance_geometry_set_cast_shadows_setting">
 			<return type="void" />
 			<argument index="0" name="instance" type="RID" />
 			<argument index="1" name="shadow_casting_setting" type="int" enum="VisualServer.ShadowCastingSetting" />
 			<description>
 				Sets the shadow casting setting to one of [enum ShadowCastingSetting]. Equivalent to [member GeometryInstance.cast_shadow].
-			</description>
-		</method>
-		<method name="instance_geometry_set_draw_range">
-			<return type="void" />
-			<argument index="0" name="instance" type="RID" />
-			<argument index="1" name="min" type="float" />
-			<argument index="2" name="max" type="float" />
-			<argument index="3" name="min_margin" type="float" />
-			<argument index="4" name="max_margin" type="float" />
-			<description>
-				Not implemented in Godot 3.x.
 			</description>
 		</method>
 		<method name="instance_geometry_set_flag">
@@ -2713,7 +2694,7 @@
 			<return type="void" />
 			<argument index="0" name="forbidden" type="bool" />
 			<description>
-				If asynchronous shader compilation is enabled, this controls whether [constant SpatialMaterial.ASYNC_MODE_HIDDEN] is obeyed.
+				If asynchronous shader compilation is enabled, this controls whether [constant Material3D.ASYNC_MODE_HIDDEN] is obeyed.
 				For instance, you may want to enable this temporarily before taking a screenshot. This ensures everything is visible even if shaders with async mode [i]hidden[/i] are not ready yet.
 				Reflection probes use this internally to ensure they capture everything regardless the shaders are ready or not.
 			</description>
@@ -3648,7 +3629,10 @@
 		<constant name="LIGHT_PARAM_SHADOW_BIAS_SPLIT_SCALE" value="15" enum="LightParam">
 			Increases bias on further splits to fix self-shadowing that only occurs far away from the camera.
 		</constant>
-		<constant name="LIGHT_PARAM_MAX" value="16" enum="LightParam">
+		<constant name="LIGHT_PARAM_SHADOW_FADE_START" value="16" enum="LightParam">
+			Proportion of [constant LIGHT_PARAM_SHADOW_MAX_DISTANCE] at which point the shadow starts to fade. At [constant LIGHT_PARAM_SHADOW_MAX_DISTANCE], the shadow will disappear. The default value is a balance between smooth fading and distant shadow visibility. If the camera moves fast and the [constant LIGHT_PARAM_SHADOW_MAX_DISTANCE] is low, consider lowering [constant LIGHT_PARAM_SHADOW_FADE_START] below [code]0.8[/code] to make shadow transitions less noticeable. On the other hand, if you tuned [constant LIGHT_PARAM_SHADOW_MAX_DISTANCE] to cover the entire scene, you can set [constant LIGHT_PARAM_SHADOW_FADE_START] to [code]1.0[/code] to prevent the shadow from fading in the distance (it will suddenly cut off instead).
+		</constant>
+		<constant name="LIGHT_PARAM_MAX" value="17" enum="LightParam">
 			Represents the size of the [enum LightParam] enum.
 		</constant>
 		<constant name="LIGHT_BAKE_DISABLED" value="0" enum="LightBakeMode">
