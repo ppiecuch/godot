@@ -235,10 +235,9 @@ _FORCE_INLINE_ Vector2 &Vector2::operator+=(const Vector2 &p_v) {
 _FORCE_INLINE_ Vector2 Vector2::operator-(const Vector2 &p_v) const {
 	return Vector2(x - p_v.x, y - p_v.y);
 }
-_FORCE_INLINE_ Vector2 &Vector2::operator-=(const Vector2 &p_v) {
+_FORCE_INLINE_ void Vector2::operator-=(const Vector2 &p_v) {
 	x -= p_v.x;
 	y -= p_v.y;
-	return *this;
 }
 
 _FORCE_INLINE_ Vector2 Vector2::operator*(const Vector2 &p_v) const {

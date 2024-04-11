@@ -48,7 +48,6 @@ uint32_t EditorOBJImporter::get_import_flags() const {
 	return IMPORT_SCENE;
 }
 
-<<<<<<< HEAD
 static Ref<ArrayMesh> _build_mesh_for_atlas(const Ref<ArrayMesh> &p_mesh, String p_path, int p_max_side, List<String> *r_paths = nullptr) {
 	ERR_FAIL_NULL_V(p_mesh, Ref<Mesh>());
 	ERR_FAIL_COND_V(p_max_side < 0, Ref<Mesh>());
