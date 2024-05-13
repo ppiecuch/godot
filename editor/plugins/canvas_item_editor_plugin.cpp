@@ -5869,15 +5869,10 @@ CanvasItemEditor::CanvasItemEditor(EditorNode *p_editor) {
 	show_helpers = false;
 	show_rulers = true;
 	show_guides = true;
-<<<<<<< HEAD
-	show_edit_locks = true;
-	zoom = 1.0;
-=======
 	show_position_gizmos = true;
 	show_lock_gizmos = true;
 	show_group_gizmos = true;
 	zoom = 1.0 / MAX(1, EDSCALE);
->>>>>>> 5bdad327c0f328a7db5286e7589fac0e8baec180
 	view_offset = Point2(-150 - RULER_WIDTH, -95 - RULER_WIDTH);
 	previous_update_view_offset = view_offset; // Moves the view a little bit to the left so that (0,0) is visible. The values a relative to a 16/10 screen
 	grid_offset = Point2();
