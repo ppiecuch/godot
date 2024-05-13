@@ -161,6 +161,7 @@ opts.Add(
         "build_fluidsynth_driver", "Force building Fluidsynth audio/midi driver (default for editor only)", False
     )
 )
+opts.Add(BoolVariable("modules_enabled_by_default", "If no, disable all modules except ones explicitly enabled", True))
 opts.Add(BoolVariable("no_editor_splash", "Don't use the custom splash screen for the editor", True))
 opts.Add("system_certs_path", "Use this path as SSL certificates default for editor (for package maintainers)", "")
 opts.Add(BoolVariable("use_precise_math_checks", "Math checks use very precise epsilon (debug option)", False))
@@ -332,16 +333,21 @@ for path in module_search_paths:
 
 # Add module options
 for name, path in modules_detected.items():
-    enabled = True
     sys.path.insert(0, path)
     import config
 
-    try:
-        enabled = config.is_enabled()
-    except AttributeError:
-        pass
+    if env_base["modules_enabled_by_default"]:
+        enabled = True
+        try:
+            enabled = config.is_enabled()
+        except AttributeError:
+            pass
+    else:
+        enabled = False
+
     sys.path.remove(path)
     sys.modules.pop("config")
+
     opts.Add(BoolVariable("module_" + name + "_enabled", "Enable module '%s'" % (name,), enabled))
 
 methods.write_modules(modules_detected)
