@@ -52,7 +52,7 @@
 			<return type="float" />
 			<argument index="0" name="s" type="float" />
 			<description>
-				Returns the arc cosine of [code]s[/code] in radians. Use to get the angle of cosine [code]s[/code]. [code]s[/code] must be between [code]-1.0[/code] and [code]1.0[/code] (inclusive), otherwise, [method acos] will return [constant NAN].
+				Returns the arc cosine of [code]s[/code] in radians. Use to get the angle of cosine [code]s[/code]. [code]s[/code] will be clamped between [code]-1.0[/code] and [code]1.0[/code] (inclusive), in order to prevent [method acos] from returning [constant NAN].
 				[codeblock]
 				# c is 0.523599 or 30 degrees if converted with rad2deg(s)
 				c = acos(0.866025)
@@ -63,7 +63,7 @@
 			<return type="float" />
 			<argument index="0" name="s" type="float" />
 			<description>
-				Returns the arc sine of [code]s[/code] in radians. Use to get the angle of sine [code]s[/code]. [code]s[/code] must be between [code]-1.0[/code] and [code]1.0[/code] (inclusive), otherwise, [method asin] will return [constant NAN].
+				Returns the arc sine of [code]s[/code] in radians. Use to get the angle of sine [code]s[/code]. [code]s[/code] will be clamped between [code]-1.0[/code] and [code]1.0[/code] (inclusive), in order to prevent [method asin] from returning [constant NAN].
 				[codeblock]
 				# s is 0.523599 or 30 degrees if converted with rad2deg(s)
 				s = asin(0.5)
@@ -276,7 +276,7 @@
 				- 1.0: Linear
 				- Greater than 1.0 (exclusive): Ease in
 				[/codeblock]
-				[url=https://raw.githubusercontent.com/godotengine/godot-docs/3.5/img/ease_cheatsheet.png]ease() curve values cheatsheet[/url]
+				[url=https://raw.githubusercontent.com/godotengine/godot-docs/3.6/img/ease_cheatsheet.png]ease() curve values cheatsheet[/url]
 				See also [method smoothstep]. If you need to perform more advanced transitions, use [Tween] or [AnimationPlayer].
 			</description>
 		</method>
@@ -556,8 +556,8 @@
 			<return type="float" />
 			<argument index="0" name="s" type="float" />
 			<description>
-				Natural logarithm. The amount of time needed to reach a certain level of continuous growth.
-				[b]Note:[/b] This is not the same as the "log" function on most calculators, which uses a base 10 logarithm.
+				Returns the [url=https://en.wikipedia.org/wiki/Natural_logarithm]natural logarithm[/url] of [code]s[/code] (base [url=https://en.wikipedia.org/wiki/E_(mathematical_constant)][i]e[/i][/url], with [i]e[/i] being approximately 2.71828). This is the amount of time needed to reach a certain level of continuous growth.
+				[b]Note:[/b] This is not the same as the "log" function on most calculators, which uses a base 10 logarithm. To use base 10 logarithm, use [code]log(x) / log(10)[/code].
 				[codeblock]
 				log(10) # Returns 2.302585
 				[/codeblock]
@@ -974,7 +974,7 @@
 				smoothstep(0, 2, 2.0) # Returns 1.0
 				[/codeblock]
 				Compared to [method ease] with a curve value of [code]-1.6521[/code], [method smoothstep] returns the smoothest possible curve with no sudden changes in the derivative. If you need to perform more advanced transitions, use [Tween] or [AnimationPlayer].
-				[url=https://raw.githubusercontent.com/godotengine/godot-docs/3.5/img/smoothstep_ease_comparison.png]Comparison between smoothstep() and ease(x, -1.6521) return values[/url]
+				[url=https://raw.githubusercontent.com/godotengine/godot-docs/3.6/img/smoothstep_ease_comparison.png]Comparison between smoothstep() and ease(x, -1.6521) return values[/url]
 			</description>
 		</method>
 		<method name="sqrt">

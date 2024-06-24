@@ -71,6 +71,15 @@
 #endif
 #endif // _HAS_EXCEPTIONS
 
+#ifndef _HAS_EXCEPTIONS
+#define throw      (void)
+#define try        if (true)
+#define catch(...) if (false)
+#define __declare_exception(nm) const std::exception nm
+#else
+#define __declare_exception(...)
+#endif
+
 // Godot editor build
 #if TOOLS_ENABLED
 #define IN_EDITOR (Engine::get_singleton()->is_editor_hint() || OS::get_singleton()->is_no_window_mode_enabled())

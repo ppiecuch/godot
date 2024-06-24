@@ -25,6 +25,7 @@ def get_opts():
         EnumVariable("android_arch", "Target architecture", "armv7", ("armv7", "arm64v8", "x86", "x86_64")),
         BoolVariable("android_neon", "Enable NEON support (armv7 only)", True),
         BoolVariable("android_rtti", "Enable rtti/exceptions support", False),
+        BoolVariable("store_release", "Editor build for Google Play Store (for official builds only)", False),
     ]
 
 
@@ -175,11 +176,11 @@ def configure(env):
     env["RANLIB"] = compiler_path + "/llvm-ranlib"
     env["AS"] = compiler_path + "/clang"
 
-    # Disable exceptions and rtti on non-tools (template) builds
+    # Disable exceptions and rtti on non-tools (template) builds.
     if env["tools"] or env["android_rtti"]:
         env.Append(CXXFLAGS=["-frtti"])
     else:
-        env.Append(CXXFLAGS=["-fno-rtti", "-fno-exceptions"])
+        env.Append(CXXFLAGS=["-fno-rtti"])
         # Don't use dynamic_cast, necessary with no-rtti.
         env.Append(CPPDEFINES=["NO_SAFE_CAST"])
 

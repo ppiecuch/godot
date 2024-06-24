@@ -280,6 +280,7 @@ private:                                                                        
 	friend class ClassDB;                                                                                                                          \
                                                                                                                                                    \
 public:                                                                                                                                            \
+	typedef m_class self_type;                                                                                                                     \
 	virtual String get_class() const G_OVERRIDE {                                                                                                  \
 		return String(#m_class);                                                                                                                   \
 	}                                                                                                                                              \
@@ -420,6 +421,8 @@ class ObjectRC;
 
 class Object {
 public:
+	typedef Object self_type;
+
 	enum ConnectFlags {
 
 		CONNECT_DEFERRED = 1,
@@ -475,7 +478,10 @@ private:
 			int reference_count;
 			Connection conn;
 			List<Connection>::Element *cE;
-			Slot() { reference_count = 0; }
+			Slot() {
+				reference_count = 0;
+				cE = nullptr;
+			}
 		};
 
 		MethodInfo user;

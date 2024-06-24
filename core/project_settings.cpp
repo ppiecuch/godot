@@ -64,14 +64,14 @@ String ProjectSettings::get_resource_path() const {
 };
 
 String ProjectSettings::localize_path(const String &p_path) const {
-	if (resource_path.empty() || p_path.begins_with("res://") || p_path.begins_with("user://") ||
-			(p_path.is_abs_path() && !p_path.begins_with(resource_path))) {
-		return p_path.simplify_path();
+	String path = p_path.simplify_path();
+
+	if (resource_path.empty() || path.begins_with("res://") || path.begins_with("user://") ||
+			(path.is_abs_path() && !path.begins_with(resource_path))) {
+		return path.simplify_path();
 	}
 
 	DirAccess *dir = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
-
-	String path = p_path.replace("\\", "/").simplify_path();
 
 	if (dir->change_dir(path) == OK) {
 		String cwd = dir->get_current_dir();
@@ -92,7 +92,7 @@ String ProjectSettings::localize_path(const String &p_path) const {
 		cwd = cwd.plus_file("");
 
 		if (!cwd.begins_with(res_path)) {
-			return p_path;
+			return path;
 		};
 
 		return cwd.replace_first(res_path, "res://");
@@ -1092,6 +1092,12 @@ ProjectSettings::ProjectSettings() {
 	custom_prop_info["audio/2d_panning_strength"] = PropertyInfo(Variant::REAL, "audio/2d_panning_strength", PROPERTY_HINT_RANGE, "0,4,0.01");
 	GLOBAL_DEF_RST("audio/3d_panning_strength", 1.0f);
 	custom_prop_info["audio/3d_panning_strength"] = PropertyInfo(Variant::REAL, "audio/3d_panning_strength", PROPERTY_HINT_RANGE, "0,4,0.01");
+
+	GLOBAL_DEF_RST("audio/general/text_to_speech", false);
+
+	GLOBAL_DEF("audio/general/ios/session_category", 0);
+	ProjectSettings::get_singleton()->set_custom_property_info("audio/general/ios/session_category", PropertyInfo(Variant::INT, "audio/general/ios/session_category", PROPERTY_HINT_ENUM, "Ambient,Multi Route,Play and Record,Playback,Record,Solo Ambient"));
+	GLOBAL_DEF("audio/general/ios/mix_with_others", false);
 
 	PoolStringArray extensions = PoolStringArray();
 	extensions.push_back("gd");

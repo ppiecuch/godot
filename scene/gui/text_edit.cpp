@@ -1653,6 +1653,11 @@ void TextEdit::_notification(int p_what) {
 				line_drawing_cache[line] = cache_entry;
 			}
 
+			// Flush out any text in the drawer BEFORE
+			// drawing the completion box, as we want the completion
+			// box to overwrite the underlying text.
+			drawer.flush();
+
 			bool completion_below = false;
 			if (completion_active && is_cursor_visible && completion_options.size() > 0) {
 				// Completion panel
@@ -4942,7 +4947,7 @@ Rect2 TextEdit::get_rect_at_line_column(int p_line, int p_column) const {
 
 	int first_visible_char = cache_entry.first_visible_char[wrap_index];
 	int last_visible_char = cache_entry.last_visible_char[wrap_index];
-	if (p_column < first_visible_char || p_column > last_visible_char) {
+	if (p_column < first_visible_char || p_column > (last_visible_char + 1)) {
 		// Character is outside of the viewing area, no point calculating its position.
 		return Rect2i(-1, -1, 0, 0);
 	}
@@ -5485,7 +5490,7 @@ int TextEdit::_is_line_in_region(int p_line) {
 	// If not find the closest line we have.
 	int previous_line = p_line - 1;
 	for (; previous_line > -1; previous_line--) {
-		if (color_region_cache.has(p_line)) {
+		if (color_region_cache.has(previous_line)) {
 			break;
 		}
 	}

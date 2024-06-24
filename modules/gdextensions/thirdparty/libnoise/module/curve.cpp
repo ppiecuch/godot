@@ -28,7 +28,7 @@ using namespace noise::module;
 
 Curve::Curve ():
   Module (GetSourceModuleCount ()),
-  m_pControlPoints (NULL)
+  m_pControlPoints (nullptr)
 {
   m_controlPointCount = 0;
 }
@@ -50,7 +50,7 @@ void Curve::AddControlPoint (double inputValue, double outputValue)
 void Curve::ClearAllControlPoints ()
 {
   delete[] m_pControlPoints;
-  m_pControlPoints = NULL;
+  m_pControlPoints = nullptr;
   m_controlPointCount = 0;
 }
 
@@ -73,8 +73,8 @@ int Curve::FindInsertionPos (double inputValue)
 
 double Curve::GetValue (double x, double y, double z) const
 {
-  assert (m_pSourceModule[0] != NULL);
-  assert (m_controlPointCount >= 4);
+  DEV_ASSERT (m_pSourceModule[0] != nullptr);
+  DEV_ASSERT (m_controlPointCount >= 4);
 
   // Get the output value from the source module.
   double sourceModuleValue = m_pSourceModule[0]->GetValue (x, y, z);

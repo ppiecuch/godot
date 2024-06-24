@@ -34,7 +34,7 @@ ScalePoint::ScalePoint ():
 
 double ScalePoint::GetValue (double x, double y, double z) const
 {
-  assert (m_pSourceModule[0] != NULL);
+  DEV_ASSERT (m_pSourceModule[0] != nullptr);
 
   return m_pSourceModule[0]->GetValue (x * m_xScale, y * m_yScale,
     z * m_zScale);

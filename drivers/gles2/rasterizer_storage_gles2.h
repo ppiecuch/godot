@@ -31,6 +31,7 @@
 #ifndef RASTERIZER_STORAGE_GLES2_H
 #define RASTERIZER_STORAGE_GLES2_H
 
+#include "core/bitfield_dynamic.h"
 #include "core/pool_vector.h"
 #include "core/self_list.h"
 #include "drivers/gles_common/rasterizer_asserts.h"
@@ -44,6 +45,8 @@
 
 class RasterizerCanvasGLES2;
 class RasterizerSceneGLES2;
+
+#define WRAPPED_GL_ACTIVE_TEXTURE storage->gl_wrapper.gl_active_texture
 
 class RasterizerStorageGLES2 : public RasterizerStorage {
 public:
@@ -63,6 +66,7 @@ public:
 
 		int max_vertex_texture_image_units;
 		int max_texture_image_units;
+		static const int32_t max_desired_texture_image_units = 64;
 		int max_texture_size;
 		int max_cubemap_texture_size;
 		int max_viewport_dimensions[2];
@@ -798,6 +802,7 @@ public:
 		bool dirty_data;
 
 		MMInterpolator interpolator;
+		LocalVector<RID> linked_canvas_items;
 
 		MultiMesh() :
 				size(0),
@@ -844,6 +849,7 @@ public:
 
 	virtual AABB _multimesh_get_aabb(RID p_multimesh) const;
 	virtual MMInterpolator *_multimesh_get_interpolator(RID p_multimesh) const;
+	virtual void multimesh_attach_canvas_item(RID p_multimesh, RID p_canvas_item, bool p_attach);
 
 	void update_dirty_multimeshes();
 
@@ -912,6 +918,7 @@ public:
 		Set<RasterizerScene::InstanceBase *> instances;
 
 		Transform2D base_transform_2d;
+		LocalVector<RID> linked_canvas_items;
 
 		Skeleton() :
 				use_2d(false),
@@ -937,6 +944,7 @@ public:
 	virtual Transform2D skeleton_bone_get_transform_2d(RID p_skeleton, int p_bone) const;
 	virtual void skeleton_set_base_transform_2d(RID p_skeleton, const Transform2D &p_base_transform);
 	virtual uint32_t skeleton_get_revision(RID p_skeleton) const;
+	virtual void skeleton_attach_canvas_item(RID p_skeleton, RID p_canvas_item, bool p_attach);
 
 	void _update_skeleton_transform_buffer(const PoolVector<float> &p_data, size_t p_size);
 
@@ -1215,10 +1223,10 @@ public:
 
 		struct MipMaps {
 			struct Size {
-				GLuint fbo;
-				GLuint color;
-				int width;
-				int height;
+				GLuint fbo = 0;
+				GLuint color = 0;
+				int width = 0;
+				int height = 0;
 			};
 
 			Vector<Size> sizes;
@@ -1352,6 +1360,27 @@ public:
 
 	} frame;
 
+	struct GLWrapper {
+		mutable BitFieldDynamic texture_unit_table;
+		mutable LocalVector<uint32_t> texture_units_bound;
+
+		void gl_active_texture(GLenum p_texture) const {
+			::glActiveTexture(p_texture);
+
+			p_texture -= GL_TEXTURE0;
+
+			// Check for below zero and above max in one check.
+			ERR_FAIL_COND((unsigned int)p_texture >= texture_unit_table.get_num_bits());
+
+			// Set if the first occurrence in the table.
+			if (texture_unit_table.check_and_set(p_texture)) {
+				texture_units_bound.push_back(p_texture);
+			}
+		}
+		void initialize(int p_max_texture_image_units);
+		void reset();
+	} gl_wrapper;
+
 	void initialize();
 	void finalize();
 
@@ -1370,6 +1399,8 @@ public:
 	virtual uint64_t get_render_info(VS::RenderInfo p_info);
 	virtual String get_video_adapter_name() const;
 	virtual String get_video_adapter_vendor() const;
+
+	static int32_t safe_gl_get_integer(unsigned int p_gl_param_name, int32_t p_max_accepted = INT32_MAX);
 
 	// NOTE : THESE SIZES ARE IN BYTES. BUFFER SIZES MAY NOT BE SPECIFIED IN BYTES SO REMEMBER TO CONVERT THEM WHEN CALLING.
 	void buffer_orphan_and_upload(unsigned int p_buffer_size_bytes, unsigned int p_offset_bytes, unsigned int p_data_size_bytes, const void *p_data, GLenum p_target = GL_ARRAY_BUFFER, GLenum p_usage = GL_DYNAMIC_DRAW, bool p_optional_orphan = false) const;

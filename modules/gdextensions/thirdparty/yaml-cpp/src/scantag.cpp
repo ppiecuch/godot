@@ -27,6 +27,7 @@ const std::string ScanVerbatimTag(Stream& INPUT) {
   }
 
   throw ParserException(INPUT.mark(), ErrorMsg::END_OF_VERBATIM_TAG);
+  return std::string();
 }
 
 const std::string ScanTagHandle(Stream& INPUT, bool& canBeHandle) {

@@ -34,7 +34,6 @@ def get_opts():
         ),
         ("IPHONESDK", "Path to the iPhone SDK", ""),
         BoolVariable("ios_simulator", "Build for iOS Simulator", False),
-        BoolVariable("ios_exceptions", "Enable exceptions", False),
         ("ios_triple", "Triple for ios toolchain", ""),
     ]
 
@@ -121,15 +120,15 @@ def configure(env):
 
     if env["ios_simulator"]:
         detect_darwin_sdk_path("iphonesimulator", env)
-        env.Append(ASFLAGS=["-mios-simulator-version-min=10.0"])
-        env.Append(CCFLAGS=["-mios-simulator-version-min=10.0"])
-        env.Append(LINKFLAGS=["-mios-simulator-version-min=10.0"])
+        env.Append(ASFLAGS=["-mios-simulator-version-min=12.0"])
+        env.Append(CCFLAGS=["-mios-simulator-version-min=12.0"])
+        env.Append(LINKFLAGS=["-mios-simulator-version-min=12.0"])
         env.extra_suffix = ".simulator" + env.extra_suffix
     else:
         detect_darwin_sdk_path("iphone", env)
-        env.Append(ASFLAGS=["-miphoneos-version-min=10.0"])
-        env.Append(CCFLAGS=["-miphoneos-version-min=10.0"])
-        env.Append(LINKFLAGS=["-miphoneos-version-min=10.0"])
+        env.Append(ASFLAGS=["-miphoneos-version-min=12.0"])
+        env.Append(CCFLAGS=["-miphoneos-version-min=12.0"])
+        env.Append(LINKFLAGS=["-miphoneos-version-min=12.0"])
 
     if env["arch"] == "x86" or env["arch"] == "x86_64":
         if not env["ios_simulator"]:
@@ -212,4 +211,6 @@ def configure(env):
     env["ENV"]["CODESIGN_ALLOCATE"] = "/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/codesign_allocate"
 
     env.Prepend(CPPPATH=["#platform/iphone"])
-    env.Append(CPPDEFINES=["IPHONE_ENABLED", "UNIX_ENABLED", "GLES_ENABLED", "METAL_ENABLED", "COREAUDIO_ENABLED"])
+    env.Append(
+        CPPDEFINES=["IPHONE_ENABLED", "UNIX_ENABLED", "GLES_ENABLED", "METAL_ENABLED", "COREAUDIO_ENABLED", "GLES_SILENCE_DEPRECATION"]
+    )

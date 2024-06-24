@@ -34,7 +34,7 @@ TranslatePoint::TranslatePoint ():
 
 double TranslatePoint::GetValue (double x, double y, double z) const
 {
-  assert (m_pSourceModule[0] != NULL);
+  DEV_ASSERT (m_pSourceModule[0] != nullptr);
 
   return m_pSourceModule[0]->GetValue (x + m_xTranslation, y + m_yTranslation,
     z + m_zTranslation);

@@ -92,7 +92,7 @@ namespace noise
         /// module with an index value of 1.
         const Module& GetControlModule () const
         {
-          if (m_pSourceModule == NULL || m_pSourceModule[2] == NULL) {
+          if (m_pSourceModule == nullptr || m_pSourceModule[2] == nullptr) {
             throw noise::ExceptionNoModule ();
           }
           return *(m_pSourceModule[2]);
@@ -125,7 +125,7 @@ namespace noise
         /// module.
         void SetControlModule (const Module& controlModule)
         {
-          assert (m_pSourceModule != NULL);
+          DEV_ASSERT (m_pSourceModule != nullptr);
           m_pSourceModule[2] = &controlModule;
         }
 

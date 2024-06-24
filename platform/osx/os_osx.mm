@@ -474,6 +474,10 @@ static bool running_under_rosetta() {
 	OS_OSX::singleton->window_focused = true;
 };
 
+- (void)windowDidChangeOcclusionState:(NSNotification *)notification {
+	OS_OSX::singleton->is_visible = ([OS_OSX::singleton->window_object occlusionState] & NSWindowOcclusionStateVisible) && [OS_OSX::singleton->window_object isVisible];
+}
+
 @end
 
 typedef enum BackingLayerTag : NSUInteger {
@@ -525,7 +529,7 @@ static NSDictionary *touchBarButtonRuntimeActions = @{};
 @implementation GodotContentView
 
 - (void)drawRect:(NSRect)dirtyRect {
-	if (OS_OSX::singleton->get_main_loop() && OS_OSX::singleton->is_resizing) {
+	if (OS_OSX::singleton->get_main_loop() && (OS_OSX::singleton->get_render_thread_mode() != OS::RENDER_SEPARATE_THREAD) && OS_OSX::singleton->is_resizing) {
 		Main::force_redraw();
 		if (!Main::is_iterating()) { // Avoid cyclic loop.
 			Main::iteration();
@@ -566,11 +570,7 @@ static NSDictionary *touchBarButtonRuntimeActions = @{};
 	imeInputEventInProgress = false;
 	backingLayerType = viewType;
 	[self updateTrackingAreas];
-#if MAC_OS_X_VERSION_MIN_REQUIRED >= 101400
 	[self registerForDraggedTypes:[NSArray arrayWithObject:NSPasteboardTypeFileURL]];
-#else
-	[self registerForDraggedTypes:[NSArray arrayWithObject:NSFilenamesPboardType]];
-#endif
 	markedText = [[NSMutableAttributedString alloc] init];
 	return self;
 }
@@ -717,7 +717,6 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 	Vector<String> files;
 	NSPasteboard *pboard = [sender draggingPasteboard];
 
-#if MAC_OS_X_VERSION_MIN_REQUIRED >= 101400
 	NSArray *items = pboard.pasteboardItems;
 	for (NSPasteboardItem *item in items) {
 		NSString *path = [item stringForType:NSPasteboardTypeFileURL];
@@ -728,16 +727,6 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 		free(utfs);
 		files.push_back(ret);
 	}
-#else
-	NSArray *filenames = [pboard propertyListForType:NSFilenamesPboardType];
-	for (NSString *ns in filenames) {
-		char *utfs = strdup([ns UTF8String]);
-		String ret;
-		ret.parse_utf8(utfs);
-		free(utfs);
-		files.push_back(ret);
-	}
-#endif
 
 	if (files.size()) {
 		OS_OSX::singleton->main_loop->drop_files(files, 0);
@@ -1845,36 +1834,43 @@ int OS_OSX::get_current_video_driver() const {
 }
 
 bool OS_OSX::tts_is_speaking() const {
+	ERR_FAIL_COND_V_MSG(!tts, false, "Enable the \"audio/general/text_to_speech\" project setting to use text-to-speech.");
 	ERR_FAIL_COND_V(!tts, false);
 	return [tts isSpeaking];
 }
 
 bool OS_OSX::tts_is_paused() const {
+	ERR_FAIL_COND_V_MSG(!tts, false, "Enable the \"audio/general/text_to_speech\" project setting to use text-to-speech.");
 	ERR_FAIL_COND_V(!tts, false);
 	return [tts isPaused];
 }
 
 Array OS_OSX::tts_get_voices() const {
+	ERR_FAIL_COND_V_MSG(!tts, Array(), "Enable the \"audio/general/text_to_speech\" project setting to use text-to-speech.");
 	ERR_FAIL_COND_V(!tts, Array());
 	return [tts getVoices];
 }
 
 void OS_OSX::tts_speak(const String &p_text, const String &p_voice, int p_volume, float p_pitch, float p_rate, int p_utterance_id, bool p_interrupt) {
+	ERR_FAIL_COND_MSG(!tts, "Enable the \"audio/general/text_to_speech\" project setting to use text-to-speech.");
 	ERR_FAIL_COND(!tts);
 	[tts speak:p_text voice:p_voice volume:p_volume pitch:p_pitch rate:p_rate utterance_id:p_utterance_id interrupt:p_interrupt];
 }
 
 void OS_OSX::tts_pause() {
+	ERR_FAIL_COND_MSG(!tts, "Enable the \"audio/general/text_to_speech\" project setting to use text-to-speech.");
 	ERR_FAIL_COND(!tts);
 	[tts pauseSpeaking];
 }
 
 void OS_OSX::tts_resume() {
+	ERR_FAIL_COND_MSG(!tts, "Enable the \"audio/general/text_to_speech\" project setting to use text-to-speech.");
 	ERR_FAIL_COND(!tts);
 	[tts resumeSpeaking];
 }
 
 void OS_OSX::tts_stop() {
+	ERR_FAIL_COND_MSG(!tts, "Enable the \"audio/general/text_to_speech\" project setting to use text-to-speech.");
 	ERR_FAIL_COND(!tts);
 	[tts stopSpeaking];
 }
@@ -1896,7 +1892,10 @@ Error OS_OSX::initialize(const VideoMode &p_desired, int p_video_driver, int p_a
 	CGDisplayRegisterReconfigurationCallback(displays_arrangement_changed, NULL);
 
 	// Init TTS
-	tts = [[TTS_OSX alloc] init];
+	bool tts_enabled = GLOBAL_GET("audio/general/text_to_speech");
+	if (tts_enabled) {
+		tts = [[TTS_OSX alloc] init];
+	}
 
 	window_delegate = [[GodotWindowDelegate alloc] init];
 
@@ -2677,7 +2676,7 @@ String OS_OSX::get_system_dir(SystemDir p_dir, bool p_shared_storage) const {
 }
 
 bool OS_OSX::can_draw() const {
-	return true;
+	return is_visible;
 }
 
 void OS_OSX::set_clipboard(const String &p_text) {
@@ -3836,6 +3835,7 @@ OS_OSX::OS_OSX() {
 	im_position = Point2();
 	layered_window = false;
 	autoreleasePool = [[NSAutoreleasePool alloc] init];
+	is_visible = true;
 
 	eventSource = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
 	ERR_FAIL_COND(!eventSource);

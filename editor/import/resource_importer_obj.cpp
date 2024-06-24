@@ -424,7 +424,8 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, const _
 			vtx.y = v[2].to_float() * scale_mesh.y + offset_mesh.y;
 			vtx.z = v[3].to_float() * scale_mesh.z + offset_mesh.z;
 			vertices.push_back(vtx);
-			if (v.size() == 7) {
+			//vertex colors
+			if (v.size() >= 7) {
 				while (colors.size() < vertices.size() - 1) {
 					colors.push_back(Color(1.0, 1.0, 1.0));
 				}
@@ -552,7 +553,7 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, const _
 
 				if (p_opts.compress_flags & VS::ARRAY_FLAG_USE_OCTAHEDRAL_COMPRESSION) {
 					print_verbose("OBJ: Validating compression flags");
-					const List<SurfaceTool::Vertex> &verts = surf_tool->get_vertex_array();
+					const LocalVector<SurfaceTool::Vertex> &verts = surf_tool->get_vertex_array();
 					if (surf_tool->get_array_format() & Mesh::ARRAY_FORMAT_NORMAL) {
 						for (const SurfaceTool::Vertex &v : verts) {
 							const float L1Norm = Math::absf(v.normal.x) + Math::absf(v.normal.y) + Math::absf(v.normal.z);

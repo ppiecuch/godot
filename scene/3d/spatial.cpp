@@ -274,6 +274,7 @@ void Spatial::set_global_rotation(const Vector3 &p_euler_rad) {
 void Spatial::set_transform(const Transform &p_transform) {
 	data.local_transform = p_transform;
 	data.dirty |= DIRTY_VECTORS;
+	data.dirty &= ~DIRTY_LOCAL;
 	_change_notify("translation");
 	_change_notify("rotation");
 	_change_notify("rotation_degrees");
@@ -935,11 +936,13 @@ void Spatial::_bind_methods() {
 	BIND_CONSTANT(NOTIFICATION_EXIT_GAMEPLAY);
 
 	ADD_GROUP("Transform", "");
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "position", PROPERTY_HINT_NONE, "", 0), "set_translation", "get_translation");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "translation", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_EDITOR), "set_translation", "get_translation");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "rotation_degrees", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_EDITOR), "set_rotation_degrees", "get_rotation_degrees");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "rotation", PROPERTY_HINT_NONE, "", 0), "set_rotation", "get_rotation");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "scale", PROPERTY_HINT_LINK, "", PROPERTY_USAGE_EDITOR), "set_scale", "get_scale");
 	ADD_PROPERTY(PropertyInfo(Variant::TRANSFORM, "global_transform", PROPERTY_HINT_NONE, "", 0), "set_global_transform", "get_global_transform");
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "global_position", PROPERTY_HINT_NONE, "", 0), "set_global_translation", "get_global_translation");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "global_translation", PROPERTY_HINT_NONE, "", 0), "set_global_translation", "get_global_translation");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "global_rotation", PROPERTY_HINT_NONE, "", 0), "set_global_rotation", "get_global_rotation");
 

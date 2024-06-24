@@ -31,10 +31,10 @@ Displace::Displace ():
 
 double Displace::GetValue (double x, double y, double z) const
 {
-  assert (m_pSourceModule[0] != NULL);
-  assert (m_pSourceModule[1] != NULL);
-  assert (m_pSourceModule[2] != NULL);
-  assert (m_pSourceModule[3] != NULL);
+  DEV_ASSERT (m_pSourceModule[0] != nullptr);
+  DEV_ASSERT (m_pSourceModule[1] != nullptr);
+  DEV_ASSERT (m_pSourceModule[2] != nullptr);
+  DEV_ASSERT (m_pSourceModule[3] != nullptr);
 
   // Get the output values from the three displacement modules.  Add each
   // value to the corresponding coordinate in the input value.

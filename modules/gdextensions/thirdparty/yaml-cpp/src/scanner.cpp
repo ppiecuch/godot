@@ -276,10 +276,10 @@ Token::TYPE Scanner::GetStartTokenFor(IndentMarker::INDENT_TYPE type) const {
     case IndentMarker::MAP:
       return Token::BLOCK_MAP_START;
     case IndentMarker::NONE:
-      assert(false);
+      CRASH_NOW();
       break;
   }
-  assert(false);
+  CRASH_NOW();
   throw std::runtime_error("yaml-cpp: internal error, invalid indent type");
 }
 

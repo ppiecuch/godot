@@ -126,7 +126,7 @@ static void _display_error_with_code(const String &p_error, const Vector<const c
 	ERR_PRINT(p_error);
 }
 
-static String _mkid(const String &p_id) {
+String ShaderGLES2::_mkid(const String &p_id) {
 	String id = "m_" + p_id;
 	return id.replace("__", "_dus_"); //doubleunderscore is reserved in glsl
 }
@@ -575,7 +575,8 @@ void ShaderGLES2::setup(
 		}
 	}
 
-	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &max_image_units);
+	// The upper limit must match the version used in storage.
+	max_image_units = RasterizerStorageGLES2::safe_gl_get_integer(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, RasterizerStorageGLES2::Config::max_desired_texture_image_units);
 }
 
 void ShaderGLES2::finish() {

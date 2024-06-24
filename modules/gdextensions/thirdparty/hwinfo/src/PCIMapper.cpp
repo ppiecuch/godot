@@ -8,6 +8,7 @@
 #include <hwinfo/PCIMapper.h>
 #include <hwinfo/utils/stringutils.h>
 
+#include <iostream>
 #include <fstream>
 #include <stdexcept>
 
@@ -35,7 +36,8 @@ const PCIDevice& PCIVendor::operator[](const std::string& device_id) const {
 PCIMapper::PCIMapper(const std::string& pci_ids_file) {
   std::ifstream f_pciid(pci_ids_file);
   if (!f_pciid) {
-    throw std::runtime_error("ERROR: Could not open file '" + pci_ids_file + "'.\n");
+    std::cerr << "ERROR: Could not open file '" << pci_ids_file << "'.\n";
+    return;
   }
   PCIVendor* current_vendor = nullptr;
   PCIDevice* current_device = nullptr;

@@ -32,9 +32,9 @@ Blend::Blend ():
 
 double Blend::GetValue (double x, double y, double z) const
 {
-  assert (m_pSourceModule[0] != NULL);
-  assert (m_pSourceModule[1] != NULL);
-  assert (m_pSourceModule[2] != NULL);
+  DEV_ASSERT (m_pSourceModule[0] != nullptr);
+  DEV_ASSERT (m_pSourceModule[1] != nullptr);
+  DEV_ASSERT (m_pSourceModule[2] != nullptr);
 
   double v0 = m_pSourceModule[0]->GetValue (x, y, z);
   double v1 = m_pSourceModule[1]->GetValue (x, y, z);

@@ -11,8 +11,23 @@ from SCons.Script import ARGUMENTS
 from SCons.Script import Glob
 from SCons.Variables.BoolVariable import _text2bool
 
+from pathlib import Path
+from os.path import normpath, basename
 
-def add_source_files(self, sources, files):
+# Get the "Godot" folder name ahead of time
+base_folder_path = str(os.path.abspath(Path(__file__).parent)) + "/"
+base_folder_only = os.path.basename(os.path.normpath(base_folder_path))
+# Listing all the folders we have converted
+# for SCU in scu_builders.py
+_scu_folders = set()
+
+
+def set_scu_folders(scu_folders):
+    global _scu_folders
+    _scu_folders = scu_folders
+
+
+def add_source_files_orig(self, sources, files, allow_gen=False):
     # Convert string to list of absolute paths (including expanding wildcard)
     if isbasestring(files):
         # Keep SCons project-absolute path as they are (no wildcard support)
@@ -30,7 +45,7 @@ def add_source_files(self, sources, files):
             else:
                 dir_path = self.Dir(".").abspath
                 files = sorted(glob.glob(dir_path + "/" + files))
-            if skip_gen_cpp:
+            if skip_gen_cpp and not allow_gen:
                 files = [f for f in files if not f.endswith(".gen.cpp")]
 
     # Add each path as compiled Object following environment (self) configuration
@@ -40,6 +55,71 @@ def add_source_files(self, sources, files):
             print('WARNING: Object "{}" already included in environment sources.'.format(obj))
             continue
         sources.append(obj)
+
+
+# The section name is used for checking
+# the hash table to see whether the folder
+# is included in the SCU build.
+# It will be something like "core/math".
+def _find_scu_section_name(subdir):
+    section_path = os.path.abspath(subdir) + "/"
+
+    folders = []
+    folder = ""
+
+    for i in range(8):
+        folder = os.path.dirname(section_path)
+        folder = os.path.basename(folder)
+        if folder == base_folder_only:
+            break
+        folders += [folder]
+        section_path += "../"
+        section_path = os.path.abspath(section_path) + "/"
+
+    section_name = ""
+    for n in range(len(folders)):
+        section_name += folders[len(folders) - n - 1]
+        if n != (len(folders) - 1):
+            section_name += "/"
+
+    return section_name
+
+
+def add_source_files_scu(self, sources, files, allow_gen=False):
+    if self["scu_build"] and isinstance(files, str):
+        if "*." not in files:
+            return False
+
+        # If the files are in a subdirectory, we want to create the scu gen
+        # files inside this subdirectory.
+        subdir = os.path.dirname(files)
+        if subdir != "":
+            subdir += "/"
+
+        section_name = _find_scu_section_name(subdir)
+        # if the section name is in the hash table?
+        # i.e. is it part of the SCU build?
+        global _scu_folders
+        if section_name not in (_scu_folders):
+            return False
+
+        if self["verbose"]:
+            print("SCU building " + section_name)
+
+        # Add all the gen.cpp files in the SCU directory
+        add_source_files_orig(self, sources, subdir + ".scu/scu_*.gen.cpp", True)
+        return True
+    return False
+
+
+# Either builds the folder using the SCU system,
+# or reverts to regular build.
+def add_source_files(self, sources, files, allow_gen=False):
+    if not add_source_files_scu(self, sources, files, allow_gen):
+        # Wraps the original function when scu build is not active.
+        add_source_files_orig(self, sources, files, allow_gen)
+        return False
+    return True
 
 
 def disable_warnings(self):
@@ -746,25 +826,28 @@ def detect_visual_c_compiler_version(tools_env):
 
 
 def find_visual_c_batch_file(env):
-    from SCons.Tool.MSCommon.vc import (
-        get_default_version,
-        get_host_target,
-        find_batch_file,
-    )
+    from SCons.Tool.MSCommon.vc import get_default_version, get_host_target, find_batch_file, find_vc_pdir
 
     # Syntax changed in SCons 4.4.0.
     from SCons import __version__ as scons_raw_version
 
     scons_ver = env._get_major_minor_revision(scons_raw_version)
 
-    version = get_default_version(env)
+    msvc_version = get_default_version(env)
 
     if scons_ver >= (4, 4, 0):
-        (host_platform, target_platform, _) = get_host_target(env, version)
+        (host_platform, target_platform, _) = get_host_target(env, msvc_version)
     else:
         (host_platform, target_platform, _) = get_host_target(env)
 
-    return find_batch_file(env, version, host_platform, target_platform)[0]
+    if scons_ver < (4, 6, 0):
+        return find_batch_file(env, msvc_version, host_platform, target_platform)[0]
+
+    # Scons 4.6.0+ removed passing env, so we need to get the product_dir ourselves first,
+    # then pass that as the last param instead of env as the first param as before.
+    # We should investigate if we can avoid relying on SCons internals here.
+    product_dir = find_vc_pdir(env, msvc_version)
+    return find_batch_file(msvc_version, host_platform, target_platform, product_dir)[0]
 
 
 def generate_cpp_hint_file(filename):
@@ -868,7 +951,7 @@ def generate_vs_project(env, num_jobs):
                     for plat_id in ModuleConfigs.PLATFORM_IDS
                 ]
                 self.arg_dict["cpppaths"] += ModuleConfigs.for_every_variant(env["CPPPATH"] + [includes])
-                self.arg_dict["cppdefines"] += ModuleConfigs.for_every_variant(env["CPPDEFINES"] + defines)
+                self.arg_dict["cppdefines"] += ModuleConfigs.for_every_variant(list(env["CPPDEFINES"]) + defines)
                 self.arg_dict["cmdargs"] += ModuleConfigs.for_every_variant(cli_args)
 
             def build_commandline(self, commands):
@@ -905,6 +988,9 @@ def generate_vs_project(env, num_jobs):
 
                 if env["custom_modules"]:
                     common_build_postfix.append("custom_modules=%s" % env["custom_modules"])
+
+                if env["incremental_link"]:
+                    common_build_postfix.append("incremental_link=yes")
 
                 result = " ^& ".join(common_build_prefix + [" ".join([commands] + common_build_postfix)])
                 return result
@@ -1054,10 +1140,10 @@ def get_compiler_version(env):
     else:  # TODO: Implement for MSVC
         return None
     # First try with x.y.z
-    match = re.search("[0-9]+\.[0-9.]+\.[0-9.]+", version)
+    match = re.search(r"[0-9]+\.[0-9.]+\.[0-9.]+", version)
     # If not found try with last x.y (and skip eg. 2014.3 signatures)
     if match is None:
-        match = re.search("[0-9]+\.[0-9.]+$", version)
+        match = re.search(r"[0-9]+\.[0-9.]+$", version)
     if match is not None:
         return list(map(int, match.group().split(".")))
     else:
@@ -1077,6 +1163,16 @@ def get_compiler_architecture(env):
     else:  # TODO: Implement for MSVC
         return None
     return next(iter(arch.split("-")), None)
+
+def is_vanilla_clang(env):
+    if not using_clang(env):
+        return False
+    try:
+        version = decode_utf8(subprocess.check_output([env.subst(env["CXX"]), "--version"]).strip())
+    except (subprocess.CalledProcessError, OSError):
+        print("Couldn't parse CXX environment variable to infer compiler version.")
+        return False
+    return not version.startswith("Apple")
 
 
 def using_gcc(env):

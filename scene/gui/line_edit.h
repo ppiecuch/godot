@@ -150,6 +150,7 @@ private:
 	void _text_changed();
 	void _emit_text_change();
 	bool expand_to_text_length;
+	bool _is_text_char(CharType c);
 
 	void update_cached_width();
 	void update_placeholder_width();
@@ -207,6 +208,7 @@ public:
 	void delete_char();
 	void delete_text(int p_from_column, int p_to_column);
 	void set_text(String p_text);
+	void set_text_with_selection(const String &p_text); // Set text, while preserving selection.
 	String get_text() const;
 	void set_placeholder(String p_text);
 	String get_placeholder() const;

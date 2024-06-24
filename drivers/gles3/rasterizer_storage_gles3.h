@@ -31,6 +31,7 @@
 #ifndef RASTERIZER_STORAGE_GLES3_H
 #define RASTERIZER_STORAGE_GLES3_H
 
+#include "core/bitfield_dynamic.h"
 #include "core/self_list.h"
 #include "drivers/gles_common/rasterizer_asserts.h"
 #include "servers/visual/rasterizer.h"
@@ -55,6 +56,8 @@ class RasterizerSceneGLES3;
 #define _SKIP_DECODE_EXT 0x8A4A
 
 void glTexStorage2DCustom(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type);
+
+#define WRAPPED_GL_ACTIVE_TEXTURE storage->gl_wrapper.gl_active_texture
 
 class RasterizerStorageGLES3 : public RasterizerStorage {
 public:
@@ -95,6 +98,7 @@ public:
 		float anisotropic_level;
 
 		int max_texture_image_units;
+		static const int32_t max_desired_texture_image_units = 64;
 		int max_texture_size;
 		int max_cubemap_texture_size;
 
@@ -827,6 +831,7 @@ public:
 		bool dirty_data;
 
 		MMInterpolator interpolator;
+		LocalVector<RID> linked_canvas_items;
 
 		MultiMesh() :
 				size(0),
@@ -876,6 +881,7 @@ public:
 
 	virtual AABB _multimesh_get_aabb(RID p_multimesh) const;
 	virtual MMInterpolator *_multimesh_get_interpolator(RID p_multimesh) const;
+	virtual void multimesh_attach_canvas_item(RID p_multimesh, RID p_canvas_item, bool p_attach);
 
 	/* IMMEDIATE API */
 
@@ -935,7 +941,9 @@ public:
 		GLuint texture;
 		SelfList<Skeleton> update_list;
 		Set<RasterizerScene::InstanceBase *> instances; //instances using skeleton
+
 		Transform2D base_transform_2d;
+		LocalVector<RID> linked_canvas_items;
 
 		Skeleton() :
 				use_2d(false),
@@ -961,6 +969,7 @@ public:
 	virtual Transform2D skeleton_bone_get_transform_2d(RID p_skeleton, int p_bone) const;
 	virtual void skeleton_set_base_transform_2d(RID p_skeleton, const Transform2D &p_base_transform);
 	virtual uint32_t skeleton_get_revision(RID p_skeleton) const;
+	virtual void skeleton_attach_canvas_item(RID p_skeleton, RID p_canvas_item, bool p_attach);
 
 	/* Light API */
 
@@ -1349,9 +1358,9 @@ public:
 		struct Effects {
 			struct MipMaps {
 				struct Size {
-					GLuint fbo;
-					int width;
-					int height;
+					GLuint fbo = 0;
+					int width = 0;
+					int height = 0;
 				};
 
 				Vector<Size> sizes;
@@ -1505,11 +1514,33 @@ public:
 		float time[4];
 		float delta;
 		uint64_t count;
-
 	} frame;
+
+	struct GLWrapper {
+		mutable BitFieldDynamic texture_unit_table;
+		mutable LocalVector<uint32_t> texture_units_bound;
+
+		void gl_active_texture(GLenum p_texture) const {
+			::glActiveTexture(p_texture);
+
+			p_texture -= GL_TEXTURE0;
+
+			// Check for below zero and above max in one check.
+			ERR_FAIL_COND((unsigned int)p_texture >= texture_unit_table.get_num_bits());
+
+			// Set if the first occurrence in the table.
+			if (texture_unit_table.check_and_set(p_texture)) {
+				texture_units_bound.push_back(p_texture);
+			}
+		}
+		void initialize(int p_max_texture_image_units);
+		void reset();
+	} gl_wrapper;
 
 	void initialize();
 	void finalize();
+
+	static int32_t safe_gl_get_integer(unsigned int p_gl_param_name, int32_t p_max_accepted = INT32_MAX);
 
 	virtual bool has_os_feature(const String &p_feature) const;
 

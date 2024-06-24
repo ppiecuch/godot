@@ -33,7 +33,7 @@ Clamp::Clamp ():
 
 double Clamp::GetValue (double x, double y, double z) const
 {
-  assert (m_pSourceModule[0] != NULL);
+  DEV_ASSERT (m_pSourceModule[0] != nullptr);
 
   double value = m_pSourceModule[0]->GetValue (x, y, z);
   if (value < m_lowerBound) {
@@ -47,7 +47,7 @@ double Clamp::GetValue (double x, double y, double z) const
 
 void Clamp::SetBounds (double lowerBound, double upperBound)
 {
-  assert (lowerBound < upperBound);
+  DEV_ASSERT (lowerBound < upperBound);
 
   m_lowerBound = lowerBound;
   m_upperBound = upperBound;

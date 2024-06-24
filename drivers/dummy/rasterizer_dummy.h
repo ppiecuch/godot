@@ -463,6 +463,7 @@ public:
 	AABB _multimesh_get_aabb(RID p_multimesh) const { return AABB(); }
 
 	MMInterpolator *_multimesh_get_interpolator(RID p_multimesh) const { return nullptr; }
+	void multimesh_attach_canvas_item(RID p_multimesh, RID p_canvas_item, bool p_attach) {}
 
 	/* IMMEDIATE API */
 
@@ -492,6 +493,7 @@ public:
 	void skeleton_bone_set_transform_2d(RID p_skeleton, int p_bone, const Transform2D &p_transform) {}
 	Transform2D skeleton_bone_get_transform_2d(RID p_skeleton, int p_bone) const { return Transform2D(); }
 	uint32_t skeleton_get_revision(RID p_skeleton) const { return 0; }
+	void skeleton_attach_canvas_item(RID p_skeleton, RID p_canvas_item, bool p_attach) {}
 
 	/* Light API */
 

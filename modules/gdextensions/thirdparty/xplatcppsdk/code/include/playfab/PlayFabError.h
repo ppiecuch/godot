@@ -3,6 +3,9 @@
 #include <playfab/PlayFabBaseModel.h>
 #include <playfab/PlayFabJsonHeaders.h>
 
+#include "core/error_macros.h"
+#include "common/gd_core_defs.h"
+
 namespace PlayFab
 {
     enum class PlayFabErrorCode

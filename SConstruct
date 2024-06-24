@@ -13,7 +13,9 @@ from collections import OrderedDict
 
 # Local
 import methods
-import gles_builders, metal_builders
+import gles_builders
+import metal_builders
+import scu_builders
 from platform_methods import run_in_subprocess
 
 # scan possible build platforms
@@ -131,6 +133,7 @@ opts.Add(EnumVariable("lto", "Link-time optimization (production builds)", "none
 opts.Add(BoolVariable("deprecated", "Enable deprecated features", True))
 opts.Add(BoolVariable("minizip", "Enable ZIP archive support using minizip", True))
 opts.Add(BoolVariable("xaudio2", "Enable the XAudio2 audio driver", False))
+opts.Add(BoolVariable("disable_exceptions", "Force disabling exception handling code", False))
 opts.Add("custom_modules", "A list of comma-separated directory paths containing custom modules to build.", "")
 opts.Add(BoolVariable("custom_modules_recursive", "Detect custom modules recursively for each specified path.", True))
 
@@ -161,6 +164,7 @@ opts.Add(
 opts.Add(BoolVariable("no_editor_splash", "Don't use the custom splash screen for the editor", True))
 opts.Add("system_certs_path", "Use this path as SSL certificates default for editor (for package maintainers)", "")
 opts.Add(BoolVariable("use_precise_math_checks", "Math checks use very precise epsilon (debug option)", False))
+opts.Add(BoolVariable("scu_build", "Use single compilation unit build", False))
 opts.Add(
     EnumVariable(
         "rids",
@@ -257,6 +261,11 @@ if selected_platform in ["linux", "bsd", "linuxbsd"]:
     # Alias for convenience.
     selected_platform = "x11"
 
+if selected_platform == "web":
+    # Alias for forward compatibility.
+    print('Platform "web" is still called "javascript" in Godot 3.x. Building for platform "javascript".')
+    selected_platform = "javascript"
+
 # Detect platform/hardware family
 if selected_platform in ["x11", "frt", "osx", "iphone", "android", "nx"]:
     env_base["os_family"] = "os_unix"
@@ -342,9 +351,8 @@ opts.Update(env_base)
 env_base["platform"] = selected_platform  # Must always be re-set after calling opts.Update().
 Help(opts.GenerateHelpText(env_base))
 
-# add default include paths
-
-env_base.Prepend(CPPPATH=["#", "#thirdparty", "#modules", "#modules/gdextensions"])
+env_base.Prepend(CPPPATH=["#", "#thirdparty", "#modules", "#modules/gdextensions"]) # add default include paths
+env_base.Append(CPPDEFINES=["_GODOT_"]) # This is GODOT
 
 # configure ENV for platform
 env_base.platform_exporters = platform_exporters
@@ -479,6 +487,10 @@ if selected_platform in platform_list:
                 "for an optimized template with debug features)."
             )
 
+    # Run SCU file generation script if in a SCU build.
+    if env["scu_build"]:
+        methods.set_scu_folders(scu_builders.generate_scu_files(env["verbose"], env_base["target"] != "debug"))
+
     # Must happen after the flags' definition, as configure is when most flags
     # are actually handled to change compile options, etc.
     detect.configure(env)
@@ -511,6 +523,16 @@ if selected_platform in platform_list:
         print("       Please adjust your scripts accordingly.")
         Exit(255)
 
+    # Disable exception handling. Godot doesn't use exceptions anywhere, and this
+    # saves around 20% of binary size and very significant build time (GH-80513).
+    if env["disable_exceptions"]:
+        if env.msvc:
+            env.Append(CPPDEFINES=[("_HAS_EXCEPTIONS", 0)])
+        else:
+            env.Append(CCFLAGS=["-fno-exceptions"])
+    elif env.msvc:
+        env.Append(CCFLAGS=["/EHsc"])
+
     # Configure compiler warnings
     if env.msvc:  # MSVC
         # Truncations, narrowing conversions, signed/unsigned comparisons...
@@ -523,11 +545,10 @@ if selected_platform in platform_list:
             env.Append(CCFLAGS=["/W2"] + disable_nonessential_warnings)
         else:  # 'no'
             env.Append(CCFLAGS=["/w"])
-        # Set exception handling model to avoid warnings caused by Windows system headers.
-        env.Append(CCFLAGS=["/EHsc"])
 
         if env["werror"]:
             env.Append(CCFLAGS=["/WX"])
+            env.Append(LINKFLAGS=["/WX"])
     else:  # GCC, Clang
         version = methods.get_compiler_version(env) or [-1, -1]
 

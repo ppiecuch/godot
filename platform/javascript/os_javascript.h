@@ -74,6 +74,7 @@ private:
 	List<AudioDriverJavaScript *> audio_drivers;
 	VisualServer *visual_server;
 
+	bool tts;
 	bool swap_ok_cancel;
 	bool idb_available;
 	bool idb_needs_sync;
@@ -193,6 +194,7 @@ public:
 	virtual int get_process_id() const;
 	bool is_process_running(const ProcessID &p_pid) const;
 	int get_processor_count() const;
+	String get_unique_id() const;
 
 	virtual void alert(const String &p_alert, const String &p_title = "ALERT!");
 	virtual void set_window_title(const String &p_title);

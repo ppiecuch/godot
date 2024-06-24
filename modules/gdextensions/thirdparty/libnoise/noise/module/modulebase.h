@@ -24,7 +24,6 @@
 #define NOISE_MODULEBASE_H
 
 #include <stdlib.h>
-#include <assert.h>
 #include <math.h>
 #include "../basictypes.h"
 #include "../exception.h"
@@ -41,6 +40,9 @@
 #else
 #define NOISE_EXPORT
 #endif
+
+#include "core/error_macros.h"
+#include "common/gd_core_defs.h"
 
 namespace noise
 {
@@ -263,17 +265,16 @@ namespace noise
         /// method.
         virtual const Module& GetSourceModule (int index) const
         {
-          assert (m_pSourceModule != NULL);
+          DEV_ASSERT(m_pSourceModule != nullptr);
 
           // The following fix was provided by Will Hawkins:
           //
-          //   m_pSourceModule[index] != NULL
+          //   m_pSourceModule[index] != nullptr
           //
           // was incorrect; it should be:
           //
-          //   m_pSourceModule[index] == NULL
-          if (index >= GetSourceModuleCount () || index < 0
-            || m_pSourceModule[index] == NULL) {
+          //   m_pSourceModule[index] == nullptr
+          if (index >= GetSourceModuleCount () || index < 0 || m_pSourceModule[index] == nullptr) {
             throw noise::ExceptionNoModule ();
           }
           return *(m_pSourceModule[index]);
@@ -339,7 +340,7 @@ namespace noise
         /// its output values.
         virtual void SetSourceModule (int index, const Module& sourceModule)
         {
-          assert (m_pSourceModule != NULL);
+          DEV_ASSERT (m_pSourceModule != nullptr);
           if (index >= GetSourceModuleCount () || index < 0) {
             throw noise::ExceptionInvalidParam ();
           }

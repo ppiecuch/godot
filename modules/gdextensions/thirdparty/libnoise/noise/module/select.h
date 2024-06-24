@@ -208,7 +208,7 @@ namespace noise
         /// module.
         void SetControlModule (const Module& controlModule)
         {
-          assert (m_pSourceModule != NULL);
+          DEV_ASSERT (m_pSourceModule != NULL);
           m_pSourceModule[2] = &controlModule;
         }
 

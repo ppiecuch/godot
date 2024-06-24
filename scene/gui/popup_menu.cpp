@@ -100,6 +100,8 @@ Size2 PopupMenu::get_minimum_size() const {
 		minsize.width += check_w;
 	}
 
+	minsize.height = MIN(minsize.height, OS::get_singleton()->get_window_size().height);
+
 	if (max_height > 0 && minsize.height > max_height) {
 		minsize.height = max_height;
 	}
@@ -492,6 +494,9 @@ void PopupMenu::_draw_items() {
 		if (items[i].checkable_type) {
 			has_check = true;
 		}
+	}
+	if (icon_ofs > 0.0) {
+		icon_ofs += hseparation;
 	}
 
 	float check_ofs = 0.0;

@@ -29,7 +29,7 @@ TEMPLATES_DIR="$HOME/Library/Application Support/Godot/templates/"
 
 if ! command -v scons &> /dev/null
 then
-	export PATH=$PATH:/opt/local/bin
+	export PATH=$PATH:/opt/local/bin:/opt/macports/bin
 fi
 
 # Utilities

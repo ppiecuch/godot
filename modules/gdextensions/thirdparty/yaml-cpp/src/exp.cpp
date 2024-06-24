@@ -130,8 +130,8 @@ std::string Escape(Stream& in) {
       return Escape(in, 8);
   }
 
-  std::stringstream msg;
   throw ParserException(in.mark(), std::string(ErrorMsg::INVALID_ESCAPE) + ch);
+  return std::string();
 }
 }  // namespace Exp
 }  // namespace YAML

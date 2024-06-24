@@ -46,12 +46,14 @@ name is available.
     Anutrix
     Aren Villanueva (kurikaesu)
     Ariel Manzur (punto-)
+    AThousandShips
     Bartłomiej T. Listwon (Listwon)
     Bastiaan Olij (BastiaanOlij)
     Ben Brookshire (sheepandshepherd)
     Benjamin Larsson (Nallebeorn)
     Bernhard Liebl (poke1024)
     Bhuvan Vemula (Bhu1-V)
+    bitsawer
     Błażej Szczygieł (zaps166)
     Bojidar Marinov (bojidar-bg)
     Brian Semrau (briansemrau)
@@ -105,6 +107,7 @@ name is available.
     Gilles Roudiere (groud)
     Gordon MacPherson (RevoluPowered)
     Guilherme Felipe de C. G. da Silva (guilhermefelipecgs)
+    Hakim Rouatbi (hakro)
     Hanif Bin Ariffin (hbina)
     Haoyu Qiu (timothyqiu)
     Hein-Pieter van Braam-Stewart (hpvb)
@@ -181,6 +184,7 @@ name is available.
     Michał Iwańczuk (iwek7)
     MichiRecRoom (LikeLakers2)
     Micky (Mickeon)
+    Mikael Hermansson (mihe)
     MinusKube
     Morris "Tabor" Arroad (mortarroad)
     mrezai
@@ -192,6 +196,8 @@ name is available.
     Nicholas Huelin (SirQuartz)
     Nikita Lita (nikitalita)
     Nils André-Chang (NilsIrl)
+    Noah Beard (TwistedTwigleg)
+    Nông Văn Tình (nongvantinh)
     Nuno Donato (nunodonato)
     ocean (they/them) (anvilfolk)
     Omar El Sheikh (The-O-King)
@@ -245,6 +251,7 @@ name is available.
     thebestnom
     Theo Hallenius (TheoXD)
     Timo Schwarzer (timoschwarzer)
+    Timothé Bonhoure (ajreckof)
     Timo (toger5)
     Tomasz Chabora (KoBeWi)
     trollodel

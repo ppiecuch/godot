@@ -97,7 +97,7 @@ namespace noise
       /// module.
       const Module& GetXDisplaceModule () const
       {
-        if (m_pSourceModule == NULL || m_pSourceModule[1] == NULL) {
+        if (m_pSourceModule == nullptr || m_pSourceModule[1] == nullptr) {
           throw noise::ExceptionNoModule ();
         }
         return *(m_pSourceModule[1]);
@@ -119,7 +119,7 @@ namespace noise
       /// module.
       const Module& GetYDisplaceModule () const
       {
-        if (m_pSourceModule == NULL || m_pSourceModule[2] == NULL) {
+        if (m_pSourceModule == nullptr || m_pSourceModule[2] == nullptr) {
           throw noise::ExceptionNoModule ();
         }
         return *(m_pSourceModule[2]);
@@ -141,7 +141,7 @@ namespace noise
       /// module.
       const Module& GetZDisplaceModule () const
       {
-        if (m_pSourceModule == NULL || m_pSourceModule[3] == NULL) {
+        if (m_pSourceModule == nullptr || m_pSourceModule[3] == nullptr) {
           throw noise::ExceptionNoModule ();
         }
         return *(m_pSourceModule[3]);
@@ -194,7 +194,7 @@ namespace noise
       /// noise module unless another displacement module replaces it.
       void SetXDisplaceModule (const Module& xDisplaceModule)
       {
-        assert (m_pSourceModule != NULL);
+        DEV_ASSERT (m_pSourceModule != nullptr);
         m_pSourceModule[1] = &xDisplaceModule;
       }
 
@@ -217,7 +217,7 @@ namespace noise
       /// noise module unless another displacement module replaces it.
       void SetYDisplaceModule (const Module& yDisplaceModule)
       {
-        assert (m_pSourceModule != NULL);
+        DEV_ASSERT (m_pSourceModule != nullptr);
         m_pSourceModule[2] = &yDisplaceModule;
       }
 
@@ -240,7 +240,7 @@ namespace noise
       /// noise module unless another displacement module replaces it.
       void SetZDisplaceModule (const Module& zDisplaceModule)
       {
-        assert (m_pSourceModule != NULL);
+        DEV_ASSERT (m_pSourceModule != nullptr);
         m_pSourceModule[3] = &zDisplaceModule;
       }
 

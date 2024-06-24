@@ -26,9 +26,13 @@
 #if defined(__clang__) && __has_keyword(__is_trivially_copyable)
 #define IS_TRIVIALLY_COPYABLE(T) __is_trivially_copyable(T)
 #elif __GNUC__ && __GNUC__ < 5
-#define IS_TRIVIALLY_COPYABLE(T) __has_trivial_copy(T)
+# if __has_builtin(__is_trivially_copyable)
+#  define IS_TRIVIALLY_COPYABLE(T) __is_trivially_copyable(T)
+# else
+#  define IS_TRIVIALLY_COPYABLE(T) __has_trivial_copy(T)
+# endif
 #else
-#define IS_TRIVIALLY_COPYABLE(T) std::is_trivially_copyable<T>::value
+# define IS_TRIVIALLY_COPYABLE(T) std::is_trivially_copyable<T>::value
 #endif
 
 // struct Id_T

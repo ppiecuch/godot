@@ -35,9 +35,9 @@ Select::Select ():
 
 double Select::GetValue (double x, double y, double z) const
 {
-  assert (m_pSourceModule[0] != NULL);
-  assert (m_pSourceModule[1] != NULL);
-  assert (m_pSourceModule[2] != NULL);
+  DEV_ASSERT (m_pSourceModule[0] != nullptr);
+  DEV_ASSERT (m_pSourceModule[1] != nullptr);
+  DEV_ASSERT (m_pSourceModule[2] != nullptr);
 
   double controlValue = m_pSourceModule[2]->GetValue (x, y, z);
   double alpha;
@@ -92,7 +92,7 @@ double Select::GetValue (double x, double y, double z) const
 
 void Select::SetBounds (double lowerBound, double upperBound)
 {
-  assert (lowerBound < upperBound);
+  DEV_ASSERT (lowerBound < upperBound);
 
   m_lowerBound = lowerBound;
   m_upperBound = upperBound;

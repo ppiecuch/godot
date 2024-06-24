@@ -90,6 +90,11 @@ public:
 		ATLAS_TILE
 	};
 
+	enum FallbackMode {
+		FALLBACK_AUTO,
+		FALLBACK_ICON
+	};
+
 	struct AutotileData {
 		BitmaskMode bitmask_mode;
 		Size2 size;
@@ -100,13 +105,15 @@ public:
 		Map<Vector2, Ref<NavigationPolygon>> navpoly_map;
 		Map<Vector2, int> priority_map;
 		Map<Vector2, int> z_index_map;
+		FallbackMode fallback_mode;
 
 		// Default size to prevent invalid value
 		explicit AutotileData() :
 				bitmask_mode(BITMASK_2X2),
 				size(64, 64),
 				spacing(0),
-				icon_coord(0, 0) {}
+				icon_coord(0, 0),
+				fallback_mode(FALLBACK_AUTO) {}
 	};
 
 private:
@@ -114,6 +121,7 @@ private:
 		String name;
 		Ref<Texture> texture;
 		Ref<Texture> normal_map;
+		Ref<Texture> mask;
 		Vector2 offset;
 		Rect2i region;
 		Vector<ShapeData> shapes_data;
@@ -144,6 +152,10 @@ protected:
 	Array _tile_get_shapes(int p_id) const;
 	Array _get_tiles_ids() const;
 	void _decompose_convex_shape(Ref<Shape2D> p_shape);
+	List<Vector2> _autotile_get_subtile_candidates_for_bitmask(int p_id, uint16_t p_bitmask) const;
+
+	uint32_t _count_bitmask_bits(uint32_t p_bitmask);
+	uint32_t _score_bitmask_difference(uint32_t p_bitmask, uint32_t p_ref_bitmask);
 
 	static void _bind_methods();
 
@@ -161,6 +173,9 @@ public:
 
 	void tile_set_normal_map(int p_id, const Ref<Texture> &p_normal_map);
 	Ref<Texture> tile_get_normal_map(int p_id) const;
+
+	void tile_set_mask(int p_id, const Ref<Texture> &p_normal_map);
+	Ref<Texture> tile_get_mask(int p_id) const;
 
 	void tile_set_texture_offset(int p_id, const Vector2 &p_offset);
 	Vector2 tile_get_texture_offset(int p_id) const;
@@ -188,6 +203,9 @@ public:
 	void autotile_set_z_index(int p_id, const Vector2 &p_coord, int p_z_index);
 	int autotile_get_z_index(int p_id, const Vector2 &p_coord);
 	const Map<Vector2, int> &autotile_get_z_index_map(int p_id) const;
+
+	void autotile_set_fallback_mode(int p_id, FallbackMode p_mode);
+	FallbackMode autotile_get_fallback_mode(int p_id) const;
 
 	void autotile_set_bitmask(int p_id, const Vector2 &p_coord, uint32_t p_flag);
 	uint32_t autotile_get_bitmask(int p_id, const Vector2 &p_coord);
@@ -265,5 +283,6 @@ public:
 VARIANT_ENUM_CAST(TileSet::AutotileBindings);
 VARIANT_ENUM_CAST(TileSet::BitmaskMode);
 VARIANT_ENUM_CAST(TileSet::TileMode);
+VARIANT_ENUM_CAST(TileSet::FallbackMode);
 
 #endif // TILE_SET_H

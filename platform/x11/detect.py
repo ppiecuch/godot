@@ -112,11 +112,24 @@ def configure(env):
         env.Prepend(CCFLAGS=["-g3"])
         env.Append(LINKFLAGS=["-rdynamic"])
 
+    if env["debug_symbols"]:
+        # Adding dwarf-4 explicitly makes stacktraces work with clang builds,
+        # otherwise addr2line doesn't understand them
+        env.Append(CCFLAGS=["-gdwarf-4"])
+
     ## Architecture
 
-    is64 = sys.maxsize > 2**32
+    # Cross-compilation
+    # TODO: Support cross-compilation on architectures other than x86.
+    host_is_64_bit = sys.maxsize > 2**32
     if env["bits"] == "default":
-        env["bits"] = "64" if is64 else "32"
+        env["bits"] = "64" if host_is_64_bit else "32"
+    if host_is_64_bit and (env["bits"] == "32" or env["arch"] == "x86"):
+        env.Append(CCFLAGS=["-m32"])
+        env.Append(LINKFLAGS=["-m32"])
+    elif not host_is_64_bit and (env["bits"] == "64" or env["arch"] == "x86_64"):
+        env.Append(CCFLAGS=["-m64"])
+        env.Append(LINKFLAGS=["-m64"])
 
     machines = {
         "riscv64": "rv64",
@@ -307,7 +320,7 @@ def configure(env):
         env.ParseConfig("pkg-config theora theoradec --cflags --libs")
     else:
         list_of_x86 = ["x86_64", "x86", "i386", "i586"]
-        if any(platform.machine() in s for s in list_of_x86):
+        if (env["arch"].startswith("x86") or env["arch"] == "") and any(platform.machine() in s for s in list_of_x86):
             env["x86_libtheora_opt_gcc"] = True
 
     if not env["builtin_libvpx"]:
@@ -416,10 +429,10 @@ def configure(env):
         linker_version_str = subprocess.check_output(
             [env.subst(env["LINK"]), "-Wl,--version"] + env.subst(env["LINKFLAGS"])
         ).decode("utf-8")
-        gnu_ld_version = re.search("^GNU ld [^$]*(\d+\.\d+)$", linker_version_str, re.MULTILINE)
+        gnu_ld_version = re.search(r"^GNU ld [^$]*(\d+\.\d+)$", linker_version_str, re.MULTILINE)
         if not gnu_ld_version:
             print(
-                "Warning: Creating template binaries enabled for PCK embedding is currently only supported with GNU ld, not gold or LLD."
+                "Warning: Creating export template binaries enabled for PCK embedding is currently only supported with GNU ld, not gold, LLD or mold."
             )
         else:
             if float(gnu_ld_version.group(1)) >= 2.30:
@@ -427,21 +440,11 @@ def configure(env):
             else:
                 env.Append(LINKFLAGS=["-T", "platform/x11/pck_embed.legacy.ld"])
 
-    ## Cross-compilation
-
-    if is64 and env["bits"] == "32":
-        env.Append(CCFLAGS=["-m32"])
-        env.Append(LINKFLAGS=["-m32", "-L/usr/lib/i386-linux-gnu"])
-    elif not is64 and env["bits"] == "64":
-        env.Append(CCFLAGS=["-m64"])
-        env.Append(LINKFLAGS=["-m64", "-L/usr/lib/i686-linux-gnu"])
-
     # Link those statically for portability
     if env["use_static_cpp"]:
         env.Append(LINKFLAGS=["-static-libgcc", "-static-libstdc++"])
         if env["use_llvm"] and platform.system() != "FreeBSD":
             env["LINKCOM"] = env["LINKCOM"] + " -l:libatomic.a"
-
     else:
         if env["use_llvm"] and platform.system() != "FreeBSD":
             env.Append(LIBS=["atomic"])
