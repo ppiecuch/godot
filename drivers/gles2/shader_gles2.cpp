@@ -476,7 +476,7 @@ ShaderGLES2::Version *ShaderGLES2::get_current_version() {
 
 #ifdef DEBUG_ENABLED
 	if (DirAccess::exists("__shaders__")) {
-		if (FileAccessRef file = FileAccess::open(vformat("__shaders__/%s-%08x.gles2.txt", get_shader_name(), debug_shader.hash64()), FileAccess::WRITE)) {
+		if (FileAccessRef file = FileAccess::open(vformat("__shaders__/%s-%08x.txt", get_shader_name(), debug_shader.hash64()), FileAccess::WRITE)) {
 			file->store_string(debug_shader);
 		}
 	}

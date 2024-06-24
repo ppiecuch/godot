@@ -819,26 +819,6 @@ ShaderGLES3::Version *ShaderGLES3::get_current_version(bool &r_async_forbidden) 
 			v.program_binary.source = Version::ProgramBinary::SOURCE_CACHE;
 			v.compile_status = Version::COMPILE_STATUS_BINARY_READY_FROM_CACHE;
 		}
-#ifdef DEBUG_ENABLED
-		if (DirAccess::exists("__shaders__")) {
-			if (FileAccessRef file = FileAccess::open(vformat("__shaders__/%s-%s.gles3.txt", get_shader_name(), v.program_binary.cache_hash), FileAccess::WRITE)) {
-				for (char **strings = (char **)strings_platform; *strings; strings++) {
-					file->store_string(vformat("#pragma %s\n", *strings));
-				}
-				file->store_string("\n");
-				file->store_string("#pragma FRAGMENT");
-				file->store_string(vformat("#pragma globals:%s\n\n", frag.code_globals.get_data()));
-				for (int i = 0; i < strings_fragment.size(); i++) {
-					file->store_string(vformat("/* %d */%s\n", i, strings_fragment[i]));
-				}
-				file->store_string("\n");
-				file->store_string("#pragma VERTEX");
-				for (int i = 0; i < strings_vertex.size(); i++) {
-					file->store_string(vformat("/* %d */%s\n", i, strings_vertex[i]));
-				}
-			}
-		}
-#endif
 	}
 	if (!in_cache) {
 		if (compile_queue && !r_async_forbidden) {
@@ -905,6 +885,50 @@ ShaderGLES3::Version *ShaderGLES3::get_current_version(bool &r_async_forbidden) 
 			v.program_binary.source = Version::ProgramBinary::SOURCE_LOCAL;
 			v.compile_status = Version::COMPILE_STATUS_SOURCE_PROVIDED;
 		}
+#ifdef DEBUG_ENABLED
+		if (DirAccess::exists("__shaders__")) {
+			const char *strings_platform[] = {
+				reinterpret_cast<const char *>(glGetString(GL_VENDOR)),
+				reinterpret_cast<const char *>(glGetString(GL_RENDERER)),
+				reinterpret_cast<const char *>(glGetString(GL_VERSION)),
+				nullptr,
+			};
+			auto ends_with_nl = [](const char *str) {
+				if (str && *str) {
+					return str[strlen(str) - 1] == '\n';
+				}
+				return false;
+			};
+			if (FileAccessRef file = FileAccess::open(vformat("__shaders__/%s-%s.txt", get_shader_name(), ShaderCacheGLES3::hash_program(strings_platform, strings_vertex, strings_fragment)), FileAccess::WRITE)) {
+				file->store_string(vformat("#pragma GL_VENDOR %s\n", reinterpret_cast<const char *>(glGetString(GL_VENDOR))));
+				file->store_string(vformat("#pragma GL_RENDERER %s\n", reinterpret_cast<const char *>(glGetString(GL_RENDERER))));
+				file->store_string(vformat("#pragma GL_VERSION %s\n", reinterpret_cast<const char *>(glGetString(GL_VERSION))));
+
+				file->store_string("\n");
+				file->store_string("#pragma FRAGMENT\n");
+				if (!frag.code_globals.empty()) {
+					file->store_string(vformat("#pragma GLOBALS '%s'\n\n", frag.code_globals.get_data()));
+				}
+				for (int i = 0; i < strings_fragment.size(); i++) {
+					file->store_string(vformat("/* %d */ %s", i, strings_fragment[i]));
+					if (!ends_with_nl(strings_fragment[i])) {
+						file->store_string("\n");
+					}
+				}
+				file->store_string("\n");
+				file->store_string("#pragma VERTEX\n");
+				if (!vert.code_globals.empty()) {
+					file->store_string(vformat("#pragma GLOBALS '%s'\n\n", vert.code_globals.get_data()));
+				}
+				for (int i = 0; i < strings_vertex.size(); i++) {
+					file->store_string(vformat("/* %d */ %s", i, strings_vertex[i]));
+					if (!ends_with_nl(strings_vertex[i])) {
+						file->store_string("\n");
+					}
+				}
+			}
+		}
+#endif
 	}
 
 	if (cc) {
