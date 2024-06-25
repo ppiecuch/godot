@@ -500,13 +500,11 @@ public:
 		}
 		// check if exponent is <= -15
 		else if (exp <= 0x38000000) {
-			/*// store a denorm half-float value or zero
-		exp = (0x38000000 - exp) >> 23;
-		mantissa >>= (14 + exp);
-
-		hf = (((uint16_t)sign) << 15) | (uint16_t)(mantissa);
-		*/
-			hf = 0; //denormals do not work for 3D, convert to zero
+			// store a denorm half-float value or zero
+			// exp = (0x38000000 - exp) >> 23;
+			// mantissa >>= (14 + exp);
+			// hf = (((uint16_t)sign) << 15) | (uint16_t)(mantissa);
+			hf = 0; // denormals do not work for 3D, convert to zero
 		} else {
 			hf = (((uint16_t)sign) << 15) |
 					(uint16_t)((exp - 0x38000000) >> 13) |
