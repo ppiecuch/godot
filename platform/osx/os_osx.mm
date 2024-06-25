@@ -182,6 +182,10 @@ static bool running_under_rosetta() {
 
 @implementation GodotApplicationDelegate
 
+- (BOOL)applicationSupportsSecureRestorableState:(NSApplication *)app {
+	return YES;
+}
+
 - (void)forceUnbundledWindowActivationHackStep1 {
 	// Step 1: Switch focus to macOS SystemUIServer process.
 	// Required to perform step 2, TransformProcessType will fail if app is already the in focus.

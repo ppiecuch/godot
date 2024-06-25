@@ -184,6 +184,10 @@ class SpatialEditorViewport : public Control {
 	friend class SpatialEditor;
 	friend class ViewportNavigationControl;
 	friend class ViewportRotationControl;
+
+	// These values are serialized, so if adding new values
+	// add to the bottom to preserve compatibility between
+	// editor versions.
 	enum {
 
 		VIEW_TOP,
@@ -213,6 +217,7 @@ class SpatialEditorViewport : public Control {
 		VIEW_CINEMATIC_PREVIEW,
 		VIEW_AUTO_ORTHOGONAL,
 		VIEW_PORTAL_CULLING,
+		VIEW_SELECTED_INFO,
 	};
 
 	enum ViewType {
@@ -283,6 +288,7 @@ private:
 	Vector2 previous_mouse_position;
 
 	Label *info_label;
+	Label *selected_info_label;
 	Label *cinema_label;
 	Label *locked_label;
 	Label *zoom_limit_label;
@@ -619,11 +625,11 @@ private:
 	bool grid_enabled;
 
 	Ref<ArrayMesh> move_gizmo[3], move_plane_gizmo[3], rotate_gizmo[4], scale_gizmo[3], scale_plane_gizmo[3];
-	Ref<SpatialMaterial> gizmo_color[3];
-	Ref<SpatialMaterial> plane_gizmo_color[3];
+	Ref<Material3D> gizmo_color[3];
+	Ref<Material3D> plane_gizmo_color[3];
 	Ref<ShaderMaterial> rotate_gizmo_color[3];
-	Ref<SpatialMaterial> gizmo_color_hl[3];
-	Ref<SpatialMaterial> plane_gizmo_color_hl[3];
+	Ref<Material3D> gizmo_color_hl[3];
+	Ref<Material3D> plane_gizmo_color_hl[3];
 	Ref<ShaderMaterial> rotate_gizmo_color_hl[3];
 
 	int over_gizmo_handle;
@@ -639,7 +645,6 @@ private:
 	RID cursor_instance;
 	Ref<SpatialMaterial> indicator_mat;
 	Ref<ShaderMaterial> grid_mat[3];
-	Ref<SpatialMaterial> cursor_material;
 
 	// Scene drag and drop support
 	Spatial *preview_node;
@@ -674,6 +679,7 @@ private:
 		MENU_VIEW_GRID,
 		MENU_VIEW_PORTAL_CULLING,
 		MENU_VIEW_OCCLUSION_CULLING,
+		MENU_VIEW_LEVEL_OF_DETAIL,
 		MENU_VIEW_GIZMOS_3D_ICONS,
 		MENU_VIEW_CAMERA_SETTINGS,
 		MENU_LOCK_SELECTED,
@@ -834,6 +840,10 @@ public:
 	int get_over_gizmo_handle() const { return over_gizmo_handle; }
 	void set_over_gizmo_handle(int idx) { over_gizmo_handle = idx; }
 
+	// Simple way to turn off (expensive) gizmo generation
+	// especially for temporary objects in the editor.
+	static bool _prevent_gizmo_generation;
+
 	void set_can_preview(Camera *p_preview);
 	void set_message(String p_message, float p_time = 5);
 
@@ -892,7 +902,7 @@ public:
 protected:
 	int current_state;
 	List<EditorSpatialGizmo *> current_gizmos;
-	HashMap<String, Vector<Ref<SpatialMaterial>>> materials;
+	HashMap<String, Vector<Ref<Material3D>>> materials;
 
 	static void _bind_methods();
 	virtual bool has_gizmo(Spatial *p_spatial);
@@ -902,9 +912,9 @@ public:
 	void create_material(const String &p_name, const Color &p_color, bool p_billboard = false, bool p_on_top = false, bool p_use_vertex_color = false);
 	void create_icon_material(const String &p_name, const Ref<Texture> &p_texture, bool p_on_top = false, const Color &p_albedo = Color(1, 1, 1, 1));
 	void create_handle_material(const String &p_name, bool p_billboard = false, const Ref<Texture> &p_icon = nullptr);
-	void add_material(const String &p_name, Ref<SpatialMaterial> p_material);
+	void add_material(const String &p_name, Ref<Material3D> p_material);
 
-	Ref<SpatialMaterial> get_material(const String &p_name, const Ref<EditorSpatialGizmo> &p_gizmo = Ref<EditorSpatialGizmo>());
+	Ref<Material3D> get_material(const String &p_name, const Ref<EditorSpatialGizmo> &p_gizmo = Ref<EditorSpatialGizmo>());
 
 	virtual String get_name() const;
 	virtual int get_priority() const;

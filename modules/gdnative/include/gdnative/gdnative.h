@@ -49,7 +49,7 @@ extern "C" {
 #endif
 
 #else // Linux/BSD/Web
-#if defined(__aarch64__)
+#if defined(__aarch64__) || defined(__arm__) || defined(__riscv)
 #define GDCALLINGCONV
 #else
 #define GDCALLINGCONV __attribute__((sysv_abi))

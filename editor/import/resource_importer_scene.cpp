@@ -315,18 +315,18 @@ Node *ResourceImporterScene::_fix_node(Node *p_node, Node *p_root, Map<Ref<Mesh>
 
 		if (m.is_valid()) {
 			for (int i = 0; i < m->get_surface_count(); i++) {
-				Ref<SpatialMaterial> mat = m->surface_get_material(i);
+				Ref<Material3D> mat = m->surface_get_material(i);
 				if (!mat.is_valid()) {
 					continue;
 				}
 
 				if (_teststr(mat->get_name(), "alpha")) {
-					mat->set_feature(SpatialMaterial::FEATURE_TRANSPARENT, true);
+					mat->set_feature(Material3D::FEATURE_TRANSPARENT, true);
 					mat->set_name(_fixstr(mat->get_name(), "alpha"));
 				}
 				if (_teststr(mat->get_name(), "vcol")) {
-					mat->set_flag(SpatialMaterial::FLAG_ALBEDO_FROM_VERTEX_COLOR, true);
-					mat->set_flag(SpatialMaterial::FLAG_SRGB_VERTEX_COLOR, true);
+					mat->set_flag(Material3D::FLAG_ALBEDO_FROM_VERTEX_COLOR, true);
+					mat->set_flag(Material3D::FLAG_SRGB_VERTEX_COLOR, true);
 					mat->set_name(_fixstr(mat->get_name(), "vcol"));
 				}
 			}
@@ -629,14 +629,11 @@ Node *ResourceImporterScene::_fix_node(Node *p_node, Node *p_root, Map<Ref<Mesh>
 }
 
 void ResourceImporterScene::_create_clips(Node *scene, const Array &p_clips, bool p_bake_all) {
-	if (!scene->has_node(String("AnimationPlayer"))) {
+	AnimationPlayer *anim = _find_animation_player(scene);
+	if (!anim) {
+		WARN_PRINT("Creating clips is enabled, but no animation player was found.");
 		return;
 	}
-
-	Node *n = scene->get_node(String("AnimationPlayer"));
-	ERR_FAIL_COND(!n);
-	AnimationPlayer *anim = Object::cast_to<AnimationPlayer>(n);
-	ERR_FAIL_COND(!anim);
 
 	if (!anim->has_animation("default")) {
 		ERR_FAIL_COND_MSG(p_clips.size() > 0, "To create clips, animations must be named \"default\".");
@@ -757,13 +754,10 @@ void ResourceImporterScene::_filter_anim_tracks(Ref<Animation> anim, Set<String>
 }
 
 void ResourceImporterScene::_filter_tracks(Node *scene, const String &p_text) {
-	if (!scene->has_node(String("AnimationPlayer"))) {
+	AnimationPlayer *anim = _find_animation_player(scene);
+	if (!anim) {
 		return;
 	}
-	Node *n = scene->get_node(String("AnimationPlayer"));
-	ERR_FAIL_COND(!n);
-	AnimationPlayer *anim = Object::cast_to<AnimationPlayer>(n);
-	ERR_FAIL_COND(!anim);
 
 	Vector<String> strings = p_text.split("\n");
 	for (int i = 0; i < strings.size(); i++) {
@@ -864,13 +858,10 @@ void ResourceImporterScene::_filter_tracks(Node *scene, const String &p_text) {
 }
 
 void ResourceImporterScene::_optimize_animations(Node *scene, float p_max_lin_error, float p_max_ang_error, float p_max_angle) {
-	if (!scene->has_node(String("AnimationPlayer"))) {
+	AnimationPlayer *anim = _find_animation_player(scene);
+	if (!anim) {
 		return;
 	}
-	Node *n = scene->get_node(String("AnimationPlayer"));
-	ERR_FAIL_COND(!n);
-	AnimationPlayer *anim = Object::cast_to<AnimationPlayer>(n);
-	ERR_FAIL_COND(!anim);
 
 	List<StringName> anim_names;
 	anim->get_animation_list(&anim_names);
@@ -893,6 +884,24 @@ static String _make_extname(const String &p_str) {
 	ext_name = ext_name.replace("*", "_");
 
 	return ext_name;
+}
+
+AnimationPlayer *ResourceImporterScene::_find_animation_player(Node *p_node) {
+	// Find a direct child that is an AnimationPlayer.
+	AnimationPlayer *ret = nullptr;
+
+	for (int i = 0; i < p_node->get_child_count(); i++) {
+		AnimationPlayer *child = Object::cast_to<AnimationPlayer>(p_node->get_child(i));
+		if (child) {
+			if (ret == nullptr) {
+				ret = child;
+			} else {
+				WARN_PRINT("More than one animation player: \"" + ret->get_name() + "\" and \"" + child->get_name() + "\".");
+			}
+		}
+	}
+
+	return ret;
 }
 
 void ResourceImporterScene::_find_meshes(Node *p_node, Map<Ref<ArrayMesh>, Transform> &meshes) {
@@ -1109,9 +1118,10 @@ void ResourceImporterScene::get_import_options(List<ImportOption> *r_options, in
 	r_options->push_back(ImportOption(PropertyInfo(Variant::INT, "materials/location", PROPERTY_HINT_ENUM, "Node,Mesh"), (meshes_out || materials_out) ? 1 : 0));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::INT, "materials/storage", PROPERTY_HINT_ENUM, "Built-In,Files (.material),Files (.tres)", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_UPDATE_ALL_IF_MODIFIED), materials_out ? 1 : 0));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::BOOL, "materials/keep_on_reimport"), materials_out));
-	r_options->push_back(ImportOption(PropertyInfo(Variant::BOOL, "meshes/octahedral_compression"), true));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::INT, "meshes/compress", PROPERTY_HINT_FLAGS, "Vertex,Normal,Tangent,Color,TexUV,TexUV2,Bones,Weights,Index"), VS::ARRAY_COMPRESS_DEFAULT >> VS::ARRAY_COMPRESS_BASE));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::BOOL, "meshes/ensure_tangents"), true));
+	r_options->push_back(ImportOption(PropertyInfo(Variant::BOOL, "meshes/octahedral_compression"), true));
+	r_options->push_back(ImportOption(PropertyInfo(Variant::BOOL, "meshes/vertex_cache_optimization"), true));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::INT, "meshes/storage", PROPERTY_HINT_ENUM, "Built-In,Files (.mesh),Files (.tres)"), meshes_out ? 1 : 0));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::INT, "meshes/light_baking", PROPERTY_HINT_ENUM, "Disabled,Enable,Gen Lightmaps", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_UPDATE_ALL_IF_MODIFIED), 0));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::REAL, "meshes/lightmap_texel_size", PROPERTY_HINT_RANGE, "0.001,100,0.001"), 0.1));
@@ -1256,6 +1266,9 @@ Error ResourceImporterScene::import(const String &p_source_file, const String &p
 	uint32_t compress_flags = int(p_options["meshes/compress"]) << VS::ARRAY_COMPRESS_BASE;
 	if (bool(p_options["meshes/octahedral_compression"])) {
 		compress_flags |= VS::ARRAY_FLAG_USE_OCTAHEDRAL_COMPRESSION;
+	}
+	if (bool(p_options["meshes/vertex_cache_optimization"])) {
+		compress_flags |= VS::ARRAY_FLAG_USE_VERTEX_CACHE_OPTIMIZATION;
 	}
 	if (bool(p_options["meshes/ensure_tangents"])) {
 		import_flags |= EditorSceneImporter::IMPORT_GENERATE_TANGENT_ARRAYS;

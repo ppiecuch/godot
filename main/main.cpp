@@ -68,6 +68,7 @@
 #include "servers/camera_server.h"
 #include "servers/navigation_2d_server.h"
 #include "servers/navigation_server.h"
+#include "servers/navigation_server_dummy.h"
 #include "servers/physics_2d_server.h"
 #include "servers/physics_server.h"
 #include "servers/register_server_types.h"
@@ -83,7 +84,7 @@
 #include "editor/progress_dialog.h"
 #include "editor/project_manager.h"
 #include "editor/script_editor_debugger.h"
-#ifndef NO_EDITOR_SPLASH
+#if defined(TOOLS_ENABLED) && !defined(NO_EDITOR_SPLASH)
 #include "main/splash_editor.gen.h"
 #endif
 #endif
@@ -243,9 +244,21 @@ void finalize_physics() {
 
 void initialize_navigation_server() {
 	ERR_FAIL_COND(navigation_server != nullptr);
-	if ((navigation_server = NavigationServerManager::new_default_server())) {
-		navigation_2d_server = memnew(Navigation2DServer);
+
+	// Init 3D Navigation Server
+	navigation_server = NavigationServerManager::new_default_server();
+
+	// Fall back to dummy if no default server has been registered.
+	if (!navigation_server) {
+		navigation_server = memnew(NavigationServerDummy);
 	}
+
+	// Should be impossible, but make sure it's not null.
+	ERR_FAIL_NULL_MSG(navigation_server, "Failed to initialize NavigationServer.");
+
+	// Init 2D Navigation Server
+	navigation_2d_server = memnew(Navigation2DServer);
+	ERR_FAIL_NULL_MSG(navigation_2d_server, "Failed to initialize Navigation2DServer.");
 }
 
 void finalize_navigation_server() {
@@ -1619,6 +1632,11 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 
 	GLOBAL_DEF("input_devices/pointing/android/enable_long_press_as_right_click", false);
 	GLOBAL_DEF("input_devices/pointing/android/enable_pan_and_scale_gestures", false);
+	GLOBAL_DEF("input_devices/pointing/android/rotary_input_scroll_axis", 1);
+	ProjectSettings::get_singleton()->set_custom_property_info("input_devices/pointing/android/rotary_input_scroll_axis",
+			PropertyInfo(Variant::INT,
+					"input_devices/pointing/android/rotary_input_scroll_axis",
+					PROPERTY_HINT_ENUM, "Horizontal,Vertical"));
 
 	MAIN_PRINT("Main: Load Translations and Remaps");
 
@@ -2475,6 +2493,12 @@ bool Main::iteration() {
 		exit = true;
 	}
 	visual_server_callbacks->flush();
+
+	// Ensure that VisualServer is kept up to date at least once with any ordering changes
+	// of canvas items before a render.
+	// This ensures this will be done at least once in apps that create their own MainLoop.
+	Viewport::flush_canvas_parents_dirty_order();
+
 	message_queue->flush();
 
 	VisualServer::get_singleton()->sync(); //sync if still drawing from previous frames.

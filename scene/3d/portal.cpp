@@ -46,6 +46,7 @@ Portal::Portal() {
 
 	_settings_active = true;
 	_settings_two_way = true;
+	_settings_include_in_bound = false;
 	_internal = false;
 	_linkedroom_ID[0] = -1;
 	_linkedroom_ID[1] = -1;
@@ -161,10 +162,13 @@ void Portal::_notification(int p_what) {
 		case NOTIFICATION_ENTER_WORLD: {
 			ERR_FAIL_COND(get_world().is_null());
 
-			// defer full creation of the visual server portal to when the editor portal is in the scene tree
+			// Defer full creation of the visual server portal to when the editor portal is in the scene tree.
 			VisualServer::get_singleton()->portal_set_scenario(_portal_rid, get_world()->get_scenario());
 
-			// we can't calculate world points until we have entered the tree
+			// Update any components in visual server that require the scenario to be set.
+			VisualServer::get_singleton()->portal_set_active(_portal_rid, _settings_active);
+
+			// We can't calculate world points until we have entered the tree.
 			portal_update();
 			update_gizmo();
 
@@ -191,7 +195,14 @@ void Portal::_notification(int p_what) {
 
 void Portal::set_portal_active(bool p_active) {
 	_settings_active = p_active;
-	VisualServer::get_singleton()->portal_set_active(_portal_rid, p_active);
+
+	// This can be called prior to entering the tree when loading packed scene,
+	// where the scenario has not yet been set (and thus the visual server portal
+	// is not yet fully created).
+	// We therefore defer setting this until entering the tree.
+	if (is_inside_tree()) {
+		VisualServer::get_singleton()->portal_set_active(_portal_rid, p_active);
+	}
 }
 
 bool Portal::get_portal_active() const {
@@ -696,8 +707,12 @@ void Portal::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_point", "index", "position"), &Portal::set_point);
 
+	ClassDB::bind_method(D_METHOD("set_include_in_bound", "p_enabled"), &Portal::set_include_in_bound);
+	ClassDB::bind_method(D_METHOD("get_include_in_bound"), &Portal::get_include_in_bound);
+
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "portal_active"), "set_portal_active", "get_portal_active");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "two_way"), "set_two_way", "is_two_way");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "include_in_bound"), "set_include_in_bound", "get_include_in_bound");
 	ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "linked_room", PROPERTY_HINT_NODE_PATH_VALID_TYPES, "Room"), "set_linked_room", "get_linked_room");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "use_default_margin"), "set_use_default_margin", "get_use_default_margin");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "portal_margin", PROPERTY_HINT_RANGE, "0.0,10.0,0.01"), "set_portal_margin", "get_portal_margin");

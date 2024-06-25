@@ -123,6 +123,7 @@ void Label::_notification(int p_what) {
 		Size2 size = get_size();
 		Ref<StyleBox> style = get_stylebox("normal");
 		Ref<Font> font = get_font("font");
+		select_font(font);
 		Color font_color = get_color("font_color");
 		Color font_color_shadow = get_color("font_color_shadow");
 		bool use_outline = get_constant("shadow_as_outline");

@@ -370,7 +370,7 @@ EditorPropertyLocale::EditorPropertyLocale() {
 	add_child(locale_hb);
 	locale = memnew(LineEdit);
 	locale_hb->add_child(locale);
-	locale->connect("text_submitted", this, "_locale_selected");
+	locale->connect("text_entered", this, "_locale_selected");
 	locale->connect("focus_exited", this, "_locale_focus_exited");
 	locale->set_h_size_flags(SIZE_EXPAND_FILL);
 
@@ -3094,7 +3094,7 @@ bool EditorInspectorDefaultPlugin::parse_property(Object *p_object, Variant::Typ
 			} else if (p_hint == PROPERTY_HINT_LOCALE_ID) {
 				EditorPropertyLocale *editor = memnew(EditorPropertyLocale);
 				editor->setup(p_hint_text);
-				return editor;
+				add_property_editor(p_path, editor);
 			} else if (p_hint == PROPERTY_HINT_DIR || p_hint == PROPERTY_HINT_FILE || p_hint == PROPERTY_HINT_SAVE_FILE || p_hint == PROPERTY_HINT_GLOBAL_DIR || p_hint == PROPERTY_HINT_GLOBAL_FILE) {
 				Vector<String> extensions = p_hint_text.split(",");
 				bool global = p_hint == PROPERTY_HINT_GLOBAL_DIR || p_hint == PROPERTY_HINT_GLOBAL_FILE;

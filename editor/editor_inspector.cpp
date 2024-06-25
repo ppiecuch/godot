@@ -944,16 +944,18 @@ void EditorInspectorCategory::_notification(int p_what) {
 		if (icon.is_valid()) {
 			w += hs + icon->get_width();
 		}
+		w = MIN(w, get_size().width - hs * 2);
 
 		int ofs = (get_size().width - w) / 2;
 
 		if (icon.is_valid()) {
 			draw_texture(icon, Point2(ofs, (get_size().height - icon->get_height()) / 2).floor());
 			ofs += hs + icon->get_width();
+			w -= hs + icon->get_width();
 		}
 
 		Color color = get_color("font_color", "Tree");
-		draw_string(font, Point2(ofs, font->get_ascent() + (get_size().height - font->get_height()) / 2).floor(), label, color, get_size().width);
+		draw_string(font, Point2(ofs, font->get_ascent() + (get_size().height - font->get_height()) / 2).floor(), label, color, w);
 	}
 }
 
@@ -2331,6 +2333,7 @@ void EditorInspector::_bind_methods() {
 	ClassDB::bind_method("_object_id_selected", &EditorInspector::_object_id_selected);
 	ClassDB::bind_method("_vscroll_changed", &EditorInspector::_vscroll_changed);
 	ClassDB::bind_method("_feature_profile_changed", &EditorInspector::_feature_profile_changed);
+	ClassDB::bind_method("get_edited_object", &EditorInspector::get_edited_object);
 
 	ClassDB::bind_method("refresh", &EditorInspector::refresh);
 

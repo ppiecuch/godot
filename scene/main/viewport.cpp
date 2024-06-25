@@ -55,6 +55,8 @@
 #include "scene/scene_string_names.h"
 #include "servers/physics_2d_server.h"
 
+LocalVector<Viewport::GUI::CanvasParent> Viewport::GUI::canvas_parents_dirty_order;
+
 void ViewportTexture::setup_local_to_scene() {
 	Node *local_scene = get_local_scene();
 	if (!local_scene) {
@@ -3225,6 +3227,130 @@ bool Viewport::is_handling_input_locally() const {
 	return handle_input_locally;
 }
 
+void Viewport::notify_canvas_parent_child_count_reduced(const Node &p_parent) {
+	uint32_t id = p_parent.get_canvas_parent_id();
+
+	ERR_FAIL_COND(id == UINT32_MAX);
+	ERR_FAIL_UNSIGNED_INDEX(id, GUI::canvas_parents_dirty_order.size());
+
+	GUI::CanvasParent &d = GUI::canvas_parents_dirty_order[id];
+
+	// No pending children moved.
+	if (!d.last_child_moved_plus_one) {
+		return;
+	}
+
+	uint32_t num_children = p_parent.get_child_count();
+	d.last_child_moved_plus_one = MIN(d.last_child_moved_plus_one, num_children);
+}
+
+void Viewport::notify_canvas_parent_children_moved(Node &r_parent, uint32_t p_first_child, uint32_t p_last_child_plus_one) {
+	// First ensure the parent has a CanvasParent allocated.
+	uint32_t id = r_parent.get_canvas_parent_id();
+
+	if (id == UINT32_MAX) {
+		id = GUI::canvas_parents_dirty_order.size();
+		r_parent.set_canvas_parent_id(id);
+		GUI::canvas_parents_dirty_order.resize(id + 1);
+
+		GUI::CanvasParent &d = GUI::canvas_parents_dirty_order[id];
+		d.id = r_parent.get_instance_id();
+		d.first_child_moved = p_first_child;
+		d.last_child_moved_plus_one = p_last_child_plus_one;
+		return;
+	}
+
+	GUI::CanvasParent &d = GUI::canvas_parents_dirty_order[id];
+	DEV_CHECK_ONCE(d.id == r_parent.get_instance_id());
+	d.first_child_moved = MIN(d.first_child_moved, p_first_child);
+	d.last_child_moved_plus_one = MAX(d.last_child_moved_plus_one, p_last_child_plus_one);
+}
+
+void Viewport::flush_canvas_parents_dirty_order() {
+	bool canvas_layers_moved = false;
+
+	for (uint32_t n = 0; n < GUI::canvas_parents_dirty_order.size(); n++) {
+		GUI::CanvasParent &d = GUI::canvas_parents_dirty_order[n];
+
+		Object *obj = ObjectDB::get_instance(d.id);
+		if (!obj) {
+			// May have been deleted.
+			continue;
+		}
+
+		Node *node = static_cast<Node *>(obj);
+		Control *parent_control = Object::cast_to<Control>(node);
+
+		// Allow anything subscribing to this signal (skeletons etc)
+		// to make any changes necessary.
+		node->emit_signal("child_order_changed");
+
+		// Reset the id stored in the node, as this data is cleared after every flush.
+		node->set_canvas_parent_id(UINT32_MAX);
+
+		// This should be very rare, as the last_child_moved_plus_one is usually kept up
+		// to date when within the scene tree. But it may become out of date outside the scene tree.
+		// This will cause no problems, just a very small possibility of more notifications being sent than
+		// necessary in that very rare situation.
+		if (d.last_child_moved_plus_one > (uint32_t)node->get_child_count()) {
+			d.last_child_moved_plus_one = node->get_child_count();
+		}
+
+		bool subwindow_order_dirty = false;
+		bool root_order_dirty = false;
+		bool control_found = false;
+
+		for (uint32_t c = d.first_child_moved; c < d.last_child_moved_plus_one; c++) {
+			Node *child = node->get_child(c);
+
+			CanvasItem *ci = Object::cast_to<CanvasItem>(child);
+			if (ci) {
+				ci->update_draw_order();
+
+				Control *control = Object::cast_to<Control>(ci);
+				if (control) {
+					control->_query_order_update(subwindow_order_dirty, root_order_dirty);
+
+					if (parent_control && !control_found) {
+						control_found = true;
+
+						// In case of regressions, this could be moved to AFTER
+						// the children have been updated.
+						parent_control->update();
+					}
+					control->update();
+				}
+
+				continue;
+			}
+
+			CanvasLayer *cl = Object::cast_to<CanvasLayer>(child);
+			if (cl) {
+				// If any canvas layers moved, we need to do an expensive update,
+				// so we ensure doing this only once.
+				if (!canvas_layers_moved) {
+					canvas_layers_moved = true;
+					cl->update_draw_order();
+				}
+			}
+		}
+
+		Viewport *viewport = node->get_viewport();
+		if (viewport) {
+			if (subwindow_order_dirty) {
+				viewport->_gui_set_subwindow_order_dirty();
+			}
+			if (root_order_dirty) {
+				viewport->_gui_set_root_order_dirty();
+			}
+		}
+
+		node->notification(Node::NOTIFICATION_CHILD_ORDER_CHANGED);
+	}
+
+	GUI::canvas_parents_dirty_order.clear();
+}
+
 void Viewport::_validate_property(PropertyInfo &property) const {
 	if (VisualServer::get_singleton()->is_low_end() && (property.name == "hdr" || property.name == "use_32_bpc_depth" || property.name == "debanding" || property.name == "sharpen_intensity" || property.name == "debug_draw")) {
 		// Only available in GLES3.
@@ -3568,6 +3694,13 @@ Viewport::Viewport() {
 	local_input_handled = false;
 	handle_input_locally = true;
 	physics_last_id = 0; //ensures first time there will be a check
+
+	// Physics interpolation mode for viewports is a special case.
+	// Typically viewports will be housed within Controls,
+	// and Controls default to PHYSICS_INTERPOLATION_MODE_OFF.
+	// Viewports can thus inherit physics interpolation OFF, which is unexpected.
+	// Setting to ON allows each viewport to have a fresh interpolation state.
+	set_physics_interpolation_mode(Node::PHYSICS_INTERPOLATION_MODE_ON);
 }
 
 Viewport::~Viewport() {

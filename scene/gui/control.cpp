@@ -593,22 +593,6 @@ void Control::_notification(int p_notification) {
 			*/
 
 		} break;
-		case NOTIFICATION_MOVED_IN_PARENT: {
-			// some parents need to know the order of the children to draw (like TabContainer)
-			// update if necessary
-			if (data.parent) {
-				data.parent->update();
-			}
-			update();
-
-			if (data.SI) {
-				get_viewport()->_gui_set_subwindow_order_dirty();
-			}
-			if (data.RI) {
-				get_viewport()->_gui_set_root_order_dirty();
-			}
-
-		} break;
 		case NOTIFICATION_RESIZED: {
 			emit_signal(SceneStringNames::get_singleton()->resized);
 		} break;
@@ -2604,14 +2588,16 @@ void Control::get_argument_options(const StringName &p_function, int p_idx, List
 	if (p_idx == 0) {
 		List<StringName> sn;
 		String pf = p_function;
-		if (pf == "add_color_override" || pf == "has_color" || pf == "has_color_override" || pf == "get_color") {
+		if (pf == "add_color_override" || pf == "has_color" || pf == "has_color_override" || pf == "get_color" || pf == "remove_color_override") {
 			Theme::get_default()->get_color_list(get_class(), &sn);
-		} else if (pf == "add_style_override" || pf == "has_style" || pf == "has_style_override" || pf == "get_style") {
+		} else if (pf == "add_stylebox_override" || pf == "has_stylebox" || pf == "has_stylebox_override" || pf == "get_stylebox" || pf == "remove_stylebox_override") {
 			Theme::get_default()->get_stylebox_list(get_class(), &sn);
-		} else if (pf == "add_font_override" || pf == "has_font" || pf == "has_font_override" || pf == "get_font") {
+		} else if (pf == "add_font_override" || pf == "has_font" || pf == "has_font_override" || pf == "get_font" || pf == "remove_font_override") {
 			Theme::get_default()->get_font_list(get_class(), &sn);
-		} else if (pf == "add_constant_override" || pf == "has_constant" || pf == "has_constant_override" || pf == "get_constant") {
+		} else if (pf == "add_constant_override" || pf == "has_constant" || pf == "has_constant_override" || pf == "get_constant" || pf == "remove_constant_override") {
 			Theme::get_default()->get_constant_list(get_class(), &sn);
+		} else if (pf == "add_icon_override" || pf == "has_icon" || pf == "has_icon_override" || pf == "get_icon" || pf == "remove_icon_override") {
+			Theme::get_default()->get_icon_list(get_class(), &sn);
 		}
 
 		sn.sort_custom<StringName::AlphCompare>();
@@ -2663,6 +2649,15 @@ void Control::set_v_grow_direction(GrowDirection p_direction) {
 
 Control::GrowDirection Control::get_v_grow_direction() const {
 	return data.v_grow;
+}
+
+void Control::_query_order_update(bool &r_subwindow_order_dirty, bool &r_root_order_dirty) const {
+	if (data.SI) {
+		r_subwindow_order_dirty = true;
+	}
+	if (data.RI) {
+		r_root_order_dirty = true;
+	}
 }
 
 void Control::_bind_methods() {

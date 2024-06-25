@@ -31,6 +31,7 @@
 #ifndef MESH_H
 #define MESH_H
 
+#include "core/local_vector.h"
 #include "core/math/face3.h"
 #include "core/math/triangle_mesh.h"
 #include "core/resource.h"
@@ -97,6 +98,7 @@ public:
 		ARRAY_FLAG_USE_16_BIT_BONES = ARRAY_COMPRESS_INDEX << 2,
 		ARRAY_FLAG_USE_DYNAMIC_UPDATE = ARRAY_COMPRESS_INDEX << 3,
 		ARRAY_FLAG_USE_OCTAHEDRAL_COMPRESSION = ARRAY_COMPRESS_INDEX << 4,
+		ARRAY_FLAG_USE_VERTEX_CACHE_OPTIMIZATION = ARRAY_COMPRESS_INDEX << 5,
 
 		ARRAY_COMPRESS_DEFAULT = ARRAY_COMPRESS_NORMAL | ARRAY_COMPRESS_TANGENT | ARRAY_COMPRESS_COLOR | ARRAY_COMPRESS_TEX_UV | ARRAY_COMPRESS_TEX_UV2 | ARRAY_COMPRESS_WEIGHTS | ARRAY_FLAG_USE_OCTAHEDRAL_COMPRESSION
 
@@ -118,6 +120,20 @@ public:
 		BLEND_SHAPE_MODE_RELATIVE = VS::BLEND_SHAPE_MODE_RELATIVE,
 	};
 
+	enum StorageMode {
+		STORAGE_MODE_GPU,
+		STORAGE_MODE_CPU,
+		STORAGE_MODE_CPU_AND_GPU,
+	};
+
+	struct CachedStats {
+		bool dirty = true;
+		uint32_t triangle_count = 0;
+		uint32_t vertex_count = 0;
+		uint32_t index_count = 0;
+		uint32_t array_format = 0;
+	};
+
 	virtual int get_surface_count() const = 0;
 	virtual int surface_get_array_len(int p_idx) const = 0;
 	virtual int surface_get_array_index_len(int p_idx) const = 0;
@@ -129,11 +145,18 @@ public:
 	virtual void surface_set_material(int p_idx, const Ref<Material> &p_material) = 0;
 	virtual Ref<Material> surface_get_material(int p_idx) const = 0;
 	virtual int get_blend_shape_count() const = 0;
+	int surface_get_triangle_count(int p_idx) const;
+	int surface_get_index_count(int p_idx) const;
 	virtual StringName get_blend_shape_name(int p_index) const = 0;
 	virtual void set_blend_shape_name(int p_index, const StringName &p_name) = 0;
 
+	int get_triangle_count() const;
 	PoolVector<Face3> get_faces() const;
+#ifdef TOOLS_ENABLED
+	const CachedStats &get_cached_stats() const;
+#endif
 	Ref<TriangleMesh> generate_triangle_mesh() const;
+	Ref<TriangleMesh> generate_triangle_mesh_from_aabb() const;
 	void generate_debug_mesh_lines(Vector<Vector3> &r_lines);
 	void generate_debug_mesh_indices(Vector<Vector3> &r_points);
 
@@ -143,6 +166,7 @@ public:
 	Ref<Mesh> create_outline(float p_margin) const;
 
 	virtual AABB get_aabb() const = 0;
+	virtual void set_storage_mode(StorageMode p_storage_mode);
 
 	void set_lightmap_size_hint(const Vector2 &p_size);
 	Size2 get_lightmap_size_hint() const;
@@ -155,6 +179,13 @@ public:
 	Vector<Ref<Shape>> convex_decompose(int p_max_convex_hulls = -1) const;
 
 	Mesh();
+
+private:
+#ifdef TOOLS_ENABLED
+	// Only for use in the editor.
+	// No need to bloat exports.
+	mutable CachedStats _cached_stats;
+#endif
 };
 
 class ArrayMesh : public Mesh {
@@ -162,14 +193,31 @@ class ArrayMesh : public Mesh {
 	RES_BASE_EXTENSION("mesh");
 
 private:
+	// Storing the mesh data on CPU
+	struct CPUSurface {
+		Array arrays;
+		Array blend_shapes;
+		PrimitiveType primitive_type;
+		int num_verts = 0;
+		int num_inds = 0;
+	};
+
 	struct Surface {
 		String name;
 		AABB aabb;
 		Ref<Material> material;
 		bool is_active;
 		bool is_2d;
+		// Watch for bugs here.
+		// When calling add_surface() rather than add_surface_from_arrays(),
+		// the creation flags will be unset, and left at default.
+		// Conversion from CPU to GPU memory assumes that creation_flags are
+		// correct, so is only TRULY safe when used with add_surface_from_arrays().
+		uint32_t creation_flags = ARRAY_COMPRESS_DEFAULT;
+		uint32_t creation_format = 0;
 	};
 	Vector<Surface> surfaces;
+	LocalVector<CPUSurface *> _cpu_surfaces;
 	RID mesh;
 	AABB aabb;
 	BlendShapeMode blend_shape_mode;
@@ -201,6 +249,18 @@ private:
 		_FORCE_INLINE_ const LocalVector<int> &operator[](int p_index) { return surfs[p_index]; }
 		_FORCE_INLINE_ const LocalVector<int> &operator[](const String &p_name) { return surfs[names_map[p_name]]; }
 	} submeshes;
+
+	// Data can be held on GPU, CPU or both.
+	// CPU is quicker for modifications, but can't be
+	// used for rendering.
+	bool _on_cpu = false;
+	bool _on_gpu = true;
+	StorageMode _storage_mode = STORAGE_MODE_GPU;
+
+	void add_surface_from_arrays_cpu(PrimitiveType p_primitive, const Array &p_arrays, const Array &p_blend_shapes);
+	void add_surface_from_arrays_cpu_with_probe(PrimitiveType p_primitive, const Array &p_arrays, const Array &p_blend_shapes, uint32_t p_flags, int p_surface_id);
+	void clear_cpu_surfaces();
+	bool on_cpu() const { return _on_cpu && ((int)_cpu_surfaces.size() == surfaces.size()); }
 
 protected:
 	virtual bool _is_generated() const { return false; }
@@ -274,6 +334,8 @@ public:
 
 	virtual void reload_from_file() G_OVERRIDE;
 	void clear_mesh();
+
+	virtual void set_storage_mode(StorageMode p_storage_mode);
 
 	ArrayMesh();
 

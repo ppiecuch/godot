@@ -30,7 +30,6 @@
 
 #include "tab_container.h"
 
-#include "core/message_queue.h"
 #include "scene/gui/box_container.h"
 #include "scene/gui/label.h"
 #include "scene/gui/texture_rect.h"
@@ -279,6 +278,7 @@ void TabContainer::_notification(int p_what) {
 			Ref<Texture> menu = get_icon("menu");
 			Ref<Texture> menu_hl = get_icon("menu_highlight");
 			Ref<Font> font = get_font("font");
+			select_font(font);
 			Color font_color_fg = get_color("font_color_fg");
 			Color font_color_bg = get_color("font_color_bg");
 			Color font_color_disabled = get_color("font_color_disabled");
@@ -873,6 +873,7 @@ void TabContainer::set_tab_icon(int p_tab, const Ref<Texture> &p_icon) {
 	Control *child = get_tab_control(p_tab);
 	ERR_FAIL_COND(!child);
 	child->set_meta("_tab_icon", p_icon);
+	_repaint();
 	update();
 }
 Ref<Texture> TabContainer::get_tab_icon(int p_tab) const {

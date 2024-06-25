@@ -643,20 +643,6 @@ void CanvasItem::_notification(int p_what) {
 				notification(NOTIFICATION_RESET_PHYSICS_INTERPOLATION);
 			}
 		} break;
-		case NOTIFICATION_MOVED_IN_PARENT: {
-			if (!is_inside_tree()) {
-				break;
-			}
-
-			if (canvas_group != "") {
-				get_tree()->call_group_flags(SceneTree::GROUP_CALL_UNIQUE, canvas_group, "_toplevel_raise_self");
-			} else {
-				CanvasItem *p = get_parent_item();
-				ERR_FAIL_COND(!p);
-				VisualServer::get_singleton()->canvas_item_set_draw_index(canvas_item, get_index());
-			}
-
-		} break;
 		case NOTIFICATION_EXIT_TREE: {
 			if (xform_change.in_list()) {
 				get_tree()->xform_change_list.remove(&xform_change);
@@ -693,6 +679,20 @@ void CanvasItem::_name_changed_notify() {
 #endif
 }
 #endif
+
+void CanvasItem::update_draw_order() {
+	if (!is_inside_tree()) {
+		return;
+	}
+
+	if (canvas_group != "") {
+		get_tree()->call_group_flags(SceneTree::GROUP_CALL_UNIQUE, canvas_group, "_toplevel_raise_self");
+	} else {
+		CanvasItem *p = get_parent_item();
+		ERR_FAIL_NULL(p);
+		VisualServer::get_singleton()->canvas_item_set_draw_index(canvas_item, get_index());
+	}
+}
 
 void CanvasItem::update() {
 	if (!is_inside_tree()) {
@@ -1001,6 +1001,17 @@ void CanvasItem::draw_multimesh(const Ref<MultiMesh> &p_multimesh, const Ref<Tex
 	RID mask_rid = p_mask.is_valid() ? p_mask->get_rid() : RID();
 
 	VisualServer::get_singleton()->canvas_item_add_multimesh(canvas_item, p_multimesh->get_rid(), texture_rid, normal_map_rid, mask_rid);
+}
+
+void CanvasItem::select_font(const Ref<Font> &p_font) {
+	// Purely to keep canvas item SDF state up to date for now.
+	bool new_font_sdf_selected = p_font.is_valid() && p_font->is_distance_field_hint();
+
+	if (font_sdf_selected != new_font_sdf_selected) {
+		ERR_FAIL_COND(!get_canvas_item().is_valid());
+		font_sdf_selected = new_font_sdf_selected;
+		VisualServer::get_singleton()->canvas_item_set_distance_field_mode(get_canvas_item(), font_sdf_selected);
+	}
 }
 
 void CanvasItem::draw_string(const Ref<Font> &p_font, const Point2 &p_pos, const String &p_text, const Color &p_modulate, int p_clip_w) {
@@ -1407,6 +1418,7 @@ CanvasItem::CanvasItem() :
 	global_invalid = true;
 	notify_local_transform = false;
 	notify_transform = false;
+	font_sdf_selected = false;
 	light_mask = 1;
 
 	C = nullptr;

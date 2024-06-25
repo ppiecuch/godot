@@ -130,7 +130,7 @@ Vector2 Vector2::rotated(real_t p_by) const {
 	return v;
 }
 
-Vector2 Vector2::posmod(const real_t p_mod) const {
+Vector2 Vector2::posmod(real_t p_mod) const {
 	return Vector2(Math::fposmod(x, p_mod), Math::fposmod(y, p_mod));
 }
 
@@ -164,7 +164,7 @@ Vector2 Vector2::clamped(real_t p_len) const {
 	return v;
 }
 
-Vector2 Vector2::limit_length(const real_t p_len) const {
+Vector2 Vector2::limit_length(real_t p_len) const {
 	const real_t l = length();
 	Vector2 v = *this;
 	if (l > 0 && p_len < l) {
@@ -194,7 +194,7 @@ Vector2 Vector2::cubic_interpolate(const Vector2 &p_b, const Vector2 &p_pre_a, c
 	return out;
 }
 
-Vector2 Vector2::move_toward(const Vector2 &p_to, const real_t p_delta) const {
+Vector2 Vector2::move_toward(const Vector2 &p_to, real_t p_delta) const {
 	Vector2 v = *this;
 	Vector2 vd = p_to - v;
 	real_t len = vd.length();
@@ -224,6 +224,10 @@ bool Vector2::is_equal_approx(const Vector2 &p_v) const {
 	return Math::is_equal_approx(x, p_v.x) && Math::is_equal_approx(y, p_v.y);
 }
 
+bool Vector2::is_zero_approx() const {
+	return Math::is_zero_approx(x) && Math::is_zero_approx(y);
+}
+
 /* Vector2i */
 
 Vector2i Vector2i::operator+(const Vector2i &p_v) const {
@@ -241,38 +245,30 @@ void Vector2i::operator-=(const Vector2i &p_v) {
 	y -= p_v.y;
 }
 
-Vector2i Vector2i::operator*(const Vector2i &p_v1) const {
-	return Vector2i(x * p_v1.x, y * p_v1.y);
-};
+Vector2i Vector2i::operator*(const Vector2i &p_v) const {
+	return Vector2i(x * p_v.x, y * p_v.y);
+}
 
-Vector2i Vector2i::operator*(const Vector2 &p_v1) const {
-	return Vector2i(x * p_v1.x, y * p_v1.y);
-};
+Vector2i Vector2i::operator*(int p_scalar) const {
+	return Vector2i(x * p_scalar, y * p_scalar);
+}
+void Vector2i::operator*=(int p_scalar) {
+	x *= p_scalar;
+	y *= p_scalar;
+}
 
-Vector2i Vector2i::operator*(const int &rvalue) const {
-	return Vector2i(x * rvalue, y * rvalue);
-};
-void Vector2i::operator*=(const int &rvalue) {
-	x *= rvalue;
-	y *= rvalue;
-};
+Vector2i Vector2i::operator/(const Vector2i &p_v) const {
+	return Vector2i(x / p_v.x, y / p_v.y);
+}
 
-Vector2i Vector2i::operator/(const Vector2i &p_v1) const {
-	return Vector2i(x / p_v1.x, y / p_v1.y);
-};
+Vector2i Vector2i::operator/(int p_scalar) const {
+	return Vector2i(x / p_scalar, y / p_scalar);
+}
 
-Vector2i Vector2i::operator/(const Vector2 &p_v1) const {
-	return Vector2i(x / p_v1.x, y / p_v1.y);
-};
-
-Vector2i Vector2i::operator/(const int &rvalue) const {
-	return Vector2i(x / rvalue, y / rvalue);
-};
-
-void Vector2i::operator/=(const int &rvalue) {
-	x /= rvalue;
-	y /= rvalue;
-};
+void Vector2i::operator/=(int p_scalar) {
+	x /= p_scalar;
+	y /= p_scalar;
+}
 
 Vector2i Vector2i::operator-() const {
 	return Vector2i(-x, -y);

@@ -108,7 +108,6 @@ class EditorExportPlatformIOS : public EditorExportPlatform {
 	String _get_linker_flags();
 	String _get_cpp_code();
 	void _fix_config_file(const Ref<EditorExportPreset> &p_preset, Vector<uint8_t> &pfile, const IOSConfigData &p_config, bool p_debug);
-	Error _export_loading_screen_images(const Ref<EditorExportPreset> &p_preset, const String &p_dest_dir);
 	Error _export_loading_screen_file(const Ref<EditorExportPreset> &p_preset, const String &p_dest_dir);
 	Error _export_icons(const Ref<EditorExportPreset> &p_preset, const String &p_iconset_dir);
 
@@ -322,27 +321,92 @@ Vector<EditorExportPlatformIOS::ExportArchitecture> EditorExportPlatformIOS::_ge
 	return archs;
 }
 
-struct LoadingScreenInfo {
-	const char *preset_key;
-	const char *export_name;
-	int width;
-	int height;
-	bool rotate;
+struct APIAccessInfo {
+	String prop_name;
+	String type_name;
+	String prop_flag_value[5];
+	String prop_flag_name[5];
+	int default_value;
 };
 
-static const LoadingScreenInfo loading_screen_infos[] = {
-	{ PNAME("landscape_launch_screens/iphone_2436x1125"), "Default-Landscape-X.png", 2436, 1125, false },
-	{ PNAME("landscape_launch_screens/iphone_2208x1242"), "Default-Landscape-736h@3x.png", 2208, 1242, false },
-	{ PNAME("landscape_launch_screens/ipad_1024x768"), "Default-Landscape.png", 1024, 768, false },
-	{ PNAME("landscape_launch_screens/ipad_2048x1536"), "Default-Landscape@2x.png", 2048, 1536, false },
+static const APIAccessInfo api_info[] = {
+	{ "file_timestamp",
+			"NSPrivacyAccessedAPICategoryFileTimestamp",
+			{ "DDA9.1", "C617.1", "3B52.1", String() },
+			{ "Display to user on-device:", "Inside app or group container", "Files provided to app by user", String() },
+			3 },
+	{ "system_boot_time",
+			"NSPrivacyAccessedAPICategorySystemBootTime",
+			{ "35F9.1", "8FFB.1", "3D61.1", String() },
+			{ "Measure time on-device", "Calculate absolute event timestamps", "User-initiated bug report", String() },
+			1 },
+	{ "disk_space",
+			"NSPrivacyAccessedAPICategoryDiskSpace",
+			{ "E174.1", "85F4.1", "7D9E.1", "B728.1", String() },
+			{ "Write or delete file on-device", "Display to user on-device", "User-initiated bug report", "Health research app", String() },
+			3 },
+	{ "active_keyboard",
+			"NSPrivacyAccessedAPICategoryActiveKeyboards",
+			{ "3EC4.1", "54BD.1", String() },
+			{ "Custom keyboard app on-device", "Customize UI on-device:2", String() },
+			0 },
+	{ "user_defaults",
+			"NSPrivacyAccessedAPICategoryUserDefaults",
+			{ "1C8F.1", "AC6B.1", "CA92.1", String() },
+			{ "Access info from same App Group", "Access managed app configuration", "Access info from same app", String() },
+			0 }
+};
 
-	{ PNAME("portrait_launch_screens/iphone_640x960"), "Default-480h@2x.png", 640, 960, false },
-	{ PNAME("portrait_launch_screens/iphone_640x1136"), "Default-568h@2x.png", 640, 1136, false },
-	{ PNAME("portrait_launch_screens/iphone_750x1334"), "Default-667h@2x.png", 750, 1334, false },
-	{ PNAME("portrait_launch_screens/iphone_1125x2436"), "Default-Portrait-X.png", 1125, 2436, false },
-	{ PNAME("portrait_launch_screens/ipad_768x1024"), "Default-Portrait.png", 768, 1024, false },
-	{ PNAME("portrait_launch_screens/ipad_1536x2048"), "Default-Portrait@2x.png", 1536, 2048, false },
-	{ PNAME("portrait_launch_screens/iphone_1242x2208"), "Default-Portrait-736h@3x.png", 1242, 2208, false }
+struct DataCollectionInfo {
+	String prop_name;
+	String type_name;
+};
+
+static const DataCollectionInfo data_collect_type_info[] = {
+	{ "name", "NSPrivacyCollectedDataTypeName" },
+	{ "email_address", "NSPrivacyCollectedDataTypeEmailAddress" },
+	{ "phone_number", "NSPrivacyCollectedDataTypePhoneNumber" },
+	{ "physical_address", "NSPrivacyCollectedDataTypePhysicalAddress" },
+	{ "other_contact_info", "NSPrivacyCollectedDataTypeOtherUserContactInfo" },
+	{ "health", "NSPrivacyCollectedDataTypeHealth" },
+	{ "fitness", "NSPrivacyCollectedDataTypeFitness" },
+	{ "payment_info", "NSPrivacyCollectedDataTypePaymentInfo" },
+	{ "credit_info", "NSPrivacyCollectedDataTypeCreditInfo" },
+	{ "other_financial_info", "NSPrivacyCollectedDataTypeOtherFinancialInfo" },
+	{ "precise_location", "NSPrivacyCollectedDataTypePreciseLocation" },
+	{ "coarse_location", "NSPrivacyCollectedDataTypeCoarseLocation" },
+	{ "sensitive_info", "NSPrivacyCollectedDataTypeSensitiveInfo" },
+	{ "contacts", "NSPrivacyCollectedDataTypeContacts" },
+	{ "emails_or_text_messages", "NSPrivacyCollectedDataTypeEmailsOrTextMessages" },
+	{ "photos_or_videos", "NSPrivacyCollectedDataTypePhotosorVideos" },
+	{ "audio_data", "NSPrivacyCollectedDataTypeAudioData" },
+	{ "gameplay_content", "NSPrivacyCollectedDataTypeGameplayContent" },
+	{ "customer_support", "NSPrivacyCollectedDataTypeCustomerSupport" },
+	{ "other_user_content", "NSPrivacyCollectedDataTypeOtherUserContent" },
+	{ "browsing_history", "NSPrivacyCollectedDataTypeBrowsingHistory" },
+	{ "search_hhistory", "NSPrivacyCollectedDataTypeSearchHistory" },
+	{ "user_id", "NSPrivacyCollectedDataTypeUserID" },
+	{ "device_id", "NSPrivacyCollectedDataTypeDeviceID" },
+	{ "purchase_history", "NSPrivacyCollectedDataTypePurchaseHistory" },
+	{ "product_interaction", "NSPrivacyCollectedDataTypeProductInteraction" },
+	{ "advertising_data", "NSPrivacyCollectedDataTypeAdvertisingData" },
+	{ "other_usage_data", "NSPrivacyCollectedDataTypeOtherUsageData" },
+	{ "crash_data", "NSPrivacyCollectedDataTypeCrashData" },
+	{ "performance_data", "NSPrivacyCollectedDataTypePerformanceData" },
+	{ "other_diagnostic_data", "NSPrivacyCollectedDataTypeOtherDiagnosticData" },
+	{ "environment_scanning", "NSPrivacyCollectedDataTypeEnvironmentScanning" },
+	{ "hands", "NSPrivacyCollectedDataTypeHands" },
+	{ "head", "NSPrivacyCollectedDataTypeHead" },
+	{ "other_data_types", "NSPrivacyCollectedDataTypeOtherDataTypes" },
+};
+
+static const DataCollectionInfo data_collect_purpose_info[] = {
+	{ "Analytics", "NSPrivacyCollectedDataTypePurposeAnalytics" },
+	{ "App Functionality", "NSPrivacyCollectedDataTypePurposeAppFunctionality" },
+	{ "Developer Advertising", "NSPrivacyCollectedDataTypePurposeDeveloperAdvertising" },
+	{ "Third-party Advertising", "NSPrivacyCollectedDataTypePurposeThirdPartyAdvertising" },
+	{ "Product Personalization", "NSPrivacyCollectedDataTypePurposeProductPersonalization" },
+	{ "Other", "NSPrivacyCollectedDataTypePurposeOther" },
 };
 
 void EditorExportPlatformIOS::get_export_options(List<ExportOption> *r_options) {
@@ -374,7 +438,6 @@ void EditorExportPlatformIOS::get_export_options(List<ExportOption> *r_options) 
 	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "application/copyright"), ""));
 
 	r_options->push_back(ExportOption(PropertyInfo(Variant::INT, "application/icon_interpolation", PROPERTY_HINT_ENUM, "Nearest neighbor,Bilinear,Cubic,Trilinear,Lanczos"), 4));
-	r_options->push_back(ExportOption(PropertyInfo(Variant::INT, "application/launch_screens_interpolation", PROPERTY_HINT_ENUM, "Nearest neighbor,Bilinear,Cubic,Trilinear,Lanczos"), 4));
 
 	Vector<PluginConfigIOS> found_plugins = get_plugins();
 	for (int i = 0; i < found_plugins.size(); i++) {
@@ -418,6 +481,37 @@ void EditorExportPlatformIOS::get_export_options(List<ExportOption> *r_options) 
 	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "privacy/microphone_usage_description", PROPERTY_HINT_PLACEHOLDER_TEXT, "Provide a message if you need to use the microphone"), ""));
 	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "privacy/photolibrary_usage_description", PROPERTY_HINT_PLACEHOLDER_TEXT, "Provide a message if you need access to the photo library"), ""));
 
+	for (uint64_t i = 0; i < sizeof(api_info) / sizeof(api_info[0]); ++i) {
+		String prop_name = vformat("privacy/%s_access_reasons", api_info[i].prop_name);
+		String hint;
+		for (int j = 0; api_info[i].prop_flag_value[j] != String(); j++) {
+			if (j != 0) {
+				hint += ",";
+			}
+			hint += vformat("%s - %s:%d", api_info[i].prop_flag_value[j], api_info[i].prop_flag_name[j], (1 << j));
+		}
+		r_options->push_back(ExportOption(PropertyInfo(Variant::INT, prop_name, PROPERTY_HINT_FLAGS, hint), api_info[i].default_value));
+	}
+
+	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "privacy/tracking_enabled"), false));
+	r_options->push_back(ExportOption(PropertyInfo(Variant::POOL_STRING_ARRAY, "privacy/tracking_domains"), Vector<String>()));
+
+	{
+		String hint;
+		for (uint64_t i = 0; i < sizeof(data_collect_purpose_info) / sizeof(data_collect_purpose_info[0]); ++i) {
+			if (i != 0) {
+				hint += ",";
+			}
+			hint += vformat("%s:%d", data_collect_purpose_info[i].prop_name, (1 << i));
+		}
+		for (uint64_t i = 0; i < sizeof(data_collect_type_info) / sizeof(data_collect_type_info[0]); ++i) {
+			r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, vformat("privacy/collected_data/%s/collected", data_collect_type_info[i].prop_name)), false));
+			r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, vformat("privacy/collected_data/%s/linked_to_user", data_collect_type_info[i].prop_name)), false));
+			r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, vformat("privacy/collected_data/%s/used_for_tracking", data_collect_type_info[i].prop_name)), false));
+			r_options->push_back(ExportOption(PropertyInfo(Variant::INT, vformat("privacy/collected_data/%s/collection_purposes", data_collect_type_info[i].prop_name), PROPERTY_HINT_FLAGS, hint), 0));
+		}
+	}
+
 	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "icons/iphone_120x120", PROPERTY_HINT_FILE, "*.png,*.jpg,*.jpeg"), "")); // Home screen on iPhone/iPod Touch with Retina display
 	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "icons/iphone_180x180", PROPERTY_HINT_FILE, "*.png,*.jpg,*.jpeg"), "")); // Home screen on iPhone with Retina HD display
 
@@ -430,16 +524,11 @@ void EditorExportPlatformIOS::get_export_options(List<ExportOption> *r_options) 
 	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "icons/spotlight_40x40", PROPERTY_HINT_FILE, "*.png,*.jpg,*.jpeg"), "")); // Spotlight
 	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "icons/spotlight_80x80", PROPERTY_HINT_FILE, "*.png,*.jpg,*.jpeg"), "")); // Spotlight on devices with Retina display
 
-	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "storyboard/use_launch_screen_storyboard"), false));
 	r_options->push_back(ExportOption(PropertyInfo(Variant::INT, "storyboard/image_scale_mode", PROPERTY_HINT_ENUM, "Same as Logo,Center,Scale to Fit,Scale to Fill,Scale"), 0));
 	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "storyboard/custom_image@2x", PROPERTY_HINT_FILE, "*.png,*.jpg,*.jpeg"), ""));
 	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "storyboard/custom_image@3x", PROPERTY_HINT_FILE, "*.png,*.jpg,*.jpeg"), ""));
 	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "storyboard/use_custom_bg_color"), false));
 	r_options->push_back(ExportOption(PropertyInfo(Variant::COLOR, "storyboard/custom_bg_color"), Color()));
-
-	for (uint64_t i = 0; i < sizeof(loading_screen_infos) / sizeof(loading_screen_infos[0]); ++i) {
-		r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, loading_screen_infos[i].preset_key, PROPERTY_HINT_FILE, "*.png,*.jpg,*.jpeg"), ""));
-	}
 }
 
 void EditorExportPlatformIOS::_fix_config_file(const Ref<EditorExportPreset> &p_preset, Vector<uint8_t> &pfile, const IOSConfigData &p_config, bool p_debug) {
@@ -457,8 +546,8 @@ void EditorExportPlatformIOS::_fix_config_file(const Ref<EditorExportPreset> &p_
 	};
 	String dbg_sign_id = p_preset->get("application/code_sign_identity_debug").operator String().empty() ? "iPhone Developer" : p_preset->get("application/code_sign_identity_debug");
 	String rel_sign_id = p_preset->get("application/code_sign_identity_release").operator String().empty() ? "iPhone Distribution" : p_preset->get("application/code_sign_identity_release");
-	bool dbg_manual = !p_preset->get("application/provisioning_profile_uuid_debug").operator String().empty() || (dbg_sign_id != "iPhone Developer");
-	bool rel_manual = !p_preset->get("application/provisioning_profile_uuid_release").operator String().empty() || (rel_sign_id != "iPhone Distribution");
+	bool dbg_manual = !p_preset->get("application/provisioning_profile_uuid_debug").operator String().empty() || (dbg_sign_id != "iPhone Developer" && dbg_sign_id != "iPhone Distribution");
+	bool rel_manual = !p_preset->get("application/provisioning_profile_uuid_release").operator String().empty() || (rel_sign_id != "iPhone Developer" && rel_sign_id != "iPhone Distribution");
 	String str;
 	String strnew;
 	str.parse_utf8((const char *)pfile.ptr(), pfile.size());
@@ -612,29 +701,24 @@ void EditorExportPlatformIOS::_fix_config_file(const Ref<EditorExportPreset> &p_
 			String description = p_preset->get("privacy/photolibrary_usage_description");
 			strnew += lines[i].replace("$photolibrary_usage_description", description) + "\n";
 		} else if (lines[i].find("$plist_launch_screen_name") != -1) {
-			bool is_on = p_preset->get("storyboard/use_launch_screen_storyboard");
-			String value = is_on ? "<key>UILaunchStoryboardName</key>\n<string>Launch Screen</string>" : "";
+			String value = "<key>UILaunchStoryboardName</key>\n<string>Launch Screen</string>";
 			strnew += lines[i].replace("$plist_launch_screen_name", value) + "\n";
 		} else if (lines[i].find("$pbx_launch_screen_file_reference") != -1) {
-			bool is_on = p_preset->get("storyboard/use_launch_screen_storyboard");
-			String value = is_on ? "90DD2D9D24B36E8000717FE1 = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = \"Launch Screen.storyboard\"; sourceTree = \"<group>\"; };" : "";
+			String value = "90DD2D9D24B36E8000717FE1 = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = \"Launch Screen.storyboard\"; sourceTree = \"<group>\"; };";
 			strnew += lines[i].replace("$pbx_launch_screen_file_reference", value) + "\n";
 		} else if (lines[i].find("$pbx_launch_screen_copy_files") != -1) {
-			bool is_on = p_preset->get("storyboard/use_launch_screen_storyboard");
-			String value = is_on ? "90DD2D9D24B36E8000717FE1 /* Launch Screen.storyboard */," : "";
+			String value = "90DD2D9D24B36E8000717FE1 /* Launch Screen.storyboard */,";
 			strnew += lines[i].replace("$pbx_launch_screen_copy_files", value) + "\n";
 		} else if (lines[i].find("$pbx_launch_screen_build_phase") != -1) {
-			bool is_on = p_preset->get("storyboard/use_launch_screen_storyboard");
-			String value = is_on ? "90DD2D9E24B36E8000717FE1 /* Launch Screen.storyboard in Resources */," : "";
+			String value = "90DD2D9E24B36E8000717FE1 /* Launch Screen.storyboard in Resources */,";
 			strnew += lines[i].replace("$pbx_launch_screen_build_phase", value) + "\n";
 		} else if (lines[i].find("$pbx_launch_screen_build_reference") != -1) {
-			bool is_on = p_preset->get("storyboard/use_launch_screen_storyboard");
-			String value = is_on ? "90DD2D9E24B36E8000717FE1 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 90DD2D9D24B36E8000717FE1 /* Launch Screen.storyboard */; };" : "";
+			String value = "90DD2D9E24B36E8000717FE1 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 90DD2D9D24B36E8000717FE1 /* Launch Screen.storyboard */; };";
 			strnew += lines[i].replace("$pbx_launch_screen_build_reference", value) + "\n";
+#ifndef DISABLE_DEPRECATED
 		} else if (lines[i].find("$pbx_launch_image_usage_setting") != -1) {
-			bool is_on = p_preset->get("storyboard/use_launch_screen_storyboard");
-			String value = is_on ? "" : "ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;";
-			strnew += lines[i].replace("$pbx_launch_image_usage_setting", value) + "\n";
+			strnew += lines[i].replace("$pbx_launch_image_usage_setting", "") + "\n";
+#endif
 		} else if (lines[i].find("$launch_screen_image_mode") != -1) {
 			int image_scale_mode = p_preset->get("storyboard/image_scale_mode");
 			String value;
@@ -731,6 +815,87 @@ void EditorExportPlatformIOS::_fix_config_file(const Ref<EditorExportPreset> &p_
 		} else if (lines[i].find("$swift_runtime_build_phase") != -1) {
 			String value = !p_config.use_swift_runtime ? "" : "90B4C2B62680C7E90039117A /* dummy.swift */,";
 			strnew += lines[i].replace("$swift_runtime_build_phase", value) + "\n";
+		} else if (lines[i].find("$priv_collection") != -1) {
+			bool section_opened = false;
+			for (uint64_t j = 0; j < sizeof(data_collect_type_info) / sizeof(data_collect_type_info[0]); ++j) {
+				bool data_collected = p_preset->get(vformat("privacy/collected_data/%s/collected", data_collect_type_info[j].prop_name));
+				bool linked = p_preset->get(vformat("privacy/collected_data/%s/linked_to_user", data_collect_type_info[j].prop_name));
+				bool tracking = p_preset->get(vformat("privacy/collected_data/%s/used_for_tracking", data_collect_type_info[j].prop_name));
+				int purposes = p_preset->get(vformat("privacy/collected_data/%s/collection_purposes", data_collect_type_info[j].prop_name));
+				if (data_collected) {
+					if (!section_opened) {
+						section_opened = true;
+						strnew += "\t<key>NSPrivacyCollectedDataTypes</key>\n";
+						strnew += "\t<array>\n";
+					}
+					strnew += "\t\t<dict>\n";
+					strnew += "\t\t\t<key>NSPrivacyCollectedDataType</key>\n";
+					strnew += vformat("\t\t\t<string>%s</string>\n", data_collect_type_info[j].type_name);
+					strnew += "\t\t\t\t<key>NSPrivacyCollectedDataTypeLinked</key>\n";
+					if (linked) {
+						strnew += "\t\t\t\t<true/>\n";
+					} else {
+						strnew += "\t\t\t\t<false/>\n";
+					}
+					strnew += "\t\t\t\t<key>NSPrivacyCollectedDataTypeTracking</key>\n";
+					if (tracking) {
+						strnew += "\t\t\t\t<true/>\n";
+					} else {
+						strnew += "\t\t\t\t<false/>\n";
+					}
+					if (purposes != 0) {
+						strnew += "\t\t\t\t<key>NSPrivacyCollectedDataTypePurposes</key>\n";
+						strnew += "\t\t\t\t<array>\n";
+						for (uint64_t k = 0; k < sizeof(data_collect_purpose_info) / sizeof(data_collect_purpose_info[0]); ++k) {
+							if (purposes & (1 << k)) {
+								strnew += vformat("\t\t\t\t\t<string>%s</string>\n", data_collect_purpose_info[k].type_name);
+							}
+						}
+						strnew += "\t\t\t\t</array>\n";
+					}
+					strnew += "\t\t\t</dict>\n";
+				}
+			}
+			if (section_opened) {
+				strnew += "\t</array>\n";
+			}
+		} else if (lines[i].find("$priv_tracking") != -1) {
+			bool tracking = p_preset->get("privacy/tracking_enabled");
+			strnew += "\t<key>NSPrivacyTracking</key>\n";
+			if (tracking) {
+				strnew += "\t<true/>\n";
+			} else {
+				strnew += "\t<false/>\n";
+			}
+			Vector<String> tracking_domains = p_preset->get("privacy/tracking_domains");
+			if (!tracking_domains.empty()) {
+				strnew += "\t<key>NSPrivacyTrackingDomains</key>\n";
+				strnew += "\t<array>\n";
+				for (int j = 0; j < tracking_domains.size(); j++) {
+					strnew += "\t\t<string>" + tracking_domains[j] + "</string>\n";
+				}
+				strnew += "\t</array>\n";
+			}
+		} else if (lines[i].find("$priv_api_types") != -1) {
+			strnew += "\t<array>\n";
+			for (uint64_t j = 0; j < sizeof(api_info) / sizeof(api_info[0]); ++j) {
+				int api_access = p_preset->get(vformat("privacy/%s_access_reasons", api_info[j].prop_name));
+				if (api_access != 0) {
+					strnew += "\t\t<dict>\n";
+					strnew += "\t\t\t<key>NSPrivacyAccessedAPITypeReasons</key>\n";
+					strnew += "\t\t\t<array>\n";
+					for (int k = 0; api_info[j].prop_flag_value[k] != String(); k++) {
+						if (api_access & (1 << k)) {
+							strnew += vformat("\t\t\t\t<string>%s</string>\n", api_info[j].prop_flag_value[k]);
+						}
+					}
+					strnew += "\t\t\t</array>\n";
+					strnew += "\t\t\t<key>NSPrivacyAccessedAPIType</key>\n";
+					strnew += vformat("\t\t\t<string>%s</string>\n", api_info[j].type_name);
+					strnew += "\t\t</dict>\n";
+				}
+			}
+			strnew += "\t</array>\n";
 		} else {
 			strnew += lines[i] + "\n";
 		}
@@ -1003,98 +1168,6 @@ Error EditorExportPlatformIOS::_export_loading_screen_file(const Ref<EditorExpor
 			return ERR_FILE_CANT_WRITE;
 		}
 	}
-
-	return OK;
-}
-
-Error EditorExportPlatformIOS::_export_loading_screen_images(const Ref<EditorExportPreset> &p_preset, const String &p_dest_dir) {
-	DirAccess *da = DirAccess::open(p_dest_dir);
-	ERR_FAIL_COND_V_MSG(!da, ERR_CANT_OPEN, "Cannot open directory '" + p_dest_dir + "'.");
-
-	for (uint64_t i = 0; i < sizeof(loading_screen_infos) / sizeof(loading_screen_infos[0]); ++i) {
-		LoadingScreenInfo info = loading_screen_infos[i];
-		String loading_screen_file = p_preset->get(info.preset_key);
-
-		Color boot_bg_color = ProjectSettings::get_singleton()->get("application/boot_splash/bg_color");
-		String boot_logo_path = ProjectSettings::get_singleton()->get("application/boot_splash/image");
-		bool boot_logo_scale = ProjectSettings::get_singleton()->get("application/boot_splash/fullsize");
-
-		if (loading_screen_file.size() > 0) {
-			// Load custom loading screens, and resize if required.
-			Ref<Image> img = memnew(Image);
-			Error err = ImageLoader::load_image(loading_screen_file, img);
-			if (err != OK) {
-				ERR_PRINT("Invalid loading screen (" + String(info.preset_key) + "): '" + loading_screen_file + "'.");
-				return ERR_UNCONFIGURED;
-			}
-			if (img->get_width() != info.width || img->get_height() != info.height) {
-				WARN_PRINT("Loading screen (" + String(info.preset_key) + "): '" + loading_screen_file + "' has incorrect size (" + String::num_int64(img->get_width()) + "x" + String::num_int64(img->get_height()) + ") and was automatically resized to " + String::num_int64(info.width) + "x" + String::num_int64(info.height) + ".");
-				float aspect_ratio = (float)img->get_width() / (float)img->get_height();
-				if (boot_logo_scale) {
-					if (info.height * aspect_ratio <= info.width) {
-						img->resize(info.height * aspect_ratio, info.height, (Image::Interpolation)(p_preset->get("application/launch_screens_interpolation").operator int()));
-					} else {
-						img->resize(info.width, info.width / aspect_ratio, (Image::Interpolation)(p_preset->get("application/launch_screens_interpolation").operator int()));
-					}
-				}
-				Ref<Image> new_img = memnew(Image);
-				new_img->create(info.width, info.height, false, Image::FORMAT_RGBA8);
-				new_img->fill(boot_bg_color);
-				_blend_and_rotate(new_img, img, false);
-				err = new_img->save_png(p_dest_dir + info.export_name);
-			} else {
-				err = da->copy(loading_screen_file, p_dest_dir + info.export_name);
-			}
-			if (err) {
-				memdelete(da);
-				String err_str = String("Failed to export loading screen (") + info.preset_key + ") from path '" + loading_screen_file + "'.";
-				ERR_PRINT(err_str.utf8().get_data());
-				return err;
-			}
-		} else {
-			// Generate loading screen from the splash screen
-			Ref<Image> img = memnew(Image);
-			img->create(info.width, info.height, false, Image::FORMAT_RGBA8);
-			img->fill(boot_bg_color);
-
-			Ref<Image> img_bs;
-
-			if (boot_logo_path.length() > 0) {
-				img_bs = Ref<Image>(memnew(Image));
-				ImageLoader::load_image(boot_logo_path, img_bs);
-			}
-			if (!img_bs.is_valid()) {
-				img_bs = Ref<Image>(memnew(Image(boot_splash_png)));
-			}
-			if (img_bs.is_valid()) {
-				float aspect_ratio = (float)img_bs->get_width() / (float)img_bs->get_height();
-				if (info.rotate) {
-					if (boot_logo_scale) {
-						if (info.width * aspect_ratio <= info.height) {
-							img_bs->resize(info.width * aspect_ratio, info.width, (Image::Interpolation)(p_preset->get("application/launch_screens_interpolation").operator int()));
-						} else {
-							img_bs->resize(info.height, info.height / aspect_ratio, (Image::Interpolation)(p_preset->get("application/launch_screens_interpolation").operator int()));
-						}
-					}
-				} else {
-					if (boot_logo_scale) {
-						if (info.height * aspect_ratio <= info.width) {
-							img_bs->resize(info.height * aspect_ratio, info.height, (Image::Interpolation)(p_preset->get("application/launch_screens_interpolation").operator int()));
-						} else {
-							img_bs->resize(info.width, info.width / aspect_ratio, (Image::Interpolation)(p_preset->get("application/launch_screens_interpolation").operator int()));
-						}
-					}
-				}
-				_blend_and_rotate(img, img_bs, info.rotate);
-			}
-			Error err = img->save_png(p_dest_dir + info.export_name);
-			if (err) {
-				String err_str = String("Failed to export loading screen (") + info.preset_key + ") from splash screen.";
-				WARN_PRINT(err_str.utf8().get_data());
-			}
-		}
-	}
-	memdelete(da);
 
 	return OK;
 }
@@ -1833,6 +1906,7 @@ Error EditorExportPlatformIOS::export_project(const Ref<EditorExportPreset> &p_p
 	files_to_parse.insert("godot_ios.xcodeproj/xcshareddata/xcschemes/godot_ios.xcscheme");
 	files_to_parse.insert("godot_ios/godot_ios.entitlements");
 	files_to_parse.insert("godot_ios/Launch Screen.storyboard");
+	files_to_parse.insert("PrivacyInfo.xcprivacy");
 
 	IOSConfigData config_data = {
 		pkg_name,
@@ -2027,9 +2101,6 @@ Error EditorExportPlatformIOS::export_project(const Ref<EditorExportPreset> &p_p
 		return err;
 	}
 
-	bool use_storyboard = p_preset->get("storyboard/use_launch_screen_storyboard");
-
-	String launch_image_path = dest_dir + binary_name + "/Images.xcassets/LaunchImage.launchimage/";
 	String splash_image_path = dest_dir + binary_name + "/Images.xcassets/SplashImage.imageset/";
 
 	DirAccess *launch_screen_da = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
@@ -2038,29 +2109,9 @@ Error EditorExportPlatformIOS::export_project(const Ref<EditorExportPreset> &p_p
 		return ERR_CANT_CREATE;
 	}
 
-	if (use_storyboard) {
-		print_line("Using Launch Storyboard");
+	print_line("Exporting launch screen storyboard");
 
-		if (launch_screen_da->change_dir(launch_image_path) == OK) {
-			launch_screen_da->erase_contents_recursive();
-			launch_screen_da->remove(launch_image_path);
-		}
-
-		err = _export_loading_screen_file(p_preset, splash_image_path);
-	} else {
-		print_line("Using Launch Images");
-
-		const String launch_screen_path = dest_dir + binary_name + "/Launch Screen.storyboard";
-
-		launch_screen_da->remove(launch_screen_path);
-
-		if (launch_screen_da->change_dir(splash_image_path) == OK) {
-			launch_screen_da->erase_contents_recursive();
-			launch_screen_da->remove(splash_image_path);
-		}
-
-		err = _export_loading_screen_images(p_preset, launch_image_path);
-	}
+	err = _export_loading_screen_file(p_preset, splash_image_path);
 
 	memdelete(launch_screen_da);
 
@@ -2188,6 +2239,27 @@ bool EditorExportPlatformIOS::has_valid_project_configuration(const Ref<EditorEx
 	if (!is_package_name_valid(identifier, &pn_err)) {
 		err += TTR("Invalid Identifier:") + " " + pn_err + "\n";
 		valid = false;
+	}
+	{
+		int access = p_preset->get("privacy/file_timestamp_access_reasons");
+		if (access == 0) {
+			err += TTR("At least one file timestamp access reason should be selected.") + "\n";
+			valid = false;
+		}
+	}
+	{
+		int access = p_preset->get("privacy/disk_space_access_reasons");
+		if (access == 0) {
+			err += TTR("At least one disk space access reason should be selected.") + "\n";
+			valid = false;
+		}
+	}
+	{
+		int access = p_preset->get("privacy/system_boot_time_access_reasons");
+		if (access == 0) {
+			err += TTR("At least one system boot time access reason should be selected.") + "\n";
+			valid = false;
+		}
 	}
 
 	String etc_error = test_etc2_or_pvrtc();

@@ -582,7 +582,9 @@ bool SceneTree::iteration(float p_time) {
 
 	flush_transform_notifications();
 
-	MainLoop::iteration(p_time);
+	if (MainLoop::iteration(p_time)) {
+		_quit = true;
+	}
 	physics_process_time = p_time;
 
 	emit_signal("physics_frame");
@@ -623,7 +625,9 @@ bool SceneTree::idle(float p_time) {
 
 	root_lock++;
 
-	MainLoop::idle(p_time);
+	if (MainLoop::idle(p_time)) {
+		_quit = true;
+	}
 
 	idle_process_time = p_time;
 
@@ -724,9 +728,7 @@ bool SceneTree::idle(float p_time) {
 
 #endif
 
-	if (_physics_interpolation_enabled) {
-		VisualServer::get_singleton()->pre_draw(true);
-	}
+	VisualServer::get_singleton()->pre_draw(true);
 
 	return _quit;
 }
@@ -940,11 +942,11 @@ Ref<Material> SceneTree::get_debug_navigation_material() {
 		return navigation_material;
 	}
 
-	Ref<SpatialMaterial> line_material = Ref<SpatialMaterial>(memnew(SpatialMaterial));
-	line_material->set_flag(SpatialMaterial::FLAG_UNSHADED, true);
-	line_material->set_feature(SpatialMaterial::FEATURE_TRANSPARENT, true);
-	line_material->set_flag(SpatialMaterial::FLAG_SRGB_VERTEX_COLOR, true);
-	line_material->set_flag(SpatialMaterial::FLAG_ALBEDO_FROM_VERTEX_COLOR, true);
+	Ref<Material3D> line_material = Ref<Material3D>(memnew(SpatialMaterial));
+	line_material->set_flag(Material3D::FLAG_UNSHADED, true);
+	line_material->set_feature(Material3D::FEATURE_TRANSPARENT, true);
+	line_material->set_flag(Material3D::FLAG_SRGB_VERTEX_COLOR, true);
+	line_material->set_flag(Material3D::FLAG_ALBEDO_FROM_VERTEX_COLOR, true);
 	line_material->set_albedo(get_debug_navigation_color());
 
 	navigation_material = line_material;
@@ -957,11 +959,11 @@ Ref<Material> SceneTree::get_debug_navigation_disabled_material() {
 		return navigation_disabled_material;
 	}
 
-	Ref<SpatialMaterial> line_material = Ref<SpatialMaterial>(memnew(SpatialMaterial));
-	line_material->set_flag(SpatialMaterial::FLAG_UNSHADED, true);
-	line_material->set_feature(SpatialMaterial::FEATURE_TRANSPARENT, true);
-	line_material->set_flag(SpatialMaterial::FLAG_SRGB_VERTEX_COLOR, true);
-	line_material->set_flag(SpatialMaterial::FLAG_ALBEDO_FROM_VERTEX_COLOR, true);
+	Ref<Material3D> line_material = Ref<Material3D>(memnew(SpatialMaterial));
+	line_material->set_flag(Material3D::FLAG_UNSHADED, true);
+	line_material->set_feature(Material3D::FEATURE_TRANSPARENT, true);
+	line_material->set_flag(Material3D::FLAG_SRGB_VERTEX_COLOR, true);
+	line_material->set_flag(Material3D::FLAG_ALBEDO_FROM_VERTEX_COLOR, true);
 	line_material->set_albedo(get_debug_navigation_disabled_color());
 
 	navigation_disabled_material = line_material;
@@ -973,11 +975,11 @@ Ref<Material> SceneTree::get_debug_collision_material() {
 		return collision_material;
 	}
 
-	Ref<SpatialMaterial> line_material = Ref<SpatialMaterial>(memnew(SpatialMaterial));
-	line_material->set_flag(SpatialMaterial::FLAG_UNSHADED, true);
-	line_material->set_feature(SpatialMaterial::FEATURE_TRANSPARENT, true);
-	line_material->set_flag(SpatialMaterial::FLAG_SRGB_VERTEX_COLOR, true);
-	line_material->set_flag(SpatialMaterial::FLAG_ALBEDO_FROM_VERTEX_COLOR, true);
+	Ref<Material3D> line_material = Ref<Material3D>(memnew(SpatialMaterial));
+	line_material->set_flag(Material3D::FLAG_UNSHADED, true);
+	line_material->set_feature(Material3D::FEATURE_TRANSPARENT, true);
+	line_material->set_flag(Material3D::FLAG_SRGB_VERTEX_COLOR, true);
+	line_material->set_flag(Material3D::FLAG_ALBEDO_FROM_VERTEX_COLOR, true);
 	line_material->set_albedo(get_debug_collisions_color());
 
 	collision_material = line_material;
@@ -992,11 +994,11 @@ Ref<ArrayMesh> SceneTree::get_debug_contact_mesh() {
 
 	debug_contact_mesh = Ref<ArrayMesh>(memnew(ArrayMesh));
 
-	Ref<SpatialMaterial> mat = Ref<SpatialMaterial>(memnew(SpatialMaterial));
-	mat->set_flag(SpatialMaterial::FLAG_UNSHADED, true);
-	mat->set_feature(SpatialMaterial::FEATURE_TRANSPARENT, true);
-	mat->set_flag(SpatialMaterial::FLAG_SRGB_VERTEX_COLOR, true);
-	mat->set_flag(SpatialMaterial::FLAG_ALBEDO_FROM_VERTEX_COLOR, true);
+	Ref<Material3D> mat = Ref<Material3D>(memnew(SpatialMaterial));
+	mat->set_flag(Material3D::FLAG_UNSHADED, true);
+	mat->set_feature(Material3D::FEATURE_TRANSPARENT, true);
+	mat->set_flag(Material3D::FLAG_SRGB_VERTEX_COLOR, true);
+	mat->set_flag(Material3D::FLAG_ALBEDO_FROM_VERTEX_COLOR, true);
 	mat->set_albedo(get_debug_collision_contact_color());
 
 	Vector3 diamond[6] = {
@@ -1231,6 +1233,21 @@ Array SceneTree::_get_nodes_in_group(const StringName &p_group) {
 	}
 
 	return ret;
+}
+
+Node *SceneTree::_get_first_node_in_group(const StringName &p_group) {
+	Map<StringName, Group>::Element *E = group_map.find(p_group);
+	if (!E) {
+		return nullptr; // No group.
+	}
+
+	_update_group_order(E->get()); // Update order just in case.
+
+	if (E->get().nodes.empty()) {
+		return nullptr;
+	}
+
+	return E->get().nodes[0];
 }
 
 bool SceneTree::has_group(const StringName &p_identifier) const {
@@ -2099,6 +2116,7 @@ void SceneTree::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_group", "group", "property", "value"), &SceneTree::set_group);
 
 	ClassDB::bind_method(D_METHOD("get_nodes_in_group", "group"), &SceneTree::_get_nodes_in_group);
+	ClassDB::bind_method(D_METHOD("get_first_node_in_group", "group"), &SceneTree::_get_first_node_in_group);
 
 	ClassDB::bind_method(D_METHOD("set_current_scene", "child_node"), &SceneTree::set_current_scene);
 	ClassDB::bind_method(D_METHOD("get_current_scene"), &SceneTree::get_current_scene);
