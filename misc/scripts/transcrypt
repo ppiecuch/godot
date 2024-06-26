@@ -17,15 +17,30 @@ esac
 # that can be be found in the LICENSE file.
 #
 
+### OVERRIDES
+
+# Disable any global grep options, to avoid problems like '--colors=always'
+GREP_OPTIONS=""
+
 ##### CONSTANTS
 
 # the release version of this script
-readonly VERSION='2.2.0'
+readonly VERSION='2.2.1'
 
 # the default cipher to utilize
 readonly DEFAULT_CIPHER='aes-256-cbc'
 
+readonly LOG_FILE=$(git config --get --local transcrypt.log-file)
+
 ##### FUNCTIONS
+
+# log message to file
+log() {
+	local msg=$1
+	if [[ ! -z $LOG_FILE ]]; then
+		echo "$(date +%T): $msg" >> "$LOG_FILE"
+	fi
+}
 
 # load encryption password
 # by default is stored in git config, modify this function to move elsewhere
@@ -55,10 +70,10 @@ realpath() {
 	# canonicalize path
 	local dirname=
 	if [[ -d $abspath ]]; then
-		dirname=$(cd "$abspath" && pwd -P)
+		dirname=$(cd "$abspath" >/dev/null && pwd -P)
 		abspath=$dirname
 	elif [[ -e $abspath ]]; then
-		dirname=$(cd "${abspath%/*}/" 2>/dev/null && pwd -P)
+		dirname=$(cd "${abspath%/*}/" >/dev/null 2>/dev/null && pwd -P)
 		abspath=$dirname/${abspath##*/}
 	fi
 
@@ -117,6 +132,7 @@ warn() {
 	shift
 	# shellcheck disable=SC2059
 	printf "transcrypt: $fmt\n" "$@" >&2
+	log $(printf "WARN: $fmt\n" "$@")
 }
 
 # print a message to stderr and exit with either
@@ -129,6 +145,26 @@ die() {
 	fi
 	warn "$@"
 	exit "$st"
+}
+
+# Detect OpenSSL major version 3 or later which requires a compatibility
+# work-around to include the prefix 'Salted__' and salt value when encrypting.
+#
+# Note that the LibreSSL project's version of the openssl command does NOT
+# require this work-around for major version 3.
+#
+# See #133 #147
+is_salt_prefix_workaround_required() {
+	openssl_path=$(git config --get --local transcrypt.openssl-path 2>/dev/null || printf '%s' "$openssl_path")
+
+	openssl_project=$($openssl_path version | cut -d' ' -f1)
+	openssl_major_version=$($openssl_path version | cut -d' ' -f2 | cut -d'.' -f1)
+
+	if [ "$openssl_project" == "OpenSSL" ] && [ "$openssl_major_version" -ge "3" ]; then
+		echo 'true'
+	else
+		echo ''
+	fi
 }
 
 # The `decryption -> encryption` process on an unchanged file must be
@@ -159,20 +195,20 @@ git_clean() {
 		openssl_path=$(git config --get --local transcrypt.openssl-path)
 		salt=$("${openssl_path}" dgst -hmac "${filename}:${password}" -sha256 "$tempfile" | tr -d '\r\n' | tail -c16)
 
-		openssl_major_version=$($openssl_path version | cut -d' ' -f2 | cut -d'.' -f1)
-		if [ "$openssl_major_version" -ge "3" ]; then
+		if [ "$(is_salt_prefix_workaround_required)" == "true" ]; then
 			# Encrypt the file to base64, ensuring it includes the prefix 'Salted__' with the salt. #133
 			(
 				echo -n "Salted__" && echo -n "$salt" | xxd -r -p &&
 					# Encrypt file to binary ciphertext
 					ENC_PASS=$password "$openssl_path" enc -e "-${cipher}" -md MD5 -pass env:ENC_PASS -S "$salt" -in "$tempfile"
 			) |
-				openssl base64
+				"$openssl_path" base64
 		else
 			# Encrypt file to base64 ciphertext
 			ENC_PASS=$password "$openssl_path" enc -e -a "-${cipher}" -md MD5 -pass env:ENC_PASS -S "$salt" -in "$tempfile"
 		fi
 	fi
+	log "git_clean($filename)"
 }
 
 git_smudge() {
@@ -182,6 +218,7 @@ git_smudge() {
 	password=$(load_password)
 	openssl_path=$(git config --get --local transcrypt.openssl-path)
 	tee "$tempfile" | ENC_PASS=$password "$openssl_path" enc -d "-${cipher}" -md MD5 -pass env:ENC_PASS -a 2>/dev/null || cat "$tempfile"
+	log "git_smudge($tempfile)"
 }
 
 git_textconv() {
@@ -194,6 +231,7 @@ git_textconv() {
 	password=$(load_password)
 	openssl_path=$(git config --get --local transcrypt.openssl-path)
 	ENC_PASS=$password "$openssl_path" enc -d "-${cipher}" -md MD5 -pass env:ENC_PASS -a -in "$filename" 2>/dev/null || cat "$filename"
+	log "git_textconv($filename)"
 }
 
 # shellcheck disable=SC2005,SC2002,SC2181
@@ -205,12 +243,11 @@ git_merge() {
 	# Look up name of the incoming "theirs" branch/ref being merged in.
 	# TODO There must be a better way of doing this than relying on this reflog
 	#      action environment variable, but I don't know what it is
-	THEIRS_LABEL="theirs"
-	if [[ "$GIT_REFLOG_ACTION" = "merge "* ]]; then
+	if [[ "${GIT_REFLOG_ACTION:-}" = "merge "* ]]; then
 		THEIRS_LABEL=$(echo "$GIT_REFLOG_ACTION" | awk '{print $2}')
-		if [[ ! "$THEIRS_LABEL" ]]; then
-			THEIRS_LABEL="theirs"
-		fi
+	fi
+	if [[ ! "${THEIRS_LABEL:-}" ]]; then
+		THEIRS_LABEL="theirs"
 	fi
 	# Decrypt BASE $1, LOCAL $2, and REMOTE $3 versions of file being merged
 	echo "$(cat "$1" | "${TRANSCRYPT_PATH}" smudge)" >"$1"
@@ -235,6 +272,7 @@ git_merge() {
 	# Now we use the `clean` script to encrypt the merged file contents back to the
 	# temp file $2 where Git expects to find the merge result content.
 	cat "$5" | "${TRANSCRYPT_PATH}" clean "$5" >"$2"
+	log "git_merge()"
 }
 
 # shellcheck disable=SC2155
@@ -343,7 +381,13 @@ run_safety_checks() {
 		git update-index -q --really-refresh
 		# check if the repo is dirty
 		if ! git diff-index --quiet HEAD --; then
-			die 1 'the repo is dirty; commit or stash your changes before running transcrypt'
+			warn 'the repo is dirty; commit or stash your changes before running transcrypt\n'
+ 			# Output a human friendly summary of dirty files, with fallback to
+ 			# less friendly output formats if nicer ones aren't supported
+ 			git diff-index --name-status HEAD -- 2>/dev/null ||
+ 				git diff-index --stat HEAD -- 2>/dev/null ||
+ 				git diff-index HEAD --
+ 			exit 1
 		fi
 	fi
 }
@@ -472,7 +516,7 @@ stage_rekeyed_files() {
 	encrypted_files=$(git ls-crypt)
 	if [[ $encrypted_files ]] && [[ $IS_BARE == 'false' ]]; then
 		# touch all encrypted files to prevent stale stat info
-		cd "$REPO" || die 1 'could not change into the "%s" directory' "$REPO"
+		cd "$REPO" >/dev/null || die 1 'could not change into the "%s" directory' "$REPO"
 		# shellcheck disable=SC2086
 		touch $encrypted_files
 		# shellcheck disable=SC2086
@@ -612,7 +656,7 @@ force_checkout() {
 		# but we already made sure the repo was clean during the safety checks
 		local encrypted_files
 		encrypted_files=$(git ls-crypt)
-		cd "$REPO" || die 1 'could not change into the "%s" directory' "$REPO"
+		cd "$REPO" >/dev/null || die 1 'could not change into the "%s" directory' "$REPO"
 		IFS=$'\n'
 		for file in $encrypted_files; do
 			rm -f "$file"
@@ -703,7 +747,7 @@ uninstall_transcrypt() {
 		local encrypted_files
 		encrypted_files=$(git ls-crypt)
 		if [[ $encrypted_files ]] && [[ $IS_BARE == 'false' ]]; then
-			cd "$REPO" || die 1 'could not change into the "%s" directory' "$REPO"
+			cd "$REPO" >/dev/null || die 1 'could not change into the "%s" directory' "$REPO"
 			# shellcheck disable=SC2086
 			touch $encrypted_files
 		fi
@@ -799,7 +843,7 @@ upgrade_transcrypt() {
 # list all of the currently encrypted files in the repository
 list_files() {
 	if [[ $IS_BARE == 'false' ]]; then
-		cd "$REPO" || die 1 'could not change into the "%s" directory' "$REPO"
+		cd "$REPO" >/dev/null || die 1 'could not change into the "%s" directory' "$REPO"
 		git -c core.quotePath=false ls-files | git -c core.quotePath=false check-attr --stdin filter | awk 'BEGIN { FS = ":" }; /crypt$/{ print $1 }'
 	fi
 }
@@ -1219,7 +1263,7 @@ fi
 # ensure the git attributes file exists
 if [[ ! -f $GIT_ATTRIBUTES ]]; then
 	mkdir -p "${GIT_ATTRIBUTES%/*}"
-	printf '#pattern  filter=crypt diff=crypt merge=crypt\n' >"$GIT_ATTRIBUTES"
+	printf '#pattern  filter=crypt diff=crypt merge=crypt\n' > "$GIT_ATTRIBUTES"
 fi
 
 printf 'The repository has been successfully configured by transcrypt.\n'
