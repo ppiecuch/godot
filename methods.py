@@ -1166,6 +1166,7 @@ def get_compiler_architecture(env):
         return None
     return next(iter(arch.split("-")), None)
 
+
 def is_vanilla_clang(env):
     if not using_clang(env):
         return False
