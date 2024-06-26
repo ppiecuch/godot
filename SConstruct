@@ -357,8 +357,8 @@ opts.Update(env_base)
 env_base["platform"] = selected_platform  # Must always be re-set after calling opts.Update().
 Help(opts.GenerateHelpText(env_base))
 
-env_base.Prepend(CPPPATH=["#", "#thirdparty", "#modules", "#modules/gdextensions"]) # add default include paths
-env_base.Append(CPPDEFINES=["_GODOT_"]) # This is GODOT
+env_base.Prepend(CPPPATH=["#", "#thirdparty", "#modules", "#modules/gdextensions"])  # add default include paths
+env_base.Append(CPPDEFINES=["_GODOT_"])  # This is GODOT
 
 # configure ENV for platform
 env_base.platform_exporters = platform_exporters
