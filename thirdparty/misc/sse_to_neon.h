@@ -1,5 +1,5 @@
-#ifndef SSE2NEON_H
-#define SSE2NEON_H
+#ifndef SSE_TO_NEON_H
+#define SSE_TO_NEON_H
 
 // This header file provides a simple API translation layer
 // between SSE intrinsics to their corresponding Arm/Aarch64 NEON versions
@@ -26,52 +26,54 @@
 //   Syoyo Fujita <syoyo@lighttransport.com>
 //   Brecht Van Lommel <brecht@blender.org>
 
-/*
- * sse2neon is freely redistributable under the MIT License.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
 
-/* Tunable configurations */
+// sse_to_neon is freely redistributable under the mit license.
+// ------------------------------------------------------------
+//
+// permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "software"), to deal
+// in the software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the software, and to permit persons to whom the software is
+// furnished to do so, subject to the following conditions:
+//
+// the above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the software.
+//
+// the software is provided "as is", without warranty of any kind, express or
+// implied, including but not limited to the warranties of merchantability,
+// fitness for a particular purpose and noninfringement. in no event shall the
+// authors or copyright holders be liable for any claim, damages or other
+// liability, whether in an action of contract, tort or otherwise, arising from,
+// out of or in connection with the software or the use or other dealings in the
+// software.
 
-/* Enable precise implementation of math operations
- * This would slow down the computation a bit, but gives consistent result with
- * x86 SSE. (e.g. would solve a hole or NaN pixel in the rendering result)
- */
-/* _mm_min|max_ps|ss|pd|sd */
+
+// Tunable configurations
+// ----------------------
+// Enable precise implementation of math operations
+// This would slow down the computation a bit, but gives consistent result with
+// x86 SSE. (e.g. would solve a hole or NaN pixel in the rendering result)
+
+
+// _mm_min|max_ps|ss|pd|sd
 #ifndef SSE2NEON_PRECISE_MINMAX
 #define SSE2NEON_PRECISE_MINMAX (0)
 #endif
-/* _mm_rcp_ps and _mm_div_ps */
+// _mm_rcp_ps and _mm_div_ps
 #ifndef SSE2NEON_PRECISE_DIV
 #define SSE2NEON_PRECISE_DIV (0)
 #endif
-/* _mm_sqrt_ps and _mm_rsqrt_ps */
+// _mm_sqrt_ps and _mm_rsqrt_ps
 #ifndef SSE2NEON_PRECISE_SQRT
 #define SSE2NEON_PRECISE_SQRT (0)
 #endif
-/* _mm_dp_pd */
+// _mm_dp_pd
 #ifndef SSE2NEON_PRECISE_DP
 #define SSE2NEON_PRECISE_DP (0)
 #endif
 
-/* compiler specific definitions */
+// compiler specific definitions
 #if defined(__GNUC__) || defined(__clang__)
 #pragma push_macro("FORCE_INLINE")
 #pragma push_macro("ALIGN_STRUCT")
@@ -91,7 +93,7 @@
 #define _sse2neon_unlikely(x) (x)
 #endif
 
-/* C language does not allow initializing a variable with a function call. */
+// C language does not allow initializing a variable with a function call.
 #ifdef __cplusplus
 #define _sse2neon_const static const
 #else
@@ -101,14 +103,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-/* Architecture-specific build options */
-/* FIXME: #pragma GCC push_options is only available on GCC */
+// Architecture-specific build options
+// FIXME: #pragma GCC push_options is only available on GCC
 #if defined(__GNUC__)
 #if defined(__arm__) && __ARM_ARCH == 7
-/* According to ARM C Language Extensions Architecture specification,
- * __ARM_NEON is defined to a value indicating the Advanced SIMD (NEON)
- * architecture supported.
- */
+// According to ARM C Language Extensions Architecture specification,
+// __ARM_NEON is defined to a value indicating the Advanced SIMD (NEON)
+// architecture supported.
 #if !defined(__ARM_NEON) || !defined(__ARM_NEON__)
 #error "You must enable NEON instructions (e.g. -mfpu=neon) to use SSE2NEON."
 #endif
@@ -141,14 +142,13 @@
 #endif
 #endif
 
-/* Rounding functions require either Aarch64 instructions or libm failback */
+// Rounding functions require either Aarch64 instructions or libm failback
 #if !defined(__aarch64__)
 #include <math.h>
 #endif
 
-/* "__has_builtin" can be used to query support for built-in functions
- * provided by gcc/clang and other compilers that support it.
- */
+// "__has_builtin" can be used to query support for built-in functions
+// provided by gcc/clang and other compilers that support it.
 #ifndef __has_builtin /* GCC prior to 10 or non-clang compilers */
 /* Compatibility with gcc <= 9 */
 #if defined(__GNUC__) && (__GNUC__ <= 9)
@@ -160,18 +160,16 @@
 #endif
 #endif
 
-/**
- * MACRO for shuffle parameter for _mm_shuffle_ps().
- * Argument fp3 is a digit[0123] that represents the fp from argument "b"
- * of mm_shuffle_ps that will be placed in fp3 of result. fp2 is the same
- * for fp2 in result. fp1 is a digit[0123] that represents the fp from
- * argument "a" of mm_shuffle_ps that will be places in fp1 of result.
- * fp0 is the same for fp0 of result.
- */
+// MACRO for shuffle parameter for _mm_shuffle_ps().
+// Argument fp3 is a digit[0123] that represents the fp from argument "b"
+// of mm_shuffle_ps that will be placed in fp3 of result. fp2 is the same
+// for fp2 in result. fp1 is a digit[0123] that represents the fp from
+// argument "a" of mm_shuffle_ps that will be places in fp1 of result.
+// fp0 is the same for fp0 of result.
 #define _MM_SHUFFLE(fp3, fp2, fp1, fp0) \
     (((fp3) << 6) | ((fp2) << 4) | ((fp1) << 2) | ((fp0)))
 
-/* Rounding mode macros. */
+// Rounding mode macros.
 #define _MM_FROUND_TO_NEAREST_INT 0x00
 #define _MM_FROUND_TO_NEG_INF 0x01
 #define _MM_FROUND_TO_POS_INF 0x02
@@ -189,24 +187,23 @@
 #define _MM_ROUND_DOWN 0x2000
 #define _MM_ROUND_UP 0x4000
 #define _MM_ROUND_TOWARD_ZERO 0x6000
-/* Flush zero mode macros. */
+// Flush zero mode macros.
 #define _MM_FLUSH_ZERO_MASK 0x8000
 #define _MM_FLUSH_ZERO_ON 0x8000
 #define _MM_FLUSH_ZERO_OFF 0x0000
-/* Denormals are zeros mode macros. */
+// Denormals are zeros mode macros.
 #define _MM_DENORMALS_ZERO_MASK 0x0040
 #define _MM_DENORMALS_ZERO_ON 0x0040
 #define _MM_DENORMALS_ZERO_OFF 0x0000
 
-/* indicate immediate constant argument in a given range */
+// indicate immediate constant argument in a given range
 #define __constrange(a, b) const
 
-/* A few intrinsics accept traditional data types like ints or floats, but
- * most operate on data types that are specific to SSE.
- * If a vector type ends in d, it contains doubles, and if it does not have
- * a suffix, it contains floats. An integer vector type can contain any type
- * of integer, from chars to shorts to unsigned long longs.
- */
+// A few intrinsics accept traditional data types like ints or floats, but
+// most operate on data types that are specific to SSE.
+// If a vector type ends in d, it contains doubles, and if it does not have
+// a suffix, it contains floats. An integer vector type can contain any type
+// of integer, from chars to shorts to unsigned long longs.
 typedef int64x1_t __m64;
 typedef float32x4_t __m128; /* 128-bit vector containing 4 floats */
 // On ARM 32-bit architecture, the float64x2_t is not supported.
@@ -229,7 +226,7 @@ typedef int64x2_t __m128i; /* 128-bit vector containing integers */
 #endif
 #endif
 
-/* type-safe casting between types */
+// type-safe casting between types
 
 #define vreinterpretq_m128_f16(x) vreinterpretq_f32_f16(x)
 #define vreinterpretq_m128_f32(x) (x)
@@ -381,7 +378,7 @@ typedef union ALIGN_STRUCT(16) SIMDVec {
 #define vreinterpretq_nth_u32_m128i(x, n) (((SIMDVec *) &x)->m128_u32[n])
 #define vreinterpretq_nth_u8_m128i(x, n) (((SIMDVec *) &x)->m128_u8[n])
 
-/* SSE macros */
+// SSE macros
 #define _MM_GET_FLUSH_ZERO_MODE _sse2neon_mm_get_flush_zero_mode
 #define _MM_SET_FLUSH_ZERO_MODE _sse2neon_mm_set_flush_zero_mode
 #define _MM_GET_DENORMALS_ZERO_MODE _sse2neon_mm_get_denormals_zero_mode
@@ -416,7 +413,7 @@ FORCE_INLINE __m128 _mm_round_ps(__m128, int);
 // SSE4.2
 FORCE_INLINE uint32_t _mm_crc32_u8(uint32_t, uint8_t);
 
-/* Backwards compatibility for compilers with lack of specific type support */
+// Backwards compatibility for compilers with lack of specific type support
 
 // Older gcc does not define vld1q_u8_x4 type
 #if defined(__GNUC__) && !defined(__clang__) &&                        \
@@ -440,84 +437,83 @@ FORCE_INLINE uint8x16x4_t _sse2neon_vld1q_u8_x4(const uint8_t *p)
 }
 #endif
 
-/* Function Naming Conventions
- * The naming convention of SSE intrinsics is straightforward. A generic SSE
- * intrinsic function is given as follows:
- *   _mm_<name>_<data_type>
- *
- * The parts of this format are given as follows:
- * 1. <name> describes the operation performed by the intrinsic
- * 2. <data_type> identifies the data type of the function's primary arguments
- *
- * This last part, <data_type>, is a little complicated. It identifies the
- * content of the input values, and can be set to any of the following values:
- * + ps - vectors contain floats (ps stands for packed single-precision)
- * + pd - vectors cantain doubles (pd stands for packed double-precision)
- * + epi8/epi16/epi32/epi64 - vectors contain 8-bit/16-bit/32-bit/64-bit
- *                            signed integers
- * + epu8/epu16/epu32/epu64 - vectors contain 8-bit/16-bit/32-bit/64-bit
- *                            unsigned integers
- * + si128 - unspecified 128-bit vector or 256-bit vector
- * + m128/m128i/m128d - identifies input vector types when they are different
- *                      than the type of the returned vector
- *
- * For example, _mm_setzero_ps. The _mm implies that the function returns
- * a 128-bit vector. The _ps at the end implies that the argument vectors
- * contain floats.
- *
- * A complete example: Byte Shuffle - pshufb (_mm_shuffle_epi8)
- *   // Set packed 16-bit integers. 128 bits, 8 short, per 16 bits
- *   __m128i v_in = _mm_setr_epi16(1, 2, 3, 4, 5, 6, 7, 8);
- *   // Set packed 8-bit integers
- *   // 128 bits, 16 chars, per 8 bits
- *   __m128i v_perm = _mm_setr_epi8(1, 0,  2,  3, 8, 9, 10, 11,
- *                                  4, 5, 12, 13, 6, 7, 14, 15);
- *   // Shuffle packed 8-bit integers
- *   __m128i v_out = _mm_shuffle_epi8(v_in, v_perm); // pshufb
- *
- * Data (Number, Binary, Byte Index):
-    +------+------+-------------+------+------+-------------+
-    |      1      |      2      |      3      |      4      | Number
-    +------+------+------+------+------+------+------+------+
-    | 0000 | 0001 | 0000 | 0010 | 0000 | 0011 | 0000 | 0100 | Binary
-    +------+------+------+------+------+------+------+------+
-    |    0 |    1 |    2 |    3 |    4 |    5 |    6 |    7 | Index
-    +------+------+------+------+------+------+------+------+
+// Function Naming Conventions
+// The naming convention of SSE intrinsics is straightforward. A generic SSE
+// intrinsic function is given as follows:
+//   _mm_<name>_<data_type>
+//
+// The parts of this format are given as follows:
+// 1. <name> describes the operation performed by the intrinsic
+// 2. <data_type> identifies the data type of the function's primary arguments
+//
+// This last part, <data_type>, is a little complicated. It identifies the
+// content of the input values, and can be set to any of the following values:
+// + ps - vectors contain floats (ps stands for packed single-precision)
+// + pd - vectors cantain doubles (pd stands for packed double-precision)
+// + epi8/epi16/epi32/epi64 - vectors contain 8-bit/16-bit/32-bit/64-bit
+//                            signed integers
+// + epu8/epu16/epu32/epu64 - vectors contain 8-bit/16-bit/32-bit/64-bit
+//                            unsigned integers
+// + si128 - unspecified 128-bit vector or 256-bit vector
+// + m128/m128i/m128d - identifies input vector types when they are different
+//                      than the type of the returned vector
+//
+// For example, _mm_setzero_ps. The _mm implies that the function returns
+// a 128-bit vector. The _ps at the end implies that the argument vectors
+// contain floats.
+//
+// A complete example: Byte Shuffle - pshufb (_mm_shuffle_epi8)
+//   // Set packed 16-bit integers. 128 bits, 8 short, per 16 bits
+//   __m128i v_in = _mm_setr_epi16(1, 2, 3, 4, 5, 6, 7, 8);
+//   // Set packed 8-bit integers
+//   // 128 bits, 16 chars, per 8 bits
+//   __m128i v_perm = _mm_setr_epi8(1, 0,  2,  3, 8, 9, 10, 11,
+//                                  4, 5, 12, 13, 6, 7, 14, 15);
+//   // Shuffle packed 8-bit integers
+//   __m128i v_out = _mm_shuffle_epi8(v_in, v_perm); // pshufb
+//
+// Data (Number, Binary, Byte Index):
+//  +------+------+-------------+------+------+-------------+
+//  |      1      |      2      |      3      |      4      | Number
+//  +------+------+------+------+------+------+------+------+
+//  | 0000 | 0001 | 0000 | 0010 | 0000 | 0011 | 0000 | 0100 | Binary
+//  +------+------+------+------+------+------+------+------+
+//  |    0 |    1 |    2 |    3 |    4 |    5 |    6 |    7 | Index
+//  +------+------+------+------+------+------+------+------+
+//
+//  +------+------+------+------+------+------+------+------+
+//  |      5      |      6      |      7      |      8      | Number
+//  +------+------+------+------+------+------+------+------+
+//  | 0000 | 0101 | 0000 | 0110 | 0000 | 0111 | 0000 | 1000 | Binary
+//  +------+------+------+------+------+------+------+------+
+//  |    8 |    9 |   10 |   11 |   12 |   13 |   14 |   15 | Index
+//  +------+------+------+------+------+------+------+------+
+// Index (Byte Index):
+//  +------+------+------+------+------+------+------+------+
+//  |    1 |    0 |    2 |    3 |    8 |    9 |   10 |   11 |
+//  +------+------+------+------+------+------+------+------+
+//
+//  +------+------+------+------+------+------+------+------+
+//  |    4 |    5 |   12 |   13 |    6 |    7 |   14 |   15 |
+//  +------+------+------+------+------+------+------+------+
+// Result:
+//  +------+------+------+------+------+------+------+------+
+//  |    1 |    0 |    2 |    3 |    8 |    9 |   10 |   11 | Index
+//  +------+------+------+------+------+------+------+------+
+//  | 0001 | 0000 | 0000 | 0010 | 0000 | 0101 | 0000 | 0110 | Binary
+//  +------+------+------+------+------+------+------+------+
+//  |     256     |      2      |      5      |      6      | Number
+//  +------+------+------+------+------+------+------+------+
+//
+//  +------+------+------+------+------+------+------+------+
+//  |    4 |    5 |   12 |   13 |    6 |    7 |   14 |   15 | Index
+//  +------+------+------+------+------+------+------+------+
+//  | 0000 | 0011 | 0000 | 0111 | 0000 | 0100 | 0000 | 1000 | Binary
+//  +------+------+------+------+------+------+------+------+
+//  |      3      |      7      |      4      |      8      | Number
+//  +------+------+------+------+------+------+-------------+
 
-    +------+------+------+------+------+------+------+------+
-    |      5      |      6      |      7      |      8      | Number
-    +------+------+------+------+------+------+------+------+
-    | 0000 | 0101 | 0000 | 0110 | 0000 | 0111 | 0000 | 1000 | Binary
-    +------+------+------+------+------+------+------+------+
-    |    8 |    9 |   10 |   11 |   12 |   13 |   14 |   15 | Index
-    +------+------+------+------+------+------+------+------+
- * Index (Byte Index):
-    +------+------+------+------+------+------+------+------+
-    |    1 |    0 |    2 |    3 |    8 |    9 |   10 |   11 |
-    +------+------+------+------+------+------+------+------+
-
-    +------+------+------+------+------+------+------+------+
-    |    4 |    5 |   12 |   13 |    6 |    7 |   14 |   15 |
-    +------+------+------+------+------+------+------+------+
- * Result:
-    +------+------+------+------+------+------+------+------+
-    |    1 |    0 |    2 |    3 |    8 |    9 |   10 |   11 | Index
-    +------+------+------+------+------+------+------+------+
-    | 0001 | 0000 | 0000 | 0010 | 0000 | 0101 | 0000 | 0110 | Binary
-    +------+------+------+------+------+------+------+------+
-    |     256     |      2      |      5      |      6      | Number
-    +------+------+------+------+------+------+------+------+
-
-    +------+------+------+------+------+------+------+------+
-    |    4 |    5 |   12 |   13 |    6 |    7 |   14 |   15 | Index
-    +------+------+------+------+------+------+------+------+
-    | 0000 | 0011 | 0000 | 0111 | 0000 | 0100 | 0000 | 1000 | Binary
-    +------+------+------+------+------+------+------+------+
-    |      3      |      7      |      4      |      8      | Number
-    +------+------+------+------+------+------+-------------+
- */
-
-/* Constants for use with _mm_prefetch.  */
+// Constants for use with _mm_prefetch.
 enum _mm_hint {
     _MM_HINT_NTA = 0,  /* load data to L1 and L2 cache, mark it as NTA */
     _MM_HINT_T0 = 1,   /* load data to L1 and L2 cache */
@@ -8798,4 +8794,4 @@ FORCE_INLINE void _sse2neon_mm_set_denormals_zero_mode(unsigned int flag)
 #pragma GCC pop_options
 #endif
 
-#endif
+#endif // SSE_TO_NEON_H
