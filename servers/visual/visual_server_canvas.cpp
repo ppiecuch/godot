@@ -29,8 +29,8 @@
 /**************************************************************************/
 
 #include "visual_server_canvas.h"
-#include "core/math/poly_geometry.h"
 #include "core/fixed_array.h"
+#include "core/math/poly_geometry.h"
 #include "core/math/transform_interpolator.h"
 #include "visual_server_globals.h"
 #include "visual_server_raster.h"
