@@ -297,7 +297,7 @@ static int sr_add_hist(sr_graph_t hgraph, unsigned bins, const Vector<real_t> &y
 static void sr_update_hist(sr_graph_t hgraph, int curve_id, const Vector<real_t> &ys) {
 	_sr_graph *graph = _from_handle(hgraph);
 	ERR_FAIL_NULL_MSG(graph, "Invalid graph handle");
-	ERR_FAIL_INDEX_MSG(curve_id, graph->points.size(), "Invalid curve indec");
+	ERR_FAIL_INDEX_MSG(curve_id, graph->points.size(), "Invalid curve index");
 	_sr_curve *curve = &graph->hists.write[curve_id];
 	curve->buffer = PoolVector2Array();
 	_sr_generate_hist(graph, ys, curve);
@@ -621,7 +621,11 @@ void SRGraph::set_plot_history_size(int p_size) {
 	plot_history_size = p_size;
 }
 
-void SRGraph::set_grid(sr_graph_t p_graph, bool p_visible, const Color &p_color) {
+void SRGraph::set_grid(sr_graph_t p_graph, bool p_visible, real_t p_stepx, real_t p_stepy, const Color &p_color) {
+	if (p_visible) {
+		sr_add_grid(p_graph, p_stepx, p_stepy, p_color, true);
+	}
+	update();
 }
 
 void SRGraph::set_axes(sr_graph_t p_graph, bool p_visible, const Color &p_color) {

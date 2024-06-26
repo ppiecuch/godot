@@ -52,7 +52,7 @@ public:
 
 	sr_graph_t add_graph(const Point2 &p_min, const Point2 &p_max, real_t p_ratio, const Color &p_bg, const String &p_label = "");
 
-	void set_grid(sr_graph_t p_graph, bool p_visible, const Color &p_color = Color());
+	void set_grid(sr_graph_t p_graph, bool p_visible, real_t p_stepx, real_t p_stepy, const Color &p_color = Color());
 	void set_axes(sr_graph_t p_graph, bool p_visible, const Color &p_color = Color());
 
 	int add_curve(sr_graph_t p_graph, const Vector<real_t> &p_xs, const Vector<real_t> &p_ys, const Color &p_color);
