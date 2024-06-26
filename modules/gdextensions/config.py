@@ -75,6 +75,7 @@ def configure(env):
         "hwinfo",
         "synthbenchmark",
         "runtimeprofiler",
+        "softrender",
         "goxel",
         "qmap",
         "textui",
