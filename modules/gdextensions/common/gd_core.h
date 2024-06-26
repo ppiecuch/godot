@@ -49,6 +49,7 @@
 #include <functional>
 #include <list>
 #include <ostream>
+#include <string>
 #include <vector>
 
 #ifdef _HAS_EXCEPTIONS
@@ -89,6 +90,8 @@ String array_concat(const Array &p_args);
 #define printf_verbose(format, ...) print_verbose(string_format(format, ##__VA_ARGS__))
 #define printv_line(...) print_line(array_concat(array(__VA_ARGS__)))
 #define printv_verbose(...) print_verbose(array_concat(array(__VA_ARGS__)))
+
+String tos(std::string &s) { return String(s.c_str()); }
 
 #ifdef DEBUG_ENABLED
 #define DEBUG_PRINT(pText) print_line(pText)
