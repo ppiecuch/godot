@@ -72,8 +72,8 @@
 #endif // _HAS_EXCEPTIONS
 
 #ifndef _HAS_EXCEPTIONS
-#define throw      (void)
-#define try        if (true)
+#define throw (void)
+#define try if (true)
 #define catch(...) if (false)
 #define __declare_exception(nm) const std::exception nm
 #else
