@@ -950,9 +950,9 @@ float BitmapFont::draw_char_ex(RID p_canvas_item, const Point2 &p_pos, CharType 
 					p_multirect->add_rect(p_canvas_item, rc.move_by(Point2(0, valign)), textures[c->texture_idx]->get_rid(), p_char_xform->xform_tex(c->rect), p_modulate, false, RID(), RID(), false);
 				} else {
 					VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item,
-						rc.move_by(Point2(0, valign)),
-						textures[c->texture_idx]->get_rid(),
-						p_char_xform->xform_tex(c->rect), p_modulate, false, RID(), RID(), false);
+							rc.move_by(Point2(0, valign)),
+							textures[c->texture_idx]->get_rid(),
+							p_char_xform->xform_tex(c->rect), p_modulate, false, RID(), RID(), false);
 				}
 			}
 		} else {
@@ -960,9 +960,9 @@ float BitmapFont::draw_char_ex(RID p_canvas_item, const Point2 &p_pos, CharType 
 				p_multirect->add_rect(p_canvas_item, Rect2(cpos, c->rect.size), textures[c->texture_idx]->get_rid(), c->rect, p_modulate, false, RID(), RID(), false);
 			} else {
 				VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item,
-					Rect2(cpos, c->rect.size),
-					textures[c->texture_idx]->get_rid(),
-					c->rect, p_modulate, false, RID(), RID(), false);
+						Rect2(cpos, c->rect.size),
+						textures[c->texture_idx]->get_rid(),
+						c->rect, p_modulate, false, RID(), RID(), false);
 			}
 		}
 	}
