@@ -33,17 +33,12 @@
 #include "common/gd_core.h"
 #include "core/reference.h"
 
-SpinnerCanvas::SpinnerCanvas() {
-	velocity = 1;
-	hue = 0;
-}
-
 // Node2D
 
 void Spinner::_notification(int p_notification) {
 	switch (p_notification) {
 		case NOTIFICATION_DRAW: {
-			canvas->draw_spinners(spinner_variant);
+			canvas->draw_spinners(imgui->wnd, spinner_variant);
 		} break;
 		case NOTIFICATION_ENTER_TREE: {
 		} break;
@@ -239,4 +234,5 @@ Spinner::Spinner() {
 	spinner_active = true;
 	spinner_variant = 0;
 	canvas = newref(SpinnerCanvas);
+	imgui = newref(ImGuiWindowCanvas, this);
 }

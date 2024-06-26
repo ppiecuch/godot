@@ -28,6 +28,9 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifndef GDSPINNER_H
+#define GDSPINNER_H
+
 #include "scene/2d/node_2d.h"
 
 class SpinnerCanvas;
@@ -182,19 +185,29 @@ enum SpinnerVariant {
 	/* 146 */ SPINNERFILLINGMEM,
 };
 
+struct ImGuiWindow;
+
+struct ImGuiWindowCanvas : public Reference {
+	ImGuiWindow *wnd;
+	ImGuiWindowCanvas(CanvasItem *p_canvas);
+	~ImGuiWindowCanvas();
+};
+
 class SpinnerCanvas : public Reference {
-	real_t velocity;
-	int hue;
+	struct SpinnerCanvasData;
+	SpinnerCanvasData *data;
 
 public:
-	void draw_spinners(int p_spinner);
+	void draw_spinners(ImGuiWindow *p_imgui, int p_spinner);
 
 	SpinnerCanvas();
+	~SpinnerCanvas();
 };
 
 class Spinner : public Node2D {
 	GDCLASS(Spinner, Node2D);
 
+	Ref<ImGuiWindowCanvas> imgui;
 	Ref<SpinnerCanvas> canvas;
 
 	int spinner_variant;
@@ -216,3 +229,5 @@ public:
 };
 
 VARIANT_ENUM_CAST(SpinnerVariant);
+
+#endif // GDSPINNER_H
