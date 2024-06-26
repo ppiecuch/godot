@@ -561,7 +561,7 @@ float DynamicFontAtSize::draw_char(RID p_canvas_item, const Point2 &p_pos, CharT
 	if (ch->found) {
 		ERR_FAIL_COND_V(ch->texture_idx < -1 || ch->texture_idx >= font->textures.size(), 0);
 
-		if (!p_advance_only && ch->texture_idx != -1 ) {
+		if (!p_advance_only && ch->texture_idx != -1) {
 			const bool visible = (!p_char_xform || (p_char_xform && !p_char_xform->hidden));
 
 			if (visible) {
