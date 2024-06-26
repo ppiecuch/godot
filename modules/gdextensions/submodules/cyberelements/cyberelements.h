@@ -31,13 +31,60 @@
 #ifndef CYBERELEMENT_H
 #define CYBERELEMENT_H
 
+#include "core/color.h"
 #include "core/map.h"
 #include "core/vector.h"
 #include "scene/2d/node_2d.h"
 
+#include <array>
+
 #define CYBERELEMENT_COUNT 90
 
-typedef std::function<void(CanvasItem *canvas, const Map<String, Dictionary> &styles)> DrawCmd;
+// Known attributes
+enum AttribKey {
+	ATTRIB_FILL = 0,
+	ATTRIB_FILL_OPACITY,
+	ATTRIB_STROKE,
+	ATTRIB_STROKE_WIDTH,
+	ATTRIB_STROKE_LINEJOIN,
+	ATTRIB_COUNT,
+};
+
+class AttribValue {
+	union {
+		Color c;
+		const char *s;
+		real_t f;
+	};
+	bool nil;
+
+public:
+	_FORCE_INLINE_ bool is_nil() const { return nil; }
+	AttribValue &operator=(const real_t &v) {
+		f = v;
+		nil = false;
+		return *this;
+	}
+	AttribValue &operator=(const Color &v) {
+		c = v;
+		nil = false;
+		return *this;
+	}
+	AttribValue &operator=(const char *v) {
+		s = v;
+		nil = false;
+		return *this;
+	}
+	operator real_t() const { return f; }
+	operator Color() const { return c; }
+	operator const char *() const { return s; }
+	AttribValue() :
+			nil(true) {}
+	~AttribValue() {}
+};
+
+typedef std::array<AttribValue, ATTRIB_COUNT> StyleDef;
+typedef std::function<void(CanvasItem *canvas, const Map<String, StyleDef> &styles)> DrawCmd;
 
 class CyberElement : public Node2D {
 	GDCLASS(CyberElement, Node2D);
@@ -47,12 +94,12 @@ class CyberElement : public Node2D {
 	struct CacheEntry {
 		Size2 box{ 1, 1 };
 		Vector<DrawCmd> commands;
-		Map<String, Dictionary> styles;
+		Map<String, StyleDef> styles;
 	};
 	Vector<CacheEntry> cache;
 	Size2 view_size;
 
-	Map<String, Dictionary> _parse_style(const String &p_style);
+	Map<String, StyleDef> _parse_style(const String &p_style);
 	void _process_object(const Dictionary &object, CacheEntry &entry);
 	Array _json_description();
 
