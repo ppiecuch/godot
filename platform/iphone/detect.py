@@ -212,5 +212,12 @@ def configure(env):
 
     env.Prepend(CPPPATH=["#platform/iphone"])
     env.Append(
-        CPPDEFINES=["IPHONE_ENABLED", "UNIX_ENABLED", "GLES_ENABLED", "METAL_ENABLED", "COREAUDIO_ENABLED", "GLES_SILENCE_DEPRECATION"]
+        CPPDEFINES=[
+            "IPHONE_ENABLED",
+            "UNIX_ENABLED",
+            "GLES_ENABLED",
+            "METAL_ENABLED",
+            "COREAUDIO_ENABLED",
+            "GLES_SILENCE_DEPRECATION",
+        ]
     )
