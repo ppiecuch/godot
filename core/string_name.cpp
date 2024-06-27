@@ -48,7 +48,7 @@ StringName _scs_create(const char *p_chr) {
 bool StringName::configured = false;
 
 namespace {
-Mutex *mutex = memnew(Mutex); // TODO: might be cleanup in cleanup()
+Mutex mutex; // TODO: might be cleanup in cleanup()
 }
 
 void StringName::setup() {
@@ -226,7 +226,7 @@ StringName::StringName(const StaticCString &p_static_string) {
 
 	if (_data) {
 		if (_data->refcount.ref()) {
-			return // exists
+			return; // exists
 		}
 	}
 
@@ -270,7 +270,7 @@ StringName::StringName(const String &p_name) {
 
 	if (_data) {
 		if (_data->refcount.ref()) {
-			return // exists
+			return; // exists
 		}
 	}
 
