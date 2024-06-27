@@ -91,7 +91,7 @@ String array_concat(const Array &p_args);
 #define printv_line(...) print_line(array_concat(array(__VA_ARGS__)))
 #define printv_verbose(...) print_verbose(array_concat(array(__VA_ARGS__)))
 
-String tos(std::string &s) { return String(s.c_str()); }
+String tos(std::string &s);
 
 #ifdef DEBUG_ENABLED
 #define DEBUG_PRINT(pText) print_line(pText)
