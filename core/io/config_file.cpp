@@ -180,14 +180,14 @@ Error ConfigFile::_internal_save(FileAccess *file) {
 		if (E != values.front()) {
 			content += "\n";
 		}
-		if (!E.key.is_empty()) {
-			content += "[" + E.key.replace("]", "\\]") + "]\n\n";
+		if (!E.key().empty()) {
+			content += "[" + E.key().replace("]", "\\]") + "]\n\n";
 		}
 
 		for (OrderedHashMap<String, Variant>::Element F = E.get().front(); F; F = F.next()) {
 			String vstr;
 			VariantWriter::write_to_string(F.get(), vstr);
-			content += F.key.property_name_encode() + "=" + vstr + "\n";
+			content += F.key().property_name_encode() + "=" + vstr + "\n";
 		}
 	}
 
