@@ -30,6 +30,8 @@
 
 // Copyright (C) 2013  Nicholas Gill
 
+#include "core/math/math_defs.h"
+
 #include <algorithm>
 #include <cctype>
 #include <cerrno>
@@ -92,7 +94,7 @@ bool nonnegative_number_p(const char c) {
 	}
 }
 
-bool parse_number(const char *&c, const char *const end, float &x) {
+bool parse_number(const char *&c, const char *const end, real_t &x) {
 	if (!number_p(*c)) {
 		return false;
 	}
@@ -105,7 +107,7 @@ bool parse_number(const char *&c, const char *const end, float &x) {
 	return true;
 }
 
-bool parse_nonnegative_number(const char *&c, const char *const end, float &x) {
+bool parse_nonnegative_number(const char *&c, const char *const end, real_t &x) {
 	if (!nonnegative_number_p(*c)) {
 		return false;
 	}
@@ -157,8 +159,8 @@ namespace path {
 namespace {
 
 struct point {
-	float x;
-	float y;
+	real_t x;
+	real_t y;
 };
 
 bool parse_coordinate_pair(const char *&c, const char *const end, point &p) {
@@ -245,7 +247,7 @@ bool parser::parse_horizontal_lineto(const char *&c, const char *const end) {
 	if (parse_whitespace(c, end)) {
 		THROW_IF(c == end, "unexpected eof");
 	}
-	float x;
+	real_t x;
 	THROW_IF(!parse_number(c, end, x), "expected coordinate");
 	horizontal_line_to(cmd == 'h', x);
 
@@ -270,7 +272,7 @@ bool parser::parse_vertical_lineto(const char *&c, const char *const end) {
 	if (parse_whitespace(c, end)) {
 		THROW_IF(c == end, "unexpected eof");
 	}
-	float y;
+	real_t y;
 	THROW_IF(!parse_number(c, end, y), "expected coordinate");
 	vertical_line_to(cmd == 'v', y);
 
@@ -440,8 +442,7 @@ bool parser::parse_elliptical_arc(const char *&c, const char *const end) {
 	if (parse_whitespace(c, end)) {
 		THROW_IF(c == end, "unexpected eof");
 	}
-	float rx, ry;
-	float x_rotation;
+	real_t rx, ry, x_rotation;
 	bool large_arc;
 	bool sweep;
 	point p;
@@ -553,9 +554,6 @@ bool parser::parse(const String &s) {
 	return parse(c, end);
 }
 
-parser::~parser() {
-}
-
 } //namespace path
 } //namespace parsers
 } //namespace types
@@ -566,19 +564,19 @@ namespace types {
 namespace parsers {
 namespace transform {
 
-static const float DEG_TO_RAD = 0.0174532925;
+static const real_t DEG_TO_RAD = 0.0174532925;
 
 struct matrix {
 	union {
-		float cell[3][3];
-		float data[9];
+		real_t cell[3][3];
+		real_t data[9];
 	};
-	float *operator[](int i) { return cell[i]; }
-	const float *operator[](int i) const { return cell[i]; }
-	float &operator()(int x, int y) { return cell[x][y]; }
-	float operator()(int x, int y) const { return cell[x][y]; }
+	real_t *operator[](int i) { return cell[i]; }
+	const real_t *operator[](int i) const { return cell[i]; }
+	real_t &operator()(int x, int y) { return cell[x][y]; }
+	real_t operator()(int x, int y) const { return cell[x][y]; }
 	matrix() {}
-	matrix(float v0, float v1, float v2) {
+	matrix(real_t v0, real_t v1, real_t v2) {
 		cell[0][0] = v0;
 		cell[1][1] = v1;
 		cell[2][2] = v2;
@@ -599,16 +597,13 @@ matrix prod(const matrix &m1, const matrix &m2) {
 	return out;
 }
 
-/*
-matrix ::=
-	"matrix" wsp* "(" wsp*
-	number comma-wsp
-	number comma-wsp
-	number comma-wsp
-	number comma-wsp
-	number comma-wsp
-	number wsp* ")"
-*/
+// matrix ::= "matrix" wsp* "(" wsp*
+//  number comma-wsp
+//  number comma-wsp
+//  number comma-wsp
+//  number comma-wsp
+//  number comma-wsp
+//  number wsp* ")"
 bool parse_matrix(const char *&c, const char *const end, matrix &t) {
 	char tag[] = { 'm', 'a', 't', 'r', 'i', 'x' };
 	auto it = std::search(c, end, std::begin(tag), std::end(tag));
@@ -760,12 +755,11 @@ bool parse_rotate(const char *&c, const char *const end, matrix &t) {
 	if (parse_whitespace(c, end)) {
 		THROW_IF(c == end, "unexpected eof");
 	}
-	float a;
+	real_t a;
 	THROW_IF(!parse_number(c, end, a), "expected number");
 	THROW_IF(c == end, "unexpected eof");
 
-	float x = 0;
-	float y = 0;
+	real_t x = 0, y = 0;
 	if (parse_comma_wsp(c, end)) {
 		THROW_IF(c == end, "unexpected eof");
 
@@ -899,7 +893,7 @@ transforms ::=
 	transform
 	| transform comma-wsp+ transforms
 */
-std::array<float, 6> parse_transforms(const char *c, const char *const end) {
+std::array<real_t, 6> parse_transforms(const char *c, const char *const end) {
 	matrix t = identity_matrix;
 
 	while (c != end) {

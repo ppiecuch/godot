@@ -33,6 +33,7 @@
 #ifndef PARSERS_PATH_H_
 #define PARSERS_PATH_H_
 
+#include "core/math/math_defs.h"
 #include "core/ustring.h"
 
 namespace svg {
@@ -54,26 +55,24 @@ class parser {
 	bool parse_closepath(const char *&c, const char *const end);
 
 public:
-	virtual void move_to(bool rel, float x, float y) = 0;
+	virtual void move_to(bool rel, real_t x, real_t y) = 0;
 
-	virtual void line_to(bool rel, float x, float y) = 0;
-	virtual void horizontal_line_to(bool rel, float x) = 0;
-	virtual void vertical_line_to(bool rel, float y) = 0;
+	virtual void line_to(bool rel, real_t x, real_t y) = 0;
+	virtual void horizontal_line_to(bool rel, real_t x) = 0;
+	virtual void vertical_line_to(bool rel, real_t y) = 0;
 
-	virtual void curve_to(bool rel, float x1, float y1, float x2, float y2, float x, float y) = 0;
-	virtual void smooth_curve_to(bool rel, float x2, float y2, float x, float y) = 0;
+	virtual void curve_to(bool rel, real_t x1, real_t y1, real_t x2, real_t y2, real_t x, real_t y) = 0;
+	virtual void smooth_curve_to(bool rel, real_t x2, real_t y2, real_t x, real_t y) = 0;
 
-	virtual void bezier_curve_to(bool rel, float x1, float y1, float x, float y) = 0;
-	virtual void smooth_bezier_curve_to(bool rel, float x, float y) = 0;
-	virtual void elliptical_arc_to(bool rel, float rx, float ry, float x_rotation, bool large_arc, bool sweep, float x, float y) = 0;
+	virtual void bezier_curve_to(bool rel, real_t x1, real_t y1, real_t x, real_t y) = 0;
+	virtual void smooth_bezier_curve_to(bool rel, real_t x, real_t y) = 0;
+	virtual void elliptical_arc_to(bool rel, real_t rx, real_t ry, real_t x_rotation, bool large_arc, bool sweep, real_t x, real_t y) = 0;
 
 	virtual void close_path() = 0;
 	virtual void eof() = 0;
 
 	bool parse(const char *c, const char *const end);
 	bool parse(const String &s);
-
-	virtual ~parser();
 };
 
 } //namespace path

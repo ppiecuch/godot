@@ -46,15 +46,14 @@ struct parse_error : std::runtime_error {
 	virtual ~parse_error() noexcept;
 };
 
-/*
-Parser that reduces all transformation lists down to a matrix
+// Parser that reduces all transformation lists down to a matrix
+//
+// [a b c d e f] ->
+//
+// [a c e]
+// [b d f]
+// [0 0 1]
 
-[a b c d e f] ->
-
-[a c e]
-[b d f]
-[0 0 1]
-*/
 std::array<float, 6> parse_transforms(const char *c, const char *const end);
 
 } //namespace transform

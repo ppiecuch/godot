@@ -33,6 +33,7 @@
 #ifndef PARSERS_BASIC_H_
 #define PARSERS_BASIC_H_
 
+#include "core/math/math_defs.h"
 #include <string>
 
 namespace svg {
@@ -44,8 +45,8 @@ bool parse_whitespace(const char *&c, const char *const end);
 
 bool number_p(const char c);
 bool nonnegative_number_p(const char c);
-bool parse_number(const char *&c, const char *const end, float &x);
-bool parse_nonnegative_number(const char *&c, const char *const end, float &x);
+bool parse_number(const char *&c, const char *const end, real_t &x);
+bool parse_nonnegative_number(const char *&c, const char *const end, real_t &x);
 
 bool parse_comma_wsp(const char *&c, const char *const end);
 
