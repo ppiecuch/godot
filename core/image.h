@@ -396,6 +396,10 @@ public:
 		return ptr;
 	}
 
+	_FORCE_INLINE_ const uint8_t *get_raw_cptr() {
+		return data.read().ptr();
+	}
+
 	void _copy_internals_from(const Image &p_image) {
 		format = p_image.format;
 		width = p_image.width;

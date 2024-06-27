@@ -1301,7 +1301,7 @@ namespace ImSpinner
 
         ImVec2 pp(centre.x - radius, centre.y - radius);
         ImFontAtlas* atlas = ImGui::GetIO().Fonts;
-        unsigned char* bitmap;
+        const unsigned char* bitmap;
         int out_width, out_height;
         atlas->GetTexDataAsAlpha8(&bitmap, &out_width, &out_height);
 

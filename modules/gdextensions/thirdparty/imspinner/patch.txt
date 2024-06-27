@@ -262,3 +262,12 @@
 \ No newline at end of file
 +#endif // _IMSPINNER_H_
 +/* clang-format on */
+@@ -1301,7 +1301,7 @@
+ 
+         ImVec2 pp(centre.x - radius, centre.y - radius);
+         ImFontAtlas* atlas = ImGui::GetIO().Fonts;
+-        unsigned char* bitmap;
++        const unsigned char* bitmap;
+         int out_width, out_height;
+         atlas->GetTexDataAsAlpha8(&bitmap, &out_width, &out_height);
+ 

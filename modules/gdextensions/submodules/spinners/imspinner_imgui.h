@@ -28,6 +28,9 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+// This file should be use internally only
+// and propably it should be use only once.
+
 #ifndef IMSPINNER_IMGUI_H
 #define IMSPINNER_IMGUI_H
 
@@ -37,6 +40,9 @@
 #include "core/os/os.h"
 #include "core/reference.h"
 #include "scene/2d/canvas_item.h"
+#include "scene/resources/font.h"
+
+#include "default_bitmap.gen.h"
 
 // https://github.com/dalerank/imspinner
 // commit 5896bfa0de0bef45b280e8a6fa5b08c7210727fb
@@ -135,7 +141,27 @@ struct ImFont : public Reference {
 };
 
 struct ImFontAtlas : public Reference {
-	void GetTexDataAsAlpha8(unsigned char **out_pixels, int *out_width, int *out_height, int *out_bytes_per_pixel = nullptr);
+	void GetTexDataAsAlpha8(const unsigned char **out_pixels, int *out_width, int *out_height, int *out_bytes_per_pixel = nullptr) {
+		static Ref<BitmapFont> bfont;
+		if (bfont.is_null()) {
+			bfont.instance();
+			Ref<BitmapFont> _font = memnew(BitmapFont);
+			if (_font->create_from_fnt_ptr(_default_bitmap_fnt, strlen(_default_bitmap_fnt), _default_bitmap_png) != OK) {
+				// this should not happen, since all data are embedded
+				// if so, we are rather running out of resources/crashing
+				WARN_PRINT("Failed to load default bitmap font.");
+			}
+		}
+		if (Ref<ImageTexture> texture = bfont->get_texture(0)) {
+			*out_pixels = texture->get_data()->get_raw_cptr();
+		}
+		if (out_width)
+			*out_width = bfont->get_texture(0)->get_width();
+		if (out_height)
+			*out_height = bfont->get_texture(0)->get_height();
+		if (out_bytes_per_pixel)
+			*out_bytes_per_pixel = 1;
+	}
 };
 
 struct ImGuiStyle {
@@ -397,6 +423,8 @@ struct ImGuiContext {
 	ImGuiStyle Style;
 	Ref<ImFont> Font = memnew(ImFont);
 };
+
+ImGuiWindow::ImDrawListSharedData ImGuiWindow::SharedData;
 
 static ImGuiContext CImGui, *GImGui = &CImGui;
 static ImGuiIO GImGuiIO;
