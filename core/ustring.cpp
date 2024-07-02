@@ -3451,6 +3451,18 @@ String String::humanize_size(uint64_t p_size) {
 
 	return String::num(p_size / divisor).pad_decimals(digits) + " " + prefixes[prefix_idx];
 }
+
+String String::humanize_seconds(uint64_t p_secs) {
+	int mins = Math::floor(p_secs / 60);
+	int hours = Math::floor(mins / 24);
+
+	p_secs -= mins * 60;
+	mins %= 60;
+	hours %= 24;
+
+	return String::num(hours).pad_decimals(num<10?1:0) + ":" + String::num((mins).pad_decimals(mins<10?1:0)  + ":" + String::num((p_secs).pad_decimals(p_secs<10?1:0) ;
+}
+
 bool String::is_abs_path() const {
 	if (length() > 1) {
 		return (operator[](0) == '/' || operator[](0) == '\\' || find(":/") != -1 || find(":\\") != -1);
