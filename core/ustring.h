@@ -361,7 +361,7 @@ public:
 	String get_base_dir() const;
 	String get_file() const;
 	static String humanize_size(uint64_t p_size);
-	static humanize_seconds(uint64_t p_secs);
+	static String humanize_seconds(uint64_t p_secs);
 	String simplify_path() const;
 	bool is_network_share_path() const;
 

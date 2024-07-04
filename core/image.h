@@ -383,6 +383,11 @@ public:
 	uint32_t _get_pixel32(int p_x, int p_y) const;
 	void _set_pixel32(int p_x, int p_y, uint32_t p_color);
 
+	_FORCE_INLINE_ static uint32_t red_comp(uint32_t p_abgr) { return (p_abgr & 0xff); }
+	_FORCE_INLINE_ static uint32_t green_comp(uint32_t p_abgr) { return ((p_abgr >> 8) & 0xff); }
+	_FORCE_INLINE_ static uint32_t blue_comp(uint32_t p_abgr) { return ((p_abgr >> 16) & 0xff); }
+	_FORCE_INLINE_ static uint32_t alpha_comp(uint32_t p_abgr) { return p_abgr >> 24; }
+
 	Color get_pixelv(const Point2 &p_src) const;
 	Color get_pixel(int p_x, int p_y) const;
 	void set_pixelv(const Point2 &p_dst, const Color &p_color);

@@ -3453,14 +3453,14 @@ String String::humanize_size(uint64_t p_size) {
 }
 
 String String::humanize_seconds(uint64_t p_secs) {
-	int mins = Math::floor(p_secs / 60);
-	int hours = Math::floor(mins / 24);
+	int mins = Math::floor(p_secs / 60.0);
+	int hours = Math::floor(mins / 24.0);
 
 	p_secs -= mins * 60;
 	mins %= 60;
 	hours %= 24;
 
-	return String::num(hours).pad_decimals(num<10?1:0) + ":" + String::num((mins).pad_decimals(mins<10?1:0)  + ":" + String::num((p_secs).pad_decimals(p_secs<10?1:0) ;
+	return String::num(hours).pad_decimals(hours < 10 ? 1 : 0) + ":" + String::num(mins).pad_decimals(mins < 10 ? 1 : 0) + ":" + String::num(p_secs).pad_decimals(p_secs < 10 ? 1 : 0);
 }
 
 bool String::is_abs_path() const {
