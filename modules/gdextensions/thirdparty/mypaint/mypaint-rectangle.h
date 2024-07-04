@@ -1,6 +1,3 @@
-#ifndef MYPAINTRECTANGLE_H
-#define MYPAINTRECTANGLE_H
-
 /* brushlib - The MyPaint Brush Library
  * Copyright (C) 2008 Martin Renold <martinxyz@gmx.ch>
  * Copyright (C) 2012 Jon Nordby <jononor@gmail.com>
@@ -18,15 +15,18 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifndef MYPAINTRECTANGLE_H
+#define MYPAINTRECTANGLE_H
+
 #include "mypaint-glib-compat.h"
 
 G_BEGIN_DECLS
 
 typedef struct {
-    int x;
-    int y;
-    int width;
-    int height;
+	int x;
+	int y;
+	int width;
+	int height;
 } MyPaintRectangle;
 
 void mypaint_rectangle_expand_to_include_point(MyPaintRectangle *r, int x, int y);
