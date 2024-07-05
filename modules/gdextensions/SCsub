@@ -284,7 +284,7 @@ modules = [
     "runtimeprofiler",
     "softrender",
     "textui",
-    "textwidgets",
+    "anttweakbar",
 ]
 
 thirdparty_sources = [
@@ -346,6 +346,9 @@ if env["tools"]:
 
 if is_enabled("textui"):
     thirdparty_sources += ["thirdparty/textui/textUI.c", "thirdparty/textui/textUI_support.cpp"]
+
+if is_enabled("anttweakbar"):
+    thirdparty_sources += ["thirdparty/anttweakbar/AntTweakBar.cpp"]
 
 if is_enabled("cyberelements"):
     thirdparty_sources += ["thirdparty/libtess3/libtess3.cpp"]
