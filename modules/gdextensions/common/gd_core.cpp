@@ -36,7 +36,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-String tos(std::string &s) { return String(s.c_str()); }
+String toStr(const std::string &s) { return String(s.c_str()); }
+std::string fromStr(const String &s) { return s.utf8().c_str(); }
 
 // va_copy was defined in the C99, but not in C++ standards before C++11.
 // When you compile C++ without --std=c++<XX> option, compilers still define

@@ -31,6 +31,7 @@
 #include "core/image_tools.h"
 #include "bind/core_bind.h"
 #include "core/image.h"
+#include "image.h"
 
 void ImageTools::checker_board(Image *p_src, int p_cell, const Color &grid_color0, const Color &grid_color1, bool details, const Color &details_color) {
 	p_src->lock();
@@ -931,12 +932,18 @@ Ref<Image> ImageTools::make_seamless(const Image *p_src, SeamlessStampMode p_sta
 	return target;
 }
 
+#define _clone(IMG) memnew(Image(IMG->get_width(), IMG->get_height(), false, Image::FORMAT_RGBA8))
+
 Vector<Ref<Image>> ImageTools::extract_channels(const Image *p_src, bool p_as_grey_rbg) {
 	ERR_FAIL_NULL_V(p_src, Vector<Ref<Image>>());
-	Ref<Image> r, b, g, a;
+	Ref<Image> r = _clone(p_src), g = _clone(p_src), b = _clone(p_src), a = _clone(p_src);
 	for (int j = 0; j < p_src->get_height(); j++) {
 		for (int i = 0; i < p_src->get_width(); i++) {
 			const uint32_t px = p_src->_get_pixel32(i, j);
+			r->_set_pixel32(i, j, Image::red_comp(px));
+			g->_set_pixel32(i, j, Image::green_comp(px));
+			b->_set_pixel32(i, j, Image::blue_comp(px));
+			a->_set_pixel32(i, j, Image::alpha_comp(px));
 		}
 	}
 	return make_vector(r, g, b, a);

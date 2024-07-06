@@ -22,36 +22,32 @@
 G_BEGIN_DECLS
 
 typedef struct {
-    int x;
-    int y;
+	int x;
+	int y;
 } TileIndex;
 
-typedef void (*TileMapItemFreeFunc) (void *item_data);
+typedef void (*TileMapItemFreeFunc)(void *item_data);
 
 // A size of 10 means the map spans x=[-10,9], y=[-10,9]
 // The tile with TileIndex (x,y) is stored in the map at offset
 // offset=((self->size + y) * rowstride) + (self->size + index.x)
+
 typedef struct {
-    void **map;
-    int size;
-    size_t item_size;
-    TileMapItemFreeFunc item_free_func;
+	void **map;
+	int size;
+	size_t item_size;
+	TileMapItemFreeFunc item_free_func;
 } TileMap;
 
-TileMap *
-tile_map_new(int size, size_t item_size, TileMapItemFreeFunc item_free_func);
+TileMap *tile_map_new(int size, size_t item_size, TileMapItemFreeFunc item_free_func);
 
-void
-tile_map_free(TileMap *self, gboolean free_items);
+void tile_map_free(TileMap *self, gboolean free_items);
 
-gboolean
-tile_map_contains(TileMap *self, TileIndex index);
+gboolean tile_map_contains(TileMap *self, TileIndex index);
 
-void **
-tile_map_get(TileMap *self, TileIndex index);
+void **tile_map_get(TileMap *self, TileIndex index);
 
-void
-tile_map_copy_to(TileMap *self, TileMap *other);
+void tile_map_copy_to(TileMap *self, TileMap *other);
 
 G_END_DECLS
 

@@ -79,7 +79,7 @@ def configure(env):
         "goxel",
         "qmap",
         "textui",
-        "textwidgets",
+        "anttweakbar",
         "yaml",
         "flowed",
     ]
