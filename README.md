@@ -118,7 +118,14 @@ There are also a number of other learning resources provided by the community,
 such as text and video tutorials, demos, etc. Consult the [community channels](https://godotengine.org/community)
 for more info.
 
-[![Actions Build Status](https://github.com/godotengine/godot/workflows/Godot/badge.svg?branch=master)](https://github.com/godotengine/godot/actions)
+
+[![Actions Build Status](https://github.com/ppiecuch/godot/actions/workflows/runner.yml/badge.svg?branch=3.x)](https://github.com/ppiecuch/godot/actions/workflows/runner.yml)
+[![Actions Build Status](https://github.com/ppiecuch/godot/actions/workflows/static_checks.yml/badge.svg?branch=3.x)](https://github.com/ppiecuch/godot/actions/workflows/static_checks.yml)
+[![Actions Build Status](https://github.com/ppiecuch/godot/actions/workflows/macos_builds.yml/badge.svg?branch=3.x)](https://github.com/ppiecuch/godot/actions/workflows/macos_builds.yml)
+[![Actions Build Status](https://github.com/ppiecuch/godot/actions/workflows/linux_builds.yml/badge.svg?branch=3.x)](https://github.com/ppiecuch/godot/actions/workflows/linux_builds.yml)
+[![Actions Build Status](https://github.com/ppiecuch/godot/actions/workflows/android_builds.yml/badge.svg?branch=3.x)](https://github.com/ppiecuch/godot/actions/workflows/android_builds.yml)
+[![Actions Build Status](https://github.com/ppiecuch/godot/actions/workflows/retro_devices_build.yml/badge.svg?branch=3.x)](https://github.com/ppiecuch/godot/actions/workflows/retro_devices_build.yml)
+---
 [![Code Triagers Badge](https://www.codetriage.com/godotengine/godot/badges/users.svg)](https://www.codetriage.com/godotengine/godot)
 [![Translate on Weblate](https://hosted.weblate.org/widgets/godot-engine/-/godot/svg-badge.svg)](https://hosted.weblate.org/engage/godot-engine/?utm_source=widget)
 [![TODOs](https://badgen.net/https/api.tickgit.com/badgen/github.com/godotengine/godot)](https://www.tickgit.com/browse?repo=github.com/godotengine/godot)
