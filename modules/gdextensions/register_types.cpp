@@ -71,9 +71,9 @@
 #include "editor/explodomatica_plugin.h"
 #endif
 
-#include "bulletkit/register.h"
+#include "swsurface/gd_bitblit.h"
 
-#include "blitter/gd_bitblit.h"
+#include "bulletkit/register.h"
 
 #ifdef GDEXT_QUROBULLET_ENABLED
 #include "qurobullet/register.h"

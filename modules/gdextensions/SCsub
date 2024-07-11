@@ -228,7 +228,6 @@ modules = [
     "threadpool",
     "bulletkit",
     "qurobullet",
-    "blitter",
     "benchmark",
     "environment/tree_2d",
     "environment/spherical_waves",
@@ -282,7 +281,8 @@ modules = [
     "hwinfo",
     "synthbenchmark",
     "runtimeprofiler",
-    "softrender",
+    "swrender",
+    "swsurface",
     "textui",
     "anttweakbar",
 ]
@@ -512,8 +512,8 @@ if is_enabled("playfab"):
     sources += Glob("submodules/playfab/PlayFabSDK/*.cpp")
     thirdparty_sources += Glob("thirdparty/xplatcppsdk/code/source/playfab/*.cpp")
 
-if env["platform"] == "psvita" and is_enabled("blitter"):
-    sources += Glob("submodules/blitter/armasm/*.S")
+if env["platform"] == "psvita" and is_enabled("swsurface"):
+    sources += Glob("submodules/swsurface/armasm/*.S")
 
 if is_enabled("behaviortree"):
     env_module.Append(CPPDEFINES=["BEHAVIOR_TREE_AS_GODOT_MODULE"])
@@ -644,7 +644,7 @@ if is_enabled("thorvg"):
         if env["builtin_libpng"]:
             env_module.Prepend(CPPPATH=["#thirdparty/libpng"])  # Also requires libpng headers
 
-if is_enabled("softrender"):
+if is_enabled("swrender"):
     egl_srcs = Glob("thirdparty/swr-vincent-gles1/src/egl/*.cpp")
     gles_srcs = (
         Glob("thirdparty/swr-vincent-gles1/src/*.cpp")
