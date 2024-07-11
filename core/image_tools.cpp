@@ -430,6 +430,7 @@ union _byteword {
 
 /**
  * Unpack sprites regions on image
+ *
  * https://github.com/ForkandBeard/Alferd-Spritesheet-Unpacker
  *
  */
@@ -932,6 +933,13 @@ Ref<Image> ImageTools::make_seamless(const Image *p_src, SeamlessStampMode p_sta
 	return target;
 }
 
+/*
+ * Basic channels-oriented operations:
+ * extract channels from abgr32 to separate images and merge channels from
+ * separate ones into abgr32.
+ *
+ */
+
 #define _clone(IMG) memnew(Image(IMG->get_width(), IMG->get_height(), false, Image::FORMAT_RGBA8))
 
 Vector<Ref<Image>> ImageTools::extract_channels(const Image *p_src, bool p_as_grey_rbg) {
@@ -955,4 +963,59 @@ Ref<Image> ImageTools::merge_channels(Image *p_dest, const Ref<Image> &p_r, cons
 	ERR_FAIL_COND_V_MSG(p_dest->write_lock.ptr(), Ref<Image>(), "Cannot modify image when it is locked.");
 	Ref<Image> r;
 	return r;
+}
+
+/*
+ *  General colvolution routines for RGB and gray (both 8bit and 16bit)
+ *  images. 3x3 and 5x5 kernels are manually unrolled.
+ */
+
+static void init_kernels(void);
+
+// convolution
+
+#define vec3p(k, b, i) (k[0] * b[i - 1] + k[1] * b[i] + k[2] * b[i + 1])
+#define conv3x3(cm, m, r, c) (vec3p(cm[0], m[r - 1], c) + vec3p(cm[1], m[r + 0], c) + vec3p(cm[2], m[r + 1], c))
+
+#define vec5p(k, b, i) (k[0] * b[i - 2] + k[1] * b[i - 1] + k[2] * b[i] + k[3] * b[i + 1] + k[4] * b[i + 2])
+#define conv5x5(kernel, pc, row, col) \
+	(vec5p(kernel[0], pc[row - 2], col) + vec5p(kernel[1], pc[row - 1], col) + vec5p(kernel[2], pc[row + 0], col) + vec5p(kernel[3], pc[row + 1], col) + vec5p(kernel[4], pc[row + 2], col))
+
+// normalize with weight the clamp
+
+#define NormAndClamp(pc, w, max)    \
+	do {                            \
+		if (pc < 0)                 \
+			pc = 0;                 \
+		else if ((pc /= w) > (max)) \
+			pc = (max);             \
+	} while (0)
+
+// some built-in kernels
+
+static int sharpen_kernel[3][3];
+static int smooth_kernel[3][3];
+
+static void init_kernels(void) {
+	sharpen_kernel[0][0] = -1;
+	sharpen_kernel[0][1] = -2;
+	sharpen_kernel[0][2] = -1;
+	sharpen_kernel[1][0] = -2;
+	sharpen_kernel[1][1] = 28;
+	sharpen_kernel[1][2] = -2;
+	sharpen_kernel[2][0] = -1;
+	sharpen_kernel[2][1] = -2;
+	sharpen_kernel[2][2] = -1;
+
+	// smoothing a bit stronger than sharpening
+
+	smooth_kernel[0][0] = 1;
+	smooth_kernel[0][1] = 2;
+	smooth_kernel[0][2] = 1;
+	smooth_kernel[1][0] = 2;
+	smooth_kernel[1][1] = 7;
+	smooth_kernel[1][2] = 2;
+	smooth_kernel[2][0] = 1;
+	smooth_kernel[2][1] = 2;
+	smooth_kernel[2][2] = 1;
 }
