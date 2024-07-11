@@ -1,5 +1,6 @@
 name: 🐜 Retro-devices Builds
-on: [push, pull_request]
+on:
+  workflow_call:
 
 # https://github.community/t/how-to-use-docker-compose-with-github-actions/16850
 # https://github.com/sdt/docker-raspberry-pi-cross-compiler
@@ -10,7 +11,7 @@ on: [push, pull_request]
 
 # Global Cache Settings
 env:
-  GODOT_BASE_BRANCH: master
+  GODOT_BASE_BRANCH: 3.x
   SCONS_CACHE_LIMIT: 4096
   RPI_IMAGE: rpi_toolchain
   VITASDK_PATH: /opt/vitasdk
