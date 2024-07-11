@@ -1,5 +1,4 @@
 // ----------------------------------------------------------------------------
-//
 //  @file       AntTweakBar.h
 //
 //  @brief      AntTweakBar is a light and intuitive graphical user interface
@@ -13,7 +12,6 @@
 //  @license    This file is part of the AntTweakBar library.
 //              AntTweakBar is a free software released under the zlib license.
 //              For conditions of distribution and use, see License.txt
-//
 // ----------------------------------------------------------------------------
 
 #if !defined TW_INCLUDED

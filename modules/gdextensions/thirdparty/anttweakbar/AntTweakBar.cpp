@@ -2,7 +2,11 @@
 
 #include "common/gd_core.h"
 #include "core/math/math_funcs.h"
+#include "core/os/input_event.h"
+#include "core/os/keyboard.h"
 #include "core/os/os.h"
+#include "core/reference.h"
+#include "scene/2d/canvas_item.h"
 
 #ifdef __APPLE__
 #ifndef GL_SILENCE_DEPRECATION
@@ -309,7 +313,7 @@ public:
 	virtual ~ITwGraph() {} // required by gcc
 };
 
-ITwGraph *TwCreateRenderer();
+ITwGraph *TwCreateRenderer(void *_Device);
 
 //  ---------------------------------------------------------------------------
 
@@ -7269,10 +7273,10 @@ std::string &CTwMgr::CLibStdString::ToLib() {
 //  Management functions
 //  ---------------------------------------------------------------------------
 
-static int TwCreateGraph() {
+static int TwCreateGraph(void *_Device) {
 	DEV_ASSERT(g_TwMgr != nullptr && g_TwMgr->m_Graph == nullptr);
 
-	g_TwMgr->m_Graph = TwCreateRenderer();
+	g_TwMgr->m_Graph = TwCreateRenderer(_Device);
 
 	if (g_TwMgr->m_Graph == nullptr) {
 		g_TwMgr->SetLastError(g_ErrUnknownAPI);
@@ -7285,7 +7289,7 @@ static int TwCreateGraph() {
 
 static _FORCE_INLINE_ int TwFreeAsyncDrawing() {
 	if (g_TwMgr && g_TwMgr->m_Graph && g_TwMgr->m_Graph->IsDrawing()) {
-		const double SLEEP_MAX = 0.25; // wait at most 1/4 second
+		const float SLEEP_MAX = 0.25; // wait at most 1/4 second
 		PerfTimer timer;
 		while (g_TwMgr->m_Graph->IsDrawing() && timer.GetTime() < SLEEP_MAX) {
 #if defined(_WINDOWS)
@@ -7305,8 +7309,8 @@ static _FORCE_INLINE_ int TwFreeAsyncDrawing() {
 //  ---------------------------------------------------------------------------
 
 static int TwInitMgr() {
-	assert(g_TwMasterMgr != nullptr);
-	assert(g_TwMgr != nullptr);
+	DEV_ASSERT(g_TwMasterMgr != nullptr);
+	DEV_ASSERT(g_TwMgr != nullptr);
 
 	g_TwMgr->m_CurrentFont = g_DefaultNormalFont;
 	g_TwMgr->m_Graph = g_TwMasterMgr->m_Graph;
@@ -7354,7 +7358,7 @@ int ANT_CALL TwInit(void *_Device) {
 	TwGenerateDefaultFonts(g_FontScaling);
 	g_TwMgr->m_CurrentFont = g_DefaultNormalFont;
 
-	int Res = TwCreateGraph();
+	int Res = TwCreateGraph(_Device);
 	if (Res)
 		Res = TwInitMgr();
 
@@ -17198,4 +17202,217 @@ color32 ColorBlend(color32 _Color1, color32 _Color2, float _S) {
 	Color32ToARGBf(_Color2, &a2, &r2, &g2, &b2);
 	const float t = 1 - _S;
 	return Color32FromARGBf(t * a1 + _S * a2, t * r1 + _S * r2, t * g1 + _S * g2, t * b1 + _S * b2);
+}
+
+//  ---------------------------------------------------------------------------
+//  @file       TwGodotEvents.h
+//  @brief      Godot Engine events, mapping and integration functions.
+//  @author     Pawel Piecuch
+//  @license    This file is part of the AntTweakBar library.
+//              For conditions of distribution and use, see License.txt
+//  ---------------------------------------------------------------------------
+
+void TW_CALL CopyCDStringToClient(char **destPtr, const char *src);
+void TW_CALL CopyStdStringToClient(std::string &destClientString, const std::string &srcLibraryString);
+
+void TW_CALL CopyCDStringToClient(char **destPtr, const char *src) {
+	size_t srcLen = (src != nullptr) ? strlen(src) : 0;
+	size_t destLen = (*destPtr != nullptr) ? strlen(*destPtr) : 0;
+
+	// Alloc or realloc dest memory block if needed
+	if (*destPtr == nullptr)
+		*destPtr = (char *)malloc(srcLen + 1);
+	else if (srcLen > destLen)
+		*destPtr = (char *)realloc(*destPtr, srcLen + 1);
+
+	// Copy src
+	if (srcLen > 0)
+		strncpy(*destPtr, src, srcLen);
+	(*destPtr)[srcLen] = '\0'; // null-terminated string
+}
+
+void TW_CALL CopyStdStringToClient(std::string &destClientString, const std::string &srcLibraryString) {
+	destClientString = srcLibraryString;
+}
+
+int TwEventGodot(const Ref<InputEvent> &ev) {
+	int handled = 0;
+
+	if (Ref<InputEventMouseButton> mb = ev) {
+		const Vector2 gpoint = mb->get_position();
+		TwMouseMotion(gpoint.x, gpoint.y);
+
+		switch (mb->get_button_index()) {
+			case BUTTON_LEFT: {
+				handled = TwMouseButton(mb->is_pressed() ? TW_MOUSE_PRESSED : TW_MOUSE_RELEASED, TW_MOUSE_LEFT);
+			} break;
+			case BUTTON_RIGHT: {
+				handled = TwMouseButton(mb->is_pressed() ? TW_MOUSE_PRESSED : TW_MOUSE_RELEASED, TW_MOUSE_RIGHT);
+			} break;
+			case BUTTON_WHEEL_UP:
+			case BUTTON_WHEEL_DOWN: {
+			}
+		}
+	}
+
+	if (Ref<InputEventMouseMotion> mm = ev) {
+		const Vector2 gpoint = mm->get_position();
+		handled = TwMouseMotion(gpoint.x, gpoint.y);
+	}
+
+	if (Ref<InputEventKey> kb = ev) {
+		int kmod = 0;
+		if (kb->get_shift())
+			kmod |= TW_KMOD_SHIFT;
+		if (kb->get_command())
+			kmod |= TW_KMOD_CTRL;
+		if (kb->get_alt())
+			kmod |= TW_KMOD_ALT;
+		bool down = kb->is_pressed() || kb->is_echo();
+		switch (kb->get_scancode()) {
+			case KEY_F1: {
+				handled = TwKeyPressed(TW_KEY_F1, kmod);
+			} break;
+			case KEY_LEFT: {
+				handled = TwKeyPressed(TW_KEY_LEFT, kmod);
+			} break;
+			case KEY_UP: {
+				handled = TwKeyPressed(TW_KEY_UP, kmod);
+			} break;
+			case KEY_RIGHT: {
+				handled = TwKeyPressed(TW_KEY_RIGHT, kmod);
+			} break;
+			case KEY_DOWN: {
+				handled = TwKeyPressed(TW_KEY_DOWN, kmod);
+			} break;
+			case KEY_PAGEUP: {
+				handled = TwKeyPressed(TW_KEY_PAGE_UP, kmod);
+			} break;
+			case KEY_PAGEDOWN: {
+				handled = TwKeyPressed(TW_KEY_PAGE_DOWN, kmod);
+			} break;
+			case KEY_HOME: {
+				handled = TwKeyPressed(TW_KEY_HOME, kmod);
+			} break;
+			case KEY_END: {
+				handled = TwKeyPressed(TW_KEY_END, kmod);
+			} break;
+			case KEY_INSERT: {
+				handled = TwKeyPressed(TW_KEY_INSERT, kmod);
+			} break;
+			case KEY_BACKSPACE: {
+				handled = TwKeyPressed(TW_KEY_BACKSPACE, kmod);
+			} break;
+			case KEY_DELETE: {
+				handled = TwKeyPressed(TW_KEY_DELETE, kmod);
+			} break;
+			case KEY_ENTER: {
+				handled = TwKeyPressed(TW_KEY_RETURN, kmod);
+			} break;
+			case KEY_ESCAPE: {
+				handled = TwKeyPressed(TW_KEY_ESCAPE, kmod);
+			} break;
+			case KEY_TAB: {
+				handled = TwKeyPressed(TW_KEY_TAB, kmod);
+			} break;
+			case KEY_SPACE: {
+				handled = TwKeyPressed(TW_KEY_SPACE, kmod);
+			} break;
+		}
+	}
+
+	return handled;
+}
+
+//  ---------------------------------------------------------------------------
+//  @file       TwGodot.h
+//  @brief      Godot Engine graph and integration functions.
+//  @author     Pawel Piecuch
+//  @license    This file is part of the AntTweakBar library.
+//              For conditions of distribution and use, see License.txt
+//  ---------------------------------------------------------------------------
+
+class CTwGraphGodot : public ITwGraph {
+public:
+	virtual int Init();
+	virtual int Shut();
+	virtual void BeginDraw(int _WndWidth, int _WndHeight);
+	virtual void EndDraw();
+	virtual bool IsDrawing();
+	virtual void Restore();
+	virtual void DrawLine(int _X0, int _Y0, int _X1, int _Y1, color32 _Color0, color32 _Color1, bool _AntiAliased = false);
+	virtual void DrawLine(int _X0, int _Y0, int _X1, int _Y1, color32 _Color, bool _AntiAliased = false) { DrawLine(_X0, _Y0, _X1, _Y1, _Color, _Color, _AntiAliased); }
+	virtual void DrawRect(int _X0, int _Y0, int _X1, int _Y1, color32 _Color00, color32 _Color10, color32 _Color01, color32 _Color11);
+	virtual void DrawRect(int _X0, int _Y0, int _X1, int _Y1, color32 _Color) { DrawRect(_X0, _Y0, _X1, _Y1, _Color, _Color, _Color, _Color); }
+	virtual void DrawTriangles(int _NumTriangles, int *_Vertices, color32 *_Colors, Cull _CullMode);
+
+	virtual void *NewTextObj();
+	virtual void DeleteTextObj(void *_TextObj);
+	virtual void BuildText(void *_TextObj, const std::string *_TextLines, color32 *_LineColors, color32 *_LineBgColors, int _NbLines, const CTexFont *_Font, int _Sep, int _BgWidth);
+	virtual void DrawText(void *_TextObj, int _X, int _Y, color32 _Color, color32 _BgColor);
+
+	virtual void ChangeViewport(int _X0, int _Y0, int _Width, int _Height, int _OffsetX, int _OffsetY);
+	virtual void RestoreViewport();
+	virtual void SetScissor(int _X0, int _Y0, int _Width, int _Height);
+
+protected:
+	bool m_Drawing;
+	unsigned m_FontTexID;
+	const CTexFont *m_FontTex;
+	float m_PrevLineWidth;
+	int m_PrevTexEnv;
+	int m_PrevPolygonMode[2];
+	int m_MaxClipPlanes;
+	int m_PrevTexture;
+	int m_PrevArrayBufferARB;
+	int m_PrevElementArrayBufferARB;
+	bool m_PrevVertexProgramARB;
+	bool m_PrevFragmentProgramARB;
+	unsigned m_PrevProgramObjectARB;
+	bool m_PrevTexture3D;
+	enum EMaxTextures { MAX_TEXTURES = 128 };
+	bool m_PrevActiveTexture1D[MAX_TEXTURES];
+	bool m_PrevActiveTexture2D[MAX_TEXTURES];
+	bool m_PrevActiveTexture3D[MAX_TEXTURES];
+	bool m_PrevClientTexCoordArray[MAX_TEXTURES];
+	int m_PrevActiveTextureARB;
+	int m_PrevClientActiveTextureARB;
+	bool m_SupportTexRect;
+	bool m_PrevTexRectARB;
+	int m_PrevBlendEquation;
+	int m_PrevBlendEquationRGB;
+	int m_PrevBlendEquationAlpha;
+	int m_PrevBlendSrcRGB;
+	int m_PrevBlendDstRGB;
+	int m_PrevBlendSrcAlpha;
+	int m_PrevBlendDstAlpha;
+	unsigned m_PrevVertexArray;
+	int m_ViewportInit[4];
+	float m_ProjMatrixInit[16];
+	enum EMaxVtxAttribs { MAX_VERTEX_ATTRIBS = 128 };
+	int m_PrevEnabledVertexAttrib[MAX_VERTEX_ATTRIBS];
+	int m_WndWidth;
+	int m_WndHeight;
+
+	struct vec2 {
+		real_t x, y;
+		vec2() {}
+		vec2(float _X, float _Y) :
+				x(_X), y(_Y) {}
+		vec2(int _X, int _Y) :
+				x(float(_X)), y(float(_Y)) {}
+	};
+	struct CTextObj {
+		std::vector<vec2> m_TextVerts;
+		std::vector<vec2> m_TextUVs;
+		std::vector<vec2> m_BgVerts;
+		std::vector<color32> m_Colors;
+		std::vector<color32> m_BgColors;
+	};
+};
+
+ITwGraph *TwCreateRenderer(void *_Device) {
+	ITwGraph *rendr;
+	CanvasItem *canvas = (CanvasItem *)_Device;
+	return rendr;
 }
