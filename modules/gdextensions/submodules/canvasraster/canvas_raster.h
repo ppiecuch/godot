@@ -28,10 +28,23 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#include "core/reference.h"
 #include "scene/2d/node_2d.h"
 
-class CanvasIty : public Node2D {
-	GDCLASS(CanvasIty, Node2D);
+class CanvasIty : public Reference {
+	GDCLASS(CanvasIty, Reference);
+
+public:
+	void begin_path();
+	void end_path();
+
+	void stroke();
+
+	CanvasIty();
+};
+
+class CanvasIty2D : public Node2D {
+	GDCLASS(CanvasIty2D, Node2D);
 
 	Size2 canvas_size;
 
@@ -49,5 +62,5 @@ public:
 	bool _edit_use_rect() const;
 #endif
 
-	CanvasIty();
+	CanvasIty2D();
 };

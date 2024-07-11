@@ -206,7 +206,7 @@ void VisualServerCanvasHelper::tilemap_begin() {
 
 void VisualServerCanvasHelper::tilemap_add_rect(RID p_canvas_item, const Rect2 &p_rect, RID p_texture, const Rect2 &p_src_rect, const Color &p_modulate, bool p_transpose, RID p_normal_map, RID p_mask, bool p_clip_uv) {
 	if (!_multirect_enabled) {
-		VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item, p_rect, p_texture, p_src_rect, p_modulate, p_transpose, p_normal_map, p_mask,  p_clip_uv);
+		VisualServer::get_singleton()->canvas_item_add_texture_rect_region(p_canvas_item, p_rect, p_texture, p_src_rect, p_modulate, p_transpose, p_normal_map, p_mask, p_clip_uv);
 		return;
 	}
 
