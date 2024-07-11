@@ -47,7 +47,7 @@ while IFS= read -rd '' f; do
             elif [[ "$f" == "platform/android/java/lib/src/org/godotengine/godot/utils/ProcessPhoenix"* ]]; then
                 continue 2
             fi
-            python misc/scripts/copyright_headers.py "$f"
+            python3 misc/scripts/copyright_headers.py "$f"
             continue 2
         fi
     done

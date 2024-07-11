@@ -20,9 +20,13 @@
 9. visual/foliage_2d_animation.h: from Foliage2D c# code
 10 . Keychain submodule (apple/android/win/linux)
 11.BMF font file: visual/bmf_bitmap_font.cpp
-12. Simple paint editor/texture type, eg. simple masks, polygon selections (mypaint brushes)
+12. Simple paint editor/texture type, eg. simple masks, polygon selections (__mypaint__ brushes)
 13. Explodomatica module (editor module).
 14. libnoise and procgenlib for additinal rock generator
+15. soft-renderes for gles1/2
+16. ofgui module for ingame gui (ARCH)
+17. choreographer
+18. AntTwaekBar integration
 
 UNITY MATH:
  * https://www.reddit.com/r/godot/comments/p2v6av/quaterionlookrotation_equivalent
