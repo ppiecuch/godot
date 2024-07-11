@@ -472,7 +472,6 @@ def _cmrc_register_dirs:
     """
 
 
-
 """
 # CMakeRC - A Standalone CMake-Based C++ Resource Compiler
 # --------------------------------------------------------
