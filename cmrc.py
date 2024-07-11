@@ -5,6 +5,7 @@ import hashlib
 
 from SCons import Node
 
+
 def initialize_cmrc(self):
     self.cmrc_code_h = """
         #ifndef CMRC_H_INCLUDED
@@ -338,7 +339,8 @@ def initialize_cmrc(self):
         #endif // CMRC_H_INCLUDED
     """
 
-def cmrc_add_resource_library(self, library, sym = ""):
+
+def cmrc_add_resource_library(self, library, sym=""):
     self.sym = sym
     self.library = library
     # Generate a library with the compiled in character arrays.
@@ -392,12 +394,12 @@ def cmrc_add_resources(self, library, filepaths):
     else:
         files = [filepaths]
     for input in files:
-        with open(input, 'rb') as f:
+        with open(input, "rb") as f:
             content = f.read()
         n_bytes = len(content)
         # python2 compatible
         chars = binascii.hexlify(content)
-        chars = [chars[i:i+2] for i in range(0, len(chars), 2)]
+        chars = [chars[i : i + 2] for i in range(0, len(chars), 2)]
         chars = ",0x".join(chars)
         code = """
             namespace { const char file_array[] = { {chars}, 0 }; }
@@ -415,7 +417,11 @@ def cmrc_add_resources(self, library, filepaths):
             "// Pointers to {input}"
             "extern const char* const {sym}_begin;\n"
             "extern const char* const {sym}_end;\n"
-        """.replace("{input}", input).replace("{sym}", sym)
+        """.replace(
+            "{input}", input
+        ).replace(
+            "{sym}", sym
+        )
 
         self.cmrc_code_cpp += """
             "root_index.emplace("
@@ -426,7 +432,9 @@ def cmrc_add_resources(self, library, filepaths):
             "        res_chars::{sym}_end"
             "    )"
             ");\n"
-        """.replace("{sym}", sym)
+        """.replace(
+            "{sym}", sym
+        )
 
 
 def finalize_cmrc(self, library):
@@ -447,25 +455,25 @@ def _cmrc_make_c_identifier(string, starting_underscore):
     # https://gitlab.kitware.com/cmake/cmake/commit/0ab50aea4c4d7099b339fb38b4459d0debbdbd85
     ret = []
 
-    alpha_under = re.compile('[A-Za-z_]')
-    alpha_num_under = re.compile('[A-Za-z0-9_]')
+    alpha_under = re.compile("[A-Za-z_]")
+    alpha_num_under = re.compile("[A-Za-z0-9_]")
 
     if starting_underscore and not alpha_under.match(string):
-        ret.append('_')
+        ret.append("_")
     for c in string:
         if alpha_num_under.match(c):
             ret.append(c)
         else:
-            ret.append('_')
+            ret.append("_")
 
-    return ''.join(ret)
+    return "".join(ret)
 
 
 def _cmrc_encode_fpath(fpath):
     return "f_%s_%s" % (hashlib.md5(fpath).hexdigest().substr(0, 4), _cmrc_make_c_identifier(fpath, false))
 
 
-def _cmrc_register_dirs:
+def _cmrc_register_dirs():
     code = """
         "static auto ${sym}_dir = ${parent_sym}_dir.directory.add_subdir(\"${leaf}\")\;"
         "root_index.emplace(\"${dirpath}\", &${sym}_dir.index_entry)\;"
@@ -476,8 +484,8 @@ def _cmrc_register_dirs:
 # CMakeRC - A Standalone CMake-Based C++ Resource Compiler
 # --------------------------------------------------------
 
-CMakeRC is a resource compiler provided in a single CMake script that can easily
-be included in another project.
+CMakeRC is a resource compiler provided in a single CMake script that can
+easily be included in another project.
 
 ## What is a "Resource Compiler"?
 
@@ -488,14 +496,14 @@ without needing to store that data on disk external to the program.
 Examples use cases:
 
 - Storing a web page tree for serving over HTTP to clients. Compiling the web
-  page into the executable means that the program is all that is required to run
-  the HTTP server, without keeping the site files on disk separately.
+  page into the executable means that the program is all that is required to
+  run the HTTP server, without keeping the site files on disk separately.
 - Storing embedded scripts and/or shaders that support the program, rather than
   writing them in the code as string literals.
 - Storing images and graphics for GUIs.
 
-These things are all about aiding in the ease of portability and distribution of
-the program, as it is no longer required to ship a plethora of support files
+These things are all about aiding in the ease of portability and distribution
+of the program, as it is no longer required to ship a plethora of support files
 with a binary to your users.
 
 ## What is Special About CMakeRC?
@@ -503,7 +511,9 @@ with a binary to your users.
 CMakeRC is implemented as a single CMake module, `CMakeRC.cmake`. No additional
 libraries or headers are required.
 
-This project was initially written as a "literate programming" experiment. [The process for the pre-2.0 version can be read about here](https://vector-of-bool.github.io/2017/01/21/cmrc.html).
+This project was initially written as a "literate programming" experiment.
+The process for the pre-2.0 version can be read about here:
+https://vector-of-bool.github.io/2017/01/21/cmrc.html.
 
 2.0.0+ is slightly different from what was written in the post, but a lot of it
 still applies.
@@ -518,11 +528,12 @@ need.
 ## Usage
 
 1. Once installed, simply import the `CMakeRC.cmake` script. If you placed the
-   module in your project directory (recommended), simply use `include(CMakeRC)`
-   to import the module. If you installed it as a package, use `find_package(CMakeRC)`.
+   module in your project directory (recommended), simply use
+   `include(CMakeRC)` to import the module. If you installed it as a package,
+   use `find_package(CMakeRC)`.
 
-2. Once included, create a new resource library using `cmrc_add_resource_library`,
-   like this:
+2. Once included, create a new resource library using
+   `cmrc_add_resource_library`, like this:
 
    ```cmake
    cmrc_add_resource_library(foo-resources ...)
@@ -554,8 +565,8 @@ need.
    target_link_libraries(my-program PRIVATE foo::rc)
    ```
 
-4. Inside of the source files, any time you wish to use the library, include the
-   `cmrc/cmrc.h` header, which will automatically become available to any
+4. Inside of the source files, any time you wish to use the library, include
+   the `cmrc/cmrc.h` header, which will automatically become available to any
    target that links to a generated resource library target, as `my-program`
    does above:
 
@@ -567,9 +578,10 @@ need.
    }
    ```
 
-5. At global scope within the `.cpp` file, place the `CMRC_DECLARE(<my-lib-ns>)` macro
-   using the namespace that was designated with `cmrc_add_resource_library` (or
-   the library name if no namespace was specified):
+5. At global scope within the `.cpp` file, place the
+   `CMRC_DECLARE(<my-lib-ns>)` macro using the namespace that was designated
+   with `cmrc_add_resource_library` (or the library name if no namespace was
+   specified):
 
    ```c++
    #include <cmrc/cmrc.h>
@@ -617,8 +629,8 @@ statically allocated resource library data.
 - `exists(const std::string& path) -> bool` returns `true` if the given path
   names an existing file or directory, `false` otherwise.
 - `iterate_directory(const std::string& path) -> cmrc::directory_iterator`
-  returns a directory iterator for iterating the contents of a directory. Throws
-  if the given `path` does not identify a directory.
+  returns a directory iterator for iterating the contents of a directory.
+  Throws if the given `path` does not identify a directory.
 
 ## Members of `cmrc::file`
 
@@ -658,12 +670,13 @@ keyword parameters:
 
 - `WHENCE` tells CMakeRC how to rewrite the filepaths to the resource files.
   The default value for `WHENCE` is the `CMAKE_CURRENT_SOURCE_DIR`, which is
-  the source directory where `cmrc_add_resources` or `cmrc_add_resource_library`
-  is called. For example, if you say `cmrc_add_resources(foo images/flower.jpg)`,
-  the resource will be accessible via `cmrc::open("images/flower.jpg")`, but
-  if you say `cmrc_add_resources(foo WHENCE images images/flower.jpg)`, then
-  the resource will be accessible only using `cmrc::open("flower.jpg")`, because
-  the `images` directory is used as the root where the resource will be compiled
+  the source directory where `cmrc_add_resources` or
+  `cmrc_add_resource_library` is called. For example, if you say
+  `cmrc_add_resources(foo images/flower.jpg)`, the resource will be accessible
+  via `cmrc::open("images/flower.jpg")`, but if you say
+  `cmrc_add_resources(foo WHENCE images images/flower.jpg)`, then the resource
+  will be accessible only using `cmrc::open("flower.jpg")`, because the
+  `images` directory is used as the root where the resource will be compiled
   from.
 
   Because of the file transformation limitations, `WHENCE` is _required_ when
@@ -673,9 +686,9 @@ keyword parameters:
 - `PREFIX` tells CMakeRC to prepend a directory-style path to the resource
   filepath in the resulting binary. For example,
   `cmrc_add_resources(foo PREFIX resources images/flower.jpg)` will make the
-  resource accessible using `cmrc::open("resources/images/flower.jpg")`. This is
-  useful to prevent resource libraries from having conflicting filenames. The
-  default `PREFIX` is to have no prefix.
+  resource accessible using `cmrc::open("resources/images/flower.jpg")`.
+  This is useful to prevent resource libraries from having conflicting
+  filenames. The default `PREFIX` is to have no prefix.
 
 The two options can be used together to rewrite the paths to your heart's
 content:
