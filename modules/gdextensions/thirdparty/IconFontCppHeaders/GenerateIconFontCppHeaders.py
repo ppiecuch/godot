@@ -1,7 +1,7 @@
 # Convert Font Awesome, Fork Awesome, Google Material Design, Pictogrammers Material Design Icons, Kenney Game,
 # Fontaudio, Codicons and Lucide icon font parameters to C, C++, C#, Python, Rust and Go compatible formats.
 #
-# ------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
 #
 # 1 - Source material
 #
