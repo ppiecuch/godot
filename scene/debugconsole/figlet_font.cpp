@@ -29,9 +29,9 @@
 /**************************************************************************/
 
 /*
-Copyright (c) 2014, Enrico Bertolazzi (enrico.bertolazzi@unitn.it)
-All rights reserved.
-*/
+ * Copyright (c) 2014, Enrico Bertolazzi (enrico.bertolazzi@unitn.it)
+ * All rights reserved.
+ */
 
 #include "figlet_font.h"
 #include <string.h>
@@ -43,8 +43,6 @@ All rights reserved.
 #endif
 
 namespace Figlet {
-
-using namespace std;
 
 typedef unsigned short u_short;
 
@@ -58,8 +56,8 @@ Banner::Banner(
 		const char *_MappingFrom,
 		const char *_MappingTo) :
 		characters(_characters), Hardblank(_Hardblank), Height(_Height), FontMaxLen(_FontMaxLen), FontSize(_FontSize), charPosition(0), mappingFrom(_MappingFrom), mappingTo(_MappingTo), printMode(_PrintMode) {
-	fill(charToTable, charToTable + maxTableSize, 0); // caratteri non noti mappati in spazi
-	fill(rspaces, rspaces + Height, 0);
+	std::fill(charToTable, charToTable + maxTableSize, 0); // caratteri non noti mappati in spazi
+	std::fill(rspaces, rspaces + Height, 0);
 	for (unsigned i = 0; i < FontSize; ++i) {
 		unsigned ipos = unsigned(characters[i].nchar);
 		if (ipos < maxTableSize) {

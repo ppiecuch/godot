@@ -1,31 +1,62 @@
-VERSION=0.8.3
-rm -rf AUTHORS inc LICENSE src *.zip
-curl -L -O https://github.com/Samsung/thorvg/archive/v$VERSION.zip
-bsdtar --strip-components=1 -xvf *.zip
-rm *.zip
-rm -rf .github docs pc res test tools tvgcompat .git* *.md *.txt wasm_build.sh
+#!/bin/bash -e
+
+VERSION=0.14.2
+
+rm -rf AUTHORS LICENSE inc/ src/ *.zip *.tar.gz tmp/
+
+echo "**"
+echo "** Processing ver. $VERSION"
+echo "**"
+
+mkdir tmp/ && pushd tmp/
+
+# Release
+curl -L -O https://github.com/thorvg/thorvg/archive/v$VERSION.tar.gz
+tar --strip-components=1 -xvf *.tar.gz
+rm *.tar.gz
+
 find . -type f -name 'meson.build' -delete
-rm -rf src/bin src/bindings src/examples src/wasm
-rm -rf src/lib/gl_engine src/loaders/external_jpg src/loaders/png
-cat << EOF > inc/config.h
+
+# Fix newline at end of file.
+for source in $(find ./ -type f \( -iname \*.h -o -iname \*.cpp \)); do
+    sed -i -e '$a\' $source
+done
+
+cp -v AUTHORS LICENSE ..
+cp -rv inc ../
+
+cat << EOF > ../inc/config.h
 #ifndef THORVG_CONFIG_H
 #define THORVG_CONFIG_H
 
-#define THORVG_SW_RASTER_SUPPORT 1
+#define THORVG_SW_RASTER_SUPPORT
+#define THORVG_SVG_LOADER_SUPPORT
+#define THORVG_PNG_LOADER_SUPPORT
+#define THORVG_JPG_LOADER_SUPPORT
+#ifndef WEB_ENABLED
+#define THORVG_THREAD_SUPPORT
+#endif
 
-#define THORVG_SVG_LOADER_SUPPORT 1
+// Added conditionally if webp module is enabled.
+//#define THORVG_WEBP_LOADER_SUPPORT
 
-#define THORVG_PNG_LOADER_SUPPORT 1
-
-#define THORVG_TVG_LOADER_SUPPORT 1
-
-#define THORVG_TVG_SAVER_SUPPORT 1
-
-#define THORVG_JPG_LOADER_SUPPORT 1
+// For internal debugging:
+//#define THORVG_LOG_ENABLED
 
 #define THORVG_VERSION_STRING "$VERSION"
 #endif
 EOF
-for source in $(find ./ -type f \( -iname \*.h -o -iname \*.cpp \)); do
-    sed -i -e '$a\' $source
-done
+
+mkdir ../src
+cp -rv src/common src/renderer ../src
+# Only sw_engine is enabled.
+rm -rfv ../src/renderer/gl_engine ../src/renderer/wg_engine
+# Enabled embedded loaders: raw, JPEG, PNG, WebP.
+mkdir ../src/loaders
+cp -rv src/loaders/svg src/loaders/raw  ../src/loaders/
+cp -rv src/loaders/external_png ../src/loaders/
+cp -rv src/loaders/external_webp ../src/loaders/
+cp -rv src/loaders/jpg ../src/loaders/  # Not using external jpg as it's turbojpeg, which we don't have.
+
+popd
+rm -rf tmp

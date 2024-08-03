@@ -29,9 +29,9 @@
 /**************************************************************************/
 
 /*
-Copyright (c) 2014, Enrico Bertolazzi (email: enrico.bertolazzi@unitn.it)
-All rights reserved.
-*/
+ * Copyright (c) 2014, Enrico Bertolazzi (email: enrico.bertolazzi@unitn.it)
+ * All rights reserved.
+ */
 
 // check for bugged compiler
 #ifdef _MSC_VER
