@@ -117,6 +117,10 @@ static void _initialize_java_modules() {
 }
 
 static void _terminate(JNIEnv *env, bool p_restart = false) {
+	if (step.get() == -1) {
+		return;
+	}
+
 	step.set(-1); // Ensure no further steps are attempted and no further events are sent
 
 	// lets cleanup
