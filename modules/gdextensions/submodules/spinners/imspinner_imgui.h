@@ -42,7 +42,7 @@
 #include "scene/2d/canvas_item.h"
 #include "scene/resources/font.h"
 
-#include "default_bitmap.gen.h"
+#include "misc/default_bitmap_font.auto.h"
 
 // https://github.com/dalerank/imspinner
 // commit 5896bfa0de0bef45b280e8a6fa5b08c7210727fb
