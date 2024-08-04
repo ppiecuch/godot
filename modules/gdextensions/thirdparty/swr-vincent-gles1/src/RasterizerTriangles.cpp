@@ -44,7 +44,7 @@
 #include "Rasterizer.h"
 #include "Texture.h"
 #include "egl/Surface.h"
-#include "arm/FunctionCache.h"
+#include "armjit/FunctionCache.h"
 #include <string.h>
 
 using namespace EGL;
