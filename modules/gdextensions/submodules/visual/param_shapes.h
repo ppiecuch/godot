@@ -43,8 +43,8 @@ void draw_param_shape(CanvasItem *canvas, real_t radius1 = 150, real_t radius2 =
 		print_line(vformat("n_gen_per: %d, n_points: %d", n_gen_per, n_points));
 		print_line(vformat("radius1: %f, Radius2: %f", radius1, radius2));
 		print_line(vformat("rotate angle: %f", angle));
-		print_line(vformat("symmetric ripple: %s", symmetric_ripple));
-		print_line(vformat("reverse in/out: %s", reverse_inout));
+		print_line(vformat("symmetric ripple: %s", opts.symmetric_ripple));
+		print_line(vformat("reverse in/out: %s", opts.reverse_inout));
 		print_line("");
 		print_line("Points:");
 	}
@@ -62,7 +62,7 @@ void draw_param_shape(CanvasItem *canvas, real_t radius1 = 150, real_t radius2 =
 			ripple = Math::abs(ripple);
 		}
 
-		if (chkReverseInOut.Checked) {
+		if (opts.reverse_inout) {
 			ripple = -1.0 * ripple;
 		}
 
