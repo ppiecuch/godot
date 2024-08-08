@@ -505,7 +505,7 @@ extern  char  VerStr [64];
 
 typedef enum window_class    {
 # define ClassDef(c,b,p,a) c,
-# include "textUI_Classes.h"
+# include "textUI_classes.h"
 CLASSCOUNT
 } CLASS;
 
@@ -732,7 +732,7 @@ extern CLASSDEFS classdefs[];
 enum messages {
 # undef DFlatMsg
 # define DFlatMsg(m) m,
-# include "textUI_Msg.h"
+# include "textUI_msg.h"
 MESSAGECOUNT
 };
 
@@ -1546,6 +1546,7 @@ int GraphBoxProc(WINDOW, MESSAGE, PARAM, PARAM);
 int LcdBoxProc(WINDOW, MESSAGE, PARAM, PARAM);
 int EditBoxProc(WINDOW, MESSAGE, PARAM, PARAM);
 int EditorProc(WINDOW, MESSAGE, PARAM, PARAM);
+int MemoPadProc(WINDOW, MESSAGE, PARAM, PARAM);
 int PictureProc(WINDOW, MESSAGE, PARAM, PARAM);
 int MenuBarProc(WINDOW, MESSAGE, PARAM, PARAM);
 int PopDownProc(WINDOW, MESSAGE, PARAM, PARAM);

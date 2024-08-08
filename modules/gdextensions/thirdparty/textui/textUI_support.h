@@ -93,9 +93,9 @@ typedef struct dd_ffblk_tag {
     int position;
 } dd_ffblk;
 
-int  dir_findfirst(const char *path, dd_ffblk *fb, int attrib);
-int  dir_findnext(dd_ffblk *fb);
-int  dir_getattrib(dd_ffblk *fb);
+int dir_findfirst(const char *path, dd_ffblk *fb, int attrib);
+int dir_findnext(dd_ffblk *fb);
+int dir_getattrib(dd_ffblk *fb);
 const char* dir_getname(dd_ffblk *fb);
 
 typedef dd_ffblk ffblk;
@@ -103,6 +103,8 @@ typedef dd_ffblk ffblk;
 #define FindNext(A)        dir_findnext(&(A))
 #define AttribOf(ff)       dir_getattrib(&(ff))
 #define NameOf(ff)         dir_getname(&(ff))
+
+#define _A_NORMAL 0x00
 
 typedef struct GFILE GFILE;
 GFILE *file_open(const char *name, const char *mode);
@@ -126,5 +128,9 @@ void system_resetmouse(void); /* reset the mouse */
 int system_mousebuttons(void); /* return true if mouse buttons are pressed */
 void system_get_mouseposition(int *x, int *y); /* return mouse coordinates */
 int system_button_releases(void); /* return true if a mouse button has been released */
+
+#ifndef _MSC_VER
+# define stricmp strcasecmp
+#endif
 
 #endif // TEXTUI_SUPPORT_H

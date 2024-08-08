@@ -5,19 +5,28 @@
 
 /* D E F I N E S ///////////////////////////////////////////////////////// */
 
+#define DFLATAPPLICATION "DEditor"
+
 #define CHARSLINE 80
 #define LINESPAGE 66
-#define ENABLEGLOBALARGV
+#undef  ENABLEGLOBALARGV
 
 /* I N C L U D E S /////////////////////////////////////////////////////// */
+
+#include "textUI.h"
+#include "textUI_support.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <sys\types.h>
-#include <sys\stat.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <time.h>
+
+#if ! defined (MSDOS)
+#include <unistd.h>
+#endif
 
 /* G L O B A L S ///////////////////////////////////////////////////////// */
 
@@ -102,7 +111,7 @@ void BuildFileName(char *path, const char *fn, const char *ext)
 FILE *OpenConfig(char *mode)
 {
     char path[64];
-    BuildFileName(path, DFlatApplication, ".cfg");
+    BuildFileName(path, DFLATAPPLICATION, ".cfg");
     return fopen(path, mode);
 }
 
@@ -121,7 +130,7 @@ BOOL LoadConfig(void)
                 fclose(fp);
             } else {
                 char path[64];
-                BuildFileName(path, DFlatApplication, ".cfg");
+                BuildFileName(path, DFLATAPPLICATION, ".cfg");
                 fclose(fp);
                 unlink(path);
                 strcpy(cfg.version, ProgramVersion);
@@ -138,7 +147,6 @@ void SaveConfig(void)
     FILE *fp = OpenConfig("wb");
 
     memcpy(&cfg.clr, &SysConfig.VideoCurrentColorScheme, sizeof (ColorScheme));
-    cfg.snowy = GetSnowyFlag();
 
     cfg.ScreenLines = SysConfig.VideoCurrentResolution.VRes;
 
@@ -184,7 +192,6 @@ BEGIN_USER_COMMANDS
     ID_DELETEFILE,
     ID_PRINT,
     ID_PRINTSETUP,
-    ID_DOS,
     ID_EXIT,
     /* --------------- Edit menu ---------------- */
     // ID_UNDO,
@@ -240,7 +247,6 @@ END_USER_COMMANDS
 /* P R O T O T Y P E S /////////////////////////////////////////////////// */
 
 int classify_args(int, char *[], char *[], char *[]);
-static int MemoPadProc(WINDOW, MESSAGE, PARAM, PARAM);
 static void NewFile(WINDOW,char *);
 static void SelectFile(WINDOW);
 static void PadWindow(WINDOW, char *);
@@ -251,7 +257,6 @@ static void SaveFile(WINDOW, int);
 #ifdef DELFILE
 static void DeleteFile(WINDOW);
 #endif
-static int EditorProc(WINDOW, MESSAGE, PARAM, PARAM);
 static char *NameComponent(char *);
 static int PrintSetupProc(WINDOW, MESSAGE, PARAM, PARAM);
 static void FixTabMenu(void);
@@ -264,7 +269,7 @@ static void FixTabMenu(void);
 static void PadWindow(WINDOW wnd, char *FileName)
 {
     int ax, criterr = 1;
-    FBLOCK ff;
+    ffblk ff;
 
     char path[66];
     char *cp;
@@ -287,7 +292,7 @@ static void PadWindow(WINDOW wnd, char *FileName)
 }
 
 /* ------- window processing module for the Edit application window ----- */
-static int MemoPadProc(WINDOW wnd,MESSAGE msg,PARAM p1,PARAM p2)
+int MemoPadProc(WINDOW wnd,MESSAGE msg,PARAM p1,PARAM p2)
 {
     int rtn;
 
@@ -322,7 +327,7 @@ static int MemoPadProc(WINDOW wnd,MESSAGE msg,PARAM p1,PARAM p2)
                     MoreWindows(wnd);
                     break;
                 case ID_HELP:
-                    DisplayHelp(wnd, DFlatApplication);
+                    DisplayHelp(wnd, DFLATAPPLICATION);
                     break;
                 case ID_HELPHELP:
                     DisplayHelp(wnd, "HelpHelp");
@@ -375,9 +380,6 @@ static int MemoPadProc(WINDOW wnd,MESSAGE msg,PARAM p1,PARAM p2)
                 case ID_PRINT:
                     PrintPad(inFocus);
                     return TRUE;
-                case ID_DOS:
-                    ExecuteNonDFP ( getenv("COMSPEC"));
-                    break;
                 case ID_EXIT: 
                     PostMessage(wnd, CLOSE_WINDOW, 0, 0);
                     return TRUE;
@@ -600,8 +602,8 @@ static void LoadFile(WINDOW wnd)
 
                 SendMessage(wwnd, CLOSE_WINDOW, 0, 0);
 
-                sprintf(tMsg,"Tabs detected in\n%s\nExpand them at tab width %d?",
-                    (strlen(wnd->extension)>120) ? "file" : wnd->extension,
+                snprintf(tMsg, 200, "Tabs detected in\n%s\nExpand them at tab width %d?",
+                    (strlen(wnd->extension)>120) ? "file" : (char *)wnd->extension,
                     cfg.Tabs);
                 expandTabs = (YesNoBox(tMsg)) ? 1 : 0;
 
@@ -663,7 +665,7 @@ static void LoadFile(WINDOW wnd)
         /* else ran out of memory? */
     } else {
         char fMsg[200];
-        sprintf(fMsg,"Could not load %s", (strlen(wnd->extension)>120) ? "file" : wnd->extension);
+        snprintf(fMsg, 200, "Could not load %s", (strlen(wnd->extension)>120) ? "file" : (char *)wnd->extension);
         ErrorMessage(fMsg);
     }
 }
@@ -710,9 +712,8 @@ static void PrintPad(WINDOW wnd)
     if (*cfg.PrinterPort)   {
         FILE *prn;
         if ((prn = fopen(cfg.PrinterPort, "wt")) != NULL)       {
-            long percent;
             BOOL KeepPrinting = TRUE;
-            unsigned char *text = GetText(wnd);
+            char *text = GetText(wnd);
             unsigned oldpct = 100, cct = 0, len = strlen(text);
             /* the ONLY place where slidebox is used right now: */
             WINDOW swnd = SliderBox(20, GetTitle(wnd), "Printing");
@@ -720,7 +721,7 @@ static void PrintPad(WINDOW wnd)
             LineCtr = CharCtr = 0;
             while (KeepPrinting && *text)   {
                 PrintChar(prn, *text++);
-                percent = ((long) ++cct * 100) / len;
+                long percent = ((long) ++cct * 100) / len;
                 if ((int) percent != oldpct)    {
                     oldpct = (int) percent;
                     KeepPrinting = SendMessage(swnd, PAINT, 0, oldpct);
@@ -799,8 +800,8 @@ static void SaveFile(WINDOW wnd, int Saveas)
             {
             char fMsg[200];
             SendMessage(mwnd, CLOSE_WINDOW, 0, 0);
-            sprintf(fMsg,"Could not save %s, try again?",
-                    (strlen(wnd->extension)>120) ? "file" : wnd->extension);
+            snprintf(fMsg, 200, "Could not save %s, try again?",
+                    (strlen(wnd->extension)>120) ? "file" : (char *)wnd->extension);
             if (YesNoBox(fMsg))
                 {
                 Saveas = 1;	/* 0.7c: ask user for a new place for next try */
@@ -863,7 +864,7 @@ static void ShowPosition(WINDOW wnd)
 }
 
 /* ----- window processing module for the editboxes ----- */
-static int EditorProc(WINDOW wnd,MESSAGE msg,PARAM p1,PARAM p2)
+int EditorProc(WINDOW wnd,MESSAGE msg,PARAM p1,PARAM p2)
 {
     int rtn;
     switch (msg)    {
@@ -1076,10 +1077,8 @@ void PrepFileMenu(void *w, struct Menu *mnu)
 /*  DeactivateCommand(&MainMenu, ID_DELETEFILE); */
     DeactivateCommand(&MainMenu, ID_PRINT);
 
-    if (cfg.ReadOnlyMode) {		/* new in 0.7b */
+    if (cfg.ReadOnlyMode) /* new in 0.7b */
         DeactivateCommand(&MainMenu, ID_NEW);
-        DeactivateCommand(&MainMenu, ID_DOS); /* make viewer mode "safe" */
-    }
 
     if (wnd != NULL && GetClass(wnd) == EDITBOX)
         {
@@ -1312,7 +1311,7 @@ static void DisplayAsciitab(WINDOW wnd)
 }
 
 
-static void CreateWindowMsg(WINDOW wnd)
+static void AsciitabCreateWindowMsg(WINDOW wnd)
 {
     ascii_highlight = 0;
     DisplayAsciitab(wnd);
@@ -1358,7 +1357,7 @@ static int AsciitabProc(WINDOW wnd,MESSAGE msg, PARAM p1,PARAM p2)
     switch (msg)    {
         case CREATE_WINDOW:
             DefaultWndProc(wnd, msg, p1, p2);
-            CreateWindowMsg(wnd);
+            AsciitabCreateWindowMsg(wnd);
             return TRUE;
         case KEYBOARD:
             if (KeyboardMsg(wnd, p1))
@@ -1397,6 +1396,7 @@ void Asciitable(WINDOW pwnd)
     SendMessage(ATwnd, SETFOCUS, TRUE, 0);
 }
 
+#endif // WITH_ASCIITAB
 
 /* ------------- calendar.c ------------- */
 
@@ -1493,7 +1493,7 @@ static void BuildDateArray(void)
         dys[offset++] = dy;
 }
 
-static void CreateWindowMsg(WINDOW wnd)
+static void CalendarCreateWindowMsg(WINDOW wnd)
 {
     DrawBox(wnd, 1, 2, CALHEIGHT-4, CALWIDTH-4);
     for (int x = 5; x < CALWIDTH-4; x += 4)
@@ -1543,7 +1543,7 @@ static void DisplayDates(WINDOW wnd)
     }
 }
 
-static int KeyboardMsg(WINDOW wnd, PARAM p1)
+static int CalendarKeyboardMsg(WINDOW wnd, PARAM p1)
 {
     switch ((int)p1)    {
         case PGUP:
@@ -1575,10 +1575,10 @@ static int CalendarProc(WINDOW wnd,MESSAGE msg, PARAM p1,PARAM p2)
     switch (msg)    {
         case CREATE_WINDOW:
             DefaultWndProc(wnd, msg, p1, p2);
-            CreateWindowMsg(wnd);
+            CalendarCreateWindowMsg(wnd);
             return TRUE;
         case KEYBOARD:
-            if (KeyboardMsg(wnd, p1))
+            if (CalendarKeyboardMsg(wnd, p1))
                 return TRUE;
             break;
         case PAINT:
@@ -1620,6 +1620,7 @@ void Calendar(WINDOW pwnd)
     SendMessage(Cwnd, SETFOCUS, TRUE, 0);
 }
 
+#endif // NOCALENDAR
 
 /* -------------- menus.c ------------- */
 
@@ -1640,7 +1641,6 @@ DEFMENU(MainMenu)
         SELECTION( "~Print",      ID_PRINT,        0, INACTIVE)
         SELECTION( "P~rinter setup...", ID_PRINTSETUP, 0, 0)
         SEPARATOR
-        SELECTION( "~DOS Shell",  ID_DOS,          0, 0)
         SELECTION( "E~xit",       ID_EXIT,     ALT_X, 0)
     ENDPOPDOWN
 

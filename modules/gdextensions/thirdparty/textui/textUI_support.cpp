@@ -2,11 +2,12 @@
 
 #include "textUI_support.h"
 
-#include <fcntl.h>
-
 #include "core/math/vector2.h"
 #include "core/os/dir_access.h"
 #include "core/os/file_access.h"
+
+#include <fcntl.h>
+#include <string.h>
 
 #if defined __MSDOS__ || defined __WIN32__ || defined _Windows
 # define DIRSEP_CHAR '\\'
@@ -458,7 +459,7 @@ static int _conv_perm(const String &p_path, const String &mode) {
     return flags;
 }
 
-struct PYFILE {
+struct GFILE {
     FileAccess *fa;
     static String fixpath(const String &p_path) {
         if (_current_dir && !p_path.is_abs_path() && !FileAccess::exists(p_path)) {
@@ -466,7 +467,7 @@ struct PYFILE {
         }
         return p_path;
     }
-    static PYFILE *fopen(const String &p_path, int p_mode_flags) {
+    static GFILE *fopen(const String &p_path, int p_mode_flags) {
         if (!p_path.empty()) {
             const String real_path = fixpath(p_path);
             const int flags = _conv_perm(real_path, p_mode_flags);
@@ -474,14 +475,14 @@ struct PYFILE {
                 if (flags & EX_MODE_CREATE) {
                     _fa->seek_end();
                 }
-                return memnew(PYFILE(_fa));
+                return memnew(GFILE(_fa));
             } else {
                 return nullptr;
             }
         }
         return nullptr;
     }
-    static PYFILE *fopen(const String &p_path, const String &p_mode_flags) {
+    static GFILE *fopen(const String &p_path, const String &p_mode_flags) {
         if (!p_path.empty()) {
             const String real_path = fixpath(p_path);
             const int flags = _conv_perm(real_path, p_mode_flags);
@@ -489,16 +490,16 @@ struct PYFILE {
                 if (flags & EX_MODE_APPEND) {
                     _fa->seek_end();
                 }
-                return memnew(PYFILE(_fa));
+                return memnew(GFILE(_fa));
             } else {
                 return nullptr;
             }
         }
         return nullptr;
     }
-    PYFILE(FileAccess *p_fa) { fa = p_fa; }
-    PYFILE() { fa = nullptr; }
-    ~PYFILE() {
+    GFILE(FileAccess *p_fa) { fa = p_fa; }
+    GFILE() { fa = nullptr; }
+    ~GFILE() {
         if (fa) {
             memdelete(fa);
         }
