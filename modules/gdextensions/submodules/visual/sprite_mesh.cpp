@@ -2289,6 +2289,8 @@ bool SpriteMeshLightEditor::forward_gui_input(const Ref<InputEvent> &p_event) {
 		const Vector2 gpoint = mb->get_position();
 		const Vector2 cpoint = node->_edit_get_global_transform().affine_inverse().xform(node->get_light_position() + canvas_item_editor->snap_point(canvas_item_editor->get_canvas_transform().affine_inverse().xform(gpoint)));
 
+		(void)cpoint;
+
 		if (mb->is_pressed()) {
 			if (mb->get_button_index() == BUTTON_LEFT) {
 				if (mb->get_control() || mb->get_shift() || mb->get_alt()) {

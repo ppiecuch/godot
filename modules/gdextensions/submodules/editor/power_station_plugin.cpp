@@ -125,7 +125,7 @@ int load_pres(PSPhysMod *model, const char *fname, char **errmsg);
 
 // Utility functions.
 
-_FORCE_INLINE_ int16_t double_to_s16(double d) {
+static _FORCE_INLINE_ int16_t double_to_s16(double d) {
 	if (d >= 1.0)
 		return 32767;
 	else if (d <= -1.0)

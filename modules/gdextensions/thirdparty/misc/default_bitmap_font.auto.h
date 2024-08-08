@@ -5,9 +5,9 @@
 extern "C" {
 #endif
 
-const char _default_bitmap_fnt[];
-unsigned char _default_bitmap_png[];
-unsigned int _default_bitmap_png_len;
+extern const char *_default_bitmap_fnt;
+extern unsigned char *_default_bitmap_png;
+extern unsigned int _default_bitmap_png_len;
 
 #ifdef __cplusplus
 }
