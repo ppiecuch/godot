@@ -189,8 +189,8 @@ typedef struct cg_physical_reg_t
 	cg_virtual_reg_t *		virtual_reg;		/* assigned virtual reg.	*/
 	cg_inst_t *				next_use;			/* next use of ass. value   */
 	physical_reg_status_t	state;				/* current register state	*/
-	int						dirty: 1;
-	int						defined:1;
+	unsigned int			dirty: 1;
+	unsigned int			defined:1;
 }
 cg_physical_reg_t;
 

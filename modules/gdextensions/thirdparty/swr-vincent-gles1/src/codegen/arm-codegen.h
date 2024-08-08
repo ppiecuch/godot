@@ -367,10 +367,10 @@ typedef union {
 } ARMInstrDPI;
 
 #define ARM_DPI_ID 0
-#define ARM_DPI_MASK 3 << 26
-#define ARM_DPI_TAG ARM_DPI_ID << 26
+#define ARM_DPI_MASK (3 << 26)
+#define ARM_DPI_TAG (ARM_DPI_ID << 26)
 
-#define ARM_DEF_DPI_IMM_COND(imm8, rot, rd, rn, s, op, cond) \
+#define ARM_DEF_DPI_IMM_COND(imm8, rot, rd, rn, s, op, cond) ((U32)( \
 	((imm8) & 0xFF)      | \
 	(((rot) & 0xF) << 8) | \
 	((rd) << 12)         | \
@@ -379,7 +379,7 @@ typedef union {
 	((op) << 21)         | \
 	(1 << 25)            | \
 	(ARM_DPI_TAG)        | \
-	ARM_DEF_COND(cond)
+	ARM_DEF_COND(cond)   ))
 
 
 #define ARM_DEF_DPI_IMM(imm8, rot, rd, rn, s, op) \
@@ -399,7 +399,7 @@ typedef union {
 
 
 
-#define ARM_DEF_DPI_REG_IMMSHIFT_COND(rm, shift_type, imm_shift, rd, rn, s, op, cond) \
+#define ARM_DEF_DPI_REG_IMMSHIFT_COND(rm, shift_type, imm_shift, rd, rn, s, op, cond) ((U32)( \
 	(rm)                        | \
 	((shift_type & 3) << 5)     | \
 	(((imm_shift) & 0x1F) << 7) | \
@@ -408,7 +408,7 @@ typedef union {
 	((s) << 20)                 | \
 	((op) << 21)                | \
 	(ARM_DPI_TAG)               | \
-	ARM_DEF_COND(cond)
+	ARM_DEF_COND(cond)          ))
 
 /* codegen */
 #define ARM_DPIOP_REG_IMMSHIFT_COND(p, op, rd, rn, rm, shift_type, imm_shift, cond) \
@@ -438,7 +438,7 @@ typedef union {
 
 
 /* Rd := Rn op (Rm shift_type Rs) */
-#define ARM_DEF_DPI_REG_REGSHIFT_COND(rm, shift_type, rs, rd, rn, s, op, cond) \
+#define ARM_DEF_DPI_REG_REGSHIFT_COND(rm, shift_type, rs, rd, rn, s, op, cond) ((U32)( \
 	(rm)                        | \
 	(1 << 4)                    | \
 	((shift_type & 3) << 5)     | \
@@ -448,7 +448,7 @@ typedef union {
 	((s) << 20)                 | \
 	((op) << 21)                | \
 	(ARM_DPI_TAG)               | \
-	ARM_DEF_COND(cond)
+	ARM_DEF_COND(cond)          ))
 
 /* codegen */
 #define ARM_DPIOP_REG_REGSHIFT_COND(p, op, rd, rn, rm, shift_type, rs, cond) \
@@ -480,19 +480,19 @@ typedef struct {
 } ARMInstrMRT;
 
 #define ARM_MRT_ID 4
-#define ARM_MRT_MASK 7 << 25
-#define ARM_MRT_TAG ARM_MRT_ID << 25
+#define ARM_MRT_MASK (7 << 25)
+#define ARM_MRT_TAG (ARM_MRT_ID << 25)
 
-#define ARM_DEF_MRT(regs, rn, l, w, s, u, p, cond) \
-	(regs)        | \
-	(rn << 16)    | \
-	(l << 20)     | \
-	(w << 21)     | \
-	(s << 22)     | \
-	(u << 23)     | \
-	(p << 24)     | \
-	(ARM_MRT_TAG) | \
-	ARM_DEF_COND(cond)
+#define ARM_DEF_MRT(regs, rn, l, w, s, u, p, cond) ((U32)( \
+	(regs)             | \
+	(rn << 16)         | \
+	(l << 20)          | \
+	(w << 21)          | \
+	(s << 22)          | \
+	(u << 23)          | \
+	(p << 24)          | \
+	(ARM_MRT_TAG)      | \
+	ARM_DEF_COND(cond) ))
 
 #define ARM_STMDB(p, rbase, regs) ARM_EMIT(p, ARM_DEF_MRT(regs, rbase, 0, 0, 0, 0, 1, ARMCOND_AL))
 #define ARM_LDMDB(p, rbase, regs) ARM_EMIT(p, ARM_DEF_MRT(regs, rbase, 1, 0, 0, 0, 1, ARMCOND_AL))
@@ -552,7 +552,7 @@ typedef struct {
 #define ARM_MUL_MASK ((0xF << 24) | (0xF << 4))
 #define ARM_MUL_TAG ((ARM_MUL_ID << 24) | (ARM_MUL_ID2 << 4))
 
-#define ARM_DEF_MUL_COND(op, rd, rm, rs, rn, s, cond) \
+#define ARM_DEF_MUL_COND(op, rd, rm, rs, rn, s, cond) ((U32)( \
 	(rm)               | \
 	((rs) << 8)        | \
 	((rn) << 12)       | \
@@ -560,7 +560,7 @@ typedef struct {
 	(((s) & 1) << 20)  | \
 	(((op) & 7) << 21) | \
 	ARM_MUL_TAG        | \
-	ARM_DEF_COND(cond)
+	ARM_DEF_COND(cond) ))
 
 /* Rd := (Rm * Rs)[31:0]; 32 x 32 -> 32 */
 #define ARM_MUL_COND(p, rd, rm, rs, cond) \
@@ -646,8 +646,8 @@ typedef union {
 } ARMInstrWXfer;
 
 #define ARM_WXFER_ID 1
-#define ARM_WXFER_MASK 3 << 26
-#define ARM_WXFER_TAG ARM_WXFER_ID << 26
+#define ARM_WXFER_MASK (3 << 26)
+#define ARM_WXFER_TAG (ARM_WXFER_ID << 26)
 
 
 /*
@@ -657,7 +657,7 @@ typedef union {
  * p     :	index mode, post-index (0, automatic write-back)
  *      	or pre-index (1, calc effective address before memory access)
  */
-#define ARM_DEF_WXFER_IMM(imm12, rd, rn, ls, wb, b, p, cond) \
+#define ARM_DEF_WXFER_IMM(imm12, rd, rn, ls, wb, b, p, cond) ((U32)( \
 	((((int)imm12) < 0) ? -(int)(imm12) : (imm12)) | \
 	((rd) << 12)                                   | \
 	((rn) << 16)                                   | \
@@ -667,7 +667,7 @@ typedef union {
 	(((int)(imm12) >= 0) << 23)                    | \
 	((p) << 24)                                    | \
 	ARM_WXFER_TAG                                  | \
-	ARM_DEF_COND(cond)
+	ARM_DEF_COND(cond)                             ))
 
 #define ARM_WXFER_MAX_OFFS 0xFFF
 
@@ -743,7 +743,7 @@ typedef union {
  * u     :	down(0) / up(1)
  * p     :	index mode, post-index (0, automatic write-back) or pre-index (1)
  */
-#define ARM_DEF_WXFER_REG_REG_UPDOWN_COND(rm, shift_type, shift, rd, rn, ls, wb, b, u, p, cond) \
+#define ARM_DEF_WXFER_REG_REG_UPDOWN_COND(rm, shift_type, shift, rd, rn, ls, wb, b, u, p, cond) ((U32)( \
 	(rm)                | \
 	((shift_type) << 5) | \
 	((shift) << 7)      | \
@@ -756,7 +756,7 @@ typedef union {
 	((p)  << 24)        | \
 	(1    << 25)        | \
 	ARM_WXFER_TAG       | \
-	ARM_DEF_COND(cond)
+	ARM_DEF_COND(cond)  ))
 
 #define ARM_DEF_WXFER_REG_REG_COND(rm, shift_type, shift, rd, rn, ls, wb, b, p, cond) \
 	ARM_DEF_WXFER_REG_REG_UPDOWN_COND(rm, shift_type, shift, rd, rn, ls, wb, b, ARM_UP, p, cond)
@@ -828,7 +828,7 @@ typedef struct {
 #define ARM_HXFER_MASK ((0x7 << 25) | (0x9 << 4))
 #define ARM_HXFER_TAG ((ARM_HXFER_ID << 25) | (ARM_HXFER_ID2 << 7) | (ARM_HXFER_ID3 << 4))
 
-#define ARM_DEF_HXFER_IMM_COND(imm, h, s, rd, rn, ls, wb, p, cond) \
+#define ARM_DEF_HXFER_IMM_COND(imm, h, s, rd, rn, ls, wb, p, cond) ((U32)( \
 	(((int)(imm) >= 0 ? (imm) : -(int)(imm)) & 0xF)               | \
 	((h) << 5)                                                    | \
 	((s) << 6)                                                    | \
@@ -841,7 +841,7 @@ typedef struct {
 	(((int)(imm) >= 0) << 23)                                     | \
 	((p) << 24)                                                   | \
 	ARM_HXFER_TAG                                                 | \
-	ARM_DEF_COND(cond)
+	ARM_DEF_COND(cond)                                            ))
 
 #define ARM_LDRH_IMM_COND(p, rd, rn, imm, cond) \
 	ARM_EMIT(p, ARM_DEF_HXFER_IMM_COND(imm, 1, 0, rd, rn, ARMOP_LDR, 0, 1, cond))
@@ -868,19 +868,19 @@ typedef struct {
 	ARM_STRH_IMM_POST_COND(p, rd, rn, imm, ARMCOND_AL)
 
 
-#define ARM_DEF_HXFER_REG_REG_UPDOWN_COND(rm, h, s, rd, rn, ls, wb, u, p, cond) \
-	((rm) & 0xF)                | \
-	((h) << 5)                  | \
-	((s) << 6)                  | \
-	((rd) << 12)                | \
-	((rn) << 16)                | \
-	((ls) << 20)                | \
-	((wb) << 21)                | \
-	(0 << 22)                   | \
-	((u) << 23)                 | \
-	((p) << 24)                 | \
-	ARM_HXFER_TAG               | \
-	ARM_DEF_COND(cond)
+#define ARM_DEF_HXFER_REG_REG_UPDOWN_COND(rm, h, s, rd, rn, ls, wb, u, p, cond) ((U32)( \
+	((rm) & 0xF)                |\
+	((h) << 5)                  |\
+	((s) << 6)                  |\
+	((rd) << 12)                |\
+	((rn) << 16)                |\
+	((ls) << 20)                |\
+	((wb) << 21)                |\
+	(0 << 22)                   |\
+	((u) << 23)                 |\
+	((p) << 24)                 |\
+	ARM_HXFER_TAG               |\
+	ARM_DEF_COND(cond)          ))
 
 #define ARM_DEF_HXFER_REG_REG_COND(rm, h, s, rd, rn, ls, wb, p, cond) \
 	ARM_DEF_HXFER_REG_REG_UPDOWN_COND(rm, h, s, rd, rn, ls, wb, ARM_UP, p, cond)
@@ -1006,7 +1006,7 @@ typedef struct {
  * Rd := cRn {<op>cRm}
  * op{condition} CP#,CPOp,Rd,CRn,CRm{,CPOp2}
  */
-#define ARM_DEF_MRC_COND(cpn, cpop, rd, crn, crm, cpop2, cond) \
+#define ARM_DEF_MRC_COND(cpn, cpop, rd, crn, crm, cpop2, cond) ((U32)( \
 	((crm) & 0xF)       |\
 	((cpop2) << 5)      |\
 	((cpn) << 8)        |\
@@ -1015,7 +1015,7 @@ typedef struct {
 	((ARMOP_LDR) << 20) |\
 	((cpop) << 21)      |\
 	ARM_CRT_TAG         |\
-	ARM_DEF_COND(cond)
+	ARM_DEF_COND(cond)  ))
 
 #define ARM_MRC_COND(p, cpn, cpop, rd, crn, crm, cpop2, cond) \
 	ARM_EMIT(p, ARM_DEF_MRC_COND(cpn, cpop, rd, crn, crm, cpop2, cond))
@@ -1237,33 +1237,33 @@ typedef struct {
 #define ARM_PLD_ID2 0xF /* rd */
 #define ARM_PLD_MASK ((0xFC7 << 20) | (0xF << 12))
 #define ARM_PLD_TAG ((ARM_PLD_ID << 20) | (ARM_PLD_ID2 << 12))
-#define ARM_DEF_PLD_IMM(imm12, rn) \
-	((((int)imm12) < 0) ? -(int)(imm12) : (imm12)) | \
-	((0xF) << 12)                                  | \
-	((rn) << 16)                                   | \
-	((1) << 20)  /* ls = load(1) */                | \
-	((0) << 21)  /* wb = 0 */                      | \
-	((1)  << 22) /* b = 1 */                       | \
-	(((int)(imm12) >= 0) << 23)                    | \
-	((1) << 24)  /* pre/post = pre(1) */           | \
-	((2) << 25)  /* tag */                         | \
-	ARM_DEF_COND(ARMCOND_NV)
+#define ARM_DEF_PLD_IMM(imm12, rn) ((U32)( \
+	((((int)imm12) < 0) ? -(int)(imm12) : (imm12)) |\
+	((0xF) << 12)                                  |\
+	((rn) << 16)                                   |\
+	((1) << 20)  /* ls = load(1) */                |\
+	((0) << 21)  /* wb = 0 */                      |\
+	((1)  << 22) /* b = 1 */                       |\
+	(((int)(imm12) >= 0) << 23)                    |\
+	((1) << 24)  /* pre/post = pre(1) */           |\
+	((2) << 25)  /* tag */                         |\
+	ARM_DEF_COND(ARMCOND_NV)                       ))
 
 #define ARM_PLD_IMM(p, rn, imm12) ARM_EMIT(p, ARM_DEF_PLD_IMM(imm12, rn))
 
-#define ARM_DEF_PLD_REG_REG_UPDOWN_SHIFT(rn, shift_type, shift, rm, u) \
-	(rm)                            | \
-	((shift_type) << 5)             | \
-	((shift) << 7)                  | \
-	(0xF << 12) /* rd = 0xF */      | \
-	((rn) << 16)                    | \
-	(1    << 20) /* ls = load(1) */ | \
-	(0    << 21) /* wb = 0 */       | \
-	(1    << 22) /* b = 1 */        | \
-	((u)  << 23)                    | \
-	(1  << 24)   /* pre(1) */       | \
-	(3    << 25)                    | \
-	ARM_DEF_COND(ARMCOND_NV)
+#define ARM_DEF_PLD_REG_REG_UPDOWN_SHIFT(rn, shift_type, shift, rm, u) ((U32)( \
+	(rm)                            |\
+	((shift_type) << 5)             |\
+	((shift) << 7)                  |\
+	(0xF << 12) /* rd = 0xF */      |\
+	((rn) << 16)                    |\
+	(1    << 20) /* ls = load(1) */ |\
+	(0    << 21) /* wb = 0 */       |\
+	(1    << 22) /* b = 1 */        |\
+	((u)  << 23)                    |\
+	(1  << 24)   /* pre(1) */       |\
+	(3    << 25)                    |\
+	ARM_DEF_COND(ARMCOND_NV)        ))
 
 #define ARM_PLD_REG_REG_UPDOWN_SHIFT(p, rm, rn, u, shift_type, shift) \
 	ARM_EMIT(p,  ARM_DEF_PLD_REG_REG_UPDOWN_SHIFT(rm, shift_type, shift, rn, u))

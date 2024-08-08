@@ -352,8 +352,8 @@ struct cg_virtual_reg_t
 	cg_reg_type_t				type;				/* type of this register		*/
 	short						use_cost;			/* repeated usage cost			*/
 	short						def_cost;			/* definition cost				*/
-	int							is_global : 1;		/* is this a global register?   */
-	int							is_arg : 1;			/* is passed in as argument val.*/
+	unsigned int				is_global : 1;		/* is this a global register?   */
+	unsigned int				is_arg : 1;			/* is passed in as argument val.*/
 };
 
 
