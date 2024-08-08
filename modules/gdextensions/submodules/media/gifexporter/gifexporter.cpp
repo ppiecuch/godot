@@ -59,9 +59,6 @@ static _FORCE_INLINE_ uint8_t get_g8(const Color &c) {
 static _FORCE_INLINE_ uint8_t get_b8(const Color &c) {
 	return (uint8_t)(c.b * 255.0);
 }
-static _FORCE_INLINE_ uint8_t get_a8(const Color &c) {
-	return (uint8_t)(c.a * 255.0);
-}
 
 Error GifExporter::write_frame(const Ref<Image> frame, const Color &background_color, float frame_delay, int32_t bit_depth, bool dither) {
 	ERR_FAIL_NULL_V(gwriter.f, ERR_INVALID_PARAMETER);
@@ -72,13 +69,12 @@ Error GifExporter::write_frame(const Ref<Image> frame, const Color &background_c
 	std::vector<uint8_t> data(pool.size());
 	for (int i = 0; i < pool.size(); i += 4) {
 		// blend color with the background color because gif doesn't support alpha channel
-		uint8_t red = pool[i];
-		uint8_t green = pool[i + 1];
-		uint8_t blue = pool[i + 2];
-		uint8_t alpha = pool[i + 3];
+		const uint8_t red = pool[i];
+		const uint8_t green = pool[i + 1];
+		const uint8_t blue = pool[i + 2];
+		const uint8_t alpha = pool[i + 3];
 
-		// background always has to have a solid alpha
-		data[i + 3] = alpha + 255 * (255 - alpha);
+		data[i + 3] = alpha + 255 * (255 - alpha); // background always has to have a solid alpha
 		data[i] = (red * alpha + get_r8(background_color) * 255 * (255 - alpha)) / data[i + 3];
 		data[i + 1] = (green * alpha + get_g8(background_color) * 255 * (255 - alpha)) / data[i + 3];
 		data[i + 2] = (blue * alpha + get_b8(background_color) * 255 * (255 - alpha)) / data[i + 3];
