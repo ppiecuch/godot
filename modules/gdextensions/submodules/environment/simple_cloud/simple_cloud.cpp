@@ -1,11 +1,13 @@
-﻿struct SimpleRotator {
+﻿#include "core/math/vector3.h"
+
+struct SimpleRotator {
 	Vector3 rotation = new Vector3(0, 1, 0);
 	real_t speed = 1;
 
 	void update(real_t delta) {
 		transform.Rotate(rotation * speed * delta);
 	}
-}
+};
 
 struct SimpleTextureRotator {
 	Vector2 rotation = new Vector2(1, 1);
@@ -58,8 +60,8 @@ class CloudFaker {
 	void InitComponents() {
 		real_t windSpeed = Random.Range(minWindStrength, maxWindStrength);
 
-		// if (Random.value > 0.5) {
-		//	windSpeed = -windSpeed;
+		//if (Random.value > 0.5) {
+		//  windSpeed = -windSpeed;
 		//}
 
 		GetComponent<SimpleTextureRotator>().speedMultiplier = windSpeed;
@@ -103,4 +105,4 @@ public:
 	void RecalcNow() {
 		InitComponents();
 	}
-}
+};

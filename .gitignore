@@ -400,7 +400,7 @@ $RECYCLE.BIN/
 
 ##################################
 ### Modules tools and binaries ###
-################################## 
+##################################
 
 modules/gdextensions/submodules/benchmark/tools/read_dat
 modules/gdextensions/_tools/conv_rgb_to_8
