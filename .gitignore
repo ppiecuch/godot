@@ -397,3 +397,11 @@ $RECYCLE.BIN/
 *.msm
 *.msp
 *.lnk
+
+##################################
+### Modules tools and binaries ###
+################################## 
+
+modules/gdextensions/submodules/benchmark/tools/read_dat
+modules/gdextensions/_tools/conv_rgb_to_8
+modules/gdextensions/_tools/dos_font_data*
