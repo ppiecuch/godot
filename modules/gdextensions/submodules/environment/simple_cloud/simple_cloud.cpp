@@ -1,4 +1,4 @@
-﻿#include "core/math/vector3.h"
+#include "core/math/vector3.h"
 
 struct SimpleRotator {
 	Vector3 rotation = new Vector3(0, 1, 0);
