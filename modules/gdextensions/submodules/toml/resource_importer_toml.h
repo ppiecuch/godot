@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  path_iterator.h                                                       */
+/*  resource_importer_toml.h                                              */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,126 +28,66 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-class DDLSPathIterator {
-	var _entity : DDLSEntityAI;
-	var _currentX : Number;
-	var _currentY : Number;
-	var _hasPrev : Boolean;
-	var _hasNext : Boolean;
+#ifndef RESOURCE_IMPORTER_TOML
+#define RESOURCE_IMPORTER_TOML
 
-	var _path : Vector.<Number>;
-	var _count : int;
-	var _countMax : int;
+#include "core/io/resource_importer.h"
+#include "core/io/resource_saver.h"
 
-	function updateEntity() :
-			void {
-		if (!_entity)
-			return;
+class TOMLData : public Resource {
+	GDCLASS(TOMLData, Resource);
+	Variant data;
 
-		_entity.x = _currentX;
-		_entity.y = _currentY;
+protected:
+	static void _bind_methods() {
+		ClassDB::bind_method(D_METHOD("set_data", "data"), &TOMLData::set_data);
+		ClassDB::bind_method(D_METHOD("get_data"), &TOMLData::get_data);
+		ClassDB::bind_method(D_METHOD("set_yaml", "json"), &TOMLData::set_yaml);
+		ClassDB::bind_method(D_METHOD("get_yaml"), &TOMLData::get_yaml);
+
+		ADD_PROPERTY(PropertyInfo(Variant::NIL, "data", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE | PROPERTY_USAGE_NIL_IS_VARIANT), "set_data", "get_data");
+		ADD_PROPERTY(PropertyInfo(Variant::STRING, "toml", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_EDITOR), "set_toml", "get_toml");
 	}
 
 public:
-	function get entity() :
-			DDLSEntityAI {
-		return _entity;
+	Variant get_data() const {
+		return data;
+	}
+	void set_data(Variant p_data) {
+		data = p_data;
+	}
+	String get_toml() const {
+		return "";
+	}
+	void set_toml(const String p_string) {
 	}
 
-	function set entity(value
-						: DDLSEntityAI) :
-			void {
-		_entity = value;
-	}
-
-	function get x() :
-			Number {
-		return _currentX;
-	}
-
-	function get y() :
-			Number {
-		return _currentY;
-	}
-
-	function get hasPrev() :
-			Boolean {
-		return _hasPrev;
-	}
-
-	function get hasNext() :
-			Boolean {
-		return _hasNext;
-	}
-
-	function get count() :
-			int {
-		return _count;
-	}
-
-	function get countMax() :
-			int {
-		return _countMax;
-	}
-
-	function set path(value
-					  : Vector.<Number>) :
-			void {
-		_path = value;
-		_countMax = _path.length / 2;
-		reset();
-	}
-
-	function reset() :
-			void {
-		_count = 0;
-		_currentX = _path[_count];
-		_currentY = _path[_count + 1];
-		updateEntity();
-
-		_hasPrev = false;
-		if (_path.length > 2)
-			_hasNext = true;
-		else
-			_hasNext = false;
-	}
-
-	function prev() :
-			Boolean {
-		if (!_hasPrev)
-			return false;
-		_hasNext = true;
-
-		_count--;
-		_currentX = _path[_count * 2];
-		_currentY = _path[_count * 2 + 1];
-
-		updateEntity();
-
-		if (_count == 0)
-			_hasPrev = false;
-
-		return true;
-	}
-
-	function next() :
-			Boolean {
-		if (!_hasNext)
-			return false;
-		_hasPrev = true;
-
-		_count++;
-		_currentX = _path[_count * 2];
-		_currentY = _path[_count * 2 + 1];
-
-		updateEntity();
-
-		if ((_count + 1) * 2 == _path.length)
-			_hasNext = false;
-
-		return true;
-	}
-
-	function DDLSPathIterator() {
-	}
+	TOMLData() {}
+	~TOMLData() {}
 };
+
+class ResourceImporterTOML : public ResourceImporter {
+	GDCLASS(ResourceImporterTOML, ResourceImporter);
+
+public:
+	virtual String get_importer_name() const;
+	virtual String get_visible_name() const;
+	virtual void get_recognized_extensions(List<String> *p_extensions) const;
+	virtual String get_save_extension() const;
+	virtual String get_resource_type() const;
+
+	virtual int get_preset_count() const;
+	virtual String get_preset_name(int p_idx) const;
+
+	virtual void get_import_options(List<ImportOption> *r_options, int p_preset = 0) const;
+	virtual bool get_option_visibility(const String &p_option, const Map<StringName, Variant> &p_options) const;
+	virtual Error import(const String &p_source_file, const String &p_save_path,
+			const Map<StringName, Variant> &p_options,
+			List<String> *r_platform_variants,
+			List<String> *r_gen_files = NULL,
+			Variant *r_metadata = NULL);
+
+	ResourceImporterTOML() {}
+	~ResourceImporterTOML() {}
+};
+#endif // RESOURCE_IMPORTER_TOML

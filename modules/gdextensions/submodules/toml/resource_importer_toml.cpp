@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  path_iterator.h                                                       */
+/*  resource_importer_toml.cpp                                            */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,126 +28,45 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-class DDLSPathIterator {
-	var _entity : DDLSEntityAI;
-	var _currentX : Number;
-	var _currentY : Number;
-	var _hasPrev : Boolean;
-	var _hasNext : Boolean;
+#include "resource_importer_toml.h"
+#include "core/io/file_access_pack.h"
 
-	var _path : Vector.<Number>;
-	var _count : int;
-	var _countMax : int;
+String ResourceImporterTOML::get_preset_name(int p_idx) const {
+	return String();
+}
 
-	function updateEntity() :
-			void {
-		if (!_entity)
-			return;
+void ResourceImporterTOML::get_import_options(List<ImportOption> *r_options, int p_preset) const {
+}
 
-		_entity.x = _currentX;
-		_entity.y = _currentY;
-	}
+bool ResourceImporterTOML::get_option_visibility(const String &p_option, const Map<StringName, Variant> &p_options) const {
+	return true;
+}
 
-public:
-	function get entity() :
-			DDLSEntityAI {
-		return _entity;
-	}
+String ResourceImporterTOML::get_importer_name() const {
+	return "TOML";
+}
 
-	function set entity(value
-						: DDLSEntityAI) :
-			void {
-		_entity = value;
-	}
+String ResourceImporterTOML::get_visible_name() const {
+	return "TOML";
+}
 
-	function get x() :
-			Number {
-		return _currentX;
-	}
+void ResourceImporterTOML::get_recognized_extensions(List<String> *p_extensions) const {
+	p_extensions->push_back("toml");
+}
 
-	function get y() :
-			Number {
-		return _currentY;
-	}
+String ResourceImporterTOML::get_save_extension() const {
+	return "res";
+}
 
-	function get hasPrev() :
-			Boolean {
-		return _hasPrev;
-	}
+String ResourceImporterTOML::get_resource_type() const {
+	return "TOMLData";
+}
 
-	function get hasNext() :
-			Boolean {
-		return _hasNext;
-	}
+int ResourceImporterTOML::get_preset_count() const {
+	return 0;
+}
 
-	function get count() :
-			int {
-		return _count;
-	}
-
-	function get countMax() :
-			int {
-		return _countMax;
-	}
-
-	function set path(value
-					  : Vector.<Number>) :
-			void {
-		_path = value;
-		_countMax = _path.length / 2;
-		reset();
-	}
-
-	function reset() :
-			void {
-		_count = 0;
-		_currentX = _path[_count];
-		_currentY = _path[_count + 1];
-		updateEntity();
-
-		_hasPrev = false;
-		if (_path.length > 2)
-			_hasNext = true;
-		else
-			_hasNext = false;
-	}
-
-	function prev() :
-			Boolean {
-		if (!_hasPrev)
-			return false;
-		_hasNext = true;
-
-		_count--;
-		_currentX = _path[_count * 2];
-		_currentY = _path[_count * 2 + 1];
-
-		updateEntity();
-
-		if (_count == 0)
-			_hasPrev = false;
-
-		return true;
-	}
-
-	function next() :
-			Boolean {
-		if (!_hasNext)
-			return false;
-		_hasPrev = true;
-
-		_count++;
-		_currentX = _path[_count * 2];
-		_currentY = _path[_count * 2 + 1];
-
-		updateEntity();
-
-		if ((_count + 1) * 2 == _path.length)
-			_hasNext = false;
-
-		return true;
-	}
-
-	function DDLSPathIterator() {
-	}
-};
+Error ResourceImporterTOML::import(const String &p_source_file, const String &p_save_path, const Map<StringName, Variant> &p_options, List<String> *r_platform_variants, List<String> *r_gen_files, Variant *r_metadata) {
+	Ref<TOMLData> toml_data;
+	return ResourceSaver::save(p_save_path + ".res", toml_data);
+}
