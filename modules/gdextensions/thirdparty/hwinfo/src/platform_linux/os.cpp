@@ -17,18 +17,18 @@
 
 namespace hwinfo {
 
-struct UnixOSVersionInfo {
-                                    // from /etc/os-release         older /etc/lsb-release         // redhat /etc/redhat-release         // debian /etc/debian_version
-    std::string productType;        // $ID                          $DISTRIB_ID                    // single line file containing:       // Debian
-    std::string productVersion;     // $VERSION_ID                  $DISTRIB_RELEASE               // <Vendor_ID release Version_ID>     // single line file <Release_ID/sid>
-    std::string prettyName;         // $PRETTY_NAME                 $DISTRIB_DESCRIPTION
-};
+// Unix OS version info:
+// ---------------------
+//                                 // from /etc/os-release         older /etc/lsb-release         // redhat /etc/redhat-release         // debian /etc/debian_version
+//  product type                   // $ID                          $DISTRIB_ID                    // single line file containing:       // Debian
+//  product version                // $VERSION_ID                  $DISTRIB_RELEASE               // <Vendor_ID release Version_ID>     // single line file <Release_ID/sid>
+//  pretty name                    // $PRETTY_NAME                 $DISTRIB_DESCRIPTION
 
-static std::string unquote(const char *begin, const char *end) {
+static std::string unquote(const std::string::iterator &begin, const std::string::iterator &end) {
   if (*begin == '"') {
-    return std::string(begin + 1, end - begin - 2);
+    return std::string(begin + 1, end - 2);
   }
-  return std::string(begin, end - begin);
+  return std::string(begin, end);
 }
 
 static bool read_etc_file(const char *filename, const std::string &id_key, const std::string &version_key, const std::string &pretty_name_key, std::string &id_val, std::string &version_val, std::string &pretty_name_val) {
@@ -44,11 +44,11 @@ static bool read_etc_file(const char *filename, const std::string &id_key, const
     }
     if (utils::starts_with(line, version_key)) {
       line = line.substr(line.find('=') + 1, line.length());
-      version_val {line.begin() + 1, line.end() - 1};
+      version_val = unquote(line.begin(), line.end());
     }
     if (utils::starts_with(line, pretty_name_key)) {
       line = line.substr(line.find('=') + 1, line.length());
-      pretty_name_val {line.begin() + 1, line.end() - 1};
+      pretty_name_val = unquote(line.begin() + 1, line.end());
     }
   }
   return true;
@@ -56,16 +56,18 @@ static bool read_etc_file(const char *filename, const std::string &id_key, const
 
 // _____________________________________________________________________________________________________________________
 
-static bool readOsRelease(UnixOSVersionInfo &v) {
+static bool read_os_release() {
   static const std::string ID = "ID=";
   static const std::string VERSIONID = "VERSION_ID=";
   static const std::string PRETTYNAME = "PRETTY_NAME=";
+
+  std::string id, versionId, prettyName;
 
   // man os-release(5) says:
   // The file /etc/os-release takes precedence over /usr/lib/os-release.
   // Applications should check for the former, and exclusively use its data
   // if it exists, and only fall back to /usr/lib/os-release if it is missing.
-  return read_etc_file(v, "/etc/os-release", id, versionId, prettyName) || read_etc_file(v, "/usr/lib/os-release", id, versionId, prettyName);
+  return read_etc_file("/etc/os-release", ID, VERSIONID, PRETTYNAME, id, versionId, prettyName) || read_etc_file("/usr/lib/os-release", ID, VERSIONID, PRETTYNAME, id, versionId, prettyName);
 }
 
 static std::string get_full_name() {
@@ -101,7 +103,7 @@ static std::string get_name() {
   return "Linux";
 }
 
-static std::string get_version(const char *etc_file) {
+static std::string get_version() {
   std::string line;
   std::ifstream stream("/etc/os-release");
   if (!stream) {

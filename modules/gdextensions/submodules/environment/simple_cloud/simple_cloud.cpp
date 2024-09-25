@@ -17,9 +17,9 @@ struct SimpleTextureRotator {
 	}
 
 	// Update is called once per frame
-	void Update() {
+	void Update(real_t delta) {
 		Vector2 _tempVector2 = GetComponent<Renderer>().material.mainTextureOffset;
-		Vector2 modification = rotation * Time.deltaTime * speedMultiplier;
+		Vector2 modification = rotation * delta * speedMultiplier;
 		modification.Scale(_tiling);
 		_tempVector2 += modification;
 

@@ -32,15 +32,14 @@
 #define __POLYFONTS__
 
 /*
- Polyfonts is a polygon font drawing library for use with SDL. Any
- TTF font can be converted for use with this library. Contact the
- author for details.
+ Polyfonts is a polygon font drawing library. Any TTF font can be
+ converted for use with this library. Contact the author for details.
 
  Copyright (C) 2003 Bob Pendleton
 
  Bob Pendleton
  Bob@Pendleton.com
- */
+*/
 
 #include "polyfonttypes.h"
 #include <vector>
@@ -66,10 +65,15 @@ class PolyFont {
 
 	pffont *currentFont;
 
-public:
-	PolyFont(const pffont *f = nullptr);
-	~PolyFont();
+	pfglyph *findGlyph(pfglyph *glyphs, int numglyphs, pfglyph *find) const;
+	pfglyph *getGlyph(wchar_t c) const;
 
+	float skew(float x, float y) const;
+
+	int _getCharBBox(wchar_t c, float *minx, float *miny, float *maxx, float *maxy);
+	float _getCharAdvance(wchar_t c);
+
+public:
 	int setFont(const pffont *f);
 	pffont *loadFont(const char *fileName);
 	void unloadFont();
@@ -141,14 +145,8 @@ public:
 
 	static void validate(const pffont *font);
 
-private:
-	pfglyph *findGlyph(pfglyph *glyphs, int numglyphs, pfglyph *find) const;
-	pfglyph *getGlyph(wchar_t c) const;
-
-	float skew(float x, float y) const;
-
-	int _getCharBBox(wchar_t c, float *minx, float *miny, float *maxx, float *maxy);
-	float _getCharAdvance(wchar_t c);
+	PolyFont(const pffont *f = nullptr);
+	~PolyFont();
 };
 
 const pffont *getDefaultFont(); // get current font:

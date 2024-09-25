@@ -31,7 +31,8 @@
 #ifndef _internal_h_
 #define _internal_h_
 
-/* Many of SDL's features require _GNU_SOURCE on various platforms */
+// Many of SDL's features require _GNU_SOURCE on various platforms
+
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif

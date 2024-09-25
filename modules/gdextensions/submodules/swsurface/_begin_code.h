@@ -28,18 +28,19 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-//  This file sets things up for C dynamic library function definitions,
+// This file sets things up for C dynamic library function definitions,
 // static inlined functions, and structures aligned at 4-byte alignment.
 // If you don't like ugly C preprocessor code, don't look at this file. :)
 
-/* This shouldn't be nested -- included it around code only. */
+// This shouldn't be nested -- included it around code only.
+
 #ifdef _begin_code_h
 #error Nested inclusion of _begin_code.h
 #endif
 #define _begin_code_h
 
 #ifndef SDL_DEPRECATED
-#if (__GNUC__ >= 4) /* technically, this arrived in gcc 3.1, but oh well. */
+#if (__GNUC__ >= 4) // technically, this arrived in gcc 3.1, but oh well.
 #define SDL_DEPRECATED __attribute__((deprecated))
 #else
 #define SDL_DEPRECATED
@@ -54,7 +55,7 @@
 #endif
 #endif
 
-/* Some compilers use a special export keyword */
+// Some compilers use a special export keyword
 #ifndef DECLSPEC
 #if defined(__GNUC__) && __GNUC__ >= 4
 #define DECLSPEC __attribute__((visibility("default")))
@@ -63,25 +64,24 @@
 #endif
 #endif
 
-/* By default SDL uses the C calling convention */
+// By default SDL uses the C calling convention
 #ifndef SDLCALL
 #if (defined(__WIN32__) || defined(__WINRT__)) && !defined(__GNUC__)
 #define SDLCALL __cdecl
 #elif defined(__OS2__) || defined(__EMX__)
 #define SDLCALL _System
 #if defined(__GNUC__) && !defined(_System)
-#define _System /* for old EMX/GCC compat.  */
+#define _System // for old EMX/GCC compat.
 #endif
 #else
 #define SDLCALL
 #endif
 #endif /* SDLCALL */
 
-/* Force structure packing at 4 byte alignment.
-   This is necessary if the header is included in code which has structure
-   packing set to an alternate value, say for loading structures from disk.
-   The packing is reset to the previous value in close_code.h
- */
+// Force structure packing at 4 byte alignment.
+// This is necessary if the header is included in code which has structure
+// packing set to an alternate value, say for loading structures from disk.
+// The packing is reset to the previous value in close_code.h
 #if defined(_MSC_VER) || defined(__MWERKS__) || defined(__BORLANDC__)
 #ifdef _MSC_VER
 #pragma warning(disable : 4103)
@@ -93,7 +93,7 @@
 #pragma nopackwarning
 #endif
 #ifdef _M_X64
-/* Use 8-byte alignment on 64-bit architectures, so pointers are aligned */
+// Use 8-byte alignment on 64-bit architectures, so pointers are aligned
 #pragma pack(push, 8)
 #else
 #pragma pack(push, 4)
@@ -139,7 +139,7 @@
 #endif
 #endif /* SDL_NORETURN not defined */
 
-/* Apparently this is needed by several Windows compilers */
+// Apparently this is needed by several Windows compilers
 #if !defined(__MACH__)
 #ifndef NULL
 #ifdef __cplusplus

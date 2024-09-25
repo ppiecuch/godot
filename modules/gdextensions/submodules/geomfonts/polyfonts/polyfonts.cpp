@@ -29,15 +29,14 @@
 /**************************************************************************/
 
 /*
- Polyfonts is a polygon font drawing library for use with SDL. Any
- TTF font can be converted for use with this library. Contact the
- author for details.
+ Polyfonts is a polygon font drawing library. Any TTF font can be
+ converted for use with this library. Contact the author for details.
 
  Copyright (C) 2003 Bob Pendleton
 
  Bob Pendleton
  Bob@Pendleton.com
- */
+*/
 
 #include <math.h>
 #include <stdio.h>

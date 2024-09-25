@@ -22,9 +22,6 @@ typedef struct char_info_t {
     };
 } char_info_t;
 
-int getScreenWidth();
-int getScreenHeight();
-
 /* ------------------------------------------------------ */
 /* ----- DFlat+ Compilation include --------------------- */
 /* ------------------------------------------------------ */
@@ -827,7 +824,9 @@ extern ColorScheme reverse;
 /* Memory allocation */
 void *DFcalloc(size_t, size_t);
 void *DFmalloc(size_t);
+void *DFalloca(size_t);
 void *DFrealloc(void *, size_t);
+void DFfree(void *);
 
 int TestCriticalError(void); /* Critical error detection */
 
@@ -859,7 +858,7 @@ int SendMessage(HWND, MESSAGE, PARAM, PARAM);
 
 /* Multitasking */
 void ProcessMessages (void); /* once finished init, let messages flow */
-void Cooperate(void);        /* momentarily process pending messages  */
+BOOL Cooperate(void);        /* momentarily process pending messages  */
 
 
 /* /////// CLASSES ///////////////////////////////////// */
@@ -977,7 +976,7 @@ extern BOOL ClipString;
 
 BOOL CharInView(HWND, int, int);
 void PutWindowChar(HWND,int,int,int);
-void PutWindowLine(HWND, char *,int,int);
+void PutWindowLine(HWND, const char *,int,int);
 
 
 /* ------- object hierarchy/MDI ----- */
@@ -1068,8 +1067,8 @@ HWND WatchIcon(void);
 /* /////// DIALOG BOXES  /////////////////////////////// */
 
 
-BOOL DialogBox(HWND, DBOX *, BOOL,
-       int (*)(struct window *, MESSAGE, PARAM, PARAM));
+BOOL DialogBox(HWND, DBOX *, BOOL, int (*)(struct window *, MESSAGE, PARAM, PARAM));
+HWND DialogWindow(HWND, DBOX *, int (*)(struct window *, MESSAGE, PARAM, PARAM));
 void ClearDialogBoxes(void);
 void GetDlgListText(HWND, char *, UCOMMAND);
 BOOL RadioButtonSetting(DBOX *, UCOMMAND);
@@ -1112,21 +1111,11 @@ BOOL InputBox(HWND, char *, char *, char *, int, int);
 BOOL GenericMessage(HWND, char *, char *, int,
 	int (*)(struct window *, MESSAGE, PARAM, PARAM),
 	char *, char *, int, int, int);
-#define TestErrorMessage(msg)	\
-	GenericMessage(NULL, "Error", msg, 2, ErrorBoxProc,	  \
-		tOk, tCancel, ID_OK, ID_CANCEL, TRUE)
-#define ErrorMessage(msg) \
-	GenericMessage(NULL, "Error", msg, 1, ErrorBoxProc,   \
-		tOk, NULL, ID_OK, 0, TRUE)
-#define MessageBox(ttl, msg) \
-	GenericMessage(NULL, ttl, msg, 1, MessageBoxProc, \
-		tOk, NULL, ID_OK, 0, TRUE)
-#define YesNoBox(msg)	\
-	GenericMessage(NULL, NULL, msg, 2, YesNoBoxProc,   \
-		tYes, tNo, ID_OK, ID_CANCEL, TRUE)
-#define CancelBox(wnd, msg) \
-	GenericMessage(wnd, "Wait...", msg, 1, CancelBoxProc, \
-		tCancel, NULL, ID_CANCEL, 0, FALSE)
+#define TestErrorMessage(msg) GenericMessage(NULL, "Error", msg, 2, ErrorBoxProc, tOk, tCancel, ID_OK, ID_CANCEL, TRUE)
+#define ErrorMessage(msg) GenericMessage(NULL, "Error", msg, 1, ErrorBoxProc, tOk, NULL, ID_OK, 0, TRUE)
+#define MessageBox(ttl, msg) GenericMessage(NULL, ttl, msg, 1, MessageBoxProc, tOk, NULL, ID_OK, 0, TRUE)
+#define YesNoBox(msg) GenericMessage(NULL, NULL, msg, 2, YesNoBoxProc, tYes, tNo, ID_OK, ID_CANCEL, TRUE)
+#define CancelBox(wnd, msg) GenericMessage(wnd, "Wait...", msg, 1, CancelBoxProc, tCancel, NULL, ID_CANCEL, 0, FALSE)
 void CloseCancelBox(void);
 HWND MomentaryMessage(char *);
 
@@ -1175,9 +1164,15 @@ void SkipApplicationControls(void);
 extern HWND inFocus;
 extern HWND oldFocus;
 
-#define CHANGECOLOR  19 /* prefix to change colors  (old: 174) */
-#define RESETCOLOR   23 /* reset colors to default  (old: 175) */
-#define LISTSELECTOR 4  /* selected list box entry */
+/* Non-printable string tokens */
+
+#define FONTSELECTOR 1 /* selected ext. charset */
+#define CHANGECOLOR 19 /* prefix to change colors  (old: 174) */
+#define RESETCOLOR 23  /* reset colors to default  (old: 175) */
+
+/* Selection marker */
+
+#define LISTSELECTOR 4 /* selected list box entry */
 
 extern char *Clipboard;
 extern unsigned ClipboardLength;
@@ -1269,6 +1264,8 @@ extern BOOL Debug_LogClockMessages; /* Log clock messages too? */
     
 void Calendar(WINDOW pwnd);
 
+int isLeapYear(int year);
+
 /* --------- helpbox.h ----------- */
 
 /* --------- linked list of help text collections -------- */
@@ -1330,23 +1327,12 @@ void SeekHelpLine(long, int);
     
 RECT subRectangle(RECT, RECT);
 
-/* ----- interrupt vectors ----- */
-#define TIMER  8
-#define VIDEO  0x10
-#define KEYBRD 0x16
-#define DOS    0x21
-#define CTRLBREAK 0x23
-#define CRIT   0x24
-#define MOUSE  0x33
-#define KEYBOARDVECT 9
 /* ------- platform-dependent values ------ */
-#define KEYBOARDPORT 0x60
 #define FREQUENCY 100
 #define COUNT (1193280L / FREQUENCY)
-#define ZEROFLAG 0x40
 #define MAXSAVES 50
-#define SCREENWIDTH  (getScreenWidth())
-#define SCREENHEIGHT (getScreenHeight())
+#define SCREENWIDTH  (get_console_width())
+#define SCREENHEIGHT (get_console_height())
 
 #define waitforkeyboard() {}
 #define disable()
@@ -1384,6 +1370,10 @@ void videomode(void);
 void SwapCursorStack(void);
 /* --------- screen prototpyes -------- */
 BOOL init_console(int console_width, int console_height);
+void get_console_size(int *w, int *h);
+inline static int get_console_width() { int w; get_console_size(&w, NULL); return w; }
+inline static int get_console_height() { int h; get_console_size(NULL, &h); return h; }
+void get_console_font_size(int *w, int *h);
 void clearscreen(void);
 /* ---------- mouse prototypes ---------- */
 BOOL mouse_installed(void);
@@ -1431,11 +1421,6 @@ int timer_disabled(int timer);
 #define WHITE        15
 #endif
 
-/* ------- the interrupt function registers -------- */
-typedef struct REGS {
-    int bp,di,si,ds,es,dx,cx,bx,ax,ip,cs,fl;
-} IREGS;
-
 /* --------- screen prototpyes -------- */
 
 extern unsigned video_mode; /* Call get_videomode before using that */
@@ -1446,7 +1431,7 @@ con_char_t GetVideoChar(int, int);
 void PutVideoChar(int, int, con_char_t);
 
 #define videochar(x,y) (GetVideoChar(x,y) & 255)
-#define vad(x,y) (((y)*SCREENWIDTH+(x))*2)
+#define vad(x,y) (((y)*SCREENWIDTH+(x))*sizeof(con_char_t))
 #define vpeek(base, offs) (*(con_char_t*)(base+offs))
 #define vpoke(base, offs, v) (*(con_char_t*)(base+offs) = v)
 #define ismono() (video_mode == 7)
@@ -1469,7 +1454,9 @@ void storevideo(RECT, void *);
 
 
 void wputch(WINDOW, int, int, int);
-void wputs(WINDOW, void *, int, int);
+void wputs(WINDOW, const char *, int, int);
+void wputsn(WINDOW, const char *, int, int, int);
+void wputsa(WINDOW, const char *, const char *, int, int);
 void scroll_window(WINDOW, RECT, int);
 
 /* /////// VARIABLES //////////////////////////////////// */
@@ -1520,7 +1507,7 @@ int MsgWidth(char *);
 
 /* --------- messages  -------------------- */
 BOOL init_messages(void);
-BOOL dispatch_message(void);
+BOOL dispatch_message(int *msgs_cnt);
 
 
 /* --------- menus  ------------------- */

@@ -28,7 +28,7 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-/// Simple error message routines for SDL.
+// Simple error message routines for SDL.
 
 #ifndef _error_h_
 #define _error_h_

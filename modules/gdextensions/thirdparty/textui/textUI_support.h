@@ -23,23 +23,23 @@
 #endif
 
 #if defined (MSDOS)
-# define DD_MAXDRIVE   3
+# define DF_MAXDRIVE   3
 # ifndef __FLAT__
-#  define DD_MAXPATH  80
-#  define DD_MAXDIR   66
-#  define DD_MAXFILE  16
-#  define DD_MAXEXT   10 /* allow for wildcards .[ch]*, .etc */
+#  define DF_MAXPATH  80
+#  define DF_MAXDIR   66
+#  define DF_MAXFILE  16
+#  define DF_MAXEXT   10 /* allow for wildcards .[ch]*, .etc */
 # else
-#  define DD_MAXPATH  260
-#  define DD_MAXDIR   256
-#  define DD_MAXFILE  256
-#  define DD_MAXEXT   256
+#  define DF_MAXPATH  260
+#  define DF_MAXDIR   256
+#  define DF_MAXFILE  256
+#  define DF_MAXEXT   256
 # endif /* ?__FLAT__ */
-   typedef long    off_t;
+   typedef long off_t;
 # ifdef __TURBOC__
-     typedef short   mode_t;
+     typedef short mode_t;
 # else /* ?!__TURBOC__ */
-     typedef unsigned short   mode_t;
+     typedef unsigned short mode_t;
 # endif /* ?__TURBOC__ */
 #else /* ?unix */
 /* _MAX_PATH is sometimes called differently and it may be in limits.h or stdlib.h instead of stdio.h. */
@@ -72,11 +72,11 @@
  * including the terminating null. It should be set high
  * enough to allow all legitimate uses, but halt infinite loops
  * reasonably quickly. For now we realy on _MAX_PATH value */
-#  define DD_MAXPATH    _MAX_PATH
-#  define DD_MAXDRIVE   1
-#  define DD_MAXDIR     768
-#  define DD_MAXFILE    255
-#  define DD_MAXEXT     1
+#  define DF_MAXPATH    _MAX_PATH
+#  define DF_MAXDRIVE   1
+#  define DF_MAXDIR     768
+#  define DF_MAXFILE    255
+#  define DF_MAXEXT     1
    typedef struct dirent DIR_ENT;
 #endif /* ?MSDOS */
 
@@ -88,17 +88,16 @@ int setdisk(int drive);
 int path_split(const char *, char *, char *, char *, char *);
 void path_merge(char *, char *, char *, char *, char *);
 
-typedef struct dd_ffblk_tag {
-    struct _dd_ffblk *data;
+typedef struct _dir_ffblk {
+    struct _ffblk *data;
     int position;
-} dd_ffblk;
+} dir_ffblk;
 
-int dir_findfirst(const char *path, dd_ffblk *fb, int attrib);
-int dir_findnext(dd_ffblk *fb);
-int dir_getattrib(dd_ffblk *fb);
-const char* dir_getname(dd_ffblk *fb);
+int dir_findfirst(const char *path, dir_ffblk *fb, int attrib);
+int dir_findnext(dir_ffblk *fb);
+int dir_getattrib(const dir_ffblk *fb);
+const char* dir_getname(const dir_ffblk *fb);
 
-typedef dd_ffblk ffblk;
 #define FindFirst(A, B, C) dir_findfirst((A), &(C), (B))
 #define FindNext(A)        dir_findnext(&(A))
 #define AttribOf(ff)       dir_getattrib(&(ff))

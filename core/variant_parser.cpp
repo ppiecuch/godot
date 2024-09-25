@@ -1096,7 +1096,7 @@ Error VariantParser::parse_value(Token &token, Variant &value, Stream *p_stream,
 			}
 
 			value = arr;
-		} else if (id == "PoolIntArray" || id == "PackedInt32Array" || id == "PackedInt64Array" || id == "IntArray") {
+		} else if (id == "PoolIntArray" || id == "PackedInt32Array" || id == "IntArray") {
 			Vector<int> args;
 			Error err = _parse_construct<int>(p_stream, args, line, r_err_str);
 			if (err) {
@@ -1110,6 +1110,24 @@ Error VariantParser::parse_value(Token &token, Variant &value, Stream *p_stream,
 				PoolVector<int>::Write w = arr.write();
 				for (int i = 0; i < len; i++) {
 					w[i] = int(args[i]);
+				}
+			}
+
+			value = arr;
+		} else if (id == "PackedInt64Array" || id == "Int64Array") {
+			Vector<int> args;
+			Error err = _parse_construct<int>(p_stream, args, line, r_err_str);
+			if (err) {
+				return err;
+			}
+
+			PoolVector<long> arr;
+			{
+				int len = args.size();
+				arr.resize(len);
+				PoolVector<long>::Write w = arr.write();
+				for (int i = 0; i < len; i++) {
+					w[i] = long(args[i]);
 				}
 			}
 
@@ -1178,7 +1196,7 @@ Error VariantParser::parse_value(Token &token, Variant &value, Stream *p_stream,
 			}
 
 			value = arr;
-		} else if (id == "PoolVector2Array" || id == "PackedVector2Array" || id == "Vector2Array") {
+		} else if (id == "PoolVector2Array" || id == "PackedVector2Array" || id == "Vector2Array" || id == "PoolPoint2Array" || id == "PackedPoint2Array" || id == "Point22Array") {
 			Vector<float> args;
 			Error err = _parse_construct<float>(p_stream, args, line, r_err_str);
 			if (err) {

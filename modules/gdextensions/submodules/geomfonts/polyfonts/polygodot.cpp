@@ -37,17 +37,29 @@
 #include "polyfonts.cpp"
 #include "polyfonts_all.h"
 
-void PolyGodot::setWidth(float w) {
-	width = w;
-};
-void PolyGodot::setColor(float R, float G, float B, float A) {
-	color = Color(R, G, B, A);
+class PolyFontGodot {
+	float width;
+	Color color;
+	const pffont *current;
+
+public:
+	virtual void beginStringDraw() const;
+	virtual void doneStringDraw() const;
+	virtual bool polyDrawElements(int mode, coord_vector &indices) const;
+	virtual void setWidth(float w);
+	virtual void setColor(float R, float G, float B, float A);
+
+	PolyFontGodot(const pffont *f);
 };
 
-void PolyGodot::beginStringDraw() const {}
-void PolyGodot::doneStringDraw() const {}
+void PolyFontGodot::setWidth(float w) { width = w; }
 
-bool PolyGodot::polyDrawElements(int mode, coord_vector &indices) const {
+void PolyFontGodot::setColor(float R, float G, float B, float A) { color = Color(R, G, B, A); }
+
+void PolyFontGodot::beginStringDraw() const {}
+void PolyFontGodot::doneStringDraw() const {}
+
+bool PolyFontGodot::polyDrawElements(int mode, coord_vector &indices) const {
 	switch (mode) {
 		case POLY_POINTS:
 			break;
@@ -70,10 +82,5 @@ bool PolyGodot::polyDrawElements(int mode, coord_vector &indices) const {
 	return true;
 }
 
-PolyGodot::PolyGodot() :
-		PolyFont(getDefaultFont()) {}
-
-PolyGodot::PolyGodot(const pffont *f) :
-		PolyFont(f) {}
-
-PolyGodot::~PolyGodot() {}
+PolyFontGodot::PolyFontGodot(const pffont *f) :
+		current(f) {}

@@ -132,91 +132,6 @@ def snake_case(name):
     return re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
 
 
-def create_v_template(submodule, class_file):
-    print("(GDExtensions) create V template for module: %s" % submodule)
-    class_file_name = os.path.splitext(class_file)[0]
-    # read class description
-    in_v_file = os.path.join("submodules", submodule, class_file)
-    if not os.path.exists(in_v_file):
-        print("(GDExtensions) missing V module file")
-        return []
-    with open(in_v_file) as f:
-        lines = [line[2:].strip() for line in f if line.startswith("//")]
-    found_info = False
-    descr = {"properties": [], "methods": []}
-    for line in lines:
-        if found_info:
-            if "END}}" in line:
-                break
-            if "- property:" in line:
-                _, property_descr = line.split(":")
-                descr["properties"] += [property_descr]
-                continue
-            if "- method:" in line:
-                _, method_descr = line.split(":")
-                descr["methods"] += [method_descr]
-                continue
-            if ":" in line:
-                class_name, base_class = line.split(":")
-                descr["class_name"] = class_name
-                if snake_case(class_name) == class_name:
-                    print("%s should be %s" % (snake_case(class_name), class_name))
-                    sys.exit(1)
-                descr["base_class"] = base_class
-            else:
-                descr["class_name"] = line
-                descr["base_class"] = "Reference"
-        if "{{INFO" in line:
-            found_info = True
-    files = [class_file + ".cpp"]
-    template_h = ""
-    template_h += "#ifndef GODOT_CLASS_%s_H\n" % descr["class_name"].upper()
-    template_h += "#define GODOT_CLASS_%s_H\n" % descr["class_name"].upper()
-    template_h += "\n"
-    template_h += "class %s : public %s {\n" % (descr["class_name"], descr["base_class"])
-    template_h += "   GDCLASS(%s, %s)\n" % (descr["class_name"], descr["base_class"])
-    template_h += "\n"
-    template_h += "protected:\n"
-    template_h += "   static void _bind_methods();\n"
-    template_h += "   void _notifcation(int p_what);\n"
-    template_h += "\n"
-    template_h += "public:\n"
-    for m in descr["methods"]:
-        template_h += "   int %s;\n" % (m)
-    template_h += "\n"
-    for p in descr["properties"]:
-        template_h += "   void set_%s(int p_num);\n" % (p)
-        template_h += "   int get_%s(int p_num) const;\n" % (p)
-    template_h += "\n"
-    template_h += "   %s();\n" % descr["class_name"]
-    template_h += "   ~%s()\n" % descr["class_name"]
-    template_h += "};\n"
-    template_h += "#endif // %s\n" % descr["class_name"].upper()
-    template_cpp = ""
-    template_cpp = 'extern "C" %s_init(void *p_self);\n' % class_file_name
-    template_cpp += "\n"
-    template_cpp += "void %s::_bind_methods() { %s_bind_methods(); }\n" % (descr["class_name"], class_file_name)
-    template_cpp += "void %s::_notifcation(int p_what) { %s_notification(this, p_what); }\n" % (
-        descr["class_name"],
-        class_file_name,
-    )
-    template_cpp += "\n"
-    for m in descr["methods"]:
-        template_cpp += "int %s::%s { }\n" % (descr["class_name"], m)
-    template_cpp += "\n"
-    for p in descr["properties"]:
-        template_cpp += "void %s::set_%s(int p_num) { }\n" % (descr["class_name"], p)
-        template_cpp += "int %s::get_%s(int p_num) const { }\n" % (descr["class_name"], p)
-    template_cpp += "\n"
-    template_cpp += "%s::%s() { v_simple_class_init(this); }\n" % (descr["class_name"], descr["class_name"])
-    template_cpp += "~%s::%s() { v_simple_class_finalize(this); }\n" % (descr["class_name"], descr["class_name"])
-    with open(os.path.join("submodules", submodule, "godot_" + class_file_name + ".cpp"), "w") as f:
-        f.write(template_cpp)
-    with open(os.path.join("submodules", submodule, "godot_" + class_file_name + ".h"), "w") as f:
-        f.write(template_h)
-    return files
-
-
 env_module = env_modules.Clone()
 
 sources = Glob("*.cpp") + Glob("common/*.cpp")  # Always build common
@@ -364,7 +279,11 @@ if env["tools"]:
         modules += ["qmap"]
 
 if is_enabled("textui"):
-    thirdparty_sources += ["thirdparty/textui/textUI.c", "thirdparty/textui/textUI_support.cpp"]
+    thirdparty_sources += [
+        "thirdparty/textui/textUI.c",
+        "thirdparty/textui/textUI_edit.c",
+        "thirdparty/textui/textUI_support.cpp",
+    ]
 
 if is_enabled("anttweakbar"):
     thirdparty_sources += ["thirdparty/anttweakbar/AntTweakBar.cpp"]
@@ -664,16 +583,19 @@ if is_enabled("thorvg"):
             env_module.Prepend(CPPPATH=["#thirdparty/libpng"])  # Also requires libpng headers
 
 if is_enabled("swrender"):
-    egl_srcs = Glob("thirdparty/swr-vincent-gles1/src/egl/*.cpp")
-    gles_srcs = (
-        Glob("thirdparty/swr-vincent-gles1/src/*.cpp")
-        + Glob("thirdparty/swr-vincent-gles1/src/arm/*.cpp")
-        + Glob("thirdparty/swr-vincent-gles1/src/codegen/*.c")
-    )
-    ug_srcs = Glob("thirdparty/swr-vincent-gles1/ug/*.c")
+    arch = env["arch"] if "arch" in env and env["arch"] else platform.machine()
+    if arch == "arm":  # vincent-gles1 with armjit
+        env_module.Append(CPPDEFINES=["SWRENDER_VINCENT1"])
+        egl_srcs = Glob("thirdparty/swr-vincent-gles1/src/egl/*.cpp")
+        gles_srcs = (
+            Glob("thirdparty/swr-vincent-gles1/src/*.cpp")
+            + Glob("thirdparty/swr-vincent-gles1/src/arm/*.cpp")
+            + Glob("thirdparty/swr-vincent-gles1/src/codegen/*.c")
+        )
+        ug_srcs = Glob("thirdparty/swr-vincent-gles1/ug/*.c")
 
-    thirdparty_sources += egl_srcs + gles_srcs + ug_srcs
-    env_module.Append(CPPPATH=["thirdparty/swr-vincent-gles1/include"])
+        thirdparty_sources += egl_srcs + gles_srcs + ug_srcs
+        env_module.Append(CPPPATH=["thirdparty/swr-vincent-gles1/include"])
 
 if is_enabled("lsystem"):
     env_module.Append(CPPPATH=["submodules/lsystem"])
@@ -783,22 +705,12 @@ if is_enabled("tileengine"):
     if env["builtin_libpng"]:
         env_module.Append(CPPPATH=["#thirdparty/libpng/"])
 
-if "V_SDK" in os.environ:
-    modules += ["vhelloworld"]
-
 active_modules = []
-v_enabled = False
 for m in modules:
-    if os.path.exists("submodules/%s/%s.v" % (m, m)):
-        create_v_template(m, "%s.v" % m)
     if is_enabled(m):
         files = Glob("submodules/%s/*.cpp" % m) + Glob("submodules/%s/*.c" % m)
         sources += [f for f in files if str(f) not in ignore]
         active_modules.append(m)
-
-if v_enabled:
-    thirdparty_sources += ["thirdparty/vnative/gc-8.2.2/extra/gc.c"]
-    env_module.Append(CPPPATH=["thirdparty/vnative/", "thirdparty/vnative/gc-8.2.2"])
 
 if env.msvc:
     incbin_code = finalize_for_incbin(sources)

@@ -13,13 +13,13 @@ def configure(env):
         # core extensions
         "core",
         "editor",
+        "media",
         "visual",
         # low-level extensions
         "benchmark",
         "breakpad",
         "cpufeatures",
         "debugdraw",
-        "fastnoise",
         "flashdb",
         "hwinfo",
         "runtimeprofiler",
@@ -32,14 +32,12 @@ def configure(env):
         "unqlite",
         "yaml",
         # system components
+        "fastnoise",
         "flexbuffers",
         "openclwrapper",
         "sfxr",
         "vgamepad",
-        #
-        "bulletkit",
-        "qurobullet",
-        # pgysics and ai extensions
+        # navigation/ai extensions
         "detournav",
         "behaviornode",
         "behaviortree",
@@ -50,16 +48,10 @@ def configure(env):
         "ccd",
         # environment components
         "environment",
-        # simulation extensions
+        # physics and simulation extensions
         "ropesim",
         "hydro",
         "msalibs",
-        # graphics components
-        "cyberelements",
-        "geomfonts",
-        "generator",
-        "fontengine3d",
-        "spinners",
         # network extensions
         "benet",
         "httpserver",
@@ -85,19 +77,26 @@ def configure(env):
         "meshslicer",
         "scenemerge",
         "texturepacker",
+        # components and wrappers
+        "cyberelements",
+        "flowed",
+        "geomfonts",
+        "generator",
+        "goxel",
+        "fontengine3d",
+        "qmap",
+        "spinners",
+        "tileengine",
         # ui and gui extensions
         "turbobadger",
         "textui",
         "ofxdatgui",
         "anttweakbar",
         # particles extensions
-        "tileengine",
+        "bulletkit",
+        "qurobullet",
         "timelinefx",
         "sparkparticles",
-        "media",
-        "goxel",
-        "qmap",
-        "flowed",
     ]
     opts = Variables()
     opts.Add(

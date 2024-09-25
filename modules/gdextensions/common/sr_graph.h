@@ -37,6 +37,13 @@
 
 typedef int sr_graph_t;
 
+enum SRGraphPalette {
+	SR_GRAPH_PAL_WARM,
+	SR_GRAPH_PAL_COOL,
+	SR_GRAPH_PAL_NEON,
+	SR_GRAPH_PAL_NUM,
+};
+
 class SRGraph : public Control {
 	GDCLASS(SRGraph, Control);
 
@@ -55,11 +62,24 @@ public:
 	void set_grid(sr_graph_t p_graph, bool p_visible, real_t p_stepx, real_t p_stepy, const Color &p_color = Color());
 	void set_axes(sr_graph_t p_graph, bool p_visible, const Color &p_color = Color());
 
-	int add_curve(sr_graph_t p_graph, const Vector<real_t> &p_xs, const Vector<real_t> &p_ys, const Color &p_color);
-	void update_curve(sr_graph_t p_graph, int p_curve, const Vector<real_t> &p_xs, const Vector<real_t> &p_ys);
+	int add_curve(sr_graph_t p_graph, const Vector<real_t> &p_xs, const Vector<real_t> &p_ys, const Color &p_color = Color());
+	void update_curve(sr_graph_t p_graph, int p_curve_id, const Vector<real_t> &p_xs, const Vector<real_t> &p_ys);
+
+	int add_hist(sr_graph_t p_graph, int p_bins, const Vector<real_t> &p_ys, real_t p_spacing, const Color &p_color = Color());
+	void update_hist(sr_graph_t p_graph, int p_hist_id, const Vector<real_t> &p_ys);
+
+	int add_points(sr_graph_t p_graph, const Vector<real_t> &p_xs, const Vector<real_t> &p_ys, real_t p_size, const Color &p_color = Color());
+	void update_points(sr_graph_t p_graph, int p_points_id, const Vector<real_t> &p_xs, const Vector<real_t> &p_ys);
+
+	int add_stack(sr_graph_t p_graph, real_t p_weight, const Vector<real_t> &p_vs);
+	void update_stack(sr_graph_t p_graph, int p_stack_id, const Vector<real_t> &p_vs);
+
+	Color get_palette_color(SRGraphPalette p_pal, int p_col, int p_num_cols = 0);
 
 	SRGraph();
 	~SRGraph();
 };
+
+VARIANT_ENUM_CAST(SRGraphPalette);
 
 #endif // SR_GRAPH_H

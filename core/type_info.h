@@ -277,9 +277,4 @@ inline StringName __constant_get_enum_name(T param, const String &p_constant) {
 
 #define CLASS_INFO(m_type) (GetTypeInfo<m_type *>::get_class_info())
 
-#else
-
-#define MAKE_ENUM_TYPE_INFO(m_enum)
-#define CLASS_INFO(m_type)
-
 #endif // TYPE_INFO_H

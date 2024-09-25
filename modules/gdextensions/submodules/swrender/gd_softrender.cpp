@@ -29,3 +29,6 @@
 /**************************************************************************/
 
 #include "gd_softrender.h"
+
+#ifdef SWRENDER_PORTABLEGL
+#endif

@@ -28,7 +28,7 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-/// This is a general header that includes C language support.
+// This is a general header that includes C language support.
 
 #ifndef _stdinc_h_
 #define _stdinc_h_
@@ -132,11 +132,8 @@ char *alloca();
 #define SDL_arraysize(array) (sizeof(array) / sizeof(array[0]))
 #define SDL_TABLESIZE(table) SDL_arraysize(table)
 
-/**
- *  Macro useful for building other macros with strings in them
- *
- *  e.g. #define LOG_ERROR(X) OutputDebugString(SDL_STRINGIFY_ARG(__FUNCTION__) ": " X "\n")
- */
+// Macro useful for building other macros with strings in them
+//  e.g. #define LOG_ERROR(X) OutputDebugString(SDL_STRINGIFY_ARG(__FUNCTION__) ": " X "\n")
 #define SDL_STRINGIFY_ARG(arg) #arg
 
 // Use proper C++ casts when compiled as C++ to be compatible with the option

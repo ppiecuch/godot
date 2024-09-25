@@ -100,6 +100,7 @@ public:
 		_FORCE_INLINE_ bool operator!=(const Iterator &other) const { return (_map != other._map) || (_index != other._index); }
 		_FORCE_INLINE_ KeyValue<TKey, TValue> operator*() { return KeyValue<TKey, TValue>(*_index, _map->get(*_index)); }
 		_FORCE_INLINE_ const KeyValue<TKey, TValue> &operator*() const { return KeyValue<TKey, TValue>(*_index, _map->get(*_index)); }
+		_FORCE_INLINE_ operator bool() const { return (_map && _index); }
 		Iterator operator++() {
 			_index = const_cast<TKey *>(_map->next(_index));
 			return *this;

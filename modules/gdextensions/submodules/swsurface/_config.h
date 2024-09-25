@@ -28,15 +28,15 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-/// This is a set of defines to configure the submodule features
+// This is a set of defines to configure the submodule features
 
 #ifndef _config_h_
 #define _config_h_
 
-/* General platform specific identifiers */
+// General platform specific identifiers
 #include "_platform.h"
 
-/* Useful headers */
+// Useful headers
 #define STDC_HEADERS 1
 #define HAVE_ALLOCA_H 1
 #define HAVE_CTYPE_H 1
@@ -52,7 +52,7 @@
 #define HAVE_SYS_TYPES_H 1
 #define HAVE_STDARG_H 1
 
-/* Enable assembly routines */
+// Enable assembly routines
 #ifdef CPU_POWERPC
 #define SDL_ALTIVEC_BLITTERS 1
 #else

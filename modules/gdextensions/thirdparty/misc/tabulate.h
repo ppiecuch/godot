@@ -14,9 +14,8 @@
 #define variant_lite_MINOR 2
 #define variant_lite_PATCH 2
 
-#define variant_lite_VERSION                                                                       \
-  variant_STRINGIFY(variant_lite_MAJOR) "." variant_STRINGIFY(                                     \
-      variant_lite_MINOR) "." variant_STRINGIFY(variant_lite_PATCH)
+#define variant_lite_VERSION \
+  variant_STRINGIFY(variant_lite_MAJOR) "." variant_STRINGIFY(variant_lite_MINOR) "." variant_STRINGIFY(variant_lite_PATCH)
 
 #define variant_STRINGIFY(x) variant_STRINGIFY_(x)
 #define variant_STRINGIFY_(x) #x

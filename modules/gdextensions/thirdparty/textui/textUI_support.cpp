@@ -6,6 +6,7 @@
 #include "core/os/dir_access.h"
 #include "core/os/file_access.h"
 
+#include <cstddef>
 #include <fcntl.h>
 #include <string.h>
 
@@ -17,7 +18,7 @@
 # define DIRSEP_CHAR '/'
 #endif
 
-// BEGIN Host-system integration
+/// BEGIN Host-system integration
 
 BOOL system_keyhit(void) {
     return FALSE;
@@ -49,7 +50,7 @@ int system_button_releases(void) {
     return 0;
 }
 
-// END Host-system integration
+/// END Host-system integration
 
 #include <ctype.h>
 
@@ -110,6 +111,27 @@ int system_button_releases(void) {
 #  endif
 #endif /* ?UNIX/VMS */
 
+#ifdef UNIX
+#  include <pwd.h>
+#  define DF_MAXUSERNAME 100
+#  define STAT lstat /* don't expand symbolic links */
+#  include <unistd.h>
+#  ifndef STDIN_FILENO
+#   define STDIN_FILENO 0
+#  endif
+#  ifndef STDERR_FILENO
+#   define STDERR_FILENO 2
+#  endif
+#  ifndef O_RDONLY
+#   define O_RDONLY 0
+#  endif
+#  ifndef O_WRONLY
+#   define O_WRONLY 1
+#  endif
+#else /* ?MSDOS\VMS */
+#  define STAT stat
+#endif
+
 /* flags used by fnsplit */
 
 #ifndef __TURBOC__
@@ -120,7 +142,7 @@ int system_button_releases(void) {
 #  define DRIVE     0x10
 #endif
 
-// copy_string - copies a string to another
+/* copy_string - copies a string to another */
 static void copy_string(char *dst, const char *src, unsigned maxlen) {
     if (dst) {
         if (strlen(src) >= maxlen) {
@@ -132,7 +154,7 @@ static void copy_string(char *dst, const char *src, unsigned maxlen) {
     }
 }
 
-// dot_found - checks for special directory names
+/* dot_found - checks for special directory names */
 static  int dot_found(char *pB) {
     if (*(pB-1) == '.') {
         pB--;
@@ -213,7 +235,7 @@ Return value    path_split returns an integer (composed of five flags,
 *---------------------------------------------------------------------*/
 
 int path_split(const char *pathP, char *driveP, char *dirP, char *nameP, char *extP) {
-    char buf[ DD_MAXPATH+2 ];
+    char buf[ DF_MAXPATH+2 ];
 
     /* Set all string to default value zero */
     int Ret = 0;
@@ -226,8 +248,8 @@ int path_split(const char *pathP, char *driveP, char *dirP, char *nameP, char *e
     int Wrk;
     char *pB = buf;
     while (*pathP == ' ') pathP++;
-    if ((Wrk = strlen(pathP)) > DD_MAXPATH)
-        Wrk = DD_MAXPATH;
+    if ((Wrk = strlen(pathP)) > DF_MAXPATH)
+        Wrk = DF_MAXPATH;
     *pB++ = 0;
     strncpy(pB, pathP, Wrk);
     *(pB += Wrk) = 0;
@@ -299,7 +321,7 @@ int path_split(const char *pathP, char *driveP, char *dirP, char *nameP, char *e
             if (Wrk) {
                 if (*++pB)
                     Ret |= DIRECTORY;
-                copy_string(dirP, pB, DD_MAXDIR - 1);
+                copy_string(dirP, pB, DF_MAXDIR - 1);
 #ifdef MSDOS
                 *pB-- = 0;
 #endif
@@ -314,7 +336,7 @@ int path_split(const char *pathP, char *driveP, char *dirP, char *nameP, char *e
             if (!Wrk) {
                 Wrk++;
                 if (*++pB) Ret |= FILENAME;
-                copy_string(nameP, pB, DD_MAXFILE - 1);
+                copy_string(nameP, pB, DF_MAXFILE - 1);
                 *pB-- = 0;
 #ifdef MSDOS
                 if (*pB == 0 || (*pB == ':' && pB == &buf[2]))
@@ -505,3 +527,16 @@ struct GFILE {
         }
     }
 };
+
+
+#ifndef __TURBOC__
+int getdisk(void) { return 0; }
+int setdisk(int drive) { return 0; }
+#endif /* ?!__TURBOC__ */
+
+/* Directory access */
+
+int dir_findfirst(const char *path, dir_ffblk *fb, int attrib) { return 0; }
+int dir_findnext(dir_ffblk *fb) { return 0; }
+int dir_getattrib(const dir_ffblk *fb) { return 0; }
+const char* dir_getname(const dir_ffblk *fb) { return ""; }

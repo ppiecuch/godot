@@ -28,7 +28,7 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-///  Try to get a standard set of platform defines.
+/*  Try to get a standard set of platform defines. */
 
 #ifndef _platform_h_
 #define _platform_h_

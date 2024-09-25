@@ -28,7 +28,7 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-///  Header for the enumerated pixel format definitions.
+//  Header for the enumerated pixel format definitions.
 
 #ifndef _pixels_h_
 #define _pixels_h_

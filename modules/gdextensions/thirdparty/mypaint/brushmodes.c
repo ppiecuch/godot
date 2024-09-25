@@ -68,9 +68,6 @@ void draw_dab_pixels_BlendMode_Normal(uint16_t *mask,
 // between probably aren't very useful. This blend mode retains the target
 // alpha, and any pure whites and blacks in the target layer.
 
-#define MAX3(a, b, c) ((a) > (b) ? MAX((a), (c)) : MAX((b), (c)))
-#define MIN3(a, b, c) ((a) < (b) ? MIN((a), (c)) : MIN((b), (c)))
-
 // For consistency, these are the values used by MyPaint's Color and
 // Luminosity layer blend modes, which in turn are defined by
 // http://dvcs.w3.org/hg/FXTF/rawfile/tip/compositing/index.html.
