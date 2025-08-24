@@ -176,8 +176,8 @@ Error DynamicFontAtSize::_load() {
 		fargs.memory_size = font->font_mem_size;
 		fargs.flags = FT_OPEN_MEMORY;
 		fargs.stream = &stream;
-
 		error = FT_Open_Face(library, &fargs, 0, &face);
+
 	} else {
 		FT_Done_FreeType(library);
 		ERR_FAIL_V_MSG(ERR_UNCONFIGURED, "DynamicFont uninitialized.");
@@ -540,9 +540,9 @@ float DynamicFontAtSize::draw_char(RID p_canvas_item, const Point2 &p_pos, CharT
 	const Character *ch = char_pair_with_font.first;
 	DynamicFontAtSize *font = char_pair_with_font.second;
 
-	ERR_FAIL_COND_V(!ch, 0);
+	ERR_FAIL_COND_V(!ch, 0.0);
 
-	float advance = 0;
+	float advance = 0.0;
 
 	// use normal character size if there's no outline character
 	if (p_outline && !ch->found) {

@@ -411,11 +411,11 @@ uniform vec4 final_modulate;
 uniform sampler2D screen_texture; // texunit:-5
 #endif
 
-#ifdef SCREEN_UV_USED
+#if defined(SCREEN_UV_USED)
 uniform vec2 screen_pixel_size;
 #endif
 
-#ifdef USE_LIGHTING
+#if defined(USE_LIGHTING)
 
 uniform highp mat4 light_matrix;
 uniform highp mat4 light_local_matrix;
@@ -509,7 +509,7 @@ void main() {
 	float dist = texture2D(color_texture, uv).a;
 	color.a = smoothstep(0.5 - smoothing, 0.5 + smoothing, dist);
 #else
-#if !defined(COLOR_USED)
+#ifndef COLOR_USED
 	// Default behavior, texture by color.
 	color *= texture2D(color_texture, uv);
 #endif
@@ -546,7 +546,7 @@ void main() {
 		// If larger fvfs are used, final_modulate is passed as an attribute.
 		// we need to read from this in custom fragment shaders or applying in the post step,
 		// rather than using final_modulate directly.
-#ifdef final_modulate_alias
+#if defined(final_modulate_alias)
 #undef final_modulate_alias
 #endif
 #ifdef USE_ATTRIB_MODULATE

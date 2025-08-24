@@ -2471,7 +2471,9 @@ SceneTree::SceneTree() {
 #endif
 
 #ifdef DEBUG_ENABLED
+
 	live_edit_root = NodePath("/root");
+
 #endif
 }
 

@@ -6694,6 +6694,7 @@ void CanvasItemEditorViewport::_perform_drop_data() {
 					child = memnew(TextureRect);
 				} else if (default_type == "NinePatchRect") {
 					child = memnew(NinePatchRect);
+				// (PP) Other default types
 #ifdef MODULE_GD_VECTOR_GRAPHICS_ENABLED
 				} else if (default_type == "Sprite") {
 					child = memnew(Sprite);
@@ -6751,9 +6752,9 @@ bool CanvasItemEditorViewport::can_drop_data(const Point2 &p_point, const Varian
 						type == "ImageTexture" ||
 						type == "ViewportTexture" ||
 						type == "CurveTexture" ||
-						type == "CheckerTexture" ||
 						type == "GradientTexture" ||
 						type == "StreamTexture" ||
+						type == "CheckerTexture" ||
 						type == "MaskTexture" ||
 						type == "AtlasTexture" ||
 						type == "LargeTexture") {

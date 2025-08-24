@@ -182,7 +182,7 @@ int RichTextLabel::_process_line(ItemFrame *p_frame, const Vector2 &p_ofs, int &
 	}
 
 	float wofs = margin;
-	float align_ofs = 0;
+	float align_ofs = 0.0f;
 
 	if (p_mode != PROCESS_CACHE && align != ALIGN_FILL) {
 		wofs += line_ofs;
@@ -200,7 +200,7 @@ int RichTextLabel::_process_line(ItemFrame *p_frame, const Vector2 &p_ofs, int &
 	int line_ascent = cfont->get_ascent();
 	int line_descent = cfont->get_descent();
 
-	float backtrack = 0; // for dynamic hidden content.
+	float backtrack = 0.0f; // for dynamic hidden content.
 
 	int nonblank_line_count = 0; //number of nonblank lines as counted during PROCESS_DRAW
 

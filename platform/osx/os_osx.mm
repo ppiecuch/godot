@@ -118,7 +118,7 @@ static Vector2 get_mouse_pos(NSPoint locationInWindow) {
 	return Vector2(mouse_x, mouse_y);
 }
 
-static NSCursor *cursor_from_selector(SEL selector, SEL fallback = nil) {
+static NSCursor *cursorFromSelector(SEL selector, SEL fallback = nil) {
 	if ([NSCursor respondsToSelector:selector]) {
 		id object = [NSCursor performSelector:selector];
 		if ([object isKindOfClass:[NSCursor class]]) {
@@ -126,7 +126,8 @@ static NSCursor *cursor_from_selector(SEL selector, SEL fallback = nil) {
 		}
 	}
 	if (fallback) {
-		return [NSCursor performSelector:fallback]; // fallback should be a reasonable default, no need to check.
+		// Fallback should be a reasonable default, no need to check.
+		return [NSCursor performSelector:fallback];
 	}
 	return [NSCursor arrowCursor];
 }
@@ -277,21 +278,20 @@ static bool running_under_rosetta() {
 - (void)applicationDidHide:(NSNotification *)notification {
 	/*
 	_Godotwindow* window;
-	for (window = _Godot.windowListHead;  window;  window = window->next) {
+	for (window = _Godot.windowListHead;  window;  window = window->next)
 		_GodotInputWindowVisibility(window, GL_FALSE);
-	}
-	*/
+*/
 }
 
 - (void)applicationDidUnhide:(NSNotification *)notification {
 	/*
 	_Godotwindow* window;
+
 	for (window = _Godot.windowListHead;  window;  window = window->next) {
-		if ([window_object isVisible]) {
+		if ([window_object isVisible])
 			_GodotInputWindowVisibility(window, GL_TRUE);
-		}
 	}
-	*/
+*/
 }
 
 - (void)applicationDidChangeScreenParameters:(NSNotification *)notification {
@@ -299,9 +299,8 @@ static bool running_under_rosetta() {
 }
 
 - (void)showAbout:(id)sender {
-	if (OS_OSX::singleton->get_main_loop()) {
+	if (OS_OSX::singleton->get_main_loop())
 		OS_OSX::singleton->get_main_loop()->notification(MainLoop::NOTIFICATION_WM_ABOUT);
-	}
 }
 
 @end
@@ -316,9 +315,9 @@ static bool running_under_rosetta() {
 
 - (BOOL)windowShouldClose:(id)sender {
 	//_GodotInputWindowCloseRequest(window);
-	if (OS_OSX::singleton->get_main_loop()) {
+	if (OS_OSX::singleton->get_main_loop())
 		OS_OSX::singleton->get_main_loop()->notification(MainLoop::NOTIFICATION_WM_QUIT_REQUEST);
-	}
+
 	return NO;
 }
 
@@ -327,7 +326,8 @@ static bool running_under_rosetta() {
 
 	[OS_OSX::singleton->window_object setContentMinSize:NSMakeSize(0, 0)];
 	[OS_OSX::singleton->window_object setContentMaxSize:NSMakeSize(FLT_MAX, FLT_MAX)];
-	[self windowDidResize:notification]; // force window resize event.
+	// Force window resize event.
+	[self windowDidResize:notification];
 }
 
 - (void)windowDidExitFullScreen:(NSNotification *)notification {
@@ -341,21 +341,23 @@ static bool running_under_rosetta() {
 		Size2 size = OS_OSX::singleton->max_size / OS_OSX::singleton->get_screen_max_scale();
 		[OS_OSX::singleton->window_object setContentMaxSize:NSMakeSize(size.x, size.y)];
 	}
-	if (!OS_OSX::singleton->resizable) {
+
+	if (!OS_OSX::singleton->resizable)
 		[OS_OSX::singleton->window_object setStyleMask:[OS_OSX::singleton->window_object styleMask] & ~NSWindowStyleMaskResizable];
-	}
-	if (OS_OSX::singleton->on_top) {
+
+	if (OS_OSX::singleton->on_top)
 		[OS_OSX::singleton->window_object setLevel:NSFloatingWindowLevel];
-	}
+
 	[NSApp setPresentationOptions:NSApplicationPresentationDefault];
 
-	[self windowDidResize:notification]; // force window resize event.
+	// Force window resize event.
+	[self windowDidResize:notification];
 }
 
 - (void)windowDidChangeBackingProperties:(NSNotification *)notification {
-	if (!OS_OSX::singleton) {
+	if (!OS_OSX::singleton)
 		return;
-	}
+
 	NSWindow *window = (NSWindow *)[notification object];
 	CGFloat newBackingScaleFactor = [window backingScaleFactor];
 	CGFloat oldBackingScaleFactor = [[[notification userInfo] objectForKey:@"NSBackingPropertyOldScaleFactorKey"] doubleValue];
@@ -383,8 +385,10 @@ static bool running_under_rosetta() {
 			CGLEnable((CGLContextObj)[OS_OSX::singleton->context CGLContextObj], kCGLCESurfaceBackingSize);
 		}
 
-		if (OS_OSX::singleton->main_loop) { // update context
-			[self windowDidResize:notification]; // force window resize event
+		//Update context
+		if (OS_OSX::singleton->main_loop) {
+			//Force window resize event
+			[self windowDidResize:notification];
 		}
 	}
 }
@@ -420,10 +424,9 @@ static bool running_under_rosetta() {
 	_GodotInputWindowSize(window, contentRect.size.width, contentRect.size.height);
 	_GodotInputWindowDamage(window);
 
-	if (window->cursorMode == Godot_CURSOR_DISABLED) {
+	if (window->cursorMode == Godot_CURSOR_DISABLED)
 		centerCursor(window);
-	}
-	*/
+*/
 }
 
 - (void)windowDidMove:(NSNotification *)notification {
@@ -438,10 +441,9 @@ static bool running_under_rosetta() {
 	_GodotPlatformGetWindowPos(window, &x, &y);
 	_GodotInputWindowPos(window, x, y);
 
-	if (window->cursorMode == Godot_CURSOR_DISABLED) {
+	if (window->cursorMode == Godot_CURSOR_DISABLED)
 		centerCursor(window);
-		}
-	*/
+*/
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)notification {
@@ -1672,7 +1674,8 @@ inline void sendPanEvent(double dx, double dy, int modifierFlags) {
 @implementation GodotWindow
 
 - (BOOL)canBecomeKeyWindow {
-	return YES; // required for NSBorderlessWindowMask windows
+	// Required for NSBorderlessWindowMask windows
+	return YES;
 }
 
 @end
@@ -1881,6 +1884,8 @@ void OS_OSX::tts_stop() {
 
 Error OS_OSX::initialize(const VideoMode &p_desired, int p_video_driver, int p_audio_driver) {
 	/*** OSX INITIALIZATION ***/
+	/*** OSX INITIALIZATION ***/
+	/*** OSX INITIALIZATION ***/
 
 	keyboard_layout_dirty = true;
 	displays_arrangement_dirty = true;
@@ -1986,7 +1991,7 @@ Error OS_OSX::initialize(const VideoMode &p_desired, int p_video_driver, int p_a
 	/*
 	if (fbconfig->alphaBits > 0)
 		ADD_ATTR2(NSOpenGLPFAAlphaSize, fbconfig->alphaBits);
-	*/
+*/
 
 	ADD_ATTR2(NSOpenGLPFADepthSize, 24);
 
@@ -1995,14 +2000,14 @@ Error OS_OSX::initialize(const VideoMode &p_desired, int p_video_driver, int p_a
 	/*
 	if (fbconfig->stereo)
 		ADD_ATTR(NSOpenGLPFAStereo);
-	*/
+*/
 
 	/*
 	if (fbconfig->samples > 0) {
 		ADD_ATTR2(NSOpenGLPFASampleBuffers, 1);
 		ADD_ATTR2(NSOpenGLPFASamples, fbconfig->samples);
 	}
-	*/
+*/
 
 	// NOTE: All NSOpenGLPixelFormats on the relevant cards support sRGB
 	//       framebuffer, so there's no need (and no way) to request it
@@ -2307,16 +2312,16 @@ void OS_OSX::set_cursor_shape(CursorShape p_shape) {
 				[[NSCursor operationNotAllowedCursor] set];
 				break;
 			case CURSOR_VSIZE:
-				[cursor_from_selector(@selector(_windowResizeNorthSouthCursor), @selector(resizeUpDownCursor)) set];
+				[cursorFromSelector(@selector(_windowResizeNorthSouthCursor), @selector(resizeUpDownCursor)) set];
 				break;
 			case CURSOR_HSIZE:
-				[cursor_from_selector(@selector(_windowResizeEastWestCursor), @selector(resizeLeftRightCursor)) set];
+				[cursorFromSelector(@selector(_windowResizeEastWestCursor), @selector(resizeLeftRightCursor)) set];
 				break;
 			case CURSOR_BDIAGSIZE:
-				[cursor_from_selector(@selector(_windowResizeNorthEastSouthWestCursor)) set];
+				[cursorFromSelector(@selector(_windowResizeNorthEastSouthWestCursor)) set];
 				break;
 			case CURSOR_FDIAGSIZE:
-				[cursor_from_selector(@selector(_windowResizeNorthWestSouthEastCursor)) set];
+				[cursorFromSelector(@selector(_windowResizeNorthWestSouthEastCursor)) set];
 				break;
 			case CURSOR_MOVE:
 				[[NSCursor arrowCursor] set];
@@ -2328,7 +2333,7 @@ void OS_OSX::set_cursor_shape(CursorShape p_shape) {
 				[[NSCursor resizeLeftRightCursor] set];
 				break;
 			case CURSOR_HELP:
-				[cursor_from_selector(@selector(_helpCursor)) set];
+				[cursorFromSelector(@selector(_helpCursor)) set];
 				break;
 			default: {
 			};
@@ -2939,7 +2944,7 @@ void OS_OSX::_update_window() {
 		[window_object setHidesOnDeactivate:YES];
 	} else {
 		// Reset these when our window is not a borderless window that covers up the screen
-		if (on_top && !zoomed) {
+		if (on_top & !zoomed) {
 			[window_object setLevel:NSFloatingWindowLevel];
 		} else {
 			[window_object setLevel:NSNormalWindowLevel];

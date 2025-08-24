@@ -256,8 +256,6 @@ bool ShaderMaterial::_can_do_next_pass() const {
 	return shader.is_valid() && shader->get_mode() == Shader::MODE_SPATIAL;
 }
 
-///////////////////////////////////
-
 Shader::Mode ShaderMaterial::get_shader_mode() const {
 	if (shader.is_valid()) {
 		return shader->get_mode();

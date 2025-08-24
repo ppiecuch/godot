@@ -32,28 +32,17 @@ package org.godotengine.godot.input;
 
 import org.godotengine.godot.*;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.res.Configuration;
-import android.graphics.Point;
-import android.graphics.Rect;
 import android.os.Handler;
 import android.os.Message;
 import android.text.InputFilter;
 import android.text.InputType;
 import android.util.AttributeSet;
-import android.view.Gravity;
 import android.view.KeyEvent;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.ViewGroup.LayoutParams;
-import android.view.ViewTreeObserver;
-import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
-import android.widget.FrameLayout;
-import android.widget.PopupWindow;
 
 import java.lang.ref.WeakReference;
 

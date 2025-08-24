@@ -430,7 +430,7 @@ MainFrameTime MainTimerSync::advance_checked(float p_frame_slice, int p_iteratio
 		}
 	}
 
-	// second clamping: keep abs(time_deficit) < jitter_fix * p_idle_step
+	// second clamping: keep abs(time_deficit) < jitter_fix * frame_slise
 	float max_clock_deviation = get_physics_jitter_fix() * p_frame_slice;
 	ret.clamp_idle(p_idle_step - max_clock_deviation, p_idle_step + max_clock_deviation);
 

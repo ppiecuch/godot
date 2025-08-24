@@ -460,10 +460,11 @@ private:
 
 			} else {
 				if (mode == MODE_NEW) {
-					String addons_path = OS::get_singleton()->get_executable_path().get_base_dir().plus_file("addons");
+					// (PP) copy default addons from the 
+					String addons_path = OS::get_singleton()->get_executable_path().get_base_dir().plus_file("godot-addons");
 #ifdef __APPLE__
 					if (!DirAccess::exists(addons_path))
-						addons_path = OS::get_singleton()->get_executable_path().get_base_dir().plus_file("/../../../addons");
+						addons_path = OS::get_singleton()->get_executable_path().get_base_dir().plus_file("/../../../godot-addons");
 #endif
 					ProjectSettings::CustomMap initial_settings;
 					if (rasterizer_button_group->get_pressed_button()->get_meta("driver_name") == "GLES3") {

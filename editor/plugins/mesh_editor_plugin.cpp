@@ -84,8 +84,8 @@ void MeshEditor::_update_from_aabb(const Ref<Mesh> &p_mesh) {
 		m *= 0.5;
 		Transform xform;
 		xform.basis.scale(Vector3(m, m, m));
-		xform.origin = -xform.basis.xform(ofs); // -ofs*m;
-		// xform.origin.z -= aabb.get_longest_axis_size() * 2;
+		xform.origin = -xform.basis.xform(ofs); //-ofs*m;
+		//xform.origin.z -= aabb.get_longest_axis_size() * 2;
 		mesh_instance->set_transform(xform);
 	}
 }

@@ -94,7 +94,7 @@ void ResourceImporterTexture::update_imports() {
 		String src_path = String(E->key()) + ".import";
 
 		Error err = cf->load(src_path);
-		ERR_CONTINUE_MSG(err != OK, "Failed to load path: " + src_path);
+		ERR_CONTINUE_MSG(err != OK, vformat("Failed to load path: %s", src_path));
 
 		bool changed = false;
 		if (E->get() & MAKE_SRGB_FLAG && int(cf->get_value("params", "flags/srgb")) == 2) {

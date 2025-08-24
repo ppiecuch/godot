@@ -121,13 +121,13 @@ class ProjectManager : public Control {
 	void _clear_project_cache_confirm();
 	void _clear_project_import();
 	void _clear_project_import_confirm();
+	void _project_menu_id_pressed(int p_option);
+	void _project_context_changed(String project_key, String project_path, Vector2 context_pos);
 	void _show_about();
 	void _update_project_buttons();
-	void _project_context_changed(String project_key, String project_path, Vector2 context_pos);
 	void _language_selected(int p_id);
 	void _restart_confirm();
 	void _scan_begin(const String &p_base);
-	void _project_menu_id_pressed(int p_option);
 	void _global_menu_action(const Variant &p_id, const Variant &p_meta);
 
 	void _confirm_update_settings();

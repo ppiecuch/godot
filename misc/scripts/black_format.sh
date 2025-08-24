@@ -8,6 +8,8 @@ find=find
 if [[ "$OSTYPE" == "darwin"* ]]; then
     if [ -e "/opt/local/libexec/gnubin/find" ]; then
         find="/opt/local/libexec/gnubin/find"
+    elif [ -e "/opt/macports/libexec/gnubin/find" ]; then
+        find="/opt/macports/libexec/gnubin/find"
     fi
 fi
 

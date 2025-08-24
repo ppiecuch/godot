@@ -33,6 +33,7 @@
 #include <mono/metadata/mono-debug.h>
 #include <mono/metadata/tokentype.h>
 
+#include "core/io/file_access_pack.h"
 #include "core/list.h"
 #include "core/os/file_access.h"
 #include "core/os/os.h"
@@ -144,10 +145,10 @@ MonoAssembly *GDMonoAssembly::_search_hook(MonoAssemblyName *aname, void *user_d
 
 MonoAssembly *GDMonoAssembly::_preload_hook(MonoAssemblyName *aname, char **, void *user_data, bool refonly) {
 	String name = String::utf8(mono_assembly_name_get_name(aname));
-	return _load_assembly_search(name, refonly, search_dirs);
+	return _load_assembly_search(name, aname, refonly, search_dirs);
 }
 
-MonoAssembly *GDMonoAssembly::_load_assembly_search(const String &p_name, bool p_refonly, const Vector<String> &p_search_dirs) {
+MonoAssembly *GDMonoAssembly::_load_assembly_search(const String &p_name, MonoAssemblyName *p_aname, bool p_refonly, const Vector<String> &p_search_dirs) {
 	MonoAssembly *res = NULL;
 	String path;
 
@@ -159,21 +160,21 @@ MonoAssembly *GDMonoAssembly::_load_assembly_search(const String &p_name, bool p
 		if (has_extension) {
 			path = search_dir.plus_file(p_name);
 			if (FileAccess::exists(path)) {
-				res = _real_load_assembly_from(path, p_refonly);
+				res = _real_load_assembly_from(path, p_refonly, p_aname);
 				if (res != NULL)
 					return res;
 			}
 		} else {
 			path = search_dir.plus_file(p_name + ".dll");
 			if (FileAccess::exists(path)) {
-				res = _real_load_assembly_from(path, p_refonly);
+				res = _real_load_assembly_from(path, p_refonly, p_aname);
 				if (res != NULL)
 					return res;
 			}
 
 			path = search_dir.plus_file(p_name + ".exe");
 			if (FileAccess::exists(path)) {
-				res = _real_load_assembly_from(path, p_refonly);
+				res = _real_load_assembly_from(path, p_refonly, p_aname);
 				if (res != NULL)
 					return res;
 			}
@@ -219,7 +220,7 @@ void GDMonoAssembly::initialize() {
 	mono_install_assembly_load_hook(&assembly_load_hook, NULL);
 }
 
-MonoAssembly *GDMonoAssembly::_real_load_assembly_from(const String &p_path, bool p_refonly) {
+MonoAssembly *GDMonoAssembly::_real_load_assembly_from(const String &p_path, bool p_refonly, MonoAssemblyName *p_aname) {
 	Vector<uint8_t> data = FileAccess::get_file_as_array(p_path);
 	ERR_FAIL_COND_V_MSG(data.empty(), NULL, "Could read the assembly in the specified location");
 
@@ -243,7 +244,33 @@ MonoAssembly *GDMonoAssembly::_real_load_assembly_from(const String &p_path, boo
 			true, &status, p_refonly,
 			image_filename.utf8());
 
-	ERR_FAIL_COND_V_MSG(status != MONO_IMAGE_OK || !image, NULL, "Failed to open assembly image from the loaded data");
+	ERR_FAIL_COND_V_MSG(status != MONO_IMAGE_OK || !image, NULL, "Failed to open assembly image from memory: '" + p_path + "'.");
+
+	if (p_aname != nullptr) {
+		// Check assembly version
+		const MonoTableInfo *table = mono_image_get_table_info(image, MONO_TABLE_ASSEMBLY);
+
+		ERR_FAIL_NULL_V(table, nullptr);
+
+		if (mono_table_info_get_rows(table)) {
+			uint32_t cols[MONO_ASSEMBLY_SIZE];
+			mono_metadata_decode_row(table, 0, cols, MONO_ASSEMBLY_SIZE);
+
+			// Not sure about .NET's policy. We will only ensure major and minor are equal, and ignore build and revision.
+			uint16_t major = cols[MONO_ASSEMBLY_MAJOR_VERSION];
+			uint16_t minor = cols[MONO_ASSEMBLY_MINOR_VERSION];
+
+			uint16_t required_minor;
+			uint16_t required_major = mono_assembly_name_get_version(p_aname, &required_minor, nullptr, nullptr);
+
+			if (required_major != 0) {
+				if (major != required_major && minor != required_minor) {
+					mono_image_close(image);
+					return nullptr;
+				}
+			}
+		}
+	}
 
 #ifdef DEBUG_ENABLED
 	Vector<uint8_t> pdb_data;
@@ -417,7 +444,7 @@ GDMonoAssembly *GDMonoAssembly::load(const String &p_name, MonoAssemblyName *p_a
 	MonoAssembly *assembly = mono_assembly_invoke_search_hook(p_aname);
 
 	if (!assembly) {
-		assembly = _load_assembly_search(p_name, p_refonly, p_search_dirs);
+		assembly = _load_assembly_search(p_name, p_aname, p_refonly, p_search_dirs);
 		if (!assembly) {
 			return nullptr;
 		}

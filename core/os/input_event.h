@@ -308,11 +308,18 @@ public:
 	uint32_t get_unicode() const;
 
 	void set_echo(bool p_enable);
+	virtual bool is_echo() const;
 	virtual bool is_echo() const G_OVERRIDE;
 
 	uint32_t get_scancode_with_modifiers() const;
 	uint32_t get_physical_scancode_with_modifiers() const;
 
+	virtual bool action_match(const Ref<InputEvent> &p_event, bool p_exact_match, bool *p_pressed, float *p_strength, float *p_raw_strength, float p_deadzone) const;
+	virtual bool shortcut_match(const Ref<InputEvent> &p_event, bool p_exact_match = true) const;
+
+	virtual bool is_action_type() const { return true; }
+
+	virtual String as_text() const;
 	virtual bool action_match(const Ref<InputEvent> &p_event, bool p_exact_match, bool *p_pressed, float *p_strength, float *p_raw_strength, float p_deadzone) const G_OVERRIDE;
 	virtual bool shortcut_match(const Ref<InputEvent> &p_event, bool p_exact_match = true) const G_OVERRIDE;
 

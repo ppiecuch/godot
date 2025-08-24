@@ -1146,6 +1146,7 @@ void RasterizerCanvasGLES2::render_batches(Item *p_current_clip, bool &r_reclip,
 								_draw_generic(GL_TRIANGLES, pline->triangles.size(), pline->triangles.ptr(), nullptr, pline->triangle_colors.ptr(), pline->triangle_colors.size() == 1);
 #ifdef GLES_OVER_GL
 								glEnable(GL_LINE_SMOOTH);
+								// (PP) everything is now LINES
 								_draw_generic(GL_LINES, pline->lines.size(), pline->lines.ptr(), nullptr, pline->line_colors.ptr(), pline->line_colors.size() == 1);
 								glDisable(GL_LINE_SMOOTH);
 #endif
@@ -2015,7 +2016,7 @@ void RasterizerCanvasGLES2::_legacy_canvas_render_item(Item *p_ci, RenderItemSta
 						ci->final_modulate.a * p_modulate.a );
 
 
-			state.canvas_shader.set_uniform(CanvasShaderGLES2::MODELVIEW_MATRIX,state.modelview_matrix);
+			state.canvas_shader.set_uniform(CanvasShaderGLES2::MODELVIEW_MATRIX,state.modelview_matrix); // (PP) from state.final_transform)
 			state.canvas_shader.set_uniform(CanvasShaderGLES2::EXTRA_MATRIX,Transform2D());
 			state.canvas_shader.set_uniform(CanvasShaderGLES2::FINAL_MODULATE,state.canvas_item_modulate);
 

@@ -567,28 +567,7 @@ bool GDMono::load_assembly(const String &p_name, MonoAssemblyName *p_aname, GDMo
 	CRASH_COND(!r_assembly);
 #endif
 
-	print_verbose("Mono: Loading assembly " + p_name + (p_refonly ? " (refonly)" : "") + "...");
-
-	MonoImageOpenStatus status = MONO_IMAGE_OK;
-	MonoAssembly *assembly = mono_assembly_load_full(p_aname, NULL, &status, p_refonly);
-
-	if (!assembly)
-		return false;
-
-	ERR_FAIL_COND_V(status != MONO_IMAGE_OK, false);
-
-	uint32_t domain_id = mono_domain_get_id(mono_domain_get());
-
-	GDMonoAssembly **stored_assembly = assemblies[domain_id].getptr(p_name);
-
-	ERR_FAIL_COND_V(stored_assembly == NULL, false);
-	ERR_FAIL_COND_V((*stored_assembly)->get_assembly() != assembly, false);
-
-	*r_assembly = *stored_assembly;
-
-	print_verbose("Mono: Assembly " + p_name + (p_refonly ? " (refonly)" : "") + " loaded from path: " + (*r_assembly)->get_path());
-
-	return true;
+	return load_assembly(p_name, p_aname, r_assembly, p_refonly, GDMonoAssembly::get_default_search_dirs());
 }
 
 bool GDMono::load_assembly(const String &p_name, MonoAssemblyName *p_aname, GDMonoAssembly **r_assembly, bool p_refonly, const Vector<String> &p_search_dirs) {

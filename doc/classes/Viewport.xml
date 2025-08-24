@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Viewport" inherits="Node" version="3.6" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
+<class name="Viewport" inherits="Node" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Creates a sub-view into the screen.
 	</brief_description>
@@ -38,14 +38,14 @@
 		<method name="get_camera" qualifiers="const">
 			<return type="Camera" />
 			<description>
-				Returns the currently active 3D camera.
+				Returns the active 3D camera.
 			</description>
 		</method>
 		<method name="get_camera_2d" qualifiers="const">
 			<return type="Camera2D">
 			</return>
 			<description>
-				Returns the currently active 2D camera. Returns null if there are no active cameras.
+				Returns the active 2D camera. Returns null if there are no active cameras.
 			</description>
 		</method>
 		<method name="get_final_transform" qualifiers="const">
@@ -419,10 +419,10 @@
 			Use 16x Multisample Antialiasing. Likely unsupported on medium and low-end hardware.
 		</constant>
 		<constant name="USAGE_2D" value="0" enum="Usage">
-			Allocates all buffers needed for drawing 2D scenes. This takes less VRAM than the 3D usage modes.
+			Allocates all buffers needed for drawing 2D scenes. This takes less VRAM than the 3D usage modes. Note that 3D rendering effects such as glow and HDR are not available when using this mode.
 		</constant>
 		<constant name="USAGE_2D_NO_SAMPLING" value="1" enum="Usage">
-			Allocates buffers needed for 2D scenes without allocating a buffer for screen copy. Accordingly, you cannot read from the screen. Of the [enum Usage] types, this requires the least VRAM.
+			Allocates buffers needed for 2D scenes without allocating a buffer for screen copy. Accordingly, you cannot read from the screen. Of the [enum Usage] types, this requires the least VRAM. Note that 3D rendering effects such as glow and HDR are not available when using this mode.
 		</constant>
 		<constant name="USAGE_3D" value="2" enum="Usage">
 			Allocates full buffers for drawing 3D scenes and all 3D effects including buffers needed for 2D scenes and effects.

@@ -70,7 +70,7 @@ private:
 
 	// The Actual Skin that will be created as a mapping between the IBM's of
 	// this skin to the generated skeleton for the mesh instances.
-	Ref<GLTFSkin> godot_skin;
+	Ref<Skin> godot_skin;
 
 protected:
 	static void _bind_methods();

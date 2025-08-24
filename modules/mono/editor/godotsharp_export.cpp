@@ -32,11 +32,14 @@
 
 #include <mono/metadata/image.h>
 
+#include "core/io/file_access_pack.h"
 #include "core/os/os.h"
+#include "core/project_settings.h"
 
 #include "../mono_gd/gd_mono.h"
 #include "../mono_gd/gd_mono_assembly.h"
 #include "../mono_gd/gd_mono_cache.h"
+#include "../utils/macros.h"
 
 namespace GodotSharpExport {
 
@@ -111,6 +114,11 @@ Error get_exported_assembly_dependencies(const Dictionary &p_initial_assemblies,
 
 	Vector<String> search_dirs;
 	GDMonoAssembly::fill_search_dirs(search_dirs, p_build_config, p_custom_bcl_dir);
+
+	if (p_custom_bcl_dir.length()) {
+		// Only one mscorlib can be loaded. We need this workaround to make sure we get it from the right BCL directory.
+		r_assembly_dependencies["mscorlib"] = p_custom_bcl_dir.plus_file("mscorlib.dll").simplify_path();
+	}
 
 	for (const Variant *key = p_initial_assemblies.next(); key; key = p_initial_assemblies.next(key)) {
 		String assembly_name = *key;

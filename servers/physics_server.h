@@ -197,8 +197,6 @@ public:
 
 class PhysicsTestMotionResult;
 
-class PhysicsTestMotionResult;
-
 class PhysicsServer : public Object {
 	GDCLASS(PhysicsServer, Object);
 

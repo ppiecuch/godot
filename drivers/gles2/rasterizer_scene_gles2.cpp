@@ -848,6 +848,11 @@ void RasterizerSceneGLES2::environment_set_glow(RID p_env, bool p_enable, int p_
 	env->glow_high_quality = p_high_quality;
 }
 
+void RasterizerSceneGLES2::environment_set_glow_map(RID p_env, float p_glow_map_strength, RID p_glow_map) {
+	Environment *env = environment_owner.getornull(p_env);
+	ERR_FAIL_COND(!env);
+}
+
 void RasterizerSceneGLES2::environment_set_fog(RID p_env, bool p_enable, float p_begin, float p_end, RID p_gradient_texture) {
 	Environment *env = environment_owner.getornull(p_env);
 	ERR_FAIL_COND(!env);
@@ -2965,11 +2970,11 @@ void RasterizerSceneGLES2::_post_process(Environment *env, const CameraMatrix &p
 		_copy_texture_to_buffer(storage->frame.current_rt->multisample_color, next_buffer);
 #elif FRT_ENABLED
 
-		// Assumin minimum GLES2, so just copy color texture manually
+		// (PP) Assumin minimum GLES2, so just copy color texture manually
 		_copy_texture_to_buffer(storage->frame.current_rt->multisample_color, next_buffer);
 #elif __psp2__
 
-		// TODO - check more PSVita specific solution
+		// TODO: (PP) check more PSVita specific solution
 		_copy_texture_to_buffer(storage->frame.current_rt->multisample_color, next_buffer);
 #else
 		// TODO: any other platform not supported? this will fail.. maybe we should just call _copy_texture_to_buffer here as well?

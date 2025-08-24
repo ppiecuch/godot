@@ -971,7 +971,6 @@ void VisualServerCanvas::canvas_item_set_transform(RID p_item, const Transform2D
 		_make_bound_dirty(canvas_item_parent);
 	}
 }
-
 void VisualServerCanvas::canvas_item_set_clip(RID p_item, bool p_clip) {
 	Item *canvas_item = canvas_item_owner.getornull(p_item);
 	ERR_FAIL_COND(!canvas_item);

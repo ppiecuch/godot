@@ -1096,6 +1096,7 @@ Error VariantParser::parse_value(Token &token, Variant &value, Stream *p_stream,
 			}
 
 			value = arr;
+		} else if (id == "PoolIntArray" || id == "PackedInt32Array" || id == "PackedInt64Array" || id == "IntArray") {
 		} else if (id == "PoolIntArray" || id == "PackedInt32Array" || id == "IntArray") {
 			Vector<int> args;
 			Error err = _parse_construct<int>(p_stream, args, line, r_err_str);

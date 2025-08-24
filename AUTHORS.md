@@ -35,7 +35,6 @@ name is available.
     Alfred Reinold Baudisch (alfredbaudisch)
     Alket Rexhepi (alketii)
     Andrea Catania (AndreaCatania)
-    Andreas Haas (Hinsbart)
     Andrii Doroshenko (Xrayez)
     Andy Maloney (asmaloney)
     Andy Moss (MillionOstrich)
@@ -151,7 +150,8 @@ name is available.
     Kostadin Damyanov (Max-Might)
     K. S. Ernest (iFire) Lee (fire)
     lawnjelly
-    Leon Krause (eska014)
+    Leon Krause (leonkrause)
+    Liz Haas (27thLiz)
     Lucien Menassol (Kanabenki)
     Lyuma
     Maganty Rushyendra (mrushyendra)
@@ -234,9 +234,11 @@ name is available.
     romulox-x
     Rune Smith (rune-scape)
     Ruslan Mustakov (endragor)
+    Ryan Roden-Corrent (rrcore)
     Saniko (sanikoyes)
     santouits
     SaracenOne
+    Sergey Minakov (naithar)
     sersoong
     Shiqing (kawa-yoiko)
     Silc 'Tokage' Renew (TokageItLab)

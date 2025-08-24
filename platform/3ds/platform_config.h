@@ -28,6 +28,7 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#include <alloca.h> // for alloca
 #include <stdlib.h>
 
 #define PLATFORM_MUTEX_H "thread_3ds.h"

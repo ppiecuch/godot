@@ -59,7 +59,7 @@ Line2D::Line2D() {
 	_width = 10;
 	_default_color = Color(0.4, 0.5, 1);
 	_texture_mode = LINE_TEXTURE_NONE;
-	_sharp_limit = 2;
+	_sharp_limit = 2.f;
 	_round_precision = 8;
 	_antialiased = false;
 }
@@ -70,12 +70,12 @@ Rect2 Line2D::_edit_get_rect() const {
 		return Rect2(0, 0, 0, 0);
 	}
 	Vector2 d = Vector2(_width, _width);
-	Rect2 bounding_rect = Rect2(_points[0] - d, 2 * d);
+	Rect2 aabb = Rect2(_points[0] - d, 2 * d);
 	for (int i = 1; i < _points.size(); i++) {
-		bounding_rect.expand_to(_points[i] - d);
-		bounding_rect.expand_to(_points[i] + d);
+		aabb.expand_to(_points[i] - d);
+		aabb.expand_to(_points[i] + d);
 	}
-	return bounding_rect;
+	return aabb;
 }
 
 bool Line2D::_edit_use_rect() const {
@@ -133,12 +133,14 @@ float Line2D::get_width() const {
 }
 
 void Line2D::set_curve(const Ref<Curve> &p_curve) {
+	// Cleanup previous connection if any
 	if (_curve.is_valid()) {
 		_curve->disconnect(CoreStringNames::get_singleton()->changed, this, "_curve_changed");
 	}
 
 	_curve = p_curve;
 
+	// Connect to the curve so the line will update when it is changed
 	if (_curve.is_valid()) {
 		_curve->connect(CoreStringNames::get_singleton()->changed, this, "_curve_changed");
 	}
@@ -201,12 +203,14 @@ Color Line2D::get_default_color() const {
 }
 
 void Line2D::set_gradient(const Ref<Gradient> &p_gradient) {
+	// Cleanup previous connection if any
 	if (_gradient.is_valid()) {
 		_gradient->disconnect(CoreStringNames::get_singleton()->changed, this, "_gradient_changed");
 	}
 
 	_gradient = p_gradient;
 
+	// Connect to the gradient so the line will update when the ColorRamp is changed
 	if (_gradient.is_valid()) {
 		_gradient->connect(CoreStringNames::get_singleton()->changed, this, "_gradient_changed");
 	}
@@ -236,7 +240,7 @@ Ref<Texture> Line2D::get_texture() const {
 	return _texture;
 }
 
-void Line2D::set_texture_mode(LineTextureMode p_mode) {
+void Line2D::set_texture_mode(const LineTextureMode p_mode) {
 	_texture_mode = p_mode;
 	update();
 }
@@ -281,8 +285,8 @@ void Line2D::_notification(int p_what) {
 }
 
 void Line2D::set_sharp_limit(float p_limit) {
-	if (p_limit < 0) {
-		p_limit = 0;
+	if (p_limit < 0.f) {
+		p_limit = 0.f;
 	}
 	_sharp_limit = p_limit;
 	update();

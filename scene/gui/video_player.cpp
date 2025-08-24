@@ -187,7 +187,7 @@ void VideoPlayer::_notification(int p_notification) {
 
 		} break;
 	};
-}
+};
 
 Size2 VideoPlayer::get_minimum_size() const {
 	if (!expand && !texture.is_null()) {
@@ -260,11 +260,11 @@ void VideoPlayer::set_stream(const Ref<VideoStream> &p_stream) {
 	if (!expand) {
 		minimum_size_changed();
 	}
-}
+};
 
 Ref<VideoStream> VideoPlayer::get_stream() const {
 	return stream;
-}
+};
 
 void VideoPlayer::play() {
 	ERR_FAIL_COND(!is_inside_tree());
@@ -296,7 +296,7 @@ void VideoPlayer::stop() {
 	resampler.flush();
 	set_process_internal(false);
 	last_audio_time = 0;
-}
+};
 
 bool VideoPlayer::is_playing() const {
 	if (playback.is_null()) {
@@ -304,7 +304,7 @@ bool VideoPlayer::is_playing() const {
 	}
 
 	return playback->is_playing();
-}
+};
 
 void VideoPlayer::set_paused(bool p_paused) {
 	paused = p_paused;
@@ -313,7 +313,7 @@ void VideoPlayer::set_paused(bool p_paused) {
 		set_process_internal(!p_paused);
 	};
 	last_audio_time = 0;
-}
+};
 
 bool VideoPlayer::is_paused() const {
 	return paused;
@@ -337,11 +337,11 @@ int VideoPlayer::get_audio_track() const {
 
 void VideoPlayer::set_volume(float p_vol) {
 	volume = p_vol;
-}
+};
 
 float VideoPlayer::get_volume() const {
 	return volume;
-}
+};
 
 void VideoPlayer::set_volume_db(float p_db) {
 	if (p_db < -79) {
@@ -349,7 +349,7 @@ void VideoPlayer::set_volume_db(float p_db) {
 	} else {
 		set_volume(Math::db2linear(p_db));
 	}
-}
+};
 
 float VideoPlayer::get_volume_db() const {
 	if (volume == 0) {
@@ -357,21 +357,21 @@ float VideoPlayer::get_volume_db() const {
 	} else {
 		return Math::linear2db(volume);
 	}
-}
+};
 
 String VideoPlayer::get_stream_name() const {
 	if (stream.is_null()) {
 		return "<No Stream>";
 	}
 	return stream->get_name();
-}
+};
 
 float VideoPlayer::get_stream_position() const {
 	if (playback.is_null()) {
 		return 0;
 	}
 	return playback->get_playback_position();
-}
+};
 
 void VideoPlayer::set_stream_position(float p_position) {
 	if (playback.is_valid()) {
@@ -389,11 +389,11 @@ Ref<Texture> VideoPlayer::get_video_texture() const {
 
 void VideoPlayer::set_autoplay(bool p_enable) {
 	autoplay = p_enable;
-}
+};
 
 bool VideoPlayer::has_autoplay() const {
 	return autoplay;
-}
+};
 
 void VideoPlayer::set_bus(const StringName &p_bus) {
 	//if audio is active, must lock this
@@ -505,10 +505,10 @@ VideoPlayer::VideoPlayer() {
 
 	wait_resampler = 0;
 	wait_resampler_limit = 2;
-}
+};
 
 VideoPlayer::~VideoPlayer() {
 	//	if (stream_rid.is_valid())
 	//		AudioServer::get_singleton()->free(stream_rid);
 	resampler.clear(); //Not necessary here, but make in consistent with other "stream_player" classes
-}
+};

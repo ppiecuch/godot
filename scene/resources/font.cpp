@@ -1010,8 +1010,8 @@ Size2 BitmapFont::get_char_size(CharType p_char, CharType p_next) const {
 
 void BitmapFont::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("create_from_fnt", "path"), &BitmapFont::create_from_fnt);
-
 	ClassDB::bind_method(D_METHOD("set_height", "px"), &BitmapFont::set_height);
+
 	ClassDB::bind_method(D_METHOD("set_ascent", "px"), &BitmapFont::set_ascent);
 
 	ClassDB::bind_method(D_METHOD("add_kerning_pair", "char_a", "char_b", "kerning"), &BitmapFont::add_kerning_pair);

@@ -75,9 +75,9 @@ class EditorExportPlatformOSX : public EditorExportPlatform {
 
 	bool use_codesign() const { return true; }
 #ifdef OSX_ENABLED
-	bool have_osx_tools() const { return true; }
+	bool use_dmg() const { return true; }
 #else
-	bool have_osx_tools() const { return false; }
+	bool use_dmg() const { return false; }
 #endif
 	bool is_package_name_valid(const String &p_package, String *r_error = nullptr) const {
 		String pname = p_package;
@@ -1509,7 +1509,7 @@ Error EditorExportPlatformOSX::export_project(const Ref<EditorExportPreset> &p_p
 	}
 
 	if (err == OK) {
-		if (ep.step(TTR("Making PCK"), 1)) {
+		if (ep.step(TTR("Making PKG"), 1)) {
 			return ERR_SKIP;
 		}
 

@@ -904,7 +904,6 @@ void EditorFileSystem::_scan_fs_changes(EditorFileSystemDirectory *p_dir, const 
 					fi->import_modified_time = 0;
 					fi->type = ResourceLoader::get_resource_type(path);
 					fi->script_class_name = _get_global_script_class(fi->type, path, &fi->script_class_extends, &fi->script_class_icon_path);
-
 					fi->import_valid = ResourceLoader::is_import_valid(path);
 					fi->import_group_file = ResourceLoader::get_import_group_file(path);
 
@@ -1764,7 +1763,7 @@ void EditorFileSystem::_reimport_file(const String &p_file) {
 	Error err = importer->import(p_file, base_path, params, &import_variants, &gen_files, &metadata);
 
 	if (err != OK) {
-		ERR_PRINT("Error importing '" + p_file + "', code: " + String::num(err) + ".");
+		ERR_PRINT("Error importing '" + p_file + "', error code: " + String::num(err) + ".");
 	}
 
 	//as import is complete, save the .import file

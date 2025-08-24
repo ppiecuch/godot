@@ -31,17 +31,12 @@
 #ifndef RID_H
 #define RID_H
 
-#include "core/color.h"
 #include "core/list.h"
-#include "core/math/transform.h"
-#include "core/math/vector2.h"
-#include "core/math/vector3.h"
 #include "core/os/memory.h"
 #include "core/rid_handle.h"
 #include "core/safe_refcount.h"
 #include "core/set.h"
 #include "core/typedefs.h"
-#include "core/vector.h"
 
 #ifndef RID_HANDLES_ENABLED
 
@@ -61,50 +56,13 @@ public:
 	virtual ~RID_Data();
 };
 
-union RID_Prop {
-	int int_value;
-	bool bool_value;
-	real_t real_value;
-	Vector2 vec2_value;
-	Vector3 vec3_value;
-	Color color_value;
-	Transform transform_value;
-
-	RID_Prop() {}
-	_FORCE_INLINE_ RID_Prop(int v) { int_value = v; }
-	_FORCE_INLINE_ RID_Prop(bool v) { bool_value = v; }
-	_FORCE_INLINE_ RID_Prop(real_t v) { real_value = v; }
-	_FORCE_INLINE_ RID_Prop(const Vector2 &v) { vec2_value = v; }
-	_FORCE_INLINE_ RID_Prop(const Vector3 &v) { vec3_value = v; }
-	_FORCE_INLINE_ RID_Prop(const Color &v) { color_value = v; }
-	_FORCE_INLINE_ RID_Prop(const Transform &v) { transform_value = v; }
-};
-
 class RID {
 	friend class RID_OwnerBase;
 
 	mutable RID_Data *_data;
-	mutable Vector<RID_Prop> *_props;
-
-	struct _expand_props {
-		template <typename... T>
-		_expand_props(T &&...) {}
-	};
 
 public:
 	_FORCE_INLINE_ RID_Data *get_data() const { return _data; }
-
-	_FORCE_INLINE_ RID_Prop &get_prop(int p_index) { return _props->write[p_index]; }
-	_FORCE_INLINE_ RID_Prop get_prop(int p_index) const { return _props->get(p_index); }
-	_FORCE_INLINE_ bool is_props_valid() const { return (_props && _props->size() > 0); }
-	_FORCE_INLINE_ size_t get_props_count() const { return (_props ? _props->size() : 0); }
-
-	template <typename... props_types>
-	void set_props(props_types... args) {
-		ERR_FAIL_COND_MSG(_props, "Property already set");
-		_props = memnew(Vector<RID_Prop>); // TODO: cleanup memory allocation
-		_expand_props{ 0, (_props->push_back(args), 0)... };
-	}
 
 	_FORCE_INLINE_ bool operator==(const RID &p_rid) const {
 		return _data == p_rid._data;
@@ -127,7 +85,6 @@ public:
 
 	_FORCE_INLINE_ RID() {
 		_data = nullptr;
-		_props = nullptr;
 	}
 };
 
@@ -149,21 +106,12 @@ protected:
 	}
 
 	_FORCE_INLINE_ void _remove_owner(RID &p_rid) {
-		p_rid._data->_owner = nullptr;
+		p_rid._data->_owner = NULL;
 	}
 #endif
 
-	_FORCE_INLINE_ void _remove_props(RID &p_rid) {
-		if (p_rid._props) {
-			memdelete(p_rid._props);
-			p_rid._props = nullptr;
-		}
-	}
-
-public:
-	virtual void get_owned_list(List<RID> *p_owned) = 0;
-
-	static void init_rid();
+	static void
+	init_rid();
 	virtual ~RID_OwnerBase() {}
 };
 
@@ -225,7 +173,6 @@ public:
 #else
 		_remove_owner(p_rid);
 #endif
-		_remove_props(p_rid);
 	}
 
 	void get_owned_list(List<RID> *p_owned) {

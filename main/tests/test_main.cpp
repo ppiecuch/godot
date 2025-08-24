@@ -38,6 +38,7 @@
 #include "test_basis.h"
 #include "test_crypto.h"
 #include "test_font.h"
+#include "test_expression.h"
 #include "test_gdscript.h"
 #include "test_gui.h"
 #include "test_math.h"
@@ -166,6 +167,10 @@ MainLoop *test_main(String p_test, const List<String> &p_args) {
 
 	if (p_test == "theme") {
 		return TestTheme::test();
+	}
+
+	if (p_test == "expression") {
+		return TestExpression::test();
 	}
 
 	print_line("Unknown test: " + p_test);

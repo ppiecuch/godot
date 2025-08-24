@@ -362,6 +362,7 @@ class EditorExportPlugin : public Reference {
 
 	_FORCE_INLINE_ void _export_end() {
 		ios_frameworks.clear();
+		ios_embedded_frameworks.clear();
 		ios_bundle_files.clear();
 		ios_plist_content = "";
 		ios_linker_flags = "";

@@ -37,10 +37,6 @@
 #include <stddef.h>
 #include <type_traits>
 
-#ifdef __3DS__
-#include <alloca.h> // for alloca
-#endif
-
 #ifndef PAD_ALIGN
 #define PAD_ALIGN 16 //must always be greater than this at much
 #endif

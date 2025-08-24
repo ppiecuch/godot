@@ -37,7 +37,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-/**< Unsupported/unimplemented. */
 #define MBEDTLS_ERR_UNSUPPORTED                           -0x0040  /**< Unsupported/unimplemented. */
 /** Failed to open a socket. */
 #define MBEDTLS_ERR_NET_SOCKET_FAILED                     -0x0042

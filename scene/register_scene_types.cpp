@@ -517,6 +517,7 @@ void register_scene_types() {
 #ifdef MODULE_NAVIGATION_ENABLED
 	ClassDB::register_class<Navigation>();
 	ClassDB::register_class<NavigationMeshInstance>();
+	ClassDB::register_class<NavigationMesh>();
 	ClassDB::register_class<NavigationAgent>();
 	ClassDB::register_class<NavigationObstacle>();
 #endif

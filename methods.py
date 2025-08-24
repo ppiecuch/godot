@@ -4,6 +4,8 @@ import sys
 import glob
 import subprocess
 from collections import OrderedDict
+from collections.abc import Mapping
+from typing import Iterator
 from compat import iteritems, isbasestring, open_utf8, decode_utf8, qualname
 
 from SCons import Node
@@ -926,29 +928,21 @@ def generate_vs_project(env, num_jobs):
 
             def add_mode(
                 self,
-                name="",
-                includes="",
-                cli_args="",
+                name: str = "",
+                includes: str = "",
+                cli_args: str = "",
                 defines=None,
             ):
                 if defines is None:
                     defines = []
                 self.names.append(name)
                 self.arg_dict["variant"] += [
-                    (
-                        "{config}".format(config=config)
-                        + ("_[{name}]".format(name=name) if name else "")
-                        + "|{platform}".format(platform=patform)
-                    )
+                    f'{config}{f"_[{name}]" if name else ""}|{platform}'
                     for config in ModuleConfigs.CONFIGURATIONS
                     for platform in ModuleConfigs.PLATFORMS
                 ]
                 self.arg_dict["runfile"] += [
-                    (
-                        "bin\\godot.windows.{config_id}.{plat_id}".format(config_id=config_id, plat_id=plat_id)
-                        + ("{name}".format(name=name) if name else "")
-                        + ".exe"
-                    )
+                    f'bin\\godot.windows.{config_id}.{plat_id}{f".{name}" if name else ""}.exe'
                     for config_id in ModuleConfigs.CONFIGURATION_IDS
                     for plat_id in ModuleConfigs.PLATFORM_IDS
                 ]
@@ -960,7 +954,7 @@ def generate_vs_project(env, num_jobs):
 
                 configuration_getter = (
                     "$(Configuration"
-                    + "".join(['.Replace("{name}", "")'.format(name=name) for name in self.names[1:]])
+                    + "".join([f'.Replace("{name}", "")' for name in self.names[1:]])
                     + '.Replace("_[]", "")'
                     + ")"
                 )
@@ -969,9 +963,7 @@ def generate_vs_project(env, num_jobs):
                     'cmd /V /C set "plat=$(PlatformTarget)"',
                     '(if "$(PlatformTarget)"=="x64" (set "plat=x86_amd64"))',
                     'set "tools=%s"' % env["tools"],
-                    '(if "{configuration_getter}"=="release" (set "tools=no"))'.format(
-                        configuration_getter=configuration_getter
-                    ),
+                    f'(if "{configuration_getter}"=="release" (set "tools=no"))',
                     'call "' + batch_file + '" !plat!',
                 ]
 
@@ -982,7 +974,7 @@ def generate_vs_project(env, num_jobs):
                 common_build_postfix = [
                     "--directory=\"$(ProjectDir.TrimEnd('\\'))\"",
                     "platform=windows",
-                    "target={configuration_getter}".format(configuration_getter=configuration_getter),
+                    f"target={configuration_getter}",
                     "progress=no",
                     "tools=!tools!",
                     "-j%s" % num_jobs,
@@ -999,15 +991,15 @@ def generate_vs_project(env, num_jobs):
 
             # Mappings interface definitions
 
-            def __iter__(self):
+            def __iter__(self) -> Iterator[str]:
                 for x in self.arg_dict:
                     yield x
 
-            def __len__(self):
+            def __len__(self) -> int:
                 return len(self.names)
 
-            def __getitem__(self, k):
-                return self.arg_dict[str(k)]
+            def __getitem__(self, k: str):
+                return self.arg_dict[k]
 
         add_to_vs_project(env, env.core_sources)
         add_to_vs_project(env, env.drivers_sources)
@@ -1046,7 +1038,7 @@ def generate_vs_project(env, num_jobs):
             incs=env.vs_incs,
             srcs=env.vs_srcs,
             auto_build_solution=1,
-            **module_configs
+            **module_configs,
         )
     else:
         print(
@@ -1150,21 +1142,6 @@ def get_compiler_version(env):
         return list(map(int, match.group().split(".")))
     else:
         return None
-
-
-def get_compiler_architecture(env):
-    """
-    Returns compiler (default) architecture.
-    """
-    if not env.msvc:
-        try:
-            arch = decode_utf8(subprocess.check_output([env.subst(env["CXX"]), "-dumpmachine"]).strip())
-        except (subprocess.CalledProcessError, OSError):
-            print("Couldn't parse CXX environment variable to infer compiler architecture.")
-            return None
-    else:  # TODO: Implement for MSVC
-        return None
-    return next(iter(arch.split("-")), None)
 
 
 def is_vanilla_clang(env):

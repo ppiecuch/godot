@@ -498,11 +498,17 @@ static void _get_directory_contents(EditorFileSystemDirectory *p_dir, Map<String
 	for (int i = 0; i < p_dir->get_file_count(); i++) {
 		ScriptCodeCompletionOption option(p_dir->get_file_path(i), ScriptCodeCompletionOption::KIND_FILE_PATH);
 		option.insert_text = quote_style + option.display + quote_style;
-		r_list.insert(option.display, option);
+		if (!p_ends_with.empty()) {
+			if (option.display.ends_with(p_ends_with)) {
+				r_list.insert(option.display, option);
+			}
+		} else {
+			r_list.insert(option.display, option);
+		}
 	}
 
 	for (int i = 0; i < p_dir->get_subdir_count(); i++) {
-		_get_directory_contents(p_dir->get_subdir(i), r_list);
+		_get_directory_contents(p_dir->get_subdir(i), r_list, p_ends_with);
 	}
 }
 

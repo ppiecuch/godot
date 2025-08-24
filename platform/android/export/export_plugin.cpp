@@ -2903,17 +2903,17 @@ Error EditorExportPlatformAndroid::export_project_helper(const Ref<EditorExportP
 	bool apk_expansion = p_preset->get("apk_expansion/enable");
 	Vector<String> enabled_abis = get_enabled_abis(p_preset);
 
-	print_line("Exporting for Android...");
-	print_line("- debug build: " + bool_to_string(p_debug));
-	print_line("- export path: " + p_path);
-	print_line("- export format: " + itos(export_format));
-	print_line("- sign build: " + bool_to_string(should_sign));
-	print_line("- custom build enabled: " + bool_to_string(use_custom_build));
-	print_line("- apk expansion enabled: " + bool_to_string(apk_expansion));
-	print_line("- enabled abis: " + String(",").join(enabled_abis));
-	print_line("- export filter: " + itos(p_preset->get_export_filter()));
-	print_line("- include filter: " + p_preset->get_include_filter());
-	print_line("- exclude filter: " + p_preset->get_exclude_filter());
+	print_verbose("Exporting for Android...");
+	print_verbose("- debug build: " + bool_to_string(p_debug));
+	print_verbose("- export path: " + p_path);
+	print_verbose("- export format: " + itos(export_format));
+	print_verbose("- sign build: " + bool_to_string(should_sign));
+	print_verbose("- custom build enabled: " + bool_to_string(use_custom_build));
+	print_verbose("- apk expansion enabled: " + bool_to_string(apk_expansion));
+	print_verbose("- enabled abis: " + String(",").join(enabled_abis));
+	print_verbose("- export filter: " + itos(p_preset->get_export_filter()));
+	print_verbose("- include filter: " + p_preset->get_include_filter());
+	print_verbose("- exclude filter: " + p_preset->get_exclude_filter());
 
 	Ref<Image> splash_image;
 	Ref<Image> splash_bg_color_image;
