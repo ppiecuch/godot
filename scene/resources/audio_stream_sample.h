@@ -114,15 +114,31 @@ public:
 	};
 
 	static Error parse_wave_data_header(FileAccess *p_file) {
-		char riff[5]; // CHECK RIFF
+		/* CHECK RIFF */
+		char riff[5];
 		riff[4] = 0;
-		p_file->get_buffer((uint8_t *)&riff, 4);
-		if (riff[0] != 'R' || riff[1] != 'I' || riff[2] != 'F' || riff[3] != 'F') { // RIFF
+		p_file->get_buffer((uint8_t *)&riff, 4); //RIFF
+
+		if (riff[0] != 'R' || riff[1] != 'I' || riff[2] != 'F' || riff[3] != 'F') {
 			ERR_FAIL_V(ERR_FILE_UNRECOGNIZED);
 		}
-		p_file->get_32(); // GET FILESIZE
-		char wave[4]; // CHECK WAVE
-		p_file->get_buffer((uint8_t *)&wave, 4); // RIFF
+
+		/* GET FILESIZE */
+
+		// The file size in header is 8 bytes less than the actual size.
+		// See https://docs.fileformat.com/audio/wav/
+		const int FILE_SIZE_HEADER_OFFSET = 8;
+		uint32_t file_size_header = file->get_32() + FILE_SIZE_HEADER_OFFSET;
+		uint64_t file_size = file->get_len();
+		if (file_size != file_size_header) {
+			WARN_PRINT(vformat("File size %d is %s than the expected size %d.", file_size, file_size > file_size_header ? "larger" : "smaller", file_size_header));
+		}
+
+		/* CHECK WAVE */
+
+		char wave[5];
+		wave[4] = 0;
+		p_file->get_buffer((uint8_t *)&wave, 4); //WAVE
 		if (wave[0] != 'W' || wave[1] != 'A' || wave[2] != 'V' || wave[3] != 'E') {
 			ERR_FAIL_V_MSG(ERR_FILE_UNRECOGNIZED, "Not a WAV file (no WAVE RIFF header).");
 		}

@@ -478,7 +478,7 @@ void EditorNode::_notification(int p_what) {
 
 			editor_selection->update();
 
-			scene_root->set_size_override(true, Size2(ProjectSettings::get_singleton()->get("display/window/size/width"), ProjectSettings::get_singleton()->get("display/window/size/height")));
+			scene_root->set_size_override(true, Size2(GLOBAL_GET_CACHED(real_t, "display/window/size/width"), GLOBAL_GET_CACHED(real_t, "display/window/size/height")));
 
 			ResourceImporterTexture::get_singleton()->update_imports();
 		} break;
@@ -546,7 +546,7 @@ void EditorNode::_notification(int p_what) {
 
 		case MainLoop::NOTIFICATION_WM_FOCUS_IN: {
 			// Restore the original FPS cap after focusing back on the editor.
-			OS::get_singleton()->set_low_processor_usage_mode_sleep_usec(int(EDITOR_GET("interface/editor/low_processor_mode_sleep_usec")));
+			OS::get_singleton()->set_low_processor_usage_mode_sleep_usec(EDITOR_GET_CACHED(int, "interface/editor/low_processor_mode_sleep_usec"));
 
 			EditorFileSystem::get_singleton()->scan_changes();
 			_scan_external_changes();
@@ -554,12 +554,12 @@ void EditorNode::_notification(int p_what) {
 
 		case MainLoop::NOTIFICATION_WM_FOCUS_OUT: {
 			// Save on focus loss before applying the FPS limit to avoid slowing down the saving process.
-			if (EDITOR_GET("interface/editor/save_on_focus_loss")) {
+			if (EDITOR_GET_CACHED(bool, "interface/editor/save_on_focus_loss")) {
 				_menu_option_confirm(FILE_SAVE_SCENE, false);
 			}
 
 			// Set a low FPS cap to decrease CPU/GPU usage while the editor is unfocused.
-			OS::get_singleton()->set_low_processor_usage_mode_sleep_usec(int(EDITOR_GET("interface/editor/unfocused_low_processor_mode_sleep_usec")));
+			OS::get_singleton()->set_low_processor_usage_mode_sleep_usec(EDITOR_GET_CACHED(int, "interface/editor/unfocused_low_processor_mode_sleep_usec"));
 		} break;
 
 		case MainLoop::NOTIFICATION_WM_ABOUT: {
@@ -642,10 +642,11 @@ void EditorNode::_notification(int p_what) {
 			p->set_item_icon(p->get_item_index(HELP_SEARCH), gui_base->get_icon("HelpSearch", "EditorIcons"));
 			p->set_item_icon(p->get_item_index(HELP_DOCS), gui_base->get_icon("ExternalLink", "EditorIcons"));
 			p->set_item_icon(p->get_item_index(HELP_QA), gui_base->get_icon("ExternalLink", "EditorIcons"));
+			p->set_item_icon(p->get_item_index(HELP_COMMUNITY), gui_base->get_icon("ExternalLink", "EditorIcons"));
+			p->set_item_icon(p->get_item_index(HELP_COPY_SYSTEM_INFO), gui_base->get_icon("ActionCopy", "EditorIcons"));
 			p->set_item_icon(p->get_item_index(HELP_REPORT_A_BUG), gui_base->get_icon("ExternalLink", "EditorIcons"));
 			p->set_item_icon(p->get_item_index(HELP_SUGGEST_A_FEATURE), gui_base->get_icon("ExternalLink", "EditorIcons"));
 			p->set_item_icon(p->get_item_index(HELP_SEND_DOCS_FEEDBACK), gui_base->get_icon("ExternalLink", "EditorIcons"));
-			p->set_item_icon(p->get_item_index(HELP_COMMUNITY), gui_base->get_icon("ExternalLink", "EditorIcons"));
 			p->set_item_icon(p->get_item_index(HELP_ABOUT), gui_base->get_icon("Godot", "EditorIcons"));
 			p->set_item_icon(p->get_item_index(HELP_SUPPORT_GODOT_DEVELOPMENT), gui_base->get_icon("Heart", "EditorIcons"));
 			_update_update_spinner();
@@ -1343,13 +1344,13 @@ void EditorNode::_save_edited_subresources(Node *scene, Map<RES, bool> &processe
 }
 
 void EditorNode::_find_node_types(Node *p_node, int &count_2d, int &count_3d) {
-	if (p_node->is_class("Viewport") || (p_node != editor_data.get_edited_scene_root() && p_node->get_owner() != editor_data.get_edited_scene_root())) {
+	if (p_node->derives_from<Viewport>() || (p_node != editor_data.get_edited_scene_root() && p_node->get_owner() != editor_data.get_edited_scene_root())) {
 		return;
 	}
 
-	if (p_node->is_class("CanvasItem")) {
+	if (p_node->derives_from<CanvasItem>()) {
 		count_2d++;
-	} else if (p_node->is_class("Spatial")) {
+	} else if (p_node->derives_from<Spatial>()) {
 		count_3d++;
 	}
 
@@ -1591,6 +1592,7 @@ void EditorNode::_save_scene(String p_file, int idx) {
 
 	// This needs to be emitted before saving external resources.
 	emit_signal("scene_saved", p_file);
+	editor_data.notify_scene_saved(p_file);
 
 	_save_external_resources();
 	editor_data.save_editor_external_data();
@@ -2063,8 +2065,8 @@ void EditorNode::_edit_current(bool p_skip_foreign) {
 	Object *prev_inspected_object = get_inspector()->get_edited_object();
 
 	bool disable_folding = bool(EDITOR_GET("interface/inspector/disable_folding"));
-	bool is_resource = current_obj->is_class("Resource");
-	bool is_node = current_obj->is_class("Node");
+	bool is_resource = current_obj->derives_from<Resource>();
+	bool is_node = current_obj->derives_from<Node>();
 	bool stay_in_script_editor_on_node_selected = bool(EDITOR_GET("text_editor/navigation/stay_in_script_editor_on_node_selected"));
 	bool skip_main_plugin = false;
 
@@ -2125,7 +2127,7 @@ void EditorNode::_edit_current(bool p_skip_foreign) {
 		if (current_obj->is_class("ScriptEditorDebuggerInspectedObject")) {
 			editable_warning = TTR("This is a remote object, so changes to it won't be kept.\nPlease read the documentation relevant to debugging to better understand this workflow.");
 			disable_folding = true;
-		} else if (current_obj->is_class("MultiNodeEdit")) {
+		} else if (current_obj->derives_from<MultiNodeEdit>()) {
 			Node *scene = get_edited_scene();
 			if (scene) {
 				MultiNodeEdit *multi_node_edit = Object::cast_to<MultiNodeEdit>(current_obj);
@@ -2683,7 +2685,7 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 			play_custom_scene_button->set_icon(gui_base->get_icon("PlayCustom", "EditorIcons"));
 			stop_button->set_disabled(true);
 
-			if (bool(EDITOR_GET("run/output/always_close_output_on_stop"))) {
+			if (EDITOR_GET_CACHED(bool, "run/output/always_close_output_on_stop")) {
 				for (int i = 0; i < bottom_panel_items.size(); i++) {
 					if (bottom_panel_items[i].control == log) {
 						_bottom_panel_switch(false, i);
@@ -2707,7 +2709,7 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 
 		} break;
 		case RUN_PLAY_NATIVE: {
-			bool autosave = EDITOR_GET("run/auto_save/save_before_running");
+			bool autosave = EDITOR_GET_CACHED(bool, "run/auto_save/save_before_running");
 			if (autosave) {
 				_menu_option_confirm(FILE_SAVE_ALL_SCENES, false);
 			}
@@ -2932,6 +2934,13 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 		case HELP_QA: {
 			OS::get_singleton()->shell_open("https://godotengine.org/qa/");
 		} break;
+		case HELP_COMMUNITY: {
+			OS::get_singleton()->shell_open("https://godotengine.org/community");
+		} break;
+		case HELP_COPY_SYSTEM_INFO: {
+			String info = _get_system_info();
+			OS::get_singleton()->set_clipboard(info);
+		} break;
 		case HELP_REPORT_A_BUG: {
 			OS::get_singleton()->shell_open("https://github.com/godotengine/godot/issues");
 		} break;
@@ -2940,9 +2949,6 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 		} break;
 		case HELP_SEND_DOCS_FEEDBACK: {
 			OS::get_singleton()->shell_open("https://github.com/godotengine/godot-docs/issues");
-		} break;
-		case HELP_COMMUNITY: {
-			OS::get_singleton()->shell_open("https://godotengine.org/community");
 		} break;
 		case HELP_ABOUT: {
 			about->popup_centered_minsize(Size2(780, 500) * EDSCALE);
@@ -2982,6 +2988,33 @@ void EditorNode::_save_screenshot(NodePath p_path) {
 	viewport->set_clear_mode(Viewport::CLEAR_MODE_ALWAYS);
 	Error error = img->save_png(p_path);
 	ERR_FAIL_COND_MSG(error != OK, "Cannot save screenshot to file '" + p_path + "'.");
+}
+
+String EditorNode::_get_system_info() {
+	String engine = String(VERSION_FULL_NAME);
+	String hash = String(VERSION_HASH);
+	hash = hash.empty() ? String(" [unknown]") : vformat(" [%s]", hash.left(9));
+	engine += hash;
+
+	String os = OS::get_singleton()->get_name();
+
+	String screen = itos(OS::get_singleton()->get_screen_count());
+	screen += (OS::get_singleton()->get_screen_count() > 1) ? String(" monitors") : String(" monitor");
+	String video_driver = OS::get_singleton()->get_video_driver_name(OS::get_singleton()->get_current_video_driver());
+	String video_adapter = VisualServer::get_singleton()->get_video_adapter_name();
+
+	String processor = OS::get_singleton()->get_processor_name();
+	processor += vformat(" (%s threads)", OS::get_singleton()->get_processor_count());
+
+	Vector<String> info;
+	info.push_back(engine);
+	info.push_back(os);
+	info.push_back(screen);
+	info.push_back(video_driver);
+	info.push_back(video_adapter);
+	info.push_back(processor);
+
+	return String(" - ").join(info);
 }
 
 void EditorNode::_tool_menu_option(int p_idx) {
@@ -4024,7 +4057,7 @@ StringName EditorNode::get_object_custom_type_name(const Object *p_object) const
 	ERR_FAIL_COND_V(!p_object, StringName());
 
 	Ref<Script> script = p_object->get_script();
-	if (script.is_null() && p_object->is_class("Script")) {
+	if (script.is_null() && p_object->derives_from<Script>()) {
 		script = p_object;
 	}
 
@@ -4090,7 +4123,7 @@ Ref<Texture> EditorNode::get_object_icon(const Object *p_object, const String &p
 	ERR_FAIL_COND_V(!p_object || !gui_base, nullptr);
 
 	Ref<Script> script = p_object->get_script();
-	if (script.is_null() && p_object->is_class("Script")) {
+	if (script.is_null() && p_object->derives_from<Script>()) {
 		script = p_object;
 	}
 
@@ -4993,7 +5026,7 @@ void EditorNode::_scene_tab_closed(int p_tab, int option) {
 }
 
 void EditorNode::_scene_tab_hover(int p_tab) {
-	if (!bool(EDITOR_GET("interface/scene_tabs/show_thumbnail_on_hover"))) {
+	if (!EDITOR_GET_CACHED(bool, "interface/scene_tabs/show_thumbnail_on_hover")) {
 		return;
 	}
 	int current_tab = scene_tabs->get_current_tab();
@@ -5822,6 +5855,7 @@ void EditorNode::_bind_methods() {
 	ClassDB::bind_method("_screenshot", &EditorNode::_screenshot);
 	ClassDB::bind_method("_request_screenshot", &EditorNode::_request_screenshot);
 	ClassDB::bind_method("_save_screenshot", &EditorNode::_save_screenshot);
+	ClassDB::bind_method("_get_system_info", &EditorNode::_get_system_info);
 
 	ADD_SIGNAL(MethodInfo("play_pressed"));
 	ADD_SIGNAL(MethodInfo("pause_pressed"));
@@ -6120,6 +6154,12 @@ EditorNode::EditorNode() {
 	EDITOR_DEF("interface/editor/update_vital_only", false);
 #endif
 	EDITOR_DEF("interface/editor/localize_settings", true);
+
+	AudioServer::get_singleton()->set_enabled(!EDITOR_DEF_RST("interface/audio/muting/mute_driver", false));
+	AudioDriverManager::set_mute_sensitivity(AudioDriverManager::MUTE_FLAG_SILENCE, EDITOR_DEF_RST("interface/audio/muting/mute_on_silence", true));
+	AudioDriverManager::set_mute_sensitivity(AudioDriverManager::MUTE_FLAG_PAUSED, EDITOR_DEF_RST("interface/audio/muting/mute_on_pause", true));
+	AudioDriverManager::set_mute_sensitivity(AudioDriverManager::MUTE_FLAG_FOCUS_LOSS, EDITOR_DEF_RST("interface/audio/muting/mute_on_focus_loss", true));
+
 	EDITOR_DEF_RST("interface/scene_tabs/restore_scenes_on_load", false);
 	EDITOR_DEF_RST("interface/scene_tabs/show_thumbnail_on_hover", true);
 	EDITOR_DEF_RST("interface/inspector/default_property_name_style", EditorPropertyNameProcessor::STYLE_CAPITALIZED);
@@ -6675,10 +6715,12 @@ EditorNode::EditorNode() {
 	p->add_separator();
 	p->add_icon_shortcut(gui_base->get_icon("ExternalLink", "EditorIcons"), ED_SHORTCUT("editor/online_docs", TTR("Online Documentation")), HELP_DOCS);
 	p->add_icon_shortcut(gui_base->get_icon("ExternalLink", "EditorIcons"), ED_SHORTCUT("editor/q&a", TTR("Questions & Answers")), HELP_QA);
+	p->add_icon_shortcut(gui_base->get_icon("ExternalLink", "EditorIcons"), ED_SHORTCUT("editor/community", TTR("Community")), HELP_COMMUNITY);
+	p->add_separator();
+	p->add_icon_shortcut(gui_base->get_icon("ActionCopy", "EditorIcons"), ED_SHORTCUT("editor/copy_system_info", TTR("Copy System Info")), HELP_COPY_SYSTEM_INFO);
 	p->add_icon_shortcut(gui_base->get_icon("ExternalLink", "EditorIcons"), ED_SHORTCUT("editor/report_a_bug", TTR("Report a Bug")), HELP_REPORT_A_BUG);
 	p->add_icon_shortcut(gui_base->get_icon("ExternalLink", "EditorIcons"), ED_SHORTCUT("editor/suggest_a_feature", TTR("Suggest a Feature")), HELP_SUGGEST_A_FEATURE);
 	p->add_icon_shortcut(gui_base->get_icon("ExternalLink", "EditorIcons"), ED_SHORTCUT("editor/send_docs_feedback", TTR("Send Docs Feedback")), HELP_SEND_DOCS_FEEDBACK);
-	p->add_icon_shortcut(gui_base->get_icon("ExternalLink", "EditorIcons"), ED_SHORTCUT("editor/community", TTR("Community")), HELP_COMMUNITY);
 	p->add_separator();
 	p->add_icon_shortcut(gui_base->get_icon("Godot", "EditorIcons"), ED_SHORTCUT("editor/about", TTR("About Godot")), HELP_ABOUT);
 	p->add_icon_shortcut(gui_base->get_icon("Heart", "EditorIcons"), ED_SHORTCUT("editor/support_development", TTR("Support Godot Development")), HELP_SUPPORT_GODOT_DEVELOPMENT);

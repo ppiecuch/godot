@@ -169,7 +169,7 @@ void ScriptTextEditor::enable_editor() {
 void ScriptTextEditor::_update_member_keywords() {
 	member_keywords.clear();
 	code_editor->get_text_edit()->clear_member_keywords();
-	Color member_variable_color = EDITOR_GET("text_editor/highlighting/member_variable_color");
+	Color member_variable_color = EDITOR_GET_CACHED(Color, "text_editor/highlighting/member_variable_color");
 
 	StringName instance_base = script->get_instance_base_type();
 
@@ -591,7 +591,7 @@ void ScriptTextEditor::_validate_script() {
 	warnings_panel->clear();
 
 	// Add missing connections.
-	if (GLOBAL_GET("debug/gdscript/warnings/enable").booleanize()) {
+	if (GLOBAL_GET_CACHED(bool, "debug/gdscript/warnings/enable")) {
 		Node *base = get_tree()->get_edited_scene_root();
 		if (base && missing_connections.size() > 0) {
 			warnings_panel->push_table(1);
@@ -1505,7 +1505,7 @@ static Node *_find_script_node(Node *p_edited_scene, Node *p_current_node, const
 }
 
 void ScriptTextEditor::drop_data_fw(const Point2 &p_point, const Variant &p_data, Control *p_from) {
-	const String quote_style = EDITOR_GET("text_editor/completion/use_single_quotes") ? "'" : "\"";
+	const String quote_style = EditorSettingsQuick::get_text_editor_completion_use_single_quotes() ? "'" : "\"";
 
 	Dictionary d = p_data;
 
@@ -1563,7 +1563,7 @@ void ScriptTextEditor::drop_data_fw(const Point2 &p_point, const Variant &p_data
 		String text_to_drop;
 
 		if (Input::get_singleton()->is_key_pressed(KEY_CONTROL)) {
-			bool use_type = EDITOR_GET("text_editor/completion/add_type_hints");
+			bool use_type = EDITOR_GET_CACHED(bool, "text_editor/completion/add_type_hints");
 			for (int i = 0; i < nodes.size(); i++) {
 				NodePath np = nodes[i];
 				Node *node = get_node(np);
@@ -1846,7 +1846,7 @@ void ScriptTextEditor::_enable_code_editor() {
 	color_panel->add_child(color_picker);
 
 	// get default color picker mode from editor settings
-	int default_color_mode = EDITOR_GET("interface/inspector/default_color_picker_mode");
+	int default_color_mode = EDITOR_GET_CACHED(int, "interface/inspector/default_color_picker_mode");
 	if (default_color_mode == 1) {
 		color_picker->set_hsv_mode(true);
 	} else if (default_color_mode == 2) {

@@ -33,6 +33,7 @@
 #include "core/engine.h"
 #include "core/math/transform_interpolator.h"
 #include "core/message_queue.h"
+#include "scene/3d/visual_instance.h"
 #include "scene/main/scene_tree.h"
 #include "scene/main/viewport.h"
 #include "scene/scene_string_names.h"
@@ -105,12 +106,15 @@ void Spatial::_propagate_transform_changed(Spatial *p_origin) {
 
 	data.children_lock++;
 
-	for (List<Spatial *>::Element *E = data.children.front(); E; E = E->next()) {
-		if (E->get()->data.toplevel_active) {
-			continue; //don't propagate to a toplevel
+	for (uint32_t n = 0; n < data.spatial_children.size(); n++) {
+		Spatial *s = data.spatial_children[n];
+
+		// Don't propagate to a toplevel.
+		if (!s->data.toplevel_active) {
+			s->_propagate_transform_changed(p_origin);
 		}
-		E->get()->_propagate_transform_changed(p_origin);
 	}
+
 #ifdef TOOLS_ENABLED
 	if ((data.gizmo.is_valid() || data.notify_transform) && !data.ignore_notification && !xform_change.in_list()) {
 #else
@@ -118,7 +122,7 @@ void Spatial::_propagate_transform_changed(Spatial *p_origin) {
 #endif
 		get_tree()->xform_change_list.add(&xform_change);
 	}
-	data.dirty |= DIRTY_GLOBAL;
+	data.dirty |= DIRTY_GLOBAL | DIRTY_GLOBAL_INTERPOLATED;
 
 	data.children_lock--;
 }
@@ -153,10 +157,14 @@ void Spatial::_notification(int p_what) {
 			}
 
 			if (data.parent) {
-				data.C = data.parent->data.children.push_back(this);
-			} else {
-				data.C = nullptr;
+				data.index_in_parent = data.parent->data.spatial_children.size();
+				data.parent->data.spatial_children.push_back(this);
+			} else if (data.index_in_parent != UINT32_MAX) {
+				data.index_in_parent = UINT32_MAX;
+				ERR_PRINT("Spatial ENTER_TREE detected without EXIT_TREE, recovering.");
 			}
+
+			_update_visible_in_tree();
 
 			if (data.toplevel && !Engine::get_singleton()->is_editor_hint()) {
 				if (data.parent) {
@@ -174,23 +182,67 @@ void Spatial::_notification(int p_what) {
 				_propagate_merging_allowed(merging_allowed);
 			}
 
-			data.dirty |= DIRTY_GLOBAL; //global is always dirty upon entering a scene
+			data.dirty |= DIRTY_GLOBAL | DIRTY_GLOBAL_INTERPOLATED; //global is always dirty upon entering a scene
 			_notify_dirty();
 
 			notification(NOTIFICATION_ENTER_WORLD);
 
+			if (is_inside_tree() && get_tree()->is_physics_interpolation_enabled()) {
+				// Always reset FTI when entering tree
+				// and update the servers,
+				// both for interpolated and non-interpolated nodes,
+				// to ensure the server xforms are up to date.
+				fti_pump_xform();
+
+				// No need to interpolate as we are doing a reset.
+				data.global_transform_interpolated = get_global_transform();
+
+				// Make sure servers are up to date.
+				fti_update_servers_xform();
+
+				// As well as a reset based on the transform when adding, the user may change
+				// the transform during the first tick / frame, and we want to reset automatically
+				// at the end of the frame / tick (unless the user manually called `reset_physics_interpolation()`).
+				if (is_physics_interpolated()) {
+					get_tree()->get_scene_tree_fti().spatial_request_reset(this);
+				}
+			}
+
 		} break;
 		case NOTIFICATION_EXIT_TREE: {
+			if (is_inside_tree()) {
+				get_tree()->get_scene_tree_fti().spatial_notify_delete(this);
+			}
+
 			notification(NOTIFICATION_EXIT_WORLD, true);
 			if (xform_change.in_list()) {
 				get_tree()->xform_change_list.remove(&xform_change);
 			}
-			if (data.C) {
-				data.parent->data.children.erase(data.C);
+
+			if (data.parent) {
+				if (data.index_in_parent != UINT32_MAX) {
+					// Aliases
+					uint32_t c = data.index_in_parent;
+					LocalVector<Spatial *> &parent_children = data.parent->data.spatial_children;
+
+					parent_children.remove_unordered(c);
+
+					// After unordered remove, we need to inform the moved child
+					// what their new id is in the parent children list.
+					if (parent_children.size() > c) {
+						parent_children[c]->data.index_in_parent = c;
+					}
+
+				} else {
+					ERR_PRINT("CanvasItem index_in_parent unset at EXIT_TREE.");
+				}
 			}
+			data.index_in_parent = UINT32_MAX;
+
 			data.parent = nullptr;
-			data.C = nullptr;
 			data.toplevel_active = false;
+
+			_update_visible_in_tree();
 			_disable_client_physics_interpolation();
 		} break;
 		case NOTIFICATION_ENTER_WORLD: {
@@ -252,6 +304,24 @@ void Spatial::_notification(int p_what) {
 			if (data.client_physics_interpolation_data) {
 				data.client_physics_interpolation_data->global_xform_prev = data.client_physics_interpolation_data->global_xform_curr;
 			}
+
+			// In most cases, nodes derived from Spatial will have to
+			// already have reset code available for SceneTreeFTI,
+			// so it makes sense for them to reuse this method
+			// rather than respond individually to NOTIFICATION_RESET_PHYSICS_INTERPOLATION,
+			// unless they need to perform specific tasks (like changing process modes).
+			fti_pump_xform();
+			fti_pump_property();
+
+			// Detect whether we are using an identity transform.
+			// This is an optimization for faster tree transform concatenation.
+			data.fti_is_identity_xform = data.local_transform == Transform();
+		} break;
+
+		case NOTIFICATION_PAUSED: {
+			if (is_physics_interpolated_and_enabled()) {
+				data.local_transform_prev = get_transform();
+			}
 		} break;
 
 		default: {
@@ -281,6 +351,16 @@ void Spatial::set_global_rotation(const Vector3 &p_euler_rad) {
 	set_global_transform(transform);
 }
 
+void Spatial::fti_pump_xform() {
+	data.local_transform_prev = get_transform();
+}
+
+void Spatial::fti_notify_node_changed(bool p_transform_changed) {
+	if (is_inside_tree()) {
+		get_tree()->get_scene_tree_fti().spatial_notify_changed(*this, p_transform_changed);
+	}
+}
+
 void Spatial::set_transform(const Transform &p_transform) {
 	data.local_transform = p_transform;
 	data.dirty |= DIRTY_VECTORS;
@@ -293,6 +373,7 @@ void Spatial::set_transform(const Transform &p_transform) {
 	if (data.notify_local_transform) {
 		notification(NOTIFICATION_LOCAL_TRANSFORM_CHANGED);
 	}
+	fti_notify_node_changed();
 }
 
 void Spatial::set_global_transform(const Transform &p_transform) {
@@ -403,15 +484,95 @@ Transform Spatial::_get_global_transform_interpolated(real_t p_interpolation_fra
 	return res;
 }
 
+// Visible nodes - get_global_transform_interpolated is cheap.
+// Invisible nodes - get_global_transform_interpolated is expensive, try to avoid.
 Transform Spatial::get_global_transform_interpolated() {
+#if 1
 	// Pass through if physics interpolation is switched off.
 	// This is a convenience, as it allows you to easy turn off interpolation
 	// without changing any code.
-	if (!is_physics_interpolated_and_enabled()) {
-		return get_global_transform();
+	if (is_inside_tree() && get_tree()->is_physics_interpolation_enabled() && !Engine::get_singleton()->is_in_physics_frame()) {
+		// Note that with SceneTreeFTI, we may want to calculate interpolated transform for a node
+		// with physics interpolation set to OFF, if it has a parent that is ON.
+
+		// Cheap case.
+		if (is_visible_in_tree()) {
+			return data.fti_global_xform_interp_set ? data.global_transform_interpolated : get_global_transform();
+		}
+
+		// If we got here we are invisible.
+		// But if there is a FIRST ancestor that is visible in tree, we can back calculate the interpolated transform.
+		const Spatial *visible_parent = nullptr;
+		const Spatial *s = this;
+
+		while (s) {
+			if (s->data.visible_in_tree) {
+				visible_parent = s;
+				break;
+			}
+			s = s->data.parent;
+		}
+
+		// We aren't bothering with the no visible parent case, because that would mean the root node
+		// was hidden.
+		if (visible_parent) {
+			// INVISIBLE case. Not visible, but there is a visible ancestor somewhere in the chain.
+			if (_get_scene_tree_depth() < 1) {
+				// This should not happen unless there a problem has been introduced in the scene tree depth code.
+				// Print a non-spammy error and return something reasonable.
+				ERR_PRINT_ONCE("depth is < 1.");
+				return get_global_transform();
+			}
+
+			// The interpolated xform is not already calculated for invisible nodes, but we can calculate this
+			// manually on demand if there is a visible parent.
+			// First create the chain (backwards), from the node up to first visible parent.
+			const Spatial **parents = (const Spatial **)alloca((sizeof(const Spatial *) * _get_scene_tree_depth()));
+			int32_t num_parents = 0;
+
+			s = this;
+			while (s) {
+				if (s == visible_parent) {
+					// Finished.
+					break;
+				}
+
+				parents[num_parents++] = s;
+				s = s->data.parent;
+			}
+
+			// Now calculate the interpolated chain forwards.
+			float interpolation_fraction = Engine::get_singleton()->get_physics_interpolation_fraction();
+
+			// Seed the xform with the visible parent.
+			Transform xform = visible_parent->data.fti_global_xform_interp_set ? visible_parent->data.global_transform_interpolated : visible_parent->get_global_transform();
+			Transform local_interp;
+
+			// Backwards through the list is forwards through the chain through the tree.
+			for (int32_t n = num_parents - 1; n >= 0; n--) {
+				s = parents[n];
+
+				if (s->is_physics_interpolated()) {
+					// Make sure to call `get_transform()` rather than using local_transform directly, because
+					// local_transform may be dirty and need updating from rotation / scale.
+					TransformInterpolator::interpolate_transform(s->data.local_transform_prev, s->get_transform(), local_interp, interpolation_fraction);
+				} else {
+					local_interp = s->get_transform();
+				}
+				xform *= local_interp;
+			}
+
+			// We could save this in case of multiple calls,
+			// but probably not necessary.
+			return xform;
+		}
 	}
 
-	// If we are in the physics frame, the interpolated global transform is meaningless.
+	return get_global_transform();
+#else
+	// OLD METHOD - deprecated since moving to SceneTreeFTI,
+	// but leaving for reference and comparison for debugging.
+
 	// However, there is an exception, we may want to use this as a means of starting off the client
 	// interpolation pump if not already started (when _is_physics_interpolated_client_side() is false).
 	if (Engine::get_singleton()->is_in_physics_frame() && _is_physics_interpolated_client_side()) {
@@ -419,6 +580,7 @@ Transform Spatial::get_global_transform_interpolated() {
 	}
 
 	return _get_global_transform_interpolated(Engine::get_singleton()->get_physics_interpolation_fraction());
+#endif
 }
 
 Transform Spatial::get_global_transform() const {
@@ -465,10 +627,6 @@ Spatial *Spatial::get_parent_spatial() const {
 	return data.parent;
 }
 
-void Spatial::_set_vi_visible(bool p_visible) {
-	data.vi_visible = p_visible;
-}
-
 Transform Spatial::get_relative_transform(const Node *p_parent) const {
 	if (p_parent == this) {
 		return Transform();
@@ -490,6 +648,7 @@ void Spatial::set_translation(const Vector3 &p_translation) {
 	if (data.notify_local_transform) {
 		notification(NOTIFICATION_LOCAL_TRANSFORM_CHANGED);
 	}
+	fti_notify_node_changed();
 }
 
 void Spatial::set_rotation(const Vector3 &p_euler_rad) {
@@ -505,6 +664,7 @@ void Spatial::set_rotation(const Vector3 &p_euler_rad) {
 	if (data.notify_local_transform) {
 		notification(NOTIFICATION_LOCAL_TRANSFORM_CHANGED);
 	}
+	fti_notify_node_changed();
 }
 
 void Spatial::set_rotation_degrees(const Vector3 &p_euler_deg) {
@@ -524,6 +684,7 @@ void Spatial::set_scale(const Vector3 &p_scale) {
 	if (data.notify_local_transform) {
 		notification(NOTIFICATION_LOCAL_TRANSFORM_CHANGED);
 	}
+	fti_notify_node_changed();
 }
 
 Vector3 Spatial::get_translation() const {
@@ -656,6 +817,7 @@ void Spatial::set_as_toplevel(bool p_enabled) {
 	} else {
 		data.toplevel = p_enabled;
 	}
+	reset_physics_interpolation();
 }
 
 bool Spatial::is_set_as_toplevel() const {
@@ -669,6 +831,36 @@ Ref<World> Spatial::get_world() const {
 	return data.viewport->find_world();
 }
 
+void Spatial::_update_visible_in_tree() {
+	Spatial *parent = get_parent_spatial();
+
+	bool propagate_visible = parent ? parent->data.visible_in_tree : true;
+
+	// Only propagate visible when entering tree if we are visible.
+	propagate_visible &= is_visible();
+
+	_propagate_visible_in_tree(propagate_visible);
+}
+
+void Spatial::_propagate_visible_in_tree(bool p_visible_in_tree) {
+	// If any node is invisible, the propagation changes to invisible below.
+	p_visible_in_tree &= is_visible();
+
+	// No change.
+	if (data.visible_in_tree == p_visible_in_tree) {
+		return;
+	}
+
+	data.visible_in_tree = p_visible_in_tree;
+
+	for (int32_t n = 0; n < get_child_count(); n++) {
+		Spatial *s = Object::cast_to<Spatial>(get_child(n));
+		if (s) {
+			s->_propagate_visible_in_tree(p_visible_in_tree);
+		}
+	}
+}
+
 void Spatial::_propagate_visibility_changed() {
 	notification(NOTIFICATION_VISIBILITY_CHANGED);
 	emit_signal(SceneStringNames::get_singleton()->visibility_changed);
@@ -679,12 +871,12 @@ void Spatial::_propagate_visibility_changed() {
 	}
 #endif
 
-	for (List<Spatial *>::Element *E = data.children.front(); E; E = E->next()) {
-		Spatial *c = E->get();
-		if (!c || !c->data.visible) {
-			continue;
+	for (uint32_t n = 0; n < data.spatial_children.size(); n++) {
+		Spatial *s = data.spatial_children[n];
+
+		if (s->data.visible) {
+			s->_propagate_visibility_changed();
 		}
-		c->_propagate_visibility_changed();
 	}
 }
 
@@ -708,12 +900,9 @@ void Spatial::_propagate_merging_allowed(bool p_merging_allowed) {
 
 	data.merging_allowed = p_merging_allowed;
 
-	for (List<Spatial *>::Element *E = data.children.front(); E; E = E->next()) {
-		Spatial *c = E->get();
-		if (!c) {
-			continue;
-		}
-		c->_propagate_merging_allowed(p_merging_allowed);
+	for (uint32_t n = 0; n < data.spatial_children.size(); n++) {
+		Spatial *s = data.spatial_children[n];
+		s->_propagate_merging_allowed(p_merging_allowed);
 	}
 }
 
@@ -728,6 +917,10 @@ void Spatial::show() {
 		return;
 	}
 
+	bool parent_visible = get_parent_spatial() ? get_parent_spatial()->data.visible_in_tree : true;
+	if (parent_visible) {
+		_propagate_visible_in_tree(true);
+	}
 	_propagate_visibility_changed();
 }
 
@@ -742,10 +935,14 @@ void Spatial::hide() {
 		return;
 	}
 
+	bool parent_visible = get_parent_spatial() ? get_parent_spatial()->data.visible_in_tree : true;
+	if (parent_visible) {
+		_propagate_visible_in_tree(false);
+	}
 	_propagate_visibility_changed();
 }
 
-bool Spatial::is_visible_in_tree() const {
+bool Spatial::_is_visible_in_tree_reference() const {
 	const Spatial *s = this;
 
 	while (s) {
@@ -1048,6 +1245,8 @@ void Spatial::_bind_methods() {
 
 Spatial::Spatial() :
 		xform_change(this), _client_physics_interpolation_spatials_list(this) {
+	_define_ancestry(AncestralClass::SPATIAL);
+
 	data.dirty = DIRTY_NONE;
 	data.children_lock = 0;
 
@@ -1058,9 +1257,19 @@ Spatial::Spatial() :
 	data.viewport = nullptr;
 	data.inside_world = false;
 	data.visible = true;
+	data.visible_in_tree = true;
 	data.disable_scale = false;
-	data.vi_visible = true;
 	data.merging_allowed = true;
+
+	data.fti_on_frame_xform_list = false;
+	data.fti_on_frame_property_list = false;
+	data.fti_on_tick_xform_list = false;
+	data.fti_on_tick_property_list = false;
+	data.fti_global_xform_interp_set = false;
+	data.fti_frame_xform_force_update = false;
+	data.fti_is_identity_xform = false;
+	data.fti_processed = false;
+
 	data.merging_mode = MERGING_MODE_INHERIT;
 
 	data.client_physics_interpolation_data = nullptr;
@@ -1072,9 +1281,12 @@ Spatial::Spatial() :
 	data.notify_local_transform = false;
 	data.notify_transform = false;
 	data.parent = nullptr;
-	data.C = nullptr;
 }
 
 Spatial::~Spatial() {
 	_disable_client_physics_interpolation();
+
+	if (is_inside_tree()) {
+		get_tree()->get_scene_tree_fti().spatial_notify_delete(this);
+	}
 }

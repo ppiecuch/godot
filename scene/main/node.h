@@ -48,6 +48,8 @@ class Node : public Object {
 	OBJ_CATEGORY("Nodes");
 
 public:
+	static constexpr AncestralClass static_ancestral_class = AncestralClass::NODE;
+
 	// N.B. Any enum stored as a bitfield should
 	// be specified as UNSIGNED to work around
 	// some compilers trying to store it as signed,
@@ -107,12 +109,12 @@ private:
 
 		Node *parent;
 		Node *owner;
-		Vector<Node *> children; // list of children
+		LocalVectori<Node *> children; // list of children
 		HashMap<StringName, Node *> owned_unique_nodes;
 		bool unique_name_in_owner = false;
 
+		int32_t depth;
 		int pos;
-		int depth;
 		int blocked; // safeguard that throws an error when attempting to modify the tree in a harmful way while being traversed.
 		StringName name;
 		SceneTree *tree;
@@ -266,6 +268,7 @@ protected:
 	bool _is_physics_interpolation_reset_requested() const { return data.physics_interpolation_reset_requested; }
 	void _set_use_identity_transform(bool p_enable);
 	bool _is_using_identity_transform() const { return data.use_identity_transform; }
+	int32_t _get_scene_tree_depth() const { return data.depth; }
 
 public:
 	enum {
@@ -459,7 +462,7 @@ public:
 	void set_physics_interpolation_mode(PhysicsInterpolationMode p_mode);
 	PhysicsInterpolationMode get_physics_interpolation_mode() const { return data.physics_interpolation_mode; }
 	_FORCE_INLINE_ bool is_physics_interpolated() const { return data.physics_interpolated; }
-	_FORCE_INLINE_ bool is_physics_interpolated_and_enabled() const { return is_inside_tree() && get_tree()->is_physics_interpolation_enabled() && is_physics_interpolated(); }
+	_FORCE_INLINE_ bool is_physics_interpolated_and_enabled() const { return SceneTree::is_fti_enabled() && is_physics_interpolated(); }
 	void reset_physics_interpolation();
 
 	uint32_t get_canvas_parent_id() const { return data.canvas_parent_id; }

@@ -397,6 +397,7 @@ public:
 	virtual void multimesh_set_physics_interpolated(RID p_multimesh, bool p_interpolated) = 0;
 	virtual void multimesh_set_physics_interpolation_quality(RID p_multimesh, MultimeshPhysicsInterpolationQuality p_quality) = 0;
 	virtual void multimesh_instance_reset_physics_interpolation(RID p_multimesh, int p_index) = 0;
+	virtual void multimesh_instances_reset_physics_interpolation(RID p_multimesh) = 0;
 
 	virtual void multimesh_set_visible_instances(RID p_multimesh, int p_visible) = 0;
 	virtual int multimesh_get_visible_instances(RID p_multimesh) const = 0;
@@ -880,8 +881,6 @@ public:
 	virtual void instance_set_layer_mask(RID p_instance, uint32_t p_mask) = 0;
 	virtual void instance_set_pivot_data(RID p_instance, float p_sorting_offset, bool p_use_aabb_center) = 0;
 	virtual void instance_set_transform(RID p_instance, const Transform &p_transform) = 0;
-	virtual void instance_set_interpolated(RID p_instance, bool p_interpolated) = 0;
-	virtual void instance_reset_physics_interpolation(RID p_instance) = 0;
 	virtual void instance_attach_object_instance_id(RID p_instance, ObjectID p_id) = 0;
 	virtual void instance_set_blend_shape_weight(RID p_instance, int p_shape, float p_weight) = 0;
 	virtual void instance_set_surface_material(RID p_instance, int p_surface, RID p_material) = 0;

@@ -301,6 +301,20 @@
 		<member name="audio/mix_rate.web" type="int" setter="" getter="" default="0">
 			Safer override for [member audio/mix_rate] in the Web platform. Here [code]0[/code] means "let the browser choose" (since some browsers do not like forcing the mix rate).
 		</member>
+		<member name="audio/muting/mute_driver" type="bool" setter="" getter="" default="false">
+			If [code]true[/code], the current audio driver will be disabled, minimizing CPU usage. This will affect both audio output and input.
+			[b]Note:[/b] The driver can be enabled and disabled at runtime using the [method AudioServer.set_enabled] function.
+		</member>
+		<member name="audio/muting/mute_on_focus_loss" type="bool" setter="" getter="" default="false">
+			If [code]true[/code], the current audio driver will be automatically disabled when the application loses focus, and re-enabled when the application regains focus.
+		</member>
+		<member name="audio/muting/mute_on_pause" type="bool" setter="" getter="" default="true">
+			If [code]true[/code], the current audio driver will be automatically disabled when the application is paused by the OS, and re-enabled when the application is resumed.
+			[b]Note:[/b] This only affects platforms where the OS can pause applications (typically Android and iOS). This does not refer to in-game pausing, where you can manually mute audio by calling [method AudioServer.set_enabled].
+		</member>
+		<member name="audio/muting/mute_on_silence" type="bool" setter="" getter="" default="false">
+			If [code]true[/code], the current audio driver will be automatically disabled after a period of silence is detected, and re-enabled when audio attempts to play. This may result in temporarily higher audio latency when audio restarts after being muted.
+		</member>
 		<member name="audio/output_latency" type="int" setter="" getter="" default="15">
 			Specifies the preferred output latency in milliseconds for audio. Lower values will result in lower audio latency at the cost of increased CPU usage. Low values may result in audible cracking on slower hardware.
 			Audio output latency may be constrained by the host operating system and audio hardware drivers. If the host can not provide the specified audio output latency then Godot will attempt to use the nearest latency allowed by the host. As such you should always use [method AudioServer.get_output_latency] to determine the actual audio output latency.
@@ -1417,6 +1431,12 @@
 		<member name="physics/3d/physics_engine" type="String" setter="" getter="" default="&quot;DEFAULT&quot;">
 			Sets which physics engine to use for 3D physics.
 			"DEFAULT" is currently the [url=https://bulletphysics.org]Bullet[/url] physics engine. The "GodotPhysics" engine is still supported as an alternative.
+		</member>
+		<member name="physics/3d/physics_interpolation/scene_traversal" type="String" setter="" getter="" default="&quot;DEFAULT&quot;">
+			The approach used for 3D scene traversal when physics interpolation is enabled.
+			- [code]DEFAULT[/code]: The default optimized method.
+			- [code]Legacy[/code]: The previous reference method used for scene tree traversal, which is slower.
+			- [code]Debug[/code]: Swaps between [code]DEFAULT[/code] and [code]Legacy[/code] methods on alternating frames, and provides logging information (which in turn makes it slower). Intended for debugging only; you should use the [code]DEFAULT[/code] method in most cases.
 		</member>
 		<member name="physics/3d/smooth_trimesh_collision" type="bool" setter="" getter="" default="false">
 			If [code]true[/code], smooths out collision with trimesh shapes ([ConcavePolygonShape]) by telling the Bullet physics engine to generate internal edge information for every trimesh shape created.

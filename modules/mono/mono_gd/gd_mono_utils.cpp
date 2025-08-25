@@ -83,7 +83,7 @@ MonoObject *unmanaged_get_managed(Object *unmanaged) {
 		}
 	}
 
-	Ref<MonoGCHandle> &gchandle = script_binding.gchandle;
+	Ref<gdmono::MonoGCHandle> &gchandle = script_binding.gchandle;
 	ERR_FAIL_COND_V(gchandle.is_null(), NULL);
 
 	MonoObject *target = gchandle->get_target();
@@ -103,12 +103,12 @@ MonoObject *unmanaged_get_managed(Object *unmanaged) {
 	MonoObject *mono_object = GDMonoUtils::create_managed_for_godot_object(script_binding.wrapper_class, script_binding.type_name, unmanaged);
 	ERR_FAIL_NULL_V(mono_object, NULL);
 
-	gchandle->set_handle(MonoGCHandle::new_strong_handle(mono_object), MonoGCHandle::STRONG_HANDLE);
+	gchandle->set_handle(gdmono::MonoGCHandle::new_strong_handle(mono_object), gdmono::MonoGCHandle::STRONG_HANDLE);
 
 	// Tie managed to unmanaged
-	Reference *ref = Object::cast_to<Reference>(unmanaged);
+	if (unmanaged->is_reference()) {
+		Reference *ref = (Reference *)unmanaged;
 
-	if (ref) {
 		// Unsafe refcount increment. The managed instance also counts as a reference.
 		// This way if the unmanaged world has no references to our owner
 		// but the managed instance is alive, the refcount will be 1 instead of 0.

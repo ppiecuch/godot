@@ -35,6 +35,7 @@
 #include "core/os/main_loop.h"
 #include "core/os/thread_safe.h"
 #include "core/self_list.h"
+#include "scene/main/scene_tree_fti.h"
 #include "scene/resources/mesh.h"
 #include "scene/resources/world.h"
 #include "scene/resources/world_2d.h"
@@ -132,7 +133,14 @@ private:
 	bool _quit;
 	bool initialized;
 	bool input_handled;
-	bool _physics_interpolation_enabled;
+
+	// Static so we can get directly instead of via SceneTree pointer.
+	static bool _physics_interpolation_enabled;
+
+	// Note that physics interpolation is hard coded to OFF in the editor,
+	// therefore we have a second bool to enable e.g. configuration warnings
+	// to only take effect when the project is using physics interpolation.
+	static bool _physics_interpolation_enabled_in_project;
 
 	Size2 last_screen_size;
 	StringName tree_changed_name;
@@ -163,6 +171,7 @@ private:
 	StretchAspect stretch_aspect;
 	Size2i stretch_min;
 	real_t stretch_scale;
+	SceneTreeFTI scene_tree_fti;
 
 	void _update_font_oversampling(float p_ratio);
 	void _update_root_rect();
@@ -443,10 +452,16 @@ public:
 	bool is_refusing_new_network_connections() const;
 
 	void set_physics_interpolation_enabled(bool p_enabled);
-	bool is_physics_interpolation_enabled() const;
+	bool is_physics_interpolation_enabled() const { return _physics_interpolation_enabled; }
+
+	// Different name to disambiguate fast static versions from the user bound versions.
+	static bool is_fti_enabled() { return _physics_interpolation_enabled; }
+	static bool is_fti_enabled_in_project() { return _physics_interpolation_enabled_in_project; }
 
 	void client_physics_interpolation_add_spatial(SelfList<Spatial> *p_elem);
 	void client_physics_interpolation_remove_spatial(SelfList<Spatial> *p_elem);
+
+	SceneTreeFTI &get_scene_tree_fti() { return scene_tree_fti; }
 
 	static void add_idle_callback(IdleCallback p_callback);
 	static void add_exit_callback(ExitCallback p_callback);

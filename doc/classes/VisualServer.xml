@@ -1488,14 +1488,6 @@
 				Sets a material that will override the material for all surfaces on the mesh associated with this instance. Equivalent to [member GeometryInstance.material_override].
 			</description>
 		</method>
-		<method name="instance_reset_physics_interpolation">
-			<return type="void" />
-			<argument index="0" name="instance" type="RID" />
-			<description>
-				Prevents physics interpolation for the current physics tick.
-				This is useful when moving an instance to a new location, to give an instantaneous change rather than interpolation from the previous location.
-			</description>
-		</method>
 		<method name="instance_set_base">
 			<return type="void" />
 			<argument index="0" name="instance" type="RID" />
@@ -1535,14 +1527,6 @@
 			<argument index="1" name="margin" type="float" />
 			<description>
 				Sets a margin to increase the size of the AABB when culling objects from the view frustum. This allows you to avoid culling objects that fall outside the view frustum. Equivalent to [member GeometryInstance.extra_cull_margin].
-			</description>
-		</method>
-		<method name="instance_set_interpolated">
-			<return type="void" />
-			<argument index="0" name="instance" type="RID" />
-			<argument index="1" name="interpolated" type="bool" />
-			<description>
-				Turns on and off physics interpolation for the instance.
 			</description>
 		</method>
 		<method name="instance_set_layer_mask">
@@ -2258,6 +2242,14 @@
 			<argument index="2" name="transform" type="Transform2D" />
 			<description>
 				Sets the [Transform2D] for this instance. For use when multimesh is used in 2D. Equivalent to [method MultiMesh.set_instance_transform_2d].
+			</description>
+		</method>
+		<method name="multimesh_instances_reset_physics_interpolation">
+			<return type="void" />
+			<argument index="0" name="multimesh" type="RID" />
+			<description>
+				Prevents physics interpolation for all instances during the current physics tick.
+				This is useful when moving all instances to new locations, to give instantaneous changes rather than interpolation from the previous locations.
 			</description>
 		</method>
 		<method name="multimesh_set_as_bulk_array">

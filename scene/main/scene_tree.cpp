@@ -50,6 +50,7 @@
 #include "scene/resources/mesh.h"
 #include "scene/resources/packed_scene.h"
 #include "scene/scene_string_names.h"
+#include "servers/audio_server.h"
 #include "servers/navigation_server.h"
 #include "servers/physics_2d_server.h"
 #include "servers/physics_server.h"
@@ -109,6 +110,9 @@ SceneTreeTimer::SceneTreeTimer() {
 	time_left = 0;
 	process_pause = true;
 }
+
+bool SceneTree::_physics_interpolation_enabled = false;
+bool SceneTree::_physics_interpolation_enabled_in_project = false;
 
 // This should be called once per physics tick, to make sure the transform previous and current
 // is kept up to date on the few spatials that are using client side physics interpolation
@@ -529,7 +533,10 @@ void SceneTree::init() {
 }
 
 void SceneTree::set_physics_interpolation_enabled(bool p_enabled) {
-	// disallow interpolation in editor
+	// This version is for use in editor.
+	_physics_interpolation_enabled_in_project = p_enabled;
+
+	// We never want interpolation in the editor.
 	if (Engine::get_singleton()->is_editor_hint()) {
 		p_enabled = false;
 	}
@@ -540,10 +547,13 @@ void SceneTree::set_physics_interpolation_enabled(bool p_enabled) {
 
 	_physics_interpolation_enabled = p_enabled;
 	VisualServer::get_singleton()->set_physics_interpolation_enabled(p_enabled);
-}
 
-bool SceneTree::is_physics_interpolation_enabled() const {
-	return _physics_interpolation_enabled;
+	get_scene_tree_fti().set_enabled(get_root(), p_enabled);
+
+	// Perform an auto reset on the root node for convenience for the user.
+	if (root) {
+		root->reset_physics_interpolation();
+	}
 }
 
 void SceneTree::client_physics_interpolation_add_spatial(SelfList<Spatial> *p_elem) {
@@ -561,12 +571,8 @@ void SceneTree::iteration_prepare() {
 		// Make sure any pending transforms from the last tick / frame
 		// are flushed before pumping the interpolation prev and currents.
 		flush_transform_notifications();
+		get_scene_tree_fti().tick_update();
 		VisualServer::get_singleton()->tick();
-
-		// Any objects performing client physics interpolation
-		// should be given an opportunity to keep their previous transforms
-		// up to date before each new physics tick.
-		_client_physics_interpolation.physics_process();
 	}
 }
 
@@ -575,6 +581,11 @@ void SceneTree::iteration_end() {
 	// to be flushed to the VisualServer before finishing a physics tick.
 	if (_physics_interpolation_enabled) {
 		flush_transform_notifications();
+
+		// Any objects performing client physics interpolation
+		// should be given an opportunity to keep their previous transforms
+		// up to date.
+		_client_physics_interpolation.physics_process();
 	}
 }
 
@@ -593,7 +604,7 @@ bool SceneTree::iteration(float p_time) {
 	emit_signal("physics_frame");
 
 	_notify_group_pause("physics_process_internal", Node::NOTIFICATION_INTERNAL_PHYSICS_PROCESS);
-	if (GLOBAL_GET("physics/common/enable_pause_aware_picking")) {
+	if (GLOBAL_GET_CACHED(bool, "physics/common/enable_pause_aware_picking")) {
 		call_group_flags(GROUP_CALL_REALTIME, "_viewports", "_process_picking", true);
 	}
 	_notify_group_pause("physics_process", Node::NOTIFICATION_PHYSICS_PROCESS);
@@ -625,6 +636,17 @@ bool SceneTree::idle(float p_time) {
 	//print_line("ram: "+itos(OS::get_singleton()->get_static_memory_usage())+" sram: "+itos(OS::get_singleton()->get_dynamic_memory_usage()));
 	//print_line("node count: "+itos(get_node_count()));
 	//print_line("TEXTURE RAM: "+itos(VS::get_singleton()->get_render_info(VS::INFO_TEXTURE_MEM_USED)));
+
+	// First pass of scene tree fixed timestep interpolation.
+	if (get_scene_tree_fti().is_enabled()) {
+		// Special, we need to ensure RenderingServer is up to date
+		// with *all* the pending xforms *before* updating it during
+		// the FTI update.
+		// If this is not done, we can end up with a deferred `set_transform()`
+		// overwriting the interpolated xform in the server.
+		flush_transform_notifications();
+		get_scene_tree_fti().frame_update(get_root(), true);
+	}
 
 	root_lock++;
 
@@ -731,6 +753,11 @@ bool SceneTree::idle(float p_time) {
 
 #endif
 
+	// Second pass of scene tree fixed timestep interpolation.
+	// ToDo: Possibly needs another flush_transform_notifications here
+	// depending on whether there are side effects to _call_idle_callbacks().
+	get_scene_tree_fti().frame_update(get_root(), false);
+
 	VisualServer::get_singleton()->pre_draw(true);
 
 	return _quit;
@@ -829,6 +856,8 @@ void SceneTree::_notification(int p_notification) {
 		} break;
 
 		case NOTIFICATION_WM_FOCUS_IN: {
+			AudioDriverManager::set_mute_flag(AudioDriverManager::MUTE_FLAG_FOCUS_LOSS, false);
+
 			InputDefault *id = Object::cast_to<InputDefault>(Input::get_singleton());
 			if (id) {
 				id->ensure_touch_mouse_raised();
@@ -849,16 +878,25 @@ void SceneTree::_notification(int p_notification) {
 			get_root()->propagate_notification(p_notification);
 
 		} break;
+		case NOTIFICATION_WM_FOCUS_OUT: {
+			AudioDriverManager::set_mute_flag(AudioDriverManager::MUTE_FLAG_FOCUS_LOSS, true);
+			get_root()->propagate_notification(p_notification);
+		} break;
+		case NOTIFICATION_APP_PAUSED: {
+			AudioDriverManager::set_mute_flag(AudioDriverManager::MUTE_FLAG_PAUSED, true);
+			get_root()->propagate_notification(p_notification);
+		} break;
+		case NOTIFICATION_APP_RESUMED: {
+			AudioDriverManager::set_mute_flag(AudioDriverManager::MUTE_FLAG_PAUSED, false);
+			get_root()->propagate_notification(p_notification);
+		} break;
 
 		case NOTIFICATION_OS_MEMORY_WARNING:
 		case NOTIFICATION_OS_IME_UPDATE:
 		case NOTIFICATION_WM_MOUSE_ENTER:
 		case NOTIFICATION_WM_MOUSE_EXIT:
-		case NOTIFICATION_WM_FOCUS_OUT:
 		case NOTIFICATION_WM_ABOUT:
-		case NOTIFICATION_CRASH:
-		case NOTIFICATION_APP_RESUMED:
-		case NOTIFICATION_APP_PAUSED: {
+		case NOTIFICATION_CRASH: {
 			get_root()->propagate_notification(p_notification);
 		} break;
 
@@ -2356,7 +2394,6 @@ SceneTree::SceneTree() {
 	call_lock = 0;
 	root_lock = 0;
 	node_count = 0;
-	_physics_interpolation_enabled = false;
 
 	//create with mainloop
 

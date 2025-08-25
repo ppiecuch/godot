@@ -38,6 +38,7 @@
 #include "core/vector.h"
 
 #include <type_traits>
+#include <utility>
 
 template <class T, class U = uint32_t, bool force_trivial = false>
 class LocalVector {
@@ -89,9 +90,9 @@ public:
 		}
 
 		if (!std::is_trivially_constructible<T>::value && !force_trivial) {
-			memnew_placement(&data[count++], T(p_elem));
+			memnew_placement(&data[count++], T(std::move(p_elem)));
 		} else {
-			data[count++] = p_elem;
+			data[count++] = std::move(p_elem);
 		}
 	}
 
@@ -99,7 +100,7 @@ public:
 		ERR_FAIL_UNSIGNED_INDEX(p_index, count);
 		count--;
 		for (U i = p_index; i < count; i++) {
-			data[i] = data[i + 1];
+			data[i] = std::move(data[i + 1]);
 		}
 		if (!std::is_trivially_destructible<T>::value && !force_trivial) {
 			data[count].~T();
@@ -112,7 +113,7 @@ public:
 		ERR_FAIL_INDEX(p_index, count);
 		count--;
 		if (count > p_index) {
-			data[p_index] = data[count];
+			data[p_index] = std::move(data[count]);
 		}
 		if (!std::is_trivially_destructible<T>::value && !force_trivial) {
 			data[count].~T();
@@ -124,6 +125,15 @@ public:
 		if (idx >= 0) {
 			remove(idx);
 		}
+	}
+
+	bool erase_unordered(const T &p_val) {
+		int64_t idx = find(p_val);
+		if (idx >= 0) {
+			remove_unordered(idx);
+			return true;
+		}
+		return false;
 	}
 
 	U erase_multiple_unordered(const T &p_val) {
@@ -224,13 +234,13 @@ public:
 	void insert(U p_pos, T p_val) {
 		ERR_FAIL_UNSIGNED_INDEX(p_pos, count + 1);
 		if (p_pos == count) {
-			push_back(p_val);
+			push_back(std::move(p_val));
 		} else {
 			resize(count + 1);
 			for (U i = count - 1; i > p_pos; i--) {
-				data[i] = data[i - 1];
+				data[i] = std::move(data[i - 1]);
 			}
-			data[p_pos] = p_val;
+			data[p_pos] = std::move(p_val);
 		}
 	}
 
@@ -277,7 +287,7 @@ public:
 		insert(i, p_val);
 	}
 
-	operator Vector<T>() const {
+	explicit operator Vector<T>() const {
 		Vector<T> ret;
 		ret.resize(size());
 		T *w = ret.ptrw();
@@ -285,7 +295,7 @@ public:
 		return ret;
 	}
 
-	operator PoolVector<T>() const {
+	explicit operator PoolVector<T>() const {
 		PoolVector<T> pl;
 		if (size()) {
 			pl.resize(size());
@@ -330,6 +340,17 @@ public:
 			data[i] = r[i];
 		}
 	}
+
+	LocalVector(LocalVector &&p_from) {
+		data = p_from.data;
+		count = p_from.count;
+		capacity = p_from.capacity;
+
+		p_from.data = nullptr;
+		p_from.count = 0;
+		p_from.capacity = 0;
+	}
+
 	inline LocalVector &operator=(const LocalVector &p_from) {
 		resize(p_from.size());
 		for (U i = 0; i < p_from.count; i++) {
@@ -337,6 +358,22 @@ public:
 		}
 		return *this;
 	}
+
+	inline void operator=(LocalVector &&p_from) {
+		if (unlikely(this == &p_from)) {
+			return;
+		}
+		reset();
+
+		data = p_from.data;
+		count = p_from.count;
+		capacity = p_from.capacity;
+
+		p_from.data = nullptr;
+		p_from.count = 0;
+		p_from.capacity = 0;
+	}
+
 	inline LocalVector &operator=(const Vector<T> &p_from) {
 		resize(p_from.size());
 		for (U i = 0; i < count; i++) {
@@ -344,6 +381,14 @@ public:
 		}
 		return *this;
 	}
+
+	inline void operator=(Vector<T> &&p_from) {
+		resize(p_from.size());
+		for (U i = 0; i < count; i++) {
+			data[i] = std::move(p_from[i]);
+		}
+	}
+
 	inline LocalVector &operator=(const PoolVector<T> &p_from) {
 		resize(p_from.size());
 		typename PoolVector<T>::Read r = p_from.read();

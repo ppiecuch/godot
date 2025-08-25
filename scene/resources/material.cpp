@@ -234,7 +234,7 @@ void ShaderMaterial::_bind_methods() {
 
 void ShaderMaterial::get_argument_options(const StringName &p_function, int p_idx, List<String> *r_options) const {
 #ifdef TOOLS_ENABLED
-	const String quote_style = EDITOR_GET("text_editor/completion/use_single_quotes") ? "'" : "\"";
+	const String quote_style = EditorSettingsQuick::get_text_editor_completion_use_single_quotes() ? "'" : "\"";
 #else
 	const String quote_style = "\"";
 #endif
@@ -2430,7 +2430,7 @@ Material3D::Material3D(bool p_orm) :
 		flags[i] = false;
 	}
 
-	force_vertex_shading = GLOBAL_GET("rendering/quality/shading/force_vertex_shading");
+	force_vertex_shading = GLOBAL_GET_CACHED(bool, "rendering/quality/shading/force_vertex_shading");
 
 	diffuse_mode = DIFFUSE_BURLEY;
 	specular_mode = SPECULAR_SCHLICK_GGX;

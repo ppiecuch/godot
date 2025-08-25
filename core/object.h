@@ -244,12 +244,6 @@ struct MethodInfo {
 	MethodInfo(const PropertyInfo &p_ret, const String &p_name, const PropertyInfo &p_param1, const PropertyInfo &p_param2, const PropertyInfo &p_param3, const PropertyInfo &p_param4, const PropertyInfo &p_param5, const PropertyInfo &p_param6);
 };
 
-// old cast_to
-//if ( is_type(T::get_class_static()) )
-//return static_cast<T*>(this);
-////else
-//return NULL;
-
 /*
    the following is an incomprehensible blob of hacks and workarounds to compensate for many of the fallencies in C++. As a plus, this macro pretty much alone defines the object model.
 */
@@ -274,7 +268,18 @@ private:
 #define GDCON const
 #endif
 
+/// `GDSOFTCLASS` provides `Object` functionality, such as being able to use `Object::cast_to()`.
+/// Use this for `Object` subclasses that are not registered in `ClassDB` (use `GDCLASS` otherwise).
+#define GDSOFTCLASS(m_class, m_inherits)                                                                                                \
+public:                                                                                                                                 \
+	typedef m_class self_type;                                                                                                          \
+	typedef m_inherits super_type;                                                                                                      \
+	virtual bool is_class_ptr(void *p_ptr) const { return (p_ptr == get_class_ptr_static()) ? true : m_inherits::is_class_ptr(p_ptr); } \
+                                                                                                                                        \
+private:
+
 #define GDCLASS(m_class, m_inherits)                                                                                                    \
+	GDSOFTCLASS(m_class, m_inherits)                                                                                                    \
 private:                                                                                                                                \
 	Vector<int> _disabled_base_notifications;                                                                                           \
 	void operator=(const m_class &p_rval) {}                                                                                            \
@@ -433,6 +438,30 @@ public:
 		CONNECT_REFERENCE_COUNTED = 8,
 	};
 
+	// Store on each object a bitfield to quickly test whether it is derived from some "key" classes
+	// that are commonly tested in performance sensitive code.
+	// Ensure unsigned to bitpack.
+	enum class AncestralClass : unsigned int {
+		REFERENCE = 1 << 0,
+		NODE = 1 << 1,
+		RESOURCE = 1 << 2,
+		SCRIPT = 1 << 3,
+
+		CANVAS_ITEM = 1 << 4,
+		CONTROL = 1 << 5,
+		NODE_2D = 1 << 6,
+		COLLISION_OBJECT_2D = 1 << 7,
+		AREA_2D = 1 << 8,
+
+		SPATIAL = 1 << 9,
+		VISUAL_INSTANCE = 1 << 10,
+		GEOMETRY_INSTANCE = 1 << 11,
+		COLLISION_OBJECT = 1 << 12,
+		PHYSICS_BODY = 1 << 13,
+		MESH_INSTANCE = 1 << 14,
+	};
+	static constexpr AncestralClass static_ancestral_class = (AncestralClass)0;
+
 	struct Connection {
 		Object *source;
 		StringName signal;
@@ -496,20 +525,24 @@ private:
 #ifdef DEBUG_ENABLED
 	SafeRefCount _lock_index;
 #endif
-	bool _block_signals;
 	int _predelete_ok;
 	Set<Object *> change_receptors;
 	ObjectID _instance_id;
 	std::atomic<ObjectRC *> _rc;
-	bool _predelete();
-	void _postinitialize();
-	bool _can_translate;
-	bool _emitting;
+
+	uint32_t _ancestry : 15;
+	bool _block_signals : 1;
+	bool _can_translate : 1;
+	bool _emitting : 1;
 #ifdef TOOLS_ENABLED
-	bool _edited;
+	bool _edited : 1;
 	uint32_t _edited_version;
 	Set<String> editor_section_folding;
 #endif
+
+	bool _predelete();
+	void _postinitialize();
+
 	ScriptInstance *script_instance;
 	RefPtr script;
 	Dictionary metadata;
@@ -591,6 +624,10 @@ protected:
 	virtual void _validate_property(PropertyInfo &property) const;
 
 	void _disconnect(const StringName &p_signal, Object *p_to_object, const StringName &p_to_method, bool p_force = false);
+	void _define_ancestry(AncestralClass p_class) { _ancestry |= (uint32_t)p_class; }
+
+	// Internally used, exposed via `Object::cast_to` and `Object::derives_from`.
+	bool _has_ancestry(AncestralClass p_class) const { return _ancestry & (uint32_t)p_class; }
 
 public: //should be protected, but bug in clang++
 	static void initialize_class();
@@ -624,30 +661,12 @@ public:
 
 	template <class T>
 	static T *cast_to(Object *p_object) {
-#ifndef NO_SAFE_CAST
-		return dynamic_cast<T *>(p_object);
-#else
-		if (!p_object)
-			return NULL;
-		if (p_object->is_class_ptr(T::get_class_ptr_static()))
-			return static_cast<T *>(p_object);
-		else
-			return NULL;
-#endif
+		return p_object && p_object->derives_from<T>() ? static_cast<T *>(p_object) : nullptr;
 	}
 
 	template <class T>
 	static const T *cast_to(const Object *p_object) {
-#ifndef NO_SAFE_CAST
-		return dynamic_cast<const T *>(p_object);
-#else
-		if (!p_object)
-			return NULL;
-		if (p_object->is_class_ptr(T::get_class_ptr_static()))
-			return static_cast<const T *>(p_object);
-		else
-			return NULL;
-#endif
+		return p_object && p_object->derives_from<T>() ? static_cast<const T *>(p_object) : nullptr;
 	}
 
 	enum {
@@ -668,6 +687,12 @@ public:
 
 	virtual bool is_class(const String &p_class) const { return (p_class == "Object"); }
 	virtual bool is_class_ptr(void *p_ptr) const { return get_class_ptr_static() == p_ptr; }
+
+	// Shortcut for common type.
+	bool is_reference() const { return _has_ancestry(AncestralClass::REFERENCE); }
+
+	template <typename T>
+	bool derives_from() const;
 
 	_FORCE_INLINE_ const StringName &get_class_name() const {
 		if (!_class_ptr) {
@@ -781,6 +806,22 @@ public:
 	virtual ~Object();
 };
 
+template <typename T>
+bool Object::derives_from() const {
+	static_assert(std::is_base_of<Object, T>::value, "T must be derived from Object");
+	static_assert(std::is_same<std::decay_t<T>, typename T::self_type>::value, "T must use GDCLASS or GDSOFTCLASS");
+
+	// If there is an explicitly set ancestral class on the type, we can use that.
+	if constexpr (T::static_ancestral_class != T::super_type::static_ancestral_class) {
+		return _has_ancestry(T::static_ancestral_class);
+	} else {
+		return is_class_ptr(T::get_class_ptr_static());
+	}
+}
+
+template <>
+inline bool Object::derives_from<Object>() const { return true; }
+
 bool predelete_handler(Object *p_object);
 void postinitialize_handler(Object *p_object);
 
@@ -813,6 +854,12 @@ public:
 	typedef void (*DebugFunc)(Object *p_obj);
 
 	static Object *get_instance(ObjectID p_instance_id);
+
+	template <class T>
+	static T *get_instance(ObjectID p_instance_id) {
+		return Object::cast_to<T>(get_instance(p_instance_id));
+	}
+
 	static void debug_objects(DebugFunc p_func);
 	static int get_object_count();
 

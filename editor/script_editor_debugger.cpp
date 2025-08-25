@@ -656,7 +656,7 @@ void ScriptEditorDebugger::_parse_message(const String &p_msg, const Array &p_da
 						}
 					}
 				} else if (var.get_type() == Variant::OBJECT) {
-					if (((Object *)var)->is_class("EncodedObjectAsID")) {
+					if (((Object *)var)->derives_from<EncodedObjectAsID>()) {
 						var = Object::cast_to<EncodedObjectAsID>(var)->get_object_id();
 						pinfo.type = var.get_type();
 						pinfo.hint = PROPERTY_HINT_OBJECT_ID;
@@ -828,7 +828,7 @@ void ScriptEditorDebugger::_parse_message(const String &p_msg, const Array &p_da
 
 			if (!EditorNode::get_log()->is_visible()) {
 				if (EditorNode::get_singleton()->are_bottom_panels_hidden()) {
-					if (EDITOR_GET("run/output/always_open_output_on_play")) {
+					if (EDITOR_GET_CACHED(bool, "run/output/always_open_output_on_play")) {
 						EditorNode::get_singleton()->make_bottom_panel_item_visible(EditorNode::get_log());
 					}
 				}
@@ -1319,7 +1319,7 @@ void ScriptEditorDebugger::_notification(int p_what) {
 				if (inspect_edited_object_timeout < 0) {
 					inspect_edited_object_timeout = EditorSettings::get_singleton()->get("debugger/remote_inspect_refresh_interval");
 					if (inspected_object_id) {
-						if (ScriptEditorDebuggerInspectedObject *obj = Object::cast_to<ScriptEditorDebuggerInspectedObject>(ObjectDB::get_instance(editor->get_editor_history()->get_current()))) {
+						if (ScriptEditorDebuggerInspectedObject *obj = ObjectDB::get_instance<ScriptEditorDebuggerInspectedObject>(editor->get_editor_history()->get_current())) {
 							if (obj->remote_object_id == inspected_object_id) {
 								//take the chance and re-inspect selected object
 								Array msg;

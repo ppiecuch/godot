@@ -34,8 +34,13 @@ Files extracted from upstream source:
 ## certs
 
 - Upstream: Mozilla, via https://github.com/bagder/ca-bundle
-- Version: git (c5a419971b1bec220368c619aaafd0b818aa119f, 2024)
+- Version: git (bcc414c5b5282f9321651bf71dc1e254ae87e3f8, 2025),
+  generated from mozilla-release changeset 60d4997d339bb7ac6d033819ac50dcad4b9be09d
 - License: MPL 2.0
+
+Files extracted from upstream source:
+
+- `ca-bundle.crt` renamed to `ca-certificates.crt`
 
 
 ## cvtt
@@ -215,6 +220,7 @@ Files extracted from upstream source:
 Important: Some files have Godot-made changes.
 They are marked with `// -- GODOT start --` and `// -- GODOT end --`
 comments.
+A patch is included to fix CVE-2019-2126 in libwebm.
 
 
 ## libtheora
@@ -278,7 +284,7 @@ Files extracted from upstream source:
 ## mbedtls
 
 - Upstream: https://github.com/Mbed-TLS/mbedtls
-- Version: 2.28.8 (5a764e5555c64337ed17444410269ff21cb617b1, 2024)
+- Version: 2.28.10 (2fc8413bfcb51354c8e679141b17b3f1a5942561, 2025)
 - License: Apache 2.0
 
 File extracted from upstream release tarball:

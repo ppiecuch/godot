@@ -42,27 +42,26 @@ void VisualInstance::_refresh_portal_mode() {
 	VisualServer::get_singleton()->instance_set_portal_mode(instance, (VisualServer::InstancePortalMode)get_portal_mode());
 }
 
-void VisualInstance::_update_visibility() {
+void VisualInstance::_update_server_visibility_and_xform(bool p_force_refresh_server) {
 	if (!is_inside_tree()) {
 		return;
 	}
 
 	bool visible = is_visible_in_tree();
 
-	// keep a quick flag available in each node.
-	// no need to call is_visible_in_tree all over the place,
-	// providing it is propagated with a notification.
-	bool already_visible = _is_vi_visible();
-	_set_vi_visible(visible);
-
-	// if making visible, make sure the visual server is up to date with the transform
-	if (visible && (!already_visible)) {
+	// As xforms are not always updated for invisible nodes, there are two circumstances
+	// where we want to ensure the server has an up to date xform:
+	// 1) When making a node visible.
+	// 2) When the node enters the scene.
+	if (visible || p_force_refresh_server) {
 		if (!_is_using_identity_transform()) {
 			Transform gt = get_global_transform();
 			VisualServer::get_singleton()->instance_set_transform(instance, gt);
 		}
 	}
 
+	// Aside from entering the scene, there will always have been a visibility change,
+	// so update this in all cases.
 	_change_notify("visible");
 	VS::get_singleton()->instance_set_visible(get_instance(), visible);
 }
@@ -82,6 +81,12 @@ void VisualInstance::set_instance_use_identity_transform(bool p_enable) {
 	}
 }
 
+void VisualInstance::fti_update_servers_xform() {
+	if (!_is_using_identity_transform()) {
+		VisualServer::get_singleton()->instance_set_transform(get_instance(), _get_cached_global_transform_interpolated());
+	}
+}
+
 void VisualInstance::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_ENTER_WORLD: {
@@ -93,55 +98,25 @@ void VisualInstance::_notification(int p_what) {
 			*/
 			ERR_FAIL_COND(get_world().is_null());
 			VisualServer::get_singleton()->instance_set_scenario(instance, get_world()->get_scenario());
-			_update_visibility();
+			_update_server_visibility_and_xform(true);
 
 		} break;
 		case NOTIFICATION_TRANSFORM_CHANGED: {
-			if (_is_vi_visible() || is_physics_interpolated_and_enabled()) {
-				if (!_is_using_identity_transform()) {
-					VisualServer::get_singleton()->instance_set_transform(instance, get_global_transform());
-
-					// For instance when first adding to the tree, when the previous transform is
-					// unset, to prevent streaking from the origin.
-					if (_is_physics_interpolation_reset_requested() && is_physics_interpolated_and_enabled() && is_inside_tree()) {
-						if (_is_vi_visible()) {
-							_notification(NOTIFICATION_RESET_PHYSICS_INTERPOLATION);
-						}
-						_set_physics_interpolation_reset_requested(false);
-					}
-				}
-			}
-		} break;
-		case NOTIFICATION_RESET_PHYSICS_INTERPOLATION: {
-			if (_is_vi_visible() && is_physics_interpolated() && is_inside_tree()) {
-				// We must ensure the VisualServer transform is up to date before resetting.
-				// This is because NOTIFICATION_TRANSFORM_CHANGED is deferred,
-				// and cannot be relied to be called in order before NOTIFICATION_RESET_PHYSICS_INTERPOLATION.
-				if (!_is_using_identity_transform()) {
-					VisualServer::get_singleton()->instance_set_transform(instance, get_global_transform());
-				}
-
-				VisualServer::get_singleton()->instance_reset_physics_interpolation(instance);
+			// ToDo : Can we turn off notify transform for physics interpolated cases?
+			if (is_visible_in_tree() && !SceneTree::is_fti_enabled() && !_is_using_identity_transform()) {
+				// Physics interpolation global off, always send.
+				VisualServer::get_singleton()->instance_set_transform(instance, get_global_transform());
 			}
 		} break;
 		case NOTIFICATION_EXIT_WORLD: {
 			VisualServer::get_singleton()->instance_set_scenario(instance, RID());
 			VisualServer::get_singleton()->instance_attach_skeleton(instance, RID());
 			//VS::get_singleton()->instance_geometry_set_baked_light_sampler(instance, RID() );
-
-			// the vi visible flag is always set to invisible when outside the tree,
-			// so it can detect re-entering the tree and becoming visible, and send
-			// the transform to the visual server
-			_set_vi_visible(false);
 		} break;
 		case NOTIFICATION_VISIBILITY_CHANGED: {
-			_update_visibility();
+			_update_server_visibility_and_xform(false);
 		} break;
 	}
-}
-
-void VisualInstance::_physics_interpolated_changed() {
-	VisualServer::get_singleton()->instance_set_interpolated(instance, is_physics_interpolated());
 }
 
 RID VisualInstance::get_instance() const {
@@ -225,6 +200,8 @@ RID VisualInstance::get_base() const {
 }
 
 VisualInstance::VisualInstance() {
+	_define_ancestry(AncestralClass::VISUAL_INSTANCE);
+
 	instance = RID_PRIME(VisualServer::get_singleton()->instance_create());
 	VisualServer::get_singleton()->instance_attach_object_instance_id(instance, get_instance_id());
 	layers = 1;
@@ -374,6 +351,8 @@ void GeometryInstance::_bind_methods() {
 }
 
 GeometryInstance::GeometryInstance() {
+	_define_ancestry(AncestralClass::GEOMETRY_INSTANCE);
+
 	for (int i = 0; i < FLAG_MAX; i++) {
 		flags[i] = false;
 	}

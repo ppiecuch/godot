@@ -49,15 +49,17 @@ class VisualInstance : public CullInstance {
 	RID _get_visual_instance_rid() const;
 
 protected:
-	void _update_visibility();
+	void _update_server_visibility_and_xform(bool p_force_refresh_server);
 	virtual void _refresh_portal_mode();
-	virtual void _physics_interpolated_changed();
 	void set_instance_use_identity_transform(bool p_enable);
+	virtual void fti_update_servers_xform();
 
 	void _notification(int p_what);
 	static void _bind_methods();
 
 public:
+	static constexpr AncestralClass static_ancestral_class = AncestralClass::VISUAL_INSTANCE;
+
 	enum GetFacesFlags {
 		FACES_SOLID = 1, // solid geometry
 		FACES_ENCLOSING = 2,
@@ -93,6 +95,8 @@ class GeometryInstance : public VisualInstance {
 	GDCLASS(GeometryInstance, VisualInstance);
 
 public:
+	static constexpr AncestralClass static_ancestral_class = AncestralClass::GEOMETRY_INSTANCE;
+
 	enum Flags {
 		FLAG_USE_BAKED_LIGHT = VS::INSTANCE_FLAG_USE_BAKED_LIGHT,
 		FLAG_DRAW_NEXT_FRAME_IF_VISIBLE = VS::INSTANCE_FLAG_DRAW_NEXT_FRAME_IF_VISIBLE,

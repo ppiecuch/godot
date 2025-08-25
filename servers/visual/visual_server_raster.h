@@ -308,6 +308,7 @@ public:
 	BIND2(multimesh_set_physics_interpolated, RID, bool)
 	BIND2(multimesh_set_physics_interpolation_quality, RID, MultimeshPhysicsInterpolationQuality)
 	BIND2(multimesh_instance_reset_physics_interpolation, RID, int)
+	BIND1(multimesh_instances_reset_physics_interpolation, RID)
 
 	BIND2(multimesh_set_visible_instances, RID, int)
 	BIND1RC(int, multimesh_get_visible_instances, RID)
@@ -593,8 +594,6 @@ public:
 	BIND2(instance_set_layer_mask, RID, uint32_t)
 	BIND3(instance_set_pivot_data, RID, float, bool)
 	BIND2(instance_set_transform, RID, const Transform &)
-	BIND2(instance_set_interpolated, RID, bool)
-	BIND1(instance_reset_physics_interpolation, RID)
 	BIND2(instance_attach_object_instance_id, RID, ObjectID)
 	BIND3(instance_set_blend_shape_weight, RID, int, float)
 	BIND3(instance_set_surface_material, RID, int, RID)

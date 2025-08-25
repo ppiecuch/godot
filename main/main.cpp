@@ -84,7 +84,7 @@
 #include "editor/progress_dialog.h"
 #include "editor/project_manager.h"
 #include "editor/script_editor_debugger.h"
-#if defined(TOOLS_ENABLED) && !defined(NO_EDITOR_SPLASH)
+#ifndef NO_EDITOR_SPLASH
 #include "main/splash_editor.gen.h"
 #endif
 #endif
@@ -2011,7 +2011,7 @@ bool Main::start() {
 		}
 	}
 
-	if (main_loop->is_class("SceneTree")) {
+	if (main_loop->derives_from<SceneTree>()) {
 		SceneTree *sml = Object::cast_to<SceneTree>(main_loop);
 
 #ifdef DEBUG_ENABLED
@@ -2123,6 +2123,8 @@ bool Main::start() {
 		}
 		if (editor) {
 			editor_node = memnew(EditorNode);
+			EditorSettingsQuick::refresh();
+
 			sml->get_root()->add_child(editor_node);
 			if (_export_preset != "") {
 				editor_node->export_preset(_export_preset, positional_arg, export_debug, export_pack_only);
@@ -2557,7 +2559,7 @@ bool Main::iteration() {
 				if (print_fps) {
 					print_line(vformat("Editor FPS: %d (%s mspf)", frames, rtos(1000.0 / frames).pad_decimals(2)));
 				}
-			} else if (print_fps || GLOBAL_GET("debug/settings/stdout/print_fps")) {
+			} else if (print_fps || GLOBAL_GET_CACHED(bool, "debug/settings/stdout/print_fps")) {
 				print_line(vformat("Project FPS: %d (%s mspf)", frames, rtos(1000.0 / frames).pad_decimals(2)));
 			}
 		} else {

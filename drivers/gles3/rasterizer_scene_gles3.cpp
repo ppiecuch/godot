@@ -2907,7 +2907,10 @@ void RasterizerSceneGLES3::_setup_directional_light(int p_index, const Transform
 		const float fade_start = li->light_ptr->param[VS::LIGHT_PARAM_SHADOW_FADE_START];
 		// Using 1.0 would break `smoothstep()` in the shader.
 		ubo_data.fade_from = -ubo_data.shadow_split_offsets[shadow_count - 1] * MIN(fade_start, 0.999);
-		ubo_data.fade_to = -ubo_data.shadow_split_offsets[shadow_count - 1];
+
+		// To prevent the need for a fade to, store the fade to in the final split offset.
+		// It will either be the same as before, or the maximum split offset.
+		ubo_data.shadow_split_offsets[3] = ubo_data.shadow_split_offsets[shadow_count - 1];
 	}
 
 	glBindBuffer(GL_UNIFORM_BUFFER, state.directional_ubo);
@@ -5486,22 +5489,22 @@ void RasterizerSceneGLES3::initialize() {
 }
 
 void RasterizerSceneGLES3::iteration() {
-	shadow_filter_mode = ShadowFilterMode(int(GLOBAL_GET("rendering/quality/shadows/filter_mode")));
+	shadow_filter_mode = ShadowFilterMode(GLOBAL_GET_CACHED(int32_t, "rendering/quality/shadows/filter_mode"));
 
-	const int directional_shadow_size_new = next_power_of_2(int(GLOBAL_GET("rendering/quality/directional_shadow/size")));
+	const int directional_shadow_size_new = next_power_of_2(GLOBAL_GET_CACHED(int32_t, "rendering/quality/directional_shadow/size"));
 	if (directional_shadow_size != directional_shadow_size_new) {
 		directional_shadow_size = directional_shadow_size_new;
 		directional_shadow_create();
 	}
 
-	subsurface_scatter_follow_surface = GLOBAL_GET("rendering/quality/subsurface_scattering/follow_surface");
-	subsurface_scatter_weight_samples = GLOBAL_GET("rendering/quality/subsurface_scattering/weight_samples");
-	subsurface_scatter_quality = SubSurfaceScatterQuality(int(GLOBAL_GET("rendering/quality/subsurface_scattering/quality")));
-	subsurface_scatter_size = GLOBAL_GET("rendering/quality/subsurface_scattering/scale");
+	subsurface_scatter_follow_surface = GLOBAL_GET_CACHED(bool, "rendering/quality/subsurface_scattering/follow_surface");
+	subsurface_scatter_weight_samples = GLOBAL_GET_CACHED(bool, "rendering/quality/subsurface_scattering/weight_samples");
+	subsurface_scatter_quality = SubSurfaceScatterQuality(int(GLOBAL_GET_CACHED(int32_t, "rendering/quality/subsurface_scattering/quality")));
+	subsurface_scatter_size = GLOBAL_GET_CACHED(float, "rendering/quality/subsurface_scattering/scale");
 
-	storage->config.use_lightmap_filter_bicubic = GLOBAL_GET("rendering/quality/lightmapping/use_bicubic_sampling");
+	storage->config.use_lightmap_filter_bicubic = GLOBAL_GET_CACHED(bool, "rendering/quality/lightmapping/use_bicubic_sampling");
 	state.scene_shader.set_conditional(SceneShaderGLES3::USE_LIGHTMAP_FILTER_BICUBIC, storage->config.use_lightmap_filter_bicubic);
-	state.scene_shader.set_conditional(SceneShaderGLES3::VCT_QUALITY_HIGH, GLOBAL_GET("rendering/quality/voxel_cone_tracing/high_quality"));
+	state.scene_shader.set_conditional(SceneShaderGLES3::VCT_QUALITY_HIGH, GLOBAL_GET_CACHED(bool, "rendering/quality/voxel_cone_tracing/high_quality"));
 }
 
 void RasterizerSceneGLES3::finalize() {

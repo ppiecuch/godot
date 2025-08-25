@@ -101,12 +101,6 @@ void Node::_notification(int p_notification) {
 			get_tree()->node_count++;
 			orphan_node_count--;
 
-			// Allow physics interpolated nodes to automatically reset when added to the tree
-			// (this is to save the user doing this manually each time).
-			if (get_tree()->is_physics_interpolation_enabled()) {
-				_set_physics_interpolation_reset_requested(true);
-			}
-
 		} break;
 		case NOTIFICATION_EXIT_TREE: {
 			ERR_FAIL_COND(!get_viewport());
@@ -224,6 +218,8 @@ void Node::_propagate_physics_interpolated(bool p_interpolated) {
 
 	// allow a call to the VisualServer etc in derived classes
 	_physics_interpolated_changed();
+
+	update_configuration_warning();
 
 	data.blocked++;
 	for (int i = 0; i < data.children.size(); i++) {
@@ -894,17 +890,16 @@ void Node::set_physics_interpolation_mode(PhysicsInterpolationMode p_mode) {
 		} break;
 	}
 
-	// if swapping from interpolated to non-interpolated, use this as
-	// an extra means to cause a reset
-	if (is_physics_interpolated() && !interpolate && is_inside_tree()) {
+	_propagate_physics_interpolated(interpolate);
+
+	// Auto-reset on changing interpolation mode.
+	if (is_physics_interpolated() && is_inside_tree()) {
 		propagate_notification(NOTIFICATION_RESET_PHYSICS_INTERPOLATION);
 	}
-
-	_propagate_physics_interpolated(interpolate);
 }
 
 void Node::reset_physics_interpolation() {
-	if (is_inside_tree()) {
+	if (SceneTree::is_fti_enabled() && is_inside_tree()) {
 		propagate_notification(NOTIFICATION_RESET_PHYSICS_INTERPOLATION);
 
 		// If `reset_physics_interpolation()` is called explicitly by the user
@@ -1161,7 +1156,7 @@ void Node::_validate_child_name(Node *p_child, bool p_force_human_readable) {
 			unique = false;
 		} else {
 			//check if exists
-			Node **children = data.children.ptrw();
+			Node **children = data.children.ptr();
 			int cc = data.children.size();
 
 			for (int i = 0; i < cc; i++) {
@@ -1351,7 +1346,7 @@ void Node::remove_child(Node *p_child) {
 	ERR_FAIL_COND_MSG(data.blocked > 0, "Parent node is busy setting up children, remove_node() failed. Consider using call_deferred(\"remove_child\", child) instead.");
 
 	int child_count = data.children.size();
-	Node **children = data.children.ptrw();
+	Node **children = data.children.ptr();
 	int idx = -1;
 
 	if (p_child->data.pos >= 0 && p_child->data.pos < child_count) {
@@ -1384,7 +1379,7 @@ void Node::remove_child(Node *p_child) {
 
 	//update pointer and size
 	child_count = data.children.size();
-	children = data.children.ptrw();
+	children = data.children.ptr();
 
 	for (int i = idx; i < child_count; i++) {
 		children[i]->data.pos = i;
@@ -2989,7 +2984,7 @@ NodePath Node::get_import_path() const {
 
 static void _add_nodes_to_options(const Node *p_base, const Node *p_node, List<String> *r_options) {
 #ifdef TOOLS_ENABLED
-	const String quote_style = EDITOR_GET("text_editor/completion/use_single_quotes") ? "'" : "\"";
+	const String quote_style = EditorSettingsQuick::get_text_editor_completion_use_single_quotes() ? "'" : "\"";
 #else
 	const String quote_style = "\"";
 #endif
@@ -3308,6 +3303,8 @@ String Node::_get_name_num_separator() {
 }
 
 Node::Node() {
+	_define_ancestry(AncestralClass::NODE);
+
 	data.pos = -1;
 	data.depth = -1;
 	data.blocked = 0;
