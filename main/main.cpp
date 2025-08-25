@@ -1942,39 +1942,36 @@ bool Main::start() {
 			bytecode_exporter.export_bytecode_to_file(script, dump_file);
 			print_verbose("OK");
 			return false;
-		} else {
-#endif
-			Ref<Script> script_res = ResourceLoader::load(script);
-			ERR_FAIL_COND_V_MSG(script_res.is_null(), false, "Can't load script: " + script);
-
-			if (check_only) {
-				if (!script_res->is_valid()) {
-					OS::get_singleton()->set_exit_code(EXIT_FAILURE);
-				} else {
-					OS::get_singleton()->set_exit_code(EXIT_SUCCESS);
-				}
-				return false;
-			}
-
-			if (script_res->can_instance()) {
-				StringName instance_type = script_res->get_instance_base_type();
-				Object *obj = ClassDB::instance(instance_type);
-				MainLoop *script_loop = Object::cast_to<MainLoop>(obj);
-				if (!script_loop) {
-					if (obj) {
-						memdelete(obj);
-					}
-					ERR_FAIL_V_MSG(false, vformat("Can't load the script \"%s\" as it doesn't inherit from SceneTree or MainLoop.", script));
-				}
-
-				script_loop->set_init_script(script_res);
-				main_loop = script_loop;
-			} else {
-				return false;
-			}
-#ifdef BYTECODE_EXPORT_ENABLED
 		}
 #endif
+		Ref<Script> script_res = ResourceLoader::load(script);
+		ERR_FAIL_COND_V_MSG(script_res.is_null(), false, "Can't load script: " + script);
+
+		if (check_only) {
+			if (!script_res->is_valid()) {
+				OS::get_singleton()->set_exit_code(EXIT_FAILURE);
+			} else {
+				OS::get_singleton()->set_exit_code(EXIT_SUCCESS);
+			}
+			return false;
+		}
+
+		if (script_res->can_instance()) {
+			StringName instance_type = script_res->get_instance_base_type();
+			Object *obj = ClassDB::instance(instance_type);
+			MainLoop *script_loop = Object::cast_to<MainLoop>(obj);
+			if (!script_loop) {
+				if (obj) {
+					memdelete(obj);
+				}
+				ERR_FAIL_V_MSG(false, vformat("Can't load the script \"%s\" as it doesn't inherit from SceneTree or MainLoop.", script));
+			}
+
+			script_loop->set_init_script(script_res);
+			main_loop = script_loop;
+		} else {
+			return false;
+		}
 	} else { // Not based on script path.
 		if (!editor && !ClassDB::class_exists(main_loop_type) && ScriptServer::is_global_class(main_loop_type)) {
 			String script_path = ScriptServer::get_global_class_path(main_loop_type);

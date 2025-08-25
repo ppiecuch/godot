@@ -44,10 +44,12 @@ void AudioStreamPlayer2D::_mix_audio() {
 			(stream_paused && !stream_paused_fade_out)) {
 		return;
 	}
+
 	if (setseek.get() >= 0.0) {
 		stream_playback->start(setseek.get());
 		setseek.set(-1.0); //reset seek
 	}
+
 	//get data
 	AudioFrame *buffer = mix_buffer.ptrw();
 	int buffer_size = mix_buffer.size();

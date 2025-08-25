@@ -586,7 +586,7 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 								_draw_generic(GL_TRIANGLES, pline->triangles.size(), pline->triangles.ptr(), nullptr, pline->triangle_colors.ptr(), pline->triangle_colors.size() == 1);
 #ifdef GLES_OVER_GL
 								glEnable(GL_LINE_SMOOTH);
-								_draw_generic(GL_LINES, pline->lines.size(), pline->lines.ptr(), nullptr, pline->line_colors.ptr(), pline->line_colors.size() == 1);
+								_draw_generic(GL_LINES, pline->lines.size(), pline->lines.ptr(), nullptr, pline->line_colors.ptr(), pline->line_colors.size() == 1); // (PP) everything is LINES now
 								glDisable(GL_LINE_SMOOTH);
 #endif
 							} else {
@@ -1217,6 +1217,7 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 									}
 								}
 							}
+
 						} break;
 
 						default: {

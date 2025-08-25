@@ -5849,6 +5849,7 @@ static void _execute_thread(void *p_ud) {
 	if (err != OK) {
 		eta->exitcode = err;
 	}
+
 	eta->done.set();
 }
 

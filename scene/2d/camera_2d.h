@@ -86,8 +86,8 @@ protected:
 	void _setup_viewport();
 	void _ensure_update_interpolation_data();
 
-	void _set_current(bool p_current);
 	void _make_current(Object *p_which);
+	void _set_current(bool p_current);
 
 	bool screen_drawing_enabled;
 	bool limit_drawing_enabled;

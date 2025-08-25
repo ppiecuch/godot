@@ -565,6 +565,7 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 	// 3D: Navigation
 	_initial_set("editors/3d/navigation/navigation_scheme", 0);
 	_initial_set("editors/3d/navigation/invert_y_axis", false);
+	_initial_set("editors/3d/navigation/invert_x_axis", false);
 	hints["editors/3d/navigation/navigation_scheme"] = PropertyInfo(Variant::INT, "editors/3d/navigation/navigation_scheme", PROPERTY_HINT_ENUM, "Godot,Maya,Modo");
 	_initial_set("editors/3d/navigation/zoom_style", 0);
 	hints["editors/3d/navigation/zoom_style"] = PropertyInfo(Variant::INT, "editors/3d/navigation/zoom_style", PROPERTY_HINT_ENUM, "Vertical,Horizontal");
@@ -613,7 +614,7 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 	_initial_set("editors/2d/bone_ik_color", Color(0.9, 0.9, 0.45, 0.9));
 	_initial_set("editors/2d/bone_outline_color", Color(0.35, 0.35, 0.35));
 	_initial_set("editors/2d/bone_outline_size", 2);
-	_initial_set("editors/2d/viewport_border_color", Color(0.4, 0.4, 1.0, 0.9));
+	_initial_set("editors/2d/viewport_border_color", Color(0.4, 0.4, 1.0, 0.8));
 	_initial_set("editors/2d/constrain_editor_view", true);
 	_initial_set("editors/2d/warped_mouse_panning", true);
 	_initial_set("editors/2d/simple_panning", false);

@@ -954,9 +954,9 @@ public:
 			RID texture;
 			RID normal_map;
 			RID mask;
-			Color modulate;
-			Transform transform;
 			bool depth;
+			Transform transform;
+			Color modulate;
 			CommandMesh() { type = TYPE_MESH; }
 		};
 
@@ -1208,6 +1208,7 @@ public:
 						found_xform = true;
 						continue;
 					} break;
+
 					case Item::Command::TYPE_CLIP_IGNORE: {
 					} break;
 				}

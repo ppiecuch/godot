@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  stream_peer_tcp.h                                                     */
+/*  rid_props.h                                                           */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,65 +28,51 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#ifndef STREAM_PEER_TCP_H
-#define STREAM_PEER_TCP_H
+#ifndef RID_PROPS_H
+#define RID_PROPS_H
 
-#include "core/io/ip.h"
-#include "core/io/ip_address.h"
-#include "core/io/net_socket.h"
-#include "core/io/stream_peer.h"
+#include "core/color.h"
+#include "core/list.h"
+#include "core/math/transform.h"
+#include "core/math/vector2.h"
+#include "core/math/vector3.h"
+#include "core/os/memory.h"
+#include "core/rid_handle.h"
+#include "core/safe_refcount.h"
+#include "core/set.h"
+#include "core/typedefs.h"
+#include "core/vector.h"
 
-class StreamPeerTCP : public StreamPeer {
-	GDCLASS(StreamPeerTCP, StreamPeer);
-	OBJ_CATEGORY("Networking");
+union RID_Prop {
+	int int_value;
+	bool bool_value;
+	real_t real_value;
+	Vector2 vec2_value;
+	Vector3 vec3_value;
+	Color color_value;
+	Transform transform_value;
 
-public:
-	enum Status {
-
-		STATUS_NONE,
-		STATUS_CONNECTING,
-		STATUS_CONNECTED,
-		STATUS_ERROR,
-	};
-
-protected:
-	Ref<NetSocket> _sock;
-	uint64_t timeout;
-	Status status;
-	IP_Address peer_host;
-	uint16_t peer_port;
-
-	Error _connect(const String &p_address, int p_port);
-	Error _poll_connection();
-	Error write(const uint8_t *p_data, int p_bytes, int &r_sent, bool p_block);
-	Error read(uint8_t *p_buffer, int p_bytes, int &r_received, bool p_block);
-
-	static void _bind_methods();
-
-public:
-	void accept_socket(Ref<NetSocket> p_sock, IP_Address p_host, uint16_t p_port);
-
-	Error connect_to_host(const IP_Address &p_host, uint16_t p_port);
-	bool is_connected_to_host() const;
-	IP_Address get_connected_host() const;
-	uint16_t get_connected_port() const;
-	void disconnect_from_host();
-
-	int get_available_bytes() const;
-	Status get_status();
-
-	void set_no_delay(bool p_enabled);
-
-	// Read/Write from StreamPeer
-	Error put_data(const uint8_t *p_data, int p_bytes);
-	Error put_partial_data(const uint8_t *p_data, int p_bytes, int &r_sent);
-	Error get_data(uint8_t *p_buffer, int p_bytes);
-	Error get_partial_data(uint8_t *p_buffer, int p_bytes, int &r_received);
-
-	StreamPeerTCP();
-	~StreamPeerTCP();
+	RID_Prop() {}
+	_FORCE_INLINE_ RID_Prop(int v) { int_value = v; }
+	_FORCE_INLINE_ RID_Prop(bool v) { bool_value = v; }
+	_FORCE_INLINE_ RID_Prop(real_t v) { real_value = v; }
+	_FORCE_INLINE_ RID_Prop(const Vector2 &v) { vec2_value = v; }
+	_FORCE_INLINE_ RID_Prop(const Vector3 &v) { vec3_value = v; }
+	_FORCE_INLINE_ RID_Prop(const Color &v) { color_value = v; }
+	_FORCE_INLINE_ RID_Prop(const Transform &v) { transform_value = v; }
 };
 
-VARIANT_ENUM_CAST(StreamPeerTCP::Status);
+typedef Vector<RID_Prop> RID_Props_Vec;
 
-#endif // STREAM_PEER_TCP_H
+struct _expand_props {
+	template <typename... T>
+	_expand_props(T &&...) {}
+};
+
+template <typename... props_types>
+RID_Props_Vec *_create_props(props_types... args) {
+	RID_Props_Vec *_props = memnew(RID_Props_Vec);
+	_expand_props{ 0, (_props->push_back(args), 0)... };
+}
+
+#endif // RID_PROPS_H

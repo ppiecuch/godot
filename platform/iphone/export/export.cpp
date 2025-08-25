@@ -1322,15 +1322,19 @@ void EditorExportPlatformIOS::_add_assets_to_project(const Ref<EditorExportPrese
 
 		String type;
 		if (asset.exported_path.ends_with(".framework")) {
-			additional_asset_info_format += "$framework_id = {isa = PBXBuildFile; fileRef = $ref_id; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };\n";
-			framework_id = (++current_id).str();
-			pbx_embeded_frameworks += framework_id + ",\n";
+			if (asset.should_embed) {
+				additional_asset_info_format += "$framework_id = {isa = PBXBuildFile; fileRef = $ref_id; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };\n";
+				framework_id = (++current_id).str();
+				pbx_embeded_frameworks += framework_id + ",\n";
+			}
 
 			type = "wrapper.framework";
 		} else if (asset.exported_path.ends_with(".xcframework")) {
-			additional_asset_info_format += "$framework_id = {isa = PBXBuildFile; fileRef = $ref_id; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };\n";
-			framework_id = (++current_id).str();
-			pbx_embeded_frameworks += framework_id + ",\n";
+			if (asset.should_embed) {
+				additional_asset_info_format += "$framework_id = {isa = PBXBuildFile; fileRef = $ref_id; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };\n";
+				framework_id = (++current_id).str();
+				pbx_embeded_frameworks += framework_id + ",\n";
+			}
 
 			type = "wrapper.xcframework";
 		} else if (asset.exported_path.ends_with(".dylib")) {

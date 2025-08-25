@@ -92,14 +92,16 @@ GLuint RasterizerStorageGLES2::system_fbo = 0;
 #ifndef GLES_OVER_GL
 #define glClearDepth glClearDepthf
 
-// enable extensions manually for android
-#ifdef ANDROID_ENABLED
+// enable extensions manually for android and ios
+#if defined(ANDROID_ENABLED) or defined(IPHONE_ENABLED)
 #include <dlfcn.h> // needed to load extensions
 #endif
 
-#if defined(IPHONE_ENABLED)
+#ifdef IPHONE_ENABLED
 
 #include <OpenGLES/ES2/glext.h>
+//void *glRenderbufferStorageMultisampleAPPLE;
+//void *glResolveMultisampleFramebufferAPPLE;
 #define glRenderbufferStorageMultisample glRenderbufferStorageMultisampleAPPLE
 #elif defined(ANDROID_ENABLED)
 
@@ -6398,7 +6400,7 @@ void RasterizerStorageGLES2::initialize() {
 #endif
 
 #ifndef GLES_OVER_GL
-	//Manually load extensions for android
+	//Manually load extensions for android and ios
 
 #ifdef IPHONE_ENABLED
 	// appears that IPhone doesn't need to dlopen TODO: test this rigorously before removing

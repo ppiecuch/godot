@@ -240,10 +240,10 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Mater
 			ERR_FAIL_COND_V(current.is_null(), ERR_FILE_CORRUPT);
 			Vector<String> v = l.split(" ", false);
 			ERR_FAIL_COND_V(v.size() < 4, ERR_INVALID_DATA);
-			const float r = v[1].to_float();
-			const float g = v[2].to_float();
-			const float b = v[3].to_float();
-			const float metalness = MAX(r, MAX(g, b));
+			float r = v[1].to_float();
+			float g = v[2].to_float();
+			float b = v[3].to_float();
+			float metalness = MAX(r, MAX(g, b));
 			current->set_metallic(metalness);
 			meta["Ks"] = metalness;
 		} else if (l.begins_with("Ns ")) {
@@ -251,8 +251,8 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Mater
 			ERR_FAIL_COND_V(current.is_null(), ERR_FILE_CORRUPT);
 			Vector<String> v = l.split(" ", false);
 			ERR_FAIL_COND_V(v.size() != 2, ERR_INVALID_DATA);
-			const float s = v[1].to_float();
-			const float m = (1000.0 - s) / 1000.0;
+			float s = v[1].to_float();
+			float m = (1000.0 - s) / 1000.0;
 			current->set_metallic(m);
 			meta["Ns"] = m;
 		} else if (l.begins_with("d ")) {
@@ -260,7 +260,7 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Mater
 			ERR_FAIL_COND_V(current.is_null(), ERR_FILE_CORRUPT);
 			Vector<String> v = l.split(" ", false);
 			ERR_FAIL_COND_V(v.size() != 2, ERR_INVALID_DATA);
-			const float d = v[1].to_float();
+			float d = v[1].to_float();
 			Color c = current->get_albedo();
 			c.a = d;
 			current->set_albedo(c);
@@ -318,7 +318,7 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Mater
 			}
 
 		} else if (l.begins_with("map_Ns ")) {
-			//roughness texture
+			//normal
 			ERR_FAIL_COND_V(current.is_null(), ERR_FILE_CORRUPT);
 
 			String p = l.replace("map_Ns", "").replace("\\", "/").strip_edges();
@@ -332,7 +332,7 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Mater
 				r_missing_deps->push_back(path);
 			}
 		} else if (l.begins_with("map_bump ")) {
-			//normalmap texture
+			//normal
 			ERR_FAIL_COND_V(current.is_null(), ERR_FILE_CORRUPT);
 
 			String p = l.replace("map_bump", "").replace("\\", "/").strip_edges();
@@ -461,15 +461,14 @@ static Error _parse_obj(const String &p_path, List<Ref<Mesh>> &r_meshes, const _
 			Vector<String> v = l.split(" ", false);
 			ERR_FAIL_COND_V(v.size() < 4, ERR_FILE_CORRUPT);
 
-			//not very fast, could be speed up
+			//not very fast, could be sped up
 
 			Vector<String> face[3];
 			face[0] = v[1].split("/");
 			face[1] = v[2].split("/");
-
 			ERR_FAIL_COND_V(face[0].size() == 0, ERR_FILE_CORRUPT);
-			ERR_FAIL_COND_V(face[0].size() != face[1].size(), ERR_FILE_CORRUPT);
 
+			ERR_FAIL_COND_V(face[0].size() != face[1].size(), ERR_FILE_CORRUPT);
 			for (int i = 2; i < v.size() - 1; i++) {
 				face[2] = v[i + 1].split("/");
 

@@ -89,8 +89,8 @@ private:
 	float max_distance;
 	float attenuation;
 
-	float panning_strength = 1;
-	float cached_global_panning_strength = 1;
+	float panning_strength = 1.0f;
+	float cached_global_panning_strength = 1.0f;
 
 	AudioPlaybackTracker audio_activity;
 

@@ -55,7 +55,6 @@ void Label::set_autowrap(bool p_autowrap) {
 		minimum_size_changed();
 	}
 }
-
 bool Label::has_autowrap() const {
 	return autowrap;
 }
@@ -65,7 +64,6 @@ void Label::set_uppercase(bool p_uppercase) {
 	word_cache_dirty = true;
 	update();
 }
-
 bool Label::is_uppercase() const {
 	return uppercase;
 }
@@ -128,12 +126,10 @@ void Label::_notification(int p_what) {
 		Color font_color_shadow = get_color("font_color_shadow");
 		bool use_outline = get_constant("shadow_as_outline");
 		Point2 shadow_ofs(get_constant("shadow_offset_x"), get_constant("shadow_offset_y"));
-		const int line_spacing = get_constant("line_spacing");
+		int line_spacing = get_constant("line_spacing");
 		Color font_outline_modulate = get_color("font_outline_modulate");
 
 		style->draw(ci, Rect2(Point2(0, 0), get_size()));
-
-		VisualServer::get_singleton()->canvas_item_set_distance_field_mode(get_canvas_item(), font.is_valid() && font->is_distance_field_hint());
 
 		const int font_h = font->get_height() + line_spacing + vertical_spacing;
 		const int lines_visible_rc = (size.y + line_spacing) / font_h;
@@ -266,7 +262,6 @@ void Label::_notification(int p_what) {
 					ERR_PRINT("BUG");
 					return;
 				}
-
 				if (from->space_count) {
 					/* spacing */
 					x_ofs += space_w * from->space_count;

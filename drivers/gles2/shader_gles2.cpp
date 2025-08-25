@@ -328,6 +328,7 @@ ShaderGLES2::Version *ShaderGLES2::get_current_version() {
 	strings.push_back(fragment_code3.get_data());
 
 #ifdef DEBUG_SHADER
+
 	if (cc) {
 		DEBUG_PRINT("\nFragment Code:\n\n" + String(cc->fragment_globals));
 	}

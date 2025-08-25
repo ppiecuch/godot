@@ -323,7 +323,7 @@ void SpriteBase3D::_im_update() {
 
 	pending_update = false;
 
-	//texture->draw_rect_region(ci, dst_rect, src_rect, modulate);
+	//texture->draw_rect_region(ci,dst_rect,src_rect,modulate);
 }
 
 void SpriteBase3D::_queue_update() {
@@ -587,6 +587,7 @@ SpriteBase3D::SpriteBase3D() {
 	const int surface_vertex_len = VS::get_singleton()->mesh_surface_get_array_len(mesh, 0);
 	const int surface_index_len = VS::get_singleton()->mesh_surface_get_array_index_len(mesh, 0);
 
+	mesh_surface_format = VS::get_singleton()->mesh_surface_get_format(mesh, 0);
 	mesh_buffer = VS::get_singleton()->mesh_surface_get_array(mesh, 0);
 	VS::get_singleton()->mesh_surface_make_offsets_from_format(mesh_surface_format, surface_vertex_len, surface_index_len, mesh_surface_offsets, mesh_stride);
 	set_base(mesh);

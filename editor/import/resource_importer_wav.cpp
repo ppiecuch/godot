@@ -123,16 +123,17 @@ Error ResourceImporterWAV::import(const String &p_source_file, const String &p_s
 
 	bool is16 = wave_data.format_bits != 8;
 	int rate = wave_data.format_freq;
+	/*
 
-	// print_verbose("Input Sample:");
-	// print_verbose("-------------");
-	// print_verbose("\tframes: " + itos(wave_data.frames));
-	// print_verbose("\tformat_channels: " + itos(wave_data.format_channels));
-	// print_verbose("\t16bits: " + itos(wave_data.is16));
-	// print_verbose("\trate: " + itos(wave_data.rate));
-	// print_verbose("\tloop: " + itos(wave_data.loop));
-	// print_verbose("\tloop begin: " + itos(wave_data.loop_begin));
-	// print_verbose("\tloop end: " + itos(wave_data.loop_end));
+	print_line("Input Sample: ");
+	print_line("\tframes: " + itos(frames));
+	print_line("\tformat_channels: " + itos(format_channels));
+	print_line("\t16bits: " + itos(is16));
+	print_line("\trate: " + itos(rate));
+	print_line("\tloop: " + itos(loop));
+	print_line("\tloop begin: " + itos(loop_begin));
+	print_line("\tloop end: " + itos(loop_end));
+	*/
 
 	//apply frequency limit
 
@@ -312,7 +313,7 @@ Error ResourceImporterWAV::import(const String &p_source_file, const String &p_s
 			_compress_ima_adpcm(left, bleft);
 			_compress_ima_adpcm(right, bright);
 
-			const int dl = bleft.size();
+			int dl = bleft.size();
 			dst_data.resize(dl * 2);
 
 			PoolVector<uint8_t>::Write w = dst_data.write();

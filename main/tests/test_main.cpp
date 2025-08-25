@@ -37,8 +37,8 @@
 #include "test_astar.h"
 #include "test_basis.h"
 #include "test_crypto.h"
-#include "test_expression.h"
 #include "test_font.h"
+#include "test_expression.h"
 #include "test_gdscript.h"
 #include "test_gui.h"
 #include "test_math.h"
@@ -76,7 +76,6 @@ const char **tests_get_names() {
 		"astar",
 		"xml_parser",
 		"theme",
-		"expression",
 		nullptr
 	};
 

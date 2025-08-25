@@ -643,7 +643,7 @@ Error VisualServer::_surface_set_data(Array p_arrays, uint32_t p_format, uint32_
 
 			} break;
 			case VS::ARRAY_TEX_UV: {
-				ERR_FAIL_COND_V(p_arrays[ai].get_type() != Variant::POOL_VECTOR2_ARRAY, ERR_INVALID_PARAMETER);
+				ERR_FAIL_COND_V(p_arrays[ai].get_type() != Variant::POOL_VECTOR3_ARRAY && p_arrays[ai].get_type() != Variant::POOL_VECTOR2_ARRAY, ERR_INVALID_PARAMETER);
 
 				PoolVector<Vector2> array = p_arrays[ai];
 
@@ -670,7 +670,7 @@ Error VisualServer::_surface_set_data(Array p_arrays, uint32_t p_format, uint32_
 			} break;
 
 			case VS::ARRAY_TEX_UV2: {
-				ERR_FAIL_COND_V(p_arrays[ai].get_type() != Variant::POOL_VECTOR2_ARRAY, ERR_INVALID_PARAMETER);
+				ERR_FAIL_COND_V(p_arrays[ai].get_type() != Variant::POOL_VECTOR3_ARRAY && p_arrays[ai].get_type() != Variant::POOL_VECTOR2_ARRAY, ERR_INVALID_PARAMETER);
 
 				PoolVector<Vector2> array = p_arrays[ai];
 

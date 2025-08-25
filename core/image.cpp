@@ -917,7 +917,7 @@ static void _overlay(const uint8_t *__restrict p_src, uint8_t *__restrict p_dst,
 	}
 }
 
-void Image::expand_to_po2(bool p_square) {
+void Image::expand_to_pow2(bool p_square) {
 	ERR_FAIL_COND_MSG(!_can_modify(format), "Cannot expand in compressed or custom image formats.");
 
 	int w = next_power_of_2(width);

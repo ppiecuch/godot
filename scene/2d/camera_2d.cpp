@@ -757,6 +757,10 @@ void Camera2D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_rotating", "rotating"), &Camera2D::set_rotating);
 	ClassDB::bind_method(D_METHOD("is_rotating"), &Camera2D::is_rotating);
 
+	ClassDB::bind_method(D_METHOD("make_current"), &Camera2D::make_current);
+	ClassDB::bind_method(D_METHOD("clear_current"), &Camera2D::clear_current);
+	ClassDB::bind_method(D_METHOD("_make_current"), &Camera2D::_make_current);
+
 	ClassDB::bind_method(D_METHOD("_update_scroll"), &Camera2D::_update_scroll);
 
 	ClassDB::bind_method(D_METHOD("set_process_mode", "mode"), &Camera2D::set_process_mode);
@@ -764,7 +768,6 @@ void Camera2D::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("_set_current", "current"), &Camera2D::_set_current);
 	ClassDB::bind_method(D_METHOD("is_current"), &Camera2D::is_current);
-	ClassDB::bind_method(D_METHOD("_make_current"), &Camera2D::_make_current);
 
 	ClassDB::bind_method(D_METHOD("set_limit", "margin", "limit"), &Camera2D::set_limit);
 	ClassDB::bind_method(D_METHOD("get_limit", "margin"), &Camera2D::get_limit);

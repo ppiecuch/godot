@@ -357,6 +357,7 @@ opts.Update(env_base)
 env_base["platform"] = selected_platform  # Must always be re-set after calling opts.Update().
 Help(opts.GenerateHelpText(env_base))
 
+# add default include paths
 env_base.Prepend(CPPPATH=["#", "#thirdparty", "#modules", "#modules/gdextensions"])  # add default include paths
 env_base.Append(CPPDEFINES=["_GODOT_"])  # This is GODOT
 
@@ -514,7 +515,7 @@ if selected_platform in platform_list:
         # both GCC and Clang. This mirrors GCC and Clang's current default
         # compile flags if no -std is specified.
         env.Prepend(CFLAGS=["-std=gnu11"])
-        env.Prepend(CXXFLAGS=["-std=gnu++11"])
+        env.Prepend(CXXFLAGS=["-std=gnu++14"])
     else:
         # MSVC doesn't have clear C standard support, /std only covers C++.
         # We apply it to CCFLAGS (both C and C++ code) in case it impacts C features.

@@ -31,10 +31,10 @@ misc/hooks/pre-commit-custom-*
 
 # Buildsystem
 bin/
-platform_plugins/
 *.gen.*
 compile_commands.json
 platform/windows/godot_res.res
+platform_plugins/
 drivers/fluidsynth/utils/
 drivers/fluidsynth/gentables/make_tables
 drivers/gles3+mgl/tools/metal_shader_check
@@ -79,9 +79,9 @@ platform/psvita/video/tools/shader_compiler
 *.os
 *.ox
 *.Plo
+*.so
 *.lo
 *.wo
-*.so
 # Binutils tmp linker output of the form "stXXXXXX" where "X" is alphanumeric
 st[A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9]
 

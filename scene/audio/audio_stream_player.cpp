@@ -244,7 +244,7 @@ float AudioStreamPlayer::get_pitch_scale() const {
 
 void AudioStreamPlayer::play(float p_from_pos) {
 	if (stream_playback.is_valid()) {
-		// mix_volume_db = volume_db; do not reset volume ramp here, can cause clicks
+		//mix_volume_db = volume_db; do not reset volume ramp here, can cause clicks
 		setseek.set(p_from_pos);
 		stop_has_priority.clear();
 		active.set();
@@ -268,7 +268,7 @@ void AudioStreamPlayer::stop() {
 
 bool AudioStreamPlayer::is_playing() const {
 	if (stream_playback.is_valid()) {
-		return active.is_set() && !setstop.is_set(); // && stream_playback->is_playing();
+		return active.is_set() && !setstop.is_set(); //&& stream_playback->is_playing();
 	}
 
 	return false;
@@ -282,6 +282,7 @@ float AudioStreamPlayer::get_playback_position() {
 		}
 		return stream_playback->get_playback_position();
 	}
+
 	return 0;
 }
 
