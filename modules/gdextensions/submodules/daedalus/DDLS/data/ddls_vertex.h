@@ -38,6 +38,8 @@
 #include "ddls_fwd.h"
 
 class DDLS_Vertex : public Reference {
+	GDCLASS(DDLS_Vertex, Reference);
+
 	unsigned id;
 
 	Point2 pos;

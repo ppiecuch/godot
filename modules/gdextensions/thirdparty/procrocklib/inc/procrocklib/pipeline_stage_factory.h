@@ -8,7 +8,7 @@
 
 #include <memory>
 
-#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201103L) || __cplusplus >= 201103L)
+#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201103L) || __cplusplus <= 201103L)
 namespace std {
   template <class T>
   struct _Unique_if {

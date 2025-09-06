@@ -666,8 +666,9 @@ if is_enabled("media/"):
     env_module.Append(CPPPATH=["thirdparty/media"])
     if is_enabled("media/gifexporter"):
         thirdparty_sources += Glob("thirdparty/media/gifanimcplusplus/*.cpp")
+    # "modules/gdnative/include" needs to be before "modules/gdnative" because because "gdnative.h" is in both locations
     if is_enabled("media/smackvideo"):
-        env_module.Append(CPPPATH=[os.path.dirname(os.path.realpath(os.curdir)) + "/gdnative/include"])
+        env_module.Prepend(CPPPATH=[os.path.dirname(os.path.realpath(os.curdir)) + "/gdnative/include"])
         thirdparty_sources += Glob("thirdparty/media/libsmacker/*.c")
     if is_enabled("media/ffmpeg"):
         arch = (env["arch"] if "arch" in env and env["arch"] else platform.machine()).lower()
@@ -698,7 +699,7 @@ if is_enabled("media/"):
             print("(GDextensions) FFmpeg is not supported on platform '%s'." % env["platform"])
             modules.remove("media/ffmpeg")
         if is_enabled("media/ffmpeg") and "media/ffmpeg" in modules:
-            env_module.Append(CPPPATH=[os.path.dirname(os.path.realpath(os.curdir)) + "/gdnative/include"])
+            env_module.Prepend(CPPPATH=[os.path.dirname(os.path.realpath(os.curdir)) + "/gdnative/include"])
             add_external_libs(env, ["avformat", "avcodec", "avutil", "swresample", "swscale"])
 
 if is_enabled("tileengine"):

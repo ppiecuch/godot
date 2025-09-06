@@ -300,8 +300,9 @@ void draw_padding_with_dot_style(
 
 	for (int i = 0; i < vertical_amount; i++) {
 		for (int j = 0; j < horizontal_amount; j++) {
-			if (!character_rc.has_point({ j, i })) {
-				const Point2 xy = start_point + Point2(j, i) * l;
+			const Point2i ji(j, i);
+			if (!character_rc.has_point(ji)) {
+				const Point2 xy = start_point + ji * l;
 				switch (dot_style) {
 					case FBFontDotStyleFlatSquare: {
 						VS::get_singleton()->canvas_item_add_rect(canvas_item, { xy, rc }, color);
@@ -522,8 +523,9 @@ void draw_bitmap_symbol_with_padding(
 
 	for (int r = 0; r < vertical_amount; r++) {
 		for (int c = 0; c < horizontal_amount; c++) {
-			const Point2 xy = start_point + Vector2i(c, r) * l;
-			const bool active = character_rc.has_point({ c, r }) && coord[r - character_rc.position.y][c - character_rc.position.x];
+			const Point2i cr(c, r);
+			const Point2 xy = start_point + cr * l;
+			const bool active = character_rc.has_point(cr) && coord[r - character_rc.position.y][c - character_rc.position.x];
 			switch (dot_style) {
 				case FBFontDotStyleFlatSquare: {
 					VS::get_singleton()->canvas_item_add_rect(canvas_item, { xy, rc }, active ? color : off_color);

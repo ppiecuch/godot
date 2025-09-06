@@ -14,8 +14,9 @@
 //  See http://www.boost.org/libs/smart_ptr/shared_ptr.htm for documentation.
 //
 
-#include <boost/config.hpp>   // for broken compiler workarounds
+#include <boost/config.hpp>
 
+// for broken compiler workarounds
 #if defined(BOOST_NO_MEMBER_TEMPLATES) && !defined(BOOST_MSVC6_MEMBER_TEMPLATES)
 #include <boost/smart_ptr/detail/shared_ptr_nmt.hpp>
 #else

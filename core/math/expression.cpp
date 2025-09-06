@@ -208,7 +208,7 @@ int Expression::get_func_argument_count(BuiltinFunc p_func) {
 		case MATH_MAP1:
 		case MATH_RANGE_LERP:
 			return 5;
-		case MATH_MAP2:
+		case MATH_MAP1CLAMP:
 			return 6;
 		case FUNC_MAX: {
 		}
@@ -346,7 +346,7 @@ void Expression::exec_func(BuiltinFunc p_func, const Variant **p_inputs, Variant
 			VALIDATE_ARG_NUM(4);
 			*r_return = Math::map1((double)*p_inputs[0], (double)*p_inputs[1], (double)*p_inputs[2], (double)*p_inputs[3], (double)*p_inputs[4]);
 		} break;
-		case MATH_MAP2: {
+		case MATH_MAP1CLAMP: {
 			VALIDATE_ARG_NUM(0);
 			VALIDATE_ARG_NUM(1);
 			VALIDATE_ARG_NUM(2);
@@ -358,7 +358,7 @@ void Expression::exec_func(BuiltinFunc p_func, const Variant **p_inputs, Variant
 				r_error.expected = Variant::BOOL;
 				return;
 			}
-			*r_return = Math::map2((double)*p_inputs[0], (double)*p_inputs[1], (double)*p_inputs[2], (double)*p_inputs[3], (double)*p_inputs[4], (bool)*p_inputs[5]);
+			*r_return = Math::map1clamp((double)*p_inputs[0], (double)*p_inputs[1], (double)*p_inputs[2], (double)*p_inputs[3], (double)*p_inputs[4], (bool)*p_inputs[5]);
 		} break;
 		case MATH_ISNAN: {
 			VALIDATE_ARG_NUM(0);

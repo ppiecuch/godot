@@ -927,13 +927,9 @@ public:
 
 		struct CommandMesh : public Command {
 			RID mesh;
-			RID mesh3d;
 			RID texture;
 			RID normal_map;
 			RID mask;
-			bool depth;
-			Transform transform;
-			Color modulate;
 			CommandMesh() { type = TYPE_MESH; }
 		};
 

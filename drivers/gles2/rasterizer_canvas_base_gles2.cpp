@@ -291,15 +291,9 @@ RasterizerStorageGLES2::Texture *RasterizerCanvasBaseGLES2::_bind_canvas_texture
 			glActiveTexture(GL_TEXTURE0 + storage->config.max_texture_image_units - 3);
 			glBindTexture(GL_TEXTURE_2D, mask->tex_id);
 			state.current_mask = p_mask;
+			state.current_mask_cut_off = rid_get_data_prop(p_mask, 0, RID_Prop(real_t(0.5))).real_value;
+			state.current_mask_channels_mixer = rid_get_data_prop(p_mask, 1, RID_Prop(Vector3(1, 0, 0))).vec3_value;
 			state.canvas_shader.set_uniform(CanvasShaderGLES2::USE_DEFAULT_MASK, true);
-			if (p_mask.get_props_count() == 2) {
-				state.current_mask_cut_off = p_mask.get_prop(0).real_value;
-				state.current_mask_channels_mixer = p_mask.get_prop(1).vec3_value;
-			} else {
-				// default masking values
-				state.current_mask_cut_off = 0.5;
-				state.current_mask_channels_mixer = Vector3(1, 0, 0);
-			}
 			state.canvas_shader.set_uniform(CanvasShaderGLES2::MASK_CUT_OFF, state.current_mask_cut_off);
 			state.canvas_shader.set_uniform(CanvasShaderGLES2::MASK_CHANNELS_MIXER, state.current_mask_channels_mixer);
 		}

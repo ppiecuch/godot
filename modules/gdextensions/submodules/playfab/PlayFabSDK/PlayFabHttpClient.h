@@ -36,7 +36,10 @@ class PlayFabHTTPClient;
 
 typedef void (*UserCallback)(int h_request, int response_code, Dictionary dict_header, Dictionary parse_data);
 
-struct CResult : public Reference {
+class CResult : public Reference {
+	GDCLASS(CResult, Reference)
+
+public:
 	int response_code = 0;
 	Dictionary dict_header;
 	int size = -1;
@@ -47,7 +50,10 @@ struct CResult : public Reference {
 	void update(PlayFabHTTPClient *client);
 };
 
-struct CRequest : public Reference {
+class CRequest : public Reference {
+	GDCLASS(CRequest, Reference)
+
+public:
 	int h_request;
 	String host;
 	int port = 443;

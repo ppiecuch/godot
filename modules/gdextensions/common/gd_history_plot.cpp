@@ -247,7 +247,7 @@ void GdHistoryPlot::draw(const Rect2 &p_frame) {
 	for (size_t i = 0; i < horizontal_guides.size(); i++) {
 		const real_t myy = horizontal_guides[i];
 		if (myy > plot_low && myy < plot_high) { //TODO negative!
-			const real_t yy = Math::map2(myy, plot_low, plot_high, 0, rc.size.height, true);
+			const real_t yy = Math::map1clamp(myy, plot_low, plot_high, 0, rc.size.height, true);
 			if (draw_guide_values) {
 				_draw_vec_text(String::num(horizontal_guides[i], precision), Point2(10 + rc.position.x, rc.position.y + rc.size.height - yy + 10), horizontal_guide_colors[i].with_alpha(0.2), text_scale);
 			}

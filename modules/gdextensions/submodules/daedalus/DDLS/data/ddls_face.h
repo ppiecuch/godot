@@ -36,6 +36,8 @@
 #include "ddls_fwd.h"
 
 class DDLS_Face : public Reference {
+	GDCLASS(DDLS_Face, Reference);
+
 	unsigned id;
 	bool is_real = true;
 	DDLSEdge edge;

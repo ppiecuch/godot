@@ -28,6 +28,7 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#include "ai/ai_entity_ai.h"
 #include "data/ddls_constants.h"
 #include "data/ddls_mesh.h"
 #include "data/math/ddls_geom2d.h"
@@ -49,14 +50,20 @@
 #include "scene/resources/font.h"
 
 namespace DDLSPotrace {
-struct Edge_Data : public Reference {
+class Edge_Data : public Reference {
+	GDCLASS(Edge_Data, Reference);
+
+public:
 	real_t sum_distances_squared;
 	real_t length;
 	int nodes_count;
 };
 typedef Ref<Edge_Data> EdgeData;
 
-struct Node_Data : public Reference {
+class Node_Data : public Reference {
+	GDCLASS(Node_Data, Reference);
+
+public:
 	int index;
 	Point2 point;
 };

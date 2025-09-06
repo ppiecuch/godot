@@ -54,6 +54,7 @@
 #include <functional> // std::less
 #include <iterator> //  std::back_inserter
 #include <vector>
+#include <random>
 
 // determine internal container to be used - std::vector<T*>  or  std::vector<void*>
 #if defined(DEBUG) || defined(_DEBUG) || defined(PTV_USE_TYPED_VEC)
@@ -1039,12 +1040,18 @@ public:
 	}
 
 	static void random_shuffle(It first, It last) {
-		std::random_shuffle(first.base_iter(), last.base_iter());
+#if __cplusplus > 201100L
+			std::random_device rd;
+			std::mt19937 g(rd());
+			std::shuffle(first.base_iter(), last.base_iter(), g);
+#else
+			std::random_shuffle(first.base_iter(), last.base_iter());
+#endif
 	}
 
 	template <typename RandomNumberGenerator>
 	static void random_shuffle(It first, It last, RandomNumberGenerator &rand) {
-		std::random_shuffle(first.base_iter(), last.base_iter(), rand);
+		std::shuffle(first.base_iter(), last.base_iter(), rand);
 	}
 
 	template <typename Predicate>

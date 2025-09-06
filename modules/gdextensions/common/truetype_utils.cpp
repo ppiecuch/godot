@@ -318,7 +318,7 @@ static real_t poly_get_index_at_length(const std::vector<real_t> &lengths, real_
 		if (dist_at1 <= length) { // if length at i1 is less than desired length (this is good)
 			dist_at2 = lengths[i1 + 1];
 			if (dist_at2 >= length) {
-				const real_t t = Math::map2(length, dist_at1, dist_at2, 0, 1);
+				const real_t t = Math::map1clamp(length, dist_at1, dist_at2, 0, 1);
 				return i1 + t;
 			} else {
 				left_limit = i1;
@@ -1197,7 +1197,7 @@ void TrueTypeFontUtils::draw_demo(CanvasItem *p_canvas, int frame_num) {
 		for (int outline_index = 0; outline_index < int(outline.size()); outline_index++) {
 			for (const Point2 &vertex : outline[outline_index]) {
 				Point2 location = Transform2D(Math::deg2rad(i * 13.5), Size2::ONE, Vector2(settings.font_size * -0.5, settings.font_size * 0.5)).xform(vertex);
-				const real_t noise_value = Math::map2(NOISE2(location.x * 0.003, frame_num * 0.01), 0, 0, 0.1, 1);
+				const real_t noise_value = Math::map1clamp(NOISE2(location.x * 0.003, frame_num * 0.01), 0, 0, 0.1, 1);
 				shape.push_back(Transform2D(0, Size2(noise_value, noise_value), Vector2()).xform(location));
 			}
 		}

@@ -456,6 +456,7 @@ public:
 	FUNC6(environment_set_dof_blur_near, RID, bool, float, float, float, EnvironmentDOFBlurQuality)
 	FUNC6(environment_set_dof_blur_far, RID, bool, float, float, float, EnvironmentDOFBlurQuality)
 	FUNC12(environment_set_glow, RID, bool, int, float, float, float, EnvironmentGlowBlendMode, float, float, float, bool, bool)
+	FUNC3(environment_set_glow_map, RID, float, RID)
 
 	FUNC9(environment_set_tonemap, RID, EnvironmentToneMapper, float, float, bool, float, float, float, float)
 
@@ -605,10 +606,7 @@ public:
 	FUNC8(canvas_item_add_polygon, RID, const Vector<Point2> &, const Vector<Color> &, const Vector<Point2> &, RID, RID, RID, bool)
 	FUNC13(canvas_item_add_triangle_array, RID, const Vector<int> &, const Vector<Point2> &, const Vector<Color> &, const Vector<Point2> &, const Vector<int> &, const Vector<float> &, RID, int, RID, RID, bool, bool)
 	FUNC7(canvas_item_add_mesh, RID, RID, const Transform2D &, const Color &, RID, RID, RID)
-	FUNC1R(RID, canvas_item_create_mesh_3d, RID)
 	FUNC7(canvas_item_add_mesh_3d, RID, RID, const Transform &, const Color &, RID, RID, RID)
-	FUNC7(canvas_item_set_mesh_3d, RID, RID, const Transform &, const Color &, RID, RID, RID)
-	FUNC3(canvas_item_update_mesh_3d, RID, const Variant &, int)
 	FUNC5(canvas_item_add_multimesh, RID, RID, RID, RID, RID)
 	FUNC5(canvas_item_add_particles, RID, RID, RID, RID, RID)
 	FUNC2(canvas_item_add_set_transform, RID, const Transform2D &)

@@ -28,12 +28,13 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "autotilemap.h"
 #include "core/io/json.h"
 #include "core/os/os.h"
 #include "core/ustring.h"
 #include "scene/2d/tile_map.h"
 #include "scene/resources/text_file.h"
+
+#include "autotilemap.h"
 
 int encode_tile_and_flipping(int tid, int fx, int fy, int atlas_id = 0) {
 	//24 bits of id code. We encode the ATLAS id in 8 bits, and the tile_id in 16 bits

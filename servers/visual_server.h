@@ -178,6 +178,11 @@ public:
 	virtual void texture_set_proxy(RID p_proxy, RID p_base) = 0;
 	virtual void texture_set_force_redraw_if_visible(RID p_texture, bool p_enable) = 0;
 
+	_FORCE_INLINE_ static real_t _texture_get_mask_cut_off_prop(RID p_mesh, real_t p_def) { return rid_get_data_prop(p_mesh, 0, RID_Prop(p_def)).real_value; }
+	_FORCE_INLINE_ static void _texture_set_mask_cut_off_prop(RID p_mesh, real_t p_value) { rid_set_data_prop(p_mesh, 0, p_value); }
+	_FORCE_INLINE_ static Vector3 _texture_get_mask_channel_mixer_prop(RID p_mesh, const Vector3 &p_def) { return rid_get_data_prop(p_mesh, 1, RID_Prop(p_def)).vec3_value; }
+	_FORCE_INLINE_ static void _texture_set_mask_channel_mixer_prop(RID p_mesh, const Vector3 &p_value) { rid_set_data_prop(p_mesh, 1, p_value); }
+
 	/* SKY API */
 
 	virtual RID sky_create() = 0;
@@ -344,6 +349,14 @@ public:
 	virtual AABB mesh_get_custom_aabb(RID p_mesh) const = 0;
 
 	virtual void mesh_clear(RID p_mesh) = 0;
+
+	_FORCE_INLINE_ static Transform _mesh_get_transform_prop(RID p_mesh, const Transform &p_def) { return rid_get_data_prop(p_mesh, 0, RID_Prop(p_def)).transform_value; }
+	_FORCE_INLINE_ static void _mesh_set_transform_prop(RID p_mesh, const Transform &p_value) { rid_set_data_prop(p_mesh, 0, p_value); }
+	_FORCE_INLINE_ static void _mesh_mul_transform_prop(RID p_mesh, const Transform &p_value) { rid_set_data_prop(p_mesh, 0, rid_get_data_prop(p_mesh, 0, RID_Prop(Transform())).transform_value * p_value); }
+	_FORCE_INLINE_ static Color _mesh_get_modulate_prop(RID p_mesh, const Color &p_def) { return rid_get_data_prop(p_mesh, 1, RID_Prop(p_def)).color_value; }
+	_FORCE_INLINE_ static void _mesh_set_modulate_prop(RID p_mesh, const Color &p_value) { rid_set_data_prop(p_mesh, 1, p_value); }
+	_FORCE_INLINE_ static bool _mesh_get_depth_prop(RID p_mesh, bool p_def) { return rid_get_data_prop(p_mesh, 2, RID_Prop(p_def)).bool_value; }
+	_FORCE_INLINE_ static void _mesh_set_depth_prop(RID p_mesh, bool p_value) { rid_set_data_prop(p_mesh, 2, p_value); }
 
 	/* MULTIMESH API */
 
@@ -1057,6 +1070,7 @@ public:
 	virtual void canvas_item_add_polygon(RID p_item, const Vector<Point2> &p_points, const Vector<Color> &p_colors, const Vector<Point2> &p_uvs = Vector<Point2>(), RID p_texture = RID(), RID p_normal_map = RID(), RID p_mask = RID(), bool p_antialiased = false) = 0;
 	virtual void canvas_item_add_triangle_array(RID p_item, const Vector<int> &p_indices, const Vector<Point2> &p_points, const Vector<Color> &p_colors, const Vector<Point2> &p_uvs = Vector<Point2>(), const Vector<int> &p_bones = Vector<int>(), const Vector<float> &p_weights = Vector<float>(), RID p_texture = RID(), int p_count = -1, RID p_normal_map = RID(), RID p_mask = RID(), bool p_antialiased = false, bool p_antialiasing_use_indices = false) = 0;
 	virtual void canvas_item_add_mesh(RID p_item, RID p_mesh, const Transform2D &p_transform = Transform2D(), const Color &p_modulate = Color(1, 1, 1), RID p_texture = RID(), RID p_normal_map = RID(), RID p_mask = RID()) = 0;
+	virtual void canvas_item_add_mesh_3d(RID p_item, RID p_mesh, const Transform &p_transform = Transform(), const Color &p_modulate = Color(1, 1, 1), RID p_texture = RID(), RID p_normal_map = RID(), RID p_mask = RID()) = 0;
 	virtual void canvas_item_add_multimesh(RID p_item, RID p_mesh, RID p_texture = RID(), RID p_normal_map = RID(), RID p_mask = RID()) = 0;
 	virtual void canvas_item_add_particles(RID p_item, RID p_particles, RID p_texture, RID p_normal_map = RID(), RID p_mask = RID()) = 0;
 	virtual void canvas_item_add_set_transform(RID p_item, const Transform2D &p_transform) = 0;
@@ -1069,17 +1083,6 @@ public:
 	virtual void canvas_item_set_draw_index(RID p_item, int p_index) = 0;
 	virtual void canvas_item_set_material(RID p_item, RID p_material) = 0;
 	virtual void canvas_item_set_use_parent_material(RID p_item, bool p_enable) = 0;
-
-	// 3d mesh and lighting
-	enum Mesh3dOp {
-		OP_SET,
-		OP_MUL,
-		OP_ADD,
-	};
-	virtual RID canvas_item_create_mesh_3d(RID p_mesh) = 0;
-	virtual void canvas_item_add_mesh_3d(RID p_item, RID p_mesh3d, const Transform &p_transform = Transform(), const Color &p_modulate = Color(1, 1, 1), RID p_texture = RID(), RID p_normal_map = RID(), RID p_mask = RID()) = 0;
-	virtual void canvas_item_set_mesh_3d(RID p_item, RID p_mesh3d, const Transform &p_transform = Transform(), const Color &p_modulate = Color(1, 1, 1), RID p_texture = RID(), RID p_normal_map = RID(), RID p_mask = RID()) = 0;
-	virtual void canvas_item_update_mesh_3d(RID p_mesh3d, const Variant &p_value, int p_op = OP_SET) = 0;
 
 	virtual void canvas_item_attach_skeleton(RID p_item, RID p_skeleton) = 0;
 	virtual void canvas_item_set_skeleton_relative_xform(RID p_item, Transform2D p_relative_xform) = 0;
@@ -1280,7 +1283,6 @@ VARIANT_ENUM_CAST(VisualServer::InstanceType);
 VARIANT_ENUM_CAST(VisualServer::InstancePortalMode);
 VARIANT_ENUM_CAST(VisualServer::NinePatchAxisMode);
 VARIANT_ENUM_CAST(VisualServer::LineDrawMode);
-VARIANT_ENUM_CAST(VisualServer::Mesh3dOp);
 VARIANT_ENUM_CAST(VisualServer::CanvasLightMode);
 VARIANT_ENUM_CAST(VisualServer::CanvasLightShadowFilter);
 VARIANT_ENUM_CAST(VisualServer::CanvasOccluderPolygonCullMode);

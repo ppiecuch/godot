@@ -34,6 +34,7 @@
 #include "ai/ai_path_finder.h"
 #include "data/ddls_face.h"
 #include "data/ddls_object.h"
+#include "data/ddls_vertex.h"
 #include "data/math/ddls_geom2d.h"
 
 #include "core/error_macros.h"

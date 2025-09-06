@@ -60,6 +60,7 @@ struct MethodInfo;
 
 typedef PoolVector<uint8_t> PoolByteArray;
 typedef PoolVector<int> PoolIntArray;
+typedef PoolVector<int64_t> PoolInt64Array;
 typedef PoolVector<real_t> PoolRealArray;
 typedef PoolVector<String> PoolStringArray;
 typedef PoolVector<Point2> PoolPoint2Array;
@@ -311,6 +312,7 @@ public:
 	Variant(const PoolVector<Plane> &p_array); // helper
 	Variant(const PoolVector<uint8_t> &p_raw_array);
 	Variant(const PoolVector<int> &p_int_array);
+	Variant(const PoolVector<int64_t> &p_int_array);
 #ifdef NEED_LONG_INT
 	Variant(const PoolVector<long int> &p_int_array);
 #endif
@@ -458,14 +460,15 @@ public:
 	static void construct_from_string(const String &p_string, Variant &r_value, ObjectConstruct p_obj_construct = nullptr, void *p_construct_ud = nullptr);
 
 	Variant &operator=(const Variant &p_variant); // only this is enough for all the other types (can be chained)
-	Variant operator=(Variant &&p_variant) {
+	Variant &operator=(Variant &&p_variant) {
 		if (unlikely(this == &p_variant)) {
-			return;
+			return *this;
 		}
 		clear();
 		type = p_variant.type;
 		_data = p_variant._data;
 		p_variant.type = NIL;
+		return *this;
 	}
 
 	Variant(const Variant &p_variant);
