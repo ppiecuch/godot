@@ -38,6 +38,8 @@
 #include "ddls_fwd.h"
 
 class DDLS_Edge : public Reference {
+	GDCLASS(DDLS_Edge, Reference);
+
 	unsigned id;
 
 	// root datas

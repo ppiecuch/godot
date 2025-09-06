@@ -52,7 +52,6 @@ union RID_Prop {
 	Color color_value;
 	Transform transform_value;
 
-	RID_Prop() {}
 	_FORCE_INLINE_ RID_Prop(int v) { int_value = v; }
 	_FORCE_INLINE_ RID_Prop(bool v) { bool_value = v; }
 	_FORCE_INLINE_ RID_Prop(real_t v) { real_value = v; }
@@ -60,19 +59,10 @@ union RID_Prop {
 	_FORCE_INLINE_ RID_Prop(const Vector3 &v) { vec3_value = v; }
 	_FORCE_INLINE_ RID_Prop(const Color &v) { color_value = v; }
 	_FORCE_INLINE_ RID_Prop(const Transform &v) { transform_value = v; }
+
+	RID_Prop() {}
 };
 
 typedef Vector<RID_Prop> RID_Props_Vec;
-
-struct _expand_props {
-	template <typename... T>
-	_expand_props(T &&...) {}
-};
-
-template <typename... props_types>
-RID_Props_Vec *_create_props(props_types... args) {
-	RID_Props_Vec *_props = memnew(RID_Props_Vec);
-	_expand_props{ 0, (_props->push_back(args), 0)... };
-}
 
 #endif // RID_PROPS_H

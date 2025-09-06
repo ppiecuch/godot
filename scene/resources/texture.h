@@ -251,16 +251,20 @@ class MaskTexture : public Texture {
 	GDCLASS(MaskTexture, Texture);
 	RES_BASE_EXTENSION("msktex");
 
+	real_t _get_mask_cut_off() const;
+	void _set_mask_cut_off(real_t p_mask_cut_off);
+	Vector3 _get_mask_channel_mixer() const;
+	void _set_mask_channel_mixer(const Vector3 &p_mask_channel_mixer);
+
 protected:
-	Ref<Texture> mask_texture;
-	real_t mask_cut_off;
-	Vector3 mask_channels_mixer;
+	Ref<Texture> texture;
 
 	static void _bind_methods();
 
 public:
 	virtual int get_width() const G_OVERRIDE;
 	virtual int get_height() const G_OVERRIDE;
+
 	virtual RID get_rid() const G_OVERRIDE;
 
 	virtual bool has_alpha() const G_OVERRIDE;
@@ -268,16 +272,17 @@ public:
 	virtual void set_flags(uint32_t p_flags) G_OVERRIDE;
 	virtual uint32_t get_flags() const G_OVERRIDE;
 
-	void set_mask_texture(const Ref<Texture> &p_mask);
-	Ref<Texture> get_mask_texture() const;
+	void set_texture(const Ref<Texture> &p_texture);
+	Ref<Texture> get_texture() const;
 
-	void set_cut_off(const real_t &p_cut_off);
-	real_t get_cut_off() const;
+	void set_mask_cut_off(const real_t &p_mask_cut_off);
+	real_t get_mask_cut_off() const;
 
-	void set_channels_mixer(const Vector3 &p_channels_mixer);
-	Vector3 get_channels_mixer() const;
+	void set_mask_channels_mixer(const Vector3 &p_mask_channels_mixer);
+	Vector3 get_mask_channels_mixer() const;
 
 	MaskTexture();
+	~MaskTexture();
 };
 
 class AtlasTexture : public Texture {

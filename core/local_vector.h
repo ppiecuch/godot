@@ -287,7 +287,7 @@ public:
 		insert(i, p_val);
 	}
 
-	explicit operator Vector<T>() const {
+	_FORCE_INLINE_ explicit operator Vector<T>() const {
 		Vector<T> ret;
 		ret.resize(size());
 		T *w = ret.ptrw();
@@ -295,15 +295,8 @@ public:
 		return ret;
 	}
 
-	explicit operator PoolVector<T>() const {
-		PoolVector<T> pl;
-		if (size()) {
-			pl.resize(size());
-			typename PoolVector<T>::Write w = pl.write();
-			T *dest = w.ptr();
-			memcpy(dest, data, sizeof(T) * count);
-		}
-		return pl;
+	_FORCE_INLINE_ explicit operator PoolVector<T>() const {
+		return to_pool_array();
 	}
 
 	Vector<uint8_t> to_byte_array() const { //useful to pass stuff to gpu or variant
@@ -312,6 +305,17 @@ public:
 		uint8_t *w = ret.ptrw();
 		memcpy(w, data, sizeof(T) * count);
 		return ret;
+	}
+
+	PoolVector<T> to_pool_array() const {
+		PoolVector<T> pl;
+		if (size()) {
+			pl.resize(size());
+			typename PoolVector<T>::Write w = pl.write();
+			T *dest = w.ptr();
+			memcpy(dest, data, sizeof(T) * count);
+		}
+		return pl;
 	}
 
 	_FORCE_INLINE_ LocalVector() {}

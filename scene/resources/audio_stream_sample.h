@@ -128,8 +128,8 @@ public:
 		// The file size in header is 8 bytes less than the actual size.
 		// See https://docs.fileformat.com/audio/wav/
 		const int FILE_SIZE_HEADER_OFFSET = 8;
-		uint32_t file_size_header = file->get_32() + FILE_SIZE_HEADER_OFFSET;
-		uint64_t file_size = file->get_len();
+		uint32_t file_size_header = p_file->get_32() + FILE_SIZE_HEADER_OFFSET;
+		uint64_t file_size = p_file->get_len();
 		if (file_size != file_size_header) {
 			WARN_PRINT(vformat("File size %d is %s than the expected size %d.", file_size, file_size > file_size_header ? "larger" : "smaller", file_size_header));
 		}

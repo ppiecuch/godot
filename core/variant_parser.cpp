@@ -1096,7 +1096,6 @@ Error VariantParser::parse_value(Token &token, Variant &value, Stream *p_stream,
 			}
 
 			value = arr;
-		} else if (id == "PoolIntArray" || id == "PackedInt32Array" || id == "PackedInt64Array" || id == "IntArray") {
 		} else if (id == "PoolIntArray" || id == "PackedInt32Array" || id == "IntArray") {
 			Vector<int> args;
 			Error err = _parse_construct<int>(p_stream, args, line, r_err_str);
@@ -1115,20 +1114,20 @@ Error VariantParser::parse_value(Token &token, Variant &value, Stream *p_stream,
 			}
 
 			value = arr;
-		} else if (id == "PackedInt64Array" || id == "Int64Array") {
+		} else if (id == "PoolInt64Array" || id == "PackedInt64Array" || id == "Int64Array") {
 			Vector<int> args;
 			Error err = _parse_construct<int>(p_stream, args, line, r_err_str);
 			if (err) {
 				return err;
 			}
 
-			PoolVector<long> arr;
+			PoolVector<int64_t> arr;
 			{
 				int len = args.size();
 				arr.resize(len);
-				PoolVector<long>::Write w = arr.write();
+				PoolVector<int64_t>::Write w = arr.write();
 				for (int i = 0; i < len; i++) {
-					w[i] = long(args[i]);
+					w[i] = int64_t(args[i]);
 				}
 			}
 

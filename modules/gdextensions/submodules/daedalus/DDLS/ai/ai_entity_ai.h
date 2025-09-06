@@ -28,12 +28,16 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#pragma once
+
 #include "core/math/vector2.h"
 #include "core/reference.h"
 
 #include "ddls_fwd.h"
 
 class DDLS_EntityAI : public Reference {
+	GDCLASS(DDLS_EntityAI, Reference);
+
 	const int NUM_SEGMENTS = 6;
 
 	real_t radius;

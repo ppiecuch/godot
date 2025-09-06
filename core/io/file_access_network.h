@@ -61,7 +61,7 @@ class FileAccessNetworkClient {
 	void _thread_func();
 	static void _thread_func(void *s);
 
-	void put_32(int32_t p_32);
+	void put_32(int p_32);
 	void put_64(int64_t p_64);
 	int32_t get_32();
 	int64_t get_64();

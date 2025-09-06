@@ -882,103 +882,106 @@ String ResourceFormatLoaderStreamTexture::get_resource_type(const String &p_path
 
 //////////////////////////////////////////
 
-int MaskTexture::get_width() const {
-	if (mask_texture.is_valid())
-		return mask_texture->get_width();
+real_t MaskTexture::_get_mask_cut_off() const {
+	return texture.is_valid() ? VS::_texture_get_mask_cut_off_prop(texture->get_rid(), 0.5) : 0.5;
+}
 
-	return 1;
+void MaskTexture::_set_mask_cut_off(real_t p_mask_cut_off) {
+	if (texture.is_valid()) {
+		VS::_texture_set_mask_cut_off_prop(texture->get_rid(), p_mask_cut_off);
+	}
+}
+
+Vector3 MaskTexture::_get_mask_channel_mixer() const {
+	return texture.is_valid() ? VS::_texture_get_mask_channel_mixer_prop(texture->get_rid(), Vector3(1, 0, 0)) : Vector3(1, 0, 0);
+}
+
+void MaskTexture::_set_mask_channel_mixer(const Vector3 &p_mask_channel_mixer) {
+	if (texture.is_valid()) {
+		VS::_texture_set_mask_channel_mixer_prop(texture->get_rid(), p_mask_channel_mixer);
+	}
+}
+
+int MaskTexture::get_width() const {
+	return texture.is_valid() ? texture->get_width() : 1;
 }
 
 int MaskTexture::get_height() const {
-	if (mask_texture.is_valid())
-		return mask_texture->get_height();
-
-	return 1;
+	return texture.is_valid() ? texture->get_height() : 1;
 }
 
 RID MaskTexture::get_rid() const {
-	if (mask_texture.is_valid()) {
-		RID rid = mask_texture->get_rid();
-		rid.set_props(get_cut_off(), get_channels_mixer());
-		return rid;
-	}
-
-	return RID();
+	return texture.is_valid() ? texture->get_rid() : RID();
 }
 
 bool MaskTexture::has_alpha() const {
-	if (mask_texture.is_valid())
-		return mask_texture->has_alpha();
-
-	return false;
+	return texture.is_valid() ? texture->has_alpha() : false;
 }
 
 void MaskTexture::set_flags(uint32_t p_flags) {
-	if (mask_texture.is_valid())
-		mask_texture->set_flags(p_flags);
+	if (texture.is_valid())
+		texture->set_flags(p_flags);
 }
 
 uint32_t MaskTexture::get_flags() const {
-	if (mask_texture.is_valid())
-		return mask_texture->get_flags();
-
-	return 0;
+	return texture.is_valid() ? texture->get_flags() : 0;
 }
 
-void MaskTexture::set_mask_texture(const Ref<Texture> &p_mask) {
-	if (mask_texture == p_mask)
+void MaskTexture::set_texture(const Ref<Texture> &p_texture) {
+	if (texture == p_texture)
 		return;
-	mask_texture = p_mask;
+	texture = p_texture;
 	emit_changed();
-	_change_notify("mask_texture");
+	_change_notify("texture");
 }
 
-Ref<Texture> MaskTexture::get_mask_texture() const {
-	return mask_texture;
+Ref<Texture> MaskTexture::get_texture() const {
+	return texture;
 }
 
-void MaskTexture::set_cut_off(const real_t &p_cut_off) {
-	if (mask_cut_off == p_cut_off)
+void MaskTexture::set_mask_cut_off(const real_t &p_mask_cut_off) {
+	if (_get_mask_cut_off() == p_mask_cut_off)
 		return;
-	mask_cut_off = p_cut_off;
+	_set_mask_cut_off(p_mask_cut_off);
 	emit_changed();
 	_change_notify("mask_cut_off");
 }
 
-real_t MaskTexture::get_cut_off() const {
-	return mask_cut_off;
+real_t MaskTexture::get_mask_cut_off() const {
+	return _get_mask_cut_off();
 }
 
-void MaskTexture::set_channels_mixer(const Vector3 &p_channels_mixer) {
-	if (mask_channels_mixer == p_channels_mixer)
+void MaskTexture::set_mask_channels_mixer(const Vector3 &p_mask_channels_mixer) {
+	if (_get_mask_channel_mixer() == p_mask_channels_mixer)
 		return;
-	mask_channels_mixer = p_channels_mixer;
+	_set_mask_channel_mixer(p_mask_channels_mixer);
 	emit_changed();
 	_change_notify("mask_channels_mixer");
 }
 
-Vector3 MaskTexture::get_channels_mixer() const {
-	return mask_channels_mixer;
+Vector3 MaskTexture::get_mask_channels_mixer() const {
+	return _get_mask_channel_mixer();
 }
 
 void MaskTexture::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("set_mask_texture", "mask"), &MaskTexture::set_mask_texture);
-	ClassDB::bind_method(D_METHOD("get_mask_texture"), &MaskTexture::get_mask_texture);
+	ClassDB::bind_method(D_METHOD("set_texture", "mask"), &MaskTexture::set_texture);
+	ClassDB::bind_method(D_METHOD("get_texture"), &MaskTexture::get_texture);
 
-	ClassDB::bind_method(D_METHOD("set_cut_off", "region"), &MaskTexture::set_cut_off);
-	ClassDB::bind_method(D_METHOD("get_cut_off"), &MaskTexture::get_cut_off);
+	ClassDB::bind_method(D_METHOD("set_cut_off", "region"), &MaskTexture::set_mask_cut_off);
+	ClassDB::bind_method(D_METHOD("get_cut_off"), &MaskTexture::get_mask_cut_off);
 
-	ClassDB::bind_method(D_METHOD("set_channels_mixer", "margin"), &MaskTexture::set_channels_mixer);
-	ClassDB::bind_method(D_METHOD("get_channels_mixer"), &MaskTexture::get_channels_mixer);
+	ClassDB::bind_method(D_METHOD("set_channels_mixer", "margin"), &MaskTexture::set_mask_channels_mixer);
+	ClassDB::bind_method(D_METHOD("get_channels_mixer"), &MaskTexture::get_mask_channels_mixer);
 
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "mask_texture", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_mask_texture", "get_mask_texture");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "texture", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_texture", "get_texture");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "cut_off"), "set_cut_off", "get_cut_off");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "channels_mixer"), "set_channels_mixer", "get_channels_mixer");
 }
 
 MaskTexture::MaskTexture() {
-	mask_cut_off = 0.5;
-	mask_channels_mixer = Vector3(1, 0, 0);
+}
+
+MaskTexture::~MaskTexture() {
 }
 
 //////////////////////////////////////////

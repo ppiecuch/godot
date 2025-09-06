@@ -2145,5 +2145,5 @@ void ObjectDB::cleanup() {
 	instance_checks.clear();
 	rw_lock->write_unlock();
 	// we should not use objectdb beyond that point
-	memdelete_notnull(rw_lock();
+	memdelete_notnull(rw_lock);
 }

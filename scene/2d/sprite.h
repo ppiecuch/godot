@@ -39,6 +39,7 @@ class Sprite : public Node2D {
 
 	Ref<Texture> texture;
 	Ref<Texture> normal_map;
+	Ref<Texture> mask;
 
 	bool centered;
 	Point2 offset;
@@ -90,6 +91,9 @@ public:
 
 	void set_normal_map(const Ref<Texture> &p_texture);
 	Ref<Texture> get_normal_map() const;
+
+	void set_mask(const Ref<MaskTexture> &p_texture);
+	Ref<MaskTexture> get_mask() const;
 
 	void set_centered(bool p_center);
 	bool is_centered() const;

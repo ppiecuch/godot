@@ -839,9 +839,9 @@ void RasterizerCanvasGLES2::render_batches(Item *p_current_clip, bool &r_reclip,
 #define putpoint(J, x, y)                                          \
 	{                                                              \
 		points[(J)] = circle->pos + Point2(x, y) * circle->radius; \
-		indices[(J)*3 + 0] = (J);                                  \
-		indices[(J)*3 + 1] = ((J) + 1) % num_points;               \
-		indices[(J)*3 + 2] = num_points;                           \
+		indices[(J) * 3 + 0] = (J);                                \
+		indices[(J) * 3 + 1] = ((J) + 1) % num_points;             \
+		indices[(J) * 3 + 2] = num_points;                         \
 	}
 
 							const bool squared = circle->squared > 0;
@@ -894,16 +894,12 @@ void RasterizerCanvasGLES2::render_batches(Item *p_current_clip, bool &r_reclip,
 						case Item::Command::TYPE_MESH: {
 							Item::CommandMesh *mesh = static_cast<Item::CommandMesh *>(command);
 
-							Transform transform = mesh->transform;
-							Color modulate = mesh->modulate;
-							bool depth = mesh->depth;
-							if (mesh->mesh3d.is_valid()) {
-								if (mesh->mesh3d.get_props_count() == 3) {
-									transform = mesh->mesh3d.get_prop(0).transform_value;
-									modulate = mesh->mesh3d.get_prop(1).color_value;
-									depth = mesh->mesh3d.get_prop(2).bool_value;
-								}
+							if (!mesh->mesh.is_valid()) {
+								break;
 							}
+							Transform transform = VS::_mesh_get_transform_prop(mesh->mesh, Transform());
+							Color modulate = VS::_mesh_get_modulate_prop(mesh->mesh, Color(1, 1, 1));
+							bool depth = VS::_mesh_get_depth_prop(mesh->mesh, true);
 
 							RasterizerStorageGLES2::Mesh *mesh_data = storage->mesh_owner.getornull(mesh->mesh);
 							if (!mesh_data) {

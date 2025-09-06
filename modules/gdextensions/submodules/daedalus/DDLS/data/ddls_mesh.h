@@ -37,6 +37,8 @@
 #include "ddls_fwd.h"
 
 class DDLS_Mesh : public Reference {
+	GDCLASS(DDLS_Mesh, Reference);
+
 	unsigned id;
 
 	real_t width;

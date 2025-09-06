@@ -28,82 +28,52 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-class RockStudio : EditorWindow {
+class RockStudio {
+public:
 	// Generation Settings
-private
 	float numberOfVerticesFloat = 25f;
-private
 	const float maximumResolution = 1000f;
-public
+	bool showGenerationInfo;
+
 	bool generateWithRigidbody;
-public
 	enum MethodOfSeed {
 		Random,
 		Custom
-	} public static MethodOfSeed SeedMethod;
-public
+	};
+	static MethodOfSeed SeedMethod;
 	static int Seed;
-public
 	static int SeedSize = 5000;
 
-private
-	bool showGenerationInfo;
-
 	// Rock Information
-private
 	Material rockMaterial;
-private
 	Material[] rockMaterials = new Material[4];
-private
 	int materialPickerIndex;
-private
 	int numberOfVerticesInt = 25;
-private
 	float rockYPositionOffset;
-private
 	int rockOrientation; // 0 = X, 1 = Y, 2 = Z
-private
 	string rockName = "ExampleRock";
-private
 	GameObject rockGroup;
-private
 	string rockGroupName = "RockGroup";
-public
 	List<Vector3> points;
 
 	// Placement Tool
-private
 	RaycastHit mouseHitPoint;
-private
 	static bool currentlyPlacingRock;
-private
 	Transform placementToolLocation;
-private
 	Event currentEvent;
-private
 	Vector3 currentMousePosition = Vector3.zero;
-private
 	float placementToolSize = 1f;
-private
 	Color outerColor = new Color(0.15f, 0.75f, 1f);
-private
 	Color innerColor = new Color(0.15f, 0.75f, 1f, 0.1f);
 
 	// GUIStyles and GUIContents
 	GUIStyle helpbox;
-private
 	GUIStyle centeredLabel;
-private
 	static Texture2D[] materialPreviews;
-private
 	GUIStyle[] materialPickers;
-private
 	GUIContent multipleMaterialsIcon;
-private
 	GUIContent removeSourceMeshIcon;
-private
 	GUIContent meshCountIcon;
-private
 	GUIContent vertexCountIcon;
 	GUIContent basicMenuHeader;
 	GUIContent composeMenuHeader;
@@ -115,23 +85,17 @@ private
 	GUIContent orientationX;
 	GUIContent orientationY;
 	GUIContent orientationZ;
-private
 	GUIStyle smallButton;
-private
 	GUIStyle toolBarButton;
-private
 	GUIContent addrigidbody;
 	bool StylesNotLoaded = true;
 
 	// UI Elements
-public
 	int toolBarIndex = 0;
 	int rowWidth = 76; // row width = (number of columns * 25) + 1
 	int columnHeight = 36; // column height = (6 / number of columns) * 18
-private
 	Texture[] toolbarIcons;
 	int heightOffset = 2;
-public
 	static Color lineDividerColor = new Color(0.6f, 0.6f, 0.6f);
 
 	// Basic Settings
@@ -141,19 +105,12 @@ public
 	float edgeHeight = 1f;
 	float edgeDepth = 1f;
 	float boulderRadius = 1f;
-private
 	float tipProtrusion = 2f;
-private
 	float tipFlatness = 1f;
-private
 	float baseHeight = 2f;
-private
 	float baseWidth = 2f;
-private
 	bool tetragonal;
-private
 	bool oneSided;
-private
 	Mesh meshVolume;
 
 	// Sculpt Settings
@@ -165,23 +122,20 @@ private
 	GameObject ExportObject;
 	string[] exportOptions = { ".fbx" };
 	int exportType;
-public
 	static string DefaultPath = "Assets/";
 
 	// Combine Settings
 	GameObject parentObject;
-public
 	bool multipleMaterials;
-public
 	bool addRigidBody;
-public
 	bool removeSourceMesh;
-public
 	string newMeshName;
 	string[] colliderOptions = { "Box Collider", "Mesh Collider", "None" };
 	int colliderType;
 
-	[MenuItem("Tools/RockStudio/RockStudio")] static void Init() {
+public:
+	// [MenuItem("Tools/RockStudio/RockStudio")]
+	static void Init() {
 		RockStudio window = (RockStudio)GetWindow(typeof(RockStudio));
 		window.Show();
 
@@ -802,7 +756,6 @@ private
 		Selection.activeGameObject = NewRockShape;
 	}
 
-private:
 	void GenerateRock(Vector3 pos, Vector3 nor) {
 		points = new List<Vector3>(numberOfVerticesInt);
 		points.Clear();

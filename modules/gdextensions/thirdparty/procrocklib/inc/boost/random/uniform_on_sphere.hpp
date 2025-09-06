@@ -169,10 +169,16 @@ public:
             *it = val;
             sqsum += val * val;
         }
-        using std::sqrt;
+
         // for all i: result[i] /= sqrt(sqsum)
+        using std::sqrt;
+    #if __cplusplus > 201100L
+        std::transform(_container.begin(), _container.end(), _container.begin(),
+                       [norm = sqrt(sqsum)](RealType val) { return val / norm; });
+    #else
         std::transform(_container.begin(), _container.end(), _container.begin(),
                        std::bind2nd(std::divides<RealType>(), sqrt(sqsum)));
+    #endif
         return _container;
     }
 

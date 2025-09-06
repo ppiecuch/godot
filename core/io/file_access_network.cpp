@@ -50,7 +50,6 @@ void FileAccessNetworkClient::unlock_mutex() {
 	mutex.unlock();
 }
 
-void FileAccessNetworkClient::put_32(int32_t p_32) {
 void FileAccessNetworkClient::put_32(int p_32) {
 	uint8_t buf[4];
 	encode_uint32(p_32, buf);

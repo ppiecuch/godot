@@ -804,16 +804,12 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 						case Item::Command::TYPE_MESH: {
 							Item::CommandMesh *mesh = static_cast<Item::CommandMesh *>(c);
 
-							Transform transform = mesh->transform;
-							Color modulate = mesh->modulate;
-							bool depth = mesh->depth;
-							if (mesh->mesh3d.is_valid()) {
-								if (mesh->mesh3d.get_props_count() == 3) {
-									transform = mesh->mesh3d.get_prop(0).transform_value;
-									modulate = mesh->mesh3d.get_prop(1).color_value;
-									depth = mesh->mesh3d.get_prop(2).bool_value;
-								}
+							if (!mesh->mesh.is_valid()) {
+								break;
 							}
+							Transform transform = rid_get_data_prop(mesh->mesh, 0, RID_Prop(Transform())).transform_value;
+							Color modulate = rid_get_data_prop(mesh->mesh, 1, RID_Prop(Color(1, 1, 1))).color_value;
+							bool depth = rid_get_data_prop(mesh->mesh, 2, RID_Prop(true)).bool_value;
 
 							RasterizerStorageGLES3::Mesh *mesh_data = storage->mesh_owner.getornull(mesh->mesh);
 							if (!mesh_data) {
@@ -876,7 +872,6 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 							}
 
 							state.canvas_shader.set_uniform(CanvasShaderGLES3::MODELVIEW_MATRIX, state.final_transform);
-
 						} break;
 						case Item::Command::TYPE_MULTIMESH: {
 							Item::CommandMultiMesh *mmesh = static_cast<Item::CommandMultiMesh *>(c);
@@ -1166,9 +1161,9 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 #define putpoint(J, x, y)                                          \
 	{                                                              \
 		points[(J)] = circle->pos + Point2(x, y) * circle->radius; \
-		indices[(J)*3 + 0] = (J);                                  \
-		indices[(J)*3 + 1] = ((J) + 1) % numpoints;                \
-		indices[(J)*3 + 2] = numpoints;                            \
+		indices[(J) * 3 + 0] = (J);                                \
+		indices[(J) * 3 + 1] = ((J) + 1) % numpoints;              \
+		indices[(J) * 3 + 2] = numpoints;                          \
 	}
 
 							const bool squared = circle->squared > 0;

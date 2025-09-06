@@ -536,7 +536,7 @@ public:
 		return p_ostart + (p_ostop - p_ostart) * ((p_value - p_istart) / (p_istop - p_istart));
 	}
 
-	static _ALWAYS_INLINE_ real_t map1ext(real_t p_value, real_t p_istart, real_t p_istop, real_t p_ostart, real_t p_ostop, bool p_clamp = false) {
+	static _ALWAYS_INLINE_ real_t map1clamp(real_t p_value, real_t p_istart, real_t p_istop, real_t p_ostart, real_t p_ostop, bool p_clamp = false) {
 		if (Math::abs(p_istart - p_istop) < FLT_EPSILON) {
 			return p_ostart;
 		} else {

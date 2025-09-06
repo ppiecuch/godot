@@ -170,7 +170,10 @@ void SpriteMeshSnapshot::_create() {
 	canvas = RID_PRIME(VS::get_singleton()->canvas_create());
 	canvas_item = RID_PRIME(VS::get_singleton()->canvas_item_create());
 
-	VS::get_singleton()->canvas_item_add_mesh_3d(canvas_item, owner->get_mesh()->get_rid());
+	RID texture_rid = owner->get_mesh_texture().is_valid() ? owner->get_mesh_texture()->get_rid() : RID();
+	RID normal_map_rid = owner->get_mesh_normal_map().is_valid() ? owner->get_mesh_normal_map()->get_rid() : RID();
+	RID mask_rid = owner->get_mesh_mask().is_valid() ? owner->get_mesh_mask()->get_rid() : RID();
+	VS::get_singleton()->canvas_item_add_mesh_3d(canvas_item, owner->get_mesh()->get_rid(), Transform(), owner->get_modulate(), texture_rid, normal_map_rid, mask_rid);
 
 	VS::get_singleton()->viewport_attach_canvas(viewport, canvas);
 	VS::get_singleton()->canvas_item_set_parent(canvas_item, canvas);
@@ -191,10 +194,8 @@ void SpriteMeshSnapshot::_trigger(const String &filepath) {
 	}
 	const Point2 origin = ofs - Point2(aabb.position.x, aabb.position.y);
 	const Transform xform(owner->get_mesh_orientation(), { origin.x + s.width / 2, origin.y + s.height / 2, 0 });
-	RID texture_rid = owner->get_mesh_texture().is_valid() ? owner->get_mesh_texture()->get_rid() : RID();
-	RID normal_map_rid = owner->get_mesh_normal_map().is_valid() ? owner->get_mesh_normal_map()->get_rid() : RID();
-	RID mask_rid = owner->get_mesh_mask().is_valid() ? owner->get_mesh_mask()->get_rid() : RID();
-	VS::get_singleton()->canvas_item_set_mesh_3d(canvas_item, owner->get_mesh()->get_rid(), xform, owner->get_modulate(), texture_rid, normal_map_rid, mask_rid);
+	VS::get_singleton()->_mesh_set_transform_prop(owner->get_mesh()->get_rid(), xform);
+	VS::get_singleton()->_mesh_set_modulate_prop(owner->get_mesh()->get_rid(), owner->get_modulate());
 	// setup viewport
 	VS::get_singleton()->request_frame_drawn_callback(owner, "_snapshot_done", filepath);
 	VS::get_singleton()->viewport_set_size(viewport, s.width, s.height);
@@ -1153,17 +1154,17 @@ bool SpriteMeshEditor::forward_gui_input(const Ref<InputEvent> &p_event) {
 							}
 							switch (_dragging) {
 								case DRAG_ROTATE_Z: {
-									VS::get_singleton()->canvas_item_update_mesh_3d(rotate_gizmo[0].mesh3d, Transform().rotated(Vector3(0, 0, 1), r), VS::OP_MUL);
+									VS::get_singleton()->_mesh_mul_transform_prop(rotate_gizmo[0].mesh->get_rid(), Transform().rotated(Vector3(0, 0, 1), r));
 									node->set_mesh_orientation(Basis(Vector3(0, 0, 1), r) * node_orientation);
 								} break;
 								case DRAG_ROTATE_X: {
 									const real_t sr = Math_PI / GIZMO_SCROLLER_SEGS; // segment rotation
-									VS::get_singleton()->canvas_item_update_mesh_3d(rotate_gizmo[1].mesh3d, Transform().rotated(Vector3(1, 0, 0), Math::fmod(r, sr)), VS::OP_SET);
+									VS::get_singleton()->_mesh_set_transform_prop(rotate_gizmo[1].mesh->get_rid(), Transform().rotated(Vector3(1, 0, 0), Math::fmod(r, sr)));
 									node->set_mesh_orientation(Basis(Vector3(1, 0, 0), r) * node_orientation);
 								} break;
 								case DRAG_ROTATE_Y: {
 									const real_t sr = Math_PI / GIZMO_SCROLLER_SEGS; // segment rotation
-									VS::get_singleton()->canvas_item_update_mesh_3d(rotate_gizmo[2].mesh3d, Transform().rotated(Vector3(0, 1, 0), Math::fmod(r, sr)), VS::OP_SET);
+									VS::get_singleton()->_mesh_set_transform_prop(rotate_gizmo[2].mesh->get_rid(), Transform().rotated(Vector3(0, 1, 0), Math::fmod(r, sr)));
 									node->set_mesh_orientation(Basis(Vector3(0, 1, 0), r) * node_orientation);
 								} break;
 							};
@@ -1217,7 +1218,7 @@ bool SpriteMeshEditor::forward_gui_input(const Ref<InputEvent> &p_event) {
 			switch (dragging) {
 				case DRAG_ROTATE_Z: {
 					const real_t r = _dragging_change = -Math_PI * (mouse_dragging_dist.y / gizmo_scale) / GIZMO_CIRCLE_SIZE; // rotation
-					VS::get_singleton()->canvas_item_update_mesh_3d(rotate_gizmo[0].mesh3d, Transform().rotated(Vector3(0, 0, 1), r), VS::OP_MUL);
+					VS::get_singleton()->_mesh_set_transform_prop(rotate_gizmo[0].mesh->get_rid(), Transform().rotated(Vector3(0, 0, 1), r));
 					const Basis node_orientation = undo_redo_state["mesh_xform"];
 					node->set_mesh_orientation(Basis(Vector3(0, 0, 1), r) * node_orientation);
 				} break;
@@ -1226,7 +1227,7 @@ bool SpriteMeshEditor::forward_gui_input(const Ref<InputEvent> &p_event) {
 						const real_t sr = Math_PI / GIZMO_SCROLLER_SEGS; // segment rotation
 						const real_t sd = 2 * GIZMO_CIRCLE_SIZE / GIZMO_SCROLLER_SEGS; // dist
 						const real_t scroller_rotation = sr * Math::fmod(mouse_dragging_dist.x / gizmo_scale, sd) / sd;
-						VS::get_singleton()->canvas_item_update_mesh_3d(rotate_gizmo[2].mesh3d, Transform().rotated(Vector3(0, 1, 0), scroller_rotation), VS::OP_MUL);
+						VS::get_singleton()->_mesh_mul_transform_prop(rotate_gizmo[2].mesh->get_rid(), Transform().rotated(Vector3(0, 1, 0), scroller_rotation));
 						const Basis node_orientation = undo_redo_state["mesh_xform"];
 						_dragging_change = Math_PI * (mouse_dragging_dist.x / gizmo_scale) / GIZMO_CIRCLE_SIZE;
 						node->set_mesh_orientation(Basis(Vector3(0, 1, 0), _dragging_change) * node_orientation);
@@ -1237,7 +1238,7 @@ bool SpriteMeshEditor::forward_gui_input(const Ref<InputEvent> &p_event) {
 						const real_t sr = Math_PI / GIZMO_SCROLLER_SEGS; // segment rotation
 						const real_t sd = 2 * GIZMO_CIRCLE_SIZE / GIZMO_SCROLLER_SEGS; // dist
 						const real_t scroller_rotation = sr * Math::fmod(mouse_dragging_dist.y / gizmo_scale, sd) / sd;
-						VS::get_singleton()->canvas_item_update_mesh_3d(rotate_gizmo[1].mesh3d, Transform().rotated(Vector3(1, 0, 0), scroller_rotation), VS::OP_MUL);
+						VS::get_singleton()->_mesh_mul_transform_prop(rotate_gizmo[1].mesh->get_rid(), Transform().rotated(Vector3(1, 0, 0), scroller_rotation));
 						const Basis node_orientation = undo_redo_state["mesh_xform"];
 						_dragging_change = Math_PI * (mouse_dragging_dist.y / gizmo_scale) / GIZMO_CIRCLE_SIZE;
 						node->set_mesh_orientation(Basis(Vector3(1, 0, 0), _dragging_change) * node_orientation);
@@ -1400,33 +1401,33 @@ void SpriteMeshEditor::update_transform_gizmo_view() {
 	switch (dragging) {
 		case DRAG_ROTATE_Z: {
 			const real_t r = -Math_PI * (mouse_dragging_dist.y / gizmo_scale) / GIZMO_CIRCLE_SIZE; // rotation
-			VS::get_singleton()->canvas_item_update_mesh_3d(rotate_gizmo[0].mesh3d, Transform().rotated(Vector3(0, 0, 1), r), VS::OP_SET);
+			VS::get_singleton()->_mesh_set_transform_prop(rotate_gizmo[0].mesh->get_rid(), Transform().rotated(Vector3(0, 0, 1), r));
 		} break;
 		case DRAG_ROTATE_Y: {
 			const real_t sr = Math_PI / GIZMO_SCROLLER_SEGS; // segment rotation
 			const real_t sd = 2 * GIZMO_CIRCLE_SIZE / GIZMO_SCROLLER_SEGS; // segment dist
 			const real_t scroller_rotation = sr * Math::fmod(mouse_dragging_dist.x / gizmo_scale, sd) / sd;
-			VS::get_singleton()->canvas_item_update_mesh_3d(rotate_gizmo[2].mesh3d, Transform().rotated(Vector3(0, 1, 0), scroller_rotation), VS::OP_SET);
+			VS::get_singleton()->_mesh_mul_transform_prop(rotate_gizmo[2].mesh->get_rid(), Transform().rotated(Vector3(0, 1, 0), scroller_rotation));
 		} break;
 		case DRAG_ROTATE_X: {
 			const real_t sr = Math_PI / GIZMO_SCROLLER_SEGS; // segment rotation
 			const real_t sd = 2 * GIZMO_CIRCLE_SIZE / GIZMO_SCROLLER_SEGS; // segment dist
 			const real_t scroller_rotation = sr * Math::fmod(mouse_dragging_dist.y / gizmo_scale, sd) / sd;
-			VS::get_singleton()->canvas_item_update_mesh_3d(rotate_gizmo[1].mesh3d, Transform().rotated(Vector3(1, 0, 0), scroller_rotation), VS::OP_SET);
+			VS::get_singleton()->_mesh_mul_transform_prop(rotate_gizmo[1].mesh->get_rid(), Transform().rotated(Vector3(1, 0, 0), scroller_rotation));
 		} break;
 	}
 
 	const CanvasItemEditor::Tool tool = canvas_item_editor->get_current_tool();
 	for (int i = 0; i < 3; i++) {
 		VS::get_singleton()->canvas_item_set_transform(rotate_gizmo[i].item, gizmo_xform);
+		VS::get_singleton()->_mesh_set_transform_prop(scale_gizmo[i].mesh->get_rid(), origin_transform);
+		VS::get_singleton()->_mesh_set_transform_prop(scale_plane_gizmo[i].mesh->get_rid(), origin_transform);
 		VS::get_singleton()->canvas_item_set_visible(rotate_gizmo[i].item, tool == CanvasItemEditor::TOOL_ROTATE);
-		VS::get_singleton()->canvas_item_update_mesh_3d(scale_gizmo[i].mesh3d, origin_transform, VS::OP_SET);
 		VS::get_singleton()->canvas_item_set_visible(scale_gizmo[i].item, tool == CanvasItemEditor::TOOL_SCALE);
-		VS::get_singleton()->canvas_item_update_mesh_3d(scale_plane_gizmo[i].mesh3d, origin_transform, VS::OP_SET);
 		VS::get_singleton()->canvas_item_set_visible(scale_plane_gizmo[i].item, tool == CanvasItemEditor::TOOL_SCALE);
 	}
 	// Origin marker
-	VS::get_singleton()->canvas_item_update_mesh_3d(origin_indicator.mesh3d, origin_transform, VS::OP_SET);
+	VS::get_singleton()->_mesh_set_transform_prop(origin_indicator.mesh->get_rid(), origin_transform);
 	VS::get_singleton()->canvas_item_set_visible(origin_indicator.item, tool != CanvasItemEditor::TOOL_SCALE); // indicator or scale gizmo
 }
 
@@ -1445,20 +1446,17 @@ void SpriteMeshEditor::_init_gizmo_instance() {
 	for (int i = 0; i < 3; i++) {
 		rotate_gizmo[i].item = RID_PRIME(VS::get_singleton()->canvas_item_create());
 		VS::get_singleton()->canvas_item_set_parent(rotate_gizmo[i].item, vpc->get_canvas_item());
-		rotate_gizmo[i].mesh3d = VS::get_singleton()->canvas_item_create_mesh_3d(rotate_gizmo[i].mesh->get_rid());
-		VS::get_singleton()->canvas_item_add_mesh_3d(rotate_gizmo[i].item, rotate_gizmo[i].mesh3d);
+		VS::get_singleton()->canvas_item_add_mesh_3d(rotate_gizmo[i].item, rotate_gizmo[i].mesh->get_rid());
 		VS::get_singleton()->canvas_item_set_visible(rotate_gizmo[i].item, false);
 
 		scale_gizmo[i].item = RID_PRIME(VS::get_singleton()->canvas_item_create());
 		VS::get_singleton()->canvas_item_set_parent(scale_gizmo[i].item, vpc->get_canvas_item());
-		scale_gizmo[i].mesh3d = VS::get_singleton()->canvas_item_create_mesh_3d(scale_gizmo[i].mesh->get_rid());
-		VS::get_singleton()->canvas_item_add_mesh_3d(scale_gizmo[i].item, scale_gizmo[i].mesh3d);
+		VS::get_singleton()->canvas_item_add_mesh_3d(scale_gizmo[i].item, scale_gizmo[i].mesh->get_rid());
 		VS::get_singleton()->canvas_item_set_visible(scale_gizmo[i].item, false);
 
 		scale_plane_gizmo[i].item = RID_PRIME(VS::get_singleton()->canvas_item_create());
 		VS::get_singleton()->canvas_item_set_parent(scale_plane_gizmo[i].item, vpc->get_canvas_item());
-		scale_plane_gizmo[i].mesh3d = VS::get_singleton()->canvas_item_create_mesh_3d(scale_plane_gizmo[i].mesh->get_rid());
-		VS::get_singleton()->canvas_item_add_mesh_3d(scale_plane_gizmo[i].item, scale_plane_gizmo[i].mesh3d);
+		VS::get_singleton()->canvas_item_add_mesh_3d(scale_plane_gizmo[i].item, scale_plane_gizmo[i].mesh->get_rid());
 		VS::get_singleton()->canvas_item_set_visible(scale_plane_gizmo[i].item, false);
 	}
 }
@@ -1466,19 +1464,16 @@ void SpriteMeshEditor::_init_gizmo_instance() {
 void SpriteMeshEditor::_finish_gizmo_instances() {
 	for (int i = 0; i < 3; i++) {
 		if (rotate_gizmo[i].item.is_valid()) {
-			VS::get_singleton()->free(rotate_gizmo[i].mesh3d);
 			VS::get_singleton()->free(rotate_gizmo[i].item);
-			rotate_gizmo[i].item = rotate_gizmo[i].mesh3d = RID();
+			rotate_gizmo[i].item = RID();
 		}
 		if (scale_gizmo[i].item.is_valid()) {
-			VS::get_singleton()->free(scale_gizmo[i].mesh3d);
 			VS::get_singleton()->free(scale_gizmo[i].item);
-			scale_gizmo[i].item = scale_gizmo[i].mesh3d = RID();
+			scale_gizmo[i].item = RID();
 		}
 		if (scale_plane_gizmo[i].item.is_valid()) {
-			VS::get_singleton()->free(scale_plane_gizmo[i].mesh3d);
 			VS::get_singleton()->free(scale_plane_gizmo[i].item);
-			scale_plane_gizmo[i].item = scale_plane_gizmo[i].mesh3d = RID();
+			scale_plane_gizmo[i].item = RID();
 		}
 	}
 }
@@ -1835,8 +1830,7 @@ void SpriteMeshEditor::_init_indicators() {
 		// Origin marker
 		origin_indicator.item = VS::get_singleton()->canvas_item_create();
 		VS::get_singleton()->canvas_item_set_parent(origin_indicator.item, canvas_item_editor->get_viewport_control()->get_canvas_item());
-		origin_indicator.mesh3d = VS::get_singleton()->canvas_item_create_mesh_3d(origin_indicator.mesh->get_rid());
-		VS::get_singleton()->canvas_item_add_mesh_3d(origin_indicator.item, origin_indicator.mesh3d);
+		VS::get_singleton()->canvas_item_add_mesh_3d(origin_indicator.item, origin_indicator.mesh->get_rid());
 	}
 }
 

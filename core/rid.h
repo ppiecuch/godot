@@ -34,6 +34,7 @@
 #include "core/list.h"
 #include "core/os/memory.h"
 #include "core/rid_handle.h"
+#include "core/rid_props.h"
 #include "core/safe_refcount.h"
 #include "core/set.h"
 #include "core/typedefs.h"
@@ -49,9 +50,26 @@ class RID_Data {
 	RID_OwnerBase *_owner;
 #endif
 	uint32_t _id;
+	RID_Props_Vec _props;
 
 public:
 	_FORCE_INLINE_ uint32_t get_id() const { return _id; }
+
+	_FORCE_INLINE_ RID_Prop &get_prop(int p_index) { return _props.write[p_index]; }
+	_FORCE_INLINE_ RID_Prop get_prop(int p_index) const { return _props.get(p_index); }
+	_FORCE_INLINE_ bool is_props_valid() const { return _props.size(); }
+	_FORCE_INLINE_ size_t get_props_count() const { return _props.size(); }
+
+	struct _expand_props {
+		template <typename... T>
+		_expand_props(T &&...) {}
+	};
+
+	template <typename... props_types>
+	RID_Props_Vec _set_props(props_types... args) {
+		_props.clear();
+		_expand_props{ 0, (_props.push_back(args), 0)... };
+	}
 
 	virtual ~RID_Data();
 };
@@ -110,8 +128,10 @@ protected:
 	}
 #endif
 
-	static void
-	init_rid();
+public:
+	virtual void get_owned_list(List<RID> *p_owned) = 0;
+
+	static void init_rid();
 	virtual ~RID_OwnerBase() {}
 };
 
@@ -186,6 +206,9 @@ public:
 #endif
 	}
 };
+
+RID_Prop rid_get_data_prop(RID p_rid, int p_index, const RID_Prop &p_default);
+void rid_set_data_prop(RID p_rid, int p_index, const RID_Prop &p_prop);
 
 #endif // not handles
 

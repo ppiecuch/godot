@@ -377,13 +377,11 @@ class SpriteMeshEditor : public Control {
 	struct {
 		bool enabled;
 		RID item;
-		RID mesh3d;
 		Ref<ArrayMesh> mesh;
 	} origin_indicator;
 
 	struct {
 		RID item;
-		RID mesh3d;
 		Ref<ArrayMesh> mesh;
 	} rotate_gizmo[3], scale_gizmo[3], scale_plane_gizmo[3];
 

@@ -153,8 +153,14 @@ public:
 
 	struct MeshData : RID_Data {
 		RID mesh;
-		MeshData(RID m) :
-				mesh(m) {}
+		RID texture;
+		RID normal_map;
+		RID mask;
+		MeshData(RID m, RID texture, RID normal_map, RID mask) :
+				mesh(m),
+				texture(texture),
+				normal_map(normal_map),
+				mask(mask) {}
 	};
 
 	mutable RID_Owner<Canvas> canvas_owner;
@@ -252,10 +258,7 @@ public:
 	void canvas_item_add_polygon(RID p_item, const Vector<Point2> &p_points, const Vector<Color> &p_colors, const Vector<Point2> &p_uvs = Vector<Point2>(), RID p_texture = RID(), RID p_normal_map = RID(), RID p_mask = RID(), bool p_antialiased = false);
 	void canvas_item_add_triangle_array(RID p_item, const Vector<int> &p_indices, const Vector<Point2> &p_points, const Vector<Color> &p_colors, const Vector<Point2> &p_uvs = Vector<Point2>(), const Vector<int> &p_bones = Vector<int>(), const Vector<float> &p_weights = Vector<float>(), RID p_texture = RID(), int p_count = -1, RID p_normal_map = RID(), RID p_mask = RID(), bool p_antialiased = false, bool p_antialiasing_use_indices = false);
 	void canvas_item_add_mesh(RID p_item, RID p_mesh, const Transform2D &p_transform = Transform2D(), const Color &p_modulate = Color(1, 1, 1), RID p_texture = RID(), RID p_normal_map = RID(), RID p_mask = RID());
-	RID canvas_item_create_mesh_3d(RID p_mesh);
-	void canvas_item_add_mesh_3d(RID p_item, RID p_mesh3d, const Transform &p_transform = Transform(), const Color &p_modulate = Color(1, 1, 1), RID p_texture = RID(), RID p_normal_map = RID(), RID p_mask = RID());
-	void canvas_item_set_mesh_3d(RID p_item, RID p_mesh3d, const Transform &p_transform = Transform(), const Color &p_modulate = Color(1, 1, 1), RID p_texture = RID(), RID p_normal_map = RID(), RID p_mask = RID());
-	void canvas_item_update_mesh_3d(RID p_mesh3d, const Variant &p_value, int op = VS::OP_SET);
+	void canvas_item_add_mesh_3d(RID p_item, RID p_mesh, const Transform &p_transform = Transform(), const Color &p_modulate = Color(1, 1, 1), RID p_texture = RID(), RID p_normal_map = RID(), RID p_mask = RID());
 	void canvas_item_add_multimesh(RID p_item, RID p_mesh, RID p_texture = RID(), RID p_normal_map = RID(), RID p_mask = RID());
 	void canvas_item_add_particles(RID p_item, RID p_particles, RID p_texture, RID p_normal = RID(), RID p_mask = RID());
 	void canvas_item_add_set_transform(RID p_item, const Transform2D &p_transform);

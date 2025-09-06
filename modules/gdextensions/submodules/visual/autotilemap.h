@@ -42,6 +42,7 @@
 #include <vector>
 
 class Autotiler : public Reference {
+	GDCLASS(Autotiler, Reference)
 public:
 	virtual bool is_source_tile(int tid) const {
 		return _src_tile == tid;
@@ -78,6 +79,7 @@ protected:
 };
 
 class BlobTerrainAutotiler : public Autotiler {
+	GDCLASS(BlobTerrainAutotiler, Reference)
 public:
 	String get_type() const {
 		return "BlobTerrainAutotiler";
@@ -118,6 +120,7 @@ private:
 };
 
 class BlobAutotiler : public Autotiler {
+	GDCLASS(BlobAutotiler, Reference)
 public:
 	String get_type() const {
 		return "BlobAutotiler";
@@ -145,6 +148,7 @@ private:
 };
 
 class QuadAutotiler : public Autotiler {
+	GDCLASS(QuadAutotiler, Reference)
 public:
 	/* struct Meta : public Object { */
 	/* Meta(int c, bool fx, bool fy) : code(c), flip_x(fx), flip_y(fy) {} */

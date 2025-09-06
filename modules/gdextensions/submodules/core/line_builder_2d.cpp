@@ -41,7 +41,7 @@ void LineBuilder2D::set_points(const PoolVector2Array &p_points) {
 	lb.points = p_points;
 }
 PoolVector2Array LineBuilder2D::get_points() const {
-	return lb.points;
+	return lb.points.to_pool_array();
 }
 void LineBuilder2D::set_default_color(const Color &p_default_color) {
 	lb.default_color = p_default_color;
