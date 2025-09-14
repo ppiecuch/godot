@@ -2049,9 +2049,11 @@ void postinitialize_handler(Object *p_object) {
 	p_object->_postinitialize();
 }
 
+RWLock *ObjectDB::rw_lock = memnew(RWLock);
 HashMap<ObjectID, Object *> ObjectDB::instances;
 ObjectID ObjectDB::instance_counter = 1;
 HashMap<Object *, ObjectID, ObjectDB::ObjectPtrHash> ObjectDB::instance_checks;
+
 ObjectID ObjectDB::add_instance(Object *p_object) {
 	ERR_FAIL_COND_V(p_object->get_instance_id() != 0, 0);
 
@@ -2106,8 +2108,6 @@ int ObjectDB::get_object_count() {
 
 	return count;
 }
-
-RWLock *ObjectDB::rw_lock = memnew(RWLock);
 
 void ObjectDB::cleanup() {
 	rw_lock->write_lock();

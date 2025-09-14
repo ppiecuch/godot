@@ -95,6 +95,8 @@ fi
 echo_header "*** Packaging app ..."
 rm -rf "$GODOT_DIR/bin/Godot-master.app"
 $cp -rv "$GODOT_DIR/misc/dist/osx_tools.app" "$GODOT_DIR/bin/Godot-master.app"
+# replace icon with master variant
+sed 's/Godot\.icns/Godot MASTER.icns/' "$GODOT_DIR/misc/dist/osx_tools.app/Contents/Info.plist" > "$GODOT_DIR/bin/Godot-master.app/Contents/Info.plist"
 mkdir -p "$GODOT_DIR/bin/Godot-master.app/Contents/MacOS"
 $cp -v "$GODOT_DIR/bin/godot.osx.opt.tools.$A" "$GODOT_DIR/bin/Godot-master.app/Contents/MacOS/Godot"
 if [ ! -z "$EDITOR_BUNDLE_ID" ]; then

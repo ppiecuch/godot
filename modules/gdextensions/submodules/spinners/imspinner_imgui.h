@@ -426,16 +426,25 @@ struct ImGuiContext {
 
 ImGuiWindow::ImDrawListSharedData ImGuiWindow::SharedData;
 
-static ImGuiContext CImGui, *GImGui = &CImGui;
-static ImGuiIO GImGuiIO;
+static ImGuiContext *GImGui = nullptr;
 static ImGuiWindow *_CurrentImWindow = nullptr;
 
 namespace ImGui {
+ImGuiContext *GetCurrentContext() {
+	static ImGuiContext GImGui;
+	return &GImGui;
+}
+ImGuiIO &GetIO() {
+	static ImGuiIO GImGuiIO;
+	return GImGuiIO;
+}
 void SetCurrentWindow(ImGuiWindow *wnd) { _CurrentImWindow = wnd; }
-ImGuiWindow *GetCurrentWindow() { return _CurrentImWindow; }
-ImGuiContext *GetCurrentContext() { return GImGui; }
-ImGuiStyle &GetStyle() { return GImGui->Style; }
-ImGuiIO &GetIO() { return GImGuiIO; }
+ImGuiWindow *GetCurrentWindow() {
+	if (!GImGui)
+		GImGui = GetCurrentContext();
+	return _CurrentImWindow;
+}
+ImGuiStyle &GetStyle() { return GetCurrentContext()->Style; }
 ImVec2 ItemSize() { return Size2(); }
 real_t GetTime() { return OS::get_singleton()->get_ticks_msec() / 1000.0; }
 bool ItemAdd(const ImRect &bb, ImGuiID id) { return true; }
