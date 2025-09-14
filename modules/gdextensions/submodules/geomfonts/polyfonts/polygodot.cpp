@@ -31,6 +31,7 @@
 #include "polygodot.h"
 #include "polyfonts.h"
 
+#include "core/color.h"
 #include "core/error_macros.h"
 #include "core/variant.h"
 

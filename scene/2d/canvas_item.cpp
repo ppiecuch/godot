@@ -1008,13 +1008,13 @@ void CanvasItem::draw_mesh(const Ref<Mesh> &p_mesh, const Ref<Texture> &p_textur
 	VisualServer::get_singleton()->canvas_item_add_mesh(canvas_item, p_mesh->get_rid(), p_transform, p_modulate, texture_rid, normal_map_rid, mask_rid);
 }
 
-void CanvasItem::draw_mesh_3d(const Ref<Mesh> &p_mesh, const Ref<Texture> &p_texture, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask, const Transform &p_transform, const Color &p_modulate) {
+void CanvasItem::draw_mesh_3d(const Ref<Mesh> &p_mesh, const Ref<Texture> &p_texture, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask, const Transform &p_transform, const Color &p_color) {
 	ERR_FAIL_COND(p_mesh.is_null());
 	RID texture_rid = p_texture.is_valid() ? p_texture->get_rid() : RID();
 	RID normal_map_rid = p_normal_map.is_valid() ? p_normal_map->get_rid() : RID();
 	RID mask_rid = p_mask.is_valid() ? p_mask->get_rid() : RID();
 
-	VisualServer::get_singleton()->canvas_item_add_mesh_3d(canvas_item, p_mesh->get_rid(), p_transform, p_modulate, texture_rid, normal_map_rid, mask_rid);
+	VisualServer::get_singleton()->canvas_item_add_mesh_3d(canvas_item, p_mesh->get_rid(), texture_rid, normal_map_rid, mask_rid, p_transform, p_color);
 }
 
 void CanvasItem::draw_multimesh(const Ref<MultiMesh> &p_multimesh, const Ref<Texture> &p_texture, const Ref<Texture> &p_normal_map, const Ref<Texture> &p_mask) {

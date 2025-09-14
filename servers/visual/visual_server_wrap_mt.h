@@ -606,7 +606,7 @@ public:
 	FUNC8(canvas_item_add_polygon, RID, const Vector<Point2> &, const Vector<Color> &, const Vector<Point2> &, RID, RID, RID, bool)
 	FUNC13(canvas_item_add_triangle_array, RID, const Vector<int> &, const Vector<Point2> &, const Vector<Color> &, const Vector<Point2> &, const Vector<int> &, const Vector<float> &, RID, int, RID, RID, bool, bool)
 	FUNC7(canvas_item_add_mesh, RID, RID, const Transform2D &, const Color &, RID, RID, RID)
-	FUNC7(canvas_item_add_mesh_3d, RID, RID, const Transform &, const Color &, RID, RID, RID)
+	FUNC7(canvas_item_add_mesh_3d, RID, RID, RID, RID, RID, const Transform &, const Color &)
 	FUNC5(canvas_item_add_multimesh, RID, RID, RID, RID, RID)
 	FUNC5(canvas_item_add_particles, RID, RID, RID, RID, RID)
 	FUNC2(canvas_item_add_set_transform, RID, const Transform2D &)

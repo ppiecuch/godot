@@ -39,4 +39,19 @@ SafeRefCount RID_OwnerBase::refcount;
 void RID_OwnerBase::init_rid() {
 	refcount.init();
 }
+
+RID_Prop rid_get_data_prop(RID p_rid, int p_index, const RID_Prop &p_default) {
+#ifndef DEBUG_ENABLED
+	ERR_FAIL_COND_V(!p_rid.is_valid(), RID_Prop());
+#endif
+	return p_rid.get_data()->get_prop(p_index, p_default);
+}
+
+void rid_set_data_prop(RID p_rid, int p_index, const RID_Prop &p_value) {
+#ifndef DEBUG_ENABLED
+	ERR_FAIL_COND(!p_rid.is_valid());
+#endif
+	p_rid.get_data()->set_prop(p_index, p_value);
+}
+
 #endif // not RID_HANDLES_ENABLED

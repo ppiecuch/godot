@@ -36,6 +36,8 @@
 #include "core/os/file_access.h"
 
 class ResourceInteractiveLoaderBinary : public ResourceInteractiveLoader {
+	GDCLASS(ResourceInteractiveLoaderBinary, ResourceInteractiveLoader)
+
 	bool translation_remapped;
 	String local_path;
 	String res_path;

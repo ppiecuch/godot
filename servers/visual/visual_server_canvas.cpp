@@ -1433,6 +1433,8 @@ void VisualServerCanvas::canvas_item_add_set_transform(RID p_item, const Transfo
 	_make_bound_dirty(canvas_item);
 }
 
+static const int32_t _mh3d = FOUR_CC('M', 'H', '3', 'D');
+
 void VisualServerCanvas::canvas_item_add_mesh(RID p_item, RID p_mesh, const Transform2D &p_transform, const Color &p_modulate, RID p_texture, RID p_normal_map, RID p_mask) {
 	Item *canvas_item = canvas_item_owner.getornull(p_item);
 	ERR_FAIL_COND(!canvas_item);
@@ -1445,15 +1447,13 @@ void VisualServerCanvas::canvas_item_add_mesh(RID p_item, RID p_mesh, const Tran
 	m->normal_map = p_normal_map;
 	m->mask = p_mask;
 
-	VS::_mesh_set_transform_prop(p_mesh, _from_transform_2d(p_transform));
-	VS::_mesh_set_modulate_prop(p_mesh, p_modulate);
-	VS::_mesh_set_depth_prop(p_mesh, false);
+	rid_setup_block(p_mesh, _mh3d, _from_transform_2d(p_transform), p_modulate, false);
 
 	canvas_item->commands.push_back(m);
 	_make_bound_dirty(canvas_item);
 }
 
-void VisualServerCanvas::canvas_item_add_mesh_3d(RID p_item, RID p_mesh, const Transform &p_transform, const Color &p_modulate, RID p_texture, RID p_normal_map, RID p_mask) {
+void VisualServerCanvas::canvas_item_add_mesh_3d(RID p_item, RID p_mesh, RID p_texture, RID p_normal_map, RID p_mask, const Transform &p_transform, const Color &p_color) {
 	Item *canvas_item = canvas_item_owner.getornull(p_item);
 	ERR_FAIL_COND(!canvas_item);
 	ERR_FAIL_COND(!p_mesh.is_valid());
@@ -1465,9 +1465,7 @@ void VisualServerCanvas::canvas_item_add_mesh_3d(RID p_item, RID p_mesh, const T
 	m->normal_map = p_normal_map;
 	m->mask = p_mask;
 
-	VS::_mesh_set_transform_prop(p_mesh, p_transform);
-	VS::_mesh_set_modulate_prop(p_mesh, p_modulate);
-	VS::_mesh_set_depth_prop(p_mesh, true);
+	rid_setup_block(p_mesh, _mh3d, p_transform, p_color, true);
 
 	canvas_item->commands.push_back(m);
 	_make_bound_dirty(canvas_item);

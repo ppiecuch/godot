@@ -232,6 +232,10 @@ xcuserdata/
 *.xccheckout
 *.xcodeproj/*
 
+# AI
+.claude*
+CLAUDE.md
+
 ##############################
 ### Visual Studio specific ###
 ##############################

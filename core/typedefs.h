@@ -426,4 +426,6 @@ struct _GlobalLock {
 // Limit the depth of recursive algorithms when dealing with Array/Dictionary
 #define MAX_RECURSION 100
 
+#define FOUR_CC(a, b, c, d) ((a) | ((b) << 8) | ((c) << 16) | ((d) << 24))
+
 #endif // TYPEDEFS_H

@@ -41,7 +41,6 @@
 #include "core/safe_refcount.h"
 #include "core/set.h"
 #include "core/typedefs.h"
-#include "core/vector.h"
 
 union RID_Prop {
 	int int_value;
@@ -54,7 +53,8 @@ union RID_Prop {
 
 	_FORCE_INLINE_ RID_Prop(int v) { int_value = v; }
 	_FORCE_INLINE_ RID_Prop(bool v) { bool_value = v; }
-	_FORCE_INLINE_ RID_Prop(real_t v) { real_value = v; }
+	_FORCE_INLINE_ RID_Prop(float v) { real_value = v; }
+	_FORCE_INLINE_ RID_Prop(double v) { real_value = v; }
 	_FORCE_INLINE_ RID_Prop(const Vector2 &v) { vec2_value = v; }
 	_FORCE_INLINE_ RID_Prop(const Vector3 &v) { vec3_value = v; }
 	_FORCE_INLINE_ RID_Prop(const Color &v) { color_value = v; }
@@ -63,6 +63,138 @@ union RID_Prop {
 	RID_Prop() {}
 };
 
-typedef Vector<RID_Prop> RID_Props_Vec;
+static constexpr size_t MAX_PROPS = 4;
+
+class RID_PropsContainer {
+private:
+	struct PropsBlock {
+		RID_Prop props[MAX_PROPS];
+	};
+
+	PropsBlock *_data;
+	int32_t _kind;
+
+public:
+	// True zero-cost construction - just nullptr
+	RID_PropsContainer() :
+			_data(nullptr), _kind(0) {}
+
+	// Destructor
+	~RID_PropsContainer() {
+		if (_data) {
+			memdelete(_data);
+		}
+	}
+
+	// Copy constructor
+	RID_PropsContainer(const RID_PropsContainer &other) :
+			_data(nullptr) {
+		if (other._data) {
+			_data = memnew(PropsBlock);
+			*_data = *other._data;
+		}
+	}
+
+	// Assignment operator
+	RID_PropsContainer &operator=(const RID_PropsContainer &other) {
+		if (this != &other) {
+			if (_data) {
+				memdelete(_data);
+				_data = nullptr;
+			}
+			if (other._data) {
+				_data = memnew(PropsBlock);
+				*_data = *other._data;
+			}
+		}
+		return *this;
+	}
+
+	// Check if empty (true zero overhead)
+	bool empty() const {
+		return _data == nullptr;
+	}
+
+	// Access operators
+	RID_Prop &operator[](size_t idx) {
+		CRASH_COND(!_data);
+		CRASH_BAD_INDEX(idx, MAX_PROPS);
+		return _data->props[idx];
+	}
+
+	const RID_Prop &operator[](size_t idx) const {
+		CRASH_COND(!_data);
+		CRASH_BAD_INDEX(idx, MAX_PROPS);
+		return _data->props[idx];
+	}
+
+	// Get with optional default value
+	RID_Prop get(size_t idx) const {
+		if (!_data || idx >= MAX_PROPS) {
+			return RID_Prop();
+		}
+		return _data->props[idx];
+	}
+
+	RID_Prop get(size_t idx, const RID_Prop &default_value) const {
+		if (!_data || idx >= MAX_PROPS) {
+			return default_value;
+		}
+		return _data->props[idx];
+	}
+
+	// Clear all properties
+	void clear() {
+		if (_data) {
+			memdelete(_data);
+			_data = nullptr;
+		}
+	}
+
+	// Variadic template to set all properties at once
+	template <typename... Args>
+	void set_all(Args... args) {
+		static_assert(sizeof...(args) <= MAX_PROPS, "Too many properties");
+
+		if (sizeof...(args) == 0) {
+			clear();
+			return;
+		}
+
+		_ensure_allocated();
+#ifndef DEBUG_ENABLED
+		CRASH_COND(!_kind);
+#endif
+		size_t idx = 0;
+		(((_data->props[idx++] = args)), ...);
+	}
+
+	// Assign values to specific indices
+	void set(size_t idx, const RID_Prop &prop) {
+		CRASH_BAD_INDEX(idx, MAX_PROPS);
+		_ensure_allocated();
+#ifndef DEBUG_ENABLED
+		CRASH_COND(!_kind);
+#endif
+		_data->props[idx] = prop;
+	}
+
+	// Manage block's owner type
+	int32_t get_kind() const { return _kind; }
+	void set_kind(int32_t kind) {
+#ifndef DEBUG_ENABLED
+		CRASH_COND_MSG(_kind, "Block properties already assigned.");
+#endif
+		_ensure_allocated();
+		_kind = kind;
+	}
+
+private:
+	void _ensure_allocated() {
+		if (!_data) {
+			_data = memnew(PropsBlock);
+		}
+	}
+};
 
 #endif // RID_PROPS_H

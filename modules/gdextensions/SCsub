@@ -222,6 +222,7 @@ modules = [
 ]
 
 thirdparty_sources = [
+    "thirdparty/misc/default_bitmap_font.auto.cpp",
     "thirdparty/misc/cqueue.cpp",
     "thirdparty/misc/pugixml.cpp",
     "thirdparty/misc/miniz_gzip.c",

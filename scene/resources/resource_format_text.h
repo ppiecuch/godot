@@ -38,6 +38,8 @@
 #include "scene/resources/packed_scene.h"
 
 class ResourceInteractiveLoaderText : public ResourceInteractiveLoader {
+	GDCLASS(ResourceInteractiveLoaderText, ResourceInteractiveLoader)
+
 	bool translation_remapped;
 	String local_path;
 	String res_path;

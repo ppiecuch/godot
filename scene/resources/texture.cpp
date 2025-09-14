@@ -882,6 +882,8 @@ String ResourceFormatLoaderStreamTexture::get_resource_type(const String &p_path
 
 //////////////////////////////////////////
 
+static const int32_t _mskt = FOUR_CC('M', 'S', 'K', 'T');
+
 real_t MaskTexture::_get_mask_cut_off() const {
 	return texture.is_valid() ? VS::_texture_get_mask_cut_off_prop(texture->get_rid(), 0.5) : 0.5;
 }
@@ -931,6 +933,9 @@ void MaskTexture::set_texture(const Ref<Texture> &p_texture) {
 	if (texture == p_texture)
 		return;
 	texture = p_texture;
+	if (texture.is_valid()) {
+		rid_setup_block(texture->get_rid(), _mskt, 0.5, Vector3(1, 0, 0));
+	}
 	emit_changed();
 	_change_notify("texture");
 }

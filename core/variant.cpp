@@ -2267,6 +2267,12 @@ Variant::Variant(const PoolVector<int> &p_int_array) {
 	type = POOL_INT_ARRAY;
 	memnew_placement(_data._mem, PoolVector<int>(p_int_array));
 }
+
+Variant::Variant(const PoolVector<int64_t> &p_int_array) {
+	type = POOL_INT_ARRAY;
+	memnew_placement(_data._mem, PoolVector<int64_t>(p_int_array));
+}
+
 #ifdef NEED_LONG_INT
 Variant::Variant(const PoolVector<long int> &p_int_array) {
 	type = POOL_INT_ARRAY;

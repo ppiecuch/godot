@@ -296,7 +296,7 @@ public:
 	virtual bool _edit_is_selected_on_click(const Point2 &p_point, double p_tolerance) const;
 
 	// Save and restore a CanvasItem state
-	virtual void _edit_set_state(const Dictionary &p_state) {};
+	virtual void _edit_set_state(const Dictionary &p_state){};
 	virtual Dictionary _edit_get_state() const { return Dictionary(); };
 
 	// Used to move the node
@@ -309,18 +309,18 @@ public:
 
 	// Used to rotate the node
 	virtual bool _edit_use_rotation() const { return false; };
-	virtual void _edit_set_rotation(float p_rotation) {};
+	virtual void _edit_set_rotation(float p_rotation){};
 	virtual float _edit_get_rotation() const { return 0.0; };
 
 	// Used to resize/move the node
 	virtual bool _edit_use_rect() const { return false; }; // MAYBE REPLACE BY A _edit_get_editmode()
-	virtual void _edit_set_rect(const Rect2 &p_rect) {};
+	virtual void _edit_set_rect(const Rect2 &p_rect){};
 	virtual Rect2 _edit_get_rect() const { return Rect2(0, 0, 0, 0); };
 	virtual Size2 _edit_get_minimum_size() const { return Size2(-1, -1); }; // LOOKS WEIRD
 
 	// Used to set a pivot
 	virtual bool _edit_use_pivot() const { return false; };
-	virtual void _edit_set_pivot(const Point2 &p_pivot) {};
+	virtual void _edit_set_pivot(const Point2 &p_pivot){};
 	virtual Point2 _edit_get_pivot() const { return Point2(); };
 
 	virtual Transform2D _edit_get_transform() const;
@@ -366,7 +366,7 @@ public:
 	void draw_colored_polygon(const Vector<Point2> &p_points, const Color &p_color, const Vector<Point2> &p_uvs = Vector<Point2>(), Ref<Texture> p_texture = Ref<Texture>(), const Ref<Texture> &p_normal_map = Ref<Texture>(), const Ref<Texture> &p_mask = Ref<Texture>(), bool p_antialiased = false);
 
 	void draw_mesh(const Ref<Mesh> &p_mesh, const Ref<Texture> &p_texture, const Ref<Texture> &p_normal_map = Ref<Texture>(), const Ref<Texture> &p_mask = Ref<Texture>(), const Transform2D &p_transform = Transform2D(), const Color &p_modulate = Color(1, 1, 1));
-	void draw_mesh_3d(const Ref<Mesh> &p_mesh, const Ref<Texture> &p_texture, const Ref<Texture> &p_normal_map = Ref<Texture>(), const Ref<Texture> &p_mask = Ref<Texture>(), const Transform &p_transform = Transform(), const Color &p_modulate = Color(1, 1, 1));
+	void draw_mesh_3d(const Ref<Mesh> &p_mesh, const Ref<Texture> &p_texture, const Ref<Texture> &p_normal_map = Ref<Texture>(), const Ref<Texture> &p_mask = Ref<Texture>(), const Transform &p_transform = Transform(), const Color &p_color = Color(1, 1, 1));
 	void draw_multimesh(const Ref<MultiMesh> &p_multimesh, const Ref<Texture> &p_texture, const Ref<Texture> &p_normal_map = Ref<Texture>(), const Ref<Texture> &p_mask = Ref<Texture>());
 
 	void select_font(const Ref<Font> &p_font);

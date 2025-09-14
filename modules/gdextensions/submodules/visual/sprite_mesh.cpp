@@ -173,7 +173,7 @@ void SpriteMeshSnapshot::_create() {
 	RID texture_rid = owner->get_mesh_texture().is_valid() ? owner->get_mesh_texture()->get_rid() : RID();
 	RID normal_map_rid = owner->get_mesh_normal_map().is_valid() ? owner->get_mesh_normal_map()->get_rid() : RID();
 	RID mask_rid = owner->get_mesh_mask().is_valid() ? owner->get_mesh_mask()->get_rid() : RID();
-	VS::get_singleton()->canvas_item_add_mesh_3d(canvas_item, owner->get_mesh()->get_rid(), Transform(), owner->get_modulate(), texture_rid, normal_map_rid, mask_rid);
+	VS::get_singleton()->canvas_item_add_mesh_3d(canvas_item, owner->get_mesh()->get_rid(), texture_rid, normal_map_rid, mask_rid);
 
 	VS::get_singleton()->viewport_attach_canvas(viewport, canvas);
 	VS::get_singleton()->canvas_item_set_parent(canvas_item, canvas);

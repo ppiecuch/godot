@@ -807,9 +807,9 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 							if (!mesh->mesh.is_valid()) {
 								break;
 							}
-							Transform transform = rid_get_data_prop(mesh->mesh, 0, RID_Prop(Transform())).transform_value;
-							Color modulate = rid_get_data_prop(mesh->mesh, 1, RID_Prop(Color(1, 1, 1))).color_value;
-							bool depth = rid_get_data_prop(mesh->mesh, 2, RID_Prop(true)).bool_value;
+							Transform transform = VS::_mesh_get_transform_prop(mesh->mesh, Transform());
+							Color modulate = VS::_mesh_get_modulate_prop(mesh->mesh, Color(1, 1, 1));
+							bool depth = VS::_mesh_get_depth_prop(mesh->mesh, true);
 
 							RasterizerStorageGLES3::Mesh *mesh_data = storage->mesh_owner.getornull(mesh->mesh);
 							if (!mesh_data) {
@@ -1161,9 +1161,9 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 #define putpoint(J, x, y)                                          \
 	{                                                              \
 		points[(J)] = circle->pos + Point2(x, y) * circle->radius; \
-		indices[(J) * 3 + 0] = (J);                                \
-		indices[(J) * 3 + 1] = ((J) + 1) % numpoints;              \
-		indices[(J) * 3 + 2] = numpoints;                          \
+		indices[(J)*3 + 0] = (J);                                  \
+		indices[(J)*3 + 1] = ((J) + 1) % numpoints;                \
+		indices[(J)*3 + 2] = numpoints;                            \
 	}
 
 							const bool squared = circle->squared > 0;

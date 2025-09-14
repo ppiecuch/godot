@@ -377,4 +377,6 @@ public:
 	Receiver *get_receiver() const { return recv; }
 };
 
+extern const real_t _gd_ubyte_to_float_color_tab[256]; // Convert byte in [0,255] to GLfloat in [0.0,1.0]
+
 #endif // GD_CORE_H

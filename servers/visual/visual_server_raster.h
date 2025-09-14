@@ -720,7 +720,7 @@ public:
 	BIND8(canvas_item_add_polygon, RID, const Vector<Point2> &, const Vector<Color> &, const Vector<Point2> &, RID, RID, RID, bool)
 	BIND13(canvas_item_add_triangle_array, RID, const Vector<int> &, const Vector<Point2> &, const Vector<Color> &, const Vector<Point2> &, const Vector<int> &, const Vector<float> &, RID, int, RID, RID, bool, bool)
 	BIND7(canvas_item_add_mesh, RID, RID, const Transform2D &, const Color &, RID, RID, RID)
-	BIND7(canvas_item_add_mesh_3d, RID, RID, const Transform &, const Color &, RID, RID, RID)
+	BIND7(canvas_item_add_mesh_3d, RID, RID, RID, RID, RID, const Transform &, const Color &)
 	BIND5(canvas_item_add_multimesh, RID, RID, RID, RID, RID)
 	BIND5(canvas_item_add_particles, RID, RID, RID, RID, RID)
 	BIND2(canvas_item_add_set_transform, RID, const Transform2D &)

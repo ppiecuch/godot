@@ -206,6 +206,8 @@ private:
 };
 
 class Ant : public Insect {
+	GDCLASS(Ant, Insect)
+
 public:
 	Ant(const InsectSkinInfo *p_theme, Vector2 p_pos, Vector2 p_vel);
 	virtual ~Ant();
