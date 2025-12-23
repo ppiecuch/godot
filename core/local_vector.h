@@ -35,6 +35,7 @@
 #include "core/os/memory.h"
 #include "core/pool_vector.h"
 #include "core/sort_array.h"
+#include "core/span.h"
 #include "core/vector.h"
 
 #include <type_traits>
@@ -216,6 +217,15 @@ public:
 		return data[p_index];
 	}
 
+	_FORCE_INLINE_ const T &get_unchecked(U p_index) const {
+		DEV_ASSERT(p_index < count);
+		return data[p_index];
+	}
+	_FORCE_INLINE_ T &get_unchecked(U p_index) {
+		DEV_ASSERT(p_index < count);
+		return data[p_index];
+	}
+
 	_FORCE_INLINE_ T &back(int p_index = 0) {
 		CRASH_BAD_UNSIGNED_INDEX(count - 1 - p_index, count);
 		return data[count - 1 - p_index];
@@ -307,6 +317,8 @@ public:
 		return ret;
 	}
 
+	_FORCE_INLINE_ Span<T> span() const { return Span(data, count); }
+	_FORCE_INLINE_ operator Span<T>() const { return span(); }
 	PoolVector<T> to_pool_array() const {
 		PoolVector<T> pl;
 		if (size()) {
@@ -331,12 +343,21 @@ public:
 			data[i] = p_from.data[i];
 		}
 	}
+
+	explicit LocalVector(const Span<T> &p_from) {
+		resize(p_from.size());
+		for (U i = 0; i < count; i++) {
+			data[i] = p_from[i];
+		}
+	}
+
 	LocalVector(const Vector<T> &p_from) {
 		resize(p_from.size());
 		for (U i = 0; i < count; i++) {
 			data[i] = p_from[i];
 		}
 	}
+
 	LocalVector(const PoolVector<T> &p_from) {
 		resize(p_from.size());
 		typename PoolVector<T>::Read r = p_from.read();
