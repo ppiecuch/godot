@@ -404,7 +404,7 @@ PoolByteArray Cripter::decrypt_byte_RSA(const PoolByteArray p_input, const Strin
 		print_error(erro);
 	}
 	//---Decryptation **
-	_err = mbedtls_pk_parse_keyfile(&ctx_pk, key.data(), password.data());
+	_err = mbedtls_pk_parse_keyfile(&ctx_pk, key.data(), password.data(), nullptr, nullptr);
 	if (_err != 0) {
 		mbedtls_strerror(_err, erro, sizeof(erro));
 		print_error(erro);
