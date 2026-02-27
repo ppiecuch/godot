@@ -54,6 +54,9 @@ class VisualServerWrapMT : public VisualServer {
 	void thread_draw(bool p_swap_buffers, double frame_step);
 	void thread_flush();
 
+	Semaphore thread_halt_semaphore;
+	void thread_halt();
+
 	void thread_exit();
 
 	Mutex alloc_mutex;
@@ -378,6 +381,7 @@ public:
 	FUNC4(camera_set_orthogonal, RID, float, float, float)
 	FUNC5(camera_set_frustum, RID, float, Vector2, float, float)
 	FUNC2(camera_set_transform, RID, const Transform &)
+	FUNC2(camera_set_blob_focus_position, RID, const Vector3 &)
 	FUNC2(camera_set_cull_mask, RID, uint32_t)
 	FUNC2(camera_set_environment, RID, RID)
 	FUNC2(camera_set_use_vertical_aspect, RID, bool)
@@ -496,6 +500,24 @@ public:
 	FUNC2(instance_set_exterior, RID, bool)
 
 	FUNC2(instance_set_extra_visibility_margin, RID, real_t)
+
+	/* BLOB SHADOWS */
+	FUNCRID(capsule_shadow)
+	FUNC5(capsule_shadow_update, RID, const Vector3 &, real_t, const Vector3 &, real_t)
+
+	FUNCRID(blob_shadow)
+	FUNC3(blob_shadow_update, RID, const Vector3 &, real_t)
+
+	FUNC1(blob_shadows_set_range, real_t)
+	FUNC1(blob_shadows_set_gamma, real_t)
+	FUNC1(blob_shadows_set_intensity, real_t)
+
+	FUNCRID(blob_light)
+	FUNC2(blob_light_update, RID, const Transform &)
+	FUNC3(blob_light_set_param, RID, VisualServer::LightBlobShadowParam, real_t)
+	FUNC3(blob_light_set_light_param, RID, VisualServer::LightParam, real_t)
+	FUNC2(blob_light_set_type, RID, VisualServer::LightType)
+	FUNC2(blob_light_set_visible, RID, bool)
 
 	/* PORTALS API */
 
@@ -693,6 +715,8 @@ public:
 	virtual void pre_draw(bool p_will_draw);
 	virtual void draw(bool p_swap_buffers, double frame_step);
 	virtual void sync();
+	virtual void sync_and_halt();
+	virtual void thaw();
 	FUNC1RC(bool, has_changed, ChangedPriority)
 	virtual void set_physics_interpolation_enabled(bool p_enabled);
 

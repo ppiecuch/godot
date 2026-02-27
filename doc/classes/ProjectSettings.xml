@@ -539,8 +539,9 @@
 			[b]Note:[/b] This setting is ignored on iOS, Android, and HTML5.
 		</member>
 		<member name="display/window/size/fullscreen" type="bool" setter="" getter="" default="false">
-			Sets the main window to full screen when the project starts. Note that this is not [i]exclusive[/i] fullscreen. On Windows and Linux, a borderless window is used to emulate fullscreen. On macOS, a new desktop is used to display the running project.
+			Sets the main window to full screen when the project starts. The display's video mode is not changed. See also [member display/window/size/use_nonexclusive_fullscreen].
 			Regardless of the platform, enabling fullscreen will change the window size to match the monitor's size. Therefore, make sure your project supports [url=$DOCS_URL/tutorials/rendering/multiple_resolutions.html]multiple resolutions[/url] when enabling fullscreen mode.
+			[b]Note:[/b] On macOS, a new desktop is used to display the running project.
 			[b]Note:[/b] This setting is ignored on iOS, Android, and HTML5.
 		</member>
 		<member name="display/window/size/height" type="int" setter="" getter="" default="600">
@@ -555,6 +556,11 @@
 		</member>
 		<member name="display/window/size/test_width" type="int" setter="" getter="" default="0">
 			If greater than zero, overrides the window width when running the game. Useful for testing stretch modes.
+		</member>
+		<member name="display/window/size/use_nonexclusive_fullscreen" type="bool" setter="" getter="" default="false">
+			If [code]true[/code] and [member display/window/size/fullscreen] is set, a full screen mode with full multi-window support is used.
+			If [code]false[/code] and [member display/window/size/fullscreen] is set, a single window fullscreen mode is used, this mode has less overhead, but only one window can be open on a given screen at a time (opening a application switching will trigger a full screen transition). This mode might not work with screen recording software.
+			[b]Note:[/b] This property is only implemented on Windows.
 		</member>
 		<member name="display/window/size/width" type="int" setter="" getter="" default="1024">
 			Sets the game's main viewport width. On desktop platforms, this is the default window size. Stretch mode settings also use this as a reference when enabled.
@@ -1326,6 +1332,10 @@
 			The CA certificates bundle to use for SSL connections. If this is set to a non-empty value, this will [i]override[/i] Godot's default [url=https://github.com/godotengine/godot/blob/master/thirdparty/certs/ca-certificates.crt]Mozilla certificate bundle[/url]. If left empty, the default certificate bundle will be used.
 			If in doubt, leave this setting empty.
 		</member>
+		<member name="network/ssl/enable_tls_v1.3" type="bool" setter="" getter="" default="true">
+			If [code]true[/code], enable TLSv1.3 negotiation.
+			[b]Note:[/b] Only supported when using Mbed TLS 3.0 or later (Linux distribution packages may be compiled against older system Mbed TLS packages), otherwise the maximum supported TLS version is always TLSv1.2.
+		</member>
 		<member name="node/name_casing" type="int" setter="" getter="" default="0">
 			When creating node names automatically, set the type of casing in this project. This is mostly an editor setting.
 		</member>
@@ -1698,6 +1708,32 @@
 		<member name="rendering/portals/pvs/use_simple_pvs" type="bool" setter="" getter="" default="false">
 			Uses a simplified method of generating PVS (potentially visible set) data. The results may not be accurate where more than one portal join adjacent rooms.
 			[b]Note:[/b] Generally you should only use this option if you encounter bugs when it is set to [code]false[/code], i.e. there are problems with the default method.
+		</member>
+		<member name="rendering/quality/blob_shadows/enable" type="bool" setter="" getter="" default="true">
+			If [code]true[/code], blob shadows will be rendered where present.
+			[b]Note:[/b] Blob shadows depend on a [BlobShadow] caster being present, and a [Light] that is set to cast blob shadows.
+		</member>
+		<member name="rendering/quality/blob_shadows/gamma" type="float" setter="" getter="" default="1.0">
+			A gamma function is applied in the shader, which can be used to determine the softness of blob shadows.
+		</member>
+		<member name="rendering/quality/blob_shadows/intensity" type="float" setter="" getter="" default="0.7">
+			Global setting for blob shadow intensity (darkness).
+			Used in conjunction with [member rendering/quality/blob_shadows/gamma] to determine shadow appearance.
+		</member>
+		<member name="rendering/quality/blob_shadows/max_capsules" type="int" setter="" getter="" default="4">
+			Blob shadow performance is tightly linked to the maximum casters (sphere and capsule).
+			It is advisable to keep this limit as low as possible, and make use of the [BlobFocus] node to ensure shadows appear in the gameplay area.
+			[b]Note:[/b] If you are only using sphere casters, you should set this value to zero for maximum performance.
+		</member>
+		<member name="rendering/quality/blob_shadows/max_spheres" type="int" setter="" getter="" default="4">
+			Blob shadow performance is tightly linked to the maximum casters (sphere and capsule).
+			It is advisable to keep this limit as low as possible, and make use of the [BlobFocus] node to ensure shadows appear in the gameplay area.
+			[b]Note:[/b] If you are only using capsule casters, you should set this value to zero for maximum performance.
+		</member>
+		<member name="rendering/quality/blob_shadows/range" type="float" setter="" getter="" default="2.0">
+			This setting determines the maximum distance from a caster that the shadow will appear.
+			This is typically used to ensure that shadows from an object only cast onto a nearby floor.
+			Blob shadows are not subject to occlusion, and can thus spread into areas that may be lit by a different light (for instance in a room below). Keeping their range low helps prevent this problem.
 		</member>
 		<member name="rendering/quality/depth/hdr" type="bool" setter="" getter="" default="true">
 			If [code]true[/code], allocates the root [Viewport]'s framebuffer with high dynamic range. High dynamic range allows the use of [Color] values greater than 1. This must be set to [code]true[/code] for glow rendering to work if [member Environment.glow_hdr_threshold] is greater than or equal to [code]1.0[/code].

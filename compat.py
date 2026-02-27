@@ -1,96 +1,57 @@
-import sys
+"""Python 3 compatibility helpers for the Godot build system."""
 
-if sys.version_info < (3,):
+import io
 
-    def isbasestring(s):
-        return isinstance(s, basestring)
 
-    def open_utf8(filename, mode):
-        return open(filename, mode)
+def isbasestring(s):
+    return isinstance(s, (str, bytes))
 
-    def byte_to_str(x):
-        return str(ord(x))
 
-    import cStringIO
+def open_utf8(filename, mode):
+    return open(filename, mode, encoding="utf-8")
 
-    def StringIO():
-        return cStringIO.StringIO()
 
-    def encode_utf8(x):
-        return x
+def byte_to_str(x):
+    return str(x)
 
-    def decode_utf8(x):
-        return x
 
-    def iteritems(d):
-        return d.iteritems()
+def StringIO():
+    return io.StringIO()
 
-    def itervalues(d):
-        return d.itervalues()
 
-    def escape_string(s):
-        if isinstance(s, unicode):
-            s = s.encode("ascii")
-        result = ""
-        for c in s:
-            if not (32 <= ord(c) < 127) or c in ("\\", '"'):
-                result += "\\%03o" % ord(c)
-            else:
-                result += c
-        return result
+def encode_utf8(x):
+    return x.encode("utf-8") if isinstance(x, str) else x
 
-    def qualname(obj):
-        # Not properly equivalent to __qualname__ in py3, but it doesn't matter.
-        return obj.__name__
 
-else:
+def decode_utf8(x):
+    return x.decode("utf-8") if isinstance(x, bytes) else x
 
-    def isbasestring(s):
-        return isinstance(s, (str, bytes))
 
-    def open_utf8(filename, mode):
-        return open(filename, mode, encoding="utf-8")
+def iteritems(d):
+    return iter(d.items())
 
-    def byte_to_str(x):
-        return str(x)
 
-    import io
+def itervalues(d):
+    return iter(d.values())
 
-    def StringIO():
-        return io.StringIO()
 
-    import codecs
+def escape_string(s):
+    if isinstance(s, str):
+        s = s.encode("utf-8")
+    result = ""
+    for c in s:
+        if not (32 <= c < 127) or c in (ord("\\"), ord('"')):
+            rev_result = []
+            val = c
+            while val >= 256:
+                val, low = (val // 256, val % 256)
+                rev_result.append("\\%03o" % low)
+            rev_result.append("\\%03o" % val)
+            result += "".join(reversed(rev_result))
+        else:
+            result += chr(c)
+    return result
 
-    def encode_utf8(x):
-        return codecs.utf_8_encode(x)[0]
 
-    def decode_utf8(x):
-        return codecs.utf_8_decode(x)[0]
-
-    def iteritems(d):
-        return iter(d.items())
-
-    def itervalues(d):
-        return iter(d.values())
-
-    def charcode_to_c_escapes(c):
-        rev_result = []
-        while c >= 256:
-            c, low = (c // 256, c % 256)
-            rev_result.append("\\%03o" % low)
-        rev_result.append("\\%03o" % c)
-        return "".join(reversed(rev_result))
-
-    def escape_string(s):
-        result = ""
-        if isinstance(s, str):
-            s = s.encode("utf-8")
-        for c in s:
-            if not (32 <= c < 127) or c in (ord("\\"), ord('"')):
-                result += charcode_to_c_escapes(c)
-            else:
-                result += chr(c)
-        return result
-
-    def qualname(obj):
-        return obj.__qualname__
+def qualname(obj):
+    return obj.__qualname__

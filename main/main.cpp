@@ -159,6 +159,7 @@ HashMap<Main::CLIScope, Vector<String>> forwardable_cli_arguments;
 static OS::VideoMode video_mode;
 static int init_screen = -1;
 static bool init_fullscreen = false;
+static bool init_non_ex_fs = false;
 static bool init_maximized = false;
 static bool init_windowed = false;
 static bool init_always_on_top = false;
@@ -662,6 +663,10 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		} else if (I->get() == "-f" || I->get() == "--fullscreen") { // force fullscreen
 
 			init_fullscreen = true;
+		} else if (I->get() == "--nonexclusive-fullscreen") { // force fullscreen
+
+			init_fullscreen = true;
+			init_non_ex_fs = true;
 		} else if (I->get() == "-m" || I->get() == "--maximized") { // force maximized window
 
 			init_maximized = true;
@@ -1162,6 +1167,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	if (editor || project_manager) {
 		Engine::get_singleton()->set_editor_hint(true);
 		use_custom_res = false;
+		init_non_ex_fs = true;
 		input_map->load_default(); //keys for editor
 	} else {
 		input_map->load_from_globals(); //keys for game
@@ -1221,6 +1227,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		video_mode.resizable = GLOBAL_GET("display/window/size/resizable");
 		video_mode.borderless_window = GLOBAL_GET("display/window/size/borderless");
 		video_mode.fullscreen = GLOBAL_GET("display/window/size/fullscreen");
+		video_mode.non_ex_fs = GLOBAL_GET("display/window/size/use_nonexclusive_fullscreen");
 		video_mode.always_on_top = GLOBAL_GET("display/window/size/always_on_top");
 	}
 
@@ -1523,6 +1530,9 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 
 	if (init_screen != -1) {
 		OS::get_singleton()->set_current_screen(init_screen);
+	}
+	if (init_non_ex_fs) {
+		OS::get_singleton()->set_window_use_nonexclusive_fullscreen(true);
 	}
 	if (init_windowed) {
 		//do none..
@@ -2417,6 +2427,8 @@ bool Main::iteration() {
 	double step = advance.idle_step;
 	double scaled_step = step * time_scale;
 
+	VisualServer::get_singleton()->sync_and_halt();
+
 	Engine::get_singleton()->_frame_step = step;
 	Engine::get_singleton()->_physics_interpolation_fraction = advance.interpolation_fraction;
 
@@ -2451,9 +2463,11 @@ bool Main::iteration() {
 		// may be the same, and no interpolation takes place.
 		OS::get_singleton()->get_main_loop()->iteration_prepare();
 
-		PhysicsServer::get_singleton()->flush_queries();
-
 		Physics2DServer::get_singleton()->sync();
+
+		VisualServer::get_singleton()->thaw();
+
+		PhysicsServer::get_singleton()->flush_queries();
 		Physics2DServer::get_singleton()->flush_queries();
 
 		if (OS::get_singleton()->get_main_loop()->iteration(frame_slice * time_scale)) {
@@ -2466,6 +2480,8 @@ bool Main::iteration() {
 		NavigationServer::get_singleton_mut()->process(frame_slice * time_scale);
 #endif
 		message_queue->flush();
+
+		VisualServer::get_singleton()->sync_and_halt();
 
 		PhysicsServer::get_singleton()->step(frame_slice * time_scale);
 
@@ -2481,6 +2497,8 @@ bool Main::iteration() {
 
 		Engine::get_singleton()->_in_physics = false;
 	}
+
+	VisualServer::get_singleton()->thaw();
 
 	if (InputDefault::get_singleton()->is_using_input_buffering() && agile_input_event_flushing) {
 		InputDefault::get_singleton()->flush_buffered_events();

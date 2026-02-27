@@ -132,7 +132,7 @@ warn() {
 	shift
 	# shellcheck disable=SC2059
 	printf "transcrypt: $fmt\n" "$@" >&2
-	log $(printf "WARN: $fmt\n" "$@")
+	log "$(printf "WARN: $fmt\n" "$@")"
 }
 
 # print a message to stderr and exit with either
@@ -326,8 +326,8 @@ git_pre_commit() {
 	}
 
 	# if bash version is 4.4 or greater than fork to number of threads otherwise run normally
-	if [[ "${BASH_VERSINFO[0]}" -ge 4 ]] && [[ "${BASH_VERSINFO[1]}" -ge 4 ]]; then
-		num_procs=$(nproc)
+	if [[ "${BASH_VERSINFO[0]}" -gt 4 ]] || { [[ "${BASH_VERSINFO[0]}" -eq 4 ]] && [[ "${BASH_VERSINFO[1]}" -ge 4 ]]; }; then
+		num_procs=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
 		num_jobs="\j"
 		for secret_file in $(git -c core.quotePath=false ls-files | git -c core.quotePath=false check-attr --stdin filter | awk 'BEGIN { FS = ":" }; /crypt$/{ print $1 }'); do
 			while ((${num_jobs@P} >= num_procs)); do
@@ -1155,13 +1155,10 @@ while [[ "${1:-}" != '' ]]; do
 		;;
 	-s | --show-raw)
 		show_file=$2
-		show_raw_file
-		exit 0
+		shift
 		;;
 	--show-raw=*)
 		show_file=${1#*=}
-		show_raw_file
-		exit 0
 		;;
 	-e | --export-gpg)
 		gpg_recipient=$2
@@ -1213,7 +1210,10 @@ readonly YES_REGEX='^[Yy]$'
 
 # in order to keep behavior consistent no matter what order the options were
 # specified in, we must run these here rather than in the case statement above
-if [[ $list ]]; then
+if [[ $show_file ]]; then
+	show_raw_file
+	exit 0
+elif [[ $list ]]; then
 	list_files
 	exit 0
 elif [[ $uninstall ]]; then
