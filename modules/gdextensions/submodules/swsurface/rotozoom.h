@@ -40,7 +40,7 @@
 
 #include "_surface.h"
 
-//f Disable anti-aliasing (no smoothing).
+// Disable anti-aliasing (no smoothing).
 #define SMOOTHING_OFF 0
 
 // Enable anti-aliasing (smoothing).

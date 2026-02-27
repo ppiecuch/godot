@@ -9,5 +9,6 @@ env.add_source_files(env.drivers_sources, "MGL/*.cpp")
 
 env.Append(FRAMEWORKS=["Metal", "Foundation"])
 
+SConscript("metal/SCsub")
 SConscript("shaders/SCsub")
 SConscript("tools/SCsub")

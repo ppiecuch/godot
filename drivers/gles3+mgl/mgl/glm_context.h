@@ -452,6 +452,11 @@ typedef struct Program_t {
 		unsigned x, y, z;
 	} local_workgroup_size;
 	void *mtl_data;
+	// Native Metal shader support
+	void *mtl_pipeline_state; // id<MTLRenderPipelineState> - cached pipeline state
+	void *mtl_uniform_buffer; // id<MTLBuffer> - uniform/constant buffer
+	void *mtl_compute_pipeline; // id<MTLComputePipelineState> - for compute shaders
+	size_t mtl_uniform_size; // Size of uniform buffer
 } Program;
 
 typedef struct Renderbuffer_t {
