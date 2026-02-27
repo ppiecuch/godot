@@ -47,14 +47,22 @@ _run_in_docker () {
 sync_extra () {
 	local REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 	local FILES=("CLAUDE.md" "CLAUDE-NOTES.md")
-	local HOSTS=("192.168.1.17" "192.168.1.199")
+
+	# host:path pairs for sync targets
+	local TARGETS=(
+		"192.168.1.17:~/Private/Software/GodotEngine/godot"
+		"192.168.1.199:/Volumes/WORKSPACE/build-private/GodotEngine/godot-3.x"
+	)
 
 	# Get local IPs to avoid rsyncing to ourselves
 	local LOCAL_IPS
 	LOCAL_IPS=$(ip -4 -o addr show 2>/dev/null | awk '{print $4}' | cut -d/ -f1 || true)
 	LOCAL_IPS+=$'\n'$(ifconfig 2>/dev/null | awk '/inet /{print $2}' || true)
 
-	for host in "${HOSTS[@]}"; do
+	for target in "${TARGETS[@]}"; do
+		local host="${target%%:*}"
+		local remote_root="${target#*:}"
+
 		# Skip if this host is us
 		if echo "$LOCAL_IPS" | grep -qxF "$host"; then
 			continue
@@ -66,11 +74,11 @@ sync_extra () {
 			continue
 		fi
 
-		echo "*** sync_extra: syncing with ${host}"
+		echo "*** sync_extra: syncing with ${host}:${remote_root}"
 
 		for f in "${FILES[@]}"; do
 			local LOCAL_FILE="${REPO_ROOT}/${f}"
-			local REMOTE_FILE="${REPO_ROOT}/${f}"
+			local REMOTE_FILE="${remote_root}/${f}"
 
 			local LOCAL_MTIME=0
 			if [[ -f "$LOCAL_FILE" ]]; then
