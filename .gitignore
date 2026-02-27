@@ -408,6 +408,9 @@ $RECYCLE.BIN/
 ### Modules tools and binaries ###
 ##################################
 
+misc/tools/glinfo
+misc/tools/qoiconv
+
 modules/gdextensions/submodules/benchmark/tools/read_dat
 modules/gdextensions/_tools/conv_rgb_to_8
 modules/gdextensions/_tools/dos_font_data*
