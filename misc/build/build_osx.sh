@@ -6,11 +6,18 @@
 
 set -e
 
+# Logging
+# -------
+
+if [ -n "$BUILD_LOG" ]; then
+	exec > >(tee -a "$BUILD_LOG") 2>&1
+fi
+
 # Utilities
 # ---------
 
 _color_supported() {
-	[[ -t 1 ]] && [[ "$TERM" =~ (xterm|screen|tmux|alacritty|kitty) ]]
+	[[ -z "$BUILD_LOG" ]] && [[ -t 1 ]] && [[ "$TERM" =~ (xterm|screen|tmux|alacritty|kitty) ]]
 }
 
 log_step() {
